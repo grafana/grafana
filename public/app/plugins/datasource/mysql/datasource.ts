@@ -7,7 +7,7 @@ import { TemplateSrv } from 'app/features/templating/template_srv';
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 //Types
 import { MysqlQueryForInterpolation } from './types';
-import { getSearchFilterScopedVar } from '../../../features/templating/variable';
+import { getSearchFilterScopedVar } from '../../../features/templating/utils';
 
 export class MysqlDatasource {
   id: any;

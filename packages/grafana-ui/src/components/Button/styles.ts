@@ -1,7 +1,8 @@
 import tinycolor from 'tinycolor2';
 import { css } from 'emotion';
 import { selectThemeVariant, stylesFactory } from '../../themes';
-import { StyleDeps, ButtonSize } from './types';
+import { ComponentSize } from '../../types/size';
+import { StyleDeps } from './types';
 import { GrafanaTheme } from '@grafana/data';
 
 const buttonVariantStyles = (
@@ -84,7 +85,7 @@ export const getButtonStyles = stylesFactory(({ theme, size, variant, textAndIco
       font-weight: ${fontWeight};
       font-size: ${fontSize};
       font-family: ${theme.typography.fontFamily.sansSerif};
-      line-height: ${theme.typography.lineHeight.xs};
+      line-height: ${theme.typography.lineHeight.md};
       padding: ${padding};
       vertical-align: middle;
       cursor: pointer;
@@ -116,11 +117,11 @@ type ButtonMeasures = {
   fontWeight: number;
 };
 
-const calculateMeasures = (theme: GrafanaTheme, size: ButtonSize, textAndIcon: boolean): ButtonMeasures => {
+const calculateMeasures = (theme: GrafanaTheme, size: ComponentSize, textAndIcon: boolean): ButtonMeasures => {
   switch (size) {
     case 'sm': {
       return {
-        padding: `${theme.spacing.xs} ${theme.spacing.sm}`,
+        padding: `0 ${theme.spacing.sm}`,
         fontSize: theme.typography.size.sm,
         height: theme.height.sm,
         fontWeight: theme.typography.weight.semibold,
@@ -131,7 +132,7 @@ const calculateMeasures = (theme: GrafanaTheme, size: ButtonSize, textAndIcon: b
       const leftPadding = textAndIcon ? theme.spacing.sm : theme.spacing.md;
 
       return {
-        padding: `${theme.spacing.sm} ${theme.spacing.md} ${theme.spacing.sm} ${leftPadding}`,
+        padding: `0 ${theme.spacing.md} 0 ${leftPadding}`,
         fontSize: theme.typography.size.md,
         height: theme.height.md,
         fontWeight: theme.typography.weight.semibold,
@@ -142,7 +143,7 @@ const calculateMeasures = (theme: GrafanaTheme, size: ButtonSize, textAndIcon: b
       const leftPadding = textAndIcon ? theme.spacing.md : theme.spacing.lg;
 
       return {
-        padding: `${theme.spacing.md} ${theme.spacing.lg} ${theme.spacing.md} ${leftPadding}`,
+        padding: `0 ${theme.spacing.lg} 0 ${leftPadding}`,
         fontSize: theme.typography.size.lg,
         height: theme.height.lg,
         fontWeight: theme.typography.weight.regular,
@@ -153,7 +154,7 @@ const calculateMeasures = (theme: GrafanaTheme, size: ButtonSize, textAndIcon: b
       const leftPadding = textAndIcon ? theme.spacing.sm : theme.spacing.md;
 
       return {
-        padding: `${theme.spacing.sm} ${theme.spacing.md} ${theme.spacing.sm} ${leftPadding}`,
+        padding: `0 ${theme.spacing.md} 0 ${leftPadding}`,
         fontSize: theme.typography.size.base,
         height: theme.height.md,
         fontWeight: theme.typography.weight.regular,

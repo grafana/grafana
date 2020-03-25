@@ -34,7 +34,15 @@ export const PanelEditorTabs: React.FC<PanelEditorTabsProps> = ({ panel, dashboa
     <div className={styles.wrapper}>
       <TabsBar className={styles.tabBar}>
         {tabs.map(tab => {
-          return <Tab key={tab.id} label={tab.text} active={tab.active} onChangeTab={() => onChangeTab(tab)} />;
+          return (
+            <Tab
+              key={tab.id}
+              label={tab.text}
+              active={tab.active}
+              onChangeTab={() => onChangeTab(tab)}
+              icon={tab.icon}
+            />
+          );
         })}
       </TabsBar>
       <TabContent className={styles.tabContent}>
@@ -71,7 +79,7 @@ const getPanelEditorTabsStyles = stylesFactory(() => {
       flex-direction: column;
       flex-grow: 1;
       min-height: 0;
-      background: ${theme.colors.pageBg};
+      background: ${theme.colors.panelBg};
 
       .toolbar {
         background: transparent;

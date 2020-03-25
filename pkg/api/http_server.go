@@ -27,6 +27,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/hooks"
 	"github.com/grafana/grafana/pkg/services/login"
+	"github.com/grafana/grafana/pkg/services/provisioning"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/rendering"
 	"github.com/grafana/grafana/pkg/setting"
@@ -44,14 +45,6 @@ func init() {
 	})
 }
 
-type ProvisioningService interface {
-	ProvisionDatasources() error
-	ProvisionNotifications() error
-	ProvisionDashboards() error
-	GetDashboardProvisionerResolvedPath(name string) string
-	GetAllowUiUpdatesFromConfig(name string) bool
-}
-
 type HTTPServer struct {
 	log           log.Logger
 	macaron       *macaron.Macaron
@@ -59,20 +52,21 @@ type HTTPServer struct {
 	streamManager *live.StreamManager
 	httpSrv       *http.Server
 
-	RouteRegister        routing.RouteRegister    `inject:""`
-	Bus                  bus.Bus                  `inject:""`
-	RenderService        rendering.Service        `inject:""`
-	Cfg                  *setting.Cfg             `inject:""`
-	HooksService         *hooks.HooksService      `inject:""`
-	CacheService         *localcache.CacheService `inject:""`
-	DatasourceCache      datasources.CacheService `inject:""`
-	AuthTokenService     models.UserTokenService  `inject:""`
-	QuotaService         *quota.QuotaService      `inject:""`
-	RemoteCacheService   *remotecache.RemoteCache `inject:""`
-	ProvisioningService  ProvisioningService      `inject:""`
-	Login                *login.LoginService      `inject:""`
-	License              models.Licensing         `inject:""`
-	BackendPluginManager backendplugin.Manager    `inject:""`
+	RouteRegister        routing.RouteRegister            `inject:""`
+	Bus                  bus.Bus                          `inject:""`
+	RenderService        rendering.Service                `inject:""`
+	Cfg                  *setting.Cfg                     `inject:""`
+	HooksService         *hooks.HooksService              `inject:""`
+	CacheService         *localcache.CacheService         `inject:""`
+	DatasourceCache      datasources.CacheService         `inject:""`
+	AuthTokenService     models.UserTokenService          `inject:""`
+	QuotaService         *quota.QuotaService              `inject:""`
+	RemoteCacheService   *remotecache.RemoteCache         `inject:""`
+	ProvisioningService  provisioning.ProvisioningService `inject:""`
+	Login                *login.LoginService              `inject:""`
+	License              models.Licensing                 `inject:""`
+	BackendPluginManager backendplugin.Manager            `inject:""`
+	PluginManager        *plugins.PluginManager           `inject:""`
 }
 
 func (hs *HTTPServer) Init() error {

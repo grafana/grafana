@@ -1,24 +1,21 @@
 // Libraries
 import _ from 'lodash';
-
 // Utils
 import getFactors from 'app/core/utils/factors';
 import { appendQueryToUrl } from 'app/core/utils/url';
 import kbn from 'app/core/utils/kbn';
-
 // Types
 import { PanelModel } from './PanelModel';
 import { DashboardModel } from './DashboardModel';
 import { DataLink } from '@grafana/data';
-
 // Constants
 import {
-  GRID_COLUMN_COUNT,
+  DEFAULT_PANEL_SPAN,
+  DEFAULT_ROW_HEIGHT,
   GRID_CELL_HEIGHT,
   GRID_CELL_VMARGIN,
-  DEFAULT_ROW_HEIGHT,
+  GRID_COLUMN_COUNT,
   MIN_PANEL_HEIGHT,
-  DEFAULT_PANEL_SPAN,
 } from 'app/core/constants';
 import { DataLinkBuiltInVars } from '@grafana/ui';
 
@@ -128,8 +125,9 @@ export class DashboardMigrator {
       }
 
       // update template variables
-      for (i = 0; i < this.dashboard.templating.list.length; i++) {
-        const variable = this.dashboard.templating.list[i];
+      const variables = this.dashboard.getVariables();
+      for (i = 0; i < variables.length; i++) {
+        const variable = variables[i];
         if (variable.datasource === void 0) {
           variable.datasource = null;
         }
@@ -242,7 +240,7 @@ export class DashboardMigrator {
 
     if (oldVersion < 12) {
       // update template variables
-      _.each(this.dashboard.templating.list, templateVariable => {
+      _.each(this.dashboard.getVariables(), templateVariable => {
         if (templateVariable.refresh) {
           templateVariable.refresh = 1;
         }

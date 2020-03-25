@@ -5,6 +5,7 @@ import _ from 'lodash';
 import GraphiteQuery from './graphite_query';
 import { QueryCtrl } from 'app/plugins/sdk';
 import appEvents from 'app/core/app_events';
+import { promiseToDigest } from 'app/core/utils/promiseToDigest';
 import { auto } from 'angular';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { AppEvents } from '@grafana/data';
@@ -59,7 +60,8 @@ export class GraphiteQueryCtrl extends QueryCtrl {
     });
 
     const checkOtherSegmentsIndex = this.queryModel.checkOtherSegmentsIndex || 0;
-    this.checkOtherSegments(checkOtherSegmentsIndex, modifyLastSegment);
+
+    promiseToDigest(this.$scope)(this.checkOtherSegments(checkOtherSegmentsIndex, modifyLastSegment));
 
     if (this.queryModel.seriesByTagUsed) {
       this.fixTagSegments();
@@ -156,7 +158,7 @@ export class GraphiteQueryCtrl extends QueryCtrl {
         }
 
         // add template variables
-        _.eachRight(this.templateSrv.variables, variable => {
+        _.eachRight(this.templateSrv.getVariables(), variable => {
           altSegments.unshift(
             this.uiSegmentSrv.newSegment({
               type: 'template',
@@ -207,20 +209,24 @@ export class GraphiteQueryCtrl extends QueryCtrl {
       const tag = removeTagPrefix(segment.value);
       this.pause();
       this.addSeriesByTagFunc(tag);
-      return;
+      return null;
     }
 
     if (segment.expandable) {
-      return this.checkOtherSegments(segmentIndex + 1).then(() => {
-        this.setSegmentFocus(segmentIndex + 1);
-        this.targetChanged();
-      });
+      return promiseToDigest(this.$scope)(
+        this.checkOtherSegments(segmentIndex + 1).then(() => {
+          this.setSegmentFocus(segmentIndex + 1);
+          this.targetChanged();
+        })
+      );
     } else {
       this.spliceSegments(segmentIndex + 1);
     }
 
     this.setSegmentFocus(segmentIndex + 1);
     this.targetChanged();
+
+    return null;
   }
 
   spliceSegments(index: any) {
@@ -363,7 +369,7 @@ export class GraphiteQueryCtrl extends QueryCtrl {
     return this.datasource.getTagValuesAutoComplete(tagExpressions, tagKey, valuePrefix).then((values: any[]) => {
       const altValues = _.map(values, 'text');
       // Add template variables as additional values
-      _.eachRight(this.templateSrv.variables, variable => {
+      _.eachRight(this.templateSrv.getVariables(), variable => {
         altValues.push('${' + variable.name + ':regex}');
       });
       return mapToDropdownOptions(altValues);

@@ -281,6 +281,7 @@ type Cfg struct {
 
 	ApiKeyMaxSecondsToLive int64
 
+	// Use to enable new features which may still be in alpha/beta stage.
 	FeatureToggles map[string]bool
 }
 
@@ -507,7 +508,7 @@ func (cfg *Cfg) loadConfiguration(args *CommandLineArgs) (*ini.File, error) {
 	// load defaults
 	parsedFile, err := ini.Load(defaultConfigFile)
 	if err != nil {
-		fmt.Println(fmt.Sprintf("Failed to parse defaults.ini, %v", err))
+		fmt.Printf("Failed to parse defaults.ini, %v\n", err)
 		os.Exit(1)
 		return nil, err
 	}
@@ -633,11 +634,11 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 		return err
 	}
 	PluginsPath = makeAbsolute(plugins, HomePath)
-	Provisioning, err := valueAsString(iniFile.Section("paths"), "provisioning", "")
+	provisioning, err := valueAsString(iniFile.Section("paths"), "provisioning", "")
 	if err != nil {
 		return err
 	}
-	cfg.ProvisioningPath = makeAbsolute(Provisioning, HomePath)
+	cfg.ProvisioningPath = makeAbsolute(provisioning, HomePath)
 	server := iniFile.Section("server")
 	AppUrl, AppSubUrl, err = parseAppUrlAndSubUrl(server)
 	if err != nil {
