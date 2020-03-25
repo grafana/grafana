@@ -19,13 +19,6 @@ type SocialOkta struct {
 	roleAttributePath string
 }
 
-type OktaClaims struct {
-	ID                string `json:"sub"`
-	Email             string `json:"email"`
-	PreferredUsername string `json:"preferred_username"`
-	Name              string `json:"name"`
-}
-
 type OktaUserInfoJson struct {
 	Name        string              `json:"name"`
 	DisplayName string              `json:"display_name"`
@@ -36,6 +29,21 @@ type OktaUserInfoJson struct {
 	Attributes  map[string][]string `json:"attributes"`
 	Groups      []string            `json:"groups"`
 	rawJSON     []byte
+}
+
+type OktaClaims struct {
+	ID                string `json:"sub"`
+	Email             string `json:"email"`
+	PreferredUsername string `json:"preferred_username"`
+	Name              string `json:"name"`
+}
+
+func (claims *OktaClaims) extractEmail() string {
+	if claims.Email == "" && claims.PreferredUsername != "" {
+		return claims.PreferredUsername
+	}
+
+	return claims.Email
 }
 
 func (s *SocialOkta) Type() int {
@@ -103,14 +111,6 @@ func (s *SocialOkta) extractAPI(data *OktaUserInfoJson, client *http.Client) err
 
 	s.log.Debug("Received user info response", "raw_json", string(data.rawJSON), "data", data)
 	return nil
-}
-
-func (claims *OktaClaims) extractEmail() string {
-	if claims.Email == "" && claims.PreferredUsername != "" {
-		return claims.PreferredUsername
-	}
-
-	return claims.Email
 }
 
 func (s *SocialOkta) extractRole(data *OktaUserInfoJson) string {
