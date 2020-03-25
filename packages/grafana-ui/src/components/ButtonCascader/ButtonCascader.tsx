@@ -5,6 +5,7 @@ import { css } from 'emotion';
 // @ts-ignore
 import RCCascader from 'rc-cascader';
 import { CascaderOption } from '../Cascader/Cascader';
+import { onChangeCascader, onLoadDataCascader } from '../Cascader/optionMappings';
 import { stylesFactory } from '../../themes';
 
 export interface ButtonCascaderProps {
@@ -28,10 +29,19 @@ const getStyles = stylesFactory(() => {
   };
 });
 
-export const ButtonCascader: React.FC<ButtonCascaderProps> = props => (
-  <RCCascader popupClassName={getStyles().popup} {...props} expandIcon={null}>
-    <button className="gf-form-label gf-form-label--btn" disabled={props.disabled}>
-      {props.children} <Icon name="caret-down" />
-    </button>
-  </RCCascader>
-);
+export const ButtonCascader: React.FC<ButtonCascaderProps> = props => {
+  const { onChange, loadData, ...rest } = props;
+  return (
+    <RCCascader
+      onChange={onChangeCascader(onChange)}
+      loadData={onLoadDataCascader(loadData)}
+      popupClassName={getStyles().popup}
+      {...rest}
+      expandIcon={null}
+    >
+      <button className="gf-form-label gf-form-label--btn" disabled={props.disabled}>
+        {props.children} <Icon name="caret-down" />
+      </button>
+    </RCCascader>
+  );
+};

@@ -185,6 +185,7 @@ export abstract class DataSourceApi<
   constructor(instanceSettings: DataSourceInstanceSettings<TOptions>) {
     this.name = instanceSettings.name;
     this.id = instanceSettings.id;
+    this.meta = {} as DataSourcePluginMeta;
   }
 
   /**
@@ -249,7 +250,7 @@ export abstract class DataSourceApi<
   /**
    * static information about the datasource
    */
-  meta?: DataSourcePluginMeta;
+  meta: DataSourcePluginMeta;
 
   /**
    * Used by alerting to check if query contains template variables

@@ -2,11 +2,12 @@ import React, { useState } from 'react';
 import { css } from 'emotion';
 import { Button, FormField, DataLinkInput, stylesFactory, Switch } from '@grafana/ui';
 import { VariableSuggestion } from '@grafana/data';
-import { DerivedFieldConfig } from '../types';
-import DataSourcePicker from '../../../../core/components/Select/DataSourcePicker';
-import { getDatasourceSrv } from '../../../../features/plugins/datasource_srv';
 import { DataSourceSelectItem } from '@grafana/data';
-import { config } from '../../../../core/config';
+
+import { DerivedFieldConfig } from '../types';
+import DataSourcePicker from 'app/core/components/Select/DataSourcePicker';
+import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
+import { config } from 'app/core/config';
 
 const getStyles = stylesFactory(() => ({
   row: css`
@@ -99,7 +100,7 @@ export const DerivedField = (props: Props) => {
         `}
       />
 
-      {config.featureToggles.tracing_integration && (
+      {config.featureToggles.tracingIntegration && (
         <div className={styles.row}>
           <Switch
             label="Internal link"

@@ -7,31 +7,21 @@ import {
   DataQueryRequest,
   DataQueryResponse,
   DataQuery,
-  FieldType,
 } from '@grafana/data';
-import { BackendSrv, DatasourceRequestOptions } from 'app/core/services/backend_srv';
-import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
+import { getBackendSrv } from '@grafana/runtime';
+
+import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
+import { DatasourceRequestOptions } from 'app/core/services/backend_srv';
+import { serializeParams } from '../../../core/utils/fetch';
 
 import { Observable, from, of } from 'rxjs';
-import { map } from 'rxjs/operators';
-
-function serializeParams(data: Record<string, any>) {
-  return Object.keys(data)
-    .map(k => `${encodeURIComponent(k)}=${encodeURIComponent(data[k])}`)
-    .join('&');
-}
 
 export type JaegerQuery = {
   query: string;
 } & DataQuery;
 
 export class JaegerDatasource extends DataSourceApi<JaegerQuery> {
-  /** @ngInject */
-  constructor(
-    private instanceSettings: DataSourceInstanceSettings,
-    private backendSrv: BackendSrv,
-    private timeSrv: TimeSrv
-  ) {
+  constructor(private instanceSettings: DataSourceInstanceSettings) {
     super(instanceSettings);
   }
 
@@ -45,7 +35,7 @@ export class JaegerDatasource extends DataSourceApi<JaegerQuery> {
       url,
     };
 
-    return from(this.backendSrv.datasourceRequest(req));
+    return from(getBackendSrv().datasourceRequest(req));
   }
 
   async metadataRequest(url: string, params?: Record<string, any>) {
@@ -97,7 +87,7 @@ export class JaegerDatasource extends DataSourceApi<JaegerQuery> {
   }
 
   getTimeRange(): { start: number; end: number } {
-    const range = this.timeSrv.timeRange();
+    const range = getTimeSrv().timeRange();
     return {
       start: this.getTime(range.from, false),
       end: this.getTime(range.to, true),

@@ -6,7 +6,7 @@ export function buildCategories(plugins: DataSourcePluginMeta[]): DataSourcePlug
   const categories: DataSourcePluginCategory[] = [
     { id: 'tsdb', title: 'Time series databases', plugins: [] },
     { id: 'logging', title: 'Logging & document databases', plugins: [] },
-    config.featureToggles.tracing_integration ? { id: 'tracing', title: 'Distributed tracing', plugins: [] } : null,
+    config.featureToggles.tracingIntegration ? { id: 'tracing', title: 'Distributed tracing', plugins: [] } : null,
     { id: 'sql', title: 'SQL', plugins: [] },
     { id: 'cloud', title: 'Cloud', plugins: [] },
     { id: 'enterprise', title: 'Enterprise plugins', plugins: [] },

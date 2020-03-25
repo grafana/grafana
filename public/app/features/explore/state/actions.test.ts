@@ -2,7 +2,7 @@ import { PayloadAction } from '@reduxjs/toolkit';
 import { DataQuery, DefaultTimeZone, ExploreMode, LogsDedupStrategy, RawTimeRange, toUtc } from '@grafana/data';
 
 import * as Actions from './actions';
-import { changeDatasource, loadDatasource, navigateToExplore, refreshExplore } from './actions';
+import { changeDatasource, loadDatasource, navigateToExplore, refreshExplore, cancelQueries } from './actions';
 import { ExploreId, ExploreUpdateState, ExploreUrlState } from 'app/types';
 import { thunkTester } from 'test/core/thunk/thunkTester';
 import {
@@ -13,6 +13,8 @@ import {
   setQueriesAction,
   updateDatasourceInstanceAction,
   updateUIStateAction,
+  cancelQueriesAction,
+  scanStopAction,
 } from './actionTypes';
 import { Emitter } from 'app/core/core';
 import { makeInitialUpdateState } from './reducers';
@@ -20,6 +22,7 @@ import { PanelModel } from 'app/features/dashboard/state';
 import { updateLocation } from '../../../core/actions';
 import { MockDataSourceApi } from '../../../../test/mocks/datasource_srv';
 import * as DatasourceSrv from 'app/features/plugins/datasource_srv';
+import { interval } from 'rxjs';
 
 jest.mock('app/features/plugins/datasource_srv');
 const getDatasourceSrvMock = (DatasourceSrv.getDatasourceSrv as any) as jest.Mock<DatasourceSrv.DatasourceSrv>;
@@ -171,6 +174,40 @@ describe('refreshExplore', () => {
 
       expect(dispatchedActions).toEqual([]);
     });
+  });
+});
+
+describe('running queries', () => {
+  it('should cancel running query when cancelQueries is dispatched', async () => {
+    const unsubscribable = interval(1000);
+    unsubscribable.subscribe();
+    const exploreId = ExploreId.left;
+    const initialState = {
+      explore: {
+        [exploreId]: {
+          datasourceInstance: 'test-datasource',
+          initialized: true,
+          loading: true,
+          querySubscription: unsubscribable,
+          queries: ['A'],
+          range: testRange,
+        },
+      },
+
+      user: {
+        orgId: 'A',
+      },
+    };
+
+    const dispatchedActions = await thunkTester(initialState)
+      .givenThunk(cancelQueries)
+      .whenThunkIsDispatched(exploreId);
+
+    expect(dispatchedActions).toEqual([
+      scanStopAction({ exploreId }),
+      cancelQueriesAction({ exploreId }),
+      expect.anything(),
+    ]);
   });
 });
 
