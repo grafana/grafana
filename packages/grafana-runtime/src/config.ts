@@ -19,7 +19,7 @@ interface FeatureToggles {
   newEdit: boolean;
   meta: boolean;
   newVariables: boolean;
-  tracing_integration: boolean;
+  tracingIntegration: boolean;
 }
 
 interface LicenseInfo {
@@ -72,7 +72,7 @@ export class GrafanaBootConfig {
     newEdit: false,
     meta: false,
     newVariables: false,
-    tracing_integration: false,
+    tracingIntegration: false,
   };
   licenseInfo: LicenseInfo = {} as LicenseInfo;
   phantomJSRenderer = false;

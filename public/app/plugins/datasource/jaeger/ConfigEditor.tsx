@@ -4,9 +4,7 @@ import { DataSourceHttpSettings } from '@grafana/ui';
 
 export type Props = DataSourcePluginOptionsEditorProps;
 
-export const ConfigEditor = (props: Props) => {
-  const { options, onOptionsChange } = props;
-
+export const ConfigEditor: React.FC<Props> = ({ options, onOptionsChange }) => {
   return (
     <>
       <DataSourceHttpSettings

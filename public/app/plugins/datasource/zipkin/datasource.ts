@@ -13,10 +13,8 @@ export type ZipkinQuery = {
 } & DataQuery;
 
 export class ZipkinDatasource extends DataSourceApi<ZipkinQuery> {
-  /** @ngInject */
   constructor(instanceSettings: DataSourceInstanceSettings) {
     super(instanceSettings);
-    console.log(instanceSettings);
   }
 
   query(options: DataQueryRequest<ZipkinQuery>): Observable<DataQueryResponse> {
