@@ -1,14 +1,10 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { cloneDeep } from 'lodash';
-import {
-  containsSearchFilter,
-  VariableOption,
-  VariableTag,
-  VariableWithMultiSupport,
-} from '../../../templating/variable';
+import { VariableOption, VariableTag, VariableWithMultiSupport } from '../../../templating/types';
 import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE } from '../../state/types';
 import { isQuery } from '../../guard';
 import { applyStateChanges } from '../../../../core/utils/applyStateChanges';
+import { containsSearchFilter } from '../../../templating/utils';
 
 export interface ToggleOption {
   option: VariableOption;

@@ -197,6 +197,7 @@ export function setupAngularRoutes($routeProvider: route.IRouteProvider, $locati
     .when('/explore', {
       template: '<react-container />',
       reloadOnSearch: false,
+      pageClass: 'page-explore',
       resolve: {
         roles: () => (config.viewersCanEdit ? [] : ['Editor', 'Admin']),
         component: () => SafeDynamicImport(import(/* webpackChunkName: "explore" */ 'app/features/explore/Wrapper')),
