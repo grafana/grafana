@@ -6,8 +6,6 @@ import './editor_ctrl';
 import coreModule from 'app/core/core_module';
 // Utils & Services
 import { dedupAnnotations } from './events_processing';
-import _ from 'lodash';
-
 // Types
 import { DashboardModel } from '../dashboard/state/DashboardModel';
 import {
@@ -20,7 +18,7 @@ import {
   TimeRange,
 } from '@grafana/data';
 import { getBackendSrv, getDataSourceSrv } from '@grafana/runtime';
-import { TemplateSrv } from '../templating/template_srv';
+import templateSrv from '../templating/template_srv';
 import { appEvents } from 'app/core/core';
 import { getTimeSrv } from '../dashboard/services/TimeSrv';
 
@@ -28,9 +26,6 @@ export class AnnotationsSrv {
   globalAnnotationsPromise: any;
   alertStatesPromise: any;
   datasourcePromises: any;
-
-  /** @ngInject */
-  constructor(private templateSrv: TemplateSrv) {}
 
   init(dashboard: DashboardModel) {
     // always clearPromiseCaches when loading new dashboard
@@ -95,12 +90,10 @@ export class AnnotationsSrv {
     matchAny: boolean,
     scopedVars: ScopedVars | undefined
   ) {
-    if (!_.isArray(filterTags) || filterTags.length === 0) {
+    if (!Array.isArray(filterTags) || filterTags.length === 0) {
       return true;
     }
-    const tagRegexps = filterTags.map(
-      t => new RegExp('^' + this.templateSrv.replace(t, scopedVars || {}, 'regex') + '$')
-    );
+    const tagRegexps = filterTags.map(t => new RegExp('^' + templateSrv.replace(t, scopedVars || {}, 'regex') + '$'));
     const match = (regexp: RegExp) => annotation.tags && annotation.tags.some(t => regexp.test(t));
     return matchAny ? tagRegexps.some(match) : tagRegexps.every(match);
   }

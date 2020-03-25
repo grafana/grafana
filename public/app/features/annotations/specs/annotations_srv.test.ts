@@ -1,6 +1,14 @@
 import { AnnotationsSrv } from '../annotations_srv';
-import { AnnotationEvent, dateTime, DataQueryResponse, AnnotationQueryRequest, ScopedVars } from '@grafana/data';
+import { AnnotationEvent, dateTime, DataQueryResponse, AnnotationQueryRequest } from '@grafana/data';
 import { DatasourceSrvMock, MockDataSourceApi } from 'test/mocks/datasource_srv';
+import templateSrv from '../../templating/template_srv';
+import { CustomVariable } from 'app/features/templating/custom_variable';
+
+jest.mock('app/core/config', () => {
+  return {
+    getConfig: () => ({ featureToggles: {} }),
+  };
+});
 
 jest.mock('app/features/dashboard/services/TimeSrv', () => ({
   __esModule: true,
@@ -47,18 +55,18 @@ jest.mock('app/core/core', () => ({
 }));
 
 describe('AnnotationsSrv', function(this: any) {
-  const ctx: { templateSrv: any } = {
-    templateSrv: {
-      updateIndex: () => {},
-      replace: (val: string, scopedVars?: ScopedVars) => {
-        let res = val.replace('$var', '(3|4)');
-        Object.entries(scopedVars || {}).forEach(([scopedVar, scopedValue]) => {
-          res = res.replace('$' + scopedVar, scopedValue ? scopedValue.value : '');
-        });
-        return res;
-      },
-    },
-  };
+  beforeEach(() => {
+    templateSrv.init([
+      new CustomVariable(
+        {
+          name: 'var',
+          current: { value: ['3', '4'] },
+          multi: true,
+        },
+        {} as any
+      ),
+    ]);
+  });
 
   describe('When translating the query result', () => {
     const time = 1507039543000;
@@ -76,7 +84,7 @@ describe('AnnotationsSrv', function(this: any) {
     let translatedAnnotations: any;
 
     beforeEach(() => {
-      const annotationsSrv = new AnnotationsSrv(ctx.templateSrv);
+      const annotationsSrv = new AnnotationsSrv();
       translatedAnnotations = annotationsSrv.translateQueryResult(annotationSource, annotations);
     });
 
@@ -108,7 +116,7 @@ describe('AnnotationsSrv', function(this: any) {
         panel: { id: 1, options: {} },
         dashboard: { annotations: { list: [annotationSource] } },
       };
-      annotationsSrv = new AnnotationsSrv(ctx.templateSrv);
+      annotationsSrv = new AnnotationsSrv();
     });
     it('should get annotations with panelId filter', async () => {
       options.dashboard.annotations.list[0].type = 'dashboard';
