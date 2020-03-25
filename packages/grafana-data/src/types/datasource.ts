@@ -115,6 +115,7 @@ export interface DataSourcePluginMeta<T extends KeyValue = {}> extends PluginMet
   logs?: boolean;
   annotations?: boolean;
   alerting?: boolean;
+  tracing?: boolean;
   mixed?: boolean;
   hasQueryHelp?: boolean;
   category?: string;
@@ -316,6 +317,7 @@ export enum DataSourceStatus {
 export enum ExploreMode {
   Logs = 'Logs',
   Metrics = 'Metrics',
+  Tracing = 'Tracing',
 }
 
 export interface ExploreQueryFieldProps<

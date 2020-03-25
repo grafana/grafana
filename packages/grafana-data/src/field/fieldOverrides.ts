@@ -204,8 +204,8 @@ function setDynamicConfigValue(config: FieldConfig, value: DynamicConfigValue, c
   const remove = val === undefined || val === null;
 
   if (remove) {
-    if (value.custom) {
-      delete (config?.custom as any)[value.prop];
+    if (value.custom && config.custom) {
+      delete config.custom[value.prop];
     } else {
       delete (config as any)[value.prop];
     }
