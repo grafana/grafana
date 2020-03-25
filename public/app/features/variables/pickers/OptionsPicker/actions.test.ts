@@ -2,7 +2,7 @@ import { reduxTester } from '../../../../../test/core/redux/reduxTester';
 import { getTemplatingRootReducer } from '../../state/helpers';
 import { initDashboardTemplating } from '../../state/actions';
 import { TemplatingState } from '../../state/reducers';
-import { QueryVariableModel, VariableHide, VariableRefresh, VariableSort } from '../../../templating/variable';
+import { QueryVariableModel, VariableHide, VariableRefresh, VariableSort } from '../../../templating/types';
 import {
   hideOptions,
   showOptions,
