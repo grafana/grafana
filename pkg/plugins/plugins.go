@@ -216,7 +216,7 @@ func (scanner *PluginScanner) walker(currentPath string, f os.FileInfo, err erro
 		return nil
 	}
 
-	if !scanner.cfg.FeatureToggles["tracing_integration"] {
+	if !scanner.cfg.FeatureToggles["tracingIntegration"] {
 		// Do not load tracing datasources if
 		prefix := path.Join(setting.StaticRootPath, "app/plugins/datasource")
 		if strings.Contains(currentPath, path.Join(prefix, "jaeger")) || strings.Contains(currentPath, path.Join(prefix, "zipkin")) {
