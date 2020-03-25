@@ -87,7 +87,7 @@ export const getButtonStyles = stylesFactory(({ theme, size, variant }: StylePro
         align-items: center;
         font-weight: ${theme.typography.weight.semibold};
         font-family: ${theme.typography.fontFamily.sansSerif};
-        line-height: ${theme.typography.lineHeight.sm};
+        line-height: ${theme.typography.lineHeight.md};
         font-size: ${fontSize};
         padding: ${padding};
         height: ${height};
