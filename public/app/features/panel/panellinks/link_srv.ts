@@ -1,5 +1,5 @@
 import _ from 'lodash';
-import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
+import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import templateSrv, { TemplateSrv } from 'app/features/templating/template_srv';
 import coreModule from 'app/core/core_module';
 import { appendQueryToUrl, toUrlParams } from 'app/core/utils/url';
@@ -8,16 +8,16 @@ import { getConfig } from 'app/core/config';
 import locationUtil from 'app/core/utils/location_util';
 import { DataLinkBuiltInVars } from '@grafana/ui';
 import {
-  DataLink,
-  KeyValue,
-  deprecationWarning,
-  LinkModel,
   DataFrame,
-  ScopedVars,
-  FieldType,
+  DataLink,
+  deprecationWarning,
   Field,
-  VariableSuggestion,
+  FieldType,
+  KeyValue,
+  LinkModel,
+  ScopedVars,
   VariableOrigin,
+  VariableSuggestion,
   VariableSuggestionsScope,
 } from '@grafana/data';
 
@@ -235,22 +235,26 @@ export interface LinkService {
   getDataLinkUIModel: <T>(link: DataLink, scopedVars: ScopedVars, origin: T) => LinkModel<T>;
 }
 
+export interface LinkServiceDependencies {
+  templateSrv: TemplateSrv;
+  getTimeSrv: () => TimeSrv;
+}
+
 export class LinkSrv implements LinkService {
-  /** @ngInject */
-  constructor(private templateSrv: TemplateSrv, private timeSrv: TimeSrv) {}
+  constructor(private dependencies: LinkServiceDependencies = { templateSrv: templateSrv, getTimeSrv: getTimeSrv }) {}
 
   getLinkUrl(link: any) {
-    let url = locationUtil.assureBaseUrl(this.templateSrv.replace(link.url || ''));
+    let url = locationUtil.assureBaseUrl(this.dependencies.templateSrv.replace(link.url || ''));
     const params: { [key: string]: any } = {};
 
     if (link.keepTime) {
-      const range = this.timeSrv.timeRangeForUrl();
+      const range = this.dependencies.getTimeSrv().timeRangeForUrl();
       params['from'] = range.from;
       params['to'] = range.to;
     }
 
     if (link.includeVars) {
-      this.templateSrv.fillVariableValuesForUrl(params);
+      this.dependencies.templateSrv.fillVariableValuesForUrl(params);
     }
 
     url = appendQueryToUrl(url, toUrlParams(params));
@@ -260,7 +264,7 @@ export class LinkSrv implements LinkService {
   getAnchorInfo(link: any) {
     const info: any = {};
     info.href = this.getLinkUrl(link);
-    info.title = this.templateSrv.replace(link.title || '');
+    info.title = this.dependencies.templateSrv.replace(link.title || '');
     return info;
   }
 
@@ -269,7 +273,7 @@ export class LinkSrv implements LinkService {
    */
   getDataLinkUIModel = <T>(link: DataLink, scopedVars: ScopedVars, origin: T): LinkModel<T> => {
     const params: KeyValue = {};
-    const timeRangeUrl = toUrlParams(this.timeSrv.timeRangeForUrl());
+    const timeRangeUrl = toUrlParams(this.dependencies.getTimeSrv().timeRangeForUrl());
 
     let href = link.url;
 
@@ -294,17 +298,17 @@ export class LinkSrv implements LinkService {
 
     const info: LinkModel<T> = {
       href: locationUtil.assureBaseUrl(href.replace(/\n/g, '')),
-      title: this.templateSrv.replace(link.title || '', scopedVars),
+      title: this.dependencies.templateSrv.replace(link.title || '', scopedVars),
       target: link.targetBlank ? '_blank' : '_self',
       origin,
       onClick,
     };
 
-    this.templateSrv.fillVariableValuesForUrl(params, scopedVars);
+    this.dependencies.templateSrv.fillVariableValuesForUrl(params, scopedVars);
 
     const variablesQuery = toUrlParams(params);
 
-    info.href = this.templateSrv.replace(info.href, {
+    info.href = this.dependencies.templateSrv.replace(info.href, {
       ...scopedVars,
       [DataLinkBuiltInVars.keepTime]: {
         text: timeRangeUrl,

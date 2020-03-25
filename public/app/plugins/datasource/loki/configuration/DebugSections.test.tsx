@@ -19,7 +19,7 @@ describe('DebugSection', () => {
         return { from, to, raw: { from, to } };
       },
     } as any;
-    const linkService = new LinkSrv(new TemplateSrv(), timeSrvMock);
+    const linkService = new LinkSrv({ templateSrv: new TemplateSrv(), getTimeSrv: () => timeSrvMock });
     originalLinkSrv = getLinkSrv();
     setLinkSrv(linkService);
   });
