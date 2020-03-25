@@ -32,12 +32,17 @@ export const e2eScenario = ({
       });
 
       afterEach(() => {
-        if (e2e.context().get('lastAddedDataSource')) {
-          e2e.flows.deleteDataSource(e2e.context().get('lastAddedDataSource'));
-        }
-        if (e2e.context().get('lastAddedDashboardUid')) {
-          e2e.flows.deleteDashboard(e2e.context().get('lastAddedDashboardUid'));
-        }
+        e2e.context().get('lastAddedDataSource').then(lastAddedDataSource => {
+          if (lastAddedDataSource) {
+            e2e.flows.deleteDataSource(lastAddedDataSource);
+          }
+        });
+
+        e2e.context().get('lastAddedDashboardUid').then(lastAddedDashboardUid => {
+          if (lastAddedDashboardUid) {
+            e2e.flows.deleteDashboard(lastAddedDashboardUid);
+          }
+        });
       });
 
       it(itName, () => scenario());

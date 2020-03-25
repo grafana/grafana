@@ -1,3 +1,5 @@
+import { e2e } from '../index';
+
 export interface ScenarioContext {
   lastAddedDashboard: string;
   lastAddedDashboardUid: string;
@@ -5,25 +7,27 @@ export interface ScenarioContext {
   [key: string]: any;
 }
 
-const scenarioContexts: ScenarioContext = {
+const store: ScenarioContext = {
   lastAddedDashboard: '',
   lastAddedDashboardUid: '',
   lastAddedDataSource: '',
 };
 
-export interface ScenarioContextApi {
-  get: <T>(name: string | keyof ScenarioContext) => T;
-  set: <T>(name: string | keyof ScenarioContext, value: T) => void;
-}
+const getScenarioContext = <T>(key: string | keyof ScenarioContext): Cypress.Chainable => e2e()
+  .wrap({
+    getScenarioContext: (): T => store[key] as T,
+  })
+  .invoke('getScenarioContext');
 
-export const scenarioContext = (): ScenarioContextApi => {
-  const get = <T>(name: string | keyof ScenarioContext): T => scenarioContexts[name] as T;
-  const set = <T>(name: string | keyof ScenarioContext, value: T): void => {
-    scenarioContexts[name] = value;
-  };
+const setScenarioContext = <T>(key: string | keyof ScenarioContext, value: T): Cypress.Chainable => e2e()
+  .wrap({
+    setScenarioContext: () => {
+      store[key] = value;
+    },
+  })
+  .invoke('setScenarioContext');
 
-  return {
-    get,
-    set,
-  };
-};
+export const scenarioContext = () => ({
+  get: getScenarioContext,
+  set: setScenarioContext,
+});

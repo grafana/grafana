@@ -7,7 +7,9 @@ e2e.scenario({
   addScenarioDashBoard: true,
   skipScenario: false,
   scenario: () => {
-    e2e.flows.openDashboard(e2e.context().get('lastAddedDashboardUid'));
+    e2e.getScenarioContext('lastAddedDashboardUid').then(lastAddedDashboardUid => {
+      e2e.flows.openDashboard(lastAddedDashboardUid);
+    });
     e2e.pages.Dashboard.Toolbar.toolbarItems('Add panel').click();
     e2e.pages.AddDashboard.ctaButtons('Add Query').click();
 

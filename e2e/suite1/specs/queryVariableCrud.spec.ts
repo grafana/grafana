@@ -190,13 +190,15 @@ const assertAdding3dependantQueryVariablesScenario = (queryVariables: QueryVaria
   for (let queryVariableIndex = 0; queryVariableIndex < queryVariables.length; queryVariableIndex++) {
     const { name, label, query, options, selectedOption } = queryVariables[queryVariableIndex];
     const asserts = queryVariables.slice(0, queryVariableIndex + 1);
-    createQueryVariable({
-      dataSourceName: e2e.context().get('lastAddedDataSource'),
-      name,
-      label,
-      query,
-      options,
-      selectedOption,
+    e2e.getScenarioContext('lastAddedDataSource').then(lastAddedDataSource => {
+      createQueryVariable({
+        dataSourceName: lastAddedDataSource,
+        name,
+        label,
+        query,
+        options,
+        selectedOption,
+      });
     });
 
     assertVariableTable(asserts);
@@ -565,7 +567,9 @@ e2e.scenario({
   addScenarioDashBoard: true,
   skipScenario: false,
   scenario: () => {
-    e2e.flows.openDashboard(e2e.context().get('lastAddedDashboardUid'));
+    e2e.getScenarioContext('lastAddedDashboardUid').then(lastAddedDashboardUid => {
+      e2e.flows.openDashboard(lastAddedDashboardUid);
+    });
     e2e.pages.Dashboard.Toolbar.toolbarItems('Dashboard settings').click();
     e2e.pages.Dashboard.Settings.General.sectionItems('Variables').click();
     e2e.pages.Dashboard.Settings.Variables.List.addVariableCTA().click();
