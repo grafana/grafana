@@ -5,8 +5,8 @@ import {
   PanelOptionsEditorConfig,
   PanelOptionsEditorItem,
   FieldConfigEditorConfig,
-} from '../../types';
-import { OptionsUIRegistryBuilder } from '../../types/optionsUi';
+} from '../types';
+import { OptionsUIRegistryBuilder } from '../types/OptionsUIRegistryBuilder';
 import {
   numberOverrideProcessor,
   selectOverrideProcessor,
@@ -17,7 +17,11 @@ import {
   StandardEditorProps,
   StringFieldConfigSettings,
   NumberFieldConfigSettings,
-} from '../../field';
+  ColorFieldConfigSettings,
+  identityOverrideProcessor,
+  UnitFieldConfigSettings,
+  unitOverrideProcessor,
+} from '../field';
 
 /**
  * Fluent API for declarative creation of field config option editors
@@ -82,6 +86,28 @@ export class FieldConfigEditorBuilder extends OptionsUIRegistryBuilder<
       settings: config.settings || {},
     });
   }
+
+  addColorPicker<TSettings = any>(config: FieldConfigEditorConfig<TSettings & ColorFieldConfigSettings>) {
+    return this.addCustomEditor({
+      ...config,
+      editor: standardEditorsRegistry.get('color').editor as any,
+      override: standardEditorsRegistry.get('color').editor as any,
+      process: identityOverrideProcessor,
+      shouldApply: config.shouldApply ? config.shouldApply : () => true,
+      settings: config.settings || {},
+    });
+  }
+
+  addUnitPicker<TSettings = any>(config: FieldConfigEditorConfig<TSettings & UnitFieldConfigSettings>) {
+    return this.addCustomEditor({
+      ...config,
+      editor: standardEditorsRegistry.get('unit').editor as any,
+      override: standardEditorsRegistry.get('unit').editor as any,
+      process: unitOverrideProcessor,
+      shouldApply: config.shouldApply ? config.shouldApply : () => true,
+      settings: config.settings || {},
+    });
+  }
 }
 
 /**
@@ -120,6 +146,21 @@ export class PanelOptionsEditorBuilder extends OptionsUIRegistryBuilder<Standard
     return this.addCustomEditor({
       ...config,
       editor: standardEditorsRegistry.get('boolean').editor as any,
+    });
+  }
+
+  addColorPicker<TSettings = any>(config: PanelOptionsEditorConfig<TSettings & ColorFieldConfigSettings>): this {
+    return this.addCustomEditor({
+      ...config,
+      editor: standardEditorsRegistry.get('color').editor as any,
+      settings: config.settings || {},
+    });
+  }
+
+  addUnitPicker<TSettings = any>(config: PanelOptionsEditorConfig<TSettings & UnitFieldConfigSettings>): this {
+    return this.addCustomEditor({
+      ...config,
+      editor: standardEditorsRegistry.get('unit').editor as any,
     });
   }
 }

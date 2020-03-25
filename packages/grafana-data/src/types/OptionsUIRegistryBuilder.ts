@@ -44,10 +44,6 @@ export interface OptionsUIRegistryBuilderAPI<TEditorProps, T extends OptionsEdit
 
   addColorPicker?<TSettings = any>(config: OptionEditorConfig<TSettings, TEditorProps>): this;
 
-  addThresholdsEditor?<TSettings = any>(config: OptionEditorConfig<TSettings, TEditorProps>): this;
-
-  addValueMappingsEditor?<TSettings = any>(config: OptionEditorConfig<TSettings, TEditorProps>): this;
-
   /**
    * Enables custom editor definition
    * @param config

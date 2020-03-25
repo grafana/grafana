@@ -4,6 +4,7 @@ import {
   dataLinksOverrideProcessor,
   FieldPropertyEditorItem,
   FieldType,
+  identityOverrideProcessor,
   NumberFieldConfigSettings,
   numberOverrideProcessor,
   standardEditorsRegistry,
@@ -22,6 +23,7 @@ import { ValueMappingsValueEditor } from '../components/OptionsUI/mappings';
 import { ThresholdsValueEditor } from '../components/OptionsUI/thresholds';
 import { UnitValueEditor } from '../components/OptionsUI/units';
 import { DataLinksValueEditor } from '../components/OptionsUI/links';
+import { ColorValueEditor } from '../components/OptionsUI/color';
 
 /**
  * Returns collection of common field config properties definitions
@@ -158,8 +160,8 @@ export const getStandardFieldConfigs = () => {
     id: 'links',
     name: 'DataLinks',
     description: 'Manage date links',
-    editor: DataLinksValueEditor,
-    override: DataLinksValueEditor,
+    editor: standardEditorsRegistry.get('links').editor as any,
+    override: standardEditorsRegistry.get('links').editor as any,
     process: dataLinksOverrideProcessor,
     settings: {
       placeholder: '-',
@@ -167,7 +169,20 @@ export const getStandardFieldConfigs = () => {
     shouldApply: () => true,
   };
 
-  return [unit, min, max, decimals, title, noValue, thresholds, mappings, links];
+  const color: FieldPropertyEditorItem<string, StringFieldConfigSettings> = {
+    id: 'color',
+    name: 'Color',
+    description: 'Customise color',
+    editor: standardEditorsRegistry.get('color').editor as any,
+    override: standardEditorsRegistry.get('color').editor as any,
+    process: identityOverrideProcessor,
+    settings: {
+      placeholder: '-',
+    },
+    shouldApply: () => true,
+  };
+
+  return [unit, min, max, decimals, title, noValue, thresholds, mappings, links, color];
 };
 
 /**
@@ -236,5 +251,19 @@ export const getStandardOptionEditors = () => {
     editor: ValueMappingsValueEditor as any,
   };
 
-  return [text, number, boolean, radio, select, unit, mappings, thresholds];
+  const color: StandardEditorsRegistryItem<string> = {
+    id: 'color',
+    name: 'Color',
+    description: 'Allows color selection',
+    editor: ColorValueEditor as any,
+  };
+
+  const links: StandardEditorsRegistryItem<DataLink[]> = {
+    id: 'links',
+    name: 'Links',
+    description: 'Allows defining data links',
+    editor: DataLinksValueEditor as any,
+  };
+
+  return [text, number, boolean, radio, select, unit, mappings, thresholds, links, color];
 };

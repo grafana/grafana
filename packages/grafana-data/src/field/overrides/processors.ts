@@ -1,5 +1,9 @@
 import { DataLink, FieldOverrideContext, SelectableValue, ThresholdsConfig, ValueMapping } from '../../types';
 
+export const identityOverrideProcessor = <T>(value: T, _context: FieldOverrideContext, _settings: any) => {
+  return value;
+};
+
 export interface NumberFieldConfigSettings {
   placeholder?: string;
   integer?: boolean;
@@ -81,9 +85,15 @@ export const thresholdsOverrideProcessor = (
   return value as ThresholdsConfig; // !!!! likely not !!!!
 };
 
-export interface UnitFieldConfigSettings {
-  // ??
-}
+export interface UnitFieldConfigSettings {}
+
+export const unitOverrideProcessor = (
+  value: boolean,
+  _context: FieldOverrideContext,
+  _settings: UnitFieldConfigSettings
+) => {
+  return value;
+};
 
 export const booleanOverrideProcessor = (
   value: boolean,
@@ -92,3 +102,7 @@ export const booleanOverrideProcessor = (
 ) => {
   return value; // !!!! likely not !!!!
 };
+
+export interface ColorFieldConfigSettings {
+  enableNamedColors?: boolean;
+}

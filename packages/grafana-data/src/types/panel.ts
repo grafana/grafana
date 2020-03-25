@@ -7,7 +7,7 @@ import { DataFrame } from './dataFrame';
 import { AbsoluteTimeRange, TimeRange, TimeZone } from './time';
 import { FieldConfigEditorRegistry, FieldConfigSource } from './fieldOverrides';
 import { Registry, RegistryItem } from '../utils';
-import { PanelOptionsEditorBuilder, FieldConfigEditorBuilder } from '../utils/optionsUi/OptionsUIBuilders';
+import { PanelOptionsEditorBuilder, FieldConfigEditorBuilder } from '../utils/OptionsUIBuilders';
 import { StandardEditorProps } from '../field';
 
 export type InterpolateFunction = (value: string, scopedVars?: ScopedVars, format?: string | Function) => string;
