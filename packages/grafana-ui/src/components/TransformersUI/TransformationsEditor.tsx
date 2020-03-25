@@ -3,7 +3,7 @@ import { Select } from '../Select/Select';
 import { transformersUIRegistry } from './transformers';
 import React from 'react';
 import { TransformationRow } from './TransformationRow';
-import { Button } from '../Button/Button';
+import { Button } from '../Forms/Legacy/Button/Button';
 import { css } from 'emotion';
 
 interface TransformationsEditorState {

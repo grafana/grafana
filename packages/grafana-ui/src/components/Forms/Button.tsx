@@ -2,10 +2,12 @@ import React, { AnchorHTMLAttributes, ButtonHTMLAttributes, useContext } from 'r
 import { css, cx } from 'emotion';
 import tinycolor from 'tinycolor2';
 import { selectThemeVariant, stylesFactory, ThemeContext } from '../../themes';
-import { Button as DefaultButton, LinkButton as DefaultLinkButton } from '../Button/Button';
+import { Button as DefaultButton, LinkButton as DefaultLinkButton } from './Legacy/Button/Button';
 import { getFocusStyle, getPropertiesForButtonSize } from './commonStyles';
-import { ButtonSize, StyleDeps } from '../Button/types';
+import { StyleDeps } from './Legacy/Button/types';
 import { GrafanaTheme } from '@grafana/data';
+
+export type ButtonSize = 'xs' | 'sm' | 'md' | 'lg';
 
 const buttonVariantStyles = (from: string, to: string, textColor: string) => css`
   background: linear-gradient(180deg, ${from} 0%, ${to} 100%);

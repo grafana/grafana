@@ -2,7 +2,7 @@ import React, { PureComponent } from 'react';
 import { css } from 'emotion';
 import uniqueId from 'lodash/uniqueId';
 import { DataSourceSettings } from '@grafana/data';
-import { Button } from '../Button/Button';
+import { Button } from '../Forms/Legacy/Button/Button';
 import { FormField } from '../FormField/FormField';
 import { SecretFormField } from '../SecretFormFied/SecretFormField';
 import { stylesFactory } from '../../themes';

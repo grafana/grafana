@@ -3,7 +3,7 @@ import { select, text } from '@storybook/addon-knobs';
 import { Button, ButtonVariant } from './Button';
 import { withCenteredStory, withHorizontallyCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { getIconKnob } from '../../utils/storybook/knobs';
-import { ButtonSize } from '../Button/types';
+import { ButtonSize } from './Legacy/Button/types';
 import mdx from './Button.mdx';
 
 export default {

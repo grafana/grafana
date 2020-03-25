@@ -3,9 +3,9 @@ import { Button, LinkButton } from './Button';
 // @ts-ignore
 import withPropsCombinations from 'react-storybook-addon-props-combinations';
 import { action } from '@storybook/addon-actions';
-import { ThemeableCombinationsRowRenderer } from '../../utils/storybook/CombinationsRowRenderer';
+import { ThemeableCombinationsRowRenderer } from '../../../../utils/storybook/CombinationsRowRenderer';
 import { boolean } from '@storybook/addon-knobs';
-import { getIconKnob } from '../../utils/storybook/knobs';
+import { getIconKnob } from '../../../../utils/storybook/knobs';
 
 const ButtonStories = storiesOf('General/Button', module);
 

@@ -1,6 +1,6 @@
 import { css } from 'emotion';
 import { GrafanaTheme } from '@grafana/data';
-import { ButtonSize } from '../Button/types';
+import { ButtonSize } from './Button';
 
 export const getFocusCss = (theme: GrafanaTheme) => `
   outline: 2px dotted transparent;

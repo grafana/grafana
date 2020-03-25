@@ -4,7 +4,7 @@ import { getLabelStyles } from './Label';
 import { getLegendStyles } from './Legend';
 import { getFieldValidationMessageStyles } from './FieldValidationMessage';
 import { getButtonStyles, ButtonVariant } from './Button';
-import { ButtonSize } from '../Button/types';
+import { ButtonSize } from './Button';
 import { getInputStyles } from './Input/Input';
 import { getSwitchStyles } from './Switch';
 import { getCheckboxStyles } from './Checkbox';

@@ -1,5 +1,5 @@
 import React, { AnchorHTMLAttributes, ButtonHTMLAttributes, useContext } from 'react';
-import { ThemeContext } from '../../themes';
+import { ThemeContext } from '../../../../themes';
 import { getButtonStyles } from './styles';
 import { ButtonContent } from './ButtonContent';
 import { ButtonSize, ButtonStyles, ButtonVariant } from './types';

@@ -1,6 +1,6 @@
 import tinycolor from 'tinycolor2';
 import { css } from 'emotion';
-import { selectThemeVariant, stylesFactory } from '../../themes';
+import { selectThemeVariant, stylesFactory } from '../../../../themes';
 import { StyleDeps, ButtonSize } from './types';
 import { GrafanaTheme } from '@grafana/data';
 

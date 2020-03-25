@@ -1,6 +1,6 @@
 import React from 'react';
 import { css } from 'emotion';
-import { stylesFactory, useTheme } from '../../themes';
+import { stylesFactory, useTheme } from '../../../../themes';
 import { GrafanaTheme } from '@grafana/data';
 import { ButtonSize } from './types';
 

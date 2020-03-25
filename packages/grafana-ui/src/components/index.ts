@@ -98,8 +98,8 @@ export { LogLabels } from './Logs/LogLabels';
 export { LogRows } from './Logs/LogRows';
 export { getLogRowStyles } from './Logs/getLogRowStyles';
 export { ToggleButtonGroup, ToggleButton } from './ToggleButtonGroup/ToggleButtonGroup';
-// Panel editors
-export { FullWidthButtonContainer } from './Button/FullWidthButtonContainer';
+// Panel editors./Forms/Legacy/Button/FullWidthButtonContainer
+export { FullWidthButtonContainer } from './Forms/Legacy/Button/FullWidthButtonContainer';
 export { ThresholdsEditor } from './ThresholdsEditor/ThresholdsEditor';
 export { ClickOutsideWrapper } from './ClickOutsideWrapper/ClickOutsideWrapper';
 export * from './SingleStatShared/index';
@@ -159,7 +159,7 @@ export { HorizontalGroup, VerticalGroup, Container } from './Layout/Layout';
 
 // Legacy Forms
 
-import * as LegacyButton from './Button/Button';
+import * as LegacyButton from './Forms/Legacy/Button/Button';
 const LegacyForms = {
   LegacyButton,
 };

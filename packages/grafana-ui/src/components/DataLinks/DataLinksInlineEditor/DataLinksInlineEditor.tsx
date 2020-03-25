@@ -4,7 +4,7 @@ import { css } from 'emotion';
 import { Button } from '../../Forms/Button';
 import cloneDeep from 'lodash/cloneDeep';
 import { Modal } from '../../Modal/Modal';
-import { FullWidthButtonContainer } from '../../Button/FullWidthButtonContainer';
+import { FullWidthButtonContainer } from '../../Forms/Legacy/Button/FullWidthButtonContainer';
 import { selectThemeVariant, stylesFactory, useTheme } from '../../../themes';
 import { DataLinksListItem } from './DataLinksListItem';
 import { DataLinkEditorModalContent } from './DataLinkEditorModalContent';
