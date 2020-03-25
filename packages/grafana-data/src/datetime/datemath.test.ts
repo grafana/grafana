@@ -1,7 +1,7 @@
 import sinon, { SinonFakeTimers } from 'sinon';
 import each from 'lodash/each';
 
-import { dateMath } from './datemath';
+import * as dateMath from './datemath';
 import { dateTime, DurationUnit, DateTime } from './moment_wrapper';
 
 describe('DateMath', () => {
