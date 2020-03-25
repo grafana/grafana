@@ -7,7 +7,7 @@ import {
   toDataFrame,
   toLegacyResponseData,
 } from './processDataFrame';
-import { DataFrameDTO, FieldType, TableData, TimeSeries } from '../types/index';
+import { DataFrameDTO, FieldType, QueryResultMeta, TableData, TimeSeries } from '../types/index';
 import { dateTime } from '../datetime/moment_wrapper';
 import { MutableDataFrame } from './MutableDataFrame';
 
@@ -227,9 +227,9 @@ describe('SerisData backwards compatibility', () => {
   it('can convert DataFrame to TableData to series and back again', () => {
     const json: DataFrameDTO = {
       refId: 'Z',
-      meta: {
-        somethign: 8,
-      },
+      meta: ({
+        something: 8,
+      } as unknown) as QueryResultMeta,
       fields: [
         { name: 'T', type: FieldType.time, values: [1, 2, 3] },
         { name: 'N', type: FieldType.number, config: { filterable: true }, values: [100, 200, 300] },
