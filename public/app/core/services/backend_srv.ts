@@ -447,7 +447,7 @@ export class BackendSrv implements BackendService {
           url,
           type,
           redirected,
-          request: { url, ...init },
+          config: options,
         };
         return fetchResponse;
       }),
@@ -555,7 +555,7 @@ export class BackendSrv implements BackendService {
             data: [],
             status: this.HTTP_REQUEST_CANCELED,
             statusText: 'Request was aborted',
-            request: { url: parseUrlFromOptions(options), ...parseInitFromOptions(options) },
+            config: options,
           });
         }
 
