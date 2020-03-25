@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/util/errutil"
 	"github.com/jmespath/go-jmespath"
 )
 
@@ -78,15 +79,15 @@ func (s *SocialBase) searchJSONForAttr(attributePath string, data []byte) (strin
 	}
 	var buf interface{}
 	if err := json.Unmarshal(data, &buf); err != nil {
-		return "", fmt.Errorf("failed to unmarshal user info JSON response: %s", err.Error())
+		return "", errutil.Wrap("failed to unmarshal user info JSON response", err)
 	}
 	val, err := jmespath.Search(attributePath, buf)
 	if err != nil {
-		return "", fmt.Errorf("failed to search user info JSON response with provided path (%s): %s", attributePath, err.Error())
+		return "", errutil.Wrapf(err, "failed to search user info JSON response with provided path: %q", attributePath)
 	}
 	strVal, ok := val.(string)
 	if ok {
 		return strVal, nil
 	}
-	return "", fmt.Errorf("attribute not found when searching JSON with provided path: %s", attributePath)
+	return "", errutil.Wrapf(err, "attribute not found when searching JSON with provided path: %q", attributePath)
 }

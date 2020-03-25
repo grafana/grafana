@@ -130,7 +130,12 @@ func (s *SocialGenericOAuth) fillUserInfo(userInfo *BasicUserInfo, data *UserInf
 		userInfo.Email = s.extractEmail(data)
 	}
 	if userInfo.Role == "" {
-		userInfo.Role = s.extractRole(data)
+		role, err := s.extractRole(data)
+		if err != nil {
+			s.log.Error("Failed to extract role", "error", err)
+		} else {
+			userInfo.Role = role
+		}
 	}
 	if userInfo.Name == "" {
 		userInfo.Name = s.extractName(data)
@@ -220,17 +225,16 @@ func (s *SocialGenericOAuth) extractEmail(data *UserInfoJson) string {
 	return ""
 }
 
-func (s *SocialGenericOAuth) extractRole(data *UserInfoJson) string {
+func (s *SocialGenericOAuth) extractRole(data *UserInfoJson) (string, error) {
 	if s.roleAttributePath == "" {
-		return ""
+		return "", nil
 	}
 
 	role, err := s.searchJSONForAttr(s.roleAttributePath, data.rawJSON)
 	if err != nil {
-		s.log.Error("Failed to extract role", "error", err)
-		return ""
+		return "", err
 	}
-	return role
+	return role, nil
 }
 
 func (s *SocialGenericOAuth) extractLogin(data *UserInfoJson) string {

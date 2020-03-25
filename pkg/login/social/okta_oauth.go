@@ -53,7 +53,7 @@ func (s *SocialOkta) Type() int {
 func (s *SocialOkta) UserInfo(client *http.Client, token *oauth2.Token) (*BasicUserInfo, error) {
 	idToken := token.Extra("id_token")
 	if idToken == nil {
-		return nil, fmt.Errorf("No id_token found")
+		return nil, fmt.Errorf("no id_token found")
 	}
 
 	parsedToken, err := jwt.ParseSigned(idToken.(string))
@@ -74,10 +74,13 @@ func (s *SocialOkta) UserInfo(client *http.Client, token *oauth2.Token) (*BasicU
 	var data OktaUserInfoJson
 	err = s.extractAPI(&data, client)
 	if err != nil {
-		s.log.Error("Error extracting user info", "error", err)
+		return nil, err
 	}
 
-	role := s.extractRole(&data)
+	role, err := s.extractRole(&data)
+	if err != nil {
+		s.log.Error("Failed to extract role", "error", err)
+	}
 
 	groups := s.GetGroups(&data)
 	if !s.IsGroupMember(groups) {
@@ -113,17 +116,16 @@ func (s *SocialOkta) extractAPI(data *OktaUserInfoJson, client *http.Client) err
 	return nil
 }
 
-func (s *SocialOkta) extractRole(data *OktaUserInfoJson) string {
+func (s *SocialOkta) extractRole(data *OktaUserInfoJson) (string, error) {
 	if s.roleAttributePath == "" {
-		return ""
+		return "", nil
 	}
 
 	role, err := s.searchJSONForAttr(s.roleAttributePath, data.rawJSON)
 	if err != nil {
-		s.log.Error("Failed to extract role", "error", err)
-		return ""
+		return "", err
 	}
-	return role
+	return role, nil
 }
 
 func (s *SocialOkta) GetGroups(data *OktaUserInfoJson) []string {
