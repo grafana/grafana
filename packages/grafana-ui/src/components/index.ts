@@ -41,6 +41,8 @@ export { TimeOfDayPicker } from './TimePicker/TimeOfDayPicker';
 export { List } from './List/List';
 export { TagsInput } from './TagsInput/TagsInput';
 export { Pagination } from './Pagination/Pagination';
+export { Tag } from './Tags/Tag';
+export { TagList } from './Tags/TagList';
 
 export { ConfirmModal } from './ConfirmModal/ConfirmModal';
 export { QueryField } from './QueryField/QueryField';

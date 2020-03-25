@@ -2,7 +2,7 @@ import { variableAdapters } from '../adapters';
 import { createQueryVariableAdapter } from './adapter';
 import { reduxTester } from '../../../../test/core/redux/reduxTester';
 import { getTemplatingRootReducer } from '../state/helpers';
-import { QueryVariableModel, VariableHide, VariableRefresh, VariableSort } from '../../templating/variable';
+import { QueryVariableModel, VariableHide, VariableRefresh, VariableSort } from '../../templating/types';
 import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE, toVariablePayload } from '../state/types';
 import { changeVariableProp, setCurrentVariableValue } from '../state/sharedReducer';
 import { initDashboardTemplating } from '../state/actions';
@@ -47,7 +47,7 @@ jest.mock('../../plugins/plugin_loader', () => ({
 }));
 
 describe('query actions', () => {
-  variableAdapters.set('query', createQueryVariableAdapter());
+  variableAdapters.setInit(() => [createQueryVariableAdapter()]);
 
   describe('when updateQueryVariableOptions is dispatched for variable with tags and includeAll', () => {
     it('then correct actions are dispatched', async () => {

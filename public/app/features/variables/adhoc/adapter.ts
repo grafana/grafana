@@ -1,5 +1,6 @@
 import cloneDeep from 'lodash/cloneDeep';
-import { AdHocVariableModel } from '../../templating/variable';
+
+import { AdHocVariableModel } from '../../templating/types';
 import { dispatch } from '../../../store/store';
 import { VariableAdapter } from '../adapters';
 import { AdHocPicker } from './picker/AdHocPicker';
@@ -12,8 +13,9 @@ const noop = async () => {};
 
 export const createAdHocVariableAdapter = (): VariableAdapter<AdHocVariableModel> => {
   return {
+    id: 'adhoc',
     description: 'Add key/value filters on the fly',
-    label: 'Ad hoc filters',
+    name: 'Ad hoc filters',
     initialState: initialAdHocVariableModelState,
     reducer: adHocVariableReducer,
     picker: AdHocPicker,

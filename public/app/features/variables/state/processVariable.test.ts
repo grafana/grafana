@@ -9,7 +9,7 @@ import { TemplatingState } from 'app/features/variables/state/reducers';
 import { initDashboardTemplating, processVariable } from './actions';
 import { resolveInitLock, setCurrentVariableValue } from './sharedReducer';
 import { toVariableIdentifier, toVariablePayload } from './types';
-import { VariableRefresh } from '../../templating/variable';
+import { VariableRefresh } from '../../templating/types';
 import { updateVariableOptions } from '../query/reducer';
 import { customBuilder, queryBuilder } from '../shared/testing/builders';
 
@@ -62,14 +62,14 @@ jest.mock('app/features/plugins/datasource_srv', () => ({
   }),
 }));
 
+variableAdapters.setInit(() => [createCustomVariableAdapter(), createQueryVariableAdapter()]);
+
 describe('processVariable', () => {
   // these following processVariable tests will test the following base setup
   // custom doesn't depend on any other variable
   // queryDependsOnCustom depends on custom
   // queryNoDepends doesn't depend on any other variable
   const getAndSetupProcessVariableContext = () => {
-    variableAdapters.set('custom', createCustomVariableAdapter());
-    variableAdapters.set('query', createQueryVariableAdapter());
     const custom = customBuilder()
       .withId('custom')
       .withName('custom')

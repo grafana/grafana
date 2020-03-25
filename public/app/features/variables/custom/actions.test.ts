@@ -3,7 +3,7 @@ import { updateCustomVariableOptions } from './actions';
 import { createCustomVariableAdapter } from './adapter';
 import { reduxTester } from '../../../../test/core/redux/reduxTester';
 import { getTemplatingRootReducer } from '../state/helpers';
-import { CustomVariableModel, VariableHide, VariableOption } from '../../templating/variable';
+import { CustomVariableModel, VariableHide, VariableOption } from '../../templating/types';
 import { toVariablePayload } from '../state/types';
 import { setCurrentVariableValue } from '../state/sharedReducer';
 import { initDashboardTemplating } from '../state/actions';
@@ -11,7 +11,7 @@ import { TemplatingState } from '../state/reducers';
 import { createCustomOptionsFromQuery } from './reducer';
 
 describe('custom actions', () => {
-  variableAdapters.set('custom', createCustomVariableAdapter());
+  variableAdapters.setInit(() => [createCustomVariableAdapter()]);
 
   describe('when updateCustomVariableOptions is dispatched', () => {
     it('then correct actions are dispatched', async () => {

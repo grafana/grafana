@@ -5,7 +5,7 @@ import { FormLabel } from '@grafana/ui';
 import { e2e } from '@grafana/e2e';
 import { variableAdapters } from '../adapters';
 import { NEW_VARIABLE_ID, toVariablePayload, VariableIdentifier } from '../state/types';
-import { VariableHide, VariableModel, VariableType } from '../../templating/variable';
+import { VariableHide, VariableModel, VariableType } from '../../templating/types';
 import { appEvents } from '../../../core/core';
 import { VariableValuesPreview } from './VariableValuesPreview';
 import { changeVariableName, onEditorAdd, onEditorUpdate, variableEditorMount, variableEditorUnMount } from './actions';
@@ -143,9 +143,9 @@ export class VariableEditorEditorUnConnected extends PureComponent<Props> {
                     onChange={this.onTypeChange}
                     aria-label={e2e.pages.Dashboard.Settings.Variables.Edit.General.selectors.generalTypeSelect}
                   >
-                    {variableAdapters.registeredTypes().map(item => (
-                      <option key={item.type} label={item.label} value={item.type}>
-                        {item.label}
+                    {variableAdapters.list().map(({ id, name }) => (
+                      <option key={id} label={name} value={id}>
+                        {name}
                       </option>
                     ))}
                   </select>

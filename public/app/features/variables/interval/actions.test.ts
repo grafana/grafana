@@ -20,7 +20,7 @@ import { TemplateSrv } from '../../templating/template_srv';
 import { intervalBuilder } from '../shared/testing/builders';
 
 describe('interval actions', () => {
-  variableAdapters.set('interval', createIntervalVariableAdapter());
+  variableAdapters.setInit(() => [createIntervalVariableAdapter()]);
   describe('when updateIntervalVariableOptions is dispatched', () => {
     it('then correct actions are dispatched', async () => {
       const interval = intervalBuilder()

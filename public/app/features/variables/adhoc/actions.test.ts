@@ -20,7 +20,7 @@ import { filterAdded, filterRemoved, filtersRestored, filterUpdated } from './re
 import { addVariable, changeVariableProp } from '../state/sharedReducer';
 import { updateLocation } from 'app/core/actions';
 import { DashboardState, LocationState } from 'app/types';
-import { VariableModel } from 'app/features/templating/variable';
+import { VariableModel } from 'app/features/templating/types';
 import { changeVariableEditorExtended, setIdInEditor } from '../editor/reducer';
 import { adHocBuilder } from '../shared/testing/builders';
 
@@ -40,9 +40,9 @@ type ReducersUsedInContext = {
   location: LocationState;
 };
 
-describe('adhoc actions', () => {
-  variableAdapters.set('adhoc', createAdHocVariableAdapter());
+variableAdapters.setInit(() => [createAdHocVariableAdapter()]);
 
+describe('adhoc actions', () => {
   describe('when applyFilterFromTable is dispatched and filter already exist', () => {
     it('then correct actions are dispatched', async () => {
       const options: AdHocTableOptions = {

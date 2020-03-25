@@ -2,7 +2,7 @@ import { reduxTester } from '../../../../../test/core/redux/reduxTester';
 import { getTemplatingRootReducer } from '../../state/helpers';
 import { initDashboardTemplating } from '../../state/actions';
 import { TemplatingState } from '../../state/reducers';
-import { QueryVariableModel, VariableHide, VariableRefresh, VariableSort } from '../../../templating/variable';
+import { QueryVariableModel, VariableHide, VariableRefresh, VariableSort } from '../../../templating/types';
 import {
   hideOptions,
   showOptions,
@@ -40,7 +40,7 @@ jest.mock('@grafana/runtime', () => {
 });
 
 describe('options picker actions', () => {
-  variableAdapters.set('query', createQueryVariableAdapter());
+  variableAdapters.setInit(() => [createQueryVariableAdapter()]);
 
   describe('when navigateOptions is dispatched with navigation key cancel', () => {
     it('then correct actions are dispatched', async () => {
