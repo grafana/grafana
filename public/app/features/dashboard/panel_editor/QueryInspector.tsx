@@ -96,7 +96,10 @@ export class QueryInspector extends PureComponent<Props, State> {
       delete response.headers;
     }
 
-    if (response.request) {
+    if (response.config) {
+      response.request = response.config;
+
+      delete response.config;
       delete response.request.transformRequest;
       delete response.request.transformResponse;
       delete response.request.paramSerializer;

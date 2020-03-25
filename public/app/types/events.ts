@@ -51,7 +51,6 @@ export interface DataSourceResponse<T> {
   readonly redirected: boolean;
   readonly type: ResponseType;
   readonly url: string;
-  readonly request: any;
   readonly config: any;
 }
 
