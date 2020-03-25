@@ -4,7 +4,7 @@ import { GrafanaTheme } from '@grafana/data';
 import { stylesFactory, useTheme } from '../../themes';
 
 export interface TabProps {
-  label: string;
+  label?: string | JSX.Element;
   active?: boolean;
   icon?: string;
   onChangeTab: () => void;
@@ -25,10 +25,6 @@ const getTabStyles = stylesFactory((theme: GrafanaTheme) => {
       border-radius: ${theme.border.radius.md} ${theme.border.radius.md} 0 0;
       color: ${colors.text};
       cursor: pointer;
-
-      i {
-        margin-right: ${theme.spacing.sm};
-      }
 
       .gicon {
         position: relative;
@@ -58,6 +54,11 @@ const getTabStyles = stylesFactory((theme: GrafanaTheme) => {
         background-image: linear-gradient(to right, #f05a28 30%, #fbca0a 99%);
       }
     `,
+    icon: css`
+      & + span {
+        margin-left: ${theme.spacing.sm};
+      }
+    `,
   };
 });
 
@@ -67,8 +68,12 @@ export const Tab: FC<TabProps> = ({ label, active, icon, onChangeTab }) => {
 
   return (
     <li className={cx(tabsStyles.tabItem, active && tabsStyles.activeStyle)} onClick={onChangeTab}>
-      {icon && <i className={icon} />}
-      {label}
+      {icon && (
+        <span className={tabsStyles.icon}>
+          <i className={icon} />
+        </span>
+      )}
+      {label && <span>{label}</span>}
     </li>
   );
 };

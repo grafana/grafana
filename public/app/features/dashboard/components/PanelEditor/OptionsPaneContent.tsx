@@ -6,6 +6,7 @@ import { DefaultFieldConfigEditor, OverrideFieldConfigEditor } from './FieldConf
 import { AngularPanelOptions } from './AngularPanelOptions';
 import { css } from 'emotion';
 import { GeneralPanelOptions } from './GeneralPanelOptions';
+import { VisualizationTab } from './VisualizationTab';
 
 export const OptionsPaneContent: React.FC<{
   plugin?: PanelPlugin;
@@ -87,6 +88,10 @@ export const OptionsPaneContent: React.FC<{
     [data, plugin, panel, onFieldConfigsChange]
   );
 
+  const renderVisualizationPicker = useCallback(() => {
+    return <VisualizationTab panel={panel} />;
+  }, [panel]);
+
   const [activeTab, setActiveTab] = useState('defaults');
 
   return (
@@ -94,12 +99,18 @@ export const OptionsPaneContent: React.FC<{
       {plugin && (
         <div className={styles.wrapper}>
           <TabsBar>
+            <Tab
+              icon={'fa fa-bar-chart'}
+              active={activeTab === 'visualization'}
+              onChangeTab={() => setActiveTab('visualization')}
+            />
             <Tab label="Options" active={activeTab === 'defaults'} onChangeTab={() => setActiveTab('defaults')} />
             <Tab label="Overrides" active={activeTab === 'overrides'} onChangeTab={() => setActiveTab('overrides')} />
             <Tab label="General" active={activeTab === 'panel'} onChangeTab={() => setActiveTab('panel')} />
           </TabsBar>
           <TabContent className={styles.tabContent}>
             <CustomScrollbar>
+              {activeTab === 'visualization' && renderVisualizationPicker()}
               {activeTab === 'defaults' && renderFieldOptions(plugin)}
               {activeTab === 'overrides' && renderFieldOverrideOptions(plugin)}
               {activeTab === 'panel' && <GeneralPanelOptions panel={panel} onPanelConfigChange={onPanelConfigChange} />}
