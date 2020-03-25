@@ -106,7 +106,7 @@ func (dc *DashboardAsConfigV1) mapToDashboardsAsConfig() ([]*DashboardsAsConfig,
 
 	for _, v := range dc.Providers {
 		if _, ok := seen[v.Name.Value()]; ok {
-			return nil, fmt.Errorf("dashboards name %q is not unique", v.Name.Value())
+			return nil, fmt.Errorf("dashboard name %q is not unique", v.Name.Value())
 		}
 		seen[v.Name.Value()] = true
 
