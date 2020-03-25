@@ -407,6 +407,8 @@ By choosing `vertical` the panels will be arranged from top to bottom in a colum
 Only make changes to the first panel (the original template). To have the changes take effect on all panels you need to trigger a dynamic dashboard re-build.
 You can do this by either changing the variable value (that is the basis for the repeat) or reload the dashboard.
 
+Repeating panels require variables to have one or more items selected; you can not repeat a panel zero times to hide it.
+
 ## Repeating Rows
 
 As seen above with the *Panels* you can also repeat *Rows* if you have variables set with  `Multi-value` or
