@@ -6,12 +6,7 @@ import { VariableLink } from '../shared/VariableLink';
 import { VariableInput } from '../shared/VariableInput';
 import { commitChangesToVariable, filterOrSearchOptions, navigateOptions, toggleAndFetchTag } from './actions';
 import { OptionsPickerState, showOptions, toggleAllOptions, toggleOption } from './reducer';
-import {
-  VariableOption,
-  VariableTag,
-  VariableWithMultiSupport,
-  VariableWithOptions,
-} from '../../../templating/variable';
+import { VariableOption, VariableTag, VariableWithMultiSupport, VariableWithOptions } from '../../../templating/types';
 import { VariableOptions } from '../shared/VariableOptions';
 import { isQuery } from '../../guard';
 import { VariablePickerProps } from '../types';
@@ -39,16 +34,22 @@ export class OptionsPickerUnconnected extends PureComponent<Props> {
   onHideOptions = () => this.props.commitChangesToVariable();
 
   onToggleOption = (option: VariableOption, clearOthers: boolean) => {
-    this.props.toggleOption({
-      option,
-      clearOthers,
-      forceSelect: false,
-    });
+    const toggleFunc = this.props.variable.multi ? this.onToggleMultiValueVariable : this.onToggleSingleValueVariable;
+    toggleFunc(option, clearOthers);
+  };
+
+  onToggleSingleValueVariable = (option: VariableOption, clearOthers: boolean) => {
+    this.props.toggleOption({ option, clearOthers, forceSelect: false });
+    this.onHideOptions();
+  };
+
+  onToggleMultiValueVariable = (option: VariableOption, clearOthers: boolean) => {
+    this.props.toggleOption({ option, clearOthers, forceSelect: false });
   };
 
   render() {
     const { variable, picker } = this.props;
-    const showOptions = picker.uuid === variable.uuid;
+    const showOptions = picker.id === variable.id;
 
     return (
       <div className="variable-link-wrapper">

@@ -1,5 +1,7 @@
 import castArray from 'lodash/castArray';
 import { UrlQueryMap, UrlQueryValue } from '@grafana/runtime';
+import { AppEvents, TimeRange } from '@grafana/data';
+import angular from 'angular';
 
 import {
   QueryVariableModel,
@@ -7,7 +9,7 @@ import {
   VariableOption,
   VariableRefresh,
   VariableWithOptions,
-} from '../../templating/variable';
+} from '../../templating/types';
 import { StoreState, ThunkResult } from '../../../types';
 import { getVariable, getVariables } from './selectors';
 import { variableAdapters } from '../adapters';
@@ -15,6 +17,8 @@ import { Graph } from '../../../core/utils/dag';
 import { updateLocation } from 'app/core/actions';
 import { addInitLock, addVariable, removeInitLock, resolveInitLock, setCurrentVariableValue } from './sharedReducer';
 import { toVariableIdentifier, toVariablePayload, VariableIdentifier } from './types';
+import { appEvents } from '../../../core/core';
+import templateSrv from '../../templating/template_srv';
 
 // process flow queryVariable
 // thunk => processVariables
@@ -51,7 +55,7 @@ export const initDashboardTemplating = (list: VariableModel[]): ThunkResult<void
     let orderIndex = 0;
     for (let index = 0; index < list.length; index++) {
       const model = list[index];
-      if (!variableAdapters.contains(model.type)) {
+      if (!variableAdapters.getIfExists(model.type)) {
         continue;
       }
 
@@ -72,7 +76,7 @@ export const processVariableDependencies = async (variable: VariableModel, state
       continue;
     }
 
-    if (variableAdapters.contains(variable.type)) {
+    if (variableAdapters.getIfExists(variable.type)) {
       if (variableAdapters.get(variable.type).dependsOn(variable, otherVariable)) {
         dependencies.push(otherVariable.initLock!.promise);
       }
@@ -84,7 +88,7 @@ export const processVariableDependencies = async (variable: VariableModel, state
 
 export const processVariable = (identifier: VariableIdentifier, queryParams: UrlQueryMap): ThunkResult<void> => {
   return async (dispatch, getState) => {
-    const variable = getVariable(identifier.uuid!, getState());
+    const variable = getVariable(identifier.id!, getState());
     await processVariableDependencies(variable, getState());
 
     const urlValue = queryParams['var-' + variable.name];
@@ -127,14 +131,14 @@ export const processVariables = (): ThunkResult<void> => {
 
 export const setOptionFromUrl = (identifier: VariableIdentifier, urlValue: UrlQueryValue): ThunkResult<void> => {
   return async (dispatch, getState) => {
-    const variable = getVariable(identifier.uuid!, getState());
+    const variable = getVariable(identifier.id!, getState());
     if (variable.hasOwnProperty('refresh') && (variable as QueryVariableModel).refresh !== VariableRefresh.never) {
       // updates options
       await variableAdapters.get(variable.type).updateOptions(variable);
     }
 
     // get variable from state
-    const variableFromState = getVariable<VariableWithOptions>(variable.uuid!, getState());
+    const variableFromState = getVariable<VariableWithOptions>(variable.id!, getState());
     if (!variableFromState) {
       throw new Error(`Couldn't find variable with name: ${variable.name}`);
     }
@@ -208,7 +212,7 @@ export const validateVariableSelectionState = (
   defaultValue?: string
 ): ThunkResult<void> => {
   return async (dispatch, getState) => {
-    const variableInState = getVariable<VariableWithOptions>(identifier.uuid!, getState());
+    const variableInState = getVariable<VariableWithOptions>(identifier.id!, getState());
     const current = variableInState.current || (({} as unknown) as VariableOption);
     const setValue = variableAdapters.get(variableInState.type).setValue;
 
@@ -292,7 +296,7 @@ const createGraph = (variables: VariableModel[]) => {
 export const variableUpdated = (identifier: VariableIdentifier, emitChangeEvents: boolean): ThunkResult<void> => {
   return (dispatch, getState) => {
     // if there is a variable lock ignore cascading update because we are in a boot up scenario
-    const variable = getVariable(identifier.uuid!, getState());
+    const variable = getVariable(identifier.id!, getState());
     if (variable.initLock) {
       return Promise.resolve();
     }
@@ -321,6 +325,45 @@ export const variableUpdated = (identifier: VariableIdentifier, emitChangeEvents
       }
     });
   };
+};
+
+export interface OnTimeRangeUpdatedDependencies {
+  templateSrv: typeof templateSrv;
+  appEvents: typeof appEvents;
+}
+
+export const onTimeRangeUpdated = (
+  timeRange: TimeRange,
+  dependencies: OnTimeRangeUpdatedDependencies = { templateSrv: templateSrv, appEvents: appEvents }
+): ThunkResult<void> => async (dispatch, getState) => {
+  dependencies.templateSrv.updateTimeRange(timeRange);
+  const variablesThatNeedRefresh = getVariables(getState()).filter(variable => {
+    if (variable.hasOwnProperty('refresh') && variable.hasOwnProperty('options')) {
+      const variableWithRefresh = (variable as unknown) as QueryVariableModel;
+      return variableWithRefresh.refresh === VariableRefresh.onTimeRangeChanged;
+    }
+
+    return false;
+  });
+
+  const promises = variablesThatNeedRefresh.map(async (variable: VariableWithOptions) => {
+    const previousOptions = variable.options.slice();
+    await variableAdapters.get(variable.type).updateOptions(variable);
+    const updatedVariable = getVariable<VariableWithOptions>(variable.id!, getState());
+    if (angular.toJson(previousOptions) !== angular.toJson(updatedVariable.options)) {
+      const dashboard = getState().dashboard.getModel();
+      dashboard?.templateVariableValueUpdated();
+    }
+  });
+
+  try {
+    await Promise.all(promises);
+    const dashboard = getState().dashboard.getModel();
+    dashboard?.startRefresh();
+  } catch (error) {
+    console.error(error);
+    dependencies.appEvents.emit(AppEvents.alertError, ['Template variable service failed', error.message]);
+  }
 };
 
 const getQueryWithVariables = (getState: () => StoreState): UrlQueryMap => {

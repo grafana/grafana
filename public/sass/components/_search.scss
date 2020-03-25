@@ -3,10 +3,10 @@
   right: 0;
   left: 0;
   bottom: 0;
-  top: $navbarHeight;
+  top: 0;
   z-index: $zindex-modal-backdrop;
   background-color: $black;
-  @include opacity(75);
+  @include opacity(60);
 }
 
 .search-container {
@@ -16,6 +16,7 @@
   bottom: 0;
   z-index: ($zindex-modal-backdrop + 10);
   position: fixed;
+  background: $body-bg;
 }
 
 // Search
@@ -26,7 +27,7 @@
 }
 
 .search-dropdown__col_1 {
-  background: $page-bg;
+  padding: $dashboard-padding;
   max-width: 700px;
   display: flex;
   flex-direction: column;
@@ -47,8 +48,9 @@
 }
 
 .search-filter-box {
-  background: $search-filter-box-bg;
-  border-radius: 2px;
+  background: $panel-bg;
+  border: $panel-border;
+  border-radius: 3px;
   padding: $spacer * 1.5;
   min-width: 340px;
   margin-bottom: $spacer * 1.5;
@@ -77,6 +79,10 @@
 .search-results-scroller {
   display: flex;
   position: relative;
+  min-height: 100%;
+  background: $panel-bg;
+  border: $panel-border;
+  border-radius: 3px;
 }
 
 .search-results-container {
@@ -90,6 +96,7 @@
   height: unset;
 
   .label-tag {
+    margin-top: 2px;
     margin-left: 6px;
     font-size: 11px;
     padding: 2px 6px;
@@ -105,10 +112,9 @@
 
 .search-section {
   background: $panel-bg;
-  border: $panel-border;
+  border-bottom: 1px solid lightOrDark($gray95, $gray25);
   padding: 0px 4px 4px 4px;
   margin-bottom: 3px;
-  border-radius: 5px;
 }
 
 .search-section__header {
@@ -157,8 +163,10 @@
 
   display: flex;
   flex-grow: 1;
-  height: 37px;
-  white-space: nowrap;
+  align-items: center;
+  height: auto;
+  min-height: 37px;
+  white-space: initial;
   padding: 0px;
 
   &:hover,
@@ -241,7 +249,11 @@
   }
 
   .search-item__tags {
-    display: block;
+    display: flex;
+    flex: 1 1 auto;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    margin-top: -2px;
   }
 
   .search-dropdown__col_2 {

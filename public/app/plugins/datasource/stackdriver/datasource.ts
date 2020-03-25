@@ -2,13 +2,13 @@ import { stackdriverUnitMappings } from './constants';
 import appEvents from 'app/core/app_events';
 import _ from 'lodash';
 import StackdriverMetricFindQuery from './StackdriverMetricFindQuery';
-import { StackdriverQuery, MetricDescriptor, StackdriverOptions, Filter, VariableQueryData } from './types';
+import { Filter, MetricDescriptor, StackdriverOptions, StackdriverQuery, VariableQueryData } from './types';
 import {
-  DataSourceApi,
   DataQueryRequest,
+  DataQueryResponse,
+  DataSourceApi,
   DataSourceInstanceSettings,
   ScopedVars,
-  DataQueryResponse,
 } from '@grafana/data';
 import { getBackendSrv } from '@grafana/runtime';
 import { TemplateSrv } from 'app/features/templating/template_srv';
@@ -22,6 +22,7 @@ export default class StackdriverDatasource extends DataSourceApi<StackdriverQuer
   authenticationType: string;
   queryPromise: Promise<any>;
   metricTypesCache: { [key: string]: MetricDescriptor[] };
+  gceDefaultProject: string;
 
   /** @ngInject */
   constructor(
@@ -37,7 +38,7 @@ export default class StackdriverDatasource extends DataSourceApi<StackdriverQuer
   }
 
   get variables() {
-    return this.templateSrv.variables.map(v => `$${v.name}`);
+    return this.templateSrv.getVariables().map(v => `$${v.name}`);
   }
 
   async getTimeSeries(options: DataQueryRequest<StackdriverQuery>) {
@@ -229,6 +230,7 @@ export default class StackdriverDatasource extends DataSourceApi<StackdriverQuer
     let status, message;
     const defaultErrorMessage = 'Cannot connect to Stackdriver API';
     try {
+      await this.ensureGCEDefaultProject();
       const path = `v3/projects/${this.getDefaultProject()}/metricDescriptors`;
       const response = await this.doRequest(`${this.baseUrl}${path}`);
       if (response.status === 200) {

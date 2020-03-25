@@ -18,7 +18,7 @@ import {
   DataFrame,
   guessFieldTypes,
 } from '@grafana/data';
-import { getAnalyticsProcessor } from './analyticsProcessor';
+import { emitDataRequestEvent } from './analyticsProcessor';
 import { ExpressionDatasourceID, expressionDatasource } from 'app/features/expressions/ExpressionDatasource';
 
 type MapOfResponsePackets = { [str: string]: DataQueryResponse };
@@ -120,7 +120,7 @@ export function runRequest(datasource: DataSourceApi, request: DataQueryRequest)
         error: processQueryError(err),
       })
     ),
-    tap(getAnalyticsProcessor(datasource)),
+    tap(emitDataRequestEvent(datasource)),
     // finalize is triggered when subscriber unsubscribes
     // This makes sure any still running network requests are cancelled
     finalize(cancelNetworkRequestsOnUnsubscribe(request)),

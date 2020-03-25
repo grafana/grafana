@@ -1,5 +1,5 @@
 import cloneDeep from 'lodash/cloneDeep';
-import { ConstantVariableModel } from '../../templating/variable';
+import { ConstantVariableModel } from '../../templating/types';
 import { dispatch } from '../../../store/store';
 import { setOptionAsCurrent, setOptionFromUrl } from '../state/actions';
 import { VariableAdapter } from '../adapters';
@@ -11,8 +11,9 @@ import { toVariableIdentifier } from '../state/types';
 
 export const createConstantVariableAdapter = (): VariableAdapter<ConstantVariableModel> => {
   return {
+    id: 'constant',
     description: 'Define a hidden constant variable, useful for metric prefixes in dashboards you want to share',
-    label: 'Constant',
+    name: 'Constant',
     initialState: initialConstantVariableModelState,
     reducer: constantVariableReducer,
     picker: OptionsPicker,
@@ -30,7 +31,7 @@ export const createConstantVariableAdapter = (): VariableAdapter<ConstantVariabl
       await dispatch(updateConstantVariableOptions(toVariableIdentifier(variable)));
     },
     getSaveModel: variable => {
-      const { index, uuid, initLock, global, ...rest } = cloneDeep(variable);
+      const { index, id, initLock, global, ...rest } = cloneDeep(variable);
       return rest;
     },
     getValueForUrl: variable => {

@@ -2,7 +2,7 @@ import { combineReducers } from '@reduxjs/toolkit';
 import { optionsPickerReducer, OptionsPickerState } from '../pickers/OptionsPicker/reducer';
 import { variableEditorReducer, VariableEditorState } from '../editor/reducer';
 import { variablesReducer } from './variablesReducer';
-import { VariableModel } from '../../templating/variable';
+import { VariableModel } from '../../templating/types';
 
 export interface TemplatingState {
   variables: Record<string, VariableModel>;
@@ -12,8 +12,8 @@ export interface TemplatingState {
 
 export default {
   templating: combineReducers({
-    optionsPicker: optionsPickerReducer,
     editor: variableEditorReducer,
     variables: variablesReducer,
+    optionsPicker: optionsPickerReducer,
   }),
 };

@@ -1,10 +1,18 @@
 import { PanelQueryRunner } from './PanelQueryRunner';
-import { DataQueryRequest, dateTime, PanelData, ScopedVars } from '@grafana/data';
+// Importing this way to be able to spy on grafana/data
+import * as grafanaData from '@grafana/data';
+import { DataConfigSource, DataQueryRequest, GrafanaTheme, PanelData, ScopedVars } from '@grafana/data';
 import { DashboardModel } from './index';
 import { setEchoSrv } from '@grafana/runtime';
 import { Echo } from '../../../core/services/echo/Echo';
 
 jest.mock('app/core/services/backend_srv');
+jest.mock('app/core/config', () => ({
+  config: { featureToggles: { transformations: true } },
+  getConfig: () => ({
+    featureToggles: {},
+  }),
+}));
 
 const dashboardModel = new DashboardModel({
   panels: [{ id: 1, type: 'graph' }],
@@ -37,16 +45,19 @@ interface ScenarioContext {
 
 type ScenarioFn = (ctx: ScenarioContext) => void;
 
-function describeQueryRunnerScenario(description: string, scenarioFn: ScenarioFn) {
+function describeQueryRunnerScenario(description: string, scenarioFn: ScenarioFn, panelConfig?: DataConfigSource) {
   describe(description, () => {
     let setupFn = () => {};
-
+    const defaultPanelConfig: DataConfigSource = {
+      getFieldOverrideOptions: () => undefined,
+      getTransformations: () => undefined,
+    };
     const ctx: ScenarioContext = {
       widthPixels: 200,
       scopedVars: {
         server: { text: 'Server1', value: 'server-1' },
       },
-      runner: new PanelQueryRunner(),
+      runner: new PanelQueryRunner(panelConfig || defaultPanelConfig),
       setup: (fn: () => void) => {
         setupFn = fn;
       },
@@ -85,15 +96,15 @@ function describeQueryRunnerScenario(description: string, scenarioFn: ScenarioFn
         widthPixels: ctx.widthPixels,
         maxDataPoints: ctx.maxDataPoints,
         timeRange: {
-          from: dateTime().subtract(1, 'days'),
-          to: dateTime(),
+          from: grafanaData.dateTime().subtract(1, 'days'),
+          to: grafanaData.dateTime(),
           raw: { from: '1h', to: 'now' },
         },
         panelId: 1,
         queries: [{ refId: 'A', test: 1 }],
       };
 
-      ctx.runner = new PanelQueryRunner();
+      ctx.runner = new PanelQueryRunner(panelConfig || defaultPanelConfig);
       ctx.runner.getData().subscribe({
         next: (data: PanelData) => {
           ctx.res = data;
@@ -182,4 +193,56 @@ describe('PanelQueryRunner', () => {
       expect(ctx.queryCalledWith?.maxDataPoints).toBe(10);
     });
   });
+
+  describeQueryRunnerScenario(
+    'field overrides',
+    ctx => {
+      it('should apply when field override options are set', async () => {
+        const spy = jest.spyOn(grafanaData, 'applyFieldOverrides');
+
+        ctx.runner.getData().subscribe({
+          next: (data: PanelData) => {
+            return data;
+          },
+        });
+        expect(spy).toBeCalled();
+      });
+    },
+    {
+      getFieldOverrideOptions: () => ({
+        fieldOptions: {
+          defaults: {
+            unit: 'm/s',
+          },
+          // @ts-ignore
+          overrides: [],
+        },
+        replaceVariables: v => v,
+        theme: {} as GrafanaTheme,
+      }),
+      getTransformations: () => undefined,
+    }
+  );
+
+  describeQueryRunnerScenario(
+    'transformations',
+    ctx => {
+      it('should apply when transformations are set', async () => {
+        const spy = jest.spyOn(grafanaData, 'transformDataFrame');
+
+        ctx.runner.getData().subscribe({
+          next: (data: PanelData) => {
+            return data;
+          },
+        });
+
+        expect(spy).toBeCalled();
+      });
+    },
+    {
+      getFieldOverrideOptions: () => undefined,
+      // @ts-ignore
+      getTransformations: () => [{}],
+    }
+  );
 });

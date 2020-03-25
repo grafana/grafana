@@ -5,6 +5,8 @@ import { DashboardRouteInfo } from 'app/types';
 import { getBackendSrv } from 'app/core/services/backend_srv';
 import { dashboardInitCompleted, dashboardInitFetching, dashboardInitServices } from './reducers';
 import { updateLocation } from '../../../core/actions';
+import { setEchoSrv } from '@grafana/runtime';
+import { Echo } from '../../../core/services/echo/Echo';
 
 jest.mock('app/core/services/backend_srv');
 
@@ -124,6 +126,7 @@ function describeInitScenario(description: string, scenarioFn: ScenarioFn) {
 
     beforeEach(async () => {
       setupFn();
+      setEchoSrv(new Echo());
 
       const store = mockStore(ctx.storeState);
       // @ts-ignore

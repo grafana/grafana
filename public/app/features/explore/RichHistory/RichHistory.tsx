@@ -30,12 +30,14 @@ export const sortOrderOptions = [
   { label: 'Data source Z-A', value: SortOrder.DatasourceZA },
 ];
 
-interface RichHistoryProps extends Themeable {
+export interface RichHistoryProps extends Themeable {
   richHistory: RichHistoryQuery[];
   activeDatasourceInstance: string;
   firstTab: Tabs;
   exploreId: ExploreId;
+  height: number;
   deleteRichHistory: () => void;
+  onClose: () => void;
 }
 
 interface RichHistoryState {
@@ -49,19 +51,23 @@ interface RichHistoryState {
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
   const borderColor = theme.isLight ? theme.colors.gray5 : theme.colors.dark6;
-  const tabBarBg = theme.isLight ? theme.colors.white : theme.colors.black;
-  const tabContentBg = theme.isLight ? theme.colors.gray7 : theme.colors.dark2;
+  const tabContentBg = theme.colors.pageBg;
   return {
     container: css`
       height: 100%;
-      background-color: ${tabContentBg};
     `,
     tabContent: css`
-      background-color: ${tabContentBg};
       padding: ${theme.spacing.md};
+      background-color: ${tabContentBg};
+    `,
+    close: css`
+      position: absolute;
+      right: 16px;
+      top: 5px;
+      cursor: pointer;
+      font-size: ${theme.typography.size.lg};
     `,
     tabs: css`
-      background-color: ${tabBarBg};
       padding-top: ${theme.spacing.sm};
       border-color: ${borderColor};
       ul {
@@ -76,8 +82,8 @@ class UnThemedRichHistory extends PureComponent<RichHistoryProps, RichHistorySta
     super(props);
     this.state = {
       activeTab: this.props.firstTab,
-      datasourceFilters: null,
       sortOrder: SortOrder.Descending,
+      datasourceFilters: store.getObject(RICH_HISTORY_SETTING_KEYS.datasourceFilters, null),
       retentionPeriod: store.getObject(RICH_HISTORY_SETTING_KEYS.retentionPeriod, 7),
       starredTabAsFirstTab: store.getBool(RICH_HISTORY_SETTING_KEYS.starredTabAsFirstTab, false),
       activeDatasourceOnly: store.getBool(RICH_HISTORY_SETTING_KEYS.activeDatasourceOnly, false),
@@ -108,6 +114,7 @@ class UnThemedRichHistory extends PureComponent<RichHistoryProps, RichHistorySta
   };
 
   onSelectDatasourceFilters = (value: SelectableValue[] | null) => {
+    store.setObject(RICH_HISTORY_SETTING_KEYS.datasourceFilters, value);
     this.setState({ datasourceFilters: value });
   };
 
@@ -126,7 +133,7 @@ class UnThemedRichHistory extends PureComponent<RichHistoryProps, RichHistorySta
       ? this.onSelectDatasourceFilters([
           { label: this.props.activeDatasourceInstance, value: this.props.activeDatasourceInstance },
         ])
-      : this.onSelectDatasourceFilters(null);
+      : this.onSelectDatasourceFilters(this.state.datasourceFilters);
   }
 
   componentDidMount() {
@@ -142,15 +149,8 @@ class UnThemedRichHistory extends PureComponent<RichHistoryProps, RichHistorySta
   }
 
   render() {
-    const {
-      datasourceFilters,
-      sortOrder,
-      activeTab,
-      starredTabAsFirstTab,
-      activeDatasourceOnly,
-      retentionPeriod,
-    } = this.state;
-    const { theme, richHistory, exploreId, deleteRichHistory } = this.props;
+    const { datasourceFilters, sortOrder, activeTab, activeDatasourceOnly, retentionPeriod } = this.state;
+    const { theme, richHistory, height, exploreId, deleteRichHistory, onClose } = this.props;
     const styles = getStyles(theme);
 
     const QueriesTab = {
@@ -166,6 +166,7 @@ class UnThemedRichHistory extends PureComponent<RichHistoryProps, RichHistorySta
           onChangeSortOrder={this.onChangeSortOrder}
           onSelectDatasourceFilters={this.onSelectDatasourceFilters}
           exploreId={exploreId}
+          height={height}
         />
       ),
       icon: 'fa fa-history',
@@ -205,8 +206,7 @@ class UnThemedRichHistory extends PureComponent<RichHistoryProps, RichHistorySta
       icon: 'gicon gicon-preferences',
     };
 
-    let tabs = starredTabAsFirstTab ? [StarredTab, QueriesTab, SettingsTab] : [QueriesTab, StarredTab, SettingsTab];
-
+    let tabs = [QueriesTab, StarredTab, SettingsTab];
     return (
       <div className={styles.container}>
         <TabsBar className={styles.tabs}>
@@ -219,6 +219,9 @@ class UnThemedRichHistory extends PureComponent<RichHistoryProps, RichHistorySta
               icon={t.icon}
             />
           ))}
+          <div className={styles.close} onClick={onClose}>
+            <i className="fa fa-times" title="Close query history" />
+          </div>
         </TabsBar>
         <CustomScrollbar
           className={css`

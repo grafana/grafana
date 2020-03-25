@@ -2,7 +2,7 @@ import { variableAdapters } from '../adapters';
 import { createQueryVariableAdapter } from './adapter';
 import { reduxTester } from '../../../../test/core/redux/reduxTester';
 import { getTemplatingRootReducer } from '../state/helpers';
-import { QueryVariableModel, VariableHide, VariableRefresh, VariableSort } from '../../templating/variable';
+import { QueryVariableModel, VariableHide, VariableRefresh, VariableSort } from '../../templating/types';
 import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE, toVariablePayload } from '../state/types';
 import { changeVariableProp, setCurrentVariableValue } from '../state/sharedReducer';
 import { initDashboardTemplating } from '../state/actions';
@@ -47,7 +47,7 @@ jest.mock('../../plugins/plugin_loader', () => ({
 }));
 
 describe('query actions', () => {
-  variableAdapters.set('query', createQueryVariableAdapter());
+  variableAdapters.setInit(() => [createQueryVariableAdapter()]);
 
   describe('when updateQueryVariableOptions is dispatched for variable with tags and includeAll', () => {
     it('then correct actions are dispatched', async () => {
@@ -64,7 +64,7 @@ describe('query actions', () => {
 
       const option = createOption(ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE);
 
-      tester.thenDispatchedActionPredicateShouldEqual(actions => {
+      tester.thenDispatchedActionsPredicateShouldEqual(actions => {
         const [updateOptions, updateTags, setCurrentAction] = actions;
         const expectedNumberOfActions = 3;
 
@@ -91,7 +91,7 @@ describe('query actions', () => {
 
       const option = createOption('A');
 
-      tester.thenDispatchedActionPredicateShouldEqual(actions => {
+      tester.thenDispatchedActionsPredicateShouldEqual(actions => {
         const [updateOptions, updateTags, setCurrentAction] = actions;
         const expectedNumberOfActions = 3;
 
@@ -117,7 +117,7 @@ describe('query actions', () => {
 
       const option = createOption('A');
 
-      tester.thenDispatchedActionPredicateShouldEqual(actions => {
+      tester.thenDispatchedActionsPredicateShouldEqual(actions => {
         const [updateOptions, setCurrentAction] = actions;
         const expectedNumberOfActions = 2;
 
@@ -142,7 +142,7 @@ describe('query actions', () => {
 
       const option = createOption(ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE);
 
-      tester.thenDispatchedActionPredicateShouldEqual(actions => {
+      tester.thenDispatchedActionsPredicateShouldEqual(actions => {
         const [updateOptions, setCurrentAction] = actions;
         const expectedNumberOfActions = 2;
 
@@ -163,12 +163,12 @@ describe('query actions', () => {
       const tester = await reduxTester<{ templating: TemplatingState }>()
         .givenRootReducer(getTemplatingRootReducer())
         .whenActionIsDispatched(initDashboardTemplating([variable]))
-        .whenActionIsDispatched(setIdInEditor({ id: variable.uuid! }))
+        .whenActionIsDispatched(setIdInEditor({ id: variable.id! }))
         .whenAsyncActionIsDispatched(updateQueryVariableOptions(toVariablePayload(variable)), true);
 
       const option = createOption(ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE);
 
-      tester.thenDispatchedActionPredicateShouldEqual(actions => {
+      tester.thenDispatchedActionsPredicateShouldEqual(actions => {
         const [clearErrors, updateOptions, setCurrentAction] = actions;
         const expectedNumberOfActions = 3;
 
@@ -190,10 +190,10 @@ describe('query actions', () => {
       const tester = await reduxTester<{ templating: TemplatingState }>()
         .givenRootReducer(getTemplatingRootReducer())
         .whenActionIsDispatched(initDashboardTemplating([variable]))
-        .whenActionIsDispatched(setIdInEditor({ id: variable.uuid! }))
+        .whenActionIsDispatched(setIdInEditor({ id: variable.id! }))
         .whenAsyncActionIsDispatched(updateQueryVariableOptions(toVariablePayload(variable)), true);
 
-      tester.thenDispatchedActionPredicateShouldEqual(actions => {
+      tester.thenDispatchedActionsPredicateShouldEqual(actions => {
         const [clearErrors, errorOccurred] = actions;
         const expectedNumberOfActions = 2;
 
@@ -221,7 +221,7 @@ describe('query actions', () => {
         .whenActionIsDispatched(initDashboardTemplating([variable]))
         .whenAsyncActionIsDispatched(initQueryVariableEditor(toVariablePayload(variable)), true);
 
-      tester.thenDispatchedActionPredicateShouldEqual(actions => {
+      tester.thenDispatchedActionsPredicateShouldEqual(actions => {
         const [updateDatasources, setDatasource, setEditor] = actions;
         const expectedNumberOfActions = 3;
 
@@ -254,7 +254,7 @@ describe('query actions', () => {
         .whenActionIsDispatched(initDashboardTemplating([variable]))
         .whenAsyncActionIsDispatched(initQueryVariableEditor(toVariablePayload(variable)), true);
 
-      tester.thenDispatchedActionPredicateShouldEqual(actions => {
+      tester.thenDispatchedActionsPredicateShouldEqual(actions => {
         const [updateDatasources, setDatasource, setEditor] = actions;
         const expectedNumberOfActions = 3;
 
@@ -286,7 +286,7 @@ describe('query actions', () => {
         .whenActionIsDispatched(initDashboardTemplating([variable]))
         .whenAsyncActionIsDispatched(initQueryVariableEditor(toVariablePayload(variable)), true);
 
-      tester.thenDispatchedActionPredicateShouldEqual(actions => {
+      tester.thenDispatchedActionsPredicateShouldEqual(actions => {
         const [updateDatasources, setDatasource, setEditor] = actions;
         const expectedNumberOfActions = 3;
 
@@ -312,7 +312,7 @@ describe('query actions', () => {
         .whenActionIsDispatched(initDashboardTemplating([variable]))
         .whenAsyncActionIsDispatched(initQueryVariableEditor(toVariablePayload(variable)), true);
 
-      tester.thenDispatchedActionPredicateShouldEqual(actions => {
+      tester.thenDispatchedActionsPredicateShouldEqual(actions => {
         const [updateDatasources] = actions;
         const expectedNumberOfActions = 1;
 
@@ -336,7 +336,7 @@ describe('query actions', () => {
         .whenActionIsDispatched(initDashboardTemplating([variable]))
         .whenAsyncActionIsDispatched(changeQueryVariableDataSource(toVariablePayload(variable), 'datasource'), true);
 
-      tester.thenDispatchedActionPredicateShouldEqual(actions => {
+      tester.thenDispatchedActionsPredicateShouldEqual(actions => {
         const [updateDatasource, updateEditor] = actions;
         const expectedNumberOfActions = 2;
 
@@ -366,7 +366,7 @@ describe('query actions', () => {
         .whenActionIsDispatched(initDashboardTemplating([variable]))
         .whenAsyncActionIsDispatched(changeQueryVariableDataSource(toVariablePayload(variable), 'datasource'), true);
 
-      tester.thenDispatchedActionPredicateShouldEqual(actions => {
+      tester.thenDispatchedActionsPredicateShouldEqual(actions => {
         const [updateDatasource, updateEditor] = actions;
         const expectedNumberOfActions = 2;
 
@@ -400,7 +400,7 @@ describe('query actions', () => {
 
       const option = createOption(ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE);
 
-      tester.thenDispatchedActionPredicateShouldEqual(actions => {
+      tester.thenDispatchedActionsPredicateShouldEqual(actions => {
         const [clearError, changeQuery, changeDefinition, updateOptions, updateTags, setOption] = actions;
         const expectedNumberOfActions = 6;
 
@@ -437,7 +437,7 @@ describe('query actions', () => {
 
       const option = createOption(ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE);
 
-      tester.thenDispatchedActionPredicateShouldEqual(actions => {
+      tester.thenDispatchedActionsPredicateShouldEqual(actions => {
         const [clearError, changeQuery, changeDefinition, updateOptions, setOption] = actions;
         const expectedNumberOfActions = 5;
 
@@ -472,7 +472,7 @@ describe('query actions', () => {
 
       const option = createOption('A');
 
-      tester.thenDispatchedActionPredicateShouldEqual(actions => {
+      tester.thenDispatchedActionsPredicateShouldEqual(actions => {
         const [clearError, changeQuery, changeDefinition, updateOptions, setOption] = actions;
         const expectedNumberOfActions = 5;
 
@@ -504,7 +504,7 @@ describe('query actions', () => {
 
       const errorText = 'Query cannot contain a reference to itself. Variable: $' + variable.name;
 
-      tester.thenDispatchedActionPredicateShouldEqual(actions => {
+      tester.thenDispatchedActionsPredicateShouldEqual(actions => {
         const [editorError] = actions;
         const expectedNumberOfActions = 1;
 
@@ -530,7 +530,7 @@ function mockDatasourceMetrics(variable: QueryVariableModel, optionsMetrics: any
 function createVariable(extend?: Partial<QueryVariableModel>): QueryVariableModel {
   return {
     type: 'query',
-    uuid: '0',
+    id: '0',
     global: false,
     current: createOption(''),
     options: [],
