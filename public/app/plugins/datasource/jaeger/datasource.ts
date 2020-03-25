@@ -7,14 +7,15 @@ import {
   DataQueryRequest,
   DataQueryResponse,
   DataQuery,
+  FieldType,
 } from '@grafana/data';
 import { getBackendSrv } from '@grafana/runtime';
+import { Observable, from, of } from 'rxjs';
+import { map } from 'rxjs/operators';
 
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { DatasourceRequestOptions } from 'app/core/services/backend_srv';
-import { serializeParams } from '../../../core/utils/fetch';
-
-import { Observable, from, of } from 'rxjs';
+import { serializeParams } from 'app/core/utils/fetch';
 
 export type JaegerQuery = {
   query: string;
