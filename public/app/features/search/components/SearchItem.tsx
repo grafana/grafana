@@ -50,7 +50,7 @@ export const SearchItem: FC<Props> = ({ item, editable, onToggleSelection, onTag
       <SearchCheckbox editable={editable} checked={item.checked} onClick={toggleItem} />
       <Icon className={styles.icon} name="th-large" />
       <div className={styles.body} onClick={onItemClick}>
-        <span className={styles.title}>{item.title}</span>
+        <span>{item.title}</span>
         <span className={styles.folderTitle}>{item.folderTitle}</span>
       </div>
       <TagList tags={item.tags} onClick={tagSelected} className={styles.tags} />
@@ -60,15 +60,19 @@ export const SearchItem: FC<Props> = ({ item, editable, onToggleSelection, onTag
 
 const getResultsItemStyles = (theme: GrafanaTheme) => ({
   wrapper: css`
-    ${styleMixins.listItem(theme)}
+    ${styleMixins.listItem(theme)};
     display: flex;
     align-items: center;
     margin: ${theme.spacing.xxs};
     padding: 0 ${theme.spacing.sm};
     min-height: 37px;
+
+    :hover {
+      cursor: pointer;
+    }
   `,
   selected: css`
-    ${styleMixins.listItemSelected(theme)}
+    ${styleMixins.listItemSelected(theme)};
   `,
   body: css`
     display: flex;
