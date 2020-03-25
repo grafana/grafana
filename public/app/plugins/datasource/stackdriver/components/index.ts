@@ -13,3 +13,4 @@ export { MetricQueryEditor } from './MetricQueryEditor';
 export { SLOQueryEditor } from './SLOQueryEditor';
 export { QueryTypeSelector } from './QueryType';
 export { QueryInlineField, QueryField } from './Fields';
+export { LogsQueryEditor } from './LogsQueryEditor';

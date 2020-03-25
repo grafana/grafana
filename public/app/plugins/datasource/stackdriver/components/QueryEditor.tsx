@@ -1,10 +1,11 @@
 import React, { PureComponent } from 'react';
 import appEvents from 'app/core/app_events';
 import { CoreEvents } from 'app/types';
-import { MetricQueryEditor, QueryTypeSelector, SLOQueryEditor, Help } from './';
-import { StackdriverQuery, MetricQuery, QueryType, SLOQuery } from '../types';
+import { MetricQueryEditor, QueryTypeSelector, SLOQueryEditor, Help, LogsQueryEditor } from './';
+import { StackdriverQuery, MetricQuery, QueryType, SLOQuery, LogsQuery } from '../types';
+import { defaultLogsQuery } from './LogsQueryEditor';
 import { defaultQuery } from './MetricQueryEditor';
-import { defaultQuery as defaultSLOQuery } from './SLOQueryEditor';
+import { defaultSLOQuery } from './SLOQueryEditor';
 import { toOption, formatStackdriverError } from '../functions';
 import StackdriverDatasource from '../datasource';
 import { ExploreQueryFieldProps } from '@grafana/data';
@@ -65,6 +66,7 @@ export class QueryEditor extends PureComponent<Props, State> {
     const { datasource, query, onRunQuery, onChange } = this.props;
     const metricQuery = { ...defaultQuery, projectName: datasource.getDefaultProject(), ...query.metricQuery };
     const sloQuery = { ...defaultSLOQuery, projectName: datasource.getDefaultProject(), ...query.sloQuery };
+    const logsQuery = { ...defaultLogsQuery, projectName: datasource.getDefaultProject(), ...query.logsQuery };
     const queryType = query.queryType || QueryType.METRICS;
     const meta = this.props.data?.series.length ? this.props.data?.series[0].meta : {};
     const usedAlignmentPeriod = meta?.alignmentPeriod as string;
@@ -80,7 +82,7 @@ export class QueryEditor extends PureComponent<Props, State> {
           value={queryType}
           templateVariableOptions={variableOptionGroup.options}
           onChange={(queryType: QueryType) => {
-            onChange({ ...query, sloQuery, queryType });
+            onChange({ ...query, sloQuery, logsQuery, queryType });
             onRunQuery();
           }}
         ></QueryTypeSelector>
@@ -106,6 +108,16 @@ export class QueryEditor extends PureComponent<Props, State> {
             datasource={datasource}
             query={sloQuery}
           ></SLOQueryEditor>
+        )}
+
+        {queryType === QueryType.LOGS && (
+          <LogsQueryEditor
+            variableOptionGroup={variableOptionGroup}
+            onChange={(logsQuery: LogsQuery) => onChange({ ...this.props.query, logsQuery })}
+            onRunQuery={onRunQuery}
+            datasource={datasource}
+            query={logsQuery}
+          ></LogsQueryEditor>
         )}
         <Help rawQuery={decodeURIComponent(meta?.rawQuery ?? '')} lastQueryError={this.state.lastQueryError} />
       </>

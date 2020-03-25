@@ -55,10 +55,10 @@ export default class Api {
     }
   }
 
-  async post(data: { [key: string]: any }) {
+  async post(data: { [key: string]: any }, url = '/api/tsdb/query') {
     return getBackendSrv().datasourceRequest({
-      url: '/api/tsdb/query',
       method: 'POST',
+      url,
       data,
     });
   }

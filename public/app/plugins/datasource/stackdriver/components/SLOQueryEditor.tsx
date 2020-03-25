@@ -15,7 +15,7 @@ export interface Props {
   datasource: StackdriverDatasource;
 }
 
-export const defaultQuery: SLOQuery = {
+export const defaultSLOQuery: SLOQuery = {
   projectName: '',
   alignmentPeriod: 'stackdriver-auto',
   aliasBy: '',
