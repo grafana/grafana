@@ -137,7 +137,7 @@ Group by resource or metric labels to reduce the number of time series and to ag
 
 ##### Metadata labels
 
-Resource metadata labels contains information to uniquely identify a resource in Google cloud. Metadata labels are only returned in the time series response if they're part of the **Group By** segment in the time series request. There's no API for retrieving metadata labels, so it's not possible to populate the group by dropdown with the metadata labels that are available for the selected service and metric. However, the **Group By** field dropdown comes with a pre-defined list of common system labels.
+Resource metadata labels contain information to uniquely identify a resource in Google Cloud. Metadata labels are only returned in the time series response if they're part of the **Group By** segment in the time series request. There's no API for retrieving metadata labels, so it's not possible to populate the group by dropdown with the metadata labels that are available for the selected service and metric. However, the **Group By** field dropdown comes with a pre-defined list of common system labels.
 
 User labels cannot be pre-defined, but it's possible to enter them manually in the **Group By** field. If a metadata label, user label or system label is included in the **Group By** segment, then you can create filters based on it and expand its value on the **Alias** field.
 
