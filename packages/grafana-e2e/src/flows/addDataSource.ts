@@ -16,7 +16,7 @@ export const addDataSource = (pluginName?: string): string => {
   e2e.pages.DataSource.alert().should('exist');
   e2e.pages.DataSource.alertMessage().should('contain.text', 'Data source is working');
   e2e().logToConsole('Added data source with name:', dataSourceName);
-  e2e.context().set('lastAddedDataSource', dataSourceName);
+  e2e.setScenarioContext({ lastAddedDataSource: dataSourceName });
 
   return dataSourceName;
 };

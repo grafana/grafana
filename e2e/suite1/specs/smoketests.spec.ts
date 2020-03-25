@@ -7,7 +7,9 @@ e2e.scenario({
   addScenarioDashBoard: true,
   skipScenario: false,
   scenario: () => {
-    e2e.getScenarioContext('lastAddedDashboardUid').then(lastAddedDashboardUid => {
+    // @todo remove `@ts-ignore` when possible
+    // @ts-ignore
+    e2e.getScenarioContext().then(({ lastAddedDashboardUid }) => {
       e2e.flows.openDashboard(lastAddedDashboardUid);
     });
     e2e.pages.Dashboard.Toolbar.toolbarItems('Add panel').click();

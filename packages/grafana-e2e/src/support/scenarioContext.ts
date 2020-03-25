@@ -7,27 +7,28 @@ export interface ScenarioContext {
   [key: string]: any;
 }
 
-const store: ScenarioContext = {
+const scenarioContext: ScenarioContext = {
   lastAddedDashboard: '',
   lastAddedDashboardUid: '',
   lastAddedDataSource: '',
 };
 
-const getScenarioContext = <T>(key: string | keyof ScenarioContext): Cypress.Chainable => e2e()
-  .wrap({
-    getScenarioContext: (): T => store[key] as T,
-  })
-  .invoke('getScenarioContext');
+// @todo this actually returns type `Cypress.Chainable`
+export const getScenarioContext = (): any =>
+  e2e()
+    .wrap({
+      getScenarioContext: () => ({ ...scenarioContext } as ScenarioContext),
+    })
+    .invoke('getScenarioContext');
 
-const setScenarioContext = <T>(key: string | keyof ScenarioContext, value: T): Cypress.Chainable => e2e()
-  .wrap({
-    setScenarioContext: () => {
-      store[key] = value;
-    },
-  })
-  .invoke('setScenarioContext');
-
-export const scenarioContext = () => ({
-  get: getScenarioContext,
-  set: setScenarioContext,
-});
+// @todo this actually returns type `Cypress.Chainable`
+export const setScenarioContext = (newContext: Partial<ScenarioContext>): any =>
+  e2e()
+    .wrap({
+      setScenarioContext: () => {
+        Object.entries(newContext).forEach(([key, value]) => {
+          scenarioContext[key] = value;
+        });
+      },
+    })
+    .invoke('setScenarioContext');

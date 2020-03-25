@@ -11,7 +11,9 @@ export const addDashboard = () => {
   e2e()
     .url()
     .then((url: string) => {
-      e2e.context().set('lastAddedDashboard', dashboardTitle);
-      e2e.context().set('lastAddedDashboardUid', getDashboardUid(url));
+      e2e.setScenarioContext({
+        lastAddedDashboard: dashboardTitle,
+        lastAddedDashboardUid: getDashboardUid(url),
+      });
     });
 };
