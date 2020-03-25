@@ -3,7 +3,7 @@ import { css } from 'emotion';
 import { GrafanaTheme } from '@grafana/data';
 
 import { Button, ButtonVariant, ButtonProps } from '../Button';
-import { ButtonSize } from '../../Button/types';
+import { ComponentSize } from '../../../types/size';
 import { SelectCommonProps, CustomControlProps } from './types';
 import { SelectBase } from './SelectBase';
 import { stylesFactory, useTheme } from '../../../themes';
@@ -13,7 +13,7 @@ import { IconType } from '../../Icon/types';
 interface ButtonSelectProps<T> extends Omit<SelectCommonProps<T>, 'renderControl' | 'size' | 'prefix'> {
   icon?: IconType;
   variant?: ButtonVariant;
-  size?: ButtonSize;
+  size?: ComponentSize;
 }
 
 interface SelectButtonProps extends Omit<ButtonProps, 'icon'> {

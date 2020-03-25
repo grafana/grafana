@@ -1,4 +1,5 @@
 import {
+  DataQueryError,
   DataQueryRequest,
   DataQueryResponse,
   DataSourceApi,
@@ -6,7 +7,6 @@ import {
   MetricFindValue,
   TableData,
   TimeSeries,
-  DataQueryError,
 } from '@grafana/data';
 import { Scenario, TestDataQuery } from './types';
 import { getBackendSrv } from '@grafana/runtime';
@@ -14,7 +14,7 @@ import { queryMetricTree } from './metricTree';
 import { from, merge, Observable } from 'rxjs';
 import { runStream } from './runStreams';
 import templateSrv from 'app/features/templating/template_srv';
-import { getSearchFilterScopedVar } from '../../../features/templating/variable';
+import { getSearchFilterScopedVar } from '../../../features/templating/utils';
 
 type TestData = TimeSeries | TableData;
 

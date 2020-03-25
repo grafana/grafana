@@ -1,4 +1,4 @@
-package plugin
+package grpcplugin
 
 import (
 	plugin "github.com/hashicorp/go-plugin"

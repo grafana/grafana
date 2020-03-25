@@ -3,7 +3,7 @@ import React, { useContext } from 'react';
 import tinycolor from 'tinycolor2';
 import { SearchQuery } from './search';
 import { css, cx } from 'emotion';
-import { ThemeContext, selectThemeVariant } from '@grafana/ui';
+import { ThemeContext } from '@grafana/ui';
 import { GrafanaTheme } from '@grafana/data';
 
 type Omit<T, K extends keyof T> = Pick<T, Exclude<keyof T, K>>;
@@ -19,14 +19,9 @@ const getSearchFieldStyles = (theme: GrafanaTheme) => ({
     width: 100%;
     height: 55px; /* this variable is not part of GrafanaTheme yet*/
     display: flex;
-    background-color: ${selectThemeVariant(
-      {
-        light: theme.colors.white,
-        dark: theme.colors.dark4,
-      },
-      theme.type
-    )};
+    background-color: ${theme.colors.formInputBg};
     position: relative;
+    box-shadow: 0 0 10px ${theme.isLight ? theme.colors.gray85 : theme.colors.black};
   `,
   input: css`
     max-width: 653px;
@@ -34,22 +29,8 @@ const getSearchFieldStyles = (theme: GrafanaTheme) => ({
     height: 51px;
     box-sizing: border-box;
     outline: none;
-    background: ${selectThemeVariant(
-      {
-        light: theme.colors.dark1,
-        dark: theme.colors.black,
-      },
-      theme.type
-    )};
-    background-color: ${selectThemeVariant(
-      {
-        light: tinycolor(theme.colors.white)
-          .lighten(4)
-          .toString(),
-        dark: theme.colors.dark4,
-      },
-      theme.type
-    )};
+    background-color: ${theme.colors.formInputBg};
+    background: ${theme.colors.formInputBg};
     flex-grow: 10;
   `,
   spacer: css`
@@ -57,6 +38,7 @@ const getSearchFieldStyles = (theme: GrafanaTheme) => ({
   `,
   icon: cx(
     css`
+      color: ${theme.colors.textWeak};
       font-size: ${theme.typography.size.lg};
       padding: ${theme.spacing.md} ${theme.spacing.md} ${theme.spacing.sm} ${theme.spacing.md};
     `,

@@ -4,18 +4,19 @@ import isEmpty from 'lodash/isEmpty';
 import { getDisplayProcessor } from './displayProcessor';
 import { getFlotPairs } from '../utils/flotPairs';
 import {
-  FieldConfig,
   DataFrame,
-  FieldType,
   DisplayValue,
   DisplayValueAlignmentFactors,
+  FieldConfig,
   FieldConfigSource,
+  FieldType,
   InterpolateFunction,
+  ValueMapping,
 } from '../types';
 import { DataFrameView } from '../dataframe/DataFrameView';
 import { GraphSeriesValue } from '../types/graph';
 import { GrafanaTheme } from '../types/theme';
-import { ReducerID, reduceField } from '../transformations/fieldReducer';
+import { reduceField, ReducerID } from '../transformations/fieldReducer';
 import { ScopedVars } from '../types/ScopedVars';
 import { getTimeField } from '../dataframe/processDataFrame';
 
@@ -24,6 +25,10 @@ export interface FieldDisplayOptions {
   values?: boolean; // If true show each row value
   limit?: number; // if showing all values limit
   calcs: string[]; // when !values, pick one value for the whole field
+  override?: any;
+  defaults?: {
+    mappings: ValueMapping[];
+  };
 }
 
 // TODO: use built in variables, same as for data links?
