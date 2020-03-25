@@ -14,34 +14,16 @@
     padding-left: $dashboard-padding;
     margin-left: 0;
   }
+
+  &--shadow {
+    box-shadow: $side-menu-shadow;
+  }
 }
 
 @mixin navbar-alt-look() {
   background: $page-header-bg;
   box-shadow: $search-shadow;
   border-bottom: $navbarBorder;
-}
-
-.dashboard-page--settings-open {
-  .navbar {
-    @include navbar-alt-look();
-  }
-
-  .navbar-buttons--tv,
-  .navbar-button--add-panel,
-  .navbar-button--star,
-  .navbar-button--save,
-  .navbar-button--share,
-  .navbar-button--settings,
-  .navbar-page-btn .fa-caret-down,
-  .refresh-picker,
-  .time-picker {
-    display: none;
-  }
-
-  .navbar-buttons--close {
-    display: flex;
-  }
 }
 
 .panel-in-fullscreen,
@@ -86,6 +68,7 @@
 .navbar-page-btn__folder {
   color: $text-color-weak;
   display: none;
+  padding-right: 8px;
 
   @include media-breakpoint-up(lg) {
     display: inline-block;
@@ -129,13 +112,14 @@ i.navbar-page-btn__search {
 }
 
 .navbar-button {
-  @include buttonBackground($btn-inverse-bg, $btn-inverse-bg-hl, $btn-inverse-text-color, $btn-inverse-text-shadow);
+  background-color: $panel-bg;
 
   display: flex;
   align-items: center;
   font-weight: $btn-font-weight;
-  padding: 6px $space-sm;
-  line-height: 18px;
+  padding: 0 $space-sm;
+  line-height: 32px;
+  height: 32px;
   color: $text-muted;
   border: 1px solid $navbar-button-border;
   margin-left: $space-xs;
@@ -171,6 +155,7 @@ i.navbar-page-btn__search {
     .gicon {
       filter: $navbar-btn-gicon-brightness;
     }
+
     &:hover {
       .gicon {
         filter: brightness(0.8);
@@ -179,17 +164,25 @@ i.navbar-page-btn__search {
   }
 
   &--tight {
-    padding: 7px 4px;
+    padding: 0px 4px;
 
     .fa {
       font-size: 14px;
-      position: relative;
-      top: 1px;
     }
   }
 
   &--secondary {
     @include buttonBackground($btn-secondary-bg, $btn-secondary-bg-hl);
+  }
+
+  &:hover {
+    .fa {
+      color: $text-color;
+    }
+  }
+
+  &--danger {
+    @include buttonBackground($red-base, $red-shade);
   }
 
   @include media-breakpoint-down(lg) {
@@ -205,13 +198,4 @@ i.navbar-page-btn__search {
   height: $navbarHeight;
   align-items: center;
   padding-right: 13px;
-}
-
-.navbar-settings-title {
-  display: block;
-  margin: 0;
-  color: $headings-color;
-  font-size: $font-size-lg;
-  min-height: $navbarHeight;
-  line-height: $navbarHeight;
 }

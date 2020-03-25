@@ -1,4 +1,4 @@
-import { VariableWithOptions, VariableOption } from 'app/features/templating/variable';
+import { VariableOption, VariableWithOptions } from 'app/features/templating/types';
 import { VariableBuilder } from './variableBuilder';
 
 export class OptionsVariableBuilder<T extends VariableWithOptions> extends VariableBuilder<T> {

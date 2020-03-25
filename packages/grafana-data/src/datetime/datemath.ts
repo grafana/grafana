@@ -26,7 +26,11 @@ export namespace dateMath {
    * @param roundUp See parseDateMath function.
    * @param timezone Only string 'utc' is acceptable here, for anything else, local timezone is used.
    */
-  export function parse(text: string | DateTime | Date, roundUp?: boolean, timezone?: TimeZone): DateTime | undefined {
+  export function parse(
+    text?: string | DateTime | Date | null,
+    roundUp?: boolean,
+    timezone?: TimeZone
+  ): DateTime | undefined {
     if (!text) {
       return undefined;
     }

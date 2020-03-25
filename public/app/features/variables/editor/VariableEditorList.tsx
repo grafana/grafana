@@ -1,7 +1,7 @@
 import React, { MouseEvent, PureComponent } from 'react';
 import { e2e } from '@grafana/e2e';
 import EmptyListCTA from '../../../core/components/EmptyListCTA/EmptyListCTA';
-import { QueryVariableModel, VariableModel } from '../../templating/variable';
+import { QueryVariableModel, VariableModel } from '../../templating/types';
 import { toVariableIdentifier, VariableIdentifier } from '../state/types';
 
 export interface Props {

@@ -25,6 +25,17 @@ $green-base: #299c46;
 $green-shade: #23843b;
 $orange-dark: #ff780a;
 
+$gray98: #f7f8fa;
+$gray95: #e9edf2;
+$gray85: #c7d0d9;
+$gray70: #9fa7b3;
+$gray60: #7b8087;
+$gray33: #464c54;
+$gray25: #343b40;
+$gray15: #202226;
+$gray10: #141619;
+$gray05: #0b0c0e;
+
 // Grays
 // -------------------------
 $black: #000000;
@@ -78,8 +89,8 @@ $critical: #e02f44;
 
 // Scaffolding
 // -------------------------
-$body-bg: #161719;
-$page-bg: #161719;
+$body-bg: #0b0c0e;
+$page-bg: #141619;
 
 $body-color: #d8d9da;
 $text-color: #d8d9da;
@@ -94,8 +105,6 @@ $textShadow: none;
 // gradients
 $brand-gradient-horizontal: linear-gradient(to right, #f05a28 30%, #fbca0a 99%);
 $brand-gradient-vertical: linear-gradient(#f05a28 30%, #fbca0a 99%);
-$page-gradient: linear-gradient(180deg, $dark-5 10px, $dark-2 100px);
-$edit-gradient: linear-gradient(180deg, $dark-2 50%, $input-black);
 
 // Links
 // -------------------------
@@ -114,13 +123,13 @@ $hr-border-color: $dark-9;
 
 // Panel
 // -------------------------
-$panel-bg: #212124;
-$panel-border: solid 1px $dark-1;
-$panel-header-hover-bg: $dark-9;
+$panel-bg: #141619;
+$panel-border: 1px solid #202226;
+$panel-header-hover-bg: #202226;
 $panel-corner: $panel-bg;
 
 // page header
-$page-header-bg: linear-gradient(90deg, $dark-7, $black);
+$page-header-bg: #202226;
 $page-header-shadow: inset 0px -4px 14px $dark-3;
 $page-header-border-color: $dark-9;
 
@@ -135,8 +144,8 @@ $code-tag-bg: $dark-1;
 $code-tag-border: $dark-9;
 
 // cards
-$card-background: linear-gradient(135deg, $dark-8, $dark-6);
-$card-background-hover: linear-gradient(135deg, $dark-9, $dark-6);
+$card-background: linear-gradient(135deg, $dark-4, $dark-3);
+$card-background-hover: linear-gradient(135deg, $dark-5, $dark-6);
 $card-shadow: -1px -1px 0 0 hsla(0, 0%, 100%, 0.1), 1px 1px 0 0 rgba(0, 0, 0, 0.3);
 
 // Lists
@@ -212,7 +221,6 @@ $placeholderText: darken($text-color, 25%);
 
 // Search
 $search-shadow: 0 0 30px 0 $black;
-$search-filter-box-bg: $gray-blue;
 
 // Typeahead
 $typeahead-shadow: 0 5px 10px 0 $black;
@@ -221,10 +229,10 @@ $typeahead-selected-color: $yellow;
 
 // Dropdowns
 // -------------------------
-$dropdownBackground: $dark-6;
-$dropdownBorder: rgba(0, 0, 0, 0.2);
+$dropdownBackground: $panel-bg;
+$dropdownBorder: #202226;
 $dropdownDividerTop: transparent;
-$dropdownDividerBottom: #444;
+$dropdownDividerBottom: #343b40;
 
 $dropdownLinkColor: $text-color;
 $dropdownLinkColorHover: $white;
@@ -239,26 +247,23 @@ $horizontalComponentOffset: 180px;
 // Navbar
 // -------------------------
 $navbarHeight: 55px;
-
-$navbarBackground: $panel-bg;
 $navbarBorder: 1px solid $dark-6;
 
-$navbarButtonBackground: $navbarBackground;
-$navbarButtonBackgroundHighlight: $body-bg;
-
+$navbarButtonBackground: $panel-bg;
 $navbar-button-border: #2f2f32;
 
 // Sidemenu
 // -------------------------
-$side-menu-bg: $black;
-$side-menu-bg-mobile: $side-menu-bg;
+$side-menu-bg: $panel-bg;
+$side-menu-bg-mobile: $panel-bg;
+$side-menu-border: none;
 $side-menu-item-hover-bg: $dark-3;
 $side-menu-shadow: 0 0 20px black;
 $side-menu-link-color: $link-color;
 
 // Menu dropdowns
 // -------------------------
-$menu-dropdown-bg: $body-bg;
+$menu-dropdown-bg: $panel-bg;
 $menu-dropdown-hover-bg: $dark-3;
 $menu-dropdown-shadow: 5px 5px 20px -5px $black;
 
