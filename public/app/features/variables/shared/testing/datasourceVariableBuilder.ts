@@ -1,5 +1,5 @@
 import { MultiVariableBuilder } from './multiVariableBuilder';
-import { DataSourceVariableModel, VariableRefresh } from 'app/features/templating/variable';
+import { DataSourceVariableModel, VariableRefresh } from 'app/features/templating/types';
 
 export class DatasourceVariableBuilder<T extends DataSourceVariableModel> extends MultiVariableBuilder<T> {
   withRefresh(refresh: VariableRefresh) {

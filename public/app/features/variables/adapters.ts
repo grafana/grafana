@@ -13,7 +13,7 @@ import {
   VariableModel,
   VariableOption,
   VariableType,
-} from '../templating/variable';
+} from '../templating/types';
 import { VariableEditorProps } from './editor/types';
 import { VariablesState } from './state/variablesReducer';
 import { VariablePickerProps } from './pickers/types';

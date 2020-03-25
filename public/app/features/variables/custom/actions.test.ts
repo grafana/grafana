@@ -3,7 +3,7 @@ import { updateCustomVariableOptions } from './actions';
 import { createCustomVariableAdapter } from './adapter';
 import { reduxTester } from '../../../../test/core/redux/reduxTester';
 import { getTemplatingRootReducer } from '../state/helpers';
-import { CustomVariableModel, VariableHide, VariableOption } from '../../templating/variable';
+import { CustomVariableModel, VariableHide, VariableOption } from '../../templating/types';
 import { toVariablePayload } from '../state/types';
 import { setCurrentVariableValue } from '../state/sharedReducer';
 import { initDashboardTemplating } from '../state/actions';
