@@ -1244,7 +1244,7 @@ workflows:
       - deploy-to-kubernetes:
           filters: *filter-only-master
           requires:
-            - publish-oss-docker-images
+            - publish-enterprise-docker-images
 
   nightly:
     triggers:
