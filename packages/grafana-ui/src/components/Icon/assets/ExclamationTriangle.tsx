@@ -1,11 +1,11 @@
 import React, { FunctionComponent } from 'react';
 import { SvgProps } from '../Icon';
 
-const Svg: FunctionComponent<SvgProps> = ({ size, color, backgroundColor }) => {
+const Svg: FunctionComponent<SvgProps> = ({ size, color, secondaryColor }) => {
   return (
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width={size} height={size}>
       <path
-        fill={backgroundColor ? backgroundColor : color}
+        fill={secondaryColor ? secondaryColor : color}
         d="M20.05713,22H3.94287A3.02288,3.02288,0,0,1,1.3252,17.46631L9.38232,3.51123a3.02272,3.02272,0,0,1,5.23536,0L22.6748,17.46631A3.02288,3.02288,0,0,1,20.05713,22Z"
       />
       <circle cx="12" cy="17" r="1" fill={color} />

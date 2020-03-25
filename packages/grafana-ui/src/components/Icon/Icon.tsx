@@ -1,25 +1,22 @@
-import React, { PureComponent, ComponentType } from 'react';
+import React, { PureComponent, ComponentType, HTMLAttributes } from 'react';
 import { css, cx } from 'emotion';
+import { camelCase } from 'lodash';
 
 import { stylesFactory, withTheme } from '../../themes';
 import { Themeable } from '../../types';
 import { IconType } from './types';
+import { ComponentSize } from '../../types/size';
 
-type Size = 'xs' | 'sm' | 'base' | 'md' | 'lg';
-
-interface IconProps extends Themeable {
+interface IconProps extends Themeable, HTMLAttributes<HTMLElement> {
   name: IconType;
-  size?: Size;
+  size?: ComponentSize;
   color?: string;
-  type?: 'icon' | 'monochrome';
-  title?: string;
-  onClick?: () => void;
-  onMouseDown?: React.MouseEventHandler;
+  type?: 'default' | 'mono';
 }
 export type SvgProps = {
   size: number;
   color: string;
-  backgroundColor?: string;
+  secondaryColor?: string;
 };
 
 const getIconStyles = stylesFactory(() => {
@@ -50,41 +47,43 @@ class UnThemedIcon extends PureComponent<IconProps, IconState> {
     };
   }
 
+  pascalCase(str: string) {
+    const string = camelCase(str);
+    return string.charAt(0).toUpperCase() + string.substring(1);
+  }
+
   componentDidMount() {
-    const { name, type = 'icon' } = this.props;
-    if (type === 'icon') {
+    const { name, type = 'default' } = this.props;
+    if (type === 'default') {
       import(`@iconscout/react-unicons/icons/uil-${name}`).then(module => {
         this.setState({ icon: module.default });
       });
     }
-    if (type === 'monochrome') {
-      import('./assets/ExclamationTriangle').then(module => {
+    if (type === 'mono') {
+      const monoIconName = this.pascalCase(name);
+      import(`./assets/${monoIconName}`).then(module => {
         this.setState({ icon: module.default });
       });
     }
   }
 
   render() {
-    const { color, size, theme, title, onClick, onMouseDown, type = 'icon' } = this.props;
+    const { type = 'default', size = 'md', color, className, theme, ...rest } = this.props;
     const { icon: Component } = this.state;
 
     const styles = getIconStyles();
-    const monochromeColor = color || theme.colors.orange;
-    const backgroundColor = `${monochromeColor}99`;
+    const mainColor = color || theme.colors.orange;
+    const secondaryColor = `${mainColor}99`;
 
     /*Transform string with px to number*/
-    const svgSize = Number(theme.typography.size[size || 'base'].slice(0, -2));
+    const svgSize = Number(theme.typography.size[size].slice(0, -2));
 
     return (
       <div
-        title={title}
-        onClick={onClick}
-        onMouseDown={onMouseDown}
-        className={cx(styles.icon, { [styles.currentFontColor]: !color && type === 'icon' })}
+        className={cx(styles.icon, { [styles.currentFontColor]: !color && type === 'default' }, className)}
+        {...rest}
       >
-        {Component && (
-          <Component color={color ? color : monochromeColor} backgroundColor={backgroundColor} size={svgSize} />
-        )}
+        {Component && <Component color={mainColor} secondaryColor={secondaryColor} size={svgSize} />}
       </div>
     );
   }
