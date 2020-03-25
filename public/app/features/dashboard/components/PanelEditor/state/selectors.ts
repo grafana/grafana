@@ -30,13 +30,6 @@ export const getPanelEditorTabs = memoizeOne((location: LocationState, plugin?: 
     });
   }
 
-  tabs.push({
-    id: PanelEditorTabId.Visualization,
-    text: 'Visualization',
-    icon: 'fa fa-bar-chart',
-    active: false,
-  });
-
   if (plugin.meta.id === 'graph') {
     tabs.push({
       id: PanelEditorTabId.Alert,
