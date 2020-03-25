@@ -155,6 +155,7 @@ i.navbar-page-btn__search {
     .gicon {
       filter: $navbar-btn-gicon-brightness;
     }
+
     &:hover {
       .gicon {
         filter: brightness(0.8);
@@ -178,6 +179,10 @@ i.navbar-page-btn__search {
     .fa {
       color: $text-color;
     }
+  }
+
+  &--danger {
+    @include buttonBackground($red-base, $red-shade);
   }
 
   @include media-breakpoint-down(lg) {
