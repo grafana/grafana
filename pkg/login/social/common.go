@@ -2,6 +2,7 @@ package social
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -68,29 +69,24 @@ func HttpGet(client *http.Client, url string) (response HttpGetResponse, err err
 	return
 }
 
-func (s *SocialBase) searchJSONForAttr(attributePath string, data []byte) string {
+func (s *SocialBase) searchJSONForAttr(attributePath string, data []byte) (string, error) {
 	if attributePath == "" {
-		s.log.Error("No attribute path specified")
-		return ""
+		return "", errors.New("no attribute path specified")
 	}
 	if len(data) == 0 {
-		s.log.Error("Empty user info JSON response provided")
-		return ""
+		return "", errors.New("empty user info JSON response provided")
 	}
 	var buf interface{}
 	if err := json.Unmarshal(data, &buf); err != nil {
-		s.log.Error("Failed to unmarshal user info JSON response", "err", err.Error())
-		return ""
+		return "", fmt.Errorf("failed to unmarshal user info JSON response: %s", err.Error())
 	}
 	val, err := jmespath.Search(attributePath, buf)
 	if err != nil {
-		s.log.Error("Failed to search user info JSON response with provided path", "attributePath", attributePath, "err", err.Error())
-		return ""
+		return "", fmt.Errorf("failed to search user info JSON response with provided path (%s): %s", attributePath, err.Error())
 	}
 	strVal, ok := val.(string)
 	if ok {
-		return strVal
+		return strVal, nil
 	}
-	s.log.Error("Attribute not found when searching JSON with provided path", "attributePath", attributePath)
-	return ""
+	return "", fmt.Errorf("attribute not found when searching JSON with provided path: %s", attributePath)
 }

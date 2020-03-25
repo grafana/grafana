@@ -87,7 +87,7 @@ func TestSearchJSONForEmail(t *testing.T) {
 		for _, test := range tests {
 			provider.emailAttributePath = test.EmailAttributePath
 			t.Run(test.Name, func(t *testing.T) {
-				actualResult := provider.searchJSONForAttr(test.EmailAttributePath, test.UserInfoJSONResponse)
+				actualResult, _ := provider.searchJSONForAttr(test.EmailAttributePath, test.UserInfoJSONResponse)
 				require.Equal(t, test.ExpectedResult, actualResult)
 			})
 		}
@@ -141,7 +141,7 @@ func TestSearchJSONForRole(t *testing.T) {
 		for _, test := range tests {
 			provider.roleAttributePath = test.RoleAttributePath
 			t.Run(test.Name, func(t *testing.T) {
-				actualResult := provider.searchJSONForAttr(test.RoleAttributePath, test.UserInfoJSONResponse)
+				actualResult, _ := provider.searchJSONForAttr(test.RoleAttributePath, test.UserInfoJSONResponse)
 				require.Equal(t, test.ExpectedResult, actualResult)
 			})
 		}

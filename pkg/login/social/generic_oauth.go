@@ -198,8 +198,8 @@ func (s *SocialGenericOAuth) extractEmail(data *UserInfoJson) string {
 	}
 
 	if s.emailAttributePath != "" {
-		email := s.searchJSONForAttr(s.emailAttributePath, data.rawJSON)
-		if email != "" {
+		email, err := s.searchJSONForAttr(s.emailAttributePath, data.rawJSON)
+		if err == nil && email != "" {
 			return email
 		}
 	}
@@ -221,13 +221,16 @@ func (s *SocialGenericOAuth) extractEmail(data *UserInfoJson) string {
 }
 
 func (s *SocialGenericOAuth) extractRole(data *UserInfoJson) string {
-	if s.roleAttributePath != "" {
-		role := s.searchJSONForAttr(s.roleAttributePath, data.rawJSON)
-		if role != "" {
-			return role
-		}
+	if s.roleAttributePath == "" {
+		return ""
 	}
-	return ""
+
+	role, err := s.searchJSONForAttr(s.roleAttributePath, data.rawJSON)
+	if err != nil {
+		s.log.Error("Failed to extract role", "error", err)
+		return ""
+	}
+	return role
 }
 
 func (s *SocialGenericOAuth) extractLogin(data *UserInfoJson) string {

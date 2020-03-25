@@ -60,6 +60,17 @@ var (
 	allOauthes    = []string{"github", "gitlab", "google", "generic_oauth", "grafananet", grafanaCom, "azuread", "okta"}
 )
 
+func newSocialBase(name string, config *oauth2.Config, info *setting.OAuthInfo) *SocialBase {
+	logger := log.New("oauth." + name)
+
+	return &SocialBase{
+		Config:         config,
+		log:            logger,
+		allowSignup:    info.AllowSignup,
+		allowedDomains: info.AllowedDomains,
+	}
+}
+
 func NewOAuthService() {
 	setting.OAuthService = &setting.OAuther{}
 	setting.OAuthService.OAuthInfos = make(map[string]*setting.OAuthInfo)
@@ -109,17 +120,10 @@ func NewOAuthService() {
 			Scopes:      info.Scopes,
 		}
 
-		logger := log.New("oauth." + name)
-
 		// GitHub.
 		if name == "github" {
 			SocialMap["github"] = &SocialGithub{
-				SocialBase: &SocialBase{
-					Config:         &config,
-					log:            logger,
-					allowSignup:    info.AllowSignup,
-					allowedDomains: info.AllowedDomains,
-				},
+				SocialBase:           newSocialBase(name, &config, info),
 				apiUrl:               info.ApiUrl,
 				teamIds:              sec.Key("team_ids").Ints(","),
 				allowedOrganizations: util.SplitString(sec.Key("allowed_organizations").String()),
@@ -129,12 +133,7 @@ func NewOAuthService() {
 		// GitLab.
 		if name == "gitlab" {
 			SocialMap["gitlab"] = &SocialGitlab{
-				SocialBase: &SocialBase{
-					Config:         &config,
-					log:            logger,
-					allowSignup:    info.AllowSignup,
-					allowedDomains: info.AllowedDomains,
-				},
+				SocialBase:    newSocialBase(name, &config, info),
 				apiUrl:        info.ApiUrl,
 				allowedGroups: util.SplitString(sec.Key("allowed_groups").String()),
 			}
@@ -143,12 +142,7 @@ func NewOAuthService() {
 		// Google.
 		if name == "google" {
 			SocialMap["google"] = &SocialGoogle{
-				SocialBase: &SocialBase{
-					Config:         &config,
-					log:            logger,
-					allowSignup:    info.AllowSignup,
-					allowedDomains: info.AllowedDomains,
-				},
+				SocialBase:   newSocialBase(name, &config, info),
 				hostedDomain: info.HostedDomain,
 				apiUrl:       info.ApiUrl,
 			}
@@ -157,12 +151,7 @@ func NewOAuthService() {
 		// AzureAD.
 		if name == "azuread" {
 			SocialMap["azuread"] = &SocialAzureAD{
-				SocialBase: &SocialBase{
-					Config:         &config,
-					log:            logger,
-					allowSignup:    info.AllowSignup,
-					allowedDomains: info.AllowedDomains,
-				},
+				SocialBase:    newSocialBase(name, &config, info),
 				allowedGroups: util.SplitString(sec.Key("allowed_groups").String()),
 			}
 		}
@@ -170,12 +159,7 @@ func NewOAuthService() {
 		// Okta
 		if name == "okta" {
 			SocialMap["okta"] = &SocialOkta{
-				SocialBase: &SocialBase{
-					Config:         &config,
-					log:            logger,
-					allowSignup:    info.AllowSignup,
-					allowedDomains: info.AllowedDomains,
-				},
+				SocialBase:        newSocialBase(name, &config, info),
 				apiUrl:            info.ApiUrl,
 				allowedGroups:     util.SplitString(sec.Key("allowed_groups").String()),
 				roleAttributePath: info.RoleAttributePath,
@@ -185,12 +169,7 @@ func NewOAuthService() {
 		// Generic - Uses the same scheme as Github.
 		if name == "generic_oauth" {
 			SocialMap["generic_oauth"] = &SocialGenericOAuth{
-				SocialBase: &SocialBase{
-					Config:         &config,
-					log:            logger,
-					allowSignup:    info.AllowSignup,
-					allowedDomains: info.AllowedDomains,
-				},
+				SocialBase:           newSocialBase(name, &config, info),
 				apiUrl:               info.ApiUrl,
 				emailAttributeName:   info.EmailAttributeName,
 				emailAttributePath:   info.EmailAttributePath,
@@ -214,11 +193,7 @@ func NewOAuthService() {
 			}
 
 			SocialMap[grafanaCom] = &SocialGrafanaCom{
-				SocialBase: &SocialBase{
-					Config:      &config,
-					log:         logger,
-					allowSignup: info.AllowSignup,
-				},
+				SocialBase:           newSocialBase(name, &config, info),
 				url:                  setting.GrafanaComUrl,
 				allowedOrganizations: util.SplitString(sec.Key("allowed_organizations").String()),
 			}
