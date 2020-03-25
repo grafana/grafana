@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
+	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/stretchr/testify/require"
 )
 
@@ -16,28 +17,28 @@ func TestParsingAlertRuleSettings(t *testing.T) {
 		shouldErr require.ErrorAssertionFunc
 	}{
 		{
-			name:      "can parse valid test datasource alert",
+			name:      "can parse singel condition",
 			file:      "testdata/one_condition.json",
 			expected:  []int64{3},
 			shouldErr: require.NoError,
 		},
 		{
-			name:      "can parse valid test datasource alert",
+			name:      "can parse multiple conditions",
 			file:      "testdata/two_conditions.json",
 			expected:  []int64{3, 2},
 			shouldErr: require.NoError,
 		},
 		{
-			name:      "can parse valid test datasource alert",
+			name:      "can parse empty json",
 			file:      "testdata/empty.json",
 			expected:  []int64{},
 			shouldErr: require.NoError,
 		},
 		{
-			name:      "can parse valid test datasource alert",
+			name:      "can parse blank content",
 			file:      "testdata/invalid_format.json",
 			expected:  []int64{},
-			shouldErr: require.Error,
+			shouldErr: require.NoError,
 		},
 	}
 
@@ -50,7 +51,9 @@ func TestParsingAlertRuleSettings(t *testing.T) {
 			content, err := ioutil.ReadFile(tc.file)
 			require.NoError(t, err, "expected to be able to read file")
 
-			result, err := uss.parseAlertRuleModel(content)
+			j, err := simplejson.NewJson(content)
+			result, err := uss.parseAlertRuleModel(j)
+
 			tc.shouldErr(t, err)
 			diff := cmp.Diff(tc.expected, result)
 			if diff != "" {

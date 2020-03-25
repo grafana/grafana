@@ -3,6 +3,7 @@ package usagestats
 import (
 	"encoding/json"
 
+	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 )
 
@@ -11,29 +12,58 @@ type datasourceAlertUsage struct {
 	count          int
 }
 
-func (uss *UsageStatsService) getAlertingUsage() ([]datasourceAlertUsage, error) {
-	//map of datasource IDs with counter
-	// datsourceIds := map[int64]int{}
+func (uss *UsageStatsService) getAlertingUsage() (map[string]int, error) {
+	cmd := &models.GetAllAlertsQuery{}
 
-	// cmd := &models.GetAllAlertsQuery{}
+	if err := uss.Bus.Dispatch(cmd); err != nil {
+		uss.log.Error("Could not load alerts", "error", err)
+		return map[string]int{}, err
+	}
 
-	// if err := uss.Bus.Dispatch(cmd); err != nil {
-	// 	uss.log.Error("Could not load alerts", "error", err)
-	// 	return []datasourceAlertUsage{}, err
-	// }
-
-	return []datasourceAlertUsage{}, nil
+	return uss.mapRulesToUsageStats(cmd.Result)
 }
 
-func (uss *UsageStatsService) mapRulesToUsageStats(rules []*models.Alert) ([]datasourceAlertUsage, error) {
-	return []datasourceAlertUsage{}, nil
+func (uss *UsageStatsService) mapRulesToUsageStats(rules []*models.Alert) (map[string]int, error) {
+	// map of datasourceId type and frequency
+	typeCount := map[int64]int{}
+
+	for _, a := range rules {
+		dss, err := uss.parseAlertRuleModel(a.Settings)
+		if err != nil {
+			uss.log.Error("could not parse alert rule", "id", a.Id)
+			continue
+		}
+
+		for _, d := range dss {
+			typeCount[d]++
+		}
+	}
+
+	r := map[string]int{}
+	for k, v := range typeCount {
+		query := &models.GetDataSourceByIdQuery{Id: k}
+		err := uss.Bus.Dispatch(query)
+		if err != nil {
+			return map[string]int{}, nil
+		}
+
+		r[query.Result.Type] = v
+	}
+
+	return r, nil
 }
 
-func (uss *UsageStatsService) parseAlertRuleModel(bytes json.RawMessage) ([]int64, error) {
+func (uss *UsageStatsService) parseAlertRuleModel(settings *simplejson.Json) ([]int64, error) {
 	datasourceIDs := []int64{}
 	alertJsonModel := AlertJsonModel{}
 
-	err := json.Unmarshal(bytes, &alertJsonModel)
+	if settings == nil {
+		return datasourceIDs, nil
+	}
+
+	bytes, err := settings.MarshalJSON()
+
+	err = json.Unmarshal(bytes, &alertJsonModel)
 	if err != nil {
 		return datasourceIDs, err
 	}
