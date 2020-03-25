@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import React, { FC, memo } from 'react';
 import { css } from 'emotion';
 import { Forms } from '@grafana/ui';
 
@@ -8,8 +8,9 @@ interface Props {
   editable?: boolean;
 }
 
-export const SearchCheckbox: FC<Props> = ({ checked = false, onClick, editable = false }) => {
+export const SearchCheckbox: FC<Props> = memo(({ checked = false, onClick, editable = false }) => {
   const styles = getStyles();
+
   return (
     editable && (
       <div onClick={onClick} className={styles.wrapper}>
@@ -17,7 +18,7 @@ export const SearchCheckbox: FC<Props> = ({ checked = false, onClick, editable =
       </div>
     )
   );
-};
+});
 
 const getStyles = () => ({
   // Vertically align absolutely positioned checkbox element
