@@ -70,7 +70,11 @@ func (s *SocialOkta) UserInfo(client *http.Client, token *oauth2.Token) (*BasicU
 	}
 
 	role := s.extractRole(&data)
+
 	groups := s.GetGroups(&data)
+	if !s.IsGroupMember(groups) {
+		return nil, ErrMissingGroupMembership
+	}
 
 	return &BasicUserInfo{
 		Id:     claims.ID,
@@ -128,4 +132,20 @@ func (s *SocialOkta) GetGroups(data *OktaUserInfoJson) []string {
 		groups = data.Groups
 	}
 	return groups
+}
+
+func (s *SocialOkta) IsGroupMember(groups []string) bool {
+	if len(s.allowedGroups) == 0 {
+		return true
+	}
+
+	for _, allowedGroup := range s.allowedGroups {
+		for _, group := range groups {
+			if group == allowedGroup {
+				return true
+			}
+		}
+	}
+
+	return false
 }
