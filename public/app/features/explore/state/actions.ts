@@ -123,7 +123,7 @@ export function addQueryRow(exploreId: ExploreId, index: number): ThunkResult<vo
  */
 export function changeDatasource(exploreId: ExploreId, datasource: string): ThunkResult<void> {
   return async (dispatch, getState) => {
-    let newDataSourceInstance: DataSourceApi = null;
+    let newDataSourceInstance: DataSourceApi;
 
     if (!datasource) {
       newDataSourceInstance = await getDatasourceSrv().get();
@@ -317,7 +317,7 @@ export const loadDatasourceReady = (
   instance: DataSourceApi,
   orgId: number
 ): PayloadAction<LoadDatasourceReadyPayload> => {
-  const historyKey = `grafana.explore.history.${instance.meta.id}`;
+  const historyKey = `grafana.explore.history.${instance.meta?.id}`;
   const history = store.getObject(historyKey, []);
   // Save last-used datasource
 
@@ -340,7 +340,7 @@ export const loadDatasourceReady = (
 export const importQueries = (
   exploreId: ExploreId,
   queries: DataQuery[],
-  sourceDataSource: DataSourceApi,
+  sourceDataSource: DataSourceApi | undefined,
   targetDataSource: DataSourceApi
 ): ThunkResult<void> => {
   return async dispatch => {
@@ -352,7 +352,7 @@ export const importQueries = (
 
     let importedQueries = queries;
     // Check if queries can be imported from previously selected datasource
-    if (sourceDataSource.meta.id === targetDataSource.meta.id) {
+    if (sourceDataSource.meta?.id === targetDataSource.meta?.id) {
       // Keep same queries if same type of datasource
       importedQueries = [...queries];
     } else if (targetDataSource.importQueries) {
@@ -701,18 +701,31 @@ export function splitClose(itemId: ExploreId): ThunkResult<void> {
  * The right state is automatically initialized.
  * The copy keeps all query modifications but wipes the query results.
  */
-export function splitOpen(): ThunkResult<void> {
-  return (dispatch, getState) => {
+export function splitOpen(dataSourceName?: string, query?: string): ThunkResult<void> {
+  return async (dispatch, getState) => {
     // Clone left state to become the right state
-    const leftState = getState().explore[ExploreId.left];
+    const leftState: ExploreItemState = getState().explore[ExploreId.left];
+    const rightState: ExploreItemState = {
+      ...leftState,
+    };
     const queryState = getState().location.query[ExploreId.left] as string;
     const urlState = parseUrlState(queryState);
-    const itemState: ExploreItemState = {
-      ...leftState,
-      queries: leftState.queries.slice(),
-      urlState,
-    };
-    dispatch(splitOpenAction({ itemState }));
+    rightState.queries = leftState.queries.slice();
+    rightState.urlState = urlState;
+    dispatch(splitOpenAction({ itemState: rightState }));
+
+    if (dataSourceName && query) {
+      // This is hardcoded for Jaeger right now
+      const queries = [
+        {
+          query,
+          refId: 'A',
+        } as DataQuery,
+      ];
+      await dispatch(changeDatasource(ExploreId.right, dataSourceName));
+      await dispatch(setQueriesAction({ exploreId: ExploreId.right, queries }));
+    }
+
     dispatch(stateSave());
   };
 }
@@ -757,7 +770,8 @@ const togglePanelActionCreator = (
     }
 
     dispatch(actionCreator({ exploreId }));
-    dispatch(updateExploreUIState(exploreId, uiFragmentStateUpdate));
+    // The switch further up is exhaustive so uiFragmentStateUpdate should definitely be initialized
+    dispatch(updateExploreUIState(exploreId, uiFragmentStateUpdate!));
 
     if (shouldRunQueries) {
       dispatch(runQueries(exploreId));
