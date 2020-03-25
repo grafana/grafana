@@ -32,18 +32,18 @@ export const SearchItem: FC<Props> = ({ item, editable, onToggleSelection, onTag
     window.location.pathname = item.url;
   };
 
-  const tagSelected = (tag: string, e: React.MouseEvent<HTMLElement>) => {
-    e.stopPropagation();
+  const tagSelected = (tag: string, event: React.MouseEvent<HTMLElement>) => {
+    event.stopPropagation();
     onTagSelected(tag);
+  };
+
+  const toggleItem = (event: React.MouseEvent<HTMLElement>) => {
+    onToggleSelection(item, event);
   };
 
   return (
     <li aria-label={selectors.dashboards(item.title)} className={styles.wrapper} onClick={navigate}>
-      <SearchCheckbox
-        editable={editable}
-        checked={item.checked}
-        onClick={(e: MouseEvent) => onToggleSelection(item, e)}
-      />
+      <SearchCheckbox editable={editable} checked={item.checked} onClick={toggleItem} />
       <Icon className={styles.icon} name="th-large" />
       <span className={styles.body} onClick={onItemClick}>
         <div className={styles.title}>{item.title}</div>
