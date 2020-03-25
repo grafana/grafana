@@ -3,17 +3,16 @@ import { css, cx } from 'emotion';
 import { GrafanaTheme } from '@grafana/data';
 import { Icon, useTheme } from '@grafana/ui';
 import { IconType } from '@grafana/ui/src/components/Icon/types';
-import { DashboardSection, DashboardSectionItem } from '../types';
+import { DashboardSection, ItemClickWithEvent } from '../types';
 import { SearchItem } from './SearchItem';
 import { SearchCheckbox } from './SearchCheckbox';
 
-type clickWithEvent = (item: DashboardSectionItem | DashboardSection, event: any) => void;
 export interface Props {
   results: DashboardSection[] | undefined;
   onSelectionChanged: () => void;
   onTagSelected: (name: string) => any;
   onFolderExpanding: () => void;
-  onToggleSelection: clickWithEvent;
+  onToggleSelection: ItemClickWithEvent;
   editable: boolean;
 }
 
@@ -81,7 +80,7 @@ const getSectionStyles = (theme: GrafanaTheme) => {
 interface SectionHeaderProps {
   section: DashboardSection;
   onSectionClick: (section: DashboardSection) => void;
-  onToggleSelection: clickWithEvent;
+  onToggleSelection: ItemClickWithEvent;
   editable: boolean;
 }
 

@@ -50,3 +50,5 @@ export interface SectionsState {
   allChecked: boolean;
   dashboardTags: DashboardTag[];
 }
+
+export type ItemClickWithEvent = (item: DashboardSectionItem | DashboardSection, event: any) => void;
