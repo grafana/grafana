@@ -178,7 +178,7 @@ Example Alias By: `{{resource.type}} - {{metric.type}}`
 
 Example Result: `gce_instance - compute.googleapis.com/instance/cpu/usage_time`
 
-### SLO Queries
+### SLO queries
 
 {{< docs-imagebox img="/img/docs/v70/slo-query-builder.png" max-width= "400px" class="docs-image--right" >}}
 
