@@ -2,10 +2,10 @@ import React, { AnchorHTMLAttributes, ButtonHTMLAttributes, useContext } from 'r
 import { css, cx } from 'emotion';
 import tinycolor from 'tinycolor2';
 import { selectThemeVariant, stylesFactory, ThemeContext } from '../../themes';
-import { Button as DefaultButton, LinkButton as DefaultLinkButton } from './Legacy/Button/Button';
 import { getFocusStyle, getPropertiesForButtonSize } from './commonStyles';
 import { StyleDeps } from './Legacy/Button/types';
 import { GrafanaTheme } from '@grafana/data';
+import { ButtonContent } from './Legacy/Button/ButtonContent';
 
 export type ButtonSize = 'xs' | 'sm' | 'md' | 'lg';
 
@@ -140,23 +140,40 @@ type CommonProps = {
 
 export type ButtonProps = CommonProps & ButtonHTMLAttributes<HTMLButtonElement>;
 
-export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(({ variant, ...otherProps }, ref) => {
-  const theme = useContext(ThemeContext);
-  const styles = getButtonStyles({
-    theme,
-    size: otherProps.size || 'md',
-    variant: variant || 'primary',
-  });
-  return <DefaultButton {...otherProps} variant={variant} styles={styles} ref={ref} />;
-});
+export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
+  ({ variant, icon, children, ...otherProps }, ref) => {
+    const theme = useContext(ThemeContext);
+    const styles = getButtonStyles({
+      theme,
+      size: otherProps.size || 'md',
+      variant: variant || 'primary',
+    });
+
+    return (
+      <button className={styles.button} {...otherProps} ref={ref}>
+        <ButtonContent icon={icon}>{children}</ButtonContent>
+      </button>
+    );
+  }
+);
+
+Button.displayName = 'Button';
 
 type ButtonLinkProps = CommonProps & AnchorHTMLAttributes<HTMLAnchorElement>;
-export const LinkButton = React.forwardRef<HTMLAnchorElement, ButtonLinkProps>(({ variant, ...otherProps }, ref) => {
-  const theme = useContext(ThemeContext);
-  const styles = getButtonStyles({
-    theme,
-    size: otherProps.size || 'md',
-    variant: variant || 'primary',
-  });
-  return <DefaultLinkButton {...otherProps} variant={variant} styles={styles} ref={ref} />;
-});
+export const LinkButton = React.forwardRef<HTMLAnchorElement, ButtonLinkProps>(
+  ({ variant, icon, children, ...otherProps }, ref) => {
+    const theme = useContext(ThemeContext);
+    const styles = getButtonStyles({
+      theme,
+      size: otherProps.size || 'md',
+      variant: variant || 'primary',
+    });
+
+    return (
+      <a className={styles.button} {...otherProps} ref={ref}>
+        <ButtonContent icon={icon}>{children}</ButtonContent>
+      </a>
+    );
+  }
+);
+LinkButton.displayName = 'LinkButton';
