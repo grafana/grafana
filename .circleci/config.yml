@@ -1269,7 +1269,7 @@ workflows:
             - build-enterprise-windows-installer
             - end-to-end-tests
             - build-release-publisher
-      - publish-storybook
+      - publish-storybook:
           requires:
             - end-to-end-tests
       - build-docker-images:
