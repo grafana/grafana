@@ -44,14 +44,14 @@ commands:
   install-google-cloud-sdk:
     description: Install Google Cloud SDK
     steps:
-      run:
-        command: |
-          VERSION=286.0.0
-          cd /tmp
-          curl -fLO https://dl.google.com/dl/cloudsdk/channels/rapid/downloads/google-cloud-sdk-${VERSION}-linux-x86_64.tar.gz
-          tar xf google-cloud-sdk-${VERSION}-linux-x86_64.tar.gz
-          sudo mv google-cloud-sdk /opt/google-cloud-sdk
-          rm google-cloud-sdk-${VERSION}-linux-x86_64.tar.gz
+      - run:
+          command: |
+            VERSION=286.0.0
+            cd /tmp
+            curl -fLO https://dl.google.com/dl/cloudsdk/channels/rapid/downloads/google-cloud-sdk-${VERSION}-linux-x86_64.tar.gz
+            tar xf google-cloud-sdk-${VERSION}-linux-x86_64.tar.gz
+            sudo mv google-cloud-sdk /opt/google-cloud-sdk
+            rm google-cloud-sdk-${VERSION}-linux-x86_64.tar.gz
 
 jobs:
   install-grabpl:
