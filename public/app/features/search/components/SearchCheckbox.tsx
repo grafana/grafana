@@ -1,6 +1,6 @@
 import React, { FC, memo } from 'react';
 import { css } from 'emotion';
-import { Forms } from '@grafana/ui';
+import { Forms, stylesFactory } from '@grafana/ui';
 
 interface Props {
   checked: boolean;
@@ -20,7 +20,7 @@ export const SearchCheckbox: FC<Props> = memo(({ checked = false, onClick, edita
   );
 });
 
-const getStyles = () => ({
+const getStyles = stylesFactory(() => ({
   // Vertically align absolutely positioned checkbox element
   wrapper: css`
     height: 21px;
@@ -28,4 +28,4 @@ const getStyles = () => ({
       height: 100%;
     }
   `,
-});
+}));

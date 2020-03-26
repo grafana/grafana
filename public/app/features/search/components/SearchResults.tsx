@@ -1,7 +1,7 @@
 import React, { FC } from 'react';
 import { css, cx } from 'emotion';
 import { GrafanaTheme } from '@grafana/data';
-import { Icon, useTheme } from '@grafana/ui';
+import { Icon, stylesFactory, useTheme } from '@grafana/ui';
 import { IconType } from '@grafana/ui/src/components/Icon/types';
 import { DashboardSection, ItemClickWithEvent } from '../types';
 import { SearchItem } from './SearchItem';
@@ -63,7 +63,7 @@ export const SearchResults: FC<Props> = ({
   );
 };
 
-const getSectionStyles = (theme: GrafanaTheme) => {
+const getSectionStyles = stylesFactory((theme: GrafanaTheme) => {
   return {
     wrapper: css`
       list-style: none;
@@ -75,7 +75,7 @@ const getSectionStyles = (theme: GrafanaTheme) => {
       margin-bottom: 3px;
     `,
   };
-};
+});
 
 interface SectionHeaderProps {
   section: DashboardSection;
@@ -114,7 +114,7 @@ const SectionHeader: FC<SectionHeaderProps> = ({ section, onSectionClick, onTogg
   );
 };
 
-const getSectionHeaderStyles = (theme: GrafanaTheme, selected = false) => {
+const getSectionHeaderStyles = stylesFactory((theme: GrafanaTheme, selected = false) => {
   const { sm, xs } = theme.spacing;
   return {
     wrapper: cx(
@@ -156,4 +156,4 @@ const getSectionHeaderStyles = (theme: GrafanaTheme, selected = false) => {
       padding: 5px;
     `,
   };
-};
+});
