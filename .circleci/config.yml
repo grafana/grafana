@@ -1346,6 +1346,9 @@ workflows:
             - end-to-end-tests
       - build-docs-website:
           filters: *filter-not-release-or-master
+          requires:
+            - test-backend
+            - test-frontend
       - deploy-to-kubernetes:
           filters: *filter-only-master
           requires:
