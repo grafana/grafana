@@ -115,6 +115,7 @@ export interface DataSourcePluginMeta<T extends KeyValue = {}> extends PluginMet
   logs?: boolean;
   annotations?: boolean;
   alerting?: boolean;
+  tracing?: boolean;
   mixed?: boolean;
   hasQueryHelp?: boolean;
   category?: string;
@@ -316,6 +317,7 @@ export enum DataSourceStatus {
 export enum ExploreMode {
   Logs = 'Logs',
   Metrics = 'Metrics',
+  Tracing = 'Tracing',
 }
 
 export interface ExploreQueryFieldProps<
@@ -389,13 +391,6 @@ export interface DataQuery {
    * For non mixed scenarios this is undefined.
    */
   datasource?: string | null;
-
-  metric?: any;
-
-  /**
-   * For limiting result lines.
-   */
-  maxLines?: number;
 }
 
 export interface DataQueryError {

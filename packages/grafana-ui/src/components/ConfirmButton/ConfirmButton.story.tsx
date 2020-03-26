@@ -1,10 +1,11 @@
+export { ClipboardButton } from '../ClipboardButton/ClipboardButton';
 import React from 'react';
 import { storiesOf } from '@storybook/react';
 import { text, boolean, select } from '@storybook/addon-knobs';
 import { ConfirmButton } from './ConfirmButton';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { action } from '@storybook/addon-actions';
-import { Button } from '../Button/Button';
+import { Button } from '../Button';
 
 const getKnobs = () => {
   return {
@@ -16,9 +17,8 @@ const getKnobs = () => {
       {
         primary: 'primary',
         secondary: 'secondary',
-        danger: 'danger',
-        inverse: 'inverse',
-        transparent: 'transparent',
+        destructive: 'destructive',
+        link: 'link',
       },
       'primary'
     ),

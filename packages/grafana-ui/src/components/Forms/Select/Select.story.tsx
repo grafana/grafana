@@ -5,7 +5,7 @@ import { SelectableValue } from '@grafana/data';
 import { getAvailableIcons, IconType } from '../../Icon/types';
 import { select, boolean } from '@storybook/addon-knobs';
 import { Icon } from '../../Icon/Icon';
-import { Button } from '../Button';
+import { Button } from '../../Button';
 import { ButtonSelect } from './ButtonSelect';
 import { getIconKnob } from '../../../utils/storybook/knobs';
 import kebabCase from 'lodash/kebabCase';
@@ -94,6 +94,33 @@ export const basicSelectPlainValue = () => {
     <>
       <Select
         options={generateOptions()}
+        value={value}
+        onChange={v => {
+          setValue(v.value);
+        }}
+        size="md"
+        {...getDynamicProps()}
+      />
+    </>
+  );
+};
+
+/**
+ * Uses plain values instead of SelectableValue<T>
+ */
+export const SelectWithOptionDescriptions = () => {
+  // TODO this is not working with new Select
+
+  const [value, setValue] = useState<number>();
+  const options = [
+    { label: 'hello', value: 1, description: 'this is a description' },
+    { label: 'hello 2', value: 2, description: 'second description' },
+  ];
+
+  return (
+    <>
+      <Select
+        options={options}
         value={value}
         onChange={v => {
           setValue(v.value);

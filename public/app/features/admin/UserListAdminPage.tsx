@@ -3,7 +3,7 @@ import { css, cx } from 'emotion';
 import { hot } from 'react-hot-loader';
 import { connect, MapDispatchToProps, MapStateToProps } from 'react-redux';
 import { NavModel } from '@grafana/data';
-import { Pagination, Forms, Tooltip, HorizontalGroup, stylesFactory } from '@grafana/ui';
+import { Pagination, Forms, Tooltip, HorizontalGroup, stylesFactory, LinkButton } from '@grafana/ui';
 import { StoreState, UserDTO } from '../../types';
 import Page from 'app/core/components/Page/Page';
 import { getNavModel } from '../../core/selectors/navModel';
@@ -53,9 +53,9 @@ const UserListAdminPageUnConnected: React.FC<Props> = props => {
                 onChange={event => props.changeQuery(event.currentTarget.value)}
                 prefix={<i className="fa fa-search" />}
               />
-              <Forms.LinkButton href="admin/users/create" variant="primary">
+              <LinkButton href="admin/users/create" variant="primary">
                 New user
-              </Forms.LinkButton>
+              </LinkButton>
             </HorizontalGroup>
           </div>
 

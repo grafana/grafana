@@ -171,11 +171,11 @@ $table-bg-hover: $dark-6;
 
 // Buttons
 // -------------------------
-$btn-secondary-bg: $blue-base;
-$btn-secondary-bg-hl: $blue-shade;
+$btn-primary-bg: $blue-base;
+$btn-primary-bg-hl: $blue-shade;
 
-$btn-primary-bg: $green-base;
-$btn-primary-bg-hl: $green-shade;
+$btn-secondary-bg: $dark-6;
+$btn-secondary-bg-hl: lighten($dark-6, 4%);
 
 $btn-success-bg: $green-base;
 $btn-success-bg-hl: $green-shade;
