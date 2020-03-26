@@ -558,7 +558,7 @@ jobs:
           command: |
             if [[ -z $CIRCLE_TAG && $CIRCLE_BRANCH != "chore/test-release-pipeline" && $CIRCLE_BRANCH != "master" ]]; then
               echo "Nothing to do for PRs, so marking this step successful"
-              echo circleci step halt
+              circleci step halt
             fi
 
             # Work around a bug in launching gsutil
@@ -571,7 +571,6 @@ jobs:
               IMAGE_BASE="ubuntu"
               echo "Uploading Ubuntu based << parameters.edition >> Docker images"
             fi
-            ls docker/*.tar
 
             echo $GCP_GRAFANA_UPLOAD_KEY > /tmp/gcpkey.json
             gcloud auth activate-service-account --key-file=/tmp/gcpkey.json
@@ -647,14 +646,14 @@ jobs:
 
             if [[ "<< parameters.ubuntu >>" != "true" ]]; then
               IMAGE_BASE="regular"
-              echo "Downloading non-Ubuntu based << parameters.edition >> Docker images"
+              echo "Removing non-Ubuntu based << parameters.edition >> Docker images"
             else
               IMAGE_BASE="ubuntu"
-              echo "Downloading Ubuntu based << parameters.edition >> Docker images"
+              echo "Removing Ubuntu based << parameters.edition >> Docker images"
             fi
             echo $GCP_GRAFANA_UPLOAD_KEY > /tmp/gcpkey.json
             gcloud auth activate-service-account --key-file=/tmp/gcpkey.json
-            echo /opt/google-cloud-sdk/bin/gsutil -m rm -r \
+            /opt/google-cloud-sdk/bin/gsutil rm -r \
               gs://grafana-build-pipeline/docker/<< parameters.edition >>/${IMAGE_BASE}/${CIRCLE_WORKFLOW_ID}
       - run:
           name: CI job failed
