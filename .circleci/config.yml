@@ -567,6 +567,9 @@ jobs:
               echo circleci step halt
             fi
 
+            # Work around a bug in launching gsutil
+            export BOTO_CONFIG=/dev/null
+
             if [[ "<< parameters.ubuntu >>" != "true" ]]; then
               IMAGE_BASE="regular"
               echo "Uploading non-Ubuntu based << parameters.edition >> Docker images"
@@ -612,6 +615,9 @@ jobs:
       - run:
           name: Download Docker images from GCS
           command: |
+            # Work around a bug in launching gsutil
+            export BOTO_CONFIG=/dev/null
+
             if [[ "<< parameters.ubuntu >>" != "true" ]]; then
               IMAGE_BASE="regular"
               echo "Downloading non-Ubuntu based << parameters.edition >> Docker images"
@@ -639,6 +645,9 @@ jobs:
       - run:
           name: Remove Docker images from GCS
           command: |
+            # Work around a bug in launching gsutil
+            export BOTO_CONFIG=/dev/null
+
             if [[ "<< parameters.ubuntu >>" != "true" ]]; then
               IMAGE_BASE="regular"
               echo "Downloading non-Ubuntu based << parameters.edition >> Docker images"
