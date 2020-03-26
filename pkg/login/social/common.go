@@ -2,6 +2,7 @@ package social
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -70,8 +71,12 @@ func HttpGet(client *http.Client, url string) (response HttpGetResponse, err err
 }
 
 func (s *SocialBase) searchJSONForAttr(attributePath string, data []byte) (string, error) {
-	if attributePath == "" || len(data) == 0 {
-		return "", nil
+	if attributePath == "" {
+		return "", errors.New("no attribute path specified")
+	}
+
+	if len(data) == 0 {
+		return "", errors.New("empty user info JSON response provided")
 	}
 
 	var buf interface{}
