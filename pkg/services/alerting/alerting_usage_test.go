@@ -109,7 +109,8 @@ func TestParsingAlertRuleSettings(t *testing.T) {
 			content, err := ioutil.ReadFile(tc.file)
 			require.NoError(t, err, "expected to be able to read file")
 
-			j, err := simplejson.NewJson(content)
+			j, _ := simplejson.NewJson(content)
+
 			result, err := ae.parseAlertRuleModel(j)
 
 			tc.shouldErr(t, err)
