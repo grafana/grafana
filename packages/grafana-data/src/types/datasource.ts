@@ -391,13 +391,6 @@ export interface DataQuery {
    * For non mixed scenarios this is undefined.
    */
   datasource?: string | null;
-
-  metric?: any;
-
-  /**
-   * For limiting result lines.
-   */
-  maxLines?: number;
 }
 
 export interface DataQueryError {
