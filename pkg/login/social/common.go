@@ -2,7 +2,6 @@ package social
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -71,23 +70,24 @@ func HttpGet(client *http.Client, url string) (response HttpGetResponse, err err
 }
 
 func (s *SocialBase) searchJSONForAttr(attributePath string, data []byte) (string, error) {
-	if attributePath == "" {
-		return "", errors.New("no attribute path specified")
+	if attributePath == "" || len(data) == 0 {
+		return "", nil
 	}
-	if len(data) == 0 {
-		return "", errors.New("empty user info JSON response provided")
-	}
+
 	var buf interface{}
 	if err := json.Unmarshal(data, &buf); err != nil {
 		return "", errutil.Wrap("failed to unmarshal user info JSON response", err)
 	}
+
 	val, err := jmespath.Search(attributePath, buf)
 	if err != nil {
 		return "", errutil.Wrapf(err, "failed to search user info JSON response with provided path: %q", attributePath)
 	}
+
 	strVal, ok := val.(string)
 	if ok {
 		return strVal, nil
 	}
-	return "", errutil.Wrapf(err, "attribute not found when searching JSON with provided path: %q", attributePath)
+
+	return "", nil
 }
