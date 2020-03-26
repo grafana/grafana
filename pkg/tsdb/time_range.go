@@ -70,6 +70,15 @@ func (tr *TimeRange) MustGetTo() time.Time {
 	return res
 }
 
+func tryParseUnixMsEpoch(val string) (time.Time, bool) {
+	if val, err := strconv.ParseInt(val, 10, 64); err == nil {
+		seconds := val / 1000
+		nano := (val - seconds*1000) * 1000000
+		return time.Unix(seconds, nano), true
+	}
+	return time.Time{}, false
+}
+
 func (tr *TimeRange) ParseFrom() (time.Time, error) {
 	return parse(tr.From, tr.now, false)
 }
@@ -79,6 +88,10 @@ func (tr *TimeRange) ParseTo() (time.Time, error) {
 }
 
 func parse(s string, now time.Time, withRoundUp bool) (time.Time, error) {
+	if res, ok := tryParseUnixMsEpoch(s); ok {
+		return res, nil
+	}
+
 	withoutNow := strings.Replace(s, "now-", "", 1)
 
 	diff, err := time.ParseDuration("-" + withoutNow)
