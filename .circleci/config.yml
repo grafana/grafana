@@ -49,6 +49,8 @@ commands:
             VERSION=286.0.0
             cd /tmp
             curl -fLO https://dl.google.com/dl/cloudsdk/channels/rapid/downloads/google-cloud-sdk-${VERSION}-linux-x86_64.tar.gz
+            echo f199e38c988d53a913fc780b6f57ebda72db5f3848073cea805b39fe3e8e34fd \
+              google-cloud-sdk-${VERSION}-linux-x86_64.tar.gz | sha256sum --check --strict --status
             tar xf google-cloud-sdk-${VERSION}-linux-x86_64.tar.gz
             sudo mv google-cloud-sdk /opt/google-cloud-sdk
             rm google-cloud-sdk-${VERSION}-linux-x86_64.tar.gz
