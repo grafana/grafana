@@ -69,13 +69,15 @@ export const simple = () => {
   const rows: IconType[][] = [[]];
   let rowIdx = 0;
 
-  icons.forEach((i: IconType, idx: number) => {
-    if (idx % iconsPerRow === 0) {
-      rows.push([]);
-      rowIdx++;
-    }
-    rows[rowIdx].push(i);
-  });
+  icons
+    .sort((a, b) => a.localeCompare(b))
+    .forEach((i: IconType, idx: number) => {
+      if (idx % iconsPerRow === 0) {
+        rows.push([]);
+        rowIdx++;
+      }
+      rows[rowIdx].push(i);
+    });
 
   return (
     <div
@@ -85,15 +87,16 @@ export const simple = () => {
         border-collapse: collapse;
       `}
     >
-      {rows.map(r => {
+      {rows.map((r, index) => {
         return (
           <div
+            key={index}
             className={css`
               display: table-row;
             `}
           >
-            {r.map((i, index) => {
-              return <IconWrapper name={i} />;
+            {r.map(i => {
+              return <IconWrapper name={i} key={i} />;
             })}
           </div>
         );
