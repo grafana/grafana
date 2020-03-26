@@ -13,6 +13,7 @@ import { DataSourcePicker } from 'app/core/components/Select/DataSourcePicker';
 import { StoreState } from 'app/types/store';
 import {
   changeDatasource,
+  cancelQueries,
   clearQueries,
   splitClose,
   runQueries,
@@ -72,6 +73,7 @@ interface StateProps {
 interface DispatchProps {
   changeDatasource: typeof changeDatasource;
   clearAll: typeof clearQueries;
+  cancelQueries: typeof cancelQueries;
   runQueries: typeof runQueries;
   closeSplit: typeof splitClose;
   split: typeof splitOpen;
@@ -93,8 +95,12 @@ export class UnConnectedExploreToolbar extends PureComponent<Props> {
     this.props.clearAll(this.props.exploreId);
   };
 
-  onRunQuery = () => {
-    return this.props.runQueries(this.props.exploreId);
+  onRunQuery = (loading = false) => {
+    if (loading) {
+      return this.props.cancelQueries(this.props.exploreId);
+    } else {
+      return this.props.runQueries(this.props.exploreId);
+    }
   };
 
   onChangeRefreshInterval = (item: string) => {
@@ -360,7 +366,7 @@ const mapStateToProps = (state: StoreState, { exploreId }: OwnProps): StateProps
     containerWidth,
   } = exploreItem;
 
-  const hasLiveOption = datasourceInstance?.meta?.streaming && mode === ExploreMode.Logs;
+  const hasLiveOption = !!(datasourceInstance?.meta?.streaming && mode === ExploreMode.Logs);
 
   return {
     datasourceMissing,
@@ -388,6 +394,7 @@ const mapDispatchToProps: DispatchProps = {
   updateLocation,
   changeRefreshInterval,
   clearAll: clearQueries,
+  cancelQueries,
   runQueries,
   closeSplit: splitClose,
   split: splitOpen,

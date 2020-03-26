@@ -6,7 +6,6 @@ export { Popover } from './Tooltip/Popover';
 export { Portal } from './Portal/Portal';
 export { CustomScrollbar } from './CustomScrollbar/CustomScrollbar';
 
-export * from './Button/Button';
 export { ClipboardButton } from './ClipboardButton/ClipboardButton';
 
 // Select
@@ -151,7 +150,8 @@ export {
 export { FieldConfigItemHeaderTitle } from './FieldConfigs/FieldConfigItemHeaderTitle';
 
 // Next-gen forms
-export { default as Forms, ButtonVariant } from './Forms';
+export { default as Forms } from './Forms';
+export * from './Button';
 export { ValuePicker } from './ValuePicker/ValuePicker';
 export { fieldMatchersUI } from './MatchersUI/fieldMatchersUI';
 export { getStandardFieldConfigs } from './FieldConfigs/standardFieldConfigEditors';

@@ -987,7 +987,8 @@ func TestDashboardApiEndpoint(t *testing.T) {
 	})
 }
 
-func GetDashboardShouldReturn200WithConfig(sc *scenarioContext, provisioningService ProvisioningService) dtos.DashboardFullWithMeta {
+func GetDashboardShouldReturn200WithConfig(sc *scenarioContext, provisioningService provisioning.ProvisioningService) dtos.
+	DashboardFullWithMeta {
 	if provisioningService == nil {
 		provisioningService = provisioning.NewProvisioningServiceMock()
 	}

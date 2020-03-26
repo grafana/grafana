@@ -2,7 +2,7 @@ import React, { PureComponent } from 'react';
 import { css } from 'emotion';
 import uniqueId from 'lodash/uniqueId';
 import { DataSourceSettings } from '@grafana/data';
-import { Button } from '../Button/Button';
+import { Button } from '../Button';
 import { FormField } from '../FormField/FormField';
 import { SecretFormField } from '../SecretFormFied/SecretFormField';
 import { stylesFactory } from '../../themes';
@@ -76,7 +76,7 @@ const CustomHeaderRow: React.FC<CustomHeaderRowProps> = ({ header, onBlur, onCha
         onChange={e => onChange({ ...header, value: e.target.value })}
         onBlur={onBlur}
       />
-      <Button variant="transparent" size="xs" onClick={_e => onRemove(header.id)}>
+      <Button variant="destructive" size="xs" onClick={_e => onRemove(header.id)}>
         <i className="fa fa-trash" />
       </Button>
     </div>
@@ -202,7 +202,7 @@ export class CustomHeadersSettings extends PureComponent<Props, State> {
         </div>
         <div className="gf-form">
           <Button
-            variant="inverse"
+            variant="secondary"
             size="xs"
             onClick={e => {
               this.onHeaderAdd();

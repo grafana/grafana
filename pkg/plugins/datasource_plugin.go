@@ -23,6 +23,7 @@ type DataSourcePlugin struct {
 	Explore      bool              `json:"explore"`
 	Table        bool              `json:"tables"`
 	Logs         bool              `json:"logs"`
+	Tracing      bool              `json:"tracing"`
 	QueryOptions map[string]bool   `json:"queryOptions,omitempty"`
 	BuiltIn      bool              `json:"builtIn,omitempty"`
 	Mixed        bool              `json:"mixed,omitempty"`

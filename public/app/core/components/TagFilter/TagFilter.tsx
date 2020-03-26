@@ -39,7 +39,9 @@ export class TagFilter extends React.Component<Props, any> {
   };
 
   onChange = (newTags: any[]) => {
-    this.props.onChange(newTags.map(tag => tag.value));
+    // On remove with 1 item returns null, so we need to make sure it's an empty array in that case
+    // https://github.com/JedWatson/react-select/issues/3632
+    this.props.onChange((newTags || []).map(tag => tag.value));
   };
 
   render() {
