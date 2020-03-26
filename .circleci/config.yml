@@ -549,10 +549,10 @@ jobs:
           name: Upload Docker images
           command: |
             if [[ "<< parameters.ubuntu >>" != "true" ]]; then
-              IMAGE_BASE = "regular"
+              IMAGE_BASE="regular"
               echo "Uploading non-Ubuntu based << parameters.edition >> Docker images"
             else
-              IMAGE_BASE = "ubuntu"
+              IMAGE_BASE="ubuntu"
               echo "Uploading Ubuntu based << parameters.edition >> Docker images"
             fi
             gsutil -m rsync -d docker/ gs://grafana-build-pipeline/docker/<< parameters.edition >>/${IMAGE_BASE}/${CIRCLE_WORKFLOW_ID}
@@ -592,10 +592,10 @@ jobs:
           name: Download Docker images from GCS
           command: |
             if [[ "<< parameters.ubuntu >>" != "true" ]]; then
-              IMAGE_BASE = "regular"
+              IMAGE_BASE="regular"
               echo "Downloading non-Ubuntu based << parameters.edition >> Docker images"
             else
-              IMAGE_BASE = "ubuntu"
+              IMAGE_BASE="ubuntu"
               echo "Downloading Ubuntu based << parameters.edition >> Docker images"
             fi
             echo $GCP_GRAFANA_UPLOAD_KEY > /tmp/gcpkey.json
@@ -618,10 +618,10 @@ jobs:
           name: Remove Docker images from GCS
           command: |
             if [[ "<< parameters.ubuntu >>" != "true" ]]; then
-              IMAGE_BASE = "regular"
+              IMAGE_BASE="regular"
               echo "Downloading non-Ubuntu based << parameters.edition >> Docker images"
             else
-              IMAGE_BASE = "ubuntu"
+              IMAGE_BASE="ubuntu"
               echo "Downloading Ubuntu based << parameters.edition >> Docker images"
             fi
             echo $GCP_GRAFANA_UPLOAD_KEY > /tmp/gcpkey.json
@@ -964,6 +964,8 @@ workflows:
           name: build-oss-backend-armv6
           requires:
             - install-grabpl
+            - test-backend
+            - test-frontend
       - build-backend:
           filters: *filter-master-or-release
           edition: oss
@@ -971,6 +973,8 @@ workflows:
           name: build-oss-backend-armv7
           requires:
             - install-grabpl
+            - test-backend
+            - test-frontend
       - build-backend:
           filters: *filter-master-or-release
           edition: oss
@@ -978,6 +982,8 @@ workflows:
           name: build-oss-backend-armv7-musl
           requires:
             - install-grabpl
+            - test-backend
+            - test-frontend
       - build-backend:
           filters: *filter-master-or-release
           edition: oss
@@ -985,6 +991,8 @@ workflows:
           name: build-oss-backend-arm64
           requires:
             - install-grabpl
+            - test-backend
+            - test-frontend
       - build-backend:
           filters: *filter-master-or-release
           edition: oss
@@ -992,6 +1000,8 @@ workflows:
           name: build-oss-backend-arm64-musl
           requires:
             - install-grabpl
+            - test-backend
+            - test-frontend
       - build-backend:
           # No filters, meaning this job runs for all branches
           edition: oss
@@ -999,6 +1009,8 @@ workflows:
           name: build-oss-backend-osx64
           requires:
             - install-grabpl
+            - test-backend
+            - test-frontend
       - build-backend:
           # No filters, meaning this job runs for all branches
           edition: oss
@@ -1006,6 +1018,8 @@ workflows:
           name: build-oss-backend-win64
           requires:
             - install-grabpl
+            - test-backend
+            - test-frontend
       - build-backend:
           # No filters, meaning this job runs for all branches
           edition: oss
@@ -1013,6 +1027,8 @@ workflows:
           name: build-oss-backend-linux-x64
           requires:
             - install-grabpl
+            - test-backend
+            - test-frontend
       - build-backend:
           # No filters, meaning this job runs for all branches
           edition: oss
@@ -1020,12 +1036,16 @@ workflows:
           name: build-oss-backend-linux-x64-musl
           requires:
             - install-grabpl
+            - test-backend
+            - test-frontend
       - build-frontend:
           # No filters, meaning this job runs for all branches
           name: build-oss-frontend
           edition: oss
           requires:
             - install-grabpl
+            - test-backend
+            - test-frontend
       - build-backend:
           filters: *filter-master-or-release
           name: build-enterprise-backend-armv6
@@ -1033,6 +1053,8 @@ workflows:
           variant: armv6
           requires:
             - install-grabpl
+            - test-backend
+            - test-frontend
       - build-backend:
           filters: *filter-master-or-release
           name: build-enterprise-backend-armv7
@@ -1040,6 +1062,8 @@ workflows:
           variant: armv7
           requires:
             - install-grabpl
+            - test-backend
+            - test-frontend
       - build-backend:
           filters: *filter-master-or-release
           name: build-enterprise-backend-armv7-musl
@@ -1047,6 +1071,8 @@ workflows:
           variant: armv7-musl
           requires:
             - install-grabpl
+            - test-backend
+            - test-frontend
       - build-backend:
           filters: *filter-master-or-release
           name: build-enterprise-backend-arm64
@@ -1054,6 +1080,8 @@ workflows:
           variant: arm64
           requires:
             - install-grabpl
+            - test-backend
+            - test-frontend
       - build-backend:
           filters: *filter-master-or-release
           name: build-enterprise-backend-arm64-musl
@@ -1061,6 +1089,8 @@ workflows:
           variant: arm64-musl
           requires:
             - install-grabpl
+            - test-backend
+            - test-frontend
       - build-backend:
           # No filters, meaning this job runs for all branches
           name: build-enterprise-backend-osx64
@@ -1068,6 +1098,8 @@ workflows:
           variant: osx64
           requires:
             - install-grabpl
+            - test-backend
+            - test-frontend
       - build-backend:
           # No filters, meaning this job runs for all branches
           name: build-enterprise-backend-win64
@@ -1075,6 +1107,8 @@ workflows:
           variant: win64
           requires:
             - install-grabpl
+            - test-backend
+            - test-frontend
       - build-backend:
           # No filters, meaning this job runs for all branches
           name: build-enterprise-backend-linux-x64
@@ -1082,6 +1116,8 @@ workflows:
           variant: linux-x64
           requires:
             - install-grabpl
+            - test-backend
+            - test-frontend
       - build-backend:
           # No filters, meaning this job runs for all branches
           name: build-enterprise-backend-linux-x64-musl
@@ -1089,12 +1125,16 @@ workflows:
           variant: linux-x64-musl
           requires:
             - install-grabpl
+            - test-backend
+            - test-frontend
       - build-frontend:
           # No filters, meaning this job runs for all branches
           name: build-enterprise-frontend
           edition: enterprise
           requires:
             - install-grabpl
+            - test-backend
+            - test-frontend
       - build-release-publisher:
           filters: *filter-master-or-release
       - codespell:
@@ -1123,11 +1163,15 @@ workflows:
           requires:
             - install-grabpl
             - lint-go
+            - test-backend
+            - test-frontend
       - postgres-integration-test:
           # No filters, meaning this job runs for all branches
           requires:
             - install-grabpl
             - lint-go
+            - test-backend
+            - test-frontend
       - package-oss:
           # No filters, meaning this job runs for all branches
           requires:
@@ -1179,7 +1223,7 @@ workflows:
       - release-next-packages:
           filters: *filter-only-master
           requires:
-            - test-frontend
+            - end-to-end-tests
       - release-packages:
           filters: *filter-only-release
           requires:
@@ -1209,6 +1253,7 @@ workflows:
           edition: oss
           ubuntu: false
           requires:
+            - end-to-end-tests
             - package-oss
             - build-oss-windows-installer
       - build-docker-images:
@@ -1217,6 +1262,7 @@ workflows:
           edition: oss
           ubuntu: true
           requires:
+            - end-to-end-tests
             - package-oss
             - build-oss-windows-installer
       - build-docker-images:
@@ -1225,6 +1271,7 @@ workflows:
           edition: enterprise
           ubuntu: false
           requires:
+            - end-to-end-tests
             - package-enterprise
             - build-enterprise-windows-installer
       - build-docker-images:
@@ -1233,6 +1280,7 @@ workflows:
           edition: enterprise
           ubuntu: true
           requires:
+            - end-to-end-tests
             - package-enterprise
             - build-enterprise-windows-installer
       - end-to-end-tests:
