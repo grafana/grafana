@@ -22,7 +22,7 @@ Typically you would use this panel next to a graph panel to display the log outp
 
 The logs panel will show the result of queries that are specified in the **Queries** tab.
 The results of multiple queries will be merged and sorted by time.
-Note that you can scroll inside the panel in case the datasource returns more lines than can be displayed at any one time.
+Note that you can scroll inside the panel in case the datasource returns more lines that can be displayed at any one time.
 
 ### Query Options
 
