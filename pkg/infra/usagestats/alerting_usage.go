@@ -7,23 +7,19 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 )
 
-type datasourceAlertUsage struct {
-	datasourceType string
-	count          int
-}
+type DatasourceAlertUsage map[string]int
 
-func (uss *UsageStatsService) getAlertingUsage() (map[string]int, error) {
+func (uss *UsageStatsService) getAlertingUsage() (DatasourceAlertUsage, error) {
 	cmd := &models.GetAllAlertsQuery{}
-
-	if err := uss.Bus.Dispatch(cmd); err != nil {
-		uss.log.Error("Could not load alerts", "error", err)
+	err := uss.Bus.Dispatch(cmd)
+	if err != nil {
 		return map[string]int{}, err
 	}
 
 	return uss.mapRulesToUsageStats(cmd.Result)
 }
 
-func (uss *UsageStatsService) mapRulesToUsageStats(rules []*models.Alert) (map[string]int, error) {
+func (uss *UsageStatsService) mapRulesToUsageStats(rules []*models.Alert) (DatasourceAlertUsage, error) {
 	// map of datasourceId type and frequency
 	typeCount := map[int64]int{}
 
@@ -39,7 +35,7 @@ func (uss *UsageStatsService) mapRulesToUsageStats(rules []*models.Alert) (map[s
 		}
 	}
 
-	r := map[string]int{}
+	result := map[string]int{}
 	for k, v := range typeCount {
 		query := &models.GetDataSourceByIdQuery{Id: k}
 		err := uss.Bus.Dispatch(query)
@@ -47,15 +43,15 @@ func (uss *UsageStatsService) mapRulesToUsageStats(rules []*models.Alert) (map[s
 			return map[string]int{}, nil
 		}
 
-		r[query.Result.Type] = v
+		result[query.Result.Type] = v
 	}
 
-	return r, nil
+	return result, nil
 }
 
 func (uss *UsageStatsService) parseAlertRuleModel(settings *simplejson.Json) ([]int64, error) {
 	datasourceIDs := []int64{}
-	alertJsonModel := AlertJsonModel{}
+	model := alertJsonModel{}
 
 	if settings == nil {
 		return datasourceIDs, nil
@@ -63,26 +59,26 @@ func (uss *UsageStatsService) parseAlertRuleModel(settings *simplejson.Json) ([]
 
 	bytes, err := settings.MarshalJSON()
 
-	err = json.Unmarshal(bytes, &alertJsonModel)
+	err = json.Unmarshal(bytes, &model)
 	if err != nil {
 		return datasourceIDs, err
 	}
 
-	for _, condition := range alertJsonModel.Conditions {
+	for _, condition := range model.Conditions {
 		datasourceIDs = append(datasourceIDs, condition.Query.DatasourceID)
 	}
 
 	return datasourceIDs, nil
 }
 
-type AlertCondition struct {
-	Query *ConditionQuery `json:"query"`
+type alertCondition struct {
+	Query *conditionQuery `json:"query"`
 }
 
-type ConditionQuery struct {
+type conditionQuery struct {
 	DatasourceID int64 `json:"datasourceId"`
 }
 
-type AlertJsonModel struct {
-	Conditions []*AlertCondition `json:"conditions"`
+type alertJsonModel struct {
+	Conditions []*alertCondition `json:"conditions"`
 }
