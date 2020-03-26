@@ -585,15 +585,15 @@ jobs:
       - checkout
       - restore_cache:
           keys:
-            - v1-yarn-{{ checksum "yarn.lock" }}
+            - v2-yarn-{{ checksum "yarn.lock" }}
             # Used if checksum fails
-            - v1-yarn-
+            - v2-yarn-
       - run:
           name: yarn install
           command: yarn install --pure-lockfile --no-progress
           no_output_timeout: 5m
       - save_cache:
-          key: v1-yarn-{{ checksum "yarn.lock" }}
+          key: v2-yarn-{{ checksum "yarn.lock" }}
           paths:
             - node_modules
       - run:
@@ -736,14 +736,14 @@ jobs:
           command: "./scripts/ci-job-started.sh"
       - restore_cache:
           keys:
-            - v1-yarn-{{ checksum "yarn.lock" }}
-            - v1-yarn-
+            - v2-yarn-{{ checksum "yarn.lock" }}
+            - v2-yarn-
       - run:
           name: yarn install
           command: "yarn install --frozen-lockfile --no-progress"
           no_output_timeout: 15m
       - save_cache:
-          key: v1-yarn-{{ checksum "yarn.lock" }}
+          key: v2-yarn-{{ checksum "yarn.lock" }}
           paths:
             - node_modules
       - run:
