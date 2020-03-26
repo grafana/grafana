@@ -19,7 +19,7 @@ import { css } from 'emotion';
 
 import { createStyle } from '../Theme';
 
-const getStyles = createStyle(() => {
+export const getStyles = createStyle(() => {
   return {
     NewWindowIconLarge: css`
       label: NewWindowIconLarge;

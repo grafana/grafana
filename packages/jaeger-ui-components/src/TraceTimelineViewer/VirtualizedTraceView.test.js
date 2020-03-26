@@ -19,11 +19,10 @@ import SpanBarRow from './SpanBarRow';
 import DetailState from './SpanDetail/DetailState';
 import SpanDetailRow from './SpanDetailRow';
 import VirtualizedTraceView, { DEFAULT_HEIGHTS } from './VirtualizedTraceView';
-import traceGenerator from '../../../demo/trace-generators';
-import transformTraceData from '../../../model/transform-trace-data';
+import traceGenerator from '../demo/trace-generators';
+import transformTraceData from '../model/transform-trace-data';
 
 jest.mock('./SpanTreeOffset');
-jest.mock('../../../utils/update-ui-find');
 
 describe('<VirtualizedTraceViewImpl>', () => {
   let wrapper;

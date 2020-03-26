@@ -15,7 +15,7 @@
 import React from 'react';
 import { shallow } from 'enzyme';
 
-import NewWindowIcon from './NewWindowIcon';
+import NewWindowIcon, { getStyles } from './NewWindowIcon';
 
 describe('NewWindowIcon', () => {
   const props = {
@@ -32,8 +32,9 @@ describe('NewWindowIcon', () => {
   });
 
   it('adds is-large className when props.isLarge is true', () => {
-    expect(wrapper.hasClass('is-large')).toBe(false);
+    const styles = getStyles();
+    expect(wrapper.hasClass(styles.NewWindowIconLarge)).toBe(false);
     wrapper.setProps({ isLarge: true });
-    expect(wrapper.hasClass('is-large')).toBe(true);
+    expect(wrapper.hasClass(styles.NewWindowIconLarge)).toBe(true);
   });
 });

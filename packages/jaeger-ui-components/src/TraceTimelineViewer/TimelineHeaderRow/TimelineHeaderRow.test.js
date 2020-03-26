@@ -91,7 +91,7 @@ describe('<TimelineHeaderRow>', () => {
       <TimelineColumnResizer
         position={nameColumnWidth}
         onChange={props.onColummWidthChange}
-        min={0.15}
+        min={0.2}
         max={0.85}
       />
     );
