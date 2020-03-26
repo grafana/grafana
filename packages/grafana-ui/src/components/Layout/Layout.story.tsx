@@ -11,7 +11,7 @@ export default {
   decorators: [withStoryContainer, withCenteredStory, withHorizontallyCenteredStory],
 };
 
-const justifyVariants = ['flex-start', 'flex-end', 'space-betw  een'];
+const justifyVariants = ['flex-start', 'flex-end', 'space-between'];
 
 const spacingVariants = ['xs', 'sm', 'md', 'lg'];
 

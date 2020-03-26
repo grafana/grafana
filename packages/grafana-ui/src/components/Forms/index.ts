@@ -10,13 +10,9 @@ import { Field } from './Field';
 import { Switch } from './Switch';
 import { TextArea } from './TextArea/TextArea';
 import { Checkbox } from './Checkbox';
-//Will be removed after Enterprise changes have been merged
-import { Button, LinkButton } from '../Button';
 
 const Forms = {
   RadioButtonGroup,
-  Button,
-  LinkButton,
   Switch,
   getFormStyles,
   Label,
