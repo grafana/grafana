@@ -4,7 +4,7 @@ import { toDataFrame } from '../dataframe/processDataFrame';
 import { ReducerID } from '../transformations/fieldReducer';
 import { ThresholdsMode } from '../types/thresholds';
 import { GrafanaTheme } from '../types/theme';
-import { MappingType, FieldConfig } from '../types';
+import { FieldConfig, MappingType } from '../types';
 import { validateFieldConfig } from './fieldOverrides';
 import { standardFieldConfigEditorRegistry } from './standardFieldConfigEditorRegistry';
 
@@ -203,6 +203,7 @@ describe('FieldDisplay', () => {
       ];
       const options = createDisplayOptions({
         fieldOptions: {
+          calcs: [ReducerID.first],
           values: true,
           override: {},
           defaults: {
