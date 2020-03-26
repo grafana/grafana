@@ -262,6 +262,8 @@ github.com/stretchr/testify/assert
 github.com/stretchr/testify/require
 # github.com/teris-io/shortid v0.0.0-20171029131806-771a37caa5cf
 github.com/teris-io/shortid
+# github.com/timberio/go-datemath v0.1.1-0.20200323150745-74ddef604fff
+github.com/timberio/go-datemath
 # github.com/ua-parser/uap-go v0.0.0-20190826212731-daf92ba38329
 github.com/ua-parser/uap-go/uaparser
 # github.com/uber/jaeger-client-go v2.20.1+incompatible

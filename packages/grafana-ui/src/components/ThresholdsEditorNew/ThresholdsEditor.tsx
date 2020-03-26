@@ -15,7 +15,7 @@ import { ColorPicker } from '../ColorPicker/ColorPicker';
 import { stylesFactory } from '../../themes';
 import { RadioButtonGroup } from '../Forms/RadioButtonGroup/RadioButtonGroup';
 import { Field } from '../Forms/Field';
-import { Button } from '../Forms/Button';
+import { Button } from '../Button';
 import { FullWidthButtonContainer } from '../Button/FullWidthButtonContainer';
 
 const modes: Array<SelectableValue<ThresholdsMode>> = [

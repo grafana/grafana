@@ -2,7 +2,7 @@ import React, { FC, useContext } from 'react';
 import { css } from 'emotion';
 import { Modal } from '../Modal/Modal';
 import { IconType } from '../Icon/types';
-import { Button } from '../Button/Button';
+import { Button } from '../Button';
 import { stylesFactory, ThemeContext } from '../../themes';
 import { GrafanaTheme } from '@grafana/data';
 import { HorizontalGroup } from '..';
@@ -53,10 +53,10 @@ export const ConfirmModal: FC<Props> = ({
       <div className={styles.modalContent}>
         <div className={styles.modalText}>{body}</div>
         <HorizontalGroup justify="center">
-          <Button variant="danger" onClick={onConfirm}>
+          <Button variant="destructive" onClick={onConfirm}>
             {confirmText}
           </Button>
-          <Button variant="inverse" onClick={onDismiss}>
+          <Button variant="secondary" onClick={onDismiss}>
             {dismissText}
           </Button>
         </HorizontalGroup>

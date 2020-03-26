@@ -3,7 +3,7 @@ import { UserDTO } from 'app/types';
 import { cx, css } from 'emotion';
 import { config } from 'app/core/config';
 import { GrafanaTheme } from '@grafana/data';
-import { ConfirmButton, Input, ConfirmModal, InputStatus, Forms, stylesFactory } from '@grafana/ui';
+import { ConfirmButton, Input, ConfirmModal, InputStatus, Button, stylesFactory } from '@grafana/ui';
 
 interface Props {
   user: UserDTO;
@@ -125,9 +125,9 @@ export class UserProfile extends PureComponent<Props, State> {
             </table>
           </div>
           <div className={styles.buttonRow}>
-            <Forms.Button variant="destructive" onClick={this.showDeleteUserModal(true)}>
+            <Button variant="destructive" onClick={this.showDeleteUserModal(true)}>
               Delete User
-            </Forms.Button>
+            </Button>
             <ConfirmModal
               isOpen={showDeleteModal}
               title="Delete user"
@@ -137,13 +137,13 @@ export class UserProfile extends PureComponent<Props, State> {
               onDismiss={this.showDeleteUserModal(false)}
             />
             {user.isDisabled ? (
-              <Forms.Button variant="secondary" onClick={this.onUserEnable}>
+              <Button variant="secondary" onClick={this.onUserEnable}>
                 Enable User
-              </Forms.Button>
+              </Button>
             ) : (
-              <Forms.Button variant="secondary" onClick={this.showDisableUserModal(true)}>
+              <Button variant="secondary" onClick={this.showDisableUserModal(true)}>
                 Disable User
-              </Forms.Button>
+              </Button>
             )}
             <ConfirmModal
               isOpen={showDisableModal}
