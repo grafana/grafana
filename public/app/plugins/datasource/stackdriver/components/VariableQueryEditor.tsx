@@ -1,7 +1,7 @@
 import React, { PureComponent } from 'react';
 import { VariableQueryProps } from 'app/types/plugins';
 import { SimpleSelect } from './';
-import { getMetricTypes, getLabelKeys, extractServicesFromMetricDescriptors } from '../functions';
+import { extractServicesFromMetricDescriptors, getLabelKeys, getMetricTypes } from '../functions';
 import { MetricFindQueryTypes, VariableQueryData } from '../types';
 
 export class StackdriverVariableQueryEditor extends PureComponent<VariableQueryProps, VariableQueryData> {
@@ -143,7 +143,7 @@ export class StackdriverVariableQueryEditor extends PureComponent<VariableQueryP
   }
 
   insertTemplateVariables(options: any) {
-    const templateVariables = this.props.templateSrv.variables.map((v: any) => ({
+    const templateVariables = this.props.templateSrv.getVariables().map((v: any) => ({
       name: `$${v.name}`,
       value: `$${v.name}`,
     }));

@@ -20,7 +20,7 @@ Grafana 6.7 comes with a lot of new features and enhancements:
 - **Data source:** Google Sheets data source 
 - [**Explore:** Query history]({{< relref "#query-history" >}})
 - [**Authorization:** Azure OAuth]({{< relref "#azure-oauth" >}})
-- [**Stackdriver:** Project Selector]({{< relref "#project-selector" >}})
+- [**Stackdriver:** Project Selector]({{< relref "#stackdriver-project-selector" >}})
 - [**Enterprise:** White Labeling for application title]({{< relref "#white-labeling-for-application-title" >}})
 - [**Enterprise:** Reporting configuration for timeout and concurrency]({{< relref "#reporting-configuration-for-timeout-and-concurrency" >}})
 - [**Enterprise:** Export dashboard as pdf]({{< relref "#export-dashboard-as-pdf" >}})

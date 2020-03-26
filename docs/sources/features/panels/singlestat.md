@@ -33,7 +33,7 @@ The singlestat panel has a normal query editor to allow you define your exact me
    * **diff** - The difference between 'current' (last value) and 'first'.
    * **range** - The difference between 'min' and 'max'. Useful the show the range of change for a gauge.
 2. **Prefix/Postfix**: The Prefix/Postfix fields let you define a custom label to appear *before/after* the value. The `$__name` variable can be used here to use the series name or alias from the metric query.
-3. **Units**: Units are appended to the the Singlestat  within the panel, and will respect the color and threshold settings for the value.
+3. **Units**: Units are appended to the Singlestat  within the panel, and will respect the color and threshold settings for the value.
 4. **Decimals**: The Decimal field allows you to override the automatic decimal precision, and set it explicitly.
 5. **Font Size**: You can use this section to select the font size of the different texts in the Singlestat Panel, i.e. prefix, value and postfix.
 

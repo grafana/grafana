@@ -1,5 +1,5 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-import { IntervalVariableModel, VariableHide, VariableOption, VariableRefresh } from '../../templating/variable';
+import { IntervalVariableModel, VariableHide, VariableOption, VariableRefresh } from '../../templating/types';
 import { getInstanceState, NEW_VARIABLE_ID, VariablePayload } from '../state/types';
 import { initialVariablesState, VariablesState } from '../state/variablesReducer';
 import _ from 'lodash';

@@ -66,7 +66,7 @@ export const DerivedFields = (props: Props) => {
           })}
         <div>
           <Button
-            variant={'inverse'}
+            variant="primary"
             className={css`
               margin-right: 10px;
             `}
@@ -81,7 +81,7 @@ export const DerivedFields = (props: Props) => {
           </Button>
 
           {value && value.length > 0 && (
-            <Button variant="inverse" onClick={() => setShowDebug(!showDebug)}>
+            <Button variant="secondary" onClick={() => setShowDebug(!showDebug)}>
               {showDebug ? 'Hide example log message' : 'Show example log message'}
             </Button>
           )}

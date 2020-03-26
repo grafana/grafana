@@ -57,6 +57,7 @@ export const withCustomValue = () => {
       formatCreateLabel={val => onCreateLabel + val}
       initialValue="Custom Initial Value"
       onSelect={val => console.log(val)}
+      size="md"
     />
   );
 };
