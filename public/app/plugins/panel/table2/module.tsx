@@ -4,7 +4,7 @@ import { Options, defaults } from './types';
 
 export const plugin = new PanelPlugin<Options>(TablePanel)
   .setDefaults(defaults)
-  .setCustomFieldConfigs(builder => {
+  .setCustomFieldConfigEditor(builder => {
     builder
       .addNumberInput({
         id: 'width',

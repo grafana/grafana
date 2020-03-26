@@ -52,7 +52,6 @@ export interface OptionsUIRegistryBuilderAPI<TEditorProps, T extends OptionsEdit
 
   /**
    * Returns registry of option editors
-   * @param config
    */
   getRegistry: () => Registry<T>;
 }
