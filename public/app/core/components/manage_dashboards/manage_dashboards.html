@@ -102,11 +102,12 @@
       </div>
     </div>
     <div class="search-results-container">
-      <dashboard-search-results
+      <search-results
         results="ctrl.sections"
         editable="true"
-        on-selection-changed="ctrl.selectionChanged()"
-        on-tag-selected="ctrl.filterByTag($tag)"
+        on-selection-changed="ctrl.selectionChanged"
+        on-tag-selected="ctrl.filterByTag"
+        on-toggle-selection="ctrl.toggleSelection"
       />
     </div>
   </div>
@@ -114,14 +115,14 @@
 </div>
 
 <div ng-if="ctrl.canSave && ctrl.folderId && !ctrl.hasFilters && ctrl.sections.length === 0">
-  <empty-list-cta 
+  <empty-list-cta
     title="'This folder doesn\'t have any dashboards yet'"
-    buttonIcon="'gicon gicon-dashboard-new'" 
+    buttonIcon="'gicon gicon-dashboard-new'"
     buttonLink="'dashboard/new?folderId={{ctrl.folderId}}'"
-    buttonTitle="'Create Dashboard'"  
-    proTip="'Add/move dashboards to your folder at ->'" 
-    proTipLink="'dashboards'" 
-    proTipLinkTitle="'Manage dashboards'" 
+    buttonTitle="'Create Dashboard'"
+    proTip="'Add/move dashboards to your folder at ->'"
+    proTipLink="'dashboards'"
+    proTipLinkTitle="'Manage dashboards'"
     proTipTarget=""
   />
 </div>

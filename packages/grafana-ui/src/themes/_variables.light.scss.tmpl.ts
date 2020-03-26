@@ -160,11 +160,11 @@ $table-bg-hover: $gray-5;
 
 // Buttons
 // -------------------------
-$btn-primary-bg: $green-base;
-$btn-primary-bg-hl: $green-shade;
+$btn-secondary-bg: $gray-5;
+$btn-secondary-bg-hl: $gray-4;
 
-$btn-secondary-bg: $blue-base;
-$btn-secondary-bg-hl: $blue-shade;
+$btn-primary-bg: $blue-base;
+$btn-primary-bg-hl: $blue-shade;
 
 $btn-success-bg: $green-base;
 $btn-success-bg-hl: $green-shade;
@@ -173,7 +173,6 @@ $btn-danger-bg: $red-base;
 $btn-danger-bg-hl: $red-shade;
 
 $btn-inverse-bg: $gray-5;
-$btn-inverse-bg-hl: darken($gray-5, 5%);
 $btn-inverse-bg-hl: $gray-4;
 $btn-inverse-text-color: $gray-1;
 $btn-inverse-text-shadow: 0 1px 0 rgba(255, 255, 255, 0.4);
