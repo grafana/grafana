@@ -52,6 +52,7 @@ class ImportDashboardOverviewUnConnected extends PureComponent<Props, State> {
     return validationSrv
       .validateNewDashboardName(folderId, newTitle)
       .then(() => {
+        this.setState({ titleExists: false });
         return true;
       })
       .catch(error => {
@@ -75,6 +76,7 @@ class ImportDashboardOverviewUnConnected extends PureComponent<Props, State> {
       })
       .catch(error => {
         error.isHandled = true;
+        this.setState({ uidExists: false });
         return true;
       });
   };
@@ -122,6 +124,7 @@ class ImportDashboardOverviewUnConnected extends PureComponent<Props, State> {
           defaultValues={{ ...dashboard, constants: [], dataSources: [], folderId }}
           validateOnMount
           validateFieldsOnMount={['title', 'uid']}
+          validateOn="onChange"
         >
           {({ register, errors, control, getValues }) => (
             <ImportDashboardForm
