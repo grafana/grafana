@@ -1208,38 +1208,6 @@ workflows:
           # No filters, meaning this job runs for all branches
           requires:
             - package-oss
-      - publish-docker-images:
-          filters: *filter-master-or-release
-          name: publish-oss-docker-images
-          edition: oss
-          ubuntu: false
-          requires:
-            - build-oss-docker-images
-            - end-to-end-tests
-      - publish-docker-images:
-          filters: *filter-master-or-release
-          name: publish-oss-ubuntu-docker-images
-          edition: oss
-          ubuntu: true
-          requires:
-            - build-oss-ubuntu-docker-images
-            - end-to-end-tests
-      - publish-docker-images:
-          filters: *filter-master-or-release
-          name: publish-enterprise-docker-images
-          edition: enterprise
-          ubuntu: false
-          requires:
-            - build-enterprise-docker-images
-            - end-to-end-tests
-      - publish-docker-images:
-          filters: *filter-master-or-release
-          name: publish-enterprise-ubuntu-docker-images
-          edition: enterprise
-          ubuntu: true
-          requires:
-            - build-enterprise-ubuntu-docker-images
-            - end-to-end-tests
       - build-docs-website:
           filters: *filter-not-release-or-master
           requires:
