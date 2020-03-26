@@ -91,7 +91,6 @@ export const getButtonStyles = stylesFactory(({ theme, size, variant }: StylePro
         align-items: center;
         font-weight: ${theme.typography.weight.semibold};
         font-family: ${theme.typography.fontFamily.sansSerif};
-        line-height: ${theme.typography.lineHeight.sm};
         font-size: ${fontSize};
         padding: ${padding};
         height: ${height};
@@ -141,7 +140,7 @@ type CommonProps = {
 export type ButtonProps = CommonProps & ButtonHTMLAttributes<HTMLButtonElement>;
 
 export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ variant, icon, children, ...otherProps }, ref) => {
+  ({ variant, icon, children, className, ...otherProps }, ref) => {
     const theme = useContext(ThemeContext);
     const styles = getButtonStyles({
       theme,
@@ -150,7 +149,7 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     });
 
     return (
-      <button className={styles.button} {...otherProps} ref={ref}>
+      <button className={cx(styles.button, className)} {...otherProps} ref={ref}>
         <ButtonContent icon={icon}>{children}</ButtonContent>
       </button>
     );
@@ -161,7 +160,7 @@ Button.displayName = 'Button';
 
 type ButtonLinkProps = CommonProps & AnchorHTMLAttributes<HTMLAnchorElement>;
 export const LinkButton = React.forwardRef<HTMLAnchorElement, ButtonLinkProps>(
-  ({ variant, icon, children, ...otherProps }, ref) => {
+  ({ variant, icon, children, className, ...otherProps }, ref) => {
     const theme = useContext(ThemeContext);
     const styles = getButtonStyles({
       theme,
@@ -170,7 +169,7 @@ export const LinkButton = React.forwardRef<HTMLAnchorElement, ButtonLinkProps>(
     });
 
     return (
-      <a className={styles.button} {...otherProps} ref={ref}>
+      <a className={cx(styles.button, className)} {...otherProps} ref={ref}>
         <ButtonContent icon={icon}>{children}</ButtonContent>
       </a>
     );
