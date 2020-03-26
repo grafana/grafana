@@ -19,7 +19,6 @@ import {
   ciBuildPluginTask,
   ciBuildPluginDocsTask,
   ciPackagePluginTask,
-  ciTestPluginTask,
   ciPluginReportTask,
 } from './tasks/plugin.ci';
 import { buildPackageTask } from './tasks/package.build';
@@ -189,14 +188,6 @@ export const run = (includeInternalScripts = false) => {
     .description('Create a zip packages for the plugin')
     .action(async cmd => {
       await execTask(ciPackagePluginTask)({});
-    });
-
-  program
-    .command('plugin:ci-test')
-    .option('--full', 'run all the tests (even stuff that will break)')
-    .description('end-to-end test using bundle in /artifacts')
-    .action(async cmd => {
-      await execTask(ciTestPluginTask)({});
     });
 
   program
