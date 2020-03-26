@@ -12,5 +12,11 @@
     "allowJs": true
   },
   "extends": "@grafana/tsconfig/base.json",
-  "include": ["public/app/**/*.ts*", "public/e2e-test/**/*.ts", "public/test/**/*.ts", "public/vendor/**/*.ts"]
+  "include": [
+    "public/app/**/*.ts*",
+    "public/e2e-test/**/*.ts",
+    "public/test/**/*.ts",
+    "public/vendor/**/*.ts",
+    "packages/jaeger-ui-components/typings"
+  ]
 }

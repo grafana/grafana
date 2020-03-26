@@ -303,7 +303,7 @@ type SpanBarRowProps = {
  * performance than the stateless function.
  */
 export default class SpanBarRow extends React.PureComponent<SpanBarRowProps> {
-  static defaultProps = {
+  static defaultProps: Partial<SpanBarRowProps> = {
     className: '',
     rpc: null,
   };
