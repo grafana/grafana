@@ -17,14 +17,14 @@ export const seriesToColumnsTransformer: DataTransformerInfo<SeriesToColumnsOpti
     const regex = `/^(${options.byField})$/`;
     // not sure if I should use filterFieldsByNameTransformer to get the key field
     const keyDataFrames = filterFieldsByNameTransformer.transformer({ include: regex })(data);
-    if (!keyDataFrames.length || (keyDataFrames.length && keyDataFrames[0].fields.length !== 1)) {
+    if (!keyDataFrames.length) {
       // for now we only parse data frames with 2 fields
       return data;
     }
 
     // not sure if I should use filterFieldsByNameTransformer to get the other fields
     const otherDataFrames = filterFieldsByNameTransformer.transformer({ exclude: regex })(data);
-    if (!otherDataFrames.length || (otherDataFrames.length && otherDataFrames[0].fields.length !== 1)) {
+    if (!otherDataFrames.length) {
       // for now we only parse data frames with 2 fields
       return data;
     }
@@ -40,14 +40,15 @@ export const seriesToColumnsTransformer: DataTransformerInfo<SeriesToColumnsOpti
     processed.addField({
       ...keyDataFrames[0].fields[0],
       values: new ArrayVector([]),
-      labels: { origin: origins.join('|') },
+      labels: { origin: origins.join(',') },
     });
 
     for (let frameIndex = 0; frameIndex < otherDataFrames.length; frameIndex++) {
       const frame = otherDataFrames[frameIndex];
-      for (const field of frame.fields) {
+      for (let fieldIndex = 0; fieldIndex < frame.fields.length; fieldIndex++) {
+        const field = frame.fields[fieldIndex];
         const origin = getOrigin(frame, frameIndex);
-        const name = getColumnName(otherDataFrames, frameIndex, false);
+        const name = getColumnName(otherDataFrames, frameIndex, fieldIndex, false);
         if (processed.fields.find(field => field.name === name)) {
           continue;
         }
@@ -74,9 +75,8 @@ export const seriesToColumnsTransformer: DataTransformerInfo<SeriesToColumnsOpti
     for (let seriesIndex = 0; seriesIndex < keyDataFrames.length; seriesIndex++) {
       const keyDataFrame = keyDataFrames[seriesIndex];
       const keyField = keyDataFrame.fields[0];
-      const keyColumnName = getColumnName(keyDataFrames, seriesIndex, true);
+      const keyColumnName = getColumnName(keyDataFrames, seriesIndex, 0, true);
       const keyValues = keyField.values;
-      const otherColumnName = getColumnName(otherDataFrames, seriesIndex, false);
       for (let valueIndex = 0; valueIndex < keyValues.length; valueIndex++) {
         const keyValue = keyValues.get(valueIndex);
         const keyValueAsString = keyValue.toString();
@@ -84,10 +84,13 @@ export const seriesToColumnsTransformer: DataTransformerInfo<SeriesToColumnsOpti
           byKeyField[keyValueAsString] = { [keyColumnName]: keyValue };
         }
         const otherDataFrame = otherDataFrames[seriesIndex];
-        const otherField = otherDataFrame.fields[0];
-        const otherValue = otherField.values.get(valueIndex);
-        if (!byKeyField[keyValueAsString][otherColumnName]) {
-          byKeyField[keyValueAsString] = { ...byKeyField[keyValueAsString], [otherColumnName]: otherValue };
+        for (let otherIndex = 0; otherIndex < otherDataFrame.fields.length; otherIndex++) {
+          const otherColumnName = getColumnName(otherDataFrames, seriesIndex, otherIndex, false);
+          const otherField = otherDataFrame.fields[otherIndex];
+          const otherValue = otherField.values.get(valueIndex);
+          if (!byKeyField[keyValueAsString][otherColumnName]) {
+            byKeyField[keyValueAsString] = { ...byKeyField[keyValueAsString], [otherColumnName]: otherValue };
+          }
         }
       }
     }
@@ -106,10 +109,10 @@ export const seriesToColumnsTransformer: DataTransformerInfo<SeriesToColumnsOpti
   },
 };
 
-const getColumnName = (frames: DataFrame[], frameIndex: number, isKeyField = false) => {
+const getColumnName = (frames: DataFrame[], frameIndex: number, fieldIndex: number, isKeyField = false) => {
   const frame = frames[frameIndex];
   const frameName = frame.name || `${frameIndex}`;
-  const fieldName = frame.fields[0].name;
+  const fieldName = frame.fields[fieldIndex].name;
   const seriesName = isKeyField ? fieldName : `${fieldName} {${frameName}}`;
 
   return seriesName;
