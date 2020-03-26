@@ -1,9 +1,12 @@
-import _ from 'lodash';
+import { cloneDeep } from 'lodash';
+import { DataLinkBuiltInVars } from '@grafana/ui';
+import { GrafanaBootConfig } from '@grafana/runtime';
+
 import { DashboardModel } from '../state/DashboardModel';
-import { PanelModel } from '../state/PanelModel';
 import { GRID_CELL_HEIGHT, GRID_CELL_VMARGIN } from 'app/core/constants';
 import { expect } from 'test/lib/common';
-import { DataLinkBuiltInVars } from '@grafana/ui';
+import { getConfig, updateConfig } from '../../../core/config';
+import { VariableModels } from '../../variables/adapters';
 
 jest.mock('app/core/services/context_srv', () => ({}));
 
@@ -128,7 +131,7 @@ describe('DashboardModel', () => {
     });
 
     it('dashboard schema version should be set to latest', () => {
-      expect(model.schemaVersion).toBe(22);
+      expect(model.schemaVersion).toBe(23);
     });
 
     it('graph thresholds should be migrated', () => {
@@ -575,6 +578,287 @@ describe('DashboardModel', () => {
       });
     });
   });
+
+  describe('when migrating to newVariables', () => {
+    const variables: VariableModels[] = [
+      {
+        allValue: null,
+        current: {
+          selected: true,
+          text: 'A',
+          value: ['A'],
+        },
+        datasource: 'mock-data',
+        definition: '*',
+        hide: 0,
+        includeAll: true,
+        label: '',
+        multi: true,
+        name: 'query',
+        options: [],
+        query: '*',
+        refresh: 1,
+        regex: '',
+        skipUrlSync: false,
+        sort: 0,
+        tagValuesQuery: '',
+        tags: [],
+        tagsQuery: '',
+        type: 'query',
+        useTags: false,
+      },
+      {
+        datasource: 'mock-data',
+        filters: [
+          {
+            condition: '',
+            key: 'key',
+            operator: '!=',
+            value: 'value',
+          },
+        ],
+        hide: 0,
+        index: 3,
+        label: '',
+        name: 'Filters',
+        skipUrlSync: false,
+        type: 'adhoc',
+      },
+      {
+        current: {
+          selected: true,
+          text: ' 3,141592 653589 793238',
+          value: ' 3,141592 653589 793238',
+        },
+        hide: 2,
+        index: 4,
+        label: null,
+        name: 'constant',
+        options: [
+          {
+            selected: true,
+            text: ' 3,141592 653589 793238',
+            value: ' 3,141592 653589 793238',
+          },
+        ],
+        query: ' 3,141592 653589 793238',
+        skipUrlSync: false,
+        type: 'constant',
+      },
+      {
+        auto: true,
+        auto_count: 30,
+        auto_min: '10s',
+        current: {
+          selected: false,
+          text: '1m',
+          value: '1m',
+        },
+        hide: 0,
+        index: 5,
+        label: null,
+        name: 'interval',
+        options: [
+          {
+            selected: false,
+            text: 'auto',
+            value: '$__auto_interval_interval',
+          },
+          {
+            selected: true,
+            text: '1m',
+            value: '1m',
+          },
+          {
+            selected: false,
+            text: '10m',
+            value: '10m',
+          },
+          {
+            selected: false,
+            text: '30m',
+            value: '30m',
+          },
+          {
+            selected: false,
+            text: '1h',
+            value: '1h',
+          },
+          {
+            selected: false,
+            text: '6h',
+            value: '6h',
+          },
+          {
+            selected: false,
+            text: '12h',
+            value: '12h',
+          },
+          {
+            selected: false,
+            text: '1d',
+            value: '1d',
+          },
+          {
+            selected: false,
+            text: '7d',
+            value: '7d',
+          },
+          {
+            selected: false,
+            text: '14d',
+            value: '14d',
+          },
+          {
+            selected: false,
+            text: '30d',
+            value: '30d',
+          },
+        ],
+        query: '1m,10m,30m,1h,6h,12h,1d,7d,14d,30d',
+        refresh: 2,
+        skipUrlSync: false,
+        type: 'interval',
+      },
+      {
+        current: {
+          text: 'default textbox value',
+          value: 'default textbox value',
+          selected: true,
+        },
+        hide: 0,
+        index: 6,
+        label: null,
+        name: 'textbox',
+        options: [
+          {
+            selected: false,
+            text: 'textbox value',
+            value: 'textbox value',
+          },
+        ],
+        query: 'default textbox value',
+        skipUrlSync: false,
+        type: 'textbox',
+      },
+      {
+        allValue: null,
+        current: {
+          text: 'Lisa',
+          value: ['Lisa'],
+          selected: true,
+        },
+        hide: 0,
+        includeAll: true,
+        index: 8,
+        label: null,
+        multi: true,
+        name: 'custom',
+        options: [
+          {
+            selected: false,
+            text: 'All',
+            value: '$__all',
+          },
+          {
+            selected: true,
+            text: 'Lisa',
+            value: 'Lisa',
+          },
+          {
+            selected: false,
+            text: 'Bart',
+            value: 'Bart',
+          },
+          {
+            selected: false,
+            text: 'Maggie',
+            value: 'Maggie',
+          },
+        ],
+        query: 'Lisa, Bart, Maggie',
+        skipUrlSync: false,
+        type: 'custom',
+      },
+      {
+        current: {
+          selected: true,
+          text: 'mock-data',
+          value: ['mock-data'],
+        },
+        hide: 0,
+        includeAll: false,
+        label: null,
+        multi: false,
+        name: 'datasource',
+        options: [],
+        query: 'mock',
+        queryValue: '',
+        refresh: 1,
+        regex: '',
+        skipUrlSync: false,
+        type: 'datasource',
+      },
+    ];
+    let model: DashboardModel;
+    let originalConfig: GrafanaBootConfig;
+
+    beforeEach(() => {
+      originalConfig = cloneDeep(getConfig());
+    });
+
+    afterEach(() => {
+      updateConfig(originalConfig);
+    });
+
+    describe('and newVariables featureToggle is true', () => {
+      it('then templating.list should be copied to variables.list', () => {
+        updateConfig({ ...originalConfig, featureToggles: { ...originalConfig.featureToggles, newVariables: true } });
+        model = new DashboardModel({
+          templating: {
+            list: variables,
+          },
+        });
+
+        expect(model.variables.list).toEqual(variables);
+      });
+
+      it('then templating.list should be empty', () => {
+        updateConfig({ ...originalConfig, featureToggles: { ...originalConfig.featureToggles, newVariables: true } });
+        model = new DashboardModel({
+          templating: {
+            list: variables,
+          },
+        });
+
+        expect(model.templating.list).toEqual([]);
+      });
+    });
+
+    describe('and newVariables featureToggle is false', () => {
+      it('then templating.list should not be copied to variables.list', () => {
+        updateConfig({ ...originalConfig, featureToggles: { ...originalConfig.featureToggles, newVariables: false } });
+        model = new DashboardModel({
+          templating: {
+            list: variables,
+          },
+        });
+
+        expect(model.variables.list).toEqual([]);
+      });
+
+      it('then templating.list should not be empty', () => {
+        updateConfig({ ...originalConfig, featureToggles: { ...originalConfig.featureToggles, newVariables: false } });
+        model = new DashboardModel({
+          templating: {
+            list: variables,
+          },
+        });
+
+        expect(model.templating.list).toEqual(variables);
+      });
+    });
+  });
 });
 
 function createRow(options: any, panelDescriptions: any[]) {
@@ -583,7 +867,7 @@ function createRow(options: any, panelDescriptions: any[]) {
   let { height } = options;
   height = height * PANEL_HEIGHT_STEP;
   const panels: any[] = [];
-  _.each(panelDescriptions, panelDesc => {
+  panelDescriptions.forEach(panelDesc => {
     const panel = { span: panelDesc[0] };
     if (panelDesc.length > 1) {
       //@ts-ignore
@@ -604,7 +888,7 @@ function createRow(options: any, panelDescriptions: any[]) {
 }
 
 function getGridPositions(dashboard: DashboardModel) {
-  return _.map(dashboard.panels, (panel: PanelModel) => {
+  return dashboard.panels.map(panel => {
     return panel.gridPos;
   });
 }

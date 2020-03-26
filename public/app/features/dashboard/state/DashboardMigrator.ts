@@ -1,14 +1,6 @@
-// Libraries
 import _ from 'lodash';
-// Utils
-import getFactors from 'app/core/utils/factors';
-import { appendQueryToUrl } from 'app/core/utils/url';
-import kbn from 'app/core/utils/kbn';
-// Types
-import { PanelModel } from './PanelModel';
-import { DashboardModel } from './DashboardModel';
+import cloneDeep from 'lodash/cloneDeep';
 import { DataLink } from '@grafana/data';
-// Constants
 import {
   DEFAULT_PANEL_SPAN,
   DEFAULT_ROW_HEIGHT,
@@ -18,6 +10,14 @@ import {
   MIN_PANEL_HEIGHT,
 } from 'app/core/constants';
 import { DataLinkBuiltInVars } from '@grafana/ui';
+
+import getFactors from 'app/core/utils/factors';
+import { appendQueryToUrl } from 'app/core/utils/url';
+import kbn from 'app/core/utils/kbn';
+
+import { PanelModel } from './PanelModel';
+import { DashboardModel } from './DashboardModel';
+import { getConfig } from '../../../core/config';
 
 export class DashboardMigrator {
   dashboard: DashboardModel;
@@ -30,7 +30,7 @@ export class DashboardMigrator {
     let i, j, k, n;
     const oldVersion = this.dashboard.schemaVersion;
     const panelUpgrades = [];
-    this.dashboard.schemaVersion = 22;
+    this.dashboard.schemaVersion = 23;
 
     if (oldVersion === this.dashboard.schemaVersion) {
       return;
@@ -495,6 +495,13 @@ export class DashboardMigrator {
           style.align = 'auto';
         });
       });
+    }
+
+    if (oldVersion < 23) {
+      if (getConfig().featureToggles.newVariables) {
+        this.dashboard.variables.list = cloneDeep(this.dashboard.templating.list);
+        this.dashboard.templating.list = [];
+      }
     }
 
     if (panelUpgrades.length === 0) {
