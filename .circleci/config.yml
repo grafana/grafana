@@ -1347,8 +1347,8 @@ workflows:
       - build-docs-website:
           filters: *filter-not-release-or-master
           requires:
-            - test-backend
-            - test-frontend
+            - mysql-integration-test
+            - postgres-integration-test
       - deploy-to-kubernetes:
           filters: *filter-only-master
           requires:
