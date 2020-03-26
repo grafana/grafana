@@ -1,6 +1,6 @@
 import React, { PureComponent } from 'react';
 import { css, cx } from 'emotion';
-import { Modal, Themeable, stylesFactory, withTheme, ConfirmButton, Button } from '@grafana/ui';
+import { Modal, Themeable, stylesFactory, withTheme, ConfirmButton, Button, DeleteButton } from '@grafana/ui';
 import { GrafanaTheme } from '@grafana/data';
 import { UserOrg, Organization, OrgRole } from 'app/types';
 import { OrgPicker, OrgSelectItem } from 'app/core/components/Select/OrgPicker';
@@ -164,7 +164,7 @@ class UnThemedOrgRow extends PureComponent<OrgRowProps, OrgRowState> {
                 onCancel={this.onCancelClick}
                 onConfirm={this.onOrgRemove}
               >
-                <Button variant="destructive">Remove from organisation</Button>
+                <Button variant="destructive" icon="fa fa-remove" size="sm" />
               </ConfirmButton>
             </div>
           </td>
