@@ -563,7 +563,7 @@ jobs:
           name: Upload Docker images to GCS
           command: |
             if [[ -z $CIRCLE_TAG && $CIRCLE_BRANCH != "chore/test-release-pipeline" && $CIRCLE_BRANCH != "master" ]]; then
-              echo "Nothing to do fork PRs, so marking this step successful"
+              echo "Nothing to do for PRs, so marking this step successful"
               echo circleci step halt
             fi
 
@@ -577,6 +577,10 @@ jobs:
               IMAGE_BASE="ubuntu"
               echo "Uploading Ubuntu based << parameters.edition >> Docker images"
             fi
+            ls docker/*.tar
+
+            echo $GCP_GRAFANA_UPLOAD_KEY > /tmp/gcpkey.json
+            gcloud auth activate-service-account --key-file=/tmp/gcpkey.json
             /opt/google-cloud-sdk/bin/gsutil -m rsync -d \
               docker/ gs://grafana-build-pipeline/docker/<< parameters.edition >>/${IMAGE_BASE}/${CIRCLE_WORKFLOW_ID}
       - run:
