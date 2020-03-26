@@ -129,24 +129,9 @@ export { Drawer } from './Drawer/Drawer';
 export { Slider } from './Slider/Slider';
 
 // TODO: namespace!!
-export {
-  StringValueEditor,
-  StringOverrideEditor,
-  stringOverrideProcessor,
-  StringFieldConfigSettings,
-} from './FieldConfigs/string';
-export {
-  NumberValueEditor,
-  NumberOverrideEditor,
-  numberOverrideProcessor,
-  NumberFieldConfigSettings,
-} from './FieldConfigs/number';
-export {
-  selectOverrideProcessor,
-  SelectValueEditor,
-  SelectOverrideEditor,
-  SelectFieldConfigSettings,
-} from './FieldConfigs/select';
+export { StringValueEditor } from './OptionsUI/string';
+export { NumberValueEditor } from './OptionsUI/number';
+export { SelectValueEditor } from './OptionsUI/select';
 export { FieldConfigItemHeaderTitle } from './FieldConfigs/FieldConfigItemHeaderTitle';
 
 // Next-gen forms
@@ -154,5 +139,5 @@ export { default as Forms } from './Forms';
 export * from './Button';
 export { ValuePicker } from './ValuePicker/ValuePicker';
 export { fieldMatchersUI } from './MatchersUI/fieldMatchersUI';
-export { getStandardFieldConfigs } from './FieldConfigs/standardFieldConfigEditors';
+
 export { HorizontalGroup, VerticalGroup, Container } from './Layout/Layout';

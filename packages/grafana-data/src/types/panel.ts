@@ -1,11 +1,13 @@
-import { ComponentClass, ComponentType } from 'react';
+import { ComponentType } from 'react';
 import { DataQueryError, DataQueryRequest, DataQueryTimings } from './datasource';
-import { GrafanaPlugin, PluginMeta } from './plugin';
+import { PluginMeta } from './plugin';
 import { ScopedVars } from './ScopedVars';
 import { LoadingState } from './data';
 import { DataFrame } from './dataFrame';
 import { AbsoluteTimeRange, TimeRange, TimeZone } from './time';
-import { FieldConfigEditorRegistry, FieldConfigSource } from './fieldOverrides';
+import { FieldConfigSource } from './fieldOverrides';
+import { Registry, RegistryItem } from '../utils';
+import { StandardEditorProps } from '../field';
 
 export type InterpolateFunction = (value: string, scopedVars?: ScopedVars, format?: string | Function) => string;
 
@@ -109,86 +111,17 @@ export type PanelTypeChangedHandler<TOptions = any> = (
   prevOptions: any
 ) => Partial<TOptions>;
 
-export class PanelPlugin<TOptions = any> extends GrafanaPlugin<PanelPluginMeta> {
-  panel: ComponentType<PanelProps<TOptions>>;
-  editor?: ComponentClass<PanelEditorProps<TOptions>>;
-  customFieldConfigs?: FieldConfigEditorRegistry;
-  defaults?: TOptions;
-  fieldConfigDefaults?: FieldConfigSource = {
-    defaults: {},
-    overrides: [],
-  };
-  onPanelMigration?: PanelMigrationHandler<TOptions>;
-  onPanelTypeChanged?: PanelTypeChangedHandler<TOptions>;
-  noPadding?: boolean;
+export type PanelOptionEditorsRegistry = Registry<PanelOptionsEditorItem>;
 
-  /**
-   * Legacy angular ctrl.  If this exists it will be used instead of the panel
-   */
-  angularPanelCtrl?: any;
+export interface PanelOptionsEditorProps<TValue> extends StandardEditorProps<TValue> {}
 
-  constructor(panel: ComponentType<PanelProps<TOptions>>) {
-    super();
-    this.panel = panel;
-  }
-
-  setEditor(editor: ComponentClass<PanelEditorProps<TOptions>>) {
-    this.editor = editor;
-    return this;
-  }
-
-  setDefaults(defaults: TOptions) {
-    this.defaults = defaults;
-    return this;
-  }
-
-  setNoPadding() {
-    this.noPadding = true;
-    return this;
-  }
-
-  /**
-   * This function is called before the panel first loads if
-   * the current version is different than the version that was saved.
-   *
-   * This is a good place to support any changes to the options model
-   */
-  setMigrationHandler(handler: PanelMigrationHandler) {
-    this.onPanelMigration = handler;
-    return this;
-  }
-
-  /**
-   * This function is called when the visualization was changed. This
-   * passes in the panel model for previous visualisation options inspection
-   * and panel model updates.
-   *
-   * This is useful for supporting PanelModel API updates when changing
-   * between Angular and React panels.
-   */
-  setPanelChangeHandler(handler: PanelTypeChangedHandler) {
-    this.onPanelTypeChanged = handler;
-    return this;
-  }
-
-  setCustomFieldConfigs(registry: FieldConfigEditorRegistry) {
-    this.customFieldConfigs = registry;
-    return this;
-  }
-
-  /**
-   * Enables configuration of panel's default field config
-   */
-  setFieldConfigDefaults(defaultConfig: Partial<FieldConfigSource>) {
-    this.fieldConfigDefaults = {
-      defaults: {},
-      overrides: [],
-      ...defaultConfig,
-    };
-
-    return this;
-  }
+export interface PanelOptionsEditorItem<TValue = any, TSettings = any> extends RegistryItem {
+  editor: ComponentType<PanelOptionsEditorProps<TValue>>;
+  settings?: TSettings;
 }
+
+export interface PanelOptionsEditorConfig<TSettings = any, TValue = any>
+  extends Pick<PanelOptionsEditorItem<TValue, TSettings>, 'id' | 'description' | 'name' | 'settings'> {}
 
 export interface PanelMenuItem {
   type?: 'submenu' | 'divider';
