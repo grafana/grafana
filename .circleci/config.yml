@@ -218,7 +218,6 @@ jobs:
 
   build-oss-windows-installer:
     executor: windows-installer
-    resource_class: large
     steps:
       - attach_workspace:
           at: /tmp/workspace
@@ -251,7 +250,6 @@ jobs:
 
   build-enterprise-windows-installer:
     executor: windows-installer
-    resource_class: large
     steps:
       - run:
           name: Exit if forked PR
@@ -325,7 +323,6 @@ jobs:
 
   package-oss:
     executor: grafana-build
-    resource_class: large
     steps:
       - attach_workspace:
           at: /tmp/workspace
@@ -378,7 +375,6 @@ jobs:
 
   package-enterprise:
     executor: grafana-build
-    resource_class: large
     steps:
       - run:
           name: Exit if forked PR
@@ -433,7 +429,6 @@ jobs:
 
   publish-packages:
     description: "Publish packages"
-    resource_class: large
     parameters:
       edition:
         type: string
@@ -516,7 +511,6 @@ jobs:
 
   build-docker-images:
     description: "Build Docker images"
-    resource_class: large
     parameters:
       edition:
         type: string
@@ -592,7 +586,6 @@ jobs:
 
   publish-docker-images:
     description: Publish Docker images
-    resource_class: large
     parameters:
       edition:
         type: string
@@ -671,7 +664,6 @@ jobs:
           when: on_success
 
   end-to-end-tests:
-    resource_class: large
     docker:
       - image: circleci/node:12-browsers
     steps:
@@ -707,7 +699,6 @@ jobs:
           destination: logs
 
   mysql-integration-test:
-    resource_class: large
     docker:
       - image: circleci/golang:1.13.4
       - image: circleci/mysql:5.6-ram
@@ -739,7 +730,6 @@ jobs:
           when: on_success
 
   postgres-integration-test:
-    resource_class: large
     docker:
       - image: circleci/golang:1.13.4
       - image: circleci/postgres:9.3-ram
@@ -788,7 +778,6 @@ jobs:
   lint-go:
     docker:
       - image: circleci/golang:1.13.4
-    resource_class: large
     working_directory: /go/src/github.com/grafana/grafana
     environment:
       # we need CGO because of go-sqlite3
@@ -822,7 +811,6 @@ jobs:
               -conf=./scripts/go/configs/gosec.json ./pkg/...
 
   test-frontend:
-    resource_class: large
     docker:
       - image: circleci/node:12
     steps:
