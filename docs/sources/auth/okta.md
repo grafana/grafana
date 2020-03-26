@@ -22,7 +22,7 @@ Before you can sign a user in, you need to create an Okta application. Start by 
 
 1. Select Applications, then Add Application. Pick Web as the platform. Enter a name for your application (or leave the default value).
 
-1. Add the Base URI of your application, such as http://localhost:3000 or https://grafana.example.com.
+1. Add the Base URI of your application, such as https://grafana.example.com.
 
 1. Next, enter values for the Login redirect URI. Use Base URI and append it with `/login/okta`: https://grafana.example.com/login/okta.
 
@@ -63,9 +63,13 @@ The `allowed_domains` option limits access to the users belonging to the specifi
 allowed_domains = mycompany.com mycompany.org
 ```
 
+### Role mapping
+
+Grafana can attempt to do role mapping through Okta OAuth. In order to achieve this, Grafana checks for the presence of a role using the [JMESPath](http://jmespath.org/examples.html) specified via the `role_attribute_path` configuration option. The JSON used for the path lookup is the HTTP response obtained from querying the `/userinfo` endpoint. The result after evaluating the `role_attribute_path` JMESPath expression needs to be a valid Grafana role, i.e. `Viewer`, `Editor` or `Admin`. Read about how to add custom claims to the user info in Okta [docs](https://developer.okta.com/docs/guides/customize-tokens-returned-from-okta/add-custom-claim/).
+
 ### Team Sync (Enterprise only)
 
->  Only available in Grafana Enterprise v7.0+
+> Only available in Grafana Enterprise v7.0+
 
 With Team Sync you can map your Okta groups to teams in Grafana so that your users will automatically be added to
 the correct teams.
