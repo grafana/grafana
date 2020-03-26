@@ -39,13 +39,11 @@ export const SearchResultsFilter: FC<Props> = ({
       <div className="search-results-filter-row__filters">
         {showActions ? (
           <div className="gf-form-button-row">
-            <Button disabled={!canMove} onClick={moveTo}>
-              <i className="fa fa-exchange" />
-              &nbsp;&nbsp;Move
+            <Button disabled={!canMove} onClick={moveTo} icon="fa fa-exchange">
+              Move
             </Button>
-            <Button onClick={deleteItem} disabled={!canDelete}>
-              <i className="fa fa-trash" />
-              &nbsp;&nbsp;Delete
+            <Button onClick={deleteItem} disabled={!canDelete} icon="fa fa-trash">
+              Delete
             </Button>
           </div>
         ) : (
