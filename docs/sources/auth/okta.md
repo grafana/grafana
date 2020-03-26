@@ -65,11 +65,9 @@ allowed_domains = mycompany.com mycompany.org
 
 ### Role mapping
 
-Grafana can attempt to do role mapping through Okta OAuth. In order to achieve this, Grafana checks for the presence of a role using the [JMESPath](http://jmespath.org/examples.html) specified via the `role_attribute_path` configuration option. The JSON used for the path lookup is the HTTP response obtained from querying the `/userinfo` endpoint. The result after evaluating the `role_attribute_path` JMESPath expression needs to be a valid Grafana role, i.e. `Viewer`, `Editor` or `Admin`. Read about how to add custom claims to the user info in Okta [docs](https://developer.okta.com/docs/guides/customize-tokens-returned-from-okta/add-custom-claim/).
+Grafana can attempt to do role mapping through Okta OAuth. In order to achieve this, Grafana checks for the presence of a role using the [JMESPath](http://jmespath.org/examples.html) specified via the `role_attribute_path` configuration option. The JSON used for the path lookup is the HTTP response obtained from querying the `/userinfo` endpoint. The result after evaluating the `role_attribute_path` JMESPath expression needs to be a valid Grafana role, i.e. `Viewer`, `Editor` or `Admin`. Read about how to add custom claims to the user info in Okta [docs](https://developer.okta.com/docs/guides/customize-tokens-returned-from-okta/add-custom-claim/) and see JMESPath examples on [Generic OAuth page]({{< relref "generic-oauth.md/#jmespath-examples" >}}).
 
 ### Team Sync (Enterprise only)
-
-> Only available in Grafana Enterprise v7.0+
 
 With Team Sync you can map your Okta groups to teams in Grafana so that your users will automatically be added to
 the correct teams.
