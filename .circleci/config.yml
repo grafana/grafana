@@ -1216,7 +1216,7 @@ workflows:
       - deploy-to-kubernetes:
           filters: *filter-only-master
           requires:
-            - publish-enterprise-docker-images
+            - build-enterprise-docker-images
 
   nightly:
     triggers:
