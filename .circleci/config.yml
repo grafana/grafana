@@ -545,10 +545,17 @@ jobs:
             fi
             mkdir -p << parameters.edition >>/docker
             mv docker/*.tar << parameters.edition >>/docker/
-      - persist_to_workspace:
-          root: .
-          paths:
-            - << parameters.edition >>/docker/*.tar
+      - run:
+          name: Upload Docker images
+          command: |
+            if [[ "<< parameters.ubuntu >>" != "true" ]]; then
+              IMAGE_BASE = "regular"
+              echo "Uploading non-Ubuntu based << parameters.edition >> Docker images"
+            else
+              IMAGE_BASE = "ubuntu"
+              echo "Uploading Ubuntu based << parameters.edition >> Docker images"
+            fi
+            gsutil -m rsync -d docker/ gs://grafana-build-pipeline/docker/<< parameters.edition >>/${IMAGE_BASE}/${CIRCLE_WORKFLOW_ID}
       - run:
           name: CI job failed
           command: ./scripts/ci-job-failed.sh
@@ -582,9 +589,21 @@ jobs:
           name: CI job started
           command: ./scripts/ci-job-started.sh
       - run:
+          name: Download Docker images from GCS
+          command: |
+            if [[ "<< parameters.ubuntu >>" != "true" ]]; then
+              IMAGE_BASE = "regular"
+              echo "Downloading non-Ubuntu based << parameters.edition >> Docker images"
+            else
+              IMAGE_BASE = "ubuntu"
+              echo "Downloading Ubuntu based << parameters.edition >> Docker images"
+            fi
+            echo $GCP_GRAFANA_UPLOAD_KEY > /tmp/gcpkey.json
+            gcloud auth activate-service-account --key-file=/tmp/gcpkey.json
+            gsutil -m rsync -d gs://grafana-build-pipeline/docker/<< parameters.edition >>/${IMAGE_BASE}/${CIRCLE_WORKFLOW_ID} docker
+      - run:
           name: Copy artifacts from workspace
           command: |
-            cp -r /tmp/workspace/<< parameters.edition >>/docker .
             cp -r /tmp/workspace/<< parameters.edition >>/dist .
       - run:
           name: Publish Docker images
@@ -595,6 +614,19 @@ jobs:
             else
               /tmp/workspace/bin/grabpl publish-docker --edition << parameters.edition >> --ubuntu=<< parameters.ubuntu >>
             fi
+      - run:
+          name: Remove Docker images from GCS
+          command: |
+            if [[ "<< parameters.ubuntu >>" != "true" ]]; then
+              IMAGE_BASE = "regular"
+              echo "Downloading non-Ubuntu based << parameters.edition >> Docker images"
+            else
+              IMAGE_BASE = "ubuntu"
+              echo "Downloading Ubuntu based << parameters.edition >> Docker images"
+            fi
+            echo $GCP_GRAFANA_UPLOAD_KEY > /tmp/gcpkey.json
+            gcloud auth activate-service-account --key-file=/tmp/gcpkey.json
+            echo gsutil -m rm -r gs://grafana-build-pipeline/docker/<< parameters.edition >>/${IMAGE_BASE}/${CIRCLE_WORKFLOW_ID}
       - run:
           name: CI job failed
           command: ./scripts/ci-job-failed.sh
