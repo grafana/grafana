@@ -80,19 +80,6 @@ describe('toDataFrame', () => {
     ).toThrowError('Expected table rows to be array, got object.');
   });
 
-  it('migrate from 6.3 style rows', () => {
-    const oldDataFrame = {
-      fields: [{ name: 'A' }, { name: 'B' }, { name: 'C' }],
-      rows: [
-        [100, 'A', 1],
-        [200, 'B', 2],
-        [300, 'C', 3],
-      ],
-    };
-    const data = toDataFrame(oldDataFrame);
-    expect(data.length).toBe(oldDataFrame.rows.length);
-  });
-
   it('Guess Colum Types from value', () => {
     expect(guessFieldTypeFromValue(1)).toBe(FieldType.number);
     expect(guessFieldTypeFromValue(1.234)).toBe(FieldType.number);
@@ -228,7 +215,9 @@ describe('SerisData backwards compatibility', () => {
     const json: DataFrameDTO = {
       refId: 'Z',
       meta: {
-        somethign: 8,
+        custom: {
+          something: 8,
+        },
       },
       fields: [
         { name: 'T', type: FieldType.time, values: [1, 2, 3] },

@@ -108,6 +108,33 @@ export const basicSelectPlainValue = () => {
 /**
  * Uses plain values instead of SelectableValue<T>
  */
+export const SelectWithOptionDescriptions = () => {
+  // TODO this is not working with new Select
+
+  const [value, setValue] = useState<number>();
+  const options = [
+    { label: 'hello', value: 1, description: 'this is a description' },
+    { label: 'hello 2', value: 2, description: 'second description' },
+  ];
+
+  return (
+    <>
+      <Select
+        options={options}
+        value={value}
+        onChange={v => {
+          setValue(v.value);
+        }}
+        size="md"
+        {...getDynamicProps()}
+      />
+    </>
+  );
+};
+
+/**
+ * Uses plain values instead of SelectableValue<T>
+ */
 export const multiPlainValue = () => {
   const [value, setValue] = useState<string[]>();
 

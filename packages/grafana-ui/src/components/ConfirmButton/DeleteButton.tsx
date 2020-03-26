@@ -1,9 +1,10 @@
 import React, { FC } from 'react';
 import { ConfirmButton } from './ConfirmButton';
-import { Button, ButtonSize } from '../Button';
+import { ComponentSize } from '../../types/size';
+import { Button } from '../Button';
 
 interface Props {
-  size?: ButtonSize;
+  size?: ComponentSize;
   disabled?: boolean;
   onConfirm(): void;
 }

@@ -3,7 +3,8 @@ import { cx, css } from 'emotion';
 import { stylesFactory, withTheme } from '../../themes';
 import { GrafanaTheme } from '@grafana/data';
 import { Themeable } from '../../types';
-import { Button, ButtonSize, ButtonVariant } from '../Button';
+import { ComponentSize } from '../../types/size';
+import { Button, ButtonVariant } from '../Button';
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
   return {
@@ -53,7 +54,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
 
 interface Props extends Themeable {
   className?: string;
-  size?: ButtonSize;
+  size?: ComponentSize;
   confirmText?: string;
   disabled?: boolean;
   confirmVariant?: ButtonVariant;

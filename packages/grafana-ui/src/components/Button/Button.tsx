@@ -135,7 +135,7 @@ export type ButtonVariant = 'primary' | 'secondary' | 'destructive' | 'link';
 
 // These also needs to be different because the ButtonVariant is different
 type CommonProps = {
-  size?: ButtonSize;
+  size?: ComponentSize;
   variant?: ButtonVariant;
   icon?: string;
   className?: string;
