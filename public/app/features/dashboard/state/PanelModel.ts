@@ -17,7 +17,6 @@ import {
   ScopedVars,
   FieldConfigSource,
 } from '@grafana/data';
-import { EDIT_PANEL_ID } from 'app/core/constants';
 
 import config from 'app/core/config';
 
@@ -388,7 +387,7 @@ export class PanelModel implements DataConfigSource {
     const sourceModel = this.getSaveModel();
 
     // Temporary id for the clone, restored later in redux action when changes are saved
-    sourceModel.id = EDIT_PANEL_ID;
+    // sourceModel.id = EDIT_PANEL_ID;
 
     const clone = new PanelModel(sourceModel);
     const sourceQueryRunner = this.getQueryRunner();

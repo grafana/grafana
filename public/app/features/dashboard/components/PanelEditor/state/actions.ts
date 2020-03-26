@@ -36,15 +36,12 @@ export function panelEditorCleanUp(): ThunkResult<void> {
     const dashboard = getStore().dashboard.getModel();
     const { getPanel, getSourcePanel, querySubscription, shouldDiscardChanges } = getStore().panelEditorNew;
 
+    const panel = getPanel();
+    const sourcePanel = getSourcePanel();
+    const panelTypeChanged = sourcePanel.type !== panel.type;
+
     if (!shouldDiscardChanges) {
-      const panel = getPanel();
       const modifiedSaveModel = panel.getSaveModel();
-      const sourcePanel = getSourcePanel();
-      const panelTypeChanged = sourcePanel.type !== panel.type;
-
-      // restore the source panel id before we update source panel
-      modifiedSaveModel.id = sourcePanel.id;
-
       sourcePanel.restoreModel(modifiedSaveModel);
 
       if (panelTypeChanged) {
@@ -56,6 +53,8 @@ export function panelEditorCleanUp(): ThunkResult<void> {
       setTimeout(() => {
         sourcePanel.getQueryRunner().pipeDataToSubject(panel.getQueryRunner().getLastResult());
       }, 20);
+    } else {
+      dispatch(cleanUpEditPanel(sourcePanel));
     }
 
     if (dashboard) {
@@ -66,7 +65,6 @@ export function panelEditorCleanUp(): ThunkResult<void> {
       querySubscription.unsubscribe();
     }
 
-    dispatch(cleanUpEditPanel());
     dispatch(closeCompleted());
   };
 }
