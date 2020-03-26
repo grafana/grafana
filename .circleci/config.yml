@@ -129,6 +129,11 @@ jobs:
       - attach_workspace:
           at: /tmp/workspace
       - checkout
+      - restore_cache:
+          keys:
+            - v1-yarn-{{ checksum "yarn.lock" }}
+            # Used if checksum fails
+            - v1-yarn-
       - run:
           name: Increase node memory
           command: |
@@ -136,6 +141,13 @@ jobs:
       - run:
           name: CI job started
           command: ./scripts/ci-job-started.sh
+      - run:
+          name: Install dependencies
+          command: yarn install --pure-lockfile
+      - save_cache:
+          key: v1-yarn-{{ checksum "yarn.lock" }}
+          paths:
+            - node_modules
       - run:
           name: Build Grafana frontend
           command: /tmp/workspace/bin/grabpl build-frontend --edition << parameters.edition >>
@@ -570,13 +582,16 @@ jobs:
           at: /tmp/workspace
       - checkout
       - restore_cache:
-          key: dependency-cache-{{ checksum "yarn.lock" }}
+          keys:
+            - v1-yarn-{{ checksum "yarn.lock" }}
+            # Used if checksum fails
+            - v1-yarn-
       - run:
           name: yarn install
           command: yarn install --pure-lockfile --no-progress
           no_output_timeout: 5m
       - save_cache:
-          key: dependency-cache-{{ checksum "yarn.lock" }}
+          key: v1-yarn-{{ checksum "yarn.lock" }}
           paths:
             - node_modules
       - run:
