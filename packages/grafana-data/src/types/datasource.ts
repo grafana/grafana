@@ -382,22 +382,10 @@ export interface DataQuery {
   hide?: boolean;
 
   /**
-   * Unique, guid like, string used in explore mode
-   */
-  key?: string;
-
-  /**
    * For mixed data sources the selected datasource is on the query level.
    * For non mixed scenarios this is undefined.
    */
   datasource?: string | null;
-
-  metric?: any;
-
-  /**
-   * For limiting result lines.
-   */
-  maxLines?: number;
 }
 
 export interface DataQueryError {
