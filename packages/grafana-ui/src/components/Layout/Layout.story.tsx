@@ -1,7 +1,7 @@
 import React from 'react';
 import { withCenteredStory, withHorizontallyCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { VerticalGroup, HorizontalGroup, Layout } from './Layout';
-import { Button } from '../Forms/Button';
+import { Button } from '../Button';
 import { withStoryContainer } from '../../utils/storybook/withStoryContainer';
 import { select } from '@storybook/addon-knobs';
 
@@ -11,7 +11,7 @@ export default {
   decorators: [withStoryContainer, withCenteredStory, withHorizontallyCenteredStory],
 };
 
-const justifyVariants = ['flex-start', 'flex-end', 'space-between'];
+const justifyVariants = ['flex-start', 'flex-end', 'space-betw  een'];
 
 const spacingVariants = ['xs', 'sm', 'md', 'lg'];
 

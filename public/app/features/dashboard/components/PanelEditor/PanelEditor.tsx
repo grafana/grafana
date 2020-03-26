@@ -1,6 +1,6 @@
 import React, { PureComponent } from 'react';
 import { FieldConfigSource, GrafanaTheme, PanelData, PanelPlugin, SelectableValue } from '@grafana/data';
-import { Forms, stylesFactory } from '@grafana/ui';
+import { Forms, stylesFactory, Button } from '@grafana/ui';
 import { css, cx } from 'emotion';
 import config from 'app/core/config';
 import AutoSizer from 'react-virtualized-auto-sizer';
@@ -198,9 +198,9 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
         </div>
         <div className={styles.toolbarLeft}>
           <div className={styles.toolbarItem}>
-            <Forms.Button className={styles.toolbarItem} variant="secondary" onClick={this.onDiscard}>
+            <Button className={styles.toolbarItem} variant="secondary" onClick={this.onDiscard}>
               Discard changes
-            </Forms.Button>
+            </Button>
           </div>
           <div className={styles.toolbarItem}>
             <Forms.Select
@@ -213,7 +213,7 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
             <DashNavTimeControls dashboard={dashboard} location={location} updateLocation={updateLocation} />
           </div>
           <div className={styles.toolbarItem}>
-            <Forms.Button
+            <Button
               className={styles.toolbarItem}
               icon="fa fa-sliders"
               variant="secondary"
