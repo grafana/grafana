@@ -1,4 +1,4 @@
-import React, { useEffect, useState, HTMLProps, ComponentType } from 'react';
+import React, { useEffect, useState } from 'react';
 import { css, cx } from 'emotion';
 import { camelCase } from 'lodash';
 
@@ -7,7 +7,7 @@ import { useTheme } from '../../themes/ThemeContext';
 import { IconType } from './types';
 import { ComponentSize } from '../../types/size';
 
-interface IconProps extends Omit<HTMLProps<HTMLDivElement>, 'size'> {
+interface IconProps extends React.HTMLAttributes<HTMLDivElement> {
   name: IconType;
   size?: ComponentSize;
   color?: string;
@@ -20,7 +20,7 @@ export type SvgProps = {
 };
 
 type Module = {
-  default: ComponentType<SvgProps>;
+  default: React.ComponentType<SvgProps>;
 };
 
 const getIconStyles = stylesFactory(() => {
@@ -40,7 +40,7 @@ const getIconStyles = stylesFactory(() => {
 });
 
 export const Icon = React.forwardRef<HTMLDivElement, IconProps>(
-  ({ size = 'md', type = 'default', color, title, name, className, ...restProps }, ref) => {
+  ({ size = 'md', type = 'default', color, title, name, className, ...divElementProps }, ref) => {
     const [icon, setIcon] = useState<null | Module>(null);
 
     const pascalCase = (string: string) => {
@@ -78,7 +78,7 @@ export const Icon = React.forwardRef<HTMLDivElement, IconProps>(
     return (
       <div
         className={cx(styles.icon, { [styles.currentFontColor]: !color && type === 'default' }, className)}
-        {...restProps}
+        {...divElementProps}
         ref={ref}
       >
         {type === 'default' && <Component color={mainColor} size={svgSize} />}
