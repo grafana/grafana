@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import React, { FC, useCallback } from 'react';
 import { css, cx } from 'emotion';
 import { GrafanaTheme } from '@grafana/data';
 import { e2e } from '@grafana/e2e';
@@ -37,9 +37,12 @@ export const SearchItem: FC<Props> = ({ item, editable, onToggleSelection, onTag
     onTagSelected(tag);
   };
 
-  const toggleItem = (event: React.MouseEvent<HTMLElement>) => {
-    onToggleSelection(item, event);
-  };
+  const toggleItem = useCallback(
+    (event: React.MouseEvent<HTMLElement>) => {
+      onToggleSelection(item, event);
+    },
+    [item]
+  );
 
   return (
     <li
