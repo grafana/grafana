@@ -48,7 +48,9 @@ const dashbardSlice = createSlice({
       state.isInitSlow = false;
 
       for (const panel of action.payload.panels) {
-        state.panels[panel.id] = getInitialPanelState(panel);
+        state.panels[panel.id] = {
+          pluginId: panel.type,
+        };
       }
     },
     dashboardInitFailed: (state, action: PayloadAction<DashboardInitError>) => {
@@ -78,9 +80,8 @@ const dashbardSlice = createSlice({
     panelModelAndPluginReady: (state: DashboardState, action: PayloadAction<PanelModelAndPluginReadyPayload>) => {
       updatePanelState(state, action.payload.panelId, { plugin: action.payload.plugin });
     },
-    cleanUpEditPanel: (state, action: PayloadAction<PanelModel>) => {
-      // reset redux panel state (plugin & angularComponent)
-      state.panels[action.payload.id] = getInitialPanelState(action.payload);
+    cleanUpEditPanel: (state, action: PayloadAction) => {
+      delete state.panels[EDIT_PANEL_ID];
     },
     setPanelAngularComponent: (state: DashboardState, action: PayloadAction<SetPanelAngularComponentPayload>) => {
       updatePanelState(state, action.payload.panelId, { angularComponent: action.payload.angularComponent });
@@ -97,12 +98,6 @@ export function updatePanelState(state: DashboardState, panelId: number, ps: Par
   } else {
     Object.assign(state.panels[panelId], ps);
   }
-}
-
-export function getInitialPanelState(panel: PanelModel): PanelState {
-  return {
-    pluginId: panel.type,
-  };
 }
 
 export interface PanelModelAndPluginReadyPayload {

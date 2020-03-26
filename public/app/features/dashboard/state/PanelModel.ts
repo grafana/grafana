@@ -17,6 +17,7 @@ import {
   ScopedVars,
   FieldConfigSource,
 } from '@grafana/data';
+import { EDIT_PANEL_ID } from 'app/core/constants';
 
 import config from 'app/core/config';
 
@@ -44,6 +45,7 @@ const notPersistedProperties: { [str: string]: boolean } = {
   plugin: true,
   queryRunner: true,
   replaceVariables: true,
+  editSourceId: true,
 };
 
 // For angular panels we need to clean up properties when changing type
@@ -95,6 +97,7 @@ const defaults: any = {
 export class PanelModel implements DataConfigSource {
   /* persisted id, used in URL to identify a panel */
   id: number;
+  editSourceId: number;
   gridPos: GridPos;
   type: string;
   title: string;
@@ -387,7 +390,8 @@ export class PanelModel implements DataConfigSource {
     const sourceModel = this.getSaveModel();
 
     // Temporary id for the clone, restored later in redux action when changes are saved
-    // sourceModel.id = EDIT_PANEL_ID;
+    sourceModel.id = EDIT_PANEL_ID;
+    sourceModel.editSourceId = this.id;
 
     const clone = new PanelModel(sourceModel);
     const sourceQueryRunner = this.getQueryRunner();
