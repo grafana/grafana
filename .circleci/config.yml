@@ -131,9 +131,11 @@ jobs:
       - checkout
       - restore_cache:
           keys:
-            - v1-yarn-{{ checksum "yarn.lock" }}
+            # Use own cache for front-end builds, since for some reason they can't be unpacked for parts of the
+            # pipeline
+            - v1-yarn-build-{{ checksum "yarn.lock" }}
             # Used if checksum fails
-            - v1-yarn-
+            - v1-yarn-build-
       - run:
           name: Increase node memory
           command: |
@@ -145,7 +147,7 @@ jobs:
           name: Install dependencies
           command: yarn install --pure-lockfile
       - save_cache:
-          key: v1-yarn-{{ checksum "yarn.lock" }}
+          key: v1-yarn-build-{{ checksum "yarn.lock" }}
           paths:
             - node_modules
       - run:
@@ -733,13 +735,15 @@ jobs:
           name: CI job started
           command: "./scripts/ci-job-started.sh"
       - restore_cache:
-          key: dependency-cache-{{ checksum "yarn.lock" }}
+          keys:
+            - v1-yarn-{{ checksum "yarn.lock" }}
+            - v1-yarn-
       - run:
           name: yarn install
           command: "yarn install --frozen-lockfile --no-progress"
           no_output_timeout: 15m
       - save_cache:
-          key: dependency-cache-{{ checksum "yarn.lock" }}
+          key: v1-yarn-{{ checksum "yarn.lock" }}
           paths:
             - node_modules
       - run:
