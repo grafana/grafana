@@ -286,6 +286,8 @@ github.com/stretchr/testify v1.4.0/go.mod h1:j7eGeouHqKxXV5pUuKE4zz7dFj8WfuZ+81P
 github.com/syndtr/goleveldb v1.0.0/go.mod h1:ZVVdQEZoIme9iO1Ch2Jdy24qqXrMMOU6lpPAyBWyWuQ=
 github.com/teris-io/shortid v0.0.0-20171029131806-771a37caa5cf h1:Z2X3Os7oRzpdJ75iPqWZc0HeJWFYNCvKsfpQwFpRNTA=
 github.com/teris-io/shortid v0.0.0-20171029131806-771a37caa5cf/go.mod h1:M8agBzgqHIhgj7wEn9/0hJUZcrvt9VY+Ln+S1I5Mha0=
+github.com/timberio/go-datemath v0.1.1-0.20200323150745-74ddef604fff h1:QCdUBuN+iKWAB9HqPTkBwyKPPUHDobJ2AuELSNZwd4o=
+github.com/timberio/go-datemath v0.1.1-0.20200323150745-74ddef604fff/go.mod h1:m7kjsbCuO4QKP3KLfnxiUZWiOiFXmxj30HeexjL3lc0=
 github.com/ua-parser/uap-go v0.0.0-20190826212731-daf92ba38329 h1:VBsKFh4W1JEMz3eLCmM9zOJKZdDkP5W4b3Y4hc7SbZc=
 github.com/ua-parser/uap-go v0.0.0-20190826212731-daf92ba38329/go.mod h1:OBcG9bn7sHtXgarhUEb3OfCnNsgtGnkVf41ilSZ3K3E=
 github.com/uber/jaeger-client-go v2.20.1+incompatible h1:HgqpYBng0n7tLJIlyT4kPCIv5XgCsF+kai1NnnrJzEU=
