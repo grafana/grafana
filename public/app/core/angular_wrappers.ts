@@ -68,17 +68,16 @@ export function registerAngularDirectives() {
   ]);
   react2AngularDirective('searchFilters', SearchResultsFilter, [
     'allChecked',
-    'onSelectAllChanged',
     'canMove',
     'canDelete',
-    'moveTo',
     'starredFilterOptions',
     'tagFilterOptions',
     'selectedStarredFilter',
-    'onStarredFilterChange',
     'selectedTagFilter',
-    'selectedTagFilter',
-    'onTagFilterChange',
+    ['onSelectAllChanged', { watchDepth: 'reference' }],
+    ['moveTo', { watchDepth: 'reference' }],
+    ['onStarredFilterChange', { watchDepth: 'reference' }],
+    ['onTagFilterChange', { watchDepth: 'reference' }],
   ]);
   react2AngularDirective('tagFilter', TagFilter, [
     'tags',

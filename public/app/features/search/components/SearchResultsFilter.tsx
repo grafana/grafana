@@ -1,7 +1,6 @@
 import React, { FC } from 'react';
 //import { css, cx } from 'emotion';
 import { Button, Forms } from '@grafana/ui';
-import { SearchCheckbox } from './SearchCheckbox';
 
 interface Props {
   allChecked: boolean;
@@ -33,9 +32,10 @@ export const SearchResultsFilter: FC<Props> = ({
   onTagFilterChange,
 }) => {
   const showActions = canDelete || canMove;
+
   return (
     <div className="search-results-filter-row">
-      <SearchCheckbox checked={allChecked} onClick={onSelectAllChanged} editable={true} />
+      <Forms.Checkbox value={allChecked} onChange={onSelectAllChanged} />
       <div className="search-results-filter-row__filters">
         {showActions ? (
           <div className="gf-form-button-row">

@@ -295,7 +295,9 @@ export class ManageDashboardsCtrl {
     return this.refreshList();
   }
 
-  onSelectAllChanged() {
+  onSelectAllChanged = () => {
+    this.selectAllChecked = !this.selectAllChecked;
+
     for (const section of this.sections) {
       if (!section.hideHeader) {
         section.checked = this.selectAllChecked;
@@ -306,9 +308,8 @@ export class ManageDashboardsCtrl {
         return item;
       });
     }
-
     this.selectionChanged();
-  }
+  };
 
   clearFilters() {
     this.query.query = '';
