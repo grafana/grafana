@@ -1,13 +1,13 @@
-import React, { PureComponent, ComponentType, HTMLAttributes } from 'react';
+import React, { useEffect, useState, HTMLProps, ComponentType } from 'react';
 import { css, cx } from 'emotion';
 import { camelCase } from 'lodash';
 
-import { stylesFactory, withTheme } from '../../themes';
-import { Themeable } from '../../types';
+import { stylesFactory } from '../../themes';
+import { useTheme } from '../../themes/ThemeContext';
 import { IconType } from './types';
 import { ComponentSize } from '../../types/size';
 
-interface IconProps extends Themeable, HTMLAttributes<HTMLElement> {
+interface IconProps extends Omit<HTMLProps<HTMLDivElement>, 'size'> {
   name: IconType;
   size?: ComponentSize;
   color?: string;
@@ -17,6 +17,10 @@ export type SvgProps = {
   size: number;
   color: string;
   secondaryColor?: string;
+};
+
+type Module = {
+  default: ComponentType<SvgProps>;
 };
 
 const getIconStyles = stylesFactory(() => {
@@ -35,58 +39,51 @@ const getIconStyles = stylesFactory(() => {
   };
 });
 
-export interface IconState {
-  icon: null | ComponentType<SvgProps>;
-}
+export const Icon = React.forwardRef<HTMLDivElement, IconProps>(
+  ({ size = 'md', type = 'default', color, title, name, className, ...restProps }, ref) => {
+    const [icon, setIcon] = useState<null | Module>(null);
 
-class UnThemedIcon extends PureComponent<IconProps, IconState> {
-  constructor(props: IconProps) {
-    super(props);
-    this.state = {
-      icon: null,
+    const pascalCase = (string: string) => {
+      const str = camelCase(string);
+      return str.charAt(0).toUpperCase() + str.substring(1);
     };
-  }
 
-  pascalCase(str: string) {
-    const string = camelCase(str);
-    return string.charAt(0).toUpperCase() + string.substring(1);
-  }
+    useEffect(() => {
+      if (type === 'default') {
+        import(`@iconscout/react-unicons/icons/uil-${name}`).then(module => {
+          setIcon(module);
+        });
+      }
+      if (type === 'mono') {
+        const monoIconName = pascalCase(name);
+        import(`./assets/${monoIconName}`).then(module => {
+          setIcon(module);
+        });
+      }
+    }, []);
 
-  componentDidMount() {
-    const { name, type = 'default' } = this.props;
-    if (type === 'default') {
-      import(`@iconscout/react-unicons/icons/uil-${name}`).then(module => {
-        this.setState({ icon: module.default });
-      });
-    }
-    if (type === 'mono') {
-      const monoIconName = this.pascalCase(name);
-      import(`./assets/${monoIconName}`).then(module => {
-        this.setState({ icon: module.default });
-      });
-    }
-  }
-
-  render() {
-    const { type = 'default', size = 'md', color, className, theme, ...rest } = this.props;
-    const { icon: Component } = this.state;
-
+    const theme = useTheme();
     const styles = getIconStyles();
     const mainColor = color || theme.colors.orange;
     const secondaryColor = `${mainColor}99`;
 
-    /*Transform string with px to number*/
+    /* Transform string with px to number */
     const svgSize = Number(theme.typography.size[size].slice(0, -2));
+
+    const Component = icon?.default;
+    if (!Component) {
+      return null;
+    }
 
     return (
       <div
         className={cx(styles.icon, { [styles.currentFontColor]: !color && type === 'default' }, className)}
-        {...rest}
+        {...restProps}
+        ref={ref}
       >
-        {Component && <Component color={mainColor} secondaryColor={secondaryColor} size={svgSize} />}
+        {type === 'default' && <Component color={mainColor} size={svgSize} />}
+        {type === 'mono' && <Component color={mainColor} secondaryColor={secondaryColor} size={svgSize} />}
       </div>
     );
   }
-}
-
-export const Icon = withTheme(UnThemedIcon);
+);
