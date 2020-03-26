@@ -94,6 +94,25 @@ func (uss *UsageStatsService) sendUsageStats(oauthProviders map[string]bool) {
 
 	metrics["stats.packaging."+setting.Packaging+".count"] = 1
 
+	// Alerting stats
+	alertingUsageStats, err := uss.AlertingUsageStats.GetAlertingUsage()
+	if err != nil {
+		uss.log.Error("Failed to get alerting usage stats", "error", err)
+		return
+	}
+
+	alertingOtherCount := 0
+	for dsType, usageCount := range alertingUsageStats.DatasourceUsage {
+		if models.IsKnownDataSourcePlugin(dsType) {
+			metrics["stats.alerting.ds."+dsType+".count"] = usageCount
+		} else {
+			alertingOtherCount += usageCount
+		}
+	}
+
+	metrics["stats.alerting.ds.other.count"] = alertingOtherCount
+
+	// fetch datasource access stats
 	dsAccessStats := models.GetDataSourceAccessStatsQuery{}
 	if err := uss.Bus.Dispatch(&dsAccessStats); err != nil {
 		metricsLogger.Error("Failed to get datasource access stats", "error", err)
@@ -131,18 +150,6 @@ func (uss *UsageStatsService) sendUsageStats(oauthProviders map[string]bool) {
 
 	for _, stats := range anStats.Result {
 		metrics["stats.alert_notifiers."+stats.Type+".count"] = stats.Count
-	}
-
-	// Add stats about alert rules
-	// * alert count per datasource
-	// * timerange per alertrule?
-	// * conditions count?
-
-	// alert rules grouped by datasourceID
-	// fetch datasource type per id
-	type DatasourceAlertUsage struct {
-		DatasourceType string
-		Count          int
 	}
 
 	// Add stats about auth configuration

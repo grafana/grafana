@@ -18,6 +18,10 @@ type UsageStats struct {
 	DatasourceUsage DatasourceAlertUsage
 }
 
+type UsageStatsFetcher interface {
+	GetAlertingUsage() (*UsageStats, error)
+}
+
 // GetAlertingUsage returns usage stats about alert rules
 // configured in Grafana.
 func (ae *AlertEngine) GetAlertingUsage() (*UsageStats, error) {
