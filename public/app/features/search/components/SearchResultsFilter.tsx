@@ -1,6 +1,7 @@
 import React, { FC } from 'react';
-//import { css, cx } from 'emotion';
+import { css } from 'emotion';
 import { Button, Forms } from '@grafana/ui';
+import { SelectableValue } from '@grafana/data';
 
 interface Props {
   allChecked: boolean;
@@ -9,13 +10,17 @@ interface Props {
   canDelete: boolean;
   moveTo: any;
   deleteItem: any;
-  starredFilterOptions: any[];
   tagFilterOptions: any[];
-  selectedStarredFilter: any;
   onStarredFilterChange: any;
   selectedTagFilter: any;
   onTagFilterChange: any;
+  selectedStarredFilter: SelectableValue;
 }
+
+const starredFilterOptions = [
+  { label: 'Yes', value: true },
+  { label: 'No', value: false },
+];
 
 export const SearchResultsFilter: FC<Props> = ({
   allChecked,
@@ -24,15 +29,13 @@ export const SearchResultsFilter: FC<Props> = ({
   canDelete,
   moveTo,
   deleteItem,
-  starredFilterOptions,
   tagFilterOptions,
-  selectedStarredFilter,
   onStarredFilterChange,
   selectedTagFilter,
   onTagFilterChange,
+  selectedStarredFilter,
 }) => {
   const showActions = canDelete || canMove;
-
   return (
     <div className="search-results-filter-row">
       <Forms.Checkbox value={allChecked} onChange={onSelectAllChanged} />
@@ -48,15 +51,19 @@ export const SearchResultsFilter: FC<Props> = ({
           </div>
         ) : (
           <>
-            <div className="gf-form-select-wrapper">
+            <div
+              className={css`
+                display: flex;
+              `}
+            >
               <Forms.Select
                 size="sm"
-                value={selectedStarredFilter}
+                placeholder="Filter by starred"
+                key={selectedStarredFilter?.value}
                 options={starredFilterOptions}
                 onChange={onStarredFilterChange}
               />
-            </div>
-            <div className="gf-form-select-wrapper">
+
               <Forms.Select
                 size="sm"
                 value={selectedTagFilter}

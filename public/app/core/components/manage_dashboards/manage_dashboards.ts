@@ -1,5 +1,6 @@
 import { IScope } from 'angular';
 import _ from 'lodash';
+import { SelectableValue } from '@grafana/data';
 import coreModule from 'app/core/core_module';
 import appEvents from 'app/core/app_events';
 import { SearchSrv } from 'app/core/services/search_srv';
@@ -54,7 +55,6 @@ export class ManageDashboardsCtrl {
   hasFilters = false;
   tagFilterOptions: any[];
   selectedTagFilter: any;
-  starredFilterOptions = [{ text: 'Filter by Starred', disabled: true }, { text: 'Yes' }, { text: 'No' }];
   selectedStarredFilter: any;
 
   // used when managing dashboards for a specific folder
@@ -87,8 +87,6 @@ export class ManageDashboardsCtrl {
     if (this.folderId) {
       this.query.folderIds = [this.folderId];
     }
-
-    this.selectedStarredFilter = this.starredFilterOptions[0];
 
     this.refreshList().then(() => {
       this.initTagFilter();
@@ -289,11 +287,10 @@ export class ManageDashboardsCtrl {
     return this.refreshList();
   }
 
-  onStarredFilterChange() {
-    this.query.starred = this.selectedStarredFilter.text === 'Yes';
-    this.selectedStarredFilter = this.starredFilterOptions[0];
+  onStarredFilterChange = (value: SelectableValue) => {
+    this.query.starred = value.value;
     return this.refreshList();
-  }
+  };
 
   onSelectAllChanged = () => {
     this.selectAllChecked = !this.selectAllChecked;
@@ -315,6 +312,7 @@ export class ManageDashboardsCtrl {
     this.query.query = '';
     this.query.tag = [];
     this.query.starred = false;
+    this.selectedStarredFilter = { value: Math.random() };
     this.refreshList();
   }
 
@@ -357,6 +355,8 @@ export class ManageDashboardsCtrl {
       this.selectionChanged();
     }
   };
+
+  onReset() {}
 }
 
 export function manageDashboardsDirective() {
