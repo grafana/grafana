@@ -51,7 +51,6 @@ export const SaveDashboardAsButton: React.FC<SaveDashboardButtonProps & { varian
   getDashboard,
   variant,
 }) => {
-  console.log(variant);
   return (
     <ModalsController>
       {({ showModal, hideModal }) => {
