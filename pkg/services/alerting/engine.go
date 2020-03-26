@@ -10,6 +10,7 @@ import (
 	tlog "github.com/opentracing/opentracing-go/log"
 
 	"github.com/benbjohnson/clock"
+	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/rendering"
@@ -23,6 +24,7 @@ import (
 // are sent.
 type AlertEngine struct {
 	RenderService rendering.Service `inject:""`
+	Bus           bus.Bus           `inject:""`
 
 	execQueue     chan *Job
 	ticker        *Ticker

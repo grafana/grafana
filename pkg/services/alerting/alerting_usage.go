@@ -1,4 +1,4 @@
-package usagestats
+package alerting
 
 import (
 	"encoding/json"
@@ -7,26 +7,44 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 )
 
+// DatasourceAlertUsage is a hash where the key represents the
+// Datasource type and the value represents how many alerts
+// that use the datasources.
 type DatasourceAlertUsage map[string]int
 
-func (uss *UsageStatsService) getAlertingUsage() (DatasourceAlertUsage, error) {
-	cmd := &models.GetAllAlertsQuery{}
-	err := uss.Bus.Dispatch(cmd)
-	if err != nil {
-		return map[string]int{}, err
-	}
-
-	return uss.mapRulesToUsageStats(cmd.Result)
+// UsageStats contains stats about alert rules configured in
+// Grafana.
+type UsageStats struct {
+	DatasourceUsage DatasourceAlertUsage
 }
 
-func (uss *UsageStatsService) mapRulesToUsageStats(rules []*models.Alert) (DatasourceAlertUsage, error) {
+// GetAlertingUsage returns usage stats about alert rules
+// configured in Grafana.
+func (ae *AlertEngine) GetAlertingUsage() (*UsageStats, error) {
+	cmd := &models.GetAllAlertsQuery{}
+	err := ae.Bus.Dispatch(cmd)
+	if err != nil {
+		return nil, err
+	}
+
+	dsUsage, err := ae.mapRulesToUsageStats(cmd.Result)
+	if err != nil {
+		return nil, err
+	}
+
+	return &UsageStats{
+		DatasourceUsage: dsUsage,
+	}, nil
+}
+
+func (ae *AlertEngine) mapRulesToUsageStats(rules []*models.Alert) (DatasourceAlertUsage, error) {
 	// map of datasourceId type and frequency
 	typeCount := map[int64]int{}
 
 	for _, a := range rules {
-		dss, err := uss.parseAlertRuleModel(a.Settings)
+		dss, err := ae.parseAlertRuleModel(a.Settings)
 		if err != nil {
-			uss.log.Error("could not parse alert rule", "id", a.Id)
+			ae.log.Debug("could not parse settings for alert rule", "id", a.Id)
 			continue
 		}
 
@@ -38,7 +56,7 @@ func (uss *UsageStatsService) mapRulesToUsageStats(rules []*models.Alert) (Datas
 	result := map[string]int{}
 	for k, v := range typeCount {
 		query := &models.GetDataSourceByIdQuery{Id: k}
-		err := uss.Bus.Dispatch(query)
+		err := ae.Bus.Dispatch(query)
 		if err != nil {
 			return map[string]int{}, nil
 		}
@@ -49,9 +67,9 @@ func (uss *UsageStatsService) mapRulesToUsageStats(rules []*models.Alert) (Datas
 	return result, nil
 }
 
-func (uss *UsageStatsService) parseAlertRuleModel(settings *simplejson.Json) ([]int64, error) {
+func (ae *AlertEngine) parseAlertRuleModel(settings *simplejson.Json) ([]int64, error) {
 	datasourceIDs := []int64{}
-	model := alertJsonModel{}
+	model := alertJSONModel{}
 
 	if settings == nil {
 		return datasourceIDs, nil
@@ -79,6 +97,6 @@ type conditionQuery struct {
 	DatasourceID int64 `json:"datasourceId"`
 }
 
-type alertJsonModel struct {
+type alertJSONModel struct {
 	Conditions []*alertCondition `json:"conditions"`
 }

@@ -1,4 +1,4 @@
-package usagestats
+package alerting
 
 import (
 	"io/ioutil"
@@ -12,11 +12,11 @@ import (
 )
 
 func TestAlertingUsageStats(t *testing.T) {
-	uss := &UsageStatsService{
+	ae := &AlertEngine{
 		Bus: bus.New(),
 	}
 
-	uss.Bus.AddHandler(func(query *models.GetAllAlertsQuery) error {
+	ae.Bus.AddHandler(func(query *models.GetAllAlertsQuery) error {
 		var createFake = func(file string) *simplejson.Json {
 			content, err := ioutil.ReadFile(file)
 			require.NoError(t, err, "expected to be able to read file")
@@ -26,14 +26,14 @@ func TestAlertingUsageStats(t *testing.T) {
 		}
 
 		query.Result = []*models.Alert{
-			{Id: 1, Settings: createFake("testdata/one_condition.json")},
-			{Id: 2, Settings: createFake("testdata/two_conditions.json")},
-			{Id: 3, Settings: createFake("testdata/empty.json")},
+			{Id: 1, Settings: createFake("testdata/settings/one_condition.json")},
+			{Id: 2, Settings: createFake("testdata/settings/two_conditions.json")},
+			{Id: 3, Settings: createFake("testdata/settings/empty.json")},
 		}
 		return nil
 	})
 
-	uss.Bus.AddHandler(func(query *models.GetDataSourceByIdQuery) error {
+	ae.Bus.AddHandler(func(query *models.GetDataSourceByIdQuery) error {
 		ds := map[int64]*models.DataSource{
 			1: {Type: "influxdb"},
 			2: {Type: "graphite"},
@@ -49,10 +49,10 @@ func TestAlertingUsageStats(t *testing.T) {
 		return nil
 	})
 
-	err := uss.Init()
+	err := ae.Init()
 	require.NoError(t, err, "Init should not return error")
 
-	result, err := uss.getAlertingUsage()
+	result, err := ae.GetAlertingUsage()
 	require.NoError(t, err, "getAlertingUsage should not return error")
 
 	expected := map[string]int{
@@ -61,8 +61,8 @@ func TestAlertingUsageStats(t *testing.T) {
 	}
 
 	for k := range expected {
-		if expected[k] != result[k] {
-			t.Errorf("result missmatch for %s. got %v expected %v", k, result[k], expected[k])
+		if expected[k] != result.DatasourceUsage[k] {
+			t.Errorf("result missmatch for %s. got %v expected %v", k, result.DatasourceUsage[k], expected[k])
 		}
 	}
 }
@@ -76,32 +76,32 @@ func TestParsingAlertRuleSettings(t *testing.T) {
 	}{
 		{
 			name:      "can parse singel condition",
-			file:      "testdata/one_condition.json",
+			file:      "testdata/settings/one_condition.json",
 			expected:  []int64{3},
 			shouldErr: require.NoError,
 		},
 		{
 			name:      "can parse multiple conditions",
-			file:      "testdata/two_conditions.json",
+			file:      "testdata/settings/two_conditions.json",
 			expected:  []int64{3, 2},
 			shouldErr: require.NoError,
 		},
 		{
 			name:      "can parse empty json",
-			file:      "testdata/empty.json",
+			file:      "testdata/settings/empty.json",
 			expected:  []int64{},
 			shouldErr: require.NoError,
 		},
 		{
 			name:      "can parse blank content",
-			file:      "testdata/invalid_format.json",
+			file:      "testdata/settings/invalid_format.json",
 			expected:  []int64{},
 			shouldErr: require.NoError,
 		},
 	}
 
-	uss := &UsageStatsService{}
-	err := uss.Init()
+	ae := &AlertEngine{}
+	err := ae.Init()
 	require.NoError(t, err, "Init should not return an error")
 
 	for _, tc := range tcs {
@@ -110,7 +110,7 @@ func TestParsingAlertRuleSettings(t *testing.T) {
 			require.NoError(t, err, "expected to be able to read file")
 
 			j, err := simplejson.NewJson(content)
-			result, err := uss.parseAlertRuleModel(j)
+			result, err := ae.parseAlertRuleModel(j)
 
 			tc.shouldErr(t, err)
 			diff := cmp.Diff(tc.expected, result)
