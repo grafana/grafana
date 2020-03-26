@@ -156,3 +156,4 @@ export { ValuePicker } from './ValuePicker/ValuePicker';
 export { fieldMatchersUI } from './MatchersUI/fieldMatchersUI';
 export { getStandardFieldConfigs } from './FieldConfigs/standardFieldConfigEditors';
 export { HorizontalGroup, VerticalGroup, Container } from './Layout/Layout';
+export { RadioButtonGroup } from './Forms/RadioButtonGroup/RadioButtonGroup';

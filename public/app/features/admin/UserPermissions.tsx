@@ -1,5 +1,5 @@
 import React, { PureComponent } from 'react';
-import { ConfirmButton } from '@grafana/ui';
+import { ConfirmButton, RadioButtonGroup } from '@grafana/ui';
 import { cx } from 'emotion';
 
 interface Props {
@@ -12,6 +12,11 @@ interface State {
   isEditing: boolean;
   currentAdminOption: string;
 }
+
+const adminOptions = [
+  { label: 'Yes', value: 'YES' },
+  { label: 'No', value: 'NO' },
+];
 
 export class UserPermissions extends PureComponent<Props, State> {
   state = {
@@ -36,8 +41,8 @@ export class UserPermissions extends PureComponent<Props, State> {
     this.props.onGrafanaAdminChange(newIsGrafanaAdmin);
   };
 
-  onAdminOptionSelect = (event: React.ChangeEvent<HTMLSelectElement>) => {
-    this.setState({ currentAdminOption: event.target.value });
+  onAdminOptionSelect = (value: string) => {
+    this.setState({ currentAdminOption: value });
   };
 
   render() {
@@ -57,7 +62,12 @@ export class UserPermissions extends PureComponent<Props, State> {
                   {isEditing ? (
                     <td colSpan={2}>
                       <div className="gf-form-select-wrapper width-8">
-                        <select
+                        <RadioButtonGroup
+                          options={adminOptions}
+                          value={currentAdminOption}
+                          onChange={this.onAdminOptionSelect}
+                        />
+                        {/* <select
                           value={currentAdminOption}
                           className="gf-form-input"
                           onChange={this.onAdminOptionSelect}
@@ -69,7 +79,7 @@ export class UserPermissions extends PureComponent<Props, State> {
                               </option>
                             );
                           })}
-                        </select>
+                        </select> */}
                       </div>
                     </td>
                   ) : (
