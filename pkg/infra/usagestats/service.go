@@ -25,7 +25,7 @@ type UsageStatsService struct {
 	Cfg                *setting.Cfg               `inject:""`
 	Bus                bus.Bus                    `inject:""`
 	SQLStore           *sqlstore.SqlStore         `inject:""`
-	AlertingUsageStats alerting.UsageStatsFetcher `inject:""`
+	AlertingUsageStats alerting.UsageStatsQuerier `inject:""`
 	License            models.Licensing           `inject:""`
 
 	log log.Logger

@@ -52,7 +52,7 @@ func TestAlertingUsageStats(t *testing.T) {
 	err := ae.Init()
 	require.NoError(t, err, "Init should not return error")
 
-	result, err := ae.GetAlertingUsage()
+	result, err := ae.QueryUsageStats()
 	require.NoError(t, err, "getAlertingUsage should not return error")
 
 	expected := map[string]int{

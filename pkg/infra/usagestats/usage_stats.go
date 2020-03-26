@@ -95,7 +95,7 @@ func (uss *UsageStatsService) sendUsageStats(oauthProviders map[string]bool) {
 	metrics["stats.packaging."+setting.Packaging+".count"] = 1
 
 	// Alerting stats
-	alertingUsageStats, err := uss.AlertingUsageStats.GetAlertingUsage()
+	alertingUsageStats, err := uss.AlertingUsageStats.QueryUsageStats()
 	if err != nil {
 		uss.log.Error("Failed to get alerting usage stats", "error", err)
 		return

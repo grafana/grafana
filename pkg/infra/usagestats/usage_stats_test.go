@@ -338,7 +338,7 @@ func waitTimeout(wg *sync.WaitGroup, timeout time.Duration) bool {
 
 type alertingUsageMock struct{}
 
-func (aum *alertingUsageMock) GetAlertingUsage() (*alerting.UsageStats, error) {
+func (aum *alertingUsageMock) QueryUsageStats() (*alerting.UsageStats, error) {
 	return &alerting.UsageStats{
 		DatasourceUsage: map[string]int{
 			"prometheus":         1,

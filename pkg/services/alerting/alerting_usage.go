@@ -18,13 +18,15 @@ type UsageStats struct {
 	DatasourceUsage DatasourceAlertUsage
 }
 
-type UsageStatsFetcher interface {
-	GetAlertingUsage() (*UsageStats, error)
+// UsageStatsQuerier returns usage stats about alert rules
+// configured in Grafana.
+type UsageStatsQuerier interface {
+	QueryUsageStats() (*UsageStats, error)
 }
 
-// GetAlertingUsage returns usage stats about alert rules
+// QueryUsageStats returns usage stats about alert rules
 // configured in Grafana.
-func (ae *AlertEngine) GetAlertingUsage() (*UsageStats, error) {
+func (ae *AlertEngine) QueryUsageStats() (*UsageStats, error) {
 	cmd := &models.GetAllAlertsQuery{}
 	err := ae.Bus.Dispatch(cmd)
 	if err != nil {
