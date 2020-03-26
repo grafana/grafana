@@ -82,6 +82,9 @@ func (ae *AlertEngine) parseAlertRuleModel(settings *simplejson.Json) ([]int64, 
 	}
 
 	bytes, err := settings.MarshalJSON()
+	if err != nil {
+		return datasourceIDs, err
+	}
 
 	err = json.Unmarshal(bytes, &model)
 	if err != nil {
