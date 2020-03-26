@@ -557,8 +557,6 @@ jobs:
               /tmp/workspace/bin/grabpl build-docker --jobs 4 --edition << parameters.edition >> \
                 --ubuntu=<< parameters.ubuntu >> --archs amd64
             fi
-            mkdir -p << parameters.edition >>/docker
-            mv docker/*.tar << parameters.edition >>/docker/
       - run:
           name: Upload Docker images to GCS
           command: |
