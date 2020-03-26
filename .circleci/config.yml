@@ -40,6 +40,19 @@ executors:
     docker:
       - image: grafana/wix-toolset-ci:v3
 
+commands:
+  install-google-cloud-sdk:
+    description: Install Google Cloud SDK
+    steps:
+      run:
+        command: |
+          VERSION=286.0.0
+          cd /tmp
+          curl -fLO https://dl.google.com/dl/cloudsdk/channels/rapid/downloads/google-cloud-sdk-${VERSION}-linux-x86_64.tar.gz
+          tar xf google-cloud-sdk-${VERSION}-linux-x86_64.tar.gz
+          sudo mv google-cloud-sdk /opt/google-cloud-sdk
+          rm google-cloud-sdk-${VERSION}-linux-x86_64.tar.gz
+
 jobs:
   install-grabpl:
     description: Install the Grafana Build Pipeline tool
@@ -524,6 +537,7 @@ jobs:
       - run:
           name: CI job started
           command: ./scripts/ci-job-started.sh
+      - install-google-cloud-sdk
       - run: docker info
       # XXX: Is this necessary?
       - run: docker run --privileged linuxkit/binfmt:v0.6
@@ -550,7 +564,7 @@ jobs:
           command: |
             if [[ -z $CIRCLE_TAG && $CIRCLE_BRANCH != "chore/test-release-pipeline" && $CIRCLE_BRANCH != "master" ]]; then
               echo "Nothing to do fork PRs, so marking this step successful"
-              circleci step halt
+              echo circleci step halt
             fi
 
             if [[ "<< parameters.ubuntu >>" != "true" ]]; then
@@ -560,7 +574,8 @@ jobs:
               IMAGE_BASE="ubuntu"
               echo "Uploading Ubuntu based << parameters.edition >> Docker images"
             fi
-            gsutil -m rsync -d docker/ gs://grafana-build-pipeline/docker/<< parameters.edition >>/${IMAGE_BASE}/${CIRCLE_WORKFLOW_ID}
+            /opt/google-cloud-sdk/bin/gsutil -m rsync -d \
+              docker/ gs://grafana-build-pipeline/docker/<< parameters.edition >>/${IMAGE_BASE}/${CIRCLE_WORKFLOW_ID}
       - run:
           name: CI job failed
           command: ./scripts/ci-job-failed.sh
@@ -593,6 +608,7 @@ jobs:
       - run:
           name: CI job started
           command: ./scripts/ci-job-started.sh
+      - install-google-cloud-sdk
       - run:
           name: Download Docker images from GCS
           command: |
@@ -605,7 +621,8 @@ jobs:
             fi
             echo $GCP_GRAFANA_UPLOAD_KEY > /tmp/gcpkey.json
             gcloud auth activate-service-account --key-file=/tmp/gcpkey.json
-            gsutil -m rsync -d gs://grafana-build-pipeline/docker/<< parameters.edition >>/${IMAGE_BASE}/${CIRCLE_WORKFLOW_ID} docker
+            /opt/google-cloud-sdk/bin/gsutil -m rsync -d \
+              gs://grafana-build-pipeline/docker/<< parameters.edition >>/${IMAGE_BASE}/${CIRCLE_WORKFLOW_ID} docker
       - run:
           name: Copy artifacts from workspace
           command: |
@@ -631,7 +648,8 @@ jobs:
             fi
             echo $GCP_GRAFANA_UPLOAD_KEY > /tmp/gcpkey.json
             gcloud auth activate-service-account --key-file=/tmp/gcpkey.json
-            echo gsutil -m rm -r gs://grafana-build-pipeline/docker/<< parameters.edition >>/${IMAGE_BASE}/${CIRCLE_WORKFLOW_ID}
+            echo /opt/google-cloud-sdk/bin/gsutil -m rm -r \
+              gs://grafana-build-pipeline/docker/<< parameters.edition >>/${IMAGE_BASE}/${CIRCLE_WORKFLOW_ID}
       - run:
           name: CI job failed
           command: ./scripts/ci-job-failed.sh
