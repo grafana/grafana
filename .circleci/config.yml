@@ -1169,7 +1169,8 @@ workflows:
             - build-release-publisher
       - publish-storybook:
           requires:
-            - end-to-end-tests
+            - backend-tests
+            - frontend-tests
       - build-docker-images:
           # No filters, meaning this job runs for all branches
           name: build-oss-docker-images
