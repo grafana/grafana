@@ -4,7 +4,8 @@ import tinycolor from 'tinycolor2';
 import { selectThemeVariant, stylesFactory, ThemeContext } from '../../themes';
 import { Button as DefaultButton, LinkButton as DefaultLinkButton } from '../Button/Button';
 import { getFocusStyle, getPropertiesForButtonSize } from './commonStyles';
-import { ButtonSize, StyleDeps } from '../Button/types';
+import { ComponentSize } from '../../types/size';
+import { StyleDeps } from '../Button/types';
 import { GrafanaTheme } from '@grafana/data';
 
 const buttonVariantStyles = (from: string, to: string, textColor: string) => css`
@@ -87,7 +88,7 @@ export const getButtonStyles = stylesFactory(({ theme, size, variant }: StylePro
         align-items: center;
         font-weight: ${theme.typography.weight.semibold};
         font-family: ${theme.typography.fontFamily.sansSerif};
-        line-height: ${theme.typography.lineHeight.sm};
+        line-height: ${theme.typography.lineHeight.md};
         font-size: ${fontSize};
         padding: ${padding};
         height: ${height};
@@ -130,7 +131,7 @@ export type ButtonVariant = 'primary' | 'secondary' | 'destructive' | 'link';
 
 // These also needs to be different because the ButtonVariant is different
 type CommonProps = {
-  size?: ButtonSize;
+  size?: ComponentSize;
   variant?: ButtonVariant;
   icon?: string;
   className?: string;

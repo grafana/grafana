@@ -1,6 +1,7 @@
 import React, { PureComponent, ChangeEvent } from 'react';
 import { ExploreQueryFieldProps } from '@grafana/data';
 import { Input, ValidationEvents, EventsWithValidation, Switch } from '@grafana/ui';
+import isEmpty from 'lodash/isEmpty';
 import { CloudWatchQuery } from '../types';
 import CloudWatchDatasource from '../datasource';
 import { QueryField, Alias, QueryFieldsEditor } from './';
@@ -20,50 +21,35 @@ const idValidationEvents: ValidationEvents = {
   ],
 };
 
+export const normalizeQuery = ({
+  namespace,
+  metricName,
+  expression,
+  dimensions,
+  region,
+  id,
+  alias,
+  statistics,
+  period,
+  ...rest
+}: CloudWatchQuery): CloudWatchQuery => {
+  const normalizedQuery = {
+    namespace: namespace || '',
+    metricName: metricName || '',
+    expression: expression || '',
+    dimensions: dimensions || {},
+    region: region || 'default',
+    id: id || '',
+    alias: alias || '',
+    statistics: isEmpty(statistics) ? ['Average'] : statistics,
+    period: period || '',
+    ...rest,
+  };
+  return !rest.hasOwnProperty('matchExact') ? { ...normalizedQuery, matchExact: true } : normalizedQuery;
+};
+
 export class QueryEditor extends PureComponent<Props, State> {
   state: State = { showMeta: false };
-
-  static getDerivedStateFromProps(props: Props, state: State) {
-    const { query } = props;
-
-    if (!query.namespace) {
-      query.namespace = '';
-    }
-
-    if (!query.metricName) {
-      query.metricName = '';
-    }
-
-    if (!query.expression) {
-      query.expression = '';
-    }
-
-    if (!query.dimensions) {
-      query.dimensions = {};
-    }
-
-    if (!query.region) {
-      query.region = 'default';
-    }
-
-    if (!query.id) {
-      query.id = '';
-    }
-
-    if (!query.alias) {
-      query.alias = '';
-    }
-
-    if (!query.statistics || !query.statistics.length) {
-      query.statistics = ['Average'];
-    }
-
-    if (!query.hasOwnProperty('matchExact')) {
-      query.matchExact = true;
-    }
-
-    return state;
-  }
 
   onChange(query: CloudWatchQuery) {
     const { onChange, onRunQuery } = this.props;
@@ -72,12 +58,13 @@ export class QueryEditor extends PureComponent<Props, State> {
   }
 
   render() {
-    const { data, query, onRunQuery } = this.props;
+    const { data, onRunQuery } = this.props;
     const { showMeta } = this.state;
+    const query = normalizeQuery(this.props.query);
     const metaDataExist = data && Object.values(data).length && data.state === 'Done';
     return (
       <>
-        <QueryFieldsEditor {...this.props}></QueryFieldsEditor>
+        <QueryFieldsEditor {...{ ...this.props, query }}></QueryFieldsEditor>
         {query.statistics.length <= 1 && (
           <div className="gf-form-inline">
             <div className="gf-form">
@@ -92,7 +79,7 @@ export class QueryEditor extends PureComponent<Props, State> {
                     this.onChange({ ...query, id: event.target.value })
                   }
                   validationEvents={idValidationEvents}
-                  value={query.id || ''}
+                  value={query.id}
                 />
               </QueryField>
             </div>
@@ -105,7 +92,7 @@ export class QueryEditor extends PureComponent<Props, State> {
                 <Input
                   className="gf-form-input"
                   onBlur={onRunQuery}
-                  value={query.expression || ''}
+                  value={query.expression}
                   onChange={(event: ChangeEvent<HTMLInputElement>) =>
                     this.onChange({ ...query, expression: event.target.value })
                   }
@@ -119,7 +106,7 @@ export class QueryEditor extends PureComponent<Props, State> {
             <QueryField label="Period" tooltip="Minimum interval between points in seconds">
               <Input
                 className="gf-form-input width-8"
-                value={query.period || ''}
+                value={query.period}
                 placeholder="auto"
                 onBlur={onRunQuery}
                 onChange={(event: ChangeEvent<HTMLInputElement>) =>
@@ -170,7 +157,7 @@ export class QueryEditor extends PureComponent<Props, State> {
                 </tr>
               </thead>
               <tbody>
-                {data.series[0].meta.gmdMeta.map(({ ID, Expression, Period }: any) => (
+                {data?.series[0]?.meta?.gmdMeta.map(({ ID, Expression, Period }: any) => (
                   <tr key={ID}>
                     <td>{ID}</td>
                     <td>{Expression}</td>

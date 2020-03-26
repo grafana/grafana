@@ -395,11 +395,16 @@ export const enhanceDataFrame = (dataFrame: DataFrame, config: LokiOptions | nul
 
   const fields = derivedFields.reduce((acc, field) => {
     const config: FieldConfig = {};
-    if (field.url) {
+    if (field.url || field.datasourceName) {
       config.links = [
         {
           url: field.url,
           title: '',
+          meta: field.datasourceName
+            ? {
+                datasourceName: field.datasourceName,
+              }
+            : undefined,
         },
       ];
     }

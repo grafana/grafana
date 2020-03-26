@@ -100,7 +100,7 @@ exports[`ServerStats Should render table with stats 1`] = `
                     className="css-13jkosq"
                   >
                     <li
-                      className="css-b418eg"
+                      className="css-1aiaexb"
                       onClick={[Function]}
                     >
                       <i

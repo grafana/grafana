@@ -209,7 +209,7 @@ $btn-service-icon-width: 35px;
 
 .btn-service--grafanacom {
   .btn-service-icon {
-    background-image: url(/public/img/grafana_mask_icon_white.svg);
+    background-image: url(../img/grafana_mask_icon_white.svg);
     background-repeat: no-repeat;
     background-position: 50%;
     background-size: 60%;
@@ -218,7 +218,7 @@ $btn-service-icon-width: 35px;
 
 .btn-service--azuread {
   .btn-service-icon {
-    background-image: url(/public/img/microsoft_auth_icon.svg);
+    background-image: url(../img/microsoft_auth_icon.svg);
     background-repeat: no-repeat;
     background-position: 50%;
     background-size: 60%;

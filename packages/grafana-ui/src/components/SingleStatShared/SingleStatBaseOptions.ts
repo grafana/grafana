@@ -12,7 +12,6 @@ import {
   VizOrientation,
   PanelModel,
   FieldDisplayOptions,
-  ConfigOverrideRule,
   ThresholdsMode,
   ThresholdsConfig,
   validateFieldConfig,
@@ -27,70 +26,20 @@ export interface SingleStatBaseOptions {
 const optionsToKeep = ['fieldOptions', 'orientation'];
 
 export function sharedSingleStatPanelChangedHandler(
-  options: Partial<SingleStatBaseOptions> | any,
+  panel: PanelModel<Partial<SingleStatBaseOptions>> | any,
   prevPluginId: string,
   prevOptions: any
 ) {
+  let options = panel.options;
+
+  panel.fieldConfig = panel.fieldConfig || {
+    defaults: {},
+    overrides: [],
+  };
+
   // Migrating from angular singlestat
   if (prevPluginId === 'singlestat' && prevOptions.angular) {
-    const panel = prevOptions.angular;
-    const reducer = fieldReducers.getIfExists(panel.valueName);
-    const options = {
-      fieldOptions: {
-        defaults: {} as FieldConfig,
-        overrides: [] as ConfigOverrideRule[],
-        calcs: [reducer ? reducer.id : ReducerID.mean],
-      },
-      orientation: VizOrientation.Horizontal,
-    };
-
-    const defaults = options.fieldOptions.defaults;
-    if (panel.format) {
-      defaults.unit = panel.format;
-    }
-    if (panel.nullPointMode) {
-      defaults.nullValueMode = panel.nullPointMode;
-    }
-    if (panel.nullText) {
-      defaults.noValue = panel.nullText;
-    }
-    if (panel.decimals || panel.decimals === 0) {
-      defaults.decimals = panel.decimals;
-    }
-
-    // Convert thresholds and color values
-    if (panel.thresholds && panel.colors) {
-      const levels = panel.thresholds.split(',').map((strVale: string) => {
-        return Number(strVale.trim());
-      });
-
-      // One more color than threshold
-      const thresholds: Threshold[] = [];
-      for (const color of panel.colors) {
-        const idx = thresholds.length - 1;
-        if (idx >= 0) {
-          thresholds.push({ value: levels[idx], color });
-        } else {
-          thresholds.push({ value: -Infinity, color });
-        }
-      }
-      defaults.thresholds = {
-        mode: ThresholdsMode.Absolute,
-        steps: thresholds,
-      };
-    }
-
-    // Convert value mappings
-    const mappings = convertOldAngularValueMapping(panel);
-    if (mappings && mappings.length) {
-      defaults.mappings = mappings;
-    }
-
-    if (panel.gauge && panel.gauge.show) {
-      defaults.min = panel.gauge.minValue;
-      defaults.max = panel.gauge.maxValue;
-    }
-    return options;
+    return migrateFromAngularSinglestat(panel, prevOptions);
   }
 
   for (const k of optionsToKeep) {
@@ -98,6 +47,70 @@ export function sharedSingleStatPanelChangedHandler(
       options[k] = cloneDeep(prevOptions[k]);
     }
   }
+
+  return options;
+}
+
+function migrateFromAngularSinglestat(panel: PanelModel<Partial<SingleStatBaseOptions>> | any, prevOptions: any) {
+  const prevPanel = prevOptions.angular;
+  const reducer = fieldReducers.getIfExists(prevPanel.valueName);
+  const options = {
+    fieldOptions: {
+      calcs: [reducer ? reducer.id : ReducerID.mean],
+    },
+    orientation: VizOrientation.Horizontal,
+  };
+
+  const defaults: FieldConfig = {};
+
+  if (prevPanel.format) {
+    defaults.unit = prevPanel.format;
+  }
+  if (prevPanel.nullPointMode) {
+    defaults.nullValueMode = prevPanel.nullPointMode;
+  }
+  if (prevPanel.nullText) {
+    defaults.noValue = prevPanel.nullText;
+  }
+  if (prevPanel.decimals || prevPanel.decimals === 0) {
+    defaults.decimals = prevPanel.decimals;
+  }
+
+  // Convert thresholds and color values
+  if (prevPanel.thresholds && prevPanel.colors) {
+    const levels = prevPanel.thresholds.split(',').map((strVale: string) => {
+      return Number(strVale.trim());
+    });
+
+    // One more color than threshold
+    const thresholds: Threshold[] = [];
+    for (const color of prevPanel.colors) {
+      const idx = thresholds.length - 1;
+      if (idx >= 0) {
+        thresholds.push({ value: levels[idx], color });
+      } else {
+        thresholds.push({ value: -Infinity, color });
+      }
+    }
+    defaults.thresholds = {
+      mode: ThresholdsMode.Absolute,
+      steps: thresholds,
+    };
+  }
+
+  // Convert value mappings
+  const mappings = convertOldAngularValueMapping(prevPanel);
+  if (mappings && mappings.length) {
+    defaults.mappings = mappings;
+  }
+
+  if (prevPanel.gauge && prevPanel.gauge.show) {
+    defaults.min = prevPanel.gauge.minValue;
+    defaults.max = prevPanel.gauge.maxValue;
+  }
+
+  panel.fieldConfig.defaults = defaults;
+
   return options;
 }
 
@@ -159,6 +172,22 @@ export function sharedSingleStatMigrationHandler(panel: PanelModel<SingleStatBas
     }
 
     validateFieldConfig(defaults);
+  }
+
+  if (previousVersion < 7.0) {
+    panel.fieldConfig = panel.fieldConfig || { defaults: {}, overrides: [] };
+    panel.fieldConfig = {
+      defaults:
+        options.fieldOptions && options.fieldOptions.defaults
+          ? { ...panel.fieldConfig.defaults, ...options.fieldOptions.defaults }
+          : panel.fieldConfig.defaults,
+      overrides:
+        options.fieldOptions && options.fieldOptions.overrides
+          ? [...panel.fieldConfig.overrides, ...options.fieldOptions.overrides]
+          : panel.fieldConfig.overrides,
+    };
+    delete options.fieldOptions.defaults;
+    delete options.fieldOptions.overrides;
   }
 
   return options as SingleStatBaseOptions;

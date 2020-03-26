@@ -52,7 +52,7 @@ After the command has finished, we can start building our source code:
 yarn start
 ```
 
-Once `yarn start` has built the assets, it will continue to do so whenever any of the files change. This means you don't have to manually build the assets whenever every time you change the code.
+Once `yarn start` has built the assets, it will continue to do so whenever any of the files change. This means you don't have to manually build the assets every time you change the code.
 
 Next, we'll build the web server that will serve the frontend assets we just built.
 
@@ -172,7 +172,7 @@ The resulting image will be tagged as grafana/grafana:dev.
 1. Build the frontend: `go run build.go build-frontend`.
 1. Build the Docker image: `make build-docker-dev`.
 
-**Note:** If you are using Docker for macOS, be sure to set the memory limit to be larger than 2 GiB. Otherwise `grunt build` may fail. The memory limit settings are available under **Docker Desktop** -> **Preferences** -> **Advanced**.
+**Note:** If you are using Docker for macOS, be sure to set the memory limit to be larger than 2 GiB. Otherwise, `grunt build` may fail. The memory limit settings are available under **Docker Desktop** -> **Preferences** -> **Advanced**.
 
 ## Troubleshooting
 

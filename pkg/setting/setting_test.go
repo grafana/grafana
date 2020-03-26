@@ -9,6 +9,8 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/stretchr/testify/require"
+
 	"gopkg.in/ini.v1"
 
 	. "github.com/smartystreets/goconvey/convey"
@@ -297,4 +299,29 @@ func TestLoadingSettings(t *testing.T) {
 		})
 
 	})
+}
+
+func TestParseAppUrlAndSubUrl(t *testing.T) {
+	testCases := []struct {
+		rootURL           string
+		expectedAppURL    string
+		expectedAppSubURL string
+	}{
+		{rootURL: "http://localhost:3000/", expectedAppURL: "http://localhost:3000/"},
+		{rootURL: "http://localhost:3000", expectedAppURL: "http://localhost:3000/"},
+		{rootURL: "http://localhost:3000/grafana", expectedAppURL: "http://localhost:3000/grafana/", expectedAppSubURL: "/grafana"},
+		{rootURL: "http://localhost:3000/grafana/", expectedAppURL: "http://localhost:3000/grafana/", expectedAppSubURL: "/grafana"},
+	}
+
+	for _, tc := range testCases {
+		f := ini.Empty()
+		s, err := f.NewSection("server")
+		require.NoError(t, err)
+		_, err = s.NewKey("root_url", tc.rootURL)
+		require.NoError(t, err)
+		appURL, appSubURL, err := parseAppUrlAndSubUrl(s)
+		require.NoError(t, err)
+		require.Equal(t, tc.expectedAppURL, appURL)
+		require.Equal(t, tc.expectedAppSubURL, appSubURL)
+	}
 }

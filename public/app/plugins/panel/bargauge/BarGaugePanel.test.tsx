@@ -1,6 +1,16 @@
 import React from 'react';
 import { mount, ReactWrapper } from 'enzyme';
-import { PanelData, dateMath, TimeRange, VizOrientation, PanelProps, LoadingState, dateTime } from '@grafana/data';
+import {
+  PanelData,
+  dateMath,
+  TimeRange,
+  VizOrientation,
+  PanelProps,
+  LoadingState,
+  dateTime,
+  FieldConfigSource,
+  toDataFrame,
+} from '@grafana/data';
 import { BarGaugeDisplayMode } from '@grafana/ui';
 
 import { BarGaugePanel } from './BarGaugePanel';
@@ -17,6 +27,27 @@ describe('BarGaugePanel', () => {
     it('should render with title "No data"', () => {
       const displayValue = wrapper.find('div.bar-gauge__value').text();
       expect(displayValue).toBe('No data');
+    });
+  });
+
+  describe('when there is data', () => {
+    const wrapper = createBarGaugePanelWithData({
+      series: [
+        toDataFrame({
+          target: 'test',
+          datapoints: [
+            [100, 1000],
+            [100, 200],
+          ],
+        }),
+      ],
+      timeRange: createTimeRange(),
+      state: LoadingState.Done,
+    });
+
+    it('should render with title "No data"', () => {
+      const displayValue = wrapper.find('div.bar-gauge__value').text();
+      expect(displayValue).toBe('100');
     });
   });
 });
@@ -36,12 +67,14 @@ function createBarGaugePanelWithData(data: PanelData): ReactWrapper<PanelProps<B
     displayMode: BarGaugeDisplayMode.Lcd,
     fieldOptions: {
       calcs: ['mean'],
-      defaults: {},
       values: false,
-      overrides: [],
     },
     orientation: VizOrientation.Horizontal,
     showUnfilled: true,
+  };
+  const fieldConfig: FieldConfigSource = {
+    defaults: {},
+    overrides: [],
   };
 
   return mount<BarGaugePanel>(
@@ -51,6 +84,8 @@ function createBarGaugePanelWithData(data: PanelData): ReactWrapper<PanelProps<B
       timeRange={timeRange}
       timeZone={'utc'}
       options={options}
+      fieldConfig={fieldConfig}
+      onFieldConfigChange={() => {}}
       onOptionsChange={() => {}}
       onChangeTimeRange={() => {}}
       replaceVariables={s => s}

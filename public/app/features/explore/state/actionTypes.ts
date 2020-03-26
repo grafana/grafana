@@ -218,6 +218,11 @@ export const changeRefreshIntervalAction = createAction<ChangeRefreshIntervalPay
 export const clearQueriesAction = createAction<ClearQueriesPayload>('explore/clearQueries');
 
 /**
+ * Cancel running queries.
+ */
+export const cancelQueriesAction = createAction<ClearQueriesPayload>('explore/cancelQueries');
+
+/**
  * Highlight expressions in the log results
  */
 export const highlightLogsExpressionAction = createAction<HighlightLogsExpressionPayload>(
@@ -296,6 +301,8 @@ export const splitCloseAction = createAction<SplitCloseActionPayload>('explore/s
 export const splitOpenAction = createAction<SplitOpenPayload>('explore/splitOpen');
 
 export const syncTimesAction = createAction<SyncTimesPayload>('explore/syncTimes');
+
+export const richHistoryUpdatedAction = createAction<any>('explore/richHistoryUpdated');
 /**
  * Update state of Explores UI elements (panels visiblity and deduplication  strategy)
  */
