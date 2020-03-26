@@ -5,8 +5,7 @@ import { selectThemeVariant, stylesFactory, ThemeContext } from '../../themes';
 import { getFocusStyle, getPropertiesForButtonSize } from '../Forms/commonStyles';
 import { GrafanaTheme } from '@grafana/data';
 import { ButtonContent } from './ButtonContent';
-
-export type ButtonSize = 'xs' | 'sm' | 'md' | 'lg';
+import { ComponentSize } from '../../types/size';
 
 const buttonVariantStyles = (from: string, to: string, textColor: string) => css`
   background: linear-gradient(180deg, ${from} 0%, ${to} 100%);
@@ -75,7 +74,7 @@ const getPropertiesForVariant = (theme: GrafanaTheme, variant: ButtonVariant) =>
 
 export interface StyleProps {
   theme: GrafanaTheme;
-  size: ButtonSize;
+  size: ComponentSize;
   variant: ButtonVariant;
   textAndIcon?: boolean;
 }
@@ -130,10 +129,8 @@ export const getButtonStyles = stylesFactory(({ theme, size, variant }: StylePro
   };
 });
 
-// These are different from the standard Button where there are more variants.
 export type ButtonVariant = 'primary' | 'secondary' | 'destructive' | 'link';
 
-// These also needs to be different because the ButtonVariant is different
 type CommonProps = {
   size?: ComponentSize;
   variant?: ButtonVariant;

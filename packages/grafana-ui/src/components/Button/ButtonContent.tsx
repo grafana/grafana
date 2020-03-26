@@ -3,7 +3,6 @@ import { css } from 'emotion';
 import { stylesFactory, useTheme } from '../../themes';
 import { ComponentSize } from '../../types/size';
 import { GrafanaTheme } from '@grafana/data';
-import { ButtonSize } from './Button';
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => ({
   content: css`
