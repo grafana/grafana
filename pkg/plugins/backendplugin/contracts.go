@@ -40,15 +40,15 @@ func (hs HealthStatus) String() string {
 type CheckHealthResult struct {
 	Status      HealthStatus
 	Message     string
-	JSONDetails string
+	JSONDetails []byte
 }
 
-func checkHealthResultFromProto(protoResp *pluginv2.CheckHealth_Response) *CheckHealthResult {
+func checkHealthResultFromProto(protoResp *pluginv2.CheckHealthResponse) *CheckHealthResult {
 	status := HealthStatusUnknown
 	switch protoResp.Status {
-	case pluginv2.CheckHealth_Response_ERROR:
+	case pluginv2.CheckHealthResponse_ERROR:
 		status = HealthStatusError
-	case pluginv2.CheckHealth_Response_OK:
+	case pluginv2.CheckHealthResponse_OK:
 		status = HealthStatusOk
 	}
 
@@ -59,20 +59,39 @@ func checkHealthResultFromProto(protoResp *pluginv2.CheckHealth_Response) *Check
 	}
 }
 
+func collectMetricsResultFromProto(protoResp *pluginv2.CollectMetricsResponse) *CollectMetricsResult {
+	var prometheusMetrics []byte
+
+	if protoResp.Metrics != nil {
+		prometheusMetrics = protoResp.Metrics.Prometheus
+	}
+
+	return &CollectMetricsResult{
+		PrometheusMetrics: prometheusMetrics,
+	}
+}
+
+// CollectMetricsResult collect metrics result.
+type CollectMetricsResult struct {
+	PrometheusMetrics []byte
+}
+
 type DataSourceConfig struct {
-	ID               int64
-	Name             string
-	URL              string
-	User             string
-	Database         string
-	BasicAuthEnabled bool
-	BasicAuthUser    string
+	ID                      int64
+	Name                    string
+	URL                     string
+	User                    string
+	Database                string
+	BasicAuthEnabled        bool
+	BasicAuthUser           string
+	JSONData                *simplejson.Json
+	DecryptedSecureJSONData map[string]string
+	Updated                 time.Time
 }
 
 type PluginConfig struct {
 	OrgID                   int64
 	PluginID                string
-	PluginType              string
 	JSONData                *simplejson.Json
 	DecryptedSecureJSONData map[string]string
 	Updated                 time.Time
@@ -102,7 +121,7 @@ type callResourceResultStream interface {
 }
 
 type callResourceResultStreamImpl struct {
-	stream pluginv2.Core_CallResourceClient
+	stream pluginv2.Resource_CallResourceClient
 }
 
 func (s *callResourceResultStreamImpl) Recv() (*CallResourceResult, error) {

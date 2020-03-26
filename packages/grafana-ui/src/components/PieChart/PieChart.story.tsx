@@ -1,42 +1,35 @@
-import { storiesOf } from '@storybook/react';
-import { number, text, object } from '@storybook/addon-knobs';
+import React from 'react';
+import { number, object, select } from '@storybook/addon-knobs';
 import { PieChart, PieChartType } from './PieChart';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
-import { renderComponentWithTheme } from '../../utils/storybook/withTheme';
+
+export default {
+  title: 'Visualizations/PieChart',
+  decorators: [withCenteredStory],
+  component: PieChart,
+};
 
 const getKnobs = () => {
   return {
     datapoints: object('datapoints', [
       {
-        value: 100,
-        name: '100',
+        numeric: 100,
+        text: '100',
         color: '#7EB26D',
       },
       {
-        value: 200,
-        name: '200',
+        numeric: 200,
+        text: '200',
         color: '#6ED0E0',
       },
     ]),
-    pieType: text('pieType', PieChartType.PIE),
+    pieType: select('pieType', [PieChartType.PIE, PieChartType.DONUT], PieChartType.PIE),
     strokeWidth: number('strokeWidth', 1),
-    unit: text('unit', 'ms'),
   };
 };
 
-const PieChartStories = storiesOf('Visualizations/PieChart', module);
+export const basic = () => {
+  const { datapoints, pieType, strokeWidth } = getKnobs();
 
-PieChartStories.addDecorator(withCenteredStory);
-
-PieChartStories.add('Pie type: pie', () => {
-  const { datapoints, pieType, strokeWidth, unit } = getKnobs();
-
-  return renderComponentWithTheme(PieChart, {
-    width: 200,
-    height: 400,
-    datapoints,
-    pieType,
-    strokeWidth,
-    unit,
-  });
-});
+  return <PieChart width={200} height={400} values={datapoints} pieType={pieType} strokeWidth={strokeWidth} />;
+};

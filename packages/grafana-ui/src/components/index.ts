@@ -28,7 +28,7 @@ export { ColorPicker, SeriesColorPicker } from './ColorPicker/ColorPicker';
 export { SeriesColorPickerPopover, SeriesColorPickerPopoverWithTheme } from './ColorPicker/SeriesColorPickerPopover';
 export { PanelOptionsGroup } from './PanelOptionsGroup/PanelOptionsGroup';
 export { PanelOptionsGrid } from './PanelOptionsGrid/PanelOptionsGrid';
-export { ValueMappingsEditor } from './ValueMappingsEditor/ValueMappingsEditor';
+export { LegacyValueMappingsEditor } from './ValueMappingsEditor/LegacyValueMappingsEditor';
 export { Switch } from './Switch/Switch';
 export { EmptySearchResult } from './EmptySearchResult/EmptySearchResult';
 export { PieChart, PieChartType } from './PieChart/PieChart';
@@ -40,6 +40,9 @@ export { TimePicker } from './TimePicker/TimePicker';
 export { TimeOfDayPicker } from './TimePicker/TimeOfDayPicker';
 export { List } from './List/List';
 export { TagsInput } from './TagsInput/TagsInput';
+export { Pagination } from './Pagination/Pagination';
+export { Tag } from './Tags/Tag';
+export { TagList } from './Tags/TagList';
 
 export { ConfirmModal } from './ConfirmModal/ConfirmModal';
 export { QueryField } from './QueryField/QueryField';
@@ -104,6 +107,7 @@ export * from './SingleStatShared/index';
 export { CallToActionCard } from './CallToActionCard/CallToActionCard';
 export { ContextMenu, ContextMenuItem, ContextMenuGroup, ContextMenuProps } from './ContextMenu/ContextMenu';
 export { DataLinksEditor } from './DataLinks/DataLinksEditor';
+export { DataLinksInlineEditor } from './DataLinks/DataLinksInlineEditor/DataLinksInlineEditor';
 export { DataLinkInput } from './DataLinks/DataLinkInput';
 export { DataLinksContextMenu } from './DataLinks/DataLinksContextMenu';
 export { SeriesIcon } from './Legend/SeriesIcon';
@@ -144,10 +148,11 @@ export {
   SelectOverrideEditor,
   SelectFieldConfigSettings,
 } from './FieldConfigs/select';
+export { FieldConfigItemHeaderTitle } from './FieldConfigs/FieldConfigItemHeaderTitle';
 
 // Next-gen forms
 export { default as Forms, ButtonVariant } from './Forms';
 export { ValuePicker } from './ValuePicker/ValuePicker';
 export { fieldMatchersUI } from './MatchersUI/fieldMatchersUI';
 export { getStandardFieldConfigs } from './FieldConfigs/standardFieldConfigEditors';
-export { HorizontalGroup, VerticalGroup } from './Layout/Layout';
+export { HorizontalGroup, VerticalGroup, Container } from './Layout/Layout';

@@ -48,7 +48,7 @@ export function panelEditorCleanUp(): ThunkResult<void> {
       sourcePanel.restoreModel(modifiedSaveModel);
 
       if (panelTypeChanged) {
-        dispatch(panelModelAndPluginReady({ panelId: sourcePanel.id, plugin: panel.plugin }));
+        dispatch(panelModelAndPluginReady({ panelId: sourcePanel.id, plugin: panel.plugin! }));
       }
 
       // Resend last query result on source panel query runner
@@ -58,8 +58,13 @@ export function panelEditorCleanUp(): ThunkResult<void> {
       }, 20);
     }
 
-    dashboard.exitPanelEditor();
-    querySubscription.unsubscribe();
+    if (dashboard) {
+      dashboard.exitPanelEditor();
+    }
+
+    if (querySubscription) {
+      querySubscription.unsubscribe();
+    }
 
     dispatch(cleanUpEditPanel());
     dispatch(closeCompleted());

@@ -15,7 +15,11 @@ func TestPluginScans(t *testing.T) {
 		setting.StaticRootPath, _ = filepath.Abs("../../public/")
 		setting.Raw = ini.Empty()
 
-		pm := &PluginManager{}
+		pm := &PluginManager{
+			Cfg: &setting.Cfg{
+				FeatureToggles: map[string]bool{},
+			},
+		}
 		err := pm.Init()
 
 		So(err, ShouldBeNil)
@@ -34,7 +38,11 @@ func TestPluginScans(t *testing.T) {
 		_, err = sec.NewKey("path", "testdata/test-app")
 		So(err, ShouldBeNil)
 
-		pm := &PluginManager{}
+		pm := &PluginManager{
+			Cfg: &setting.Cfg{
+				FeatureToggles: map[string]bool{},
+			},
+		}
 		err = pm.Init()
 		So(err, ShouldBeNil)
 

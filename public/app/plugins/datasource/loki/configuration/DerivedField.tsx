@@ -1,11 +1,16 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { css } from 'emotion';
-import { Button, FormField, DataLinkInput, stylesFactory } from '@grafana/ui';
+import { Button, FormField, DataLinkInput, stylesFactory, Switch } from '@grafana/ui';
 import { VariableSuggestion } from '@grafana/data';
+import { DataSourceSelectItem } from '@grafana/data';
+
 import { DerivedFieldConfig } from '../types';
+import DataSourcePicker from 'app/core/components/Select/DataSourcePicker';
+import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
+import { config } from 'app/core/config';
 
 const getStyles = stylesFactory(() => ({
-  firstRow: css`
+  row: css`
     display: flex;
     align-items: baseline;
   `,
@@ -27,6 +32,7 @@ type Props = {
 export const DerivedField = (props: Props) => {
   const { value, onChange, onDelete, suggestions, className } = props;
   const styles = getStyles();
+  const [hasIntenalLink, setHasInternalLink] = useState(!!value.datasourceName);
 
   const handleChange = (field: keyof typeof value) => (event: React.ChangeEvent<HTMLInputElement>) => {
     onChange({
@@ -37,7 +43,7 @@ export const DerivedField = (props: Props) => {
 
   return (
     <div className={className}>
-      <div className={styles.firstRow}>
+      <div className={styles.row}>
         <FormField
           className={styles.nameField}
           labelWidth={5}
@@ -93,6 +99,64 @@ export const DerivedField = (props: Props) => {
           width: 100%;
         `}
       />
+
+      {config.featureToggles.tracingIntegration && (
+        <div className={styles.row}>
+          <Switch
+            label="Internal link"
+            checked={hasIntenalLink}
+            onChange={() => {
+              if (hasIntenalLink) {
+                onChange({
+                  ...value,
+                  datasourceName: undefined,
+                });
+              }
+              setHasInternalLink(!hasIntenalLink);
+            }}
+          />
+
+          {hasIntenalLink && (
+            <DataSourceSection
+              onChange={datasourceName => {
+                onChange({
+                  ...value,
+                  datasourceName,
+                });
+              }}
+              datasourceName={value.datasourceName}
+            />
+          )}
+        </div>
+      )}
     </div>
+  );
+};
+
+type DataSourceSectionProps = {
+  datasourceName?: string;
+  onChange: (name: string) => void;
+};
+const DataSourceSection = (props: DataSourceSectionProps) => {
+  const { datasourceName, onChange } = props;
+  const datasources: DataSourceSelectItem[] = getDatasourceSrv()
+    .getExternal()
+    .map(
+      (ds: any) =>
+        ({
+          value: ds.name,
+          name: ds.name,
+          meta: ds.meta,
+        } as DataSourceSelectItem)
+    );
+  const selectedDatasource = datasourceName && datasources.find(d => d.name === datasourceName);
+  return (
+    <DataSourcePicker
+      onChange={newValue => {
+        onChange(newValue.name);
+      }}
+      datasources={datasources}
+      current={selectedDatasource}
+    />
   );
 };

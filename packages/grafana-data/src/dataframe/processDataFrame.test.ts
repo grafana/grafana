@@ -228,7 +228,9 @@ describe('SerisData backwards compatibility', () => {
     const json: DataFrameDTO = {
       refId: 'Z',
       meta: {
-        somethign: 8,
+        custom: {
+          something: 8,
+        },
       },
       fields: [
         { name: 'T', type: FieldType.time, values: [1, 2, 3] },

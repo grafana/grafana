@@ -15,7 +15,6 @@ import {
   toNumberString,
   toIntegerOrUndefined,
   SelectableValue,
-  FieldConfig,
 } from '@grafana/data';
 
 const showOptions: Array<SelectableValue<boolean>> = [
@@ -45,10 +44,6 @@ export class FieldDisplayEditor extends PureComponent<Props> {
 
   onCalcsChange = (calcs: string[]) => {
     this.props.onChange({ ...this.props.value, calcs });
-  };
-
-  onDefaultsChange = (value: FieldConfig) => {
-    this.props.onChange({ ...this.props.value, defaults: value });
   };
 
   onLimitChange = (event: ChangeEvent<HTMLInputElement>) => {

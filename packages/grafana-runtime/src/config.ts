@@ -1,6 +1,6 @@
 import extend from 'lodash/extend';
 import { getTheme } from '@grafana/ui';
-import { GrafanaTheme, GrafanaThemeType, PanelPluginMeta, DataSourceInstanceSettings } from '@grafana/data';
+import { DataSourceInstanceSettings, GrafanaTheme, GrafanaThemeType, PanelPluginMeta } from '@grafana/data';
 
 export interface BuildInfo {
   version: string;
@@ -18,6 +18,8 @@ interface FeatureToggles {
   expressions: boolean;
   newEdit: boolean;
   meta: boolean;
+  newVariables: boolean;
+  tracingIntegration: boolean;
 }
 
 interface LicenseInfo {
@@ -69,6 +71,8 @@ export class GrafanaBootConfig {
     expressions: false,
     newEdit: false,
     meta: false,
+    newVariables: false,
+    tracingIntegration: false,
   };
   licenseInfo: LicenseInfo = {} as LicenseInfo;
   phantomJSRenderer = false;

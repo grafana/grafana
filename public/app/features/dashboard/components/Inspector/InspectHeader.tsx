@@ -1,17 +1,16 @@
 import React, { FC } from 'react';
 import { css } from 'emotion';
-import { Icon, selectThemeVariant, stylesFactory, Tab, TabsBar, useTheme } from '@grafana/ui';
-import { GrafanaTheme, SelectableValue } from '@grafana/data';
+import { Icon, stylesFactory, Tab, TabsBar, useTheme } from '@grafana/ui';
+import { GrafanaTheme, SelectableValue, PanelData, getValueFormat, formattedValueToString } from '@grafana/data';
 import { InspectTab } from './PanelInspector';
 import { PanelModel } from '../../state';
 
 interface Props {
   tab: InspectTab;
   tabs: Array<{ label: string; value: InspectTab }>;
-  stats: { requestTime: number; queries: number; dataSources: number };
+  panelData: PanelData;
   panel: PanelModel;
   isExpanded: boolean;
-
   onSelectTab: (tab: SelectableValue<InspectTab>) => void;
   onClose: () => void;
   onToggleExpand: () => void;
@@ -24,7 +23,7 @@ export const InspectHeader: FC<Props> = ({
   onClose,
   onToggleExpand,
   panel,
-  stats,
+  panelData,
   isExpanded,
 }) => {
   const theme = useTheme();
@@ -42,9 +41,9 @@ export const InspectHeader: FC<Props> = ({
       </div>
       <div className={styles.titleWrapper}>
         <h3>{panel.title}</h3>
-        <div>{formatStats(stats)}</div>
+        <div className="muted">{formatStats(panelData)}</div>
       </div>
-      <TabsBar>
+      <TabsBar className={styles.tabsBar}>
         {tabs.map((t, index) => {
           return (
             <Tab
@@ -61,19 +60,21 @@ export const InspectHeader: FC<Props> = ({
 };
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
-  const headerBackground = selectThemeVariant({ dark: theme.colors.gray15, light: theme.colors.white }, theme.type);
+  const headerBackground = theme.isLight ? theme.colors.gray95 : theme.colors.gray15;
   return {
     header: css`
       background-color: ${headerBackground};
       z-index: 1;
       flex-grow: 0;
-      padding: ${theme.spacing.sm} ${theme.spacing.sm} 0 ${theme.spacing.lg};
     `,
     actions: css`
       display: flex;
       align-items: baseline;
       justify-content: space-between;
-      margin-bottom: ${theme.spacing.md};
+      margin: ${theme.spacing.md};
+    `,
+    tabsBar: css`
+      padding-left: ${theme.spacing.md};
     `,
     iconWrapper: css`
       cursor: pointer;
@@ -88,14 +89,20 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
     `,
     titleWrapper: css`
       margin-bottom: ${theme.spacing.lg};
+      padding: ${theme.spacing.sm} ${theme.spacing.sm} 0 ${theme.spacing.lg};
     `,
   };
 });
 
-function formatStats(stats: { requestTime: number; queries: number; dataSources: number }) {
-  const queries = `${stats.queries} ${stats.queries === 1 ? 'query' : 'queries'}`;
-  const dataSources = `${stats.dataSources} ${stats.dataSources === 1 ? 'data source' : 'data sources'}`;
-  const requestTime = `${stats.requestTime === -1 ? 'N/A' : stats.requestTime}ms`;
+function formatStats(panelData: PanelData) {
+  const { request } = panelData;
+  if (!request) {
+    return '';
+  }
 
-  return `${queries} - ${dataSources}  - ${requestTime}`;
+  const queryCount = request.targets.length;
+  const requestTime = request.endTime ? request.endTime - request.startTime : 0;
+  const formatted = formattedValueToString(getValueFormat('ms')(requestTime));
+
+  return `${queryCount} queries with total query time of ${formatted}`;
 }
