@@ -63,7 +63,7 @@ export const DataLinks = (props: Props) => {
           })}
         <div>
           <Button
-            variant={'inverse'}
+            variant={'secondary'}
             className={css`
               margin-right: 10px;
             `}

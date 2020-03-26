@@ -3,15 +3,13 @@ import { pluginBuildRunner } from './plugin.build';
 import { restoreCwd } from '../utils/cwd';
 import { getPluginJson } from '../../config/utils/pluginValidation';
 import { getPluginId } from '../../config/utils/getPluginId';
-import { PluginMeta } from '@grafana/data';
 
 // @ts-ignore
 import execa = require('execa');
 import path = require('path');
 import fs from 'fs-extra';
-import { getPackageDetails, findImagesInFolder, getGrafanaVersions, readGitLog } from '../../plugins/utils';
+import { getPackageDetails, getGrafanaVersions, readGitLog } from '../../plugins/utils';
 import {
-  job,
   getJobFolder,
   writeJobStats,
   getCiFolder,
@@ -20,9 +18,7 @@ import {
   getCircleDownloadBaseURL,
 } from '../../plugins/env';
 import { agregateWorkflowInfo, agregateCoverageInfo, agregateTestInfo } from '../../plugins/workflow';
-import { PluginPackageDetails, PluginBuildReport, TestResultsInfo } from '../../plugins/types';
-import { runEndToEndTests } from '../../plugins/e2e/launcher';
-import { getEndToEndSettings } from '../../plugins/index';
+import { PluginPackageDetails, PluginBuildReport } from '../../plugins/types';
 import { manifestTask } from './manifest';
 import { execTask } from '../utils/execTask';
 import rimrafCallback from 'rimraf';
@@ -234,85 +230,6 @@ const packagePluginRunner: TaskRunner<PluginCIOptions> = async () => {
 };
 
 export const ciPackagePluginTask = new Task<PluginCIOptions>('Bundle Plugin', packagePluginRunner);
-
-/**
- * 3. Test (end-to-end)
- *
- *  deploy the zip to a running grafana instance
- *
- */
-const testPluginRunner: TaskRunner<PluginCIOptions> = async ({}) => {
-  const start = Date.now();
-  const workDir = getJobFolder();
-  const results: TestResultsInfo = { job, passed: 0, failed: 0, screenshots: [] };
-  const args = {
-    withCredentials: true,
-    baseURL: process.env.BASE_URL || 'http://localhost:3000/',
-    responseType: 'json',
-    auth: {
-      username: 'admin',
-      password: 'admin',
-    },
-  };
-
-  const settings = getEndToEndSettings();
-  await execa('rimraf', [settings.outputFolder]);
-  fs.mkdirSync(settings.outputFolder);
-
-  const tempDir = path.resolve(process.cwd(), 'e2e-temp');
-  await execa('rimraf', [tempDir]);
-  fs.mkdirSync(tempDir);
-
-  try {
-    const axios = require('axios');
-    const frontendSettings = await axios.get('api/frontend/settings', args);
-    results.grafana = frontendSettings.data.buildInfo;
-
-    console.log('Grafana: ' + JSON.stringify(results.grafana, null, 2));
-
-    const loadedMetaRsp = await axios.get(`api/plugins/${settings.plugin.id}/settings`, args);
-    const loadedMeta: PluginMeta = loadedMetaRsp.data;
-    console.log('Plugin Info: ' + JSON.stringify(loadedMeta, null, 2));
-    if (loadedMeta.info.build) {
-      const currentHash = settings.plugin.info.build!.hash;
-      console.log('Check version: ', settings.plugin.info.build);
-      if (loadedMeta.info.build.hash !== currentHash) {
-        console.warn(`Testing wrong plugin version.  Expected: ${currentHash}, found: ${loadedMeta.info.build.hash}`);
-        throw new Error('Wrong plugin version');
-      }
-    }
-
-    if (!fs.existsSync('e2e-temp')) {
-      fs.mkdirSync(tempDir);
-    }
-
-    await execa('cp', [
-      'node_modules/@grafana/toolkit/src/plugins/e2e/commonPluginTests.ts',
-      path.resolve(tempDir, 'common.test.ts'),
-    ]);
-
-    await runEndToEndTests(settings.outputFolder, results);
-  } catch (err) {
-    results.error = err;
-    console.log('Test Error', err);
-  }
-  await execa('rimraf', [tempDir]);
-
-  // Now copy everything to work folder
-  await execa('cp', ['-rv', settings.outputFolder + '/.', workDir]);
-  results.screenshots = findImagesInFolder(workDir);
-
-  const f = path.resolve(workDir, 'results.json');
-  fs.writeFile(f, JSON.stringify(results, null, 2), err => {
-    if (err) {
-      throw new Error('Error saving: ' + f);
-    }
-  });
-
-  writeJobStats(start, workDir);
-};
-
-export const ciTestPluginTask = new Task<PluginCIOptions>('Test Plugin (e2e)', testPluginRunner);
 
 /**
  * 4. Report

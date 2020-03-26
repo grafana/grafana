@@ -1,7 +1,7 @@
 import { DataFrame, DataLink, GrafanaTheme, VariableSuggestion } from '@grafana/data';
 import React, { useState } from 'react';
 import { css } from 'emotion';
-import Forms from '../../Forms';
+import { Button } from '../../Button/Button';
 import cloneDeep from 'lodash/cloneDeep';
 import { Modal } from '../../Modal/Modal';
 import { FullWidthButtonContainer } from '../../Button/FullWidthButtonContainer';
@@ -100,9 +100,9 @@ export const DataLinksInlineEditor: React.FC<DataLinksInlineEditorProps> = ({ li
       )}
 
       <FullWidthButtonContainer>
-        <Forms.Button size="sm" icon="fa fa-plus" onClick={onDataLinkAdd}>
+        <Button size="sm" icon="fa fa-plus" onClick={onDataLinkAdd}>
           Add link
-        </Forms.Button>
+        </Button>
       </FullWidthButtonContainer>
     </>
   );
