@@ -19,6 +19,7 @@
 // TODO: Everett Tech Debt: Fix KeyValuePair types
 export type KeyValuePair = {
   key: string;
+  type: string;
   value: any;
 };
 
@@ -40,7 +41,7 @@ export type Process = {
 export type SpanReference = {
   refType: 'CHILD_OF' | 'FOLLOWS_FROM';
   // eslint-disable-next-line no-use-before-define
-  span: Span | null | undefined;
+  span?: Span | null | undefined;
   spanID: string;
   traceID: string;
 };
@@ -56,6 +57,7 @@ export type SpanData = {
   tags?: KeyValuePair[];
   references?: SpanReference[];
   warnings?: string[] | null;
+  flags: number;
 };
 
 export type Span = SpanData & {
@@ -72,6 +74,7 @@ export type Span = SpanData & {
 export type TraceData = {
   processes: Record<string, Process>;
   traceID: string;
+  warnings?: string[] | null;
 };
 
 export type Trace = TraceData & {

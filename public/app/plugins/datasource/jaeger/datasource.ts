@@ -26,19 +26,6 @@ export class JaegerDatasource extends DataSourceApi<JaegerQuery> {
     super(instanceSettings);
   }
 
-  _request(apiUrl: string, data?: any, options?: DatasourceRequestOptions): Observable<Record<string, any>> {
-    // Hack for proxying metadata requests
-    const baseUrl = `/api/datasources/proxy/${this.instanceSettings.id}`;
-    const params = data ? serializeParams(data) : '';
-    const url = `${baseUrl}${apiUrl}${params.length ? `?${params}` : ''}`;
-    const req = {
-      ...options,
-      url,
-    };
-
-    return from(getBackendSrv().datasourceRequest(req));
-  }
-
   async metadataRequest(url: string, params?: Record<string, any>) {
     const res = await this._request(url, params, { silent: true }).toPromise();
     return res.data.data;
@@ -47,7 +34,7 @@ export class JaegerDatasource extends DataSourceApi<JaegerQuery> {
   query(options: DataQueryRequest<JaegerQuery>): Observable<DataQueryResponse> {
     // At this moment we expect only one target. In case we somehow change the UI to be able to show multiple
     // traces at one we need to change this.
-    const id = options.targets?.[0]?.query;
+    const id = options.targets[0]?.query;
     if (id) {
       // TODO: this api is internal, used in jaeger ui. Officially they have gRPC api that should be used.
       return this._request(`/api/traces/${id}`).pipe(
@@ -69,9 +56,17 @@ export class JaegerDatasource extends DataSourceApi<JaegerQuery> {
       );
     } else {
       return of({
-        name: 'trace',
-        type: FieldType.trace,
-        data: [],
+        data: [
+          new MutableDataFrame({
+            fields: [
+              {
+                name: 'trace',
+                type: FieldType.trace,
+                values: [],
+              },
+            ],
+          }),
+        ],
       });
     }
   }
@@ -80,18 +75,31 @@ export class JaegerDatasource extends DataSourceApi<JaegerQuery> {
     return true;
   }
 
-  getTime(date: string | DateTime, roundUp: boolean) {
-    if (typeof date === 'string') {
-      date = dateMath.parse(date, roundUp);
-    }
-    return date.valueOf() * 1000;
-  }
-
   getTimeRange(): { start: number; end: number } {
     const range = getTimeSrv().timeRange();
     return {
-      start: this.getTime(range.from, false),
-      end: this.getTime(range.to, true),
+      start: getTime(range.from, false),
+      end: getTime(range.to, true),
     };
   }
+
+  private _request(apiUrl: string, data?: any, options?: DatasourceRequestOptions): Observable<Record<string, any>> {
+    // Hack for proxying metadata requests
+    const baseUrl = `/api/datasources/proxy/${this.instanceSettings.id}`;
+    const params = data ? serializeParams(data) : '';
+    const url = `${baseUrl}${apiUrl}${params.length ? `?${params}` : ''}`;
+    const req = {
+      ...options,
+      url,
+    };
+
+    return from(getBackendSrv().datasourceRequest(req));
+  }
+}
+
+function getTime(date: string | DateTime, roundUp: boolean) {
+  if (typeof date === 'string') {
+    date = dateMath.parse(date, roundUp);
+  }
+  return date.valueOf() * 1000;
 }
