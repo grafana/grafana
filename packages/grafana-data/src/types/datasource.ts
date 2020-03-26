@@ -382,6 +382,11 @@ export interface DataQuery {
   hide?: boolean;
 
   /**
+   * Unique, guid like, string used in explore mode
+   */
+  key?: string;
+  
+  /**
    * For mixed data sources the selected datasource is on the query level.
    * For non mixed scenarios this is undefined.
    */
