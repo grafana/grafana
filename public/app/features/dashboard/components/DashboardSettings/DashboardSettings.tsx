@@ -9,6 +9,7 @@ import { DashboardModel } from '../../state/DashboardModel';
 import { BackButton } from 'app/core/components/BackButton/BackButton';
 import { e2e } from '@grafana/e2e';
 import { updateLocation } from 'app/core/actions';
+import { CustomScrollbar } from '@grafana/ui';
 
 export interface Props {
   dashboard: DashboardModel | null;
@@ -57,7 +58,9 @@ export class DashboardSettings extends PureComponent<Props> {
             <span>{dashboard.title} / Settings</span>
           </div>
         </div>
-        <div className="dashboard-settings__body1" ref={element => (this.element = element)} />
+        <CustomScrollbar>
+          <div className="dashboard-settings__body1" ref={element => (this.element = element)} />
+        </CustomScrollbar>
       </div>
     );
   }
