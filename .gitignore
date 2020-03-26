@@ -108,3 +108,6 @@ compilation-stats.json
 /e2e/suite1/screenshots
 !/e2e/suite1/screenshots/expeced/*
 /e2e/suite1/videos/*
+
+# report dumping the whole system env
+/report.*.json

@@ -20,7 +20,6 @@ import { SaveDashboardModalProxy } from 'app/features/dashboard/components/SaveD
 
 export interface OwnProps {
   dashboard: DashboardModel;
-  editview: string;
   isEditing: boolean;
   isFullscreen: boolean;
   $injector: any;
@@ -53,17 +52,10 @@ export class DashNav extends PureComponent<Props> {
   };
 
   onClose = () => {
-    if (this.props.editview) {
-      this.props.updateLocation({
-        query: { editview: null },
-        partial: true,
-      });
-    } else {
-      this.props.updateLocation({
-        query: { panelId: null, edit: null, fullscreen: null, tab: null },
-        partial: true,
-      });
-    }
+    this.props.updateLocation({
+      query: { panelId: null, edit: null, fullscreen: null, tab: null },
+      partial: true,
+    });
   };
 
   onToggleTVMode = () => {
@@ -101,7 +93,7 @@ export class DashNav extends PureComponent<Props> {
   };
 
   renderDashboardTitleSearchButton() {
-    const { dashboard } = this.props;
+    const { dashboard, isFullscreen } = this.props;
 
     const folderTitle = dashboard.meta.folderTitle;
     const haveFolder = dashboard.meta.folderId > 0;
@@ -110,7 +102,7 @@ export class DashNav extends PureComponent<Props> {
       <>
         <div>
           <div className="navbar-page-btn">
-            {!this.isInFullscreenOrSettings && <i className="gicon gicon-dashboard" />}
+            {!isFullscreen && <i className="gicon gicon-dashboard" />}
             {haveFolder && (
               <>
                 <a className="navbar-page-btn__folder" onClick={this.onFolderNameClick}>
@@ -124,18 +116,9 @@ export class DashNav extends PureComponent<Props> {
             </a>
           </div>
         </div>
-        {this.isSettings && <span className="navbar-settings-title">&nbsp;/ Settings</span>}
         <div className="navbar__spacer" />
       </>
     );
-  }
-
-  get isInFullscreenOrSettings() {
-    return this.props.editview || this.props.isFullscreen;
-  }
-
-  get isSettings() {
-    return this.props.editview;
   }
 
   renderBackButton() {
@@ -147,13 +130,13 @@ export class DashNav extends PureComponent<Props> {
   }
 
   render() {
-    const { dashboard, onAddPanel, location } = this.props;
+    const { dashboard, onAddPanel, location, isFullscreen } = this.props;
     const { canStar, canSave, canShare, showSettings, isStarred } = dashboard.meta;
     const { snapshot } = dashboard;
     const snapshotUrl = snapshot && snapshot.originalUrl;
     return (
       <div className="navbar">
-        {this.isInFullscreenOrSettings && this.renderBackButton()}
+        {isFullscreen && this.renderBackButton()}
         {this.renderDashboardTitleSearchButton()}
 
         {this.playlistSrv.isPlaying && (

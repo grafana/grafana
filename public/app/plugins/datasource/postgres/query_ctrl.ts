@@ -9,6 +9,7 @@ import { auto } from 'angular';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { CoreEvents } from 'app/types';
 import { PanelEvents } from '@grafana/data';
+import { VariableWithMultiSupport } from 'app/features/templating/types';
 
 export interface QueryMeta {
   sql: string;
@@ -333,10 +334,10 @@ export class PostgresQueryCtrl extends QueryCtrl {
       });
 
       if (config.addTemplateVars) {
-        for (const variable of this.templateSrv.variables) {
+        for (const variable of this.templateSrv.getVariables()) {
           let value;
           value = '$' + variable.name;
-          if (config.templateQuoter && variable.multi === false) {
+          if (config.templateQuoter && ((variable as unknown) as VariableWithMultiSupport).multi === false) {
             value = config.templateQuoter(value);
           }
 

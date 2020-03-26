@@ -1,7 +1,7 @@
 import React, { PureComponent } from 'react';
 import { getTagColorsFromName, Tooltip } from '@grafana/ui';
 import { e2e } from '@grafana/e2e';
-import { VariableOption, VariableTag } from '../../../templating/variable';
+import { VariableOption, VariableTag } from '../../../templating/types';
 
 export interface Props {
   multi: boolean;

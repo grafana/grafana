@@ -1,6 +1,6 @@
 import React, { PureComponent } from 'react';
 import { FieldConfigSource, GrafanaTheme, PanelData, PanelPlugin, SelectableValue } from '@grafana/data';
-import { Forms, selectThemeVariant, stylesFactory } from '@grafana/ui';
+import { Forms, stylesFactory, Button } from '@grafana/ui';
 import { css, cx } from 'emotion';
 import config from 'app/core/config';
 import AutoSizer from 'react-virtualized-auto-sizer';
@@ -198,9 +198,9 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
         </div>
         <div className={styles.toolbarLeft}>
           <div className={styles.toolbarItem}>
-            <Forms.Button className={styles.toolbarItem} variant="secondary" onClick={this.onDiscard}>
+            <Button className={styles.toolbarItem} variant="secondary" onClick={this.onDiscard}>
               Discard changes
-            </Forms.Button>
+            </Button>
           </div>
           <div className={styles.toolbarItem}>
             <Forms.Select
@@ -213,7 +213,7 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
             <DashNavTimeControls dashboard={dashboard} location={location} updateLocation={updateLocation} />
           </div>
           <div className={styles.toolbarItem}>
-            <Forms.Button
+            <Button
               className={styles.toolbarItem}
               icon="fa fa-sliders"
               variant="secondary"
@@ -316,7 +316,6 @@ export const PanelEditor = connect(mapStateToProps, mapDispatchToProps)(PanelEdi
  */
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
   const handleColor = theme.colors.blueLight;
-  const background = selectThemeVariant({ light: theme.colors.white, dark: theme.colors.inputBlack }, theme.type);
 
   const resizer = css`
     font-style: italic;
@@ -344,7 +343,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       left: 0;
       right: 0;
       bottom: 0;
-      background: ${background};
+      background: ${theme.colors.bodyBg};
       display: flex;
       flex-direction: column;
     `,
@@ -382,7 +381,6 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       height: 100%;
       width: 100%;
     `,
-
     toolbar: css`
       display: flex;
       padding: ${theme.spacing.sm};
