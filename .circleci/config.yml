@@ -253,7 +253,7 @@ jobs:
           name: Build Windows installer
           command: ./scripts/build/ci-msi-build/ci-msi-build-oss.sh
       - run:
-          name: Upload packages to GCS
+          name: Upload installer to GCS
           command: |
             # Work around an issue with the gsutil installation
             export BOTO_CONFIG=/dev/null
@@ -301,7 +301,7 @@ jobs:
           name: Build Windows installer
           command: ./scripts/build/ci-msi-build/ci-msi-build-ee.sh
       - run:
-          name: Upload packages to GCS
+          name: Upload installer to GCS
           command: |
             # Work around an issue with the gsutil installation
             export BOTO_CONFIG=/dev/null
