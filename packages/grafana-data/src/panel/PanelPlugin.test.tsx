@@ -9,7 +9,7 @@ describe('PanelPlugin', () => {
         return <div>Panel</div>;
       });
 
-      panel.setCustomFieldConfigEditor(builder => {
+      panel.setCustomFieldOptions(builder => {
         builder.addCustomEditor({
           id: 'custom',
           name: 'Custom',
@@ -31,7 +31,7 @@ describe('PanelPlugin', () => {
         return <div>Panel</div>;
       });
 
-      panel.setOptionsEditor(builder => {
+      panel.setPanelOptions(builder => {
         builder.addCustomEditor({
           id: 'option',
           name: 'Option editor',

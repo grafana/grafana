@@ -9,9 +9,10 @@ import {
   GrafanaTheme,
   TimeZone,
 } from '../types';
-import { Registry, RegistryItem } from '../utils';
+import { Registry } from '../utils';
 import { InterpolateFunction } from './panel';
 import { StandardEditorProps } from '../field';
+import { OptionsEditorItem } from './OptionsUIRegistryBuilder';
 
 export interface DynamicConfigValue {
   prop: string;
@@ -53,24 +54,21 @@ export interface FieldOverrideEditorProps<TValue, TSettings> extends Omit<Standa
   context: FieldOverrideContext;
 }
 
-export interface FieldConfigEditorConfig<TSettings = any, TValue = any>
-  extends Omit<Pick<FieldPropertyEditorItem<TValue, TSettings>, 'id' | 'description' | 'name'>, 'settings'> {
+export interface FieldConfigEditorConfig<TSettings = any> {
+  id: string;
+  name: string;
+  description: string;
   settings?: TSettings;
   shouldApply?: (field: Field) => boolean;
 }
 
-export interface FieldPropertyEditorItem<TValue = any, TSettings = any> extends RegistryItem {
-  // An editor the creates the well typed value
-  editor: ComponentType<FieldConfigEditorProps<TValue, TSettings>>;
-
+export interface FieldPropertyEditorItem<TValue = any, TSettings extends {} = any>
+  extends OptionsEditorItem<TSettings, FieldConfigEditorProps<TValue, TSettings>> {
   // An editor that can be filled in with context info (template variables etc)
   override: ComponentType<FieldOverrideEditorProps<TValue, TSettings>>;
 
   // Convert the override value to a well typed value
-  process: (value: any, context: FieldOverrideContext, settings: TSettings) => TValue;
-
-  // Configuration options for the particular property
-  settings: TSettings;
+  process: (value: any, context: FieldOverrideContext, settings?: TSettings) => TValue;
 
   // Checks if field should be processed
   shouldApply: (field: Field) => boolean;

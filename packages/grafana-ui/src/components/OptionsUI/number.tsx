@@ -16,14 +16,14 @@ export const NumberValueEditor: React.FC<FieldConfigEditorProps<number, NumberFi
   return (
     <Forms.Input
       value={isNaN(value) ? '' : value}
-      min={settings.min}
-      max={settings.max}
+      min={settings?.min}
+      max={settings?.max}
       type="number"
-      step={settings.step}
-      placeholder={settings.placeholder}
+      step={settings?.step}
+      placeholder={settings?.placeholder}
       onChange={e => {
         onChange(
-          settings.integer ? toIntegerOrUndefined(e.currentTarget.value) : toFloatOrUndefined(e.currentTarget.value)
+          settings?.integer ? toIntegerOrUndefined(e.currentTarget.value) : toFloatOrUndefined(e.currentTarget.value)
         );
       }}
     />

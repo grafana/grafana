@@ -5,44 +5,46 @@ import { NumberFieldConfigSettings, SelectFieldConfigSettings, StringFieldConfig
 /**
  * Option editor registry item
  */
-interface OptionsEditorItem<TSettings, TEditorProps> extends RegistryItem {
+export interface OptionsEditorItem<TSettings, TEditorProps> extends RegistryItem {
+  editor: ComponentType<TEditorProps>;
   settings?: TSettings;
-  editor?: ComponentType<TEditorProps>;
 }
 
 /**
  * Configuration of option editor registry item
  */
-type OptionEditorConfig<TSettings, TEditorProps> = Pick<
-  OptionsEditorItem<TSettings, TEditorProps>,
-  'id' | 'name' | 'description' | 'editor' | 'settings'
->;
+interface OptionEditorConfig<TSettings> {
+  id: string;
+  name: string;
+  description: string;
+  settings?: TSettings;
+}
 
 /**
  * Describes an API for option editors UI builder
  */
 export interface OptionsUIRegistryBuilderAPI<TEditorProps, T extends OptionsEditorItem<any, TEditorProps>> {
   addNumberInput?<TSettings extends NumberFieldConfigSettings = NumberFieldConfigSettings>(
-    config: OptionEditorConfig<TSettings, TEditorProps>
+    config: OptionEditorConfig<TSettings>
   ): this;
 
   addTextInput?<TSettings extends StringFieldConfigSettings = StringFieldConfigSettings>(
-    config: OptionEditorConfig<TSettings, TEditorProps>
+    config: OptionEditorConfig<TSettings>
   ): this;
 
   addSelect?<TOption, TSettings extends SelectFieldConfigSettings<TOption>>(
-    config: OptionEditorConfig<TSettings, TEditorProps>
+    config: OptionEditorConfig<TSettings>
   ): this;
 
   addRadio?<TOption, TSettings extends SelectFieldConfigSettings<TOption> = SelectFieldConfigSettings<TOption>>(
-    config: OptionEditorConfig<TSettings, TEditorProps>
+    config: OptionEditorConfig<TSettings>
   ): this;
 
-  addBooleanSwitch?<TSettings = any>(config: OptionEditorConfig<TSettings, TEditorProps>): this;
+  addBooleanSwitch?<TSettings = any>(config: OptionEditorConfig<TSettings>): this;
 
-  addUnitPicker?<TSettings = any>(config: OptionEditorConfig<TSettings, TEditorProps>): this;
+  addUnitPicker?<TSettings = any>(config: OptionEditorConfig<TSettings>): this;
 
-  addColorPicker?<TSettings = any>(config: OptionEditorConfig<TSettings, TEditorProps>): this;
+  addColorPicker?<TSettings = any>(config: OptionEditorConfig<TSettings>): this;
 
   /**
    * Enables custom editor definition

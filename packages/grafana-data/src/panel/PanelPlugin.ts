@@ -110,7 +110,7 @@ export class PanelPlugin<TOptions = any> extends GrafanaPlugin<PanelPluginMeta> 
    * interface ShapePanelOptions {}
    *
    * export const plugin = new PanelPlugin<ShapePanelOptions>(ShapePanel)
-   *   .setCustomFieldConfigEditor(builder => {
+   *   .setCustomFieldOptions(builder => {
    *     builder
    *       .addNumberInput({
    *         id: 'shapeBorderWidth',
@@ -134,7 +134,7 @@ export class PanelPlugin<TOptions = any> extends GrafanaPlugin<PanelPluginMeta> 
    *
    * @public
    **/
-  setCustomFieldConfigEditor(builder: (builder: FieldConfigEditorBuilder) => void) {
+  setCustomFieldOptions(builder: (builder: FieldConfigEditorBuilder) => void) {
     // builder is applied lazily when custom field configs are accessed
     this.registerCustomFieldConfigs = builder;
     return this;
@@ -151,7 +151,7 @@ export class PanelPlugin<TOptions = any> extends GrafanaPlugin<PanelPluginMeta> 
    * interface ShapePanelOptions {}
    *
    * export const plugin = new PanelPlugin<ShapePanelOptions>(ShapePanel)
-   *   .setOptionsEditor(builder => {
+   *   .setPanelOptions(builder => {
    *     builder
    *       .addSelect({
    *         id: 'shape',
@@ -170,7 +170,7 @@ export class PanelPlugin<TOptions = any> extends GrafanaPlugin<PanelPluginMeta> 
    *
    * @public
    **/
-  setOptionsEditor(builder: (builder: PanelOptionsEditorBuilder) => void) {
+  setPanelOptions(builder: (builder: PanelOptionsEditorBuilder) => void) {
     // builder is applied lazily when options UI is created
     this.registerOptionEditors = builder;
     return this;

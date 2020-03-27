@@ -7,5 +7,5 @@ export function SelectValueEditor<T>({
   onChange,
   item,
 }: FieldConfigEditorProps<T, SelectFieldConfigSettings<T>>) {
-  return <Forms.Select<T> defaultValue={value} onChange={e => onChange(e.value)} options={item.settings.options} />;
+  return <Forms.Select<T> defaultValue={value} onChange={e => onChange(e.value)} options={item.settings?.options} />;
 }
