@@ -5,6 +5,12 @@ import { Checkbox } from './Checkbox';
 
 # Checkbox
 
+### When to use
+
+Checkboxes can be used in groups and have no dependencies. That means that selecting one doesn’t affect any other checkbox. Checked represents true, un-checked represent false. So you can use them to select a binary option or multiple options in a set. When adding a description to your checkbox, use positive commands, not negatives like "do not …".
+
+Checkboxes typically only trigger changes after sending a form. If your component should trigger a change immediately, it's better to use a toggle switch instead. Furthermore, checkboxes are not mutually exclusive. If you want to offer a mutually exclusive choice, use radio buttons or a dropdown.
+
 ### Usage
 
 ```jsx
