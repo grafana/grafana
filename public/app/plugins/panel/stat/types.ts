@@ -2,10 +2,11 @@ import { SingleStatBaseOptions, BigValueColorMode, BigValueGraphMode, BigValueJu
 import {
   VizOrientation,
   ReducerID,
-  FieldDisplayOptions,
+  DataToSingleValueOptions,
   SelectableValue,
   FieldConfigSource,
   ThresholdsMode,
+  fieldReducers,
 } from '@grafana/data';
 import { PanelOptionsEditorBuilder } from '@grafana/data/src/utils/OptionsUIBuilders';
 
@@ -31,7 +32,7 @@ export const justifyModes: Array<SelectableValue<BigValueJustifyMode>> = [
   { value: BigValueJustifyMode.Center, label: 'Center' },
 ];
 
-export const standardFieldDisplayOptions: FieldDisplayOptions = {
+export const commonValueOptionDefaults: DataToSingleValueOptions = {
   values: false,
   calcs: [ReducerID.mean],
 };
@@ -51,8 +52,10 @@ export const standardFieldConfig: FieldConfigSource = {
 };
 
 export function addStandardSingleValueOptions(builder: PanelOptionsEditorBuilder) {
+  const select = fieldReducers.selectOptions();
+
   builder.addRadio({
-    id: 'values',
+    id: 'valueOptions.values',
     name: 'Show',
     description: 'Calculate a single value per colum or series or show each row',
     settings: {
@@ -62,12 +65,20 @@ export function addStandardSingleValueOptions(builder: PanelOptionsEditorBuilder
       ],
     },
   });
+  builder.addSelect({
+    id: 'valueOptions.calcs',
+    name: 'Calc',
+    description: '',
+    settings: {
+      options: select.options,
+    },
+  });
 }
 
 export const defaults: StatPanelOptions = {
   graphMode: BigValueGraphMode.Area,
   colorMode: BigValueColorMode.Value,
   justifyMode: BigValueJustifyMode.Auto,
-  fieldOptions: standardFieldDisplayOptions,
+  valueOptions: commonValueOptionDefaults,
   orientation: VizOrientation.Auto,
 };

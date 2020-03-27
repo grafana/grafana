@@ -2,7 +2,7 @@ import { sharedSingleStatPanelChangedHandler } from '@grafana/ui';
 import { PanelPlugin } from '@grafana/data';
 import { BarGaugePanel } from './BarGaugePanel';
 import { BarGaugeOptions, defaults } from './types';
-import { standardFieldConfig } from '../stat/types';
+import { standardFieldConfig, addStandardSingleValueOptions } from '../stat/types';
 import { BarGaugePanelEditor } from './BarGaugePanelEditor';
 import { barGaugePanelMigrationHandler } from './BarGaugeMigrations';
 
@@ -11,7 +11,7 @@ export const plugin = new PanelPlugin<BarGaugeOptions>(BarGaugePanel)
   .setEditor(BarGaugePanelEditor)
   .setFieldConfigDefaults(standardFieldConfig)
   .setPanelOptions(builder => {
-    /* addStandardSingleValueOptions(builder); */
+    addStandardSingleValueOptions(builder);
 
     builder.addRadio({
       id: 'orientation',

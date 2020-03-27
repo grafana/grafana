@@ -15,7 +15,7 @@ import {
 
 import {
   PanelEditorProps,
-  FieldDisplayOptions,
+  DataToSingleValueOptions,
   FieldConfig,
   ValueMapping,
   ThresholdsConfig,
@@ -53,10 +53,10 @@ export class StatPanelEditor extends PureComponent<PanelEditorProps<StatPanelOpt
     });
   };
 
-  onDisplayOptionsChanged = (fieldOptions: FieldDisplayOptions) =>
+  onDisplayOptionsChanged = (fieldOptions: DataToSingleValueOptions) =>
     this.props.onOptionsChange({
       ...this.props.options,
-      fieldOptions,
+      valueOptions: fieldOptions,
     });
 
   onColorModeChanged = ({ value }: any) => this.props.onOptionsChange({ ...this.props.options, colorMode: value });
@@ -84,10 +84,10 @@ export class StatPanelEditor extends PureComponent<PanelEditorProps<StatPanelOpt
 
   render() {
     const { options, fieldConfig } = this.props;
-    const { fieldOptions } = options;
+    const { valueOptions } = options;
     const { defaults } = fieldConfig;
 
-    const suggestions = fieldOptions.values
+    const suggestions = valueOptions.values
       ? getDataLinksVariableSuggestions(this.props.data.series)
       : getCalculationValueDataLinksVariableSuggestions(this.props.data.series);
 
@@ -98,7 +98,7 @@ export class StatPanelEditor extends PureComponent<PanelEditorProps<StatPanelOpt
             <>
               <PanelOptionsGrid>
                 <PanelOptionsGroup title="Display">
-                  <FieldDisplayEditor onChange={this.onDisplayOptionsChanged} value={fieldOptions} labelWidth={8} />
+                  <FieldDisplayEditor onChange={this.onDisplayOptionsChanged} value={valueOptions} labelWidth={8} />
                   <div className="form-field">
                     <FormLabel width={8}>Orientation</FormLabel>
                     <Select

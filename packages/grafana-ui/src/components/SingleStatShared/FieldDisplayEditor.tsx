@@ -9,7 +9,7 @@ import { StatsPicker } from '../StatsPicker/StatsPicker';
 // Types
 import Select from '../Select/Select';
 import {
-  FieldDisplayOptions,
+  DataToSingleValueOptions,
   DEFAULT_FIELD_DISPLAY_VALUES_LIMIT,
   ReducerID,
   toNumberString,
@@ -32,8 +32,8 @@ const showOptions: Array<SelectableValue<boolean>> = [
 
 export interface Props {
   labelWidth?: number;
-  value: FieldDisplayOptions;
-  onChange: (value: FieldDisplayOptions, event?: React.SyntheticEvent<HTMLElement>) => void;
+  value: DataToSingleValueOptions;
+  onChange: (value: DataToSingleValueOptions, event?: React.SyntheticEvent<HTMLElement>) => void;
 }
 
 export class FieldDisplayEditor extends PureComponent<Props> {

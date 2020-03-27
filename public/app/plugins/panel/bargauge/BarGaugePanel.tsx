@@ -50,7 +50,7 @@ export class BarGaugePanel extends PureComponent<PanelProps<BarGaugeOptions>> {
     const { data, options, replaceVariables, fieldConfig } = this.props;
     return getFieldDisplayValues({
       fieldConfig,
-      fieldOptions: options.fieldOptions,
+      valueOptions: options.valueOptions,
       replaceVariables,
       theme: config.theme,
       data: data.series,

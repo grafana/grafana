@@ -20,7 +20,7 @@ export class PieChartPanel extends PureComponent<Props> {
 
     const values = getFieldDisplayValues({
       fieldConfig,
-      fieldOptions: options.fieldOptions,
+      valueOptions: options.valueOptions,
       data: data.series,
       theme: config.theme,
       replaceVariables: replaceVariables,
