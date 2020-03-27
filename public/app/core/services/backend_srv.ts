@@ -1,6 +1,5 @@
-import omitBy from 'lodash/omitBy';
-import { from, merge, MonoTypeOperatorFunction, Observable, Subject, throwError } from 'rxjs';
-import { catchError, filter, map, mergeMap, retryWhen, share, takeUntil, tap } from 'rxjs/operators';
+import { from, merge, MonoTypeOperatorFunction, Observable, of, Subject, throwError } from 'rxjs';
+import { catchError, filter, map, mergeMap, retryWhen, share, takeUntil, tap, throwIfEmpty } from 'rxjs/operators';
 import { fromFetch } from 'rxjs/fetch';
 import { BackendSrv as BackendService, BackendSrvRequest } from '@grafana/runtime';
 import { AppEvents } from '@grafana/data';
@@ -14,6 +13,7 @@ import { ContextSrv, contextSrv } from './context_srv';
 import { coreModule } from 'app/core/core_module';
 import { Emitter } from '../utils/emitter';
 import { DataSourceResponse } from '../../types/events';
+import { parseInitFromOptions, parseUrlFromOptions } from '../utils/fetch';
 
 export interface DatasourceRequestOptions {
   retry?: number;
@@ -49,16 +49,9 @@ interface ErrorResponse<T extends ErrorResponseProps = any> {
   cancelled?: boolean;
 }
 
-function serializeParams(data: Record<string, any>): string {
-  return Object.keys(data)
-    .map(key => {
-      const value = data[key];
-      if (Array.isArray(value)) {
-        return value.map(arrayValue => `${encodeURIComponent(key)}=${encodeURIComponent(arrayValue)}`).join('&');
-      }
-      return `${encodeURIComponent(key)}=${encodeURIComponent(value)}`;
-    })
-    .join('&');
+enum CancellationType {
+  request,
+  dataSourceRequest,
 }
 
 export interface BackendSrvDependencies {
@@ -90,8 +83,8 @@ export class BackendSrv implements BackendService {
     }
   }
 
-  async get(url: string, params?: any) {
-    return await this.request({ method: 'GET', url, params });
+  async get(url: string, params?: any, requestId?: string) {
+    return await this.request({ method: 'GET', url, params, requestId });
   }
 
   async delete(url: string) {
@@ -150,6 +143,13 @@ export class BackendSrv implements BackendService {
   };
 
   async request(options: BackendSrvRequest): Promise<any> {
+    // A requestId is a unique identifier for a particular query.
+    // Every observable below has a takeUntil that subscribes to this.inFlightRequests and
+    // will cancel/unsubscribe that observable when a new datasourceRequest with the same requestId is made
+    if (options.requestId) {
+      this.inFlightRequests.next(options.requestId);
+    }
+
     options = this.parseRequestOptions(options, this.dependencies.contextSrv.user?.orgId);
 
     const fromFetchStream = this.getFromFetchStream(options);
@@ -173,7 +173,8 @@ export class BackendSrv implements BackendService {
           // this setTimeout hack enables any caller catching this err to set isHandled to true
           setTimeout(() => this.requestErrorHandler(err), 50);
           return throwError(err);
-        })
+        }),
+        this.handleStreamCancellation(options, CancellationType.request)
       )
       .toPromise();
   }
@@ -214,13 +215,6 @@ export class BackendSrv implements BackendService {
     return merge(successStream, failureStream)
       .pipe(
         catchError((err: ErrorResponse) => {
-          if (err.status === this.HTTP_REQUEST_CANCELED) {
-            return throwError({
-              err,
-              cancelled: true,
-            });
-          }
-
           // populate error obj on Internal Error
           if (typeof err.data === 'string' && err.status === 500) {
             err.data = {
@@ -240,20 +234,7 @@ export class BackendSrv implements BackendService {
 
           return throwError(err);
         }),
-        takeUntil(
-          this.inFlightRequests.pipe(
-            filter(requestId => {
-              let cancelRequest = false;
-              if (options && options.requestId && options.requestId === requestId) {
-                // when a new requestId is started it will be published to inFlightRequests
-                // if a previous long running request that hasn't finished yet has the same requestId
-                // we need to cancel that request
-                cancelRequest = true;
-              }
-              return cancelRequest;
-            })
-          )
-        )
+        this.handleStreamCancellation(options, CancellationType.dataSourceRequest)
       )
       .toPromise();
   }
@@ -466,7 +447,7 @@ export class BackendSrv implements BackendService {
           url,
           type,
           redirected,
-          request: { url, ...init },
+          config: options,
         };
         return fetchResponse;
       }),
@@ -539,42 +520,51 @@ export class BackendSrv implements BackendService {
         )
       )
     );
+
+  private handleStreamCancellation = (
+    options: BackendSrvRequest,
+    resultType: CancellationType
+  ): MonoTypeOperatorFunction<FetchResponse | DataSourceSuccessResponse | SuccessResponse> => inputStream =>
+    inputStream.pipe(
+      takeUntil(
+        this.inFlightRequests.pipe(
+          filter(requestId => {
+            let cancelRequest = false;
+            if (options && options.requestId && options.requestId === requestId) {
+              // when a new requestId is started it will be published to inFlightRequests
+              // if a previous long running request that hasn't finished yet has the same requestId
+              // we need to cancel that request
+              cancelRequest = true;
+            }
+            return cancelRequest;
+          })
+        )
+      ),
+      // when a request is cancelled by takeUntil it will complete without emitting anything so we use throwIfEmpty to identify this case
+      // in throwIfEmpty we'll then throw an cancelled error and then we'll return the correct result in the catchError or rethrow
+      throwIfEmpty(() => ({
+        cancelled: true,
+      })),
+      catchError(err => {
+        if (!err.cancelled) {
+          return throwError(err);
+        }
+
+        if (resultType === CancellationType.dataSourceRequest) {
+          return of({
+            data: [],
+            status: this.HTTP_REQUEST_CANCELED,
+            statusText: 'Request was aborted',
+            config: options,
+          });
+        }
+
+        return of([]);
+      })
+    );
 }
 
 coreModule.factory('backendSrv', () => backendSrv);
 // Used for testing and things that really need BackendSrv
 export const backendSrv = new BackendSrv();
 export const getBackendSrv = (): BackendSrv => backendSrv;
-
-export const parseUrlFromOptions = (options: BackendSrvRequest): string => {
-  const cleanParams = omitBy(options.params, v => v === undefined || (v && v.length === 0));
-  const serializedParams = serializeParams(cleanParams);
-  return options.params && serializedParams.length ? `${options.url}?${serializedParams}` : options.url;
-};
-
-export const parseInitFromOptions = (options: BackendSrvRequest): RequestInit => {
-  const method = options.method;
-  const headers = {
-    'Content-Type': 'application/json',
-    Accept: 'application/json, text/plain, */*',
-    ...options.headers,
-  };
-  const body = parseBody({ ...options, headers });
-  return {
-    method,
-    headers,
-    body,
-  };
-};
-
-const parseBody = (options: BackendSrvRequest) => {
-  if (!options.data || typeof options.data === 'string') {
-    return options.data;
-  }
-
-  if (options.headers['Content-Type'] === 'application/json') {
-    return JSON.stringify(options.data);
-  }
-
-  return new URLSearchParams(options.data);
-};

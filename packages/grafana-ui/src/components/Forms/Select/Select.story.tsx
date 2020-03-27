@@ -9,41 +9,12 @@ import { Button } from '../Button';
 import { ButtonSelect } from './ButtonSelect';
 import { getIconKnob } from '../../../utils/storybook/knobs';
 import kebabCase from 'lodash/kebabCase';
+import { generateOptions } from './mockOptions';
 
 export default {
-  title: 'General/Select',
+  title: 'Forms/Select',
   component: Select,
   decorators: [withCenteredStory, withHorizontallyCenteredStory],
-};
-
-const generateOptions = () => {
-  const values = [
-    'Sharilyn Markowitz',
-    'Naomi Striplin',
-    'Beau Bevel',
-    'Garrett Starkes',
-    'Hildegarde Pedro',
-    'Gudrun Seyler',
-    'Eboni Raines',
-    'Hye Felix',
-    'Chau Brito',
-    'Heidy Zook',
-    'Karima Husain',
-    'Virgil Mckinny',
-    'Kaley Dodrill',
-    'Sharan Ruf',
-    'Edgar Loveland',
-    'Judie Sanger',
-    'Season Bundrick',
-    'Ok Vicente',
-    'Garry Spitz',
-    'Han Harnish',
-  ];
-
-  return values.map<SelectableValue<string>>(name => ({
-    value: kebabCase(name),
-    label: name,
-  }));
 };
 
 const loadAsyncOptions = () => {
@@ -123,6 +94,33 @@ export const basicSelectPlainValue = () => {
     <>
       <Select
         options={generateOptions()}
+        value={value}
+        onChange={v => {
+          setValue(v.value);
+        }}
+        size="md"
+        {...getDynamicProps()}
+      />
+    </>
+  );
+};
+
+/**
+ * Uses plain values instead of SelectableValue<T>
+ */
+export const SelectWithOptionDescriptions = () => {
+  // TODO this is not working with new Select
+
+  const [value, setValue] = useState<number>();
+  const options = [
+    { label: 'hello', value: 1, description: 'this is a description' },
+    { label: 'hello 2', value: 2, description: 'second description' },
+  ];
+
+  return (
+    <>
+      <Select
+        options={options}
         value={value}
         onChange={v => {
           setValue(v.value);
@@ -237,11 +235,36 @@ export const customizedControl = () => {
         setValue(v);
       }}
       size="md"
-      renderControl={({ isOpen, value, ...otherProps }) => {
-        return <Button {...otherProps}> {isOpen ? 'Open' : 'Closed'}</Button>;
-      }}
+      renderControl={React.forwardRef(({ isOpen, value, ...otherProps }, ref) => {
+        return (
+          <Button {...otherProps} ref={ref}>
+            {' '}
+            {isOpen ? 'Open' : 'Closed'}
+          </Button>
+        );
+      })}
       {...getDynamicProps()}
     />
+  );
+};
+
+export const autoMenuPlacement = () => {
+  const [value, setValue] = useState<SelectableValue<string>>();
+
+  return (
+    <>
+      <div style={{ height: '95vh', display: 'flex', alignItems: 'flex-end' }}>
+        <Select
+          options={generateOptions()}
+          value={value}
+          onChange={v => {
+            setValue(v);
+          }}
+          size="md"
+          {...getDynamicProps()}
+        />
+      </div>
+    </>
   );
 };
 

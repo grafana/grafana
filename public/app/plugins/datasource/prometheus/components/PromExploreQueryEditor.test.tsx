@@ -1,11 +1,11 @@
 import React from 'react';
-import { shallow, mount } from 'enzyme';
+import { mount, shallow } from 'enzyme';
 import { act } from 'react-dom/test-utils';
 import PromExploreQueryEditor from './PromExploreQueryEditor';
 import { PromExploreExtraField } from './PromExploreExtraField';
 import { PrometheusDatasource } from '../datasource';
 import { PromQuery } from '../types';
-import { PanelData, LoadingState, dateTime } from '@grafana/data';
+import { LoadingState, PanelData, toUtc } from '@grafana/data';
 
 const setup = (renderMethod: any, propOverrides?: object) => {
   const datasourceMock: unknown = {};
@@ -22,11 +22,11 @@ const setup = (renderMethod: any, propOverrides?: object) => {
       interval: '1s',
       panelId: 1,
       range: {
-        from: dateTime('2020-01-01', 'YYYY-MM-DD'),
-        to: dateTime('2020-01-02', 'YYYY-MM-DD'),
+        from: toUtc('2020-01-01', 'YYYY-MM-DD'),
+        to: toUtc('2020-01-02', 'YYYY-MM-DD'),
         raw: {
-          from: dateTime('2020-01-01', 'YYYY-MM-DD'),
-          to: dateTime('2020-01-02', 'YYYY-MM-DD'),
+          from: toUtc('2020-01-01', 'YYYY-MM-DD'),
+          to: toUtc('2020-01-02', 'YYYY-MM-DD'),
         },
       },
       scopedVars: {},
@@ -36,11 +36,11 @@ const setup = (renderMethod: any, propOverrides?: object) => {
       startTime: 0,
     },
     timeRange: {
-      from: dateTime('2020-01-01', 'YYYY-MM-DD'),
-      to: dateTime('2020-01-02', 'YYYY-MM-DD'),
+      from: toUtc('2020-01-01', 'YYYY-MM-DD'),
+      to: toUtc('2020-01-02', 'YYYY-MM-DD'),
       raw: {
-        from: dateTime('2020-01-01', 'YYYY-MM-DD'),
-        to: dateTime('2020-01-02', 'YYYY-MM-DD'),
+        from: toUtc('2020-01-01', 'YYYY-MM-DD'),
+        to: toUtc('2020-01-02', 'YYYY-MM-DD'),
       },
     },
   };
@@ -79,6 +79,7 @@ describe('PromExploreQueryEditor', () => {
   });
 
   it('should render PromQueryField with ExtraFieldElement', async () => {
+    // @ts-ignore strict null errpr TS2345: Argument of type '() => Promise<void>' is not assignable to parameter of type '() => void | undefined'.
     await act(async () => {
       const wrapper = setup(mount);
       expect(wrapper.find(PromExploreExtraField).length).toBe(1);

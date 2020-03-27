@@ -59,7 +59,7 @@ class ElasticsearchQueryField extends React.PureComponent<Props, State> {
   };
 
   render() {
-    const { data, query } = this.props;
+    const { query } = this.props;
     const { syntaxLoaded } = this.state;
 
     return (
@@ -77,7 +77,6 @@ class ElasticsearchQueryField extends React.PureComponent<Props, State> {
             />
           </div>
         </div>
-        {data && data.error ? <div className="prom-query-field-info text-error">{data.error.message}</div> : null}
       </>
     );
   }

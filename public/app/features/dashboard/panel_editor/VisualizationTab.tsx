@@ -1,8 +1,7 @@
 // Libraries
 import React, { PureComponent } from 'react';
 // Utils & Services
-import { AngularComponent, getAngularLoader } from '@grafana/runtime';
-import { connectWithStore } from 'app/core/utils/connectWithReduxStore';
+import { connect } from 'react-redux';
 import { StoreState } from 'app/types';
 import { updateLocation } from 'app/core/actions';
 // Components
@@ -10,19 +9,25 @@ import { EditorTabBody, EditorToolbarView } from './EditorTabBody';
 import { VizTypePicker } from './VizTypePicker';
 import { PluginHelp } from 'app/core/components/PluginHelp/PluginHelp';
 import { FadeIn } from 'app/core/components/Animations/FadeIn';
+import { AngularPanelOptions } from './AngularPanelOptions';
 // Types
 import { PanelModel, DashboardModel } from '../state';
 import { VizPickerSearch } from './VizPickerSearch';
 import PluginStateinfo from 'app/features/plugins/PluginStateInfo';
-import { PanelCtrl } from 'app/plugins/sdk';
 import { Unsubscribable } from 'rxjs';
-import { PanelPlugin, PanelPluginMeta, PanelData, LoadingState, DefaultTimeRange } from '@grafana/data';
+import {
+  PanelPlugin,
+  PanelPluginMeta,
+  PanelData,
+  LoadingState,
+  DefaultTimeRange,
+  FieldConfigSource,
+} from '@grafana/data';
 
 interface Props {
   panel: PanelModel;
   dashboard: DashboardModel;
   plugin: PanelPlugin;
-  angularPanel?: AngularComponent;
   onPluginTypeChange: (newType: PanelPluginMeta) => void;
   updateLocation: typeof updateLocation;
   urlOpenVizPicker: boolean;
@@ -38,7 +43,6 @@ interface State {
 
 export class VisualizationTab extends PureComponent<Props, State> {
   element: HTMLElement;
-  angularOptions: AngularComponent;
   querySubscription: Unsubscribable;
 
   constructor(props: Props) {
@@ -62,11 +66,16 @@ export class VisualizationTab extends PureComponent<Props, State> {
     return panel.getOptions();
   };
 
-  renderPanelOptions() {
-    const { plugin, angularPanel } = this.props;
+  getReactPanelFieldConfig = () => {
+    const { panel } = this.props;
+    return panel.getFieldConfig();
+  };
 
-    if (angularPanel) {
-      return <div ref={element => (this.element = element)} />;
+  renderPanelOptions() {
+    const { plugin, dashboard, panel } = this.props;
+
+    if (plugin.angularPanelCtrl) {
+      return <AngularPanelOptions plugin={plugin} dashboard={dashboard} panel={panel} />;
     }
 
     if (plugin.editor) {
@@ -75,6 +84,10 @@ export class VisualizationTab extends PureComponent<Props, State> {
           data={this.state.data}
           options={this.getReactPanelOptions()}
           onOptionsChange={this.onPanelOptionsChanged}
+          // TODO[FieldConfig]: Remove when we switch old editor to new
+          fieldConfig={this.getReactPanelFieldConfig()}
+          // TODO[FieldConfig]: Remove when we switch old editor to new
+          onFieldConfigChange={this.onPanelFieldConfigChange}
         />
       );
     }
@@ -85,81 +98,15 @@ export class VisualizationTab extends PureComponent<Props, State> {
   componentDidMount() {
     const { panel } = this.props;
     const queryRunner = panel.getQueryRunner();
-    if (this.shouldLoadAngularOptions()) {
-      this.loadAngularOptions();
-    }
 
     this.querySubscription = queryRunner.getData().subscribe({
       next: (data: PanelData) => this.setState({ data }),
     });
   }
 
-  componentDidUpdate(prevProps: Props) {
-    if (this.props.plugin !== prevProps.plugin) {
-      this.cleanUpAngularOptions();
-    }
-
-    if (this.shouldLoadAngularOptions()) {
-      this.loadAngularOptions();
-    }
-  }
-
-  shouldLoadAngularOptions() {
-    return this.props.angularPanel && this.element && !this.angularOptions;
-  }
-
-  loadAngularOptions() {
-    const { angularPanel } = this.props;
-
-    const scope = angularPanel.getScope();
-
-    // When full page reloading in edit mode the angular panel has on fully compiled & instantiated yet
-    if (!scope.$$childHead) {
-      setTimeout(() => {
-        this.forceUpdate();
-      });
-      return;
-    }
-
-    const panelCtrl: PanelCtrl = scope.$$childHead.ctrl;
-    panelCtrl.initEditMode();
-    panelCtrl.onPluginTypeChange = this.onPluginTypeChange;
-
-    let template = '';
-    for (let i = 0; i < panelCtrl.editorTabs.length; i++) {
-      template +=
-        `
-      <div class="panel-options-group" ng-cloak>` +
-        (i > 0
-          ? `<div class="panel-options-group__header">
-           <span class="panel-options-group__title">{{ctrl.editorTabs[${i}].title}}
-           </span>
-         </div>`
-          : '') +
-        `<div class="panel-options-group__body">
-          <panel-editor-tab editor-tab="ctrl.editorTabs[${i}]" ctrl="ctrl"></panel-editor-tab>
-        </div>
-      </div>
-      `;
-    }
-
-    const loader = getAngularLoader();
-    const scopeProps = { ctrl: panelCtrl };
-
-    this.angularOptions = loader.load(this.element, scopeProps, template);
-  }
-
   componentWillUnmount() {
     if (this.querySubscription) {
       this.querySubscription.unsubscribe();
-    }
-    this.cleanUpAngularOptions();
-  }
-
-  cleanUpAngularOptions() {
-    if (this.angularOptions) {
-      this.angularOptions.destroy();
-      this.angularOptions = null;
     }
   }
 
@@ -169,6 +116,12 @@ export class VisualizationTab extends PureComponent<Props, State> {
 
   onPanelOptionsChanged = (options: any, callback?: () => void) => {
     this.props.panel.updateOptions(options);
+    this.forceUpdate(callback);
+  };
+
+  // TODO[FieldConfig]: Remove when we switch old editor to new
+  onPanelFieldConfigChange = (config: FieldConfigSource, callback?: () => void) => {
+    this.props.panel.updateFieldConfig(config);
     this.forceUpdate(callback);
   };
 
@@ -276,4 +229,4 @@ const mapDispatchToProps = {
   updateLocation,
 };
 
-export default connectWithStore(VisualizationTab, mapStateToProps, mapDispatchToProps);
+export default connect(mapStateToProps, mapDispatchToProps)(VisualizationTab);

@@ -42,10 +42,12 @@ type PluginScanner struct {
 	pluginPath           string
 	errors               []error
 	backendPluginManager backendplugin.Manager
+	cfg                  *setting.Cfg
 }
 
 type PluginManager struct {
 	BackendPluginManager backendplugin.Manager `inject:""`
+	Cfg                  *setting.Cfg          `inject:""`
 	log                  log.Logger
 }
 
@@ -164,6 +166,7 @@ func (pm *PluginManager) scan(pluginDir string) error {
 	scanner := &PluginScanner{
 		pluginPath:           pluginDir,
 		backendPluginManager: pm.BackendPluginManager,
+		cfg:                  pm.Cfg,
 	}
 
 	if err := util.Walk(pluginDir, true, true, scanner.walker); err != nil {
@@ -188,6 +191,15 @@ func (pm *PluginManager) scan(pluginDir string) error {
 	return nil
 }
 
+// GetDatasource returns a datasource based on passed pluginID if it exists
+//
+// This function fetches the datasource from the global variable DataSources in this package.
+// Rather then refactor all dependencies on the global variable we can use this as an transition.
+func (pm *PluginManager) GetDatasource(pluginID string) (*DataSourcePlugin, bool) {
+	ds, exist := DataSources[pluginID]
+	return ds, exist
+}
+
 func (scanner *PluginScanner) walker(currentPath string, f os.FileInfo, err error) error {
 	// We scan all the subfolders for plugin.json (with some exceptions) so that we also load embedded plugins, for
 	// example https://github.com/raintank/worldping-app/tree/master/dist/grafana-worldmap-panel worldmap panel plugin
@@ -202,6 +214,14 @@ func (scanner *PluginScanner) walker(currentPath string, f os.FileInfo, err erro
 
 	if f.IsDir() {
 		return nil
+	}
+
+	if !scanner.cfg.FeatureToggles["tracingIntegration"] {
+		// Do not load tracing datasources if
+		prefix := path.Join(setting.StaticRootPath, "app/plugins/datasource")
+		if strings.Contains(currentPath, path.Join(prefix, "jaeger")) || strings.Contains(currentPath, path.Join(prefix, "zipkin")) {
+			return nil
+		}
 	}
 
 	if f.Name() == "plugin.json" {

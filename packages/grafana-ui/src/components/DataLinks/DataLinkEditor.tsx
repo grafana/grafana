@@ -1,11 +1,9 @@
 import React, { ChangeEvent, useContext } from 'react';
-import { DataLink } from '@grafana/data';
+import { DataLink, VariableSuggestion, GrafanaTheme } from '@grafana/data';
 import { FormField, Switch } from '../index';
-import { VariableSuggestion } from './DataLinkSuggestions';
 import { css } from 'emotion';
 import { ThemeContext, stylesFactory } from '../../themes/index';
 import { DataLinkInput } from './DataLinkInput';
-import { GrafanaTheme } from '@grafana/data';
 
 interface DataLinkEditorProps {
   index: number;

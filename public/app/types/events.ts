@@ -22,6 +22,11 @@ export interface ShowModalPayload {
   scope?: any;
 }
 
+export interface ShowModalReactPayload {
+  component: React.ComponentType;
+  props?: any;
+}
+
 export interface ShowConfirmModalPayload {
   title?: string;
   text?: string;
@@ -46,7 +51,7 @@ export interface DataSourceResponse<T> {
   readonly redirected: boolean;
   readonly type: ResponseType;
   readonly url: string;
-  readonly request: any;
+  readonly config: any;
 }
 
 type DataSourceResponsePayload = DataSourceResponse<any>;
@@ -109,6 +114,7 @@ export const timepickerClosed = eventFactory('timepickerClosed');
 export const showModal = eventFactory<ShowModalPayload>('show-modal');
 export const showConfirmModal = eventFactory<ShowConfirmModalPayload>('confirm-modal');
 export const hideModal = eventFactory('hide-modal');
+export const showModalReact = eventFactory<ShowModalReactPayload>('show-modal-react');
 
 export const dsRequestResponse = eventFactory<DataSourceResponsePayload>('ds-request-response');
 export const dsRequestError = eventFactory<any>('ds-request-error');

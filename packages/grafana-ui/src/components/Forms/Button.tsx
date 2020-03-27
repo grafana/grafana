@@ -4,7 +4,8 @@ import tinycolor from 'tinycolor2';
 import { selectThemeVariant, stylesFactory, ThemeContext } from '../../themes';
 import { Button as DefaultButton, LinkButton as DefaultLinkButton } from '../Button/Button';
 import { getFocusStyle, getPropertiesForButtonSize } from './commonStyles';
-import { ButtonSize, StyleDeps } from '../Button/types';
+import { ComponentSize } from '../../types/size';
+import { StyleDeps } from '../Button/types';
 import { GrafanaTheme } from '@grafana/data';
 
 const buttonVariantStyles = (from: string, to: string, textColor: string) => css`
@@ -63,7 +64,6 @@ const getPropertiesForVariant = (theme: GrafanaTheme, variant: ButtonVariant) =>
           }
         `,
       };
-
     case 'primary':
     default:
       return {
@@ -88,7 +88,7 @@ export const getButtonStyles = stylesFactory(({ theme, size, variant }: StylePro
         align-items: center;
         font-weight: ${theme.typography.weight.semibold};
         font-family: ${theme.typography.fontFamily.sansSerif};
-        line-height: ${theme.typography.lineHeight.sm};
+        line-height: ${theme.typography.lineHeight.md};
         font-size: ${fontSize};
         padding: ${padding};
         height: ${height};
@@ -131,7 +131,7 @@ export type ButtonVariant = 'primary' | 'secondary' | 'destructive' | 'link';
 
 // These also needs to be different because the ButtonVariant is different
 type CommonProps = {
-  size?: ButtonSize;
+  size?: ComponentSize;
   variant?: ButtonVariant;
   icon?: string;
   className?: string;
@@ -139,23 +139,23 @@ type CommonProps = {
 
 export type ButtonProps = CommonProps & ButtonHTMLAttributes<HTMLButtonElement>;
 
-export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>((props, ref) => {
+export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(({ variant, ...otherProps }, ref) => {
   const theme = useContext(ThemeContext);
   const styles = getButtonStyles({
     theme,
-    size: props.size || 'md',
-    variant: props.variant || 'primary',
+    size: otherProps.size || 'md',
+    variant: variant || 'primary',
   });
-  return <DefaultButton {...props} styles={styles} ref={ref} />;
+  return <DefaultButton {...otherProps} variant={variant} styles={styles} ref={ref} />;
 });
 
 type ButtonLinkProps = CommonProps & AnchorHTMLAttributes<HTMLAnchorElement>;
-export const LinkButton = React.forwardRef<HTMLAnchorElement, ButtonLinkProps>((props, ref) => {
+export const LinkButton = React.forwardRef<HTMLAnchorElement, ButtonLinkProps>(({ variant, ...otherProps }, ref) => {
   const theme = useContext(ThemeContext);
   const styles = getButtonStyles({
     theme,
-    size: props.size || 'md',
-    variant: props.variant || 'primary',
+    size: otherProps.size || 'md',
+    variant: variant || 'primary',
   });
-  return <DefaultLinkButton {...props} styles={styles} ref={ref} />;
+  return <DefaultLinkButton {...otherProps} variant={variant} styles={styles} ref={ref} />;
 });

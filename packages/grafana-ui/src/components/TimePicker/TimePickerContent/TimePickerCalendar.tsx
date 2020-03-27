@@ -1,4 +1,4 @@
-import React, { memo } from 'react';
+import React, { memo, useState, useEffect } from 'react';
 import { css, cx } from 'emotion';
 import Calendar from 'react-calendar/dist/entry.nostyle';
 import { GrafanaTheme, dateTime, TIME_FORMAT } from '@grafana/data';
@@ -84,7 +84,6 @@ const getBodyStyles = stylesFactory((theme: GrafanaTheme) => {
     title: css`
       color: ${theme.colors.text}
       background-color: ${colors.background};
-      line-height: 21px;
       font-size: ${theme.typography.size.md};
       border: 1px solid transparent;
 
@@ -129,6 +128,7 @@ const getBodyStyles = stylesFactory((theme: GrafanaTheme) => {
       .react-calendar__tile--now {
         margin-bottom: 4px;
         background-color: inherit;
+        height: 26px;
       }
 
       .react-calendar__navigation__label,
@@ -158,7 +158,8 @@ const getBodyStyles = stylesFactory((theme: GrafanaTheme) => {
           background-color: ${theme.colors.blue77};
           border-radius: 100px;
           display: block;
-          padding: 2px 7px 3px;
+          padding-top: 2px;
+          height: 26px;
         }
       }
 
@@ -202,6 +203,8 @@ interface Props {
   isFullscreen: boolean;
 }
 
+const stopPropagation = (event: React.MouseEvent<HTMLDivElement>) => event.stopPropagation();
+
 export const TimePickerCalendar = memo<Props>(props => {
   const theme = useTheme();
   const styles = getStyles(theme);
@@ -214,7 +217,7 @@ export const TimePickerCalendar = memo<Props>(props => {
   if (isFullscreen) {
     return (
       <ClickOutsideWrapper onClick={props.onClose}>
-        <div className={styles.container}>
+        <div className={styles.container} onClick={stopPropagation}>
           <Body {...props} />
         </div>
       </ClickOutsideWrapper>
@@ -223,14 +226,14 @@ export const TimePickerCalendar = memo<Props>(props => {
 
   return (
     <Portal>
-      <div className={styles.modal} onClick={event => event.stopPropagation()}>
+      <div className={styles.modal} onClick={stopPropagation}>
         <div className={styles.content}>
           <Header {...props} />
           <Body {...props} />
           <Footer {...props} />
         </div>
       </div>
-      <div className={styles.backdrop} onClick={event => event.stopPropagation()} />
+      <div className={styles.backdrop} onClick={stopPropagation} />
     </Portal>
   );
 });
@@ -247,10 +250,14 @@ const Header = memo<Props>(({ onClose }) => {
   );
 });
 
-const Body = memo<Props>(props => {
+const Body = memo<Props>(({ onChange, from, to }) => {
+  const [value, setValue] = useState<Date[]>();
   const theme = useTheme();
   const styles = getBodyStyles(theme);
-  const { from, to, onChange } = props;
+
+  useEffect(() => {
+    setValue(inputToValue(from, to));
+  }, []);
 
   return (
     <Calendar
@@ -259,7 +266,7 @@ const Body = memo<Props>(props => {
       prev2Label={null}
       className={styles.body}
       tileClassName={styles.title}
-      value={inputToValue(from, to)}
+      value={value}
       nextLabel={<span className="fa fa-angle-right" />}
       prevLabel={<span className="fa fa-angle-left" />}
       onChange={value => valueToInput(value, onChange)}

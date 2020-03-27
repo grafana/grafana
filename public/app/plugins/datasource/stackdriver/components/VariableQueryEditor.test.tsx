@@ -4,6 +4,7 @@ import renderer from 'react-test-renderer';
 import { StackdriverVariableQueryEditor } from './VariableQueryEditor';
 import { VariableQueryProps } from 'app/types/plugins';
 import { MetricFindQueryTypes } from '../types';
+import { VariableModel } from 'app/features/templating/types';
 
 jest.mock('../functions', () => ({
   getMetricTypes: (): any => ({ metricTypes: [], selectedMetricType: '' }),
@@ -14,9 +15,11 @@ const props: VariableQueryProps = {
   onChange: (query, definition) => {},
   query: {},
   datasource: {
+    getDefaultProject: () => '',
+    getProjects: async (): Promise<any[]> => [],
     getMetricTypes: async (p: any): Promise<any[]> => [],
   },
-  templateSrv: { replace: (s: string) => s, variables: [] },
+  templateSrv: { replace: (s: string) => s, getVariables: () => ([] as unknown) as VariableModel[] },
 };
 
 describe('VariableQueryEditor', () => {
@@ -28,7 +31,7 @@ describe('VariableQueryEditor', () => {
   describe('and a new variable is created', () => {
     it('should trigger a query using the first query type in the array', done => {
       props.onChange = (query, definition) => {
-        expect(definition).toBe('Stackdriver - Services');
+        expect(definition).toBe('Stackdriver - Projects');
         done();
       };
       renderer.create(<StackdriverVariableQueryEditor {...props} />).toJSON();

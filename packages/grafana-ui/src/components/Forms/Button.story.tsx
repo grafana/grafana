@@ -3,7 +3,7 @@ import { select, text } from '@storybook/addon-knobs';
 import { Button, ButtonVariant } from './Button';
 import { withCenteredStory, withHorizontallyCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { getIconKnob } from '../../utils/storybook/knobs';
-import { ButtonSize } from '../Button/types';
+import { ComponentSize } from '../../types/size';
 import mdx from './Button.mdx';
 
 export default {
@@ -28,7 +28,7 @@ export const simple = () => {
   const icon = getIconKnob();
 
   return (
-    <Button variant={variant as ButtonVariant} size={size as ButtonSize} icon={icon && `fa fa-${icon}`}>
+    <Button variant={variant as ButtonVariant} size={size as ComponentSize} icon={icon && `fa fa-${icon}`}>
       {buttonText}
     </Button>
   );
