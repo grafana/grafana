@@ -7,6 +7,7 @@ import {
   FieldConfigSource,
   ThresholdsMode,
 } from '@grafana/data';
+import { PanelOptionsEditorBuilder } from '@grafana/data/src/utils/OptionsUIBuilders';
 
 // Structure copied from angular
 export interface StatPanelOptions extends SingleStatBaseOptions {
@@ -48,6 +49,20 @@ export const standardFieldConfig: FieldConfigSource = {
   },
   overrides: [],
 };
+
+export function addStandardSingleValueOptions(builder: PanelOptionsEditorBuilder) {
+  builder.addRadio({
+    id: 'values',
+    name: 'Show',
+    description: 'Calculate a single value per colum or series or show each row',
+    settings: {
+      options: [
+        { value: false, label: 'Calculate' },
+        { value: true, label: 'All values' },
+      ],
+    },
+  });
+}
 
 export const defaults: StatPanelOptions = {
   graphMode: BigValueGraphMode.Area,
