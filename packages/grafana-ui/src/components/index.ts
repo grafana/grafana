@@ -78,7 +78,7 @@ export { GraphWithLegend } from './Graph/GraphWithLegend';
 export { GraphContextMenu } from './Graph/GraphContextMenu';
 export { BarGauge, BarGaugeDisplayMode } from './BarGauge/BarGauge';
 export { GraphTooltipOptions } from './Graph/GraphTooltip/types';
-export { VizRepeater } from './VizRepeater/VizRepeater';
+export { VizRepeater, VizRepeaterRenderValueProps } from './VizRepeater/VizRepeater';
 
 export {
   LegendOptions,
