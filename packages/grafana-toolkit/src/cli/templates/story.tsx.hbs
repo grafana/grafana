@@ -1,0 +1,19 @@
+import React from 'react';
+import {{ properCase name }} from './{{ properCase name }}';
+import mdx from './{{ properCase name }}.mdx';
+
+
+export default {
+  title: 'General/{{ properCase name }}',
+  component: {{ properCase name }},
+  decorators: [withCenteredStory],
+  parameters: {
+    docs: {
+      page: mdx,
+    },
+  },
+};
+
+export const single = () => {
+  return <{{ properCase name }} />;
+};
