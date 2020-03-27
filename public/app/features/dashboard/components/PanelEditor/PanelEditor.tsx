@@ -1,6 +1,6 @@
 import React, { PureComponent } from 'react';
 import { FieldConfigSource, GrafanaTheme, PanelData, PanelPlugin, SelectableValue } from '@grafana/data';
-import { Forms, stylesFactory } from '@grafana/ui';
+import { Forms, stylesFactory, Button } from '@grafana/ui';
 import { css, cx } from 'emotion';
 import config from 'app/core/config';
 import AutoSizer from 'react-virtualized-auto-sizer';
@@ -14,7 +14,6 @@ import { StoreState } from '../../../../types/store';
 import { connect, MapDispatchToProps, MapStateToProps } from 'react-redux';
 import { updateLocation } from '../../../../core/reducers/location';
 import { Unsubscribable } from 'rxjs';
-import { PanelTitle } from './PanelTitle';
 import { DisplayMode, displayModes, PanelEditorTab } from './types';
 import { PanelEditorTabs } from './PanelEditorTabs';
 import { DashNavTimeControls } from '../DashNav/DashNavTimeControls';
@@ -187,20 +186,20 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
   }
 
   renderToolbar() {
-    const { dashboard, location, uiState, panel } = this.props;
+    const { dashboard, location, uiState } = this.props;
     const styles = getStyles(config.theme);
 
     return (
       <div className={styles.toolbar}>
         <div className={styles.toolbarLeft}>
           <BackButton onClick={this.onPanelExit} />
-          <PanelTitle value={panel.title} onChange={this.onPanelTitleChange} />
+          <span className={styles.editorTitle}>{dashboard.title} / Edit Panel</span>
         </div>
         <div className={styles.toolbarLeft}>
           <div className={styles.toolbarItem}>
-            <Forms.Button className={styles.toolbarItem} variant="secondary" onClick={this.onDiscard}>
+            <Button className={styles.toolbarItem} variant="secondary" onClick={this.onDiscard}>
               Discard changes
-            </Forms.Button>
+            </Button>
           </div>
           <div className={styles.toolbarItem}>
             <Forms.Select
@@ -213,7 +212,7 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
             <DashNavTimeControls dashboard={dashboard} location={location} updateLocation={updateLocation} />
           </div>
           <div className={styles.toolbarItem}>
-            <Forms.Button
+            <Button
               className={styles.toolbarItem}
               icon="fa fa-sliders"
               variant="secondary"
@@ -316,6 +315,7 @@ export const PanelEditor = connect(mapStateToProps, mapDispatchToProps)(PanelEdi
  */
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
   const handleColor = theme.colors.blueLight;
+  const paneSpaceing = theme.spacing.md;
 
   const resizer = css`
     font-style: italic;
@@ -355,21 +355,21 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
     `,
     panelWrapper: css`
       width: 100%;
-      padding-left: ${theme.spacing.sm};
+      padding-left: ${paneSpaceing};
       height: 100%;
     `,
     resizerV: cx(
       resizer,
       css`
         cursor: col-resize;
-        width: 8px;
+        width: ${paneSpaceing};
         border-right-width: 1px;
       `
     ),
     resizerH: cx(
       resizer,
       css`
-        height: 8px;
+        height: ${paneSpaceing};
         cursor: row-resize;
         position: relative;
         top: 49px;
@@ -402,6 +402,10 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       display: flex;
       justify-content: center;
       align-items: center;
+    `,
+    editorTitle: css`
+      font-size: ${theme.typography.size.lg};
+      padding-left: ${theme.spacing.md};
     `,
   };
 });

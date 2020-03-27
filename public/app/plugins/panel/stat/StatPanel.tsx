@@ -6,7 +6,14 @@ import { config } from 'app/core/config';
 
 // Types
 import { StatPanelOptions } from './types';
-import { VizRepeater, BigValue, DataLinksContextMenu, BigValueSparkline, BigValueGraphMode } from '@grafana/ui';
+import {
+  VizRepeater,
+  VizRepeaterRenderValueProps,
+  BigValue,
+  DataLinksContextMenu,
+  BigValueSparkline,
+  BigValueGraphMode,
+} from '@grafana/ui';
 
 import {
   PanelProps,
@@ -21,13 +28,9 @@ import {
 import { getFieldLinksSupplier } from 'app/features/panel/panellinks/linkSuppliers';
 
 export class StatPanel extends PureComponent<PanelProps<StatPanelOptions>> {
-  renderValue = (
-    value: FieldDisplay,
-    width: number,
-    height: number,
-    alignmentFactors: DisplayValueAlignmentFactors
-  ): JSX.Element => {
+  renderValue = (valueProps: VizRepeaterRenderValueProps<FieldDisplay, DisplayValueAlignmentFactors>): JSX.Element => {
     const { timeRange, options } = this.props;
+    const { value, alignmentFactors, width, height } = valueProps;
     let sparkline: BigValueSparkline | undefined;
 
     if (value.sparkline) {
