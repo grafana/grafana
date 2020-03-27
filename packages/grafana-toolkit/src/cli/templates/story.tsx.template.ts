@@ -1,11 +1,12 @@
-export const storyTpl = `import React from 'react';
-import <%= name %> from './<%= name %>';
+export const storyTpl = `
+import React from 'react';
+import { <%= name %> } from './<%= name %>';
 import { withCenteredStory } from '@grafana/ui/src/utils/storybook/withCenteredStory';
 import mdx from './<%= name %>.mdx';
 
 
 export default {
-  title: '<%= type %>/<%= name %>',
+  title: '<%= group %>/<%= name %>',
   component: <%= name %>,
   decorators: [withCenteredStory],
   parameters: {

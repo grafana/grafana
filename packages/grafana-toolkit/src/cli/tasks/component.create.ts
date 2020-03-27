@@ -4,12 +4,12 @@ import _ from 'lodash';
 import { pascalCase } from '../utils/pascalCase';
 import { prompt } from 'inquirer';
 import { promptConfirm, promptInput } from '../utils/prompt';
-import { componentTpl, docsTpl, storyTpl } from '../templates';
+import { componentTpl, docsTpl, storyTpl, testTpl } from '../templates';
 
 interface Details {
   name?: string;
   hasStory: boolean;
-  storyType: string;
+  group: string;
   hasTests: boolean;
 }
 
@@ -23,23 +23,36 @@ type ComponentGenerator = (options: GeneratorOptions) => Promise<any>;
 export const promptDetails = () => {
   return prompt<Details>([
     promptInput('name', 'Component name', true, ''),
+    promptConfirm('hasTests', "Generate component's test file?"),
     promptConfirm('hasStory', "Generate component's story?"),
-    promptInput('storyType', 'Select story type (default General)', true, 'General', ({ hasStory }) => hasStory),
+    promptInput('group', 'Select component group (e.g. Forms, Layout)', true, 'General', ({ hasStory }) => hasStory),
   ]);
 };
 
 export const generateComponents: ComponentGenerator = async ({ details, path }) => {
-  console.log('Generating components in: ', path);
   const name = pascalCase(details.name);
-  const str = _.template(componentTpl)({ name });
-  fs.writeFileSync(`${path}/${name}.tsx`, str);
+  const getCompiled = (template: string) => {
+    return _.template(template)({ ...details, name });
+  };
+  const filePath = `${path}/${name}`;
+  const paths = [];
+
+  fs.writeFileSync(`${filePath}.tsx`, getCompiled(componentTpl));
+  paths.push(`${filePath}.tsx`);
+
+  if (details.hasTests) {
+    fs.writeFileSync(`${filePath}.test.tsx`, getCompiled(testTpl));
+    paths.push(`${filePath}.test.tsx`);
+  }
 
   if (details.hasStory) {
-    const storyStr = _.template(storyTpl)({ name, type: details.storyType });
-    fs.writeFileSync(`${path}/${name}.story.tsx`, storyStr);
-    const docsStr = _.template(docsTpl)({ name });
-    fs.writeFileSync(`${path}/${name}.mdx`, docsStr);
+    fs.writeFileSync(`${filePath}.story.tsx`, getCompiled(storyTpl));
+    fs.writeFileSync(`${filePath}.mdx`, getCompiled(docsTpl));
+    paths.push(`${filePath}.story.tsx`, `${filePath}.mdx`);
   }
+
+  console.log('Generated files:');
+  console.log(paths.join('\n'));
 };
 
 const componentCreateRunner: TaskRunner<never> = async () => {
