@@ -1,8 +1,8 @@
 import { Task, TaskRunner } from './task';
 import fs from 'fs';
 import _ from 'lodash';
-import { pascalCase } from '../utils/pascalCase';
 import { prompt } from 'inquirer';
+import { pascalCase } from '../utils/pascalCase';
 import { promptConfirm, promptInput } from '../utils/prompt';
 import { componentTpl, docsTpl, storyTpl, testTpl } from '../templates';
 
@@ -22,9 +22,9 @@ type ComponentGenerator = (options: GeneratorOptions) => Promise<any>;
 
 export const promptDetails = () => {
   return prompt<Details>([
-    promptInput('name', 'Component name', true, ''),
+    promptInput('name', 'Component name', true),
     promptConfirm('hasTests', "Generate component's test file?"),
-    promptConfirm('hasStory', "Generate component's story?"),
+    promptConfirm('hasStory', "Generate component's story file?"),
     promptInput('group', 'Select component group (e.g. Forms, Layout)', true, 'General', ({ hasStory }) => hasStory),
   ]);
 };
@@ -35,7 +35,7 @@ export const generateComponents: ComponentGenerator = async ({ details, path }) 
     return _.template(template)({ ...details, name });
   };
   const filePath = `${path}/${name}`;
-  const paths = [];
+  let paths = [];
 
   fs.writeFileSync(`${filePath}.tsx`, getCompiled(componentTpl));
   paths.push(`${filePath}.tsx`);
@@ -57,7 +57,8 @@ export const generateComponents: ComponentGenerator = async ({ details, path }) 
 
 const componentCreateRunner: TaskRunner<any> = async () => {
   const destPath = process.cwd();
-  let details = await promptDetails();
+  const details = await promptDetails();
   await generateComponents({ details, path: destPath });
 };
+
 export const componentCreateTask = new Task('component:create', componentCreateRunner);
