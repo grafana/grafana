@@ -6,6 +6,7 @@ export type IconName =
   | 'angle-up'
   | 'angle-down'
   | 'angle-left'
+  | 'angle-right'
   | 'pen'
   | 'trash-alt'
   | 'exclamation-triangle'
@@ -36,4 +37,6 @@ export type IconName =
   | 'book'
   | 'bolt'
   | 'comments-alt'
+  | 'document-info'
+  | 'bug'
   | 'monitor';

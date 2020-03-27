@@ -1,6 +1,7 @@
 // Libaries
 import React, { PureComponent } from 'react';
 import { connect } from 'react-redux';
+import { css } from 'emotion';
 import { e2e } from '@grafana/e2e';
 // Utils & Services
 import { appEvents } from 'app/core/app_events';
@@ -8,7 +9,7 @@ import { PlaylistSrv } from 'app/features/playlist/playlist_srv';
 // Components
 import { DashNavButton } from './DashNavButton';
 import { DashNavTimeControls } from './DashNavTimeControls';
-import { ModalsController } from '@grafana/ui';
+import { ModalsController, Icon, withTheme, Themeable } from '@grafana/ui';
 import { BackButton } from 'app/core/components/BackButton/BackButton';
 // State
 import { updateLocation } from 'app/core/actions';
@@ -18,7 +19,7 @@ import { CoreEvents, StoreState } from 'app/types';
 import { ShareModal } from 'app/features/dashboard/components/ShareModal';
 import { SaveDashboardModalProxy } from 'app/features/dashboard/components/SaveDashboard/SaveDashboardModalProxy';
 
-export interface OwnProps {
+export interface OwnProps extends Themeable {
   dashboard: DashboardModel;
   isEditing: boolean;
   isFullscreen: boolean;
@@ -33,7 +34,7 @@ export interface StateProps {
 
 type Props = StateProps & OwnProps;
 
-export class DashNav extends PureComponent<Props> {
+class UnThemedDashNav extends PureComponent<Props> {
   playlistSrv: PlaylistSrv;
 
   constructor(props: Props) {
@@ -93,7 +94,16 @@ export class DashNav extends PureComponent<Props> {
   };
 
   renderDashboardTitleSearchButton() {
-    const { dashboard, isFullscreen } = this.props;
+    const { dashboard, isFullscreen, theme } = this.props;
+
+    const mainIconClass = css`
+      margin-right: ${theme.spacing.sm};
+      margin-bottom: ${theme.spacing.xxs};
+    `;
+
+    const angleIconClass = css`
+      margin-right: ${theme.spacing.sm};
+    `;
 
     const folderTitle = dashboard.meta.folderTitle;
     const haveFolder = dashboard.meta.folderId > 0;
@@ -102,17 +112,17 @@ export class DashNav extends PureComponent<Props> {
       <>
         <div>
           <div className="navbar-page-btn">
-            {!isFullscreen && <i className="gicon gicon-dashboard" />}
+            {!isFullscreen && <Icon name="apps" size="xl" className={mainIconClass} />}
             {haveFolder && (
               <>
                 <a className="navbar-page-btn__folder" onClick={this.onFolderNameClick}>
                   {folderTitle}
                 </a>
-                <i className="fa fa-chevron-right navbar-page-btn__folder-icon" />
+                <Icon name="angle-right" size="lg" className={angleIconClass} />
               </>
             )}
             <a onClick={this.onDahboardNameClick}>
-              {dashboard.title} <i className="fa fa-caret-down navbar-page-btn__search" />
+              {dashboard.title} <Icon name="angle-down" size="lg" className={angleIconClass} />
             </a>
           </div>
         </div>
@@ -254,6 +264,8 @@ export class DashNav extends PureComponent<Props> {
     );
   }
 }
+
+export const DashNav = withTheme(UnThemedDashNav);
 
 const mapStateToProps = (state: StoreState) => ({
   location: state.location,
