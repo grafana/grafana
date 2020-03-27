@@ -239,13 +239,14 @@ jobs:
           name: Build Windows installer
           command: ./scripts/build/ci-msi-build/ci-msi-build-oss.sh
       - run:
-          name: Move artifacts
-          command: mkdir oss && mv dist oss/
-      - persist_to_workspace:
-          root: .
-          paths:
-            - oss/dist/grafana-*.msi
-            - oss/dist/grafana-*.msi.sha256
+          name: Upload packages to GCS
+          command: |
+            # Work around an issue with the gsutil installation
+            export BOTO_CONFIG=/dev/null
+
+            echo $GCP_GRAFANA_UPLOAD_KEY > /tmp/gcpkey.json
+            ./google-cloud-sdk/bin/gcloud auth activate-service-account --key-file=/tmp/gcpkey.json
+            ./google-cloud-sdk/bin/gsutil -m rsync dist/grafana-*.msi* gs://grafana-build-pipeline/oss/packages/${CIRCLE_WORKFLOW_ID}/
       - run:
           name: CI job failed
           command: ./scripts/ci-job-failed.sh
@@ -286,13 +287,14 @@ jobs:
           name: Build Windows installer
           command: ./scripts/build/ci-msi-build/ci-msi-build-ee.sh
       - run:
-          name: Move artifacts
-          command: mkdir enterprise && mv enterprise-dist enterprise/dist
-      - persist_to_workspace:
-          root: .
-          paths:
-            - enterprise/dist/grafana-*.msi
-            - enterprise/dist/grafana-*.msi.sha256
+          name: Upload packages to GCS
+          command: |
+            # Work around an issue with the gsutil installation
+            export BOTO_CONFIG=/dev/null
+
+            echo $GCP_GRAFANA_UPLOAD_KEY > /tmp/gcpkey.json
+            ./google-cloud-sdk/bin/gcloud auth activate-service-account --key-file=/tmp/gcpkey.json
+            ./google-cloud-sdk/bin/gsutil -m rsync enterprise-dist/grafana-*.msi* gs://grafana-build-pipeline/enterprise/packages/${CIRCLE_WORKFLOW_ID}/
       - run:
           name: CI job failed
           command: "./scripts/ci-job-failed.sh"
@@ -379,7 +381,7 @@ jobs:
 
             echo $GCP_GRAFANA_UPLOAD_KEY > /tmp/gcpkey.json
             ./google-cloud-sdk/bin/gcloud auth activate-service-account --key-file=/tmp/gcpkey.json
-            ./google-cloud-sdk/bin/gsutil -m rsync -d -r dist gs://grafana-build-pipeline/oss/packages/${CIRCLE_WORKFLOW_ID}
+            ./google-cloud-sdk/bin/gsutil -m rsync -r dist gs://grafana-build-pipeline/oss/packages/${CIRCLE_WORKFLOW_ID}
       - run:
           name: CI job failed
           command: ./scripts/ci-job-failed.sh
@@ -434,7 +436,7 @@ jobs:
 
             echo $GCP_GRAFANA_UPLOAD_KEY > /tmp/gcpkey.json
             ./google-cloud-sdk/bin/gcloud auth activate-service-account --key-file=/tmp/gcpkey.json
-            ./google-cloud-sdk/bin/gsutil -m rsync -d -r dist gs://grafana-build-pipeline/enterprise/packages/${CIRCLE_WORKFLOW_ID}
+            ./google-cloud-sdk/bin/gsutil -m rsync -r dist gs://grafana-build-pipeline/enterprise/packages/${CIRCLE_WORKFLOW_ID}
       - run:
           name: CI job failed
           command: ./scripts/ci-job-failed.sh
