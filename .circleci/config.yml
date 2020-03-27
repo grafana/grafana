@@ -51,7 +51,11 @@ commands:
             curl -fLO https://dl.google.com/dl/cloudsdk/channels/rapid/downloads/google-cloud-sdk-${VERSION}-linux-x86_64.tar.gz
             echo $CHECKSUM google-cloud-sdk-${VERSION}-linux-x86_64.tar.gz | sha256sum --check --status
             tar xf google-cloud-sdk-${VERSION}-linux-x86_64.tar.gz
-            sudo mv google-cloud-sdk /opt/
+            if hash sudo &>> /dev/null; then
+              sudo mv google-cloud-sdk /opt/
+            else
+              mv google-cloud-sdk /opt/
+            fi
 
 jobs:
   install-grabpl:
