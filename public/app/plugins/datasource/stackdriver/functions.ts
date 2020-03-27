@@ -3,7 +3,7 @@ import { alignOptions, aggOptions, ValueTypes, MetricKind, systemLabels } from '
 import { SelectableValue } from '@grafana/data';
 import StackdriverDatasource from './datasource';
 import { TemplateSrv } from 'app/features/templating/template_srv';
-import { StackdriverQuery, MetricDescriptor } from './types';
+import { MetricDescriptor, Filter, MetricQuery } from './types';
 
 export const extractServicesFromMetricDescriptors = (metricDescriptors: MetricDescriptor[]) =>
   _.uniqBy(metricDescriptors, 'service');
@@ -61,7 +61,7 @@ export const getLabelKeys = async (
 };
 
 export const getAlignmentPickerData = (
-  { valueType, metricKind, perSeriesAligner }: Partial<StackdriverQuery>,
+  { valueType, metricKind, perSeriesAligner }: Partial<MetricQuery>,
   templateSrv: TemplateSrv
 ) => {
   const alignOptions = getAlignmentOptionsByMetric(valueType!, metricKind!).map(option => ({
@@ -92,4 +92,36 @@ export const labelsToGroupedOptions = (groupBys: string[]) => {
   return Object.entries(groups).map(([label, options]) => ({ label, options, expanded: true }), []);
 };
 
+export const filtersToStringArray = (filters: Filter[]) => {
+  const strArr = _.flatten(filters.map(({ key, operator, value, condition }) => [key, operator, value, condition]));
+  return strArr.filter((_, i) => i !== strArr.length - 1);
+};
+
+export const stringArrayToFilters = (filterArray: string[]) =>
+  _.chunk(filterArray, 4).map(([key, operator, value, condition = 'AND']) => ({
+    key,
+    operator,
+    value,
+    condition,
+  }));
+
 export const toOption = (value: string) => ({ label: value, value } as SelectableValue<string>);
+
+export const formatStackdriverError = (error: any) => {
+  let message = error.statusText ?? '';
+  if (error.data && error.data.error) {
+    try {
+      const res = JSON.parse(error.data.error);
+      message += res.error.code + '. ' + res.error.message;
+    } catch (err) {
+      message += error.data.error;
+    }
+  } else if (error.data && error.data.message) {
+    try {
+      message = JSON.parse(error.data.message).error.message;
+    } catch (err) {
+      error.error;
+    }
+  }
+  return message;
+};
