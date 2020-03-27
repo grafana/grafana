@@ -1198,8 +1198,6 @@ workflows:
             - test-frontend
             - codespell
             - shellcheck
-            - mysql-integration-test
-            - postgres-integration-test
       - package-enterprise:
           # No filters, meaning this job runs for all branches
           requires:
@@ -1218,8 +1216,6 @@ workflows:
             - test-frontend
             - codespell
             - shellcheck
-            - mysql-integration-test
-            - postgres-integration-test
       - build-oss-windows-installer:
           # No filters, meaning this job runs for all branches
           requires:
@@ -1236,6 +1232,8 @@ workflows:
           filters: *filter-only-release
           requires:
             - end-to-end-tests
+            - mysql-integration-test
+            - postgres-integration-test
       - publish-packages:
           filters: *filter-master-or-release
           name: publish-oss-packages
@@ -1244,6 +1242,8 @@ workflows:
             - package-oss
             - build-oss-windows-installer
             - end-to-end-tests
+            - mysql-integration-test
+            - postgres-integration-test
             - build-release-publisher
       - publish-packages:
           filters: *filter-master-or-release
@@ -1253,6 +1253,8 @@ workflows:
             - package-enterprise
             - build-enterprise-windows-installer
             - end-to-end-tests
+            - mysql-integration-test
+            - postgres-integration-test
             - build-release-publisher
       - publish-storybook:
           requires:
@@ -1265,6 +1267,8 @@ workflows:
           ubuntu: false
           requires:
             - end-to-end-tests
+            - mysql-integration-test
+            - postgres-integration-test
             - package-oss
             - build-oss-windows-installer
       - build-docker-images:
@@ -1274,6 +1278,8 @@ workflows:
           ubuntu: true
           requires:
             - end-to-end-tests
+            - mysql-integration-test
+            - postgres-integration-test
             - package-oss
             - build-oss-windows-installer
       - build-docker-images:
@@ -1283,6 +1289,8 @@ workflows:
           ubuntu: false
           requires:
             - end-to-end-tests
+            - mysql-integration-test
+            - postgres-integration-test
             - package-enterprise
             - build-enterprise-windows-installer
       - build-docker-images:
@@ -1292,6 +1300,8 @@ workflows:
           ubuntu: true
           requires:
             - end-to-end-tests
+            - mysql-integration-test
+            - postgres-integration-test
             - package-enterprise
             - build-enterprise-windows-installer
       - end-to-end-tests:
