@@ -61,27 +61,29 @@ const prepareRelease = useSpinner<any>('Preparing release', async ({ dryrun, ver
   const distDir = path.resolve(ciDir, 'dist');
   const distContentDir = path.resolve(distDir, getPluginId());
   const pluginJsonFile = path.resolve(distContentDir, 'plugin.json');
-  const pluginVersion = getPluginJson(pluginJsonFile).info.version;
+  const pluginJson = getPluginJson(pluginJsonFile);
   const GIT_EMAIL = 'eng@grafana.com';
   const GIT_USERNAME = 'CircleCI Automation';
 
   const githubPublishScript: Command = [
     ['git', ['config', 'user.email', GIT_EMAIL]],
     ['git', ['config', 'user.name', GIT_USERNAME]],
-    await checkoutBranch(`release-${pluginVersion}`),
+    await checkoutBranch(`release-${pluginJson.info.version}`),
     ['cp', ['-rf', distContentDir, 'dist'], { dryrun }],
     ['git', ['add', '--force', distDir], { dryrun }],
     ['git', ['add', '--force', 'dist'], { dryrun }],
+    ['/bin/rm', ['-rf', 'src'], { dryrun, enterprise: true }],
+    ['git', ['rm', '-rf', 'src'], { dryrun, enterprise: true }],
     [
       'git',
-      ['commit', '-m', `automated release ${pluginVersion} [skip ci]`],
+      ['commit', '-m', `automated release ${pluginJson.info.version} [skip ci]`],
       {
         dryrun,
         okOnError: [/nothing to commit/g, /nothing added to commit/g, /no changes added to commit/g],
       },
     ],
-    ['git', ['tag', '-f', pluginVersion]],
-    ['git', ['push', '-f', 'origin', `release-${pluginVersion}`], { dryrun }],
+    ['git', ['tag', '-f', pluginJson.info.version]],
+    ['git', ['push', '-f', 'origin', `release-${pluginJson.info.version}`], { dryrun }],
   ];
 
   for (let line of githubPublishScript) {
@@ -98,6 +100,11 @@ const prepareRelease = useSpinner<any>('Preparing release', async ({ dryrun, ver
         if (opts['dryrun']) {
           line[1].push('--dry-run');
         }
+
+        if (pluginJson.enterprise && !opts['enterprise']) {
+          continue;
+        }
+
         const { stdout } = await execa(command, args);
         if (verbose) {
           console.log(stdout);
