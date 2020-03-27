@@ -94,6 +94,10 @@ export class StatPanelEditor extends PureComponent<PanelEditorProps<StatPanelOpt
     return (
       <NewPanelEditorContext.Consumer>
         {useNewEditor => {
+          if (useNewEditor) {
+            return null;
+          }
+
           return (
             <>
               <PanelOptionsGrid>
@@ -140,36 +144,28 @@ export class StatPanelEditor extends PureComponent<PanelEditorProps<StatPanelOpt
                     />
                   </div>
                 </PanelOptionsGroup>
-                <>
-                  {!useNewEditor && (
-                    <>
-                      <PanelOptionsGroup title="Field">
-                        <FieldPropertiesEditor
-                          showMinMax={true}
-                          onChange={this.onDefaultsChange}
-                          value={defaults}
-                          showTitle={true}
-                        />
-                      </PanelOptionsGroup>
-                      <ThresholdsEditor onChange={this.onThresholdsChanged} thresholds={defaults.thresholds} />
-                    </>
-                  )}
-                </>
-              </PanelOptionsGrid>
-              {!useNewEditor && (
-                <>
-                  <LegacyValueMappingsEditor onChange={this.onValueMappingsChanged} valueMappings={defaults.mappings} />
 
-                  <PanelOptionsGroup title="Data links">
-                    <DataLinksEditor
-                      value={defaults.links}
-                      onChange={this.onDataLinksChanged}
-                      suggestions={suggestions}
-                      maxLinks={10}
-                    />
-                  </PanelOptionsGroup>
-                </>
-              )}
+                <PanelOptionsGroup title="Field">
+                  <FieldPropertiesEditor
+                    showMinMax={true}
+                    onChange={this.onDefaultsChange}
+                    value={defaults}
+                    showTitle={true}
+                  />
+                </PanelOptionsGroup>
+                <ThresholdsEditor onChange={this.onThresholdsChanged} thresholds={defaults.thresholds} />
+              </PanelOptionsGrid>
+
+              <LegacyValueMappingsEditor onChange={this.onValueMappingsChanged} valueMappings={defaults.mappings} />
+
+              <PanelOptionsGroup title="Data links">
+                <DataLinksEditor
+                  value={defaults.links}
+                  onChange={this.onDataLinksChanged}
+                  suggestions={suggestions}
+                  maxLinks={10}
+                />
+              </PanelOptionsGroup>
             </>
           );
         }}

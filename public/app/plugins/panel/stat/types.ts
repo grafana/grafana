@@ -6,7 +6,7 @@ import {
   SelectableValue,
   FieldConfigSource,
   ThresholdsMode,
-  fieldReducers,
+  standardEditorsRegistry,
 } from '@grafana/data';
 import { PanelOptionsEditorBuilder } from '@grafana/data/src/utils/OptionsUIBuilders';
 
@@ -52,8 +52,6 @@ export const standardFieldConfig: FieldConfigSource = {
 };
 
 export function addStandardSingleValueOptions(builder: PanelOptionsEditorBuilder) {
-  const select = fieldReducers.selectOptions();
-
   builder.addRadio({
     id: 'valueOptions.values',
     name: 'Show',
@@ -65,13 +63,24 @@ export function addStandardSingleValueOptions(builder: PanelOptionsEditorBuilder
       ],
     },
   });
-  builder.addSelect({
+
+  builder.addNumberInput({
+    id: 'valueOptions.limit',
+    name: 'Limit',
+    description: 'Max number of rows to display',
+    settings: {
+      placeholder: '5000',
+      integer: true,
+      min: 1,
+      max: 5000,
+    },
+  });
+
+  builder.addCustomEditor({
     id: 'valueOptions.calcs',
     name: 'Calc',
     description: '',
-    settings: {
-      options: select.options,
-    },
+    editor: standardEditorsRegistry.get('stats-picker').editor as any,
   });
 }
 

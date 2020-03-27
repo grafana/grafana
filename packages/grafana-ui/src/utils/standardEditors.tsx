@@ -24,6 +24,7 @@ import { ThresholdsValueEditor } from '../components/OptionsUI/thresholds';
 import { UnitValueEditor } from '../components/OptionsUI/units';
 import { DataLinksValueEditor } from '../components/OptionsUI/links';
 import { ColorValueEditor } from '../components/OptionsUI/color';
+import { StatsPickerEditor } from '../components/OptionsUI/stats';
 
 /**
  * Returns collection of common field config properties definitions
@@ -265,5 +266,12 @@ export const getStandardOptionEditors = () => {
     editor: DataLinksValueEditor as any,
   };
 
-  return [text, number, boolean, radio, select, unit, mappings, thresholds, links, color];
+  const statsPicker: StandardEditorsRegistryItem<string[]> = {
+    id: 'stats-picker',
+    name: 'Stats Picker',
+    editor: StatsPickerEditor as any,
+    description: '',
+  };
+
+  return [text, number, boolean, radio, select, unit, mappings, thresholds, links, color, statsPicker];
 };

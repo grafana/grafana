@@ -105,6 +105,10 @@ export class GaugePanelEditor extends PureComponent<PanelEditorProps<GaugeOption
     return (
       <NewPanelEditorContext.Consumer>
         {useNewEditor => {
+          if (useNewEditor) {
+            return null;
+          }
+
           return (
             <>
               <PanelOptionsGrid>
@@ -128,36 +132,27 @@ export class GaugePanelEditor extends PureComponent<PanelEditorProps<GaugeOption
                   />
                 </PanelOptionsGroup>
 
-                <>
-                  {!useNewEditor && (
-                    <>
-                      <PanelOptionsGroup title="Field">
-                        <FieldPropertiesEditor
-                          showMinMax={true}
-                          showTitle={true}
-                          onChange={this.onDefaultsChange}
-                          value={defaults}
-                        />
-                      </PanelOptionsGroup>
+                <PanelOptionsGroup title="Field">
+                  <FieldPropertiesEditor
+                    showMinMax={true}
+                    showTitle={true}
+                    onChange={this.onDefaultsChange}
+                    value={defaults}
+                  />
+                </PanelOptionsGroup>
 
-                      <ThresholdsEditor onChange={this.onThresholdsChanged} thresholds={defaults.thresholds} />
-                    </>
-                  )}
-                </>
+                <ThresholdsEditor onChange={this.onThresholdsChanged} thresholds={defaults.thresholds} />
               </PanelOptionsGrid>
-              {!useNewEditor && (
-                <>
-                  <LegacyValueMappingsEditor onChange={this.onValueMappingsChanged} valueMappings={defaults.mappings} />
-                  <PanelOptionsGroup title="Data links">
-                    <DataLinksEditor
-                      value={defaults.links}
-                      onChange={this.onDataLinksChanged}
-                      suggestions={suggestions}
-                      maxLinks={10}
-                    />
-                  </PanelOptionsGroup>
-                </>
-              )}
+
+              <LegacyValueMappingsEditor onChange={this.onValueMappingsChanged} valueMappings={defaults.mappings} />
+              <PanelOptionsGroup title="Data links">
+                <DataLinksEditor
+                  value={defaults.links}
+                  onChange={this.onDataLinksChanged}
+                  suggestions={suggestions}
+                  maxLinks={10}
+                />
+              </PanelOptionsGroup>
             </>
           );
         }}
