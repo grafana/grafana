@@ -54,7 +54,7 @@ export interface FieldOverrideEditorProps<TValue, TSettings> extends Omit<Standa
   context: FieldOverrideContext;
 }
 
-export interface FieldConfigEditorConfig<TSettings = {}> {
+export interface FieldConfigEditorConfig<TSettings = any> {
   id: string;
   name: string;
   description: string;
@@ -62,8 +62,10 @@ export interface FieldConfigEditorConfig<TSettings = {}> {
   shouldApply?: (field: Field) => boolean;
 }
 
-export interface FieldPropertyEditorItem<TValue = any, TSettings = {}>
-  extends OptionsEditorItem<TSettings, FieldConfigEditorProps<TValue, TSettings>> {
+export interface FieldPropertyEditorItem<TValue = any, TSettings = any> extends RegistryItem {
+  // An editor the creates the well typed value
+  editor: ComponentType<FieldConfigEditorProps<TValue, TSettings>>;
+
   // An editor that can be filled in with context info (template variables etc)
   override: ComponentType<FieldOverrideEditorProps<TValue, TSettings>>;
 
