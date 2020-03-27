@@ -143,7 +143,7 @@ jobs:
       - checkout
       - restore_cache:
           keys:
-            # Use own cache for front-end builds, since for some reason they can't be unpacked for parts of the
+            # Use own cache for front-end builds, since for some reason it can't be unpacked for parts of the
             # pipeline
             - v1-yarn-build-{{ checksum "yarn.lock" }}
             # Used if checksum fails
