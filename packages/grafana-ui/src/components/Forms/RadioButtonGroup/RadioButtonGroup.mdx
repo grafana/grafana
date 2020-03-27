@@ -5,9 +5,13 @@ import { RadioButtonGroup } from './RadioButtonGroup';
 
 # RadioButtonGroup
 
-`RadioButtonGroup` is used for selecting single value from multiple options.
+`RadioButtonGroup` is used to select a single value from multiple mutually exclusive options.
 
-Use `RadioButtonGroup` if there are up to four options available. Otherwise use Select component.
+### When to use
+
+Use `RadioButtonGroup` for mutually exclusive selections if there are up to four options available. Otherwise use `Select` component. 
+
+Like `Checkbox`, `RadioButtonGroup` only triggers changes on sending a form. Furthermore, radio buttons can only exist in this group. If you want one single option, or if you want your component to trigger changes immediately, it's better to use `Switch` instead. To offer multiple choices within the same group or context which are not mutually exclusive, use `Checkbox` instead.
 
 ### Usage
 
