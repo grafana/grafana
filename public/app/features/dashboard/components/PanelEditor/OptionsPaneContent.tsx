@@ -7,6 +7,7 @@ import { AngularPanelOptions } from './AngularPanelOptions';
 import { css } from 'emotion';
 import { GeneralPanelOptions } from './GeneralPanelOptions';
 import { PanelOptionsEditor } from './PanelOptionsEditor';
+import { OptionsGroup } from './OptionsGroup';
 
 export const OptionsPaneContent: React.FC<{
   plugin?: PanelPlugin;
@@ -29,7 +30,7 @@ export const OptionsPaneContent: React.FC<{
       }
 
       return (
-        <Container padding="md">
+        <>
           {renderCustomPanelSettings(plugin)}
           <DefaultFieldConfigEditor
             config={fieldConfig}
@@ -37,7 +38,7 @@ export const OptionsPaneContent: React.FC<{
             onChange={onFieldConfigsChange}
             data={data.series}
           />
-        </Container>
+        </>
       );
     },
     [data, plugin, panel, onFieldConfigsChange]
@@ -83,7 +84,9 @@ export const OptionsPaneContent: React.FC<{
       // When editor created declaratively
       if (plugin.optionEditors && panel) {
         editors.push(
-          <PanelOptionsEditor options={panel.getOptions()} onChange={onPanelOptionsChanged} plugin={plugin} />
+          <OptionsGroup title="Panel options">
+            <PanelOptionsEditor options={panel.getOptions()} onChange={onPanelOptionsChanged} plugin={plugin} />
+          </OptionsGroup>
         );
       }
 

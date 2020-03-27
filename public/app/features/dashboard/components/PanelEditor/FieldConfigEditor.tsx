@@ -1,5 +1,6 @@
 import React, { useCallback } from 'react';
 import cloneDeep from 'lodash/cloneDeep';
+import groupBy from 'lodash/groupBy';
 import {
   FieldConfigSource,
   DataFrame,
@@ -13,6 +14,7 @@ import { Forms, fieldMatchersUI, ValuePicker, useTheme } from '@grafana/ui';
 import { getDataLinksVariableSuggestions } from '../../../panel/panellinks/link_srv';
 import { OverrideEditor } from './OverrideEditor';
 import { css } from 'emotion';
+import { OptionsGroup } from './OptionsGroup';
 
 interface Props {
   plugin: PanelPlugin;
@@ -165,9 +167,14 @@ export const DefaultFieldConfigEditor: React.FC<Props> = ({ include, data, onCha
     (item: FieldPropertyEditorItem, custom: boolean) => {
       const defaults = config.defaults;
       const value = custom ? (defaults.custom ? defaults.custom[item.id] : undefined) : (defaults as any)[item.id];
+      const label = (
+        <Forms.Label description={item.description} category={item.category.slice(1)}>
+          {item.name}
+        </Forms.Label>
+      );
 
       return (
-        <Forms.Field label={item.name} description={item.description} key={`${item.id}/${custom}`}>
+        <Forms.Field label={label} key={`${item.id}/${custom}`}>
           <item.editor
             item={item}
             value={value}
@@ -184,10 +191,33 @@ export const DefaultFieldConfigEditor: React.FC<Props> = ({ include, data, onCha
   );
 
   const renderStandardConfigs = useCallback(() => {
+    let editors;
+
     if (include) {
-      return <>{include.map(f => renderEditor(standardFieldConfigEditorRegistry.get(f), false))}</>;
+      editors = (
+        <>
+          {include.map(f => {
+            return renderEditor(standardFieldConfigEditorRegistry.get(f), false);
+          })}
+        </>
+      );
+    } else {
+      const r = groupBy(standardFieldConfigEditorRegistry.list(), i => {
+        return i.category ? i.category[0] : 'No category';
+      });
+
+      editors = Object.keys(r).map(c => {
+        return (
+          <OptionsGroup title={c} expanded={false}>
+            {r[c].map(e => {
+              return renderEditor(standardFieldConfigEditorRegistry.get(e.id), false);
+            })}
+          </OptionsGroup>
+        );
+      });
     }
-    return <>{standardFieldConfigEditorRegistry.list().map(f => renderEditor(f, false))}</>;
+
+    return editors;
   }, [plugin, config]);
 
   const renderCustomConfigs = useCallback(() => {
@@ -195,7 +225,20 @@ export const DefaultFieldConfigEditor: React.FC<Props> = ({ include, data, onCha
       return null;
     }
 
-    return plugin.customFieldConfigs.list().map(f => renderEditor(f, true));
+    const r = groupBy(plugin.customFieldConfigs.list(), i => {
+      return i.category ? i.category[0] : 'No category';
+    });
+
+    return Object.keys(r).map(c => {
+      return (
+        <OptionsGroup title={c} expanded={false}>
+          {r[c].map(e => {
+            return renderEditor(plugin.customFieldConfigs.get(e.id), false);
+          })}
+        </OptionsGroup>
+      );
+    });
+    // return plugin.customFieldConfigs.list().map(f => renderEditor(f, true));
   }, [plugin, config]);
 
   return (

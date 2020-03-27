@@ -5,10 +5,11 @@ import { useTheme, Icon, stylesFactory } from '@grafana/ui';
 
 interface Props {
   title: string;
+  expanded?: boolean;
 }
 
-export const OptionsGroup: FC<Props> = ({ title, children }) => {
-  const [isExpanded, toggleExpand] = useState(true);
+export const OptionsGroup: FC<Props> = ({ title, children, expanded = true }) => {
+  const [isExpanded, toggleExpand] = useState(expanded);
   const theme = useTheme();
   const styles = getStyles(theme);
 

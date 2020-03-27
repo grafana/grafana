@@ -1,6 +1,7 @@
 import React, { useMemo } from 'react';
-import { PanelPlugin } from '@grafana/data';
+import { PanelOptionsEditorItem, PanelPlugin } from '@grafana/data';
 import { Forms } from '@grafana/ui';
+import groupBy from 'lodash/groupBy';
 
 interface PanelOptionsEditorProps<TOptions> {
   plugin: PanelPlugin;
@@ -9,7 +10,11 @@ interface PanelOptionsEditorProps<TOptions> {
 }
 
 export const PanelOptionsEditor: React.FC<PanelOptionsEditorProps<any>> = ({ plugin, options, onChange }) => {
-  const optionEditors = useMemo(() => plugin.optionEditors, [plugin]);
+  const optionEditors = useMemo<Record<string, PanelOptionsEditorItem[]>>(() => {
+    return groupBy(plugin.optionEditors.list(), i => {
+      return i.category ? i.category[0] : 'No category';
+    });
+  }, [plugin]);
 
   const onOptionChange = (key: string, value: any) => {
     onChange({
@@ -20,11 +25,23 @@ export const PanelOptionsEditor: React.FC<PanelOptionsEditorProps<any>> = ({ plu
 
   return (
     <>
-      {optionEditors.list().map(e => {
+      {Object.keys(optionEditors).map(c => {
         return (
-          <Forms.Field label={e.name} description={e.description}>
-            <e.editor value={options[e.id]} onChange={value => onOptionChange(e.id, value)} item={e} />
-          </Forms.Field>
+          <>
+            {optionEditors[c].map(e => {
+              const label = (
+                // Ignore top level category
+                <Forms.Label description={e.description} category={e.category}>
+                  {e.name}
+                </Forms.Label>
+              );
+              return (
+                <Forms.Field label={label}>
+                  <e.editor value={options[e.id]} onChange={value => onOptionChange(e.id, value)} item={e} />
+                </Forms.Field>
+              );
+            })}
+          </>
         );
       })}
     </>

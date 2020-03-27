@@ -123,6 +123,7 @@ export interface PanelOptionsEditorConfig<TSettings = any> {
   name: string;
   description: string;
   settings?: TSettings;
+  category?: string[];
 }
 
 export interface PanelMenuItem {

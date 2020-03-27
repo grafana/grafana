@@ -29,6 +29,8 @@ import { ColorValueEditor } from '../components/OptionsUI/color';
  * Returns collection of common field config properties definitions
  */
 export const getStandardFieldConfigs = () => {
+  const category = ['Common field options'];
+
   const title: FieldPropertyEditorItem<string, StringFieldConfigSettings> = {
     id: 'title',
     name: 'Title',
@@ -41,6 +43,7 @@ export const getStandardFieldConfigs = () => {
       expandTemplateVars: true,
     },
     shouldApply: field => field.type !== FieldType.time,
+    category,
   };
 
   const unit: FieldPropertyEditorItem<string, StringFieldConfigSettings> = {
@@ -57,6 +60,7 @@ export const getStandardFieldConfigs = () => {
     },
 
     shouldApply: field => field.type === FieldType.number,
+    category,
   };
 
   const min: FieldPropertyEditorItem<number, NumberFieldConfigSettings> = {
@@ -72,6 +76,7 @@ export const getStandardFieldConfigs = () => {
       placeholder: 'auto',
     },
     shouldApply: field => field.type === FieldType.number,
+    category,
   };
 
   const max: FieldPropertyEditorItem<number, NumberFieldConfigSettings> = {
@@ -88,6 +93,7 @@ export const getStandardFieldConfigs = () => {
     },
 
     shouldApply: field => field.type === FieldType.number,
+    category,
   };
 
   const decimals: FieldPropertyEditorItem<number, NumberFieldConfigSettings> = {
@@ -107,6 +113,7 @@ export const getStandardFieldConfigs = () => {
     },
 
     shouldApply: field => field.type === FieldType.number,
+    category,
   };
 
   const thresholds: FieldPropertyEditorItem<ThresholdsConfig, ThresholdsFieldConfigSettings> = {
@@ -123,6 +130,7 @@ export const getStandardFieldConfigs = () => {
     },
 
     shouldApply: field => field.type === FieldType.number,
+    category: ['Thresholds'],
   };
 
   const mappings: FieldPropertyEditorItem<ValueMapping[], ValueMappingFieldConfigSettings> = {
@@ -138,6 +146,7 @@ export const getStandardFieldConfigs = () => {
     },
 
     shouldApply: field => field.type === FieldType.number,
+    category: ['Value mappings'],
   };
 
   const noValue: FieldPropertyEditorItem<string, StringFieldConfigSettings> = {
@@ -154,6 +163,7 @@ export const getStandardFieldConfigs = () => {
     },
     // ??? any optionsUi with no value
     shouldApply: () => true,
+    category,
   };
 
   const links: FieldPropertyEditorItem<DataLink[], StringFieldConfigSettings> = {
@@ -167,6 +177,7 @@ export const getStandardFieldConfigs = () => {
       placeholder: '-',
     },
     shouldApply: () => true,
+    category: ['Data links'],
   };
 
   const color: FieldPropertyEditorItem<string, StringFieldConfigSettings> = {
@@ -180,6 +191,7 @@ export const getStandardFieldConfigs = () => {
       placeholder: '-',
     },
     shouldApply: () => true,
+    category,
   };
 
   return [unit, min, max, decimals, title, noValue, thresholds, mappings, links, color];

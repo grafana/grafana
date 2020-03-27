@@ -58,6 +58,7 @@ export interface FieldConfigEditorConfig<TSettings = any> {
   id: string;
   name: string;
   description: string;
+  category?: string[];
   settings?: TSettings;
   shouldApply?: (field: Field) => boolean;
 }

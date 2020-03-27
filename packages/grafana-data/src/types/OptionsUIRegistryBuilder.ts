@@ -8,12 +8,13 @@ import { NumberFieldConfigSettings, SelectFieldConfigSettings, StringFieldConfig
 export interface OptionsEditorItem<TSettings, TEditorProps> extends RegistryItem {
   editor: ComponentType<TEditorProps>;
   settings?: TSettings;
+  category?: string[];
 }
 
 /**
  * Configuration of option editor registry item
  */
-interface OptionEditorConfig<TSettings> {
+export interface OptionEditorConfig<TSettings> {
   id: string;
   name: string;
   description: string;
