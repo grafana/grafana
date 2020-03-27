@@ -22,7 +22,7 @@ export const DashNavButton: FunctionComponent<Props> = ({ icon, iconType, toolti
           onClick={onClick}
           aria-label={e2e.pages.Dashboard.Toolbar.selectors.toolbarItems(tooltip)}
         >
-          <Icon name={icon} type={iconType} size="lg" />
+          <Icon name={icon} type={iconType} />
         </button>
       </Tooltip>
     );
@@ -31,7 +31,7 @@ export const DashNavButton: FunctionComponent<Props> = ({ icon, iconType, toolti
   return (
     <Tooltip content={tooltip}>
       <a className={`btn navbar-button navbar-button--${classSuffix}`} href={href}>
-        <Icon name={icon} type={iconType} size="lg" />
+        <Icon name={icon} type={iconType} />
       </a>
     </Tooltip>
   );

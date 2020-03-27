@@ -10,20 +10,14 @@ const DropDownChild: FC<Props> = props => {
   const { child } = props;
   const listItemClassName = child.divider ? 'divider' : '';
   const theme = useTheme();
+  const iconClassName = css`
+    margin-right: ${theme.spacing.sm};
+  `;
 
   return (
     <li className={listItemClassName}>
       <a href={child.url}>
-        {child.icon && (
-          <Icon
-            name={child.icon as IconName}
-            size="lg"
-            className={css`
-              margin-right: ${theme.spacing.sm};
-              margin-bottom: ${theme.spacing.xxs};
-            `}
-          />
-        )}
+        {child.icon && <Icon name={child.icon as IconName} className={iconClassName} />}
         {child.text}
       </a>
     </li>

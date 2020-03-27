@@ -9,7 +9,7 @@ import { PlaylistSrv } from 'app/features/playlist/playlist_srv';
 // Components
 import { DashNavButton } from './DashNavButton';
 import { DashNavTimeControls } from './DashNavTimeControls';
-import { ModalsController, Icon, withTheme, Themeable } from '@grafana/ui';
+import { ModalsController, Icon } from '@grafana/ui';
 import { BackButton } from 'app/core/components/BackButton/BackButton';
 // State
 import { updateLocation } from 'app/core/actions';
@@ -19,7 +19,7 @@ import { CoreEvents, StoreState } from 'app/types';
 import { ShareModal } from 'app/features/dashboard/components/ShareModal';
 import { SaveDashboardModalProxy } from 'app/features/dashboard/components/SaveDashboard/SaveDashboardModalProxy';
 
-export interface OwnProps extends Themeable {
+export interface OwnProps {
   dashboard: DashboardModel;
   isEditing: boolean;
   isFullscreen: boolean;
@@ -34,7 +34,7 @@ export interface StateProps {
 
 type Props = StateProps & OwnProps;
 
-class UnThemedDashNav extends PureComponent<Props> {
+class DashNav extends PureComponent<Props> {
   playlistSrv: PlaylistSrv;
 
   constructor(props: Props) {
@@ -94,15 +94,10 @@ class UnThemedDashNav extends PureComponent<Props> {
   };
 
   renderDashboardTitleSearchButton() {
-    const { dashboard, isFullscreen, theme } = this.props;
-
-    const mainIconClass = css`
-      margin-right: ${theme.spacing.sm};
-      margin-bottom: ${theme.spacing.xxs};
-    `;
-
-    const angleIconClass = css`
-      margin-right: ${theme.spacing.sm};
+    const { dashboard, isFullscreen } = this.props;
+    /* Hard-coded value so we don't have to wrap whole component in withTheme because of 1 variable */
+    const iconClassName = css`
+      margin-right: 8px;
     `;
 
     const folderTitle = dashboard.meta.folderTitle;
@@ -112,17 +107,17 @@ class UnThemedDashNav extends PureComponent<Props> {
       <>
         <div>
           <div className="navbar-page-btn">
-            {!isFullscreen && <Icon name="apps" size="xl" className={mainIconClass} />}
+            {!isFullscreen && <Icon name="apps" size="lg" className={iconClassName} />}
             {haveFolder && (
               <>
                 <a className="navbar-page-btn__folder" onClick={this.onFolderNameClick}>
                   {folderTitle}
                 </a>
-                <Icon name="angle-right" size="lg" className={angleIconClass} />
+                <Icon name="angle-right" className={iconClassName} />
               </>
             )}
             <a onClick={this.onDahboardNameClick}>
-              {dashboard.title} <Icon name="angle-down" size="lg" className={angleIconClass} />
+              {dashboard.title} <Icon name="angle-down" className={iconClassName} />
             </a>
           </div>
         </div>
@@ -173,7 +168,7 @@ class UnThemedDashNav extends PureComponent<Props> {
         )}
 
         <div className="navbar-buttons navbar-buttons--actions">
-          {canSave && <DashNavButton tooltip="Add panel" icon="panel-add" onClick={onAddPanel} />}
+          {canSave && <DashNavButton classSuffix="save" tooltip="Add panel" icon="panel-add" onClick={onAddPanel} />}
 
           {canStar && (
             <DashNavButton
@@ -253,8 +248,6 @@ class UnThemedDashNav extends PureComponent<Props> {
     );
   }
 }
-
-export const DashNav = withTheme(UnThemedDashNav);
 
 const mapStateToProps = (state: StoreState) => ({
   location: state.location,

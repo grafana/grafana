@@ -62,7 +62,7 @@ export const HomeLink: FC<HomeLinkProps> = ({ title, url, target, icon }) => {
 
   return (
     <a className={styles.item} href={url} target={target}>
-      <Icon name={icon} className={styles.icon} size="lg" />
+      <Icon name={icon} className={styles.icon} />
       {title}
     </a>
   );
@@ -90,7 +90,6 @@ export const getStyles = stylesFactory(() => {
     `,
     icon: css`
       margin-right: ${theme.spacing.sm};
-      margin-bottom: ${theme.spacing.xxs};
     `,
     footer: css`
       ${styleMixins.listItem(theme)}
