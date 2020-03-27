@@ -158,7 +158,7 @@ jobs:
           command: ./scripts/ci-job-started.sh
       - run:
           name: Install dependencies
-          command: yarn install --pure-lockfile --no-progress
+          command: yarn install --frozen-lockfile --no-progress
       - save_cache:
           key: v1-yarn-build-{{ checksum "yarn.lock" }}
           paths:
@@ -651,7 +651,7 @@ jobs:
             - v2-yarn-
       - run:
           name: yarn install
-          command: yarn install --pure-lockfile --no-progress
+          command: yarn install --frozen-lockfile --no-progress
           no_output_timeout: 5m
       - save_cache:
           key: v2-yarn-{{ checksum "yarn.lock" }}
