@@ -7,7 +7,7 @@ import { Button } from './Button';
 
 ## Primary
 
-Used for "call to action".
+Used for "call to action", i.e. triggering the main action. There should never be more than one on a page. If you need multiple buttons for different actions, decide which action is the most important and make that the primary `Button`. All other `Button` components should be secondary.
 
 <Preview>
   <div>
@@ -25,7 +25,7 @@ Used for "call to action".
 
 ## Secondary
 
-The secondary button, used for "cancel" or aborting.
+The secondary `Button` can trigger various actions. When next to the primary `Button`, it can for example be used for "Cancel" or "Abort" actions. Apart from that, the secondary variant is the main `Button` variant in Grafana and is used for most buttons except when there is an important main action.
 
 <Preview>
   <div>
@@ -43,7 +43,7 @@ The secondary button, used for "cancel" or aborting.
 
 ## Destructive
 
-Used for removing or deleting entities.
+Used for "call to action", i.e. triggering the main action, when that main action is removing or deleting something. Because of its dominant coloring, it should be used sparingly. If you need multiple Destrucutive `Button` components in one view, maybe use a secondary `Button` or Link variant instead and only use the Destructive variant to double confirm. Just like the primary variant, the Destructive `Button` can be juxtaposed with secondary buttons like "Cancel" or "Abort".
 
 <Preview>
   <div>
