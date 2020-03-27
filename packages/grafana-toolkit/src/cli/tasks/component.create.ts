@@ -9,7 +9,8 @@ import { componentTpl, docsTpl, storyTpl, testTpl } from '../templates';
 interface Details {
   name?: string;
   hasStory: boolean;
-  group: string;
+  group?: string;
+  isStoryPublic: boolean;
   hasTests: boolean;
 }
 
@@ -25,6 +26,7 @@ export const promptDetails = () => {
     promptInput('name', 'Component name', true),
     promptConfirm('hasTests', "Generate component's test file?"),
     promptConfirm('hasStory', "Generate component's story file?"),
+    promptConfirm('isStoryPublic', 'Generate public story? (Selecting "No" will create an internal story)'),
     promptInput('group', 'Select component group (e.g. Forms, Layout)', true, 'General', ({ hasStory }) => hasStory),
   ]);
 };
@@ -46,9 +48,10 @@ export const generateComponents: ComponentGenerator = async ({ details, path }) 
   }
 
   if (details.hasStory) {
-    fs.writeFileSync(`${filePath}.story.tsx`, getCompiled(storyTpl));
+    const storyExt = details.isStoryPublic ? '.story.tsx' : '.story.internal.tsx';
+    fs.writeFileSync(`${filePath}${storyExt}`, getCompiled(storyTpl));
     fs.writeFileSync(`${filePath}.mdx`, getCompiled(docsTpl));
-    paths.push(`${filePath}.story.tsx`, `${filePath}.mdx`);
+    paths.push(`${filePath}${storyExt}`, `${filePath}.mdx`);
   }
 
   console.log('Generated files:');
