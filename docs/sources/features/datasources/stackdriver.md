@@ -194,11 +194,11 @@ The SLO query builder in the Stackdriver data source allows you to display SLO d
 
 To create an SLO query, follow these steps:
 
-1. Choose the option **Service Level Objectives (SLO)** in the **Query Type** dropdown
-2. Choose a project from the **Project** dropdown
-3. Choose a [SLO service](https://cloud.google.com/monitoring/api/ref_v3/rest/v3/services) from the **Service** dropdown
+1. Choose the option **Service Level Objectives (SLO)** in the **Query Type** dropdown.
+2. Choose a project from the **Project** dropdown.
+3. Choose a [SLO service](https://cloud.google.com/monitoring/api/ref_v3/rest/v3/services) from the **Service** dropdown.
 4. Choose a [SLO](https://cloud.google.com/monitoring/api/ref_v3/rest/v3/services.serviceLevelObjectives) from the **SLO** dropdown.
-5. Choose a [time series selector](https://cloud.google.com/monitoring/service-monitoring/timeseries-selectors#ts-selector-list) from the **Selector** dropdown
+5. Choose a [time series selector](https://cloud.google.com/monitoring/service-monitoring/timeseries-selectors#ts-selector-list) from the **Selector** dropdown.
 
 The friendly names for the time series selectors are shown in Grafana. Here is the mapping from the friendly name to the system name that is used in the Service Monitoring documentation:
 
@@ -221,7 +221,7 @@ The Alias By field allows you to control the format of the legend keys for SLO q
 
 #### Alignment Period/Group by Time for SLO queries
 
-SLO queries use the same [alignment period functionality as metric queries]({{< relref "##metric-queries" >}}).
+SLO queries use the same [alignment period functionality as metric queries]({{< relref "#metric-queries" >}}).
 
 ## Templating
 
