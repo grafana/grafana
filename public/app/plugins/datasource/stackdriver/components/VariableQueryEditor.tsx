@@ -3,6 +3,7 @@ import { VariableQueryProps } from 'app/types/plugins';
 import { SimpleSelect } from './';
 import { extractServicesFromMetricDescriptors, getLabelKeys, getMetricTypes } from '../functions';
 import { MetricFindQueryTypes, VariableQueryData } from '../types';
+import { getConfig } from 'app/core/config';
 
 export class StackdriverVariableQueryEditor extends PureComponent<VariableQueryProps, VariableQueryData> {
   queryTypes: Array<{ value: string; name: string }> = [
@@ -17,7 +18,7 @@ export class StackdriverVariableQueryEditor extends PureComponent<VariableQueryP
     { value: MetricFindQueryTypes.AlignmentPeriods, name: 'Alignment Periods' },
     { value: MetricFindQueryTypes.Selectors, name: 'Selectors' },
     { value: MetricFindQueryTypes.SLOServices, name: 'SLO Services' },
-    { value: MetricFindQueryTypes.SLO, name: 'Service Level Objectices (SLO)' },
+    { value: MetricFindQueryTypes.SLO, name: 'Service Level Objectives (SLO)' },
   ];
 
   defaults: VariableQueryData = {
@@ -142,10 +143,12 @@ export class StackdriverVariableQueryEditor extends PureComponent<VariableQueryP
     this.setState({ labelKey });
   }
 
-  componentDidUpdate() {
-    const { metricDescriptors, labels, metricTypes, services, sloServices, projects, ...queryModel } = this.state;
-    const query = this.queryTypes.find(q => q.value === this.state.selectedQueryType);
-    this.props.onChange(queryModel, `Stackdriver - ${query.name}`);
+  componentDidUpdate(prevProps: Readonly<VariableQueryProps>, prevState: Readonly<VariableQueryData>) {
+    if (!getConfig().featureToggles.newVariables || prevState.selectedQueryType !== this.state.selectedQueryType) {
+      const { metricDescriptors, labels, metricTypes, services, ...queryModel } = this.state;
+      const query = this.queryTypes.find(q => q.value === this.state.selectedQueryType);
+      this.props.onChange(queryModel, `Stackdriver - ${query.name}`);
+    }
   }
 
   async getLabels(selectedMetricType: string, projectName: string, selectedQueryType = this.state.selectedQueryType) {
