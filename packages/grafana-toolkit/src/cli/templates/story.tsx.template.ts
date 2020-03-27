@@ -5,7 +5,7 @@ import mdx from './<%= name %>.mdx';
 
 
 export default {
-  title: 'General/<%= name %>',
+  title: '<%= type %>/<%= name %>',
   component: <%= name %>,
   decorators: [withCenteredStory],
   parameters: {

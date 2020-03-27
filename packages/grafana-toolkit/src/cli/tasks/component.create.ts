@@ -18,8 +18,9 @@ interface Details {
 }
 export const promptPluginDetails = (name?: string) => {
   return prompt<Details>([
-    promptInput('name', "Component's name", true, name),
+    promptInput('name', 'Component name', true, ''),
     promptConfirm('hasStory', "Generate component's story?"),
+    promptInput('storyType', 'Select story type (default General)', true, 'General', ({ hasStory }) => hasStory),
   ]);
 };
 
@@ -30,7 +31,7 @@ export const generateComponents = async ({ details, path }) => {
   fs.writeFileSync(`${path}/${name}.tsx`, str);
 
   if (details.hasStory) {
-    const storyStr = _.template(storyTpl)({ name });
+    const storyStr = _.template(storyTpl)({ name, type: details.storyType });
     fs.writeFileSync(`${path}/${name}.story.tsx`, storyStr);
     const docsStr = _.template(docsTpl)({ name });
     fs.writeFileSync(`${path}/${name}.mdx`, docsStr);
