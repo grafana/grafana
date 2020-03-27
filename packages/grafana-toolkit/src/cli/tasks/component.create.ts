@@ -7,7 +7,7 @@ import { getPluginIdFromName } from './plugin/create';
 import { prompt } from 'inquirer';
 import { promptConfirm, promptInput } from '../utils/prompt';
 import { useSpinner } from '../utils/useSpinner';
-import { componentTpl } from '../templates/component.template';
+import { componentTpl, docsTpl, storyTpl } from '../templates';
 
 interface Options {
   name?: string;
