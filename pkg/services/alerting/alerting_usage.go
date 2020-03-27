@@ -46,7 +46,6 @@ func (ae *AlertEngine) QueryUsageStats() (*UsageStats, error) {
 func (ae *AlertEngine) mapRulesToUsageStats(rules []*models.Alert) (DatasourceAlertUsage, error) {
 	// map of datasourceId type and frequency
 	typeCount := map[int64]int{}
-
 	for _, a := range rules {
 		dss, err := ae.parseAlertRuleModel(a.Settings)
 		if err != nil {
@@ -55,10 +54,12 @@ func (ae *AlertEngine) mapRulesToUsageStats(rules []*models.Alert) (DatasourceAl
 		}
 
 		for _, d := range dss {
+			// aggregated datasource usage based on datasource id
 			typeCount[d]++
 		}
 	}
 
+	// map of datsource types and frequency
 	result := map[string]int{}
 	for k, v := range typeCount {
 		query := &models.GetDataSourceByIdQuery{Id: k}
@@ -67,7 +68,8 @@ func (ae *AlertEngine) mapRulesToUsageStats(rules []*models.Alert) (DatasourceAl
 			return map[string]int{}, nil
 		}
 
-		result[query.Result.Type] = v
+		// aggregate datasource usages based on datasource type
+		result[query.Result.Type] += v
 	}
 
 	return result, nil

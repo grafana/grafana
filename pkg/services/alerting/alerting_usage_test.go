@@ -28,6 +28,7 @@ func TestAlertingUsageStats(t *testing.T) {
 		query.Result = []*models.Alert{
 			{Id: 1, Settings: createFake("testdata/settings/one_condition.json")},
 			{Id: 2, Settings: createFake("testdata/settings/two_conditions.json")},
+			{Id: 2, Settings: createFake("testdata/settings/three_conditions.json")},
 			{Id: 3, Settings: createFake("testdata/settings/empty.json")},
 		}
 		return nil
@@ -38,6 +39,7 @@ func TestAlertingUsageStats(t *testing.T) {
 			1: {Type: "influxdb"},
 			2: {Type: "graphite"},
 			3: {Type: "prometheus"},
+			4: {Type: "prometheus"},
 		}
 
 		r, exist := ds[query.Id]
@@ -56,8 +58,8 @@ func TestAlertingUsageStats(t *testing.T) {
 	require.NoError(t, err, "getAlertingUsage should not return error")
 
 	expected := map[string]int{
-		"prometheus": 2,
-		"graphite":   1,
+		"prometheus": 4,
+		"graphite":   2,
 	}
 
 	for k := range expected {
