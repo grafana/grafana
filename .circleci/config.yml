@@ -27,6 +27,12 @@ executors:
   base:
     docker:
       - image: cimg/base:stable
+  node:
+    docker:
+      - image: cimg/node:12.16
+  go:
+    docker:
+      - image: cimg/go:1.14
   grafana-build:
     docker:
       - image: grafana/build-container:1.2.13
@@ -64,7 +70,7 @@ jobs:
       - run:
           name: Install Grafana Build Pipeline
           command: |
-            curl -fLO https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v0.2.7/grabpl
+            curl -fLO https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v0.2.8/grabpl
             chmod +x grabpl
             mkdir bin
             mv grabpl bin/
@@ -187,7 +193,7 @@ jobs:
 
   build-release-publisher:
     description: "Build release-publisher"
-    executor: grafana-build
+    executor: go
     steps:
       - checkout
       - run:
@@ -224,11 +230,11 @@ jobs:
       - run:
           name: Install ShellCheck
           command: |
-            /tmp/workspace/bin/grabpl shellcheck
+            sudo apt-get update && sudo apt-get install -y shellcheck
       - run:
           name: ShellCheck
           command: |
-            shellcheck scripts/*.sh
+            /tmp/workspace/bin/grabpl shellcheck
       - run:
           name: CI job failed
           command: ./scripts/ci-job-failed.sh
@@ -595,14 +601,11 @@ jobs:
             ./google-cloud-sdk/bin/gcloud auth activate-service-account --key-file=/tmp/gcpkey.json
             mkdir dist
             ./google-cloud-sdk/bin/gsutil -m rsync -d -r gs://grafana-build-pipeline/<< parameters.edition >>/packages/${CIRCLE_WORKFLOW_ID}/ dist/
-      - run: docker info
       # XXX: Is this necessary?
       - run: docker run --privileged linuxkit/binfmt:v0.6
       - run:
           name: Build Docker images
           command: |
-            scp -r dist remote-docker:dist
-
             if [[ -n $CIRCLE_TAG || $CIRCLE_BRANCH == "chore/test-release-pipeline" || $CIRCLE_BRANCH == "master" ]]; then
               # It's a full build
               /tmp/workspace/bin/grabpl build-docker --jobs 4 --edition << parameters.edition >> \
@@ -688,14 +691,13 @@ jobs:
 
   mysql-integration-test:
     docker:
-      - image: circleci/golang:1.13.4
+      - image: cimg/go:1.14
       - image: circleci/mysql:5.6-ram
         environment:
           MYSQL_ROOT_PASSWORD: rootpass
           MYSQL_DATABASE: grafana_tests
           MYSQL_USER: grafana
           MYSQL_PASSWORD: password
-    working_directory: /go/src/github.com/grafana/grafana
     steps:
       - checkout
       - run:
@@ -719,13 +721,12 @@ jobs:
 
   postgres-integration-test:
     docker:
-      - image: circleci/golang:1.13.4
+      - image: cimg/go:1.14
       - image: circleci/postgres:9.3-ram
         environment:
           POSTGRES_USER: grafanatest
           POSTGRES_PASSWORD: grafanatest
           POSTGRES_DB: grafanatest
-    working_directory: /go/src/github.com/grafana/grafana
     steps:
       - checkout
       - run:
@@ -749,12 +750,12 @@ jobs:
 
   codespell:
     docker:
-      - image: circleci/python
+      - image: cimg/python:3.8
     steps:
       - checkout
       - run:
-          name: install codespell
-          command: "sudo pip install codespell"
+          name: Install codespell
+          command: "pip install codespell"
       - run:
           # Important: all words have to be in lowercase, and separated by "\n".
           name: exclude known exceptions
@@ -764,9 +765,7 @@ jobs:
           command: "codespell -I ./words_to_ignore.txt docs/"
 
   lint-go:
-    docker:
-      - image: circleci/golang:1.13.4
-    working_directory: /go/src/github.com/grafana/grafana
+    executor: go
     environment:
       # we need CGO because of go-sqlite3
       CGO_ENABLED: 1
@@ -799,8 +798,7 @@ jobs:
               -conf=./scripts/go/configs/gosec.json ./pkg/...
 
   test-frontend:
-    docker:
-      - image: circleci/node:12
+    executor: node
     steps:
       - checkout
       - run:
@@ -834,9 +832,7 @@ jobs:
           when: on_success
 
   test-backend:
-    docker:
-      - image: circleci/golang:1.13.4
-    working_directory: /go/src/github.com/grafana/grafana
+    executor: go
     steps:
       - checkout
       - run:
@@ -900,8 +896,7 @@ jobs:
             /tmp/workspace/bin/grabpl deploy-to-k8s $CIRCLE_WORKFLOW_ID
 
   release-packages:
-    docker:
-      - image: circleci/node:12
+    executor: node
     steps:
       - run:
           name: Exit if forked PR
