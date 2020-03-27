@@ -61,8 +61,7 @@ export class GaugePanel extends PureComponent<PanelProps<GaugeOptions>> {
         height={height}
         source={data}
         renderCounter={renderCounter}
-        orientation={VizOrientation.Auto}
-        itemAsSquares={true}
+        orientation={VizOrientation.Grid}
       />
     );
   }
