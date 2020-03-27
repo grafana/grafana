@@ -69,11 +69,10 @@ const getRadioButtonStyles = stylesFactory((theme: GrafanaTheme, size: RadioButt
       display: inline-block;
       position: relative;
       font-size: ${fontSize};
-      min-height: ${fontSize};
+      height: ${height};
+      line-height: ${height};
       color: ${textColor};
-      padding: calc((${height} - ${fontSize}) / 2) ${horizontalPadding} calc((${height} - ${fontSize}) / 2)
-        ${horizontalPadding};
-      line-height: 1;
+      padding: 0 ${horizontalPadding};
       margin-left: -1px;
       border-radius: ${theme.border.radius.sm};
       border: ${border};
