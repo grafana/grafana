@@ -1,7 +1,7 @@
 import React, { useCallback, useState } from 'react';
 import { FieldConfigSource, GrafanaTheme, PanelData, PanelPlugin } from '@grafana/data';
 import { DashboardModel, PanelModel } from '../../state';
-import { CustomScrollbar, stylesFactory, Tab, TabContent, TabsBar, useTheme, Container } from '@grafana/ui';
+import { CustomScrollbar, stylesFactory, Tab, TabContent, TabsBar, useTheme } from '@grafana/ui';
 import { DefaultFieldConfigEditor, OverrideFieldConfigEditor } from './FieldConfigEditor';
 import { AngularPanelOptions } from './AngularPanelOptions';
 import { css } from 'emotion';
