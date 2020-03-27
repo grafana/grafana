@@ -1,5 +1,5 @@
 import { e2e } from '../index';
-import { Url } from '../support/url';
+import { getDashboardUid } from '../support/url';
 
 export const addDashboard = () => {
   e2e().logToConsole('Adding dashboard');
@@ -11,7 +11,9 @@ export const addDashboard = () => {
   e2e()
     .url()
     .then((url: string) => {
-      e2e.context().set('lastAddedDashboard', dashboardTitle);
-      e2e.context().set('lastAddedDashboardUid', Url.getDashboardUid(url));
+      e2e.setScenarioContext({
+        lastAddedDashboard: dashboardTitle,
+        lastAddedDashboardUid: getDashboardUid(url),
+      });
     });
 };
