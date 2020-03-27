@@ -9,6 +9,8 @@ import { filterFieldsByNameTransformer, FilterFieldsByNameTransformerOptions } f
 import { noopTransformer } from './transformers/noop';
 import { DataTransformerInfo, DataTransformerConfig } from '../types/transformations';
 import { filterFramesByRefIdTransformer } from './transformers/filterByRefId';
+import { sortFieldsTransformer } from './transformers/sort';
+import { sortAndFilterFieldsTransformer } from './transformers/sortAndFilter';
 
 /**
  * Apply configured transformations to the input data
@@ -66,6 +68,8 @@ export const transformersRegistry = new TransformerRegistry(() => [
   filterFieldsByNameTransformer,
   filterFramesTransformer,
   filterFramesByRefIdTransformer,
+  sortFieldsTransformer,
+  sortAndFilterFieldsTransformer,
   appendTransformer,
   reduceTransformer,
 ]);
