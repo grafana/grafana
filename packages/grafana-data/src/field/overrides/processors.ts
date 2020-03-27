@@ -18,7 +18,7 @@ export const numberOverrideProcessor = (
   settings?: NumberFieldConfigSettings
 ) => {
   const v = parseFloat(`${value}`);
-  if (settings.max && v > settings.max) {
+  if (settings && settings.max && v > settings.max) {
     // ????
   }
   return v;
