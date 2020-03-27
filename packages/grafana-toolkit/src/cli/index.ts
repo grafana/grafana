@@ -221,7 +221,7 @@ export const run = (includeInternalScripts = false) => {
     });
 
   // React generator
-  program.command('component:create').action(async cmd => {
+  program.command('component:create').action(async () => {
     await execTask(componentCreateTask)({});
   });
 

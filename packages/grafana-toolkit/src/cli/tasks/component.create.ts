@@ -55,7 +55,7 @@ export const generateComponents: ComponentGenerator = async ({ details, path }) 
   console.log(paths.join('\n'));
 };
 
-const componentCreateRunner: TaskRunner<never> = async () => {
+const componentCreateRunner: TaskRunner<any> = async () => {
   const destPath = process.cwd();
   let details = await promptDetails();
   await generateComponents({ details, path: destPath });
