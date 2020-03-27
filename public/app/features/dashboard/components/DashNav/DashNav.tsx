@@ -107,7 +107,7 @@ class DashNav extends PureComponent<Props> {
       <>
         <div>
           <div className="navbar-page-btn">
-            {!isFullscreen && <Icon name="apps" size="lg" className={iconClassName} />}
+            {!isFullscreen && <Icon name="apps" size="xl" className={iconClassName} />}
             {haveFolder && (
               <>
                 <a className="navbar-page-btn__folder" onClick={this.onFolderNameClick}>

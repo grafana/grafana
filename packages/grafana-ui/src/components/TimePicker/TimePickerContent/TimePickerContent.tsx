@@ -193,7 +193,7 @@ const NarrowScreenForm: React.FC<FormProps> = props => {
     <>
       <div className={styles.header} onClick={() => setCollapsed(!collapsed)}>
         <TimePickerTitle>Absolute time range</TimePickerTitle>
-        {collapsed ? <i className="fa fa-caret-up" /> : <i className="fa fa-caret-down" />}
+        {<Icon name={collapsed ? 'angle-up' : 'angle-down'} />}
       </div>
       {collapsed && (
         <div className={styles.body}>

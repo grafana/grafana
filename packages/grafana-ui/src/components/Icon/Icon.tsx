@@ -71,7 +71,7 @@ export const Icon = React.forwardRef<HTMLDivElement, IconProps>(
 
     const Component = icon?.default;
     if (!Component) {
-      return null;
+      return <div style={{ width: `${svgSize}px` }}></div>;
     }
 
     return (

@@ -1,6 +1,8 @@
 import React, { PureComponent, ReactElement } from 'react';
+import { css } from 'emotion';
 import Select from './Select';
 import { PopoverContent } from '../Tooltip/Tooltip';
+import { Icon } from '../Icon/Icon';
 import { SelectableValue } from '@grafana/data';
 
 interface ButtonComponentProps {
@@ -11,6 +13,9 @@ interface ButtonComponentProps {
 
 const ButtonComponent = (buttonProps: ButtonComponentProps) => (props: any) => {
   const { label, className, iconClass } = buttonProps;
+  const iconClassName = css`
+    margin-top: 3px;
+  `;
 
   return (
     <div // changed to div because of FireFox on MacOs issue below
@@ -23,8 +28,8 @@ const ButtonComponent = (buttonProps: ButtonComponentProps) => (props: any) => {
       <div className="select-button">
         {iconClass && <i className={`select-button-icon ${iconClass}`} />}
         <span className="select-button-value">{label ? label : ''}</span>
-        {!props.menuIsOpen && <i className="fa fa-caret-down fa-fw" />}
-        {props.menuIsOpen && <i className="fa fa-caret-up fa-fw" />}
+        {!props.menuIsOpen && <Icon name="angle-down" className={iconClassName} />}
+        {props.menuIsOpen && <Icon name="angle-up" className={iconClassName} />}
       </div>
     </div>
   );
