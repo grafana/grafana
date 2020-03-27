@@ -364,9 +364,6 @@ jobs:
           command: ./scripts/ci-job-started.sh
       - install-google-cloud-sdk
       - run:
-          name: Copy artifacts from workspace
-          command: cp -r /tmp/workspace/oss/* .
-      - run:
           name: Package Grafana
           command: |
             if [[ -n "$CIRCLE_PR_NUMBER" ]]; then
@@ -423,9 +420,6 @@ jobs:
           name: CI job started
           command: ./scripts/ci-job-started.sh
       - install-google-cloud-sdk
-      - run:
-          name: Copy artifacts from workspace
-          command: cp -r /tmp/workspace/enterprise/* .
       - run:
           name: Package Grafana
           command: |
