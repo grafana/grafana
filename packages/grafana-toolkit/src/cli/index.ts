@@ -18,6 +18,7 @@ import { githubPublishTask } from './tasks/plugin.utils';
 import { ciBuildPluginTask, ciBuildPluginDocsTask, ciPackagePluginTask, ciPluginReportTask } from './tasks/plugin.ci';
 import { buildPackageTask } from './tasks/package.build';
 import { pluginCreateTask } from './tasks/plugin.create';
+import { componentCreateTask } from './tasks/component.create';
 
 export const run = (includeInternalScripts = false) => {
   if (includeInternalScripts) {
@@ -218,6 +219,11 @@ export const run = (includeInternalScripts = false) => {
     .action(async cmd => {
       await execTask(manifestTask)({ folder: process.cwd() });
     });
+
+  // React generator
+  program.command('component:create').action(async cmd => {
+    await execTask(componentCreateTask)({});
+  });
 
   program.on('command:*', () => {
     console.error('Invalid command: %s\nSee --help for a list of available commands.', program.args.join(' '));
