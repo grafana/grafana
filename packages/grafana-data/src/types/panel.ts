@@ -120,8 +120,9 @@ export interface PanelOptionsEditorItem<TValue = any, TSettings = any> extends R
   settings?: TSettings;
 }
 
-export interface PanelOptionsEditorConfig<TSettings = any, TValue = any>
-  extends Pick<PanelOptionsEditorItem<TValue, TSettings>, 'id' | 'description' | 'name' | 'settings'> {}
+export interface PanelOptionsEditorConfig<TSettings = any> extends RegistryItem {
+  settings?: TSettings;
+}
 
 export interface PanelMenuItem {
   type?: 'submenu' | 'divider';

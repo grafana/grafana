@@ -4,7 +4,7 @@ import { Options, defaults } from './types';
 
 export const plugin = new PanelPlugin<Options>(TablePanel)
   .setDefaults(defaults)
-  .setCustomFieldConfigEditor(builder => {
+  .setCustomFieldOptions(builder => {
     builder
       .addNumberInput({
         id: 'width',
@@ -20,7 +20,6 @@ export const plugin = new PanelPlugin<Options>(TablePanel)
         id: 'displayMode',
         name: 'Cell display mode',
         description: 'Color value, background, show as gauge, etc',
-
         settings: {
           options: [
             { value: 'auto', label: 'Auto' },
@@ -31,7 +30,7 @@ export const plugin = new PanelPlugin<Options>(TablePanel)
         },
       });
   })
-  .setOptionsEditor(builder => {
+  .setPanelOptions(builder => {
     builder.addBooleanSwitch({
       id: 'showHeader',
       name: 'Show header',

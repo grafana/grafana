@@ -315,6 +315,7 @@ export const PanelEditor = connect(mapStateToProps, mapDispatchToProps)(PanelEdi
  */
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
   const handleColor = theme.colors.blueLight;
+  const paneSpaceing = theme.spacing.md;
 
   const resizer = css`
     font-style: italic;
@@ -354,21 +355,21 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
     `,
     panelWrapper: css`
       width: 100%;
-      padding-left: ${theme.spacing.sm};
+      padding-left: ${paneSpaceing};
       height: 100%;
     `,
     resizerV: cx(
       resizer,
       css`
         cursor: col-resize;
-        width: 8px;
+        width: ${paneSpaceing};
         border-right-width: 1px;
       `
     ),
     resizerH: cx(
       resizer,
       css`
-        height: 8px;
+        height: ${paneSpaceing};
         cursor: row-resize;
         position: relative;
         top: 49px;
