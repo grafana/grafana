@@ -14,7 +14,6 @@ import { StoreState } from '../../../../types/store';
 import { connect, MapDispatchToProps, MapStateToProps } from 'react-redux';
 import { updateLocation } from '../../../../core/reducers/location';
 import { Unsubscribable } from 'rxjs';
-import { PanelTitle } from './PanelTitle';
 import { DisplayMode, displayModes, PanelEditorTab } from './types';
 import { PanelEditorTabs } from './PanelEditorTabs';
 import { DashNavTimeControls } from '../DashNav/DashNavTimeControls';
@@ -187,14 +186,14 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
   }
 
   renderToolbar() {
-    const { dashboard, location, uiState, panel } = this.props;
+    const { dashboard, location, uiState } = this.props;
     const styles = getStyles(config.theme);
 
     return (
       <div className={styles.toolbar}>
         <div className={styles.toolbarLeft}>
           <BackButton onClick={this.onPanelExit} />
-          <PanelTitle value={panel.title} onChange={this.onPanelTitleChange} />
+          <span className={styles.editorTitle}>{dashboard.title} / Edit Panel</span>
         </div>
         <div className={styles.toolbarLeft}>
           <div className={styles.toolbarItem}>
@@ -402,6 +401,10 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       display: flex;
       justify-content: center;
       align-items: center;
+    `,
+    editorTitle: css`
+      font-size: ${theme.typography.size.lg};
+      padding-left: ${theme.spacing.md};
     `,
   };
 });
