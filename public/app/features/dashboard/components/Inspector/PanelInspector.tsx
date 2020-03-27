@@ -361,6 +361,7 @@ export class PanelInspector extends PureComponent<Props, State> {
             {tab === InspectTab.Request && this.renderRequestTab()}
             {tab === InspectTab.Error && this.renderErrorTab(error)}
             {tab === InspectTab.Stats && this.renderStatsTab()}
+            {tab === InspectTab.PanelJson && this.renderJsonModelTab()}
           </CustomScrollbar>
         </TabContent>
       </Drawer>
