@@ -1,5 +1,5 @@
 import React, { FC } from 'react';
-import { Forms, HorizontalGroup } from '@grafana/ui';
+import { Forms, HorizontalGroup, Button, LinkButton } from '@grafana/ui';
 import { getConfig } from 'app/core/config';
 import { OrgRole } from 'app/types';
 import { getBackendSrv } from '@grafana/runtime';
@@ -71,10 +71,10 @@ export const UserInviteForm: FC<Props> = ({ updateLocation }) => {
               <Forms.Switch name="sendEmail" ref={register} />
             </Forms.Field>
             <HorizontalGroup>
-              <Forms.Button type="submit">Submit</Forms.Button>
-              <Forms.LinkButton href={assureBaseUrl(getConfig().appSubUrl + '/org/users')} variant="secondary">
+              <Button type="submit">Submit</Button>
+              <LinkButton href={assureBaseUrl(getConfig().appSubUrl + '/org/users')} variant="secondary">
                 Back
-              </Forms.LinkButton>
+              </LinkButton>
             </HorizontalGroup>
           </>
         );

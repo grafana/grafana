@@ -6,7 +6,7 @@ import { css } from 'emotion';
 import { InspectHeader } from './InspectHeader';
 
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
-import { JSONFormatter, Drawer, Select, Table, TabContent, Forms, stylesFactory, CustomScrollbar } from '@grafana/ui';
+import { JSONFormatter, Drawer, Select, Table, TabContent, stylesFactory, CustomScrollbar, Button } from '@grafana/ui';
 import { getLocationSrv, getDataSourceSrv } from '@grafana/runtime';
 import {
   DataFrame,
@@ -189,9 +189,9 @@ export class PanelInspector extends PureComponent<Props, State> {
             </div>
           )}
           <div className={styles.downloadCsv}>
-            <Forms.Button variant="primary" onClick={() => this.exportCsv(processed[selected])}>
+            <Button variant="primary" onClick={() => this.exportCsv(processed[selected])}>
               Download CSV
-            </Forms.Button>
+            </Button>
           </div>
         </div>
         <div style={{ flexGrow: 1 }}>

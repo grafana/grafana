@@ -2,7 +2,7 @@ import React from 'react';
 import { css } from 'emotion';
 import { GrafanaTheme } from '@grafana/data';
 
-import { Button, ButtonVariant, ButtonProps } from '../Button';
+import { Button, ButtonVariant, ButtonProps } from '../../Button';
 import { ComponentSize } from '../../../types/size';
 import { SelectCommonProps, CustomControlProps } from './types';
 import { SelectBase } from './SelectBase';

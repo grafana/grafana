@@ -40,6 +40,19 @@ executors:
     docker:
       - image: grafana/wix-toolset-ci:v3
 
+commands:
+  install-google-cloud-sdk:
+    description: "Install Google Cloud SDK"
+    steps:
+      - run:
+          name: "Install Google Cloud SDK"
+          command: |
+            VERSION=286.0.0
+            CHECKSUM=f199e38c988d53a913fc780b6f57ebda72db5f3848073cea805b39fe3e8e34fd
+            curl -fLO https://dl.google.com/dl/cloudsdk/channels/rapid/downloads/google-cloud-sdk-${VERSION}-linux-x86_64.tar.gz
+            echo $CHECKSUM google-cloud-sdk-${VERSION}-linux-x86_64.tar.gz | sha256sum --check --status
+            tar xf google-cloud-sdk-${VERSION}-linux-x86_64.tar.gz
+
 jobs:
   install-grabpl:
     description: Install the Grafana Build Pipeline tool
@@ -48,7 +61,7 @@ jobs:
       - run:
           name: Install Grafana Build Pipeline
           command: |
-            curl -fLO https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v0.2.4/grabpl
+            curl -fLO https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v0.2.7/grabpl
             chmod +x grabpl
             mkdir bin
             mv grabpl bin/
@@ -129,6 +142,13 @@ jobs:
       - attach_workspace:
           at: /tmp/workspace
       - checkout
+      - restore_cache:
+          keys:
+            # Use own cache for front-end builds, since for some reason it can't be unpacked for parts of the
+            # pipeline
+            - v1-yarn-build-{{ checksum "yarn.lock" }}
+            # Used if checksum fails
+            - v1-yarn-build-
       - run:
           name: Increase node memory
           command: |
@@ -136,6 +156,13 @@ jobs:
       - run:
           name: CI job started
           command: ./scripts/ci-job-started.sh
+      - run:
+          name: Install dependencies
+          command: yarn install --frozen-lockfile --no-progress
+      - save_cache:
+          key: v1-yarn-build-{{ checksum "yarn.lock" }}
+          paths:
+            - node_modules
       - run:
           name: Build Grafana frontend
           command: /tmp/workspace/bin/grabpl build-frontend --edition << parameters.edition >>
@@ -205,7 +232,6 @@ jobs:
 
   build-oss-windows-installer:
     executor: windows-installer
-    resource_class: large
     steps:
       - attach_workspace:
           at: /tmp/workspace
@@ -213,20 +239,29 @@ jobs:
       - run:
           name: CI job started
           command: ./scripts/ci-job-started.sh
+      - install-google-cloud-sdk
       - run:
-          name: Copy artifacts from workspace
-          command: cp -r /tmp/workspace/oss/dist .
+          name: Download packages from GCS
+          command: |
+            # Work around an issue with the gsutil installation
+            export BOTO_CONFIG=/dev/null
+
+            echo $GCP_GRAFANA_UPLOAD_KEY > /tmp/gcpkey.json
+            ./google-cloud-sdk/bin/gcloud auth activate-service-account --key-file=/tmp/gcpkey.json
+            mkdir dist
+            ./google-cloud-sdk/bin/gsutil -m rsync -d -r gs://grafana-build-pipeline/oss/packages/${CIRCLE_WORKFLOW_ID}/ dist/
       - run:
           name: Build Windows installer
           command: ./scripts/build/ci-msi-build/ci-msi-build-oss.sh
       - run:
-          name: Move artifacts
-          command: mkdir oss && mv dist oss/
-      - persist_to_workspace:
-          root: .
-          paths:
-            - oss/dist/grafana-*.msi
-            - oss/dist/grafana-*.msi.sha256
+          name: Upload installer to GCS
+          command: |
+            # Work around an issue with the gsutil installation
+            export BOTO_CONFIG=/dev/null
+
+            echo $GCP_GRAFANA_UPLOAD_KEY > /tmp/gcpkey.json
+            ./google-cloud-sdk/bin/gcloud auth activate-service-account --key-file=/tmp/gcpkey.json
+            ./google-cloud-sdk/bin/gsutil -m cp dist/grafana-*.msi* gs://grafana-build-pipeline/oss/packages/${CIRCLE_WORKFLOW_ID}/
       - run:
           name: CI job failed
           command: ./scripts/ci-job-failed.sh
@@ -238,7 +273,6 @@ jobs:
 
   build-enterprise-windows-installer:
     executor: windows-installer
-    resource_class: large
     steps:
       - run:
           name: Exit if forked PR
@@ -253,20 +287,29 @@ jobs:
       - run:
           name: CI job started
           command: "./scripts/ci-job-started.sh"
+      - install-google-cloud-sdk
       - run:
-          name: Copy artifacts from workspace
-          command: cp -r /tmp/workspace/enterprise/dist enterprise-dist
+          name: Download packages from GCS
+          command: |
+            # Work around an issue with the gsutil installation
+            export BOTO_CONFIG=/dev/null
+
+            echo $GCP_GRAFANA_UPLOAD_KEY > /tmp/gcpkey.json
+            ./google-cloud-sdk/bin/gcloud auth activate-service-account --key-file=/tmp/gcpkey.json
+            mkdir enterprise-dist
+            ./google-cloud-sdk/bin/gsutil -m rsync -d -r gs://grafana-build-pipeline/enterprise/packages/${CIRCLE_WORKFLOW_ID}/ enterprise-dist/
       - run:
           name: Build Windows installer
           command: ./scripts/build/ci-msi-build/ci-msi-build-ee.sh
       - run:
-          name: Move artifacts
-          command: mkdir enterprise && mv enterprise-dist enterprise/dist
-      - persist_to_workspace:
-          root: .
-          paths:
-            - enterprise/dist/grafana-*.msi
-            - enterprise/dist/grafana-*.msi.sha256
+          name: Upload installer to GCS
+          command: |
+            # Work around an issue with the gsutil installation
+            export BOTO_CONFIG=/dev/null
+
+            echo $GCP_GRAFANA_UPLOAD_KEY > /tmp/gcpkey.json
+            ./google-cloud-sdk/bin/gcloud auth activate-service-account --key-file=/tmp/gcpkey.json
+            ./google-cloud-sdk/bin/gsutil -m cp enterprise-dist/grafana-*.msi* gs://grafana-build-pipeline/enterprise/packages/${CIRCLE_WORKFLOW_ID}/
       - run:
           name: CI job failed
           command: "./scripts/ci-job-failed.sh"
@@ -312,7 +355,6 @@ jobs:
 
   package-oss:
     executor: grafana-build
-    resource_class: large
     steps:
       - attach_workspace:
           at: /tmp/workspace
@@ -320,6 +362,7 @@ jobs:
       - run:
           name: CI job started
           command: ./scripts/ci-job-started.sh
+      - install-google-cloud-sdk
       - run:
           name: Copy artifacts from workspace
           command: cp -r /tmp/workspace/oss/* .
@@ -333,27 +376,27 @@ jobs:
 
             if [[ -n $CIRCLE_TAG ]]; then
               # A release build
-              /tmp/workspace/bin/grabpl package --edition oss $CIRCLE_TAG
+              /tmp/workspace/bin/grabpl package --jobs 2 --edition oss $CIRCLE_TAG
             elif [[ $CIRCLE_BRANCH == "chore/test-release-pipeline" ]]; then
               # We're testing the release pipeline
-              /tmp/workspace/bin/grabpl package --edition oss v6.7.0-beta1
+              /tmp/workspace/bin/grabpl package --jobs 2 --edition oss v6.7.0-beta1
             elif [[ $CIRCLE_BRANCH == "master" ]]; then
               # A master build
-              /tmp/workspace/bin/grabpl package --edition oss --build-id $CIRCLE_WORKFLOW_ID
+              /tmp/workspace/bin/grabpl package --jobs 2 --edition oss --build-id $CIRCLE_WORKFLOW_ID
             else
               # A PR build
-              /tmp/workspace/bin/grabpl package --edition oss --build-id $CIRCLE_WORKFLOW_ID --variants \
+              /tmp/workspace/bin/grabpl package --jobs 2 --edition oss --build-id $CIRCLE_WORKFLOW_ID --variants \
                 linux-x64,linux-x64-musl,osx64,win64
             fi
       - run:
-          name: Move artifacts
+          name: Upload packages to GCS
           command: |
-            mkdir -p oss
-            mv dist oss/
-      - persist_to_workspace:
-          root: .
-          paths:
-            - oss/dist/*
+            # Work around an issue with the gsutil installation
+            export BOTO_CONFIG=/dev/null
+
+            echo $GCP_GRAFANA_UPLOAD_KEY > /tmp/gcpkey.json
+            ./google-cloud-sdk/bin/gcloud auth activate-service-account --key-file=/tmp/gcpkey.json
+            ./google-cloud-sdk/bin/gsutil -m rsync -r dist gs://grafana-build-pipeline/oss/packages/${CIRCLE_WORKFLOW_ID}
       - run:
           name: CI job failed
           command: ./scripts/ci-job-failed.sh
@@ -365,7 +408,6 @@ jobs:
 
   package-enterprise:
     executor: grafana-build
-    resource_class: large
     steps:
       - run:
           name: Exit if forked PR
@@ -380,6 +422,7 @@ jobs:
       - run:
           name: CI job started
           command: ./scripts/ci-job-started.sh
+      - install-google-cloud-sdk
       - run:
           name: Copy artifacts from workspace
           command: cp -r /tmp/workspace/enterprise/* .
@@ -388,27 +431,27 @@ jobs:
           command: |
             if [[ -n $CIRCLE_TAG ]]; then
               # A release build
-              /tmp/workspace/bin/grabpl package --edition enterprise $CIRCLE_TAG
+              /tmp/workspace/bin/grabpl package --jobs 2 --edition enterprise $CIRCLE_TAG
             elif [[ $CIRCLE_BRANCH == "chore/test-release-pipeline" ]]; then
               # We're testing the release pipeline
-              /tmp/workspace/bin/grabpl package --edition enterprise v6.7.0-beta1
+              /tmp/workspace/bin/grabpl package --jobs 2 --edition enterprise v6.7.0-beta1
             elif [[ $CIRCLE_BRANCH == "master" ]]; then
               # A master build
-              /tmp/workspace/bin/grabpl package --edition enterprise --build-id $CIRCLE_WORKFLOW_ID
+              /tmp/workspace/bin/grabpl package --jobs 2 --edition enterprise --build-id $CIRCLE_WORKFLOW_ID
             else
               # A PR build
-              /tmp/workspace/bin/grabpl package --edition enterprise --build-id $CIRCLE_WORKFLOW_ID --variants \
+              /tmp/workspace/bin/grabpl package --jobs 2 --edition enterprise --build-id $CIRCLE_WORKFLOW_ID --variants \
                 linux-x64,linux-x64-musl,osx64,win64
             fi
       - run:
-          name: Move artifacts
+          name: Upload packages to GCS
           command: |
-            mkdir -p enterprise
-            mv dist enterprise/
-      - persist_to_workspace:
-          root: .
-          paths:
-            - enterprise/dist/*
+            # Work around an issue with the gsutil installation
+            export BOTO_CONFIG=/dev/null
+
+            echo $GCP_GRAFANA_UPLOAD_KEY > /tmp/gcpkey.json
+            ./google-cloud-sdk/bin/gcloud auth activate-service-account --key-file=/tmp/gcpkey.json
+            ./google-cloud-sdk/bin/gsutil -m rsync -r dist gs://grafana-build-pipeline/enterprise/packages/${CIRCLE_WORKFLOW_ID}
       - run:
           name: CI job failed
           command: ./scripts/ci-job-failed.sh
@@ -420,7 +463,6 @@ jobs:
 
   publish-packages:
     description: "Publish packages"
-    resource_class: large
     parameters:
       edition:
         type: string
@@ -439,10 +481,20 @@ jobs:
       - run:
           name: CI job started
           command: ./scripts/ci-job-started.sh
+      - install-google-cloud-sdk
+      - run:
+          name: Download packages from GCS
+          command: |
+            # Work around an issue with the gsutil installation
+            export BOTO_CONFIG=/dev/null
+
+            echo $GCP_GRAFANA_UPLOAD_KEY > /tmp/gcpkey.json
+            ./google-cloud-sdk/bin/gcloud auth activate-service-account --key-file=/tmp/gcpkey.json
+            mkdir dist
+            ./google-cloud-sdk/bin/gsutil -m rsync -d -r gs://grafana-build-pipeline/<< parameters.edition >>/packages/${CIRCLE_WORKFLOW_ID}/ dist/
       - run:
           name: Publish packages
           command: |
-            cp -r /tmp/workspace/<< parameters.edition >>/dist .
             if [[ $CIRCLE_BRANCH == "chore/test-release-pipeline" ]]; then
               # We're testing the release pipeline
               /tmp/workspace/bin/grabpl publish-packages --edition << parameters.edition >> \
@@ -502,8 +554,7 @@ jobs:
           when: on_success
 
   build-docker-images:
-    description: "Build Docker images"
-    resource_class: large
+    description: "Build/publish Docker images"
     parameters:
       edition:
         type: string
@@ -524,76 +575,47 @@ jobs:
       - run:
           name: CI job started
           command: ./scripts/ci-job-started.sh
+      - install-google-cloud-sdk
+      - run:
+          name: Download packages from GCS
+          command: |
+            # Work around an issue with the gsutil installation
+            export BOTO_CONFIG=/dev/null
+
+            echo $GCP_GRAFANA_UPLOAD_KEY > /tmp/gcpkey.json
+            ./google-cloud-sdk/bin/gcloud auth activate-service-account --key-file=/tmp/gcpkey.json
+            mkdir dist
+            ./google-cloud-sdk/bin/gsutil -m rsync -d -r gs://grafana-build-pipeline/<< parameters.edition >>/packages/${CIRCLE_WORKFLOW_ID}/ dist/
       - run: docker info
       # XXX: Is this necessary?
       - run: docker run --privileged linuxkit/binfmt:v0.6
-      - run:
-          name: Copy Grafana archives
-          command: |
-            cp -r /tmp/workspace/<< parameters.edition >>/dist .
       - run:
           name: Build Docker images
           command: |
             if [[ -n $CIRCLE_TAG || $CIRCLE_BRANCH == "chore/test-release-pipeline" || $CIRCLE_BRANCH == "master" ]]; then
               # It's a full build
-              /tmp/workspace/bin/grabpl build-docker --edition << parameters.edition >> \
+              /tmp/workspace/bin/grabpl build-docker --jobs 4 --edition << parameters.edition >> \
                 --ubuntu=<< parameters.ubuntu >>
             else
               # We're testing a branch
-              /tmp/workspace/bin/grabpl build-docker --edition << parameters.edition >> \
+              /tmp/workspace/bin/grabpl build-docker --jobs 4 --edition << parameters.edition >> \
                 --ubuntu=<< parameters.ubuntu >> --archs amd64
             fi
-            mkdir -p << parameters.edition >>/docker
-            mv docker/*.tar << parameters.edition >>/docker/
-      - persist_to_workspace:
-          root: .
-          paths:
-            - << parameters.edition >>/docker/*.tar
       - run:
-          name: CI job failed
-          command: ./scripts/ci-job-failed.sh
-          when: on_fail
-      - run:
-          name: CI job succeeded
-          command: ./scripts/ci-job-succeeded.sh
-          when: on_success
-
-  publish-docker-images:
-    description: Publish Docker images
-    resource_class: large
-    parameters:
-      edition:
-        type: string
-      ubuntu:
-        type: boolean
-    executor: docker
-    steps:
-      - run:
-          name: Exit if forked PR
+          name: Exit if PR
           command: |
-            if [[ -n "$CIRCLE_PR_NUMBER" ]]; then
-              echo "Nothing to do for forked PRs, so marking this step successful"
+            if [[ -z $CIRCLE_TAG && $CIRCLE_BRANCH != "chore/test-release-pipeline" && $CIRCLE_BRANCH != "master" ]]; then
+              echo "Nothing to do for PRs, so marking this step successful"
               circleci step halt
             fi
-      - attach_workspace:
-          at: /tmp/workspace
-      - checkout
-      - run:
-          name: CI job started
-          command: ./scripts/ci-job-started.sh
-      - run:
-          name: Copy artifacts from workspace
-          command: |
-            cp -r /tmp/workspace/<< parameters.edition >>/docker .
-            cp -r /tmp/workspace/<< parameters.edition >>/dist .
       - run:
           name: Publish Docker images
           command: |
             if [[ $CIRCLE_BRANCH == "chore/test-release-pipeline" ]]; then
               # We're testing the release pipeline
-              /tmp/workspace/bin/grabpl publish-docker --edition << parameters.edition >> --ubuntu=<< parameters.ubuntu >> --dry-run
+              /tmp/workspace/bin/grabpl publish-docker --jobs 4 --edition << parameters.edition >> --ubuntu=<< parameters.ubuntu >> --dry-run
             else
-              /tmp/workspace/bin/grabpl publish-docker --edition << parameters.edition >> --ubuntu=<< parameters.ubuntu >>
+              /tmp/workspace/bin/grabpl publish-docker --jobs 4 --edition << parameters.edition >> --ubuntu=<< parameters.ubuntu >>
             fi
       - run:
           name: CI job failed
@@ -605,21 +627,34 @@ jobs:
           when: on_success
 
   end-to-end-tests:
-    resource_class: large
     docker:
       - image: circleci/node:12-browsers
     steps:
       - attach_workspace:
           at: /tmp/workspace
       - checkout
+      - install-google-cloud-sdk
+      - run:
+          name: Download packages from GCS
+          command: |
+            # Work around an issue with the gsutil installation
+            export BOTO_CONFIG=/dev/null
+
+            echo $GCP_GRAFANA_UPLOAD_KEY > /tmp/gcpkey.json
+            ./google-cloud-sdk/bin/gcloud auth activate-service-account --key-file=/tmp/gcpkey.json
+            mkdir dist
+            ./google-cloud-sdk/bin/gsutil -m rsync -d -r gs://grafana-build-pipeline/oss/packages/${CIRCLE_WORKFLOW_ID}/ dist/
       - restore_cache:
-          key: dependency-cache-{{ checksum "yarn.lock" }}
+          keys:
+            - v2-yarn-{{ checksum "yarn.lock" }}
+            # Used if checksum fails
+            - v2-yarn-
       - run:
           name: yarn install
-          command: yarn install --pure-lockfile --no-progress
+          command: yarn install --frozen-lockfile --no-progress
           no_output_timeout: 5m
       - save_cache:
-          key: dependency-cache-{{ checksum "yarn.lock" }}
+          key: v2-yarn-{{ checksum "yarn.lock" }}
           paths:
             - node_modules
       - run:
@@ -641,7 +676,6 @@ jobs:
           destination: logs
 
   mysql-integration-test:
-    resource_class: large
     docker:
       - image: circleci/golang:1.13.4
       - image: circleci/mysql:5.6-ram
@@ -673,7 +707,6 @@ jobs:
           when: on_success
 
   postgres-integration-test:
-    resource_class: large
     docker:
       - image: circleci/golang:1.13.4
       - image: circleci/postgres:9.3-ram
@@ -722,7 +755,6 @@ jobs:
   lint-go:
     docker:
       - image: circleci/golang:1.13.4
-    resource_class: large
     working_directory: /go/src/github.com/grafana/grafana
     environment:
       # we need CGO because of go-sqlite3
@@ -756,7 +788,6 @@ jobs:
               -conf=./scripts/go/configs/gosec.json ./pkg/...
 
   test-frontend:
-    resource_class: large
     docker:
       - image: circleci/node:12
     steps:
@@ -765,13 +796,16 @@ jobs:
           name: CI job started
           command: "./scripts/ci-job-started.sh"
       - restore_cache:
-          key: dependency-cache-{{ checksum "yarn.lock" }}
+          keys:
+            - v2-yarn-{{ checksum "yarn.lock" }}
+            # Used if checksum fails
+            - v2-yarn-
       - run:
           name: yarn install
           command: "yarn install --frozen-lockfile --no-progress"
           no_output_timeout: 15m
       - save_cache:
-          key: dependency-cache-{{ checksum "yarn.lock" }}
+          key: v2-yarn-{{ checksum "yarn.lock" }}
           paths:
             - node_modules
       - run:
@@ -932,6 +966,8 @@ workflows:
           name: build-oss-backend-armv6
           requires:
             - install-grabpl
+            - test-backend
+            - test-frontend
       - build-backend:
           filters: *filter-master-or-release
           edition: oss
@@ -939,6 +975,8 @@ workflows:
           name: build-oss-backend-armv7
           requires:
             - install-grabpl
+            - test-backend
+            - test-frontend
       - build-backend:
           filters: *filter-master-or-release
           edition: oss
@@ -946,6 +984,8 @@ workflows:
           name: build-oss-backend-armv7-musl
           requires:
             - install-grabpl
+            - test-backend
+            - test-frontend
       - build-backend:
           filters: *filter-master-or-release
           edition: oss
@@ -953,6 +993,8 @@ workflows:
           name: build-oss-backend-arm64
           requires:
             - install-grabpl
+            - test-backend
+            - test-frontend
       - build-backend:
           filters: *filter-master-or-release
           edition: oss
@@ -960,6 +1002,8 @@ workflows:
           name: build-oss-backend-arm64-musl
           requires:
             - install-grabpl
+            - test-backend
+            - test-frontend
       - build-backend:
           # No filters, meaning this job runs for all branches
           edition: oss
@@ -967,6 +1011,8 @@ workflows:
           name: build-oss-backend-osx64
           requires:
             - install-grabpl
+            - test-backend
+            - test-frontend
       - build-backend:
           # No filters, meaning this job runs for all branches
           edition: oss
@@ -974,6 +1020,8 @@ workflows:
           name: build-oss-backend-win64
           requires:
             - install-grabpl
+            - test-backend
+            - test-frontend
       - build-backend:
           # No filters, meaning this job runs for all branches
           edition: oss
@@ -981,6 +1029,8 @@ workflows:
           name: build-oss-backend-linux-x64
           requires:
             - install-grabpl
+            - test-backend
+            - test-frontend
       - build-backend:
           # No filters, meaning this job runs for all branches
           edition: oss
@@ -988,12 +1038,16 @@ workflows:
           name: build-oss-backend-linux-x64-musl
           requires:
             - install-grabpl
+            - test-backend
+            - test-frontend
       - build-frontend:
           # No filters, meaning this job runs for all branches
           name: build-oss-frontend
           edition: oss
           requires:
             - install-grabpl
+            - test-backend
+            - test-frontend
       - build-backend:
           filters: *filter-master-or-release
           name: build-enterprise-backend-armv6
@@ -1001,6 +1055,8 @@ workflows:
           variant: armv6
           requires:
             - install-grabpl
+            - test-backend
+            - test-frontend
       - build-backend:
           filters: *filter-master-or-release
           name: build-enterprise-backend-armv7
@@ -1008,6 +1064,8 @@ workflows:
           variant: armv7
           requires:
             - install-grabpl
+            - test-backend
+            - test-frontend
       - build-backend:
           filters: *filter-master-or-release
           name: build-enterprise-backend-armv7-musl
@@ -1015,6 +1073,8 @@ workflows:
           variant: armv7-musl
           requires:
             - install-grabpl
+            - test-backend
+            - test-frontend
       - build-backend:
           filters: *filter-master-or-release
           name: build-enterprise-backend-arm64
@@ -1022,6 +1082,8 @@ workflows:
           variant: arm64
           requires:
             - install-grabpl
+            - test-backend
+            - test-frontend
       - build-backend:
           filters: *filter-master-or-release
           name: build-enterprise-backend-arm64-musl
@@ -1029,6 +1091,8 @@ workflows:
           variant: arm64-musl
           requires:
             - install-grabpl
+            - test-backend
+            - test-frontend
       - build-backend:
           # No filters, meaning this job runs for all branches
           name: build-enterprise-backend-osx64
@@ -1036,6 +1100,8 @@ workflows:
           variant: osx64
           requires:
             - install-grabpl
+            - test-backend
+            - test-frontend
       - build-backend:
           # No filters, meaning this job runs for all branches
           name: build-enterprise-backend-win64
@@ -1043,6 +1109,8 @@ workflows:
           variant: win64
           requires:
             - install-grabpl
+            - test-backend
+            - test-frontend
       - build-backend:
           # No filters, meaning this job runs for all branches
           name: build-enterprise-backend-linux-x64
@@ -1050,6 +1118,8 @@ workflows:
           variant: linux-x64
           requires:
             - install-grabpl
+            - test-backend
+            - test-frontend
       - build-backend:
           # No filters, meaning this job runs for all branches
           name: build-enterprise-backend-linux-x64-musl
@@ -1057,12 +1127,16 @@ workflows:
           variant: linux-x64-musl
           requires:
             - install-grabpl
+            - test-backend
+            - test-frontend
       - build-frontend:
           # No filters, meaning this job runs for all branches
           name: build-enterprise-frontend
           edition: enterprise
           requires:
             - install-grabpl
+            - test-backend
+            - test-frontend
       - build-release-publisher:
           filters: *filter-master-or-release
       - codespell:
@@ -1091,11 +1165,15 @@ workflows:
           requires:
             - install-grabpl
             - lint-go
+            - test-backend
+            - test-frontend
       - postgres-integration-test:
           # No filters, meaning this job runs for all branches
           requires:
             - install-grabpl
             - lint-go
+            - test-backend
+            - test-frontend
       - package-oss:
           # No filters, meaning this job runs for all branches
           requires:
@@ -1147,7 +1225,7 @@ workflows:
       - release-next-packages:
           filters: *filter-only-master
           requires:
-            - test-frontend
+            - end-to-end-tests
       - release-packages:
           filters: *filter-only-release
           requires:
@@ -1170,13 +1248,17 @@ workflows:
             - build-enterprise-windows-installer
             - end-to-end-tests
             - build-release-publisher
-      - publish-storybook
+      - publish-storybook:
+          requires:
+            - test-backend
+            - test-frontend
       - build-docker-images:
           # No filters, meaning this job runs for all branches
           name: build-oss-docker-images
           edition: oss
           ubuntu: false
           requires:
+            - end-to-end-tests
             - package-oss
             - build-oss-windows-installer
       - build-docker-images:
@@ -1185,6 +1267,7 @@ workflows:
           edition: oss
           ubuntu: true
           requires:
+            - end-to-end-tests
             - package-oss
             - build-oss-windows-installer
       - build-docker-images:
@@ -1193,6 +1276,7 @@ workflows:
           edition: enterprise
           ubuntu: false
           requires:
+            - end-to-end-tests
             - package-enterprise
             - build-enterprise-windows-installer
       - build-docker-images:
@@ -1201,50 +1285,22 @@ workflows:
           edition: enterprise
           ubuntu: true
           requires:
+            - end-to-end-tests
             - package-enterprise
             - build-enterprise-windows-installer
       - end-to-end-tests:
           # No filters, meaning this job runs for all branches
           requires:
             - package-oss
-      - publish-docker-images:
-          filters: *filter-master-or-release
-          name: publish-oss-docker-images
-          edition: oss
-          ubuntu: false
-          requires:
-            - build-oss-docker-images
-            - end-to-end-tests
-      - publish-docker-images:
-          filters: *filter-master-or-release
-          name: publish-oss-ubuntu-docker-images
-          edition: oss
-          ubuntu: true
-          requires:
-            - build-oss-ubuntu-docker-images
-            - end-to-end-tests
-      - publish-docker-images:
-          filters: *filter-master-or-release
-          name: publish-enterprise-docker-images
-          edition: enterprise
-          ubuntu: false
-          requires:
-            - build-enterprise-docker-images
-            - end-to-end-tests
-      - publish-docker-images:
-          filters: *filter-master-or-release
-          name: publish-enterprise-ubuntu-docker-images
-          edition: enterprise
-          ubuntu: true
-          requires:
-            - build-enterprise-ubuntu-docker-images
-            - end-to-end-tests
       - build-docs-website:
           filters: *filter-not-release-or-master
+          requires:
+            - mysql-integration-test
+            - postgres-integration-test
       - deploy-to-kubernetes:
           filters: *filter-only-master
           requires:
-            - publish-enterprise-docker-images
+            - build-enterprise-docker-images
 
   nightly:
     triggers:

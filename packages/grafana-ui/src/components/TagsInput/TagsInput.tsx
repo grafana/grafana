@@ -1,7 +1,7 @@
 import React, { ChangeEvent, KeyboardEvent, PureComponent } from 'react';
 import { css, cx } from 'emotion';
 import { stylesFactory } from '../../themes/stylesFactory';
-import { Button } from '../Button/Button';
+import { Button } from '../Button';
 import { Input } from '../Input/Input';
 import { TagItem } from './TagItem';
 
@@ -106,7 +106,7 @@ export class TagsInput extends PureComponent<Props, State> {
           )}
         >
           <Input placeholder="Add Name" onChange={this.onNameChange} value={newTag} onKeyUp={this.onKeyboardAdd} />
-          <Button className={getStyles().addButtonStyle} onClick={this.onAdd} variant="secondary" size="md">
+          <Button className={getStyles().addButtonStyle} onClick={this.onAdd} variant="primary" size="md">
             Add
           </Button>
         </div>
