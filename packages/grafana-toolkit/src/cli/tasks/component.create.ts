@@ -27,7 +27,13 @@ export const promptDetails = () => {
     promptConfirm('hasTests', "Generate component's test file?"),
     promptConfirm('hasStory', "Generate component's story file?"),
     promptConfirm('isStoryPublic', 'Generate public story? (Selecting "No" will create an internal story)'),
-    promptInput('group', 'Select component group (e.g. Forms, Layout)', true, 'General', ({ hasStory }) => hasStory),
+    promptInput(
+      'group',
+      'Select component group for the story (e.g. Forms, Layout)',
+      true,
+      'General',
+      ({ hasStory }) => hasStory
+    ),
   ]);
 };
 
