@@ -1,4 +1,3 @@
-import { ComponentType } from 'react';
 import { DataQueryError, DataQueryRequest, DataQueryTimings } from './datasource';
 import { PluginMeta } from './plugin';
 import { ScopedVars } from './ScopedVars';
@@ -6,8 +5,9 @@ import { LoadingState } from './data';
 import { DataFrame } from './dataFrame';
 import { AbsoluteTimeRange, TimeRange, TimeZone } from './time';
 import { FieldConfigSource } from './fieldOverrides';
-import { Registry, RegistryItem } from '../utils';
+import { Registry } from '../utils';
 import { StandardEditorProps } from '../field';
+import { OptionsEditorItem } from './OptionsUIRegistryBuilder';
 
 export type InterpolateFunction = (value: string, scopedVars?: ScopedVars, format?: string | Function) => string;
 
@@ -115,10 +115,8 @@ export type PanelOptionEditorsRegistry = Registry<PanelOptionsEditorItem>;
 
 export interface PanelOptionsEditorProps<TValue> extends StandardEditorProps<TValue> {}
 
-export interface PanelOptionsEditorItem<TValue = any, TSettings = any> extends RegistryItem {
-  editor: ComponentType<PanelOptionsEditorProps<TValue>>;
-  settings?: TSettings;
-}
+export interface PanelOptionsEditorItem<TValue = any, TSettings = any>
+  extends OptionsEditorItem<TSettings, PanelOptionsEditorProps<TValue>> {}
 
 export interface PanelOptionsEditorConfig<TSettings = any> {
   id: string;
