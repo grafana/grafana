@@ -62,7 +62,7 @@ export interface FieldConfigEditorConfig<TSettings = any> {
   shouldApply?: (field: Field) => boolean;
 }
 
-export interface FieldPropertyEditorItem<TValue = any, TSettings = {}>
+export interface FieldPropertyEditorItem<TValue = any, TSettings extends {} = any>
   extends OptionsEditorItem<TSettings, FieldConfigEditorProps<TValue, TSettings>> {
   // An editor that can be filled in with context info (template variables etc)
   override: ComponentType<FieldOverrideEditorProps<TValue, TSettings>>;
