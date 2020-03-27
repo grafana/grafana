@@ -178,7 +178,7 @@ Are you having issues with setting up your environment? Here are some tips that 
 
 ### Too many open files when running `make run`
 
-Depending on your environment, you may have to increase the maximum number of open files allowed. For the rest of this section, we will assume you are on a Unix like OS (e.g. Linux/MacOS), where you can control the maximum number of open files through the [https://ss64.com/bash/ulimit.html](ulimit) shell command.
+Depending on your environment, you may have to increase the maximum number of open files allowed. For the rest of this section, we will assume you are on a Unix like OS (e.g. Linux/MacOS), where you can control the maximum number of open files through the [ulimit](https://ss64.com/bash/ulimit.html) shell command.
 
 To see how many open files are allowed, run:
 
@@ -200,7 +200,7 @@ find ./conf ./pkg ./public/views | wc -l
 
 Another alternative is to limit the files being watched. The directories that are watched for changes are listed in the `.bra.toml` file in the root directory. 
 
-To retain your `ulimit` configuration, i.e. so that it will be remembered for future sessions, you need to commit it to your command line shell initialization file. Which file this will be depends on the shell you are using, here are some examples:
+To retain your `ulimit` configuration, i.e. so it will be remembered for future sessions, you need to commit it to your command line shell initialization file. Which file this will be depends on the shell you are using, here are some examples:
 
 * zsh -> ~/.zshrc
 * bash -> ~/.bashrc
