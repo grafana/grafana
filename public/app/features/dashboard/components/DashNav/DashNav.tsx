@@ -154,39 +154,33 @@ class UnThemedDashNav extends PureComponent<Props> {
             <DashNavButton
               tooltip="Go to previous dashboard"
               classSuffix="tight"
-              icon="fa fa-step-backward"
+              icon="step-backward"
               onClick={this.onPlaylistPrev}
             />
             <DashNavButton
               tooltip="Stop playlist"
               classSuffix="tight"
-              icon="fa fa-stop"
+              icon="square-shape"
               onClick={this.onPlaylistStop}
             />
             <DashNavButton
               tooltip="Go to next dashboard"
               classSuffix="tight"
-              icon="fa fa-forward"
+              icon="forward"
               onClick={this.onPlaylistNext}
             />
           </div>
         )}
 
         <div className="navbar-buttons navbar-buttons--actions">
-          {canSave && (
-            <DashNavButton
-              tooltip="Add panel"
-              classSuffix="add-panel"
-              icon="gicon gicon-add-panel"
-              onClick={onAddPanel}
-            />
-          )}
+          {canSave && <DashNavButton tooltip="Add panel" icon="panel-add" onClick={onAddPanel} />}
 
           {canStar && (
             <DashNavButton
               tooltip="Mark as favorite"
               classSuffix="star"
-              icon={`${isStarred ? 'fa fa-star' : 'fa fa-star-o'}`}
+              icon={isStarred ? 'favorite' : 'star'}
+              iconType={isStarred ? 'mono' : 'default'}
               onClick={this.onStarDashboard}
             />
           )}
@@ -197,7 +191,7 @@ class UnThemedDashNav extends PureComponent<Props> {
                 <DashNavButton
                   tooltip="Share dashboard"
                   classSuffix="share"
-                  icon="fa fa-share-square-o"
+                  icon="share-alt"
                   onClick={() => {
                     showModal(ShareModal, {
                       dashboard,
@@ -215,7 +209,7 @@ class UnThemedDashNav extends PureComponent<Props> {
                 <DashNavButton
                   tooltip="Save dashboard"
                   classSuffix="save"
-                  icon="fa fa-save"
+                  icon="save"
                   onClick={() => {
                     showModal(SaveDashboardModalProxy, {
                       dashboard,
@@ -231,7 +225,7 @@ class UnThemedDashNav extends PureComponent<Props> {
             <DashNavButton
               tooltip="Open original dashboard"
               classSuffix="snapshot-origin"
-              icon="gicon gicon-link"
+              icon="link"
               href={snapshotUrl}
             />
           )}
@@ -240,19 +234,14 @@ class UnThemedDashNav extends PureComponent<Props> {
             <DashNavButton
               tooltip="Dashboard settings"
               classSuffix="settings"
-              icon="gicon gicon-cog"
+              icon="cog"
               onClick={this.onOpenSettings}
             />
           )}
         </div>
 
         <div className="navbar-buttons navbar-buttons--tv">
-          <DashNavButton
-            tooltip="Cycle view mode"
-            classSuffix="tv"
-            icon="fa fa-desktop"
-            onClick={this.onToggleTVMode}
-          />
+          <DashNavButton tooltip="Cycle view mode" classSuffix="tv" icon="monitor" onClick={this.onToggleTVMode} />
         </div>
 
         {!dashboard.timepicker.hidden && (
