@@ -120,7 +120,10 @@ export interface PanelOptionsEditorItem<TValue = any, TSettings = any> extends R
   settings?: TSettings;
 }
 
-export interface PanelOptionsEditorConfig<TSettings = any> extends RegistryItem {
+export interface PanelOptionsEditorConfig<TSettings = any> {
+  id: string;
+  name: string;
+  description: string;
   settings?: TSettings;
 }
 
