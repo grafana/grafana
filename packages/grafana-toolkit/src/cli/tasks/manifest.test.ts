@@ -8,6 +8,7 @@ describe('Manifest', () => {
         "changelog.ts",
         "cherrypick.ts",
         "closeMilestone.ts",
+        "component.create.ts",
         "core.start.ts",
         "manifest.test.ts",
         "manifest.ts",
