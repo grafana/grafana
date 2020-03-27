@@ -6,7 +6,6 @@ import { pascalCase } from '../utils/pascalCase';
 import { getPluginIdFromName } from './plugin/create';
 import { prompt } from 'inquirer';
 import { promptConfirm, promptInput } from '../utils/prompt';
-import { useSpinner } from '../utils/useSpinner';
 import { componentTpl, docsTpl, storyTpl } from '../templates';
 
 interface Options {
@@ -24,15 +23,21 @@ export const promptPluginDetails = (name?: string) => {
   ]);
 };
 
-export const generateComponents = useSpinner('Generating components', async ({ details, path }) => {
-  console.log('generating', details, path);
+export const generateComponents = async ({ details, path }) => {
+  console.log('Generating components in: ', path);
   const name = pascalCase(details.name);
-  const string = _.template(componentTpl)({ name });
-  fs.writeFileSync(`${path}/${name}.tsx`, string);
-});
+  const str = _.template(componentTpl)({ name });
+  fs.writeFileSync(`${path}/${name}.tsx`, str);
+
+  if (details.hasStory) {
+    const storyStr = _.template(storyTpl)({ name });
+    fs.writeFileSync(`${path}/${name}.story.tsx`, storyStr);
+    const docsStr = _.template(docsTpl)({ name });
+    fs.writeFileSync(`${path}/${name}.mdx`, docsStr);
+  }
+};
 
 const componentCreateRunner: TaskRunner<Options> = async ({ name }) => {
-  console.log('running', name);
   const destPath = path.resolve(process.cwd(), getPluginIdFromName(name || ''));
   let details = await promptPluginDetails(name);
   await generateComponents({ details, path: destPath });
