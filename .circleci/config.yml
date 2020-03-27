@@ -40,6 +40,19 @@ executors:
     docker:
       - image: grafana/wix-toolset-ci:v3
 
+commands:
+  install-google-cloud-sdk:
+    description: "Install Google Cloud SDK"
+    steps:
+      - run:
+          command: |
+            VERSION=286.0.0
+            CHECKSUM=f199e38c988d53a913fc780b6f57ebda72db5f3848073cea805b39fe3e8e34fd
+            curl -fLO https://dl.google.com/dl/cloudsdk/channels/rapid/downloads/google-cloud-sdk-${VERSION}-linux-x86_64.tar.gz
+            echo $CHECKSUM google-cloud-sdk-${VERSION}-linux-x86_64.tar.gz | sha256sum --check --status
+            tar xf google-cloud-sdk-${VERSION}-linux-x86_64.tar.gz
+            sudo mv google-cloud-sdk /opt/
+
 jobs:
   install-grabpl:
     description: Install the Grafana Build Pipeline tool
@@ -212,6 +225,7 @@ jobs:
       - run:
           name: CI job started
           command: ./scripts/ci-job-started.sh
+      - install-google-cloud-sdk
       - run:
           name: Download packages from GCS
           command: |
@@ -219,8 +233,8 @@ jobs:
             export BOTO_CONFIG=/dev/null
 
             echo $GCP_GRAFANA_UPLOAD_KEY > /tmp/gcpkey.json
-            gcloud auth activate-service-account --key-file=/tmp/gcpkey.json
-            gsutil -m rsync -d -r gs://grafana-build-pipeline/oss/packages/${CIRCLE_WORKFLOW_ID}/ dist/
+            /opt/google-cloud-sdk/bin/gcloud auth activate-service-account --key-file=/tmp/gcpkey.json
+            /opt/google-cloud-sdk/bin/gsutil -m rsync -d -r gs://grafana-build-pipeline/oss/packages/${CIRCLE_WORKFLOW_ID}/ dist/
       - run:
           name: Build Windows installer
           command: ./scripts/build/ci-msi-build/ci-msi-build-oss.sh
@@ -257,6 +271,7 @@ jobs:
       - run:
           name: CI job started
           command: "./scripts/ci-job-started.sh"
+      - install-google-cloud-sdk
       - run:
           name: Download packages from GCS
           command: |
@@ -264,8 +279,8 @@ jobs:
             export BOTO_CONFIG=/dev/null
 
             echo $GCP_GRAFANA_UPLOAD_KEY > /tmp/gcpkey.json
-            gcloud auth activate-service-account --key-file=/tmp/gcpkey.json
-            gsutil -m rsync -d -r gs://grafana-build-pipeline/enterprise/packages/${CIRCLE_WORKFLOW_ID}/ enterprise-dist/
+            /opt/google-cloud-sdk/bin/gcloud auth activate-service-account --key-file=/tmp/gcpkey.json
+            /opt/google-cloud-sdk/bin/gsutil -m rsync -d -r gs://grafana-build-pipeline/enterprise/packages/${CIRCLE_WORKFLOW_ID}/ enterprise-dist/
       - run:
           name: Build Windows installer
           command: ./scripts/build/ci-msi-build/ci-msi-build-ee.sh
@@ -329,6 +344,7 @@ jobs:
       - run:
           name: CI job started
           command: ./scripts/ci-job-started.sh
+      - install-google-cloud-sdk
       - run:
           name: Copy artifacts from workspace
           command: cp -r /tmp/workspace/oss/* .
@@ -361,8 +377,8 @@ jobs:
             export BOTO_CONFIG=/dev/null
 
             echo $GCP_GRAFANA_UPLOAD_KEY > /tmp/gcpkey.json
-            gcloud auth activate-service-account --key-file=/tmp/gcpkey.json
-            gsutil -m rsync -d -r dist gs://grafana-build-pipeline/oss/packages/${CIRCLE_WORKFLOW_ID}
+            /opt/google-cloud-sdk/bin/gcloud auth activate-service-account --key-file=/tmp/gcpkey.json
+            /opt/google-cloud-sdk/bin/gsutil -m rsync -d -r dist gs://grafana-build-pipeline/oss/packages/${CIRCLE_WORKFLOW_ID}
       - run:
           name: CI job failed
           command: ./scripts/ci-job-failed.sh
@@ -388,6 +404,7 @@ jobs:
       - run:
           name: CI job started
           command: ./scripts/ci-job-started.sh
+      - install-google-cloud-sdk
       - run:
           name: Copy artifacts from workspace
           command: cp -r /tmp/workspace/enterprise/* .
@@ -415,8 +432,8 @@ jobs:
             export BOTO_CONFIG=/dev/null
 
             echo $GCP_GRAFANA_UPLOAD_KEY > /tmp/gcpkey.json
-            gcloud auth activate-service-account --key-file=/tmp/gcpkey.json
-            gsutil -m rsync -d -r dist gs://grafana-build-pipeline/enterprise/packages/${CIRCLE_WORKFLOW_ID}
+            /opt/google-cloud-sdk/bin/gcloud auth activate-service-account --key-file=/tmp/gcpkey.json
+            /opt/google-cloud-sdk/bin/gsutil -m rsync -d -r dist gs://grafana-build-pipeline/enterprise/packages/${CIRCLE_WORKFLOW_ID}
       - run:
           name: CI job failed
           command: ./scripts/ci-job-failed.sh
@@ -446,6 +463,7 @@ jobs:
       - run:
           name: CI job started
           command: ./scripts/ci-job-started.sh
+      - install-google-cloud-sdk
       - run:
           name: Download packages from GCS
           command: |
@@ -453,8 +471,8 @@ jobs:
             export BOTO_CONFIG=/dev/null
 
             echo $GCP_GRAFANA_UPLOAD_KEY > /tmp/gcpkey.json
-            gcloud auth activate-service-account --key-file=/tmp/gcpkey.json
-            gsutil -m rsync -d -r gs://grafana-build-pipeline/<< parameters.edition >>/packages/${CIRCLE_WORKFLOW_ID}/ dist/
+            /opt/google-cloud-sdk/bin/gcloud auth activate-service-account --key-file=/tmp/gcpkey.json
+            /opt/google-cloud-sdk/bin/gsutil -m rsync -d -r gs://grafana-build-pipeline/<< parameters.edition >>/packages/${CIRCLE_WORKFLOW_ID}/ dist/
       - run:
           name: Publish packages
           command: |
@@ -538,6 +556,7 @@ jobs:
       - run:
           name: CI job started
           command: ./scripts/ci-job-started.sh
+      - install-google-cloud-sdk
       - run:
           name: Download packages from GCS
           command: |
@@ -545,8 +564,8 @@ jobs:
             export BOTO_CONFIG=/dev/null
 
             echo $GCP_GRAFANA_UPLOAD_KEY > /tmp/gcpkey.json
-            gcloud auth activate-service-account --key-file=/tmp/gcpkey.json
-            gsutil -m rsync -d -r gs://grafana-build-pipeline/<< parameters.edition >>/packages/${CIRCLE_WORKFLOW_ID}/ dist/
+            /opt/google-cloud-sdk/bin/gcloud auth activate-service-account --key-file=/tmp/gcpkey.json
+            /opt/google-cloud-sdk/bin/gsutil -m rsync -d -r gs://grafana-build-pipeline/<< parameters.edition >>/packages/${CIRCLE_WORKFLOW_ID}/ dist/
       - run: docker info
       # XXX: Is this necessary?
       - run: docker run --privileged linuxkit/binfmt:v0.6
@@ -594,6 +613,7 @@ jobs:
       - attach_workspace:
           at: /tmp/workspace
       - checkout
+      - install-google-cloud-sdk
       - run:
           name: Download packages from GCS
           command: |
@@ -601,8 +621,8 @@ jobs:
             export BOTO_CONFIG=/dev/null
 
             echo $GCP_GRAFANA_UPLOAD_KEY > /tmp/gcpkey.json
-            gcloud auth activate-service-account --key-file=/tmp/gcpkey.json
-            gsutil -m rsync -d -r gs://grafana-build-pipeline/oss/packages/${CIRCLE_WORKFLOW_ID}/ dist/
+            /opt/google-cloud-sdk/bin/gcloud auth activate-service-account --key-file=/tmp/gcpkey.json
+            /opt/google-cloud-sdk/bin/gsutil -m rsync -d -r gs://grafana-build-pipeline/oss/packages/${CIRCLE_WORKFLOW_ID}/ dist/
       - restore_cache:
           key: dependency-cache-{{ checksum "yarn.lock" }}
       - run:
