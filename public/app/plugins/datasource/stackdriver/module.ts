@@ -1,13 +1,13 @@
+import { DataSourcePlugin } from '@grafana/data';
 import StackdriverDatasource from './datasource';
-import { StackdriverQueryCtrl } from './query_ctrl';
+import { QueryEditor } from './components/QueryEditor';
 import { StackdriverConfigCtrl } from './config_ctrl';
 import { StackdriverAnnotationsQueryCtrl } from './annotations_query_ctrl';
 import { StackdriverVariableQueryEditor } from './components/VariableQueryEditor';
+import { StackdriverQuery } from './types';
 
-export {
-  StackdriverDatasource as Datasource,
-  StackdriverQueryCtrl as QueryCtrl,
-  StackdriverConfigCtrl as ConfigCtrl,
-  StackdriverAnnotationsQueryCtrl as AnnotationsQueryCtrl,
-  StackdriverVariableQueryEditor as VariableQueryEditor,
-};
+export const plugin = new DataSourcePlugin<StackdriverDatasource, StackdriverQuery>(StackdriverDatasource)
+  .setQueryEditor(QueryEditor)
+  .setConfigCtrl(StackdriverConfigCtrl)
+  .setAnnotationQueryCtrl(StackdriverAnnotationsQueryCtrl)
+  .setVariableQueryEditor(StackdriverVariableQueryEditor);

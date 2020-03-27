@@ -2,7 +2,7 @@ import React, { FunctionComponent, Fragment } from 'react';
 import _ from 'lodash';
 import { SelectableValue } from '@grafana/data';
 import { Segment } from '@grafana/ui';
-import { labelsToGroupedOptions, toOption } from '../functions';
+import { labelsToGroupedOptions, filtersToStringArray, stringArrayToFilters, toOption } from '../functions';
 import { Filter } from '../types';
 
 export interface Props {
@@ -15,18 +15,8 @@ export interface Props {
 const removeText = '-- remove filter --';
 const removeOption: SelectableValue<string> = { label: removeText, value: removeText, icon: 'fa fa-remove' };
 const operators = ['=', '!=', '=~', '!=~'];
-const filtersToStringArray = (filters: Filter[]) =>
-  _.flatten(filters.map(({ key, operator, value, condition }) => [key, operator, value, condition]));
 
-const stringArrayToFilters = (filterArray: string[]) =>
-  _.chunk(filterArray, 4).map(([key, operator, value, condition = 'AND']) => ({
-    key,
-    operator,
-    value,
-    condition,
-  }));
-
-export const Filters: FunctionComponent<Props> = ({
+export const LabelFilter: FunctionComponent<Props> = ({
   labels = {},
   filters: filterArray,
   onChange,
@@ -45,7 +35,7 @@ export const Filters: FunctionComponent<Props> = ({
             allowCustomValue
             value={key}
             options={options}
-            onChange={({ value: key }) => {
+            onChange={({ value: key = '' }) => {
               if (key === removeText) {
                 onChange(filtersToStringArray(filters.filter((_, i) => i !== index)));
               } else {
@@ -61,7 +51,7 @@ export const Filters: FunctionComponent<Props> = ({
             value={operator}
             className="gf-form-label query-segment-operator"
             options={operators.map(toOption)}
-            onChange={({ value: operator }) =>
+            onChange={({ value: operator = '=' }) =>
               onChange(filtersToStringArray(filters.map((f, i) => (i === index ? { ...f, operator } : f))))
             }
           />
@@ -72,7 +62,7 @@ export const Filters: FunctionComponent<Props> = ({
             options={
               labels.hasOwnProperty(key) ? [variableOptionGroup, ...labels[key].map(toOption)] : [variableOptionGroup]
             }
-            onChange={({ value }) =>
+            onChange={({ value = '' }) =>
               onChange(filtersToStringArray(filters.map((f, i) => (i === index ? { ...f, value } : f))))
             }
           />
@@ -90,7 +80,7 @@ export const Filters: FunctionComponent<Props> = ({
             </a>
           }
           options={[variableOptionGroup, ...labelsToGroupedOptions(Object.keys(labels))]}
-          onChange={({ value: key }) =>
+          onChange={({ value: key = '' }) =>
             onChange(filtersToStringArray([...filters, { key, operator: '=', condition: 'AND', value: '' } as Filter]))
           }
         />

@@ -1,0 +1,17 @@
+{
+  "timeSeries": [{
+    "metric": {
+      "type": "compute.googleapis.com/firewall/dropped_bytes_count"
+    },
+    "resource": {
+      "type": "gce_instance",
+      "labels": {
+        "instance_id": "114250375703598695",
+        "project_id": "raintank-dev"
+      }
+    },
+    "metricKind": "DELTA",
+    "valueType": "INT64"
+  }
+  ]
+}

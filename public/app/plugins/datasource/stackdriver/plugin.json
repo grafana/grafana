@@ -3,15 +3,14 @@
   "type": "datasource",
   "id": "stackdriver",
   "category": "cloud",
-
   "metrics": true,
   "alerting": true,
   "annotations": true,
+  "logs": true,
   "queryOptions": {
     "maxDataPoints": true,
     "cacheTimeout": true
   },
-
   "info": {
     "description": "Data source for Google's monitoring service",
     "version": "1.0.0",
@@ -44,6 +43,19 @@
       "url": "https://cloudresourcemanager.googleapis.com",
       "jwtTokenAuth": {
         "scopes": ["https://www.googleapis.com/auth/cloudplatformprojects.readonly"],
+        "params": {
+          "token_uri": "{{.JsonData.tokenUri}}",
+          "client_email": "{{.JsonData.clientEmail}}",
+          "private_key": "{{.SecureJsonData.privateKey}}"
+        }
+      }
+    },
+    {
+      "path": "stackdriver-logging",
+      "method": "POST",
+      "url": "https://logging.googleapis.com",
+      "jwtTokenAuth": {
+        "scopes": ["https://www.googleapis.com/auth/logging.read"],
         "params": {
           "token_uri": "{{.JsonData.tokenUri}}",
           "client_email": "{{.JsonData.clientEmail}}",

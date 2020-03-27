@@ -18,7 +18,7 @@ func TestStackdriverAnnotationQuery(t *testing.T) {
 			So(len(data.TimeSeries), ShouldEqual, 3)
 
 			res := &tsdb.QueryResult{Meta: simplejson.New(), RefId: "annotationQuery"}
-			query := &StackdriverQuery{}
+			query := &stackdriverQuery{}
 			err = executor.parseToAnnotations(res, data, query, "atitle {{metric.label.instance_name}} {{metric.value}}", "atext {{resource.label.zone}}", "atag")
 			So(err, ShouldBeNil)
 

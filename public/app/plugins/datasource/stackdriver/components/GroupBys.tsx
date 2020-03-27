@@ -26,7 +26,7 @@ export const GroupBys: FunctionComponent<Props> = ({ groupBys = [], values = [],
             key={value + index}
             value={value}
             options={options}
-            onChange={({ value }) =>
+            onChange={({ value = '' }) =>
               onChange(
                 value === removeText
                   ? values.filter((_, i) => i !== index)
@@ -43,7 +43,7 @@ export const GroupBys: FunctionComponent<Props> = ({ groupBys = [], values = [],
             </a>
           }
           allowCustomValue
-          onChange={({ value }) => onChange([...values, value])}
+          onChange={({ value = '' }) => onChange([...values, value])}
           options={[
             variableOptionGroup,
             ...labelsToGroupedOptions([...groupBys.filter(groupBy => !values.includes(groupBy)), ...systemLabels]),
