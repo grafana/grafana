@@ -110,7 +110,7 @@ export class PanelPlugin<TOptions = any> extends GrafanaPlugin<PanelPluginMeta> 
    * interface ShapePanelOptions {}
    *
    * export const plugin = new PanelPlugin<ShapePanelOptions>(ShapePanel)
-   *   .setCustomFieldConfigEditor(builder => {
+   *   .setCustomFieldOptions(builder => {
    *     builder
    *       .addNumberInput({
    *         id: 'shapeBorderWidth',
@@ -151,7 +151,7 @@ export class PanelPlugin<TOptions = any> extends GrafanaPlugin<PanelPluginMeta> 
    * interface ShapePanelOptions {}
    *
    * export const plugin = new PanelPlugin<ShapePanelOptions>(ShapePanel)
-   *   .setOptionsEditor(builder => {
+   *   .setPanelOptions(builder => {
    *     builder
    *       .addSelect({
    *         id: 'shape',
