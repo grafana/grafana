@@ -644,7 +644,8 @@ jobs:
             mkdir dist
             ./google-cloud-sdk/bin/gsutil -m rsync -d -r gs://grafana-build-pipeline/oss/packages/${CIRCLE_WORKFLOW_ID}/ dist/
       - restore_cache:
-          - v2-yarn-{{ checksum "yarn.lock" }}
+          keys:
+            - v2-yarn-{{ checksum "yarn.lock" }}
             # Used if checksum fails
             - v2-yarn-
       - run:
@@ -796,6 +797,7 @@ jobs:
       - restore_cache:
           keys:
             - v2-yarn-{{ checksum "yarn.lock" }}
+            # Used if checksum fails
             - v2-yarn-
       - run:
           name: yarn install
