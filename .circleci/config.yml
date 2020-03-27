@@ -24,6 +24,9 @@ aliases:
       only: /^v[0-9]+(\.[0-9]+){2}(-.+|[^-.]*)$/
 
 executors:
+  base:
+    docker:
+      - image: cimg/base:stable
   grafana-build:
     docker:
       - image: grafana/build-container:1.2.13
@@ -31,8 +34,8 @@ executors:
     docker:
       - image: grafana/grafana-ci-deploy:1.2.4
   docker:
-    machine:
-      image: circleci/classic:201808-01
+    docker:
+      - image: cimg/base:stable
   cloud-sdk:
     docker:
       - image: google/cloud-sdk
@@ -56,7 +59,7 @@ commands:
 jobs:
   install-grabpl:
     description: Install the Grafana Build Pipeline tool
-    executor: grafana-build
+    executor: base
     steps:
       - run:
           name: Install Grafana Build Pipeline
@@ -210,7 +213,7 @@ jobs:
           when: on_success
 
   shellcheck:
-    machine: true
+    executor: base
     steps:
       - attach_workspace:
           at: /tmp/workspace
@@ -219,8 +222,13 @@ jobs:
           name: CI job started
           command: ./scripts/ci-job-started.sh
       - run:
+          name: Install ShellCheck
+          command: |
+            /tmp/workspace/bin/grabpl shellcheck
+      - run:
           name: ShellCheck
-          command: /tmp/workspace/bin/grabpl shellcheck
+          command: |
+            shellcheck scripts/*.sh
       - run:
           name: CI job failed
           command: ./scripts/ci-job-failed.sh
@@ -364,6 +372,9 @@ jobs:
           command: ./scripts/ci-job-started.sh
       - install-google-cloud-sdk
       - run:
+          name: Copy artifacts from workspace
+          command: cp -r /tmp/workspace/oss/* .
+      - run:
           name: Package Grafana
           command: |
             if [[ -n "$CIRCLE_PR_NUMBER" ]]; then
@@ -420,6 +431,9 @@ jobs:
           name: CI job started
           command: ./scripts/ci-job-started.sh
       - install-google-cloud-sdk
+      - run:
+          name: Copy artifacts from workspace
+          command: cp -r /tmp/workspace/enterprise/* .
       - run:
           name: Package Grafana
           command: |
@@ -569,6 +583,7 @@ jobs:
       - run:
           name: CI job started
           command: ./scripts/ci-job-started.sh
+      - setup_remote_docker
       - install-google-cloud-sdk
       - run:
           name: Download packages from GCS
@@ -586,6 +601,8 @@ jobs:
       - run:
           name: Build Docker images
           command: |
+            scp -r dist remote-docker:dist
+
             if [[ -n $CIRCLE_TAG || $CIRCLE_BRANCH == "chore/test-release-pipeline" || $CIRCLE_BRANCH == "master" ]]; then
               # It's a full build
               /tmp/workspace/bin/grabpl build-docker --jobs 4 --edition << parameters.edition >> \
@@ -873,7 +890,7 @@ jobs:
 
   deploy-to-kubernetes:
     description: "Deploy Grafana master Docker image to Kubernetes"
-    executor: grafana-build
+    executor: base
     steps:
       - attach_workspace:
           at: /tmp/workspace
