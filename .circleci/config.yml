@@ -260,7 +260,7 @@ jobs:
 
             echo $GCP_GRAFANA_UPLOAD_KEY > /tmp/gcpkey.json
             ./google-cloud-sdk/bin/gcloud auth activate-service-account --key-file=/tmp/gcpkey.json
-            ./google-cloud-sdk/bin/gsutil -m rsync dist/grafana-*.msi* gs://grafana-build-pipeline/oss/packages/${CIRCLE_WORKFLOW_ID}/
+            ./google-cloud-sdk/bin/gsutil -m cp dist/grafana-*.msi* gs://grafana-build-pipeline/oss/packages/${CIRCLE_WORKFLOW_ID}/
       - run:
           name: CI job failed
           command: ./scripts/ci-job-failed.sh
@@ -308,7 +308,7 @@ jobs:
 
             echo $GCP_GRAFANA_UPLOAD_KEY > /tmp/gcpkey.json
             ./google-cloud-sdk/bin/gcloud auth activate-service-account --key-file=/tmp/gcpkey.json
-            ./google-cloud-sdk/bin/gsutil -m rsync enterprise-dist/grafana-*.msi* gs://grafana-build-pipeline/enterprise/packages/${CIRCLE_WORKFLOW_ID}/
+            ./google-cloud-sdk/bin/gsutil -m cp enterprise-dist/grafana-*.msi* gs://grafana-build-pipeline/enterprise/packages/${CIRCLE_WORKFLOW_ID}/
       - run:
           name: CI job failed
           command: "./scripts/ci-job-failed.sh"
