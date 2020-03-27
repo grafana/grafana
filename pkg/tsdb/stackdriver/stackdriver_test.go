@@ -589,10 +589,30 @@ func TestStackdriver(t *testing.T) {
 						Selector:    "select_slo_compliance",
 						Service:     "test-service",
 						Slo:         "test-slo",
-						AliasBy:     "{{project}} - {{service}} - {{slo}} - {{selector}}"}
+						AliasBy:     "{{project}} - {{service}} - {{slo}} - {{selector}}",
+					}
 					err = executor.parseResponse(res, data, query)
 					So(err, ShouldBeNil)
 					So(res.Series[0].Name, ShouldEqual, "test-proj - test-service - test-slo - select_slo_compliance")
+				})
+			})
+
+			Convey("when data from query returns slo and alias by is not defined", func() {
+				data, err := loadTestFile("./test-data/6-series-response-slo.json")
+				So(err, ShouldBeNil)
+				So(len(data.TimeSeries), ShouldEqual, 1)
+
+				Convey("and alias by is expanded", func() {
+					res := &tsdb.QueryResult{Meta: simplejson.New(), RefId: "A"}
+					query := &stackdriverQuery{
+						ProjectName: "test-proj",
+						Selector:    "select_slo_compliance",
+						Service:     "test-service",
+						Slo:         "test-slo",
+					}
+					err = executor.parseResponse(res, data, query)
+					So(err, ShouldBeNil)
+					So(res.Series[0].Name, ShouldEqual, "select_slo_compliance(\"projects/test-proj/services/test-service/serviceLevelObjectives/test-slo\")")
 				})
 			})
 		})
