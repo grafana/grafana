@@ -136,14 +136,12 @@ export function getPanelMenu(
     });
   }
 
-  if (config.featureToggles.inspect) {
-    menu.push({
-      text: 'Inspect',
-      iconClassName: 'fa fa-fw fa-info-circle',
-      onClick: onInspectPanel,
-      shortcut: 'p i',
-    });
-  }
+  menu.push({
+    text: 'Inspect',
+    iconClassName: 'fa fa-fw fa-info-circle',
+    onClick: onInspectPanel,
+    shortcut: 'p i',
+  });
 
   if (config.featureToggles.newEdit) {
     menu.push({

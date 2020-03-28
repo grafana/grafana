@@ -14,10 +14,8 @@ export interface BuildInfo {
 
 interface FeatureToggles {
   transformations: boolean;
-  inspect: boolean;
   expressions: boolean;
   newEdit: boolean;
-  meta: boolean;
   newVariables: boolean;
   tracingIntegration: boolean;
 }

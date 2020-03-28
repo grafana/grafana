@@ -84,10 +84,6 @@ export class TablePanelCtrl extends MetricsPanelCtrl {
     this.addEditorTab('Column Styles', columnOptionsTab, 3);
   }
 
-  onInitPanelActions(actions: any[]) {
-    actions.push({ text: 'Export CSV', click: 'ctrl.exportCsv()' });
-  }
-
   issueQueries(datasource: any) {
     this.pageIndex = 0;
 
@@ -165,17 +161,6 @@ export class TablePanelCtrl extends MetricsPanelCtrl {
       this.panel.sort.desc = true;
     }
     this.render();
-  }
-
-  exportCsv() {
-    const scope = this.$scope.$new(true);
-    scope.tableData = this.renderer.render_values();
-    scope.panel = 'table';
-    this.publishAppEvent(CoreEvents.showModal, {
-      templateHtml: '<export-data-modal panel="panel" data="tableData"></export-data-modal>',
-      scope,
-      modalClass: 'modal--narrow',
-    });
   }
 
   link(scope: any, elem: JQuery, attrs: any, ctrl: TablePanelCtrl) {

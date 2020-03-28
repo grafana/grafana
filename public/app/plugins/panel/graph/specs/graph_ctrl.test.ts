@@ -143,49 +143,5 @@ describe('GraphCtrl', () => {
       // allIsNull / allIsZero are set by getFlotPairs
       ctx.ctrl.seriesList.forEach((series: TimeSeries) => series.getFlotPairs(''));
     });
-
-    const thenExportYieldedNSeries = (n: number) => {
-      expect(appEventMock.mock.calls.length).toBe(1);
-      const eventPayload = appEventMock.mock.calls[0][1];
-      expect(eventPayload.scope.seriesList).toHaveLength(n);
-    };
-
-    const thenExportDidNotYieldSeriesName = (unexpectedName: string) => {
-      expect(appEventMock.mock.calls.length).toBe(1);
-      const eventPayload = appEventMock.mock.calls[0][1];
-      expect(
-        eventPayload.scope.seriesList.filter((series: TimeSeries) => series.label === unexpectedName)
-      ).toHaveLength(0);
-    };
-
-    it('should not ignore anything if not asked to', () => {
-      ctx.ctrl.exportCsv();
-      thenExportYieldedNSeries(3);
-    });
-
-    it('should ignore all-null series when asked to', () => {
-      ctx.ctrl.panel.legend.hideEmpty = true;
-      ctx.ctrl.exportCsv();
-      thenExportYieldedNSeries(2);
-      thenExportDidNotYieldSeriesName('test.nulls');
-    });
-
-    it('should ignore all-zero series when asked to', () => {
-      ctx.ctrl.panel.legend.hideZero = true;
-      ctx.ctrl.exportCsv();
-      // impl treats all-null series as all-zero as well
-      thenExportYieldedNSeries(1);
-      thenExportDidNotYieldSeriesName('test.zeros');
-      thenExportDidNotYieldSeriesName('test.empty');
-    });
-
-    it('should ignore both when asked to', () => {
-      ctx.ctrl.panel.legend.hideZero = true;
-      ctx.ctrl.panel.legend.hideEmpty = true;
-      ctx.ctrl.exportCsv();
-      thenExportYieldedNSeries(1);
-      thenExportDidNotYieldSeriesName('test.zeros');
-      thenExportDidNotYieldSeriesName('test.empty');
-    });
   });
 });
