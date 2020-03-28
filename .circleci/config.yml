@@ -39,12 +39,6 @@ executors:
   grafana-publish:
     docker:
       - image: grafana/grafana-ci-deploy:1.2.4
-  docker:
-    docker:
-      - image: cimg/base:stable
-  cloud-sdk:
-    docker:
-      - image: google/cloud-sdk
   windows-installer:
     docker:
       - image: grafana/wix-toolset-ci:v3
@@ -574,7 +568,7 @@ jobs:
         type: string
       ubuntu:
         type: boolean
-    executor: docker
+    executor: base
     steps:
       - run:
           name: Exit if enterprise and forked PR
