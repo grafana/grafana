@@ -7,13 +7,19 @@
  * @param parentHeight height of the parent container
  * @param numberOfChildren number of children that should fit in the parent container
  */
-export const calculateGridDimensions = (parentWidth: number, parentHeight: number, numberOfChildren: number) => {
+export const calculateGridDimensions = (
+  parentWidth: number,
+  parentHeight: number,
+  itemSpacing: number,
+  numberOfChildren: number
+) => {
   const vertical = calculateSizeOfChild(parentWidth, parentHeight, numberOfChildren);
   const horizontal = calculateSizeOfChild(parentHeight, parentWidth, numberOfChildren);
   const square = Math.max(vertical, horizontal);
   let xCount = Math.floor(parentWidth / square);
   let yCount = Math.ceil(numberOfChildren / xCount);
   const empty = xCount * yCount - numberOfChildren;
+
   if (empty > 1) {
     // Avoid this layout:
     // [X][X][X]
@@ -21,9 +27,14 @@ export const calculateGridDimensions = (parentWidth: number, parentHeight: numbe
     yCount = Math.floor(parentHeight / square);
     xCount = Math.ceil(numberOfChildren / yCount);
   }
+
+  const itemsOnLastRow = xCount - (xCount * yCount - numberOfChildren);
+  const widthOnLastRow = parentWidth / itemsOnLastRow - itemSpacing / (itemsOnLastRow + 1);
+
   return {
-    width: parentWidth / xCount,
-    height: parentHeight / yCount,
+    width: parentWidth / xCount - itemSpacing / (xCount + 1),
+    height: parentHeight / yCount - itemSpacing / (yCount + 1),
+    widthOnLastRow,
     xCount,
     yCount,
   };

@@ -76,6 +76,53 @@ export class VizRepeater<V, D = {}> extends PureComponent<Props<V, D>, State<V>>
     return orientation;
   }
 
+  renderGrid() {
+    const { renderValue, height, width, itemSpacing, getAlignmentFactors, orientation } = this
+      .props as PropsWithDefaults<V, D>;
+
+    const { values } = this.state;
+    const grid = calculateGridDimensions(width, height, itemSpacing, values.length);
+    const alignmentFactors = getAlignmentFactors ? getAlignmentFactors(values, grid.width, grid.height) : ({} as D);
+
+    let xGrid = 0;
+    let yGrid = 0;
+    let items: JSX.Element[] = [];
+
+    for (let i = 0; i < values.length; i++) {
+      const value = values[i];
+      const isLastRow = yGrid === grid.yCount - 1;
+
+      const itemWidth = isLastRow ? grid.widthOnLastRow : grid.width;
+      const itemHeight = grid.height;
+
+      const xPos = xGrid * itemWidth + itemSpacing * xGrid;
+      const yPos = yGrid * itemHeight + itemSpacing * yGrid;
+
+      const itemStyles: CSSProperties = {
+        position: 'absolute',
+        left: xPos,
+        top: yPos,
+        width: `${itemWidth}px`,
+        height: `${itemHeight}px`,
+      };
+
+      items.push(
+        <div key={i} style={itemStyles}>
+          {renderValue({ value, width: itemWidth, height: itemHeight, alignmentFactors, orientation })}
+        </div>
+      );
+
+      xGrid++;
+
+      if (xGrid === grid.xCount) {
+        xGrid = 0;
+        yGrid++;
+      }
+    }
+
+    return <div style={{ position: 'relative' }}>{items}</div>;
+  }
+
   render() {
     const { renderValue, height, width, itemSpacing, getAlignmentFactors } = this.props as PropsWithDefaults<V, D>;
     const { values } = this.state;
@@ -92,32 +139,21 @@ export class VizRepeater<V, D = {}> extends PureComponent<Props<V, D>, State<V>>
     let vizHeight = height;
     let vizWidth = width;
 
-    if (orientation === VizOrientation.Grid) {
-      const grid = calculateGridDimensions(width, height, values.length);
-      repeaterStyle.flexDirection = 'row';
-      repeaterStyle.flexWrap = 'wrap';
-      repeaterStyle.justifyContent = 'center';
-      vizHeight = grid.height;
-      vizWidth = grid.width;
-
-      // itemStyles.outline = '1px solid red';
-      // if(grid.xCount > 1) {
-      //   itemStyles.marginRight = `${spacing}px`;
-      // }
-      // if(grid.yCount > 1) {
-      //   itemStyles.marginBottom = `${spacing}px`;
-      // }
-    } else if (orientation === VizOrientation.Horizontal) {
-      repeaterStyle.flexDirection = 'column';
-      itemStyles.marginBottom = `${itemSpacing}px`;
-      vizWidth = width;
-      vizHeight = height / values.length - itemSpacing + itemSpacing / values.length;
-    } else {
-      repeaterStyle.flexDirection = 'row';
-      repeaterStyle.justifyContent = 'space-between';
-      itemStyles.marginRight = `${itemSpacing}px`;
-      vizHeight = height;
-      vizWidth = width / values.length - itemSpacing + itemSpacing / values.length;
+    switch (orientation) {
+      case VizOrientation.Grid:
+        return this.renderGrid();
+      case VizOrientation.Horizontal:
+        repeaterStyle.flexDirection = 'column';
+        itemStyles.marginBottom = `${itemSpacing}px`;
+        vizWidth = width;
+        vizHeight = height / values.length - itemSpacing + itemSpacing / values.length;
+        break;
+      case VizOrientation.Vertical:
+        repeaterStyle.flexDirection = 'row';
+        repeaterStyle.justifyContent = 'space-between';
+        itemStyles.marginRight = `${itemSpacing}px`;
+        vizHeight = height;
+        vizWidth = width / values.length - itemSpacing + itemSpacing / values.length;
     }
 
     itemStyles.width = `${vizWidth}px`;
