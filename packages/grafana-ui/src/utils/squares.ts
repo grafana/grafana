@@ -11,9 +11,16 @@ export const calculateGridDimensions = (parentWidth: number, parentHeight: numbe
   const vertical = calculateSizeOfChild(parentWidth, parentHeight, numberOfChildren);
   const horizontal = calculateSizeOfChild(parentHeight, parentWidth, numberOfChildren);
   const square = Math.max(vertical, horizontal);
-  const xCount = Math.floor(parentWidth / square);
-  const yCount = Math.ceil(numberOfChildren / xCount);
-
+  let xCount = Math.floor(parentWidth / square);
+  let yCount = Math.ceil(numberOfChildren / xCount);
+  const empty = xCount * yCount - numberOfChildren;
+  if (empty > 1) {
+    // Avoid this layout:
+    // [X][X][X]
+    //    [X]
+    yCount = Math.floor(parentHeight / square);
+    xCount = Math.ceil(numberOfChildren / yCount);
+  }
   return {
     width: parentWidth / xCount,
     height: parentHeight / yCount,
