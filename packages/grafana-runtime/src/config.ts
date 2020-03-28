@@ -65,10 +65,8 @@ export class GrafanaBootConfig {
   pluginsToPreload: string[] = [];
   featureToggles: FeatureToggles = {
     transformations: false,
-    inspect: false,
     expressions: false,
     newEdit: false,
-    meta: false,
     newVariables: false,
     tracingIntegration: false,
   };
