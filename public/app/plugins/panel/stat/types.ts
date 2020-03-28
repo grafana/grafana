@@ -69,5 +69,5 @@ export const defaults: StatPanelOptions = {
   colorMode: BigValueColorMode.Value,
   justifyMode: BigValueJustifyMode.Auto,
   fieldOptions: standardFieldDisplayOptions,
-  orientation: VizOrientation.Auto,
+  orientation: VizOrientation.Grid,
 };
