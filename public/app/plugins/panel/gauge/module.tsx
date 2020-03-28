@@ -11,6 +11,18 @@ export const plugin = new PanelPlugin<GaugeOptions>(GaugePanel)
   .setEditor(GaugePanelEditor)
   .setPanelOptions(builder => {
     addStandardSingleValueOptions(builder);
+
+    builder
+      .addBooleanSwitch({
+        id: 'showThresholdLabels',
+        name: 'Show threshold Labels',
+        description: 'Render the threshold values around the gauge bar',
+      })
+      .addBooleanSwitch({
+        id: 'showThresholdMarkers',
+        name: 'Show threshold markers',
+        description: 'Renders the thresholds as an outer bar',
+      });
   })
   .setPanelChangeHandler(gaugePanelChangedHandler)
   .setMigrationHandler(gaugePanelMigrationHandler);

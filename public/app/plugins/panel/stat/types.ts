@@ -78,9 +78,22 @@ export function addStandardSingleValueOptions(builder: PanelOptionsEditorBuilder
 
   builder.addCustomEditor({
     id: 'valueOptions.calcs',
-    name: 'Calc',
-    description: '',
+    name: 'Value',
+    description: 'Choose a reducer function / calculation',
     editor: standardEditorsRegistry.get('stats-picker').editor as any,
+  });
+
+  builder.addRadio({
+    id: 'orientation',
+    name: 'Orientation',
+    description: 'Stacking direction in case of multiple series or fields',
+    settings: {
+      options: [
+        { value: 'auto', label: 'Auto' },
+        { value: 'horizontal', label: 'Horizontal' },
+        { value: 'vertical', label: 'Vertical' },
+      ],
+    },
   });
 }
 
