@@ -8,7 +8,6 @@ import { columnOptionsTab } from './column_options';
 import { TableRenderer } from './renderer';
 import { isTableData, PanelEvents, PanelPlugin } from '@grafana/data';
 import { TemplateSrv } from 'app/features/templating/template_srv';
-import { CoreEvents } from 'app/types';
 import { dispatch } from 'app/store/store';
 import { applyFilterFromTable } from 'app/features/variables/adhoc/actions';
 
@@ -76,7 +75,6 @@ export class TablePanelCtrl extends MetricsPanelCtrl {
     this.events.on(PanelEvents.dataReceived, this.onDataReceived.bind(this));
     this.events.on(PanelEvents.dataSnapshotLoad, this.onDataReceived.bind(this));
     this.events.on(PanelEvents.editModeInitialized, this.onInitEditMode.bind(this));
-    this.events.on(PanelEvents.initPanelActions, this.onInitPanelActions.bind(this));
   }
 
   onInitEditMode() {
