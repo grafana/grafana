@@ -2,13 +2,15 @@
 
 exports[`Gauge Panel Migrations from 6.1.1 1`] = `
 Object {
-  "fieldOptions": Object {
-    "calcs": Array [
-      "last",
-    ],
-  },
   "orientation": "auto",
   "showThresholdLabels": true,
   "showThresholdMarkers": true,
+  "valueOptions": Object {
+    "calcs": Array [
+      "last",
+    ],
+    "limit": undefined,
+    "values": undefined,
+  },
 }
 `;
