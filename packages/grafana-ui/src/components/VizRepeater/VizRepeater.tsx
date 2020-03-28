@@ -1,6 +1,6 @@
 import React, { PureComponent, CSSProperties } from 'react';
 import { VizOrientation } from '@grafana/data';
-import { calculatePreferredSizeForChild } from '../../utils/squares';
+import { calculateGridDimensions } from '../../utils/squares';
 
 interface Props<V, D> {
   /**
@@ -93,12 +93,20 @@ export class VizRepeater<V, D = {}> extends PureComponent<Props<V, D>, State<V>>
     let vizWidth = width;
 
     if (orientation === VizOrientation.Grid) {
-      const side = calculatePreferredSizeForChild(width, height, values.length, itemSpacing || 0);
+      const grid = calculateGridDimensions(width, height, values.length);
       repeaterStyle.flexDirection = 'row';
       repeaterStyle.flexWrap = 'wrap';
       repeaterStyle.justifyContent = 'center';
-      vizHeight = side;
-      vizWidth = side;
+      vizHeight = grid.height;
+      vizWidth = grid.width;
+
+      // itemStyles.outline = '1px solid red';
+      // if(grid.xCount > 1) {
+      //   itemStyles.marginRight = `${spacing}px`;
+      // }
+      // if(grid.yCount > 1) {
+      //   itemStyles.marginBottom = `${spacing}px`;
+      // }
     } else if (orientation === VizOrientation.Horizontal) {
       repeaterStyle.flexDirection = 'column';
       itemStyles.marginBottom = `${itemSpacing}px`;

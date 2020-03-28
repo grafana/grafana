@@ -6,21 +6,24 @@
  * @param parentWidth width of the parent container
  * @param parentHeight height of the parent container
  * @param numberOfChildren number of children that should fit in the parent container
- * @param childSpacing amount of spacing for each child
  */
-export const calculatePreferredSizeForChild = (
+export const calculateGridDimensions = (
   parentWidth: number,
   parentHeight: number,
   numberOfChildren: number,
-  childSpacing: number
-): number => {
-  const spacing = childSpacing * numberOfChildren;
-  const width = parentWidth - spacing;
+) => {
+  const vertical = calculateSizeOfChild(parentWidth, parentHeight, numberOfChildren);
+  const horizontal = calculateSizeOfChild(parentHeight, parentWidth, numberOfChildren);
+  const square = Math.max(vertical, horizontal);
+  const xCount = Math.floor(parentWidth / square);
+  const yCount = Math.ceil(numberOfChildren / xCount);
 
-  const vertical = calculateSizeOfChild(width, parentHeight, numberOfChildren);
-  const horizontal = calculateSizeOfChild(parentHeight, width, numberOfChildren);
-
-  return Math.max(vertical, horizontal);
+  return {
+    width: parentWidth/xCount,
+    height: parentHeight/yCount,
+    xCount,
+    yCount,
+  };
 };
 
 function calculateSizeOfChild(parentWidth: number, parentHeight: number, numberOfChildren: number): number {
