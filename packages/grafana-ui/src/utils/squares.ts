@@ -29,11 +29,11 @@ export const calculateGridDimensions = (
   }
 
   const itemsOnLastRow = xCount - (xCount * yCount - numberOfChildren);
-  const widthOnLastRow = parentWidth / itemsOnLastRow - itemSpacing / (itemsOnLastRow + 1);
+  const widthOnLastRow = parentWidth / itemsOnLastRow - itemSpacing + itemSpacing / itemsOnLastRow;
 
   return {
-    width: parentWidth / xCount - itemSpacing / (xCount + 1),
-    height: parentHeight / yCount - itemSpacing / (yCount + 1),
+    width: parentWidth / xCount - itemSpacing + itemSpacing / xCount,
+    height: parentHeight / yCount - itemSpacing + itemSpacing / yCount,
     widthOnLastRow,
     xCount,
     yCount,
