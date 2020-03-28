@@ -10,7 +10,7 @@ interface Props {
   classSuffix?: string;
   onClick?: () => void;
   href?: string;
-  children?: JSX.Element;
+  children?: React.ReactNode;
 }
 
 export const DashNavButton: FunctionComponent<Props> = ({ icon, tooltip, classSuffix, onClick, href, children }) => {

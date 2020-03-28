@@ -163,7 +163,7 @@ export const OptionsPaneContent: React.FC<{
                 />
                 <Tab label="General" active={activeTab === 'panel'} onChangeTab={() => setActiveTab('panel')} />
                 <div className="flex-grow-1" />
-                <div className={styles.tabsButtton}>
+                <div className={styles.tabsButton}>
                   <DashNavButton
                     icon="fa fa-search"
                     tooltip="Search all options"
@@ -171,7 +171,7 @@ export const OptionsPaneContent: React.FC<{
                     onClick={() => setSearchMode(true)}
                   />
                 </div>
-                <div className={styles.tabsButtton}>
+                <div className={styles.tabsButton}>
                   <DashNavButton
                     icon="fa fa-chevron-right"
                     tooltip="Close options pane"
