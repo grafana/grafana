@@ -200,9 +200,9 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
         </div>
         <div className={styles.toolbarLeft}>
           <div className={styles.toolbarItem}>
-            <Button className={styles.toolbarItem} variant="secondary" onClick={this.onDiscard}>
-              Discard
-            </Button>
+            <DashNavButton tooltip="Discard all changes and return to dashboard" onClick={this.onDiscard}>
+              Discard changes
+            </DashNavButton>
           </div>
           <div className={styles.toolbarItem}>
             <Forms.Select
