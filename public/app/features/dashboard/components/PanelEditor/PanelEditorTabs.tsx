@@ -71,7 +71,7 @@ const getPanelEditorTabsStyles = stylesFactory(() => {
       height: 100%;
     `,
     tabBar: css`
-      padding-left: ${theme.spacing.sm};
+      padding-left: ${theme.spacing.md};
     `,
     tabContent: css`
       padding: 0;
