@@ -11,7 +11,7 @@ import {
   MappingType,
   VizOrientation,
   PanelModel,
-  DataToSingleValueOptions,
+  ReduceDataOptions,
   ThresholdsMode,
   ThresholdsConfig,
   validateFieldConfig,
@@ -19,11 +19,11 @@ import {
 } from '@grafana/data';
 
 export interface SingleStatBaseOptions {
-  valueOptions: DataToSingleValueOptions;
+  reduceOptions: ReduceDataOptions;
   orientation: VizOrientation;
 }
 
-const optionsToKeep = ['valueOptions', 'orientation'];
+const optionsToKeep = ['reduceOptions', 'orientation'];
 
 export function sharedSingleStatPanelChangedHandler(
   panel: PanelModel<Partial<SingleStatBaseOptions>> | any,
@@ -188,7 +188,7 @@ export function sharedSingleStatMigrationHandler(panel: PanelModel<SingleStatBas
     };
 
     if (fieldOptions) {
-      options.valueOptions = {
+      options.reduceOptions = {
         values: fieldOptions.values,
         limit: fieldOptions.limit,
         calcs: fieldOptions.calcs,

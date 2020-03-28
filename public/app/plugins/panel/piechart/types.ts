@@ -11,5 +11,5 @@ export const defaults: PieChartOptions = {
   pieType: PieChartType.PIE,
   strokeWidth: 1,
   orientation: VizOrientation.Auto,
-  valueOptions: commonValueOptionDefaults,
+  reduceOptions: commonValueOptionDefaults,
 };

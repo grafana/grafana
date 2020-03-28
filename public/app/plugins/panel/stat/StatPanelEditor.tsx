@@ -15,7 +15,7 @@ import {
 
 import {
   PanelEditorProps,
-  DataToSingleValueOptions,
+  ReduceDataOptions,
   FieldConfig,
   ValueMapping,
   ThresholdsConfig,
@@ -53,10 +53,10 @@ export class StatPanelEditor extends PureComponent<PanelEditorProps<StatPanelOpt
     });
   };
 
-  onDisplayOptionsChanged = (fieldOptions: DataToSingleValueOptions) =>
+  onDisplayOptionsChanged = (fieldOptions: ReduceDataOptions) =>
     this.props.onOptionsChange({
       ...this.props.options,
-      valueOptions: fieldOptions,
+      reduceOptions: fieldOptions,
     });
 
   onColorModeChanged = ({ value }: any) => this.props.onOptionsChange({ ...this.props.options, colorMode: value });
@@ -84,7 +84,7 @@ export class StatPanelEditor extends PureComponent<PanelEditorProps<StatPanelOpt
 
   render() {
     const { options, fieldConfig } = this.props;
-    const { valueOptions } = options;
+    const { reduceOptions: valueOptions } = options;
     const { defaults } = fieldConfig;
 
     const suggestions = valueOptions.values

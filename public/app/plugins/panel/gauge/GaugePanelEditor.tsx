@@ -12,7 +12,7 @@ import {
 } from '@grafana/ui';
 import {
   PanelEditorProps,
-  DataToSingleValueOptions,
+  ReduceDataOptions,
   ThresholdsConfig,
   DataLink,
   FieldConfig,
@@ -39,14 +39,14 @@ export class GaugePanelEditor extends PureComponent<PanelEditorProps<GaugeOption
     });
 
   onDisplayOptionsChanged = (
-    fieldOptions: DataToSingleValueOptions,
+    fieldOptions: ReduceDataOptions,
     event?: React.SyntheticEvent<HTMLElement>,
     callback?: () => void
   ) => {
     this.props.onOptionsChange(
       {
         ...this.props.options,
-        valueOptions: fieldOptions,
+        reduceOptions: fieldOptions,
       },
       callback
     );
@@ -94,7 +94,7 @@ export class GaugePanelEditor extends PureComponent<PanelEditorProps<GaugeOption
 
   render() {
     const { options, fieldConfig } = this.props;
-    const { showThresholdLabels, showThresholdMarkers, valueOptions } = options;
+    const { showThresholdLabels, showThresholdMarkers, reduceOptions: valueOptions } = options;
 
     const { defaults } = fieldConfig;
 

@@ -22,7 +22,7 @@ import { getTimeField } from '../dataframe/processDataFrame';
 /**
  * Options for how to turn DataFrames into an array of display values
  */
-export interface DataToSingleValueOptions {
+export interface ReduceDataOptions {
   /* If true show each row value */
   values?: boolean;
   /** if showing all values limit */
@@ -81,7 +81,7 @@ export interface FieldDisplay {
 
 export interface GetFieldDisplayValuesOptions {
   data?: DataFrame[];
-  valueOptions: DataToSingleValueOptions;
+  reduceOptions: ReduceDataOptions;
   fieldConfig: FieldConfigSource;
   replaceVariables: InterpolateFunction;
   sparkline?: boolean; // Calculate the sparkline
@@ -92,8 +92,8 @@ export interface GetFieldDisplayValuesOptions {
 export const DEFAULT_FIELD_DISPLAY_VALUES_LIMIT = 25;
 
 export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): FieldDisplay[] => {
-  const { replaceVariables, valueOptions, fieldConfig } = options;
-  const calcs = valueOptions.calcs.length ? valueOptions.calcs : [ReducerID.last];
+  const { replaceVariables, reduceOptions, fieldConfig } = options;
+  const calcs = reduceOptions.calcs.length ? reduceOptions.calcs : [ReducerID.last];
 
   const values: FieldDisplay[] = [];
 
@@ -101,7 +101,7 @@ export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): Fi
     // Field overrides are applied already
     const data = options.data;
     let hitLimit = false;
-    const limit = valueOptions.limit ? valueOptions.limit : DEFAULT_FIELD_DISPLAY_VALUES_LIMIT;
+    const limit = reduceOptions.limit ? reduceOptions.limit : DEFAULT_FIELD_DISPLAY_VALUES_LIMIT;
     const defaultTitle = getTitleTemplate(fieldConfig.defaults.title, calcs, data);
     const scopedVars: ScopedVars = {};
 
@@ -129,7 +129,7 @@ export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): Fi
 
         const title = config.title ? config.title : defaultTitle;
         // Show all rows
-        if (valueOptions.values) {
+        if (reduceOptions.values) {
           const usesCellValues = title.indexOf(VAR_CELL_PREFIX) >= 0;
 
           for (let j = 0; j < field.values.length; j++) {

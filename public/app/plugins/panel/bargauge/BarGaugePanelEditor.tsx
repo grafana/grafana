@@ -16,7 +16,7 @@ import {
 import {
   DataLink,
   FieldConfig,
-  DataToSingleValueOptions,
+  ReduceDataOptions,
   PanelEditorProps,
   ThresholdsConfig,
   ValueMapping,
@@ -30,10 +30,10 @@ import {
 import { NewPanelEditorContext } from '../../../features/dashboard/components/PanelEditor/PanelEditor';
 
 export class BarGaugePanelEditor extends PureComponent<PanelEditorProps<BarGaugeOptions>> {
-  onDisplayOptionsChanged = (fieldOptions: DataToSingleValueOptions) =>
+  onDisplayOptionsChanged = (fieldOptions: ReduceDataOptions) =>
     this.props.onOptionsChange({
       ...this.props.options,
-      valueOptions: fieldOptions,
+      reduceOptions: fieldOptions,
     });
 
   onOrientationChange = ({ value }: any) => this.props.onOptionsChange({ ...this.props.options, orientation: value });
@@ -84,7 +84,7 @@ export class BarGaugePanelEditor extends PureComponent<PanelEditorProps<BarGauge
 
   render() {
     const { options, fieldConfig } = this.props;
-    const { valueOptions: fieldOptions } = options;
+    const { reduceOptions: fieldOptions } = options;
     const { defaults } = fieldConfig;
 
     const labelWidth = 6;

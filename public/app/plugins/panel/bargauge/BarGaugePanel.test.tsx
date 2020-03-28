@@ -65,7 +65,7 @@ function createBarGaugePanelWithData(data: PanelData): ReactWrapper<PanelProps<B
 
   const options: BarGaugeOptions = {
     displayMode: BarGaugeDisplayMode.Lcd,
-    valueOptions: {
+    reduceOptions: {
       calcs: ['mean'],
       values: false,
     },

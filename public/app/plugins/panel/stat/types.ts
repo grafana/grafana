@@ -2,7 +2,7 @@ import { SingleStatBaseOptions, BigValueColorMode, BigValueGraphMode, BigValueJu
 import {
   VizOrientation,
   ReducerID,
-  DataToSingleValueOptions,
+  ReduceDataOptions,
   SelectableValue,
   FieldConfigSource,
   ThresholdsMode,
@@ -32,7 +32,7 @@ export const justifyModes: Array<SelectableValue<BigValueJustifyMode>> = [
   { value: BigValueJustifyMode.Center, label: 'Center' },
 ];
 
-export const commonValueOptionDefaults: DataToSingleValueOptions = {
+export const commonValueOptionDefaults: ReduceDataOptions = {
   values: false,
   calcs: [ReducerID.mean],
 };
@@ -51,9 +51,9 @@ export const standardFieldConfig: FieldConfigSource = {
   overrides: [],
 };
 
-export function addStandardSingleValueOptions(builder: PanelOptionsEditorBuilder) {
+export function addStandardDataReduceOptions(builder: PanelOptionsEditorBuilder) {
   builder.addRadio({
-    id: 'valueOptions.values',
+    id: 'reduceOptions.values',
     name: 'Show',
     description: 'Calculate a single value per colum or series or show each row',
     settings: {
@@ -65,7 +65,7 @@ export function addStandardSingleValueOptions(builder: PanelOptionsEditorBuilder
   });
 
   builder.addNumberInput({
-    id: 'valueOptions.limit',
+    id: 'reduceOptions.limit',
     name: 'Limit',
     description: 'Max number of rows to display',
     settings: {
@@ -77,7 +77,7 @@ export function addStandardSingleValueOptions(builder: PanelOptionsEditorBuilder
   });
 
   builder.addCustomEditor({
-    id: 'valueOptions.calcs',
+    id: 'reduceOptions.calcs',
     name: 'Value',
     description: 'Choose a reducer function / calculation',
     editor: standardEditorsRegistry.get('stats-picker').editor as any,
@@ -101,6 +101,6 @@ export const defaults: StatPanelOptions = {
   graphMode: BigValueGraphMode.Area,
   colorMode: BigValueColorMode.Value,
   justifyMode: BigValueJustifyMode.Auto,
-  valueOptions: commonValueOptionDefaults,
+  reduceOptions: commonValueOptionDefaults,
   orientation: VizOrientation.Auto,
 };

@@ -26,7 +26,7 @@ describe('FieldDisplay', () => {
 
   it('show first numeric values', () => {
     const options = createDisplayOptions({
-      valueOptions: {
+      reduceOptions: {
         calcs: [ReducerID.first],
       },
       fieldConfig: {
@@ -42,7 +42,7 @@ describe('FieldDisplay', () => {
 
   it('show last numeric values', () => {
     const options = createDisplayOptions({
-      valueOptions: {
+      reduceOptions: {
         calcs: [ReducerID.last],
       },
     });
@@ -52,7 +52,7 @@ describe('FieldDisplay', () => {
 
   it('show all numeric values', () => {
     const options = createDisplayOptions({
-      valueOptions: {
+      reduceOptions: {
         values: true, //
         limit: 1000,
         calcs: [],
@@ -64,7 +64,7 @@ describe('FieldDisplay', () => {
 
   it('show 2 numeric values (limit)', () => {
     const options = createDisplayOptions({
-      valueOptions: {
+      reduceOptions: {
         values: true, //
         limit: 2,
         calcs: [],
@@ -173,7 +173,7 @@ describe('FieldDisplay', () => {
         },
       ];
       const options = createDisplayOptions({
-        valueOptions: {
+        reduceOptions: {
           calcs: [ReducerID.first],
         },
       });
@@ -198,7 +198,7 @@ describe('FieldDisplay', () => {
         },
       ];
       const options = createDisplayOptions({
-        valueOptions: {
+        reduceOptions: {
           calcs: [ReducerID.first],
           values: true,
         },
@@ -245,7 +245,7 @@ function createDisplayOptions(extend: Partial<GetFieldDisplayValuesOptions> = {}
     replaceVariables: (value: string) => {
       return value;
     },
-    valueOptions: {
+    reduceOptions: {
       calcs: [],
     },
     fieldConfig: {

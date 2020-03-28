@@ -1,6 +1,6 @@
 import { sharedSingleStatMigrationHandler, sharedSingleStatPanelChangedHandler } from '@grafana/ui';
 import { PanelPlugin } from '@grafana/data';
-import { StatPanelOptions, defaults, standardFieldConfig, addStandardSingleValueOptions } from './types';
+import { StatPanelOptions, defaults, standardFieldConfig, addStandardDataReduceOptions } from './types';
 import { StatPanel } from './StatPanel';
 import { StatPanelEditor } from './StatPanelEditor';
 
@@ -9,7 +9,7 @@ export const plugin = new PanelPlugin<StatPanelOptions>(StatPanel)
   .setFieldConfigDefaults(standardFieldConfig)
   .setEditor(StatPanelEditor)
   .setPanelOptions(builder => {
-    addStandardSingleValueOptions(builder);
+    addStandardDataReduceOptions(builder);
 
     builder
       .addRadio({

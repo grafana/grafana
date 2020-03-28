@@ -89,7 +89,7 @@ describe('BarGauge Panel Migrations', () => {
       Object {
         "displayMode": "lcd",
         "orientation": "vertical",
-        "valueOptions": Object {
+        "reduceOptions": Object {
           "calcs": Array [
             "mean",
           ],

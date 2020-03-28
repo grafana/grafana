@@ -16,6 +16,6 @@ export const displayModes: Array<SelectableValue<string>> = [
 export const defaults: BarGaugeOptions = {
   displayMode: BarGaugeDisplayMode.Lcd,
   orientation: VizOrientation.Horizontal,
-  valueOptions: commonValueOptionDefaults,
+  reduceOptions: commonValueOptionDefaults,
   showUnfilled: true,
 };

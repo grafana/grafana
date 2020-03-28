@@ -16,6 +16,6 @@ export const orientationOptions: Array<SelectableValue<VizOrientation>> = [
 export const defaults: GaugeOptions = {
   showThresholdMarkers: true,
   showThresholdLabels: false,
-  valueOptions: commonValueOptionDefaults,
+  reduceOptions: commonValueOptionDefaults,
   orientation: VizOrientation.Auto,
 };
