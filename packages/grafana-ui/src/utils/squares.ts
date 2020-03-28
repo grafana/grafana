@@ -18,15 +18,6 @@ export const calculateGridDimensions = (
   const square = Math.max(vertical, horizontal);
   let xCount = Math.floor(parentWidth / square);
   let yCount = Math.ceil(numberOfChildren / xCount);
-  const empty = xCount * yCount - numberOfChildren;
-
-  if (empty > 1) {
-    // Avoid this layout:
-    // [X][X][X]
-    //    [X]
-    yCount = Math.floor(parentHeight / square);
-    xCount = Math.ceil(numberOfChildren / yCount);
-  }
 
   const itemsOnLastRow = xCount - (xCount * yCount - numberOfChildren);
   const widthOnLastRow = parentWidth / itemsOnLastRow - itemSpacing + itemSpacing / itemsOnLastRow;
