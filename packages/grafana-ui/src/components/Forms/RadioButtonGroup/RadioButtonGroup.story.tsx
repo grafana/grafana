@@ -36,7 +36,7 @@ export const simple = () => {
       disabled={disabled}
       disabledOptions={[disabledItem]}
       value={selected}
-      onChange={setSelected}
+      onChange={v => setSelected(v!)}
       size={size}
     />
   );
@@ -63,7 +63,7 @@ export const fullWidth = () => {
         disabled={disabled}
         disabledOptions={[disabledItem]}
         value={selected}
-        onChange={setSelected}
+        onChange={v => setSelected(v!)}
         size={size}
         fullWidth
       />
