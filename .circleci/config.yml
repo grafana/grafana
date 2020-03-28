@@ -56,23 +56,18 @@ commands:
             echo $CHECKSUM google-cloud-sdk-${VERSION}-linux-x86_64.tar.gz | sha256sum --check --status
             tar xf google-cloud-sdk-${VERSION}-linux-x86_64.tar.gz
 
-jobs:
   install-grabpl:
-    description: Install the Grafana Build Pipeline tool
-    executor: base
+    description: "Install Grafana build pipeline tool"
     steps:
       - run:
-          name: Install Grafana Build Pipeline
+          name: "Install Grafana build pipeline tool"
           command: |
-            curl -fLO https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v0.2.8/grabpl
+            VERSION=0.2.8
+            curl -fLO https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v${VERSION}/grabpl
             chmod +x grabpl
-            mkdir bin
-            mv grabpl bin/
-      - persist_to_workspace:
-          root: .
-          paths:
-            - bin/grabpl
+            mv grabpl /tmp
 
+jobs:
   build-backend:
     description: "Build a certain variant of Grafana back-end binaries"
     parameters:
@@ -89,26 +84,25 @@ jobs:
               echo "Nothing to do for forked PRs, so marking this step successful"
               circleci step halt
             fi
-      - attach_workspace:
-          at: /tmp/workspace
       - checkout
       - run:
           name: CI job started
           command: ./scripts/ci-job-started.sh
+      - install-grabpl
       - run:
           name: Build Grafana backend
           command: |
             if [[ -n $CIRCLE_TAG ]]; then
               # A release build
-              /tmp/workspace/bin/grabpl build-backend --edition << parameters.edition >> \
+              /tmp/grabpl build-backend --edition << parameters.edition >> \
                 --variants << parameters.variant >> $CIRCLE_TAG
             elif [[ $CIRCLE_BRANCH == "chore/test-release-pipeline" ]]; then
               # We're testing the release pipeline
-              /tmp/workspace/bin/grabpl build-backend --edition << parameters.edition >> \
+              /tmp/grabpl build-backend --edition << parameters.edition >> \
                 --variants << parameters.variant >> v6.7.0-beta1
             else
               # A master or PR build
-              /tmp/workspace/bin/grabpl build-backend --edition << parameters.edition >> \
+              /tmp/grabpl build-backend --edition << parameters.edition >> \
                 --variants << parameters.variant >> --build-id $CIRCLE_WORKFLOW_ID
             fi
       - run:
@@ -142,8 +136,6 @@ jobs:
               echo "Nothing to do for forked PRs, so marking this step successful"
               circleci step halt
             fi
-      - attach_workspace:
-          at: /tmp/workspace
       - checkout
       - restore_cache:
           keys:
@@ -159,6 +151,7 @@ jobs:
       - run:
           name: CI job started
           command: ./scripts/ci-job-started.sh
+      - install-grabpl
       - run:
           name: Install dependencies
           command: yarn install --frozen-lockfile --no-progress
@@ -168,7 +161,7 @@ jobs:
             - node_modules
       - run:
           name: Build Grafana frontend
-          command: /tmp/workspace/bin/grabpl build-frontend --edition << parameters.edition >>
+          command: /tmp/grabpl build-frontend --edition << parameters.edition >>
       - run:
           name: Move artifacts
           command: mkdir << parameters.edition >> && cp -r public << parameters.edition >>/
@@ -215,12 +208,11 @@ jobs:
   shellcheck:
     executor: base
     steps:
-      - attach_workspace:
-          at: /tmp/workspace
       - checkout
       - run:
           name: CI job started
           command: ./scripts/ci-job-started.sh
+      - install-grabpl
       - run:
           name: Install ShellCheck
           command: |
@@ -228,7 +220,7 @@ jobs:
       - run:
           name: ShellCheck
           command: |
-            /tmp/workspace/bin/grabpl shellcheck
+            /tmp/grabpl shellcheck
       - run:
           name: CI job failed
           command: ./scripts/ci-job-failed.sh
@@ -241,8 +233,6 @@ jobs:
   build-oss-windows-installer:
     executor: windows-installer
     steps:
-      - attach_workspace:
-          at: /tmp/workspace
       - checkout
       - run:
           name: CI job started
@@ -289,8 +279,6 @@ jobs:
               echo "Nothing to do for forked PRs, so marking this step successful"
               circleci step halt
             fi
-      - attach_workspace:
-          at: /tmp/workspace
       - checkout
       - run:
           name: CI job started
@@ -337,8 +325,6 @@ jobs:
               echo "Nothing to do for forked PRs, so marking this step successful"
               circleci step halt
             fi
-      - attach_workspace:
-          at: /tmp/workspace
       - checkout
       - run:
           name: CI job started
@@ -370,6 +356,7 @@ jobs:
       - run:
           name: CI job started
           command: ./scripts/ci-job-started.sh
+      - install-grabpl
       - install-google-cloud-sdk
       - run:
           name: Copy artifacts from workspace
@@ -384,16 +371,16 @@ jobs:
 
             if [[ -n $CIRCLE_TAG ]]; then
               # A release build
-              /tmp/workspace/bin/grabpl package --jobs 2 --edition oss $CIRCLE_TAG
+              /tmp/grabpl package --jobs 2 --edition oss $CIRCLE_TAG
             elif [[ $CIRCLE_BRANCH == "chore/test-release-pipeline" ]]; then
               # We're testing the release pipeline
-              /tmp/workspace/bin/grabpl package --jobs 2 --edition oss v6.7.0-beta1
+              /tmp/grabpl package --jobs 2 --edition oss v6.7.0-beta1
             elif [[ $CIRCLE_BRANCH == "master" ]]; then
               # A master build
-              /tmp/workspace/bin/grabpl package --jobs 2 --edition oss --build-id $CIRCLE_WORKFLOW_ID
+              /tmp/grabpl package --jobs 2 --edition oss --build-id $CIRCLE_WORKFLOW_ID
             else
               # A PR build
-              /tmp/workspace/bin/grabpl package --jobs 2 --edition oss --build-id $CIRCLE_WORKFLOW_ID --variants \
+              /tmp/grabpl package --jobs 2 --edition oss --build-id $CIRCLE_WORKFLOW_ID --variants \
                 linux-x64,linux-x64-musl,osx64,win64
             fi
       - run:
@@ -431,6 +418,7 @@ jobs:
           name: CI job started
           command: ./scripts/ci-job-started.sh
       - install-google-cloud-sdk
+      - install-grabpl
       - run:
           name: Copy artifacts from workspace
           command: cp -r /tmp/workspace/enterprise/* .
@@ -439,16 +427,16 @@ jobs:
           command: |
             if [[ -n $CIRCLE_TAG ]]; then
               # A release build
-              /tmp/workspace/bin/grabpl package --jobs 2 --edition enterprise $CIRCLE_TAG
+              /tmp/grabpl package --jobs 2 --edition enterprise $CIRCLE_TAG
             elif [[ $CIRCLE_BRANCH == "chore/test-release-pipeline" ]]; then
               # We're testing the release pipeline
-              /tmp/workspace/bin/grabpl package --jobs 2 --edition enterprise v6.7.0-beta1
+              /tmp/grabpl package --jobs 2 --edition enterprise v6.7.0-beta1
             elif [[ $CIRCLE_BRANCH == "master" ]]; then
               # A master build
-              /tmp/workspace/bin/grabpl package --jobs 2 --edition enterprise --build-id $CIRCLE_WORKFLOW_ID
+              /tmp/grabpl package --jobs 2 --edition enterprise --build-id $CIRCLE_WORKFLOW_ID
             else
               # A PR build
-              /tmp/workspace/bin/grabpl package --jobs 2 --edition enterprise --build-id $CIRCLE_WORKFLOW_ID --variants \
+              /tmp/grabpl package --jobs 2 --edition enterprise --build-id $CIRCLE_WORKFLOW_ID --variants \
                 linux-x64,linux-x64-musl,osx64,win64
             fi
       - run:
@@ -476,6 +464,10 @@ jobs:
         type: string
     executor: grafana-publish
     steps:
+      # Have to attach the workspace, because grabpl publish-packages uses
+      # /tmp/workspace/scripts/build/release_publisher/release_publisher
+      - attach_workspace:
+          at: /tmp/workspace
       - run:
           name: Exit if forked PR
           command: |
@@ -483,13 +475,12 @@ jobs:
               echo "Nothing to do for forked PRs, so marking this step successful"
               circleci step halt
             fi
-      - attach_workspace:
-          at: /tmp/workspace
       - checkout
       - run:
           name: CI job started
           command: ./scripts/ci-job-started.sh
       - install-google-cloud-sdk
+      - install-grabpl
       - run:
           name: Download packages from GCS
           command: |
@@ -505,11 +496,11 @@ jobs:
           command: |
             if [[ $CIRCLE_BRANCH == "chore/test-release-pipeline" ]]; then
               # We're testing the release pipeline
-              /tmp/workspace/bin/grabpl publish-packages --edition << parameters.edition >> \
+              /tmp/grabpl publish-packages --edition << parameters.edition >> \
                 --deb-db-bucket grafana-testing-aptly-db --deb-repo-bucket grafana-testing-repo --packages-bucket \
                 grafana-downloads-test --rpm-repo-bucket grafana-testing-repo --simulate-release
             else
-              /tmp/workspace/bin/grabpl publish-packages --edition << parameters.edition >>
+              /tmp/grabpl publish-packages --edition << parameters.edition >>
             fi
       - run:
           name: CI job failed
@@ -577,14 +568,13 @@ jobs:
               echo "Nothing to do for forked PRs, so marking this step successful"
               circleci step halt
             fi
-      - attach_workspace:
-          at: /tmp/workspace
       - checkout
       - run:
           name: CI job started
           command: ./scripts/ci-job-started.sh
       - setup_remote_docker
       - install-google-cloud-sdk
+      - install-grabpl
       - run:
           name: Download packages from GCS
           command: |
@@ -602,11 +592,11 @@ jobs:
           command: |
             if [[ -n $CIRCLE_TAG || $CIRCLE_BRANCH == "chore/test-release-pipeline" || $CIRCLE_BRANCH == "master" ]]; then
               # It's a full build
-              /tmp/workspace/bin/grabpl build-docker --jobs 4 --edition << parameters.edition >> \
+              /tmp/grabpl build-docker --jobs 4 --edition << parameters.edition >> \
                 --ubuntu=<< parameters.ubuntu >>
             else
               # We're testing a branch
-              /tmp/workspace/bin/grabpl build-docker --jobs 4 --edition << parameters.edition >> \
+              /tmp/grabpl build-docker --jobs 4 --edition << parameters.edition >> \
                 --ubuntu=<< parameters.ubuntu >> --archs amd64
             fi
       - run:
@@ -621,9 +611,9 @@ jobs:
           command: |
             if [[ $CIRCLE_BRANCH == "chore/test-release-pipeline" ]]; then
               # We're testing the release pipeline
-              /tmp/workspace/bin/grabpl publish-docker --jobs 4 --edition << parameters.edition >> --ubuntu=<< parameters.ubuntu >> --dry-run
+              /tmp/grabpl publish-docker --jobs 4 --edition << parameters.edition >> --ubuntu=<< parameters.ubuntu >> --dry-run
             else
-              /tmp/workspace/bin/grabpl publish-docker --jobs 4 --edition << parameters.edition >> --ubuntu=<< parameters.ubuntu >>
+              /tmp/grabpl publish-docker --jobs 4 --edition << parameters.edition >> --ubuntu=<< parameters.ubuntu >>
             fi
       - run:
           name: CI job failed
@@ -638,8 +628,6 @@ jobs:
     docker:
       - image: circleci/node:12-browsers
     steps:
-      - attach_workspace:
-          at: /tmp/workspace
       - checkout
       - install-google-cloud-sdk
       - run:
@@ -882,12 +870,11 @@ jobs:
     description: "Deploy Grafana master Docker image to Kubernetes"
     executor: base
     steps:
-      - attach_workspace:
-          at: /tmp/workspace
+      - install-grabpl
       - run:
           name: Deploy to Kubernetes
           command: |
-            /tmp/workspace/bin/grabpl deploy-to-k8s $CIRCLE_WORKFLOW_ID
+            /tmp/grabpl deploy-to-k8s $CIRCLE_WORKFLOW_ID
 
   release-packages:
     executor: node
@@ -958,14 +945,12 @@ workflows:
   build-pipeline:
     jobs:
       # No filters, meaning this job runs for all branches
-      - install-grabpl
       - build-backend:
           filters: *filter-master-or-release
           edition: oss
           variant: armv6
           name: build-oss-backend-armv6
           requires:
-            - install-grabpl
             - test-backend
             - test-frontend
       - build-backend:
@@ -974,7 +959,6 @@ workflows:
           variant: armv7
           name: build-oss-backend-armv7
           requires:
-            - install-grabpl
             - test-backend
             - test-frontend
       - build-backend:
@@ -983,7 +967,6 @@ workflows:
           variant: armv7-musl
           name: build-oss-backend-armv7-musl
           requires:
-            - install-grabpl
             - test-backend
             - test-frontend
       - build-backend:
@@ -992,7 +975,6 @@ workflows:
           variant: arm64
           name: build-oss-backend-arm64
           requires:
-            - install-grabpl
             - test-backend
             - test-frontend
       - build-backend:
@@ -1001,7 +983,6 @@ workflows:
           variant: arm64-musl
           name: build-oss-backend-arm64-musl
           requires:
-            - install-grabpl
             - test-backend
             - test-frontend
       - build-backend:
@@ -1010,7 +991,6 @@ workflows:
           variant: osx64
           name: build-oss-backend-osx64
           requires:
-            - install-grabpl
             - test-backend
             - test-frontend
       - build-backend:
@@ -1019,7 +999,6 @@ workflows:
           variant: win64
           name: build-oss-backend-win64
           requires:
-            - install-grabpl
             - test-backend
             - test-frontend
       - build-backend:
@@ -1028,7 +1007,6 @@ workflows:
           variant: linux-x64
           name: build-oss-backend-linux-x64
           requires:
-            - install-grabpl
             - test-backend
             - test-frontend
       - build-backend:
@@ -1037,7 +1015,6 @@ workflows:
           variant: linux-x64-musl
           name: build-oss-backend-linux-x64-musl
           requires:
-            - install-grabpl
             - test-backend
             - test-frontend
       - build-frontend:
@@ -1045,7 +1022,6 @@ workflows:
           name: build-oss-frontend
           edition: oss
           requires:
-            - install-grabpl
             - test-backend
             - test-frontend
       - build-backend:
@@ -1054,7 +1030,6 @@ workflows:
           edition: enterprise
           variant: armv6
           requires:
-            - install-grabpl
             - test-backend
             - test-frontend
       - build-backend:
@@ -1063,7 +1038,6 @@ workflows:
           edition: enterprise
           variant: armv7
           requires:
-            - install-grabpl
             - test-backend
             - test-frontend
       - build-backend:
@@ -1072,7 +1046,6 @@ workflows:
           edition: enterprise
           variant: armv7-musl
           requires:
-            - install-grabpl
             - test-backend
             - test-frontend
       - build-backend:
@@ -1081,7 +1054,6 @@ workflows:
           edition: enterprise
           variant: arm64
           requires:
-            - install-grabpl
             - test-backend
             - test-frontend
       - build-backend:
@@ -1090,7 +1062,6 @@ workflows:
           edition: enterprise
           variant: arm64-musl
           requires:
-            - install-grabpl
             - test-backend
             - test-frontend
       - build-backend:
@@ -1099,7 +1070,6 @@ workflows:
           edition: enterprise
           variant: osx64
           requires:
-            - install-grabpl
             - test-backend
             - test-frontend
       - build-backend:
@@ -1108,7 +1078,6 @@ workflows:
           edition: enterprise
           variant: win64
           requires:
-            - install-grabpl
             - test-backend
             - test-frontend
       - build-backend:
@@ -1117,7 +1086,6 @@ workflows:
           edition: enterprise
           variant: linux-x64
           requires:
-            - install-grabpl
             - test-backend
             - test-frontend
       - build-backend:
@@ -1126,7 +1094,6 @@ workflows:
           edition: enterprise
           variant: linux-x64-musl
           requires:
-            - install-grabpl
             - test-backend
             - test-frontend
       - build-frontend:
@@ -1134,50 +1101,37 @@ workflows:
           name: build-enterprise-frontend
           edition: enterprise
           requires:
-            - install-grabpl
             - test-backend
             - test-frontend
       - build-release-publisher:
           filters: *filter-master-or-release
-      - codespell:
-          # No filters, meaning this job runs for all branches
-          requires:
-            - install-grabpl
-      - lint-go:
-          # No filters, meaning this job runs for all branches
-          requires:
-            - install-grabpl
-      - shellcheck:
-          # No filters, meaning this job runs for all branches
-          requires:
-            - install-grabpl
+      # No filters, meaning this job runs for all branches
+      - codespell
+      # No filters, meaning this job runs for all branches
+      - lint-go
+      # No filters, meaning this job runs for all branches
+      - shellcheck
+      # No filters, meaning this job runs for all branches
       - test-backend:
-          # No filters, meaning this job runs for all branches
           requires:
-            - install-grabpl
             - lint-go
-      - test-frontend:
-          # No filters, meaning this job runs for all branches
-          requires:
-            - install-grabpl
+      # No filters, meaning this job runs for all branches
+      - test-frontend
+      # No filters, meaning this job runs for all branches
       - mysql-integration-test:
-          # No filters, meaning this job runs for all branches
           requires:
-            - install-grabpl
             - lint-go
             - test-backend
             - test-frontend
       - postgres-integration-test:
           # No filters, meaning this job runs for all branches
           requires:
-            - install-grabpl
             - lint-go
             - test-backend
             - test-frontend
       - package-oss:
           # No filters, meaning this job runs for all branches
           requires:
-            - install-grabpl
             - build-oss-backend-armv6
             - build-oss-backend-armv7
             - build-oss-backend-armv7-musl
@@ -1195,7 +1149,6 @@ workflows:
       - package-enterprise:
           # No filters, meaning this job runs for all branches
           requires:
-            - install-grabpl
             - build-enterprise-backend-armv6
             - build-enterprise-backend-armv7
             - build-enterprise-backend-armv7-musl
