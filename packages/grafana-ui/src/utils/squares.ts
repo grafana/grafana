@@ -7,11 +7,7 @@
  * @param parentHeight height of the parent container
  * @param numberOfChildren number of children that should fit in the parent container
  */
-export const calculateGridDimensions = (
-  parentWidth: number,
-  parentHeight: number,
-  numberOfChildren: number,
-) => {
+export const calculateGridDimensions = (parentWidth: number, parentHeight: number, numberOfChildren: number) => {
   const vertical = calculateSizeOfChild(parentWidth, parentHeight, numberOfChildren);
   const horizontal = calculateSizeOfChild(parentHeight, parentWidth, numberOfChildren);
   const square = Math.max(vertical, horizontal);
@@ -19,8 +15,8 @@ export const calculateGridDimensions = (
   const yCount = Math.ceil(numberOfChildren / xCount);
 
   return {
-    width: parentWidth/xCount,
-    height: parentHeight/yCount,
+    width: parentWidth / xCount,
+    height: parentHeight / yCount,
     xCount,
     yCount,
   };
