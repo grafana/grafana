@@ -1,22 +1,43 @@
 import React, { useCallback, useState } from 'react';
 import { FieldConfigSource, GrafanaTheme, PanelData, PanelPlugin } from '@grafana/data';
 import { DashboardModel, PanelModel } from '../../state';
-import { CustomScrollbar, stylesFactory, Tab, TabContent, TabsBar, useTheme, Container } from '@grafana/ui';
+import {
+  CustomScrollbar,
+  stylesFactory,
+  Tab,
+  TabContent,
+  TabsBar,
+  useTheme,
+  Container,
+  Forms,
+  Icon,
+} from '@grafana/ui';
 import { DefaultFieldConfigEditor, OverrideFieldConfigEditor } from './FieldConfigEditor';
 import { AngularPanelOptions } from './AngularPanelOptions';
 import { css } from 'emotion';
 import { GeneralPanelOptions } from './GeneralPanelOptions';
 import { PanelOptionsEditor } from './PanelOptionsEditor';
+import { DashNavButton } from 'app/features/dashboard/components/DashNav/DashNavButton';
 
 export const OptionsPaneContent: React.FC<{
   plugin?: PanelPlugin;
   panel: PanelModel;
   data: PanelData;
   dashboard: DashboardModel;
+  onClose: () => void;
   onFieldConfigsChange: (config: FieldConfigSource) => void;
   onPanelOptionsChanged: (options: any) => void;
   onPanelConfigChange: (configKey: string, value: any) => void;
-}> = ({ plugin, panel, data, onFieldConfigsChange, onPanelOptionsChanged, onPanelConfigChange, dashboard }) => {
+}> = ({
+  plugin,
+  panel,
+  data,
+  onFieldConfigsChange,
+  onPanelOptionsChanged,
+  onPanelConfigChange,
+  onClose,
+  dashboard,
+}) => {
   const theme = useTheme();
   const styles = getStyles(theme);
 
@@ -106,15 +127,60 @@ export const OptionsPaneContent: React.FC<{
   );
 
   const [activeTab, setActiveTab] = useState('defaults');
+  const [isSearching, setSearchMode] = useState(false);
 
   return (
     <div className={styles.panelOptionsPane}>
       {plugin && (
         <div className={styles.wrapper}>
-          <TabsBar>
-            <Tab label="Options" active={activeTab === 'defaults'} onChangeTab={() => setActiveTab('defaults')} />
-            <Tab label="Overrides" active={activeTab === 'overrides'} onChangeTab={() => setActiveTab('overrides')} />
-            <Tab label="General" active={activeTab === 'panel'} onChangeTab={() => setActiveTab('panel')} />
+          <TabsBar className={styles.tabsBar}>
+            {isSearching && (
+              <>
+                <Tab
+                  label="All options"
+                  active={activeTab === 'defaults'}
+                  onChangeTab={() => setActiveTab('defaults')}
+                />
+                <Forms.Input
+                  className={styles.searchInput}
+                  type="text"
+                  prefix={<Icon name="search" />}
+                  ref={elem => elem && elem.focus()}
+                  placeholder="Search all options"
+                  suffix={
+                    <Icon name="remove" onClick={() => setSearchMode(false)} className={styles.searchRemoveIcon} />
+                  }
+                />
+              </>
+            )}
+            {!isSearching && (
+              <>
+                <Tab label="Options" active={activeTab === 'defaults'} onChangeTab={() => setActiveTab('defaults')} />
+                <Tab
+                  label="Overrides"
+                  active={activeTab === 'overrides'}
+                  onChangeTab={() => setActiveTab('overrides')}
+                />
+                <Tab label="General" active={activeTab === 'panel'} onChangeTab={() => setActiveTab('panel')} />
+                <div className="flex-grow-1" />
+                <div className={styles.tabsButtton}>
+                  <DashNavButton
+                    icon="fa fa-search"
+                    tooltip="Search all options"
+                    classSuffix="search-options"
+                    onClick={() => setSearchMode(true)}
+                  />
+                </div>
+                <div className={styles.tabsButtton}>
+                  <DashNavButton
+                    icon="fa fa-chevron-right"
+                    tooltip="Close options pane"
+                    classSuffix="close-options"
+                    onClick={onClose}
+                  />
+                </div>
+              </>
+            )}
           </TabsBar>
           <TabContent className={styles.tabContent}>
             <CustomScrollbar>
@@ -135,11 +201,22 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       display: flex;
       flex-direction: column;
       height: 100%;
+      padding-top: ${theme.spacing.sm};
     `,
     panelOptionsPane: css`
       height: 100%;
       width: 100%;
       border-bottom: none;
+    `,
+    tabsBar: css`
+      padding-right: ${theme.spacing.sm};
+    `,
+    searchInput: css`
+      color: ${theme.colors.textWeak};
+      flex-grow: 1;
+    `,
+    searchRemoveIcon: css`
+      cursor: pointer;
     `,
     tabContent: css`
       padding: 0;
@@ -150,6 +227,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       background: ${theme.colors.pageBg};
       border-left: 1px solid ${theme.colors.pageHeaderBorder};
     `,
+    tabsButton: css``,
     legacyOptions: css`
       label: legacy-options;
       .panel-options-grid {

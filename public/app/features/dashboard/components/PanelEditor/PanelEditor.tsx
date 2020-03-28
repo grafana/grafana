@@ -217,11 +217,12 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
           {!uiState.isPanelOptionsVisible && (
             <div className={styles.toolbarItem}>
               <DashNavButton
-                icon="fa fa-chevron-left"
                 onClick={this.onTogglePanelOptions}
                 tooltip="Open options pane"
                 classSuffix="close-options"
-              />
+              >
+                <Icon name="chevron-left" /> <span style={{ paddingLeft: '6px' }}>Show options</span>
+              </DashNavButton>
             </div>
           )}
         </div>
@@ -237,32 +238,16 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
     }
 
     return (
-      <div className={styles.optionsPaneWrapper}>
-        <div className={styles.optionsPaneToolbar}>
-          <div className={styles.toolbarItem} style={{ flexGrow: 1 }}>
-            <Forms.Input prefix={<Icon name="search" />} type="text" placeholder="Search options" />
-          </div>
-          <div className={styles.toolbarItem}>
-            <DashNavButton
-              icon="fa fa-chevron-right"
-              onClick={this.onTogglePanelOptions}
-              tooltip="Close options pane"
-              classSuffix="close-options"
-            />
-          </div>
-        </div>
-        <div className={styles.optionsPaneBody}>
-          <OptionsPaneContent
-            plugin={plugin}
-            dashboard={dashboard}
-            data={data}
-            panel={panel}
-            onFieldConfigsChange={this.onFieldConfigChange}
-            onPanelOptionsChanged={this.onPanelOptionsChanged}
-            onPanelConfigChange={this.onPanelConfigChanged}
-          />
-        </div>
-      </div>
+      <OptionsPaneContent
+        plugin={plugin}
+        dashboard={dashboard}
+        data={data}
+        panel={panel}
+        onClose={this.onTogglePanelOptions}
+        onFieldConfigsChange={this.onFieldConfigChange}
+        onPanelOptionsChanged={this.onPanelOptionsChanged}
+        onPanelConfigChange={this.onPanelConfigChanged}
+      />
     );
   }
 
@@ -366,13 +351,13 @@ const getStyles = stylesFactory((theme: GrafanaTheme, props: Props) => {
       background: ${theme.colors.bodyBg};
       display: flex;
       flex-direction: column;
-      padding-right: ${uiState.isPanelOptionsVisible ? 0 : paneSpaceing};
     `,
     mainPaneWrapper: css`
       display: flex;
       flex-direction: column;
       height: 100%;
       width: 100%;
+      padding-right: ${uiState.isPanelOptionsVisible ? 0 : paneSpaceing};
     `,
     panelWrapper: css`
       flex: 1 1 0;
@@ -420,20 +405,6 @@ const getStyles = stylesFactory((theme: GrafanaTheme, props: Props) => {
       &:last-child {
         margin-right: 0;
       }
-    `,
-    optionsPaneWrapper: css`
-      display: flex;
-      flex-direction: column;
-    `,
-    optionsPaneToolbar: css`
-      display: flex;
-      padding: ${theme.spacing.sm} ${theme.spacing.sm} ${theme.spacing.sm} 0;
-      color: ${theme.colors.textWeak};
-    `,
-    optionsPaneBody: css`
-      flex: 1 1 0;
-      min-height: 0;
-      width: 100%;
     `,
     centeringContainer: css`
       display: flex;
