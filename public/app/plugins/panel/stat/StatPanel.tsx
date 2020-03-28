@@ -42,7 +42,7 @@ export class StatPanel extends PureComponent<PanelProps<StatPanelOptions>> {
         yMax: value.field.max,
       };
 
-      const calc = options.fieldOptions.calcs[0];
+      const calc = options.reduceOptions.calcs[0];
       if (calc === ReducerID.last) {
         sparkline.highlightIndex = sparkline.data.length - 1;
       }
@@ -76,7 +76,7 @@ export class StatPanel extends PureComponent<PanelProps<StatPanelOptions>> {
 
     return getFieldDisplayValues({
       fieldConfig,
-      fieldOptions: options.fieldOptions,
+      reduceOptions: options.reduceOptions,
       replaceVariables,
       theme: config.theme,
       data: data.series,
