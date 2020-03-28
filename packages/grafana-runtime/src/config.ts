@@ -16,6 +16,7 @@ interface FeatureToggles {
   transformations: boolean;
   expressions: boolean;
   newEdit: boolean;
+  meta: boolean; // enterprise
   newVariables: boolean;
   tracingIntegration: boolean;
 }
@@ -67,6 +68,7 @@ export class GrafanaBootConfig {
     transformations: false,
     expressions: false,
     newEdit: false,
+    meta: false,
     newVariables: false,
     tracingIntegration: false,
   };
