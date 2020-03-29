@@ -330,6 +330,14 @@ export class PanelChrome extends PureComponent<Props, State> {
       'panel-container--no-title': this.hasOverlayHeader(),
     });
 
+    if (data.request) {
+      if (!panel.scopedVars) {
+        panel.scopedVars = {};
+      }
+      panel.scopedVars.__interval = data.request.scopedVars.__interval;
+      panel.scopedVars.__interval_ms = data.request.scopedVars.__interval_ms;
+    }
+
     return (
       <div className={containerClassNames}>
         <PanelHeader

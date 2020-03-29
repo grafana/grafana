@@ -235,6 +235,14 @@ export class PanelChromeAngularUnconnected extends PureComponent<Props, State> {
       'panel-content--no-padding': plugin.noPadding,
     });
 
+    if (data.request) {
+      if (!panel.scopedVars) {
+        panel.scopedVars = {};
+      }
+      panel.scopedVars.__interval = data.request.scopedVars.__interval;
+      panel.scopedVars.__interval_ms = data.request.scopedVars.__interval_ms;
+    }
+
     return (
       <div className={containerClassNames}>
         <PanelHeader
