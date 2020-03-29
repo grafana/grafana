@@ -136,11 +136,7 @@ export const OptionsPaneContent: React.FC<{
           <TabsBar className={styles.tabsBar}>
             {isSearching && (
               <>
-                <Tab
-                  label="All options"
-                  active={activeTab === 'defaults'}
-                  onChangeTab={() => setActiveTab('defaults')}
-                />
+                <Tab label="Options" active={activeTab === 'defaults'} onChangeTab={() => setActiveTab('defaults')} />
                 <Forms.Input
                   className={styles.searchInput}
                   type="text"
