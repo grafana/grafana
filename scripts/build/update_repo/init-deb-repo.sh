@@ -11,5 +11,5 @@ mkdir -p /deb-repo/db   \
 aptly repo create -distribution=stable -component=main grafana
 aptly repo create -distribution=beta -component=main beta
 
-aptly publish repo -architectures=amd64,i386,arm64,armhf grafana filesystem:repo:grafana
-aptly publish repo -architectures=amd64,i386,arm64,armhf beta filesystem:repo:grafana
+aptly publish repo -architectures=amd64,i386,arm64,armhf,ppc64le grafana filesystem:repo:grafana
+aptly publish repo -architectures=amd64,i386,arm64,armhf,ppc64le beta filesystem:repo:grafana

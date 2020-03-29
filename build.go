@@ -174,15 +174,17 @@ func makeLatestDistCopies() {
 	}
 
 	latestMapping := map[string]string{
-		"_amd64.deb":               "dist/grafana_latest_amd64.deb",
-		".x86_64.rpm":              "dist/grafana-latest-1.x86_64.rpm",
-		".linux-amd64.tar.gz":      "dist/grafana-latest.linux-x64.tar.gz",
-		".linux-amd64-musl.tar.gz": "dist/grafana-latest.linux-x64-musl.tar.gz",
-		".linux-armv7.tar.gz":      "dist/grafana-latest.linux-armv7.tar.gz",
-		".linux-armv7-musl.tar.gz": "dist/grafana-latest.linux-armv7-musl.tar.gz",
-		".linux-armv6.tar.gz":      "dist/grafana-latest.linux-armv6.tar.gz",
-		".linux-arm64.tar.gz":      "dist/grafana-latest.linux-arm64.tar.gz",
-		".linux-arm64-musl.tar.gz": "dist/grafana-latest.linux-arm64-musl.tar.gz",
+		"_amd64.deb":                 "dist/grafana_latest_amd64.deb",
+		".x86_64.rpm":                "dist/grafana-latest-1.x86_64.rpm",
+		".linux-amd64.tar.gz":        "dist/grafana-latest.linux-x64.tar.gz",
+		".linux-amd64-musl.tar.gz":   "dist/grafana-latest.linux-x64-musl.tar.gz",
+		".linux-armv7.tar.gz":        "dist/grafana-latest.linux-armv7.tar.gz",
+		".linux-armv7-musl.tar.gz":   "dist/grafana-latest.linux-armv7-musl.tar.gz",
+		".linux-armv6.tar.gz":        "dist/grafana-latest.linux-armv6.tar.gz",
+		".linux-arm64.tar.gz":        "dist/grafana-latest.linux-arm64.tar.gz",
+		".linux-arm64-musl.tar.gz":   "dist/grafana-latest.linux-arm64-musl.tar.gz",
+		".linux-ppc64le.tar.gz":      "dist/grafana-latest.linux-ppc64le.tar.gz",
+		".linux-ppc64le-musl.tar.gz": "dist/grafana-latest.linux-ppc64le-musl.tar.gz",
 	}
 
 	for _, file := range files {

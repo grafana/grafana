@@ -125,6 +125,21 @@ var completeBuildArtifactConfigurations = []buildArtifact{
 	},
 	{
 		os:         "deb",
+		arch:       "ppc64le",
+		urlPostfix: "_ppc64el.deb",
+	},
+	{
+		os:         "rhel",
+		arch:       "ppc64le",
+		urlPostfix: ".ppc64le.rpm",
+	},
+	{
+		os:         "linux",
+		arch:       "ppc64le",
+		urlPostfix: ".linux-ppc64le.tar.gz",
+	},
+	{
+		os:         "deb",
 		arch:       "armv7",
 		urlPostfix: "_armhf.deb",
 	},

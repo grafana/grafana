@@ -18,6 +18,8 @@ CCARMV7=arm-linux-gnueabihf-gcc
 CCARMV7_MUSL=/tmp/arm-linux-musleabihf-cross/bin/arm-linux-musleabihf-gcc
 CCARM64=aarch64-linux-gnu-gcc
 CCARM64_MUSL=/tmp/aarch64-linux-musl-cross/bin/aarch64-linux-musl-gcc
+CCPPC64LE=powerpc64le-linux-gnu-gcc
+CCPPC64LE_MUSL=/tmp/powerpc64le-linux-musl-cross/bin/powerpc64le-linux-musl-gcc
 CCOSX64=/tmp/osxcross/target/bin/o64-clang
 CCWIN64=x86_64-w64-mingw32-gcc
 CCX64=/tmp/x86_64-centos6-linux-gnu/bin/x86_64-centos6-linux-gnu-gcc
@@ -50,8 +52,10 @@ echo "current dir: $(pwd)"
 go run build.go -goarch armv6 -cc ${CCARMV6} ${OPT} build
 go run build.go -goarch armv7 -cc ${CCARMV7} ${OPT} build
 go run build.go -goarch arm64 -cc ${CCARM64} ${OPT} build
+go run build.go -goarch ppc64le -cc ${CCPPC64LE} ${OPT} build
 go run build.go -goarch armv7 -libc musl -cc ${CCARMV7_MUSL} ${OPT} build
 go run build.go -goarch arm64 -libc musl -cc ${CCARM64_MUSL} ${OPT} build
+go run build.go -goarch ppc64le -libc musl -cc ${CCPPC64LE_MUSL} ${OPT} build
 go run build.go -goos darwin -cc ${CCOSX64} ${OPT} build
 
 
@@ -96,8 +100,10 @@ rm tools/phantomjs/phantomjs
 go run build.go -goos linux -pkg-arch armv6 ${OPT} -skipRpm package-only
 go run build.go -goos linux -pkg-arch armv7 ${OPT} package-only
 go run build.go -goos linux -pkg-arch arm64 ${OPT} package-only
+go run build.go -goos linux -pkg-arch ppc64le ${OPT} package-only
 go run build.go -goos linux -pkg-arch armv7 -libc musl ${OPT} -skipRpm -skipDeb package-only
 go run build.go -goos linux -pkg-arch arm64 -libc musl ${OPT} -skipRpm -skipDeb package-only
+go run build.go -goos linux -pkg-arch ppc64le -libc musl ${OPT} -skipRpm -skipDeb package-only
 
 if [ -d '/tmp/phantomjs/darwin' ]; then
   cp /tmp/phantomjs/darwin/phantomjs tools/phantomjs/phantomjs

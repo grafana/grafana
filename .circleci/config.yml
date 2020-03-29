@@ -986,6 +986,22 @@ workflows:
             - test-backend
             - test-frontend
       - build-backend:
+          filters: *filter-master-or-release
+          edition: oss
+          variant: ppc64le
+          name: build-oss-backend-ppc64le
+          requires:
+            - test-backend
+            - test-frontend
+      - build-backend:
+          filters: *filter-master-or-release
+          edition: oss
+          variant: ppc64le-musl
+          name: build-oss-backend-ppc64le-musl
+          requires:
+            - test-backend
+            - test-frontend
+      - build-backend:
           # No filters, meaning this job runs for all branches
           edition: oss
           variant: osx64
@@ -1065,6 +1081,22 @@ workflows:
             - test-backend
             - test-frontend
       - build-backend:
+          filters: *filter-master-or-release
+          name: build-enterprise-backend-ppc64le
+          edition: enterprise
+          variant: ppc64le
+          requires:
+            - test-backend
+            - test-frontend
+      - build-backend:
+          filters: *filter-master-or-release
+          name: build-enterprise-backend-ppc64le-musl
+          edition: enterprise
+          variant: ppc64le-musl
+          requires:
+            - test-backend
+            - test-frontend
+      - build-backend:
           # No filters, meaning this job runs for all branches
           name: build-enterprise-backend-osx64
           edition: enterprise
@@ -1137,6 +1169,8 @@ workflows:
             - build-oss-backend-armv7-musl
             - build-oss-backend-arm64
             - build-oss-backend-arm64-musl
+            - build-oss-backend-ppc64le
+            - build-oss-backend-ppc64le-musl
             - build-oss-backend-osx64
             - build-oss-backend-win64
             - build-oss-backend-linux-x64
@@ -1154,6 +1188,8 @@ workflows:
             - build-enterprise-backend-armv7-musl
             - build-enterprise-backend-arm64
             - build-enterprise-backend-arm64-musl
+            - build-enterprise-backend-ppc64le
+            - build-enterprise-backend-ppc64le-musl
             - build-enterprise-backend-osx64
             - build-enterprise-backend-win64
             - build-enterprise-backend-linux-x64
