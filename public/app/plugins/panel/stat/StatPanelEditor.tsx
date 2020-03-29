@@ -15,7 +15,7 @@ import {
 
 import {
   PanelEditorProps,
-  FieldDisplayOptions,
+  ReduceDataOptions,
   FieldConfig,
   ValueMapping,
   ThresholdsConfig,
@@ -53,10 +53,10 @@ export class StatPanelEditor extends PureComponent<PanelEditorProps<StatPanelOpt
     });
   };
 
-  onDisplayOptionsChanged = (fieldOptions: FieldDisplayOptions) =>
+  onDisplayOptionsChanged = (fieldOptions: ReduceDataOptions) =>
     this.props.onOptionsChange({
       ...this.props.options,
-      fieldOptions,
+      reduceOptions: fieldOptions,
     });
 
   onColorModeChanged = ({ value }: any) => this.props.onOptionsChange({ ...this.props.options, colorMode: value });
@@ -84,21 +84,25 @@ export class StatPanelEditor extends PureComponent<PanelEditorProps<StatPanelOpt
 
   render() {
     const { options, fieldConfig } = this.props;
-    const { fieldOptions } = options;
+    const { reduceOptions: valueOptions } = options;
     const { defaults } = fieldConfig;
 
-    const suggestions = fieldOptions.values
+    const suggestions = valueOptions.values
       ? getDataLinksVariableSuggestions(this.props.data.series)
       : getCalculationValueDataLinksVariableSuggestions(this.props.data.series);
 
     return (
       <NewPanelEditorContext.Consumer>
         {useNewEditor => {
+          if (useNewEditor) {
+            return null;
+          }
+
           return (
             <>
               <PanelOptionsGrid>
                 <PanelOptionsGroup title="Display">
-                  <FieldDisplayEditor onChange={this.onDisplayOptionsChanged} value={fieldOptions} labelWidth={8} />
+                  <FieldDisplayEditor onChange={this.onDisplayOptionsChanged} value={valueOptions} labelWidth={8} />
                   <div className="form-field">
                     <FormLabel width={8}>Orientation</FormLabel>
                     <Select
@@ -140,36 +144,28 @@ export class StatPanelEditor extends PureComponent<PanelEditorProps<StatPanelOpt
                     />
                   </div>
                 </PanelOptionsGroup>
-                <>
-                  {!useNewEditor && (
-                    <>
-                      <PanelOptionsGroup title="Field">
-                        <FieldPropertiesEditor
-                          showMinMax={true}
-                          onChange={this.onDefaultsChange}
-                          value={defaults}
-                          showTitle={true}
-                        />
-                      </PanelOptionsGroup>
-                      <ThresholdsEditor onChange={this.onThresholdsChanged} thresholds={defaults.thresholds} />
-                    </>
-                  )}
-                </>
-              </PanelOptionsGrid>
-              {!useNewEditor && (
-                <>
-                  <LegacyValueMappingsEditor onChange={this.onValueMappingsChanged} valueMappings={defaults.mappings} />
 
-                  <PanelOptionsGroup title="Data links">
-                    <DataLinksEditor
-                      value={defaults.links}
-                      onChange={this.onDataLinksChanged}
-                      suggestions={suggestions}
-                      maxLinks={10}
-                    />
-                  </PanelOptionsGroup>
-                </>
-              )}
+                <PanelOptionsGroup title="Field">
+                  <FieldPropertiesEditor
+                    showMinMax={true}
+                    onChange={this.onDefaultsChange}
+                    value={defaults}
+                    showTitle={true}
+                  />
+                </PanelOptionsGroup>
+                <ThresholdsEditor onChange={this.onThresholdsChanged} thresholds={defaults.thresholds} />
+              </PanelOptionsGrid>
+
+              <LegacyValueMappingsEditor onChange={this.onValueMappingsChanged} valueMappings={defaults.mappings} />
+
+              <PanelOptionsGroup title="Data links">
+                <DataLinksEditor
+                  value={defaults.links}
+                  onChange={this.onDataLinksChanged}
+                  suggestions={suggestions}
+                  maxLinks={10}
+                />
+              </PanelOptionsGroup>
             </>
           );
         }}

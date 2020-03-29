@@ -1,5 +1,6 @@
 import React, { useMemo } from 'react';
 import { PanelOptionsEditorItem, PanelPlugin } from '@grafana/data';
+import { set as lodashSet, get as lodashGet } from 'lodash';
 import { Forms } from '@grafana/ui';
 import groupBy from 'lodash/groupBy';
 
@@ -17,10 +18,8 @@ export const PanelOptionsEditor: React.FC<PanelOptionsEditorProps<any>> = ({ plu
   }, [plugin]);
 
   const onOptionChange = (key: string, value: any) => {
-    onChange({
-      ...options,
-      [key]: value,
-    });
+    const newOptions = lodashSet({ ...options }, key, value);
+    onChange(newOptions);
   };
 
   return (
@@ -37,7 +36,7 @@ export const PanelOptionsEditor: React.FC<PanelOptionsEditorProps<any>> = ({ plu
               );
               return (
                 <Forms.Field label={label}>
-                  <e.editor value={options[e.id]} onChange={value => onOptionChange(e.id, value)} item={e} />
+                  <e.editor value={lodashGet(options, e.id)} onChange={value => onOptionChange(e.id, value)} item={e} />
                 </Forms.Field>
               );
             })}

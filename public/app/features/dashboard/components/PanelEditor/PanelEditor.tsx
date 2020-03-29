@@ -228,7 +228,7 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
     const { plugin, dashboard, data, panel } = this.props;
 
     if (!plugin) {
-      return null;
+      return <div />;
     }
 
     return (

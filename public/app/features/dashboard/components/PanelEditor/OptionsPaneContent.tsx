@@ -66,10 +66,10 @@ export const OptionsPaneContent: React.FC<{
 
   const renderCustomPanelSettings = useCallback(
     (plugin: PanelPlugin) => {
-      const editors = [];
+      const editors: JSX.Element[] = [];
       if (plugin.editor && panel) {
         editors.push(
-          <div className={styles.legacyOptions}>
+          <div className={styles.legacyOptions} key="plugin custom panel settings">
             <plugin.editor
               data={data}
               options={panel.getOptions()}
@@ -84,14 +84,14 @@ export const OptionsPaneContent: React.FC<{
       // When editor created declaratively
       if (plugin.optionEditors && panel) {
         editors.push(
-          <OptionsGroup title="Panel options">
+          <OptionsGroup title="Panel options" key="panel options">
             <PanelOptionsEditor options={panel.getOptions()} onChange={onPanelOptionsChanged} plugin={plugin} />
           </OptionsGroup>
         );
       }
 
       if (editors.length > 0) {
-        return <>{editors}</>;
+        return editors;
       }
 
       return (
