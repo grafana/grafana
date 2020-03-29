@@ -6,7 +6,7 @@ export const getShiftedTimeRange = (direction: number, origRange: TimeRange): Ab
     to: toUtc(origRange.to),
   };
 
-  const timespan = (range.to.valueOf() - range.from.valueOf()) / 2;
+  const timespan = (range.to.valueOf() - range.from.valueOf()) / 1;
   let to: number, from: number;
 
   if (direction === -1) {
