@@ -45,6 +45,7 @@ import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { ContextSrv } from 'app/core/services/context_srv';
 import { getFieldLinksSupplier } from 'app/features/panel/panellinks/linkSuppliers';
 import { CoreEvents } from 'app/types';
+import templateSrv from 'app/features/templating/template_srv';
 
 const LegendWithThemeProvider = provideTheme(Legend);
 
@@ -339,14 +340,14 @@ class GraphElement {
     // add left axis labels
     if (this.panel.yaxes[0].label && this.panel.yaxes[0].show) {
       $("<div class='axisLabel left-yaxis-label flot-temp-elem'></div>")
-        .text(this.panel.yaxes[0].label)
+        .text(templateSrv.replaceWithText(this.panel.yaxes[0].label, this.panel.scopedVars))
         .appendTo(this.elem);
     }
 
     // add right axis labels
     if (this.panel.yaxes[1].label && this.panel.yaxes[1].show) {
       $("<div class='axisLabel right-yaxis-label flot-temp-elem'></div>")
-        .text(this.panel.yaxes[1].label)
+        .text(templateSrv.replaceWithText(this.panel.yaxes[1].label, this.panel.scopedVars))
         .appendTo(this.elem);
     }
 
