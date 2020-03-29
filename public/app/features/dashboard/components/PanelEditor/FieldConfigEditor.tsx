@@ -243,8 +243,8 @@ export const DefaultFieldConfigEditor: React.FC<Props> = ({ include, data, onCha
 
   return (
     <>
-      {renderStandardConfigs()}
       {plugin.customFieldConfigs && renderCustomConfigs()}
+      {renderStandardConfigs()}
     </>
   );
 };

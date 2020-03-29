@@ -10,7 +10,7 @@ export const plugin = new PanelPlugin<Options>(TablePanel)
         id: 'width',
         name: 'Column width',
         description: 'column width (for table)',
-        category: ['Table column defaults'],
+        category: ['Table field options'],
         settings: {
           placeholder: 'auto',
           min: 20,
@@ -21,7 +21,7 @@ export const plugin = new PanelPlugin<Options>(TablePanel)
         id: 'displayMode',
         name: 'Cell display mode',
         description: 'Color value, background, show as gauge, etc',
-        category: ['Table column defaults'],
+        category: ['Table field options'],
         settings: {
           options: [
             { value: 'auto', label: 'Auto' },

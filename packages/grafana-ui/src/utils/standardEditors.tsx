@@ -30,7 +30,7 @@ import { StatsPickerEditor } from '../components/OptionsUI/stats';
  * Returns collection of common field config properties definitions
  */
 export const getStandardFieldConfigs = () => {
-  const category = ['Data options'];
+  const category = ['Common field defaults'];
 
   const title: FieldPropertyEditorItem<string, StringFieldConfigSettings> = {
     id: 'title',
