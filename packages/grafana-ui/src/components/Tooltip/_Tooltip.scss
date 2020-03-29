@@ -13,6 +13,11 @@ $popper-margin-from-ref: 5px;
     background: darken($backgroundColor, 15%);
     color: lighten($textColor, 20%);
   }
+
+  strong,
+  em {
+    color: lighten($textColor, 20%);
+  }
 }
 
 .popper {

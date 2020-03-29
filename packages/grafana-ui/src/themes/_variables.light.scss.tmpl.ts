@@ -274,29 +274,25 @@ $alert-success-bg: linear-gradient(90deg, $green-base, $green-shade);
 $alert-warning-bg: linear-gradient(90deg, $red-base, $red-shade);
 $alert-info-bg: linear-gradient(100deg, $blue-base, $blue-shade);
 
-// popover
+// Tooltips and popovers
+$tooltipBackground: $gray-1;
+$tooltipColor: $gray-7;
+$tooltipArrowColor: $tooltipBackground; // Used by Angular tooltip
+$tooltipBackgroundError: $brand-danger;
+$graph-tooltip-bg: $gray-5;
+
+$tooltipArrowWidth: 5px;
+$tooltipLinkColor: lighten($tooltipColor, 5%);
+
 $popover-bg: $page-bg;
 $popover-color: $text-color;
 $popover-border-color: $gray-5;
 $popover-header-bg: $gray-5;
 $popover-shadow: 0 0 20px $white;
 
-$popover-help-bg: $btn-secondary-bg;
-$popover-help-color: $gray-6;
-
 $popover-error-bg: $btn-danger-bg;
-
-// Tooltips and popovers
-// -------------------------
-$tooltipColor: $popover-help-color;
-$tooltipArrowWidth: 5px;
-$tooltipLinkColor: lighten($popover-help-color, 5%);
-$graph-tooltip-bg: $gray-5;
-
-$tooltipBackground: $gray-1;
-$tooltipColor: $gray-7;
-$tooltipArrowColor: $tooltipBackground; // Used by Angular tooltip
-$tooltipBackgroundError: $brand-danger;
+$popover-help-bg: $tooltipBackground;
+$popover-help-color: $tooltipColor;
 
 // images
 $checkboxImageUrl: '../img/checkbox_white.png';
