@@ -133,6 +133,7 @@ export class PanelChrome extends PureComponent<Props, State> {
       return;
     }
 
+    const { panel } = this.props;
     let { isFirstLoad } = this.state;
     let errorMessage: string | undefined;
 
@@ -161,6 +162,14 @@ export class PanelChrome extends PureComponent<Props, State> {
           isFirstLoad = false;
         }
         break;
+    }
+
+    if (data.request) {
+      if (!panel.scopedVars) {
+        panel.scopedVars = {};
+      }
+      panel.scopedVars.__interval = data.request.scopedVars.__interval;
+      panel.scopedVars.__interval_ms = data.request.scopedVars.__interval_ms;
     }
 
     this.setState({ isFirstLoad, errorMessage, data });
@@ -329,14 +338,6 @@ export class PanelChrome extends PureComponent<Props, State> {
       'panel-container--transparent': transparent,
       'panel-container--no-title': this.hasOverlayHeader(),
     });
-
-    if (data.request) {
-      if (!panel.scopedVars) {
-        panel.scopedVars = {};
-      }
-      panel.scopedVars.__interval = data.request.scopedVars.__interval;
-      panel.scopedVars.__interval_ms = data.request.scopedVars.__interval_ms;
-    }
 
     return (
       <div className={containerClassNames}>

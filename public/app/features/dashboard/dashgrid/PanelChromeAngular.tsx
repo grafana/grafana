@@ -105,6 +105,7 @@ export class PanelChromeAngularUnconnected extends PureComponent<Props, State> {
   };
 
   onPanelDataUpdate(data: PanelData) {
+    const { panel } = this.props;
     let errorMessage: string | undefined;
 
     if (data.state === LoadingState.Error) {
@@ -114,6 +115,14 @@ export class PanelChromeAngularUnconnected extends PureComponent<Props, State> {
           errorMessage = error.message;
         }
       }
+    }
+
+    if (data.request) {
+      if (!panel.scopedVars) {
+        panel.scopedVars = {};
+      }
+      panel.scopedVars.__interval = data.request.scopedVars.__interval;
+      panel.scopedVars.__interval_ms = data.request.scopedVars.__interval_ms;
     }
 
     this.setState({ data, errorMessage });
@@ -234,14 +243,6 @@ export class PanelChromeAngularUnconnected extends PureComponent<Props, State> {
       'panel-content': true,
       'panel-content--no-padding': plugin.noPadding,
     });
-
-    if (data.request) {
-      if (!panel.scopedVars) {
-        panel.scopedVars = {};
-      }
-      panel.scopedVars.__interval = data.request.scopedVars.__interval;
-      panel.scopedVars.__interval_ms = data.request.scopedVars.__interval_ms;
-    }
 
     return (
       <div className={containerClassNames}>
