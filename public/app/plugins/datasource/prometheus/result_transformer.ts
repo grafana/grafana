@@ -1,4 +1,6 @@
 import _ from 'lodash';
+import sampleSize from 'lodash/sampleSize';
+import sortBy from 'lodash/sortBy';
 import TableModel from 'app/core/table_model';
 import { TimeSeries, FieldType } from '@grafana/data';
 import { TemplateSrv } from 'app/features/templating/template_srv';
@@ -26,6 +28,9 @@ export class ResultTransformer {
       seriesList.sort(sortSeriesByLabel);
       seriesList = this.transformToHistogramOverTime(seriesList);
       return seriesList;
+    } else if (options.format === 'exemplars') {
+      const exemplarsResult = prometheusResult ? this.buildFakeExemplars(prometheusResult) : response.data.data;
+      return this.transformExemplars(exemplarsResult, options, options.start, options.end);
     } else if (prometheusResult) {
       const seriesList = [];
       for (const metricData of prometheusResult) {
@@ -38,6 +43,41 @@ export class ResultTransformer {
       return seriesList;
     }
     return [];
+  }
+
+  // Build fake exemplars based on existing timeseries to have nicely aligned datapoints
+  buildFakeExemplars(prometheusResult: any) {
+    const seriesList = [];
+    for (const metricData of prometheusResult) {
+      const exemplars = sortBy(
+        sampleSize(metricData.values, 10).map((datapoint, index) => ({
+          timestamp: datapoint[0],
+          value: parseFloat(datapoint[1]) * 1.01,
+          hasTimestamp: true,
+          labels: {
+            traceId: `trace${index}`,
+          },
+        })),
+        'timestamp'
+      );
+      seriesList.push({
+        seriesLabels: metricData.metric,
+        exemplars,
+      });
+    }
+    return seriesList;
+  }
+
+  // For now turn exemplars into a timeseries for display
+  transformExemplars(exemplarsResult: any, options: any, start: number, end: number) {
+    return exemplarsResult.map((data: any) =>
+      this.transformMetricData(
+        { values: data.exemplars.map(({ value, timestamp }: any) => [timestamp, value]), metric: data.seriesLabels },
+        options,
+        start,
+        end
+      )
+    );
   }
 
   transformMetricData(metricData: any, options: any, start: number, end: number) {

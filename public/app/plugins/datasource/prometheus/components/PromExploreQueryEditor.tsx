@@ -1,6 +1,7 @@
 import React, { memo } from 'react';
 
 // Types
+import { Switch } from '@grafana/ui';
 import { ExploreQueryFieldProps } from '@grafana/data';
 
 import { PrometheusDatasource } from '../datasource';
@@ -26,6 +27,12 @@ export function PromExploreQueryEditor(props: Props) {
     }
   }
 
+  function onChangeShowingExemplars(e: React.ChangeEvent<HTMLInputElement>) {
+    const { query, onChange } = props;
+    const nextQuery = { ...query, showingExemplars: e.target.checked };
+    onChange(nextQuery);
+  }
+
   function onReturnKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
     if (e.key === 'Enter') {
       onRunQuery();
@@ -42,14 +49,17 @@ export function PromExploreQueryEditor(props: Props) {
       history={history}
       data={data}
       ExtraFieldElement={
-        <PromExploreExtraField
-          label={'Step'}
-          onChangeFunc={onStepChange}
-          onKeyDownFunc={onReturnKeyDown}
-          value={query.interval || ''}
-          hasTooltip={true}
-          tooltipContent={'Needs to be a valid time unit string, for example 5s, 1m, 3h, 1d, 1y'}
-        />
+        <>
+          <PromExploreExtraField
+            label={'Step'}
+            onChangeFunc={onStepChange}
+            onKeyDownFunc={onReturnKeyDown}
+            value={query.interval || ''}
+            hasTooltip={true}
+            tooltipContent={'Needs to be a valid time unit string, for example 5s, 1m, 3h, 1d, 1y'}
+          />
+          <Switch label="Exemplars" checked={query.showingExemplars} onChange={onChangeShowingExemplars} />
+        </>
       }
     />
   );

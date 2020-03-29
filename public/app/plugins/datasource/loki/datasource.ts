@@ -388,8 +388,13 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
   }
 
   async metadataRequest(url: string, params?: Record<string, string>) {
-    const res = await this._request(url, params, { silent: true }).toPromise();
-    return res.data.data || res.data.values || [];
+    try {
+      const res = await this._request(url, params, { silent: true }).toPromise();
+      return res.data.data || res.data.values || [];
+    } catch (e) {
+      console.error('metadata request failed', e);
+    }
+    return [];
   }
 
   async metricFindQuery(query: string) {

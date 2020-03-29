@@ -233,6 +233,19 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
         activeTargets.push(target);
         queries.push(this.createQuery(target, options, start, end));
       }
+
+      if (target.showingExemplars) {
+        // create exemplar target only if in Explore and exemplars are requested
+        const exemplarsTarget: any = cloneDeep(target);
+        exemplarsTarget.format = 'exemplars';
+        exemplarsTarget.exemplars = true;
+        exemplarsTarget.valueWithRefId = true;
+        delete exemplarsTarget.maxDataPoints;
+        exemplarsTarget.requestId += '_exemplars';
+
+        activeTargets.push(exemplarsTarget);
+        queries.push(this.createQuery(exemplarsTarget, options, start, end));
+      }
     }
 
     return {
@@ -267,7 +280,9 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
       const target = activeTargets[index];
       let observable: Observable<any> = null;
 
-      if (query.instant) {
+      if (query.exemplars) {
+        observable = from(this.performExemplarsQuery(query, query.start, query.end));
+      } else if (query.instant) {
         observable = from(this.performInstantQuery(query, end));
       } else {
         observable = from(this.performTimeSeriesQuery(query, query.start, query.end));
@@ -330,6 +345,7 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
     const query: PromQueryRequest = {
       hinting: target.hinting,
       instant: target.instant,
+      exemplars: target.exemplars,
       step: 0,
       expr: '',
       requestId: target.requestId,
@@ -460,6 +476,27 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
       }
 
       throw this.handleErrors(err, query);
+    });
+  }
+
+  performExemplarsQuery(query: PromQueryRequest, start: number, end: number) {
+    const url = '/api/v1/exemplars';
+    const data: any = {
+      query: query.expr,
+      start,
+      end,
+    };
+
+    return this._request(url, data, { headers: query.headers }).catch((err: any) => {
+      if (err.cancelled) {
+        return err;
+      }
+
+      // throw this.handleErrors(err, query);
+      console.log('Exemplars query failed, using fake data', err);
+
+      // Build fake exemplars from series
+      return this.performTimeSeriesQuery(query, start, end);
     });
   }
 

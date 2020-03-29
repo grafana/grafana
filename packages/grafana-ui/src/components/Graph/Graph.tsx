@@ -13,7 +13,7 @@ import {
   dateTime,
 } from '@grafana/data';
 import _ from 'lodash';
-import { FlotPosition, FlotItem } from './types';
+import { FlotPosition, FlotItem, FlotEvents } from './types';
 import { TooltipProps, TooltipContentProps, ActiveDimensions, Tooltip } from '../Chart/Tooltip';
 import { GraphTooltip } from './GraphTooltip/GraphTooltip';
 import { GraphContextMenu, GraphContextMenuProps, ContextDimensions } from './GraphContextMenu';
@@ -27,6 +27,7 @@ export interface GraphProps {
   showLines?: boolean;
   showPoints?: boolean;
   showBars?: boolean;
+  events?: FlotEvents;
   width: number;
   height: number;
   isStacked?: boolean;

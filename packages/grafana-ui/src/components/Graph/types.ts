@@ -15,3 +15,19 @@ export interface FlotItem<T> {
   pageX: number;
   pageY: number;
 }
+
+export interface FlotEvent {
+  min: number;
+  max?: number;
+  eventType: string;
+  title: string;
+  description?: string;
+  position?: FlotPosition;
+}
+
+export interface FlotEventType {
+  eventType: string;
+  color?: string;
+}
+
+export type FlotEvents = { data: FlotEvent[]; types: FlotEventType[] };

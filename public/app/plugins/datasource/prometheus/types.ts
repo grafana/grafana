@@ -2,6 +2,7 @@ import { DataQuery, DataSourceJsonData } from '@grafana/data';
 
 export interface PromQuery extends DataQuery {
   expr: string;
+  exemplars?: boolean;
   format?: string;
   instant?: boolean;
   hinting?: boolean;
@@ -12,6 +13,7 @@ export interface PromQuery extends DataQuery {
   requestId?: string;
   showingGraph?: boolean;
   showingTable?: boolean;
+  showingExemplars?: boolean;
 }
 
 export interface PromOptions extends DataSourceJsonData {
