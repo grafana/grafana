@@ -30,7 +30,7 @@ import { StatsPickerEditor } from '../components/OptionsUI/stats';
  * Returns collection of common field config properties definitions
  */
 export const getStandardFieldConfigs = () => {
-  const category = ['Common field options'];
+  const category = ['Data options'];
 
   const title: FieldPropertyEditorItem<string, StringFieldConfigSettings> = {
     id: 'title',
@@ -131,7 +131,7 @@ export const getStandardFieldConfigs = () => {
     },
 
     shouldApply: field => field.type === FieldType.number,
-    category: ['Thresholds'],
+    category: ['Color & thresholds'],
   };
 
   const mappings: FieldPropertyEditorItem<ValueMapping[], ValueMappingFieldConfigSettings> = {
@@ -192,10 +192,10 @@ export const getStandardFieldConfigs = () => {
       placeholder: '-',
     },
     shouldApply: () => true,
-    category,
+    category: ['Color & thresholds'],
   };
 
-  return [unit, min, max, decimals, title, noValue, thresholds, mappings, links, color];
+  return [unit, min, max, decimals, title, noValue, color, thresholds, mappings, links];
 };
 
 /**

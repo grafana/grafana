@@ -84,7 +84,7 @@ export const OptionsPaneContent: React.FC<{
       // When editor created declaratively
       if (plugin.optionEditors && panel) {
         editors.push(
-          <OptionsGroup title="Panel options" key="panel options">
+          <OptionsGroup title="Display options" key="panel options">
             <PanelOptionsEditor options={panel.getOptions()} onChange={onPanelOptionsChanged} plugin={plugin} />
           </OptionsGroup>
         );
