@@ -29,7 +29,6 @@ const getIconStyles = stylesFactory(() => {
 });
 
 export const Icon: React.FC<IconProps> = ({ name, className, onClick, onMouseDown }) => {
-  console.log('cl', className);
   const styles = getIconStyles();
   return <i className={cx(styles.icon, 'fa', `fa-${name}`, className)} onClick={onClick} onMouseDown={onMouseDown} />;
 };
