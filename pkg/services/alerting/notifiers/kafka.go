@@ -89,7 +89,7 @@ func (kn *KafkaNotifier) Notify(evalContext *alerting.EvalContext) error {
 	}
 	bodyJSON.Set("client_url", ruleURL)
 
-	if evalContext.ImagePublicURL != "" {
+	if kn.NeedsImage() && evalContext.ImagePublicURL != "" {
 		contexts := make([]interface{}, 1)
 		imageJSON := simplejson.New()
 		imageJSON.Set("type", "image")
