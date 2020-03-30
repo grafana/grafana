@@ -66,7 +66,7 @@ describe('linkSrv', () => {
       },
     ]);
 
-    linkSrv = new LinkSrv({ templateSrv: _templateSrv, getTimeSrv: () => timeSrv });
+    linkSrv = new LinkSrv({ templateSrv: _templateSrv, timeSrv: () => timeSrv });
   }
 
   beforeEach(() => {

@@ -237,18 +237,18 @@ export interface LinkService {
 
 export interface LinkServiceDependencies {
   templateSrv: TemplateSrv;
-  getTimeSrv: () => TimeSrv;
+  timeSrv: () => TimeSrv;
 }
 
 export class LinkSrv implements LinkService {
-  constructor(private dependencies: LinkServiceDependencies = { templateSrv: templateSrv, getTimeSrv: getTimeSrv }) {}
+  constructor(private dependencies: LinkServiceDependencies = { templateSrv: templateSrv, timeSrv: getTimeSrv }) {}
 
   getLinkUrl(link: any) {
     let url = locationUtil.assureBaseUrl(this.dependencies.templateSrv.replace(link.url || ''));
     const params: { [key: string]: any } = {};
 
     if (link.keepTime) {
-      const range = this.dependencies.getTimeSrv().timeRangeForUrl();
+      const range = this.dependencies.timeSrv().timeRangeForUrl();
       params['from'] = range.from;
       params['to'] = range.to;
     }
@@ -273,7 +273,7 @@ export class LinkSrv implements LinkService {
    */
   getDataLinkUIModel = <T>(link: DataLink, scopedVars: ScopedVars, origin: T): LinkModel<T> => {
     const params: KeyValue = {};
-    const timeRangeUrl = toUrlParams(this.dependencies.getTimeSrv().timeRangeForUrl());
+    const timeRangeUrl = toUrlParams(this.dependencies.timeSrv().timeRangeForUrl());
 
     let href = link.url;
 
