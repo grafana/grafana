@@ -16,6 +16,7 @@ const getIconStyles = stylesFactory(() => {
       display: inline-flex;
       width: 16px;
       align-items: center;
+      justify-content: center;
       height: 16px;
       text-align: center;
       font-size: 14px;
@@ -28,6 +29,7 @@ const getIconStyles = stylesFactory(() => {
 });
 
 export const Icon: React.FC<IconProps> = ({ name, className, onClick, onMouseDown }) => {
+  console.log('cl', className);
   const styles = getIconStyles();
   return <i className={cx(styles.icon, 'fa', `fa-${name}`, className)} onClick={onClick} onMouseDown={onMouseDown} />;
 };
