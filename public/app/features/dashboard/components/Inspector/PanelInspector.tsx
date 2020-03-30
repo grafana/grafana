@@ -54,8 +54,6 @@ interface State {
   // If the datasource supports custom metadata
   metaDS?: DataSourceApi;
 
-  stats: { requestTime: number; queries: number; dataSources: number; processingTime: number };
-
   drawerWidth: string;
 }
 
@@ -67,7 +65,6 @@ export class PanelInspector extends PureComponent<Props, State> {
       data: [],
       selected: 0,
       tab: props.selectedTab || InspectTab.Data,
-      stats: { requestTime: 0, queries: 0, dataSources: 0, processingTime: 0 },
       drawerWidth: '50%',
     };
   }
@@ -92,9 +89,6 @@ export class PanelInspector extends PureComponent<Props, State> {
     const error = lastResult.error;
 
     const targets = lastResult.request?.targets || [];
-    const requestTime = lastResult.request?.endTime ? lastResult.request?.endTime - lastResult.request.startTime : -1;
-    const dataSources = new Set(targets.map(t => t.datasource)).size;
-    const processingTime = lastResult.timings?.dataProcessingTime || -1;
 
     // Find the first DataSource wanting to show custom metadata
     if (data && targets.length) {
@@ -117,12 +111,6 @@ export class PanelInspector extends PureComponent<Props, State> {
       data,
       metaDS,
       tab: error ? InspectTab.Error : prevState.tab,
-      stats: {
-        requestTime,
-        queries: targets.length,
-        dataSources,
-        processingTime,
-      },
     }));
   }
 
@@ -298,9 +286,9 @@ export class PanelInspector extends PureComponent<Props, State> {
         <div className="section-heading">{name}</div>
         <table className="filter-table width-30">
           <tbody>
-            {stats.map(stat => {
+            {stats.map((stat, index) => {
               return (
-                <tr>
+                <tr key={`${stat.title}-${index}`}>
                   <td>{stat.title}</td>
                   <td style={{ textAlign: 'right' }}>{formatStat(stat.value, stat.unit)}</td>
                 </tr>
