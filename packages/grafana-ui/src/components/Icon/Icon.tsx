@@ -46,7 +46,7 @@ export const Icon = React.forwardRef<HTMLDivElement, IconProps>(
 
     useEffect(() => {
       if (type === 'default') {
-        import(`./assets/icons/uil-${name}`).then(module => {
+        import(`@iconscout/react-unicons/icons/uil-${name}`).then(module => {
           setIcon(module);
         });
       }
