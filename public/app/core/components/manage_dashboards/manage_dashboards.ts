@@ -230,7 +230,7 @@ export class ManageDashboardsCtrl {
     return selectedDashboards;
   }
 
-  moveTo() {
+  moveTo = () => {
     const selectedDashboards = this.getDashboardsToMove();
 
     const template =
@@ -245,7 +245,7 @@ export class ManageDashboardsCtrl {
         afterSave: this.refreshList.bind(this),
       },
     });
-  }
+  };
 
   initTagFilter() {
     return this.searchSrv.getDashboardTags().then((results: any) => {
