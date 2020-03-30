@@ -63,7 +63,7 @@ export interface FieldConfigEditorConfig<TOptions, TSettings = any> {
 }
 
 export interface FieldPropertyEditorItem<TOptions = any, TValue = any, TSettings extends {} = any>
-  extends OptionsEditorItem<TOptions, TSettings, FieldConfigEditorProps<TValue, TSettings>> {
+  extends OptionsEditorItem<TOptions, TSettings, FieldConfigEditorProps<TValue, TSettings>, TValue> {
   // An editor that can be filled in with context info (template variables etc)
   override: ComponentType<FieldOverrideEditorProps<TValue, TSettings>>;
 
@@ -85,4 +85,17 @@ export interface ApplyFieldOverrideOptions {
   autoMinMax?: boolean;
   standard?: FieldConfigEditorRegistry;
   custom?: FieldConfigEditorRegistry;
+}
+
+export enum StandardFieldConfigProperties {
+  Unit = 'unit',
+  Min = 'min',
+  Max = 'max',
+  Decimals = 'decimals',
+  Title = 'title',
+  NoValue = 'noValue',
+  Thresholds = 'thresholds',
+  Mappings = 'mappings',
+  Links = 'links',
+  Color = 'color',
 }

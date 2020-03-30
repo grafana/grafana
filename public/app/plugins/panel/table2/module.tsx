@@ -1,4 +1,4 @@
-import { PanelPlugin } from '@grafana/data';
+import { PanelPlugin, StandardFieldConfigProperties } from '@grafana/data';
 import { TablePanel } from './TablePanel';
 import { Options, defaults, CustomFieldConfig } from './types';
 
@@ -35,5 +35,7 @@ export const plugin = new PanelPlugin<Options, CustomFieldConfig>(TablePanel)
       id: 'showHeader',
       name: 'Show header',
       description: "To display table's header or not to display",
+      defaultValue: true,
     });
-  });
+  })
+  .useCommonFieldConfig([StandardFieldConfigProperties.Thresholds]);

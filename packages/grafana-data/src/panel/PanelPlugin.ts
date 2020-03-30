@@ -8,22 +8,38 @@ import {
   PanelPluginMeta,
   PanelProps,
   PanelTypeChangedHandler,
+  StandardFieldConfigProperties,
 } from '../types';
 import { FieldConfigEditorBuilder, PanelOptionsEditorBuilder } from '../utils/OptionsUIBuilders';
 import { ComponentClass, ComponentType } from 'react';
+import set from 'lodash/set';
+import { deprecationWarning } from '../utils';
 
 export class PanelPlugin<TOptions = any, TFieldConfigOptions = any> extends GrafanaPlugin<PanelPluginMeta> {
-  private customFieldConfigsUIBuilder = new FieldConfigEditorBuilder<TFieldConfigOptions>();
+  private _defaults?: TOptions;
+  private _commonFieldConfigProperties: StandardFieldConfigProperties[] = [
+    StandardFieldConfigProperties.Title,
+    StandardFieldConfigProperties.Decimals,
+    StandardFieldConfigProperties.Max,
+    StandardFieldConfigProperties.Min,
+    StandardFieldConfigProperties.NoValue,
+    StandardFieldConfigProperties.Links,
+    StandardFieldConfigProperties.Unit,
+    StandardFieldConfigProperties.Thresholds,
+    StandardFieldConfigProperties.Mappings,
+    StandardFieldConfigProperties.Color,
+  ];
+
   private _customFieldConfigs?: FieldConfigEditorRegistry;
+  private customFieldConfigsUIBuilder = new FieldConfigEditorBuilder<TFieldConfigOptions>();
   private registerCustomFieldConfigs?: (builder: FieldConfigEditorBuilder<TFieldConfigOptions>) => void;
 
-  private optionsUIBuilder = new PanelOptionsEditorBuilder<TOptions>();
   private _optionEditors?: PanelOptionEditorsRegistry;
+  private optionsUIBuilder = new PanelOptionsEditorBuilder<TOptions>();
   private registerOptionEditors?: (builder: PanelOptionsEditorBuilder<TOptions>) => void;
 
   panel: ComponentType<PanelProps<TOptions>>;
   editor?: ComponentClass<PanelEditorProps<TOptions>>;
-  defaults?: TOptions;
   fieldConfigDefaults?: FieldConfigSource = {
     defaults: {},
     overrides: [],
@@ -40,6 +56,49 @@ export class PanelPlugin<TOptions = any, TFieldConfigOptions = any> extends Graf
   constructor(panel: ComponentType<PanelProps<TOptions>>) {
     super();
     this.panel = panel;
+  }
+
+  get defaults() {
+    let result = this._defaults || {};
+
+    if (!this._defaults) {
+      const editors = this.optionEditors;
+
+      if (!editors || editors.list().length === 0) {
+        return null;
+      }
+
+      for (const editor of editors.list()) {
+        set(result, editor.id, editor.defaultValue);
+      }
+    }
+    return result;
+  }
+
+  get commonFieldConfigProperties() {
+    return this._commonFieldConfigProperties;
+  }
+
+  /**
+   * @deprecated setDefaults is deprecated in favor of setPanelOptions
+   */
+  setDefaults(defaults: TOptions) {
+    deprecationWarning('PanelPlugin', 'setDefaults', 'setPanelOptions');
+    this._defaults = defaults;
+    return this;
+  }
+
+  /**
+   * Enables configuration of panel's default field config
+   */
+  setFieldConfigDefaults(defaultConfig: Partial<FieldConfigSource>) {
+    this.fieldConfigDefaults = {
+      defaults: {},
+      overrides: [],
+      ...defaultConfig,
+    };
+
+    return this;
   }
 
   get customFieldConfigs() {
@@ -62,11 +121,6 @@ export class PanelPlugin<TOptions = any, TFieldConfigOptions = any> extends Graf
 
   setEditor(editor: ComponentClass<PanelEditorProps<TOptions>>) {
     this.editor = editor;
-    return this;
-  }
-
-  setDefaults(defaults: TOptions) {
-    this.defaults = defaults;
     return this;
   }
 
@@ -177,15 +231,30 @@ export class PanelPlugin<TOptions = any, TFieldConfigOptions = any> extends Graf
   }
 
   /**
-   * Enables configuration of panel's default field config
+   * Allows specyfing which common field config options panel should use
+   *
+   * @example
+   * ```typescript
+   *
+   * import { ShapePanel } from './ShapePanel';
+   *
+   * interface ShapePanelOptions {}
+   *
+   * // when plugin should use only specific common options
+   * export const plugin = new PanelPlugin<ShapePanelOptions>(ShapePanel)
+   *  .useCommonFieldConfig([StandardFieldConfigProperties.Min, StandardFieldConfigProperties.Max, StandardFieldConfigProperties.Links]);
+   *
+   * // when plugin should use all common options
+   * export const plugin = new PanelPlugin<ShapePanelOptions>(ShapePanel)
+   *  .useCommonFieldConfig();
+   * ```
+   *
+   * @public
    */
-  setFieldConfigDefaults(defaultConfig: Partial<FieldConfigSource>) {
-    this.fieldConfigDefaults = {
-      defaults: {},
-      overrides: [],
-      ...defaultConfig,
-    };
-
+  useCommonFieldConfig(properties?: StandardFieldConfigProperties[]) {
+    if (properties) {
+      this._commonFieldConfigProperties = properties;
+    }
     return this;
   }
 }

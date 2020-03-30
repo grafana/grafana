@@ -36,6 +36,7 @@ export const OptionsPaneContent: React.FC<{
             plugin={plugin}
             onChange={onFieldConfigsChange}
             data={data.series}
+            include={plugin.commonFieldConfigProperties}
           />
         </Container>
       );
