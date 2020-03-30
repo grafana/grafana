@@ -356,8 +356,6 @@ export class ManageDashboardsCtrl {
       this.selectionChanged();
     }
   };
-
-  onReset() {}
 }
 
 export function manageDashboardsDirective() {
