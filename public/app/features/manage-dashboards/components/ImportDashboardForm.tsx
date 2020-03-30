@@ -1,6 +1,5 @@
 import React, { FC, useEffect, useState } from 'react';
-import { Forms, FormAPI, HorizontalGroup } from '@grafana/ui';
-import { OnSubmit } from 'react-hook-form';
+import { Forms, FormAPI, FormsOnSubmit, HorizontalGroup } from '@grafana/ui';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
 import DataSourcePicker from 'app/core/components/Select/DataSourcePicker';
 import { DashboardInput, DashboardInputs, DataSourceInput, ImportDashboardDTO } from '../state/reducers';
@@ -14,7 +13,7 @@ interface Props extends Omit<FormAPI<ImportDashboardDTO>, 'formState'> {
 
   onCancel: () => void;
   onUidReset: () => void;
-  onSubmit: OnSubmit<ImportDashboardDTO>;
+  onSubmit: FormsOnSubmit<ImportDashboardDTO>;
   validateTitle: (value: string) => Promise<boolean>;
   validateUid: (value: string) => Promise<boolean | string>;
 }
