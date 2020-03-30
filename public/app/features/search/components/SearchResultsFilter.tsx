@@ -1,6 +1,7 @@
 import React, { FC } from 'react';
 import { css } from 'emotion';
-import { Button, Forms } from '@grafana/ui';
+import { Button, Forms, stylesFactory, useTheme } from '@grafana/ui';
+import { GrafanaTheme } from '@grafana/data';
 
 interface Props {
   allChecked: boolean;
@@ -35,12 +36,15 @@ export const SearchResultsFilter: FC<Props> = ({
   selectedStarredFilter,
 }) => {
   const showActions = canDelete || canMove;
+  const theme = useTheme();
+  const styles = getStyles(theme);
+
   return (
-    <div className="search-results-filter-row">
+    <div className={styles.wrapper}>
       <Forms.Checkbox value={allChecked} onChange={onSelectAllChanged} />
-      <div className="search-results-filter-row__filters">
+      <div className={styles.row}>
         {showActions ? (
-          <div className="gf-form-button-row">
+          <div className={styles.row}>
             <Button disabled={!canMove} onClick={moveTo} icon="fa fa-exchange" variant="secondary">
               Move
             </Button>
@@ -50,11 +54,7 @@ export const SearchResultsFilter: FC<Props> = ({
           </div>
         ) : (
           <>
-            <div
-              className={css`
-                display: flex;
-              `}
-            >
+            <div className={styles.row}>
               <Forms.Select
                 size="sm"
                 placeholder="Filter by starred"
@@ -77,3 +77,26 @@ export const SearchResultsFilter: FC<Props> = ({
     </div>
   );
 };
+
+const getStyles = stylesFactory((theme: GrafanaTheme) => {
+  return {
+    wrapper: css`
+      height: 35px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+
+      label {
+        height: 20px;
+        margin-left: 4px;
+      }
+    `,
+    row: css`
+      display: flex;
+
+      & > button:first-child {
+        margin-right: ${theme.spacing.md};
+      }
+    `,
+  };
+});
