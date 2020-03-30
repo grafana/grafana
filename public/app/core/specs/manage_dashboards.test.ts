@@ -188,7 +188,7 @@ describe('ManageDashboards', () => {
 
       describe('when select all is checked', () => {
         beforeEach(() => {
-          ctrl.selectAllChecked = true;
+          ctrl.selectAllChecked = false;
           ctrl.onSelectAllChanged();
         });
 
@@ -306,7 +306,7 @@ describe('ManageDashboards', () => {
 
       describe('when select all is checked', () => {
         beforeEach(() => {
-          ctrl.selectAllChecked = true;
+          ctrl.selectAllChecked = false;
           ctrl.onSelectAllChanged();
         });
 
@@ -354,7 +354,7 @@ describe('ManageDashboards', () => {
 
       describe('when select all is unchecked', () => {
         beforeEach(() => {
-          ctrl.selectAllChecked = false;
+          ctrl.selectAllChecked = true;
           ctrl.onSelectAllChanged();
         });
 
