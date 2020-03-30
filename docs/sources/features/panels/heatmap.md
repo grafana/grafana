@@ -15,7 +15,7 @@ weight = 4
 
 > New panel only available in Grafana v4.3+
 
-The Heatmap panel allows you to view histograms over time. To fully understand and use this panel you need
+The Heatmap panel allows you to view histograms over time. To fully understand and use this panel you need to 
 understand what Histograms are and how they are created. Read on below to for a quick introduction to the
 term Histogram.
 
@@ -74,7 +74,7 @@ the time range `1h`. This will make the cells 1h wide on the X-axis.
 ### Pre-bucketed data
 
 If you have a data that is already organized into buckets you can use the `Time series buckets` data format. This format
-requires that your metric query return regular time series and that each time series has a numeric name that represent
+requires that your metric query returns regular time series and that each time series has a numeric name that represents
 the upper or lower bound of the interval.
 
 There are a number of data sources supporting histogram over time like Elasticsearch (by using a Histogram bucket
@@ -108,7 +108,7 @@ change with the bucket count.
 ## Raw data vs aggregated
 
 If you use the heatmap with regular time series data (not pre-bucketed). Then it's important to keep in mind that your data
-is often already by aggregated by your time series backend. Most time series queries do not return raw sample data
+is often already aggregated by your time series backend. Most time series queries do not return raw sample data
 but include a group by time interval or maxDataPoints limit coupled with an aggregation function (usually average).
 
 This all depends on the time range of your query of course. But the important point is to know that the Histogram bucketing

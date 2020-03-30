@@ -23,7 +23,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "apache-arrow": "0.15.1",
+    "apache-arrow": "0.16.0",
     "lodash": "4.17.15",
     "rxjs": "6.5.4"
   },

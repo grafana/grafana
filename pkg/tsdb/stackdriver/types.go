@@ -6,17 +6,49 @@ import (
 )
 
 type (
-	// StackdriverQuery is the query that Grafana sends from the frontend
-	StackdriverQuery struct {
+	stackdriverQuery struct {
 		Target      string
 		Params      url.Values
 		RefID       string
 		GroupBys    []string
 		AliasBy     string
 		ProjectName string
+		Selector    string
+		Service     string
+		Slo         string
 	}
 
-	StackdriverBucketOptions struct {
+	metricQuery struct {
+		ProjectName        string
+		MetricType         string
+		CrossSeriesReducer string
+		AlignmentPeriod    string
+		PerSeriesAligner   string
+		GroupBys           []string
+		Filters            []string
+		AliasBy            string
+		View               string
+	}
+
+	sloQuery struct {
+		ProjectName      string
+		AlignmentPeriod  string
+		PerSeriesAligner string
+		AliasBy          string
+		SelectorName     string
+		ServiceId        string
+		SloId            string
+	}
+
+	grafanaQuery struct {
+		DatasourceId int
+		RefId        string
+		QueryType    string
+		MetricQuery  metricQuery
+		SloQuery     sloQuery
+	}
+
+	stackdriverBucketOptions struct {
 		LinearBuckets *struct {
 			NumFiniteBuckets int64 `json:"numFiniteBuckets"`
 			Width            int64 `json:"width"`
@@ -32,8 +64,7 @@ type (
 		} `json:"explicitBuckets"`
 	}
 
-	// StackdriverResponse is the data returned from the external Google Stackdriver API
-	StackdriverResponse struct {
+	stackdriverResponse struct {
 		TimeSeries []struct {
 			Metric struct {
 				Labels map[string]string `json:"labels"`
@@ -64,7 +95,7 @@ type (
 							Min int `json:"min"`
 							Max int `json:"max"`
 						} `json:"range"`
-						BucketOptions StackdriverBucketOptions `json:"bucketOptions"`
+						BucketOptions stackdriverBucketOptions `json:"bucketOptions"`
 						BucketCounts  []string                 `json:"bucketCounts"`
 						Examplars     []struct {
 							Value     float64 `json:"value"`
@@ -75,19 +106,5 @@ type (
 				} `json:"value"`
 			} `json:"points"`
 		} `json:"timeSeries"`
-	}
-
-	// ResourceManagerProjectList is the data returned from the external Google Resource Manager API
-	ResourceManagerProjectList struct {
-		Projects []ResourceManagerProject `json:"projects"`
-	}
-
-	ResourceManagerProject struct {
-		ProjectID string `json:"projectId"`
-	}
-
-	ResourceManagerProjectSelect struct {
-		Label string `json:"label"`
-		Value string `json:"value"`
 	}
 )

@@ -12,7 +12,7 @@ import {
 } from '@grafana/ui';
 import {
   PanelEditorProps,
-  FieldDisplayOptions,
+  ReduceDataOptions,
   ThresholdsConfig,
   DataLink,
   FieldConfig,
@@ -39,14 +39,14 @@ export class GaugePanelEditor extends PureComponent<PanelEditorProps<GaugeOption
     });
 
   onDisplayOptionsChanged = (
-    fieldOptions: FieldDisplayOptions,
+    fieldOptions: ReduceDataOptions,
     event?: React.SyntheticEvent<HTMLElement>,
     callback?: () => void
   ) => {
     this.props.onOptionsChange(
       {
         ...this.props.options,
-        fieldOptions,
+        reduceOptions: fieldOptions,
       },
       callback
     );
@@ -94,24 +94,28 @@ export class GaugePanelEditor extends PureComponent<PanelEditorProps<GaugeOption
 
   render() {
     const { options, fieldConfig } = this.props;
-    const { showThresholdLabels, showThresholdMarkers, fieldOptions } = options;
+    const { showThresholdLabels, showThresholdMarkers, reduceOptions: valueOptions } = options;
 
     const { defaults } = fieldConfig;
 
-    const suggestions = fieldOptions.values
+    const suggestions = valueOptions.values
       ? getDataLinksVariableSuggestions(this.props.data.series)
       : getCalculationValueDataLinksVariableSuggestions(this.props.data.series);
 
     return (
       <NewPanelEditorContext.Consumer>
         {useNewEditor => {
+          if (useNewEditor) {
+            return null;
+          }
+
           return (
             <>
               <PanelOptionsGrid>
                 <PanelOptionsGroup title="Display">
                   <FieldDisplayEditor
                     onChange={this.onDisplayOptionsChanged}
-                    value={fieldOptions}
+                    value={valueOptions}
                     labelWidth={this.labelWidth}
                   />
                   <Switch
@@ -128,36 +132,27 @@ export class GaugePanelEditor extends PureComponent<PanelEditorProps<GaugeOption
                   />
                 </PanelOptionsGroup>
 
-                <>
-                  {!useNewEditor && (
-                    <>
-                      <PanelOptionsGroup title="Field">
-                        <FieldPropertiesEditor
-                          showMinMax={true}
-                          showTitle={true}
-                          onChange={this.onDefaultsChange}
-                          value={defaults}
-                        />
-                      </PanelOptionsGroup>
+                <PanelOptionsGroup title="Field">
+                  <FieldPropertiesEditor
+                    showMinMax={true}
+                    showTitle={true}
+                    onChange={this.onDefaultsChange}
+                    value={defaults}
+                  />
+                </PanelOptionsGroup>
 
-                      <ThresholdsEditor onChange={this.onThresholdsChanged} thresholds={defaults.thresholds} />
-                    </>
-                  )}
-                </>
+                <ThresholdsEditor onChange={this.onThresholdsChanged} thresholds={defaults.thresholds} />
               </PanelOptionsGrid>
-              {!useNewEditor && (
-                <>
-                  <LegacyValueMappingsEditor onChange={this.onValueMappingsChanged} valueMappings={defaults.mappings} />
-                  <PanelOptionsGroup title="Data links">
-                    <DataLinksEditor
-                      value={defaults.links}
-                      onChange={this.onDataLinksChanged}
-                      suggestions={suggestions}
-                      maxLinks={10}
-                    />
-                  </PanelOptionsGroup>
-                </>
-              )}
+
+              <LegacyValueMappingsEditor onChange={this.onValueMappingsChanged} valueMappings={defaults.mappings} />
+              <PanelOptionsGroup title="Data links">
+                <DataLinksEditor
+                  value={defaults.links}
+                  onChange={this.onDataLinksChanged}
+                  suggestions={suggestions}
+                  maxLinks={10}
+                />
+              </PanelOptionsGroup>
             </>
           );
         }}

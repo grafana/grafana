@@ -7,7 +7,6 @@ import { RadioButtonGroup } from './RadioButtonGroup/RadioButtonGroup';
 import { AsyncSelect, Select } from './Select/Select';
 import { Form } from './Form';
 import { Field } from './Field';
-import { Button, LinkButton } from './Button';
 import { Switch } from './Switch';
 import { Legend } from './Legend';
 import { TextArea } from './TextArea/TextArea';
@@ -21,8 +20,6 @@ const Forms = {
   Input,
   Form,
   Field,
-  Button,
-  LinkButton,
   Select,
   ButtonSelect,
   InputControl,
@@ -32,5 +29,4 @@ const Forms = {
   Legend,
 };
 
-export { ButtonVariant } from './Button';
 export default Forms;

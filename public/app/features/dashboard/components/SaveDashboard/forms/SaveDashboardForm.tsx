@@ -62,9 +62,9 @@ export const SaveDashboardForm: React.FC<SaveDashboardFormProps> = ({ dashboard,
             <Button type="submit" aria-label={e2e.pages.SaveDashboardModal.selectors.save}>
               Save
             </Button>
-            <Forms.Button variant="secondary" onClick={onCancel}>
+            <Button variant="secondary" onClick={onCancel}>
               Cancel
-            </Forms.Button>
+            </Button>
           </HorizontalGroup>
         </>
       )}

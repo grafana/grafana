@@ -82,10 +82,10 @@ describe('Gauge Panel Migrations', () => {
 
     // Ignored due to the API change
     //@ts-ignore
-    expect(result.fieldOptions.defaults).toBeUndefined();
+    expect(result.reduceOptions.defaults).toBeUndefined();
     // Ignored due to the API change
     //@ts-ignore
-    expect(result.fieldOptions.overrides).toBeUndefined();
+    expect(result.reduceOptions.overrides).toBeUndefined();
 
     expect((panel as PanelModel).fieldConfig).toMatchInlineSnapshot(`
       Object {
