@@ -131,13 +131,12 @@ export const OptionsPaneContent: React.FC<{
 
   const renderSearchInput = useCallback(() => {
     const defaultStyles = {
-      transition: 'width 100ms ease-in-out',
+      transition: 'width 50ms ease-in-out',
       width: '50%',
       display: 'flex',
     };
 
     const transitionStyles: { [str: string]: CSSProperties } = {
-      entering: { width: '50%' },
       entered: { width: '100%' },
     };
 
