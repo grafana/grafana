@@ -23,7 +23,7 @@ describe('MSSQLDatasource', () => {
     jest.clearAllMocks();
 
     ctx.instanceSettings = { name: 'mssql' };
-    ctx.ds = new MssqlDatasource(ctx.instanceSettings, templateSrv, ctx.timeSrv);
+    ctx.ds = new MssqlDatasource(ctx.instanceSettings, { templateSrv, timeSrv: () => ctx.timeSrv });
   });
 
   describe('When performing annotationQuery', () => {
