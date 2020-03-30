@@ -1,7 +1,7 @@
-import React, { useMemo, FC } from 'react';
+import React, { FC, useMemo } from 'react';
 import { PanelModel } from '../../state';
 import { SelectableValue } from '@grafana/data';
-import { Forms, DataLinksInlineEditor } from '@grafana/ui';
+import { DataLinksInlineEditor, Forms } from '@grafana/ui';
 import { OptionsGroup } from './OptionsGroup';
 import { getPanelLinksVariableSuggestions } from '../../../panel/panellinks/link_srv';
 import { getVariables } from '../../../variables/state/selectors';

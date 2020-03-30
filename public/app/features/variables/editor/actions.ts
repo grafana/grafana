@@ -1,5 +1,5 @@
 import { ThunkResult } from '../../../types';
-import { getVariable, getVariables, getNewVariabelIndex } from '../state/selectors';
+import { getNewVariabelIndex, getVariable, getVariables } from '../state/selectors';
 import {
   changeVariableNameFailed,
   changeVariableNameSucceeded,
