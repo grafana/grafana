@@ -6,6 +6,7 @@ import { Forms, stylesFactory } from '@grafana/ui';
 import Page from 'app/core/components/Page/Page';
 import { ImportDashboardOverview } from './components/ImportDashboardOverview';
 import { DashboardFileUpload } from './components/DashboardFileUpload';
+import { validateDashboardJson, validateGcomDashboard } from './utils/validation';
 import { fetchGcomDashboard, importDashboardJson } from './state/actions';
 import appEvents from 'app/core/app_events';
 import { getNavModel } from 'app/core/selectors/navModel';
@@ -52,22 +53,6 @@ class DashboardImportUnConnected extends PureComponent<Props> {
     }
   };
 
-  validateDashboardJson = (json: string) => {
-    try {
-      JSON.parse(json);
-      return true;
-    } catch (error) {
-      return 'Not valid JSON';
-    }
-  };
-
-  validateGcomDashboard = (gcomDashboard: string) => {
-    // From DashboardImportCtrl
-    const match = /(^\d+$)|dashboards\/(\d+)/.exec(gcomDashboard);
-
-    return match && (match[1] || match[2]) ? true : 'Could not find a valid Grafana.com id';
-  };
-
   getDashboardFromJson = (formData: { dashboardJson: string }) => {
     this.props.importDashboardJson(JSON.parse(formData.dashboardJson));
   };
@@ -109,7 +94,7 @@ class DashboardImportUnConnected extends PureComponent<Props> {
                   type="text"
                   ref={register({
                     required: 'A Grafana dashboard url or id is required',
-                    validate: this.validateGcomDashboard,
+                    validate: validateGcomDashboard,
                   })}
                   addonAfter={<Forms.Button type="submit">Load</Forms.Button>}
                 />
@@ -130,7 +115,7 @@ class DashboardImportUnConnected extends PureComponent<Props> {
                     name="dashboardJson"
                     ref={register({
                       required: 'Need a dashboard json model',
-                      validate: this.validateDashboardJson,
+                      validate: validateDashboardJson,
                     })}
                     rows={10}
                   />
