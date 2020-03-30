@@ -77,7 +77,7 @@ const buildLabelPath = (label: string) => {
 };
 
 export const getPanelLinksVariableSuggestions = (): VariableSuggestion[] => [
-  ...templateSrv.variables.map(variable => ({
+  ...templateSrv.getVariables().map(variable => ({
     value: variable.name as string,
     label: variable.name,
     origin: VariableOrigin.Template,

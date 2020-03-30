@@ -9,6 +9,15 @@ import (
 	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
+type DashboardProvisioner interface {
+	Provision() error
+	PollChanges(ctx context.Context)
+	GetProvisionerResolvedPath(name string) string
+	GetAllowUiUpdatesFromConfig(name string) bool
+}
+
+type DashboardProvisionerFactory func(string) (DashboardProvisioner, error)
+
 type DashboardProvisionerImpl struct {
 	log         log.Logger
 	fileReaders []*fileReader

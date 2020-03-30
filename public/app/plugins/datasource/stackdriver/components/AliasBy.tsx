@@ -1,53 +1,25 @@
-import React, { Component } from 'react';
+import React, { FunctionComponent, useState } from 'react';
 import { debounce } from 'lodash';
-import { Input } from '@grafana/ui';
+import { QueryInlineField } from '.';
 
 export interface Props {
-  onChange: (alignmentPeriod: string) => void;
+  onChange: (alias: any) => void;
   value: string;
 }
 
-export interface State {
-  value: string;
-}
+export const AliasBy: FunctionComponent<Props> = ({ value = '', onChange }) => {
+  const [alias, setAlias] = useState(value);
 
-export class AliasBy extends Component<Props, State> {
-  propagateOnChange: (value: any) => void;
+  const propagateOnChange = debounce(onChange, 1000);
 
-  constructor(props: Props) {
-    super(props);
-    this.propagateOnChange = debounce(this.props.onChange, 500);
-    this.state = { value: '' };
-  }
-
-  componentDidMount() {
-    this.setState({ value: this.props.value });
-  }
-
-  UNSAFE_componentWillReceiveProps(nextProps: Props) {
-    if (nextProps.value !== this.props.value) {
-      this.setState({ value: nextProps.value });
-    }
-  }
-
-  onChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    this.setState({ value: e.target.value });
-    this.propagateOnChange(e.target.value);
+  onChange = (e: any) => {
+    setAlias(e.target.value);
+    propagateOnChange(e.target.value);
   };
 
-  render() {
-    return (
-      <>
-        <div className="gf-form-inline">
-          <div className="gf-form">
-            <label className="gf-form-label query-keyword width-9">Alias By</label>
-            <Input type="text" className="gf-form-input width-24" value={this.state.value} onChange={this.onChange} />
-          </div>
-          <div className="gf-form gf-form--grow">
-            <div className="gf-form-label gf-form-label--grow" />
-          </div>
-        </div>
-      </>
-    );
-  }
-}
+  return (
+    <QueryInlineField label="Alias By">
+      <input type="text" className="gf-form-input width-26" value={alias} onChange={onChange} />
+    </QueryInlineField>
+  );
+};

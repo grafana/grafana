@@ -20,33 +20,33 @@ import {
   changeSize,
   initializeExplore,
   modifyQueries,
+  refreshExplore,
   scanStart,
   setQueries,
-  refreshExplore,
-  updateTimeRange,
   toggleGraph,
   addQueryRow,
+  updateTimeRange,
 } from './state/actions';
 // Types
 import {
+  AbsoluteTimeRange,
   DataQuery,
   DataSourceApi,
+  GraphSeriesXY,
   PanelData,
   RawTimeRange,
   TimeRange,
-  GraphSeriesXY,
   TimeZone,
-  AbsoluteTimeRange,
   LoadingState,
   ExploreMode,
 } from '@grafana/data';
 
-import { ExploreItemState, ExploreUrlState, ExploreId, ExploreUpdateState, ExploreUIState } from 'app/types/explore';
+import { ExploreId, ExploreItemState, ExploreUIState, ExploreUpdateState, ExploreUrlState } from 'app/types/explore';
 import { StoreState } from 'app/types';
 import {
-  ensureQueries,
   DEFAULT_RANGE,
   DEFAULT_UI_STATE,
+  ensureQueries,
   getTimeRangeFromUrl,
   getTimeRange,
   lastUsedDatasourceKeyForOrgId,
@@ -66,9 +66,22 @@ const getStyles = stylesFactory(() => {
       label: logsMain;
       // Is needed for some transition animations to work.
       position: relative;
+      margin-top: 21px;
     `,
     button: css`
       margin: 1em 4px 0 0;
+    `,
+    // Utility class for iframe parents so that we can show iframe content with reasonable height instead of squished
+    // or some random explicit height.
+    fullHeight: css`
+      label: fullHeight;
+      height: 100%;
+    `,
+    iframe: css`
+      label: iframe;
+      border: none;
+      width: 100%;
+      height: 100%;
     `,
   };
 });
@@ -328,14 +341,22 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
               </button>
             </div>
             <ErrorContainer queryError={queryError} />
-            <AutoSizer onResize={this.onResize} disableHeight>
+            <AutoSizer className={styles.fullHeight} onResize={this.onResize} disableHeight>
               {({ width }) => {
                 if (width === 0) {
                   return null;
                 }
 
                 return (
-                  <main className={`m-t-2 ${styles.logsMain}`} style={{ width }}>
+                  <main
+                    className={cx(
+                      styles.logsMain,
+                      // We need height to be 100% for tracing iframe to look good but in case of metrics mode
+                      // it makes graph and table also full page high when they do not need to be.
+                      mode === ExploreMode.Tracing && styles.fullHeight
+                    )}
+                    style={{ width }}
+                  >
                     <ErrorBoundaryAlert>
                       {showStartPage && StartPage && (
                         <div className={'grafana-info-box grafana-info-box--max-lg'}>
@@ -378,6 +399,18 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
                               onStartScanning={this.onStartScanning}
                               onStopScanning={this.onStopScanning}
                             />
+                          )}
+                          {mode === ExploreMode.Tracing && (
+                            <div className={styles.fullHeight}>
+                              {queryResponse &&
+                                !!queryResponse.series.length &&
+                                queryResponse.series[0].fields[0].values.get(0) && (
+                                  <iframe
+                                    className={styles.iframe}
+                                    src={queryResponse.series[0].fields[0].values.get(0)}
+                                  />
+                                )}
+                            </div>
                           )}
                         </>
                       )}
@@ -448,7 +481,7 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps): Partia
       newMode = supportedModes[0];
     }
   } else {
-    newMode = [ExploreMode.Metrics, ExploreMode.Logs].includes(urlMode) ? urlMode : undefined;
+    newMode = [ExploreMode.Metrics, ExploreMode.Logs, ExploreMode.Tracing].includes(urlMode) ? urlMode : undefined;
   }
 
   const initialUI = ui || DEFAULT_UI_STATE;
