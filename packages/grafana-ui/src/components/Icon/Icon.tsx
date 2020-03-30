@@ -13,11 +13,13 @@ export interface IconProps {
 const getIconStyles = stylesFactory(() => {
   return {
     icon: css`
-      display: inline-block;
+      display: inline-flex;
       width: 16px;
+      align-items: center;
       height: 16px;
       text-align: center;
       font-size: 14px;
+
       &:before {
         vertical-align: middle;
       }
