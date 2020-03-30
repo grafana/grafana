@@ -23,6 +23,7 @@ import {
 import { ComponentType } from 'react';
 import { VariableQueryProps } from '../../../types';
 import { initialVariablesState, VariablesState } from '../state/variablesReducer';
+import { changeMultiTo } from '../shared/multiOptions';
 
 export interface QueryVariableEditorState {
   VariableQueryEditor: ComponentType<VariableQueryProps> | null;
@@ -157,9 +158,14 @@ export const queryVariableSlice = createSlice({
 
       instanceState.tags = tags;
     },
+    changeMulti: (state: VariablesState, action: PayloadAction<VariablePayload<boolean>>) => {
+      const instanceState = getInstanceState<QueryVariableModel>(state, action.payload.id);
+      changeMultiTo(instanceState, action.payload.data);
+      return state;
+    },
   },
 });
 
 export const queryVariableReducer = queryVariableSlice.reducer;
 
-export const { updateVariableOptions, updateVariableTags } = queryVariableSlice.actions;
+export const { updateVariableOptions, updateVariableTags, changeMulti } = queryVariableSlice.actions;

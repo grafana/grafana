@@ -5,7 +5,7 @@ import { FormLabel, Switch } from '@grafana/ui';
 import templateSrv from '../../templating/template_srv';
 import { SelectionOptionsEditor } from '../editor/SelectionOptionsEditor';
 import { QueryVariableModel, VariableRefresh, VariableSort, VariableWithMultiSupport } from '../../templating/types';
-import { QueryVariableEditorState } from './reducer';
+import { QueryVariableEditorState, changeMulti } from './reducer';
 import { changeQueryVariableDataSource, changeQueryVariableQuery, initQueryVariableEditor } from './actions';
 import { VariableEditorState } from '../editor/reducer';
 import { OnPropChangeArguments, VariableEditorProps } from '../editor/types';
@@ -24,6 +24,7 @@ interface DispatchProps {
   initQueryVariableEditor: typeof initQueryVariableEditor;
   changeQueryVariableDataSource: typeof changeQueryVariableDataSource;
   changeQueryVariableQuery: typeof changeQueryVariableQuery;
+  changeMulti: typeof changeMulti;
 }
 
 type Props = OwnProps & ConnectedProps & DispatchProps;
@@ -237,7 +238,11 @@ export class QueryVariableEditorUnConnected extends PureComponent<Props, State> 
           </div>
         </div>
 
-        <SelectionOptionsEditor variable={this.props.variable} onPropChange={this.onSelectionOptionsChange} />
+        <SelectionOptionsEditor
+          variable={this.props.variable}
+          onPropChange={this.onSelectionOptionsChange}
+          onMultiChanged={this.props.changeMulti}
+        />
 
         <div className="gf-form-group">
           <h5>Value groups/tags (Experimental feature)</h5>
@@ -300,6 +305,7 @@ const mapDispatchToProps: MapDispatchToProps<DispatchProps, OwnProps> = {
   initQueryVariableEditor,
   changeQueryVariableDataSource,
   changeQueryVariableQuery,
+  changeMulti,
 };
 
 export const QueryVariableEditor = connectWithStore(

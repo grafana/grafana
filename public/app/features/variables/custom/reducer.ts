@@ -9,6 +9,7 @@ import {
   VariablePayload,
 } from '../state/types';
 import { initialVariablesState, VariablesState } from '../state/variablesReducer';
+import { changeMultiTo } from '../shared/multiOptions';
 
 export const initialCustomVariableModelState: CustomVariableModel = {
   id: NEW_VARIABLE_ID,
@@ -48,9 +49,14 @@ export const customVariableSlice = createSlice({
 
       instanceState.options = options;
     },
+    changeMulti: (state: VariablesState, action: PayloadAction<VariablePayload<boolean>>) => {
+      const instanceState = getInstanceState<CustomVariableModel>(state, action.payload.id);
+      changeMultiTo(instanceState, action.payload.data);
+      return state;
+    },
   },
 });
 
 export const customVariableReducer = customVariableSlice.reducer;
 
-export const { createCustomOptionsFromQuery } = customVariableSlice.actions;
+export const { createCustomOptionsFromQuery, changeMulti } = customVariableSlice.actions;

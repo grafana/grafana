@@ -9,6 +9,7 @@ import {
 } from '../state/types';
 import { initialVariablesState, VariablesState } from '../state/variablesReducer';
 import { DataSourceSelectItem } from '@grafana/data';
+import { changeMultiTo } from '../shared/multiOptions';
 
 export interface DataSourceVariableEditorState {
   dataSourceTypes: Array<{ text: string; value: string }>;
@@ -68,9 +69,13 @@ export const dataSourceVariableSlice = createSlice({
 
       instanceState.options = options;
     },
+    changeMulti: (state: VariablesState, action: PayloadAction<VariablePayload<boolean>>) => {
+      const instanceState = getInstanceState<DataSourceVariableModel>(state, action.payload.id);
+      changeMultiTo(instanceState, action.payload.data);
+      return state;
+    },
   },
 });
 
 export const dataSourceVariableReducer = dataSourceVariableSlice.reducer;
-
-export const { createDataSourceOptions } = dataSourceVariableSlice.actions;
+export const { createDataSourceOptions, changeMulti } = dataSourceVariableSlice.actions;

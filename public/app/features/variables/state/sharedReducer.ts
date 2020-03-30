@@ -7,7 +7,8 @@ import { variableAdapters } from '../adapters';
 import { changeVariableNameSucceeded } from '../editor/reducer';
 import { Deferred } from '../../../core/utils/deferred';
 import { initialVariablesState, VariablesState } from './variablesReducer';
-import { isQuery } from '../guard';
+import { isQuery, isMulti } from '../guard';
+import { changeMultiTo } from '../shared/multiOptions';
 
 const sharedReducerSlice = createSlice({
   name: 'templating/shared',
@@ -15,13 +16,22 @@ const sharedReducerSlice = createSlice({
   reducers: {
     addVariable: (state: VariablesState, action: PayloadAction<VariablePayload<AddVariable>>) => {
       const id = action.payload.id ?? action.payload.data.model.name; // for testing purposes we can call this with an id
-      state[id] = {
+      const variable = {
         ...cloneDeep(variableAdapters.get(action.payload.type).initialState),
         ...action.payload.data.model,
+        id: id,
+        index: action.payload.data.index,
+        global: action.payload.data.global,
       };
-      state[id].id = id;
-      state[id].index = action.payload.data.index;
-      state[id].global = action.payload.data.global;
+
+      if (isMulti(variable)) {
+        // this is done to clean up potential scenarios where
+        // we store single value variable with current value
+        // as string[] instead of string.
+        changeMultiTo(variable, variable.multi);
+      }
+
+      state[id] = variable;
     },
     addInitLock: (state: VariablesState, action: PayloadAction<VariablePayload>) => {
       const instanceState = getInstanceState(state, action.payload.id!);
