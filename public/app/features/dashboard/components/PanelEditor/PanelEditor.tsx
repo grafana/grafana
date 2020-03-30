@@ -26,6 +26,9 @@ import { getPanelEditorTabs } from './state/selectors';
 import { getPanelStateById } from '../../state/selectors';
 import { OptionsPaneContent } from './OptionsPaneContent';
 import { DashNavButton } from 'app/features/dashboard/components/DashNav/DashNavButton';
+import { VariableModel } from 'app/features/templating/types';
+import { getVariables } from 'app/features/variables/state/selectors';
+import { SubMenuItems } from 'app/features/dashboard/components/SubMenu/SubMenuItems';
 
 enum Pane {
   Right,
@@ -45,6 +48,7 @@ interface ConnectedProps {
   initDone: boolean;
   tabs: PanelEditorTab[];
   uiState: PanelEditorUIState;
+  variables: VariableModel[];
 }
 
 interface DispatchProps {
@@ -141,7 +145,7 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
     updatePanelEditorUIState({ isPanelOptionsVisible: !uiState.isPanelOptionsVisible });
   };
 
-  renderHorizontalSplit(styles: any) {
+  renderHorizontalSplit(styles: EditorStyles) {
     const { dashboard, panel, tabs, data, uiState } = this.props;
 
     return (
@@ -158,6 +162,7 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
       >
         <div className={styles.mainPaneWrapper}>
           {this.renderToolbar(styles)}
+          {this.renderTemplateVariables(styles)}
           <div className={styles.panelWrapper}>
             <AutoSizer>
               {({ width, height }) => {
@@ -189,7 +194,21 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
     );
   }
 
-  renderToolbar(styles: any) {
+  renderTemplateVariables(styles: EditorStyles) {
+    const { variables } = this.props;
+
+    if (!variables.length) {
+      return null;
+    }
+
+    return (
+      <div className={styles.variablesWrapper}>
+        <SubMenuItems variables={variables} />
+      </div>
+    );
+  }
+
+  renderToolbar(styles: EditorStyles) {
     const { dashboard, location, uiState } = this.props;
 
     return (
@@ -230,7 +249,7 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
     );
   }
 
-  renderOptionsPane(styles: any) {
+  renderOptionsPane() {
     const { plugin, dashboard, data, panel } = this.props;
 
     if (!plugin) {
@@ -251,7 +270,7 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
     );
   }
 
-  renderWithOptionsPane(styles: any) {
+  renderWithOptionsPane(styles: EditorStyles) {
     const { uiState } = this.props;
 
     return (
@@ -266,7 +285,7 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
         onDragFinished={size => this.onDragFinished(Pane.Right, size)}
       >
         {this.renderHorizontalSplit(styles)}
-        {this.renderOptionsPane(styles)}
+        {this.renderOptionsPane()}
       </SplitPane>
     );
   }
@@ -301,6 +320,7 @@ const mapStateToProps: MapStateToProps<ConnectedProps, OwnProps, StoreState> = (
     initDone: state.panelEditorNew.initDone,
     tabs: getPanelEditorTabs(state.location, plugin),
     uiState: state.panelEditorNew.ui,
+    variables: getVariables(state),
   };
 };
 
@@ -358,6 +378,9 @@ const getStyles = stylesFactory((theme: GrafanaTheme, props: Props) => {
       height: 100%;
       width: 100%;
       padding-right: ${uiState.isPanelOptionsVisible ? 0 : paneSpaceing};
+    `,
+    variablesWrapper: css`
+      padding: 0 ${theme.spacing.sm} ${theme.spacing.sm} ${paneSpaceing};
     `,
     panelWrapper: css`
       flex: 1 1 0;
@@ -417,3 +440,5 @@ const getStyles = stylesFactory((theme: GrafanaTheme, props: Props) => {
     `,
   };
 });
+
+type EditorStyles = ReturnType<typeof getStyles>;
