@@ -55,25 +55,23 @@ export const SearchResultsFilter: FC<Props> = ({
             </Button>
           </div>
         ) : (
-          <>
-            <div className={styles.row}>
-              <Forms.Select
-                size="sm"
-                placeholder="Filter by starred"
-                key={selectedStarredFilter}
-                options={starredFilterOptions}
-                onChange={onStarredFilterChange}
-              />
+          <div className={styles.row}>
+            <Forms.Select
+              size="sm"
+              placeholder="Filter by starred"
+              key={selectedStarredFilter}
+              options={starredFilterOptions}
+              onChange={onStarredFilterChange}
+            />
 
-              <Forms.Select
-                size="sm"
-                placeholder="Filter by tag"
-                key={selectedTagFilter}
-                options={tagFilterOptions}
-                onChange={onTagFilterChange}
-              />
-            </div>
-          </>
+            <Forms.Select
+              size="sm"
+              placeholder="Filter by tag"
+              key={selectedTagFilter}
+              options={tagFilterOptions}
+              onChange={onTagFilterChange}
+            />
+          </div>
         )}
       </div>
     </div>
