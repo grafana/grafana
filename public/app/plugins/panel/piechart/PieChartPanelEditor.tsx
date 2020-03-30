@@ -6,7 +6,7 @@ import {
   FieldPropertiesEditor,
   LegacyValueMappingsEditor,
 } from '@grafana/ui';
-import { PanelEditorProps, FieldDisplayOptions, ValueMapping, FieldConfig } from '@grafana/data';
+import { PanelEditorProps, ReduceDataOptions, ValueMapping, FieldConfig } from '@grafana/data';
 
 import { PieChartOptionsBox } from './PieChartOptionsBox';
 import { PieChartOptions } from './types';
@@ -23,10 +23,10 @@ export class PieChartPanelEditor extends PureComponent<PanelEditorProps<PieChart
     });
   };
 
-  onDisplayOptionsChanged = (fieldOptions: FieldDisplayOptions) =>
+  onDisplayOptionsChanged = (fieldOptions: ReduceDataOptions) =>
     this.props.onOptionsChange({
       ...this.props.options,
-      fieldOptions,
+      reduceOptions: fieldOptions,
     });
 
   onDefaultsChange = (field: FieldConfig) => {
@@ -38,7 +38,7 @@ export class PieChartPanelEditor extends PureComponent<PanelEditorProps<PieChart
 
   render() {
     const { onOptionsChange, options, data, fieldConfig, onFieldConfigChange } = this.props;
-    const { fieldOptions } = options;
+    const { reduceOptions: fieldOptions } = options;
     const { defaults } = fieldConfig;
 
     return (
