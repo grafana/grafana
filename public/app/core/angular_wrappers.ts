@@ -75,6 +75,7 @@ export function registerAngularDirectives() {
     'selectedTagFilter',
     'onReset',
     ['onSelectAllChanged', { watchDepth: 'reference' }],
+    ['deleteItem', { watchDepth: 'reference' }],
     ['moveTo', { watchDepth: 'reference' }],
     ['onStarredFilterChange', { watchDepth: 'reference' }],
     ['onTagFilterChange', { watchDepth: 'reference' }],

@@ -183,7 +183,7 @@ export class ManageDashboardsCtrl {
     return ids;
   }
 
-  delete() {
+  delete = () => {
     const data = this.getFoldersAndDashboardsToDelete();
     const folderCount = data.folderUids.length;
     const dashCount = data.dashboardUids.length;
@@ -209,7 +209,7 @@ export class ManageDashboardsCtrl {
         this.deleteFoldersAndDashboards(data.folderUids, data.dashboardUids);
       },
     });
-  }
+  };
 
   private deleteFoldersAndDashboards(folderUids: string[], dashboardUids: string[]) {
     promiseToDigest(this.$scope)(

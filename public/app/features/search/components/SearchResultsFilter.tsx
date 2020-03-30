@@ -1,16 +1,16 @@
 import React, { FC } from 'react';
 import { css } from 'emotion';
 import { Button, Forms, stylesFactory, useTheme } from '@grafana/ui';
-import { GrafanaTheme } from '@grafana/data';
+import { GrafanaTheme, SelectableValue } from '@grafana/data';
 
 interface Props {
   allChecked: boolean;
-  onSelectAllChanged: any;
   canMove: boolean;
   canDelete: boolean;
   moveTo: any;
   deleteItem: any;
-  tagFilterOptions: any[];
+  tagFilterOptions: SelectableValue[];
+  onSelectAllChanged: any;
   onStarredFilterChange: any;
   onTagFilterChange: any;
   selectedTagFilter: string;
@@ -48,7 +48,7 @@ export const SearchResultsFilter: FC<Props> = ({
             <Button disabled={!canMove} onClick={moveTo} icon="fa fa-exchange" variant="secondary">
               Move
             </Button>
-            <Button onClick={deleteItem} disabled={!canDelete} icon="fa fa-trash" variant="destructive">
+            <Button disabled={!canDelete} onClick={deleteItem} icon="fa fa-trash" variant="destructive">
               Delete
             </Button>
           </div>
