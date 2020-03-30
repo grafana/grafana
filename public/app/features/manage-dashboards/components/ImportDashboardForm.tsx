@@ -1,5 +1,5 @@
 import React, { FC, useEffect, useState } from 'react';
-import { Forms, FormAPI, FormsOnSubmit, HorizontalGroup } from '@grafana/ui';
+import { Button, Forms, FormAPI, FormsOnSubmit, HorizontalGroup } from '@grafana/ui';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
 import DataSourcePicker from 'app/core/components/Select/DataSourcePicker';
 import { DashboardInput, DashboardInputs, DataSourceInput, ImportDashboardDTO } from '../state/reducers';
@@ -84,7 +84,7 @@ export const ImportDashboardForm: FC<Props> = ({
               name="uid"
               disabled
               ref={register({ validate: async (v: string) => await validateUid(v) })}
-              addonAfter={!uidReset && <Forms.Button onClick={onUidReset}>Change uid</Forms.Button>}
+              addonAfter={!uidReset && <Button onClick={onUidReset}>Change uid</Button>}
             />
           ) : (
             <Forms.Input
@@ -136,7 +136,7 @@ export const ImportDashboardForm: FC<Props> = ({
           );
         })}
       <HorizontalGroup>
-        <Forms.Button
+        <Button
           type="submit"
           variant={buttonVariant}
           onClick={() => {
@@ -144,10 +144,10 @@ export const ImportDashboardForm: FC<Props> = ({
           }}
         >
           {buttonText}
-        </Forms.Button>
-        <Forms.Button type="reset" variant="secondary" onClick={onCancel}>
+        </Button>
+        <Button type="reset" variant="secondary" onClick={onCancel}>
           Cancel
-        </Forms.Button>
+        </Button>
       </HorizontalGroup>
     </>
   );

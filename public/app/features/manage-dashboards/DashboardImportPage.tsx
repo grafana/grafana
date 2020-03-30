@@ -2,7 +2,7 @@ import React, { FormEvent, PureComponent } from 'react';
 import { connect, MapDispatchToProps, MapStateToProps } from 'react-redux';
 import { css } from 'emotion';
 import { AppEvents, NavModel } from '@grafana/data';
-import { Forms, stylesFactory } from '@grafana/ui';
+import { Button, Forms, stylesFactory } from '@grafana/ui';
 import Page from 'app/core/components/Page/Page';
 import { ImportDashboardOverview } from './components/ImportDashboardOverview';
 import { DashboardFileUpload } from './components/DashboardFileUpload';
@@ -96,7 +96,7 @@ class DashboardImportUnConnected extends PureComponent<Props> {
                     required: 'A Grafana dashboard url or id is required',
                     validate: validateGcomDashboard,
                   })}
-                  addonAfter={<Forms.Button type="submit">Load</Forms.Button>}
+                  addonAfter={<Button type="submit">Load</Button>}
                 />
               </Forms.Field>
             )}
@@ -120,7 +120,7 @@ class DashboardImportUnConnected extends PureComponent<Props> {
                     rows={10}
                   />
                 </Forms.Field>
-                <Forms.Button type="submit">Load</Forms.Button>
+                <Button type="submit">Load</Button>
               </>
             )}
           </Forms.Form>
