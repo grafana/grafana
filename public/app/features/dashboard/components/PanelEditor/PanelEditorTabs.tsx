@@ -71,7 +71,7 @@ const getPanelEditorTabsStyles = stylesFactory(() => {
       height: 100%;
     `,
     tabBar: css`
-      padding-left: ${theme.spacing.sm};
+      padding-left: ${theme.spacing.md};
     `,
     tabContent: css`
       padding: 0;
@@ -80,6 +80,7 @@ const getPanelEditorTabsStyles = stylesFactory(() => {
       flex-grow: 1;
       min-height: 0;
       background: ${theme.colors.panelBg};
+      border-right: 1px solid ${theme.colors.pageHeaderBorder};
 
       .toolbar {
         background: transparent;

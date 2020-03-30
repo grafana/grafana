@@ -268,6 +268,9 @@ type Cfg struct {
 	LoginMaxLifetimeDays         int
 	TokenRotationIntervalMinutes int
 
+	// OAuth
+	OAuthCookieMaxAge int
+
 	// SAML Auth
 	SAMLEnabled bool
 
@@ -848,6 +851,7 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	DisableLoginForm = auth.Key("disable_login_form").MustBool(false)
 	DisableSignoutMenu = auth.Key("disable_signout_menu").MustBool(false)
 	OAuthAutoLogin = auth.Key("oauth_auto_login").MustBool(false)
+	cfg.OAuthCookieMaxAge = auth.Key("oauth_state_cookie_max_age").MustInt(60)
 	SignoutRedirectUrl, err = valueAsString(auth, "signout_redirect_url", "")
 	if err != nil {
 		return err
