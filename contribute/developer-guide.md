@@ -213,6 +213,14 @@ echo ulimit -S -n $LIMIT >> $INIT_FILE
 
 Your command shell should read the initialization file in question every time it gets started, and apply your `ulimit` command.
 
+For some people, typically using the bash shell, ulimit fails with an error similar to the following:
+
+```
+ulimit: open files: cannot modify limit: Operation not permitted
+```
+
+If that happens to you, chances are you've already set a lower limit and your shell won't let you set a higher one. Try looking in your shell initalization files (~/.bashrc typically), if there's already a ulimit command that you can tweak.
+
 ## Next steps
 
 - Read our [style guides](/contribute/style-guides).
