@@ -21,7 +21,7 @@ Grafana v4.6+ comes with a native annotation store and the ability to add annota
 
 ## Adding annotations
 
-By holding down Ctrl/Cmd+Click. Add tags to the annotation which will make it searchable from other dashboards.
+By holding down Ctrl/Cmd+Click. Adding tags to the annotation will make it searchable from other dashboards.
 
 {{< docs-imagebox img="/img/docs/annotations/annotation-still.png"
 max-width="600px" animated-gif="/img/docs/annotations/annotation.gif" >}}
