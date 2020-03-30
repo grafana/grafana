@@ -109,7 +109,7 @@ class DashboardImportUnConnected extends PureComponent<Props> {
                   type="text"
                   ref={register({
                     required: 'A Grafana dashboard url or id is required',
-                    validate: v => this.validateGcomDashboard(v),
+                    validate: this.validateGcomDashboard,
                   })}
                   addonAfter={<Forms.Button type="submit">Load</Forms.Button>}
                 />
@@ -130,7 +130,7 @@ class DashboardImportUnConnected extends PureComponent<Props> {
                     name="dashboardJson"
                     ref={register({
                       required: 'Need a dashboard json model',
-                      validate: v => this.validateDashboardJson(v),
+                      validate: this.validateDashboardJson,
                     })}
                     rows={10}
                   />
