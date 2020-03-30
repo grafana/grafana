@@ -2,6 +2,6 @@
 
 RUNDIR=e2e/tmp
 PIDFILE=$RUNDIR/pid
-PACKAGE_FILE=/tmp/workspace/oss/dist/grafana-*linux-amd64.tar.gz
+PACKAGE_FILE=dist/grafana-*linux-amd64.tar.gz
 PROV_DIR=$RUNDIR/conf/provisioning
 PORT=3001
