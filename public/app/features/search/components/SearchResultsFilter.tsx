@@ -3,18 +3,18 @@ import { css } from 'emotion';
 import { Button, Forms, stylesFactory, useTheme } from '@grafana/ui';
 import { GrafanaTheme, SelectableValue } from '@grafana/data';
 
-interface Props {
-  allChecked: boolean;
-  canMove: boolean;
-  canDelete: boolean;
-  moveTo: any;
+export interface Props {
+  allChecked?: boolean;
+  canDelete?: boolean;
+  canMove?: boolean;
   deleteItem: any;
-  tagFilterOptions: SelectableValue[];
+  moveTo: any;
   onSelectAllChanged: any;
   onStarredFilterChange: any;
   onTagFilterChange: any;
-  selectedTagFilter: string;
   selectedStarredFilter: string;
+  selectedTagFilter: string;
+  tagFilterOptions: SelectableValue[];
 }
 
 const starredFilterOptions = [
@@ -24,16 +24,16 @@ const starredFilterOptions = [
 
 export const SearchResultsFilter: FC<Props> = ({
   allChecked,
-  onSelectAllChanged,
-  canMove,
   canDelete,
-  moveTo,
+  canMove,
   deleteItem,
-  tagFilterOptions,
+  moveTo,
+  onSelectAllChanged,
   onStarredFilterChange,
-  selectedTagFilter,
   onTagFilterChange,
   selectedStarredFilter,
+  selectedTagFilter,
+  tagFilterOptions,
 }) => {
   const showActions = canDelete || canMove;
   const theme = useTheme();
