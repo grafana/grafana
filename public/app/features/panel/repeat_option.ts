@@ -1,7 +1,7 @@
 import { coreModule } from 'app/core/core';
 import { VariableSrv } from 'app/features/templating/variable_srv';
 import { getConfig } from '../../core/config';
-import { getVariables } from '../variables/state/selectors';
+import { getVariableClones } from '../variables/state/selectors';
 
 const template = `
 <div class="gf-form-select-wrapper max-width-18">
@@ -22,7 +22,7 @@ function dashRepeatOptionDirective(variableSrv: VariableSrv) {
       element.css({ display: 'block', width: '100%' });
 
       if (getConfig().featureToggles.newVariables) {
-        scope.variables = getVariables().map((item: any) => {
+        scope.variables = getVariableClones().map((item: any) => {
           return { text: item.name, value: item.name };
         });
       }

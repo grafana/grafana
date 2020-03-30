@@ -1,10 +1,10 @@
-import React, { useMemo, FC } from 'react';
+import React, { FC, useMemo } from 'react';
 import { PanelModel } from '../../state';
 import { SelectableValue } from '@grafana/data';
-import { Forms, DataLinksInlineEditor } from '@grafana/ui';
+import { DataLinksInlineEditor, Forms } from '@grafana/ui';
 import { OptionsGroup } from './OptionsGroup';
 import { getPanelLinksVariableSuggestions } from '../../../panel/panellinks/link_srv';
-import { getVariables } from '../../../variables/state/selectors';
+import { getVariableClones } from '../../../variables/state/selectors';
 
 export const GeneralPanelOptions: FC<{
   panel: PanelModel;
@@ -85,7 +85,7 @@ export const GeneralPanelOptions: FC<{
 };
 
 function getVariableOptions(): Array<SelectableValue<string>> {
-  const options = getVariables().map((item: any) => {
+  const options = getVariableClones().map((item: any) => {
     return { label: item.name, value: item.name };
   });
 

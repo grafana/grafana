@@ -14,7 +14,7 @@ import { AppEvent, dateTime, DateTimeInput, isDateTime, PanelEvents, TimeRange, 
 import { UrlQueryValue } from '@grafana/runtime';
 import { CoreEvents, DashboardMeta, KIOSK_MODE_TV } from 'app/types';
 import { getConfig } from '../../../core/config';
-import { getVariableClones, getVariables } from 'app/features/variables/state/selectors';
+import { getVariableClones } from 'app/features/variables/state/selectors';
 import { variableAdapters } from 'app/features/variables/adapters';
 import { onTimeRangeUpdated } from 'app/features/variables/state/actions';
 import { dispatch } from '../../../store/store';
@@ -1029,7 +1029,7 @@ export class DashboardModel {
       return _.find(this.templating.list, { name: panel.repeat } as any);
     }
 
-    return getVariables().find(variable => variable.name === panel.repeat);
+    return getVariableClones().find(variable => variable.name === panel.repeat);
   }
 
   private isSnapshotTruthy() {
@@ -1038,7 +1038,7 @@ export class DashboardModel {
 
   private hasVariables() {
     if (getConfig().featureToggles.newVariables) {
-      return getVariables().length > 0;
+      return getVariableClones().length > 0;
     }
     return this.templating.list.length > 0;
   }

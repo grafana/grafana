@@ -11,7 +11,7 @@ import {
   VariableWithOptions,
 } from '../../templating/types';
 import { StoreState, ThunkResult } from '../../../types';
-import { getVariable, getVariables } from './selectors';
+import { getVariable, getVariableClones } from './selectors';
 import { variableAdapters } from '../adapters';
 import { Graph } from '../../../core/utils/dag';
 import { updateLocation } from 'app/core/actions';
@@ -62,8 +62,8 @@ export const initDashboardTemplating = (list: VariableModel[]): ThunkResult<void
       dispatch(addVariable(toVariablePayload(model, { global: false, index: orderIndex++, model })));
     }
 
-    for (let index = 0; index < getVariables(getState()).length; index++) {
-      dispatch(addInitLock(toVariablePayload(getVariables(getState())[index])));
+    for (let index = 0; index < getVariableClones(getState()).length; index++) {
+      dispatch(addInitLock(toVariablePayload(getVariableClones(getState())[index])));
     }
   };
 };
@@ -71,7 +71,7 @@ export const initDashboardTemplating = (list: VariableModel[]): ThunkResult<void
 export const processVariableDependencies = async (variable: VariableModel, state: StoreState) => {
   let dependencies: Array<Promise<any>> = [];
 
-  for (const otherVariable of getVariables(state)) {
+  for (const otherVariable of getVariableClones(state)) {
     if (variable === otherVariable) {
       continue;
     }
@@ -117,14 +117,14 @@ export const processVariable = (identifier: VariableIdentifier, queryParams: Url
 export const processVariables = (): ThunkResult<void> => {
   return async (dispatch, getState) => {
     const queryParams = getState().location.query;
-    const promises = getVariables(getState()).map(
+    const promises = getVariableClones(getState()).map(
       async (variable: VariableModel) => await dispatch(processVariable(toVariableIdentifier(variable), queryParams))
     );
 
     await Promise.all(promises);
 
-    for (let index = 0; index < getVariables(getState()).length; index++) {
-      await dispatch(removeInitLock(toVariablePayload(getVariables(getState())[index])));
+    for (let index = 0; index < getVariableClones(getState()).length; index++) {
+      await dispatch(removeInitLock(toVariablePayload(getVariableClones(getState())[index])));
     }
   };
 };
@@ -301,7 +301,7 @@ export const variableUpdated = (identifier: VariableIdentifier, emitChangeEvents
       return Promise.resolve();
     }
 
-    const variables = getVariables(getState());
+    const variables = getVariableClones(getState());
     const g = createGraph(variables);
 
     const node = g.getNode(variable.name);
@@ -337,7 +337,7 @@ export const onTimeRangeUpdated = (
   dependencies: OnTimeRangeUpdatedDependencies = { templateSrv: templateSrv, appEvents: appEvents }
 ): ThunkResult<void> => async (dispatch, getState) => {
   dependencies.templateSrv.updateTimeRange(timeRange);
-  const variablesThatNeedRefresh = getVariables(getState()).filter(variable => {
+  const variablesThatNeedRefresh = getVariableClones(getState()).filter(variable => {
     if (variable.hasOwnProperty('refresh') && variable.hasOwnProperty('options')) {
       const variableWithRefresh = (variable as unknown) as QueryVariableModel;
       return variableWithRefresh.refresh === VariableRefresh.onTimeRangeChanged;
@@ -376,7 +376,7 @@ const getQueryWithVariables = (getState: () => StoreState): UrlQueryMap => {
       return obj;
     }, {} as UrlQueryMap);
 
-  for (const variable of getVariables(getState())) {
+  for (const variable of getVariableClones(getState())) {
     if (variable.skipUrlSync) {
       continue;
     }
