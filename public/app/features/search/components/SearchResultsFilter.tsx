@@ -1,7 +1,6 @@
 import React, { FC } from 'react';
 import { css } from 'emotion';
 import { Button, Forms } from '@grafana/ui';
-import { SelectableValue } from '@grafana/data';
 
 interface Props {
   allChecked: boolean;
@@ -12,9 +11,9 @@ interface Props {
   deleteItem: any;
   tagFilterOptions: any[];
   onStarredFilterChange: any;
-  selectedTagFilter: any;
   onTagFilterChange: any;
-  selectedStarredFilter: SelectableValue;
+  selectedTagFilter: string;
+  selectedStarredFilter: string;
 }
 
 const starredFilterOptions = [
@@ -59,14 +58,15 @@ export const SearchResultsFilter: FC<Props> = ({
               <Forms.Select
                 size="sm"
                 placeholder="Filter by starred"
-                key={selectedStarredFilter?.value}
+                key={selectedStarredFilter}
                 options={starredFilterOptions}
                 onChange={onStarredFilterChange}
               />
 
               <Forms.Select
                 size="sm"
-                value={selectedTagFilter}
+                placeholder="Filter by tag"
+                key={selectedTagFilter}
                 options={tagFilterOptions}
                 onChange={onTagFilterChange}
               />

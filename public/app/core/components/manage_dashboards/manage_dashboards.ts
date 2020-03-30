@@ -249,8 +249,7 @@ export class ManageDashboardsCtrl {
 
   initTagFilter() {
     return this.searchSrv.getDashboardTags().then((results: any) => {
-      this.tagFilterOptions = [{ term: 'Filter By Tag', disabled: true }].concat(results);
-      this.selectedTagFilter = this.tagFilterOptions[0];
+      this.tagFilterOptions = results.map((result: any) => ({ value: result.term, label: result.term }));
     });
   }
 
@@ -267,11 +266,11 @@ export class ManageDashboardsCtrl {
     return this.refreshList();
   }
 
-  onTagFilterChange() {
-    const res = this.filterByTag(this.selectedTagFilter.term);
-    this.selectedTagFilter = this.tagFilterOptions[0];
+  onTagFilterChange = (filter: SelectableValue) => {
+    const res = this.filterByTag(filter.value);
+    this.selectedTagFilter = filter.value;
     return res;
-  }
+  };
 
   removeTag(tag: any, evt: Event) {
     this.query.tag = _.without(this.query.tag, tag);
@@ -287,8 +286,9 @@ export class ManageDashboardsCtrl {
     return this.refreshList();
   }
 
-  onStarredFilterChange = (value: SelectableValue) => {
-    this.query.starred = value.value;
+  onStarredFilterChange = (filter: SelectableValue) => {
+    this.query.starred = filter.value;
+    this.selectedStarredFilter = filter.value;
     return this.refreshList();
   };
 
@@ -312,7 +312,8 @@ export class ManageDashboardsCtrl {
     this.query.query = '';
     this.query.tag = [];
     this.query.starred = false;
-    this.selectedStarredFilter = { value: Math.random() };
+    this.selectedStarredFilter = 'starred';
+    this.selectedTagFilter = 'tag';
     this.refreshList();
   }
 
