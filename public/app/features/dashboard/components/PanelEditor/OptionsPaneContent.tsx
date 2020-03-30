@@ -1,4 +1,5 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useState, CSSProperties } from 'react';
+import Transition from 'react-transition-group/Transition';
 import { FieldConfigSource, GrafanaTheme, PanelData, PanelPlugin } from '@grafana/data';
 import { DashboardModel, PanelModel } from '../../state';
 import {
@@ -40,6 +41,8 @@ export const OptionsPaneContent: React.FC<{
 }) => {
   const theme = useTheme();
   const styles = getStyles(theme);
+  const [activeTab, setActiveTab] = useState('defaults');
+  const [isSearching, setSearchMode] = useState(false);
 
   const renderFieldOptions = useCallback(
     (plugin: PanelPlugin) => {
@@ -126,17 +129,24 @@ export const OptionsPaneContent: React.FC<{
     [data, plugin, panel, onFieldConfigsChange]
   );
 
-  const [activeTab, setActiveTab] = useState('defaults');
-  const [isSearching, setSearchMode] = useState(false);
+  const renderSearchInput = useCallback(() => {
+    const defaultStyles = {
+      transition: 'width 100ms ease-in-out',
+      width: '50%',
+      display: 'flex',
+    };
 
-  return (
-    <div className={styles.panelOptionsPane}>
-      {plugin && (
-        <div className={styles.wrapper}>
-          <TabsBar className={styles.tabsBar}>
-            {isSearching && (
-              <>
-                <Tab label="Options" active={activeTab === 'defaults'} onChangeTab={() => setActiveTab('defaults')} />
+    const transitionStyles: { [str: string]: CSSProperties } = {
+      entering: { width: '50%' },
+      entered: { width: '100%' },
+    };
+
+    return (
+      <Transition in={true} timeout={0} appear={true}>
+        {state => {
+          return (
+            <div className={styles.searchWrapper}>
+              <div style={{ ...defaultStyles, ...transitionStyles[state] }}>
                 <Forms.Input
                   className={styles.searchInput}
                   type="text"
@@ -147,8 +157,20 @@ export const OptionsPaneContent: React.FC<{
                     <Icon name="remove" onClick={() => setSearchMode(false)} className={styles.searchRemoveIcon} />
                   }
                 />
-              </>
-            )}
+              </div>
+            </div>
+          );
+        }}
+      </Transition>
+    );
+  }, []);
+
+  return (
+    <div className={styles.panelOptionsPane}>
+      {plugin && (
+        <div className={styles.wrapper}>
+          <TabsBar className={styles.tabsBar}>
+            {isSearching && renderSearchInput()}
             {!isSearching && (
               <>
                 <Tab label="Options" active={activeTab === 'defaults'} onChangeTab={() => setActiveTab('defaults')} />
@@ -202,10 +224,14 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
     panelOptionsPane: css`
       height: 100%;
       width: 100%;
-      border-bottom: none;
     `,
     tabsBar: css`
       padding-right: ${theme.spacing.sm};
+    `,
+    searchWrapper: css`
+      display: flex;
+      flex-grow: 1;
+      flex-direction: row-reverse;
     `,
     searchInput: css`
       color: ${theme.colors.textWeak};

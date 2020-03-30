@@ -19,11 +19,13 @@ const getTabsBarStyles = stylesFactory((theme: GrafanaTheme, hideBorder = false)
       !hideBorder &&
       css`
         border-bottom: 1px solid ${colors.pageHeaderBorder};
+        // Sometimes TabsBar is rendered without any tabs, and should preserve height
       `,
     tabs: css`
       position: relative;
       top: 1px;
       display: flex;
+      height: 41px;
     `,
   };
 });
