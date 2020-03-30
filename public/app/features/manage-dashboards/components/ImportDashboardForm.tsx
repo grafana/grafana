@@ -39,6 +39,10 @@ export const ImportDashboardForm: FC<Props> = ({
 
   const [isSubmitted, setSubmitted] = useState(false);
 
+  /*
+    This useEffect is needed for overwriting a dashboard. It
+    submits the form even if there's validation errors on title or uid.
+  */
   useEffect(() => {
     if (isSubmitted && (errors.title || errors.uid)) {
       onSubmit(getValues({ nest: true }), {} as any);
