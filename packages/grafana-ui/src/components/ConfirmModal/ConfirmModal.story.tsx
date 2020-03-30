@@ -11,7 +11,7 @@ const getKnobs = () => {
     body: text('Body', 'Are you sure you want to delete this user?'),
     confirm: text('Confirm', 'Delete'),
     visible: boolean('Visible', true),
-    icon: select('Icon', ['exclamation-triangle', 'power-off', 'cog', 'lock'], 'exclamation-triangle'),
+    icon: select('Icon', ['exclamation-triangle', 'power', 'cog', 'lock'], 'exclamation-triangle'),
   };
 };
 
