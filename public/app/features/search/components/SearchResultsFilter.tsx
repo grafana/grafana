@@ -3,15 +3,17 @@ import { css } from 'emotion';
 import { Button, Forms, stylesFactory, useTheme } from '@grafana/ui';
 import { GrafanaTheme, SelectableValue } from '@grafana/data';
 
+type onSelectChange = (value: SelectableValue) => void;
+
 export interface Props {
   allChecked?: boolean;
   canDelete?: boolean;
   canMove?: boolean;
-  deleteItem: any;
-  moveTo: any;
+  deleteItem: () => void;
+  moveTo: () => void;
   onSelectAllChanged: any;
-  onStarredFilterChange: any;
-  onTagFilterChange: any;
+  onStarredFilterChange: onSelectChange;
+  onTagFilterChange: onSelectChange;
   selectedStarredFilter: string;
   selectedTagFilter: string;
   tagFilterOptions: SelectableValue[];
