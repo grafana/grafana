@@ -21,7 +21,7 @@ Grafana v4.6+ comes with a native annotation store and the ability to add annota
 
 ## Adding annotations
 
-By holding down Ctrl/Cmd+Click. Add tags to the annotation will make it searchable from other dashboards.
+By holding down Ctrl/Cmd+Click. Adding tags to the annotation will make it searchable from other dashboards.
 
 {{< docs-imagebox img="/img/docs/annotations/annotation-still.png"
 max-width="600px" animated-gif="/img/docs/annotations/annotation.gif" >}}
@@ -36,7 +36,7 @@ max-width="600px" animated-gif="/img/docs/annotations/region-annotation.gif" >}}
 ### Built in query
 
 After you added an annotation they will still be visible. This is due to the built in annotation query that exists on all dashboards. This annotation query will
-fetch all annotation events that originate from the current dashboard and show them on the panel where they where created. This includes alert state history annotations. You can
+fetch all annotation events that originate from the current dashboard and show them on the panel where they were created. This includes alert state history annotations. You can
 stop annotations from being fetched and drawn by opening the **Annotations** settings (via Dashboard cogs menu) and modifying the query named `Annotations & Alerts (Built-in)`.
 
 When you copy a dashboard using the **Save As** feature it will get a new dashboard id so annotations created on source dashboard will no longer be visible on the copy. You
