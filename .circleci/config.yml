@@ -520,6 +520,9 @@ jobs:
       ubuntu:
         type: boolean
     executor: base
+    environment:
+      # Required for building cross-platform images
+      DOCKER_BUILDKIT: 1
     steps:
       - run:
           name: Exit if enterprise and forked PR
@@ -534,7 +537,9 @@ jobs:
       - run:
           name: CI job started
           command: ./scripts/ci-job-started.sh
-      - setup_remote_docker
+      - setup_remote_docker:
+          # This version is necessary for building cross-platform images
+          version: 18.09.3
       - install-grabpl
       # XXX: Is this necessary?
       - run: docker run --privileged linuxkit/binfmt:v0.6
