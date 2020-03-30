@@ -67,19 +67,6 @@ export class UserPermissions extends PureComponent<Props, State> {
                           value={currentAdminOption}
                           onChange={this.onAdminOptionSelect}
                         />
-                        {/* <select
-                          value={currentAdminOption}
-                          className="gf-form-input"
-                          onChange={this.onAdminOptionSelect}
-                        >
-                          {['YES', 'NO'].map((option, index) => {
-                            return (
-                              <option value={option} key={`${option}-${index}`}>
-                                {option}
-                              </option>
-                            );
-                          })}
-                        </select> */}
                       </div>
                     </td>
                   ) : (
