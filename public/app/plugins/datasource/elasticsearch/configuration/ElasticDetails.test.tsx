@@ -3,7 +3,8 @@ import { last } from 'lodash';
 import { mount } from 'enzyme';
 import { ElasticDetails } from './ElasticDetails';
 import { createDefaultConfigOptions } from './mocks';
-import { Select } from '@grafana/ui';
+import { Legacy } from '@grafana/ui';
+const { Select } = Legacy;
 
 describe('ElasticDetails', () => {
   it('should render without error', () => {

@@ -1,8 +1,9 @@
 import React, { PureComponent } from 'react';
-import { AsyncSelect } from '@grafana/ui';
+import { Legacy } from '@grafana/ui';
 import { getBackendSrv } from 'app/core/services/backend_srv';
 import { Organization } from 'app/types';
 import { SelectableValue } from '@grafana/data';
+const { AsyncSelect } = Legacy;
 
 export interface OrgSelectItem {
   id: number;
