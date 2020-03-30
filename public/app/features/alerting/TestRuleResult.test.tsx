@@ -1,6 +1,6 @@
 import React from 'react';
 import { TestRuleResult, Props } from './TestRuleResult';
-import { DashboardModel } from '../dashboard/state';
+import { DashboardModel, PanelModel } from '../dashboard/state';
 import { shallow } from 'enzyme';
 
 jest.mock('@grafana/runtime', () => {
@@ -16,7 +16,7 @@ jest.mock('@grafana/runtime', () => {
 
 const setup = (propOverrides?: object) => {
   const props: Props = {
-    panelId: 1,
+    panel: new PanelModel({ id: 1 }),
     dashboard: new DashboardModel({ panels: [{ id: 1 }] }),
   };
 
