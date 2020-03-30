@@ -12,14 +12,14 @@ import {
 import { FieldConfigEditorBuilder, PanelOptionsEditorBuilder } from '../utils/OptionsUIBuilders';
 import { ComponentClass, ComponentType } from 'react';
 
-export class PanelPlugin<TOptions = any> extends GrafanaPlugin<PanelPluginMeta> {
-  private customFieldConfigsUIBuilder = new FieldConfigEditorBuilder();
+export class PanelPlugin<TOptions = any, TFieldConfigOptions = any> extends GrafanaPlugin<PanelPluginMeta> {
+  private customFieldConfigsUIBuilder = new FieldConfigEditorBuilder<TFieldConfigOptions>();
   private _customFieldConfigs?: FieldConfigEditorRegistry;
-  private registerCustomFieldConfigs?: (builder: FieldConfigEditorBuilder) => void;
+  private registerCustomFieldConfigs?: (builder: FieldConfigEditorBuilder<TFieldConfigOptions>) => void;
 
-  private optionsUIBuilder = new PanelOptionsEditorBuilder();
+  private optionsUIBuilder = new PanelOptionsEditorBuilder<TOptions>();
   private _optionEditors?: PanelOptionEditorsRegistry;
-  private registerOptionEditors?: (builder: PanelOptionsEditorBuilder) => void;
+  private registerOptionEditors?: (builder: PanelOptionsEditorBuilder<TOptions>) => void;
 
   panel: ComponentType<PanelProps<TOptions>>;
   editor?: ComponentClass<PanelEditorProps<TOptions>>;
@@ -134,7 +134,7 @@ export class PanelPlugin<TOptions = any> extends GrafanaPlugin<PanelPluginMeta> 
    *
    * @public
    **/
-  setCustomFieldOptions(builder: (builder: FieldConfigEditorBuilder) => void) {
+  setCustomFieldOptions(builder: (builder: FieldConfigEditorBuilder<TFieldConfigOptions>) => void) {
     // builder is applied lazily when custom field configs are accessed
     this.registerCustomFieldConfigs = builder;
     return this;
@@ -170,7 +170,7 @@ export class PanelPlugin<TOptions = any> extends GrafanaPlugin<PanelPluginMeta> 
    *
    * @public
    **/
-  setPanelOptions(builder: (builder: PanelOptionsEditorBuilder) => void) {
+  setPanelOptions(builder: (builder: PanelOptionsEditorBuilder<TOptions>) => void) {
     // builder is applied lazily when options UI is created
     this.registerOptionEditors = builder;
     return this;

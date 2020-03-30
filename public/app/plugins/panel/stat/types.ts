@@ -51,7 +51,7 @@ export const standardFieldConfig: FieldConfigSource = {
   overrides: [],
 };
 
-export function addStandardDataReduceOptions(builder: PanelOptionsEditorBuilder) {
+export function addStandardDataReduceOptions(builder: PanelOptionsEditorBuilder<StatPanelOptions>) {
   builder.addRadio({
     id: 'reduceOptions.values',
     name: 'Show',

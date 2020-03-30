@@ -1,8 +1,8 @@
 import { PanelPlugin } from '@grafana/data';
 import { TablePanel } from './TablePanel';
-import { Options, defaults } from './types';
+import { Options, defaults, CustomFieldConfig } from './types';
 
-export const plugin = new PanelPlugin<Options>(TablePanel)
+export const plugin = new PanelPlugin<Options, CustomFieldConfig>(TablePanel)
   .setDefaults(defaults)
   .setCustomFieldOptions(builder => {
     builder

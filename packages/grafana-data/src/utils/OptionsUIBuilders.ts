@@ -26,11 +26,12 @@ import {
 /**
  * Fluent API for declarative creation of field config option editors
  */
-export class FieldConfigEditorBuilder extends OptionsUIRegistryBuilder<
+export class FieldConfigEditorBuilder<TOptions> extends OptionsUIRegistryBuilder<
+  TOptions,
   FieldConfigEditorProps<any, any>,
-  FieldPropertyEditorItem
+  FieldPropertyEditorItem<TOptions>
 > {
-  addNumberInput<TSettings>(config: FieldConfigEditorConfig<TSettings & NumberFieldConfigSettings>) {
+  addNumberInput<TSettings>(config: FieldConfigEditorConfig<TOptions, TSettings & NumberFieldConfigSettings>) {
     return this.addCustomEditor({
       ...config,
       override: standardEditorsRegistry.get('number').editor as any,
@@ -41,7 +42,7 @@ export class FieldConfigEditorBuilder extends OptionsUIRegistryBuilder<
     });
   }
 
-  addTextInput<TSettings>(config: FieldConfigEditorConfig<TSettings & StringFieldConfigSettings>) {
+  addTextInput<TSettings>(config: FieldConfigEditorConfig<TOptions, TSettings & StringFieldConfigSettings>) {
     return this.addCustomEditor({
       ...config,
       override: standardEditorsRegistry.get('text').editor as any,
@@ -52,7 +53,9 @@ export class FieldConfigEditorBuilder extends OptionsUIRegistryBuilder<
     });
   }
 
-  addSelect<TOption, TSettings = any>(config: FieldConfigEditorConfig<TSettings & SelectFieldConfigSettings<TOption>>) {
+  addSelect<TOption, TSettings = any>(
+    config: FieldConfigEditorConfig<TOptions, TSettings & SelectFieldConfigSettings<TOption>>
+  ) {
     return this.addCustomEditor({
       ...config,
       override: standardEditorsRegistry.get('select').editor as any,
@@ -64,7 +67,9 @@ export class FieldConfigEditorBuilder extends OptionsUIRegistryBuilder<
     });
   }
 
-  addRadio<TOption, TSettings = any>(config: FieldConfigEditorConfig<TSettings & SelectFieldConfigSettings<TOption>>) {
+  addRadio<TOption, TSettings = any>(
+    config: FieldConfigEditorConfig<TOptions, TSettings & SelectFieldConfigSettings<TOption>>
+  ) {
     return this.addCustomEditor({
       ...config,
       override: standardEditorsRegistry.get('radio').editor as any,
@@ -76,7 +81,7 @@ export class FieldConfigEditorBuilder extends OptionsUIRegistryBuilder<
     });
   }
 
-  addBooleanSwitch<TSettings = any>(config: FieldConfigEditorConfig<TSettings>) {
+  addBooleanSwitch<TSettings = any>(config: FieldConfigEditorConfig<TOptions, TSettings>) {
     return this.addCustomEditor({
       ...config,
       editor: standardEditorsRegistry.get('boolean').editor as any,
@@ -87,7 +92,7 @@ export class FieldConfigEditorBuilder extends OptionsUIRegistryBuilder<
     });
   }
 
-  addColorPicker<TSettings = any>(config: FieldConfigEditorConfig<TSettings & ColorFieldConfigSettings>) {
+  addColorPicker<TSettings = any>(config: FieldConfigEditorConfig<TOptions, TSettings & ColorFieldConfigSettings>) {
     return this.addCustomEditor({
       ...config,
       editor: standardEditorsRegistry.get('color').editor as any,
@@ -98,7 +103,7 @@ export class FieldConfigEditorBuilder extends OptionsUIRegistryBuilder<
     });
   }
 
-  addUnitPicker<TSettings = any>(config: FieldConfigEditorConfig<TSettings & UnitFieldConfigSettings>) {
+  addUnitPicker<TSettings = any>(config: FieldConfigEditorConfig<TOptions, TSettings & UnitFieldConfigSettings>) {
     return this.addCustomEditor({
       ...config,
       editor: standardEditorsRegistry.get('unit').editor as any,
@@ -113,43 +118,53 @@ export class FieldConfigEditorBuilder extends OptionsUIRegistryBuilder<
 /**
  * Fluent API for declarative creation of panel options
  */
-export class PanelOptionsEditorBuilder extends OptionsUIRegistryBuilder<StandardEditorProps, PanelOptionsEditorItem> {
-  addNumberInput<TSettings>(config: PanelOptionsEditorConfig<TSettings & NumberFieldConfigSettings>) {
+export class PanelOptionsEditorBuilder<TOptions> extends OptionsUIRegistryBuilder<
+  TOptions,
+  StandardEditorProps,
+  PanelOptionsEditorItem<TOptions>
+> {
+  addNumberInput<TSettings>(config: PanelOptionsEditorConfig<TOptions, TSettings & NumberFieldConfigSettings>) {
     return this.addCustomEditor({
       ...config,
       editor: standardEditorsRegistry.get('number').editor as any,
     });
   }
 
-  addTextInput<TSettings>(config: PanelOptionsEditorConfig<TSettings & StringFieldConfigSettings>) {
+  addTextInput<TSettings>(config: PanelOptionsEditorConfig<TOptions, TSettings & StringFieldConfigSettings>) {
     return this.addCustomEditor({
       ...config,
       editor: standardEditorsRegistry.get('text').editor as any,
     });
   }
 
-  addSelect<TOption, TSettings>(config: PanelOptionsEditorConfig<TSettings & SelectFieldConfigSettings<TOption>>) {
+  addSelect<TOption, TSettings>(
+    config: PanelOptionsEditorConfig<TOptions, TSettings & SelectFieldConfigSettings<TOption>>
+  ) {
     return this.addCustomEditor({
       ...config,
       editor: standardEditorsRegistry.get('select').editor as any,
     });
   }
 
-  addRadio<TOption, TSettings>(config: PanelOptionsEditorConfig<TSettings & SelectFieldConfigSettings<TOption>>) {
+  addRadio<TOption, TSettings>(
+    config: PanelOptionsEditorConfig<TOptions, TSettings & SelectFieldConfigSettings<TOption>>
+  ) {
     return this.addCustomEditor({
       ...config,
       editor: standardEditorsRegistry.get('radio').editor as any,
     });
   }
 
-  addBooleanSwitch<TSettings = any>(config: PanelOptionsEditorConfig<TSettings>) {
+  addBooleanSwitch<TSettings = any>(config: PanelOptionsEditorConfig<TOptions, TSettings>) {
     return this.addCustomEditor({
       ...config,
       editor: standardEditorsRegistry.get('boolean').editor as any,
     });
   }
 
-  addColorPicker<TSettings = any>(config: PanelOptionsEditorConfig<TSettings & ColorFieldConfigSettings>): this {
+  addColorPicker<TSettings = any>(
+    config: PanelOptionsEditorConfig<TOptions, TSettings & ColorFieldConfigSettings>
+  ): this {
     return this.addCustomEditor({
       ...config,
       editor: standardEditorsRegistry.get('color').editor as any,
@@ -157,7 +172,9 @@ export class PanelOptionsEditorBuilder extends OptionsUIRegistryBuilder<Standard
     });
   }
 
-  addUnitPicker<TSettings = any>(config: PanelOptionsEditorConfig<TSettings & UnitFieldConfigSettings>): this {
+  addUnitPicker<TSettings = any>(
+    config: PanelOptionsEditorConfig<TOptions, TSettings & UnitFieldConfigSettings>
+  ): this {
     return this.addCustomEditor({
       ...config,
       editor: standardEditorsRegistry.get('unit').editor as any,
