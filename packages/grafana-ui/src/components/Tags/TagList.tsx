@@ -1,10 +1,10 @@
 import React, { FC } from 'react';
 import { cx, css } from 'emotion';
-import { Tag } from './Tag';
+import { OnTagClick, Tag } from './Tag';
 
 export interface Props {
   tags: string[];
-  onClick?: (name: string) => any;
+  onClick?: OnTagClick;
   /** Custom styles for the wrapper component */
   className?: string;
 }

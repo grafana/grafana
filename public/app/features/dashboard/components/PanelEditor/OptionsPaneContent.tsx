@@ -6,6 +6,7 @@ import { DefaultFieldConfigEditor, OverrideFieldConfigEditor } from './FieldConf
 import { AngularPanelOptions } from './AngularPanelOptions';
 import { css } from 'emotion';
 import { GeneralPanelOptions } from './GeneralPanelOptions';
+import { PanelOptionsEditor } from './PanelOptionsEditor';
 
 export const OptionsPaneContent: React.FC<{
   plugin?: PanelPlugin;
@@ -64,9 +65,10 @@ export const OptionsPaneContent: React.FC<{
 
   const renderCustomPanelSettings = useCallback(
     (plugin: PanelPlugin) => {
+      const editors: JSX.Element[] = [];
       if (plugin.editor && panel) {
-        return (
-          <div className={styles.legacyOptions}>
+        editors.push(
+          <div className={styles.legacyOptions} key="plugin custom panel settings">
             <plugin.editor
               data={data}
               options={panel.getOptions()}
@@ -76,6 +78,22 @@ export const OptionsPaneContent: React.FC<{
             />
           </div>
         );
+      }
+
+      // When editor created declaratively
+      if (plugin.optionEditors && panel) {
+        editors.push(
+          <PanelOptionsEditor
+            key="panel options"
+            options={panel.getOptions()}
+            onChange={onPanelOptionsChanged}
+            plugin={plugin}
+          />
+        );
+      }
+
+      if (editors.length > 0) {
+        return editors;
       }
 
       return (

@@ -16,11 +16,12 @@
       <div class="search-results-scroller">
         <div class="search-results-container" grafana-scrollbar>
           <h6 ng-show="!ctrl.isLoading && ctrl.results.length === 0">No dashboards matching your query were found.</h6>
-          <dashboard-search-results
+          <search-results
             results="ctrl.results"
-            on-tag-selected="ctrl.filterByTag($tag)"
-            on-folder-expanding="ctrl.folderExpanding()"
-            on-folder-expanded="ctrl.folderExpanded($folder)" />
+            on-tag-selected="ctrl.filterByTag"
+            on-folder-expanding="ctrl.folderExpanding"
+            on-selection-changed="ctrl.selectionChanged"
+          />
         </div>
       </div>
     </div>

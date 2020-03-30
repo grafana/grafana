@@ -39,6 +39,7 @@ interface RadioButtonGroupProps<T> {
   options: Array<SelectableValue<T>>;
   onChange?: (value?: T) => void;
   size?: RadioButtonSize;
+  fullWidth?: boolean;
 }
 
 export function RadioButtonGroup<T>({
@@ -48,6 +49,7 @@ export function RadioButtonGroup<T>({
   disabled,
   disabledOptions,
   size = 'md',
+  fullWidth,
 }: RadioButtonGroupProps<T>) {
   const handleOnChange = useCallback(
     (option: SelectableValue<T>) => {
@@ -75,6 +77,7 @@ export function RadioButtonGroup<T>({
             onChange={handleOnChange(o)}
             id={`option-${o.value}`}
             name={groupName.current}
+            fullWidth
           >
             {o.label}
           </RadioButton>

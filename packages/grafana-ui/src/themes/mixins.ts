@@ -47,6 +47,13 @@ export function listItem(theme: GrafanaTheme): string {
     `;
 }
 
+export function listItemSelected(theme: GrafanaTheme): string {
+  return `
+       background: ${theme.isLight ? theme.colors.gray6 : theme.colors.dark9};
+       color: ${theme.colors.textStrong};
+    `;
+}
+
 export const panelEditorNestedListStyles = stylesFactory((theme: GrafanaTheme) => {
   const borderColor = selectThemeVariant(
     {

@@ -66,7 +66,7 @@ const TAG_BORDER_COLORS = [
  * Returns tag badge background and border colors based on hashed tag name.
  * @param name tag name
  */
-export function getTagColorsFromName(name: string): { color: string; borderColor: string } {
+export function getTagColorsFromName(name = ''): { color: string; borderColor: string } {
   const hash = djb2(name.toLowerCase());
   const color = TAG_COLORS[Math.abs(hash % TAG_COLORS.length)];
   const borderColor = TAG_BORDER_COLORS[Math.abs(hash % TAG_BORDER_COLORS.length)];
