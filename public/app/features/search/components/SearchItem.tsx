@@ -28,10 +28,6 @@ export const SearchItem: FC<Props> = ({ item, editable, onToggleSelection, onTag
     }
   };
 
-  const navigate = () => {
-    window.location.pathname = item.url;
-  };
-
   const tagSelected = (tag: string, event: React.MouseEvent<HTMLElement>) => {
     event.stopPropagation();
     onTagSelected(tag);
@@ -48,15 +44,16 @@ export const SearchItem: FC<Props> = ({ item, editable, onToggleSelection, onTag
     <li
       aria-label={selectors.dashboards(item.title)}
       className={cx(styles.wrapper, { [styles.selected]: item.selected })}
-      onClick={navigate}
     >
       <SearchCheckbox editable={editable} checked={item.checked} onClick={toggleItem} />
-      <Icon className={styles.icon} name="th-large" />
-      <div className={styles.body} onClick={onItemClick}>
-        <span>{item.title}</span>
-        <span className={styles.folderTitle}>{item.folderTitle}</span>
-      </div>
-      <TagList tags={item.tags} onClick={tagSelected} className={styles.tags} />
+      <a href={item.url} className={styles.link}>
+        <Icon className={styles.icon} name="th-large" />
+        <div className={styles.body} onClick={onItemClick}>
+          <span>{item.title}</span>
+          <span className={styles.folderTitle}>{item.folderTitle}</span>
+        </div>
+        <TagList tags={item.tags} onClick={tagSelected} className={styles.tags} />
+      </a>
     </li>
   );
 };
@@ -103,5 +100,10 @@ const getResultsItemStyles = stylesFactory((theme: GrafanaTheme) => ({
     @media only screen and (max-width: ${theme.breakpoints.md}) {
       display: none;
     }
+  `,
+  link: css`
+    display: flex;
+    align-items: center;
+    width: 100%;
   `,
 }));
