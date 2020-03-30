@@ -48,7 +48,11 @@ export type IconName =
   | 'bolt'
   | 'comments-alt'
   | 'document-info'
+  | 'info-circle'
   | 'bug'
+  | 'cube'
   | 'star'
+  | 'edit'
   | 'favorite'
+  | 'eye'
   | 'monitor';
