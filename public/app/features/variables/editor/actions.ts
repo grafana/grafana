@@ -1,5 +1,5 @@
 import { ThunkResult } from '../../../types';
-import { getNewVariabelIndex, getVariable, getVariableClones } from '../state/selectors';
+import { getNewVariabelIndex, getVariable, getVariables } from '../state/selectors';
 import {
   changeVariableNameFailed,
   changeVariableNameSucceeded,
@@ -71,7 +71,7 @@ export const changeVariableName = (identifier: VariableIdentifier, newName: stri
       errorText = 'Only word and digit characters are allowed in variable names';
     }
 
-    const variables = getVariableClones(getState());
+    const variables = getVariables(getState());
     const foundVariables = variables.filter(v => v.name === newName && v.id !== identifier.id);
 
     if (foundVariables.length) {

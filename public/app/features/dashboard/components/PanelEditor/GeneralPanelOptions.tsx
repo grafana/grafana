@@ -4,7 +4,7 @@ import { SelectableValue } from '@grafana/data';
 import { DataLinksInlineEditor, Forms } from '@grafana/ui';
 import { OptionsGroup } from './OptionsGroup';
 import { getPanelLinksVariableSuggestions } from '../../../panel/panellinks/link_srv';
-import { getVariableClones } from '../../../variables/state/selectors';
+import { getVariables } from '../../../variables/state/selectors';
 
 export const GeneralPanelOptions: FC<{
   panel: PanelModel;
@@ -85,7 +85,7 @@ export const GeneralPanelOptions: FC<{
 };
 
 function getVariableOptions(): Array<SelectableValue<string>> {
-  const options = getVariableClones().map((item: any) => {
+  const options = getVariables().map((item: any) => {
     return { label: item.name, value: item.name };
   });
 
