@@ -33,7 +33,7 @@ describe('MySQLDatasource', () => {
   } as any;
 
   beforeEach(() => {
-    ctx.ds = new MysqlDatasource(instanceSettings, templateSrv, ctx.timeSrvMock);
+    ctx.ds = new MysqlDatasource(instanceSettings, { templateSrv, timeSrv: () => ctx.timeSrvMock });
   });
 
   describe('When performing annotationQuery', () => {

@@ -3,11 +3,16 @@ import ResponseParser from './response_parser';
 import MysqlQuery from 'app/plugins/datasource/mysql/mysql_query';
 import { getBackendSrv } from '@grafana/runtime';
 import { ScopedVars } from '@grafana/data';
-import { TemplateSrv } from 'app/features/templating/template_srv';
-import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
+import templateSrv, { TemplateSrv } from 'app/features/templating/template_srv';
+import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 //Types
 import { MysqlQueryForInterpolation } from './types';
 import { getSearchFilterScopedVar } from '../../../features/templating/utils';
+
+export interface MysqlDatasourceDependencies {
+  templateSrv: TemplateSrv;
+  timeSrv: () => TimeSrv;
+}
 
 export class MysqlDatasource {
   id: any;
@@ -17,7 +22,10 @@ export class MysqlDatasource {
   interval: string;
 
   /** @ngInject */
-  constructor(instanceSettings: any, private templateSrv: TemplateSrv, private timeSrv: TimeSrv) {
+  constructor(
+    instanceSettings: any,
+    private dependencies: MysqlDatasourceDependencies = { templateSrv: templateSrv, timeSrv: getTimeSrv }
+  ) {
     this.name = instanceSettings.name;
     this.id = instanceSettings.id;
     this.responseParser = new ResponseParser();
@@ -55,7 +63,7 @@ export class MysqlDatasource {
         const expandedQuery = {
           ...query,
           datasource: this.name,
-          rawSql: this.templateSrv.replace(query.rawSql, scopedVars, this.interpolateVariable),
+          rawSql: this.dependencies.templateSrv.replace(query.rawSql, scopedVars, this.interpolateVariable),
         };
         return expandedQuery;
       });
@@ -67,7 +75,7 @@ export class MysqlDatasource {
     const queries = _.filter(options.targets, target => {
       return target.hide !== true;
     }).map(target => {
-      const queryModel = new MysqlQuery(target, this.templateSrv, options.scopedVars);
+      const queryModel = new MysqlQuery(target, this.dependencies.templateSrv, options.scopedVars);
 
       return {
         refId: target.refId,
@@ -106,7 +114,11 @@ export class MysqlDatasource {
     const query = {
       refId: options.annotation.name,
       datasourceId: this.id,
-      rawSql: this.templateSrv.replace(options.annotation.rawQuery, options.scopedVars, this.interpolateVariable),
+      rawSql: this.dependencies.templateSrv.replace(
+        options.annotation.rawQuery,
+        options.scopedVars,
+        this.interpolateVariable
+      ),
       format: 'table',
     };
 
@@ -129,7 +141,7 @@ export class MysqlDatasource {
       refId = optionalOptions.variable.name;
     }
 
-    const rawSql = this.templateSrv.replace(
+    const rawSql = this.dependencies.templateSrv.replace(
       query,
       getSearchFilterScopedVar({ query, wildcardChar: '%', options: optionalOptions }),
       this.interpolateVariable
@@ -142,7 +154,7 @@ export class MysqlDatasource {
       format: 'table',
     };
 
-    const range = this.timeSrv.timeRange();
+    const range = this.dependencies.timeSrv().timeRange();
     const data = {
       queries: [interpolatedQuery],
       from: range.from.valueOf().toString(),
@@ -210,6 +222,6 @@ export class MysqlDatasource {
 
     rawSql = rawSql.replace('$__', '');
 
-    return this.templateSrv.variableExists(rawSql);
+    return this.dependencies.templateSrv.variableExists(rawSql);
   }
 }
