@@ -2,13 +2,13 @@ import React from 'react';
 import { Portal } from '../Portal/Portal';
 import { cx } from 'emotion';
 import { withTheme } from '../../themes';
-import { IconType } from '../Icon/types';
+import { IconName } from '../../types';
 import { Themeable } from '../../types';
 import { getModalStyles } from './getModalStyles';
 import { ModalHeader } from './ModalHeader';
 
 interface Props extends Themeable {
-  icon?: IconType;
+  icon?: IconName;
   title: string | JSX.Element;
   className?: string;
 

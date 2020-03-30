@@ -90,6 +90,8 @@ export const Icon = React.forwardRef<HTMLDivElement, IconProps>(
   }
 );
 
+Icon.displayName = 'Icon';
+
 const pascalCase = (string: string) => {
   const str = camelCase(string);
   return str.charAt(0).toUpperCase() + str.substring(1);

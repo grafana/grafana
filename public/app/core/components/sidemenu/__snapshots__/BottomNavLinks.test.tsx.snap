@@ -118,8 +118,9 @@ exports[`Render should render organization switcher 1`] = `
         <div
           className="sidemenu-org-switcher__switch"
         >
-          <i
-            className="fa fa-fw fa-random"
+          <Icon
+            className="css-f8is2k"
+            name="arrow-random"
           />
           Switch
         </div>

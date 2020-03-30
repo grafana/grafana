@@ -1,5 +1,5 @@
 import React from 'react';
-import { IconType } from '../Icon/types';
+import { IconName } from '../../types';
 import { TabsBar } from '../Tabs/TabsBar';
 import { Tab } from '../Tabs/Tab';
 import { ModalHeader } from './ModalHeader';
@@ -11,7 +11,7 @@ interface ModalTab {
 }
 
 interface Props {
-  icon: IconType;
+  icon: IconName;
   title: string;
   tabs: ModalTab[];
   activeTab: string;

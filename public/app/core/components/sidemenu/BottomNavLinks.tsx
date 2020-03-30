@@ -3,12 +3,12 @@ import { css } from 'emotion';
 import appEvents from '../../app_events';
 import { User } from '../../services/context_srv';
 import { NavModelItem } from '@grafana/data';
-import { Icon, IconName, withTheme, Themeable } from '@grafana/ui';
+import { Icon, IconName } from '@grafana/ui';
 import { CoreEvents } from 'app/types';
 import { OrgSwitcher } from '../OrgSwitcher';
 import { getFooterLinks } from '../Footer/Footer';
 
-export interface Props extends Themeable {
+export interface Props {
   link: NavModelItem;
   user: User;
 }
@@ -17,7 +17,7 @@ interface State {
   showSwitcherModal: boolean;
 }
 
-class UnThemedBottomNavLinks extends PureComponent<Props, State> {
+export default class BottomNavLinks extends PureComponent<Props, State> {
   state: State = {
     showSwitcherModal: false,
   };
@@ -35,11 +35,10 @@ class UnThemedBottomNavLinks extends PureComponent<Props, State> {
   };
 
   render() {
-    const { link, user, theme } = this.props;
+    const { link, user } = this.props;
     const { showSwitcherModal } = this.state;
-    const navMenuColor = theme.isLight ? theme.colors.gray95 : theme.colors.gray4;
     const subMenuIconClassName = css`
-      margin-right: ${theme.spacing.sm};
+      margin-right: 8px;
     `;
 
     let children = link.children || [];
@@ -52,7 +51,7 @@ class UnThemedBottomNavLinks extends PureComponent<Props, State> {
       <div className="sidemenu-item dropdown dropup">
         <a href={link.url} className="sidemenu-link" target={link.target}>
           <span className="icon-circle sidemenu-icon">
-            {link.icon && <Icon name={link.icon as IconName} size="xl" color={navMenuColor} />}
+            {link.icon && <Icon name={link.icon as IconName} size="xl" />}
             {link.img && <img src={link.img} />}
           </span>
         </a>
@@ -106,5 +105,3 @@ class UnThemedBottomNavLinks extends PureComponent<Props, State> {
     );
   }
 }
-
-export default withTheme(UnThemedBottomNavLinks);

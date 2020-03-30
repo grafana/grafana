@@ -33,7 +33,7 @@ export const InspectHeader: FC<Props> = ({
     <div className={styles.header}>
       <div className={styles.actions}>
         <div className={styles.iconWrapper} onClick={onToggleExpand}>
-          <Icon name={isExpanded ? 'chevron-right' : 'chevron-left'} className={styles.icon} />
+          <Icon name={isExpanded ? 'angle-right' : 'angle-left'} className={styles.icon} />
         </div>
         <div className={styles.iconWrapper} onClick={onClose}>
           <Icon name="times" className={styles.icon} />

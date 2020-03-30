@@ -11,8 +11,8 @@ exports[`TimePicker renders buttons correctly 1`] = `
       className="btn navbar-button navbar-button--tight"
       onClick={[Function]}
     >
-      <i
-        className="fa fa-chevron-left"
+      <Icon
+        name="angle-left"
       />
     </button>
     <div>
@@ -38,8 +38,9 @@ exports[`TimePicker renders buttons correctly 1`] = `
           className="btn navbar-button navbar-button--tight"
           onClick={[Function]}
         >
-          <i
-            className="fa fa-clock-o fa-fw"
+          <Icon
+            className="css-znfyx6"
+            name="clock-nine"
           />
           <Memo()
             onChange={[Function]}
@@ -276,10 +277,10 @@ exports[`TimePicker renders buttons correctly 1`] = `
             }
           />
           <span
-            className="css-6x26ye"
+            className="css-132xth5"
           >
-            <i
-              className="fa fa-caret-down fa-fw"
+            <Icon
+              name="angle-down"
             />
           </span>
         </button>
@@ -289,8 +290,8 @@ exports[`TimePicker renders buttons correctly 1`] = `
       className="btn navbar-button navbar-button--tight"
       onClick={[Function]}
     >
-      <i
-        className="fa fa-chevron-right"
+      <Icon
+        name="angle-right"
       />
     </button>
     <Component
@@ -301,8 +302,8 @@ exports[`TimePicker renders buttons correctly 1`] = `
         className="btn navbar-button navbar-button--zoom"
         onClick={[Function]}
       >
-        <i
-          className="fa fa-search-minus"
+        <Icon
+          name="search-minus"
         />
       </button>
     </Component>
@@ -321,8 +322,8 @@ exports[`TimePicker renders content correctly after beeing open 1`] = `
       className="btn navbar-button navbar-button--tight"
       onClick={[Function]}
     >
-      <i
-        className="fa fa-chevron-left"
+      <Icon
+        name="angle-left"
       />
     </button>
     <div>
@@ -348,8 +349,9 @@ exports[`TimePicker renders content correctly after beeing open 1`] = `
           className="btn navbar-button navbar-button--tight"
           onClick={[Function]}
         >
-          <i
-            className="fa fa-clock-o fa-fw"
+          <Icon
+            className="css-znfyx6"
+            name="clock-nine"
           />
           <Memo()
             onChange={[Function]}
@@ -586,10 +588,10 @@ exports[`TimePicker renders content correctly after beeing open 1`] = `
             }
           />
           <span
-            className="css-6x26ye"
+            className="css-132xth5"
           >
-            <i
-              className="fa fa-caret-up fa-fw"
+            <Icon
+              name="angle-up"
             />
           </span>
         </button>
@@ -804,8 +806,8 @@ exports[`TimePicker renders content correctly after beeing open 1`] = `
       className="btn navbar-button navbar-button--tight"
       onClick={[Function]}
     >
-      <i
-        className="fa fa-chevron-right"
+      <Icon
+        name="angle-right"
       />
     </button>
     <Component
@@ -816,8 +818,8 @@ exports[`TimePicker renders content correctly after beeing open 1`] = `
         className="btn navbar-button navbar-button--zoom"
         onClick={[Function]}
       >
-        <i
-          className="fa fa-search-minus"
+        <Icon
+          name="search-minus"
         />
       </button>
     </Component>

@@ -1,12 +1,12 @@
 import React, { useContext } from 'react';
 import { getModalStyles } from './getModalStyles';
-import { IconType } from '../Icon/types';
+import { IconName } from '../../types';
 import { ThemeContext } from '../../themes';
 import { Icon } from '../Icon/Icon';
 
 interface Props {
   title: string;
-  icon?: IconType;
+  icon?: IconName;
 }
 
 export const ModalHeader: React.FC<Props> = ({ icon, title, children }) => {

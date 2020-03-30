@@ -28,7 +28,7 @@ export const ButtonCascader: React.FC<ButtonCascaderProps> = props => {
       expandIcon={null}
     >
       <button className="gf-form-label gf-form-label--btn" disabled={props.disabled}>
-        {props.children} <Icon name="caret-down" />
+        {props.children} <Icon name="angle-down" />
       </button>
     </RCCascader>
   );

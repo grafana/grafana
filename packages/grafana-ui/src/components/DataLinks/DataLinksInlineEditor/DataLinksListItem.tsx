@@ -42,10 +42,10 @@ export const DataLinksListItem: FC<DataLinksListItemProps> = ({
 
         <HorizontalGroup>
           <div onClick={onEdit} className={styles.action}>
-            <Icon name="pencil" />
+            <Icon name="pen" />
           </div>
           <div onClick={onRemove} className={cx(styles.action, styles.remove)}>
-            <Icon name="trash" />
+            <Icon name="trash-alt" />
           </div>
         </HorizontalGroup>
       </HorizontalGroup>

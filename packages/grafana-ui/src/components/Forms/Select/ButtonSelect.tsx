@@ -8,16 +8,16 @@ import { SelectCommonProps, CustomControlProps } from './types';
 import { SelectBase } from './SelectBase';
 import { stylesFactory, useTheme } from '../../../themes';
 import { Icon } from '../../Icon/Icon';
-import { IconType } from '../../Icon/types';
+import { IconName } from '../../../types';
 
 interface ButtonSelectProps<T> extends Omit<SelectCommonProps<T>, 'renderControl' | 'size' | 'prefix'> {
-  icon?: IconType;
+  icon?: IconName;
   variant?: ButtonVariant;
   size?: ComponentSize;
 }
 
 interface SelectButtonProps extends Omit<ButtonProps, 'icon'> {
-  icon?: IconType;
+  icon?: IconName;
   isOpen?: boolean;
 }
 
@@ -43,7 +43,7 @@ const SelectButton = React.forwardRef<HTMLButtonElement, SelectButtonProps>(
     }));
     const styles = getStyles(useTheme());
     const buttonIcon = `fa fa-${icon}`;
-    const caretIcon = isOpen ? 'caret-up' : 'caret-down';
+    const caretIcon = isOpen ? 'angle-up' : 'angle-down';
     return (
       <Button {...buttonProps} ref={ref} icon={buttonIcon}>
         <span className={styles.wrapper}>

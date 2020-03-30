@@ -3,7 +3,6 @@ import { GrafanaTheme } from '@grafana/data';
 import { css, cx } from 'emotion';
 import { getFocusStyle, inputSizes, sharedInputStyle } from '../commonStyles';
 import { stylesFactory, useTheme } from '../../../themes';
-import { Icon } from '../../Icon/Icon';
 import { useClientRect } from '../../../utils/useClientRect';
 import { FormInputSize } from '../types';
 
@@ -246,7 +245,7 @@ export const Input = React.forwardRef<HTMLInputElement, Props>((props, ref) => {
 
         {(suffix || loading) && (
           <div className={styles.suffix} ref={suffixRef}>
-            {loading && <Icon name="spinner" className={cx('fa-spin', styles.loadingIndicator)} />}
+            {loading && <i className={cx('fa fa-spinner fa-spin', styles.loadingIndicator)} />}
             {suffix}
           </div>
         )}
