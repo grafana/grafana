@@ -1,8 +1,8 @@
 import React, { PureComponent } from 'react';
 import { connect, MapStateToProps } from 'react-redux';
 import { StoreState } from '../../../../types';
-import { getVariableClones } from '../../../templating/state/selectors';
-import { VariableHide, VariableModel } from '../../../templating/variable';
+import { getVariableClones } from '../../../variables/state/selectors';
+import { VariableHide, VariableModel } from '../../../templating/types';
 import { DashboardModel } from '../../state';
 import { AngularDashboardLinks } from './AngularDashboardLinks';
 import { Annotations } from './Annotations';

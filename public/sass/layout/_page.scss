@@ -11,12 +11,13 @@
 .main-view {
   position: relative;
   flex-grow: 1;
-  background: $page-gradient;
+  background: $page-bg;
 }
 
-.panel-in-fullscreen {
+.page-explore,
+.page-dashboard {
   .main-view {
-    background: $edit-gradient;
+    background: $body-bg;
   }
 }
 

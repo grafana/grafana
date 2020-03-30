@@ -2,7 +2,7 @@ import React from 'react';
 import { boolean, text, select, number } from '@storybook/addon-knobs';
 import { withCenteredStory } from '../../../utils/storybook/withCenteredStory';
 import { Input } from './Input';
-import { Button } from '../Button';
+import { Button } from '../../Button';
 import mdx from './Input.mdx';
 import { getAvailableIcons, IconType } from '../../Icon/types';
 import { KeyValue } from '@grafana/data';

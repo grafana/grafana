@@ -26,7 +26,7 @@ func init() {
         <input type="text" required class="gf-form-input max-width-22" ng-model="ctrl.model.settings.integrationKey" placeholder="Pagerduty Integration Key"></input>
       </div>
       <div class="gf-form">
-        <span class="gf-form-label width-10">Severity</span>
+        <span class="gf-form-label width-14">Severity</span>
         <div class="gf-form-select-wrapper width-14">
           <select
             class="gf-form-input"
@@ -98,6 +98,7 @@ func (pn *PagerdutyNotifier) buildEventPayload(evalContext *alerting.EvalContext
 
 	// set default, override in following case switch if defined
 	payloadJSON.Set("component", "Grafana")
+	payloadJSON.Set("severity", pn.Severity)
 
 	for _, tag := range evalContext.Rule.AlertRuleTags {
 		customData.Set(tag.Key, tag.Value)
@@ -110,6 +111,21 @@ func (pn *PagerdutyNotifier) buildEventPayload(evalContext *alerting.EvalContext
 			payloadJSON.Set("class", tag.Value)
 		case "component":
 			payloadJSON.Set("component", tag.Value)
+		case "severity":
+			// Only set severity if it's one of the PD supported enum values
+			// Info, Warning, Error, or Critical (case insensitive)
+			switch sev := strings.ToLower(tag.Value); sev {
+			case "info":
+				fallthrough
+			case "warning":
+				fallthrough
+			case "error":
+				fallthrough
+			case "critical":
+				payloadJSON.Set("severity", sev)
+			default:
+				pn.log.Warn("Ignoring invalid severity tag", "severity", sev)
+			}
 		}
 	}
 
@@ -122,7 +138,6 @@ func (pn *PagerdutyNotifier) buildEventPayload(evalContext *alerting.EvalContext
 	if hostname, err := os.Hostname(); err == nil {
 		payloadJSON.Set("source", hostname)
 	}
-	payloadJSON.Set("severity", pn.Severity)
 	payloadJSON.Set("timestamp", time.Now())
 	payloadJSON.Set("custom_details", customData)
 	bodyJSON := simplejson.New()

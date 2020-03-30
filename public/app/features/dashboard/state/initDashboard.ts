@@ -23,8 +23,9 @@ import { DashboardDTO, DashboardRouteInfo, StoreState, ThunkDispatch, ThunkResul
 import { DashboardModel } from './DashboardModel';
 import { DataQuery } from '@grafana/data';
 import { getConfig } from '../../../core/config';
-import { initDashboardTemplating, processVariables } from '../../templating/state/actions';
-import { variableAdapters } from '../../templating/adapters';
+import { initDashboardTemplating, processVariables } from '../../variables/state/actions';
+import { variableAdapters } from '../../variables/adapters';
+import { emitDashboardViewEvent } from './analyticsProcessor';
 
 export interface InitDashboardArgs {
   $injector: any;
@@ -188,7 +189,7 @@ export function initDashboard(args: InitDashboardArgs): ThunkResult<void> {
         const list =
           dashboard.variables.list.length > 0
             ? dashboard.variables.list
-            : dashboard.templating.list.filter(v => variableAdapters.contains(v.type));
+            : dashboard.templating.list.filter(v => variableAdapters.getIfExists(v.type));
         await dispatch(initDashboardTemplating(list));
         await dispatch(processVariables());
       }
@@ -222,6 +223,11 @@ export function initDashboard(args: InitDashboardArgs): ThunkResult<void> {
 
     // legacy srv state
     dashboardSrv.setCurrent(dashboard);
+
+    // send open dashboard event
+    if (args.routeInfo !== DashboardRouteInfo.New) {
+      emitDashboardViewEvent(dashboard);
+    }
 
     // yay we are done
     dispatch(dashboardInitCompleted(dashboard));
