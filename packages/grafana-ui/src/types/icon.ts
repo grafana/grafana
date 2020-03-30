@@ -22,6 +22,8 @@ export type IconName =
   | 'arrow-random'
   | 'arrow-from-right'
   | 'keyboard'
+  | 'search'
+  | 'chart-line'
   | 'search-minus'
   | 'clock-nine'
   | 'sync'
@@ -53,6 +55,6 @@ export type IconName =
   | 'cube'
   | 'star'
   | 'edit'
-  | 'favorite'
   | 'eye'
-  | 'monitor';
+  | 'monitor'
+  | 'favorite';
