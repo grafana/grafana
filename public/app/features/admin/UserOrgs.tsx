@@ -164,7 +164,7 @@ class UnThemedOrgRow extends PureComponent<OrgRowProps, OrgRowState> {
                 onCancel={this.onCancelClick}
                 onConfirm={this.onOrgRemove}
               >
-                <Button variant="destructive" icon="fa fa-remove" size="sm" />
+                Remove from organisation
               </ConfirmButton>
             </div>
           </td>
