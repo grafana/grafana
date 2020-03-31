@@ -19,6 +19,7 @@ import { PanelEditorState } from '../features/dashboard/panel_editor/state/reduc
 import { PanelEditorStateNew } from '../features/dashboard/components/PanelEditor/state/reducers';
 import { ApiKeysState } from './apiKeys';
 import { TemplatingState } from '../features/variables/state/reducers';
+import { ImportDashboardState } from '../features/manage-dashboards/state/reducers';
 
 export interface StoreState {
   navIndex: NavIndex;
@@ -44,6 +45,7 @@ export interface StoreState {
   userAdmin: UserAdminState;
   userListAdmin: UserListAdminState;
   templating: TemplatingState;
+  importDashboard: ImportDashboardState;
 }
 
 /*
