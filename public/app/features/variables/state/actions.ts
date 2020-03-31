@@ -28,6 +28,7 @@ import { toVariableIdentifier, toVariablePayload, VariableIdentifier } from './t
 import { appEvents } from '../../../core/core';
 import templateSrv from '../../templating/template_srv';
 import { alignCurrentWithMulti } from '../shared/multiOptions';
+import { isMulti } from '../guard';
 
 // process flow queryVariable
 // thunk => processVariables
@@ -80,7 +81,7 @@ export const initDashboardTemplating = (list: VariableModel[]): ThunkResult<void
 export const changeVariableMultiValue = (identifier: VariableIdentifier, multi: boolean): ThunkResult<void> => {
   return (dispatch, getState) => {
     const variable = getVariable<VariableWithMultiSupport>(identifier.id!, getState());
-    const current = alignCurrentWithMulti(variable, multi);
+    const current = alignCurrentWithMulti(variable.current, multi);
 
     dispatch(changeVariableProp(toVariablePayload(identifier, { propName: 'multi', propValue: multi })));
     dispatch(changeVariableProp(toVariablePayload(identifier, { propName: 'current', propValue: current })));
@@ -192,7 +193,7 @@ export const setOptionFromUrl = (identifier: VariableIdentifier, urlValue: UrlQu
       option = { text: defaultText, value: defaultValue, selected: false };
     }
 
-    if (variableFromState.hasOwnProperty('multi')) {
+    if (isMulti(variableFromState) && variableFromState.multi === true) {
       // In case variable is multiple choice, we cast to array to preserve the same behaviour as when selecting
       // the option directly, which will return even single value in an array.
       option = { text: castArray(option.text), value: castArray(option.value), selected: false };
