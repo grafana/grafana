@@ -1,6 +1,20 @@
-import { Props } from '@storybook/addon-docs/blocks';
-import { Input } from './Input';
+import { Props, Preview } from "@storybook/addon-docs/blocks";
+import { Input } from "./Input";
+import { Icon } from "../../Icon/Icon";
 
 # Input
 
+Used for regular text input.
+
+## Prefix and suffix
+
+To add more context to the input you might want to add either text or an icon before or after the input. You can use the prefix and suffix props for this.
+
+```jsx
+<Forms.Input prefix={<Icon name="search" />} size="sm" />
+```
+
+<Preview>
+  <Input prefix={<Icon name="search" />} size="sm" />
+</Preview>
 <Props of={Input} />
