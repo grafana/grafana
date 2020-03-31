@@ -10,5 +10,5 @@ export const isAdHoc = (model: VariableModel): model is AdHocVariableModel => {
 
 export const isMulti = (model: VariableModel): model is VariableWithMultiSupport => {
   const withMulti = model as VariableWithMultiSupport;
-  return withMulti && typeof withMulti.multi === 'boolean';
+  return withMulti.hasOwnProperty('multi') && typeof withMulti.multi === 'boolean';
 };

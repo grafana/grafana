@@ -2,17 +2,17 @@ import React, { ChangeEvent, FocusEvent, PureComponent } from 'react';
 import { CustomVariableModel, VariableWithMultiSupport } from '../../templating/types';
 import { SelectionOptionsEditor } from '../editor/SelectionOptionsEditor';
 import { OnPropChangeArguments, VariableEditorProps } from '../editor/types';
-import { changeMulti } from './reducer';
 import { connectWithStore } from 'app/core/utils/connectWithReduxStore';
 import { MapDispatchToProps, MapStateToProps } from 'react-redux';
 import { StoreState } from 'app/types';
+import { changeVariableMultiValue } from '../state/actions';
 
 interface OwnProps extends VariableEditorProps<CustomVariableModel> {}
 
 interface ConnectedProps {}
 
 interface DispatchProps {
-  changeMulti: typeof changeMulti;
+  changeVariableMultiValue: typeof changeVariableMultiValue;
 }
 
 export type Props = OwnProps & ConnectedProps & DispatchProps;
@@ -59,7 +59,7 @@ class CustomVariableEditorUnconnected extends PureComponent<Props> {
         <SelectionOptionsEditor
           variable={this.props.variable}
           onPropChange={this.onSelectionOptionsChange}
-          onMultiChanged={this.props.changeMulti}
+          onMultiChanged={this.props.changeVariableMultiValue}
         />
       </>
     );
@@ -69,7 +69,7 @@ class CustomVariableEditorUnconnected extends PureComponent<Props> {
 const mapStateToProps: MapStateToProps<ConnectedProps, OwnProps, StoreState> = (state, ownProps) => ({});
 
 const mapDispatchToProps: MapDispatchToProps<DispatchProps, OwnProps> = {
-  changeMulti,
+  changeVariableMultiValue,
 };
 
 export const CustomVariableEditor = connectWithStore(

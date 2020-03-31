@@ -1,22 +1,27 @@
-import { VariableWithMultiSupport } from 'app/features/templating/types';
+import { VariableWithMultiSupport, VariableOption } from 'app/features/templating/types';
 
-export const changeMultiTo = <Variable extends VariableWithMultiSupport>(variable: Variable, value: boolean): void => {
+export const alignCurrentWithMulti = <Model extends VariableWithMultiSupport>(
+  variable: Model,
+  value: boolean
+): VariableOption => {
   const { current } = variable;
 
   if (value && !Array.isArray(current.value)) {
-    variable.multi = value;
-    variable.current.value = convertToMulti(current.value);
-    return;
+    return {
+      ...current,
+      value: convertToMulti(current.value),
+    };
   }
 
   if (!value && Array.isArray(current.value)) {
-    variable.multi = value;
-    variable.current.value = convertToSingle(current.value);
-    variable.current.text = convertToSingle(current.text);
-    return;
+    return {
+      ...current,
+      value: convertToMulti(current.value),
+      text: convertToSingle(current.text),
+    };
   }
 
-  variable.multi = value;
+  return current;
 };
 
 const convertToSingle = (value: string | string[]): string => {

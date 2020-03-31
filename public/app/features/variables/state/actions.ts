@@ -9,16 +9,25 @@ import {
   VariableOption,
   VariableRefresh,
   VariableWithOptions,
+  VariableWithMultiSupport,
 } from '../../templating/types';
 import { StoreState, ThunkResult } from '../../../types';
 import { getVariable, getVariables } from './selectors';
 import { variableAdapters } from '../adapters';
 import { Graph } from '../../../core/utils/dag';
 import { updateLocation } from 'app/core/actions';
-import { addInitLock, addVariable, removeInitLock, resolveInitLock, setCurrentVariableValue } from './sharedReducer';
+import {
+  addInitLock,
+  addVariable,
+  removeInitLock,
+  resolveInitLock,
+  setCurrentVariableValue,
+  changeVariableProp,
+} from './sharedReducer';
 import { toVariableIdentifier, toVariablePayload, VariableIdentifier } from './types';
 import { appEvents } from '../../../core/core';
 import templateSrv from '../../templating/template_srv';
+import { alignCurrentWithMulti } from '../shared/multiOptions';
 
 // process flow queryVariable
 // thunk => processVariables
@@ -65,6 +74,16 @@ export const initDashboardTemplating = (list: VariableModel[]): ThunkResult<void
     for (let index = 0; index < getVariables(getState()).length; index++) {
       dispatch(addInitLock(toVariablePayload(getVariables(getState())[index])));
     }
+  };
+};
+
+export const changeVariableMultiValue = (identifier: VariableIdentifier, multi: boolean): ThunkResult<void> => {
+  return (dispatch, getState) => {
+    const variable = getVariable<VariableWithMultiSupport>(identifier.id!, getState());
+    const current = alignCurrentWithMulti(variable, multi);
+
+    dispatch(changeVariableProp(toVariablePayload(identifier, { propName: 'multi', propValue: multi })));
+    dispatch(changeVariableProp(toVariablePayload(identifier, { propName: 'current', propValue: current })));
   };
 };
 

@@ -7,8 +7,7 @@ import { variableAdapters } from '../adapters';
 import { changeVariableNameSucceeded } from '../editor/reducer';
 import { Deferred } from '../../../core/utils/deferred';
 import { initialVariablesState, VariablesState } from './variablesReducer';
-import { isQuery, isMulti } from '../guard';
-import { changeMultiTo } from '../shared/multiOptions';
+import { isQuery } from '../guard';
 
 const sharedReducerSlice = createSlice({
   name: 'templating/shared',
@@ -23,14 +22,6 @@ const sharedReducerSlice = createSlice({
         index: action.payload.data.index,
         global: action.payload.data.global,
       };
-
-      if (isMulti(variable)) {
-        // this is done to clean up potential scenarios where
-        // we store single value variable with current value
-        // as string[] instead of string.
-        changeMultiTo(variable, variable.multi);
-      }
-
       state[id] = variable;
     },
     addInitLock: (state: VariablesState, action: PayloadAction<VariablePayload>) => {

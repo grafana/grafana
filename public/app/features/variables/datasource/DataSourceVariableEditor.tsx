@@ -5,11 +5,12 @@ import { OnPropChangeArguments, VariableEditorProps } from '../editor/types';
 import { SelectionOptionsEditor } from '../editor/SelectionOptionsEditor';
 import { FormLabel } from '@grafana/ui';
 import { VariableEditorState } from '../editor/reducer';
-import { DataSourceVariableEditorState, changeMulti } from './reducer';
+import { DataSourceVariableEditorState } from './reducer';
 import { initDataSourceVariableEditor } from './actions';
 import { MapDispatchToProps, MapStateToProps } from 'react-redux';
 import { StoreState } from '../../../types';
 import { connectWithStore } from '../../../core/utils/connectWithReduxStore';
+import { changeVariableMultiValue } from '../state/actions';
 
 export interface OwnProps extends VariableEditorProps<DataSourceVariableModel> {}
 
@@ -19,7 +20,7 @@ interface ConnectedProps {
 
 interface DispatchProps {
   initDataSourceVariableEditor: typeof initDataSourceVariableEditor;
-  changeMulti: typeof changeMulti;
+  changeVariableMultiValue: typeof changeVariableMultiValue;
 }
 
 type Props = OwnProps & ConnectedProps & DispatchProps;
@@ -114,7 +115,7 @@ export class DataSourceVariableEditorUnConnected extends PureComponent<Props> {
         <SelectionOptionsEditor
           variable={this.props.variable}
           onPropChange={this.onSelectionOptionsChange}
-          onMultiChanged={this.props.changeMulti}
+          onMultiChanged={this.props.changeVariableMultiValue}
         />
       </>
     );
@@ -127,7 +128,7 @@ const mapStateToProps: MapStateToProps<ConnectedProps, OwnProps, StoreState> = (
 
 const mapDispatchToProps: MapDispatchToProps<DispatchProps, OwnProps> = {
   initDataSourceVariableEditor,
-  changeMulti,
+  changeVariableMultiValue,
 };
 
 export const DataSourceVariableEditor = connectWithStore(

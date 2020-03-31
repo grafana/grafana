@@ -4,17 +4,17 @@ import { e2e } from '@grafana/e2e';
 
 import { VariableWithMultiSupport } from '../../templating/types';
 import { VariableEditorProps } from './types';
-import { toVariablePayload, VariablePayload } from '../state/types';
+import { VariableIdentifier, toVariableIdentifier } from '../state/types';
 
 export interface SelectionOptionsEditorProps<Model extends VariableWithMultiSupport = VariableWithMultiSupport>
   extends VariableEditorProps<Model> {
-  onMultiChanged: (multi: VariablePayload<boolean>) => void;
+  onMultiChanged: (identifier: VariableIdentifier, value: boolean) => void;
 }
 
 export const SelectionOptionsEditor: FunctionComponent<SelectionOptionsEditorProps> = props => {
   const onMultiChanged = useCallback(
     (event: React.ChangeEvent<HTMLInputElement>) => {
-      props.onMultiChanged(toVariablePayload(props.variable, event.target.checked));
+      props.onMultiChanged(toVariableIdentifier(props.variable), event.target.checked);
     },
     [props.onPropChange]
   );
