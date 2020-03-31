@@ -134,8 +134,8 @@ export { ValuePicker } from './ValuePicker/ValuePicker';
 export { fieldMatchersUI } from './MatchersUI/fieldMatchersUI';
 
 export { default as resetSelectStyles } from './Forms/Select/resetSelectStyles';
-// export * from './Forms/Select/Select';
-// export { ButtonSelect } from './Forms/Select/ButtonSelect';
+export * from './Forms/Select/Select';
+export { ButtonSelect } from './Forms/Select/ButtonSelect';
 
 export { HorizontalGroup, VerticalGroup, Container } from './Layout/Layout';
 
