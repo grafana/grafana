@@ -1,7 +1,7 @@
 import React from 'react';
 import { MatcherUIProps, FieldMatcherUIRegistryItem } from './types';
 import { FieldMatcherID, fieldMatchers } from '@grafana/data';
-import Forms from '../Forms';
+import { Select } from '../Select/Select';
 
 export class FieldNameMatcherEditor extends React.PureComponent<MatcherUIProps<string>> {
   render() {
@@ -23,12 +23,7 @@ export class FieldNameMatcherEditor extends React.PureComponent<MatcherUIProps<s
     const selectedOption = selectOptions.find(v => v.value === options);
 
     return (
-      <Forms.Select
-        allowCustomValue
-        value={selectedOption}
-        options={selectOptions}
-        onChange={o => onChange(o.value!)}
-      />
+      <Select allowCustomValue value={selectedOption} options={selectOptions} onChange={o => onChange(o.value!)} />
     );
   }
 }

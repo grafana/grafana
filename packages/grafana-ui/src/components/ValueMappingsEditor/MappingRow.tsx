@@ -1,5 +1,6 @@
 import React, { ChangeEvent } from 'react';
 import { HorizontalGroup } from '../Layout/Layout';
+import { Select } from '../index';
 import Forms from '../Forms';
 import { MappingType, RangeMap, ValueMap, ValueMapping } from '@grafana/data';
 import * as styleMixins from '../../themes/mixins';
@@ -80,7 +81,7 @@ export const MappingRow: React.FC<Props> = ({ valueMapping, updateValueMapping, 
     <div className={styles.wrapper}>
       <FieldConfigItemHeaderTitle title="Mapping type" onRemove={removeValueMapping}>
         <div className={styles.itemContent}>
-          <Forms.Select
+          <Select
             placeholder="Choose type"
             isSearchable={false}
             options={MAPPING_OPTIONS}
