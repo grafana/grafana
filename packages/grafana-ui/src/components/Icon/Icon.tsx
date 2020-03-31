@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { css, cx } from 'emotion';
 import { camelCase } from 'lodash';
 import { GrafanaTheme } from '@grafana/data';
@@ -6,10 +6,13 @@ import { stylesFactory } from '../../themes';
 import { useTheme } from '../../themes/ThemeContext';
 import { IconName, IconType } from '../../types';
 import { ComponentSize } from '../../types/size';
+//@ts-ignore
+import * as DefaultIcon from '@iconscout/react-unicons';
+import * as MonoIcon from './assets';
 
 interface IconProps extends React.HTMLAttributes<HTMLDivElement> {
   name: IconName;
-  size?: ComponentSize | 'xl';
+  size?: ComponentSize | 'xl' | 'logo';
   type?: IconType;
   color?: string;
 }
@@ -19,10 +22,6 @@ export interface SvgProps extends React.HTMLAttributes<SVGElement> {
   secondaryColor?: string;
   className?: string;
 }
-
-type Module = {
-  default: React.ComponentType<SvgProps>;
-};
 
 const getIconStyles = stylesFactory((theme: GrafanaTheme) => {
   return {
@@ -42,36 +41,19 @@ const getIconStyles = stylesFactory((theme: GrafanaTheme) => {
 
 export const Icon = React.forwardRef<HTMLDivElement, IconProps>(
   ({ size = 'md', type = 'default', color, title, name, className, ...divElementProps }, ref) => {
-    const [icon, setIcon] = useState<null | Module>(null);
-
-    useEffect(() => {
-      if (type === 'default') {
-        import(`@iconscout/react-unicons/icons/uil-${name}`).then(module => {
-          setIcon(module);
-        });
-      }
-      if (type === 'mono') {
-        const monoIconName = pascalCase(name);
-        import(`./assets/${monoIconName}`).then(module => {
-          setIcon(module);
-        });
-      }
-    }, [name, type]);
-
     const theme = useTheme();
     const styles = getIconStyles(theme);
     const mainColor = color || theme.colors.orange;
     const secondaryColor = `${mainColor}99`;
+    const svgSize = getSvgSize(size, theme);
+    const iconName = type === 'default' ? `Uil${pascalCase(name)}` : pascalCase(name);
 
-    /* Transform string with px to number and add 2 pxs as path in svg is 2px smaller*/
-    const svgSize =
-      size === 'xl'
-        ? Number(theme.typography.heading.h1.slice(0, -2))
-        : Number(theme.typography.size[size].slice(0, -2)) + 2;
+    /* Unicons don't have type definitions */
+    //@ts-ignore
+    const Component: any = type === 'default' ? (DefaultIcon[iconName] as any) : (MonoIcon[iconName] as any);
 
-    const Component = icon?.default;
     if (!Component) {
-      return <div style={{ width: `${svgSize}px` }}></div>;
+      return <div />;
     }
 
     return (
@@ -95,4 +77,17 @@ Icon.displayName = 'Icon';
 const pascalCase = (string: string) => {
   const str = camelCase(string);
   return str.charAt(0).toUpperCase() + str.substring(1);
+};
+
+/* Transform string with px to number and add 2 pxs as path in svg is 2px smaller */
+const getSvgSize = (size: ComponentSize | 'xl' | 'logo', theme: GrafanaTheme) => {
+  let svgSize;
+  if (size === 'xl') {
+    svgSize = Number(theme.typography.heading.h1.slice(0, -2));
+  } else if (size === 'logo') {
+    svgSize = Number(theme.height.lg.slice(0, -2));
+  } else {
+    svgSize = Number(theme.typography.size[size].slice(0, -2)) + 2;
+  }
+  return svgSize;
 };

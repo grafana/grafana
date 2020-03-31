@@ -1,7 +1,7 @@
 import React, { FunctionComponent } from 'react';
 import { SvgProps } from '../Icon';
 
-const Svg: FunctionComponent<SvgProps> = ({ size, color, secondaryColor, ...rest }) => {
+export const Favorite: FunctionComponent<SvgProps> = ({ size, color, secondaryColor, ...rest }) => {
   return (
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width={size} height={size} {...rest}>
       <path
@@ -11,5 +11,3 @@ const Svg: FunctionComponent<SvgProps> = ({ size, color, secondaryColor, ...rest
     </svg>
   );
 };
-
-export default Svg;

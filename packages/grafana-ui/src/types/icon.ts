@@ -8,6 +8,7 @@ export type IconName =
   | 'angle-left'
   | 'angle-right'
   | 'pen'
+  | 'plane'
   | 'power'
   | 'trash-alt'
   | 'exclamation-triangle'
@@ -57,14 +58,17 @@ export type IconName =
   | 'cube'
   | 'star'
   | 'edit'
+  | 'shield'
   | 'eye'
   | 'monitor'
   | 'favorite';
 
 export const getAvailableIcons = (): IconName[] => [
   'question-circle',
+  'plane',
   'plus',
   'angle-up',
+  'shield',
   'angle-down',
   'angle-left',
   'angle-right',
