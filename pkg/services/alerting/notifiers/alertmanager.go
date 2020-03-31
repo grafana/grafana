@@ -29,7 +29,7 @@ func init() {
         	<input type="text" required class="gf-form-input max-width-26" ng-model="ctrl.model.settings.basicAuthUser" placeholder=""></input>
 		</div>
 		<div class="gf-form">
-        	<span class="gf-form-label width-10">basicAuthPassword</span>
+        	<span class="gf-form-label width-10">Basic Auth Password</span>
         	<input type="text" required class="gf-form-input max-width-26" ng-model="ctrl.model.settings.basicAuthPassword" placeholder=""></input>
 		</div>
       </div>
