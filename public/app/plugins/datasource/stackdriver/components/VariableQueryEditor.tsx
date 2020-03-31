@@ -1,8 +1,9 @@
 import React, { PureComponent } from 'react';
 import { VariableQueryProps } from 'app/types/plugins';
 import { SimpleSelect } from './';
-import { getMetricTypes, getLabelKeys, extractServicesFromMetricDescriptors } from '../functions';
+import { extractServicesFromMetricDescriptors, getLabelKeys, getMetricTypes } from '../functions';
 import { MetricFindQueryTypes, VariableQueryData } from '../types';
+import { getConfig } from 'app/core/config';
 
 export class StackdriverVariableQueryEditor extends PureComponent<VariableQueryProps, VariableQueryData> {
   queryTypes: Array<{ value: string; name: string }> = [
@@ -15,6 +16,9 @@ export class StackdriverVariableQueryEditor extends PureComponent<VariableQueryP
     { value: MetricFindQueryTypes.Aggregations, name: 'Aggregations' },
     { value: MetricFindQueryTypes.Aligners, name: 'Aligners' },
     { value: MetricFindQueryTypes.AlignmentPeriods, name: 'Alignment Periods' },
+    { value: MetricFindQueryTypes.Selectors, name: 'Selectors' },
+    { value: MetricFindQueryTypes.SLOServices, name: 'SLO Services' },
+    { value: MetricFindQueryTypes.SLO, name: 'Service Level Objectives (SLO)' },
   ];
 
   defaults: VariableQueryData = {
@@ -26,6 +30,8 @@ export class StackdriverVariableQueryEditor extends PureComponent<VariableQueryP
     labelKey: '',
     metricTypes: [],
     services: [],
+    sloServices: [],
+    selectedSLOService: '',
     projects: [],
     projectName: '',
   };
@@ -63,6 +69,8 @@ export class StackdriverVariableQueryEditor extends PureComponent<VariableQueryP
       this.props.templateSrv.replace(selectedService)
     );
 
+    const sloServices = await this.props.datasource.getSLOServices(this.state.projectName);
+
     const state: any = {
       services,
       selectedService,
@@ -71,6 +79,7 @@ export class StackdriverVariableQueryEditor extends PureComponent<VariableQueryP
       metricDescriptors,
       projects: projects.map(({ value, label }: any) => ({ value, name: label })),
       ...(await this.getLabels(selectedMetricType, this.state.projectName)),
+      sloServices: sloServices.map(({ value, label }: any) => ({ value, name: label })),
     };
     this.setState(state);
   }
@@ -80,6 +89,7 @@ export class StackdriverVariableQueryEditor extends PureComponent<VariableQueryP
       selectedQueryType: queryType,
       ...(await this.getLabels(this.state.selectedMetricType, this.state.projectName, queryType)),
     };
+
     this.setState(state);
   }
 
@@ -93,7 +103,16 @@ export class StackdriverVariableQueryEditor extends PureComponent<VariableQueryP
       this.props.templateSrv.replace(this.state.selectedService)
     );
 
-    this.setState({ ...labels, metricTypes, selectedMetricType, metricDescriptors, projectName });
+    const sloServices = await this.props.datasource.getSLOServices(projectName);
+
+    this.setState({
+      ...labels,
+      metricTypes,
+      selectedMetricType,
+      metricDescriptors,
+      projectName,
+      sloServices: sloServices.map(({ value, label }: any) => ({ value, name: label })),
+    });
   }
 
   async onServiceChange(service: string) {
@@ -124,10 +143,12 @@ export class StackdriverVariableQueryEditor extends PureComponent<VariableQueryP
     this.setState({ labelKey });
   }
 
-  componentDidUpdate() {
-    const { metricDescriptors, labels, metricTypes, services, ...queryModel } = this.state;
-    const query = this.queryTypes.find(q => q.value === this.state.selectedQueryType);
-    this.props.onChange(queryModel, `Stackdriver - ${query.name}`);
+  componentDidUpdate(prevProps: Readonly<VariableQueryProps>, prevState: Readonly<VariableQueryData>) {
+    if (!getConfig().featureToggles.newVariables || prevState.selectedQueryType !== this.state.selectedQueryType) {
+      const { metricDescriptors, labels, metricTypes, services, ...queryModel } = this.state;
+      const query = this.queryTypes.find(q => q.value === this.state.selectedQueryType);
+      this.props.onChange(queryModel, `Stackdriver - ${query.name}`);
+    }
   }
 
   async getLabels(selectedMetricType: string, projectName: string, selectedQueryType = this.state.selectedQueryType) {
@@ -143,7 +164,7 @@ export class StackdriverVariableQueryEditor extends PureComponent<VariableQueryP
   }
 
   insertTemplateVariables(options: any) {
-    const templateVariables = this.props.templateSrv.variables.map((v: any) => ({
+    const templateVariables = this.props.templateSrv.getVariables().map((v: any) => ({
       name: `$${v.name}`,
       value: `$${v.name}`,
     }));
@@ -217,6 +238,40 @@ export class StackdriverVariableQueryEditor extends PureComponent<VariableQueryP
               options={this.insertTemplateVariables(this.state.metricTypes)}
               onValueChange={e => this.onMetricTypeChange(e.target.value)}
               label="Metric Type"
+            />
+          </>
+        );
+      case MetricFindQueryTypes.SLOServices:
+        return (
+          <>
+            <SimpleSelect
+              value={this.state.projectName}
+              options={this.insertTemplateVariables(this.state.projects)}
+              onValueChange={e => this.onProjectChange(e.target.value)}
+              label="Project"
+            />
+          </>
+        );
+
+      case MetricFindQueryTypes.SLO:
+        return (
+          <>
+            <SimpleSelect
+              value={this.state.projectName}
+              options={this.insertTemplateVariables(this.state.projects)}
+              onValueChange={e => this.onProjectChange(e.target.value)}
+              label="Project"
+            />
+            <SimpleSelect
+              value={this.state.selectedSLOService}
+              options={this.insertTemplateVariables(this.state.sloServices)}
+              onValueChange={e => {
+                this.setState({
+                  ...this.state,
+                  selectedSLOService: e.target.value,
+                });
+              }}
+              label="SLO Service"
             />
           </>
         );

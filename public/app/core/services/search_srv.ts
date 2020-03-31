@@ -26,7 +26,7 @@ export class SearchSrv {
       if (result.length > 0) {
         sections['recent'] = {
           title: 'Recent',
-          icon: 'fa fa-clock-o',
+          icon: 'clock-o',
           score: -1,
           removable: true,
           expanded: this.recentIsOpen,
@@ -81,7 +81,7 @@ export class SearchSrv {
       if (result.length > 0) {
         sections['starred'] = {
           title: 'Starred',
-          icon: 'fa fa-star-o',
+          icon: 'star-o',
           score: -2,
           expanded: this.starredIsOpen,
           toggle: this.toggleStarred.bind(this),
@@ -141,7 +141,7 @@ export class SearchSrv {
           items: [],
           toggle: this.toggleFolder.bind(this),
           url: hit.url,
-          icon: 'fa fa-folder',
+          icon: 'folder',
           score: _.keys(sections).length,
         };
       }
@@ -161,7 +161,7 @@ export class SearchSrv {
             title: hit.folderTitle,
             url: hit.folderUrl,
             items: [],
-            icon: 'fa fa-folder-open',
+            icon: 'folder-open',
             toggle: this.toggleFolder.bind(this),
             score: _.keys(sections).length,
           };
@@ -170,7 +170,7 @@ export class SearchSrv {
             id: 0,
             title: 'General',
             items: [],
-            icon: 'fa fa-folder-open',
+            icon: 'folder-open',
             toggle: this.toggleFolder.bind(this),
             score: _.keys(sections).length,
           };
@@ -186,7 +186,7 @@ export class SearchSrv {
 
   private toggleFolder(section: Section) {
     section.expanded = !section.expanded;
-    section.icon = section.expanded ? 'fa fa-folder-open' : 'fa fa-folder';
+    section.icon = section.expanded ? 'folder-open' : 'folder';
 
     if (section.items.length) {
       return Promise.resolve(section);

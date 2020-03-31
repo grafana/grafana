@@ -4,6 +4,7 @@ import { stringToDateTimeType, isValidTimeString } from '../time';
 import { mapStringsToTimeRange } from './mapper';
 import { TimePickerCalendar } from './TimePickerCalendar';
 import Forms from '../../Forms';
+import { Button } from '../../Button';
 
 interface Props {
   isFullscreen: boolean;
@@ -60,7 +61,7 @@ export const TimeRangeForm: React.FC<Props> = props => {
     [timeZone]
   );
 
-  const icon = isFullscreen ? null : <Forms.Button icon="fa fa-calendar" variant="secondary" onClick={onOpen} />;
+  const icon = isFullscreen ? null : <Button icon="fa fa-calendar" variant="secondary" onClick={onOpen} />;
 
   return (
     <>
@@ -82,7 +83,7 @@ export const TimeRangeForm: React.FC<Props> = props => {
           value={to.value}
         />
       </Forms.Field>
-      <Forms.Button onClick={onApply}>Apply time range</Forms.Button>
+      <Button onClick={onApply}>Apply time range</Button>
 
       <TimePickerCalendar
         isFullscreen={isFullscreen}

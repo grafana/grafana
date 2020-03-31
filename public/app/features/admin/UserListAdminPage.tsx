@@ -3,7 +3,7 @@ import { css, cx } from 'emotion';
 import { hot } from 'react-hot-loader';
 import { connect, MapDispatchToProps, MapStateToProps } from 'react-redux';
 import { NavModel } from '@grafana/data';
-import { Pagination, Forms, Tooltip, HorizontalGroup, stylesFactory } from '@grafana/ui';
+import { Pagination, Forms, Tooltip, HorizontalGroup, stylesFactory, LinkButton } from '@grafana/ui';
 import { StoreState, UserDTO } from '../../types';
 import Page from 'app/core/components/Page/Page';
 import { getNavModel } from '../../core/selectors/navModel';
@@ -53,9 +53,9 @@ const UserListAdminPageUnConnected: React.FC<Props> = props => {
                 onChange={event => props.changeQuery(event.currentTarget.value)}
                 prefix={<i className="fa fa-search" />}
               />
-              <Forms.LinkButton href="admin/users/create" variant="primary">
+              <LinkButton href="admin/users/create" variant="primary">
                 New user
-              </Forms.LinkButton>
+              </LinkButton>
             </HorizontalGroup>
           </div>
 
@@ -66,6 +66,7 @@ const UserListAdminPageUnConnected: React.FC<Props> = props => {
                   <th></th>
                   <th>Login</th>
                   <th>Email</th>
+                  <th>Name</th>
                   <th>
                     Seen&nbsp;
                     <Tooltip placement="top" content="Time since user was seen using Grafana">
@@ -103,6 +104,9 @@ const renderUser = (user: UserDTO) => {
       </td>
       <td className="link-td">
         <a href={editUrl}>{user.email}</a>
+      </td>
+      <td className="link-td">
+        <a href={editUrl}>{user.name}</a>
       </td>
       <td className="link-td">{user.lastSeenAtAge && <a href={editUrl}>{user.lastSeenAtAge}</a>}</td>
       <td className="link-td">

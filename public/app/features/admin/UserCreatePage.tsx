@@ -1,7 +1,7 @@
 import React, { useCallback } from 'react';
 import { hot } from 'react-hot-loader';
 import { connect } from 'react-redux';
-import { Forms } from '@grafana/ui';
+import { Forms, Button } from '@grafana/ui';
 import { NavModel } from '@grafana/data';
 import { getBackendSrv } from '@grafana/runtime';
 import { StoreState } from '../../types';
@@ -62,7 +62,7 @@ const UserCreatePage: React.FC<UserCreatePageProps> = ({ navModel, updateLocatio
                     })}
                   />
                 </Forms.Field>
-                <Forms.Button type="submit">Create user</Forms.Button>
+                <Button type="submit">Create user</Button>
               </>
             );
           }}

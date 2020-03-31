@@ -51,6 +51,7 @@ import {
 } from './types';
 import { LegacyTarget, LiveStreams } from './live_streams';
 import LanguageProvider from './language_provider';
+import { serializeParams } from '../../../core/utils/fetch';
 
 export type RangeQueryOptions = Pick<DataQueryRequest<LokiQuery>, 'range' | 'intervalMs' | 'maxDataPoints' | 'reverse'>;
 export const DEFAULT_MAX_LINES = 1000;
@@ -67,12 +68,6 @@ const DEFAULT_QUERY_PARAMS: Partial<LokiLegacyQueryRequest> = {
   regexp: '',
   query: '',
 };
-
-function serializeParams(data: Record<string, any>) {
-  return Object.keys(data)
-    .map(k => `${encodeURIComponent(k)}=${encodeURIComponent(data[k])}`)
-    .join('&');
-}
 
 interface LokiContextQueryOptions {
   direction?: 'BACKWARD' | 'FORWARD';
