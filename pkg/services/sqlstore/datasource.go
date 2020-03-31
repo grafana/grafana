@@ -10,6 +10,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/securejsondata"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 )
 
@@ -173,6 +174,8 @@ func UpdateDataSource(cmd *models.UpdateDataSourceCommand) error {
 			ReadOnly:          cmd.ReadOnly,
 			Version:           cmd.Version + 1,
 		}
+
+		log.Debug("UPDATE SECURE: %s (%d)", ds.SecureJsonData, len(ds.SecureJsonData))
 
 		sess.UseBool("is_default")
 		sess.UseBool("basic_auth")

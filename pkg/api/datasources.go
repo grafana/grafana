@@ -6,6 +6,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
@@ -153,6 +154,8 @@ func UpdateDataSource(c *models.ReqContext, cmd models.UpdateDataSourceCommand) 
 		return Error(500, "Failed to update datasource", err)
 	}
 
+	log.Debug("UPDATE: (secure json) %s", cmd.SecureJsonData)
+
 	err = bus.Dispatch(&cmd)
 	if err != nil {
 		if err == models.ErrDataSourceUpdatingOldVersion {
@@ -199,6 +202,11 @@ func fillWithSecureJSONData(cmd *models.UpdateDataSourceCommand) error {
 
 	secureJSONData := ds.SecureJsonData.Decrypt()
 	for k, v := range secureJSONData {
+		if v == "" {
+			log.Debug("Removing secure field: %s", k)
+			delete(cmd.SecureJsonData, k)
+			continue
+		}
 
 		if _, ok := cmd.SecureJsonData[k]; !ok {
 			cmd.SecureJsonData[k] = v
@@ -318,6 +326,7 @@ func convertModelToDtos(ds *models.DataSource) dtos.DataSource {
 
 	for k, v := range ds.SecureJsonData {
 		if len(v) > 0 {
+			log.Debug("SECURE: %s (%d)", k, len(v))
 			dto.SecureJsonFields[k] = true
 		}
 	}

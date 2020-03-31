@@ -33,7 +33,10 @@ func (s SecureJsonData) Decrypt() map[string]string {
 			log.Fatal(4, err.Error())
 		}
 
-		decrypted[key] = string(decryptedData)
+		val := string(decryptedData)
+		if val != "" {
+			decrypted[key] = val
+		}
 	}
 	return decrypted
 }
@@ -42,6 +45,10 @@ func (s SecureJsonData) Decrypt() map[string]string {
 func GetEncryptedJsonData(sjd map[string]string) SecureJsonData {
 	encrypted := make(SecureJsonData)
 	for key, data := range sjd {
+		if data == "" {
+			continue // Don't store empty strings
+		}
+
 		encryptedData, err := util.Encrypt([]byte(data), setting.SecretKey)
 		if err != nil {
 			log.Fatal(4, err.Error())
