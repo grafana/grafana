@@ -28,7 +28,7 @@ type Frame struct {
 	Fields []*Field
 
 	RefID    string
-	Meta     *QueryResultMeta
+	Meta     *FrameMeta
 	Warnings []Warning
 }
 

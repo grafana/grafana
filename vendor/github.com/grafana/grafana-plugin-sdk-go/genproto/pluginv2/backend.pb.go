@@ -677,7 +677,7 @@ func (m *QueryDataRequest) GetQueries() []*DataQuery {
 }
 
 type QueryDataResponse struct {
-	// List of data query responses
+	// Map of refId to response
 	Responses map[string]*DataResponse `protobuf:"bytes,1,rep,name=responses,proto3" json:"responses,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
 	// Additional response metadata
 	Metadata             map[string]string `protobuf:"bytes,2,rep,name=metadata,proto3" json:"metadata,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
