@@ -1,21 +1,18 @@
 import React, { FC, useEffect, useState } from 'react';
-import { Button, Forms, FormAPI, FormsOnSubmit, HorizontalGroup } from '@grafana/ui';
+import { Button, Forms, FormAPI, FormsOnSubmit, HorizontalGroup, FormFieldErrors } from '@grafana/ui';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
 import DataSourcePicker from 'app/core/components/Select/DataSourcePicker';
 import { DashboardInput, DashboardInputs, DataSourceInput, ImportDashboardDTO } from '../state/reducers';
+import { validateTitle, validateUid } from '../utils/validation';
 
 interface Props extends Omit<FormAPI<ImportDashboardDTO>, 'formState'> {
   uidReset: boolean;
   inputs: DashboardInputs;
-  uidExists: boolean;
-  titleExists: boolean;
   initialFolderId: number;
 
   onCancel: () => void;
   onUidReset: () => void;
   onSubmit: FormsOnSubmit<ImportDashboardDTO>;
-  validateTitle: (value: string) => Promise<boolean>;
-  validateUid: (value: string) => Promise<boolean | string>;
 }
 
 export const ImportDashboardForm: FC<Props> = ({
@@ -25,18 +22,11 @@ export const ImportDashboardForm: FC<Props> = ({
   getValues,
   uidReset,
   inputs,
-  uidExists,
-  titleExists,
   initialFolderId,
   onUidReset,
   onCancel,
   onSubmit,
-  validateUid,
-  validateTitle,
 }) => {
-  const buttonVariant = uidExists || titleExists ? 'destructive' : 'primary';
-  const buttonText = uidExists || titleExists ? 'Import (Overwrite)' : 'Import';
-
   const [isSubmitted, setSubmitted] = useState(false);
 
   /*
@@ -57,7 +47,10 @@ export const ImportDashboardForm: FC<Props> = ({
           name="title"
           size="md"
           type="text"
-          ref={register({ required: 'Name is required', validate: async (v: string) => await validateTitle(v) })}
+          ref={register({
+            required: 'Name is required',
+            validate: async (v: string) => await validateTitle(v, getValues().folderId),
+          })}
         />
       </Forms.Field>
       <Forms.Field label="Folder">
@@ -138,12 +131,12 @@ export const ImportDashboardForm: FC<Props> = ({
       <HorizontalGroup>
         <Button
           type="submit"
-          variant={buttonVariant}
+          variant={getButtonVariant(errors)}
           onClick={() => {
             setSubmitted(true);
           }}
         >
-          {buttonText}
+          {getButtonText(errors)}
         </Button>
         <Button type="reset" variant="secondary" onClick={onCancel}>
           Cancel
@@ -152,3 +145,11 @@ export const ImportDashboardForm: FC<Props> = ({
     </>
   );
 };
+
+function getButtonVariant(errors: FormFieldErrors<ImportDashboardDTO>) {
+  return errors && (errors.title || errors.uid) ? 'destructive' : 'primary';
+}
+
+function getButtonText(errors: FormFieldErrors<ImportDashboardDTO>) {
+  return errors && (errors.title || errors.uid) ? 'Import (Overwrite)' : 'Import';
+}

@@ -1,10 +1,8 @@
 import React, { PureComponent } from 'react';
 import { dateTime } from '@grafana/data';
 import { Forms } from '@grafana/ui';
-import { getBackendSrv } from '@grafana/runtime';
 import { connect, MapDispatchToProps, MapStateToProps } from 'react-redux';
 import { ImportDashboardForm } from './ImportDashboardForm';
-import validationSrv from '../services/ValidationSrv';
 import { resetDashboard, saveDashboard } from '../state/actions';
 import { DashboardInputs, DashboardSource, ImportDashboardDTO } from '../state/reducers';
 import { StoreState } from 'app/types';
@@ -28,15 +26,11 @@ type Props = OwnProps & ConnectedProps & DispatchProps;
 
 interface State {
   uidReset: boolean;
-  titleExists: boolean;
-  uidExists: boolean;
 }
 
 class ImportDashboardOverviewUnConnected extends PureComponent<Props, State> {
   state: State = {
     uidReset: false,
-    titleExists: false,
-    uidExists: false,
   };
 
   onSubmit = (form: ImportDashboardDTO) => {
@@ -47,47 +41,13 @@ class ImportDashboardOverviewUnConnected extends PureComponent<Props, State> {
     this.props.resetDashboard();
   };
 
-  validateTitle = (newTitle: string) => {
-    const { folderId } = this.props;
-    return validationSrv
-      .validateNewDashboardName(folderId, newTitle)
-      .then(() => {
-        this.setState({ titleExists: false });
-        return true;
-      })
-      .catch(error => {
-        if (error.type === 'EXISTING') {
-          this.setState({
-            titleExists: true,
-          });
-          return error.message;
-        }
-      });
-  };
-
-  validateUid = (value: string) => {
-    return getBackendSrv()
-      .get(`/api/dashboards/uid/${value}`)
-      .then(existingDashboard => {
-        this.setState({
-          uidExists: true,
-        });
-        return `Dashboard named '${existingDashboard?.dashboard.title}' in folder '${existingDashboard?.meta.folderTitle}' has the same uid`;
-      })
-      .catch(error => {
-        error.isHandled = true;
-        this.setState({ uidExists: false });
-        return true;
-      });
-  };
-
   onUidReset = () => {
     this.setState({ uidReset: true });
   };
 
   render() {
     const { dashboard, inputs, meta, source, folderId } = this.props;
-    const { uidReset, titleExists, uidExists } = this.state;
+    const { uidReset } = this.state;
 
     return (
       <>
@@ -134,13 +94,9 @@ class ImportDashboardOverviewUnConnected extends PureComponent<Props, State> {
               getValues={getValues}
               uidReset={uidReset}
               inputs={inputs}
-              uidExists={uidExists}
-              titleExists={titleExists}
               onCancel={this.onCancel}
               onUidReset={this.onUidReset}
               onSubmit={this.onSubmit}
-              validateTitle={this.validateTitle}
-              validateUid={this.validateUid}
               initialFolderId={folderId}
             />
           )}

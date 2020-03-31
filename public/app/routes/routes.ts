@@ -3,7 +3,6 @@ import './ReactContainer';
 import { applyRouteRegistrationHandlers } from './registry';
 // Pages
 import FolderDashboardsCtrl from 'app/features/folders/FolderDashboardsCtrl';
-import DashboardImportCtrl from 'app/features/manage-dashboards/DashboardImportCtrl';
 import LdapPage from 'app/features/admin/ldap/LdapPage';
 import UserAdminPage from 'app/features/admin/UserAdminPage';
 import SignupPage from 'app/features/profile/SignupPage';
@@ -109,11 +108,6 @@ export function setupAngularRoutes($routeProvider: route.IRouteProvider, $locati
       },
     })
     .when('/dashboard/import', {
-      templateUrl: 'public/app/features/manage-dashboards/partials/dashboard_import.html',
-      controller: DashboardImportCtrl,
-      controllerAs: 'ctrl',
-    })
-    .when('/dashboard/import2', {
       template: '<react-container />',
       resolve: {
         component: () =>
