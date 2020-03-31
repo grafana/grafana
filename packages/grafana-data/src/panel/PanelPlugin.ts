@@ -2,6 +2,7 @@ import {
   FieldConfigEditorRegistry,
   FieldConfigSource,
   GrafanaPlugin,
+  KeyValue,
   PanelEditorProps,
   PanelMigrationHandler,
   PanelOptionEditorsRegistry,
@@ -15,22 +16,24 @@ import { ComponentClass, ComponentType } from 'react';
 import set from 'lodash/set';
 import { deprecationWarning } from '../utils';
 
+export const standardFieldConfigProperties = new Map([
+  [StandardFieldConfigProperties.Title, undefined],
+  [StandardFieldConfigProperties.Decimals, undefined],
+  [StandardFieldConfigProperties.Max, undefined],
+  [StandardFieldConfigProperties.Min, undefined],
+  [StandardFieldConfigProperties.NoValue, undefined],
+  [StandardFieldConfigProperties.Links, undefined],
+  [StandardFieldConfigProperties.Unit, undefined],
+  [StandardFieldConfigProperties.Thresholds, undefined],
+  [StandardFieldConfigProperties.Mappings, undefined],
+  [StandardFieldConfigProperties.Color, undefined],
+]);
+
 export class PanelPlugin<TOptions = any, TFieldConfigOptions extends object = any> extends GrafanaPlugin<
   PanelPluginMeta
 > {
   private _defaults?: TOptions;
-  private _commonFieldConfigProperties: StandardFieldConfigProperties[] = [
-    StandardFieldConfigProperties.Title,
-    StandardFieldConfigProperties.Decimals,
-    StandardFieldConfigProperties.Max,
-    StandardFieldConfigProperties.Min,
-    StandardFieldConfigProperties.NoValue,
-    StandardFieldConfigProperties.Links,
-    StandardFieldConfigProperties.Unit,
-    StandardFieldConfigProperties.Thresholds,
-    StandardFieldConfigProperties.Mappings,
-    StandardFieldConfigProperties.Color,
-  ];
+  private _standardFieldConfigProperties?: Map<StandardFieldConfigProperties, any>;
 
   private _fieldConfigDefaults: FieldConfigSource<TFieldConfigOptions> = {
     defaults: {},
@@ -78,37 +81,37 @@ export class PanelPlugin<TOptions = any, TFieldConfigOptions extends object = an
   }
 
   get fieldConfigDefaults(): FieldConfigSource<TFieldConfigOptions> {
-    let result = this._fieldConfigDefaults.defaults.custom;
+    let customPropertiesDefaults = this._fieldConfigDefaults.defaults.custom;
 
-    if (!result) {
-      result = {} as TFieldConfigOptions;
+    if (!customPropertiesDefaults) {
+      customPropertiesDefaults = {} as TFieldConfigOptions;
     }
     const editors = this.customFieldConfigs;
 
-    if (!editors || (editors && editors.list().length === 0)) {
-      return this._fieldConfigDefaults;
-    }
-
-    for (const editor of editors.list()) {
-      set(result, editor.id, editor.defaultValue);
+    if (editors && editors.list().length !== 0) {
+      for (const editor of editors.list()) {
+        set(customPropertiesDefaults, editor.id, editor.defaultValue);
+      }
     }
 
     return {
       defaults: {
+        ...(this._standardFieldConfigProperties ? Object.fromEntries(this._standardFieldConfigProperties) : {}),
+        custom:
+          Object.keys(customPropertiesDefaults).length > 0
+            ? {
+                ...customPropertiesDefaults,
+              }
+            : undefined,
         ...this._fieldConfigDefaults.defaults,
-        custom: Object.keys(result)
-          ? {
-              ...result,
-            }
-          : undefined,
       },
       // TODO: not sure yet what about overrides, if anything
-      overrides: [],
+      overrides: this._fieldConfigDefaults.overrides,
     };
   }
 
-  get commonFieldConfigProperties() {
-    return this._commonFieldConfigProperties;
+  get standardFieldConfigProperties() {
+    return this._standardFieldConfigProperties ? Array.from(this._standardFieldConfigProperties.keys()) : [];
   }
 
   /**
@@ -265,7 +268,7 @@ export class PanelPlugin<TOptions = any, TFieldConfigOptions extends object = an
   }
 
   /**
-   * Allows specyfing which common field config options panel should use
+   * Allows specyfing which standard field config options panel should use and defining default values
    *
    * @example
    * ```typescript
@@ -274,20 +277,39 @@ export class PanelPlugin<TOptions = any, TFieldConfigOptions extends object = an
    *
    * interface ShapePanelOptions {}
    *
-   * // when plugin should only display specific common options
+   * // when plugin should use all standard options
    * export const plugin = new PanelPlugin<ShapePanelOptions>(ShapePanel)
-   *  .useCommonFieldConfig([StandardFieldConfigProperties.Min, StandardFieldConfigProperties.Max, StandardFieldConfigProperties.Links]);
+   *  .useStandardFieldConfig();
    *
-   * // when plugin should use all common options
+   * // when plugin should only display specific standard options
    * export const plugin = new PanelPlugin<ShapePanelOptions>(ShapePanel)
-   *  .useCommonFieldConfig();
+   *  .useStandardFieldConfig([StandardFieldConfigProperties.Min, StandardFieldConfigProperties.Max, StandardFieldConfigProperties.Links]);
+   *
+   * // when standard option's default value needs to be provided
+   * export const plugin = new PanelPlugin<ShapePanelOptions>(ShapePanel)
+   *  .useStandardFieldConfig({
+   *    [StandardFieldConfigProperties.Min]: 20,
+   *    [StandardFieldConfigProperties.Max]: 100
+   *  });
+   *
    * ```
    *
    * @public
    */
-  useCommonFieldConfig(properties?: StandardFieldConfigProperties[]) {
-    if (properties) {
-      this._commonFieldConfigProperties = properties;
+  useStandardFieldConfig(properties?: StandardFieldConfigProperties[] | KeyValue<any>) {
+    if (!properties) {
+      this._standardFieldConfigProperties = standardFieldConfigProperties;
+      return this;
+    }
+
+    if (Array.isArray(properties)) {
+      this._standardFieldConfigProperties = new Map(
+        [...standardFieldConfigProperties].filter(p => properties.includes(p[0]))
+      );
+    } else {
+      this._standardFieldConfigProperties = new Map(
+        Object.keys(properties).map(k => [k as StandardFieldConfigProperties, properties[k]])
+      );
     }
     return this;
   }

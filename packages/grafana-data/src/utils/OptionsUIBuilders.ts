@@ -5,7 +5,6 @@ import {
   PanelOptionsEditorConfig,
   PanelOptionsEditorItem,
   FieldConfigEditorConfig,
-  SelectableValue,
 } from '../types';
 import { OptionsUIRegistryBuilder } from '../types/OptionsUIRegistryBuilder';
 import {
@@ -55,9 +54,7 @@ export class FieldConfigEditorBuilder<TOptions> extends OptionsUIRegistryBuilder
   }
 
   addSelect<TOption, TSettings extends SelectFieldConfigSettings<TOption>>(
-    config: Omit<FieldConfigEditorConfig<TOptions, TSettings, TOption>, 'defaultValue'> & {
-      defaultValue?: SelectableValue<TOption>;
-    }
+    config: FieldConfigEditorConfig<TOptions, TSettings, TOption>
   ) {
     return this.addCustomEditor({
       ...config,
@@ -70,11 +67,7 @@ export class FieldConfigEditorBuilder<TOptions> extends OptionsUIRegistryBuilder
     });
   }
 
-  addRadio<TOption, TSettings = any>(
-    config: Omit<FieldConfigEditorConfig<TOptions, TSettings, TOption>, 'defaultValue'> & {
-      defaultValue?: SelectableValue<TOption>;
-    }
-  ) {
+  addRadio<TOption, TSettings = any>(config: FieldConfigEditorConfig<TOptions, TSettings, TOption>) {
     return this.addCustomEditor({
       ...config,
       override: standardEditorsRegistry.get('radio').editor as any,
@@ -147,9 +140,7 @@ export class PanelOptionsEditorBuilder<TOptions> extends OptionsUIRegistryBuilde
   }
 
   addSelect<TOption, TSettings extends SelectFieldConfigSettings<TOption>>(
-    config: Omit<PanelOptionsEditorConfig<TOptions, TSettings, TOption>, 'defaultValue'> & {
-      defaultValue?: SelectableValue<TOption>;
-    }
+    config: PanelOptionsEditorConfig<TOptions, TSettings, TOption>
   ) {
     return this.addCustomEditor({
       ...config,
@@ -158,9 +149,7 @@ export class PanelOptionsEditorBuilder<TOptions> extends OptionsUIRegistryBuilde
   }
 
   addRadio<TOption, TSettings extends SelectFieldConfigSettings<TOption>>(
-    config: Omit<PanelOptionsEditorConfig<TOptions, TSettings, TOption>, 'defaultValue'> & {
-      defaultValue?: SelectableValue<TOption>;
-    }
+    config: PanelOptionsEditorConfig<TOptions, TSettings, TOption>
   ) {
     return this.addCustomEditor({
       ...config,

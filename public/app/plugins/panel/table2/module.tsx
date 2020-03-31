@@ -1,6 +1,6 @@
 import { PanelPlugin } from '@grafana/data';
 import { TablePanel } from './TablePanel';
-import { Options, defaults, CustomFieldConfig } from './types';
+import { CustomFieldConfig, defaults, Options } from './types';
 
 export const plugin = new PanelPlugin<Options, CustomFieldConfig>(TablePanel)
   .setDefaults(defaults)
@@ -29,7 +29,6 @@ export const plugin = new PanelPlugin<Options, CustomFieldConfig>(TablePanel)
             { value: 'lcd-gauge', label: 'LCD gauge' },
           ],
         },
-        defaultValue: { value: 'lcd-gauge', label: 'LCD gauge' },
       });
   })
   .setPanelOptions(builder => {
@@ -37,6 +36,5 @@ export const plugin = new PanelPlugin<Options, CustomFieldConfig>(TablePanel)
       id: 'showHeader',
       name: 'Show header',
       description: "To display table's header or not to display",
-      defaultValue: true,
     });
   });

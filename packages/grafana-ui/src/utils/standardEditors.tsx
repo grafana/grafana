@@ -217,7 +217,7 @@ export const getStandardOptionEditors = () => {
     description: 'Allows option selection',
     editor: props => (
       <Forms.Select
-        defaultValue={props.value}
+        value={props.value}
         onChange={e => props.onChange(e.value)}
         options={props.item.settings?.options}
       />

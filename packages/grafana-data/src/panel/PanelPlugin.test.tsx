@@ -1,6 +1,7 @@
 import React from 'react';
 import { identityOverrideProcessor, standardEditorsRegistry } from '../field';
-import { PanelPlugin } from './PanelPlugin';
+import { PanelPlugin, standardFieldConfigProperties } from './PanelPlugin';
+import { StandardFieldConfigProperties } from '../types';
 
 describe('PanelPlugin', () => {
   describe('declarative options', () => {
@@ -174,6 +175,47 @@ describe('PanelPlugin', () => {
         };
 
         expect(panel.fieldConfigDefaults.defaults.custom).toEqual(expectedDefaults);
+      });
+    });
+
+    describe('standard field config options', () => {
+      test('standard config', () => {
+        const panel = new PanelPlugin(() => {
+          return <div>Panel</div>;
+        });
+
+        panel.useStandardFieldConfig();
+        expect(panel.standardFieldConfigProperties).toEqual(Array.from(standardFieldConfigProperties.keys()));
+      });
+
+      test('selected standard config', () => {
+        const panel = new PanelPlugin(() => {
+          return <div>Panel</div>;
+        });
+
+        panel.useStandardFieldConfig([StandardFieldConfigProperties.Min, StandardFieldConfigProperties.Thresholds]);
+        expect(panel.standardFieldConfigProperties).toEqual(['min', 'thresholds']);
+      });
+
+      test('default values', () => {
+        const panel = new PanelPlugin(() => {
+          return <div>Panel</div>;
+        });
+
+        panel.useStandardFieldConfig({
+          [StandardFieldConfigProperties.Color]: '#ff00ff',
+          [StandardFieldConfigProperties.Min]: 10,
+        });
+
+        expect(panel.standardFieldConfigProperties).toEqual(['color', 'min']);
+
+        expect(panel.fieldConfigDefaults).toEqual({
+          defaults: {
+            min: 10,
+            color: '#ff00ff',
+          },
+          overrides: [],
+        });
       });
     });
   });

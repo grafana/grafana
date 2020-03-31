@@ -68,7 +68,7 @@ export const OverrideFieldConfigEditor: React.FC<Props> = props => {
       return null;
     }
 
-    let configPropertiesOptions = plugin.commonFieldConfigProperties.map(i => {
+    let configPropertiesOptions = plugin.standardFieldConfigProperties.map(i => {
       const editor = standardFieldConfigEditorRegistry.get(i);
       return {
         label: editor.name,
@@ -188,6 +188,9 @@ export const DefaultFieldConfigEditor: React.FC<Props> = ({ include, data, onCha
   );
 
   const renderStandardConfigs = useCallback(() => {
+    if (include && include.length === 0) {
+      return null;
+    }
     if (include) {
       return <>{include.map(f => renderEditor(standardFieldConfigEditorRegistry.get(f), false))}</>;
     }
