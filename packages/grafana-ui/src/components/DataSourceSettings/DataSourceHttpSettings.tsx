@@ -8,7 +8,7 @@ import { TLSAuthSettings } from './TLSAuthSettings';
 import { DataSourceSettings } from '@grafana/data';
 import { HttpSettingsProps } from './types';
 import { CustomHeadersSettings } from './CustomHeadersSettings';
-import { Select } from '../Select/Select';
+import { Select } from '../Forms/Legacy/Select/Select';
 import { Input } from '../Input/Input';
 import { FormField } from '../FormField/FormField';
 import { FormLabel } from '../FormLabel/FormLabel';

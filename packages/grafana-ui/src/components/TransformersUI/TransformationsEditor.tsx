@@ -1,5 +1,5 @@
 import { DataTransformerID, DataTransformerConfig, DataFrame, transformDataFrame } from '@grafana/data';
-import { Select } from '../Select/Select';
+import { Select } from '../Forms/Legacy/Select/Select';
 import { transformersUIRegistry } from './transformers';
 import React from 'react';
 import { TransformationRow } from './TransformationRow';

@@ -1,6 +1,6 @@
 import React, { PureComponent } from 'react';
 
-import { Select } from '../Select/Select';
+import { Select } from '../Forms/Legacy/Select/Select';
 import { Cascader, CascaderOption } from '../Cascader/Cascader';
 import { getValueFormats, SelectableValue } from '@grafana/data';
 

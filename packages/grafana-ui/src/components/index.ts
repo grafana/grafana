@@ -142,10 +142,10 @@ export { HorizontalGroup, VerticalGroup, Container } from './Layout/Layout';
 // Legacy forms
 
 // Select
-import { Select, AsyncSelect } from './Select/Select';
-import { IndicatorsContainer } from './Select/IndicatorsContainer';
-import { NoOptionsMessage } from './Select/NoOptionsMessage';
-import { ButtonSelect } from './Select/ButtonSelect';
+import { Select, AsyncSelect } from './Forms/Legacy/Select/Select';
+import { IndicatorsContainer } from './Forms/Legacy/Select/IndicatorsContainer';
+import { NoOptionsMessage } from './Forms/Legacy/Select/NoOptionsMessage';
+import { ButtonSelect } from './Forms/Legacy/Select/ButtonSelect';
 
 const LegacyForms = {
   Select,

@@ -1,6 +1,6 @@
 import React, { PureComponent, ReactElement } from 'react';
 import Select from './Select';
-import { PopoverContent } from '../Tooltip/Tooltip';
+import { PopoverContent } from '../../../Tooltip/Tooltip';
 import { SelectableValue } from '@grafana/data';
 
 interface ButtonComponentProps {

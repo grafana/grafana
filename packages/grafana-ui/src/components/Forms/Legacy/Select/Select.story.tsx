@@ -1,8 +1,8 @@
 import React, { useState, useCallback } from 'react';
 import { action } from '@storybook/addon-actions';
 import { withKnobs, object } from '@storybook/addon-knobs';
-import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
-import { UseState } from '../../utils/storybook/UseState';
+import { withCenteredStory } from '../../../../utils/storybook/withCenteredStory';
+import { UseState } from '../../../../utils/storybook/UseState';
 import { SelectableValue } from '@grafana/data';
 import { Select, AsyncSelect } from './Select';
 
