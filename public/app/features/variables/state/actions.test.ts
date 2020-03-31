@@ -9,7 +9,13 @@ import { createTextBoxVariableAdapter } from '../textbox/adapter';
 import { createConstantVariableAdapter } from '../constant/adapter';
 import { reduxTester } from '../../../../test/core/redux/reduxTester';
 import { TemplatingState } from 'app/features/variables/state/reducers';
-import { initDashboardTemplating, processVariables, setOptionFromUrl, validateVariableSelectionState } from './actions';
+import {
+  initDashboardTemplating,
+  processVariables,
+  setOptionFromUrl,
+  validateVariableSelectionState,
+  changeVariableMultiValue,
+} from './actions';
 import {
   addInitLock,
   addVariable,
@@ -17,6 +23,7 @@ import {
   removeVariable,
   resolveInitLock,
   setCurrentVariableValue,
+  changeVariableProp,
 } from './sharedReducer';
 import { NEW_VARIABLE_ID, toVariableIdentifier, toVariablePayload } from './types';
 import {
@@ -443,6 +450,82 @@ describe('shared actions', () => {
               errorText: 'Variable with the same name already exists',
             })
           );
+      });
+    });
+  });
+
+  describe('changeVariableMultiValue', () => {
+    describe('when changeVariableMultiValue is dispatched for variable with multi enabled', () => {
+      it('then correct actions are dispatched', () => {
+        const custom = customBuilder()
+          .withId('custom')
+          .withMulti(true)
+          .withCurrent(['A'], ['A'])
+          .build();
+
+        reduxTester<{ templating: TemplatingState }>()
+          .givenRootReducer(getTemplatingRootReducer())
+          .whenActionIsDispatched(addVariable(toVariablePayload(custom, { global: false, index: 0, model: custom })))
+          .whenActionIsDispatched(changeVariableMultiValue(toVariableIdentifier(custom), false), true)
+          .thenDispatchedActionsPredicateShouldEqual(actions => {
+            const [changeMultiAction, changeCurrentAction] = actions;
+            const expectedNumberOfActions = 2;
+
+            expect(changeMultiAction).toEqual(
+              changeVariableProp(toVariablePayload(custom, { propName: 'multi', propValue: false }))
+            );
+            expect(changeCurrentAction).toEqual(
+              changeVariableProp(
+                toVariablePayload(custom, {
+                  propName: 'current',
+                  propValue: {
+                    value: 'A',
+                    text: 'A',
+                    selected: true,
+                  },
+                })
+              )
+            );
+
+            return actions.length === expectedNumberOfActions;
+          });
+      });
+    });
+
+    describe('when changeVariableMultiValue is dispatched for variable with multi disabled', () => {
+      it('then correct actions are dispatched', () => {
+        const custom = customBuilder()
+          .withId('custom')
+          .withMulti(false)
+          .withCurrent(['A'], ['A'])
+          .build();
+
+        reduxTester<{ templating: TemplatingState }>()
+          .givenRootReducer(getTemplatingRootReducer())
+          .whenActionIsDispatched(addVariable(toVariablePayload(custom, { global: false, index: 0, model: custom })))
+          .whenActionIsDispatched(changeVariableMultiValue(toVariableIdentifier(custom), true), true)
+          .thenDispatchedActionsPredicateShouldEqual(actions => {
+            const [changeMultiAction, changeCurrentAction] = actions;
+            const expectedNumberOfActions = 2;
+
+            expect(changeMultiAction).toEqual(
+              changeVariableProp(toVariablePayload(custom, { propName: 'multi', propValue: true }))
+            );
+            expect(changeCurrentAction).toEqual(
+              changeVariableProp(
+                toVariablePayload(custom, {
+                  propName: 'current',
+                  propValue: {
+                    value: ['A'],
+                    text: ['A'],
+                    selected: true,
+                  },
+                })
+              )
+            );
+
+            return actions.length === expectedNumberOfActions;
+          });
       });
     });
   });

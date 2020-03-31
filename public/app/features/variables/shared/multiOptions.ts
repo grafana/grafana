@@ -9,6 +9,7 @@ export const alignCurrentWithMulti = (current: VariableOption, value: boolean): 
     return {
       ...current,
       value: convertToMulti(current.value),
+      text: convertToMulti(current.text),
     };
   }
 
