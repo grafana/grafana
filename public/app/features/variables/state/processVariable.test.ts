@@ -132,10 +132,7 @@ describe('processVariable', () => {
 
         await tester.thenDispatchedActionsShouldEqual(
           setCurrentVariableValue(
-            toVariablePayload(
-              { type: 'custom', id: 'custom' },
-              { option: { text: ['B'], value: ['B'], selected: false } }
-            )
+            toVariablePayload({ type: 'custom', id: 'custom' }, { option: { text: 'B', value: 'B', selected: false } })
           ),
           resolveInitLock(toVariablePayload({ type: 'custom', id: 'custom' }))
         );
@@ -212,7 +209,7 @@ describe('processVariable', () => {
             setCurrentVariableValue(
               toVariablePayload(
                 { type: 'query', id: 'queryNoDepends' },
-                { option: { text: ['B'], value: ['B'], selected: false } }
+                { option: { text: 'B', value: 'B', selected: false } }
               )
             ),
             resolveInitLock(toVariablePayload({ type: 'query', id: 'queryNoDepends' }))
@@ -251,7 +248,7 @@ describe('processVariable', () => {
               setCurrentVariableValue(
                 toVariablePayload(
                   { type: 'query', id: 'queryNoDepends' },
-                  { option: { text: ['B'], value: ['B'], selected: false } }
+                  { option: { text: 'B', value: 'B', selected: false } }
                 )
               ),
               resolveInitLock(toVariablePayload({ type: 'query', id: 'queryNoDepends' }))
@@ -346,7 +343,7 @@ describe('processVariable', () => {
             setCurrentVariableValue(
               toVariablePayload(
                 { type: 'query', id: 'queryDependsOnCustom' },
-                { option: { text: ['AB'], value: ['AB'], selected: false } }
+                { option: { text: 'AB', value: 'AB', selected: false } }
               )
             ),
             resolveInitLock(toVariablePayload({ type: 'query', id: 'queryDependsOnCustom' }))
@@ -390,7 +387,7 @@ describe('processVariable', () => {
               setCurrentVariableValue(
                 toVariablePayload(
                   { type: 'query', id: 'queryDependsOnCustom' },
-                  { option: { text: ['AB'], value: ['AB'], selected: false } }
+                  { option: { text: 'AB', value: 'AB', selected: false } }
                 )
               ),
               resolveInitLock(toVariablePayload({ type: 'query', id: 'queryDependsOnCustom' }))

@@ -193,10 +193,13 @@ export const setOptionFromUrl = (identifier: VariableIdentifier, urlValue: UrlQu
       option = { text: defaultText, value: defaultValue, selected: false };
     }
 
-    if (isMulti(variableFromState) && variableFromState.multi === true) {
+    if (isMulti(variableFromState)) {
       // In case variable is multiple choice, we cast to array to preserve the same behaviour as when selecting
       // the option directly, which will return even single value in an array.
-      option = { text: castArray(option.text), value: castArray(option.value), selected: false };
+      option = alignCurrentWithMulti(
+        { text: castArray(option.text), value: castArray(option.value), selected: false },
+        variableFromState.multi
+      );
     }
 
     await variableAdapters.get(variable.type).setValue(variableFromState, option);

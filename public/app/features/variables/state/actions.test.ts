@@ -136,17 +136,24 @@ describe('shared actions', () => {
 
   describe('when setOptionFromUrl is dispatched with a custom variable (no refresh property)', () => {
     it.each`
-      urlValue      | expected
-      ${'B'}        | ${['B']}
-      ${['B']}      | ${['B']}
-      ${'X'}        | ${['X']}
-      ${''}         | ${['']}
-      ${['A', 'B']} | ${['A', 'B']}
-      ${null}       | ${[null]}
-      ${undefined}  | ${[undefined]}
-    `('and urlValue is $urlValue then correct actions are dispatched', async ({ urlValue, expected }) => {
+      urlValue      | isMulti  | expected
+      ${'B'}        | ${false} | ${'B'}
+      ${['B']}      | ${false} | ${'B'}
+      ${'X'}        | ${false} | ${'X'}
+      ${''}         | ${false} | ${''}
+      ${null}       | ${false} | ${null}
+      ${undefined}  | ${false} | ${undefined}
+      ${'B'}        | ${true}  | ${['B']}
+      ${['B']}      | ${true}  | ${['B']}
+      ${'X'}        | ${true}  | ${['X']}
+      ${''}         | ${true}  | ${['']}
+      ${['A', 'B']} | ${true}  | ${['A', 'B']}
+      ${null}       | ${true}  | ${[null]}
+      ${undefined}  | ${true}  | ${[undefined]}
+    `('and urlValue is $urlValue then correct actions are dispatched', async ({ urlValue, expected, isMulti }) => {
       const custom = customBuilder()
         .withId('0')
+        .withMulti(isMulti)
         .withOptions('A', 'B', 'C')
         .withCurrent('A')
         .build();
