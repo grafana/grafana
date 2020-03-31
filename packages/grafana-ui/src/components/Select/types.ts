@@ -1,6 +1,6 @@
 import { SelectableValue } from '@grafana/data';
 import React from 'react';
-import { FormInputSize } from '../types';
+import { FormInputSize } from '../Forms/types';
 
 export type SelectValue<T> = T | SelectableValue<T> | T[] | Array<SelectableValue<T>>;
 

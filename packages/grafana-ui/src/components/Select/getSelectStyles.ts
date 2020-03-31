@@ -1,5 +1,5 @@
-import { stylesFactory } from '../../../themes/stylesFactory';
-import { selectThemeVariant as stv } from '../../../themes/selectThemeVariant';
+import { stylesFactory } from '../../themes/stylesFactory';
+import { selectThemeVariant as stv } from '../../themes/selectThemeVariant';
 import { css } from 'emotion';
 import { GrafanaTheme } from '@grafana/data';
 

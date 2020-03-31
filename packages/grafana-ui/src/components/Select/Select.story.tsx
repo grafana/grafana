@@ -1,13 +1,13 @@
 import React, { useState } from 'react';
 import { Select, AsyncSelect, MultiSelect, AsyncMultiSelect } from './Select';
-import { withCenteredStory, withHorizontallyCenteredStory } from '../../../utils/storybook/withCenteredStory';
+import { withCenteredStory, withHorizontallyCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { SelectableValue } from '@grafana/data';
-import { getAvailableIcons, IconType } from '../../Icon/types';
+import { getAvailableIcons, IconType } from '../Icon/types';
 import { select, boolean } from '@storybook/addon-knobs';
-import { Icon } from '../../Icon/Icon';
-import { Button } from '../../Button';
+import { Icon } from '../Icon/Icon';
+import { Button } from '../Button';
 import { ButtonSelect } from './ButtonSelect';
-import { getIconKnob } from '../../../utils/storybook/knobs';
+import { getIconKnob } from '../../utils/storybook/knobs';
 import kebabCase from 'lodash/kebabCase';
 import { generateOptions } from './mockOptions';
 

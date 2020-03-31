@@ -1,6 +1,6 @@
 import React from 'react';
 import { cx } from 'emotion';
-import { useTheme } from '../../../themes/ThemeContext';
+import { useTheme } from '../../themes/ThemeContext';
 import { getSelectStyles } from './getSelectStyles';
 
 export const ValueContainer = (props: any) => {

@@ -1,9 +1,9 @@
 import React from 'react';
-import { useTheme } from '../../../themes/ThemeContext';
-import { getFocusCss, sharedInputStyle } from '../commonStyles';
-import { getInputStyles } from '../Input/Input';
+import { useTheme } from '../../themes/ThemeContext';
+import { getFocusCss, sharedInputStyle } from '../Forms/commonStyles';
+import { getInputStyles } from '../Forms/Input/Input';
 import { cx, css } from 'emotion';
-import { stylesFactory } from '../../../themes';
+import { stylesFactory } from '../../themes';
 import { GrafanaTheme } from '@grafana/data';
 
 interface InputControlProps {

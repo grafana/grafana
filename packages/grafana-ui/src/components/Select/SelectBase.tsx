@@ -9,9 +9,9 @@ import { default as ReactAsyncSelect } from '@torkelo/react-select/async';
 // @ts-ignore
 import { default as AsyncCreatable } from '@torkelo/react-select/async-creatable';
 
-import { Icon } from '../../Icon/Icon';
+import { Icon } from '../Icon/Icon';
 import { css, cx } from 'emotion';
-import { inputSizesPixels } from '../commonStyles';
+import { inputSizesPixels } from '../Forms/commonStyles';
 import resetSelectStyles from './resetSelectStyles';
 import { SelectMenu, SelectMenuOptions } from './SelectMenu';
 import { IndicatorsContainer } from './IndicatorsContainer';
@@ -21,7 +21,7 @@ import { DropdownIndicator } from './DropdownIndicator';
 import { SelectOptionGroup } from './SelectOptionGroup';
 import { SingleValue } from './SingleValue';
 import { MultiValueContainer, MultiValueRemove } from './MultiValue';
-import { useTheme } from '../../../themes';
+import { useTheme } from '../../themes';
 import { getSelectStyles } from './getSelectStyles';
 import { cleanValue } from './utils';
 import { SelectBaseProps, SelectValue } from './types';

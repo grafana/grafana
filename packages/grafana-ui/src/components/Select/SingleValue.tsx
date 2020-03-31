@@ -4,11 +4,11 @@ import { css, cx } from 'emotion';
 // Ignoring because I couldn't get @types/react-select work wih Torkel's fork
 // @ts-ignore
 import { components } from '@torkelo/react-select';
-import { useDelayedSwitch } from '../../../utils/useDelayedSwitch';
-import { stylesFactory, useTheme } from '../../../themes';
-import { SlideOutTransition } from '../../transitions/SlideOutTransition';
-import { FadeTransition } from '../../transitions/FadeTransition';
-import { Spinner } from '../../Spinner/Spinner';
+import { useDelayedSwitch } from '../../utils/useDelayedSwitch';
+import { stylesFactory, useTheme } from '../../themes';
+import { SlideOutTransition } from '../transitions/SlideOutTransition';
+import { FadeTransition } from '../transitions/FadeTransition';
+import { Spinner } from '../Spinner/Spinner';
 import { GrafanaTheme } from '@grafana/data';
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => {

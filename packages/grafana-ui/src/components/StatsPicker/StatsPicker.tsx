@@ -3,7 +3,7 @@ import React, { PureComponent } from 'react';
 import isArray from 'lodash/isArray';
 import difference from 'lodash/difference';
 
-import { Select } from '../Forms/Select/Select';
+import { Select } from '../Select/Select';
 
 import { fieldReducers, SelectableValue } from '@grafana/data';
 

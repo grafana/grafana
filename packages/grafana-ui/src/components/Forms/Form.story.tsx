@@ -11,7 +11,7 @@ import { Switch } from './Switch';
 import { Checkbox } from './Checkbox';
 
 import { RadioButtonGroup } from './RadioButtonGroup/RadioButtonGroup';
-import { Select } from './Select/Select';
+import { Select } from '../Select/Select';
 import Forms from './index';
 import mdx from './Form.mdx';
 import { ValidateResult } from 'react-hook-form';
