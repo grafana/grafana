@@ -10,6 +10,7 @@ import { DashboardSection } from '../types';
 const FETCH_RESULTS = 'FETCH_RESULTS';
 const TOGGLE_SECTION = 'TOGGLE_SECTION';
 const FETCH_ITEMS = 'FETCH_ITEMS';
+const TOGGLE_CUSTOM = 'TOGGLE_CUSTOM';
 
 const searchSrv = new SearchSrv();
 
@@ -31,6 +32,18 @@ const searchReducer = (state: any, action: any) => {
         ...state,
         results: state.results.map((result: DashboardSection) => {
           if (section.id === result.id) {
+            result.expanded = !result.expanded;
+          }
+          return result;
+        }),
+      };
+    }
+    case TOGGLE_CUSTOM: {
+      const section = action.payload;
+      return {
+        ...state,
+        results: state.results.map((result: DashboardSection) => {
+          if (result.title === section.title) {
             result.expanded = !result.expanded;
           }
           return result;
@@ -68,13 +81,17 @@ export const DashboardSearch: FC = () => {
   }, 300);
 
   const toggleSection = (section: DashboardSection) => {
-    if (!section.items.length) {
-      backendSrv.search({ ...defaultQuery, folderIds: [section.id] }).then(items => {
-        dispatch({ type: FETCH_ITEMS, payload: { section, items } });
-        dispatch({ type: TOGGLE_SECTION, payload: section });
-      });
+    if (['Recent', 'Starred'].includes(section.title)) {
+      dispatch({ type: TOGGLE_CUSTOM, payload: section });
     } else {
-      dispatch({ type: TOGGLE_SECTION, payload: section });
+      if (!section.items.length) {
+        backendSrv.search({ ...defaultQuery, folderIds: [section.id] }).then(items => {
+          dispatch({ type: FETCH_ITEMS, payload: { section, items } });
+          dispatch({ type: TOGGLE_SECTION, payload: section });
+        });
+      } else {
+        dispatch({ type: TOGGLE_SECTION, payload: section });
+      }
     }
   };
 
