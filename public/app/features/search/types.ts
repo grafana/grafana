@@ -13,21 +13,27 @@ export interface DashboardSection {
   selected?: boolean;
 }
 
+export enum DashboardSearchHitType {
+  DashHitDB = 'dash-db',
+  DashHitHome = 'dash-home',
+  DashHitFolder = 'dash-folder',
+}
+
 export interface DashboardSectionItem {
+  checked?: boolean;
+  folderId?: number;
+  folderTitle?: string;
+  folderUid?: string;
+  folderUrl?: string;
   id: number;
-  uid: string;
+  isStarred: boolean;
+  selected?: boolean;
+  tags: string[];
   title: string;
+  type: DashboardSearchHitType;
+  uid: string;
   uri: string;
   url: string;
-  type: string;
-  tags: string[];
-  isStarred: boolean;
-  folderId?: number;
-  folderUid?: string;
-  folderTitle?: string;
-  folderUrl?: string;
-  checked: boolean;
-  selected?: boolean;
 }
 
 export interface DashboardTag {
