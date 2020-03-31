@@ -10,6 +10,7 @@ interface Props extends Omit<InputHTMLAttributes<HTMLInputElement>, 'onReset'> {
   isConfigured: boolean;
 
   label?: string;
+  tooltip?: string;
   labelWidth?: number;
   inputWidth?: number;
   // Placeholder of the input field when in non configured state.
@@ -40,6 +41,7 @@ export const SecretFormField: FunctionComponent<Props> = ({
   inputWidth = 12,
   onReset,
   isConfigured,
+  tooltip,
   placeholder = 'Password',
   ...inputProps
 }: Props) => {
@@ -47,6 +49,7 @@ export const SecretFormField: FunctionComponent<Props> = ({
   return (
     <FormField
       label={label!}
+      tooltip={tooltip!}
       labelWidth={labelWidth}
       inputEl={
         isConfigured ? (

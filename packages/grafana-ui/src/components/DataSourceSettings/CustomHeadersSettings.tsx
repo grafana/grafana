@@ -4,7 +4,7 @@ import uniqueId from 'lodash/uniqueId';
 import { DataSourceSettings } from '@grafana/data';
 import { Button } from '../Button';
 import { FormField } from '../FormField/FormField';
-import { SecretFormField } from '../SecretFormFied/SecretFormField';
+import { SecretFormField } from '../SecretFormField/SecretFormField';
 import { stylesFactory } from '../../themes';
 
 export interface CustomHeader {
