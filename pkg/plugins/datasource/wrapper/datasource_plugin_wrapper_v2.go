@@ -94,13 +94,16 @@ func (tw *DatasourcePluginWrapperV2) Query(ctx context.Context, ds *models.DataS
 		}
 		tR.Message = string(resMd)
 	}
-	for refID, res := range pbRes.Responses {
-		tR.Results[refID] = &tsdb.QueryResult{
+	for refID, pRes := range pbRes.Responses {
+		qr := &tsdb.QueryResult{
 			RefId:      refID,
-			Dataframes: res.Frames,
-			Error:      fmt.Errorf(res.Error),
-			Meta:       simplejson.NewFromAny(res.QueryMeta),
+			Dataframes: pRes.Frames,
+			Meta:       simplejson.NewFromAny(pRes.QueryMeta),
 		}
+		if pRes.Error != "" {
+			qr.Error = fmt.Errorf(pRes.Error)
+		}
+		tR.Results[refID] = qr
 	}
 
 	return tR, nil
