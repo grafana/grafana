@@ -504,7 +504,8 @@ export class DashboardMigrator {
         if (!isMulti(variable)) {
           continue;
         }
-        variable.current = alignCurrentWithMulti(variable, variable.multi);
+        const { multi, current } = variable;
+        variable.current = alignCurrentWithMulti(current, multi);
       }
     }
 

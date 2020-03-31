@@ -1,10 +1,9 @@
-import { VariableWithMultiSupport, VariableOption } from 'app/features/templating/types';
+import { VariableOption } from 'app/features/templating/types';
 
-export const alignCurrentWithMulti = <Model extends VariableWithMultiSupport>(
-  variable: Model,
-  value: boolean
-): VariableOption => {
-  const { current } = variable;
+export const alignCurrentWithMulti = (current: VariableOption, value: boolean): VariableOption => {
+  if (!current) {
+    return current;
+  }
 
   if (value && !Array.isArray(current.value)) {
     return {
@@ -16,7 +15,7 @@ export const alignCurrentWithMulti = <Model extends VariableWithMultiSupport>(
   if (!value && Array.isArray(current.value)) {
     return {
       ...current,
-      value: convertToMulti(current.value),
+      value: convertToSingle(current.value),
       text: convertToSingle(current.text),
     };
   }
