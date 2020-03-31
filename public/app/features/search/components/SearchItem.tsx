@@ -1,4 +1,4 @@
-import React, { FC, useCallback } from 'react';
+import React, { FC, useCallback, useRef, useEffect } from 'react';
 import { css, cx } from 'emotion';
 import { GrafanaTheme } from '@grafana/data';
 import { e2e } from '@grafana/e2e';
@@ -20,6 +20,14 @@ const { selectors } = e2e.pages.Dashboards;
 export const SearchItem: FC<Props> = ({ item, editable, onToggleSelection, onTagSelected }) => {
   const theme = useTheme();
   const styles = getResultsItemStyles(theme);
+  const inputEl = useRef(null);
+
+  useEffect(() => {
+    inputEl.current.addEventListener('click', (event: MouseEvent) => {
+      // manually prevent default on TagList click, as doing it via normal onClick doesn't work inside angular
+      event.preventDefault();
+    });
+  }, []);
 
   const onItemClick = () => {
     //Check if one string can be found in the other
@@ -29,7 +37,6 @@ export const SearchItem: FC<Props> = ({ item, editable, onToggleSelection, onTag
   };
 
   const tagSelected = (tag: string, event: React.MouseEvent<HTMLElement>) => {
-    event.stopPropagation();
     onTagSelected(tag);
   };
 
@@ -52,7 +59,9 @@ export const SearchItem: FC<Props> = ({ item, editable, onToggleSelection, onTag
           <span>{item.title}</span>
           <span className={styles.folderTitle}>{item.folderTitle}</span>
         </div>
-        <TagList tags={item.tags} onClick={tagSelected} className={styles.tags} />
+        <span ref={inputEl}>
+          <TagList tags={item.tags} onClick={tagSelected} className={styles.tags} />
+        </span>
       </a>
     </li>
   );
