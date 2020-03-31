@@ -575,6 +575,51 @@ describe('DashboardModel', () => {
       });
     });
   });
+
+  describe('when migrating variables with multi support', () => {
+    let model: DashboardModel;
+
+    beforeEach(() => {
+      model = new DashboardModel({
+        templating: {
+          list: [
+            {
+              multi: false,
+              current: {
+                value: ['value'],
+                text: ['text'],
+              },
+            },
+            {
+              multi: true,
+              current: {
+                value: ['value'],
+                text: ['text'],
+              },
+            },
+          ],
+        },
+      });
+    });
+
+    it('should be migrated if being out of sync', () => {
+      expect(model.templating.list.length).toBe(2);
+      expect(model.templating.list[0].multi).toBe(false);
+      expect(model.templating.list[0].current).toEqual({
+        text: 'text',
+        value: 'value',
+      });
+    });
+
+    it('should not be migrated if being in sync', () => {
+      expect(model.templating.list.length).toBe(2);
+      expect(model.templating.list[1].multi).toBe(true);
+      expect(model.templating.list[1].current).toEqual({
+        text: ['text'],
+        value: ['value'],
+      });
+    });
+  });
 });
 
 function createRow(options: any, panelDescriptions: any[]) {
