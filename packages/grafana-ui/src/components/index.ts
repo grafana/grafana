@@ -147,7 +147,7 @@ import { IndicatorsContainer } from './Select/IndicatorsContainer';
 import { NoOptionsMessage } from './Select/NoOptionsMessage';
 import { ButtonSelect } from './Select/ButtonSelect';
 
-const Legacy = {
+const LegacyForms = {
   Select,
   AsyncSelect,
   IndicatorsContainer,
@@ -155,4 +155,4 @@ const Legacy = {
   ButtonSelect,
 };
 
-export { Legacy };
+export { LegacyForms };

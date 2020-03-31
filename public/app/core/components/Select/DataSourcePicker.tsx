@@ -2,9 +2,9 @@
 import React, { PureComponent } from 'react';
 
 // Components
-import { Legacy } from '@grafana/ui';
+import { LegacyForms } from '@grafana/ui';
 import { SelectableValue, DataSourceSelectItem } from '@grafana/data';
-const { Select } = Legacy;
+const { Select } = LegacyForms;
 
 export interface Props {
   onChange: (ds: DataSourceSelectItem) => void;

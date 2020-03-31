@@ -2,8 +2,8 @@
 import React, { PureComponent } from 'react';
 
 // Components
-import { Legacy, FormLabel, PanelOptionsGroup } from '@grafana/ui';
-const { Select } = Legacy;
+import { LegacyForms, FormLabel, PanelOptionsGroup } from '@grafana/ui';
+const { Select } = LegacyForms;
 
 // Types
 import { PanelEditorProps } from '@grafana/data';

@@ -1,6 +1,6 @@
 import React, { SyntheticEvent } from 'react';
-import { FormLabel, Legacy, Input } from '@grafana/ui';
-const { Select } = Legacy;
+import { FormLabel, LegacyForms, Input } from '@grafana/ui';
+const { Select } = LegacyForms;
 import { DataSourceSettings, SelectableValue } from '@grafana/data';
 import { OpenTsdbOptions } from '../types';
 

@@ -3,8 +3,8 @@ import React, { Component } from 'react';
 import _ from 'lodash';
 
 // Components
-import { Legacy } from '@grafana/ui';
-const { AsyncSelect } = Legacy;
+import { LegacyForms } from '@grafana/ui';
+const { AsyncSelect } = LegacyForms;
 
 // Utils & Services
 import { debounce } from 'lodash';

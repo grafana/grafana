@@ -1,6 +1,6 @@
 import React, { PureComponent } from 'react';
-import { Switch, Legacy } from '@grafana/ui';
-const { Select } = Legacy;
+import { Switch, LegacyForms } from '@grafana/ui';
+const { Select } = LegacyForms;
 import { SelectableValue } from '@grafana/data';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 import { buildIframeHtml } from './utils';

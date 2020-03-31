@@ -10,10 +10,10 @@ import {
   GraphTooltipOptions,
   PanelOptionsGrid,
   PanelOptionsGroup,
-  Legacy,
+  LegacyForms,
   FieldPropertiesEditor,
 } from '@grafana/ui';
-const { Select } = Legacy;
+const { Select } = LegacyForms;
 import { Options, GraphOptions } from './types';
 import { GraphLegendEditor } from './GraphLegendEditor';
 import { NewPanelEditorContext } from 'app/features/dashboard/components/PanelEditor/PanelEditor';

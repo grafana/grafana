@@ -5,7 +5,8 @@ import React, { PureComponent } from 'react';
 import { InputDatasource, describeDataFrame } from './InputDatasource';
 import { InputQuery, InputOptions } from './types';
 
-import { FormLabel, Select, TableInputCSV } from '@grafana/ui';
+import { FormLabel, LegacyForms, TableInputCSV } from '@grafana/ui';
+const { Select } = LegacyForms;
 import { DataFrame, toCSV, SelectableValue, MutableDataFrame, QueryEditorProps } from '@grafana/data';
 
 import { dataFrameToCSV } from './utils';

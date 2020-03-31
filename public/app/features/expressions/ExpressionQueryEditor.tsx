@@ -1,7 +1,8 @@
 // Libraries
 import React, { PureComponent, ChangeEvent } from 'react';
 
-import { FormLabel, Select, FormField } from '@grafana/ui';
+import { FormLabel, LegacyForms, FormField } from '@grafana/ui';
+const { Select } = LegacyForms;
 import { SelectableValue, ReducerID, QueryEditorProps } from '@grafana/data';
 
 // Types
