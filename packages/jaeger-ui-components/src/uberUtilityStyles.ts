@@ -22,6 +22,10 @@ export const ubPx2 = css`
   padding-right: 0.5rem;
 `;
 
+export const ubPb2 = css`
+  padding-bottom: 0.5rem;
+`;
+
 export const ubFlex = css`
   display: flex;
 `;
@@ -54,4 +58,12 @@ export const uTxEllipsis = css`
 
 export const uWidth100 = css`
   width: 100%;
+`;
+
+export const uTxMuted = css`
+  color: #aaa;
+`;
+
+export const ubJustifyEnd = css`
+  justify-content: flex-end;
 `;

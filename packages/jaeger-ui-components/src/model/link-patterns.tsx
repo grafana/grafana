@@ -17,7 +17,7 @@ import memoize from 'lru-memoize';
 import { getConfigValue } from '../utils/config/get-config';
 import { getParent } from './span';
 import { TNil } from '../types';
-import { Span, Link, KeyValuePair, Trace } from '../types/trace';
+import { Span, Link, KeyValuePair, Trace } from '..';
 
 const parameterRegExp = /#\{([^{}]*)\}/g;
 
@@ -36,7 +36,7 @@ type ProcessedLinkPattern = {
   parameters: string[];
 };
 
-type TLinksRV = { url: string; text: string }[];
+type TLinksRV = Array<{ url: string; text: string }>;
 
 function getParamNames(str: string) {
   const names = new Set<string>();
@@ -143,7 +143,7 @@ function callTemplate(template: ProcessedTemplate, data: any) {
 
 export function computeTraceLink(linkPatterns: ProcessedLinkPattern[], trace: Trace) {
   const result: TLinksRV = [];
-  const validKeys = (Object.keys(trace) as (keyof Trace)[]).filter(
+  const validKeys = (Object.keys(trace) as Array<keyof Trace>).filter(
     key => typeof trace[key] === 'string' || trace[key] === 'number'
   );
 
@@ -188,7 +188,7 @@ export function computeLinks(
   if (spanTags) {
     type = 'tags';
   }
-  const result: { url: string; text: string }[] = [];
+  const result: Array<{ url: string; text: string }> = [];
   linkPatterns.forEach(pattern => {
     if (pattern.type(type) && pattern.key(item.key) && pattern.value(item.value)) {
       const parameterValues: Record<string, any> = {};
@@ -242,7 +242,9 @@ const processedLinks: ProcessedLinkPattern[] = (getConfigValue('linkPatterns') |
 
 export const getTraceLinks: (trace: Trace | undefined) => TLinksRV = memoize(10)((trace: Trace | undefined) => {
   const result: TLinksRV = [];
-  if (!trace) return result;
+  if (!trace) {
+    return result;
+  }
   return computeTraceLink(processedLinks, trace);
 });
 

@@ -4,8 +4,6 @@ import {
   Link,
   Log,
   Span,
-  // SpanData,
-  // SpanReference,
   Trace,
   TraceTimelineViewer,
   TTraceTimeline,
@@ -14,6 +12,7 @@ import {
   transformTraceData,
   SpanData,
   TraceData,
+  TracePageHeader,
 } from '@jaegertracing/jaeger-ui-components';
 import React, { useState } from 'react';
 
@@ -167,8 +166,40 @@ export function TraceView(props: Props) {
         MenuItem: (() => null as any) as any,
         Button: (() => null as any) as any,
         Divider: (() => null as any) as any,
+        Input: (() => null as any) as any,
+        InputGroup: (() => null as any) as any,
       }}
     >
+      <TracePageHeader
+        canCollapse={true}
+        clearSearch={() => {}}
+        focusUiFindMatches={() => {}}
+        hideMap={false}
+        hideSummary={false}
+        linkToStandalone={''}
+        nextResult={() => {}}
+        onArchiveClicked={() => {}}
+        onSlimViewClicked={() => {}}
+        onTraceGraphViewClicked={() => {}}
+        prevResult={() => {}}
+        resultCount={0}
+        showArchiveButton={false}
+        showShortcutsHelp={false}
+        showViewOptions={false}
+        slimView={false}
+        textFilter={null}
+        toSearch={null}
+        trace={traceProp}
+        traceGraphView={false}
+        updateNextViewRangeTime={(update: ViewRangeTimeUpdate) => {}}
+        updateViewRangeTime={(start: number, end: number, trackSrc?: string) => {}}
+        viewRange={{
+          time: {
+            current: [0, 1],
+            cursor: undefined,
+          },
+        }}
+      />
       <TraceTimelineViewer
         registerAccessors={() => {}}
         scrollToFirstVisibleSpan={() => {}}

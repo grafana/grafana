@@ -1,4 +1,5 @@
 export { default as TraceTimelineViewer } from './TraceTimelineViewer';
+export { default as TracePageHeader } from './TracePageHeader';
 export { default as UIElementsContext } from './uiElementsContext';
 export * from './uiElementsContext';
 export * from './types';
