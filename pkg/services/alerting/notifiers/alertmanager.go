@@ -25,7 +25,7 @@ func init() {
         	<input type="text" required class="gf-form-input max-width-26" ng-model="ctrl.model.settings.url" placeholder="http://localhost:9093"></input>
 		</div>
 		<div class="gf-form">
-        	<span class="gf-form-label width-10">basicAuthUser</span>
+        	<span class="gf-form-label width-10">Basic Auth User</span>
         	<input type="text" required class="gf-form-input max-width-26" ng-model="ctrl.model.settings.basicAuthUser" placeholder=""></input>
 		</div>
 		<div class="gf-form">
