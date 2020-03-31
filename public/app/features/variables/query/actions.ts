@@ -1,9 +1,9 @@
 import { AppEvents, DataSourcePluginMeta, DataSourceSelectItem } from '@grafana/data';
-
 import { validateVariableSelectionState } from '../state/actions';
 import { QueryVariableModel, VariableRefresh } from '../../templating/types';
 import { ThunkResult } from '../../../types';
 import { getDatasourceSrv } from '../../plugins/datasource_srv';
+import templateSrv from '../../templating/template_srv';
 import { getTimeSrv } from '../../dashboard/services/TimeSrv';
 import appEvents from '../../../core/app_events';
 import { importDataSourcePlugin } from '../../plugins/plugin_loader';
@@ -36,7 +36,8 @@ export const updateQueryVariableOptions = (
       }
 
       const results = await dataSource.metricFindQuery(variableInState.query, queryOptions);
-      await dispatch(updateVariableOptions(toVariablePayload(variableInState, results)));
+      const templatedRegex = getTemplatedRegex(variableInState);
+      await dispatch(updateVariableOptions(toVariablePayload(variableInState, { results, templatedRegex })));
 
       if (variableInState.useTags) {
         const tagResults = await dataSource.metricFindQuery(variableInState.tagsQuery, queryOptions);
@@ -112,4 +113,16 @@ export const changeQueryVariableQuery = (
   dispatch(changeVariableProp(toVariablePayload(identifier, { propName: 'query', propValue: query })));
   dispatch(changeVariableProp(toVariablePayload(identifier, { propName: 'definition', propValue: definition })));
   await variableAdapters.get(identifier.type).updateOptions(variableInState);
+};
+
+const getTemplatedRegex = (variable: QueryVariableModel): string => {
+  if (!variable) {
+    return '';
+  }
+
+  if (!variable.regex) {
+    return '';
+  }
+
+  return templateSrv.replace(variable.regex, {}, 'regex');
 };
