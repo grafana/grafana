@@ -2,7 +2,6 @@ import {
   FieldConfigEditorRegistry,
   FieldConfigSource,
   GrafanaPlugin,
-  KeyValue,
   PanelEditorProps,
   PanelMigrationHandler,
   PanelOptionEditorsRegistry,
@@ -16,18 +15,25 @@ import { ComponentClass, ComponentType } from 'react';
 import set from 'lodash/set';
 import { deprecationWarning } from '../utils';
 
-export const standardFieldConfigProperties = new Map([
-  [StandardFieldConfigProperties.Title, undefined],
-  [StandardFieldConfigProperties.Decimals, undefined],
-  [StandardFieldConfigProperties.Max, undefined],
-  [StandardFieldConfigProperties.Min, undefined],
-  [StandardFieldConfigProperties.NoValue, undefined],
-  [StandardFieldConfigProperties.Links, undefined],
-  [StandardFieldConfigProperties.Unit, undefined],
-  [StandardFieldConfigProperties.Thresholds, undefined],
-  [StandardFieldConfigProperties.Mappings, undefined],
-  [StandardFieldConfigProperties.Color, undefined],
-]);
+export const defaultStandardFieldConfig: Record<StandardFieldConfigProperties, any> = {
+  [StandardFieldConfigProperties.Min]: undefined,
+  [StandardFieldConfigProperties.Max]: undefined,
+  [StandardFieldConfigProperties.Title]: undefined,
+  [StandardFieldConfigProperties.Unit]: undefined,
+  [StandardFieldConfigProperties.Decimals]: undefined,
+  [StandardFieldConfigProperties.NoValue]: undefined,
+  [StandardFieldConfigProperties.Color]: undefined,
+  [StandardFieldConfigProperties.Thresholds]: undefined,
+  [StandardFieldConfigProperties.Mappings]: undefined,
+  [StandardFieldConfigProperties.Links]: undefined,
+};
+
+export const standardFieldConfigProperties = new Map(
+  Object.keys(defaultStandardFieldConfig).map(k => [
+    k as StandardFieldConfigProperties,
+    (defaultStandardFieldConfig as any)[k],
+  ])
+);
 
 export class PanelPlugin<TOptions = any, TFieldConfigOptions extends object = any> extends GrafanaPlugin<
   PanelPluginMeta
@@ -120,21 +126,6 @@ export class PanelPlugin<TOptions = any, TFieldConfigOptions extends object = an
   setDefaults(defaults: TOptions) {
     deprecationWarning('PanelPlugin', 'setDefaults', 'setPanelOptions');
     this._defaults = defaults;
-    return this;
-  }
-
-  /**
-   * Enables configuration of panel's default field config
-   *
-   * @deprecated setFieldConfigDefaults is deprecated in favor of setCustomFieldOptions
-   */
-  setFieldConfigDefaults(defaultConfig: Partial<FieldConfigSource<TFieldConfigOptions>>) {
-    this._fieldConfigDefaults = {
-      defaults: {},
-      overrides: [],
-      ...defaultConfig,
-    };
-
     return this;
   }
 
@@ -296,7 +287,9 @@ export class PanelPlugin<TOptions = any, TFieldConfigOptions extends object = an
    *
    * @public
    */
-  useStandardFieldConfig(properties?: StandardFieldConfigProperties[] | KeyValue<any>) {
+  useStandardFieldConfig(
+    properties?: StandardFieldConfigProperties[] | Partial<Record<StandardFieldConfigProperties, any>>
+  ) {
     if (!properties) {
       this._standardFieldConfigProperties = standardFieldConfigProperties;
       return this;
@@ -308,7 +301,7 @@ export class PanelPlugin<TOptions = any, TFieldConfigOptions extends object = an
       );
     } else {
       this._standardFieldConfigProperties = new Map(
-        Object.keys(properties).map(k => [k as StandardFieldConfigProperties, properties[k]])
+        Object.keys(properties).map(k => [k as StandardFieldConfigProperties, (properties as any)[k]])
       );
     }
     return this;

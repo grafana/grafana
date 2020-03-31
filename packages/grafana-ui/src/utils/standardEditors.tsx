@@ -38,7 +38,7 @@ export const getStandardFieldConfigs = () => {
     override: standardEditorsRegistry.get('text').editor as any,
     process: stringOverrideProcessor,
     settings: {
-      placeholder: 'auto',
+      placeholder: 'none',
       expandTemplateVars: true,
     },
     shouldApply: field => field.type !== FieldType.time,
