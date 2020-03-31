@@ -1,16 +1,23 @@
 import React, { FC, useState, useEffect, useReducer } from 'react';
+import { debounce } from 'lodash';
 import { SearchSrv } from 'app/core/services/search_srv';
+import { backendSrv } from 'app/core/services/backend_srv';
+import { SearchQuery } from 'app/core/components/search/search';
 import { SearchField } from './SearchField';
 import { SearchResults } from './SearchResults';
-import { debounce } from 'lodash';
 import { DashboardSection } from '../types';
-import { backendSrv } from 'app/core/services/backend_srv';
+
 const FETCH_RESULTS = 'FETCH_RESULTS';
 const TOGGLE_SECTION = 'TOGGLE_SECTION';
 const FETCH_ITEMS = 'FETCH_ITEMS';
+
 const searchSrv = new SearchSrv();
 
-const initialState = {
+interface State {
+  results: DashboardSection[];
+}
+
+const initialState: State = {
   results: [],
 };
 
@@ -45,9 +52,9 @@ const searchReducer = (state: any, action: any) => {
   }
 };
 
+const defaultQuery: SearchQuery = { query: '', parsedQuery: { text: '' }, tags: [], starred: false };
 export const DashboardSearch: FC = () => {
-  const [results, setResults] = useState([]);
-  const [query, setQuery] = useState({ query: '', parsedQuery: { text: '' }, tags: [], starred: false });
+  const [query, setQuery] = useState(defaultQuery);
   const [state, dispatch] = useReducer(searchReducer, initialState);
 
   useEffect(() => {
@@ -61,11 +68,13 @@ export const DashboardSearch: FC = () => {
   }, 300);
 
   const toggleSection = (section: DashboardSection) => {
-    dispatch({ type: TOGGLE_SECTION, payload: section });
     if (!section.items.length) {
-      backendSrv.search(query).then(items => {
+      backendSrv.search({ ...defaultQuery, folderIds: [section.id] }).then(items => {
         dispatch({ type: FETCH_ITEMS, payload: { section, items } });
+        dispatch({ type: TOGGLE_SECTION, payload: section });
       });
+    } else {
+      dispatch({ type: TOGGLE_SECTION, payload: section });
     }
   };
 
