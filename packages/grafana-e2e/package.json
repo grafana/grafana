@@ -55,6 +55,7 @@
     "cypress": "3.7.0",
     "execa": "4.0.0",
     "ts-loader": "6.2.1",
-    "typescript": "3.7.2"
+    "typescript": "3.7.2",
+    "yaml": "^1.8.3"
   }
 }

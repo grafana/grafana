@@ -6,7 +6,7 @@ import { VariableEditorList } from './VariableEditorList';
 import { VariableEditorEditor } from './VariableEditorEditor';
 import { MapDispatchToProps, MapStateToProps } from 'react-redux';
 import { connectWithStore } from '../../../core/utils/connectWithReduxStore';
-import { getVariableClones } from '../state/selectors';
+import { getVariables } from '../state/selectors';
 import { VariableModel } from '../../templating/types';
 import { switchToEditMode, switchToListMode, switchToNewMode } from './actions';
 import { changeVariableOrder, duplicateVariable, removeVariable } from '../state/sharedReducer';
@@ -122,7 +122,7 @@ class VariableEditorContainerUnconnected extends PureComponent<Props> {
 }
 
 const mapStateToProps: MapStateToProps<ConnectedProps, OwnProps, StoreState> = state => ({
-  variables: getVariableClones(state, true),
+  variables: getVariables(state, true),
   idInEditor: state.templating.editor.id,
 });
 
