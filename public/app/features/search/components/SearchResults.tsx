@@ -14,6 +14,7 @@ export interface Props {
   onFolderExpanding: () => void;
   onToggleSelection: ItemClickWithEvent;
   editable: boolean;
+  onToggleSection?: any;
 }
 
 export const SearchResults: FC<Props> = ({
@@ -23,21 +24,26 @@ export const SearchResults: FC<Props> = ({
   onFolderExpanding,
   onToggleSelection,
   editable,
+  onToggleSection,
 }) => {
   const theme = useTheme();
   const styles = getSectionStyles(theme);
 
   const toggleFolderExpand = (section: DashboardSection) => {
-    if (section.toggle) {
-      if (!section.expanded && onFolderExpanding) {
-        onFolderExpanding();
-      }
-
-      section.toggle(section).then(() => {
-        if (onSelectionChanged) {
-          onSelectionChanged();
+    if (onToggleSection) {
+      onToggleSection(section);
+    } else {
+      if (section.toggle) {
+        if (!section.expanded && onFolderExpanding) {
+          onFolderExpanding();
         }
-      });
+
+        section.toggle(section).then(() => {
+          if (onSelectionChanged) {
+            onSelectionChanged();
+          }
+        });
+      }
     }
   };
 
