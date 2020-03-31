@@ -24,7 +24,7 @@ Before you can sign a user in, you need to create an Okta application. Start by 
 
 1. Add the Base URI of your application, such as https://grafana.example.com.
 
-1. Next, enter values for the Login redirect URI. Use Base URI and append it with `/login/okta`: https://grafana.example.com/login/okta.
+1. Next, enter values for the Login redirect URI. Use Base URI and append it with `/login/okta`, for example: https://grafana.example.com/login/okta.
 
 1. Click Done to finish creating the Okta application.
 
