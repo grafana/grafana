@@ -5,6 +5,7 @@ import {
   PanelOptionsEditorConfig,
   PanelOptionsEditorItem,
   FieldConfigEditorConfig,
+  SelectableValue,
 } from '../types';
 import { OptionsUIRegistryBuilder } from '../types/OptionsUIRegistryBuilder';
 import {
@@ -31,7 +32,7 @@ export class FieldConfigEditorBuilder<TOptions> extends OptionsUIRegistryBuilder
   FieldConfigEditorProps<any, any>,
   FieldPropertyEditorItem<TOptions>
 > {
-  addNumberInput<TSettings>(config: FieldConfigEditorConfig<TOptions, TSettings & NumberFieldConfigSettings>) {
+  addNumberInput<TSettings>(config: FieldConfigEditorConfig<TOptions, TSettings & NumberFieldConfigSettings, number>) {
     return this.addCustomEditor({
       ...config,
       override: standardEditorsRegistry.get('number').editor as any,
@@ -42,7 +43,7 @@ export class FieldConfigEditorBuilder<TOptions> extends OptionsUIRegistryBuilder
     });
   }
 
-  addTextInput<TSettings>(config: FieldConfigEditorConfig<TOptions, TSettings & StringFieldConfigSettings>) {
+  addTextInput<TSettings>(config: FieldConfigEditorConfig<TOptions, TSettings & StringFieldConfigSettings, string>) {
     return this.addCustomEditor({
       ...config,
       override: standardEditorsRegistry.get('text').editor as any,
@@ -53,8 +54,10 @@ export class FieldConfigEditorBuilder<TOptions> extends OptionsUIRegistryBuilder
     });
   }
 
-  addSelect<TOption, TSettings = any>(
-    config: FieldConfigEditorConfig<TOptions, TSettings & SelectFieldConfigSettings<TOption>>
+  addSelect<TOption, TSettings extends SelectFieldConfigSettings<TOption>>(
+    config: Omit<FieldConfigEditorConfig<TOptions, TSettings, TOption>, 'defaultValue'> & {
+      defaultValue?: SelectableValue<TOption>;
+    }
   ) {
     return this.addCustomEditor({
       ...config,
@@ -68,7 +71,9 @@ export class FieldConfigEditorBuilder<TOptions> extends OptionsUIRegistryBuilder
   }
 
   addRadio<TOption, TSettings = any>(
-    config: FieldConfigEditorConfig<TOptions, TSettings & SelectFieldConfigSettings<TOption>>
+    config: Omit<FieldConfigEditorConfig<TOptions, TSettings, TOption>, 'defaultValue'> & {
+      defaultValue?: SelectableValue<TOption>;
+    }
   ) {
     return this.addCustomEditor({
       ...config,
@@ -81,7 +86,7 @@ export class FieldConfigEditorBuilder<TOptions> extends OptionsUIRegistryBuilder
     });
   }
 
-  addBooleanSwitch<TSettings = any>(config: FieldConfigEditorConfig<TOptions, TSettings>) {
+  addBooleanSwitch<TSettings = any>(config: FieldConfigEditorConfig<TOptions, TSettings, boolean>) {
     return this.addCustomEditor({
       ...config,
       editor: standardEditorsRegistry.get('boolean').editor as any,
@@ -92,7 +97,9 @@ export class FieldConfigEditorBuilder<TOptions> extends OptionsUIRegistryBuilder
     });
   }
 
-  addColorPicker<TSettings = any>(config: FieldConfigEditorConfig<TOptions, TSettings & ColorFieldConfigSettings>) {
+  addColorPicker<TSettings = any>(
+    config: FieldConfigEditorConfig<TOptions, TSettings & ColorFieldConfigSettings, string>
+  ) {
     return this.addCustomEditor({
       ...config,
       editor: standardEditorsRegistry.get('color').editor as any,
@@ -103,7 +110,9 @@ export class FieldConfigEditorBuilder<TOptions> extends OptionsUIRegistryBuilder
     });
   }
 
-  addUnitPicker<TSettings = any>(config: FieldConfigEditorConfig<TOptions, TSettings & UnitFieldConfigSettings>) {
+  addUnitPicker<TSettings = any>(
+    config: FieldConfigEditorConfig<TOptions, TSettings & UnitFieldConfigSettings, string>
+  ) {
     return this.addCustomEditor({
       ...config,
       editor: standardEditorsRegistry.get('unit').editor as any,
@@ -137,8 +146,10 @@ export class PanelOptionsEditorBuilder<TOptions> extends OptionsUIRegistryBuilde
     });
   }
 
-  addSelect<TOption, TSettings>(
-    config: PanelOptionsEditorConfig<TOptions, TSettings & SelectFieldConfigSettings<TOption>, TOption>
+  addSelect<TOption, TSettings extends SelectFieldConfigSettings<TOption>>(
+    config: Omit<PanelOptionsEditorConfig<TOptions, TSettings, TOption>, 'defaultValue'> & {
+      defaultValue?: SelectableValue<TOption>;
+    }
   ) {
     return this.addCustomEditor({
       ...config,
@@ -146,8 +157,10 @@ export class PanelOptionsEditorBuilder<TOptions> extends OptionsUIRegistryBuilde
     });
   }
 
-  addRadio<TOption, TSettings>(
-    config: PanelOptionsEditorConfig<TOptions, TSettings & SelectFieldConfigSettings<TOption>, TOption>
+  addRadio<TOption, TSettings extends SelectFieldConfigSettings<TOption>>(
+    config: Omit<PanelOptionsEditorConfig<TOptions, TSettings, TOption>, 'defaultValue'> & {
+      defaultValue?: SelectableValue<TOption>;
+    }
   ) {
     return this.addCustomEditor({
       ...config,

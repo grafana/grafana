@@ -15,7 +15,9 @@ import { ComponentClass, ComponentType } from 'react';
 import set from 'lodash/set';
 import { deprecationWarning } from '../utils';
 
-export class PanelPlugin<TOptions = any, TFieldConfigOptions = any> extends GrafanaPlugin<PanelPluginMeta> {
+export class PanelPlugin<TOptions = any, TFieldConfigOptions extends object = any> extends GrafanaPlugin<
+  PanelPluginMeta
+> {
   private _defaults?: TOptions;
   private _commonFieldConfigProperties: StandardFieldConfigProperties[] = [
     StandardFieldConfigProperties.Title,
@@ -30,6 +32,10 @@ export class PanelPlugin<TOptions = any, TFieldConfigOptions = any> extends Graf
     StandardFieldConfigProperties.Color,
   ];
 
+  private _fieldConfigDefaults: FieldConfigSource<TFieldConfigOptions> = {
+    defaults: {},
+    overrides: [],
+  };
   private _customFieldConfigs?: FieldConfigEditorRegistry;
   private customFieldConfigsUIBuilder = new FieldConfigEditorBuilder<TFieldConfigOptions>();
   private registerCustomFieldConfigs?: (builder: FieldConfigEditorBuilder<TFieldConfigOptions>) => void;
@@ -40,10 +46,6 @@ export class PanelPlugin<TOptions = any, TFieldConfigOptions = any> extends Graf
 
   panel: ComponentType<PanelProps<TOptions>>;
   editor?: ComponentClass<PanelEditorProps<TOptions>>;
-  fieldConfigDefaults?: FieldConfigSource = {
-    defaults: {},
-    overrides: [],
-  };
   onPanelMigration?: PanelMigrationHandler<TOptions>;
   onPanelTypeChanged?: PanelTypeChangedHandler<TOptions>;
   noPadding?: boolean;
@@ -75,6 +77,36 @@ export class PanelPlugin<TOptions = any, TFieldConfigOptions = any> extends Graf
     return result;
   }
 
+  get fieldConfigDefaults(): FieldConfigSource<TFieldConfigOptions> {
+    let result = this._fieldConfigDefaults.defaults.custom;
+
+    if (!result) {
+      result = {} as TFieldConfigOptions;
+    }
+    const editors = this.customFieldConfigs;
+
+    if (!editors || (editors && editors.list().length === 0)) {
+      return this._fieldConfigDefaults;
+    }
+
+    for (const editor of editors.list()) {
+      set(result, editor.id, editor.defaultValue);
+    }
+
+    return {
+      defaults: {
+        ...this._fieldConfigDefaults.defaults,
+        custom: Object.keys(result)
+          ? {
+              ...result,
+            }
+          : undefined,
+      },
+      // TODO: not sure yet what about overrides, if anything
+      overrides: [],
+    };
+  }
+
   get commonFieldConfigProperties() {
     return this._commonFieldConfigProperties;
   }
@@ -90,9 +122,11 @@ export class PanelPlugin<TOptions = any, TFieldConfigOptions = any> extends Graf
 
   /**
    * Enables configuration of panel's default field config
+   *
+   * @deprecated setFieldConfigDefaults is deprecated in favor of setCustomFieldOptions
    */
-  setFieldConfigDefaults(defaultConfig: Partial<FieldConfigSource>) {
-    this.fieldConfigDefaults = {
+  setFieldConfigDefaults(defaultConfig: Partial<FieldConfigSource<TFieldConfigOptions>>) {
+    this._fieldConfigDefaults = {
       defaults: {},
       overrides: [],
       ...defaultConfig,

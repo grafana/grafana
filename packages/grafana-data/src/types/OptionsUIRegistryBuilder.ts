@@ -1,6 +1,7 @@
 import { ComponentType } from 'react';
 import { RegistryItem, Registry } from '../utils/Registry';
 import { NumberFieldConfigSettings, SelectFieldConfigSettings, StringFieldConfigSettings } from '../field';
+import { SelectableValue } from './select';
 
 /**
  * Option editor registry item
@@ -40,11 +41,15 @@ export interface OptionsUIRegistryBuilderAPI<
   ): this;
 
   addSelect?<TOption, TSettings extends SelectFieldConfigSettings<TOption>>(
-    config: OptionEditorConfig<TOptions, TSettings, TOption>
+    config: Omit<OptionEditorConfig<TOptions, TSettings, TOption>, 'defaultValue'> & {
+      defaultValue?: SelectableValue<TOption>;
+    }
   ): this;
 
   addRadio?<TOption, TSettings extends SelectFieldConfigSettings<TOption> = SelectFieldConfigSettings<TOption>>(
-    config: OptionEditorConfig<TOptions, TSettings, TOption>
+    config: Omit<OptionEditorConfig<TOptions, TSettings, TOption>, 'defaultValue'> & {
+      defaultValue?: SelectableValue<TOption>;
+    }
   ): this;
 
   addBooleanSwitch?<TSettings = any>(config: OptionEditorConfig<TOptions, TSettings, boolean>): this;

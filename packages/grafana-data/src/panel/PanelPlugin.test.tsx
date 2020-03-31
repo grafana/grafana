@@ -53,41 +53,128 @@ describe('PanelPlugin', () => {
       expect(panel.optionEditors).toBeDefined();
       expect(panel.optionEditors!.list()).toHaveLength(1);
     });
+  });
 
-    test('default option values', () => {
-      const panel = new PanelPlugin(() => {
-        return <div>Panel</div>;
+  describe('default options', () => {
+    describe('panel options', () => {
+      test('default values', () => {
+        const panel = new PanelPlugin(() => {
+          return <div>Panel</div>;
+        });
+
+        panel.setPanelOptions(builder => {
+          builder
+            .addNumberInput({
+              id: 'numericOption',
+              name: 'Option editor',
+              description: 'Option editor description',
+              defaultValue: 10,
+            })
+            .addNumberInput({
+              id: 'numericOptionNoDefault',
+              name: 'Option editor',
+              description: 'Option editor description',
+            })
+            .addCustomEditor({
+              id: 'customOption',
+              name: 'Option editor',
+              description: 'Option editor description',
+              editor: () => <div>Editor</div>,
+              settings: {},
+              defaultValue: { value: 'Custom default value' },
+            });
+        });
+
+        const expectedDefaults = {
+          numericOption: 10,
+          customOption: { value: 'Custom default value' },
+        };
+
+        expect(panel.defaults).toEqual(expectedDefaults);
       });
 
-      panel.setPanelOptions(builder => {
-        builder
-          .addNumberInput({
-            id: 'numericOption',
+      test('default values for nested paths', () => {
+        const panel = new PanelPlugin(() => {
+          return <div>Panel</div>;
+        });
+
+        panel.setPanelOptions(builder => {
+          builder.addNumberInput({
+            id: 'numericOption.nested',
             name: 'Option editor',
             description: 'Option editor description',
             defaultValue: 10,
-          })
-          .addNumberInput({
-            id: 'numericOptionNoDefault',
-            name: 'Option editor',
-            description: 'Option editor description',
-          })
-          .addCustomEditor({
-            id: 'customOption',
-            name: 'Option editor',
-            description: 'Option editor description',
-            editor: () => <div>Editor</div>,
-            settings: {},
-            defaultValue: { value: 'Custom default value' },
           });
+        });
+
+        const expectedDefaults = {
+          numericOption: { nested: 10 },
+        };
+
+        expect(panel.defaults).toEqual(expectedDefaults);
+      });
+    });
+
+    describe('field config options', () => {
+      test('default values', () => {
+        const panel = new PanelPlugin(() => {
+          return <div>Panel</div>;
+        });
+
+        panel.setCustomFieldOptions(builder => {
+          builder
+            .addNumberInput({
+              id: 'numericOption',
+              name: 'Option editor',
+              description: 'Option editor description',
+              defaultValue: 10,
+            })
+            .addNumberInput({
+              id: 'numericOptionNoDefault',
+              name: 'Option editor',
+              description: 'Option editor description',
+            })
+            .addCustomEditor({
+              id: 'customOption',
+              name: 'Option editor',
+              description: 'Option editor description',
+              editor: () => <div>Editor</div>,
+              override: () => <div>Override editor</div>,
+              process: identityOverrideProcessor,
+              shouldApply: () => true,
+              settings: {},
+              defaultValue: { value: 'Custom default value' },
+            });
+        });
+
+        const expectedDefaults = {
+          numericOption: 10,
+          customOption: { value: 'Custom default value' },
+        };
+
+        expect(panel.fieldConfigDefaults.defaults.custom).toEqual(expectedDefaults);
       });
 
-      const expectedDefaults = {
-        numericOption: 10,
-        customOption: { value: 'Custom default value' },
-      };
+      test('default values for nested paths', () => {
+        const panel = new PanelPlugin(() => {
+          return <div>Panel</div>;
+        });
 
-      expect(panel.defaults).toEqual(expectedDefaults);
+        panel.setCustomFieldOptions(builder => {
+          builder.addNumberInput({
+            id: 'numericOption.nested',
+            name: 'Option editor',
+            description: 'Option editor description',
+            defaultValue: 10,
+          });
+        });
+
+        const expectedDefaults = {
+          numericOption: { nested: 10 },
+        };
+
+        expect(panel.fieldConfigDefaults.defaults.custom).toEqual(expectedDefaults);
+      });
     });
   });
 });

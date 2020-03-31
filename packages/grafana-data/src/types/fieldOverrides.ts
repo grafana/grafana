@@ -25,9 +25,9 @@ export interface ConfigOverrideRule {
   properties: DynamicConfigValue[];
 }
 
-export interface FieldConfigSource {
+export interface FieldConfigSource<TOptions extends object = any> {
   // Defatuls applied to all numeric fields
-  defaults: FieldConfig;
+  defaults: FieldConfig<TOptions>;
 
   // Rules to override individual values
   overrides: ConfigOverrideRule[];
@@ -54,12 +54,13 @@ export interface FieldOverrideEditorProps<TValue, TSettings> extends Omit<Standa
   context: FieldOverrideContext;
 }
 
-export interface FieldConfigEditorConfig<TOptions, TSettings = any> {
+export interface FieldConfigEditorConfig<TOptions, TSettings = any, TValue = any> {
   id: (keyof TOptions & string) | string;
   name: string;
   description: string;
   settings?: TSettings;
   shouldApply?: (field: Field) => boolean;
+  defaultValue?: TValue;
 }
 
 export interface FieldPropertyEditorItem<TOptions = any, TValue = any, TSettings extends {} = any>
