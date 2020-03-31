@@ -369,6 +369,8 @@ func (f *Frame) StringTable(maxFields, maxRows int) (string, error) {
 
 	sb := &strings.Builder{}
 	sb.WriteString(fmt.Sprintf("Name: %v\n", f.Name))
+	sb.WriteString(fmt.Sprintf("Dimensions: %v Fields by %v Rows\n", len(f.Fields), rowLen))
+
 	table := tablewriter.NewWriter(sb)
 
 	// table formatting options
@@ -376,9 +378,6 @@ func (f *Frame) StringTable(maxFields, maxRows int) (string, error) {
 	table.SetHeaderAlignment(tablewriter.ALIGN_LEFT)
 	table.SetAutoWrapText(false)
 	table.SetAlignment(tablewriter.ALIGN_LEFT)
-
-	// (caption is below the table)
-	table.SetCaption(true, fmt.Sprintf("Field Count: %v\nRow Count: %v", len(f.Fields), rowLen))
 
 	// set table headers
 	headers := make([]string, width)

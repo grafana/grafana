@@ -692,3 +692,29 @@ func toJSONString(val interface{}) (string, error) {
 	}
 	return string(b), nil
 }
+
+// BytesSliceToFrames decodes a slice of encoded Arrow frames to a slice of *Frame.
+func BytesSliceToFrames(bFrames [][]byte) ([]*Frame, error) {
+	frames := make([]*Frame, len(bFrames))
+	var err error
+	for i, encodedFrame := range bFrames {
+		frames[i], err = UnmarshalArrow(encodedFrame)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return frames, nil
+}
+
+// FramesToBytesSlice encodes a slice of Frames into a slice of []byte.
+func FramesToBytesSlice(frames []*Frame) ([][]byte, error) {
+	bs := make([][]byte, len(frames))
+	var err error
+	for i, frame := range frames {
+		bs[i], err = MarshalArrow(frame)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return bs, nil
+}

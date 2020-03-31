@@ -103,14 +103,26 @@ func (tw *TransformWrapper) Transform(ctx context.Context, query *tsdb.TsdbQuery
 		return nil, err
 	}
 
-	return &tsdb.Response{
-		Results: map[string]*tsdb.QueryResult{
-			"": {
-				Dataframes: pbRes.Frames,
-				Meta:       simplejson.NewFromAny(pbRes.Metadata),
-			},
-		},
-	}, nil
+	tR := &tsdb.Response{
+		Results: make(map[string]*tsdb.QueryResult, len(pbRes.Responses)),
+	}
+	if pbRes.Metadata != nil {
+		resMd, err := json.Marshal(pbRes.Metadata)
+		if err != nil {
+			tw.logger.Error("unable to marshal resposne metadata", err)
+		}
+		tR.Message = string(resMd)
+	}
+	for refID, res := range pbRes.Responses {
+		tR.Results[refID] = &tsdb.QueryResult{
+			RefId:      refID,
+			Dataframes: res.Frames,
+			Error:      fmt.Errorf(res.Error),
+			Meta:       simplejson.NewFromAny(res.QueryMeta),
+		}
+	}
+
+	return tR, nil
 }
 
 type transformCallback struct {
@@ -169,17 +181,18 @@ func (s *transformCallback) QueryData(ctx context.Context, req *pluginv2.QueryDa
 	// Convert tsdb results (map) to plugin-model/datasource (slice) results.
 	// Only error, tsdb.Series, and encoded Dataframes responses are mapped.
 
-	encodedFrames := [][]byte{}
+	// encodedFrames := [][]byte{}
+	pQDR := &pluginv2.QueryDataResponse{
+		Responses: make(map[string]*pluginv2.DataResponse, len(tsdbRes.Results)),
+	}
 	for refID, res := range tsdbRes.Results {
-
+		pRes := &pluginv2.DataResponse{}
 		if res.Error != nil {
-			// TODO add Errors property to Frame
-			encodedFrames = append(encodedFrames, nil)
-			continue
+			pRes.Error = res.Error.Error()
 		}
 
 		if res.Dataframes != nil {
-			encodedFrames = append(encodedFrames, res.Dataframes...)
+			pRes.Frames = res.Dataframes
 			continue
 		}
 
@@ -193,8 +206,8 @@ func (s *transformCallback) QueryData(ctx context.Context, req *pluginv2.QueryDa
 			if err != nil {
 				return nil, err
 			}
-			encodedFrames = append(encodedFrames, encFrame)
+			pRes.Frames = append(pRes.Frames, encFrame)
 		}
 	}
-	return &pluginv2.QueryDataResponse{Frames: encodedFrames}, nil
+	return pQDR, nil
 }

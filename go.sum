@@ -131,6 +131,10 @@ github.com/grafana/grafana-plugin-model v0.0.0-20190930120109-1fc953a61fb4 h1:SP
 github.com/grafana/grafana-plugin-model v0.0.0-20190930120109-1fc953a61fb4/go.mod h1:nc0XxBzjeGcrMltCDw269LoWF9S8ibhgxolCdA1R8To=
 github.com/grafana/grafana-plugin-sdk-go v0.33.0 h1:+eFcOV/KioHTTRNimENZeajlkw31B+m92RNRShooPEQ=
 github.com/grafana/grafana-plugin-sdk-go v0.33.0/go.mod h1:4rVPIvfv7SzFC0AA/8T5tmDRxIsrvDJOF9p4SrQGS1M=
+github.com/grafana/grafana-plugin-sdk-go v0.33.1-0.20200326183617-c67ab2ce3e00 h1:Jgse6QzEdcivCDRIper182ZfY9kI4PTnOxphoaSnm4w=
+github.com/grafana/grafana-plugin-sdk-go v0.33.1-0.20200326183617-c67ab2ce3e00/go.mod h1:4rVPIvfv7SzFC0AA/8T5tmDRxIsrvDJOF9p4SrQGS1M=
+github.com/grafana/grafana-plugin-sdk-go v0.33.1-0.20200331153735-0bff9368bd35 h1:Ng1oIs4+frpClPU4wSozon4dbG+BfjAGoMUexi/3LPw=
+github.com/grafana/grafana-plugin-sdk-go v0.33.1-0.20200331153735-0bff9368bd35/go.mod h1:ixQICVAqHaRx/jS4mkwcxZ6DuPkWc8oVWi9iwkfeHc4=
 github.com/hashicorp/go-hclog v0.0.0-20180709165350-ff2cf002a8dd h1:rNuUHR+CvK1IS89MMtcF0EpcVMZtjKfPRp4MEmt/aTs=
 github.com/hashicorp/go-hclog v0.0.0-20180709165350-ff2cf002a8dd/go.mod h1:9bjs9uLqI8l75knNv3lV1kA55veR+WUPSiKIWcQHudI=
 github.com/hashicorp/go-plugin v1.0.1 h1:4OtAfUGbnKC6yS48p0CtMX2oFYtzFZVv6rok3cRWgnE=
