@@ -1,4 +1,4 @@
-import { VariableWithMultiSupport } from 'app/features/templating/variable';
+import { VariableWithMultiSupport } from 'app/features/templating/types';
 import { OptionsVariableBuilder } from './optionsVariableBuilder';
 
 export class MultiVariableBuilder<T extends VariableWithMultiSupport> extends OptionsVariableBuilder<T> {

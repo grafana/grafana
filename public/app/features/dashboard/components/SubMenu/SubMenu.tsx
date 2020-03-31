@@ -1,8 +1,8 @@
 import React, { PureComponent } from 'react';
 import { connect, MapStateToProps } from 'react-redux';
 import { StoreState } from '../../../../types';
-import { getVariableClones } from '../../../variables/state/selectors';
-import { VariableHide, VariableModel } from '../../../templating/variable';
+import { getVariables } from '../../../variables/state/selectors';
+import { VariableHide, VariableModel } from '../../../templating/types';
 import { DashboardModel } from '../../state';
 import { AngularDashboardLinks } from './AngularDashboardLinks';
 import { Annotations } from './Annotations';
@@ -69,7 +69,7 @@ class SubMenuUnConnected extends PureComponent<Props> {
 }
 
 const mapStateToProps: MapStateToProps<ConnectedProps, OwnProps, StoreState> = state => ({
-  variables: getVariableClones(state, false),
+  variables: getVariables(state, false),
 });
 
 export const SubMenu = connect(mapStateToProps)(SubMenuUnConnected);

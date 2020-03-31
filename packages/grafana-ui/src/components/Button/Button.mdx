@@ -1,0 +1,80 @@
+import { Meta, Story, Preview, Props } from '@storybook/addon-docs/blocks';
+import { Button } from './Button';
+
+<Meta title="MDX|Button" component={Button} />
+
+# Button
+
+## Primary
+
+Used for "call to action".
+
+<Preview>
+  <div>
+    <Button variant="primary" size="sm" renderAs="button" style={{ margin: '5px' }}>
+      Small
+    </Button>
+    <Button variant="primary" size="md" renderAs="button" style={{ margin: '5px' }}>
+      Medium
+    </Button>
+    <Button variant="primary" size="lg" renderAs="button" style={{ margin: '5px' }}>
+      Large
+    </Button>
+  </div>
+</Preview>
+
+## Secondary
+
+The secondary button, used for "cancel" or aborting.
+
+<Preview>
+  <div>
+    <Button variant="secondary" size="sm" renderAs="button" style={{ margin: '5px' }}>
+      Small
+    </Button>
+    <Button variant="secondary" size="md" renderAs="button" style={{ margin: '5px' }}>
+      Medium
+    </Button>
+    <Button variant="secondary" size="lg" renderAs="button" style={{ margin: '5px' }}>
+      Large
+    </Button>
+  </div>
+</Preview>
+
+## Destructive
+
+Used for removing or deleting entities.
+
+<Preview>
+  <div>
+    <Button variant="destructive" size="sm" renderAs="button" style={{ margin: '5px' }}>
+      Small
+    </Button>
+    <Button variant="destructive" size="md" renderAs="button" style={{ margin: '5px' }}>
+      Medium
+    </Button>
+    <Button variant="destructive" size="lg" renderAs="button" style={{ margin: '5px' }}>
+      Large
+    </Button>
+  </div>
+</Preview>
+
+## Link
+
+Used for hyperlinks.
+
+<Preview>
+  <div>
+    <Button href="/" variant="link" size="sm" renderAs="button" style={{ margin: '5px' }}>
+      Small
+    </Button>
+    <Button href="/" variant="link" size="md" renderAs="button" style={{ margin: '5px' }}>
+      Medium
+    </Button>
+    <Button href="/" variant="link" size="lg" renderAs="button" style={{ margin: '5px' }}>
+      Large
+    </Button>
+  </div>
+</Preview>
+
+<Props of={Button} />

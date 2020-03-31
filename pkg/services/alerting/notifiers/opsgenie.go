@@ -123,7 +123,7 @@ func (on *OpsGenieNotifier) createAlert(evalContext *alerting.EvalContext) error
 
 	details := simplejson.New()
 	details.Set("url", ruleURL)
-	if evalContext.ImagePublicURL != "" {
+	if on.NeedsImage() && evalContext.ImagePublicURL != "" {
 		details.Set("image", evalContext.ImagePublicURL)
 	}
 

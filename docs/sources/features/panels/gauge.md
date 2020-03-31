@@ -37,7 +37,7 @@ The Gauge is a single value panel that can repeat a gauge for every series, colu
 ### Thresholds
 
 Define thresholds that will set the color of either the value or the background depending on your `Color` display option. The
-thresholds are automatically sorted from lowerst value to highest. The `Base` value represents minus infinity.
+thresholds are automatically sorted from lowest value to highest. The `Base` value represents minus infinity.
 
 
 ### Value mappings
