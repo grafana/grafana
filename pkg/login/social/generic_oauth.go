@@ -204,7 +204,9 @@ func (s *SocialGenericOAuth) extractEmail(data *UserInfoJson) string {
 
 	if s.emailAttributePath != "" {
 		email, err := s.searchJSONForAttr(s.emailAttributePath, data.rawJSON)
-		if err == nil && email != "" {
+		if err != nil {
+			s.log.Error("Failed to search JSON for attribute", "error", err)
+		} else if email != "" {
 			return email
 		}
 	}
