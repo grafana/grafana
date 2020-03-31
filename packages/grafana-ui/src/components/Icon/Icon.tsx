@@ -50,7 +50,7 @@ export const Icon = React.forwardRef<HTMLDivElement, IconProps>(
 
     /* Unicons don't have type definitions */
     //@ts-ignore
-    const Component: any = type === 'default' ? (DefaultIcon[iconName] as any) : (MonoIcon[iconName] as any);
+    const Component = type === 'default' ? DefaultIcon[iconName] : MonoIcon[iconName];
 
     if (!Component) {
       return <div />;
