@@ -240,7 +240,7 @@ export class PanelPlugin<TOptions = any, TFieldConfigOptions = any> extends Graf
    *
    * interface ShapePanelOptions {}
    *
-   * // when plugin should use only specific common options
+   * // when plugin should only display specific common options
    * export const plugin = new PanelPlugin<ShapePanelOptions>(ShapePanel)
    *  .useCommonFieldConfig([StandardFieldConfigProperties.Min, StandardFieldConfigProperties.Max, StandardFieldConfigProperties.Links]);
    *
