@@ -18,7 +18,7 @@ The Okta authentication allows your Grafana users to log in by using an external
 
 ## Create an Okta application
 
-Before you can sign a user in, you need to create an Okta application. Start by signing in to the Okta Developer Console: log in to the Okta, go to Admin and then select *Developer Console* in the top menu. Then create an application:
+Before you can sign a user in, you need to create an Okta application. Start by signing in to the Okta Developer Console: log in to the [Okta portal](https://login.okta.com/), go to Admin and then select *Developer Console* in the top menu. Then create an application:
 
 1. Select Applications, then Add Application. Pick Web as the platform. Enter a name for your application (or leave the default value).
 
