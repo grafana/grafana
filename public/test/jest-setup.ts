@@ -23,6 +23,15 @@ angular.module('grafana.routes', ['ngRoute']);
 jest.mock('app/core/core', () => ({}));
 jest.mock('app/features/plugins/plugin_loader', () => ({}));
 
+/* Dynamic import in <Icon /> throws SyntaxError: Cannot use import statement outside a module in test environment.
+ * Therefore we are mocking in for all tests.
+ */
+jest.mock('@grafana/ui/src/components/Icon/Icon', () => {
+  return {
+    Icon: () => null as any,
+  };
+});
+
 configure({ adapter: new Adapter() });
 
 const localStorageMock = (() => {
