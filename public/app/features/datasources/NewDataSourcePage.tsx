@@ -3,7 +3,7 @@ import classNames from 'classnames';
 import { connect } from 'react-redux';
 import { hot } from 'react-hot-loader';
 import { DataSourcePluginMeta, NavModel } from '@grafana/data';
-import { List, LinkButton, Button, Icon } from '@grafana/ui';
+import { List, LinkButton, Button } from '@grafana/ui';
 import { e2e } from '@grafana/e2e';
 
 import Page from 'app/core/components/Page/Page';
@@ -93,12 +93,7 @@ class NewDataSourcePage extends PureComponent<Props> {
       <Page navModel={navModel}>
         <Page.Contents isLoading={isLoading}>
           <div className="page-action-bar">
-            <FilterInput
-              useNewForms
-              value={searchQuery}
-              onChange={this.onSearchQueryChange}
-              placeholder="Filter by name or type"
-            />
+            <FilterInput value={searchQuery} onChange={this.onSearchQueryChange} placeholder="Filter by name or type" />
             <div className="page-action-bar__spacer" />
             <LinkButton href="datasources">Cancel</LinkButton>
           </div>
@@ -148,7 +143,7 @@ const DataSourceTypeCard: FC<DataSourceTypeCardProps> = props => {
             target="_blank"
             rel="noopener"
             onClick={onLearnMoreClick}
-            icon={<Icon name="external-link" />}
+            icon="fa fa-external-link"
           >
             {learnMoreLink.name}
           </LinkButton>
