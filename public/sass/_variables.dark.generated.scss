@@ -211,13 +211,10 @@ $input-border-color: $dark-6;
 $input-box-shadow: inset 1px 0px 4px 0px rgba(150, 150, 150, 0.1);
 $input-border-focus: $dark-6 !default;
 $input-box-shadow-focus: $blue-light !default;
-$input-color-placeholder: #464c54;
+$input-color-placeholder: #555555;
 $input-label-bg: $gray-blue;
 $input-label-border-color: $dark-6;
 $input-color-select-arrow: $white;
-
-// Input placeholder text color
-$placeholderText: darken($text-color, 25%);
 
 // Search
 $search-shadow: 0 0 30px 0 $black;

@@ -200,13 +200,10 @@ $input-border-color: $gray-5;
 $input-box-shadow: none;
 $input-border-focus: $gray-5 !default;
 $input-box-shadow-focus: $blue-light !default;
-$input-color-placeholder: $gray-4 !default;
+$input-color-placeholder: ${theme.colors.formInputPlaceholderText};
 $input-label-bg: $gray-5;
 $input-label-border-color: $gray-5;
 $input-color-select-arrow: $gray-1;
-
-// Input placeholder text color
-$placeholderText: $gray-2;
 
 // search
 $search-shadow: 0 1px 5px 0 $gray-5;

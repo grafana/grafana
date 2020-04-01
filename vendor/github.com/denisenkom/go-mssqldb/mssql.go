@@ -351,7 +351,6 @@ func (d *Driver) connect(ctx context.Context, c *Connector, params connectParams
 		processQueryText: d.processQueryText,
 		connectionGood:   true,
 	}
-	conn.sess.log = d.log
 
 	return conn, nil
 }

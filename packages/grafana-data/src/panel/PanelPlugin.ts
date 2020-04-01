@@ -8,26 +8,48 @@ import {
   PanelPluginMeta,
   PanelProps,
   PanelTypeChangedHandler,
+  StandardFieldConfigProperties,
 } from '../types';
 import { FieldConfigEditorBuilder, PanelOptionsEditorBuilder } from '../utils/OptionsUIBuilders';
 import { ComponentClass, ComponentType } from 'react';
+import set from 'lodash/set';
+import { deprecationWarning } from '../utils';
 
-export class PanelPlugin<TOptions = any> extends GrafanaPlugin<PanelPluginMeta> {
-  private customFieldConfigsUIBuilder = new FieldConfigEditorBuilder();
-  private _customFieldConfigs?: FieldConfigEditorRegistry;
-  private registerCustomFieldConfigs?: (builder: FieldConfigEditorBuilder) => void;
+export const defaultStandardFieldConfigProperties: StandardFieldConfigProperties[] = [
+  StandardFieldConfigProperties.Min,
+  StandardFieldConfigProperties.Max,
+  StandardFieldConfigProperties.Title,
+  StandardFieldConfigProperties.Unit,
+  StandardFieldConfigProperties.Decimals,
+  StandardFieldConfigProperties.NoValue,
+  StandardFieldConfigProperties.Color,
+  StandardFieldConfigProperties.Thresholds,
+  StandardFieldConfigProperties.Mappings,
+  StandardFieldConfigProperties.Links,
+];
 
-  private optionsUIBuilder = new PanelOptionsEditorBuilder();
-  private _optionEditors?: PanelOptionEditorsRegistry;
-  private registerOptionEditors?: (builder: PanelOptionsEditorBuilder) => void;
+export const standardFieldConfigProperties = new Map(defaultStandardFieldConfigProperties.map(p => [p, undefined]));
 
-  panel: ComponentType<PanelProps<TOptions>>;
-  editor?: ComponentClass<PanelEditorProps<TOptions>>;
-  defaults?: TOptions;
-  fieldConfigDefaults?: FieldConfigSource = {
+export class PanelPlugin<TOptions = any, TFieldConfigOptions extends object = any> extends GrafanaPlugin<
+  PanelPluginMeta
+> {
+  private _defaults?: TOptions;
+  private _standardFieldConfigProperties?: Map<StandardFieldConfigProperties, any>;
+
+  private _fieldConfigDefaults: FieldConfigSource<TFieldConfigOptions> = {
     defaults: {},
     overrides: [],
   };
+  private _customFieldConfigs?: FieldConfigEditorRegistry;
+  private customFieldConfigsUIBuilder = new FieldConfigEditorBuilder<TFieldConfigOptions>();
+  private registerCustomFieldConfigs?: (builder: FieldConfigEditorBuilder<TFieldConfigOptions>) => void;
+
+  private _optionEditors?: PanelOptionEditorsRegistry;
+  private optionsUIBuilder = new PanelOptionsEditorBuilder<TOptions>();
+  private registerOptionEditors?: (builder: PanelOptionsEditorBuilder<TOptions>) => void;
+
+  panel: ComponentType<PanelProps<TOptions>>;
+  editor?: ComponentClass<PanelEditorProps<TOptions>>;
   onPanelMigration?: PanelMigrationHandler<TOptions>;
   onPanelTypeChanged?: PanelTypeChangedHandler<TOptions>;
   noPadding?: boolean;
@@ -40,6 +62,66 @@ export class PanelPlugin<TOptions = any> extends GrafanaPlugin<PanelPluginMeta> 
   constructor(panel: ComponentType<PanelProps<TOptions>>) {
     super();
     this.panel = panel;
+  }
+
+  get defaults() {
+    let result = this._defaults || {};
+
+    if (!this._defaults) {
+      const editors = this.optionEditors;
+
+      if (!editors || editors.list().length === 0) {
+        return null;
+      }
+
+      for (const editor of editors.list()) {
+        set(result, editor.id, editor.defaultValue);
+      }
+    }
+    return result;
+  }
+
+  get fieldConfigDefaults(): FieldConfigSource<TFieldConfigOptions> {
+    let customPropertiesDefaults = this._fieldConfigDefaults.defaults.custom;
+
+    if (!customPropertiesDefaults) {
+      customPropertiesDefaults = {} as TFieldConfigOptions;
+    }
+    const editors = this.customFieldConfigs;
+
+    if (editors && editors.list().length !== 0) {
+      for (const editor of editors.list()) {
+        set(customPropertiesDefaults, editor.id, editor.defaultValue);
+      }
+    }
+
+    return {
+      defaults: {
+        ...(this._standardFieldConfigProperties ? Object.fromEntries(this._standardFieldConfigProperties) : {}),
+        custom:
+          Object.keys(customPropertiesDefaults).length > 0
+            ? {
+                ...customPropertiesDefaults,
+              }
+            : undefined,
+        ...this._fieldConfigDefaults.defaults,
+      },
+      // TODO: not sure yet what about overrides, if anything
+      overrides: this._fieldConfigDefaults.overrides,
+    };
+  }
+
+  get standardFieldConfigProperties() {
+    return this._standardFieldConfigProperties ? Array.from(this._standardFieldConfigProperties.keys()) : [];
+  }
+
+  /**
+   * @deprecated setDefaults is deprecated in favor of setPanelOptions
+   */
+  setDefaults(defaults: TOptions) {
+    deprecationWarning('PanelPlugin', 'setDefaults', 'setPanelOptions');
+    this._defaults = defaults;
+    return this;
   }
 
   get customFieldConfigs() {
@@ -62,11 +144,6 @@ export class PanelPlugin<TOptions = any> extends GrafanaPlugin<PanelPluginMeta> 
 
   setEditor(editor: ComponentClass<PanelEditorProps<TOptions>>) {
     this.editor = editor;
-    return this;
-  }
-
-  setDefaults(defaults: TOptions) {
-    this.defaults = defaults;
     return this;
   }
 
@@ -134,7 +211,7 @@ export class PanelPlugin<TOptions = any> extends GrafanaPlugin<PanelPluginMeta> 
    *
    * @public
    **/
-  setCustomFieldOptions(builder: (builder: FieldConfigEditorBuilder) => void) {
+  setCustomFieldOptions(builder: (builder: FieldConfigEditorBuilder<TFieldConfigOptions>) => void) {
     // builder is applied lazily when custom field configs are accessed
     this.registerCustomFieldConfigs = builder;
     return this;
@@ -170,22 +247,63 @@ export class PanelPlugin<TOptions = any> extends GrafanaPlugin<PanelPluginMeta> 
    *
    * @public
    **/
-  setPanelOptions(builder: (builder: PanelOptionsEditorBuilder) => void) {
+  setPanelOptions(builder: (builder: PanelOptionsEditorBuilder<TOptions>) => void) {
     // builder is applied lazily when options UI is created
     this.registerOptionEditors = builder;
     return this;
   }
 
   /**
-   * Enables configuration of panel's default field config
+   * Allows specyfing which standard field config options panel should use and defining default values
+   *
+   * @example
+   * ```typescript
+   *
+   * import { ShapePanel } from './ShapePanel';
+   *
+   * interface ShapePanelOptions {}
+   *
+   * // when plugin should use all standard options
+   * export const plugin = new PanelPlugin<ShapePanelOptions>(ShapePanel)
+   *  .useStandardFieldConfig();
+   *
+   * // when plugin should only display specific standard options
+   * // note, that options will be displayed in the order they are provided
+   * export const plugin = new PanelPlugin<ShapePanelOptions>(ShapePanel)
+   *  .useStandardFieldConfig([StandardFieldConfigProperties.Min, StandardFieldConfigProperties.Max, StandardFieldConfigProperties.Links]);
+   *
+   * // when standard option's default value needs to be provided
+   * export const plugin = new PanelPlugin<ShapePanelOptions>(ShapePanel)
+   *  .useStandardFieldConfig([StandardFieldConfigProperties.Min, StandardFieldConfigProperties.Max], {
+   *    [StandardFieldConfigProperties.Min]: 20,
+   *    [StandardFieldConfigProperties.Max]: 100
+   *  });
+   *
+   * ```
+   *
+   * @public
    */
-  setFieldConfigDefaults(defaultConfig: Partial<FieldConfigSource>) {
-    this.fieldConfigDefaults = {
-      defaults: {},
-      overrides: [],
-      ...defaultConfig,
-    };
+  useStandardFieldConfig(
+    properties?: StandardFieldConfigProperties[],
+    defauls?: Partial<Record<StandardFieldConfigProperties, any>>
+  ) {
+    if (!properties) {
+      this._standardFieldConfigProperties = standardFieldConfigProperties;
+      return this;
+    } else {
+      this._standardFieldConfigProperties = new Map(properties.map(p => [p, standardFieldConfigProperties.get(p)]));
+    }
 
+    if (defauls) {
+      Object.keys(defauls).map(k => {
+        if (properties.indexOf(k as StandardFieldConfigProperties) > -1) {
+          this._standardFieldConfigProperties!.set(
+            k as StandardFieldConfigProperties,
+            defauls[k as StandardFieldConfigProperties]
+          );
+        }
+      });
+    }
     return this;
   }
 }

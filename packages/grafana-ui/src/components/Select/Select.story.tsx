@@ -113,8 +113,14 @@ export const SelectWithOptionDescriptions = () => {
 
   const [value, setValue] = useState<number>();
   const options = [
-    { label: 'hello', value: 1, description: 'this is a description' },
-    { label: 'hello 2', value: 2, description: 'second description' },
+    { label: 'Basic option', value: 0 },
+    { label: 'Option with description', value: 1, description: 'this is a description' },
+    {
+      label: 'Option with description and image',
+      value: 2,
+      description: 'This is a very elaborate description, describing all the wonders in the world.',
+      imgUrl: 'https://placekitten.com/40/40',
+    },
   ];
 
   return (

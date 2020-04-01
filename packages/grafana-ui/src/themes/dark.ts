@@ -88,7 +88,7 @@ const darkTheme: GrafanaTheme = {
     formInputBorderHover: basicColors.gray33,
     formInputBorderActive: basicColors.blue95,
     formInputBorderInvalid: basicColors.red88,
-    formInputPlaceholderText: basicColors.gray33,
+    formInputPlaceholderText: basicColors.gray1,
     formInputText: basicColors.gray85,
     formInputDisabledText: basicColors.gray70,
     formInputTextStrong: basicColors.gray85,

@@ -1318,42 +1318,43 @@ initiate_connection:
 	}
 
 	// processing login response
-	var sspi_msg []byte
-continue_login:
-	tokchan := make(chan tokenStruct, 5)
-	go processResponse(context.Background(), &sess, tokchan, nil)
 	success := false
-	for tok := range tokchan {
-		switch token := tok.(type) {
-		case sspiMsg:
-			sspi_msg, err = auth.NextBytes(token)
-			if err != nil {
-				return nil, err
-			}
-		case loginAckStruct:
-			success = true
-			sess.loginAck = token
-		case error:
-			return nil, fmt.Errorf("Login error: %s", token.Error())
-		case doneStruct:
-			if token.isError() {
-				return nil, fmt.Errorf("Login error: %s", token.getError())
+	for {
+		tokchan := make(chan tokenStruct, 5)
+		go processResponse(context.Background(), &sess, tokchan, nil)
+		for tok := range tokchan {
+			switch token := tok.(type) {
+			case sspiMsg:
+				sspi_msg, err := auth.NextBytes(token)
+				if err != nil {
+					return nil, err
+				}
+				if sspi_msg != nil && len(sspi_msg) > 0 {
+					outbuf.BeginPacket(packSSPIMessage, false)
+					_, err = outbuf.Write(sspi_msg)
+					if err != nil {
+						return nil, err
+					}
+					err = outbuf.FinishPacket()
+					if err != nil {
+						return nil, err
+					}
+					sspi_msg = nil
+				}
+			case loginAckStruct:
+				success = true
+				sess.loginAck = token
+			case error:
+				return nil, fmt.Errorf("Login error: %s", token.Error())
+			case doneStruct:
+				if token.isError() {
+					return nil, fmt.Errorf("Login error: %s", token.getError())
+				}
+				goto loginEnd
 			}
 		}
 	}
-	if sspi_msg != nil {
-		outbuf.BeginPacket(packSSPIMessage, false)
-		_, err = outbuf.Write(sspi_msg)
-		if err != nil {
-			return nil, err
-		}
-		err = outbuf.FinishPacket()
-		if err != nil {
-			return nil, err
-		}
-		sspi_msg = nil
-		goto continue_login
-	}
+loginEnd:
 	if !success {
 		return nil, fmt.Errorf("Login failed")
 	}
