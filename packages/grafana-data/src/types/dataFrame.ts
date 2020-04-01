@@ -21,7 +21,7 @@ export enum FieldType {
  *
  * Plugins may extend this with additional properties. Something like series overrides
  */
-export interface FieldConfig {
+export interface FieldConfig<TOptions extends object = any> {
   title?: string; // The display value for this field.  This supports template variables blank is auto
   filterable?: boolean;
 
@@ -50,7 +50,7 @@ export interface FieldConfig {
   noValue?: string;
 
   // Panel Specific Values
-  custom?: Record<string, any>;
+  custom?: TOptions;
 
   scopedVars?: ScopedVars;
 }
