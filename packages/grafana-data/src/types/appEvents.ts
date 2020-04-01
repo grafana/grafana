@@ -5,11 +5,8 @@ export interface AppEvent<T> {
   payload?: T;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-namespace
-export namespace AppEvents {
-  export type AlertPayload = [string, string?];
+export type AlertPayload = [string, string?];
 
-  export const alertSuccess = eventFactory<AlertPayload>('alert-success');
-  export const alertWarning = eventFactory<AlertPayload>('alert-warning');
-  export const alertError = eventFactory<AlertPayload>('alert-error');
-}
+export const alertSuccess = eventFactory<AlertPayload>('alert-success');
+export const alertWarning = eventFactory<AlertPayload>('alert-warning');
+export const alertError = eventFactory<AlertPayload>('alert-error');
