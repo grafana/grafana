@@ -6,6 +6,7 @@ import { SearchQuery } from 'app/core/components/search/search';
 import { SearchField } from './SearchField';
 import { SearchResults } from './SearchResults';
 import { DashboardSection } from '../types';
+import { parse, SearchParserResult } from 'search-query-parser';
 
 const FETCH_RESULTS = 'FETCH_RESULTS';
 const TOGGLE_SECTION = 'TOGGLE_SECTION';
@@ -13,6 +14,20 @@ const FETCH_ITEMS = 'FETCH_ITEMS';
 const TOGGLE_CUSTOM = 'TOGGLE_CUSTOM';
 
 const searchSrv = new SearchSrv();
+
+const parseQuery = (query: string) => {
+  const parsedQuery = parse(query, {
+    keywords: ['folder'],
+  });
+
+  if (typeof parsedQuery === 'string') {
+    return {
+      text: parsedQuery,
+    } as SearchParserResult;
+  }
+
+  return parsedQuery;
+};
 
 interface State {
   results: DashboardSection[];
@@ -95,9 +110,19 @@ export const DashboardSearch: FC = () => {
     }
   };
 
+  const onQueryChange = (searchQuery: string) => {
+    setQuery(q => ({
+      ...q,
+      parsedQuery: parseQuery(searchQuery),
+      query: searchQuery,
+    }));
+  };
+
+  const onKeyDown = () => {};
+
   return (
     <div className="search-container">
-      <SearchField query={query} onChange={query => setQuery(q => ({ ...q, query }))} onKeyDown={() => {}} />
+      <SearchField query={query} onChange={onQueryChange} onKeyDown={onKeyDown} />
       <div className="search-dropdown">
         <div className="search-dropdown__col_1">
           <div className="search-results-scroller">
