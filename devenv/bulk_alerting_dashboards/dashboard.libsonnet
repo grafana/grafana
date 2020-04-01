@@ -37,7 +37,7 @@
           executionErrorState: "alerting",
           frequency: "24h",
           handler: 1,
-          name: "bulk alerting",
+          name: "bulk alerting " + dashboardCounter,
           noDataState: "no_data",
           notifications: []
         },
@@ -53,7 +53,7 @@
           x: 0,
           y: 0
         },
-        id: 2,
+        id: 1,
         legend: {
           avg: false,
           current: false,
