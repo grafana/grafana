@@ -25,10 +25,15 @@ export const alignCurrentWithMulti = (current: VariableOption, value: boolean): 
 };
 
 const convertToSingle = (value: string | string[]): string => {
-  if (Array.isArray(value) && value.length > 0) {
+  if (!Array.isArray(value)) {
+    return value;
+  }
+
+  if (value.length > 0) {
     return value[0];
   }
-  return value.toString();
+
+  return '';
 };
 
 const convertToMulti = (value: string | string[]): string[] => {

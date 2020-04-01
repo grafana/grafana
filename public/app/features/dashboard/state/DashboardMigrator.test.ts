@@ -602,8 +602,11 @@ describe('DashboardModel', () => {
       });
     });
 
-    it('should be migrated if being out of sync', () => {
+    it('should have two variables after migration', () => {
       expect(model.templating.list.length).toBe(2);
+    });
+
+    it('should be migrated if being out of sync', () => {
       expect(model.templating.list[0].multi).toBe(false);
       expect(model.templating.list[0].current).toEqual({
         text: 'text',
@@ -612,7 +615,6 @@ describe('DashboardModel', () => {
     });
 
     it('should not be migrated if being in sync', () => {
-      expect(model.templating.list.length).toBe(2);
       expect(model.templating.list[1].multi).toBe(true);
       expect(model.templating.list[1].current).toEqual({
         text: ['text'],

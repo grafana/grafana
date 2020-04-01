@@ -467,28 +467,24 @@ describe('shared actions', () => {
           .givenRootReducer(getTemplatingRootReducer())
           .whenActionIsDispatched(addVariable(toVariablePayload(custom, { global: false, index: 0, model: custom })))
           .whenActionIsDispatched(changeVariableMultiValue(toVariableIdentifier(custom), false), true)
-          .thenDispatchedActionsPredicateShouldEqual(actions => {
-            const [changeMultiAction, changeCurrentAction] = actions;
-            const expectedNumberOfActions = 2;
-
-            expect(changeMultiAction).toEqual(
-              changeVariableProp(toVariablePayload(custom, { propName: 'multi', propValue: false }))
-            );
-            expect(changeCurrentAction).toEqual(
-              changeVariableProp(
-                toVariablePayload(custom, {
-                  propName: 'current',
-                  propValue: {
-                    value: 'A',
-                    text: 'A',
-                    selected: true,
-                  },
-                })
-              )
-            );
-
-            return actions.length === expectedNumberOfActions;
-          });
+          .thenDispatchedActionsShouldEqual(
+            changeVariableProp(
+              toVariablePayload(custom, {
+                propName: 'multi',
+                propValue: false,
+              })
+            ),
+            changeVariableProp(
+              toVariablePayload(custom, {
+                propName: 'current',
+                propValue: {
+                  value: 'A',
+                  text: 'A',
+                  selected: true,
+                },
+              })
+            )
+          );
       });
     });
 
@@ -504,28 +500,24 @@ describe('shared actions', () => {
           .givenRootReducer(getTemplatingRootReducer())
           .whenActionIsDispatched(addVariable(toVariablePayload(custom, { global: false, index: 0, model: custom })))
           .whenActionIsDispatched(changeVariableMultiValue(toVariableIdentifier(custom), true), true)
-          .thenDispatchedActionsPredicateShouldEqual(actions => {
-            const [changeMultiAction, changeCurrentAction] = actions;
-            const expectedNumberOfActions = 2;
-
-            expect(changeMultiAction).toEqual(
-              changeVariableProp(toVariablePayload(custom, { propName: 'multi', propValue: true }))
-            );
-            expect(changeCurrentAction).toEqual(
-              changeVariableProp(
-                toVariablePayload(custom, {
-                  propName: 'current',
-                  propValue: {
-                    value: ['A'],
-                    text: ['A'],
-                    selected: true,
-                  },
-                })
-              )
-            );
-
-            return actions.length === expectedNumberOfActions;
-          });
+          .thenDispatchedActionsShouldEqual(
+            changeVariableProp(
+              toVariablePayload(custom, {
+                propName: 'multi',
+                propValue: true,
+              })
+            ),
+            changeVariableProp(
+              toVariablePayload(custom, {
+                propName: 'current',
+                propValue: {
+                  value: ['A'],
+                  text: ['A'],
+                  selected: true,
+                },
+              })
+            )
+          );
       });
     });
   });
