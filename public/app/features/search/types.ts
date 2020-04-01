@@ -61,5 +61,5 @@ export type ItemClickWithEvent = (item: DashboardSectionItem | DashboardSection,
 
 export type SearchAction = {
   type: string;
-  payload: any;
+  payload?: any;
 };
