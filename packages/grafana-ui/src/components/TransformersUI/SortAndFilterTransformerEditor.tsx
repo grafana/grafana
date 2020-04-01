@@ -1,9 +1,8 @@
 import React, { useMemo, useCallback } from 'react';
 import { SortAndFilterFieldsTransformerOptions } from '@grafana/data/src/transformations/transformers/sortAndFilter';
+import { DragDropContext, Droppable, Draggable, DropResult } from 'react-beautiful-dnd';
 import { TransformerUIRegistyItem, TransformerUIProps } from './types';
 import { DataTransformerID, transformersRegistry, DataFrame } from '@grafana/data';
-import { InlineList } from '../List/InlineList';
-import { Input } from '../Forms/Input/Input';
 
 interface SortAndFilterTransformerEditorProps extends TransformerUIProps<SortAndFilterFieldsTransformerOptions> {}
 
@@ -11,10 +10,10 @@ const SortAndFilterTransformerEditor: React.FC<SortAndFilterTransformerEditorPro
   const { options, input, onChange } = props;
   const { indexByName, excludeByName } = options;
 
-  const fields = useMemo(() => uniqueFieldNames(input, excludeByName), [input, excludeByName]);
-  const sortedFields = useMemo(() => sortByIndex(fields, indexByName), [fields, indexByName]);
+  const fieldNames = useMemo(() => fieldNamesFromInput(input), [input]);
+  const sortedFieldNames = useMemo(() => sortFieldNamesByIndex(fieldNames, indexByName), [fieldNames, indexByName]);
 
-  const toggleExclude = useCallback(
+  const onToggleVisibility = useCallback(
     (field: string, shouldExclude: boolean) => {
       onChange({
         ...options,
@@ -24,70 +23,108 @@ const SortAndFilterTransformerEditor: React.FC<SortAndFilterTransformerEditorPro
         },
       });
     },
-    [onChange, indexByName, excludeByName]
+    [onChange, options]
   );
 
-  const changeSorting = useCallback(
-    (field: string, value: string) => {
+  const onDragEnd = useCallback(
+    (result: DropResult) => {
+      if (!result || !result.destination) {
+        return;
+      }
+
+      const startIndex = result.source.index;
+      const endIndex = result.destination.index;
+
+      if (startIndex === endIndex) {
+        return;
+      }
+
       onChange({
         ...options,
-        indexByName: {
-          ...indexByName,
-          [field]: parseInt(value, 10),
-        },
+        indexByName: reorderToIndex(fieldNames, startIndex, endIndex),
       });
     },
-    [onChange, indexByName, excludeByName]
+    [onChange, options, fieldNames]
   );
 
   return (
-    <InlineList
-      items={sortedFields}
-      renderItem={(fieldName, index) => {
-        const excluded = excludeByName[fieldName];
-        const icon = excluded ? 'fa fa-eye-slash' : 'fa fa-eye';
-
-        return (
-          <div>
-            <i className={icon} onClick={() => toggleExclude(fieldName, !excluded)} />
-            <span>&nbsp;{fieldName}</span>
-            <Input
-              defaultValue={index.toString()}
-              onBlur={event => changeSorting(fieldName, event.currentTarget.value)}
-            />
+    <DragDropContext onDragEnd={onDragEnd}>
+      <Droppable droppableId="sortable-fields-transformer" direction="horizontal">
+        {provided => (
+          <div style={{ flexGrow: 1, display: 'inline-flex' }} ref={provided.innerRef} {...provided.droppableProps}>
+            {sortedFieldNames.map((fieldName, index) => {
+              return (
+                <DraggableFieldName
+                  fieldName={fieldName}
+                  index={index}
+                  onToggleVisibility={onToggleVisibility}
+                  visible={!excludeByName[fieldName]}
+                />
+              );
+            })}
+            {provided.placeholder}
           </div>
-        );
-      }}
-      getItemKey={fieldName => fieldName}
-    />
+        )}
+      </Droppable>
+    </DragDropContext>
   );
 };
 
-const sortByIndex = (fields: string[], indexByName: Record<string, number> = {}): string[] => {
-  return fields.sort((a, b) => {
-    const ai = indexByName[a] || 0;
-    const bi = indexByName[b] || 0;
+interface DraggableFieldProps {
+  fieldName: string;
+  index: number;
+  visible: boolean;
+  onToggleVisibility: (fieldName: string, isVisible: boolean) => void;
+}
 
-    return ai - bi;
+const DraggableFieldName: React.FC<DraggableFieldProps> = ({ fieldName, index, visible, onToggleVisibility }) => {
+  return (
+    <Draggable draggableId={fieldName} index={index}>
+      {provided => (
+        <div ref={provided.innerRef} {...provided.draggableProps} {...provided.dragHandleProps}>
+          <i
+            className={visible ? 'fa fa-eye' : 'fa fa-eye-slash'}
+            onClick={() => onToggleVisibility(fieldName, !visible)}
+          />
+          <span>{fieldName}</span>
+        </div>
+      )}
+    </Draggable>
+  );
+};
+
+const reorderToIndex = (fieldNames: string[], startIndex: number, endIndex: number) => {
+  const result = Array.from(fieldNames);
+  const [removed] = result.splice(startIndex, 1);
+  result.splice(endIndex, 0, removed);
+
+  return result.reduce((nameByIndex, fieldName, index) => {
+    nameByIndex[fieldName] = index;
+    return nameByIndex;
+  }, {} as Record<string, number>);
+};
+
+const sortFieldNamesByIndex = (fieldNames: string[], indexByName: Record<string, number> = {}): string[] => {
+  if (Object.keys(indexByName).length === 0) {
+    return fieldNames;
+  }
+
+  return fieldNames.sort((a, b) => {
+    const aIndex = indexByName[a] || 0;
+    const bIndex = indexByName[b] || 0;
+    return aIndex - bIndex;
   });
 };
 
-const uniqueFieldNames = (input: DataFrame[], excludeByName: Record<string, boolean>): string[] => {
-  const fieldNames: Record<string, null> = {};
-
-  input.reduce((names, frame) => {
-    return frame.fields.reduce((names, field) => {
-      names[field.name] = null;
-      return names;
-    }, names);
-  }, fieldNames);
-
-  // Object.keys(excludeByName).reduce((names, name) => {
-  //   names[name] = null;
-  //   return names;
-  // }, fieldNames);
-
-  return Object.keys(fieldNames);
+const fieldNamesFromInput = (input: DataFrame[]): string[] => {
+  return Object.keys(
+    input.reduce((names, frame) => {
+      return frame.fields.reduce((names, field) => {
+        names[field.name] = null;
+        return names;
+      }, names);
+    }, {} as Record<string, null>)
+  );
 };
 
 export const sortAndFilterTransformRegistryItem: TransformerUIRegistyItem<SortAndFilterFieldsTransformerOptions> = {

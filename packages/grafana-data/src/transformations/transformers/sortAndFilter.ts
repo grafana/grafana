@@ -32,6 +32,10 @@ export const sortAndFilterFieldsTransformer: DataTransformerInfo<SortAndFilterFi
 };
 
 const mapToExcludeRegexp = (excludeByName: Record<string, boolean>): string | undefined => {
+  if (!excludeByName) {
+    return undefined;
+  }
+
   const fieldsToExclude = Object.keys(excludeByName)
     .filter(name => excludeByName[name])
     .join('|');
