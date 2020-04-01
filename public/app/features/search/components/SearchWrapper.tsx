@@ -8,14 +8,16 @@ export const SearchWrapper: FC = () => {
 
   useEffect(() => {
     appEvents.on(CoreEvents.showDashSearch, () => setIsOpen(true));
-    appEvents.on(CoreEvents.hideDashSearch, () => setIsOpen(false));
+    appEvents.on(CoreEvents.hideDashSearch, () => {
+      //setIsOpen(false);
+    });
   }, []);
 
   return (
     isOpen && (
       <>
         <div className="search-backdrop" />
-        <DashboardSearch />
+        <DashboardSearch close={() => setIsOpen(false)} />
       </>
     )
   );

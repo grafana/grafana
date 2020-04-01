@@ -104,7 +104,8 @@ export const DashboardSearch: FC<Props> = ({ close }) => {
   );
 
   const search = () => {
-    searchSrv.search(query).then(results => {
+    // TODO move query construction to search_srv
+    searchSrv.search({ ...query, tag: query.tags, query: query.parsedQuery.text }).then(results => {
       dispatch({ type: FETCH_RESULTS, payload: results });
     });
   };
@@ -144,6 +145,12 @@ export const DashboardSearch: FC<Props> = ({ close }) => {
     setQuery(q => ({ ...q, tags }));
   };
 
+  const filterByTag = (tag: string) => {
+    if (tag && !query.tags.includes(tag)) {
+      setQuery(q => ({ ...q, tags: [...q.tags, tag] }));
+    }
+  };
+
   const clearSearchFilter = () => {
     // TODO check if resetting the query text is necessary
     setQuery(q => ({ ...q, tags: [] }));
@@ -160,7 +167,7 @@ export const DashboardSearch: FC<Props> = ({ close }) => {
             <div className="search-results-container">
               <SearchResults
                 results={state.results}
-                onTagSelected={() => {}}
+                onTagSelected={filterByTag}
                 dispatch={dispatch}
                 editable={false}
                 onToggleSection={toggleSection}
