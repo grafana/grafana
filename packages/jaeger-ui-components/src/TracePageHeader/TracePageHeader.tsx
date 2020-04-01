@@ -141,24 +141,21 @@ type TracePageHeaderEmbedProps = {
   focusUiFindMatches: () => void;
   hideMap: boolean;
   hideSummary: boolean;
-  linkToStandalone: string;
   nextResult: () => void;
-  onArchiveClicked: () => void;
   onSlimViewClicked: () => void;
   onTraceGraphViewClicked: () => void;
   prevResult: () => void;
   resultCount: number;
-  showArchiveButton: boolean;
-  showShortcutsHelp: boolean;
-  showViewOptions: boolean;
   slimView: boolean;
   textFilter: string | TNil;
-  toSearch: string | null;
   trace: Trace;
   traceGraphView: boolean;
   updateNextViewRangeTime: (update: ViewRangeTimeUpdate) => void;
   updateViewRangeTime: TUpdateViewRangeTimeFunction;
   viewRange: ViewRange;
+  searchValue: string;
+  onSearchValueChange: (value: string) => void;
+  hideSearchButtons?: boolean;
 };
 
 export const HEADER_ITEMS = [
@@ -219,6 +216,9 @@ export default function TracePageHeader(props: TracePageHeaderEmbedProps) {
     updateNextViewRangeTime,
     updateViewRangeTime,
     viewRange,
+    searchValue,
+    onSearchValueChange,
+    hideSearchButtons,
   } = props;
 
   if (!trace) {
@@ -274,6 +274,9 @@ export default function TracePageHeader(props: TracePageHeaderEmbedProps) {
           resultCount={resultCount}
           textFilter={textFilter}
           navigable={!traceGraphView}
+          searchValue={searchValue}
+          onSearchValueChange={onSearchValueChange}
+          hideSearchButtons={hideSearchButtons}
         />
       </div>
       {summaryItems && <LabeledList className={styles.TracePageHeaderOverviewItems} items={summaryItems} />}

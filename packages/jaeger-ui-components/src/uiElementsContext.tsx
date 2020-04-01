@@ -166,8 +166,7 @@ export const UIDivider = function UIDivider(props: DividerProps) {
 export type InputProps = {
   autosize?: boolean | null;
   placeholder?: string;
-  onBlur: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  onChange: (value: React.ChangeEvent<HTMLInputElement>) => void;
   suffix: React.ReactNode;
   value?: string;
 };
@@ -199,7 +198,7 @@ export const UIInputGroup = function UIInputGroup(props: InputGroupProps) {
   );
 };
 
-type Elements = {
+export type Elements = {
   Popover: React.ComponentType<PopoverProps>;
   Tooltip: React.ComponentType<TooltipProps>;
   Icon: React.ComponentType<IconProps>;

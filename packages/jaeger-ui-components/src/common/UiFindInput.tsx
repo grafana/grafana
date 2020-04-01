@@ -13,66 +13,41 @@
 // limitations under the License.
 
 import * as React from 'react';
-import _debounce from 'lodash/debounce';
-import _isString from 'lodash/isString';
 
 import { TNil } from '../types/index';
 import { UIIcon, UIInput } from '../uiElementsContext';
 
-type TOwnProps = {
+type Props = {
   allowClear?: boolean;
   inputProps: Record<string, any>;
   location: Location;
   match: any;
   trackFindFunction?: (str: string | TNil) => void;
+  value: string | undefined;
+  onChange: (value: string) => void;
 };
 
-export type TExtractUiFindFromStateReturn = {
-  uiFind: string | undefined;
-};
-
-type TProps = TOwnProps & TExtractUiFindFromStateReturn;
-
-type StateType = {
-  ownInputValue: string | undefined;
-};
-
-export default class UiFindInput extends React.PureComponent<TProps, StateType> {
-  static defaultProps: Partial<TProps> = {
+export default class UiFindInput extends React.PureComponent<Props> {
+  static defaultProps: Partial<Props> = {
     inputProps: {},
     trackFindFunction: undefined,
-    uiFind: undefined,
+    value: undefined,
   };
-
-  state: StateType = {
-    ownInputValue: undefined,
-  };
-
-  updateUiFindQueryParam = _debounce((uiFind?: string) => {
-    // TODO: implement this
-  }, 250);
 
   clearUiFind = () => {
-    this.updateUiFindQueryParam();
-    this.updateUiFindQueryParam.flush();
+    this.props.onChange('');
   };
 
-  handleInputBlur = () => {
-    this.updateUiFindQueryParam.flush();
-  };
-
-  handleInputChange = (evt: React.ChangeEvent<HTMLInputElement>) => {
-    const { value } = evt.target;
-    this.updateUiFindQueryParam(value);
-  };
+  componentWillUnmount(): void {
+    console.log('unomuet');
+  }
 
   render() {
-    const { allowClear, inputProps } = this.props;
+    const { allowClear, inputProps, value } = this.props;
 
-    const inputValue = _isString(this.state.ownInputValue) ? this.state.ownInputValue : this.props.uiFind;
     const suffix = (
       <>
-        {allowClear && inputValue && inputValue.length && <UIIcon type="close" onClick={this.clearUiFind} />}
+        {allowClear && value && value.length && <UIIcon type="close" onClick={this.clearUiFind} />}
         {inputProps.suffix}
       </>
     );
@@ -82,10 +57,9 @@ export default class UiFindInput extends React.PureComponent<TProps, StateType> 
         autosize={null}
         placeholder="Find..."
         {...inputProps}
-        onBlur={this.handleInputBlur}
-        onChange={this.handleInputChange}
+        onChange={e => this.props.onChange(e.target.value)}
         suffix={suffix}
-        value={inputValue}
+        value={value}
       />
     );
   }

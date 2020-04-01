@@ -47,8 +47,6 @@ describe('<TracePageSearchBar>', () => {
       );
       expect(suffix.hasClass(getStyles().TracePageSearchBarCount)).toBe(true);
       expect(suffix.text()).toBe(String(defaultProps.resultCount));
-      expect(renderedUiFindInput.prop('forwardedRef')).toBe(defaultProps.forwardedRef);
-      expect(renderedUiFindInput.prop('trackFindFunction')).toBe(trackFilter);
     });
 
     it('renders buttons', () => {

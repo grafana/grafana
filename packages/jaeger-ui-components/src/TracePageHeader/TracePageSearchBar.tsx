@@ -23,13 +23,12 @@ import { TNil } from '../types';
 
 import { UIButton, UIInputGroup } from '../uiElementsContext';
 import { createStyle } from '../Theme';
-import { ubJustifyEnd } from '../uberUtilityStyles';
+import { ubFlexAuto, ubJustifyEnd } from '../uberUtilityStyles';
 
 export const getStyles = createStyle(() => {
   return {
     TracePageSearchBar: css`
       label: TracePageSearchBar;
-      width: 40%;
     `,
     TracePageSearchBarBar: css`
       label: TracePageSearchBarBar;
@@ -67,10 +66,24 @@ type TracePageSearchBarProps = {
   focusUiFindMatches: () => void;
   resultCount: number;
   navigable: boolean;
+  searchValue: string;
+  onSearchValueChange: (value: string) => void;
+  hideSearchButtons?: boolean;
 };
 
 export default function TracePageSearchBar(props: TracePageSearchBarProps) {
-  const { clearSearch, focusUiFindMatches, navigable, nextResult, prevResult, resultCount, textFilter } = props;
+  const {
+    clearSearch,
+    focusUiFindMatches,
+    navigable,
+    nextResult,
+    prevResult,
+    resultCount,
+    textFilter,
+    onSearchValueChange,
+    searchValue,
+    hideSearchButtons,
+  } = props;
   const styles = getStyles();
 
   const count = textFilter ? <span className={styles.TracePageSearchBarCount}>{resultCount}</span> : null;
@@ -78,7 +91,7 @@ export default function TracePageSearchBar(props: TracePageSearchBarProps) {
   const btnClass = cx(styles.TracePageSearchBarBtn, { [styles.TracePageSearchBarBtnDisabled]: !textFilter });
   const uiFindInputInputProps = {
     'data-test': markers.IN_TRACE_SEARCH,
-    className: cx(styles.TracePageSearchBarBar, 'ub-flex-auto'),
+    className: cx(styles.TracePageSearchBarBar, ubFlexAuto),
     name: 'search',
     suffix: count,
   };
@@ -87,22 +100,44 @@ export default function TracePageSearchBar(props: TracePageSearchBarProps) {
     <div className={styles.TracePageSearchBar}>
       {/* style inline because compact overwrites the display */}
       <UIInputGroup className={ubJustifyEnd} compact style={{ display: 'flex' }}>
-        <UiFindInput inputProps={uiFindInputInputProps} />
-        {navigable && (
+        <UiFindInput onChange={onSearchValueChange} value={searchValue} inputProps={uiFindInputInputProps} />
+        {!hideSearchButtons && (
           <>
+            {navigable && (
+              <>
+                <UIButton
+                  className={cx(btnClass, styles.TracePageSearchBarLocateBtn)}
+                  disabled={!textFilter}
+                  htmlType="button"
+                  onClick={focusUiFindMatches}
+                >
+                  <IoAndroidLocate />
+                </UIButton>
+                <UIButton
+                  className={btnClass}
+                  disabled={!textFilter}
+                  htmlType="button"
+                  icon="up"
+                  onClick={prevResult}
+                />
+                <UIButton
+                  className={btnClass}
+                  disabled={!textFilter}
+                  htmlType="button"
+                  icon="down"
+                  onClick={nextResult}
+                />
+              </>
+            )}
             <UIButton
-              className={cx(btnClass, styles.TracePageSearchBarLocateBtn)}
+              className={btnClass}
               disabled={!textFilter}
               htmlType="button"
-              onClick={focusUiFindMatches}
-            >
-              <IoAndroidLocate />
-            </UIButton>
-            <UIButton className={btnClass} disabled={!textFilter} htmlType="button" icon="up" onClick={prevResult} />
-            <UIButton className={btnClass} disabled={!textFilter} htmlType="button" icon="down" onClick={nextResult} />
+              icon="close"
+              onClick={clearSearch}
+            />
           </>
         )}
-        <UIButton className={btnClass} disabled={!textFilter} htmlType="button" icon="close" onClick={clearSearch} />
       </UIInputGroup>
     </div>
   );

@@ -25,6 +25,9 @@ import DraggableManager, { DraggableBounds, DraggingUpdate, EUpdateTypes } from 
 import { createStyle } from '../../Theme';
 
 export const getStyles = createStyle(() => {
+  // Need this cause emotion will merge emotion generated classes into single className if used with cx from emotion
+  // package and the selector won't work
+  const ViewingLayerResetZoomHoverClassName = 'JaegerUiComponents__ViewingLayerResetZoomHoverClassName';
   const ViewingLayerResetZoom = css`
     label: ViewingLayerResetZoom;
     display: none;
@@ -39,7 +42,7 @@ export const getStyles = createStyle(() => {
       cursor: vertical-text;
       position: relative;
       z-index: 1;
-      &:hover > .${ViewingLayerResetZoom} {
+      &:hover > .${ViewingLayerResetZoomHoverClassName} {
         display: unset;
       }
     `,
@@ -80,6 +83,7 @@ export const getStyles = createStyle(() => {
       user-select: none;
     `,
     ViewingLayerResetZoom,
+    ViewingLayerResetZoomHoverClassName,
   };
 });
 
@@ -341,7 +345,7 @@ export default class ViewingLayer extends React.PureComponent<ViewingLayerProps,
         {(viewStart !== 0 || viewEnd !== 1) && (
           <UIButton
             onClick={this._resetTimeZoomClickHandler}
-            className={styles.ViewingLayerResetZoom}
+            className={cx(styles.ViewingLayerResetZoom, styles.ViewingLayerResetZoomHoverClassName)}
             htmlType="button"
           >
             Reset Selection

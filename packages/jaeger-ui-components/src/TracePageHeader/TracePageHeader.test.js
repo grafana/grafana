@@ -16,7 +16,7 @@ import React from 'react';
 import { shallow, mount } from 'enzyme';
 
 import SpanGraph from './SpanGraph';
-import { TracePageHeaderFn as TracePageHeader, HEADER_ITEMS } from './TracePageHeader';
+import TracePageHeader, { HEADER_ITEMS } from './TracePageHeader';
 import LabeledList from '../common/LabeledList';
 import traceGenerator from '../demo/trace-generators';
 import { getTraceName } from '../model/trace-viewer';
