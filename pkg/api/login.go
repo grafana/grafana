@@ -2,6 +2,7 @@ package api
 
 import (
 	"encoding/hex"
+	"errors"
 	"net/url"
 	"strings"
 
@@ -14,6 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
+	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
 const (
@@ -35,9 +37,9 @@ func (hs *HTTPServer) validateRedirectTo(redirectTo string) error {
 	if to.IsAbs() {
 		return login.ErrAbsoluteRedirectTo
 	}
-	// when using a subUrl, the redirect_to should have a relative or absolute path that includes the subUrl, otherwise the redirect
+	// when using a subUrl, the redirect_to should start with the subUrl (which contains the leading slash), otherwise the redirect
 	// will send the user to the wrong location
-	if hs.Cfg.AppSubUrl != "" && !strings.HasPrefix(to.Path, hs.Cfg.AppSubUrl) && !strings.HasPrefix(to.Path, "/"+hs.Cfg.AppSubUrl) {
+	if hs.Cfg.AppSubUrl != "" && !strings.HasPrefix(to.Path, hs.Cfg.AppSubUrl+"/") {
 		return login.ErrInvalidRedirectTo
 	}
 	return nil
@@ -85,15 +87,20 @@ func (hs *HTTPServer) LoginView(c *models.ReqContext) {
 	if c.IsSignedIn {
 		// Assign login token to auth proxy users if enable_login_token = true
 		if setting.AuthProxyEnabled && setting.AuthProxyEnableLoginToken {
-			hs.loginAuthProxyUser(c)
+			user := &models.User{Id: c.SignedInUser.UserId, Email: c.SignedInUser.Email, Login: c.SignedInUser.Login}
+			err := hs.loginUserWithUser(user, c)
+			if err != nil {
+				c.Handle(500, "Failed to sign in user", err)
+				return
+			}
 		}
 
 		if redirectTo, _ := url.QueryUnescape(c.GetCookie("redirect_to")); len(redirectTo) > 0 {
 			if err := hs.validateRedirectTo(redirectTo); err != nil {
-				viewData.Settings["loginError"] = err.Error()
-				c.HTML(200, getViewIndex(), viewData)
-				middleware.DeleteCookie(c.Resp, "redirect_to", hs.cookieOptionsFromCfg)
-				return
+				// the user is already logged so instead of rendering the login page with error
+				// it should be redirected to the home page.
+				log.Debug("Ignored invalid redirect_to cookie value: %v", redirectTo)
+				redirectTo = hs.Cfg.AppSubUrl + "/"
 			}
 			middleware.DeleteCookie(c.Resp, "redirect_to", hs.cookieOptionsFromCfg)
 			c.Redirect(redirectTo)
@@ -105,14 +112,6 @@ func (hs *HTTPServer) LoginView(c *models.ReqContext) {
 	}
 
 	c.HTML(200, getViewIndex(), viewData)
-}
-
-func (hs *HTTPServer) loginAuthProxyUser(c *models.ReqContext) {
-	hs.loginUserWithUser(&models.User{
-		Id:    c.SignedInUser.UserId,
-		Email: c.SignedInUser.Email,
-		Login: c.SignedInUser.Login,
-	}, c)
 }
 
 func tryOAuthAutoLogin(c *models.ReqContext) bool {
@@ -171,7 +170,10 @@ func (hs *HTTPServer) LoginPost(c *models.ReqContext, cmd dtos.LoginCommand) Res
 
 	user := authQuery.User
 
-	hs.loginUserWithUser(user, c)
+	err := hs.loginUserWithUser(user, c)
+	if err != nil {
+		return Error(500, "Error while signing in user", err)
+	}
 
 	result := map[string]interface{}{
 		"message": "Logged in",
@@ -179,11 +181,6 @@ func (hs *HTTPServer) LoginPost(c *models.ReqContext, cmd dtos.LoginCommand) Res
 
 	if redirectTo, _ := url.QueryUnescape(c.GetCookie("redirect_to")); len(redirectTo) > 0 {
 		if err := hs.validateRedirectTo(redirectTo); err == nil {
-			// remove subpath if it exists at the beginning of the redirect_to
-			// LoginCtrl.tsx is already prepending the redirectUrl with the subpath
-			if setting.AppSubUrl != "" && strings.Index(redirectTo, setting.AppSubUrl) == 0 {
-				redirectTo = strings.Replace(redirectTo, setting.AppSubUrl, "", 1)
-			}
 			result["redirectUrl"] = redirectTo
 		} else {
 			log.Info("Ignored invalid redirect_to cookie value: %v", redirectTo)
@@ -195,17 +192,19 @@ func (hs *HTTPServer) LoginPost(c *models.ReqContext, cmd dtos.LoginCommand) Res
 	return JSON(200, result)
 }
 
-func (hs *HTTPServer) loginUserWithUser(user *models.User, c *models.ReqContext) {
+func (hs *HTTPServer) loginUserWithUser(user *models.User, c *models.ReqContext) error {
 	if user == nil {
-		hs.log.Error("user login with nil user")
+		return errors.New("could not login user")
 	}
 
 	userToken, err := hs.AuthTokenService.CreateToken(c.Req.Context(), user.Id, c.RemoteAddr(), c.Req.UserAgent())
 	if err != nil {
-		hs.log.Error("failed to create auth token", "error", err)
+		return errutil.Wrap("failed to create auth token", err)
 	}
+
 	hs.log.Info("Successful Login", "User", user.Email)
 	middleware.WriteSessionCookie(c, userToken.UnhashedToken, hs.Cfg.LoginMaxLifetimeDays)
+	return nil
 }
 
 func (hs *HTTPServer) Logout(c *models.ReqContext) {

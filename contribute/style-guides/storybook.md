@@ -10,7 +10,7 @@ Storybook is:
 
 ## How to create stories
 
-Stories for a component should be placed next to the component file. The Storybook file requires the same name as the component file. For example, a story for `SomeComponent.tsx` will have the file name `SomeComponent.story.tsx`.
+Stories for a component should be placed next to the component file. The Storybook file requires the same name as the component file. For example, a story for `SomeComponent.tsx` will have the file name `SomeComponent.story.tsx`. If a story should be internal, not visible in production, name the file `SomeComponent.story.internal.tsx`.
 
 ### Writing stories
 

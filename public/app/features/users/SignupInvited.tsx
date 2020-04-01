@@ -4,7 +4,7 @@ import { connect, MapStateToProps, MapDispatchToProps } from 'react-redux';
 import { StoreState } from 'app/types';
 import { updateLocation } from 'app/core/actions';
 import { UrlQueryValue, getBackendSrv } from '@grafana/runtime';
-import { Forms } from '@grafana/ui';
+import { Forms, Button } from '@grafana/ui';
 import { useAsync } from 'react-use';
 import Page from 'app/core/components/Page/Page';
 import { contextSrv } from 'app/core/core';
@@ -115,7 +115,7 @@ const SingupInvitedPageUnconnected: FC<DispatchProps & ConnectedProps> = ({ code
                 />
               </Forms.Field>
 
-              <Forms.Button type="submit">Sign Up</Forms.Button>
+              <Button type="submit">Sign Up</Button>
             </>
           )}
         </Forms.Form>

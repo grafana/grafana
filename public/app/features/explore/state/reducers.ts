@@ -38,6 +38,7 @@ import {
   clearQueriesAction,
   highlightLogsExpressionAction,
   historyUpdatedAction,
+  richHistoryUpdatedAction,
   initializeExploreAction,
   loadDatasourceMissingAction,
   loadDatasourcePendingAction,
@@ -64,6 +65,7 @@ import {
   toggleTableAction,
   updateDatasourceInstanceAction,
   updateUIStateAction,
+  cancelQueriesAction,
 } from './actionTypes';
 import { ResultProcessor } from '../utils/ResultProcessor';
 import { updateLocation } from '../../../core/actions';
@@ -132,10 +134,11 @@ export const createEmptyQueryResponse = (): PanelData => ({
  */
 export const initialExploreItemState = makeExploreItemState();
 export const initialExploreState: ExploreState = {
-  split: null,
+  split: false,
   syncedTimes: false,
   left: initialExploreItemState,
   right: initialExploreItemState,
+  richHistory: [],
 };
 
 /**
@@ -230,6 +233,14 @@ export const itemReducer = (state: ExploreItemState = makeExploreItemState(), ac
       logsResult: null,
       queryKeys: getQueryKeys(queries, state.datasourceInstance),
       queryResponse: createEmptyQueryResponse(),
+      loading: false,
+    };
+  }
+
+  if (cancelQueriesAction.match(action)) {
+    stopQueryState(state.querySubscription);
+    return {
+      ...state,
       loading: false,
     };
   }
@@ -588,6 +599,7 @@ export const updateChildRefreshState = (
 const getModesForDatasource = (dataSource: DataSourceApi, currentMode: ExploreMode): [ExploreMode[], ExploreMode] => {
   const supportsGraph = dataSource.meta.metrics;
   const supportsLogs = dataSource.meta.logs;
+  const supportsTracing = dataSource.meta.tracing;
 
   let mode = currentMode || ExploreMode.Metrics;
   const supportedModes: ExploreMode[] = [];
@@ -600,13 +612,17 @@ const getModesForDatasource = (dataSource: DataSourceApi, currentMode: ExploreMo
     supportedModes.push(ExploreMode.Logs);
   }
 
+  if (supportsTracing) {
+    supportedModes.push(ExploreMode.Tracing);
+  }
+
   if (supportedModes.length === 1) {
     mode = supportedModes[0];
   }
 
   // HACK: Used to set Loki's default explore mode to Logs mode.
   // A better solution would be to introduce a "default" or "preferred" mode to the datasource config
-  if (dataSource.meta.name === 'Loki' && !currentMode) {
+  if (dataSource.meta.name === 'Loki' && (!currentMode || supportedModes.indexOf(currentMode) === -1)) {
     mode = ExploreMode.Logs;
   }
 
@@ -637,6 +653,13 @@ export const exploreReducer = (state = initialExploreState, action: AnyAction): 
 
   if (syncTimesAction.match(action)) {
     return { ...state, syncedTimes: action.payload.syncedTimes };
+  }
+
+  if (richHistoryUpdatedAction.match(action)) {
+    return {
+      ...state,
+      richHistory: action.payload.richHistory,
+    };
   }
 
   if (resetExploreAction.match(action)) {

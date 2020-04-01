@@ -455,8 +455,8 @@ func TestUserDataAccess(t *testing.T) {
 			var err error
 			createUserCmd := &models.CreateUserCommand{
 				Email:   fmt.Sprint("admin", "@test.com"),
-				Name:    fmt.Sprint("admin"),
-				Login:   fmt.Sprint("admin"),
+				Name:    "admin",
+				Login:   "admin",
 				IsAdmin: true,
 			}
 			err = CreateUser(context.Background(), createUserCmd)

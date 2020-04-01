@@ -4,7 +4,7 @@ import { Column } from 'react-table';
 import { DefaultCell } from './DefaultCell';
 import { BarGaugeCell } from './BarGaugeCell';
 import { BackgroundColoredCell } from './BackgroundColorCell';
-import { TableRow, TableFieldOptions, TableCellDisplayMode } from './types';
+import { TableCellDisplayMode, TableFieldOptions, TableRow } from './types';
 
 export function getTableRows(data: DataFrame): TableRow[] {
   const tableData = [];
@@ -21,7 +21,11 @@ export function getTableRows(data: DataFrame): TableRow[] {
   return tableData;
 }
 
-export function getTextAlign(field: Field): TextAlignProperty {
+export function getTextAlign(field?: Field): TextAlignProperty {
+  if (!field) {
+    return 'left';
+  }
+
   if (field.config.custom) {
     const custom = field.config.custom as TableFieldOptions;
 
@@ -57,6 +61,7 @@ export function getColumns(data: DataFrame, availableWidth: number, columnMinWid
 
     columns.push({
       Cell,
+      id: field.name,
       Header: field.name,
       accessor: field.name,
       width: fieldTableOptions.width,

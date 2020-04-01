@@ -1,14 +1,14 @@
 import LokiDatasource, { RangeQueryOptions } from './datasource';
-import { LokiQuery, LokiResultType, LokiResponse, LokiLegacyStreamResponse } from './types';
+import { LokiLegacyStreamResponse, LokiQuery, LokiResponse, LokiResultType } from './types';
 import { getQueryOptions } from 'test/helpers/getQueryOptions';
 import {
   AnnotationQueryRequest,
-  DataSourceApi,
   DataFrame,
+  DataSourceApi,
   dateTime,
-  TimeRange,
   ExploreMode,
   FieldCache,
+  TimeRange,
 } from '@grafana/data';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { CustomVariable } from 'app/features/templating/custom_variable';
@@ -219,9 +219,9 @@ describe('LokiDatasource', () => {
 
       const dataFrame = res.data[0] as DataFrame;
       const fieldCache = new FieldCache(dataFrame);
-      expect(fieldCache.getFieldByName('line').values.get(0)).toBe('hello');
-      expect(dataFrame.meta.limit).toBe(20);
-      expect(dataFrame.meta.searchWords).toEqual(['foo']);
+      expect(fieldCache.getFieldByName('line')?.values.get(0)).toBe('hello');
+      expect(dataFrame.meta?.limit).toBe(20);
+      expect(dataFrame.meta?.searchWords).toEqual(['foo']);
     });
   });
 
@@ -373,7 +373,7 @@ describe('LokiDatasource', () => {
       };
       // Odd timerange/interval combination that would lead to a float step
       const options: RangeQueryOptions = { range, intervalMs: 2000 };
-      expect(Number.isInteger(ds.createRangeQuery(query, options).step)).toBeTruthy();
+      expect(Number.isInteger(ds.createRangeQuery(query, options).step!)).toBeTruthy();
     });
   });
 
@@ -478,7 +478,7 @@ type LimitTestArgs = {
 function makeLimitTest(instanceSettings: any, datasourceRequestMock: any, templateSrvMock: any, testResp: any) {
   return ({ maxDataPoints, maxLines, expectedLimit }: LimitTestArgs) => {
     let settings = instanceSettings;
-    if (Number.isFinite(maxLines)) {
+    if (Number.isFinite(maxLines!)) {
       const customData = { ...(instanceSettings.jsonData || {}), maxLines: 20 };
       settings = { ...instanceSettings, jsonData: customData };
     }
@@ -486,7 +486,7 @@ function makeLimitTest(instanceSettings: any, datasourceRequestMock: any, templa
     datasourceRequestMock.mockImplementation(() => Promise.resolve(testResp));
 
     const options = getQueryOptions<LokiQuery>({ targets: [{ expr: 'foo', refId: 'B', maxLines: maxDataPoints }] });
-    if (Number.isFinite(maxDataPoints)) {
+    if (Number.isFinite(maxDataPoints!)) {
       options.maxDataPoints = maxDataPoints;
     } else {
       // By default is 500

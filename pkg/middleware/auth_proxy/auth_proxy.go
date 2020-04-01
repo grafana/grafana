@@ -1,8 +1,9 @@
 package authproxy
 
 import (
-	"encoding/base32"
+	"encoding/hex"
 	"fmt"
+	"hash/fnv"
 	"net"
 	"net/mail"
 	"reflect"
@@ -146,6 +147,13 @@ func (auth *AuthProxy) IsAllowedIP() (bool, *Error) {
 	return false, newError("Proxy authentication required", err)
 }
 
+func HashCacheKey(key string) string {
+	hasher := fnv.New128a()
+	// according to the documentation, Hash.Write cannot error, but linter is complaining
+	hasher.Write([]byte(key)) // nolint: errcheck
+	return hex.EncodeToString(hasher.Sum(nil))
+}
+
 // getKey forms a key for the cache based on the headers received as part of the authentication flow.
 // Our configuration supports multiple headers. The main header contains the email or username.
 // And the additional ones that allow us to specify extra attributes: Name, Email or Groups.
@@ -156,7 +164,7 @@ func (auth *AuthProxy) getKey() string {
 		key = strings.Join([]string{key, header}, "-") // compose the key with any additional headers
 	})
 
-	hashedKey := base32.StdEncoding.EncodeToString([]byte(key))
+	hashedKey := HashCacheKey(key)
 	return fmt.Sprintf(CachePrefix, hashedKey)
 }
 

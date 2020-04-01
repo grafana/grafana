@@ -9,13 +9,12 @@ import { StatsPicker } from '../StatsPicker/StatsPicker';
 // Types
 import Select from '../Select/Select';
 import {
-  FieldDisplayOptions,
+  ReduceDataOptions,
   DEFAULT_FIELD_DISPLAY_VALUES_LIMIT,
   ReducerID,
   toNumberString,
   toIntegerOrUndefined,
   SelectableValue,
-  FieldConfig,
 } from '@grafana/data';
 
 const showOptions: Array<SelectableValue<boolean>> = [
@@ -33,8 +32,8 @@ const showOptions: Array<SelectableValue<boolean>> = [
 
 export interface Props {
   labelWidth?: number;
-  value: FieldDisplayOptions;
-  onChange: (value: FieldDisplayOptions, event?: React.SyntheticEvent<HTMLElement>) => void;
+  value: ReduceDataOptions;
+  onChange: (value: ReduceDataOptions, event?: React.SyntheticEvent<HTMLElement>) => void;
 }
 
 export class FieldDisplayEditor extends PureComponent<Props> {
@@ -45,10 +44,6 @@ export class FieldDisplayEditor extends PureComponent<Props> {
 
   onCalcsChange = (calcs: string[]) => {
     this.props.onChange({ ...this.props.value, calcs });
-  };
-
-  onDefaultsChange = (value: FieldConfig) => {
-    this.props.onChange({ ...this.props.value, defaults: value });
   };
 
   onLimitChange = (event: ChangeEvent<HTMLInputElement>) => {

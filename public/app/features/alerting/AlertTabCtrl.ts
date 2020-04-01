@@ -168,8 +168,8 @@ export class AlertTabCtrl {
   removeNotification(an: any) {
     // remove notifiers refeered to by id and uid to support notifiers added
     // before and after we added support for uid
-    _.remove(this.alert.notifications, (n: any) => n.uid === an.uid || n.id === an.id);
-    _.remove(this.alertNotifications, (n: any) => n.uid === an.uid || n.id === an.id);
+    _.remove(this.alert.notifications, (n: any) => n.uid === an.uid);
+    _.remove(this.alertNotifications, (n: any) => n.uid === an.uid);
   }
 
   addAlertRuleTag() {
@@ -237,7 +237,6 @@ export class AlertTabCtrl {
     for (const notification of this.notifications) {
       if (notification.isDefault) {
         notification.iconClass = this.getNotificationIcon(notification.type);
-        notification.bgColor = '#00678b';
         this.alertNotifications.push(notification);
       }
     }

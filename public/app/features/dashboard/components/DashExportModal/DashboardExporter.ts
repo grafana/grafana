@@ -54,7 +54,7 @@ export class DashboardExporter {
     const promises: Array<Promise<void>> = [];
     const variableLookup: { [key: string]: any } = {};
 
-    for (const variable of saveModel.templating.list) {
+    for (const variable of saveModel.getVariables()) {
       variableLookup[variable.name] = variable;
     }
 
@@ -81,9 +81,9 @@ export class DashboardExporter {
             // add data source type to require list
             requires['datasource' + ds.meta?.id] = {
               type: 'datasource',
-              id: ds.meta?.id,
-              name: ds.meta?.name,
-              version: ds.meta?.info.version || '1.0.0',
+              id: ds.meta.id,
+              name: ds.meta.name,
+              version: ds.meta.info.version || '1.0.0',
             };
 
             // if used via variable we can skip templatizing usage
@@ -143,7 +143,7 @@ export class DashboardExporter {
     }
 
     // templatize template vars
-    for (const variable of saveModel.templating.list) {
+    for (const variable of saveModel.getVariables()) {
       if (variable.type === 'query') {
         templateizeDatasourceUsage(variable);
         variable.options = [];
@@ -172,7 +172,7 @@ export class DashboardExporter {
         });
 
         // templatize constants
-        for (const variable of saveModel.templating.list) {
+        for (const variable of saveModel.getVariables()) {
           if (variable.type === 'constant') {
             const refName = 'VAR_' + variable.name.replace(' ', '_').toUpperCase();
             inputs.push({
