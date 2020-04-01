@@ -18,15 +18,23 @@ The Okta authentication allows your Grafana users to log in by using an external
 
 ## Create an Okta application
 
-Before you can sign a user in, you need to create an Okta application. Start by signing in to the Okta Developer Console: log in to the [Okta portal](https://login.okta.com/), go to Admin and then select *Developer Console* in the top menu. Then create an application:
+Before you can sign a user in, you need to create an Okta application from the Okta Developer Console.
 
-1. Select Applications, then Add Application. Pick Web as the platform. Enter a name for your application (or leave the default value).
+1. Log in to the [Okta portal](https://login.okta.com/).
 
-1. Add the Base URI of your application, such as https://grafana.example.com.
+1. Go to Admin and then select **Developer Console**.
 
-1. Next, enter values for the Login redirect URI. Use Base URI and append it with `/login/okta`, for example: https://grafana.example.com/login/okta.
+1. Select **Applications**, then **Add Application**.
 
-1. Click Done to finish creating the Okta application.
+1. Pick **Web** as the platform.
+
+1. Enter a name for your application (or leave the default value).
+
+1. Add the **Base URI** of your application, such as https://grafana.example.com.
+
+1. Enter values for the **Login redirect URI**. Use **Base URI** and append it with `/login/okta`, for example: https://grafana.example.com/login/okta.
+
+1. Click **Done** to finish creating the Okta application.
 
 ## Enable Okta Oauth in Grafana
 
@@ -63,15 +71,19 @@ The `allowed_domains` option limits access to the users belonging to the specifi
 allowed_domains = mycompany.com mycompany.org
 ```
 
-### Role mapping
+### Map roles
 
-Grafana can attempt to do role mapping through Okta OAuth. In order to achieve this, Grafana checks for the presence of a role using the [JMESPath](http://jmespath.org/examples.html) specified via the `role_attribute_path` configuration option. The JSON used for the path lookup is the HTTP response obtained from querying the `/userinfo` endpoint. The result after evaluating the `role_attribute_path` JMESPath expression needs to be a valid Grafana role, i.e. `Viewer`, `Editor` or `Admin`. Read about how to add custom claims to the user info in Okta [docs](https://developer.okta.com/docs/guides/customize-tokens-returned-from-okta/add-custom-claim/) and see JMESPath examples on the [Generic OAuth page]({{< relref "generic-oauth.md/#jmespath-examples" >}}).
+Grafana can attempt to do role mapping through Okta OAuth. In order to achieve this, Grafana checks for the presence of a role using the [JMESPath](http://jmespath.org/examples.html) specified via the `role_attribute_path` configuration option.
+
+Grafana uses JSON obtained from querying the `/userinfo` endpoint for the path lookup. The result after evaluating the `role_attribute_path` JMESPath expression needs to be a valid Grafana role, i.e. `Viewer`, `Editor` or `Admin`.
+
+Read about how to [add custom claims](https://developer.okta.com/docs/guides/customize-tokens-returned-from-okta/add-custom-claim/) to the user info in Okta. Also, check Generic OAuth page for [JMESPath examples]({{< relref "generic-oauth.md/#jmespath-examples" >}}).
 
 ### Team Sync (Enterprise only)
 
-With Team Sync you can map your Okta groups to teams in Grafana so that your users will automatically be added to
+Map your Okta groups to teams in Grafana so that your users will automatically be added to
 the correct teams.
 
 Okta groups can be referenced by group name, like `Admins`.
 
-[Learn more about Team Sync]({{< relref "team-sync.md" >}})
+[Learn more about Team Sync]({{< relref "../enterprise/team-sync.md" >}})
