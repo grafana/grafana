@@ -8,6 +8,7 @@ import { AsyncSelect, Select } from './Select/Select';
 import { Form } from './Form';
 import { Field } from './Field';
 import { Switch } from './Switch';
+import { Legend } from './Legend';
 import { TextArea } from './TextArea/TextArea';
 import { Checkbox } from './Checkbox';
 
@@ -25,6 +26,7 @@ const Forms = {
   AsyncSelect,
   TextArea,
   Checkbox,
+  Legend,
 };
 
 export default Forms;

@@ -5,10 +5,9 @@ import { SelectableValue } from '@grafana/data';
 import { Segment } from '@grafana/ui';
 import { getAggregationOptionsByMetric } from '../functions';
 import { ValueTypes, MetricKind } from '../constants';
-import { MetricDescriptor } from '../types';
 
 export interface Props {
-  onChange: (metricDescriptor: MetricDescriptor[]) => void;
+  onChange: (metricDescriptor: string) => void;
   metricDescriptor: {
     valueType: string;
     metricKind: string;
@@ -92,7 +91,7 @@ export class Aggregations extends React.Component<Props, State> {
             </label>
           </div>
         </div>
-        {this.props.children(this.state.displayAdvancedOptions)}
+        {this.props.children && this.props.children(this.state.displayAdvancedOptions)}
       </>
     );
   }

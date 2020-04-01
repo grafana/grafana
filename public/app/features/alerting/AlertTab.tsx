@@ -104,13 +104,15 @@ class UnConnectedAlertTab extends PureComponent<Props, State> {
   }
 
   stateHistory = (): EditorToolbarView => {
+    const { panel, dashboard } = this.props;
+
     return {
       title: 'State history',
       render: () => {
         return (
           <StateHistory
-            dashboard={this.props.dashboard}
-            panelId={this.props.panel.id}
+            dashboard={dashboard}
+            panelId={panel.editSourceId ?? panel.id}
             onRefresh={this.panelCtrl.refresh}
           />
         );
@@ -143,8 +145,8 @@ class UnConnectedAlertTab extends PureComponent<Props, State> {
   };
 
   renderTestRuleResult = () => {
-    const { panel, dashboard } = this.props;
-    return <TestRuleResult panelId={panel.id} dashboard={dashboard} />;
+    const { dashboard, panel } = this.props;
+    return <TestRuleResult panel={panel} dashboard={dashboard} />;
   };
 
   testRule = (): EditorToolbarView => ({
