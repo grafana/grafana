@@ -16,7 +16,7 @@ export const ModalHeader: React.FC<Props> = ({ icon, title, children }) => {
   return (
     <>
       <h2 className={styles.modalHeaderTitle}>
-        {icon && <Icon name={icon} className={styles.modalHeaderIcon} />}
+        {icon && <Icon name={icon} size="lg" className={styles.modalHeaderIcon} />}
         {title}
       </h2>
       {children}

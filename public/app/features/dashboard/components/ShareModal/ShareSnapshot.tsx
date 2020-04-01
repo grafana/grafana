@@ -1,5 +1,5 @@
 import React, { PureComponent } from 'react';
-import { Button, ClipboardButton, Input, LinkButton, Select } from '@grafana/ui';
+import { Button, ClipboardButton, Input, LinkButton, Select, Icon } from '@grafana/ui';
 import { AppEvents, SelectableValue } from '@grafana/data';
 import { getBackendSrv } from '@grafana/runtime';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
@@ -301,9 +301,13 @@ export class ShareSnapshot extends PureComponent<Props, State> {
     return (
       <div className="share-modal-body">
         <div className="share-modal-header">
-          <div className="share-modal-big-icon">
-            {isLoading ? <i className="fa fa-spinner fa-spin"></i> : <i className="gicon gicon-snapshots"></i>}
-          </div>
+          {isLoading ? (
+            <div className="share-modal-big-icon">
+              <i className="fa fa-spinner fa-spin"></i>
+            </div>
+          ) : (
+            <Icon name="camera" className="share-modal-big-icon" size="logo" />
+          )}
           <div className="share-modal-content">
             {step === 1 && this.renderStep1()}
             {step === 2 && this.renderStep2()}

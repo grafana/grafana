@@ -114,19 +114,19 @@ export default class PageHeader extends React.Component<Props, any> {
   }
 
   renderHeaderTitle(main: NavModelItem) {
+    const iconClassName =
+      main.icon === 'grafana'
+        ? css`
+            margin-top: 12px;
+          `
+        : css`
+            margin-top: 14px;
+          `;
+
     return (
       <div className="page-header__inner">
         <span className="page-header__logo">
-          {main.icon && (
-            <Icon
-              name={main.icon as IconName}
-              size="logo"
-              type="mono"
-              className={css`
-                margin-top: 14px;
-              `}
-            />
-          )}
+          {main.icon && <Icon name={main.icon as IconName} size="logo" type="mono" className={iconClassName} />}
           {main.img && <img className="page-header__img" src={main.img} />}
         </span>
 
