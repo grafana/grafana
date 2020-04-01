@@ -44,6 +44,7 @@ export const getSelectStyles = stylesFactory((theme: GrafanaTheme) => {
       display: flex;
       font-weight: ${theme.typography.weight.semibold};
       flex-direction: column;
+      flex-grow: 1;
     `,
     optionFocused: css`
       background: ${optionBgHover};
