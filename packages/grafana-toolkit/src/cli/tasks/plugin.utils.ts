@@ -4,7 +4,6 @@ import { GitHubRelease } from '../utils/githubRelease';
 import { getPluginId } from '../../config/utils/getPluginId';
 import { getCiFolder } from '../../plugins/env';
 import { useSpinner } from '../utils/useSpinner';
-
 import path = require('path');
 
 // @ts-ignore
@@ -20,10 +19,11 @@ const releaseNotes = async (): Promise<string> => {
 const checkoutBranch = async (branchName: string): Promise<Command> => {
   const currentBranch = await execa.shell(`git rev-parse --abbrev-ref HEAD`);
   const branchesAvailable = await execa.shell(
-    `(git branch -a | grep ${branchName} | grep -v remote) || echo 'No release found'`
+    `(git branch -a | grep "${branchName}$" | grep -v remote) || echo 'No release found'`
   );
 
   if (currentBranch.stdout !== branchName) {
+    console.log('available', branchesAvailable.stdout.trim());
     if (branchesAvailable.stdout.trim() === branchName) {
       return ['git', ['checkout', branchName]];
     } else {
@@ -56,7 +56,7 @@ const gitUrlParse = (url: string): { owner: string; name: string } => {
   throw `Coult not find a suitable git repository. Received [${url}]`;
 };
 
-const prepareRelease = useSpinner<any>('Preparing release', async ({ dryrun, verbose }) => {
+const prepareRelease = useSpinner<any>('Preparing release', async ({ dryrun, dev, verbose }) => {
   const ciDir = getCiFolder();
   const distDir = path.resolve(ciDir, 'dist');
   const distContentDir = path.resolve(distDir, getPluginId());
@@ -64,16 +64,16 @@ const prepareRelease = useSpinner<any>('Preparing release', async ({ dryrun, ver
   const pluginJson = getPluginJson(pluginJsonFile);
   const GIT_EMAIL = 'eng@grafana.com';
   const GIT_USERNAME = 'CircleCI Automation';
+  const BRANCH_SUFFIX = dev ? '-dev' : '';
 
   const githubPublishScript: Command = [
     ['git', ['config', 'user.email', GIT_EMAIL]],
     ['git', ['config', 'user.name', GIT_USERNAME]],
-    await checkoutBranch(`release-${pluginJson.info.version}`),
-    ['cp', ['-rf', distContentDir, 'dist'], { dryrun }],
+    await checkoutBranch(`release-${pluginJson.info.version}${BRANCH_SUFFIX}`),
+    ['cp', ['-rf', distContentDir, 'dist']],
     ['git', ['add', '--force', distDir], { dryrun }],
     ['git', ['add', '--force', 'dist'], { dryrun }],
-    ['/bin/rm', ['-rf', 'src'], { dryrun, enterprise: true }],
-    ['git', ['rm', '-rf', 'src'], { dryrun, enterprise: true }],
+    ['/bin/rm', ['-rf', 'src'], { enterprise: true }],
     [
       'git',
       ['commit', '-m', `automated release ${pluginJson.info.version} [skip ci]`],
@@ -83,7 +83,7 @@ const prepareRelease = useSpinner<any>('Preparing release', async ({ dryrun, ver
       },
     ],
     ['git', ['tag', '-f', pluginJson.info.version]],
-    ['git', ['push', '-f', 'origin', `release-${pluginJson.info.version}`], { dryrun }],
+    ['git', ['push', '-f', 'origin', `release-${pluginJson.info.version}${BRANCH_SUFFIX}`], { dryrun }],
   ];
 
   for (let line of githubPublishScript) {
@@ -138,7 +138,7 @@ const prepareRelease = useSpinner<any>('Preparing release', async ({ dryrun, ver
 
 interface GithubPluglishReleaseOptions {
   commitHash?: string;
-  recreate?: boolean;
+  dev?: boolean;
   githubToken: string;
   gitRepoOwner: string;
   gitRepoName: string;
@@ -146,9 +146,9 @@ interface GithubPluglishReleaseOptions {
 
 const createRelease = useSpinner<GithubPluglishReleaseOptions>(
   'Creating release',
-  async ({ commitHash, recreate, githubToken, gitRepoName, gitRepoOwner }) => {
+  async ({ commitHash, githubToken, gitRepoName, gitRepoOwner }) => {
     const gitRelease = new GitHubRelease(githubToken, gitRepoOwner, gitRepoName, await releaseNotes(), commitHash);
-    return gitRelease.release(recreate || false);
+    return gitRelease.release();
   }
 );
 
@@ -156,10 +156,10 @@ export interface GithubPublishOptions {
   dryrun?: boolean;
   verbose?: boolean;
   commitHash?: string;
-  recreate?: boolean;
+  dev?: boolean;
 }
 
-const githubPublishRunner: TaskRunner<GithubPublishOptions> = async ({ dryrun, verbose, commitHash, recreate }) => {
+const githubPublishRunner: TaskRunner<GithubPublishOptions> = async ({ dryrun, verbose, dev, commitHash }) => {
   if (!process.env['CIRCLE_REPOSITORY_URL']) {
     throw `The release plugin requires you specify the repository url as environment variable CIRCLE_REPOSITORY_URL`;
   }
@@ -174,12 +174,12 @@ const githubPublishRunner: TaskRunner<GithubPublishOptions> = async ({ dryrun, v
 
   await prepareRelease({
     dryrun,
+    dev,
     verbose,
   });
 
   await createRelease({
     commitHash,
-    recreate,
     githubToken,
     gitRepoOwner: parsedUrl.owner,
     gitRepoName: parsedUrl.name,

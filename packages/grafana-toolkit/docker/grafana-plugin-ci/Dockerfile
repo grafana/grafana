@@ -1,5 +1,7 @@
 FROM circleci/node:12-browsers
 USER root 
+# Default to latest, unless there is an environment var specifying a specific version
+ENV GRAFANA_VERSION latest
 WORKDIR /tmp
 
 # Install Go
@@ -26,10 +28,10 @@ RUN chmod +x /usr/local/bin/cc-test-reporter
 
 # Download, but don't install previous grafana releases
 RUN mkdir -pv /usr/local/grafana/deb
+ADD https://dl.grafana.com/oss/release/grafana_$(curl -s https://raw.githubusercontent.com/grafana/grafana/master/latest.json | jq -r '.stable')_amd64.deb /usr/local/grafana/deb
 ADD https://dl.grafana.com/oss/release/grafana_6.6.2_amd64.deb /usr/local/grafana/deb
-ADD https://dl.grafana.com/oss/release/grafana_6.5.3_amd64.deb /usr/local/grafana/deb
-ADD https://dl.grafana.com/oss/release/grafana_6.4.5_amd64.deb /usr/local/grafana/deb
-ADD https://dl.grafana.com/oss/release/grafana_6.3.7_amd64.deb /usr/local/grafana/deb
+ADD https://dl.grafana.com/oss/release/grafana_6.5.1_amd64.deb /usr/local/grafana/deb
+ADD https://dl.grafana.com/oss/release/grafana_6.4.3_amd64.deb /usr/local/grafana/deb
 
 # Perform user specific initialization
 USER circleci
