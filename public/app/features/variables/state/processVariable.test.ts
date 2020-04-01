@@ -176,11 +176,17 @@ describe('processVariable', () => {
 
             await tester.thenDispatchedActionsShouldEqual(
               updateVariableOptions(
-                toVariablePayload({ type: 'query', id: 'queryNoDepends' }, [
-                  { value: 'A', text: 'A' },
-                  { value: 'B', text: 'B' },
-                  { value: 'C', text: 'C' },
-                ])
+                toVariablePayload(
+                  { type: 'query', id: 'queryNoDepends' },
+                  {
+                    results: [
+                      { value: 'A', text: 'A' },
+                      { value: 'B', text: 'B' },
+                      { value: 'C', text: 'C' },
+                    ],
+                    templatedRegex: '',
+                  }
+                )
               ),
               setCurrentVariableValue(
                 toVariablePayload(
@@ -236,11 +242,17 @@ describe('processVariable', () => {
 
             await tester.thenDispatchedActionsShouldEqual(
               updateVariableOptions(
-                toVariablePayload({ type: 'query', id: 'queryNoDepends' }, [
-                  { value: 'A', text: 'A' },
-                  { value: 'B', text: 'B' },
-                  { value: 'C', text: 'C' },
-                ])
+                toVariablePayload(
+                  { type: 'query', id: 'queryNoDepends' },
+                  {
+                    results: [
+                      { value: 'A', text: 'A' },
+                      { value: 'B', text: 'B' },
+                      { value: 'C', text: 'C' },
+                    ],
+                    templatedRegex: '',
+                  }
+                )
               ),
               setCurrentVariableValue(
                 toVariablePayload(
@@ -305,11 +317,17 @@ describe('processVariable', () => {
 
             await tester.thenDispatchedActionsShouldEqual(
               updateVariableOptions(
-                toVariablePayload({ type: 'query', id: 'queryDependsOnCustom' }, [
-                  { value: 'AA', text: 'AA' },
-                  { value: 'AB', text: 'AB' },
-                  { value: 'AC', text: 'AC' },
-                ])
+                toVariablePayload(
+                  { type: 'query', id: 'queryDependsOnCustom' },
+                  {
+                    results: [
+                      { value: 'AA', text: 'AA' },
+                      { value: 'AB', text: 'AB' },
+                      { value: 'AC', text: 'AC' },
+                    ],
+                    templatedRegex: '',
+                  }
+                )
               ),
               setCurrentVariableValue(
                 toVariablePayload(
@@ -375,11 +393,17 @@ describe('processVariable', () => {
 
             await tester.thenDispatchedActionsShouldEqual(
               updateVariableOptions(
-                toVariablePayload({ type: 'query', id: 'queryDependsOnCustom' }, [
-                  { value: 'AA', text: 'AA' },
-                  { value: 'AB', text: 'AB' },
-                  { value: 'AC', text: 'AC' },
-                ])
+                toVariablePayload(
+                  { type: 'query', id: 'queryDependsOnCustom' },
+                  {
+                    results: [
+                      { value: 'AA', text: 'AA' },
+                      { value: 'AB', text: 'AB' },
+                      { value: 'AC', text: 'AC' },
+                    ],
+                    templatedRegex: '',
+                  }
+                )
               ),
               setCurrentVariableValue(
                 toVariablePayload(
