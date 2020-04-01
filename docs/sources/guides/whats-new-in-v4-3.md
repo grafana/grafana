@@ -1,7 +1,7 @@
 +++
-title = "What's New in Grafana v4.3"
+title = "What's new in Grafana v4.3"
 description = "Feature and improvement highlights for Grafana v4.3"
-keywords = ["grafana", "new", "documentation", "4.3.0"]
+keywords = ["grafana", "new", "documentation", "4.3.0", "release notes"]
 type = "docs"
 [menu.docs]
 name = "Version 4.3"
@@ -10,7 +10,7 @@ parent = "whatsnew"
 weight = -2
 +++
 
-## What's New in Grafana v4.3
+## What's new in Grafana v4.3
 
 Grafana v4.3 Beta is now [available for download](https://grafana.com/grafana/download/4.3.0-beta1).
 
@@ -102,4 +102,3 @@ Head to the [v4.3 download page](https://grafana.com/grafana/download) for downl
 ## Thanks
 
 A big thanks to all the Grafana users who contribute by submitting PRs, bug reports, helping out on our [community site](https://community.grafana.com/) and providing feedback!
-

@@ -89,6 +89,7 @@ export type IconType =
   | 'times-circle-o'
   | 'check-circle-o'
   | 'ban'
+  | 'remove'
   | 'arrow-left'
   | 'arrow-right'
   | 'arrow-up'
@@ -648,7 +649,8 @@ export type IconType =
   | 'snowflake-o'
   | 'superpowers'
   | 'wpexplorer'
-  | 'meetup';
+  | 'meetup'
+  | 'copy';
 
 export const getAvailableIcons = (): IconType[] => [
   'glass',

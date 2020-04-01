@@ -7,16 +7,19 @@ import { AlertRulesState } from './alerting';
 import { TeamsState, TeamState } from './teams';
 import { FolderState } from './folders';
 import { DashboardState } from './dashboard';
-import { DataSourcesState } from './datasources';
+import { DataSourceSettingsState, DataSourcesState } from './datasources';
 import { ExploreState } from './explore';
-import { UsersState, UserState, UserAdminState } from './user';
+import { UserAdminState, UserListAdminState, UsersState, UserState } from './user';
 import { OrganizationState } from './organization';
 import { AppNotificationsState } from './appNotifications';
 import { PluginsState } from './plugins';
 import { ApplicationState } from './application';
 import { LdapState } from './ldap';
 import { PanelEditorState } from '../features/dashboard/panel_editor/state/reducers';
+import { PanelEditorStateNew } from '../features/dashboard/components/PanelEditor/state/reducers';
 import { ApiKeysState } from './apiKeys';
+import { TemplatingState } from '../features/variables/state/reducers';
+import { ImportDashboardState } from '../features/manage-dashboards/state/reducers';
 
 export interface StoreState {
   navIndex: NavIndex;
@@ -27,7 +30,9 @@ export interface StoreState {
   folder: FolderState;
   dashboard: DashboardState;
   panelEditor: PanelEditorState;
+  panelEditorNew: PanelEditorStateNew;
   dataSources: DataSourcesState;
+  dataSourceSettings: DataSourceSettingsState;
   explore: ExploreState;
   users: UsersState;
   organization: OrganizationState;
@@ -38,6 +43,9 @@ export interface StoreState {
   ldap: LdapState;
   apiKeys: ApiKeysState;
   userAdmin: UserAdminState;
+  userListAdmin: UserListAdminState;
+  templating: TemplatingState;
+  importDashboard: ImportDashboardState;
 }
 
 /*

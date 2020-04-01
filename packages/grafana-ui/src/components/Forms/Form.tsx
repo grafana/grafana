@@ -1,22 +1,34 @@
-/**
- * This is a stub implementation only for correct styles to be applied
- */
+import React, { useEffect } from 'react';
+import { useForm, Mode, OnSubmit, DeepPartial } from 'react-hook-form';
+import { FormAPI } from '../../types';
 
-import React from 'react';
-import { stylesFactory, useTheme } from '../../themes';
-import { GrafanaTheme } from '@grafana/data';
-import { css } from 'emotion';
+interface FormProps<T> {
+  validateOn?: Mode;
+  validateOnMount?: boolean;
+  validateFieldsOnMount?: string[];
+  defaultValues?: DeepPartial<T>;
+  onSubmit: OnSubmit<T>;
+  children: (api: FormAPI<T>) => React.ReactNode;
+}
 
-const getFormStyles = stylesFactory((theme: GrafanaTheme) => {
-  return {
-    form: css`
-      margin-bottom: ${theme.spacing.formMargin};
-    `,
-  };
-});
+export function Form<T>({
+  defaultValues,
+  onSubmit,
+  validateOnMount = false,
+  validateFieldsOnMount,
+  children,
+  validateOn = 'onSubmit',
+}: FormProps<T>) {
+  const { handleSubmit, register, errors, control, triggerValidation, getValues, formState } = useForm<T>({
+    mode: validateOn,
+    defaultValues,
+  });
 
-export const Form: React.FC = ({ children }) => {
-  const theme = useTheme();
-  const styles = getFormStyles(theme);
-  return <div className={styles.form}>{children}</div>;
-};
+  useEffect(() => {
+    if (validateOnMount) {
+      triggerValidation(validateFieldsOnMount);
+    }
+  }, []);
+
+  return <form onSubmit={handleSubmit(onSubmit)}>{children({ register, errors, control, getValues, formState })}</form>;
+}

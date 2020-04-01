@@ -6,7 +6,7 @@ import { TimeZonePicker } from './TimeZonePicker';
 import { UseState } from '../../utils/storybook/UseState';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 
-const TimeZonePickerStories = storiesOf('UI/TimeZonePicker', module);
+const TimeZonePickerStories = storiesOf('General/TimeZonePicker', module);
 
 TimeZonePickerStories.addDecorator(withCenteredStory);
 
@@ -14,7 +14,7 @@ TimeZonePickerStories.add('default', () => {
   return (
     <UseState
       initialState={{
-        value: 'europe/stockholm',
+        value: 'Europe/Stockholm',
       }}
     >
       {(value, updateValue) => {
@@ -25,7 +25,7 @@ TimeZonePickerStories.add('default', () => {
               action('on selected')(newValue);
               updateValue({ value: newValue });
             }}
-            width={20}
+            size="sm"
           />
         );
       }}

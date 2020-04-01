@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/setting"
 
 	"github.com/grafana/grafana/pkg/services/rendering"
 
@@ -29,22 +30,80 @@ func TestNotificationService(t *testing.T) {
 	}
 	evalCtx := NewEvalContext(context.Background(), testRule)
 
-	notificationServiceScenario(t, "SendIfNeeded should render and upload image and send notification", evalCtx, true, func(scenarioCtx *scenarioContext) {
+	notificationServiceScenario(t, "Given alert rule with upload image enabled should render and upload image and send notification", evalCtx, true, func(scenarioCtx *scenarioContext) {
 		err := scenarioCtx.notificationService.SendIfNeeded(evalCtx)
 		require.NoError(t, err)
 
 		require.Equalf(t, 1, scenarioCtx.renderCount, "expected render to be called, but wasn't")
 		require.Equalf(t, 1, scenarioCtx.imageUploadCount, "expected image to be uploaded, but wasn't")
-		require.Truef(t, evalCtx.Ctx.Value("notificationSent").(bool), "expected notification to be sent, but wasn't")
+		require.Truef(t, evalCtx.Ctx.Value(notificationSent{}).(bool), "expected notification to be sent, but wasn't")
 	})
 
-	notificationServiceScenario(t, "SendIfNeeded should not render and upload image, but send notification", evalCtx, false, func(scenarioCtx *scenarioContext) {
+	notificationServiceScenario(t, "Given alert rule with upload image disabled should not render and upload image, but send notification", evalCtx, false, func(scenarioCtx *scenarioContext) {
 		err := scenarioCtx.notificationService.SendIfNeeded(evalCtx)
 		require.NoError(t, err)
 
-		require.Equalf(t, 0, scenarioCtx.renderCount, "expected render to be called, but wasn't")
-		require.Equalf(t, 0, scenarioCtx.imageUploadCount, "expected image to be uploaded, but wasn't")
-		require.Truef(t, evalCtx.Ctx.Value("notificationSent").(bool), "expected notification to be sent, but wasn't")
+		require.Equalf(t, 0, scenarioCtx.renderCount, "expected render not to be called, but it was")
+		require.Equalf(t, 0, scenarioCtx.imageUploadCount, "expected image not to be uploaded, but it was")
+		require.Truef(t, evalCtx.Ctx.Value(notificationSent{}).(bool), "expected notification to be sent, but wasn't")
+	})
+
+	notificationServiceScenario(t, "Given alert rule with upload image enabled and render times out should send notification", evalCtx, true, func(scenarioCtx *scenarioContext) {
+		setting.AlertingNotificationTimeout = 200 * time.Millisecond
+		scenarioCtx.renderProvider = func(ctx context.Context, opts rendering.Opts) (*rendering.RenderResult, error) {
+			wait := make(chan bool)
+
+			go func() {
+				time.Sleep(1 * time.Second)
+				wait <- true
+			}()
+
+			select {
+			case <-ctx.Done():
+				if err := ctx.Err(); err != nil {
+					return nil, err
+				}
+				break
+			case <-wait:
+			}
+
+			return nil, nil
+		}
+		err := scenarioCtx.notificationService.SendIfNeeded(evalCtx)
+		require.NoError(t, err)
+
+		require.Equalf(t, 0, scenarioCtx.renderCount, "expected render not to be called, but it was")
+		require.Equalf(t, 0, scenarioCtx.imageUploadCount, "expected image not to be uploaded, but it was")
+		require.Truef(t, evalCtx.Ctx.Value(notificationSent{}).(bool), "expected notification to be sent, but wasn't")
+	})
+
+	notificationServiceScenario(t, "Given alert rule with upload image enabled and upload times out should send notification", evalCtx, true, func(scenarioCtx *scenarioContext) {
+		setting.AlertingNotificationTimeout = 200 * time.Millisecond
+		scenarioCtx.uploadProvider = func(ctx context.Context, path string) (string, error) {
+			wait := make(chan bool)
+
+			go func() {
+				time.Sleep(1 * time.Second)
+				wait <- true
+			}()
+
+			select {
+			case <-ctx.Done():
+				if err := ctx.Err(); err != nil {
+					return "", err
+				}
+				break
+			case <-wait:
+			}
+
+			return "", nil
+		}
+		err := scenarioCtx.notificationService.SendIfNeeded(evalCtx)
+		require.NoError(t, err)
+
+		require.Equalf(t, 1, scenarioCtx.renderCount, "expected render to be called, but wasn't")
+		require.Equalf(t, 0, scenarioCtx.imageUploadCount, "expected image not to be uploaded, but it was")
+		require.Truef(t, evalCtx.Ctx.Value(notificationSent{}).(bool), "expected notification to be sent, but wasn't")
 	})
 }
 
@@ -53,6 +112,8 @@ type scenarioContext struct {
 	notificationService *notificationService
 	imageUploadCount    int
 	renderCount         int
+	uploadProvider      func(ctx context.Context, path string) (string, error)
+	renderProvider      func(ctx context.Context, opts rendering.Opts) (*rendering.RenderResult, error)
 }
 
 type scenarioFunc func(c *scenarioContext)
@@ -100,14 +161,26 @@ func notificationServiceScenario(t *testing.T, name string, evalCtx *EvalContext
 			return nil
 		})
 
+		setting.AlertingNotificationTimeout = 30 * time.Second
+
 		scenarioCtx := &scenarioContext{
 			evalCtx: evalCtx,
 		}
 
+		uploadProvider := func(ctx context.Context, path string) (string, error) {
+			scenarioCtx.imageUploadCount++
+			return "", nil
+		}
+
 		imageUploader := &testImageUploader{
 			uploadProvider: func(ctx context.Context, path string) (string, error) {
-				scenarioCtx.imageUploadCount++
-				return "", nil
+				if scenarioCtx.uploadProvider != nil {
+					if _, err := scenarioCtx.uploadProvider(ctx, path); err != nil {
+						return "", err
+					}
+				}
+
+				return uploadProvider(ctx, path)
 			},
 		}
 
@@ -119,10 +192,20 @@ func notificationServiceScenario(t *testing.T, name string, evalCtx *EvalContext
 			newImageUploaderProvider = origNewImageUploaderProvider
 		}()
 
+		renderProvider := func(ctx context.Context, opts rendering.Opts) (*rendering.RenderResult, error) {
+			scenarioCtx.renderCount++
+			return &rendering.RenderResult{FilePath: "image.png"}, nil
+		}
+
 		renderService := &testRenderService{
 			renderProvider: func(ctx context.Context, opts rendering.Opts) (*rendering.RenderResult, error) {
-				scenarioCtx.renderCount++
-				return &rendering.RenderResult{FilePath: "image.png"}, nil
+				if scenarioCtx.renderProvider != nil {
+					if _, err := scenarioCtx.renderProvider(ctx, opts); err != nil {
+						return nil, err
+					}
+				}
+
+				return renderProvider(ctx, opts)
 			},
 		}
 
@@ -161,8 +244,10 @@ func newTestNotifier(model *models.AlertNotification) (Notifier, error) {
 	}, nil
 }
 
+type notificationSent struct{}
+
 func (n *testNotifier) Notify(evalCtx *EvalContext) error {
-	evalCtx.Ctx = context.WithValue(evalCtx.Ctx, "notificationSent", true)
+	evalCtx.Ctx = context.WithValue(evalCtx.Ctx, notificationSent{}, true)
 	return nil
 }
 
@@ -219,6 +304,10 @@ func (s *testRenderService) RenderErrorImage(err error) (*rendering.RenderResult
 	}
 
 	return &rendering.RenderResult{FilePath: "image.png"}, nil
+}
+
+func (s *testRenderService) GetRenderUser(key string) (*rendering.RenderUser, bool) {
+	return nil, false
 }
 
 var _ rendering.Service = &testRenderService{}

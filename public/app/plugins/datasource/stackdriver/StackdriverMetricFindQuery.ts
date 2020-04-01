@@ -1,6 +1,8 @@
 import isString from 'lodash/isString';
-import { alignmentPeriods } from './constants';
-import { MetricFindQueryTypes } from './types';
+import { alignmentPeriods, ValueTypes, MetricKind, selectors } from './constants';
+import StackdriverDatasource from './datasource';
+import { MetricFindQueryTypes, VariableQueryData } from './types';
+import { SelectableValue } from '@grafana/data';
 import {
   getMetricTypesByService,
   getAlignmentOptionsByMetric,
@@ -10,13 +12,19 @@ import {
 } from './functions';
 
 export default class StackdriverMetricFindQuery {
-  constructor(private datasource: any) {}
+  constructor(private datasource: StackdriverDatasource) {}
 
-  async execute(query: any) {
+  async execute(query: VariableQueryData) {
     try {
+      if (!query.projectName) {
+        query.projectName = this.datasource.getDefaultProject();
+      }
+
       switch (query.selectedQueryType) {
+        case MetricFindQueryTypes.Projects:
+          return this.handleProjectsQuery();
         case MetricFindQueryTypes.Services:
-          return this.handleServiceQuery();
+          return this.handleServiceQuery(query);
         case MetricFindQueryTypes.MetricTypes:
           return this.handleMetricTypesQuery(query);
         case MetricFindQueryTypes.LabelKeys:
@@ -31,6 +39,12 @@ export default class StackdriverMetricFindQuery {
           return this.handleAlignmentPeriodQuery();
         case MetricFindQueryTypes.Aggregations:
           return this.handleAggregationQuery(query);
+        case MetricFindQueryTypes.SLOServices:
+          return this.handleSLOServicesQuery(query);
+        case MetricFindQueryTypes.SLO:
+          return this.handleSLOQuery(query);
+        case MetricFindQueryTypes.Selectors:
+          return this.handleSelectorQuery();
         default:
           return [];
       }
@@ -40,8 +54,17 @@ export default class StackdriverMetricFindQuery {
     }
   }
 
-  async handleServiceQuery() {
-    const metricDescriptors = await this.datasource.getMetricTypes(this.datasource.projectName);
+  async handleProjectsQuery() {
+    const projects = await this.datasource.getProjects();
+    return (projects as SelectableValue<string>).map((s: { label: string; value: string }) => ({
+      text: s.label,
+      value: s.value,
+      expandable: true,
+    }));
+  }
+
+  async handleServiceQuery({ projectName }: VariableQueryData) {
+    const metricDescriptors = await this.datasource.getMetricTypes(projectName);
     const services: any[] = extractServicesFromMetricDescriptors(metricDescriptors);
     return services.map(s => ({
       text: s.serviceShortName,
@@ -50,11 +73,11 @@ export default class StackdriverMetricFindQuery {
     }));
   }
 
-  async handleMetricTypesQuery({ selectedService }: any) {
+  async handleMetricTypesQuery({ selectedService, projectName }: VariableQueryData) {
     if (!selectedService) {
       return [];
     }
-    const metricDescriptors = await this.datasource.getMetricTypes(this.datasource.projectName);
+    const metricDescriptors = await this.datasource.getMetricTypes(projectName);
     return getMetricTypesByService(metricDescriptors, this.datasource.templateSrv.replace(selectedService)).map(
       (s: any) => ({
         text: s.displayName,
@@ -64,61 +87,68 @@ export default class StackdriverMetricFindQuery {
     );
   }
 
-  async handleLabelKeysQuery({ selectedMetricType }: any) {
+  async handleLabelKeysQuery({ selectedMetricType, projectName }: VariableQueryData) {
     if (!selectedMetricType) {
       return [];
     }
-    const labelKeys = await getLabelKeys(this.datasource, selectedMetricType);
+    const labelKeys = await getLabelKeys(this.datasource, selectedMetricType, projectName);
     return labelKeys.map(this.toFindQueryResult);
   }
 
-  async handleLabelValuesQuery({ selectedMetricType, labelKey }: any) {
+  async handleLabelValuesQuery({ selectedMetricType, labelKey, projectName }: VariableQueryData) {
     if (!selectedMetricType) {
       return [];
     }
     const refId = 'handleLabelValuesQuery';
-    const response = await this.datasource.getLabels(selectedMetricType, refId);
+    const labels = await this.datasource.getLabels(selectedMetricType, refId, projectName, [labelKey]);
     const interpolatedKey = this.datasource.templateSrv.replace(labelKey);
-    const [name] = interpolatedKey.split('.').reverse();
-    let values = [];
-    if (response.meta && response.meta.metricLabels && response.meta.metricLabels.hasOwnProperty(name)) {
-      values = response.meta.metricLabels[name];
-    } else if (response.meta && response.meta.resourceLabels && response.meta.resourceLabels.hasOwnProperty(name)) {
-      values = response.meta.resourceLabels[name];
-    }
-
+    const values = labels.hasOwnProperty(interpolatedKey) ? labels[interpolatedKey] : [];
     return values.map(this.toFindQueryResult);
   }
 
-  async handleResourceTypeQuery({ selectedMetricType }: any) {
+  async handleResourceTypeQuery({ selectedMetricType, projectName }: VariableQueryData) {
     if (!selectedMetricType) {
       return [];
     }
     const refId = 'handleResourceTypeQueryQueryType';
-    const response = await this.datasource.getLabels(selectedMetricType, refId);
-    return response.meta.resourceTypes ? response.meta.resourceTypes.map(this.toFindQueryResult) : [];
+    const labels = await this.datasource.getLabels(selectedMetricType, refId, projectName);
+    return labels['resource.type'].map(this.toFindQueryResult);
   }
 
-  async handleAlignersQuery({ selectedMetricType }: any) {
+  async handleAlignersQuery({ selectedMetricType, projectName }: VariableQueryData) {
     if (!selectedMetricType) {
       return [];
     }
-    const metricDescriptors = await this.datasource.getMetricTypes(this.datasource.projectName);
+    const metricDescriptors = await this.datasource.getMetricTypes(projectName);
     const { valueType, metricKind } = metricDescriptors.find(
       (m: any) => m.type === this.datasource.templateSrv.replace(selectedMetricType)
     );
     return getAlignmentOptionsByMetric(valueType, metricKind).map(this.toFindQueryResult);
   }
 
-  async handleAggregationQuery({ selectedMetricType }: any) {
+  async handleAggregationQuery({ selectedMetricType, projectName }: VariableQueryData) {
     if (!selectedMetricType) {
       return [];
     }
-    const metricDescriptors = await this.datasource.getMetricTypes(this.datasource.projectName);
+    const metricDescriptors = await this.datasource.getMetricTypes(projectName);
     const { valueType, metricKind } = metricDescriptors.find(
       (m: any) => m.type === this.datasource.templateSrv.replace(selectedMetricType)
     );
-    return getAggregationOptionsByMetric(valueType, metricKind).map(this.toFindQueryResult);
+    return getAggregationOptionsByMetric(valueType as ValueTypes, metricKind as MetricKind).map(this.toFindQueryResult);
+  }
+
+  async handleSLOServicesQuery({ projectName }: VariableQueryData) {
+    const services = await this.datasource.getSLOServices(projectName);
+    return services.map(this.toFindQueryResult);
+  }
+
+  async handleSLOQuery({ selectedSLOService, projectName }: VariableQueryData) {
+    const slos = await this.datasource.getServiceLevelObjectives(projectName, selectedSLOService);
+    return slos.map(this.toFindQueryResult);
+  }
+
+  async handleSelectorQuery() {
+    return selectors.map(this.toFindQueryResult);
   }
 
   handleAlignmentPeriodQuery() {

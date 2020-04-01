@@ -1,36 +1,37 @@
 import DatasourceSrv from 'app/features/plugins/datasource_srv';
+import { AuthType, authTypes } from './types';
 
 export interface JWT {
-  private_key: any;
-  token_uri: any;
-  client_email: any;
-  project_id: any;
+  private_key: string;
+  token_uri: string;
+  client_email: string;
+  project_id: string;
 }
 
 export class StackdriverConfigCtrl {
   static templateUrl = 'public/app/plugins/datasource/stackdriver/partials/config.html';
-  datasourceSrv: any;
+  datasourceSrv: DatasourceSrv;
   current: any;
+  meta: any;
   jsonText: string;
   validationErrors: string[] = [];
   inputDataValid: boolean;
-  authenticationTypes: any[];
+  authenticationTypes: Array<{ key: AuthType; value: string }>;
   defaultAuthenticationType: string;
+  name: string;
 
   /** @ngInject */
   constructor(datasourceSrv: DatasourceSrv) {
-    this.defaultAuthenticationType = 'jwt';
+    this.defaultAuthenticationType = AuthType.JWT;
     this.datasourceSrv = datasourceSrv;
+    this.name = this.meta.name;
     this.current.jsonData = this.current.jsonData || {};
     this.current.jsonData.authenticationType = this.current.jsonData.authenticationType
       ? this.current.jsonData.authenticationType
       : this.defaultAuthenticationType;
     this.current.secureJsonData = this.current.secureJsonData || {};
     this.current.secureJsonFields = this.current.secureJsonFields || {};
-    this.authenticationTypes = [
-      { key: this.defaultAuthenticationType, value: 'Google JWT File' },
-      { key: 'gce', value: 'GCE Default Service Account' },
-    ];
+    this.authenticationTypes = authTypes;
   }
 
   save(jwt: JWT) {

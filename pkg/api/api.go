@@ -251,15 +251,22 @@ func (hs *HTTPServer) registerRoutes() {
 		apiRoute.Get("/plugins", Wrap(hs.GetPluginList))
 		apiRoute.Get("/plugins/:pluginId/settings", Wrap(GetPluginSettingByID))
 		apiRoute.Get("/plugins/:pluginId/markdown/:name", Wrap(GetPluginMarkdown))
+		apiRoute.Get("/plugins/:pluginId/health", Wrap(hs.CheckHealth))
+		apiRoute.Any("/plugins/:pluginId/resources", hs.CallResource)
+		apiRoute.Any("/plugins/:pluginId/resources/*", hs.CallResource)
 
 		apiRoute.Group("/plugins", func(pluginRoute routing.RouteRegister) {
 			pluginRoute.Get("/:pluginId/dashboards/", Wrap(GetPluginDashboards))
 			pluginRoute.Post("/:pluginId/settings", bind(models.UpdatePluginSettingCmd{}), Wrap(UpdatePluginSetting))
+			pluginRoute.Get("/:pluginId/metrics", Wrap(hs.CollectPluginMetrics))
 		}, reqOrgAdmin)
 
 		apiRoute.Get("/frontend/settings/", hs.GetFrontendSettings)
 		apiRoute.Any("/datasources/proxy/:id/*", reqSignedIn, hs.ProxyDataSourceRequest)
 		apiRoute.Any("/datasources/proxy/:id", reqSignedIn, hs.ProxyDataSourceRequest)
+		apiRoute.Any("/datasources/:id/resources", hs.CallDatasourceResource)
+		apiRoute.Any("/datasources/:id/resources/*", hs.CallDatasourceResource)
+		apiRoute.Any("/datasources/:id/health", hs.CheckDatasourceHealth)
 
 		// Folders
 		apiRoute.Group("/folders", func(folderRoute routing.RouteRegister) {

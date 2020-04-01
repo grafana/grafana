@@ -7,9 +7,13 @@ export interface BrandComponentProps {
 }
 
 export const LoginLogo: FC<BrandComponentProps> = ({ className }) => {
+  const maxSize = css`
+    max-width: 150px;
+  `;
+
   return (
     <>
-      <img className={className} src="public/img/grafana_icon.svg" alt="Grafana" />
+      <img className={cx(className, maxSize)} src="public/img/grafana_icon.svg" alt="Grafana" />
       <div className="logo-wordmark" />
     </>
   );
@@ -28,8 +32,11 @@ export const MenuLogo: FC<BrandComponentProps> = ({ className }) => {
   return <img className={className} src="public/img/grafana_icon.svg" alt="Grafana" />;
 };
 
+export const AppTitle = 'Grafana';
+
 export class Branding {
   static LoginLogo = LoginLogo;
   static LoginBackground = LoginBackground;
   static MenuLogo = MenuLogo;
+  static AppTitle = AppTitle;
 }

@@ -6,23 +6,13 @@ import { GrafanaTheme } from '@grafana/data';
 const title = { fontWeight: 500, fontSize: '26px', lineHeight: '123%' };
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
-  const background = theme.colors.panelBg;
-  const backgroundUrl = theme.isDark
-    ? '/public/img/licensing/header_dark.svg'
-    : '/public/img/licensing/header_light.svg';
+  const backgroundUrl = theme.isDark ? 'public/img/licensing/header_dark.svg' : 'public/img/licensing/header_light.svg';
   const footerBg = theme.isDark ? theme.colors.dark9 : theme.colors.gray6;
 
   return {
     container: css`
-      display: grid;
-      grid-template-columns: 100%;
-      column-gap: 20px;
-      row-gap: 40px;
-      padding: 42px 20px 0 77px;
-      background-color: ${background};
-      @media (min-width: 1050px) {
-        grid-template-columns: 50% 50%;
-      }
+      padding: 36px 79px;
+      background: ${theme.colors.panelBg};
     `,
     footer: css`
       text-align: center;
@@ -65,8 +55,7 @@ export const LicenseChrome: React.FC<Props> = ({ header, editionNotice, subheade
           }}
         >
           <img
-            className="logo-icon"
-            src="/public/img/grafana_icon.svg"
+            src="public/img/grafana_icon.svg"
             alt="Grafana"
             width="80px"
             style={{ position: 'absolute', left: '23px', top: '20px' }}

@@ -1,4 +1,4 @@
-import ora from 'ora';
+import ora = require('ora');
 
 type FnToSpin<T> = (options: T) => Promise<void>;
 
@@ -10,7 +10,7 @@ export const useSpinner = <T = any>(spinnerLabel: string, fn: FnToSpin<T>, killP
       await fn(options);
       spinner.succeed();
     } catch (e) {
-      console.trace(e);
+      console.trace(e); // eslint-disable-line no-console
       spinner.fail(e.message || e);
       if (killProcess) {
         process.exit(1);

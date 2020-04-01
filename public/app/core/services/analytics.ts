@@ -15,7 +15,7 @@ export class Analytics {
     });
     const ga = ((window as any).ga =
       (window as any).ga ||
-      //tslint:disable-next-line:only-arrow-functions
+      // this had the equivalent of `eslint-disable-next-line prefer-arrow/prefer-arrow-functions`
       function() {
         (ga.q = ga.q || []).push(arguments);
       });

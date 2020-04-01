@@ -22,6 +22,7 @@ export * from './thresholds';
 export * from './fieldColor';
 export * from './theme';
 export * from './orgs';
+export * from './flot';
 
 import * as AppEvents from './appEvents';
 import { AppEvent } from './appEvents';

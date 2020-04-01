@@ -6,7 +6,7 @@ import Drop from 'tether-drop';
 
 // Utils and servies
 import { colors } from '@grafana/ui';
-import { setBackendSrv, BackendSrv, setDataSourceSrv } from '@grafana/runtime';
+import { setBackendSrv, setDataSourceSrv } from '@grafana/runtime';
 import config from 'app/core/config';
 import coreModule from 'app/core/core_module';
 import { profiler } from 'app/core/profiler';
@@ -30,6 +30,7 @@ import { PlaylistSrv } from 'app/features/playlist/playlist_srv';
 import { DashboardSrv, setDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { ILocationService, ITimeoutService, IRootScopeService, IAngularEvent } from 'angular';
 import { AppEvent, AppEvents } from '@grafana/data';
+import { backendSrv } from 'app/core/services/backend_srv';
 
 export type GrafanaRootScope = IRootScopeService & AppEventEmitter & AppEventConsumer & { colors: string[] };
 
@@ -41,7 +42,6 @@ export class GrafanaCtrl {
     $rootScope: GrafanaRootScope,
     contextSrv: ContextSrv,
     bridgeSrv: BridgeSrv,
-    backendSrv: BackendSrv,
     timeSrv: TimeSrv,
     linkSrv: LinkSrv,
     datasourceSrv: DatasourceSrv,
@@ -167,7 +167,7 @@ export function grafanaAppDirective(
       });
 
       // check if we are in server side render
-      if (document.cookie.indexOf('renderKey') !== -1) {
+      if (config.phantomJSRenderer && document.cookie.indexOf('renderKey') !== -1) {
         body.addClass('body--phantomjs');
       }
 

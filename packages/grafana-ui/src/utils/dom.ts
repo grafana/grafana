@@ -28,8 +28,8 @@ export function getPreviousCousin(node: any, selector: string) {
   return undefined;
 }
 
-export function getNextCharacter(global = window) {
-  const selection = global.getSelection();
+export function getNextCharacter(global?: any) {
+  const selection = (global || window).getSelection();
   if (!selection || !selection.anchorNode) {
     return null;
   }

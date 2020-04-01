@@ -6,7 +6,7 @@ import {
   VariableOption,
   VariableType,
   variableTypes,
-} from './variable';
+} from './types';
 import { VariableSrv } from './all';
 
 export class ConstantVariable implements ConstantVariableModel, VariableActions {
@@ -22,7 +22,7 @@ export class ConstantVariable implements ConstantVariableModel, VariableActions 
   defaults: ConstantVariableModel = {
     type: 'constant',
     name: '',
-    hide: VariableHide.hideLabel,
+    hide: VariableHide.hideVariable,
     label: '',
     query: '',
     current: {} as VariableOption,

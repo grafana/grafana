@@ -13,8 +13,9 @@ import {
   PanelData,
   QueryFixAction,
   TimeRange,
+  ExploreMode,
 } from '@grafana/data';
-import { ExploreId, ExploreItemState, ExploreMode, ExploreUIState } from 'app/types/explore';
+import { ExploreId, ExploreItemState, ExploreUIState } from 'app/types/explore';
 
 export interface AddQueryRowPayload {
   exploreId: ExploreId;
@@ -46,10 +47,6 @@ export interface ChangeRefreshIntervalPayload {
 }
 
 export interface ClearQueriesPayload {
-  exploreId: ExploreId;
-}
-
-export interface ClearOriginPayload {
   exploreId: ExploreId;
 }
 
@@ -221,9 +218,9 @@ export const changeRefreshIntervalAction = createAction<ChangeRefreshIntervalPay
 export const clearQueriesAction = createAction<ClearQueriesPayload>('explore/clearQueries');
 
 /**
- * Clear origin panel id.
+ * Cancel running queries.
  */
-export const clearOriginAction = createAction<ClearOriginPayload>('explore/clearOrigin');
+export const cancelQueriesAction = createAction<ClearQueriesPayload>('explore/cancelQueries');
 
 /**
  * Highlight expressions in the log results
@@ -304,6 +301,8 @@ export const splitCloseAction = createAction<SplitCloseActionPayload>('explore/s
 export const splitOpenAction = createAction<SplitOpenPayload>('explore/splitOpen');
 
 export const syncTimesAction = createAction<SyncTimesPayload>('explore/syncTimes');
+
+export const richHistoryUpdatedAction = createAction<any>('explore/richHistoryUpdated');
 /**
  * Update state of Explores UI elements (panels visiblity and deduplication  strategy)
  */

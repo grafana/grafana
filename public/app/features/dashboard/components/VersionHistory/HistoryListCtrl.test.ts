@@ -1,7 +1,19 @@
 import _ from 'lodash';
+import { IScope } from 'angular';
+
 import { HistoryListCtrl } from './HistoryListCtrl';
-import { versions, compare, restore } from './__mocks__/history';
+import { compare, restore, versions } from './__mocks__/history';
 import { CoreEvents } from 'app/types';
+import { appEvents } from 'app/core/app_events';
+
+jest.mock('app/core/app_events', () => {
+  return {
+    appEvents: {
+      emit: jest.fn(),
+      on: jest.fn(),
+    },
+  };
+});
 
 describe('HistoryListCtrl', () => {
   const RESTORE_ID = 4;
@@ -12,6 +24,7 @@ describe('HistoryListCtrl', () => {
 
   let historySrv: any;
   let $rootScope: any;
+  const $scope: IScope = ({ $evalAsync: jest.fn() } as any) as IScope;
   let historyListCtrl: any;
   beforeEach(() => {
     historySrv = {
@@ -28,7 +41,7 @@ describe('HistoryListCtrl', () => {
     beforeEach(() => {
       historySrv.getHistoryList = jest.fn(() => Promise.resolve({}));
 
-      historyListCtrl = new HistoryListCtrl({}, $rootScope, {} as any, historySrv, {});
+      historyListCtrl = new HistoryListCtrl({}, $rootScope, {} as any, historySrv, $scope);
 
       historyListCtrl.dashboard = {
         id: 2,
@@ -84,7 +97,7 @@ describe('HistoryListCtrl', () => {
       beforeEach(async () => {
         historySrv.getHistoryList = jest.fn(() => Promise.reject(new Error('HistoryListError')));
 
-        historyListCtrl = new HistoryListCtrl({}, $rootScope, {} as any, historySrv, {});
+        historyListCtrl = new HistoryListCtrl({}, $rootScope, {} as any, historySrv, $scope);
 
         await historyListCtrl.getLog();
       });
@@ -111,13 +124,15 @@ describe('HistoryListCtrl', () => {
       });
 
       it('should listen for the `dashboardSaved` appEvent', () => {
-        expect($rootScope.onAppEvent).toHaveBeenCalledTimes(1);
-        expect($rootScope.onAppEvent.mock.calls[0][0]).toBe(CoreEvents.dashboardSaved);
+        // @ts-ignore
+        expect(appEvents.on.mock.calls[0][0]).toBe(CoreEvents.dashboardSaved);
       });
 
       it('should call `onDashboardSaved` when the appEvent is received', () => {
-        expect($rootScope.onAppEvent.mock.calls[0][1]).not.toBe(historyListCtrl.onDashboardSaved);
-        expect($rootScope.onAppEvent.mock.calls[0][1].toString).toBe(historyListCtrl.onDashboardSaved.toString);
+        // @ts-ignore
+        expect(appEvents.on.mock.calls[0][1]).not.toBe(historyListCtrl.onDashboardSaved);
+        // @ts-ignore
+        expect(appEvents.on.mock.calls[0][1].toString).toBe(historyListCtrl.onDashboardSaved.toString);
       });
     });
   });
@@ -127,7 +142,7 @@ describe('HistoryListCtrl', () => {
       historySrv.getHistoryList = jest.fn(() => Promise.resolve(versionsResponse));
       historySrv.calculateDiff = jest.fn(() => Promise.resolve({}));
 
-      historyListCtrl = new HistoryListCtrl({}, $rootScope, {} as any, historySrv, {});
+      historyListCtrl = new HistoryListCtrl({}, $rootScope, {} as any, historySrv, $scope);
 
       historyListCtrl.dashboard = {
         id: 2,
@@ -260,7 +275,7 @@ describe('HistoryListCtrl', () => {
       historySrv.getHistoryList = jest.fn(() => Promise.resolve(versionsResponse));
       historySrv.restoreDashboard = jest.fn(() => Promise.resolve());
 
-      historyListCtrl = new HistoryListCtrl({}, $rootScope, {} as any, historySrv, {});
+      historyListCtrl = new HistoryListCtrl({}, $rootScope, {} as any, historySrv, $scope);
 
       historyListCtrl.dashboard = {
         id: 1,
@@ -279,7 +294,7 @@ describe('HistoryListCtrl', () => {
       beforeEach(async () => {
         historySrv.getHistoryList = jest.fn(() => Promise.resolve(versionsResponse));
         historySrv.restoreDashboard = jest.fn(() => Promise.resolve());
-        historyListCtrl = new HistoryListCtrl({}, $rootScope, {} as any, historySrv, {});
+        historyListCtrl = new HistoryListCtrl({}, $rootScope, {} as any, historySrv, $scope);
         historySrv.restoreDashboard = jest.fn(() => Promise.reject(new Error('RestoreError')));
         historyListCtrl.restoreConfirm(RESTORE_ID);
         await historyListCtrl.getLog();

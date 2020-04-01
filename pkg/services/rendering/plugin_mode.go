@@ -3,6 +3,7 @@ package rendering
 import (
 	"context"
 	"fmt"
+	"time"
 
 	pluginModel "github.com/grafana/grafana-plugin-model/go/renderer"
 )
@@ -11,18 +12,14 @@ func (rs *RenderingService) startPlugin(ctx context.Context) error {
 	return rs.pluginInfo.Start(ctx)
 }
 
-func (rs *RenderingService) renderViaPlugin(ctx context.Context, opts Opts) (*RenderResult, error) {
+func (rs *RenderingService) renderViaPlugin(ctx context.Context, renderKey string, opts Opts) (*RenderResult, error) {
 	pngPath, err := rs.getFilePathForNewImage()
 	if err != nil {
 		return nil, err
 	}
 
-	renderKey, err := rs.getRenderKey(opts.OrgId, opts.UserId, opts.OrgRole)
-	if err != nil {
-		return nil, err
-	}
-
-	ctx, cancel := context.WithTimeout(ctx, opts.Timeout)
+	// gives plugin some additional time to timeout and return possible errors.
+	ctx, cancel := context.WithTimeout(ctx, opts.Timeout+time.Second*2)
 	defer cancel()
 
 	req := &pluginModel.RenderRequest{

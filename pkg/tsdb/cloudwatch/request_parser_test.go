@@ -2,13 +2,18 @@ package cloudwatch
 
 import (
 	"testing"
+	"time"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/tsdb"
 	. "github.com/smartystreets/goconvey/convey"
 )
 
 func TestRequestParser(t *testing.T) {
 	Convey("TestRequestParser", t, func() {
+		timeRange := tsdb.NewTimeRange("now-1h", "now-2h")
+		from, _ := timeRange.ParseFrom()
+		to, _ := timeRange.ParseTo()
 		Convey("when parsing query editor row json", func() {
 			Convey("using new dimensions structure", func() {
 				query := simplejson.NewFromAny(map[string]interface{}{
@@ -27,7 +32,7 @@ func TestRequestParser(t *testing.T) {
 					"hide":       false,
 				})
 
-				res, err := parseRequestQuery(query, "ref1")
+				res, err := parseRequestQuery(query, "ref1", from, to)
 				So(err, ShouldBeNil)
 				So(res.Region, ShouldEqual, "us-east-1")
 				So(res.RefId, ShouldEqual, "ref1")
@@ -62,7 +67,7 @@ func TestRequestParser(t *testing.T) {
 					"hide":       false,
 				})
 
-				res, err := parseRequestQuery(query, "ref1")
+				res, err := parseRequestQuery(query, "ref1", from, to)
 				So(err, ShouldBeNil)
 				So(res.Region, ShouldEqual, "us-east-1")
 				So(res.RefId, ShouldEqual, "ref1")
@@ -78,6 +83,131 @@ func TestRequestParser(t *testing.T) {
 				So(res.Dimensions["InstanceType"][0], ShouldEqual, "test2")
 				So(*res.Statistics[0], ShouldEqual, "Average")
 			})
+
+			Convey("period defined in the editor by the user is being used", func() {
+				query := simplejson.NewFromAny(map[string]interface{}{
+					"refId":      "ref1",
+					"region":     "us-east-1",
+					"namespace":  "ec2",
+					"metricName": "CPUUtilization",
+					"id":         "",
+					"expression": "",
+					"dimensions": map[string]interface{}{
+						"InstanceId":   "test",
+						"InstanceType": "test2",
+					},
+					"statistics": []interface{}{"Average"},
+					"hide":       false,
+				})
+				Convey("when time range is short", func() {
+					query.Set("period", "900")
+					timeRange := tsdb.NewTimeRange("now-1h", "now-2h")
+					from, _ := timeRange.ParseFrom()
+					to, _ := timeRange.ParseTo()
+
+					res, err := parseRequestQuery(query, "ref1", from, to)
+					So(err, ShouldBeNil)
+					So(res.Period, ShouldEqual, 900)
+				})
+			})
+
+			Convey("period is parsed correctly if not defined by user", func() {
+				query := simplejson.NewFromAny(map[string]interface{}{
+					"refId":      "ref1",
+					"region":     "us-east-1",
+					"namespace":  "ec2",
+					"metricName": "CPUUtilization",
+					"id":         "",
+					"expression": "",
+					"dimensions": map[string]interface{}{
+						"InstanceId":   "test",
+						"InstanceType": "test2",
+					},
+					"statistics": []interface{}{"Average"},
+					"hide":       false,
+					"period":     "auto",
+				})
+
+				Convey("when time range is 5 minutes", func() {
+					query.Set("period", "auto")
+					to := time.Now()
+					from := to.Local().Add(time.Minute * time.Duration(5))
+
+					res, err := parseRequestQuery(query, "ref1", from, to)
+					So(err, ShouldBeNil)
+					So(res.Period, ShouldEqual, 60)
+				})
+
+				Convey("when time range is 1 day", func() {
+					query.Set("period", "auto")
+					to := time.Now()
+					from := to.AddDate(0, 0, -1)
+
+					res, err := parseRequestQuery(query, "ref1", from, to)
+					So(err, ShouldBeNil)
+					So(res.Period, ShouldEqual, 60)
+				})
+
+				Convey("when time range is 2 days", func() {
+					query.Set("period", "auto")
+					to := time.Now()
+					from := to.AddDate(0, 0, -2)
+					res, err := parseRequestQuery(query, "ref1", from, to)
+					So(err, ShouldBeNil)
+					So(res.Period, ShouldEqual, 300)
+				})
+
+				Convey("when time range is 7 days", func() {
+					query.Set("period", "auto")
+					to := time.Now()
+					from := to.AddDate(0, 0, -7)
+
+					res, err := parseRequestQuery(query, "ref1", from, to)
+					So(err, ShouldBeNil)
+					So(res.Period, ShouldEqual, 900)
+				})
+
+				Convey("when time range is 30 days", func() {
+					query.Set("period", "auto")
+					to := time.Now()
+					from := to.AddDate(0, 0, -30)
+
+					res, err := parseRequestQuery(query, "ref1", from, to)
+					So(err, ShouldBeNil)
+					So(res.Period, ShouldEqual, 3600)
+				})
+
+				Convey("when time range is 90 days", func() {
+					query.Set("period", "auto")
+					to := time.Now()
+					from := to.AddDate(0, 0, -90)
+
+					res, err := parseRequestQuery(query, "ref1", from, to)
+					So(err, ShouldBeNil)
+					So(res.Period, ShouldEqual, 21600)
+				})
+
+				Convey("when time range is 1 year", func() {
+					query.Set("period", "auto")
+					to := time.Now()
+					from := to.AddDate(-1, 0, 0)
+
+					res, err := parseRequestQuery(query, "ref1", from, to)
+					So(err, ShouldBeNil)
+					So(res.Period, ShouldEqual, 21600)
+				})
+
+				Convey("when time range is 2 years", func() {
+					query.Set("period", "auto")
+					to := time.Now()
+					from := to.AddDate(-2, 0, 0)
+
+					res, err := parseRequestQuery(query, "ref1", from, to)
+					So(err, ShouldBeNil)
+					So(res.Period, ShouldEqual, 86400)
+				})
+			})
+
 		})
 	})
 }

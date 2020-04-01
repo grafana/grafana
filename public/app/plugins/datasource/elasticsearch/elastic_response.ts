@@ -416,7 +416,6 @@ export class ElasticResponse {
 
   getLogs(logMessageField?: string, logLevelField?: string): DataQueryResponse {
     const dataFrame: DataFrame[] = [];
-    const docs: any[] = [];
 
     for (let n = 0; n < this.response.responses.length; n++) {
       const response = this.response.responses[n];
@@ -424,78 +423,18 @@ export class ElasticResponse {
         throw this.getErrorFromElasticResponse(this.response, response.error);
       }
 
-      // We keep a list of all props so that we can create all the fields in the dataFrame, this can lead
-      // to wide sparse dataframes in case the scheme is different per document.
-      let propNames: string[] = [];
-
-      for (const hit of response.hits.hits) {
-        const flattened = hit._source ? flatten(hit._source, null) : {};
-        const doc = {
-          _id: hit._id,
-          _type: hit._type,
-          _index: hit._index,
-          _source: { ...flattened },
-          ...flattened,
-        };
-
-        for (const propName of Object.keys(doc)) {
-          if (propNames.indexOf(propName) === -1) {
-            propNames.push(propName);
-          }
-        }
-
-        docs.push(doc);
-      }
-
+      const { propNames, docs } = flattenHits(response.hits.hits);
       if (docs.length > 0) {
-        propNames = propNames.sort();
-        const series = new MutableDataFrame({ fields: [] });
-
-        series.addField({
-          name: this.targets[0].timeField,
-          type: FieldType.time,
-        });
-
-        if (logMessageField) {
-          series.addField({
-            name: logMessageField,
-            type: FieldType.string,
-          }).parse = (v: any) => {
-            return v || '';
-          };
-        } else {
-          series.addField({
-            name: '_source',
-            type: FieldType.string,
-          }).parse = (v: any) => {
-            return JSON.stringify(v, null, 2);
-          };
-        }
-
-        if (logLevelField) {
-          series.addField({
-            name: 'level',
-            type: FieldType.string,
-          }).parse = (v: any) => {
-            return v || '';
-          };
-        }
-
-        for (const propName of propNames) {
-          if (propName === this.targets[0].timeField || propName === '_source') {
-            continue;
-          }
-
-          series.addField({
-            name: propName,
-            type: FieldType.string,
-          }).parse = (v: any) => {
-            return v || '';
-          };
-        }
+        const series = createEmptyDataFrame(propNames, this.targets[0].timeField, logMessageField, logLevelField);
 
         // Add a row for each document
         for (const doc of docs) {
+          if (logLevelField) {
+            // Remap level field based on the datasource config. This field is then used in explore to figure out the
+            // log level. We may rewrite some actual data in the level field if they are different.
+            doc['level'] = doc[logLevelField];
+          }
+
           series.add(doc);
         }
 
@@ -522,3 +461,110 @@ export class ElasticResponse {
     return { data: dataFrame };
   }
 }
+
+type Doc = {
+  _id: string;
+  _type: string;
+  _index: string;
+  _source?: any;
+};
+
+/**
+ * Flatten the docs from response mainly the _source part which can be nested. This flattens it so that it is one level
+ * deep and the keys are: `level1Name.level2Name...`. Also returns list of all properties from all the docs (not all
+ * docs have to have the same keys).
+ * @param hits
+ */
+const flattenHits = (hits: Doc[]): { docs: Array<Record<string, any>>; propNames: string[] } => {
+  const docs: any[] = [];
+  // We keep a list of all props so that we can create all the fields in the dataFrame, this can lead
+  // to wide sparse dataframes in case the scheme is different per document.
+  let propNames: string[] = [];
+
+  for (const hit of hits) {
+    const flattened = hit._source ? flatten(hit._source, null) : {};
+    const doc = {
+      _id: hit._id,
+      _type: hit._type,
+      _index: hit._index,
+      _source: { ...flattened },
+      ...flattened,
+    };
+
+    for (const propName of Object.keys(doc)) {
+      if (propNames.indexOf(propName) === -1) {
+        propNames.push(propName);
+      }
+    }
+
+    docs.push(doc);
+  }
+
+  propNames.sort();
+  return { docs, propNames };
+};
+
+/**
+ * Create empty dataframe but with created fields. Fields are based from propNames (should be from the response) and
+ * also from configuration specified fields for message, time, and level.
+ * @param propNames
+ * @param timeField
+ * @param logMessageField
+ * @param logLevelField
+ */
+const createEmptyDataFrame = (
+  propNames: string[],
+  timeField: string,
+  logMessageField?: string,
+  logLevelField?: string
+): MutableDataFrame => {
+  const series = new MutableDataFrame({ fields: [] });
+
+  series.addField({
+    name: timeField,
+    type: FieldType.time,
+  });
+
+  if (logMessageField) {
+    series.addField({
+      name: logMessageField,
+      type: FieldType.string,
+    }).parse = (v: any) => {
+      return v || '';
+    };
+  } else {
+    series.addField({
+      name: '_source',
+      type: FieldType.string,
+    }).parse = (v: any) => {
+      return JSON.stringify(v, null, 2);
+    };
+  }
+
+  if (logLevelField) {
+    series.addField({
+      name: 'level',
+      type: FieldType.string,
+    }).parse = (v: any) => {
+      return v || '';
+    };
+  }
+
+  const fieldNames = series.fields.map(field => field.name);
+
+  for (const propName of propNames) {
+    // Do not duplicate fields. This can mean that we will shadow some fields.
+    if (fieldNames.includes(propName)) {
+      continue;
+    }
+
+    series.addField({
+      name: propName,
+      type: FieldType.string,
+    }).parse = (v: any) => {
+      return v || '';
+    };
+  }
+
+  return series;
+};

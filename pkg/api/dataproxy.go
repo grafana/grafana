@@ -3,17 +3,18 @@ package api
 import (
 	"github.com/grafana/grafana/pkg/api/pluginproxy"
 	"github.com/grafana/grafana/pkg/infra/metrics"
-	m "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 )
 
-func (hs *HTTPServer) ProxyDataSourceRequest(c *m.ReqContext) {
+// ProxyDataSourceRequest proxies datasource requests
+func (hs *HTTPServer) ProxyDataSourceRequest(c *models.ReqContext) {
 	c.TimeRequest(metrics.MDataSourceProxyReqTimer)
 
-	dsId := c.ParamsInt64(":id")
-	ds, err := hs.DatasourceCache.GetDatasource(dsId, c.SignedInUser, c.SkipCache)
+	dsID := c.ParamsInt64(":id")
+	ds, err := hs.DatasourceCache.GetDatasource(dsID, c.SignedInUser, c.SkipCache)
 	if err != nil {
-		if err == m.ErrDataSourceAccessDenied {
+		if err == models.ErrDataSourceAccessDenied {
 			c.JsonApiErr(403, "Access denied to datasource", err)
 			return
 		}

@@ -135,6 +135,7 @@ export const getLogRowStyles = stylesFactory((theme: GrafanaTheme, logLevel?: Lo
     `,
     logsRowMessage: css`
       label: logs-row__message;
+      white-space: pre-wrap;
       word-break: break-all;
     `,
     //Log details sepcific CSS
