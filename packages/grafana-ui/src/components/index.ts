@@ -13,7 +13,7 @@ export { ButtonCascader } from './ButtonCascader/ButtonCascader';
 // Forms
 export { FormLabel } from './FormLabel/FormLabel';
 export { FormField } from './FormField/FormField';
-export { SecretFormField } from './SecretFormFied/SecretFormField';
+export { SecretFormField } from './SecretFormField/SecretFormField';
 
 export { LoadingPlaceholder } from './LoadingPlaceholder/LoadingPlaceholder';
 export { ColorPicker, SeriesColorPicker } from './ColorPicker/ColorPicker';

@@ -14,6 +14,7 @@ import userReducers from 'app/features/profile/state/reducers';
 import organizationReducers from 'app/features/org/state/reducers';
 import ldapReducers from 'app/features/admin/state/reducers';
 import templatingReducers from 'app/features/variables/state/reducers';
+import importDashboardReducers from 'app/features/manage-dashboards/state/reducers';
 
 const rootReducers = {
   ...sharedReducers,
@@ -30,6 +31,7 @@ const rootReducers = {
   ...organizationReducers,
   ...ldapReducers,
   ...templatingReducers,
+  ...importDashboardReducers,
 };
 
 const addedReducers = {};

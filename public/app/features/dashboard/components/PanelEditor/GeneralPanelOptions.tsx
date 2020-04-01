@@ -1,4 +1,4 @@
-import React, { useMemo, FC } from 'react';
+import React, { FC, useMemo } from 'react';
 import { PanelModel } from '../../state';
 import { SelectableValue } from '@grafana/data';
 import { Forms, Select, DataLinksInlineEditor } from '@grafana/ui';

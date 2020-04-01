@@ -9,18 +9,20 @@ const { Select } = LegacyForms;
 export interface Props {
   onChange: (ds: DataSourceSelectItem) => void;
   datasources: DataSourceSelectItem[];
-  current: DataSourceSelectItem;
+  current?: DataSourceSelectItem;
   hideTextValue?: boolean;
   onBlur?: () => void;
   autoFocus?: boolean;
   openMenuOnFocus?: boolean;
   showLoading?: boolean;
+  placeholder?: string;
 }
 
 export class DataSourcePicker extends PureComponent<Props> {
   static defaultProps: Partial<Props> = {
     autoFocus: false,
     openMenuOnFocus: false,
+    placeholder: 'Select datasource',
   };
 
   searchInput: HTMLElement;
@@ -31,11 +33,23 @@ export class DataSourcePicker extends PureComponent<Props> {
 
   onChange = (item: SelectableValue<string>) => {
     const ds = this.props.datasources.find(ds => ds.name === item.value);
-    this.props.onChange(ds);
+
+    if (ds) {
+      this.props.onChange(ds);
+    }
   };
 
   render() {
-    const { datasources, current, autoFocus, hideTextValue, onBlur, openMenuOnFocus, showLoading } = this.props;
+    const {
+      datasources,
+      current,
+      autoFocus,
+      hideTextValue,
+      onBlur,
+      openMenuOnFocus,
+      showLoading,
+      placeholder,
+    } = this.props;
 
     const options = datasources.map(ds => ({
       value: ds.name,
@@ -64,7 +78,7 @@ export class DataSourcePicker extends PureComponent<Props> {
           onBlur={onBlur}
           openMenuOnFocus={openMenuOnFocus}
           maxMenuHeight={500}
-          placeholder="Select datasource"
+          placeholder={placeholder}
           noOptionsMessage={() => 'No datasources found'}
           value={value}
         />
