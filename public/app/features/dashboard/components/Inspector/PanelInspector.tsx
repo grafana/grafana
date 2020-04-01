@@ -154,6 +154,7 @@ export class PanelInspector extends PureComponent<Props, State> {
   }
 
   renderDataTab() {
+    const { panel } = this.props;
     const { data, selected } = this.state;
     const styles = getStyles();
 
@@ -177,6 +178,8 @@ export class PanelInspector extends PureComponent<Props, State> {
       },
     });
 
+    console.log(panel.transformations);
+
     return (
       <div className={styles.dataTabContent}>
         <div className={styles.toolbar}>
@@ -189,6 +192,9 @@ export class PanelInspector extends PureComponent<Props, State> {
               />
             </div>
           )}
+          <div className={styles.transformationSelect}>
+            <Select options={panel.transformations} />
+          </div>
           <div className={styles.downloadCsv}>
             <Button variant="primary" onClick={() => this.exportCsv(processed[selected])}>
               Download CSV
@@ -375,6 +381,9 @@ const getStyles = stylesFactory(() => {
     `,
     dataFrameSelect: css`
       flex-grow: 2;
+    `,
+    transformationSelect: css`
+      flex-grow: 1;
     `,
     downloadCsv: css`
       margin-left: 16px;
