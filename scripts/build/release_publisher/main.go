@@ -44,14 +44,6 @@ func main() {
 	if enterprise {
 		product = "grafana-enterprise"
 		baseURL = createBaseURL(archiveProviderRoot, "enterprise", product, nightly)
-		var err error
-		buildArtifacts, err = filterBuildArtifacts(completeBuildArtifactConfigurations, Remove, []artifactFilter{
-			{os: "win-installer", arch: "amd64"},
-		})
-
-		if err != nil {
-			log.Fatalf("Could not filter to the selected build artifacts, err=%v", err)
-		}
 
 	} else {
 		product = "grafana"

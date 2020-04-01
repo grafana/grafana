@@ -6,8 +6,7 @@ const path = require('path');
 const webpack = require('webpack');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const HtmlWebpackHarddiskPlugin = require('html-webpack-harddisk-plugin');
-const CleanWebpackPlugin = require('clean-webpack-plugin');
-const IgnoreNotFoundExportPlugin = require("./IgnoreNotFoundExportPlugin.js");
+const { CleanWebpackPlugin } = require('clean-webpack-plugin');
 
 module.exports = merge(common, {
   mode: 'development',
@@ -36,50 +35,61 @@ module.exports = merge(common, {
       '!/public/build': 'http://localhost:3000',
     },
     watchOptions: {
-      ignored: /node_modules/
-    }
+      ignored: /node_modules/,
+    },
   },
 
   optimization: {
     removeAvailableModules: false,
     runtimeChunk: false,
     removeEmptyChunks: false,
-    splitChunks: false
+    splitChunks: false,
   },
 
   module: {
-    rules: [{
+    // Note: order is bottom-to-top and/or right-to-left
+    rules: [
+      {
         test: /\.tsx?$/,
         exclude: /node_modules/,
-        use: [{
-          loader: 'babel-loader',
-          options: {
-            cacheDirectory: true,
-            babelrc: false,
-            plugins: [
-              [require('@rtsao/plugin-proposal-class-properties'), {
-                loose: true
-              }],
-              'angularjs-annotate',
-              '@babel/plugin-syntax-dynamic-import', // needed for `() => import()` in routes.ts
-              'react-hot-loader/babel',
-            ],
-            presets: [
-              [
-                '@babel/preset-env',
-                {
-                  targets: {
-                    browsers: 'last 3 versions'
+        use: [
+          {
+            loader: 'babel-loader',
+            options: {
+              cacheDirectory: true,
+              babelrc: false,
+              // Note: order is top-to-bottom and/or left-to-right
+              plugins: [
+                [
+                  require('@rtsao/plugin-proposal-class-properties'),
+                  {
+                    loose: true,
                   },
-                  useBuiltIns: 'entry',
-                  modules: false
-                },
+                ],
+                '@babel/plugin-proposal-nullish-coalescing-operator',
+                '@babel/plugin-proposal-optional-chaining',
+                '@babel/plugin-syntax-dynamic-import', // needed for `() => import()` in routes.ts
+                'angularjs-annotate',
+                'react-hot-loader/babel',
               ],
-              '@babel/preset-typescript',
-              '@babel/preset-react',
-            ],
+              // Note: order is bottom-to-top and/or right-to-left
+              presets: [
+                [
+                  '@babel/preset-env',
+                  {
+                    targets: {
+                      browsers: 'last 3 versions',
+                    },
+                    useBuiltIns: 'entry',
+                    modules: false,
+                  },
+                ],
+                '@babel/preset-typescript',
+                '@babel/preset-react',
+              ],
+            },
           },
-        }, ],
+        ],
       },
       {
         test: /\.scss$/,
@@ -90,13 +100,13 @@ module.exports = merge(common, {
             loader: 'postcss-loader',
             options: {
               config: {
-                path: __dirname + '/postcss.config.js'
+                path: __dirname + '/postcss.config.js',
               },
             },
           },
           {
-            loader: 'sass-loader'
-          }
+            loader: 'sass-loader',
+          },
         ],
       },
       {
@@ -113,7 +123,7 @@ module.exports = merge(common, {
       template: path.resolve(__dirname, '../../public/views/index-template.html'),
       inject: 'body',
       alwaysWriteToDisk: true,
-      chunksSortMode: 'none'
+      chunksSortMode: 'none',
     }),
     new HtmlWebpackHarddiskPlugin(),
     new webpack.NamedModulesPlugin(),
@@ -124,6 +134,5 @@ module.exports = merge(common, {
         NODE_ENV: JSON.stringify('development'),
       },
     }),
-    new IgnoreNotFoundExportPlugin(),
   ],
 });

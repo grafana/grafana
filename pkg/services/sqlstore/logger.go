@@ -5,7 +5,7 @@ import (
 
 	glog "github.com/grafana/grafana/pkg/infra/log"
 
-	"github.com/go-xorm/core"
+	"xorm.io/core"
 )
 
 type XormLogger struct {

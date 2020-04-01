@@ -13,6 +13,8 @@ const grafanaPlugin = async () =>
 const influxdbPlugin = async () =>
   await import(/* webpackChunkName: "influxdbPlugin" */ 'app/plugins/datasource/influxdb/module');
 const lokiPlugin = async () => await import(/* webpackChunkName: "lokiPlugin" */ 'app/plugins/datasource/loki/module');
+const jaegerPlugin = async () =>
+  await import(/* webpackChunkName: "jaegerPlugin" */ 'app/plugins/datasource/jaeger/module');
 const mixedPlugin = async () =>
   await import(/* webpackChunkName: "mixedPlugin" */ 'app/plugins/datasource/mixed/module');
 const mysqlPlugin = async () =>
@@ -53,8 +55,7 @@ import * as pieChartPanel from 'app/plugins/panel/piechart/module';
 import * as barGaugePanel from 'app/plugins/panel/bargauge/module';
 import * as logsPanel from 'app/plugins/panel/logs/module';
 import * as newsPanel from 'app/plugins/panel/news/module';
-
-const exampleApp = async () => await import(/* webpackChunkName: "exampleApp" */ 'app/plugins/app/example-app/module');
+import * as homeLinksPanel from 'app/plugins/panel/homelinks/module';
 
 const builtInPlugins: any = {
   'app/plugins/datasource/graphite/module': graphitePlugin,
@@ -65,6 +66,7 @@ const builtInPlugins: any = {
   'app/plugins/datasource/grafana/module': grafanaPlugin,
   'app/plugins/datasource/influxdb/module': influxdbPlugin,
   'app/plugins/datasource/loki/module': lokiPlugin,
+  'app/plugins/datasource/jaeger/module': jaegerPlugin,
   'app/plugins/datasource/mixed/module': mixedPlugin,
   'app/plugins/datasource/mysql/module': mysqlPlugin,
   'app/plugins/datasource/postgres/module': postgresPlugin,
@@ -94,8 +96,7 @@ const builtInPlugins: any = {
   'app/plugins/panel/piechart/module': pieChartPanel,
   'app/plugins/panel/bargauge/module': barGaugePanel,
   'app/plugins/panel/logs/module': logsPanel,
-
-  'app/plugins/app/example-app/module': exampleApp,
+  'app/plugins/panel/homelinks/module': homeLinksPanel,
 };
 
 export default builtInPlugins;

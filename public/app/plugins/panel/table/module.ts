@@ -1,17 +1,18 @@
 import _ from 'lodash';
 import $ from 'jquery';
 import { MetricsPanelCtrl } from 'app/plugins/sdk';
-import config from 'app/core/config';
+import config, { getConfig } from 'app/core/config';
 import { transformDataToTable } from './transformers';
 import { tablePanelEditor } from './editor';
 import { columnOptionsTab } from './column_options';
 import { TableRenderer } from './renderer';
-import { isTableData } from '@grafana/data';
+import { isTableData, PanelEvents, PanelPlugin } from '@grafana/data';
 import { TemplateSrv } from 'app/features/templating/template_srv';
-import { PanelEvents } from '@grafana/data';
 import { CoreEvents } from 'app/types';
+import { dispatch } from 'app/store/store';
+import { applyFilterFromTable } from 'app/features/variables/adhoc/actions';
 
-class TablePanelCtrl extends MetricsPanelCtrl {
+export class TablePanelCtrl extends MetricsPanelCtrl {
   static templateUrl = 'module.html';
 
   pageIndex: number;
@@ -30,6 +31,7 @@ class TablePanelCtrl extends MetricsPanelCtrl {
         pattern: 'Time',
         alias: 'Time',
         dateFormat: 'YYYY-MM-DD HH:mm:ss',
+        align: 'auto',
       },
       {
         unit: 'short',
@@ -40,6 +42,7 @@ class TablePanelCtrl extends MetricsPanelCtrl {
         colorMode: null,
         pattern: '/.*/',
         thresholds: [],
+        align: 'right',
       },
     ],
     columns: [],
@@ -256,7 +259,11 @@ class TablePanelCtrl extends MetricsPanelCtrl {
         operator: filterData.operator,
       };
 
-      ctrl.variableSrv.setAdhocFilter(options);
+      if (getConfig().featureToggles.newVariables) {
+        dispatch(applyFilterFromTable(options));
+      } else {
+        ctrl.variableSrv.setAdhocFilter(options);
+      }
     }
 
     elem.on('click', '.table-panel-page-link', switchPage);
@@ -278,4 +285,6 @@ class TablePanelCtrl extends MetricsPanelCtrl {
   }
 }
 
-export { TablePanelCtrl, TablePanelCtrl as PanelCtrl };
+export const plugin = new PanelPlugin(null);
+plugin.angularPanelCtrl = TablePanelCtrl;
+plugin.setNoPadding();

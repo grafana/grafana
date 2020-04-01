@@ -55,7 +55,8 @@ Structs used to build a custom Google Hangouts Chat message card.
 See: https://developers.google.com/hangouts/chat/reference/message-formats/cards
 */
 type outerStruct struct {
-	Cards []card `json:"cards"`
+	FallbackText string `json:"fallbackText"`
+	Cards        []card `json:"cards"`
 }
 
 type card struct {
@@ -151,15 +152,17 @@ func (gcn *GoogleChatNotifier) Notify(evalContext *alerting.EvalContext) error {
 	}
 	widgets = append(widgets, fields)
 
-	// if an image exists, add it as an image widget
-	if evalContext.ImagePublicURL != "" {
-		widgets = append(widgets, imageWidget{
-			Image: image{
-				ImageURL: evalContext.ImagePublicURL,
-			},
-		})
-	} else {
-		gcn.log.Info("Could not retrieve a public image URL.")
+	if gcn.NeedsImage() {
+		// if an image exists, add it as an image widget
+		if evalContext.ImagePublicURL != "" {
+			widgets = append(widgets, imageWidget{
+				Image: image{
+					ImageURL: evalContext.ImagePublicURL,
+				},
+			})
+		} else {
+			gcn.log.Info("Could not retrieve a public image URL.")
+		}
 	}
 
 	// add a button widget (link to Grafana)
@@ -187,6 +190,7 @@ func (gcn *GoogleChatNotifier) Notify(evalContext *alerting.EvalContext) error {
 
 	// nest the required structs
 	res1D := &outerStruct{
+		FallbackText: evalContext.GetNotificationTitle(),
 		Cards: []card{
 			{
 				Header: header{

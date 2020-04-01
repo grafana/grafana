@@ -1,8 +1,19 @@
 import OpenTsDatasource from '../datasource';
+import { backendSrv } from 'app/core/services/backend_srv'; // will use the version in __mocks__
+
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  getBackendSrv: () => backendSrv,
+}));
 
 describe('opentsdb', () => {
+  const datasourceRequestMock = jest.spyOn(backendSrv, 'datasourceRequest');
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
   const ctx = {
-    backendSrv: {},
     ds: {},
     templateSrv: {
       replace: (str: string) => str,
@@ -11,7 +22,7 @@ describe('opentsdb', () => {
   const instanceSettings = { url: '', jsonData: { tsdbVersion: 1 } };
 
   beforeEach(() => {
-    ctx.ctrl = new OpenTsDatasource(instanceSettings, ctx.backendSrv, ctx.templateSrv);
+    ctx.ctrl = new OpenTsDatasource(instanceSettings, ctx.templateSrv);
   });
 
   describe('When performing metricFindQuery', () => {
@@ -19,20 +30,22 @@ describe('opentsdb', () => {
     let requestOptions: any;
 
     beforeEach(async () => {
-      ctx.backendSrv.datasourceRequest = await ((options: any) => {
-        requestOptions = options;
-        return Promise.resolve({
-          data: [
-            {
-              target: 'prod1.count',
-              datapoints: [
-                [10, 1],
-                [12, 1],
-              ],
-            },
-          ],
-        });
-      });
+      datasourceRequestMock.mockImplementation(
+        await ((options: any) => {
+          requestOptions = options;
+          return Promise.resolve({
+            data: [
+              {
+                target: 'prod1.count',
+                datapoints: [
+                  [10, 1],
+                  [12, 1],
+                ],
+              },
+            ],
+          });
+        })
+      );
     });
 
     it('metrics() should generate api suggest query', () => {

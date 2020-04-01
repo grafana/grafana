@@ -8,8 +8,12 @@ import {
   ScopedVar,
   Field,
   LinkModel,
+  formattedValueToString,
+  DisplayValue,
+  DataLink,
 } from '@grafana/data';
 import { getLinkSrv } from './link_srv';
+import { getFieldDisplayValuesProxy } from './fieldDisplayValuesProxy';
 
 interface SeriesVars {
   name?: string;
@@ -29,10 +33,17 @@ interface ValueVars {
   calc?: string;
 }
 
+interface DataViewVars {
+  name?: string;
+  refId?: string;
+  fields?: Record<string, DisplayValue>;
+}
+
 interface DataLinkScopedVars extends ScopedVars {
   __series?: ScopedVar<SeriesVars>;
   __field?: ScopedVar<FieldVars>;
   __value?: ScopedVar<ValueVars>;
+  __data?: ScopedVar<DataViewVars>;
 }
 
 /**
@@ -71,24 +82,36 @@ export const getFieldLinksSupplier = (value: FieldDisplay): LinkModelSupplier<Fi
           };
         }
 
-        if (value.rowIndex) {
+        if (!isNaN(value.rowIndex)) {
           const { timeField } = getTimeField(dataFrame);
           scopedVars['__value'] = {
             value: {
               raw: field.values.get(value.rowIndex),
               numeric: value.display.numeric,
-              text: value.display.text,
+              text: formattedValueToString(value.display),
               time: timeField ? timeField.values.get(value.rowIndex) : undefined,
             },
             text: 'Value',
           };
+
+          // Expose other values on the row
+          if (value.view) {
+            scopedVars['__data'] = {
+              value: {
+                name: dataFrame.name,
+                refId: dataFrame.refId,
+                fields: getFieldDisplayValuesProxy(dataFrame, value.rowIndex!),
+              },
+              text: 'Data',
+            };
+          }
         } else {
           // calculation
           scopedVars['__value'] = {
             value: {
               raw: value.display.numeric,
               numeric: value.display.numeric,
-              text: value.display.text,
+              text: formattedValueToString(value.display),
               calc: value.name,
             },
             text: 'Value',
@@ -121,7 +144,10 @@ export const getPanelLinksSupplier = (value: PanelModel): LinkModelSupplier<Pane
   };
 };
 
-export const getLinksFromLogsField = (field: Field, rowIndex: number): Array<LinkModel<Field>> => {
+export const getLinksFromLogsField = (
+  field: Field,
+  rowIndex: number
+): Array<{ linkModel: LinkModel<Field>; link: DataLink }> => {
   const scopedVars: any = {};
   scopedVars['__value'] = {
     value: {
@@ -131,6 +157,11 @@ export const getLinksFromLogsField = (field: Field, rowIndex: number): Array<Lin
   };
 
   return field.config.links
-    ? field.config.links.map(link => getLinkSrv().getDataLinkUIModel(link, scopedVars, field))
+    ? field.config.links.map(link => {
+        return {
+          link,
+          linkModel: getLinkSrv().getDataLinkUIModel(link, scopedVars, field),
+        };
+      })
     : [];
 };

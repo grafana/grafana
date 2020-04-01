@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/go-xorm/xorm"
+	"xorm.io/xorm"
 )
 
 const (

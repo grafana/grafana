@@ -5,13 +5,15 @@ import { QueryPart } from 'app/core/components/query_part/query_part';
 import alertDef from './state/alertDef';
 import config from 'app/core/config';
 import appEvents from 'app/core/app_events';
-import { BackendSrv } from 'app/core/services/backend_srv';
+import { getBackendSrv } from '@grafana/runtime';
 import { DashboardSrv } from '../dashboard/services/DashboardSrv';
 import DatasourceSrv from '../plugins/datasource_srv';
 import { DataQuery, DataSourceApi } from '@grafana/data';
 import { PanelModel } from 'app/features/dashboard/state';
 import { getDefaultCondition } from './getAlertingValidationMessage';
 import { CoreEvents } from 'app/types';
+import kbn from 'app/core/utils/kbn';
+import { promiseToDigest } from 'app/core/utils/promiseToDigest';
 
 export class AlertTabCtrl {
   panel: PanelModel;
@@ -31,11 +33,13 @@ export class AlertTabCtrl {
   appSubUrl: string;
   alertHistory: any;
   newAlertRuleTag: any;
+  alertingMinIntervalSecs: number;
+  alertingMinInterval: string;
+  frequencyWarning: any;
 
   /** @ngInject */
   constructor(
     private $scope: any,
-    private backendSrv: BackendSrv,
     private dashboardSrv: DashboardSrv,
     private uiSegmentSrv: any,
     private datasourceSrv: DatasourceSrv
@@ -51,6 +55,8 @@ export class AlertTabCtrl {
     this.executionErrorModes = alertDef.executionErrorModes;
     this.appSubUrl = config.appSubUrl;
     this.panelCtrl._enableAlert = this.enable;
+    this.alertingMinIntervalSecs = config.alertingMinInterval;
+    this.alertingMinInterval = kbn.secondsToHms(config.alertingMinInterval);
   }
 
   $onInit() {
@@ -72,25 +78,31 @@ export class AlertTabCtrl {
     this.alertNotifications = [];
     this.alertHistory = [];
 
-    return this.backendSrv.get('/api/alert-notifications/lookup').then((res: any) => {
-      this.notifications = res;
+    return promiseToDigest(this.$scope)(
+      getBackendSrv()
+        .get('/api/alert-notifications/lookup')
+        .then((res: any) => {
+          this.notifications = res;
 
-      this.initModel();
-      this.validateModel();
-    });
+          this.initModel();
+          this.validateModel();
+        })
+    );
   }
 
   getAlertHistory() {
-    this.backendSrv
-      .get(`/api/annotations?dashboardId=${this.panelCtrl.dashboard.id}&panelId=${this.panel.id}&limit=50&type=alert`)
-      .then((res: any) => {
-        this.alertHistory = _.map(res, ah => {
-          ah.time = this.dashboardSrv.getCurrent().formatDate(ah.time, 'MMM D, YYYY HH:mm:ss');
-          ah.stateModel = alertDef.getStateDisplayModel(ah.newState);
-          ah.info = alertDef.getAlertAnnotationInfo(ah);
-          return ah;
-        });
-      });
+    promiseToDigest(this.$scope)(
+      getBackendSrv()
+        .get(`/api/annotations?dashboardId=${this.panelCtrl.dashboard.id}&panelId=${this.panel.id}&limit=50&type=alert`)
+        .then((res: any) => {
+          this.alertHistory = _.map(res, ah => {
+            ah.time = this.dashboardSrv.getCurrent().formatDate(ah.time, 'MMM D, YYYY HH:mm:ss');
+            ah.stateModel = alertDef.getStateDisplayModel(ah.newState);
+            ah.info = alertDef.getAlertAnnotationInfo(ah);
+            return ah;
+          });
+        })
+    );
   }
 
   getNotificationIcon(type: string): string {
@@ -156,8 +168,8 @@ export class AlertTabCtrl {
   removeNotification(an: any) {
     // remove notifiers refeered to by id and uid to support notifiers added
     // before and after we added support for uid
-    _.remove(this.alert.notifications, (n: any) => n.uid === an.uid || n.id === an.id);
-    _.remove(this.alertNotifications, (n: any) => n.uid === an.uid || n.id === an.id);
+    _.remove(this.alert.notifications, (n: any) => n.uid === an.uid);
+    _.remove(this.alertNotifications, (n: any) => n.uid === an.uid);
   }
 
   addAlertRuleTag() {
@@ -177,6 +189,8 @@ export class AlertTabCtrl {
     if (!alert) {
       return;
     }
+
+    this.checkFrequency();
 
     alert.conditions = alert.conditions || [];
     if (alert.conditions.length === 0) {
@@ -223,13 +237,33 @@ export class AlertTabCtrl {
     for (const notification of this.notifications) {
       if (notification.isDefault) {
         notification.iconClass = this.getNotificationIcon(notification.type);
-        notification.bgColor = '#00678b';
         this.alertNotifications.push(notification);
       }
     }
 
     this.panelCtrl.editingThresholds = true;
     this.panelCtrl.render();
+  }
+
+  checkFrequency() {
+    if (!this.alert.frequency) {
+      return;
+    }
+
+    this.frequencyWarning = '';
+
+    try {
+      const frequencySecs = kbn.interval_to_seconds(this.alert.frequency);
+      if (frequencySecs < this.alertingMinIntervalSecs) {
+        this.frequencyWarning =
+          'A minimum evaluation interval of ' +
+          this.alertingMinInterval +
+          ' have been configured in Grafana and will be used for this alert rule. ' +
+          'Please contact the administrator to configure a lower interval.';
+      }
+    } catch (err) {
+      this.frequencyWarning = err;
+    }
   }
 
   graphThresholdChanged(evt: any) {
@@ -430,15 +464,17 @@ export class AlertTabCtrl {
       icon: 'fa-trash',
       yesText: 'Yes',
       onConfirm: () => {
-        this.backendSrv
-          .post('/api/annotations/mass-delete', {
-            dashboardId: this.panelCtrl.dashboard.id,
-            panelId: this.panel.id,
-          })
-          .then(() => {
-            this.alertHistory = [];
-            this.panelCtrl.refresh();
-          });
+        promiseToDigest(this.$scope)(
+          getBackendSrv()
+            .post('/api/annotations/mass-delete', {
+              dashboardId: this.panelCtrl.dashboard.id,
+              panelId: this.panel.id,
+            })
+            .then(() => {
+              this.alertHistory = [];
+              this.panelCtrl.refresh();
+            })
+        );
       },
     });
   }

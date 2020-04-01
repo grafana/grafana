@@ -2,20 +2,22 @@ package middleware
 
 import (
 	"context"
-	"encoding/base32"
 	"errors"
 	"fmt"
 	"net/http"
+	"net/http/httptest"
 	"path/filepath"
 	"testing"
 	"time"
 
 	. "github.com/smartystreets/goconvey/convey"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"gopkg.in/macaron.v1"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
 	authproxy "github.com/grafana/grafana/pkg/middleware/auth_proxy"
 	"github.com/grafana/grafana/pkg/models"
@@ -256,12 +258,12 @@ func TestMiddlewareContext(t *testing.T) {
 			maxAge := (maxAgeHours + time.Hour).Seconds()
 
 			sameSitePolicies := []http.SameSite{
-				http.SameSiteDefaultMode,
+				http.SameSiteNoneMode,
 				http.SameSiteLaxMode,
 				http.SameSiteStrictMode,
 			}
 			for _, sameSitePolicy := range sameSitePolicies {
-				setting.CookieSameSite = sameSitePolicy
+				setting.CookieSameSiteMode = sameSitePolicy
 				expectedCookie := &http.Cookie{
 					Name:     setting.LoginCookieName,
 					Value:    "rotated",
@@ -269,9 +271,7 @@ func TestMiddlewareContext(t *testing.T) {
 					HttpOnly: true,
 					MaxAge:   int(maxAge),
 					Secure:   setting.CookieSecure,
-				}
-				if sameSitePolicy != http.SameSiteDefaultMode {
-					expectedCookie.SameSite = sameSitePolicy
+					SameSite: sameSitePolicy,
 				}
 
 				sc.fakeReq("GET", "/").exec()
@@ -287,6 +287,22 @@ func TestMiddlewareContext(t *testing.T) {
 					So(sc.resp.Header().Get("Set-Cookie"), ShouldEqual, expectedCookie.String())
 				})
 			}
+
+			Convey("Should not set cookie with SameSite attribute when setting.CookieSameSiteDisabled is true", func() {
+				setting.CookieSameSiteDisabled = true
+				setting.CookieSameSiteMode = http.SameSiteLaxMode
+				expectedCookie := &http.Cookie{
+					Name:     setting.LoginCookieName,
+					Value:    "rotated",
+					Path:     setting.AppSubUrl + "/",
+					HttpOnly: true,
+					MaxAge:   int(maxAge),
+					Secure:   setting.CookieSecure,
+				}
+
+				sc.fakeReq("GET", "/").exec()
+				So(sc.resp.Header().Get("Set-Cookie"), ShouldEqual, expectedCookie.String())
+			})
 		})
 
 		middlewareScenario(t, "Invalid/expired auth token in cookie", func(sc *scenarioContext) {
@@ -347,7 +363,7 @@ func TestMiddlewareContext(t *testing.T) {
 					return nil
 				})
 
-				key := fmt.Sprintf(authproxy.CachePrefix, base32.StdEncoding.EncodeToString([]byte(name+"-"+group)))
+				key := fmt.Sprintf(authproxy.CachePrefix, authproxy.HashCacheKey(name+"-"+group))
 				err := sc.remoteCacheService.Set(key, int64(33), 0)
 				So(err, ShouldBeNil)
 				sc.fakeReq("GET", "/")
@@ -527,7 +543,8 @@ func middlewareScenario(t *testing.T, desc string, fn scenarioFunc) {
 
 		sc := &scenarioContext{}
 
-		viewsPath, _ := filepath.Abs("../../public/views")
+		viewsPath, err := filepath.Abs("../../public/views")
+		require.NoError(t, err)
 
 		sc.m = macaron.New()
 		sc.m.Use(AddDefaultResponseHeaders())
@@ -539,7 +556,7 @@ func middlewareScenario(t *testing.T, desc string, fn scenarioFunc) {
 		sc.userAuthTokenService = auth.NewFakeUserAuthTokenService()
 		sc.remoteCacheService = remotecache.NewFakeStore(t)
 
-		sc.m.Use(GetContextHandler(sc.userAuthTokenService, sc.remoteCacheService))
+		sc.m.Use(GetContextHandler(sc.userAuthTokenService, sc.remoteCacheService, nil))
 
 		sc.m.Use(OrgRedirect())
 
@@ -547,6 +564,8 @@ func middlewareScenario(t *testing.T, desc string, fn scenarioFunc) {
 			sc.context = c
 			if sc.handlerFunc != nil {
 				sc.handlerFunc(sc.context)
+			} else {
+				c.JsonOK("OK")
 			}
 		}
 
@@ -555,3 +574,88 @@ func middlewareScenario(t *testing.T, desc string, fn scenarioFunc) {
 		fn(sc)
 	})
 }
+
+func TestDontRotateTokensOnCancelledRequests(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	reqContext, _, err := initTokenRotationTest(ctx)
+	require.NoError(t, err)
+
+	tryRotateCallCount := 0
+	uts := &auth.FakeUserAuthTokenService{
+		TryRotateTokenProvider: func(ctx context.Context, token *models.UserToken, clientIP, userAgent string) (bool, error) {
+			tryRotateCallCount++
+			return false, nil
+		},
+	}
+
+	token := &models.UserToken{AuthToken: "oldtoken"}
+
+	fn := rotateEndOfRequestFunc(reqContext, uts, token)
+	cancel()
+	fn(reqContext.Resp)
+
+	assert.Equal(t, 0, tryRotateCallCount, "Token rotation was attempted")
+}
+
+func TestTokenRotationAtEndOfRequest(t *testing.T) {
+	reqContext, rr, err := initTokenRotationTest(context.Background())
+	require.NoError(t, err)
+
+	uts := &auth.FakeUserAuthTokenService{
+		TryRotateTokenProvider: func(ctx context.Context, token *models.UserToken, clientIP, userAgent string) (bool, error) {
+			newToken, err := util.RandomHex(16)
+			require.NoError(t, err)
+			token.AuthToken = newToken
+			return true, nil
+		},
+	}
+
+	token := &models.UserToken{AuthToken: "oldtoken"}
+
+	rotateEndOfRequestFunc(reqContext, uts, token)(reqContext.Resp)
+
+	foundLoginCookie := false
+	for _, c := range rr.Result().Cookies() {
+		if c.Name == "login_token" {
+			foundLoginCookie = true
+
+			require.NotEqual(t, token.AuthToken, c.Value, "Auth token is still the same")
+		}
+	}
+
+	assert.True(t, foundLoginCookie, "Could not find cookie")
+}
+
+func initTokenRotationTest(ctx context.Context) (*models.ReqContext, *httptest.ResponseRecorder, error) {
+	setting.LoginCookieName = "login_token"
+	setting.LoginMaxLifetimeDays = 7
+
+	rr := httptest.NewRecorder()
+	req, err := http.NewRequestWithContext(ctx, "", "", nil)
+	if err != nil {
+		return nil, nil, err
+	}
+	reqContext := &models.ReqContext{
+		Context: &macaron.Context{
+			Req: macaron.Request{
+				Request: req,
+			},
+		},
+		Logger: log.New("testlogger"),
+	}
+
+	mw := mockWriter{rr}
+	reqContext.Resp = mw
+
+	return reqContext, rr, nil
+}
+
+type mockWriter struct {
+	*httptest.ResponseRecorder
+}
+
+func (mw mockWriter) Flush()                    {}
+func (mw mockWriter) Status() int               { return 0 }
+func (mw mockWriter) Size() int                 { return 0 }
+func (mw mockWriter) Written() bool             { return false }
+func (mw mockWriter) Before(macaron.BeforeFunc) {}

@@ -1,0 +1,8 @@
+#!/bin/bash
+
+. e2e/variables
+
+# Start it in the background
+./e2e/start-server 2>&1 > e2e/server.log &
+
+./e2e/run-suite "$@"

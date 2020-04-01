@@ -15,6 +15,9 @@ type IndexViewData struct {
 	NewGrafanaVersion       string
 	AppName                 string
 	AppNameBodyClass        string
+	FavIcon                 string
+	AppleTouchIcon          string
+	AppTitle                string
 }
 
 type PluginCss struct {

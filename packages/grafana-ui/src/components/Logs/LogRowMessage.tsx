@@ -30,8 +30,6 @@ interface Props extends Themeable {
   updateLimit?: () => void;
 }
 
-interface State {}
-
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
   const outlineColor = selectThemeVariant(
     {
@@ -54,10 +52,6 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
           .setAlpha(0.7)
           .toRgbString()};
     `,
-    whiteSpacePreWrap: css`
-      label: whiteSpacePreWrap;
-      white-space: pre-wrap;
-    `,
     horizontalScroll: css`
       label: verticalScroll;
       white-space: nowrap;
@@ -65,7 +59,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
   };
 });
 
-class UnThemedLogRowMessage extends PureComponent<Props, State> {
+class UnThemedLogRowMessage extends PureComponent<Props> {
   onContextToggle = (e: React.SyntheticEvent<HTMLElement>) => {
     e.stopPropagation();
     this.props.onToggleContext();
@@ -84,7 +78,7 @@ class UnThemedLogRowMessage extends PureComponent<Props, State> {
       wrapLogMessage,
       onToggleContext,
     } = this.props;
-    const {} = this.state;
+
     const style = getLogRowStyles(theme, row.logLevel);
     const { entry, hasAnsi, raw } = row;
 
@@ -95,6 +89,11 @@ class UnThemedLogRowMessage extends PureComponent<Props, State> {
       ? cx([style.logsRowMatchHighLight, style.logsRowMatchHighLightPreview])
       : cx([style.logsRowMatchHighLight]);
     const styles = getStyles(theme);
+    const whiteSpacePreWrap = {
+      label: 'white-space-pre-wrap',
+      whiteSpace: 'pre-wrap',
+    };
+
     return (
       <td className={style.logsRowMessage}>
         <div className={cx(styles.positionRelative, { [styles.horizontalScroll]: !wrapLogMessage })}>
@@ -115,7 +114,7 @@ class UnThemedLogRowMessage extends PureComponent<Props, State> {
           <span className={cx(styles.positionRelative, { [styles.rowWithContext]: showContext })}>
             {needsHighlighter ? (
               <Highlighter
-                style={styles.whiteSpacePreWrap}
+                style={whiteSpacePreWrap}
                 textToHighlight={entry}
                 searchWords={highlights}
                 findChunks={findHighlightChunksInText}

@@ -1,5 +1,4 @@
-// TODO: when grafana blog has CORS headers updated, remove the cors-anywhere prefix
-export const DEFAULT_FEED_URL = 'https://cors-anywhere.herokuapp.com/' + 'https://grafana.com/blog/index.xml';
+export const DEFAULT_FEED_URL = 'https://grafana.com/blog/news.xml';
 
 export interface NewsOptions {
   feedUrl?: string;

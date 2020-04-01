@@ -1,7 +1,7 @@
 import React, { PureComponent } from 'react';
 import appEvents from 'app/core/app_events';
 import { CopyToClipboard } from 'app/core/components/CopyToClipboard/CopyToClipboard';
-import { LoadingPlaceholder, JSONFormatter } from '@grafana/ui';
+import { JSONFormatter, LoadingPlaceholder } from '@grafana/ui';
 import { CoreEvents } from 'app/types';
 import { AppEvents, PanelEvents } from '@grafana/data';
 
@@ -98,6 +98,7 @@ export class QueryInspector extends PureComponent<Props, State> {
 
     if (response.config) {
       response.request = response.config;
+
       delete response.config;
       delete response.request.transformRequest;
       delete response.request.transformResponse;
@@ -113,11 +114,17 @@ export class QueryInspector extends PureComponent<Props, State> {
     if (response.data) {
       response.response = response.data;
 
+      delete response.config;
       delete response.data;
       delete response.status;
       delete response.statusText;
+      delete response.ok;
+      delete response.url;
+      delete response.redirected;
+      delete response.type;
       delete response.$$config;
     }
+
     this.setState(prevState => ({
       ...prevState,
       dsQuery: {

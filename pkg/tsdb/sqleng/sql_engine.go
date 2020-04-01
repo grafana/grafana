@@ -19,10 +19,10 @@ import (
 
 	"github.com/grafana/grafana/pkg/components/null"
 
-	"github.com/go-xorm/core"
-	"github.com/go-xorm/xorm"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
+	"xorm.io/core"
+	"xorm.io/xorm"
 )
 
 // SqlMacroEngine interpolates macros into sql. It takes in the Query to have access to query context and

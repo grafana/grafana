@@ -1,21 +1,27 @@
 import { reducerTester } from 'test/core/redux/reducerTester';
-import { dataSourcesReducer, initialState } from './reducers';
 import {
-  dataSourcesLoaded,
   dataSourceLoaded,
-  setDataSourcesSearchQuery,
-  setDataSourcesLayoutMode,
-  dataSourceTypesLoad,
-  dataSourceTypesLoaded,
-  setDataSourceTypeSearchQuery,
   dataSourceMetaLoaded,
+  dataSourcePluginsLoad,
+  dataSourcePluginsLoaded,
+  dataSourceSettingsReducer,
+  dataSourcesLoaded,
+  dataSourcesReducer,
+  initDataSourceSettingsFailed,
+  initDataSourceSettingsSucceeded,
+  initialDataSourceSettingsState,
+  initialState,
   setDataSourceName,
+  setDataSourcesLayoutMode,
+  setDataSourcesSearchQuery,
+  setDataSourceTypeSearchQuery,
   setIsDefault,
-} from './actions';
-import { getMockDataSources, getMockDataSource } from '../__mocks__/dataSourcesMocks';
+} from './reducers';
+import { getMockDataSource, getMockDataSources } from '../__mocks__/dataSourcesMocks';
 import { LayoutModes } from 'app/core/components/LayoutSelector/LayoutSelector';
-import { DataSourcesState } from 'app/types';
-import { PluginMetaInfo, PluginType, PluginMeta } from '@grafana/data';
+import { DataSourceSettingsState, DataSourcesState } from 'app/types';
+import { PluginMeta, PluginMetaInfo, PluginType } from '@grafana/data';
+import { GenericDataSourcePlugin } from '../settings/PluginSettings';
 
 const mockPlugin = () =>
   ({
@@ -36,7 +42,7 @@ describe('dataSourcesReducer', () => {
     it('then state should be correct', () => {
       const dataSources = getMockDataSources(0);
 
-      reducerTester()
+      reducerTester<DataSourcesState>()
         .givenReducer(dataSourcesReducer, initialState)
         .whenActionIsDispatched(dataSourcesLoaded(dataSources))
         .thenStateShouldEqual({ ...initialState, hasFetched: true, dataSources, dataSourcesCount: 1 });
@@ -47,7 +53,7 @@ describe('dataSourcesReducer', () => {
     it('then state should be correct', () => {
       const dataSource = getMockDataSource();
 
-      reducerTester()
+      reducerTester<DataSourcesState>()
         .givenReducer(dataSourcesReducer, initialState)
         .whenActionIsDispatched(dataSourceLoaded(dataSource))
         .thenStateShouldEqual({ ...initialState, dataSource });
@@ -56,7 +62,7 @@ describe('dataSourcesReducer', () => {
 
   describe('when setDataSourcesSearchQuery is dispatched', () => {
     it('then state should be correct', () => {
-      reducerTester()
+      reducerTester<DataSourcesState>()
         .givenReducer(dataSourcesReducer, initialState)
         .whenActionIsDispatched(setDataSourcesSearchQuery('some query'))
         .thenStateShouldEqual({ ...initialState, searchQuery: 'some query' });
@@ -67,39 +73,39 @@ describe('dataSourcesReducer', () => {
     it('then state should be correct', () => {
       const layoutMode: LayoutModes = LayoutModes.Grid;
 
-      reducerTester()
+      reducerTester<DataSourcesState>()
         .givenReducer(dataSourcesReducer, initialState)
         .whenActionIsDispatched(setDataSourcesLayoutMode(layoutMode))
         .thenStateShouldEqual({ ...initialState, layoutMode: LayoutModes.Grid });
     });
   });
 
-  describe('when dataSourceTypesLoad is dispatched', () => {
+  describe('when dataSourcePluginsLoad is dispatched', () => {
     it('then state should be correct', () => {
-      const state: DataSourcesState = { ...initialState, dataSourceTypes: [mockPlugin()] };
+      const state: DataSourcesState = { ...initialState, plugins: [mockPlugin()] };
 
-      reducerTester()
+      reducerTester<DataSourcesState>()
         .givenReducer(dataSourcesReducer, state)
-        .whenActionIsDispatched(dataSourceTypesLoad())
-        .thenStateShouldEqual({ ...initialState, dataSourceTypes: [], isLoadingDataSources: true });
+        .whenActionIsDispatched(dataSourcePluginsLoad())
+        .thenStateShouldEqual({ ...initialState, isLoadingDataSources: true });
     });
   });
 
-  describe('when dataSourceTypesLoaded is dispatched', () => {
+  describe('when dataSourcePluginsLoaded is dispatched', () => {
     it('then state should be correct', () => {
       const dataSourceTypes = [mockPlugin()];
       const state: DataSourcesState = { ...initialState, isLoadingDataSources: true };
 
-      reducerTester()
+      reducerTester<DataSourcesState>()
         .givenReducer(dataSourcesReducer, state)
-        .whenActionIsDispatched(dataSourceTypesLoaded(dataSourceTypes))
-        .thenStateShouldEqual({ ...initialState, dataSourceTypes, isLoadingDataSources: false });
+        .whenActionIsDispatched(dataSourcePluginsLoaded({ plugins: dataSourceTypes, categories: [] }))
+        .thenStateShouldEqual({ ...initialState, plugins: dataSourceTypes, isLoadingDataSources: false });
     });
   });
 
   describe('when setDataSourceTypeSearchQuery is dispatched', () => {
     it('then state should be correct', () => {
-      reducerTester()
+      reducerTester<DataSourcesState>()
         .givenReducer(dataSourcesReducer, initialState)
         .whenActionIsDispatched(setDataSourceTypeSearchQuery('type search query'))
         .thenStateShouldEqual({ ...initialState, dataSourceTypeSearchQuery: 'type search query' });
@@ -110,7 +116,7 @@ describe('dataSourcesReducer', () => {
     it('then state should be correct', () => {
       const dataSourceMeta = mockPlugin();
 
-      reducerTester()
+      reducerTester<DataSourcesState>()
         .givenReducer(dataSourcesReducer, initialState)
         .whenActionIsDispatched(dataSourceMetaLoaded(dataSourceMeta))
         .thenStateShouldEqual({ ...initialState, dataSourceMeta });
@@ -119,19 +125,50 @@ describe('dataSourcesReducer', () => {
 
   describe('when setDataSourceName is dispatched', () => {
     it('then state should be correct', () => {
-      reducerTester()
+      reducerTester<DataSourcesState>()
         .givenReducer(dataSourcesReducer, initialState)
         .whenActionIsDispatched(setDataSourceName('some name'))
-        .thenStateShouldEqual({ ...initialState, dataSource: { name: 'some name' } });
+        .thenStateShouldEqual({ ...initialState, dataSource: { name: 'some name' } } as DataSourcesState);
     });
   });
 
   describe('when setIsDefault is dispatched', () => {
     it('then state should be correct', () => {
-      reducerTester()
+      reducerTester<DataSourcesState>()
         .givenReducer(dataSourcesReducer, initialState)
         .whenActionIsDispatched(setIsDefault(true))
-        .thenStateShouldEqual({ ...initialState, dataSource: { isDefault: true } });
+        .thenStateShouldEqual({ ...initialState, dataSource: { isDefault: true } } as DataSourcesState);
+    });
+  });
+});
+
+describe('dataSourceSettingsReducer', () => {
+  describe('when initDataSourceSettingsSucceeded is dispatched', () => {
+    it('then state should be correct', () => {
+      reducerTester<DataSourceSettingsState>()
+        .givenReducer(dataSourceSettingsReducer, { ...initialDataSourceSettingsState })
+        .whenActionIsDispatched(initDataSourceSettingsSucceeded({} as GenericDataSourcePlugin))
+        .thenStateShouldEqual({
+          ...initialDataSourceSettingsState,
+          plugin: {} as GenericDataSourcePlugin,
+          loadError: null,
+        });
+    });
+  });
+
+  describe('when initDataSourceSettingsFailed is dispatched', () => {
+    it('then state should be correct', () => {
+      reducerTester<DataSourceSettingsState>()
+        .givenReducer(dataSourceSettingsReducer, {
+          ...initialDataSourceSettingsState,
+          plugin: {} as GenericDataSourcePlugin,
+        })
+        .whenActionIsDispatched(initDataSourceSettingsFailed(new Error('Some error')))
+        .thenStatePredicateShouldEqual(resultingState => {
+          expect(resultingState.plugin).toEqual(null);
+          expect(resultingState.loadError).toEqual('Some error');
+          return true;
+        });
     });
   });
 });

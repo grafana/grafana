@@ -1,10 +1,7 @@
 import React from 'react';
-import { Project } from './Project';
-import StackdriverDatasource from '../datasource';
 import { MetricDescriptor } from '../types';
 
 export interface Props {
-  datasource: StackdriverDatasource;
   rawQuery: string;
   lastQueryError: string;
   metricDescriptor?: MetricDescriptor;
@@ -35,12 +32,11 @@ export class Help extends React.Component<Props, State> {
 
   render() {
     const { displayHelp, displaRawQuery } = this.state;
-    const { datasource, rawQuery, lastQueryError } = this.props;
+    const { rawQuery, lastQueryError } = this.props;
 
     return (
       <>
         <div className="gf-form-inline">
-          <Project datasource={datasource} />
           <div className="gf-form" onClick={this.onHelpClicked}>
             <label className="gf-form-label query-keyword pointer">
               Show Help <i className={`fa fa-caret-${displayHelp ? 'down' : 'right'}`} />
@@ -66,8 +62,8 @@ export class Help extends React.Component<Props, State> {
         )}
 
         {displayHelp && (
-          <div className="gf-form grafana-info-box" style={{ padding: 0 }}>
-            <pre className="gf-form-pre alert alert-info" style={{ marginRight: 0 }}>
+          <div className="gf-form grafana-info-box alert-info">
+            <div>
               <h5>Alias Patterns</h5>Format the legend keys any way you want by using alias patterns. Format the legend
               keys any way you want by using alias patterns.
               <br /> <br />
@@ -98,11 +94,31 @@ export class Help extends React.Component<Props, State> {
                   <code>{`${'{{resource.label.label_name}}'}`}</code> = Resource label metadata e.g. resource.label.zone
                 </li>
                 <li>
+                  <code>{`${'{{metadata.system_labels.name}}'}`}</code> = Meta data system labels e.g.
+                  metadata.system_labels.name. For this to work, the needs to be included in the group by
+                </li>
+                <li>
+                  <code>{`${'{{metadata.user_labels.name}}'}`}</code> = Meta data user labels e.g.
+                  metadata.user_labels.name. For this to work, the needs to be included in the group by
+                </li>
+                <li>
                   <code>{`${'{{bucket}}'}`}</code> = bucket boundary for distribution metrics when using a heatmap in
                   Grafana
                 </li>
+                <li>
+                  <code>{`${'{{project}}'}`}</code> = The project name that was specified in the query editor
+                </li>
+                <li>
+                  <code>{`${'{{service}}'}`}</code> = The service id that was specified in the SLO query editor
+                </li>
+                <li>
+                  <code>{`${'{{slo}}'}`}</code> = The SLO id that was specified in the SLO query editor
+                </li>
+                <li>
+                  <code>{`${'{{selector}}'}`}</code> = The Selector function that was specified in the SLO query editor
+                </li>
               </ul>
-            </pre>
+            </div>
           </div>
         )}
 

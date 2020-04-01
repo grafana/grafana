@@ -1,6 +1,5 @@
-import { MutableDataFrame, GrafanaThemeType, FieldType } from '@grafana/data';
-import { getColumns } from './utils';
-import { getTheme } from '../../themes';
+import { MutableDataFrame, FieldType } from '@grafana/data';
+import { getColumns, getTextAlign } from './utils';
 
 function getData() {
   const data = new MutableDataFrame({
@@ -34,33 +33,32 @@ function getData() {
 describe('Table utils', () => {
   describe('getColumns', () => {
     it('Should build columns from DataFrame', () => {
-      const theme = getTheme(GrafanaThemeType.Dark);
-      const columns = getColumns(getData(), 1000, theme);
+      const columns = getColumns(getData(), 1000, 120);
 
       expect(columns[0].Header).toBe('Time');
       expect(columns[1].Header).toBe('Value');
     });
 
     it('Should distribute width and use field config width', () => {
-      const theme = getTheme(GrafanaThemeType.Dark);
-      const columns = getColumns(getData(), 1000, theme);
+      const columns = getColumns(getData(), 1000, 120);
 
       expect(columns[0].width).toBe(450);
       expect(columns[1].width).toBe(100);
     });
+  });
 
+  describe('getTextAlign', () => {
     it('Should use textAlign from custom', () => {
-      const theme = getTheme(GrafanaThemeType.Dark);
-      const columns = getColumns(getData(), 1000, theme);
+      const data = getData();
+      const textAlign = getTextAlign(data.fields[2]);
 
-      expect(columns[2].textAlign).toBe('center');
+      expect(textAlign).toBe('center');
     });
 
     it('Should set textAlign to right for number values', () => {
-      const theme = getTheme(GrafanaThemeType.Dark);
-      const columns = getColumns(getData(), 1000, theme);
-
-      expect(columns[1].textAlign).toBe('right');
+      const data = getData();
+      const textAlign = getTextAlign(data.fields[1]);
+      expect(textAlign).toBe('right');
     });
   });
 });

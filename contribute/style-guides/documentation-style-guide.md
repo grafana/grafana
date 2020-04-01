@@ -2,6 +2,8 @@
 
 This style guide applies to all documentation created for Grafana products.
 
+For information about how to write technical documentation, we suggest reviewing the content of the [Google Technical Writing courses](https://developers.google.com/tech-writing).
+
 ## Contributing
 
 The *Documentation style guide* is a living document. Add to it whenever a style decision is made or a question is answered regarding style, grammar, or word choice.
@@ -81,7 +83,30 @@ Always give the reader some idea of what to expect in the reference. Avoid blind
 When possible, use the exact title of the page or section you are linking to as the link text.
 
 **Example**
-* Refer to the [Documentation style guide](documentation-style-guide.md) for information about word usage and capitalization guidelines.
+Refer to the [Documentation style guide](documentation-style-guide.md) for information about word usage and capitalization guidelines.
+
+### Command line examples
+
+* Do not assume everyone is using Linux. Make sure instructions include enough information for Windows and Mac users to successfully complete procedures.
+
+* Do not add `$` before commands. Make it easy for users to copy and paste commands.
+
+  * **Wrong:** `$ sudo yum install grafana`
+  * **Right:** `sudo yum install grafana`
+
+* Include `sudo` before commands that require `sudo` to work.
+
+For terminal examples and Grafana configuration, use a `bash` code block:
+```bash
+sudo yum install grafana
+```
+For HTTP request/response, use an `http` code block:
+```http
+GET /api/dashboards/id/1/permissions HTTP/1.1
+Accept: application/json
+Content-Type: application/json
+Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+```
 
 ### Word usage
 
@@ -113,6 +138,14 @@ Two words, not one
 * Correct, active voice: Grafana displays your list of active alarms.
 * Correct, but passive voice: Your list of active alarms is displayed.
 * Incorrect: The list of active alarms displays.
+
+#### intro, introduction
+
+"Introduction" is the preferred word. Use "intro" if there are space constraints (like on the side menu) or you are specifically trying for a less formal, more conversational tone.
+
+#### metadata
+
+One word, not two.
 
 #### open source, open-source
 

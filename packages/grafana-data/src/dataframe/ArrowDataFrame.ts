@@ -1,4 +1,4 @@
-import { DataFrame, FieldType, Field, Vector, FieldConfig, Labels } from '../types';
+import { DataFrame, FieldType, Field, Vector } from '../types';
 import {
   Table,
   ArrowType,
@@ -26,6 +26,17 @@ export function base64StringToArrowTable(text: string): Table {
 
 function valueOrUndefined(val?: string) {
   return val ? val : undefined;
+}
+
+function parseOptionalMeta(str?: string): any {
+  if (str && str.length && str !== '{}') {
+    try {
+      return JSON.parse(str);
+    } catch (err) {
+      console.warn('Error reading JSON from arrow metadata: ', str);
+    }
+  }
+  return undefined;
 }
 
 export function arrowTableToDataFrame(table: Table): ArrowDataFrame {
@@ -59,37 +70,36 @@ export function arrowTableToDataFrame(table: Table): ArrowDataFrame {
         default:
           console.log('UNKNOWN Type:', schema);
       }
-      const labelsJson = col.metadata.get('labels');
-      const configJson = col.metadata.get('config');
-
-      let config: FieldConfig = {};
-      let labels: Labels | undefined = undefined;
-      if (labelsJson) {
-        labels = JSON.parse(labelsJson);
-      }
-      if (configJson) {
-        config = JSON.parse(configJson);
-      }
 
       fields.push({
-        name: col.name,
+        name: stripFieldNamePrefix(col.name),
         type,
-        config,
         values,
-        labels,
+        config: parseOptionalMeta(col.metadata.get('config')) || {},
+        labels: parseOptionalMeta(col.metadata.get('labels')),
       });
     }
   }
   const meta = table.schema.metadata;
-  const metaJson = valueOrUndefined(meta.get('meta'));
   return {
     fields,
     length: table.length,
     refId: valueOrUndefined(meta.get('refId')),
     name: valueOrUndefined(meta.get('name')),
-    meta: metaJson ? JSON.parse(metaJson) : undefined,
+    meta: parseOptionalMeta(meta.get('meta')),
     table,
   };
+}
+
+// fieldNamePrefixSep is the delimiter used with fieldNamePrefix.
+const fieldNamePrefixSep = '🦥: ';
+
+function stripFieldNamePrefix(name: string): string {
+  const idx = name.indexOf(fieldNamePrefixSep);
+  if (idx > 0) {
+    return name.substring(idx + fieldNamePrefixSep.length);
+  }
+  return name;
 }
 
 function toArrowVector(field: Field): ArrowVector {
@@ -113,9 +123,22 @@ function toArrowVector(field: Field): ArrowVector {
 }
 
 export function grafanaDataFrameToArrowTable(data: DataFrame): Table {
-  const table = Table.new(
-    data.fields.map(field => {
-      const column = Column.new(field.name, toArrowVector(field));
+  // Return the original table
+  let table = (data as any).table;
+  if (table instanceof Table) {
+    return table as Table;
+  }
+  // Make sure the names are unique
+  const names = new Set<string>();
+
+  table = Table.new(
+    data.fields.map((field, index) => {
+      let name = field.name;
+      if (names.has(field.name)) {
+        name = `${index}${fieldNamePrefixSep}${field.name}`;
+      }
+      names.add(name);
+      const column = Column.new(name, toArrowVector(field));
       if (field.labels) {
         column.metadata.set('labels', JSON.stringify(field.labels));
       }
@@ -141,9 +164,12 @@ export function grafanaDataFrameToArrowTable(data: DataFrame): Table {
 export function resultsToDataFrames(rsp: any): DataFrame[] {
   const frames: DataFrame[] = [];
   for (const res of Object.values(rsp.results)) {
-    for (const b of (res as any).dataframes) {
-      const t = base64StringToArrowTable(b as string);
-      frames.push(arrowTableToDataFrame(t));
+    const r = res as any;
+    if (r.dataframes) {
+      for (const b of r.dataframes) {
+        const t = base64StringToArrowTable(b as string);
+        frames.push(arrowTableToDataFrame(t));
+      }
     }
   }
   return frames;

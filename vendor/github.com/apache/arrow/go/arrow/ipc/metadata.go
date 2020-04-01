@@ -88,7 +88,19 @@ func (blk fileBlock) NewMessage() (*Message, error) {
 	if err != nil {
 		return nil, errors.Wrap(err, "arrow/ipc: could not read message metadata")
 	}
-	meta := memory.NewBufferBytes(buf[4:]) // drop buf-size already known from blk.Meta
+
+	prefix := 0
+	switch binary.LittleEndian.Uint32(buf) {
+	case 0:
+	case kIPCContToken:
+		prefix = 8
+	default:
+		// ARROW-6314: backwards compatibility for reading old IPC
+		// messages produced prior to version 0.15.0
+		prefix = 4
+	}
+
+	meta := memory.NewBufferBytes(buf[prefix:]) // drop buf-size already known from blk.Meta
 
 	buf = make([]byte, blk.Body)
 	_, err = io.ReadFull(r, buf)
@@ -1002,19 +1014,26 @@ func writeMessage(msg *memory.Buffer, alignment int32, w io.Writer) (int, error)
 	)
 
 	// ARROW-3212: we do not make any assumption on whether the output stream is aligned or not.
-	paddedMsgLen := int32(msg.Len()) + 4
+	paddedMsgLen := int32(msg.Len()) + 8
 	remainder := paddedMsgLen % alignment
 	if remainder != 0 {
 		paddedMsgLen += alignment - remainder
 	}
 
+	tmp := make([]byte, 4)
+
+	// write continuation indicator, to address 8-byte alignment requirement from FlatBuffers.
+	binary.LittleEndian.PutUint32(tmp, kIPCContToken)
+	_, err = w.Write(tmp)
+	if err != nil {
+		return 0, errors.Wrap(err, "arrow/ipc: could not write continuation bit indicator")
+	}
+
 	// the returned message size includes the length prefix, the flatbuffer, + padding
 	n = int(paddedMsgLen)
 
-	tmp := make([]byte, 4)
-
 	// write the flatbuffer size prefix, including padding
-	sizeFB := paddedMsgLen - 4
+	sizeFB := paddedMsgLen - 8
 	binary.LittleEndian.PutUint32(tmp, uint32(sizeFB))
 	_, err = w.Write(tmp)
 	if err != nil {
@@ -1028,7 +1047,7 @@ func writeMessage(msg *memory.Buffer, alignment int32, w io.Writer) (int, error)
 	}
 
 	// write any padding
-	padding := paddedMsgLen - int32(msg.Len()) - 4
+	padding := paddedMsgLen - int32(msg.Len()) - 8
 	if padding > 0 {
 		_, err = w.Write(paddingBytes[:padding])
 		if err != nil {

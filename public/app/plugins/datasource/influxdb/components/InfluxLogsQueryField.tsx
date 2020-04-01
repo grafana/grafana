@@ -1,13 +1,13 @@
 import React from 'react';
 import { ExploreQueryFieldProps } from '@grafana/data';
-import { Cascader, CascaderOption } from '@grafana/ui';
+import { ButtonCascader, CascaderOption } from '@grafana/ui';
 
 import InfluxQueryModel from '../influx_query_model';
 import { AdHocFilterField, KeyValuePair } from 'app/features/explore/AdHocFilterField';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import InfluxDatasource from '../datasource';
 import { InfluxQueryBuilder } from '../query_builder';
-import { InfluxQuery, InfluxOptions } from '../types';
+import { InfluxOptions, InfluxQuery } from '../types';
 
 export interface Props extends ExploreQueryFieldProps<InfluxDatasource, InfluxQuery, InfluxOptions> {}
 
@@ -49,7 +49,12 @@ function getChooserText({ measurement, field, error }: ChooserOptions): string {
 
 export class InfluxLogsQueryField extends React.PureComponent<Props, State> {
   templateSrv: TemplateSrv = new TemplateSrv();
-  state: State = { measurements: [], measurement: null, field: null, error: null };
+  state: State = {
+    measurements: [],
+    measurement: (null as unknown) as string,
+    field: (null as unknown) as string,
+    error: (null as unknown) as string,
+  };
 
   async componentDidMount() {
     const { datasource } = this.props;
@@ -81,6 +86,7 @@ export class InfluxLogsQueryField extends React.PureComponent<Props, State> {
       this.setState({ measurements });
     } catch (error) {
       const message = error && error.message ? error.message : error;
+      console.error(error);
       this.setState({ error: message });
     }
   }
@@ -134,14 +140,14 @@ export class InfluxLogsQueryField extends React.PureComponent<Props, State> {
     return (
       <div className="gf-form-inline gf-form-inline--nowrap">
         <div className="gf-form flex-shrink-0">
-          <Cascader
-            buttonText={cascadeText}
+          <ButtonCascader
             options={measurements}
             disabled={!hasMeasurement}
             value={[measurement, field]}
             onChange={this.onMeasurementsChange}
-            expandIcon={null}
-          />
+          >
+            {cascadeText}
+          </ButtonCascader>
         </div>
         <div className="flex-shrink-1 flex-flow-column-nowrap">
           {measurement && (

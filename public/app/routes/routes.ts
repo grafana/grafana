@@ -2,15 +2,16 @@ import './dashboard_loaders';
 import './ReactContainer';
 import { applyRouteRegistrationHandlers } from './registry';
 // Pages
-import CreateFolderCtrl from 'app/features/folders/CreateFolderCtrl';
 import FolderDashboardsCtrl from 'app/features/folders/FolderDashboardsCtrl';
-import DashboardImportCtrl from 'app/features/manage-dashboards/DashboardImportCtrl';
 import LdapPage from 'app/features/admin/ldap/LdapPage';
+import UserAdminPage from 'app/features/admin/UserAdminPage';
+import SignupPage from 'app/features/profile/SignupPage';
+import { LoginPage } from 'app/core/components/Login/LoginPage';
+
 import config from 'app/core/config';
 import { ILocationProvider, route } from 'angular';
 // Types
 import { DashboardRouteInfo } from 'app/types';
-import { LoginPage } from 'app/core/components/Login/LoginPage';
 import { SafeDynamicImport } from '../core/components/DynamicImports/SafeDynamicImport';
 
 /** @ngInject */
@@ -107,9 +108,13 @@ export function setupAngularRoutes($routeProvider: route.IRouteProvider, $locati
       },
     })
     .when('/dashboard/import', {
-      templateUrl: 'public/app/features/manage-dashboards/partials/dashboard_import.html',
-      controller: DashboardImportCtrl,
-      controllerAs: 'ctrl',
+      template: '<react-container />',
+      resolve: {
+        component: () =>
+          SafeDynamicImport(
+            import(/* webpackChunkName: "DashboardImport"*/ 'app/features/manage-dashboards/DashboardImportPage')
+          ),
+      },
     })
     .when('/datasources', {
       template: '<react-container />',
@@ -156,9 +161,13 @@ export function setupAngularRoutes($routeProvider: route.IRouteProvider, $locati
       controllerAs: 'ctrl',
     })
     .when('/dashboards/folder/new', {
-      templateUrl: 'public/app/features/folders/partials/create_folder.html',
-      controller: CreateFolderCtrl,
-      controllerAs: 'ctrl',
+      template: '<react-container />',
+      resolve: {
+        component: () =>
+          SafeDynamicImport(
+            import(/* webpackChunkName: "NewDashboardsFolder"*/ 'app/features/folders/components/NewDashboardsFolder')
+          ),
+      },
     })
     .when('/dashboards/f/:uid/:slug/permissions', {
       template: '<react-container />',
@@ -191,6 +200,7 @@ export function setupAngularRoutes($routeProvider: route.IRouteProvider, $locati
     .when('/explore', {
       template: '<react-container />',
       reloadOnSearch: false,
+      pageClass: 'page-explore',
       resolve: {
         roles: () => (config.viewersCanEdit ? [] : ['Editor', 'Admin']),
         component: () => SafeDynamicImport(import(/* webpackChunkName: "explore" */ 'app/features/explore/Wrapper')),
@@ -213,8 +223,10 @@ export function setupAngularRoutes($routeProvider: route.IRouteProvider, $locati
       },
     })
     .when('/org/new', {
-      templateUrl: 'public/app/features/org/partials/newOrg.html',
-      controller: 'NewOrgCtrl',
+      template: '<react-container />',
+      resolve: {
+        component: () => SafeDynamicImport(import(/* webpackChunkName: "NewOrgPage" */ 'app/features/org/NewOrgPage')),
+      },
     })
     .when('/org/users', {
       template: '<react-container />',
@@ -224,9 +236,11 @@ export function setupAngularRoutes($routeProvider: route.IRouteProvider, $locati
       },
     })
     .when('/org/users/invite', {
-      templateUrl: 'public/app/features/org/partials/invite.html',
-      controller: 'UserInviteCtrl',
-      controllerAs: 'ctrl',
+      template: '<react-container/>',
+      resolve: {
+        component: () =>
+          SafeDynamicImport(import(/* webpackChunkName: "UserInvitePage" */ 'app/features/org/UserInvitePage')),
+      },
     })
     .when('/org/apikeys', {
       template: '<react-container />',
@@ -289,18 +303,31 @@ export function setupAngularRoutes($routeProvider: route.IRouteProvider, $locati
           SafeDynamicImport(import(/* webpackChunkName: "AdminSettings" */ 'app/features/admin/AdminSettings')),
       },
     })
+    .when('/admin/upgrading', {
+      template: '<react-container />',
+      resolve: {
+        component: () => SafeDynamicImport(import('app/features/admin/UpgradePage')),
+      },
+    })
     .when('/admin/users', {
-      templateUrl: 'public/app/features/admin/partials/users.html',
-      controller: 'AdminListUsersCtrl',
-      controllerAs: 'ctrl',
+      template: '<react-container />',
+      resolve: {
+        component: () =>
+          SafeDynamicImport(import(/* webpackChunkName: "UserListAdminPage" */ 'app/features/admin/UserListAdminPage')),
+      },
     })
     .when('/admin/users/create', {
-      templateUrl: 'public/app/features/admin/partials/new_user.html',
-      controller: 'AdminEditUserCtrl',
+      template: '<react-container />',
+      resolve: {
+        component: () =>
+          SafeDynamicImport(import(/* webpackChunkName: "UserCreatePage" */ 'app/features/admin/UserCreatePage')),
+      },
     })
     .when('/admin/users/edit/:id', {
-      templateUrl: 'public/app/features/admin/partials/edit_user.html',
-      controller: 'AdminEditUserCtrl',
+      template: '<react-container />',
+      resolve: {
+        component: () => UserAdminPage,
+      },
     })
     .when('/admin/orgs', {
       templateUrl: 'public/app/features/admin/partials/orgs.html',
@@ -334,13 +361,18 @@ export function setupAngularRoutes($routeProvider: route.IRouteProvider, $locati
       pageClass: 'login-page sidemenu-hidden',
     })
     .when('/invite/:code', {
-      templateUrl: 'public/app/partials/signup_invited.html',
-      controller: 'InvitedCtrl',
+      template: '<react-container/>',
       pageClass: 'sidemenu-hidden',
+      resolve: {
+        component: () =>
+          SafeDynamicImport(import(/* webpackChunkName: "SignupInvited" */ 'app/features/users/SignupInvited')),
+      },
     })
     .when('/signup', {
-      templateUrl: 'public/app/partials/signup_step2.html',
-      controller: 'SignUpCtrl',
+      template: '<react-container/>',
+      resolve: {
+        component: () => SignupPage,
+      },
       pageClass: 'sidemenu-hidden',
     })
     .when('/user/password/send-reset-email', {
@@ -377,11 +409,6 @@ export function setupAngularRoutes($routeProvider: route.IRouteProvider, $locati
       templateUrl: 'public/app/features/plugins/partials/plugin_page.html',
       controller: 'AppPageCtrl',
       controllerAs: 'ctrl',
-    })
-    .when('/styleguide/:page?', {
-      controller: 'StyleGuideCtrl',
-      controllerAs: 'ctrl',
-      templateUrl: 'public/app/features/admin/partials/styleguide.html',
     })
     .when('/alerting', {
       redirectTo: '/alerting/list',

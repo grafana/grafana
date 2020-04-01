@@ -2,9 +2,10 @@ import React, { FC, useContext } from 'react';
 import { css } from 'emotion';
 import { Modal } from '../Modal/Modal';
 import { IconType } from '../Icon/types';
-import { Button } from '../Button/Button';
+import { Button } from '../Button';
 import { stylesFactory, ThemeContext } from '../../themes';
 import { GrafanaTheme } from '@grafana/data';
+import { HorizontalGroup } from '..';
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => ({
   modal: css`
@@ -19,13 +20,6 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => ({
     margin-bottom: calc(${theme.spacing.d} * 2);
     padding-top: ${theme.spacing.d};
   `,
-  modalButtonRow: css`
-    margin-bottom: 14px;
-    a,
-    button {
-      margin-right: ${theme.spacing.d};
-    }
-  `,
 }));
 
 const defaultIcon: IconType = 'exclamation-triangle';
@@ -33,15 +27,24 @@ const defaultIcon: IconType = 'exclamation-triangle';
 interface Props {
   isOpen: boolean;
   title: string;
-  body: string;
+  body: React.ReactNode;
   confirmText: string;
+  dismissText?: string;
   icon?: IconType;
-
   onConfirm(): void;
   onDismiss(): void;
 }
 
-export const ConfirmModal: FC<Props> = ({ isOpen, title, body, confirmText, icon, onConfirm, onDismiss }) => {
+export const ConfirmModal: FC<Props> = ({
+  isOpen,
+  title,
+  body,
+  confirmText,
+  dismissText = 'Cancel',
+  icon,
+  onConfirm,
+  onDismiss,
+}) => {
   const theme = useContext(ThemeContext);
   const styles = getStyles(theme);
 
@@ -49,14 +52,14 @@ export const ConfirmModal: FC<Props> = ({ isOpen, title, body, confirmText, icon
     <Modal className={styles.modal} title={title} icon={icon || defaultIcon} isOpen={isOpen} onDismiss={onDismiss}>
       <div className={styles.modalContent}>
         <div className={styles.modalText}>{body}</div>
-        <div className={styles.modalButtonRow}>
-          <Button variant="danger" onClick={onConfirm}>
+        <HorizontalGroup justify="center">
+          <Button variant="destructive" onClick={onConfirm}>
             {confirmText}
           </Button>
-          <Button variant="inverse" onClick={onDismiss}>
-            Cancel
+          <Button variant="secondary" onClick={onDismiss}>
+            {dismissText}
           </Button>
-        </div>
+        </HorizontalGroup>
       </div>
     </Modal>
   );
