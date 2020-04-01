@@ -1,6 +1,6 @@
 import { sharedSingleStatMigrationHandler, sharedSingleStatPanelChangedHandler } from '@grafana/ui';
-import { defaultStandardFieldConfigProperties, PanelPlugin } from '@grafana/data';
-import { StatPanelOptions, defaults, standardFieldConfigDefaults, addStandardDataReduceOptions } from './types';
+import { PanelPlugin } from '@grafana/data';
+import { StatPanelOptions, defaults, addStandardDataReduceOptions } from './types';
 import { StatPanel } from './StatPanel';
 import { StatPanelEditor } from './StatPanelEditor';
 
@@ -48,4 +48,4 @@ export const plugin = new PanelPlugin<StatPanelOptions>(StatPanel)
   .setNoPadding()
   .setPanelChangeHandler(sharedSingleStatPanelChangedHandler)
   .setMigrationHandler(sharedSingleStatMigrationHandler)
-  .useStandardFieldConfig(defaultStandardFieldConfigProperties, standardFieldConfigDefaults);
+  .useStandardFieldConfig();

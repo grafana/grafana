@@ -8,33 +8,45 @@ import {
   PanelPluginMeta,
   PanelProps,
   PanelTypeChangedHandler,
-  StandardFieldConfigProperties,
+  StandardFieldConfigProperty,
+  ThresholdsMode,
 } from '../types';
 import { FieldConfigEditorBuilder, PanelOptionsEditorBuilder } from '../utils/OptionsUIBuilders';
 import { ComponentClass, ComponentType } from 'react';
 import set from 'lodash/set';
 import { deprecationWarning } from '../utils';
 
-export const defaultStandardFieldConfigProperties: StandardFieldConfigProperties[] = [
-  StandardFieldConfigProperties.Min,
-  StandardFieldConfigProperties.Max,
-  StandardFieldConfigProperties.Title,
-  StandardFieldConfigProperties.Unit,
-  StandardFieldConfigProperties.Decimals,
-  StandardFieldConfigProperties.NoValue,
-  StandardFieldConfigProperties.Color,
-  StandardFieldConfigProperties.Thresholds,
-  StandardFieldConfigProperties.Mappings,
-  StandardFieldConfigProperties.Links,
+export const allStandardFieldConfigProperties: StandardFieldConfigProperty[] = [
+  StandardFieldConfigProperty.Min,
+  StandardFieldConfigProperty.Max,
+  StandardFieldConfigProperty.Title,
+  StandardFieldConfigProperty.Unit,
+  StandardFieldConfigProperty.Decimals,
+  StandardFieldConfigProperty.NoValue,
+  StandardFieldConfigProperty.Color,
+  StandardFieldConfigProperty.Thresholds,
+  StandardFieldConfigProperty.Mappings,
+  StandardFieldConfigProperty.Links,
 ];
 
-export const standardFieldConfigProperties = new Map(defaultStandardFieldConfigProperties.map(p => [p, undefined]));
+export const standardFieldConfigDefaults: Partial<Record<StandardFieldConfigProperty, any>> = {
+  [StandardFieldConfigProperty.Thresholds]: {
+    mode: ThresholdsMode.Absolute,
+    steps: [
+      { value: -Infinity, color: 'green' },
+      { value: 80, color: 'red' },
+    ],
+  },
+  [StandardFieldConfigProperty.Mappings]: [],
+};
+
+export const standardFieldConfigProperties = new Map(allStandardFieldConfigProperties.map(p => [p, undefined]));
 
 export class PanelPlugin<TOptions = any, TFieldConfigOptions extends object = any> extends GrafanaPlugin<
   PanelPluginMeta
 > {
   private _defaults?: TOptions;
-  private _standardFieldConfigProperties?: Map<StandardFieldConfigProperties, any>;
+  private _standardFieldConfigProperties?: Map<StandardFieldConfigProperty, any>;
 
   private _fieldConfigDefaults: FieldConfigSource<TFieldConfigOptions> = {
     defaults: {},
@@ -270,13 +282,13 @@ export class PanelPlugin<TOptions = any, TFieldConfigOptions extends object = an
    * // when plugin should only display specific standard options
    * // note, that options will be displayed in the order they are provided
    * export const plugin = new PanelPlugin<ShapePanelOptions>(ShapePanel)
-   *  .useStandardFieldConfig([StandardFieldConfigProperties.Min, StandardFieldConfigProperties.Max, StandardFieldConfigProperties.Links]);
+   *  .useStandardFieldConfig([StandardFieldConfigProperty.Min, StandardFieldConfigProperty.Max, StandardFieldConfigProperty.Links]);
    *
    * // when standard option's default value needs to be provided
    * export const plugin = new PanelPlugin<ShapePanelOptions>(ShapePanel)
-   *  .useStandardFieldConfig([StandardFieldConfigProperties.Min, StandardFieldConfigProperties.Max], {
-   *    [StandardFieldConfigProperties.Min]: 20,
-   *    [StandardFieldConfigProperties.Max]: 100
+   *  .useStandardFieldConfig([StandardFieldConfigProperty.Min, StandardFieldConfigProperty.Max], {
+   *    [StandardFieldConfigProperty.Min]: 20,
+   *    [StandardFieldConfigProperty.Max]: 100
    *  });
    *
    * ```
@@ -284,8 +296,8 @@ export class PanelPlugin<TOptions = any, TFieldConfigOptions extends object = an
    * @public
    */
   useStandardFieldConfig(
-    properties?: StandardFieldConfigProperties[],
-    defauls?: Partial<Record<StandardFieldConfigProperties, any>>
+    properties?: StandardFieldConfigProperty[] | null,
+    customDefaults?: Partial<Record<StandardFieldConfigProperty, any>>
   ) {
     if (!properties) {
       this._standardFieldConfigProperties = standardFieldConfigProperties;
@@ -294,12 +306,14 @@ export class PanelPlugin<TOptions = any, TFieldConfigOptions extends object = an
       this._standardFieldConfigProperties = new Map(properties.map(p => [p, standardFieldConfigProperties.get(p)]));
     }
 
-    if (defauls) {
-      Object.keys(defauls).map(k => {
-        if (properties.indexOf(k as StandardFieldConfigProperties) > -1) {
+    const defaults = customDefaults ?? standardFieldConfigDefaults;
+
+    if (defaults) {
+      Object.keys(defaults).map(k => {
+        if (properties.indexOf(k as StandardFieldConfigProperty) > -1) {
           this._standardFieldConfigProperties!.set(
-            k as StandardFieldConfigProperties,
-            defauls[k as StandardFieldConfigProperties]
+            k as StandardFieldConfigProperty,
+            defaults[k as StandardFieldConfigProperty]
           );
         }
       });

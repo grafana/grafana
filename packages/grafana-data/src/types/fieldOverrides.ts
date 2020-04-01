@@ -88,7 +88,7 @@ export interface ApplyFieldOverrideOptions {
   custom?: FieldConfigEditorRegistry;
 }
 
-export enum StandardFieldConfigProperties {
+export enum StandardFieldConfigProperty {
   Unit = 'unit',
   Min = 'min',
   Max = 'max',

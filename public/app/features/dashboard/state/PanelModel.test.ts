@@ -1,6 +1,6 @@
 import { PanelModel } from './PanelModel';
 import { getPanelPlugin } from '../../plugins/__mocks__/pluginMocks';
-import { PanelProps, StandardFieldConfigProperties } from '@grafana/data';
+import { PanelProps, StandardFieldConfigProperty } from '@grafana/data';
 import { ComponentClass } from 'react';
 
 class TablePanelCtrl {}
@@ -79,9 +79,9 @@ describe('PanelModel', () => {
         TablePanelCtrl // angular
       );
       panelPlugin.setDefaults(defaultOptionsMock);
-      panelPlugin.useStandardFieldConfig([StandardFieldConfigProperties.Unit, StandardFieldConfigProperties.Decimals], {
-        [StandardFieldConfigProperties.Unit]: 'flop',
-        [StandardFieldConfigProperties.Decimals]: 2,
+      panelPlugin.useStandardFieldConfig([StandardFieldConfigProperty.Unit, StandardFieldConfigProperty.Decimals], {
+        [StandardFieldConfigProperty.Unit]: 'flop',
+        [StandardFieldConfigProperty.Decimals]: 2,
       });
       model.pluginLoaded(panelPlugin);
     });
