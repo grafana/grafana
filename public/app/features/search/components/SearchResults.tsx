@@ -1,30 +1,32 @@
-import React, { FC } from 'react';
+import React, { FC, Dispatch } from 'react';
 import { css, cx } from 'emotion';
 import { GrafanaTheme } from '@grafana/data';
 import { Icon, stylesFactory, useTheme } from '@grafana/ui';
 import { IconType } from '@grafana/ui/src/components/Icon/types';
-import { DashboardSection, ItemClickWithEvent } from '../types';
+import { DashboardSection, ItemClickWithEvent, SearchAction } from '../types';
 import { SearchItem } from './SearchItem';
 import { SearchCheckbox } from './SearchCheckbox';
 
 export interface Props {
-  results: DashboardSection[] | undefined;
-  onSelectionChanged: () => void;
-  onTagSelected: (name: string) => any;
-  onFolderExpanding: () => void;
-  onToggleSelection: ItemClickWithEvent;
+  dispatch?: Dispatch<SearchAction>;
   editable: boolean;
+  onFolderExpanding?: () => void;
+  onSelectionChanged?: () => void;
+  onTagSelected: (name: string) => any;
   onToggleSection?: any;
+  onToggleSelection?: ItemClickWithEvent;
+  results: DashboardSection[] | undefined;
 }
 
 export const SearchResults: FC<Props> = ({
-  results,
+  dispatch,
+  editable,
+  onFolderExpanding,
   onSelectionChanged,
   onTagSelected,
-  onFolderExpanding,
-  onToggleSelection,
-  editable,
   onToggleSection,
+  onToggleSelection,
+  results,
 }) => {
   const theme = useTheme();
   const styles = getSectionStyles(theme);

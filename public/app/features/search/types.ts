@@ -58,3 +58,8 @@ export interface SectionsState {
 }
 
 export type ItemClickWithEvent = (item: DashboardSectionItem | DashboardSection, event: any) => void;
+
+export type SearchAction = {
+  type: string;
+  payload: any;
+};

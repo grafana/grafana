@@ -6,7 +6,7 @@ import { backendSrv } from 'app/core/services/backend_srv';
 import { SearchQuery } from 'app/core/components/search/search';
 import { SearchField } from './SearchField';
 import { SearchResults } from './SearchResults';
-import { DashboardSection } from '../types';
+import { DashboardSection, SearchAction } from '../types';
 
 const FETCH_RESULTS = 'FETCH_RESULTS';
 const TOGGLE_SECTION = 'TOGGLE_SECTION';
@@ -37,7 +37,7 @@ const initialState: State = {
   results: [],
 };
 
-const searchReducer = (state: any, action: any) => {
+const searchReducer = (state: any, action: SearchAction) => {
   switch (action.type) {
     case FETCH_RESULTS:
       return { ...state, results: action.payload };
@@ -134,10 +134,8 @@ export const DashboardSearch: FC = () => {
             <div className="search-results-container">
               <SearchResults
                 results={state.results}
-                onSelectionChanged={() => {}}
                 onTagSelected={() => {}}
-                onFolderExpanding={() => {}}
-                onToggleSelection={() => {}}
+                dispatch={dispatch}
                 editable={false}
                 onToggleSection={toggleSection}
               />
