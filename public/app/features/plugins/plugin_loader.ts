@@ -44,112 +44,12 @@ import * as grafanaData from '@grafana/data';
 import * as grafanaUIraw from '@grafana/ui';
 import * as grafanaRuntime from '@grafana/runtime';
 
-// Help the 6.4 to 6.5 migration
-// The base classes were moved from @grafana/ui to @grafana/data
-// This exposes the same classes on both import paths
-const grafanaUI = grafanaUIraw as any;
-grafanaUI.PanelPlugin = grafanaData.PanelPlugin;
-grafanaUI.DataSourcePlugin = grafanaData.DataSourcePlugin;
-grafanaUI.AppPlugin = grafanaData.AppPlugin;
-grafanaUI.DataSourceApi = grafanaData.DataSourceApi;
+import { getPanelPluginNotFound, getPanelPluginLoadError } from '../dashboard/dashgrid/PanelPluginError';
+import { GenericDataSourcePlugin } from '../datasources/settings/PluginSettings';
 
 // rxjs
 import * as rxjs from 'rxjs';
 import * as rxjsOperators from 'rxjs/operators';
-
-// add cache busting
-const bust = `?_cache=${Date.now()}`;
-function locate(load: { address: string }) {
-  return load.address + bust;
-}
-grafanaRuntime.SystemJS.registry.set('plugin-loader', grafanaRuntime.SystemJS.newModule({ locate: locate }));
-
-grafanaRuntime.SystemJS.config({
-  baseURL: 'public',
-  defaultExtension: 'js',
-  packages: {
-    plugins: {
-      defaultExtension: 'js',
-    },
-  },
-  map: {
-    text: 'vendor/plugin-text/text.js',
-    css: 'vendor/plugin-css/css.js',
-  },
-  meta: {
-    '/*': {
-      esModule: true,
-      authorization: true,
-      loader: 'plugin-loader',
-    },
-  },
-});
-
-function exposeToPlugin(name: string, component: any) {
-  grafanaRuntime.SystemJS.registerDynamic(name, [], true, (require: any, exports: any, module: { exports: any }) => {
-    module.exports = component;
-  });
-}
-
-exposeToPlugin('@grafana/data', grafanaData);
-exposeToPlugin('@grafana/ui', grafanaUI);
-exposeToPlugin('@grafana/runtime', grafanaRuntime);
-exposeToPlugin('lodash', _);
-exposeToPlugin('moment', moment);
-exposeToPlugin('jquery', jquery);
-exposeToPlugin('angular', angular);
-exposeToPlugin('d3', d3);
-exposeToPlugin('rxjs', rxjs);
-exposeToPlugin('rxjs/operators', rxjsOperators);
-
-// Experimental modules
-exposeToPlugin('prismjs', prismjs);
-exposeToPlugin('slate', slate);
-exposeToPlugin('@grafana/slate-react', slateReact);
-exposeToPlugin('slate-plain-serializer', slatePlain);
-exposeToPlugin('react', react);
-exposeToPlugin('react-dom', reactDom);
-exposeToPlugin('react-redux', reactRedux);
-exposeToPlugin('redux', redux);
-exposeToPlugin('emotion', emotion);
-
-exposeToPlugin('app/features/dashboard/impression_store', {
-  impressions: impressionSrv,
-  __esModule: true,
-});
-
-/**
- * NOTE: this is added temporarily while we explore a long term solution
- * If you use this export, only use the:
- *  get/delete/post/patch/request methods
- */
-exposeToPlugin('app/core/services/backend_srv', {
-  BackendSrv,
-  getBackendSrv,
-});
-
-exposeToPlugin('app/plugins/sdk', sdk);
-exposeToPlugin('app/core/utils/datemath', dateMath);
-exposeToPlugin('app/core/utils/flatten', flatten);
-exposeToPlugin('app/core/utils/kbn', kbn);
-exposeToPlugin('app/core/utils/ticks', ticks);
-exposeToPlugin('app/core/utils/promiseToDigest', {
-  promiseToDigest: promiseToDigest,
-  __esModule: true,
-});
-
-exposeToPlugin('app/core/config', config);
-exposeToPlugin('app/core/time_series', TimeSeries);
-exposeToPlugin('app/core/time_series2', TimeSeries);
-exposeToPlugin('app/core/table_model', TableModel);
-exposeToPlugin('app/core/app_events', appEvents);
-exposeToPlugin('app/core/core_module', coreModule);
-exposeToPlugin('app/core/core', {
-  coreModule: coreModule,
-  appEvents: appEvents,
-  contextSrv: contextSrv,
-  __esModule: true,
-});
 
 import 'vendor/flot/jquery.flot';
 import 'vendor/flot/jquery.flot.selection';
@@ -160,6 +60,111 @@ import 'vendor/flot/jquery.flot.fillbelow';
 import 'vendor/flot/jquery.flot.crosshair';
 import 'vendor/flot/jquery.flot.dashes';
 import 'vendor/flot/jquery.flot.gauge';
+
+const { SystemJS } = grafanaRuntime;
+
+// Help the 6.4 to 6.5 migration
+// The base classes were moved from @grafana/ui to @grafana/data
+// This exposes the same classes on both import paths
+const grafanaUI = grafanaUIraw as any;
+grafanaUI.PanelPlugin = grafanaData.PanelPlugin;
+grafanaUI.DataSourcePlugin = grafanaData.DataSourcePlugin;
+grafanaUI.AppPlugin = grafanaData.AppPlugin;
+grafanaUI.DataSourceApi = grafanaData.DataSourceApi;
+
+const PLUGIN_BASE_URL = '/public';
+
+interface ImportMapModule {
+  key: string;
+  path: string;
+}
+
+const appendImportMap = (modules: ImportMapModule[], reprocessImportMaps: boolean): Promise<HTMLScriptElement> => {
+  const script = document.createElement('script');
+  script.type = 'systemjs-importmap';
+  script.textContent = JSON.stringify({
+    imports: Object.fromEntries(modules.map(({ key, path }) => [key, path])),
+  });
+
+  // Tests don't support `document.currentScript`
+  document.body.append(script);
+
+  // Wait for import map
+  return SystemJS.prepareImport(reprocessImportMaps).then(() => script);
+};
+
+// Exported for tests
+export interface ExposedModuleConfig {
+  isPluginModule?: boolean;
+  key: string;
+  path?: string; // @todo remove?
+  url?: string; // @todo remove?
+  value: any;
+}
+
+// Exported for tests
+export interface CompleteExposedModuleConfig {
+  isPluginModule: boolean;
+  key: string;
+  path: string;
+  url: string;
+  value: any;
+}
+
+// Exported for tests
+export interface ExposedModulesConfig {
+  importMap: HTMLScriptElement;
+  modules: CompleteExposedModuleConfig[];
+}
+
+const cacheBuster = Date.now();
+
+const resolveModulePath = (key: string, isPluginModule = false): string => {
+  if (isPluginModule) {
+    const baseURL = key.startsWith('/') ? '' : `${PLUGIN_BASE_URL}/`;
+    const defaultExtension = key.endsWith('.js') ? '' : '.js';
+    return `${baseURL}${key}${defaultExtension}?_cache=${cacheBuster}`;
+  } else {
+    return `${PLUGIN_BASE_URL}/nonexistent-for-import-map/${key}/index.js`;
+  }
+};
+
+// Exported for tests
+export const exposeAsyncModules = async (
+  modules: ExposedModuleConfig[],
+  reloadImportMaps = false
+): Promise<ExposedModulesConfig> => {
+  const TEMP_URL = '__temp';
+
+  const semiCompleteModules = modules.map(
+    ({ isPluginModule, key, path, url, value }) =>
+      ({
+        isPluginModule: !!isPluginModule,
+        key,
+        path: path ?? resolveModulePath(key, isPluginModule),
+        url: url ?? TEMP_URL,
+        value: value ?? {}, // support undefined named exports within test stubs
+      } as CompleteExposedModuleConfig)
+  );
+
+  const script = await appendImportMap(semiCompleteModules, reloadImportMaps);
+
+  // `SystemJS.resolve` failed if `SystemJS.prepareImport` was not called
+  const completeModules = semiCompleteModules.map(
+    module =>
+      ({
+        ...module,
+        url: module.url === TEMP_URL ? SystemJS.resolve(module.key) : module.url,
+      } as CompleteExposedModuleConfig)
+  );
+
+  completeModules.forEach(({ url, value }) => SystemJS.set(url, value));
+
+  return {
+    importMap: script,
+    modules: completeModules,
+  };
+};
 
 const flotDeps = [
   'jquery.flot',
@@ -174,9 +179,68 @@ const flotDeps = [
   'jquery.flot.gauge',
 ];
 
-for (const flotDep of flotDeps) {
-  exposeToPlugin(flotDep, { fakeDep: 1 });
-}
+exposeAsyncModules([
+  { key: '@grafana/data', value: grafanaData },
+  { key: '@grafana/ui', value: grafanaUI },
+  { key: '@grafana/runtime', value: grafanaRuntime },
+  { key: 'lodash', value: _ },
+  { key: 'moment', value: moment },
+  { key: 'jquery', value: jquery },
+  { key: 'angular', value: angular },
+  { key: 'd3', value: d3 },
+  { key: 'rxjs', value: rxjs },
+  { key: 'rxjs/operators', value: rxjsOperators },
+
+  // Experimental modules
+  { key: 'prismjs', value: prismjs },
+  { key: 'slate', value: slate },
+  { key: '@grafana/slate-react', value: slateReact },
+  { key: 'slate-plain-serializer', value: slatePlain },
+  { key: 'react', value: react },
+  { key: 'react-dom', value: reactDom },
+  { key: 'react-redux', value: reactRedux },
+  { key: 'redux', value: redux },
+  { key: 'emotion', value: emotion },
+
+  { key: 'app/features/dashboard/impression_store', value: { impressions: impressionSrv } },
+
+  /**
+   * NOTE: this is added temporarily while we explore a long term solution
+   * If you use this export, only use the:
+   *  get/delete/post/patch/request methods
+   */
+  {
+    key: 'app/core/services/backend_srv',
+    value: {
+      BackendSrv,
+      getBackendSrv,
+    },
+  },
+
+  { key: 'app/plugins/sdk', value: sdk },
+  { key: 'app/core/utils/datemath', value: dateMath },
+  { key: 'app/core/utils/flatten', value: flatten },
+  { key: 'app/core/utils/kbn', value: kbn },
+  { key: 'app/core/utils/ticks', value: ticks },
+  { key: 'app/core/utils/promiseToDigest', value: { promiseToDigest } },
+
+  { key: 'app/core/config', value: config },
+  { key: 'app/core/time_series', value: TimeSeries },
+  { key: 'app/core/time_series2', value: TimeSeries },
+  { key: 'app/core/table_model', value: TableModel },
+  { key: 'app/core/app_events', value: appEvents },
+  { key: 'app/core/core_module', value: coreModule },
+  {
+    key: 'app/core/core',
+    value: {
+      coreModule,
+      appEvents,
+      contextSrv,
+    },
+  },
+
+  ...flotDeps.map(flotDep => ({ key: flotDep, value: { fakeDep: 1 } })),
+]);
 
 export async function importPluginModule(path: string): Promise<any> {
   const builtIn = builtInPlugins[path];
@@ -188,7 +252,8 @@ export async function importPluginModule(path: string): Promise<any> {
       return Promise.resolve(builtIn);
     }
   }
-  return grafanaRuntime.SystemJS.import(path);
+
+  return SystemJS.import(resolveModulePath(path, true));
 }
 
 export function importDataSourcePlugin(meta: DataSourcePluginMeta): Promise<GenericDataSourcePlugin> {
@@ -223,9 +288,6 @@ export function importAppPlugin(meta: PluginMeta): Promise<AppPlugin> {
     return plugin;
   });
 }
-
-import { getPanelPluginNotFound, getPanelPluginLoadError } from '../dashboard/dashgrid/PanelPluginError';
-import { GenericDataSourcePlugin } from '../datasources/settings/PluginSettings';
 
 interface PanelCache {
   [key: string]: Promise<PanelPlugin>;

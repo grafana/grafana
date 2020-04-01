@@ -20,6 +20,7 @@ export function getPluginSettings(pluginId: string): Promise<PluginMeta> {
     })
     .catch((err: any) => {
       // err.isHandled = true;
+      // @todo should reject an `Error`
       return Promise.reject('Unknown Plugin');
     });
 }

@@ -284,19 +284,6 @@ Put them in the `static` directory in the root of your project. The `static` dir
 
 If you are using version `canary`, this error occurs because a `canary` release unpublishes previous versions leaving `yarn.lock` outdated. Remove `yarn.lock` and run `yarn install` again.
 
-### I am getting this message when I run my plugin: `Unable to dynamically transpile ES module A loader plugin needs to be configured via SystemJS.config({ transpiler: 'transpiler-module' }).`
-
-This error occurs when you bundle your plugin using the `grafana-toolkit plugin:dev` task and your code comments include ES2016 code.
-
-There are two issues at play:
-
-- The `grafana-toolkit plugin:dev` task does not remove comments from your bundled package.
-- Grafana does not support [ES modules](https://hacks.mozilla.org/2018/03/es-modules-a-cartoon-deep-dive/).
-
-If your comments include ES2016 code, then SystemJS v0.20.19, which Grafana uses internally to load plugins, interprets your code as an ESM and fails.
-
-To fix this error, remove the ES2016 code from your comments.
-
 ## Contribute to grafana-toolkit
 
 You can contribute to grafana-toolkit by helping develop it or by debugging it.

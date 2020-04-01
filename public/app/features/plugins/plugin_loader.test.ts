@@ -5,19 +5,17 @@ jest.unmock('app/features/plugins/plugin_loader');
   define: jest.fn(),
 };
 
-jest.mock('app/core/core', () => {
-  return {
-    coreModule: {
-      directive: jest.fn(),
-    },
-  };
-});
+jest.mock('app/core/core', () => ({
+  coreModule: {
+    directive: jest.fn(),
+  },
+}));
 
 import { SystemJS } from '@grafana/runtime';
 import { AppPluginMeta, PluginMetaInfo, PluginType, AppPlugin } from '@grafana/data';
 
-// Loaded after the `unmock` abve
-import { importAppPlugin } from './plugin_loader';
+// Loaded after the `unmock` above
+import { exposeAsyncModules, ExposedModulesConfig, importAppPlugin } from './plugin_loader';
 
 class MyCustomApp extends AppPlugin {
   initWasCalled = false;
@@ -32,16 +30,28 @@ class MyCustomApp extends AppPlugin {
 describe('Load App', () => {
   const app = new MyCustomApp();
   const modulePath = 'my/custom/plugin/module';
+  let exposedModulesConfig: ExposedModulesConfig | undefined;
 
-  beforeAll(() => {
-    SystemJS.set(modulePath, SystemJS.newModule({ plugin: app }));
+  beforeAll(async () => {
+    exposedModulesConfig = await exposeAsyncModules(
+      [
+        {
+          isPluginModule: true,
+          key: modulePath,
+          value: { plugin: app },
+        },
+      ],
+      true
+    );
   });
 
   afterAll(() => {
-    SystemJS.delete(modulePath);
+    exposedModulesConfig?.modules.forEach(({ url }) => SystemJS.delete(url));
+    exposedModulesConfig?.importMap.remove();
+    return SystemJS.prepareImport(true); // reprocess all
   });
 
-  it('should call init and set meta', async () => {
+  it('calls init and sets meta', async () => {
     const meta: AppPluginMeta = {
       id: 'test-app',
       module: modulePath,
@@ -52,7 +62,8 @@ describe('Load App', () => {
     };
 
     // Check that we mocked the import OK
-    const m = await SystemJS.import(modulePath);
+    const resolvedModulePath = exposedModulesConfig?.modules.filter(({ key }) => key === modulePath)[0].url;
+    const m = await SystemJS.import(resolvedModulePath);
     expect(m.plugin).toBe(app);
 
     const loaded = await importAppPlugin(meta);
