@@ -18,7 +18,7 @@ export const DeleteButton: FC<Props> = ({ size, disabled, onConfirm }) => {
       disabled={disabled}
       onConfirm={onConfirm}
     >
-      <Button variant="destructive" icon="fa fa-remove" size={size || 'sm'} />
+      <Button variant="destructive" icon="times" size={size || 'sm'} />
     </ConfirmButton>
   );
 };

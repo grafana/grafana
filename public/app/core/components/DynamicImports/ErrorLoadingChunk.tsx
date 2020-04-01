@@ -20,7 +20,7 @@ export const ErrorLoadingChunk: FunctionComponent<Props> = ({ error }) => (
     <h2 className="page-heading">Grafana has likely been updated. Please try reloading the page.</h2>
     <br />
     <div className="gf-form-group">
-      <Button size="md" variant="secondary" icon="fa fa-repeat" onClick={() => window.location.reload()}>
+      <Button size="md" variant="secondary" icon="repeat" onClick={() => window.location.reload()}>
         Reload
       </Button>
     </div>

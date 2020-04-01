@@ -1,6 +1,8 @@
 import React from 'react';
 import { css } from 'emotion';
 import { stylesFactory, useTheme } from '../../themes';
+import { IconName } from '../../types';
+import { Icon } from '../Icon/Icon';
 import { ComponentSize } from '../../types/size';
 import { GrafanaTheme } from '@grafana/data';
 
@@ -14,8 +16,6 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => ({
   `,
 
   icon: css`
-    position: relative;
-    top: 1px;
     & + * {
       margin-left: ${theme.spacing.sm};
     }
@@ -23,28 +23,24 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => ({
 }));
 
 type Props = {
-  icon?: string;
+  icon?: IconName;
   className?: string;
   children: React.ReactNode;
   size?: ComponentSize;
 };
 
 export function ButtonContent(props: Props) {
-  const { icon, children } = props;
+  const { icon, children, size } = props;
   const theme = useTheme();
   const styles = getStyles(theme);
 
   if (!children) {
-    return (
-      <span className={styles.content}>
-        <i className={icon} />
-      </span>
-    );
+    return <span className={styles.content}>{icon && <Icon name={icon} size={size} />}</span>;
   }
 
   const iconElement = icon && (
     <span className={styles.icon}>
-      <i className={icon} />
+      <Icon name={icon} size={size} />
     </span>
   );
 

@@ -13,6 +13,7 @@ export type IconName =
   | 'trash-alt'
   | 'exclamation-triangle'
   | 'times'
+  | 'cloud-upload'
   | 'step-backward'
   | 'square-shape'
   | 'share-alt'
@@ -39,11 +40,15 @@ export type IconName =
   | 'link'
   | 'upload'
   | 'home-alt'
+  | 'channel-add'
+  | 'calendar-alt'
+  | 'calculator-alt'
   | 'compass'
   | 'sliders-v-alt'
   | 'bell'
   | 'database'
   | 'user'
+  | 'camera'
   | 'plug'
   | 'shield'
   | 'key-skeleton-alt'
@@ -57,22 +62,32 @@ export type IconName =
   | 'bug'
   | 'cube'
   | 'star'
+  | 'list-ul'
   | 'edit'
   | 'shield'
   | 'eye'
   | 'monitor'
+  | 'plus-circle'
+  | 'arrow-left'
+  | 'repeat'
+  | 'external-link-alt'
   | 'favorite';
 
 export const getAvailableIcons = (): IconName[] => [
   'question-circle',
   'plane',
   'plus',
+  'plus-circle',
   'angle-up',
   'shield',
   'angle-down',
   'angle-left',
   'angle-right',
+  'calendar-alt',
+  'calculator-alt',
   'pen',
+  'repeat',
+  'external-link-alt',
   'power',
   'trash-alt',
   'exclamation-triangle',
@@ -80,6 +95,7 @@ export const getAvailableIcons = (): IconName[] => [
   'step-backward',
   'square-shape',
   'share-alt',
+  'camera',
   'forward',
   'check',
   'add-panel',
@@ -88,6 +104,7 @@ export const getAvailableIcons = (): IconName[] => [
   'panel-add',
   'arrow-random',
   'arrow-from-right',
+  'arrow-left',
   'keyboard',
   'search',
   'chart-line',
@@ -115,7 +132,9 @@ export const getAvailableIcons = (): IconName[] => [
   'graph-bar',
   'book',
   'bolt',
+  'cloud-upload',
   'comments-alt',
+  'list-ul',
   'document-info',
   'info-circle',
   'bug',
@@ -123,6 +142,7 @@ export const getAvailableIcons = (): IconName[] => [
   'star',
   'edit',
   'eye',
+  'channel-add',
   'monitor',
   'favorite',
 ];

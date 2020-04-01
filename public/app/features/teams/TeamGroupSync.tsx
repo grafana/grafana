@@ -122,7 +122,7 @@ export class TeamGroupSync extends PureComponent<Props, State> {
         {groups.length === 0 && !isAdding && (
           <EmptyListCTA
             onClick={this.onToggleAdding}
-            buttonIcon="gicon gicon-team"
+            buttonIcon="users-alt"
             title="There are no external groups to sync with"
             buttonTitle="Add Group"
             proTip={headerTooltip}

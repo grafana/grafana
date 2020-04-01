@@ -1,7 +1,7 @@
 import React, { PureComponent } from 'react';
 import { connect, MapStateToProps, MapDispatchToProps } from 'react-redux';
 import { css } from 'emotion';
-import { Alert, Button } from '@grafana/ui';
+import { Alert, Button, IconName } from '@grafana/ui';
 
 import { AngularComponent, getAngularLoader, getDataSourceSrv } from '@grafana/runtime';
 import appEvents from 'app/core/app_events';
@@ -130,7 +130,7 @@ class UnConnectedAlertTab extends PureComponent<Props, State> {
           title: 'Delete Alert',
           text: 'Are you sure you want to delete this alert rule?',
           text2: 'You need to save dashboard for the delete to take effect',
-          icon: 'fa-trash',
+          icon: 'trash-alt',
           yesText: 'Delete',
           onConfirm: () => {
             delete panel.alert;
@@ -178,7 +178,7 @@ class UnConnectedAlertTab extends PureComponent<Props, State> {
         <h2>{validatonMessage}</h2>
         <br />
         <div className="gf-form-group">
-          <Button size={'md'} variant={'secondary'} icon="fa fa-arrow-left" onClick={this.switchToQueryTab}>
+          <Button size={'md'} variant={'secondary'} icon="arrow-left" onClick={this.switchToQueryTab}>
             Go back to Queries
           </Button>
         </div>
@@ -199,7 +199,7 @@ class UnConnectedAlertTab extends PureComponent<Props, State> {
 
     const model = {
       title: 'Panel has no alert rule defined',
-      buttonIcon: 'gicon gicon-alert',
+      buttonIcon: 'bell' as IconName,
       onClick: this.onAddAlert,
       buttonTitle: 'Create Alert',
     };

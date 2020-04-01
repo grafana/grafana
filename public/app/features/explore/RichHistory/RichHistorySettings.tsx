@@ -63,7 +63,7 @@ export function RichHistorySettings(props: RichHistorySettingsProps) {
       title: 'Delete',
       text: 'Are you sure you want to permanently delete your query history?',
       yesText: 'Delete',
-      icon: 'fa-trash',
+      icon: 'trash-alt',
       onConfirm: () => {
         deleteRichHistory();
         appEvents.emit(AppEvents.alertSuccess, ['Query history deleted']);

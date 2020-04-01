@@ -1,10 +1,10 @@
 import React, { MouseEvent, useContext } from 'react';
-import { CallToActionCard, LinkButton, ThemeContext, Icon } from '@grafana/ui';
+import { CallToActionCard, LinkButton, ThemeContext, Icon, IconName } from '@grafana/ui';
 import { css } from 'emotion';
 
 export interface Props {
   title: string;
-  buttonIcon: string;
+  buttonIcon: IconName;
   buttonLink?: string;
   buttonTitle: string;
   onClick?: (event: MouseEvent) => void;

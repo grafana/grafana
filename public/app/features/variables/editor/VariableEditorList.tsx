@@ -47,7 +47,7 @@ export class VariableEditorList extends PureComponent<Props> {
             <div>
               <EmptyListCTA
                 title="There are no variables yet"
-                buttonIcon="gicon gicon-variable"
+                buttonIcon="calculator-alt"
                 buttonTitle="Add variable"
                 infoBox={{
                   __html: ` <p>

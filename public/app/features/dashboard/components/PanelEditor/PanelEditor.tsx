@@ -214,7 +214,7 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
           <div className={styles.toolbarItem}>
             <Button
               className={styles.toolbarItem}
-              icon="fa fa-sliders"
+              icon="sliders-v-alt"
               variant="secondary"
               onClick={this.onTogglePanelOptions}
             />
