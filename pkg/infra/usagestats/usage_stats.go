@@ -142,6 +142,7 @@ func (uss *UsageStatsService) sendUsageStats(oauthProviders map[string]bool) {
 		metrics["stats.ds_access.other."+access+".count"] = count
 	}
 
+	// get stats about alert notifier usage
 	anStats := models.GetAlertNotifierUsageStatsQuery{}
 	if err := uss.Bus.Dispatch(&anStats); err != nil {
 		metricsLogger.Error("Failed to get alert notification stats", "error", err)
