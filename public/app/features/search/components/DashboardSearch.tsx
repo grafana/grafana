@@ -87,7 +87,11 @@ const defaultQuery: SearchQuery = { query: '', parsedQuery: { text: '' }, tags: 
 const { isEditor, hasEditPermissionInFolders } = contextSrv;
 const canEdit = isEditor || hasEditPermissionInFolders;
 
-export const DashboardSearch: FC = () => {
+export interface Props {
+  close: () => void;
+}
+
+export const DashboardSearch: FC<Props> = ({ close }) => {
   const [query, setQuery] = useState(defaultQuery);
   const [state, dispatch] = useReducer(searchReducer, initialState);
 
@@ -128,7 +132,13 @@ export const DashboardSearch: FC = () => {
     }));
   };
 
-  const onKeyDown = () => {};
+  const onKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
+    switch (event.key) {
+      case 'Escape':
+        close();
+        break;
+    }
+  };
 
   const onTagFiltersChanged = (tags: string[]) => {
     setQuery(q => ({ ...q, tags }));
