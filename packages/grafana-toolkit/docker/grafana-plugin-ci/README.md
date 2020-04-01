@@ -20,7 +20,7 @@ The home directory will be `/home/circleci`
 
 All of the above directories are in the path, so there is no need to specify fully qualified paths.
 
-## Grafana source
+## Grafana
 - Installed in `/home/circleci/src/grafana`
 - `yarn install` has been run
 
@@ -47,5 +47,15 @@ To test, your CircleCI config will need a run section with something similar to 
 # Building
 To build, cd to `<srcroot>/packages/grafana-toolkit/docker/grafana-plugin-ci`
 ```
-docker build .
+./build.sh
 ```
+
+# Developing/Testing
+To test, you should have docker-compose installed.
+```
+cd test
+./start.sh
+```
+
+You will be in /home/circleci/test with the buildscripts installed to the local directory.
+Do your edits/run tests. When saving, your edits will be available in the container immediately.
