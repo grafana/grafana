@@ -18,6 +18,8 @@ import {
   MIN_PANEL_HEIGHT,
 } from 'app/core/constants';
 import { DataLinkBuiltInVars } from '@grafana/ui';
+import { isMulti } from 'app/features/variables/guard';
+import { alignCurrentWithMulti } from 'app/features/variables/shared/multiOptions';
 
 export class DashboardMigrator {
   dashboard: DashboardModel;
@@ -30,7 +32,7 @@ export class DashboardMigrator {
     let i, j, k, n;
     const oldVersion = this.dashboard.schemaVersion;
     const panelUpgrades = [];
-    this.dashboard.schemaVersion = 22;
+    this.dashboard.schemaVersion = 23;
 
     if (oldVersion === this.dashboard.schemaVersion) {
       return;
@@ -495,6 +497,16 @@ export class DashboardMigrator {
           style.align = 'auto';
         });
       });
+    }
+
+    if (oldVersion < 23) {
+      for (const variable of this.dashboard.templating.list) {
+        if (!isMulti(variable)) {
+          continue;
+        }
+        const { multi, current } = variable;
+        variable.current = alignCurrentWithMulti(current, multi);
+      }
     }
 
     if (panelUpgrades.length === 0) {

@@ -15,13 +15,14 @@ const sharedReducerSlice = createSlice({
   reducers: {
     addVariable: (state: VariablesState, action: PayloadAction<VariablePayload<AddVariable>>) => {
       const id = action.payload.id ?? action.payload.data.model.name; // for testing purposes we can call this with an id
-      state[id] = {
+      const variable = {
         ...cloneDeep(variableAdapters.get(action.payload.type).initialState),
         ...action.payload.data.model,
+        id: id,
+        index: action.payload.data.index,
+        global: action.payload.data.global,
       };
-      state[id].id = id;
-      state[id].index = action.payload.data.index;
-      state[id].global = action.payload.data.global;
+      state[id] = variable;
     },
     addInitLock: (state: VariablesState, action: PayloadAction<VariablePayload>) => {
       const instanceState = getInstanceState(state, action.payload.id!);
