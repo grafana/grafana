@@ -14,37 +14,35 @@ interface IconProps extends React.HTMLAttributes<HTMLDivElement> {
   name: IconName;
   size?: ComponentSize | 'xl' | 'xxl';
   type?: IconType;
-  color?: string;
 }
 export interface SvgProps extends React.HTMLAttributes<SVGElement> {
   size: number;
-  color: string;
   secondaryColor?: string;
   className?: string;
 }
 
-const getIconStyles = stylesFactory((theme: GrafanaTheme) => {
+const getIconStyles = stylesFactory((theme: GrafanaTheme, type: IconType) => {
+  const defaultIconColor = type === 'default' ? 'currentColor' : theme.colors.orange;
   return {
+    container: css`
+      display: inline-block;
+    `,
     icon: css`
       vertical-align: middle;
       display: inline-block;
       margin-bottom: ${theme.spacing.xxs};
       cursor: pointer;
-    `,
-    currentFontColor: css`
-      svg {
-        fill: currentColor;
+      * {
+        fill: ${defaultIconColor};
       }
     `,
   };
 });
 
 export const Icon = React.forwardRef<HTMLDivElement, IconProps>(
-  ({ size = 'md', type = 'default', color, title, name, className, ...divElementProps }, ref) => {
+  ({ size = 'md', type = 'default', title, name, className, style, ...divElementProps }, ref) => {
     const theme = useTheme();
-    const styles = getIconStyles(theme);
-    const mainColor = color || theme.colors.orange;
-    const secondaryColor = `${mainColor}99`;
+    const styles = getIconStyles(theme, type);
     const svgSize = getSvgSize(size, theme);
     const iconName = type === 'default' ? `Uil${pascalCase(name)}` : pascalCase(name);
 
@@ -57,17 +55,10 @@ export const Icon = React.forwardRef<HTMLDivElement, IconProps>(
     }
 
     return (
-      <span className={cx({ [styles.currentFontColor]: !color && type === 'default' })} {...divElementProps} ref={ref}>
-        {type === 'default' && <Component color={mainColor} size={svgSize} className={cx(styles.icon, className)} />}
-        {type === 'mono' && (
-          <Component
-            color={mainColor}
-            secondaryColor={secondaryColor}
-            size={svgSize}
-            className={cx(styles.icon, className)}
-          />
-        )}
-      </span>
+      <div className={styles.container} {...divElementProps} ref={ref}>
+        {type === 'default' && <Component size={svgSize} className={cx(styles.icon, className)} style={style} />}
+        {type === 'mono' && <Component size={svgSize} className={cx(styles.icon, className)} style={style} />}
+      </div>
     );
   }
 );
