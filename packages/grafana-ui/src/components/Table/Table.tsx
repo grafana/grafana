@@ -1,15 +1,14 @@
 import React, { FC, memo, useMemo } from 'react';
 import { DataFrame, Field } from '@grafana/data';
-import { useSortBy, useTable, useBlockLayout, Cell } from 'react-table';
+import { Cell, useBlockLayout, useSortBy, useTable } from 'react-table';
 import { FixedSizeList } from 'react-window';
 import useMeasure from 'react-use/lib/useMeasure';
-import { getColumns, getTableRows } from './utils';
+import { getColumns, getTableRows, getTextAlign } from './utils';
 import { useTheme } from '../../themes';
 import { TableFilterActionCallback } from './types';
 import { getTableStyles } from './styles';
 import { TableCell } from './TableCell';
 import { Icon } from '../Icon/Icon';
-import { getTextAlign } from './utils';
 import { CustomScrollbar } from '../CustomScrollbar/CustomScrollbar';
 
 export interface Props {
@@ -26,11 +25,26 @@ export const Table: FC<Props> = memo(({ data, height, onCellClick, width, column
   const theme = useTheme();
   const [ref, headerRowMeasurements] = useMeasure();
   const tableStyles = getTableStyles(theme);
+  const memoizedColumns = useMemo(() => getColumns(data, width, columnMinWidth ?? 150), [data, width, columnMinWidth]);
+  const memoizedData = useMemo(() => getTableRows(data), [data]);
+  const idToFieldMap = useMemo(() => {
+    return memoizedColumns.reduce((map, column) => {
+      const field = data.fields.find(field => field.name === column.id);
+      if (!field) {
+        throw new Error(`Could not find a field with the name:${column.id}`);
+      }
+
+      return {
+        ...map,
+        [field.name]: field,
+      };
+    }, {} as { [key: string]: Field });
+  }, [memoizedColumns, data.fields]);
 
   const { getTableProps, headerGroups, rows, prepareRow } = useTable(
     {
-      columns: useMemo(() => getColumns(data, width, columnMinWidth ?? 150), [data, width, columnMinWidth]),
-      data: useMemo(() => getTableRows(data), [data]),
+      columns: memoizedColumns,
+      data: memoizedData,
     },
     useSortBy,
     useBlockLayout
@@ -45,7 +59,7 @@ export const Table: FC<Props> = memo(({ data, height, onCellClick, width, column
           {row.cells.map((cell: Cell, index: number) => (
             <TableCell
               key={index}
-              field={data.fields[cell.column.index]}
+              field={idToFieldMap[cell.column.id]}
               tableStyles={tableStyles}
               cell={cell}
               onCellClick={onCellClick}
@@ -73,7 +87,7 @@ export const Table: FC<Props> = memo(({ data, height, onCellClick, width, column
             {headerGroups.map((headerGroup: any) => (
               <div className={tableStyles.thead} {...headerGroup.getHeaderGroupProps()} ref={ref}>
                 {headerGroup.headers.map((column: any) =>
-                  renderHeaderCell(column, tableStyles.headerCell, data.fields[column.index])
+                  renderHeaderCell(column, tableStyles.headerCell, idToFieldMap[column.id])
                 )}
               </div>
             ))}
@@ -93,7 +107,7 @@ export const Table: FC<Props> = memo(({ data, height, onCellClick, width, column
   );
 });
 
-function renderHeaderCell(column: any, className: string, field: Field) {
+function renderHeaderCell(column: any, className: string, field?: Field) {
   const headerProps = column.getHeaderProps(column.getSortByToggleProps());
   const fieldTextAlign = getTextAlign(field);
 
