@@ -1,12 +1,12 @@
-import React, { FC, useState, useEffect, useReducer } from 'react';
-import { debounce } from 'lodash';
+import React, { FC, useState, useReducer } from 'react';
+import { useDebounce } from 'react-use';
+import { parse, SearchParserResult } from 'search-query-parser';
 import { SearchSrv } from 'app/core/services/search_srv';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { SearchQuery } from 'app/core/components/search/search';
 import { SearchField } from './SearchField';
 import { SearchResults } from './SearchResults';
 import { DashboardSection } from '../types';
-import { parse, SearchParserResult } from 'search-query-parser';
 
 const FETCH_RESULTS = 'FETCH_RESULTS';
 const TOGGLE_SECTION = 'TOGGLE_SECTION';
@@ -81,19 +81,24 @@ const searchReducer = (state: any, action: any) => {
 };
 
 const defaultQuery: SearchQuery = { query: '', parsedQuery: { text: '' }, tags: [], starred: false };
+
 export const DashboardSearch: FC = () => {
   const [query, setQuery] = useState(defaultQuery);
   const [state, dispatch] = useReducer(searchReducer, initialState);
 
-  useEffect(() => {
-    search();
-  }, [query]);
+  useDebounce(
+    () => {
+      search();
+    },
+    300,
+    [query]
+  );
 
-  const search = debounce(() => {
+  const search = () => {
     searchSrv.search(query).then(results => {
       dispatch({ type: FETCH_RESULTS, payload: results });
     });
-  }, 300);
+  };
 
   const toggleSection = (section: DashboardSection) => {
     if (['Recent', 'Starred'].includes(section.title)) {
