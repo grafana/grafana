@@ -101,6 +101,7 @@ type TimelineColumnResizerProps = {
   max: number;
   onChange: (newSize: number) => void;
   position: number;
+  columnResizeHandleHeight: number;
 };
 
 type TimelineColumnResizerState = {
@@ -164,8 +165,8 @@ export default class TimelineColumnResizer extends React.PureComponent<
 
   render() {
     let left;
-    let draggerStyle;
-    const { position } = this.props;
+    let draggerStyle: React.CSSProperties;
+    const { position, columnResizeHandleHeight } = this.props;
     const { dragPosition } = this.state;
     left = `${position * 100}%`;
     const gripStyle = { left };
@@ -188,6 +189,7 @@ export default class TimelineColumnResizer extends React.PureComponent<
     } else {
       draggerStyle = gripStyle;
     }
+    draggerStyle.height = columnResizeHandleHeight;
 
     const isDragging = isDraggingLeft || isDraggingRight;
     return (

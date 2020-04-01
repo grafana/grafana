@@ -34,6 +34,7 @@ const getStyles = createStyle(() => {
       line-height: 38px;
       width: 100%;
       z-index: 4;
+      position: relative;
     `,
     title: css`
       flex: 1;
@@ -57,6 +58,7 @@ type TimelineHeaderRowProps = {
   updateNextViewRangeTime: (update: ViewRangeTimeUpdate) => void;
   updateViewRangeTime: TUpdateViewRangeTimeFunction;
   viewRangeTime: ViewRangeTime;
+  columnResizeHandleHeight: number;
 };
 
 export default function TimelineHeaderRow(props: TimelineHeaderRowProps) {
@@ -72,6 +74,7 @@ export default function TimelineHeaderRow(props: TimelineHeaderRowProps) {
     updateViewRangeTime,
     updateNextViewRangeTime,
     viewRangeTime,
+    columnResizeHandleHeight,
   } = props;
   const [viewStart, viewEnd] = viewRangeTime.current;
   const styles = getStyles();
@@ -95,7 +98,13 @@ export default function TimelineHeaderRow(props: TimelineHeaderRowProps) {
         />
         <Ticks numTicks={numTicks} startTime={viewStart * duration} endTime={viewEnd * duration} showLabels />
       </TimelineRow.Cell>
-      <TimelineColumnResizer position={nameColumnWidth} onChange={onColummWidthChange} min={0.2} max={0.85} />
+      <TimelineColumnResizer
+        columnResizeHandleHeight={columnResizeHandleHeight}
+        position={nameColumnWidth}
+        onChange={onColummWidthChange}
+        min={0.2}
+        max={0.85}
+      />
     </TimelineRow>
   );
 }
