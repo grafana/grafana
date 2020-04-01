@@ -64,6 +64,21 @@ Array [
         >
           Alignment Periods
         </option>
+        <option
+          value="selectors"
+        >
+          Selectors
+        </option>
+        <option
+          value="sloServices"
+        >
+          SLO Services
+        </option>
+        <option
+          value="slo"
+        >
+          Service Level Objectives (SLO)
+        </option>
       </select>
     </div>
   </div>,

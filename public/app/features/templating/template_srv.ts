@@ -2,7 +2,7 @@ import kbn from 'app/core/utils/kbn';
 import _ from 'lodash';
 import { escapeHtml } from 'app/core/utils/text';
 import { deprecationWarning, ScopedVars, TimeRange } from '@grafana/data';
-import { getFilteredVariables, getVariableClones, getVariableWithName } from '../variables/state/selectors';
+import { getFilteredVariables, getVariables, getVariableWithName } from '../variables/state/selectors';
 import { getConfig } from 'app/core/config';
 import { variableRegex } from './utils';
 import { isAdHoc } from '../variables/guard';
@@ -53,7 +53,7 @@ export class TemplateSrv {
 
   getVariables(): VariableModel[] {
     if (getConfig().featureToggles.newVariables) {
-      return getVariableClones();
+      return getVariables();
     }
 
     return this._variables;

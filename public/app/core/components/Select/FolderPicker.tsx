@@ -9,7 +9,7 @@ import { DashboardSearchHit } from '../../../types';
 
 export interface Props {
   onChange: ($folder: { title: string; id: number }) => void;
-  enableCreateNew: boolean;
+  enableCreateNew?: boolean;
   rootName?: string;
   enableReset?: boolean;
   dashboardId?: any;
@@ -43,6 +43,7 @@ export class FolderPicker extends PureComponent<Props, State> {
     enableReset: false,
     initialTitle: '',
     enableCreateNew: false,
+    useInNextGenForms: false,
   };
 
   componentDidMount = async () => {
@@ -115,7 +116,7 @@ export class FolderPicker extends PureComponent<Props, State> {
       folder = resetFolder;
     }
 
-    if (!folder) {
+    if (folder.value === -1) {
       if (contextSrv.isEditor) {
         folder = rootFolder;
       } else {

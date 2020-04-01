@@ -4,7 +4,7 @@
   height: $navbarHeight;
   padding: 0 16px 0 60px;
   display: flex;
-  flex-grow: 1;
+  flex-grow: 0;
   border-bottom: 1px solid transparent;
   transition-duration: 350ms;
   transition-timing-function: ease-in-out;
@@ -155,6 +155,7 @@ i.navbar-page-btn__search {
     .gicon {
       filter: $navbar-btn-gicon-brightness;
     }
+
     &:hover {
       .gicon {
         filter: brightness(0.8);
@@ -170,14 +171,18 @@ i.navbar-page-btn__search {
     }
   }
 
-  &--secondary {
-    @include buttonBackground($btn-secondary-bg, $btn-secondary-bg-hl);
+  &--primary {
+    @include buttonBackground($btn-primary-bg, $btn-primary-bg-hl);
   }
 
   &:hover {
     .fa {
       color: $text-color;
     }
+  }
+
+  &--danger {
+    @include buttonBackground($red-base, $red-shade);
   }
 
   @include media-breakpoint-down(lg) {

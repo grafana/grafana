@@ -111,7 +111,7 @@ func (sn *SensuNotifier) Notify(evalContext *alerting.EvalContext) error {
 		bodyJSON.Set("ruleUrl", ruleURL)
 	}
 
-	if evalContext.ImagePublicURL != "" {
+	if sn.NeedsImage() && evalContext.ImagePublicURL != "" {
 		bodyJSON.Set("imageUrl", evalContext.ImagePublicURL)
 	}
 

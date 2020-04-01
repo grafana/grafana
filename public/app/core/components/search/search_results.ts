@@ -44,15 +44,6 @@ export class SearchResultsCtrl {
     }
   }
 
-  navigateToFolder(section: any, evt: any) {
-    this.$location.path(section.url);
-
-    if (evt) {
-      evt.stopPropagation();
-      evt.preventDefault();
-    }
-  }
-
   toggleSelection(item: any, evt: any) {
     item.checked = !item.checked;
 
