@@ -5,9 +5,9 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/go-xorm/xorm"
 	"github.com/grafana/grafana/pkg/util/errutil"
 	"github.com/lib/pq"
+	"xorm.io/xorm"
 )
 
 type Postgres struct {
