@@ -1,7 +1,7 @@
 import React, { useMemo, useCallback } from 'react';
 import { SortAndFilterFieldsTransformerOptions } from '@grafana/data/src/transformations/transformers/sortAndFilter';
 import { TransformerUIRegistyItem, TransformerUIProps } from './types';
-import { DataTransformerID, transformersRegistry, DataFrame, stringToJsRegex } from '@grafana/data';
+import { DataTransformerID, transformersRegistry, DataFrame } from '@grafana/data';
 import { InlineList } from '../List/InlineList';
 import { Input } from '../Forms/Input/Input';
 
@@ -9,21 +9,22 @@ interface SortAndFilterTransformerEditorProps extends TransformerUIProps<SortAnd
 
 const SortAndFilterTransformerEditor: React.FC<SortAndFilterTransformerEditorProps> = props => {
   const { options, input, onChange } = props;
-  const { indexByName, exclude } = options;
-  console.log('exclude', exclude);
+  const { indexByName, excludeByName } = options;
 
-  const fields = useMemo(() => uniqueFieldNames(input), input);
+  const fields = useMemo(() => uniqueFieldNames(input, excludeByName), [input, excludeByName]);
   const sortedFields = useMemo(() => sortByIndex(fields, indexByName), [fields, indexByName]);
-  const isExcluded = useMemo(() => matcherFor(exclude), [exclude]);
 
   const toggleExclude = useCallback(
     (field: string, shouldExclude: boolean) => {
       onChange({
         ...options,
-        exclude: recreateRegexp(exclude, field, shouldExclude),
+        excludeByName: {
+          ...excludeByName,
+          [field]: shouldExclude,
+        },
       });
     },
-    [onChange, indexByName, exclude]
+    [onChange, indexByName, excludeByName]
   );
 
   const changeSorting = useCallback(
@@ -36,47 +37,30 @@ const SortAndFilterTransformerEditor: React.FC<SortAndFilterTransformerEditorPro
         },
       });
     },
-    [onChange, indexByName, exclude]
+    [onChange, indexByName, excludeByName]
   );
 
   return (
     <InlineList
       items={sortedFields}
-      renderItem={(field, index) => {
-        const excluded = isExcluded(field);
+      renderItem={(fieldName, index) => {
+        const excluded = excludeByName[fieldName];
         const icon = excluded ? 'fa fa-eye-slash' : 'fa fa-eye';
 
         return (
           <div>
-            <i className={icon} onClick={() => toggleExclude(field, !excluded)} />
-            <span>&nbsp;{field}</span>
-            <Input defaultValue={index.toString()} onBlur={event => changeSorting(field, event.currentTarget.value)} />
+            <i className={icon} onClick={() => toggleExclude(fieldName, !excluded)} />
+            <span>&nbsp;{fieldName}</span>
+            <Input
+              defaultValue={index.toString()}
+              onBlur={event => changeSorting(fieldName, event.currentTarget.value)}
+            />
           </div>
         );
       }}
-      getItemKey={field => field}
+      getItemKey={fieldName => fieldName}
     />
   );
-};
-
-const recreateRegexp = (exclude: string | undefined, field: string, shouldExclude: boolean): string => {
-  const match = /\^\((.*)\)\$$/g.exec(exclude ?? '');
-
-  if (!match || match.length === 0) {
-    return shouldExclude ? `^(${field})$` : '';
-  }
-
-  const parts = match[1].split('|');
-  const fields = [...parts, field]
-    .filter(current => {
-      if (field === current) {
-        return shouldExclude;
-      }
-      return true;
-    })
-    .join('|');
-
-  return fields.length === 0 ? '' : `^(${fields})$`;
 };
 
 const sortByIndex = (fields: string[], indexByName: Record<string, number> = {}): string[] => {
@@ -88,25 +72,22 @@ const sortByIndex = (fields: string[], indexByName: Record<string, number> = {})
   });
 };
 
-const uniqueFieldNames = (input: DataFrame[]): string[] => {
-  const fields: Record<string, null> = {};
+const uniqueFieldNames = (input: DataFrame[], excludeByName: Record<string, boolean>): string[] => {
+  const fieldNames: Record<string, null> = {};
 
-  input.reduce((allFields, frame) => {
-    return frame.fields.reduce((fields, field) => {
-      fields[field.name] = null;
-      return fields;
-    }, allFields);
-  }, fields);
+  input.reduce((names, frame) => {
+    return frame.fields.reduce((names, field) => {
+      names[field.name] = null;
+      return names;
+    }, names);
+  }, fieldNames);
 
-  return Object.keys(fields);
-};
+  // Object.keys(excludeByName).reduce((names, name) => {
+  //   names[name] = null;
+  //   return names;
+  // }, fieldNames);
 
-const matcherFor = (exclude: string | undefined): ((name: string) => boolean) => {
-  if (!exclude) {
-    return () => false;
-  }
-  const regex = stringToJsRegex(exclude);
-  return (field: string) => regex.test(field);
+  return Object.keys(fieldNames);
 };
 
 export const sortAndFilterTransformRegistryItem: TransformerUIRegistyItem<SortAndFilterFieldsTransformerOptions> = {

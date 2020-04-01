@@ -12,7 +12,9 @@ export const sortFieldsTransformer: DataTransformerInfo<SortFieldsTransformerOpt
   id: DataTransformerID.sort,
   name: 'Sort fields by name',
   description: 'sort fields based on configuration given by user',
-  defaultOptions: {},
+  defaultOptions: {
+    indexByName: {},
+  },
 
   /**
    * Return a modified copy of the series.  If the transform is not or should not
