@@ -18,6 +18,7 @@ import { AppEvents, dateTime } from '@grafana/data';
 import { getTimeSrv, setTimeSrv, TimeSrv } from '../../dashboard/services/TimeSrv';
 import { TemplateSrv } from '../../templating/template_srv';
 import { intervalBuilder } from '../shared/testing/builders';
+import kbn from 'app/core/utils/kbn';
 
 describe('interval actions', () => {
   variableAdapters.setInit(() => [createIntervalVariableAdapter()]);
@@ -65,7 +66,7 @@ describe('interval actions', () => {
         .withId('0')
         .withQuery('1s,1m,1h,1d')
         .withAuto(true)
-        .withAutoMin('1') // illegal interval string
+        .withAutoMin('1xyz') // illegal interval string
         .build();
       const appEventMock = ({
         emit: jest.fn(),
@@ -80,7 +81,9 @@ describe('interval actions', () => {
       expect(appEventMock.emit).toHaveBeenCalledTimes(1);
       expect(appEventMock.emit).toHaveBeenCalledWith(AppEvents.alertError, [
         'Templating',
-        'Invalid interval string, expecting a number followed by one of "Mwdhmsy"',
+        `Invalid interval string, has to be either unit-less or end with one of the following units: "${Object.keys(
+          kbn.intervals_in_seconds
+        ).join(', ')}"`,
       ]);
       setTimeSrv(originalTimeSrv);
     });
