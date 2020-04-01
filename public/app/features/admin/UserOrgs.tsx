@@ -1,6 +1,16 @@
 import React, { PureComponent } from 'react';
 import { css, cx } from 'emotion';
-import { Modal, Themeable, stylesFactory, withTheme, ConfirmButton, Button } from '@grafana/ui';
+import {
+  Modal,
+  Themeable,
+  stylesFactory,
+  withTheme,
+  ConfirmButton,
+  Button,
+  Forms,
+  HorizontalGroup,
+  Container,
+} from '@grafana/ui';
 import { GrafanaTheme } from '@grafana/data';
 import { UserOrg, Organization, OrgRole } from 'app/types';
 import { OrgPicker, OrgSelectItem } from 'app/core/components/Select/OrgPicker';
@@ -54,7 +64,7 @@ export class UserOrgs extends PureComponent<Props, State> {
           </div>
           <div className={addToOrgContainerClass}>
             <Button variant="secondary" onClick={this.showOrgAddModal(true)}>
-              Add user to organization
+              Add user to organisation
             </Button>
           </div>
           <AddToOrgModal isOpen={showAddOrgModal} onOrgAdd={onOrgAdd} onDismiss={this.showOrgAddModal(false)} />
@@ -86,14 +96,12 @@ interface OrgRowProps extends Themeable {
 interface OrgRowState {
   currentRole: OrgRole;
   isChangingRole: boolean;
-  isRemovingFromOrg: boolean;
 }
 
 class UnThemedOrgRow extends PureComponent<OrgRowProps, OrgRowState> {
   state = {
     currentRole: this.props.org.role,
     isChangingRole: false,
-    isRemovingFromOrg: false,
   };
 
   onOrgRemove = () => {
@@ -106,10 +114,6 @@ class UnThemedOrgRow extends PureComponent<OrgRowProps, OrgRowState> {
     this.setState({ isChangingRole: true, currentRole: org.role });
   };
 
-  onOrgRemoveClick = () => {
-    this.setState({ isRemovingFromOrg: true });
-  };
-
   onOrgRoleChange = (newRole: OrgRole) => {
     this.setState({ currentRole: newRole });
   };
@@ -119,12 +123,12 @@ class UnThemedOrgRow extends PureComponent<OrgRowProps, OrgRowState> {
   };
 
   onCancelClick = () => {
-    this.setState({ isChangingRole: false, isRemovingFromOrg: false });
+    this.setState({ isChangingRole: false });
   };
 
   render() {
     const { org, theme } = this.props;
-    const { currentRole, isChangingRole, isRemovingFromOrg } = this.state;
+    const { currentRole, isChangingRole } = this.state;
     const styles = getOrgRowStyles(theme);
     const labelClass = cx('width-16', styles.label);
 
@@ -133,42 +137,36 @@ class UnThemedOrgRow extends PureComponent<OrgRowProps, OrgRowState> {
         <td className={labelClass}>{org.name}</td>
         {isChangingRole ? (
           <td>
-            <div className="gf-form-select-wrapper width-8">
-              <OrgRolePicker value={currentRole} onChange={this.onOrgRoleChange} />
-            </div>
+            <OrgRolePicker value={currentRole} onChange={this.onOrgRoleChange} />
           </td>
         ) : (
           <td className="width-25">{org.role}</td>
         )}
-        {!isRemovingFromOrg && (
-          <td colSpan={isChangingRole ? 2 : 1}>
-            <div className="pull-right">
-              <ConfirmButton
-                confirmText="Save"
-                onClick={this.onChangeRoleClick}
-                onCancel={this.onCancelClick}
-                onConfirm={this.onOrgRoleSave}
-              >
-                Change role
-              </ConfirmButton>
-            </div>
-          </td>
-        )}
-        {!isChangingRole && (
-          <td colSpan={isRemovingFromOrg ? 2 : 1}>
-            <div className="pull-right">
-              <ConfirmButton
-                confirmText="Confirm removal"
-                confirmVariant="destructive"
-                onClick={this.onOrgRemoveClick}
-                onCancel={this.onCancelClick}
-                onConfirm={this.onOrgRemove}
-              >
-                Remove from organisation
-              </ConfirmButton>
-            </div>
-          </td>
-        )}
+        <td colSpan={1}>
+          <div className="pull-right">
+            <ConfirmButton
+              confirmText="Save"
+              onClick={this.onChangeRoleClick}
+              onCancel={this.onCancelClick}
+              onConfirm={this.onOrgRoleSave}
+            >
+              Change role
+            </ConfirmButton>
+          </div>
+        </td>
+        <td colSpan={1}>
+          <div className="pull-right">
+            <ConfirmButton
+              confirmText="Confirm removal"
+              confirmVariant="destructive"
+              onClick={this.onOrgRemoveClick}
+              onCancel={this.onCancelClick}
+              onConfirm={this.onOrgRemove}
+            >
+              Remove from organisation
+            </ConfirmButton>
+          </div>
+        </td>
       </tr>
     );
   }
@@ -225,28 +223,25 @@ export class AddToOrgModal extends PureComponent<AddToOrgModalProps, AddToOrgMod
     const { isOpen } = this.props;
     const { role } = this.state;
     const styles = getAddToOrgModalStyles();
-    const buttonRowClass = cx('gf-form-button-row', styles.buttonRow);
 
     return (
       <Modal className={styles.modal} title="Add to an organization" isOpen={isOpen} onDismiss={this.onCancel}>
-        <div className="gf-form-group">
-          <h6 className="">Organisation</h6>
+        <Forms.Field label="Organisation">
           <OrgPicker onSelected={this.onOrgSelect} />
-        </div>
-        <div className="gf-form-group">
-          <h6 className="">Role</h6>
-          <div className="gf-form-select-wrapper width-16">
-            <OrgRolePicker value={role} onChange={this.onOrgRoleChange} />
-          </div>
-        </div>
-        <div className={buttonRowClass}>
-          <Button variant="primary" onClick={this.onAddUserToOrg}>
-            Add to organization
-          </Button>
-          <Button variant="secondary" onClick={this.onCancel}>
-            Cancel
-          </Button>
-        </div>
+        </Forms.Field>
+        <Forms.Field label="Role">
+          <OrgRolePicker value={role} onChange={this.onOrgRoleChange} />
+        </Forms.Field>
+        <Container padding="md">
+          <HorizontalGroup spacing="md" justify="center">
+            <Button variant="primary" onClick={this.onAddUserToOrg}>
+              Add to organisation
+            </Button>
+            <Button variant="secondary" onClick={this.onCancel}>
+              Cancel
+            </Button>
+          </HorizontalGroup>
+        </Container>
       </Modal>
     );
   }
