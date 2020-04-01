@@ -12,7 +12,7 @@ import * as MonoIcon from './assets';
 
 interface IconProps extends React.HTMLAttributes<HTMLDivElement> {
   name: IconName;
-  size?: ComponentSize | 'xl' | 'logo';
+  size?: ComponentSize | 'xl' | 'xxl';
   type?: IconType;
   color?: string;
 }
@@ -80,11 +80,11 @@ const pascalCase = (string: string) => {
 };
 
 /* Transform string with px to number and add 2 pxs as path in svg is 2px smaller */
-const getSvgSize = (size: ComponentSize | 'xl' | 'logo', theme: GrafanaTheme) => {
+const getSvgSize = (size: ComponentSize | 'xl' | 'xxl', theme: GrafanaTheme) => {
   let svgSize;
   if (size === 'xl') {
     svgSize = Number(theme.typography.heading.h1.slice(0, -2));
-  } else if (size === 'logo') {
+  } else if (size === 'xxl') {
     svgSize = Number(theme.height.lg.slice(0, -2));
   } else {
     svgSize = Number(theme.typography.size[size].slice(0, -2)) + 2;

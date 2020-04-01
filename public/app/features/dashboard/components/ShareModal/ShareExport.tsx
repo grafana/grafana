@@ -90,7 +90,7 @@ export class ShareExport extends PureComponent<Props, State> {
     return (
       <div className="share-modal-body">
         <div className="share-modal-header">
-          <Icon name="cloud-upload" size="logo" className="share-modal-big-icon" />
+          <Icon name="cloud-upload" size="xxl" className="share-modal-big-icon" />
           <div className="share-modal-content">
             <Switch
               labelClass="width-16"

@@ -78,7 +78,7 @@ export class ShareEmbed extends PureComponent<Props, State> {
     return (
       <div className="share-modal-body">
         <div className="share-modal-header">
-          <Icon name="link" className="share-modal-big-icon" size="logo" />
+          <Icon name="link" className="share-modal-big-icon" size="xxl" />
           <div className="share-modal-content">
             <div className="gf-form-group">
               <Switch

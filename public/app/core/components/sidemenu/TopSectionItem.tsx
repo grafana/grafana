@@ -1,6 +1,6 @@
 import React, { FC } from 'react';
 import SideMenuDropDown from './SideMenuDropDown';
-import { Icon, useTheme } from '@grafana/ui';
+import { Icon } from '@grafana/ui';
 
 export interface Props {
   link: any;
@@ -8,13 +8,11 @@ export interface Props {
 
 const TopSectionItem: FC<Props> = props => {
   const { link } = props;
-  const theme = useTheme();
-  const navMenuColor = theme.isLight ? theme.colors.gray95 : theme.colors.gray4;
   return (
     <div className="sidemenu-item dropdown">
       <a className="sidemenu-link" href={link.url} target={link.target}>
         <span className="icon-circle sidemenu-icon">
-          <Icon name={link.icon} size="xl" color={navMenuColor} />
+          <Icon name={link.icon} size="xl" />
           {link.img && <img src={link.img} />}
         </span>
       </a>

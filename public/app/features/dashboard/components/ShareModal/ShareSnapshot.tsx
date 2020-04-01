@@ -306,7 +306,7 @@ export class ShareSnapshot extends PureComponent<Props, State> {
               <i className="fa fa-spinner fa-spin"></i>
             </div>
           ) : (
-            <Icon name="camera" className="share-modal-big-icon" size="logo" />
+            <Icon name="camera" className="share-modal-big-icon" size="xxl" />
           )}
           <div className="share-modal-content">
             {step === 1 && this.renderStep1()}
