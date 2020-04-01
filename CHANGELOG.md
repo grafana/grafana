@@ -28,8 +28,6 @@
 
 * **Alerting**: Reverts the behavior of `diff` and `percent_diff` to not always be absolute. Something we introduced by mistake in [6.1.0](https://github.com/grafana/grafana/commit/28eaac3a9c7082e8c496005c1cb66b4b70a4f82f). Alerting now support `diff()`, `diff_abs()`, `percent_diff()` and `percent_diff_abs()`. [#21338](https://github.com/grafana/grafana/pull/21338)
 
-* **BackendSrv**: We've changed so backendSrv uses fetch instead of using Angulars http service so the response format for .headers() changed from a function to an object.
-
 ### Notice about changes in backendSrv for plugin authors
 
 In our mission to migrate away from AngularJS to React we have removed all AngularJS dependencies in the core data retrieval service `backendSrv`.
@@ -46,6 +44,23 @@ backendSrv.get(‘http://your.url/api’).then(result => {
     this.$scope.$digest();
 });
 ```
+
+Another unfortunate outcome from this work in `backendSrv` is that the response format for `.headers()` changed from a function to an object.
+
+To make your plugin work on 6.7.x as well as on previous versions you should add something like the following:
+
+```typescript
+let responseHeaders = response.headers;
+if (!responseHeaders) {
+  return null;
+}
+
+// Support pre 6.7 angular HTTP rather than fetch
+if (typeof responseHeaders === 'function') {
+  responseHeaders = responseHeaders();
+}
+```
+
 
 You can test your plugin with the `master` branch version of Grafana.
 
