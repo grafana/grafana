@@ -1,5 +1,5 @@
 import { sharedSingleStatPanelChangedHandler } from '@grafana/ui';
-import { PanelPlugin } from '@grafana/data';
+import { defaultStandardFieldConfigProperties, PanelPlugin } from '@grafana/data';
 import { BarGaugePanel } from './BarGaugePanel';
 import { BarGaugeOptions, defaults } from './types';
 import { standardFieldConfigDefaults, addStandardDataReduceOptions } from '../stat/types';
@@ -33,4 +33,4 @@ export const plugin = new PanelPlugin<BarGaugeOptions>(BarGaugePanel)
   })
   .setPanelChangeHandler(sharedSingleStatPanelChangedHandler)
   .setMigrationHandler(barGaugePanelMigrationHandler)
-  .useStandardFieldConfig(standardFieldConfigDefaults);
+  .useStandardFieldConfig(defaultStandardFieldConfigProperties, standardFieldConfigDefaults);

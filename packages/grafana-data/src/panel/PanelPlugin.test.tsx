@@ -197,24 +197,46 @@ describe('PanelPlugin', () => {
         expect(panel.standardFieldConfigProperties).toEqual(['min', 'thresholds']);
       });
 
-      test('default values', () => {
-        const panel = new PanelPlugin(() => {
-          return <div>Panel</div>;
+      describe('default values', () => {
+        test('setting default values', () => {
+          const panel = new PanelPlugin(() => {
+            return <div>Panel</div>;
+          });
+
+          panel.useStandardFieldConfig([StandardFieldConfigProperties.Color, StandardFieldConfigProperties.Min], {
+            [StandardFieldConfigProperties.Color]: '#ff00ff',
+            [StandardFieldConfigProperties.Min]: 10,
+          });
+
+          expect(panel.standardFieldConfigProperties).toEqual(['color', 'min']);
+
+          expect(panel.fieldConfigDefaults).toEqual({
+            defaults: {
+              min: 10,
+              color: '#ff00ff',
+            },
+            overrides: [],
+          });
         });
 
-        panel.useStandardFieldConfig({
-          [StandardFieldConfigProperties.Color]: '#ff00ff',
-          [StandardFieldConfigProperties.Min]: 10,
-        });
+        it('should ignore defaults that are not specified as availeble properties', () => {
+          const panel = new PanelPlugin(() => {
+            return <div>Panel</div>;
+          });
 
-        expect(panel.standardFieldConfigProperties).toEqual(['color', 'min']);
+          panel.useStandardFieldConfig([StandardFieldConfigProperties.Color], {
+            [StandardFieldConfigProperties.Color]: '#ff00ff',
+            [StandardFieldConfigProperties.Min]: 10,
+          });
 
-        expect(panel.fieldConfigDefaults).toEqual({
-          defaults: {
-            min: 10,
-            color: '#ff00ff',
-          },
-          overrides: [],
+          expect(panel.standardFieldConfigProperties).toEqual(['color']);
+
+          expect(panel.fieldConfigDefaults).toEqual({
+            defaults: {
+              color: '#ff00ff',
+            },
+            overrides: [],
+          });
         });
       });
     });

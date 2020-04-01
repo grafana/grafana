@@ -7,7 +7,6 @@ import {
   ThresholdsMode,
   standardEditorsRegistry,
   StandardFieldConfigProperties,
-  defaultStandardFieldConfig,
 } from '@grafana/data';
 import { PanelOptionsEditorBuilder } from '@grafana/data/src/utils/OptionsUIBuilders';
 
@@ -38,8 +37,7 @@ export const commonValueOptionDefaults: ReduceDataOptions = {
   calcs: [ReducerID.mean],
 };
 
-export const standardFieldConfigDefaults: Record<StandardFieldConfigProperties, any> = {
-  ...defaultStandardFieldConfig,
+export const standardFieldConfigDefaults: Partial<Record<StandardFieldConfigProperties, any>> = {
   [StandardFieldConfigProperties.Thresholds]: {
     mode: ThresholdsMode.Absolute,
     steps: [

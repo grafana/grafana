@@ -1,4 +1,4 @@
-import { PanelPlugin } from '@grafana/data';
+import { defaultStandardFieldConfigProperties, PanelPlugin } from '@grafana/data';
 import { GaugePanelEditor } from './GaugePanelEditor';
 import { GaugePanel } from './GaugePanel';
 import { GaugeOptions, defaults } from './types';
@@ -25,4 +25,4 @@ export const plugin = new PanelPlugin<GaugeOptions>(GaugePanel)
   })
   .setPanelChangeHandler(gaugePanelChangedHandler)
   .setMigrationHandler(gaugePanelMigrationHandler)
-  .useStandardFieldConfig(standardFieldConfigDefaults);
+  .useStandardFieldConfig(defaultStandardFieldConfigProperties, standardFieldConfigDefaults);
