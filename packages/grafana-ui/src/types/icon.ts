@@ -17,6 +17,7 @@ export type IconName =
   | 'step-backward'
   | 'square-shape'
   | 'share-alt'
+  | 'tag-alt'
   | 'forward'
   | 'check'
   | 'add-panel'
@@ -84,6 +85,7 @@ export const getAvailableIcons = (): IconName[] => [
   'angle-left',
   'angle-right',
   'calendar-alt',
+  'tag-alt',
   'calculator-alt',
   'pen',
   'repeat',

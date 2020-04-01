@@ -51,7 +51,7 @@ export const SearchItem: FC<Props> = ({ item, editable, onToggleSelection, onTag
       onClick={navigate}
     >
       <SearchCheckbox editable={editable} checked={item.checked} onClick={toggleItem} />
-      <Icon className={styles.icon} name="apps" />
+      <Icon className={styles.icon} name="apps" size="lg" />
       <div className={styles.body} onClick={onItemClick}>
         <span>{item.title}</span>
         <span className={styles.folderTitle}>{item.folderTitle}</span>
