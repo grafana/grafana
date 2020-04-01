@@ -1,4 +1,4 @@
-import React, { AnchorHTMLAttributes, ButtonHTMLAttributes, useContext, ReactElement } from 'react';
+import React, { AnchorHTMLAttributes, ButtonHTMLAttributes, useContext } from 'react';
 import { css, cx } from 'emotion';
 import tinycolor from 'tinycolor2';
 import { selectThemeVariant, stylesFactory, ThemeContext } from '../../themes';
@@ -134,7 +134,7 @@ export type ButtonVariant = 'primary' | 'secondary' | 'destructive' | 'link';
 type CommonProps = {
   size?: ComponentSize;
   variant?: ButtonVariant;
-  icon?: string | ReactElement;
+  icon?: string;
   className?: string;
 };
 

@@ -1,4 +1,4 @@
-import React, { ReactElement } from 'react';
+import React from 'react';
 import { css } from 'emotion';
 import { stylesFactory, useTheme } from '../../themes';
 import { ComponentSize } from '../../types/size';
@@ -23,7 +23,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => ({
 }));
 
 type Props = {
-  icon?: string | ReactElement;
+  icon?: string;
   className?: string;
   children: React.ReactNode;
   size?: ComponentSize;
@@ -33,17 +33,24 @@ export function ButtonContent(props: Props) {
   const { icon, children } = props;
   const theme = useTheme();
   const styles = getStyles(theme);
-  const iconElement = typeof icon === 'string' ? <i className={icon} /> : icon;
 
   if (!children) {
-    return <span className={styles.content}>{iconElement}</span>;
+    return (
+      <span className={styles.content}>
+        <i className={icon} />
+      </span>
+    );
   }
 
-  const iconWrapper = iconElement && <span className={styles.icon}>{iconElement}</span>;
+  const iconElement = icon && (
+    <span className={styles.icon}>
+      <i className={icon} />
+    </span>
+  );
 
   return (
     <span className={styles.content}>
-      {iconWrapper}
+      {iconElement}
       <span>{children}</span>
     </span>
   );
