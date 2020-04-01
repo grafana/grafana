@@ -93,10 +93,7 @@ const getResultsItemStyles = stylesFactory((theme: GrafanaTheme) => ({
     top: -1px;
   `,
   icon: css`
-    font-size: ${theme.typography.size.lg};
-    width: auto;
-    height: auto;
-    padding: 1px 2px 0 10px;
+    margin-left: 10px;
   `,
   tags: css`
     justify-content: flex-end;
