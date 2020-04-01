@@ -657,7 +657,7 @@ func UnmarshalArrow(b []byte) (*Frame, error) {
 
 	if metaAsString, ok := getMDKey("meta", metaData); ok {
 		var err error
-		frame.Meta, err = QueryResultMetaFromJSON(metaAsString)
+		frame.Meta, err = FrameMetaFromJSON(metaAsString)
 		if err != nil {
 			return nil, err
 		}

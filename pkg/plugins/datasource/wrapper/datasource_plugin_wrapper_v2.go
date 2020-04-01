@@ -98,7 +98,7 @@ func (tw *DatasourcePluginWrapperV2) Query(ctx context.Context, ds *models.DataS
 		qr := &tsdb.QueryResult{
 			RefId:      refID,
 			Dataframes: pRes.Frames,
-			Meta:       simplejson.NewFromAny(pRes.QueryMeta),
+			Meta:       simplejson.NewFromAny(pRes.JsonMeta),
 		}
 		if pRes.Error != "" {
 			qr.Error = fmt.Errorf(pRes.Error)

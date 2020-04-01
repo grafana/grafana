@@ -17,8 +17,8 @@ type FrameMeta struct {
 	Notices interface{} `json:"notices,omitempty"`
 }
 
-// QueryResultMetaFromJSON creates a QueryResultMeta from a json string
-func QueryResultMetaFromJSON(jsonStr string) (*FrameMeta, error) {
+// FrameMetaFromJSON creates a QueryResultMeta from a json string
+func FrameMetaFromJSON(jsonStr string) (*FrameMeta, error) {
 	var m FrameMeta
 	err := json.Unmarshal([]byte(jsonStr), &m)
 	if err != nil {

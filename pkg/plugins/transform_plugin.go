@@ -118,7 +118,7 @@ func (tw *TransformWrapper) Transform(ctx context.Context, query *tsdb.TsdbQuery
 			RefId:      refID,
 			Dataframes: res.Frames,
 			Error:      fmt.Errorf(res.Error),
-			Meta:       simplejson.NewFromAny(res.QueryMeta),
+			Meta:       simplejson.NewFromAny(res.JsonMeta),
 		}
 	}
 
