@@ -22,7 +22,7 @@ func (ss *SqlStore) InTransaction(ctx context.Context, fn func(ctx context.Conte
 
 func (ss *SqlStore) inTransactionWithRetry(ctx context.Context, fn func(ctx context.Context) error, retry int) error {
 	return inTransactionWithRetryCtx(ctx, ss.engine, func(sess *DBSession) error {
-		withValue := context.WithValue(ctx, ContextSessionName, sess)
+		withValue := context.WithValue(ctx, ContextSessionKey{}, sess)
 		return fn(withValue)
 	}, retry)
 }

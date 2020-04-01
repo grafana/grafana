@@ -8,13 +8,18 @@ enum Orientation {
   Vertical,
 }
 type Spacing = 'xs' | 'sm' | 'md' | 'lg';
-type Justify = 'flex-start' | 'flex-end' | 'space-between';
+type Justify = 'flex-start' | 'flex-end' | 'space-between' | 'center';
 
 export interface LayoutProps {
   children: React.ReactNode[];
   orientation?: Orientation;
   spacing?: Spacing;
   justify?: Justify;
+}
+
+export interface ContainerProps {
+  padding?: Spacing;
+  margin?: Spacing;
 }
 
 export const Layout: React.FC<LayoutProps> = ({
@@ -45,6 +50,12 @@ export const VerticalGroup: React.FC<Omit<LayoutProps, 'orientation'>> = ({ chil
   </Layout>
 );
 
+export const Container: React.FC<ContainerProps> = ({ children, padding, margin }) => {
+  const theme = useTheme();
+  const styles = getContainerStyles(theme, padding, margin);
+  return <div className={styles.wrapper}>{children}</div>;
+};
+
 const getStyles = stylesFactory((theme: GrafanaTheme, orientation: Orientation, spacing: Spacing, justify: Justify) => {
   return {
     layout: css`
@@ -61,6 +72,17 @@ const getStyles = stylesFactory((theme: GrafanaTheme, orientation: Orientation, 
         margin-bottom: 0;
         margin-right: 0;
       }
+    `,
+  };
+});
+
+const getContainerStyles = stylesFactory((theme: GrafanaTheme, padding?: Spacing, margin?: Spacing) => {
+  const paddingSize = (padding && theme.spacing[padding]) || 0;
+  const marginSize = (margin && theme.spacing[margin]) || 0;
+  return {
+    wrapper: css`
+      margin: ${marginSize};
+      padding: ${paddingSize};
     `,
   };
 });

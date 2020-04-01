@@ -1,15 +1,10 @@
 import { LinkSrv } from '../link_srv';
 import { DataLinkBuiltInVars } from '@grafana/ui';
-import _ from 'lodash';
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { advanceTo } from 'jest-date-mock';
 import { updateConfig } from '../../../../core/config';
 
-jest.mock('angular', () => {
-  const AngularJSMock = require('test/mocks/angular');
-  return new AngularJSMock();
-});
 jest.mock('app/core/core', () => ({
   appEvents: {
     on: () => {},

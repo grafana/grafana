@@ -1,42 +1,45 @@
 import React, { PureComponent } from 'react';
 import {
   PanelOptionsGrid,
-  ValueMappingsEditor,
   FieldDisplayEditor,
-  FieldPropertiesEditor,
   PanelOptionsGroup,
+  FieldPropertiesEditor,
+  LegacyValueMappingsEditor,
 } from '@grafana/ui';
-import { ValueMapping, FieldConfig, PanelEditorProps, FieldDisplayOptions } from '@grafana/data';
+import { PanelEditorProps, ReduceDataOptions, ValueMapping, FieldConfig } from '@grafana/data';
 
 import { PieChartOptionsBox } from './PieChartOptionsBox';
 import { PieChartOptions } from './types';
 
 export class PieChartPanelEditor extends PureComponent<PanelEditorProps<PieChartOptions>> {
   onValueMappingsChanged = (mappings: ValueMapping[]) => {
-    const current = this.props.options.fieldOptions.defaults;
-    this.onDefaultsChange({
+    const current = this.props.fieldConfig;
+    this.props.onFieldConfigChange({
       ...current,
-      mappings,
+      defaults: {
+        ...current.defaults,
+        mappings,
+      },
     });
   };
 
-  onDisplayOptionsChanged = (fieldOptions: FieldDisplayOptions) =>
+  onDisplayOptionsChanged = (fieldOptions: ReduceDataOptions) =>
     this.props.onOptionsChange({
       ...this.props.options,
-      fieldOptions,
+      reduceOptions: fieldOptions,
     });
 
   onDefaultsChange = (field: FieldConfig) => {
-    this.onDisplayOptionsChanged({
-      ...this.props.options.fieldOptions,
+    this.props.onFieldConfigChange({
+      ...this.props.fieldConfig,
       defaults: field,
     });
   };
 
   render() {
-    const { onOptionsChange, options, data } = this.props;
-    const { fieldOptions } = options;
-    const { defaults } = fieldOptions;
+    const { onOptionsChange, options, data, fieldConfig, onFieldConfigChange } = this.props;
+    const { reduceOptions: fieldOptions } = options;
+    const { defaults } = fieldConfig;
 
     return (
       <>
@@ -49,10 +52,15 @@ export class PieChartPanelEditor extends PureComponent<PanelEditorProps<PieChart
             <FieldPropertiesEditor showMinMax={true} onChange={this.onDefaultsChange} value={defaults} />
           </PanelOptionsGroup>
 
-          <PieChartOptionsBox data={data} onOptionsChange={onOptionsChange} options={options} />
+          <PieChartOptionsBox
+            data={data}
+            onOptionsChange={onOptionsChange}
+            options={options}
+            fieldConfig={fieldConfig}
+            onFieldConfigChange={onFieldConfigChange}
+          />
         </PanelOptionsGrid>
-
-        <ValueMappingsEditor onChange={this.onValueMappingsChanged} valueMappings={defaults.mappings} />
+        <LegacyValueMappingsEditor onChange={this.onValueMappingsChanged} valueMappings={defaults.mappings} />
       </>
     );
   }

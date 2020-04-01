@@ -20,7 +20,7 @@ export const getLabelStyles = stylesFactory((theme: GrafanaTheme) => {
       max-width: 480px;
     `,
     description: css`
-      color: ${theme.colors.formLabel};
+      color: ${theme.colors.formDescription};
       font-size: ${theme.typography.size.sm};
       font-weight: ${theme.typography.weight.regular};
       display: block;

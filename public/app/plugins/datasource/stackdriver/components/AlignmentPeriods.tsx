@@ -8,7 +8,7 @@ import { Segment } from '@grafana/ui';
 import { alignmentPeriods, alignOptions } from '../constants';
 
 export interface Props {
-  onChange: (alignmentPeriod: any) => void;
+  onChange: (alignmentPeriod: string) => void;
   templateSrv: TemplateSrv;
   templateVariableOptions: Array<SelectableValue<string>>;
   alignmentPeriod: string;
@@ -36,7 +36,7 @@ export const AlignmentPeriods: FC<Props> = ({
       <div className="gf-form-inline">
         <label className="gf-form-label query-keyword width-9">Alignment Period</label>
         <Segment
-          onChange={({ value }) => onChange(value)}
+          onChange={({ value }) => onChange(value!)}
           value={[...options, ...templateVariableOptions].find(s => s.value === alignmentPeriod)}
           options={[
             {

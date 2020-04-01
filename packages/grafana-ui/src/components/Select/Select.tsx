@@ -18,7 +18,7 @@ import { components } from '@torkelo/react-select';
 import { SelectOption } from './SelectOption';
 import { SelectOptionGroup } from '../Forms/Select/SelectOptionGroup';
 import { SingleValue } from '../Forms/Select/SingleValue';
-import { SelectCommonProps, SelectAsyncProps } from '../Forms/Select/SelectBase';
+import { SelectCommonProps, SelectAsyncProps } from '../Forms/Select/types';
 import IndicatorsContainer from './IndicatorsContainer';
 import NoOptionsMessage from './NoOptionsMessage';
 import resetSelectStyles from '../Forms/Select/resetSelectStyles';
@@ -154,7 +154,7 @@ export class Select<T> extends PureComponent<LegacySelectProps<T>> {
               onBlur={onBlur}
               openMenuOnFocus={openMenuOnFocus}
               maxMenuHeight={maxMenuHeight}
-              noOptionsMessage={() => noOptionsMessage}
+              noOptionsMessage={noOptionsMessage}
               isMulti={isMulti}
               backspaceRemovesValue={backspaceRemovesValue}
               menuIsOpen={isOpen}

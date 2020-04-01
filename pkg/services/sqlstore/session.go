@@ -28,7 +28,7 @@ func newSession() *DBSession {
 }
 
 func startSession(ctx context.Context, engine *xorm.Engine, beginTran bool) (*DBSession, error) {
-	value := ctx.Value(ContextSessionName)
+	value := ctx.Value(ContextSessionKey{})
 	var sess *DBSession
 	sess, ok := value.(*DBSession)
 

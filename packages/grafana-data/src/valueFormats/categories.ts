@@ -123,8 +123,8 @@ export const getCategories = (): ValueFormatCategory[] => [
   {
     name: 'Data (IEC)',
     formats: [
-      { name: 'bits', id: 'bits', fn: binarySIPrefix('b') },
-      { name: 'bytes', id: 'bytes', fn: binarySIPrefix('B') },
+      { name: 'bits(IEC)', id: 'bits', fn: binarySIPrefix('b') },
+      { name: 'bytes(IEC)', id: 'bytes', fn: binarySIPrefix('B') },
       { name: 'kibibytes', id: 'kbytes', fn: binarySIPrefix('B', 1) },
       { name: 'mebibytes', id: 'mbytes', fn: binarySIPrefix('B', 2) },
       { name: 'gibibytes', id: 'gbytes', fn: binarySIPrefix('B', 3) },
@@ -135,8 +135,8 @@ export const getCategories = (): ValueFormatCategory[] => [
   {
     name: 'Data (Metric)',
     formats: [
-      { name: 'bits', id: 'decbits', fn: decimalSIPrefix('b') },
-      { name: 'bytes', id: 'decbytes', fn: decimalSIPrefix('B') },
+      { name: 'bits(Metric)', id: 'decbits', fn: decimalSIPrefix('b') },
+      { name: 'bytes(Metric)', id: 'decbytes', fn: decimalSIPrefix('B') },
       { name: 'kilobytes', id: 'deckbytes', fn: decimalSIPrefix('B', 1) },
       { name: 'megabytes', id: 'decmbytes', fn: decimalSIPrefix('B', 2) },
       { name: 'gigabytes', id: 'decgbytes', fn: decimalSIPrefix('B', 3) },

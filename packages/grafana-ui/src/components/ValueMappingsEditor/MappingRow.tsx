@@ -1,11 +1,10 @@
-import React, { ChangeEvent, PureComponent } from 'react';
-
-import { FormField } from '../FormField/FormField';
-import { FormLabel } from '../FormLabel/FormLabel';
-import { Input } from '../Input/Input';
-import { Select } from '../Select/Select';
-
-import { MappingType, ValueMapping } from '@grafana/data';
+import React, { ChangeEvent } from 'react';
+import { HorizontalGroup } from '../Layout/Layout';
+import Forms from '../Forms';
+import { MappingType, RangeMap, ValueMap, ValueMapping } from '@grafana/data';
+import * as styleMixins from '../../themes/mixins';
+import { useTheme } from '../../themes';
+import { FieldConfigItemHeaderTitle } from '../FieldConfigs/FieldConfigItemHeaderTitle';
 
 export interface Props {
   valueMapping: ValueMapping;
@@ -13,134 +12,84 @@ export interface Props {
   removeValueMapping: () => void;
 }
 
-interface State {
-  from?: string;
-  id: number;
-  operator: string;
-  text: string;
-  to?: string;
-  type: MappingType;
-  value?: string;
-}
-
-const mappingOptions = [
+const MAPPING_OPTIONS = [
   { value: MappingType.ValueToText, label: 'Value' },
   { value: MappingType.RangeToText, label: 'Range' },
 ];
 
-export default class MappingRow extends PureComponent<Props, State> {
-  constructor(props: Props) {
-    super(props);
+export const MappingRow: React.FC<Props> = ({ valueMapping, updateValueMapping, removeValueMapping }) => {
+  const theme = useTheme();
+  const { type } = valueMapping;
 
-    this.state = { ...props.valueMapping };
-  }
-
-  onMappingValueChange = (event: ChangeEvent<HTMLInputElement>) => {
-    this.setState({ value: event.target.value });
+  const onMappingValueChange = (event: ChangeEvent<HTMLInputElement>) => {
+    updateValueMapping({ ...valueMapping, value: event.target.value });
   };
 
-  onMappingFromChange = (event: ChangeEvent<HTMLInputElement>) => {
-    this.setState({ from: event.target.value });
+  const onMappingFromChange = (event: ChangeEvent<HTMLInputElement>) => {
+    updateValueMapping({ ...valueMapping, from: event.target.value });
   };
 
-  onMappingToChange = (event: ChangeEvent<HTMLInputElement>) => {
-    this.setState({ to: event.target.value });
+  const onMappingToChange = (event: ChangeEvent<HTMLInputElement>) => {
+    updateValueMapping({ ...valueMapping, to: event.target.value });
   };
 
-  onMappingTextChange = (event: ChangeEvent<HTMLInputElement>) => {
-    this.setState({ text: event.target.value });
+  const onMappingTextChange = (event: ChangeEvent<HTMLInputElement>) => {
+    updateValueMapping({ ...valueMapping, text: event.target.value });
   };
 
-  onMappingTypeChange = (mappingType: MappingType) => {
-    this.setState({ type: mappingType });
+  const onMappingTypeChange = (mappingType: MappingType) => {
+    updateValueMapping({ ...valueMapping, type: mappingType });
   };
 
-  updateMapping = () => {
-    this.props.updateValueMapping({ ...this.state } as ValueMapping);
-  };
-
-  renderRow() {
-    const { from, text, to, type, value } = this.state;
-
+  const renderRow = () => {
     if (type === MappingType.RangeToText) {
       return (
         <>
-          <FormField
-            label="From"
-            labelWidth={4}
-            inputWidth={8}
-            onBlur={this.updateMapping}
-            onChange={this.onMappingFromChange}
-            value={from}
-          />
-          <FormField
-            label="To"
-            labelWidth={4}
-            inputWidth={8}
-            onBlur={this.updateMapping}
-            onChange={this.onMappingToChange}
-            value={to}
-          />
-          <div className="gf-form gf-form--grow">
-            <FormLabel width={4}>Text</FormLabel>
-            <Input
-              className="gf-form-input"
-              onBlur={this.updateMapping}
-              value={text}
-              onChange={this.onMappingTextChange}
-            />
-          </div>
+          <HorizontalGroup>
+            <Forms.Field label="From">
+              <Forms.Input type="number" defaultValue={(valueMapping as RangeMap).from!} onBlur={onMappingFromChange} />
+            </Forms.Field>
+            <Forms.Field label="To">
+              <Forms.Input type="number" defaultValue={(valueMapping as RangeMap).to} onBlur={onMappingToChange} />
+            </Forms.Field>
+          </HorizontalGroup>
+
+          <Forms.Field label="Text">
+            <Forms.Input defaultValue={valueMapping.text} onBlur={onMappingTextChange} />
+          </Forms.Field>
         </>
       );
     }
 
     return (
       <>
-        <FormField
-          label="Value"
-          labelWidth={4}
-          onBlur={this.updateMapping}
-          onChange={this.onMappingValueChange}
-          value={value}
-          inputWidth={8}
-        />
-        <div className="gf-form gf-form--grow">
-          <FormLabel width={4}>Text</FormLabel>
-          <Input
-            className="gf-form-input"
-            onBlur={this.updateMapping}
-            value={text}
-            onChange={this.onMappingTextChange}
-          />
-        </div>
+        <Forms.Field label="Value">
+          <Forms.Input type="number" defaultValue={(valueMapping as ValueMap).value} onBlur={onMappingValueChange} />
+        </Forms.Field>
+
+        <Forms.Field label="Text">
+          <Forms.Input defaultValue={valueMapping.text} onBlur={onMappingTextChange} />
+        </Forms.Field>
       </>
     );
-  }
+  };
 
-  render() {
-    const { type } = this.state;
+  const styles = styleMixins.panelEditorNestedListStyles(theme);
 
-    return (
-      <div className="gf-form-inline">
-        <div className="gf-form">
-          <FormLabel width={5}>Type</FormLabel>
-          <Select
+  return (
+    <div className={styles.wrapper}>
+      <FieldConfigItemHeaderTitle title="Mapping type" onRemove={removeValueMapping}>
+        <div className={styles.itemContent}>
+          <Forms.Select
             placeholder="Choose type"
             isSearchable={false}
-            options={mappingOptions}
-            value={mappingOptions.find(o => o.value === type)}
-            // @ts-ignore
-            onChange={type => this.onMappingTypeChange(type.value)}
-            width={7}
+            options={MAPPING_OPTIONS}
+            value={MAPPING_OPTIONS.find(o => o.value === type)}
+            onChange={type => onMappingTypeChange(type.value!)}
           />
         </div>
-        {this.renderRow()}
-        <div className="gf-form">
-          <button onClick={this.props.removeValueMapping} className="gf-form-label gf-form-label--btn">
-            <i className="fa fa-times" />
-          </button>
-        </div>
-      </div>
-    );
-  }
-}
+      </FieldConfigItemHeaderTitle>
+      <div className={styles.content}>{renderRow()}</div>
+    </div>
+  );
+};

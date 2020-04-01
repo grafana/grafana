@@ -191,16 +191,27 @@ Setting | Required | Description | Default
 Users with nested/recursive group membership must have an LDAP server that supports `LDAP_MATCHING_RULE_IN_CHAIN`
 and configure `group_search_filter` in a way that it returns the groups the submitted username is a member of.
 
+To configure `group_search_filter`:
+* You can set `group_search_base_dns` to specify where the matching groups are defined.
+* If you do not use `group_search_base_dns`, then the previously defined `search_base_dns` is used.
+
 **Active Directory example:**
 
 Active Directory groups store the Distinguished Names (DNs) of members, so your filter will need to know the DN for the user based only on the submitted username.
-Multiple DN templates can be searched by combining filters with the LDAP OR-operator. Examples:
+Multiple DN templates can be searched by combining filters with the LDAP OR-operator. Two examples:
+
+```bash
+group_search_filter = "(member:1.2.840.113556.1.4.1941:=%s)"
+group_search_base_dns = ["DC=mycorp,DC=mytld"]
+group_search_filter_user_attribute = "dn"
+```
 
 ```bash
 group_search_filter = "(member:1.2.840.113556.1.4.1941:=CN=%s,[user container/OU])"
 group_search_filter = "(|(member:1.2.840.113556.1.4.1941:=CN=%s,[user container/OU])(member:1.2.840.113556.1.4.1941:=CN=%s,[another user container/OU]))"
 group_search_filter_user_attribute = "cn"
 ```
+
 For more information on AD searches see [Microsoft's Search Filter Syntax](https://docs.microsoft.com/en-us/windows/desktop/adsi/search-filter-syntax) documentation.
 
 For troubleshooting, by changing `member_of` in `[servers.attributes]` to "dn" it will show you more accurate group memberships when [debug is enabled](#troubleshooting).

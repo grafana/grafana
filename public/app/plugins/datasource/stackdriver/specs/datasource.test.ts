@@ -155,7 +155,7 @@ describe('StackdriverDataSource', () => {
 
       ds = new StackdriverDataSource(instanceSettings, templateSrv, timeSrv);
       // @ts-ignore
-      result = await ds.getMetricTypes();
+      result = await ds.getMetricTypes('proj');
     });
 
     it('should return successfully', () => {
@@ -180,8 +180,21 @@ describe('StackdriverDataSource', () => {
       });
 
       it('should replace the variable with the value', () => {
-        expect(interpolated.length).toBe(4);
+        expect(interpolated.length).toBe(3);
         expect(interpolated[2]).toBe('filtervalue1');
+      });
+    });
+
+    describe('and is single value variable for the label part', () => {
+      beforeEach(() => {
+        const filterTemplateSrv = initTemplateSrv('resource.label.zone');
+        const ds = new StackdriverDataSource(instanceSettings, filterTemplateSrv, timeSrv);
+        interpolated = ds.interpolateFilters(['${test}', '=~', 'europe-north-1a'], {});
+      });
+
+      it('should replace the variable with the value and not with regex formatting', () => {
+        expect(interpolated.length).toBe(3);
+        expect(interpolated[0]).toBe('resource.label.zone');
       });
     });
 
