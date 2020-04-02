@@ -6,7 +6,7 @@ import {
   SelectableValue,
   ThresholdsMode,
   standardEditorsRegistry,
-  StandardFieldConfigProperty,
+  FieldConfigProperty,
 } from '@grafana/data';
 import { PanelOptionsEditorBuilder } from '@grafana/data/src/utils/OptionsUIBuilders';
 
@@ -37,15 +37,15 @@ export const commonValueOptionDefaults: ReduceDataOptions = {
   calcs: [ReducerID.mean],
 };
 
-export const standardFieldConfigDefaults: Partial<Record<StandardFieldConfigProperty, any>> = {
-  [StandardFieldConfigProperty.Thresholds]: {
+export const standardFieldConfigDefaults: Partial<Record<FieldConfigProperty, any>> = {
+  [FieldConfigProperty.Thresholds]: {
     mode: ThresholdsMode.Absolute,
     steps: [
       { value: -Infinity, color: 'green' },
       { value: 80, color: 'red' },
     ],
   },
-  [StandardFieldConfigProperty.Mappings]: [],
+  [FieldConfigProperty.Mappings]: [],
 };
 
 export function addStandardDataReduceOptions(builder: PanelOptionsEditorBuilder<StatPanelOptions>) {
