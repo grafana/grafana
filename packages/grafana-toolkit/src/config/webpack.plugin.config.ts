@@ -93,7 +93,7 @@ const getCommonPlugins = (options: WebpackConfigurationOptions) => {
     new CopyWebpackPlugin(
       [
         // If src/README.md exists use it; otherwise the root README
-        { from: hasREADME ? 'README.md' : '../README.md', to: '.', force:true },
+        { from: hasREADME ? 'README.md' : '../README.md', to: '.', force: true },
         { from: 'plugin.json', to: '.' },
         { from: '../LICENSE', to: '.' },
         { from: '**/*.json', to: '.' },
