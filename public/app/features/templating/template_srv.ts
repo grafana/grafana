@@ -22,7 +22,7 @@ export interface TemplateSrvDependencies {
   getVariableWithName: typeof getVariableWithName;
 }
 
-const duringRuntime: TemplateSrvDependencies = {
+const runtimeDependencies: TemplateSrvDependencies = {
   getFilteredVariables,
   getVariables,
   getVariableWithName,
@@ -37,7 +37,7 @@ export class TemplateSrv {
   private timeRange?: TimeRange | null = null;
   private fieldAccessorCache: FieldAccessorCache = {};
 
-  constructor(private dependencies: TemplateSrvDependencies = duringRuntime) {
+  constructor(private dependencies: TemplateSrvDependencies = runtimeDependencies) {
     this.builtIns['__interval'] = { text: '1s', value: '1s' };
     this.builtIns['__interval_ms'] = { text: '100', value: '100' };
     this._variables = [];
