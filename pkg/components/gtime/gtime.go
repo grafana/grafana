@@ -1,7 +1,7 @@
 package gtime
 
 import (
-	"errors"
+	"fmt"
 	"regexp"
 	"strconv"
 	"time"
