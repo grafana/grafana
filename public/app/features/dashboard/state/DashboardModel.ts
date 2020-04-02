@@ -69,6 +69,7 @@ export class DashboardModel {
     originalTime: true,
     originalTemplating: true,
     panelInEdit: true,
+    getVariablesFromState: true,
   };
 
   constructor(data: any, meta?: DashboardMeta, private getVariablesFromState: GetVariables = getVariables) {
