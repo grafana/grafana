@@ -1,6 +1,7 @@
 import _ from 'lodash';
 import { DashboardModel } from '../state/DashboardModel';
 import { expect } from 'test/lib/common';
+import { getDashboardModel } from '../../../../test/helpers/getDashboardModel';
 
 jest.mock('app/core/services/context_srv', () => ({}));
 
@@ -31,8 +32,7 @@ describe('given dashboard with panel repeat', () => {
         ],
       },
     };
-    const getVariablesFromState: any = () => dashboardJSON.templating.list;
-    dashboard = new DashboardModel(dashboardJSON, {}, getVariablesFromState);
+    dashboard = getDashboardModel(dashboardJSON);
     dashboard.processRepeats();
   });
 
@@ -87,8 +87,7 @@ describe('given dashboard with panel repeat in horizontal direction', () => {
         ],
       },
     };
-    const getVariablesFromState: any = () => dashboardJSON.templating.list;
-    dashboard = new DashboardModel(dashboardJSON, {}, getVariablesFromState);
+    dashboard = getDashboardModel(dashboardJSON);
     dashboard.processRepeats();
   });
 
@@ -218,8 +217,7 @@ describe('given dashboard with panel repeat in vertical direction', () => {
         ],
       },
     };
-    const getVariablesFromState: any = () => dashboardJSON.templating.list;
-    dashboard = new DashboardModel(dashboardJSON, {}, getVariablesFromState);
+    dashboard = getDashboardModel(dashboardJSON);
     dashboard.processRepeats();
   });
 
@@ -274,8 +272,7 @@ describe('given dashboard with row repeat and panel repeat in horizontal directi
         ],
       },
     };
-    const getVariablesFromState: any = () => dashboardJSON.templating.list;
-    dashboard = new DashboardModel(dashboardJSON, {}, getVariablesFromState);
+    dashboard = getDashboardModel(dashboardJSON);
     dashboard.processRepeats(false);
   });
 
@@ -354,8 +351,7 @@ describe('given dashboard with row repeat', () => {
         ],
       },
     };
-    const getVariablesFromState: any = () => dashboardJSON.templating.list;
-    dashboard = new DashboardModel(dashboardJSON, {}, getVariablesFromState);
+    dashboard = getDashboardModel(dashboardJSON);
     dashboard.processRepeats();
   });
 
@@ -366,8 +362,7 @@ describe('given dashboard with row repeat', () => {
 
   it('should set scopedVars for each panel', () => {
     dashboardJSON.templating.list[0].options[2].selected = true;
-    const getVariablesFromState: any = () => dashboardJSON.templating.list;
-    dashboard = new DashboardModel(dashboardJSON, {}, getVariablesFromState);
+    dashboard = getDashboardModel(dashboardJSON);
     dashboard.processRepeats();
 
     expect(dashboard.panels[1].scopedVars).toMatchObject({
@@ -407,8 +402,7 @@ describe('given dashboard with row repeat', () => {
       { id: 4, type: 'row', gridPos: { x: 0, y: 1, h: 1, w: 24 } },
       { id: 5, type: 'graph', gridPos: { x: 0, y: 2, h: 1, w: 12 } },
     ];
-    const getVariablesFromState: any = () => dashboardJSON.templating.list;
-    dashboard = new DashboardModel(dashboardJSON, {}, getVariablesFromState);
+    dashboard = getDashboardModel(dashboardJSON);
     dashboard.processRepeats();
 
     const panelTypes = _.map(dashboard.panels, 'type');
@@ -450,8 +444,7 @@ describe('given dashboard with row repeat', () => {
         { text: 'backend03', value: 'backend03', selected: false },
       ],
     });
-    const getVariablesFromState: any = () => dashboardJSON.templating.list;
-    dashboard = new DashboardModel(dashboardJSON, {}, getVariablesFromState);
+    dashboard = getDashboardModel(dashboardJSON);
     dashboard.processRepeats();
 
     const panelTypes = _.map(dashboard.panels, 'type');
@@ -498,7 +491,7 @@ describe('given dashboard with row repeat', () => {
       { id: 4, type: 'row', gridPos: { x: 0, y: 1, h: 1, w: 24 } },
       { id: 5, type: 'graph', gridPos: { x: 0, y: 2, h: 1, w: 12 } },
     ];
-    dashboard = new DashboardModel(dashboardJSON);
+    dashboard = getDashboardModel(dashboardJSON);
     dashboard.processRepeats();
 
     const panelIds = _.flattenDeep(
@@ -521,8 +514,7 @@ describe('given dashboard with row repeat', () => {
       { id: 3, type: 'graph', gridPos: { x: 6, y: 1, h: 4, w: 12 } },
       { id: 4, type: 'graph', gridPos: { x: 0, y: 5, h: 2, w: 12 } },
     ];
-    const getVariablesFromState: any = () => dashboardJSON.templating.list;
-    dashboard = new DashboardModel(dashboardJSON, {}, getVariablesFromState);
+    dashboard = getDashboardModel(dashboardJSON);
     dashboard.processRepeats();
 
     const panelTypes = _.map(dashboard.panels, 'type');
@@ -575,8 +567,7 @@ describe('given dashboard with row and panel repeat', () => {
         ],
       },
     };
-    const getVariablesFromState: any = () => dashboardJSON.templating.list;
-    dashboard = new DashboardModel(dashboardJSON, {}, getVariablesFromState);
+    dashboard = getDashboardModel(dashboardJSON);
     dashboard.processRepeats();
   });
 
@@ -604,8 +595,7 @@ describe('given dashboard with row and panel repeat', () => {
       },
       { id: 12, type: 'graph', repeatPanelId: 2, repeatIteration: 101, gridPos: { x: 0, y: 3, h: 1, w: 6 } },
     ];
-    const getVariablesFromState: any = () => dashboardJSON.templating.list;
-    dashboard = new DashboardModel(dashboardJSON, {}, getVariablesFromState);
+    dashboard = getDashboardModel(dashboardJSON);
     dashboard.processRepeats();
 
     const panelTypes = _.map(dashboard.panels, 'type');
@@ -613,8 +603,7 @@ describe('given dashboard with row and panel repeat', () => {
   });
 
   it('should set scopedVars for each row', () => {
-    const getVariablesFromState: any = () => dashboardJSON.templating.list;
-    dashboard = new DashboardModel(dashboardJSON, {}, getVariablesFromState);
+    dashboard = getDashboardModel(dashboardJSON);
     dashboard.processRepeats();
 
     expect(dashboard.panels[0].scopedVars).toMatchObject({
@@ -626,8 +615,7 @@ describe('given dashboard with row and panel repeat', () => {
   });
 
   it('should set panel-repeat variable for each panel', () => {
-    const getVariablesFromState: any = () => dashboardJSON.templating.list;
-    dashboard = new DashboardModel(dashboardJSON, {}, getVariablesFromState);
+    dashboard = getDashboardModel(dashboardJSON);
     dashboard.processRepeats();
 
     expect(dashboard.panels[1].scopedVars).toMatchObject({
@@ -646,8 +634,7 @@ describe('given dashboard with row and panel repeat', () => {
   });
 
   it('should set row-repeat variable for each panel', () => {
-    const getVariablesFromState: any = () => dashboardJSON.templating.list;
-    dashboard = new DashboardModel(dashboardJSON, {}, getVariablesFromState);
+    dashboard = getDashboardModel(dashboardJSON);
     dashboard.processRepeats();
 
     expect(dashboard.panels[1].scopedVars).toMatchObject({
@@ -666,8 +653,7 @@ describe('given dashboard with row and panel repeat', () => {
   });
 
   it('should repeat panels when row is expanding', () => {
-    const getVariablesFromState: any = () => dashboardJSON.templating.list;
-    dashboard = new DashboardModel(dashboardJSON, {}, getVariablesFromState);
+    dashboard = getDashboardModel(dashboardJSON);
     dashboard.processRepeats();
 
     expect(dashboard.panels.length).toBe(6);
