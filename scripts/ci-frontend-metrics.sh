@@ -13,7 +13,7 @@ DIRECTIVES="$(grep -r -o  directive public/app/**/*  | wc -l)"
 CONTROLLERS="$(grep -r -oP 'class .*Ctrl' public/app/**/*  | wc -l)"
 STORIES_COUNT="$(find ./packages/grafana-ui/src/components  -name "*.story.tsx" | wc -l)"
 MDX_COUNT="$(find ./packages/grafana-ui/src/components  -name "*.mdx" | wc -l)"
-LEGACY_FORMS="$(grep -r "LegacyForms;" public/app/* | wc -l)"
+LEGACY_FORMS="$(grep -r -oP 'LegacyForms;' public/app/**/* | wc -l)"
 
 
 if [ "$ERROR_COUNT" -gt $ERROR_COUNT_LIMIT ]; then
