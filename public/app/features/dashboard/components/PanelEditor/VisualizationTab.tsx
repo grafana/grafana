@@ -1,7 +1,7 @@
 import React, { FC, useState } from 'react';
 import { css } from 'emotion';
 import { GrafanaTheme, PanelPlugin, PanelPluginMeta } from '@grafana/data';
-import { CustomScrollbar, useTheme, stylesFactory, Forms, Icon } from '@grafana/ui';
+import { CustomScrollbar, useTheme, stylesFactory, Icon, Input } from '@grafana/ui';
 import { changePanelPlugin } from '../../state/actions';
 import { StoreState } from 'app/types';
 import { PanelModel } from '../../state/PanelModel';
@@ -38,7 +38,7 @@ export const VisualizationTabUnconnected: FC<Props> = ({ panel, plugin, changePa
   return (
     <div className={styles.wrapper}>
       <div className={styles.search}>
-        <Forms.Input
+        <Input
           value={searchQuery}
           onChange={e => setSearchQuery(e.currentTarget.value)}
           prefix={<Icon name="filter" className={styles.icon} />}
