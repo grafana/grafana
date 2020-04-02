@@ -1,7 +1,7 @@
 import React, { useCallback, useMemo } from 'react';
 import { css } from 'emotion';
 import { saveAs } from 'file-saver';
-import { CustomScrollbar, Forms, Button, HorizontalGroup, JSONFormatter, VerticalGroup } from '@grafana/ui';
+import { CustomScrollbar, Button, HorizontalGroup, JSONFormatter, VerticalGroup } from '@grafana/ui';
 import { CopyToClipboard } from 'app/core/components/CopyToClipboard/CopyToClipboard';
 import { SaveDashboardFormProps } from '../types';
 
@@ -61,9 +61,9 @@ export const SaveProvisionedDashboardForm: React.FC<SaveDashboardFormProps> = ({
             Copy JSON to clipboard
           </CopyToClipboard>
           <Button onClick={saveToFile}>Save JSON to file</Button>
-          <Forms.Button variant="secondary" onClick={onCancel}>
+          <Button variant="secondary" onClick={onCancel}>
             Cancel
-          </Forms.Button>
+          </Button>
         </HorizontalGroup>
       </VerticalGroup>
     </>

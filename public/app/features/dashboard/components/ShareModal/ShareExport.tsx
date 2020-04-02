@@ -108,7 +108,7 @@ export class ShareExport extends PureComponent<Props, State> {
               <Button variant="secondary" onClick={this.onViewJson}>
                 View JSON
               </Button>
-              <Button variant="inverse" onClick={onDismiss}>
+              <Button variant="secondary" onClick={onDismiss}>
                 Cancel
               </Button>
             </div>

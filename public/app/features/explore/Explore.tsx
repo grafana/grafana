@@ -66,6 +66,7 @@ const getStyles = stylesFactory(() => {
       label: logsMain;
       // Is needed for some transition animations to work.
       position: relative;
+      margin-top: 21px;
     `,
     button: css`
       margin: 1em 4px 0 0;
@@ -347,7 +348,15 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
                 }
 
                 return (
-                  <main className={cx('m-t-2', styles.logsMain, styles.fullHeight)} style={{ width }}>
+                  <main
+                    className={cx(
+                      styles.logsMain,
+                      // We need height to be 100% for tracing iframe to look good but in case of metrics mode
+                      // it makes graph and table also full page high when they do not need to be.
+                      mode === ExploreMode.Tracing && styles.fullHeight
+                    )}
+                    style={{ width }}
+                  >
                     <ErrorBoundaryAlert>
                       {showStartPage && StartPage && (
                         <div className={'grafana-info-box grafana-info-box--max-lg'}>

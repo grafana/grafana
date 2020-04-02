@@ -1,6 +1,7 @@
 // Libraries
 import React, { PureComponent } from 'react';
-import { Switch, PanelOptionsGrid, PanelOptionsGroup, FormLabel, Select } from '@grafana/ui';
+import { Switch, PanelOptionsGrid, PanelOptionsGroup, FormLabel, LegacyForms } from '@grafana/ui';
+const { Select } = LegacyForms;
 
 // Types
 import { Options } from './types';

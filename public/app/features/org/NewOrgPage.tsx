@@ -1,7 +1,7 @@
 import React, { FC } from 'react';
 import { getBackendSrv } from '@grafana/runtime';
 import Page from 'app/core/components/Page/Page';
-import { Forms } from '@grafana/ui';
+import { Forms, Button } from '@grafana/ui';
 import { getConfig } from 'app/core/config';
 import { StoreState } from 'app/types';
 import { hot } from 'react-hot-loader';
@@ -68,7 +68,7 @@ export const NewOrgPage: FC<PropsWithState> = ({ navModel }) => {
                     })}
                   />
                 </Forms.Field>
-                <Forms.Button type="submit">Create</Forms.Button>
+                <Button type="submit">Create</Button>
               </>
             );
           }}

@@ -1,9 +1,9 @@
 import { DataTransformerID, DataTransformerConfig, DataFrame, transformDataFrame } from '@grafana/data';
-import { Select } from '../Select/Select';
+import { Select } from '../Forms/Legacy/Select/Select';
 import { transformersUIRegistry } from './transformers';
 import React from 'react';
 import { TransformationRow } from './TransformationRow';
-import { Button } from '../Button/Button';
+import { Button } from '../Button';
 import { css } from 'emotion';
 
 interface TransformationsEditorState {
@@ -118,7 +118,7 @@ export class TransformationsEditor extends React.PureComponent<TransformationsEd
     return (
       <>
         {this.renderTransformationEditors()}
-        <Button variant="inverse" icon="fa fa-plus" onClick={this.onTransformationAdd}>
+        <Button variant="secondary" icon="fa fa-plus" onClick={this.onTransformationAdd}>
           Add transformation
         </Button>
       </>

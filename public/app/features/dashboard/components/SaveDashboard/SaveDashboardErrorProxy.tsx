@@ -89,7 +89,7 @@ const ConfirmPluginDashboardSaveModal: React.FC<SaveDashboardModalProps> = ({ on
         <HorizontalGroup justify="center">
           <SaveDashboardAsButton dashboard={dashboard} onSaveSuccess={onDismiss} />
           <Button
-            variant="danger"
+            variant="destructive"
             onClick={async () => {
               await onDashboardSave(dashboard.getSaveModelClone(), { overwrite: true }, dashboard);
               onDismiss();
@@ -97,7 +97,7 @@ const ConfirmPluginDashboardSaveModal: React.FC<SaveDashboardModalProps> = ({ on
           >
             Overwrite
           </Button>
-          <Button variant="inverse" onClick={onDismiss}>
+          <Button variant="secondary" onClick={onDismiss}>
             Cancel
           </Button>
         </HorizontalGroup>

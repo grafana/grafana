@@ -2,15 +2,15 @@ import { Controller as InputControl } from 'react-hook-form';
 import { getFormStyles } from './getFormStyles';
 import { Label } from './Label';
 import { Input } from './Input/Input';
-import { ButtonSelect } from './Select/ButtonSelect';
 import { RadioButtonGroup } from './RadioButtonGroup/RadioButtonGroup';
-import { AsyncSelect, Select } from './Select/Select';
 import { Form } from './Form';
 import { Field } from './Field';
-import { Button, LinkButton } from './Button';
 import { Switch } from './Switch';
+import { Legend } from './Legend';
 import { TextArea } from './TextArea/TextArea';
 import { Checkbox } from './Checkbox';
+//Remove after Enterprise migrations have been merged
+import { Select } from '../Select/Select';
 
 const Forms = {
   RadioButtonGroup,
@@ -20,15 +20,11 @@ const Forms = {
   Input,
   Form,
   Field,
-  Button,
-  LinkButton,
-  Select,
-  ButtonSelect,
   InputControl,
-  AsyncSelect,
   TextArea,
   Checkbox,
+  Legend,
+  Select,
 };
 
-export { ButtonVariant } from './Button';
 export default Forms;

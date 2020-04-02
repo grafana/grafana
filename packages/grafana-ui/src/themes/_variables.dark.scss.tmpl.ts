@@ -168,11 +168,11 @@ $table-bg-hover: $dark-6;
 
 // Buttons
 // -------------------------
-$btn-secondary-bg: $blue-base;
-$btn-secondary-bg-hl: $blue-shade;
+$btn-primary-bg: $blue-base;
+$btn-primary-bg-hl: $blue-shade;
 
-$btn-primary-bg: $green-base;
-$btn-primary-bg-hl: $green-shade;
+$btn-secondary-bg: $dark-6;
+$btn-secondary-bg-hl: lighten($dark-6, 4%);
 
 $btn-success-bg: $green-base;
 $btn-success-bg-hl: $green-shade;
@@ -212,9 +212,6 @@ $input-color-placeholder: ${theme.colors.formInputPlaceholderText};
 $input-label-bg: $gray-blue;
 $input-label-border-color: $dark-6;
 $input-color-select-arrow: $white;
-
-// Input placeholder text color
-$placeholderText: darken($text-color, 25%);
 
 // Search
 $search-shadow: 0 0 30px 0 $black;
@@ -282,29 +279,28 @@ $alert-success-bg: linear-gradient(90deg, $green-base, $green-shade);
 $alert-warning-bg: linear-gradient(90deg, $red-base, $red-shade);
 $alert-info-bg: linear-gradient(100deg, $blue-base, $blue-shade);
 
-// popover
+// Tooltips and popovers
+// -------------------------
+$tooltipColor: $text-color;
+$tooltipArrowWidth: 5px;
+$tooltipLinkColor: $link-color;
+$tooltipShadow: 0 0 10px black;
+$graph-tooltip-bg: $dark-1;
+
+$tooltipBackground: $gray15;
+$tooltipColor: $text-color;
+$tooltipArrowColor: $tooltipBackground;
+$tooltipBackgroundError: $brand-danger;
+
 $popover-bg: $dark-2;
 $popover-color: $text-color;
 $popover-border-color: $dark-9;
 $popover-header-bg: $dark-9;
 $popover-shadow: 0 0 20px black;
 
-$popover-help-bg: $btn-secondary-bg;
-$popover-help-color: $gray-6;
-
+$popover-help-bg: $tooltipBackground;
+$popover-help-color: $text-color;
 $popover-error-bg: $btn-danger-bg;
-
-// Tooltips and popovers
-// -------------------------
-$tooltipColor: $popover-help-color;
-$tooltipArrowWidth: 5px;
-$tooltipLinkColor: $link-color;
-$graph-tooltip-bg: $dark-1;
-
-$tooltipBackground: $black;
-$tooltipColor: $gray-4;
-$tooltipArrowColor: $tooltipBackground;
-$tooltipBackgroundError: $brand-danger;
 
 // images
 $checkboxImageUrl: '../img/checkbox.png';

@@ -48,7 +48,7 @@ export class UserOrganizations extends PureComponent<Props> {
                             <span className="btn btn-primary btn-small">Current</span>
                           ) : (
                             <Button
-                              variant="inverse"
+                              variant="secondary"
                               size="sm"
                               onClick={() => {
                                 this.props.setUserOrg(org);
