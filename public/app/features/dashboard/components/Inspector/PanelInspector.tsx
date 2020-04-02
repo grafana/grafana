@@ -15,8 +15,9 @@ import {
   stylesFactory,
   CustomScrollbar,
   Button,
+  transformersUIRegistry,
 } from '@grafana/ui';
-const { Select } = LegacyForms;
+
 import { getLocationSrv, getDataSourceSrv } from '@grafana/runtime';
 import {
   DataFrame,
@@ -29,8 +30,11 @@ import {
   getValueFormat,
   formattedValueToString,
   QueryResultMetaStat,
+  DataTransformerID,
 } from '@grafana/data';
+
 import { config } from 'app/core/config';
+const { Select } = LegacyForms;
 
 interface Props {
   dashboard: DashboardModel;
@@ -66,6 +70,9 @@ interface State {
 
   drawerWidth: string;
 }
+
+const seriesToColumns = transformersUIRegistry.get(DataTransformerID.seriesToColumns);
+const transformations = [{ value: seriesToColumns.id, label: seriesToColumns.name }];
 
 export class PanelInspector extends PureComponent<Props, State> {
   constructor(props: Props) {
@@ -203,7 +210,7 @@ export class PanelInspector extends PureComponent<Props, State> {
             </div>
           )}
           <div className={styles.transformationSelect}>
-            <Select options={panel.transformations} />
+            <Select options={transformations} />
           </div>
           <div className={styles.downloadCsv}>
             <Button variant="primary" onClick={() => this.exportCsv(processed[selected])}>
