@@ -22,8 +22,8 @@ export const getFilteredVariables = (filter: (model: VariableModel) => boolean, 
   return Object.values(state.templating.variables).filter(filter);
 };
 
-export const getVariableWithName = (name: string) => {
-  return getVariable(name, getState(), false);
+export const getVariableWithName = (name: string, state: StoreState = getState()) => {
+  return getVariable(name, state, false);
 };
 
 export const getVariables = (state: StoreState = getState(), includeNewVariable = false): VariableModel[] => {
