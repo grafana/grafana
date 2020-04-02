@@ -88,10 +88,10 @@ const { isEditor, hasEditPermissionInFolders } = contextSrv;
 const canEdit = isEditor || hasEditPermissionInFolders;
 
 export interface Props {
-  close: () => void;
+  closeSearch: () => void;
 }
 
-export const DashboardSearch: FC<Props> = ({ close }) => {
+export const DashboardSearch: FC<Props> = ({ closeSearch }) => {
   const [query, setQuery] = useState(defaultQuery);
   const [state, dispatch] = useReducer(searchReducer, initialState);
 
@@ -136,7 +136,7 @@ export const DashboardSearch: FC<Props> = ({ close }) => {
   const onKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
     switch (event.key) {
       case 'Escape':
-        close();
+        closeSearch();
         break;
     }
   };
@@ -190,7 +190,7 @@ export const DashboardSearch: FC<Props> = ({ close }) => {
           </div>
 
           {canEdit && (
-            <div className="search-filter-box">
+            <div className="search-filter-box" onClick={() => closeSearch()}>
               <a href="dashboard/new" className="search-filter-box-link">
                 <i className="gicon gicon-dashboard-new"></i> New dashboard
               </a>

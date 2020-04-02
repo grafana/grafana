@@ -17,7 +17,7 @@ export const SearchWrapper: FC = () => {
     isOpen && (
       <>
         <div className="search-backdrop" />
-        <DashboardSearch close={() => setIsOpen(false)} />
+        <DashboardSearch closeSearch={() => setIsOpen(false)} />
       </>
     )
   );
