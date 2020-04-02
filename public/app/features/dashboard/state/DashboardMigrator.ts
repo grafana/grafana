@@ -127,9 +127,8 @@ export class DashboardMigrator {
       }
 
       // update template variables
-      const variables = this.dashboard.getVariables();
-      for (i = 0; i < variables.length; i++) {
-        const variable = variables[i];
+      for (i = 0; i < this.dashboard.templating.list.length; i++) {
+        const variable = this.dashboard.templating.list[i];
         if (variable.datasource === void 0) {
           variable.datasource = null;
         }
