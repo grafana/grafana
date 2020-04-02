@@ -8,6 +8,7 @@ import {
   standardFieldConfigEditorRegistry,
   PanelPlugin,
   SelectableValue,
+  FieldConfigProperty,
 } from '@grafana/data';
 import { Forms, fieldMatchersUI, ValuePicker, useTheme } from '@grafana/ui';
 import { getDataLinksVariableSuggestions } from '../../../panel/panellinks/link_srv';
@@ -17,7 +18,7 @@ import { css } from 'emotion';
 interface Props {
   plugin: PanelPlugin;
   config: FieldConfigSource;
-  include?: string[]; // Ordered list of which fields should be shown/included
+  include?: FieldConfigProperty[]; // Ordered list of which fields should be shown/included
   onChange: (config: FieldConfigSource) => void;
   /* Helpful for IntelliSense */
   data: DataFrame[];
@@ -67,12 +68,15 @@ export const OverrideFieldConfigEditor: React.FC<Props> = props => {
       return null;
     }
 
-    let configPropertiesOptions = standardFieldConfigEditorRegistry.list().map(i => ({
-      label: i.name,
-      value: i.id,
-      description: i.description,
-      custom: false,
-    }));
+    let configPropertiesOptions = plugin.standardFieldConfigProperties.map(i => {
+      const editor = standardFieldConfigEditorRegistry.get(i);
+      return {
+        label: editor.name,
+        value: editor.id,
+        description: editor.description,
+        custom: false,
+      };
+    });
 
     if (customFieldConfigs) {
       configPropertiesOptions = configPropertiesOptions.concat(
@@ -185,6 +189,9 @@ export const DefaultFieldConfigEditor: React.FC<Props> = ({ include, data, onCha
   );
 
   const renderStandardConfigs = useCallback(() => {
+    if (include && include.length === 0) {
+      return null;
+    }
     if (include) {
       return <>{include.map(f => renderEditor(standardFieldConfigEditorRegistry.get(f), false))}</>;
     }

@@ -7,11 +7,11 @@ exports[`Render should render component 1`] = `
   <div
     className="gf-form gf-form--grow"
   >
-    <ForwardRef
+    <Component
       inputClassName="gf-form-input width-20"
       labelClassName="gf-form--has-input-icon"
       onChange={[MockFunction]}
-      placeholder="Filter by email, login or name"
+      placeholder="Search user by login,email or name"
       value=""
     />
     <div
@@ -28,11 +28,11 @@ exports[`Render should render pending invites button 1`] = `
   <div
     className="gf-form gf-form--grow"
   >
-    <ForwardRef
+    <Component
       inputClassName="gf-form-input width-20"
       labelClassName="gf-form--has-input-icon"
       onChange={[MockFunction]}
-      placeholder="Filter by email, login or name"
+      placeholder="Search user by login,email or name"
       value=""
     />
     <div
@@ -73,11 +73,11 @@ exports[`Render should show external user management button 1`] = `
   <div
     className="gf-form gf-form--grow"
   >
-    <ForwardRef
+    <Component
       inputClassName="gf-form-input width-20"
       labelClassName="gf-form--has-input-icon"
       onChange={[MockFunction]}
-      placeholder="Filter by email, login or name"
+      placeholder="Search user by login,email or name"
       value=""
     />
     <div
@@ -100,11 +100,11 @@ exports[`Render should show invite button 1`] = `
   <div
     className="gf-form gf-form--grow"
   >
-    <ForwardRef
+    <Component
       inputClassName="gf-form-input width-20"
       labelClassName="gf-form--has-input-icon"
       onChange={[MockFunction]}
-      placeholder="Filter by email, login or name"
+      placeholder="Search user by login,email or name"
       value=""
     />
     <div
