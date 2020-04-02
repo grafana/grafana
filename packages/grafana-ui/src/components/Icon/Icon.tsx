@@ -1,7 +1,6 @@
 import React from 'react';
 import { css, cx } from 'emotion';
-import { camelCase } from 'lodash';
-import { GrafanaTheme } from '@grafana/data';
+import { GrafanaTheme, toPascalCase } from '@grafana/data';
 import { stylesFactory } from '../../themes';
 import { useTheme } from '../../themes/ThemeContext';
 import { IconName, IconType } from '../../types';
@@ -44,7 +43,7 @@ export const Icon = React.forwardRef<HTMLDivElement, IconProps>(
     const theme = useTheme();
     const styles = getIconStyles(theme, type);
     const svgSize = getSvgSize(size, theme);
-    const iconName = type === 'default' ? `Uil${pascalCase(name)}` : pascalCase(name);
+    const iconName = type === 'default' ? `Uil${toPascalCase(name)}` : toPascalCase(name);
 
     /* Unicons don't have type definitions */
     //@ts-ignore
@@ -64,11 +63,6 @@ export const Icon = React.forwardRef<HTMLDivElement, IconProps>(
 );
 
 Icon.displayName = 'Icon';
-
-const pascalCase = (string: string) => {
-  const str = camelCase(string);
-  return str.charAt(0).toUpperCase() + str.substring(1);
-};
 
 /* Transform string with px to number and add 2 pxs as path in svg is 2px smaller */
 const getSvgSize = (size: ComponentSize | 'xl' | 'xxl', theme: GrafanaTheme) => {
