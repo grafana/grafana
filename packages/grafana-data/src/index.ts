@@ -12,4 +12,4 @@ export * from './datetime';
 export * from './text';
 export * from './valueFormats';
 export * from './field';
-export { PanelPlugin, defaultStandardFieldConfigProperties } from './panel/PanelPlugin';
+export { PanelPlugin } from './panel/PanelPlugin';

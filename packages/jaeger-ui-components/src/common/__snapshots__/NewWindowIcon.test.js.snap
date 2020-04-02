@@ -1,0 +1,8 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`NewWindowIcon renders as expected 1`] = `
+<IoAndroidOpen
+  className=""
+  notIsLarge="not is large"
+/>
+`;

@@ -18,8 +18,6 @@ export interface SelectCommonProps<T> {
   onKeyDown?: (event: React.KeyboardEvent) => void;
   placeholder?: string;
   disabled?: boolean;
-  //To be removed, is here to make Enterprise mergable
-  isDisabled?: boolean;
   isSearchable?: boolean;
   isClearable?: boolean;
   autoFocus?: boolean;

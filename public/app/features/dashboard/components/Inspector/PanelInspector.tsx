@@ -271,7 +271,15 @@ export class PanelInspector extends PureComponent<Props, State> {
   }
 
   renderRequestTab() {
-    return <JSONFormatter json={this.state.last} open={3} />;
+    return (
+      <CustomScrollbar>
+        <JSONFormatter json={this.state.last} open={2} />
+      </CustomScrollbar>
+    );
+  }
+
+  renderJsonModelTab() {
+    return <JSONFormatter json={this.props.panel.getSaveModel()} open={2} />;
   }
 
   renderJsonModelTab() {
