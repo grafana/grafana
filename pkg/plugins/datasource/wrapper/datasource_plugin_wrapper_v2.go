@@ -96,6 +96,7 @@ func (tw *DatasourcePluginWrapperV2) Query(ctx context.Context, ds *models.DataS
 		}
 		if pRes.Error != "" {
 			qr.Error = fmt.Errorf(pRes.Error)
+			qr.ErrorString = pRes.Error
 		}
 		tR.Results[refID] = qr
 	}

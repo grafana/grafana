@@ -116,6 +116,7 @@ func (tw *TransformWrapper) Transform(ctx context.Context, query *tsdb.TsdbQuery
 		}
 		if res.Error != "" {
 			tRes.Error = fmt.Errorf(res.Error)
+			tRes.ErrorString = res.Error
 		}
 		tR.Results[refID] = tRes
 	}
