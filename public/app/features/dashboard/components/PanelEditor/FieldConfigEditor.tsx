@@ -8,7 +8,7 @@ import {
   standardFieldConfigEditorRegistry,
   PanelPlugin,
   SelectableValue,
-  StandardFieldConfigProperties,
+  FieldConfigProperty,
 } from '@grafana/data';
 import { Forms, fieldMatchersUI, ValuePicker, useTheme } from '@grafana/ui';
 import { getDataLinksVariableSuggestions } from '../../../panel/panellinks/link_srv';
@@ -18,7 +18,7 @@ import { css } from 'emotion';
 interface Props {
   plugin: PanelPlugin;
   config: FieldConfigSource;
-  include?: StandardFieldConfigProperties[]; // Ordered list of which fields should be shown/included
+  include?: FieldConfigProperty[]; // Ordered list of which fields should be shown/included
   onChange: (config: FieldConfigSource) => void;
   /* Helpful for IntelliSense */
   data: DataFrame[];
