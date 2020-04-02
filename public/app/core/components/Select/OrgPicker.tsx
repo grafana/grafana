@@ -55,18 +55,16 @@ export class OrgPicker extends PureComponent<Props, State> {
     const { isLoading } = this.state;
 
     return (
-      <div className="org-picker">
-        <AsyncSelect
-          className={className}
-          isLoading={isLoading}
-          defaultOptions={true}
-          isSearchable={false}
-          loadOptions={this.getOrgOptions}
-          onChange={onSelected}
-          placeholder="Select organization"
-          noOptionsMessage={() => 'No organizations found'}
-        />
-      </div>
+      <Forms.AsyncSelect
+        className={className}
+        isLoading={isLoading}
+        defaultOptions={true}
+        isSearchable={false}
+        loadOptions={this.getOrgOptions}
+        onChange={onSelected}
+        placeholder="Select organization"
+        noOptionsMessage="No organizations found"
+      />
     );
   }
 }

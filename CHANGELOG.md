@@ -45,6 +45,23 @@ backendSrv.get(‘http://your.url/api’).then(result => {
 });
 ```
 
+Another unfortunate outcome from this work in `backendSrv` is that the response format for `.headers()` changed from a function to an object.
+
+To make your plugin work on 6.7.x as well as on previous versions you should add something like the following:
+
+```typescript
+let responseHeaders = response.headers;
+if (!responseHeaders) {
+  return null;
+}
+
+// Support pre 6.7 angular HTTP rather than fetch
+if (typeof responseHeaders === 'function') {
+  responseHeaders = responseHeaders();
+}
+```
+
+
 You can test your plugin with the `master` branch version of Grafana.
 
 ### Features / Enhancements

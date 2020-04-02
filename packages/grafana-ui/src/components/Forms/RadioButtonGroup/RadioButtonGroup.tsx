@@ -61,7 +61,8 @@ export function RadioButtonGroup<T>({
     },
     [onChange]
   );
-  const groupName = useRef(uniqueId('radiogroup-'));
+  const id = uniqueId('radiogroup-');
+  const groupName = useRef(id);
   const styles = getRadioButtonGroupStyles();
 
   return (
@@ -75,7 +76,7 @@ export function RadioButtonGroup<T>({
             active={value === o.value}
             key={o.label}
             onChange={handleOnChange(o)}
-            id={`option-${o.value}`}
+            id={`option-${o.value}-${id}`}
             name={groupName.current}
             fullWidth
           >
