@@ -34,6 +34,13 @@ export const VisualizationTabUnconnected: FC<Props> = ({ panel, plugin, changePa
   const onPluginTypeChange = (meta: PanelPluginMeta) => {
     changePanelPlugin(panel, meta.id);
   };
+  const suffix =
+    searchQuery !== '' ? (
+      <span className={styles.searchClear} onClick={() => setSearchQuery('')}>
+        <Icon name="times" />
+        Clear filter
+      </span>
+    ) : null;
 
   return (
     <div className={styles.wrapper}>
@@ -42,6 +49,7 @@ export const VisualizationTabUnconnected: FC<Props> = ({ panel, plugin, changePa
           value={searchQuery}
           onChange={e => setSearchQuery(e.currentTarget.value)}
           prefix={<Icon name="filter" className={styles.icon} />}
+          suffix={suffix}
           placeholder="Filter visualisations"
           autoFocus
         />
@@ -76,6 +84,10 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       flex-grow: 0;
       flex-shrink: 1;
       margin-bottom: ${theme.spacing.sm};
+    `,
+    searchClear: css`
+      color: ${theme.colors.gray60};
+      cursor: pointer;
     `,
     visList: css`
       flex-grow: 1;
