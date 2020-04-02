@@ -136,7 +136,7 @@ const prepareRelease = useSpinner<any>('Preparing release', async ({ dryrun, dev
   }
 });
 
-interface GithubPluglishReleaseOptions {
+interface GithubPublishReleaseOptions {
   commitHash?: string;
   dev?: boolean;
   githubToken: string;
@@ -144,7 +144,7 @@ interface GithubPluglishReleaseOptions {
   gitRepoName: string;
 }
 
-const createRelease = useSpinner<GithubPluglishReleaseOptions>(
+const createRelease = useSpinner<GithubPublishReleaseOptions>(
   'Creating release',
   async ({ commitHash, githubToken, gitRepoName, gitRepoOwner }) => {
     const gitRelease = new GitHubRelease(githubToken, gitRepoOwner, gitRepoName, await releaseNotes(), commitHash);
