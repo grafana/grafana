@@ -16,6 +16,18 @@ interface FieldAccessorCache {
   [key: string]: (obj: any) => any;
 }
 
+interface TemplateSrvDependencies {
+  getFilteredVariables: typeof getFilteredVariables;
+  getVariables: typeof getVariables;
+  getVariableWithName: typeof getVariableWithName;
+}
+
+const duringRuntime: TemplateSrvDependencies = {
+  getFilteredVariables,
+  getVariables,
+  getVariableWithName,
+};
+
 export class TemplateSrv {
   private _variables: any[];
   private regex = variableRegex;
@@ -25,7 +37,7 @@ export class TemplateSrv {
   private timeRange?: TimeRange | null = null;
   private fieldAccessorCache: FieldAccessorCache = {};
 
-  constructor() {
+  constructor(private dependencies: TemplateSrvDependencies = duringRuntime) {
     this.builtIns['__interval'] = { text: '1s', value: '1s' };
     this.builtIns['__interval_ms'] = { text: '100', value: '100' };
     this._variables = [];
@@ -53,7 +65,7 @@ export class TemplateSrv {
 
   getVariables(): VariableModel[] {
     if (getConfig().featureToggles.newVariables) {
-      return getVariables();
+      return this.dependencies.getVariables();
     }
 
     return this._variables;
@@ -419,7 +431,7 @@ export class TemplateSrv {
     }
 
     if (getConfig().featureToggles.newVariables && !this.index[name]) {
-      return getVariableWithName(name);
+      return this.dependencies.getVariableWithName(name);
     }
 
     return this.index[name];
@@ -427,7 +439,7 @@ export class TemplateSrv {
 
   private getAdHocVariables = (): any[] => {
     if (getConfig().featureToggles.newVariables) {
-      return getFilteredVariables(isAdHoc);
+      return this.dependencies.getFilteredVariables(isAdHoc);
     }
     if (Array.isArray(this._variables)) {
       return this._variables.filter(isAdHoc);

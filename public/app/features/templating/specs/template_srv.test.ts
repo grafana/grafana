@@ -1,10 +1,19 @@
 import { TemplateSrv } from '../template_srv';
+import { getFilteredVariables, getVariables, getVariableWithName } from '../../variables/state/selectors';
+import { StoreState } from 'app/types';
 
 describe('templateSrv', () => {
   let _templateSrv: any;
 
-  function initTemplateSrv(variables: any) {
-    _templateSrv = new TemplateSrv();
+  function initTemplateSrv(variables: any[]) {
+    const state = convertToStoreState(variables);
+
+    _templateSrv = new TemplateSrv({
+      getFilteredVariables: filter => getFilteredVariables(filter, state),
+      getVariableWithName: name => getVariableWithName(name, state),
+      getVariables: () => getVariables(state),
+    });
+
     _templateSrv.init(variables);
   }
 
@@ -598,3 +607,14 @@ describe('templateSrv', () => {
     });
   });
 });
+
+const convertToStoreState = (variables: any[]): StoreState => {
+  return {
+    templating: {
+      variables: variables.reduce((byName, variable) => {
+        byName[variable.name] = variable;
+        return byName;
+      }, {}),
+    },
+  } as StoreState;
+};
