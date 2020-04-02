@@ -109,7 +109,7 @@ func (tw *TransformWrapper) Transform(ctx context.Context, query *tsdb.TsdbQuery
 	if pbRes.Metadata != nil {
 		resMd, err := json.Marshal(pbRes.Metadata)
 		if err != nil {
-			tw.logger.Error("unable to marshal resposne metadata", err)
+			tw.logger.Error("unable to marshal response metadata", err)
 		}
 		tR.Message = string(resMd)
 	}
@@ -117,8 +117,10 @@ func (tw *TransformWrapper) Transform(ctx context.Context, query *tsdb.TsdbQuery
 		tR.Results[refID] = &tsdb.QueryResult{
 			RefId:      refID,
 			Dataframes: res.Frames,
-			Error:      fmt.Errorf(res.Error),
 			Meta:       simplejson.NewFromAny(res.JsonMeta),
+		}
+		if res.Error != "" {
+			tR.Results[refID].Error = fmt.Errorf(res.Error)
 		}
 	}
 
@@ -180,11 +182,7 @@ func (s *transformCallback) QueryData(ctx context.Context, req *pluginv2.QueryDa
 	}
 	// Convert tsdb results (map) to plugin-model/datasource (slice) results.
 	// Only error, tsdb.Series, and encoded Dataframes responses are mapped.
-
-	// encodedFrames := [][]byte{}
-	pQDR := &pluginv2.QueryDataResponse{
-		Responses: make(map[string]*pluginv2.DataResponse, len(tsdbRes.Results)),
-	}
+	responses := make(map[string]*pluginv2.DataResponse, len(tsdbRes.Results))
 	for refID, res := range tsdbRes.Results {
 		pRes := &pluginv2.DataResponse{}
 		if res.Error != nil {
@@ -193,6 +191,7 @@ func (s *transformCallback) QueryData(ctx context.Context, req *pluginv2.QueryDa
 
 		if res.Dataframes != nil {
 			pRes.Frames = res.Dataframes
+			responses[refID] = pRes
 			continue
 		}
 
@@ -208,6 +207,9 @@ func (s *transformCallback) QueryData(ctx context.Context, req *pluginv2.QueryDa
 			}
 			pRes.Frames = append(pRes.Frames, encFrame)
 		}
+		responses[refID] = pRes
 	}
-	return pQDR, nil
+	return &pluginv2.QueryDataResponse{
+		Responses: responses,
+	}, nil
 }
