@@ -313,7 +313,7 @@ export class PanelModel {
         old = oldOptions.options;
       }
       this.options = this.options || {};
-      Object.assign(this.options, newPlugin.onPanelTypeChanged(this, oldPluginId, old));
+      Object.assign(this.options, newPlugin.onPanelTypeChanged(this.options, oldPluginId, old));
     }
 
     // switch

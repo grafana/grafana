@@ -63,10 +63,10 @@ export interface PanelModel<TOptions = any> {
 export type PanelMigrationHandler<TOptions = any> = (panel: PanelModel<TOptions>) => Partial<TOptions>;
 
 /**
- * Called before a panel is initialized. Allows panel inspection for any updates before changing the panel type.
+ * Called before a panel is initialized
  */
 export type PanelTypeChangedHandler<TOptions = any> = (
-  panel: PanelModel<TOptions>,
+  options: Partial<TOptions>,
   prevPluginId: string,
   prevOptions: any
 ) => Partial<TOptions>;
@@ -117,12 +117,8 @@ export class PanelPlugin<TOptions = any> extends GrafanaPlugin<PanelPluginMeta> 
   }
 
   /**
-   * This function is called when the visualization was changed. This
-   * passes in the panel model for previous visualisation options inspection
-   * and panel model updates.
-   *
-   * This is useful for supporting PanelModel API updates when changing
-   * between Angular and React panels.
+   * This function is called when the visualization was changed.  This
+   * passes in the options that were used in the previous visualization
    */
   setPanelChangeHandler(handler: PanelTypeChangedHandler) {
     this.onPanelTypeChanged = handler;
