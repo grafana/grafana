@@ -15,6 +15,8 @@ const FETCH_RESULTS = 'FETCH_RESULTS';
 const TOGGLE_SECTION = 'TOGGLE_SECTION';
 const FETCH_ITEMS = 'FETCH_ITEMS';
 const TOGGLE_CUSTOM = 'TOGGLE_CUSTOM';
+const MOVE_SELECTION_UP = 'MOVE_SELECTION_UP';
+const MOVE_SELECTION_DOWN = 'MOVE_SELECTION_DOWN';
 
 const searchSrv = new SearchSrv();
 
@@ -35,11 +37,13 @@ const parseQuery = (query: string) => {
 interface State {
   results: DashboardSection[];
   loading: boolean;
+  selectedIndex: number;
 }
 
 const initialState: State = {
   results: [],
   loading: true,
+  selectedIndex: 0,
 };
 
 const searchReducer = (state: any, action: SearchAction) => {
@@ -82,6 +86,19 @@ const searchReducer = (state: any, action: SearchAction) => {
         }),
       };
     }
+    case MOVE_SELECTION_UP: {
+      if (state.selectedIndex < state.results.length) {
+        return { ...state, selectedIndex: state.selectedIndex + 1 };
+      }
+      break;
+    }
+    case MOVE_SELECTION_DOWN:
+      if (state.selectedIndex > 0) {
+        return { ...state, selectedIndex: state.selectedIndex - 1 };
+      }
+      break;
+    default:
+      return state;
   }
 };
 
@@ -139,6 +156,12 @@ export const DashboardSearch: FC<Props> = ({ closeSearch }) => {
     switch (event.key) {
       case 'Escape':
         closeSearch();
+        break;
+      case 'ArrowUp':
+        dispatch({ type: MOVE_SELECTION_UP });
+        break;
+      case 'ArrowDown':
+        dispatch({ type: MOVE_SELECTION_DOWN });
         break;
     }
   };
