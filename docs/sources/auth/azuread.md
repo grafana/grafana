@@ -12,6 +12,8 @@ weight = 3
 
 # Azure AD OAuth2 authentication
 
+> Only available in Grafana v6.7+
+
 The Azure AD authentication provides the possibility to use an Azure Active Directory tenant as an identity provider for Grafana. By using Azure AD Application Roles it is also possible to assign Users and Groups to Grafana roles from the Azure Portal.
 
 ## Create the Azure AD application
@@ -131,7 +133,7 @@ allowed_domains = mycompany.com mycompany.org
 >  Only available in Grafana Enterprise v6.7+
 
 With Team Sync you can map your Azure AD groups to teams in Grafana so that your users will automatically be added to
-the correct teams. 
+the correct teams.
 
 Azure AD groups can be referenced by group Object Id, like `8bab1c86-8fba-33e5-2089-1d1c80ec267d`.
 

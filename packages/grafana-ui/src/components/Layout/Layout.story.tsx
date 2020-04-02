@@ -1,7 +1,7 @@
 import React from 'react';
 import { withCenteredStory, withHorizontallyCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { VerticalGroup, HorizontalGroup, Layout } from './Layout';
-import { Button } from '../Forms/Button';
+import { Button } from '../Button';
 import { withStoryContainer } from '../../utils/storybook/withStoryContainer';
 import { select } from '@storybook/addon-knobs';
 

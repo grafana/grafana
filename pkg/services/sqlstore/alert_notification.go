@@ -67,6 +67,32 @@ func GetAlertNotifications(query *models.GetAlertNotificationsQuery) error {
 	return getAlertNotificationInternal(query, newSession())
 }
 
+func (ss *SqlStore) addAlertNotificationUidByIdHandler() {
+	bus.AddHandler("sql", ss.GetAlertNotificationUidWithId)
+}
+
+func (ss *SqlStore) GetAlertNotificationUidWithId(query *models.GetAlertNotificationUidQuery) error {
+	cacheKey := newAlertNotificationUidCacheKey(query.OrgId, query.Id)
+
+	if cached, found := ss.CacheService.Get(cacheKey); found {
+		query.Result = cached.(string)
+		return nil
+	}
+
+	err := getAlertNotificationUidInternal(query, newSession())
+	if err != nil {
+		return err
+	}
+
+	ss.CacheService.Set(cacheKey, query.Result, -1) //Infinite, never changes
+
+	return nil
+}
+
+func newAlertNotificationUidCacheKey(orgID, notificationId int64) string {
+	return fmt.Sprintf("notification-uid-by-org-%d-and-id-%d", orgID, notificationId)
+}
+
 func GetAlertNotificationsWithUid(query *models.GetAlertNotificationsWithUidQuery) error {
 	return getAlertNotificationWithUidInternal(query, newSession())
 }
@@ -121,6 +147,35 @@ func GetAlertNotificationsWithUidToSend(query *models.GetAlertNotificationsWithU
 	}
 
 	query.Result = results
+	return nil
+}
+
+func getAlertNotificationUidInternal(query *models.GetAlertNotificationUidQuery, sess *DBSession) error {
+	var sql bytes.Buffer
+	params := make([]interface{}, 0)
+
+	sql.WriteString(`SELECT
+										alert_notification.uid
+										FROM alert_notification
+	  							`)
+
+	sql.WriteString(` WHERE alert_notification.org_id = ?`)
+	params = append(params, query.OrgId)
+
+	sql.WriteString(` AND alert_notification.id = ?`)
+	params = append(params, query.Id)
+
+	results := make([]string, 0)
+	if err := sess.SQL(sql.String(), params...).Find(&results); err != nil {
+		return err
+	}
+
+	if len(results) == 0 {
+		return fmt.Errorf("Alert notification [ Id: %v, OrgId: %v ] not found", query.Id, query.OrgId)
+	}
+
+	query.Result = results[0]
+
 	return nil
 }
 

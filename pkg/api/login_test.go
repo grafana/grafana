@@ -4,12 +4,13 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
-	"github.com/grafana/grafana/pkg/services/licensing"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
+
+	"github.com/grafana/grafana/pkg/services/licensing"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/bus"
@@ -66,13 +67,13 @@ func (stub *FakeLogger) Info(testMessage string, ctx ...interface{}) {
 }
 
 type redirectCase struct {
-	desc      string
-	url       string
-	status    int
-	err       error
-	appURL    string
-	appSubURL string
-	path      string
+	desc        string
+	url         string
+	status      int
+	err         error
+	appURL      string
+	appSubURL   string
+	redirectURL string
 }
 
 func TestLoginErrorCookieApiEndpoint(t *testing.T) {
@@ -152,68 +153,56 @@ func TestLoginViewRedirect(t *testing.T) {
 
 	redirectCases := []redirectCase{
 		{
-			desc:   "grafana relative url without subpath",
-			url:    "/profile",
-			appURL: "http://localhost:3000",
-			path:   "/",
-			status: 302,
+			desc:        "grafana relative url without subpath",
+			url:         "/profile",
+			redirectURL: "/profile",
+			appURL:      "http://localhost:3000/",
+			status:      302,
 		},
 		{
-			desc:      "grafana relative url with subpath",
-			url:       "/grafana/profile",
-			appURL:    "http://localhost:3000",
-			appSubURL: "grafana",
-			path:      "grafana/",
-			status:    302,
+			desc:        "grafana invalid relative url starting with the subpath",
+			url:         "/grafanablah",
+			redirectURL: "/grafana/",
+			appURL:      "http://localhost:3000/",
+			appSubURL:   "/grafana",
+			status:      302,
 		},
 		{
-			desc:      "grafana slashed relative url with subpath",
-			url:       "/grafana/profile",
-			appURL:    "http://localhost:3000",
-			appSubURL: "grafana",
-			path:      "/grafana/",
-			status:    302,
+			desc:        "grafana relative url with subpath with leading slash",
+			url:         "/grafana/profile",
+			redirectURL: "/grafana/profile",
+			appURL:      "http://localhost:3000",
+			appSubURL:   "/grafana",
+			status:      302,
 		},
 		{
-			desc:      "relative url with missing subpath",
-			url:       "/profile",
-			appURL:    "http://localhost:3000",
-			appSubURL: "grafana",
-			path:      "grafana/",
-			status:    200,
-			err:       login.ErrInvalidRedirectTo,
+			desc:        "relative url with missing subpath",
+			url:         "/profile",
+			redirectURL: "/grafana/",
+			appURL:      "http://localhost:3000/",
+			appSubURL:   "/grafana",
+			status:      302,
 		},
 		{
-			desc:      "grafana subpath absolute url",
-			url:       "http://localhost:3000/grafana/profile",
-			appURL:    "http://localhost:3000",
-			appSubURL: "grafana",
-			path:      "/grafana/profile",
-			status:    200,
+			desc:        "grafana absolute url",
+			url:         "http://localhost:3000/profile",
+			redirectURL: "/",
+			appURL:      "http://localhost:3000/",
+			status:      302,
 		},
 		{
-			desc:   "grafana absolute url",
-			url:    "http://localhost:3000/profile",
-			appURL: "http://localhost:3000",
-			path:   "/",
-			status: 200,
-			err:    login.ErrAbsoluteRedirectTo,
+			desc:        "non grafana absolute url",
+			url:         "http://example.com",
+			redirectURL: "/",
+			appURL:      "http://localhost:3000/",
+			status:      302,
 		},
 		{
-			desc:   "non grafana absolute url",
-			url:    "http://example.com",
-			appURL: "http://localhost:3000",
-			path:   "/",
-			status: 200,
-			err:    login.ErrAbsoluteRedirectTo,
-		},
-		{
-			desc:   "invalid url",
-			url:    ":foo",
-			appURL: "http://localhost:3000",
-			path:   "/",
-			status: 200,
-			err:    login.ErrInvalidRedirectTo,
+			desc:        "invalid url",
+			url:         ":foo",
+			redirectURL: "/",
+			appURL:      "http://localhost:3000/",
+			status:      302,
 		},
 	}
 
@@ -226,7 +215,7 @@ func TestLoginViewRedirect(t *testing.T) {
 				MaxAge:   60,
 				Value:    c.url,
 				HttpOnly: true,
-				Path:     c.path,
+				Path:     hs.Cfg.AppSubUrl + "/",
 				Secure:   hs.Cfg.CookieSecure,
 				SameSite: hs.Cfg.CookieSameSiteMode,
 			}
@@ -236,15 +225,22 @@ func TestLoginViewRedirect(t *testing.T) {
 			if c.status == 302 {
 				location, ok := sc.resp.Header()["Location"]
 				assert.True(t, ok)
-				assert.Equal(t, location[0], c.url)
+				assert.Equal(t, location[0], c.redirectURL)
 
 				setCookie, ok := sc.resp.Header()["Set-Cookie"]
 				assert.True(t, ok, "Set-Cookie exists")
 				assert.Greater(t, len(setCookie), 0)
 				var redirectToCookieFound bool
-				expCookieValue := fmt.Sprintf("redirect_to=%v; Path=%v; Max-Age=60; HttpOnly; Secure", c.url, c.path)
+				redirectToCookieShouldBeDeleted := c.url != c.redirectURL
+				expCookieValue := c.redirectURL
+				expCookieMaxAge := 60
+				if redirectToCookieShouldBeDeleted {
+					expCookieValue = ""
+					expCookieMaxAge = 0
+				}
+				expCookie := fmt.Sprintf("redirect_to=%v; Path=%v; Max-Age=%v; HttpOnly; Secure", expCookieValue, hs.Cfg.AppSubUrl+"/", expCookieMaxAge)
 				for _, cookieValue := range setCookie {
-					if cookieValue == expCookieValue {
+					if cookieValue == expCookie {
 						redirectToCookieFound = true
 						break
 					}
@@ -296,37 +292,38 @@ func TestLoginPostRedirect(t *testing.T) {
 		{
 			desc:   "grafana relative url without subpath",
 			url:    "/profile",
-			appURL: "https://localhost:3000",
+			appURL: "https://localhost:3000/",
 		},
 		{
-			desc:      "grafana relative url with subpath",
+			desc:      "grafana relative url with subpath with leading slash",
 			url:       "/grafana/profile",
-			appURL:    "https://localhost:3000",
-			appSubURL: "grafana",
+			appURL:    "https://localhost:3000/",
+			appSubURL: "/grafana",
 		},
 		{
-			desc:      "grafana no slash relative url with subpath",
-			url:       "grafana/profile",
-			appURL:    "https://localhost:3000",
-			appSubURL: "grafana",
+			desc:      "grafana invalid relative url starting with subpath",
+			url:       "/grafanablah",
+			appURL:    "https://localhost:3000/",
+			appSubURL: "/grafana",
+			err:       login.ErrInvalidRedirectTo,
 		},
 		{
 			desc:      "relative url with missing subpath",
 			url:       "/profile",
-			appURL:    "https://localhost:3000",
-			appSubURL: "grafana",
+			appURL:    "https://localhost:3000/",
+			appSubURL: "/grafana",
 			err:       login.ErrInvalidRedirectTo,
 		},
 		{
 			desc:   "grafana absolute url",
 			url:    "http://localhost:3000/profile",
-			appURL: "http://localhost:3000",
+			appURL: "http://localhost:3000/",
 			err:    login.ErrAbsoluteRedirectTo,
 		},
 		{
 			desc:   "non grafana absolute url",
 			url:    "http://example.com",
-			appURL: "https://localhost:3000",
+			appURL: "https://localhost:3000/",
 			err:    login.ErrAbsoluteRedirectTo,
 		},
 	}

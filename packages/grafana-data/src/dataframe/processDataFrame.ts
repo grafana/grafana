@@ -16,7 +16,6 @@ import {
   DataFrameDTO,
 } from '../types/index';
 import { isDateTime } from '../datetime/moment_wrapper';
-import { deprecationWarning } from '../utils/deprecationWarning';
 import { ArrayVector } from '../vector/ArrayVector';
 import { MutableDataFrame } from './MutableDataFrame';
 import { SortedVector } from '../vector/SortedVector';
@@ -224,7 +223,7 @@ export function guessFieldTypeForField(field: Field): FieldType | undefined {
 export const guessFieldTypes = (series: DataFrame): DataFrame => {
   for (let i = 0; i < series.fields.length; i++) {
     if (!series.fields[i].type) {
-      // Somethign is missing a type return a modified copy
+      // Something is missing a type, return a modified copy
       return {
         ...series,
         fields: series.fields.map(field => {
@@ -250,17 +249,6 @@ export const isDataFrame = (data: any): data is DataFrame => data && data.hasOwn
 
 export const toDataFrame = (data: any): DataFrame => {
   if (data.hasOwnProperty('fields')) {
-    // @deprecated -- remove in 6.5
-    if (data.hasOwnProperty('rows')) {
-      const v = new MutableDataFrame(data as DataFrameDTO);
-      const rows = data.rows as any[][];
-      for (let i = 0; i < rows.length; i++) {
-        v.appendRow(rows[i]);
-      }
-      deprecationWarning('DataFrame', '.rows', 'columnar format');
-      return v;
-    }
-
     // DataFrameDTO does not have length
     if (data.hasOwnProperty('length')) {
       return data as DataFrame;

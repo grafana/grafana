@@ -1,7 +1,6 @@
 {
   "compilerOptions": {
     "declarationDir": "dist",
-    "module": "commonjs",
     "outDir": "compiled",
     "rootDirs": ["."],
     "typeRoots": ["node_modules/@types"],

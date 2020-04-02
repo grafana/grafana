@@ -5,17 +5,17 @@ import React, { PureComponent } from 'react';
 import { config } from 'app/core/config';
 
 // Components
-import { Gauge, DataLinksContextMenu } from '@grafana/ui';
+import { Gauge, DataLinksContextMenu, VizRepeater, VizRepeaterRenderValueProps } from '@grafana/ui';
 
 // Types
 import { GaugeOptions } from './types';
-import { VizRepeater } from '@grafana/ui';
 import { FieldDisplay, getFieldDisplayValues, VizOrientation, PanelProps } from '@grafana/data';
 import { getFieldLinksSupplier } from 'app/features/panel/panellinks/linkSuppliers';
 
 export class GaugePanel extends PureComponent<PanelProps<GaugeOptions>> {
-  renderValue = (value: FieldDisplay, width: number, height: number): JSX.Element => {
+  renderValue = (valueProps: VizRepeaterRenderValueProps<FieldDisplay>): JSX.Element => {
     const { options } = this.props;
+    const { value, width, height } = valueProps;
     const { field, display } = value;
 
     return (
@@ -40,9 +40,10 @@ export class GaugePanel extends PureComponent<PanelProps<GaugeOptions>> {
   };
 
   getValues = (): FieldDisplay[] => {
-    const { data, options, replaceVariables } = this.props;
+    const { data, options, replaceVariables, fieldConfig } = this.props;
     return getFieldDisplayValues({
-      fieldOptions: options.fieldOptions,
+      fieldConfig,
+      reduceOptions: options.reduceOptions,
       replaceVariables,
       theme: config.theme,
       data: data.series,

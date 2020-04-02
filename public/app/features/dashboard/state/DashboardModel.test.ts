@@ -652,14 +652,14 @@ describe('DashboardModel', () => {
 
     it('toggleLegendsForAll should toggle all legends on on first execution', () => {
       model.toggleLegendsForAll();
-      const legendsOn = model.panels.filter(panel => panel.legend.show === true);
+      const legendsOn = model.panels.filter(panel => panel.legend!.show === true);
       expect(legendsOn.length).toBe(3);
     });
 
     it('toggleLegendsForAll should toggle all legends off on second execution', () => {
       model.toggleLegendsForAll();
       model.toggleLegendsForAll();
-      const legendsOn = model.panels.filter(panel => panel.legend.show === true);
+      const legendsOn = model.panels.filter(panel => panel.legend!.show === true);
       expect(legendsOn.length).toBe(0);
     });
   });

@@ -2,6 +2,7 @@ export interface PanelEditorTab {
   id: string;
   text: string;
   active: boolean;
+  icon: string;
 }
 
 export enum PanelEditorTabId {

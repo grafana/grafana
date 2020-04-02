@@ -8,16 +8,16 @@ import { getConfig } from 'app/core/config';
 import locationUtil from 'app/core/utils/location_util';
 import { DataLinkBuiltInVars } from '@grafana/ui';
 import {
-  DataLink,
-  KeyValue,
-  deprecationWarning,
-  LinkModel,
   DataFrame,
-  ScopedVars,
-  FieldType,
+  DataLink,
+  deprecationWarning,
   Field,
-  VariableSuggestion,
+  FieldType,
+  KeyValue,
+  LinkModel,
+  ScopedVars,
   VariableOrigin,
+  VariableSuggestion,
   VariableSuggestionsScope,
 } from '@grafana/data';
 
@@ -77,7 +77,7 @@ const buildLabelPath = (label: string) => {
 };
 
 export const getPanelLinksVariableSuggestions = (): VariableSuggestion[] => [
-  ...templateSrv.variables.map(variable => ({
+  ...templateSrv.getVariables().map(variable => ({
     value: variable.name as string,
     label: variable.name,
     origin: VariableOrigin.Template,

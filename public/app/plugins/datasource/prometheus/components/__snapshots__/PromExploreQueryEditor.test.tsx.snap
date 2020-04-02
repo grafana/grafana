@@ -8,7 +8,7 @@ exports[`PromExploreQueryEditor should render component 1`] = `
       label="Step"
       onChangeFunc={[Function]}
       onKeyDownFunc={[Function]}
-      tooltipContent="Needs to be a valid time unit string, for example 5s, 1m, 3h, 1d, 1y"
+      tooltipContent="Time units can be used here, for example: 5s, 1m, 3h, 1d, 1y (Default if no unit is specified: s)"
       value="1s"
     />
   }
@@ -47,6 +47,7 @@ exports[`PromExploreQueryEditor should render component 1`] = `
   }
   datasource={Object {}}
   history={Array []}
+  onBlur={[Function]}
   onChange={[MockFunction]}
   onRunQuery={[MockFunction]}
   query={

@@ -99,6 +99,7 @@ exports[`LokiExploreQueryEditor should render component 1`] = `
     }
   }
   history={Array []}
+  onBlur={[Function]}
   onChange={[MockFunction]}
   onRunQuery={[MockFunction]}
   query={

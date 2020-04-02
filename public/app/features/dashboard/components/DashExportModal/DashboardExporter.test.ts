@@ -7,6 +7,7 @@ import { PanelPluginMeta } from '@grafana/data';
 jest.mock('app/core/store', () => {
   return {
     getBool: jest.fn(),
+    getObject: jest.fn(),
   };
 });
 
@@ -17,6 +18,9 @@ jest.mock('@grafana/runtime', () => ({
   config: {
     buildInfo: {},
     panels: {},
+    featureToggles: {
+      newVariables: false,
+    },
   },
   DataSourceWithBackend: jest.fn(),
 }));

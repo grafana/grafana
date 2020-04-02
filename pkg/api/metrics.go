@@ -16,12 +16,9 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
+// QueryMetricsV2 returns query metrics
 // POST /api/ds/query   DataSource query w/ expressions
 func (hs *HTTPServer) QueryMetricsV2(c *models.ReqContext, reqDto dtos.MetricRequest) Response {
-	if !setting.IsExpressionsEnabled() {
-		return Error(404, "Expressions feature toggle is not enabled", nil)
-	}
-
 	if len(reqDto.Queries) == 0 {
 		return Error(500, "No queries found in query", nil)
 	}
@@ -29,6 +26,7 @@ func (hs *HTTPServer) QueryMetricsV2(c *models.ReqContext, reqDto dtos.MetricReq
 	request := &tsdb.TsdbQuery{
 		TimeRange: tsdb.NewTimeRange(reqDto.From, reqDto.To),
 		Debug:     reqDto.Debug,
+		User:      c.SignedInUser,
 	}
 
 	expr := false
@@ -74,6 +72,10 @@ func (hs *HTTPServer) QueryMetricsV2(c *models.ReqContext, reqDto dtos.MetricReq
 			return Error(500, "Metric request error", err)
 		}
 	} else {
+		if !setting.IsExpressionsEnabled() {
+			return Error(404, "Expressions feature toggle is not enabled", nil)
+		}
+
 		resp, err = plugins.Transform.Transform(c.Req.Context(), request)
 		if err != nil {
 			return Error(500, "Transform request error", err)
@@ -92,6 +94,7 @@ func (hs *HTTPServer) QueryMetricsV2(c *models.ReqContext, reqDto dtos.MetricReq
 	return JSON(statusCode, &resp)
 }
 
+// QueryMetrics returns query metrics
 // POST /api/tsdb/query
 func (hs *HTTPServer) QueryMetrics(c *models.ReqContext, reqDto dtos.MetricRequest) Response {
 	timeRange := tsdb.NewTimeRange(reqDto.From, reqDto.To)
@@ -113,7 +116,11 @@ func (hs *HTTPServer) QueryMetrics(c *models.ReqContext, reqDto dtos.MetricReque
 		return Error(500, "Unable to load datasource meta data", err)
 	}
 
-	request := &tsdb.TsdbQuery{TimeRange: timeRange, Debug: reqDto.Debug}
+	request := &tsdb.TsdbQuery{
+		TimeRange: timeRange,
+		Debug:     reqDto.Debug,
+		User:      c.SignedInUser,
+	}
 
 	for _, query := range reqDto.Queries {
 		request.Queries = append(request.Queries, &tsdb.Query{
@@ -165,7 +172,7 @@ func GetTestDataScenarios(c *models.ReqContext) Response {
 	return JSON(200, &result)
 }
 
-// Generates a index out of range error
+// GenerateError generates a index out of range error
 func GenerateError(c *models.ReqContext) Response {
 	var array []string
 	// nolint: govet

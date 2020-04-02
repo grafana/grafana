@@ -135,7 +135,7 @@ describe('AppInsightsDatasource', () => {
             rawQueryString: queryString,
             timeColumn: 'timestamp',
             valueColumn: 'max',
-            segmentColumn: undefined as string,
+            segmentColumn: (undefined as unknown) as string,
           },
         },
       ],

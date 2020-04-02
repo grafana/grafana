@@ -1,12 +1,13 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { boolean, text, select, number } from '@storybook/addon-knobs';
 import { withCenteredStory } from '../../../utils/storybook/withCenteredStory';
 import { Input } from './Input';
-import { Button } from '../Button';
+import { Button } from '../../Button';
 import mdx from './Input.mdx';
 import { getAvailableIcons, IconType } from '../../Icon/types';
 import { KeyValue } from '@grafana/data';
 import { Icon } from '../../Icon/Icon';
+import { Field } from '../Field';
 
 export default {
   title: 'Forms/Input',
@@ -92,6 +93,18 @@ export const simple = () => {
         type={type}
         placeholder={placeholder}
       />
+    </div>
+  );
+};
+
+export const withFieldValidation = () => {
+  const [value, setValue] = useState('');
+
+  return (
+    <div>
+      <Field invalid={value === ''} error={value === '' ? 'This input is required' : ''}>
+        <Input value={value} onChange={e => setValue(e.currentTarget.value)} />
+      </Field>
     </div>
   );
 };

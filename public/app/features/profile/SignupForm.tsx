@@ -1,5 +1,5 @@
 import React, { FC } from 'react';
-import { Forms } from '@grafana/ui';
+import { Forms, Button, LinkButton } from '@grafana/ui';
 import { css } from 'emotion';
 
 import { getConfig } from 'app/core/config';
@@ -106,11 +106,11 @@ export const SignupForm: FC<Props> = props => {
               />
             </Forms.Field>
 
-            <Forms.Button type="submit">Submit</Forms.Button>
+            <Button type="submit">Submit</Button>
             <span className={buttonSpacing}>
-              <Forms.LinkButton href={getConfig().appSubUrl + '/login'} variant="secondary">
+              <LinkButton href={getConfig().appSubUrl + '/login'} variant="secondary">
                 Back
-              </Forms.LinkButton>
+              </LinkButton>
             </span>
           </>
         );

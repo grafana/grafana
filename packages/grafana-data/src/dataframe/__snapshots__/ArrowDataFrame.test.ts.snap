@@ -103,7 +103,7 @@ Array [
 ]
 `;
 
-exports[`Read/Write arrow Table to DataFrame should parse output with dataframe 1`] = `
+exports[`Read/Write arrow Table to DataFrame should read all types 1`] = `
 Object {
   "fields": Array [
     Object {

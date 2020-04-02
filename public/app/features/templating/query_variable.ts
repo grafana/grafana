@@ -1,7 +1,6 @@
 import _ from 'lodash';
 import {
   assignModelProperties,
-  containsVariable,
   QueryVariableModel,
   VariableActions,
   VariableHide,
@@ -11,12 +10,13 @@ import {
   VariableTag,
   VariableType,
   variableTypes,
-} from './variable';
-import { stringToJsRegex } from '@grafana/data';
+} from './types';
+import { DataSourceApi, stringToJsRegex } from '@grafana/data';
 import DatasourceSrv from '../plugins/datasource_srv';
 import { TemplateSrv } from './template_srv';
 import { VariableSrv } from './variable_srv';
 import { TimeSrv } from '../dashboard/services/TimeSrv';
+import { containsVariable } from './utils';
 
 function getNoneOption(): VariableOption {
   return { text: 'None', value: '', isNone: true, selected: false };
@@ -25,10 +25,10 @@ function getNoneOption(): VariableOption {
 export class QueryVariable implements QueryVariableModel, VariableActions {
   type: VariableType;
   name: string;
-  label: string;
+  label: string | null;
   hide: VariableHide;
   skipUrlSync: boolean;
-  datasource: string;
+  datasource: string | null;
   query: string;
   regex: string;
   sort: VariableSort;
@@ -43,6 +43,7 @@ export class QueryVariable implements QueryVariableModel, VariableActions {
   tags: VariableTag[];
   definition: string;
   allValue: string;
+  index: number;
 
   defaults: QueryVariableModel = {
     type: 'query',
@@ -65,6 +66,7 @@ export class QueryVariable implements QueryVariableModel, VariableActions {
     tagsQuery: '',
     tagValuesQuery: '',
     definition: '',
+    index: -1,
   };
 
   /** @ngInject */
@@ -109,8 +111,8 @@ export class QueryVariable implements QueryVariableModel, VariableActions {
 
   updateOptions(searchFilter?: string) {
     return this.datasourceSrv
-      .get(this.datasource)
-      .then(ds => this.updateOptionsFromMetricFindQuery(ds, searchFilter))
+      .get(this.datasource ?? '')
+      .then((ds: DataSourceApi) => this.updateOptionsFromMetricFindQuery(ds, searchFilter))
       .then(this.updateTags.bind(this))
       .then(this.variableSrv.validateVariableSelectionState.bind(this.variableSrv, this));
   }
@@ -132,7 +134,7 @@ export class QueryVariable implements QueryVariableModel, VariableActions {
   }
 
   getValuesForTag(tagKey: string) {
-    return this.datasourceSrv.get(this.datasource).then(datasource => {
+    return this.datasourceSrv.get(this.datasource ?? '').then((datasource: DataSourceApi) => {
       const query = this.tagValuesQuery.replace('$tag', tagKey);
       return this.metricFindQuery(datasource, query).then((results: any) => {
         return _.map(results, value => {

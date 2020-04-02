@@ -1,7 +1,18 @@
 import { ComponentType } from 'react';
-import { MatcherConfig, FieldConfig, Field, DataFrame, VariableSuggestionsScope, VariableSuggestion } from '../types';
-import { Registry, RegistryItem } from '../utils';
+import {
+  MatcherConfig,
+  FieldConfig,
+  Field,
+  DataFrame,
+  VariableSuggestionsScope,
+  VariableSuggestion,
+  GrafanaTheme,
+  TimeZone,
+} from '../types';
+import { Registry } from '../utils';
 import { InterpolateFunction } from './panel';
+import { StandardEditorProps } from '../field';
+import { OptionsEditorItem } from './OptionsUIRegistryBuilder';
 
 export interface DynamicConfigValue {
   prop: string;
@@ -14,19 +25,12 @@ export interface ConfigOverrideRule {
   properties: DynamicConfigValue[];
 }
 
-export interface FieldConfigSource {
+export interface FieldConfigSource<TOptions extends object = any> {
   // Defatuls applied to all numeric fields
-  defaults: FieldConfig;
+  defaults: FieldConfig<TOptions>;
 
   // Rules to override individual values
   overrides: ConfigOverrideRule[];
-}
-
-export interface FieldConfigEditorProps<TValue, TSettings> {
-  item: FieldPropertyEditorItem<TValue, TSettings>; // The property info
-  value: TValue;
-  context: FieldOverrideContext;
-  onChange: (value?: TValue) => void;
 }
 
 export interface FieldOverrideContext {
@@ -37,28 +41,62 @@ export interface FieldOverrideContext {
   getSuggestions?: (scope?: VariableSuggestionsScope) => VariableSuggestion[];
 }
 
-export interface FieldOverrideEditorProps<TValue, TSettings> {
-  item: FieldPropertyEditorItem<TValue, TSettings>;
+export interface FieldConfigEditorProps<TValue, TSettings>
+  extends Omit<StandardEditorProps<TValue, TSettings>, 'item'> {
+  item: FieldPropertyEditorItem<TValue, TSettings>; // The property info
   value: TValue;
   context: FieldOverrideContext;
-  onChange: (value?: any) => void;
+  onChange: (value?: TValue) => void;
 }
 
-export interface FieldPropertyEditorItem<TValue = any, TSettings = any> extends RegistryItem {
-  // An editor the creates the well typed value
-  editor: ComponentType<FieldConfigEditorProps<TValue, TSettings>>;
+export interface FieldOverrideEditorProps<TValue, TSettings> extends Omit<StandardEditorProps<TValue>, 'item'> {
+  item: FieldPropertyEditorItem<TValue, TSettings>;
+  context: FieldOverrideContext;
+}
 
+export interface FieldConfigEditorConfig<TOptions, TSettings = any, TValue = any> {
+  id: (keyof TOptions & string) | string;
+  name: string;
+  description: string;
+  settings?: TSettings;
+  shouldApply?: (field: Field) => boolean;
+  defaultValue?: TValue;
+}
+
+export interface FieldPropertyEditorItem<TOptions = any, TValue = any, TSettings extends {} = any>
+  extends OptionsEditorItem<TOptions, TSettings, FieldConfigEditorProps<TValue, TSettings>, TValue> {
   // An editor that can be filled in with context info (template variables etc)
   override: ComponentType<FieldOverrideEditorProps<TValue, TSettings>>;
 
   // Convert the override value to a well typed value
-  process: (value: any, context: FieldOverrideContext, settings: TSettings) => TValue;
-
-  // Configuration options for the particular property
-  settings: TSettings;
+  process: (value: any, context: FieldOverrideContext, settings?: TSettings) => TValue;
 
   // Checks if field should be processed
   shouldApply: (field: Field) => boolean;
 }
 
 export type FieldConfigEditorRegistry = Registry<FieldPropertyEditorItem>;
+
+export interface ApplyFieldOverrideOptions {
+  data?: DataFrame[];
+  fieldOptions: FieldConfigSource;
+  replaceVariables: InterpolateFunction;
+  theme: GrafanaTheme;
+  timeZone?: TimeZone;
+  autoMinMax?: boolean;
+  standard?: FieldConfigEditorRegistry;
+  custom?: FieldConfigEditorRegistry;
+}
+
+export enum FieldConfigProperty {
+  Unit = 'unit',
+  Min = 'min',
+  Max = 'max',
+  Decimals = 'decimals',
+  Title = 'title',
+  NoValue = 'noValue',
+  Thresholds = 'thresholds',
+  Mappings = 'mappings',
+  Links = 'links',
+  Color = 'color',
+}

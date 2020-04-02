@@ -1,29 +1,36 @@
+import { e2e } from '../index';
+
 export interface ScenarioContext {
-  lastAddedDataSource: string;
   lastAddedDashboard: string;
   lastAddedDashboardUid: string;
+  lastAddedDataSource: string;
+  lastAddedDataSourceId: string;
   [key: string]: any;
 }
 
-const scenarioContexts: ScenarioContext = {
-  lastAddedDataSource: '',
+const scenarioContext: ScenarioContext = {
   lastAddedDashboard: '',
   lastAddedDashboardUid: '',
+  lastAddedDataSource: '',
+  lastAddedDataSourceId: '',
 };
 
-export interface ScenarioContextApi {
-  get: <T>(name: string | keyof ScenarioContext) => T;
-  set: <T>(name: string | keyof ScenarioContext, value: T) => void;
-}
+// @todo this actually returns type `Cypress.Chainable`
+export const getScenarioContext = (): any =>
+  e2e()
+    .wrap({
+      getScenarioContext: () => ({ ...scenarioContext } as ScenarioContext),
+    })
+    .invoke('getScenarioContext');
 
-export const scenarioContext = (): ScenarioContextApi => {
-  const get = <T>(name: string | keyof ScenarioContext): T => scenarioContexts[name] as T;
-  const set = <T>(name: string | keyof ScenarioContext, value: T): void => {
-    scenarioContexts[name] = value;
-  };
-
-  return {
-    get,
-    set,
-  };
-};
+// @todo this actually returns type `Cypress.Chainable`
+export const setScenarioContext = (newContext: Partial<ScenarioContext>): any =>
+  e2e()
+    .wrap({
+      setScenarioContext: () => {
+        Object.entries(newContext).forEach(([key, value]) => {
+          scenarioContext[key] = value;
+        });
+      },
+    })
+    .invoke('setScenarioContext');
