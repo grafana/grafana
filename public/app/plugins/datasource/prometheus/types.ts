@@ -19,6 +19,7 @@ export interface PromOptions extends DataSourceJsonData {
   queryTimeout: string;
   httpMethod: string;
   directUrl: string;
+  directUrlOverride: string;
   customQueryParameters?: string;
 }
 

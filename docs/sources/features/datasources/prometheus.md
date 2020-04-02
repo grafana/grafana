@@ -35,6 +35,7 @@ Grafana includes built-in support for Prometheus.
 | _User_                    | User name for basic authentication.                                                                                                   |
 | _Password_                | Password for basic authentication.                                                                                                    |
 | _Scrape interval_         | Set this to the typical scrape and evaluation interval configured in Prometheus. Defaults to 15s.                                     |
+| _Direct URL Override_     | Override the link to the Prometheus graph in the query editor.                                                                        |
 | _Custom Query Parameters_ | Add custom parameters to the Prometheus query URL. For example `timeout`, `partial_response`, `dedup` or `max_source_resolution`. Multiple parameters should be concatenated together with an '&amp;'. |
 
 ## Query editor

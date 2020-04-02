@@ -76,6 +76,7 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
   ruleMappings: { [index: string]: string };
   url: string;
   directUrl: string;
+  directUrlOverride: string;
   basicAuth: any;
   withCredentials: any;
   metricsNameCache: any;
@@ -97,7 +98,7 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
     this.interval = instanceSettings.jsonData.timeInterval || '15s';
     this.queryTimeout = instanceSettings.jsonData.queryTimeout;
     this.httpMethod = instanceSettings.jsonData.httpMethod || 'GET';
-    this.directUrl = instanceSettings.jsonData.directUrl;
+    this.directUrl = instanceSettings.jsonData.directUrlOverride || instanceSettings.jsonData.directUrl;
     this.resultTransformer = new ResultTransformer(templateSrv);
     this.ruleMappings = {};
     this.languageProvider = new PrometheusLanguageProvider(this);

@@ -72,6 +72,23 @@ export const PromSettings = (props: Props) => {
             width={7}
           />
         </div>
+        <div className="gf-form-inline">
+          <div className="gf-form">
+            <FormField
+              label="Direct URL Override"
+              labelWidth={13}
+              inputEl={
+                <Input
+                  className="width-20"
+                  value={value.jsonData.directUrlOverride}
+                  onChange={onChangeHandler('directUrlOverride', value, onChange)}
+                  spellCheck={false}
+                />
+              }
+              tooltip="Override the direct link to the Prometheus graph in the query editor."
+            />
+          </div>
+        </div>
       </div>
       <h3 className="page-heading">Misc</h3>
       <div className="gf-form-group">
