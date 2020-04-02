@@ -26,7 +26,6 @@ export { EmptySearchResult } from './EmptySearchResult/EmptySearchResult';
 export { PieChart, PieChartType } from './PieChart/PieChart';
 export { UnitPicker } from './UnitPicker/UnitPicker';
 export { StatsPicker } from './StatsPicker/StatsPicker';
-export { Input, InputStatus } from './Input/Input';
 export { RefreshPicker } from './RefreshPicker/RefreshPicker';
 export { TimePicker } from './TimePicker/TimePicker';
 export { TimeOfDayPicker } from './TimePicker/TimeOfDayPicker';
@@ -148,12 +147,18 @@ import { IndicatorsContainer } from './Forms/Legacy/Select/IndicatorsContainer';
 import { NoOptionsMessage } from './Forms/Legacy/Select/NoOptionsMessage';
 import { ButtonSelect } from './Forms/Legacy/Select/ButtonSelect';
 
+//Input
+import { Input, LegacyInputStatus } from './Input/Input';
+// Export these until  Enterprise migrations have been merged
+// export { Input, InputStatus}
+
 const LegacyForms = {
   Select,
   AsyncSelect,
   IndicatorsContainer,
   NoOptionsMessage,
   ButtonSelect,
+  Input,
 };
 
-export { LegacyForms };
+export { LegacyForms, LegacyInputStatus };
