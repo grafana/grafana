@@ -282,10 +282,6 @@ export class PanelInspector extends PureComponent<Props, State> {
     return <JSONFormatter json={this.props.panel.getSaveModel()} open={2} />;
   }
 
-  renderJsonModelTab() {
-    return <JSONFormatter json={this.props.panel.getSaveModel()} open={2} />;
-  }
-
   renderStatsTab() {
     const { last } = this.state;
     const { request } = last;
