@@ -32,5 +32,5 @@ func ParseInterval(interval string) (time.Duration, error) {
 		return now.Sub(now.AddDate(-num, 0, 0)), nil
 	}
 
-	return 0, errors.New("ParseInterval: invalid duration " + interval)
+	return 0, fmt.Errorf("ParseInterval: invalid duration %q", interval)
 }
