@@ -10,7 +10,7 @@ import { stylesFactory, withTheme } from '@grafana/ui';
 //Types
 import { RichHistoryQuery, ExploreId } from 'app/types/explore';
 import { SelectableValue, GrafanaTheme } from '@grafana/data';
-import { TabsBar, Tab, TabContent, Themeable, CustomScrollbar, IconName } from '@grafana/ui';
+import { TabsBar, Tab, TabContent, Themeable, CustomScrollbar, IconName, Icon } from '@grafana/ui';
 
 //Components
 import { RichHistorySettings } from './RichHistorySettings';
@@ -169,7 +169,7 @@ class UnThemedRichHistory extends PureComponent<RichHistoryProps, RichHistorySta
           height={height}
         />
       ),
-      icon: 'fa fa-history',
+      icon: 'history',
     };
 
     const StarredTab = {
@@ -186,7 +186,7 @@ class UnThemedRichHistory extends PureComponent<RichHistoryProps, RichHistorySta
           exploreId={exploreId}
         />
       ),
-      icon: 'fa fa-star',
+      icon: 'star',
     };
 
     const SettingsTab = {
@@ -203,7 +203,7 @@ class UnThemedRichHistory extends PureComponent<RichHistoryProps, RichHistorySta
           deleteRichHistory={deleteRichHistory}
         />
       ),
-      icon: 'gicon gicon-preferences',
+      icon: 'sliders-v-alt',
     };
 
     let tabs = [QueriesTab, StarredTab, SettingsTab];
@@ -220,7 +220,7 @@ class UnThemedRichHistory extends PureComponent<RichHistoryProps, RichHistorySta
             />
           ))}
           <div className={styles.close} onClick={onClose}>
-            <i className="fa fa-times" title="Close query history" />
+            <Icon name="times" title="Close query history" />
           </div>
         </TabsBar>
         <CustomScrollbar
