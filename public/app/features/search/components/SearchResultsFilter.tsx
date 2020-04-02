@@ -86,7 +86,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
 
       label {
         height: 20px;
-        margin-left: 4px;
+        margin-left: 8px;
       }
     `,
   };
