@@ -148,7 +148,7 @@ import { NoOptionsMessage } from './Forms/Legacy/Select/NoOptionsMessage';
 import { ButtonSelect } from './Forms/Legacy/Select/ButtonSelect';
 
 //Input
-import { Input, InputStatus } from './Input/Input';
+import { Input, LegacyInputStatus } from './Input/Input';
 // Export these until  Enterprise migrations have been merged
 // export { Input, InputStatus}
 
@@ -159,7 +159,6 @@ const LegacyForms = {
   NoOptionsMessage,
   ButtonSelect,
   Input,
-  InputStatus,
 };
 
-export { LegacyForms };
+export { LegacyForms, LegacyInputStatus };
