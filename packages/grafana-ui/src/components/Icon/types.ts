@@ -89,6 +89,7 @@ export type IconType =
   | 'times-circle-o'
   | 'check-circle-o'
   | 'ban'
+  | 'remove'
   | 'arrow-left'
   | 'arrow-right'
   | 'arrow-up'

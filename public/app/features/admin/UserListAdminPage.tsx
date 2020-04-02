@@ -45,7 +45,7 @@ const UserListAdminPageUnConnected: React.FC<Props> = props => {
               <Forms.Input
                 size="md"
                 type="text"
-                placeholder="Find user by name/login/email"
+                placeholder="Search user by login,email or name"
                 tabIndex={1}
                 autoFocus={true}
                 value={props.query}

@@ -94,6 +94,29 @@ func (uss *UsageStatsService) sendUsageStats(oauthProviders map[string]bool) {
 
 	metrics["stats.packaging."+setting.Packaging+".count"] = 1
 
+	// Alerting stats
+	alertingUsageStats, err := uss.AlertingUsageStats.QueryUsageStats()
+	if err != nil {
+		uss.log.Error("Failed to get alerting usage stats", "error", err)
+		return
+	}
+
+	var addAlertingUsageStats = func(dsType string, usageCount int) {
+		metrics[fmt.Sprintf("stats.alerting.ds.%s.count", dsType)] = usageCount
+	}
+
+	alertingOtherCount := 0
+	for dsType, usageCount := range alertingUsageStats.DatasourceUsage {
+		if models.IsKnownDataSourcePlugin(dsType) {
+			addAlertingUsageStats(dsType, usageCount)
+		} else {
+			alertingOtherCount += usageCount
+		}
+	}
+
+	addAlertingUsageStats("other", alertingOtherCount)
+
+	// fetch datasource access stats
 	dsAccessStats := models.GetDataSourceAccessStatsQuery{}
 	if err := uss.Bus.Dispatch(&dsAccessStats); err != nil {
 		metricsLogger.Error("Failed to get datasource access stats", "error", err)
@@ -123,6 +146,7 @@ func (uss *UsageStatsService) sendUsageStats(oauthProviders map[string]bool) {
 		metrics["stats.ds_access.other."+access+".count"] = count
 	}
 
+	// get stats about alert notifier usage
 	anStats := models.GetAlertNotifierUsageStatsQuery{}
 	if err := uss.Bus.Dispatch(&anStats); err != nil {
 		metricsLogger.Error("Failed to get alert notification stats", "error", err)
@@ -133,6 +157,7 @@ func (uss *UsageStatsService) sendUsageStats(oauthProviders map[string]bool) {
 		metrics["stats.alert_notifiers."+stats.Type+".count"] = stats.Count
 	}
 
+	// Add stats about auth configuration
 	authTypes := map[string]bool{}
 	authTypes["anonymous"] = setting.AnonymousEnabled
 	authTypes["basic_auth"] = setting.BasicAuthEnabled

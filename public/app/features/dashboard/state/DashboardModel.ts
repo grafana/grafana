@@ -13,9 +13,8 @@ import { DashboardMigrator } from './DashboardMigrator';
 import { AppEvent, dateTime, DateTimeInput, isDateTime, PanelEvents, TimeRange, TimeZone, toUtc } from '@grafana/data';
 import { UrlQueryValue } from '@grafana/runtime';
 import { CoreEvents, DashboardMeta, KIOSK_MODE_TV } from 'app/types';
-import { VariableModel } from '../../templating/types';
 import { getConfig } from '../../../core/config';
-import { getVariableClones, getVariables } from 'app/features/variables/state/selectors';
+import { getVariables } from 'app/features/variables/state/selectors';
 import { variableAdapters } from 'app/features/variables/adapters';
 import { onTimeRangeUpdated } from 'app/features/variables/state/actions';
 import { dispatch } from '../../../store/store';
@@ -41,7 +40,6 @@ export class DashboardModel {
   private originalTime: any;
   timepicker: any;
   templating: { list: any[] };
-  variables: { list: VariableModel[] };
   private originalTemplating: any;
   annotations: { list: any[] };
   refresh: any;
@@ -93,7 +91,6 @@ export class DashboardModel {
     this.time = data.time || { from: 'now-6h', to: 'now' };
     this.timepicker = data.timepicker || {};
     this.templating = this.ensureListExist(data.templating);
-    this.variables = this.ensureListExist(data.variables);
     this.annotations = this.ensureListExist(data.annotations);
     this.refresh = data.refresh;
     this.snapshot = data.snapshot;
@@ -190,9 +187,6 @@ export class DashboardModel {
     //  sort by keys
     copy = sortByKeys(copy);
     copy.getVariables = () => {
-      if (getConfig().featureToggles.newVariables) {
-        return copy.variables.list;
-      }
       return copy.templating.list;
     };
 
@@ -205,6 +199,7 @@ export class DashboardModel {
   ) {
     if (getConfig().featureToggles.newVariables) {
       this.updateTemplatingSaveModel(copy, defaults);
+      return;
     }
     this.updateAngularTemplatingSaveModel(copy, defaults);
   }
@@ -242,16 +237,16 @@ export class DashboardModel {
     copy: any,
     defaults: { saveTimerange: boolean; saveVariables: boolean } & CloneOptions
   ) {
-    const originalVariables = this.variables.list;
-    const currentVariables = getVariableClones();
+    const originalVariables = this.originalTemplating;
+    const currentVariables = getVariables();
 
-    copy.variables = {
+    copy.templating = {
       list: currentVariables.map(variable => variableAdapters.get(variable.type).getSaveModel(variable)),
     };
 
     if (!defaults.saveVariables) {
-      for (let i = 0; i < copy.variables.list.length; i++) {
-        const current = copy.variables.list[i];
+      for (let i = 0; i < copy.templating.list.length; i++) {
+        const current = copy.templating.list[i];
         const original: any = _.find(originalVariables, { name: current.name, type: current.type });
 
         if (!original) {
@@ -259,9 +254,9 @@ export class DashboardModel {
         }
 
         if (current.type === 'adhoc') {
-          copy.variables.list[i].filters = original.filters;
+          copy.templating.list[i].filters = original.filters;
         } else {
-          copy.variables.list[i].current = original.current;
+          copy.templating.list[i].current = original.current;
         }
       }
     }
@@ -940,21 +935,19 @@ export class DashboardModel {
   }
 
   resetOriginalVariables(initial = false) {
-    if (!getConfig().featureToggles.newVariables) {
+    if (!getConfig().featureToggles.newVariables || initial) {
       this.originalTemplating = this.cloneVariablesFrom(this.templating.list);
+      return;
     }
 
-    if (!initial && getConfig().featureToggles.newVariables) {
-      // since we never change the this.variables.list when running with variables
-      // in redux we can use it instead of the originalTemplating.
-      this.variables.list = this.cloneVariablesFrom(getVariables());
-    }
+    this.originalTemplating = this.cloneVariablesFrom(getVariables());
   }
 
   hasVariableValuesChanged() {
     if (getConfig().featureToggles.newVariables) {
-      return this.hasVariablesChanged(this.variables.list, getVariables());
+      return this.hasVariablesChanged(this.originalTemplating, getVariables());
     }
+
     return this.hasVariablesChanged(this.originalTemplating, this.templating.list);
   }
 
@@ -1026,7 +1019,7 @@ export class DashboardModel {
 
   getVariables = () => {
     if (getConfig().featureToggles.newVariables) {
-      return this.variables.list;
+      return getVariables();
     }
     return this.templating.list;
   };

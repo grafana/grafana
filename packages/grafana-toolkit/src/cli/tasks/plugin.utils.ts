@@ -69,7 +69,9 @@ const prepareRelease = useSpinner<any>('Preparing release', async ({ dryrun, ver
     ['git', ['config', 'user.email', GIT_EMAIL]],
     ['git', ['config', 'user.name', GIT_USERNAME]],
     await checkoutBranch(`release-${pluginVersion}`),
+    ['cp', ['-rf', distContentDir, 'dist'], { dryrun }],
     ['git', ['add', '--force', distDir], { dryrun }],
+    ['git', ['add', '--force', 'dist'], { dryrun }],
     [
       'git',
       ['commit', '-m', `automated release ${pluginVersion} [skip ci]`],

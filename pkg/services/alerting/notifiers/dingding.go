@@ -114,7 +114,7 @@ func (dd *DingDingNotifier) genBody(evalContext *alerting.EvalContext, messageUR
 	var bodyMsg map[string]interface{}
 	if dd.MsgType == "actionCard" {
 		// Embed the pic into the markdown directly because actionCard doesn't have a picUrl field
-		if picURL != "" {
+		if dd.NeedsImage() && picURL != "" {
 			message = "![](" + picURL + ")\\n\\n" + message
 		}
 
@@ -128,14 +128,19 @@ func (dd *DingDingNotifier) genBody(evalContext *alerting.EvalContext, messageUR
 			},
 		}
 	} else {
+		link := map[string]string{
+			"text":       message,
+			"title":      title,
+			"messageUrl": messageURL,
+		}
+
+		if dd.NeedsImage() {
+			link["picUrl"] = picURL
+		}
+
 		bodyMsg = map[string]interface{}{
 			"msgtype": "link",
-			"link": map[string]string{
-				"text":       message,
-				"title":      title,
-				"picUrl":     picURL,
-				"messageUrl": messageURL,
-			},
+			"link":    link,
 		}
 	}
 	return json.Marshal(bodyMsg)
