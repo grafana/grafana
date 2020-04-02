@@ -200,7 +200,7 @@ export class ThresholdsEditor extends PureComponent<Props, State> {
           return (
             <div className={styles.wrapper}>
               <FullWidthButtonContainer className={styles.addButton}>
-                <Button size="sm" icon="plus" onClick={() => this.onAddThreshold()}>
+                <Button size="sm" icon="plus-circle" onClick={() => this.onAddThreshold()}>
                   Add threshold
                 </Button>
               </FullWidthButtonContainer>

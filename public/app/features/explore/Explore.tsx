@@ -326,7 +326,7 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
                 onClick={this.onClickAddQueryRowButton}
                 disabled={isLive}
               >
-                <Icon className="icon-margin-right" name="plus" size="sm" />
+                <Icon className="icon-margin-right" name="plus-circle" size="sm" />
                 <span className="btn-title">{'\xA0' + 'Add query'}</span>
               </button>
               <button

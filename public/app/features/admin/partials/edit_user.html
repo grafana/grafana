@@ -108,7 +108,7 @@
         </td>
         <td style="width: 1%">
           <a ng-click="removeOrgUser(org)" class="btn btn-danger btn-small">
-            <i class="fa fa-remove"></i>
+            <icon name="'times'"></icon>
           </a>
         </td>
       </tr>
@@ -152,7 +152,6 @@
     </div>
   </div>
 
-
   <h3 class="page-heading">User status</h3>
 
   <div class="gf-form-group">
@@ -177,7 +176,9 @@
       >
         Enable
       </button>
-      <button type="submit" class="btn btn-danger" ng-click="deleteUser(user)" ng-show="!createMode">Delete User</button>
+      <button type="submit" class="btn btn-danger" ng-click="deleteUser(user)" ng-show="!createMode">
+        Delete User
+      </button>
     </div>
   </div>
 </div>

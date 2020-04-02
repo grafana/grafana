@@ -115,7 +115,7 @@ export const OverrideEditor: React.FC<OverrideEditorProps> = ({
         <div className={styles.propertyPickerWrapper}>
           <ValuePicker
             label="Set config property"
-            icon="plus"
+            icon="plus-circle"
             options={configPropertiesOptions}
             variant={'link'}
             onChange={o => {
