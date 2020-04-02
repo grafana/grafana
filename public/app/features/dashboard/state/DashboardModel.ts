@@ -14,7 +14,7 @@ import { AppEvent, dateTime, DateTimeInput, isDateTime, PanelEvents, TimeRange, 
 import { UrlQueryValue } from '@grafana/runtime';
 import { CoreEvents, DashboardMeta, KIOSK_MODE_TV } from 'app/types';
 import { getConfig } from '../../../core/config';
-import { getVariables } from 'app/features/variables/state/selectors';
+import { GetVariables, getVariables } from 'app/features/variables/state/selectors';
 import { variableAdapters } from 'app/features/variables/adapters';
 import { onTimeRangeUpdated } from 'app/features/variables/state/actions';
 import { dispatch } from '../../../store/store';
@@ -71,7 +71,7 @@ export class DashboardModel {
     panelInEdit: true,
   };
 
-  constructor(data: any, meta?: DashboardMeta) {
+  constructor(data: any, meta?: DashboardMeta, private getVariablesFromState: GetVariables = getVariables) {
     if (!data) {
       data = {};
     }
@@ -238,7 +238,7 @@ export class DashboardModel {
     defaults: { saveTimerange: boolean; saveVariables: boolean } & CloneOptions
   ) {
     const originalVariables = this.originalTemplating;
-    const currentVariables = getVariables();
+    const currentVariables = this.getVariablesFromState();
 
     copy.templating = {
       list: currentVariables.map(variable => variableAdapters.get(variable.type).getSaveModel(variable)),
@@ -940,12 +940,12 @@ export class DashboardModel {
       return;
     }
 
-    this.originalTemplating = this.cloneVariablesFrom(getVariables());
+    this.originalTemplating = this.cloneVariablesFrom(this.getVariablesFromState());
   }
 
   hasVariableValuesChanged() {
     if (getConfig().featureToggles.newVariables) {
-      return this.hasVariablesChanged(this.originalTemplating, getVariables());
+      return this.hasVariablesChanged(this.originalTemplating, this.getVariablesFromState());
     }
 
     return this.hasVariablesChanged(this.originalTemplating, this.templating.list);
@@ -1019,7 +1019,7 @@ export class DashboardModel {
 
   getVariables = () => {
     if (getConfig().featureToggles.newVariables) {
-      return getVariables();
+      return this.getVariablesFromState();
     }
     return this.templating.list;
   };
@@ -1029,7 +1029,7 @@ export class DashboardModel {
       return _.find(this.templating.list, { name: panel.repeat } as any);
     }
 
-    return getVariables().find(variable => variable.name === panel.repeat);
+    return this.getVariablesFromState().find(variable => variable.name === panel.repeat);
   }
 
   private isSnapshotTruthy() {
@@ -1038,7 +1038,7 @@ export class DashboardModel {
 
   private hasVariables() {
     if (getConfig().featureToggles.newVariables) {
-      return getVariables().length > 0;
+      return this.getVariablesFromState().length > 0;
     }
     return this.templating.list.length > 0;
   }
