@@ -15,7 +15,7 @@
 /docs/ @oddlittlebird
 /contribute/ @oddlittlebird  @marcusolsson
 # @grafana/ui component documentation
-*.mdx @marcusolsson
+*.mdx @marcusolsson @jessover9000
 
 # Backend code
 *.go @grafana/backend-platform
