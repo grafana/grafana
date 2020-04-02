@@ -182,7 +182,9 @@ export class ThresholdsEditor extends PureComponent<Props, State> {
             {isPercent && <div className={styles.percentIcon}>%</div>}
           </div>
         }
-        suffix={<Icon className={styles.trashIcon} name="trash" onClick={() => this.onRemoveThreshold(threshold)} />}
+        suffix={
+          <Icon className={styles.trashIcon} name="trash-alt" onClick={() => this.onRemoveThreshold(threshold)} />
+        }
       />
     );
   }

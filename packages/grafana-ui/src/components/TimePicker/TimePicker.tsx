@@ -4,6 +4,7 @@ import { css, cx } from 'emotion';
 
 // Components
 import { Tooltip } from '../Tooltip/Tooltip';
+import { Icon } from '../Icon/Icon';
 import { TimePickerContent } from './TimePickerContent/TimePickerContent';
 import { ClickOutsideWrapper } from '../ClickOutsideWrapper/ClickOutsideWrapper';
 
@@ -63,11 +64,10 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       display: flex;
     `,
     caretIcon: css`
-      margin-left: 3px;
-
-      i {
-        font-size: ${theme.typography.size.md};
-      }
+      margin-left: ${theme.spacing.xs};
+    `,
+    clockIcon: css`
+      margin-right: ${theme.spacing.xs};
     `,
     noRightBorderStyle: css`
       label: noRightBorderStyle;
@@ -144,7 +144,7 @@ export class UnthemedTimePicker extends PureComponent<Props, State> {
     const styles = getStyles(theme);
     const hasAbsolute = isDateTime(value.raw.from) || isDateTime(value.raw.to);
     const syncedTimePicker = timeSyncButton && isSynced;
-    const timePickerIconClass = cx('fa fa-clock-o fa-fw', { ['icon-brand-gradient']: syncedTimePicker });
+    const timePickerIconClass = cx({ ['icon-brand-gradient']: syncedTimePicker });
     const timePickerButtonClass = cx('btn navbar-button navbar-button--tight', {
       [`btn--radius-right-0 ${styles.noRightBorderStyle}`]: !!timeSyncButton,
       [`explore-active-button`]: syncedTimePicker,
@@ -155,17 +155,15 @@ export class UnthemedTimePicker extends PureComponent<Props, State> {
         <div className={styles.buttons}>
           {hasAbsolute && (
             <button className="btn navbar-button navbar-button--tight" onClick={onMoveBackward}>
-              <i className="fa fa-chevron-left" />
+              <Icon name="angle-left" />
             </button>
           )}
           <div>
             <Tooltip content={<TimePickerTooltip timeRange={value} />} placement="bottom">
               <button aria-label="TimePicker Open Button" className={timePickerButtonClass} onClick={this.onOpen}>
-                <i className={timePickerIconClass} />
+                <Icon name="clock-nine" className={cx(styles.clockIcon, timePickerIconClass)} />
                 <TimePickerButtonLabel {...this.props} />
-                <span className={styles.caretIcon}>
-                  {isOpen ? <i className="fa fa-caret-up fa-fw" /> : <i className="fa fa-caret-down fa-fw" />}
-                </span>
+                <span className={styles.caretIcon}>{<Icon name={isOpen ? 'angle-up' : 'angle-down'} />}</span>
               </button>
             </Tooltip>
             {isOpen && (
@@ -186,13 +184,13 @@ export class UnthemedTimePicker extends PureComponent<Props, State> {
 
           {hasAbsolute && (
             <button className="btn navbar-button navbar-button--tight" onClick={onMoveForward}>
-              <i className="fa fa-chevron-right" />
+              <Icon name="angle-right" />
             </button>
           )}
 
           <Tooltip content={ZoomOutTooltip} placement="bottom">
             <button className="btn navbar-button navbar-button--zoom" onClick={onZoom}>
-              <i className="fa fa-search-minus" />
+              <Icon name="search-minus" />
             </button>
           </Tooltip>
         </div>

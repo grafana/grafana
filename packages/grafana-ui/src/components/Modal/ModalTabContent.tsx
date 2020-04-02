@@ -1,9 +1,9 @@
 import React from 'react';
-import { IconType } from '../Icon/types';
+import { IconName } from '../../types';
 import { Icon } from '../Icon/Icon';
 
 interface Props {
-  icon?: IconType;
+  icon?: IconName;
   iconClass?: string;
 }
 

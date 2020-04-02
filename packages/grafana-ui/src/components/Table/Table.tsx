@@ -104,7 +104,7 @@ function renderHeaderCell(column: any, className: string, field: Field) {
   return (
     <div className={className} {...headerProps}>
       {column.render('Header')}
-      {column.isSorted && (column.isSortedDesc ? <Icon name="caret-down" /> : <Icon name="caret-up" />)}
+      {column.isSorted && (column.isSortedDesc ? <Icon name="angle-down" /> : <Icon name="angle-up" />)}
     </div>
   );
 }

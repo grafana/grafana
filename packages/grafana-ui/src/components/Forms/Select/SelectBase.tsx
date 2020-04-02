@@ -242,7 +242,7 @@ export function SelectBase<T>({
             );
           },
           LoadingIndicator: (props: any) => {
-            return <Icon name="spinner" className="fa fa-spin" />;
+            return <i className="fa fa-spinner fa-spin" />;
           },
           LoadingMessage: (props: any) => {
             return <div className={styles.loadingMessage}>{loadingMessage}</div>;

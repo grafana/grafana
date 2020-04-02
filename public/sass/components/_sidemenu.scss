@@ -117,26 +117,9 @@ $mobile-menu-breakpoint: md;
   width: 35px;
   height: 35px;
   display: inline-block;
-
-  .fa,
-  .icon-gf,
-  .gicon {
-    color: $side-menu-link-color;
-    position: relative;
-    opacity: 0.7;
-    font-size: 130%;
-    height: 22px;
-    width: 22px;
-  }
-
-  .fa {
-    top: 2px;
-    position: relative;
-  }
-
-  .icon-gf {
-    top: 5px;
-  }
+  color: $side-menu-link-color;
+  position: relative;
+  opacity: 0.7;
 
   img {
     position: relative;
