@@ -7,7 +7,7 @@ import classNames from 'classnames';
 import { css } from 'emotion';
 
 import { ExploreId, ExploreItemState } from 'app/types/explore';
-import { ToggleButtonGroup, ToggleButton, Tooltip, ButtonSelect, SetInterval } from '@grafana/ui';
+import { ToggleButtonGroup, ToggleButton, Tooltip, ButtonSelect, SetInterval, Icon } from '@grafana/ui';
 import { RawTimeRange, TimeZone, TimeRange, DataQuery, ExploreMode } from '@grafana/data';
 import { DataSourcePicker } from 'app/core/components/Select/DataSourcePicker';
 import { StoreState } from 'app/types/store';
@@ -201,14 +201,21 @@ export class UnConnectedExploreToolbar extends PureComponent<Props> {
             <div className="explore-toolbar-header-title">
               {exploreId === 'left' && (
                 <span className="navbar-page-btn">
-                  <i className="gicon gicon-explore" />
+                  <Icon
+                    name="compass"
+                    size="xl"
+                    className={css`
+                      margin-right: 6px;
+                      margin-bottom: 3px;
+                    `}
+                  />
                   Explore
                 </span>
               )}
             </div>
             {splitted && (
               <a className="explore-toolbar-header-close" onClick={() => closeSplit(exploreId)}>
-                <i className="fa fa-times fa-fw" />
+                <Icon name="times" />
               </a>
             )}
           </div>
@@ -260,7 +267,7 @@ export class UnConnectedExploreToolbar extends PureComponent<Props> {
               <div className="explore-toolbar-content-item">
                 <Tooltip content={'Return to panel'} placement="bottom">
                   <button className={panelReturnClasses} onClick={() => this.returnToPanel()}>
-                    <i className="fa fa-arrow-left" />
+                    <Icon name="arrow-left" />
                   </button>
                 </Tooltip>
                 {originDashboardIsEditable && (
@@ -280,7 +287,8 @@ export class UnConnectedExploreToolbar extends PureComponent<Props> {
                   splitted={splitted}
                   title="Split"
                   onClick={split}
-                  iconClassName="fa fa-fw fa-columns icon-margin-right"
+                  icon="columns"
+                  iconClassName="icon-margin-right"
                   disabled={isLive}
                 />
               </div>
@@ -306,7 +314,8 @@ export class UnConnectedExploreToolbar extends PureComponent<Props> {
                   splitted={splitted}
                   title="Clear All"
                   onClick={this.onClearAll}
-                  iconClassName="fa fa-fw fa-trash icon-margin-right"
+                  icon="trash-alt"
+                  iconClassName="icon-margin-right"
                 />
               </div>
             )}

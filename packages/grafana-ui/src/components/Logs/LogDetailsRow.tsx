@@ -10,6 +10,7 @@ import { stylesFactory } from '../../themes/stylesFactory';
 //Components
 import { LogLabelStats } from './LogLabelStats';
 import { LinkButton } from '../Button/Button';
+import { Icon } from '../Icon/Icon';
 
 export interface Props extends Themeable {
   parsedValue: string;
@@ -94,22 +95,24 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
       <tr className={cx(style.logDetailsValue, { [styles.noHoverBackground]: showFieldsStats })}>
         {/* Action buttons - show stats/filter results */}
         <td className={style.logsDetailsIcon} colSpan={isLabel ? undefined : 3}>
-          <i title="Ad-hoc statistics" className={`fa fa-signal ${styles.hoverCursor}`} onClick={this.showStats} />
+          <Icon name="signal" title="Ad-hoc statistics" className={styles.hoverCursor} onClick={this.showStats} />
         </td>
 
         {isLabel && (
           <>
             <td className={style.logsDetailsIcon}>
-              <i
+              <Icon
+                name="search-minus"
                 title="Filter for value"
-                className={`fa fa-search-plus ${styles.hoverCursor}`}
+                className={styles.hoverCursor}
                 onClick={this.filterLabel}
               />
             </td>
             <td className={style.logsDetailsIcon}>
-              <i
+              <Icon
+                name="search-plus"
                 title="Filter out value"
-                className={`fa fa-search-minus ${styles.hoverCursor}`}
+                className={styles.hoverCursor}
                 onClick={this.filterOutLabel}
               />
             </td>
