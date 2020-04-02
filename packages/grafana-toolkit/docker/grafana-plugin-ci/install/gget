@@ -5,20 +5,22 @@
 # for usage information see "show_help" below.
 #
 
+latest=$(curl -s 'https://raw.githubusercontent.com/grafana/grafana/master/latest.json' | jq -r '.stable')
+canary=$(curl -s "https://grafana.com/api/grafana/versions" | jq ".items[0].version" | tr -d '"')
+
 show_help() {
     echo "Usage: gget <version>"
     echo ""
     echo "where <version> can be:"
     echo "  1) A version from https://grafana.com/grafana/download (ex x.y.z)"
     echo "  2) latest (currently $latest)"
-    echo "  3) canary (latest nightly build)"
+    echo "  3) canary (currently $canary)"
 	echo ""
 	echo "  -h, --help: Display this help message"
     echo ""
+	exit 0
 }
 
-latest=$(curl -s 'https://raw.githubusercontent.com/grafana/grafana/master/latest.json' | jq -r '.stable')
-canary=$(curl -s "https://grafana.com/api/grafana/versions" | jq ".items[0].version" | tr -d '"')
 opts=$(getopt -o h --long help -n 'gget' -- "$@")
 [ $? -eq 0 ] || {
 	show_help
