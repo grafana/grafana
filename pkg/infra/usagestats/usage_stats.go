@@ -101,16 +101,20 @@ func (uss *UsageStatsService) sendUsageStats(oauthProviders map[string]bool) {
 		return
 	}
 
+	var addAlertingUsageStats = func(dsType string, usageCount int) {
+		metrics[fmt.Sprintf("stats.alerting.ds.%s.count", dsType)] = usageCount
+	}
+
 	alertingOtherCount := 0
 	for dsType, usageCount := range alertingUsageStats.DatasourceUsage {
 		if models.IsKnownDataSourcePlugin(dsType) {
-			metrics["stats.alerting.ds."+dsType+".count"] = usageCount
+			addAlertingUsageStats(dsType, usageCount)
 		} else {
 			alertingOtherCount += usageCount
 		}
 	}
 
-	metrics["stats.alerting.ds.other.count"] = alertingOtherCount
+	addAlertingUsageStats("other", alertingOtherCount)
 
 	// fetch datasource access stats
 	dsAccessStats := models.GetDataSourceAccessStatsQuery{}
