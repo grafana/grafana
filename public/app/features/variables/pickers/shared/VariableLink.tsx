@@ -1,7 +1,7 @@
 import React, { PureComponent } from 'react';
 import { getTagColorsFromName } from '@grafana/ui';
 import { e2e } from '@grafana/e2e';
-import { VariableTag } from '../../../templating/variable';
+import { VariableTag } from '../../../templating/types';
 
 interface Props {
   onClick: () => void;

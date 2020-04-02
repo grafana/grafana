@@ -1,14 +1,15 @@
 import { DataFrame } from '../types/dataFrame';
 import { Registry } from '../utils/Registry';
-// Initalize the Registry
-
-import { appendTransformer, AppendOptions } from './transformers/append';
+import { AppendOptions, appendTransformer } from './transformers/append';
 import { reduceTransformer, ReduceTransformerOptions } from './transformers/reduce';
 import { filterFieldsTransformer, filterFramesTransformer } from './transformers/filter';
 import { filterFieldsByNameTransformer, FilterFieldsByNameTransformerOptions } from './transformers/filterByName';
 import { noopTransformer } from './transformers/noop';
-import { DataTransformerInfo, DataTransformerConfig } from '../types/transformations';
+import { DataTransformerConfig, DataTransformerInfo } from '../types/transformations';
 import { filterFramesByRefIdTransformer } from './transformers/filterByRefId';
+import { seriesToColumnsTransformer } from './transformers/seriesToColumns';
+
+// Initalize the Registry
 
 /**
  * Apply configured transformations to the input data
@@ -68,6 +69,7 @@ export const transformersRegistry = new TransformerRegistry(() => [
   filterFramesByRefIdTransformer,
   appendTransformer,
   reduceTransformer,
+  seriesToColumnsTransformer,
 ]);
 
 export { ReduceTransformerOptions, FilterFieldsByNameTransformerOptions };

@@ -6,7 +6,7 @@ import {
   VariableOption,
   VariableType,
   variableTypes,
-} from './variable';
+} from './types';
 import { VariableSrv } from './all';
 
 export class ConstantVariable implements ConstantVariableModel, VariableActions {

@@ -249,7 +249,7 @@ export class ShareSnapshot extends PureComponent<Props, State> {
               {sharingButtonText}
             </Button>
           )}
-          <Button variant="inverse" onClick={onDismiss}>
+          <Button variant="secondary" onClick={onDismiss}>
             Cancel
           </Button>
         </div>
@@ -268,7 +268,7 @@ export class ShareSnapshot extends PureComponent<Props, State> {
               <i className="fa fa-external-link-square"></i> {snapshotUrl}
             </a>
             <br />
-            <ClipboardButton variant="inverse" getText={this.getSnapshotUrl} onClipboardCopy={this.onSnapshotUrlCopy}>
+            <ClipboardButton variant="secondary" getText={this.getSnapshotUrl} onClipboardCopy={this.onSnapshotUrlCopy}>
               Copy Link
             </ClipboardButton>
           </div>

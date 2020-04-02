@@ -2,7 +2,7 @@ import React, { PureComponent } from 'react';
 
 import LegacyMappingRow from './LegacyMappingRow';
 import { MappingType, ValueMapping } from '@grafana/data';
-import { Button } from '../Button/Button';
+import { Button } from '../Button';
 import { PanelOptionsGroup } from '../PanelOptionsGroup/PanelOptionsGroup';
 
 export interface Props {
@@ -98,7 +98,7 @@ export class LegacyValueMappingsEditor extends PureComponent<Props, State> {
                 removeValueMapping={() => this.onRemoveMapping(valueMapping.id)}
               />
             ))}
-          <Button variant="inverse" icon="fa fa-plus" onClick={this.onAddMapping}>
+          <Button variant="primary" icon="fa fa-plus" onClick={this.onAddMapping}>
             Add mapping
           </Button>
         </div>

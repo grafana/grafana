@@ -1,5 +1,5 @@
 import React, { PureComponent } from 'react';
-import { AsyncSelect } from '@grafana/ui';
+import { Forms } from '@grafana/ui';
 import { getBackendSrv } from 'app/core/services/backend_srv';
 import { Organization } from 'app/types';
 import { SelectableValue } from '@grafana/data';
@@ -54,18 +54,16 @@ export class OrgPicker extends PureComponent<Props, State> {
     const { isLoading } = this.state;
 
     return (
-      <div className="org-picker">
-        <AsyncSelect
-          className={className}
-          isLoading={isLoading}
-          defaultOptions={true}
-          isSearchable={false}
-          loadOptions={this.getOrgOptions}
-          onChange={onSelected}
-          placeholder="Select organization"
-          noOptionsMessage={() => 'No organizations found'}
-        />
-      </div>
+      <Forms.AsyncSelect
+        className={className}
+        isLoading={isLoading}
+        defaultOptions={true}
+        isSearchable={false}
+        loadOptions={this.getOrgOptions}
+        onChange={onSelected}
+        placeholder="Select organization"
+        noOptionsMessage="No organizations found"
+      />
     );
   }
 }

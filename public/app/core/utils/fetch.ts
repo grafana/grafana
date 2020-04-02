@@ -88,7 +88,7 @@ export const parseBody = (options: BackendSrvRequest, isAppJson: boolean) => {
   return isAppJson ? JSON.stringify(options.data) : new URLSearchParams(options.data);
 };
 
-function serializeParams(data: Record<string, any>): string {
+export function serializeParams(data: Record<string, any>): string {
   return Object.keys(data)
     .map(key => {
       const value = data[key];

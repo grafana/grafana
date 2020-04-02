@@ -1,6 +1,6 @@
 import { reducerTester } from '../../../../test/core/redux/reducerTester';
 import { cleanUpDashboard } from 'app/features/dashboard/state/reducers';
-import { QueryVariableModel, VariableHide, VariableType } from '../../templating/variable';
+import { QueryVariableModel, VariableHide, VariableType } from '../../templating/types';
 import { VariableAdapter, variableAdapters } from '../adapters';
 import { createAction } from '@reduxjs/toolkit';
 import { variablesReducer, VariablesState } from './variablesReducer';

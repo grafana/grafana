@@ -2,7 +2,7 @@ import React, { ChangeEvent } from 'react';
 import { HorizontalGroup } from '../Layout/Layout';
 import Forms from '../Forms';
 import { MappingType, RangeMap, ValueMap, ValueMapping } from '@grafana/data';
-import { styleMixins } from '../../themes/mixins';
+import * as styleMixins from '../../themes/mixins';
 import { useTheme } from '../../themes';
 import { FieldConfigItemHeaderTitle } from '../FieldConfigs/FieldConfigItemHeaderTitle';
 

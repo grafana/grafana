@@ -5,6 +5,7 @@ import { css, cx } from 'emotion';
 import { getFocusCss, getPropertiesForButtonSize } from '../commonStyles';
 
 export type RadioButtonSize = 'sm' | 'md';
+
 export interface RadioButtonProps {
   size?: RadioButtonSize;
   disabled?: boolean;
@@ -12,9 +13,10 @@ export interface RadioButtonProps {
   active: boolean;
   id: string;
   onChange: () => void;
+  fullWidth?: boolean;
 }
 
-const getRadioButtonStyles = stylesFactory((theme: GrafanaTheme, size: RadioButtonSize) => {
+const getRadioButtonStyles = stylesFactory((theme: GrafanaTheme, size: RadioButtonSize, fullWidth?: boolean) => {
   const { fontSize, height } = getPropertiesForButtonSize(theme, size);
   const horizontalPadding = theme.spacing[size] ?? theme.spacing.md;
   const c = theme.colors;
@@ -69,17 +71,18 @@ const getRadioButtonStyles = stylesFactory((theme: GrafanaTheme, size: RadioButt
       display: inline-block;
       position: relative;
       font-size: ${fontSize};
-      min-height: ${fontSize};
+      height: ${height};
+      line-height: ${height};
       color: ${textColor};
-      padding: calc((${height} - ${fontSize}) / 2) ${horizontalPadding} calc((${height} - ${fontSize}) / 2)
-        ${horizontalPadding};
-      line-height: 1;
+      padding: 0 ${horizontalPadding};
       margin-left: -1px;
       border-radius: ${theme.border.radius.sm};
       border: ${border};
       background: ${bg};
       cursor: pointer;
       z-index: 1;
+      flex-grow: ${fullWidth ? 1 : 0};
+      text-align: center;
 
       user-select: none;
 
@@ -100,9 +103,10 @@ export const RadioButton: React.FC<RadioButtonProps> = ({
   onChange,
   id,
   name = undefined,
+  fullWidth,
 }) => {
   const theme = useTheme();
-  const styles = getRadioButtonStyles(theme, size);
+  const styles = getRadioButtonStyles(theme, size, fullWidth);
 
   return (
     <>

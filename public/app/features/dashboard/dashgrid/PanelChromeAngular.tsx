@@ -31,7 +31,7 @@ interface OwnProps {
 }
 
 interface ConnectedProps {
-  angularComponent: AngularComponent;
+  angularComponent?: AngularComponent | null;
 }
 
 interface DispatchProps {

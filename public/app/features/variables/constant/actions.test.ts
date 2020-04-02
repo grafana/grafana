@@ -4,7 +4,7 @@ import { reduxTester } from '../../../../test/core/redux/reduxTester';
 import { TemplatingState } from 'app/features/variables/state/reducers';
 import { updateConstantVariableOptions } from './actions';
 import { getTemplatingRootReducer } from '../state/helpers';
-import { ConstantVariableModel, VariableHide, VariableOption } from '../../templating/variable';
+import { ConstantVariableModel, VariableHide, VariableOption } from '../../templating/types';
 import { toVariablePayload } from '../state/types';
 import { createConstantOptionsFromQuery } from './reducer';
 import { setCurrentVariableValue } from '../state/sharedReducer';

@@ -1,6 +1,6 @@
 import cloneDeep from 'lodash/cloneDeep';
 
-import { TextBoxVariableModel } from '../../templating/variable';
+import { TextBoxVariableModel } from '../../templating/types';
 import { initialTextBoxVariableModelState, textBoxVariableReducer } from './reducer';
 import { dispatch } from '../../../store/store';
 import { setOptionAsCurrent, setOptionFromUrl } from '../state/actions';

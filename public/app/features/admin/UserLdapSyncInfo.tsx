@@ -71,7 +71,7 @@ export class UserLdapSyncInfo extends PureComponent<Props, State> {
             <Button variant="secondary" onClick={this.onUserSync}>
               Sync user
             </Button>
-            <LinkButton variant="inverse" href={debugLDAPMappingURL}>
+            <LinkButton variant="secondary" href={debugLDAPMappingURL}>
               Debug LDAP Mapping
             </LinkButton>
           </div>

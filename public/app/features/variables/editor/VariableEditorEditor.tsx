@@ -5,7 +5,7 @@ import { FormLabel } from '@grafana/ui';
 import { e2e } from '@grafana/e2e';
 import { variableAdapters } from '../adapters';
 import { NEW_VARIABLE_ID, toVariablePayload, VariableIdentifier } from '../state/types';
-import { VariableHide, VariableModel, VariableType } from '../../templating/variable';
+import { VariableHide, VariableModel, VariableType } from '../../templating/types';
 import { appEvents } from '../../../core/core';
 import { VariableValuesPreview } from './VariableValuesPreview';
 import { changeVariableName, onEditorAdd, onEditorUpdate, variableEditorMount, variableEditorUnMount } from './actions';

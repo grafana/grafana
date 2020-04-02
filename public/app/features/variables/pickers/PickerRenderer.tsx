@@ -1,5 +1,5 @@
 import React, { FunctionComponent, useMemo } from 'react';
-import { VariableHide, VariableModel } from '../../templating/variable';
+import { VariableHide, VariableModel } from '../../templating/types';
 import { e2e } from '@grafana/e2e';
 import { variableAdapters } from '../adapters';
 

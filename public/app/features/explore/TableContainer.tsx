@@ -46,7 +46,7 @@ export class TableContainer extends PureComponent<TableContainerProps> {
     return (
       <Collapse label="Table" loading={loading} collapsible isOpen={showingTable} onToggle={this.onClickTableButton}>
         {hasTableResult ? (
-          <Table data={tableResult} width={tableWidth} height={height} onCellClick={onClickCell} />
+          <Table data={tableResult!} width={tableWidth} height={height} onCellClick={onClickCell} />
         ) : (
           <MetaInfoText metaItems={[{ value: '0 series returned' }]} />
         )}

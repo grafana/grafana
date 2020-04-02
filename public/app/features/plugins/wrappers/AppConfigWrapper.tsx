@@ -80,7 +80,7 @@ export class AppConfigCtrlWrapper extends PureComponent<Props, State> {
               </Button>
             )}
             {model.enabled && (
-              <Button variant="danger" onClick={this.disable} className={withRightMargin}>
+              <Button variant="destructive" onClick={this.disable} className={withRightMargin}>
                 Disable
               </Button>
             )}

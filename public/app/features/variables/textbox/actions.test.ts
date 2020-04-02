@@ -4,7 +4,7 @@ import { reduxTester } from '../../../../test/core/redux/reduxTester';
 import { TemplatingState } from 'app/features/variables/state/reducers';
 import { updateTextBoxVariableOptions } from './actions';
 import { getTemplatingRootReducer } from '../state/helpers';
-import { TextBoxVariableModel, VariableHide, VariableOption } from '../../templating/variable';
+import { TextBoxVariableModel, VariableHide, VariableOption } from '../../templating/types';
 import { toVariablePayload } from '../state/types';
 import { createTextBoxOptions } from './reducer';
 import { setCurrentVariableValue } from '../state/sharedReducer';

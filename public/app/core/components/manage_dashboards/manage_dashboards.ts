@@ -143,17 +143,19 @@ export class ManageDashboardsCtrl {
     }
   }
 
-  selectionChanged() {
+  selectionChanged = () => {
     let selectedDashboards = 0;
 
-    for (const section of this.sections) {
-      selectedDashboards += _.filter(section.items, { checked: true } as any).length;
-    }
+    if (this.sections) {
+      for (const section of this.sections) {
+        selectedDashboards += _.filter(section.items, { checked: true } as any).length;
+      }
 
-    const selectedFolders = _.filter(this.sections, { checked: true }).length;
-    this.canMove = selectedDashboards > 0;
-    this.canDelete = selectedDashboards > 0 || selectedFolders > 0;
-  }
+      const selectedFolders = _.filter(this.sections, { checked: true }).length;
+      this.canMove = selectedDashboards > 0;
+      this.canDelete = selectedDashboards > 0 || selectedFolders > 0;
+    }
+  };
 
   getFoldersAndDashboardsToDelete(): FoldersAndDashboardUids {
     const selectedDashboards: FoldersAndDashboardUids = {
@@ -254,13 +256,14 @@ export class ManageDashboardsCtrl {
     });
   }
 
-  filterByTag(tag: any) {
-    if (_.indexOf(this.query.tag, tag) === -1) {
-      this.query.tag.push(tag);
+  filterByTag = (tag: any) => {
+    if (tag) {
+      if (_.indexOf(this.query.tag, tag) === -1) {
+        this.query.tag.push(tag);
+      }
     }
-
     return this.refreshList();
-  }
+  };
 
   onQueryChange() {
     return this.refreshList();
@@ -333,6 +336,26 @@ export class ManageDashboardsCtrl {
 
     return url;
   }
+
+  // TODO handle this inside SearchResults component
+  toggleSelection = (item: any, evt: any) => {
+    if (evt) {
+      evt.stopPropagation();
+      evt.preventDefault();
+    }
+
+    item.checked = !item.checked;
+
+    if (item.items) {
+      _.each(item.items, i => {
+        i.checked = item.checked;
+      });
+    }
+
+    if (this.selectionChanged) {
+      this.selectionChanged();
+    }
+  };
 }
 
 export function manageDashboardsDirective() {

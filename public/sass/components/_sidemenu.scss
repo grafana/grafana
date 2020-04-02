@@ -1,12 +1,14 @@
 $mobile-menu-breakpoint: md;
 
 .sidemenu {
+  background: $side-menu-bg;
   position: fixed;
   display: flex;
   flex-flow: column;
   flex-direction: column;
   width: $side-menu-width;
   z-index: $zindex-sidemenu;
+
   a:focus {
     text-decoration: none;
   }
@@ -20,7 +22,7 @@ $mobile-menu-breakpoint: md;
   }
 
   @include media-breakpoint-up($mobile-menu-breakpoint) {
-    background: $side-menu-bg;
+    border-right: $side-menu-border;
     height: auto;
     box-shadow: $side-menu-shadow;
     position: relative;
@@ -205,7 +207,7 @@ li.sidemenu-org-switcher {
   height: $navbarHeight - 1px;
 
   &:hover {
-    background: $navbarButtonBackgroundHighlight;
+    background: lightOrDark($gray33, $gray25);
   }
 
   img {

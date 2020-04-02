@@ -1,17 +1,17 @@
 <div class="dashboard-list">
   <div class="page-action-bar page-action-bar--narrow" ng-hide="ctrl.folderId && !ctrl.hasFilters && ctrl.sections.length === 0">
     <label class="gf-form gf-form--grow gf-form--has-input-icon">
-      <input type="text" class="gf-form-input max-width-30" placeholder="Find Dashboard by name" tabindex="1" give-focus="true" ng-model="ctrl.query.query" ng-model-options="{ debounce: 500 }" spellcheck='false' ng-change="ctrl.onQueryChange()" />
+      <input type="text" class="gf-form-input max-width-30" placeholder="Search dashboards by name" tabindex="1" give-focus="true" ng-model="ctrl.query.query" ng-model-options="{ debounce: 500 }" spellcheck='false' ng-change="ctrl.onQueryChange()" />
       <i class="gf-form-input-icon fa fa-search"></i>
     </label>
     <div class="page-action-bar__spacer"></div>
     <a class="btn btn-primary" ng-href="{{ctrl.createDashboardUrl()}}" ng-if="ctrl.hasEditPermissionInFolders || ctrl.canSave">
       New Dashboard
     </a>
-    <a class="btn btn-inverse" href="dashboards/folder/new" ng-if="!ctrl.folderId && ctrl.isEditor">
+    <a class="btn btn-primary" href="dashboards/folder/new" ng-if="!ctrl.folderId && ctrl.isEditor">
       New Folder
     </a>
-    <a class="btn btn-inverse" href="{{ctrl.importDashboardUrl()}}" ng-if="ctrl.hasEditPermissionInFolders || ctrl.canSave">
+    <a class="btn btn-primary" href="{{ctrl.importDashboardUrl()}}" ng-if="ctrl.hasEditPermissionInFolders || ctrl.canSave">
       Import
     </a>
   </div>
@@ -49,7 +49,7 @@
 
   <div class="search-results" ng-show="ctrl.hasFilters && ctrl.sections.length === 0">
     <em class="muted">
-      No dashboards matching your query were found.
+      No dashboards matching your search were found.
     </em>
   </div>
 
@@ -102,11 +102,12 @@
       </div>
     </div>
     <div class="search-results-container">
-      <dashboard-search-results
+      <search-results
         results="ctrl.sections"
         editable="true"
-        on-selection-changed="ctrl.selectionChanged()"
-        on-tag-selected="ctrl.filterByTag($tag)"
+        on-selection-changed="ctrl.selectionChanged"
+        on-tag-selected="ctrl.filterByTag"
+        on-toggle-selection="ctrl.toggleSelection"
       />
     </div>
   </div>
@@ -114,14 +115,14 @@
 </div>
 
 <div ng-if="ctrl.canSave && ctrl.folderId && !ctrl.hasFilters && ctrl.sections.length === 0">
-  <empty-list-cta 
+  <empty-list-cta
     title="'This folder doesn\'t have any dashboards yet'"
-    buttonIcon="'gicon gicon-dashboard-new'" 
+    buttonIcon="'gicon gicon-dashboard-new'"
     buttonLink="'dashboard/new?folderId={{ctrl.folderId}}'"
-    buttonTitle="'Create Dashboard'"  
-    proTip="'Add/move dashboards to your folder at ->'" 
-    proTipLink="'dashboards'" 
-    proTipLinkTitle="'Manage dashboards'" 
+    buttonTitle="'Create Dashboard'"
+    proTip="'Add/move dashboards to your folder at ->'"
+    proTipLink="'dashboards'"
+    proTipLinkTitle="'Manage dashboards'"
     proTipTarget=""
   />
 </div>

@@ -9,9 +9,23 @@ import { createTextBoxVariableAdapter } from '../textbox/adapter';
 import { createConstantVariableAdapter } from '../constant/adapter';
 import { reduxTester } from '../../../../test/core/redux/reduxTester';
 import { TemplatingState } from 'app/features/variables/state/reducers';
-import { initDashboardTemplating, processVariables, setOptionFromUrl, validateVariableSelectionState } from './actions';
-import { addInitLock, addVariable, removeInitLock, resolveInitLock, setCurrentVariableValue } from './sharedReducer';
-import { toVariableIdentifier, toVariablePayload } from './types';
+import {
+  initDashboardTemplating,
+  processVariables,
+  setOptionFromUrl,
+  validateVariableSelectionState,
+  changeVariableMultiValue,
+} from './actions';
+import {
+  addInitLock,
+  addVariable,
+  removeInitLock,
+  removeVariable,
+  resolveInitLock,
+  setCurrentVariableValue,
+  changeVariableProp,
+} from './sharedReducer';
+import { NEW_VARIABLE_ID, toVariableIdentifier, toVariablePayload } from './types';
 import {
   constantBuilder,
   customBuilder,
@@ -19,6 +33,8 @@ import {
   queryBuilder,
   textboxBuilder,
 } from '../shared/testing/builders';
+import { changeVariableName } from '../editor/actions';
+import { changeVariableNameFailed, changeVariableNameSucceeded, setIdInEditor } from '../editor/reducer';
 
 variableAdapters.setInit(() => [
   createQueryVariableAdapter(),
@@ -127,17 +143,24 @@ describe('shared actions', () => {
 
   describe('when setOptionFromUrl is dispatched with a custom variable (no refresh property)', () => {
     it.each`
-      urlValue      | expected
-      ${'B'}        | ${['B']}
-      ${['B']}      | ${['B']}
-      ${'X'}        | ${['X']}
-      ${''}         | ${['']}
-      ${['A', 'B']} | ${['A', 'B']}
-      ${null}       | ${[null]}
-      ${undefined}  | ${[undefined]}
-    `('and urlValue is $urlValue then correct actions are dispatched', async ({ urlValue, expected }) => {
+      urlValue      | isMulti  | expected
+      ${'B'}        | ${false} | ${'B'}
+      ${['B']}      | ${false} | ${'B'}
+      ${'X'}        | ${false} | ${'X'}
+      ${''}         | ${false} | ${''}
+      ${null}       | ${false} | ${null}
+      ${undefined}  | ${false} | ${undefined}
+      ${'B'}        | ${true}  | ${['B']}
+      ${['B']}      | ${true}  | ${['B']}
+      ${'X'}        | ${true}  | ${['X']}
+      ${''}         | ${true}  | ${['']}
+      ${['A', 'B']} | ${true}  | ${['A', 'B']}
+      ${null}       | ${true}  | ${[null]}
+      ${undefined}  | ${true}  | ${[undefined]}
+    `('and urlValue is $urlValue then correct actions are dispatched', async ({ urlValue, expected, isMulti }) => {
       const custom = customBuilder()
         .withId('0')
+        .withMulti(isMulti)
         .withOptions('A', 'B', 'C')
         .withCurrent('A')
         .build();
@@ -264,6 +287,238 @@ describe('shared actions', () => {
           });
         }
       );
+    });
+  });
+
+  describe('changeVariableName', () => {
+    describe('when changeVariableName is dispatched with the same name', () => {
+      it('then no actions are dispatched', () => {
+        const textbox = textboxBuilder()
+          .withId('textbox')
+          .withName('textbox')
+          .build();
+        const constant = constantBuilder()
+          .withId('constant')
+          .withName('constant')
+          .build();
+
+        reduxTester<{ templating: TemplatingState }>()
+          .givenRootReducer(getTemplatingRootReducer())
+          .whenActionIsDispatched(addVariable(toVariablePayload(textbox, { global: false, index: 0, model: textbox })))
+          .whenActionIsDispatched(
+            addVariable(toVariablePayload(constant, { global: false, index: 1, model: constant }))
+          )
+          .whenActionIsDispatched(changeVariableName(toVariableIdentifier(constant), constant.name), true)
+          .thenNoActionsWhereDispatched();
+      });
+    });
+
+    describe('when changeVariableName is dispatched with an unique name', () => {
+      it('then the correct actions are dispatched', () => {
+        const textbox = textboxBuilder()
+          .withId('textbox')
+          .withName('textbox')
+          .build();
+        const constant = constantBuilder()
+          .withId('constant')
+          .withName('constant')
+          .build();
+
+        reduxTester<{ templating: TemplatingState }>()
+          .givenRootReducer(getTemplatingRootReducer())
+          .whenActionIsDispatched(addVariable(toVariablePayload(textbox, { global: false, index: 0, model: textbox })))
+          .whenActionIsDispatched(
+            addVariable(toVariablePayload(constant, { global: false, index: 1, model: constant }))
+          )
+          .whenActionIsDispatched(changeVariableName(toVariableIdentifier(constant), 'constant1'), true)
+          .thenDispatchedActionsShouldEqual(
+            addVariable({
+              type: 'constant',
+              id: 'constant1',
+              data: {
+                global: false,
+                index: 1,
+                model: { ...constant, name: 'constant1', id: 'constant1', global: false, index: 1 },
+              },
+            }),
+            changeVariableNameSucceeded({ type: 'constant', id: 'constant1', data: { newName: 'constant1' } }),
+            setIdInEditor({ id: 'constant1' }),
+            removeVariable({ type: 'constant', id: 'constant', data: { reIndex: false } })
+          );
+      });
+    });
+
+    describe('when changeVariableName is dispatched with an unique name for a new variable', () => {
+      it('then the correct actions are dispatched', () => {
+        const textbox = textboxBuilder()
+          .withId('textbox')
+          .withName('textbox')
+          .build();
+        const constant = constantBuilder()
+          .withId(NEW_VARIABLE_ID)
+          .withName('constant')
+          .build();
+
+        reduxTester<{ templating: TemplatingState }>()
+          .givenRootReducer(getTemplatingRootReducer())
+          .whenActionIsDispatched(addVariable(toVariablePayload(textbox, { global: false, index: 0, model: textbox })))
+          .whenActionIsDispatched(
+            addVariable(toVariablePayload(constant, { global: false, index: 1, model: constant }))
+          )
+          .whenActionIsDispatched(changeVariableName(toVariableIdentifier(constant), 'constant1'), true)
+          .thenDispatchedActionsShouldEqual(
+            changeVariableNameSucceeded({ type: 'constant', id: NEW_VARIABLE_ID, data: { newName: 'constant1' } })
+          );
+      });
+    });
+
+    describe('when changeVariableName is dispatched with __newName', () => {
+      it('then the correct actions are dispatched', () => {
+        const textbox = textboxBuilder()
+          .withId('textbox')
+          .withName('textbox')
+          .build();
+        const constant = constantBuilder()
+          .withId('constant')
+          .withName('constant')
+          .build();
+
+        reduxTester<{ templating: TemplatingState }>()
+          .givenRootReducer(getTemplatingRootReducer())
+          .whenActionIsDispatched(addVariable(toVariablePayload(textbox, { global: false, index: 0, model: textbox })))
+          .whenActionIsDispatched(
+            addVariable(toVariablePayload(constant, { global: false, index: 1, model: constant }))
+          )
+          .whenActionIsDispatched(changeVariableName(toVariableIdentifier(constant), '__newName'), true)
+          .thenDispatchedActionsShouldEqual(
+            changeVariableNameFailed({
+              newName: '__newName',
+              errorText: "Template names cannot begin with '__', that's reserved for Grafana's global variables",
+            })
+          );
+      });
+    });
+
+    describe('when changeVariableName is dispatched with illegal characters', () => {
+      it('then the correct actions are dispatched', () => {
+        const textbox = textboxBuilder()
+          .withId('textbox')
+          .withName('textbox')
+          .build();
+        const constant = constantBuilder()
+          .withId('constant')
+          .withName('constant')
+          .build();
+
+        reduxTester<{ templating: TemplatingState }>()
+          .givenRootReducer(getTemplatingRootReducer())
+          .whenActionIsDispatched(addVariable(toVariablePayload(textbox, { global: false, index: 0, model: textbox })))
+          .whenActionIsDispatched(
+            addVariable(toVariablePayload(constant, { global: false, index: 1, model: constant }))
+          )
+          .whenActionIsDispatched(changeVariableName(toVariableIdentifier(constant), '#constant!'), true)
+          .thenDispatchedActionsShouldEqual(
+            changeVariableNameFailed({
+              newName: '#constant!',
+              errorText: 'Only word and digit characters are allowed in variable names',
+            })
+          );
+      });
+    });
+
+    describe('when changeVariableName is dispatched with a name that is already used', () => {
+      it('then the correct actions are dispatched', () => {
+        const textbox = textboxBuilder()
+          .withId('textbox')
+          .withName('textbox')
+          .build();
+        const constant = constantBuilder()
+          .withId('constant')
+          .withName('constant')
+          .build();
+
+        reduxTester<{ templating: TemplatingState }>()
+          .givenRootReducer(getTemplatingRootReducer())
+          .whenActionIsDispatched(addVariable(toVariablePayload(textbox, { global: false, index: 0, model: textbox })))
+          .whenActionIsDispatched(
+            addVariable(toVariablePayload(constant, { global: false, index: 1, model: constant }))
+          )
+          .whenActionIsDispatched(changeVariableName(toVariableIdentifier(constant), 'textbox'), true)
+          .thenDispatchedActionsShouldEqual(
+            changeVariableNameFailed({
+              newName: 'textbox',
+              errorText: 'Variable with the same name already exists',
+            })
+          );
+      });
+    });
+  });
+
+  describe('changeVariableMultiValue', () => {
+    describe('when changeVariableMultiValue is dispatched for variable with multi enabled', () => {
+      it('then correct actions are dispatched', () => {
+        const custom = customBuilder()
+          .withId('custom')
+          .withMulti(true)
+          .withCurrent(['A'], ['A'])
+          .build();
+
+        reduxTester<{ templating: TemplatingState }>()
+          .givenRootReducer(getTemplatingRootReducer())
+          .whenActionIsDispatched(addVariable(toVariablePayload(custom, { global: false, index: 0, model: custom })))
+          .whenActionIsDispatched(changeVariableMultiValue(toVariableIdentifier(custom), false), true)
+          .thenDispatchedActionsShouldEqual(
+            changeVariableProp(
+              toVariablePayload(custom, {
+                propName: 'multi',
+                propValue: false,
+              })
+            ),
+            changeVariableProp(
+              toVariablePayload(custom, {
+                propName: 'current',
+                propValue: {
+                  value: 'A',
+                  text: 'A',
+                  selected: true,
+                },
+              })
+            )
+          );
+      });
+    });
+
+    describe('when changeVariableMultiValue is dispatched for variable with multi disabled', () => {
+      it('then correct actions are dispatched', () => {
+        const custom = customBuilder()
+          .withId('custom')
+          .withMulti(false)
+          .withCurrent(['A'], ['A'])
+          .build();
+
+        reduxTester<{ templating: TemplatingState }>()
+          .givenRootReducer(getTemplatingRootReducer())
+          .whenActionIsDispatched(addVariable(toVariablePayload(custom, { global: false, index: 0, model: custom })))
+          .whenActionIsDispatched(changeVariableMultiValue(toVariableIdentifier(custom), true), true)
+          .thenDispatchedActionsShouldEqual(
+            changeVariableProp(
+              toVariablePayload(custom, {
+                propName: 'multi',
+                propValue: true,
+              })
+            ),
+            changeVariableProp(
+              toVariablePayload(custom, {
+                propName: 'current',
+                propValue: {
+                  value: ['A'],
+                  text: ['A'],
+                  selected: true,
+                },
+              })
+            )
+          );
+      });
     });
   });
 });
