@@ -1,6 +1,6 @@
 import React, { FC } from 'react';
 import { css } from 'emotion';
-import { Button, Forms, stylesFactory, useTheme, HorizontalGroup } from '@grafana/ui';
+import { Button, Select, Forms, stylesFactory, useTheme, HorizontalGroup } from '@grafana/ui';
 import { GrafanaTheme, SelectableValue } from '@grafana/data';
 
 type onSelectChange = (value: SelectableValue) => void;
@@ -55,7 +55,7 @@ export const SearchResultsFilter: FC<Props> = ({
         </HorizontalGroup>
       ) : (
         <HorizontalGroup spacing="md">
-          <Forms.Select
+          <Select
             size="sm"
             placeholder="Filter by starred"
             key={selectedStarredFilter}
@@ -63,7 +63,7 @@ export const SearchResultsFilter: FC<Props> = ({
             onChange={onStarredFilterChange}
           />
 
-          <Forms.Select
+          <Select
             size="sm"
             placeholder="Filter by tag"
             key={selectedTagFilter}
