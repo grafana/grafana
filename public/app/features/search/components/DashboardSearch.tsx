@@ -10,6 +10,7 @@ import { contextSrv } from 'app/core/services/context_srv';
 import { SearchField } from './SearchField';
 import { SearchResults } from './SearchResults';
 import { DashboardSection, SearchAction } from '../types';
+import { getFlattenedSections, markSelected } from '../utils';
 
 const FETCH_RESULTS = 'FETCH_RESULTS';
 const TOGGLE_SECTION = 'TOGGLE_SECTION';
@@ -86,17 +87,31 @@ const searchReducer = (state: any, action: SearchAction) => {
         }),
       };
     }
-    case MOVE_SELECTION_UP: {
-      if (state.selectedIndex < state.results.length) {
-        return { ...state, selectedIndex: state.selectedIndex + 1 };
+    case MOVE_SELECTION_DOWN: {
+      const flatIds = getFlattenedSections(state.results);
+      if (state.selectedIndex < flatIds.length) {
+        const newIndex = state.selectedIndex + 1;
+        const selectedId = flatIds[newIndex];
+        return {
+          ...state,
+          selectedIndex: newIndex,
+          results: markSelected(state.results, selectedId),
+        };
       }
-      break;
+      return state;
     }
-    case MOVE_SELECTION_DOWN:
+    case MOVE_SELECTION_UP:
       if (state.selectedIndex > 0) {
-        return { ...state, selectedIndex: state.selectedIndex - 1 };
+        const flatIds = getFlattenedSections(state.results);
+        const newIndex = state.selectedIndex - 1;
+        const selectedId = flatIds[newIndex];
+        return {
+          ...state,
+          selectedIndex: newIndex,
+          results: markSelected(state.results, selectedId),
+        };
       }
-      break;
+      return state;
     default:
       return state;
   }

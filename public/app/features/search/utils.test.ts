@@ -126,7 +126,18 @@ describe('Search utils', () => {
     it('should return an array of items plus children for expanded items', () => {
       const flatSections = getFlattenedSections(sections as DashboardSection[]);
       expect(flatSections).toHaveLength(10);
-      expect(flatSections).toEqual(['Starred', 1, 'Recent', 2, 2568, 4074, 0, 4069, 4072, 1]);
+      expect(flatSections).toEqual([
+        'Starred',
+        'Starred-1',
+        'Recent',
+        '2',
+        '2568',
+        '4074',
+        '0',
+        '0-4069',
+        '0-4072',
+        '0-1',
+      ]);
     });
   });
 });
