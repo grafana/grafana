@@ -37,6 +37,7 @@ export type IconName =
   | 'panel-add'
   | 'arrow-random'
   | 'arrow-down'
+  | 'arrow-right'
   | 'arrow-up'
   | 'arrow-from-right'
   | 'keyboard'

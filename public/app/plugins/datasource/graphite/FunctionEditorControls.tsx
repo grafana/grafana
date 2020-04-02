@@ -60,8 +60,8 @@ export const FunctionEditorControls = (
         description={func.def.description}
         onDescriptionShow={onDescriptionShow}
       />
-      <span className="pointer fa fa-remove" onClick={() => onRemove(func)} />
-      <span className="pointer fa fa-arrow-right" onClick={() => onMoveRight(func)} />
+      <Icon name="times" onClick={() => onRemove(func)} />
+      <Icon name="arrow-right" onClick={() => onMoveRight(func)} />
     </div>
   );
 };
