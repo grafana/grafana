@@ -34,16 +34,18 @@ const parseQuery = (query: string) => {
 
 interface State {
   results: DashboardSection[];
+  loading: boolean;
 }
 
 const initialState: State = {
   results: [],
+  loading: true,
 };
 
 const searchReducer = (state: any, action: SearchAction) => {
   switch (action.type) {
     case FETCH_RESULTS:
-      return { ...state, results: action.payload };
+      return { ...state, results: action.payload, loading: false };
     case TOGGLE_SECTION: {
       const section = action.payload;
       return {
@@ -166,6 +168,7 @@ export const DashboardSearch: FC<Props> = ({ closeSearch }) => {
             <div className="search-results-container">
               <SearchResults
                 results={state.results}
+                loading={state.loading}
                 onTagSelected={filterByTag}
                 dispatch={dispatch}
                 editable={false}

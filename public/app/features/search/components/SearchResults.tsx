@@ -9,7 +9,8 @@ import { SearchCheckbox } from './SearchCheckbox';
 
 export interface Props {
   dispatch?: Dispatch<SearchAction>;
-  editable: boolean;
+  editable?: boolean;
+  loading?: boolean;
   onFolderExpanding?: () => void;
   onSelectionChanged?: () => void;
   onTagSelected: (name: string) => any;
@@ -21,6 +22,7 @@ export interface Props {
 export const SearchResults: FC<Props> = ({
   dispatch,
   editable,
+  loading,
   onFolderExpanding,
   onSelectionChanged,
   onTagSelected,
@@ -49,7 +51,7 @@ export const SearchResults: FC<Props> = ({
     }
   };
 
-  if (!results || !results.length) {
+  if (!loading && (!results || !results.length)) {
     return <h6> No dashboards matching your query were found.</h6>;
   }
 
