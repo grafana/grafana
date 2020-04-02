@@ -9,7 +9,6 @@ import {
   PanelProps,
   PanelTypeChangedHandler,
   FieldConfigProperty,
-  ThresholdsMode,
 } from '../types';
 import { FieldConfigEditorBuilder, PanelOptionsEditorBuilder } from '../utils/OptionsUIBuilders';
 import { ComponentClass, ComponentType } from 'react';
@@ -17,31 +16,11 @@ import set from 'lodash/set';
 import { deprecationWarning } from '../utils';
 import { standardFieldConfigEditorRegistry } from '../field';
 
-export const allStandardFieldConfigProperties: FieldConfigProperty[] = [
-  FieldConfigProperty.Min,
-  FieldConfigProperty.Max,
-  FieldConfigProperty.Title,
-  FieldConfigProperty.Unit,
-  FieldConfigProperty.Decimals,
-  FieldConfigProperty.NoValue,
-  FieldConfigProperty.Color,
-  FieldConfigProperty.Thresholds,
-  FieldConfigProperty.Mappings,
-  FieldConfigProperty.Links,
-];
-
-export const standardFieldConfigDefaults: Partial<Record<FieldConfigProperty, any>> = {
-  [FieldConfigProperty.Thresholds]: {
-    mode: ThresholdsMode.Absolute,
-    steps: [
-      { value: -Infinity, color: 'green' },
-      { value: 80, color: 'red' },
-    ],
-  },
-  [FieldConfigProperty.Mappings]: [],
-};
-
-export const standardFieldConfigProperties = new Map(allStandardFieldConfigProperties.map(p => [p, undefined]));
+export interface SetFieldConfigOptionsArgs<TFieldConfigOptions = any> {
+  standardOptions?: FieldConfigProperty[];
+  standardOptionsDefaults?: Partial<Record<FieldConfigProperty, any>>;
+  useCustomOptions: (builder: FieldConfigEditorBuilder<TFieldConfigOptions>) => void;
+}
 
 export class PanelPlugin<TOptions = any, TFieldConfigOptions extends object = any> extends GrafanaPlugin<
   PanelPluginMeta
@@ -185,15 +164,15 @@ export class PanelPlugin<TOptions = any, TFieldConfigOptions extends object = an
     return this;
   }
 
-  setFieldConfigOptions(addCustomOptions?: (builder: FieldConfigEditorBuilder<TFieldConfigOptions>) => void) {
+  useFieldConfigOptions(config?: SetFieldConfigOptionsArgs<TFieldConfigOptions>) {
     // builder is applied lazily when custom field configs are accessed
     this._initConfigRegistry = () => {
       const registry = new FieldConfigOptionsRegistry();
 
       // Add custom options
-      if (addCustomOptions) {
+      if (config && config.useCustomOptions) {
         const builder = new FieldConfigEditorBuilder<TFieldConfigOptions>();
-        addCustomOptions(builder);
+        config.useCustomOptions(builder);
 
         for (const customProp of builder.getRegistry().list()) {
           customProp.isCustom = true;

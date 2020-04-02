@@ -63,6 +63,7 @@ export function applyFieldOverrides(options: ApplyFieldOverrideOptions): DataFra
   if (!source) {
     return options.data;
   }
+
   const fieldConfigRegistry = options.fieldConfigRegistry ?? standardFieldConfigEditorRegistry;
 
   let range: GlobalMinMax | undefined = undefined;

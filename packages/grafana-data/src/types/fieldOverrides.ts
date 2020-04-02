@@ -55,7 +55,7 @@ export interface FieldOverrideEditorProps<TValue, TSettings> extends Omit<Standa
 }
 
 export interface FieldConfigEditorConfig<TOptions, TSettings = any, TValue = any> {
-  id: (keyof TOptions & string) | string;
+  path: (keyof TOptions & string) | string;
   name: string;
   description: string;
   settings?: TSettings;
