@@ -25,7 +25,8 @@ import {
   changeVariableProp,
 } from './sharedReducer';
 import { toVariableIdentifier, toVariablePayload, VariableIdentifier } from './types';
-import { appEvents, contextSrv } from '../../../core/core';
+import { appEvents } from 'app/core/core';
+import { contextSrv } from 'app/core/services/context_srv';
 import templateSrv from '../../templating/template_srv';
 import { alignCurrentWithMulti } from '../shared/multiOptions';
 import { isMulti } from '../guard';
