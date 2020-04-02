@@ -152,8 +152,7 @@ export const DashboardSearch: FC<Props> = ({ close }) => {
   };
 
   const clearSearchFilter = () => {
-    // TODO check if resetting the query text is necessary
-    setQuery(q => ({ ...q, tags: [] }));
+    setQuery(q => ({ ...q, tags: [], query: '' }));
   };
 
   const onFilterBoxClick = () => {};
