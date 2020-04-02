@@ -28,7 +28,7 @@ import {
   SaveDashboardButtonConnected,
 } from '../features/dashboard/components/SaveDashboard/SaveDashboardButton';
 import { VariableEditorContainer } from '../features/variables/editor/VariableEditorContainer';
-import { SearchField, SearchResults } from '../features/search';
+import { SearchField, SearchResults, SearchResultsFilter } from '../features/search';
 
 export function registerAngularDirectives() {
   react2AngularDirective('footer', Footer, []);
@@ -65,6 +65,19 @@ export function registerAngularDirectives() {
     ['onTagSelected', { watchDepth: 'reference' }],
     ['onFolderExpanding', { watchDepth: 'reference' }],
     ['onToggleSelection', { watchDepth: 'reference' }],
+  ]);
+  react2AngularDirective('searchFilters', SearchResultsFilter, [
+    'allChecked',
+    'canMove',
+    'canDelete',
+    'tagFilterOptions',
+    'selectedStarredFilter',
+    'selectedTagFilter',
+    ['onSelectAllChanged', { watchDepth: 'reference' }],
+    ['deleteItem', { watchDepth: 'reference' }],
+    ['moveTo', { watchDepth: 'reference' }],
+    ['onStarredFilterChange', { watchDepth: 'reference' }],
+    ['onTagFilterChange', { watchDepth: 'reference' }],
   ]);
   react2AngularDirective('tagFilter', TagFilter, [
     'tags',
