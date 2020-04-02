@@ -16,7 +16,7 @@ interface FieldAccessorCache {
   [key: string]: (obj: any) => any;
 }
 
-interface TemplateSrvDependencies {
+export interface TemplateSrvDependencies {
   getFilteredVariables: typeof getFilteredVariables;
   getVariables: typeof getVariables;
   getVariableWithName: typeof getVariableWithName;
