@@ -1,5 +1,5 @@
 import React, { PureComponent } from 'react';
-import { ConfirmButton } from '@grafana/ui';
+import { ConfirmButton, Icon } from '@grafana/ui';
 import { cx } from 'emotion';
 
 interface Props {
@@ -76,7 +76,7 @@ export class UserPermissions extends PureComponent<Props, State> {
                     <td colSpan={2}>
                       {isGrafanaAdmin ? (
                         <>
-                          <i className="gicon gicon-shield" /> Yes
+                          <Icon name="shield" /> Yes
                         </>
                       ) : (
                         <>No</>

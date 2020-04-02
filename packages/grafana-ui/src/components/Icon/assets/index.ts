@@ -6,4 +6,5 @@ export * from './Grafana';
 export * from './Bell';
 export * from './PlusSquare';
 export * from './FolderPlus';
+export * from './FolderInfo';
 export * from './Import';

@@ -2,7 +2,7 @@ import React, { PureComponent } from 'react';
 import { connect } from 'react-redux';
 
 import { SlideDown } from 'app/core/components/Animations/SlideDown';
-import { Input, Tooltip } from '@grafana/ui';
+import { Input, Tooltip, Icon } from '@grafana/ui';
 
 import { TeamGroup } from '../../types';
 import { addTeamGroup, loadTeamGroups, removeTeamGroup } from './state/actions';
@@ -81,9 +81,7 @@ export class TeamGroupSync extends PureComponent<Props, State> {
         <div className="page-action-bar">
           <h3 className="page-sub-heading">External group sync</h3>
           <Tooltip placement="auto" content={headerTooltip}>
-            <div className="page-sub-heading-icon">
-              <i className="gicon gicon-question gicon--has-hover" />
-            </div>
+            <Icon className="icon--has-hover page-sub-heading-icon" name="question-circle" />
           </Tooltip>
           <div className="page-action-bar__spacer" />
           {groups.length > 0 && (

@@ -15,7 +15,7 @@
         spellcheck="false"
         ng-change="ctrl.onQueryChange()"
       />
-      <icon class="gf-form-input-icon" name="'search'"></i>
+      <icon class="gf-form-input-icon" name="'search'"></icon>
     </label>
     <div class="page-action-bar__spacer"></div>
     <a
@@ -46,20 +46,20 @@
         <div class="gf-form-input gf-form-input--plaintext" ng-show="ctrl.query.tag.length > 0">
           <span ng-repeat="tagName in ctrl.query.tag">
             <a ng-click="ctrl.removeTag(tagName, $event)" tag-color-from-name="tagName" class="tag label label-tag">
-              <i class="fa fa-remove"></i>&nbsp;{{tagName}}
+              <icon name="'times'"></icon>&nbsp;{{tagName}}
             </a>
           </span>
         </div>
       </div>
       <div class="gf-form" ng-show="ctrl.query.starred">
         <label class="gf-form-label">
-          <a class="pointer" ng-click="ctrl.removeStarred()"> <i class="fa fa-fw fa-check"></i> Starred </a>
+          <a class="pointer" ng-click="ctrl.removeStarred()"> <icon name="'check'"></icon> Starred </a>
         </label>
       </div>
       <div class="gf-form">
         <label class="gf-form-label">
           <a class="pointer" ng-click="ctrl.clearFilters()" bs-tooltip="'Clear current search query and filters'">
-            <i class="fa fa-remove"></i>&nbsp;Clear
+            <icon name="'times'"></icon>&nbsp;Clear
           </a>
         </label>
       </div>
@@ -111,7 +111,7 @@
             bs-tooltip="ctrl.canMove ? '' : 'Select a dashboard to move (cannot move folders)'"
             data-placement="bottom"
           >
-            <i class="fa fa-exchange"></i>&nbsp;&nbsp;Move
+            <icon class="'exchange-alt'"></icon>&nbsp;&nbsp;Move
           </button>
           <button
             type="button"
@@ -119,7 +119,7 @@
             ng-click="ctrl.delete()"
             ng-disabled="!ctrl.canDelete"
           >
-            <i class="fa fa-trash"></i>&nbsp;&nbsp;Delete
+            <icon name="'trash-alt'"></icon>&nbsp;&nbsp;Delete
           </button>
         </div>
       </div>

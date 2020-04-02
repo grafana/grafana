@@ -13,6 +13,10 @@ export type IconName =
   | 'trash-alt'
   | 'plus-square'
   | 'folder-plus'
+  | 'folder-open'
+  | 'folder-info'
+  | 'file-copy-alt'
+  | 'exchange-alt'
   | 'import'
   | 'exclamation-triangle'
   | 'times'
@@ -28,6 +32,8 @@ export type IconName =
   | 'lock'
   | 'panel-add'
   | 'arrow-random'
+  | 'arrow-down'
+  | 'arrow-up'
   | 'arrow-from-right'
   | 'keyboard'
   | 'search'
@@ -153,4 +159,10 @@ export const getAvailableIcons = (): IconName[] => [
   'folder-plus',
   'plus-square',
   'import',
+  'folder-open',
+  'folder-info',
+  'file-copy-alt',
+  'arrow-down',
+  'arrow-up',
+  'exchange-alt',
 ];

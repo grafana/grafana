@@ -14,13 +14,10 @@ exports[`Render should render component 1`] = `
       content="Sync LDAP or OAuth groups with your Grafana teams."
       placement="auto"
     >
-      <div
-        className="page-sub-heading-icon"
-      >
-        <i
-          className="gicon gicon-question gicon--has-hover"
-        />
-      </div>
+      <Icon
+        className="icon--has-hover page-sub-heading-icon"
+        name="question-circle"
+      />
     </Component>
     <div
       className="page-action-bar__spacer"
@@ -99,13 +96,10 @@ exports[`Render should render groups table 1`] = `
       content="Sync LDAP or OAuth groups with your Grafana teams."
       placement="auto"
     >
-      <div
-        className="page-sub-heading-icon"
-      >
-        <i
-          className="gicon gicon-question gicon--has-hover"
-        />
-      </div>
+      <Icon
+        className="icon--has-hover page-sub-heading-icon"
+        name="question-circle"
+      />
     </Component>
     <div
       className="page-action-bar__spacer"
