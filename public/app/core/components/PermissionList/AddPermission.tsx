@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import { UserPicker } from 'app/core/components/Select/UserPicker';
 import { TeamPicker, Team } from 'app/core/components/Select/TeamPicker';
-import { Select } from '@grafana/ui';
+import { Select, Icon } from '@grafana/ui';
 import { SelectableValue } from '@grafana/data';
 import { User } from 'app/types';
 import {
@@ -90,7 +90,7 @@ class AddPermissions extends Component<Props, NewDashboardAclItem> {
     return (
       <div className="gf-form-inline cta-form">
         <button className="cta-form__close btn btn-transparent" onClick={onCancel}>
-          <i className="fa fa-close" />
+          <Icon name="times" />
         </button>
         <form name="addPermission" onSubmit={this.onSubmit}>
           <h5>Add Permission For</h5>

@@ -70,7 +70,7 @@ const UserListAdminPageUnConnected: React.FC<Props> = props => {
                   <th>
                     Seen&nbsp;
                     <Tooltip placement="top" content="Time since user was seen using Grafana">
-                      <i className="fa fa-question-circle" />
+                      <Icon name="question-circle" />
                     </Tooltip>
                   </th>
                   <th></th>
@@ -113,7 +113,7 @@ const renderUser = (user: UserDTO) => {
         {user.isAdmin && (
           <a href={editUrl}>
             <Tooltip placement="top" content="Grafana Admin">
-              <i className="fa fa-shield" />
+              <Icon name="shield" />
             </Tooltip>
           </a>
         )}
