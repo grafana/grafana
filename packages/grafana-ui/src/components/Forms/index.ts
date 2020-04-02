@@ -9,8 +9,6 @@ import { Switch } from './Switch';
 import { Legend } from './Legend';
 import { TextArea } from './TextArea/TextArea';
 import { Checkbox } from './Checkbox';
-//Remove after Enterprise migrations have been merged
-import { Select } from '../Select/Select';
 
 const Forms = {
   RadioButtonGroup,
@@ -24,7 +22,6 @@ const Forms = {
   TextArea,
   Checkbox,
   Legend,
-  Select,
 };
 
 export default Forms;
