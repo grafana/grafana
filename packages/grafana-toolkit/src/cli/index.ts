@@ -200,14 +200,12 @@ export const run = (includeInternalScripts = false) => {
     .option('--dryrun', 'Do a dry run only', false)
     .option('--verbose', 'Print verbose', false)
     .option('--commitHash <hashKey>', 'Specify the commit hash')
-    .option('--dev', 'Create a development release')
     .description('Publish to github')
     .action(async cmd => {
       await execTask(githubPublishTask)({
         dryrun: cmd.dryrun,
         verbose: cmd.verbose,
         commitHash: cmd.commitHash,
-        dev: cmd.dev,
       });
     });
 
