@@ -9,12 +9,14 @@ enum Orientation {
 }
 type Spacing = 'xs' | 'sm' | 'md' | 'lg';
 type Justify = 'flex-start' | 'flex-end' | 'space-between' | 'center';
+type Align = 'flex-start' | 'flex-end' | 'center';
 
 export interface LayoutProps {
   children: React.ReactNode[];
   orientation?: Orientation;
   spacing?: Spacing;
   justify?: Justify;
+  align?: Align;
 }
 
 export interface ContainerProps {
@@ -27,9 +29,10 @@ export const Layout: React.FC<LayoutProps> = ({
   orientation = Orientation.Horizontal,
   spacing = 'sm',
   justify = 'flex-start',
+  align = 'flex-start',
 }) => {
   const theme = useTheme();
-  const styles = getStyles(theme, orientation, spacing, justify);
+  const styles = getStyles(theme, orientation, spacing, justify, align);
   return (
     <div className={styles.layout}>
       {React.Children.map(children, (child, index) => {
@@ -56,25 +59,28 @@ export const Container: React.FC<ContainerProps> = ({ children, padding, margin 
   return <div className={styles.wrapper}>{children}</div>;
 };
 
-const getStyles = stylesFactory((theme: GrafanaTheme, orientation: Orientation, spacing: Spacing, justify: Justify) => {
-  return {
-    layout: css`
-      display: flex;
-      flex-direction: ${orientation === Orientation.Vertical ? 'column' : 'row'};
-      justify-content: ${justify};
-      height: 100%;
-    `,
-    buttonWrapper: css`
-      margin-bottom: ${orientation === Orientation.Horizontal ? 0 : theme.spacing[spacing]};
-      margin-right: ${orientation === Orientation.Horizontal ? theme.spacing[spacing] : 0};
+const getStyles = stylesFactory(
+  (theme: GrafanaTheme, orientation: Orientation, spacing: Spacing, justify: Justify, align) => {
+    return {
+      layout: css`
+        display: flex;
+        flex-direction: ${orientation === Orientation.Vertical ? 'column' : 'row'};
+        justify-content: ${justify};
+        align-items: ${align};
+        height: 100%;
+      `,
+      buttonWrapper: css`
+        margin-bottom: ${orientation === Orientation.Horizontal ? 0 : theme.spacing[spacing]};
+        margin-right: ${orientation === Orientation.Horizontal ? theme.spacing[spacing] : 0};
 
-      &:last-child {
-        margin-bottom: 0;
-        margin-right: 0;
-      }
-    `,
-  };
-});
+        &:last-child {
+          margin-bottom: 0;
+          margin-right: 0;
+        }
+      `,
+    };
+  }
+);
 
 const getContainerStyles = stylesFactory((theme: GrafanaTheme, padding?: Spacing, margin?: Spacing) => {
   const paddingSize = (padding && theme.spacing[padding]) || 0;
