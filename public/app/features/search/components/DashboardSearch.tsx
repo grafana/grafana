@@ -159,7 +159,7 @@ export const DashboardSearch: FC<Props> = ({ close }) => {
 
   return (
     <div className="search-container">
-      <SearchField query={query} onChange={onQueryChange} onKeyDown={onKeyDown} />
+      <SearchField query={query} onChange={onQueryChange} onKeyDown={onKeyDown} autoFocus={true} />
       <div className="search-dropdown">
         <div className="search-dropdown__col_1">
           <div className="search-results-scroller">
