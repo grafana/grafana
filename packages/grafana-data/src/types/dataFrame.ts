@@ -13,6 +13,8 @@ export enum FieldType {
   number = 'number',
   string = 'string',
   boolean = 'boolean',
+  // Used to detect that the value is some kind of trace data to help with the visualisation and processing.
+  trace = 'trace',
   other = 'other', // Object, Array, etc
 }
 

@@ -1,6 +1,6 @@
 import React, { FC } from 'react';
 import { css } from 'emotion';
-import { Button, Forms, Select, stylesFactory, useTheme, HorizontalGroup } from '@grafana/ui';
+import { Button, Select, Forms, stylesFactory, useTheme, HorizontalGroup } from '@grafana/ui';
 import { GrafanaTheme, SelectableValue } from '@grafana/data';
 
 type onSelectChange = (value: SelectableValue) => void;
