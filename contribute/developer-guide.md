@@ -4,7 +4,6 @@ This guide helps you get started developing Grafana.
 
 Before you begin, you might want to read [How to contribute to Grafana as a junior dev](https://medium.com/@ivanahuckova/how-to-contribute-to-grafana-as-junior-dev-c01fe3064502) by [Ivana Huckova](https://medium.com/@ivanahuckova).
 
-
 ## Dependencies
 
 Make sure you have the following dependencies installed before setting up your developer environment:
@@ -130,7 +129,6 @@ Enable the development mode, by adding the following line in your `custom.ini`:
 app_mode = development
 ```
 
-
 ### Add data sources
 
 By now, you should be able to build and test a change you've made to the Grafana source code. In most cases, you need to add at least one data source to verify the change.
@@ -180,7 +178,7 @@ Are you having issues with setting up your environment? Here are some tips that 
 
 ### Too many open files when running `make run`
 
-Depending on your environment, you may have to increase the maximum number of open files allowed.
+Depending on your environment, you may have to increase the maximum number of open files allowed. For the rest of this section, we will assume you are on a Unix like OS (e.g. Linux/MacOS), where you can control the maximum number of open files through the [ulimit](https://ss64.com/bash/ulimit.html) shell command.
 
 To see how many open files are allowed, run:
 
@@ -201,6 +199,27 @@ find ./conf ./pkg ./public/views | wc -l
 ```
 
 Another alternative is to limit the files being watched. The directories that are watched for changes are listed in the `.bra.toml` file in the root directory. 
+
+To retain your `ulimit` configuration, i.e. so it will be remembered for future sessions, you need to commit it to your command line shell initialization file. Which file this will be depends on the shell you are using, here are some examples:
+
+* zsh -> ~/.zshrc
+* bash -> ~/.bashrc
+
+Commit your ulimit configuration to your shell initialization file as follows ($LIMIT being your chosen limit and $INIT_FILE being the initialization file for your shell): 
+
+```
+echo ulimit -S -n $LIMIT >> $INIT_FILE
+```
+
+Your command shell should read the initialization file in question every time it gets started, and apply your `ulimit` command.
+
+For some people, typically using the bash shell, ulimit fails with an error similar to the following:
+
+```
+ulimit: open files: cannot modify limit: Operation not permitted
+```
+
+If that happens to you, chances are you've already set a lower limit and your shell won't let you set a higher one. Try looking in your shell initalization files (~/.bashrc typically), if there's already a ulimit command that you can tweak.
 
 ## Next steps
 

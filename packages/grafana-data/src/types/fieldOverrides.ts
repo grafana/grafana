@@ -25,9 +25,9 @@ export interface ConfigOverrideRule {
   properties: DynamicConfigValue[];
 }
 
-export interface FieldConfigSource {
+export interface FieldConfigSource<TOptions extends object = any> {
   // Defatuls applied to all numeric fields
-  defaults: FieldConfig;
+  defaults: FieldConfig<TOptions>;
 
   // Rules to override individual values
   overrides: ConfigOverrideRule[];
@@ -54,16 +54,17 @@ export interface FieldOverrideEditorProps<TValue, TSettings> extends Omit<Standa
   context: FieldOverrideContext;
 }
 
-export interface FieldConfigEditorConfig<TSettings = any> {
-  id: string;
+export interface FieldConfigEditorConfig<TOptions, TSettings = any, TValue = any> {
+  id: (keyof TOptions & string) | string;
   name: string;
   description: string;
   settings?: TSettings;
   shouldApply?: (field: Field) => boolean;
+  defaultValue?: TValue;
 }
 
-export interface FieldPropertyEditorItem<TValue = any, TSettings extends {} = any>
-  extends OptionsEditorItem<TSettings, FieldConfigEditorProps<TValue, TSettings>> {
+export interface FieldPropertyEditorItem<TOptions = any, TValue = any, TSettings extends {} = any>
+  extends OptionsEditorItem<TOptions, TSettings, FieldConfigEditorProps<TValue, TSettings>, TValue> {
   // An editor that can be filled in with context info (template variables etc)
   override: ComponentType<FieldOverrideEditorProps<TValue, TSettings>>;
 
@@ -85,4 +86,17 @@ export interface ApplyFieldOverrideOptions {
   autoMinMax?: boolean;
   standard?: FieldConfigEditorRegistry;
   custom?: FieldConfigEditorRegistry;
+}
+
+export enum FieldConfigProperty {
+  Unit = 'unit',
+  Min = 'min',
+  Max = 'max',
+  Decimals = 'decimals',
+  Title = 'title',
+  NoValue = 'noValue',
+  Thresholds = 'thresholds',
+  Mappings = 'mappings',
+  Links = 'links',
+  Color = 'color',
 }

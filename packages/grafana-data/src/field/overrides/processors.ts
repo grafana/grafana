@@ -67,6 +67,9 @@ export const stringOverrideProcessor = (
   context: FieldOverrideContext,
   settings?: StringFieldConfigSettings
 ) => {
+  if (value === null || value === undefined) {
+    return value;
+  }
   if (settings && settings.expandTemplateVars && context.replaceVariables) {
     return context.replaceVariables(value, context.field!.config.scopedVars);
   }

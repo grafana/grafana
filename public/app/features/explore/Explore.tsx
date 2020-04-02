@@ -59,6 +59,8 @@ import { getTimeZone } from '../profile/state/selectors';
 import { ErrorContainer } from './ErrorContainer';
 import { scanStopAction } from './state/actionTypes';
 import { ExploreGraphPanel } from './ExploreGraphPanel';
+import { TraceView } from './TraceView';
+import { SecondaryActions } from './SecondaryActions';
 
 const getStyles = stylesFactory(() => {
   return {
@@ -319,27 +321,14 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
         {datasourceInstance && (
           <div className="explore-container">
             <QueryRows exploreEvents={this.exploreEvents} exploreId={exploreId} queryKeys={queryKeys} />
-            <div className="gf-form">
-              <button
-                aria-label="Add row button"
-                className={`gf-form-label gf-form-label--btn ${styles.button}`}
-                onClick={this.onClickAddQueryRowButton}
-                disabled={isLive}
-              >
-                <i className={'fa fa-fw fa-plus icon-margin-right'} />
-                <span className="btn-title">{'\xA0' + 'Add query'}</span>
-              </button>
-              <button
-                aria-label="Rich history button"
-                className={cx(`gf-form-label gf-form-label--btn ${styles.button}`, {
-                  ['explore-active-button']: showRichHistory,
-                })}
-                onClick={this.toggleShowRichHistory}
-              >
-                <i className={'fa fa-fw fa-history icon-margin-right '} />
-                <span className="btn-title">{'\xA0' + 'Query history'}</span>
-              </button>
-            </div>
+            <SecondaryActions
+              addQueryRowButtonDisabled={isLive}
+              // We cannot show multiple traces at the same time right now so we do not show add query button.
+              addQueryRowButtonHidden={mode === ExploreMode.Tracing}
+              richHistoryButtonActive={showRichHistory}
+              onClickAddQueryRowButton={this.onClickAddQueryRowButton}
+              onClickRichHistoryButton={this.toggleShowRichHistory}
+            />
             <ErrorContainer queryError={queryError} />
             <AutoSizer className={styles.fullHeight} onResize={this.onResize} disableHeight>
               {({ width }) => {
@@ -400,18 +389,12 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
                               onStopScanning={this.onStopScanning}
                             />
                           )}
-                          {mode === ExploreMode.Tracing && (
-                            <div className={styles.fullHeight}>
-                              {queryResponse &&
-                                !!queryResponse.series.length &&
-                                queryResponse.series[0].fields[0].values.get(0) && (
-                                  <iframe
-                                    className={styles.iframe}
-                                    src={queryResponse.series[0].fields[0].values.get(0)}
-                                  />
-                                )}
-                            </div>
-                          )}
+                          {mode === ExploreMode.Tracing &&
+                            // We expect only one trace at the moment to be in the dataframe
+                            // If there is not data (like 404) we show a separate error so no need to show anything here
+                            queryResponse.series[0] && (
+                              <TraceView trace={queryResponse.series[0].fields[0].values.get(0) as any} />
+                            )}
                         </>
                       )}
                       {showRichHistory && (

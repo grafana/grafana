@@ -398,6 +398,8 @@ The following sections detail the supported settings for each alert notification
 | Name |
 | ---- |
 | url |
+| basicAuthUser |
+| basicAuthPassword |
 
 #### Alert notification `teams`
 

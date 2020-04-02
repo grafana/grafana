@@ -3,7 +3,7 @@ import classNames from 'classnames';
 import { connect } from 'react-redux';
 import { hot } from 'react-hot-loader';
 import { DataSourcePluginMeta, NavModel } from '@grafana/data';
-import { List } from '@grafana/ui';
+import { List, LinkButton, Button } from '@grafana/ui';
 import { e2e } from '@grafana/e2e';
 
 import Page from 'app/core/components/Page/Page';
@@ -25,11 +25,8 @@ export interface Props {
 }
 
 class NewDataSourcePage extends PureComponent<Props> {
-  searchInput: HTMLElement;
-
   componentDidMount() {
     this.props.loadDataSourcePlugins();
-    this.searchInput.focus();
   }
 
   onDataSourceTypeClicked = (plugin: DataSourcePluginMeta) => {
@@ -76,14 +73,14 @@ class NewDataSourcePage extends PureComponent<Props> {
           </div>
         ))}
         <div className="add-data-source-more">
-          <a
-            className="btn btn-inverse"
+          <LinkButton
+            variant="secondary"
             href="https://grafana.com/plugins?type=datasource&utm_source=grafana_add_ds"
             target="_blank"
             rel="noopener"
           >
             Find more data source plugins on grafana.com
-          </a>
+          </LinkButton>
         </div>
       </>
     );
@@ -96,20 +93,9 @@ class NewDataSourcePage extends PureComponent<Props> {
       <Page navModel={navModel}>
         <Page.Contents isLoading={isLoading}>
           <div className="page-action-bar">
-            <div className="gf-form gf-form--grow">
-              <FilterInput
-                ref={elem => (this.searchInput = elem)}
-                labelClassName="gf-form--has-input-icon"
-                inputClassName="gf-form-input width-30"
-                value={searchQuery}
-                onChange={this.onSearchQueryChange}
-                placeholder="Filter by name or type"
-              />
-            </div>
+            <FilterInput value={searchQuery} onChange={this.onSearchQueryChange} placeholder="Filter by name or type" />
             <div className="page-action-bar__spacer" />
-            <a className="btn btn-secondary" href="datasources">
-              Cancel
-            </a>
+            <LinkButton href="datasources">Cancel</LinkButton>
           </div>
           <div>
             {searchQuery && this.renderPlugins(plugins)}
@@ -151,17 +137,18 @@ const DataSourceTypeCard: FC<DataSourceTypeCardProps> = props => {
       </div>
       <div className="add-data-source-item-actions">
         {learnMoreLink && (
-          <a
-            className="btn btn-inverse"
+          <LinkButton
+            variant="secondary"
             href={`${learnMoreLink.url}?utm_source=grafana_add_ds`}
             target="_blank"
             rel="noopener"
             onClick={onLearnMoreClick}
+            icon="fa fa-external-link"
           >
-            {learnMoreLink.name} <i className="fa fa-external-link add-datasource-item-actions__btn-icon" />
-          </a>
+            {learnMoreLink.name}
+          </LinkButton>
         )}
-        {!isPhantom && <button className="btn btn-primary">Select</button>}
+        {!isPhantom && <Button>Select</Button>}
       </div>
     </div>
   );
