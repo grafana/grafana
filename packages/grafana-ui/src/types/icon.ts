@@ -1,6 +1,8 @@
 export type IconType = 'mono' | 'default';
 
 export type IconName =
+  | 'fa fa-fw fa-unlock'
+  | 'fa fa-envelope'
   | 'question-circle'
   | 'plus'
   | 'angle-up'
