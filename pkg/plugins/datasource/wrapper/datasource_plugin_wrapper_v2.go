@@ -76,7 +76,14 @@ func (tw *DatasourcePluginWrapperV2) Query(ctx context.Context, ds *models.DataS
 		})
 	}
 
-	pbRes, err := tw.DataPlugin.QueryData(ctx, pbQuery)
+	var pbRes *pluginv2.QueryDataResponse
+	err = backendplugin.InstrumentPluginRequest(ds.Type, "dataquery", func() error {
+		var err error
+		pbRes, err = tw.DataPlugin.QueryData(ctx, pbQuery)
+
+		return err
+	})
+
 	if err != nil {
 		return nil, err
 	}
