@@ -4,4 +4,5 @@ services:
     image: "circleci/node:12-browsers"
     user: root
     volumes:
-      - ../scripts:/home/circleci/test
+      - ../scripts:/home/circleci/scripts
+      - ../install:/home/circleci/install
