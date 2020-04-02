@@ -22,7 +22,8 @@ func TestTimeRange(t *testing.T) {
 			}
 
 			Convey("5m ago ", func() {
-				fiveMinAgo, _ := time.ParseDuration("-5m")
+				fiveMinAgo, err := time.ParseDuration("-5m")
+				So(err, ShouldBeNil)
 				expected := now.Add(fiveMinAgo)
 
 				res, err := tr.ParseFrom()
@@ -45,7 +46,8 @@ func TestTimeRange(t *testing.T) {
 			}
 
 			Convey("5h ago ", func() {
-				fiveHourAgo, _ := time.ParseDuration("-5h")
+				fiveHourAgo, err := time.ParseDuration("-5h")
+				So(err, ShouldBeNil)
 				expected := now.Add(fiveHourAgo)
 
 				res, err := tr.ParseFrom()
@@ -54,7 +56,8 @@ func TestTimeRange(t *testing.T) {
 			})
 
 			Convey("now-10m ", func() {
-				tenMinAgo, _ := time.ParseDuration("-10m")
+				tenMinAgo, err := time.ParseDuration("-10m")
+				So(err, ShouldBeNil)
 				expected := now.Add(tenMinAgo)
 				res, err := tr.ParseTo()
 				So(err, ShouldBeNil)
@@ -62,7 +65,8 @@ func TestTimeRange(t *testing.T) {
 			})
 		})
 
-		now, _ = time.Parse(time.RFC3339Nano, "2020-03-26T15:12:56.000Z")
+		now, err := time.Parse(time.RFC3339Nano, "2020-03-26T15:12:56.000Z")
+		So(err, ShouldBeNil)
 		Convey("Can parse now-1M/M, now-1M/M", func() {
 			tr := TimeRange{
 				From: "now-1M/M",
@@ -71,7 +75,8 @@ func TestTimeRange(t *testing.T) {
 			}
 
 			Convey("from now-1M/M ", func() {
-				expected, _ := time.Parse(time.RFC3339Nano, "2020-02-01T00:00:00.000Z")
+				expected, err := time.Parse(time.RFC3339Nano, "2020-02-01T00:00:00.000Z")
+				So(err, ShouldBeNil)
 
 				res, err := tr.ParseFrom()
 				So(err, ShouldBeNil)
@@ -79,7 +84,8 @@ func TestTimeRange(t *testing.T) {
 			})
 
 			Convey("to now-1M/M ", func() {
-				expected, _ := time.Parse(time.RFC3339Nano, "2020-02-29T23:59:59.999Z")
+				expected, err := time.Parse(time.RFC3339Nano, "2020-02-29T23:59:59.999Z")
+				So(err, ShouldBeNil)
 
 				res, err := tr.ParseTo()
 				So(err, ShouldBeNil)
@@ -95,7 +101,8 @@ func TestTimeRange(t *testing.T) {
 			}
 
 			Convey("now-3d ", func() {
-				expected, _ := time.Parse(time.RFC3339Nano, "2020-03-23T15:12:56.000Z")
+				expected, err := time.Parse(time.RFC3339Nano, "2020-03-23T15:12:56.000Z")
+				So(err, ShouldBeNil)
 
 				res, err := tr.ParseFrom()
 				So(err, ShouldBeNil)
@@ -103,7 +110,8 @@ func TestTimeRange(t *testing.T) {
 			})
 
 			Convey("now+3w ", func() {
-				expected, _ := time.Parse(time.RFC3339Nano, "2020-04-16T15:12:56.000Z")
+				expected, err := time.Parse(time.RFC3339Nano, "2020-04-16T15:12:56.000Z")
+				So(err, ShouldBeNil)
 
 				res, err := tr.ParseTo()
 				So(err, ShouldBeNil)
@@ -119,7 +127,8 @@ func TestTimeRange(t *testing.T) {
 			}
 
 			Convey("1960-02-01T07:00:00.000Z ", func() {
-				expected, _ := time.Parse(time.RFC3339Nano, "1960-02-01T07:00:00.000Z")
+				expected, err := time.Parse(time.RFC3339Nano, "1960-02-01T07:00:00.000Z")
+				So(err, ShouldBeNil)
 
 				res, err := tr.ParseFrom()
 				So(err, ShouldBeNil)
@@ -127,7 +136,8 @@ func TestTimeRange(t *testing.T) {
 			})
 
 			Convey("1965-02-03T08:00:00.000Z ", func() {
-				expected, _ := time.Parse(time.RFC3339Nano, "1965-02-03T08:00:00.000Z")
+				expected, err := time.Parse(time.RFC3339Nano, "1965-02-03T08:00:00.000Z")
+				So(err, ShouldBeNil)
 
 				res, err := tr.ParseTo()
 				So(err, ShouldBeNil)
