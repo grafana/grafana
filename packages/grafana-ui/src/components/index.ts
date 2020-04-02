@@ -7,15 +7,8 @@ export { Portal } from './Portal/Portal';
 export { CustomScrollbar } from './CustomScrollbar/CustomScrollbar';
 
 export { ClipboardButton } from './ClipboardButton/ClipboardButton';
-
-// Select
-export { Select, AsyncSelect } from './Select/Select';
-export { IndicatorsContainer } from './Select/IndicatorsContainer';
-export { NoOptionsMessage } from './Select/NoOptionsMessage';
-export { default as resetSelectStyles } from './Forms/Select/resetSelectStyles';
-export { ButtonSelect } from './Select/ButtonSelect';
-export { ButtonCascader } from './ButtonCascader/ButtonCascader';
 export { Cascader, CascaderOption } from './Cascader/Cascader';
+export { ButtonCascader } from './ButtonCascader/ButtonCascader';
 
 // Forms
 export { FormLabel } from './FormLabel/FormLabel';
@@ -140,4 +133,27 @@ export * from './Button';
 export { ValuePicker } from './ValuePicker/ValuePicker';
 export { fieldMatchersUI } from './MatchersUI/fieldMatchersUI';
 
+export { default as resetSelectStyles } from './Select/resetSelectStyles';
+export * from './Select/Select';
+export { ButtonSelect } from './Select/ButtonSelect';
+
 export { HorizontalGroup, VerticalGroup, Container } from './Layout/Layout';
+export { RadioButtonGroup } from './Forms/RadioButtonGroup/RadioButtonGroup';
+
+// Legacy forms
+
+// Select
+import { Select, AsyncSelect } from './Forms/Legacy/Select/Select';
+import { IndicatorsContainer } from './Forms/Legacy/Select/IndicatorsContainer';
+import { NoOptionsMessage } from './Forms/Legacy/Select/NoOptionsMessage';
+import { ButtonSelect } from './Forms/Legacy/Select/ButtonSelect';
+
+const LegacyForms = {
+  Select,
+  AsyncSelect,
+  IndicatorsContainer,
+  NoOptionsMessage,
+  ButtonSelect,
+};
+
+export { LegacyForms };

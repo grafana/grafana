@@ -1,6 +1,7 @@
 import React, { PureComponent } from 'react';
 
-import { FormLabel, Select } from '@grafana/ui';
+import { FormLabel, LegacyForms } from '@grafana/ui';
+const { Select } = LegacyForms;
 
 import { DashboardSearchHit, DashboardSearchHitType } from 'app/types';
 import { backendSrv } from 'app/core/services/backend_srv';

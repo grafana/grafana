@@ -21,7 +21,20 @@ export default class AzureLogAnalyticsDatasource {
     private templateSrv: TemplateSrv
   ) {
     this.id = instanceSettings.id;
-    this.baseUrl = '/loganalyticsazure';
+
+    switch (this.instanceSettings.jsonData.cloudName) {
+      case 'govazuremonitor': // Azure US Government
+        break;
+      case 'germanyazuremonitor': // Azure Germany
+        break;
+      case 'chinaazuremonitor': // Azue China
+        this.baseUrl = '/chinaloganalyticsazure';
+        break;
+      default:
+        // Azure Global
+        this.baseUrl = '/loganalyticsazure';
+    }
+
     this.url = instanceSettings.url;
     this.defaultOrFirstWorkspace = this.instanceSettings.jsonData.logAnalyticsDefaultWorkspace;
 
@@ -43,7 +56,19 @@ export default class AzureLogAnalyticsDatasource {
       this.azureMonitorUrl = `/${azureCloud}/subscriptions`;
     } else {
       this.subscriptionId = this.instanceSettings.jsonData.logAnalyticsSubscriptionId;
-      this.azureMonitorUrl = `/workspacesloganalytics/subscriptions`;
+
+      switch (this.instanceSettings.jsonData.cloudName) {
+        case 'govazuremonitor': // Azure US Government
+          break;
+        case 'germanyazuremonitor': // Azure Germany
+          break;
+        case 'chinaazuremonitor': // Azue China
+          this.azureMonitorUrl = `/chinaworkspacesloganalytics/subscriptions`;
+          break;
+        default:
+          // Azure Global
+          this.azureMonitorUrl = `/workspacesloganalytics/subscriptions`;
+      }
     }
   }
 

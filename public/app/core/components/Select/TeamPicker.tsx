@@ -1,8 +1,9 @@
 import React, { Component } from 'react';
 import _ from 'lodash';
-import { AsyncSelect } from '@grafana/ui';
+import { LegacyForms } from '@grafana/ui';
 import { debounce } from 'lodash';
 import { getBackendSrv } from '@grafana/runtime';
+const { AsyncSelect } = LegacyForms;
 
 export interface Team {
   id: number;
