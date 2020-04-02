@@ -11,6 +11,9 @@ export type IconName =
   | 'plane'
   | 'power'
   | 'trash-alt'
+  | 'plus-square'
+  | 'folder-plus'
+  | 'import'
   | 'exclamation-triangle'
   | 'times'
   | 'cloud-upload'
@@ -147,4 +150,7 @@ export const getAvailableIcons = (): IconName[] => [
   'channel-add',
   'monitor',
   'favorite',
+  'folder-plus',
+  'plus-square',
+  'import',
 ];

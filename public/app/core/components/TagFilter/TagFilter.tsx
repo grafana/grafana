@@ -8,7 +8,7 @@ import { escapeStringForRegex } from '@grafana/data';
 // Components
 import { TagOption } from './TagOption';
 import { TagBadge } from './TagBadge';
-import { IndicatorsContainer, NoOptionsMessage, resetSelectStyles } from '@grafana/ui';
+import { IndicatorsContainer, NoOptionsMessage, resetSelectStyles, Icon } from '@grafana/ui';
 
 export interface TermCount {
   term: string;
@@ -89,7 +89,7 @@ export class TagFilter extends React.Component<Props, any> {
         <div className="tag-filter">
           <AsyncSelect {...selectOptions} />
         </div>
-        <i className="gf-form-input-icon fa fa-tag" />
+        <Icon className="gf-form-input-icon" name="tag-alt" />
       </div>
     );
   }

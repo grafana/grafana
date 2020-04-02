@@ -95,8 +95,12 @@ class DashNav extends PureComponent<Props> {
 
   renderDashboardTitleSearchButton() {
     const { dashboard, isFullscreen } = this.props;
-    /* Hard-coded value so we don't have to wrap whole component in withTheme because of 1 variable */
+
     const iconClassName = css`
+      margin-right: 8px;
+      margin-bottom: -1px;
+    `;
+    const mainIconClassName = css`
       margin-right: 8px;
     `;
 
@@ -107,7 +111,7 @@ class DashNav extends PureComponent<Props> {
       <>
         <div>
           <div className="navbar-page-btn">
-            {!isFullscreen && <Icon name="apps" size="xl" className={iconClassName} />}
+            {!isFullscreen && <Icon name="apps" size="xl" className={mainIconClassName} />}
             {haveFolder && (
               <>
                 <a className="navbar-page-btn__folder" onClick={this.onFolderNameClick}>

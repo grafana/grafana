@@ -20,7 +20,7 @@ export const PanelHeaderMenuItem: FC<Props & PanelMenuItem> = props => {
   `;
   const shortcutIconClassName = css`
     position: absolute;
-    margin-top: 3px;
+    top: 7px;
     right: ${theme.spacing.xs};
     color: ${theme.colors.textWeak};
   `;
