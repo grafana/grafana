@@ -4,7 +4,7 @@ import { FormLabel, Switch } from '@grafana/ui';
 
 import templateSrv from '../../templating/template_srv';
 import { SelectionOptionsEditor } from '../editor/SelectionOptionsEditor';
-import { QueryVariableModel, VariableRefresh, VariableSort, VariableWithMultiSupport } from '../../templating/variable';
+import { QueryVariableModel, VariableRefresh, VariableSort, VariableWithMultiSupport } from '../../templating/types';
 import { QueryVariableEditorState } from './reducer';
 import { changeQueryVariableDataSource, changeQueryVariableQuery, initQueryVariableEditor } from './actions';
 import { VariableEditorState } from '../editor/reducer';
@@ -13,6 +13,7 @@ import { MapDispatchToProps, MapStateToProps } from 'react-redux';
 import { StoreState } from '../../../types';
 import { connectWithStore } from '../../../core/utils/connectWithReduxStore';
 import { toVariableIdentifier } from '../state/types';
+import { changeVariableMultiValue } from '../state/actions';
 
 export interface OwnProps extends VariableEditorProps<QueryVariableModel> {}
 
@@ -24,6 +25,7 @@ interface DispatchProps {
   initQueryVariableEditor: typeof initQueryVariableEditor;
   changeQueryVariableDataSource: typeof changeQueryVariableDataSource;
   changeQueryVariableQuery: typeof changeQueryVariableQuery;
+  changeVariableMultiValue: typeof changeVariableMultiValue;
 }
 
 type Props = OwnProps & ConnectedProps & DispatchProps;
@@ -237,7 +239,11 @@ export class QueryVariableEditorUnConnected extends PureComponent<Props, State> 
           </div>
         </div>
 
-        <SelectionOptionsEditor variable={this.props.variable} onPropChange={this.onSelectionOptionsChange} />
+        <SelectionOptionsEditor
+          variable={this.props.variable}
+          onPropChange={this.onSelectionOptionsChange}
+          onMultiChanged={this.props.changeVariableMultiValue}
+        />
 
         <div className="gf-form-group">
           <h5>Value groups/tags (Experimental feature)</h5>
@@ -300,6 +306,7 @@ const mapDispatchToProps: MapDispatchToProps<DispatchProps, OwnProps> = {
   initQueryVariableEditor,
   changeQueryVariableDataSource,
   changeQueryVariableQuery,
+  changeVariableMultiValue,
 };
 
 export const QueryVariableEditor = connectWithStore(

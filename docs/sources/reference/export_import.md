@@ -104,7 +104,7 @@ add the inputs and templatize the data source properties like above.
 
 If you want to import a dashboard from Grafana.com into an older version of Grafana then you can either import
 it as usual and then update the data source option in the metrics tab so that the panel is using the correct
-data source. Another alternative is to open the json file in a a text editor and update the data source properties
+data source. Another alternative is to open the json file in a text editor and update the data source properties
 to value that matches a name of your data source.
 
 ## Note

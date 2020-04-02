@@ -73,14 +73,10 @@ const (
 const _PLP_NULL = 0xFFFFFFFFFFFFFFFF
 const _UNKNOWN_PLP_LEN = 0xFFFFFFFFFFFFFFFE
 const _PLP_TERMINATOR = 0x00000000
-const _TVP_NULL_TOKEN = 0xffff
 
 // TVP COLUMN FLAGS
-const _TVP_COLUMN_DEFAULT_FLAG = 0x200
 const _TVP_END_TOKEN = 0x00
 const _TVP_ROW_TOKEN = 0x01
-const _TVP_ORDER_UNIQUE_TOKEN = 0x10
-const _TVP_COLUMN_ORDERING_TOKEN = 0x11
 
 // TYPE_INFO rule
 // http://msdn.microsoft.com/en-us/library/dd358284.aspx

@@ -5,7 +5,7 @@ import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { withStoryContainer } from '../../utils/storybook/withStoryContainer';
 import { Field } from './Field';
 import { Input } from './Input/Input';
-import { Button } from './Button';
+import { Button } from '../Button';
 import { Form } from './Form';
 import { Switch } from './Switch';
 import { Checkbox } from './Checkbox';

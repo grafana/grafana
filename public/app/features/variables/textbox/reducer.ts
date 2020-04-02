@@ -1,6 +1,6 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
-import { TextBoxVariableModel, VariableHide, VariableOption } from '../../templating/variable';
+import { TextBoxVariableModel, VariableHide, VariableOption } from '../../templating/types';
 import { getInstanceState, NEW_VARIABLE_ID, VariablePayload } from '../state/types';
 import { initialVariablesState, VariablesState } from '../state/variablesReducer';
 

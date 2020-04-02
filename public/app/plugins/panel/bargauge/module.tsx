@@ -1,14 +1,36 @@
 import { sharedSingleStatPanelChangedHandler } from '@grafana/ui';
-import { PanelPlugin } from '@grafana/data';
+import { defaultStandardFieldConfigProperties, PanelPlugin } from '@grafana/data';
 import { BarGaugePanel } from './BarGaugePanel';
-import { BarGaugePanelEditor } from './BarGaugePanelEditor';
 import { BarGaugeOptions, defaults } from './types';
-import { standardFieldConfig } from '../stat/types';
+import { standardFieldConfigDefaults, addStandardDataReduceOptions } from '../stat/types';
+import { BarGaugePanelEditor } from './BarGaugePanelEditor';
 import { barGaugePanelMigrationHandler } from './BarGaugeMigrations';
 
 export const plugin = new PanelPlugin<BarGaugeOptions>(BarGaugePanel)
   .setDefaults(defaults)
-  .setFieldConfigDefaults(standardFieldConfig)
   .setEditor(BarGaugePanelEditor)
+  .setPanelOptions(builder => {
+    addStandardDataReduceOptions(builder);
+
+    builder
+      .addRadio({
+        id: 'displayMode',
+        name: 'Display mode',
+        description: 'Controls the bar style',
+        settings: {
+          options: [
+            { value: 'basic', label: 'Basic' },
+            { value: 'gradient', label: 'Gradient' },
+            { value: 'lcd', label: 'Retro LCD' },
+          ],
+        },
+      })
+      .addBooleanSwitch({
+        id: 'showUnfilled',
+        name: 'Show unfilled area',
+        description: 'When enabled renders the unfilled region as gray',
+      });
+  })
   .setPanelChangeHandler(sharedSingleStatPanelChangedHandler)
-  .setMigrationHandler(barGaugePanelMigrationHandler);
+  .setMigrationHandler(barGaugePanelMigrationHandler)
+  .useStandardFieldConfig(defaultStandardFieldConfigProperties, standardFieldConfigDefaults);

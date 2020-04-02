@@ -1,10 +1,10 @@
-import React from 'react';
+import React, { ReactNode } from 'react';
 import { useTheme, stylesFactory } from '../../themes';
 import { GrafanaTheme } from '@grafana/data';
 import { css, cx } from 'emotion';
 
 export interface LabelProps extends React.HTMLAttributes<HTMLLegendElement> {
-  children: string;
+  children: string | ReactNode;
   description?: string;
 }
 

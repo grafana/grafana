@@ -83,7 +83,7 @@ func (tn *TeamsNotifier) Notify(evalContext *alerting.EvalContext) error {
 	}
 
 	images := make([]map[string]interface{}, 0)
-	if evalContext.ImagePublicURL != "" {
+	if tn.NeedsImage() && evalContext.ImagePublicURL != "" {
 		images = append(images, map[string]interface{}{
 			"image": evalContext.ImagePublicURL,
 		})

@@ -1,9 +1,10 @@
-import React, { PureComponent } from 'react';
+import React, { useMemo } from 'react';
 
 import config from 'app/core/config';
 import VizTypePickerPlugin from './VizTypePickerPlugin';
-import { EmptySearchResult } from '@grafana/ui';
-import { PanelPluginMeta } from '@grafana/data';
+import { EmptySearchResult, stylesFactory, useTheme } from '@grafana/ui';
+import { GrafanaTheme, PanelPluginMeta } from '@grafana/data';
+import { css } from 'emotion';
 
 export interface Props {
   current: PanelPluginMeta;
@@ -12,62 +13,68 @@ export interface Props {
   onClose: () => void;
 }
 
-export class VizTypePicker extends PureComponent<Props> {
-  searchInput: HTMLElement;
-  pluginList = this.getPanelPlugins;
-
-  constructor(props: Props) {
-    super(props);
-  }
-
-  get maxSelectedIndex() {
-    const filteredPluginList = this.getFilteredPluginList();
-    return filteredPluginList.length - 1;
-  }
-
-  get getPanelPlugins(): PanelPluginMeta[] {
+export const VizTypePicker: React.FC<Props> = ({ searchQuery, onTypeChange, current }) => {
+  const theme = useTheme();
+  const styles = getStyles(theme);
+  const pluginsList: PanelPluginMeta[] = useMemo(() => {
     const allPanels = config.panels;
 
     return Object.keys(allPanels)
       .filter(key => allPanels[key]['hideFromList'] === false)
       .map(key => allPanels[key])
       .sort((a: PanelPluginMeta, b: PanelPluginMeta) => a.sort - b.sort);
-  }
+  }, []);
 
-  renderVizPlugin = (plugin: PanelPluginMeta, index: number) => {
-    const { onTypeChange } = this.props;
-    const isCurrent = plugin.id === this.props.current.id;
+  const renderVizPlugin = (plugin: PanelPluginMeta, index: number) => {
+    const isCurrent = plugin.id === current.id;
+    const filteredPluginList = getFilteredPluginList();
 
+    const matchesQuery = filteredPluginList.indexOf(plugin) > -1;
     return (
-      <VizTypePickerPlugin key={plugin.id} isCurrent={isCurrent} plugin={plugin} onClick={() => onTypeChange(plugin)} />
+      <VizTypePickerPlugin
+        disabled={!matchesQuery}
+        key={plugin.id}
+        isCurrent={isCurrent}
+        plugin={plugin}
+        onClick={() => onTypeChange(plugin)}
+      />
     );
   };
 
-  getFilteredPluginList = (): PanelPluginMeta[] => {
-    const { searchQuery } = this.props;
+  const getFilteredPluginList = (): PanelPluginMeta[] => {
     const regex = new RegExp(searchQuery, 'i');
-    const pluginList = this.pluginList;
 
-    const filtered = pluginList.filter(item => {
+    return pluginsList.filter(item => {
       return regex.test(item.name);
     });
-
-    return filtered;
   };
 
-  render() {
-    const filteredPluginList = this.getFilteredPluginList();
-    const hasResults = filteredPluginList.length > 0;
-    return (
-      <div className="viz-picker">
-        <div className="viz-picker-list">
-          {hasResults ? (
-            filteredPluginList.map((plugin, index) => this.renderVizPlugin(plugin, index))
-          ) : (
-            <EmptySearchResult>Could not find anything matching your query</EmptySearchResult>
-          )}
-        </div>
+  const filteredPluginList = getFilteredPluginList();
+  const hasResults = filteredPluginList.length > 0;
+
+  return (
+    <div className={styles.wrapper}>
+      <div className={styles.grid}>
+        {hasResults ? (
+          pluginsList.map((plugin, index) => renderVizPlugin(plugin, index))
+        ) : (
+          <EmptySearchResult>Could not find anything matching your query</EmptySearchResult>
+        )}
       </div>
-    );
-  }
-}
+    </div>
+  );
+};
+
+const getStyles = stylesFactory((theme: GrafanaTheme) => {
+  return {
+    wrapper: css`
+      padding-right: ${theme.spacing.md};
+    `,
+    grid: css`
+      max-width: 100%;
+      display: grid;
+      grid-gap: ${theme.spacing.md};
+      grid-template-columns: repeat(auto-fit, minmax(145px, 1fr));
+    `,
+  };
+});
