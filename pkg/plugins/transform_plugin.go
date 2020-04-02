@@ -107,14 +107,17 @@ func (tw *TransformWrapper) Transform(ctx context.Context, query *tsdb.TsdbQuery
 		Results: make(map[string]*tsdb.QueryResult, len(pbRes.Responses)),
 	}
 	for refID, res := range pbRes.Responses {
-		tR.Results[refID] = &tsdb.QueryResult{
+		tRes := &tsdb.QueryResult{
 			RefId:      refID,
 			Dataframes: res.Frames,
-			Meta:       simplejson.NewFromAny(res.JsonMeta),
+		}
+		if len(res.JsonMeta) != 0 {
+			tRes.Meta = simplejson.NewFromAny(res.JsonMeta)
 		}
 		if res.Error != "" {
-			tR.Results[refID].Error = fmt.Errorf(res.Error)
+			tRes.Error = fmt.Errorf(res.Error)
 		}
+		tR.Results[refID] = tRes
 	}
 
 	return tR, nil
@@ -199,6 +202,13 @@ func (s *transformCallback) QueryData(ctx context.Context, req *pluginv2.QueryDa
 				return nil, err
 			}
 			pRes.Frames = append(pRes.Frames, encFrame)
+		}
+		if res.Meta != nil {
+			b, err := res.Meta.MarshalJSON()
+			if err != nil {
+				s.logger.Error("failed to marhsal json metadata", err)
+			}
+			pRes.JsonMeta = b
 		}
 		responses[refID] = pRes
 	}

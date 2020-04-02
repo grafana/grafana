@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 
 	"github.com/grafana/grafana-plugin-sdk-go/genproto/pluginv2"
@@ -89,6 +90,9 @@ func (tw *DatasourcePluginWrapperV2) Query(ctx context.Context, ds *models.DataS
 		qr := &tsdb.QueryResult{
 			RefId:      refID,
 			Dataframes: pRes.Frames,
+		}
+		if len(pRes.JsonMeta) != 0 {
+			qr.Meta = simplejson.NewFromAny(pRes.JsonMeta)
 		}
 		if pRes.Error != "" {
 			qr.Error = fmt.Errorf(pRes.Error)
