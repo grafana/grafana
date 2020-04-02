@@ -1,5 +1,5 @@
 import {
-  FieldConfigEditorRegistry,
+  FieldConfigOptionsRegistry,
   FieldConfigSource,
   GrafanaPlugin,
   PanelEditorProps,
@@ -15,6 +15,7 @@ import { FieldConfigEditorBuilder, PanelOptionsEditorBuilder } from '../utils/Op
 import { ComponentClass, ComponentType } from 'react';
 import set from 'lodash/set';
 import { deprecationWarning } from '../utils';
+import { standardFieldConfigEditorRegistry } from '../field';
 
 export const allStandardFieldConfigProperties: FieldConfigProperty[] = [
   FieldConfigProperty.Min,
@@ -46,18 +47,17 @@ export class PanelPlugin<TOptions = any, TFieldConfigOptions extends object = an
   PanelPluginMeta
 > {
   private _defaults?: TOptions;
-  private _standardFieldConfigProperties?: Map<FieldConfigProperty, any>;
-
   private _fieldConfigDefaults: FieldConfigSource<TFieldConfigOptions> = {
     defaults: {},
     overrides: [],
   };
-  private _customFieldConfigs?: FieldConfigEditorRegistry;
-  private customFieldConfigsUIBuilder = new FieldConfigEditorBuilder<TFieldConfigOptions>();
-  private registerCustomFieldConfigs?: (builder: FieldConfigEditorBuilder<TFieldConfigOptions>) => void;
+
+  private _fieldConfigRegistry?: FieldConfigOptionsRegistry;
+  private _initConfigRegistry = () => {
+    return new FieldConfigOptionsRegistry();
+  };
 
   private _optionEditors?: PanelOptionEditorsRegistry;
-  private optionsUIBuilder = new PanelOptionsEditorBuilder<TOptions>();
   private registerOptionEditors?: (builder: PanelOptionsEditorBuilder<TOptions>) => void;
 
   panel: ComponentType<PanelProps<TOptions>>;
@@ -94,20 +94,21 @@ export class PanelPlugin<TOptions = any, TFieldConfigOptions extends object = an
   }
 
   get fieldConfigDefaults(): FieldConfigSource<TFieldConfigOptions> {
-    let customPropertiesDefaults = this._fieldConfigDefaults.defaults.custom;
+    const configDefaults = this._fieldConfigDefaults.defaults;
+    configDefaults.custom = {} as TFieldConfigOptions;
 
-    if (!customPropertiesDefaults) {
-      customPropertiesDefaults = {} as TFieldConfigOptions;
-    }
-    const editors = this.customFieldConfigs;
-
-    if (editors && editors.list().length !== 0) {
-      for (const editor of editors.list()) {
-        set(customPropertiesDefaults, editor.id, editor.defaultValue);
-      }
+    for (const option of this.fieldConfigRegistry.list()) {
+      set(configDefaults, option.id, option.defaultValue);
     }
 
     return {
+      defaults: {
+        ...configDefaults,
+      },
+      overrides: this._fieldConfigDefaults.overrides,
+    };
+
+    /*   return {
       defaults: {
         ...(this._standardFieldConfigProperties ? Object.fromEntries(this._standardFieldConfigProperties) : {}),
         custom:
@@ -120,11 +121,7 @@ export class PanelPlugin<TOptions = any, TFieldConfigOptions extends object = an
       },
       // TODO: not sure yet what about overrides, if anything
       overrides: this._fieldConfigDefaults.overrides,
-    };
-  }
-
-  get standardFieldConfigProperties() {
-    return this._standardFieldConfigProperties ? Array.from(this._standardFieldConfigProperties.keys()) : [];
+    }; */
   }
 
   /**
@@ -136,19 +133,19 @@ export class PanelPlugin<TOptions = any, TFieldConfigOptions extends object = an
     return this;
   }
 
-  get customFieldConfigs() {
-    if (!this._customFieldConfigs && this.registerCustomFieldConfigs) {
-      this.registerCustomFieldConfigs(this.customFieldConfigsUIBuilder);
-      this._customFieldConfigs = this.customFieldConfigsUIBuilder.getRegistry();
+  get fieldConfigRegistry() {
+    if (!this._fieldConfigRegistry) {
+      this._fieldConfigRegistry = this._initConfigRegistry();
     }
 
-    return this._customFieldConfigs;
+    return this._fieldConfigRegistry;
   }
 
   get optionEditors() {
     if (!this._optionEditors && this.registerOptionEditors) {
-      this.registerOptionEditors(this.optionsUIBuilder);
-      this._optionEditors = this.optionsUIBuilder.getRegistry();
+      const builder = new PanelOptionsEditorBuilder<TOptions>();
+      this.registerOptionEditors(builder);
+      this._optionEditors = builder.getRegistry();
     }
 
     return this._optionEditors;
@@ -188,44 +185,34 @@ export class PanelPlugin<TOptions = any, TFieldConfigOptions extends object = an
     return this;
   }
 
-  /**
-   * Enables custom field properties editor creation
-   *
-   * @example
-   * ```typescript
-   *
-   * import { ShapePanel } from './ShapePanel';
-   *
-   * interface ShapePanelOptions {}
-   *
-   * export const plugin = new PanelPlugin<ShapePanelOptions>(ShapePanel)
-   *   .setCustomFieldOptions(builder => {
-   *     builder
-   *       .addNumberInput({
-   *         id: 'shapeBorderWidth',
-   *         name: 'Border width',
-   *         description: 'Border width of the shape',
-   *         settings: {
-   *           min: 1,
-   *           max: 5,
-   *         },
-   *       })
-   *       .addSelect({
-   *         id: 'displayMode',
-   *         name: 'Display mode',
-   *         description: 'How the shape shout be rendered'
-   *         settings: {
-   *           options: [{value: 'fill', label: 'Fill' }, {value: 'transparent', label: 'Transparent }]
-   *         },
-   *       })
-   *   })
-   * ```
-   *
-   * @public
-   **/
-  setCustomFieldOptions(builder: (builder: FieldConfigEditorBuilder<TFieldConfigOptions>) => void) {
+  setFieldConfigOptions(addCustomOptions?: (builder: FieldConfigEditorBuilder<TFieldConfigOptions>) => void) {
     // builder is applied lazily when custom field configs are accessed
-    this.registerCustomFieldConfigs = builder;
+    this._initConfigRegistry = () => {
+      const registry = new FieldConfigOptionsRegistry();
+
+      // Add custom options
+      if (addCustomOptions) {
+        const builder = new FieldConfigEditorBuilder<TFieldConfigOptions>();
+        addCustomOptions(builder);
+
+        for (const customProp of builder.getRegistry().list()) {
+          customProp.isCustom = true;
+          // need to do something to make the custom items not conflict with standard ones
+          // problem is id (registry index) is used as property path
+          // so sort of need a property path on the FieldPropertyEditorItem
+          customProp.id = 'custom.' + customProp.id;
+          registry.register(customProp);
+        }
+      }
+
+      // add standard props
+      for (const fieldConfigProp of standardFieldConfigEditorRegistry.list()) {
+        registry.register(fieldConfigProp);
+      }
+
+      return registry;
+    };
+
     return this;
   }
 
@@ -262,59 +249,6 @@ export class PanelPlugin<TOptions = any, TFieldConfigOptions extends object = an
   setPanelOptions(builder: (builder: PanelOptionsEditorBuilder<TOptions>) => void) {
     // builder is applied lazily when options UI is created
     this.registerOptionEditors = builder;
-    return this;
-  }
-
-  /**
-   * Allows specyfing which standard field config options panel should use and defining default values
-   *
-   * @example
-   * ```typescript
-   *
-   * import { ShapePanel } from './ShapePanel';
-   *
-   * interface ShapePanelOptions {}
-   *
-   * // when plugin should use all standard options
-   * export const plugin = new PanelPlugin<ShapePanelOptions>(ShapePanel)
-   *  .useStandardFieldConfig();
-   *
-   * // when plugin should only display specific standard options
-   * // note, that options will be displayed in the order they are provided
-   * export const plugin = new PanelPlugin<ShapePanelOptions>(ShapePanel)
-   *  .useStandardFieldConfig([FieldConfigProperty.Min, FieldConfigProperty.Max, FieldConfigProperty.Links]);
-   *
-   * // when standard option's default value needs to be provided
-   * export const plugin = new PanelPlugin<ShapePanelOptions>(ShapePanel)
-   *  .useStandardFieldConfig([FieldConfigProperty.Min, FieldConfigProperty.Max], {
-   *    [FieldConfigProperty.Min]: 20,
-   *    [FieldConfigProperty.Max]: 100
-   *  });
-   *
-   * ```
-   *
-   * @public
-   */
-  useStandardFieldConfig(
-    properties?: FieldConfigProperty[] | null,
-    customDefaults?: Partial<Record<FieldConfigProperty, any>>
-  ) {
-    if (!properties) {
-      this._standardFieldConfigProperties = standardFieldConfigProperties;
-      return this;
-    } else {
-      this._standardFieldConfigProperties = new Map(properties.map(p => [p, standardFieldConfigProperties.get(p)]));
-    }
-
-    const defaults = customDefaults ?? standardFieldConfigDefaults;
-
-    if (defaults) {
-      Object.keys(defaults).map(k => {
-        if (properties.indexOf(k as FieldConfigProperty) > -1) {
-          this._standardFieldConfigProperties!.set(k as FieldConfigProperty, defaults[k as FieldConfigProperty]);
-        }
-      });
-    }
     return this;
   }
 }

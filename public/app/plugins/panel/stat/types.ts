@@ -1,13 +1,5 @@
 import { SingleStatBaseOptions, BigValueColorMode, BigValueGraphMode, BigValueJustifyMode } from '@grafana/ui';
-import {
-  VizOrientation,
-  ReducerID,
-  ReduceDataOptions,
-  SelectableValue,
-  ThresholdsMode,
-  standardEditorsRegistry,
-  FieldConfigProperty,
-} from '@grafana/data';
+import { VizOrientation, ReducerID, ReduceDataOptions, SelectableValue, standardEditorsRegistry } from '@grafana/data';
 import { PanelOptionsEditorBuilder } from '@grafana/data/src/utils/OptionsUIBuilders';
 
 // Structure copied from angular
@@ -35,17 +27,6 @@ export const justifyModes: Array<SelectableValue<BigValueJustifyMode>> = [
 export const commonValueOptionDefaults: ReduceDataOptions = {
   values: false,
   calcs: [ReducerID.mean],
-};
-
-export const standardFieldConfigDefaults: Partial<Record<FieldConfigProperty, any>> = {
-  [FieldConfigProperty.Thresholds]: {
-    mode: ThresholdsMode.Absolute,
-    steps: [
-      { value: -Infinity, color: 'green' },
-      { value: 80, color: 'red' },
-    ],
-  },
-  [FieldConfigProperty.Mappings]: [],
 };
 
 export function addStandardDataReduceOptions(builder: PanelOptionsEditorBuilder<StatPanelOptions>) {

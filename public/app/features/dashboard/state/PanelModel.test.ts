@@ -79,10 +79,10 @@ describe('PanelModel', () => {
         TablePanelCtrl // angular
       );
       panelPlugin.setDefaults(defaultOptionsMock);
-      panelPlugin.useStandardFieldConfig([FieldConfigProperty.Unit, FieldConfigProperty.Decimals], {
-        [FieldConfigProperty.Unit]: 'flop',
-        [FieldConfigProperty.Decimals]: 2,
-      });
+      /*   panelPlugin.useStandardFieldConfig([FieldConfigOptionId.Unit, FieldConfigOptionId.Decimals], {
+        [FieldConfigOptionId.Unit]: 'flop',
+        [FieldConfigOptionId.Decimals]: 2,
+      }); */
       model.pluginLoaded(panelPlugin);
     });
 

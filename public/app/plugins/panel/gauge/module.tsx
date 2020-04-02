@@ -24,5 +24,4 @@ export const plugin = new PanelPlugin<GaugeOptions>(GaugePanel)
       });
   })
   .setPanelChangeHandler(gaugePanelChangedHandler)
-  .setMigrationHandler(gaugePanelMigrationHandler)
-  .useStandardFieldConfig();
+  .setMigrationHandler(gaugePanelMigrationHandler);

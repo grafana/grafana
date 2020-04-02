@@ -17,7 +17,7 @@ import { OptionsEditorItem } from './OptionsUIRegistryBuilder';
 export interface DynamicConfigValue {
   prop: string;
   value?: any;
-  custom?: boolean;
+  isCustom?: boolean;
 }
 
 export interface ConfigOverrideRule {
@@ -68,6 +68,9 @@ export interface FieldPropertyEditorItem<TOptions = any, TValue = any, TSettings
   // An editor that can be filled in with context info (template variables etc)
   override: ComponentType<FieldOverrideEditorProps<TValue, TSettings>>;
 
+  /** true for plugin field config properties */
+  isCustom?: boolean;
+
   // Convert the override value to a well typed value
   process: (value: any, context: FieldOverrideContext, settings?: TSettings) => TValue;
 
@@ -75,17 +78,16 @@ export interface FieldPropertyEditorItem<TOptions = any, TValue = any, TSettings
   shouldApply: (field: Field) => boolean;
 }
 
-export type FieldConfigEditorRegistry = Registry<FieldPropertyEditorItem>;
+export class FieldConfigOptionsRegistry extends Registry<FieldPropertyEditorItem> {}
 
 export interface ApplyFieldOverrideOptions {
   data?: DataFrame[];
-  fieldOptions: FieldConfigSource;
+  fieldConfig: FieldConfigSource;
   replaceVariables: InterpolateFunction;
   theme: GrafanaTheme;
   timeZone?: TimeZone;
   autoMinMax?: boolean;
-  standard?: FieldConfigEditorRegistry;
-  custom?: FieldConfigEditorRegistry;
+  fieldConfigRegistry?: FieldConfigOptionsRegistry;
 }
 
 export enum FieldConfigProperty {

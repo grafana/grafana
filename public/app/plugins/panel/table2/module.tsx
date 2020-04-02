@@ -4,7 +4,7 @@ import { CustomFieldConfig, defaults, Options } from './types';
 
 export const plugin = new PanelPlugin<Options, CustomFieldConfig>(TablePanel)
   .setDefaults(defaults)
-  .setCustomFieldOptions(builder => {
+  .setFieldConfigOptions(builder => {
     builder
       .addNumberInput({
         id: 'width',
@@ -15,7 +15,6 @@ export const plugin = new PanelPlugin<Options, CustomFieldConfig>(TablePanel)
           min: 20,
           max: 300,
         },
-        defaultValue: 1,
       })
       .addSelect({
         id: 'displayMode',

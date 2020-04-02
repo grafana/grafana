@@ -7,7 +7,7 @@ import {
 import { MutableDataFrame } from '../dataframe';
 import {
   FieldConfig,
-  FieldConfigEditorRegistry,
+  FieldConfigOptionsRegistry,
   FieldOverrideContext,
   FieldPropertyEditorItem,
   GrafanaTheme,
@@ -34,7 +34,7 @@ const unit = {
   shouldApply: () => true,
 } as any;
 
-export const customFieldRegistry: FieldConfigEditorRegistry = new Registry<FieldPropertyEditorItem>(() => {
+export const customFieldRegistry: FieldConfigOptionsRegistry = new Registry<FieldPropertyEditorItem>(() => {
   return [property1, property2];
 });
 
@@ -72,12 +72,13 @@ describe('applyFieldOverrides', () => {
     it('should add scopedVars to fields', () => {
       const withOverrides = applyFieldOverrides({
         data: [f0, f1],
-        fieldOptions: {
+        fieldConfig: {
           defaults: {},
           overrides: [],
         },
         replaceVariables: (value: any) => value,
         theme: {} as GrafanaTheme,
+        fieldConfigRegistry: new FieldConfigOptionsRegistry(),
       });
 
       expect(withOverrides[0].fields[0].config.scopedVars).toMatchInlineSnapshot(`
@@ -169,7 +170,7 @@ describe('setFieldConfigDefaults', () => {
       data: [] as any,
       field: { type: FieldType.number } as any,
       dataFrameIndex: 0,
-      custom: customFieldRegistry,
+      fieldConfigRegistry: customFieldRegistry,
     };
 
     // we mutate dsFieldConfig

@@ -7,6 +7,7 @@ import { StatPanelEditor } from './StatPanelEditor';
 export const plugin = new PanelPlugin<StatPanelOptions>(StatPanel)
   .setDefaults(defaults)
   .setEditor(StatPanelEditor)
+  .setFieldConfigOptions()
   .setPanelOptions(builder => {
     addStandardDataReduceOptions(builder);
 
@@ -47,5 +48,4 @@ export const plugin = new PanelPlugin<StatPanelOptions>(StatPanel)
   })
   .setNoPadding()
   .setPanelChangeHandler(sharedSingleStatPanelChangedHandler)
-  .setMigrationHandler(sharedSingleStatMigrationHandler)
-  .useStandardFieldConfig();
+  .setMigrationHandler(sharedSingleStatMigrationHandler);
