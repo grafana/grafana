@@ -106,13 +106,6 @@ func (tw *TransformWrapper) Transform(ctx context.Context, query *tsdb.TsdbQuery
 	tR := &tsdb.Response{
 		Results: make(map[string]*tsdb.QueryResult, len(pbRes.Responses)),
 	}
-	if pbRes.Metadata != nil {
-		resMd, err := json.Marshal(pbRes.Metadata)
-		if err != nil {
-			tw.logger.Error("unable to marshal response metadata", err)
-		}
-		tR.Message = string(resMd)
-	}
 	for refID, res := range pbRes.Responses {
 		tR.Results[refID] = &tsdb.QueryResult{
 			RefId:      refID,

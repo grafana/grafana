@@ -2,14 +2,12 @@ package wrapper
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"time"
 
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 
 	"github.com/grafana/grafana-plugin-sdk-go/genproto/pluginv2"
-	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/tsdb"
@@ -87,18 +85,10 @@ func (tw *DatasourcePluginWrapperV2) Query(ctx context.Context, ds *models.DataS
 		Results: make(map[string]*tsdb.QueryResult, len(pbRes.Responses)),
 	}
 
-	if pbRes.Metadata != nil {
-		resMd, err := json.Marshal(pbRes.Metadata)
-		if err != nil {
-			tw.logger.Error("unable to marshal resposne metadata", err)
-		}
-		tR.Message = string(resMd)
-	}
 	for refID, pRes := range pbRes.Responses {
 		qr := &tsdb.QueryResult{
 			RefId:      refID,
 			Dataframes: pRes.Frames,
-			Meta:       simplejson.NewFromAny(pRes.JsonMeta),
 		}
 		if pRes.Error != "" {
 			qr.Error = fmt.Errorf(pRes.Error)
@@ -107,13 +97,4 @@ func (tw *DatasourcePluginWrapperV2) Query(ctx context.Context, ds *models.DataS
 	}
 
 	return tR, nil
-
-	// return &tsdb.Response{
-	// 	Results: map[string]*tsdb.QueryResult{
-	// 		"": {
-	// 			Dataframes: pbRes.Frames,
-	// 			Meta:       simplejson.NewFromAny(pbRes.Metadata),
-	// 		},
-	// 	},
-	// }, nil
 }

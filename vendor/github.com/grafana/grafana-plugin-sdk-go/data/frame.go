@@ -263,29 +263,13 @@ func FrameTestCompareOptions() []cmp.Option {
 		if x == nil && y == nil {
 			return true
 		}
-		if y == nil {
-			if math.IsNaN(float64(*x)) {
-				return true
-			}
-			if math.IsInf(float64(*x), 1) {
-				return true
-			}
-			if math.IsInf(float64(*x), -1) {
-				return true
-			}
+		if y == nil && x != nil || y != nil && x == nil {
+			return false
 		}
-		if x == nil {
-			if math.IsNaN(float64(*y)) {
-				return true
-			}
-			if math.IsInf(float64(*y), 1) {
-				return true
-			}
-			if math.IsInf(float64(*y), -1) {
-				return true
-			}
-		}
-		return *x == *y
+		return (math.IsNaN(float64(*x)) && math.IsNaN(float64(*y))) ||
+			(math.IsInf(float64(*x), 1) && math.IsInf(float64(*y), 1)) ||
+			(math.IsInf(float64(*x), -1) && math.IsInf(float64(*y), -1)) ||
+			*x == *y
 	})
 	f64s := cmp.Comparer(func(x, y float64) bool {
 		return (math.IsNaN(x) && math.IsNaN(y)) ||
@@ -297,29 +281,13 @@ func FrameTestCompareOptions() []cmp.Option {
 		if x == nil && y == nil {
 			return true
 		}
-		if y == nil {
-			if math.IsNaN(float64(*x)) {
-				return true
-			}
-			if math.IsInf(float64(*x), 1) {
-				return true
-			}
-			if math.IsInf(float64(*x), -1) {
-				return true
-			}
+		if y == nil && x != nil || y != nil && x == nil {
+			return false
 		}
-		if x == nil {
-			if math.IsNaN(float64(*y)) {
-				return true
-			}
-			if math.IsInf(float64(*y), 1) {
-				return true
-			}
-			if math.IsInf(float64(*y), -1) {
-				return true
-			}
-		}
-		return *x == *y
+		return (math.IsNaN(float64(*x)) && math.IsNaN(float64(*y))) ||
+			(math.IsInf(float64(*x), 1) && math.IsInf(float64(*y), 1)) ||
+			(math.IsInf(float64(*x), -1) && math.IsInf(float64(*y), -1)) ||
+			*x == *y
 	})
 	f32s := cmp.Comparer(func(x, y float32) bool {
 		return (math.IsNaN(float64(x)) && math.IsNaN(float64(y))) ||
