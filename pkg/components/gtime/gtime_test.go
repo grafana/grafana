@@ -8,17 +8,19 @@ import (
 )
 
 func TestParseInterval(t *testing.T) {
+	now := time.Now()
+
 	tcs := []struct {
 		interval string
 		duration time.Duration
 		err      error
 	}{
-		{interval: "1d", duration: time.Hour * 24},
-		{interval: "1w", duration: time.Hour * 24 * 7},
-		{interval: "2w", duration: time.Hour * 24 * 7 * 2},
-		{interval: "1y", duration: time.Hour * 24 * 7 * 365},
-		{interval: "5y", duration: time.Hour * 24 * 7 * 365 * 5},
-		{interval: "1M", err: errors.New("time: unknown unit M in duration 1M")},
+		{interval: "1d", duration: now.Sub(now.AddDate(0, 0, -1)), err: errors.New("")},
+		{interval: "1w", duration: now.Sub(now.AddDate(0, 0, -7)), err: errors.New("")},
+		{interval: "2w", duration: now.Sub(now.AddDate(0, 0, -14)), err: errors.New("")},
+		{interval: "1M", duration: now.Sub(now.AddDate(0, -1, 0)), err: errors.New("")},
+		{interval: "1y", duration: now.Sub(now.AddDate(-1, 0, 0)), err: errors.New("")},
+		{interval: "5y", duration: now.Sub(now.AddDate(-5, 0, 0)), err: errors.New("")},
 		{interval: "invalid-duration", err: errors.New("time: invalid duration invalid-duration")},
 	}
 
