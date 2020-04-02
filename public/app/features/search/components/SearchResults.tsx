@@ -49,9 +49,8 @@ export const SearchResults: FC<Props> = ({
     }
   };
 
-  // TODO display 'No results' messages after manage dashboards is refactored
-  if (!results) {
-    return null;
+  if (!results || !results.length) {
+    return <h6> No dashboards matching your query were found.</h6>;
   }
 
   return (
