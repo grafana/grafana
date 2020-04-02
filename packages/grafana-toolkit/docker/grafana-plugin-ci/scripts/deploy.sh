@@ -27,14 +27,17 @@ get_file "https://codeclimate.com/downloads/test-reporter/test-reporter-latest-l
     "38f2442892027f61a07f52c845818750261b2ba58bffb043a582495339d37c05"
 chmod +x /usr/local/bin/cc-test-reporter
 
-# Install latest grafana version for plugin compile
-latest_version="$(curl -s https://raw.githubusercontent.com/grafana/grafana/master/latest.json | jq -r '.stable')"
-version=${GRAFANA_VERSION:-$latest_version}
-
-# We won't validate the sha, as if it's not valid, the deb package won't install, and it will be changing
-# from version to version.
-get_file "https://dl.grafana.com/oss/release/grafana_${version}_amd64.deb" "/tmp/grafana_${version}_amd64.deb"
-dpkg -i "/tmp/grafana_${version}_amd64.deb" && /bin/rm -rf "/tmp/grafana_${version}_amd64.deb"
+# Install Mage
+mkdir -pv /tmp/mage $HOME/go/bin
+git clone https://github.com/magefile/mage.git /tmp/mage
+pushd /tmp/mage && go run bootstrap.go && popd
+mv $HOME/go/bin/mage /usr/local/bin
+# Cleanup after yourself
+/bin/rm -rf /tmp/mage 
+/bin/rm -rf $HOME/go
 
 # Perform user specific initialization
 sudo -u circleci ./deploy-user.sh
+
+# Get the size down
+/bin/rm -rf /var/lib/apt/lists
