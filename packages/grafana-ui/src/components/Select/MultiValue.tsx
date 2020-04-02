@@ -1,7 +1,7 @@
 import React from 'react';
-import { useTheme } from '../../../themes';
+import { useTheme } from '../../themes';
 import { getSelectStyles } from './getSelectStyles';
-import { Icon } from '../../Icon/Icon';
+import { Icon } from '../Icon/Icon';
 
 interface MultiValueContainerProps {
   innerProps: any;

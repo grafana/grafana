@@ -1,6 +1,6 @@
 import React, { PureComponent } from 'react';
 import { FieldConfigSource, GrafanaTheme, PanelData, PanelPlugin, SelectableValue } from '@grafana/data';
-import { Forms, stylesFactory, Icon } from '@grafana/ui';
+import { Select, stylesFactory, Icon } from '@grafana/ui';
 import { css, cx } from 'emotion';
 import config from 'app/core/config';
 import AutoSizer from 'react-virtualized-auto-sizer';
@@ -205,7 +205,7 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
             </DashNavButton>
           </div>
           <div className={styles.toolbarItem}>
-            <Forms.Select
+            <Select
               value={displayModes.find(v => v.value === uiState.mode)}
               options={displayModes}
               onChange={this.onDiplayModeChange}

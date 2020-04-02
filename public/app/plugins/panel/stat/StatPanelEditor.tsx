@@ -6,12 +6,14 @@ import {
   FieldDisplayEditor,
   PanelOptionsGroup,
   FormLabel,
-  Select,
+  LegacyForms,
   FieldPropertiesEditor,
   ThresholdsEditor,
   LegacyValueMappingsEditor,
   DataLinksEditor,
 } from '@grafana/ui';
+
+const { Select } = LegacyForms;
 
 import {
   PanelEditorProps,

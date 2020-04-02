@@ -1,5 +1,5 @@
 import React, { PureComponent } from 'react';
-import { Forms } from '@grafana/ui';
+import { AsyncSelect } from '@grafana/ui';
 import { getBackendSrv } from 'app/core/services/backend_srv';
 import { Organization } from 'app/types';
 import { SelectableValue } from '@grafana/data';
@@ -54,7 +54,7 @@ export class OrgPicker extends PureComponent<Props, State> {
     const { isLoading } = this.state;
 
     return (
-      <Forms.AsyncSelect
+      <AsyncSelect
         className={className}
         isLoading={isLoading}
         defaultOptions={true}

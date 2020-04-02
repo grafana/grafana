@@ -6,7 +6,17 @@ import { css } from 'emotion';
 import { InspectHeader } from './InspectHeader';
 
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
-import { JSONFormatter, Drawer, Select, Table, TabContent, stylesFactory, CustomScrollbar, Button } from '@grafana/ui';
+import {
+  JSONFormatter,
+  Drawer,
+  LegacyForms,
+  Table,
+  TabContent,
+  stylesFactory,
+  CustomScrollbar,
+  Button,
+} from '@grafana/ui';
+const { Select } = LegacyForms;
 import { getLocationSrv, getDataSourceSrv } from '@grafana/runtime';
 import {
   DataFrame,

@@ -1,6 +1,6 @@
 import { SelectableValue } from '@grafana/data';
 import React from 'react';
-import { FormInputSize } from '../types';
+import { FormInputSize } from '../Forms/types';
 
 export type SelectValue<T> = T | SelectableValue<T> | T[] | Array<SelectableValue<T>>;
 
@@ -18,6 +18,8 @@ export interface SelectCommonProps<T> {
   onKeyDown?: (event: React.KeyboardEvent) => void;
   placeholder?: string;
   disabled?: boolean;
+  //To be removed, is here to make Enterprise mergable
+  isDisabled?: boolean;
   isSearchable?: boolean;
   isClearable?: boolean;
   autoFocus?: boolean;

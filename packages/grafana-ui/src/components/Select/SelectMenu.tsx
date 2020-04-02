@@ -1,10 +1,10 @@
 import React from 'react';
-import { useTheme } from '../../../themes/ThemeContext';
+import { useTheme } from '../../themes/ThemeContext';
 import { getSelectStyles } from './getSelectStyles';
 import { cx } from 'emotion';
 import { SelectableValue } from '@grafana/data';
-import { Icon } from '../../Icon/Icon';
-import { CustomScrollbar } from '../../CustomScrollbar/CustomScrollbar';
+import { Icon } from '../Icon/Icon';
+import { CustomScrollbar } from '../CustomScrollbar/CustomScrollbar';
 
 interface SelectMenuProps {
   maxHeight: number;

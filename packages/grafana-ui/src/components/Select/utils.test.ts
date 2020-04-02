@@ -42,7 +42,7 @@ const options: SelectableValue[] = [
   { label: 'Option 6', value: 6 },
 ];
 
-describe('Forms.Select utils', () => {
+describe('Select utils', () => {
   describe('findSelected value', () => {
     it('should find value of type number in array of optgroups', () => {
       expect(findSelectedValue(11, optGroup)).toEqual({ label: 'Group 2 - Option 1', value: 11 });
