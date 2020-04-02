@@ -18,6 +18,7 @@ show_help() {
 }
 
 latest=$(curl -s 'https://raw.githubusercontent.com/grafana/grafana/master/latest.json' | jq -r '.stable')
+canary=$(curl -s "https://grafana.com/api/grafana/versions" | jq ".items[0].version" | tr -d '"')
 opts=$(getopt -o h --long help -n 'gget' -- "$@")
 [ $? -eq 0 ] || {
 	show_help
