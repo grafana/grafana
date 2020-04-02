@@ -7,33 +7,35 @@ import { InspectHeader } from './InspectHeader';
 
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 import {
-  JSONFormatter,
-  Drawer,
-  LegacyForms,
-  Table,
-  TabContent,
-  stylesFactory,
-  CustomScrollbar,
   Button,
-  transformersUIRegistry,
+  CustomScrollbar,
+  Drawer,
+  JSONFormatter,
+  LegacyForms,
+  stylesFactory,
+  TabContent,
+  Table,
 } from '@grafana/ui';
 
-import { getLocationSrv, getDataSourceSrv } from '@grafana/runtime';
+import { getDataSourceSrv, getLocationSrv } from '@grafana/runtime';
 import {
-  DataFrame,
-  DataSourceApi,
-  SelectableValue,
   applyFieldOverrides,
-  toCSV,
+  DataFrame,
   DataQueryError,
-  PanelData,
-  getValueFormat,
-  formattedValueToString,
-  QueryResultMetaStat,
+  DataSourceApi,
   DataTransformerID,
+  formattedValueToString,
+  getValueFormat,
+  PanelData,
+  QueryResultMetaStat,
+  SelectableValue,
+  toCSV,
+  transformDataFrame,
+  transformersRegistry,
 } from '@grafana/data';
 
 import { config } from 'app/core/config';
+
 const { Select } = LegacyForms;
 
 interface Props {
@@ -69,10 +71,15 @@ interface State {
   metaDS?: DataSourceApi;
 
   drawerWidth: string;
+
+  transformation: DataTransformerID;
 }
 
-const seriesToColumns = transformersUIRegistry.get(DataTransformerID.seriesToColumns);
-const transformations = [{ value: seriesToColumns.id, label: seriesToColumns.name }];
+const seriesToColumns = transformersRegistry.get(DataTransformerID.seriesToColumns);
+const transformations: Array<SelectableValue<DataTransformerID>> = [
+  { value: DataTransformerID.noop, label: 'None' },
+  { value: DataTransformerID.seriesToColumns, label: seriesToColumns.name },
+];
 
 export class PanelInspector extends PureComponent<Props, State> {
   constructor(props: Props) {
@@ -83,6 +90,7 @@ export class PanelInspector extends PureComponent<Props, State> {
       selected: 0,
       tab: props.selectedTab || InspectTab.Data,
       drawerWidth: '50%',
+      transformation: DataTransformerID.noop,
     };
   }
 
@@ -152,6 +160,10 @@ export class PanelInspector extends PureComponent<Props, State> {
     this.setState({ selected: item.value || 0 });
   };
 
+  onSelectedTransformationChanged = (item: SelectableValue<DataTransformerID>) => {
+    this.setState({ transformation: item.value });
+  };
+
   exportCsv = (dataFrame: DataFrame) => {
     const dataFrameCsv = toCSV([dataFrame]);
 
@@ -171,8 +183,7 @@ export class PanelInspector extends PureComponent<Props, State> {
   }
 
   renderDataTab() {
-    const { panel } = this.props;
-    const { data, selected } = this.state;
+    const { data, selected, transformation } = this.state;
     const styles = getStyles();
 
     if (!data || !data.length) {
@@ -186,16 +197,19 @@ export class PanelInspector extends PureComponent<Props, State> {
       };
     });
 
-    const processed = applyFieldOverrides({
-      data,
-      theme: config.theme,
-      fieldOptions: { defaults: {}, overrides: [] },
-      replaceVariables: (value: string) => {
-        return value;
-      },
-    });
+    const processed = transformDataFrame(
+      [{ id: transformation, options: [] }],
+      applyFieldOverrides({
+        data,
+        theme: config.theme,
+        fieldOptions: { defaults: {}, overrides: [] },
+        replaceVariables: (value: string) => {
+          return value;
+        },
+      })
+    );
 
-    console.log(panel.transformations);
+    console.log(processed);
 
     return (
       <div className={styles.dataTabContent}>
@@ -210,7 +224,11 @@ export class PanelInspector extends PureComponent<Props, State> {
             </div>
           )}
           <div className={styles.transformationSelect}>
-            <Select options={transformations} />
+            <Select
+              options={transformations}
+              value={transformations.find(t => t.value === transformation)}
+              onChange={this.onSelectedTransformationChanged}
+            />
           </div>
           <div className={styles.downloadCsv}>
             <Button variant="primary" onClick={() => this.exportCsv(processed[selected])}>
