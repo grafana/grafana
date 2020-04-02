@@ -2,11 +2,13 @@ import { SingleStatBaseOptions, BigValueColorMode, BigValueGraphMode, BigValueJu
 import {
   VizOrientation,
   ReducerID,
-  FieldDisplayOptions,
+  ReduceDataOptions,
   SelectableValue,
-  FieldConfigSource,
   ThresholdsMode,
+  standardEditorsRegistry,
+  StandardFieldConfigProperties,
 } from '@grafana/data';
+import { PanelOptionsEditorBuilder } from '@grafana/data/src/utils/OptionsUIBuilders';
 
 // Structure copied from angular
 export interface StatPanelOptions extends SingleStatBaseOptions {
@@ -30,29 +32,72 @@ export const justifyModes: Array<SelectableValue<BigValueJustifyMode>> = [
   { value: BigValueJustifyMode.Center, label: 'Center' },
 ];
 
-export const standardFieldDisplayOptions: FieldDisplayOptions = {
+export const commonValueOptionDefaults: ReduceDataOptions = {
   values: false,
   calcs: [ReducerID.mean],
 };
 
-export const standardFieldConfig: FieldConfigSource = {
-  defaults: {
-    thresholds: {
-      mode: ThresholdsMode.Absolute,
-      steps: [
-        { value: -Infinity, color: 'green' },
-        { value: 80, color: 'red' }, // 80%
+export const standardFieldConfigDefaults: Partial<Record<StandardFieldConfigProperties, any>> = {
+  [StandardFieldConfigProperties.Thresholds]: {
+    mode: ThresholdsMode.Absolute,
+    steps: [
+      { value: -Infinity, color: 'green' },
+      { value: 80, color: 'red' }, // 80%
+    ],
+  },
+  [StandardFieldConfigProperties.Mappings]: [],
+};
+
+export function addStandardDataReduceOptions(builder: PanelOptionsEditorBuilder<StatPanelOptions>) {
+  builder.addRadio({
+    id: 'reduceOptions.values',
+    name: 'Show',
+    description: 'Calculate a single value per colum or series or show each row',
+    settings: {
+      options: [
+        { value: false, label: 'Calculate' },
+        { value: true, label: 'All values' },
       ],
     },
-    mappings: [],
-  },
-  overrides: [],
-};
+  });
+
+  builder.addNumberInput({
+    id: 'reduceOptions.limit',
+    name: 'Limit',
+    description: 'Max number of rows to display',
+    settings: {
+      placeholder: '5000',
+      integer: true,
+      min: 1,
+      max: 5000,
+    },
+  });
+
+  builder.addCustomEditor({
+    id: 'reduceOptions.calcs',
+    name: 'Value',
+    description: 'Choose a reducer function / calculation',
+    editor: standardEditorsRegistry.get('stats-picker').editor as any,
+  });
+
+  builder.addRadio({
+    id: 'orientation',
+    name: 'Orientation',
+    description: 'Stacking direction in case of multiple series or fields',
+    settings: {
+      options: [
+        { value: 'auto', label: 'Auto' },
+        { value: 'horizontal', label: 'Horizontal' },
+        { value: 'vertical', label: 'Vertical' },
+      ],
+    },
+  });
+}
 
 export const defaults: StatPanelOptions = {
   graphMode: BigValueGraphMode.Area,
   colorMode: BigValueColorMode.Value,
   justifyMode: BigValueJustifyMode.Auto,
-  fieldOptions: standardFieldDisplayOptions,
+  reduceOptions: commonValueOptionDefaults,
   orientation: VizOrientation.Auto,
 };

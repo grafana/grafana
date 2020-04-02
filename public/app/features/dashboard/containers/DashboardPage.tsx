@@ -319,11 +319,7 @@ export class DashboardPage extends PureComponent<Props, State> {
             <PanelEditor dashboard={dashboard} sourcePanel={editPanel} />
           </Portal>
         )}
-        {editview && (
-          <Portal>
-            <DashboardSettings dashboard={dashboard} updateLocation={updateLocation} />
-          </Portal>
-        )}
+        {editview && <DashboardSettings dashboard={dashboard} updateLocation={updateLocation} />}
       </div>
     );
   }

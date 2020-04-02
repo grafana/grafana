@@ -86,7 +86,7 @@ github.com/crewjam/saml/logger
 github.com/crewjam/saml/xmlenc
 # github.com/davecgh/go-spew v1.1.1
 github.com/davecgh/go-spew/spew
-# github.com/denisenkom/go-mssqldb v0.0.0-20190315220205-a8ed825ac853
+# github.com/denisenkom/go-mssqldb v0.0.0-20190707035753-2be1aa521ff4
 github.com/denisenkom/go-mssqldb
 github.com/denisenkom/go-mssqldb/internal/cp
 # github.com/facebookgo/inject v0.0.0-20180706035515-f23751cae28b
@@ -107,12 +107,6 @@ github.com/go-macaron/session
 github.com/go-sql-driver/mysql
 # github.com/go-stack/stack v1.8.0
 github.com/go-stack/stack
-# github.com/go-xorm/builder v0.3.2
-github.com/go-xorm/builder
-# github.com/go-xorm/core v0.6.2
-github.com/go-xorm/core
-# github.com/go-xorm/xorm v0.7.1
-github.com/go-xorm/xorm
 # github.com/gobwas/glob v0.2.3
 github.com/gobwas/glob
 github.com/gobwas/glob/compiler
@@ -417,3 +411,9 @@ gopkg.in/square/go-jose.v2/json
 gopkg.in/square/go-jose.v2/jwt
 # gopkg.in/yaml.v2 v2.2.5
 gopkg.in/yaml.v2
+# xorm.io/builder v0.3.6
+xorm.io/builder
+# xorm.io/core v0.7.3
+xorm.io/core
+# xorm.io/xorm v0.8.1
+xorm.io/xorm

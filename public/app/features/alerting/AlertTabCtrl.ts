@@ -168,8 +168,8 @@ export class AlertTabCtrl {
   removeNotification(an: any) {
     // remove notifiers refeered to by id and uid to support notifiers added
     // before and after we added support for uid
-    _.remove(this.alert.notifications, (n: any) => n.uid === an.uid || n.id === an.id);
-    _.remove(this.alertNotifications, (n: any) => n.uid === an.uid || n.id === an.id);
+    _.remove(this.alert.notifications, (n: any) => n.uid === an.uid);
+    _.remove(this.alertNotifications, (n: any) => n.uid === an.uid);
   }
 
   addAlertRuleTag() {

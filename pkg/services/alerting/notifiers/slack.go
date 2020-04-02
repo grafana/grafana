@@ -287,7 +287,7 @@ func (sn *SlackNotifier) Notify(evalContext *alerting.EvalContext) error {
 		"footer_icon": "https://grafana.com/assets/img/fav32.png",
 		"ts":          time.Now().Unix(),
 	}
-	if imageURL != "" {
+	if sn.NeedsImage() && imageURL != "" {
 		attachment["image_url"] = imageURL
 	}
 	body := map[string]interface{}{

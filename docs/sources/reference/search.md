@@ -25,7 +25,7 @@ When using only a keyboard, you can use your keyboard arrow keys to navigate the
 
 ## Find by dashboard name
 
-Begin typing any part of the desired dashboard names in the search bar. Search will return results for for any partial string match in real-time, as you type.
+Begin typing any part of the desired dashboard names in the search bar. Search will return results for any partial string match in real-time, as you type.
 
 Dashboard search is:
 - Real-time
