@@ -1,6 +1,7 @@
 import { CellProps } from 'react-table';
 import { Field } from '@grafana/data';
 import { TableStyles } from './styles';
+import { TextAlignProperty } from 'csstype';
 
 export interface TableFieldOptions {
   width: number;
@@ -27,4 +28,13 @@ export type TableFilterActionCallback = (key: string, value: string) => void;
 export interface TableCellProps extends CellProps<any> {
   tableStyles: TableStyles;
   field: Field;
+  textAlign: TextAlignProperty;
+}
+
+export interface TableHeaderProps {
+  tableStyles: TableStyles;
+  field: Field;
+  textAlign: TextAlignProperty;
+  isSorted: boolean;
+  isSortedDesc: boolean | undefined;
 }

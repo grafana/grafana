@@ -1,7 +1,6 @@
 import React, { FC } from 'react';
 import { Cell } from 'react-table';
 import { Field } from '@grafana/data';
-import { getTextAlign } from './utils';
 import { TableFilterActionCallback } from './types';
 import { TableStyles } from './styles';
 
@@ -24,11 +23,6 @@ export const TableCell: FC<Props> = ({ cell, field, tableStyles, onCellClick }) 
     }
 
     onClick = () => onCellClick(cell.column.Header as string, cell.value);
-  }
-
-  const fieldTextAlign = getTextAlign(field);
-  if (fieldTextAlign && cellProps.style) {
-    cellProps.style.textAlign = fieldTextAlign;
   }
 
   return (

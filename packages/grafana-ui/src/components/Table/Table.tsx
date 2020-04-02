@@ -1,15 +1,15 @@
 import React, { FC, memo, useMemo } from 'react';
-import { DataFrame, Field } from '@grafana/data';
+import { DataFrame } from '@grafana/data';
 import { Cell, Column, HeaderGroup, useBlockLayout, useSortBy, useTable } from 'react-table';
 import { FixedSizeList } from 'react-window';
 import useMeasure from 'react-use/lib/useMeasure';
-import { getColumns, getTableRows, getTextAlign } from './utils';
+import { getColumns, getTableRows } from './utils';
 import { useTheme } from '../../themes';
 import { TableFilterActionCallback } from './types';
 import { getTableStyles } from './styles';
 import { TableCell } from './TableCell';
-import { Icon } from '../Icon/Icon';
 import { CustomScrollbar } from '../CustomScrollbar/CustomScrollbar';
+import { TableHeaderCell } from './TableHeaderCell';
 
 export interface Props {
   data: DataFrame;
@@ -73,9 +73,16 @@ export const Table: FC<Props> = memo(({ data, height, onCellClick, width, column
           <div>
             {headerGroups.map((headerGroup: HeaderGroup) => (
               <div className={tableStyles.thead} {...headerGroup.getHeaderGroupProps()} ref={ref}>
-                {headerGroup.headers.map((column: Column, index: number) =>
-                  renderHeaderCell(column, tableStyles.headerCell, data.fields[index])
-                )}
+                {headerGroup.headers.map((column: Column, index) => {
+                  return (
+                    <TableHeaderCell
+                      key={`column-${column.id}`}
+                      tableStyles={tableStyles}
+                      column={column}
+                      field={data.fields[index]}
+                    />
+                  );
+                })}
               </div>
             ))}
           </div>
@@ -93,19 +100,3 @@ export const Table: FC<Props> = memo(({ data, height, onCellClick, width, column
     </div>
   );
 });
-
-function renderHeaderCell(column: any, className: string, field?: Field) {
-  const headerProps = column.getHeaderProps(column.getSortByToggleProps());
-  const fieldTextAlign = getTextAlign(field);
-
-  if (fieldTextAlign) {
-    headerProps.style.textAlign = fieldTextAlign;
-  }
-
-  return (
-    <div className={className} {...headerProps}>
-      {column.render('Header')}
-      {column.isSorted && (column.isSortedDesc ? <Icon name="caret-down" /> : <Icon name="caret-up" />)}
-    </div>
-  );
-}

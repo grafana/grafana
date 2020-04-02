@@ -1,10 +1,11 @@
 import { TextAlignProperty } from 'csstype';
 import { DataFrame, Field, FieldType } from '@grafana/data';
 import { Column } from 'react-table';
-import { DefaultCell } from './DefaultCell';
+import { CenterAlignedCell, DefaultCell, RightAlignedCell } from './DefaultCell';
 import { BarGaugeCell } from './BarGaugeCell';
 import { BackgroundColoredCell } from './BackgroundColorCell';
 import { TableCellDisplayMode, TableFieldOptions, TableRow } from './types';
+import { CenterAlignedHeader, DefaultHeader, RightAlignedHeader } from './DefaultHeader';
 
 export function getTableRows(data: DataFrame): TableRow[] {
   const tableData = [];
@@ -57,12 +58,13 @@ export function getColumns(data: DataFrame, availableWidth: number, columnMinWid
       fieldCountWithoutWidth -= 1;
     }
 
-    const Cell = getCellComponent(fieldTableOptions.displayMode);
+    const Cell = getCellComponent(field);
+    const Header = getHeaderComponent(field);
 
     columns.push({
       Cell,
       id: field.name,
-      Header: field.name,
+      Header,
       accessor: field.name,
       width: fieldTableOptions.width,
     });
@@ -79,14 +81,40 @@ export function getColumns(data: DataFrame, availableWidth: number, columnMinWid
   return columns;
 }
 
-function getCellComponent(displayMode: TableCellDisplayMode) {
-  switch (displayMode) {
-    case TableCellDisplayMode.ColorBackground:
-      return BackgroundColoredCell;
-    case TableCellDisplayMode.LcdGauge:
-    case TableCellDisplayMode.GradientGauge:
-      return BarGaugeCell;
-    default:
-      return DefaultCell;
+function getCellComponent(field: Field) {
+  const fieldTableOptions = (field.config.custom || {}) as TableFieldOptions;
+  const { displayMode } = fieldTableOptions;
+  const textAlign = getTextAlign(field);
+
+  if (displayMode === TableCellDisplayMode.ColorBackground) {
+    return BackgroundColoredCell;
   }
+
+  if (displayMode === TableCellDisplayMode.LcdGauge || displayMode === TableCellDisplayMode.GradientGauge) {
+    return BarGaugeCell;
+  }
+
+  if (textAlign === 'right') {
+    return RightAlignedCell;
+  }
+
+  if (textAlign === 'center') {
+    return CenterAlignedCell;
+  }
+
+  return DefaultCell;
+}
+
+function getHeaderComponent(field: Field) {
+  const textAlign = getTextAlign(field);
+
+  if (textAlign === 'right') {
+    return RightAlignedHeader;
+  }
+
+  if (textAlign === 'center') {
+    return CenterAlignedHeader;
+  }
+
+  return DefaultHeader;
 }
