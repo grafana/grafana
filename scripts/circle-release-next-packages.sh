@@ -28,17 +28,17 @@ function unpublish_previous_canary () {
       echo "Unpublish @grafana/${PACKAGE}@${CURRENT_CANARY}"
       npm unpublish "@grafana/${PACKAGE}@${CURRENT_CANARY}"
       if [ $? -ne 0 ]; then
-	# We want to deprecate here, rather than fail and return an non-0 exit code
-	npm deprecate \
-	  "@grafana/${PACKAGE}@${CURRENT_CANARY}" \
-	  "Unpublish failed with [$?]. Deprecating \"@grafana/${PACKAGE}@${CURRENT_CANARY}\""
-	innerExitCode=$?
-	if [ $innerExitCode -ne 0 ]; then
-	  # Echoing a log message will ultimately change the error code, so save the error
-	  # code and return it after printing an error log.
+      	# We want to deprecate here, rather than fail and return an non-0 exit code
+        npm deprecate \
+	        "@grafana/${PACKAGE}@${CURRENT_CANARY}" \
+	        "Unpublish failed with [$?]. Deprecating \"@grafana/${PACKAGE}@${CURRENT_CANARY}\""
+	      innerExitCode=$?
+	      if [ $innerExitCode -ne 0 ]; then
+	        # Echoing a log message will ultimately change the error code, so save the error
+	        # code and return it after printing an error log.
           echo "Could not deprecate \"@grafana/${PACKAGE}@${CURRENT_CANARY}\". Received exit-code [$?]"
-	  return $innerExitCode
-	fi
+	        return $innerExitCode
+	      fi
       fi
     fi
   done
