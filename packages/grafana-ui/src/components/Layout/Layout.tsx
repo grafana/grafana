@@ -9,7 +9,7 @@ enum Orientation {
 }
 type Spacing = 'xs' | 'sm' | 'md' | 'lg';
 type Justify = 'flex-start' | 'flex-end' | 'space-between' | 'center';
-type Align = 'flex-start' | 'flex-end' | 'center';
+type Align = 'normal' | 'flex-start' | 'flex-end' | 'center';
 
 export interface LayoutProps {
   children: React.ReactNode[];
@@ -29,7 +29,7 @@ export const Layout: React.FC<LayoutProps> = ({
   orientation = Orientation.Horizontal,
   spacing = 'sm',
   justify = 'flex-start',
-  align = 'flex-start',
+  align = 'normal',
 }) => {
   const theme = useTheme();
   const styles = getStyles(theme, orientation, spacing, justify, align);

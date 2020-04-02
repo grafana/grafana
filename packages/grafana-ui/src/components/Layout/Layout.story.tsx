@@ -4,7 +4,7 @@ import { VerticalGroup, HorizontalGroup, Layout } from './Layout';
 import { Button } from '../Button';
 import { withStoryContainer } from '../../utils/storybook/withStoryContainer';
 import { select } from '@storybook/addon-knobs';
-import mdx from './HorizontalGroup.mdx';
+import mdx from './Layout.mdx';
 
 export default {
   title: 'Layout/Groups',
