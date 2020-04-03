@@ -50,6 +50,8 @@ const initialState: State = {
 const searchReducer = (state: any, action: SearchAction) => {
   switch (action.type) {
     case FETCH_RESULTS:
+      // Highlight the first item ('Starred' folder)
+      action.payload[0].selected = true;
       return { ...state, results: action.payload, loading: false };
     case TOGGLE_SECTION: {
       const section = action.payload;

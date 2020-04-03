@@ -22,7 +22,7 @@ export const getFlattenedSections = (sections: DashboardSection[]): string[] => 
 
 export const markSelected = (sections: DashboardSection[], selectedId: string) => {
   return sections.map((result: DashboardSection) => {
-    const lookupField = hasId(selectedId) ? 'title' : 'id';
+    const lookupField = hasId(selectedId) ? 'id' : 'title';
     result.selected = String(result[lookupField]) === selectedId;
 
     if (result.expanded && result.items.length) {
