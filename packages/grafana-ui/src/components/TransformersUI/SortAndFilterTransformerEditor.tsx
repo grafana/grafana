@@ -1,8 +1,11 @@
 import React, { useMemo, useCallback } from 'react';
+import { css, cx } from 'emotion';
 import { SortAndFilterFieldsTransformerOptions } from '@grafana/data/src/transformations/transformers/sortAndFilter';
 import { DragDropContext, Droppable, Draggable, DropResult } from 'react-beautiful-dnd';
 import { TransformerUIRegistyItem, TransformerUIProps } from './types';
-import { DataTransformerID, transformersRegistry, DataFrame } from '@grafana/data';
+import { DataTransformerID, transformersRegistry, DataFrame, GrafanaTheme } from '@grafana/data';
+import { Button } from '../Forms/Button';
+import { stylesFactory, useTheme } from '../../themes';
 
 interface SortAndFilterTransformerEditorProps extends TransformerUIProps<SortAndFilterFieldsTransformerOptions> {}
 
@@ -10,6 +13,7 @@ const SortAndFilterTransformerEditor: React.FC<SortAndFilterTransformerEditorPro
   const { options, input, onChange } = props;
   const { indexByName, excludeByName } = options;
 
+  const styles = getEditorStyles();
   const fieldNames = useMemo(() => fieldNamesFromInput(input), [input]);
   const sortedFieldNames = useMemo(() => sortFieldNamesByIndex(fieldNames, indexByName), [fieldNames, indexByName]);
 
@@ -23,7 +27,7 @@ const SortAndFilterTransformerEditor: React.FC<SortAndFilterTransformerEditorPro
         },
       });
     },
-    [onChange, options]
+    [onChange, excludeByName, indexByName]
   );
 
   const onDragEnd = useCallback(
@@ -44,29 +48,32 @@ const SortAndFilterTransformerEditor: React.FC<SortAndFilterTransformerEditorPro
         indexByName: reorderToIndex(fieldNames, startIndex, endIndex),
       });
     },
-    [onChange, options, fieldNames]
+    [onChange, indexByName, excludeByName, fieldNames]
   );
 
   return (
-    <DragDropContext onDragEnd={onDragEnd}>
-      <Droppable droppableId="sortable-fields-transformer" direction="horizontal">
-        {provided => (
-          <div style={{ flexGrow: 1, display: 'inline-flex' }} ref={provided.innerRef} {...provided.droppableProps}>
-            {sortedFieldNames.map((fieldName, index) => {
-              return (
-                <DraggableFieldName
-                  fieldName={fieldName}
-                  index={index}
-                  onToggleVisibility={onToggleVisibility}
-                  visible={!excludeByName[fieldName]}
-                />
-              );
-            })}
-            {provided.placeholder}
-          </div>
-        )}
-      </Droppable>
-    </DragDropContext>
+    <div className={styles.container}>
+      <DragDropContext onDragEnd={onDragEnd}>
+        <Droppable droppableId="sortable-fields-transformer" direction="horizontal">
+          {provided => (
+            <div className={styles.fields} ref={provided.innerRef} {...provided.droppableProps}>
+              {sortedFieldNames.map((fieldName, index) => {
+                return (
+                  <DraggableFieldName
+                    fieldName={fieldName}
+                    index={index}
+                    onToggleVisibility={onToggleVisibility}
+                    visible={!excludeByName[fieldName]}
+                    key={fieldName}
+                  />
+                );
+              })}
+              {provided.placeholder}
+            </div>
+          )}
+        </Droppable>
+      </DragDropContext>
+    </div>
   );
 };
 
@@ -78,20 +85,67 @@ interface DraggableFieldProps {
 }
 
 const DraggableFieldName: React.FC<DraggableFieldProps> = ({ fieldName, index, visible, onToggleVisibility }) => {
+  const theme = useTheme();
+  const styles = getFieldNameStyles(theme);
+
   return (
     <Draggable draggableId={fieldName} index={index}>
       {provided => (
-        <div ref={provided.innerRef} {...provided.draggableProps} {...provided.dragHandleProps}>
-          <i
-            className={visible ? 'fa fa-eye' : 'fa fa-eye-slash'}
-            onClick={() => onToggleVisibility(fieldName, !visible)}
+        <div
+          className={styles.container}
+          ref={provided.innerRef}
+          {...provided.draggableProps}
+          {...provided.dragHandleProps}
+        >
+          <i className={cx('fa fa-ellipsis-v', styles.draggable)} />
+          <Button
+            className={styles.toggle}
+            variant="link"
+            size="md"
+            icon={visible ? 'fa fa-eye' : 'fa fa-eye-slash'}
+            onClick={() => onToggleVisibility(fieldName, visible)}
           />
-          <span>{fieldName}</span>
+          <span className={styles.name}>{fieldName}</span>
         </div>
       )}
     </Draggable>
   );
 };
+
+const getEditorStyles = stylesFactory(() => ({
+  container: css`
+    display: flex;
+    flex-direction: column;
+  `,
+  fields: css`
+    flex-grow: 1;
+    display: inline-flex;
+    overflow: auto;
+  `,
+}));
+
+const getFieldNameStyles = stylesFactory((theme: GrafanaTheme) => ({
+  container: css`
+    display: flex;
+    align-items: center;
+    padding: 0 8px;
+    border-radius: 3px;
+    background-color: ${theme.isDark ? theme.colors.grayBlue : theme.colors.gray6};
+    border: 1px solid ${theme.isDark ? theme.colors.dark6 : theme.colors.gray5};
+    margin-right: 8px;
+  `,
+  toggle: css`
+    padding: 5px;
+  `,
+  draggable: css`
+    font-size: ${theme.typography.size.md};
+    opacity: 0.6;
+  `,
+  name: css`
+    font-size: ${theme.typography.size.sm};
+    font-weight: ${theme.typography.weight.semibold};
+  `,
+}));
 
 const reorderToIndex = (fieldNames: string[], startIndex: number, endIndex: number) => {
   const result = Array.from(fieldNames);
