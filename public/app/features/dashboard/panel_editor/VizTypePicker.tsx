@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useCallback, useMemo } from 'react';
 
 import config from 'app/core/config';
 import VizTypePickerPlugin from './VizTypePickerPlugin';
@@ -41,22 +41,22 @@ export const VizTypePicker: React.FC<Props> = ({ searchQuery, onTypeChange, curr
     );
   };
 
-  const getFilteredPluginList = (): PanelPluginMeta[] => {
+  const getFilteredPluginList = useCallback((): PanelPluginMeta[] => {
     const regex = new RegExp(searchQuery, 'i');
-
     return pluginsList.filter(item => {
       return regex.test(item.name);
     });
-  };
+  }, [searchQuery]);
 
   const filteredPluginList = getFilteredPluginList();
   const hasResults = filteredPluginList.length > 0;
+  const renderList = filteredPluginList.concat(pluginsList.filter(p => filteredPluginList.indexOf(p) === -1));
 
   return (
     <div className={styles.wrapper}>
       <div className={styles.grid}>
         {hasResults ? (
-          pluginsList.map((plugin, index) => renderVizPlugin(plugin, index))
+          renderList.map((plugin, index) => renderVizPlugin(plugin, index))
         ) : (
           <EmptySearchResult>Could not find anything matching your query</EmptySearchResult>
         )}

@@ -1,5 +1,6 @@
 import React from 'react';
-import { LegendOptions, PanelOptionsGroup, Switch, Input, StatsPicker } from '@grafana/ui';
+import { LegendOptions, PanelOptionsGroup, Switch, LegacyForms, StatsPicker } from '@grafana/ui';
+const { Input } = LegacyForms;
 
 export interface GraphLegendEditorLegendOptions extends LegendOptions {
   stats?: string[];

@@ -1,5 +1,6 @@
 import React, { FC, ChangeEvent } from 'react';
-import { FormLabel, Input } from '@grafana/ui';
+import { FormLabel, LegacyForms } from '@grafana/ui';
+const { Input } = LegacyForms;
 
 interface Props {
   label: string;

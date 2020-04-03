@@ -10,8 +10,8 @@ import {
   TabsBar,
   useTheme,
   Container,
-  Forms,
   Icon,
+  Input,
 } from '@grafana/ui';
 import { DefaultFieldConfigEditor, OverrideFieldConfigEditor } from './FieldConfigEditor';
 import { AngularPanelOptions } from './AngularPanelOptions';
@@ -147,7 +147,7 @@ export const OptionsPaneContent: React.FC<{
           return (
             <div className={styles.searchWrapper}>
               <div style={{ ...defaultStyles, ...transitionStyles[state] }}>
-                <Forms.Input
+                <Input
                   className={styles.searchInput}
                   type="text"
                   prefix={<Icon name="search" />}
