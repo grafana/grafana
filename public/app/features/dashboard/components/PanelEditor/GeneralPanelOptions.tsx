@@ -1,7 +1,7 @@
 import React, { FC, useMemo } from 'react';
 import { PanelModel } from '../../state';
 import { SelectableValue } from '@grafana/data';
-import { Forms, Select, DataLinksInlineEditor } from '@grafana/ui';
+import { Forms, Select, DataLinksInlineEditor, Input } from '@grafana/ui';
 import { OptionsGroup } from './OptionsGroup';
 import { getPanelLinksVariableSuggestions } from '../../../panel/panellinks/link_srv';
 import { getVariables } from '../../../variables/state/selectors';
@@ -24,7 +24,7 @@ export const GeneralPanelOptions: FC<{
     <div>
       <OptionsGroup title="Panel settings">
         <Forms.Field label="Panel title">
-          <Forms.Input defaultValue={panel.title} onBlur={e => onPanelConfigChange('title', e.currentTarget.value)} />
+          <Input defaultValue={panel.title} onBlur={e => onPanelConfigChange('title', e.currentTarget.value)} />
         </Forms.Field>
         <Forms.Field label="Description" description="Panel description supports markdown and links.">
           <Forms.TextArea

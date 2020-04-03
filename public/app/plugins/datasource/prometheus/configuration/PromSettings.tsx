@@ -1,6 +1,6 @@
 import React, { SyntheticEvent } from 'react';
-import { EventsWithValidation, FormField, FormLabel, Input, regexValidation, LegacyForms } from '@grafana/ui';
-const { Select } = LegacyForms;
+import { EventsWithValidation, FormField, FormLabel, regexValidation, LegacyForms } from '@grafana/ui';
+const { Select, Input } = LegacyForms;
 import { DataSourceSettings, SelectableValue } from '@grafana/data';
 import { PromOptions } from '../types';
 

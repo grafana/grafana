@@ -3,12 +3,12 @@ import { createTextBoxVariableAdapter } from './adapter';
 import { reduxTester } from '../../../../test/core/redux/reduxTester';
 import { TemplatingState } from 'app/features/variables/state/reducers';
 import { updateTextBoxVariableOptions } from './actions';
-import { getTemplatingRootReducer } from '../state/helpers';
+import { getRootReducer } from '../state/helpers';
 import { TextBoxVariableModel, VariableHide, VariableOption } from '../../templating/types';
 import { toVariablePayload } from '../state/types';
 import { createTextBoxOptions } from './reducer';
-import { setCurrentVariableValue } from '../state/sharedReducer';
-import { initDashboardTemplating } from '../state/actions';
+import { setCurrentVariableValue, addVariable } from '../state/sharedReducer';
+import { updateLocation } from 'app/core/actions';
 
 describe('textbox actions', () => {
   variableAdapters.setInit(() => [createTextBoxVariableAdapter()]);
@@ -40,16 +40,18 @@ describe('textbox actions', () => {
       };
 
       const tester = await reduxTester<{ templating: TemplatingState }>()
-        .givenRootReducer(getTemplatingRootReducer())
-        .whenActionIsDispatched(initDashboardTemplating([variable]))
+        .givenRootReducer(getRootReducer())
+        .whenActionIsDispatched(addVariable(toVariablePayload(variable, { global: false, index: 0, model: variable })))
         .whenAsyncActionIsDispatched(updateTextBoxVariableOptions(toVariablePayload(variable)), true);
 
       tester.thenDispatchedActionsPredicateShouldEqual(actions => {
-        const [createAction, setCurrentAction] = actions;
-        const expectedNumberOfActions = 2;
+        const [createAction, setCurrentAction, locationAction] = actions;
+        const expectedNumberOfActions = 3;
 
         expect(createAction).toEqual(createTextBoxOptions(toVariablePayload(variable)));
         expect(setCurrentAction).toEqual(setCurrentVariableValue(toVariablePayload(variable, { option })));
+        expect(locationAction).toEqual(updateLocation({ query: { 'var-textbox': 'A' } }));
+
         return actions.length === expectedNumberOfActions;
       });
     });
