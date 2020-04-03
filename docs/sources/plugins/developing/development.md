@@ -28,10 +28,9 @@ Example plugins
 - [Clock panel](https://github.com/grafana/clock-panel)
 - [Pie chart panel](https://github.com/grafana/piechart-panel)
 
-There are two blog posts about authoring a plugin that might also be of interest to other users.
+You might also be interested in the available tutorials around authoring a plugin.
 
-- [Timing is Everything. Writing the Clock Panel Plugin for Grafana](https://grafana.com/blog/2016/04/08/timing-is-everything.-writing-the-clock-panel-plugin-for-grafana-3.0/)
-- [Timing is Everything. Editor Mode in Grafana for the Clock Panel Plugin](https://grafana.com/blog/2016/04/15/timing-is-everything.-editor-mode-in-grafana-3.0-for-the-clock-panel-plugin/).
+- [Grafana Tutorials](https://grafana.com/tutorials/)
 
 ## What languages?
 
