@@ -1,10 +1,18 @@
+import { PromMetricsMetadata } from './types';
+
 export const RATE_RANGES = ['1m', '5m', '10m', '30m', '1h'];
+export const MAX_LABEL_LENGTH = 1000;
 
 export const processHistogramLabels = (labels: string[]) => {
   const result = [];
   const regexp = new RegExp('_bucket($|:)');
   for (let index = 0; index < labels.length; index++) {
-    const label = labels[index];
+    let label = labels[index];
+
+    if (label.length > MAX_LABEL_LENGTH) {
+      label = label.substr(0, MAX_LABEL_LENGTH);
+    }
+
     const isHistogramValue = regexp.test(label);
     if (isHistogramValue) {
       if (result.indexOf(label) === -1) {
@@ -28,15 +36,38 @@ export function processLabels(labels: Array<{ [key: string]: string }>, withName
     }
 
     Object.keys(rest).forEach(key => {
+      const value = rest[key].length > MAX_LABEL_LENGTH ? rest[key].substr(0, MAX_LABEL_LENGTH) : rest[key];
+
       if (!values[key]) {
         values[key] = [];
       }
-      if (!values[key].includes(rest[key])) {
-        values[key].push(rest[key]);
+      if (!values[key].includes(value)) {
+        values[key].push(value);
+      }
+
+      if (key.length > MAX_LABEL_LENGTH) {
+        const truncatedKey = key.substr(0, MAX_LABEL_LENGTH);
+        values[truncatedKey] = values[key];
+        delete values[key];
       }
     });
   });
+
   return { values, keys: Object.keys(values) };
+}
+
+// Not pure! As large amounts of data may be processed, changes are done in place.
+export function truncateExcessivelyLongMetricNames(metrics: string[], metricsMetadata: PromMetricsMetadata) {
+  for (let i = 0; i < metrics.length; i++) {
+    if (metrics[i].length > MAX_LABEL_LENGTH) {
+      const oldMetricName = metrics[i];
+      const newMetricName = metrics[i].substr(0, MAX_LABEL_LENGTH);
+
+      metrics[i] = newMetricName;
+      metricsMetadata[newMetricName] = metricsMetadata[oldMetricName];
+      delete metricsMetadata[oldMetricName];
+    }
+  }
 }
 
 // const cleanSelectorRegexp = /\{(\w+="[^"\n]*?")(,\w+="[^"\n]*?")*\}/;

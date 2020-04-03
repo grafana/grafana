@@ -1,4 +1,32 @@
-import { expandRecordingRules, parseSelector } from './language_utils';
+import {
+  expandRecordingRules,
+  parseSelector,
+  truncateExcessivelyLongMetricNames,
+  MAX_LABEL_LENGTH,
+} from './language_utils';
+import { PromMetricsMetadataItem, PromMetricsMetadata } from './types';
+
+describe('expandRecordingRules()', () => {
+  it('returns query w/o recording rules as is', () => {
+    expect(expandRecordingRules('metric', {})).toBe('metric');
+    expect(expandRecordingRules('metric + metric', {})).toBe('metric + metric');
+    expect(expandRecordingRules('metric{}', {})).toBe('metric{}');
+  });
+
+  it('does not modify recording rules name in label values', () => {
+    expect(expandRecordingRules('{__name__="metric"} + bar', { metric: 'foo', bar: 'super' })).toBe(
+      '{__name__="metric"} + super'
+    );
+  });
+
+  it('returns query with expanded recording rules', () => {
+    expect(expandRecordingRules('metric', { metric: 'foo' })).toBe('foo');
+    expect(expandRecordingRules('metric + metric', { metric: 'foo' })).toBe('foo + foo');
+    expect(expandRecordingRules('metric{}', { metric: 'foo' })).toBe('foo{}');
+    expect(expandRecordingRules('metric[]', { metric: 'foo' })).toBe('foo[]');
+    expect(expandRecordingRules('metric + foo', { metric: 'foo', foo: 'bar' })).toBe('foo + bar');
+  });
+});
 
 describe('parseSelector()', () => {
   let parsed;
@@ -70,24 +98,38 @@ describe('parseSelector()', () => {
   });
 });
 
-describe('expandRecordingRules()', () => {
-  it('returns query w/o recording rules as is', () => {
-    expect(expandRecordingRules('metric', {})).toBe('metric');
-    expect(expandRecordingRules('metric + metric', {})).toBe('metric + metric');
-    expect(expandRecordingRules('metric{}', {})).toBe('metric{}');
-  });
+describe('truncateExcessivelyLongMetricNames()', () => {
+  const metaDataItems: PromMetricsMetadataItem[] = [
+    {
+      type: '.',
+      help: '.',
+    },
+  ];
 
-  it('does not modify recording rules name in label values', () => {
-    expect(expandRecordingRules('{__name__="metric"} + bar', { metric: 'foo', bar: 'super' })).toBe(
-      '{__name__="metric"} + super'
-    );
-  });
+  it(`truncates correctly`, () => {
+    const metrics = ['a', 'b', 'c'];
+    const metricsMetadata: PromMetricsMetadata = {
+      a: metaDataItems,
+      b: metaDataItems,
+      c: metaDataItems,
+    };
 
-  it('returns query with expanded recording rules', () => {
-    expect(expandRecordingRules('metric', { metric: 'foo' })).toBe('foo');
-    expect(expandRecordingRules('metric + metric', { metric: 'foo' })).toBe('foo + foo');
-    expect(expandRecordingRules('metric{}', { metric: 'foo' })).toBe('foo{}');
-    expect(expandRecordingRules('metric[]', { metric: 'foo' })).toBe('foo[]');
-    expect(expandRecordingRules('metric + foo', { metric: 'foo', foo: 'bar' })).toBe('foo + bar');
+    const tooLong = '.'.repeat(MAX_LABEL_LENGTH + 1);
+    const truncated = tooLong.substr(0, MAX_LABEL_LENGTH);
+    metrics.push(tooLong);
+    metricsMetadata[tooLong] = metaDataItems;
+    truncateExcessivelyLongMetricNames(metrics, metricsMetadata);
+    expect(metrics[metrics.length - 1].length).toBe(MAX_LABEL_LENGTH);
+    expect(metricsMetadata[tooLong]).toBe(undefined);
+    expect(metricsMetadata[truncated]).toBe(metaDataItems);
+
+    const fitsPrecisely = '.'.repeat(MAX_LABEL_LENGTH);
+    metrics.push(fitsPrecisely);
+    metricsMetadata[fitsPrecisely] = metaDataItems;
+    truncateExcessivelyLongMetricNames(metrics, metricsMetadata);
+    expect(metrics[metrics.length - 1].length).toBe(MAX_LABEL_LENGTH);
+    expect(metricsMetadata[fitsPrecisely]).toBe(metaDataItems);
+
+    expect(metrics[0]).toBe('a');
   });
 });

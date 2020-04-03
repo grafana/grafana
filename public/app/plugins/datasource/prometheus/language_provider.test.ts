@@ -5,6 +5,7 @@ import { PrometheusDatasource } from './datasource';
 import { HistoryItem } from '@grafana/data';
 import { PromQuery } from './types';
 import Mock = jest.Mock;
+import { MAX_LABEL_LENGTH } from './language_utils';
 
 describe('Language completion provider', () => {
   const datasource: PrometheusDatasource = ({
@@ -583,6 +584,67 @@ describe('Language completion provider', () => {
       expect((datasource.metadataRequest as Mock).mock.calls.length).toBeGreaterThan(0);
       await instance.provideCompletionItems(args);
       expect((datasource.metadataRequest as Mock).mock.calls.length).toBe(callCount);
+    });
+  });
+
+  describe('truncation of excessively long metric/label names', () => {
+    it('truncates metric names correctly', async () => {
+      const metrics = ['.', '.'.repeat(MAX_LABEL_LENGTH + 1)];
+      const metricsMetadata = { '.': 1, ['.'.repeat(MAX_LABEL_LENGTH + 1)]: 2 };
+
+      const datasource: PrometheusDatasource = ({
+        metadataRequest: (url: string) => ({
+          data: { data: url.indexOf('__name__') >= 0 ? metrics : metricsMetadata },
+        }),
+        getTimeRange: () => ({ start: 0, end: 1 }),
+      } as any) as PrometheusDatasource;
+
+      const instance = new LanguageProvider(datasource);
+      await instance.start();
+      expect(instance.metrics[0].length).toBe(1);
+      expect(instance.metrics[1].length).toBe(MAX_LABEL_LENGTH);
+      expect(instance.metricsMetadata['.']).toBe(1);
+      expect(instance.metricsMetadata['.'.repeat(MAX_LABEL_LENGTH)]).toBe(2);
+      expect(instance.metricsMetadata['.'.repeat(MAX_LABEL_LENGTH + 1)]).toBe(undefined);
+    });
+
+    it('truncates label key and value correctly', async () => {
+      const keyNameAndValue = '.'.repeat(MAX_LABEL_LENGTH + 1);
+      const partialValue = '...';
+
+      const metricLabelsResponse = {
+        data: {
+          data: [
+            {
+              __name__: 'metric',
+              [keyNameAndValue]: keyNameAndValue,
+            },
+          ],
+        },
+      };
+
+      const instance = new LanguageProvider(({
+        ...datasource,
+        metadataRequest: () => metricLabelsResponse,
+      } as any) as PrometheusDatasource);
+
+      const truncatedKey = keyNameAndValue.substr(0, MAX_LABEL_LENGTH);
+
+      instance.lookupsDisabled = false;
+      const query = `metric{${truncatedKey}=${partialValue}}`;
+      const value = Plain.deserialize(query);
+      const ed = new SlateEditor({ value });
+      const valueWithSelection = ed.moveForward(query.length - 1).value;
+      const result = await instance.provideCompletionItems({
+        text: `=${partialValue}`,
+        prefix: partialValue,
+        wrapperClasses: ['context-labels'],
+        labelKey: truncatedKey,
+        value: valueWithSelection,
+      });
+
+      // Lookup of the truncated value using the truncated key should work
+      expect(result.suggestions[0].items[0].label.length).toBe(MAX_LABEL_LENGTH);
     });
   });
 });
