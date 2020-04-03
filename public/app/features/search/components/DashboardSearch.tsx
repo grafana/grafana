@@ -1,6 +1,5 @@
 import React, { FC, useReducer, useState } from 'react';
 import { useDebounce } from 'react-use';
-import { parse, SearchParserResult } from 'search-query-parser';
 import { Icon } from '@grafana/ui';
 import { getLocationSrv } from '@grafana/runtime';
 import { SearchSrv } from 'app/core/services/search_srv';
@@ -8,105 +7,20 @@ import { backendSrv } from 'app/core/services/backend_srv';
 import { SearchQuery } from 'app/core/components/search/search';
 import { TagFilter } from 'app/core/components/TagFilter/TagFilter';
 import { contextSrv } from 'app/core/services/context_srv';
-import { DashboardSearchItemType, DashboardSection, SearchAction } from '../types';
-import { findSelected, getFlattenedSections, getLookupField, hasId, markSelected } from '../utils';
+import { DashboardSearchItemType, DashboardSection } from '../types';
+import { findSelected, hasId, parseQuery } from '../utils';
+import { searchReducer, initialState } from '../reducers/dashboardSearch';
+import {
+  FETCH_ITEMS,
+  FETCH_RESULTS,
+  TOGGLE_SECTION,
+  MOVE_SELECTION_DOWN,
+  MOVE_SELECTION_UP,
+} from '../reducers/actionTypes';
 import { SearchField } from './SearchField';
 import { SearchResults } from './SearchResults';
 
-const FETCH_RESULTS = 'FETCH_RESULTS';
-const TOGGLE_SECTION = 'TOGGLE_SECTION';
-const FETCH_ITEMS = 'FETCH_ITEMS';
-const MOVE_SELECTION_UP = 'MOVE_SELECTION_UP';
-const MOVE_SELECTION_DOWN = 'MOVE_SELECTION_DOWN';
-
 const searchSrv = new SearchSrv();
-
-const parseQuery = (query: string) => {
-  const parsedQuery = parse(query, {
-    keywords: ['folder'],
-  });
-
-  if (typeof parsedQuery === 'string') {
-    return {
-      text: parsedQuery,
-    } as SearchParserResult;
-  }
-
-  return parsedQuery;
-};
-
-interface State {
-  results: DashboardSection[];
-  loading: boolean;
-  selectedIndex: number;
-}
-
-const initialState: State = {
-  results: [],
-  loading: true,
-  selectedIndex: 0,
-};
-
-const searchReducer = (state: any, action: SearchAction) => {
-  switch (action.type) {
-    case FETCH_RESULTS:
-      // Highlight the first item ('Starred' folder)
-      action.payload[0].selected = true;
-      return { ...state, results: action.payload, loading: false };
-    case TOGGLE_SECTION: {
-      const section = action.payload;
-      const lookupField = getLookupField(section.title);
-      return {
-        ...state,
-        results: state.results.map((result: DashboardSection) => {
-          if (section[lookupField] === result[lookupField]) {
-            result.expanded = !result.expanded;
-          }
-          return result;
-        }),
-      };
-    }
-    case FETCH_ITEMS: {
-      const { section, items } = action.payload;
-      return {
-        ...state,
-        results: state.results.map((result: DashboardSection) => {
-          if (section.id === result.id) {
-            result.items = items;
-          }
-          return result;
-        }),
-      };
-    }
-    case MOVE_SELECTION_DOWN: {
-      const flatIds = getFlattenedSections(state.results);
-      if (state.selectedIndex < flatIds.length - 1) {
-        const newIndex = state.selectedIndex + 1;
-        const selectedId = flatIds[newIndex];
-        return {
-          ...state,
-          selectedIndex: newIndex,
-          results: markSelected(state.results, selectedId),
-        };
-      }
-      return state;
-    }
-    case MOVE_SELECTION_UP:
-      if (state.selectedIndex > 0) {
-        const flatIds = getFlattenedSections(state.results);
-        const newIndex = state.selectedIndex - 1;
-        const selectedId = flatIds[newIndex];
-        return {
-          ...state,
-          selectedIndex: newIndex,
-          results: markSelected(state.results, selectedId),
-        };
-      }
-      return state;
-    default:
-      return state;
-  }
-};
 
 const defaultQuery: SearchQuery = { query: '', parsedQuery: { text: '' }, tags: [], starred: false };
 const { isEditor, hasEditPermissionInFolders } = contextSrv;

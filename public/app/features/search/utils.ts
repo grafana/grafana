@@ -1,5 +1,6 @@
 import { DashboardSection, DashboardSectionItem } from './types';
 import { NO_ID_SECTIONS } from './constants';
+import { parse, SearchParserResult } from 'search-query-parser';
 
 export const hasId = (str: string) => {
   return !NO_ID_SECTIONS.includes(str);
@@ -55,4 +56,18 @@ export const findSelected = (sections: any): DashboardSection | DashboardSection
   }
 
   return null;
+};
+
+export const parseQuery = (query: string) => {
+  const parsedQuery = parse(query, {
+    keywords: ['folder'],
+  });
+
+  if (typeof parsedQuery === 'string') {
+    return {
+      text: parsedQuery,
+    } as SearchParserResult;
+  }
+
+  return parsedQuery;
 };
