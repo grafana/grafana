@@ -18,7 +18,7 @@ A *dashboard* is a set of one or more panels organized and arranged into one or 
 1. Zoom out time range
 2. Time picker dropdown. Here you can access relative time range options, auto refresh options and set custom absolute time ranges.
 3. Manual refresh button. Will cause all panels to refresh (fetch new data).
-4. Dashboard panel. You edit panels by clicking the panel title.
+4. Dashboard panel. Click the panel title to edit panels.
 5. Graph legend. You can change series colors, y-axis and series visibility directly from the legend.
 
 ## Dashboard header

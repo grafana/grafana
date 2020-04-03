@@ -15,14 +15,7 @@ export class VizPickerSearch extends PureComponent<Props> {
     const { searchQuery, onChange, onClose } = this.props;
     return (
       <>
-        <FilterInput
-          labelClassName="gf-form--has-input-icon"
-          inputClassName="gf-form-input width-13"
-          placeholder=""
-          onChange={onChange}
-          value={searchQuery}
-          ref={element => element && element.focus()}
-        />
+        <FilterInput placeholder="" onChange={onChange} value={searchQuery} />
         <button className="btn btn-link toolbar__close" onClick={onClose}>
           <i className="fa fa-chevron-up" />
         </button>

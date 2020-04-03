@@ -1,7 +1,7 @@
 import React, { FC } from 'react';
 import { getBackendSrv } from '@grafana/runtime';
 import Page from 'app/core/components/Page/Page';
-import { Forms, Button } from '@grafana/ui';
+import { Forms, Button, Input } from '@grafana/ui';
 import { getConfig } from 'app/core/config';
 import { StoreState } from 'app/types';
 import { hot } from 'react-hot-loader';
@@ -58,7 +58,7 @@ export const NewOrgPage: FC<PropsWithState> = ({ navModel }) => {
                   invalid={!!errors.name}
                   error={errors.name && errors.name.message}
                 >
-                  <Forms.Input
+                  <Input
                     size="md"
                     placeholder="Org. name"
                     name="name"
