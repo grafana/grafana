@@ -59,7 +59,7 @@ import { getTimeZone } from '../profile/state/selectors';
 import { ErrorContainer } from './ErrorContainer';
 import { scanStopAction } from './state/actionTypes';
 import { ExploreGraphPanel } from './ExploreGraphPanel';
-import { TraceView } from './TraceView';
+import { TraceView } from './TraceView/TraceView';
 import { SecondaryActions } from './SecondaryActions';
 
 const getStyles = stylesFactory(() => {
