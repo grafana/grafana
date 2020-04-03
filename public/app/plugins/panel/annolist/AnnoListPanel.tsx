@@ -1,9 +1,8 @@
 // Libraries
 import React, { PureComponent } from 'react';
-
 // Types
 import { AnnoOptions } from './types';
-import { PanelProps, dateTime, DurationUnit, AnnotationEvent, AppEvents } from '@grafana/data';
+import { AnnotationEvent, AppEvents, dateTime, DurationUnit, PanelProps } from '@grafana/data';
 import { Tooltip } from '@grafana/ui';
 import { getBackendSrv } from '@grafana/runtime';
 import { AbstractList } from '@grafana/ui/src/components/List/AbstractList';
@@ -13,7 +12,7 @@ import appEvents from 'app/core/app_events';
 
 import { updateLocation } from 'app/core/actions';
 import { store } from 'app/store/store';
-import { cx, css } from 'emotion';
+import { css, cx } from 'emotion';
 
 interface UserInfo {
   id: number;
@@ -98,7 +97,8 @@ export class AnnoListPanel extends PureComponent<Props, State> {
       params.tags = params.tags ? [...params.tags, ...queryTags] : queryTags;
     }
 
-    const annotations = await getBackendSrv().get('/api/annotations', params);
+    const annotations = await getBackendSrv().get('/api/annotations', params, `anno-list-panel-${this.props.id}`);
+
     this.setState({
       annotations,
       timeInfo,

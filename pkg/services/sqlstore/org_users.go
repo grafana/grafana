@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/bus"
-	m "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -17,29 +17,29 @@ func init() {
 	bus.AddHandler("sql", UpdateOrgUser)
 }
 
-func AddOrgUser(cmd *m.AddOrgUserCommand) error {
+func AddOrgUser(cmd *models.AddOrgUserCommand) error {
 	return inTransaction(func(sess *DBSession) error {
 		// check if user exists
-		var user m.User
+		var user models.User
 		if exists, err := sess.ID(cmd.UserId).Get(&user); err != nil {
 			return err
 		} else if !exists {
-			return m.ErrUserNotFound
+			return models.ErrUserNotFound
 		}
 
 		if res, err := sess.Query("SELECT 1 from org_user WHERE org_id=? and user_id=?", cmd.OrgId, user.Id); err != nil {
 			return err
 		} else if len(res) == 1 {
-			return m.ErrOrgUserAlreadyAdded
+			return models.ErrOrgUserAlreadyAdded
 		}
 
 		if res, err := sess.Query("SELECT 1 from org WHERE id=?", cmd.OrgId); err != nil {
 			return err
 		} else if len(res) != 1 {
-			return m.ErrOrgNotFound
+			return models.ErrOrgNotFound
 		}
 
-		entity := m.OrgUser{
+		entity := models.OrgUser{
 			OrgId:   cmd.OrgId,
 			UserId:  cmd.UserId,
 			Role:    cmd.Role,
@@ -52,7 +52,7 @@ func AddOrgUser(cmd *m.AddOrgUserCommand) error {
 			return err
 		}
 
-		var userOrgs []*m.UserOrgDTO
+		var userOrgs []*models.UserOrgDTO
 		sess.Table("org_user")
 		sess.Join("INNER", "org", "org_user.org_id=org.id")
 		sess.Where("org_user.user_id=? AND org_user.org_id=?", user.Id, user.OrgId)
@@ -71,16 +71,16 @@ func AddOrgUser(cmd *m.AddOrgUserCommand) error {
 	})
 }
 
-func UpdateOrgUser(cmd *m.UpdateOrgUserCommand) error {
+func UpdateOrgUser(cmd *models.UpdateOrgUserCommand) error {
 	return inTransaction(func(sess *DBSession) error {
-		var orgUser m.OrgUser
+		var orgUser models.OrgUser
 		exists, err := sess.Where("org_id=? AND user_id=?", cmd.OrgId, cmd.UserId).Get(&orgUser)
 		if err != nil {
 			return err
 		}
 
 		if !exists {
-			return m.ErrOrgUserNotFound
+			return models.ErrOrgUserNotFound
 		}
 
 		orgUser.Role = cmd.Role
@@ -94,8 +94,8 @@ func UpdateOrgUser(cmd *m.UpdateOrgUserCommand) error {
 	})
 }
 
-func GetOrgUsers(query *m.GetOrgUsersQuery) error {
-	query.Result = make([]*m.OrgUserDTO, 0)
+func GetOrgUsers(query *models.GetOrgUsersQuery) error {
+	query.Result = make([]*models.OrgUserDTO, 0)
 
 	sess := x.Table("org_user")
 	sess.Join("INNER", x.Dialect().Quote("user"), fmt.Sprintf("org_user.user_id=%s.id", x.Dialect().Quote("user")))
@@ -142,14 +142,14 @@ func GetOrgUsers(query *m.GetOrgUsersQuery) error {
 	return nil
 }
 
-func RemoveOrgUser(cmd *m.RemoveOrgUserCommand) error {
+func RemoveOrgUser(cmd *models.RemoveOrgUserCommand) error {
 	return inTransaction(func(sess *DBSession) error {
 		// check if user exists
-		var user m.User
+		var user models.User
 		if exists, err := sess.ID(cmd.UserId).Get(&user); err != nil {
 			return err
 		} else if !exists {
-			return m.ErrUserNotFound
+			return models.ErrUserNotFound
 		}
 
 		deletes := []string{
@@ -171,7 +171,7 @@ func RemoveOrgUser(cmd *m.RemoveOrgUserCommand) error {
 		}
 
 		// check user other orgs and update user current org
-		var userOrgs []*m.UserOrgDTO
+		var userOrgs []*models.UserOrgDTO
 		sess.Table("org_user")
 		sess.Join("INNER", "org", "org_user.org_id=org.id")
 		sess.Where("org_user.user_id=?", user.Id)
@@ -199,7 +199,7 @@ func RemoveOrgUser(cmd *m.RemoveOrgUserCommand) error {
 			}
 		} else if cmd.ShouldDeleteOrphanedUser {
 			// no other orgs, delete the full user
-			if err := deleteUserInTransaction(sess, &m.DeleteUserCommand{UserId: user.Id}); err != nil {
+			if err := deleteUserInTransaction(sess, &models.DeleteUserCommand{UserId: user.Id}); err != nil {
 				return err
 			}
 
@@ -218,7 +218,7 @@ func validateOneAdminLeftInOrg(orgId int64, sess *DBSession) error {
 	}
 
 	if len(res) == 0 {
-		return m.ErrLastOrgAdmin
+		return models.ErrLastOrgAdmin
 	}
 
 	return err

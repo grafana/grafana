@@ -59,9 +59,9 @@ describe('useLokiSyntax hook', () => {
     await waitForNextUpdate();
     expect(result.current.logLabelOptions).toEqual(logLabelOptionsMock2);
 
-    languageProvider.fetchLabelValues = (key: string) => {
+    languageProvider.fetchLabelValues = (key: string, absoluteRange: AbsoluteTimeRange) => {
       languageProvider.logLabelOptions = logLabelOptionsMock3;
-      return Promise.resolve();
+      return Promise.resolve([]);
     };
 
     act(() => result.current.setActiveOption([activeOptionMock]));

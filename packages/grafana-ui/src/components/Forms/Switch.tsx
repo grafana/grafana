@@ -1,7 +1,8 @@
 import React, { HTMLProps } from 'react';
-import { stylesFactory, useTheme } from '../../themes';
-import { GrafanaTheme } from '@grafana/data';
 import { css, cx } from 'emotion';
+import uniqueId from 'lodash/uniqueId';
+import { GrafanaTheme } from '@grafana/data';
+import { stylesFactory, useTheme } from '../../themes';
 import { getFocusCss } from './commonStyles';
 
 export interface SwitchProps extends Omit<HTMLProps<HTMLInputElement>, 'value'> {
@@ -17,68 +18,68 @@ export const getSwitchStyles = stylesFactory((theme: GrafanaTheme) => {
 
       input {
         opacity: 0;
-        width: 100% !important;
-        height: 100%;
-        position: relative;
-        z-index: 1;
-        cursor: pointer;
+        left: -100vw;
+        z-index: -1000;
+        position: absolute;
 
-        &:focus ~ div {
-          ${getFocusCss(theme)};
-        }
-        &[disabled] {
+        &:disabled + label {
           background: ${theme.colors.formSwitchBgDisabled};
+          cursor: not-allowed;
+        }
+
+        &:checked + label {
+          background: ${theme.colors.formSwitchBgActive};
+
+          &:hover {
+            background: ${theme.colors.formSwitchBgActiveHover};
+          }
+
+          &::after {
+            transform: translate3d(18px, -50%, 0);
+          }
+        }
+
+        &:focus + label {
+          ${getFocusCss(theme)};
         }
       }
 
-      input ~ div {
+      label {
         width: 100%;
         height: 100%;
-        background: red;
-        z-index: 0;
-        position: absolute;
-        top: 0;
-        left: 0;
+        cursor: pointer;
+        border: none;
+        border-radius: 50px;
         background: ${theme.colors.formSwitchBg};
         transition: all 0.3s ease;
-        border-radius: 50px;
-        border: none;
-        display: block;
-        padding: 0;
+
         &:hover {
           background: ${theme.colors.formSwitchBgHover};
         }
-        &:after {
-          content: '';
-          transition: transform 0.2s cubic-bezier(0.19, 1, 0.22, 1);
+
+        &::after {
           position: absolute;
-          z-index: 0;
-          top: 50%;
           display: block;
+          content: '';
           width: 12px;
           height: 12px;
-          background: ${theme.colors.formSwitchDot};
           border-radius: 6px;
+          background: ${theme.colors.formSwitchDot};
+          top: 50%;
           transform: translate3d(2px, -50%, 0);
+          transition: transform 0.2s cubic-bezier(0.19, 1, 0.22, 1);
         }
       }
-      input:checked ~ div {
-        background: ${theme.colors.formSwitchBgActive};
-        &:hover {
-          background: ${theme.colors.formSwitchBgActiveHover};
-        }
-
-        &:after {
-          transform: translate3d(16px, -50%, 0);
-        }
-      }
+    }
     `,
   };
 });
+
 export const Switch = React.forwardRef<HTMLInputElement, SwitchProps>(
   ({ value, checked, disabled = false, onChange, ...inputProps }, ref) => {
     const theme = useTheme();
     const styles = getSwitchStyles(theme);
+    const switchId = uniqueId('switch-');
 
     return (
       <div className={cx(styles.switch)}>
@@ -87,14 +88,13 @@ export const Switch = React.forwardRef<HTMLInputElement, SwitchProps>(
           disabled={disabled}
           checked={value}
           onChange={event => {
-            if (onChange) {
-              onChange(event);
-            }
+            onChange?.(event);
           }}
+          id={switchId}
           {...inputProps}
           ref={ref}
         />
-        <div></div>
+        <label htmlFor={switchId} />
       </div>
     );
   }

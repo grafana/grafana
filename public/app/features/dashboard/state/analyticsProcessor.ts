@@ -1,10 +1,16 @@
 import { getDashboardSrv } from '../services/DashboardSrv';
+import { DashboardModel } from './DashboardModel';
 
 import { PanelData, LoadingState, DataSourceApi } from '@grafana/data';
 
-import { reportMetaAnalytics, MetaAnalyticsEventPayload } from '@grafana/runtime';
+import {
+  reportMetaAnalytics,
+  MetaAnalyticsEventName,
+  DataRequestEventPayload,
+  DashboardViewEventPayload,
+} from '@grafana/runtime';
 
-export function getAnalyticsProcessor(datasource: DataSourceApi) {
+export function emitDataRequestEvent(datasource: DataSourceApi) {
   let done = false;
 
   return (data: PanelData) => {
@@ -16,16 +22,14 @@ export function getAnalyticsProcessor(datasource: DataSourceApi) {
       return;
     }
 
-    const eventData: MetaAnalyticsEventPayload = {
+    const eventData: DataRequestEventPayload = {
+      eventName: MetaAnalyticsEventName.DataRequest,
       datasourceName: datasource.name,
       datasourceId: datasource.id,
       panelId: data.request.panelId,
       dashboardId: data.request.dashboardId,
-      // app: 'dashboard',
       dataSize: 0,
       duration: data.request.endTime - data.request.startTime,
-      eventName: 'data-request',
-      // sessionId: '',
     };
 
     // enrich with dashboard info
@@ -52,4 +56,16 @@ export function getAnalyticsProcessor(datasource: DataSourceApi) {
     // there are multiple responses with done state
     done = true;
   };
+}
+
+export function emitDashboardViewEvent(dashboard: DashboardModel) {
+  const eventData: DashboardViewEventPayload = {
+    dashboardId: dashboard.id,
+    dashboardName: dashboard.title,
+    dashboardUid: dashboard.uid,
+    folderName: dashboard.meta.folderTitle,
+    eventName: MetaAnalyticsEventName.DashboardView,
+  };
+
+  reportMetaAnalytics(eventData);
 }

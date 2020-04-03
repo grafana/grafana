@@ -1,11 +1,10 @@
 import _ from 'lodash';
+import { getBackendSrv } from '@grafana/runtime';
+import { dateMath, dateTime, PanelEvents } from '@grafana/data';
+import { auto, IScope } from 'angular';
+
 import alertDef from '../../../features/alerting/state/alertDef';
 import { PanelCtrl } from 'app/plugins/sdk';
-
-import { dateMath, dateTime } from '@grafana/data';
-import { PanelEvents } from '@grafana/data';
-import { auto, IScope } from 'angular';
-import { getBackendSrv } from '@grafana/runtime';
 import { promiseToDigest } from 'app/core/utils/promiseToDigest';
 
 class AlertListPanel extends PanelCtrl {
@@ -102,10 +101,10 @@ class AlertListPanel extends PanelCtrl {
     });
   }
 
-  onFolderChange(folder: any) {
+  onFolderChange = (folder: any) => {
     this.panel.folderId = folder.id;
     this.refresh();
-  }
+  };
 
   getStateChanges() {
     const params: any = {
@@ -123,9 +122,9 @@ class AlertListPanel extends PanelCtrl {
 
     return promiseToDigest(this.$scope)(
       getBackendSrv()
-        .get(`/api/annotations`, params)
-        .then(res => {
-          this.alertHistory = _.map(res, al => {
+        .get('/api/annotations', params, `alert-list-get-state-changes-${this.panel.id}`)
+        .then(data => {
+          this.alertHistory = _.map(data, al => {
             al.time = this.dashboard.formatDate(al.time, 'MMM D, YYYY HH:mm:ss');
             al.stateModel = alertDef.getStateDisplayModel(al.newState);
             al.info = alertDef.getAlertAnnotationInfo(al);
@@ -166,10 +165,10 @@ class AlertListPanel extends PanelCtrl {
 
     return promiseToDigest(this.$scope)(
       getBackendSrv()
-        .get(`/api/alerts`, params)
-        .then(res => {
+        .get('/api/alerts', params, `alert-list-get-current-alert-state-${this.panel.id}`)
+        .then(data => {
           this.currentAlerts = this.sortResult(
-            _.map(res, al => {
+            _.map(data, al => {
               al.stateModel = alertDef.getStateDisplayModel(al.state);
               al.newStateDateAgo = dateTime(al.newStateDate)
                 .locale('en')

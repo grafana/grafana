@@ -1,7 +1,7 @@
 import React, { useCallback } from 'react';
 import { hot } from 'react-hot-loader';
 import { connect } from 'react-redux';
-import { Forms } from '@grafana/ui';
+import { Forms, Button, Input } from '@grafana/ui';
 import { NavModel } from '@grafana/data';
 import { getBackendSrv } from '@grafana/runtime';
 import { StoreState } from '../../types';
@@ -37,15 +37,15 @@ const UserCreatePage: React.FC<UserCreatePageProps> = ({ navModel, updateLocatio
             return (
               <>
                 <Forms.Field label="Name" required invalid={!!errors.name} error={!!errors.name && 'Name is required'}>
-                  <Forms.Input name="name" size="md" ref={register({ required: true })} />
+                  <Input name="name" size="md" ref={register({ required: true })} />
                 </Forms.Field>
 
                 <Forms.Field label="E-mail">
-                  <Forms.Input name="email" size="md" ref={register} />
+                  <Input name="email" size="md" ref={register} />
                 </Forms.Field>
 
                 <Forms.Field label="Username">
-                  <Forms.Input name="login" size="md" ref={register} />
+                  <Input name="login" size="md" ref={register} />
                 </Forms.Field>
                 <Forms.Field
                   label="Password"
@@ -53,7 +53,7 @@ const UserCreatePage: React.FC<UserCreatePageProps> = ({ navModel, updateLocatio
                   invalid={!!errors.password}
                   error={!!errors.password && 'Password is required and must contain at least 4 characters'}
                 >
-                  <Forms.Input
+                  <Input
                     size="md"
                     type="password"
                     name="password"
@@ -62,7 +62,7 @@ const UserCreatePage: React.FC<UserCreatePageProps> = ({ navModel, updateLocatio
                     })}
                   />
                 </Forms.Field>
-                <Forms.Button type="submit">Create user</Forms.Button>
+                <Button type="submit">Create user</Button>
               </>
             );
           }}

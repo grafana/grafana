@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestPasswordMigrationCommand(t *testing.T) {
@@ -45,7 +46,9 @@ func TestPasswordMigrationCommand(t *testing.T) {
 	assert.Nil(t, err)
 
 	//run migration
-	err = EncryptDatasourcePaswords(&commandstest.FakeCommandLine{}, sqlstore)
+	c, err := commandstest.NewCliContext(map[string]string{})
+	require.Nil(t, err)
+	err = EncryptDatasourcePaswords(c, sqlstore)
 	assert.Nil(t, err)
 
 	//verify that no datasources still have password or basic_auth

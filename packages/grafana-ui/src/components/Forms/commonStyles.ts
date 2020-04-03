@@ -1,6 +1,6 @@
 import { css } from 'emotion';
 import { GrafanaTheme } from '@grafana/data';
-import { ButtonSize } from '../Button/types';
+import { ComponentSize } from '../../types/size';
 
 export const getFocusCss = (theme: GrafanaTheme) => `
   outline: 2px dotted transparent;
@@ -51,27 +51,46 @@ export const sharedInputStyle = (theme: GrafanaTheme, invalid = false) => {
       background-color: ${colors.formInputBgDisabled};
       color: ${colors.formInputDisabledText};
     }
+
+    &::placeholder {
+      color: ${colors.formInputPlaceholderText};
+      opacity: 1;
+    }
   `;
 };
 
 export const inputSizes = () => {
   return {
     sm: css`
-      width: 200px;
+      width: ${inputSizesPixels('sm')};
     `,
     md: css`
-      width: 320px;
+      width: ${inputSizesPixels('md')};
     `,
     lg: css`
-      width: 580px;
+      width: ${inputSizesPixels('lg')};
     `,
     auto: css`
-      width: auto;
+      width: ${inputSizesPixels('auto')};
     `,
   };
 };
 
-export const getPropertiesForButtonSize = (theme: GrafanaTheme, size: ButtonSize) => {
+export const inputSizesPixels = (size: string) => {
+  switch (size) {
+    case 'sm':
+      return '200px';
+    case 'md':
+      return '320px';
+    case 'lg':
+      return '580px';
+    case 'auto':
+    default:
+      return 'auto';
+  }
+};
+
+export const getPropertiesForButtonSize = (theme: GrafanaTheme, size: ComponentSize) => {
   switch (size) {
     case 'sm':
       return {

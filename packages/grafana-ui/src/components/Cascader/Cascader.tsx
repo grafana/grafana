@@ -1,20 +1,25 @@
 import React from 'react';
 import { Icon } from '../Icon/Icon';
-// @ts-ignore
 import RCCascader from 'rc-cascader';
 
-import { Select } from '../Forms/Select/Select';
+import { Select } from '../Select/Select';
 import { FormInputSize } from '../Forms/types';
 import { Input } from '../Forms/Input/Input';
 import { SelectableValue } from '@grafana/data';
 import { css } from 'emotion';
+import { onChangeCascader } from './optionMappings';
 
 interface CascaderProps {
+  /** The seperator between levels in the search */
   separator?: string;
+  placeholder?: string;
   options: CascaderOption[];
   onSelect(val: string): void;
   size?: FormInputSize;
   initialValue?: string;
+  allowCustomValue?: boolean;
+  /** A function for formatting the message for custom value creation. Only applies when allowCustomValue is set to true*/
+  formatCreateLabel?: (val: string) => string;
 }
 
 interface CascaderState {
@@ -27,13 +32,20 @@ interface CascaderState {
 }
 
 export interface CascaderOption {
+  /**
+   *  The value used under the hood
+   */
   value: any;
+  /**
+   *  The label to display in the UI
+   */
   label: string;
-  // Items will be just flattened into the main list of items recursively.
+  /** Items will be just flattened into the main list of items recursively. */
   items?: CascaderOption[];
   disabled?: boolean;
+  /** Avoid using */
   title?: string;
-  // Children will be shown in a submenu.
+  /**  Children will be shown in a submenu. Use 'items' instead, as 'children' exist to ensure backwards compatibility.*/
   children?: CascaderOption[];
 }
 
@@ -64,6 +76,7 @@ export class Cascader extends React.PureComponent<CascaderProps, CascaderState> 
       cpy.push(option);
       if (!option.items) {
         selectOptions.push({
+          singleLabel: cpy[cpy.length - 1].label,
           label: cpy.map(o => o.label).join(this.props.separator || ' / '),
           value: cpy.map(o => o.value),
         });
@@ -84,9 +97,12 @@ export class Cascader extends React.PureComponent<CascaderProps, CascaderState> 
       if (optionPath.indexOf(initValue) === optionPath.length - 1) {
         return {
           rcValue: optionPath,
-          activeLabel: option.label || '',
+          activeLabel: option.singleLabel || '',
         };
       }
+    }
+    if (this.props.allowCustomValue) {
+      return { rcValue: [], activeLabel: initValue };
     }
     return { rcValue: [], activeLabel: '' };
   }
@@ -95,7 +111,8 @@ export class Cascader extends React.PureComponent<CascaderProps, CascaderState> 
   onChange = (value: string[], selectedOptions: CascaderOption[]) => {
     this.setState({
       rcValue: value,
-      activeLabel: selectedOptions.map(o => o.label).join(this.props.separator || ' / '),
+      focusCascade: true,
+      activeLabel: selectedOptions[selectedOptions.length - 1].label,
     });
 
     this.props.onSelect(selectedOptions[selectedOptions.length - 1].value);
@@ -103,18 +120,22 @@ export class Cascader extends React.PureComponent<CascaderProps, CascaderState> 
 
   //For select
   onSelect = (obj: SelectableValue<string[]>) => {
+    const valueArray = obj.value || [];
     this.setState({
-      activeLabel: obj.label || '',
-      rcValue: obj.value || [],
+      activeLabel: obj.singleLabel || '',
+      rcValue: valueArray,
       isSearching: false,
     });
-    this.props.onSelect(this.state.rcValue[this.state.rcValue.length - 1]);
+    this.props.onSelect(valueArray[valueArray.length - 1]);
   };
 
-  onClick = () => {
+  onCreateOption = (value: string) => {
     this.setState({
-      focusCascade: true,
+      activeLabel: value,
+      rcValue: [],
+      isSearching: false,
     });
+    this.props.onSelect(value);
   };
 
   onBlur = () => {
@@ -138,65 +159,59 @@ export class Cascader extends React.PureComponent<CascaderProps, CascaderState> 
 
   onInputKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (
-      e.key !== 'ArrowDown' &&
-      e.key !== 'ArrowUp' &&
-      e.key !== 'Enter' &&
-      e.key !== 'ArrowLeft' &&
-      e.key !== 'ArrowRight'
+      e.key === 'ArrowDown' ||
+      e.key === 'ArrowUp' ||
+      e.key === 'Enter' ||
+      e.key === 'ArrowLeft' ||
+      e.key === 'ArrowRight'
     ) {
-      this.setState({
-        focusCascade: false,
-        isSearching: true,
-      });
-      if (e.key === 'Backspace') {
-        const label = this.state.activeLabel || '';
-        this.setState({
-          activeLabel: label.slice(0, -1),
-        });
-      }
+      return;
     }
-  };
-
-  onInputChange = (value: string) => {
     this.setState({
-      activeLabel: value,
+      focusCascade: false,
+      isSearching: true,
     });
   };
 
   render() {
-    const { size } = this.props;
+    const { size, allowCustomValue, placeholder } = this.props;
     const { focusCascade, isSearching, searchableOptions, rcValue, activeLabel } = this.state;
 
     return (
       <div>
         {isSearching ? (
           <Select
-            inputValue={activeLabel}
-            placeholder="Search"
+            allowCustomValue={allowCustomValue}
+            placeholder={placeholder}
             autoFocus={!focusCascade}
             onChange={this.onSelect}
-            onInputChange={this.onInputChange}
             onBlur={this.onBlur}
             options={searchableOptions}
-            size={size || 'md'}
+            size={size}
+            onCreateOption={this.onCreateOption}
+            formatCreateLabel={this.props.formatCreateLabel}
           />
         ) : (
           <RCCascader
-            onChange={this.onChange}
-            onClick={this.onClick}
+            onChange={onChangeCascader(this.onChange)}
             options={this.props.options}
-            isFocused={focusCascade}
-            onBlur={this.onBlurCascade}
-            value={rcValue}
+            changeOnSelect
+            value={rcValue.value}
             fieldNames={{ label: 'label', value: 'value', children: 'items' }}
             expandIcon={null}
+            // Required, otherwise the portal that the popup is shown in will render under other components
+            popupClassName={css`
+              z-index: 9999;
+            `}
           >
             <div className={disableDivFocus}>
               <Input
+                size={size}
+                placeholder={placeholder}
+                onBlur={this.onBlurCascade}
                 value={activeLabel}
                 onKeyDown={this.onInputKeyDown}
                 onChange={() => {}}
-                size={size || 'md'}
                 suffix={focusCascade ? <Icon name="caret-up" /> : <Icon name="caret-down" />}
               />
             </div>

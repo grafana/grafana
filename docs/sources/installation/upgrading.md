@@ -81,6 +81,7 @@ If you installed Grafana from our APT repository, then Grafana will automaticall
 
 ```bash
 sudo apt-get update
+sudo apt-get upgrade
 ```
 
 #### Upgrade from binary .tar file

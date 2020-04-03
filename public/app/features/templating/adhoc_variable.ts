@@ -7,7 +7,7 @@ import {
   VariableHide,
   VariableType,
   variableTypes,
-} from './variable';
+} from './types';
 
 export class AdhocVariable implements AdHocVariableModel, VariableActions {
   type: VariableType;

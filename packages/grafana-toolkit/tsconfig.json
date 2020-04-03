@@ -1,14 +1,12 @@
 {
-  "extends": "../tsconfig.json",
-  "include": ["src/**/*.ts", "../../public/app/types/jquery/*.ts"],
-  "exclude": ["dist", "node_modules"],
   "compilerOptions": {
-    "module": "commonjs",
-    "rootDirs": ["."],
-    "outDir": "dist/src",
-    "declaration": true,
     "declarationDir": "dist/src",
-    "typeRoots": ["./node_modules/@types"],
-    "esModuleInterop": true
-  }
+    "module": "commonjs",
+    "outDir": "dist/src",
+    "rootDirs": ["."],
+    "typeRoots": ["node_modules/@types"]
+  },
+  "exclude": ["dist", "node_modules"],
+  "extends": "@grafana/tsconfig",
+  "include": ["src/**/*.ts", "../../public/app/types/jquery/*.ts"]
 }

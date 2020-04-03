@@ -57,9 +57,23 @@ export const jestConfig = (baseDir: string = process.cwd()) => {
     moduleDirectories: ['node_modules', 'src'],
     moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json'],
     setupFiles,
-    globals: { 'ts-jest': { isolatedModules: true } },
+    globals: {
+      'ts-jest': {
+        isolatedModules: true,
+        tsConfig: path.resolve(baseDir, 'tsconfig.json'),
+      },
+    },
     coverageReporters: ['json-summary', 'text', 'lcov'],
     collectCoverageFrom: ['src/**/*.{ts,tsx}', '!**/node_modules/**', '!**/vendor/**'],
+    reporters: [
+      'default',
+      [
+        'jest-junit',
+        {
+          outputDirectory: 'coverage',
+        },
+      ],
+    ],
     testMatch: [
       '<rootDir>/src/**/__tests__/**/*.{js,jsx,ts,tsx}',
       '<rootDir>/src/**/*.{spec,test,jest}.{js,jsx,ts,tsx}',
@@ -79,4 +93,17 @@ export const jestConfig = (baseDir: string = process.cwd()) => {
     ...defaultJestConfig,
     ...otherOverrides,
   };
+};
+
+/**
+ * This will load the existing just setup, or use the default if it exists
+ */
+export const loadJestPluginConfig = (baseDir: string = process.cwd()) => {
+  const cfgpath = path.resolve(baseDir, 'jest.config.js');
+  if (!fs.existsSync(cfgpath)) {
+    const src = path.resolve(baseDir, 'node_modules/@grafana/toolkit/src/config/jest.plugin.config.local.js');
+    fs.copyFileSync(src, cfgpath);
+    console.log('Using standard jest plugin config', src);
+  }
+  return require(cfgpath);
 };

@@ -14,7 +14,7 @@ weight = 1
 
 Grafana has a number of configuration options that you can specify in a `.ini` configuration file or specified using environment variables.
 
-> **Note.** You must restart Grafana for any configuration changes to take effect.
+> **Note:** You must restart Grafana for any configuration changes to take effect.
 
 ## Config file locations
 
@@ -28,7 +28,7 @@ Grafana has a number of configuration options that you can specify in a `.ini` c
 If you installed Grafana using the `deb` or `rpm` packages, then your configuration file is located at `/etc/grafana/grafana.ini` and a separate `custom.ini` is not used. This path is specified in the Grafana init.d script using `--config` file parameter.
 
 ### Docker
-Refer to [Configure a Grafana Docker image](configure-docker.md) for information about environmental variables, persistent storage, and building custom Docker images.
+Refer to [Configure a Grafana Docker image]({{< relref "configure-docker.md" >}}) for information about environmental variables, persistent storage, and building custom Docker images.
 
 ### Windows
 `sample.ini` is in the same directory as `defaults.ini` and contains all the settings commented out. Copy `sample.ini` and name it `custom.ini`.
@@ -147,7 +147,7 @@ Another way is put a webserver like Nginx or Apache in front of Grafana and have
 
 `http`,`https`,`h2` or `socket`
 
-> **Note** Grafana versions earlier than 3.0 are vulnerable to [POODLE](https://en.wikipedia.org/wiki/POODLE). So we strongly recommend to upgrade to 3.x or use a reverse proxy for ssl termination.
+> **Note:** Grafana versions earlier than 3.0 are vulnerable to [POODLE](https://en.wikipedia.org/wiki/POODLE). So we strongly recommend to upgrade to 3.x or use a reverse proxy for ssl termination.
 
 ### socket
 Path where the socket should be created when `protocol=socket`. Please make sure that Grafana has appropriate permissions.
@@ -166,7 +166,7 @@ This is the full URL used to access Grafana from a web browser. This is
 important if you use Google or GitHub OAuth authentication (for the
 callback URL to be correct).
 
-> **Note** This setting is also important if you have a reverse proxy
+> **Note:** This setting is also important if you have a reverse proxy
 > in front of Grafana that exposes it through a subpath. In that
 > case add the subpath to the end of this URL setting.
 
@@ -182,7 +182,7 @@ By enabling this setting and using a subpath in `root_url` above, e.g.
 ### static_root_path
 
 The path to the directory where the front end files (HTML, JS, and CSS
-files). Default to `public` which is why the Grafana binary needs to be
+files). Defaults to `public` which is why the Grafana binary needs to be
 executed with working directory set to the installation path.
 
 ### enable_gzip
@@ -350,7 +350,7 @@ Default is `false`.
 
 ### data_source_proxy_whitelist
 
-Define a white list of allowed ips/domains to use in data sources. Format: `ip_or_domain:port` separated by spaces.
+Define a whitelist of allowed IP addresses or domains, with ports, to be used in data source URLs with the Grafana data source proxy. Format: `ip_or_domain:port` separated by spaces. PostgreSQL, MySQL, and MSSQL data sources do not use the proxy and are therefore unaffected by this setting.
 
 ### cookie_secure
 
@@ -415,7 +415,7 @@ organization to be created for that new user.
 
 Set this value to automatically add new users to the provided org.
 This requires `auto_assign_org` to be set to `true`. Please make sure
-that this organization does already exists.
+that this organization already exists.
 
 ### auto_assign_org_role
 
@@ -449,6 +449,11 @@ Text used as placeholder text on login page for password input.
 
 Grafana provides many ways to authenticate users. The docs for authentication has been split in to many different pages
 below.
+
+### oauth_state_cookie_max_age
+
+How long the OAuth state cookie lives before being deleted. Default is `60` (seconds)
+Administrators can increase it if they experience OAuth login state mismatch errors.
 
 - [Authentication Overview]({{< relref "../auth/overview.md" >}}) (anonymous access options, hide login and more)
 - [Google OAuth]({{< relref "../auth/google.md" >}}) (auth.google)
@@ -501,6 +506,13 @@ Set to false to disable all checks to https://grafana.com for new versions of in
 ### versions_to_keep
 
 Number dashboard versions to keep (per dashboard). Default: `20`, Minimum: `1`.
+
+### min_refresh_interval
+
+> Only available in Grafana v6.7+.
+
+When set, this will restrict users to set the refresh interval of a dashboard lower than given interval. Per default this is not set/unrestricted.
+The interval string is a possibly signed sequence of decimal numbers, followed by a unit suffix (ms, s, m, h, d), e.g. `30s` or `1m`.
 
 ## [dashboards.json]
 
@@ -715,10 +727,10 @@ Secret key, e.g. AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA.
 ## [external_image_storage.webdav]
 
 ### url
-Url to where Grafana will send PUT request with images
+URL to where Grafana will send PUT request with images
 
 ### public_url
-Optional parameter. Url to send to users in notifications. If the string contains the sequence ${file}, it will be replaced with the uploaded filename. Otherwise, the file name will be appended to the path part of the url, leaving any query string unchanged.
+Optional parameter. URL to send to users in notifications. If the string contains the sequence ${file}, it will be replaced with the uploaded filename. Otherwise, the file name will be appended to the path part of the URL, leaving any query string unchanged.
 
 ### username
 basic auth username

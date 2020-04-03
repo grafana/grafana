@@ -61,7 +61,7 @@ You can edit playlists while creating them or after saving them.
 
 ### Search for a dashboard to add
 
-1. Click the **Find dashboards by name** text box. 
+1. Click the **Search dashboards by name** text box. 
 1. Search for the playlist by name or regular expression. 
 1. If needed, filter your results by starred status or tags.  
    By default, your starred dashboards will appear as options to add to the Playlist.

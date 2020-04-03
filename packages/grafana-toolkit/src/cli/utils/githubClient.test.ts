@@ -97,7 +97,7 @@ describe('GithubClient', () => {
       describe('when the credentials are not defined', () => {
         it('should throw an error', () => {
           expect(() => {
-            // tslint:disable-next-line
+            // eslint-disable-next-line
             new GithubClient({ required: true });
           }).toThrow(/operation needs a GITHUB_USERNAME and GITHUB_ACCESS_TOKEN environment variables/);
         });

@@ -1,14 +1,14 @@
-import { getLinksFromLogsField, getFieldLinksSupplier } from './linkSuppliers';
+import { getFieldLinksSupplier, getLinksFromLogsField } from './linkSuppliers';
 import {
+  applyFieldOverrides,
   ArrayVector,
+  DataFrameView,
   dateTime,
   Field,
-  FieldType,
-  toDataFrame,
-  applyFieldOverrides,
-  GrafanaTheme,
   FieldDisplay,
-  DataFrameView,
+  FieldType,
+  GrafanaTheme,
+  toDataFrame,
 } from '@grafana/data';
 import { getLinkSrv, LinkService, LinkSrv, setLinkSrv } from './link_srv';
 import { TemplateSrv } from '../../templating/template_srv';
@@ -54,8 +54,8 @@ describe('getLinksFromLogsField', () => {
     };
     const links = getLinksFromLogsField(field, 2);
     expect(links.length).toBe(2);
-    expect(links[0].href).toBe('http://domain.com/3');
-    expect(links[1].href).toBe('http://anotherdomain.sk/3');
+    expect(links[0].linkModel.href).toBe('http://domain.com/3');
+    expect(links[1].linkModel.href).toBe('http://anotherdomain.sk/3');
   });
 
   it('handles zero links', () => {
@@ -152,7 +152,7 @@ describe('getLinksFromLogsField', () => {
     };
 
     const supplier = getFieldLinksSupplier(fieldDisp);
-    const links = supplier.getLinks({}).map(m => {
+    const links = supplier?.getLinks({}).map(m => {
       return {
         title: m.title,
         href: m.href,

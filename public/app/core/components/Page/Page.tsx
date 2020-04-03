@@ -9,6 +9,7 @@ import PageContents from './PageContents';
 import { CustomScrollbar } from '@grafana/ui';
 import { NavModel } from '@grafana/data';
 import { isEqual } from 'lodash';
+import { Branding } from '../Branding/Branding';
 
 interface Props {
   children: JSX.Element[] | JSX.Element;
@@ -31,7 +32,7 @@ class Page extends Component<Props> {
 
   updateTitle = () => {
     const title = this.getPageTitle;
-    document.title = title ? title + ' - Grafana' : 'Grafana';
+    document.title = title ? title + ' - ' + Branding.AppTitle : Branding.AppTitle;
   };
 
   get getPageTitle() {

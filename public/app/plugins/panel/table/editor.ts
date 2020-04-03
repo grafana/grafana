@@ -67,12 +67,16 @@ export class TablePanelEditorCtrl {
 
   transformChanged() {
     this.panel.columns = [];
-    if (this.panel.transform === 'timeseries_aggregations') {
-      this.panel.columns.push({ text: 'Avg', value: 'avg' });
-    }
+    if (this.panel.transform === 'annotations') {
+      this.panelCtrl.refresh();
+    } else {
+      if (this.panel.transform === 'timeseries_aggregations') {
+        this.panel.columns.push({ text: 'Avg', value: 'avg' });
+      }
 
-    this.updateTransformHints();
-    this.render();
+      this.updateTransformHints();
+      this.render();
+    }
   }
 
   render() {

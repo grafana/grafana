@@ -1,0 +1,30 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`FolderPicker should render 1`] = `
+<Fragment>
+  <div
+    className="gf-form-inline"
+  >
+    <div
+      className="gf-form"
+    >
+      <label
+        className="gf-form-label width-7"
+      >
+        Folder
+      </label>
+      <AsyncSelect
+        allowCustomValue={false}
+        defaultOptions={true}
+        defaultValue={Object {}}
+        loadOptions={[Function]}
+        loadingMessage="Loading folders..."
+        onChange={[Function]}
+        onCreateOption={[Function]}
+        size="sm"
+        value={Object {}}
+      />
+    </div>
+  </div>
+</Fragment>
+`;

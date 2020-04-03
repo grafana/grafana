@@ -16,7 +16,7 @@ exports[`Render should render List page 1`] = `
   <PageContents
     isLoading={false}
   >
-    <Component
+    <Connect(UsersActionBar)
       onShowInvites={[Function]}
       showInvites={false}
     />
@@ -45,7 +45,7 @@ exports[`Render should render component 1`] = `
   <PageContents
     isLoading={true}
   >
-    <Component
+    <Connect(UsersActionBar)
       onShowInvites={[Function]}
       showInvites={false}
     />

@@ -49,7 +49,7 @@ exports[`DashboardGrid Can render dashboard grid Should render 1`] = `
     id="panel-1"
     key="1"
   >
-    <DashboardPanel
+    <Connect(DashboardPanelUnconnected)
       dashboard={
         DashboardModel {
           "annotations": Object {
@@ -105,6 +105,8 @@ exports[`DashboardGrid Can render dashboard grid Should render 1`] = `
               "_eventsCount": 6,
             },
           },
+          "getVariables": [Function],
+          "getVariablesFromState": [Function],
           "gnetId": null,
           "graphTooltip": 0,
           "id": null,
@@ -142,7 +144,8 @@ exports[`DashboardGrid Can render dashboard grid Should render 1`] = `
               },
               "id": 1,
               "isInView": false,
-              "restoreModel": [Function],
+              "options": Object {},
+              "replaceVariables": [Function],
               "targets": Array [
                 Object {
                   "refId": "A",
@@ -169,7 +172,8 @@ exports[`DashboardGrid Can render dashboard grid Should render 1`] = `
               },
               "id": 2,
               "isInView": false,
-              "restoreModel": [Function],
+              "options": Object {},
+              "replaceVariables": [Function],
               "targets": Array [
                 Object {
                   "refId": "A",
@@ -196,7 +200,8 @@ exports[`DashboardGrid Can render dashboard grid Should render 1`] = `
               },
               "id": 3,
               "isInView": false,
-              "restoreModel": [Function],
+              "options": Object {},
+              "replaceVariables": [Function],
               "targets": Array [
                 Object {
                   "refId": "A",
@@ -223,7 +228,8 @@ exports[`DashboardGrid Can render dashboard grid Should render 1`] = `
               },
               "id": 4,
               "isInView": false,
-              "restoreModel": [Function],
+              "options": Object {},
+              "replaceVariables": [Function],
               "targets": Array [
                 Object {
                   "refId": "A",
@@ -236,7 +242,7 @@ exports[`DashboardGrid Can render dashboard grid Should render 1`] = `
           ],
           "refresh": undefined,
           "revision": undefined,
-          "schemaVersion": 22,
+          "schemaVersion": 23,
           "snapshot": undefined,
           "style": "dark",
           "tags": Array [],
@@ -251,7 +257,6 @@ exports[`DashboardGrid Can render dashboard grid Should render 1`] = `
           "timezone": "",
           "title": "My dashboard",
           "uid": null,
-          "updatePanel": [Function],
           "version": 0,
         }
       }
@@ -274,7 +279,8 @@ exports[`DashboardGrid Can render dashboard grid Should render 1`] = `
           },
           "id": 1,
           "isInView": false,
-          "restoreModel": [Function],
+          "options": Object {},
+          "replaceVariables": [Function],
           "targets": Array [
             Object {
               "refId": "A",
@@ -292,7 +298,7 @@ exports[`DashboardGrid Can render dashboard grid Should render 1`] = `
     id="panel-2"
     key="2"
   >
-    <DashboardPanel
+    <Connect(DashboardPanelUnconnected)
       dashboard={
         DashboardModel {
           "annotations": Object {
@@ -348,6 +354,8 @@ exports[`DashboardGrid Can render dashboard grid Should render 1`] = `
               "_eventsCount": 6,
             },
           },
+          "getVariables": [Function],
+          "getVariablesFromState": [Function],
           "gnetId": null,
           "graphTooltip": 0,
           "id": null,
@@ -385,7 +393,8 @@ exports[`DashboardGrid Can render dashboard grid Should render 1`] = `
               },
               "id": 1,
               "isInView": false,
-              "restoreModel": [Function],
+              "options": Object {},
+              "replaceVariables": [Function],
               "targets": Array [
                 Object {
                   "refId": "A",
@@ -412,7 +421,8 @@ exports[`DashboardGrid Can render dashboard grid Should render 1`] = `
               },
               "id": 2,
               "isInView": false,
-              "restoreModel": [Function],
+              "options": Object {},
+              "replaceVariables": [Function],
               "targets": Array [
                 Object {
                   "refId": "A",
@@ -439,7 +449,8 @@ exports[`DashboardGrid Can render dashboard grid Should render 1`] = `
               },
               "id": 3,
               "isInView": false,
-              "restoreModel": [Function],
+              "options": Object {},
+              "replaceVariables": [Function],
               "targets": Array [
                 Object {
                   "refId": "A",
@@ -466,7 +477,8 @@ exports[`DashboardGrid Can render dashboard grid Should render 1`] = `
               },
               "id": 4,
               "isInView": false,
-              "restoreModel": [Function],
+              "options": Object {},
+              "replaceVariables": [Function],
               "targets": Array [
                 Object {
                   "refId": "A",
@@ -479,7 +491,7 @@ exports[`DashboardGrid Can render dashboard grid Should render 1`] = `
           ],
           "refresh": undefined,
           "revision": undefined,
-          "schemaVersion": 22,
+          "schemaVersion": 23,
           "snapshot": undefined,
           "style": "dark",
           "tags": Array [],
@@ -494,7 +506,6 @@ exports[`DashboardGrid Can render dashboard grid Should render 1`] = `
           "timezone": "",
           "title": "My dashboard",
           "uid": null,
-          "updatePanel": [Function],
           "version": 0,
         }
       }
@@ -517,7 +528,8 @@ exports[`DashboardGrid Can render dashboard grid Should render 1`] = `
           },
           "id": 2,
           "isInView": false,
-          "restoreModel": [Function],
+          "options": Object {},
+          "replaceVariables": [Function],
           "targets": Array [
             Object {
               "refId": "A",
@@ -535,7 +547,7 @@ exports[`DashboardGrid Can render dashboard grid Should render 1`] = `
     id="panel-3"
     key="3"
   >
-    <DashboardPanel
+    <Connect(DashboardPanelUnconnected)
       dashboard={
         DashboardModel {
           "annotations": Object {
@@ -591,6 +603,8 @@ exports[`DashboardGrid Can render dashboard grid Should render 1`] = `
               "_eventsCount": 6,
             },
           },
+          "getVariables": [Function],
+          "getVariablesFromState": [Function],
           "gnetId": null,
           "graphTooltip": 0,
           "id": null,
@@ -628,7 +642,8 @@ exports[`DashboardGrid Can render dashboard grid Should render 1`] = `
               },
               "id": 1,
               "isInView": false,
-              "restoreModel": [Function],
+              "options": Object {},
+              "replaceVariables": [Function],
               "targets": Array [
                 Object {
                   "refId": "A",
@@ -655,7 +670,8 @@ exports[`DashboardGrid Can render dashboard grid Should render 1`] = `
               },
               "id": 2,
               "isInView": false,
-              "restoreModel": [Function],
+              "options": Object {},
+              "replaceVariables": [Function],
               "targets": Array [
                 Object {
                   "refId": "A",
@@ -682,7 +698,8 @@ exports[`DashboardGrid Can render dashboard grid Should render 1`] = `
               },
               "id": 3,
               "isInView": false,
-              "restoreModel": [Function],
+              "options": Object {},
+              "replaceVariables": [Function],
               "targets": Array [
                 Object {
                   "refId": "A",
@@ -709,7 +726,8 @@ exports[`DashboardGrid Can render dashboard grid Should render 1`] = `
               },
               "id": 4,
               "isInView": false,
-              "restoreModel": [Function],
+              "options": Object {},
+              "replaceVariables": [Function],
               "targets": Array [
                 Object {
                   "refId": "A",
@@ -722,7 +740,7 @@ exports[`DashboardGrid Can render dashboard grid Should render 1`] = `
           ],
           "refresh": undefined,
           "revision": undefined,
-          "schemaVersion": 22,
+          "schemaVersion": 23,
           "snapshot": undefined,
           "style": "dark",
           "tags": Array [],
@@ -737,7 +755,6 @@ exports[`DashboardGrid Can render dashboard grid Should render 1`] = `
           "timezone": "",
           "title": "My dashboard",
           "uid": null,
-          "updatePanel": [Function],
           "version": 0,
         }
       }
@@ -760,7 +777,8 @@ exports[`DashboardGrid Can render dashboard grid Should render 1`] = `
           },
           "id": 3,
           "isInView": false,
-          "restoreModel": [Function],
+          "options": Object {},
+          "replaceVariables": [Function],
           "targets": Array [
             Object {
               "refId": "A",
@@ -778,7 +796,7 @@ exports[`DashboardGrid Can render dashboard grid Should render 1`] = `
     id="panel-4"
     key="4"
   >
-    <DashboardPanel
+    <Connect(DashboardPanelUnconnected)
       dashboard={
         DashboardModel {
           "annotations": Object {
@@ -834,6 +852,8 @@ exports[`DashboardGrid Can render dashboard grid Should render 1`] = `
               "_eventsCount": 6,
             },
           },
+          "getVariables": [Function],
+          "getVariablesFromState": [Function],
           "gnetId": null,
           "graphTooltip": 0,
           "id": null,
@@ -871,7 +891,8 @@ exports[`DashboardGrid Can render dashboard grid Should render 1`] = `
               },
               "id": 1,
               "isInView": false,
-              "restoreModel": [Function],
+              "options": Object {},
+              "replaceVariables": [Function],
               "targets": Array [
                 Object {
                   "refId": "A",
@@ -898,7 +919,8 @@ exports[`DashboardGrid Can render dashboard grid Should render 1`] = `
               },
               "id": 2,
               "isInView": false,
-              "restoreModel": [Function],
+              "options": Object {},
+              "replaceVariables": [Function],
               "targets": Array [
                 Object {
                   "refId": "A",
@@ -925,7 +947,8 @@ exports[`DashboardGrid Can render dashboard grid Should render 1`] = `
               },
               "id": 3,
               "isInView": false,
-              "restoreModel": [Function],
+              "options": Object {},
+              "replaceVariables": [Function],
               "targets": Array [
                 Object {
                   "refId": "A",
@@ -952,7 +975,8 @@ exports[`DashboardGrid Can render dashboard grid Should render 1`] = `
               },
               "id": 4,
               "isInView": false,
-              "restoreModel": [Function],
+              "options": Object {},
+              "replaceVariables": [Function],
               "targets": Array [
                 Object {
                   "refId": "A",
@@ -965,7 +989,7 @@ exports[`DashboardGrid Can render dashboard grid Should render 1`] = `
           ],
           "refresh": undefined,
           "revision": undefined,
-          "schemaVersion": 22,
+          "schemaVersion": 23,
           "snapshot": undefined,
           "style": "dark",
           "tags": Array [],
@@ -980,7 +1004,6 @@ exports[`DashboardGrid Can render dashboard grid Should render 1`] = `
           "timezone": "",
           "title": "My dashboard",
           "uid": null,
-          "updatePanel": [Function],
           "version": 0,
         }
       }
@@ -1003,7 +1026,8 @@ exports[`DashboardGrid Can render dashboard grid Should render 1`] = `
           },
           "id": 4,
           "isInView": false,
-          "restoreModel": [Function],
+          "options": Object {},
+          "replaceVariables": [Function],
           "targets": Array [
             Object {
               "refId": "A",

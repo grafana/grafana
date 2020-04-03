@@ -1,15 +1,29 @@
-jest.mock('app/core/store', () => {
-  return {
-    getBool: jest.fn(),
-  };
-});
-
 import _ from 'lodash';
 import config from 'app/core/config';
 import { DashboardExporter } from './DashboardExporter';
 import { DashboardModel } from '../../state/DashboardModel';
-import { DatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { PanelPluginMeta } from '@grafana/data';
+
+jest.mock('app/core/store', () => {
+  return {
+    getBool: jest.fn(),
+    getObject: jest.fn(),
+  };
+});
+
+jest.mock('@grafana/runtime', () => ({
+  getDataSourceSrv: () => ({
+    get: jest.fn(arg => getStub(arg)),
+  }),
+  config: {
+    buildInfo: {},
+    panels: {},
+    featureToggles: {
+      newVariables: false,
+    },
+  },
+  DataSourceWithBackend: jest.fn(),
+}));
 
 describe('given dashboard with repeated panels', () => {
   let dash: any, exported: any;
@@ -90,9 +104,6 @@ describe('given dashboard with repeated panels', () => {
 
     config.buildInfo.version = '3.0.2';
 
-    //Stubs test function calls
-    const datasourceSrvStub = ({ get: jest.fn(arg => getStub(arg)) } as any) as DatasourceSrv;
-
     config.panels['graph'] = {
       id: 'graph',
       name: 'Graph',
@@ -112,7 +123,7 @@ describe('given dashboard with repeated panels', () => {
     } as PanelPluginMeta;
 
     dash = new DashboardModel(dash, {});
-    const exporter = new DashboardExporter(datasourceSrvStub);
+    const exporter = new DashboardExporter();
     exporter.makeExportable(dash).then(clean => {
       exported = clean;
       done();

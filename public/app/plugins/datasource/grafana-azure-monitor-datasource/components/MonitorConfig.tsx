@@ -14,23 +14,23 @@ export interface Props {
   options: AzureDataSourceSettings;
   subscriptions: SelectableValue[];
   makeSameAs: (updatedClientSecret?: string) => void;
-  onUpdateOption: (key: string, val: any) => void;
-  onUpdateSecureOption: (key: string, val: any) => void;
+  onUpdateJsonDataOption: (key: string, val: any) => void;
+  onUpdateSecureJsonDataOption: (key: string, val: any) => void;
   onResetOptionKey: (key: string) => void;
   onLoadSubscriptions: () => void;
 }
 
 export class MonitorConfig extends PureComponent<Props> {
   onAzureCloudSelect = (cloudName: SelectableValue<string>) => {
-    this.props.onUpdateOption('cloudName', cloudName.value);
+    this.props.onUpdateJsonDataOption('cloudName', cloudName.value);
   };
 
   onTenantIdChange = (event: ChangeEvent<HTMLInputElement>) => {
-    this.props.onUpdateOption('tenantId', event.target.value);
+    this.props.onUpdateJsonDataOption('tenantId', event.target.value);
   };
 
   onClientIdChange = (event: ChangeEvent<HTMLInputElement>) => {
-    this.props.onUpdateOption('clientId', event.target.value);
+    this.props.onUpdateJsonDataOption('clientId', event.target.value);
   };
 
   onClientSecretChange = (event: ChangeEvent<HTMLInputElement>) => {
@@ -39,7 +39,7 @@ export class MonitorConfig extends PureComponent<Props> {
     if (options.jsonData.azureLogAnalyticsSameAs && event.target.value) {
       makeSameAs(event.target.value);
     } else {
-      this.props.onUpdateSecureOption('clientSecret', event.target.value);
+      this.props.onUpdateSecureJsonDataOption('clientSecret', event.target.value);
     }
   };
 
@@ -48,7 +48,7 @@ export class MonitorConfig extends PureComponent<Props> {
   };
 
   onSubscriptionSelect = (subscription: SelectableValue<string>) => {
-    this.props.onUpdateOption('subscriptionId', subscription.value);
+    this.props.onUpdateJsonDataOption('subscriptionId', subscription.value);
   };
 
   render() {

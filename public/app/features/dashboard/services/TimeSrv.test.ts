@@ -2,6 +2,12 @@ import { TimeSrv } from './TimeSrv';
 import { ContextSrvStub } from 'test/specs/helpers';
 import { isDateTime, dateTime } from '@grafana/data';
 
+jest.mock('app/core/core', () => ({
+  appEvents: {
+    on: () => {},
+  },
+}));
+
 describe('timeSrv', () => {
   const rootScope = {
     $on: jest.fn(),

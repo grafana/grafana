@@ -104,9 +104,17 @@ export class LoginCtrl extends PureComponent<Props, State> {
     const params = this.props.routeParams;
     // Use window.location.href to force page reload
     if (params.redirect && params.redirect[0] === '/') {
-      window.location.href = config.appSubUrl + params.redirect;
+      if (config.appSubUrl !== '' && !params.redirect.startsWith(config.appSubUrl)) {
+        window.location.href = config.appSubUrl + params.redirect;
+      } else {
+        window.location.href = params.redirect;
+      }
     } else if (this.result.redirectUrl) {
-      window.location.href = config.appSubUrl + this.result.redirectUrl;
+      if (config.appSubUrl !== '' && !this.result.redirectUrl.startsWith(config.appSubUrl)) {
+        window.location.href = config.appSubUrl + this.result.redirectUrl;
+      } else {
+        window.location.href = this.result.redirectUrl;
+      }
     } else {
       window.location.href = config.appSubUrl + '/';
     }

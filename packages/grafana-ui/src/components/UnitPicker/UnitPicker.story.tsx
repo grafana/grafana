@@ -13,4 +13,5 @@ export default {
   },
 };
 
-export const simple = () => <UnitPicker onChange={val => console.log(val)} />;
+export const simple = () => <UnitPicker useNewForms onChange={val => console.log(val)} />;
+export const old = () => <UnitPicker onChange={val => console.log(val)} />;

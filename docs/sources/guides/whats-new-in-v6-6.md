@@ -1,7 +1,7 @@
 +++
-title = "What's New in Grafana v6.6"
+title = "What's new in Grafana v6.6"
 description = "Feature and improvement highlights for Grafana v6.6"
-keywords = ["grafana", "new", "documentation", "6.6"]
+keywords = ["grafana", "new", "documentation", "6.6", "release notes"]
 type = "docs"
 [menu.docs]
 name = "Version 6.6"
@@ -10,9 +10,9 @@ parent = "whatsnew"
 weight = -16
 +++
 
-# What's New in Grafana v6.6
+# What's new in Grafana v6.6
 
-For all details, read the full [CHANGELOG.md](https://github.com/grafana/grafana/blob/master/CHANGELOG.md)
+For all details, read the full [CHANGELOG.md](https://github.com/grafana/grafana/blob/master/CHANGELOG.md).
 
 ## Highlights
 
@@ -131,19 +131,19 @@ This release adds new white labeling options to the grafana.ini file (can also b
 
 ```bash
 [white_labeling]
-# Set to complete url to override login logo
+# Set to complete URL to override login logo
 login_logo = https://my.logo.url/images/logo.png
 
 # Set to complete css background expression to override login background
 login_background = url(http://www.bhmpics.com/wallpapers/starfield-1920x1080.jpg)
 
-# Set to complete url to override menu logo
+# Set to complete URL to override menu logo
 menu_logo = https://my.logo.url/images/logo_icon.png
 
-# Set to complete url to override fav icon (icon shown in browser tab)
+# Set to complete URL to override fav icon (icon shown in browser tab)
 fav_icon = https://my.logo.url/images/logo_icon_32px.png
 
-# Set to complete url to override apple/ios icon
+# Set to complete URL to override apple/ios icon
 apple_touch_icon = https://my.logo.url/images/logo_icon_32px.png
 
 # Below is an example for how to replace the default footer & help links with 2 custom links
@@ -218,4 +218,3 @@ backendSrv.get(‘http://your.url/api’).then(result => {
     this.$scope.$digest();
 });
 ```
-

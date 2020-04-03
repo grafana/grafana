@@ -1,7 +1,5 @@
-export interface MetricTankResultMeta {
-  'schema-name': string;
-  'schema-retentions': string; //"1s:35d:20min:5:1542274085,1min:38d:2h:1:true,10min:120d:6h:1:true,2h:2y:6h:2",
-}
+import { MetricTankSeriesMeta } from './types';
+import { QueryResultMetaNotice } from '@grafana/data';
 
 // https://github.com/grafana/metrictank/blob/master/scripts/config/storage-schemas.conf#L15-L46
 
@@ -19,6 +17,7 @@ function toInteger(val?: string): number | undefined {
   }
   return undefined;
 }
+
 function toBooleanOrTimestamp(val?: string): number | boolean | undefined {
   if (val) {
     if (val === 'true') {
@@ -30,6 +29,44 @@ function toBooleanOrTimestamp(val?: string): number | boolean | undefined {
     return parseInt(val, 10);
   }
   return undefined;
+}
+
+export function getRollupNotice(metaList: MetricTankSeriesMeta[]): QueryResultMetaNotice | null {
+  for (const meta of metaList) {
+    const archiveIndex = meta['archive-read'];
+
+    if (archiveIndex > 0) {
+      const schema = parseSchemaRetentions(meta['schema-retentions']);
+      const intervalString = schema[archiveIndex].interval;
+      const func = meta['consolidate-normfetch'].replace('Consolidator', '');
+
+      return {
+        text: `Data is rolled up, aggregated over ${intervalString} using ${func} function`,
+        severity: 'info',
+        inspect: 'meta',
+      };
+    }
+  }
+
+  return null;
+}
+
+export function getRuntimeConsolidationNotice(metaList: MetricTankSeriesMeta[]): QueryResultMetaNotice | null {
+  for (const meta of metaList) {
+    const runtimeNr = meta['aggnum-rc'];
+
+    if (runtimeNr > 0) {
+      const func = meta['consolidate-rc'].replace('Consolidator', '');
+
+      return {
+        text: `Data is runtime consolidated, ${runtimeNr} datapoints combined using ${func} function`,
+        severity: 'info',
+        inspect: 'meta',
+      };
+    }
+  }
+
+  return null;
 }
 
 export function parseSchemaRetentions(spec: string): RetentionInfo[] {

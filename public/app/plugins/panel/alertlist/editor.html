@@ -4,7 +4,8 @@
     <div class="gf-form">
       <span class="gf-form-label width-8">Show</span>
       <div class="gf-form-select-wrapper max-width-15">
-        <select class="gf-form-input" ng-model="ctrl.panel.show" ng-options="f.value as f.text for f in ctrl.showOptions" ng-change="ctrl.onRefresh()"></select>
+        <select class="gf-form-input" ng-model="ctrl.panel.show"
+          ng-options="f.value as f.text for f in ctrl.showOptions" ng-change="ctrl.onRefresh()"></select>
       </div>
     </div>
     <div class="gf-form">
@@ -14,42 +15,50 @@
     <div class="gf-form" ng-show="ctrl.panel.show === 'current'">
       <span class="gf-form-label width-8">Sort order</span>
       <div class="gf-form-select-wrapper max-width-15">
-        <select class="gf-form-input" ng-model="ctrl.panel.sortOrder" ng-options="f.value as f.text for f in ctrl.sortOrderOptions" ng-change="ctrl.onRefresh()"></select>
+        <select class="gf-form-input" ng-model="ctrl.panel.sortOrder"
+          ng-options="f.value as f.text for f in ctrl.sortOrderOptions" ng-change="ctrl.onRefresh()"></select>
       </div>
     </div>
-    <gf-form-switch class="gf-form" label="Alerts from this dashboard" label-class="width-18" checked="ctrl.panel.onlyAlertsOnDashboard" on-change="ctrl.updateStateFilter()"></gf-form-switch>
+    <gf-form-switch class="gf-form" label="Alerts from this dashboard" label-class="width-18"
+      checked="ctrl.panel.onlyAlertsOnDashboard" on-change="ctrl.updateStateFilter()"></gf-form-switch>
   </div>
   <div class="section gf-form-group" ng-show="ctrl.panel.show === 'current'">
     <h5 class="section-heading">Filter</h5>
     <div class="gf-form">
       <span class="gf-form-label width-8">Alert name</span>
-      <input type="text" class="gf-form-input max-width-15" ng-model="ctrl.panel.nameFilter" placeholder="Alert name query" ng-change="ctrl.onRefresh()" />
+      <input type="text" class="gf-form-input max-width-15" ng-model="ctrl.panel.nameFilter"
+        placeholder="Alert name query" ng-change="ctrl.onRefresh()" />
     </div>
     <div class="gf-form">
       <span class="gf-form-label width-8">Dashboard title</span>
-      <input type="text" class="gf-form-input" placeholder="Dashboard title query" ng-model="ctrl.panel.dashboardFilter" ng-change="ctrl.onRefresh()" ng-model-onblur>
+      <input type="text" class="gf-form-input" placeholder="Dashboard title query" ng-model="ctrl.panel.dashboardFilter"
+        ng-change="ctrl.onRefresh()" ng-model-onblur>
     </div>
     <div class="gf-form">
-      <folder-picker  initial-folder-id="ctrl.panel.folderId"
-                      on-change="ctrl.onFolderChange($folder)"
-                      label-class="width-8"
-                      initial-title="'All'"
-                      enable-reset="true" >
+      <folder-picker initial-folder-id="ctrl.panel.folderId" on-change="ctrl.onFolderChange" label-class="width-8"
+        initial-title="'All'" enable-reset="true">
       </folder-picker>
     </div>
     <div class="gf-form">
-        <span class="gf-form-label width-8">Dashboard tags</span>
-        <bootstrap-tagsinput ng-model="ctrl.panel.dashboardTags" tagclass="label label-tag" placeholder="add tags" on-tags-updated="ctrl.refresh()">
-        </bootstrap-tagsinput>
+      <span class="gf-form-label width-8">Dashboard tags</span>
+      <bootstrap-tagsinput ng-model="ctrl.panel.dashboardTags" tagclass="label label-tag" placeholder="add tags"
+        on-tags-updated="ctrl.refresh()">
+      </bootstrap-tagsinput>
     </div>
   </div>
   <div class="section gf-form-group" ng-show="ctrl.panel.show === 'current'">
     <h5 class="section-heading">State filter</h5>
-    <gf-form-switch class="gf-form" label="Ok" label-class="width-10" checked="ctrl.stateFilter['ok']" on-change="ctrl.updateStateFilter()"></gf-form-switch>
-    <gf-form-switch class="gf-form" label="Paused" label-class="width-10" checked="ctrl.stateFilter['paused']" on-change="ctrl.updateStateFilter()"></gf-form-switch>
-    <gf-form-switch class="gf-form" label="No data" label-class="width-10" checked="ctrl.stateFilter['no_data']" on-change="ctrl.updateStateFilter()"></gf-form-switch>
-    <gf-form-switch class="gf-form" label="Execution error" label-class="width-10" checked="ctrl.stateFilter['execution_error']" on-change="ctrl.updateStateFilter()"></gf-form-switch>
-    <gf-form-switch class="gf-form" label="Alerting" label-class="width-10" checked="ctrl.stateFilter['alerting']" on-change="ctrl.updateStateFilter()"></gf-form-switch>
-    <gf-form-switch class="gf-form" label="Pending" label-class="width-10" checked="ctrl.stateFilter['pending']" on-change="ctrl.updateStateFilter()"></gf-form-switch>
+    <gf-form-switch class="gf-form" label="Ok" label-class="width-10" checked="ctrl.stateFilter['ok']"
+      on-change="ctrl.updateStateFilter()"></gf-form-switch>
+    <gf-form-switch class="gf-form" label="Paused" label-class="width-10" checked="ctrl.stateFilter['paused']"
+      on-change="ctrl.updateStateFilter()"></gf-form-switch>
+    <gf-form-switch class="gf-form" label="No data" label-class="width-10" checked="ctrl.stateFilter['no_data']"
+      on-change="ctrl.updateStateFilter()"></gf-form-switch>
+    <gf-form-switch class="gf-form" label="Execution error" label-class="width-10"
+      checked="ctrl.stateFilter['execution_error']" on-change="ctrl.updateStateFilter()"></gf-form-switch>
+    <gf-form-switch class="gf-form" label="Alerting" label-class="width-10" checked="ctrl.stateFilter['alerting']"
+      on-change="ctrl.updateStateFilter()"></gf-form-switch>
+    <gf-form-switch class="gf-form" label="Pending" label-class="width-10" checked="ctrl.stateFilter['pending']"
+      on-change="ctrl.updateStateFilter()"></gf-form-switch>
   </div>
 </div>

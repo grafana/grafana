@@ -32,7 +32,7 @@ Require all network requests being made by Grafana to go through a proxy server.
 
 ## Limit Viewer query permissions
 
-Users with the Viewer role can enter *any possible query* in *all* data sources available in the **organization**, not just the queries that are defined on the dashboards for which the user has Viewer permissions.
+Users with the Viewer role can enter *any possible query* in *any* of the data sources available in the **organization**, not just the queries that are defined on the dashboards for which the user has Viewer permissions.
 
 **For example:** In a Grafana instance with one data source, one dashboard, and one panel that has one query defined, you might assume that a Viewer can only see the result of the query defined in that panel. Actually, the Viewer has access to send any query to the data source. With a command-line tool like curl (there are lots of tools for this), the Viewer can make their own query to the data source and potentially access sensitive data.
 

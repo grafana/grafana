@@ -13,7 +13,7 @@ interface Props<V, D> {
   /**
    * Render a single value
    */
-  renderValue: (value: V, width: number, height: number, dims: D) => JSX.Element;
+  renderValue: (props: VizRepeaterRenderValueProps<V, D>) => JSX.Element;
   height: number;
   width: number;
   source: any; // If this changes, new values will be requested
@@ -21,6 +21,14 @@ interface Props<V, D> {
   renderCounter: number; // force update of values & render
   orientation: VizOrientation;
   itemSpacing?: number;
+}
+
+export interface VizRepeaterRenderValueProps<V, D = {}> {
+  value: V;
+  width: number;
+  height: number;
+  orientation: VizOrientation;
+  alignmentFactors: D;
 }
 
 interface DefaultProps {
@@ -99,13 +107,14 @@ export class VizRepeater<V, D = {}> extends PureComponent<Props<V, D>, State<V>>
     itemStyles.width = `${vizWidth}px`;
     itemStyles.height = `${vizHeight}px`;
 
-    const dims = getAlignmentFactors ? getAlignmentFactors(values, vizWidth, vizHeight) : ({} as D);
+    const alignmentFactors = getAlignmentFactors ? getAlignmentFactors(values, vizWidth, vizHeight) : ({} as D);
+
     return (
       <div style={repeaterStyle}>
         {values.map((value, index) => {
           return (
             <div key={index} style={getItemStylesForIndex(itemStyles, index, values.length)}>
-              {renderValue(value, vizWidth, vizHeight, dims)}
+              {renderValue({ value, width: vizWidth, height: vizHeight, alignmentFactors, orientation })}
             </div>
           );
         })}

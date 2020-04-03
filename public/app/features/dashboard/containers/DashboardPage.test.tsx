@@ -2,7 +2,7 @@ import React from 'react';
 import { shallow, ShallowWrapper } from 'enzyme';
 import { DashboardPage, mapStateToProps, Props, State } from './DashboardPage';
 import { DashboardModel } from '../state';
-import { cleanUpDashboard } from '../state/actions';
+import { cleanUpDashboard } from '../state/reducers';
 import {
   mockToolkitActionCreator,
   mockToolkitActionCreatorWithoutPayload,
@@ -198,10 +198,6 @@ describe('DashboardPage', () => {
     it('should render settings view', () => {
       expect(ctx.wrapper).toMatchSnapshot();
     });
-
-    it('should set animation state', () => {
-      expect(ctx.wrapper?.state().isSettingsOpening).toBe(true);
-    });
   });
 
   dashboardPageScenario('When adding panel', ctx => {
@@ -215,7 +211,7 @@ describe('DashboardPage', () => {
     it('should set scrollTop to 0', () => {
       expect(ctx.wrapper).not.toBe(null);
       expect(ctx.wrapper?.state()).not.toBe(null);
-      expect(ctx.wrapper?.state().scrollTop).toBe(0);
+      expect(ctx.wrapper?.state().updateScrollTop).toBe(0);
     });
 
     it('should add panel widget to dashboard panels', () => {
@@ -271,7 +267,10 @@ describe('DashboardPage', () => {
           edit: false,
         },
       },
-      dashboard: {},
+      panelEditorNew: {},
+      dashboard: {
+        getModel: () => ({} as DashboardModel),
+      },
     } as any);
 
     expect(props.urlFullscreen).toBe(true);
@@ -287,7 +286,10 @@ describe('DashboardPage', () => {
           edit: 'true',
         },
       },
-      dashboard: {},
+      panelEditorNew: {},
+      dashboard: {
+        getModel: () => ({} as DashboardModel),
+      },
     } as any);
 
     expect(props.urlFullscreen).toBe(false);

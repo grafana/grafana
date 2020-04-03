@@ -193,7 +193,7 @@ export function appendResponseToBufferedData(response: LokiTailResponse, data: M
 
     // Add each line
     for (const [ts, line] of stream.values) {
-      data.values.ts.add(ts.substr(0, ts.length - 6));
+      data.values.ts.add(new Date(parseInt(ts.substr(0, ts.length - 6), 10)).toISOString());
       data.values.tsNs.add(ts);
       data.values.line.add(line);
       data.values.labels.add(unique);
@@ -395,11 +395,16 @@ export const enhanceDataFrame = (dataFrame: DataFrame, config: LokiOptions | nul
 
   const fields = derivedFields.reduce((acc, field) => {
     const config: FieldConfig = {};
-    if (field.url) {
+    if (field.url || field.datasourceName) {
       config.links = [
         {
           url: field.url,
           title: '',
+          meta: field.datasourceName
+            ? {
+                datasourceName: field.datasourceName,
+              }
+            : undefined,
         },
       ];
     }

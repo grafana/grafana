@@ -6,9 +6,7 @@ import { GrafanaTheme } from '@grafana/data';
 const title = { fontWeight: 500, fontSize: '26px', lineHeight: '123%' };
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
-  const backgroundUrl = theme.isDark
-    ? '/public/img/licensing/header_dark.svg'
-    : '/public/img/licensing/header_light.svg';
+  const backgroundUrl = theme.isDark ? 'public/img/licensing/header_dark.svg' : 'public/img/licensing/header_light.svg';
   const footerBg = theme.isDark ? theme.colors.dark9 : theme.colors.gray6;
 
   return {
@@ -57,7 +55,7 @@ export const LicenseChrome: React.FC<Props> = ({ header, editionNotice, subheade
           }}
         >
           <img
-            src="/public/img/grafana_icon.svg"
+            src="public/img/grafana_icon.svg"
             alt="Grafana"
             width="80px"
             style={{ position: 'absolute', left: '23px', top: '20px' }}

@@ -7,7 +7,7 @@ type = "docs"
 name = "Glossary"
 identifier = "glossary"
 parent = "guides"
-weight = 4
+weight = 400
 +++
 
 # Glossary

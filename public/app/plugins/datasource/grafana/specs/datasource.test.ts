@@ -1,4 +1,5 @@
 import { DataSourceInstanceSettings, dateTime } from '@grafana/data';
+
 import { backendSrv } from 'app/core/services/backend_srv'; // will use the version in __mocks__
 import { GrafanaDatasource } from '../datasource';
 

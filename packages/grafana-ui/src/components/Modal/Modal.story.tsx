@@ -1,9 +1,12 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { storiesOf } from '@storybook/react';
 import { oneLineTrim } from 'common-tags';
 import { text, boolean } from '@storybook/addon-knobs';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
+import { UseState } from '../../utils/storybook/UseState';
 import { Modal } from './Modal';
+import { ModalTabsHeader } from './ModalTabsHeader';
+import { TabContent } from '../Tabs/TabContent';
 
 const getKnobs = () => {
   return {
@@ -24,7 +27,6 @@ amet.`
 };
 
 const ModalStories = storiesOf('General/Modal', module);
-
 ModalStories.addDecorator(withCenteredStory);
 
 ModalStories.add('default', () => {
@@ -33,7 +35,7 @@ ModalStories.add('default', () => {
     <Modal
       title={
         <div className="modal-header-title">
-          <i className="fa fa-share-square-o" />
+          <i className="fa fa-exclamation-triangle" />
           <span className="p-l-1">My Modal</span>
         </div>
       }
@@ -41,5 +43,43 @@ ModalStories.add('default', () => {
     >
       {body}
     </Modal>
+  );
+});
+
+const tabs = [
+  { label: '1st child', value: 'first', active: true },
+  { label: '2nd child', value: 'second', active: false },
+  { label: '3rd child', value: 'third', active: false },
+];
+
+ModalStories.add('with tabs', () => {
+  const [activeTab, setActiveTab] = useState('first');
+  const modalHeader = (
+    <ModalTabsHeader
+      title="Modal With Tabs"
+      icon="cog"
+      tabs={tabs}
+      activeTab={activeTab}
+      onChangeTab={t => {
+        setActiveTab(t.value);
+      }}
+    />
+  );
+  return (
+    <UseState initialState={tabs}>
+      {(state, updateState) => {
+        return (
+          <div>
+            <Modal title={modalHeader} isOpen={true}>
+              <TabContent>
+                {activeTab === state[0].value && <div>First tab content</div>}
+                {activeTab === state[1].value && <div>Second tab content</div>}
+                {activeTab === state[2].value && <div>Third tab content</div>}
+              </TabContent>
+            </Modal>
+          </div>
+        );
+      }}
+    </UseState>
   );
 });

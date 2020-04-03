@@ -1,5 +1,5 @@
 import angular from 'angular';
-import { dateMath, Field } from '@grafana/data';
+import { CoreApp, DataQueryRequest, dateMath, Field } from '@grafana/data';
 import _ from 'lodash';
 import { ElasticDatasource } from './datasource';
 import { toUtc, dateTime } from '@grafana/data';
@@ -7,7 +7,7 @@ import { backendSrv } from 'app/core/services/backend_srv'; // will use the vers
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { DataSourceInstanceSettings } from '@grafana/data';
-import { ElasticsearchOptions } from './types';
+import { ElasticsearchOptions, ElasticsearchQuery } from './types';
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
@@ -37,26 +37,41 @@ describe('ElasticDatasource', function(this: any) {
     getAdhocFilters: jest.fn(() => []),
   };
 
-  const timeSrv: any = {
-    time: { from: 'now-1h', to: 'now' },
-    timeRange: jest.fn(() => {
-      return {
-        from: dateMath.parse(timeSrv.time.from, false),
-        to: dateMath.parse(timeSrv.time.to, true),
-      };
-    }),
-    setTime: jest.fn(time => {
-      this.time = time;
-    }),
-  };
+  const timeSrv: any = createTimeSrv('now-1h');
 
   const ctx = {
     $rootScope,
   } as any;
 
+  function createTimeSrv(from: string) {
+    const srv: any = {
+      time: { from: from, to: 'now' },
+    };
+
+    srv.timeRange = jest.fn(() => {
+      return {
+        from: dateMath.parse(srv.time.from, false),
+        to: dateMath.parse(srv.time.to, true),
+      };
+    });
+
+    srv.setTime = jest.fn(time => {
+      srv.time = time;
+    });
+
+    return srv;
+  }
+
   function createDatasource(instanceSettings: DataSourceInstanceSettings<ElasticsearchOptions>) {
+    createDatasourceWithTime(instanceSettings, timeSrv as TimeSrv);
+  }
+
+  function createDatasourceWithTime(
+    instanceSettings: DataSourceInstanceSettings<ElasticsearchOptions>,
+    timeSrv: TimeSrv
+  ) {
     instanceSettings.jsonData = instanceSettings.jsonData || ({} as ElasticsearchOptions);
-    ctx.ds = new ElasticDatasource(instanceSettings, templateSrv as TemplateSrv, timeSrv as TimeSrv);
+    ctx.ds = new ElasticDatasource(instanceSettings, templateSrv as TemplateSrv, timeSrv);
   }
 
   describe('When testing datasource with index pattern', () => {
@@ -355,6 +370,123 @@ describe('ElasticDatasource', function(this: any) {
     });
   });
 
+  describe('When getting field mappings on indices with gaps', () => {
+    const twoWeekTimeSrv: any = createTimeSrv('now-2w');
+
+    const basicResponse = {
+      data: {
+        metricbeat: {
+          mappings: {
+            metricsets: {
+              _all: {},
+              properties: {
+                '@timestamp': { type: 'date' },
+                beat: {
+                  properties: {
+                    hostname: { type: 'string' },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    };
+
+    const alternateResponse = {
+      data: {
+        metricbeat: {
+          mappings: {
+            metricsets: {
+              _all: {},
+              properties: {
+                '@timestamp': { type: 'date' },
+              },
+            },
+          },
+        },
+      },
+    };
+
+    beforeEach(() => {
+      createDatasourceWithTime(
+        {
+          url: 'http://es.com',
+          database: '[asd-]YYYY.MM.DD',
+          jsonData: { interval: 'Daily', esVersion: 50 } as ElasticsearchOptions,
+        } as DataSourceInstanceSettings<ElasticsearchOptions>,
+        twoWeekTimeSrv
+      );
+    });
+
+    it('should return fields of the newest available index', async () => {
+      const twoDaysBefore = toUtc()
+        .subtract(2, 'day')
+        .format('YYYY.MM.DD');
+
+      const threeDaysBefore = toUtc()
+        .subtract(3, 'day')
+        .format('YYYY.MM.DD');
+
+      datasourceRequestMock.mockImplementation(options => {
+        if (options.url === `http://es.com/asd-${twoDaysBefore}/_mapping`) {
+          return Promise.resolve(basicResponse);
+        } else if (options.url === `http://es.com/asd-${threeDaysBefore}/_mapping`) {
+          return Promise.resolve(alternateResponse);
+        }
+        return Promise.reject({ status: 404 });
+      });
+
+      const fieldObjects = await ctx.ds.getFields({
+        find: 'fields',
+        query: '*',
+      });
+      const fields = _.map(fieldObjects, 'text');
+      expect(fields).toEqual(['@timestamp', 'beat.hostname']);
+    });
+
+    it('should not retry when ES is down', async () => {
+      const twoDaysBefore = toUtc()
+        .subtract(2, 'day')
+        .format('YYYY.MM.DD');
+
+      datasourceRequestMock.mockImplementation(options => {
+        if (options.url === `http://es.com/asd-${twoDaysBefore}/_mapping`) {
+          return Promise.resolve(basicResponse);
+        }
+        return Promise.reject({ status: 500 });
+      });
+
+      expect.assertions(2);
+      try {
+        await ctx.ds.getFields({
+          find: 'fields',
+          query: '*',
+        });
+      } catch (e) {
+        expect(e).toStrictEqual({ status: 500 });
+        expect(datasourceRequestMock).toBeCalledTimes(1);
+      }
+    });
+
+    it('should not retry more than 7 indices', async () => {
+      datasourceRequestMock.mockImplementation(() => {
+        return Promise.reject({ status: 404 });
+      });
+
+      expect.assertions(2);
+      try {
+        await ctx.ds.getFields({
+          find: 'fields',
+          query: '*',
+        });
+      } catch (e) {
+        expect(e).toStrictEqual({ status: 404 });
+        expect(datasourceRequestMock).toBeCalledTimes(7);
+      }
+    });
+  });
+
   describe('When getting fields from ES 7.0', () => {
     beforeEach(() => {
       createDatasource({
@@ -613,7 +745,56 @@ describe('ElasticDatasource', function(this: any) {
       expect(body['aggs']['1']['terms'].size).not.toBe(0);
     });
   });
+
+  describe('query', () => {
+    it('should replace range as integer not string', () => {
+      const dataSource = new ElasticDatasource(
+        {
+          url: 'http://es.com',
+          database: '[asd-]YYYY.MM.DD',
+          jsonData: {
+            interval: 'Daily',
+            esVersion: 2,
+            timeField: '@time',
+          },
+        } as DataSourceInstanceSettings<ElasticsearchOptions>,
+        templateSrv as TemplateSrv,
+        timeSrv as TimeSrv
+      );
+      (dataSource as any).post = jest.fn(() => Promise.resolve({ responses: [] }));
+      dataSource.query(createElasticQuery());
+
+      const query = ((dataSource as any).post as jest.Mock).mock.calls[0][1];
+      expect(typeof JSON.parse(query.split('\n')[1]).query.bool.filter[0].range['@time'].gte).toBe('number');
+    });
+  });
 });
+
+const createElasticQuery = (): DataQueryRequest<ElasticsearchQuery> => {
+  return {
+    requestId: '',
+    dashboardId: 0,
+    interval: '',
+    panelId: 0,
+    scopedVars: {},
+    timezone: '',
+    app: CoreApp.Dashboard,
+    startTime: 0,
+    range: {
+      from: dateTime([2015, 4, 30, 10]),
+      to: dateTime([2015, 5, 1, 10]),
+    } as any,
+    targets: [
+      {
+        refId: '',
+        isLogsQuery: false,
+        bucketAggs: [{ type: 'date_histogram', field: '@timestamp', id: '2' }],
+        metrics: [{ type: 'count', id: '' }],
+        query: 'test',
+      },
+    ],
+  };
+};
 
 const logsResponse = {
   data: {

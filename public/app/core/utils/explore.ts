@@ -66,17 +66,17 @@ export interface GetExploreUrlArguments {
   datasourceSrv: DataSourceSrv;
   timeSrv: TimeSrv;
 }
-export async function getExploreUrl(args: GetExploreUrlArguments) {
+export async function getExploreUrl(args: GetExploreUrlArguments): Promise<string | undefined> {
   const { panel, panelTargets, panelDatasource, datasourceSrv, timeSrv } = args;
   let exploreDatasource = panelDatasource;
   let exploreTargets: DataQuery[] = panelTargets;
-  let url: string;
+  let url: string | undefined;
 
   // Mixed datasources need to choose only one datasource
-  if (panelDatasource.meta.id === 'mixed' && exploreTargets) {
+  if (panelDatasource.meta?.id === 'mixed' && exploreTargets) {
     // Find first explore datasource among targets
     for (const t of exploreTargets) {
-      const datasource = await datasourceSrv.get(t.datasource);
+      const datasource = await datasourceSrv.get(t.datasource || undefined);
       if (datasource) {
         exploreDatasource = datasource;
         exploreTargets = panelTargets.filter(t => t.datasource === datasource.name);
@@ -108,8 +108,7 @@ export async function getExploreUrl(args: GetExploreUrlArguments) {
     const exploreState = JSON.stringify({ ...state, originPanelId: panel.id });
     url = renderUrl('/explore', { left: exploreState });
   }
-  const finalUrl = config.appSubUrl + url;
-  return finalUrl;
+  return url;
 }
 
 export function buildQueryTransaction(
@@ -184,7 +183,7 @@ enum ParseUiStateIndex {
   Strategy = 3,
 }
 
-export const safeParseJson = (text: string) => {
+export const safeParseJson = (text?: string): any | undefined => {
   if (!text) {
     return;
   }
@@ -366,7 +365,7 @@ export function clearHistory(datasourceId: string) {
 }
 
 export const getQueryKeys = (queries: DataQuery[], datasourceInstance: DataSourceApi): string[] => {
-  const queryKeys = queries.reduce((newQueryKeys, query, index) => {
+  const queryKeys = queries.reduce<string[]>((newQueryKeys, query, index) => {
     const primaryKey = datasourceInstance && datasourceInstance.name ? datasourceInstance.name : query.key;
     return newQueryKeys.concat(`${primaryKey}-${index}`);
   }, []);
@@ -382,7 +381,7 @@ export const getTimeRange = (timeZone: TimeZone, rawRange: RawTimeRange): TimeRa
   };
 };
 
-const parseRawTime = (value: any): TimeFragment => {
+const parseRawTime = (value: any): TimeFragment | null => {
   if (value === null) {
     return null;
   }
@@ -443,7 +442,7 @@ export const getValueWithRefId = (value?: any): any => {
   return undefined;
 };
 
-export const getFirstQueryErrorWithoutRefId = (errors?: DataQueryError[]) => {
+export const getFirstQueryErrorWithoutRefId = (errors?: DataQueryError[]): DataQueryError | undefined => {
   if (!errors) {
     return undefined;
   }
@@ -501,6 +500,8 @@ const sortInDescendingOrder = (a: LogRowModel, b: LogRowModel) => {
 export enum SortOrder {
   Descending = 'Descending',
   Ascending = 'Ascending',
+  DatasourceAZ = 'Datasource A-Z',
+  DatasourceZA = 'Datasource Z-A',
 }
 
 export const refreshIntervalToSortOrder = (refreshInterval?: string) =>
@@ -529,7 +530,7 @@ export const stopQueryState = (querySubscription: Unsubscribable) => {
   }
 };
 
-export function getIntervals(range: TimeRange, lowLimit: string, resolution: number): IntervalValues {
+export function getIntervals(range: TimeRange, lowLimit: string, resolution?: number): IntervalValues {
   if (!resolution) {
     return { interval: '1s', intervalMs: 1000 };
   }
@@ -540,3 +541,8 @@ export function getIntervals(range: TimeRange, lowLimit: string, resolution: num
 export function deduplicateLogRowsById(rows: LogRowModel[]) {
   return _.uniqBy(rows, 'uid');
 }
+
+export const getFirstNonQueryRowSpecificError = (queryErrors?: DataQueryError[]): DataQueryError | undefined => {
+  const refId = getValueWithRefId(queryErrors);
+  return refId ? undefined : getFirstQueryErrorWithoutRefId(queryErrors);
+};

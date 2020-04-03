@@ -50,7 +50,7 @@ export const getInputStyles = stylesFactory(({ theme, invalid = false }: StyleDe
   `;
 
   return {
-    // Wraps inputWraper and addons
+    // Wraps inputWrapper and addons
     wrapper: cx(
       css`
         label: input-wrapper;
@@ -63,6 +63,19 @@ export const getInputStyles = stylesFactory(({ theme, invalid = false }: StyleDe
           .suffix,
           .input {
             border-color: ${invalid ? colors.redBase : colors.formInputBorder};
+          }
+
+          // only show number buttons on hover
+          input[type='number'] {
+            -moz-appearance: number-input;
+            -webkit-appearance: number-input;
+            appearance: textfield;
+          }
+
+          input[type='number']::-webkit-inner-spin-button,
+          input[type='number']::-webkit-outer-spin-button {
+            -webkit-appearance: inner-spin-button !important;
+            opacity: 1;
           }
         }
       `
@@ -129,21 +142,6 @@ export const getInputStyles = stylesFactory(({ theme, invalid = false }: StyleDe
         border-radius: ${borderRadius};
         height: 100%;
         width: 100%;
-
-        /*
-         Restoring increase/decrease spinner on number inputs. Overwriting rules implemented in
-         https://github.com/grafana/grafana/commit/488fe62f158a9e0a0bced2b678ada5d43cf3998e.
-         */
-
-        &[type='number']::-webkit-outer-spin-button,
-        &[type='number']::-webkit-inner-spin-button {
-          -webkit-appearance: inner-spin-button !important;
-          opacity: 1;
-        }
-
-        &[type='number'] {
-          -moz-appearance: number-input;
-        }
       `
     ),
     inputDisabled: css`
@@ -151,37 +149,36 @@ export const getInputStyles = stylesFactory(({ theme, invalid = false }: StyleDe
       color: ${colors.formInputDisabledText};
     `,
     addon: css`
-        label: input-addon;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        flex-grow: 0;
-        flex-shrink: 0;
-        position: relative;
+      label: input-addon;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      flex-grow: 0;
+      flex-shrink: 0;
+      position: relative;
 
-        &:first-child {
+      &:first-child {
+        border-top-right-radius: 0;
+        border-bottom-right-radius: 0;
+        > :last-child {
           border-top-right-radius: 0;
           border-bottom-right-radius: 0;
-          > :last-child {
-            border-top-right-radius: 0;
-            border-bottom-right-radius: 0;
-          }
         }
+      }
 
-        &:last-child {
+      &:last-child {
+        border-top-left-radius: 0;
+        border-bottom-left-radius: 0;
+        > :first-child {
           border-top-left-radius: 0;
           border-bottom-left-radius: 0;
-          > :first-child {
-            border-top-left-radius: 0;
-            border-bottom-left-radius: 0;
-          }
         }
-        > *:focus {
-          /* we want anything that has focus and is an addon to be above input */
-          z-index: 2;
-        }
-        }
-      `,
+      }
+      > *:focus {
+        /* we want anything that has focus and is an addon to be above input */
+        z-index: 2;
+      }
+    `,
     prefix: cx(
       prefixSuffix,
       css`
@@ -214,7 +211,7 @@ export const getInputStyles = stylesFactory(({ theme, invalid = false }: StyleDe
 });
 
 export const Input = React.forwardRef<HTMLInputElement, Props>((props, ref) => {
-  const { addonAfter, addonBefore, prefix, suffix, invalid, loading, size = 'auto', ...restProps } = props;
+  const { className, addonAfter, addonBefore, prefix, suffix, invalid, loading, size = 'auto', ...restProps } = props;
   /**
    * Prefix & suffix are positioned absolutely within inputWrapper. We use client rects below to apply correct padding to the input
    * when prefix/suffix is larger than default (28px = 16px(icon) + 12px(left/right paddings)).
@@ -227,7 +224,7 @@ export const Input = React.forwardRef<HTMLInputElement, Props>((props, ref) => {
   const styles = getInputStyles({ theme, invalid: !!invalid });
 
   return (
-    <div className={cx(styles.wrapper, inputSizes()[size])}>
+    <div className={cx(styles.wrapper, inputSizes()[size], className)}>
       {!!addonBefore && <div className={styles.addon}>{addonBefore}</div>}
 
       <div className={styles.inputWrapper}>
@@ -259,3 +256,5 @@ export const Input = React.forwardRef<HTMLInputElement, Props>((props, ref) => {
     </div>
   );
 });
+
+Input.displayName = 'Input';

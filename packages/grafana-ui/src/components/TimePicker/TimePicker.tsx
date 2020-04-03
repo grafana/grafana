@@ -69,19 +69,6 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
         font-size: ${theme.typography.size.md};
       }
     `,
-    syncedTimePicker: css`
-      label: syncedTimePicker;
-      border-color: ${theme.colors.orangeDark};
-      background-image: none;
-      background-color: transparent;
-      color: ${theme.colors.orangeDark};
-      &:focus,
-      :hover {
-        color: ${theme.colors.orangeDark};
-        background-image: none;
-        background-color: transparent;
-      }
-    `,
     noRightBorderStyle: css`
       label: noRightBorderStyle;
       border-right: 0;
@@ -160,7 +147,7 @@ export class UnthemedTimePicker extends PureComponent<Props, State> {
     const timePickerIconClass = cx('fa fa-clock-o fa-fw', { ['icon-brand-gradient']: syncedTimePicker });
     const timePickerButtonClass = cx('btn navbar-button navbar-button--tight', {
       [`btn--radius-right-0 ${styles.noRightBorderStyle}`]: !!timeSyncButton,
-      [`explore-active-button-glow ${styles.syncedTimePicker}`]: syncedTimePicker,
+      [`explore-active-button`]: syncedTimePicker,
     });
 
     return (
