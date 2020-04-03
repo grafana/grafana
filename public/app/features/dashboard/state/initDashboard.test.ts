@@ -7,9 +7,30 @@ import { dashboardInitCompleted, dashboardInitFetching, dashboardInitServices } 
 import { updateLocation } from '../../../core/actions';
 import { setEchoSrv } from '@grafana/runtime';
 import { Echo } from '../../../core/services/echo/Echo';
+import { getConfig } from 'app/core/config';
+import { variableAdapters } from 'app/features/variables/adapters';
+import { createConstantVariableAdapter } from 'app/features/variables/constant/adapter';
+import { addVariable } from 'app/features/variables/state/sharedReducer';
+import { constantBuilder } from 'app/features/variables/shared/testing/builders';
 
 jest.mock('app/core/services/backend_srv');
+jest.mock('app/features/dashboard/services/TimeSrv', () => {
+  const original = jest.requireActual('app/features/dashboard/services/TimeSrv');
+  return {
+    ...original,
+    getTimeSrv: () => ({
+      ...original.getTimeSrv(),
+      timeRange: jest.fn().mockReturnValue(undefined),
+    }),
+  };
+});
+jest.mock('app/core/services/context_srv', () => ({
+  contextSrv: {
+    user: { orgId: 1, orgName: 'TestOrg' },
+  },
+}));
 
+variableAdapters.register(createConstantVariableAdapter());
 const mockStore = configureMockStore([thunk]);
 
 interface ScenarioContext {
@@ -61,6 +82,9 @@ function describeInitScenario(description: string, scenarioFn: ScenarioFn) {
               ],
             },
           ],
+          templating: {
+            list: [constantBuilder().build()],
+          },
         },
       })),
     };
@@ -118,6 +142,9 @@ function describeInitScenario(description: string, scenarioFn: ScenarioFn) {
             queries: [],
           },
         },
+        templating: {
+          variables: {},
+        },
       },
       setup: (fn: () => void) => {
         setupFn = fn;
@@ -166,10 +193,16 @@ describeInitScenario('Initializing new dashboard', ctx => {
   it('Should initialize services', () => {
     expect(ctx.timeSrv.init).toBeCalled();
     expect(ctx.annotationsSrv.init).toBeCalled();
-    expect(ctx.variableSrv.init).toBeCalled();
     expect(ctx.unsavedChangesSrv.init).toBeCalled();
     expect(ctx.keybindingSrv.setupDashboardBindings).toBeCalled();
     expect(ctx.dashboardSrv.setCurrent).toBeCalled();
+  });
+
+  it('Should initialize variableSrv if newVariables is disabled', () => {
+    if (getConfig().featureToggles.newVariables) {
+      return expect.assertions(0);
+    }
+    expect(ctx.variableSrv.init).toBeCalled();
   });
 });
 
@@ -224,16 +257,30 @@ describeInitScenario('Initializing existing dashboard', ctx => {
   });
 
   it('Should send action dashboardInitCompleted', () => {
-    expect(ctx.actions[3].type).toBe(dashboardInitCompleted.type);
-    expect(ctx.actions[3].payload.title).toBe('My cool dashboard');
+    const index = getConfig().featureToggles.newVariables ? 4 : 3;
+    expect(ctx.actions[index].type).toBe(dashboardInitCompleted.type);
+    expect(ctx.actions[index].payload.title).toBe('My cool dashboard');
   });
 
   it('Should initialize services', () => {
     expect(ctx.timeSrv.init).toBeCalled();
     expect(ctx.annotationsSrv.init).toBeCalled();
-    expect(ctx.variableSrv.init).toBeCalled();
     expect(ctx.unsavedChangesSrv.init).toBeCalled();
     expect(ctx.keybindingSrv.setupDashboardBindings).toBeCalled();
     expect(ctx.dashboardSrv.setCurrent).toBeCalled();
+  });
+
+  it('Should initialize variableSrv if newVariables is disabled', () => {
+    if (getConfig().featureToggles.newVariables) {
+      return expect.assertions(0);
+    }
+    expect(ctx.variableSrv.init).toBeCalled();
+  });
+
+  it('Should initialize redux variables if newVariables is enabled', () => {
+    if (!getConfig().featureToggles.newVariables) {
+      return expect.assertions(0);
+    }
+    expect(ctx.actions[3].type).toBe(addVariable.type);
   });
 });

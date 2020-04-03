@@ -1,6 +1,7 @@
 import { Controller as InputControl } from 'react-hook-form';
 import { getFormStyles } from './getFormStyles';
 import { Label } from './Label';
+// To be removed
 import { Input } from './Input/Input';
 import { RadioButtonGroup } from './RadioButtonGroup/RadioButtonGroup';
 import { Form } from './Form';
@@ -15,6 +16,7 @@ const Forms = {
   Switch,
   getFormStyles,
   Label,
+  // To be removed
   Input,
   Form,
   Field,
