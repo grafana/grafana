@@ -22,7 +22,6 @@ $mobile-menu-breakpoint: md;
   }
 
   @include media-breakpoint-up($mobile-menu-breakpoint) {
-    border-right: $side-menu-border;
     height: auto;
     box-shadow: $side-menu-shadow;
     position: relative;
