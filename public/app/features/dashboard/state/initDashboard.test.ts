@@ -14,8 +14,23 @@ import { addVariable } from 'app/features/variables/state/sharedReducer';
 import { constantBuilder } from 'app/features/variables/shared/testing/builders';
 
 jest.mock('app/core/services/backend_srv');
-variableAdapters.register(createConstantVariableAdapter());
+jest.mock('app/features/dashboard/services/TimeSrv', () => {
+  const original = jest.requireActual('app/features/dashboard/services/TimeSrv');
+  return {
+    ...original,
+    getTimeSrv: () => ({
+      ...original.getTimeSrv(),
+      timeRange: jest.fn().mockReturnValue(undefined),
+    }),
+  };
+});
+jest.mock('app/core/services/context_srv', () => ({
+  contextSrv: {
+    user: { orgId: 1, orgName: 'TestOrg' },
+  },
+}));
 
+variableAdapters.register(createConstantVariableAdapter());
 const mockStore = configureMockStore([thunk]);
 
 interface ScenarioContext {
