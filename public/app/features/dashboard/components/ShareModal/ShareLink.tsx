@@ -1,6 +1,7 @@
 import React, { PureComponent } from 'react';
 import { e2e } from '@grafana/e2e';
-import { Switch, Select, ClipboardButton } from '@grafana/ui';
+import { Switch, LegacyForms, ClipboardButton } from '@grafana/ui';
+const { Select } = LegacyForms;
 import { SelectableValue, PanelModel, AppEvents } from '@grafana/data';
 import { DashboardModel } from 'app/features/dashboard/state';
 import { buildImageUrl, buildShareUrl } from './utils';
@@ -121,7 +122,7 @@ export class ShareLink extends PureComponent<Props, State> {
                     <input type="text" className="gf-form-input" defaultValue={shareUrl} />
                   </div>
                   <div className="gf-form">
-                    <ClipboardButton variant="inverse" getText={this.getShareUrl} onClipboardCopy={this.onShareUrlCopy}>
+                    <ClipboardButton variant="primary" getText={this.getShareUrl} onClipboardCopy={this.onShareUrlCopy}>
                       Copy
                     </ClipboardButton>
                   </div>

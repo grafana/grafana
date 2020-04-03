@@ -58,7 +58,7 @@ export class NewsPanelEditor extends PureComponent<PanelEditorProps<NewsOptions>
               <div>
                 <br />
                 <div>If the feed is unable to connect, consider a CORS proxy</div>
-                <Button variant="inverse" onClick={this.onSetProxyPrefix}>
+                <Button variant="secondary" onClick={this.onSetProxyPrefix}>
                   Use Proxy
                 </Button>
               </div>

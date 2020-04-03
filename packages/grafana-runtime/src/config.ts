@@ -71,7 +71,7 @@ export class GrafanaBootConfig {
     expressions: false,
     newEdit: false,
     meta: false,
-    newVariables: false,
+    newVariables: true,
     tracingIntegration: false,
   };
   licenseInfo: LicenseInfo = {} as LicenseInfo;

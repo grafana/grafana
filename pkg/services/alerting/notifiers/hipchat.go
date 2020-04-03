@@ -148,7 +148,7 @@ func (hc *HipChatNotifier) Notify(evalContext *alerting.EvalContext) error {
 		"date":       evalContext.EndTime.Unix(),
 		"attributes": attributes,
 	}
-	if evalContext.ImagePublicURL != "" {
+	if hc.NeedsImage() && evalContext.ImagePublicURL != "" {
 		card["thumbnail"] = map[string]interface{}{
 			"url":    evalContext.ImagePublicURL,
 			"url@2x": evalContext.ImagePublicURL,

@@ -5,13 +5,13 @@ import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { withStoryContainer } from '../../utils/storybook/withStoryContainer';
 import { Field } from './Field';
 import { Input } from './Input/Input';
-import { Button } from './Button';
+import { Button } from '../Button';
 import { Form } from './Form';
 import { Switch } from './Switch';
 import { Checkbox } from './Checkbox';
 
 import { RadioButtonGroup } from './RadioButtonGroup/RadioButtonGroup';
-import { Select } from './Select/Select';
+import { Select } from '../Select/Select';
 import Forms from './index';
 import mdx from './Form.mdx';
 import { ValidateResult } from 'react-hook-form';

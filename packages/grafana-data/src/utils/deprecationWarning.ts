@@ -6,7 +6,7 @@ const history: KeyValue<number> = {};
 export const deprecationWarning = (file: string, oldName: string, newName?: string) => {
   let message = `[Deprecation warning] ${file}: ${oldName} is deprecated`;
   if (newName) {
-    message += `.  Use ${newName} instead`;
+    message += `. Use ${newName} instead`;
   }
   const now = Date.now();
   const last = history[message];

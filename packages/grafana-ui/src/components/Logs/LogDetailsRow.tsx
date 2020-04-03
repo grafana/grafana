@@ -127,7 +127,7 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
                   <>
                     &nbsp;
                     <LinkButton
-                      variant={'transparent'}
+                      variant="link"
                       size={'sm'}
                       icon={cx('fa', link.onClick ? 'fa-list' : 'fa-external-link')}
                       href={link.href}
