@@ -3,6 +3,7 @@ import { shallow } from 'enzyme';
 import { FolderPicker } from './FolderPicker';
 
 jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
   getBackendSrv: () => ({
     search: jest.fn(() => [
       { title: 'Dash 1', id: 'A' },

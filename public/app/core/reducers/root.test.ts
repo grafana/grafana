@@ -8,6 +8,7 @@ import { cleanUpAction } from '../actions/cleanUp';
 import { initialTeamsState, teamsLoaded } from '../../features/teams/state/reducers';
 
 jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
   config: {
     bootData: {
       navTree: [] as NavModelItem[],
