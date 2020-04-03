@@ -1,4 +1,9 @@
 import { DashboardSection } from './types';
+import { NO_ID_SECTIONS } from './constants';
+
+export const hasId = (str: string) => {
+  return !NO_ID_SECTIONS.includes(str);
+};
 
 /**
  * Return ids for sections concatenated with their items ids, if section is expanded
@@ -6,7 +11,8 @@ import { DashboardSection } from './types';
  */
 export const getFlattenedSections = (sections: DashboardSection[]): string[] => {
   return sections.flatMap(section => {
-    const id = section.id === undefined ? section.title : section.id;
+    const id = hasId(section.title) ? section.id : section.title;
+
     if (section.expanded && section.items.length) {
       return [String(id), ...section.items.map(item => `${id}-${item.id}`)];
     }
@@ -16,8 +22,9 @@ export const getFlattenedSections = (sections: DashboardSection[]): string[] => 
 
 export const markSelected = (sections: DashboardSection[], selectedId: string) => {
   return sections.map((result: DashboardSection) => {
-    const lookupField = ['Starred', 'Recent'].includes(selectedId as any) ? 'title' : 'id';
+    const lookupField = hasId(selectedId) ? 'title' : 'id';
     result.selected = String(result[lookupField]) === selectedId;
+
     if (result.expanded && result.items.length) {
       result.items = result.items.map(item => {
         item.selected = String(item[lookupField]) === selectedId.split('-')[1];
