@@ -11,9 +11,9 @@ export interface Props extends Omit<HTMLProps<HTMLInputElement>, 'prefix' | 'siz
   /** Show an invalid state around the input */
   invalid?: boolean;
   /** Show an icon as a prefix in the input */
-  prefix?: JSX.Element | string | null;
+  prefix?: ReactNode;
   /** Show an icon as a suffix in the input */
-  suffix?: JSX.Element | string | null;
+  suffix?: ReactNode;
   /** Show a loading indicator as a suffix in the input */
   loading?: boolean;
   /** Add a component as an addon before the input  */
