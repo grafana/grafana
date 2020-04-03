@@ -13,10 +13,8 @@ import (
 
 func TestSocialAzureAD_UserInfo(t *testing.T) {
 	type fields struct {
-		SocialBase     *SocialBase
-		allowedDomains []string
-		allowedGroups  []string
-		allowSignup    bool
+		SocialBase    *SocialBase
+		allowedGroups []string
 	}
 	type args struct {
 		client *http.Client
@@ -225,10 +223,8 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			s := &SocialAzureAD{
-				SocialBase:     tt.fields.SocialBase,
-				allowedDomains: tt.fields.allowedDomains,
-				allowedGroups:  tt.fields.allowedGroups,
-				allowSignup:    tt.fields.allowSignup,
+				SocialBase:    tt.fields.SocialBase,
+				allowedGroups: tt.fields.allowedGroups,
 			}
 
 			key := []byte("secret")

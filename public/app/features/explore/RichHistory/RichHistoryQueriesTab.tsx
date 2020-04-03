@@ -21,7 +21,8 @@ import {
 // Components
 import RichHistoryCard from './RichHistoryCard';
 import { sortOrderOptions } from './RichHistory';
-import { Select, Slider } from '@grafana/ui';
+import { LegacyForms, Slider } from '@grafana/ui';
+const { Select } = LegacyForms;
 
 export interface Props {
   queries: RichHistoryQuery[];

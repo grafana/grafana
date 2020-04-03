@@ -3,7 +3,7 @@ import { UserDTO } from 'app/types';
 import { cx, css } from 'emotion';
 import { config } from 'app/core/config';
 import { GrafanaTheme } from '@grafana/data';
-import { ConfirmButton, Input, ConfirmModal, InputStatus, Button, stylesFactory } from '@grafana/ui';
+import { ConfirmButton, ConfirmModal, LegacyInputStatus, Button, stylesFactory, Forms } from '@grafana/ui';
 
 interface Props {
   user: UserDTO;
@@ -217,16 +217,16 @@ export class UserProfileRow extends PureComponent<UserProfileRowProps, UserProfi
     this.setState({ editing: false, value: this.props.value || '' });
   };
 
-  onInputChange = (event: React.ChangeEvent<HTMLInputElement>, status?: InputStatus) => {
-    if (status === InputStatus.Invalid) {
+  onInputChange = (event: React.ChangeEvent<HTMLInputElement>, status?: LegacyInputStatus) => {
+    if (status === LegacyInputStatus.Invalid) {
       return;
     }
 
     this.setState({ value: event.target.value });
   };
 
-  onInputBlur = (event: React.FocusEvent<HTMLInputElement>, status?: InputStatus) => {
-    if (status === InputStatus.Invalid) {
+  onInputBlur = (event: React.FocusEvent<HTMLInputElement>, status?: LegacyInputStatus) => {
+    if (status === LegacyInputStatus.Invalid) {
       return;
     }
 
@@ -265,13 +265,13 @@ export class UserProfileRow extends PureComponent<UserProfileRowProps, UserProfi
         <td className={labelClass}>{label}</td>
         <td className="width-25" colSpan={2}>
           {this.state.editing ? (
-            <Input
-              className="width-20"
+            <Forms.Input
+              size="md"
               type={inputType}
               defaultValue={value}
               onBlur={this.onInputBlur}
               onChange={this.onInputChange}
-              inputRef={this.setInputElem}
+              ref={this.setInputElem}
             />
           ) : (
             <span>{this.props.value}</span>

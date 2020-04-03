@@ -100,7 +100,7 @@ export const DataLinksInlineEditor: React.FC<DataLinksInlineEditorProps> = ({ li
       )}
 
       <FullWidthButtonContainer>
-        <Button size="sm" icon="fa fa-plus" onClick={onDataLinkAdd}>
+        <Button size="sm" icon="fa fa-plus" onClick={onDataLinkAdd} variant="secondary">
           Add link
         </Button>
       </FullWidthButtonContainer>
