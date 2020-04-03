@@ -1,4 +1,4 @@
-import { getFlattenedSections, markSelected } from './utils';
+import { findSelected, getFlattenedSections, markSelected } from './utils';
 import { DashboardSection } from './types';
 
 const sections = [
@@ -191,6 +191,22 @@ describe('Search utils', () => {
         expect(newResults[0].items[0].selected).toBeFalsy();
         // Same item in diff section
         expect(newResults[5].items[2].selected).toBeTruthy();
+      });
+    });
+
+    describe('findSelected', () => {
+      it('should find selected section', () => {
+        const results = [...sections, { id: 'Test', selected: true }];
+
+        const found = findSelected(results);
+        expect(found.id).toEqual('Test');
+      });
+
+      it('should find selected item', () => {
+        const results = [{ expanded: true, id: 'Test', items: [{ id: 1 }, { id: 2, selected: true }, { id: 3 }] }];
+
+        const found = findSelected(results);
+        expect(found.id).toEqual(2);
       });
     });
   });

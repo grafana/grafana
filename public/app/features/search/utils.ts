@@ -1,4 +1,4 @@
-import { DashboardSection } from './types';
+import { DashboardSection, DashboardSectionItem } from './types';
 import { NO_ID_SECTIONS } from './constants';
 
 export const hasId = (str: string) => {
@@ -34,4 +34,21 @@ export const markSelected = (sections: DashboardSection[], selectedId: string) =
     }
     return result;
   });
+};
+
+export const findSelected = (sections: any): DashboardSection | DashboardSectionItem | null => {
+  let found = null;
+  for (const section of sections) {
+    if (section.expanded && section.items.length) {
+      found = findSelected(section.items);
+    }
+    if (section.selected) {
+      found = section;
+    }
+    if (found) {
+      return found;
+    }
+  }
+
+  return null;
 };
