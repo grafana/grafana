@@ -152,11 +152,9 @@ export const DashboardSearch: FC<Props> = ({ closeSearch }) => {
                   <i className="gicon gicon-folder-new"></i> New folder
                 </a>
               )}
-              {canEdit && (
-                <a href="dashboard/import" className="search-filter-box-link">
-                  <i className="gicon gicon-dashboard-import"></i> Import dashboard
-                </a>
-              )}
+              <a href="dashboard/import" className="search-filter-box-link">
+                <i className="gicon gicon-dashboard-import"></i> Import dashboard
+              </a>
               <a
                 className="search-filter-box-link"
                 target="_blank"
