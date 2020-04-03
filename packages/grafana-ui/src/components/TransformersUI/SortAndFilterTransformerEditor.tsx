@@ -4,8 +4,8 @@ import { SortAndFilterFieldsTransformerOptions } from '@grafana/data/src/transfo
 import { DragDropContext, Droppable, Draggable, DropResult } from 'react-beautiful-dnd';
 import { TransformerUIRegistyItem, TransformerUIProps } from './types';
 import { DataTransformerID, transformersRegistry, DataFrame, GrafanaTheme } from '@grafana/data';
-import { Button } from '../Forms/Button';
 import { stylesFactory, useTheme } from '../../themes';
+import { Button } from '../Button';
 
 interface SortAndFilterTransformerEditorProps extends TransformerUIProps<SortAndFilterFieldsTransformerOptions> {}
 
