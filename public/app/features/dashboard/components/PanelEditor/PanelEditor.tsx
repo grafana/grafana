@@ -140,9 +140,9 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
     });
   };
 
-  onTogglePanelOptions = (mode: boolean) => {
+  onTogglePanelOptions = () => {
     const { uiState, updatePanelEditorUIState } = this.props;
-    updatePanelEditorUIState({ isPanelOptionsVisible: mode });
+    updatePanelEditorUIState({ isPanelOptionsVisible: !uiState.isPanelOptionsVisible });
   };
 
   renderHorizontalSplit(styles: EditorStyles) {
@@ -162,7 +162,6 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
       >
         <div className={styles.mainPaneWrapper}>
           {this.renderPanelToolbar(styles)}
-          {this.renderTemplateVariables(styles)}
           <div className={styles.panelWrapper}>
             <AutoSizer>
               {({ width, height }) => {
@@ -211,24 +210,23 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
   renderPanelToolbar(styles: EditorStyles) {
     const { dashboard, location, uiState } = this.props;
 
-    const options = [{ label: 'Variables', value: null }];
-
     return (
       <div className={styles.panelToolbar}>
-        <div className={styles.toolbarItem}>
-          <Forms.RadioButtonGroup value={uiState.mode} options={displayModes} onChange={this.onDiplayModeChange} />
-        </div>
+        {this.renderTemplateVariables(styles)}
         <div className="flex-grow-1" />
         <div className={styles.toolbarItem}>
-          <Forms.RadioButtonGroup
-            value={uiState.isPanelOptionsVisible}
-            options={options}
-            onChange={this.onTogglePanelOptions}
-          />
+          <Forms.RadioButtonGroup value={uiState.mode} options={displayModes} onChange={this.onDiplayModeChange} />
         </div>
         <div className={styles.toolbarItem}>
           <DashNavTimeControls dashboard={dashboard} location={location} updateLocation={updateLocation} />
         </div>
+        {!uiState.isPanelOptionsVisible && (
+          <div className={styles.toolbarItem}>
+            <DashNavButton onClick={this.onTogglePanelOptions} tooltip="Open options pane" classSuffix="close-options">
+              <Icon name="chevron-left" /> <span style={{ paddingLeft: '6px' }}>Show options</span>
+            </DashNavButton>
+          </div>
+        )}
       </div>
     );
   }
@@ -244,9 +242,9 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
         </div>
         <div className={styles.toolbarLeft}>
           <div className={styles.toolbarItem}>
-            <DashNavButton tooltip="Discard all changes and return to dashboard" onClick={this.onDiscard}>
+            <Button onClick={this.onDiscard} variant="secondary">
               Discard changes
-            </DashNavButton>
+            </Button>
           </div>
           <div className={styles.toolbarItem}>
             <Button onClick={this.onPanelExit}>Apply</Button>
@@ -398,7 +396,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme, props: Props) => {
       padding-right: ${uiState.isPanelOptionsVisible ? 0 : paneSpaceing};
     `,
     variablesWrapper: css`
-      padding: 0 ${theme.spacing.sm} ${theme.spacing.sm} ${paneSpaceing};
+      display: flex;
     `,
     panelWrapper: css`
       flex: 1 1 0;
@@ -432,12 +430,15 @@ const getStyles = stylesFactory((theme: GrafanaTheme, props: Props) => {
     editorToolbar: css`
       display: flex;
       padding: ${theme.spacing.sm};
+      background: ${theme.colors.panelBg};
       justify-content: space-between;
+      border-bottom: 1px solid ${theme.colors.panelBorder};
     `,
     panelToolbar: css`
       display: flex;
-      padding: ${toolbarPadding} 0 ${toolbarPadding} ${paneSpaceing};
+      padding: ${paneSpaceing} 0 ${paneSpaceing} ${paneSpaceing};
       justify-content: space-between;
+      flex-wrap: wrap;
     `,
     toolbarLeft: css`
       padding-left: ${theme.spacing.sm};

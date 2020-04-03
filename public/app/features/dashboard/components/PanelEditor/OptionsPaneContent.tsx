@@ -219,7 +219,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       display: flex;
       flex-direction: column;
       height: 100%;
-      padding-top: ${theme.spacing.sm};
+      padding-top: ${theme.spacing.md};
     `,
     panelOptionsPane: css`
       height: 100%;
