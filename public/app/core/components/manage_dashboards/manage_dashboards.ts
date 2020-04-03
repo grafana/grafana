@@ -22,6 +22,7 @@ export interface Section {
   checked: boolean;
   hideHeader: boolean;
   toggle: Function;
+  type?: string;
 }
 
 export interface FoldersAndDashboardUids {

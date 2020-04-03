@@ -1,3 +1,9 @@
+export enum DashboardSearchItemType {
+  DashDB = 'dash-db',
+  DashHome = 'dash-home',
+  DashFolder = 'dash-folder',
+}
+
 export interface DashboardSection {
   id: number;
   uid?: string;
@@ -11,12 +17,7 @@ export interface DashboardSection {
   items: DashboardSectionItem[];
   toggle?: (section: DashboardSection) => Promise<DashboardSection>;
   selected?: boolean;
-}
-
-export enum DashboardSearchHitType {
-  DashHitDB = 'dash-db',
-  DashHitHome = 'dash-home',
-  DashHitFolder = 'dash-folder',
+  type: DashboardSearchItemType;
 }
 
 export interface DashboardSectionItem {
@@ -30,7 +31,7 @@ export interface DashboardSectionItem {
   selected?: boolean;
   tags: string[];
   title: string;
-  type: DashboardSearchHitType;
+  type: DashboardSearchItemType;
   uid: string;
   uri: string;
   url: string;
