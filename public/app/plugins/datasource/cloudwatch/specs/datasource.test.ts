@@ -1,14 +1,14 @@
 import '../datasource';
 import CloudWatchDatasource from '../datasource';
 import * as redux from 'app/store/store';
-import { dateMath } from '@grafana/data';
+import { DataSourceInstanceSettings, dateMath } from '@grafana/data';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { CustomVariable } from 'app/features/templating/all';
-import _ from 'lodash';
 import { CloudWatchQuery } from '../types';
-import { DataSourceInstanceSettings } from '@grafana/data';
 import { backendSrv } from 'app/core/services/backend_srv'; // will use the version in __mocks__
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
+import { convertToStoreState } from '../../../../../test/helpers/convertToStoreState';
+import { getTemplateSrvDependencies } from 'test/helpers/getTemplateSrvDependencies';
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
@@ -23,7 +23,7 @@ describe('CloudWatchDatasource', () => {
     name: 'TestDatasource',
   } as DataSourceInstanceSettings;
 
-  const templateSrv = new TemplateSrv();
+  let templateSrv = new TemplateSrv();
   const start = 1483196400 * 1000;
   const defaultTimeRange = { from: new Date(start), to: new Date(start + 3600 * 1000) };
 
@@ -465,7 +465,7 @@ describe('CloudWatchDatasource', () => {
   describe('When performing CloudWatch query with template variables', () => {
     let requestParams: { queries: CloudWatchQuery[] };
     beforeEach(() => {
-      templateSrv.init([
+      const variables = [
         new CustomVariable(
           {
             name: 'var1',
@@ -516,7 +516,11 @@ describe('CloudWatchDatasource', () => {
           },
           {} as any
         ),
-      ]);
+      ];
+      const state = convertToStoreState(variables);
+      const _templateSrv = new TemplateSrv(getTemplateSrvDependencies(state));
+      _templateSrv.init(variables);
+      ctx.ds = new CloudWatchDatasource(instanceSettings, _templateSrv, timeSrv);
 
       datasourceRequestMock.mockImplementation(params => {
         requestParams = params.data;
