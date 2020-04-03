@@ -45,7 +45,7 @@ export const Icon = React.forwardRef<HTMLDivElement, IconProps>(
     const svgSize = getSvgSize(size, theme);
 
     /* Temporary solution to display also font awesome icons */
-    const isFontAwesome = name.includes('fa-');
+    const isFontAwesome = name?.includes('fa-');
     if (isFontAwesome) {
       return <i className={cx(name, className)} {...divElementProps} style={style} />;
     }
