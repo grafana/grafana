@@ -1,6 +1,7 @@
 import React, { FC, useReducer, useState } from 'react';
 import { useDebounce } from 'react-use';
-import { Icon } from '@grafana/ui';
+import { css } from 'emotion';
+import { Button, Icon } from '@grafana/ui';
 import { getLocationSrv } from '@grafana/runtime';
 import { SearchSrv } from 'app/core/services/search_srv';
 import { backendSrv } from 'app/core/services/backend_srv';
@@ -33,6 +34,7 @@ export interface Props {
 export const DashboardSearch: FC<Props> = ({ closeSearch }) => {
   const [query, setQuery] = useState(defaultQuery);
   const [{ results, loading }, dispatch] = useReducer(searchReducer, initialState);
+  const styles = getStyles();
 
   useDebounce(
     () => {
@@ -172,7 +174,19 @@ export const DashboardSearch: FC<Props> = ({ closeSearch }) => {
             </div>
           )}
         </div>
+        <Button onClick={closeSearch} variant="secondary" className={styles.closeBtn}>
+          X
+        </Button>
       </div>
     </div>
   );
+};
+
+const getStyles = () => {
+  return {
+    closeBtn: css`
+      font-size: 22px;
+      margin-top: 14px;
+    `,
+  };
 };
