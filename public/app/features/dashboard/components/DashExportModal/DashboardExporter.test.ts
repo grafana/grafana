@@ -12,6 +12,7 @@ jest.mock('app/core/store', () => {
 });
 
 jest.mock('@grafana/runtime', () => ({
+  setAppEvents: (e: any) => {},
   getDataSourceSrv: () => ({
     get: jest.fn(arg => getStub(arg)),
   }),
