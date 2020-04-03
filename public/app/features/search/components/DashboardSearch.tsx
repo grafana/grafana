@@ -93,6 +93,15 @@ export const DashboardSearch: FC<Props> = ({ closeSearch }) => {
     }
   };
 
+  // The main search input has own keydown handler, also TagFilter uses input, so
+  // clicking Esc when tagFilter is active shouldn't close the whole search overlay
+  const handleClose = (e: React.KeyboardEvent<HTMLElement>) => {
+    const target = e.target as HTMLElement;
+    if ((target.tagName as any) !== 'INPUT' && ['Escape', 'ArrowLeft'].includes(e.key)) {
+      closeSearch();
+    }
+  };
+
   const onTagFiltersChanged = (tags: string[]) => {
     setQuery(q => ({ ...q, tags }));
   };
@@ -107,10 +116,8 @@ export const DashboardSearch: FC<Props> = ({ closeSearch }) => {
     setQuery(q => ({ ...q, tags: [], query: '' }));
   };
 
-  const onFilterBoxClick = () => {};
-
   return (
-    <div className="search-container">
+    <div tabIndex={0} className="search-container" onKeyDown={handleClose}>
       <SearchField query={query} onChange={onQueryChange} onKeyDown={onKeyDown} autoFocus={true} />
       <div className="search-dropdown">
         <div className="search-dropdown__col_1">
@@ -128,7 +135,7 @@ export const DashboardSearch: FC<Props> = ({ closeSearch }) => {
           </div>
         </div>
         <div className="search-dropdown__col_2">
-          <div className="search-filter-box" onClick={onFilterBoxClick}>
+          <div className="search-filter-box">
             <div className="search-filter-box__header">
               <Icon name="filter" />
               Filter by:

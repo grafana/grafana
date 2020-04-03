@@ -8,8 +8,12 @@ export const SearchWrapper: FC = () => {
 
   useEffect(() => {
     appEvents.on(CoreEvents.showDashSearch, () => setIsOpen(true));
-    appEvents.on(CoreEvents.hideDashSearch, () => {
-      //setIsOpen(false);
+    appEvents.on(CoreEvents.hideDashSearch, (payload: any) => {
+      // Detect if the event was emitted by clicking on search item
+      // TODO remove appEvents dependency
+      if (payload?.target === 'search-item' && isOpen) {
+        setIsOpen(false);
+      }
     });
   }, []);
 

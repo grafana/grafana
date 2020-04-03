@@ -32,7 +32,7 @@ export const SearchItem: FC<Props> = ({ item, editable, onToggleSelection, onTag
   const onItemClick = () => {
     //Check if one string can be found in the other
     if (window.location.pathname.includes(item.url) || item.url.includes(window.location.pathname)) {
-      appEvents.emit(CoreEvents.hideDashSearch);
+      appEvents.emit(CoreEvents.hideDashSearch, { target: 'search-item' });
     }
   };
 
