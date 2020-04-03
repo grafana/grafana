@@ -85,7 +85,6 @@ export const initDashboardTemplating = (list: VariableModel[]): ThunkResult<void
 
 export const completeDashboardTemplating = (dashboard: DashboardModel): ThunkResult<void> => {
   return (dispatch, getState) => {
-    templateSrv.updateIndex();
     templateSrv.setGlobalVariable('__dashboard', {
       value: {
         name: dashboard.title,
