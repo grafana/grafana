@@ -23,12 +23,13 @@ export const getFlattenedSections = (sections: DashboardSection[]): string[] => 
 export const markSelected = (sections: DashboardSection[], selectedId: string) => {
   return sections.map((result: DashboardSection) => {
     const lookupField = hasId(selectedId) ? 'id' : 'title';
-    result.selected = String(result[lookupField]) === selectedId;
+    result = { ...result, selected: String(result[lookupField]) === selectedId };
 
     if (result.expanded && result.items.length) {
       result.items = result.items.map(item => {
-        item.selected = String(item[lookupField]) === selectedId.split('-')[1];
-        return item;
+        const [sectionId, itemId] = selectedId.split('-');
+        const lookup = hasId(sectionId) ? 'id' : 'title';
+        return { ...item, selected: String(item.id) === itemId && String(result[lookup]) === sectionId };
       });
     }
     return result;
