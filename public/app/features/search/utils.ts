@@ -20,15 +20,19 @@ export const getFlattenedSections = (sections: DashboardSection[]): string[] => 
   });
 };
 
+export const getLookupField = (title: string) => {
+  return hasId(title) ? 'id' : 'title';
+};
+
 export const markSelected = (sections: DashboardSection[], selectedId: string) => {
   return sections.map((result: DashboardSection) => {
-    const lookupField = hasId(selectedId) ? 'id' : 'title';
+    const lookupField = getLookupField(selectedId);
     result = { ...result, selected: String(result[lookupField]) === selectedId };
 
     if (result.expanded && result.items.length) {
       result.items = result.items.map(item => {
         const [sectionId, itemId] = selectedId.split('-');
-        const lookup = hasId(sectionId) ? 'id' : 'title';
+        const lookup = getLookupField(sectionId);
         return { ...item, selected: String(item.id) === itemId && String(result[lookup]) === sectionId };
       });
     }

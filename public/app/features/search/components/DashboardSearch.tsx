@@ -1,21 +1,21 @@
-import React, { FC, useState, useReducer } from 'react';
+import React, { FC, useReducer, useState } from 'react';
 import { useDebounce } from 'react-use';
 import { parse, SearchParserResult } from 'search-query-parser';
 import { Icon } from '@grafana/ui';
+import { getLocationSrv } from '@grafana/runtime';
 import { SearchSrv } from 'app/core/services/search_srv';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { SearchQuery } from 'app/core/components/search/search';
 import { TagFilter } from 'app/core/components/TagFilter/TagFilter';
 import { contextSrv } from 'app/core/services/context_srv';
+import { DashboardSearchItemType, DashboardSection, SearchAction } from '../types';
+import { findSelected, getFlattenedSections, getLookupField, hasId, markSelected } from '../utils';
 import { SearchField } from './SearchField';
 import { SearchResults } from './SearchResults';
-import { DashboardSection, SearchAction } from '../types';
-import { getFlattenedSections, markSelected } from '../utils';
 
 const FETCH_RESULTS = 'FETCH_RESULTS';
 const TOGGLE_SECTION = 'TOGGLE_SECTION';
 const FETCH_ITEMS = 'FETCH_ITEMS';
-const TOGGLE_CUSTOM = 'TOGGLE_CUSTOM';
 const MOVE_SELECTION_UP = 'MOVE_SELECTION_UP';
 const MOVE_SELECTION_DOWN = 'MOVE_SELECTION_DOWN';
 
@@ -55,22 +55,11 @@ const searchReducer = (state: any, action: SearchAction) => {
       return { ...state, results: action.payload, loading: false };
     case TOGGLE_SECTION: {
       const section = action.payload;
+      const lookupField = getLookupField(section.title);
       return {
         ...state,
         results: state.results.map((result: DashboardSection) => {
-          if (section.id === result.id) {
-            result.expanded = !result.expanded;
-          }
-          return result;
-        }),
-      };
-    }
-    case TOGGLE_CUSTOM: {
-      const section = action.payload;
-      return {
-        ...state,
-        results: state.results.map((result: DashboardSection) => {
-          if (result.title === section.title) {
+          if (section[lookupField] === result[lookupField]) {
             result.expanded = !result.expanded;
           }
           return result;
@@ -129,7 +118,7 @@ export interface Props {
 
 export const DashboardSearch: FC<Props> = ({ closeSearch }) => {
   const [query, setQuery] = useState(defaultQuery);
-  const [state, dispatch] = useReducer(searchReducer, initialState);
+  const [{ results, loading }, dispatch] = useReducer(searchReducer, initialState);
 
   useDebounce(
     () => {
@@ -147,17 +136,13 @@ export const DashboardSearch: FC<Props> = ({ closeSearch }) => {
   };
 
   const toggleSection = (section: DashboardSection) => {
-    if (['Recent', 'Starred'].includes(section.title)) {
-      dispatch({ type: TOGGLE_CUSTOM, payload: section });
-    } else {
-      if (!section.items.length) {
-        backendSrv.search({ ...defaultQuery, folderIds: [section.id] }).then(items => {
-          dispatch({ type: FETCH_ITEMS, payload: { section, items } });
-          dispatch({ type: TOGGLE_SECTION, payload: section });
-        });
-      } else {
+    if (hasId(section.title) && !section.items.length) {
+      backendSrv.search({ ...defaultQuery, folderIds: [section.id] }).then(items => {
+        dispatch({ type: FETCH_ITEMS, payload: { section, items } });
         dispatch({ type: TOGGLE_SECTION, payload: section });
-      }
+      });
+    } else {
+      dispatch({ type: TOGGLE_SECTION, payload: section });
     }
   };
 
@@ -180,6 +165,17 @@ export const DashboardSearch: FC<Props> = ({ closeSearch }) => {
       case 'ArrowDown':
         dispatch({ type: MOVE_SELECTION_DOWN });
         break;
+      case 'Enter':
+        const selectedItem = findSelected(results);
+        if (selectedItem) {
+          if (selectedItem.type === DashboardSearchItemType.DashFolder) {
+            toggleSection(selectedItem as DashboardSection);
+          } else {
+            getLocationSrv().update({ path: selectedItem.url });
+            // Delay closing to prevent current page flicker
+            setTimeout(() => closeSearch(), 0);
+          }
+        }
     }
   };
 
@@ -207,8 +203,8 @@ export const DashboardSearch: FC<Props> = ({ closeSearch }) => {
           <div className="search-results-scroller">
             <div className="search-results-container">
               <SearchResults
-                results={state.results}
-                loading={state.loading}
+                results={results}
+                loading={loading}
                 onTagSelected={filterByTag}
                 dispatch={dispatch}
                 editable={false}
