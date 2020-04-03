@@ -48,7 +48,7 @@ jobs:
       - run:
           name: Install Grafana Build Pipeline
           command: |
-            curl -fLO https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v0.1.0/grabpl
+            curl -fLO https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v0.1.1/grabpl
             chmod +x grabpl
             mkdir bin
             mv grabpl bin/
