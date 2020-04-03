@@ -36,7 +36,9 @@ describe('SortAndFilter Transformer', () => {
           temperature: 0,
           humidity: 1,
         },
-        exclude: '/^(time)/',
+        excludeByName: {
+          time: true,
+        },
       },
     };
 
@@ -67,7 +69,9 @@ describe('SortAndFilter Transformer', () => {
           temperature: 0,
           humidity: 1,
         },
-        exclude: '/^(humidity)/',
+        excludeByName: {
+          humidity: true,
+        },
       },
     };
 
