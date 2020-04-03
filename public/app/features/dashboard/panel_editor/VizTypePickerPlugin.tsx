@@ -29,10 +29,11 @@ const VizTypePickerPlugin: React.FC<Props> = ({ isCurrent, plugin, onClick, disa
 };
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
+  const itemBorder = `1px solid ${theme.isLight ? theme.colors.gray3 : theme.colors.dark10}`;
   return {
     item: css`
       background: ${theme.isLight ? theme.colors.white : theme.colors.gray05};
-      border: 1px solid ${theme.isLight ? theme.colors.gray3 : theme.colors.dark10};
+      border: ${itemBorder};
       border-radius: 3px;
       height: 100px;
       width: 100%;
@@ -68,7 +69,11 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
     disabled: css`
       opacity: 0.2;
       filter: grayscale(1);
-      cursor: pointer;
+      cursor: default;
+      &:hover {
+        box-shadow: none;
+        border: ${itemBorder};
+      }
     `,
     name: css`
       text-overflow: ellipsis;
