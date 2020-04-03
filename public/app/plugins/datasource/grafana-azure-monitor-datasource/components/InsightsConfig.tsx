@@ -1,5 +1,6 @@
 import React, { PureComponent } from 'react';
-import { FormLabel, Button, Input } from '@grafana/ui';
+import { FormLabel, Button, LegacyForms } from '@grafana/ui';
+const { Input } = LegacyForms;
 import { AzureDataSourceSettings, AzureDataSourceJsonData, AzureDataSourceSecureJsonData } from '../types';
 
 export interface Props {

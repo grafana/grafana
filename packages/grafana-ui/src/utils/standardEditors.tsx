@@ -18,7 +18,7 @@ import {
   ValueMappingFieldConfigSettings,
   valueMappingsOverrideProcessor,
 } from '@grafana/data';
-import { NumberValueEditor, Forms, StringValueEditor } from '../components';
+import { NumberValueEditor, Forms, StringValueEditor, Select } from '../components';
 import { ValueMappingsValueEditor } from '../components/OptionsUI/mappings';
 import { ThresholdsValueEditor } from '../components/OptionsUI/thresholds';
 import { UnitValueEditor } from '../components/OptionsUI/units';
@@ -216,11 +216,7 @@ export const getStandardOptionEditors = () => {
     name: 'Select',
     description: 'Allows option selection',
     editor: props => (
-      <Forms.Select
-        value={props.value}
-        onChange={e => props.onChange(e.value)}
-        options={props.item.settings?.options}
-      />
+      <Select value={props.value} onChange={e => props.onChange(e.value)} options={props.item.settings?.options} />
     ),
   };
 
