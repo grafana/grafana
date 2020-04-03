@@ -139,6 +139,8 @@ export { ButtonSelect } from './Select/ButtonSelect';
 export { HorizontalGroup, VerticalGroup, Container } from './Layout/Layout';
 export { RadioButtonGroup } from './Forms/RadioButtonGroup/RadioButtonGroup';
 
+export { Input } from './Forms/Input/Input';
+
 // Legacy forms
 
 // Select
