@@ -91,7 +91,7 @@ const searchReducer = (state: any, action: SearchAction) => {
     }
     case MOVE_SELECTION_DOWN: {
       const flatIds = getFlattenedSections(state.results);
-      if (state.selectedIndex < flatIds.length) {
+      if (state.selectedIndex < flatIds.length - 1) {
         const newIndex = state.selectedIndex + 1;
         const selectedId = flatIds[newIndex];
         return {
