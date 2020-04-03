@@ -174,7 +174,7 @@ describe('CloudWatchDatasource', () => {
     it('should return series list', done => {
       ctx.ds.query(query).then((result: any) => {
         expect(result.data[0].name).toBe(response.results.A.series[0].name);
-        expect(result.data[0].fields[0].values.buffer[0]).toBe(response.results.A.series[0].points[0][0]);
+        expect(result.data[0].fields[1].values.buffer[0]).toBe(response.results.A.series[0].points[0][0]);
         done();
       });
     });
@@ -191,8 +191,8 @@ describe('CloudWatchDatasource', () => {
         response.results['A'].meta.gmdMeta = [{ Expression: `REMOVE_EMPTY(SEARCH('some expression'))`, Period: '300' }];
         ctx.ds.query(query).then((result: any) => {
           expect(result.data[0].name).toBe(response.results.A.series[0].name);
-          expect(result.data[0].fields[0].config.links[0].title).toBe('View in CloudWatch console');
-          expect(decodeURIComponent(result.data[0].fields[0].config.links[0].url)).toContain(
+          expect(result.data[0].fields[1].config.links[0].title).toBe('View in CloudWatch console');
+          expect(decodeURIComponent(result.data[0].fields[1].config.links[0].url)).toContain(
             `region=us-east-1#metricsV2:graph={"view":"timeSeries","stacked":false,"title":"A","start":"2016-12-31T15:00:00.000Z","end":"2016-12-31T16:00:00.000Z","region":"us-east-1","metrics":[{"expression":"REMOVE_EMPTY(SEARCH(\'some expression\'))"}]}`
           );
           done();
@@ -206,7 +206,7 @@ describe('CloudWatchDatasource', () => {
         ];
         ctx.ds.query(query).then((result: any) => {
           expect(result.data[0].name).toBe(response.results.A.series[0].name);
-          expect(result.data[0].fields[0].config.links[0].title).toBe('View in CloudWatch console');
+          expect(result.data[0].fields[1].config.links[0].title).toBe('View in CloudWatch console');
           expect(decodeURIComponent(result.data[0].fields[0].config.links[0].url)).toContain(
             `region=us-east-1#metricsV2:graph={"view":"timeSeries","stacked":false,"title":"A","start":"2016-12-31T15:00:00.000Z","end":"2016-12-31T16:00:00.000Z","region":"us-east-1","metrics":[{"expression":"REMOVE_EMPTY(SEARCH(\'first expression\'))"},{"expression":"REMOVE_EMPTY(SEARCH(\'second expression\'))"}]}`
           );
@@ -218,7 +218,7 @@ describe('CloudWatchDatasource', () => {
         response.results['A'].meta.gmdMeta = [{ Period: '300' }];
         ctx.ds.query(query).then((result: any) => {
           expect(result.data[0].name).toBe(response.results.A.series[0].name);
-          expect(result.data[0].fields[0].config.links[0].title).toBe('View in CloudWatch console');
+          expect(result.data[0].fields[1].config.links[0].title).toBe('View in CloudWatch console');
           expect(decodeURIComponent(result.data[0].fields[0].config.links[0].url)).toContain(
             `region=us-east-1#metricsV2:graph={\"view\":\"timeSeries\",\"stacked\":false,\"title\":\"A\",\"start\":\"2016-12-31T15:00:00.000Z\",\"end\":\"2016-12-31T16:00:00.000Z\",\"region\":\"us-east-1\",\"metrics\":[[\"AWS/EC2\",\"CPUUtilization\",\"InstanceId\",\"i-12345678\",{\"stat\":\"Average\",\"period\":\"300\"}]]}`
           );
@@ -230,7 +230,7 @@ describe('CloudWatchDatasource', () => {
         query.targets[0].expression = 'a * 2';
         response.results['A'].meta.searchExpressions = [];
         ctx.ds.query(query).then((result: any) => {
-          expect(result.data[0].fields[0].config.links).toBeUndefined();
+          expect(result.data[0].fields[1].config.links).toBeUndefined();
           done();
         });
       });
@@ -456,7 +456,7 @@ describe('CloudWatchDatasource', () => {
     it('should return series list', done => {
       ctx.ds.query(query).then((result: any) => {
         expect(result.data[0].name).toBe(response.results.A.series[0].name);
-        expect(result.data[0].fields[0].values.buffer[0]).toBe(response.results.A.series[0].points[0][0]);
+        expect(result.data[0].fields[1].values.buffer[0]).toBe(response.results.A.series[0].points[0][0]);
         done();
       });
     });

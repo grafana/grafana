@@ -285,14 +285,6 @@ export const toLegacyResponseData = (frame: DataFrame): TimeSeries | TableData =
   const rowCount = frame.length;
   const rows: any[][] = [];
 
-  for (let i = 0; i < rowCount; i++) {
-    const row: any[] = [];
-    for (let j = 0; j < fields.length; j++) {
-      row.push(fields[j].values.get(i));
-    }
-    rows.push(row);
-  }
-
   if (fields.length === 2) {
     const { timeField, timeIndex } = getTimeField(frame);
     if (timeField) {

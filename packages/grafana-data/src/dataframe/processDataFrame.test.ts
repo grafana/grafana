@@ -43,7 +43,7 @@ describe('toDataFrame', () => {
       ],
     };
     series = toDataFrame(input2);
-    expect(series.fields[0].name).toEqual('Value');
+    expect(series.fields[1].name).toEqual('Value');
   });
 
   it('assumes TimeSeries values are numbers', () => {
