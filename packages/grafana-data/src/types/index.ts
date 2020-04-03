@@ -25,8 +25,8 @@ export * from './orgs';
 export * from './flot';
 
 import * as AppEvents from './appEvents';
-import { AppEvent } from './appEvents';
-export { AppEvent, AppEvents };
+import { AppEvent, EventEmitter } from './appEvents';
+export { AppEvent, AppEvents, EventEmitter };
 
 import * as PanelEvents from './panelEvents';
 export { PanelEvents };

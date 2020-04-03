@@ -1,7 +1,7 @@
 import EventEmitter3, { EventEmitter } from 'eventemitter3';
-import { AppEvent } from '@grafana/data';
+import { AppEvent, EventEmitter as GrafanaEventEmitter } from '@grafana/data';
 
-export class Emitter {
+export class Emitter implements GrafanaEventEmitter {
   private emitter: EventEmitter3;
 
   constructor() {
