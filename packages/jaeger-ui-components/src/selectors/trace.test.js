@@ -166,10 +166,8 @@ it('getTraceServices() should return an unique array of all services in the trac
 
 it('getTraceServiceCount() should return the length of the service list', () => {
   expect(traceSelectors.getTraceServiceCount(generatedTrace)).toBe(
-    generatedTrace.spans.reduce(
-      (results, { processID }) => results.add(generatedTrace.processes[processID].serviceName),
-      new Set()
-    ).size
+    Object.values(generatedTrace.processes).reduce((results, process) => results.add(process.serviceName), new Set())
+      .size
   );
 });
 
