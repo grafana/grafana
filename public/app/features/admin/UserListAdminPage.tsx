@@ -3,7 +3,7 @@ import { css, cx } from 'emotion';
 import { hot } from 'react-hot-loader';
 import { connect, MapDispatchToProps, MapStateToProps } from 'react-redux';
 import { NavModel } from '@grafana/data';
-import { Pagination, Forms, Tooltip, HorizontalGroup, stylesFactory, LinkButton } from '@grafana/ui';
+import { Pagination, Tooltip, HorizontalGroup, stylesFactory, LinkButton, Input } from '@grafana/ui';
 import { StoreState, UserDTO } from '../../types';
 import Page from 'app/core/components/Page/Page';
 import { getNavModel } from '../../core/selectors/navModel';
@@ -42,10 +42,10 @@ const UserListAdminPageUnConnected: React.FC<Props> = props => {
         <>
           <div>
             <HorizontalGroup justify="space-between">
-              <Forms.Input
+              <Input
                 size="md"
                 type="text"
-                placeholder="Find user by name/login/email"
+                placeholder="Search user by login,email or name"
                 tabIndex={1}
                 autoFocus={true}
                 value={props.query}

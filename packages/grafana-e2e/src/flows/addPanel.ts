@@ -23,7 +23,7 @@ export const addPanel = (config?: Partial<AddPanelConfig>) => {
     e2e()
       .get('.ds-picker')
       .click()
-      .contains(dataSourceName)
+      .contains('.gf-form-select-box__desc-option', dataSourceName)
       .click();
     queriesForm();
   });

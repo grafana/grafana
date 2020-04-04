@@ -1,7 +1,7 @@
-import React, { useMemo, FC } from 'react';
+import React, { FC, useMemo } from 'react';
 import { PanelModel } from '../../state';
 import { SelectableValue } from '@grafana/data';
-import { Forms, DataLinksInlineEditor } from '@grafana/ui';
+import { Forms, Select, DataLinksInlineEditor, Input } from '@grafana/ui';
 import { OptionsGroup } from './OptionsGroup';
 import { getPanelLinksVariableSuggestions } from '../../../panel/panellinks/link_srv';
 import { getVariables } from '../../../variables/state/selectors';
@@ -24,7 +24,7 @@ export const GeneralPanelOptions: FC<{
     <div>
       <OptionsGroup title="Panel settings">
         <Forms.Field label="Panel title">
-          <Forms.Input defaultValue={panel.title} onBlur={e => onPanelConfigChange('title', e.currentTarget.value)} />
+          <Input defaultValue={panel.title} onBlur={e => onPanelConfigChange('title', e.currentTarget.value)} />
         </Forms.Field>
         <Forms.Field label="Description" description="Panel description supports markdown and links.">
           <Forms.TextArea
@@ -54,7 +54,7 @@ export const GeneralPanelOptions: FC<{
           This is not visible while in edit mode. You need to go back to dashboard and then update the variable or
           reload the dashboard."
         >
-          <Forms.Select
+          <Select
             value={panel.repeat}
             onChange={value => onPanelConfigChange('repeat', value.value)}
             options={variableOptions}
@@ -72,7 +72,7 @@ export const GeneralPanelOptions: FC<{
 
         {panel.repeat && panel.repeatDirection === 'h' && (
           <Forms.Field label="Max per row">
-            <Forms.Select
+            <Select
               options={maxPerRowOptions}
               value={panel.maxPerRow}
               onChange={value => onPanelConfigChange('maxPerRow', value.value)}

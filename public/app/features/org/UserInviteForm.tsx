@@ -1,5 +1,5 @@
 import React, { FC } from 'react';
-import { Forms, HorizontalGroup, Button, LinkButton } from '@grafana/ui';
+import { Forms, HorizontalGroup, Button, LinkButton, Input } from '@grafana/ui';
 import { getConfig } from 'app/core/config';
 import { OrgRole } from 'app/types';
 import { getBackendSrv } from '@grafana/runtime';
@@ -54,15 +54,10 @@ export const UserInviteForm: FC<Props> = ({ updateLocation }) => {
               error={!!errors.loginOrEmail && 'Email or Username is required'}
               label="Email or Username"
             >
-              <Forms.Input
-                size="md"
-                name="loginOrEmail"
-                placeholder="email@example.com"
-                ref={register({ required: true })}
-              />
+              <Input size="md" name="loginOrEmail" placeholder="email@example.com" ref={register({ required: true })} />
             </Forms.Field>
             <Forms.Field invalid={!!errors.name} label="Name">
-              <Forms.Input size="md" name="name" placeholder="(optional)" ref={register} />
+              <Input size="md" name="name" placeholder="(optional)" ref={register} />
             </Forms.Field>
             <Forms.Field invalid={!!errors.role} label="Role">
               <Forms.InputControl as={Forms.RadioButtonGroup} control={control} options={roles} name="role" />

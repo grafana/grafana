@@ -145,8 +145,8 @@ class UnConnectedAlertTab extends PureComponent<Props, State> {
   };
 
   renderTestRuleResult = () => {
-    const { panel, dashboard } = this.props;
-    return <TestRuleResult panelId={panel.id} dashboard={dashboard} />;
+    const { dashboard, panel } = this.props;
+    return <TestRuleResult panel={panel} dashboard={dashboard} />;
   };
 
   testRule = (): EditorToolbarView => ({

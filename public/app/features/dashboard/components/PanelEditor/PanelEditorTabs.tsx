@@ -46,9 +46,9 @@ export const PanelEditorTabs: React.FC<PanelEditorTabsProps> = ({ panel, dashboa
         })}
       </TabsBar>
       <TabContent className={styles.tabContent}>
-        {activeTab.id === PanelEditorTabId.Queries && <QueriesTab panel={panel} dashboard={dashboard} />}
+        {activeTab.id === PanelEditorTabId.Query && <QueriesTab panel={panel} dashboard={dashboard} />}
         {activeTab.id === PanelEditorTabId.Alert && <AlertTab panel={panel} dashboard={dashboard} />}
-        {activeTab.id === PanelEditorTabId.Visualization && <VisualizationTab panel={panel} />}
+        {activeTab.id === PanelEditorTabId.Visualize && <VisualizationTab panel={panel} />}
         {activeTab.id === PanelEditorTabId.Transform && data.state !== LoadingState.NotStarted && (
           <TransformationsEditor
             transformations={panel.transformations || []}
@@ -71,7 +71,7 @@ const getPanelEditorTabsStyles = stylesFactory(() => {
       height: 100%;
     `,
     tabBar: css`
-      padding-left: ${theme.spacing.sm};
+      padding-left: ${theme.spacing.md};
     `,
     tabContent: css`
       padding: 0;
@@ -80,6 +80,7 @@ const getPanelEditorTabsStyles = stylesFactory(() => {
       flex-grow: 1;
       min-height: 0;
       background: ${theme.colors.panelBg};
+      border-right: 1px solid ${theme.colors.pageHeaderBorder};
 
       .toolbar {
         background: transparent;
