@@ -210,7 +210,7 @@ $input-border-focus: $dark-6 !default;
 $input-box-shadow-focus: $blue-light !default;
 $input-color-placeholder: ${theme.colors.formInputPlaceholderText};
 $input-label-bg: ${theme.colors.gray15};
-$input-label-border-color:${theme.colors.gray25};
+$input-label-border-color: ${theme.colors.gray25};
 $input-color-select-arrow: $white;
 
 // Search
