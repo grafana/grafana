@@ -2,7 +2,7 @@ import AzureMonitorDatasource from '../datasource';
 import FakeSchemaData from './__mocks__/schema';
 
 import { TemplateSrv } from 'app/features/templating/template_srv';
-import { KustoSchema } from '../types';
+import { KustoSchema, AzureLogsVariable } from '../types';
 import { toUtc } from '@grafana/data';
 import { backendSrv } from 'app/core/services/backend_srv'; // will use the version in __mocks__
 
@@ -283,53 +283,129 @@ describe('AzureLogAnalyticsDatasource', () => {
   });
 
   describe('When performing metricFindQuery', () => {
-    const tableResponseWithOneColumn = {
-      tables: [
-        {
-          name: 'PrimaryResult',
-          columns: [
-            {
-              name: 'Category',
-              type: 'string',
-            },
-          ],
-          rows: [['Administrative'], ['Policy']],
-        },
-      ],
-    };
+    let queryResults: AzureLogsVariable[];
 
-    const workspaceResponse = {
+    const workspacesResponse = {
       value: [
         {
-          name: 'aworkspace',
+          name: 'workspace1',
           properties: {
-            source: 'Azure',
-            customerId: 'abc1b44e-3e57-4410-b027-6cc0ae6dee67',
+            customerId: 'eeee4fde-1aaa-4d60-9974-eeee562ffaa1',
+          },
+        },
+        {
+          name: 'workspace2',
+          properties: {
+            customerId: 'eeee4fde-1aaa-4d60-9974-eeee562ffaa2',
           },
         },
       ],
     };
 
-    let queryResults: any[];
+    describe('and is the workspaces() macro', () => {
+      beforeEach(async () => {
+        datasourceRequestMock.mockImplementation((options: { url: string }) => {
+          expect(options.url).toContain('xxx');
+          return Promise.resolve({ data: workspacesResponse, status: 200 });
+        });
 
-    beforeEach(async () => {
-      datasourceRequestMock.mockImplementation((options: { url: string }) => {
-        if (options.url.indexOf('Microsoft.OperationalInsights/workspaces') > -1) {
-          return Promise.resolve({ data: workspaceResponse, status: 200 });
-        } else {
-          return Promise.resolve({ data: tableResponseWithOneColumn, status: 200 });
-        }
+        queryResults = await ctx.ds.metricFindQuery('workspaces()');
       });
 
-      queryResults = await ctx.ds.metricFindQuery('workspace("aworkspace").AzureActivity  | distinct Category');
+      it('should return a list of workspaces', () => {
+        expect(queryResults.length).toBe(2);
+        expect(queryResults[0].text).toBe('workspace1');
+        expect(queryResults[0].value).toBe('eeee4fde-1aaa-4d60-9974-eeee562ffaa1');
+        expect(queryResults[1].text).toBe('workspace2');
+        expect(queryResults[1].value).toBe('eeee4fde-1aaa-4d60-9974-eeee562ffaa2');
+      });
     });
 
-    it('should return a list of categories in the correct format', () => {
-      expect(queryResults.length).toBe(2);
-      expect(queryResults[0].text).toBe('Administrative');
-      expect(queryResults[0].value).toBe('Administrative');
-      expect(queryResults[1].text).toBe('Policy');
-      expect(queryResults[1].value).toBe('Policy');
+    describe('and is the workspaces() macro with the subscription parameter', () => {
+      beforeEach(async () => {
+        datasourceRequestMock.mockImplementation((options: { url: string }) => {
+          expect(options.url).toContain('11112222-eeee-4949-9b2d-9106972f9123');
+          return Promise.resolve({ data: workspacesResponse, status: 200 });
+        });
+
+        queryResults = await ctx.ds.metricFindQuery('workspaces(11112222-eeee-4949-9b2d-9106972f9123)');
+      });
+
+      it('should return a list of workspaces', () => {
+        expect(queryResults.length).toBe(2);
+        expect(queryResults[0].text).toBe('workspace1');
+        expect(queryResults[0].value).toBe('eeee4fde-1aaa-4d60-9974-eeee562ffaa1');
+        expect(queryResults[1].text).toBe('workspace2');
+        expect(queryResults[1].value).toBe('eeee4fde-1aaa-4d60-9974-eeee562ffaa2');
+      });
+    });
+
+    describe('and is the workspaces() macro with the subscription parameter quoted', () => {
+      beforeEach(async () => {
+        datasourceRequestMock.mockImplementation((options: { url: string }) => {
+          expect(options.url).toContain('11112222-eeee-4949-9b2d-9106972f9123');
+          return Promise.resolve({ data: workspacesResponse, status: 200 });
+        });
+
+        queryResults = await ctx.ds.metricFindQuery('workspaces("11112222-eeee-4949-9b2d-9106972f9123")');
+      });
+
+      it('should return a list of workspaces', () => {
+        expect(queryResults.length).toBe(2);
+        expect(queryResults[0].text).toBe('workspace1');
+        expect(queryResults[0].value).toBe('eeee4fde-1aaa-4d60-9974-eeee562ffaa1');
+        expect(queryResults[1].text).toBe('workspace2');
+        expect(queryResults[1].value).toBe('eeee4fde-1aaa-4d60-9974-eeee562ffaa2');
+      });
+    });
+
+    describe('and is a custom query', () => {
+      const tableResponseWithOneColumn = {
+        tables: [
+          {
+            name: 'PrimaryResult',
+            columns: [
+              {
+                name: 'Category',
+                type: 'string',
+              },
+            ],
+            rows: [['Administrative'], ['Policy']],
+          },
+        ],
+      };
+
+      const workspaceResponse = {
+        value: [
+          {
+            name: 'aworkspace',
+            properties: {
+              source: 'Azure',
+              customerId: 'abc1b44e-3e57-4410-b027-6cc0ae6dee67',
+            },
+          },
+        ],
+      };
+
+      beforeEach(async () => {
+        datasourceRequestMock.mockImplementation((options: { url: string }) => {
+          if (options.url.indexOf('Microsoft.OperationalInsights/workspaces') > -1) {
+            return Promise.resolve({ data: workspaceResponse, status: 200 });
+          } else {
+            return Promise.resolve({ data: tableResponseWithOneColumn, status: 200 });
+          }
+        });
+
+        queryResults = await ctx.ds.metricFindQuery('workspace("aworkspace").AzureActivity  | distinct Category');
+      });
+
+      it('should return a list of categories in the correct format', () => {
+        expect(queryResults.length).toBe(2);
+        expect(queryResults[0].text).toBe('Administrative');
+        expect(queryResults[0].value).toBe('Administrative');
+        expect(queryResults[1].text).toBe('Policy');
+        expect(queryResults[1].value).toBe('Policy');
+      });
     });
   });
 

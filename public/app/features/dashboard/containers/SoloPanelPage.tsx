@@ -83,7 +83,7 @@ export class SoloPanelPage extends Component<Props, State> {
       return <div className="alert alert-error">Panel with id {urlPanelId} not found</div>;
     }
 
-    if (!panel) {
+    if (!panel || !dashboard) {
       return <div>Loading & initializing dashboard</div>;
     }
 

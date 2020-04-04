@@ -117,6 +117,27 @@ _, err := db.ExecContext(ctx, "sp_RunMe",
 )
 ```
 
+## Reading Output Parameters from a Stored Procedure with Resultset
+
+To read output parameters from a stored procedure with resultset, make sure you read all the rows before reading the output parameters:
+```go
+sqltextcreate := `
+CREATE PROCEDURE spwithoutputandrows
+	@bitparam BIT OUTPUT
+AS BEGIN
+	SET @bitparam = 1
+	SELECT 'Row 1'
+END
+`
+var bitout int64
+rows, err := db.QueryContext(ctx, "spwithoutputandrows", sql.Named("bitparam", sql.Out{Dest: &bitout}))
+var strrow string
+for rows.Next() {
+	err = rows.Scan(&strrow)
+}
+fmt.Printf("bitparam is %d", bitout)
+```
+
 ## Caveat for local temporary tables
 
 Due to protocol limitations, temporary tables will only be allocated on the connection
@@ -189,7 +210,7 @@ are supported:
  * "cloud.google.com/go/civil".Date -> date
  * "cloud.google.com/go/civil".DateTime -> datetime2
  * "cloud.google.com/go/civil".Time -> time
- * mssql.TVPType -> Table Value Parameter (TDS version dependent)
+ * mssql.TVP -> Table Value Parameter (TDS version dependent)
 
 ## Important Notes
 

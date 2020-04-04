@@ -7,14 +7,15 @@ import classNames from 'classnames';
 // Services & Utils
 import { createErrorNotification } from 'app/core/copy/appNotification';
 import { getMessageFromError } from 'app/core/utils/errors';
+import { Branding } from 'app/core/components/Branding/Branding';
+
 // Components
 import { DashboardGrid } from '../dashgrid/DashboardGrid';
 import { DashNav } from '../components/DashNav';
-import { SubMenu } from '../components/SubMenu';
+import { AngularSubMenu } from '../components/SubMenu';
 import { DashboardSettings } from '../components/DashboardSettings';
-import PanelEditor from '../components/PanelEditor/PanelEditor';
-import { CustomScrollbar, Alert, Portal } from '@grafana/ui';
-
+import { PanelEditor } from '../components/PanelEditor/PanelEditor';
+import { Alert, CustomScrollbar, Portal } from '@grafana/ui';
 // Redux
 import { initDashboard } from '../state/initDashboard';
 import { cleanUpDashboard } from '../state/reducers';
@@ -30,6 +31,8 @@ import {
 
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 import { InspectTab, PanelInspector } from '../components/Inspector/PanelInspector';
+import { getConfig } from '../../../core/config';
+import { SubMenu } from '../components/SubMenu/SubMenu';
 
 export interface Props {
   urlUid?: string;
@@ -54,10 +57,10 @@ export interface Props {
   notifyApp: typeof notifyApp;
   updateLocation: typeof updateLocation;
   inspectTab?: InspectTab;
+  isNewEditorOpen?: boolean;
 }
 
 export interface State {
-  isSettingsOpening: boolean;
   isEditing: boolean;
   isFullscreen: boolean;
   fullscreenPanel: PanelModel | null;
@@ -69,7 +72,6 @@ export interface State {
 
 export class DashboardPage extends PureComponent<Props, State> {
   state: State = {
-    isSettingsOpening: false,
     isEditing: false,
     isFullscreen: false,
     showLoadingState: false,
@@ -99,7 +101,7 @@ export class DashboardPage extends PureComponent<Props, State> {
   }
 
   componentDidUpdate(prevProps: Props) {
-    const { dashboard, editview, urlEdit, urlFullscreen, urlPanelId, urlUid } = this.props;
+    const { dashboard, urlEdit, urlFullscreen, urlPanelId, urlUid } = this.props;
 
     if (!dashboard) {
       return;
@@ -107,21 +109,13 @@ export class DashboardPage extends PureComponent<Props, State> {
 
     // if we just got dashboard update title
     if (!prevProps.dashboard) {
-      document.title = dashboard.title + ' - Grafana';
+      document.title = dashboard.title + ' - ' + Branding.AppTitle;
     }
 
     // Due to the angular -> react url bridge we can ge an update here with new uid before the container unmounts
     // Can remove this condition after we switch to react router
     if (prevProps.urlUid !== urlUid) {
       return;
-    }
-
-    // handle animation states when opening dashboard settings
-    if (!prevProps.editview && editview) {
-      this.setState({ isSettingsOpening: true });
-      setTimeout(() => {
-        this.setState({ isSettingsOpening: false });
-      }, 10);
     }
 
     // Sync url state with model
@@ -260,8 +254,11 @@ export class DashboardPage extends PureComponent<Props, State> {
       inspectPanelId,
       urlEditPanel,
       inspectTab,
+      isNewEditorOpen,
+      updateLocation,
     } = this.props;
-    const { isSettingsOpening, isEditing, isFullscreen, scrollTop, updateScrollTop } = this.state;
+
+    const { isEditing, isFullscreen, scrollTop, updateScrollTop } = this.state;
 
     if (!dashboard) {
       if (isInitSlow) {
@@ -269,11 +266,6 @@ export class DashboardPage extends PureComponent<Props, State> {
       }
       return null;
     }
-
-    const classes = classNames({
-      'dashboard-page--settings-opening': isSettingsOpening,
-      'dashboard-page--settings-open': !isSettingsOpening && editview,
-    });
 
     const gridWrapperClasses = classNames({
       'dashboard-container': true,
@@ -289,12 +281,11 @@ export class DashboardPage extends PureComponent<Props, State> {
     const approximateScrollTop = Math.round(scrollTop / 25) * 25;
 
     return (
-      <div className={classes}>
+      <div>
         <DashNav
           dashboard={dashboard}
           isEditing={isEditing}
           isFullscreen={isFullscreen}
-          editview={editview}
           $injector={$injector}
           onAddPanel={this.onAddPanel}
         />
@@ -306,16 +297,16 @@ export class DashboardPage extends PureComponent<Props, State> {
             updateAfterMountMs={500}
             className="custom-scrollbar--page"
           >
-            {editview && <DashboardSettings dashboard={dashboard} />}
-
             {initError && this.renderInitFailedState()}
 
             <div className={gridWrapperClasses}>
-              <SubMenu dashboard={dashboard} />
+              {!getConfig().featureToggles.newVariables && <AngularSubMenu dashboard={dashboard} />}
+              {!editPanel && getConfig().featureToggles.newVariables && <SubMenu dashboard={dashboard} />}
               <DashboardGrid
                 dashboard={dashboard}
                 isEditing={isEditing}
                 isFullscreen={isFullscreen}
+                isNewEditorOpen={isNewEditorOpen}
                 scrollTop={approximateScrollTop}
               />
             </div>
@@ -328,6 +319,7 @@ export class DashboardPage extends PureComponent<Props, State> {
             <PanelEditor dashboard={dashboard} sourcePanel={editPanel} />
           </Portal>
         )}
+        {editview && <DashboardSettings dashboard={dashboard} updateLocation={updateLocation} />}
       </div>
     );
   }
@@ -349,6 +341,7 @@ export const mapStateToProps = (state: StoreState) => ({
   initError: state.dashboard.initError,
   dashboard: state.dashboard.getModel() as DashboardModel,
   inspectTab: state.location.query.tab,
+  isNewEditorOpen: state.panelEditorNew.isOpen,
 });
 
 const mapDispatchToProps = {

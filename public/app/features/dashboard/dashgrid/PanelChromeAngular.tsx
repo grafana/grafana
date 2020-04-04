@@ -2,16 +2,25 @@
 import React, { PureComponent } from 'react';
 import classNames from 'classnames';
 import { Unsubscribable } from 'rxjs';
+import { connect, MapStateToProps, MapDispatchToProps } from 'react-redux';
+
 // Components
 import { PanelHeader } from './PanelHeader/PanelHeader';
+
 // Utils & Services
 import { getTimeSrv, TimeSrv } from '../services/TimeSrv';
-import { getAngularLoader } from '@grafana/runtime';
+import { getAngularLoader, AngularComponent } from '@grafana/runtime';
+import { setPanelAngularComponent } from '../state/reducers';
+import config from 'app/core/config';
+
 // Types
 import { DashboardModel, PanelModel } from '../state';
+import { StoreState } from 'app/types';
 import { LoadingState, DefaultTimeRange, PanelData, PanelPlugin, PanelEvents } from '@grafana/data';
+import { updateLocation } from 'app/core/actions';
+import { PANEL_BORDER } from 'app/core/constants';
 
-export interface Props {
+interface OwnProps {
   panel: PanelModel;
   dashboard: DashboardModel;
   plugin: PanelPlugin;
@@ -20,6 +29,17 @@ export interface Props {
   width: number;
   height: number;
 }
+
+interface ConnectedProps {
+  angularComponent?: AngularComponent | null;
+}
+
+interface DispatchProps {
+  setPanelAngularComponent: typeof setPanelAngularComponent;
+  updateLocation: typeof updateLocation;
+}
+
+export type Props = OwnProps & ConnectedProps & DispatchProps;
 
 export interface State {
   data: PanelData;
@@ -36,8 +56,8 @@ interface AngularScopeProps {
   };
 }
 
-export class PanelChromeAngular extends PureComponent<Props, State> {
-  element?: HTMLElement;
+export class PanelChromeAngularUnconnected extends PureComponent<Props, State> {
+  element: HTMLElement | null = null;
   timeSrv: TimeSrv = getTimeSrv();
   scopeProps?: AngularScopeProps;
   querySubscription: Unsubscribable;
@@ -85,7 +105,7 @@ export class PanelChromeAngular extends PureComponent<Props, State> {
   };
 
   onPanelDataUpdate(data: PanelData) {
-    let errorMessage: string | null = null;
+    let errorMessage: string | undefined;
 
     if (data.state === LoadingState.Error) {
       const { error } = data;
@@ -104,26 +124,50 @@ export class PanelChromeAngular extends PureComponent<Props, State> {
 
     if (this.querySubscription) {
       this.querySubscription.unsubscribe();
-      this.querySubscription = null;
     }
 
     this.props.panel.events.off(PanelEvents.render, this.onPanelRenderEvent);
   }
 
   componentDidUpdate(prevProps: Props, prevState: State) {
-    if (prevProps.plugin !== this.props.plugin) {
+    const { plugin, height, width, panel } = this.props;
+
+    if (prevProps.plugin !== plugin) {
       this.cleanUpAngularPanel();
       this.loadAngularPanel();
     }
+
+    if (prevProps.width !== width || prevProps.height !== height) {
+      if (this.scopeProps) {
+        this.scopeProps.size.height = this.getInnerPanelHeight();
+        this.scopeProps.size.width = this.getInnerPanelWidth();
+        panel.events.emit(PanelEvents.panelSizeChanged);
+      }
+    }
+  }
+
+  getInnerPanelHeight() {
+    const { plugin, height } = this.props;
+    const { theme } = config;
+
+    const headerHeight = this.hasOverlayHeader() ? 0 : theme.panelHeaderHeight;
+    const chromePadding = plugin.noPadding ? 0 : theme.panelPadding;
+    return height - headerHeight - chromePadding * 2 - PANEL_BORDER;
+  }
+
+  getInnerPanelWidth() {
+    const { plugin, width } = this.props;
+    const { theme } = config;
+
+    const chromePadding = plugin.noPadding ? 0 : theme.panelPadding;
+    return width - chromePadding * 2 - PANEL_BORDER;
   }
 
   loadAngularPanel() {
-    const { panel, dashboard, height, width } = this.props;
+    const { panel, dashboard, setPanelAngularComponent } = this.props;
 
     // if we have no element or already have loaded the panel return
-    if (!this.element || panel.angularPanel) {
-      this.scopeProps.size.height = height;
-      this.scopeProps.size.width = width;
+    if (!this.element) {
       return;
     }
 
@@ -133,22 +177,26 @@ export class PanelChromeAngular extends PureComponent<Props, State> {
     this.scopeProps = {
       panel: panel,
       dashboard: dashboard,
-      size: { width, height },
+      size: { width: this.getInnerPanelWidth(), height: this.getInnerPanelHeight() },
     };
 
-    // compile angular template and get back handle to scope
-    panel.setAngularPanel(loader.load(this.element, this.scopeProps, template));
+    setPanelAngularComponent({
+      panelId: panel.id,
+      angularComponent: loader.load(this.element, this.scopeProps, template),
+    });
 
     // need to to this every time we load an angular as all events are unsubscribed when panel is destroyed
     this.subscribeToRenderEvent();
   }
 
   cleanUpAngularPanel() {
-    const { panel } = this.props;
+    const { angularComponent, setPanelAngularComponent, panel } = this.props;
 
-    if (panel.angularPanel) {
-      panel.setAngularPanel(undefined);
+    if (angularComponent) {
+      angularComponent.destroy();
     }
+
+    setPanelAngularComponent({ panelId: panel.id, angularComponent: null });
   }
 
   hasOverlayHeader() {
@@ -169,7 +217,7 @@ export class PanelChromeAngular extends PureComponent<Props, State> {
   }
 
   render() {
-    const { dashboard, panel, isFullscreen, plugin } = this.props;
+    const { dashboard, panel, isFullscreen, plugin, angularComponent, updateLocation } = this.props;
     const { errorMessage, data, alertState } = this.state;
     const { transparent } = panel;
 
@@ -192,14 +240,15 @@ export class PanelChromeAngular extends PureComponent<Props, State> {
         <PanelHeader
           panel={panel}
           dashboard={dashboard}
-          timeInfo={data.request ? data.request.timeInfo : null}
           title={panel.title}
           description={panel.description}
           scopedVars={panel.scopedVars}
+          angularComponent={angularComponent}
           links={panel.links}
           error={errorMessage}
           isFullscreen={isFullscreen}
-          isLoading={data.state === LoadingState.Loading}
+          data={data}
+          updateLocation={updateLocation}
         />
         <div className={panelContentClassNames}>
           <div ref={element => (this.element = element)} className="panel-height-helper" />
@@ -208,3 +257,13 @@ export class PanelChromeAngular extends PureComponent<Props, State> {
     );
   }
 }
+
+const mapStateToProps: MapStateToProps<ConnectedProps, OwnProps, StoreState> = (state, props) => {
+  return {
+    angularComponent: state.dashboard.panels[props.panel.id].angularComponent,
+  };
+};
+
+const mapDispatchToProps: MapDispatchToProps<DispatchProps, OwnProps> = { setPanelAngularComponent, updateLocation };
+
+export const PanelChromeAngular = connect(mapStateToProps, mapDispatchToProps)(PanelChromeAngularUnconnected);

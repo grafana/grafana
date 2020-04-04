@@ -11,9 +11,15 @@ import { DataProcessor } from './data_processor';
 import { axesEditorComponent } from './axes_editor';
 import config from 'app/core/config';
 import TimeSeries from 'app/core/time_series2';
-import { VariableSuggestion } from '@grafana/ui';
 import { getProcessedDataFrames } from 'app/features/dashboard/state/runRequest';
-import { getColorFromHexRgbOrName, PanelEvents, DataFrame, DataLink, DateTimeInput } from '@grafana/data';
+import {
+  getColorFromHexRgbOrName,
+  PanelEvents,
+  DataFrame,
+  DataLink,
+  DateTimeInput,
+  VariableSuggestion,
+} from '@grafana/data';
 
 import { GraphContextMenuCtrl } from './GraphContextMenuCtrl';
 import { getDataLinksVariableSuggestions } from 'app/features/panel/panellinks/link_srv';
@@ -158,6 +164,7 @@ class GraphCtrl extends MetricsPanelCtrl {
     this.events.on(PanelEvents.initPanelActions, this.onInitPanelActions.bind(this));
 
     this.onDataLinksChange = this.onDataLinksChange.bind(this);
+    this.annotationsPromise = Promise.resolve({ annotations: [] });
   }
 
   onInitEditMode() {
@@ -171,7 +178,6 @@ class GraphCtrl extends MetricsPanelCtrl {
   }
 
   onInitPanelActions(actions: any[]) {
-    actions.push({ text: 'Export CSV', click: 'ctrl.exportCsv()' });
     actions.push({ text: 'Toggle legend', click: 'ctrl.toggleLegend()', shortcut: 'p l' });
   }
 
@@ -330,18 +336,6 @@ class GraphCtrl extends MetricsPanelCtrl {
     const legend = this.panel.legend;
     legend.values = legend.min || legend.max || legend.avg || legend.current || legend.total;
     this.render();
-  }
-
-  exportCsv() {
-    const scope = this.$scope.$new(true);
-    scope.seriesList = this.seriesList
-      .filter(series => !this.panel.legend.hideEmpty || !series.allIsNull)
-      .filter(series => !this.panel.legend.hideZero || !series.allIsZero);
-    this.publishAppEvent(CoreEvents.showModal, {
-      templateHtml: '<export-data-modal data="seriesList"></export-data-modal>',
-      scope,
-      modalClass: 'modal--narrow',
-    });
   }
 
   onContextMenuClose = () => {

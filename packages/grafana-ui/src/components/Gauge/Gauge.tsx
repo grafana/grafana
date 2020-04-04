@@ -54,8 +54,9 @@ export class Gauge extends PureComponent<Props> {
 
   getFormattedThresholds(): Threshold[] {
     const { field, theme } = this.props;
-    const isPercent = field.thresholds?.mode === ThresholdsMode.Percentage;
-    const steps = field.thresholds!.steps;
+    const thresholds = field.thresholds ?? Gauge.defaultProps.field?.thresholds!;
+    const isPercent = thresholds.mode === ThresholdsMode.Percentage;
+    const steps = thresholds.steps;
     let min = field.min!;
     let max = field.max!;
     if (isPercent) {

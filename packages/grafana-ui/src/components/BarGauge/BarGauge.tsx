@@ -37,7 +37,7 @@ export interface Props extends Themeable {
   height: number;
   width: number;
   field: FieldConfig;
-  display: DisplayProcessor;
+  display?: DisplayProcessor;
   value: DisplayValue;
   orientation: VizOrientation;
   itemSpacing?: number;

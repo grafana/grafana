@@ -20,16 +20,17 @@ describe('toDataFrame', () => {
       ],
     };
     let series = toDataFrame(input1);
-    expect(series.fields[0].name).toBe(input1.target);
+    expect(series.fields[1].name).toBe(input1.target);
 
     const v0 = series.fields[0].values;
     const v1 = series.fields[1].values;
     expect(v0.length).toEqual(2);
+    expect(v0.get(0)).toEqual(1);
+    expect(v0.get(1)).toEqual(2);
+
     expect(v1.length).toEqual(2);
-    expect(v0.get(0)).toEqual(100);
-    expect(v0.get(1)).toEqual(200);
-    expect(v1.get(0)).toEqual(1);
-    expect(v1.get(1)).toEqual(2);
+    expect(v1.get(0)).toEqual(100);
+    expect(v1.get(1)).toEqual(200);
 
     // Should fill a default name if target is empty
     const input2 = {
@@ -41,7 +42,7 @@ describe('toDataFrame', () => {
       ],
     };
     series = toDataFrame(input2);
-    expect(series.fields[0].name).toEqual('Value');
+    expect(series.fields[1].name).toEqual('Value');
   });
 
   it('assumes TimeSeries values are numbers', () => {
@@ -53,7 +54,8 @@ describe('toDataFrame', () => {
       ],
     };
     const data = toDataFrame(input1);
-    expect(data.fields[0].type.value).toBe(FieldType.number);
+    expect(data.fields[0].type.value).toBe(FieldType.time);
+    expect(data.fields[1].type.value).toBe(FieldType.number);
   });
 
   it('keeps dataFrame unchanged', () => {
@@ -77,19 +79,6 @@ describe('toDataFrame', () => {
         rows: {},
       })
     ).toThrowError('Expected table rows to be array, got object.');
-  });
-
-  it('migrate from 6.3 style rows', () => {
-    const oldDataFrame = {
-      fields: [{ name: 'A' }, { name: 'B' }, { name: 'C' }],
-      rows: [
-        [100, 'A', 1],
-        [200, 'B', 2],
-        [300, 'C', 3],
-      ],
-    };
-    const data = toDataFrame(oldDataFrame);
-    expect(data.length).toBe(oldDataFrame.rows.length);
   });
 
   it('Guess Colum Types from value', () => {
@@ -225,7 +214,9 @@ describe('SerisData backwards compatibility', () => {
     const json: DataFrameDTO = {
       refId: 'Z',
       meta: {
-        somethign: 8,
+        custom: {
+          something: 8,
+        },
       },
       fields: [
         { name: 'T', type: 'time', values: [1, 2, 3] },

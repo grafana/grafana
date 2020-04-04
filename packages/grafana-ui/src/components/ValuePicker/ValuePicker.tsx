@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { IconType } from '../Icon/types';
 import { SelectableValue } from '@grafana/data';
-import { Button } from '../Forms/Button';
-import { Select } from '../Forms/Select/Select';
+import { Button, ButtonVariant } from '../Button';
+import { Select } from '../Select/Select';
+import { FullWidthButtonContainer } from '../Button/FullWidthButtonContainer';
 
 interface ValuePickerProps<T> {
   /** Label to display on the picker button */
@@ -12,17 +13,20 @@ interface ValuePickerProps<T> {
   /** ValuePicker options  */
   options: Array<SelectableValue<T>>;
   onChange: (value: SelectableValue<T>) => void;
+  variant?: ButtonVariant;
 }
 
-export function ValuePicker<T>({ label, icon, options, onChange }: ValuePickerProps<T>) {
+export function ValuePicker<T>({ label, icon, options, onChange, variant }: ValuePickerProps<T>) {
   const [isPicking, setIsPicking] = useState(false);
 
   return (
     <>
       {!isPicking && (
-        <Button icon={`fa fa-${icon || 'plus'}`} onClick={() => setIsPicking(true)}>
-          {label}
-        </Button>
+        <FullWidthButtonContainer>
+          <Button size="sm" icon={`fa fa-${icon || 'plus'}`} onClick={() => setIsPicking(true)} variant={variant}>
+            {label}
+          </Button>
+        </FullWidthButtonContainer>
       )}
 
       {isPicking && (

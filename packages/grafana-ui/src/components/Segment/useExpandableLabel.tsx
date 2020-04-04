@@ -11,7 +11,7 @@ export const useExpandableLabel = (initialExpanded: boolean) => {
       onClick={() => {
         setExpanded(true);
         if (ref && ref.current) {
-          setWidth(ref.current.clientWidth);
+          setWidth(ref.current.clientWidth * 1.25);
         }
         if (onClick) {
           onClick();

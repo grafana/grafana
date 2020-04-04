@@ -1,15 +1,15 @@
 import {
   DataFrame,
   FieldType,
-  LogsMetaKind,
-  LogsDedupStrategy,
   LogLevel,
+  LogRowModel,
+  LogsDedupStrategy,
+  LogsMetaKind,
   MutableDataFrame,
   toDataFrame,
-  LogRowModel,
   SemanticType,
 } from '@grafana/data';
-import { dedupLogRows, dataFrameToLogsModel } from './logs_model';
+import { dataFrameToLogsModel, dedupLogRows } from './logs_model';
 
 describe('dedupLogRows()', () => {
   test('should return rows as is when dedup is set to none', () => {
@@ -247,12 +247,12 @@ describe('dataFrameToLogsModel', () => {
 
     expect(logsModel.series).toHaveLength(2);
     expect(logsModel.meta).toHaveLength(2);
-    expect(logsModel.meta[0]).toMatchObject({
+    expect(logsModel.meta![0]).toMatchObject({
       label: 'Common labels',
       value: series[0].fields[1].labels,
       kind: LogsMetaKind.LabelsMap,
     });
-    expect(logsModel.meta[1]).toMatchObject({
+    expect(logsModel.meta![1]).toMatchObject({
       label: 'Limit',
       value: `1000 (2 returned)`,
       kind: LogsMetaKind.String,
@@ -388,7 +388,7 @@ describe('dataFrameToLogsModel', () => {
 
     expect(logsModel.series).toHaveLength(2);
     expect(logsModel.meta).toHaveLength(1);
-    expect(logsModel.meta[0]).toMatchObject({
+    expect(logsModel.meta![0]).toMatchObject({
       label: 'Common labels',
       value: {
         foo: 'bar',

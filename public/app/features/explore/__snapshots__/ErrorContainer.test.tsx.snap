@@ -1,0 +1,33 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`ErrorContainer should render component 1`] = `
+<Component
+  duration={100}
+  in={true}
+>
+  <div
+    className="alert-container"
+  >
+    <div
+      className="alert-error alert"
+    >
+      <div
+        className="alert-icon"
+      >
+        <i
+          className="fa fa-exclamation-triangle"
+        />
+      </div>
+      <div
+        className="alert-body"
+      >
+        <div
+          className="alert-title"
+        >
+          Error message
+        </div>
+      </div>
+    </div>
+  </div>
+</Component>
+`;

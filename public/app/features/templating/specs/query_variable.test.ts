@@ -1,9 +1,19 @@
 import { QueryVariable } from '../query_variable';
+import DatasourceSrv from '../../plugins/datasource_srv';
+import { TemplateSrv } from '../template_srv';
+import { VariableSrv } from '../variable_srv';
+import { TimeSrv } from '../../dashboard/services/TimeSrv';
 
 describe('QueryVariable', () => {
   describe('when creating from model', () => {
     it('should set defaults', () => {
-      const variable = new QueryVariable({}, null, null, null, null);
+      const variable = new QueryVariable(
+        {},
+        (null as unknown) as DatasourceSrv,
+        (null as unknown) as TemplateSrv,
+        (null as unknown) as VariableSrv,
+        (null as unknown) as TimeSrv
+      );
       expect(variable.datasource).toBe(null);
       expect(variable.refresh).toBe(0);
       expect(variable.sort).toBe(0);
@@ -15,7 +25,13 @@ describe('QueryVariable', () => {
     });
 
     it('get model should copy changes back to model', () => {
-      const variable = new QueryVariable({}, null, null, null, null);
+      const variable = new QueryVariable(
+        {},
+        (null as unknown) as DatasourceSrv,
+        (null as unknown) as TemplateSrv,
+        (null as unknown) as VariableSrv,
+        (null as unknown) as TimeSrv
+      );
       variable.options = [{ text: 'test', value: '', selected: false }];
       variable.datasource = 'google';
       variable.regex = 'asd';
@@ -30,7 +46,13 @@ describe('QueryVariable', () => {
     });
 
     it('if refresh != 0 then remove options in presisted mode', () => {
-      const variable = new QueryVariable({}, null, null, null, null);
+      const variable = new QueryVariable(
+        {},
+        (null as unknown) as DatasourceSrv,
+        (null as unknown) as TemplateSrv,
+        (null as unknown) as VariableSrv,
+        (null as unknown) as TimeSrv
+      );
       variable.options = [{ text: 'test', value: '', selected: false }];
       variable.refresh = 1;
 
@@ -40,7 +62,13 @@ describe('QueryVariable', () => {
   });
 
   describe('can convert and sort metric names', () => {
-    const variable = new QueryVariable({}, null, null, null, null);
+    const variable = new QueryVariable(
+      {},
+      (null as unknown) as DatasourceSrv,
+      (null as unknown) as TemplateSrv,
+      (null as unknown) as VariableSrv,
+      (null as unknown) as TimeSrv
+    );
     let input: any;
 
     beforeEach(() => {

@@ -105,10 +105,10 @@ export const BarGaugeCell = () => {
     {
       matcher: { id: FieldMatcherID.byName, options: 'Progress' },
       properties: [
-        { path: 'custom.width', value: '200' },
-        { path: 'custom.displayMode', value: 'gradient-gauge' },
-        { path: 'min', value: '0' },
-        { path: 'max', value: '100' },
+        { prop: 'width', value: '200', custom: true },
+        { prop: 'displayMode', value: 'gradient-gauge', custom: true },
+        { prop: 'min', value: '0' },
+        { prop: 'max', value: '100' },
       ],
     },
   ]);
@@ -141,11 +141,11 @@ export const ColoredCells = () => {
     {
       matcher: { id: FieldMatcherID.byName, options: 'Progress' },
       properties: [
-        { path: 'custom.width', value: '80' },
-        { path: 'custom.displayMode', value: 'color-background' },
-        { path: 'min', value: '0' },
-        { path: 'max', value: '100' },
-        { path: 'thresholds', value: defaultThresholds },
+        { prop: 'width', value: '80', custom: true },
+        { prop: 'displayMode', value: 'color-background', custom: true },
+        { prop: 'min', value: '0' },
+        { prop: 'max', value: '100' },
+        { prop: 'thresholds', value: defaultThresholds },
       ],
     },
   ]);

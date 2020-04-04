@@ -228,7 +228,7 @@ Open http://your_server_ip:3000 in your browser and login with the default user 
 - Click on `Data Sources` on the side menu.
 - Click on `Add new` in the top menu
 - Specify name `graphite` and check the `Default ` checkbox
-- Specify Url `http://localhost:8888` and Access `proxy`
+- Specify URL `http://localhost:8888` and Access `proxy`
 - Click `Add ` button
 
 ### Your first dashboard

@@ -2,6 +2,7 @@ package wrapper
 
 import (
 	"context"
+	"time"
 
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 
@@ -12,32 +13,50 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb"
 )
 
-func NewDatasourcePluginWrapperV2(log log.Logger, plugin backendplugin.DatasourcePlugin) *DatasourcePluginWrapperV2 {
-	return &DatasourcePluginWrapperV2{DatasourcePlugin: plugin, logger: log}
+func NewDatasourcePluginWrapperV2(log log.Logger, pluginId, pluginType string, plugin backendplugin.DataPlugin) *DatasourcePluginWrapperV2 {
+	return &DatasourcePluginWrapperV2{DataPlugin: plugin, logger: log, pluginId: pluginId, pluginType: pluginType}
 }
 
 type DatasourcePluginWrapperV2 struct {
-	backendplugin.DatasourcePlugin
-	logger log.Logger
+	backendplugin.DataPlugin
+	logger     log.Logger
+	pluginId   string
+	pluginType string
 }
 
 func (tw *DatasourcePluginWrapperV2) Query(ctx context.Context, ds *models.DataSource, query *tsdb.TsdbQuery) (*tsdb.Response, error) {
-	jsonData, err := ds.JsonData.MarshalJSON()
+	jsonDataBytes, err := ds.JsonData.MarshalJSON()
 	if err != nil {
 		return nil, err
 	}
 
-	pbQuery := &pluginv2.DataQueryRequest{
+	pbQuery := &pluginv2.QueryDataRequest{
 		Config: &pluginv2.PluginConfig{
-			Name:                    ds.Name,
-			Type:                    ds.Type,
-			Url:                     ds.Url,
-			Id:                      ds.Id,
-			OrgId:                   ds.OrgId,
-			JsonData:                string(jsonData),
-			DecryptedSecureJsonData: ds.SecureJsonData.Decrypt(),
+			OrgId:         ds.OrgId,
+			PluginId:      tw.pluginId,
+			LastUpdatedMS: ds.Updated.UnixNano() / int64(time.Millisecond),
+			DatasourceConfig: &pluginv2.DataSourceConfig{
+				Id:                      ds.Id,
+				Name:                    ds.Name,
+				Url:                     ds.Url,
+				Database:                ds.Database,
+				User:                    ds.User,
+				BasicAuthEnabled:        ds.BasicAuth,
+				BasicAuthUser:           ds.BasicAuthUser,
+				JsonData:                jsonDataBytes,
+				DecryptedSecureJsonData: ds.DecryptedValues(),
+			},
 		},
 		Queries: []*pluginv2.DataQuery{},
+	}
+
+	if query.User != nil {
+		pbQuery.User = &pluginv2.User{
+			Name:  query.User.Name,
+			Login: query.User.Login,
+			Email: query.User.Email,
+			Role:  string(query.User.OrgRole),
+		}
 	}
 
 	for _, q := range query.Queries {
@@ -57,7 +76,7 @@ func (tw *DatasourcePluginWrapperV2) Query(ctx context.Context, ds *models.DataS
 		})
 	}
 
-	pbRes, err := tw.DatasourcePlugin.DataQuery(ctx, pbQuery)
+	pbRes, err := tw.DataPlugin.QueryData(ctx, pbQuery)
 	if err != nil {
 		return nil, err
 	}

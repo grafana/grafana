@@ -1,7 +1,7 @@
 import { updateLocation } from 'app/core/actions';
 import { store } from 'app/store/store';
 import config from 'app/core/config';
-import { getDataSourceSrv, getLocationSrv } from '@grafana/runtime';
+import { getDataSourceSrv, getLocationSrv, AngularComponent } from '@grafana/runtime';
 import { PanelMenuItem } from '@grafana/data';
 import { copyPanel, duplicatePanel, editPanelJson, removePanel, sharePanel } from 'app/features/dashboard/utils/panel';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
@@ -12,7 +12,11 @@ import { getExploreUrl } from '../../../core/utils/explore';
 import { getTimeSrv } from '../services/TimeSrv';
 import { PanelCtrl } from '../../panel/panel_ctrl';
 
-export function getPanelMenu(dashboard: DashboardModel, panel: PanelModel): PanelMenuItem[] {
+export function getPanelMenu(
+  dashboard: DashboardModel,
+  panel: PanelModel,
+  angularComponent?: AngularComponent | null
+): PanelMenuItem[] {
   const onViewPanel = (event: React.MouseEvent<any>) => {
     event.preventDefault();
     store.dispatch(
@@ -123,7 +127,7 @@ export function getPanelMenu(dashboard: DashboardModel, panel: PanelModel): Pane
     shortcut: 'p s',
   });
 
-  if (contextSrv.hasAccessToExplore() && !panel.plugin.meta.skipDataQuery) {
+  if (contextSrv.hasAccessToExplore() && !(panel.plugin && panel.plugin.meta.skipDataQuery)) {
     menu.push({
       text: 'Explore',
       iconClassName: 'gicon gicon-explore',
@@ -132,14 +136,12 @@ export function getPanelMenu(dashboard: DashboardModel, panel: PanelModel): Pane
     });
   }
 
-  if (config.featureToggles.inspect) {
-    menu.push({
-      text: 'Inspect',
-      iconClassName: 'fa fa-fw fa-info-circle',
-      onClick: onInspectPanel,
-      shortcut: 'p i',
-    });
-  }
+  menu.push({
+    text: 'Inspect',
+    iconClassName: 'fa fa-fw fa-info-circle',
+    onClick: onInspectPanel,
+    shortcut: 'p i',
+  });
 
   if (config.featureToggles.newEdit) {
     menu.push({
@@ -171,8 +173,8 @@ export function getPanelMenu(dashboard: DashboardModel, panel: PanelModel): Pane
   });
 
   // add old angular panel options
-  if (panel.angularPanel) {
-    const scope = panel.angularPanel.getScope();
+  if (angularComponent) {
+    const scope = angularComponent.getScope();
     const panelCtrl: PanelCtrl = scope.$$childHead.ctrl;
     const angularMenuItems = panelCtrl.getExtendedMenu();
 

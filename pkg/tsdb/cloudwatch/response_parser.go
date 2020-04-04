@@ -83,44 +83,72 @@ func parseGetMetricDataTimeSeries(metricDataResults map[string]*cloudwatch.Metri
 			}
 		}
 
-		series := tsdb.TimeSeries{
-			Tags:   make(map[string]string),
-			Points: make([]tsdb.TimePoint, 0),
-		}
+		// In case a multi-valued dimension is used and the cloudwatch query yields no values, create one empty time series for each dimension value.
+		// Use that dimension value to expand the alias field
+		if len(metricDataResult.Values) == 0 && query.isMultiValuedDimensionExpression() {
+			series := 0
+			multiValuedDimension := ""
+			for key, values := range query.Dimensions {
+				if len(values) > series {
+					series = len(values)
+					multiValuedDimension = key
+				}
+			}
 
-		keys := make([]string, 0)
-		for k := range query.Dimensions {
-			keys = append(keys, k)
-		}
-		sort.Strings(keys)
+			for _, value := range query.Dimensions[multiValuedDimension] {
+				emptySeries := tsdb.TimeSeries{
+					Tags:   map[string]string{multiValuedDimension: value},
+					Points: make([]tsdb.TimePoint, 0),
+				}
+				for key, values := range query.Dimensions {
+					if key != multiValuedDimension && len(values) > 0 {
+						emptySeries.Tags[key] = values[0]
+					}
+				}
 
-		for _, key := range keys {
-			values := query.Dimensions[key]
-			if len(values) == 1 && values[0] != "*" {
-				series.Tags[key] = values[0]
-			} else {
-				for _, value := range values {
-					if value == label || value == "*" {
-						series.Tags[key] = label
-					} else if strings.Contains(label, value) {
-						series.Tags[key] = value
+				emptySeries.Name = formatAlias(query, query.Stats, emptySeries.Tags, label)
+				result = append(result, &emptySeries)
+			}
+		} else {
+			keys := make([]string, 0)
+			for k := range query.Dimensions {
+				keys = append(keys, k)
+			}
+			sort.Strings(keys)
+
+			series := tsdb.TimeSeries{
+				Tags:   make(map[string]string),
+				Points: make([]tsdb.TimePoint, 0),
+			}
+
+			for _, key := range keys {
+				values := query.Dimensions[key]
+				if len(values) == 1 && values[0] != "*" {
+					series.Tags[key] = values[0]
+				} else {
+					for _, value := range values {
+						if value == label || value == "*" {
+							series.Tags[key] = label
+						} else if strings.Contains(label, value) {
+							series.Tags[key] = value
+						}
 					}
 				}
 			}
-		}
 
-		series.Name = formatAlias(query, query.Stats, series.Tags, label)
+			series.Name = formatAlias(query, query.Stats, series.Tags, label)
 
-		for j, t := range metricDataResult.Timestamps {
-			if j > 0 {
-				expectedTimestamp := metricDataResult.Timestamps[j-1].Add(time.Duration(query.Period) * time.Second)
-				if expectedTimestamp.Before(*t) {
-					series.Points = append(series.Points, tsdb.NewTimePoint(null.FloatFromPtr(nil), float64(expectedTimestamp.Unix()*1000)))
+			for j, t := range metricDataResult.Timestamps {
+				if j > 0 {
+					expectedTimestamp := metricDataResult.Timestamps[j-1].Add(time.Duration(query.Period) * time.Second)
+					if expectedTimestamp.Before(*t) {
+						series.Points = append(series.Points, tsdb.NewTimePoint(null.FloatFromPtr(nil), float64(expectedTimestamp.Unix()*1000)))
+					}
 				}
+				series.Points = append(series.Points, tsdb.NewTimePoint(null.FloatFrom(*metricDataResult.Values[j]), float64((*t).Unix())*1000))
 			}
-			series.Points = append(series.Points, tsdb.NewTimePoint(null.FloatFrom(*metricDataResult.Values[j]), float64((*t).Unix())*1000))
+			result = append(result, &series)
 		}
-		result = append(result, &series)
 	}
 	return &result, partialData, nil
 }
@@ -142,7 +170,7 @@ func formatAlias(query *cloudWatchQuery, stat string, dimensions map[string]stri
 		return query.Id
 	}
 
-	if len(query.Alias) == 0 && query.isInferredSearchExpression() {
+	if len(query.Alias) == 0 && query.isInferredSearchExpression() && !query.isMultiValuedDimensionExpression() {
 		return label
 	}
 

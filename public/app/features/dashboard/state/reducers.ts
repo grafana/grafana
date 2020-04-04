@@ -4,12 +4,17 @@ import {
   DashboardState,
   DashboardAclDTO,
   DashboardInitError,
+  PanelState,
   QueriesToUpdateOnDashboardLoad,
 } from 'app/types';
+import { AngularComponent } from '@grafana/runtime';
+import { EDIT_PANEL_ID } from 'app/core/constants';
 import { processAclItems } from 'app/core/utils/acl';
 import { panelEditorReducer } from '../panel_editor/state/reducers';
+import { panelEditorReducerNew } from '../components/PanelEditor/state/reducers';
 import { DashboardModel } from './DashboardModel';
 import { PanelModel } from './PanelModel';
+import { PanelPlugin } from '@grafana/data';
 
 export const initialState: DashboardState = {
   initPhase: DashboardInitPhase.NotStarted,
@@ -61,6 +66,7 @@ const dashbardSlice = createSlice({
         state.getModel = () => null;
       }
 
+      state.panels = {};
       state.initPhase = DashboardInitPhase.NotStarted;
       state.isInitSlow = false;
       state.initError = null;
@@ -71,20 +77,37 @@ const dashbardSlice = createSlice({
     clearDashboardQueriesToUpdateOnLoad: (state, action: PayloadAction) => {
       state.modifiedQueries = null;
     },
-    dashboardPanelTypeChanged: (state, action: PayloadAction<DashboardPanelTypeChangedPayload>) => {
-      state.panels[action.payload.panelId] = { pluginId: action.payload.pluginId };
+    panelModelAndPluginReady: (state: DashboardState, action: PayloadAction<PanelModelAndPluginReadyPayload>) => {
+      updatePanelState(state, action.payload.panelId, { plugin: action.payload.plugin });
     },
-    addPanelToDashboard: (state, action: PayloadAction<AddPanelPayload>) => {},
+    cleanUpEditPanel: (state, action: PayloadAction) => {
+      delete state.panels[EDIT_PANEL_ID];
+    },
+    setPanelAngularComponent: (state: DashboardState, action: PayloadAction<SetPanelAngularComponentPayload>) => {
+      updatePanelState(state, action.payload.panelId, { angularComponent: action.payload.angularComponent });
+    },
+    addPanel: (state, action: PayloadAction<PanelModel>) => {
+      state.panels[action.payload.id] = { pluginId: action.payload.type };
+    },
   },
 });
 
-export interface DashboardPanelTypeChangedPayload {
-  panelId: number;
-  pluginId: string;
+export function updatePanelState(state: DashboardState, panelId: number, ps: Partial<PanelState>) {
+  if (!state.panels[panelId]) {
+    state.panels[panelId] = ps as PanelState;
+  } else {
+    Object.assign(state.panels[panelId], ps);
+  }
 }
 
-export interface AddPanelPayload {
-  panel: PanelModel;
+export interface PanelModelAndPluginReadyPayload {
+  panelId: number;
+  plugin: PanelPlugin;
+}
+
+export interface SetPanelAngularComponentPayload {
+  panelId: number;
+  angularComponent: AngularComponent | null;
 }
 
 export const {
@@ -97,8 +120,10 @@ export const {
   cleanUpDashboard,
   setDashboardQueriesToUpdateOnLoad,
   clearDashboardQueriesToUpdateOnLoad,
-  dashboardPanelTypeChanged,
-  addPanelToDashboard,
+  panelModelAndPluginReady,
+  addPanel,
+  cleanUpEditPanel,
+  setPanelAngularComponent,
 } = dashbardSlice.actions;
 
 export const dashboardReducer = dashbardSlice.reducer;
@@ -106,4 +131,5 @@ export const dashboardReducer = dashbardSlice.reducer;
 export default {
   dashboard: dashboardReducer,
   panelEditor: panelEditorReducer,
+  panelEditorNew: panelEditorReducerNew,
 };

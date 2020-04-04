@@ -8,6 +8,7 @@ jest.mock('app/core/store', () => {
   return {
     getBool: jest.fn(),
     set: jest.fn(),
+    getObject: jest.fn(),
   };
 });
 

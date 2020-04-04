@@ -377,8 +377,7 @@ export const FUNCTIONS = [
 
 const tokenizer = {
   comment: {
-    pattern: /(^|[^\n])#.*/,
-    lookbehind: true,
+    pattern: /#.*/,
   },
   'context-aggregation': {
     pattern: /((by|without)\s*)\([^)]*\)/, // by ()
@@ -393,10 +392,15 @@ const tokenizer = {
   },
   'context-labels': {
     pattern: /\{[^}]*(?=})/,
+    greedy: true,
     inside: {
+      comment: {
+        pattern: /#.*/,
+      },
       'label-key': {
         pattern: /[a-z_]\w*(?=\s*(=|!=|=~|!~))/,
         alias: 'attr-name',
+        greedy: true,
       },
       'label-value': {
         pattern: /"(?:\\.|[^\\"])*"/,

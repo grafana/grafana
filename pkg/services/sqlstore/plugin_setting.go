@@ -4,7 +4,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/bus"
-	m "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -16,7 +16,7 @@ func init() {
 	bus.AddHandler("sql", UpdatePluginSettingVersion)
 }
 
-func GetPluginSettings(query *m.GetPluginSettingsQuery) error {
+func GetPluginSettings(query *models.GetPluginSettingsQuery) error {
 	sql := `SELECT org_id, plugin_id, enabled, pinned, plugin_version
 					FROM plugin_setting `
 	params := make([]interface{}, 0)
@@ -27,25 +27,25 @@ func GetPluginSettings(query *m.GetPluginSettingsQuery) error {
 	}
 
 	sess := x.SQL(sql, params...)
-	query.Result = make([]*m.PluginSettingInfoDTO, 0)
+	query.Result = make([]*models.PluginSettingInfoDTO, 0)
 	return sess.Find(&query.Result)
 }
 
-func GetPluginSettingById(query *m.GetPluginSettingByIdQuery) error {
-	pluginSetting := m.PluginSetting{OrgId: query.OrgId, PluginId: query.PluginId}
+func GetPluginSettingById(query *models.GetPluginSettingByIdQuery) error {
+	pluginSetting := models.PluginSetting{OrgId: query.OrgId, PluginId: query.PluginId}
 	has, err := x.Get(&pluginSetting)
 	if err != nil {
 		return err
 	} else if !has {
-		return m.ErrPluginSettingNotFound
+		return models.ErrPluginSettingNotFound
 	}
 	query.Result = &pluginSetting
 	return nil
 }
 
-func UpdatePluginSetting(cmd *m.UpdatePluginSettingCmd) error {
+func UpdatePluginSetting(cmd *models.UpdatePluginSettingCmd) error {
 	return inTransaction(func(sess *DBSession) error {
-		var pluginSetting m.PluginSetting
+		var pluginSetting models.PluginSetting
 
 		exists, err := sess.Where("org_id=? and plugin_id=?", cmd.OrgId, cmd.PluginId).Get(&pluginSetting)
 		if err != nil {
@@ -54,7 +54,7 @@ func UpdatePluginSetting(cmd *m.UpdatePluginSettingCmd) error {
 		sess.UseBool("enabled")
 		sess.UseBool("pinned")
 		if !exists {
-			pluginSetting = m.PluginSetting{
+			pluginSetting = models.PluginSetting{
 				PluginId:       cmd.PluginId,
 				OrgId:          cmd.OrgId,
 				Enabled:        cmd.Enabled,
@@ -67,7 +67,7 @@ func UpdatePluginSetting(cmd *m.UpdatePluginSettingCmd) error {
 			}
 
 			// add state change event on commit success
-			sess.events = append(sess.events, &m.PluginStateChangedEvent{
+			sess.events = append(sess.events, &models.PluginStateChangedEvent{
 				PluginId: cmd.PluginId,
 				OrgId:    cmd.OrgId,
 				Enabled:  cmd.Enabled,
@@ -87,7 +87,7 @@ func UpdatePluginSetting(cmd *m.UpdatePluginSettingCmd) error {
 
 		// add state change event on commit success
 		if pluginSetting.Enabled != cmd.Enabled {
-			sess.events = append(sess.events, &m.PluginStateChangedEvent{
+			sess.events = append(sess.events, &models.PluginStateChangedEvent{
 				PluginId: cmd.PluginId,
 				OrgId:    cmd.OrgId,
 				Enabled:  cmd.Enabled,
@@ -105,7 +105,7 @@ func UpdatePluginSetting(cmd *m.UpdatePluginSettingCmd) error {
 	})
 }
 
-func UpdatePluginSettingVersion(cmd *m.UpdatePluginSettingVersionCmd) error {
+func UpdatePluginSettingVersion(cmd *models.UpdatePluginSettingVersionCmd) error {
 	return inTransaction(func(sess *DBSession) error {
 
 		_, err := sess.Exec("UPDATE plugin_setting SET plugin_version=? WHERE org_id=? AND plugin_id=?", cmd.PluginVersion, cmd.OrgId, cmd.PluginId)

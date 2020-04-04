@@ -22,6 +22,8 @@ import { getZoomedTimeRange, getShiftedTimeRange } from 'app/core/utils/timePick
 import { appEvents } from '../../../core/core';
 import { CoreEvents } from '../../../types';
 
+import { config } from 'app/core/config';
+
 export class TimeSrv {
   time: any;
   refreshTimer: any;
@@ -70,6 +72,19 @@ export class TimeSrv {
     if (this.refresh) {
       this.setAutoRefresh(this.refresh);
     }
+  }
+
+  getValidIntervals(intervals: string[]): string[] {
+    if (!this.contextSrv.minRefreshInterval) {
+      return intervals;
+    }
+
+    const validIntervals = intervals.filter(str => str !== '').filter(this.contextSrv.isAllowedInterval);
+
+    if (validIntervals.indexOf(this.contextSrv.minRefreshInterval) === -1) {
+      validIntervals.unshift(this.contextSrv.minRefreshInterval);
+    }
+    return validIntervals;
   }
 
   private parseTime() {
@@ -138,7 +153,11 @@ export class TimeSrv {
     }
     // but if refresh explicitly set then use that
     if (params.refresh) {
-      this.refresh = params.refresh || this.refresh;
+      if (!this.contextSrv.isAllowedInterval(params.refresh)) {
+        this.refresh = config.minRefreshInterval;
+      } else {
+        this.refresh = params.refresh || this.refresh;
+      }
     }
   }
 
@@ -170,7 +189,8 @@ export class TimeSrv {
     this.cancelNextRefresh();
 
     if (interval) {
-      const intervalMs = kbn.interval_to_ms(interval);
+      const validInterval = this.contextSrv.getValidInterval(interval);
+      const intervalMs = kbn.interval_to_ms(validInterval);
 
       this.refreshTimer = this.timer.register(
         this.$timeout(() => {
@@ -184,7 +204,7 @@ export class TimeSrv {
     this.$timeout(() => {
       const params = this.$location.search();
       if (interval) {
-        params.refresh = interval;
+        params.refresh = this.contextSrv.getValidInterval(interval);
         this.$location.search(params);
       } else if (params.refresh) {
         delete params.refresh;

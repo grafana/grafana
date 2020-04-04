@@ -6,13 +6,14 @@ import { DataLink } from './dataLink';
 import { Vector } from './vector';
 import { FieldCalcs } from '../transformations/fieldReducer';
 import { FieldColor } from './fieldColor';
+import { ScopedVars } from './ScopedVars';
 
 /**
  * Every property is optional
  *
  * Plugins may extend this with additional properties. Something like series overrides
  */
-export interface FieldConfig {
+export interface FieldConfig<TOptions extends object = any> {
   title?: string; // The display value for this field.  This supports template variables blank is auto
   filterable?: boolean;
 
@@ -41,14 +42,19 @@ export interface FieldConfig {
   noValue?: string;
 
   // Panel Specific Values
-  custom?: Record<string, any>;
+  custom?: TOptions;
+
+  scopedVars?: ScopedVars;
 }
 
 export enum FieldType {
+  time = 'time', // or date
   number = 'number',
   string = 'string',
   boolean = 'boolean',
-  other = 'other',
+  // Used to detect that the value is some kind of trace data to help with the visualisation and processing.
+  trace = 'trace',
+  other = 'other', // Object, Array, etc
 }
 
 export enum MetricType {

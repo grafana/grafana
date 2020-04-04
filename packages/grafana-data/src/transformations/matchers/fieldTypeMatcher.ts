@@ -3,7 +3,7 @@ import { FieldMatcherID } from './ids';
 import { FieldMatcherInfo } from '../../types/transformations';
 
 // General Field matcher
-const fieldTypeMacher: FieldMatcherInfo<FieldType> = {
+const fieldTypeMatcher: FieldMatcherInfo<FieldType> = {
   id: FieldMatcherID.byType,
   name: 'Field Type',
   description: 'match based on the field type',
@@ -22,7 +22,7 @@ const fieldTypeMacher: FieldMatcherInfo<FieldType> = {
 
 // Numeric Field matcher
 // This gets its own entry so it shows up in the dropdown
-const numericMacher: FieldMatcherInfo = {
+const numericMatcher: FieldMatcherInfo = {
   id: FieldMatcherID.numeric,
   name: 'Numeric Fields',
   description: 'Fields with type number',
@@ -39,7 +39,7 @@ const numericMacher: FieldMatcherInfo = {
 };
 
 // Time Field matcher
-const timeMacher: FieldMatcherInfo = {
+const timeMatcher: FieldMatcherInfo = {
   id: FieldMatcherID.time,
   name: 'Time Fields',
   description: 'Fields with type time',
@@ -59,5 +59,5 @@ const timeMacher: FieldMatcherInfo = {
  * Registry Initalization
  */
 export function getFieldTypeMatchers(): FieldMatcherInfo[] {
-  return [fieldTypeMacher, numericMacher, timeMacher];
+  return [fieldTypeMatcher, numericMatcher, timeMatcher];
 }

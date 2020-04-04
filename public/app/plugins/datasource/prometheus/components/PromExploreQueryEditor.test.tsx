@@ -79,6 +79,7 @@ describe('PromExploreQueryEditor', () => {
   });
 
   it('should render PromQueryField with ExtraFieldElement', async () => {
+    // @ts-ignore strict null errpr TS2345: Argument of type '() => Promise<void>' is not assignable to parameter of type '() => void | undefined'.
     await act(async () => {
       const wrapper = setup(mount);
       expect(wrapper.find(PromExploreExtraField).length).toBe(1);

@@ -14,6 +14,7 @@ import { withPaddedStory } from '../src/utils/storybook/withPaddedStory';
 import lightTheme from '../../../public/sass/grafana.light.scss';
 // @ts-ignore
 import darkTheme from '../../../public/sass/grafana.dark.scss';
+import { GrafanaLight, GrafanaDark } from './storybookTheme';
 import { configure, addDecorator, addParameters } from '@storybook/react';
 import { withKnobs } from '@storybook/addon-knobs';
 
@@ -26,13 +27,16 @@ const handleThemeChange = (theme: any) => {
     lightTheme.use();
   }
 };
-
 addDecorator(withTheme(handleThemeChange));
 addDecorator(withKnobs);
 addDecorator(withPaddedStory);
 
 addParameters({
   info: {},
+  darkMode: {
+    dark: GrafanaDark,
+    light: GrafanaLight,
+  },
   options: {
     showPanel: true,
     showRoots: true,

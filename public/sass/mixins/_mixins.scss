@@ -44,14 +44,8 @@
 
 // Placeholder text
 // -------------------------
-@mixin placeholder($color: $placeholderText) {
-  &:-moz-placeholder {
-    color: $color;
-  }
-  &:-ms-input-placeholder {
-    color: $color;
-  }
-  &::-webkit-input-placeholder {
+@mixin placeholder($color: $input-color-placeholder) {
+  &::placeholder {
     color: $color;
   }
 }
@@ -369,7 +363,7 @@
   }
 }
 
-@function lightOrDarkTheme($lightColor, $darkColor) {
+@function lightOrDark($lightColor, $darkColor) {
   @if (lightness($text-color) < 50) {
     @return $lightColor;
   } @else {

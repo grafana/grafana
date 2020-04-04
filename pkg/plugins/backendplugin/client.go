@@ -1,16 +1,13 @@
 package backendplugin
 
 import (
-	"context"
 	"os/exec"
 
-	"github.com/grafana/grafana-plugin-sdk-go/backend/plugin"
-
+	"github.com/grafana/grafana-plugin-sdk-go/backend/grpcplugin"
 	"github.com/grafana/grafana/pkg/infra/log"
 
 	datasourceV1 "github.com/grafana/grafana-plugin-model/go/datasource"
 	rendererV1 "github.com/grafana/grafana-plugin-model/go/renderer"
-	"github.com/grafana/grafana-plugin-sdk-go/genproto/pluginv2"
 	goplugin "github.com/hashicorp/go-plugin"
 )
 
@@ -29,8 +26,8 @@ var handshake = goplugin.HandshakeConfig{
 	ProtocolVersion: DefaultProtocolVersion,
 
 	// The magic cookie values should NEVER be changed.
-	MagicCookieKey:   plugin.MagicCookieKey,
-	MagicCookieValue: plugin.MagicCookieValue,
+	MagicCookieKey:   grpcplugin.MagicCookieKey,
+	MagicCookieValue: grpcplugin.MagicCookieValue,
 }
 
 func newClientConfig(executablePath string, logger log.Logger, versionedPlugins map[int]goplugin.PluginSet) *goplugin.ClientConfig {
@@ -75,10 +72,11 @@ func NewBackendPluginDescriptor(pluginID, executablePath string, startFns Plugin
 			DefaultProtocolVersion: {
 				pluginID: &datasourceV1.DatasourcePluginImpl{},
 			},
-			plugin.ProtocolVersion: {
-				"diagnostics": &plugin.DiagnosticsGRPCPlugin{},
-				"backend":     &plugin.CoreGRPCPlugin{},
-				"transform":   &plugin.TransformGRPCPlugin{},
+			grpcplugin.ProtocolVersion: {
+				"diagnostics": &grpcplugin.DiagnosticsGRPCPlugin{},
+				"resource":    &grpcplugin.ResourceGRPCPlugin{},
+				"data":        &grpcplugin.DataGRPCPlugin{},
+				"transform":   &grpcplugin.TransformGRPCPlugin{},
 			},
 		},
 		startFns: startFns,
@@ -102,21 +100,19 @@ func NewRendererPluginDescriptor(pluginID, executablePath string, startFns Plugi
 }
 
 type DiagnosticsPlugin interface {
-	CollectMetrics(ctx context.Context, req *pluginv2.CollectMetrics_Request) (*pluginv2.CollectMetrics_Response, error)
-	CheckHealth(ctx context.Context, req *pluginv2.CheckHealth_Request) (*pluginv2.CheckHealth_Response, error)
+	grpcplugin.DiagnosticsClient
 }
 
-type DatasourcePlugin interface {
-	DataQuery(ctx context.Context, req *pluginv2.DataQueryRequest) (*pluginv2.DataQueryResponse, error)
+type ResourcePlugin interface {
+	grpcplugin.ResourceClient
 }
 
-type CorePlugin interface {
-	CallResource(ctx context.Context, req *pluginv2.CallResource_Request) (*pluginv2.CallResource_Response, error)
-	DatasourcePlugin
+type DataPlugin interface {
+	grpcplugin.DataClient
 }
 
 type TransformPlugin interface {
-	DataQuery(ctx context.Context, req *pluginv2.DataQueryRequest, callback plugin.TransformCallBack) (*pluginv2.DataQueryResponse, error)
+	grpcplugin.TransformClient
 }
 
 // LegacyClient client for communicating with a plugin using the old plugin protocol.
@@ -127,6 +123,7 @@ type LegacyClient struct {
 
 // Client client for communicating with a plugin using the current plugin protocol.
 type Client struct {
-	DatasourcePlugin DatasourcePlugin
-	TransformPlugin  TransformPlugin
+	ResourcePlugin  ResourcePlugin
+	DataPlugin      DataPlugin
+	TransformPlugin TransformPlugin
 }

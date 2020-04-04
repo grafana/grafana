@@ -132,6 +132,18 @@ export function describeTextRange(expr: any) {
   return opt;
 }
 
+/**
+ * Use this function to get a properly formatted string representation of a {@link @grafana/data:RawTimeRange | range}.
+ *
+ * @example
+ * ```
+ * // Prints "2":
+ * console.log(add(1,1));
+ * ```
+ * @category TimeUtils
+ * @param range - a time range (usually specified by the TimePicker)
+ * @alpha
+ */
 export function describeTimeRange(range: RawTimeRange): string {
   const option = rangeIndex[range.from.toString() + ' to ' + range.to.toString()];
   if (option) {

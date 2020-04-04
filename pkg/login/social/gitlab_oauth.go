@@ -13,26 +13,12 @@ import (
 
 type SocialGitlab struct {
 	*SocialBase
-	allowedDomains []string
-	allowedGroups  []string
-	apiUrl         string
-	allowSignup    bool
+	allowedGroups []string
+	apiUrl        string
 }
-
-var (
-	ErrMissingGroupMembership = &Error{"User not a member of one of the required groups"}
-)
 
 func (s *SocialGitlab) Type() int {
 	return int(models.GITLAB)
-}
-
-func (s *SocialGitlab) IsEmailAllowed(email string) bool {
-	return isEmailAllowed(email, s.allowedDomains)
-}
-
-func (s *SocialGitlab) IsSignupAllowed() bool {
-	return s.allowSignup
 }
 
 func (s *SocialGitlab) IsGroupMember(groups []string) bool {
