@@ -1,6 +1,6 @@
 import React, { PureComponent } from 'react';
-import { FieldConfigSource, GrafanaTheme, PanelData, PanelPlugin, SelectableValue } from '@grafana/data';
-import { Select, stylesFactory, Icon } from '@grafana/ui';
+import { FieldConfigSource, GrafanaTheme, PanelData, PanelPlugin } from '@grafana/data';
+import { Button, stylesFactory, Icon, Forms } from '@grafana/ui';
 import { css, cx } from 'emotion';
 import config from 'app/core/config';
 import AutoSizer from 'react-virtualized-auto-sizer';
@@ -133,10 +133,10 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
     this.forceUpdate();
   };
 
-  onDiplayModeChange = (mode: SelectableValue<DisplayMode>) => {
+  onDiplayModeChange = (mode: DisplayMode) => {
     const { updatePanelEditorUIState } = this.props;
     updatePanelEditorUIState({
-      mode: mode.value,
+      mode: mode,
     });
   };
 
@@ -161,8 +161,7 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
         onDragFinished={size => this.onDragFinished(Pane.Top, size)}
       >
         <div className={styles.mainPaneWrapper}>
-          {this.renderToolbar(styles)}
-          {this.renderTemplateVariables(styles)}
+          {this.renderPanelToolbar(styles)}
           <div className={styles.panelWrapper}>
             <AutoSizer>
               {({ width, height }) => {
@@ -208,42 +207,48 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
     );
   }
 
-  renderToolbar(styles: EditorStyles) {
+  renderPanelToolbar(styles: EditorStyles) {
     const { dashboard, location, uiState } = this.props;
 
     return (
-      <div className={styles.toolbar}>
+      <div className={styles.panelToolbar}>
+        {this.renderTemplateVariables(styles)}
+        <div className="flex-grow-1" />
+        <div className={styles.toolbarItem}>
+          <Forms.RadioButtonGroup value={uiState.mode} options={displayModes} onChange={this.onDiplayModeChange} />
+        </div>
+        <div className={styles.toolbarItem}>
+          <DashNavTimeControls dashboard={dashboard} location={location} updateLocation={updateLocation} />
+        </div>
+        {!uiState.isPanelOptionsVisible && (
+          <div className={styles.toolbarItem}>
+            <DashNavButton onClick={this.onTogglePanelOptions} tooltip="Open options pane" classSuffix="close-options">
+              <Icon name="chevron-left" /> <span style={{ paddingLeft: '6px' }}>Show options</span>
+            </DashNavButton>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  editorToolbar(styles: EditorStyles) {
+    const { dashboard } = this.props;
+
+    return (
+      <div className={styles.editorToolbar}>
         <div className={styles.toolbarLeft}>
           <BackButton onClick={this.onPanelExit} />
           <span className={styles.editorTitle}>{dashboard.title} / Edit Panel</span>
         </div>
         <div className={styles.toolbarLeft}>
           <div className={styles.toolbarItem}>
-            <DashNavButton tooltip="Discard all changes and return to dashboard" onClick={this.onDiscard}>
+            <Button onClick={this.onDiscard} variant="secondary">
               Discard changes
-            </DashNavButton>
+            </Button>
           </div>
           <div className={styles.toolbarItem}>
-            <Select
-              value={displayModes.find(v => v.value === uiState.mode)}
-              options={displayModes}
-              onChange={this.onDiplayModeChange}
-            />
+            <Button onClick={this.onPanelExit}>Apply</Button>
           </div>
-          <div className={styles.toolbarItem}>
-            <DashNavTimeControls dashboard={dashboard} location={location} updateLocation={updateLocation} />
-          </div>
-          {!uiState.isPanelOptionsVisible && (
-            <div className={styles.toolbarItem}>
-              <DashNavButton
-                onClick={this.onTogglePanelOptions}
-                tooltip="Open options pane"
-                classSuffix="close-options"
-              >
-                <Icon name="chevron-left" /> <span style={{ paddingLeft: '6px' }}>Show options</span>
-              </DashNavButton>
-            </div>
-          )}
         </div>
       </div>
     );
@@ -301,7 +306,10 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
     return (
       <NewPanelEditorContext.Provider value={true}>
         <div className={styles.wrapper}>
-          {uiState.isPanelOptionsVisible ? this.renderWithOptionsPane(styles) : this.renderHorizontalSplit(styles)}
+          {this.editorToolbar(styles)}
+          <div className={styles.verticalSplitPanesWrapper}>
+            {uiState.isPanelOptionsVisible ? this.renderWithOptionsPane(styles) : this.renderHorizontalSplit(styles)}
+          </div>
         </div>
       </NewPanelEditorContext.Provider>
     );
@@ -372,6 +380,13 @@ const getStyles = stylesFactory((theme: GrafanaTheme, props: Props) => {
       display: flex;
       flex-direction: column;
     `,
+    verticalSplitPanesWrapper: css`
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      width: 100%;
+      position: relative;
+    `,
     mainPaneWrapper: css`
       display: flex;
       flex-direction: column;
@@ -380,7 +395,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme, props: Props) => {
       padding-right: ${uiState.isPanelOptionsVisible ? 0 : paneSpaceing};
     `,
     variablesWrapper: css`
-      padding: 0 ${theme.spacing.sm} ${theme.spacing.sm} ${paneSpaceing};
+      display: flex;
     `,
     panelWrapper: css`
       flex: 1 1 0;
@@ -411,11 +426,18 @@ const getStyles = stylesFactory((theme: GrafanaTheme, props: Props) => {
       height: 100%;
       width: 100%;
     `,
-    toolbar: css`
+    editorToolbar: css`
       display: flex;
       padding: ${theme.spacing.sm};
-      padding-right: 0;
+      background: ${theme.colors.panelBg};
       justify-content: space-between;
+      border-bottom: 1px solid ${theme.colors.panelBorder};
+    `,
+    panelToolbar: css`
+      display: flex;
+      padding: ${paneSpaceing} 0 ${paneSpaceing} ${paneSpaceing};
+      justify-content: space-between;
+      flex-wrap: wrap;
     `,
     toolbarLeft: css`
       padding-left: ${theme.spacing.sm};
