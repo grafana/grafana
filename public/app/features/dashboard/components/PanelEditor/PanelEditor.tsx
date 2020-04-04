@@ -232,7 +232,7 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
   }
 
   editorToolbar(styles: EditorStyles) {
-    const { dashboard, uiState } = this.props;
+    const { dashboard } = this.props;
 
     return (
       <div className={styles.editorToolbar}>
@@ -349,7 +349,6 @@ const getStyles = stylesFactory((theme: GrafanaTheme, props: Props) => {
   const { uiState } = props;
   const handleColor = theme.colors.blueLight;
   const paneSpaceing = theme.spacing.md;
-  const toolbarPadding = '12px';
 
   const resizer = css`
     font-style: italic;
