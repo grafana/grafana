@@ -22,6 +22,8 @@ interface Props<V, D> {
   renderCounter: number; // force update of values & render
   orientation: VizOrientation;
   itemSpacing?: number;
+  /** When orientation is set to auto layout items in a grid */
+  autoGrid?: boolean;
 }
 
 export interface VizRepeaterRenderValueProps<V, D = {}> {
@@ -44,7 +46,7 @@ interface State<V> {
 
 export class VizRepeater<V, D = {}> extends PureComponent<Props<V, D>, State<V>> {
   static defaultProps: DefaultProps = {
-    itemSpacing: 10,
+    itemSpacing: 8,
   };
 
   constructor(props: Props<V, D>) {
@@ -124,9 +126,13 @@ export class VizRepeater<V, D = {}> extends PureComponent<Props<V, D>, State<V>>
   }
 
   render() {
-    const { renderValue, height, width, itemSpacing, getAlignmentFactors } = this.props as PropsWithDefaults<V, D>;
+    const { renderValue, height, width, itemSpacing, getAlignmentFactors, autoGrid, orientation } = this
+      .props as PropsWithDefaults<V, D>;
     const { values } = this.state;
-    const orientation = this.getOrientation();
+
+    if (autoGrid && orientation === VizOrientation.Auto) {
+      return this.renderGrid();
+    }
 
     const itemStyles: React.CSSProperties = {
       display: 'flex',
@@ -139,9 +145,7 @@ export class VizRepeater<V, D = {}> extends PureComponent<Props<V, D>, State<V>>
     let vizHeight = height;
     let vizWidth = width;
 
-    switch (orientation) {
-      case VizOrientation.Grid:
-        return this.renderGrid();
+    switch (this.getOrientation()) {
       case VizOrientation.Horizontal:
         repeaterStyle.flexDirection = 'column';
         itemStyles.marginBottom = `${itemSpacing}px`;

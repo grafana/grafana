@@ -11,7 +11,6 @@ export const orientationOptions: Array<SelectableValue<VizOrientation>> = [
   { value: VizOrientation.Auto, label: 'Auto' },
   { value: VizOrientation.Horizontal, label: 'Horizontal' },
   { value: VizOrientation.Vertical, label: 'Vertical' },
-  { value: VizOrientation.Grid, label: 'Grid' },
 ];
 
 export const defaults: GaugeOptions = {

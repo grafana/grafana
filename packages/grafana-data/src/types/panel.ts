@@ -150,5 +150,4 @@ export enum VizOrientation {
   Auto = 'auto',
   Vertical = 'vertical',
   Horizontal = 'horizontal',
-  Grid = 'grid',
 }
