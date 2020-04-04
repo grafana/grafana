@@ -1,10 +1,10 @@
 import { PanelPlugin } from '@grafana/data';
 import { TablePanel } from './TablePanel';
-import { Options, defaults } from './types';
+import { CustomFieldConfig, defaults, Options } from './types';
 
-export const plugin = new PanelPlugin<Options>(TablePanel)
+export const plugin = new PanelPlugin<Options, CustomFieldConfig>(TablePanel)
   .setDefaults(defaults)
-  .setCustomFieldConfigEditor(builder => {
+  .setCustomFieldOptions(builder => {
     builder
       .addNumberInput({
         id: 'width',
@@ -15,12 +15,12 @@ export const plugin = new PanelPlugin<Options>(TablePanel)
           min: 20,
           max: 300,
         },
+        defaultValue: 1,
       })
       .addSelect({
         id: 'displayMode',
         name: 'Cell display mode',
         description: 'Color value, background, show as gauge, etc',
-
         settings: {
           options: [
             { value: 'auto', label: 'Auto' },
@@ -31,7 +31,7 @@ export const plugin = new PanelPlugin<Options>(TablePanel)
         },
       });
   })
-  .setOptionsEditor(builder => {
+  .setPanelOptions(builder => {
     builder.addBooleanSwitch({
       id: 'showHeader',
       name: 'Show header',

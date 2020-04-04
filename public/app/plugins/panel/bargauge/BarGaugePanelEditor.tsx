@@ -6,17 +6,18 @@ import {
   FieldDisplayEditor,
   PanelOptionsGroup,
   FormLabel,
-  Select,
+  LegacyForms,
   Switch,
   FieldPropertiesEditor,
   ThresholdsEditor,
   LegacyValueMappingsEditor,
   DataLinksEditor,
 } from '@grafana/ui';
+const { Select } = LegacyForms;
 import {
   DataLink,
   FieldConfig,
-  FieldDisplayOptions,
+  ReduceDataOptions,
   PanelEditorProps,
   ThresholdsConfig,
   ValueMapping,
@@ -30,10 +31,10 @@ import {
 import { NewPanelEditorContext } from '../../../features/dashboard/components/PanelEditor/PanelEditor';
 
 export class BarGaugePanelEditor extends PureComponent<PanelEditorProps<BarGaugeOptions>> {
-  onDisplayOptionsChanged = (fieldOptions: FieldDisplayOptions) =>
+  onDisplayOptionsChanged = (fieldOptions: ReduceDataOptions) =>
     this.props.onOptionsChange({
       ...this.props.options,
-      fieldOptions,
+      reduceOptions: fieldOptions,
     });
 
   onOrientationChange = ({ value }: any) => this.props.onOptionsChange({ ...this.props.options, orientation: value });
@@ -84,7 +85,7 @@ export class BarGaugePanelEditor extends PureComponent<PanelEditorProps<BarGauge
 
   render() {
     const { options, fieldConfig } = this.props;
-    const { fieldOptions } = options;
+    const { reduceOptions: fieldOptions } = options;
     const { defaults } = fieldConfig;
 
     const labelWidth = 6;
@@ -95,6 +96,10 @@ export class BarGaugePanelEditor extends PureComponent<PanelEditorProps<BarGauge
     return (
       <NewPanelEditorContext.Consumer>
         {useNewEditor => {
+          if (useNewEditor) {
+            return null;
+          }
+
           return (
             <>
               <PanelOptionsGrid>
@@ -135,38 +140,28 @@ export class BarGaugePanelEditor extends PureComponent<PanelEditorProps<BarGauge
                     )}
                   </>
                 </PanelOptionsGroup>
-                <>
-                  {!useNewEditor && (
-                    <>
-                      <PanelOptionsGroup title="Field">
-                        <FieldPropertiesEditor
-                          showMinMax={true}
-                          showTitle={true}
-                          onChange={this.onDefaultsChange}
-                          value={defaults}
-                        />
-                      </PanelOptionsGroup>
-
-                      <ThresholdsEditor onChange={this.onThresholdsChanged} thresholds={defaults.thresholds} />
-                    </>
-                  )}
-                </>
-              </PanelOptionsGrid>
-
-              {!useNewEditor && (
-                <LegacyValueMappingsEditor onChange={this.onValueMappingsChanged} valueMappings={defaults.mappings} />
-              )}
-
-              {!useNewEditor && (
-                <PanelOptionsGroup title="Data links">
-                  <DataLinksEditor
-                    value={defaults.links}
-                    onChange={this.onDataLinksChanged}
-                    suggestions={suggestions}
-                    maxLinks={10}
+                <PanelOptionsGroup title="Field">
+                  <FieldPropertiesEditor
+                    showMinMax={true}
+                    showTitle={true}
+                    onChange={this.onDefaultsChange}
+                    value={defaults}
                   />
                 </PanelOptionsGroup>
-              )}
+
+                <ThresholdsEditor onChange={this.onThresholdsChanged} thresholds={defaults.thresholds} />
+              </PanelOptionsGrid>
+
+              <LegacyValueMappingsEditor onChange={this.onValueMappingsChanged} valueMappings={defaults.mappings} />
+
+              <PanelOptionsGroup title="Data links">
+                <DataLinksEditor
+                  value={defaults.links}
+                  onChange={this.onDataLinksChanged}
+                  suggestions={suggestions}
+                  maxLinks={10}
+                />
+              </PanelOptionsGroup>
             </>
           );
         }}

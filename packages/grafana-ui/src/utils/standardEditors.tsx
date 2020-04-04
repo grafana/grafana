@@ -18,18 +18,19 @@ import {
   ValueMappingFieldConfigSettings,
   valueMappingsOverrideProcessor,
 } from '@grafana/data';
-import { NumberValueEditor, Forms, StringValueEditor } from '../components';
+import { NumberValueEditor, Forms, StringValueEditor, Select } from '../components';
 import { ValueMappingsValueEditor } from '../components/OptionsUI/mappings';
 import { ThresholdsValueEditor } from '../components/OptionsUI/thresholds';
 import { UnitValueEditor } from '../components/OptionsUI/units';
 import { DataLinksValueEditor } from '../components/OptionsUI/links';
 import { ColorValueEditor } from '../components/OptionsUI/color';
+import { StatsPickerEditor } from '../components/OptionsUI/stats';
 
 /**
  * Returns collection of common field config properties definitions
  */
 export const getStandardFieldConfigs = () => {
-  const title: FieldPropertyEditorItem<string, StringFieldConfigSettings> = {
+  const title: FieldPropertyEditorItem<any, string, StringFieldConfigSettings> = {
     id: 'title',
     name: 'Title',
     description: "Field's title",
@@ -37,13 +38,13 @@ export const getStandardFieldConfigs = () => {
     override: standardEditorsRegistry.get('text').editor as any,
     process: stringOverrideProcessor,
     settings: {
-      placeholder: 'auto',
+      placeholder: 'none',
       expandTemplateVars: true,
     },
     shouldApply: field => field.type !== FieldType.time,
   };
 
-  const unit: FieldPropertyEditorItem<string, StringFieldConfigSettings> = {
+  const unit: FieldPropertyEditorItem<any, string, StringFieldConfigSettings> = {
     id: 'unit',
     name: 'Unit',
     description: 'Value units',
@@ -59,7 +60,7 @@ export const getStandardFieldConfigs = () => {
     shouldApply: field => field.type === FieldType.number,
   };
 
-  const min: FieldPropertyEditorItem<number, NumberFieldConfigSettings> = {
+  const min: FieldPropertyEditorItem<any, number, NumberFieldConfigSettings> = {
     id: 'min',
     name: 'Min',
     description: 'Minimum expected value',
@@ -74,7 +75,7 @@ export const getStandardFieldConfigs = () => {
     shouldApply: field => field.type === FieldType.number,
   };
 
-  const max: FieldPropertyEditorItem<number, NumberFieldConfigSettings> = {
+  const max: FieldPropertyEditorItem<any, number, NumberFieldConfigSettings> = {
     id: 'max',
     name: 'Max',
     description: 'Maximum expected value',
@@ -90,7 +91,7 @@ export const getStandardFieldConfigs = () => {
     shouldApply: field => field.type === FieldType.number,
   };
 
-  const decimals: FieldPropertyEditorItem<number, NumberFieldConfigSettings> = {
+  const decimals: FieldPropertyEditorItem<any, number, NumberFieldConfigSettings> = {
     id: 'decimals',
     name: 'Decimals',
     description: 'Number of decimal to be shown for a value',
@@ -109,7 +110,7 @@ export const getStandardFieldConfigs = () => {
     shouldApply: field => field.type === FieldType.number,
   };
 
-  const thresholds: FieldPropertyEditorItem<ThresholdsConfig, ThresholdsFieldConfigSettings> = {
+  const thresholds: FieldPropertyEditorItem<any, ThresholdsConfig, ThresholdsFieldConfigSettings> = {
     id: 'thresholds',
     name: 'Thresholds',
     description: 'Manage thresholds',
@@ -125,7 +126,7 @@ export const getStandardFieldConfigs = () => {
     shouldApply: field => field.type === FieldType.number,
   };
 
-  const mappings: FieldPropertyEditorItem<ValueMapping[], ValueMappingFieldConfigSettings> = {
+  const mappings: FieldPropertyEditorItem<any, ValueMapping[], ValueMappingFieldConfigSettings> = {
     id: 'mappings',
     name: 'Value mappings',
     description: 'Manage value mappings',
@@ -140,7 +141,7 @@ export const getStandardFieldConfigs = () => {
     shouldApply: field => field.type === FieldType.number,
   };
 
-  const noValue: FieldPropertyEditorItem<string, StringFieldConfigSettings> = {
+  const noValue: FieldPropertyEditorItem<any, string, StringFieldConfigSettings> = {
     id: 'noValue',
     name: 'No Value',
     description: 'What to show when there is no value',
@@ -156,7 +157,7 @@ export const getStandardFieldConfigs = () => {
     shouldApply: () => true,
   };
 
-  const links: FieldPropertyEditorItem<DataLink[], StringFieldConfigSettings> = {
+  const links: FieldPropertyEditorItem<any, DataLink[], StringFieldConfigSettings> = {
     id: 'links',
     name: 'DataLinks',
     description: 'Manage date links',
@@ -169,7 +170,7 @@ export const getStandardFieldConfigs = () => {
     shouldApply: () => true,
   };
 
-  const color: FieldPropertyEditorItem<string, StringFieldConfigSettings> = {
+  const color: FieldPropertyEditorItem<any, string, StringFieldConfigSettings> = {
     id: 'color',
     name: 'Color',
     description: 'Customise color',
@@ -215,11 +216,7 @@ export const getStandardOptionEditors = () => {
     name: 'Select',
     description: 'Allows option selection',
     editor: props => (
-      <Forms.Select
-        defaultValue={props.value}
-        onChange={e => props.onChange(e.value)}
-        options={props.item.settings?.options}
-      />
+      <Select value={props.value} onChange={e => props.onChange(e.value)} options={props.item.settings?.options} />
     ),
   };
 
@@ -227,7 +224,7 @@ export const getStandardOptionEditors = () => {
     id: 'radio',
     name: 'Radio',
     description: 'Allows option selection',
-    editor: props => <Forms.RadioButtonGroup {...props} options={props.item.settings?.options} />,
+    editor: props => <Forms.RadioButtonGroup {...props} options={props.item.settings?.options} fullWidth />,
   };
 
   const unit: StandardEditorsRegistryItem<string> = {
@@ -265,5 +262,12 @@ export const getStandardOptionEditors = () => {
     editor: DataLinksValueEditor as any,
   };
 
-  return [text, number, boolean, radio, select, unit, mappings, thresholds, links, color];
+  const statsPicker: StandardEditorsRegistryItem<string[]> = {
+    id: 'stats-picker',
+    name: 'Stats Picker',
+    editor: StatsPickerEditor as any,
+    description: '',
+  };
+
+  return [text, number, boolean, radio, select, unit, mappings, thresholds, links, color, statsPicker];
 };

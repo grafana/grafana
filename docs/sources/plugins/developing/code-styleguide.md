@@ -43,8 +43,8 @@ Minimal plugin.json:
   "info": {
     "description": "Clock panel for grafana",
     "author": {
-      "name": "Raintank Inc.",
-      "url": "http://raintank.io"
+      "name": "Grafana Labs",
+      "url": "https://grafana.com"
     },
     "keywords": ["clock", "panel"],
     "version": "1.0.0",
@@ -60,7 +60,7 @@ Minimal plugin.json:
 
 ### README.md
 
-The README.md file is rendered both on Grafana.net and in the plugins section in Grafana. The only difference from how GitHub renders markdown is that html is not allowed.
+The README.md file is rendered both in the grafana.com plugins page, and within the Grafana application. The only difference from how GitHub renders markdown is that html is not allowed.
 
 ## File and Directory Structure Conventions
 

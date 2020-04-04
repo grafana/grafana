@@ -2,7 +2,7 @@
 import React, { PureComponent } from 'react';
 
 // Types
-import { Select } from '@grafana/ui';
+import { LegacyForms } from '@grafana/ui';
 import { DataQuery, DataQueryError, PanelData, DataFrame, SelectableValue } from '@grafana/data';
 import { DashboardQuery } from './types';
 import config from 'app/core/config';
@@ -12,6 +12,7 @@ import { PanelModel } from 'app/features/dashboard/state';
 import { SHARED_DASHBODARD_QUERY } from './types';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { filterPanelDataToQuery } from 'app/features/dashboard/panel_editor/QueryEditorRow';
+const { Select } = LegacyForms;
 
 type ResultInfo = {
   img: string; // The Datasource

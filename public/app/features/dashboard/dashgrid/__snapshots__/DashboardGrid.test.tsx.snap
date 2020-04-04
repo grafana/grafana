@@ -106,6 +106,7 @@ exports[`DashboardGrid Can render dashboard grid Should render 1`] = `
             },
           },
           "getVariables": [Function],
+          "getVariablesFromState": [Function],
           "gnetId": null,
           "graphTooltip": 0,
           "id": null,
@@ -241,7 +242,7 @@ exports[`DashboardGrid Can render dashboard grid Should render 1`] = `
           ],
           "refresh": undefined,
           "revision": undefined,
-          "schemaVersion": 22,
+          "schemaVersion": 23,
           "snapshot": undefined,
           "style": "dark",
           "tags": Array [],
@@ -256,9 +257,6 @@ exports[`DashboardGrid Can render dashboard grid Should render 1`] = `
           "timezone": "",
           "title": "My dashboard",
           "uid": null,
-          "variables": Object {
-            "list": Array [],
-          },
           "version": 0,
         }
       }
@@ -357,6 +355,7 @@ exports[`DashboardGrid Can render dashboard grid Should render 1`] = `
             },
           },
           "getVariables": [Function],
+          "getVariablesFromState": [Function],
           "gnetId": null,
           "graphTooltip": 0,
           "id": null,
@@ -492,7 +491,7 @@ exports[`DashboardGrid Can render dashboard grid Should render 1`] = `
           ],
           "refresh": undefined,
           "revision": undefined,
-          "schemaVersion": 22,
+          "schemaVersion": 23,
           "snapshot": undefined,
           "style": "dark",
           "tags": Array [],
@@ -507,9 +506,6 @@ exports[`DashboardGrid Can render dashboard grid Should render 1`] = `
           "timezone": "",
           "title": "My dashboard",
           "uid": null,
-          "variables": Object {
-            "list": Array [],
-          },
           "version": 0,
         }
       }
@@ -608,6 +604,7 @@ exports[`DashboardGrid Can render dashboard grid Should render 1`] = `
             },
           },
           "getVariables": [Function],
+          "getVariablesFromState": [Function],
           "gnetId": null,
           "graphTooltip": 0,
           "id": null,
@@ -743,7 +740,7 @@ exports[`DashboardGrid Can render dashboard grid Should render 1`] = `
           ],
           "refresh": undefined,
           "revision": undefined,
-          "schemaVersion": 22,
+          "schemaVersion": 23,
           "snapshot": undefined,
           "style": "dark",
           "tags": Array [],
@@ -758,9 +755,6 @@ exports[`DashboardGrid Can render dashboard grid Should render 1`] = `
           "timezone": "",
           "title": "My dashboard",
           "uid": null,
-          "variables": Object {
-            "list": Array [],
-          },
           "version": 0,
         }
       }
@@ -859,6 +853,7 @@ exports[`DashboardGrid Can render dashboard grid Should render 1`] = `
             },
           },
           "getVariables": [Function],
+          "getVariablesFromState": [Function],
           "gnetId": null,
           "graphTooltip": 0,
           "id": null,
@@ -994,7 +989,7 @@ exports[`DashboardGrid Can render dashboard grid Should render 1`] = `
           ],
           "refresh": undefined,
           "revision": undefined,
-          "schemaVersion": 22,
+          "schemaVersion": 23,
           "snapshot": undefined,
           "style": "dark",
           "tags": Array [],
@@ -1009,9 +1004,6 @@ exports[`DashboardGrid Can render dashboard grid Should render 1`] = `
           "timezone": "",
           "title": "My dashboard",
           "uid": null,
-          "variables": Object {
-            "list": Array [],
-          },
           "version": 0,
         }
       }

@@ -1,6 +1,8 @@
 import React, { ChangeEvent } from 'react';
 import { HorizontalGroup } from '../Layout/Layout';
+import { Select } from '../index';
 import Forms from '../Forms';
+import { Input } from '../Forms/Input/Input';
 import { MappingType, RangeMap, ValueMap, ValueMapping } from '@grafana/data';
 import * as styleMixins from '../../themes/mixins';
 import { useTheme } from '../../themes';
@@ -47,15 +49,15 @@ export const MappingRow: React.FC<Props> = ({ valueMapping, updateValueMapping, 
         <>
           <HorizontalGroup>
             <Forms.Field label="From">
-              <Forms.Input type="number" defaultValue={(valueMapping as RangeMap).from!} onBlur={onMappingFromChange} />
+              <Input type="number" defaultValue={(valueMapping as RangeMap).from!} onBlur={onMappingFromChange} />
             </Forms.Field>
             <Forms.Field label="To">
-              <Forms.Input type="number" defaultValue={(valueMapping as RangeMap).to} onBlur={onMappingToChange} />
+              <Input type="number" defaultValue={(valueMapping as RangeMap).to} onBlur={onMappingToChange} />
             </Forms.Field>
           </HorizontalGroup>
 
           <Forms.Field label="Text">
-            <Forms.Input defaultValue={valueMapping.text} onBlur={onMappingTextChange} />
+            <Input defaultValue={valueMapping.text} onBlur={onMappingTextChange} />
           </Forms.Field>
         </>
       );
@@ -64,11 +66,11 @@ export const MappingRow: React.FC<Props> = ({ valueMapping, updateValueMapping, 
     return (
       <>
         <Forms.Field label="Value">
-          <Forms.Input type="number" defaultValue={(valueMapping as ValueMap).value} onBlur={onMappingValueChange} />
+          <Input type="number" defaultValue={(valueMapping as ValueMap).value} onBlur={onMappingValueChange} />
         </Forms.Field>
 
         <Forms.Field label="Text">
-          <Forms.Input defaultValue={valueMapping.text} onBlur={onMappingTextChange} />
+          <Input defaultValue={valueMapping.text} onBlur={onMappingTextChange} />
         </Forms.Field>
       </>
     );
@@ -80,7 +82,7 @@ export const MappingRow: React.FC<Props> = ({ valueMapping, updateValueMapping, 
     <div className={styles.wrapper}>
       <FieldConfigItemHeaderTitle title="Mapping type" onRemove={removeValueMapping}>
         <div className={styles.itemContent}>
-          <Forms.Select
+          <Select
             placeholder="Choose type"
             isSearchable={false}
             options={MAPPING_OPTIONS}
