@@ -30,6 +30,16 @@
     margin-right: 2px;
   }
 
+  .gf-form-input,
+  .gf-form-label {
+    border-right: 1px solid $input-border-color;
+    border-radius: $border-radius;
+  }
+
+  .gf-form-input {
+    border-radius: $border-radius;
+  }
+
   .gf-form + .gf-form {
     margin-left: 0;
   }
