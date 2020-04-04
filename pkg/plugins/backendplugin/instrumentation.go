@@ -22,6 +22,7 @@ func init() {
 	prometheus.MustRegister(pluginRequestCounter, pluginRequestLatency)
 }
 
+// InstrumentPluginRequest instruments success rate and latency of `fn`
 func InstrumentPluginRequest(pluginType string, endpoint string, fn func() error) error {
 	status := "ok"
 
