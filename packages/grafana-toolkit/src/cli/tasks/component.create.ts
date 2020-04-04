@@ -3,7 +3,7 @@ import fs from 'fs';
 import _ from 'lodash';
 import { prompt } from 'inquirer';
 import { pascalCase } from '../utils/pascalCase';
-import { promptConfirm, promptInput } from '../utils/prompt';
+import { promptConfirm, promptInput, promptList } from '../utils/prompt';
 import { componentTpl, docsTpl, storyTpl, testTpl } from '../templates';
 
 interface Details {
@@ -21,17 +21,25 @@ interface GeneratorOptions {
 
 type ComponentGenerator = (options: GeneratorOptions) => Promise<any>;
 
+const componentGroups = [
+  { name: 'General', value: 'General' },
+  { name: 'Forms', value: 'Forms' },
+  { name: 'Panel', value: 'Panel' },
+  { name: 'Visualizations', value: 'Visualizations' },
+  { name: 'Others', value: 'Others' },
+];
+
 export const promptDetails = () => {
   return prompt<Details>([
     promptInput('name', 'Component name', true),
     promptConfirm('hasTests', "Generate component's test file?"),
     promptConfirm('hasStory', "Generate component's story file?"),
     promptConfirm('isStoryPublic', 'Generate public story? (Selecting "No" will create an internal story)'),
-    promptInput(
+    promptList(
       'group',
       'Select component group for the story (e.g. Forms, Layout)',
-      true,
-      'General',
+      () => componentGroups,
+      0,
       ({ hasStory }) => hasStory
     ),
   ]);
