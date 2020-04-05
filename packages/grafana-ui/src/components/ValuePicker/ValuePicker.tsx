@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { IconType } from '../Icon/types';
+import { IconName } from '../../types';
 import { SelectableValue } from '@grafana/data';
 import { Button, ButtonVariant } from '../Button';
 import { Select } from '../Select/Select';
@@ -9,7 +9,7 @@ interface ValuePickerProps<T> {
   /** Label to display on the picker button */
   label: string;
   /** Icon to display on the picker button */
-  icon?: IconType;
+  icon?: IconName;
   /** ValuePicker options  */
   options: Array<SelectableValue<T>>;
   onChange: (value: SelectableValue<T>) => void;

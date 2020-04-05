@@ -10,31 +10,31 @@ describe('getPanelMenu', () => {
     expect(menuItems).toMatchInlineSnapshot(`
       Array [
         Object {
-          "iconClassName": "gicon gicon-viewer",
+          "iconClassName": "eye",
           "onClick": [Function],
           "shortcut": "v",
           "text": "View",
         },
         Object {
-          "iconClassName": "gicon gicon-editor",
+          "iconClassName": "edit",
           "onClick": [Function],
           "shortcut": "e",
           "text": "Edit",
         },
         Object {
-          "iconClassName": "fa fa-fw fa-share",
+          "iconClassName": "share-alt",
           "onClick": [Function],
           "shortcut": "p s",
           "text": "Share",
         },
         Object {
-          "iconClassName": "fa fa-fw fa-info-circle",
+          "iconClassName": "info-circle",
           "onClick": [Function],
           "shortcut": "p i",
           "text": "Inspect",
         },
         Object {
-          "iconClassName": "fa fa-fw fa-cube",
+          "iconClassName": "cube",
           "onClick": [Function],
           "subMenu": Array [
             Object {
@@ -58,7 +58,7 @@ describe('getPanelMenu', () => {
           "type": "divider",
         },
         Object {
-          "iconClassName": "fa fa-fw fa-trash",
+          "iconClassName": "trash-alt",
           "onClick": [Function],
           "shortcut": "p r",
           "text": "Remove",
