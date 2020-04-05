@@ -96,49 +96,50 @@ export const PanelOptionsTab: FC<Props> = ({
   }
 
   elements.push(
-    <>
-      <OptionsGroup title="Panel links" key="panel links" defaultToClosed={true}>
-        <DataLinksInlineEditor
-          links={panel.links}
-          onChange={links => onPanelConfigChange('links', links)}
-          suggestions={linkVariablesSuggestions}
-          data={[]}
-        />
-      </OptionsGroup>
-      <OptionsGroup title="Panel repeats" key="panel repeats" defaultToClosed={true}>
-        <Forms.Field
-          label="Repeat by variable"
-          description="Repeat this panel for each value in the selected variable.
+    <OptionsGroup title="Panel links" key="panel links" defaultToClosed={true}>
+      <DataLinksInlineEditor
+        links={panel.links}
+        onChange={links => onPanelConfigChange('links', links)}
+        suggestions={linkVariablesSuggestions}
+        data={[]}
+      />
+    </OptionsGroup>
+  );
+
+  elements.push(
+    <OptionsGroup title="Panel repeats" key="panel repeats" defaultToClosed={true}>
+      <Forms.Field
+        label="Repeat by variable"
+        description="Repeat this panel for each value in the selected variable.
           This is not visible while in edit mode. You need to go back to dashboard and then update the variable or
           reload the dashboard."
-        >
-          <Select
-            value={panel.repeat}
-            onChange={value => onPanelConfigChange('repeat', value.value)}
-            options={variableOptions}
+      >
+        <Select
+          value={panel.repeat}
+          onChange={value => onPanelConfigChange('repeat', value.value)}
+          options={variableOptions}
+        />
+      </Forms.Field>
+      {panel.repeat && (
+        <Forms.Field label="Repeat direction">
+          <Forms.RadioButtonGroup
+            options={directionOptions}
+            value={panel.repeatDirection || 'h'}
+            onChange={value => onPanelConfigChange('repeatDirection', value)}
           />
         </Forms.Field>
-        {panel.repeat && (
-          <Forms.Field label="Repeat direction">
-            <Forms.RadioButtonGroup
-              options={directionOptions}
-              value={panel.repeatDirection || 'h'}
-              onChange={value => onPanelConfigChange('repeatDirection', value)}
-            />
-          </Forms.Field>
-        )}
+      )}
 
-        {panel.repeat && panel.repeatDirection === 'h' && (
-          <Forms.Field label="Max per row">
-            <Select
-              options={maxPerRowOptions}
-              value={panel.maxPerRow}
-              onChange={value => onPanelConfigChange('maxPerRow', value.value)}
-            />
-          </Forms.Field>
-        )}
-      </OptionsGroup>
-    </>
+      {panel.repeat && panel.repeatDirection === 'h' && (
+        <Forms.Field label="Max per row">
+          <Select
+            options={maxPerRowOptions}
+            value={panel.maxPerRow}
+            onChange={value => onPanelConfigChange('maxPerRow', value.value)}
+          />
+        </Forms.Field>
+      )}
+    </OptionsGroup>
   );
 
   return <>{elements}</>;

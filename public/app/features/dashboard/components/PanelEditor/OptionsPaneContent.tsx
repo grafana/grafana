@@ -184,11 +184,14 @@ export const TabsBarContent: React.FC<{
         </div>
       ) : (
         <>
-          {tabSelections.map(item => {
-            return (
-              <Tab label={item.label} active={activeTab === item.value} onChangeTab={() => setActiveTab(item.value)} />
-            );
-          })}
+          {tabSelections.map(item => (
+            <Tab
+              key={item.value}
+              label={item.label}
+              active={activeTab === item.value}
+              onChangeTab={() => setActiveTab(item.value)}
+            />
+          ))}
           <div className="flex-grow-1" />
         </>
       )}
@@ -219,7 +222,7 @@ const tabSelections: Array<SelectableValue<string>> = [
     value: 'options',
   },
   {
-    label: 'Data',
+    label: 'Fields',
     value: 'defaults',
   },
   {
