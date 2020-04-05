@@ -5,17 +5,17 @@ import { DataTransformerID, DataTransformerConfig, DataFrame, transformDataFrame
 import { Button, Select } from '@grafana/ui';
 import { TransformationRow } from './TransformationRow';
 
-interface TransformationsEditorState {
-  updateCounter: number;
-}
-
-interface TransformationsEditorProps {
+interface Props {
   onChange: (transformations: DataTransformerConfig[]) => void;
   transformations: DataTransformerConfig[];
   dataFrames: DataFrame[];
 }
 
-export class TransformationsEditor extends React.PureComponent<TransformationsEditorProps, TransformationsEditorState> {
+interface State {
+  updateCounter: number;
+}
+
+export class TransformationsEditor extends React.PureComponent<Props, State> {
   state = { updateCounter: 0 };
 
   onTransformationAdd = () => {
