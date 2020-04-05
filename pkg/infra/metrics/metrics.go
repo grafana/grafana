@@ -148,10 +148,14 @@ var (
 
 	// grafanaBuildVersion is a metric with a constant '1' value labeled by version, revision, branch, and goversion from which Grafana was built
 	grafanaBuildVersion *prometheus.GaugeVec
+
+	grafanPluginBuildInfoDesc *prometheus.GaugeVec
 )
 
 func init() {
 	httpStatusCodes := []string{"200", "404", "500", "unknown"}
+	objectiveMap := map[float64]float64{0.5: 0.05, 0.9: 0.01, 0.99: 0.001}
+
 	MInstanceStart = prometheus.NewCounter(prometheus.CounterOpts{
 		Name:      "instance_start_total",
 		Help:      "counter for started instances",
@@ -189,8 +193,9 @@ func init() {
 
 	MHttpRequestSummary = prometheus.NewSummaryVec(
 		prometheus.SummaryOpts{
-			Name: "http_request_duration_milliseconds",
-			Help: "http request summary",
+			Name:       "http_request_duration_milliseconds",
+			Help:       "http request summary",
+			Objectives: objectiveMap,
 		},
 		[]string{"handler", "statuscode", "method"},
 	)
@@ -214,21 +219,24 @@ func init() {
 	})
 
 	MApiDashboardSave = prometheus.NewSummary(prometheus.SummaryOpts{
-		Name:      "api_dashboard_save_milliseconds",
-		Help:      "summary for dashboard save duration",
-		Namespace: exporterName,
+		Name:       "api_dashboard_save_milliseconds",
+		Help:       "summary for dashboard save duration",
+		Objectives: objectiveMap,
+		Namespace:  exporterName,
 	})
 
 	MApiDashboardGet = prometheus.NewSummary(prometheus.SummaryOpts{
-		Name:      "api_dashboard_get_milliseconds",
-		Help:      "summary for dashboard get duration",
-		Namespace: exporterName,
+		Name:       "api_dashboard_get_milliseconds",
+		Help:       "summary for dashboard get duration",
+		Objectives: objectiveMap,
+		Namespace:  exporterName,
 	})
 
 	MApiDashboardSearch = prometheus.NewSummary(prometheus.SummaryOpts{
-		Name:      "api_dashboard_search_milliseconds",
-		Help:      "summary for dashboard search duration",
-		Namespace: exporterName,
+		Name:       "api_dashboard_search_milliseconds",
+		Help:       "summary for dashboard search duration",
+		Objectives: objectiveMap,
+		Namespace:  exporterName,
 	})
 
 	MApiAdminUserCreate = newCounterStartingAtZero(prometheus.CounterOpts{
@@ -328,21 +336,24 @@ func init() {
 	})
 
 	LDAPUsersSyncExecutionTime = prometheus.NewSummary(prometheus.SummaryOpts{
-		Name:      "ldap_users_sync_execution_time",
-		Help:      "summary for LDAP users sync execution duration",
-		Namespace: exporterName,
+		Name:       "ldap_users_sync_execution_time",
+		Help:       "summary for LDAP users sync execution duration",
+		Objectives: objectiveMap,
+		Namespace:  exporterName,
 	})
 
 	MDataSourceProxyReqTimer = prometheus.NewSummary(prometheus.SummaryOpts{
-		Name:      "api_dataproxy_request_all_milliseconds",
-		Help:      "summary for dataproxy request duration",
-		Namespace: exporterName,
+		Name:       "api_dataproxy_request_all_milliseconds",
+		Help:       "summary for dataproxy request duration",
+		Objectives: objectiveMap,
+		Namespace:  exporterName,
 	})
 
 	MAlertingExecutionTime = prometheus.NewSummary(prometheus.SummaryOpts{
-		Name:      "alerting_execution_time_milliseconds",
-		Help:      "summary of alert exeuction duration",
-		Namespace: exporterName,
+		Name:       "alerting_execution_time_milliseconds",
+		Help:       "summary of alert exeuction duration",
+		Objectives: objectiveMap,
+		Namespace:  exporterName,
 	})
 
 	MAlertingActiveAlerts = prometheus.NewGauge(prometheus.GaugeOpts{
@@ -422,6 +433,12 @@ func init() {
 		Help:      "A metric with a constant '1' value labeled by version, revision, branch, and goversion from which Grafana was built",
 		Namespace: exporterName,
 	}, []string{"version", "revision", "branch", "goversion", "edition"})
+
+	grafanPluginBuildInfoDesc = prometheus.NewGaugeVec(prometheus.GaugeOpts{
+		Name:      "plugin_build_info",
+		Help:      "A metric with a constant '1' value labeled by pluginId, pluginType and version from which Grafana plugin was built",
+		Namespace: exporterName,
+	}, []string{"plugin_id", "plugin_type", "version"})
 }
 
 // SetBuildInformation sets the build information for this binary
@@ -432,6 +449,10 @@ func SetBuildInformation(version, revision, branch string) {
 	}
 
 	grafanaBuildVersion.WithLabelValues(version, revision, branch, runtime.Version(), edition).Set(1)
+}
+
+func SetPluginBuildInformation(pluginID, pluginType, version string) {
+	grafanPluginBuildInfoDesc.WithLabelValues(pluginID, pluginType, version).Set(1)
 }
 
 func initMetricVars() {
@@ -480,6 +501,7 @@ func initMetricVars() {
 		StatsTotalActiveEditors,
 		StatsTotalActiveAdmins,
 		grafanaBuildVersion,
+		grafanPluginBuildInfoDesc,
 	)
 
 }

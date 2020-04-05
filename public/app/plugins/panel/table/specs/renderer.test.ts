@@ -40,9 +40,26 @@ describe('when rendering table', () => {
       { text: 'MappingColored' },
       { text: 'RangeMappingColored' },
       { text: 'HiddenType' },
+      { text: 'RightAligned' },
     ];
     table.rows = [
-      [1388556366666, 1230, 40, undefined, '', '', 'my.host.com', 'host1', ['value1', 'value2'], 1, 2, 1, 2, 'ignored'],
+      [
+        1388556366666,
+        1230,
+        40,
+        undefined,
+        '',
+        '',
+        'my.host.com',
+        'host1',
+        ['value1', 'value2'],
+        1,
+        2,
+        1,
+        2,
+        'ignored',
+        42,
+      ],
     ];
 
     const panel = {
@@ -185,13 +202,17 @@ describe('when rendering table', () => {
           pattern: 'HiddenType',
           type: 'hidden',
         },
+        {
+          pattern: 'RightAligned',
+          align: 'right',
+        },
       ],
     };
 
     //@ts-ignore
     const renderer = new TableRenderer(panel, table, 'utc', sanitize, templateSrv);
 
-    it('time column should be formated', () => {
+    it('time column should be formatted', () => {
       const html = renderer.renderCell(0, 0, 1388556366666);
       expect(html).toBe('<td>2014-01-01T06:06:06Z</td>');
     });
@@ -296,12 +317,9 @@ describe('when rendering table', () => {
     it('link should render as', () => {
       const html = renderer.renderCell(7, 0, 'host1');
       const expectedHtml = `
-        <td class="table-panel-cell-link">
-          <a href="/dashboard?param=host1&param_1=1230&param_2=40"
-            target="_blank" data-link-tooltip data-original-title="host1 1230 my.host.com" data-placement="right">
-            host1
-          </a>
-        </td>
+        <td class="table-panel-cell-link"><a href="/dashboard?param=host1&param_1=1230&param_2=40"
+            target="_blank" data-link-tooltip data-original-title="host1 1230 my.host.com"
+			data-placement="right">host1</a></td>
       `;
       expect(normalize(html)).toBe(normalize(expectedHtml));
     });
@@ -396,6 +414,11 @@ describe('when rendering table', () => {
       expect(html).toBe('');
     });
 
+    it('right aligned column should have correct text-align style', () => {
+      const html = renderer.renderCell(14, 0, 42);
+      expect(html).toBe('<td style="text-align:right">42</td>');
+    });
+
     it('render_values should ignore hidden columns', () => {
       renderer.render(0); // this computes the hidden markers on the columns
       const { columns, rows } = renderer.render_values();
@@ -445,6 +468,76 @@ describe('when rendering table with different patterns', () => {
       //@ts-ignore
       const renderer = new TableRenderer(panel, table, 'utc', sanitize, templateSrv);
       const html = renderer.renderCell(1, 0, 1230);
+
+      expect(html).toBe(expected);
+    }
+  );
+});
+
+describe('when rendering cells with different alignment options', () => {
+  const cases = [
+    //align, preserve fmt, color mode, expected
+    ['', false, null, '<td>42</td>'],
+    ['invalid_option', false, null, '<td>42</td>'],
+    ['alert("no xss");', false, null, '<td>42</td>'],
+    ['auto', false, null, '<td>42</td>'],
+    ['justify', false, null, '<td>42</td>'],
+    ['auto', true, null, '<td class="table-panel-cell-pre">42</td>'],
+    ['left', false, null, '<td style="text-align:left">42</td>'],
+    ['left', true, null, '<td class="table-panel-cell-pre" style="text-align:left">42</td>'],
+    ['center', false, null, '<td style="text-align:center">42</td>'],
+    [
+      'center',
+      true,
+      'cell',
+      '<td class="table-panel-color-cell table-panel-cell-pre" style="background-color:rgba(50, 172, 45, 0.97);text-align:center">42</td>',
+    ],
+    [
+      'right',
+      false,
+      'cell',
+      '<td class="table-panel-color-cell" style="background-color:rgba(50, 172, 45, 0.97);text-align:right">42</td>',
+    ],
+    [
+      'right',
+      true,
+      'cell',
+      '<td class="table-panel-color-cell table-panel-cell-pre" style="background-color:rgba(50, 172, 45, 0.97);text-align:right">42</td>',
+    ],
+  ];
+
+  it.each(cases)(
+    'align option:"%s", preformatted:%s columns should be formatted with correct style',
+    (align: string, preserveFormat: boolean, colorMode, expected: string) => {
+      const table = new TableModel();
+      table.columns = [{ text: 'Time' }, { text: align }];
+      table.rows = [[0, 42]];
+
+      const panel = {
+        pageSize: 10,
+        styles: [
+          {
+            pattern: 'Time',
+            type: 'date',
+            format: 'LLL',
+            alias: 'Timestamp',
+          },
+          {
+            pattern: `/${align}/`,
+            align: align,
+            type: 'number',
+            unit: 'none',
+            preserveFormat: preserveFormat,
+            colorMode: colorMode,
+            thresholds: [1, 2],
+            colors: ['rgba(245, 54, 54, 0.9)', 'rgba(237, 129, 40, 0.89)', 'rgba(50, 172, 45, 0.97)'],
+          },
+        ],
+      };
+
+      //@ts-ignore
+      const renderer = new TableRenderer(panel, table, 'utc', sanitize, templateSrv);
+      const html = renderer.renderCell(1, 0, 42);
 
       expect(html).toBe(expected);
     }

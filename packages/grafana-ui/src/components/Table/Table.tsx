@@ -1,31 +1,37 @@
-import React, { useMemo, CSSProperties } from 'react';
-import { DataFrame } from '@grafana/data';
-// @ts-ignore
-import { useSortBy, useTable, useBlockLayout } from 'react-table';
+import React, { FC, memo, useMemo } from 'react';
+import { DataFrame, Field } from '@grafana/data';
+import { Cell, Column, HeaderGroup, useBlockLayout, useSortBy, useTable } from 'react-table';
 import { FixedSizeList } from 'react-window';
-import { getTableStyles } from './styles';
-import { getColumns, getTableRows } from './utils';
-import { TableColumn } from './types';
+import useMeasure from 'react-use/lib/useMeasure';
+import { getColumns, getTableRows, getTextAlign } from './utils';
 import { useTheme } from '../../themes';
+import { TableFilterActionCallback } from './types';
+import { getTableStyles } from './styles';
+import { TableCell } from './TableCell';
+import { Icon } from '../Icon/Icon';
+import { CustomScrollbar } from '../CustomScrollbar/CustomScrollbar';
 
 export interface Props {
   data: DataFrame;
   width: number;
   height: number;
+  /** Minimal column width specified in pixels */
+  columnMinWidth?: number;
+  noHeader?: boolean;
   onCellClick?: TableFilterActionCallback;
 }
 
-type TableFilterActionCallback = (key: string, value: string) => void;
-
-export const Table = ({ data, height, onCellClick, width }: Props) => {
+export const Table: FC<Props> = memo(({ data, height, onCellClick, width, columnMinWidth, noHeader }) => {
   const theme = useTheme();
+  const [ref, headerRowMeasurements] = useMeasure();
   const tableStyles = getTableStyles(theme);
+  const memoizedColumns = useMemo(() => getColumns(data, width, columnMinWidth ?? 150), [data, width, columnMinWidth]);
+  const memoizedData = useMemo(() => getTableRows(data), [data]);
 
   const { getTableProps, headerGroups, rows, prepareRow } = useTable(
     {
-      columns: useMemo(() => getColumns(data, width, theme), [data]),
-      data: useMemo(() => getTableRows(data), [data]),
-      tableStyles,
+      columns: memoizedColumns,
+      data: memoizedData,
     },
     useSortBy,
     useBlockLayout
@@ -37,68 +43,69 @@ export const Table = ({ data, height, onCellClick, width }: Props) => {
       prepareRow(row);
       return (
         <div {...row.getRowProps({ style })} className={tableStyles.row}>
-          {row.cells.map((cell: RenderCellProps) => renderCell(cell, onCellClick))}
+          {row.cells.map((cell: Cell, index: number) => (
+            <TableCell
+              key={index}
+              field={data.fields[index]}
+              tableStyles={tableStyles}
+              cell={cell}
+              onCellClick={onCellClick}
+            />
+          ))}
         </div>
       );
     },
     [prepareRow, rows]
   );
 
+  let totalWidth = 0;
+
+  for (const headerGroup of headerGroups) {
+    for (const header of headerGroup.headers) {
+      totalWidth += header.width as number;
+    }
+  }
+
   return (
     <div {...getTableProps()} className={tableStyles.table}>
-      <div>
-        {headerGroups.map((headerGroup: any) => (
-          <div className={tableStyles.thead} {...headerGroup.getHeaderGroupProps()}>
-            {headerGroup.headers.map((column: any) => renderHeaderCell(column, tableStyles.headerCell))}
+      <CustomScrollbar hideVerticalTrack={true}>
+        {!noHeader && (
+          <div>
+            {headerGroups.map((headerGroup: HeaderGroup) => (
+              <div className={tableStyles.thead} {...headerGroup.getHeaderGroupProps()} ref={ref}>
+                {headerGroup.headers.map((column: Column, index: number) =>
+                  renderHeaderCell(column, tableStyles.headerCell, data.fields[index])
+                )}
+              </div>
+            ))}
           </div>
-        ))}
-      </div>
-      <FixedSizeList height={height} itemCount={rows.length} itemSize={tableStyles.rowHeight} width={width}>
-        {RenderRow}
-      </FixedSizeList>
+        )}
+        <FixedSizeList
+          height={height - headerRowMeasurements.height}
+          itemCount={rows.length}
+          itemSize={tableStyles.rowHeight}
+          width={totalWidth ?? width}
+          style={{ overflow: 'hidden auto' }}
+        >
+          {RenderRow}
+        </FixedSizeList>
+      </CustomScrollbar>
     </div>
   );
-};
+});
 
-interface RenderCellProps {
-  column: TableColumn;
-  value: any;
-  getCellProps: () => { style: CSSProperties };
-  render: (component: string) => React.ReactNode;
-}
-
-function renderCell(cell: RenderCellProps, onCellClick?: TableFilterActionCallback) {
-  const filterable = cell.column.field.config.filterable;
-  const cellProps = cell.getCellProps();
-  let onClick: ((event: React.SyntheticEvent) => void) | undefined = undefined;
-
-  if (filterable && onCellClick) {
-    cellProps.style.cursor = 'pointer';
-    onClick = () => onCellClick(cell.column.Header, cell.value);
-  }
-
-  if (cell.column.textAlign) {
-    cellProps.style.textAlign = cell.column.textAlign;
-  }
-
-  return (
-    <div {...cellProps} onClick={onClick}>
-      {cell.render('Cell')}
-    </div>
-  );
-}
-
-function renderHeaderCell(column: any, className: string) {
+function renderHeaderCell(column: any, className: string, field?: Field) {
   const headerProps = column.getHeaderProps(column.getSortByToggleProps());
+  const fieldTextAlign = getTextAlign(field);
 
-  if (column.textAlign) {
-    headerProps.style.textAlign = column.textAlign;
+  if (fieldTextAlign) {
+    headerProps.style.textAlign = fieldTextAlign;
   }
 
   return (
     <div className={className} {...headerProps}>
       {column.render('Header')}
-      <span>{column.isSorted ? (column.isSortedDesc ? ' 🔽' : ' 🔼') : ''}</span>
+      {column.isSorted && (column.isSortedDesc ? <Icon name="caret-down" /> : <Icon name="caret-up" />)}
     </div>
   );
 }

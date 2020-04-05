@@ -7,7 +7,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/bus"
-	m "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -18,13 +18,13 @@ const (
 	darkName  = "dark"
 )
 
-func (hs *HTTPServer) setIndexViewData(c *m.ReqContext) (*dtos.IndexViewData, error) {
+func (hs *HTTPServer) setIndexViewData(c *models.ReqContext) (*dtos.IndexViewData, error) {
 	settings, err := hs.getFrontendSettingsMap(c)
 	if err != nil {
 		return nil, err
 	}
 
-	prefsQuery := m.GetPreferencesWithDefaultsQuery{User: c.SignedInUser}
+	prefsQuery := models.GetPreferencesWithDefaultsQuery{User: c.SignedInUser}
 	if err := bus.Dispatch(&prefsQuery); err != nil {
 		return nil, err
 	}
@@ -43,13 +43,13 @@ func (hs *HTTPServer) setIndexViewData(c *m.ReqContext) (*dtos.IndexViewData, er
 	appSubURL := setting.AppSubUrl
 
 	// special case when doing localhost call from phantomjs
-	if c.IsRenderCall {
+	if c.IsRenderCall && !hs.Cfg.ServeFromSubPath {
 		appURL = fmt.Sprintf("%s://localhost:%s", setting.Protocol, setting.HttpPort)
 		appSubURL = ""
 		settings["appSubUrl"] = ""
 	}
 
-	hasEditPermissionInFoldersQuery := m.HasEditPermissionInFoldersQuery{SignedInUser: c.SignedInUser}
+	hasEditPermissionInFoldersQuery := models.HasEditPermissionInFoldersQuery{SignedInUser: c.SignedInUser}
 	if err := bus.Dispatch(&hasEditPermissionInFoldersQuery); err != nil {
 		return nil, err
 	}
@@ -85,6 +85,9 @@ func (hs *HTTPServer) setIndexViewData(c *m.ReqContext) (*dtos.IndexViewData, er
 		NewGrafanaVersionExists: plugins.GrafanaHasUpdate,
 		AppName:                 setting.ApplicationName,
 		AppNameBodyClass:        getAppNameBodyClass(hs.License.HasValidLicense()),
+		FavIcon:                 "public/img/fav32.png",
+		AppleTouchIcon:          "public/img/apple-touch-icon.png",
+		AppTitle:                "Grafana",
 	}
 
 	if setting.DisableGravatar {
@@ -109,7 +112,7 @@ func (hs *HTTPServer) setIndexViewData(c *m.ReqContext) (*dtos.IndexViewData, er
 			{Text: "Dashboard", Icon: "gicon gicon-dashboard-new", Url: setting.AppSubUrl + "/dashboard/new"},
 		}
 
-		if c.OrgRole == m.ROLE_ADMIN || c.OrgRole == m.ROLE_EDITOR {
+		if c.OrgRole == models.ROLE_ADMIN || c.OrgRole == models.ROLE_EDITOR {
 			children = append(children, &dtos.NavLink{Text: "Folder", SubTitle: "Create a new folder to organize your dashboards", Id: "folder", Icon: "gicon gicon-folder-new", Url: setting.AppSubUrl + "/dashboards/folder/new"})
 		}
 
@@ -143,7 +146,7 @@ func (hs *HTTPServer) setIndexViewData(c *m.ReqContext) (*dtos.IndexViewData, er
 		Children:   dashboardChildNavs,
 	})
 
-	if setting.ExploreEnabled && (c.OrgRole == m.ROLE_ADMIN || c.OrgRole == m.ROLE_EDITOR || setting.ViewersCanEdit) {
+	if setting.ExploreEnabled && (c.OrgRole == models.ROLE_ADMIN || c.OrgRole == models.ROLE_EDITOR || setting.ViewersCanEdit) {
 		data.NavTree = append(data.NavTree, &dtos.NavLink{
 			Text:       "Explore",
 			Id:         "explore",
@@ -189,7 +192,7 @@ func (hs *HTTPServer) setIndexViewData(c *m.ReqContext) (*dtos.IndexViewData, er
 		data.NavTree = append(data.NavTree, profileNode)
 	}
 
-	if setting.AlertingEnabled && (c.OrgRole == m.ROLE_ADMIN || c.OrgRole == m.ROLE_EDITOR) {
+	if setting.AlertingEnabled && (c.OrgRole == models.ROLE_ADMIN || c.OrgRole == models.ROLE_EDITOR) {
 		alertChildNavs := []*dtos.NavLink{
 			{Text: "Alert Rules", Id: "alert-list", Url: setting.AppSubUrl + "/alerting/list", Icon: "gicon gicon-alert-rules"},
 			{Text: "Notification channels", Id: "channels", Url: setting.AppSubUrl + "/alerting/notifications", Icon: "gicon gicon-alert-notification-channel"},
@@ -227,9 +230,20 @@ func (hs *HTTPServer) setIndexViewData(c *m.ReqContext) (*dtos.IndexViewData, er
 				}
 
 				if include.Type == "page" && include.AddToNav {
-					link := &dtos.NavLink{
-						Url:  setting.AppSubUrl + "/plugins/" + plugin.Id + "/page/" + include.Slug,
-						Text: include.Name,
+					var link *dtos.NavLink
+					if len(include.Path) > 0 {
+						link = &dtos.NavLink{
+							Url:  setting.AppSubUrl + include.Path,
+							Text: include.Name,
+						}
+						if include.DefaultNav {
+							appLink.Url = link.Url // Overwrite the hardcoded page logic
+						}
+					} else {
+						link = &dtos.NavLink{
+							Url:  setting.AppSubUrl + "/plugins/" + plugin.Id + "/page/" + include.Slug,
+							Text: include.Name,
+						}
 					}
 					appLink.Children = append(appLink.Children, link)
 				}
@@ -243,7 +257,7 @@ func (hs *HTTPServer) setIndexViewData(c *m.ReqContext) (*dtos.IndexViewData, er
 				}
 			}
 
-			if len(appLink.Children) > 0 && c.OrgRole == m.ROLE_ADMIN {
+			if len(appLink.Children) > 0 && c.OrgRole == models.ROLE_ADMIN {
 				appLink.Children = append(appLink.Children, &dtos.NavLink{Divider: true})
 				appLink.Children = append(appLink.Children, &dtos.NavLink{Text: "Plugin Config", Icon: "gicon gicon-cog", Url: setting.AppSubUrl + "/plugins/" + plugin.Id + "/"})
 			}
@@ -256,7 +270,7 @@ func (hs *HTTPServer) setIndexViewData(c *m.ReqContext) (*dtos.IndexViewData, er
 
 	configNodes := []*dtos.NavLink{}
 
-	if c.OrgRole == m.ROLE_ADMIN {
+	if c.OrgRole == models.ROLE_ADMIN {
 		configNodes = append(configNodes, &dtos.NavLink{
 			Text:        "Data Sources",
 			Icon:        "gicon gicon-datasources",
@@ -273,7 +287,7 @@ func (hs *HTTPServer) setIndexViewData(c *m.ReqContext) (*dtos.IndexViewData, er
 		})
 	}
 
-	if c.OrgRole == m.ROLE_ADMIN || hs.Cfg.EditorsCanAdmin {
+	if c.OrgRole == models.ROLE_ADMIN || (hs.Cfg.EditorsCanAdmin && c.OrgRole == models.ROLE_EDITOR) {
 		configNodes = append(configNodes, &dtos.NavLink{
 			Text:        "Teams",
 			Id:          "teams",
@@ -283,15 +297,15 @@ func (hs *HTTPServer) setIndexViewData(c *m.ReqContext) (*dtos.IndexViewData, er
 		})
 	}
 
-	configNodes = append(configNodes, &dtos.NavLink{
-		Text:        "Plugins",
-		Id:          "plugins",
-		Description: "View and configure plugins",
-		Icon:        "gicon gicon-plugins",
-		Url:         setting.AppSubUrl + "/plugins",
-	})
+	if c.OrgRole == models.ROLE_ADMIN {
+		configNodes = append(configNodes, &dtos.NavLink{
+			Text:        "Plugins",
+			Id:          "plugins",
+			Description: "View and configure plugins",
+			Icon:        "gicon gicon-plugins",
+			Url:         setting.AppSubUrl + "/plugins",
+		})
 
-	if c.OrgRole == m.ROLE_ADMIN {
 		configNodes = append(configNodes, &dtos.NavLink{
 			Text:        "Preferences",
 			Id:          "org-settings",
@@ -308,15 +322,17 @@ func (hs *HTTPServer) setIndexViewData(c *m.ReqContext) (*dtos.IndexViewData, er
 		})
 	}
 
-	data.NavTree = append(data.NavTree, &dtos.NavLink{
-		Id:         "cfg",
-		Text:       "Configuration",
-		SubTitle:   "Organization: " + c.OrgName,
-		Icon:       "gicon gicon-cog",
-		Url:        configNodes[0].Url,
-		SortWeight: dtos.WeightConfig,
-		Children:   configNodes,
-	})
+	if len(configNodes) > 0 {
+		data.NavTree = append(data.NavTree, &dtos.NavLink{
+			Id:         "cfg",
+			Text:       "Configuration",
+			SubTitle:   "Organization: " + c.OrgName,
+			Icon:       "gicon gicon-cog",
+			Url:        configNodes[0].Url,
+			SortWeight: dtos.WeightConfig,
+			Children:   configNodes,
+		})
+	}
 
 	if c.IsGrafanaAdmin {
 		adminNavLinks := []*dtos.NavLink{
@@ -352,14 +368,10 @@ func (hs *HTTPServer) setIndexViewData(c *m.ReqContext) (*dtos.IndexViewData, er
 		Icon:         "gicon gicon-question",
 		HideFromMenu: true,
 		SortWeight:   dtos.WeightHelp,
-		Children: []*dtos.NavLink{
-			{Text: "Keyboard shortcuts", Url: "/shortcuts", Icon: "fa fa-fw fa-keyboard-o", Target: "_self"},
-			{Text: "Community site", Url: "http://community.grafana.com", Icon: "fa fa-fw fa-comment", Target: "_blank"},
-			{Text: "Documentation", Url: "http://docs.grafana.org", Icon: "fa fa-fw fa-file", Target: "_blank"},
-		},
+		Children:     []*dtos.NavLink{},
 	})
 
-	hs.HooksService.RunIndexDataHooks(&data)
+	hs.HooksService.RunIndexDataHooks(&data, c)
 
 	sort.SliceStable(data.NavTree, func(i, j int) bool {
 		return data.NavTree[i].SortWeight < data.NavTree[j].SortWeight
@@ -367,7 +379,7 @@ func (hs *HTTPServer) setIndexViewData(c *m.ReqContext) (*dtos.IndexViewData, er
 	return &data, nil
 }
 
-func (hs *HTTPServer) Index(c *m.ReqContext) {
+func (hs *HTTPServer) Index(c *models.ReqContext) {
 	data, err := hs.setIndexViewData(c)
 	if err != nil {
 		c.Handle(500, "Failed to get settings", err)
@@ -376,7 +388,7 @@ func (hs *HTTPServer) Index(c *m.ReqContext) {
 	c.HTML(200, "index", data)
 }
 
-func (hs *HTTPServer) NotFoundHandler(c *m.ReqContext) {
+func (hs *HTTPServer) NotFoundHandler(c *models.ReqContext) {
 	if c.IsApiRequest() {
 		c.JsonApiErr(404, "Not found", nil)
 		return

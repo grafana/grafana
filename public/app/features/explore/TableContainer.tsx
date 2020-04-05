@@ -6,6 +6,9 @@ import { Table, Collapse } from '@grafana/ui';
 import { ExploreId, ExploreItemState } from 'app/types/explore';
 import { StoreState } from 'app/types';
 import { toggleTable } from './state/actions';
+import { config } from 'app/core/config';
+import { PANEL_BORDER } from 'app/core/constants';
+import { MetaInfoText } from './MetaInfoText';
 
 interface TableContainerProps {
   exploreId: ExploreId;
@@ -37,12 +40,16 @@ export class TableContainer extends PureComponent<TableContainerProps> {
     const { loading, onClickCell, showingTable, tableResult, width } = this.props;
 
     const height = this.getTableHeight();
-    const paddingWidth = 16;
-    const tableWidth = width - paddingWidth;
+    const tableWidth = width - config.theme.panelPadding * 2 - PANEL_BORDER;
+    const hasTableResult = tableResult?.length;
 
     return (
       <Collapse label="Table" loading={loading} collapsible isOpen={showingTable} onToggle={this.onClickTableButton}>
-        {tableResult && <Table data={tableResult} width={tableWidth} height={height} onCellClick={onClickCell} />}
+        {hasTableResult ? (
+          <Table data={tableResult!} width={tableWidth} height={height} onCellClick={onClickCell} />
+        ) : (
+          <MetaInfoText metaItems={[{ value: '0 series returned' }]} />
+        )}
       </Collapse>
     );
   }

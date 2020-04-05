@@ -1,18 +1,22 @@
+// Libraries
 import React, { FC } from 'react';
+import { CSSTransition } from 'react-transition-group';
+
+// Components
 import { UserSignup } from './UserSignup';
 import { LoginServiceButtons } from './LoginServiceButtons';
 import LoginCtrl from './LoginCtrl';
 import { LoginForm } from './LoginForm';
 import { ChangePassword } from './ChangePassword';
-import { CSSTransition } from 'react-transition-group';
+import { Branding } from 'app/core/components/Branding/Branding';
+import { Footer } from 'app/core/components/Footer/Footer';
 
 export const LoginPage: FC = () => {
   return (
-    <div className="login container">
+    <Branding.LoginBackground className="login container">
       <div className="login-content">
         <div className="login-branding">
-          <img className="logo-icon" src="public/img/grafana_icon.svg" alt="Grafana" />
-          <div className="logo-wordmark" />
+          <Branding.LoginLogo className="login-logo" />
         </div>
         <LoginCtrl>
           {({
@@ -59,6 +63,7 @@ export const LoginPage: FC = () => {
 
         <div className="clearfix" />
       </div>
-    </div>
+      <Footer />
+    </Branding.LoginBackground>
   );
 };

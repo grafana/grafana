@@ -11,7 +11,7 @@ const getKnobs = () => {
   };
 };
 
-const BigValueStories = storiesOf('UI/BigValue', module);
+const BigValueStories = storiesOf('Visualizations/BigValue', module);
 
 BigValueStories.addDecorator(withCenteredStory);
 

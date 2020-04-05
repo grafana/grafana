@@ -10,14 +10,13 @@ import { getTimeSrv, TimeSrv } from '../services/TimeSrv';
 import { applyPanelTimeOverrides } from 'app/features/dashboard/utils/panel';
 import { profiler } from 'app/core/profiler';
 import { getProcessedDataFrames } from '../state/runRequest';
-import templateSrv from 'app/features/templating/template_srv';
 import config from 'app/core/config';
+import { updateLocation } from 'app/core/actions';
 // Types
 import { DashboardModel, PanelModel } from '../state';
 import { PANEL_BORDER } from 'app/core/constants';
 import {
   LoadingState,
-  ScopedVars,
   AbsoluteTimeRange,
   DefaultTimeRange,
   toUtc,
@@ -26,6 +25,7 @@ import {
   PanelData,
   PanelPlugin,
   EventBusGroup,
+  FieldConfigSource,
 } from '@grafana/data';
 
 const DEFAULT_PLUGIN_ERROR = 'Error in plugin';
@@ -36,17 +36,17 @@ export interface Props {
   plugin: PanelPlugin;
   isFullscreen: boolean;
   isInView: boolean;
+  isInEditMode?: boolean;
   width: number;
   height: number;
+  updateLocation: typeof updateLocation;
 }
 
 export interface State {
   isFirstLoad: boolean;
   renderCounter: number;
-  errorMessage: string | null;
+  errorMessage?: string;
   refreshWhenInView: boolean;
-
-  // Current state of all events
   data: PanelData;
 }
 
@@ -64,7 +64,6 @@ export class PanelChrome extends PureComponent<Props, State> {
     this.state = {
       isFirstLoad: true,
       renderCounter: 0,
-      errorMessage: null,
       refreshWhenInView: false,
       data: {
         state: LoadingState.NotStarted,
@@ -75,7 +74,7 @@ export class PanelChrome extends PureComponent<Props, State> {
   }
 
   componentDidMount() {
-    const { panel, dashboard } = this.props;
+    const { panel, dashboard, isInEditMode } = this.props;
 
     // Subscribe to panel events
     panel.events.on(PanelEvents.refresh, this.onRefresh);
@@ -94,8 +93,19 @@ export class PanelChrome extends PureComponent<Props, State> {
         },
         isFirstLoad: false,
       });
-    } else if (!this.wantsQueryExecution) {
-      this.setState({ isFirstLoad: false });
+    } else {
+      if (isInEditMode) {
+        this.querySubscription = panel
+          .getQueryRunner()
+          .getData()
+          .subscribe({
+            next: data => this.onDataUpdate(data),
+          });
+      }
+
+      if (!this.wantsQueryExecution) {
+        this.setState({ isFirstLoad: false });
+      }
     }
   }
 
@@ -108,7 +118,6 @@ export class PanelChrome extends PureComponent<Props, State> {
 
     if (this.querySubscription) {
       this.querySubscription.unsubscribe();
-      this.querySubscription = null;
     }
   }
 
@@ -122,9 +131,6 @@ export class PanelChrome extends PureComponent<Props, State> {
         if (this.state.refreshWhenInView) {
           this.onRefresh();
         }
-      } else if (this.querySubscription) {
-        this.querySubscription.unsubscribe();
-        this.querySubscription = null;
       }
     }
   }
@@ -140,7 +146,7 @@ export class PanelChrome extends PureComponent<Props, State> {
     }
 
     let { isFirstLoad } = this.state;
-    let errorMessage: string | null = null;
+    let errorMessage: string | undefined;
 
     switch (data.state) {
       case LoadingState.Loading:
@@ -174,7 +180,6 @@ export class PanelChrome extends PureComponent<Props, State> {
 
   onRefresh = () => {
     const { panel, isInView, width } = this.props;
-
     if (!isInView) {
       console.log('Refresh when panel is visible', panel.id);
       this.setState({ refreshWhenInView: true });
@@ -218,7 +223,6 @@ export class PanelChrome extends PureComponent<Props, State> {
 
   onRender = () => {
     const stateUpdate = { renderCounter: this.state.renderCounter + 1 };
-
     this.setState(stateUpdate);
   };
 
@@ -226,12 +230,8 @@ export class PanelChrome extends PureComponent<Props, State> {
     this.props.panel.updateOptions(options);
   };
 
-  replaceVariables = (value: string, extraVars?: ScopedVars, format?: string) => {
-    let vars = this.props.panel.scopedVars;
-    if (extraVars) {
-      vars = vars ? { ...vars, ...extraVars } : extraVars;
-    }
-    return templateSrv.replace(value, vars, format);
+  onFieldConfigChange = (config: FieldConfigSource) => {
+    this.props.panel.updateFieldConfig(config);
   };
 
   onPanelError = (message: string) => {
@@ -245,6 +245,10 @@ export class PanelChrome extends PureComponent<Props, State> {
     return panel.snapshotData && panel.snapshotData.length;
   }
 
+  panelHasLastResult = () => {
+    return !!this.props.panel.getQueryRunner().getLastResult();
+  };
+
   get wantsQueryExecution() {
     return !(this.props.plugin.meta.skipDataQuery || this.hasPanelSnapshot);
   }
@@ -256,7 +260,7 @@ export class PanelChrome extends PureComponent<Props, State> {
     });
   };
 
-  renderPanel(width: number, height: number): JSX.Element {
+  renderPanel(width: number, height: number) {
     const { panel, plugin } = this.props;
     const { renderCounter, data, isFirstLoad } = this.state;
     const { theme } = config;
@@ -270,51 +274,43 @@ export class PanelChrome extends PureComponent<Props, State> {
 
     // do not render component until we have first data
     if (isFirstLoad && (loading === LoadingState.Loading || loading === LoadingState.NotStarted)) {
-      return this.renderLoadingState();
+      return null;
     }
 
     const PanelComponent = plugin.panel;
     const timeRange = data.timeRange || this.timeSrv.timeRange();
-
     const headerHeight = this.hasOverlayHeader() ? 0 : theme.panelHeaderHeight;
     const chromePadding = plugin.noPadding ? 0 : theme.panelPadding;
     const panelWidth = width - chromePadding * 2 - PANEL_BORDER;
     const innerPanelHeight = height - headerHeight - chromePadding * 2 - PANEL_BORDER;
-
     const panelContentClassNames = classNames({
       'panel-content': true,
       'panel-content--no-padding': plugin.noPadding,
     });
+    const panelOptions = panel.getOptions();
 
     return (
       <>
-        {loading === LoadingState.Loading && this.renderLoadingState()}
         <div className={panelContentClassNames}>
           <PanelComponent
             id={panel.id}
             data={data}
             timeRange={timeRange}
             timeZone={this.props.dashboard.getTimezone()}
-            options={panel.getOptions()}
+            options={panelOptions}
+            fieldConfig={panel.fieldConfig}
             transparent={panel.transparent}
             width={panelWidth}
             height={innerPanelHeight}
             renderCounter={renderCounter}
-            replaceVariables={this.replaceVariables}
+            replaceVariables={panel.replaceVariables}
             onOptionsChange={this.onOptionsChange}
+            onFieldConfigChange={this.onFieldConfigChange}
             onChangeTimeRange={this.onChangeTimeRange}
             eventBus={this.panelBus}
           />
         </div>
       </>
-    );
-  }
-
-  private renderLoadingState(): JSX.Element {
-    return (
-      <div className="panel-loading">
-        <i className="fa fa-spinner fa-spin" />
-      </div>
     );
   }
 
@@ -336,7 +332,7 @@ export class PanelChrome extends PureComponent<Props, State> {
   }
 
   render() {
-    const { dashboard, panel, isFullscreen, width, height } = this.props;
+    const { dashboard, panel, isFullscreen, width, height, updateLocation } = this.props;
     const { errorMessage, data } = this.state;
     const { transparent } = panel;
 
@@ -352,17 +348,18 @@ export class PanelChrome extends PureComponent<Props, State> {
         <PanelHeader
           panel={panel}
           dashboard={dashboard}
-          timeInfo={data.request ? data.request.timeInfo : null}
           title={panel.title}
           description={panel.description}
           scopedVars={panel.scopedVars}
           links={panel.links}
           error={errorMessage}
           isFullscreen={isFullscreen}
+          data={data}
+          updateLocation={updateLocation}
         />
         <ErrorBoundary>
-          {({ error, errorInfo }) => {
-            if (errorInfo) {
+          {({ error }) => {
+            if (error) {
               this.onPanelError(error.message || DEFAULT_PLUGIN_ERROR);
               return null;
             }

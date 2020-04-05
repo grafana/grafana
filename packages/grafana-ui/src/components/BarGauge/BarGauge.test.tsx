@@ -1,6 +1,6 @@
 import React from 'react';
 import { shallow } from 'enzyme';
-import { DisplayValue } from '@grafana/data';
+import { DisplayValue, VizOrientation, ThresholdsMode, Field, FieldType, getDisplayProcessor } from '@grafana/data';
 import {
   BarGauge,
   Props,
@@ -11,29 +11,38 @@ import {
   getValuePercent,
   BarGaugeDisplayMode,
 } from './BarGauge';
-import { VizOrientation } from '@grafana/data';
 import { getTheme } from '../../themes';
 
 const green = '#73BF69';
 const orange = '#FF9830';
 
 function getProps(propOverrides?: Partial<Props>): Props {
+  const field: Partial<Field> = {
+    type: FieldType.number,
+    config: {
+      min: 0,
+      max: 100,
+      thresholds: {
+        mode: ThresholdsMode.Absolute,
+        steps: [
+          { value: -Infinity, color: 'green' },
+          { value: 70, color: 'orange' },
+          { value: 90, color: 'red' },
+        ],
+      },
+    },
+  };
+  const theme = getTheme();
+  field.display = getDisplayProcessor({ field, theme });
+
   const props: Props = {
-    maxValue: 100,
-    minValue: 0,
     displayMode: BarGaugeDisplayMode.Basic,
-    thresholds: [
-      { value: -Infinity, color: 'green' },
-      { value: 70, color: 'orange' },
-      { value: 90, color: 'red' },
-    ],
+    field: field.config!,
+    display: field.display!,
     height: 300,
     width: 300,
-    value: {
-      text: '25',
-      numeric: 25,
-    },
-    theme: getTheme(),
+    value: field.display(25),
+    theme,
     orientation: VizOrientation.Horizontal,
   };
 
@@ -59,11 +68,13 @@ function getValue(value: number, title?: string): DisplayValue {
 describe('BarGauge', () => {
   describe('Get value color', () => {
     it('should get the threshold color if value is same as a threshold', () => {
-      const props = getProps({ value: getValue(70) });
+      const props = getProps();
+      props.value = props.display!(70);
       expect(getValueColor(props)).toEqual(orange);
     });
     it('should get the base threshold', () => {
-      const props = getProps({ value: getValue(-10) });
+      const props = getProps();
+      props.value = props.display!(-10);
       expect(getValueColor(props)).toEqual(green);
     });
   });

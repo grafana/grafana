@@ -1,5 +1,5 @@
-import resolve from 'rollup-plugin-node-resolve';
-import commonjs from 'rollup-plugin-commonjs';
+import resolve from '@rollup/plugin-node-resolve';
+import commonjs from '@rollup/plugin-commonjs';
 import sourceMaps from 'rollup-plugin-sourcemaps';
 import { terser } from 'rollup-plugin-terser';
 
@@ -20,7 +20,7 @@ const buildCjsPackage = ({ env }) => {
         globals: {},
       },
     ],
-    external: ['lodash'], // Use Lodash from grafana
+    external: ['lodash', 'apache-arrow'], // Use Lodash & arrow from grafana
     plugins: [
       commonjs({
         include: /node_modules/,

@@ -6,7 +6,6 @@ import {
   FoldersAndDashboardUids,
 } from 'app/core/components/manage_dashboards/manage_dashboards';
 import { SearchSrv } from 'app/core/services/search_srv';
-import { BackendSrv } from '../services/backend_srv';
 import { ContextSrv } from '../services/context_srv';
 
 const mockSection = (overides?: object): Section => {
@@ -189,7 +188,7 @@ describe('ManageDashboards', () => {
 
       describe('when select all is checked', () => {
         beforeEach(() => {
-          ctrl.selectAllChecked = true;
+          ctrl.selectAllChecked = false;
           ctrl.onSelectAllChanged();
         });
 
@@ -246,10 +245,10 @@ describe('ManageDashboards', () => {
 
     describe('with starred filter', () => {
       beforeEach(() => {
-        const yesOption: any = ctrl.starredFilterOptions[1];
+        const yesOption: any = { label: 'Yes', value: true };
 
         ctrl.selectedStarredFilter = yesOption;
-        return ctrl.onStarredFilterChange();
+        return ctrl.onStarredFilterChange(yesOption);
       });
 
       it('should set starred filter', () => {
@@ -307,7 +306,7 @@ describe('ManageDashboards', () => {
 
       describe('when select all is checked', () => {
         beforeEach(() => {
-          ctrl.selectAllChecked = true;
+          ctrl.selectAllChecked = false;
           ctrl.onSelectAllChanged();
         });
 
@@ -355,7 +354,7 @@ describe('ManageDashboards', () => {
 
       describe('when select all is unchecked', () => {
         beforeEach(() => {
-          ctrl.selectAllChecked = false;
+          ctrl.selectAllChecked = true;
           ctrl.onSelectAllChanged();
         });
 
@@ -593,7 +592,6 @@ function createCtrlWithStubs(searchResponse: any, tags?: any) {
 
   return new ManageDashboardsCtrl(
     { $digest: jest.fn() } as any,
-    {} as BackendSrv,
     searchSrvStub as SearchSrv,
     { isEditor: true } as ContextSrv
   );

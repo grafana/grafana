@@ -5,7 +5,7 @@ import { boolean, number, select, text } from '@storybook/addon-knobs';
 import mdx from './TextArea.mdx';
 
 export default {
-  title: 'UI/Forms/TextArea',
+  title: 'Forms/TextArea',
   component: TextArea,
   decorators: [withCenteredStory],
   parameters: {

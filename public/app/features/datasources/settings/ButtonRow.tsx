@@ -30,7 +30,7 @@ const ButtonRow: FC<Props> = ({ isReadOnly, onDelete, onSubmit, onTest }) => {
         </button>
       )}
       <button
-        type="submit"
+        type="button"
         className="btn btn-danger"
         disabled={isReadOnly}
         onClick={onDelete}

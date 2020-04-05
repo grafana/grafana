@@ -454,7 +454,7 @@ func SearchUsers(query *models.SearchUsersQuery) error {
 	offset := query.Limit * (query.Page - 1)
 	sess.Limit(query.Limit, offset)
 	sess.Cols("u.id", "u.email", "u.name", "u.login", "u.is_admin", "u.is_disabled", "u.last_seen_at", "user_auth.auth_module")
-	sess.OrderBy("u.id")
+	sess.Asc("u.login", "u.email")
 	if err := sess.Find(&query.Result.Users); err != nil {
 		return err
 	}
@@ -480,8 +480,11 @@ func SearchUsers(query *models.SearchUsersQuery) error {
 func DisableUser(cmd *models.DisableUserCommand) error {
 	user := models.User{}
 	sess := x.Table("user")
-	if _, err := sess.ID(cmd.UserId).Get(&user); err != nil {
+
+	if has, err := sess.ID(cmd.UserId).Get(&user); err != nil {
 		return err
+	} else if !has {
+		return models.ErrUserNotFound
 	}
 
 	user.IsDisabled = cmd.IsDisabled
@@ -523,6 +526,16 @@ func DeleteUser(cmd *models.DeleteUserCommand) error {
 }
 
 func deleteUserInTransaction(sess *DBSession, cmd *models.DeleteUserCommand) error {
+	//Check if user exists
+	user := models.User{Id: cmd.UserId}
+	has, err := sess.Get(&user)
+	if err != nil {
+		return err
+	}
+	if !has {
+		return models.ErrUserNotFound
+	}
+
 	deletes := []string{
 		"DELETE FROM star WHERE user_id = ?",
 		"DELETE FROM " + dialect.Quote("user") + " WHERE id = ?",

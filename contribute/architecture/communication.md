@@ -72,7 +72,7 @@ if err := s.bus.Dispatch(cmd); err != nil {
 
 ### Handle commands
 
-Let others parts of the application dispatch commands to a service, by registering a _command handler_:
+Let other parts of the application dispatch commands to a service, by registering a _command handler_:
 
 To handle a command, register a command handler in the `Init` function.
 
@@ -91,7 +91,7 @@ func (s *MyService) SendStickers(cmd *models.SendStickersCommand) error {
 
 ## Queries
 
-A command handler can optionally populate the command sent it. This pattern is commonly used to implement _queries_.
+A command handler can optionally populate the command sent to it. This pattern is commonly used to implement _queries_.
 
 ### Making a query
 

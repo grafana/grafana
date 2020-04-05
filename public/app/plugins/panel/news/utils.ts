@@ -15,13 +15,10 @@ export function feedToDataFrame(feed: RssFeed): DataFrame {
       title.buffer.push(item.title);
       link.buffer.push(item.link);
 
-      let body = item.content.replace(/<\/?[^>]+(>|$)/g, '');
-
-      if (body && body.length > 300) {
-        body = body.substr(0, 300);
+      if (item.content) {
+        const body = item.content.replace(/<\/?[^>]+(>|$)/g, '');
+        content.buffer.push(body);
       }
-
-      content.buffer.push(body);
     } catch (err) {
       console.warn('Error reading news item:', err, item);
     }

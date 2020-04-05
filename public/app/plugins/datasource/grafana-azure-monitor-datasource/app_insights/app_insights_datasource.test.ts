@@ -1,20 +1,28 @@
 import Datasource from '../datasource';
 import { DataFrame, toUtc } from '@grafana/data';
 import { TemplateSrv } from 'app/features/templating/template_srv';
+import { backendSrv } from 'app/core/services/backend_srv'; // will use the version in __mocks__
+
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  getBackendSrv: () => backendSrv,
+}));
 
 describe('AppInsightsDatasource', () => {
+  const datasourceRequestMock = jest.spyOn(backendSrv, 'datasourceRequest');
+
   const ctx: any = {
-    backendSrv: {},
     templateSrv: new TemplateSrv(),
   };
 
   beforeEach(() => {
+    jest.clearAllMocks();
     ctx.instanceSettings = {
       jsonData: { appInsightsAppId: '3ad4400f-ea7d-465d-a8fb-43fb20555d85' },
       url: 'http://appinsightsapi',
     };
 
-    ctx.ds = new Datasource(ctx.instanceSettings, ctx.backendSrv, ctx.templateSrv);
+    ctx.ds = new Datasource(ctx.instanceSettings, ctx.templateSrv);
   });
 
   describe('When performing testDatasource', () => {
@@ -38,9 +46,9 @@ describe('AppInsightsDatasource', () => {
       };
 
       beforeEach(() => {
-        ctx.backendSrv.datasourceRequest = () => {
+        datasourceRequestMock.mockImplementation(() => {
           return Promise.resolve({ data: response, status: 200 });
-        };
+        });
       });
 
       it('should return success status', () => {
@@ -63,9 +71,9 @@ describe('AppInsightsDatasource', () => {
       };
 
       beforeEach(() => {
-        ctx.backendSrv.datasourceRequest = () => {
+        datasourceRequestMock.mockImplementation(() => {
           return Promise.reject(error);
-        };
+        });
       });
 
       it('should return error status and a detailed error message', () => {
@@ -91,9 +99,9 @@ describe('AppInsightsDatasource', () => {
       };
 
       beforeEach(() => {
-        ctx.backendSrv.datasourceRequest = () => {
+        datasourceRequestMock.mockImplementation(() => {
           return Promise.reject(error);
-        };
+        });
       });
 
       it('should return error status and a detailed error message', () => {
@@ -127,7 +135,7 @@ describe('AppInsightsDatasource', () => {
             rawQueryString: queryString,
             timeColumn: 'timestamp',
             valueColumn: 'max',
-            segmentColumn: undefined as string,
+            segmentColumn: (undefined as unknown) as string,
           },
         },
       ],
@@ -151,7 +159,7 @@ describe('AppInsightsDatasource', () => {
       };
 
       beforeEach(() => {
-        ctx.backendSrv.datasourceRequest = (options: any) => {
+        datasourceRequestMock.mockImplementation((options: any) => {
           expect(options.url).toContain('/api/tsdb/query');
           expect(options.data.queries.length).toBe(1);
           expect(options.data.queries[0].refId).toBe('A');
@@ -160,7 +168,7 @@ describe('AppInsightsDatasource', () => {
           expect(options.data.queries[0].appInsights.valueColumn).toEqual('max');
           expect(options.data.queries[0].appInsights.segmentColumn).toBeUndefined();
           return Promise.resolve({ data: response, status: 200 });
-        };
+        });
       });
 
       it('should return a list of datapoints', () => {
@@ -169,8 +177,8 @@ describe('AppInsightsDatasource', () => {
           const data = results.data[0] as DataFrame;
           expect(data.name).toEqual('PrimaryResult');
           expect(data.fields[0].values.length).toEqual(1);
-          expect(data.fields[1].values.get(0)).toEqual(1558278660000);
-          expect(data.fields[0].values.get(0)).toEqual(2.2075);
+          expect(data.fields[0].values.get(0)).toEqual(1558278660000);
+          expect(data.fields[1].values.get(0)).toEqual(2.2075);
         });
       });
     });
@@ -194,7 +202,7 @@ describe('AppInsightsDatasource', () => {
 
       beforeEach(() => {
         options.targets[0].appInsights.segmentColumn = 'partition';
-        ctx.backendSrv.datasourceRequest = (options: any) => {
+        datasourceRequestMock.mockImplementation((options: any) => {
           expect(options.url).toContain('/api/tsdb/query');
           expect(options.data.queries.length).toBe(1);
           expect(options.data.queries[0].refId).toBe('A');
@@ -203,7 +211,7 @@ describe('AppInsightsDatasource', () => {
           expect(options.data.queries[0].appInsights.valueColumn).toEqual('max');
           expect(options.data.queries[0].appInsights.segmentColumn).toEqual('partition');
           return Promise.resolve({ data: response, status: 200 });
-        };
+        });
       });
 
       it('should return a list of datapoints', () => {
@@ -212,8 +220,8 @@ describe('AppInsightsDatasource', () => {
           const data = results.data[0] as DataFrame;
           expect(data.name).toEqual('paritionA');
           expect(data.fields[0].values.length).toEqual(1);
-          expect(data.fields[1].values.get(0)).toEqual(1558278660000);
-          expect(data.fields[0].values.get(0)).toEqual(2.2075);
+          expect(data.fields[0].values.get(0)).toEqual(1558278660000);
+          expect(data.fields[1].values.get(0)).toEqual(2.2075);
         });
       });
     });
@@ -257,14 +265,14 @@ describe('AppInsightsDatasource', () => {
       };
 
       beforeEach(() => {
-        ctx.backendSrv.datasourceRequest = (options: any) => {
+        datasourceRequestMock.mockImplementation((options: any) => {
           expect(options.url).toContain('/api/tsdb/query');
           expect(options.data.queries.length).toBe(1);
           expect(options.data.queries[0].refId).toBe('A');
           expect(options.data.queries[0].appInsights.rawQueryString).toBeUndefined();
           expect(options.data.queries[0].appInsights.metricName).toBe('exceptions/server');
           return Promise.resolve({ data: response, status: 200 });
-        };
+        });
       });
 
       it('should return a single datapoint', () => {
@@ -272,8 +280,8 @@ describe('AppInsightsDatasource', () => {
           expect(results.data.length).toBe(1);
           const data = results.data[0] as DataFrame;
           expect(data.name).toEqual('exceptions/server');
-          expect(data.fields[1].values.get(0)).toEqual(1558278660000);
-          expect(data.fields[0].values.get(0)).toEqual(2.2075);
+          expect(data.fields[0].values.get(0)).toEqual(1558278660000);
+          expect(data.fields[1].values.get(0)).toEqual(2.2075);
         });
       });
     });
@@ -300,14 +308,14 @@ describe('AppInsightsDatasource', () => {
 
       beforeEach(() => {
         options.targets[0].appInsights.timeGrain = 'PT30M';
-        ctx.backendSrv.datasourceRequest = (options: any) => {
+        datasourceRequestMock.mockImplementation((options: any) => {
           expect(options.url).toContain('/api/tsdb/query');
           expect(options.data.queries[0].refId).toBe('A');
           expect(options.data.queries[0].appInsights.rawQueryString).toBeUndefined();
           expect(options.data.queries[0].appInsights.metricName).toBe('exceptions/server');
           expect(options.data.queries[0].appInsights.timeGrain).toBe('PT30M');
           return Promise.resolve({ data: response, status: 200 });
-        };
+        });
       });
 
       it('should return a list of datapoints', () => {
@@ -316,10 +324,10 @@ describe('AppInsightsDatasource', () => {
           const data = results.data[0] as DataFrame;
           expect(data.name).toEqual('exceptions/server');
           expect(data.fields[0].values.length).toEqual(2);
-          expect(data.fields[1].values.get(0)).toEqual(1504108800000);
-          expect(data.fields[0].values.get(0)).toEqual(3);
-          expect(data.fields[1].values.get(1)).toEqual(1504112400000);
-          expect(data.fields[0].values.get(1)).toEqual(6);
+          expect(data.fields[0].values.get(0)).toEqual(1504108800000);
+          expect(data.fields[1].values.get(0)).toEqual(3);
+          expect(data.fields[0].values.get(1)).toEqual(1504112400000);
+          expect(data.fields[1].values.get(1)).toEqual(6);
         });
       });
     });
@@ -355,13 +363,13 @@ describe('AppInsightsDatasource', () => {
         beforeEach(() => {
           options.targets[0].appInsights.dimension = 'client/city';
 
-          ctx.backendSrv.datasourceRequest = (options: any) => {
+          datasourceRequestMock.mockImplementation((options: any) => {
             expect(options.url).toContain('/api/tsdb/query');
             expect(options.data.queries[0].appInsights.rawQueryString).toBeUndefined();
             expect(options.data.queries[0].appInsights.metricName).toBe('exceptions/server');
             expect(options.data.queries[0].appInsights.dimension).toBe('client/city');
             return Promise.resolve({ data: response, status: 200 });
-          };
+          });
         });
 
         it('should return a list of datapoints', () => {
@@ -369,18 +377,18 @@ describe('AppInsightsDatasource', () => {
             expect(results.data.length).toBe(2);
             let data = results.data[0] as DataFrame;
             expect(data.name).toEqual('exceptions/server{client/city="Miami"}');
-            expect(data.fields[0].values.length).toEqual(2);
-            expect(data.fields[1].values.get(0)).toEqual(1504108800000);
-            expect(data.fields[0].values.get(0)).toEqual(10);
-            expect(data.fields[1].values.get(1)).toEqual(1504112400000);
-            expect(data.fields[0].values.get(1)).toEqual(20);
+            expect(data.fields[1].values.length).toEqual(2);
+            expect(data.fields[0].values.get(0)).toEqual(1504108800000);
+            expect(data.fields[1].values.get(0)).toEqual(10);
+            expect(data.fields[0].values.get(1)).toEqual(1504112400000);
+            expect(data.fields[1].values.get(1)).toEqual(20);
             data = results.data[1] as DataFrame;
             expect(data.name).toEqual('exceptions/server{client/city="San Antonio"}');
-            expect(data.fields[0].values.length).toEqual(2);
-            expect(data.fields[1].values.get(0)).toEqual(1504108800000);
-            expect(data.fields[0].values.get(0)).toEqual(1);
-            expect(data.fields[1].values.get(1)).toEqual(1504112400000);
-            expect(data.fields[0].values.get(1)).toEqual(2);
+            expect(data.fields[1].values.length).toEqual(2);
+            expect(data.fields[0].values.get(0)).toEqual(1504108800000);
+            expect(data.fields[1].values.get(0)).toEqual(1);
+            expect(data.fields[0].values.get(1)).toEqual(1504112400000);
+            expect(data.fields[1].values.get(1)).toEqual(2);
           });
         });
       });
@@ -397,10 +405,10 @@ describe('AppInsightsDatasource', () => {
       };
 
       beforeEach(() => {
-        ctx.backendSrv.datasourceRequest = (options: { url: string }) => {
+        datasourceRequestMock.mockImplementation((options: { url: string }) => {
           expect(options.url).toContain('/metrics/metadata');
           return Promise.resolve({ data: response, status: 200 });
-        };
+        });
       });
 
       it('should return a list of metric names', () => {
@@ -435,10 +443,10 @@ describe('AppInsightsDatasource', () => {
       };
 
       beforeEach(() => {
-        ctx.backendSrv.datasourceRequest = (options: { url: string }) => {
+        datasourceRequestMock.mockImplementation((options: { url: string }) => {
           expect(options.url).toContain('/metrics/metadata');
           return Promise.resolve({ data: response, status: 200 });
-        };
+        });
       });
 
       it('should return a list of group bys', () => {
@@ -463,10 +471,10 @@ describe('AppInsightsDatasource', () => {
     };
 
     beforeEach(() => {
-      ctx.backendSrv.datasourceRequest = (options: { url: string }) => {
+      datasourceRequestMock.mockImplementation((options: { url: string }) => {
         expect(options.url).toContain('/metrics/metadata');
         return Promise.resolve({ data: response, status: 200 });
-      };
+      });
     });
 
     it('should return a list of metric names', () => {
@@ -501,10 +509,10 @@ describe('AppInsightsDatasource', () => {
     };
 
     beforeEach(() => {
-      ctx.backendSrv.datasourceRequest = (options: { url: string }) => {
+      datasourceRequestMock.mockImplementation((options: { url: string }) => {
         expect(options.url).toContain('/metrics/metadata');
         return Promise.resolve({ data: response, status: 200 });
-      };
+      });
     });
 
     it('should return a list of group bys', () => {

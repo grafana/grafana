@@ -6,7 +6,14 @@ import { config } from 'app/core/config';
 
 // Types
 import { StatPanelOptions } from './types';
-import { VizRepeater, BigValue, DataLinksContextMenu, BigValueSparkline, BigValueGraphMode } from '@grafana/ui';
+import {
+  VizRepeater,
+  VizRepeaterRenderValueProps,
+  BigValue,
+  DataLinksContextMenu,
+  BigValueSparkline,
+  BigValueGraphMode,
+} from '@grafana/ui';
 
 import {
   PanelProps,
@@ -15,29 +22,26 @@ import {
   ReducerID,
   getDisplayValueAlignmentFactors,
   DisplayValueAlignmentFactors,
-  VizOrientation,
 } from '@grafana/data';
 
 import { getFieldLinksSupplier } from 'app/features/panel/panellinks/linkSuppliers';
 
 export class StatPanel extends PureComponent<PanelProps<StatPanelOptions>> {
-  renderValue = (
-    value: FieldDisplay,
-    width: number,
-    height: number,
-    alignmentFactors: DisplayValueAlignmentFactors
-  ): JSX.Element => {
+  renderValue = (valueProps: VizRepeaterRenderValueProps<FieldDisplay, DisplayValueAlignmentFactors>): JSX.Element => {
     const { timeRange, options } = this.props;
+    const { value, alignmentFactors, width, height } = valueProps;
     let sparkline: BigValueSparkline | undefined;
 
     if (value.sparkline) {
       sparkline = {
         data: value.sparkline,
-        minX: timeRange.from.valueOf(),
-        maxX: timeRange.to.valueOf(),
+        xMin: timeRange.from.valueOf(),
+        xMax: timeRange.to.valueOf(),
+        yMin: value.field.min,
+        yMax: value.field.max,
       };
 
-      const calc = options.fieldOptions.calcs[0];
+      const calc = options.reduceOptions.calcs[0];
       if (calc === ReducerID.last) {
         sparkline.highlightIndex = sparkline.data.length - 1;
       }
@@ -67,14 +71,16 @@ export class StatPanel extends PureComponent<PanelProps<StatPanelOptions>> {
   };
 
   getValues = (): FieldDisplay[] => {
-    const { data, options, replaceVariables } = this.props;
+    const { data, options, replaceVariables, fieldConfig } = this.props;
 
     return getFieldDisplayValues({
-      ...options,
+      fieldConfig,
+      reduceOptions: options.reduceOptions,
       replaceVariables,
       theme: config.theme,
       data: data.series,
       sparkline: options.graphMode !== BigValueGraphMode.None,
+      autoMinMax: true,
     });
   };
 
@@ -90,23 +96,9 @@ export class StatPanel extends PureComponent<PanelProps<StatPanelOptions>> {
         height={height}
         source={data}
         renderCounter={renderCounter}
-        orientation={getOrientation(width, height, options.orientation)}
+        autoGrid={true}
+        orientation={options.orientation}
       />
     );
-  }
-}
-
-/**
- * Stat panel custom auto orientation
- */
-function getOrientation(width: number, height: number, orientation: VizOrientation): VizOrientation {
-  if (orientation !== VizOrientation.Auto) {
-    return orientation;
-  }
-
-  if (width / height > 2) {
-    return VizOrientation.Vertical;
-  } else {
-    return VizOrientation.Horizontal;
   }
 }

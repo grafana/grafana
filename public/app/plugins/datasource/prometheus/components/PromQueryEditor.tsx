@@ -2,8 +2,10 @@ import _ from 'lodash';
 import React, { PureComponent } from 'react';
 
 // Types
-import { FormLabel, Select, Switch } from '@grafana/ui';
+import { FormLabel, LegacyForms, Switch } from '@grafana/ui';
 import { SelectableValue, QueryEditorProps } from '@grafana/data';
+
+const { Select } = LegacyForms;
 
 import { PrometheusDatasource } from '../datasource';
 import { PromQuery, PromOptions } from '../types';
@@ -37,7 +39,9 @@ export class PromQueryEditor extends PureComponent<Props, State> {
 
   constructor(props: Props) {
     super(props);
-    const { query } = props;
+    // Use default query to prevent undefined input values
+    const defaultQuery: Partial<PromQuery> = { expr: '', legendFormat: '', interval: '' };
+    const query = Object.assign({}, defaultQuery, props.query);
     this.query = query;
     // Query target properties that are fully controlled inputs
     this.state = {
@@ -128,9 +132,12 @@ export class PromQueryEditor extends PureComponent<Props, State> {
           <div className="gf-form">
             <FormLabel
               width={7}
-              tooltip="Leave blank for auto handling based on time range and panel width.
-            Note that the actual dates used in the query will be adjusted
-        to a multiple of the interval step."
+              tooltip={
+                <>
+                  An additional lower limit for the step parameter of the Prometheus query and for the{' '}
+                  <code>$__interval</code> variable. The limit is absolute and not modified by the "Resolution" setting.
+                </>
+              }
             >
               Min step
             </FormLabel>

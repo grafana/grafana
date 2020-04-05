@@ -13,7 +13,7 @@
           </div>
           <div class="gf-form">
             <span class="gf-form-label width-9">Evaluate every</span>
-            <input class="gf-form-input max-width-6" type="text" ng-model="ctrl.alert.frequency">
+            <input class="gf-form-input max-width-6" type="text" ng-model="ctrl.alert.frequency" ng-blur="ctrl.checkFrequency()">
           </div>
           <div class="gf-form max-width-11">
             <label class="gf-form-label width-5">For</label>
@@ -30,6 +30,12 @@
               notifications.
             </info-popover>
           </div>
+        </div>
+        <div class="gf-form" ng-if="ctrl.frequencyWarning">
+          <label class="gf-form-label text-warning">
+            <i
+            class="fa fa-warning"></i> {{ctrl.frequencyWarning}}
+          </label>
         </div>
       </div>
 
@@ -133,8 +139,9 @@
           <span class="gf-form-label width-8">Send to</span>
         </div>
         <div class="gf-form" ng-repeat="nc in ctrl.alertNotifications">
-          <span class="gf-form-label" ng-style="{'background-color': nc.bgColor }">
-            <i class="{{nc.iconClass}}"></i>&nbsp;{{nc.name}}&nbsp;
+          <span class="gf-form-label">
+            <i class="{{nc.iconClass}}"></i>
+            &nbsp;{{nc.name}}&nbsp;<span ng-if="nc.isDefault">(default)</span>
             <i class="fa fa-remove pointer muted" ng-click="ctrl.removeNotification(nc)" ng-if="nc.isDefault === false"></i>
           </span>
         </div>

@@ -6,13 +6,15 @@ import memoizeOne from 'memoize-one';
 import classNames from 'classnames';
 import { css } from 'emotion';
 
-import { ExploreId, ExploreItemState, ExploreMode } from 'app/types/explore';
-import { ToggleButtonGroup, ToggleButton, Tooltip, ButtonSelect, SetInterval } from '@grafana/ui';
-import { RawTimeRange, TimeZone, TimeRange, DataQuery } from '@grafana/data';
+import { ExploreId, ExploreItemState } from 'app/types/explore';
+import { ToggleButtonGroup, ToggleButton, Tooltip, LegacyForms, SetInterval } from '@grafana/ui';
+const { ButtonSelect } = LegacyForms;
+import { RawTimeRange, TimeZone, TimeRange, DataQuery, ExploreMode } from '@grafana/data';
 import { DataSourcePicker } from 'app/core/components/Select/DataSourcePicker';
 import { StoreState } from 'app/types/store';
 import {
   changeDatasource,
+  cancelQueries,
   clearQueries,
   splitClose,
   runQueries,
@@ -20,7 +22,6 @@ import {
   syncTimes,
   changeRefreshInterval,
   changeMode,
-  clearOrigin,
 } from './state/actions';
 import { updateLocation } from 'app/core/actions';
 import { getTimeZone } from '../profile/state/selectors';
@@ -32,6 +33,7 @@ import { ResponsiveButton } from './ResponsiveButton';
 import { RunButton } from './RunButton';
 import { LiveTailControls } from './useLiveTailControls';
 import { getExploreDatasources } from './state/selectors';
+import { setDashboardQueriesToUpdateOnLoad } from '../dashboard/state/reducers';
 
 const getStyles = memoizeOne(() => {
   return {
@@ -72,14 +74,15 @@ interface StateProps {
 interface DispatchProps {
   changeDatasource: typeof changeDatasource;
   clearAll: typeof clearQueries;
+  cancelQueries: typeof cancelQueries;
   runQueries: typeof runQueries;
   closeSplit: typeof splitClose;
   split: typeof splitOpen;
   syncTimes: typeof syncTimes;
   changeRefreshInterval: typeof changeRefreshInterval;
   changeMode: typeof changeMode;
-  clearOrigin: typeof clearOrigin;
   updateLocation: typeof updateLocation;
+  setDashboardQueriesToUpdateOnLoad: typeof setDashboardQueriesToUpdateOnLoad;
 }
 
 type Props = StateProps & DispatchProps & OwnProps;
@@ -93,8 +96,12 @@ export class UnConnectedExploreToolbar extends PureComponent<Props> {
     this.props.clearAll(this.props.exploreId);
   };
 
-  onRunQuery = () => {
-    return this.props.runQueries(this.props.exploreId);
+  onRunQuery = (loading = false) => {
+    if (loading) {
+      return this.props.cancelQueries(this.props.exploreId);
+    } else {
+      return this.props.runQueries(this.props.exploreId);
+    }
   };
 
   onChangeRefreshInterval = (item: string) => {
@@ -113,14 +120,17 @@ export class UnConnectedExploreToolbar extends PureComponent<Props> {
   };
 
   returnToPanel = async ({ withChanges = false } = {}) => {
-    const { originPanelId } = this.props;
+    const { originPanelId, queries } = this.props;
 
     const dashboardSrv = getDashboardSrv();
     const dash = dashboardSrv.getCurrent();
     const titleSlug = kbn.slugifyForUrl(dash.title);
 
-    if (!withChanges) {
-      this.props.clearOrigin();
+    if (withChanges) {
+      this.props.setDashboardQueriesToUpdateOnLoad({
+        panelId: originPanelId,
+        queries: this.cleanQueries(queries),
+      });
     }
 
     const dashViewOptions = {
@@ -136,6 +146,15 @@ export class UnConnectedExploreToolbar extends PureComponent<Props> {
       },
     });
   };
+
+  // Remove explore specific parameters from queries
+  private cleanQueries(queries: DataQuery[]) {
+    return queries.map((query: DataQuery & { context?: string }) => {
+      delete query.context;
+      delete query.key;
+      return query;
+    });
+  }
 
   getSelectedDatasource = () => {
     const { datasourceName } = this.props;
@@ -348,7 +367,7 @@ const mapStateToProps = (state: StoreState, { exploreId }: OwnProps): StateProps
     containerWidth,
   } = exploreItem;
 
-  const hasLiveOption = datasourceInstance?.meta?.streaming && mode === ExploreMode.Logs;
+  const hasLiveOption = !!(datasourceInstance?.meta?.streaming && mode === ExploreMode.Logs);
 
   return {
     datasourceMissing,
@@ -376,12 +395,13 @@ const mapDispatchToProps: DispatchProps = {
   updateLocation,
   changeRefreshInterval,
   clearAll: clearQueries,
+  cancelQueries,
   runQueries,
   closeSplit: splitClose,
   split: splitOpen,
   syncTimes,
   changeMode: changeMode,
-  clearOrigin,
+  setDashboardQueriesToUpdateOnLoad,
 };
 
 export const ExploreToolbar = hot(module)(connect(mapStateToProps, mapDispatchToProps)(UnConnectedExploreToolbar));

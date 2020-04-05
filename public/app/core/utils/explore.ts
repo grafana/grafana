@@ -4,6 +4,7 @@ import { Unsubscribable } from 'rxjs';
 // Services & Utils
 import {
   DataQuery,
+  CoreApp,
   DataQueryError,
   DataQueryRequest,
   DataSourceApi,
@@ -20,6 +21,7 @@ import {
   TimeRange,
   TimeZone,
   toUtc,
+  ExploreMode,
 } from '@grafana/data';
 import { renderUrl } from 'app/core/utils/url';
 import store from 'app/core/store';
@@ -27,7 +29,7 @@ import kbn from 'app/core/utils/kbn';
 import { getNextRefIdChar } from './query';
 // Types
 import { RefreshPicker } from '@grafana/ui';
-import { ExploreMode, ExploreUrlState, QueryOptions, QueryTransaction } from 'app/types/explore';
+import { ExploreUrlState, QueryOptions, QueryTransaction } from 'app/types/explore';
 import { config } from '../config';
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { DataSourceSrv } from '@grafana/runtime';
@@ -64,17 +66,17 @@ export interface GetExploreUrlArguments {
   datasourceSrv: DataSourceSrv;
   timeSrv: TimeSrv;
 }
-export async function getExploreUrl(args: GetExploreUrlArguments) {
+export async function getExploreUrl(args: GetExploreUrlArguments): Promise<string | undefined> {
   const { panel, panelTargets, panelDatasource, datasourceSrv, timeSrv } = args;
   let exploreDatasource = panelDatasource;
   let exploreTargets: DataQuery[] = panelTargets;
-  let url: string;
+  let url: string | undefined;
 
   // Mixed datasources need to choose only one datasource
-  if (panelDatasource.meta.id === 'mixed' && exploreTargets) {
+  if (panelDatasource.meta?.id === 'mixed' && exploreTargets) {
     // Find first explore datasource among targets
     for (const t of exploreTargets) {
-      const datasource = await datasourceSrv.get(t.datasource);
+      const datasource = await datasourceSrv.get(t.datasource || undefined);
       if (datasource) {
         exploreDatasource = datasource;
         exploreTargets = panelTargets.filter(t => t.datasource === datasource.name);
@@ -87,11 +89,12 @@ export async function getExploreUrl(args: GetExploreUrlArguments) {
     const range = timeSrv.timeRangeForUrl();
     let state: Partial<ExploreUrlState> = { range };
     if (exploreDatasource.interpolateVariablesInQueries) {
+      const scopedVars = panel.scopedVars || {};
       state = {
         ...state,
         datasource: exploreDatasource.name,
         context: 'explore',
-        queries: exploreDatasource.interpolateVariablesInQueries(exploreTargets),
+        queries: exploreDatasource.interpolateVariablesInQueries(exploreTargets, scopedVars),
       };
     } else {
       state = {
@@ -105,8 +108,7 @@ export async function getExploreUrl(args: GetExploreUrlArguments) {
     const exploreState = JSON.stringify({ ...state, originPanelId: panel.id });
     url = renderUrl('/explore', { left: exploreState });
   }
-  const finalUrl = config.appSubUrl + url;
-  return finalUrl;
+  return url;
 }
 
 export function buildQueryTransaction(
@@ -130,6 +132,7 @@ export function buildQueryTransaction(
   const panelId = `${key}`;
 
   const request: DataQueryRequest = {
+    app: CoreApp.Explore,
     dashboardId: 0,
     // TODO probably should be taken from preferences but does not seem to be used anyway.
     timezone: DefaultTimeZone,
@@ -180,7 +183,7 @@ enum ParseUiStateIndex {
   Strategy = 3,
 }
 
-export const safeParseJson = (text: string) => {
+export const safeParseJson = (text?: string): any | undefined => {
   if (!text) {
     return;
   }
@@ -362,7 +365,7 @@ export function clearHistory(datasourceId: string) {
 }
 
 export const getQueryKeys = (queries: DataQuery[], datasourceInstance: DataSourceApi): string[] => {
-  const queryKeys = queries.reduce((newQueryKeys, query, index) => {
+  const queryKeys = queries.reduce<string[]>((newQueryKeys, query, index) => {
     const primaryKey = datasourceInstance && datasourceInstance.name ? datasourceInstance.name : query.key;
     return newQueryKeys.concat(`${primaryKey}-${index}`);
   }, []);
@@ -378,7 +381,7 @@ export const getTimeRange = (timeZone: TimeZone, rawRange: RawTimeRange): TimeRa
   };
 };
 
-const parseRawTime = (value: any): TimeFragment => {
+const parseRawTime = (value: any): TimeFragment | null => {
   if (value === null) {
     return null;
   }
@@ -439,7 +442,7 @@ export const getValueWithRefId = (value?: any): any => {
   return undefined;
 };
 
-export const getFirstQueryErrorWithoutRefId = (errors?: DataQueryError[]) => {
+export const getFirstQueryErrorWithoutRefId = (errors?: DataQueryError[]): DataQueryError | undefined => {
   if (!errors) {
     return undefined;
   }
@@ -471,11 +474,11 @@ export const getRefIds = (value: any): string[] => {
 };
 
 export const sortInAscendingOrder = (a: LogRowModel, b: LogRowModel) => {
-  if (a.timestamp < b.timestamp) {
+  if (a.timeEpochMs < b.timeEpochMs) {
     return -1;
   }
 
-  if (a.timestamp > b.timestamp) {
+  if (a.timeEpochMs > b.timeEpochMs) {
     return 1;
   }
 
@@ -483,11 +486,11 @@ export const sortInAscendingOrder = (a: LogRowModel, b: LogRowModel) => {
 };
 
 const sortInDescendingOrder = (a: LogRowModel, b: LogRowModel) => {
-  if (a.timestamp > b.timestamp) {
+  if (a.timeEpochMs > b.timeEpochMs) {
     return -1;
   }
 
-  if (a.timestamp < b.timestamp) {
+  if (a.timeEpochMs < b.timeEpochMs) {
     return 1;
   }
 
@@ -497,6 +500,8 @@ const sortInDescendingOrder = (a: LogRowModel, b: LogRowModel) => {
 export enum SortOrder {
   Descending = 'Descending',
   Ascending = 'Ascending',
+  DatasourceAZ = 'Datasource A-Z',
+  DatasourceZA = 'Datasource Z-A',
 }
 
 export const refreshIntervalToSortOrder = (refreshInterval?: string) =>
@@ -525,10 +530,19 @@ export const stopQueryState = (querySubscription: Unsubscribable) => {
   }
 };
 
-export function getIntervals(range: TimeRange, lowLimit: string, resolution: number): IntervalValues {
+export function getIntervals(range: TimeRange, lowLimit: string, resolution?: number): IntervalValues {
   if (!resolution) {
     return { interval: '1s', intervalMs: 1000 };
   }
 
   return kbn.calculateInterval(range, resolution, lowLimit);
 }
+
+export function deduplicateLogRowsById(rows: LogRowModel[]) {
+  return _.uniqBy(rows, 'uid');
+}
+
+export const getFirstNonQueryRowSpecificError = (queryErrors?: DataQueryError[]): DataQueryError | undefined => {
+  const refId = getValueWithRefId(queryErrors);
+  return refId ? undefined : getFirstQueryErrorWithoutRefId(queryErrors);
+};

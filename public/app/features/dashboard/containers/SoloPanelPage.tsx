@@ -83,7 +83,7 @@ export class SoloPanelPage extends Component<Props, State> {
       return <div className="alert alert-error">Panel with id {urlPanelId} not found</div>;
     }
 
-    if (!panel) {
+    if (!panel || !dashboard) {
       return <div>Loading & initializing dashboard</div>;
     }
 
@@ -100,7 +100,7 @@ const mapStateToProps = (state: StoreState) => ({
   urlSlug: state.location.routeParams.slug,
   urlType: state.location.routeParams.type,
   urlPanelId: state.location.query.panelId,
-  dashboard: state.dashboard.model as DashboardModel,
+  dashboard: state.dashboard.getModel() as DashboardModel,
 });
 
 const mapDispatchToProps = {

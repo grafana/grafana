@@ -6,6 +6,10 @@ import classNames from 'classnames';
 // @ts-ignore
 import sizeMe from 'react-sizeme';
 
+// Components
+import { AddPanelWidget } from '../components/AddPanelWidget';
+import { DashboardRow } from '../components/DashboardRow';
+
 // Types
 import { GRID_CELL_HEIGHT, GRID_CELL_VMARGIN, GRID_COLUMN_COUNT } from 'app/core/constants';
 import { DashboardPanel } from './DashboardPanel';
@@ -93,6 +97,7 @@ export interface Props {
   isEditing: boolean;
   isFullscreen: boolean;
   scrollTop: number;
+  isNewEditorOpen?: boolean;
 }
 
 export class DashboardGrid extends PureComponent<Props> {
@@ -101,6 +106,7 @@ export class DashboardGrid extends PureComponent<Props> {
 
   componentDidMount() {
     const { dashboard } = this.props;
+
     dashboard.on(panelAdded, this.triggerForceUpdate);
     dashboard.on(panelRemoved, this.triggerForceUpdate);
     dashboard.on(CoreEvents.repeatsProcessed, this.triggerForceUpdate);
@@ -155,7 +161,7 @@ export class DashboardGrid extends PureComponent<Props> {
 
   onLayoutChange = (newLayout: ReactGridLayout.Layout[]) => {
     for (const newPos of newLayout) {
-      this.panelMap[newPos.i].updateGridPos(newPos);
+      this.panelMap[newPos.i!].updateGridPos(newPos);
     }
 
     this.props.dashboard.sortPanelsByGridPos();
@@ -172,7 +178,6 @@ export class DashboardGrid extends PureComponent<Props> {
     for (const panel of this.props.dashboard.panels) {
       panel.resizeDone();
     }
-    this.forceUpdate();
   };
 
   onViewModeChanged = () => {
@@ -180,7 +185,7 @@ export class DashboardGrid extends PureComponent<Props> {
   };
 
   updateGridPos = (item: ReactGridLayout.Layout, layout: ReactGridLayout.Layout[]) => {
-    this.panelMap[item.i].updateGridPos(item);
+    this.panelMap[item.i!].updateGridPos(item);
 
     // react-grid-layout has a bug (#670), and onLayoutChange() is only called when the component is mounted.
     // So it's required to call it explicitly when panel resized or moved to save layout changes.
@@ -188,12 +193,12 @@ export class DashboardGrid extends PureComponent<Props> {
   };
 
   onResize: ItemCallback = (layout, oldItem, newItem) => {
-    this.panelMap[newItem.i].updateGridPos(newItem);
+    this.panelMap[newItem.i!].updateGridPos(newItem);
   };
 
   onResizeStop: ItemCallback = (layout, oldItem, newItem) => {
     this.updateGridPos(newItem, layout);
-    this.panelMap[newItem.i].resizeDone();
+    this.panelMap[newItem.i!].resizeDone();
   };
 
   onDragStop: ItemCallback = (layout, oldItem, newItem) => {
@@ -240,31 +245,40 @@ export class DashboardGrid extends PureComponent<Props> {
 
   renderPanels() {
     const panelElements = [];
+
     for (const panel of this.props.dashboard.panels) {
       const panelClasses = classNames({ 'react-grid-item--fullscreen': panel.fullscreen });
       const id = panel.id.toString();
       panel.isInView = this.isInView(panel);
+
       panelElements.push(
-        <div
-          key={id}
-          className={panelClasses}
-          id={'panel-' + id}
-          ref={elem => {
-            this.panelRef[id] = elem;
-          }}
-        >
-          <DashboardPanel
-            panel={panel}
-            dashboard={this.props.dashboard}
-            isEditing={panel.isEditing}
-            isFullscreen={panel.fullscreen}
-            isInView={panel.isInView}
-          />
+        <div key={id} className={panelClasses} id={'panel-' + id} ref={elem => elem && (this.panelRef[id] = elem)}>
+          {this.renderPanel(panel)}
         </div>
       );
     }
 
     return panelElements;
+  }
+
+  renderPanel(panel: PanelModel) {
+    if (panel.type === 'row') {
+      return <DashboardRow panel={panel} dashboard={this.props.dashboard} />;
+    }
+
+    if (panel.type === 'add-panel') {
+      return <AddPanelWidget panel={panel} dashboard={this.props.dashboard} />;
+    }
+
+    return (
+      <DashboardPanel
+        panel={panel}
+        dashboard={this.props.dashboard}
+        isEditing={panel.isEditing}
+        isFullscreen={panel.fullscreen}
+        isInView={panel.isInView}
+      />
+    );
   }
 
   render() {

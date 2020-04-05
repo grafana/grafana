@@ -13,6 +13,12 @@ export interface CloudWatchQuery extends DataQuery {
   matchExact: boolean;
 }
 
+export interface AnnotationQuery extends CloudWatchQuery {
+  prefixMatching: boolean;
+  actionPrefix: string;
+  alarmNamePrefix: string;
+}
+
 export type SelectableStrings = Array<SelectableValue<string>>;
 
 export interface CloudWatchJsonData extends DataSourceJsonData {

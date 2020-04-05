@@ -1,6 +1,8 @@
 package dashboards
 
 import (
+	"github.com/grafana/grafana/pkg/components/gtime"
+	"github.com/grafana/grafana/pkg/setting"
 	"strings"
 	"time"
 
@@ -103,6 +105,10 @@ func (dr *dashboardServiceImpl) buildSaveDashboardCommand(dto *SaveDashboardDTO,
 		return nil, models.ErrDashboardUidToLong
 	}
 
+	if err := validateDashboardRefreshInterval(dash); err != nil {
+		return nil, err
+	}
+
 	if validateAlerts {
 		validateAlertsCmd := models.ValidateDashboardAlertsCommand{
 			OrgId:     dto.OrgId,
@@ -172,6 +178,33 @@ func (dr *dashboardServiceImpl) buildSaveDashboardCommand(dto *SaveDashboardDTO,
 	return cmd, nil
 }
 
+func validateDashboardRefreshInterval(dash *models.Dashboard) error {
+	if setting.MinRefreshInterval == "" {
+		return nil
+	}
+
+	refresh := dash.Data.Get("refresh").MustString("")
+	if refresh == "" {
+		// since no refresh is set it is a valid refresh rate
+		return nil
+	}
+
+	minRefreshInterval, err := gtime.ParseInterval(setting.MinRefreshInterval)
+	if err != nil {
+		return err
+	}
+	d, err := gtime.ParseInterval(refresh)
+	if err != nil {
+		return err
+	}
+
+	if d < minRefreshInterval {
+		return models.ErrDashboardRefreshIntervalTooShort
+	}
+
+	return nil
+}
+
 func (dr *dashboardServiceImpl) updateAlerting(cmd *models.SaveDashboardCommand, dto *SaveDashboardDTO) error {
 	alertCmd := models.UpdateDashboardAlertsCommand{
 		OrgId:     dto.OrgId,
@@ -183,6 +216,11 @@ func (dr *dashboardServiceImpl) updateAlerting(cmd *models.SaveDashboardCommand,
 }
 
 func (dr *dashboardServiceImpl) SaveProvisionedDashboard(dto *SaveDashboardDTO, provisioning *models.DashboardProvisioning) (*models.Dashboard, error) {
+	if err := validateDashboardRefreshInterval(dto.Dashboard); err != nil {
+		dr.log.Warn("Changing refresh interval for provisioned dashboard to minimum refresh interval", "dashboardUid", dto.Dashboard.Uid, "dashboardTitle", dto.Dashboard.Title, "minRefreshInterval", setting.MinRefreshInterval)
+		dto.Dashboard.Data.Set("refresh", setting.MinRefreshInterval)
+	}
+
 	dto.User = &models.SignedInUser{
 		UserId:  0,
 		OrgRole: models.ROLE_ADMIN,

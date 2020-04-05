@@ -66,15 +66,32 @@ const changelogTaskRunner: TaskRunner<ChangelogOptions> = useSpinner<ChangelogOp
       },
     });
 
-    const issues = res.data;
+    const mergedIssues = [];
+    for (const item of res.data) {
+      if (!item.pull_request) {
+        // it's an issue, not pull request
+        mergedIssues.push(item);
+        continue;
+      }
+      const isMerged = await client.get(item.pull_request.url + '/merge');
+      if (isMerged.status === 204) {
+        mergedIssues.push(item);
+      }
+    }
+    const issues = _.sortBy(mergedIssues, 'title');
+
     const toolkitIssues = issues.filter((item: any) =>
       item.labels.find((label: any) => label.name === 'area/grafana/toolkit')
+    );
+    const grafanaUiIssues = issues.filter((item: any) =>
+      item.labels.find((label: any) => label.name === 'area/grafana/ui')
     );
 
     let markdown = '';
 
     markdown += getPackageChangelog('Grafana', issues);
     markdown += getPackageChangelog('grafana-toolkit', toolkitIssues);
+    markdown += getPackageChangelog('grafana-ui', grafanaUiIssues);
 
     console.log(markdown);
   }

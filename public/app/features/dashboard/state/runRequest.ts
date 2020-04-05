@@ -3,7 +3,7 @@ import { Observable, of, timer, merge, from } from 'rxjs';
 import { flatten, map as lodashMap, isArray, isString } from 'lodash';
 import { map, catchError, takeUntil, mapTo, share, finalize, tap } from 'rxjs/operators';
 // Utils & Services
-import { getBackendSrv } from 'app/core/services/backend_srv';
+import { backendSrv } from 'app/core/services/backend_srv';
 // Types
 import {
   DataSourceApi,
@@ -18,7 +18,7 @@ import {
   DataFrame,
   guessFieldTypes,
 } from '@grafana/data';
-import { getAnalyticsProcessor } from './analyticsProcessor';
+import { emitDataRequestEvent } from './analyticsProcessor';
 import { ExpressionDatasourceID, expressionDatasource } from 'app/features/expressions/ExpressionDatasource';
 
 type MapOfResponsePackets = { [str: string]: DataQueryResponse };
@@ -120,7 +120,7 @@ export function runRequest(datasource: DataSourceApi, request: DataQueryRequest)
         error: processQueryError(err),
       })
     ),
-    tap(getAnalyticsProcessor(datasource)),
+    tap(emitDataRequestEvent(datasource)),
     // finalize is triggered when subscriber unsubscribes
     // This makes sure any still running network requests are cancelled
     finalize(cancelNetworkRequestsOnUnsubscribe(request)),
@@ -136,7 +136,7 @@ export function runRequest(datasource: DataSourceApi, request: DataQueryRequest)
 
 function cancelNetworkRequestsOnUnsubscribe(req: DataQueryRequest) {
   return () => {
-    getBackendSrv().resolveCancelerIfExists(req.requestId);
+    backendSrv.resolveCancelerIfExists(req.requestId);
   };
 }
 
@@ -216,8 +216,13 @@ export function preProcessPanelData(data: PanelData, lastResult: PanelData): Pan
   }
 
   // Make sure the data frames are properly formatted
+  const STARTTIME = performance.now();
+  const processedDataFrames = getProcessedDataFrames(series);
+  const STOPTIME = performance.now();
+
   return {
     ...data,
-    series: getProcessedDataFrames(series),
+    series: processedDataFrames,
+    timings: { dataProcessingTime: STOPTIME - STARTTIME },
   };
 }

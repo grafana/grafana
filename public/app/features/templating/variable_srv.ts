@@ -1,22 +1,22 @@
 // Libaries
-import angular, { IQService, ILocationService, auto, IPromise } from 'angular';
+import angular, { auto, ILocationService, IPromise, IQService } from 'angular';
 import _ from 'lodash';
-
 // Utils & Services
 import coreModule from 'app/core/core_module';
-import { variableTypes } from './variable';
+import { variableTypes } from './types';
 import { Graph } from 'app/core/utils/dag';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
-
 // Types
-import { TimeRange } from '@grafana/data';
+import { AppEvents, TimeRange } from '@grafana/data';
 import { CoreEvents } from 'app/types';
+import { UrlQueryMap } from '@grafana/runtime';
+import { appEvents, contextSrv } from 'app/core/core';
 
 export class VariableSrv {
   dashboard: DashboardModel;
-  variables: any[];
+  variables: any[] = [];
 
   /** @ngInject */
   constructor(
@@ -53,6 +53,24 @@ export class VariableSrv {
       )
       .then(() => {
         this.templateSrv.updateIndex();
+        this.templateSrv.setGlobalVariable('__dashboard', {
+          value: {
+            name: dashboard.title,
+            uid: dashboard.uid,
+            toString: function() {
+              return this.uid;
+            },
+          },
+        });
+        this.templateSrv.setGlobalVariable('__org', {
+          value: {
+            name: contextSrv.user.orgName,
+            id: contextSrv.user.id,
+            toString: function() {
+              return this.id;
+            },
+          },
+        });
       });
   }
 
@@ -70,9 +88,14 @@ export class VariableSrv {
         });
       });
 
-    return this.$q.all(promises).then(() => {
-      this.dashboard.startRefresh();
-    });
+    return this.$q
+      .all(promises)
+      .then(() => {
+        this.dashboard.startRefresh();
+      })
+      .catch(e => {
+        appEvents.emit(AppEvents.alertError, ['Template variable service failed', e.message]);
+      });
   }
 
   processVariable(variable: any, queryParams: any) {
@@ -181,7 +204,7 @@ export class VariableSrv {
     return selected;
   }
 
-  validateVariableSelectionState(variable: any) {
+  validateVariableSelectionState(variable: any, defaultValue?: string) {
     if (!variable.current) {
       variable.current = {};
     }
@@ -205,17 +228,33 @@ export class VariableSrv {
 
       return variable.setValue(selected);
     } else {
-      const currentOption: any = _.find(variable.options, {
+      let option: any = undefined;
+
+      // 1. find the current value
+      option = _.find(variable.options, {
         text: variable.current.text,
       });
-      if (currentOption) {
-        return variable.setValue(currentOption);
-      } else {
-        if (!variable.options.length) {
-          return Promise.resolve();
+      if (option) {
+        return variable.setValue(option);
+      }
+
+      // 2. find the default value
+      if (defaultValue) {
+        option = _.find(variable.options, {
+          text: defaultValue,
+        });
+        if (option) {
+          return variable.setValue(option);
         }
+      }
+
+      // 3. use the first value
+      if (variable.options) {
         return variable.setValue(variable.options[0]);
       }
+
+      // 4... give up
+      return Promise.resolve();
     }
   }
 
@@ -284,6 +323,30 @@ export class VariableSrv {
 
     this.selectOptionsForCurrentValue(variable);
     return this.variableUpdated(variable);
+  }
+
+  templateVarsChangedInUrl(vars: UrlQueryMap) {
+    const update: Array<Promise<any>> = [];
+    for (const v of this.variables) {
+      const key = `var-${v.name}`;
+      if (vars.hasOwnProperty(key)) {
+        if (this.isVariableUrlValueDifferentFromCurrent(v, vars[key])) {
+          update.push(v.setValueFromUrl(vars[key]));
+        }
+      }
+    }
+
+    if (update.length) {
+      Promise.all(update).then(() => {
+        this.dashboard.templateVariableValueUpdated();
+        this.dashboard.startRefresh();
+      });
+    }
+  }
+
+  isVariableUrlValueDifferentFromCurrent(variable: any, urlValue: any) {
+    // lodash _.isEqual handles array of value equality checks as well
+    return !_.isEqual(variable.current.value, urlValue);
   }
 
   updateUrlParamsWithCurrentVariables() {

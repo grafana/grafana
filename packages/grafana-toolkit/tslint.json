@@ -1,7 +1,0 @@
-{
-  "extends": "../../tslint.json",
-  "rules": {
-    "import-blacklist": [true, ["^@grafana/runtime.*"]],
-    "no-console": [true, "debug", "info", "time", "timeEnd"]
-  }
-}

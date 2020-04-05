@@ -19,7 +19,7 @@ func TestStackdriver(t *testing.T) {
 	Convey("Stackdriver", t, func() {
 		executor := &StackdriverExecutor{}
 
-		Convey("Parse queries from frontend and build Stackdriver API queries", func() {
+		Convey("Parse migrated queries from frontend and build Stackdriver API queries", func() {
 			fromStart := time.Date(2018, 3, 15, 13, 0, 0, 0, time.UTC).In(time.Local)
 			tsdbQuery := &tsdb.TsdbQuery{
 				TimeRange: &tsdb.TimeRange{
@@ -208,6 +208,99 @@ func TestStackdriver(t *testing.T) {
 
 		})
 
+		Convey("Parse queries from frontend and build Stackdriver API queries", func() {
+			fromStart := time.Date(2018, 3, 15, 13, 0, 0, 0, time.UTC).In(time.Local)
+			tsdbQuery := &tsdb.TsdbQuery{
+				TimeRange: &tsdb.TimeRange{
+					From: fmt.Sprintf("%v", fromStart.Unix()*1000),
+					To:   fmt.Sprintf("%v", fromStart.Add(34*time.Minute).Unix()*1000),
+				},
+				Queries: []*tsdb.Query{
+					{
+						Model: simplejson.NewFromAny(map[string]interface{}{
+							"queryType": metricQueryType,
+							"metricQuery": map[string]interface{}{
+								"metricType": "a/metric/type",
+								"view":       "FULL",
+								"aliasBy":    "testalias",
+								"type":       "timeSeriesQuery",
+								"groupBys":   []interface{}{"metric.label.group1", "metric.label.group2"},
+							},
+						}),
+						RefId: "A",
+					},
+				},
+			}
+
+			Convey("and query type is metrics", func() {
+				queries, err := executor.buildQueries(tsdbQuery)
+				So(err, ShouldBeNil)
+
+				So(len(queries), ShouldEqual, 1)
+				So(queries[0].RefID, ShouldEqual, "A")
+				So(queries[0].Target, ShouldEqual, "aggregation.alignmentPeriod=%2B60s&aggregation.crossSeriesReducer=REDUCE_NONE&aggregation.groupByFields=metric.label.group1&aggregation.groupByFields=metric.label.group2&aggregation.perSeriesAligner=ALIGN_MEAN&filter=metric.type%3D%22a%2Fmetric%2Ftype%22&interval.endTime=2018-03-15T13%3A34%3A00Z&interval.startTime=2018-03-15T13%3A00%3A00Z&view=FULL")
+				So(len(queries[0].Params), ShouldEqual, 8)
+				So(queries[0].Params["aggregation.groupByFields"][0], ShouldEqual, "metric.label.group1")
+				So(queries[0].Params["aggregation.groupByFields"][1], ShouldEqual, "metric.label.group2")
+				So(queries[0].Params["interval.startTime"][0], ShouldEqual, "2018-03-15T13:00:00Z")
+				So(queries[0].Params["interval.endTime"][0], ShouldEqual, "2018-03-15T13:34:00Z")
+				So(queries[0].Params["aggregation.perSeriesAligner"][0], ShouldEqual, "ALIGN_MEAN")
+				So(queries[0].Params["filter"][0], ShouldEqual, "metric.type=\"a/metric/type\"")
+				So(queries[0].Params["view"][0], ShouldEqual, "FULL")
+				So(queries[0].AliasBy, ShouldEqual, "testalias")
+				So(queries[0].GroupBys, ShouldResemble, []string{"metric.label.group1", "metric.label.group2"})
+			})
+
+			Convey("and query type is SLOs", func() {
+				tsdbQuery.Queries[0].Model = simplejson.NewFromAny(map[string]interface{}{
+					"queryType":   sloQueryType,
+					"metricQuery": map[string]interface{}{},
+					"sloQuery": map[string]interface{}{
+						"projectName":      "test-proj",
+						"alignmentPeriod":  "stackdriver-auto",
+						"perSeriesAligner": "ALIGN_NEXT_OLDER",
+						"aliasBy":          "",
+						"selectorName":     "select_slo_health",
+						"serviceId":        "test-service",
+						"sloId":            "test-slo",
+					},
+				})
+
+				queries, err := executor.buildQueries(tsdbQuery)
+				So(err, ShouldBeNil)
+
+				So(len(queries), ShouldEqual, 1)
+				So(queries[0].RefID, ShouldEqual, "A")
+				So(queries[0].Params["interval.startTime"][0], ShouldEqual, "2018-03-15T13:00:00Z")
+				So(queries[0].Params["interval.endTime"][0], ShouldEqual, "2018-03-15T13:34:00Z")
+				So(queries[0].Params["aggregation.alignmentPeriod"][0], ShouldEqual, `+60s`)
+				So(queries[0].AliasBy, ShouldEqual, "")
+				So(queries[0].Params["aggregation.perSeriesAligner"][0], ShouldEqual, "ALIGN_MEAN")
+				So(queries[0].Target, ShouldEqual, `aggregation.alignmentPeriod=%2B60s&aggregation.perSeriesAligner=ALIGN_MEAN&filter=select_slo_health%28%22projects%2Ftest-proj%2Fservices%2Ftest-service%2FserviceLevelObjectives%2Ftest-slo%22%29&interval.endTime=2018-03-15T13%3A34%3A00Z&interval.startTime=2018-03-15T13%3A00%3A00Z`)
+				So(len(queries[0].Params), ShouldEqual, 5)
+
+				Convey("and perSeriesAligner is inferred by SLO selector", func() {
+					tsdbQuery.Queries[0].Model = simplejson.NewFromAny(map[string]interface{}{
+						"queryType":   sloQueryType,
+						"metricQuery": map[string]interface{}{},
+						"sloQuery": map[string]interface{}{
+							"projectName":      "test-proj",
+							"alignmentPeriod":  "stackdriver-auto",
+							"perSeriesAligner": "ALIGN_NEXT_OLDER",
+							"aliasBy":          "",
+							"selectorName":     "select_slo_compliance",
+							"serviceId":        "test-service",
+							"sloId":            "test-slo",
+						},
+					})
+
+					queries, err := executor.buildQueries(tsdbQuery)
+					So(err, ShouldBeNil)
+					So(queries[0].Params["aggregation.perSeriesAligner"][0], ShouldEqual, "ALIGN_NEXT_OLDER")
+				})
+			})
+		})
+
 		Convey("Parse stackdriver response in the time series format", func() {
 			Convey("when data from query aggregated to one time series", func() {
 				data, err := loadTestFile("./test-data/1-series-response-agg-one-metric.json")
@@ -215,7 +308,7 @@ func TestStackdriver(t *testing.T) {
 				So(len(data.TimeSeries), ShouldEqual, 1)
 
 				res := &tsdb.QueryResult{Meta: simplejson.New(), RefId: "A"}
-				query := &StackdriverQuery{}
+				query := &stackdriverQuery{}
 				err = executor.parseResponse(res, data, query)
 				So(err, ShouldBeNil)
 
@@ -241,7 +334,7 @@ func TestStackdriver(t *testing.T) {
 				So(len(data.TimeSeries), ShouldEqual, 3)
 
 				res := &tsdb.QueryResult{Meta: simplejson.New(), RefId: "A"}
-				query := &StackdriverQuery{}
+				query := &stackdriverQuery{}
 				err = executor.parseResponse(res, data, query)
 				So(err, ShouldBeNil)
 
@@ -260,22 +353,20 @@ func TestStackdriver(t *testing.T) {
 				})
 
 				Convey("Should add meta for labels to the response", func() {
-					metricLabels := res.Meta.Get("metricLabels").Interface().(map[string][]string)
-					So(metricLabels, ShouldNotBeNil)
-					So(len(metricLabels["instance_name"]), ShouldEqual, 3)
-					So(metricLabels["instance_name"][0], ShouldEqual, "collector-asia-east-1")
-					So(metricLabels["instance_name"][1], ShouldEqual, "collector-europe-west-1")
-					So(metricLabels["instance_name"][2], ShouldEqual, "collector-us-east-1")
+					labels := res.Meta.Get("labels").Interface().(map[string][]string)
+					So(labels, ShouldNotBeNil)
+					So(len(labels["metric.label.instance_name"]), ShouldEqual, 3)
+					So(labels["metric.label.instance_name"], ShouldContain, "collector-asia-east-1")
+					So(labels["metric.label.instance_name"], ShouldContain, "collector-europe-west-1")
+					So(labels["metric.label.instance_name"], ShouldContain, "collector-us-east-1")
 
-					resourceLabels := res.Meta.Get("resourceLabels").Interface().(map[string][]string)
-					So(resourceLabels, ShouldNotBeNil)
-					So(len(resourceLabels["zone"]), ShouldEqual, 3)
-					So(resourceLabels["zone"][0], ShouldEqual, "asia-east1-a")
-					So(resourceLabels["zone"][1], ShouldEqual, "europe-west1-b")
-					So(resourceLabels["zone"][2], ShouldEqual, "us-east1-b")
+					So(len(labels["resource.label.zone"]), ShouldEqual, 3)
+					So(labels["resource.label.zone"], ShouldContain, "asia-east1-a")
+					So(labels["resource.label.zone"], ShouldContain, "europe-west1-b")
+					So(labels["resource.label.zone"], ShouldContain, "us-east1-b")
 
-					So(len(resourceLabels["project_id"]), ShouldEqual, 1)
-					So(resourceLabels["project_id"][0], ShouldEqual, "grafana-prod")
+					So(len(labels["resource.label.project_id"]), ShouldEqual, 1)
+					So(labels["resource.label.project_id"][0], ShouldEqual, "grafana-prod")
 				})
 			})
 
@@ -285,7 +376,7 @@ func TestStackdriver(t *testing.T) {
 				So(len(data.TimeSeries), ShouldEqual, 3)
 
 				res := &tsdb.QueryResult{Meta: simplejson.New(), RefId: "A"}
-				query := &StackdriverQuery{GroupBys: []string{"metric.label.instance_name", "resource.label.zone"}}
+				query := &stackdriverQuery{GroupBys: []string{"metric.label.instance_name", "resource.label.zone"}}
 				err = executor.parseResponse(res, data, query)
 				So(err, ShouldBeNil)
 
@@ -306,7 +397,7 @@ func TestStackdriver(t *testing.T) {
 
 				Convey("and the alias pattern is for metric type, a metric label and a resource label", func() {
 
-					query := &StackdriverQuery{AliasBy: "{{metric.type}} - {{metric.label.instance_name}} - {{resource.label.zone}}", GroupBys: []string{"metric.label.instance_name", "resource.label.zone"}}
+					query := &stackdriverQuery{AliasBy: "{{metric.type}} - {{metric.label.instance_name}} - {{resource.label.zone}}", GroupBys: []string{"metric.label.instance_name", "resource.label.zone"}}
 					err = executor.parseResponse(res, data, query)
 					So(err, ShouldBeNil)
 
@@ -320,7 +411,7 @@ func TestStackdriver(t *testing.T) {
 
 				Convey("and the alias pattern is for metric name", func() {
 
-					query := &StackdriverQuery{AliasBy: "metric {{metric.name}} service {{metric.service}}", GroupBys: []string{"metric.label.instance_name", "resource.label.zone"}}
+					query := &stackdriverQuery{AliasBy: "metric {{metric.name}} service {{metric.service}}", GroupBys: []string{"metric.label.instance_name", "resource.label.zone"}}
 					err = executor.parseResponse(res, data, query)
 					So(err, ShouldBeNil)
 
@@ -339,7 +430,7 @@ func TestStackdriver(t *testing.T) {
 				So(len(data.TimeSeries), ShouldEqual, 1)
 
 				res := &tsdb.QueryResult{Meta: simplejson.New(), RefId: "A"}
-				query := &StackdriverQuery{AliasBy: "{{bucket}}"}
+				query := &stackdriverQuery{AliasBy: "{{bucket}}"}
 				err = executor.parseResponse(res, data, query)
 				So(err, ShouldBeNil)
 
@@ -386,7 +477,7 @@ func TestStackdriver(t *testing.T) {
 				So(len(data.TimeSeries), ShouldEqual, 1)
 
 				res := &tsdb.QueryResult{Meta: simplejson.New(), RefId: "A"}
-				query := &StackdriverQuery{AliasBy: "{{bucket}}"}
+				query := &stackdriverQuery{AliasBy: "{{bucket}}"}
 				err = executor.parseResponse(res, data, query)
 				So(err, ShouldBeNil)
 
@@ -417,6 +508,111 @@ func TestStackdriver(t *testing.T) {
 					So(res.Series[8].Points[1][0].Float64, ShouldEqual, 375)
 					So(res.Series[9].Points[1][0].Float64, ShouldEqual, 213)
 					So(res.Series[10].Points[1][0].Float64, ShouldEqual, 56)
+				})
+			})
+
+			Convey("when data from query returns metadata system labels", func() {
+				data, err := loadTestFile("./test-data/5-series-response-meta-data.json")
+				So(err, ShouldBeNil)
+				So(len(data.TimeSeries), ShouldEqual, 3)
+
+				res := &tsdb.QueryResult{Meta: simplejson.New(), RefId: "A"}
+				query := &stackdriverQuery{AliasBy: "{{bucket}}"}
+				err = executor.parseResponse(res, data, query)
+				labels := res.Meta.Get("labels").Interface().(map[string][]string)
+				So(err, ShouldBeNil)
+
+				So(len(res.Series), ShouldEqual, 3)
+
+				Convey("and systemlabel contains key with array of string", func() {
+					So(len(labels["metadata.system_labels.test"]), ShouldEqual, 5)
+					So(labels["metadata.system_labels.test"], ShouldContain, "value1")
+					So(labels["metadata.system_labels.test"], ShouldContain, "value2")
+					So(labels["metadata.system_labels.test"], ShouldContain, "value3")
+					So(labels["metadata.system_labels.test"], ShouldContain, "value4")
+					So(labels["metadata.system_labels.test"], ShouldContain, "value5")
+				})
+
+				Convey("and systemlabel contains key with primitive strings", func() {
+					So(len(labels["metadata.system_labels.region"]), ShouldEqual, 2)
+					So(labels["metadata.system_labels.region"], ShouldContain, "us-central1")
+					So(labels["metadata.system_labels.region"], ShouldContain, "us-west1")
+				})
+
+				Convey("and userLabel contains key with primitive strings", func() {
+					So(len(labels["metadata.user_labels.region"]), ShouldEqual, 2)
+					So(labels["metadata.user_labels.region"], ShouldContain, "region1")
+					So(labels["metadata.user_labels.region"], ShouldContain, "region3")
+
+					So(len(labels["metadata.user_labels.name"]), ShouldEqual, 2)
+					So(labels["metadata.user_labels.name"], ShouldContain, "name1")
+					So(labels["metadata.user_labels.name"], ShouldContain, "name3")
+				})
+			})
+			Convey("when data from query returns metadata system labels and alias by is defined", func() {
+				data, err := loadTestFile("./test-data/5-series-response-meta-data.json")
+				So(err, ShouldBeNil)
+				So(len(data.TimeSeries), ShouldEqual, 3)
+
+				Convey("and systemlabel contains key with array of string", func() {
+					res := &tsdb.QueryResult{Meta: simplejson.New(), RefId: "A"}
+					query := &stackdriverQuery{AliasBy: "{{metadata.system_labels.test}}"}
+					err = executor.parseResponse(res, data, query)
+					So(err, ShouldBeNil)
+					So(len(res.Series), ShouldEqual, 3)
+					fmt.Println(res.Series[0].Name)
+					So(res.Series[0].Name, ShouldEqual, "value1, value2")
+					So(res.Series[1].Name, ShouldEqual, "value1, value2, value3")
+					So(res.Series[2].Name, ShouldEqual, "value1, value2, value4, value5")
+				})
+
+				Convey("and systemlabel contains key with array of string2", func() {
+					res := &tsdb.QueryResult{Meta: simplejson.New(), RefId: "A"}
+					query := &stackdriverQuery{AliasBy: "{{metadata.system_labels.test2}}"}
+					err = executor.parseResponse(res, data, query)
+					So(err, ShouldBeNil)
+					So(len(res.Series), ShouldEqual, 3)
+					fmt.Println(res.Series[0].Name)
+					So(res.Series[2].Name, ShouldEqual, "testvalue")
+				})
+			})
+
+			Convey("when data from query returns slo and alias by is defined", func() {
+				data, err := loadTestFile("./test-data/6-series-response-slo.json")
+				So(err, ShouldBeNil)
+				So(len(data.TimeSeries), ShouldEqual, 1)
+
+				Convey("and alias by is expanded", func() {
+					res := &tsdb.QueryResult{Meta: simplejson.New(), RefId: "A"}
+					query := &stackdriverQuery{
+						ProjectName: "test-proj",
+						Selector:    "select_slo_compliance",
+						Service:     "test-service",
+						Slo:         "test-slo",
+						AliasBy:     "{{project}} - {{service}} - {{slo}} - {{selector}}",
+					}
+					err = executor.parseResponse(res, data, query)
+					So(err, ShouldBeNil)
+					So(res.Series[0].Name, ShouldEqual, "test-proj - test-service - test-slo - select_slo_compliance")
+				})
+			})
+
+			Convey("when data from query returns slo and alias by is not defined", func() {
+				data, err := loadTestFile("./test-data/6-series-response-slo.json")
+				So(err, ShouldBeNil)
+				So(len(data.TimeSeries), ShouldEqual, 1)
+
+				Convey("and alias by is expanded", func() {
+					res := &tsdb.QueryResult{Meta: simplejson.New(), RefId: "A"}
+					query := &stackdriverQuery{
+						ProjectName: "test-proj",
+						Selector:    "select_slo_compliance",
+						Service:     "test-service",
+						Slo:         "test-slo",
+					}
+					err = executor.parseResponse(res, data, query)
+					So(err, ShouldBeNil)
+					So(res.Series[0].Name, ShouldEqual, "select_slo_compliance(\"projects/test-proj/services/test-service/serviceLevelObjectives/test-slo\")")
 				})
 			})
 		})
@@ -486,20 +682,20 @@ func TestStackdriver(t *testing.T) {
 		Convey("when building filter string", func() {
 			Convey("and theres no regex operator", func() {
 				Convey("and there are wildcards in a filter value", func() {
-					filterParts := []interface{}{"zone", "=", "*-central1*"}
+					filterParts := []string{"zone", "=", "*-central1*"}
 					value := buildFilterString("somemetrictype", filterParts)
 					So(value, ShouldEqual, `metric.type="somemetrictype" zone=has_substring("-central1")`)
 				})
 
 				Convey("and there are no wildcards in any filter value", func() {
-					filterParts := []interface{}{"zone", "!=", "us-central1-a"}
+					filterParts := []string{"zone", "!=", "us-central1-a"}
 					value := buildFilterString("somemetrictype", filterParts)
 					So(value, ShouldEqual, `metric.type="somemetrictype" zone!="us-central1-a"`)
 				})
 			})
 
 			Convey("and there is a regex operator", func() {
-				filterParts := []interface{}{"zone", "=~", "us-central1-a~"}
+				filterParts := []string{"zone", "=~", "us-central1-a~"}
 				value := buildFilterString("somemetrictype", filterParts)
 				Convey("it should remove the ~ character from the operator that belongs to the value", func() {
 					So(value, ShouldNotContainSubstring, `=~`)
@@ -514,8 +710,8 @@ func TestStackdriver(t *testing.T) {
 	})
 }
 
-func loadTestFile(path string) (StackdriverResponse, error) {
-	var data StackdriverResponse
+func loadTestFile(path string) (stackdriverResponse, error) {
+	var data stackdriverResponse
 
 	jsonBody, err := ioutil.ReadFile(path)
 	if err != nil {

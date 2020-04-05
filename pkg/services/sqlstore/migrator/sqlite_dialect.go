@@ -3,8 +3,8 @@ package migrator
 import (
 	"fmt"
 
-	"github.com/go-xorm/xorm"
-	sqlite3 "github.com/mattn/go-sqlite3"
+	"github.com/mattn/go-sqlite3"
+	"xorm.io/xorm"
 )
 
 type Sqlite3 struct {

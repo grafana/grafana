@@ -227,6 +227,7 @@ type UserProfileDTO struct {
 	AuthLabels     []string  `json:"authLabels"`
 	UpdatedAt      time.Time `json:"updatedAt"`
 	CreatedAt      time.Time `json:"createdAt"`
+	AvatarUrl      string    `json:"avatarUrl"`
 }
 
 type UserSearchHitDTO struct {

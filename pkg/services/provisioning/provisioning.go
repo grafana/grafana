@@ -15,18 +15,17 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-type DashboardProvisioner interface {
-	Provision() error
-	PollChanges(ctx context.Context)
-	GetProvisionerResolvedPath(name string) string
+type ProvisioningService interface {
+	ProvisionDatasources() error
+	ProvisionNotifications() error
+	ProvisionDashboards() error
+	GetDashboardProvisionerResolvedPath(name string) string
 	GetAllowUiUpdatesFromConfig(name string) bool
 }
 
-type DashboardProvisionerFactory func(string) (DashboardProvisioner, error)
-
 func init() {
 	registry.RegisterService(NewProvisioningServiceImpl(
-		func(path string) (DashboardProvisioner, error) {
+		func(path string) (dashboards.DashboardProvisioner, error) {
 			return dashboards.NewDashboardProvisionerImpl(path)
 		},
 		notifiers.Provision,
@@ -35,7 +34,7 @@ func init() {
 }
 
 func NewProvisioningServiceImpl(
-	newDashboardProvisioner DashboardProvisionerFactory,
+	newDashboardProvisioner dashboards.DashboardProvisionerFactory,
 	provisionNotifiers func(string) error,
 	provisionDatasources func(string) error,
 ) *provisioningServiceImpl {
@@ -51,8 +50,8 @@ type provisioningServiceImpl struct {
 	Cfg                     *setting.Cfg `inject:""`
 	log                     log.Logger
 	pollingCtxCancel        context.CancelFunc
-	newDashboardProvisioner DashboardProvisionerFactory
-	dashboardProvisioner    DashboardProvisioner
+	newDashboardProvisioner dashboards.DashboardProvisionerFactory
+	dashboardProvisioner    dashboards.DashboardProvisioner
 	provisionNotifiers      func(string) error
 	provisionDatasources    func(string) error
 	mutex                   sync.Mutex
@@ -69,15 +68,15 @@ func (ps *provisioningServiceImpl) Init() error {
 		return err
 	}
 
-	err = ps.ProvisionDashboards()
-	if err != nil {
-		return err
-	}
-
 	return nil
 }
 
 func (ps *provisioningServiceImpl) Run(ctx context.Context) error {
+	err := ps.ProvisionDashboards()
+	if err != nil {
+		ps.log.Error("Failed to provision dashboard", "error", err)
+	}
+
 	for {
 
 		// Wait for unlock. This is tied to new dashboardProvisioner to be instantiated before we start polling.

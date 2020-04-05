@@ -1,72 +1,92 @@
-import { Action, ActionTypes } from './actions';
-import { initialTeamsState, initialTeamState, teamReducer, teamsReducer } from './reducers';
-import { getMockTeam, getMockTeamMember } from '../__mocks__/teamMocks';
+import {
+  initialTeamsState,
+  initialTeamState,
+  setSearchMemberQuery,
+  setSearchQuery,
+  teamGroupsLoaded,
+  teamLoaded,
+  teamMembersLoaded,
+  teamReducer,
+  teamsLoaded,
+  teamsReducer,
+} from './reducers';
+import { getMockTeam, getMockTeamGroups, getMockTeamMember } from '../__mocks__/teamMocks';
+import { reducerTester } from '../../../../test/core/redux/reducerTester';
+import { TeamsState, TeamState } from '../../../types';
 
 describe('teams reducer', () => {
-  it('should set teams', () => {
-    const payload = [getMockTeam()];
-
-    const action: Action = {
-      type: ActionTypes.LoadTeams,
-      payload,
-    };
-
-    const result = teamsReducer(initialTeamsState, action);
-
-    expect(result.teams).toEqual(payload);
+  describe('when teamsLoaded is dispatched', () => {
+    it('then state should be correct', () => {
+      reducerTester<TeamsState>()
+        .givenReducer(teamsReducer, { ...initialTeamsState })
+        .whenActionIsDispatched(teamsLoaded([getMockTeam()]))
+        .thenStateShouldEqual({
+          ...initialTeamsState,
+          hasFetched: true,
+          teams: [getMockTeam()],
+        });
+    });
   });
 
-  it('should set search query', () => {
-    const payload = 'test';
-
-    const action: Action = {
-      type: ActionTypes.SetSearchQuery,
-      payload,
-    };
-
-    const result = teamsReducer(initialTeamsState, action);
-
-    expect(result.searchQuery).toEqual('test');
+  describe('when setSearchQueryAction is dispatched', () => {
+    it('then state should be correct', () => {
+      reducerTester<TeamsState>()
+        .givenReducer(teamsReducer, { ...initialTeamsState })
+        .whenActionIsDispatched(setSearchQuery('test'))
+        .thenStateShouldEqual({
+          ...initialTeamsState,
+          searchQuery: 'test',
+        });
+    });
   });
 });
 
 describe('team reducer', () => {
-  it('should set team', () => {
-    const payload = getMockTeam();
-
-    const action: Action = {
-      type: ActionTypes.LoadTeam,
-      payload,
-    };
-
-    const result = teamReducer(initialTeamState, action);
-
-    expect(result.team).toEqual(payload);
+  describe('when loadTeamsAction is dispatched', () => {
+    it('then state should be correct', () => {
+      reducerTester<TeamState>()
+        .givenReducer(teamReducer, { ...initialTeamState })
+        .whenActionIsDispatched(teamLoaded(getMockTeam()))
+        .thenStateShouldEqual({
+          ...initialTeamState,
+          team: getMockTeam(),
+        });
+    });
   });
 
-  it('should set team members', () => {
-    const mockTeamMember = getMockTeamMember();
-
-    const action: Action = {
-      type: ActionTypes.LoadTeamMembers,
-      payload: [mockTeamMember],
-    };
-
-    const result = teamReducer(initialTeamState, action);
-
-    expect(result.members).toEqual([mockTeamMember]);
+  describe('when loadTeamMembersAction is dispatched', () => {
+    it('then state should be correct', () => {
+      reducerTester<TeamState>()
+        .givenReducer(teamReducer, { ...initialTeamState })
+        .whenActionIsDispatched(teamMembersLoaded([getMockTeamMember()]))
+        .thenStateShouldEqual({
+          ...initialTeamState,
+          members: [getMockTeamMember()],
+        });
+    });
   });
 
-  it('should set member search query', () => {
-    const payload = 'member';
+  describe('when setSearchMemberQueryAction is dispatched', () => {
+    it('then state should be correct', () => {
+      reducerTester<TeamState>()
+        .givenReducer(teamReducer, { ...initialTeamState })
+        .whenActionIsDispatched(setSearchMemberQuery('member'))
+        .thenStateShouldEqual({
+          ...initialTeamState,
+          searchMemberQuery: 'member',
+        });
+    });
+  });
 
-    const action: Action = {
-      type: ActionTypes.SetSearchMemberQuery,
-      payload,
-    };
-
-    const result = teamReducer(initialTeamState, action);
-
-    expect(result.searchMemberQuery).toEqual('member');
+  describe('when loadTeamGroupsAction is dispatched', () => {
+    it('then state should be correct', () => {
+      reducerTester<TeamState>()
+        .givenReducer(teamReducer, { ...initialTeamState })
+        .whenActionIsDispatched(teamGroupsLoaded(getMockTeamGroups(1)))
+        .thenStateShouldEqual({
+          ...initialTeamState,
+          groups: getMockTeamGroups(1),
+        });
+    });
   });
 });

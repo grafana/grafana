@@ -3,7 +3,7 @@ title = "AWS CloudWatch"
 description = "Guide for using CloudWatch in Grafana"
 keywords = ["grafana", "cloudwatch", "guide"]
 type = "docs"
-aliases = ["/datasources/cloudwatch"]
+aliases = ["/docs/grafana/latest/datasources/cloudwatch"]
 [menu.docs]
 name = "AWS Cloudwatch"
 identifier = "cloudwatch"
@@ -43,7 +43,7 @@ server is running on AWS you can use IAM Roles and authentication will be handle
 
 See the AWS documentation on [IAM Roles](http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/iam-roles-for-amazon-ec2.html)
 
-> NOTE: AWS Role Switching as described [here](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_use_switch-role-cli.html) it not supported at the moment.
+> NOTE: AWS Role Switching as described [here](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_use_switch-role-cli.html) is not supported at the moment.
 
 ## IAM Policies
 
@@ -146,6 +146,12 @@ As an example, if you want to apply arithmetic operations on a metric, you can d
 
 Please note that in the case you use the expression field to reference another query, like `queryA * 2`, it will not be possible to create an alert rule based on that query.
 
+### Period
+
+A period is the length of time associated with a specific Amazon CloudWatch statistic. Periods are defined in numbers of seconds, and valid values for period are 1, 5, 10, 30, or any multiple of 60.
+
+If the period field is left blank or set to `auto`, then it calculates automatically based on the time range. The formula used is `time range in seconds / 2000`, and then it snaps to the next higher value in an array of predefined periods `[60, 300, 900, 3600, 21600, 86400]`. By clicking `Show Query Preview` in the query editor, you can see what period Grafana used.
+
 ### Deep linking from Grafana panels to the CloudWatch console
 
 > Only available in Grafana v6.5+.
@@ -174,7 +180,7 @@ To import the pre-configured dashboards, go to the configuration page of your Cl
 
 ## Templated queries
 
-Instead of hard-coding things like server, application and sensor name in you metric queries you can use variables in their place. Variables are shown as dropdown select boxes at the top of the dashboard. These dropdowns makes it easy to change the data being displayed in your dashboard.
+Instead of hard-coding things like server, application and sensor name in you metric queries you can use variables in their place. Variables are shown as dropdown select boxes at the top of the dashboard. These dropdowns make it easy to change the data being displayed in your dashboard.
 
 See the [Templating]({{< relref "../../reference/templating.md" >}}) documentation for an introduction to the templating feature and the different types of template variables.
 

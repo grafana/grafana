@@ -1,13 +1,14 @@
 import React from 'react';
-import { Input } from '@grafana/ui';
+import { LegacyForms } from '@grafana/ui';
+const { Input } = LegacyForms;
 
 import { TemplateSrv } from 'app/features/templating/template_srv';
+import { SelectableValue } from '@grafana/data';
 
 import StackdriverDatasource from '../datasource';
-import { Metrics } from './Metrics';
-import { Filter } from './Filter';
+import { Metrics, LabelFilter, AnnotationsHelp, Project } from './';
+import { toOption } from '../functions';
 import { AnnotationTarget, MetricDescriptor } from '../types';
-import { AnnotationsHelp } from './AnnotationsHelp';
 
 export interface Props {
   onQueryChange: (target: AnnotationTarget) => void;
@@ -17,11 +18,15 @@ export interface Props {
 }
 
 interface State extends AnnotationTarget {
+  variableOptionGroup: SelectableValue<string>;
+  variableOptions: Array<SelectableValue<string>>;
+  labels: any;
   [key: string]: any;
 }
 
 const DefaultTarget: State = {
-  defaultProject: 'loading project...',
+  projectName: '',
+  projects: [],
   metricType: '',
   filters: [],
   metricKind: '',
@@ -29,19 +34,40 @@ const DefaultTarget: State = {
   refId: 'annotationQuery',
   title: '',
   text: '',
+  labels: {},
+  variableOptionGroup: {},
+  variableOptions: [],
 };
 
 export class AnnotationQueryEditor extends React.Component<Props, State> {
   state: State = DefaultTarget;
 
-  componentDidMount() {
+  async UNSAFE_componentWillMount() {
+    // Unfortunately, migrations like this need to go componentWillMount. As soon as there's
+    // migration hook for this module.ts, we can do the migrations there instead.
+    const { target, datasource } = this.props;
+    if (!target.projectName) {
+      target.projectName = datasource.getDefaultProject();
+    }
+
+    const variableOptionGroup = {
+      label: 'Template Variables',
+      options: datasource.variables.map(toOption),
+    };
+
+    const projects = await datasource.getProjects();
     this.setState({
-      ...this.props.target,
+      variableOptionGroup,
+      variableOptions: variableOptionGroup.options,
+      ...target,
+      projects,
     });
+
+    datasource.getLabels(target.metricType, target.projectName, target.refId).then(labels => this.setState({ labels }));
   }
 
   onMetricTypeChange = ({ valueType, metricKind, type, unit }: MetricDescriptor) => {
-    const { onQueryChange } = this.props;
+    const { onQueryChange, datasource } = this.props;
     this.setState(
       {
         metricType: type,
@@ -53,6 +79,7 @@ export class AnnotationQueryEditor extends React.Component<Props, State> {
         onQueryChange(this.state);
       }
     );
+    datasource.getLabels(type, this.state.refId, this.state.projectName).then(labels => this.setState({ labels }));
   };
 
   onChange(prop: string, value: string | string[]) {
@@ -62,28 +89,32 @@ export class AnnotationQueryEditor extends React.Component<Props, State> {
   }
 
   render() {
-    const { defaultProject, metricType, filters, refId, title, text } = this.state;
-    const { datasource, templateSrv } = this.props;
+    const { metricType, projectName, filters, title, text, variableOptionGroup, labels, variableOptions } = this.state;
+    const { datasource } = this.props;
 
     return (
       <>
-        <Metrics
-          defaultProject={defaultProject}
-          metricType={metricType}
-          templateSrv={templateSrv}
+        <Project
+          templateVariableOptions={variableOptions}
           datasource={datasource}
-          onChange={this.onMetricTypeChange}
+          projectName={projectName || datasource.getDefaultProject()}
+          onChange={value => this.onChange('projectName', value)}
+        />
+        <Metrics
+          projectName={projectName}
+          metricType={metricType}
+          templateSrv={datasource.templateSrv}
+          datasource={datasource}
+          templateVariableOptions={variableOptions}
+          onChange={metric => this.onMetricTypeChange(metric)}
         >
           {metric => (
             <>
-              <Filter
-                filtersChanged={value => this.onChange('filters', value)}
+              <LabelFilter
+                labels={labels}
                 filters={filters}
-                refId={refId}
-                hideGroupBys={true}
-                templateSrv={templateSrv}
-                datasource={datasource}
-                metricType={metric ? metric.type : ''}
+                onChange={value => this.onChange('filters', value)}
+                variableOptionGroup={variableOptionGroup}
               />
             </>
           )}

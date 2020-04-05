@@ -28,7 +28,7 @@ import {
 } from '@grafana/data';
 import { getThemeColor } from 'app/core/utils/colors';
 import { hasAnsiCodes } from 'app/core/utils/text';
-import { sortInAscendingOrder } from 'app/core/utils/explore';
+import { sortInAscendingOrder, deduplicateLogRowsById } from 'app/core/utils/explore';
 import { getGraphSeriesModel } from 'app/plugins/panel/graph2/getGraphSeriesModel';
 
 export const LogLevelColor = {
@@ -150,9 +150,8 @@ export function makeSeriesForLogs(rows: LogRowModel[], intervalMs: number, timeZ
 
     const timeField = data.fields[1];
     timeField.display = getDisplayProcessor({
-      config: timeField.config,
-      type: timeField.type,
-      isUtc: timeZone === 'utc',
+      field: timeField,
+      timeZone,
     });
 
     const valueField = data.fields[0];
@@ -313,7 +312,7 @@ export function logSeriesToLogsModel(logSeries: DataFrame[]): LogsModel | undefi
       const searchWords = series.meta && series.meta.searchWords ? series.meta.searchWords : [];
 
       let logLevel = LogLevel.unknown;
-      if (logLevelField) {
+      if (logLevelField && logLevelField.values.get(j)) {
         logLevel = getLogLevelFromKey(logLevelField.values.get(j));
       } else if (seriesLogLevel) {
         logLevel = seriesLogLevel;
@@ -329,18 +328,19 @@ export function logSeriesToLogsModel(logSeries: DataFrame[]): LogsModel | undefi
         timeFromNow: time.fromNow(),
         timeEpochMs: time.valueOf(),
         timeLocal: time.format(logTimeFormat),
-        timeUtc: toUtc(ts).format(logTimeFormat),
+        timeUtc: toUtc(time.valueOf()).format(logTimeFormat),
         uniqueLabels,
         hasAnsi,
         searchWords,
         entry: hasAnsi ? ansicolor.strip(message) : message,
         raw: message,
         labels: stringField.labels,
-        timestamp: ts,
         uid: idField ? idField.values.get(j) : j.toString(),
       });
     }
   }
+
+  const deduplicatedLogRows = deduplicateLogRowsById(rows);
 
   // Meta data to display in status
   const meta: LogsMetaItem[] = [];
@@ -353,11 +353,17 @@ export function logSeriesToLogsModel(logSeries: DataFrame[]): LogsModel | undefi
   }
 
   const limits = logSeries.filter(series => series.meta && series.meta.limit);
+  const limitValue = Object.values(
+    limits.reduce((acc: any, elem: any) => {
+      acc[elem.refId] = elem.meta.limit;
+      return acc;
+    }, {})
+  ).reduce((acc: number, elem: any) => (acc += elem), 0);
 
   if (limits.length > 0) {
     meta.push({
       label: 'Limit',
-      value: `${limits[0].meta.limit} (${rows.length} returned)`,
+      value: `${limitValue} (${deduplicatedLogRows.length} returned)`,
       kind: LogsMetaKind.String,
     });
   }
@@ -365,7 +371,7 @@ export function logSeriesToLogsModel(logSeries: DataFrame[]): LogsModel | undefi
   return {
     hasUniqueLabels,
     meta,
-    rows,
+    rows: deduplicatedLogRows,
   };
 }
 

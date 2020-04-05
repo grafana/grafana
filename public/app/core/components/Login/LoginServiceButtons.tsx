@@ -15,6 +15,10 @@ const loginServices: () => LoginServices = () => {
       enabled: oauthEnabled && config.oauth.google,
       name: 'Google',
     },
+    azuread: {
+      enabled: config.oauth.azuread,
+      name: 'Microsoft',
+    },
     github: {
       enabled: oauthEnabled && config.oauth.github,
       name: 'GitHub',
@@ -28,6 +32,10 @@ const loginServices: () => LoginServices = () => {
       name: 'Grafana.com',
       hrefName: 'grafana_com',
       icon: 'grafana_com',
+    },
+    okta: {
+      enabled: config.oauth.okta,
+      name: 'Okta',
     },
     oauth: {
       enabled: oauthEnabled && config.oauth.generic_oauth,

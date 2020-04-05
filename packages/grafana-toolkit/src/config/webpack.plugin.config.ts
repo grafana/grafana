@@ -82,6 +82,7 @@ const getEntries = async () => {
 };
 
 const getCommonPlugins = (options: WebpackConfigurationOptions) => {
+  const hasREADME = fs.existsSync(path.resolve(process.cwd(), 'src', 'README.md'));
   const packageJson = require(path.resolve(process.cwd(), 'package.json'));
   return [
     new MiniCssExtractPlugin({
@@ -91,8 +92,9 @@ const getCommonPlugins = (options: WebpackConfigurationOptions) => {
     new webpack.optimize.OccurrenceOrderPlugin(true),
     new CopyWebpackPlugin(
       [
+        // If src/README.md exists use it; otherwise the root README
+        { from: hasREADME ? 'README.md' : '../README.md', to: '.', force: true },
         { from: 'plugin.json', to: '.' },
-        { from: '../README.md', to: '.' },
         { from: '../LICENSE', to: '.' },
         { from: '**/*.json', to: '.' },
         { from: '**/*.svg', to: '.' },
@@ -129,7 +131,7 @@ const getBaseWebpackConfig: WebpackConfigurationGetter = async options => {
   const optimization: { [key: string]: any } = {};
 
   if (options.production) {
-    optimization.minimizer = [new TerserPlugin(), new OptimizeCssAssetsPlugin()];
+    optimization.minimizer = [new TerserPlugin({ sourceMap: true }), new OptimizeCssAssetsPlugin()];
   } else if (options.watch) {
     plugins.push(new HtmlWebpackPlugin());
   }
@@ -198,6 +200,7 @@ const getBaseWebpackConfig: WebpackConfigurationGetter = async options => {
               options: {
                 presets: [['@babel/preset-env', { modules: false }]],
                 plugins: ['angularjs-annotate'],
+                sourceMaps: true,
               },
             },
             {
@@ -215,6 +218,7 @@ const getBaseWebpackConfig: WebpackConfigurationGetter = async options => {
               options: {
                 presets: [['@babel/preset-env', { modules: false }]],
                 plugins: ['angularjs-annotate'],
+                sourceMaps: true,
               },
             },
           ],

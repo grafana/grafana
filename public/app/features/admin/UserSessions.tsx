@@ -1,4 +1,6 @@
 import React, { PureComponent } from 'react';
+import { css } from 'emotion';
+import { ConfirmButton, ConfirmModal, Button } from '@grafana/ui';
 import { UserSession } from 'app/types';
 
 interface Props {
@@ -8,19 +10,37 @@ interface Props {
   onAllSessionsRevoke: () => void;
 }
 
-export class UserSessions extends PureComponent<Props> {
-  handleSessionRevoke = (id: number) => {
+interface State {
+  showLogoutModal: boolean;
+}
+
+export class UserSessions extends PureComponent<Props, State> {
+  state: State = {
+    showLogoutModal: false,
+  };
+
+  showLogoutConfirmationModal = (show: boolean) => () => {
+    this.setState({ showLogoutModal: show });
+  };
+
+  onSessionRevoke = (id: number) => {
     return () => {
       this.props.onSessionRevoke(id);
     };
   };
 
-  handleAllSessionsRevoke = () => {
+  onAllSessionsRevoke = () => {
+    this.setState({ showLogoutModal: false });
     this.props.onAllSessionsRevoke();
   };
 
   render() {
     const { sessions } = this.props;
+    const { showLogoutModal } = this.state;
+
+    const logoutFromAllDevicesClass = css`
+      margin-top: 0.8rem;
+    `;
 
     return (
       <>
@@ -45,21 +65,35 @@ export class UserSessions extends PureComponent<Props> {
                       <td>{session.clientIp}</td>
                       <td>{`${session.browser} on ${session.os} ${session.osVersion}`}</td>
                       <td>
-                        <button className="btn btn-danger btn-small" onClick={this.handleSessionRevoke(session.id)}>
-                          <i className="fa fa-power-off" />
-                        </button>
+                        <div className="pull-right">
+                          <ConfirmButton
+                            confirmText="Confirm logout"
+                            confirmVariant="destructive"
+                            onConfirm={this.onSessionRevoke(session.id)}
+                          >
+                            Force logout
+                          </ConfirmButton>
+                        </div>
                       </td>
                     </tr>
                   ))}
               </tbody>
             </table>
           </div>
-          <div className="gf-form-button-row">
+          <div className={logoutFromAllDevicesClass}>
             {sessions.length > 0 && (
-              <button className="btn btn-danger" onClick={this.handleAllSessionsRevoke}>
-                Logout user from all devices
-              </button>
+              <Button variant="secondary" onClick={this.showLogoutConfirmationModal(true)}>
+                Force logout from all devices
+              </Button>
             )}
+            <ConfirmModal
+              isOpen={showLogoutModal}
+              title="Force logout from all devices"
+              body="Are you sure you want to force logout from all devices?"
+              confirmText="Force logout"
+              onConfirm={this.onAllSessionsRevoke}
+              onDismiss={this.showLogoutConfirmationModal(false)}
+            />
           </div>
         </div>
       </>

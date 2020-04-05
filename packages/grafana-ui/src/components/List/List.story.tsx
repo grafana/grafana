@@ -6,7 +6,7 @@ import { css, cx } from 'emotion';
 import tinycolor from 'tinycolor2';
 import { InlineList } from './InlineList';
 
-const ListStories = storiesOf('UI/List', module);
+const ListStories = storiesOf('General/List', module);
 
 const generateListItems = (numberOfItems: number) => {
   return [...new Array(numberOfItems)].map((item, i) => {

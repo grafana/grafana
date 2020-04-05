@@ -79,8 +79,14 @@ export function parseSelector(query: string, cursorOffset = 1): { labelKeys: any
   // Extract clean labels to form clean selector, incomplete labels are dropped
   const selector = query.slice(prefixOpen, suffixClose);
   const labels: { [key: string]: { value: string; operator: string } } = {};
-  selector.replace(labelRegexp, (_, key, operator, value) => {
-    labels[key] = { value, operator };
+  selector.replace(labelRegexp, (label, key, operator, value) => {
+    const labelOffset = query.indexOf(label);
+    const valueStart = labelOffset + key.length + operator.length + 1;
+    const valueEnd = labelOffset + key.length + operator.length + value.length - 1;
+    // Skip label if cursor is in value
+    if (cursorOffset < valueStart || cursorOffset > valueEnd) {
+      labels[key] = { value, operator };
+    }
     return '';
   });
 

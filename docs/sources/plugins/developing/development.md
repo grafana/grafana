@@ -1,7 +1,7 @@
 +++
 title = "Developer Guide"
 type = "docs"
-aliases = ["/plugins/development/", "/plugins/datasources/", "/plugins/apps/", "/plugins/panels/"]
+aliases = ["/docs/grafana/latest/plugins/development/", "/docs/grafana/latest/plugins/datasources/", "/docs/grafana/latest/plugins/apps/", "/docs/grafana/latest/plugins/panels/"]
 [menu.docs]
 name = "Developer Guide"
 parent = "developing"
@@ -12,11 +12,13 @@ weight = 1
 
 You can extend Grafana by writing your own plugins and then share them with other users in [our plugin repository](https://grafana.com/plugins).
 
+Grafana already has a strong community of contributors and plugin developers. By making it easier to develop and install plugins with resources such as this guide, we hope that the community can grow even stronger and develop new plugins that we would never think about.
+
 ## Short version
 
-1. [Setup grafana](http://docs.grafana.org/project/building_from_source/)
+1. [Set up Grafana](https://github.com/grafana/grafana/blob/master/contribute/developer-guide.md)
 2. Clone an example plugin into ```/var/lib/grafana/plugins```  or `data/plugins` (relative to grafana git repo if you're running development version from source dir)
-3. Use one of our example plugins as starting point
+3. Use one of our example plugins as a starting point
 
 Example plugins
 
@@ -26,21 +28,17 @@ Example plugins
 - [Clock panel](https://github.com/grafana/clock-panel)
 - [Pie chart panel](https://github.com/grafana/piechart-panel)
 
-There are two blog posts about authoring a plugin that might also be of interest to any plugin authors.
+You might also be interested in the available tutorials around authoring a plugin.
 
-- [Timing is Everything. Writing the Clock Panel Plugin for Grafana](https://grafana.com/blog/2016/04/08/timing-is-everything.-writing-the-clock-panel-plugin-for-grafana-3.0/)
-- [Timing is Everything. Editor Mode in Grafana for the Clock Panel Plugin](https://grafana.com/blog/2016/04/15/timing-is-everything.-editor-mode-in-grafana-3.0-for-the-clock-panel-plugin/).
+- [Grafana Tutorials](https://grafana.com/tutorials/)
 
 ## What languages?
 
-Since everything turns into javascript it's up to you to choose which language you want. That said it's probably a good idea to choose es6 or typescript since
-we use es6 classes in Grafana. So it's easier to get inspiration from the Grafana repo if you choose one of those languages.
+Since everything turns into JavaScript, it's up to you to choose which language you want. That said, it's probably a good idea to choose es6 or TypeScript, because we use es6 classes in Grafana. So it's easier to get inspiration from the Grafana repo if you choose one of those languages.
 
 ## Buildscript
 
-You can use any build system you like that support systemjs. All the built content should end up in a folder named ```dist``` and committed to the repository.
-By committing the dist folder the person who installs your plugin does not have to run any buildscript.
-All our example plugins have build scripted configured.
+You can use any build system that supports systemjs. All the built content should end up in a folder named ```dist``` and be committed to the repository. By committing the dist folder, the person who installs your plugin does not have to run any build script. All of our example plugins have a build script configured.
 
 ## Keep your plugin up to date
 
@@ -94,15 +92,15 @@ export {
 
 There are three ways that you can start developing a Grafana plugin.
 
-1. Setup a Grafana development environment. [(described here)](http://docs.grafana.org/project/building_from_source/) and place your plugin in the ```data/plugins``` folder.
+1. Set up a Grafana development environment. [(described here)](https://github.com/grafana/grafana/blob/master/contribute/developer-guide.md) and place your plugin in the ```data/plugins``` folder.
 2. Install Grafana and place your plugin in the plugins directory which is set in your [config file](/installation/configuration). By default this is `/var/lib/grafana/plugins` on Linux systems.
 3. Place your plugin directory anywhere you like and specify it grafana.ini.
 
-We encourage people to setup the full Grafana environment so that you can get inspiration from the rest of grafana code base.
+We encourage people to set up the full Grafana environment so that you can get inspiration from the rest of the Grafana code base.
 
-When Grafana starts it will scan the plugin folders and mount every folder that contains a plugin.json file unless
-the folder contains a subfolder named dist. In that case grafana will mount the dist folder instead.
-This makes it possible to have both built and src content in the same plugin git repo.
+When Grafana starts, it scans the plugin folders and mounts every folder that contains a plugin.json file unless
+the folder contains a subfolder named dist. In that case, Grafana mounts the dist folder instead.
+This makes it possible to have both built and src content in the same plugin Git repo.
 
 ## Grafana Events
 
@@ -118,12 +116,12 @@ If a panel receives data and hooks into the `data-received` event then it should
 
 ## Examples
 
-We currently have three different examples that you can fork/download to get started developing your grafana plugin.
+We have three different examples that you can fork/download to get started developing your Grafana plugin.
 
  - [simple-json-datasource](https://github.com/grafana/simple-json-datasource) (small data source plugin for querying json data from backends)
- - [example-app](https://github.com/grafana/example-app)
+ - [simple-app-plugin](https://github.com/grafana/simple-app-plugin)
  - [clock-panel](https://github.com/grafana/clock-panel)
- - [singlestat-panel](https://github.com/grafana/grafana/blob/master/public/app/plugins/panel/singlestat/module.ts)
+ - [singlestat-panel](https://github.com/grafana/grafana/tree/master/public/app/plugins/panel/singlestat)
  - [piechart-panel](https://github.com/grafana/piechart-panel)
 
 ## Other Articles

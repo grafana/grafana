@@ -93,11 +93,10 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => ({
     height: 100%;
   `,
   item: css`
-    ${styleMixins.cardChrome(theme)}
+    ${styleMixins.listItem(theme)}
     padding: ${theme.spacing.sm};
     position: relative;
     margin-bottom: 4px;
-    border-radius: 3px;
     margin-right: ${theme.spacing.sm};
   `,
   title: css`
@@ -115,7 +114,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => ({
     position: absolute;
     top: 0;
     right: 0;
-    background: ${theme.colors.bodyBg};
+    background: ${theme.colors.panelBg};
     width: 55px;
     text-align: right;
     padding: ${theme.spacing.xs};

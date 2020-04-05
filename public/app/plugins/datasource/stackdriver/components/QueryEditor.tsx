@@ -1,206 +1,113 @@
-import React from 'react';
-import _ from 'lodash';
-
-import { TemplateSrv } from 'app/features/templating/template_srv';
-
-import { Metrics } from './Metrics';
-import { Filter } from './Filter';
-import { Aggregations } from './Aggregations';
-import { Alignments } from './Alignments';
-import { AlignmentPeriods } from './AlignmentPeriods';
-import { AliasBy } from './AliasBy';
-import { Help } from './Help';
-import { StackdriverQuery, MetricDescriptor } from '../types';
-import { getAlignmentPickerData } from '../functions';
+import React, { PureComponent } from 'react';
+import appEvents from 'app/core/app_events';
+import { CoreEvents } from 'app/types';
+import { MetricQueryEditor, QueryTypeSelector, SLOQueryEditor, Help } from './';
+import { StackdriverQuery, MetricQuery, QueryType, SLOQuery } from '../types';
+import { defaultQuery } from './MetricQueryEditor';
+import { defaultQuery as defaultSLOQuery } from './SLOQueryEditor';
+import { toOption, formatStackdriverError } from '../functions';
 import StackdriverDatasource from '../datasource';
-import { TimeSeries, SelectableValue } from '@grafana/data';
-import { PanelEvents } from '@grafana/data';
+import { ExploreQueryFieldProps } from '@grafana/data';
 
-export interface Props {
-  onQueryChange: (target: StackdriverQuery) => void;
-  onExecuteQuery: () => void;
-  target: StackdriverQuery;
-  events: any;
-  datasource: StackdriverDatasource;
-  templateSrv: TemplateSrv;
-}
+export type Props = ExploreQueryFieldProps<StackdriverDatasource, StackdriverQuery>;
 
-interface State extends StackdriverQuery {
-  alignOptions: Array<SelectableValue<string>>;
-  lastQuery: string;
+interface State {
   lastQueryError: string;
-  [key: string]: any;
 }
 
-export const DefaultTarget: State = {
-  defaultProject: 'loading project...',
-  metricType: '',
-  metricKind: '',
-  valueType: '',
-  refId: '',
-  service: '',
-  unit: '',
-  crossSeriesReducer: 'REDUCE_MEAN',
-  alignmentPeriod: 'stackdriver-auto',
-  perSeriesAligner: 'ALIGN_MEAN',
-  groupBys: [],
-  filters: [],
-  aliasBy: '',
-  alignOptions: [],
-  lastQuery: '',
-  lastQueryError: '',
-  usedAlignmentPeriod: '',
-};
+export class QueryEditor extends PureComponent<Props, State> {
+  state: State = { lastQueryError: '' };
 
-export class QueryEditor extends React.Component<Props, State> {
-  state: State = DefaultTarget;
+  async UNSAFE_componentWillMount() {
+    const { datasource, query } = this.props;
+
+    // Unfortunately, migrations like this need to go componentWillMount. As soon as there's
+    // migration hook for this module.ts, we can do the migrations there instead.
+    if (!this.props.query.hasOwnProperty('metricQuery')) {
+      const { hide, refId, datasource, key, queryType, maxLines, metric, ...metricQuery } = this.props.query as any;
+      this.props.query.metricQuery = metricQuery;
+    }
+
+    if (!this.props.query.hasOwnProperty('queryType')) {
+      this.props.query.queryType = QueryType.METRICS;
+    }
+
+    await datasource.ensureGCEDefaultProject();
+    if (!query.metricQuery.projectName) {
+      this.props.query.metricQuery.projectName = datasource.getDefaultProject();
+    }
+  }
 
   componentDidMount() {
-    const { events, target, templateSrv } = this.props;
-    events.on(PanelEvents.dataReceived, this.onDataReceived.bind(this));
-    events.on(PanelEvents.dataError, this.onDataError.bind(this));
-    const { perSeriesAligner, alignOptions } = getAlignmentPickerData(target, templateSrv);
-    this.setState({
-      ...this.props.target,
-      alignOptions,
-      perSeriesAligner,
-    });
+    appEvents.on(CoreEvents.dsRequestError, this.onDataError.bind(this));
+    appEvents.on(CoreEvents.dsRequestResponse, this.onDataResponse.bind(this));
   }
 
   componentWillUnmount() {
-    this.props.events.off(PanelEvents.dataReceived, this.onDataReceived);
-    this.props.events.off(PanelEvents.dataError, this.onDataError);
+    appEvents.off(CoreEvents.dsRequestResponse, this.onDataResponse.bind(this));
+    appEvents.on(CoreEvents.dsRequestError, this.onDataError.bind(this));
   }
 
-  onDataReceived(dataList: TimeSeries[]) {
-    const series = dataList.find((item: any) => item.refId === this.props.target.refId);
-    if (series) {
-      this.setState({
-        lastQuery: decodeURIComponent(series.meta.rawQuery),
-        lastQueryError: '',
-        usedAlignmentPeriod: series.meta.alignmentPeriod,
-      });
-    }
+  onDataResponse() {
+    this.setState({ lastQueryError: '' });
   }
 
-  onDataError(err: any) {
-    let lastQuery;
-    let lastQueryError;
-    if (err.data && err.data.error) {
-      lastQueryError = this.props.datasource.formatStackdriverError(err);
-    } else if (err.data && err.data.results) {
-      const queryRes = err.data.results[this.props.target.refId];
-      lastQuery = decodeURIComponent(queryRes.meta.rawQuery);
-      if (queryRes && queryRes.error) {
-        try {
-          lastQueryError = JSON.parse(queryRes.error).error.message;
-        } catch {
-          lastQueryError = queryRes.error;
-        }
-      }
-    }
-    this.setState({ lastQuery, lastQueryError });
+  onDataError(error: any) {
+    this.setState({ lastQueryError: formatStackdriverError(error) });
   }
 
-  onMetricTypeChange = ({ valueType, metricKind, type, unit }: MetricDescriptor) => {
-    const { templateSrv, onQueryChange, onExecuteQuery } = this.props;
-    const { perSeriesAligner, alignOptions } = getAlignmentPickerData(
-      { valueType, metricKind, perSeriesAligner: this.state.perSeriesAligner },
-      templateSrv
-    );
-    this.setState(
-      {
-        alignOptions,
-        perSeriesAligner,
-        metricType: type,
-        unit,
-        valueType,
-        metricKind,
-      },
-      () => {
-        onQueryChange(this.state);
-        onExecuteQuery();
-      }
-    );
-  };
-
-  onPropertyChange(prop: string, value: string[]) {
-    this.setState({ [prop]: value }, () => {
-      this.props.onQueryChange(this.state);
-      this.props.onExecuteQuery();
-    });
+  onQueryChange(prop: string, value: any) {
+    this.props.onChange({ ...this.props.query, [prop]: value });
+    this.props.onRunQuery();
   }
 
   render() {
-    const {
-      usedAlignmentPeriod,
-      defaultProject,
-      metricType,
-      crossSeriesReducer,
-      groupBys,
-      filters,
-      perSeriesAligner,
-      alignOptions,
-      alignmentPeriod,
-      aliasBy,
-      lastQuery,
-      lastQueryError,
-      refId,
-    } = this.state;
-    const { datasource, templateSrv } = this.props;
+    const { datasource, query, onRunQuery, onChange } = this.props;
+    const metricQuery = { ...defaultQuery, projectName: datasource.getDefaultProject(), ...query.metricQuery };
+    const sloQuery = { ...defaultSLOQuery, projectName: datasource.getDefaultProject(), ...query.sloQuery };
+    const queryType = query.queryType || QueryType.METRICS;
+    const meta = this.props.data?.series.length ? this.props.data?.series[0].meta : {};
+    const usedAlignmentPeriod = meta?.alignmentPeriod as string;
+    const variableOptionGroup = {
+      label: 'Template Variables',
+      expanded: false,
+      options: datasource.variables.map(toOption),
+    };
 
     return (
       <>
-        <Metrics
-          defaultProject={defaultProject}
-          metricType={metricType}
-          templateSrv={templateSrv}
-          datasource={datasource}
-          onChange={this.onMetricTypeChange}
-        >
-          {metric => (
-            <>
-              <Filter
-                filtersChanged={value => this.onPropertyChange('filters', value)}
-                groupBysChanged={value => this.onPropertyChange('groupBys', value)}
-                filters={filters}
-                groupBys={groupBys}
-                refId={refId}
-                hideGroupBys={false}
-                templateSrv={templateSrv}
-                datasource={datasource}
-                metricType={metric ? metric.type : ''}
-              />
-              <Aggregations
-                metricDescriptor={metric}
-                templateSrv={templateSrv}
-                crossSeriesReducer={crossSeriesReducer}
-                groupBys={groupBys}
-                onChange={value => this.onPropertyChange('crossSeriesReducer', value)}
-              >
-                {displayAdvancedOptions =>
-                  displayAdvancedOptions && (
-                    <Alignments
-                      alignOptions={alignOptions}
-                      templateSrv={templateSrv}
-                      perSeriesAligner={perSeriesAligner}
-                      onChange={value => this.onPropertyChange('perSeriesAligner', value)}
-                    />
-                  )
-                }
-              </Aggregations>
-              <AlignmentPeriods
-                templateSrv={templateSrv}
-                alignmentPeriod={alignmentPeriod}
-                perSeriesAligner={perSeriesAligner}
-                usedAlignmentPeriod={usedAlignmentPeriod}
-                onChange={value => this.onPropertyChange('alignmentPeriod', value)}
-              />
-              <AliasBy value={aliasBy} onChange={value => this.onPropertyChange('aliasBy', value)} />
-              <Help datasource={datasource} rawQuery={lastQuery} lastQueryError={lastQueryError} />
-            </>
-          )}
-        </Metrics>
+        <QueryTypeSelector
+          value={queryType}
+          templateVariableOptions={variableOptionGroup.options}
+          onChange={(queryType: QueryType) => {
+            onChange({ ...query, sloQuery, queryType });
+            onRunQuery();
+          }}
+        ></QueryTypeSelector>
+
+        {queryType === QueryType.METRICS && (
+          <MetricQueryEditor
+            refId={query.refId}
+            variableOptionGroup={variableOptionGroup}
+            usedAlignmentPeriod={usedAlignmentPeriod}
+            onChange={(query: MetricQuery) => this.onQueryChange('metricQuery', query)}
+            onRunQuery={onRunQuery}
+            datasource={datasource}
+            query={metricQuery}
+          ></MetricQueryEditor>
+        )}
+
+        {queryType === QueryType.SLO && (
+          <SLOQueryEditor
+            variableOptionGroup={variableOptionGroup}
+            usedAlignmentPeriod={usedAlignmentPeriod}
+            onChange={(query: SLOQuery) => this.onQueryChange('sloQuery', query)}
+            onRunQuery={onRunQuery}
+            datasource={datasource}
+            query={sloQuery}
+          ></SLOQueryEditor>
+        )}
+        <Help rawQuery={decodeURIComponent(meta?.rawQuery ?? '')} lastQueryError={this.state.lastQueryError} />
       </>
     );
   }

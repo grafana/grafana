@@ -1,25 +1,40 @@
-import { assignModelProperties, containsVariable, VariableActions, variableTypes } from './variable';
+import {
+  assignModelProperties,
+  DataSourceVariableModel,
+  VariableActions,
+  VariableHide,
+  VariableOption,
+  VariableRefresh,
+  VariableType,
+  variableTypes,
+} from './types';
 import { stringToJsRegex } from '@grafana/data';
 import { VariableSrv } from './variable_srv';
 import { TemplateSrv } from './template_srv';
 import { DatasourceSrv } from '../plugins/datasource_srv';
+import { config } from '@grafana/runtime';
+import { containsVariable } from './utils';
 
-export class DatasourceVariable implements VariableActions {
+export class DatasourceVariable implements DataSourceVariableModel, VariableActions {
+  type: VariableType;
+  name: string;
+  label: string;
+  hide: VariableHide;
   regex: any;
   query: string;
-  options: any;
-  current: any;
+  options: VariableOption[];
+  current: VariableOption;
   multi: boolean;
   includeAll: boolean;
-  refresh: any;
+  refresh: VariableRefresh;
   skipUrlSync: boolean;
 
-  defaults: any = {
+  defaults: DataSourceVariableModel = {
     type: 'datasource',
     name: '',
     hide: 0,
     label: '',
-    current: {},
+    current: {} as VariableOption,
     regex: '',
     options: [],
     query: '',
@@ -53,12 +68,12 @@ export class DatasourceVariable implements VariableActions {
   }
 
   updateOptions() {
-    const options = [];
+    const options: VariableOption[] = [];
     const sources = this.datasourceSrv.getMetricSources({ skipVariables: true });
     let regex;
 
     if (this.regex) {
-      regex = this.templateSrv.replace(this.regex, null, 'regex');
+      regex = this.templateSrv.replace(this.regex, undefined, 'regex');
       regex = stringToJsRegex(regex);
     }
 
@@ -73,22 +88,23 @@ export class DatasourceVariable implements VariableActions {
         continue;
       }
 
-      options.push({ text: source.name, value: source.name });
+      options.push({ text: source.name, value: source.name, selected: false });
     }
 
     if (options.length === 0) {
-      options.push({ text: 'No data sources found', value: '' });
+      options.push({ text: 'No data sources found', value: '', selected: false });
     }
 
     this.options = options;
     if (this.includeAll) {
       this.addAllOption();
     }
-    return this.variableSrv.validateVariableSelectionState(this);
+    const { defaultDatasource } = config.bootData.settings;
+    return this.variableSrv.validateVariableSelectionState(this, defaultDatasource);
   }
 
   addAllOption() {
-    this.options.unshift({ text: 'All', value: '$__all' });
+    this.options.unshift({ text: 'All', value: '$__all', selected: false });
   }
 
   dependsOn(variable: any) {

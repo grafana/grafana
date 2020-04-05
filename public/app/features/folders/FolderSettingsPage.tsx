@@ -2,13 +2,15 @@ import React, { PureComponent } from 'react';
 import { hot } from 'react-hot-loader';
 import { connect } from 'react-redux';
 import { NavModel } from '@grafana/data';
-import { Input } from '@grafana/ui';
+import { LegacyForms } from '@grafana/ui';
+const { Input } = LegacyForms;
 import Page from 'app/core/components/Page/Page';
 import appEvents from 'app/core/app_events';
 import { getNavModel } from 'app/core/selectors/navModel';
-import { StoreState, FolderState, CoreEvents } from 'app/types';
-import { getFolderByUid, setFolderTitle, saveFolder, deleteFolder } from './state/actions';
+import { CoreEvents, FolderState, StoreState } from 'app/types';
+import { deleteFolder, getFolderByUid, saveFolder } from './state/actions';
 import { getLoadingNav } from './state/navModel';
+import { setFolderTitle } from './state/reducers';
 
 export interface Props {
   navModel: NavModel;

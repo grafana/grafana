@@ -5,6 +5,7 @@ import chalk from 'chalk';
 import { startTask } from './tasks/core.start';
 import { changelogTask } from './tasks/changelog';
 import { cherryPickTask } from './tasks/cherrypick';
+import { manifestTask } from './tasks/manifest';
 import { precommitTask } from './tasks/precommit';
 import { templateTask } from './tasks/template';
 import { pluginBuildTask } from './tasks/plugin.build';
@@ -13,13 +14,8 @@ import { pluginTestTask } from './tasks/plugin.tests';
 import { searchTestDataSetupTask } from './tasks/searchTestDataSetup';
 import { closeMilestoneTask } from './tasks/closeMilestone';
 import { pluginDevTask } from './tasks/plugin.dev';
-import {
-  ciBuildPluginTask,
-  ciBuildPluginDocsTask,
-  ciPackagePluginTask,
-  ciTestPluginTask,
-  ciPluginReportTask,
-} from './tasks/plugin.ci';
+import { githubPublishTask } from './tasks/plugin.utils';
+import { ciBuildPluginTask, ciBuildPluginDocsTask, ciPackagePluginTask, ciPluginReportTask } from './tasks/plugin.ci';
 import { buildPackageTask } from './tasks/package.build';
 import { pluginCreateTask } from './tasks/plugin.create';
 
@@ -167,15 +163,11 @@ export const run = (includeInternalScripts = false) => {
 
   program
     .command('plugin:ci-build')
-    .option('--backend', 'Run Makefile for backend task', false)
+    .option('--finish', 'move all results to the jobs folder', false)
     .description('Build the plugin, leaving results in /dist and /coverage')
     .action(async cmd => {
-      if (typeof cmd === 'string') {
-        console.error(`Invalid argument: ${cmd}\nSee --help for a list of available commands.`);
-        process.exit(1);
-      }
       await execTask(ciBuildPluginTask)({
-        backend: cmd.backend,
+        finish: cmd.finish,
       });
     });
 
@@ -194,16 +186,6 @@ export const run = (includeInternalScripts = false) => {
     });
 
   program
-    .command('plugin:ci-test')
-    .option('--full', 'run all the tests (even stuff that will break)')
-    .description('end-to-end test using bundle in /artifacts')
-    .action(async cmd => {
-      await execTask(ciTestPluginTask)({
-        full: cmd.full,
-      });
-    });
-
-  program
     .command('plugin:ci-report')
     .description('Build a report for this whole process')
     .option('--upload', 'upload packages also')
@@ -211,6 +193,28 @@ export const run = (includeInternalScripts = false) => {
       await execTask(ciPluginReportTask)({
         upload: cmd.upload,
       });
+    });
+
+  program
+    .command('plugin:github-publish')
+    .option('--dryrun', 'Do a dry run only', false)
+    .option('--verbose', 'Print verbose', false)
+    .option('--commitHash <hashKey>', 'Specify the commit hash')
+    .description('Publish to github')
+    .action(async cmd => {
+      await execTask(githubPublishTask)({
+        dryrun: cmd.dryrun,
+        verbose: cmd.verbose,
+        commitHash: cmd.commitHash,
+      });
+    });
+
+  // Test the manifest creation
+  program
+    .command('manifest')
+    .description('create a manifest file in the cwd')
+    .action(async cmd => {
+      await execTask(manifestTask)({ folder: process.cwd() });
     });
 
   program.on('command:*', () => {

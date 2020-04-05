@@ -1,0 +1,18 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`MetaInfoText should render component 1`] = `
+<div
+  className="css-mi7ebz"
+>
+  <Memo(MetaInfoItem)
+    key="0-label"
+    label="label"
+    value="value"
+  />
+  <Memo(MetaInfoItem)
+    key="1-label2"
+    label="label2"
+    value="value2"
+  />
+</div>
+`;

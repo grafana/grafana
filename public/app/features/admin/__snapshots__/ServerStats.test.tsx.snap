@@ -93,23 +93,23 @@ exports[`ServerStats Should render table with stats 1`] = `
                     </option>
                   </select>
                 </div>
-                <ul
-                  className="gf-tabs page-header__tabs"
+                <div
+                  className="page-header__tabs"
                 >
-                  <li
-                    className="gf-tabs-item"
+                  <ul
+                    className="css-payll4"
                   >
-                    <a
-                      className="gf-tabs-link active"
-                      href="Admin"
+                    <li
+                      className="css-1aiaexb"
+                      onClick={[Function]}
                     >
                       <i
                         className="icon"
                       />
                       Admin
-                    </a>
-                  </li>
-                </ul>
+                    </li>
+                  </ul>
+                </div>
               </nav>
             </div>
           </div>
@@ -159,14 +159,15 @@ exports[`ServerStats Should render table with stats 1`] = `
             <ul>
               <li>
                 <a
-                  href="http://docs.grafana.org"
+                  href="https://grafana.com/docs/grafana/latest/?utm_source=grafana_footer"
                   rel="noopener"
                   target="_blank"
                 >
                   <i
                     className="fa fa-file-code-o"
                   />
-                   Docs
+                   
+                  Documentation
                 </a>
               </li>
               <li>
@@ -178,37 +179,40 @@ exports[`ServerStats Should render table with stats 1`] = `
                   <i
                     className="fa fa-support"
                   />
-                   Support & Enterprise
+                   
+                  Support
                 </a>
               </li>
               <li>
                 <a
-                  href="https://community.grafana.com/"
+                  href="https://community.grafana.com/?utm_source=grafana_footer"
                   rel="noopener"
                   target="_blank"
                 >
                   <i
                     className="fa fa-comments-o"
                   />
-                   Community
+                   
+                  Community
                 </a>
               </li>
               <li>
                 <a
-                  href="https://grafana.com"
                   rel="noopener"
-                  target="_blank"
                 >
-                  Grafana
+                  <i />
+                   
+                  undefined
                 </a>
-                 
-                <span>
-                  v
-                  v1.0
-                   (commit: 
-                  1
-                  )
-                </span>
+              </li>
+              <li>
+                <a
+                  rel="noopener"
+                >
+                  <i />
+                   
+                  vv1.0 (1)
+                </a>
               </li>
             </ul>
           </div>
@@ -216,7 +220,7 @@ exports[`ServerStats Should render table with stats 1`] = `
       </div>
     </div>
     <div
-      className="css-52gpmd track-horizontal"
+      className="track-horizontal"
       style={
         Object {
           "display": "none",
@@ -237,7 +241,7 @@ exports[`ServerStats Should render table with stats 1`] = `
       />
     </div>
     <div
-      className="css-52gpmd track-vertical"
+      className="track-vertical"
       style={
         Object {
           "display": "none",

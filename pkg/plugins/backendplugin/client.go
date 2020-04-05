@@ -3,14 +3,12 @@ package backendplugin
 import (
 	"os/exec"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend/grpcplugin"
 	"github.com/grafana/grafana/pkg/infra/log"
 
 	datasourceV1 "github.com/grafana/grafana-plugin-model/go/datasource"
 	rendererV1 "github.com/grafana/grafana-plugin-model/go/renderer"
-	sdk "github.com/grafana/grafana-plugin-sdk-go/common"
-	datasourceV2 "github.com/grafana/grafana-plugin-sdk-go/datasource"
-	transformV2 "github.com/grafana/grafana-plugin-sdk-go/transform"
-	"github.com/hashicorp/go-plugin"
+	goplugin "github.com/hashicorp/go-plugin"
 )
 
 const (
@@ -21,61 +19,111 @@ const (
 )
 
 // Handshake is the HandshakeConfig used to configure clients and servers.
-var handshake = plugin.HandshakeConfig{
+var handshake = goplugin.HandshakeConfig{
 	// The ProtocolVersion is the version that must match between Grafana core
 	// and Grafana plugins. This should be bumped whenever a (breaking) change
 	// happens in one or the other that makes it so that they can't safely communicate.
 	ProtocolVersion: DefaultProtocolVersion,
 
 	// The magic cookie values should NEVER be changed.
-	MagicCookieKey:   sdk.MagicCookieKey,
-	MagicCookieValue: sdk.MagicCookieValue,
+	MagicCookieKey:   grpcplugin.MagicCookieKey,
+	MagicCookieValue: grpcplugin.MagicCookieValue,
 }
 
-// NewClientConfig returns a configuration object that can be used to instantiate
-// a client for the plugin described by the given metadata.
-func NewClientConfig(executablePath string, logger log.Logger, versionedPlugins map[int]plugin.PluginSet) *plugin.ClientConfig {
-	return &plugin.ClientConfig{
+func newClientConfig(executablePath string, logger log.Logger, versionedPlugins map[int]goplugin.PluginSet) *goplugin.ClientConfig {
+	return &goplugin.ClientConfig{
 		Cmd:              exec.Command(executablePath),
 		HandshakeConfig:  handshake,
 		VersionedPlugins: versionedPlugins,
 		Logger:           logWrapper{Logger: logger},
-		AllowedProtocols: []plugin.Protocol{plugin.ProtocolGRPC},
+		AllowedProtocols: []goplugin.Protocol{goplugin.ProtocolGRPC},
 	}
 }
 
-// NewDatasourceClient returns a datasource plugin client.
-func NewDatasourceClient(pluginID, executablePath string, logger log.Logger) *plugin.Client {
-	versionedPlugins := map[int]plugin.PluginSet{
-		1: {
-			pluginID: &datasourceV1.DatasourcePluginImpl{},
-		},
-		2: {
-			pluginID: &datasourceV2.DatasourcePluginImpl{},
-		},
-	}
+// LegacyStartFunc callback function called when a plugin with old plugin protocol is started.
+type LegacyStartFunc func(pluginID string, client *LegacyClient, logger log.Logger) error
 
-	return plugin.NewClient(NewClientConfig(executablePath, logger, versionedPlugins))
+// StartFunc callback function called when a plugin with current plugin protocol version is started.
+type StartFunc func(pluginID string, client *Client, logger log.Logger) error
+
+// PluginStartFuncs functions called for plugin when started.
+type PluginStartFuncs struct {
+	OnLegacyStart LegacyStartFunc
+	OnStart       StartFunc
 }
 
-// NewRendererClient returns a renderer plugin client.
-func NewRendererClient(pluginID, executablePath string, logger log.Logger) *plugin.Client {
-	versionedPlugins := map[int]plugin.PluginSet{
-		1: {
-			pluginID: &rendererV1.RendererPluginImpl{},
-		},
-	}
-
-	return plugin.NewClient(NewClientConfig(executablePath, logger, versionedPlugins))
+// PluginDescriptor descriptor used for registering backend plugins.
+type PluginDescriptor struct {
+	pluginID         string
+	executablePath   string
+	managed          bool
+	versionedPlugins map[int]goplugin.PluginSet
+	startFns         PluginStartFuncs
 }
 
-// NewTransformClient returns a transform plugin client.
-func NewTransformClient(pluginID, executablePath string, logger log.Logger) *plugin.Client {
-	versionedPlugins := map[int]plugin.PluginSet{
-		2: {
-			pluginID: &transformV2.TransformPluginImpl{},
+// NewBackendPluginDescriptor creates a new backend plugin descriptor
+// used for registering a backend datasource plugin.
+func NewBackendPluginDescriptor(pluginID, executablePath string, startFns PluginStartFuncs) PluginDescriptor {
+	return PluginDescriptor{
+		pluginID:       pluginID,
+		executablePath: executablePath,
+		managed:        true,
+		versionedPlugins: map[int]goplugin.PluginSet{
+			DefaultProtocolVersion: {
+				pluginID: &datasourceV1.DatasourcePluginImpl{},
+			},
+			grpcplugin.ProtocolVersion: {
+				"diagnostics": &grpcplugin.DiagnosticsGRPCPlugin{},
+				"resource":    &grpcplugin.ResourceGRPCPlugin{},
+				"data":        &grpcplugin.DataGRPCPlugin{},
+				"transform":   &grpcplugin.TransformGRPCPlugin{},
+			},
 		},
+		startFns: startFns,
 	}
+}
 
-	return plugin.NewClient(NewClientConfig(executablePath, logger, versionedPlugins))
+// NewRendererPluginDescriptor creates a new renderer plugin descriptor
+// used for registering a backend renderer plugin.
+func NewRendererPluginDescriptor(pluginID, executablePath string, startFns PluginStartFuncs) PluginDescriptor {
+	return PluginDescriptor{
+		pluginID:       pluginID,
+		executablePath: executablePath,
+		managed:        false,
+		versionedPlugins: map[int]goplugin.PluginSet{
+			DefaultProtocolVersion: {
+				pluginID: &rendererV1.RendererPluginImpl{},
+			},
+		},
+		startFns: startFns,
+	}
+}
+
+type DiagnosticsPlugin interface {
+	grpcplugin.DiagnosticsClient
+}
+
+type ResourcePlugin interface {
+	grpcplugin.ResourceClient
+}
+
+type DataPlugin interface {
+	grpcplugin.DataClient
+}
+
+type TransformPlugin interface {
+	grpcplugin.TransformClient
+}
+
+// LegacyClient client for communicating with a plugin using the old plugin protocol.
+type LegacyClient struct {
+	DatasourcePlugin datasourceV1.DatasourcePlugin
+	RendererPlugin   rendererV1.RendererPlugin
+}
+
+// Client client for communicating with a plugin using the current plugin protocol.
+type Client struct {
+	ResourcePlugin  ResourcePlugin
+	DataPlugin      DataPlugin
+	TransformPlugin TransformPlugin
 }

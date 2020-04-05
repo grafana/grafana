@@ -19,21 +19,28 @@ exports[`Render should render children 1`] = `
       key="undefined-0"
     >
       <a
-        onClick={[Function]}
+        rel="noopener"
       />
     </li>
     <li
       key="undefined-1"
     >
       <a
-        onClick={[Function]}
+        rel="noopener"
       />
     </li>
     <li
       key="undefined-2"
     >
       <a
-        onClick={[Function]}
+        rel="noopener"
+      />
+    </li>
+    <li
+      key="undefined-3"
+    >
+      <a
+        rel="noopener"
       />
     </li>
     <li
@@ -98,14 +105,14 @@ exports[`Render should render organization switcher 1`] = `
       >
         <div>
           <div
+            className="sidemenu-org-switcher__org-current"
+          >
+            Current Org.:
+          </div>
+          <div
             className="sidemenu-org-switcher__org-name"
           >
             Grafana
-          </div>
-          <div
-            className="sidemenu-org-switcher__org-current"
-          >
-            Current Org:
           </div>
         </div>
         <div

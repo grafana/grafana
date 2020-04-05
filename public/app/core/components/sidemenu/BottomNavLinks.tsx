@@ -4,6 +4,7 @@ import { User } from '../../services/context_srv';
 import { NavModelItem } from '@grafana/data';
 import { CoreEvents } from 'app/types';
 import { OrgSwitcher } from '../OrgSwitcher';
+import { getFooterLinks } from '../Footer/Footer';
 
 export interface Props {
   link: NavModelItem;
@@ -19,13 +20,10 @@ class BottomNavLinks extends PureComponent<Props, State> {
     showSwitcherModal: false,
   };
 
-  itemClicked = (event: React.SyntheticEvent, child: NavModelItem) => {
-    if (child.url === '/shortcuts') {
-      event.preventDefault();
-      appEvents.emit(CoreEvents.showModal, {
-        templateHtml: '<help-modal></help-modal>',
-      });
-    }
+  onOpenShortcuts = () => {
+    appEvents.emit(CoreEvents.showModal, {
+      templateHtml: '<help-modal></help-modal>',
+    });
   };
 
   toggleSwitcherModal = () => {
@@ -37,6 +35,12 @@ class BottomNavLinks extends PureComponent<Props, State> {
   render() {
     const { link, user } = this.props;
     const { showSwitcherModal } = this.state;
+
+    let children = link.children || [];
+
+    if (link.id === 'help') {
+      children = getFooterLinks();
+    }
 
     return (
       <div className="sidemenu-item dropdown dropup">
@@ -56,8 +60,8 @@ class BottomNavLinks extends PureComponent<Props, State> {
             <li className="sidemenu-org-switcher">
               <a onClick={this.toggleSwitcherModal}>
                 <div>
+                  <div className="sidemenu-org-switcher__org-current">Current Org.:</div>
                   <div className="sidemenu-org-switcher__org-name">{user.orgName}</div>
-                  <div className="sidemenu-org-switcher__org-current">Current Org:</div>
                 </div>
                 <div className="sidemenu-org-switcher__switch">
                   <i className="fa fa-fw fa-random" />
@@ -69,20 +73,25 @@ class BottomNavLinks extends PureComponent<Props, State> {
 
           {showSwitcherModal && <OrgSwitcher onDismiss={this.toggleSwitcherModal} />}
 
-          {link.children &&
-            link.children.map((child, index) => {
-              if (!child.hideFromMenu) {
-                return (
-                  <li key={`${child.text}-${index}`}>
-                    <a href={child.url} target={child.target} onClick={event => this.itemClicked(event, child)}>
-                      {child.icon && <i className={child.icon} />}
-                      {child.text}
-                    </a>
-                  </li>
-                );
-              }
-              return null;
-            })}
+          {children.map((child, index) => {
+            return (
+              <li key={`${child.text}-${index}`}>
+                <a href={child.url} target={child.target} rel="noopener">
+                  {child.icon && <i className={child.icon} />}
+                  {child.text}
+                </a>
+              </li>
+            );
+          })}
+
+          {link.id === 'help' && (
+            <li key="keyboard-shortcuts">
+              <a onClick={() => this.onOpenShortcuts()}>
+                <i className="fa fa-keyboard-o" /> Keyboard shortcuts
+              </a>
+            </li>
+          )}
+
           <li className="side-menu-header">
             <span className="sidemenu-item-text">{link.text}</span>
           </li>

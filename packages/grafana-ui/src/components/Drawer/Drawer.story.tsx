@@ -6,7 +6,7 @@ import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import mdx from './Drawer.mdx';
 
 export default {
-  title: 'UI/Drawer',
+  title: 'General/Drawer',
   component: Drawer,
   decorators: [withCenteredStory],
   parameters: {
@@ -69,6 +69,7 @@ export const longContent = () => {
             </div>
             {state.isOpen && (
               <Drawer
+                scrollableContent
                 title="Drawer with long content"
                 onClose={() => {
                   updateValue({ isOpen: !state.isOpen });

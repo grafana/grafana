@@ -3,7 +3,7 @@ title = "Using Azure Monitor in Grafana"
 description = "Guide for using Azure Monitor in Grafana"
 keywords = ["grafana", "microsoft", "azure", "monitor", "application", "insights", "log", "analytics", "guide"]
 type = "docs"
-aliases = ["/datasources/azuremonitor"]
+aliases = ["/docs/grafana/latest/datasources/azuremonitor"]
 [menu.docs]
 name = "Azure Monitor"
 parent = "datasources"
@@ -273,6 +273,45 @@ To make writing queries easier there are several Grafana macros that can be used
 There are also some Grafana variables that can be used in Azure Log Analytics queries:
 
 - `$__interval` - Grafana calculates the minimum time grain that can be used to group by time in queries. More details on how it works [here]({{< relref "../../reference/templating.md#interval-variables" >}}). It returns a time grain like `5m` or `1h` that can be used in the bin function. E.g. `summarize count() by bin(TimeGenerated, $__interval)`
+
+### Templating with Variables for Azure Log Analytics
+
+Any Log Analytics query that returns a list of values can be used in the `Query` field in the Variable edit view. There is also one Grafana function for Log Analytics that returns a list of workspaces.
+
+Refer to the [Variables]({{< relref "../../reference/templating.md" >}}) documentation for an introduction to the templating feature and the different
+types of template variables.
+
+| Name                                               | Description                                                                                            |
+| -------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
+| _workspaces()_                                     | Returns a list of workspaces for the default subscription.                                             |
+| _workspaces(12345678-aaaa-bbbb-cccc-123456789aaa)_ | Returns a list of workspaces for the specified subscription (the parameter can be quoted or unquoted). |
+
+Example variable queries:
+
+<!-- prettier-ignore-start -->
+| Query                                                                                   | Description                                               |
+| --------------------------------------------------------------------------------------- | --------------------------------------------------------- |
+| _subscriptions()_                                                                       | Returns a list of Azure subscriptions                     |
+| _workspaces()_                                                                          | Returns a list of workspaces for default subscription     |
+| _workspaces("12345678-aaaa-bbbb-cccc-123456789aaa")_                                    | Returns a list of workspaces for a specified subscription |
+| _workspaces("$subscription")_                                                           | With template variable for the subscription parameter     |
+| _workspace("myWorkspace").Heartbeat \| distinct Computer_                               | Returns a list of Virtual Machines                        |
+| _workspace("$workspace").Heartbeat \| distinct Computer_                                | Returns a list of Virtual Machines with template variable |
+| _workspace("$workspace").Perf \| distinct ObjectName_                                   | Returns a list of objects from the Perf table             |
+| _workspace("$workspace").Perf \| where ObjectName == "$object" \| distinct CounterName_ | Returns a list of metric names from the Perf table        |
+
+<!-- prettier-ignore-end -->
+
+Example of a time series query using variables:
+
+```
+Perf
+| where ObjectName == "$object" and CounterName == "$metric"
+| where TimeGenerated >= $__timeFrom() and TimeGenerated <= $__timeTo()
+| where  $__contains(Computer, $computer)
+| summarize avg(CounterValue) by bin(TimeGenerated, $__interval), Computer
+| order by TimeGenerated asc
+```
 
 ### Azure Log Analytics Alerting
 

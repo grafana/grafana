@@ -45,7 +45,7 @@ export function buildNavModel(dataSource: DataSourceSettings, plugin: GenericDat
     });
   }
 
-  if (config.buildInfo.isEnterprise) {
+  if (config.licenseInfo.hasLicense) {
     navModel.children.push({
       active: false,
       icon: 'fa fa-fw fa-lock',

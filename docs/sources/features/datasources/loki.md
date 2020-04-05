@@ -3,7 +3,7 @@ title = "Using Loki in Grafana"
 description = "Guide for using Loki in Grafana"
 keywords = ["grafana", "loki", "logging", "guide"]
 type = "docs"
-aliases = ["/datasources/loki"]
+aliases = ["/docs/grafana/latest/datasources/loki"]
 [menu.docs]
 name = "Loki"
 parent = "datasources"
@@ -39,12 +39,14 @@ Just add it as a data source and you are ready to query your log data in [Explor
 ### Derived fields
 
 The Derived Fields configuration allows you to: 
+
 * Add fields parsed from the log message. 
 * Add a link that uses the value of the field. 
 
 You can use this functionality to link to your tracing backend directly from your logs, or link to a user profile page if a userId is present in the log line. These links will be shown in the [log details](/features/explore/#labels-and-parsed-fields).
 {{< docs-imagebox img="/img/docs/v65/loki_derived_fields.png" class="docs-image--no-shadow" caption="Screenshot of the derived fields configuration" >}}
 Each derived field consists of:
+
 - **Name:** Shown in the log details as a label.
 - **Regex:** A Regex pattern that runs on the log message and captures part of it to as the value of the new field. Can only contain capture a single group.
 - **URL**: A URL template used to construct a link next to the field value in log details. Use special `${__value.raw}` value in your template to interpolate the real field value into your URL template.
@@ -125,7 +127,7 @@ The following filter types are currently supported:
 
 ## Live tailing
 
-Loki supports Live tailing which displays logs in real-time. This feature is supported in [Explore]({{< relref "../explore/#loki-specific-features" >}}) and in dashboards with a Live toggle in the query editor.
+Loki supports Live tailing which displays logs in real-time. This feature is supported in [Explore]({{< relref "../explore/#loki-specific-features" >}}).
 
 Note that Live Tailing relies on two Websocket connections: one between the browser and the Grafana server, and another between the Grafana server and the Loki server. If you run any reverse proxies, please configure them accordingly.
 

@@ -1,4 +1,5 @@
 import _ from 'lodash';
+import md5 from 'md5';
 
 import {
   parseLabels,
@@ -9,9 +10,9 @@ import {
   ArrayVector,
   MutableDataFrame,
   findUniqueLabels,
-  dateTime,
   FieldConfig,
   DataFrameView,
+  dateTime,
 } from '@grafana/data';
 import templateSrv from 'app/features/templating/template_srv';
 import TableModel from 'app/core/table_model';
@@ -34,7 +35,7 @@ import { formatQuery, getHighlighterExpressionsFromQuery } from './query_utils';
 import { of } from 'rxjs';
 
 /**
- * Transforms LokiLogStream structure into a dataFrame. Used when doing standard queries.
+ * Transforms LokiLogStream structure into a dataFrame. Used when doing standard queries and older version of Loki.
  */
 export function legacyLogStreamToDataFrame(
   stream: LokiLegacyStreamResult,
@@ -45,68 +46,82 @@ export function legacyLogStreamToDataFrame(
   if (!labels && stream.labels) {
     labels = parseLabels(stream.labels);
   }
+
   const times = new ArrayVector<string>([]);
+  const timesNs = new ArrayVector<string>([]);
   const lines = new ArrayVector<string>([]);
   const uids = new ArrayVector<string>([]);
 
   for (const entry of stream.entries) {
     const ts = entry.ts || entry.timestamp;
+    // iso string with nano precision, will be truncated but is parse-able
     times.add(ts);
+    // So this matches new format, we are loosing precision here, which sucks but no easy way to keep it and this
+    // is for old pre 1.0.0 version Loki so probably does not affect that much.
+    timesNs.add(dateTime(ts).valueOf() + '000000');
     lines.add(entry.line);
-    uids.add(`${ts}_${stream.labels}`);
+    uids.add(createUid(ts, stream.labels, entry.line));
   }
 
-  if (reverse) {
-    times.buffer = times.buffer.reverse();
-    lines.buffer = lines.buffer.reverse();
-  }
-
-  return {
-    refId,
-    fields: [
-      { name: 'ts', type: FieldType.time, config: { title: 'Time' }, values: times }, // Time
-      { name: 'line', type: FieldType.string, config: {}, values: lines, labels }, // Line
-      { name: 'id', type: FieldType.string, config: {}, values: uids },
-    ],
-    length: times.length,
-  };
+  return constructDataFrame(times, timesNs, lines, uids, labels, reverse, refId);
 }
 
+/**
+ * Transforms LokiStreamResult structure into a dataFrame. Used when doing standard queries and newer version of Loki.
+ */
 export function lokiStreamResultToDataFrame(stream: LokiStreamResult, reverse?: boolean, refId?: string): DataFrame {
   const labels: Labels = stream.stream;
+  const labelsString = Object.entries(labels)
+    .map(([key, val]) => `${key}="${val}"`)
+    .sort()
+    .join('');
 
   const times = new ArrayVector<string>([]);
+  const timesNs = new ArrayVector<string>([]);
   const lines = new ArrayVector<string>([]);
   const uids = new ArrayVector<string>([]);
 
   for (const [ts, line] of stream.values) {
-    times.add(
-      dateTime(Number.parseFloat(ts) / 1e6)
-        .utc()
-        .format()
-    );
+    // num ns epoch in string, we convert it to iso string here so it matches old format
+    times.add(new Date(parseInt(ts.substr(0, ts.length - 6), 10)).toISOString());
+    timesNs.add(ts);
     lines.add(line);
-    uids.add(
-      `${ts}_{${Object.entries(labels)
-        .map(([key, val]) => `${key}="${val}"`)
-        .join('')}}`
-    );
+    uids.add(createUid(ts, labelsString, line));
   }
 
-  if (reverse) {
-    times.buffer = times.buffer.reverse();
-    lines.buffer = lines.buffer.reverse();
-  }
+  return constructDataFrame(times, timesNs, lines, uids, labels, reverse, refId);
+}
 
-  return {
+/**
+ * Constructs dataFrame with supplied fields and other data. Also makes sure it is properly reversed if needed.
+ */
+function constructDataFrame(
+  times: ArrayVector<string>,
+  timesNs: ArrayVector<string>,
+  lines: ArrayVector<string>,
+  uids: ArrayVector<string>,
+  labels: Labels,
+  reverse?: boolean,
+  refId?: string
+) {
+  const dataFrame = {
     refId,
     fields: [
       { name: 'ts', type: FieldType.time, config: { title: 'Time' }, values: times }, // Time
       { name: 'line', type: FieldType.string, config: {}, values: lines, labels }, // Line
       { name: 'id', type: FieldType.string, config: {}, values: uids },
+      { name: 'tsNs', type: FieldType.time, config: { title: 'Time ns' }, values: timesNs }, // Time
     ],
     length: times.length,
   };
+
+  if (reverse) {
+    const mutableDataFrame = new MutableDataFrame(dataFrame);
+    mutableDataFrame.reverse();
+    return mutableDataFrame;
+  }
+
+  return dataFrame;
 }
 
 /**
@@ -145,7 +160,7 @@ export function appendLegacyResponseToBufferedData(response: LokiLegacyStreamRes
       data.values.ts.add(ts);
       data.values.line.add(entry.line);
       data.values.labels.add(unique);
-      data.values.id.add(`${ts}_${stream.labels}`);
+      data.values.id.add(createUid(ts, stream.labels, entry.line));
     }
   }
 }
@@ -171,19 +186,24 @@ export function appendResponseToBufferedData(response: LokiTailResponse, data: M
   for (const stream of streams) {
     // Find unique labels
     const unique = findUniqueLabels(stream.stream, baseLabels);
+    const allLabelsString = Object.entries(stream.stream)
+      .map(([key, val]) => `${key}="${val}"`)
+      .sort()
+      .join('');
 
     // Add each line
     for (const [ts, line] of stream.values) {
-      data.values.ts.add(parseInt(ts, 10) / 1e6);
+      data.values.ts.add(new Date(parseInt(ts.substr(0, ts.length - 6), 10)).toISOString());
+      data.values.tsNs.add(ts);
       data.values.line.add(line);
       data.values.labels.add(unique);
-      data.values.id.add(
-        `${ts}_${Object.entries(unique)
-          .map(([key, val]) => `${key}=${val}`)
-          .join('')}`
-      );
+      data.values.id.add(createUid(ts, allLabelsString, line));
     }
   }
+}
+
+function createUid(ts: string, labelsString: string, line: string): string {
+  return md5(`${ts}_${labelsString}_${line}`);
 }
 
 function lokiMatrixToTimeSeries(matrixResult: LokiMatrixResult, options: TransformerOptions): TimeSeries {
@@ -375,11 +395,16 @@ export const enhanceDataFrame = (dataFrame: DataFrame, config: LokiOptions | nul
 
   const fields = derivedFields.reduce((acc, field) => {
     const config: FieldConfig = {};
-    if (field.url) {
+    if (field.url || field.datasourceName) {
       config.links = [
         {
           url: field.url,
           title: '',
+          meta: field.datasourceName
+            ? {
+                datasourceName: field.datasourceName,
+              }
+            : undefined,
         },
       ];
     }
@@ -447,7 +472,7 @@ export function processRangeQueryResponse(
   switch (response.data.resultType) {
     case LokiResultType.Stream:
       return of({
-        data: lokiStreamsToDataframes(response.data.result, target, limit, config, reverse),
+        data: lokiStreamsToDataframes(limit > 0 ? response.data.result : [], target, limit, config, reverse),
         key: `${target.refId}_log`,
       });
 

@@ -3,7 +3,7 @@ import classNames from 'classnames';
 import { validate, EventsWithValidation, hasValidationEvent } from '../../utils';
 import { ValidationEvents, ValidationRule } from '../../types';
 
-export enum InputStatus {
+export enum LegacyInputStatus {
   Invalid = 'invalid',
   Valid = 'valid',
 }
@@ -11,11 +11,12 @@ export enum InputStatus {
 interface Props extends React.HTMLProps<HTMLInputElement> {
   validationEvents?: ValidationEvents;
   hideErrorMessage?: boolean;
+  inputRef?: React.LegacyRef<HTMLInputElement>;
 
   // Override event props and append status as argument
-  onBlur?: (event: React.FocusEvent<HTMLInputElement>, status?: InputStatus) => void;
-  onFocus?: (event: React.FocusEvent<HTMLInputElement>, status?: InputStatus) => void;
-  onChange?: (event: React.ChangeEvent<HTMLInputElement>, status?: InputStatus) => void;
+  onBlur?: (event: React.FocusEvent<HTMLInputElement>, status?: LegacyInputStatus) => void;
+  onFocus?: (event: React.FocusEvent<HTMLInputElement>, status?: LegacyInputStatus) => void;
+  onChange?: (event: React.ChangeEvent<HTMLInputElement>, status?: LegacyInputStatus) => void;
 }
 
 interface State {
@@ -32,11 +33,11 @@ export class Input extends PureComponent<Props, State> {
   };
 
   get status() {
-    return this.state.error ? InputStatus.Invalid : InputStatus.Valid;
+    return this.state.error ? LegacyInputStatus.Invalid : LegacyInputStatus.Valid;
   }
 
   get isInvalid() {
-    return this.status === InputStatus.Invalid;
+    return this.status === LegacyInputStatus.Invalid;
   }
 
   validatorAsync = (validationRules: ValidationRule[]) => {
@@ -70,14 +71,14 @@ export class Input extends PureComponent<Props, State> {
   };
 
   render() {
-    const { validationEvents, className, hideErrorMessage, ...restProps } = this.props;
+    const { validationEvents, className, hideErrorMessage, inputRef, ...restProps } = this.props;
     const { error } = this.state;
     const inputClassName = classNames('gf-form-input', { invalid: this.isInvalid }, className);
     const inputElementProps = this.populateEventPropsWithStatus(restProps, validationEvents);
 
     return (
       <div style={{ flexGrow: 1 }}>
-        <input {...inputElementProps} className={inputClassName} />
+        <input {...inputElementProps} ref={inputRef} className={inputClassName} />
         {error && !hideErrorMessage && <span>{error}</span>}
       </div>
     );

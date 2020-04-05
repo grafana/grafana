@@ -1,4 +1,4 @@
-import { LoadingState, toDataFrame, dateTime, PanelData, DataQueryRequest } from '@grafana/data';
+import { DataQueryRequest, dateTime, LoadingState, PanelData, toDataFrame } from '@grafana/data';
 import { filterPanelDataToQuery } from './QueryEditorRow';
 
 function makePretendRequest(requestId: string, subRequests?: DataQueryRequest[]): DataQueryRequest {
@@ -32,15 +32,15 @@ describe('filterPanelDataToQuery', () => {
 
   it('should not have an error unless the refId matches', () => {
     const panelData = filterPanelDataToQuery(data, 'A');
-    expect(panelData.series.length).toBe(1);
-    expect(panelData.series[0].refId).toBe('A');
-    expect(panelData.error).toBeUndefined();
+    expect(panelData?.series.length).toBe(1);
+    expect(panelData?.series[0].refId).toBe('A');
+    expect(panelData?.error).toBeUndefined();
   });
 
   it('should match the error to the query', () => {
     const panelData = filterPanelDataToQuery(data, 'B');
-    expect(panelData.series.length).toBe(3);
-    expect(panelData.series[0].refId).toBe('B');
-    expect(panelData.error!.refId).toBe('B');
+    expect(panelData?.series.length).toBe(3);
+    expect(panelData?.series[0].refId).toBe('B');
+    expect(panelData?.error!.refId).toBe('B');
   });
 });

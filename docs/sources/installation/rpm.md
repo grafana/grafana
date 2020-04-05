@@ -1,58 +1,63 @@
 +++
-title = "Installing on RPM-based Linux"
-description = "Grafana Installation guide for Centos, Fedora, OpenSuse, Redhat."
+title = "Install on RPM-based Linux"
+description = "Grafana Installation guide for RPM-based Linux, such as Centos, Fedora, OpenSuse, and Red Hat."
 keywords = ["grafana", "installation", "documentation", "centos", "fedora", "opensuse", "redhat"]
-aliases = ["installation/installation/rpm"]
+aliases = ["/docs/grafana/latest/installation/installation/rpm"]
 type = "docs"
 [menu.docs]
-name = "Installing on Centos / Redhat"
+name = "Install on RPM-based Linux"
 identifier = "rpm"
 parent = "installation"
 weight = 300
 +++
 
-# Installing on RPM-based Linux (CentOS, Fedora, OpenSuse, RedHat)
+# Install on RPM-based Linux (CentOS, Fedora, OpenSuse, Red Hat)
 
-Read [Upgrading Grafana]({{< relref "upgrading.md" >}}) for tips and guidance on updating an existing
-installation.
+This page explains how to install Grafana dependencies, download and install Grafana, get the service up and running on your RPM-based Linux system, and the installation package details.
 
-## Download
-
-Go to the [download page](https://grafana.com/grafana/download?platform=linux) for the latest download
-links.
+**Note on upgrading:** While the process for upgrading Grafana is very similar to installing Grafana, there are some key backup steps you should perform. Read [Upgrading Grafana]({{< relref "upgrading.md" >}}) for tips and guidance on updating an existing installation.
 
 
-You can install Grafana using Yum directly:
+## 1. Download and install
 
-```bash
-$ sudo yum install <rpm package url>
-```
+You can install Grafana from a YUM repository, manually using YUM, manually using RPM, or by downloading a binary `.tar.gz` file.
 
-You will find package URLs on the [download page](https://grafana.com/grafana/download?platform=linux).
+### Install from YUM repository
 
-Or install manually using `rpm`. First execute
+If you install from the YUM repository, then Grafana is automatically updated every time you run `sudo yum update`.
 
-```bash
-$ wget <rpm package url>
-```
+| Grafana Version            | Package            | Repository                                         |
+|----------------------------|--------------------|----------------------------------------------------|
+| Grafana OSS                | grafana            | `https://packages.grafana.com/oss/rpm`             |
+| Grafana OSS (Beta)         | grafana            | `https://packages.grafana.com/oss/rpm-beta`        |
+| Grafana Enterprise         | grafana-enterprise | `https://packages.grafana.com/enterprise/rpm`      |
+| Grafana Enterprise (Beta)  | grafana-enterprise | `https://packages.grafana.com/enterprise/rpm-beta` |
 
-### On CentOS / Fedora / Redhat:
+
+Add a new file to your YUM repo using the method of your choice. The command below uses `nano`.
 
 ```bash
-$ sudo yum install initscripts urw-fonts
-$ sudo rpm -Uvh <local rpm package>
+sudo nano /etc/yum.repos.d/grafana.repo
 ```
 
-### On OpenSuse:
+Choose if you want to install the Open Source or Enterprise edition of Grafana and enter the information from the edition you've chosen into `grafana.repo`. If you want to install the beta version of Grafana you need to replace the URL with a beta URL from the table above.
 
+> We recommend all users to install the Enterprise Edition of Grafana, which can be seamlessly upgraded with a Grafana Enterprise [subscription](https://grafana.com/products/enterprise/?utm_source=grafana-install-page).
+
+For Enterprise releases:
 ```bash
-$ sudo rpm -i --nodeps <local rpm package>
+[grafana]
+name=grafana
+baseurl=https://packages.grafana.com/enterprise/rpm
+repo_gpgcheck=1
+enabled=1
+gpgcheck=1
+gpgkey=https://packages.grafana.com/gpg.key
+sslverify=1
+sslcacert=/etc/pki/tls/certs/ca-bundle.crt
 ```
 
-## Install via YUM Repository
-
-Add the following to a new file at `/etc/yum.repos.d/grafana.repo`
-
+For OSS releases:
 ```bash
 [grafana]
 name=grafana
@@ -65,29 +70,125 @@ sslverify=1
 sslcacert=/etc/pki/tls/certs/ca-bundle.crt
 ```
 
-There is a separate repository if you want beta releases.
+Install Grafana with one of the following commands:
 
 ```bash
-[grafana]
-name=grafana
-baseurl=https://packages.grafana.com/oss/rpm-beta
-repo_gpgcheck=1
-enabled=1
-gpgcheck=1
-gpgkey=https://packages.grafana.com/gpg.key
-sslverify=1
-sslcacert=/etc/pki/tls/certs/ca-bundle.crt
+sudo yum install grafana
+
+# or
+
+sudo yum install grafana-enterprise
 ```
 
-Then install Grafana via the `yum` command.
+### Install manually with YUM
+
+If you install manually with YUM, then you will need to manually update Grafana for each new version. To enable automatic updates for your Grafana installation please use the instructions below to install via our YUM repository.
+
+1. On the [Grafana download page](https://grafana.com/grafana/download), select the Grafana version you want to install. 
+   * The most recent Grafana version is selected by default.
+   * The **Version** field displays only finished releases. If you want to install a beta version, click **Nightly Builds** and then select a version.
+2. Select an **Edition**.
+   * **Enterprise** - Recommended download. Functionally identical to the open source version, but includes features you can unlock with a license if you so choose.
+   * **Open Source** - Functionally identical to the Enterprise version, but you will need to download the Enterprise version if you want enterprise features.
+3. Depending on which system you are running, click **Linux** or **ARM**.
+4. Copy and paste the code from the installation page into your command line and run. It follows the pattern shown below.
 
 ```bash
-$ sudo yum install grafana
+wget <rpm package url>
+sudo yum localinstall <local rpm package>
+```
+   You can also install Grafana using YUM directly:
+
+```bash
+sudo yum install <rpm package url>
 ```
 
-### RPM GPG Key
+### Install with RPM
 
-The RPMs are signed, you can verify the signature with this [public GPG key](https://packages.grafana.com/gpg.key).
+If you install with RPM, then you will need to manually update Grafana for each new version. This method varies according to which Linux OS you are running. Read the instructions fully before you begin.
+
+**Note:** The .rpm files are signed, you can verify the signature with this [public GPG key](https://packages.grafana.com/gpg.key).
+
+1. On the [Grafana download page](https://grafana.com/grafana/download), select the Grafana version you want to install. 
+   * The most recent Grafana version is selected by default.
+   * The **Version** field displays only finished releases. If you want to install a beta version, click **Nightly Builds** and then select a version.
+2. Select an **Edition**.
+   * **Enterprise** - Recommended download. Functionally identical to the open source version, but includes features you can unlock with a license if you so choose.
+   * **Open Source** - Functionally identical to the Enterprise version, but you will need to download the Enterprise version if you want Enterprise features.
+3. Depending on which system you are running, click **Linux** or **ARM**.
+4. Copy and paste the .rpm package URL and the local .rpm package information from the installation page into the pattern shown below, then run the commands.
+
+**On CentOS, Fedora, Red Hat, or RHEL:**
+
+```bash
+sudo yum install initscripts urw-fonts wget
+wget <rpm package url>
+sudo rpm -Uvh <local rpm package>
+```
+
+**On OpenSUSE or SUSE:**
+
+```bash
+wget <rpm package url>
+sudo rpm -i --nodeps <local rpm package>
+```
+
+### Install from binary .tar.gz file
+
+Download the latest [`.tar.gz` file](https://grafana.com/grafana/download?platform=linux) and extract it. The files extract into a folder named after the Grafana version that you downloaded. This folder contains all files required to run Grafana. There are no init scripts or install scripts in this package.
+
+```bash
+wget <tar.gz package url>
+sudo tar -zxvf <tar.gz package>
+```
+
+## 2. Start the server
+
+This starts the `grafana-server` process as the `grafana` user, which was created during the package installation. The systemd commands work in most cases, but some older Linux systems might require init.d. The installer should prompt you with the correct commands.
+
+If you installed with an `.rpm` package, then you can start the server using `systemd` or `init.d`. If you installed a binary `.tar.gz` file, then you need to execute the binary.
+
+### Start the server with systemd
+
+To start the service and verify that the service has started:
+
+```bash
+sudo systemctl daemon-reload
+sudo systemctl start grafana-server
+sudo systemctl status grafana-server
+```
+
+Configure the Grafana server to start at boot:
+
+```bash
+sudo systemctl enable grafana-server.service
+```
+
+> **SUSE or OpenSUSE users:** You might need to start the server with the systemd method, then then use the init.d method to configure Grafana to start at boot.
+
+### Start the server with init.d
+
+To start the service and verify that the service has started:
+
+```bash
+sudo service grafana-server start
+sudo service grafana-server status
+```
+
+Configure the Grafana server to start at boot:
+
+```bash
+sudo /sbin/chkconfig --add grafana-server
+```
+
+### Execute the binary
+
+The `grafana-server` binary needs the working directory to be the root install directory where the binary and the `public` folder are located.
+
+Start Grafana by running: 
+```bash
+./bin/grafana-server web
+```
 
 ## Package details
 
@@ -99,99 +200,10 @@ The RPMs are signed, you can verify the signature with this [public GPG key](htt
 - The default configuration uses a log file at `/var/log/grafana/grafana.log`
 - The default configuration specifies an sqlite3 database at `/var/lib/grafana/grafana.db`
 
-## Start the server (init.d service)
+## Next steps
 
-You can start Grafana by running:
+Refer to the [Getting Started]({{< relref "../guides/getting_started/" >}}) guide for information about logging in, setting up data sources, and so on.
 
-```bash
-$ sudo service grafana-server start
-```
+## Configure Grafana
 
-This will start the `grafana-server` process as the `grafana` user,
-which is created during package installation. The default HTTP port is
-`3000`, and default user and group is `admin`.
-
-Default login and password `admin`/ `admin`
-
-To configure the Grafana server to start at boot time:
-
-```bash
-$ sudo /sbin/chkconfig --add grafana-server
-```
-
-## Start the server (via systemd)
-
-```bash
-$ systemctl daemon-reload
-$ systemctl start grafana-server
-$ systemctl status grafana-server
-```
-
-### Enable the systemd service to start at boot
-
-```bash
-sudo systemctl enable grafana-server.service
-```
-
-## Environment file
-
-The systemd service file and init.d script both use the file located at
-`/etc/sysconfig/grafana-server` for environment variables used when
-starting the back-end. Here you can override log directory, data
-directory and other variables.
-
-### Logging
-
-By default Grafana will log to `/var/log/grafana`
-
-### Database
-
-The default configuration specifies a sqlite3 database located at
-`/var/lib/grafana/grafana.db`. Please backup this database before
-upgrades. You can also use MySQL or Postgres as the Grafana database, as detailed on [the configuration page]({{< relref "configuration.md#database" >}}).
-
-## Configuration
-
-The configuration file is located at `/etc/grafana/grafana.ini`.  Go the
-[Configuration]({{< relref "configuration.md" >}}) page for details on all
-those options.
-
-### Adding data sources
-
-- [Graphite]({{< relref "../features/datasources/graphite.md" >}})
-- [InfluxDB]({{< relref "../features/datasources/influxdb.md" >}})
-- [OpenTSDB]({{< relref "../features/datasources/opentsdb.md" >}})
-- [Prometheus]({{< relref "../features/datasources/prometheus.md" >}})
-
-### Server side image rendering
-
-Server side image (png) rendering is a feature that is optional but very useful when sharing visualizations,
-for example in alert notifications.
-
-If the image is missing text make sure you have font packages installed.
-
-```bash
-yum install fontconfig
-yum install freetype*
-yum install urw-fonts
-```
-
-## Installing from binary tar file
-
-Download [the latest `.tar.gz` file](https://grafana.com/get) and
-extract it.  This will extract into a folder named after the version you
-downloaded. This folder contains all files required to run Grafana.  There are
-no init scripts or install scripts in this package.
-
-To configure Grafana add a configuration file named `custom.ini` to the
-`conf` folder and override any of the settings defined in
-`conf/defaults.ini`.
-
-Start Grafana by executing `./bin/grafana-server web`. The `grafana-server`
-binary needs the working directory to be the root install directory (where the
-binary and the `public` folder is located).
-
-## Logging in for the first time
-
-To run Grafana open your browser and go to http://localhost:3000/. 3000 is the default HTTP port that Grafana listens to if you haven't [configured a different port]({{< relref "configuration/#http-port" >}}).
-Then follow the instructions [here]({{< relref "../guides/getting_started/" >}}).
+Refer to the [Configuration]({{< relref "configuration.md" >}}) page for details on options for customizing your environment, logging, database, and so on.

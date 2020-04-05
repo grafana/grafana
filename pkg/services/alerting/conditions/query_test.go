@@ -3,7 +3,9 @@ package conditions
 import (
 	"context"
 	"testing"
+	"time"
 
+	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/null"
 	"github.com/grafana/grafana/pkg/components/simplejson"
@@ -51,9 +53,31 @@ func TestQueryCondition(t *testing.T) {
 				So(cr.Firing, ShouldBeTrue)
 			})
 
+			Convey("should fire when avg is above 100 on dataframe", func() {
+				ctx.frame = data.NewFrame("",
+					data.NewField("time", nil, []time.Time{time.Now()}),
+					data.NewField("val", nil, []int64{120, 150}),
+				)
+				cr, err := ctx.exec()
+
+				So(err, ShouldBeNil)
+				So(cr.Firing, ShouldBeTrue)
+			})
+
 			Convey("Should not fire when avg is below 100", func() {
 				points := tsdb.NewTimeSeriesPointsFromArgs(90, 0)
 				ctx.series = tsdb.TimeSeriesSlice{tsdb.NewTimeSeries("test1", points)}
+				cr, err := ctx.exec()
+
+				So(err, ShouldBeNil)
+				So(cr.Firing, ShouldBeFalse)
+			})
+
+			Convey("Should not fire when avg is below 100 on dataframe", func() {
+				ctx.frame = data.NewFrame("",
+					data.NewField("time", nil, []time.Time{time.Now()}),
+					data.NewField("val", nil, []int64{12, 47}),
+				)
 				cr, err := ctx.exec()
 
 				So(err, ShouldBeNil)
@@ -144,6 +168,7 @@ type queryConditionTestContext struct {
 	reducer   string
 	evaluator string
 	series    tsdb.TimeSeriesSlice
+	frame     *data.Frame
 	result    *alerting.EvalContext
 	condition *QueryCondition
 }
@@ -168,10 +193,24 @@ func (ctx *queryConditionTestContext) exec() (*alerting.ConditionResult, error) 
 
 	ctx.condition = condition
 
+	qr := &tsdb.QueryResult{
+		Series: ctx.series,
+	}
+
+	if ctx.frame != nil {
+		bFrame, err := data.MarshalArrow(ctx.frame)
+		if err != nil {
+			return nil, err
+		}
+		qr = &tsdb.QueryResult{
+			Dataframes: [][]byte{bFrame},
+		}
+	}
+
 	condition.HandleRequest = func(context context.Context, dsInfo *models.DataSource, req *tsdb.TsdbQuery) (*tsdb.Response, error) {
 		return &tsdb.Response{
 			Results: map[string]*tsdb.QueryResult{
-				"A": {Series: ctx.series},
+				"A": qr,
 			},
 		}, nil
 	}

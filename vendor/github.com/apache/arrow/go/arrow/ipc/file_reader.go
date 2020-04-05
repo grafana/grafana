@@ -82,7 +82,7 @@ func NewFileReader(r ReadAtSeeker, opts ...Option) (*FileReader, error) {
 	}
 
 	if cfg.schema != nil && !cfg.schema.Equal(f.schema) {
-		return nil, errors.Errorf("arrow/ipc: inconsitent schema for reading (got: %v, want: %v)", f.schema, cfg.schema)
+		return nil, errors.Errorf("arrow/ipc: inconsistent schema for reading (got: %v, want: %v)", f.schema, cfg.schema)
 	}
 
 	return &f, err

@@ -31,6 +31,13 @@ describe('parseSelector()', () => {
 
     parsed = parseSelector('{foo="bar",baz="}');
     expect(parsed.selector).toBe('{foo="bar"}');
+
+    // Cursor in value area counts as incomplete
+    parsed = parseSelector('{foo="bar",baz=""}', 16);
+    expect(parsed.selector).toBe('{foo="bar"}');
+
+    parsed = parseSelector('{foo="bar",baz="4"}', 17);
+    expect(parsed.selector).toBe('{foo="bar"}');
   });
 
   it('throws if not inside a selector', () => {
@@ -55,7 +62,7 @@ describe('parseSelector()', () => {
     parsed = parseSelector('bar{foo}', 4);
     expect(parsed.selector).toBe('{__name__="bar"}');
 
-    parsed = parseSelector('baz{foo="bar"}', 12);
+    parsed = parseSelector('baz{foo="bar"}', 13);
     expect(parsed.selector).toBe('{__name__="baz",foo="bar"}');
 
     parsed = parseSelector('bar:metric:1m{}', 14);

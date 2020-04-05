@@ -15,13 +15,13 @@ exports[`TimeSyncButton should render component 1`] = `
     >
       <button
         aria-label="Synced times"
-        className="btn navbar-button navbar-button--attached explore-active-button-glow css-14r9fpj-timePickerSynced"
+        className="btn navbar-button navbar-button--attached explore-active-button"
         onClick={[Function]}
         onMouseEnter={[Function]}
         onMouseLeave={[Function]}
       >
         <i
-          className="fa fa-link icon-brand-gradient"
+          className="fa fa-link css-1c3xqzq-topPadding icon-brand-gradient"
         />
       </button>
     </PopoverController>

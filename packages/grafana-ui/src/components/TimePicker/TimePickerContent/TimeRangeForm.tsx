@@ -1,10 +1,11 @@
 import React, { FormEvent, useState, useCallback } from 'react';
-import { TIME_FORMAT, TimeZone, isDateTime, TimeRange, DateTime } from '@grafana/data';
+import { TIME_FORMAT, TimeZone, isDateTime, TimeRange, DateTime, dateMath } from '@grafana/data';
 import { stringToDateTimeType, isValidTimeString } from '../time';
 import { mapStringsToTimeRange } from './mapper';
 import { TimePickerCalendar } from './TimePickerCalendar';
 import Forms from '../../Forms';
-import { isMathString } from '@grafana/data/src/datetime/datemath';
+import { Input } from '../../Forms/Input/Input';
+import { Button } from '../../Button';
 
 interface Props {
   isFullscreen: boolean;
@@ -61,12 +62,12 @@ export const TimeRangeForm: React.FC<Props> = props => {
     [timeZone]
   );
 
-  const icon = isFullscreen ? null : <Forms.Button icon="fa fa-calendar" variant="secondary" onClick={onOpen} />;
+  const icon = isFullscreen ? null : <Button icon="fa fa-calendar" variant="secondary" onClick={onOpen} />;
 
   return (
     <>
       <Forms.Field label="From" invalid={from.invalid} error={errorMessage}>
-        <Forms.Input
+        <Input
           onClick={event => event.stopPropagation()}
           onFocus={onFocus}
           onChange={event => setFrom(eventToState(event, false, timeZone))}
@@ -75,7 +76,7 @@ export const TimeRangeForm: React.FC<Props> = props => {
         />
       </Forms.Field>
       <Forms.Field label="To" invalid={to.invalid} error={errorMessage}>
-        <Forms.Input
+        <Input
           onClick={event => event.stopPropagation()}
           onFocus={onFocus}
           onChange={event => setTo(eventToState(event, true, timeZone))}
@@ -83,7 +84,7 @@ export const TimeRangeForm: React.FC<Props> = props => {
           value={to.value}
         />
       </Forms.Field>
-      <Forms.Button onClick={onApply}>Apply time range</Forms.Button>
+      <Button onClick={onApply}>Apply time range</Button>
 
       <TimePickerCalendar
         isFullscreen={isFullscreen}
@@ -116,7 +117,7 @@ function valueAsString(value: DateTime | string): string {
 }
 
 function isValid(value: string, roundup?: boolean, timeZone?: TimeZone): boolean {
-  if (isMathString(value)) {
+  if (dateMath.isMathString(value)) {
     return isValidTimeString(value);
   }
 

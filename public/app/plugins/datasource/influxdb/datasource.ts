@@ -1,12 +1,12 @@
 import _ from 'lodash';
 
-import { dateMath, DataSourceApi, DataSourceInstanceSettings } from '@grafana/data';
+import { dateMath, DataSourceApi, DataSourceInstanceSettings, ScopedVars } from '@grafana/data';
 import InfluxSeries from './influx_series';
 import InfluxQueryModel from './influx_query_model';
 import ResponseParser from './response_parser';
 import { InfluxQueryBuilder } from './query_builder';
 import { InfluxQuery, InfluxOptions } from './types';
-import { BackendSrv } from 'app/core/services/backend_srv';
+import { getBackendSrv } from '@grafana/runtime';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 
 export default class InfluxDatasource extends DataSourceApi<InfluxQuery, InfluxOptions> {
@@ -23,11 +23,7 @@ export default class InfluxDatasource extends DataSourceApi<InfluxQuery, InfluxO
   httpMode: string;
 
   /** @ngInject */
-  constructor(
-    instanceSettings: DataSourceInstanceSettings<InfluxOptions>,
-    private backendSrv: BackendSrv,
-    private templateSrv: TemplateSrv
-  ) {
+  constructor(instanceSettings: DataSourceInstanceSettings<InfluxOptions>, private templateSrv: TemplateSrv) {
     super(instanceSettings);
     this.type = 'influxdb';
     this.urls = _.map(instanceSettings.url.split(','), url => {
@@ -171,7 +167,7 @@ export default class InfluxDatasource extends DataSourceApi<InfluxQuery, InfluxO
     return false;
   }
 
-  interpolateVariablesInQueries(queries: InfluxQuery[]): InfluxQuery[] {
+  interpolateVariablesInQueries(queries: InfluxQuery[], scopedVars: ScopedVars): InfluxQuery[] {
     if (!queries || queries.length === 0) {
       return [];
     }
@@ -182,11 +178,11 @@ export default class InfluxDatasource extends DataSourceApi<InfluxQuery, InfluxO
         const expandedQuery = {
           ...query,
           datasource: this.name,
-          measurement: this.templateSrv.replace(query.measurement, null, 'regex'),
+          measurement: this.templateSrv.replace(query.measurement, scopedVars, 'regex'),
         };
 
         if (query.rawQuery) {
-          expandedQuery.query = this.templateSrv.replace(query.query, null, 'regex');
+          expandedQuery.query = this.templateSrv.replace(query.query, scopedVars, 'regex');
         }
 
         if (query.tags) {
@@ -208,7 +204,9 @@ export default class InfluxDatasource extends DataSourceApi<InfluxQuery, InfluxO
   metricFindQuery(query: string, options?: any) {
     const interpolated = this.templateSrv.replace(query, null, 'regex');
 
-    return this._seriesQuery(interpolated, options).then(_.curry(this.responseParser.parse)(query));
+    return this._seriesQuery(interpolated, options).then(resp => {
+      return this.responseParser.parse(query, resp);
+    });
   }
 
   getTagKeys(options: any = {}) {
@@ -320,28 +318,32 @@ export default class InfluxDatasource extends DataSourceApi<InfluxQuery, InfluxO
       req.headers['Content-type'] = 'application/x-www-form-urlencoded';
     }
 
-    return this.backendSrv.datasourceRequest(req).then(
-      (result: any) => {
-        return result.data;
-      },
-      (err: any) => {
-        if (err.status !== 0 || err.status >= 300) {
-          if (err.data && err.data.error) {
-            throw {
-              message: 'InfluxDB Error: ' + err.data.error,
-              data: err.data,
-              config: err.config,
-            };
+    return getBackendSrv()
+      .datasourceRequest(req)
+      .then(
+        (result: any) => {
+          return result.data;
+        },
+        (err: any) => {
+          if ((Number.isInteger(err.status) && err.status !== 0) || err.status >= 300) {
+            if (err.data && err.data.error) {
+              throw {
+                message: 'InfluxDB Error: ' + err.data.error,
+                data: err.data,
+                config: err.config,
+              };
+            } else {
+              throw {
+                message: 'Network Error: ' + err.statusText + '(' + err.status + ')',
+                data: err.data,
+                config: err.config,
+              };
+            }
           } else {
-            throw {
-              message: 'Network Error: ' + err.statusText + '(' + err.status + ')',
-              data: err.data,
-              config: err.config,
-            };
+            throw err;
           }
         }
-      }
-    );
+      );
   }
 
   getTimeFilter(options: any) {

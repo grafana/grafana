@@ -11,6 +11,9 @@ awsconfig
 /public/views/error.html
 /emails/dist
 /reports
+/e2e/tmp
+.yarnrc
+.yarn/
 
 # Enterprise emails
 /emails/templates/enterprise_*
@@ -60,7 +63,8 @@ profile.cov
 /pkg/cmd/grafana-cli/grafana-cli
 /pkg/cmd/grafana-server/grafana-server
 /pkg/cmd/grafana-server/debug
-/pkg/extensions
+/pkg/extensions/*
+!/pkg/extensions/main.go
 /public/app/extensions
 debug.test
 /examples/*/dist
@@ -80,6 +84,8 @@ debug.test
 
 /devenv/bulk-dashboards/*.json
 /devenv/bulk_alerting_dashboards/*.json
+/devenv/datasources_bulk.yaml
+/devenv/bulk_alerting_dashboards/bulk_alerting_datasources.yaml
 
 /scripts/build/release_publisher/release_publisher
 *.patch
@@ -88,6 +94,7 @@ debug.test
 /packages/**/dist
 /packages/**/compiled
 /packages/**/.rpt2_cache
+/packages/**/tsdoc-metadata.json
 
 # Ignore go local build dependencies
 /scripts/go/bin/**
@@ -99,6 +106,10 @@ compilation-stats.json
 /packages/grafana-e2e/cypress/screenshots
 /packages/grafana-e2e/cypress/videos
 /packages/grafana-e2e/cypress/logs
-/public/e2e-test/screenShots/theOutput
-/public/e2e-tests/screenShots/theOutput/*.png
-/public/e2e-tests/videos
+/e2e/server.log
+/e2e/suite1/screenshots
+!/e2e/suite1/screenshots/expeced/*
+/e2e/suite1/videos/*
+
+# report dumping the whole system env
+/report.*.json
