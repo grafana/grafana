@@ -95,6 +95,7 @@ export type IconName =
   | 'search-plus'
   | 'search-minus'
   | 'table'
+  | 'plus'
   | 'heart'
   | 'favorite';
 

@@ -121,7 +121,7 @@ func (hs *HTTPServer) setIndexViewData(c *models.ReqContext) (*dtos.IndexViewDat
 		data.NavTree = append(data.NavTree, &dtos.NavLink{
 			Text:       "Create",
 			Id:         "create",
-			Icon:       "plus-circle",
+			Icon:       "plus",
 			Url:        setting.AppSubUrl + "/dashboard/new",
 			Children:   children,
 			SortWeight: dtos.WeightCreate,
