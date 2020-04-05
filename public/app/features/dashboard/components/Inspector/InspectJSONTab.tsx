@@ -147,6 +147,7 @@ export class InspectJSONTab extends PureComponent<Props, State> {
       }
     } catch (err) {
       console.log('Error applyign updates', err);
+      appEvents.emit(AppEvents.alertError, ['Invalid JSON Text']);
     }
 
     // Close the inspector
@@ -216,6 +217,7 @@ const getStyles = stylesFactory(() => {
       color: inherit;
       width: 100%;
       margin-bottom: 5px;
+      font-family: monospace;
     `,
   };
 });
