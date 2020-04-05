@@ -29,10 +29,11 @@ const VizTypePickerPlugin: React.FC<Props> = ({ isCurrent, plugin, onClick, disa
 };
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
-  const itemBorder = `1px solid ${theme.isLight ? theme.colors.gray3 : theme.colors.dark10}`;
+  const itemBorder = `1px solid ${theme.isLight ? theme.colors.gray85 : theme.colors.gray25}`;
+
   return {
     item: css`
-      background: ${theme.isLight ? theme.colors.white : theme.colors.gray05};
+      background: ${theme.isLight ? theme.colors.gray98 : theme.colors.gray15};
       border: ${itemBorder};
       border-radius: 3px;
       height: 100px;
@@ -44,27 +45,18 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       cursor: pointer;
       display: flex;
       margin-right: 10px;
-      margin-bottom: 10px;
       align-items: center;
       justify-content: center;
       padding-bottom: 6px;
-      transition: transform 1 ease;
+
       &:hover {
         box-shadow: 0 0 4px ${theme.colors.blueLight};
-        background: ${theme.isLight
-          ? tinycolor(theme.colors.blueBase)
-              .lighten(45)
-              .toHexString()
-          : tinycolor(theme.colors.blueBase)
-              .darken(46)
-              .toHexString()};
         border: 1px solid ${theme.colors.blueLight};
       }
     `,
     current: css`
       box-shadow: 0 0 6px ${theme.colors.orange} !important;
       border: 1px solid ${theme.colors.orange} !important;
-      background: ${theme.isLight ? theme.colors.white : theme.colors.gray05};
     `,
     disabled: css`
       opacity: 0.2;
