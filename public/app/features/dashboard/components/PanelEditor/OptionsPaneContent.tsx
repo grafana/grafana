@@ -215,11 +215,11 @@ export const TabsBarContent: React.FC<{
 
 const tabSelections: Array<SelectableValue<string>> = [
   {
-    label: 'Options',
+    label: 'Panel',
     value: 'options',
   },
   {
-    label: 'Fields',
+    label: 'Data',
     value: 'defaults',
   },
   {
