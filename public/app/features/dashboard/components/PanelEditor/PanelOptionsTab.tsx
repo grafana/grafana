@@ -141,7 +141,7 @@ export const PanelOptionsTab: FC<Props> = ({
     </>
   );
 
-  return elements;
+  return <>{elements}</>;
 };
 
 function getVariableOptions(): Array<SelectableValue<string>> {
