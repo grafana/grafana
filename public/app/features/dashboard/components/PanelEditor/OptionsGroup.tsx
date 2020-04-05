@@ -5,10 +5,11 @@ import { useTheme, Icon, stylesFactory } from '@grafana/ui';
 
 interface Props {
   title: string;
+  defaultToClosed?: boolean;
 }
 
-export const OptionsGroup: FC<Props> = ({ title, children }) => {
-  const [isExpanded, toggleExpand] = useState(true);
+export const OptionsGroup: FC<Props> = ({ title, children, defaultToClosed }) => {
+  const [isExpanded, toggleExpand] = useState(defaultToClosed ? false : true);
   const theme = useTheme();
   const styles = getStyles(theme);
 
