@@ -46,10 +46,6 @@ describe('getPanelMenu', () => {
               "onClick": [Function],
               "text": "Copy",
             },
-            Object {
-              "onClick": [Function],
-              "text": "Panel JSON",
-            },
           ],
           "text": "More...",
           "type": "submenu",

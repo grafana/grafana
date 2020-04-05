@@ -4,27 +4,11 @@ import { chain } from 'lodash';
 
 import { PanelData, SelectableValue, AppEvents } from '@grafana/data';
 import { getLocationSrv } from '@grafana/runtime';
-import { PanelModel, DashboardModel } from '../../state';
 import { Forms, JSONFormatter, CustomScrollbar, stylesFactory, Button, Select, ClipboardButton } from '@grafana/ui';
 import { css } from 'emotion';
 import { appEvents } from 'app/core/core';
 import { replacePanel } from 'app/features/dashboard/utils/panel';
-
-// export const editPanelJson = (, panel: PanelModel) => {
-//   const model = {
-//     object: panel.getSaveModel(),
-//     updateHandler: (newPanel: PanelModel, oldPanel: PanelModel) => {
-//       replacePanel(dashboard, newPanel, oldPanel);
-//     },
-//     canUpdate: dashboard.meta.canEdit,
-//     enableCopy: true,
-//   };
-
-//   appEvents.emit(CoreEvents.showModal, {
-//     src: 'public/app/partials/edit_json.html',
-//     model: model,
-//   });
-// };
+import { PanelModel, DashboardModel } from '../../state';
 
 enum ShowContent {
   PanelJSON = 'panel',
@@ -67,10 +51,6 @@ interface Props {
 interface State {
   show: ShowContent;
   text: string;
-}
-
-function getSaveModelJSON(panel: PanelModel): string {
-  return JSON.stringify(panel.getSaveModel(), null, 2);
 }
 
 export class InspectJSONTab extends PureComponent<Props, State> {
@@ -183,7 +163,7 @@ export class InspectJSONTab extends PureComponent<Props, State> {
           </CustomScrollbar>
         )}
         <div>
-          {isPanelJSON && (
+          {isPanelJSON && canEdit && (
             <>
               <Button onClick={this.onApplyPanelModel}>Apply</Button>&nbsp;
             </>
@@ -195,6 +175,10 @@ export class InspectJSONTab extends PureComponent<Props, State> {
       </div>
     );
   }
+}
+
+function getSaveModelJSON(panel: PanelModel): string {
+  return JSON.stringify(panel.getSaveModel(), null, 2);
 }
 
 const getStyles = stylesFactory(() => {
