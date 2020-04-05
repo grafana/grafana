@@ -3,7 +3,7 @@ import { store } from 'app/store/store';
 import config from 'app/core/config';
 import { getDataSourceSrv, getLocationSrv, AngularComponent } from '@grafana/runtime';
 import { PanelMenuItem } from '@grafana/data';
-import { copyPanel, duplicatePanel, editPanelJson, removePanel, sharePanel } from 'app/features/dashboard/utils/panel';
+import { copyPanel, duplicatePanel, removePanel, sharePanel } from 'app/features/dashboard/utils/panel';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { contextSrv } from '../../../core/services/context_srv';
@@ -86,11 +86,6 @@ export function getPanelMenu(
     copyPanel(panel);
   };
 
-  const onEditPanelJson = (event: React.MouseEvent<any>) => {
-    event.preventDefault();
-    editPanelJson(dashboard, panel);
-  };
-
   const onRemovePanel = (event: React.MouseEvent<any>) => {
     event.preventDefault();
     removePanel(dashboard, panel, true);
@@ -166,11 +161,6 @@ export function getPanelMenu(
       onClick: onCopyPanel,
     });
   }
-
-  subMenu.push({
-    text: 'Panel JSON',
-    onClick: onEditPanelJson,
-  });
 
   // add old angular panel options
   if (angularComponent) {

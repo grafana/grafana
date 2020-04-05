@@ -51,7 +51,7 @@ export const copyPanel = (panel: PanelModel) => {
   appEvents.emit(AppEvents.alertSuccess, ['Panel copied. Open Add Panel to paste']);
 };
 
-const replacePanel = (dashboard: DashboardModel, newPanel: PanelModel, oldPanel: PanelModel) => {
+export const replacePanel = (dashboard: DashboardModel, newPanel: PanelModel, oldPanel: PanelModel) => {
   const index = dashboard.panels.findIndex(panel => {
     return panel.id === oldPanel.id;
   });
@@ -65,22 +65,6 @@ const replacePanel = (dashboard: DashboardModel, newPanel: PanelModel, oldPanel:
   dashboard.panels.splice(index, 0, newPanel);
   dashboard.sortPanelsByGridPos();
   dashboard.events.emit(panelAdded, newPanel);
-};
-
-export const editPanelJson = (dashboard: DashboardModel, panel: PanelModel) => {
-  const model = {
-    object: panel.getSaveModel(),
-    updateHandler: (newPanel: PanelModel, oldPanel: PanelModel) => {
-      replacePanel(dashboard, newPanel, oldPanel);
-    },
-    canUpdate: dashboard.meta.canEdit,
-    enableCopy: true,
-  };
-
-  appEvents.emit(CoreEvents.showModal, {
-    src: 'public/app/partials/edit_json.html',
-    model: model,
-  });
 };
 
 export const sharePanel = (dashboard: DashboardModel, panel: PanelModel) => {

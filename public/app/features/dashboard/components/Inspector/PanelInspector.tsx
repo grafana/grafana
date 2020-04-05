@@ -4,6 +4,7 @@ import { saveAs } from 'file-saver';
 import { css } from 'emotion';
 
 import { InspectHeader } from './InspectHeader';
+import { InspectJSONTab } from './InspectJSONTab';
 
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 import {
@@ -40,12 +41,10 @@ interface Props {
 
 export enum InspectTab {
   Data = 'data',
-  Request = 'request',
-  Issue = 'issue',
   Meta = 'meta', // When result metadata exists
   Error = 'error',
   Stats = 'stats',
-  PanelJson = 'paneljson',
+  JSON = 'json',
 }
 
 interface State {
@@ -239,18 +238,6 @@ export class PanelInspector extends PureComponent<Props, State> {
     return <div>{error.message}</div>;
   }
 
-  renderRequestTab() {
-    return (
-      <CustomScrollbar>
-        <JSONFormatter json={this.state.last} open={2} />
-      </CustomScrollbar>
-    );
-  }
-
-  renderJsonModelTab() {
-    return <JSONFormatter json={this.props.panel.getSaveModel()} open={2} />;
-  }
-
   renderStatsTab() {
     const { last } = this.state;
     const { request } = last;
@@ -320,8 +307,7 @@ export class PanelInspector extends PureComponent<Props, State> {
     }
 
     tabs.push({ label: 'Stats', value: InspectTab.Stats });
-    tabs.push({ label: 'Request', value: InspectTab.Request });
-    tabs.push({ label: 'Panel JSON', value: InspectTab.PanelJson });
+    tabs.push({ label: 'JSON', value: InspectTab.JSON });
 
     if (this.state.metaDS) {
       tabs.push({ label: 'Meta Data', value: InspectTab.Meta });
@@ -346,6 +332,7 @@ export class PanelInspector extends PureComponent<Props, State> {
   };
 
   render() {
+    const { panel, dashboard } = this.props;
     const { last, tab, drawerWidth } = this.state;
     const styles = getStyles();
     const error = last?.error;
@@ -356,10 +343,9 @@ export class PanelInspector extends PureComponent<Props, State> {
           {tab === InspectTab.Data && this.renderDataTab()}
           <CustomScrollbar autoHeightMin="100%">
             {tab === InspectTab.Meta && this.renderMetadataInspector()}
-            {tab === InspectTab.Request && this.renderRequestTab()}
+            {tab === InspectTab.JSON && <InspectJSONTab panel={panel} dashboard={dashboard} data={last} />}
             {tab === InspectTab.Error && this.renderErrorTab(error)}
             {tab === InspectTab.Stats && this.renderStatsTab()}
-            {tab === InspectTab.PanelJson && this.renderJsonModelTab()}
           </CustomScrollbar>
         </TabContent>
       </Drawer>
@@ -390,7 +376,7 @@ const getStyles = stylesFactory(() => {
       margin-left: 16px;
     `,
     tabContent: css`
-      height: calc(100% - 32px);
+      height: 100%;
     `,
     dataTabContent: css`
       display: flex;
