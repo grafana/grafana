@@ -32,17 +32,16 @@ describe('LogDetailsRow', () => {
   });
   it('should render metrics button', () => {
     const wrapper = setup();
-    console.log(wrapper);
-    expect(wrapper.find({ title: 'Ad-hoc statistics' })).toHaveLength(1);
+    expect(wrapper.find({ title: 'Ad-hoc statistics' }).hostNodes()).toHaveLength(1);
   });
   describe('if props is a label', () => {
     it('should render filter label button', () => {
       const wrapper = setup();
-      expect(wrapper.find({ title: 'Filter for value' })).toHaveLength(1);
+      expect(wrapper.find({ title: 'Filter for value' }).hostNodes()).toHaveLength(1);
     });
     it('should render filter out label button', () => {
       const wrapper = setup();
-      expect(wrapper.find({ title: 'Filter out value' })).toHaveLength(1);
+      expect(wrapper.find({ title: 'Filter out value' }).hostNodes()).toHaveLength(1);
     });
   });
 
@@ -67,7 +66,10 @@ describe('LogDetailsRow', () => {
     });
 
     expect(wrapper.find(LogLabelStats).length).toBe(0);
-    wrapper.find({ title: 'Ad-hoc statistics' }).simulate('click');
+    wrapper
+      .find({ title: 'Ad-hoc statistics' })
+      .hostNodes()
+      .simulate('click');
     expect(wrapper.find(LogLabelStats).length).toBe(1);
     expect(wrapper.find(LogLabelStats).contains('another value')).toBeTruthy();
   });
