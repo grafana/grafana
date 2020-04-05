@@ -195,7 +195,7 @@ export const OptionsPaneContent: React.FC<{
     );
   }, []);
 
-  const isNarrow = true;
+  const isNarrow = false;
 
   return (
     <div className={styles.panelOptionsPane}>
