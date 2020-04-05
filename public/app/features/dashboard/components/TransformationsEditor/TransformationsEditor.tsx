@@ -1,10 +1,9 @@
-import { DataTransformerID, DataTransformerConfig, DataFrame, transformDataFrame } from '@grafana/data';
-import { Select } from '../Forms/Legacy/Select/Select';
-import { transformersUIRegistry } from './transformers';
-import React from 'react';
-import { TransformationRow } from './TransformationRow';
-import { Button } from '../Button';
 import { css } from 'emotion';
+import React from 'react';
+import { transformersUIRegistry } from '@grafana/ui/src/components/TransformersUI/transformers';
+import { DataTransformerID, DataTransformerConfig, DataFrame, transformDataFrame } from '@grafana/data';
+import { Button, Select } from '@grafana/ui';
+import { TransformationRow } from './TransformationRow';
 
 interface TransformationsEditorState {
   updateCounter: number;
