@@ -304,7 +304,7 @@ export class Graph extends PureComponent<GraphProps, GraphState> {
         stack: isStacked,
         lines: {
           show: showLines,
-          linewidth: lineWidth,
+          lineWidth: lineWidth,
           zero: false,
         },
         points: {

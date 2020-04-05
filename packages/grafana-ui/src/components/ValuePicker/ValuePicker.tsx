@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { IconName } from '../../types';
 import { SelectableValue } from '@grafana/data';
 import { Button, ButtonVariant } from '../Button';
-import { Select } from '../Forms/Select/Select';
+import { Select } from '../Select/Select';
 import { FullWidthButtonContainer } from '../Button/FullWidthButtonContainer';
 
 interface ValuePickerProps<T> {
@@ -23,7 +23,7 @@ export function ValuePicker<T>({ label, icon, options, onChange, variant }: Valu
     <>
       {!isPicking && (
         <FullWidthButtonContainer>
-          <Button size="sm" icon={icon || 'plus'} onClick={() => setIsPicking(true)} variant={variant}>
+          <Button size="sm" icon={icon || 'plus-circle'} onClick={() => setIsPicking(true)} variant={variant}>
             {label}
           </Button>
         </FullWidthButtonContainer>

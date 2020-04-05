@@ -8,7 +8,8 @@ import { escapeStringForRegex } from '@grafana/data';
 // Components
 import { TagOption } from './TagOption';
 import { TagBadge } from './TagBadge';
-import { IndicatorsContainer, NoOptionsMessage, resetSelectStyles, Icon } from '@grafana/ui';
+import { resetSelectStyles, LegacyForms, Icon } from '@grafana/ui';
+const { IndicatorsContainer, NoOptionsMessage } = LegacyForms;
 
 export interface TermCount {
   term: string;

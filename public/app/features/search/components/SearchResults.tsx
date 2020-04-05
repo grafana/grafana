@@ -119,6 +119,7 @@ const getSectionHeaderStyles = stylesFactory((theme: GrafanaTheme, selected = fa
     wrapper: cx(
       css`
         display: flex;
+        align-items: center;
         font-size: ${theme.typography.size.base};
         padding: ${sm} ${xs} ${xs};
         color: ${theme.colors.textWeak};

@@ -1,7 +1,6 @@
 $mobile-menu-breakpoint: md;
 
 .sidemenu {
-  background: $side-menu-bg;
   position: fixed;
   display: flex;
   flex-flow: column;
@@ -22,7 +21,7 @@ $mobile-menu-breakpoint: md;
   }
 
   @include media-breakpoint-up($mobile-menu-breakpoint) {
-    border-right: $side-menu-border;
+    background: $side-menu-bg;
     height: auto;
     box-shadow: $side-menu-shadow;
     position: relative;

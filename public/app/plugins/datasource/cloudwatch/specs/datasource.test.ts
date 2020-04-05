@@ -1,14 +1,14 @@
 import '../datasource';
 import CloudWatchDatasource from '../datasource';
 import * as redux from 'app/store/store';
-import { dateMath } from '@grafana/data';
+import { DataSourceInstanceSettings, dateMath } from '@grafana/data';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { CustomVariable } from 'app/features/templating/all';
-import _ from 'lodash';
 import { CloudWatchQuery } from '../types';
-import { DataSourceInstanceSettings } from '@grafana/data';
 import { backendSrv } from 'app/core/services/backend_srv'; // will use the version in __mocks__
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
+import { convertToStoreState } from '../../../../../test/helpers/convertToStoreState';
+import { getTemplateSrvDependencies } from 'test/helpers/getTemplateSrvDependencies';
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
@@ -23,7 +23,7 @@ describe('CloudWatchDatasource', () => {
     name: 'TestDatasource',
   } as DataSourceInstanceSettings;
 
-  const templateSrv = new TemplateSrv();
+  let templateSrv = new TemplateSrv();
   const start = 1483196400 * 1000;
   const defaultTimeRange = { from: new Date(start), to: new Date(start + 3600 * 1000) };
 
@@ -174,7 +174,7 @@ describe('CloudWatchDatasource', () => {
     it('should return series list', done => {
       ctx.ds.query(query).then((result: any) => {
         expect(result.data[0].name).toBe(response.results.A.series[0].name);
-        expect(result.data[0].fields[0].values.buffer[0]).toBe(response.results.A.series[0].points[0][0]);
+        expect(result.data[0].fields[1].values.buffer[0]).toBe(response.results.A.series[0].points[0][0]);
         done();
       });
     });
@@ -191,8 +191,8 @@ describe('CloudWatchDatasource', () => {
         response.results['A'].meta.gmdMeta = [{ Expression: `REMOVE_EMPTY(SEARCH('some expression'))`, Period: '300' }];
         ctx.ds.query(query).then((result: any) => {
           expect(result.data[0].name).toBe(response.results.A.series[0].name);
-          expect(result.data[0].fields[0].config.links[0].title).toBe('View in CloudWatch console');
-          expect(decodeURIComponent(result.data[0].fields[0].config.links[0].url)).toContain(
+          expect(result.data[0].fields[1].config.links[0].title).toBe('View in CloudWatch console');
+          expect(decodeURIComponent(result.data[0].fields[1].config.links[0].url)).toContain(
             `region=us-east-1#metricsV2:graph={"view":"timeSeries","stacked":false,"title":"A","start":"2016-12-31T15:00:00.000Z","end":"2016-12-31T16:00:00.000Z","region":"us-east-1","metrics":[{"expression":"REMOVE_EMPTY(SEARCH(\'some expression\'))"}]}`
           );
           done();
@@ -206,7 +206,7 @@ describe('CloudWatchDatasource', () => {
         ];
         ctx.ds.query(query).then((result: any) => {
           expect(result.data[0].name).toBe(response.results.A.series[0].name);
-          expect(result.data[0].fields[0].config.links[0].title).toBe('View in CloudWatch console');
+          expect(result.data[0].fields[1].config.links[0].title).toBe('View in CloudWatch console');
           expect(decodeURIComponent(result.data[0].fields[0].config.links[0].url)).toContain(
             `region=us-east-1#metricsV2:graph={"view":"timeSeries","stacked":false,"title":"A","start":"2016-12-31T15:00:00.000Z","end":"2016-12-31T16:00:00.000Z","region":"us-east-1","metrics":[{"expression":"REMOVE_EMPTY(SEARCH(\'first expression\'))"},{"expression":"REMOVE_EMPTY(SEARCH(\'second expression\'))"}]}`
           );
@@ -218,7 +218,7 @@ describe('CloudWatchDatasource', () => {
         response.results['A'].meta.gmdMeta = [{ Period: '300' }];
         ctx.ds.query(query).then((result: any) => {
           expect(result.data[0].name).toBe(response.results.A.series[0].name);
-          expect(result.data[0].fields[0].config.links[0].title).toBe('View in CloudWatch console');
+          expect(result.data[0].fields[1].config.links[0].title).toBe('View in CloudWatch console');
           expect(decodeURIComponent(result.data[0].fields[0].config.links[0].url)).toContain(
             `region=us-east-1#metricsV2:graph={\"view\":\"timeSeries\",\"stacked\":false,\"title\":\"A\",\"start\":\"2016-12-31T15:00:00.000Z\",\"end\":\"2016-12-31T16:00:00.000Z\",\"region\":\"us-east-1\",\"metrics\":[[\"AWS/EC2\",\"CPUUtilization\",\"InstanceId\",\"i-12345678\",{\"stat\":\"Average\",\"period\":\"300\"}]]}`
           );
@@ -230,7 +230,7 @@ describe('CloudWatchDatasource', () => {
         query.targets[0].expression = 'a * 2';
         response.results['A'].meta.searchExpressions = [];
         ctx.ds.query(query).then((result: any) => {
-          expect(result.data[0].fields[0].config.links).toBeUndefined();
+          expect(result.data[0].fields[1].config.links).toBeUndefined();
           done();
         });
       });
@@ -456,7 +456,7 @@ describe('CloudWatchDatasource', () => {
     it('should return series list', done => {
       ctx.ds.query(query).then((result: any) => {
         expect(result.data[0].name).toBe(response.results.A.series[0].name);
-        expect(result.data[0].fields[0].values.buffer[0]).toBe(response.results.A.series[0].points[0][0]);
+        expect(result.data[0].fields[1].values.buffer[0]).toBe(response.results.A.series[0].points[0][0]);
         done();
       });
     });
@@ -465,7 +465,7 @@ describe('CloudWatchDatasource', () => {
   describe('When performing CloudWatch query with template variables', () => {
     let requestParams: { queries: CloudWatchQuery[] };
     beforeEach(() => {
-      templateSrv.init([
+      const variables = [
         new CustomVariable(
           {
             name: 'var1',
@@ -516,7 +516,11 @@ describe('CloudWatchDatasource', () => {
           },
           {} as any
         ),
-      ]);
+      ];
+      const state = convertToStoreState(variables);
+      const _templateSrv = new TemplateSrv(getTemplateSrvDependencies(state));
+      _templateSrv.init(variables);
+      ctx.ds = new CloudWatchDatasource(instanceSettings, _templateSrv, timeSrv);
 
       datasourceRequestMock.mockImplementation(params => {
         requestParams = params.data;

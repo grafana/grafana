@@ -5,10 +5,10 @@ export type IconName =
   | 'fa fa-envelope'
   | 'fa fa-spinner'
   | 'question-circle'
-  | 'plus'
   | 'angle-up'
   | 'history'
   | 'angle-down'
+  | 'filter'
   | 'angle-left'
   | 'angle-right'
   | 'pen'
@@ -18,7 +18,6 @@ export type IconName =
   | 'plus-square'
   | 'folder-plus'
   | 'folder-open'
-  | 'folder-info'
   | 'file-copy-alt'
   | 'exchange-alt'
   | 'import'
@@ -102,7 +101,6 @@ export type IconName =
 export const getAvailableIcons = (): IconName[] => [
   'question-circle',
   'plane',
-  'plus',
   'plus-circle',
   'angle-up',
   'shield',
@@ -180,9 +178,9 @@ export const getAvailableIcons = (): IconName[] => [
   'plus-square',
   'import',
   'folder-open',
-  'folder-info',
   'file-copy-alt',
   'arrow-down',
+  'filter',
   'arrow-up',
   'exchange-alt',
 ];

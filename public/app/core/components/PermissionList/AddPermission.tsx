@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import { UserPicker } from 'app/core/components/Select/UserPicker';
 import { TeamPicker, Team } from 'app/core/components/Select/TeamPicker';
-import { Select, Icon } from '@grafana/ui';
+import { LegacyForms, Icon } from '@grafana/ui';
 import { SelectableValue } from '@grafana/data';
 import { User } from 'app/types';
 import {
@@ -12,6 +12,7 @@ import {
   NewDashboardAclItem,
   OrgRole,
 } from 'app/types/acl';
+const { Select } = LegacyForms;
 
 export interface Props {
   onAddPermission: (item: NewDashboardAclItem) => void;

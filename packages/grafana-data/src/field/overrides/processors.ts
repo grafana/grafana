@@ -17,11 +17,11 @@ export const numberOverrideProcessor = (
   context: FieldOverrideContext,
   settings?: NumberFieldConfigSettings
 ) => {
-  const v = parseFloat(`${value}`);
-  if (settings && settings.max && v > settings.max) {
-    // ????
+  if (value === undefined || value === null) {
+    return undefined;
   }
-  return v;
+
+  return parseFloat(value);
 };
 
 export interface DataLinksFieldConfigSettings {}
@@ -67,6 +67,9 @@ export const stringOverrideProcessor = (
   context: FieldOverrideContext,
   settings?: StringFieldConfigSettings
 ) => {
+  if (value === null || value === undefined) {
+    return value;
+  }
   if (settings && settings.expandTemplateVars && context.replaceVariables) {
     return context.replaceVariables(value, context.field!.config.scopedVars);
   }

@@ -3,7 +3,7 @@ import { NavModelItem, NavModel } from '@grafana/data';
 
 export function buildNavModel(folder: FolderDTO): NavModelItem {
   return {
-    icon: 'folder-info',
+    icon: 'folder',
     id: 'manage-folder',
     subTitle: 'Manage folder dashboards & permissions',
     url: '',

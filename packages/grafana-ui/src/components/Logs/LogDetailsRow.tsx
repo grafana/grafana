@@ -95,26 +95,18 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
       <tr className={cx(style.logDetailsValue, { [styles.noHoverBackground]: showFieldsStats })}>
         {/* Action buttons - show stats/filter results */}
         <td className={style.logsDetailsIcon} colSpan={isLabel ? undefined : 3}>
-          <Icon name="signal" title="Ad-hoc statistics" className={styles.hoverCursor} onClick={this.showStats} />
+          <span title="Ad-hoc statistics" onClick={this.showStats}>
+            <Icon name="signal" />
+          </span>
         </td>
 
         {isLabel && (
           <>
             <td className={style.logsDetailsIcon}>
-              <Icon
-                name="search-minus"
-                title="Filter for value"
-                className={styles.hoverCursor}
-                onClick={this.filterLabel}
-              />
+              <Icon name="search-minus" title="Filter for value" onClick={this.filterLabel} />
             </td>
             <td className={style.logsDetailsIcon}>
-              <Icon
-                name="search-plus"
-                title="Filter out value"
-                className={styles.hoverCursor}
-                onClick={this.filterOutLabel}
-              />
+              <Icon name="search-plus" title="Filter out value" onClick={this.filterOutLabel} />
             </td>
           </>
         )}

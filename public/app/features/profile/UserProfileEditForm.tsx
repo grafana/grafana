@@ -1,5 +1,6 @@
 import React, { PureComponent, ChangeEvent, MouseEvent } from 'react';
-import { Button, FormLabel, Input, Tooltip, Icon } from '@grafana/ui';
+import { Button, FormLabel, LegacyForms, Tooltip, Icon } from '@grafana/ui';
+const { Input } = LegacyForms;
 import { User } from 'app/types';
 import config from 'app/core/config';
 import { ProfileUpdateFields } from 'app/core/utils/UserProvider';

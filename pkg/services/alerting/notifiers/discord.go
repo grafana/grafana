@@ -115,17 +115,19 @@ func (dn *DiscordNotifier) Notify(evalContext *alerting.EvalContext) error {
 	var image map[string]interface{}
 	var embeddedImage = false
 
-	if evalContext.ImagePublicURL != "" {
-		image = map[string]interface{}{
-			"url": evalContext.ImagePublicURL,
+	if dn.NeedsImage() {
+		if evalContext.ImagePublicURL != "" {
+			image = map[string]interface{}{
+				"url": evalContext.ImagePublicURL,
+			}
+			embed.Set("image", image)
+		} else {
+			image = map[string]interface{}{
+				"url": "attachment://graph.png",
+			}
+			embed.Set("image", image)
+			embeddedImage = true
 		}
-		embed.Set("image", image)
-	} else {
-		image = map[string]interface{}{
-			"url": "attachment://graph.png",
-		}
-		embed.Set("image", image)
-		embeddedImage = true
 	}
 
 	bodyJSON.Set("embeds", []interface{}{embed})

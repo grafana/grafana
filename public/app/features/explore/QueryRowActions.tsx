@@ -49,7 +49,7 @@ export function QueryRowActions(props: Props) {
           disabled={isNotStarted}
           className="gf-form-label gf-form-label--btn"
           onClick={onClickToggleDisabled}
-          title="Disable/enable query"
+          title={isDisabled ? 'Enable query' : 'Disable query'}
         >
           <Icon name={isDisabled ? 'eye' : 'eye-slash'} />
         </button>

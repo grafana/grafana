@@ -99,17 +99,9 @@ describe('RichHistoryCard', () => {
       const wrapper = setup();
       expect(wrapper.find({ title: 'Star query' })).toHaveLength(1);
     });
-    it('should render fa-star-o icon, if not starred', () => {
-      const wrapper = setup();
-      expect(wrapper.find({ title: 'Star query' }).hasClass('fa-star-o')).toBe(true);
-    });
     it('should have title "Unstar query", if not starred', () => {
       const wrapper = setup({ query: starredQueryWithComment });
       expect(wrapper.find({ title: 'Unstar query' })).toHaveLength(1);
-    });
-    it('should have fa-star icon, if not starred', () => {
-      const wrapper = setup({ query: starredQueryWithComment });
-      expect(wrapper.find({ title: 'Unstar query' }).hasClass('fa-star')).toBe(true);
     });
   });
 });
