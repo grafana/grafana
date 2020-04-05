@@ -70,36 +70,37 @@ export class PanelQueryRunner {
     return this.subject.pipe(
       map((data: PanelData) => {
         let processedData = data;
-        // apply transformations
-        if (transform && this.hasTransformations()) {
-          processedData = {
-            ...processedData,
-            series: transformDataFrame(this.dataConfigSource.getTransformations(), data.series),
-          };
+
+        // Apply transformations
+
+        if (transform) {
+          const transformations = this.dataConfigSource.getTransformations();
+
+          if (transformations && transformations.length > 0) {
+            processedData = {
+              ...processedData,
+              series: transformDataFrame(this.dataConfigSource.getTransformations(), data.series),
+            };
+          }
         }
-        // apply overrides
-        if (this.hasFieldOverrideOptions()) {
+
+        // Apply field defaults & overrides
+        const fieldConfig = this.dataConfigSource.getFieldOverrideOptions();
+
+        if (fieldConfig) {
           processedData = {
             ...processedData,
             series: applyFieldOverrides({
               data: processedData.series,
-              ...this.dataConfigSource.getFieldOverrideOptions(),
+              ...fieldConfig,
             }),
           };
         }
+
         return processedData;
       })
     );
   }
-
-  hasTransformations = () => {
-    const transformations = this.dataConfigSource.getTransformations();
-    return config.featureToggles.transformations && transformations && transformations.length > 0;
-  };
-
-  hasFieldOverrideOptions = () => {
-    return this.dataConfigSource.getFieldOverrideOptions();
-  };
 
   async run(options: QueryRunnerOptions) {
     const {
