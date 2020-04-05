@@ -49,9 +49,9 @@ export const OverrideEditor: React.FC<OverrideEditorProps> = ({ data, override, 
   );
 
   const onDynamicConfigValueAdd = useCallback(
-    (prop: string, custom?: boolean) => {
+    (id: string, custom?: boolean) => {
       const propertyConfig: DynamicConfigValue = {
-        prop,
+        id,
         isCustom: custom,
       };
       if (override.properties) {
@@ -69,6 +69,7 @@ export const OverrideEditor: React.FC<OverrideEditorProps> = ({ data, override, 
       label: item.name,
       value: item.id,
       description: item.description,
+      custom: item.isCustom,
     };
   });
 
@@ -88,14 +89,14 @@ export const OverrideEditor: React.FC<OverrideEditorProps> = ({ data, override, 
       </FieldConfigItemHeaderTitle>
       <div>
         {override.properties.map((p, j) => {
-          const item = registry.getIfExists(p.prop);
+          const item = registry.getIfExists(p.id);
 
           if (!item) {
-            return <div>Unknown property: {p.prop}</div>;
+            return <div>Unknown property: {p.id}</div>;
           }
 
           return (
-            <div key={`${p.prop}/${j}`}>
+            <div key={`${p.id}/${j}`}>
               <DynamicConfigValueEditor
                 onChange={value => onDynamicConfigValueChange(j, value)}
                 onRemove={() => onDynamicConfigValueRemove(j)}

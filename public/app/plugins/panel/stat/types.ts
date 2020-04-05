@@ -55,6 +55,7 @@ export function addStandardDataReduceOptions(builder: PanelOptionsEditorBuilder<
   });
 
   builder.addCustomEditor({
+    id: 'reduceOptions.calcs',
     path: 'reduceOptions.calcs',
     name: 'Value',
     description: 'Choose a reducer function / calculation',

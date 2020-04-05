@@ -19,7 +19,7 @@ import { standardFieldConfigEditorRegistry } from '../field';
 export interface SetFieldConfigOptionsArgs<TFieldConfigOptions = any> {
   standardOptions?: FieldConfigProperty[];
   standardOptionsDefaults?: Partial<Record<FieldConfigProperty, any>>;
-  useCustomOptions: (builder: FieldConfigEditorBuilder<TFieldConfigOptions>) => void;
+  useCustomOptions?: (builder: FieldConfigEditorBuilder<TFieldConfigOptions>) => void;
 }
 
 export class PanelPlugin<TOptions = any, TFieldConfigOptions extends object = any> extends GrafanaPlugin<
@@ -184,13 +184,39 @@ export class PanelPlugin<TOptions = any, TFieldConfigOptions extends object = an
         }
       }
 
-      // add standard props
-      for (const fieldConfigProp of standardFieldConfigEditorRegistry.list()) {
-        registry.register(fieldConfigProp);
+      if (config && config.standardOptions) {
+        for (const standardOption of config.standardOptions) {
+          const standardEditor = standardFieldConfigEditorRegistry.get(standardOption);
+          registry.register({
+            ...standardEditor,
+            defaultValue:
+              (config.standardOptionsDefaults && config.standardOptionsDefaults[standardOption]) ||
+              standardEditor.defaultValue,
+          });
+        }
+      } else {
+        for (const fieldConfigProp of standardFieldConfigEditorRegistry.list()) {
+          console.log(fieldConfigProp);
+          registry.register(fieldConfigProp);
+        }
       }
 
       return registry;
     };
+
+    // if (config && config.standardOptions && config.standardOptionsDefaults) {
+    //   const defaults: Record<string, any> = {};
+    //   for (const standardOptionDefault of Object.keys(config.standardOptionsDefaults)) {
+    //     if (config.standardOptions.indexOf(standardOptionDefault as FieldConfigProperty) > -1) {
+    //       defaults[standardOptionDefault] =
+    //         config.standardOptionsDefaults[standardOptionDefault as FieldConfigProperty];
+    //     }
+    //     this._fieldConfigDefaults = {
+    //       ...this.fieldConfigDefaults,
+    //       defaults,
+    //     };
+    //   }
+    // }
 
     return this;
   }

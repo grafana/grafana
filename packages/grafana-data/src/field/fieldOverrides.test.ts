@@ -15,27 +15,31 @@ import {
 } from '../types';
 import { Registry } from '../utils';
 import { standardFieldConfigEditorRegistry } from './standardFieldConfigEditorRegistry';
+import { mockStandardProperties } from '../utils/mocks';
 
 const property1 = {
-  id: 'property1', // Match field properties
+  id: 'custom.property1', // Match field properties
+  path: 'property1', // Match field properties
   process: (value: any) => value,
   shouldApply: () => true,
 } as any;
 
 const property2 = {
-  id: 'property2', // Match field properties
+  id: 'custom.property2', // Match field properties
+  path: 'property2', // Match field properties
   process: (value: any) => value,
   shouldApply: () => true,
 } as any;
 
 const unit = {
   id: 'unit', // Match field properties
+  path: 'unit', // Match field properties
   process: (value: any) => value,
   shouldApply: () => true,
 } as any;
 
 export const customFieldRegistry: FieldConfigOptionsRegistry = new Registry<FieldPropertyEditorItem>(() => {
-  return [property1, property2];
+  return [property1, property2, ...mockStandardProperties()];
 });
 
 // For the need of this test  we need to mock the standard registry
@@ -133,15 +137,17 @@ describe('setFieldConfigDefaults', () => {
       unit: 'km',
     };
 
-    const context: FieldOverrideContext = {
+    const context: FieldOverrideEnv = {
       data: [] as any,
       field: { type: FieldType.number } as any,
       dataFrameIndex: 0,
+      fieldConfigRegistry: customFieldRegistry,
     };
 
     // we mutate dsFieldConfig
     setFieldConfigDefaults(dsFieldConfig, panelFieldConfig, context);
 
+    console.log(dsFieldConfig);
     expect(dsFieldConfig).toMatchInlineSnapshot(`
       Object {
         "decimals": 2,
@@ -179,7 +185,7 @@ describe('setFieldConfigDefaults', () => {
     expect(dsFieldConfig).toMatchInlineSnapshot(`
       Object {
         "custom": Object {
-          "property1": 10,
+          "property1": 20,
           "property2": 10,
         },
       }

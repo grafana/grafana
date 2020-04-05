@@ -196,7 +196,7 @@ export interface FieldOverrideEnv extends FieldOverrideContext {
 function setDynamicConfigValue(config: FieldConfig, value: DynamicConfigValue, context: FieldOverrideEnv) {
   const reg = context.fieldConfigRegistry;
 
-  const item = reg.getIfExists(value.prop);
+  const item = reg.getIfExists(value.id);
   if (!item || !item.shouldApply(context.field!)) {
     return;
   }
@@ -207,18 +207,18 @@ function setDynamicConfigValue(config: FieldConfig, value: DynamicConfigValue, c
 
   if (remove) {
     if (value.isCustom && config.custom) {
-      delete config.custom[value.prop];
+      delete config.custom[item.path];
     } else {
-      delete (config as any)[value.prop];
+      delete (config as any)[item.path];
     }
   } else {
     if (value.isCustom) {
       if (!config.custom) {
         config.custom = {};
       }
-      config.custom[value.prop] = val;
+      config.custom[item.path] = val;
     } else {
-      (config as any)[value.prop] = val;
+      (config as any)[item.path] = val;
     }
   }
 }
@@ -238,9 +238,8 @@ export function setFieldConfigDefaults(config: FieldConfig, defaults: FieldConfi
         }
 
         const customKeys = Object.keys(defaults.custom!);
-
         for (const customKey of customKeys) {
-          processFieldConfigValue(config.custom!, defaults.custom!, customKey, context);
+          processFieldConfigValue(config.custom!, defaults.custom!, `custom.${customKey}`, context);
         }
       } else {
         // when config from ds exists for a given field -> use it
@@ -266,9 +265,9 @@ const processFieldConfigValue = (
     }
 
     if (item && item.shouldApply(context.field!)) {
-      const val = item.process(source[key], context, item.settings);
+      const val = item.process(source[item.path], context, item.settings);
       if (val !== undefined && val !== null) {
-        destination[key] = val;
+        destination[item.path] = val;
       }
     }
   }

@@ -146,16 +146,16 @@ export const DefaultFieldConfigEditor: React.FC<Props> = ({ data, onChange, conf
       const defaults = config.defaults;
       const value = item.isCustom
         ? defaults.custom
-          ? defaults.custom[item.id]
+          ? defaults.custom[item.path]
           : undefined
-        : (defaults as any)[item.id];
+        : (defaults as any)[item.path];
 
       return (
         <Forms.Field label={item.name} description={item.description} key={`${item.id}`}>
           <item.editor
             item={item}
             value={value}
-            onChange={v => setDefaultValue(item.id, v, item.isCustom)}
+            onChange={v => setDefaultValue(item.path, v, item.isCustom)}
             context={{
               data,
               getSuggestions: (scope?: VariableSuggestionsScope) => getDataLinksVariableSuggestions(data, scope),

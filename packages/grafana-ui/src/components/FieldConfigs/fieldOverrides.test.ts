@@ -41,8 +41,8 @@ describe('FieldOverrides', () => {
       {
         matcher: { id: FieldMatcherID.numeric },
         properties: [
-          { prop: 'decimals', value: 1 }, // Numeric
-          { prop: 'title', value: 'Kittens' }, // Text
+          { id: 'decimals', value: 1 }, // Numeric
+          { id: 'title', value: 'Kittens' }, // Text
         ],
       },
     ],
@@ -65,8 +65,8 @@ describe('FieldOverrides', () => {
     });
     const processed = applyFieldOverrides({
       data: [f],
-      standard: standardFieldConfigEditorRegistry,
-      fieldOptions: {
+      fieldConfigRegistry: standardFieldConfigEditorRegistry,
+      fieldConfig: {
         defaults: f1 as FieldConfig,
         overrides: [],
       },
@@ -83,7 +83,7 @@ describe('FieldOverrides', () => {
   it('will apply field overrides', () => {
     const data = applyFieldOverrides({
       data: [f0], // the frame
-      fieldOptions: src as FieldConfigSource, // defaults + overrides
+      fieldConfig: src as FieldConfigSource, // defaults + overrides
       replaceVariables: (undefined as any) as InterpolateFunction,
       theme: (undefined as any) as GrafanaTheme,
     })[0];
@@ -109,7 +109,7 @@ describe('FieldOverrides', () => {
   it('will apply set min/max when asked', () => {
     const data = applyFieldOverrides({
       data: [f0], // the frame
-      fieldOptions: src as FieldConfigSource, // defaults + overrides
+      fieldConfig: src as FieldConfigSource, // defaults + overrides
       replaceVariables: (undefined as any) as InterpolateFunction,
       theme: (undefined as any) as GrafanaTheme,
       autoMinMax: true,

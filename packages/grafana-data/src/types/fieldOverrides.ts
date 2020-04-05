@@ -15,7 +15,7 @@ import { StandardEditorProps } from '../field';
 import { OptionsEditorItem } from './OptionsUIRegistryBuilder';
 
 export interface DynamicConfigValue {
-  prop: string;
+  id: string;
   value?: any;
   isCustom?: boolean;
 }

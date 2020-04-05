@@ -20,7 +20,7 @@ export const DynamicConfigValueEditor: React.FC<DynamicConfigValueEditorProps> =
 }) => {
   const theme = useTheme();
   const styles = getStyles(theme);
-  const item = registry?.getIfExists(property.prop);
+  const item = registry?.getIfExists(property.id);
 
   if (!item) {
     return null;
