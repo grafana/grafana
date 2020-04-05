@@ -15,6 +15,7 @@ export type IconName =
   | 'times'
   | 'step-backward'
   | 'square-shape'
+  | 'filter'
   | 'share-alt'
   | 'forward'
   | 'check'

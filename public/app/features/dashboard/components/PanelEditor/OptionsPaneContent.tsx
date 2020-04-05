@@ -154,7 +154,7 @@ export const OptionsPaneContent: React.FC<{
                   ref={elem => elem && elem.focus()}
                   placeholder="Search all options"
                   suffix={
-                    <Icon name="remove" onClick={() => setSearchMode(false)} className={styles.searchRemoveIcon} />
+                    <Icon name="times" onClick={() => setSearchMode(false)} className={styles.searchRemoveIcon} />
                   }
                 />
               </div>
@@ -183,7 +183,7 @@ export const OptionsPaneContent: React.FC<{
                 <div className="flex-grow-1" />
                 <div className={styles.tabsButton}>
                   <DashNavButton
-                    icon="fa fa-search"
+                    icon="search"
                     tooltip="Search all options"
                     classSuffix="search-options"
                     onClick={() => setSearchMode(true)}
@@ -191,7 +191,7 @@ export const OptionsPaneContent: React.FC<{
                 </div>
                 <div className={styles.tabsButton}>
                   <DashNavButton
-                    icon="fa fa-chevron-right"
+                    icon="angle-right"
                     tooltip="Close options pane"
                     classSuffix="close-options"
                     onClick={onClose}
