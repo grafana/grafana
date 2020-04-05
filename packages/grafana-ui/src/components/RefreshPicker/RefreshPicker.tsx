@@ -4,7 +4,7 @@ import { SelectableValue } from '@grafana/data';
 import { css } from 'emotion';
 import { Tooltip } from '../Tooltip/Tooltip';
 import { Icon } from '../Icon/Icon';
-import { ButtonSelect } from '../Select/ButtonSelect';
+import { ButtonSelect } from '../Forms/Legacy/Select/ButtonSelect';
 import memoizeOne from 'memoize-one';
 import { GrafanaTheme } from '@grafana/data';
 import { withTheme } from '../../themes';

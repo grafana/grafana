@@ -22,7 +22,6 @@ import {
   ReducerID,
   getDisplayValueAlignmentFactors,
   DisplayValueAlignmentFactors,
-  VizOrientation,
 } from '@grafana/data';
 
 import { getFieldLinksSupplier } from 'app/features/panel/panellinks/linkSuppliers';
@@ -97,23 +96,9 @@ export class StatPanel extends PureComponent<PanelProps<StatPanelOptions>> {
         height={height}
         source={data}
         renderCounter={renderCounter}
-        orientation={getOrientation(width, height, options.orientation)}
+        autoGrid={true}
+        orientation={options.orientation}
       />
     );
-  }
-}
-
-/**
- * Stat panel custom auto orientation
- */
-function getOrientation(width: number, height: number, orientation: VizOrientation): VizOrientation {
-  if (orientation !== VizOrientation.Auto) {
-    return orientation;
-  }
-
-  if (width / height > 2) {
-    return VizOrientation.Vertical;
-  } else {
-    return VizOrientation.Horizontal;
   }
 }

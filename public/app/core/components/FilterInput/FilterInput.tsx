@@ -1,6 +1,6 @@
-import React, { forwardRef } from 'react';
+import React, { FC } from 'react';
 import { escapeStringForRegex, unEscapeStringFromRegex } from '@grafana/data';
-import { Icon } from '@grafana/ui';
+import { Input, Icon } from '@grafana/ui';
 
 export interface Props {
   value: string | undefined;
@@ -10,16 +10,15 @@ export interface Props {
   onChange: (value: string) => void;
 }
 
-export const FilterInput = forwardRef<HTMLInputElement, Props>((props, ref) => (
-  <label className={props.labelClassName}>
-    <input
-      ref={ref}
-      type="text"
-      className={props.inputClassName}
-      value={props.value ? unEscapeStringFromRegex(props.value) : ''}
-      onChange={event => props.onChange(escapeStringForRegex(event.target.value))}
-      placeholder={props.placeholder ?? ''}
-    />
-    <Icon name="search" className="gf-form-input-icon" />
-  </label>
-));
+export const FilterInput: FC<Props> = props => (
+  <Input
+    // Replaces the usage of ref
+    autoFocus
+    prefix={<Icon name="search" />}
+    type="text"
+    size="md"
+    value={props.value ? unEscapeStringFromRegex(props.value) : ''}
+    onChange={event => props.onChange(escapeStringForRegex(event.currentTarget.value))}
+    placeholder={props.placeholder ?? ''}
+  />
+);

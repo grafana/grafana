@@ -66,7 +66,13 @@ export const ValueMappingsEditor: React.FC<Props> = ({ valueMappings, onChange, 
         </>
       )}
       <FullWidthButtonContainer>
-        <Button size="sm" icon="plus" onClick={onAdd} aria-label="ValueMappingsEditor add mapping button">
+        <Button
+          size="sm"
+          icon="plus"
+          onClick={onAdd}
+          aria-label="ValueMappingsEditor add mapping button"
+          variant="secondary"
+        >
           Add mapping
         </Button>
       </FullWidthButtonContainer>

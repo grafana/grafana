@@ -4,6 +4,7 @@ import { stringToDateTimeType, isValidTimeString } from '../time';
 import { mapStringsToTimeRange } from './mapper';
 import { TimePickerCalendar } from './TimePickerCalendar';
 import Forms from '../../Forms';
+import { Input } from '../../Forms/Input/Input';
 import { Button } from '../../Button';
 
 interface Props {
@@ -66,7 +67,7 @@ export const TimeRangeForm: React.FC<Props> = props => {
   return (
     <>
       <Forms.Field label="From" invalid={from.invalid} error={errorMessage}>
-        <Forms.Input
+        <Input
           onClick={event => event.stopPropagation()}
           onFocus={onFocus}
           onChange={event => setFrom(eventToState(event, false, timeZone))}
@@ -75,7 +76,7 @@ export const TimeRangeForm: React.FC<Props> = props => {
         />
       </Forms.Field>
       <Forms.Field label="To" invalid={to.invalid} error={errorMessage}>
-        <Forms.Input
+        <Input
           onClick={event => event.stopPropagation()}
           onFocus={onFocus}
           onChange={event => setTo(eventToState(event, true, timeZone))}

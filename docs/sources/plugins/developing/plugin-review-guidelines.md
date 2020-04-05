@@ -57,7 +57,7 @@ A minimal `plugin.json` file:
 }
 ```
 
-- The convention for the plugin id is [github username/org]-[plugin name]-[datasource|app|panel] and it has to be unique. Although if org and plugin name are the same then [plugin name]-[datasource|app|panel] is also valid. The org **cannot** be `grafana` unless it is a plugin created by the Grafana core team.
+- The convention for the plugin id is **[grafana.com username/org]-[plugin name]-[datasource|app|panel]** and it has to be unique. The org **cannot** be `grafana` unless it is a plugin created by the Grafana core team.
 
     Examples:
 
@@ -65,6 +65,7 @@ A minimal `plugin.json` file:
     - ryantxu-ajax-panel
     - alexanderzobnin-zabbix-app
     - hawkular-datasource
+
 
 - The `type` field should be either `datasource` `app` or `panel`.
 - The `version` field should be in the form: x.x.x e.g. `1.0.0` or `0.4.1`.
@@ -151,16 +152,18 @@ A basic guide for data sources can be found [here](http://docs.grafana.org/plugi
 
 - The `testDatasource` function should make a query to the data source that will also test that the authentication details are correct. This is so the data source is correctly configured when the user tries to write a query in a new dashboard.
 
+
 #### Password Security
 
-If possible, any passwords or secrets should be be saved in the `secureJsonData` blob. To encrypt sensitive data, the Grafana server's proxy feature must be used. The Grafana server has support for token authentication (OAuth) and HTTP Header authentication. If the calls have to be sent directly from the browser to a third-party API then this will not be possible and sensitive data will not be encrypted.
+If possible, any passwords or secrets should be be saved in the `secureJsonData` blob. To encrypt sensitive data, the Grafana server's proxy feature must be used. The Grafana server has support for token authentication (OAuth) and HTTP Header authentication. If the calls have to be sent directly from the browser to a third-party API, this will not be possible and sensitive data will not be encrypted.
 
 Read more here about how [authentication for data sources]({{< relref "auth-for-datasources.md" >}}) works.
 
-If using the proxy feature then the Config page should use the `secureJsonData` blob like this:
+If using the proxy feature, the Config page should use the `secureJsonData` blob like this:
 
   - good: `<input type="password" class="gf-form-input" ng-model='ctrl.current.secureJsonData.password' placeholder="password"></input>`
   - bad: `<input type="password" class="gf-form-input" ng-model='ctrl.current.password' placeholder="password"></input>`
+
 
 ### Query Editor
 
@@ -168,7 +171,7 @@ Each query editor is unique and can have a unique style. It should be adapted to
 
 - Should use the Grafana CSS `gf-form` classes.
 - Should be neat and tidy. Labels and fields in columns should be aligned and should be the same width if possible.
-- The data source should be able to handle when a user toggles a query (by clicking on the eye icon) and not execute the query. This is done by checking the `hide` property - an [example](https://github.com/grafana/grafana/blob/master/public/app/plugins/datasource/postgres/datasource.ts#L35-L38).
+- The data source should be able to handle when a user toggles a query (by clicking on the eye icon) and not execute the query. This is done by checking the `hide` property - an [example](https://github.com/grafana/grafana/blob/e75840737e81f70b6d169df21eca86a624d4bdc4/public/app/plugins/datasource/postgres/datasource.ts#L73).
 - Should not execute queries if fields in the Query Editor are empty and the query will throw an exception (defensive programming).
 - Should handle errors. There are two main ways to do this:
   - use the notification system in Grafana to show a toaster popup with the error message. Example [here](https://github.com/alexanderzobnin/grafana-zabbix/blob/fdbbba2fb03f5f2a4b3b0715415e09d5a4cf6cde/src/panel-triggers/triggers_panel_ctrl.js#L467-L471).

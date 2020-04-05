@@ -1,8 +1,8 @@
 import { PanelPlugin } from '@grafana/data';
 import { TablePanel } from './TablePanel';
-import { Options, defaults } from './types';
+import { CustomFieldConfig, defaults, Options } from './types';
 
-export const plugin = new PanelPlugin<Options>(TablePanel)
+export const plugin = new PanelPlugin<Options, CustomFieldConfig>(TablePanel)
   .setDefaults(defaults)
   .setCustomFieldOptions(builder => {
     builder
@@ -15,6 +15,7 @@ export const plugin = new PanelPlugin<Options>(TablePanel)
           min: 20,
           max: 300,
         },
+        defaultValue: 1,
       })
       .addSelect({
         id: 'displayMode',

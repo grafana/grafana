@@ -210,7 +210,7 @@ export const getInputStyles = stylesFactory(({ theme, invalid = false }: StyleDe
 });
 
 export const Input = React.forwardRef<HTMLInputElement, Props>((props, ref) => {
-  const { addonAfter, addonBefore, prefix, suffix, invalid, loading, size = 'auto', ...restProps } = props;
+  const { className, addonAfter, addonBefore, prefix, suffix, invalid, loading, size = 'auto', ...restProps } = props;
   /**
    * Prefix & suffix are positioned absolutely within inputWrapper. We use client rects below to apply correct padding to the input
    * when prefix/suffix is larger than default (28px = 16px(icon) + 12px(left/right paddings)).
@@ -223,7 +223,7 @@ export const Input = React.forwardRef<HTMLInputElement, Props>((props, ref) => {
   const styles = getInputStyles({ theme, invalid: !!invalid });
 
   return (
-    <div className={cx(styles.wrapper, inputSizes()[size])}>
+    <div className={cx(styles.wrapper, inputSizes()[size], className)}>
       {!!addonBefore && <div className={styles.addon}>{addonBefore}</div>}
 
       <div className={styles.inputWrapper}>
@@ -255,3 +255,5 @@ export const Input = React.forwardRef<HTMLInputElement, Props>((props, ref) => {
     </div>
   );
 });
+
+Input.displayName = 'Input';

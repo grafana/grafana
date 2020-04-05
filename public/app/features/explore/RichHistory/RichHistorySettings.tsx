@@ -1,6 +1,6 @@
 import React from 'react';
 import { css } from 'emotion';
-import { stylesFactory, useTheme, Forms, Button } from '@grafana/ui';
+import { stylesFactory, useTheme, Forms, Select, Button } from '@grafana/ui';
 import { GrafanaTheme, AppEvents } from '@grafana/data';
 import appEvents from 'app/core/app_events';
 import { CoreEvents } from 'app/types';
@@ -79,11 +79,7 @@ export function RichHistorySettings(props: RichHistorySettingsProps) {
         className="space-between"
       >
         <div className={styles.input}>
-          <Forms.Select
-            value={selectedOption}
-            options={retentionPeriodOptions}
-            onChange={onChangeRetentionPeriod}
-          ></Forms.Select>
+          <Select value={selectedOption} options={retentionPeriodOptions} onChange={onChangeRetentionPeriod}></Select>
         </div>
       </Forms.Field>
       <Forms.Field label="Default active tab" description=" " className="space-between">

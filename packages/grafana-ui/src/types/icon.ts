@@ -16,7 +16,6 @@ export type IconName =
   | 'plus-square'
   | 'folder-plus'
   | 'folder-open'
-  | 'folder-info'
   | 'file-copy-alt'
   | 'exchange-alt'
   | 'import'
@@ -78,6 +77,7 @@ export type IconName =
   | 'edit'
   | 'shield'
   | 'eye'
+  | 'filter'
   | 'monitor'
   | 'plus-circle'
   | 'arrow-left'
@@ -162,7 +162,6 @@ export const getAvailableIcons = (): IconName[] => [
   'plus-square',
   'import',
   'folder-open',
-  'folder-info',
   'file-copy-alt',
   'arrow-down',
   'arrow-up',

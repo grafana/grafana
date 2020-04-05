@@ -28,6 +28,12 @@ describe('getPanelMenu', () => {
           "text": "Share",
         },
         Object {
+          "iconClassName": "info-circle",
+          "onClick": [Function],
+          "shortcut": "p i",
+          "text": "Inspect",
+        },
+        Object {
           "iconClassName": "cube",
           "onClick": [Function],
           "subMenu": Array [

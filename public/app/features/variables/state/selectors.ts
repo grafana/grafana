@@ -1,5 +1,3 @@
-import { cloneDeep } from 'lodash';
-
 import { StoreState } from '../../../types';
 import { VariableModel } from '../../templating/types';
 import { getState } from '../../../store/store';
@@ -21,24 +19,20 @@ export const getVariable = <T extends VariableModel = VariableModel>(
 };
 
 export const getFilteredVariables = (filter: (model: VariableModel) => boolean, state: StoreState = getState()) => {
-  return Object.values(state.templating.variables).filter(filter);
+  return Object.values(state.templating.variables)
+    .filter(filter)
+    .sort((s1, s2) => s1.index! - s2.index!);
 };
 
-export const getVariableWithName = (name: string) => {
-  return getVariable(name, getState(), false);
+export const getVariableWithName = (name: string, state: StoreState = getState()) => {
+  return getVariable(name, state, false);
 };
 
-export const getVariables = (state: StoreState = getState()): VariableModel[] => {
-  return getFilteredVariables(variable => variable.id! !== NEW_VARIABLE_ID, state);
+export const getVariables = (state: StoreState = getState(), includeNewVariable = false): VariableModel[] => {
+  return getFilteredVariables(variable => (includeNewVariable ? true : variable.id! !== NEW_VARIABLE_ID), state);
 };
 
-export const getVariableClones = (state: StoreState = getState(), includeEmptyUuid = false): VariableModel[] => {
-  const variables = getFilteredVariables(
-    variable => (includeEmptyUuid ? true : variable.id! !== NEW_VARIABLE_ID),
-    state
-  ).map(variable => cloneDeep(variable));
-  return variables.sort((s1, s2) => s1.index! - s2.index!);
-};
+export type GetVariables = typeof getVariables;
 
 export const getNewVariabelIndex = (state: StoreState = getState()): number => {
   return Object.values(state.templating.variables).length;

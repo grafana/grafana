@@ -1,6 +1,6 @@
 import { PanelModel } from './PanelModel';
 import { getPanelPlugin } from '../../plugins/__mocks__/pluginMocks';
-import { ConfigOverrideRule, PanelProps } from '@grafana/data';
+import { PanelProps, FieldConfigProperty } from '@grafana/data';
 import { ComponentClass } from 'react';
 
 class TablePanelCtrl {}
@@ -70,13 +70,6 @@ describe('PanelModel', () => {
       };
 
       model = new PanelModel(modelJson);
-      const overrideMock: ConfigOverrideRule = {
-        matcher: {
-          id: '2',
-          options: {},
-        },
-        properties: [],
-      };
 
       const panelPlugin = getPanelPlugin(
         {
@@ -86,12 +79,9 @@ describe('PanelModel', () => {
         TablePanelCtrl // angular
       );
       panelPlugin.setDefaults(defaultOptionsMock);
-      panelPlugin.setFieldConfigDefaults({
-        defaults: {
-          unit: 'flop',
-          decimals: 2,
-        },
-        overrides: [overrideMock],
+      panelPlugin.useStandardFieldConfig([FieldConfigProperty.Unit, FieldConfigProperty.Decimals], {
+        [FieldConfigProperty.Unit]: 'flop',
+        [FieldConfigProperty.Decimals]: 2,
       });
       model.pluginLoaded(panelPlugin);
     });
@@ -106,10 +96,6 @@ describe('PanelModel', () => {
 
     it('should apply option defaults but not override if array is changed', () => {
       expect(model.getOptions().arrayWith2Values.length).toBe(1);
-    });
-
-    it('should merge override field config options', () => {
-      expect(model.getFieldOverrideOptions().fieldOptions.overrides.length).toBe(2);
     });
 
     it('should apply field config defaults', () => {

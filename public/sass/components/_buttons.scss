@@ -228,6 +228,15 @@ $btn-service-icon-width: 35px;
   }
 }
 
+.btn-service--okta {
+  .btn-service-icon {
+    background-image: url(../img/okta_logo_white.png);
+    background-repeat: no-repeat;
+    background-position: 50%;
+    background-size: 60%;
+  }
+}
+
 //Toggle button
 
 .toggle-btn {

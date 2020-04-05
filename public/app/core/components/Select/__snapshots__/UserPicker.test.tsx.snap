@@ -82,7 +82,11 @@ exports[`UserPicker renders correctly 1`] = `
         </div>
         <div
           className="gf-form-select-box__indicators css-q46mcr-IndicatorsContainer"
-        />
+        >
+          <span
+            className="gf-form-select-box__select-arrow "
+          />
+        </div>
       </div>
     </div>
   </div>

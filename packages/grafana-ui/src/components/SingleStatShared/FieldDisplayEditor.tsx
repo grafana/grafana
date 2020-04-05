@@ -7,7 +7,7 @@ import { FormField } from '../FormField/FormField';
 import { StatsPicker } from '../StatsPicker/StatsPicker';
 
 // Types
-import Select from '../Select/Select';
+import Select from '../Forms/Legacy/Select/Select';
 import {
   ReduceDataOptions,
   DEFAULT_FIELD_DISPLAY_VALUES_LIMIT,

@@ -1,6 +1,7 @@
 import React, { Component } from 'react';
-import { Select, Icon } from '@grafana/ui';
+import { LegacyForms, Icon } from '@grafana/ui';
 import { dashboardPermissionLevels } from 'app/types/acl';
+const { Select } = LegacyForms;
 
 export interface Props {
   item: any;

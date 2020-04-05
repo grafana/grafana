@@ -4,7 +4,7 @@ export class FolderPageLoader {
   load(ctrl: any, uid: any, activeChildId: any) {
     ctrl.navModel = {
       main: {
-        icon: 'folder-info',
+        icon: 'folder',
         id: 'manage-folder',
         subTitle: 'Manage folder dashboards & permissions',
         url: '',
