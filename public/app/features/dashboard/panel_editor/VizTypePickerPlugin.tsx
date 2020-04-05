@@ -2,7 +2,6 @@ import React from 'react';
 import { GrafanaTheme, PanelPluginMeta } from '@grafana/data';
 import { stylesFactory, useTheme } from '@grafana/ui';
 import { css, cx } from 'emotion';
-import tinycolor from 'tinycolor2';
 
 interface Props {
   isCurrent: boolean;
