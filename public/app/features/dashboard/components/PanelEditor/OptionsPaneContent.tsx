@@ -1,6 +1,6 @@
 import React, { useCallback, useState, CSSProperties } from 'react';
 import Transition from 'react-transition-group/Transition';
-import { FieldConfigSource, GrafanaTheme, PanelData, PanelPlugin } from '@grafana/data';
+import { FieldConfigSource, GrafanaTheme, PanelData, PanelPlugin, SelectableValue } from '@grafana/data';
 import { DashboardModel, PanelModel } from '../../state';
 import {
   CustomScrollbar,
@@ -8,6 +8,7 @@ import {
   Tab,
   TabContent,
   TabsBar,
+  Select,
   useTheme,
   Container,
   Icon,
@@ -19,6 +20,25 @@ import { css } from 'emotion';
 import { GeneralPanelOptions } from './GeneralPanelOptions';
 import { PanelOptionsEditor } from './PanelOptionsEditor';
 import { DashNavButton } from 'app/features/dashboard/components/DashNav/DashNavButton';
+
+const tabSelections: Array<SelectableValue<string>> = [
+  {
+    label: 'Options',
+    value: 'options',
+  },
+  {
+    label: 'Fields',
+    value: 'defaults',
+  },
+  {
+    label: 'Overrides',
+    value: 'overrides',
+  },
+  {
+    label: 'General',
+    value: 'panel',
+  },
+];
 
 export const OptionsPaneContent: React.FC<{
   plugin?: PanelPlugin;
@@ -41,8 +61,19 @@ export const OptionsPaneContent: React.FC<{
 }) => {
   const theme = useTheme();
   const styles = getStyles(theme);
-  const [activeTab, setActiveTab] = useState('defaults');
+  const [activeTab, setActiveTab] = useState('options');
   const [isSearching, setSearchMode] = useState(false);
+
+  const renderPanelOptions = useCallback(
+    (plugin: PanelPlugin) => {
+      return (
+        <Container padding="md">
+          <>{renderCustomPanelSettings(plugin)}</>
+        </Container>
+      );
+    },
+    [data, plugin, panel, onFieldConfigsChange]
+  );
 
   const renderFieldOptions = useCallback(
     (plugin: PanelPlugin) => {
@@ -54,7 +85,6 @@ export const OptionsPaneContent: React.FC<{
 
       return (
         <Container padding="md">
-          {renderCustomPanelSettings(plugin)}
           <DefaultFieldConfigEditor
             config={fieldConfig}
             plugin={plugin}
@@ -165,6 +195,8 @@ export const OptionsPaneContent: React.FC<{
     );
   }, []);
 
+  const isNarrow = true;
+
   return (
     <div className={styles.panelOptionsPane}>
       {plugin && (
@@ -173,14 +205,30 @@ export const OptionsPaneContent: React.FC<{
             {isSearching && renderSearchInput()}
             {!isSearching && (
               <>
-                <Tab label="Options" active={activeTab === 'defaults'} onChangeTab={() => setActiveTab('defaults')} />
-                <Tab
-                  label="Overrides"
-                  active={activeTab === 'overrides'}
-                  onChangeTab={() => setActiveTab('overrides')}
-                />
-                <Tab label="General" active={activeTab === 'panel'} onChangeTab={() => setActiveTab('panel')} />
-                <div className="flex-grow-1" />
+                {isNarrow ? (
+                  <div className="flex-grow-1">
+                    <Select
+                      options={tabSelections}
+                      value={tabSelections.find(v => v.value === activeTab)}
+                      onChange={v => {
+                        setActiveTab(v.value);
+                      }}
+                    />
+                  </div>
+                ) : (
+                  <>
+                    {tabSelections.map(item => {
+                      return (
+                        <Tab
+                          label={item.label}
+                          active={activeTab === item.value}
+                          onChangeTab={() => setActiveTab(item.value)}
+                        />
+                      );
+                    })}
+                    <div className="flex-grow-1" />
+                  </>
+                )}
                 <div className={styles.tabsButton}>
                   <DashNavButton
                     icon="fa fa-search"
@@ -202,6 +250,7 @@ export const OptionsPaneContent: React.FC<{
           </TabsBar>
           <TabContent className={styles.tabContent}>
             <CustomScrollbar>
+              {activeTab === 'options' && renderPanelOptions(plugin)}
               {activeTab === 'defaults' && renderFieldOptions(plugin)}
               {activeTab === 'overrides' && renderFieldOverrideOptions(plugin)}
               {activeTab === 'panel' && <GeneralPanelOptions panel={panel} onPanelConfigChange={onPanelConfigChange} />}

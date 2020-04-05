@@ -17,7 +17,7 @@ const getTabStyles = stylesFactory((theme: GrafanaTheme) => {
     tabItem: css`
       list-style: none;
       padding: 10px 15px 9px;
-      margin-right: ${theme.spacing.md};
+      margin-right: ${theme.spacing.sm};
       position: relative;
       display: block;
       border: solid transparent;
