@@ -115,12 +115,16 @@ export class TransformationsEditor extends React.PureComponent<TransformationsEd
 
   render() {
     return (
-      <>
+      <div className="panel-editor__content">
+        <p className="muted text-center" style={{ padding: '8px' }}>
+          Transformations allow you to combine, re-order, hide and rename specific parts the the data set before being
+          visualized.
+        </p>
         {this.renderTransformationEditors()}
         <Button variant="secondary" icon="fa fa-plus" onClick={this.onTransformationAdd}>
           Add transformation
         </Button>
-      </>
+      </div>
     );
   }
 }
