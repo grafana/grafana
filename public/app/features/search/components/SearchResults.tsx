@@ -6,6 +6,7 @@ import { IconType } from '@grafana/ui/src/components/Icon/types';
 import { DashboardSection, ItemClickWithEvent, SearchAction } from '../types';
 import { SearchItem } from './SearchItem';
 import { SearchCheckbox } from './SearchCheckbox';
+import PageLoader from '../../../core/components/PageLoader/PageLoader';
 
 export interface Props {
   dispatch?: Dispatch<SearchAction>;
@@ -50,7 +51,9 @@ export const SearchResults: FC<Props> = ({
     }
   };
 
-  if (!loading && (!results || !results.length)) {
+  if (loading) {
+    return <PageLoader />;
+  } else if (!results || !results.length) {
     return <h6>No dashboards matching your query were found.</h6>;
   }
 
