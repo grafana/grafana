@@ -9,9 +9,10 @@ import { backendSrv } from 'app/core/services/backend_srv';
 import { SearchQuery } from 'app/core/components/search/search';
 import { TagFilter } from 'app/core/components/TagFilter/TagFilter';
 import { contextSrv } from 'app/core/services/context_srv';
-import { DashboardSearchItemType, DashboardSection } from '../types';
+import { DashboardSearchItemType, DashboardSection, OpenSearchParams } from '../types';
 import { findSelected, hasId, parseQuery } from '../utils';
 import { searchReducer, initialState } from '../reducers/dashboardSearch';
+import { getDashboardSrv } from '../../dashboard/services/DashboardSrv';
 import {
   FETCH_ITEMS,
   FETCH_RESULTS,
@@ -30,10 +31,11 @@ const canEdit = isEditor || hasEditPermissionInFolders;
 
 export interface Props {
   closeSearch: () => void;
+  payload?: OpenSearchParams;
 }
 
-export const DashboardSearch: FC<Props> = ({ closeSearch }) => {
-  const [query, setQuery] = useState(defaultQuery);
+export const DashboardSearch: FC<Props> = ({ closeSearch, payload = {} }) => {
+  const [query, setQuery] = useState({ ...defaultQuery, ...payload, parsedQuery: parseQuery(payload.query) });
   const [{ results, loading }, dispatch] = useReducer(searchReducer, initialState);
   const theme = useTheme();
   const styles = getStyles(theme);
@@ -47,7 +49,11 @@ export const DashboardSearch: FC<Props> = ({ closeSearch }) => {
   );
 
   const search = () => {
-    searchSrv.search({ ...query, tag: query.tags, query: query.parsedQuery.text }).then(results => {
+    let folderIds: number[] = [];
+    if (query.parsedQuery.folder === 'current') {
+      folderIds.push(getDashboardSrv().getCurrent().meta.folderId);
+    }
+    searchSrv.search({ ...query, tag: query.tags, query: query.parsedQuery.text, folderIds }).then(results => {
       dispatch({ type: FETCH_RESULTS, payload: results });
     });
   };

@@ -64,3 +64,7 @@ export type SearchAction = {
   type: string;
   payload?: any;
 };
+
+export interface OpenSearchParams {
+  query?: string;
+}
