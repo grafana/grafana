@@ -18,17 +18,17 @@ export const hasId = (str: string) => {
  */
 export const getFlattenedSections = (sections: DashboardSection[]): string[] => {
   return sections.flatMap(section => {
-    const id = hasId(section.title) ? section.id : section.title;
+    const id = hasId(section.title) ? String(section.id) : section.title;
 
     if (section.expanded && section.items.length) {
-      return [String(id), ...section.items.map(item => `${id}-${item.id}`)];
+      return [id, ...section.items.map(item => `${id}-${item.id}`)];
     }
-    return String(id);
+    return id;
   });
 };
 
 /**
- * Since Recent and Starred folders don't have id, title field is used for lookup for them
+ * Since Recent and Starred folders don't have id, title field is used as id
  * @param title - title field of the section
  */
 export const getLookupField = (title: string) => {
@@ -62,7 +62,7 @@ export const markSelected = (sections: DashboardSection[], selectedId: string) =
 };
 
 /**
- * Find items with property selected set true in a list of folders and their items.
+ * Find items with property 'selected' set true in a list of folders and their items.
  * Does recursive search in the items list.
  * @param sections
  */
@@ -83,7 +83,7 @@ export const findSelected = (sections: any): DashboardSection | DashboardSection
   return null;
 };
 
-// TODO find out if there are any use cases where query isn't a string
+// TODO check if there are any use cases where query isn't a string
 export const parseQuery = (query: any) => {
   const parsedQuery = parse(query, {
     keywords: ['folder'],
