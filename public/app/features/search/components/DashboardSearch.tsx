@@ -1,8 +1,9 @@
 import React, { FC, useReducer, useState } from 'react';
 import { useDebounce } from 'react-use';
 import { css } from 'emotion';
-import { Button, Icon } from '@grafana/ui';
+import { Icon, useTheme } from '@grafana/ui';
 import { getLocationSrv } from '@grafana/runtime';
+import { GrafanaTheme } from '@grafana/data';
 import { SearchSrv } from 'app/core/services/search_srv';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { SearchQuery } from 'app/core/components/search/search';
@@ -34,7 +35,8 @@ export interface Props {
 export const DashboardSearch: FC<Props> = ({ closeSearch }) => {
   const [query, setQuery] = useState(defaultQuery);
   const [{ results, loading }, dispatch] = useReducer(searchReducer, initialState);
-  const styles = getStyles();
+  const theme = useTheme();
+  const styles = getStyles(theme);
 
   useDebounce(
     () => {
@@ -174,19 +176,22 @@ export const DashboardSearch: FC<Props> = ({ closeSearch }) => {
             </div>
           )}
         </div>
-        <Button onClick={closeSearch} variant="secondary" className={styles.closeBtn}>
-          X
-        </Button>
+        <Icon onClick={closeSearch} className={styles.closeBtn} name="remove" />
       </div>
     </div>
   );
 };
 
-const getStyles = () => {
+const getStyles = (theme: GrafanaTheme) => {
   return {
     closeBtn: css`
       font-size: 22px;
       margin-top: 14px;
+
+      &:hover {
+        cursor: pointer;
+        color: ${theme.colors.white};
+      }
     `,
   };
 };
