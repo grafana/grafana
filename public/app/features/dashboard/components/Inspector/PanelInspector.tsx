@@ -23,11 +23,12 @@ import {
   DataFrame,
   DataSourceApi,
   SelectableValue,
+  getDisplayProcessor,
   applyFieldOverrides,
   toCSV,
   DataQueryError,
   PanelData,
-  getValueFormat,
+  FieldType,
   formattedValueToString,
   QueryResultMetaStat,
 } from '@grafana/data';
@@ -272,12 +273,16 @@ export class PanelInspector extends PureComponent<Props, State> {
     return (
       <>
         {this.renderStatsTable('Stats', stats)}
-        {dataStats.length && this.renderStatsTable('Data source stats', dataStats)}
+        {this.renderStatsTable('Data source stats', dataStats)}
       </>
     );
   }
 
   renderStatsTable(name: string, stats: QueryResultMetaStat[]) {
+    if (!stats || !stats.length) {
+      return null;
+    }
+
     return (
       <div style={{ paddingBottom: '16px' }}>
         <div className="section-heading">{name}</div>
@@ -287,7 +292,7 @@ export class PanelInspector extends PureComponent<Props, State> {
               return (
                 <tr key={`${stat.title}-${index}`}>
                   <td>{stat.title}</td>
-                  <td style={{ textAlign: 'right' }}>{formatStat(stat.value, stat.unit)}</td>
+                  <td style={{ textAlign: 'right' }}>{formatStat(stat)}</td>
                 </tr>
               );
             })}
@@ -353,12 +358,15 @@ export class PanelInspector extends PureComponent<Props, State> {
   }
 }
 
-function formatStat(value: any, unit?: string): string {
-  if (unit) {
-    return formattedValueToString(getValueFormat(unit)(value));
-  } else {
-    return value;
-  }
+function formatStat(stat: QueryResultMetaStat): string {
+  const display = getDisplayProcessor({
+    field: {
+      type: FieldType.number,
+      config: stat,
+    },
+    theme: config.theme,
+  });
+  return formattedValueToString(display(stat.value));
 }
 
 const getStyles = stylesFactory(() => {
