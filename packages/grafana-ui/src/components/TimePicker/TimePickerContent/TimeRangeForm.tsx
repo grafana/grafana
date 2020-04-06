@@ -4,7 +4,7 @@ import { stringToDateTimeType, isValidTimeString } from '../time';
 import { mapStringsToTimeRange } from './mapper';
 import { TimePickerCalendar } from './TimePickerCalendar';
 import Forms from '../../Forms';
-import { Input } from '../../Forms/Input/Input';
+import { Input } from '../../Input/Input';
 import { Button } from '../../Button';
 
 interface Props {

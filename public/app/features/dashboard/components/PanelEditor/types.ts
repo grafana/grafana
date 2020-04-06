@@ -6,9 +6,9 @@ export interface PanelEditorTab {
 }
 
 export enum PanelEditorTabId {
-  Queries = 'queries',
+  Query = 'Query',
   Transform = 'transform',
-  Visualization = 'visualization',
+  Visualize = 'visualize',
   Alert = 'alert',
 }
 

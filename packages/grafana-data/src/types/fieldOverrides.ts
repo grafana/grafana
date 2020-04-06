@@ -69,7 +69,7 @@ export interface FieldPropertyEditorItem<TOptions = any, TValue = any, TSettings
   override: ComponentType<FieldOverrideEditorProps<TValue, TSettings>>;
 
   // Convert the override value to a well typed value
-  process: (value: any, context: FieldOverrideContext, settings?: TSettings) => TValue;
+  process: (value: any, context: FieldOverrideContext, settings?: TSettings) => TValue | undefined | null;
 
   // Checks if field should be processed
   shouldApply: (field: Field) => boolean;
