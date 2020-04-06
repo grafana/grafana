@@ -73,7 +73,6 @@ export class GrafanaBootConfig {
     tracingIntegration: false,
   };
   licenseInfo: LicenseInfo = {} as LicenseInfo;
-  phantomJSRenderer = false;
 
   constructor(options: GrafanaBootConfig) {
     this.theme = options.bootData.user.lightTheme ? getTheme(GrafanaThemeType.Light) : getTheme(GrafanaThemeType.Dark);
