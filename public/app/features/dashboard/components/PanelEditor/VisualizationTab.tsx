@@ -6,7 +6,7 @@ import { changePanelPlugin } from '../../state/actions';
 import { StoreState } from 'app/types';
 import { PanelModel } from '../../state/PanelModel';
 import { connect, MapStateToProps, MapDispatchToProps } from 'react-redux';
-import { VizTypePicker } from '../../panel_editor/VizTypePicker';
+import { VizTypePicker, getAllPanelPluginMeta, filterPluginList } from '../../panel_editor/VizTypePicker';
 
 interface OwnProps {
   panel: PanelModel;
@@ -48,6 +48,16 @@ export const VisualizationTabUnconnected: FC<Props> = ({ panel, plugin, changePa
         <Input
           value={searchQuery}
           onChange={e => setSearchQuery(e.currentTarget.value)}
+          onKeyPress={e => {
+            if (e.key === 'Enter') {
+              const query = e.currentTarget.value;
+              const plugins = getAllPanelPluginMeta();
+              const match = filterPluginList(plugins, query);
+              if (match && match.length) {
+                onPluginTypeChange(match[0]);
+              }
+            }
+          }}
           prefix={<Icon name="filter" className={styles.icon} />}
           suffix={suffix}
           placeholder="Filter visualisations"

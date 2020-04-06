@@ -13,16 +13,39 @@ export interface Props {
   onClose: () => void;
 }
 
+export function getAllPanelPluginMeta(): PanelPluginMeta[] {
+  const allPanels = config.panels;
+
+  return Object.keys(allPanels)
+    .filter(key => allPanels[key]['hideFromList'] === false)
+    .map(key => allPanels[key])
+    .sort((a: PanelPluginMeta, b: PanelPluginMeta) => a.sort - b.sort);
+}
+
+export function filterPluginList(pluginsList: PanelPluginMeta[], searchQuery: string): PanelPluginMeta[] {
+  if (!searchQuery.length) {
+    return pluginsList;
+  }
+  const query = searchQuery.toLowerCase();
+  const first: PanelPluginMeta[] = [];
+  const match: PanelPluginMeta[] = [];
+  for (const item of pluginsList) {
+    const name = item.name.toLowerCase();
+    const idx = name.indexOf(query);
+    if (idx === 0) {
+      first.push(item);
+    } else if (idx > 0) {
+      match.push(item);
+    }
+  }
+  return first.concat(match);
+}
+
 export const VizTypePicker: React.FC<Props> = ({ searchQuery, onTypeChange, current }) => {
   const theme = useTheme();
   const styles = getStyles(theme);
   const pluginsList: PanelPluginMeta[] = useMemo(() => {
-    const allPanels = config.panels;
-
-    return Object.keys(allPanels)
-      .filter(key => allPanels[key]['hideFromList'] === false)
-      .map(key => allPanels[key])
-      .sort((a: PanelPluginMeta, b: PanelPluginMeta) => a.sort - b.sort);
+    return getAllPanelPluginMeta();
   }, []);
 
   const renderVizPlugin = (plugin: PanelPluginMeta, index: number) => {
@@ -42,10 +65,7 @@ export const VizTypePicker: React.FC<Props> = ({ searchQuery, onTypeChange, curr
   };
 
   const getFilteredPluginList = useCallback((): PanelPluginMeta[] => {
-    const regex = new RegExp(searchQuery, 'i');
-    return pluginsList.filter(item => {
-      return regex.test(item.name);
-    });
+    return filterPluginList(pluginsList, searchQuery);
   }, [searchQuery]);
 
   const filteredPluginList = getFilteredPluginList();
