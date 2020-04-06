@@ -12,19 +12,31 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import React from 'react';
+import React, { useContext } from 'react';
 import hoistNonReactStatics from 'hoist-non-react-statics';
 import memoizeOne from 'memoize-one';
+import tinycolor from 'tinycolor2';
 
 export type ThemeOptions = Partial<Theme>;
 
+export enum ThemeType {
+  Dark,
+  Light,
+}
+
 export type Theme = {
+  type: ThemeType;
   borderStyle: string;
 };
 
 export const defaultTheme: Theme = {
+  type: ThemeType.Light,
   borderStyle: '1px solid #bbb',
 };
+
+export function isLight(theme: Theme) {
+  return theme.type === ThemeType.Light;
+}
 
 const ThemeContext = React.createContext<ThemeOptions | undefined>(undefined);
 ThemeContext.displayName = 'ThemeContext';
@@ -81,6 +93,25 @@ export const withTheme = <Props extends { theme: Theme }, Statics extends {} = {
   return WithTheme as WrappedWithThemeComponent<Props>;
 };
 
+export function useTheme(): Theme {
+  const theme = useContext(ThemeContext);
+  return {
+    ...defaultTheme,
+    ...theme,
+  };
+}
+
 export const createStyle = <Fn extends (this: any, ...newArgs: any[]) => ReturnType<Fn>>(fn: Fn) => {
   return memoizeOne(fn);
 };
+
+export function autoColor(theme: Theme, hex: string) {
+  if (isLight(theme)) {
+    return hex;
+  } else {
+    const color = tinycolor(hex).toHsl();
+    color.l = 1 - color.l;
+    const newColor = tinycolor(color);
+    return newColor.isLight() ? newColor.darken(5).toHexString() : newColor.lighten(5).toHexString();
+  }
+}
