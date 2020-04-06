@@ -5,6 +5,7 @@ export enum DataTransformerID {
   reduce = 'reduce', // Run calculations on fields
   order = 'order', // order fields based on user configuration
   organize = 'organize', // order, rename and filter based on user configuration
+  rename = 'rename', // rename field based on user configuration
 
   seriesToColumns = 'seriesToColumns', // former table transform timeseries_to_columns
   filterFields = 'filterFields', // Pick some fields (keep all frames)

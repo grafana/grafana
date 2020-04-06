@@ -31,6 +31,9 @@ describe('OrganizeFields Transformer', () => {
           excludeByName: {
             time: true,
           },
+          renameByName: {
+            humidity: 'renamed_humidity',
+          },
         },
       };
 
@@ -45,7 +48,7 @@ describe('OrganizeFields Transformer', () => {
         },
         {
           config: {},
-          name: 'humidity',
+          name: 'renamed_humidity',
           type: FieldType.number,
           values: new ArrayVector([10000.3, 10000.4, 10000.5, 10000.6]),
         },
@@ -75,6 +78,9 @@ describe('OrganizeFields Transformer', () => {
           excludeByName: {
             humidity: true,
           },
+          renameByName: {
+            time: 'renamed_time',
+          },
         },
       };
 
@@ -83,7 +89,7 @@ describe('OrganizeFields Transformer', () => {
       expect(organized.fields).toEqual([
         {
           config: {},
-          name: 'time',
+          name: 'renamed_time',
           type: FieldType.time,
           values: new ArrayVector([3000, 4000, 5000, 6000]),
         },

@@ -6,9 +6,9 @@ import {
   toDataFrame,
   transformDataFrame,
 } from '@grafana/data';
-import { OrderFieldsTransformerOptions } from './order';
+import { RenameFieldsTransformerOptions } from './rename';
 
-describe('Order Transformer', () => {
+describe('Rename Transformer', () => {
   describe('when consistent data is received', () => {
     const data = toDataFrame({
       name: 'A',
@@ -19,38 +19,38 @@ describe('Order Transformer', () => {
       ],
     });
 
-    it('should order according to config', () => {
-      const cfg: DataTransformerConfig<OrderFieldsTransformerOptions> = {
-        id: DataTransformerID.order,
+    it('should rename according to config', () => {
+      const cfg: DataTransformerConfig<RenameFieldsTransformerOptions> = {
+        id: DataTransformerID.rename,
         options: {
-          indexByName: {
-            time: 2,
-            temperature: 0,
-            humidity: 1,
+          renameByName: {
+            time: 'Total time',
+            humidity: 'Moistiness',
+            temperature: 'how cold is it?',
           },
         },
       };
 
-      const ordered = transformDataFrame([cfg], [data])[0];
+      const renamed = transformDataFrame([cfg], [data])[0];
 
-      expect(ordered.fields).toEqual([
+      expect(renamed.fields).toEqual([
         {
           config: {},
-          name: 'temperature',
+          name: 'Total time',
+          type: FieldType.time,
+          values: new ArrayVector([3000, 4000, 5000, 6000]),
+        },
+        {
+          config: {},
+          name: 'how cold is it?',
           type: FieldType.number,
           values: new ArrayVector([10.3, 10.4, 10.5, 10.6]),
         },
         {
           config: {},
-          name: 'humidity',
+          name: 'Moistiness',
           type: FieldType.number,
           values: new ArrayVector([10000.3, 10000.4, 10000.5, 10000.6]),
-        },
-        {
-          config: {},
-          name: 'time',
-          type: FieldType.time,
-          values: new ArrayVector([3000, 4000, 5000, 6000]),
         },
       ]);
     });
@@ -66,30 +66,24 @@ describe('Order Transformer', () => {
       ],
     });
 
-    it('should append fields missing in config at the end', () => {
-      const cfg: DataTransformerConfig<OrderFieldsTransformerOptions> = {
-        id: DataTransformerID.order,
+    it('should not rename fields missing in config', () => {
+      const cfg: DataTransformerConfig<RenameFieldsTransformerOptions> = {
+        id: DataTransformerID.rename,
         options: {
-          indexByName: {
-            time: 2,
-            temperature: 0,
-            humidity: 1,
+          renameByName: {
+            time: 'ttl',
+            temperature: 'temp',
+            humidity: 'hum',
           },
         },
       };
 
-      const ordered = transformDataFrame([cfg], [data])[0];
+      const renamed = transformDataFrame([cfg], [data])[0];
 
-      expect(ordered.fields).toEqual([
+      expect(renamed.fields).toEqual([
         {
           config: {},
-          name: 'humidity',
-          type: FieldType.number,
-          values: new ArrayVector([10000.3, 10000.4, 10000.5, 10000.6]),
-        },
-        {
-          config: {},
-          name: 'time',
+          name: 'ttl',
           type: FieldType.time,
           values: new ArrayVector([3000, 4000, 5000, 6000]),
         },
@@ -98,6 +92,12 @@ describe('Order Transformer', () => {
           name: 'pressure',
           type: FieldType.number,
           values: new ArrayVector([10.3, 10.4, 10.5, 10.6]),
+        },
+        {
+          config: {},
+          name: 'hum',
+          type: FieldType.number,
+          values: new ArrayVector([10000.3, 10000.4, 10000.5, 10000.6]),
         },
       ]);
     });
@@ -113,17 +113,17 @@ describe('Order Transformer', () => {
       ],
     });
 
-    it('should keep the same order as in the incoming data', () => {
-      const cfg: DataTransformerConfig<OrderFieldsTransformerOptions> = {
-        id: DataTransformerID.order,
+    it('should keep the same names as in the incoming data', () => {
+      const cfg: DataTransformerConfig<RenameFieldsTransformerOptions> = {
+        id: DataTransformerID.rename,
         options: {
-          indexByName: {},
+          renameByName: {},
         },
       };
 
-      const ordered = transformDataFrame([cfg], [data])[0];
+      const renamed = transformDataFrame([cfg], [data])[0];
 
-      expect(ordered.fields).toEqual([
+      expect(renamed.fields).toEqual([
         {
           config: {},
           name: 'time',

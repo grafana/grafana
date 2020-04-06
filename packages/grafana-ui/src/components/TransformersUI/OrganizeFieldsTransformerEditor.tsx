@@ -8,12 +8,13 @@ import { stylesFactory, useTheme } from '../../themes';
 import { Button } from '../Button';
 import { createFieldsComparer } from '@grafana/data/src/transformations/transformers/order';
 import { VerticalGroup } from '../Layout/Layout';
+import { Input } from '../Forms/Input/Input';
 
 interface OrganizeFieldsTransformerEditorProps extends TransformerUIProps<OrganizeFieldsTransformerOptions> {}
 
 const OrganizeFieldsTransformerEditor: React.FC<OrganizeFieldsTransformerEditorProps> = props => {
   const { options, input, onChange } = props;
-  const { indexByName, excludeByName } = options;
+  const { indexByName, excludeByName, renameByName } = options;
 
   const fieldNames = useMemo(() => fieldNamesFromInput(input), [input]);
   const orderedFieldNames = useMemo(() => orderFieldNamesByIndex(fieldNames, indexByName), [fieldNames, indexByName]);
@@ -52,6 +53,19 @@ const OrganizeFieldsTransformerEditor: React.FC<OrganizeFieldsTransformerEditorP
     [onChange, indexByName, excludeByName, fieldNames]
   );
 
+  const onRenameField = useCallback(
+    (from: string, to: string) => {
+      onChange({
+        ...options,
+        renameByName: {
+          ...options.renameByName,
+          [from]: to,
+        },
+      });
+    },
+    [onChange, fieldNames, renameByName]
+  );
+
   return (
     <VerticalGroup>
       <DragDropContext onDragEnd={onDragEnd}>
@@ -64,6 +78,7 @@ const OrganizeFieldsTransformerEditor: React.FC<OrganizeFieldsTransformerEditorP
                     fieldName={fieldName}
                     index={index}
                     onToggleVisibility={onToggleVisibility}
+                    onRenameField={onRenameField}
                     visible={!excludeByName[fieldName]}
                     key={fieldName}
                   />
@@ -83,9 +98,16 @@ interface DraggableFieldProps {
   index: number;
   visible: boolean;
   onToggleVisibility: (fieldName: string, isVisible: boolean) => void;
+  onRenameField: (from: string, to: string) => void;
 }
 
-const DraggableFieldName: React.FC<DraggableFieldProps> = ({ fieldName, index, visible, onToggleVisibility }) => {
+const DraggableFieldName: React.FC<DraggableFieldProps> = ({
+  fieldName,
+  index,
+  visible,
+  onToggleVisibility,
+  onRenameField,
+}) => {
   const theme = useTheme();
   const styles = getFieldNameStyles(theme);
 
@@ -98,15 +120,23 @@ const DraggableFieldName: React.FC<DraggableFieldProps> = ({ fieldName, index, v
           {...provided.draggableProps}
           {...provided.dragHandleProps}
         >
-          <i className={cx('fa fa-ellipsis-v', styles.draggable)} />
-          <Button
-            className={styles.toggle}
-            variant="link"
-            size="md"
-            icon={visible ? 'fa fa-eye' : 'fa fa-eye-slash'}
-            onClick={() => onToggleVisibility(fieldName, visible)}
-          />
-          <span className={styles.name}>{fieldName}</span>
+          <div className={styles.left}>
+            <i className={cx('fa fa-ellipsis-v', styles.draggable)} />
+            <Button
+              className={styles.toggle}
+              variant="link"
+              size="md"
+              icon={visible ? 'fa fa-eye' : 'fa fa-eye-slash'}
+              onClick={() => onToggleVisibility(fieldName, visible)}
+            />
+            <span className={styles.name}>{fieldName}</span>
+          </div>
+          <div className={styles.right}>
+            <Input
+              placeholder={`Rename ${fieldName}`}
+              onChange={event => onRenameField(fieldName, event.currentTarget.value)}
+            />
+          </div>
         </div>
       )}
     </Draggable>
@@ -117,11 +147,18 @@ const getFieldNameStyles = stylesFactory((theme: GrafanaTheme) => ({
   container: css`
     display: flex;
     align-items: center;
+    margin-top: 8px;
+  `,
+  left: css`
+    width: 35%;
     padding: 0 8px;
     border-radius: 3px;
     background-color: ${theme.isDark ? theme.colors.grayBlue : theme.colors.gray6};
     border: 1px solid ${theme.isDark ? theme.colors.dark6 : theme.colors.gray5};
-    margin-top: 8px;
+  `,
+  right: css`
+    width: 65%;
+    margin-left: 8px;
   `,
   toggle: css`
     padding: 5px;

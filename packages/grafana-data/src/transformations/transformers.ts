@@ -10,6 +10,7 @@ import { filterFramesByRefIdTransformer } from './transformers/filterByRefId';
 import { orderFieldsTransformer } from './transformers/order';
 import { organizeFieldsTransformer } from './transformers/organize';
 import { seriesToColumnsTransformer } from './transformers/seriesToColumns';
+import { renameFieldsTransformer } from './transformers/rename';
 
 // Initalize the Registry
 
@@ -74,6 +75,7 @@ export const transformersRegistry = new TransformerRegistry(() => [
   appendTransformer,
   reduceTransformer,
   seriesToColumnsTransformer,
+  renameFieldsTransformer,
 ]);
 
 export { ReduceTransformerOptions, FilterFieldsByNameTransformerOptions };
