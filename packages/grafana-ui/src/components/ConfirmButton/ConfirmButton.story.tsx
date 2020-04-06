@@ -23,18 +23,20 @@ const getKnobs = () => {
       'primary'
     ),
     disabled: boolean('Disabled', false),
+    closeOnConfirm: boolean('Close on confirm', true),
   };
 };
 
 storiesOf('General/ConfirmButton', module)
   .addDecorator(withCenteredStory)
   .add('default', () => {
-    const { size, buttonText, confirmText, confirmVariant, disabled } = getKnobs();
+    const { size, buttonText, confirmText, confirmVariant, disabled, closeOnConfirm } = getKnobs();
     return (
       <>
         <div className="gf-form-group">
           <div className="gf-form">
             <ConfirmButton
+              closeOnConfirm={closeOnConfirm}
               size={size}
               confirmText={confirmText}
               disabled={disabled}
@@ -51,12 +53,13 @@ storiesOf('General/ConfirmButton', module)
     );
   })
   .add('with custom button', () => {
-    const { buttonText, confirmText, confirmVariant, disabled, size } = getKnobs();
+    const { buttonText, confirmText, confirmVariant, disabled, size, closeOnConfirm } = getKnobs();
     return (
       <>
         <div className="gf-form-group">
           <div className="gf-form">
             <ConfirmButton
+              closeOnConfirm={closeOnConfirm}
               size={size}
               confirmText={confirmText}
               disabled={disabled}

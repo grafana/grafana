@@ -1,9 +1,12 @@
-import React, { FC } from 'react';
+import React, { FC, useState } from 'react';
 import { OrgUser } from 'app/types';
+import { OrgRolePicker } from '../admin/OrgRolePicker';
+import { ConfirmButton, Button, ConfirmModal } from '@grafana/ui';
+import { OrgRole } from '@grafana/data';
 
 export interface Props {
   users: OrgUser[];
-  onRoleChange: (role: string, user: OrgUser) => void;
+  onRoleChange: (role: OrgRole, user: OrgUser) => void;
   onRemoveUser: (user: OrgUser) => void;
 }
 
@@ -25,38 +28,57 @@ const UsersTable: FC<Props> = props => {
       </thead>
       <tbody>
         {users.map((user, index) => {
+          const [isChangingRole, setIsChangingRole] = useState(false);
+          const [role, setRole] = useState<OrgRole>(user.role);
+          const [isRemovingUser, setIsRemovingUser] = useState(false);
           return (
             <tr key={`${user.userId}-${index}`}>
               <td className="width-4 text-center">
                 <img className="filter-table__avatar" src={user.avatarUrl} />
               </td>
               <td>{user.login}</td>
+
+              {isChangingRole && (
+                <td colSpan={3}>
+                  <OrgRolePicker value={role} onChange={newRole => setRole(newRole)} />
+                </td>
+              )}
+              {!isChangingRole && (
+                <>
+                  <td>
+                    <span className="ellipsis">{user.email}</span>
+                  </td>
+                  <td>{user.name}</td>
+                  <td>{user.lastSeenAtAge}</td>
+                </>
+              )}
+
+              <td>{!isChangingRole && role}</td>
               <td>
-                <span className="ellipsis">{user.email}</span>
+                <ConfirmButton
+                  closeOnConfirm
+                  onClick={() => setIsChangingRole(true)}
+                  onCancel={() => setIsChangingRole(false)}
+                  onConfirm={() => {
+                    onRoleChange(role, user);
+                    setIsChangingRole(false);
+                  }}
+                >
+                  Edit role
+                </ConfirmButton>
               </td>
-              <td>{user.name}</td>
-              <td>{user.lastSeenAtAge}</td>
               <td>
-                <div className="gf-form-select-wrapper width-12">
-                  <select
-                    value={user.role}
-                    className="gf-form-input"
-                    onChange={event => onRoleChange(event.target.value, user)}
-                  >
-                    {['Viewer', 'Editor', 'Admin'].map((option, index) => {
-                      return (
-                        <option value={option} key={`${option}-${index}`}>
-                          {option}
-                        </option>
-                      );
-                    })}
-                  </select>
-                </div>
-              </td>
-              <td>
-                <div onClick={() => onRemoveUser(user)} className="btn btn-danger btn-small">
-                  <i className="fa fa-remove" />
-                </div>
+                <Button size="sm" variant="destructive" onClick={() => setIsRemovingUser(true)} icon="fa fa-remove" />
+                <ConfirmModal
+                  body={`Are you sure you want to delete user ${user.login}?`}
+                  confirmText="Delete"
+                  title="Delete"
+                  onDismiss={() => setIsRemovingUser(false)}
+                  isOpen={isRemovingUser}
+                  onConfirm={() => {
+                    onRemoveUser(user);
+                  }}
+                />
               </td>
             </tr>
           );
