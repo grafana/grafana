@@ -38,23 +38,17 @@ const UsersTable: FC<Props> = props => {
               </td>
               <td>{user.login}</td>
 
-              {isChangingRole && (
-                <td colSpan={3}>
-                  <OrgRolePicker value={role} onChange={newRole => setRole(newRole)} />
-                </td>
-              )}
-              {!isChangingRole && (
-                <>
-                  <td>
-                    <span className="ellipsis">{user.email}</span>
-                  </td>
-                  <td>{user.name}</td>
-                  <td>{user.lastSeenAtAge}</td>
-                </>
-              )}
-
-              <td>{!isChangingRole && role}</td>
               <td>
+                <span className="ellipsis">{user.email}</span>
+              </td>
+              <td>{user.name}</td>
+              <td>{user.lastSeenAtAge}</td>
+
+              <td className="width-8">
+                {!isChangingRole && role}
+                {isChangingRole && <OrgRolePicker type="select" value={role} onChange={newRole => setRole(newRole)} />}
+              </td>
+              <td className="width-11">
                 <ConfirmButton
                   closeOnConfirm
                   onClick={() => setIsChangingRole(true)}
