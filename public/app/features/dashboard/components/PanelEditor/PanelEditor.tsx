@@ -169,8 +169,7 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
                       <DashboardPanel
                         dashboard={dashboard}
                         panel={panel}
-                        isEditing={false}
-                        isInEditMode
+                        isEditing={true}
                         isFullscreen={false}
                         isInView={true}
                       />

@@ -6,8 +6,6 @@ import { connect, MapStateToProps, MapDispatchToProps } from 'react-redux';
 
 // Components
 import { PanelChrome } from './PanelChrome';
-import { PanelEditor } from '../panel_editor/PanelEditor';
-import { PanelResizer } from './PanelResizer';
 import { PanelChromeAngular } from './PanelChromeAngular';
 
 // Actions
@@ -23,7 +21,6 @@ export interface OwnProps {
   panel: PanelModel;
   dashboard: DashboardModel;
   isEditing: boolean;
-  isInEditMode?: boolean;
   isFullscreen: boolean;
   isInView: boolean;
 }
@@ -74,12 +71,10 @@ export class DashboardPanelUnconnected extends PureComponent<Props, State> {
   };
 
   renderPanel(plugin: PanelPlugin) {
-    const { dashboard, panel, isFullscreen, isEditing, isInView, isInEditMode, updateLocation } = this.props;
-
-    const autoSizerStyle = { height: isEditing ? '100%' : '' };
+    const { dashboard, panel, isFullscreen, isInView, isEditing, updateLocation } = this.props;
 
     return (
-      <AutoSizer style={autoSizerStyle}>
+      <AutoSizer>
         {({ width, height }) => {
           if (width === 0) {
             return null;
@@ -105,8 +100,8 @@ export class DashboardPanelUnconnected extends PureComponent<Props, State> {
               panel={panel}
               dashboard={dashboard}
               isFullscreen={isFullscreen}
+              isEditing={isEditing}
               isInView={isInView}
-              isInEditMode={isInEditMode}
               width={width}
               height={height}
               updateLocation={updateLocation}
@@ -118,7 +113,7 @@ export class DashboardPanelUnconnected extends PureComponent<Props, State> {
   }
 
   render() {
-    const { panel, dashboard, isFullscreen, isEditing, plugin } = this.props;
+    const { isFullscreen, isEditing, plugin } = this.props;
     const { isLazy } = this.state;
 
     // if we have not loaded plugin exports yet, wait
@@ -131,34 +126,14 @@ export class DashboardPanelUnconnected extends PureComponent<Props, State> {
       return null;
     }
 
-    const editorContainerClasses = classNames({
-      'panel-editor-container': isEditing,
-      'panel-height-helper': !isEditing,
-    });
-
     const panelWrapperClass = classNames({
       'panel-wrapper': true,
-      'panel-wrapper--edit': isEditing,
       'panel-wrapper--view': isFullscreen && !isEditing,
     });
 
     return (
-      <div className={editorContainerClasses}>
-        <PanelResizer
-          isEditing={isEditing}
-          panel={panel}
-          render={styles => (
-            <div
-              className={panelWrapperClass}
-              onMouseEnter={this.onMouseEnter}
-              onMouseLeave={this.onMouseLeave}
-              style={styles}
-            >
-              {this.renderPanel(plugin)}
-            </div>
-          )}
-        />
-        {panel.isEditing && <PanelEditor panel={panel} plugin={plugin} dashboard={dashboard} />}
+      <div className={panelWrapperClass} onMouseEnter={this.onMouseEnter} onMouseLeave={this.onMouseLeave}>
+        {this.renderPanel(plugin)}
       </div>
     );
   }
