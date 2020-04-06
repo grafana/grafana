@@ -258,10 +258,6 @@ export class PanelInspector extends PureComponent<Props, State> {
     return <div>{error.message}</div>;
   }
 
-  renderQueryTab() {
-    return <div>TODO!</div>;
-  }
-
   renderStatsTab() {
     const { last } = this.state;
     const { request } = last;

@@ -6,6 +6,7 @@ import { EditorTabBody, EditorToolbarView } from './EditorTabBody';
 import { DataSourcePicker } from 'app/core/components/Select/DataSourcePicker';
 import { QueryOptions } from './QueryOptions';
 import { PanelOptionsGroup } from '@grafana/ui';
+import { getLocationSrv } from '@grafana/runtime';
 import { QueryEditorRows } from './QueryEditorRows';
 // Services
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
@@ -119,7 +120,11 @@ export class QueriesTab extends PureComponent<Props, State> {
   };
 
   openQueryInspector = () => {
-    alert('TODO... open the inspector at query tab');
+    const { panel } = this.props;
+    getLocationSrv().update({
+      query: { inspect: panel.id, tab: 'JSON' },
+      partial: true,
+    });
   };
 
   renderHelp = () => {
