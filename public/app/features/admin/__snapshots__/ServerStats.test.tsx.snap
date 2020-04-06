@@ -97,10 +97,10 @@ exports[`ServerStats Should render table with stats 1`] = `
                   className="page-header__tabs"
                 >
                   <ul
-                    className="css-13jkosq"
+                    className="css-payll4"
                   >
                     <li
-                      className="css-14totda"
+                      className="css-1lu9djy"
                       onClick={[Function]}
                     >
                       <i
@@ -220,7 +220,7 @@ exports[`ServerStats Should render table with stats 1`] = `
       </div>
     </div>
     <div
-      className="css-52gpmd track-horizontal"
+      className="track-horizontal"
       style={
         Object {
           "display": "none",
@@ -241,7 +241,7 @@ exports[`ServerStats Should render table with stats 1`] = `
       />
     </div>
     <div
-      className="css-52gpmd track-vertical"
+      className="track-vertical"
       style={
         Object {
           "display": "none",

@@ -68,6 +68,7 @@ With a Grafana Enterprise license, you get access to premium plugins, including:
 * [Dynatrace](https://grafana.com/plugins/grafana-dynatrace-datasource)
 * [New Relic](https://grafana.com/plugins/grafana-newrelic-datasource)
 * [Oracle Database](https://grafana.com/plugins/grafana-oracle-datasource)
+* [ServiceNow](https://grafana.com/grafana/plugins/grafana-servicenow-datasource)
 * [Splunk](https://grafana.com/plugins/grafana-splunk-datasource)
 
 ## Try Grafana Enterprise

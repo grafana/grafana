@@ -1,5 +1,5 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-import { DataSourceVariableModel, VariableHide, VariableOption, VariableRefresh } from '../../templating/variable';
+import { DataSourceVariableModel, VariableHide, VariableOption, VariableRefresh } from '../../templating/types';
 import {
   ALL_VARIABLE_TEXT,
   ALL_VARIABLE_VALUE,
@@ -72,5 +72,4 @@ export const dataSourceVariableSlice = createSlice({
 });
 
 export const dataSourceVariableReducer = dataSourceVariableSlice.reducer;
-
 export const { createDataSourceOptions } = dataSourceVariableSlice.actions;

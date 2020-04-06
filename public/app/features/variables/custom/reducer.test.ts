@@ -5,7 +5,7 @@ import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE, toVariablePayload } from '../sta
 import { createCustomOptionsFromQuery, customVariableReducer } from './reducer';
 import { createCustomVariableAdapter } from './adapter';
 import { VariablesState } from '../state/variablesReducer';
-import { CustomVariableModel } from '../../templating/variable';
+import { CustomVariableModel } from '../../templating/types';
 
 describe('customVariableReducer', () => {
   const adapter = createCustomVariableAdapter();

@@ -1,4 +1,4 @@
-import { TextBoxVariableModel } from '../../templating/variable';
+import { TextBoxVariableModel } from '../../templating/types';
 import { ThunkResult } from '../../../types';
 import { getVariable } from '../state/selectors';
 import { variableAdapters } from '../adapters';

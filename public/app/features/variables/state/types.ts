@@ -1,5 +1,6 @@
-import { VariableModel, VariableType } from '../../templating/variable';
+import { VariableModel } from '../../templating/types';
 import { VariablesState } from './variablesReducer';
+import { VariableType } from '@grafana/data';
 
 export const NEW_VARIABLE_ID = '00000000-0000-0000-0000-000000000000';
 export const ALL_VARIABLE_TEXT = 'All';

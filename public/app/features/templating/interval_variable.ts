@@ -7,12 +7,12 @@ import {
   VariableHide,
   VariableOption,
   VariableRefresh,
-  VariableType,
   variableTypes,
-} from './variable';
+} from './types';
 import { TimeSrv } from '../dashboard/services/TimeSrv';
 import { TemplateSrv } from './template_srv';
 import { VariableSrv } from './variable_srv';
+import { VariableType } from '@grafana/data';
 
 export class IntervalVariable implements IntervalVariableModel, VariableActions {
   type: VariableType;

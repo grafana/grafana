@@ -3,8 +3,7 @@ package backendplugin
 import (
 	"os/exec"
 
-	"github.com/grafana/grafana-plugin-sdk-go/backend/plugin"
-
+	"github.com/grafana/grafana-plugin-sdk-go/backend/grpcplugin"
 	"github.com/grafana/grafana/pkg/infra/log"
 
 	datasourceV1 "github.com/grafana/grafana-plugin-model/go/datasource"
@@ -27,8 +26,8 @@ var handshake = goplugin.HandshakeConfig{
 	ProtocolVersion: DefaultProtocolVersion,
 
 	// The magic cookie values should NEVER be changed.
-	MagicCookieKey:   plugin.MagicCookieKey,
-	MagicCookieValue: plugin.MagicCookieValue,
+	MagicCookieKey:   grpcplugin.MagicCookieKey,
+	MagicCookieValue: grpcplugin.MagicCookieValue,
 }
 
 func newClientConfig(executablePath string, logger log.Logger, versionedPlugins map[int]goplugin.PluginSet) *goplugin.ClientConfig {
@@ -73,11 +72,11 @@ func NewBackendPluginDescriptor(pluginID, executablePath string, startFns Plugin
 			DefaultProtocolVersion: {
 				pluginID: &datasourceV1.DatasourcePluginImpl{},
 			},
-			plugin.ProtocolVersion: {
-				"diagnostics": &plugin.DiagnosticsGRPCPlugin{},
-				"resource":    &plugin.ResourceGRPCPlugin{},
-				"data":        &plugin.DataGRPCPlugin{},
-				"transform":   &plugin.TransformGRPCPlugin{},
+			grpcplugin.ProtocolVersion: {
+				"diagnostics": &grpcplugin.DiagnosticsGRPCPlugin{},
+				"resource":    &grpcplugin.ResourceGRPCPlugin{},
+				"data":        &grpcplugin.DataGRPCPlugin{},
+				"transform":   &grpcplugin.TransformGRPCPlugin{},
 			},
 		},
 		startFns: startFns,
@@ -101,19 +100,19 @@ func NewRendererPluginDescriptor(pluginID, executablePath string, startFns Plugi
 }
 
 type DiagnosticsPlugin interface {
-	plugin.DiagnosticsClient
+	grpcplugin.DiagnosticsClient
 }
 
 type ResourcePlugin interface {
-	plugin.ResourceClient
+	grpcplugin.ResourceClient
 }
 
 type DataPlugin interface {
-	plugin.DataClient
+	grpcplugin.DataClient
 }
 
 type TransformPlugin interface {
-	plugin.TransformClient
+	grpcplugin.TransformClient
 }
 
 // LegacyClient client for communicating with a plugin using the old plugin protocol.

@@ -1,4 +1,5 @@
 import { dateTime, TimeRange } from '@grafana/data';
+
 import { TemplateSrv } from '../../templating/template_srv';
 import { Emitter } from '../../../core/utils/emitter';
 import { onTimeRangeUpdated, OnTimeRangeUpdatedDependencies } from './actions';
@@ -7,7 +8,7 @@ import { DashboardState } from '../../../types';
 import { createIntervalVariableAdapter } from '../interval/adapter';
 import { variableAdapters } from '../adapters';
 import { createConstantVariableAdapter } from '../constant/adapter';
-import { VariableRefresh } from '../../templating/variable';
+import { VariableRefresh } from '../../templating/types';
 import { constantBuilder, intervalBuilder } from '../shared/testing/builders';
 
 variableAdapters.setInit(() => [createIntervalVariableAdapter(), createConstantVariableAdapter()]);

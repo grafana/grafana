@@ -1,5 +1,4 @@
 import {
-  applyFieldOverrides,
   FieldConfig,
   FieldConfigSource,
   InterpolateFunction,
@@ -7,16 +6,19 @@ import {
   FieldMatcherID,
   MutableDataFrame,
   DataFrame,
+  FieldType,
+  applyFieldOverrides,
   toDataFrame,
   standardFieldConfigEditorRegistry,
-  FieldType,
+  standardEditorsRegistry,
 } from '@grafana/data';
 
 import { getTheme } from '../../themes';
-import { getStandardFieldConfigs } from './standardFieldConfigEditors';
+import { getStandardFieldConfigs, getStandardOptionEditors } from '../../utils';
 
 describe('FieldOverrides', () => {
   beforeAll(() => {
+    standardEditorsRegistry.setInit(getStandardOptionEditors);
     standardFieldConfigEditorRegistry.setInit(getStandardFieldConfigs);
   });
 

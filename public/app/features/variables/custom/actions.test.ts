@@ -2,11 +2,10 @@ import { variableAdapters } from '../adapters';
 import { updateCustomVariableOptions } from './actions';
 import { createCustomVariableAdapter } from './adapter';
 import { reduxTester } from '../../../../test/core/redux/reduxTester';
-import { getTemplatingRootReducer } from '../state/helpers';
-import { CustomVariableModel, VariableHide, VariableOption } from '../../templating/variable';
+import { getRootReducer } from '../state/helpers';
+import { CustomVariableModel, VariableHide, VariableOption } from '../../templating/types';
 import { toVariablePayload } from '../state/types';
-import { setCurrentVariableValue } from '../state/sharedReducer';
-import { initDashboardTemplating } from '../state/actions';
+import { setCurrentVariableValue, addVariable } from '../state/sharedReducer';
 import { TemplatingState } from '../state/reducers';
 import { createCustomOptionsFromQuery } from './reducer';
 
@@ -53,8 +52,8 @@ describe('custom actions', () => {
       };
 
       const tester = await reduxTester<{ templating: TemplatingState }>()
-        .givenRootReducer(getTemplatingRootReducer())
-        .whenActionIsDispatched(initDashboardTemplating([variable]))
+        .givenRootReducer(getRootReducer())
+        .whenActionIsDispatched(addVariable(toVariablePayload(variable, { global: false, index: 0, model: variable })))
         .whenAsyncActionIsDispatched(updateCustomVariableOptions(toVariablePayload(variable)), true);
 
       tester.thenDispatchedActionsPredicateShouldEqual(actions => {

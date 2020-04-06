@@ -1,8 +1,8 @@
 import React from 'react';
 import { css } from 'emotion';
 import { stylesFactory, useTheme } from '../../themes';
+import { ComponentSize } from '../../types/size';
 import { GrafanaTheme } from '@grafana/data';
-import { ButtonSize } from './types';
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => ({
   content: css`
@@ -26,7 +26,7 @@ type Props = {
   icon?: string;
   className?: string;
   children: React.ReactNode;
-  size?: ButtonSize;
+  size?: ComponentSize;
 };
 
 export function ButtonContent(props: Props) {

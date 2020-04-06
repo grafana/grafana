@@ -44,17 +44,18 @@
     "rollup-plugin-visualizer": "3.3.1",
     "ts-loader": "6.2.1",
     "typescript": "3.7.5",
-    "ts-node": "8.5.0"
+    "ts-node": "8.8.1"
   },
   "types": "src/index.ts",
   "dependencies": {
     "@cypress/webpack-preprocessor": "4.1.1",
     "@grafana/tsconfig": "^1.0.0-rc1",
     "blink-diff": "1.0.13",
-    "commander": "4.1.1",
+    "commander": "5.0.0",
     "cypress": "3.7.0",
     "execa": "4.0.0",
     "ts-loader": "6.2.1",
-    "typescript": "3.7.2"
+    "typescript": "3.7.2",
+    "yaml": "^1.8.3"
   }
 }

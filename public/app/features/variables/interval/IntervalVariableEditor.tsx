@@ -1,6 +1,6 @@
 import React, { ChangeEvent, FocusEvent, PureComponent } from 'react';
 
-import { IntervalVariableModel } from '../../templating/variable';
+import { IntervalVariableModel } from '../../templating/types';
 import { VariableEditorProps } from '../editor/types';
 import { FormLabel, Switch } from '@grafana/ui';
 

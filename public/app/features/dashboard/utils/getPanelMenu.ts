@@ -15,7 +15,7 @@ import { PanelCtrl } from '../../panel/panel_ctrl';
 export function getPanelMenu(
   dashboard: DashboardModel,
   panel: PanelModel,
-  angularComponent?: AngularComponent
+  angularComponent?: AngularComponent | null
 ): PanelMenuItem[] {
   const onViewPanel = (event: React.MouseEvent<any>) => {
     event.preventDefault();
@@ -127,7 +127,7 @@ export function getPanelMenu(
     shortcut: 'p s',
   });
 
-  if (contextSrv.hasAccessToExplore() && !panel.plugin.meta.skipDataQuery) {
+  if (contextSrv.hasAccessToExplore() && !(panel.plugin && panel.plugin.meta.skipDataQuery)) {
     menu.push({
       text: 'Explore',
       iconClassName: 'gicon gicon-explore',
@@ -136,14 +136,12 @@ export function getPanelMenu(
     });
   }
 
-  if (config.featureToggles.inspect) {
-    menu.push({
-      text: 'Inspect',
-      iconClassName: 'fa fa-fw fa-info-circle',
-      onClick: onInspectPanel,
-      shortcut: 'p i',
-    });
-  }
+  menu.push({
+    text: 'Inspect',
+    iconClassName: 'fa fa-fw fa-info-circle',
+    onClick: onInspectPanel,
+    shortcut: 'p i',
+  });
 
   if (config.featureToggles.newEdit) {
     menu.push({

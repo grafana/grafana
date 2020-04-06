@@ -1,7 +1,7 @@
 import { combineReducers } from '@reduxjs/toolkit';
 
 import { NEW_VARIABLE_ID } from './types';
-import { VariableHide, VariableModel } from '../../templating/variable';
+import { VariableHide, VariableModel } from '../../templating/types';
 import { variablesReducer, VariablesState } from './variablesReducer';
 import { optionsPickerReducer } from '../pickers/OptionsPicker/reducer';
 import { variableEditorReducer } from '../editor/reducer';

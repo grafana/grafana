@@ -1,5 +1,5 @@
 import cloneDeep from 'lodash/cloneDeep';
-import { ConstantVariableModel } from '../../templating/variable';
+import { ConstantVariableModel } from '../../templating/types';
 import { dispatch } from '../../../store/store';
 import { setOptionAsCurrent, setOptionFromUrl } from '../state/actions';
 import { VariableAdapter } from '../adapters';

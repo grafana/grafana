@@ -152,15 +152,17 @@ func (gcn *GoogleChatNotifier) Notify(evalContext *alerting.EvalContext) error {
 	}
 	widgets = append(widgets, fields)
 
-	// if an image exists, add it as an image widget
-	if evalContext.ImagePublicURL != "" {
-		widgets = append(widgets, imageWidget{
-			Image: image{
-				ImageURL: evalContext.ImagePublicURL,
-			},
-		})
-	} else {
-		gcn.log.Info("Could not retrieve a public image URL.")
+	if gcn.NeedsImage() {
+		// if an image exists, add it as an image widget
+		if evalContext.ImagePublicURL != "" {
+			widgets = append(widgets, imageWidget{
+				Image: image{
+					ImageURL: evalContext.ImagePublicURL,
+				},
+			})
+		} else {
+			gcn.log.Info("Could not retrieve a public image URL.")
+		}
 	}
 
 	// add a button widget (link to Grafana)
