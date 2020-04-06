@@ -1,6 +1,6 @@
 import { DataTransformerID } from './ids';
 import { DataTransformerInfo } from '../../types/transformations';
-import { OrderFieldsTransformerOptions, OrderFieldsTransformer } from './order';
+import { OrderFieldsTransformerOptions, orderFieldsTransformer } from './order';
 import { filterFieldsByNameTransformer } from './filterByName';
 import { DataFrame } from '../..';
 
@@ -8,7 +8,7 @@ export interface OrganizeFieldsTransformerOptions extends OrderFieldsTransformer
   excludeByName: Record<string, boolean>;
 }
 
-export const OrganizeFieldsTransformer: DataTransformerInfo<OrganizeFieldsTransformerOptions> = {
+export const organizeFieldsTransformer: DataTransformerInfo<OrganizeFieldsTransformerOptions> = {
   id: DataTransformerID.organize,
   name: 'Organize fields by name',
   description: 'Order, filter and rename fields based on configuration given by user',
@@ -22,7 +22,7 @@ export const OrganizeFieldsTransformer: DataTransformerInfo<OrganizeFieldsTransf
    * be applied, just return the input series
    */
   transformer: (options: OrganizeFieldsTransformerOptions) => {
-    const order = OrderFieldsTransformer.transformer(options);
+    const order = orderFieldsTransformer.transformer(options);
     const filter = filterFieldsByNameTransformer.transformer({
       exclude: mapToExcludeRegexp(options.excludeByName),
     });

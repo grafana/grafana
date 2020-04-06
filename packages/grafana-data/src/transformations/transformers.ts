@@ -7,8 +7,8 @@ import { filterFieldsByNameTransformer, FilterFieldsByNameTransformerOptions } f
 import { noopTransformer } from './transformers/noop';
 import { DataTransformerConfig, DataTransformerInfo } from '../types/transformations';
 import { filterFramesByRefIdTransformer } from './transformers/filterByRefId';
-import { OrderFieldsTransformer } from './transformers/order';
-import { OrganizeFieldsTransformer } from './transformers/organize';
+import { orderFieldsTransformer } from './transformers/order';
+import { organizeFieldsTransformer } from './transformers/organize';
 import { seriesToColumnsTransformer } from './transformers/seriesToColumns';
 
 // Initalize the Registry
@@ -69,8 +69,8 @@ export const transformersRegistry = new TransformerRegistry(() => [
   filterFieldsByNameTransformer,
   filterFramesTransformer,
   filterFramesByRefIdTransformer,
-  OrderFieldsTransformer,
-  OrganizeFieldsTransformer,
+  orderFieldsTransformer,
+  organizeFieldsTransformer,
   appendTransformer,
   reduceTransformer,
   seriesToColumnsTransformer,

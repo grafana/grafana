@@ -7,7 +7,7 @@ export interface OrderFieldsTransformerOptions {
   indexByName: Record<string, number>;
 }
 
-export const OrderFieldsTransformer: DataTransformerInfo<OrderFieldsTransformerOptions> = {
+export const orderFieldsTransformer: DataTransformerInfo<OrderFieldsTransformerOptions> = {
   id: DataTransformerID.order,
   name: 'Order fields by name',
   description: 'Order fields based on configuration given by user',
