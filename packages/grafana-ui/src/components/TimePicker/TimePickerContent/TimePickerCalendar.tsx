@@ -1,11 +1,12 @@
 import React, { memo, useState, useEffect } from 'react';
-import { css, cx } from 'emotion';
+import { css } from 'emotion';
 import Calendar from 'react-calendar/dist/entry.nostyle';
 import { GrafanaTheme, dateTime, TIME_FORMAT } from '@grafana/data';
 import { stringToDateTimeType } from '../time';
 import { useTheme, stylesFactory } from '../../../themes';
 import { TimePickerTitle } from './TimePickerTitle';
 import { Button } from '../../Button';
+import { Icon } from '../../Icon/Icon';
 import { Portal } from '../../Portal/Portal';
 import { getThemeColors } from './colors';
 import { ClickOutsideWrapper } from '../../ClickOutsideWrapper/ClickOutsideWrapper';
@@ -186,10 +187,6 @@ const getHeaderStyles = stylesFactory((theme: GrafanaTheme) => {
       justify-content: space-between;
       padding: 7px;
     `,
-    close: css`
-      cursor: pointer;
-      font-size: ${theme.typography.size.lg};
-    `,
   };
 });
 
@@ -245,7 +242,7 @@ const Header = memo<Props>(({ onClose }) => {
   return (
     <div className={styles.container}>
       <TimePickerTitle>Select a time range</TimePickerTitle>
-      <i className={cx(styles.close, 'fa', 'fa-times')} onClick={onClose} />
+      <Icon name="times" onClick={onClose} />
     </div>
   );
 });

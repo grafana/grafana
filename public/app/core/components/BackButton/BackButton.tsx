@@ -1,7 +1,7 @@
 import React, { ButtonHTMLAttributes } from 'react';
 import { css } from 'emotion';
 import { GrafanaTheme } from '@grafana/data';
-import { stylesFactory, useTheme, Tooltip, selectThemeVariant } from '@grafana/ui';
+import { stylesFactory, useTheme, Tooltip, selectThemeVariant, Icon } from '@grafana/ui';
 
 export type Props = ButtonHTMLAttributes<HTMLButtonElement>;
 
@@ -12,7 +12,7 @@ export const BackButton: React.FC<Props> = props => {
   return (
     <Tooltip content="Go back (Esc)" placement="bottom">
       <button className={styles.wrapper} {...props}>
-        <i className="gicon gicon-arrow-left" />
+        <Icon name="arrow-left" />
       </button>
     </Tooltip>
   );
@@ -53,10 +53,6 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
         box-sizing: border-box;
         transform: scale(0);
         transition-property: transform, opacity;
-      }
-
-      .gicon {
-        font-size: 26px;
       }
 
       &:hover {

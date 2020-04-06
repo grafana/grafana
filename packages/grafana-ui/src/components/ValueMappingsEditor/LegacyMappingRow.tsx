@@ -4,6 +4,7 @@ import { FormField } from '../FormField/FormField';
 import { FormLabel } from '../FormLabel/FormLabel';
 import { Input } from '../Forms/Legacy/Input/Input';
 import { Select } from '../Forms/Legacy/Select/Select';
+import { Icon } from '../Icon/Icon';
 
 import { MappingType, ValueMapping } from '@grafana/data';
 
@@ -137,7 +138,7 @@ export default class LegacyMappingRow extends PureComponent<Props, State> {
         {this.renderRow()}
         <div className="gf-form">
           <button onClick={this.props.removeValueMapping} className="gf-form-label gf-form-label--btn">
-            <i className="fa fa-times" />
+            <Icon name="times" />
           </button>
         </div>
       </div>

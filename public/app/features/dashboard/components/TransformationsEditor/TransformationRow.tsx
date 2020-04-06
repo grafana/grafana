@@ -1,6 +1,6 @@
 import React, { useContext, useState } from 'react';
 import { css } from 'emotion';
-import { JSONFormatter, ThemeContext } from '@grafana/ui';
+import { JSONFormatter, ThemeContext, Icon } from '@grafana/ui';
 import { GrafanaTheme, DataFrame } from '@grafana/data';
 
 interface TransformationRowProps {
@@ -25,10 +25,10 @@ export const TransformationRow = ({ onRemove, editor, name, input }: Transformat
         <div className={styles.name}>{name}</div>
         <div className={styles.iconRow}>
           <div onClick={() => setViewDebug(!viewDebug)} className={styles.icon}>
-            <i className="fa fa-fw fa-bug" />
+            <Icon name="bug" />
           </div>
           <div onClick={onRemove} className={styles.icon}>
-            <i className="fa fa-fw fa-trash" />
+            <Icon name="trash-alt" />
           </div>
         </div>
       </div>

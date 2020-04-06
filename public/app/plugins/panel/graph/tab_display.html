@@ -169,9 +169,9 @@
     </div>
     <div class="gf-form" ng-repeat="option in currentOverrides">
       <label class="gf-form-label">
-        <i class="pointer fa fa-remove" ng-click="removeOverride(option)"></i>
+        <icon name="'times'" ng-click="removeOverride(option)"></icon>
         <span ng-show="option.propertyName === 'color'">
-          Color: <i class="fa fa-circle" ng-style="{color:option.value}"></i>
+          Color: <icon name="'circle'" ng-style="{color:option.value}"></icon>
         </span>
         <span ng-show="option.propertyName !== 'color'"> {{ option.name }}: {{ option.value }} </span>
       </label>
@@ -193,13 +193,14 @@
 
     <div class="gf-form">
       <label class="gf-form-label">
-        <i class="fa fa-trash pointer" ng-click="ctrl.removeSeriesOverride(override)"></i>
+        <icon name="'trash-alt'" ng-click="ctrl.removeSeriesOverride(override)"></icon>
       </label>
     </div>
   </div>
   <div class="gf-form-button-row">
     <button class="btn btn-inverse" ng-click="ctrl.addSeriesOverride()">
-      <i class="fa fa-plus"></i>&nbsp;Add series override<tip>Regex match example: /server[0-3]/i </tip>
+      <icon name="'plus-circle'"></icon>&nbsp;Add series override<tip>Regex match example: /server[0-3]/i </tip>
     </button>
   </div>
 </div>
+con

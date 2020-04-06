@@ -89,7 +89,7 @@ export class PanelHeader extends Component<Props, State> {
   private renderLoadingState(): JSX.Element {
     return (
       <div className="panel-loading">
-        <i className="fa fa-spinner fa-spin" />
+        <Icon className="fa-spin" name="fa fa-spinner" />
       </div>
     );
   }

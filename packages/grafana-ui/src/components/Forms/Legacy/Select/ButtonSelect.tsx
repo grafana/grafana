@@ -2,6 +2,7 @@ import React, { PureComponent, ReactElement } from 'react';
 import Select from './Select';
 import { PopoverContent } from '../../../Tooltip/Tooltip';
 import { Icon } from '../../../Icon/Icon';
+import { IconName } from '../../../../types';
 import { SelectableValue } from '@grafana/data';
 
 interface ButtonComponentProps {
@@ -22,7 +23,7 @@ const ButtonComponent = (buttonProps: ButtonComponentProps) => (props: any) => {
       tabIndex={0} // necessary to get onBlur to work https://developer.mozilla.org/en-US/docs/Web/HTML/Element/button#Clicking_and_focus
     >
       <div className="select-button">
-        {iconClass && <i className={`select-button-icon ${iconClass}`} />}
+        {iconClass && <Icon className={'select-button-icon'} name={iconClass as IconName} />}
         <span className="select-button-value">{label ? label : ''}</span>
         {!props.menuIsOpen && <Icon name="angle-down" style={{ marginBottom: 0 }} size="lg" />}
         {props.menuIsOpen && <Icon name="angle-up" style={{ marginBottom: 0 }} size="lg" />}

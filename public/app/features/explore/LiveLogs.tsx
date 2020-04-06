@@ -2,7 +2,7 @@ import React, { PureComponent } from 'react';
 import { css, cx } from 'emotion';
 import tinycolor from 'tinycolor2';
 
-import { Themeable, withTheme, getLogRowStyles } from '@grafana/ui';
+import { Themeable, withTheme, getLogRowStyles, Icon } from '@grafana/ui';
 import { GrafanaTheme, LogRowModel, TimeZone } from '@grafana/data';
 
 import ElapsedTime from './ElapsedTime';
@@ -179,12 +179,12 @@ class LiveLogs extends PureComponent<Props, State> {
         </table>
         <div className={cx([styles.logsRowsIndicator])}>
           <button onClick={isPaused ? onResume : onPause} className={cx('btn btn-secondary', styles.button)}>
-            <i className={cx('fa', isPaused ? 'fa-play' : 'fa-pause')} />
+            <Icon name={isPaused ? 'play' : 'pause'} />
             &nbsp;
             {isPaused ? 'Resume' : 'Pause'}
           </button>
           <button onClick={this.props.stopLive} className={cx('btn btn-inverse', styles.button)}>
-            <i className={'fa fa-stop'} />
+            <Icon name="square-shape" />
             &nbsp; Exit live mode
           </button>
           {isPaused || (

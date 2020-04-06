@@ -4,6 +4,7 @@ import RcDrawer from 'rc-drawer';
 import { css } from 'emotion';
 import CustomScrollbar from '../CustomScrollbar/CustomScrollbar';
 import { stylesFactory, useTheme, selectThemeVariant } from '../../themes';
+import { Icon } from '../Icon/Icon';
 
 export interface Props {
   children: ReactNode;
@@ -98,7 +99,7 @@ export const Drawer: FC<Props> = ({
         <div className={drawerStyles.titleWrapper}>
           <div>{title}</div>
           <div className={drawerStyles.close} onClick={onClose}>
-            <i className="fa fa-close" />
+            <Icon name="times" />
           </div>
         </div>
       )}

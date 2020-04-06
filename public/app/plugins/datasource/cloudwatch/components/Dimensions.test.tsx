@@ -27,7 +27,7 @@ describe('Dimensions', () => {
       );
 
       expect(wrapper.html()).toEqual(
-        `<div class="gf-form"><a class="gf-form-label query-part"><i class="fa fa-plus"></i></a></div>`
+        `<div class="gf-form"><a class="gf-form-label query-part"><icon name="'plus-circle'"></icon></a></div>`
       );
     });
   });
@@ -43,7 +43,7 @@ describe('Dimensions', () => {
         />
       );
       expect(wrapper.html()).toEqual(
-        `<div class="gf-form"><a class="gf-form-label query-part">somekey</a></div><label class="gf-form-label query-segment-operator">=</label><div class="gf-form"><a class="gf-form-label query-part">somevalue</a></div><div class="gf-form"><a class="gf-form-label query-part"><i class="fa fa-plus"></i></a></div>`
+        `<div class="gf-form"><a class="gf-form-label query-part">somekey</a></div><label class="gf-form-label query-segment-operator">=</label><div class="gf-form"><a class="gf-form-label query-part">somevalue</a></div><div class="gf-form"><a class="gf-form-label query-part"><icon name="'plus-circle'"></icon></a></div>`
       );
     });
   });

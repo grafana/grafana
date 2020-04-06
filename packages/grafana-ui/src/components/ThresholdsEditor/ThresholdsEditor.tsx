@@ -5,6 +5,7 @@ import { getColorFromHexRgbOrName } from '@grafana/data';
 import { ThemeContext } from '../../themes/ThemeContext';
 import { Input } from '../Forms/Legacy/Input/Input';
 import { ColorPicker } from '../ColorPicker/ColorPicker';
+import { Icon } from '../Icon/Icon';
 import { css } from 'emotion';
 import { PanelOptionsGroup } from '../PanelOptionsGroup/PanelOptionsGroup';
 
@@ -181,11 +182,11 @@ export class ThresholdsEditor extends PureComponent<Props, State> {
             </div>
             {isPercent && (
               <div className={css(`margin-left:-20px; margin-top:5px;`)}>
-                <i className="fa fa-percent" />
+                <Icon name="percentage" />
               </div>
             )}
             <div className="thresholds-row-input-inner-remove" onClick={() => this.onRemoveThreshold(threshold)}>
-              <i className="fa fa-times" />
+              <Icon name="times" />
             </div>
           </>
         )}
@@ -209,7 +210,7 @@ export class ThresholdsEditor extends PureComponent<Props, State> {
                     return (
                       <div className="thresholds-row" key={`${threshold.key}`}>
                         <div className="thresholds-row-add-button" onClick={() => this.onAddThresholdAfter(threshold)}>
-                          <i className="fa fa-plus" />
+                          <Icon name="plus-circle" />
                         </div>
                         <div
                           className="thresholds-row-color-indicator"
