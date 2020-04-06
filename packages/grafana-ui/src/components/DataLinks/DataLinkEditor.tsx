@@ -1,7 +1,7 @@
 import React, { ChangeEvent, useContext } from 'react';
 import { DataLink, VariableSuggestion, GrafanaTheme } from '@grafana/data';
-import { FormField, LegacyForms } from '../index';
-const { Switch } = LegacyForms;
+import { FormField } from '../index';
+import { Switch } from '../Switch/Switch';
 import { css } from 'emotion';
 import { ThemeContext, stylesFactory } from '../../themes/index';
 import { DataLinkInput } from './DataLinkInput';

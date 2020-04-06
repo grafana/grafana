@@ -152,7 +152,6 @@ import { ButtonSelect } from './Forms/Legacy/Select/ButtonSelect';
 import { Input, LegacyInputStatus } from './Forms/Legacy/Input/Input';
 
 import { Switch } from './Switch/Switch';
-export { Switch };
 
 const LegacyForms = {
   Select,
@@ -163,5 +162,5 @@ const LegacyForms = {
   Input,
   Switch,
 };
-
+export { Switch };
 export { LegacyForms, LegacyInputStatus };
