@@ -5,7 +5,7 @@ import { FixedSizeList } from 'react-window';
 import useMeasure from 'react-use/lib/useMeasure';
 import { getColumns, getTableRows, getTextAlign } from './utils';
 import { useTheme } from '../../themes';
-import { TableFilterActionCallback } from './types';
+import { ColumnResizeActionCallback, TableFilterActionCallback } from './types';
 import { getTableStyles, TableStyles } from './styles';
 import { TableCell } from './TableCell';
 import { Icon } from '../Icon/Icon';
@@ -22,10 +22,20 @@ export interface Props {
   noHeader?: boolean;
   resizable?: boolean;
   onCellClick?: TableFilterActionCallback;
+  onColumnResize?: ColumnResizeActionCallback;
 }
 
 export const Table: FC<Props> = memo(
-  ({ data, height, onCellClick, width, columnMinWidth = COLUMN_MIN_WIDTH, noHeader, resizable = false }) => {
+  ({
+    data,
+    height,
+    onCellClick,
+    width,
+    columnMinWidth = COLUMN_MIN_WIDTH,
+    noHeader,
+    resizable = false,
+    onColumnResize,
+  }) => {
     const theme = useTheme();
     const [ref, headerRowMeasurements] = useMeasure();
     const tableStyles = getTableStyles(theme);
@@ -90,7 +100,7 @@ export const Table: FC<Props> = memo(
                   return (
                     <div className={tableStyles.thead} {...headerGroup.getHeaderGroupProps()} ref={ref}>
                       {headerGroup.headers.map((column: Column, index: number) =>
-                        renderHeaderCell(column, tableStyles, data.fields[index])
+                        renderHeaderCell(column, tableStyles, data.fields[index], onColumnResize)
                       )}
                     </div>
                   );
@@ -113,11 +123,21 @@ export const Table: FC<Props> = memo(
   }
 );
 
-function renderHeaderCell(column: any, tableStyles: TableStyles, field?: Field) {
+Table.displayName = 'Table';
+
+function renderHeaderCell(
+  column: any,
+  tableStyles: TableStyles,
+  field?: Field,
+  onColumnResize?: ColumnResizeActionCallback
+) {
   const headerProps = column.getHeaderProps(column.getSortByToggleProps());
   if (column.canResize) {
     headerProps.style.userSelect = column.isResizing ? 'none' : 'auto'; // disables selecting text while resizing
     column.disableSortBy = column.isResizing; // disables sorting while resizing, unfortunate side effect that the column will not be sortable until re-render
+    if (onColumnResize && field && column.isResizing) {
+      onColumnResize(field, column.width);
+    }
   }
 
   const fieldTextAlign = getTextAlign(field);
