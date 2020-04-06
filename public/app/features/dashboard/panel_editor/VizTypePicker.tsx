@@ -88,7 +88,8 @@ export const VizTypePicker: React.FC<Props> = ({ searchQuery, onTypeChange, curr
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
   return {
     wrapper: css`
-      padding-right: ${theme.spacing.md};
+      // this needed here to make the box shadow not be clicked by the parent scroll container
+      padding-top: ${theme.spacing.md};
     `,
     grid: css`
       max-width: 100%;

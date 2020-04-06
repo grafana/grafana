@@ -172,7 +172,7 @@ export const TabsBarContent: React.FC<{
 
   return (
     <>
-      {width < 377 ? (
+      {width < 352 ? (
         <div className="flex-grow-1">
           <Select
             options={tabSelections}
