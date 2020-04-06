@@ -119,7 +119,7 @@ describe('PanelModel', () => {
         [FieldConfigOptionId.Unit]: 'flop',
         [FieldConfigOptionId.Decimals]: 2,
       }); */
-      panelPlugin.useFieldConfigOptions({
+      panelPlugin.useFieldConfig({
         standardOptions: [FieldConfigProperty.Unit, FieldConfigProperty.Decimals],
         standardOptionsDefaults: {
           [FieldConfigProperty.Unit]: 'flop',

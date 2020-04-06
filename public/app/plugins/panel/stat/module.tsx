@@ -7,7 +7,7 @@ import { StatPanelEditor } from './StatPanelEditor';
 export const plugin = new PanelPlugin<StatPanelOptions>(StatPanel)
   .setDefaults(defaults)
   .setEditor(StatPanelEditor)
-  .useFieldConfigOptions()
+  .useFieldConfig()
   .setPanelOptions(builder => {
     addStandardDataReduceOptions(builder);
 

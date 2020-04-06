@@ -19,7 +19,7 @@ import { standardFieldConfigEditorRegistry } from '../field';
 export interface SetFieldConfigOptionsArgs<TFieldConfigOptions = any> {
   standardOptions?: FieldConfigProperty[];
   standardOptionsDefaults?: Partial<Record<FieldConfigProperty, any>>;
-  useCustomOptions?: (builder: FieldConfigEditorBuilder<TFieldConfigOptions>) => void;
+  useCustomConfig?: (builder: FieldConfigEditorBuilder<TFieldConfigOptions>) => void;
 }
 
 export class PanelPlugin<TOptions = any, TFieldConfigOptions extends object = any> extends GrafanaPlugin<
@@ -197,18 +197,18 @@ export class PanelPlugin<TOptions = any, TFieldConfigOptions extends object = an
    *
    * // when plugin should use all standard options
    * export const plugin = new PanelPlugin<ShapePanelOptions>(ShapePanel)
-   *  .useFieldConfigOptions();
+   *  .useFieldConfig();
    *
    * // when plugin should only display specific standard options
    * // note, that options will be displayed in the order they are provided
    * export const plugin = new PanelPlugin<ShapePanelOptions>(ShapePanel)
-   *  .useFieldConfigOptions({
+   *  .useFieldConfig({
    *    standardOptions: [FieldConfigProperty.Min, FieldConfigProperty.Max]
    *   });
    *
    * // when standard option's default value needs to be provided
    * export const plugin = new PanelPlugin<ShapePanelOptions>(ShapePanel)
-   *  .useFieldConfigOptions({
+   *  .useFieldConfig({
    *    standardOptions: [FieldConfigProperty.Min, FieldConfigProperty.Max],
    *    standardOptionsDefaults: {
    *      [FieldConfigProperty.Min]: 20,
@@ -218,8 +218,8 @@ export class PanelPlugin<TOptions = any, TFieldConfigOptions extends object = an
    *
    * // when custom field config options needs to be provided
    * export const plugin = new PanelPlugin<ShapePanelOptions>(ShapePanel)
-   *  .useFieldConfigOptions({
-   *    useCustomOptions: builder => {
+   *  .useFieldConfig({
+   *    useCustomConfig: builder => {
           builder
    *       .addNumberInput({
    *         id: 'shapeBorderWidth',
@@ -245,15 +245,15 @@ export class PanelPlugin<TOptions = any, TFieldConfigOptions extends object = an
    *
    * @public
    */
-  useFieldConfigOptions(config?: SetFieldConfigOptionsArgs<TFieldConfigOptions>) {
+  useFieldConfig(config?: SetFieldConfigOptionsArgs<TFieldConfigOptions>) {
     // builder is applied lazily when custom field configs are accessed
     this._initConfigRegistry = () => {
       const registry = new FieldConfigOptionsRegistry();
 
       // Add custom options
-      if (config && config.useCustomOptions) {
+      if (config && config.useCustomConfig) {
         const builder = new FieldConfigEditorBuilder<TFieldConfigOptions>();
-        config.useCustomOptions(builder);
+        config.useCustomConfig(builder);
 
         for (const customProp of builder.getRegistry().list()) {
           customProp.isCustom = true;

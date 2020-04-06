@@ -4,12 +4,12 @@ import { CustomFieldConfig, defaults, Options } from './types';
 
 export const plugin = new PanelPlugin<Options, CustomFieldConfig>(TablePanel)
   .setDefaults(defaults)
-  .useFieldConfigOptions({
+  .useFieldConfig({
     standardOptions: [FieldConfigProperty.Min],
     standardOptionsDefaults: {
       [FieldConfigProperty.Min]: 10,
     },
-    useCustomOptions: builder => {
+    useCustomConfig: builder => {
       builder
         .addNumberInput({
           path: 'width',

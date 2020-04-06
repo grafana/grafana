@@ -9,7 +9,7 @@ import { barGaugePanelMigrationHandler } from './BarGaugeMigrations';
 export const plugin = new PanelPlugin<BarGaugeOptions>(BarGaugePanel)
   .setDefaults(defaults)
   .setEditor(BarGaugePanelEditor)
-  .useFieldConfigOptions()
+  .useFieldConfig()
   .setPanelOptions(builder => {
     addStandardDataReduceOptions(builder);
 

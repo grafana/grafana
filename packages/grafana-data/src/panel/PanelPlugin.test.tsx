@@ -32,8 +32,8 @@ describe('PanelPlugin', () => {
         return <div>Panel</div>;
       });
 
-      panel.useFieldConfigOptions({
-        useCustomOptions: builder => {
+      panel.useFieldConfig({
+        useCustomConfig: builder => {
           builder.addCustomEditor({
             id: 'custom',
             path: 'custom',
@@ -139,8 +139,8 @@ describe('PanelPlugin', () => {
           return <div>Panel</div>;
         });
 
-        panel.useFieldConfigOptions({
-          useCustomOptions: builder => {
+        panel.useFieldConfig({
+          useCustomConfig: builder => {
             builder
               .addNumberInput({
                 path: 'numericOption',
@@ -181,8 +181,8 @@ describe('PanelPlugin', () => {
           return <div>Panel</div>;
         });
 
-        panel.useFieldConfigOptions({
-          useCustomOptions: builder => {
+        panel.useFieldConfig({
+          useCustomConfig: builder => {
             builder.addNumberInput({
               path: 'numericOption.nested',
               name: 'Option editor',
@@ -206,7 +206,7 @@ describe('PanelPlugin', () => {
           return <div>Panel</div>;
         });
 
-        panel.useFieldConfigOptions();
+        panel.useFieldConfig();
         expect(panel.fieldConfigRegistry.list()).toHaveLength(2);
       });
 
@@ -215,7 +215,7 @@ describe('PanelPlugin', () => {
           return <div>Panel</div>;
         });
 
-        panel.useFieldConfigOptions({
+        panel.useFieldConfig({
           standardOptions: [FieldConfigProperty.Min, FieldConfigProperty.Max],
         });
         expect(panel.fieldConfigRegistry.list()).toHaveLength(2);
@@ -227,7 +227,7 @@ describe('PanelPlugin', () => {
             return <div>Panel</div>;
           });
 
-          panel.useFieldConfigOptions({
+          panel.useFieldConfig({
             standardOptions: [FieldConfigProperty.Max, FieldConfigProperty.Min],
             standardOptionsDefaults: {
               [FieldConfigProperty.Max]: 20,
@@ -252,7 +252,7 @@ describe('PanelPlugin', () => {
             return <div>Panel</div>;
           });
 
-          panel.useFieldConfigOptions({
+          panel.useFieldConfig({
             standardOptions: [FieldConfigProperty.Max],
             standardOptionsDefaults: {
               [FieldConfigProperty.Max]: 20,
