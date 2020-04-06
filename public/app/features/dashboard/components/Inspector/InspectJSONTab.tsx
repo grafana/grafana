@@ -16,29 +16,21 @@ enum ShowContent {
   DataStructure = 'structure',
 }
 
-interface SelectionInfo extends SelectableValue<ShowContent> {
-  label: string;
-  editText: boolean;
-}
-
-const options: SelectionInfo[] = [
+const options: Array<SelectableValue<ShowContent>> = [
   {
     label: 'Panel JSON',
     description: 'The model saved in the dashboard JSON that configures how everythign works.',
     value: ShowContent.PanelJSON,
-    editText: true,
   },
   {
     label: 'Panel Data',
     description: 'The raw model passed to the panel visualization',
     value: ShowContent.PanelData,
-    editText: false,
   },
   {
     label: 'DataFrame Structure',
     description: 'Response info without any values',
     value: ShowContent.DataStructure,
-    editText: false,
   },
 ];
 
@@ -62,7 +54,7 @@ export class InspectJSONTab extends PureComponent<Props, State> {
     };
   }
 
-  onSelectChanged = (item: SelectionInfo) => {
+  onSelectChanged = (item: SelectableValue<ShowContent>) => {
     let text = '';
     if (item.value === ShowContent.PanelJSON) {
       text = getSaveModelJSON(this.props.panel);
@@ -89,6 +81,7 @@ export class InspectJSONTab extends PureComponent<Props, State> {
           return chain(field)
             .omit('values')
             .omit('calcs')
+            .omit('display')
             .value();
         });
         return {
@@ -149,7 +142,7 @@ export class InspectJSONTab extends PureComponent<Props, State> {
     return (
       <div className={styles.wrap}>
         <Select options={options} value={selected} onChange={this.onSelectChanged} />
-        {selected.editText && canEdit ? (
+        {isPanelJSON && canEdit ? (
           <Forms.TextArea
             spellCheck={false}
             value={this.state.text}

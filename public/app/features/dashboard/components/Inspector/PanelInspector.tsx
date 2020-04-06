@@ -1,4 +1,5 @@
 import React, { PureComponent } from 'react';
+import { Unsubscribable } from 'rxjs';
 import AutoSizer from 'react-virtualized-auto-sizer';
 import { saveAs } from 'file-saver';
 import { css } from 'emotion';
@@ -51,6 +52,8 @@ export enum InspectTab {
 }
 
 interface State {
+  loading: boolean;
+
   // The last raw response
   last: PanelData;
 
@@ -70,9 +73,12 @@ interface State {
 }
 
 export class PanelInspector extends PureComponent<Props, State> {
+  querySubscription: Unsubscribable;
+
   constructor(props: Props) {
     super(props);
     this.state = {
+      loading: true,
       last: {} as PanelData,
       data: [],
       selected: 0,
@@ -89,13 +95,23 @@ export class PanelInspector extends PureComponent<Props, State> {
       return;
     }
 
-    const lastResult = panel.getQueryRunner().getLastResult();
+    // Listen for changes to the results
+    this.querySubscription = panel
+      .getQueryRunner()
+      .getData()
+      // .pipe(take(1))
+      .subscribe({
+        next: data => this.onUpdateData(data),
+      });
+  }
 
-    if (!lastResult) {
-      this.onDismiss(); // Usually opened from refresh?
-      return;
+  componentWillUnmount() {
+    if (this.querySubscription) {
+      this.querySubscription.unsubscribe();
     }
+  }
 
+  async onUpdateData(lastResult: PanelData) {
     let metaDS: DataSourceApi;
     const data = lastResult.series;
     const error = lastResult.error;
@@ -119,6 +135,7 @@ export class PanelInspector extends PureComponent<Props, State> {
 
     // Set last result, but no metadata inspector
     this.setState(prevState => ({
+      loading: false,
       last: lastResult,
       data,
       metaDS,
@@ -346,22 +363,26 @@ export class PanelInspector extends PureComponent<Props, State> {
 
   render() {
     const { panel, dashboard } = this.props;
-    const { last, tab, drawerWidth } = this.state;
+    const { loading, last, tab, drawerWidth } = this.state;
     const styles = getStyles();
     const error = last?.error;
 
     return (
       <Drawer title={this.drawerHeader} width={drawerWidth} onClose={this.onDismiss}>
-        <TabContent className={styles.tabContent}>
-          {tab === InspectTab.Data && this.renderDataTab()}
-          <CustomScrollbar autoHeightMin="100%">
-            {tab === InspectTab.Meta && this.renderMetadataInspector()}
-            {tab === InspectTab.JSON && <InspectJSONTab panel={panel} dashboard={dashboard} data={last} />}
-            {tab === InspectTab.Error && this.renderErrorTab(error)}
-            {tab === InspectTab.Stats && this.renderStatsTab()}
-            {tab === InspectTab.Query && <QueryInspector panel={panel} />}
-          </CustomScrollbar>
-        </TabContent>
+        {loading ? (
+          <div>loading...</div>
+        ) : (
+          <TabContent className={styles.tabContent}>
+            {tab === InspectTab.Data && this.renderDataTab()}
+            <CustomScrollbar autoHeightMin="100%">
+              {tab === InspectTab.Meta && this.renderMetadataInspector()}
+              {tab === InspectTab.JSON && <InspectJSONTab panel={panel} dashboard={dashboard} data={last} />}
+              {tab === InspectTab.Error && this.renderErrorTab(error)}
+              {tab === InspectTab.Stats && this.renderStatsTab()}
+              {tab === InspectTab.Query && <QueryInspector panel={panel} />}
+            </CustomScrollbar>
+          </TabContent>
+        )}
       </Drawer>
     );
   }
