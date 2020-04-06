@@ -10,8 +10,8 @@ entrypoint = () => {
   // THEN run everything in linked mode
   if (fs.existsSync(toolkitDirectory)) {
     const tkStat = fs.lstatSync(toolkitDirectory);
-    if (fs.existsSync(`${process.env['HOME']}/.config/yarn/link/@grafana/toolkit`) && tkStat.isSymbolicLink()) {
-      console.log('Running in linked mode');
+    if (tkStat.isSymbolicLink()) {
+      console.log('Running in linked mode', `${__dirname}/grafana-toolkit.js`);
       return `${__dirname}/grafana-toolkit.js`;
     }
   }

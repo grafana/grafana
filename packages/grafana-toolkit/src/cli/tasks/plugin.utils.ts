@@ -10,11 +10,11 @@ import path = require('path');
 import execa = require('execa');
 
 interface Command extends Array<any> {}
-const DEFAULT_EMAIL_ADDRESS = 'eng@graafna.com';
+const DEFAULT_EMAIL_ADDRESS = 'eng@grafana.com';
 const DEFAULT_USERNAME = 'CircleCI Automation';
 
 const releaseNotes = async (): Promise<string> => {
-  const { stdout } = await execa.shell(`awk \'BEGIN {FS="##"; RS=""} FNR==3 {print; exit}\' CHANGELOG.md`);
+  const { stdout } = await execa.shell(`awk 'BEGIN {FS="##"; RS="##"} FNR==3 {print "##" $1; exit}' CHANGELOG.md`);
   return stdout;
 };
 
@@ -138,14 +138,14 @@ const prepareRelease = useSpinner<any>('Preparing release', async ({ dryrun, ver
 interface GithubPublishReleaseOptions {
   commitHash?: string;
   githubToken: string;
-  githubEmail: string;
+  githubUser: string;
   gitRepoName: string;
 }
 
 const createRelease = useSpinner<GithubPublishReleaseOptions>(
   'Creating release',
-  async ({ commitHash, githubEmail, githubToken, gitRepoName }) => {
-    const gitRelease = new GitHubRelease(githubToken, githubEmail, gitRepoName, await releaseNotes(), commitHash);
+  async ({ commitHash, githubUser, githubToken, gitRepoName }) => {
+    const gitRelease = new GitHubRelease(githubToken, githubUser, gitRepoName, await releaseNotes(), commitHash);
     return gitRelease.release();
   }
 );
@@ -159,9 +159,15 @@ export interface GithubPublishOptions {
 
 const githubPublishRunner: TaskRunner<GithubPublishOptions> = async ({ dryrun, verbose, commitHash }) => {
   if (!process.env['CIRCLE_REPOSITORY_URL']) {
-    throw new Error(
-      'The release plugin requires you specify the repository url as environment variable CIRCLE_REPOSITORY_URL'
-    );
+    // Try and figure it out
+    const repo = await execa('git', ['config', '--local', 'remote.origin.url']);
+    if (repo && repo.stdout) {
+      process.env.CIRCLE_REPOSITORY_URL = repo.stdout;
+    } else {
+      throw new Error(
+        'The release plugin requires you specify the repository url as environment variable CIRCLE_REPOSITORY_URL'
+      );
+    }
   }
 
   if (!process.env['GITHUB_ACCESS_TOKEN']) {
@@ -183,7 +189,7 @@ const githubPublishRunner: TaskRunner<GithubPublishOptions> = async ({ dryrun, v
 
   const parsedUrl = gitUrlParse(process.env['CIRCLE_REPOSITORY_URL']);
   const githubToken = process.env['GITHUB_ACCESS_TOKEN'];
-  const githubEmail = process.env['GITHUB_USERNAME'];
+  const githubUser = parsedUrl.owner;
 
   await prepareRelease({
     dryrun,
@@ -192,7 +198,7 @@ const githubPublishRunner: TaskRunner<GithubPublishOptions> = async ({ dryrun, v
 
   await createRelease({
     commitHash,
-    githubEmail,
+    githubUser,
     githubToken,
     gitRepoName: parsedUrl.name,
   });
