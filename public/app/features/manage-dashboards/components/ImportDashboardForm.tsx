@@ -1,5 +1,5 @@
 import React, { FC, useEffect, useState } from 'react';
-import { Button, Forms, FormAPI, FormsOnSubmit, HorizontalGroup, FormFieldErrors } from '@grafana/ui';
+import { Button, Forms, FormAPI, FormsOnSubmit, HorizontalGroup, FormFieldErrors, Input } from '@grafana/ui';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
 import DataSourcePicker from 'app/core/components/Select/DataSourcePicker';
 import { DashboardInput, DashboardInputs, DataSourceInput, ImportDashboardDTO } from '../state/reducers';
@@ -43,7 +43,7 @@ export const ImportDashboardForm: FC<Props> = ({
     <>
       <Forms.Legend>Options</Forms.Legend>
       <Forms.Field label="Name" invalid={!!errors.title} error={errors.title && errors.title.message}>
-        <Forms.Input
+        <Input
           name="title"
           size="md"
           type="text"
@@ -72,7 +72,7 @@ export const ImportDashboardForm: FC<Props> = ({
       >
         <>
           {!uidReset ? (
-            <Forms.Input
+            <Input
               size="md"
               name="uid"
               disabled
@@ -80,7 +80,7 @@ export const ImportDashboardForm: FC<Props> = ({
               addonAfter={!uidReset && <Button onClick={onUidReset}>Change uid</Button>}
             />
           ) : (
-            <Forms.Input
+            <Input
               size="md"
               name="uid"
               ref={register({ required: true, validate: async (v: string) => await validateUid(v) })}
@@ -119,7 +119,7 @@ export const ImportDashboardForm: FC<Props> = ({
               invalid={errors.constants && !!errors.constants[index]}
               key={constantIndex}
             >
-              <Forms.Input
+              <Input
                 ref={register({ required: true })}
                 name={`${constantIndex}`}
                 size="md"

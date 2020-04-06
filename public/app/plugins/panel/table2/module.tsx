@@ -15,7 +15,6 @@ export const plugin = new PanelPlugin<Options, CustomFieldConfig>(TablePanel)
           min: 20,
           max: 300,
         },
-        defaultValue: 1,
       })
       .addSelect({
         id: 'displayMode',

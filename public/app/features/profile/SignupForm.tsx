@@ -1,5 +1,5 @@
 import React, { FC } from 'react';
-import { Forms, Button, LinkButton } from '@grafana/ui';
+import { Forms, Button, LinkButton, Input } from '@grafana/ui';
 import { css } from 'emotion';
 
 import { getConfig } from 'app/core/config';
@@ -66,19 +66,19 @@ export const SignupForm: FC<Props> = props => {
           <>
             {verifyEmailEnabled && (
               <Forms.Field label="Email verification code (sent to your email)">
-                <Forms.Input name="code" size="md" ref={register} placeholder="Code" />
+                <Input name="code" size="md" ref={register} placeholder="Code" />
               </Forms.Field>
             )}
             {!autoAssignOrg && (
               <Forms.Field label="Org. name">
-                <Forms.Input size="md" name="orgName" placeholder="Org. name" ref={register} />
+                <Input size="md" name="orgName" placeholder="Org. name" ref={register} />
               </Forms.Field>
             )}
             <Forms.Field label="Your name">
-              <Forms.Input size="md" name="name" placeholder="(optional)" ref={register} />
+              <Input size="md" name="name" placeholder="(optional)" ref={register} />
             </Forms.Field>
             <Forms.Field label="Email" invalid={!!errors.email} error={!!errors.email && errors.email.message}>
-              <Forms.Input
+              <Input
                 size="md"
                 name="email"
                 type="email"
@@ -97,7 +97,7 @@ export const SignupForm: FC<Props> = props => {
               invalid={!!errors.password}
               error={!!errors.password && errors.password.message}
             >
-              <Forms.Input
+              <Input
                 size="md"
                 name="password"
                 type="password"

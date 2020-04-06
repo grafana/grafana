@@ -1,6 +1,5 @@
-// Libraries
 import React, { Component } from 'react';
-// Types
+
 import { Table } from '@grafana/ui';
 import { Field, FieldMatcherID, PanelProps } from '@grafana/data';
 import { Options } from './types';
@@ -40,7 +39,7 @@ export class TablePanel extends Component<Props> {
 
     return (
       <Table
-        height={height}
+        height={height - 16}
         width={width}
         data={data.series[0]}
         noHeader={!options.showHeader}

@@ -92,10 +92,10 @@ export const Table: FC<Props> = memo(
 
     return (
       <div {...getTableProps()} className={tableStyles.table}>
-        <CustomScrollbar>
+        <CustomScrollbar hideVerticalTrack={true}>
           <div style={{ width: `${totalColumnsWidth}px` }}>
             {!noHeader && (
-              <>
+              <div>
                 {headerGroups.map((headerGroup: HeaderGroup) => {
                   return (
                     <div className={tableStyles.thead} {...headerGroup.getHeaderGroupProps()} ref={ref}>
@@ -105,7 +105,7 @@ export const Table: FC<Props> = memo(
                     </div>
                   );
                 })}
-              </>
+              </div>
             )}
             <FixedSizeList
               height={height - headerRowMeasurements.height}

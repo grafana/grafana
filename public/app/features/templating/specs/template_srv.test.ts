@@ -1,10 +1,14 @@
 import { TemplateSrv } from '../template_srv';
+import { convertToStoreState } from 'test/helpers/convertToStoreState';
+import { getTemplateSrvDependencies } from '../../../../test/helpers/getTemplateSrvDependencies';
 
 describe('templateSrv', () => {
   let _templateSrv: any;
 
-  function initTemplateSrv(variables: any) {
-    _templateSrv = new TemplateSrv();
+  function initTemplateSrv(variables: any[]) {
+    const state = convertToStoreState(variables);
+
+    _templateSrv = new TemplateSrv(getTemplateSrvDependencies(state));
     _templateSrv.init(variables);
   }
 
