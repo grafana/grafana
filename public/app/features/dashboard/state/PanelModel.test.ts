@@ -39,6 +39,7 @@ export const mockStandardProperties = () => {
 
   return [unit, decimals];
 };
+standardFieldConfigEditorRegistry.setInit(() => mockStandardProperties());
 
 describe('PanelModel', () => {
   describe('when creating new panel model', () => {
@@ -65,7 +66,6 @@ describe('PanelModel', () => {
     };
 
     beforeEach(() => {
-      standardFieldConfigEditorRegistry.setInit(() => mockStandardProperties());
       persistedOptionsMock = {
         fieldOptions: {
           thresholds: [

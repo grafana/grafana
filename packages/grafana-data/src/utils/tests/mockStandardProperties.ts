@@ -1,5 +1,5 @@
-import { identityOverrideProcessor } from '../field';
-import { ThresholdsMode } from '../types';
+import { identityOverrideProcessor } from '../../field';
+import { ThresholdsMode } from '../../types';
 
 export const mockStandardProperties = () => {
   const title = {
@@ -7,8 +7,8 @@ export const mockStandardProperties = () => {
     path: 'title',
     name: 'Title',
     description: "Field's title",
-    editor: () => {},
-    override: () => {},
+    editor: () => null,
+    override: () => null,
     process: identityOverrideProcessor,
     settings: {
       placeholder: 'none',
@@ -23,8 +23,8 @@ export const mockStandardProperties = () => {
     name: 'Unit',
     description: 'Value units',
 
-    editor: () => {},
-    override: () => {},
+    editor: () => null,
+    override: () => null,
     process: identityOverrideProcessor,
 
     settings: {
@@ -40,8 +40,8 @@ export const mockStandardProperties = () => {
     name: 'Min',
     description: 'Minimum expected value',
 
-    editor: () => {},
-    override: () => {},
+    editor: () => null,
+    override: () => null,
     process: identityOverrideProcessor,
 
     settings: {
@@ -56,8 +56,8 @@ export const mockStandardProperties = () => {
     name: 'Max',
     description: 'Maximum expected value',
 
-    editor: () => {},
-    override: () => {},
+    editor: () => null,
+    override: () => null,
     process: identityOverrideProcessor,
 
     settings: {
@@ -73,8 +73,8 @@ export const mockStandardProperties = () => {
     name: 'Decimals',
     description: 'Number of decimal to be shown for a value',
 
-    editor: () => {},
-    override: () => {},
+    editor: () => null,
+    override: () => null,
     process: identityOverrideProcessor,
 
     settings: {
@@ -93,8 +93,8 @@ export const mockStandardProperties = () => {
     name: 'Thresholds',
     description: 'Manage thresholds',
 
-    editor: () => {},
-    override: () => {},
+    editor: () => null,
+    override: () => null,
     process: identityOverrideProcessor,
     settings: {},
     defaultValue: {
@@ -113,8 +113,8 @@ export const mockStandardProperties = () => {
     name: 'Value mappings',
     description: 'Manage value mappings',
 
-    editor: () => {},
-    override: () => {},
+    editor: () => null,
+    override: () => null,
     process: identityOverrideProcessor,
     settings: {},
     defaultValue: [],
@@ -127,8 +127,8 @@ export const mockStandardProperties = () => {
     name: 'No Value',
     description: 'What to show when there is no value',
 
-    editor: () => {},
-    override: () => {},
+    editor: () => null,
+    override: () => null,
     process: identityOverrideProcessor,
 
     settings: {
@@ -143,8 +143,8 @@ export const mockStandardProperties = () => {
     path: 'links',
     name: 'DataLinks',
     description: 'Manage date links',
-    editor: () => {},
-    override: () => {},
+    editor: () => null,
+    override: () => null,
     process: identityOverrideProcessor,
     settings: {
       placeholder: '-',
@@ -157,8 +157,8 @@ export const mockStandardProperties = () => {
     path: 'color',
     name: 'Color',
     description: 'Customise color',
-    editor: () => {},
-    override: () => {},
+    editor: () => null,
+    override: () => null,
     process: identityOverrideProcessor,
     settings: {
       placeholder: '-',
