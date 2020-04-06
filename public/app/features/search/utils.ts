@@ -48,11 +48,14 @@ export const markSelected = (sections: DashboardSection[], selectedId: string) =
     result = { ...result, selected: String(result[lookupField]) === selectedId };
 
     if (result.expanded && result.items.length) {
-      result.items = result.items.map(item => {
-        const [sectionId, itemId] = selectedId.split('-');
-        const lookup = getLookupField(sectionId);
-        return { ...item, selected: String(item.id) === itemId && String(result[lookup]) === sectionId };
-      });
+      return {
+        ...result,
+        items: result.items.map(item => {
+          const [sectionId, itemId] = selectedId.split('-');
+          const lookup = getLookupField(sectionId);
+          return { ...item, selected: String(item.id) === itemId && String(result[lookup]) === sectionId };
+        }),
+      };
     }
     return result;
   });

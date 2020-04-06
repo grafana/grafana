@@ -31,7 +31,7 @@ export const searchReducer = (state: any, action: SearchAction) => {
         ...state,
         results: state.results.map((result: DashboardSection) => {
           if (section[lookupField] === result[lookupField]) {
-            result.expanded = !result.expanded;
+            return { ...result, expanded: !result.expanded };
           }
           return result;
         }),
