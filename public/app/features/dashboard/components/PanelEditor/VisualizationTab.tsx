@@ -1,4 +1,4 @@
-import React, { FC, useState } from 'react';
+import React, { FC, useCallback, useState } from 'react';
 import { css } from 'emotion';
 import { GrafanaTheme, PanelPlugin, PanelPluginMeta } from '@grafana/data';
 import { CustomScrollbar, useTheme, stylesFactory, Icon, Input } from '@grafana/ui';
@@ -35,6 +35,21 @@ export const VisualizationTabUnconnected: FC<Props> = ({ panel, plugin, changePa
   const onPluginTypeChange = (meta: PanelPluginMeta) => {
     changePanelPlugin(panel, meta.id);
   };
+
+  const onKeyPress = useCallback(
+    (e: React.KeyboardEvent<HTMLInputElement>) => {
+      if (e.key === 'Enter') {
+        const query = e.currentTarget.value;
+        const plugins = getAllPanelPluginMeta();
+        const match = filterPluginList(plugins, query);
+        if (match && match.length) {
+          onPluginTypeChange(match[0]);
+        }
+      }
+    },
+    [onPluginTypeChange]
+  );
+
   const suffix =
     searchQuery !== '' ? (
       <span className={styles.searchClear} onClick={() => setSearchQuery('')}>
@@ -50,16 +65,7 @@ export const VisualizationTabUnconnected: FC<Props> = ({ panel, plugin, changePa
           <Input
             value={searchQuery}
             onChange={e => setSearchQuery(e.currentTarget.value)}
-            onKeyPress={e => {
-              if (e.key === 'Enter') {
-                const query = e.currentTarget.value;
-                const plugins = getAllPanelPluginMeta();
-                const match = filterPluginList(plugins, query);
-                if (match && match.length) {
-                  onPluginTypeChange(match[0]);
-                }
-              }
-            }}
+            onKeyPress={onKeyPress}
             prefix={<Icon name="filter" className={styles.icon} />}
             suffix={suffix}
             placeholder="Filter visualisations"
