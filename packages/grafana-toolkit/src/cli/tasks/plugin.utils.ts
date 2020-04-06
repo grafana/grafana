@@ -159,7 +159,9 @@ export interface GithubPublishOptions {
 
 const githubPublishRunner: TaskRunner<GithubPublishOptions> = async ({ dryrun, verbose, commitHash }) => {
   if (!process.env['CIRCLE_REPOSITORY_URL']) {
-    throw `The release plugin requires you specify the repository url as environment variable CIRCLE_REPOSITORY_URL`;
+    throw new Error(
+      'The release plugin requires you specify the repository url as environment variable CIRCLE_REPOSITORY_URL'
+    );
   }
 
   if (!process.env['GITHUB_ACCESS_TOKEN']) {
@@ -167,8 +169,10 @@ const githubPublishRunner: TaskRunner<GithubPublishOptions> = async ({ dryrun, v
     if (process.env['GITHUB_TOKEN']) {
       process.env['GITHUB_ACCESS_TOKEN'] = process.env['GITHUB_TOKEN'];
     } else {
-      throw `Github publish requires that you set the environment variable GITHUB_ACCESS_TOKEN to a valid github api token.
-      See: https://github.com/settings/tokens for more details.`;
+      throw new Error(
+        `Github publish requires that you set the environment variable GITHUB_ACCESS_TOKEN to a valid github api token.
+        See: https://github.com/settings/tokens for more details.`
+      );
     }
   }
 
