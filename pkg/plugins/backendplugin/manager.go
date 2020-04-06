@@ -9,6 +9,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/util/proxyutil"
+	"github.com/prometheus/client_golang/prometheus"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/registry"
@@ -186,6 +187,8 @@ func (m *manager) CheckHealth(ctx context.Context, pluginConfig *PluginConfig) (
 	return checkHealthResultFromProto(res), nil
 }
 
+const resourceMetricEndpoint string = "resource"
+
 // CallResource calls a plugin resource.
 func (m *manager) CallResource(config PluginConfig, c *models.ReqContext, path string) {
 	m.pluginsMu.RLock()
@@ -224,9 +227,15 @@ func (m *manager) CallResource(config PluginConfig, c *models.ReqContext, path s
 		User:    c.SignedInUser,
 	}
 
+	status := "ok"
+	latencyTimer := prometheus.NewTimer(pluginRequestLatency.WithLabelValues(p.id, resourceMetricEndpoint))
+	defer latencyTimer.ObserveDuration()
+	defer pluginRequestCounter.WithLabelValues(p.id, resourceMetricEndpoint, status).Inc()
+
 	stream, err := p.callResource(clonedReq.Context(), req)
 	if err != nil {
 		c.JsonApiErr(500, "Failed to call resource", err)
+		status = "error"
 		return
 	}
 
