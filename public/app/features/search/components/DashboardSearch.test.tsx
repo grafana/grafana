@@ -79,4 +79,24 @@ describe('DashboardSearch', () => {
     expect(wrapper.find({ 'aria-label': 'Search section' })).toHaveLength(2);
     expect(wrapper.find({ 'aria-label': 'Search items' }).children()).toHaveLength(2);
   });
+
+  it('should call search with selected tags', async () => {
+    let wrapper: any;
+    await act(async () => {
+      wrapper = mount(<DashboardSearch closeSearch={() => {}} />);
+      jest.runAllTimers();
+    });
+
+    await act(async () => {
+      wrapper.find('TagFilter').prop('onChange')(['TestTag']);
+      jest.runAllTimers();
+    });
+    expect(mockSearch).toHaveBeenCalledWith({
+      query: '',
+      parsedQuery: { text: '' },
+      tags: ['TestTag'],
+      tag: ['TestTag'],
+      starred: false,
+    });
+  });
 });
