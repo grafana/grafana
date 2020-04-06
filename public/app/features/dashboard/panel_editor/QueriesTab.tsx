@@ -118,6 +118,10 @@ export class QueriesTab extends PureComponent<Props, State> {
     });
   };
 
+  openQueryInspector = () => {
+    alert('TODO... open the inspector at query tab');
+  };
+
   renderHelp = () => {
     return <PluginHelp plugin={this.state.currentDS.meta} type="query_help" />;
   };
@@ -237,6 +241,10 @@ export class QueriesTab extends PureComponent<Props, State> {
 
   render() {
     const { scrollTop } = this.state;
+    const queryInspector: EditorToolbarView = {
+      title: 'Query Inspector',
+      onClick: this.openQueryInspector,
+    };
 
     const dsHelp: EditorToolbarView = {
       heading: 'Help',
@@ -248,7 +256,7 @@ export class QueriesTab extends PureComponent<Props, State> {
       <EditorTabBody
         heading="Query"
         renderToolbar={this.renderToolbar}
-        toolbarItems={[dsHelp]}
+        toolbarItems={[queryInspector, dsHelp]}
         setScrollTop={this.setScrollTop}
         scrollTop={scrollTop}
       >
