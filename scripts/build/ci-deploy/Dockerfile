@@ -1,4 +1,4 @@
-FROM circleci/golang:1.13
+FROM circleci/golang:1.14
 
 RUN git clone https://github.com/aptly-dev/aptly $GOPATH/src/github.com/aptly-dev/aptly && \
     cd $GOPATH/src/github.com/aptly-dev/aptly && \

@@ -73,7 +73,7 @@ RUN rm -rf /tmp/osxcross/target/SDK/${OSX_SDK}/usr/share && \
 # base image to crossbuild grafana
 FROM ubuntu:18.04
 
-ENV GOVERSION=1.13.4 \
+ENV GOVERSION=1.14.1 \
     PATH=/usr/local/go/bin:$PATH \
     GOPATH=/go \
     NODEVERSION=12.13.0
