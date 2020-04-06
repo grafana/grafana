@@ -4,7 +4,6 @@ import _ from 'lodash';
 // Components
 import { EditorTabBody, EditorToolbarView } from './EditorTabBody';
 import { DataSourcePicker } from 'app/core/components/Select/DataSourcePicker';
-import { QueryInspector } from './QueryInspector';
 import { QueryOptions } from './QueryOptions';
 import { PanelOptionsGroup } from '@grafana/ui';
 import { QueryEditorRows } from './QueryEditorRows';
@@ -117,11 +116,6 @@ export class QueriesTab extends PureComponent<Props, State> {
     this.setState({
       currentDS: datasource,
     });
-  };
-
-  renderQueryInspector = () => {
-    const { panel } = this.props;
-    return <QueryInspector panel={panel} />;
   };
 
   renderHelp = () => {
@@ -243,10 +237,6 @@ export class QueriesTab extends PureComponent<Props, State> {
 
   render() {
     const { scrollTop } = this.state;
-    const queryInspector: EditorToolbarView = {
-      title: 'Query Inspector',
-      render: this.renderQueryInspector,
-    };
 
     const dsHelp: EditorToolbarView = {
       heading: 'Help',
@@ -258,7 +248,7 @@ export class QueriesTab extends PureComponent<Props, State> {
       <EditorTabBody
         heading="Query"
         renderToolbar={this.renderToolbar}
-        toolbarItems={[queryInspector, dsHelp]}
+        toolbarItems={[dsHelp]}
         setScrollTop={this.setScrollTop}
         scrollTop={scrollTop}
       >

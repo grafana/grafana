@@ -4,6 +4,7 @@ import { CopyToClipboard } from 'app/core/components/CopyToClipboard/CopyToClipb
 import { JSONFormatter, LoadingPlaceholder } from '@grafana/ui';
 import { CoreEvents } from 'app/types';
 import { AppEvents, PanelEvents } from '@grafana/data';
+import { PanelModel } from 'app/features/dashboard/state';
 
 interface DsQuery {
   isLoading: boolean;
@@ -11,7 +12,7 @@ interface DsQuery {
 }
 
 interface Props {
-  panel: any;
+  panel: PanelModel;
 }
 
 interface State {

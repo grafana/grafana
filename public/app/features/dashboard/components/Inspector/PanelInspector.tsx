@@ -5,6 +5,7 @@ import { css } from 'emotion';
 
 import { InspectHeader } from './InspectHeader';
 import { InspectJSONTab } from './InspectJSONTab';
+import { QueryInspector } from './QueryInspector';
 
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 import {
@@ -46,6 +47,7 @@ export enum InspectTab {
   Error = 'error',
   Stats = 'stats',
   JSON = 'json',
+  Query = 'query',
 }
 
 interface State {
@@ -239,6 +241,10 @@ export class PanelInspector extends PureComponent<Props, State> {
     return <div>{error.message}</div>;
   }
 
+  renderQueryTab() {
+    return <div>TODO!</div>;
+  }
+
   renderStatsTab() {
     const { last } = this.state;
     const { request } = last;
@@ -312,11 +318,13 @@ export class PanelInspector extends PureComponent<Props, State> {
     }
 
     tabs.push({ label: 'Stats', value: InspectTab.Stats });
-    tabs.push({ label: 'JSON', value: InspectTab.JSON });
 
     if (this.state.metaDS) {
       tabs.push({ label: 'Meta Data', value: InspectTab.Meta });
     }
+
+    tabs.push({ label: 'Query', value: InspectTab.Query });
+    tabs.push({ label: 'JSON', value: InspectTab.JSON });
 
     if (error && error.message) {
       tabs.push({ label: 'Error', value: InspectTab.Error });
@@ -351,6 +359,7 @@ export class PanelInspector extends PureComponent<Props, State> {
             {tab === InspectTab.JSON && <InspectJSONTab panel={panel} dashboard={dashboard} data={last} />}
             {tab === InspectTab.Error && this.renderErrorTab(error)}
             {tab === InspectTab.Stats && this.renderStatsTab()}
+            {tab === InspectTab.Query && <QueryInspector panel={panel} />}
           </CustomScrollbar>
         </TabContent>
       </Drawer>
