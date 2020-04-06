@@ -16,10 +16,14 @@ export const initialState: State = {
 
 export const searchReducer = (state: any, action: SearchAction) => {
   switch (action.type) {
-    case FETCH_RESULTS:
+    case FETCH_RESULTS: {
+      const results = action.payload;
       // Highlight the first item ('Starred' folder)
-      action.payload[0].selected = true;
-      return { ...state, results: action.payload, loading: false };
+      if (results.length) {
+        results[0].selected = true;
+      }
+      return { ...state, results, loading: false };
+    }
     case TOGGLE_SECTION: {
       const section = action.payload;
       const lookupField = getLookupField(section.title);

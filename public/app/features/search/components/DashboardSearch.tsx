@@ -47,7 +47,6 @@ export const DashboardSearch: FC<Props> = ({ closeSearch }) => {
   );
 
   const search = () => {
-    // TODO move query construction to search_srv
     searchSrv.search({ ...query, tag: query.tags, query: query.parsedQuery.text }).then(results => {
       dispatch({ type: FETCH_RESULTS, payload: results });
     });
