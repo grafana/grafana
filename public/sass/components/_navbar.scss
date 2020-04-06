@@ -63,6 +63,14 @@
       display: inline-block;
     }
   }
+
+  .navbar-page-btn__folder-icon {
+    display: none;
+
+    @include media-breakpoint-up(md) {
+      display: inline-block;
+    }
+  }
 }
 
 .navbar-page-btn__folder {
