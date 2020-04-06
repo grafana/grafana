@@ -1,7 +1,7 @@
 import React from 'react';
 import { identityOverrideProcessor, standardEditorsRegistry } from '../field';
 import { PanelPlugin, standardFieldConfigProperties } from './PanelPlugin';
-import { StandardFieldConfigProperties } from '../types';
+import { FieldConfigProperty } from '../types';
 
 describe('PanelPlugin', () => {
   describe('declarative options', () => {
@@ -193,7 +193,7 @@ describe('PanelPlugin', () => {
           return <div>Panel</div>;
         });
 
-        panel.useStandardFieldConfig([StandardFieldConfigProperties.Min, StandardFieldConfigProperties.Thresholds]);
+        panel.useStandardFieldConfig([FieldConfigProperty.Min, FieldConfigProperty.Thresholds]);
         expect(panel.standardFieldConfigProperties).toEqual(['min', 'thresholds']);
       });
 
@@ -203,9 +203,9 @@ describe('PanelPlugin', () => {
             return <div>Panel</div>;
           });
 
-          panel.useStandardFieldConfig([StandardFieldConfigProperties.Color, StandardFieldConfigProperties.Min], {
-            [StandardFieldConfigProperties.Color]: '#ff00ff',
-            [StandardFieldConfigProperties.Min]: 10,
+          panel.useStandardFieldConfig([FieldConfigProperty.Color, FieldConfigProperty.Min], {
+            [FieldConfigProperty.Color]: '#ff00ff',
+            [FieldConfigProperty.Min]: 10,
           });
 
           expect(panel.standardFieldConfigProperties).toEqual(['color', 'min']);
@@ -224,9 +224,9 @@ describe('PanelPlugin', () => {
             return <div>Panel</div>;
           });
 
-          panel.useStandardFieldConfig([StandardFieldConfigProperties.Color], {
-            [StandardFieldConfigProperties.Color]: '#ff00ff',
-            [StandardFieldConfigProperties.Min]: 10,
+          panel.useStandardFieldConfig([FieldConfigProperty.Color], {
+            [FieldConfigProperty.Color]: '#ff00ff',
+            [FieldConfigProperty.Min]: 10,
           });
 
           expect(panel.standardFieldConfigProperties).toEqual(['color']);

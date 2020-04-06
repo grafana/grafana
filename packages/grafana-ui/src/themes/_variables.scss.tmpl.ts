@@ -149,8 +149,8 @@ $input-border-radius-sm: 0 $border-radius-sm $border-radius-sm 0 !default;
 $label-border-radius: $border-radius 0 0 $border-radius !default;
 $label-border-radius-sm: $border-radius-sm 0 0 $border-radius-sm !default;
 
-$input-padding: ${theme.spacing.sm};
-$input-height: 35px !default;
+$input-padding: 0 ${theme.spacing.sm};
+$input-height: 32px !default;
 
 $cursor-disabled: not-allowed !default;
 
@@ -226,6 +226,11 @@ $external-services: (
   ),
   grafanacom: (
     bgColor: #262628,
+    borderColor: #393939,
+    icon: '',
+  ),
+  okta: (
+    bgColor: #2f2f2f,
     borderColor: #393939,
     icon: '',
   ),

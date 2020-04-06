@@ -208,14 +208,12 @@ export const run = (includeInternalScripts = false) => {
     .option('--dryrun', 'Do a dry run only', false)
     .option('--verbose', 'Print verbose', false)
     .option('--commitHash <hashKey>', 'Specify the commit hash')
-    .option('--recreate', 'Recreate the release if already present')
-    .description('Publish to github ... etc etc etc')
+    .description('Publish to github')
     .action(async cmd => {
       await execTask(githubPublishTask)({
         dryrun: cmd.dryrun,
         verbose: cmd.verbose,
         commitHash: cmd.commitHash,
-        recreate: cmd.recreate,
       });
     });
 

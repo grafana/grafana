@@ -1,6 +1,6 @@
 import React, { FC } from 'react';
 import { escapeStringForRegex, unEscapeStringFromRegex } from '@grafana/data';
-import { Forms, Icon } from '@grafana/ui';
+import { Input, Icon } from '@grafana/ui';
 
 export interface Props {
   value: string | undefined;
@@ -11,7 +11,7 @@ export interface Props {
 }
 
 export const FilterInput: FC<Props> = props => (
-  <Forms.Input
+  <Input
     // Replaces the usage of ref
     autoFocus
     prefix={<Icon name="search" />}

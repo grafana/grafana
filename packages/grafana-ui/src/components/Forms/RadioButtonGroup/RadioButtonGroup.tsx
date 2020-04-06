@@ -49,7 +49,7 @@ export function RadioButtonGroup<T>({
   disabled,
   disabledOptions,
   size = 'md',
-  fullWidth,
+  fullWidth = false,
 }: RadioButtonGroupProps<T>) {
   const handleOnChange = useCallback(
     (option: SelectableValue<T>) => {
@@ -78,7 +78,7 @@ export function RadioButtonGroup<T>({
             onChange={handleOnChange(o)}
             id={`option-${o.value}-${id}`}
             name={groupName.current}
-            fullWidth
+            fullWidth={fullWidth}
           >
             {o.label}
           </RadioButton>

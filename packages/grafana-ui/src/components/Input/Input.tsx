@@ -3,7 +3,7 @@ import classNames from 'classnames';
 import { validate, EventsWithValidation, hasValidationEvent } from '../../utils';
 import { ValidationEvents, ValidationRule } from '../../types';
 
-export enum InputStatus {
+export enum LegacyInputStatus {
   Invalid = 'invalid',
   Valid = 'valid',
 }
@@ -14,9 +14,9 @@ interface Props extends React.HTMLProps<HTMLInputElement> {
   inputRef?: React.LegacyRef<HTMLInputElement>;
 
   // Override event props and append status as argument
-  onBlur?: (event: React.FocusEvent<HTMLInputElement>, status?: InputStatus) => void;
-  onFocus?: (event: React.FocusEvent<HTMLInputElement>, status?: InputStatus) => void;
-  onChange?: (event: React.ChangeEvent<HTMLInputElement>, status?: InputStatus) => void;
+  onBlur?: (event: React.FocusEvent<HTMLInputElement>, status?: LegacyInputStatus) => void;
+  onFocus?: (event: React.FocusEvent<HTMLInputElement>, status?: LegacyInputStatus) => void;
+  onChange?: (event: React.ChangeEvent<HTMLInputElement>, status?: LegacyInputStatus) => void;
 }
 
 interface State {
@@ -33,11 +33,11 @@ export class Input extends PureComponent<Props, State> {
   };
 
   get status() {
-    return this.state.error ? InputStatus.Invalid : InputStatus.Valid;
+    return this.state.error ? LegacyInputStatus.Invalid : LegacyInputStatus.Valid;
   }
 
   get isInvalid() {
-    return this.status === InputStatus.Invalid;
+    return this.status === LegacyInputStatus.Invalid;
   }
 
   validatorAsync = (validationRules: ValidationRule[]) => {

@@ -114,7 +114,7 @@ export class ResultProcessor {
 
 export function isTimeSeries(frame: DataFrame): boolean {
   if (frame.fields.length === 2) {
-    if (frame.fields[1].type === FieldType.time) {
+    if (frame.fields[0].type === FieldType.time) {
       return true;
     }
   }
