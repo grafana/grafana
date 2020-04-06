@@ -113,6 +113,7 @@ export class MutableDataFrame<T = any> implements DataFrame, MutableVector<T> {
       config: f.config || {},
       values: this.creator(buffer),
       labels: f.labels,
+      display: (f as Field).display,
     };
 
     if (type === FieldType.other) {

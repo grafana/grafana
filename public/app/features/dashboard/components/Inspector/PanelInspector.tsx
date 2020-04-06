@@ -157,11 +157,18 @@ export class PanelInspector extends PureComponent<Props, State> {
   };
 
   onSelectedFrameChanged = (item: SelectableValue<number>) => {
-    this.setState({ selected: item.value || 0 });
+    this.setState({ selected: item.value || 0, transformation: DataTransformerID.noop });
   };
 
   onSelectedTransformationChanged = (item: SelectableValue<DataTransformerID>) => {
-    this.setState({ transformation: item.value });
+    /*
+      When applying a transformation we will have a MutableDataFrame with one element,
+      we need to set selected to 0 to avoid out out range error.
+   */
+    this.setState(prevState => ({
+      selected: item.value !== DataTransformerID.noop ? 0 : prevState.selected,
+      transformation: item.value,
+    }));
   };
 
   exportCsv = (dataFrame: DataFrame) => {
@@ -198,7 +205,7 @@ export class PanelInspector extends PureComponent<Props, State> {
     });
 
     const processed = transformDataFrame(
-      [{ id: transformation, options: [] }],
+      [{ id: transformation, options: { byField: 'Time' } }],
       applyFieldOverrides({
         data,
         theme: config.theme,
