@@ -1,5 +1,6 @@
 import React, { PureComponent } from 'react';
 import { getBackendSrv } from '@grafana/runtime';
+import { Icon } from '@grafana/ui';
 
 import alertDef from './state/alertDef';
 import { DashboardModel } from '../dashboard/state/DashboardModel';
@@ -78,7 +79,7 @@ class StateHistory extends PureComponent<Props, State> {
           <div className="p-b-1">
             <span className="muted">Last 50 state changes</span>
             <button className="btn btn-small btn-danger pull-right" onClick={this.clearHistory}>
-              <i className="fa fa-trash" /> {` Clear history`}
+              <Icon name="trash-alt" /> {` Clear history`}
             </button>
           </div>
         )}
@@ -88,7 +89,7 @@ class StateHistory extends PureComponent<Props, State> {
               return (
                 <li className="alert-rule-item" key={`${item.time}-${index}`}>
                   <div className={`alert-rule-item__icon ${item.stateModel.stateClass}`}>
-                    <i className={item.stateModel.iconClass} />
+                    <Icon name={item.stateModel.iconClass} />
                   </div>
                   <div className="alert-rule-item__body">
                     <div className="alert-rule-item__header">

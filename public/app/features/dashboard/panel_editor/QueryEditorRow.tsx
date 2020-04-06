@@ -9,7 +9,7 @@ import { Emitter } from 'app/core/utils/emitter';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 // Types
 import { PanelModel } from '../state/PanelModel';
-import { ErrorBoundaryAlert } from '@grafana/ui';
+import { ErrorBoundaryAlert, Icon } from '@grafana/ui';
 import {
   DataQuery,
   DataSourceApi,
@@ -223,8 +223,8 @@ export class QueryEditorRow extends PureComponent<Props, State> {
       <div className={rowClasses}>
         <div className="query-editor-row__header">
           <div className="query-editor-row__ref-id" onClick={this.onToggleCollapse}>
-            {isCollapsed && <i className="fa fa-caret-right" />}
-            {!isCollapsed && <i className="fa fa-caret-down" />}
+            {isCollapsed && <Icon name="angle-right" />}
+            {!isCollapsed && <Icon name="angle-down" />}
             <span>{query.refId}</span>
             {inMixedMode && <em className="query-editor-row__context-info"> ({datasource.name})</em>}
             {isDisabled && <em className="query-editor-row__context-info"> Disabled</em>}
@@ -239,24 +239,24 @@ export class QueryEditorRow extends PureComponent<Props, State> {
                 onClick={this.onToggleEditMode}
                 title="Toggle text edit mode"
               >
-                <i className="fa fa-fw fa-pencil" />
+                <Icon name="pen" />
               </button>
             )}
             <button className="query-editor-row__action" onClick={() => this.props.onMoveQuery(query, 1)}>
-              <i className="fa fa-fw fa-arrow-down" />
+              <Icon name="arrow-down" />
             </button>
             <button className="query-editor-row__action" onClick={() => this.props.onMoveQuery(query, -1)}>
-              <i className="fa fa-fw fa-arrow-up" />
+              <Icon name="arrow-up" />
             </button>
             <button className="query-editor-row__action" onClick={this.onCopyQuery} title="Duplicate query">
-              <i className="fa fa-fw fa-copy" />
+              <Icon name="copy" />
             </button>
             <button className="query-editor-row__action" onClick={this.onDisableQuery} title="Disable/enable query">
-              {isDisabled && <i className="fa fa-fw fa-eye-slash" />}
-              {!isDisabled && <i className="fa fa-fw fa-eye" />}
+              {isDisabled && <Icon name="eye-slash" />}
+              {!isDisabled && <Icon name="eye" />}
             </button>
             <button className="query-editor-row__action" onClick={this.onRemoveQuery} title="Remove query">
-              <i className="fa fa-fw fa-trash" />
+              <Icon name="trash-alt" />
             </button>
           </div>
         </div>
