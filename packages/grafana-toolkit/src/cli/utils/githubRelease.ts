@@ -9,6 +9,9 @@ import GithubClient from './githubClient';
 import { AxiosResponse } from 'axios';
 
 const resolveContentType = (extension: string): string => {
+  if (extension.startsWith('.')) {
+    extension = extension.substr(1);
+  }
   switch (extension) {
     case 'zip':
       return 'application/zip';
@@ -42,26 +45,18 @@ class GitHubRelease {
     });
   }
 
-  async publishAssets(srcLocation: string, destUrl: string) {
+  publishAssets(srcLocation: string, destUrl: string) {
     // Add the assets. Loop through files in the ci/dist folder and upload each asset.
-    fs.readdir(srcLocation, (err: NodeJS.ErrnoException | null, files: string[]) => {
-      if (err) {
-        throw err;
-      }
+    const files = fs.readdirSync(srcLocation);
 
-      files.forEach(async (file: string) => {
-        const fileStat = fs.statSync(`${srcLocation}/${file}`);
-        const fileData = fs.readFileSync(`${srcLocation}/${file}`);
-        try {
-          await this.git.client.post(`${destUrl}?name=${file}`, fileData, {
-            headers: {
-              'Content-Type': resolveContentType(path.extname(file)),
-              'Content-Length': fileStat.size,
-            },
-          });
-        } catch (reason) {
-          console.log('Could not post', reason);
-        }
+    return files.map(async (file: string) => {
+      const fileStat = fs.statSync(`${srcLocation}/${file}`);
+      const fileData = fs.readFileSync(`${srcLocation}/${file}`);
+      return this.git.client.post(`${destUrl}?name=${file}`, fileData, {
+        headers: {
+          'Content-Type': resolveContentType(path.extname(file)),
+          'Content-Length': fileStat.size,
+        },
       });
     });
   }
@@ -76,7 +71,7 @@ class GitHubRelease {
     const commitHash = this.commitHash || pluginInfo.build?.hash;
 
     try {
-      const latestRelease: AxiosResponse<any> = await this.git.client.get('releases/latest');
+      const latestRelease: AxiosResponse<any> = await this.git.client.get(`releases/tags/v${pluginInfo.version}`);
 
       // Re-release if the version is the same as an existing release
       if (latestRelease.data.tag_name === `v${pluginInfo.version}`) {
@@ -93,12 +88,13 @@ class GitHubRelease {
         prerelease: false,
       });
 
-      this.publishAssets(
+      const publishPromises = this.publishAssets(
         PUBLISH_DIR,
         `https://uploads.github.com/repos/${this.username}/${this.repository}/releases/${newReleaseResponse.data.id}/assets`
       );
+      await Promise.all(publishPromises);
     } catch (reason) {
-      console.error(reason.data?.message ?? reason);
+      console.error(reason.data?.message ?? reason.response.data ?? reason);
       // Rethrow the error so that we can trigger a non-zero exit code to circle-ci
       throw reason;
     }
