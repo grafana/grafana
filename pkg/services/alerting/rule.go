@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 )
@@ -137,13 +138,15 @@ func NewRuleFromDBAlert(ruleDef *models.Alert) (*Rule, error) {
 	for _, v := range ruleDef.Settings.Get("notifications").MustArray() {
 		jsonModel := simplejson.NewFromAny(v)
 		if id, err := jsonModel.Get("id").Int64(); err == nil {
-			model.Notifications = append(model.Notifications, fmt.Sprintf("%09d", id))
-		} else {
-			uid, err := jsonModel.Get("uid").String()
+			uid, err := translateNotificationIDToUID(id, ruleDef.OrgId)
 			if err != nil {
-				return nil, ValidationError{Reason: "Neither id nor uid is specified in 'notifications' block, " + err.Error(), DashboardID: model.DashboardID, AlertID: model.ID, PanelID: model.PanelID}
+				return nil, ValidationError{Reason: "Unable to translate notification id to uid, " + err.Error(), DashboardID: model.DashboardID, AlertID: model.ID, PanelID: model.PanelID}
 			}
 			model.Notifications = append(model.Notifications, uid)
+		} else if uid, err := jsonModel.Get("uid").String(); err == nil {
+			model.Notifications = append(model.Notifications, uid)
+		} else {
+			return nil, ValidationError{Reason: "Neither id nor uid is specified in 'notifications' block, " + err.Error(), DashboardID: model.DashboardID, AlertID: model.ID, PanelID: model.PanelID}
 		}
 	}
 	model.AlertRuleTags = ruleDef.GetTagsFromSettings()
@@ -167,6 +170,29 @@ func NewRuleFromDBAlert(ruleDef *models.Alert) (*Rule, error) {
 	}
 
 	return model, nil
+}
+
+func translateNotificationIDToUID(id int64, orgID int64) (string, error) {
+	notificationUid, err := getAlertNotificationUidByIDAndOrgID(id, orgID)
+	if err != nil {
+		logger.Debug("Failed to translate Notification Id to Uid", "orgID", orgID, "Id", id)
+		return "", err
+	}
+
+	return notificationUid, nil
+}
+
+func getAlertNotificationUidByIDAndOrgID(notificationID int64, orgID int64) (string, error) {
+	query := &models.GetAlertNotificationUidQuery{
+		OrgId: orgID,
+		Id:    notificationID,
+	}
+
+	if err := bus.Dispatch(query); err != nil {
+		return "", err
+	}
+
+	return query.Result, nil
 }
 
 // ConditionFactory is the function signature for creating `Conditions`.

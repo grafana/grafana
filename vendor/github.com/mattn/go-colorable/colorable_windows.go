@@ -27,6 +27,8 @@ const (
 	backgroundRed       = 0x40
 	backgroundIntensity = 0x80
 	backgroundMask      = (backgroundRed | backgroundBlue | backgroundGreen | backgroundIntensity)
+
+	cENABLE_VIRTUAL_TERMINAL_PROCESSING = 0x4
 )
 
 const (
@@ -78,6 +80,8 @@ var (
 	procGetConsoleCursorInfo       = kernel32.NewProc("GetConsoleCursorInfo")
 	procSetConsoleCursorInfo       = kernel32.NewProc("SetConsoleCursorInfo")
 	procSetConsoleTitle            = kernel32.NewProc("SetConsoleTitleW")
+	procGetConsoleMode             = kernel32.NewProc("GetConsoleMode")
+	procSetConsoleMode             = kernel32.NewProc("SetConsoleMode")
 	procCreateConsoleScreenBuffer  = kernel32.NewProc("CreateConsoleScreenBuffer")
 )
 
@@ -98,6 +102,10 @@ func NewColorable(file *os.File) io.Writer {
 	}
 
 	if isatty.IsTerminal(file.Fd()) {
+		var mode uint32
+		if r, _, _ := procGetConsoleMode.Call(file.Fd(), uintptr(unsafe.Pointer(&mode))); r != 0 && mode&cENABLE_VIRTUAL_TERMINAL_PROCESSING != 0 {
+			return file
+		}
 		var csbi consoleScreenBufferInfo
 		handle := syscall.Handle(file.Fd())
 		procGetConsoleScreenBufferInfo.Call(uintptr(handle), uintptr(unsafe.Pointer(&csbi)))
@@ -1002,4 +1010,24 @@ func n256setup() {
 		n256foreAttr[i] = c.foregroundAttr()
 		n256backAttr[i] = c.backgroundAttr()
 	}
+}
+
+// EnableColorsStdout enable colors if possible.
+func EnableColorsStdout(enabled *bool) func() {
+	var mode uint32
+	h := os.Stdout.Fd()
+	if r, _, _ := procGetConsoleMode.Call(h, uintptr(unsafe.Pointer(&mode))); r != 0 {
+		if r, _, _ = procSetConsoleMode.Call(h, uintptr(mode|cENABLE_VIRTUAL_TERMINAL_PROCESSING)); r != 0 {
+			if enabled != nil {
+				*enabled = true
+			}
+			return func() {
+				procSetConsoleMode.Call(h, uintptr(mode))
+			}
+		}
+	}
+	if enabled != nil {
+		*enabled = true
+	}
+	return func() {}
 }

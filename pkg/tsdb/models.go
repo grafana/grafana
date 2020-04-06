@@ -6,10 +6,12 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 )
 
+// TsdbQuery contains all information about a query request.
 type TsdbQuery struct {
 	TimeRange *TimeRange
 	Queries   []*Query
 	Debug     bool
+	User      *models.SignedInUser
 }
 
 type Query struct {

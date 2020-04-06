@@ -1,20 +1,18 @@
 // Libraries
 import sortBy from 'lodash/sortBy';
 import coreModule from 'app/core/core_module';
-
 // Services & Utils
 import config from 'app/core/config';
 import { importDataSourcePlugin } from './plugin_loader';
 import { DataSourceSrv as DataSourceService, getDataSourceSrv as getDataSourceService } from '@grafana/runtime';
-
 // Types
-import { DataSourceApi, DataSourceSelectItem, ScopedVars, AppEvents } from '@grafana/data';
+import { AppEvents, DataSourceApi, DataSourceSelectItem, ScopedVars } from '@grafana/data';
 import { auto } from 'angular';
 import { TemplateSrv } from '../templating/template_srv';
 import { GrafanaRootScope } from 'app/routes/GrafanaCtrl';
-
 // Pretend Datasource
 import { expressionDatasource } from 'app/features/expressions/ExpressionDatasource';
+import { DataSourceVariableModel } from '../templating/types';
 
 export class DatasourceSrv implements DataSourceService {
   datasources: Record<string, DataSourceApi> = {};
@@ -163,11 +161,13 @@ export class DatasourceSrv implements DataSourceService {
 
   addDataSourceVariables(list: any[]) {
     // look for data source variables
-    this.templateSrv.variables
+    this.templateSrv
+      .getVariables()
       .filter(variable => variable.type === 'datasource')
-      .forEach(variable => {
+      .forEach((variable: DataSourceVariableModel) => {
         const first = variable.current.value === 'default' ? config.defaultDatasource : variable.current.value;
-        const ds = config.datasources[first];
+        const index = (first as unknown) as string;
+        const ds = config.datasources[index];
 
         if (ds) {
           const key = `$${variable.name}`;

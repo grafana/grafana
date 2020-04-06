@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { IconType } from '../Icon/types';
 import { SelectableValue } from '@grafana/data';
-import { Button, ButtonVariant } from '../Forms/Button';
-import { Select } from '../Forms/Select/Select';
+import { Button, ButtonVariant } from '../Button';
+import { Select } from '../Select/Select';
 import { FullWidthButtonContainer } from '../Button/FullWidthButtonContainer';
 
 interface ValuePickerProps<T> {

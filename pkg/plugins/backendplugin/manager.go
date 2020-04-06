@@ -3,16 +3,14 @@ package backendplugin
 import (
 	"context"
 	"errors"
+	"io"
 	"sync"
 	"time"
 
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/util/proxyutil"
 
-	"github.com/prometheus/client_golang/prometheus"
-
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/plugins/backendplugin/collector"
 	"github.com/grafana/grafana/pkg/registry"
 	plugin "github.com/hashicorp/go-plugin"
 	"golang.org/x/xerrors"
@@ -41,24 +39,23 @@ type Manager interface {
 	Register(descriptor PluginDescriptor) error
 	// StartPlugin starts a non-managed backend plugin
 	StartPlugin(ctx context.Context, pluginID string) error
+	// CollectMetrics collects metrics from a registered backend plugin.
+	CollectMetrics(ctx context.Context, pluginID string) (*CollectMetricsResult, error)
 	// CheckHealth checks the health of a registered backend plugin.
-	CheckHealth(ctx context.Context, pluginID string) (*CheckHealthResult, error)
+	CheckHealth(ctx context.Context, pluginConfig *PluginConfig) (*CheckHealthResult, error)
 	// CallResource calls a plugin resource.
 	CallResource(pluginConfig PluginConfig, ctx *models.ReqContext, path string)
 }
 
 type manager struct {
-	pluginsMu       sync.RWMutex
-	plugins         map[string]*BackendPlugin
-	pluginCollector collector.PluginCollector
-	logger          log.Logger
+	pluginsMu sync.RWMutex
+	plugins   map[string]*BackendPlugin
+	logger    log.Logger
 }
 
 func (m *manager) Init() error {
 	m.plugins = make(map[string]*BackendPlugin)
 	m.logger = log.New("plugins.backend")
-	m.pluginCollector = collector.NewPluginCollector()
-	prometheus.MustRegister(m.pluginCollector)
 
 	return nil
 }
@@ -110,11 +107,6 @@ func (m *manager) start(ctx context.Context) {
 			p.logger.Error("Failed to start plugin", "error", err)
 			continue
 		}
-
-		if p.supportsDiagnostics() {
-			p.logger.Debug("Registering metrics collector")
-			m.pluginCollector.Register(p.id, p)
-		}
 	}
 }
 
@@ -149,8 +141,8 @@ func (m *manager) stop() {
 	}
 }
 
-// CheckHealth checks the health of a registered backend plugin.
-func (m *manager) CheckHealth(ctx context.Context, pluginID string) (*CheckHealthResult, error) {
+// CollectMetrics collects metrics from a registered backend plugin.
+func (m *manager) CollectMetrics(ctx context.Context, pluginID string) (*CollectMetricsResult, error) {
 	m.pluginsMu.RLock()
 	p, registered := m.plugins[pluginID]
 	m.pluginsMu.RUnlock()
@@ -163,7 +155,29 @@ func (m *manager) CheckHealth(ctx context.Context, pluginID string) (*CheckHealt
 		return nil, ErrDiagnosticsNotSupported
 	}
 
-	res, err := p.checkHealth(ctx)
+	res, err := p.CollectMetrics(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return collectMetricsResultFromProto(res), nil
+}
+
+// CheckHealth checks the health of a registered backend plugin.
+func (m *manager) CheckHealth(ctx context.Context, pluginConfig *PluginConfig) (*CheckHealthResult, error) {
+	m.pluginsMu.RLock()
+	p, registered := m.plugins[pluginConfig.PluginID]
+	m.pluginsMu.RUnlock()
+
+	if !registered {
+		return nil, ErrPluginNotRegistered
+	}
+
+	if !p.supportsDiagnostics() {
+		return nil, ErrDiagnosticsNotSupported
+	}
+
+	res, err := p.checkHealth(ctx, pluginConfig)
 	if err != nil {
 		p.logger.Error("Failed to check plugin health", "error", err)
 		return nil, ErrHealthCheckFailed
@@ -207,32 +221,62 @@ func (m *manager) CallResource(config PluginConfig, c *models.ReqContext, path s
 		URL:     clonedReq.URL.String(),
 		Headers: clonedReq.Header,
 		Body:    body,
+		User:    c.SignedInUser,
 	}
 
-	res, err := p.callResource(clonedReq.Context(), req)
+	stream, err := p.callResource(clonedReq.Context(), req)
 	if err != nil {
 		c.JsonApiErr(500, "Failed to call resource", err)
 		return
 	}
 
-	// Make sure a content type always is returned in response
-	if _, exists := res.Headers["Content-Type"]; !exists {
-		res.Headers["Content-Type"] = []string{"application/json"}
-	}
+	processedStreams := 0
 
-	for k, values := range res.Headers {
-		if k == "Set-Cookie" {
-			continue
+	for {
+		resp, err := stream.Recv()
+		if err == io.EOF {
+			if processedStreams == 0 {
+				c.JsonApiErr(500, "Received empty resource response ", nil)
+			}
+			return
+		}
+		if err != nil {
+			if processedStreams == 0 {
+				c.JsonApiErr(500, "Failed to receive response from resource call", err)
+			} else {
+				p.logger.Error("Failed to receive response from resource call", "error", err)
+			}
+			return
 		}
 
-		for _, v := range values {
-			c.Resp.Header().Add(k, v)
-		}
-	}
+		// Expected that headers and status are only part of first stream
+		if processedStreams == 0 {
+			// Make sure a content type always is returned in response
+			if _, exists := resp.Headers["Content-Type"]; !exists {
+				resp.Headers["Content-Type"] = []string{"application/json"}
+			}
 
-	c.WriteHeader(res.Status)
-	if _, err := c.Write(res.Body); err != nil {
-		p.logger.Error("Failed to write resource response", "error", err)
+			for k, values := range resp.Headers {
+				// Due to security reasons we don't want to forward
+				// cookies from a backend plugin to clients/browsers.
+				if k == "Set-Cookie" {
+					continue
+				}
+
+				for _, v := range values {
+					c.Resp.Header().Add(k, v)
+				}
+			}
+
+			c.WriteHeader(resp.Status)
+		}
+
+		if _, err := c.Write(resp.Body); err != nil {
+			p.logger.Error("Failed to write resource response", "error", err)
+		}
+
+		c.Resp.Flush()
+		processedStreams++
 	}
 }
 

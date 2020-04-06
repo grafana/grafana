@@ -1,4 +1,4 @@
-import { FieldType, MutableDataFrame, CircularDataFrame } from '@grafana/data';
+import { CircularDataFrame, FieldType, MutableDataFrame } from '@grafana/data';
 import { LokiLegacyStreamResult, LokiStreamResult, LokiTailResponse } from './types';
 import * as ResultTransformer from './result_transformer';
 
@@ -52,7 +52,7 @@ describe('loki result transformer', () => {
       const data = legacyStreamResult.map(stream => ResultTransformer.legacyLogStreamToDataFrame(stream));
 
       expect(data.length).toBe(2);
-      expect(data[0].fields[1].labels['foo']).toEqual('bar');
+      expect(data[0].fields[1].labels!['foo']).toEqual('bar');
       expect(data[0].fields[0].values.get(0)).toEqual(legacyStreamResult[0].entries[0].ts);
       expect(data[0].fields[1].values.get(0)).toEqual(legacyStreamResult[0].entries[0].line);
       expect(data[0].fields[2].values.get(0)).toEqual('2764544e18dbc3fcbeee21a573e8cd1b');
@@ -94,7 +94,7 @@ describe('loki result transformer', () => {
       const data = streamResult.map(stream => ResultTransformer.lokiStreamResultToDataFrame(stream));
 
       expect(data.length).toBe(2);
-      expect(data[0].fields[1].labels['foo']).toEqual('bar');
+      expect(data[0].fields[1].labels!['foo']).toEqual('bar');
       expect(data[0].fields[0].values.get(0)).toEqual('2020-01-24T09:19:22.021Z');
       expect(data[0].fields[1].values.get(0)).toEqual(streamResult[0].values[0][1]);
       expect(data[0].fields[2].values.get(0)).toEqual('2b431b8a98b80b3b2c2f4cd2444ae6cb');

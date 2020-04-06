@@ -3,7 +3,7 @@ import { AppEvents } from '@grafana/data';
 import { e2e } from '@grafana/e2e';
 
 import coreModule from 'app/core/core_module';
-import { variableTypes } from './variable';
+import { variableTypes } from './types';
 import appEvents from 'app/core/app_events';
 import DatasourceSrv from '../plugins/datasource_srv';
 import { VariableSrv } from './all';

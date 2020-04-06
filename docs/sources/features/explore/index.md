@@ -11,25 +11,23 @@ weight = 5
 
 # Explore
 
-> Explore is only available in Grafana 6.0 and above.
-
-## Introduction
-
-One of the major new features of Grafana 6.0 is the new query-focused Explore workflow for troubleshooting and/or for data exploration.
-
 Grafana's dashboard UI is all about building dashboards for visualization. Explore strips away all the dashboard and panel options so that you can focus on the query. Iterate until you have a working query and then think about building a dashboard.
+
+> Explore is only available in Grafana 6.0 and above.
 
 For infrastructure monitoring and incident response, you no longer need to switch to other tools to debug what went wrong. Explore allows you to dig deeper into your metrics and logs to find the cause. Grafana's new logging data source, [Loki](https://github.com/grafana/loki) is tightly integrated into Explore and allows you to correlate metrics and logs by viewing them side-by-side. This creates a new debugging workflow where you can:
 
 1. Receive an alert
-2. Drill down and examine metrics
-3. Drill down again and search logs related to the metric and time interval (and in the future, distributed traces).
+1. Drill down and examine metrics
+1. Drill down again and search logs related to the metric and time interval (and in the future, distributed traces).
 
 If you just want to explore your data and do not want to create a dashboard then Explore makes this much easier. Explore will show the results as both a graph and a table enabling you to see trends in the data and more detail at the same time (if the data source supports both graph and table data).
 
-## How to Start Exploring
+## Start exploring
 
-There is a new Explore icon on the menu bar to the left. This opens a new empty Explore tab.
+> **Note:** By default, users with the Viewer role cannot edit and do not have access to Explore. Refer to [Organization roles](https://grafana.com/docs/grafana/latest/permissions/organization_roles/) for more information about what each role has access to.
+
+There is an Explore icon on the menu bar to the left. This opens an empty Explore tab.
 
 {{< docs-imagebox img="/img/docs/v65/explore_menu.png" class="docs-image--no-shadow" caption="Screenshot of the new Explore Icon" >}}
 
@@ -41,7 +39,7 @@ Choose your data source in the dropdown in the top left. Prometheus has a custom
 
 The query field is where you can write your query and explore your data. There are three buttons beside the query field, a clear button (X), an add query button (+) and the remove query button (-). Just like the normal query editor, you can add and remove multiple queries.
 
-## Split and Compare
+## Split and compare
 
 The Split feature is an easy way to compare graphs and tables side-by-side or to look at related data together on one page. Click the split button to duplicate the current query and split the page into two side-by-side queries. It is possible to select another data source for the new query which for example, allows you to compare the same query for two different servers or to compare the staging environment to the production environment.
 
@@ -51,17 +49,78 @@ In split view, timepickers for both panels can be linked (if you change one, the
 
 You can close the newly created query by clicking on the Close Split button.
 
+## Query history
+
+> BETA: Query history is a beta feature.
+
+Query history is a list of queries that you have used in Explore. The history is local to your browser and is not shared with others. To open and interact with your history, click the **Query history** button in Explore.
+
+### View query history
+
+Query history lets you view the history of your querying. For each individual query, you can:
+
+- Replace Explore query for selected query by clicking on the query card.
+- Create and/or edit a comment.
+- Copy a query to the clipboard.
+- Copy a URL link with the query to the clipboard.
+- Star a query.
+
+### Manage favorite queries
+
+All queries that have been starred in the Query history tab are displayed in the Starred. This allows you to access your favorite queries faster and to reuse these queries without typing them from scratch.
+
+### Sort query history
+
+By default, query history shows you the most recent queries. You can sort your history in by date or by data source name in ascending or descending order.
+
+1. Click the **Sort queries by** field.
+2. Select one of the following options:
+   - Time ascending
+   - Time descending
+   - Data source A-Z
+   - Data source Z-A
+
+> Note: If you are in split mode, then the chosen sorting mode applies only to the active panel.
+
+### Filter query history
+
+Filter query history in Query history and Starred tab by data source name:
+
+1. Click the **Filter queries for specific data source(s)** field
+2. Select the data source for which you would like to filter your history. You can select multiple data sources.
+
+In **Query history** tab is is also possible to filter queries by date using the slider:
+
+- Use vertical slider to filter queries by date.
+- By dragging top handle, adjust start date.
+- By dragging top handle, adjust end date.
+
+> Note: If you are in split mode, filters are applied only to your currently active panel.
+
+### Query history settings
+
+You can customize the query history in the Settings tab. Options are described in the table below.
+
+| Setting                                                       | Default value                           |
+| ------------------------------------------------------------- | --------------------------------------- |
+| Period of time for which Grafana will save your query history | 1 week                                  |
+| Change the default active tab                                 | Query history tab                       |
+| Only show queries for datasource currently active in Explore  | False                                   |
+| Clear query history                                           | Permanently deletes all stored queries. |
+
+> Note: Query history settings are global, and applied to both panels in split mode.
+
 ## Prometheus-specific Features
 
 The first version of Explore features a custom querying experience for Prometheus. When a query is executed, it actually executes two queries, a normal Prometheus query for the graph and an Instant Query for the table. An Instant Query returns the last value for each time series which shows a good summary of the data shown in the graph.
 
-### Metrics Explorer
+### Metrics explorer
 
 On the left-hand side of the query field is a `Metrics` button, clicking on this opens the Metric Explorer. This shows a hierarchical menu with metrics grouped by their prefix. For example, all the Alert Manager metrics will be grouped under the `alertmanager` prefix. This is a good starting point if you just want to explore which metrics are available.
 
 {{< docs-imagebox img="/img/docs/v65/explore_metric_explorer.png" class="docs-image--no-shadow" caption="Screenshot of the new Explore option in the panel menu" >}}
 
-### Query Field
+### Query field
 
 The Query field supports autocomplete for metric names, function and works mostly the same way as the standard Prometheus query editor. Press the enter key to execute a query.
 
@@ -69,17 +128,18 @@ The autocomplete menu can be trigger by pressing Ctrl+Space. The Autocomplete me
 
 Suggestions can appear under the query field - click on them to update your query with the suggested change.
 
-* For counters (monotonically increasing metrics), a rate function will be suggested.
-* For buckets, a histogram function will be suggested.
-* For recording rules, possible to expand the rules.
+- For counters (monotonically increasing metrics), a rate function will be suggested.
+- For buckets, a histogram function will be suggested.
+- For recording rules, possible to expand the rules.
 
-### Table Filters
+### Table filters
 
 Click on the filter button <span title="Filter for label" class="logs-label__icon fa fa-search-plus"></span> in a labels column in the Table panel to add filters to the query expression. This works with multiple queries too - the filter will be added for all the queries.
 
-## Logs Integration
+## Logs integration
 
 Along with metrics, Explore allows you to investigate your logs with the following data sources:
+
 - [Loki](../datasources/loki)
 - [InfluxDB](../datasources/influxdb)
 - [Elasticsearch](../datasources/elasticsearch)
@@ -92,9 +152,9 @@ You can customize how logs are displayed and select which columns are shown.
 
 Log data can be very repetitive and Explore can help by hiding duplicate log lines. There are a few different deduplication algorithms that you can use:
 
-* `exact` Exact matches are done on the whole line, except for date fields.
-* `numbers` Matches on the line after stripping out numbers (durations, IP addresses etc.).
-* `signature` The most aggressive deduping - strips all letters and numbers, and matches on the remaining whitespace and punctuation.
+- `exact` Exact matches are done on the whole line, except for date fields.
+- `numbers` Matches on the line after stripping out numbers (durations, IP addresses etc.).
+- `signature` The most aggressive deduping - strips all letters and numbers, and matches on the remaining whitespace and punctuation.
 
 #### Time
 
@@ -108,7 +168,7 @@ Shows or hides the unique labels column that includes only non-common labels. Al
 
 Set this to True if you want the display to use line wrapping. If set to False, it will result in horizontal scrolling.
 
-### Labels and Parsed fields
+### Labels and parsed fields
 
 Each log row has an extendable area with its labels and parsed fields, for more robust interaction. For all labels we have added the ability to filter for (positive filter) and filter out (negative filter) selected labels. Each field or label also has a stats icon to display ad-hoc statistics in relation to all displayed logs.
 
@@ -118,7 +178,7 @@ As mentioned, one of the log integrations is for the new open source log aggrega
 
 See [Loki's data source documentation](../datasources/loki) on how to query for log data.
 
-#### Switching from Metrics to Logs
+#### Switch from metrics to logs
 
 If you switch from a Prometheus query to a logs query (you can do a split first to have your metrics and logs side by side) then it will keep the labels from your query that exist in the logs and use those to query the log streams. For example, the following Prometheus query:
 

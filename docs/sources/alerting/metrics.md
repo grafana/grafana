@@ -11,7 +11,7 @@ weight = 2
 
 # Metrics from the alert engine
 
-The alert engine publishes some internal metrics about itself. You can read more about how Grafana publishes [internal metrics]({{ < "../administration/metrics/" > }}).
+The alert engine publishes some internal metrics about itself. You can read more about how Grafana publishes [internal metrics]({{< relref "../administration/metrics/" >}}).
 
 Description | Type | Metric name
 ---------- | ----------- | ----------

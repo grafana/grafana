@@ -28,24 +28,28 @@ func TestSearchJSONForEmail(t *testing.T) {
 			UserInfoJSONResponse []byte
 			EmailAttributePath   string
 			ExpectedResult       string
+			ExpectedError        string
 		}{
 			{
 				Name:                 "Given an invalid user info JSON response",
 				UserInfoJSONResponse: []byte("{"),
 				EmailAttributePath:   "attributes.email",
 				ExpectedResult:       "",
+				ExpectedError:        "failed to unmarshal user info JSON response: unexpected end of JSON input",
 			},
 			{
 				Name:                 "Given an empty user info JSON response and empty JMES path",
 				UserInfoJSONResponse: []byte{},
 				EmailAttributePath:   "",
 				ExpectedResult:       "",
+				ExpectedError:        "no attribute path specified",
 			},
 			{
 				Name:                 "Given an empty user info JSON response and valid JMES path",
 				UserInfoJSONResponse: []byte{},
 				EmailAttributePath:   "attributes.email",
 				ExpectedResult:       "",
+				ExpectedError:        "empty user info JSON response provided",
 			},
 			{
 				Name: "Given a simple user info JSON response and valid JMES path",
@@ -87,7 +91,12 @@ func TestSearchJSONForEmail(t *testing.T) {
 		for _, test := range tests {
 			provider.emailAttributePath = test.EmailAttributePath
 			t.Run(test.Name, func(t *testing.T) {
-				actualResult := provider.searchJSONForAttr(test.EmailAttributePath, test.UserInfoJSONResponse)
+				actualResult, err := provider.searchJSONForAttr(test.EmailAttributePath, test.UserInfoJSONResponse)
+				if test.ExpectedError == "" {
+					require.NoError(t, err, "Testing case %q", test.Name)
+				} else {
+					require.EqualError(t, err, test.ExpectedError, "Testing case %q", test.Name)
+				}
 				require.Equal(t, test.ExpectedResult, actualResult)
 			})
 		}
@@ -107,24 +116,28 @@ func TestSearchJSONForRole(t *testing.T) {
 			UserInfoJSONResponse []byte
 			RoleAttributePath    string
 			ExpectedResult       string
+			ExpectedError        string
 		}{
 			{
 				Name:                 "Given an invalid user info JSON response",
 				UserInfoJSONResponse: []byte("{"),
 				RoleAttributePath:    "attributes.role",
 				ExpectedResult:       "",
+				ExpectedError:        "failed to unmarshal user info JSON response: unexpected end of JSON input",
 			},
 			{
 				Name:                 "Given an empty user info JSON response and empty JMES path",
 				UserInfoJSONResponse: []byte{},
 				RoleAttributePath:    "",
 				ExpectedResult:       "",
+				ExpectedError:        "no attribute path specified",
 			},
 			{
 				Name:                 "Given an empty user info JSON response and valid JMES path",
 				UserInfoJSONResponse: []byte{},
 				RoleAttributePath:    "attributes.role",
 				ExpectedResult:       "",
+				ExpectedError:        "empty user info JSON response provided",
 			},
 			{
 				Name: "Given a simple user info JSON response and valid JMES path",
@@ -141,7 +154,12 @@ func TestSearchJSONForRole(t *testing.T) {
 		for _, test := range tests {
 			provider.roleAttributePath = test.RoleAttributePath
 			t.Run(test.Name, func(t *testing.T) {
-				actualResult := provider.searchJSONForAttr(test.RoleAttributePath, test.UserInfoJSONResponse)
+				actualResult, err := provider.searchJSONForAttr(test.RoleAttributePath, test.UserInfoJSONResponse)
+				if test.ExpectedError == "" {
+					require.NoError(t, err, "Testing case %q", test.Name)
+				} else {
+					require.EqualError(t, err, test.ExpectedError, "Testing case %q", test.Name)
+				}
 				require.Equal(t, test.ExpectedResult, actualResult)
 			})
 		}

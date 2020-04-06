@@ -79,7 +79,10 @@ export class DashboardSrv {
   };
 
   saveJSONDashboard(json: string) {
-    return getBackendSrv().saveDashboard(JSON.parse(json), {});
+    const parsedJson = JSON.parse(json);
+    return getBackendSrv().saveDashboard(parsedJson, {
+      folderId: this.dashboard.meta.folderId || parsedJson.folderId,
+    });
   }
 
   starDashboard(dashboardId: string, isStarred: any) {

@@ -24,7 +24,23 @@ export default class AppInsightsDatasource {
   constructor(instanceSettings: DataSourceInstanceSettings<AzureDataSourceJsonData>, private templateSrv: TemplateSrv) {
     this.id = instanceSettings.id;
     this.applicationId = instanceSettings.jsonData.appInsightsAppId;
-    this.baseUrl = `/appinsights/${this.version}/apps/${this.applicationId}`;
+
+    switch (instanceSettings.jsonData.cloudName) {
+      // Azure US Government
+      case 'govazuremonitor':
+        break;
+      // Azure Germany
+      case 'germanyazuremonitor':
+        break;
+      // Azue China
+      case 'chinaazuremonitor':
+        this.baseUrl = `/chinaappinsights/${this.version}/apps/${this.applicationId}`;
+        break;
+      // Azure Global
+      default:
+        this.baseUrl = `/appinsights/${this.version}/apps/${this.applicationId}`;
+    }
+
     this.url = instanceSettings.url;
   }
 

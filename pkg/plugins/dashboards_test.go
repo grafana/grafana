@@ -18,7 +18,11 @@ func TestPluginDashboards(t *testing.T) {
 		_, err := sec.NewKey("path", "testdata/test-app")
 		So(err, ShouldBeNil)
 
-		pm := &PluginManager{}
+		pm := &PluginManager{
+			Cfg: &setting.Cfg{
+				FeatureToggles: map[string]bool{},
+			},
+		}
 		err = pm.Init()
 		So(err, ShouldBeNil)
 

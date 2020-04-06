@@ -128,7 +128,7 @@ describe('DashboardModel', () => {
     });
 
     it('dashboard schema version should be set to latest', () => {
-      expect(model.schemaVersion).toBe(22);
+      expect(model.schemaVersion).toBe(23);
     });
 
     it('graph thresholds should be migrated', () => {
@@ -572,6 +572,53 @@ describe('DashboardModel', () => {
         expect(model.panels[1].options.fieldOptions.defaults.links[0].url).toBe(
           'http://mylink.com?series=${__field.labels}&${__field.labels.x}'
         );
+      });
+    });
+  });
+
+  describe('when migrating variables with multi support', () => {
+    let model: DashboardModel;
+
+    beforeEach(() => {
+      model = new DashboardModel({
+        templating: {
+          list: [
+            {
+              multi: false,
+              current: {
+                value: ['value'],
+                text: ['text'],
+              },
+            },
+            {
+              multi: true,
+              current: {
+                value: ['value'],
+                text: ['text'],
+              },
+            },
+          ],
+        },
+      });
+    });
+
+    it('should have two variables after migration', () => {
+      expect(model.templating.list.length).toBe(2);
+    });
+
+    it('should be migrated if being out of sync', () => {
+      expect(model.templating.list[0].multi).toBe(false);
+      expect(model.templating.list[0].current).toEqual({
+        text: 'text',
+        value: 'value',
+      });
+    });
+
+    it('should not be migrated if being in sync', () => {
+      expect(model.templating.list[1].multi).toBe(true);
+      expect(model.templating.list[1].current).toEqual({
+        text: ['text'],
+        value: ['value'],
       });
     });
   });

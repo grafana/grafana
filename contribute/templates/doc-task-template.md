@@ -26,7 +26,7 @@ In the case of a long task, then you probably won't need any headings except for
 1. Use second-person imperative tense.
 1. Basically, "You, do this" with every sentence.
 1. Do not use the third-person "user" for steps you want the reader ("you") to perform.
-1. Write steps that contain one action, possibly two related actions, such as copy and paste a thing or save and quite the program.
+1. Write steps that contain one action, possibly two related actions, such as copy and paste a thing or save and quit the program.
    If a sentence is not telling the reader to do something, then it is not a step. You can use nested images or paragraphs like this one to add information if necessary.
 
 In many cases, you should tell the reader what the outcome should be so that they know when they are done.

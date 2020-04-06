@@ -10,13 +10,13 @@ import {
 } from '@grafana/data';
 import { colors } from '../../utils';
 import { ThemeContext } from '../../themes/ThemeContext';
-import { Input } from '../Forms/Input/Input';
+import { Input } from '../Input/Input';
 import { ColorPicker } from '../ColorPicker/ColorPicker';
 import { stylesFactory } from '../../themes';
 import { Icon } from '../Icon/Icon';
 import { RadioButtonGroup } from '../Forms/RadioButtonGroup/RadioButtonGroup';
 import { Field } from '../Forms/Field';
-import { Button } from '../Forms/Button';
+import { Button } from '../Button';
 import { FullWidthButtonContainer } from '../Button/FullWidthButtonContainer';
 
 const modes: Array<SelectableValue<ThresholdsMode>> = [
@@ -198,7 +198,7 @@ export class ThresholdsEditor extends PureComponent<Props, State> {
           return (
             <div className={styles.wrapper}>
               <FullWidthButtonContainer className={styles.addButton}>
-                <Button size="sm" icon="fa fa-plus" onClick={() => this.onAddThreshold()}>
+                <Button size="sm" icon="fa fa-plus" onClick={() => this.onAddThreshold()} variant="secondary">
                   Add threshold
                 </Button>
               </FullWidthButtonContainer>

@@ -17,7 +17,7 @@ describe('Prometheus Result Transformer', () => {
         status: 'success',
         data: {
           resultType: '',
-          result: null as DataQueryResponseData[],
+          result: (null as unknown) as DataQueryResponseData[],
         },
       };
       const series = ctx.resultTransformer.transform({ data: response }, {});
@@ -28,7 +28,7 @@ describe('Prometheus Result Transformer', () => {
         status: 'success',
         data: {
           resultType: '',
-          result: null as DataQueryResponseData[],
+          result: (null as unknown) as DataQueryResponseData[],
         },
       };
       const table = ctx.resultTransformer.transform({ data: response }, { format: 'table' });

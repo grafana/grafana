@@ -15,7 +15,14 @@ import { PanelModel, DashboardModel } from '../state';
 import { VizPickerSearch } from './VizPickerSearch';
 import PluginStateinfo from 'app/features/plugins/PluginStateInfo';
 import { Unsubscribable } from 'rxjs';
-import { PanelPlugin, PanelPluginMeta, PanelData, LoadingState, DefaultTimeRange } from '@grafana/data';
+import {
+  PanelPlugin,
+  PanelPluginMeta,
+  PanelData,
+  LoadingState,
+  DefaultTimeRange,
+  FieldConfigSource,
+} from '@grafana/data';
 
 interface Props {
   panel: PanelModel;
@@ -59,6 +66,11 @@ export class VisualizationTab extends PureComponent<Props, State> {
     return panel.getOptions();
   };
 
+  getReactPanelFieldConfig = () => {
+    const { panel } = this.props;
+    return panel.getFieldConfig();
+  };
+
   renderPanelOptions() {
     const { plugin, dashboard, panel } = this.props;
 
@@ -72,6 +84,10 @@ export class VisualizationTab extends PureComponent<Props, State> {
           data={this.state.data}
           options={this.getReactPanelOptions()}
           onOptionsChange={this.onPanelOptionsChanged}
+          // TODO[FieldConfig]: Remove when we switch old editor to new
+          fieldConfig={this.getReactPanelFieldConfig()}
+          // TODO[FieldConfig]: Remove when we switch old editor to new
+          onFieldConfigChange={this.onPanelFieldConfigChange}
         />
       );
     }
@@ -100,6 +116,12 @@ export class VisualizationTab extends PureComponent<Props, State> {
 
   onPanelOptionsChanged = (options: any, callback?: () => void) => {
     this.props.panel.updateOptions(options);
+    this.forceUpdate(callback);
+  };
+
+  // TODO[FieldConfig]: Remove when we switch old editor to new
+  onPanelFieldConfigChange = (config: FieldConfigSource, callback?: () => void) => {
+    this.props.panel.updateFieldConfig(config);
     this.forceUpdate(callback);
   };
 

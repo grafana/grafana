@@ -3,7 +3,7 @@ import _ from 'lodash';
 import { DashboardModel } from '../state/DashboardModel';
 import { ContextSrv } from 'app/core/services/context_srv';
 import { GrafanaRootScope } from 'app/routes/GrafanaCtrl';
-import { CoreEvents, AppEventConsumer } from 'app/types';
+import { AppEventConsumer, CoreEvents } from 'app/types';
 import { appEvents } from 'app/core/app_events';
 
 export class ChangeTracker {
@@ -132,10 +132,10 @@ export class ChangeTracker {
     });
 
     // ignore template variable values
-    _.each(dash.templating.list, value => {
-      value.current = null;
-      value.options = null;
-      value.filters = null;
+    _.each(dash.getVariables(), variable => {
+      variable.current = null;
+      variable.options = null;
+      variable.filters = null;
     });
 
     return dash;
@@ -145,8 +145,8 @@ export class ChangeTracker {
     const current = this.cleanDashboardFromIgnoredChanges(this.current.getSaveModelClone());
     const original = this.cleanDashboardFromIgnoredChanges(this.original);
 
-    const currentTimepicker: any = _.find(current.nav, { type: 'timepicker' });
-    const originalTimepicker: any = _.find(original.nav, { type: 'timepicker' });
+    const currentTimepicker: any = _.find((current as any).nav, { type: 'timepicker' });
+    const originalTimepicker: any = _.find((original as any).nav, { type: 'timepicker' });
 
     if (currentTimepicker && originalTimepicker) {
       currentTimepicker.now = originalTimepicker.now;
