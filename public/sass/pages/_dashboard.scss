@@ -52,8 +52,8 @@ div.flot-text {
   width: 100%;
 
   &--transparent {
-    background-color: $page-bg;
-    border: none;
+    background-color: transparent;
+    border: 1px solid transparent;
   }
 
   &:hover {
