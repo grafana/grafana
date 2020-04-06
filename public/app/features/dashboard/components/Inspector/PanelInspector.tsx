@@ -181,7 +181,7 @@ export class PanelInspector extends PureComponent<Props, State> {
     const processed = applyFieldOverrides({
       data,
       theme: config.theme,
-      fieldOptions: { defaults: {}, overrides: [] },
+      fieldConfig: { defaults: {}, overrides: [] },
       replaceVariables: (value: string) => {
         return value;
       },
@@ -353,8 +353,8 @@ export class PanelInspector extends PureComponent<Props, State> {
     return (
       <Drawer title={this.drawerHeader} width={drawerWidth} onClose={this.onDismiss}>
         <TabContent className={styles.tabContent}>
+          {tab === InspectTab.Data && this.renderDataTab()}
           <CustomScrollbar autoHeightMin="100%">
-            {tab === InspectTab.Data && this.renderDataTab()}
             {tab === InspectTab.Meta && this.renderMetadataInspector()}
             {tab === InspectTab.Request && this.renderRequestTab()}
             {tab === InspectTab.Error && this.renderErrorTab(error)}

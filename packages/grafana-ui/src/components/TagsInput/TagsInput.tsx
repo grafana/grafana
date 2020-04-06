@@ -2,7 +2,7 @@ import React, { ChangeEvent, KeyboardEvent, PureComponent } from 'react';
 import { css, cx } from 'emotion';
 import { stylesFactory } from '../../themes/stylesFactory';
 import { Button } from '../Button';
-import { Input } from '../Input/Input';
+import { Input } from '../Forms/Legacy/Input/Input';
 import { TagItem } from './TagItem';
 
 interface Props {

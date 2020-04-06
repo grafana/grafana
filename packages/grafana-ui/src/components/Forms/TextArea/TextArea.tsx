@@ -12,16 +12,18 @@ export interface Props extends Omit<HTMLProps<HTMLTextAreaElement>, 'size'> {
   size?: FormInputSize;
 }
 
-export const TextArea = React.forwardRef<HTMLTextAreaElement, Props>(({ invalid, size = 'auto', ...props }, ref) => {
-  const theme = useTheme();
-  const styles = getTextAreaStyle(theme, invalid);
+export const TextArea = React.forwardRef<HTMLTextAreaElement, Props>(
+  ({ invalid, size = 'auto', className, ...props }, ref) => {
+    const theme = useTheme();
+    const styles = getTextAreaStyle(theme, invalid);
 
-  return (
-    <div className={inputSizes()[size]}>
-      <textarea className={styles.textarea} {...props} ref={ref} />
-    </div>
-  );
-});
+    return (
+      <div className={inputSizes()[size]}>
+        <textarea {...props} className={cx(styles.textarea, className)} ref={ref} />
+      </div>
+    );
+  }
+);
 
 const getTextAreaStyle = stylesFactory((theme: GrafanaTheme, invalid = false) => {
   return {

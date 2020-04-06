@@ -1,6 +1,6 @@
 import React from 'react';
 import { FieldConfigEditorProps, StringFieldConfigSettings } from '@grafana/data';
-import Forms from '../Forms';
+import { Input } from '../Input/Input';
 
 export const StringValueEditor: React.FC<FieldConfigEditorProps<string, StringFieldConfigSettings>> = ({
   value,
@@ -8,7 +8,7 @@ export const StringValueEditor: React.FC<FieldConfigEditorProps<string, StringFi
   item,
 }) => {
   return (
-    <Forms.Input
+    <Input
       placeholder={item.settings?.placeholder}
       value={value || ''}
       onChange={e => onChange(e.currentTarget.value)}

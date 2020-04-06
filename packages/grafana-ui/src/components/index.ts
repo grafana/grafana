@@ -139,6 +139,8 @@ export { ButtonSelect } from './Select/ButtonSelect';
 export { HorizontalGroup, VerticalGroup, Container } from './Layout/Layout';
 export { RadioButtonGroup } from './Forms/RadioButtonGroup/RadioButtonGroup';
 
+export { Input } from './Input/Input';
+
 // Legacy forms
 
 // Select
@@ -148,7 +150,7 @@ import { NoOptionsMessage } from './Forms/Legacy/Select/NoOptionsMessage';
 import { ButtonSelect } from './Forms/Legacy/Select/ButtonSelect';
 
 //Input
-import { Input, LegacyInputStatus } from './Input/Input';
+import { Input, LegacyInputStatus } from './Forms/Legacy/Input/Input';
 // Export these until  Enterprise migrations have been merged
 // export { Input, InputStatus}
 
