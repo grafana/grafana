@@ -43,7 +43,7 @@ export const searchReducer = (state: any, action: SearchAction) => {
         ...state,
         results: state.results.map((result: DashboardSection) => {
           if (section.id === result.id) {
-            result.items = items;
+            return { ...result, items };
           }
           return result;
         }),
