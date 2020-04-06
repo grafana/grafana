@@ -65,7 +65,7 @@ export class VariableSrv {
         this.templateSrv.setGlobalVariable('__org', {
           value: {
             name: contextSrv.user.orgName,
-            id: contextSrv.user.id,
+            id: contextSrv.user.orgId,
             toString: function() {
               return this.id;
             },
