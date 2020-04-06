@@ -10,10 +10,9 @@ interface Props {
   field: Field;
   tableStyles: TableStyles;
   onCellClick?: TableFilterActionCallback;
-  columnMinWidth?: number;
 }
 
-export const TableCell: FC<Props> = ({ cell, field, tableStyles, onCellClick, columnMinWidth }) => {
+export const TableCell: FC<Props> = ({ cell, field, tableStyles, onCellClick }) => {
   const filterable = field.config.filterable;
   const cellProps = cell.getCellProps();
 
@@ -30,10 +29,6 @@ export const TableCell: FC<Props> = ({ cell, field, tableStyles, onCellClick, co
   const fieldTextAlign = getTextAlign(field);
   if (fieldTextAlign && cellProps.style) {
     cellProps.style.textAlign = fieldTextAlign;
-  }
-
-  if (columnMinWidth && cellProps.style) {
-    cellProps.style.minWidth = columnMinWidth;
   }
 
   return (

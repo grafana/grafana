@@ -11,6 +11,8 @@ import { TableCell } from './TableCell';
 import { Icon } from '../Icon/Icon';
 import { CustomScrollbar } from '../CustomScrollbar/CustomScrollbar';
 
+const COLUMN_MIN_WIDTH = 150;
+
 export interface Props {
   data: DataFrame;
   width: number;
@@ -18,30 +20,39 @@ export interface Props {
   /** Minimal column width specified in pixels */
   columnMinWidth?: number;
   noHeader?: boolean;
+  resizable?: boolean;
   onCellClick?: TableFilterActionCallback;
-  disableResizing?: boolean;
 }
 
 export const Table: FC<Props> = memo(
-  ({ data, height, onCellClick, width, columnMinWidth, noHeader, disableResizing = true }) => {
+  ({ data, height, onCellClick, width, columnMinWidth = COLUMN_MIN_WIDTH, noHeader, resizable = false }) => {
     const theme = useTheme();
     const [ref, headerRowMeasurements] = useMeasure();
     const tableStyles = getTableStyles(theme);
-    const memoizedColumns = useMemo(() => getColumns(data, width, columnMinWidth ?? 150), [
-      data,
-      width,
-      columnMinWidth,
-    ]);
+    const memoizedColumns = useMemo(() => getColumns(data, width, columnMinWidth), [data, width, columnMinWidth]);
     const memoizedData = useMemo(() => getTableRows(data), [data]);
+    const defaultColumn = React.useMemo(
+      () => ({
+        minWidth: memoizedColumns.reduce((minWidth, column) => {
+          if (column.width) {
+            const width = typeof column.width === 'string' ? parseInt(column.width, 10) : column.width;
+            return Math.min(minWidth, width);
+          }
+          return minWidth;
+        }, columnMinWidth),
+      }),
+      [columnMinWidth, memoizedColumns]
+    );
     const options: any = useMemo(
       () => ({
         columns: memoizedColumns,
         data: memoizedData,
-        disableResizing: disableResizing,
+        disableResizing: !resizable,
+        defaultColumn,
       }),
-      [memoizedColumns, memoizedData]
+      [memoizedColumns, memoizedData, resizable, defaultColumn]
     );
-    const { getTableProps, headerGroups, rows, prepareRow } = useTable(
+    const { getTableProps, headerGroups, rows, prepareRow, totalColumnsWidth } = useTable(
       options,
       useSortBy,
       useBlockLayout,
@@ -61,7 +72,6 @@ export const Table: FC<Props> = memo(
                 tableStyles={tableStyles}
                 cell={cell}
                 onCellClick={onCellClick}
-                columnMinWidth={columnMinWidth}
               />
             ))}
           </div>
@@ -70,44 +80,40 @@ export const Table: FC<Props> = memo(
       [prepareRow, rows]
     );
 
-    let totalWidth = 0;
-
-    for (const headerGroup of headerGroups) {
-      for (const header of headerGroup.headers) {
-        totalWidth += header.width as number;
-      }
-    }
-
     return (
       <div {...getTableProps()} className={tableStyles.table}>
         <CustomScrollbar>
-          {!noHeader && (
-            <div>
-              {headerGroups.map((headerGroup: HeaderGroup) => (
-                <div className={tableStyles.thead} {...headerGroup.getHeaderGroupProps()} ref={ref}>
-                  {headerGroup.headers.map((column: Column, index: number) =>
-                    renderHeaderCell(column, tableStyles, data.fields[index], columnMinWidth)
-                  )}
-                </div>
-              ))}
-            </div>
-          )}
-          <FixedSizeList
-            height={height - headerRowMeasurements.height}
-            itemCount={rows.length}
-            itemSize={tableStyles.rowHeight}
-            width={totalWidth ?? width}
-            style={{ overflow: 'hidden auto' }}
-          >
-            {RenderRow}
-          </FixedSizeList>
+          <div style={{ width: `${totalColumnsWidth}px` }}>
+            {!noHeader && (
+              <>
+                {headerGroups.map((headerGroup: HeaderGroup) => {
+                  return (
+                    <div className={tableStyles.thead} {...headerGroup.getHeaderGroupProps()} ref={ref}>
+                      {headerGroup.headers.map((column: Column, index: number) =>
+                        renderHeaderCell(column, tableStyles, data.fields[index])
+                      )}
+                    </div>
+                  );
+                })}
+              </>
+            )}
+            <FixedSizeList
+              height={height - headerRowMeasurements.height}
+              itemCount={rows.length}
+              itemSize={tableStyles.rowHeight}
+              width={'100%'}
+              style={{ overflow: 'hidden auto' }}
+            >
+              {RenderRow}
+            </FixedSizeList>
+          </div>
         </CustomScrollbar>
       </div>
     );
   }
 );
 
-function renderHeaderCell(column: any, tableStyles: TableStyles, field?: Field, columnMinWidth?: number) {
+function renderHeaderCell(column: any, tableStyles: TableStyles, field?: Field) {
   const headerProps = column.getHeaderProps(column.getSortByToggleProps());
   if (column.canResize) {
     headerProps.style.userSelect = column.isResizing ? 'none' : 'auto'; // disables selecting text while resizing
@@ -118,10 +124,6 @@ function renderHeaderCell(column: any, tableStyles: TableStyles, field?: Field, 
 
   if (fieldTextAlign) {
     headerProps.style.textAlign = fieldTextAlign;
-  }
-
-  if (columnMinWidth) {
-    headerProps.style.minWidth = columnMinWidth;
   }
 
   return (

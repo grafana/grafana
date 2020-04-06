@@ -32,9 +32,16 @@ export const plugin = new PanelPlugin<Options, CustomFieldConfig>(TablePanel)
       });
   })
   .setPanelOptions(builder => {
-    builder.addBooleanSwitch({
-      id: 'showHeader',
-      name: 'Show header',
-      description: "To display table's header or not to display",
-    });
+    builder
+      .addBooleanSwitch({
+        id: 'showHeader',
+        name: 'Show header',
+        description: "To display table's header or not to display",
+      })
+      .addBooleanSwitch({
+        id: 'resizable',
+        name: 'Resizable',
+        description: 'Enables / disables column resizing',
+        defaultValue: false,
+      });
   });

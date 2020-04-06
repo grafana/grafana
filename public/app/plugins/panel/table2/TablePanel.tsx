@@ -1,6 +1,5 @@
 // Libraries
 import React, { Component } from 'react';
-
 // Types
 import { Table } from '@grafana/ui';
 import { PanelProps } from '@grafana/data';
@@ -20,6 +19,14 @@ export class TablePanel extends Component<Props> {
       return <div>No Table Data...</div>;
     }
 
-    return <Table height={height} width={width} data={data.series[0]} noHeader={!options.showHeader} />;
+    return (
+      <Table
+        height={height}
+        width={width}
+        data={data.series[0]}
+        noHeader={!options.showHeader}
+        resizable={options.resizable}
+      />
+    );
   }
 }
