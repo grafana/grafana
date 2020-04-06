@@ -7,7 +7,6 @@ import (
 	context "context"
 	fmt "fmt"
 	proto "github.com/golang/protobuf/proto"
-	empty "github.com/golang/protobuf/ptypes/empty"
 	grpc "google.golang.org/grpc"
 	codes "google.golang.org/grpc/codes"
 	status "google.golang.org/grpc/status"
@@ -25,45 +24,50 @@ var _ = math.Inf
 // proto package needs to be updated.
 const _ = proto.ProtoPackageIsVersion3 // please upgrade the proto package
 
-type CheckHealth_Response_HealthStatus int32
+type CheckHealthResponse_HealthStatus int32
 
 const (
-	CheckHealth_Response_UNKNOWN CheckHealth_Response_HealthStatus = 0
-	CheckHealth_Response_OK      CheckHealth_Response_HealthStatus = 1
-	CheckHealth_Response_ERROR   CheckHealth_Response_HealthStatus = 2
+	CheckHealthResponse_UNKNOWN CheckHealthResponse_HealthStatus = 0
+	CheckHealthResponse_OK      CheckHealthResponse_HealthStatus = 1
+	CheckHealthResponse_ERROR   CheckHealthResponse_HealthStatus = 2
 )
 
-var CheckHealth_Response_HealthStatus_name = map[int32]string{
+var CheckHealthResponse_HealthStatus_name = map[int32]string{
 	0: "UNKNOWN",
 	1: "OK",
 	2: "ERROR",
 }
 
-var CheckHealth_Response_HealthStatus_value = map[string]int32{
+var CheckHealthResponse_HealthStatus_value = map[string]int32{
 	"UNKNOWN": 0,
 	"OK":      1,
 	"ERROR":   2,
 }
 
-func (x CheckHealth_Response_HealthStatus) String() string {
-	return proto.EnumName(CheckHealth_Response_HealthStatus_name, int32(x))
+func (x CheckHealthResponse_HealthStatus) String() string {
+	return proto.EnumName(CheckHealthResponse_HealthStatus_name, int32(x))
 }
 
-func (CheckHealth_Response_HealthStatus) EnumDescriptor() ([]byte, []int) {
-	return fileDescriptor_5ab9ba5b8d8b2ba5, []int{8, 1, 0}
+func (CheckHealthResponse_HealthStatus) EnumDescriptor() ([]byte, []int) {
+	return fileDescriptor_5ab9ba5b8d8b2ba5, []int{13, 0}
 }
 
 type DataSourceConfig struct {
-	Id                   int64    `protobuf:"varint,4,opt,name=id,proto3" json:"id,omitempty"`
-	Name                 string   `protobuf:"bytes,5,opt,name=name,proto3" json:"name,omitempty"`
-	Url                  string   `protobuf:"bytes,6,opt,name=url,proto3" json:"url,omitempty"`
-	User                 string   `protobuf:"bytes,7,opt,name=user,proto3" json:"user,omitempty"`
-	Database             string   `protobuf:"bytes,8,opt,name=database,proto3" json:"database,omitempty"`
-	BasicAuthEnabled     bool     `protobuf:"varint,9,opt,name=basicAuthEnabled,proto3" json:"basicAuthEnabled,omitempty"`
-	BasicAuthUser        string   `protobuf:"bytes,10,opt,name=basicAuthUser,proto3" json:"basicAuthUser,omitempty"`
-	XXX_NoUnkeyedLiteral struct{} `json:"-"`
-	XXX_unrecognized     []byte   `json:"-"`
-	XXX_sizecache        int32    `json:"-"`
+	Id               int64  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
+	Name             string `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
+	Url              string `protobuf:"bytes,3,opt,name=url,proto3" json:"url,omitempty"`
+	User             string `protobuf:"bytes,4,opt,name=user,proto3" json:"user,omitempty"`
+	Database         string `protobuf:"bytes,5,opt,name=database,proto3" json:"database,omitempty"`
+	BasicAuthEnabled bool   `protobuf:"varint,6,opt,name=basicAuthEnabled,proto3" json:"basicAuthEnabled,omitempty"`
+	BasicAuthUser    string `protobuf:"bytes,7,opt,name=basicAuthUser,proto3" json:"basicAuthUser,omitempty"`
+	// from [data_source.json_data] field in the database
+	JsonData []byte `protobuf:"bytes,8,opt,name=jsonData,proto3" json:"jsonData,omitempty"`
+	// from [data_source.secure_json_data] field in the database
+	DecryptedSecureJsonData map[string]string `protobuf:"bytes,9,rep,name=decryptedSecureJsonData,proto3" json:"decryptedSecureJsonData,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
+	LastUpdatedMS           int64             `protobuf:"varint,10,opt,name=lastUpdatedMS,proto3" json:"lastUpdatedMS,omitempty"`
+	XXX_NoUnkeyedLiteral    struct{}          `json:"-"`
+	XXX_unrecognized        []byte            `json:"-"`
+	XXX_sizecache           int32             `json:"-"`
 }
 
 func (m *DataSourceConfig) Reset()         { *m = DataSourceConfig{} }
@@ -140,14 +144,36 @@ func (m *DataSourceConfig) GetBasicAuthUser() string {
 	return ""
 }
 
+func (m *DataSourceConfig) GetJsonData() []byte {
+	if m != nil {
+		return m.JsonData
+	}
+	return nil
+}
+
+func (m *DataSourceConfig) GetDecryptedSecureJsonData() map[string]string {
+	if m != nil {
+		return m.DecryptedSecureJsonData
+	}
+	return nil
+}
+
+func (m *DataSourceConfig) GetLastUpdatedMS() int64 {
+	if m != nil {
+		return m.LastUpdatedMS
+	}
+	return 0
+}
+
 type PluginConfig struct {
-	OrgId                   int64             `protobuf:"varint,1,opt,name=orgId,proto3" json:"orgId,omitempty"`
-	PluginId                string            `protobuf:"bytes,2,opt,name=pluginId,proto3" json:"pluginId,omitempty"`
-	PluginType              string            `protobuf:"bytes,3,opt,name=pluginType,proto3" json:"pluginType,omitempty"`
-	JsonData                []byte            `protobuf:"bytes,4,opt,name=jsonData,proto3" json:"jsonData,omitempty"`
-	DecryptedSecureJsonData map[string]string `protobuf:"bytes,5,rep,name=decryptedSecureJsonData,proto3" json:"decryptedSecureJsonData,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
-	UpdatedMS               int64             `protobuf:"varint,6,opt,name=updatedMS,proto3" json:"updatedMS,omitempty"`
-	DatasourceConfig        *DataSourceConfig `protobuf:"bytes,7,opt,name=datasourceConfig,proto3" json:"datasourceConfig,omitempty"`
+	OrgId    int64  `protobuf:"varint,1,opt,name=orgId,proto3" json:"orgId,omitempty"`
+	PluginId string `protobuf:"bytes,2,opt,name=pluginId,proto3" json:"pluginId,omitempty"`
+	// from [plugin_setting.json_data] field in the database
+	JsonData []byte `protobuf:"bytes,3,opt,name=jsonData,proto3" json:"jsonData,omitempty"`
+	// from [plugin_setting.secure_json_data] field in the database
+	DecryptedSecureJsonData map[string]string `protobuf:"bytes,4,rep,name=decryptedSecureJsonData,proto3" json:"decryptedSecureJsonData,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
+	LastUpdatedMS           int64             `protobuf:"varint,5,opt,name=lastUpdatedMS,proto3" json:"lastUpdatedMS,omitempty"`
+	DatasourceConfig        *DataSourceConfig `protobuf:"bytes,6,opt,name=datasourceConfig,proto3" json:"datasourceConfig,omitempty"`
 	XXX_NoUnkeyedLiteral    struct{}          `json:"-"`
 	XXX_unrecognized        []byte            `json:"-"`
 	XXX_sizecache           int32             `json:"-"`
@@ -192,13 +218,6 @@ func (m *PluginConfig) GetPluginId() string {
 	return ""
 }
 
-func (m *PluginConfig) GetPluginType() string {
-	if m != nil {
-		return m.PluginType
-	}
-	return ""
-}
-
 func (m *PluginConfig) GetJsonData() []byte {
 	if m != nil {
 		return m.JsonData
@@ -213,9 +232,9 @@ func (m *PluginConfig) GetDecryptedSecureJsonData() map[string]string {
 	return nil
 }
 
-func (m *PluginConfig) GetUpdatedMS() int64 {
+func (m *PluginConfig) GetLastUpdatedMS() int64 {
 	if m != nil {
-		return m.UpdatedMS
+		return m.LastUpdatedMS
 	}
 	return 0
 }
@@ -223,6 +242,250 @@ func (m *PluginConfig) GetUpdatedMS() int64 {
 func (m *PluginConfig) GetDatasourceConfig() *DataSourceConfig {
 	if m != nil {
 		return m.DatasourceConfig
+	}
+	return nil
+}
+
+type User struct {
+	Login                string   `protobuf:"bytes,1,opt,name=login,proto3" json:"login,omitempty"`
+	Name                 string   `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
+	Email                string   `protobuf:"bytes,3,opt,name=email,proto3" json:"email,omitempty"`
+	Role                 string   `protobuf:"bytes,4,opt,name=role,proto3" json:"role,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *User) Reset()         { *m = User{} }
+func (m *User) String() string { return proto.CompactTextString(m) }
+func (*User) ProtoMessage()    {}
+func (*User) Descriptor() ([]byte, []int) {
+	return fileDescriptor_5ab9ba5b8d8b2ba5, []int{2}
+}
+
+func (m *User) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_User.Unmarshal(m, b)
+}
+func (m *User) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_User.Marshal(b, m, deterministic)
+}
+func (m *User) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_User.Merge(m, src)
+}
+func (m *User) XXX_Size() int {
+	return xxx_messageInfo_User.Size(m)
+}
+func (m *User) XXX_DiscardUnknown() {
+	xxx_messageInfo_User.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_User proto.InternalMessageInfo
+
+func (m *User) GetLogin() string {
+	if m != nil {
+		return m.Login
+	}
+	return ""
+}
+
+func (m *User) GetName() string {
+	if m != nil {
+		return m.Name
+	}
+	return ""
+}
+
+func (m *User) GetEmail() string {
+	if m != nil {
+		return m.Email
+	}
+	return ""
+}
+
+func (m *User) GetRole() string {
+	if m != nil {
+		return m.Role
+	}
+	return ""
+}
+
+type StringList struct {
+	Values               []string `protobuf:"bytes,1,rep,name=values,proto3" json:"values,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *StringList) Reset()         { *m = StringList{} }
+func (m *StringList) String() string { return proto.CompactTextString(m) }
+func (*StringList) ProtoMessage()    {}
+func (*StringList) Descriptor() ([]byte, []int) {
+	return fileDescriptor_5ab9ba5b8d8b2ba5, []int{3}
+}
+
+func (m *StringList) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_StringList.Unmarshal(m, b)
+}
+func (m *StringList) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_StringList.Marshal(b, m, deterministic)
+}
+func (m *StringList) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_StringList.Merge(m, src)
+}
+func (m *StringList) XXX_Size() int {
+	return xxx_messageInfo_StringList.Size(m)
+}
+func (m *StringList) XXX_DiscardUnknown() {
+	xxx_messageInfo_StringList.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_StringList proto.InternalMessageInfo
+
+func (m *StringList) GetValues() []string {
+	if m != nil {
+		return m.Values
+	}
+	return nil
+}
+
+type CallResourceRequest struct {
+	Config               *PluginConfig          `protobuf:"bytes,1,opt,name=config,proto3" json:"config,omitempty"`
+	User                 *User                  `protobuf:"bytes,2,opt,name=user,proto3" json:"user,omitempty"`
+	Path                 string                 `protobuf:"bytes,3,opt,name=path,proto3" json:"path,omitempty"`
+	Method               string                 `protobuf:"bytes,4,opt,name=method,proto3" json:"method,omitempty"`
+	Url                  string                 `protobuf:"bytes,5,opt,name=url,proto3" json:"url,omitempty"`
+	Headers              map[string]*StringList `protobuf:"bytes,6,rep,name=headers,proto3" json:"headers,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
+	Body                 []byte                 `protobuf:"bytes,7,opt,name=body,proto3" json:"body,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}               `json:"-"`
+	XXX_unrecognized     []byte                 `json:"-"`
+	XXX_sizecache        int32                  `json:"-"`
+}
+
+func (m *CallResourceRequest) Reset()         { *m = CallResourceRequest{} }
+func (m *CallResourceRequest) String() string { return proto.CompactTextString(m) }
+func (*CallResourceRequest) ProtoMessage()    {}
+func (*CallResourceRequest) Descriptor() ([]byte, []int) {
+	return fileDescriptor_5ab9ba5b8d8b2ba5, []int{4}
+}
+
+func (m *CallResourceRequest) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_CallResourceRequest.Unmarshal(m, b)
+}
+func (m *CallResourceRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_CallResourceRequest.Marshal(b, m, deterministic)
+}
+func (m *CallResourceRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_CallResourceRequest.Merge(m, src)
+}
+func (m *CallResourceRequest) XXX_Size() int {
+	return xxx_messageInfo_CallResourceRequest.Size(m)
+}
+func (m *CallResourceRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_CallResourceRequest.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_CallResourceRequest proto.InternalMessageInfo
+
+func (m *CallResourceRequest) GetConfig() *PluginConfig {
+	if m != nil {
+		return m.Config
+	}
+	return nil
+}
+
+func (m *CallResourceRequest) GetUser() *User {
+	if m != nil {
+		return m.User
+	}
+	return nil
+}
+
+func (m *CallResourceRequest) GetPath() string {
+	if m != nil {
+		return m.Path
+	}
+	return ""
+}
+
+func (m *CallResourceRequest) GetMethod() string {
+	if m != nil {
+		return m.Method
+	}
+	return ""
+}
+
+func (m *CallResourceRequest) GetUrl() string {
+	if m != nil {
+		return m.Url
+	}
+	return ""
+}
+
+func (m *CallResourceRequest) GetHeaders() map[string]*StringList {
+	if m != nil {
+		return m.Headers
+	}
+	return nil
+}
+
+func (m *CallResourceRequest) GetBody() []byte {
+	if m != nil {
+		return m.Body
+	}
+	return nil
+}
+
+type CallResourceResponse struct {
+	Code                 int32                  `protobuf:"varint,1,opt,name=code,proto3" json:"code,omitempty"`
+	Headers              map[string]*StringList `protobuf:"bytes,2,rep,name=headers,proto3" json:"headers,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
+	Body                 []byte                 `protobuf:"bytes,3,opt,name=body,proto3" json:"body,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}               `json:"-"`
+	XXX_unrecognized     []byte                 `json:"-"`
+	XXX_sizecache        int32                  `json:"-"`
+}
+
+func (m *CallResourceResponse) Reset()         { *m = CallResourceResponse{} }
+func (m *CallResourceResponse) String() string { return proto.CompactTextString(m) }
+func (*CallResourceResponse) ProtoMessage()    {}
+func (*CallResourceResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_5ab9ba5b8d8b2ba5, []int{5}
+}
+
+func (m *CallResourceResponse) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_CallResourceResponse.Unmarshal(m, b)
+}
+func (m *CallResourceResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_CallResourceResponse.Marshal(b, m, deterministic)
+}
+func (m *CallResourceResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_CallResourceResponse.Merge(m, src)
+}
+func (m *CallResourceResponse) XXX_Size() int {
+	return xxx_messageInfo_CallResourceResponse.Size(m)
+}
+func (m *CallResourceResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_CallResourceResponse.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_CallResourceResponse proto.InternalMessageInfo
+
+func (m *CallResourceResponse) GetCode() int32 {
+	if m != nil {
+		return m.Code
+	}
+	return 0
+}
+
+func (m *CallResourceResponse) GetHeaders() map[string]*StringList {
+	if m != nil {
+		return m.Headers
+	}
+	return nil
+}
+
+func (m *CallResourceResponse) GetBody() []byte {
+	if m != nil {
+		return m.Body
 	}
 	return nil
 }
@@ -239,7 +502,7 @@ func (m *TimeRange) Reset()         { *m = TimeRange{} }
 func (m *TimeRange) String() string { return proto.CompactTextString(m) }
 func (*TimeRange) ProtoMessage()    {}
 func (*TimeRange) Descriptor() ([]byte, []int) {
-	return fileDescriptor_5ab9ba5b8d8b2ba5, []int{2}
+	return fileDescriptor_5ab9ba5b8d8b2ba5, []int{6}
 }
 
 func (m *TimeRange) XXX_Unmarshal(b []byte) error {
@@ -289,7 +552,7 @@ func (m *DataQuery) Reset()         { *m = DataQuery{} }
 func (m *DataQuery) String() string { return proto.CompactTextString(m) }
 func (*DataQuery) ProtoMessage()    {}
 func (*DataQuery) Descriptor() ([]byte, []int) {
-	return fileDescriptor_5ab9ba5b8d8b2ba5, []int{3}
+	return fileDescriptor_5ab9ba5b8d8b2ba5, []int{7}
 }
 
 func (m *DataQuery) XXX_Unmarshal(b []byte) error {
@@ -345,65 +608,75 @@ func (m *DataQuery) GetJson() []byte {
 	return nil
 }
 
-type DataQueryRequest struct {
+// QueryDataRequest
+type QueryDataRequest struct {
 	// Plugin Configuration
 	Config *PluginConfig `protobuf:"bytes,1,opt,name=config,proto3" json:"config,omitempty"`
+	//Info about the user who calls the plugin.
+	User *User `protobuf:"bytes,2,opt,name=user,proto3" json:"user,omitempty"`
 	// Environment info
-	Headers map[string]string `protobuf:"bytes,2,rep,name=headers,proto3" json:"headers,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
-	// List of queries
-	Queries              []*DataQuery `protobuf:"bytes,3,rep,name=queries,proto3" json:"queries,omitempty"`
+	Headers map[string]string `protobuf:"bytes,3,rep,name=headers,proto3" json:"headers,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
+	// List of data queries
+	Queries              []*DataQuery `protobuf:"bytes,4,rep,name=queries,proto3" json:"queries,omitempty"`
 	XXX_NoUnkeyedLiteral struct{}     `json:"-"`
 	XXX_unrecognized     []byte       `json:"-"`
 	XXX_sizecache        int32        `json:"-"`
 }
 
-func (m *DataQueryRequest) Reset()         { *m = DataQueryRequest{} }
-func (m *DataQueryRequest) String() string { return proto.CompactTextString(m) }
-func (*DataQueryRequest) ProtoMessage()    {}
-func (*DataQueryRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_5ab9ba5b8d8b2ba5, []int{4}
+func (m *QueryDataRequest) Reset()         { *m = QueryDataRequest{} }
+func (m *QueryDataRequest) String() string { return proto.CompactTextString(m) }
+func (*QueryDataRequest) ProtoMessage()    {}
+func (*QueryDataRequest) Descriptor() ([]byte, []int) {
+	return fileDescriptor_5ab9ba5b8d8b2ba5, []int{8}
 }
 
-func (m *DataQueryRequest) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_DataQueryRequest.Unmarshal(m, b)
+func (m *QueryDataRequest) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_QueryDataRequest.Unmarshal(m, b)
 }
-func (m *DataQueryRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_DataQueryRequest.Marshal(b, m, deterministic)
+func (m *QueryDataRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_QueryDataRequest.Marshal(b, m, deterministic)
 }
-func (m *DataQueryRequest) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_DataQueryRequest.Merge(m, src)
+func (m *QueryDataRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_QueryDataRequest.Merge(m, src)
 }
-func (m *DataQueryRequest) XXX_Size() int {
-	return xxx_messageInfo_DataQueryRequest.Size(m)
+func (m *QueryDataRequest) XXX_Size() int {
+	return xxx_messageInfo_QueryDataRequest.Size(m)
 }
-func (m *DataQueryRequest) XXX_DiscardUnknown() {
-	xxx_messageInfo_DataQueryRequest.DiscardUnknown(m)
+func (m *QueryDataRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_QueryDataRequest.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_DataQueryRequest proto.InternalMessageInfo
+var xxx_messageInfo_QueryDataRequest proto.InternalMessageInfo
 
-func (m *DataQueryRequest) GetConfig() *PluginConfig {
+func (m *QueryDataRequest) GetConfig() *PluginConfig {
 	if m != nil {
 		return m.Config
 	}
 	return nil
 }
 
-func (m *DataQueryRequest) GetHeaders() map[string]string {
+func (m *QueryDataRequest) GetUser() *User {
+	if m != nil {
+		return m.User
+	}
+	return nil
+}
+
+func (m *QueryDataRequest) GetHeaders() map[string]string {
 	if m != nil {
 		return m.Headers
 	}
 	return nil
 }
 
-func (m *DataQueryRequest) GetQueries() []*DataQuery {
+func (m *QueryDataRequest) GetQueries() []*DataQuery {
 	if m != nil {
 		return m.Queries
 	}
 	return nil
 }
 
-type DataQueryResponse struct {
+type QueryDataResponse struct {
 	// Arrow encoded DataFrames
 	// Each frame encodes its own: Errors, meta, and refId
 	Frames [][]byte `protobuf:"bytes,1,rep,name=frames,proto3" json:"frames,omitempty"`
@@ -414,931 +687,347 @@ type DataQueryResponse struct {
 	XXX_sizecache        int32             `json:"-"`
 }
 
-func (m *DataQueryResponse) Reset()         { *m = DataQueryResponse{} }
-func (m *DataQueryResponse) String() string { return proto.CompactTextString(m) }
-func (*DataQueryResponse) ProtoMessage()    {}
-func (*DataQueryResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_5ab9ba5b8d8b2ba5, []int{5}
+func (m *QueryDataResponse) Reset()         { *m = QueryDataResponse{} }
+func (m *QueryDataResponse) String() string { return proto.CompactTextString(m) }
+func (*QueryDataResponse) ProtoMessage()    {}
+func (*QueryDataResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_5ab9ba5b8d8b2ba5, []int{9}
 }
 
-func (m *DataQueryResponse) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_DataQueryResponse.Unmarshal(m, b)
+func (m *QueryDataResponse) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_QueryDataResponse.Unmarshal(m, b)
 }
-func (m *DataQueryResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_DataQueryResponse.Marshal(b, m, deterministic)
+func (m *QueryDataResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_QueryDataResponse.Marshal(b, m, deterministic)
 }
-func (m *DataQueryResponse) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_DataQueryResponse.Merge(m, src)
+func (m *QueryDataResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_QueryDataResponse.Merge(m, src)
 }
-func (m *DataQueryResponse) XXX_Size() int {
-	return xxx_messageInfo_DataQueryResponse.Size(m)
+func (m *QueryDataResponse) XXX_Size() int {
+	return xxx_messageInfo_QueryDataResponse.Size(m)
 }
-func (m *DataQueryResponse) XXX_DiscardUnknown() {
-	xxx_messageInfo_DataQueryResponse.DiscardUnknown(m)
+func (m *QueryDataResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_QueryDataResponse.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_DataQueryResponse proto.InternalMessageInfo
+var xxx_messageInfo_QueryDataResponse proto.InternalMessageInfo
 
-func (m *DataQueryResponse) GetFrames() [][]byte {
+func (m *QueryDataResponse) GetFrames() [][]byte {
 	if m != nil {
 		return m.Frames
 	}
 	return nil
 }
 
-func (m *DataQueryResponse) GetMetadata() map[string]string {
+func (m *QueryDataResponse) GetMetadata() map[string]string {
 	if m != nil {
 		return m.Metadata
 	}
 	return nil
 }
 
-type CallResource struct {
+type CollectMetricsRequest struct {
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
 	XXX_sizecache        int32    `json:"-"`
 }
 
-func (m *CallResource) Reset()         { *m = CallResource{} }
-func (m *CallResource) String() string { return proto.CompactTextString(m) }
-func (*CallResource) ProtoMessage()    {}
-func (*CallResource) Descriptor() ([]byte, []int) {
-	return fileDescriptor_5ab9ba5b8d8b2ba5, []int{6}
+func (m *CollectMetricsRequest) Reset()         { *m = CollectMetricsRequest{} }
+func (m *CollectMetricsRequest) String() string { return proto.CompactTextString(m) }
+func (*CollectMetricsRequest) ProtoMessage()    {}
+func (*CollectMetricsRequest) Descriptor() ([]byte, []int) {
+	return fileDescriptor_5ab9ba5b8d8b2ba5, []int{10}
 }
 
-func (m *CallResource) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_CallResource.Unmarshal(m, b)
+func (m *CollectMetricsRequest) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_CollectMetricsRequest.Unmarshal(m, b)
 }
-func (m *CallResource) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_CallResource.Marshal(b, m, deterministic)
+func (m *CollectMetricsRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_CollectMetricsRequest.Marshal(b, m, deterministic)
 }
-func (m *CallResource) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_CallResource.Merge(m, src)
+func (m *CollectMetricsRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_CollectMetricsRequest.Merge(m, src)
 }
-func (m *CallResource) XXX_Size() int {
-	return xxx_messageInfo_CallResource.Size(m)
+func (m *CollectMetricsRequest) XXX_Size() int {
+	return xxx_messageInfo_CollectMetricsRequest.Size(m)
 }
-func (m *CallResource) XXX_DiscardUnknown() {
-	xxx_messageInfo_CallResource.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_CallResource proto.InternalMessageInfo
-
-type CallResource_StringList struct {
-	Values               []string `protobuf:"bytes,1,rep,name=values,proto3" json:"values,omitempty"`
-	XXX_NoUnkeyedLiteral struct{} `json:"-"`
-	XXX_unrecognized     []byte   `json:"-"`
-	XXX_sizecache        int32    `json:"-"`
+func (m *CollectMetricsRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_CollectMetricsRequest.DiscardUnknown(m)
 }
 
-func (m *CallResource_StringList) Reset()         { *m = CallResource_StringList{} }
-func (m *CallResource_StringList) String() string { return proto.CompactTextString(m) }
-func (*CallResource_StringList) ProtoMessage()    {}
-func (*CallResource_StringList) Descriptor() ([]byte, []int) {
-	return fileDescriptor_5ab9ba5b8d8b2ba5, []int{6, 0}
+var xxx_messageInfo_CollectMetricsRequest proto.InternalMessageInfo
+
+type CollectMetricsResponse struct {
+	Metrics              *CollectMetricsResponse_Payload `protobuf:"bytes,1,opt,name=metrics,proto3" json:"metrics,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}                        `json:"-"`
+	XXX_unrecognized     []byte                          `json:"-"`
+	XXX_sizecache        int32                           `json:"-"`
 }
 
-func (m *CallResource_StringList) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_CallResource_StringList.Unmarshal(m, b)
-}
-func (m *CallResource_StringList) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_CallResource_StringList.Marshal(b, m, deterministic)
-}
-func (m *CallResource_StringList) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_CallResource_StringList.Merge(m, src)
-}
-func (m *CallResource_StringList) XXX_Size() int {
-	return xxx_messageInfo_CallResource_StringList.Size(m)
-}
-func (m *CallResource_StringList) XXX_DiscardUnknown() {
-	xxx_messageInfo_CallResource_StringList.DiscardUnknown(m)
+func (m *CollectMetricsResponse) Reset()         { *m = CollectMetricsResponse{} }
+func (m *CollectMetricsResponse) String() string { return proto.CompactTextString(m) }
+func (*CollectMetricsResponse) ProtoMessage()    {}
+func (*CollectMetricsResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_5ab9ba5b8d8b2ba5, []int{11}
 }
 
-var xxx_messageInfo_CallResource_StringList proto.InternalMessageInfo
-
-func (m *CallResource_StringList) GetValues() []string {
-	if m != nil {
-		return m.Values
-	}
-	return nil
+func (m *CollectMetricsResponse) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_CollectMetricsResponse.Unmarshal(m, b)
+}
+func (m *CollectMetricsResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_CollectMetricsResponse.Marshal(b, m, deterministic)
+}
+func (m *CollectMetricsResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_CollectMetricsResponse.Merge(m, src)
+}
+func (m *CollectMetricsResponse) XXX_Size() int {
+	return xxx_messageInfo_CollectMetricsResponse.Size(m)
+}
+func (m *CollectMetricsResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_CollectMetricsResponse.DiscardUnknown(m)
 }
 
-type CallResource_Request struct {
-	Config               *PluginConfig                       `protobuf:"bytes,1,opt,name=config,proto3" json:"config,omitempty"`
-	Path                 string                              `protobuf:"bytes,2,opt,name=path,proto3" json:"path,omitempty"`
-	Method               string                              `protobuf:"bytes,3,opt,name=method,proto3" json:"method,omitempty"`
-	Url                  string                              `protobuf:"bytes,4,opt,name=url,proto3" json:"url,omitempty"`
-	Headers              map[string]*CallResource_StringList `protobuf:"bytes,5,rep,name=headers,proto3" json:"headers,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
-	Body                 []byte                              `protobuf:"bytes,6,opt,name=body,proto3" json:"body,omitempty"`
-	XXX_NoUnkeyedLiteral struct{}                            `json:"-"`
-	XXX_unrecognized     []byte                              `json:"-"`
-	XXX_sizecache        int32                               `json:"-"`
-}
+var xxx_messageInfo_CollectMetricsResponse proto.InternalMessageInfo
 
-func (m *CallResource_Request) Reset()         { *m = CallResource_Request{} }
-func (m *CallResource_Request) String() string { return proto.CompactTextString(m) }
-func (*CallResource_Request) ProtoMessage()    {}
-func (*CallResource_Request) Descriptor() ([]byte, []int) {
-	return fileDescriptor_5ab9ba5b8d8b2ba5, []int{6, 1}
-}
-
-func (m *CallResource_Request) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_CallResource_Request.Unmarshal(m, b)
-}
-func (m *CallResource_Request) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_CallResource_Request.Marshal(b, m, deterministic)
-}
-func (m *CallResource_Request) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_CallResource_Request.Merge(m, src)
-}
-func (m *CallResource_Request) XXX_Size() int {
-	return xxx_messageInfo_CallResource_Request.Size(m)
-}
-func (m *CallResource_Request) XXX_DiscardUnknown() {
-	xxx_messageInfo_CallResource_Request.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_CallResource_Request proto.InternalMessageInfo
-
-func (m *CallResource_Request) GetConfig() *PluginConfig {
-	if m != nil {
-		return m.Config
-	}
-	return nil
-}
-
-func (m *CallResource_Request) GetPath() string {
-	if m != nil {
-		return m.Path
-	}
-	return ""
-}
-
-func (m *CallResource_Request) GetMethod() string {
-	if m != nil {
-		return m.Method
-	}
-	return ""
-}
-
-func (m *CallResource_Request) GetUrl() string {
-	if m != nil {
-		return m.Url
-	}
-	return ""
-}
-
-func (m *CallResource_Request) GetHeaders() map[string]*CallResource_StringList {
-	if m != nil {
-		return m.Headers
-	}
-	return nil
-}
-
-func (m *CallResource_Request) GetBody() []byte {
-	if m != nil {
-		return m.Body
-	}
-	return nil
-}
-
-type CallResource_Response struct {
-	Code                 int32                               `protobuf:"varint,1,opt,name=code,proto3" json:"code,omitempty"`
-	Headers              map[string]*CallResource_StringList `protobuf:"bytes,2,rep,name=headers,proto3" json:"headers,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
-	Body                 []byte                              `protobuf:"bytes,3,opt,name=body,proto3" json:"body,omitempty"`
-	XXX_NoUnkeyedLiteral struct{}                            `json:"-"`
-	XXX_unrecognized     []byte                              `json:"-"`
-	XXX_sizecache        int32                               `json:"-"`
-}
-
-func (m *CallResource_Response) Reset()         { *m = CallResource_Response{} }
-func (m *CallResource_Response) String() string { return proto.CompactTextString(m) }
-func (*CallResource_Response) ProtoMessage()    {}
-func (*CallResource_Response) Descriptor() ([]byte, []int) {
-	return fileDescriptor_5ab9ba5b8d8b2ba5, []int{6, 2}
-}
-
-func (m *CallResource_Response) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_CallResource_Response.Unmarshal(m, b)
-}
-func (m *CallResource_Response) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_CallResource_Response.Marshal(b, m, deterministic)
-}
-func (m *CallResource_Response) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_CallResource_Response.Merge(m, src)
-}
-func (m *CallResource_Response) XXX_Size() int {
-	return xxx_messageInfo_CallResource_Response.Size(m)
-}
-func (m *CallResource_Response) XXX_DiscardUnknown() {
-	xxx_messageInfo_CallResource_Response.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_CallResource_Response proto.InternalMessageInfo
-
-func (m *CallResource_Response) GetCode() int32 {
-	if m != nil {
-		return m.Code
-	}
-	return 0
-}
-
-func (m *CallResource_Response) GetHeaders() map[string]*CallResource_StringList {
-	if m != nil {
-		return m.Headers
-	}
-	return nil
-}
-
-func (m *CallResource_Response) GetBody() []byte {
-	if m != nil {
-		return m.Body
-	}
-	return nil
-}
-
-type CollectMetrics struct {
-	XXX_NoUnkeyedLiteral struct{} `json:"-"`
-	XXX_unrecognized     []byte   `json:"-"`
-	XXX_sizecache        int32    `json:"-"`
-}
-
-func (m *CollectMetrics) Reset()         { *m = CollectMetrics{} }
-func (m *CollectMetrics) String() string { return proto.CompactTextString(m) }
-func (*CollectMetrics) ProtoMessage()    {}
-func (*CollectMetrics) Descriptor() ([]byte, []int) {
-	return fileDescriptor_5ab9ba5b8d8b2ba5, []int{7}
-}
-
-func (m *CollectMetrics) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_CollectMetrics.Unmarshal(m, b)
-}
-func (m *CollectMetrics) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_CollectMetrics.Marshal(b, m, deterministic)
-}
-func (m *CollectMetrics) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_CollectMetrics.Merge(m, src)
-}
-func (m *CollectMetrics) XXX_Size() int {
-	return xxx_messageInfo_CollectMetrics.Size(m)
-}
-func (m *CollectMetrics) XXX_DiscardUnknown() {
-	xxx_messageInfo_CollectMetrics.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_CollectMetrics proto.InternalMessageInfo
-
-type CollectMetrics_Request struct {
-	XXX_NoUnkeyedLiteral struct{} `json:"-"`
-	XXX_unrecognized     []byte   `json:"-"`
-	XXX_sizecache        int32    `json:"-"`
-}
-
-func (m *CollectMetrics_Request) Reset()         { *m = CollectMetrics_Request{} }
-func (m *CollectMetrics_Request) String() string { return proto.CompactTextString(m) }
-func (*CollectMetrics_Request) ProtoMessage()    {}
-func (*CollectMetrics_Request) Descriptor() ([]byte, []int) {
-	return fileDescriptor_5ab9ba5b8d8b2ba5, []int{7, 0}
-}
-
-func (m *CollectMetrics_Request) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_CollectMetrics_Request.Unmarshal(m, b)
-}
-func (m *CollectMetrics_Request) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_CollectMetrics_Request.Marshal(b, m, deterministic)
-}
-func (m *CollectMetrics_Request) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_CollectMetrics_Request.Merge(m, src)
-}
-func (m *CollectMetrics_Request) XXX_Size() int {
-	return xxx_messageInfo_CollectMetrics_Request.Size(m)
-}
-func (m *CollectMetrics_Request) XXX_DiscardUnknown() {
-	xxx_messageInfo_CollectMetrics_Request.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_CollectMetrics_Request proto.InternalMessageInfo
-
-type CollectMetrics_Payload struct {
-	Prometheus           []byte   `protobuf:"bytes,1,opt,name=prometheus,proto3" json:"prometheus,omitempty"`
-	XXX_NoUnkeyedLiteral struct{} `json:"-"`
-	XXX_unrecognized     []byte   `json:"-"`
-	XXX_sizecache        int32    `json:"-"`
-}
-
-func (m *CollectMetrics_Payload) Reset()         { *m = CollectMetrics_Payload{} }
-func (m *CollectMetrics_Payload) String() string { return proto.CompactTextString(m) }
-func (*CollectMetrics_Payload) ProtoMessage()    {}
-func (*CollectMetrics_Payload) Descriptor() ([]byte, []int) {
-	return fileDescriptor_5ab9ba5b8d8b2ba5, []int{7, 1}
-}
-
-func (m *CollectMetrics_Payload) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_CollectMetrics_Payload.Unmarshal(m, b)
-}
-func (m *CollectMetrics_Payload) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_CollectMetrics_Payload.Marshal(b, m, deterministic)
-}
-func (m *CollectMetrics_Payload) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_CollectMetrics_Payload.Merge(m, src)
-}
-func (m *CollectMetrics_Payload) XXX_Size() int {
-	return xxx_messageInfo_CollectMetrics_Payload.Size(m)
-}
-func (m *CollectMetrics_Payload) XXX_DiscardUnknown() {
-	xxx_messageInfo_CollectMetrics_Payload.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_CollectMetrics_Payload proto.InternalMessageInfo
-
-func (m *CollectMetrics_Payload) GetPrometheus() []byte {
-	if m != nil {
-		return m.Prometheus
-	}
-	return nil
-}
-
-type CollectMetrics_Response struct {
-	Metrics              *CollectMetrics_Payload `protobuf:"bytes,1,opt,name=metrics,proto3" json:"metrics,omitempty"`
-	XXX_NoUnkeyedLiteral struct{}                `json:"-"`
-	XXX_unrecognized     []byte                  `json:"-"`
-	XXX_sizecache        int32                   `json:"-"`
-}
-
-func (m *CollectMetrics_Response) Reset()         { *m = CollectMetrics_Response{} }
-func (m *CollectMetrics_Response) String() string { return proto.CompactTextString(m) }
-func (*CollectMetrics_Response) ProtoMessage()    {}
-func (*CollectMetrics_Response) Descriptor() ([]byte, []int) {
-	return fileDescriptor_5ab9ba5b8d8b2ba5, []int{7, 2}
-}
-
-func (m *CollectMetrics_Response) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_CollectMetrics_Response.Unmarshal(m, b)
-}
-func (m *CollectMetrics_Response) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_CollectMetrics_Response.Marshal(b, m, deterministic)
-}
-func (m *CollectMetrics_Response) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_CollectMetrics_Response.Merge(m, src)
-}
-func (m *CollectMetrics_Response) XXX_Size() int {
-	return xxx_messageInfo_CollectMetrics_Response.Size(m)
-}
-func (m *CollectMetrics_Response) XXX_DiscardUnknown() {
-	xxx_messageInfo_CollectMetrics_Response.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_CollectMetrics_Response proto.InternalMessageInfo
-
-func (m *CollectMetrics_Response) GetMetrics() *CollectMetrics_Payload {
+func (m *CollectMetricsResponse) GetMetrics() *CollectMetricsResponse_Payload {
 	if m != nil {
 		return m.Metrics
 	}
 	return nil
 }
 
-type CheckHealth struct {
+type CollectMetricsResponse_Payload struct {
+	Prometheus           []byte   `protobuf:"bytes,1,opt,name=prometheus,proto3" json:"prometheus,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
 	XXX_sizecache        int32    `json:"-"`
 }
 
-func (m *CheckHealth) Reset()         { *m = CheckHealth{} }
-func (m *CheckHealth) String() string { return proto.CompactTextString(m) }
-func (*CheckHealth) ProtoMessage()    {}
-func (*CheckHealth) Descriptor() ([]byte, []int) {
-	return fileDescriptor_5ab9ba5b8d8b2ba5, []int{8}
+func (m *CollectMetricsResponse_Payload) Reset()         { *m = CollectMetricsResponse_Payload{} }
+func (m *CollectMetricsResponse_Payload) String() string { return proto.CompactTextString(m) }
+func (*CollectMetricsResponse_Payload) ProtoMessage()    {}
+func (*CollectMetricsResponse_Payload) Descriptor() ([]byte, []int) {
+	return fileDescriptor_5ab9ba5b8d8b2ba5, []int{11, 0}
 }
 
-func (m *CheckHealth) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_CheckHealth.Unmarshal(m, b)
+func (m *CollectMetricsResponse_Payload) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_CollectMetricsResponse_Payload.Unmarshal(m, b)
 }
-func (m *CheckHealth) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_CheckHealth.Marshal(b, m, deterministic)
+func (m *CollectMetricsResponse_Payload) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_CollectMetricsResponse_Payload.Marshal(b, m, deterministic)
 }
-func (m *CheckHealth) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_CheckHealth.Merge(m, src)
+func (m *CollectMetricsResponse_Payload) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_CollectMetricsResponse_Payload.Merge(m, src)
 }
-func (m *CheckHealth) XXX_Size() int {
-	return xxx_messageInfo_CheckHealth.Size(m)
+func (m *CollectMetricsResponse_Payload) XXX_Size() int {
+	return xxx_messageInfo_CollectMetricsResponse_Payload.Size(m)
 }
-func (m *CheckHealth) XXX_DiscardUnknown() {
-	xxx_messageInfo_CheckHealth.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_CheckHealth proto.InternalMessageInfo
-
-type CheckHealth_Request struct {
-	XXX_NoUnkeyedLiteral struct{} `json:"-"`
-	XXX_unrecognized     []byte   `json:"-"`
-	XXX_sizecache        int32    `json:"-"`
+func (m *CollectMetricsResponse_Payload) XXX_DiscardUnknown() {
+	xxx_messageInfo_CollectMetricsResponse_Payload.DiscardUnknown(m)
 }
 
-func (m *CheckHealth_Request) Reset()         { *m = CheckHealth_Request{} }
-func (m *CheckHealth_Request) String() string { return proto.CompactTextString(m) }
-func (*CheckHealth_Request) ProtoMessage()    {}
-func (*CheckHealth_Request) Descriptor() ([]byte, []int) {
-	return fileDescriptor_5ab9ba5b8d8b2ba5, []int{8, 0}
-}
+var xxx_messageInfo_CollectMetricsResponse_Payload proto.InternalMessageInfo
 
-func (m *CheckHealth_Request) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_CheckHealth_Request.Unmarshal(m, b)
-}
-func (m *CheckHealth_Request) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_CheckHealth_Request.Marshal(b, m, deterministic)
-}
-func (m *CheckHealth_Request) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_CheckHealth_Request.Merge(m, src)
-}
-func (m *CheckHealth_Request) XXX_Size() int {
-	return xxx_messageInfo_CheckHealth_Request.Size(m)
-}
-func (m *CheckHealth_Request) XXX_DiscardUnknown() {
-	xxx_messageInfo_CheckHealth_Request.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_CheckHealth_Request proto.InternalMessageInfo
-
-type CheckHealth_Response struct {
-	Status               CheckHealth_Response_HealthStatus `protobuf:"varint,1,opt,name=status,proto3,enum=pluginv2.CheckHealth_Response_HealthStatus" json:"status,omitempty"`
-	Info                 string                            `protobuf:"bytes,2,opt,name=info,proto3" json:"info,omitempty"`
-	XXX_NoUnkeyedLiteral struct{}                          `json:"-"`
-	XXX_unrecognized     []byte                            `json:"-"`
-	XXX_sizecache        int32                             `json:"-"`
-}
-
-func (m *CheckHealth_Response) Reset()         { *m = CheckHealth_Response{} }
-func (m *CheckHealth_Response) String() string { return proto.CompactTextString(m) }
-func (*CheckHealth_Response) ProtoMessage()    {}
-func (*CheckHealth_Response) Descriptor() ([]byte, []int) {
-	return fileDescriptor_5ab9ba5b8d8b2ba5, []int{8, 1}
-}
-
-func (m *CheckHealth_Response) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_CheckHealth_Response.Unmarshal(m, b)
-}
-func (m *CheckHealth_Response) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_CheckHealth_Response.Marshal(b, m, deterministic)
-}
-func (m *CheckHealth_Response) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_CheckHealth_Response.Merge(m, src)
-}
-func (m *CheckHealth_Response) XXX_Size() int {
-	return xxx_messageInfo_CheckHealth_Response.Size(m)
-}
-func (m *CheckHealth_Response) XXX_DiscardUnknown() {
-	xxx_messageInfo_CheckHealth_Response.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_CheckHealth_Response proto.InternalMessageInfo
-
-func (m *CheckHealth_Response) GetStatus() CheckHealth_Response_HealthStatus {
+func (m *CollectMetricsResponse_Payload) GetPrometheus() []byte {
 	if m != nil {
-		return m.Status
-	}
-	return CheckHealth_Response_UNKNOWN
-}
-
-func (m *CheckHealth_Response) GetInfo() string {
-	if m != nil {
-		return m.Info
-	}
-	return ""
-}
-
-type StreamingRequest struct {
-	PluginId int64 `protobuf:"varint,1,opt,name=pluginId,proto3" json:"pluginId,omitempty"`
-	// Environment info
-	Headers map[string]string `protobuf:"bytes,2,rep,name=headers,proto3" json:"headers,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
-	// The topic we are talking to
-	Topic string `protobuf:"bytes,3,opt,name=topic,proto3" json:"topic,omitempty"`
-	// The message
-	Body string `protobuf:"bytes,4,opt,name=body,proto3" json:"body,omitempty"`
-	// Flag if the user is already listening
-	Subscribed           bool     `protobuf:"varint,5,opt,name=subscribed,proto3" json:"subscribed,omitempty"`
-	XXX_NoUnkeyedLiteral struct{} `json:"-"`
-	XXX_unrecognized     []byte   `json:"-"`
-	XXX_sizecache        int32    `json:"-"`
-}
-
-func (m *StreamingRequest) Reset()         { *m = StreamingRequest{} }
-func (m *StreamingRequest) String() string { return proto.CompactTextString(m) }
-func (*StreamingRequest) ProtoMessage()    {}
-func (*StreamingRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_5ab9ba5b8d8b2ba5, []int{9}
-}
-
-func (m *StreamingRequest) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_StreamingRequest.Unmarshal(m, b)
-}
-func (m *StreamingRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_StreamingRequest.Marshal(b, m, deterministic)
-}
-func (m *StreamingRequest) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_StreamingRequest.Merge(m, src)
-}
-func (m *StreamingRequest) XXX_Size() int {
-	return xxx_messageInfo_StreamingRequest.Size(m)
-}
-func (m *StreamingRequest) XXX_DiscardUnknown() {
-	xxx_messageInfo_StreamingRequest.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_StreamingRequest proto.InternalMessageInfo
-
-func (m *StreamingRequest) GetPluginId() int64 {
-	if m != nil {
-		return m.PluginId
-	}
-	return 0
-}
-
-func (m *StreamingRequest) GetHeaders() map[string]string {
-	if m != nil {
-		return m.Headers
+		return m.Prometheus
 	}
 	return nil
 }
 
-func (m *StreamingRequest) GetTopic() string {
+type CheckHealthRequest struct {
+	Config               *PluginConfig `protobuf:"bytes,1,opt,name=config,proto3" json:"config,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}      `json:"-"`
+	XXX_unrecognized     []byte        `json:"-"`
+	XXX_sizecache        int32         `json:"-"`
+}
+
+func (m *CheckHealthRequest) Reset()         { *m = CheckHealthRequest{} }
+func (m *CheckHealthRequest) String() string { return proto.CompactTextString(m) }
+func (*CheckHealthRequest) ProtoMessage()    {}
+func (*CheckHealthRequest) Descriptor() ([]byte, []int) {
+	return fileDescriptor_5ab9ba5b8d8b2ba5, []int{12}
+}
+
+func (m *CheckHealthRequest) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_CheckHealthRequest.Unmarshal(m, b)
+}
+func (m *CheckHealthRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_CheckHealthRequest.Marshal(b, m, deterministic)
+}
+func (m *CheckHealthRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_CheckHealthRequest.Merge(m, src)
+}
+func (m *CheckHealthRequest) XXX_Size() int {
+	return xxx_messageInfo_CheckHealthRequest.Size(m)
+}
+func (m *CheckHealthRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_CheckHealthRequest.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_CheckHealthRequest proto.InternalMessageInfo
+
+func (m *CheckHealthRequest) GetConfig() *PluginConfig {
 	if m != nil {
-		return m.Topic
+		return m.Config
 	}
-	return ""
+	return nil
 }
 
-func (m *StreamingRequest) GetBody() string {
+type CheckHealthResponse struct {
+	Status               CheckHealthResponse_HealthStatus `protobuf:"varint,1,opt,name=status,proto3,enum=pluginv2.CheckHealthResponse_HealthStatus" json:"status,omitempty"`
+	Message              string                           `protobuf:"bytes,2,opt,name=message,proto3" json:"message,omitempty"`
+	JsonDetails          []byte                           `protobuf:"bytes,3,opt,name=jsonDetails,proto3" json:"jsonDetails,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}                         `json:"-"`
+	XXX_unrecognized     []byte                           `json:"-"`
+	XXX_sizecache        int32                            `json:"-"`
+}
+
+func (m *CheckHealthResponse) Reset()         { *m = CheckHealthResponse{} }
+func (m *CheckHealthResponse) String() string { return proto.CompactTextString(m) }
+func (*CheckHealthResponse) ProtoMessage()    {}
+func (*CheckHealthResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_5ab9ba5b8d8b2ba5, []int{13}
+}
+
+func (m *CheckHealthResponse) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_CheckHealthResponse.Unmarshal(m, b)
+}
+func (m *CheckHealthResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_CheckHealthResponse.Marshal(b, m, deterministic)
+}
+func (m *CheckHealthResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_CheckHealthResponse.Merge(m, src)
+}
+func (m *CheckHealthResponse) XXX_Size() int {
+	return xxx_messageInfo_CheckHealthResponse.Size(m)
+}
+func (m *CheckHealthResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_CheckHealthResponse.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_CheckHealthResponse proto.InternalMessageInfo
+
+func (m *CheckHealthResponse) GetStatus() CheckHealthResponse_HealthStatus {
 	if m != nil {
-		return m.Body
+		return m.Status
 	}
-	return ""
+	return CheckHealthResponse_UNKNOWN
 }
 
-func (m *StreamingRequest) GetSubscribed() bool {
-	if m != nil {
-		return m.Subscribed
-	}
-	return false
-}
-
-type StreamingMessage struct {
-	PluginId             int64    `protobuf:"varint,1,opt,name=pluginId,proto3" json:"pluginId,omitempty"`
-	Topic                string   `protobuf:"bytes,2,opt,name=topic,proto3" json:"topic,omitempty"`
-	Message              string   `protobuf:"bytes,3,opt,name=message,proto3" json:"message,omitempty"`
-	XXX_NoUnkeyedLiteral struct{} `json:"-"`
-	XXX_unrecognized     []byte   `json:"-"`
-	XXX_sizecache        int32    `json:"-"`
-}
-
-func (m *StreamingMessage) Reset()         { *m = StreamingMessage{} }
-func (m *StreamingMessage) String() string { return proto.CompactTextString(m) }
-func (*StreamingMessage) ProtoMessage()    {}
-func (*StreamingMessage) Descriptor() ([]byte, []int) {
-	return fileDescriptor_5ab9ba5b8d8b2ba5, []int{10}
-}
-
-func (m *StreamingMessage) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_StreamingMessage.Unmarshal(m, b)
-}
-func (m *StreamingMessage) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_StreamingMessage.Marshal(b, m, deterministic)
-}
-func (m *StreamingMessage) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_StreamingMessage.Merge(m, src)
-}
-func (m *StreamingMessage) XXX_Size() int {
-	return xxx_messageInfo_StreamingMessage.Size(m)
-}
-func (m *StreamingMessage) XXX_DiscardUnknown() {
-	xxx_messageInfo_StreamingMessage.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_StreamingMessage proto.InternalMessageInfo
-
-func (m *StreamingMessage) GetPluginId() int64 {
-	if m != nil {
-		return m.PluginId
-	}
-	return 0
-}
-
-func (m *StreamingMessage) GetTopic() string {
-	if m != nil {
-		return m.Topic
-	}
-	return ""
-}
-
-func (m *StreamingMessage) GetMessage() string {
+func (m *CheckHealthResponse) GetMessage() string {
 	if m != nil {
 		return m.Message
 	}
 	return ""
 }
 
-type StreamingClose struct {
-	Count                int64    `protobuf:"varint,1,opt,name=count,proto3" json:"count,omitempty"`
-	XXX_NoUnkeyedLiteral struct{} `json:"-"`
-	XXX_unrecognized     []byte   `json:"-"`
-	XXX_sizecache        int32    `json:"-"`
-}
-
-func (m *StreamingClose) Reset()         { *m = StreamingClose{} }
-func (m *StreamingClose) String() string { return proto.CompactTextString(m) }
-func (*StreamingClose) ProtoMessage()    {}
-func (*StreamingClose) Descriptor() ([]byte, []int) {
-	return fileDescriptor_5ab9ba5b8d8b2ba5, []int{11}
-}
-
-func (m *StreamingClose) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_StreamingClose.Unmarshal(m, b)
-}
-func (m *StreamingClose) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_StreamingClose.Marshal(b, m, deterministic)
-}
-func (m *StreamingClose) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_StreamingClose.Merge(m, src)
-}
-func (m *StreamingClose) XXX_Size() int {
-	return xxx_messageInfo_StreamingClose.Size(m)
-}
-func (m *StreamingClose) XXX_DiscardUnknown() {
-	xxx_messageInfo_StreamingClose.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_StreamingClose proto.InternalMessageInfo
-
-func (m *StreamingClose) GetCount() int64 {
+func (m *CheckHealthResponse) GetJsonDetails() []byte {
 	if m != nil {
-		return m.Count
+		return m.JsonDetails
 	}
-	return 0
-}
-
-type RenderRequest struct {
-	Url                  string   `protobuf:"bytes,1,opt,name=url,proto3" json:"url,omitempty"`
-	Width                int32    `protobuf:"varint,2,opt,name=width,proto3" json:"width,omitempty"`
-	Height               int32    `protobuf:"varint,3,opt,name=height,proto3" json:"height,omitempty"`
-	Timeout              int32    `protobuf:"varint,4,opt,name=timeout,proto3" json:"timeout,omitempty"`
-	Timezone             string   `protobuf:"bytes,5,opt,name=timezone,proto3" json:"timezone,omitempty"`
-	Encoding             string   `protobuf:"bytes,6,opt,name=encoding,proto3" json:"encoding,omitempty"`
-	FilePath             string   `protobuf:"bytes,7,opt,name=filePath,proto3" json:"filePath,omitempty"`
-	RenderKey            string   `protobuf:"bytes,8,opt,name=renderKey,proto3" json:"renderKey,omitempty"`
-	Domain               string   `protobuf:"bytes,9,opt,name=domain,proto3" json:"domain,omitempty"`
-	XXX_NoUnkeyedLiteral struct{} `json:"-"`
-	XXX_unrecognized     []byte   `json:"-"`
-	XXX_sizecache        int32    `json:"-"`
-}
-
-func (m *RenderRequest) Reset()         { *m = RenderRequest{} }
-func (m *RenderRequest) String() string { return proto.CompactTextString(m) }
-func (*RenderRequest) ProtoMessage()    {}
-func (*RenderRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_5ab9ba5b8d8b2ba5, []int{12}
-}
-
-func (m *RenderRequest) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_RenderRequest.Unmarshal(m, b)
-}
-func (m *RenderRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_RenderRequest.Marshal(b, m, deterministic)
-}
-func (m *RenderRequest) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_RenderRequest.Merge(m, src)
-}
-func (m *RenderRequest) XXX_Size() int {
-	return xxx_messageInfo_RenderRequest.Size(m)
-}
-func (m *RenderRequest) XXX_DiscardUnknown() {
-	xxx_messageInfo_RenderRequest.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_RenderRequest proto.InternalMessageInfo
-
-func (m *RenderRequest) GetUrl() string {
-	if m != nil {
-		return m.Url
-	}
-	return ""
-}
-
-func (m *RenderRequest) GetWidth() int32 {
-	if m != nil {
-		return m.Width
-	}
-	return 0
-}
-
-func (m *RenderRequest) GetHeight() int32 {
-	if m != nil {
-		return m.Height
-	}
-	return 0
-}
-
-func (m *RenderRequest) GetTimeout() int32 {
-	if m != nil {
-		return m.Timeout
-	}
-	return 0
-}
-
-func (m *RenderRequest) GetTimezone() string {
-	if m != nil {
-		return m.Timezone
-	}
-	return ""
-}
-
-func (m *RenderRequest) GetEncoding() string {
-	if m != nil {
-		return m.Encoding
-	}
-	return ""
-}
-
-func (m *RenderRequest) GetFilePath() string {
-	if m != nil {
-		return m.FilePath
-	}
-	return ""
-}
-
-func (m *RenderRequest) GetRenderKey() string {
-	if m != nil {
-		return m.RenderKey
-	}
-	return ""
-}
-
-func (m *RenderRequest) GetDomain() string {
-	if m != nil {
-		return m.Domain
-	}
-	return ""
-}
-
-type RenderResponse struct {
-	Error                string   `protobuf:"bytes,1,opt,name=error,proto3" json:"error,omitempty"`
-	XXX_NoUnkeyedLiteral struct{} `json:"-"`
-	XXX_unrecognized     []byte   `json:"-"`
-	XXX_sizecache        int32    `json:"-"`
-}
-
-func (m *RenderResponse) Reset()         { *m = RenderResponse{} }
-func (m *RenderResponse) String() string { return proto.CompactTextString(m) }
-func (*RenderResponse) ProtoMessage()    {}
-func (*RenderResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_5ab9ba5b8d8b2ba5, []int{13}
-}
-
-func (m *RenderResponse) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_RenderResponse.Unmarshal(m, b)
-}
-func (m *RenderResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_RenderResponse.Marshal(b, m, deterministic)
-}
-func (m *RenderResponse) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_RenderResponse.Merge(m, src)
-}
-func (m *RenderResponse) XXX_Size() int {
-	return xxx_messageInfo_RenderResponse.Size(m)
-}
-func (m *RenderResponse) XXX_DiscardUnknown() {
-	xxx_messageInfo_RenderResponse.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_RenderResponse proto.InternalMessageInfo
-
-func (m *RenderResponse) GetError() string {
-	if m != nil {
-		return m.Error
-	}
-	return ""
+	return nil
 }
 
 func init() {
-	proto.RegisterEnum("pluginv2.CheckHealth_Response_HealthStatus", CheckHealth_Response_HealthStatus_name, CheckHealth_Response_HealthStatus_value)
+	proto.RegisterEnum("pluginv2.CheckHealthResponse_HealthStatus", CheckHealthResponse_HealthStatus_name, CheckHealthResponse_HealthStatus_value)
 	proto.RegisterType((*DataSourceConfig)(nil), "pluginv2.DataSourceConfig")
+	proto.RegisterMapType((map[string]string)(nil), "pluginv2.DataSourceConfig.DecryptedSecureJsonDataEntry")
 	proto.RegisterType((*PluginConfig)(nil), "pluginv2.PluginConfig")
 	proto.RegisterMapType((map[string]string)(nil), "pluginv2.PluginConfig.DecryptedSecureJsonDataEntry")
+	proto.RegisterType((*User)(nil), "pluginv2.User")
+	proto.RegisterType((*StringList)(nil), "pluginv2.StringList")
+	proto.RegisterType((*CallResourceRequest)(nil), "pluginv2.CallResourceRequest")
+	proto.RegisterMapType((map[string]*StringList)(nil), "pluginv2.CallResourceRequest.HeadersEntry")
+	proto.RegisterType((*CallResourceResponse)(nil), "pluginv2.CallResourceResponse")
+	proto.RegisterMapType((map[string]*StringList)(nil), "pluginv2.CallResourceResponse.HeadersEntry")
 	proto.RegisterType((*TimeRange)(nil), "pluginv2.TimeRange")
 	proto.RegisterType((*DataQuery)(nil), "pluginv2.DataQuery")
-	proto.RegisterType((*DataQueryRequest)(nil), "pluginv2.DataQueryRequest")
-	proto.RegisterMapType((map[string]string)(nil), "pluginv2.DataQueryRequest.HeadersEntry")
-	proto.RegisterType((*DataQueryResponse)(nil), "pluginv2.DataQueryResponse")
-	proto.RegisterMapType((map[string]string)(nil), "pluginv2.DataQueryResponse.MetadataEntry")
-	proto.RegisterType((*CallResource)(nil), "pluginv2.CallResource")
-	proto.RegisterType((*CallResource_StringList)(nil), "pluginv2.CallResource.StringList")
-	proto.RegisterType((*CallResource_Request)(nil), "pluginv2.CallResource.Request")
-	proto.RegisterMapType((map[string]*CallResource_StringList)(nil), "pluginv2.CallResource.Request.HeadersEntry")
-	proto.RegisterType((*CallResource_Response)(nil), "pluginv2.CallResource.Response")
-	proto.RegisterMapType((map[string]*CallResource_StringList)(nil), "pluginv2.CallResource.Response.HeadersEntry")
-	proto.RegisterType((*CollectMetrics)(nil), "pluginv2.CollectMetrics")
-	proto.RegisterType((*CollectMetrics_Request)(nil), "pluginv2.CollectMetrics.Request")
-	proto.RegisterType((*CollectMetrics_Payload)(nil), "pluginv2.CollectMetrics.Payload")
-	proto.RegisterType((*CollectMetrics_Response)(nil), "pluginv2.CollectMetrics.Response")
-	proto.RegisterType((*CheckHealth)(nil), "pluginv2.CheckHealth")
-	proto.RegisterType((*CheckHealth_Request)(nil), "pluginv2.CheckHealth.Request")
-	proto.RegisterType((*CheckHealth_Response)(nil), "pluginv2.CheckHealth.Response")
-	proto.RegisterType((*StreamingRequest)(nil), "pluginv2.StreamingRequest")
-	proto.RegisterMapType((map[string]string)(nil), "pluginv2.StreamingRequest.HeadersEntry")
-	proto.RegisterType((*StreamingMessage)(nil), "pluginv2.StreamingMessage")
-	proto.RegisterType((*StreamingClose)(nil), "pluginv2.StreamingClose")
-	proto.RegisterType((*RenderRequest)(nil), "pluginv2.RenderRequest")
-	proto.RegisterType((*RenderResponse)(nil), "pluginv2.RenderResponse")
+	proto.RegisterType((*QueryDataRequest)(nil), "pluginv2.QueryDataRequest")
+	proto.RegisterMapType((map[string]string)(nil), "pluginv2.QueryDataRequest.HeadersEntry")
+	proto.RegisterType((*QueryDataResponse)(nil), "pluginv2.QueryDataResponse")
+	proto.RegisterMapType((map[string]string)(nil), "pluginv2.QueryDataResponse.MetadataEntry")
+	proto.RegisterType((*CollectMetricsRequest)(nil), "pluginv2.CollectMetricsRequest")
+	proto.RegisterType((*CollectMetricsResponse)(nil), "pluginv2.CollectMetricsResponse")
+	proto.RegisterType((*CollectMetricsResponse_Payload)(nil), "pluginv2.CollectMetricsResponse.Payload")
+	proto.RegisterType((*CheckHealthRequest)(nil), "pluginv2.CheckHealthRequest")
+	proto.RegisterType((*CheckHealthResponse)(nil), "pluginv2.CheckHealthResponse")
 }
 
 func init() { proto.RegisterFile("backend.proto", fileDescriptor_5ab9ba5b8d8b2ba5) }
 
 var fileDescriptor_5ab9ba5b8d8b2ba5 = []byte{
-	// 1375 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xcc, 0x57, 0x4b, 0x8f, 0x1b, 0xc5,
-	0x16, 0xbe, 0xed, 0xc7, 0x78, 0x7c, 0xec, 0x4c, 0x9c, 0xca, 0x28, 0xb1, 0x3a, 0xb9, 0xb9, 0x8e,
-	0x15, 0xdd, 0x3b, 0xb9, 0x80, 0x03, 0xce, 0x02, 0x94, 0x48, 0xa0, 0xe0, 0x71, 0x5e, 0x93, 0xc9,
-	0x4c, 0xca, 0x89, 0x10, 0x0b, 0x90, 0xca, 0xdd, 0xc7, 0x76, 0x33, 0xed, 0x2e, 0xa7, 0xba, 0x3a,
-	0x60, 0x7e, 0x04, 0x1b, 0xd6, 0xd9, 0xb1, 0x06, 0xc1, 0x6f, 0x60, 0xc5, 0x9e, 0x05, 0xff, 0x02,
-	0x89, 0x05, 0x5b, 0x54, 0x8f, 0x6e, 0xb7, 0x27, 0x63, 0x47, 0x81, 0x08, 0xb1, 0x3b, 0xe7, 0xf4,
-	0xa9, 0x53, 0xdf, 0x79, 0xd4, 0x57, 0xd5, 0x70, 0x6a, 0xc8, 0xbc, 0x23, 0x8c, 0xfc, 0xce, 0x4c,
-	0x70, 0xc9, 0xc9, 0xe6, 0x2c, 0x4c, 0xc6, 0x41, 0xf4, 0xac, 0xeb, 0x5e, 0x18, 0x73, 0x3e, 0x0e,
-	0xf1, 0x9a, 0xb6, 0x0f, 0x93, 0xd1, 0x35, 0x9c, 0xce, 0xe4, 0xdc, 0xb8, 0xb5, 0x7f, 0x72, 0xa0,
-	0xb1, 0xcb, 0x24, 0x1b, 0xf0, 0x44, 0x78, 0xd8, 0xe3, 0xd1, 0x28, 0x18, 0x93, 0x2d, 0x28, 0x04,
-	0x7e, 0xb3, 0xd4, 0x72, 0x76, 0x8a, 0xb4, 0x10, 0xf8, 0x84, 0x40, 0x29, 0x62, 0x53, 0x6c, 0x96,
-	0x5b, 0xce, 0x4e, 0x95, 0x6a, 0x99, 0x34, 0xa0, 0x98, 0x88, 0xb0, 0xb9, 0xa1, 0x4d, 0x4a, 0x54,
-	0x5e, 0x49, 0x8c, 0xa2, 0x59, 0x31, 0x5e, 0x4a, 0x26, 0x2e, 0x6c, 0xfa, 0x4c, 0xb2, 0x21, 0x8b,
-	0xb1, 0xb9, 0xa9, 0xed, 0x99, 0x4e, 0xfe, 0x0f, 0x8d, 0x21, 0x8b, 0x03, 0xef, 0x56, 0x22, 0x27,
-	0xfd, 0x88, 0x0d, 0x43, 0xf4, 0x9b, 0xd5, 0x96, 0xb3, 0xb3, 0x49, 0x5f, 0xb0, 0x93, 0x2b, 0x2a,
-	0x3d, 0x6b, 0x7b, 0xa2, 0x36, 0x01, 0x1d, 0x6c, 0xd9, 0xd8, 0x7e, 0x5e, 0x84, 0xfa, 0xa1, 0x4e,
-	0xdb, 0x26, 0xb2, 0x0d, 0x65, 0x2e, 0xc6, 0xf7, 0xfc, 0xa6, 0xa3, 0x73, 0x31, 0x8a, 0x02, 0x65,
-	0x8a, 0x73, 0xcf, 0x6f, 0x16, 0x0c, 0xa8, 0x54, 0x27, 0x97, 0x00, 0x8c, 0xfc, 0x78, 0x3e, 0xc3,
-	0x66, 0x51, 0x7f, 0xcd, 0x59, 0xd4, 0xda, 0xcf, 0x62, 0x1e, 0xa9, 0x92, 0xe9, 0x02, 0xd5, 0x69,
-	0xa6, 0x93, 0x29, 0x9c, 0xf7, 0xd1, 0x13, 0xf3, 0x99, 0x44, 0x7f, 0x80, 0x5e, 0x22, 0xf0, 0x7e,
-	0xea, 0x5a, 0x6e, 0x15, 0x77, 0x6a, 0xdd, 0xeb, 0x9d, 0xb4, 0x29, 0x9d, 0x3c, 0xcc, 0xce, 0xee,
-	0xc9, 0xab, 0xfa, 0x91, 0x14, 0x73, 0xba, 0x2a, 0x26, 0xb9, 0x08, 0xd5, 0x64, 0xe6, 0x33, 0x89,
-	0xfe, 0xfe, 0x40, 0xf7, 0xa1, 0x48, 0x17, 0x06, 0x72, 0x1b, 0x1a, 0xaa, 0xd2, 0x71, 0xae, 0xaf,
-	0xba, 0x33, 0xb5, 0xae, 0xbb, 0x40, 0x71, 0xbc, 0xf3, 0xf4, 0x85, 0x35, 0xee, 0x7d, 0xb8, 0xb8,
-	0x0e, 0x9e, 0x9a, 0x83, 0x23, 0x9c, 0xeb, 0x02, 0x57, 0xa9, 0x12, 0x55, 0xd1, 0x9f, 0xb1, 0x30,
-	0x41, 0x5b, 0x5b, 0xa3, 0xdc, 0x28, 0xbc, 0xe7, 0xb4, 0xf7, 0xa0, 0xfa, 0x38, 0x98, 0x22, 0x65,
-	0xd1, 0x18, 0x49, 0x0b, 0x6a, 0x23, 0xc1, 0xa7, 0xfd, 0x19, 0xf7, 0x26, 0xfb, 0x03, 0xdb, 0xa1,
-	0xbc, 0x49, 0x25, 0x28, 0x79, 0xfa, 0xbd, 0x60, 0x12, 0xcc, 0x0c, 0xed, 0x6f, 0x1d, 0xa8, 0x2a,
-	0x18, 0x8f, 0x12, 0x14, 0x7a, 0x53, 0x81, 0x23, 0xdb, 0xe9, 0x2a, 0x35, 0x8a, 0x1a, 0x9b, 0x29,
-	0xfb, 0x42, 0x79, 0x1d, 0xf2, 0x20, 0x92, 0xb1, 0x8d, 0xb2, 0x6c, 0x54, 0x3d, 0x0f, 0x22, 0x89,
-	0xe2, 0x19, 0x0b, 0xf7, 0x07, 0xba, 0xe7, 0x45, 0x9a, 0xb3, 0x90, 0x77, 0xa0, 0x2a, 0x53, 0xd8,
-	0xba, 0xe9, 0xb5, 0xee, 0xd9, 0x45, 0x0d, 0xb3, 0x8c, 0xe8, 0xc2, 0x4b, 0x9d, 0x05, 0x35, 0x16,
-	0xfa, 0xc4, 0xd4, 0xa9, 0x96, 0xdb, 0xbf, 0xda, 0xa3, 0xa6, 0x01, 0x53, 0x7c, 0x9a, 0x60, 0x2c,
-	0x49, 0x07, 0x36, 0x3c, 0xd3, 0x1c, 0x47, 0x07, 0x3e, 0x77, 0xf2, 0x88, 0x50, 0xeb, 0x45, 0x6e,
-	0x41, 0x65, 0x82, 0xcc, 0x47, 0xa1, 0x72, 0x51, 0x33, 0xf5, 0xbf, 0xe5, 0x6e, 0xe6, 0x83, 0x77,
-	0xee, 0x1a, 0x4f, 0x33, 0x47, 0xe9, 0x3a, 0xf2, 0x16, 0x54, 0x9e, 0x26, 0x28, 0x02, 0x8c, 0x9b,
-	0x45, 0x1d, 0xe2, 0xec, 0x49, 0x21, 0x52, 0x1f, 0xf7, 0x06, 0xd4, 0xf3, 0x71, 0x5e, 0xa9, 0xe1,
-	0xdf, 0x39, 0x70, 0x26, 0x87, 0x2a, 0x9e, 0xf1, 0x28, 0x46, 0x72, 0x0e, 0x36, 0x46, 0x82, 0x4d,
-	0x31, 0x6e, 0x3a, 0xad, 0xe2, 0x4e, 0x9d, 0x5a, 0x8d, 0xf4, 0x61, 0x73, 0x8a, 0x92, 0xa9, 0x11,
-	0xb4, 0xc9, 0x5d, 0x3d, 0x31, 0x39, 0x13, 0xa6, 0xb3, 0x6f, 0x7d, 0x4d, 0x7a, 0xd9, 0x52, 0xf7,
-	0x26, 0x9c, 0x5a, 0xfa, 0xf4, 0x4a, 0x88, 0x7f, 0x2c, 0x41, 0xbd, 0xc7, 0xc2, 0x90, 0xa2, 0x39,
-	0x05, 0xee, 0x15, 0x80, 0x81, 0x14, 0x41, 0x34, 0x7e, 0x10, 0xc4, 0x52, 0x41, 0xd7, 0xbe, 0x06,
-	0x7a, 0x95, 0x5a, 0xcd, 0xfd, 0xbe, 0x00, 0x95, 0x3f, 0xdb, 0x52, 0x02, 0xa5, 0x19, 0x93, 0x13,
-	0x8b, 0x45, 0xcb, 0x6a, 0x9f, 0x29, 0xca, 0x09, 0xf7, 0x2d, 0x05, 0x59, 0x2d, 0x65, 0xdd, 0xd2,
-	0x82, 0x75, 0xfb, 0x8b, 0x81, 0x30, 0x24, 0xf3, 0xc6, 0x62, 0xbb, 0x7c, 0x22, 0x9d, 0xf5, 0x43,
-	0x41, 0xa0, 0x34, 0xe4, 0xfe, 0x5c, 0xf3, 0x48, 0x9d, 0x6a, 0xd9, 0xfd, 0xe4, 0xa5, 0x9d, 0x7f,
-	0x37, 0x5f, 0xc7, 0x5a, 0xf7, 0xf2, 0x8a, 0xad, 0x17, 0x05, 0xcc, 0x95, 0xda, 0xfd, 0xc5, 0x81,
-	0xcd, 0x6c, 0x26, 0x08, 0x94, 0x3c, 0xee, 0xa3, 0x0e, 0x5e, 0xa6, 0x5a, 0x26, 0xb7, 0x8f, 0xcf,
-	0xfa, 0x9b, 0x2b, 0x53, 0xb3, 0x23, 0xb1, 0x3e, 0xb7, 0xe2, 0xdf, 0x96, 0x5b, 0xfb, 0x2b, 0x07,
-	0xb6, 0x7a, 0x3c, 0x0c, 0xd1, 0x93, 0xfb, 0x28, 0x45, 0xe0, 0xc5, 0x6e, 0x35, 0x9b, 0x10, 0xf7,
-	0x2a, 0x54, 0x0e, 0xd9, 0x3c, 0xe4, 0xcc, 0xdc, 0x37, 0x82, 0xab, 0xee, 0x62, 0x12, 0xeb, 0xed,
-	0xeb, 0x34, 0x67, 0x71, 0x6f, 0xe7, 0x6a, 0x74, 0x03, 0x2a, 0x53, 0x13, 0xcc, 0x4e, 0x56, 0x2b,
-	0x87, 0x69, 0x69, 0xb3, 0x8e, 0x0d, 0x4f, 0xd3, 0x05, 0x8a, 0x2d, 0x6b, 0xbd, 0x09, 0x7a, 0x47,
-	0x77, 0x91, 0x85, 0x72, 0x92, 0x47, 0xf3, 0x75, 0xbe, 0x0f, 0x3d, 0xd8, 0x88, 0x25, 0x93, 0x16,
-	0xcb, 0xd6, 0xd2, 0x34, 0x2d, 0x96, 0x2f, 0x55, 0x3c, 0x94, 0x93, 0x81, 0x5e, 0x42, 0xed, 0x52,
-	0x55, 0xf0, 0x20, 0x1a, 0xf1, 0x74, 0xa2, 0x95, 0xdc, 0xee, 0xe8, 0x82, 0x67, 0xbe, 0xa4, 0x06,
-	0x95, 0x27, 0x0f, 0xf7, 0x1e, 0x1e, 0x7c, 0xf4, 0xb0, 0xf1, 0x2f, 0xb2, 0x01, 0x85, 0x83, 0xbd,
-	0x86, 0x43, 0xaa, 0x50, 0xee, 0x53, 0x7a, 0x40, 0x1b, 0x85, 0xf6, 0xef, 0x0e, 0x34, 0x06, 0x52,
-	0x20, 0x9b, 0x06, 0xd1, 0x38, 0x3d, 0x5a, 0xf9, 0x9b, 0xdb, 0x5c, 0x18, 0x8b, 0x9b, 0x7b, 0x1d,
-	0x33, 0x1e, 0x0f, 0xb4, 0x62, 0x50, 0xb6, 0xa1, 0x2c, 0xf9, 0x2c, 0xf0, 0xec, 0xa1, 0x33, 0x4a,
-	0x36, 0x3e, 0xe6, 0xd0, 0x69, 0x59, 0xb5, 0x2d, 0x4e, 0x86, 0xb1, 0x27, 0x82, 0x21, 0xfa, 0x9a,
-	0xe5, 0x37, 0x69, 0xce, 0xf2, 0x97, 0x48, 0xf3, 0xd3, 0x5c, 0xe2, 0xfb, 0x18, 0xc7, 0x6c, 0x8c,
-	0x6b, 0x13, 0xcf, 0x50, 0x17, 0xf2, 0xa8, 0x9b, 0x6a, 0x58, 0xf4, 0x62, 0x9b, 0x4d, 0xaa, 0xb6,
-	0xff, 0x0b, 0x5b, 0x59, 0xfc, 0x5e, 0xc8, 0x63, 0x54, 0x11, 0x3c, 0x9e, 0x44, 0x32, 0x7d, 0x26,
-	0x69, 0xa5, 0xfd, 0x9b, 0x03, 0xa7, 0x28, 0x46, 0x3e, 0x8a, 0xb4, 0xfc, 0x96, 0x7d, 0x9c, 0x05,
-	0xfb, 0x6c, 0x43, 0xf9, 0xf3, 0xc0, 0xb7, 0xe4, 0x55, 0xa6, 0x46, 0x51, 0xec, 0x35, 0xc1, 0x60,
-	0x3c, 0x91, 0x7a, 0xeb, 0x32, 0xb5, 0x9a, 0xc2, 0xa4, 0xae, 0x48, 0x9e, 0x48, 0x5d, 0xcc, 0x32,
-	0x4d, 0x55, 0x95, 0x9f, 0x12, 0xbf, 0xe4, 0x51, 0xfa, 0xca, 0xcc, 0x74, 0xf5, 0x0d, 0x23, 0x8f,
-	0xfb, 0x41, 0x34, 0xb6, 0xcf, 0xcd, 0x4c, 0x57, 0xdf, 0x46, 0x41, 0x88, 0x87, 0x8a, 0x3f, 0xcd,
-	0xbb, 0x33, 0xd3, 0xd5, 0xf3, 0x41, 0x68, 0xf8, 0x7b, 0x38, 0xb7, 0x8f, 0xcf, 0x85, 0x41, 0x61,
-	0xf4, 0xf9, 0x94, 0x05, 0x91, 0x7e, 0x73, 0x56, 0xa9, 0xd5, 0x54, 0x75, 0xd2, 0xa4, 0xed, 0x91,
-	0xd8, 0x86, 0x32, 0x0a, 0xc1, 0x45, 0xfa, 0xb4, 0xd0, 0x4a, 0xf7, 0xb9, 0x03, 0xa5, 0x1e, 0x17,
-	0x48, 0x0e, 0x96, 0x2f, 0x0c, 0x72, 0x69, 0x3d, 0xff, 0xba, 0xff, 0x79, 0x09, 0x89, 0x91, 0xdd,
-	0xfc, 0xbb, 0xc6, 0x5d, 0x7d, 0xbd, 0xbb, 0x17, 0xd6, 0xdc, 0x8e, 0xdd, 0x1f, 0x1c, 0xa8, 0xed,
-	0x06, 0x6c, 0x1c, 0xf1, 0x58, 0x06, 0x5e, 0x4c, 0x9e, 0x1c, 0x27, 0x24, 0xb2, 0x9a, 0x3d, 0xd2,
-	0x0d, 0x2e, 0xaf, 0xf1, 0xb0, 0x60, 0x1f, 0x2c, 0xd1, 0x0a, 0xf9, 0xf7, 0x2a, 0xba, 0x30, 0x01,
-	0x2f, 0xad, 0x67, 0x93, 0xee, 0x37, 0x0e, 0x9c, 0xbe, 0x23, 0xd8, 0x88, 0x45, 0xec, 0x30, 0x64,
-	0x72, 0xc4, 0xc5, 0x94, 0xec, 0x69, 0x76, 0xfa, 0x47, 0xd5, 0xf6, 0x11, 0x54, 0x1f, 0x0b, 0x16,
-	0xc5, 0x1a, 0xdf, 0xeb, 0x09, 0xf9, 0x31, 0x9c, 0xc9, 0x42, 0x2a, 0xe8, 0x1f, 0x32, 0xef, 0xe8,
-	0x35, 0x85, 0xfe, 0xd9, 0x81, 0xd3, 0xd9, 0x81, 0x37, 0x2f, 0x10, 0xf2, 0x01, 0x54, 0x7a, 0x3c,
-	0x8a, 0xd0, 0x93, 0x64, 0xc5, 0xf3, 0xc4, 0x75, 0x4f, 0xa0, 0x4f, 0x4b, 0x47, 0x6f, 0x3b, 0x8a,
-	0x6d, 0x0f, 0x05, 0xf7, 0x30, 0x8e, 0x89, 0xbb, 0x9a, 0x67, 0xd7, 0x05, 0x21, 0xef, 0x03, 0xec,
-	0x06, 0xb1, 0x97, 0xc1, 0x30, 0xbf, 0xa9, 0x9d, 0xf4, 0x37, 0xb5, 0xd3, 0x57, 0xbf, 0xa9, 0x6e,
-	0xf3, 0x84, 0x08, 0x9a, 0xb5, 0xba, 0x77, 0xd4, 0x60, 0xa8, 0x93, 0x8a, 0x82, 0xdc, 0x84, 0x0d,
-	0x23, 0x93, 0xf3, 0x0b, 0xff, 0x25, 0xf2, 0xca, 0x07, 0x5a, 0x3e, 0xe0, 0xc3, 0x0d, 0xbd, 0xe5,
-	0xf5, 0x3f, 0x02, 0x00, 0x00, 0xff, 0xff, 0x53, 0xca, 0x5d, 0x41, 0x42, 0x0f, 0x00, 0x00,
+	// 1115 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xb4, 0x57, 0xcd, 0x6e, 0xdb, 0x46,
+	0x10, 0x2e, 0x49, 0xfd, 0x71, 0xa4, 0x18, 0xea, 0x5a, 0x71, 0x08, 0x35, 0x49, 0x05, 0x22, 0x40,
+	0x95, 0x14, 0x15, 0x5a, 0xe5, 0xd0, 0x22, 0x39, 0xc5, 0x96, 0x0a, 0xc7, 0x8e, 0x7f, 0xba, 0x8a,
+	0x51, 0x20, 0x45, 0x0f, 0x2b, 0x72, 0x2d, 0xb1, 0xe6, 0x8f, 0xcc, 0x5d, 0x1a, 0xf5, 0x03, 0x14,
+	0x7d, 0x81, 0x3e, 0x47, 0xfa, 0x14, 0x3d, 0xf5, 0xd8, 0x43, 0x5f, 0xa7, 0xd8, 0xe5, 0x52, 0x24,
+	0x6d, 0xc9, 0x46, 0x5b, 0xe7, 0xb6, 0x33, 0x9c, 0x9d, 0x9d, 0xf9, 0xe6, 0x9b, 0xcf, 0x32, 0xdc,
+	0x9b, 0x12, 0xe7, 0x8c, 0x86, 0xee, 0x60, 0x11, 0x47, 0x3c, 0x42, 0x8d, 0x85, 0x9f, 0xcc, 0xbc,
+	0xf0, 0x62, 0x68, 0xff, 0x69, 0x40, 0x7b, 0x44, 0x38, 0x99, 0x44, 0x49, 0xec, 0xd0, 0x9d, 0x28,
+	0x3c, 0xf5, 0x66, 0x68, 0x03, 0x74, 0xcf, 0xb5, 0xb4, 0x9e, 0xd6, 0x37, 0xb0, 0xee, 0xb9, 0x08,
+	0x41, 0x25, 0x24, 0x01, 0xb5, 0xf4, 0x9e, 0xd6, 0x37, 0xb1, 0x3c, 0xa3, 0x36, 0x18, 0x49, 0xec,
+	0x5b, 0x86, 0x74, 0x89, 0xa3, 0x88, 0x4a, 0x18, 0x8d, 0xad, 0x4a, 0x1a, 0x25, 0xce, 0xa8, 0x0b,
+	0x0d, 0x97, 0x70, 0x32, 0x25, 0x8c, 0x5a, 0x55, 0xe9, 0x5f, 0xda, 0xe8, 0x19, 0xb4, 0xa7, 0x84,
+	0x79, 0xce, 0xab, 0x84, 0xcf, 0xc7, 0x21, 0x99, 0xfa, 0xd4, 0xb5, 0x6a, 0x3d, 0xad, 0xdf, 0xc0,
+	0xd7, 0xfc, 0xe8, 0x89, 0xe8, 0x40, 0xf9, 0x4e, 0xc4, 0x23, 0x75, 0x99, 0xac, 0xec, 0x14, 0xaf,
+	0xfd, 0xc4, 0xa2, 0x50, 0xf4, 0x63, 0x35, 0x7a, 0x5a, 0xbf, 0x85, 0x97, 0x36, 0x3a, 0x87, 0x07,
+	0x2e, 0x75, 0xe2, 0xcb, 0x05, 0xa7, 0xee, 0x84, 0x3a, 0x49, 0x4c, 0xf7, 0xb2, 0x50, 0xb3, 0x67,
+	0xf4, 0x9b, 0xc3, 0xaf, 0x07, 0x19, 0x28, 0x83, 0xab, 0x80, 0x0c, 0x46, 0xab, 0x6f, 0x8e, 0x43,
+	0x1e, 0x5f, 0xe2, 0x75, 0x79, 0x45, 0xd1, 0x3e, 0x61, 0xfc, 0x64, 0xe1, 0x12, 0x4e, 0xdd, 0x83,
+	0x89, 0x05, 0x12, 0xd1, 0xb2, 0xb3, 0xbb, 0x07, 0x0f, 0x6f, 0x4a, 0x2f, 0x80, 0x3e, 0xa3, 0x97,
+	0x72, 0x1a, 0x26, 0x16, 0x47, 0xd4, 0x81, 0xea, 0x05, 0xf1, 0x93, 0x6c, 0x1e, 0xa9, 0xf1, 0x42,
+	0xff, 0x46, 0xb3, 0x7f, 0x31, 0xa0, 0x75, 0x2c, 0xbb, 0x50, 0x93, 0xec, 0x40, 0x35, 0x8a, 0x67,
+	0xaf, 0xb3, 0x61, 0xa6, 0x86, 0xc0, 0x29, 0xed, 0xf5, 0xb5, 0xab, 0x72, 0x2c, 0xed, 0x12, 0x86,
+	0xc6, 0x15, 0x0c, 0x83, 0xf5, 0x18, 0x56, 0x24, 0x86, 0xcf, 0x73, 0x0c, 0x8b, 0x65, 0xdc, 0x15,
+	0x7e, 0xd5, 0x15, 0xf8, 0xa1, 0x6f, 0xa1, 0x2d, 0x28, 0xc5, 0x0a, 0xf3, 0x92, 0x34, 0x6a, 0x0e,
+	0xbb, 0xeb, 0x27, 0x8a, 0xaf, 0xdd, 0xb9, 0xd3, 0x39, 0xbc, 0x83, 0x8a, 0x24, 0x64, 0x07, 0xaa,
+	0x7e, 0x34, 0xf3, 0x42, 0x75, 0x2b, 0x35, 0x56, 0xae, 0x53, 0x07, 0xaa, 0x34, 0x20, 0x5e, 0xb6,
+	0x50, 0xa9, 0x21, 0x22, 0xe3, 0xc8, 0xa7, 0xd9, 0x4a, 0x89, 0xb3, 0xfd, 0x04, 0x60, 0xc2, 0x63,
+	0x2f, 0x9c, 0xbd, 0xf1, 0x18, 0x47, 0x5b, 0x50, 0x93, 0xcf, 0x32, 0x4b, 0xeb, 0x19, 0x7d, 0x13,
+	0x2b, 0xcb, 0xfe, 0x4b, 0x87, 0xcd, 0x1d, 0xe2, 0xfb, 0x98, 0xa6, 0x4d, 0x62, 0x7a, 0x9e, 0x50,
+	0xc6, 0xd1, 0x00, 0x6a, 0x4e, 0x8a, 0x91, 0x26, 0x31, 0xda, 0x5a, 0x3d, 0x31, 0xac, 0xa2, 0x90,
+	0xad, 0x96, 0x5a, 0x97, 0xd1, 0x1b, 0x79, 0xb4, 0xe8, 0x4f, 0x2d, 0x39, 0x82, 0xca, 0x82, 0xf0,
+	0xb9, 0x2a, 0x5d, 0x9e, 0x45, 0x5d, 0x01, 0xe5, 0xf3, 0xc8, 0x55, 0xb5, 0x2b, 0x2b, 0x93, 0x8d,
+	0x6a, 0x2e, 0x1b, 0x23, 0xa8, 0xcf, 0x29, 0x71, 0x69, 0xcc, 0xac, 0x9a, 0x24, 0xd1, 0xb3, 0xfc,
+	0x91, 0x15, 0x1d, 0x0c, 0x76, 0xd3, 0xe0, 0x94, 0x3b, 0xd9, 0x55, 0x51, 0xc3, 0x34, 0x72, 0x2f,
+	0xa5, 0x2e, 0xb4, 0xb0, 0x3c, 0x77, 0x8f, 0xa1, 0x55, 0x0c, 0x5e, 0x31, 0xc1, 0x67, 0xc5, 0x09,
+	0x36, 0x87, 0x9d, 0xfc, 0xe5, 0x1c, 0xe2, 0xe2, 0x5c, 0xff, 0xd6, 0xa0, 0x53, 0xae, 0x89, 0x2d,
+	0xa2, 0x90, 0x51, 0xf1, 0xbc, 0x13, 0xb9, 0x54, 0xe6, 0xae, 0x62, 0x79, 0x46, 0xe3, 0xbc, 0x31,
+	0x5d, 0x36, 0xf6, 0xf9, 0xba, 0xc6, 0xd2, 0x24, 0xb7, 0x74, 0x66, 0x7c, 0xd0, 0xce, 0xf6, 0xc1,
+	0x7c, 0xeb, 0x05, 0x14, 0x93, 0x70, 0x46, 0x51, 0x0f, 0x9a, 0xa7, 0x71, 0x14, 0x8c, 0x17, 0x91,
+	0x33, 0x3f, 0x98, 0x28, 0xed, 0x28, 0xba, 0xd0, 0x43, 0x30, 0x79, 0x94, 0x7d, 0xd7, 0xe5, 0xf7,
+	0xdc, 0x61, 0xbf, 0xd7, 0xc0, 0x14, 0x8b, 0xf3, 0x5d, 0x42, 0x63, 0xb9, 0x26, 0x31, 0x3d, 0x55,
+	0x1a, 0x64, 0xe2, 0xd4, 0x10, 0xcb, 0x1d, 0x90, 0x9f, 0x45, 0xd4, 0x71, 0xe4, 0x85, 0x9c, 0xa9,
+	0x2c, 0x65, 0x27, 0x7a, 0x0c, 0xe0, 0x85, 0x9c, 0xc6, 0x17, 0xc4, 0x3f, 0x98, 0x48, 0x08, 0x0c,
+	0x5c, 0xf0, 0xa0, 0xaf, 0xc0, 0xe4, 0x59, 0xd9, 0x92, 0x69, 0xcd, 0xe1, 0x66, 0xde, 0xea, 0xb2,
+	0x23, 0x9c, 0x47, 0x09, 0x3c, 0x85, 0xa0, 0x49, 0x0a, 0xb6, 0xb0, 0x3c, 0xdb, 0xbf, 0xe9, 0xd0,
+	0x96, 0xc5, 0x8a, 0xa7, 0x3f, 0xe4, 0xaa, 0xbc, 0xca, 0x39, 0x61, 0x48, 0x4e, 0x7c, 0x96, 0x87,
+	0x5d, 0x2d, 0x60, 0x0d, 0x1f, 0xbe, 0x80, 0xfa, 0x79, 0x42, 0x63, 0x8f, 0x32, 0x25, 0xba, 0x9b,
+	0x65, 0x99, 0x93, 0x69, 0x70, 0x16, 0xd3, 0x7d, 0x71, 0x2b, 0x55, 0xd6, 0xcb, 0xd8, 0xef, 0x1a,
+	0x7c, 0x5c, 0xa8, 0x4a, 0x71, 0x7d, 0x0b, 0x6a, 0xa7, 0x31, 0x09, 0x94, 0xe4, 0xb4, 0xb0, 0xb2,
+	0xd0, 0x18, 0x1a, 0x01, 0xe5, 0x44, 0x08, 0xab, 0x22, 0xfc, 0xd3, 0x95, 0xcd, 0x29, 0xb6, 0x1f,
+	0xa8, 0xd8, 0xb4, 0xbd, 0xe5, 0xd5, 0xee, 0x4b, 0xb8, 0x57, 0xfa, 0xf4, 0xaf, 0x2a, 0x7e, 0x00,
+	0xf7, 0x77, 0x22, 0xdf, 0xa7, 0x0e, 0x3f, 0xa0, 0x3c, 0xf6, 0x1c, 0xa6, 0xb0, 0xb4, 0x7f, 0xd5,
+	0x60, 0xeb, 0xea, 0x17, 0xd5, 0xcf, 0x36, 0xd4, 0x83, 0xd4, 0xa5, 0x06, 0xdd, 0x2f, 0xec, 0xe9,
+	0xca, 0x2b, 0x83, 0x63, 0x72, 0xe9, 0x47, 0xc4, 0xc5, 0xd9, 0xc5, 0xee, 0x53, 0xa8, 0x2b, 0x9f,
+	0xa0, 0xec, 0x22, 0x8e, 0x84, 0xdc, 0xd1, 0x24, 0xcd, 0xd8, 0xc2, 0x05, 0x8f, 0x3d, 0x02, 0xb4,
+	0x33, 0xa7, 0xce, 0xd9, 0x2e, 0x25, 0x3e, 0x9f, 0xff, 0x47, 0xb2, 0xd9, 0x7f, 0x68, 0xb0, 0x59,
+	0x4a, 0xb3, 0x6c, 0xa6, 0xc6, 0x38, 0xe1, 0xea, 0xe5, 0x8d, 0x92, 0x98, 0x5e, 0x0f, 0x1f, 0xa4,
+	0xe6, 0x44, 0xde, 0xc0, 0xea, 0x26, 0xb2, 0x04, 0x20, 0x8c, 0x91, 0x59, 0x06, 0x70, 0x66, 0x0a,
+	0x61, 0x90, 0x3f, 0x06, 0x28, 0x27, 0x9e, 0xcf, 0x94, 0x24, 0x15, 0x5d, 0xf6, 0x40, 0xd2, 0x6d,
+	0x99, 0x13, 0x35, 0xa1, 0x7e, 0x72, 0xb8, 0x7f, 0x78, 0xf4, 0xfd, 0x61, 0xfb, 0x23, 0x54, 0x03,
+	0xfd, 0x68, 0xbf, 0xad, 0x21, 0x13, 0xaa, 0x63, 0x8c, 0x8f, 0x70, 0x5b, 0x1f, 0xfe, 0x00, 0x8d,
+	0x4c, 0x07, 0xd1, 0x11, 0xb4, 0x8a, 0xba, 0x88, 0x1e, 0xdd, 0xf8, 0x87, 0xa0, 0xfb, 0xf8, 0x66,
+	0x39, 0xfd, 0x52, 0x1b, 0xbe, 0x81, 0x8a, 0xfc, 0x21, 0x31, 0x02, 0x73, 0xc9, 0x3f, 0xd4, 0x5d,
+	0xbf, 0x71, 0xdd, 0x4f, 0x6e, 0x20, 0xec, 0xf0, 0xbd, 0x06, 0xcd, 0x91, 0x47, 0x66, 0x61, 0xc4,
+	0xb8, 0xe7, 0x30, 0xb4, 0x07, 0xcd, 0x02, 0xa4, 0xe8, 0xe1, 0x1a, 0xa4, 0xd3, 0xcc, 0x8f, 0x6e,
+	0x9c, 0x03, 0x9a, 0xc0, 0x46, 0x99, 0x6a, 0xe8, 0xd3, 0xf5, 0x24, 0x4c, 0x33, 0xf6, 0x6e, 0x63,
+	0xe9, 0xf0, 0x04, 0xcc, 0xb7, 0x31, 0x09, 0xd9, 0x69, 0x14, 0x07, 0x68, 0x17, 0xee, 0x2d, 0x8d,
+	0xff, 0x87, 0xc3, 0x8f, 0x70, 0xbf, 0x94, 0x49, 0x80, 0xbf, 0x4d, 0x9c, 0xb3, 0xbb, 0x81, 0x79,
+	0xbb, 0xf5, 0x0e, 0x06, 0x2f, 0xb3, 0xef, 0xd3, 0x9a, 0xfc, 0x87, 0xe5, 0xf9, 0x3f, 0x01, 0x00,
+	0x00, 0xff, 0xff, 0xfc, 0xf3, 0x6d, 0x5e, 0xc1, 0x0c, 0x00, 0x00,
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -1349,112 +1038,171 @@ var _ grpc.ClientConn
 // is compatible with the grpc package it is being compiled against.
 const _ = grpc.SupportPackageIsVersion4
 
-// CoreClient is the client API for Core service.
+// ResourceClient is the client API for Resource service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://godoc.org/google.golang.org/grpc#ClientConn.NewStream.
-type CoreClient interface {
-	// HTTP Style request
-	CallResource(ctx context.Context, in *CallResource_Request, opts ...grpc.CallOption) (*CallResource_Response, error)
-	// Well typed query interface
-	DataQuery(ctx context.Context, in *DataQueryRequest, opts ...grpc.CallOption) (*DataQueryResponse, error)
+type ResourceClient interface {
+	CallResource(ctx context.Context, in *CallResourceRequest, opts ...grpc.CallOption) (Resource_CallResourceClient, error)
 }
 
-type coreClient struct {
+type resourceClient struct {
 	cc *grpc.ClientConn
 }
 
-func NewCoreClient(cc *grpc.ClientConn) CoreClient {
-	return &coreClient{cc}
+func NewResourceClient(cc *grpc.ClientConn) ResourceClient {
+	return &resourceClient{cc}
 }
 
-func (c *coreClient) CallResource(ctx context.Context, in *CallResource_Request, opts ...grpc.CallOption) (*CallResource_Response, error) {
-	out := new(CallResource_Response)
-	err := c.cc.Invoke(ctx, "/pluginv2.Core/CallResource", in, out, opts...)
+func (c *resourceClient) CallResource(ctx context.Context, in *CallResourceRequest, opts ...grpc.CallOption) (Resource_CallResourceClient, error) {
+	stream, err := c.cc.NewStream(ctx, &_Resource_serviceDesc.Streams[0], "/pluginv2.Resource/CallResource", opts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &resourceCallResourceClient{stream}
+	if err := x.ClientStream.SendMsg(in); err != nil {
+		return nil, err
+	}
+	if err := x.ClientStream.CloseSend(); err != nil {
+		return nil, err
+	}
+	return x, nil
+}
+
+type Resource_CallResourceClient interface {
+	Recv() (*CallResourceResponse, error)
+	grpc.ClientStream
+}
+
+type resourceCallResourceClient struct {
+	grpc.ClientStream
+}
+
+func (x *resourceCallResourceClient) Recv() (*CallResourceResponse, error) {
+	m := new(CallResourceResponse)
+	if err := x.ClientStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
+// ResourceServer is the server API for Resource service.
+type ResourceServer interface {
+	CallResource(*CallResourceRequest, Resource_CallResourceServer) error
+}
+
+// UnimplementedResourceServer can be embedded to have forward compatible implementations.
+type UnimplementedResourceServer struct {
+}
+
+func (*UnimplementedResourceServer) CallResource(req *CallResourceRequest, srv Resource_CallResourceServer) error {
+	return status.Errorf(codes.Unimplemented, "method CallResource not implemented")
+}
+
+func RegisterResourceServer(s *grpc.Server, srv ResourceServer) {
+	s.RegisterService(&_Resource_serviceDesc, srv)
+}
+
+func _Resource_CallResource_Handler(srv interface{}, stream grpc.ServerStream) error {
+	m := new(CallResourceRequest)
+	if err := stream.RecvMsg(m); err != nil {
+		return err
+	}
+	return srv.(ResourceServer).CallResource(m, &resourceCallResourceServer{stream})
+}
+
+type Resource_CallResourceServer interface {
+	Send(*CallResourceResponse) error
+	grpc.ServerStream
+}
+
+type resourceCallResourceServer struct {
+	grpc.ServerStream
+}
+
+func (x *resourceCallResourceServer) Send(m *CallResourceResponse) error {
+	return x.ServerStream.SendMsg(m)
+}
+
+var _Resource_serviceDesc = grpc.ServiceDesc{
+	ServiceName: "pluginv2.Resource",
+	HandlerType: (*ResourceServer)(nil),
+	Methods:     []grpc.MethodDesc{},
+	Streams: []grpc.StreamDesc{
+		{
+			StreamName:    "CallResource",
+			Handler:       _Resource_CallResource_Handler,
+			ServerStreams: true,
+		},
+	},
+	Metadata: "backend.proto",
+}
+
+// DataClient is the client API for Data service.
+//
+// For semantics around ctx use and closing/ending streaming RPCs, please refer to https://godoc.org/google.golang.org/grpc#ClientConn.NewStream.
+type DataClient interface {
+	QueryData(ctx context.Context, in *QueryDataRequest, opts ...grpc.CallOption) (*QueryDataResponse, error)
+}
+
+type dataClient struct {
+	cc *grpc.ClientConn
+}
+
+func NewDataClient(cc *grpc.ClientConn) DataClient {
+	return &dataClient{cc}
+}
+
+func (c *dataClient) QueryData(ctx context.Context, in *QueryDataRequest, opts ...grpc.CallOption) (*QueryDataResponse, error) {
+	out := new(QueryDataResponse)
+	err := c.cc.Invoke(ctx, "/pluginv2.Data/QueryData", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *coreClient) DataQuery(ctx context.Context, in *DataQueryRequest, opts ...grpc.CallOption) (*DataQueryResponse, error) {
-	out := new(DataQueryResponse)
-	err := c.cc.Invoke(ctx, "/pluginv2.Core/DataQuery", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
+// DataServer is the server API for Data service.
+type DataServer interface {
+	QueryData(context.Context, *QueryDataRequest) (*QueryDataResponse, error)
 }
 
-// CoreServer is the server API for Core service.
-type CoreServer interface {
-	// HTTP Style request
-	CallResource(context.Context, *CallResource_Request) (*CallResource_Response, error)
-	// Well typed query interface
-	DataQuery(context.Context, *DataQueryRequest) (*DataQueryResponse, error)
+// UnimplementedDataServer can be embedded to have forward compatible implementations.
+type UnimplementedDataServer struct {
 }
 
-// UnimplementedCoreServer can be embedded to have forward compatible implementations.
-type UnimplementedCoreServer struct {
+func (*UnimplementedDataServer) QueryData(ctx context.Context, req *QueryDataRequest) (*QueryDataResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method QueryData not implemented")
 }
 
-func (*UnimplementedCoreServer) CallResource(ctx context.Context, req *CallResource_Request) (*CallResource_Response, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method CallResource not implemented")
-}
-func (*UnimplementedCoreServer) DataQuery(ctx context.Context, req *DataQueryRequest) (*DataQueryResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method DataQuery not implemented")
+func RegisterDataServer(s *grpc.Server, srv DataServer) {
+	s.RegisterService(&_Data_serviceDesc, srv)
 }
 
-func RegisterCoreServer(s *grpc.Server, srv CoreServer) {
-	s.RegisterService(&_Core_serviceDesc, srv)
-}
-
-func _Core_CallResource_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(CallResource_Request)
+func _Data_QueryData_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(QueryDataRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(CoreServer).CallResource(ctx, in)
+		return srv.(DataServer).QueryData(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/pluginv2.Core/CallResource",
+		FullMethod: "/pluginv2.Data/QueryData",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(CoreServer).CallResource(ctx, req.(*CallResource_Request))
+		return srv.(DataServer).QueryData(ctx, req.(*QueryDataRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Core_DataQuery_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(DataQueryRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(CoreServer).DataQuery(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/pluginv2.Core/DataQuery",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(CoreServer).DataQuery(ctx, req.(*DataQueryRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-var _Core_serviceDesc = grpc.ServiceDesc{
-	ServiceName: "pluginv2.Core",
-	HandlerType: (*CoreServer)(nil),
+var _Data_serviceDesc = grpc.ServiceDesc{
+	ServiceName: "pluginv2.Data",
+	HandlerType: (*DataServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "CallResource",
-			Handler:    _Core_CallResource_Handler,
-		},
-		{
-			MethodName: "DataQuery",
-			Handler:    _Core_DataQuery_Handler,
+			MethodName: "QueryData",
+			Handler:    _Data_QueryData_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
@@ -1465,8 +1213,8 @@ var _Core_serviceDesc = grpc.ServiceDesc{
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://godoc.org/google.golang.org/grpc#ClientConn.NewStream.
 type DiagnosticsClient interface {
-	CollectMetrics(ctx context.Context, in *CollectMetrics_Request, opts ...grpc.CallOption) (*CollectMetrics_Response, error)
-	CheckHealth(ctx context.Context, in *CheckHealth_Request, opts ...grpc.CallOption) (*CheckHealth_Response, error)
+	CheckHealth(ctx context.Context, in *CheckHealthRequest, opts ...grpc.CallOption) (*CheckHealthResponse, error)
+	CollectMetrics(ctx context.Context, in *CollectMetricsRequest, opts ...grpc.CallOption) (*CollectMetricsResponse, error)
 }
 
 type diagnosticsClient struct {
@@ -1477,18 +1225,18 @@ func NewDiagnosticsClient(cc *grpc.ClientConn) DiagnosticsClient {
 	return &diagnosticsClient{cc}
 }
 
-func (c *diagnosticsClient) CollectMetrics(ctx context.Context, in *CollectMetrics_Request, opts ...grpc.CallOption) (*CollectMetrics_Response, error) {
-	out := new(CollectMetrics_Response)
-	err := c.cc.Invoke(ctx, "/pluginv2.Diagnostics/CollectMetrics", in, out, opts...)
+func (c *diagnosticsClient) CheckHealth(ctx context.Context, in *CheckHealthRequest, opts ...grpc.CallOption) (*CheckHealthResponse, error) {
+	out := new(CheckHealthResponse)
+	err := c.cc.Invoke(ctx, "/pluginv2.Diagnostics/CheckHealth", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *diagnosticsClient) CheckHealth(ctx context.Context, in *CheckHealth_Request, opts ...grpc.CallOption) (*CheckHealth_Response, error) {
-	out := new(CheckHealth_Response)
-	err := c.cc.Invoke(ctx, "/pluginv2.Diagnostics/CheckHealth", in, out, opts...)
+func (c *diagnosticsClient) CollectMetrics(ctx context.Context, in *CollectMetricsRequest, opts ...grpc.CallOption) (*CollectMetricsResponse, error) {
+	out := new(CollectMetricsResponse)
+	err := c.cc.Invoke(ctx, "/pluginv2.Diagnostics/CollectMetrics", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -1497,45 +1245,27 @@ func (c *diagnosticsClient) CheckHealth(ctx context.Context, in *CheckHealth_Req
 
 // DiagnosticsServer is the server API for Diagnostics service.
 type DiagnosticsServer interface {
-	CollectMetrics(context.Context, *CollectMetrics_Request) (*CollectMetrics_Response, error)
-	CheckHealth(context.Context, *CheckHealth_Request) (*CheckHealth_Response, error)
+	CheckHealth(context.Context, *CheckHealthRequest) (*CheckHealthResponse, error)
+	CollectMetrics(context.Context, *CollectMetricsRequest) (*CollectMetricsResponse, error)
 }
 
 // UnimplementedDiagnosticsServer can be embedded to have forward compatible implementations.
 type UnimplementedDiagnosticsServer struct {
 }
 
-func (*UnimplementedDiagnosticsServer) CollectMetrics(ctx context.Context, req *CollectMetrics_Request) (*CollectMetrics_Response, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method CollectMetrics not implemented")
-}
-func (*UnimplementedDiagnosticsServer) CheckHealth(ctx context.Context, req *CheckHealth_Request) (*CheckHealth_Response, error) {
+func (*UnimplementedDiagnosticsServer) CheckHealth(ctx context.Context, req *CheckHealthRequest) (*CheckHealthResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CheckHealth not implemented")
+}
+func (*UnimplementedDiagnosticsServer) CollectMetrics(ctx context.Context, req *CollectMetricsRequest) (*CollectMetricsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CollectMetrics not implemented")
 }
 
 func RegisterDiagnosticsServer(s *grpc.Server, srv DiagnosticsServer) {
 	s.RegisterService(&_Diagnostics_serviceDesc, srv)
 }
 
-func _Diagnostics_CollectMetrics_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(CollectMetrics_Request)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(DiagnosticsServer).CollectMetrics(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/pluginv2.Diagnostics/CollectMetrics",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(DiagnosticsServer).CollectMetrics(ctx, req.(*CollectMetrics_Request))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
 func _Diagnostics_CheckHealth_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(CheckHealth_Request)
+	in := new(CheckHealthRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -1547,7 +1277,25 @@ func _Diagnostics_CheckHealth_Handler(srv interface{}, ctx context.Context, dec 
 		FullMethod: "/pluginv2.Diagnostics/CheckHealth",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(DiagnosticsServer).CheckHealth(ctx, req.(*CheckHealth_Request))
+		return srv.(DiagnosticsServer).CheckHealth(ctx, req.(*CheckHealthRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Diagnostics_CollectMetrics_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CollectMetricsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(DiagnosticsServer).CollectMetrics(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/pluginv2.Diagnostics/CollectMetrics",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(DiagnosticsServer).CollectMetrics(ctx, req.(*CollectMetricsRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -1557,120 +1305,12 @@ var _Diagnostics_serviceDesc = grpc.ServiceDesc{
 	HandlerType: (*DiagnosticsServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "CollectMetrics",
-			Handler:    _Diagnostics_CollectMetrics_Handler,
-		},
-		{
 			MethodName: "CheckHealth",
 			Handler:    _Diagnostics_CheckHealth_Handler,
 		},
-	},
-	Streams:  []grpc.StreamDesc{},
-	Metadata: "backend.proto",
-}
-
-// GrafanaPlatformClient is the client API for GrafanaPlatform service.
-//
-// For semantics around ctx use and closing/ending streaming RPCs, please refer to https://godoc.org/google.golang.org/grpc#ClientConn.NewStream.
-type GrafanaPlatformClient interface {
-	Resource(ctx context.Context, in *CallResource_Request, opts ...grpc.CallOption) (*CallResource_Response, error)
-	DataQuery(ctx context.Context, in *DataQueryRequest, opts ...grpc.CallOption) (*DataQueryResponse, error)
-}
-
-type grafanaPlatformClient struct {
-	cc *grpc.ClientConn
-}
-
-func NewGrafanaPlatformClient(cc *grpc.ClientConn) GrafanaPlatformClient {
-	return &grafanaPlatformClient{cc}
-}
-
-func (c *grafanaPlatformClient) Resource(ctx context.Context, in *CallResource_Request, opts ...grpc.CallOption) (*CallResource_Response, error) {
-	out := new(CallResource_Response)
-	err := c.cc.Invoke(ctx, "/pluginv2.GrafanaPlatform/Resource", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *grafanaPlatformClient) DataQuery(ctx context.Context, in *DataQueryRequest, opts ...grpc.CallOption) (*DataQueryResponse, error) {
-	out := new(DataQueryResponse)
-	err := c.cc.Invoke(ctx, "/pluginv2.GrafanaPlatform/DataQuery", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-// GrafanaPlatformServer is the server API for GrafanaPlatform service.
-type GrafanaPlatformServer interface {
-	Resource(context.Context, *CallResource_Request) (*CallResource_Response, error)
-	DataQuery(context.Context, *DataQueryRequest) (*DataQueryResponse, error)
-}
-
-// UnimplementedGrafanaPlatformServer can be embedded to have forward compatible implementations.
-type UnimplementedGrafanaPlatformServer struct {
-}
-
-func (*UnimplementedGrafanaPlatformServer) Resource(ctx context.Context, req *CallResource_Request) (*CallResource_Response, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method Resource not implemented")
-}
-func (*UnimplementedGrafanaPlatformServer) DataQuery(ctx context.Context, req *DataQueryRequest) (*DataQueryResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method DataQuery not implemented")
-}
-
-func RegisterGrafanaPlatformServer(s *grpc.Server, srv GrafanaPlatformServer) {
-	s.RegisterService(&_GrafanaPlatform_serviceDesc, srv)
-}
-
-func _GrafanaPlatform_Resource_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(CallResource_Request)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(GrafanaPlatformServer).Resource(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/pluginv2.GrafanaPlatform/Resource",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(GrafanaPlatformServer).Resource(ctx, req.(*CallResource_Request))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _GrafanaPlatform_DataQuery_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(DataQueryRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(GrafanaPlatformServer).DataQuery(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/pluginv2.GrafanaPlatform/DataQuery",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(GrafanaPlatformServer).DataQuery(ctx, req.(*DataQueryRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-var _GrafanaPlatform_serviceDesc = grpc.ServiceDesc{
-	ServiceName: "pluginv2.GrafanaPlatform",
-	HandlerType: (*GrafanaPlatformServer)(nil),
-	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "Resource",
-			Handler:    _GrafanaPlatform_Resource_Handler,
-		},
-		{
-			MethodName: "DataQuery",
-			Handler:    _GrafanaPlatform_DataQuery_Handler,
+			MethodName: "CollectMetrics",
+			Handler:    _Diagnostics_CollectMetrics_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
@@ -1681,7 +1321,7 @@ var _GrafanaPlatform_serviceDesc = grpc.ServiceDesc{
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://godoc.org/google.golang.org/grpc#ClientConn.NewStream.
 type TransformClient interface {
-	DataQuery(ctx context.Context, in *DataQueryRequest, opts ...grpc.CallOption) (*DataQueryResponse, error)
+	TransformData(ctx context.Context, in *QueryDataRequest, opts ...grpc.CallOption) (*QueryDataResponse, error)
 }
 
 type transformClient struct {
@@ -1692,9 +1332,9 @@ func NewTransformClient(cc *grpc.ClientConn) TransformClient {
 	return &transformClient{cc}
 }
 
-func (c *transformClient) DataQuery(ctx context.Context, in *DataQueryRequest, opts ...grpc.CallOption) (*DataQueryResponse, error) {
-	out := new(DataQueryResponse)
-	err := c.cc.Invoke(ctx, "/pluginv2.Transform/DataQuery", in, out, opts...)
+func (c *transformClient) TransformData(ctx context.Context, in *QueryDataRequest, opts ...grpc.CallOption) (*QueryDataResponse, error) {
+	out := new(QueryDataResponse)
+	err := c.cc.Invoke(ctx, "/pluginv2.Transform/TransformData", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -1703,35 +1343,35 @@ func (c *transformClient) DataQuery(ctx context.Context, in *DataQueryRequest, o
 
 // TransformServer is the server API for Transform service.
 type TransformServer interface {
-	DataQuery(context.Context, *DataQueryRequest) (*DataQueryResponse, error)
+	TransformData(context.Context, *QueryDataRequest) (*QueryDataResponse, error)
 }
 
 // UnimplementedTransformServer can be embedded to have forward compatible implementations.
 type UnimplementedTransformServer struct {
 }
 
-func (*UnimplementedTransformServer) DataQuery(ctx context.Context, req *DataQueryRequest) (*DataQueryResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method DataQuery not implemented")
+func (*UnimplementedTransformServer) TransformData(ctx context.Context, req *QueryDataRequest) (*QueryDataResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method TransformData not implemented")
 }
 
 func RegisterTransformServer(s *grpc.Server, srv TransformServer) {
 	s.RegisterService(&_Transform_serviceDesc, srv)
 }
 
-func _Transform_DataQuery_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(DataQueryRequest)
+func _Transform_TransformData_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(QueryDataRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(TransformServer).DataQuery(ctx, in)
+		return srv.(TransformServer).TransformData(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/pluginv2.Transform/DataQuery",
+		FullMethod: "/pluginv2.Transform/TransformData",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(TransformServer).DataQuery(ctx, req.(*DataQueryRequest))
+		return srv.(TransformServer).TransformData(ctx, req.(*QueryDataRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -1741,334 +1381,80 @@ var _Transform_serviceDesc = grpc.ServiceDesc{
 	HandlerType: (*TransformServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "DataQuery",
-			Handler:    _Transform_DataQuery_Handler,
+			MethodName: "TransformData",
+			Handler:    _Transform_TransformData_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
 	Metadata: "backend.proto",
 }
 
-// TransformCallBackClient is the client API for TransformCallBack service.
+// TransformDataCallBackClient is the client API for TransformDataCallBack service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://godoc.org/google.golang.org/grpc#ClientConn.NewStream.
-type TransformCallBackClient interface {
-	DataQuery(ctx context.Context, in *DataQueryRequest, opts ...grpc.CallOption) (*DataQueryResponse, error)
+type TransformDataCallBackClient interface {
+	QueryData(ctx context.Context, in *QueryDataRequest, opts ...grpc.CallOption) (*QueryDataResponse, error)
 }
 
-type transformCallBackClient struct {
+type transformDataCallBackClient struct {
 	cc *grpc.ClientConn
 }
 
-func NewTransformCallBackClient(cc *grpc.ClientConn) TransformCallBackClient {
-	return &transformCallBackClient{cc}
+func NewTransformDataCallBackClient(cc *grpc.ClientConn) TransformDataCallBackClient {
+	return &transformDataCallBackClient{cc}
 }
 
-func (c *transformCallBackClient) DataQuery(ctx context.Context, in *DataQueryRequest, opts ...grpc.CallOption) (*DataQueryResponse, error) {
-	out := new(DataQueryResponse)
-	err := c.cc.Invoke(ctx, "/pluginv2.TransformCallBack/DataQuery", in, out, opts...)
+func (c *transformDataCallBackClient) QueryData(ctx context.Context, in *QueryDataRequest, opts ...grpc.CallOption) (*QueryDataResponse, error) {
+	out := new(QueryDataResponse)
+	err := c.cc.Invoke(ctx, "/pluginv2.TransformDataCallBack/QueryData", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-// TransformCallBackServer is the server API for TransformCallBack service.
-type TransformCallBackServer interface {
-	DataQuery(context.Context, *DataQueryRequest) (*DataQueryResponse, error)
+// TransformDataCallBackServer is the server API for TransformDataCallBack service.
+type TransformDataCallBackServer interface {
+	QueryData(context.Context, *QueryDataRequest) (*QueryDataResponse, error)
 }
 
-// UnimplementedTransformCallBackServer can be embedded to have forward compatible implementations.
-type UnimplementedTransformCallBackServer struct {
+// UnimplementedTransformDataCallBackServer can be embedded to have forward compatible implementations.
+type UnimplementedTransformDataCallBackServer struct {
 }
 
-func (*UnimplementedTransformCallBackServer) DataQuery(ctx context.Context, req *DataQueryRequest) (*DataQueryResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method DataQuery not implemented")
+func (*UnimplementedTransformDataCallBackServer) QueryData(ctx context.Context, req *QueryDataRequest) (*QueryDataResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method QueryData not implemented")
 }
 
-func RegisterTransformCallBackServer(s *grpc.Server, srv TransformCallBackServer) {
-	s.RegisterService(&_TransformCallBack_serviceDesc, srv)
+func RegisterTransformDataCallBackServer(s *grpc.Server, srv TransformDataCallBackServer) {
+	s.RegisterService(&_TransformDataCallBack_serviceDesc, srv)
 }
 
-func _TransformCallBack_DataQuery_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(DataQueryRequest)
+func _TransformDataCallBack_QueryData_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(QueryDataRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(TransformCallBackServer).DataQuery(ctx, in)
+		return srv.(TransformDataCallBackServer).QueryData(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/pluginv2.TransformCallBack/DataQuery",
+		FullMethod: "/pluginv2.TransformDataCallBack/QueryData",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(TransformCallBackServer).DataQuery(ctx, req.(*DataQueryRequest))
+		return srv.(TransformDataCallBackServer).QueryData(ctx, req.(*QueryDataRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-var _TransformCallBack_serviceDesc = grpc.ServiceDesc{
-	ServiceName: "pluginv2.TransformCallBack",
-	HandlerType: (*TransformCallBackServer)(nil),
+var _TransformDataCallBack_serviceDesc = grpc.ServiceDesc{
+	ServiceName: "pluginv2.TransformDataCallBack",
+	HandlerType: (*TransformDataCallBackServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "DataQuery",
-			Handler:    _TransformCallBack_DataQuery_Handler,
-		},
-	},
-	Streams:  []grpc.StreamDesc{},
-	Metadata: "backend.proto",
-}
-
-// StreamingPluginClient is the client API for StreamingPlugin service.
-//
-// For semantics around ctx use and closing/ending streaming RPCs, please refer to https://godoc.org/google.golang.org/grpc#ClientConn.NewStream.
-type StreamingPluginClient interface {
-	// Called by grafana before the first request
-	// Grafana server will set up a websocket that will broadcast to all listeners
-	Connect(ctx context.Context, in *PluginConfig, opts ...grpc.CallOption) (StreamingPlugin_ConnectClient, error)
-	// If the message is not empty, send that to the user
-	// throwing an error will make sure the user is not subscribed
-	Process(ctx context.Context, in *StreamingRequest, opts ...grpc.CallOption) (*StreamingMessage, error)
-	// Stop streaming to that instance, returns the number of open connections
-	Disconnect(ctx context.Context, in *empty.Empty, opts ...grpc.CallOption) (*StreamingClose, error)
-}
-
-type streamingPluginClient struct {
-	cc *grpc.ClientConn
-}
-
-func NewStreamingPluginClient(cc *grpc.ClientConn) StreamingPluginClient {
-	return &streamingPluginClient{cc}
-}
-
-func (c *streamingPluginClient) Connect(ctx context.Context, in *PluginConfig, opts ...grpc.CallOption) (StreamingPlugin_ConnectClient, error) {
-	stream, err := c.cc.NewStream(ctx, &_StreamingPlugin_serviceDesc.Streams[0], "/pluginv2.StreamingPlugin/Connect", opts...)
-	if err != nil {
-		return nil, err
-	}
-	x := &streamingPluginConnectClient{stream}
-	if err := x.ClientStream.SendMsg(in); err != nil {
-		return nil, err
-	}
-	if err := x.ClientStream.CloseSend(); err != nil {
-		return nil, err
-	}
-	return x, nil
-}
-
-type StreamingPlugin_ConnectClient interface {
-	Recv() (*StreamingMessage, error)
-	grpc.ClientStream
-}
-
-type streamingPluginConnectClient struct {
-	grpc.ClientStream
-}
-
-func (x *streamingPluginConnectClient) Recv() (*StreamingMessage, error) {
-	m := new(StreamingMessage)
-	if err := x.ClientStream.RecvMsg(m); err != nil {
-		return nil, err
-	}
-	return m, nil
-}
-
-func (c *streamingPluginClient) Process(ctx context.Context, in *StreamingRequest, opts ...grpc.CallOption) (*StreamingMessage, error) {
-	out := new(StreamingMessage)
-	err := c.cc.Invoke(ctx, "/pluginv2.StreamingPlugin/Process", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *streamingPluginClient) Disconnect(ctx context.Context, in *empty.Empty, opts ...grpc.CallOption) (*StreamingClose, error) {
-	out := new(StreamingClose)
-	err := c.cc.Invoke(ctx, "/pluginv2.StreamingPlugin/Disconnect", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-// StreamingPluginServer is the server API for StreamingPlugin service.
-type StreamingPluginServer interface {
-	// Called by grafana before the first request
-	// Grafana server will set up a websocket that will broadcast to all listeners
-	Connect(*PluginConfig, StreamingPlugin_ConnectServer) error
-	// If the message is not empty, send that to the user
-	// throwing an error will make sure the user is not subscribed
-	Process(context.Context, *StreamingRequest) (*StreamingMessage, error)
-	// Stop streaming to that instance, returns the number of open connections
-	Disconnect(context.Context, *empty.Empty) (*StreamingClose, error)
-}
-
-// UnimplementedStreamingPluginServer can be embedded to have forward compatible implementations.
-type UnimplementedStreamingPluginServer struct {
-}
-
-func (*UnimplementedStreamingPluginServer) Connect(req *PluginConfig, srv StreamingPlugin_ConnectServer) error {
-	return status.Errorf(codes.Unimplemented, "method Connect not implemented")
-}
-func (*UnimplementedStreamingPluginServer) Process(ctx context.Context, req *StreamingRequest) (*StreamingMessage, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method Process not implemented")
-}
-func (*UnimplementedStreamingPluginServer) Disconnect(ctx context.Context, req *empty.Empty) (*StreamingClose, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method Disconnect not implemented")
-}
-
-func RegisterStreamingPluginServer(s *grpc.Server, srv StreamingPluginServer) {
-	s.RegisterService(&_StreamingPlugin_serviceDesc, srv)
-}
-
-func _StreamingPlugin_Connect_Handler(srv interface{}, stream grpc.ServerStream) error {
-	m := new(PluginConfig)
-	if err := stream.RecvMsg(m); err != nil {
-		return err
-	}
-	return srv.(StreamingPluginServer).Connect(m, &streamingPluginConnectServer{stream})
-}
-
-type StreamingPlugin_ConnectServer interface {
-	Send(*StreamingMessage) error
-	grpc.ServerStream
-}
-
-type streamingPluginConnectServer struct {
-	grpc.ServerStream
-}
-
-func (x *streamingPluginConnectServer) Send(m *StreamingMessage) error {
-	return x.ServerStream.SendMsg(m)
-}
-
-func _StreamingPlugin_Process_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(StreamingRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(StreamingPluginServer).Process(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/pluginv2.StreamingPlugin/Process",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(StreamingPluginServer).Process(ctx, req.(*StreamingRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _StreamingPlugin_Disconnect_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(empty.Empty)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(StreamingPluginServer).Disconnect(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/pluginv2.StreamingPlugin/Disconnect",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(StreamingPluginServer).Disconnect(ctx, req.(*empty.Empty))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-var _StreamingPlugin_serviceDesc = grpc.ServiceDesc{
-	ServiceName: "pluginv2.StreamingPlugin",
-	HandlerType: (*StreamingPluginServer)(nil),
-	Methods: []grpc.MethodDesc{
-		{
-			MethodName: "Process",
-			Handler:    _StreamingPlugin_Process_Handler,
-		},
-		{
-			MethodName: "Disconnect",
-			Handler:    _StreamingPlugin_Disconnect_Handler,
-		},
-	},
-	Streams: []grpc.StreamDesc{
-		{
-			StreamName:    "Connect",
-			Handler:       _StreamingPlugin_Connect_Handler,
-			ServerStreams: true,
-		},
-	},
-	Metadata: "backend.proto",
-}
-
-// RendererClient is the client API for Renderer service.
-//
-// For semantics around ctx use and closing/ending streaming RPCs, please refer to https://godoc.org/google.golang.org/grpc#ClientConn.NewStream.
-type RendererClient interface {
-	Render(ctx context.Context, in *RenderRequest, opts ...grpc.CallOption) (*RenderResponse, error)
-}
-
-type rendererClient struct {
-	cc *grpc.ClientConn
-}
-
-func NewRendererClient(cc *grpc.ClientConn) RendererClient {
-	return &rendererClient{cc}
-}
-
-func (c *rendererClient) Render(ctx context.Context, in *RenderRequest, opts ...grpc.CallOption) (*RenderResponse, error) {
-	out := new(RenderResponse)
-	err := c.cc.Invoke(ctx, "/pluginv2.Renderer/Render", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-// RendererServer is the server API for Renderer service.
-type RendererServer interface {
-	Render(context.Context, *RenderRequest) (*RenderResponse, error)
-}
-
-// UnimplementedRendererServer can be embedded to have forward compatible implementations.
-type UnimplementedRendererServer struct {
-}
-
-func (*UnimplementedRendererServer) Render(ctx context.Context, req *RenderRequest) (*RenderResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method Render not implemented")
-}
-
-func RegisterRendererServer(s *grpc.Server, srv RendererServer) {
-	s.RegisterService(&_Renderer_serviceDesc, srv)
-}
-
-func _Renderer_Render_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(RenderRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(RendererServer).Render(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/pluginv2.Renderer/Render",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(RendererServer).Render(ctx, req.(*RenderRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-var _Renderer_serviceDesc = grpc.ServiceDesc{
-	ServiceName: "pluginv2.Renderer",
-	HandlerType: (*RendererServer)(nil),
-	Methods: []grpc.MethodDesc{
-		{
-			MethodName: "Render",
-			Handler:    _Renderer_Render_Handler,
+			MethodName: "QueryData",
+			Handler:    _TransformDataCallBack_QueryData_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

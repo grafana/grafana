@@ -1,5 +1,12 @@
+import { FieldConfig } from './dataFrame';
+import { DataTransformerConfig } from './transformations';
+import { ApplyFieldOverrideOptions } from './fieldOverrides';
+
 export type KeyValue<T = any> = { [s: string]: T };
 
+/**
+ * Represent panel data loading state.
+ */
 export enum LoadingState {
   NotStarted = 'NotStarted',
   Loading = 'Loading',
@@ -9,19 +16,40 @@ export enum LoadingState {
 }
 
 export interface QueryResultMeta {
-  [key: string]: any;
-
-  // Match the result to the query
-  requestId?: string;
-
-  // Used in Explore for highlighting
-  searchWords?: string[];
-
-  // Used in Explore to show limit applied to search result
-  limit?: number;
-
-  // DatasSource Specific Values
+  /** DatasSource Specific Values */
   custom?: Record<string, any>;
+
+  /** Stats */
+  stats?: QueryResultMetaStat[];
+
+  /** Meta Notices */
+  notices?: QueryResultMetaNotice[];
+
+  /** Used to track transformation ids that where part of the processing */
+  transformations?: string[];
+
+  /**
+   * Legacy data source specific, should be moved to custom
+   * */
+  gmdMeta?: any[]; // used by cloudwatch
+  rawQuery?: string; // used by stackdriver
+  alignmentPeriod?: string; // used by stackdriver
+  query?: string; // used by azure log
+  searchWords?: string[]; // used by log models and loki
+  limit?: number; // used by log models and loki
+  json?: boolean; // used to keep track of old json doc values
+}
+
+export interface QueryResultMetaStat extends FieldConfig {
+  title: string;
+  value: number;
+}
+
+export interface QueryResultMetaNotice {
+  severity: 'info' | 'warning' | 'error';
+  text: string;
+  url?: string;
+  inspect?: 'meta' | 'error' | 'data' | 'stats';
 }
 
 export interface QueryResultBase {
@@ -89,4 +117,12 @@ export interface AnnotationEvent {
 
   // Currently used to merge annotations from alerts and dashboard
   source?: any; // source.type === 'dashboard'
+}
+
+/**
+ * Describes and API for exposing panel specific data configurations.
+ */
+export interface DataConfigSource {
+  getTransformations: () => DataTransformerConfig[] | undefined;
+  getFieldOverrideOptions: () => ApplyFieldOverrideOptions | undefined;
 }

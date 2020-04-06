@@ -21,7 +21,7 @@ export const BackButton: React.FC<Props> = props => {
 BackButton.displayName = 'BackButton';
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
-  const hoverColor = selectThemeVariant({ dark: theme.colors.gray25, light: theme.colors.gray85 }, theme.type);
+  const hoverColor = selectThemeVariant({ dark: theme.colors.gray15, light: theme.colors.gray85 }, theme.type);
 
   return {
     wrapper: css`
@@ -56,7 +56,6 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       }
 
       .gicon {
-        opacity: 0.9;
         font-size: 26px;
       }
 
@@ -67,11 +66,6 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
           box-shadow: none;
           opacity: 1;
           transform: scale(0.8);
-        }
-
-        .gicon {
-          opacity: 1;
-          transition: opacity 0.2s ease-in-out;
         }
       }
     `,

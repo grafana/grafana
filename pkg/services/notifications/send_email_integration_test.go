@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana/pkg/bus"
-	m "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
 	. "github.com/smartystreets/goconvey/convey"
 )
@@ -27,7 +27,7 @@ func TestEmailIntegrationTest(t *testing.T) {
 		So(err, ShouldBeNil)
 
 		Convey("When sending reset email password", func() {
-			cmd := &m.SendEmailCommand{
+			cmd := &models.SendEmailCommand{
 
 				Data: map[string]interface{}{
 					"Title":         "[CRITICAL] Imaginary timeserie alert",

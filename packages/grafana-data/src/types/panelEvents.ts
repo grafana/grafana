@@ -11,7 +11,6 @@ export interface PanelChangeViewPayload {
 }
 
 /** Events */
-
 export const refresh = eventFactory('refresh');
 export const componentDidMount = eventFactory('component-did-mount');
 export const dataError = eventFactory<DataQueryError>('data-error');

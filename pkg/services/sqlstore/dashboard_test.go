@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	m "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/search"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
@@ -41,7 +41,7 @@ func TestDashboardDataAccess(t *testing.T) {
 			})
 
 			Convey("Should be able to get dashboard by id", func() {
-				query := m.GetDashboardQuery{
+				query := models.GetDashboardQuery{
 					Id:    savedDash.Id,
 					OrgId: 1,
 				}
@@ -57,7 +57,7 @@ func TestDashboardDataAccess(t *testing.T) {
 			})
 
 			Convey("Should be able to get dashboard by slug", func() {
-				query := m.GetDashboardQuery{
+				query := models.GetDashboardQuery{
 					Slug:  "test-dash-23",
 					OrgId: 1,
 				}
@@ -73,7 +73,7 @@ func TestDashboardDataAccess(t *testing.T) {
 			})
 
 			Convey("Should be able to get dashboard by uid", func() {
-				query := m.GetDashboardQuery{
+				query := models.GetDashboardQuery{
 					Uid:   savedDash.Uid,
 					OrgId: 1,
 				}
@@ -89,18 +89,18 @@ func TestDashboardDataAccess(t *testing.T) {
 			})
 
 			Convey("Shouldn't be able to get a dashboard with just an OrgID", func() {
-				query := m.GetDashboardQuery{
+				query := models.GetDashboardQuery{
 					OrgId: 1,
 				}
 
 				err := GetDashboard(&query)
-				So(err, ShouldEqual, m.ErrDashboardIdentifierNotSet)
+				So(err, ShouldEqual, models.ErrDashboardIdentifierNotSet)
 			})
 
 			Convey("Should be able to delete dashboard", func() {
 				dash := insertTestDashboard("delete me", 1, 0, false, "delete this")
 
-				err := DeleteDashboard(&m.DeleteDashboardCommand{
+				err := DeleteDashboard(&models.DeleteDashboardCommand{
 					Id:    dash.Id,
 					OrgId: 1,
 				})
@@ -117,7 +117,7 @@ func TestDashboardDataAccess(t *testing.T) {
 					}
 					return util.GenerateShortUID()
 				}
-				cmd := m.SaveDashboardCommand{
+				cmd := models.SaveDashboardCommand{
 					OrgId: 1,
 					Dashboard: simplejson.NewFromAny(map[string]interface{}{
 						"title": "new dash 12334",
@@ -132,7 +132,7 @@ func TestDashboardDataAccess(t *testing.T) {
 			})
 
 			Convey("Should be able to create dashboard", func() {
-				cmd := m.SaveDashboardCommand{
+				cmd := models.SaveDashboardCommand{
 					OrgId: 1,
 					Dashboard: simplejson.NewFromAny(map[string]interface{}{
 						"title": "folderId",
@@ -150,7 +150,7 @@ func TestDashboardDataAccess(t *testing.T) {
 			})
 
 			Convey("Should be able to update dashboard by id and remove folderId", func() {
-				cmd := m.SaveDashboardCommand{
+				cmd := models.SaveDashboardCommand{
 					OrgId: 1,
 					Dashboard: simplejson.NewFromAny(map[string]interface{}{
 						"id":    savedDash.Id,
@@ -166,7 +166,7 @@ func TestDashboardDataAccess(t *testing.T) {
 				So(err, ShouldBeNil)
 				So(cmd.Result.FolderId, ShouldEqual, 2)
 
-				cmd = m.SaveDashboardCommand{
+				cmd = models.SaveDashboardCommand{
 					OrgId: 1,
 					Dashboard: simplejson.NewFromAny(map[string]interface{}{
 						"id":    savedDash.Id,
@@ -181,7 +181,7 @@ func TestDashboardDataAccess(t *testing.T) {
 				err = SaveDashboard(&cmd)
 				So(err, ShouldBeNil)
 
-				query := m.GetDashboardQuery{
+				query := models.GetDashboardQuery{
 					Id:    savedDash.Id,
 					OrgId: 1,
 				}
@@ -196,14 +196,14 @@ func TestDashboardDataAccess(t *testing.T) {
 			})
 
 			Convey("Should be able to delete a dashboard folder and its children", func() {
-				deleteCmd := &m.DeleteDashboardCommand{Id: savedFolder.Id}
+				deleteCmd := &models.DeleteDashboardCommand{Id: savedFolder.Id}
 				err := DeleteDashboard(deleteCmd)
 				So(err, ShouldBeNil)
 
 				query := search.FindPersistedDashboardsQuery{
 					OrgId:        1,
 					FolderIds:    []int64{savedFolder.Id},
-					SignedInUser: &m.SignedInUser{},
+					SignedInUser: &models.SignedInUser{},
 				}
 
 				err = SearchDashboards(&query)
@@ -213,7 +213,7 @@ func TestDashboardDataAccess(t *testing.T) {
 			})
 
 			Convey("Should return error if no dashboard is found for update when dashboard id is greater than zero", func() {
-				cmd := m.SaveDashboardCommand{
+				cmd := models.SaveDashboardCommand{
 					OrgId:     1,
 					Overwrite: true,
 					Dashboard: simplejson.NewFromAny(map[string]interface{}{
@@ -224,11 +224,11 @@ func TestDashboardDataAccess(t *testing.T) {
 				}
 
 				err := SaveDashboard(&cmd)
-				So(err, ShouldEqual, m.ErrDashboardNotFound)
+				So(err, ShouldEqual, models.ErrDashboardNotFound)
 			})
 
 			Convey("Should not return error if no dashboard is found for update when dashboard id is zero", func() {
-				cmd := m.SaveDashboardCommand{
+				cmd := models.SaveDashboardCommand{
 					OrgId:     1,
 					Overwrite: true,
 					Dashboard: simplejson.NewFromAny(map[string]interface{}{
@@ -243,7 +243,7 @@ func TestDashboardDataAccess(t *testing.T) {
 			})
 
 			Convey("Should be able to get dashboard tags", func() {
-				query := m.GetDashboardTagsQuery{OrgId: 1}
+				query := models.GetDashboardTagsQuery{OrgId: 1}
 
 				err := GetDashboardTags(&query)
 				So(err, ShouldBeNil)
@@ -255,7 +255,7 @@ func TestDashboardDataAccess(t *testing.T) {
 				query := search.FindPersistedDashboardsQuery{
 					Title:        "1 test dash folder",
 					OrgId:        1,
-					SignedInUser: &m.SignedInUser{OrgId: 1, OrgRole: m.ROLE_EDITOR},
+					SignedInUser: &models.SignedInUser{OrgId: 1, OrgRole: models.ROLE_EDITOR},
 				}
 
 				err := SearchDashboards(&query)
@@ -272,7 +272,7 @@ func TestDashboardDataAccess(t *testing.T) {
 				query := search.FindPersistedDashboardsQuery{
 					OrgId:        1,
 					Limit:        1,
-					SignedInUser: &m.SignedInUser{OrgId: 1, OrgRole: m.ROLE_EDITOR},
+					SignedInUser: &models.SignedInUser{OrgId: 1, OrgRole: models.ROLE_EDITOR},
 				}
 
 				err := SearchDashboards(&query)
@@ -287,7 +287,7 @@ func TestDashboardDataAccess(t *testing.T) {
 					OrgId:        1,
 					Limit:        1,
 					Page:         2,
-					SignedInUser: &m.SignedInUser{OrgId: 1, OrgRole: m.ROLE_EDITOR},
+					SignedInUser: &models.SignedInUser{OrgId: 1, OrgRole: models.ROLE_EDITOR},
 				}
 
 				err := SearchDashboards(&query)
@@ -302,7 +302,7 @@ func TestDashboardDataAccess(t *testing.T) {
 					OrgId:        1,
 					Type:         "dash-db",
 					Tags:         []string{"prod"},
-					SignedInUser: &m.SignedInUser{OrgId: 1, OrgRole: m.ROLE_EDITOR},
+					SignedInUser: &models.SignedInUser{OrgId: 1, OrgRole: models.ROLE_EDITOR},
 				}
 
 				err := SearchDashboards(&query)
@@ -316,7 +316,7 @@ func TestDashboardDataAccess(t *testing.T) {
 				query := search.FindPersistedDashboardsQuery{
 					OrgId:        1,
 					FolderIds:    []int64{savedFolder.Id},
-					SignedInUser: &m.SignedInUser{OrgId: 1, OrgRole: m.ROLE_EDITOR},
+					SignedInUser: &models.SignedInUser{OrgId: 1, OrgRole: models.ROLE_EDITOR},
 				}
 
 				err := SearchDashboards(&query)
@@ -336,7 +336,7 @@ func TestDashboardDataAccess(t *testing.T) {
 				Convey("should be able to find two dashboards by id", func() {
 					query := search.FindPersistedDashboardsQuery{
 						DashboardIds: []int64{2, 3},
-						SignedInUser: &m.SignedInUser{OrgId: 1, OrgRole: m.ROLE_EDITOR},
+						SignedInUser: &models.SignedInUser{OrgId: 1, OrgRole: models.ROLE_EDITOR},
 					}
 
 					err := SearchDashboards(&query)
@@ -354,13 +354,13 @@ func TestDashboardDataAccess(t *testing.T) {
 
 			Convey("Given two dashboards, one is starred dashboard by user 10, other starred by user 1", func() {
 				starredDash := insertTestDashboard("starred dash", 1, 0, false)
-				err := StarDashboard(&m.StarDashboardCommand{
+				err := StarDashboard(&models.StarDashboardCommand{
 					DashboardId: starredDash.Id,
 					UserId:      10,
 				})
 				So(err, ShouldBeNil)
 
-				err = StarDashboard(&m.StarDashboardCommand{
+				err = StarDashboard(&models.StarDashboardCommand{
 					DashboardId: savedDash.Id,
 					UserId:      1,
 				})
@@ -368,7 +368,7 @@ func TestDashboardDataAccess(t *testing.T) {
 
 				Convey("Should be able to search for starred dashboards", func() {
 					query := search.FindPersistedDashboardsQuery{
-						SignedInUser: &m.SignedInUser{UserId: 10, OrgId: 1, OrgRole: m.ROLE_EDITOR},
+						SignedInUser: &models.SignedInUser{UserId: 10, OrgId: 1, OrgRole: models.ROLE_EDITOR},
 						IsStarred:    true,
 					}
 					err := SearchDashboards(&query)
@@ -388,7 +388,7 @@ func TestDashboardDataAccess(t *testing.T) {
 			insertTestDashboardForPlugin("app-dash2", 1, appFolder.Id, false, pluginId)
 
 			Convey("Should return imported dashboard", func() {
-				query := m.GetDashboardsByPluginIdQuery{
+				query := models.GetDashboardsByPluginIdQuery{
 					PluginId: pluginId,
 					OrgId:    1,
 				}
@@ -401,8 +401,8 @@ func TestDashboardDataAccess(t *testing.T) {
 	})
 }
 
-func insertTestDashboard(title string, orgId int64, folderId int64, isFolder bool, tags ...interface{}) *m.Dashboard {
-	cmd := m.SaveDashboardCommand{
+func insertTestDashboard(title string, orgId int64, folderId int64, isFolder bool, tags ...interface{}) *models.Dashboard {
+	cmd := models.SaveDashboardCommand{
 		OrgId:    orgId,
 		FolderId: folderId,
 		IsFolder: isFolder,
@@ -422,8 +422,8 @@ func insertTestDashboard(title string, orgId int64, folderId int64, isFolder boo
 	return cmd.Result
 }
 
-func insertTestDashboardForPlugin(title string, orgId int64, folderId int64, isFolder bool, pluginId string) *m.Dashboard {
-	cmd := m.SaveDashboardCommand{
+func insertTestDashboardForPlugin(title string, orgId int64, folderId int64, isFolder bool, pluginId string) *models.Dashboard {
+	cmd := models.SaveDashboardCommand{
 		OrgId:    orgId,
 		FolderId: folderId,
 		IsFolder: isFolder,
@@ -440,16 +440,16 @@ func insertTestDashboardForPlugin(title string, orgId int64, folderId int64, isF
 	return cmd.Result
 }
 
-func createUser(name string, role string, isAdmin bool) m.User {
+func createUser(name string, role string, isAdmin bool) models.User {
 	setting.AutoAssignOrg = true
 	setting.AutoAssignOrgId = 1
 	setting.AutoAssignOrgRole = role
 
-	currentUserCmd := m.CreateUserCommand{Login: name, Email: name + "@test.com", Name: "a " + name, IsAdmin: isAdmin}
+	currentUserCmd := models.CreateUserCommand{Login: name, Email: name + "@test.com", Name: "a " + name, IsAdmin: isAdmin}
 	err := CreateUser(context.Background(), &currentUserCmd)
 	So(err, ShouldBeNil)
 
-	q1 := m.GetUserOrgListQuery{UserId: currentUserCmd.Result.Id}
+	q1 := models.GetUserOrgListQuery{UserId: currentUserCmd.Result.Id}
 	err = GetUserOrgList(&q1)
 	So(err, ShouldBeNil)
 	So(q1.Result[0].Role, ShouldEqual, role)
@@ -457,8 +457,8 @@ func createUser(name string, role string, isAdmin bool) m.User {
 	return currentUserCmd.Result
 }
 
-func moveDashboard(orgId int64, dashboard *simplejson.Json, newFolderId int64) *m.Dashboard {
-	cmd := m.SaveDashboardCommand{
+func moveDashboard(orgId int64, dashboard *simplejson.Json, newFolderId int64) *models.Dashboard {
+	cmd := models.SaveDashboardCommand{
 		OrgId:     orgId,
 		FolderId:  newFolderId,
 		Dashboard: dashboard,

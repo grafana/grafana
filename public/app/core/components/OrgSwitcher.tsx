@@ -63,7 +63,7 @@ export class OrgSwitcher extends React.PureComponent<Props, State> {
                   {org.orgId === currentOrgId ? (
                     <Button size="sm">Current</Button>
                   ) : (
-                    <Button variant="inverse" size="sm" onClick={() => this.setCurrentOrg(org)}>
+                    <Button variant="secondary" size="sm" onClick={() => this.setCurrentOrg(org)}>
                       Switch to
                     </Button>
                   )}

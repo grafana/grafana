@@ -1,4 +1,7 @@
 import { GrafanaTheme } from '@grafana/data';
+import { selectThemeVariant } from './selectThemeVariant';
+import { css } from 'emotion';
+import { stylesFactory } from './stylesFactory';
 
 export function cardChrome(theme: GrafanaTheme): string {
   if (theme.isDark) {
@@ -43,3 +46,60 @@ export function listItem(theme: GrafanaTheme): string {
        border-radius: ${theme.border.radius.md};
     `;
 }
+
+export function listItemSelected(theme: GrafanaTheme): string {
+  return `
+       background: ${theme.isLight ? theme.colors.gray6 : theme.colors.dark9};
+       color: ${theme.colors.textStrong};
+    `;
+}
+
+export const panelEditorNestedListStyles = stylesFactory((theme: GrafanaTheme) => {
+  const borderColor = selectThemeVariant(
+    {
+      light: theme.colors.gray85,
+      dark: theme.colors.dark9,
+    },
+    theme.type
+  );
+  const shadow = selectThemeVariant(
+    {
+      light: theme.colors.gray85,
+      dark: theme.colors.black,
+    },
+    theme.type
+  );
+  const headerBg = selectThemeVariant(
+    {
+      light: theme.colors.white,
+      dark: theme.colors.dark1,
+    },
+    theme.type
+  );
+
+  return {
+    wrapper: css`
+      border: 1px dashed ${borderColor};
+      margin-bottom: ${theme.spacing.md};
+      transition: box-shadow 0.5s cubic-bezier(0.19, 1, 0.22, 1);
+      box-shadow: none;
+      &:hover {
+        box-shadow: 0 0 10px ${shadow};
+      }
+    `,
+    headerWrapper: css`
+      background: ${headerBg};
+      padding: ${theme.spacing.xs} 0;
+    `,
+
+    content: css`
+        padding: ${theme.spacing.xs} ${theme.spacing.sm} ${theme.spacing.sm} ${theme.spacing.sm};
+        border-top: 1px dashed ${borderColor};
+        > *:last-child {
+          margin-bottom: 0;
+      `,
+    itemContent: css`
+      padding: ${theme.spacing.xs} ${theme.spacing.sm} ${theme.spacing.sm} ${theme.spacing.sm};
+    `,
+  };
+});

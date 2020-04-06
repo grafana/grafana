@@ -214,6 +214,7 @@ For code that needs to be used by external plugin:
 - Use [TSDoc](https://github.com/microsoft/tsdoc) comments to document your code.
 - Use [react-docgen](https://github.com/reactjs/react-docgen) comments (`/** ... */`) for props documentation.
 - Use inline comments for comments inside functions, classes etc.
+- Please try to follow the [code comment guidelines](./code-comments.md) when adding comments.
 
 ### Linting
 

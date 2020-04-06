@@ -1,67 +1,300 @@
-import React from 'react';
-import { storiesOf } from '@storybook/react';
-import { action } from '@storybook/addon-actions';
-import { withKnobs, object } from '@storybook/addon-knobs';
-import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
-import { UseState } from '../../utils/storybook/UseState';
+import React, { useState } from 'react';
+import { Select, AsyncSelect, MultiSelect, AsyncMultiSelect } from './Select';
+import { withCenteredStory, withHorizontallyCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { SelectableValue } from '@grafana/data';
-import { Select } from './Select';
+import { getAvailableIcons, IconType } from '../Icon/types';
+import { select, boolean } from '@storybook/addon-knobs';
+import { Icon } from '../Icon/Icon';
+import { Button } from '../Button';
+import { ButtonSelect } from './ButtonSelect';
+import { getIconKnob } from '../../utils/storybook/knobs';
+import kebabCase from 'lodash/kebabCase';
+import { generateOptions } from './mockOptions';
 
-const SelectStories = storiesOf('General/Select/Select', module);
+export default {
+  title: 'Forms/Select',
+  component: Select,
+  decorators: [withCenteredStory, withHorizontallyCenteredStory],
+};
 
-SelectStories.addDecorator(withCenteredStory).addDecorator(withKnobs);
+const loadAsyncOptions = () => {
+  return new Promise<Array<SelectableValue<string>>>(resolve => {
+    setTimeout(() => {
+      resolve(generateOptions());
+    }, 2000);
+  });
+};
 
-SelectStories.add('default', () => {
-  const intialState: SelectableValue<string> = { label: 'A label', value: 'A value' };
-  const value = object<SelectableValue<string>>('Selected Value:', intialState);
-  const options = object<Array<SelectableValue<string>>>('Options:', [
-    intialState,
-    { label: 'Another label', value: 'Another value' },
-  ]);
+const getKnobs = () => {
+  const BEHAVIOUR_GROUP = 'Behaviour props';
+  const disabled = boolean('Disabled', false, BEHAVIOUR_GROUP);
+  const invalid = boolean('Invalid', false, BEHAVIOUR_GROUP);
+  const loading = boolean('Loading', false, BEHAVIOUR_GROUP);
+  const prefixSuffixOpts = {
+    None: null,
+    Text: '$',
+    ...getAvailableIcons().reduce<Record<string, string>>((prev, c) => {
+      return {
+        ...prev,
+        [`Icon: ${c}`]: `icon-${c}`,
+      };
+    }, {}),
+  };
+  const VISUAL_GROUP = 'Visual options';
+  // ---
+  const prefix = select('Prefix', prefixSuffixOpts, null, VISUAL_GROUP);
+
+  let prefixEl: any = prefix;
+  if (prefix && prefix.match(/icon-/g)) {
+    prefixEl = <Icon name={prefix.replace(/icon-/g, '') as IconType} />;
+  }
+
+  return {
+    disabled,
+    invalid,
+    loading,
+    prefixEl,
+  };
+};
+
+const getDynamicProps = () => {
+  const knobs = getKnobs();
+  return {
+    disabled: knobs.disabled,
+    isLoading: knobs.loading,
+    invalid: knobs.invalid,
+    prefix: knobs.prefixEl,
+  };
+};
+
+export const basic = () => {
+  const [value, setValue] = useState<SelectableValue<string>>();
 
   return (
-    <UseState initialState={value}>
-      {(value, updateValue) => {
-        return (
-          <Select
-            placeholder="Choose..."
-            options={options}
-            onChange={value => {
-              action('onChanged fired')(value);
-              updateValue(value);
-            }}
-          />
-        );
-      }}
-    </UseState>
+    <>
+      <Select
+        options={generateOptions()}
+        value={value}
+        onChange={v => {
+          setValue(v);
+        }}
+        size="md"
+        {...getDynamicProps()}
+      />
+    </>
   );
-});
+};
 
-SelectStories.add('With allowCustomValue', () => {
-  const intialState: SelectableValue<string> = { label: 'A label', value: 'A value' };
-  // @ts-ignore
-  const value = object<SelectableValue<string>>('Selected Value:', null);
-  const options = object<Array<SelectableValue<string>>>('Options:', [
-    intialState,
-    { label: 'Another label', value: 'Another value' },
-  ]);
+/**
+ * Uses plain values instead of SelectableValue<T>
+ */
+export const basicSelectPlainValue = () => {
+  const [value, setValue] = useState<string>();
+  return (
+    <>
+      <Select
+        options={generateOptions()}
+        value={value}
+        onChange={v => {
+          setValue(v.value);
+        }}
+        size="md"
+        {...getDynamicProps()}
+      />
+    </>
+  );
+};
+
+/**
+ * Uses plain values instead of SelectableValue<T>
+ */
+export const SelectWithOptionDescriptions = () => {
+  // TODO this is not working with new Select
+
+  const [value, setValue] = useState<number>();
+  const options = [
+    { label: 'Basic option', value: 0 },
+    { label: 'Option with description', value: 1, description: 'this is a description' },
+    {
+      label: 'Option with description and image',
+      value: 2,
+      description: 'This is a very elaborate description, describing all the wonders in the world.',
+      imgUrl: 'https://placekitten.com/40/40',
+    },
+  ];
 
   return (
-    <UseState initialState={value}>
-      {(value, updateValue) => {
-        return (
-          <Select
-            // value={value}
-            placeholder="Choose..."
-            options={options}
-            allowCustomValue={true}
-            onChange={value => {
-              action('onChanged fired')(value);
-              updateValue(value);
-            }}
-          />
-        );
-      }}
-    </UseState>
+    <>
+      <Select
+        options={options}
+        value={value}
+        onChange={v => {
+          setValue(v.value);
+        }}
+        size="md"
+        {...getDynamicProps()}
+      />
+    </>
   );
-});
+};
+
+/**
+ * Uses plain values instead of SelectableValue<T>
+ */
+export const multiPlainValue = () => {
+  const [value, setValue] = useState<string[]>();
+
+  return (
+    <>
+      <MultiSelect
+        options={generateOptions()}
+        value={value}
+        onChange={v => {
+          setValue(v.map((v: any) => v.value));
+        }}
+        size="md"
+        {...getDynamicProps()}
+      />
+    </>
+  );
+};
+
+export const multiSelect = () => {
+  const [value, setValue] = useState<Array<SelectableValue<string>>>([]);
+
+  return (
+    <>
+      <MultiSelect
+        options={generateOptions()}
+        value={value}
+        onChange={v => {
+          setValue(v);
+        }}
+        size="md"
+        {...getDynamicProps()}
+      />
+    </>
+  );
+};
+
+export const multiSelectAsync = () => {
+  const [value, setValue] = useState<Array<SelectableValue<string>>>();
+
+  return (
+    <AsyncMultiSelect
+      loadOptions={loadAsyncOptions}
+      defaultOptions
+      value={value}
+      onChange={v => {
+        setValue(v);
+      }}
+      size="md"
+      allowCustomValue
+      {...getDynamicProps()}
+    />
+  );
+};
+export const buttonSelect = () => {
+  const [value, setValue] = useState<SelectableValue<string>>();
+  const icon = getIconKnob();
+  return (
+    <ButtonSelect
+      placeholder="Select all the things..."
+      value={value}
+      options={generateOptions()}
+      onChange={v => {
+        setValue(v);
+      }}
+      size="md"
+      allowCustomValue
+      icon={icon}
+      {...getDynamicProps()}
+    />
+  );
+};
+
+export const basicSelectAsync = () => {
+  const [value, setValue] = useState<SelectableValue<string>>();
+
+  return (
+    <AsyncSelect
+      loadOptions={loadAsyncOptions}
+      defaultOptions
+      value={value}
+      onChange={v => {
+        setValue(v);
+      }}
+      size="md"
+      {...getDynamicProps()}
+    />
+  );
+};
+
+export const customizedControl = () => {
+  const [value, setValue] = useState<SelectableValue<string>>();
+
+  return (
+    <Select
+      options={generateOptions()}
+      value={value}
+      onChange={v => {
+        setValue(v);
+      }}
+      size="md"
+      renderControl={React.forwardRef(({ isOpen, value, ...otherProps }, ref) => {
+        return (
+          <Button {...otherProps} ref={ref}>
+            {' '}
+            {isOpen ? 'Open' : 'Closed'}
+          </Button>
+        );
+      })}
+      {...getDynamicProps()}
+    />
+  );
+};
+
+export const autoMenuPlacement = () => {
+  const [value, setValue] = useState<SelectableValue<string>>();
+
+  return (
+    <>
+      <div style={{ height: '95vh', display: 'flex', alignItems: 'flex-end' }}>
+        <Select
+          options={generateOptions()}
+          value={value}
+          onChange={v => {
+            setValue(v);
+          }}
+          size="md"
+          {...getDynamicProps()}
+        />
+      </div>
+    </>
+  );
+};
+
+export const customValueCreation = () => {
+  const [value, setValue] = useState<SelectableValue<string>>();
+  const [customOptions, setCustomOptions] = useState<Array<SelectableValue<string>>>([]);
+  const options = generateOptions();
+  return (
+    <>
+      <Select
+        options={[...options, ...customOptions]}
+        value={value}
+        onChange={v => {
+          setValue(v);
+        }}
+        size="md"
+        allowCustomValue
+        onCreateOption={v => {
+          const customValue: SelectableValue<string> = { value: kebabCase(v), label: v };
+          setCustomOptions([...customOptions, customValue]);
+          setValue(customValue);
+        }}
+        {...getDynamicProps()}
+      />
+    </>
+  );
+};

@@ -207,7 +207,7 @@ export class CloudWatchQueryParameterCtrl {
         });
 
         if (addTemplateVars) {
-          _.each(templateSrv.variables, variable => {
+          _.each(templateSrv.getVariables(), variable => {
             segments.unshift(
               uiSegmentSrv.newSegment({
                 type: 'template',

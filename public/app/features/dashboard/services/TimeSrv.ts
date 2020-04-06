@@ -22,6 +22,8 @@ import { getZoomedTimeRange, getShiftedTimeRange } from 'app/core/utils/timePick
 import { appEvents } from '../../../core/core';
 import { CoreEvents } from '../../../types';
 
+import { config } from 'app/core/config';
+
 export class TimeSrv {
   time: any;
   refreshTimer: any;
@@ -72,6 +74,19 @@ export class TimeSrv {
     }
   }
 
+  getValidIntervals(intervals: string[]): string[] {
+    if (!this.contextSrv.minRefreshInterval) {
+      return intervals;
+    }
+
+    const validIntervals = intervals.filter(str => str !== '').filter(this.contextSrv.isAllowedInterval);
+
+    if (validIntervals.indexOf(this.contextSrv.minRefreshInterval) === -1) {
+      validIntervals.unshift(this.contextSrv.minRefreshInterval);
+    }
+    return validIntervals;
+  }
+
   private parseTime() {
     // when absolute time is saved in json it is turned to a string
     if (_.isString(this.time.from) && this.time.from.indexOf('Z') >= 0) {
@@ -87,10 +102,15 @@ export class TimeSrv {
       return value;
     }
     if (value.length === 8) {
-      return toUtc(value, 'YYYYMMDD');
-    }
-    if (value.length === 15) {
-      return toUtc(value, 'YYYYMMDDTHHmmss');
+      const utcValue = toUtc(value, 'YYYYMMDD');
+      if (utcValue.isValid()) {
+        return utcValue;
+      }
+    } else if (value.length === 15) {
+      const utcValue = toUtc(value, 'YYYYMMDDTHHmmss');
+      if (utcValue.isValid()) {
+        return utcValue;
+      }
     }
 
     if (!isNaN(value)) {
@@ -138,7 +158,11 @@ export class TimeSrv {
     }
     // but if refresh explicitly set then use that
     if (params.refresh) {
-      this.refresh = params.refresh || this.refresh;
+      if (!this.contextSrv.isAllowedInterval(params.refresh)) {
+        this.refresh = config.minRefreshInterval;
+      } else {
+        this.refresh = params.refresh || this.refresh;
+      }
     }
   }
 
@@ -170,7 +194,8 @@ export class TimeSrv {
     this.cancelNextRefresh();
 
     if (interval) {
-      const intervalMs = kbn.interval_to_ms(interval);
+      const validInterval = this.contextSrv.getValidInterval(interval);
+      const intervalMs = kbn.interval_to_ms(validInterval);
 
       this.refreshTimer = this.timer.register(
         this.$timeout(() => {
@@ -184,7 +209,7 @@ export class TimeSrv {
     this.$timeout(() => {
       const params = this.$location.search();
       if (interval) {
-        params.refresh = interval;
+        params.refresh = this.contextSrv.getValidInterval(interval);
         this.$location.search(params);
       } else if (params.refresh) {
         delete params.refresh;

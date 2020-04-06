@@ -7,7 +7,7 @@ type = "docs"
 name = "Time series"
 identifier = "time_series"
 parent = "guides"
-weight = 3
+weight = 300
 +++
 
 # Introduction to time series

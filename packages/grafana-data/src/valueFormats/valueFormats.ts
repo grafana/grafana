@@ -176,37 +176,50 @@ function buildFormats() {
   hasBuiltIndex = true;
 }
 
-export function getValueFormat(id: string): ValueFormatter {
+export function getValueFormat(id?: string | null): ValueFormatter {
+  if (!id) {
+    return toFixedUnit('');
+  }
+
   if (!hasBuiltIndex) {
     buildFormats();
   }
 
   const fmt = index[id];
+
   if (!fmt && id) {
     const idx = id.indexOf(':');
+
     if (idx > 0) {
       const key = id.substring(0, idx);
       const sub = id.substring(idx + 1);
+
       if (key === 'prefix') {
         return toFixedUnit(sub, true);
       }
+
       if (key === 'time') {
         return toDateTimeValueFormatter(sub);
       }
+
       if (key === 'si') {
         const offset = getOffsetFromSIPrefix(sub.charAt(0));
         const unit = offset === 0 ? sub : sub.substring(1);
         return decimalSIPrefix(unit, offset);
       }
+
       if (key === 'count') {
         return simpleCountUnit(sub);
       }
+
       if (key === 'currency') {
         return currency(sub);
       }
     }
+
     return toFixedUnit(id);
   }
+
   return fmt;
 }
 

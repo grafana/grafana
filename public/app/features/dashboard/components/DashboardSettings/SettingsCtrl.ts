@@ -5,7 +5,7 @@ import { e2e } from '@grafana/e2e';
 
 import { appEvents, contextSrv, coreModule } from 'app/core/core';
 import { DashboardModel } from '../../state/DashboardModel';
-import config from 'app/core/config';
+import { getConfig } from 'app/core/config';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { DashboardSrv } from '../../services/DashboardSrv';
 import { CoreEvents } from 'app/types';
@@ -26,6 +26,7 @@ export class SettingsCtrl {
   sections: any[];
   hasUnsavedFolderChange: boolean;
   selectors: typeof e2e.pages.Dashboard.Settings.General.selectors;
+  useAngularTemplating: boolean;
 
   /** @ngInject */
   constructor(
@@ -56,8 +57,11 @@ export class SettingsCtrl {
 
     this.$rootScope.onAppEvent(CoreEvents.routeUpdated, this.onRouteUpdated.bind(this), $scope);
     this.$rootScope.appEvent(CoreEvents.dashScroll, { animate: false, pos: 0 });
-    this.$rootScope.onAppEvent(CoreEvents.dashboardSaved, this.onPostSave.bind(this), $scope);
+
+    appEvents.on(CoreEvents.dashboardSaved, this.onPostSave.bind(this), $scope);
+
     this.selectors = e2e.pages.Dashboard.Settings.General.selectors;
+    this.useAngularTemplating = !getConfig().featureToggles.newVariables;
   }
 
   buildSectionList() {
@@ -121,7 +125,7 @@ export class SettingsCtrl {
 
     for (const section of this.sections) {
       const sectionParams = _.defaults({ editview: section.id }, params);
-      section.url = config.appSubUrl + url + '?' + $.param(sectionParams);
+      section.url = getConfig().appSubUrl + url + '?' + $.param(sectionParams);
     }
   }
 
@@ -146,15 +150,6 @@ export class SettingsCtrl {
       this.viewId = '404';
     }
   }
-
-  openSaveAsModal() {
-    this.dashboardSrv.showSaveAsModal();
-  }
-
-  saveDashboard() {
-    this.dashboardSrv.saveDashboard();
-  }
-
   saveDashboardJson() {
     this.dashboardSrv.saveJSONDashboard(this.json).then(() => {
       this.$route.reload();
@@ -257,6 +252,10 @@ export class SettingsCtrl {
       url: this.dashboard.meta.folderUrl,
     };
   }
+
+  getDashboard = () => {
+    return this.dashboard;
+  };
 }
 
 export function dashboardSettings() {

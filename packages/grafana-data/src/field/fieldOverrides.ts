@@ -1,19 +1,16 @@
 import {
-  GrafanaTheme,
   DynamicConfigValue,
   FieldConfig,
-  InterpolateFunction,
   DataFrame,
   Field,
   FieldType,
-  FieldConfigSource,
   ThresholdsMode,
   FieldColorMode,
   ColorScheme,
-  TimeZone,
   FieldConfigEditorRegistry,
   FieldOverrideContext,
   ScopedVars,
+  ApplyFieldOverrideOptions,
 } from '../types';
 import { fieldMatchers, ReducerID, reduceField } from '../transformations';
 import { FieldMatcher } from '../types/transformations';
@@ -30,17 +27,6 @@ interface OverrideProps {
 interface GlobalMinMax {
   min: number;
   max: number;
-}
-
-export interface ApplyFieldOverrideOptions {
-  data?: DataFrame[];
-  fieldOptions: FieldConfigSource;
-  replaceVariables: InterpolateFunction;
-  theme: GrafanaTheme;
-  timeZone?: TimeZone;
-  autoMinMax?: boolean;
-  standard?: FieldConfigEditorRegistry;
-  custom?: FieldConfigEditorRegistry;
 }
 
 export function findNumericFieldMinMax(data: DataFrame[]): GlobalMinMax {
@@ -136,8 +122,6 @@ export function applyFieldOverrides(options: ApplyFieldOverrideOptions): DataFra
         }
       }
 
-      // console.log(config)
-
       // Try harder to set a real value that is not 'other'
       let type = field.type;
       if (!type || type === FieldType.other) {
@@ -220,8 +204,8 @@ function setDynamicConfigValue(config: FieldConfig, value: DynamicConfigValue, c
   const remove = val === undefined || val === null;
 
   if (remove) {
-    if (value.custom) {
-      delete (config?.custom as any)[value.prop];
+    if (value.custom && config.custom) {
+      delete config.custom[value.prop];
     } else {
       delete (config as any)[value.prop];
     }
@@ -242,7 +226,6 @@ function setDynamicConfigValue(config: FieldConfig, value: DynamicConfigValue, c
 export function setFieldConfigDefaults(config: FieldConfig, defaults: FieldConfig, context: FieldOverrideEnv) {
   if (defaults) {
     const keys = Object.keys(defaults);
-
     for (const key of keys) {
       if (key === 'custom') {
         if (!context.custom) {
@@ -275,6 +258,10 @@ const processFieldConfigValue = (
   const currentConfig = destination[key];
   if (currentConfig === null || currentConfig === undefined) {
     const item = registry.getIfExists(key);
+    if (!item) {
+      return;
+    }
+
     if (item && item.shouldApply(context.field!)) {
       const val = item.process(source[key], context, item.settings);
       if (val !== undefined && val !== null) {

@@ -231,6 +231,9 @@ module.exports = {
 ### How do I add third-party dependencies that are not npm packages?
 Put them in the `static` directory in the root of your project. The `static` directory is copied when the plugin is built.
 
+### I am getting this message when I run yarn install: `Request failed \"404 Not Found\"`
+If you are using version `canary`, this error occurs because a `canary` release unpublishes previous versions leaving `yarn.lock` outdated. Remove `yarn.lock` and run `yarn install` again.
+
 ### I am getting this message when I run my plugin: `Unable to dynamically transpile ES module A loader plugin needs to be configured via SystemJS.config({ transpiler: 'transpiler-module' }).`
 This error occurs when you bundle your plugin using the `grafana-toolkit plugin:dev` task and your code comments include ES2016 code.
 

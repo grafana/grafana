@@ -17,6 +17,7 @@ import { TimePickerWithHistory } from 'app/core/components/TimePicker/TimePicker
 
 // Utils & Services
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
+import { defaultIntervals } from '@grafana/ui/src/components/RefreshPicker/RefreshPicker';
 import { appEvents } from 'app/core/core';
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
@@ -24,7 +25,6 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
     container: css`
       position: relative;
       display: flex;
-      padding: 2px 2px;
     `,
   };
 });
@@ -93,7 +93,9 @@ class UnthemedDashNavTimeControls extends Component<Props> {
 
   render() {
     const { dashboard, theme } = this.props;
-    const intervals = dashboard.timepicker.refresh_intervals;
+    const { refresh_intervals } = dashboard.timepicker;
+    const intervals = getTimeSrv().getValidIntervals(refresh_intervals || defaultIntervals);
+
     const timePickerValue = getTimeSrv().timeRange();
     const timeZone = dashboard.getTimezone();
     const styles = getStyles(theme);

@@ -214,6 +214,10 @@
   background-image: url('../img/icons_#{$theme-name}_theme/icon_explore.svg');
 }
 
+.gicon-reports {
+  background-image: url('../img/icons_#{$theme-name}_theme/icon_reports.svg');
+}
+
 .sidemenu {
   .gicon-dashboard {
     background-image: url('../img/icons_dark_theme/icon_dashboard.svg');
@@ -232,6 +236,9 @@
   }
   .gicon-shield {
     background-image: url('../img/icons_dark_theme/icon_shield.svg');
+  }
+  .gicon-reports {
+    background-image: url('../img/icons_dark_theme/icon_reports.svg');
   }
 }
 

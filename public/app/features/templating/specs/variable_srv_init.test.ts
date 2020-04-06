@@ -81,7 +81,7 @@ describe('VariableSrv init', function(this: any) {
     });
   }
 
-  ['query', 'interval', 'custom', 'datasource'].forEach(type => {
+  ['interval', 'custom', 'datasource'].forEach(type => {
     describeInitScenario('when setting ' + type + ' variable via url', (scenario: any) => {
       scenario.setup(() => {
         scenario.variables = [
@@ -103,6 +103,7 @@ describe('VariableSrv init', function(this: any) {
     });
   });
 
+  // this test will moved to redux tests instead
   describe('given dependent variables', () => {
     const variableList = [
       {
@@ -170,7 +171,7 @@ describe('VariableSrv init', function(this: any) {
       scenario.variables = [
         {
           name: 'apps',
-          type: 'query',
+          type: 'custom',
           multi: true,
           current: { text: 'Val1', value: 'val1' },
           options: [
@@ -206,7 +207,7 @@ describe('VariableSrv init', function(this: any) {
         scenario.variables = [
           {
             name: 'apps',
-            type: 'query',
+            type: 'custom',
             multi: true,
           },
         ];
@@ -228,7 +229,7 @@ describe('VariableSrv init', function(this: any) {
       scenario.variables = [
         {
           name: 'apps',
-          type: 'query',
+          type: 'custom',
           multi: true,
           current: { text: 'Val1', value: 'val1' },
           options: [

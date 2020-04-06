@@ -34,13 +34,21 @@ export const PanelEditorTabs: React.FC<PanelEditorTabsProps> = ({ panel, dashboa
     <div className={styles.wrapper}>
       <TabsBar className={styles.tabBar}>
         {tabs.map(tab => {
-          return <Tab key={tab.id} label={tab.text} active={tab.active} onChangeTab={() => onChangeTab(tab)} />;
+          return (
+            <Tab
+              key={tab.id}
+              label={tab.text}
+              active={tab.active}
+              onChangeTab={() => onChangeTab(tab)}
+              icon={tab.icon}
+            />
+          );
         })}
       </TabsBar>
       <TabContent className={styles.tabContent}>
-        {activeTab.id === PanelEditorTabId.Queries && <QueriesTab panel={panel} dashboard={dashboard} />}
+        {activeTab.id === PanelEditorTabId.Query && <QueriesTab panel={panel} dashboard={dashboard} />}
         {activeTab.id === PanelEditorTabId.Alert && <AlertTab panel={panel} dashboard={dashboard} />}
-        {activeTab.id === PanelEditorTabId.Visualization && <VisualizationTab panel={panel} />}
+        {activeTab.id === PanelEditorTabId.Visualize && <VisualizationTab panel={panel} />}
         {activeTab.id === PanelEditorTabId.Transform && data.state !== LoadingState.NotStarted && (
           <TransformationsEditor
             transformations={panel.transformations || []}
@@ -62,16 +70,17 @@ const getPanelEditorTabsStyles = stylesFactory(() => {
       flex-direction: column;
       height: 100%;
     `,
-    tabBar: css``,
+    tabBar: css`
+      padding-left: ${theme.spacing.md};
+    `,
     tabContent: css`
       padding: 0;
       display: flex;
       flex-direction: column;
       flex-grow: 1;
       min-height: 0;
-      background: ${theme.colors.pageBg};
+      background: ${theme.colors.panelBg};
       border-right: 1px solid ${theme.colors.pageHeaderBorder};
-      border-left: 1px solid ${theme.colors.pageHeaderBorder};
 
       .toolbar {
         background: transparent;

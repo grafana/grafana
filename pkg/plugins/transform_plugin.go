@@ -7,7 +7,7 @@ import (
 	"path"
 	"strconv"
 
-	"github.com/grafana/grafana-plugin-sdk-go/dataframe"
+	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana-plugin-sdk-go/genproto/pluginv2"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
@@ -53,9 +53,9 @@ func (p *TransformPlugin) Load(decoder *json.Decoder, pluginDir string, backendP
 func (p *TransformPlugin) onPluginStart(pluginID string, client *backendplugin.Client, logger log.Logger) error {
 	p.TransformWrapper = NewTransformWrapper(logger, client.TransformPlugin)
 
-	if client.DatasourcePlugin != nil {
+	if client.DataPlugin != nil {
 		tsdb.RegisterTsdbQueryEndpoint(pluginID, func(dsInfo *models.DataSource) (tsdb.TsdbQueryEndpoint, error) {
-			return wrapper.NewDatasourcePluginWrapperV2(logger, p.Id, p.Type, client.DatasourcePlugin), nil
+			return wrapper.NewDatasourcePluginWrapperV2(logger, p.Id, p.Type, client.DataPlugin), nil
 		})
 	}
 
@@ -77,7 +77,7 @@ type TransformWrapper struct {
 }
 
 func (tw *TransformWrapper) Transform(ctx context.Context, query *tsdb.TsdbQuery) (*tsdb.Response, error) {
-	pbQuery := &pluginv2.DataQueryRequest{
+	pbQuery := &pluginv2.QueryDataRequest{
 		Config:  &pluginv2.PluginConfig{},
 		Queries: []*pluginv2.DataQuery{},
 	}
@@ -98,7 +98,7 @@ func (tw *TransformWrapper) Transform(ctx context.Context, query *tsdb.TsdbQuery
 			},
 		})
 	}
-	pbRes, err := tw.TransformPlugin.DataQuery(ctx, pbQuery, tw.callback)
+	pbRes, err := tw.TransformPlugin.TransformData(ctx, pbQuery, tw.callback)
 	if err != nil {
 		return nil, err
 	}
@@ -117,7 +117,7 @@ type transformCallback struct {
 	logger log.Logger
 }
 
-func (s *transformCallback) DataQuery(ctx context.Context, req *pluginv2.DataQueryRequest) (*pluginv2.DataQueryResponse, error) {
+func (s *transformCallback) QueryData(ctx context.Context, req *pluginv2.QueryDataRequest) (*pluginv2.QueryDataResponse, error) {
 	if len(req.Queries) == 0 {
 		return nil, fmt.Errorf("zero queries found in datasource request")
 	}
@@ -189,12 +189,12 @@ func (s *transformCallback) DataQuery(ctx context.Context, req *pluginv2.DataQue
 			if err != nil {
 				return nil, err
 			}
-			encFrame, err := dataframe.MarshalArrow(frame)
+			encFrame, err := data.MarshalArrow(frame)
 			if err != nil {
 				return nil, err
 			}
 			encodedFrames = append(encodedFrames, encFrame)
 		}
 	}
-	return &pluginv2.DataQueryResponse{Frames: encodedFrames}, nil
+	return &pluginv2.QueryDataResponse{Frames: encodedFrames}, nil
 }

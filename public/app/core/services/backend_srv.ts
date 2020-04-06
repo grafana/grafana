@@ -1,4 +1,3 @@
-import omitBy from 'lodash/omitBy';
 import { from, merge, MonoTypeOperatorFunction, Observable, of, Subject, throwError } from 'rxjs';
 import { catchError, filter, map, mergeMap, retryWhen, share, takeUntil, tap, throwIfEmpty } from 'rxjs/operators';
 import { fromFetch } from 'rxjs/fetch';
@@ -14,6 +13,7 @@ import { ContextSrv, contextSrv } from './context_srv';
 import { coreModule } from 'app/core/core_module';
 import { Emitter } from '../utils/emitter';
 import { DataSourceResponse } from '../../types/events';
+import { parseInitFromOptions, parseUrlFromOptions } from '../utils/fetch';
 
 export interface DatasourceRequestOptions {
   retry?: number;
@@ -52,18 +52,6 @@ interface ErrorResponse<T extends ErrorResponseProps = any> {
 enum CancellationType {
   request,
   dataSourceRequest,
-}
-
-function serializeParams(data: Record<string, any>): string {
-  return Object.keys(data)
-    .map(key => {
-      const value = data[key];
-      if (Array.isArray(value)) {
-        return value.map(arrayValue => `${encodeURIComponent(key)}=${encodeURIComponent(arrayValue)}`).join('&');
-      }
-      return `${encodeURIComponent(key)}=${encodeURIComponent(value)}`;
-    })
-    .join('&');
 }
 
 export interface BackendSrvDependencies {
@@ -459,7 +447,7 @@ export class BackendSrv implements BackendService {
           url,
           type,
           redirected,
-          request: { url, ...init },
+          config: options,
         };
         return fetchResponse;
       }),
@@ -567,7 +555,7 @@ export class BackendSrv implements BackendService {
             data: [],
             status: this.HTTP_REQUEST_CANCELED,
             statusText: 'Request was aborted',
-            request: { url: parseUrlFromOptions(options), ...parseInitFromOptions(options) },
+            config: options,
           });
         }
 
@@ -580,36 +568,3 @@ coreModule.factory('backendSrv', () => backendSrv);
 // Used for testing and things that really need BackendSrv
 export const backendSrv = new BackendSrv();
 export const getBackendSrv = (): BackendSrv => backendSrv;
-
-export const parseUrlFromOptions = (options: BackendSrvRequest): string => {
-  const cleanParams = omitBy(options.params, v => v === undefined || (v && v.length === 0));
-  const serializedParams = serializeParams(cleanParams);
-  return options.params && serializedParams.length ? `${options.url}?${serializedParams}` : options.url;
-};
-
-export const parseInitFromOptions = (options: BackendSrvRequest): RequestInit => {
-  const method = options.method;
-  const headers = {
-    'Content-Type': 'application/json',
-    Accept: 'application/json, text/plain, */*',
-    ...options.headers,
-  };
-  const body = parseBody({ ...options, headers });
-  return {
-    method,
-    headers,
-    body,
-  };
-};
-
-const parseBody = (options: BackendSrvRequest) => {
-  if (!options.data || typeof options.data === 'string') {
-    return options.data;
-  }
-
-  if (options.headers['Content-Type'] === 'application/json') {
-    return JSON.stringify(options.data);
-  }
-
-  return new URLSearchParams(options.data);
-};

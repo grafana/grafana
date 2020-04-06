@@ -23,6 +23,7 @@ type DataSourcePlugin struct {
 	Explore      bool              `json:"explore"`
 	Table        bool              `json:"tables"`
 	Logs         bool              `json:"logs"`
+	Tracing      bool              `json:"tracing"`
 	QueryOptions map[string]bool   `json:"queryOptions,omitempty"`
 	BuiltIn      bool              `json:"builtIn,omitempty"`
 	Mixed        bool              `json:"mixed,omitempty"`
@@ -68,9 +69,9 @@ func (p *DataSourcePlugin) onLegacyPluginStart(pluginID string, client *backendp
 }
 
 func (p *DataSourcePlugin) onPluginStart(pluginID string, client *backendplugin.Client, logger log.Logger) error {
-	if client.DatasourcePlugin != nil {
+	if client.DataPlugin != nil {
 		tsdb.RegisterTsdbQueryEndpoint(pluginID, func(dsInfo *models.DataSource) (tsdb.TsdbQueryEndpoint, error) {
-			return wrapper.NewDatasourcePluginWrapperV2(logger, p.Id, p.Type, client.DatasourcePlugin), nil
+			return wrapper.NewDatasourcePluginWrapperV2(logger, p.Id, p.Type, client.DataPlugin), nil
 		})
 	}
 
