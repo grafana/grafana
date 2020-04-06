@@ -247,9 +247,9 @@ func (m *manager) CallResource(config PluginConfig, c *models.ReqContext, path s
 			if err != nil {
 				if processedStreams == 0 {
 					return errutil.Wrap("Failed to receive response from resource call", err)
-				} else {
-					p.logger.Error("Failed to receive response from resource call", "error", err)
 				}
+
+				p.logger.Error("Failed to receive response from resource call", "error", err)
 				return ErrStreamDrained
 			}
 
