@@ -7,7 +7,6 @@ import {
   ThresholdsMode,
   FieldColorMode,
   ColorScheme,
-  FieldConfigOptionsRegistry,
   FieldOverrideContext,
   ScopedVars,
   ApplyFieldOverrideOptions,
@@ -18,6 +17,7 @@ import isNumber from 'lodash/isNumber';
 import { getDisplayProcessor } from './displayProcessor';
 import { guessFieldTypeForField } from '../dataframe';
 import { standardFieldConfigEditorRegistry } from './standardFieldConfigEditorRegistry';
+import { FieldConfigOptionsRegistry } from './FieldConfigOptionsRegistry';
 
 interface OverrideProps {
   match: FieldMatcher;

@@ -1,5 +1,4 @@
 import {
-  FieldConfigOptionsRegistry,
   FieldConfigSource,
   GrafanaPlugin,
   PanelEditorProps,
@@ -14,7 +13,7 @@ import { FieldConfigEditorBuilder, PanelOptionsEditorBuilder } from '../utils/Op
 import { ComponentClass, ComponentType } from 'react';
 import set from 'lodash/set';
 import { deprecationWarning } from '../utils';
-import { standardFieldConfigEditorRegistry } from '../field';
+import { FieldConfigOptionsRegistry, standardFieldConfigEditorRegistry } from '../field';
 
 export interface SetFieldConfigOptionsArgs<TFieldConfigOptions = any> {
   standardOptions?: FieldConfigProperty[];

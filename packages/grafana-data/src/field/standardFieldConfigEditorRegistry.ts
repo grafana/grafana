@@ -1,6 +1,6 @@
-import { FieldConfigOptionsRegistry } from '../types/fieldOverrides';
 import { Registry, RegistryItem } from '../utils/Registry';
 import { ComponentType } from 'react';
+import { FieldConfigOptionsRegistry } from './FieldConfigOptionsRegistry';
 
 export interface StandardEditorProps<TValue = any, TSettings = any> {
   value: TValue;

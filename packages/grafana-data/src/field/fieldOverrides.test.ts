@@ -7,7 +7,6 @@ import {
 import { MutableDataFrame, toDataFrame } from '../dataframe';
 import {
   FieldConfig,
-  FieldConfigOptionsRegistry,
   FieldPropertyEditorItem,
   GrafanaTheme,
   FieldType,
@@ -18,6 +17,7 @@ import {
 import { Registry } from '../utils';
 import { mockStandardProperties } from '../utils/tests/mockStandardProperties';
 import { FieldMatcherID } from '../transformations';
+import { FieldConfigOptionsRegistry } from './FieldConfigOptionsRegistry';
 
 const property1 = {
   id: 'custom.property1', // Match field properties

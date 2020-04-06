@@ -78,8 +78,6 @@ export interface FieldPropertyEditorItem<TOptions = any, TValue = any, TSettings
   shouldApply: (field: Field) => boolean;
 }
 
-export class FieldConfigOptionsRegistry extends Registry<FieldPropertyEditorItem> {}
-
 export interface ApplyFieldOverrideOptions {
   data?: DataFrame[];
   fieldConfig: FieldConfigSource;
@@ -87,7 +85,7 @@ export interface ApplyFieldOverrideOptions {
   theme: GrafanaTheme;
   timeZone?: TimeZone;
   autoMinMax?: boolean;
-  fieldConfigRegistry?: FieldConfigOptionsRegistry;
+  fieldConfigRegistry?: Registry<FieldPropertyEditorItem>;
 }
 
 export enum FieldConfigProperty {
