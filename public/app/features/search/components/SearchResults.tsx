@@ -20,7 +20,6 @@ export interface Props {
 }
 
 export const SearchResults: FC<Props> = ({
-  dispatch,
   editable,
   loading,
   onFolderExpanding,
@@ -52,7 +51,7 @@ export const SearchResults: FC<Props> = ({
   };
 
   if (!loading && (!results || !results.length)) {
-    return <h6> No dashboards matching your query were found.</h6>;
+    return <h6>No dashboards matching your query were found.</h6>;
   }
 
   return (
