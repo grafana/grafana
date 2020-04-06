@@ -153,7 +153,7 @@ export const DashboardSearch: FC<Props> = ({ closeSearch }) => {
           </div>
 
           {canEdit && (
-            <div className="search-filter-box" onClick={() => closeSearch()}>
+            <div className="search-filter-box" onClick={closeSearch}>
               <a href="dashboard/new" className="search-filter-box-link">
                 <i className="gicon gicon-dashboard-new"></i> New dashboard
               </a>
