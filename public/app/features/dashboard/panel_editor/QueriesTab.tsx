@@ -122,7 +122,7 @@ export class QueriesTab extends PureComponent<Props, State> {
   openQueryInspector = () => {
     const { panel } = this.props;
     getLocationSrv().update({
-      query: { inspect: panel.id, tab: 'JSON' },
+      query: { inspect: panel.id, tab: 'query' },
       partial: true,
     });
   };
