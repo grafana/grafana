@@ -22,6 +22,7 @@ import { FieldConfigOptionsRegistry } from './FieldConfigOptionsRegistry';
 const property1 = {
   id: 'custom.property1', // Match field properties
   path: 'property1', // Match field properties
+  isCustom: true,
   process: (value: any) => value,
   shouldApply: () => true,
 } as any;
@@ -29,6 +30,7 @@ const property1 = {
 const property2 = {
   id: 'custom.property2', // Match field properties
   path: 'property2', // Match field properties
+  isCustom: true,
   process: (value: any) => value,
   shouldApply: () => true,
 } as any;
@@ -241,6 +243,7 @@ describe('setFieldConfigDefaults', () => {
 
     expect(dsFieldConfig).toMatchInlineSnapshot(`
       Object {
+        "custom": Object {},
         "decimals": 2,
         "max": 100,
         "min": 0,
@@ -276,7 +279,7 @@ describe('setFieldConfigDefaults', () => {
     expect(dsFieldConfig).toMatchInlineSnapshot(`
       Object {
         "custom": Object {
-          "property1": 20,
+          "property1": 10,
           "property2": 10,
         },
       }

@@ -10,10 +10,13 @@ import {
   FieldOverrideContext,
   ScopedVars,
   ApplyFieldOverrideOptions,
+  FieldPropertyEditorItem,
 } from '../types';
 import { fieldMatchers, ReducerID, reduceField } from '../transformations';
 import { FieldMatcher } from '../types/transformations';
 import isNumber from 'lodash/isNumber';
+import set from 'lodash/set';
+import get from 'lodash/get';
 import { getDisplayProcessor } from './displayProcessor';
 import { guessFieldTypeForField } from '../dataframe';
 import { standardFieldConfigEditorRegistry } from './standardFieldConfigEditorRegistry';
@@ -226,26 +229,16 @@ function setDynamicConfigValue(config: FieldConfig, value: DynamicConfigValue, c
 // config -> from DS
 // defaults -> from Panel config
 export function setFieldConfigDefaults(config: FieldConfig, defaults: FieldConfig, context: FieldOverrideEnv) {
-  if (defaults) {
-    const keys = Object.keys(defaults);
-    for (const key of keys) {
-      if (key === 'custom') {
-        if (!context.fieldConfigRegistry) {
-          continue;
-        }
-        if (!config.custom) {
-          config.custom = {};
-        }
-
-        const customKeys = Object.keys(defaults.custom!);
-        for (const customKey of customKeys) {
-          processFieldConfigValue(config.custom!, defaults.custom!, `custom.${customKey}`, context);
-        }
-      } else {
-        // when config from ds exists for a given field -> use it
-        processFieldConfigValue(config, defaults, key, context);
-      }
+  for (const fieldConfigProperty of context.fieldConfigRegistry.list()) {
+    if (fieldConfigProperty.isCustom && !config.custom) {
+      config.custom = {};
     }
+    processFieldConfigValue(
+      fieldConfigProperty.isCustom ? config.custom : config,
+      fieldConfigProperty.isCustom ? defaults.custom : defaults,
+      fieldConfigProperty,
+      context
+    );
   }
 
   validateFieldConfig(config);
@@ -254,20 +247,21 @@ export function setFieldConfigDefaults(config: FieldConfig, defaults: FieldConfi
 const processFieldConfigValue = (
   destination: Record<string, any>, // it's mutable
   source: Record<string, any>,
-  key: string,
+  fieldConfigProperty: FieldPropertyEditorItem,
   context: FieldOverrideEnv
 ) => {
-  const currentConfig = destination[key];
+  const currentConfig = get(destination, fieldConfigProperty.path);
+
   if (currentConfig === null || currentConfig === undefined) {
-    const item = context.fieldConfigRegistry.getIfExists(key);
+    const item = context.fieldConfigRegistry.getIfExists(fieldConfigProperty.id);
     if (!item) {
       return;
     }
 
     if (item && item.shouldApply(context.field!)) {
-      const val = item.process(source[item.path], context, item.settings);
+      const val = item.process(get(source, item.path), context, item.settings);
       if (val !== undefined && val !== null) {
-        destination[item.path] = val;
+        set(destination, item.path, val);
       }
     }
   }
