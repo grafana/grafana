@@ -72,7 +72,7 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
 
   onPanelExit = () => {
     this.props.updateLocation({
-      query: { editPanel: null, tab: null },
+      query: { edit: null, tab: null, panelId: null },
       partial: true,
     });
   };
@@ -80,7 +80,7 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
   onDiscard = () => {
     this.props.setDiscardChanges(true);
     this.props.updateLocation({
-      query: { editPanel: null, tab: null },
+      query: { edit: null, tab: null, panelId: null },
       partial: true,
     });
   };

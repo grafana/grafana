@@ -1,6 +1,5 @@
 import { updateLocation } from 'app/core/actions';
 import { store } from 'app/store/store';
-import config from 'app/core/config';
 import { getDataSourceSrv, getLocationSrv, AngularComponent } from '@grafana/runtime';
 import { PanelMenuItem } from '@grafana/data';
 import { copyPanel, duplicatePanel, editPanelJson, removePanel, sharePanel } from 'app/features/dashboard/utils/panel';
@@ -39,18 +38,6 @@ export function getPanelMenu(
           panelId: panel.id,
           edit: true,
           fullscreen: true,
-        },
-        partial: true,
-      })
-    );
-  };
-
-  const onNewEditPanel = (event: React.MouseEvent<any>) => {
-    event.preventDefault();
-    store.dispatch(
-      updateLocation({
-        query: {
-          editPanel: panel.id,
         },
         partial: true,
       })
@@ -142,15 +129,6 @@ export function getPanelMenu(
     onClick: onInspectPanel,
     shortcut: 'p i',
   });
-
-  if (config.featureToggles.newEdit) {
-    menu.push({
-      text: 'New edit',
-      iconClassName: 'gicon gicon-editor',
-      onClick: onNewEditPanel,
-      shortcut: 'p i',
-    });
-  }
 
   const subMenu: PanelMenuItem[] = [];
 
