@@ -1,10 +1,9 @@
 import { Controller as InputControl } from 'react-hook-form';
 import { getFormStyles } from './getFormStyles';
 import { Label } from './Label';
+// To be removed
 import { Input } from './Input/Input';
-import { ButtonSelect } from './Select/ButtonSelect';
 import { RadioButtonGroup } from './RadioButtonGroup/RadioButtonGroup';
-import { AsyncSelect, Select } from './Select/Select';
 import { Form } from './Form';
 import { Field } from './Field';
 import { Switch } from './Switch';
@@ -17,13 +16,11 @@ const Forms = {
   Switch,
   getFormStyles,
   Label,
+  // To be removed
   Input,
   Form,
   Field,
-  Select,
-  ButtonSelect,
   InputControl,
-  AsyncSelect,
   TextArea,
   Checkbox,
   Legend,

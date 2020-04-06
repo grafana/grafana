@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+PACKAGES=(ui toolkit data runtime e2e)
+
 # shellcheck source=./scripts/helpers/exit-if-fail.sh
 source "$(dirname "$0")/helpers/exit-if-fail.sh"
 
@@ -16,15 +18,24 @@ function prapare_version_commit () {
 
 function unpublish_previous_canary () {
   echo $'\nUnpublishing previous canary packages'
-  for PACKAGE in ui toolkit data runtime e2e
+  for PACKAGE in "${PACKAGES[@]}"
   do
     # dist-tag next to be changed to canary when https://github.com/grafana/grafana/pull/18195 is merged
-    CURRENT_CANARY=$(npm view @grafana/${PACKAGE} dist-tags.canary)
+    CURRENT_CANARY=$(npm view @grafana/"${PACKAGE}" dist-tags.canary)
     if [ -z "${CURRENT_CANARY}" ]; then
         echo "@grafana/${PACKAGE} - Nothing to unpublish"
     else
       echo "Unpublish @grafana/${PACKAGE}@${CURRENT_CANARY}"
-      npm unpublish "@grafana/${PACKAGE}@${CURRENT_CANARY}"
+      npm unpublish "@grafana/${PACKAGE}@${CURRENT_CANARY}" || (
+        # We want to deprecate here, rather than fail and return an non-0 exit code
+        npm deprecate \
+          "@grafana/${PACKAGE}@${CURRENT_CANARY}" \
+          "Unpublish failed with [$?]. Deprecating \"@grafana/${PACKAGE}@${CURRENT_CANARY}\"" || (
+            # Echoing a log message will ultimately change the error code, so save the error
+            # code and return it after printing an error log.
+            echo "Could not deprecate \"@grafana/${PACKAGE}@${CURRENT_CANARY}\". Received exit-code [$?]"
+        )
+      )
     fi
   done
 }
@@ -52,10 +63,10 @@ else
 
   echo $'\nBuilding packages'
 
-  for PACKAGE in ui data toolkit runtime e2e
+  for PACKAGE in "${PACKAGES[@]}"
   do
     start=$(date +%s%N)
-    yarn workspace @grafana/$PACKAGE run build
+    yarn workspace @grafana/"${PACKAGE}" run build
     runtime=$((($(date +%s%N) - start)/1000000))
     if [ "${CIRCLE_BRANCH}" == "master" ]; then
     exit_if_fail ./scripts/ci-metrics-publisher.sh "grafana.ci-buildtimes.$CIRCLE_JOB.$PACKAGE=$runtime"

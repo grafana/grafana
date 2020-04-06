@@ -68,7 +68,7 @@ export const Table: FC<Props> = memo(({ data, height, onCellClick, width, column
 
   return (
     <div {...getTableProps()} className={tableStyles.table}>
-      <CustomScrollbar>
+      <CustomScrollbar hideVerticalTrack={true}>
         {!noHeader && (
           <div>
             {headerGroups.map((headerGroup: HeaderGroup) => (
