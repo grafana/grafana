@@ -386,6 +386,15 @@ This variable is the UID of the current dashboard.
 This variable is the ID of the current organization.
 `${__org.name}` is the name of the current organization.
 
+### The $__user Variable
+> Only available in Grafana v6.8+
+
+This variable is the ID of the current user.
+`${__org.name}` is the name of the current user.
+`${__org.login}` is the login of the current user.
+`${__org.email}` is the email of the current user.
+
+
 ## Repeating Panels
 
 Template variables can be very useful to dynamically change your queries across a whole dashboard. If you want
