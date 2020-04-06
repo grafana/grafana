@@ -1,6 +1,6 @@
 import { css } from 'emotion';
 import { GrafanaTheme } from '@grafana/data';
-import { stylesFactory, selectThemeVariant as stv } from '../../themes';
+import { selectThemeVariant as stv, stylesFactory } from '../../themes';
 
 export interface TableStyles {
   cellHeight: number;
@@ -13,6 +13,7 @@ export interface TableStyles {
   tableCell: string;
   row: string;
   theme: GrafanaTheme;
+  resizeHandle: string;
 }
 
 export const getTableStyles = stylesFactory(
@@ -41,6 +42,7 @@ export const getTableStyles = stylesFactory(
         overflow-y: auto;
         overflow-x: hidden;
         background: ${headerBg};
+        position: relative;
       `,
       headerCell: css`
         padding: ${padding}px 10px;
@@ -57,6 +59,19 @@ export const getTableStyles = stylesFactory(
         text-overflow: ellipsis;
         white-space: nowrap;
         overflow: hidden;
+      `,
+      resizeHandle: css`
+        label: resizeHandle;
+        cursor: col-resize !important;
+        display: inline-block;
+        border-right: 2px solid ${colors.bodyBg};
+        width: 10px;
+        height: 100%;
+        position: absolute;
+        right: 0;
+        top: 0;
+        z-index: ${theme.zIndex.dropdown};
+        touch-action: none;
       `,
     };
   }
