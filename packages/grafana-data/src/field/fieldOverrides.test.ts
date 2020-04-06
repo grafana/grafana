@@ -5,14 +5,7 @@ import {
   applyFieldOverrides,
 } from './fieldOverrides';
 import { MutableDataFrame } from '../dataframe';
-import {
-  FieldConfig,
-  FieldConfigOptionsRegistry,
-  FieldOverrideContext,
-  FieldPropertyEditorItem,
-  GrafanaTheme,
-  FieldType,
-} from '../types';
+import { FieldConfig, FieldConfigOptionsRegistry, FieldPropertyEditorItem, GrafanaTheme, FieldType } from '../types';
 import { Registry } from '../utils';
 import { standardFieldConfigEditorRegistry } from './standardFieldConfigEditorRegistry';
 import { mockStandardProperties } from '../utils/mocks';
@@ -43,7 +36,7 @@ export const customFieldRegistry: FieldConfigOptionsRegistry = new Registry<Fiel
 });
 
 // For the need of this test  we need to mock the standard registry
-// as we cannot imporrt from grafana/ui
+// as we cannot import from grafana/ui
 standardFieldConfigEditorRegistry.setInit(() => {
   return [unit];
 });

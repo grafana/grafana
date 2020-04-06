@@ -86,21 +86,6 @@ export class PanelPlugin<TOptions = any, TFieldConfigOptions extends object = an
       },
       overrides: this._fieldConfigDefaults.overrides,
     };
-
-    /*   return {
-      defaults: {
-        ...(this._standardFieldConfigProperties ? Object.fromEntries(this._standardFieldConfigProperties) : {}),
-        custom:
-          Object.keys(customPropertiesDefaults).length > 0
-            ? {
-                ...customPropertiesDefaults,
-              }
-            : undefined,
-        ...this._fieldConfigDefaults.defaults,
-      },
-      // TODO: not sure yet what about overrides, if anything
-      overrides: this._fieldConfigDefaults.overrides,
-    }; */
   }
 
   /**
@@ -164,6 +149,102 @@ export class PanelPlugin<TOptions = any, TFieldConfigOptions extends object = an
     return this;
   }
 
+  /**
+   * Enables panel options editor creation
+   *
+   * @example
+   * ```typescript
+   *
+   * import { ShapePanel } from './ShapePanel';
+   *
+   * interface ShapePanelOptions {}
+   *
+   * export const plugin = new PanelPlugin<ShapePanelOptions>(ShapePanel)
+   *   .setPanelOptions(builder => {
+   *     builder
+   *       .addSelect({
+   *         id: 'shape',
+   *         name: 'Shape',
+   *         description: 'Select shape to render'
+   *         settings: {
+   *           options: [
+   *             {value: 'circle', label: 'Circle' },
+   *             {value: 'square', label: 'Square },
+   *             {value: 'triangle', label: 'Triangle }
+   *            ]
+   *         },
+   *       })
+   *   })
+   * ```
+   *
+   * @public
+   **/
+  setPanelOptions(builder: (builder: PanelOptionsEditorBuilder<TOptions>) => void) {
+    // builder is applied lazily when options UI is created
+    this.registerOptionEditors = builder;
+    return this;
+  }
+
+  /**
+   * Allows specyfing which standard field config options panel should use and defining default values
+   *
+   * @example
+   * ```typescript
+   *
+   * import { ShapePanel } from './ShapePanel';
+   *
+   * interface ShapePanelOptions {}
+   *
+   * // when plugin should use all standard options
+   * export const plugin = new PanelPlugin<ShapePanelOptions>(ShapePanel)
+   *  .useFieldConfigOptions();
+   *
+   * // when plugin should only display specific standard options
+   * // note, that options will be displayed in the order they are provided
+   * export const plugin = new PanelPlugin<ShapePanelOptions>(ShapePanel)
+   *  .useFieldConfigOptions({
+   *    standardOptions: [FieldConfigProperty.Min, FieldConfigProperty.Max]
+   *   });
+   *
+   * // when standard option's default value needs to be provided
+   * export const plugin = new PanelPlugin<ShapePanelOptions>(ShapePanel)
+   *  .useFieldConfigOptions({
+   *    standardOptions: [FieldConfigProperty.Min, FieldConfigProperty.Max],
+   *    standardOptionsDefaults: {
+   *      [FieldConfigProperty.Min]: 20,
+   *      [FieldConfigProperty.Max]: 100
+   *    }
+   *  });
+   *
+   * // when custom field config options needs to be provided
+   * export const plugin = new PanelPlugin<ShapePanelOptions>(ShapePanel)
+   *  .useFieldConfigOptions({
+   *    useCustomOptions: builder => {
+          builder
+   *       .addNumberInput({
+   *         id: 'shapeBorderWidth',
+   *         name: 'Border width',
+   *         description: 'Border width of the shape',
+   *         settings: {
+   *           min: 1,
+   *           max: 5,
+   *         },
+   *       })
+   *       .addSelect({
+   *         id: 'displayMode',
+   *         name: 'Display mode',
+   *         description: 'How the shape shout be rendered'
+   *         settings: {
+   *         options: [{value: 'fill', label: 'Fill' }, {value: 'transparent', label: 'Transparent }]
+   *       },
+   *     })
+   *   },
+   *  });
+   *
+   * ```
+   *
+   * @public
+   */
   useFieldConfigOptions(config?: SetFieldConfigOptionsArgs<TFieldConfigOptions>) {
     // builder is applied lazily when custom field configs are accessed
     this._initConfigRegistry = () => {
@@ -204,56 +285,6 @@ export class PanelPlugin<TOptions = any, TFieldConfigOptions extends object = an
       return registry;
     };
 
-    // if (config && config.standardOptions && config.standardOptionsDefaults) {
-    //   const defaults: Record<string, any> = {};
-    //   for (const standardOptionDefault of Object.keys(config.standardOptionsDefaults)) {
-    //     if (config.standardOptions.indexOf(standardOptionDefault as FieldConfigProperty) > -1) {
-    //       defaults[standardOptionDefault] =
-    //         config.standardOptionsDefaults[standardOptionDefault as FieldConfigProperty];
-    //     }
-    //     this._fieldConfigDefaults = {
-    //       ...this.fieldConfigDefaults,
-    //       defaults,
-    //     };
-    //   }
-    // }
-
-    return this;
-  }
-
-  /**
-   * Enables panel options editor creation
-   *
-   * @example
-   * ```typescript
-   *
-   * import { ShapePanel } from './ShapePanel';
-   *
-   * interface ShapePanelOptions {}
-   *
-   * export const plugin = new PanelPlugin<ShapePanelOptions>(ShapePanel)
-   *   .setPanelOptions(builder => {
-   *     builder
-   *       .addSelect({
-   *         id: 'shape',
-   *         name: 'Shape',
-   *         description: 'Select shape to render'
-   *         settings: {
-   *           options: [
-   *             {value: 'circle', label: 'Circle' },
-   *             {value: 'square', label: 'Square },
-   *             {value: 'triangle', label: 'Triangle }
-   *            ]
-   *         },
-   *       })
-   *   })
-   * ```
-   *
-   * @public
-   **/
-  setPanelOptions(builder: (builder: PanelOptionsEditorBuilder<TOptions>) => void) {
-    // builder is applied lazily when options UI is created
-    this.registerOptionEditors = builder;
     return this;
   }
 }
