@@ -6,9 +6,9 @@ import {
   toDataFrame,
   transformDataFrame,
 } from '@grafana/data';
-import { SortFieldsTransformerOptions } from './sort';
+import { OrderFieldsTransformerOptions } from './order';
 
-describe('Sort Transformer', () => {
+describe('Order Transformer', () => {
   describe('when consistent data is received', () => {
     const data = toDataFrame({
       name: 'A',
@@ -19,9 +19,9 @@ describe('Sort Transformer', () => {
       ],
     });
 
-    it('should sort according to config', () => {
-      const cfg: DataTransformerConfig<SortFieldsTransformerOptions> = {
-        id: DataTransformerID.sort,
+    it('should order according to config', () => {
+      const cfg: DataTransformerConfig<OrderFieldsTransformerOptions> = {
+        id: DataTransformerID.order,
         options: {
           indexByName: {
             time: 2,
@@ -31,9 +31,10 @@ describe('Sort Transformer', () => {
         },
       };
 
-      const sorted = transformDataFrame([cfg], [data])[0];
+      const ordered = transformDataFrame([cfg], [data])[0];
+      console.log('ordered', ordered);
 
-      expect(sorted.fields).toEqual([
+      expect(ordered.fields).toEqual([
         {
           config: {},
           name: 'temperature',
@@ -67,8 +68,8 @@ describe('Sort Transformer', () => {
     });
 
     it('should append fields missing in config at the end', () => {
-      const cfg: DataTransformerConfig<SortFieldsTransformerOptions> = {
-        id: DataTransformerID.sort,
+      const cfg: DataTransformerConfig<OrderFieldsTransformerOptions> = {
+        id: DataTransformerID.order,
         options: {
           indexByName: {
             time: 2,
@@ -78,9 +79,9 @@ describe('Sort Transformer', () => {
         },
       };
 
-      const sorted = transformDataFrame([cfg], [data])[0];
+      const ordered = transformDataFrame([cfg], [data])[0];
 
-      expect(sorted.fields).toEqual([
+      expect(ordered.fields).toEqual([
         {
           config: {},
           name: 'humidity',
@@ -114,16 +115,16 @@ describe('Sort Transformer', () => {
     });
 
     it('should keep the same order as in the incoming data', () => {
-      const cfg: DataTransformerConfig<SortFieldsTransformerOptions> = {
-        id: DataTransformerID.sort,
+      const cfg: DataTransformerConfig<OrderFieldsTransformerOptions> = {
+        id: DataTransformerID.order,
         options: {
           indexByName: {},
         },
       };
 
-      const sorted = transformDataFrame([cfg], [data])[0];
+      const ordered = transformDataFrame([cfg], [data])[0];
 
-      expect(sorted.fields).toEqual([
+      expect(ordered.fields).toEqual([
         {
           config: {},
           name: 'time',

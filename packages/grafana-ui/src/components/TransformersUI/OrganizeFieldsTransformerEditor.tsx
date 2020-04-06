@@ -1,21 +1,22 @@
 import React, { useMemo, useCallback } from 'react';
 import { css, cx } from 'emotion';
-import { SortAndFilterFieldsTransformerOptions } from '@grafana/data/src/transformations/transformers/sortAndFilter';
+import { OrganizeFieldsTransformerOptions } from '@grafana/data/src/transformations/transformers/organize';
 import { DragDropContext, Droppable, Draggable, DropResult } from 'react-beautiful-dnd';
 import { TransformerUIRegistyItem, TransformerUIProps } from './types';
 import { DataTransformerID, transformersRegistry, DataFrame, GrafanaTheme } from '@grafana/data';
 import { stylesFactory, useTheme } from '../../themes';
 import { Button } from '../Button';
+import { createFieldsComparer } from '@grafana/data/src/transformations/transformers/order';
 
-interface SortAndFilterTransformerEditorProps extends TransformerUIProps<SortAndFilterFieldsTransformerOptions> {}
+interface OrganizeFieldsTransformerEditorProps extends TransformerUIProps<OrganizeFieldsTransformerOptions> {}
 
-const SortAndFilterTransformerEditor: React.FC<SortAndFilterTransformerEditorProps> = props => {
+const OrganizeFieldsTransformerEditor: React.FC<OrganizeFieldsTransformerEditorProps> = props => {
   const { options, input, onChange } = props;
   const { indexByName, excludeByName } = options;
 
   const styles = getEditorStyles();
   const fieldNames = useMemo(() => fieldNamesFromInput(input), [input]);
-  const sortedFieldNames = useMemo(() => sortFieldNamesByIndex(fieldNames, indexByName), [fieldNames, indexByName]);
+  const orderedFieldNames = useMemo(() => orderFieldNamesByIndex(fieldNames, indexByName), [fieldNames, indexByName]);
 
   const onToggleVisibility = useCallback(
     (field: string, shouldExclude: boolean) => {
@@ -57,7 +58,7 @@ const SortAndFilterTransformerEditor: React.FC<SortAndFilterTransformerEditorPro
         <Droppable droppableId="sortable-fields-transformer" direction="horizontal">
           {provided => (
             <div className={styles.fields} ref={provided.innerRef} {...provided.droppableProps}>
-              {sortedFieldNames.map((fieldName, index) => {
+              {orderedFieldNames.map((fieldName, index) => {
                 return (
                   <DraggableFieldName
                     fieldName={fieldName}
@@ -158,21 +159,25 @@ const reorderToIndex = (fieldNames: string[], startIndex: number, endIndex: numb
   }, {} as Record<string, number>);
 };
 
-const sortFieldNamesByIndex = (fieldNames: string[], indexByName: Record<string, number> = {}): string[] => {
-  if (Object.keys(indexByName).length === 0) {
+const orderFieldNamesByIndex = (fieldNames: string[], indexByName: Record<string, number> = {}): string[] => {
+  if (!indexByName || Object.keys(indexByName).length === 0) {
     return fieldNames;
   }
-
-  return fieldNames.sort((a, b) => {
-    const aIndex = indexByName[a] || 0;
-    const bIndex = indexByName[b] || 0;
-    return aIndex - bIndex;
-  });
+  const comparer = createFieldsComparer(indexByName);
+  return fieldNames.sort(comparer);
 };
 
 const fieldNamesFromInput = (input: DataFrame[]): string[] => {
+  if (!Array.isArray(input)) {
+    return [] as string[];
+  }
+
   return Object.keys(
     input.reduce((names, frame) => {
+      if (!frame || !Array.isArray(frame.fields)) {
+        return names;
+      }
+
       return frame.fields.reduce((names, field) => {
         names[field.name] = null;
         return names;
@@ -181,10 +186,10 @@ const fieldNamesFromInput = (input: DataFrame[]): string[] => {
   );
 };
 
-export const sortAndFilterTransformRegistryItem: TransformerUIRegistyItem<SortAndFilterFieldsTransformerOptions> = {
-  id: DataTransformerID.sortAndFilter,
-  component: SortAndFilterTransformerEditor,
-  transformer: transformersRegistry.get(DataTransformerID.sortAndFilter),
-  name: 'Sort and filter',
-  description: 'UI for sorting and hiding fields',
+export const organizeFieldsTransformRegistryItem: TransformerUIRegistyItem<OrganizeFieldsTransformerOptions> = {
+  id: DataTransformerID.organize,
+  component: OrganizeFieldsTransformerEditor,
+  transformer: transformersRegistry.get(DataTransformerID.organize),
+  name: 'Organize fields',
+  description: 'UI for organizing fields',
 };
