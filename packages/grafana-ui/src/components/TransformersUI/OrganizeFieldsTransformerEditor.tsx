@@ -7,6 +7,7 @@ import { DataTransformerID, transformersRegistry, DataFrame, GrafanaTheme } from
 import { stylesFactory, useTheme } from '../../themes';
 import { Button } from '../Button';
 import { createFieldsComparer } from '@grafana/data/src/transformations/transformers/order';
+import { VerticalGroup } from '../Layout/Layout';
 
 interface OrganizeFieldsTransformerEditorProps extends TransformerUIProps<OrganizeFieldsTransformerOptions> {}
 
@@ -14,7 +15,6 @@ const OrganizeFieldsTransformerEditor: React.FC<OrganizeFieldsTransformerEditorP
   const { options, input, onChange } = props;
   const { indexByName, excludeByName } = options;
 
-  const styles = getEditorStyles();
   const fieldNames = useMemo(() => fieldNamesFromInput(input), [input]);
   const orderedFieldNames = useMemo(() => orderFieldNamesByIndex(fieldNames, indexByName), [fieldNames, indexByName]);
 
@@ -53,11 +53,11 @@ const OrganizeFieldsTransformerEditor: React.FC<OrganizeFieldsTransformerEditorP
   );
 
   return (
-    <div className={styles.container}>
+    <VerticalGroup>
       <DragDropContext onDragEnd={onDragEnd}>
-        <Droppable droppableId="sortable-fields-transformer" direction="horizontal">
+        <Droppable droppableId="sortable-fields-transformer" direction="vertical">
           {provided => (
-            <div className={styles.fields} ref={provided.innerRef} {...provided.droppableProps}>
+            <div ref={provided.innerRef} {...provided.droppableProps}>
               {orderedFieldNames.map((fieldName, index) => {
                 return (
                   <DraggableFieldName
@@ -74,7 +74,7 @@ const OrganizeFieldsTransformerEditor: React.FC<OrganizeFieldsTransformerEditorP
           )}
         </Droppable>
       </DragDropContext>
-    </div>
+    </VerticalGroup>
   );
 };
 
@@ -113,18 +113,6 @@ const DraggableFieldName: React.FC<DraggableFieldProps> = ({ fieldName, index, v
   );
 };
 
-const getEditorStyles = stylesFactory(() => ({
-  container: css`
-    display: flex;
-    flex-direction: column;
-  `,
-  fields: css`
-    flex-grow: 1;
-    display: inline-flex;
-    overflow: auto;
-  `,
-}));
-
 const getFieldNameStyles = stylesFactory((theme: GrafanaTheme) => ({
   container: css`
     display: flex;
@@ -133,14 +121,15 @@ const getFieldNameStyles = stylesFactory((theme: GrafanaTheme) => ({
     border-radius: 3px;
     background-color: ${theme.isDark ? theme.colors.grayBlue : theme.colors.gray6};
     border: 1px solid ${theme.isDark ? theme.colors.dark6 : theme.colors.gray5};
-    margin-right: 8px;
+    margin-top: 8px;
   `,
   toggle: css`
     padding: 5px;
+    margin: 0 5px;
   `,
   draggable: css`
     font-size: ${theme.typography.size.md};
-    opacity: 0.6;
+    opacity: 0.4;
   `,
   name: css`
     font-size: ${theme.typography.size.sm};
