@@ -1,11 +1,21 @@
 import React, { useCallback, useMemo } from 'react';
 import { css } from 'emotion';
 import { saveAs } from 'file-saver';
-import { CustomScrollbar, Button, HorizontalGroup, JSONFormatter, VerticalGroup } from '@grafana/ui';
+import {
+  CustomScrollbar,
+  Button,
+  HorizontalGroup,
+  JSONFormatter,
+  VerticalGroup,
+  useTheme,
+  stylesFactory,
+} from '@grafana/ui';
 import { CopyToClipboard } from 'app/core/components/CopyToClipboard/CopyToClipboard';
 import { SaveDashboardFormProps } from '../types';
+import { GrafanaTheme } from '@grafana/data';
 
 export const SaveProvisionedDashboardForm: React.FC<SaveDashboardFormProps> = ({ dashboard, onCancel }) => {
+  const theme = useTheme();
   const dashboardJSON = useMemo(() => {
     const clone = dashboard.getSaveModelClone();
     delete clone.id;
@@ -22,7 +32,7 @@ export const SaveProvisionedDashboardForm: React.FC<SaveDashboardFormProps> = ({
     });
     saveAs(blob, dashboard.title + '-' + new Date().getTime() + '.json');
   }, [dashboardJSON]);
-
+  const styles = getStyles(theme);
   return (
     <>
       <VerticalGroup spacing="lg">
@@ -45,13 +55,7 @@ export const SaveProvisionedDashboardForm: React.FC<SaveDashboardFormProps> = ({
         <div>
           <strong>File path: </strong> {dashboard.meta.provisionedExternalId}
         </div>
-        <div
-          className={css`
-            padding: 8px 16px;
-            background: black;
-            height: 400px;
-          `}
-        >
+        <div className={styles.json}>
           <CustomScrollbar>
             <JSONFormatter json={dashboardJSON} open={1} />
           </CustomScrollbar>
@@ -69,3 +73,13 @@ export const SaveProvisionedDashboardForm: React.FC<SaveDashboardFormProps> = ({
     </>
   );
 };
+
+const getStyles = stylesFactory((theme: GrafanaTheme) => {
+  return {
+    json: css`
+      background: ${theme.isLight ? theme.colors.gray7 : theme.colors.black};
+      padding: ${theme.spacing.sm} 0 ${theme.spacing.sm} ${theme.spacing.md};
+      height: 400px;
+    `,
+  };
+});

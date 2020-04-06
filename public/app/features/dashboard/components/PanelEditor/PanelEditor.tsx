@@ -1,6 +1,6 @@
 import React, { PureComponent } from 'react';
-import { FieldConfigSource, GrafanaTheme, PanelData, PanelPlugin, SelectableValue } from '@grafana/data';
-import { Select, stylesFactory, Icon } from '@grafana/ui';
+import { FieldConfigSource, GrafanaTheme, PanelData, PanelPlugin } from '@grafana/data';
+import { Button, stylesFactory, Icon, Forms } from '@grafana/ui';
 import { css, cx } from 'emotion';
 import config from 'app/core/config';
 import AutoSizer from 'react-virtualized-auto-sizer';
@@ -26,11 +26,9 @@ import { getPanelEditorTabs } from './state/selectors';
 import { getPanelStateById } from '../../state/selectors';
 import { OptionsPaneContent } from './OptionsPaneContent';
 import { DashNavButton } from 'app/features/dashboard/components/DashNav/DashNavButton';
-
-enum Pane {
-  Right,
-  Top,
-}
+import { VariableModel } from 'app/features/templating/types';
+import { getVariables } from 'app/features/variables/state/selectors';
+import { SubMenuItems } from 'app/features/dashboard/components/SubMenu/SubMenuItems';
 
 interface OwnProps {
   dashboard: DashboardModel;
@@ -45,6 +43,7 @@ interface ConnectedProps {
   initDone: boolean;
   tabs: PanelEditorTab[];
   uiState: PanelEditorUIState;
+  variables: VariableModel[];
 }
 
 interface DispatchProps {
@@ -73,7 +72,7 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
 
   onPanelExit = () => {
     this.props.updateLocation({
-      query: { editPanel: null },
+      query: { editPanel: null, tab: null },
       partial: true,
     });
   };
@@ -81,7 +80,7 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
   onDiscard = () => {
     this.props.setDiscardChanges(true);
     this.props.updateLocation({
-      query: { editPanel: null },
+      query: { editPanel: null, tab: null },
       partial: true,
     });
   };
@@ -129,10 +128,10 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
     this.forceUpdate();
   };
 
-  onDiplayModeChange = (mode: SelectableValue<DisplayMode>) => {
+  onDiplayModeChange = (mode: DisplayMode) => {
     const { updatePanelEditorUIState } = this.props;
     updatePanelEditorUIState({
-      mode: mode.value,
+      mode: mode,
     });
   };
 
@@ -141,7 +140,7 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
     updatePanelEditorUIState({ isPanelOptionsVisible: !uiState.isPanelOptionsVisible });
   };
 
-  renderHorizontalSplit(styles: any) {
+  renderHorizontalSplit(styles: EditorStyles) {
     const { dashboard, panel, tabs, data, uiState } = this.props;
 
     return (
@@ -157,7 +156,7 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
         onDragFinished={size => this.onDragFinished(Pane.Top, size)}
       >
         <div className={styles.mainPaneWrapper}>
-          {this.renderToolbar(styles)}
+          {this.renderPanelToolbar(styles)}
           <div className={styles.panelWrapper}>
             <AutoSizer>
               {({ width, height }) => {
@@ -189,49 +188,69 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
     );
   }
 
-  renderToolbar(styles: any) {
+  renderTemplateVariables(styles: EditorStyles) {
+    const { variables } = this.props;
+
+    if (!variables.length) {
+      return null;
+    }
+
+    return (
+      <div className={styles.variablesWrapper}>
+        <SubMenuItems variables={variables} />
+      </div>
+    );
+  }
+
+  renderPanelToolbar(styles: EditorStyles) {
     const { dashboard, location, uiState } = this.props;
 
     return (
-      <div className={styles.toolbar}>
+      <div className={styles.panelToolbar}>
+        {this.renderTemplateVariables(styles)}
+        <div className="flex-grow-1" />
+        <div className={styles.toolbarItem}>
+          <Forms.RadioButtonGroup value={uiState.mode} options={displayModes} onChange={this.onDiplayModeChange} />
+        </div>
+        <div className={styles.toolbarItem}>
+          <DashNavTimeControls dashboard={dashboard} location={location} updateLocation={updateLocation} />
+        </div>
+        {!uiState.isPanelOptionsVisible && (
+          <div className={styles.toolbarItem}>
+            <DashNavButton onClick={this.onTogglePanelOptions} tooltip="Open options pane" classSuffix="close-options">
+              <Icon name="chevron-left" /> <span style={{ paddingLeft: '6px' }}>Show options</span>
+            </DashNavButton>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  editorToolbar(styles: EditorStyles) {
+    const { dashboard } = this.props;
+
+    return (
+      <div className={styles.editorToolbar}>
         <div className={styles.toolbarLeft}>
           <BackButton onClick={this.onPanelExit} />
           <span className={styles.editorTitle}>{dashboard.title} / Edit Panel</span>
         </div>
         <div className={styles.toolbarLeft}>
           <div className={styles.toolbarItem}>
-            <DashNavButton tooltip="Discard all changes and return to dashboard" onClick={this.onDiscard}>
+            <Button onClick={this.onDiscard} variant="secondary">
               Discard changes
-            </DashNavButton>
+            </Button>
           </div>
           <div className={styles.toolbarItem}>
-            <Select
-              value={displayModes.find(v => v.value === uiState.mode)}
-              options={displayModes}
-              onChange={this.onDiplayModeChange}
-            />
+            <Button onClick={this.onPanelExit}>Apply</Button>
           </div>
-          <div className={styles.toolbarItem}>
-            <DashNavTimeControls dashboard={dashboard} location={location} updateLocation={updateLocation} />
-          </div>
-          {!uiState.isPanelOptionsVisible && (
-            <div className={styles.toolbarItem}>
-              <DashNavButton
-                onClick={this.onTogglePanelOptions}
-                tooltip="Open options pane"
-                classSuffix="close-options"
-              >
-                <Icon name="chevron-left" /> <span style={{ paddingLeft: '6px' }}>Show options</span>
-              </DashNavButton>
-            </div>
-          )}
         </div>
       </div>
     );
   }
 
-  renderOptionsPane(styles: any) {
-    const { plugin, dashboard, data, panel } = this.props;
+  renderOptionsPane() {
+    const { plugin, dashboard, data, panel, uiState } = this.props;
 
     if (!plugin) {
       return <div />;
@@ -243,6 +262,7 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
         dashboard={dashboard}
         data={data}
         panel={panel}
+        width={uiState.rightPaneSize as number}
         onClose={this.onTogglePanelOptions}
         onFieldConfigsChange={this.onFieldConfigChange}
         onPanelOptionsChanged={this.onPanelOptionsChanged}
@@ -251,7 +271,7 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
     );
   }
 
-  renderWithOptionsPane(styles: any) {
+  renderWithOptionsPane(styles: EditorStyles) {
     const { uiState } = this.props;
 
     return (
@@ -266,7 +286,7 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
         onDragFinished={size => this.onDragFinished(Pane.Right, size)}
       >
         {this.renderHorizontalSplit(styles)}
-        {this.renderOptionsPane(styles)}
+        {this.renderOptionsPane()}
       </SplitPane>
     );
   }
@@ -282,7 +302,10 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
     return (
       <NewPanelEditorContext.Provider value={true}>
         <div className={styles.wrapper}>
-          {uiState.isPanelOptionsVisible ? this.renderWithOptionsPane(styles) : this.renderHorizontalSplit(styles)}
+          {this.editorToolbar(styles)}
+          <div className={styles.verticalSplitPanesWrapper}>
+            {uiState.isPanelOptionsVisible ? this.renderWithOptionsPane(styles) : this.renderHorizontalSplit(styles)}
+          </div>
         </div>
       </NewPanelEditorContext.Provider>
     );
@@ -301,6 +324,7 @@ const mapStateToProps: MapStateToProps<ConnectedProps, OwnProps, StoreState> = (
     initDone: state.panelEditorNew.initDone,
     tabs: getPanelEditorTabs(state.location, plugin),
     uiState: state.panelEditorNew.ui,
+    variables: getVariables(state),
   };
 };
 
@@ -313,6 +337,11 @@ const mapDispatchToProps: MapDispatchToProps<DispatchProps, OwnProps> = {
 };
 
 export const PanelEditor = connect(mapStateToProps, mapDispatchToProps)(PanelEditorUnconnected);
+
+enum Pane {
+  Right,
+  Top,
+}
 
 /*
  * Styles
@@ -352,12 +381,22 @@ const getStyles = stylesFactory((theme: GrafanaTheme, props: Props) => {
       display: flex;
       flex-direction: column;
     `,
+    verticalSplitPanesWrapper: css`
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      width: 100%;
+      position: relative;
+    `,
     mainPaneWrapper: css`
       display: flex;
       flex-direction: column;
       height: 100%;
       width: 100%;
       padding-right: ${uiState.isPanelOptionsVisible ? 0 : paneSpaceing};
+    `,
+    variablesWrapper: css`
+      display: flex;
     `,
     panelWrapper: css`
       flex: 1 1 0;
@@ -388,11 +427,18 @@ const getStyles = stylesFactory((theme: GrafanaTheme, props: Props) => {
       height: 100%;
       width: 100%;
     `,
-    toolbar: css`
+    editorToolbar: css`
       display: flex;
       padding: ${theme.spacing.sm};
-      padding-right: 0;
+      background: ${theme.colors.panelBg};
       justify-content: space-between;
+      border-bottom: 1px solid ${theme.colors.panelBorder};
+    `,
+    panelToolbar: css`
+      display: flex;
+      padding: ${paneSpaceing} 0 ${paneSpaceing} ${paneSpaceing};
+      justify-content: space-between;
+      flex-wrap: wrap;
     `,
     toolbarLeft: css`
       padding-left: ${theme.spacing.sm};
@@ -417,3 +463,5 @@ const getStyles = stylesFactory((theme: GrafanaTheme, props: Props) => {
     `,
   };
 });
+
+type EditorStyles = ReturnType<typeof getStyles>;

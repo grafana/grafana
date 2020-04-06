@@ -7,6 +7,7 @@ import { getConfig } from 'app/core/config';
 import { variableRegex } from './utils';
 import { isAdHoc } from '../variables/guard';
 import { VariableModel } from './types';
+import { setTemplateSrv, TemplateSrv as BaseTemplateSrv } from '@grafana/runtime';
 
 function luceneEscape(value: string) {
   return value.replace(/([\!\*\+\-\=<>\s\&\|\(\)\[\]\{\}\^\~\?\:\\/"])/g, '\\$1');
@@ -16,7 +17,19 @@ interface FieldAccessorCache {
   [key: string]: (obj: any) => any;
 }
 
-export class TemplateSrv {
+export interface TemplateSrvDependencies {
+  getFilteredVariables: typeof getFilteredVariables;
+  getVariables: typeof getVariables;
+  getVariableWithName: typeof getVariableWithName;
+}
+
+const runtimeDependencies: TemplateSrvDependencies = {
+  getFilteredVariables,
+  getVariables,
+  getVariableWithName,
+};
+
+export class TemplateSrv implements BaseTemplateSrv {
   private _variables: any[];
   private regex = variableRegex;
   private index: any = {};
@@ -25,7 +38,7 @@ export class TemplateSrv {
   private timeRange?: TimeRange | null = null;
   private fieldAccessorCache: FieldAccessorCache = {};
 
-  constructor() {
+  constructor(private dependencies: TemplateSrvDependencies = runtimeDependencies) {
     this.builtIns['__interval'] = { text: '1s', value: '1s' };
     this.builtIns['__interval_ms'] = { text: '100', value: '100' };
     this._variables = [];
@@ -53,7 +66,7 @@ export class TemplateSrv {
 
   getVariables(): VariableModel[] {
     if (getConfig().featureToggles.newVariables) {
-      return getVariables();
+      return this.dependencies.getVariables();
     }
 
     return this._variables;
@@ -419,7 +432,7 @@ export class TemplateSrv {
     }
 
     if (getConfig().featureToggles.newVariables && !this.index[name]) {
-      return getVariableWithName(name);
+      return this.dependencies.getVariableWithName(name);
     }
 
     return this.index[name];
@@ -427,7 +440,7 @@ export class TemplateSrv {
 
   private getAdHocVariables = (): any[] => {
     if (getConfig().featureToggles.newVariables) {
-      return getFilteredVariables(isAdHoc);
+      return this.dependencies.getFilteredVariables(isAdHoc);
     }
     if (Array.isArray(this._variables)) {
       return this._variables.filter(isAdHoc);
@@ -436,4 +449,7 @@ export class TemplateSrv {
   };
 }
 
-export default new TemplateSrv();
+// Expose the template srv
+const srv = new TemplateSrv();
+setTemplateSrv(srv);
+export default srv;

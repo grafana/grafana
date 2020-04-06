@@ -5,7 +5,7 @@ import {
   toFloatOrUndefined,
   NumberFieldConfigSettings,
 } from '@grafana/data';
-import Forms from '../Forms';
+import { Input } from '../Forms/Input/Input';
 
 export const NumberValueEditor: React.FC<FieldConfigEditorProps<number, NumberFieldConfigSettings>> = ({
   value,
@@ -14,7 +14,7 @@ export const NumberValueEditor: React.FC<FieldConfigEditorProps<number, NumberFi
 }) => {
   const { settings } = item;
   return (
-    <Forms.Input
+    <Input
       value={isNaN(value) ? '' : value}
       min={settings?.min}
       max={settings?.max}
