@@ -116,7 +116,7 @@ export const DashboardSearch: FC<Props> = ({ closeSearch }) => {
   };
 
   const clearSearchFilter = () => {
-    setQuery(q => ({ ...q, tags: [], query: '' }));
+    setQuery(q => ({ ...q, tags: [] }));
   };
 
   return (
