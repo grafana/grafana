@@ -37,6 +37,7 @@ class GitHubRelease {
     this.commitHash = commitHash;
 
     this.git = new GithubClient({
+      required: true,
       repo: repository,
     });
   }
@@ -97,7 +98,9 @@ class GitHubRelease {
         `https://uploads.github.com/repos/${this.username}/${this.repository}/releases/${newReleaseResponse.data.id}/assets`
       );
     } catch (reason) {
-      console.error('error', reason);
+      console.error(reason.data?.message ?? reason);
+      // Rethrow the error so that we can trigger a non-zero exit code to circle-ci
+      throw reason;
     }
   }
 }
