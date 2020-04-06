@@ -1,6 +1,10 @@
 package backendplugin
 
-import "github.com/prometheus/client_golang/prometheus"
+import (
+	"time"
+
+	"github.com/prometheus/client_golang/prometheus"
+)
 
 var (
 	pluginRequestCounter *prometheus.CounterVec
@@ -14,7 +18,7 @@ func init() {
 	}, []string{"plugin_id", "endpoint", "status"})
 
 	pluginRequestLatency = prometheus.NewSummaryVec(prometheus.SummaryOpts{
-		Name:       "plugin_request_latency",
+		Name:       "plugin_request_latency_milliseconds",
 		Help:       "Plugin request latency",
 		Objectives: map[float64]float64{0.5: 0.05, 0.9: 0.01, 0.99: 0.001},
 	}, []string{"plugin_id", "endpoint"})
@@ -26,15 +30,16 @@ func init() {
 func InstrumentPluginRequest(pluginID string, endpoint string, fn func() error) error {
 	status := "ok"
 
-	t := prometheus.NewTimer(pluginRequestLatency.WithLabelValues(pluginID, endpoint))
+	start := time.Now()
 
 	err := fn()
-	if err != nil {
+	if err != nil && err != ErrStreamDrained {
 		status = "error"
 	}
 
+	elapsed := time.Since(start) / time.Millisecond
+	pluginRequestLatency.WithLabelValues(pluginID, endpoint).Observe(float64(elapsed))
 	pluginRequestCounter.WithLabelValues(pluginID, endpoint, status).Inc()
-	t.ObserveDuration()
 
 	return err
 }

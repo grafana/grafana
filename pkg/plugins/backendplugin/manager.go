@@ -8,8 +8,8 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/util/errutil"
 	"github.com/grafana/grafana/pkg/util/proxyutil"
-	"github.com/prometheus/client_golang/prometheus"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/registry"
@@ -187,7 +187,8 @@ func (m *manager) CheckHealth(ctx context.Context, pluginConfig *PluginConfig) (
 	return checkHealthResultFromProto(res), nil
 }
 
-const resourceMetricEndpoint string = "resource"
+// ErrStreamDrained indicates that the stream is drained
+var ErrStreamDrained error = errors.New("stream is drained")
 
 // CallResource calls a plugin resource.
 func (m *manager) CallResource(config PluginConfig, c *models.ReqContext, path string) {
@@ -227,65 +228,64 @@ func (m *manager) CallResource(config PluginConfig, c *models.ReqContext, path s
 		User:    c.SignedInUser,
 	}
 
-	status := "ok"
-	latencyTimer := prometheus.NewTimer(pluginRequestLatency.WithLabelValues(p.id, resourceMetricEndpoint))
-	defer latencyTimer.ObserveDuration()
-	defer pluginRequestCounter.WithLabelValues(p.id, resourceMetricEndpoint, status).Inc()
-
-	stream, err := p.callResource(clonedReq.Context(), req)
-	if err != nil {
-		c.JsonApiErr(500, "Failed to call resource", err)
-		status = "error"
-		return
-	}
-
-	processedStreams := 0
-
-	for {
-		resp, err := stream.Recv()
-		if err == io.EOF {
-			if processedStreams == 0 {
-				c.JsonApiErr(500, "Received empty resource response ", nil)
-			}
-			return
-		}
+	err = InstrumentPluginRequest(p.id, "resource", func() error {
+		stream, err := p.callResource(clonedReq.Context(), req)
 		if err != nil {
+			return errutil.Wrap("Failed to call resource", err)
+		}
+
+		processedStreams := 0
+
+		for {
+			resp, err := stream.Recv()
+			if err == io.EOF {
+				if processedStreams == 0 {
+					return errors.New("Received empty resource response")
+				}
+				return ErrStreamDrained
+			}
+			if err != nil {
+				if processedStreams == 0 {
+					return errutil.Wrap("Failed to receive response from resource call", err)
+				} else {
+					p.logger.Error("Failed to receive response from resource call", "error", err)
+				}
+				return ErrStreamDrained
+			}
+
+			// Expected that headers and status are only part of first stream
 			if processedStreams == 0 {
-				c.JsonApiErr(500, "Failed to receive response from resource call", err)
-			} else {
-				p.logger.Error("Failed to receive response from resource call", "error", err)
-			}
-			return
-		}
-
-		// Expected that headers and status are only part of first stream
-		if processedStreams == 0 {
-			// Make sure a content type always is returned in response
-			if _, exists := resp.Headers["Content-Type"]; !exists {
-				resp.Headers["Content-Type"] = []string{"application/json"}
-			}
-
-			for k, values := range resp.Headers {
-				// Due to security reasons we don't want to forward
-				// cookies from a backend plugin to clients/browsers.
-				if k == "Set-Cookie" {
-					continue
+				// Make sure a content type always is returned in response
+				if _, exists := resp.Headers["Content-Type"]; !exists {
+					resp.Headers["Content-Type"] = []string{"application/json"}
 				}
 
-				for _, v := range values {
-					c.Resp.Header().Add(k, v)
+				for k, values := range resp.Headers {
+					// Due to security reasons we don't want to forward
+					// cookies from a backend plugin to clients/browsers.
+					if k == "Set-Cookie" {
+						continue
+					}
+
+					for _, v := range values {
+						c.Resp.Header().Add(k, v)
+					}
 				}
+
+				c.WriteHeader(resp.Status)
 			}
 
-			c.WriteHeader(resp.Status)
-		}
+			if _, err := c.Write(resp.Body); err != nil {
+				p.logger.Error("Failed to write resource response", "error", err)
+			}
 
-		if _, err := c.Write(resp.Body); err != nil {
-			p.logger.Error("Failed to write resource response", "error", err)
+			c.Resp.Flush()
+			processedStreams++
 		}
+	})
 
-		c.Resp.Flush()
-		processedStreams++
+	if err != nil {
+		c.JsonApiErr(500, "Failed to ", err)
 	}
 }
 
