@@ -10,7 +10,7 @@ var (
 func init() {
 	pluginRequestCounter = prometheus.NewCounterVec(prometheus.CounterOpts{
 		Name: "plugin_request_total",
-		Help: "The total amount of plugin request",
+		Help: "The total amount of plugin requests",
 	}, []string{"name", "endpoint", "status"})
 
 	pluginRequestLatency = prometheus.NewSummaryVec(prometheus.SummaryOpts{
