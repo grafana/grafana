@@ -100,9 +100,12 @@ export type IconName =
   | 'signal'
   | 'search-plus'
   | 'search-minus'
+  | 'minus-circle'
   | 'table'
   | 'plus'
   | 'heart'
+  | 'heartbeat'
+  | 'ellipsis-v'
   | 'favorite';
 
 export const getAvailableIcons = (): IconName[] => [

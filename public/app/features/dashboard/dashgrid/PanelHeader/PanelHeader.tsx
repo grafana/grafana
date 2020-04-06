@@ -25,6 +25,7 @@ export interface Props {
   angularComponent?: AngularComponent | null;
   links?: DataLink[];
   error?: string;
+  alertState?: string;
   isFullscreen: boolean;
   data: PanelData;
   updateLocation: typeof updateLocation;
@@ -121,7 +122,7 @@ export class PanelHeader extends Component<Props, State> {
   };
 
   render() {
-    const { panel, scopedVars, error, isFullscreen, data } = this.props;
+    const { panel, scopedVars, error, isFullscreen, data, alertState } = this.props;
     const { menuItems } = this.state;
     const title = templateSrv.replaceWithText(panel.title, scopedVars);
 
@@ -161,7 +162,14 @@ export class PanelHeader extends Component<Props, State> {
           >
             <div className="panel-title">
               {Object.values(notices).map(this.renderNotice)}
-              <span className="icon-gf panel-alert-icon" />
+              {alertState && (
+                <Icon
+                  name={alertState === 'alerting' ? 'heartbeat' : 'heart'}
+                  className="icon-gf panel-alert-icon"
+                  style={{ marginRight: '4px' }}
+                  size="sm"
+                />
+              )}
               <span className="panel-title-text">
                 {title}
                 <Icon name="angle-down" className="panel-menu-toggle" />

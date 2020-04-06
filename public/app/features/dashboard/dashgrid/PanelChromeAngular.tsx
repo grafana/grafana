@@ -249,6 +249,7 @@ export class PanelChromeAngularUnconnected extends PureComponent<Props, State> {
           isFullscreen={isFullscreen}
           data={data}
           updateLocation={updateLocation}
+          alertState={alertState}
         />
         <div className={panelContentClassNames}>
           <div ref={element => (this.element = element)} className="panel-height-helper" />

@@ -1,5 +1,7 @@
 <div ng-if="ctrl.panel.alert">
-  <div class="alert alert-error m-b-2" ng-show="ctrl.error"><i class="fa fa-warning"></i> {{ctrl.error}}</div>
+  <div class="alert alert-error m-b-2" ng-show="ctrl.error">
+    <icon name="'exclamation-triangle'"></icon> {{ctrl.error}}
+  </div>
   <div class="panel-options-group">
     <div class="panel-options-group__body">
       <div class="gf-form-group">
@@ -35,7 +37,9 @@
           </div>
         </div>
         <div class="gf-form" ng-if="ctrl.frequencyWarning">
-          <label class="gf-form-label text-warning"> <i class="fa fa-warning"></i> {{ctrl.frequencyWarning}} </label>
+          <label class="gf-form-label text-warning">
+            <icon name="'exclamation-triangle'"></icon> {{ctrl.frequencyWarning}}
+          </label>
         </div>
       </div>
 
@@ -98,7 +102,7 @@
           <div class="gf-form">
             <label class="gf-form-label">
               <a class="pointer" tabindex="1" ng-click="ctrl.removeCondition($index)">
-                <i class="fa fa-trash"></i>
+                <icon name="'trash-alt'"></icon>
               </a>
             </label>
           </div>
@@ -107,7 +111,7 @@
         <div class="gf-form">
           <label class="gf-form-label dropdown">
             <a class="pointer dropdown-toggle" data-toggle="dropdown">
-              <i class="fa fa-plus"></i>
+              <icon name="'plus-circle'"></icon>
             </a>
             <ul class="dropdown-menu" role="menu">
               <li ng-repeat="ct in ctrl.conditionTypes" role="menuitem">
@@ -166,7 +170,7 @@
         </div>
         <div class="gf-form" ng-repeat="nc in ctrl.alertNotifications">
           <span class="gf-form-label">
-            <i class="{{nc.iconClass}}"></i>
+            <icon name="'{{nc.iconClass}}'"></icon>
             &nbsp;{{nc.name}}&nbsp;<span ng-if="nc.isDefault">(default)</span>
             <icon
               name="'times'"
@@ -206,7 +210,7 @@
             />
             <label class="gf-form-label">
               <a class="pointer" tabindex="1" ng-click="ctrl.removeAlertRuleTag(name)">
-                <i class="fa fa-trash"></i>
+                <icon name="'trash-alt'"></icon>
               </a>
             </label>
           </div>
@@ -230,7 +234,7 @@
             <div class="gf-form">
               <label class="gf-form-label">
                 <a class="pointer" tabindex="1" ng-click="ctrl.addAlertRuleTag()">
-                  <i class="fa fa-plus"></i>&nbsp;Add Tag
+                  <icon name="'plus-circle'"></icon>&nbsp;Add Tag
                 </a>
               </label>
             </div>
