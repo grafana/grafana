@@ -1,14 +1,10 @@
-import { PanelPlugin, FieldConfigProperty } from '@grafana/data';
+import { PanelPlugin } from '@grafana/data';
 import { TablePanel } from './TablePanel';
 import { CustomFieldConfig, defaults, Options } from './types';
 
 export const plugin = new PanelPlugin<Options, CustomFieldConfig>(TablePanel)
   .setDefaults(defaults)
   .useFieldConfig({
-    standardOptions: [FieldConfigProperty.Min],
-    standardOptionsDefaults: {
-      [FieldConfigProperty.Min]: 10,
-    },
     useCustomConfig: builder => {
       builder
         .addNumberInput({
