@@ -48,6 +48,7 @@ datasources:
 If you have a literal `$` in your value and want to avoid interpolation, `$$` can be used.
 
 <hr />
+
 ## Configuration Management Tools
 
 Currently we do not provide any scripts/manifests for configuring Grafana. Rather than spending time learning and creating scripts/manifests for each tool, we think our time is better spent making Grafana easier to provision. Therefore, we heavily relay on the expertise of the community.
