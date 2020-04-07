@@ -45,10 +45,29 @@ export interface QueryResultMetaStat extends FieldConfig {
   value: number;
 }
 
+/**
+ * QueryResultMetaNotice is a structure that provides user notices for query result data
+ */
 export interface QueryResultMetaNotice {
+  /**
+   * Specify the notice severity
+   */
   severity: 'info' | 'warning' | 'error';
+
+  /**
+   * The text that should be displayed
+   */
   text: string;
-  url?: string;
+
+  /**
+   * An optional link that may be displayed in the UI.
+   * This value may be an absolute URL or relative to grafana root
+   */
+  link?: string;
+
+  /**
+   * Optionally suggest an appropriate for the panel inspector
+   */
   inspect?: 'meta' | 'error' | 'data' | 'stats';
 }
 
