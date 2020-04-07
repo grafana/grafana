@@ -16,6 +16,7 @@ import { CloudWatchJsonData, CloudWatchSecureJsonData } from '../types';
 import { CancelablePromise, makePromiseCancelable } from 'app/core/utils/CancelablePromise';
 
 const authProviderOptions = [
+  { label: 'AWS SDK Default', value: 'sdk' },
   { label: 'Access & secret key', value: 'keys' },
   { label: 'Credentials file', value: 'credentials' },
   { label: 'ARN', value: 'arn' },

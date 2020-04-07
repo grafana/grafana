@@ -2,19 +2,24 @@ package cloudwatch
 
 import (
 	"context"
+	"fmt"
 	"regexp"
 
+	"github.com/aws/aws-sdk-go/aws/request"
+	"github.com/aws/aws-sdk-go/service/cloudwatch"
+	"github.com/aws/aws-sdk-go/service/cloudwatch/cloudwatchiface"
+	"github.com/aws/aws-sdk-go/service/ec2"
 	"github.com/aws/aws-sdk-go/service/ec2/ec2iface"
+	"github.com/aws/aws-sdk-go/service/resourcegroupstaggingapi"
 	"github.com/aws/aws-sdk-go/service/resourcegroupstaggingapi/resourcegroupstaggingapiiface"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb"
 )
 
 type CloudWatchExecutor struct {
 	*models.DataSource
-	ec2Svc  ec2iface.EC2API
-	rgtaSvc resourcegroupstaggingapiiface.ResourceGroupsTaggingAPIAPI
 }
 
 type DatasourceInfo struct {
@@ -61,4 +66,61 @@ func (e *CloudWatchExecutor) Query(ctx context.Context, dsInfo *models.DataSourc
 	}
 
 	return result, err
+}
+
+func (e *CloudWatchExecutor) getDsInfo(region string) *DatasourceInfo {
+	defaultRegion := e.DataSource.JsonData.Get("defaultRegion").MustString()
+	if region == "default" {
+		region = defaultRegion
+	}
+
+	authType := e.DataSource.JsonData.Get("authType").MustString()
+	assumeRoleArn := e.DataSource.JsonData.Get("assumeRoleArn").MustString()
+	decrypted := e.DataSource.DecryptedValues()
+	accessKey := decrypted["accessKey"]
+	secretKey := decrypted["secretKey"]
+
+	datasourceInfo := &DatasourceInfo{
+		Region:        region,
+		Profile:       e.DataSource.Database,
+		AuthType:      authType,
+		AssumeRoleArn: assumeRoleArn,
+		AccessKey:     accessKey,
+		SecretKey:     secretKey,
+	}
+
+	return datasourceInfo
+}
+
+func (e *CloudWatchExecutor) getCloudWatchClient(region string) (cloudwatchiface.CloudWatchAPI, error) {
+	sess, err := globalSessionCache.Get(e.getDsInfo(region))
+	if err != nil {
+		return nil, err
+	}
+
+	client := cloudwatch.New(sess)
+	client.Handlers.Send.PushFront(func(r *request.Request) {
+		r.HTTPRequest.Header.Set("User-Agent", fmt.Sprintf("Grafana/%s", setting.BuildVersion))
+	})
+	return client, nil
+}
+
+func (e *CloudWatchExecutor) getEc2Client(region string) (ec2iface.EC2API, error) {
+	sess, err := globalSessionCache.Get(e.getDsInfo(region))
+	if err != nil {
+		return nil, err
+	}
+
+	client := ec2.New(sess)
+	return client, nil
+}
+
+func (e *CloudWatchExecutor) getRgtaClient(region string) (resourcegroupstaggingapiiface.ResourceGroupsTaggingAPIAPI, error) {
+	sess, err := globalSessionCache.Get(e.getDsInfo(region))
+	if err != nil {
+		return nil, err
+	}
+
+	client := resourcegroupstaggingapi.New(sess)
+	return client, nil
 }

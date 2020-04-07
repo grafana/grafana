@@ -12,7 +12,6 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awsutil"
-	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/cloudwatch"
 	"github.com/aws/aws-sdk-go/service/ec2"
 	"github.com/aws/aws-sdk-go/service/resourcegroupstaggingapi"
@@ -300,11 +299,12 @@ func (e *CloudWatchExecutor) handleGetRegions(ctx context.Context, parameters *s
 		"eu-central-1", "eu-north-1", "eu-west-1", "eu-west-2", "eu-west-3", "me-south-1", "sa-east-1", "us-east-1", "us-east-2", "us-west-1", "us-west-2",
 		"cn-north-1", "cn-northwest-1", "us-gov-east-1", "us-gov-west-1", "us-isob-east-1", "us-iso-east-1",
 	}
-	err := e.ensureClientSession("default")
+
+	client, err := e.getEc2Client("default")
 	if err != nil {
 		return nil, err
 	}
-	r, err := e.ec2Svc.DescribeRegions(&ec2.DescribeRegionsInput{})
+	r, err := client.DescribeRegions(&ec2.DescribeRegionsInput{})
 	if err != nil {
 		// ignore error for backward compatibility
 		plog.Error("Failed to get regions", "error", err)
@@ -464,30 +464,9 @@ func (e *CloudWatchExecutor) handleGetDimensionValues(ctx context.Context, param
 	return result, nil
 }
 
-func (e *CloudWatchExecutor) ensureClientSession(region string) error {
-	if e.ec2Svc == nil {
-		dsInfo := e.getDsInfo(region)
-		cfg, err := e.getAwsConfig(dsInfo)
-		if err != nil {
-			return fmt.Errorf("Failed to call ec2:getAwsConfig, %v", err)
-		}
-		sess, err := session.NewSession(cfg)
-		if err != nil {
-			return fmt.Errorf("Failed to call ec2:NewSession, %v", err)
-		}
-		e.ec2Svc = ec2.New(sess, cfg)
-	}
-	return nil
-}
-
 func (e *CloudWatchExecutor) handleGetEbsVolumeIds(ctx context.Context, parameters *simplejson.Json, queryContext *tsdb.TsdbQuery) ([]suggestData, error) {
 	region := parameters.Get("region").MustString()
 	instanceId := parameters.Get("instanceId").MustString()
-
-	err := e.ensureClientSession(region)
-	if err != nil {
-		return nil, err
-	}
 
 	instanceIds := aws.StringSlice(parseMultiSelectValue(instanceId))
 	instances, err := e.ec2DescribeInstances(region, nil, instanceIds)
@@ -526,11 +505,6 @@ func (e *CloudWatchExecutor) handleGetEc2InstanceAttribute(ctx context.Context, 
 				Values: vvvvv,
 			})
 		}
-	}
-
-	err := e.ensureClientSession(region)
-	if err != nil {
-		return nil, err
 	}
 
 	instances, err := e.ec2DescribeInstances(region, filters, nil)
@@ -590,31 +564,10 @@ func (e *CloudWatchExecutor) handleGetEc2InstanceAttribute(ctx context.Context, 
 	return result, nil
 }
 
-func (e *CloudWatchExecutor) ensureRGTAClientSession(region string) error {
-	if e.rgtaSvc == nil {
-		dsInfo := e.getDsInfo(region)
-		cfg, err := e.getAwsConfig(dsInfo)
-		if err != nil {
-			return fmt.Errorf("Failed to call ec2:getAwsConfig, %v", err)
-		}
-		sess, err := session.NewSession(cfg)
-		if err != nil {
-			return fmt.Errorf("Failed to call ec2:NewSession, %v", err)
-		}
-		e.rgtaSvc = resourcegroupstaggingapi.New(sess, cfg)
-	}
-	return nil
-}
-
 func (e *CloudWatchExecutor) handleGetResourceArns(ctx context.Context, parameters *simplejson.Json, queryContext *tsdb.TsdbQuery) ([]suggestData, error) {
 	region := parameters.Get("region").MustString()
 	resourceType := parameters.Get("resourceType").MustString()
 	filterJson := parameters.Get("tags").MustMap()
-
-	err := e.ensureRGTAClientSession(region)
-	if err != nil {
-		return nil, err
-	}
 
 	var filters []*resourcegroupstaggingapi.TagFilter
 	for k, v := range filterJson {
@@ -650,7 +603,7 @@ func (e *CloudWatchExecutor) handleGetResourceArns(ctx context.Context, paramete
 }
 
 func (e *CloudWatchExecutor) cloudwatchListMetrics(region string, namespace string, metricName string, dimensions []*cloudwatch.DimensionFilter) (*cloudwatch.ListMetricsOutput, error) {
-	svc, err := e.getClient(region)
+	svc, err := e.getCloudWatchClient(region)
 	if err != nil {
 		return nil, err
 	}
@@ -687,8 +640,13 @@ func (e *CloudWatchExecutor) ec2DescribeInstances(region string, filters []*ec2.
 		InstanceIds: instanceIds,
 	}
 
+	client, err := e.getEc2Client(region)
+	if err != nil {
+		return nil, err
+	}
+
 	var resp ec2.DescribeInstancesOutput
-	err := e.ec2Svc.DescribeInstancesPages(params,
+	err = client.DescribeInstancesPages(params,
 		func(page *ec2.DescribeInstancesOutput, lastPage bool) bool {
 			reservations, _ := awsutil.ValuesAtPath(page, "Reservations")
 			for _, reservation := range reservations {
@@ -709,8 +667,13 @@ func (e *CloudWatchExecutor) resourceGroupsGetResources(region string, filters [
 		TagFilters:          filters,
 	}
 
+	client, err := e.getRgtaClient(region)
+	if err != nil {
+		return nil, err
+	}
+
 	var resp resourcegroupstaggingapi.GetResourcesOutput
-	err := e.rgtaSvc.GetResourcesPages(params,
+	err = client.GetResourcesPages(params,
 		func(page *resourcegroupstaggingapi.GetResourcesOutput, lastPage bool) bool {
 			resources, _ := awsutil.ValuesAtPath(page, "ResourceTagMappingList")
 			for _, resource := range resources {
@@ -726,19 +689,11 @@ func (e *CloudWatchExecutor) resourceGroupsGetResources(region string, filters [
 }
 
 func getAllMetrics(cwData *DatasourceInfo) (cloudwatch.ListMetricsOutput, error) {
-	creds, err := GetCredentials(cwData)
+	sess, err := globalSessionCache.Get(cwData)
 	if err != nil {
 		return cloudwatch.ListMetricsOutput{}, err
 	}
-	cfg := &aws.Config{
-		Region:      aws.String(cwData.Region),
-		Credentials: creds,
-	}
-	sess, err := session.NewSession(cfg)
-	if err != nil {
-		return cloudwatch.ListMetricsOutput{}, err
-	}
-	svc := cloudwatch.New(sess, cfg)
+	svc := cloudwatch.New(sess)
 
 	params := &cloudwatch.ListMetricsInput{
 		Namespace: aws.String(cwData.Namespace),
