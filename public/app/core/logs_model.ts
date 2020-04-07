@@ -136,29 +136,28 @@ export function makeSeriesForLogs(rows: LogRowModel[], intervalMs: number, timeZ
   }
 
   return seriesList.map((series, i) => {
-    series.datapoints.sort((a: number[], b: number[]) => {
-      return a[1] - b[1];
-    });
+    series.datapoints.sort((a: number[], b: number[]) => a[1] - b[1]);
 
     // EEEP: converts GraphSeriesXY to DataFrame and back again!
     const data = toDataFrame(series);
-    const points = getFlotPairs({
-      xField: data.fields[1],
-      yField: data.fields[0],
-      nullValueMode: NullValueMode.Null,
-    });
 
-    const timeField = data.fields[1];
+    const timeField = data.fields.find(field => field.type === FieldType.time);
     timeField.display = getDisplayProcessor({
       field: timeField,
       timeZone,
     });
 
-    const valueField = data.fields[0];
+    const valueField = data.fields.find(field => field.type !== FieldType.time);
     valueField.config = {
       ...valueField.config,
       color: series.color,
     };
+
+    const points = getFlotPairs({
+      xField: timeField,
+      yField: valueField,
+      nullValueMode: NullValueMode.Null,
+    });
 
     const graphSeries: GraphSeriesXY = {
       color: series.color,
