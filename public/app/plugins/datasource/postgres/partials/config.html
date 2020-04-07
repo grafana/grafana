@@ -35,8 +35,7 @@
         This option determines whether or with what priority a secure SSL (TLS) TCP/IP connection will be negotiated with the server.
       </info-popover>
     </div>
-    <!-- TODO: Hide if mode is disable -->
-    <div class="gf-form max-width-30">
+    <div class="gf-form max-width-30" ng-if="ctrl.current.jsonData.sslmode != 'disable'">
       <span class="gf-form-label width-7">SSL/TLS Root Certificate</span>
       <input type="text" class="gf-form-input gf-form-input--has-help-icon" ng-model='ctrl.current.jsonData.sslRootCertFile' placeholder="SSL/TLS root cert file"></input>
       <info-popover mode="right-absolute">
