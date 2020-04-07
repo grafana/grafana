@@ -7,12 +7,13 @@ import { StatPanelEditor } from './StatPanelEditor';
 export const plugin = new PanelPlugin<StatPanelOptions>(StatPanel)
   .setDefaults(defaults)
   .setEditor(StatPanelEditor)
+  .useFieldConfig()
   .setPanelOptions(builder => {
     addStandardDataReduceOptions(builder);
 
     builder
       .addRadio({
-        id: 'colorMode',
+        path: 'colorMode',
         name: 'Color mode',
         description: 'Color either the value or the background',
         settings: {
@@ -23,7 +24,7 @@ export const plugin = new PanelPlugin<StatPanelOptions>(StatPanel)
         },
       })
       .addRadio({
-        id: 'graphMode',
+        path: 'graphMode',
         name: 'Graph mode',
         description: 'Stat panel graph / sparkline mode',
         settings: {
@@ -34,7 +35,7 @@ export const plugin = new PanelPlugin<StatPanelOptions>(StatPanel)
         },
       })
       .addRadio({
-        id: 'justifyMode',
+        path: 'justifyMode',
         name: 'Justify mode',
         description: 'Value & title posititioning',
         settings: {
@@ -47,5 +48,4 @@ export const plugin = new PanelPlugin<StatPanelOptions>(StatPanel)
   })
   .setNoPadding()
   .setPanelChangeHandler(sharedSingleStatPanelChangedHandler)
-  .setMigrationHandler(sharedSingleStatMigrationHandler)
-  .useStandardFieldConfig();
+  .setMigrationHandler(sharedSingleStatMigrationHandler);

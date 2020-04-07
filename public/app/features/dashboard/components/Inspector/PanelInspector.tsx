@@ -200,7 +200,7 @@ export class PanelInspector extends PureComponent<Props, State> {
     const processed = applyFieldOverrides({
       data,
       theme: config.theme,
-      fieldOptions: { defaults: {}, overrides: [] },
+      fieldConfig: { defaults: {}, overrides: [] },
       replaceVariables: (value: string) => {
         return value;
       },

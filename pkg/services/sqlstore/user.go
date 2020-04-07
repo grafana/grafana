@@ -3,6 +3,7 @@ package sqlstore
 import (
 	"context"
 	"fmt"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -311,6 +312,27 @@ func GetUserProfile(query *models.GetUserProfileQuery) error {
 	return err
 }
 
+type byOrgName []*models.UserOrgDTO
+
+// Len returns the length of an array of organisations.
+func (o byOrgName) Len() int {
+	return len(o)
+}
+
+// Swap swaps two indices of an array of organizations.
+func (o byOrgName) Swap(i, j int) {
+	o[i], o[j] = o[j], o[i]
+}
+
+// Less returns whether element i of an array of organizations is less than element j.
+func (o byOrgName) Less(i, j int) bool {
+	if strings.ToLower(o[i].Name) < strings.ToLower(o[j].Name) {
+		return true
+	}
+
+	return o[i].Name < o[j].Name
+}
+
 func GetUserOrgList(query *models.GetUserOrgListQuery) error {
 	query.Result = make([]*models.UserOrgDTO, 0)
 	sess := x.Table("org_user")
@@ -319,6 +341,7 @@ func GetUserOrgList(query *models.GetUserOrgListQuery) error {
 	sess.Cols("org.name", "org_user.role", "org_user.org_id")
 	sess.OrderBy("org.name")
 	err := sess.Find(&query.Result)
+	sort.Sort(byOrgName(query.Result))
 	return err
 }
 

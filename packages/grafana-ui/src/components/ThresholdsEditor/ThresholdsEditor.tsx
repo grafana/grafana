@@ -3,7 +3,7 @@ import { Threshold, sortThresholds, ThresholdsConfig, ThresholdsMode, Selectable
 import { colors } from '../../utils';
 import { getColorFromHexRgbOrName } from '@grafana/data';
 import { ThemeContext } from '../../themes/ThemeContext';
-import { Input } from '../Input/Input';
+import { Input } from '../Forms/Legacy/Input/Input';
 import { ColorPicker } from '../ColorPicker/ColorPicker';
 import { css } from 'emotion';
 import { PanelOptionsGroup } from '../PanelOptionsGroup/PanelOptionsGroup';
