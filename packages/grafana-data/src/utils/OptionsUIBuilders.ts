@@ -1,7 +1,7 @@
 import {
   FieldType,
   FieldConfigEditorProps,
-  FieldPropertyEditorItem,
+  FieldConfigPropertyItem,
   PanelOptionsEditorConfig,
   PanelOptionsEditorItem,
   FieldConfigEditorConfig,
@@ -29,7 +29,7 @@ import {
 export class FieldConfigEditorBuilder<TOptions> extends OptionsUIRegistryBuilder<
   TOptions,
   FieldConfigEditorProps<any, any>,
-  FieldPropertyEditorItem<TOptions>
+  FieldConfigPropertyItem<TOptions>
 > {
   addNumberInput<TSettings>(config: FieldConfigEditorConfig<TOptions, TSettings & NumberFieldConfigSettings, number>) {
     return this.addCustomEditor({

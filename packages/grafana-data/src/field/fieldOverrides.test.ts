@@ -7,7 +7,7 @@ import {
 import { MutableDataFrame, toDataFrame } from '../dataframe';
 import {
   FieldConfig,
-  FieldPropertyEditorItem,
+  FieldConfigPropertyItem,
   GrafanaTheme,
   FieldType,
   DataFrame,
@@ -35,7 +35,7 @@ const property2 = {
   shouldApply: () => true,
 } as any;
 
-export const customFieldRegistry: FieldConfigOptionsRegistry = new Registry<FieldPropertyEditorItem>(() => {
+export const customFieldRegistry: FieldConfigOptionsRegistry = new Registry<FieldConfigPropertyItem>(() => {
   return [property1, property2, ...mockStandardProperties()];
 });
 

@@ -10,7 +10,7 @@ import {
   FieldOverrideContext,
   ScopedVars,
   ApplyFieldOverrideOptions,
-  FieldPropertyEditorItem,
+  FieldConfigPropertyItem,
 } from '../types';
 import { fieldMatchers, ReducerID, reduceField } from '../transformations';
 import { FieldMatcher } from '../types/transformations';
@@ -247,7 +247,7 @@ export function setFieldConfigDefaults(config: FieldConfig, defaults: FieldConfi
 const processFieldConfigValue = (
   destination: Record<string, any>, // it's mutable
   source: Record<string, any>,
-  fieldConfigProperty: FieldPropertyEditorItem,
+  fieldConfigProperty: FieldConfigPropertyItem,
   context: FieldOverrideEnv
 ) => {
   const currentConfig = get(destination, fieldConfigProperty.path);
