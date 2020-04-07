@@ -1,5 +1,6 @@
 import React, { FunctionComponent, useCallback } from 'react';
-import { Switch } from '@grafana/ui';
+import { LegacyForms } from '@grafana/ui';
+const { Switch } = LegacyForms;
 import { e2e } from '@grafana/e2e';
 
 import { VariableWithMultiSupport } from '../../templating/types';
