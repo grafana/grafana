@@ -13,6 +13,7 @@ export interface Props {
 const UsersTable: FC<Props> = props => {
   const { users, onRoleChange, onRemoveUser } = props;
 
+  const [showRemoveModal, setShowRemoveModal] = useState<string | boolean>(false);
   return (
     <table className="filter-table form-inline">
       <thead>
@@ -28,7 +29,6 @@ const UsersTable: FC<Props> = props => {
       </thead>
       <tbody>
         {users.map((user, index) => {
-          const [isRemovingUser, setIsRemovingUser] = useState(false);
           return (
             <tr key={`${user.userId}-${index}`}>
               <td className="width-4 text-center">
@@ -47,13 +47,18 @@ const UsersTable: FC<Props> = props => {
               </td>
 
               <td>
-                <Button size="sm" variant="destructive" onClick={() => setIsRemovingUser(true)} icon="fa fa-remove" />
+                <Button
+                  size="sm"
+                  variant="destructive"
+                  onClick={() => setShowRemoveModal(user.login)}
+                  icon="fa fa-remove"
+                />
                 <ConfirmModal
                   body={`Are you sure you want to delete user ${user.login}?`}
                   confirmText="Delete"
                   title="Delete"
-                  onDismiss={() => setIsRemovingUser(false)}
-                  isOpen={isRemovingUser}
+                  onDismiss={() => setShowRemoveModal(false)}
+                  isOpen={user.login === showRemoveModal}
                   onConfirm={() => {
                     onRemoveUser(user);
                   }}
