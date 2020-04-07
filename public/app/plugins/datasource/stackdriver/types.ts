@@ -78,6 +78,7 @@ export interface SLOQuery {
 }
 
 export interface StackdriverQuery extends DataQuery {
+  datasourceId?: number; // Should not be necessary anymore
   queryType: QueryType;
   metricQuery: MetricQuery;
   sloQuery?: SLOQuery;
