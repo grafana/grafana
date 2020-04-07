@@ -1,7 +1,7 @@
 import React, { FC, useMemo } from 'react';
 import { PanelModel, DashboardModel } from '../../state';
 import { SelectableValue, PanelPlugin, FieldConfigSource, PanelData } from '@grafana/data';
-import { Forms, Select, DataLinksInlineEditor, Input } from '@grafana/ui';
+import { Forms, Switch, Select, DataLinksInlineEditor, Input } from '@grafana/ui';
 import { OptionsGroup } from './OptionsGroup';
 import { getPanelLinksVariableSuggestions } from '../../../panel/panellinks/link_srv';
 import { getVariables } from '../../../variables/state/selectors';
@@ -51,10 +51,7 @@ export const PanelOptionsTab: FC<Props> = ({
         />
       </Forms.Field>
       <Forms.Field label="Transparent" description="Display panel without background.">
-        <Forms.Switch
-          value={panel.transparent}
-          onChange={e => onPanelConfigChange('transparent', e.currentTarget.checked)}
-        />
+        <Switch value={panel.transparent} onChange={e => onPanelConfigChange('transparent', e.currentTarget.checked)} />
       </Forms.Field>
     </OptionsGroup>
   );
