@@ -8,7 +8,7 @@ import { stylesFactory, useTheme } from '../../themes';
 import { Button } from '../Button';
 import { createFieldsComparer } from '@grafana/data/src/transformations/transformers/order';
 import { VerticalGroup } from '../Layout/Layout';
-import { Input } from '../Forms/Input/Input';
+import { Input } from '../Input/Input';
 
 interface OrganizeFieldsTransformerEditorProps extends TransformerUIProps<OrganizeFieldsTransformerOptions> {}
 
