@@ -8,7 +8,6 @@ import { columnOptionsTab } from './column_options';
 import { TableRenderer } from './renderer';
 import { isTableData, PanelEvents, PanelPlugin } from '@grafana/data';
 import { TemplateSrv } from 'app/features/templating/template_srv';
-import { CoreEvents } from 'app/types';
 import { dispatch } from 'app/store/store';
 import { applyFilterFromTable } from 'app/features/variables/adhoc/actions';
 
@@ -76,16 +75,11 @@ export class TablePanelCtrl extends MetricsPanelCtrl {
     this.events.on(PanelEvents.dataReceived, this.onDataReceived.bind(this));
     this.events.on(PanelEvents.dataSnapshotLoad, this.onDataReceived.bind(this));
     this.events.on(PanelEvents.editModeInitialized, this.onInitEditMode.bind(this));
-    this.events.on(PanelEvents.initPanelActions, this.onInitPanelActions.bind(this));
   }
 
   onInitEditMode() {
     this.addEditorTab('Options', tablePanelEditor, 2);
     this.addEditorTab('Column Styles', columnOptionsTab, 3);
-  }
-
-  onInitPanelActions(actions: any[]) {
-    actions.push({ text: 'Export CSV', click: 'ctrl.exportCsv()' });
   }
 
   issueQueries(datasource: any) {
@@ -165,17 +159,6 @@ export class TablePanelCtrl extends MetricsPanelCtrl {
       this.panel.sort.desc = true;
     }
     this.render();
-  }
-
-  exportCsv() {
-    const scope = this.$scope.$new(true);
-    scope.tableData = this.renderer.render_values();
-    scope.panel = 'table';
-    this.publishAppEvent(CoreEvents.showModal, {
-      templateHtml: '<export-data-modal panel="panel" data="tableData"></export-data-modal>',
-      scope,
-      modalClass: 'modal--narrow',
-    });
   }
 
   link(scope: any, elem: JQuery, attrs: any, ctrl: TablePanelCtrl) {

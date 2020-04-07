@@ -1,7 +1,8 @@
 import React, { ChangeEvent, useState } from 'react';
 import { css } from 'emotion';
 
-import { Forms } from '../index';
+import { Input } from '../Input/Input';
+import { Field } from '../Forms/Field';
 import { Icon } from './Icon';
 import { getAvailableIcons, IconType } from './types';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
@@ -79,13 +80,13 @@ export const simple = () => {
         width: 100%;
       `}
     >
-      <Forms.Field
+      <Field
         className={css`
           width: 300px;
         `}
       >
-        <Forms.Input onChange={searchIcon} placeholder="Search icons by name" />
-      </Forms.Field>
+        <Input onChange={searchIcon} placeholder="Search icons by name" />
+      </Field>
       <div
         className={css`
           display: flex;

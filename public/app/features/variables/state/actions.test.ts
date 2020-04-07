@@ -43,6 +43,12 @@ variableAdapters.setInit(() => [
   createConstantVariableAdapter(),
 ]);
 
+jest.mock('app/features/dashboard/services/TimeSrv', () => ({
+  getTimeSrv: () => ({
+    timeRange: jest.fn().mockReturnValue(undefined),
+  }),
+}));
+
 describe('shared actions', () => {
   describe('when initDashboardTemplating is dispatched', () => {
     it('then correct actions are dispatched', () => {
