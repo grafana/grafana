@@ -23,6 +23,7 @@ export interface TableRow {
 }
 
 export type TableFilterActionCallback = (key: string, value: string) => void;
+export type ColumnResizeActionCallback = (field: Field, width: number) => void;
 
 export interface TableCellProps extends CellProps<any> {
   tableStyles: TableStyles;

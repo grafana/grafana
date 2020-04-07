@@ -52,4 +52,11 @@ export const plugin = new PanelPlugin<Options, CustomFieldConfig>(TablePanel)
       name: 'Show header',
       description: "To display table's header or not to display",
     });
+  })
+  .setPanelOptions(builder => {
+    builder.addBooleanSwitch({
+      path: 'resizable',
+      name: 'Resizable',
+      description: 'Toggles if table columns are resizable or not',
+    });
   });
