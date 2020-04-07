@@ -21,7 +21,7 @@ export class TablePanel extends Component<Props> {
 
     overrides.push({
       matcher: { id: matcherId, options: field.name },
-      properties: [{ isCustom: true, id: prop, value: width }],
+      properties: [{ id: prop, value: width }],
     });
 
     this.props.onFieldConfigChange({
