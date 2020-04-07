@@ -17,6 +17,20 @@ export const plugin = new PanelPlugin<Options, CustomFieldConfig>(TablePanel)
             max: 300,
           },
         })
+        .addRadio({
+          path: 'align',
+          name: 'Column alignment',
+          description: 'column alignment (for table)',
+          settings: {
+            options: [
+              { label: 'auto', value: null },
+              { label: 'left', value: 'left' },
+              { label: 'center', value: 'center' },
+              { label: 'right', value: 'right' },
+            ],
+          },
+          defaultValue: null,
+        })
         .addSelect({
           path: 'displayMode',
           name: 'Cell display mode',
@@ -37,5 +51,12 @@ export const plugin = new PanelPlugin<Options, CustomFieldConfig>(TablePanel)
       path: 'showHeader',
       name: 'Show header',
       description: "To display table's header or not to display",
+    });
+  })
+  .setPanelOptions(builder => {
+    builder.addBooleanSwitch({
+      path: 'resizable',
+      name: 'Resizable',
+      description: 'Toggles if table columns are resizable or not',
     });
   });

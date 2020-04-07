@@ -1,7 +1,5 @@
 //// Libraries
-import _ from 'lodash';
 import React, { PureComponent } from 'react';
-
 // Types
 import { PanelEditorProps } from '@grafana/data';
 import { LegacyForms } from '@grafana/ui';
