@@ -51,22 +51,56 @@ func addStackTag(tag uint, context_call func()) {
 
 // these private methods are named this horrendous name so gopherjs support
 // is easier. it shouldn't add any runtime cost in non-js builds.
+
+//go:noinline
 func github_com_jtolds_gls_markS(tag uint, cb func()) { _m(tag, cb) }
+
+//go:noinline
 func github_com_jtolds_gls_mark0(tag uint, cb func()) { _m(tag, cb) }
+
+//go:noinline
 func github_com_jtolds_gls_mark1(tag uint, cb func()) { _m(tag, cb) }
+
+//go:noinline
 func github_com_jtolds_gls_mark2(tag uint, cb func()) { _m(tag, cb) }
+
+//go:noinline
 func github_com_jtolds_gls_mark3(tag uint, cb func()) { _m(tag, cb) }
+
+//go:noinline
 func github_com_jtolds_gls_mark4(tag uint, cb func()) { _m(tag, cb) }
+
+//go:noinline
 func github_com_jtolds_gls_mark5(tag uint, cb func()) { _m(tag, cb) }
+
+//go:noinline
 func github_com_jtolds_gls_mark6(tag uint, cb func()) { _m(tag, cb) }
+
+//go:noinline
 func github_com_jtolds_gls_mark7(tag uint, cb func()) { _m(tag, cb) }
+
+//go:noinline
 func github_com_jtolds_gls_mark8(tag uint, cb func()) { _m(tag, cb) }
+
+//go:noinline
 func github_com_jtolds_gls_mark9(tag uint, cb func()) { _m(tag, cb) }
+
+//go:noinline
 func github_com_jtolds_gls_markA(tag uint, cb func()) { _m(tag, cb) }
+
+//go:noinline
 func github_com_jtolds_gls_markB(tag uint, cb func()) { _m(tag, cb) }
+
+//go:noinline
 func github_com_jtolds_gls_markC(tag uint, cb func()) { _m(tag, cb) }
+
+//go:noinline
 func github_com_jtolds_gls_markD(tag uint, cb func()) { _m(tag, cb) }
+
+//go:noinline
 func github_com_jtolds_gls_markE(tag uint, cb func()) { _m(tag, cb) }
+
+//go:noinline
 func github_com_jtolds_gls_markF(tag uint, cb func()) { _m(tag, cb) }
 
 func _m(tag_remainder uint, cb func()) {

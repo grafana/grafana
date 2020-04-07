@@ -178,7 +178,7 @@ func ShouldNotHappenWithin(actual interface{}, expected ...interface{}) string {
 	return ShouldNotHappenOnOrBetween(actualTime, min, max)
 }
 
-// ShouldBeChronological receives a []time.Time slice and asserts that the are
+// ShouldBeChronological receives a []time.Time slice and asserts that they are
 // in chronological order starting with the first time.Time as the earliest.
 func ShouldBeChronological(actual interface{}, expected ...interface{}) string {
 	if fail := need(0, expected); fail != success {
@@ -199,4 +199,20 @@ func ShouldBeChronological(actual interface{}, expected ...interface{}) string {
 		previous = current
 	}
 	return ""
+}
+
+// ShouldNotBeChronological receives a []time.Time slice and asserts that they are
+// NOT in chronological order.
+func ShouldNotBeChronological(actual interface{}, expected ...interface{}) string {
+	if fail := need(0, expected); fail != success {
+		return fail
+	}
+	if _, ok := actual.([]time.Time); !ok {
+		return shouldUseTimeSlice
+	}
+	result := ShouldBeChronological(actual, expected...)
+	if result != "" {
+		return ""
+	}
+	return shouldNotHaveBeenchronological
 }

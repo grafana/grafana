@@ -5,7 +5,9 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/go-xorm/xorm"
+	"github.com/grafana/grafana/pkg/util/errutil"
+	"github.com/lib/pq"
+	"xorm.io/xorm"
 )
 
 type Postgres struct {
@@ -100,16 +102,16 @@ func (db *Postgres) SqlType(c *Column) string {
 	return res
 }
 
-func (db *Postgres) TableCheckSql(tableName string) (string, []interface{}) {
-	args := []interface{}{"grafana", tableName}
-	sql := "SELECT table_name FROM information_schema.tables WHERE table_schema=? and table_name=?"
+func (db *Postgres) IndexCheckSql(tableName, indexName string) (string, []interface{}) {
+	args := []interface{}{tableName, indexName}
+	sql := "SELECT 1 FROM " + db.Quote("pg_indexes") + " WHERE" + db.Quote("tablename") + "=? AND " + db.Quote("indexname") + "=?"
 	return sql, args
 }
 
 func (db *Postgres) DropIndexSql(tableName string, index *Index) string {
 	quote := db.Quote
 	idxName := index.XName(tableName)
-	return fmt.Sprintf("DROP INDEX %v", quote(idxName))
+	return fmt.Sprintf("DROP INDEX %v CASCADE", quote(idxName))
 }
 
 func (db *Postgres) UpdateTableSql(tableName string, columns []*Column) string {
@@ -134,5 +136,35 @@ func (db *Postgres) CleanDB() error {
 		return fmt.Errorf("Failed to create schema public")
 	}
 
+	return nil
+}
+
+func (db *Postgres) isThisError(err error, errcode string) bool {
+	if driverErr, ok := err.(*pq.Error); ok {
+		if string(driverErr.Code) == errcode {
+			return true
+		}
+	}
+
+	return false
+}
+
+func (db *Postgres) IsUniqueConstraintViolation(err error) bool {
+	return db.isThisError(err, "23505")
+}
+
+func (db *Postgres) IsDeadlock(err error) bool {
+	return db.isThisError(err, "40P01")
+}
+
+func (db *Postgres) PostInsertId(table string, sess *xorm.Session) error {
+	if table != "org" {
+		return nil
+	}
+
+	// sync primary key sequence of org table
+	if _, err := sess.Exec("SELECT setval('org_id_seq', (SELECT max(id) FROM org));"); err != nil {
+		return errutil.Wrapf(err, "failed to sync primary key for org table")
+	}
 	return nil
 }

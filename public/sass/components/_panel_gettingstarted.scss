@@ -1,11 +1,7 @@
-// Colours
+// Colors
 $progress-color-dark: $panel-bg !default;
 $progress-color: $panel-bg !default;
-$progress-color-light: $panel-bg !default;
-$progress-color-grey-light: $body-bg !default;
-$progress-color-shadow: $panel-border !default;
-$progress-color-grey: $iconContainerBackground !default;
-$progress-color-grey-dark: $iconContainerBackground !default;
+$progress-line-uncompleted: lightOrDark($gray-3, $gray-1);
 
 // Sizing
 $marker-size: 60px !default;
@@ -13,29 +9,33 @@ $marker-size-half: ($marker-size / 2);
 $path-height: 2px !default;
 $path-position: $marker-size-half - ($path-height / 2);
 
-.dashlist-cta-close-btn {
+.progress-tracker-container {
+  height: 100%;
+  display: flex;
+  align-items: center;
+}
+
+.progress-tracker-close-btn {
   color: $text-color-weak;
-  float: right;
-  padding: 0;
-  margin: 0 2px 0 0;
+  position: absolute;
+  z-index: $panel-header-z-index;
+  top: 8px;
+  right: 8px;
+  font-size: $font-size-lg;
   background-color: transparent;
   border: none;
 
-  i {
-    font-size: 80%;
-  }
-
   &:hover {
-    color: $white;
+    color: $link-hover-color;
   }
 }
 
 // Container element
 .progress-tracker {
   display: flex;
-  margin: 0 auto;
+  width: 100%;
   padding: 0;
-  list-style: none;
+  align-items: center;
 }
 
 // Step container that creates lines between steps
@@ -46,24 +46,22 @@ $path-position: $marker-size-half - ($path-height / 2);
   margin: 0;
   padding: 0;
   color: $text-color-weak;
+  height: 84px;
 
   // For a flexbox bug in firefox that wont allow the text overflow on the text
   min-width: $marker-size;
 
   &::after {
-    right: -50%;
-    content: "";
+    content: '';
     display: block;
     position: absolute;
-    z-index: 1;
+    z-index: 0;
     top: $path-position;
     bottom: $path-position;
-    right: - $marker-size-half;
+    right: -$marker-size-half;
     width: 100%;
     height: $path-height;
-    border-top: 2px solid $progress-color-grey-light;
-    border-bottom: $progress-color-shadow;
-    background: $progress-color-grey-light;
+    border-top: 2px solid $progress-line-uncompleted;
   }
 
   &:first-child {
@@ -80,7 +78,7 @@ $path-position: $marker-size-half - ($path-height / 2);
   // Active state
   &.active {
     .progress-step-cta {
-      display: inline-block;
+      display: inline-flex;
     }
     .progress-title {
       font-weight: 400;
@@ -92,9 +90,12 @@ $path-position: $marker-size-half - ($path-height / 2);
       .icon-gf {
         color: $brand-primary;
         -webkit-text-fill-color: transparent;
-        background: $brand-gradient;
+        background: $brand-gradient-horizontal;
         -webkit-background-clip: text;
         text-decoration: none;
+      }
+      .gicon {
+        opacity: 1;
       }
     }
   }
@@ -105,21 +106,21 @@ $path-position: $marker-size-half - ($path-height / 2);
 
       // change icon to check
       .icon-gf::before {
-        content: "\e604";
+        content: '\e604';
       }
     }
     .progress-text {
       text-decoration: line-through;
     }
-    &::after {
-      background: $progress-color-grey-light;
-    }
+    // &::after {
+    //   border-top: 2px solid $progress-line-completed;
+    // }
   }
 }
 
 .progress-step-cta {
-  @include button-size($btn-padding-y-sm, $btn-padding-x-sm, $font-size-sm, $btn-border-radius);
-  @include buttonBackground($btn-success-bg, $btn-success-bg-hl);
+  @include button-size($btn-padding-y-sm, $btn-padding-x-sm, $font-size-sm, $border-radius-sm);
+  @include buttonBackground($btn-primary-bg, $btn-primary-bg-hl);
   display: none;
 }
 
@@ -132,11 +133,10 @@ $path-position: $marker-size-half - ($path-height / 2);
   width: $marker-size;
   height: $marker-size;
   padding-bottom: 2px; // To align text within the marker
-  z-index: 20;
+  z-index: 1;
   background-color: $panel-bg;
   margin-left: auto;
   margin-right: auto;
-  margin-bottom: $spacer;
   color: $text-color-weak;
   font-size: 35px;
   vertical-align: sub;
@@ -155,6 +155,9 @@ $path-position: $marker-size-half - ($path-height / 2);
   text-decoration: none;
   font-size: 35px;
   vertical-align: sub;
+  .gicon {
+    opacity: 0.7;
+  }
 }
 
 a.progress-link {

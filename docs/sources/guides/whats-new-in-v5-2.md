@@ -1,7 +1,7 @@
 +++
-title = "What's New in Grafana v5.2"
-description = "Feature & improvement highlights for Grafana v5.2"
-keywords = ["grafana", "new", "documentation", "5.2"]
+title = "What's new in Grafana v5.2"
+description = "Feature and improvement highlights for Grafana v5.2"
+keywords = ["grafana", "new", "documentation", "5.2", "release notes"]
 type = "docs"
 [menu.docs]
 name = "Version 5.2"
@@ -10,7 +10,7 @@ parent = "whatsnew"
 weight = -8
 +++
 
-# What's New in Grafana v5.2
+# What's new in Grafana v5.2
 
 Grafana v5.2 brings new features, many enhancements and bug fixes. This article will detail the major new features and enhancements.
 
@@ -21,13 +21,13 @@ Grafana v5.2 brings new features, many enhancements and bug fixes. This article 
 - [Prometheus]({{< relref "#prometheus" >}}) with alignment enhancements
 - [InfluxDB]({{< relref "#influxdb" >}}) now supports the `mode` function
 - [Alerting]({{< relref "#alerting" >}}) with alert notification channel type for Discord
-- [Dashboards & Panels]({{< relref "#dashboards-panels" >}}) with save & import enhancements
+- [Dashboards and Panels]({{< relref "#dashboards-panels" >}}) with save and import enhancements
 
 ## Elasticsearch alerting
 
 {{< docs-imagebox img="/img/docs/v52/elasticsearch_alerting.png" max-width="800px" class="docs-image--right" >}}
 
-Grafana v5.2 ships with an updated Elasticsearch datasource with support for alerting. Alerting support for Elasticsearch has been one of
+Grafana v5.2 ships with an updated Elasticsearch data source with support for alerting. Alerting support for Elasticsearch has been one of
 the most requested features by our community and now it's finally here. Please try it out and let us know what you think.
 
 <div class="clearfix"></div>
@@ -38,7 +38,7 @@ Grafana v5.2 brings an improved build pipeline with cross-platform support. This
 We've been longing for native ARM build support for ages. With the help from our amazing community this is now finally available.
 Please try it out and let us know what you think.
 
-Another great addition with the improved build pipeline is that binaries for MacOS/Darwin (x64) and Windows (x64) are now automatically built and
+Another great addition with the improved build pipeline is that binaries for macOS/Darwin (x64) and Windows (x64) are now automatically built and
 published for both stable and nightly builds.
 
 ## Improved Docker image
@@ -57,18 +57,18 @@ We hope this encourages users to follow Grafana's best practices and change the 
 
 ## Prometheus
 
-The Prometheus datasource now aligns the start/end of the query sent to Prometheus with the step, which ensures PromQL expressions with *rate*
+The Prometheus data source now aligns the start/end of the query sent to Prometheus with the step, which ensures PromQL expressions with *rate*
 functions get consistent results, and thus avoids graphs jumping around on reload.
 
 ## InfluxDB
 
-The InfluxDB datasource now includes support for the *mode* function which returns the most frequent value in a list of field values.
+The InfluxDB data source now includes support for the *mode* function which returns the most frequent value in a list of field values.
 
 ## Alerting
 
 By popular demand Grafana now includes support for an alert notification channel type for [Discord](https://discordapp.com/).
 
-## Dashboards & Panels
+## Dashboards and Panels
 
 ### Modified time range and variables are no longer saved by default
 
@@ -97,5 +97,5 @@ user that has editor role in an organization or the edit permission in at least 
 
 ## Changelog
 
-Checkout the [CHANGELOG.md](https://github.com/grafana/grafana/blob/master/CHANGELOG.md) file for a complete list
+Check out the [CHANGELOG.md](https://github.com/grafana/grafana/blob/master/CHANGELOG.md) file for a complete list
 of new features, changes, and bug fixes.

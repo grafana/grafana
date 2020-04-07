@@ -1,35 +1,55 @@
 import OpenTsDatasource from '../datasource';
-import $q from 'q';
+import { backendSrv } from 'app/core/services/backend_srv'; // will use the version in __mocks__
+
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  getBackendSrv: () => backendSrv,
+}));
 
 describe('opentsdb', () => {
+  const datasourceRequestMock = jest.spyOn(backendSrv, 'datasourceRequest');
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
   const ctx = {
-    backendSrv: {},
     ds: {},
     templateSrv: {
-      replace: str => str,
+      replace: (str: string) => str,
     },
   } as any;
   const instanceSettings = { url: '', jsonData: { tsdbVersion: 1 } };
 
   beforeEach(() => {
-    ctx.ctrl = new OpenTsDatasource(instanceSettings, $q, ctx.backendSrv, ctx.templateSrv);
+    ctx.ctrl = new OpenTsDatasource(instanceSettings, ctx.templateSrv);
   });
 
   describe('When performing metricFindQuery', () => {
-    let results;
-    let requestOptions;
+    let results: any;
+    let requestOptions: any;
 
     beforeEach(async () => {
-      ctx.backendSrv.datasourceRequest = await function(options) {
-        requestOptions = options;
-        return Promise.resolve({
-          data: [{ target: 'prod1.count', datapoints: [[10, 1], [12, 1]] }],
-        });
-      };
+      datasourceRequestMock.mockImplementation(
+        await ((options: any) => {
+          requestOptions = options;
+          return Promise.resolve({
+            data: [
+              {
+                target: 'prod1.count',
+                datapoints: [
+                  [10, 1],
+                  [12, 1],
+                ],
+              },
+            ],
+          });
+        })
+      );
     });
 
     it('metrics() should generate api suggest query', () => {
-      ctx.ctrl.metricFindQuery('metrics(pew)').then(function(data) {
+      ctx.ctrl.metricFindQuery('metrics(pew)').then((data: any) => {
         results = data;
       });
       expect(requestOptions.url).toBe('/api/suggest');
@@ -39,7 +59,7 @@ describe('opentsdb', () => {
     });
 
     it('tag_names(cpu) should generate lookup query', () => {
-      ctx.ctrl.metricFindQuery('tag_names(cpu)').then(function(data) {
+      ctx.ctrl.metricFindQuery('tag_names(cpu)').then((data: any) => {
         results = data;
       });
       expect(requestOptions.url).toBe('/api/search/lookup');
@@ -47,7 +67,7 @@ describe('opentsdb', () => {
     });
 
     it('tag_values(cpu, test) should generate lookup query', () => {
-      ctx.ctrl.metricFindQuery('tag_values(cpu, hostname)').then(function(data) {
+      ctx.ctrl.metricFindQuery('tag_values(cpu, hostname)').then((data: any) => {
         results = data;
       });
       expect(requestOptions.url).toBe('/api/search/lookup');
@@ -55,7 +75,7 @@ describe('opentsdb', () => {
     });
 
     it('tag_values(cpu, test) should generate lookup query', () => {
-      ctx.ctrl.metricFindQuery('tag_values(cpu, hostname, env=$env)').then(function(data) {
+      ctx.ctrl.metricFindQuery('tag_values(cpu, hostname, env=$env)').then((data: any) => {
         results = data;
       });
       expect(requestOptions.url).toBe('/api/search/lookup');
@@ -63,7 +83,7 @@ describe('opentsdb', () => {
     });
 
     it('tag_values(cpu, test) should generate lookup query', () => {
-      ctx.ctrl.metricFindQuery('tag_values(cpu, hostname, env=$env, region=$region)').then(function(data) {
+      ctx.ctrl.metricFindQuery('tag_values(cpu, hostname, env=$env, region=$region)').then((data: any) => {
         results = data;
       });
       expect(requestOptions.url).toBe('/api/search/lookup');
@@ -71,7 +91,7 @@ describe('opentsdb', () => {
     });
 
     it('suggest_tagk() should generate api suggest query', () => {
-      ctx.ctrl.metricFindQuery('suggest_tagk(foo)').then(function(data) {
+      ctx.ctrl.metricFindQuery('suggest_tagk(foo)').then((data: any) => {
         results = data;
       });
       expect(requestOptions.url).toBe('/api/suggest');
@@ -80,7 +100,7 @@ describe('opentsdb', () => {
     });
 
     it('suggest_tagv() should generate api suggest query', () => {
-      ctx.ctrl.metricFindQuery('suggest_tagv(bar)').then(function(data) {
+      ctx.ctrl.metricFindQuery('suggest_tagv(bar)').then((data: any) => {
         results = data;
       });
       expect(requestOptions.url).toBe('/api/suggest');

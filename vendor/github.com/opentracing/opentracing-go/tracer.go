@@ -30,7 +30,7 @@ type Tracer interface {
 	//     sp := tracer.StartSpan(
 	//         "GetFeed",
 	//         opentracing.ChildOf(parentSpan.Context()),
-	//         opentracing.Tag("user_agent", loggedReq.UserAgent),
+	//         opentracing.Tag{"user_agent", loggedReq.UserAgent},
 	//         opentracing.StartTime(loggedReq.Timestamp),
 	//     )
 	//
@@ -44,8 +44,7 @@ type Tracer interface {
 	// and each has an expected carrier type.
 	//
 	// Other packages may declare their own `format` values, much like the keys
-	// used by `context.Context` (see
-	// https://godoc.org/golang.org/x/net/context#WithValue).
+	// used by `context.Context` (see https://godoc.org/context#WithValue).
 	//
 	// Example usage (sans error handling):
 	//

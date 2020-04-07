@@ -1,4 +1,5 @@
 import $ from 'jquery';
+// @ts-ignore
 import baron from 'baron';
 import coreModule from 'app/core/core_module';
 
@@ -14,10 +15,11 @@ const scrollerClass = 'baron__scroller';
 export function geminiScrollbar() {
   return {
     restrict: 'A',
-    link: function(scope, elem, attrs) {
+    link: (scope: any, elem: any, attrs: any) => {
       let scrollRoot = elem.parent();
       const scroller = elem;
 
+      console.log('scroll');
       if (attrs.grafanaScrollbar && attrs.grafanaScrollbar === 'scrollonroot') {
         scrollRoot = scroller;
       }

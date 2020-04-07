@@ -3,11 +3,11 @@ title = "Using OpenTSDB in Grafana"
 description = "Guide for using OpenTSDB in Grafana"
 keywords = ["grafana", "opentsdb", "guide"]
 type = "docs"
-aliases = ["/datasources/opentsdb",	"docs/features/opentsdb"]
+aliases = ["/docs/grafana/latest/datasources/opentsdb",	"/docs/grafana/latest/features/opentsdb"]
 [menu.docs]
 name = "OpenTSDB"
 parent = "datasources"
-weight = 5
+weight = 19
 +++
 
 # Using OpenTSDB in Grafana
@@ -25,22 +25,22 @@ Grafana ships with advanced support for OpenTSDB.
 
 Name | Description
 ------------ | -------------
-*Name* | The data source name. This is how you refer to the data source in panels & queries.
+*Name* | The data source name. This is how you refer to the data source in panels and queries.
 *Default* | Default data source means that it will be pre-selected for new panels.
-*Url* | The http protocol, ip and port of you opentsdb server (default port is usually 4242)
+*Url* | The HTTP protocol, ip and port of you opentsdb server (default port is usually 4242)
 *Access* | Server (default) = URL needs to be accessible from the Grafana backend/server, Browser = URL needs to be accessible from the browser.
 *Version* | Version = opentsdb version, either <=2.1 or 2.2
 *Resolution* | Metrics from opentsdb may have datapoints with either second or millisecond resolution.
 
 ## Query editor
 
-Open a graph in edit mode by click the title. Query editor will differ if the datasource has version <=2.1 or = 2.2.
+Open a graph in edit mode by click the title. Query editor will differ if the data source has version <=2.1 or = 2.2.
 In the former version, only tags can be used to query OpenTSDB. But in the latter version, filters as well as tags
 can be used to query opentsdb. Fill Policy is also introduced in OpenTSDB 2.2.
 
 ![](/img/docs/v43/opentsdb_query_editor.png)
 
-> Note: While using OpenTSDB 2.2 datasource, make sure you use either Filters or Tags as they are mutually exclusive. If used together, might give you weird results.
+> Note: While using OpenTSDB 2.2 data source, make sure you use either Filters or Tags as they are mutually exclusive. If used together, might give you weird results.
 
 ### Auto complete suggestions
 
@@ -53,7 +53,7 @@ Instead of hard-coding things like server, application and sensor name in you me
 Variables are shown as dropdown select boxes at the top of the dashboard. These dropdowns makes it easy to change the data
 being displayed in your dashboard.
 
-Checkout the [Templating]({{< relref "reference/templating.md" >}}) documentation for an introduction to the templating feature and the different
+Check out the [Templating]({{< relref "../../reference/templating.md" >}}) documentation for an introduction to the templating feature and the different
 types of template variables.
 
 ### Query variable
@@ -84,15 +84,15 @@ Some examples are mentioned below to make nested template queries work successfu
 Query | Description
 ------------ | -------------
 *tag_values(cpu, hostname, env=$env)*  | Return tag values for cpu metric, selected env tag value and tag key hostname
-*tag_values(cpu, hostanme, env=$env, region=$region)* | Return tag values for cpu metric, selected env tag value, selected region tag value and tag key hostname
+*tag_values(cpu, hostname, env=$env, region=$region)* | Return tag values for cpu metric, selected env tag value, selected region tag value and tag key hostname
 
-For details on OpenTSDB metric queries checkout the official [OpenTSDB documentation](http://opentsdb.net/docs/build/html/index.html)
+For details on OpenTSDB metric queries, check out the official [OpenTSDB documentation](http://opentsdb.net/docs/build/html/index.html)
 
-## Configure the Datasource with Provisioning
+## Configure the data source with provisioning
 
-It's now possible to configure datasources using config files with Grafana's provisioning system. You can read more about how it works and all the settings you can set for datasources on the [provisioning docs page](/administration/provisioning/#datasources)
+It's now possible to configure data sources using config files with Grafana's provisioning system. You can read more about how it works and all the settings you can set for data sources on the [provisioning docs page]({{< relref "../../administration/provisioning/#datasources" >}})
 
-Here are some provisioning examples for this datasource.
+Here are some provisioning examples for this data source.
 
 ```yaml
 apiVersion: 1
@@ -106,3 +106,8 @@ datasources:
       tsdbResolution: 1
       tsdbVersion: 1
 ```
+
+## Lookup limits
+
+By default, at most 1000 records are looked up from OpenTSDB.
+You can change this by modifying the "Lookup Limit" in the OpenTSDB settings page.

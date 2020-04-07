@@ -23,24 +23,24 @@
 
 .graph-box {
   width: 62%;
-  padding: 2rem 1rem;
+  padding: $space-xl $space-md;
 }
 
 .info-box {
   width: 38%;
-  padding: 2rem 1rem 2rem;
+  padding: $space-xl $space-md;
 }
 
 .graph-percentage {
-  padding: 0 0 1.5rem;
+  padding: 0 0 18px;
 }
 
 .image-box {
-  padding: 0.5rem;
+  padding: $space-sm;
 }
 
 .left-margin {
-  padding: 0 0 0 5rem;
+  padding: 0 0 0 64px;
 }
 
 .current-box {
@@ -54,7 +54,7 @@
 .current-text {
   color: $blue;
   font-weight: bold;
-  line-height: 1rem;
+  line-height: 14px;
 }
 
 .error-link {
@@ -63,14 +63,14 @@
 
 .error-minus {
   color: #7eb26d;
-  padding: 0 0.5rem;
-  line-height: 1.5rem;
+  padding: 0 $space-sm;
+  line-height: 21px;
 }
 
 .graph-percentage p {
   text-align: right;
   margin: 0;
-  line-height: 1rem;
+  line-height: 14px;
 }
 
 .graph-text {

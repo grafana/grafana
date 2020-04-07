@@ -1,0 +1,87 @@
+.add-data-source-header {
+  margin-bottom: $space-xl;
+  padding-top: $spacer;
+  text-align: center;
+}
+
+.add-data-source-search {
+  display: flex;
+  justify-content: center;
+  margin-bottom: $space-lg;
+}
+
+.add-data-source-category {
+  margin-bottom: $space-md;
+}
+
+.add-data-source-category__header {
+  font-size: $font-size-h5;
+  margin-bottom: $space-sm;
+}
+
+.add-data-source-item {
+  padding: $space-md;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  box-shadow: $card-shadow;
+  background: $panel-editor-viz-item-bg;
+  border: 1px solid transparent;
+  border-radius: 3px;
+  margin-bottom: $space-xxs;
+
+  &:hover {
+    box-shadow: $panel-editor-viz-item-shadow-hover;
+    background: $panel-editor-viz-item-bg-hover;
+    border: $panel-editor-viz-item-border-hover;
+    color: $text-color-strong;
+
+    .add-data-source-item-actions {
+      opacity: 1;
+      transition: 0.15s opacity ease-in-out;
+    }
+  }
+}
+
+.add-data-source-item-text-wrapper {
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+}
+
+.add-data-source-item-desc {
+  font-size: $font-size-sm;
+  color: $text-color-weak;
+}
+
+.add-data-source-item-text {
+  font-size: $font-size-h5;
+}
+
+.add-data-source-item-logo {
+  margin-right: $space-lg;
+  margin-left: $space-sm;
+  width: 55px;
+  max-height: 55px;
+}
+
+.add-data-source-item-actions {
+  opacity: 0;
+  padding-left: $space-md;
+  display: flex;
+  align-items: center;
+
+  > button {
+    margin-left: $space-md;
+    cursor: pointer;
+  }
+}
+
+.add-datasource-item-actions__btn-icon {
+  margin-left: $space-sm;
+}
+
+.add-data-source-more {
+  text-align: center;
+  margin: $space-xl;
+}

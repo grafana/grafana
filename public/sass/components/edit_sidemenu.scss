@@ -8,10 +8,12 @@
   min-width: 0;
 }
 
+//Deprecated class but maybe used by plugins (in panel settings)
 .edit-sidemenu-aside {
-  margin-right: $spacer*2;
+  margin-right: $spacer * 2;
 }
 
+//Deprecated class but maybe used by plugins (in panel settings)
 .edit-sidemenu {
   width: 100%;
   list-style: none;
@@ -28,20 +30,27 @@
   }
 }
 
+.column-styles-heading {
+  border-bottom: 1px solid $gray-1;
+}
+
 @include media-breakpoint-down(sm) {
   .edit-tab-with-sidemenu {
     flex-direction: column;
   }
 
+  //Deprecated class but maybe used by plugins (in panel settings)
   .edit-sidemenu-aside {
     width: 100%;
     margin-bottom: 2rem;
   }
 
+  //Deprecated class but maybe used by plugins (in panel settings)
   .edit-sidemenu {
     li {
       float: left;
     }
+
     a {
       margin: 0.3rem 1rem;
     }

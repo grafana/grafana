@@ -7,7 +7,8 @@ import (
 
 // Typed errors
 var (
-	ErrUserNotFound = errors.New("User not found")
+	ErrUserNotFound     = errors.New("User not found")
+	ErrLastGrafanaAdmin = errors.New("Cannot remove last grafana admin")
 )
 
 type Password string
@@ -29,6 +30,7 @@ type User struct {
 	EmailVerified bool
 	Theme         string
 	HelpFlags1    HelpFlags1
+	IsDisabled    bool
 
 	IsAdmin bool
 	OrgId   int64
@@ -60,6 +62,7 @@ type CreateUserCommand struct {
 	Password       string
 	EmailVerified  bool
 	IsAdmin        bool
+	IsDisabled     bool
 	SkipOrgSetup   bool
 	DefaultOrgRole string
 
@@ -85,6 +88,16 @@ type ChangeUserPasswordCommand struct {
 type UpdateUserPermissionsCommand struct {
 	IsGrafanaAdmin bool
 	UserId         int64 `json:"-"`
+}
+
+type DisableUserCommand struct {
+	UserId     int64
+	IsDisabled bool
+}
+
+type BatchDisableUsersCommand struct {
+	UserIds    []int64
+	IsDisabled bool
 }
 
 type DeleteUserCommand struct {
@@ -128,10 +141,13 @@ type GetUserProfileQuery struct {
 }
 
 type SearchUsersQuery struct {
-	OrgId int64
-	Query string
-	Page  int
-	Limit int
+	OrgId      int64
+	Query      string
+	Page       int
+	Limit      int
+	AuthModule string
+
+	IsDisabled *bool
 
 	Result SearchUserQueryResult
 }
@@ -165,6 +181,7 @@ type SignedInUser struct {
 	IsAnonymous    bool
 	HelpFlags1     HelpFlags1
 	LastSeenAt     time.Time
+	Teams          []int64
 }
 
 func (u *SignedInUser) ShouldUpdateLastSeenAt() bool {
@@ -193,28 +210,55 @@ func (user *SignedInUser) HasRole(role RoleType) bool {
 	return user.OrgRole.Includes(role)
 }
 
+func (user *SignedInUser) IsRealUser() bool {
+	return user.UserId != 0
+}
+
 type UserProfileDTO struct {
-	Id             int64  `json:"id"`
-	Email          string `json:"email"`
-	Name           string `json:"name"`
-	Login          string `json:"login"`
-	Theme          string `json:"theme"`
-	OrgId          int64  `json:"orgId"`
-	IsGrafanaAdmin bool   `json:"isGrafanaAdmin"`
+	Id             int64     `json:"id"`
+	Email          string    `json:"email"`
+	Name           string    `json:"name"`
+	Login          string    `json:"login"`
+	Theme          string    `json:"theme"`
+	OrgId          int64     `json:"orgId"`
+	IsGrafanaAdmin bool      `json:"isGrafanaAdmin"`
+	IsDisabled     bool      `json:"isDisabled"`
+	IsExternal     bool      `json:"isExternal"`
+	AuthLabels     []string  `json:"authLabels"`
+	UpdatedAt      time.Time `json:"updatedAt"`
+	CreatedAt      time.Time `json:"createdAt"`
+	AvatarUrl      string    `json:"avatarUrl"`
 }
 
 type UserSearchHitDTO struct {
-	Id            int64     `json:"id"`
-	Name          string    `json:"name"`
-	Login         string    `json:"login"`
-	Email         string    `json:"email"`
-	AvatarUrl     string    `json:"avatarUrl"`
-	IsAdmin       bool      `json:"isAdmin"`
-	LastSeenAt    time.Time `json:"lastSeenAt"`
-	LastSeenAtAge string    `json:"lastSeenAtAge"`
+	Id            int64                `json:"id"`
+	Name          string               `json:"name"`
+	Login         string               `json:"login"`
+	Email         string               `json:"email"`
+	AvatarUrl     string               `json:"avatarUrl"`
+	IsAdmin       bool                 `json:"isAdmin"`
+	IsDisabled    bool                 `json:"isDisabled"`
+	LastSeenAt    time.Time            `json:"lastSeenAt"`
+	LastSeenAtAge string               `json:"lastSeenAtAge"`
+	AuthLabels    []string             `json:"authLabels"`
+	AuthModule    AuthModuleConversion `json:"-"`
 }
 
 type UserIdDTO struct {
 	Id      int64  `json:"id"`
 	Message string `json:"message"`
+}
+
+// implement Conversion interface to define custom field mapping (xorm feature)
+type AuthModuleConversion []string
+
+func (auth *AuthModuleConversion) FromDB(data []byte) error {
+	auth_module := string(data)
+	*auth = []string{auth_module}
+	return nil
+}
+
+// Just a stub, we don't wanna write to database
+func (auth *AuthModuleConversion) ToDB() ([]byte, error) {
+	return []byte{}, nil
 }

@@ -3,12 +3,14 @@ package sqlstore
 import (
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 	"time"
 
 	"github.com/grafana/grafana/pkg/bus"
-	m "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 func init() {
@@ -16,27 +18,87 @@ func init() {
 	bus.AddHandler("sql", CreateAlertNotificationCommand)
 	bus.AddHandler("sql", UpdateAlertNotification)
 	bus.AddHandler("sql", DeleteAlertNotification)
-	bus.AddHandler("sql", GetAlertNotificationsToSend)
 	bus.AddHandler("sql", GetAllAlertNotifications)
-	bus.AddHandlerCtx("sql", RecordNotificationJournal)
-	bus.AddHandlerCtx("sql", GetLatestNotification)
-	bus.AddHandlerCtx("sql", CleanNotificationJournal)
+	bus.AddHandlerCtx("sql", GetOrCreateAlertNotificationState)
+	bus.AddHandlerCtx("sql", SetAlertNotificationStateToCompleteCommand)
+	bus.AddHandlerCtx("sql", SetAlertNotificationStateToPendingCommand)
+
+	bus.AddHandler("sql", GetAlertNotificationsWithUid)
+	bus.AddHandler("sql", UpdateAlertNotificationWithUid)
+	bus.AddHandler("sql", DeleteAlertNotificationWithUid)
+	bus.AddHandler("sql", GetAlertNotificationsWithUidToSend)
 }
 
-func DeleteAlertNotification(cmd *m.DeleteAlertNotificationCommand) error {
+func DeleteAlertNotification(cmd *models.DeleteAlertNotificationCommand) error {
 	return inTransaction(func(sess *DBSession) error {
 		sql := "DELETE FROM alert_notification WHERE alert_notification.org_id = ? AND alert_notification.id = ?"
-		_, err := sess.Exec(sql, cmd.OrgId, cmd.Id)
-		return err
+		if _, err := sess.Exec(sql, cmd.OrgId, cmd.Id); err != nil {
+			return err
+		}
+
+		if _, err := sess.Exec("DELETE FROM alert_notification_state WHERE alert_notification_state.org_id = ? AND alert_notification_state.notifier_id = ?", cmd.OrgId, cmd.Id); err != nil {
+			return err
+		}
+
+		return nil
 	})
 }
 
-func GetAlertNotifications(query *m.GetAlertNotificationsQuery) error {
+func DeleteAlertNotificationWithUid(cmd *models.DeleteAlertNotificationWithUidCommand) error {
+	existingNotification := &models.GetAlertNotificationsWithUidQuery{OrgId: cmd.OrgId, Uid: cmd.Uid}
+	if err := getAlertNotificationWithUidInternal(existingNotification, newSession()); err != nil {
+		return err
+	}
+
+	if existingNotification.Result != nil {
+		deleteCommand := &models.DeleteAlertNotificationCommand{
+			Id:    existingNotification.Result.Id,
+			OrgId: existingNotification.Result.OrgId,
+		}
+		if err := bus.Dispatch(deleteCommand); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func GetAlertNotifications(query *models.GetAlertNotificationsQuery) error {
 	return getAlertNotificationInternal(query, newSession())
 }
 
-func GetAllAlertNotifications(query *m.GetAllAlertNotificationsQuery) error {
-	results := make([]*m.AlertNotification, 0)
+func (ss *SqlStore) addAlertNotificationUidByIdHandler() {
+	bus.AddHandler("sql", ss.GetAlertNotificationUidWithId)
+}
+
+func (ss *SqlStore) GetAlertNotificationUidWithId(query *models.GetAlertNotificationUidQuery) error {
+	cacheKey := newAlertNotificationUidCacheKey(query.OrgId, query.Id)
+
+	if cached, found := ss.CacheService.Get(cacheKey); found {
+		query.Result = cached.(string)
+		return nil
+	}
+
+	err := getAlertNotificationUidInternal(query, newSession())
+	if err != nil {
+		return err
+	}
+
+	ss.CacheService.Set(cacheKey, query.Result, -1) //Infinite, never changes
+
+	return nil
+}
+
+func newAlertNotificationUidCacheKey(orgID, notificationId int64) string {
+	return fmt.Sprintf("notification-uid-by-org-%d-and-id-%d", orgID, notificationId)
+}
+
+func GetAlertNotificationsWithUid(query *models.GetAlertNotificationsWithUidQuery) error {
+	return getAlertNotificationWithUidInternal(query, newSession())
+}
+
+func GetAllAlertNotifications(query *models.GetAllAlertNotificationsQuery) error {
+	results := make([]*models.AlertNotification, 0)
 	if err := x.Where("org_id = ?", query.OrgId).Find(&results); err != nil {
 		return err
 	}
@@ -45,12 +107,13 @@ func GetAllAlertNotifications(query *m.GetAllAlertNotificationsQuery) error {
 	return nil
 }
 
-func GetAlertNotificationsToSend(query *m.GetAlertNotificationsToSendQuery) error {
+func GetAlertNotificationsWithUidToSend(query *models.GetAlertNotificationsWithUidToSendQuery) error {
 	var sql bytes.Buffer
 	params := make([]interface{}, 0)
 
 	sql.WriteString(`SELECT
 										alert_notification.id,
+										alert_notification.uid,
 										alert_notification.org_id,
 										alert_notification.name,
 										alert_notification.type,
@@ -58,6 +121,7 @@ func GetAlertNotificationsToSend(query *m.GetAlertNotificationsToSendQuery) erro
 										alert_notification.updated,
 										alert_notification.settings,
 										alert_notification.is_default,
+										alert_notification.disable_resolve_message,
 										alert_notification.send_reminder,
 										alert_notification.frequency
 										FROM alert_notification
@@ -68,15 +132,16 @@ func GetAlertNotificationsToSend(query *m.GetAlertNotificationsToSendQuery) erro
 
 	sql.WriteString(` AND ((alert_notification.is_default = ?)`)
 	params = append(params, dialect.BooleanStr(true))
-	if len(query.Ids) > 0 {
-		sql.WriteString(` OR alert_notification.id IN (?` + strings.Repeat(",?", len(query.Ids)-1) + ")")
-		for _, v := range query.Ids {
+
+	if len(query.Uids) > 0 {
+		sql.WriteString(` OR alert_notification.uid IN (?` + strings.Repeat(",?", len(query.Uids)-1) + ")")
+		for _, v := range query.Uids {
 			params = append(params, v)
 		}
 	}
 	sql.WriteString(`)`)
 
-	results := make([]*m.AlertNotification, 0)
+	results := make([]*models.AlertNotification, 0)
 	if err := x.SQL(sql.String(), params...).Find(&results); err != nil {
 		return err
 	}
@@ -85,12 +150,42 @@ func GetAlertNotificationsToSend(query *m.GetAlertNotificationsToSendQuery) erro
 	return nil
 }
 
-func getAlertNotificationInternal(query *m.GetAlertNotificationsQuery, sess *DBSession) error {
+func getAlertNotificationUidInternal(query *models.GetAlertNotificationUidQuery, sess *DBSession) error {
+	var sql bytes.Buffer
+	params := make([]interface{}, 0)
+
+	sql.WriteString(`SELECT
+										alert_notification.uid
+										FROM alert_notification
+	  							`)
+
+	sql.WriteString(` WHERE alert_notification.org_id = ?`)
+	params = append(params, query.OrgId)
+
+	sql.WriteString(` AND alert_notification.id = ?`)
+	params = append(params, query.Id)
+
+	results := make([]string, 0)
+	if err := sess.SQL(sql.String(), params...).Find(&results); err != nil {
+		return err
+	}
+
+	if len(results) == 0 {
+		return fmt.Errorf("Alert notification [ Id: %v, OrgId: %v ] not found", query.Id, query.OrgId)
+	}
+
+	query.Result = results[0]
+
+	return nil
+}
+
+func getAlertNotificationInternal(query *models.GetAlertNotificationsQuery, sess *DBSession) error {
 	var sql bytes.Buffer
 	params := make([]interface{}, 0)
 
 	sql.WriteString(`SELECT
 										alert_notification.id,
+										alert_notification.uid,
 										alert_notification.org_id,
 										alert_notification.name,
 										alert_notification.type,
@@ -98,6 +193,7 @@ func getAlertNotificationInternal(query *m.GetAlertNotificationsQuery, sess *DBS
 										alert_notification.updated,
 										alert_notification.settings,
 										alert_notification.is_default,
+										alert_notification.disable_resolve_message,
 										alert_notification.send_reminder,
 										alert_notification.frequency
 										FROM alert_notification
@@ -118,8 +214,8 @@ func getAlertNotificationInternal(query *m.GetAlertNotificationsQuery, sess *DBS
 		}
 	}
 
-	results := make([]*m.AlertNotification, 0)
-	if err := sess.Sql(sql.String(), params...).Find(&results); err != nil {
+	results := make([]*models.AlertNotification, 0)
+	if err := sess.SQL(sql.String(), params...).Find(&results); err != nil {
 		return err
 	}
 
@@ -132,23 +228,78 @@ func getAlertNotificationInternal(query *m.GetAlertNotificationsQuery, sess *DBS
 	return nil
 }
 
-func CreateAlertNotificationCommand(cmd *m.CreateAlertNotificationCommand) error {
+func getAlertNotificationWithUidInternal(query *models.GetAlertNotificationsWithUidQuery, sess *DBSession) error {
+	var sql bytes.Buffer
+	params := make([]interface{}, 0)
+
+	sql.WriteString(`SELECT
+										alert_notification.id,
+										alert_notification.uid,
+										alert_notification.org_id,
+										alert_notification.name,
+										alert_notification.type,
+										alert_notification.created,
+										alert_notification.updated,
+										alert_notification.settings,
+										alert_notification.is_default,
+										alert_notification.disable_resolve_message,
+										alert_notification.send_reminder,
+										alert_notification.frequency
+										FROM alert_notification
+	  							`)
+
+	sql.WriteString(` WHERE alert_notification.org_id = ? AND alert_notification.uid = ?`)
+	params = append(params, query.OrgId, query.Uid)
+
+	results := make([]*models.AlertNotification, 0)
+	if err := sess.SQL(sql.String(), params...).Find(&results); err != nil {
+		return err
+	}
+
+	if len(results) == 0 {
+		query.Result = nil
+	} else {
+		query.Result = results[0]
+	}
+
+	return nil
+}
+
+func CreateAlertNotificationCommand(cmd *models.CreateAlertNotificationCommand) error {
 	return inTransaction(func(sess *DBSession) error {
-		existingQuery := &m.GetAlertNotificationsQuery{OrgId: cmd.OrgId, Name: cmd.Name}
-		err := getAlertNotificationInternal(existingQuery, sess)
+		if cmd.Uid == "" {
+			uid, uidGenerationErr := generateNewAlertNotificationUid(sess, cmd.OrgId)
+			if uidGenerationErr != nil {
+				return uidGenerationErr
+			}
+
+			cmd.Uid = uid
+		}
+		existingQuery := &models.GetAlertNotificationsWithUidQuery{OrgId: cmd.OrgId, Uid: cmd.Uid}
+		err := getAlertNotificationWithUidInternal(existingQuery, sess)
 
 		if err != nil {
 			return err
 		}
 
 		if existingQuery.Result != nil {
+			return fmt.Errorf("Alert notification uid %s already exists", cmd.Uid)
+		}
+
+		// check if name exists
+		sameNameQuery := &models.GetAlertNotificationsQuery{OrgId: cmd.OrgId, Name: cmd.Name}
+		if err := getAlertNotificationInternal(sameNameQuery, sess); err != nil {
+			return err
+		}
+
+		if sameNameQuery.Result != nil {
 			return fmt.Errorf("Alert notification name %s already exists", cmd.Name)
 		}
 
 		var frequency time.Duration
 		if cmd.SendReminder {
 			if cmd.Frequency == "" {
-				return m.ErrNotificationFrequencyNotFound
+				return models.ErrNotificationFrequencyNotFound
 			}
 
 			frequency, err = time.ParseDuration(cmd.Frequency)
@@ -157,16 +308,18 @@ func CreateAlertNotificationCommand(cmd *m.CreateAlertNotificationCommand) error
 			}
 		}
 
-		alertNotification := &m.AlertNotification{
-			OrgId:        cmd.OrgId,
-			Name:         cmd.Name,
-			Type:         cmd.Type,
-			Settings:     cmd.Settings,
-			SendReminder: cmd.SendReminder,
-			Frequency:    frequency,
-			Created:      time.Now(),
-			Updated:      time.Now(),
-			IsDefault:    cmd.IsDefault,
+		alertNotification := &models.AlertNotification{
+			Uid:                   cmd.Uid,
+			OrgId:                 cmd.OrgId,
+			Name:                  cmd.Name,
+			Type:                  cmd.Type,
+			Settings:              cmd.Settings,
+			SendReminder:          cmd.SendReminder,
+			DisableResolveMessage: cmd.DisableResolveMessage,
+			Frequency:             frequency,
+			Created:               time.Now(),
+			Updated:               time.Now(),
+			IsDefault:             cmd.IsDefault,
 		}
 
 		if _, err = sess.MustCols("send_reminder").Insert(alertNotification); err != nil {
@@ -178,16 +331,32 @@ func CreateAlertNotificationCommand(cmd *m.CreateAlertNotificationCommand) error
 	})
 }
 
-func UpdateAlertNotification(cmd *m.UpdateAlertNotificationCommand) error {
+func generateNewAlertNotificationUid(sess *DBSession, orgId int64) (string, error) {
+	for i := 0; i < 3; i++ {
+		uid := util.GenerateShortUID()
+		exists, err := sess.Where("org_id=? AND uid=?", orgId, uid).Get(&models.AlertNotification{})
+		if err != nil {
+			return "", err
+		}
+
+		if !exists {
+			return uid, nil
+		}
+	}
+
+	return "", models.ErrAlertNotificationFailedGenerateUniqueUid
+}
+
+func UpdateAlertNotification(cmd *models.UpdateAlertNotificationCommand) error {
 	return inTransaction(func(sess *DBSession) (err error) {
-		current := m.AlertNotification{}
+		current := models.AlertNotification{}
 
 		if _, err = sess.ID(cmd.Id).Get(&current); err != nil {
 			return err
 		}
 
 		// check if name exists
-		sameNameQuery := &m.GetAlertNotificationsQuery{OrgId: cmd.OrgId, Name: cmd.Name}
+		sameNameQuery := &models.GetAlertNotificationsQuery{OrgId: cmd.OrgId, Name: cmd.Name}
 		if err := getAlertNotificationInternal(sameNameQuery, sess); err != nil {
 			return err
 		}
@@ -202,10 +371,15 @@ func UpdateAlertNotification(cmd *m.UpdateAlertNotificationCommand) error {
 		current.Type = cmd.Type
 		current.IsDefault = cmd.IsDefault
 		current.SendReminder = cmd.SendReminder
+		current.DisableResolveMessage = cmd.DisableResolveMessage
+
+		if cmd.Uid != "" {
+			current.Uid = cmd.Uid
+		}
 
 		if current.SendReminder {
 			if cmd.Frequency == "" {
-				return m.ErrNotificationFrequencyNotFound
+				return models.ErrNotificationFrequencyNotFound
 			}
 
 			frequency, err := time.ParseDuration(cmd.Frequency)
@@ -216,7 +390,7 @@ func UpdateAlertNotification(cmd *m.UpdateAlertNotificationCommand) error {
 			current.Frequency = frequency
 		}
 
-		sess.UseBool("is_default", "send_reminder")
+		sess.UseBool("is_default", "send_reminder", "disable_resolve_message")
 
 		if affected, err := sess.ID(cmd.Id).Update(current); err != nil {
 			return err
@@ -229,49 +403,163 @@ func UpdateAlertNotification(cmd *m.UpdateAlertNotificationCommand) error {
 	})
 }
 
-func RecordNotificationJournal(ctx context.Context, cmd *m.RecordNotificationJournalCommand) error {
+func UpdateAlertNotificationWithUid(cmd *models.UpdateAlertNotificationWithUidCommand) error {
+	getAlertNotificationWithUidQuery := &models.GetAlertNotificationsWithUidQuery{OrgId: cmd.OrgId, Uid: cmd.Uid}
+
+	if err := getAlertNotificationWithUidInternal(getAlertNotificationWithUidQuery, newSession()); err != nil {
+		return err
+	}
+
+	current := getAlertNotificationWithUidQuery.Result
+
+	if current == nil {
+		return fmt.Errorf("Cannot update, alert notification uid %s doesn't exist", cmd.Uid)
+	}
+
+	if cmd.NewUid == "" {
+		cmd.NewUid = cmd.Uid
+	}
+
+	updateNotification := &models.UpdateAlertNotificationCommand{
+		Id:                    current.Id,
+		Uid:                   cmd.NewUid,
+		Name:                  cmd.Name,
+		Type:                  cmd.Type,
+		SendReminder:          cmd.SendReminder,
+		DisableResolveMessage: cmd.DisableResolveMessage,
+		Frequency:             cmd.Frequency,
+		IsDefault:             cmd.IsDefault,
+		Settings:              cmd.Settings,
+
+		OrgId: cmd.OrgId,
+	}
+
+	if err := bus.Dispatch(updateNotification); err != nil {
+		return err
+	}
+
+	cmd.Result = updateNotification.Result
+
+	return nil
+}
+
+func SetAlertNotificationStateToCompleteCommand(ctx context.Context, cmd *models.SetAlertNotificationStateToCompleteCommand) error {
 	return inTransactionCtx(ctx, func(sess *DBSession) error {
-		journalEntry := &m.AlertNotificationJournal{
-			OrgId:      cmd.OrgId,
-			AlertId:    cmd.AlertId,
-			NotifierId: cmd.NotifierId,
-			SentAt:     cmd.SentAt,
-			Success:    cmd.Success,
+		version := cmd.Version
+		var current models.AlertNotificationState
+		if _, err := sess.ID(cmd.Id).Get(&current); err != nil {
+			return err
 		}
 
-		if _, err := sess.Insert(journalEntry); err != nil {
+		newVersion := cmd.Version + 1
+		sql := `UPDATE alert_notification_state SET
+			state = ?,
+			version = ?,
+			updated_at = ?
+		WHERE
+			id = ?`
+
+		_, err := sess.Exec(sql, models.AlertNotificationStateCompleted, newVersion, timeNow().Unix(), cmd.Id)
+		if err != nil {
 			return err
+		}
+
+		if current.Version != version {
+			sqlog.Error("notification state out of sync. the notification is marked as complete but has been modified between set as pending and completion.", "notifierId", current.NotifierId)
 		}
 
 		return nil
 	})
 }
 
-func GetLatestNotification(ctx context.Context, cmd *m.GetLatestNotificationQuery) error {
-	return inTransactionCtx(ctx, func(sess *DBSession) error {
-		nj := &m.AlertNotificationJournal{}
+func SetAlertNotificationStateToPendingCommand(ctx context.Context, cmd *models.SetAlertNotificationStateToPendingCommand) error {
+	return withDbSession(ctx, func(sess *DBSession) error {
+		newVersion := cmd.Version + 1
+		sql := `UPDATE alert_notification_state SET
+			state = ?,
+			version = ?,
+			updated_at = ?,
+			alert_rule_state_updated_version = ?
+		WHERE
+			id = ? AND
+			(version = ? OR alert_rule_state_updated_version < ?)`
 
-		_, err := sess.Desc("alert_notification_journal.sent_at").
-			Limit(1).
-			Where("alert_notification_journal.org_id = ? AND alert_notification_journal.alert_id = ? AND alert_notification_journal.notifier_id = ?", cmd.OrgId, cmd.AlertId, cmd.NotifierId).Get(nj)
+		res, err := sess.Exec(sql,
+			models.AlertNotificationStatePending,
+			newVersion,
+			timeNow().Unix(),
+			cmd.AlertRuleStateUpdatedVersion,
+			cmd.Id,
+			cmd.Version,
+			cmd.AlertRuleStateUpdatedVersion)
 
 		if err != nil {
 			return err
 		}
 
-		if nj.AlertId == 0 && nj.Id == 0 && nj.NotifierId == 0 && nj.OrgId == 0 {
-			return m.ErrJournalingNotFound
+		affected, _ := res.RowsAffected()
+		if affected == 0 {
+			return models.ErrAlertNotificationStateVersionConflict
 		}
 
-		cmd.Result = nj
+		cmd.ResultVersion = newVersion
+
 		return nil
 	})
 }
 
-func CleanNotificationJournal(ctx context.Context, cmd *m.CleanNotificationJournalCommand) error {
+func GetOrCreateAlertNotificationState(ctx context.Context, cmd *models.GetOrCreateNotificationStateQuery) error {
 	return inTransactionCtx(ctx, func(sess *DBSession) error {
-		sql := "DELETE FROM alert_notification_journal WHERE alert_notification_journal.org_id = ? AND alert_notification_journal.alert_id = ? AND alert_notification_journal.notifier_id = ?"
-		_, err := sess.Exec(sql, cmd.OrgId, cmd.AlertId, cmd.NotifierId)
-		return err
+		nj := &models.AlertNotificationState{}
+
+		exist, err := getAlertNotificationState(sess, cmd, nj)
+
+		// if exists, return it, otherwise create it with default values
+		if err != nil {
+			return err
+		}
+
+		if exist {
+			cmd.Result = nj
+			return nil
+		}
+
+		notificationState := &models.AlertNotificationState{
+			OrgId:      cmd.OrgId,
+			AlertId:    cmd.AlertId,
+			NotifierId: cmd.NotifierId,
+			State:      models.AlertNotificationStateUnknown,
+			UpdatedAt:  timeNow().Unix(),
+		}
+
+		if _, err := sess.Insert(notificationState); err != nil {
+			if dialect.IsUniqueConstraintViolation(err) {
+				exist, err = getAlertNotificationState(sess, cmd, nj)
+
+				if err != nil {
+					return err
+				}
+
+				if !exist {
+					return errors.New("Should not happen")
+				}
+
+				cmd.Result = nj
+				return nil
+			}
+
+			return err
+		}
+
+		cmd.Result = notificationState
+		return nil
 	})
+}
+
+func getAlertNotificationState(sess *DBSession, cmd *models.GetOrCreateNotificationStateQuery, nj *models.AlertNotificationState) (bool, error) {
+	return sess.
+		Where("alert_notification_state.org_id = ?", cmd.OrgId).
+		Where("alert_notification_state.alert_id = ?", cmd.AlertId).
+		Where("alert_notification_state.notifier_id = ?", cmd.NotifierId).
+		Get(nj)
 }

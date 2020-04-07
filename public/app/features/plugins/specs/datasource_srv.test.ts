@@ -1,10 +1,11 @@
 import config from 'app/core/config';
 import 'app/features/plugins/datasource_srv';
 import { DatasourceSrv } from 'app/features/plugins/datasource_srv';
+import { DataSourcePluginMeta, PluginMeta } from '@grafana/data';
 
 // Datasource variable $datasource with current value 'BBB'
-const templateSrv = {
-  variables: [
+const templateSrv: any = {
+  getVariables: () => [
     {
       type: 'datasource',
       name: 'datasource',
@@ -15,37 +16,46 @@ const templateSrv = {
   ],
 };
 
-describe('datasource_srv', function() {
-  const _datasourceSrv = new DatasourceSrv({}, {}, {}, templateSrv);
+describe('datasource_srv', () => {
+  const _datasourceSrv = new DatasourceSrv({} as any, {} as any, templateSrv);
 
-  describe('when loading explore sources', () => {
+  describe('when loading external datasources', () => {
     beforeEach(() => {
       config.datasources = {
-        explore1: {
-          name: 'explore1',
-          meta: { explore: true, metrics: true },
+        buildInDs: {
+          id: 1,
+          type: 'b',
+          name: 'buildIn',
+          meta: { builtIn: true } as DataSourcePluginMeta,
+          jsonData: {},
         },
-        explore2: {
-          name: 'explore2',
-          meta: { explore: true, metrics: false },
+        nonBuildIn: {
+          id: 2,
+          type: 'e',
+          name: 'external1',
+          meta: { builtIn: false } as DataSourcePluginMeta,
+          jsonData: {},
         },
         nonExplore: {
-          name: 'nonExplore',
-          meta: { explore: false, metrics: true },
+          id: 3,
+          type: 'e2',
+          name: 'external2',
+          meta: {} as PluginMeta,
+          jsonData: {},
         },
       };
     });
 
     it('should return list of explore sources', () => {
-      const exploreSources = _datasourceSrv.getExploreSources();
-      expect(exploreSources.length).toBe(2);
-      expect(exploreSources[0].name).toBe('explore1');
-      expect(exploreSources[1].name).toBe('explore2');
+      const externalSources = _datasourceSrv.getExternal();
+      expect(externalSources.length).toBe(2);
+      expect(externalSources[0].name).toBe('external1');
+      expect(externalSources[1].name).toBe('external2');
     });
   });
 
   describe('when loading metric sources', () => {
-    let metricSources;
+    let metricSources: any;
     const unsortedDatasources = {
       mmm: {
         type: 'test-db',
@@ -73,7 +83,7 @@ describe('datasource_srv', function() {
       },
     };
     beforeEach(() => {
-      config.datasources = unsortedDatasources;
+      config.datasources = unsortedDatasources as any;
       metricSources = _datasourceSrv.getMetricSources({});
       config.defaultDatasource = 'BBB';
     });

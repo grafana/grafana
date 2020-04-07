@@ -6,6 +6,7 @@ import (
 
 	"github.com/gosimple/slug"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -23,12 +24,13 @@ type AppPlugin struct {
 }
 
 type AppPluginRoute struct {
-	Path      string                 `json:"path"`
-	Method    string                 `json:"method"`
-	ReqRole   models.RoleType        `json:"reqRole"`
-	Url       string                 `json:"url"`
-	Headers   []AppPluginRouteHeader `json:"headers"`
-	TokenAuth *JwtTokenAuth          `json:"tokenAuth"`
+	Path         string                 `json:"path"`
+	Method       string                 `json:"method"`
+	ReqRole      models.RoleType        `json:"reqRole"`
+	Url          string                 `json:"url"`
+	Headers      []AppPluginRouteHeader `json:"headers"`
+	TokenAuth    *JwtTokenAuth          `json:"tokenAuth"`
+	JwtTokenAuth *JwtTokenAuth          `json:"jwtTokenAuth"`
 }
 
 type AppPluginRouteHeader struct {
@@ -36,13 +38,16 @@ type AppPluginRouteHeader struct {
 	Content string `json:"content"`
 }
 
+// JwtTokenAuth struct is both for normal Token Auth and JWT Token Auth with
+// an uploaded JWT file.
 type JwtTokenAuth struct {
 	Url    string            `json:"url"`
+	Scopes []string          `json:"scopes"`
 	Params map[string]string `json:"params"`
 }
 
-func (app *AppPlugin) Load(decoder *json.Decoder, pluginDir string) error {
-	if err := decoder.Decode(&app); err != nil {
+func (app *AppPlugin) Load(decoder *json.Decoder, pluginDir string, backendPluginManager backendplugin.Manager) error {
+	if err := decoder.Decode(app); err != nil {
 		return err
 	}
 

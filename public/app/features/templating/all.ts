@@ -9,10 +9,9 @@ import { DatasourceVariable } from './datasource_variable';
 import { CustomVariable } from './custom_variable';
 import { ConstantVariable } from './constant_variable';
 import { AdhocVariable } from './adhoc_variable';
+import { TextBoxVariable } from './TextBoxVariable';
 
-coreModule.factory('templateSrv', function() {
-  return templateSrv;
-});
+coreModule.factory('templateSrv', () => templateSrv);
 
 export {
   VariableSrv,
@@ -22,4 +21,5 @@ export {
   CustomVariable,
   ConstantVariable,
   AdhocVariable,
+  TextBoxVariable,
 };

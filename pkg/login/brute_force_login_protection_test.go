@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana/pkg/bus"
-	m "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
 	. "github.com/smartystreets/goconvey/convey"
 )
@@ -43,18 +43,19 @@ func TestLoginAttemptsValidation(t *testing.T) {
 
 			Convey("When saving invalid login attempt", func() {
 				defer bus.ClearBusHandlers()
-				createLoginAttemptCmd := &m.CreateLoginAttemptCommand{}
+				createLoginAttemptCmd := &models.CreateLoginAttemptCommand{}
 
-				bus.AddHandler("test", func(cmd *m.CreateLoginAttemptCommand) error {
+				bus.AddHandler("test", func(cmd *models.CreateLoginAttemptCommand) error {
 					createLoginAttemptCmd = cmd
 					return nil
 				})
 
-				saveInvalidLoginAttempt(&m.LoginUserQuery{
+				err := saveInvalidLoginAttempt(&models.LoginUserQuery{
 					Username:  "user",
 					Password:  "pwd",
 					IpAddress: "192.168.1.1:56433",
 				})
+				So(err, ShouldBeNil)
 
 				Convey("it should dispatch command", func() {
 					So(createLoginAttemptCmd, ShouldNotBeNil)
@@ -96,18 +97,19 @@ func TestLoginAttemptsValidation(t *testing.T) {
 
 			Convey("When saving invalid login attempt", func() {
 				defer bus.ClearBusHandlers()
-				createLoginAttemptCmd := (*m.CreateLoginAttemptCommand)(nil)
+				createLoginAttemptCmd := (*models.CreateLoginAttemptCommand)(nil)
 
-				bus.AddHandler("test", func(cmd *m.CreateLoginAttemptCommand) error {
+				bus.AddHandler("test", func(cmd *models.CreateLoginAttemptCommand) error {
 					createLoginAttemptCmd = cmd
 					return nil
 				})
 
-				saveInvalidLoginAttempt(&m.LoginUserQuery{
+				err := saveInvalidLoginAttempt(&models.LoginUserQuery{
 					Username:  "user",
 					Password:  "pwd",
 					IpAddress: "192.168.1.1:56433",
 				})
+				So(err, ShouldBeNil)
 
 				Convey("it should not dispatch command", func() {
 					So(createLoginAttemptCmd, ShouldBeNil)
@@ -118,7 +120,7 @@ func TestLoginAttemptsValidation(t *testing.T) {
 }
 
 func withLoginAttempts(loginAttempts int64) {
-	bus.AddHandler("test", func(query *m.GetUserLoginAttemptCountQuery) error {
+	bus.AddHandler("test", func(query *models.GetUserLoginAttemptCountQuery) error {
 		query.Result = loginAttempts
 		return nil
 	})

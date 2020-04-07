@@ -5,25 +5,24 @@ import (
 	"net/http/httptest"
 	"path/filepath"
 
-	"github.com/go-macaron/session"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/middleware"
-	m "github.com/grafana/grafana/pkg/models"
-	"gopkg.in/macaron.v1"
-
+	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/auth"
 	. "github.com/smartystreets/goconvey/convey"
+	"gopkg.in/macaron.v1"
 )
 
 func loggedInUserScenario(desc string, url string, fn scenarioFunc) {
-	loggedInUserScenarioWithRole(desc, "GET", url, url, m.ROLE_EDITOR, fn)
+	loggedInUserScenarioWithRole(desc, "GET", url, url, models.ROLE_EDITOR, fn)
 }
 
-func loggedInUserScenarioWithRole(desc string, method string, url string, routePattern string, role m.RoleType, fn scenarioFunc) {
+func loggedInUserScenarioWithRole(desc string, method string, url string, routePattern string, role models.RoleType, fn scenarioFunc) {
 	Convey(desc+" "+url, func() {
 		defer bus.ClearBusHandlers()
 
 		sc := setupScenarioContext(url)
-		sc.defaultHandler = Wrap(func(c *m.ReqContext) Response {
+		sc.defaultHandler = Wrap(func(c *models.ReqContext) Response {
 			sc.context = c
 			sc.context.UserId = TestUserID
 			sc.context.OrgId = TestOrgID
@@ -51,7 +50,7 @@ func anonymousUserScenario(desc string, method string, url string, routePattern 
 		defer bus.ClearBusHandlers()
 
 		sc := setupScenarioContext(url)
-		sc.defaultHandler = Wrap(func(c *m.ReqContext) Response {
+		sc.defaultHandler = Wrap(func(c *models.ReqContext) Response {
 			sc.context = c
 			if sc.handlerFunc != nil {
 				return sc.handlerFunc(sc.context)
@@ -94,14 +93,35 @@ func (sc *scenarioContext) fakeReqWithParams(method, url string, queryParams map
 	return sc
 }
 
+func (sc *scenarioContext) fakeReqNoAssertions(method, url string) *scenarioContext {
+	sc.resp = httptest.NewRecorder()
+	req, _ := http.NewRequest(method, url, nil)
+	sc.req = req
+
+	return sc
+}
+
+func (sc *scenarioContext) fakeReqNoAssertionsWithCookie(method, url string, cookie http.Cookie) *scenarioContext {
+	sc.resp = httptest.NewRecorder()
+	http.SetCookie(sc.resp, &cookie)
+
+	req, _ := http.NewRequest(method, url, nil)
+	req.Header = http.Header{"Cookie": sc.resp.Header()["Set-Cookie"]}
+
+	sc.req = req
+
+	return sc
+}
+
 type scenarioContext struct {
-	m              *macaron.Macaron
-	context        *m.ReqContext
-	resp           *httptest.ResponseRecorder
-	handlerFunc    handlerFunc
-	defaultHandler macaron.Handler
-	req            *http.Request
-	url            string
+	m                    *macaron.Macaron
+	context              *models.ReqContext
+	resp                 *httptest.ResponseRecorder
+	handlerFunc          handlerFunc
+	defaultHandler       macaron.Handler
+	req                  *http.Request
+	url                  string
+	userAuthTokenService *auth.FakeUserAuthTokenService
 }
 
 func (sc *scenarioContext) exec() {
@@ -109,7 +129,7 @@ func (sc *scenarioContext) exec() {
 }
 
 type scenarioFunc func(c *scenarioContext)
-type handlerFunc func(c *m.ReqContext) Response
+type handlerFunc func(c *models.ReqContext) Response
 
 func setupScenarioContext(url string) *scenarioContext {
 	sc := &scenarioContext{
@@ -123,8 +143,7 @@ func setupScenarioContext(url string) *scenarioContext {
 		Delims:    macaron.Delims{Left: "[[", Right: "]]"},
 	}))
 
-	sc.m.Use(middleware.GetContextHandler())
-	sc.m.Use(middleware.Sessioner(&session.Options{}, 0))
+	sc.m.Use(middleware.GetContextHandler(nil, nil, nil))
 
 	return sc
 }

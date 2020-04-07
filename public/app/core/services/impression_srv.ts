@@ -5,8 +5,8 @@ import config from 'app/core/config';
 export class ImpressionSrv {
   constructor() {}
 
-  addDashboardImpression(dashboardId) {
-    const impressionsKey = this.impressionKey(config);
+  addDashboardImpression(dashboardId: number) {
+    const impressionsKey = this.impressionKey();
     let impressions = [];
     if (store.exists(impressionsKey)) {
       impressions = JSON.parse(store.get(impressionsKey));
@@ -28,7 +28,7 @@ export class ImpressionSrv {
   }
 
   getDashboardOpened() {
-    let impressions = store.get(this.impressionKey(config)) || '[]';
+    let impressions = store.get(this.impressionKey()) || '[]';
 
     impressions = JSON.parse(impressions);
 
@@ -39,7 +39,7 @@ export class ImpressionSrv {
     return impressions;
   }
 
-  impressionKey(config) {
+  impressionKey() {
     return 'dashboard_impressions-' + config.bootData.user.orgId;
   }
 }

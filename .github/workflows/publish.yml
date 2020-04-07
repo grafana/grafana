@@ -1,0 +1,30 @@
+name: publish_docs
+
+on:
+  push:
+    branches:
+    - master
+    paths:
+    - 'docs/sources/**'
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v1
+    - name: publish-to-git
+      uses: ./.github/actions/gha-publish-to-git
+      id: publish
+      with:
+        repository: grafana/website
+        branch: master
+        host: github.com
+        github_pat: '${{ secrets.GH_BOT_ACCESS_TOKEN }}'
+        source_folder: docs/sources
+        target_folder: content/docs/grafana/latest
+    - shell: bash
+      run: |
+        test -n "${{ steps.publish.outputs.commit_hash }}"
+        test -n "${{ steps.publish.outputs.working_directory }}"

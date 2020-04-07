@@ -1,0 +1,30 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`TimeSyncButton should render component 1`] = `
+<TimeSyncButton
+  isSynced={true}
+  onClick={[Function]}
+>
+  <Component
+    content={[Function]}
+    placement="bottom"
+  >
+    <PopoverController
+      content={[Function]}
+      placement="bottom"
+    >
+      <button
+        aria-label="Synced times"
+        className="btn navbar-button navbar-button--attached explore-active-button"
+        onClick={[Function]}
+        onMouseEnter={[Function]}
+        onMouseLeave={[Function]}
+      >
+        <i
+          className="fa fa-link css-1c3xqzq-topPadding icon-brand-gradient"
+        />
+      </button>
+    </PopoverController>
+  </Component>
+</TimeSyncButton>
+`;

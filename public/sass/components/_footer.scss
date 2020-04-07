@@ -4,7 +4,7 @@
 
 .footer {
   color: $footer-link-color;
-  padding: 5rem 0 1rem 0;
+  padding: $space-md 0 $space-md 0;
   font-size: $font-size-sm;
   position: relative;
   width: 98%; /* was causing horiz scrollbars - need to examine */
@@ -15,6 +15,11 @@
     &:hover {
       color: $footer-link-hover;
     }
+
+    i {
+      display: inline-block;
+      padding-right: $space-xxs;
+    }
   }
 
   ul {
@@ -23,10 +28,10 @@
 
   li {
     display: inline-block;
-    padding-right: 2px;
+
     &::after {
       content: ' | ';
-      padding-left: 2px;
+      padding: 0 $space-sm;
     }
   }
 
@@ -40,16 +45,17 @@
 
 .login-page {
   .footer {
-    padding: 1rem 0 1rem 0;
+    display: block;
+    bottom: $spacer;
+    position: absolute;
+    padding: $space-md 0 $space-md 0;
   }
 }
 
-@include media-breakpoint-up(md) {
+@include media-breakpoint-up(sm) {
   .login-page {
     .footer {
-      bottom: $spacer;
-      position: absolute;
-      padding: 5rem 0 1rem 0;
+      padding: 70px 0 $space-md 0;
     }
   }
 }

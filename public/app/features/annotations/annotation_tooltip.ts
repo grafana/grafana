@@ -1,11 +1,18 @@
 import _ from 'lodash';
 import $ from 'jquery';
 import coreModule from 'app/core/core_module';
-import alertDef from '../alerting/alert_def';
+import alertDef from '../alerting/state/alertDef';
+import { DashboardSrv } from '../dashboard/services/DashboardSrv';
+import { ContextSrv } from 'app/core/services/context_srv';
 
 /** @ngInject */
-export function annotationTooltipDirective($sanitize, dashboardSrv, contextSrv, $compile) {
-  function sanitizeString(str) {
+export function annotationTooltipDirective(
+  $sanitize: any,
+  dashboardSrv: DashboardSrv,
+  contextSrv: ContextSrv,
+  $compile: any
+) {
+  function sanitizeString(str: string) {
     try {
       return $sanitize(str);
     } catch (err) {
@@ -20,7 +27,7 @@ export function annotationTooltipDirective($sanitize, dashboardSrv, contextSrv, 
       event: '=',
       onEdit: '&',
     },
-    link: function(scope, element) {
+    link: (scope: any, element: JQuery) => {
       const event = scope.event;
       let title = event.title;
       let text = event.text;
@@ -32,7 +39,7 @@ export function annotationTooltipDirective($sanitize, dashboardSrv, contextSrv, 
       if (event.alertId) {
         const stateModel = alertDef.getStateDisplayModel(event.newState);
         titleStateClass = stateModel.stateClass;
-        title = `<i class="icon-gf ${stateModel.iconClass}"></i> ${stateModel.text}`;
+        title = `<i class="${stateModel.iconClass}"></i> ${stateModel.text}`;
         text = alertDef.getAlertAnnotationInfo(event);
         if (event.text) {
           text = text + '<br />' + event.text;
@@ -44,9 +51,7 @@ export function annotationTooltipDirective($sanitize, dashboardSrv, contextSrv, 
 
       let header = `<div class="graph-annotation__header">`;
       if (event.login) {
-        header += `<div class="graph-annotation__user" bs-tooltip="'Created by ${event.login}'"><img src="${
-          event.avatarUrl
-        }" /></div>`;
+        header += `<div class="graph-annotation__user" bs-tooltip="'Created by ${event.login}'"><img src="${event.avatarUrl}" /></div>`;
       }
       header += `
           <span class="graph-annotation__title ${titleStateClass}">${sanitizeString(title)}</span>

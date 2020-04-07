@@ -1,0 +1,25 @@
+# You need to run 'sysctl -w vm.max_map_count=262144' on the host machine
+
+  elasticsearch6:
+    image: docker.elastic.co/elasticsearch/elasticsearch-oss:6.7.1
+    command: elasticsearch
+    ports:
+      - "11200:9200"
+      - "11300:9300"
+
+  fake-elastic6-data:
+    image: grafana/fake-data-gen
+    links:
+      - elasticsearch6 
+    environment:
+      FD_SERVER: elasticsearch6
+      FD_DATASOURCE: elasticsearch6
+      FD_PORT: 9200
+
+  filebeat6:
+    image: docker.elastic.co/beats/filebeat-oss:6.7.1
+    command: filebeat -e -strict.perms=false
+    volumes:
+      - ./docker/blocks/elastic6/filebeat.yml:/usr/share/filebeat/filebeat.yml:ro
+      - /var/log:/var/log:ro
+      - ../data/log:/var/log/grafana:ro

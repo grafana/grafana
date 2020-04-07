@@ -6,6 +6,9 @@ import (
 	"math"
 	"testing"
 
+	"time"
+
+	"github.com/grafana/grafana/pkg/setting"
 	. "github.com/smartystreets/goconvey/convey"
 )
 
@@ -30,24 +33,29 @@ func (handler *FakeEvalHandler) Eval(evalContext *EvalContext) {
 
 type FakeResultHandler struct{}
 
-func (handler *FakeResultHandler) Handle(evalContext *EvalContext) error {
+func (handler *FakeResultHandler) handle(evalContext *EvalContext) error {
 	return nil
 }
 
 func TestEngineProcessJob(t *testing.T) {
 	Convey("Alerting engine job processing", t, func() {
-		engine := NewEngine()
+		engine := &AlertEngine{}
+		err := engine.Init()
+		So(err, ShouldBeNil)
+		setting.AlertingEvaluationTimeout = 30 * time.Second
+		setting.AlertingNotificationTimeout = 30 * time.Second
+		setting.AlertingMaxAttempts = 3
 		engine.resultHandler = &FakeResultHandler{}
-		job := &Job{Running: true, Rule: &Rule{}}
+		job := &Job{running: true, Rule: &Rule{}}
 
 		Convey("Should trigger retry if needed", func() {
 
 			Convey("error + not last attempt -> retry", func() {
 				engine.evalHandler = NewFakeEvalHandler(0)
 
-				for i := 1; i < alertMaxAttempts; i++ {
+				for i := 1; i < setting.AlertingMaxAttempts; i++ {
 					attemptChan := make(chan int, 1)
-					cancelChan := make(chan context.CancelFunc, alertMaxAttempts)
+					cancelChan := make(chan context.CancelFunc, setting.AlertingMaxAttempts)
 
 					engine.processJob(i, attemptChan, cancelChan, job)
 					nextAttemptID, more := <-attemptChan
@@ -61,9 +69,9 @@ func TestEngineProcessJob(t *testing.T) {
 			Convey("error + last attempt -> no retry", func() {
 				engine.evalHandler = NewFakeEvalHandler(0)
 				attemptChan := make(chan int, 1)
-				cancelChan := make(chan context.CancelFunc, alertMaxAttempts)
+				cancelChan := make(chan context.CancelFunc, setting.AlertingMaxAttempts)
 
-				engine.processJob(alertMaxAttempts, attemptChan, cancelChan, job)
+				engine.processJob(setting.AlertingMaxAttempts, attemptChan, cancelChan, job)
 				nextAttemptID, more := <-attemptChan
 
 				So(nextAttemptID, ShouldEqual, 0)
@@ -74,7 +82,7 @@ func TestEngineProcessJob(t *testing.T) {
 			Convey("no error -> no retry", func() {
 				engine.evalHandler = NewFakeEvalHandler(1)
 				attemptChan := make(chan int, 1)
-				cancelChan := make(chan context.CancelFunc, alertMaxAttempts)
+				cancelChan := make(chan context.CancelFunc, setting.AlertingMaxAttempts)
 
 				engine.processJob(1, attemptChan, cancelChan, job)
 				nextAttemptID, more := <-attemptChan
@@ -88,11 +96,12 @@ func TestEngineProcessJob(t *testing.T) {
 		Convey("Should trigger as many retries as needed", func() {
 
 			Convey("never success -> max retries number", func() {
-				expectedAttempts := alertMaxAttempts
+				expectedAttempts := setting.AlertingMaxAttempts
 				evalHandler := NewFakeEvalHandler(0)
 				engine.evalHandler = evalHandler
 
-				engine.processJobWithRetry(context.TODO(), job)
+				err := engine.processJobWithRetry(context.TODO(), job)
+				So(err, ShouldBeNil)
 				So(evalHandler.CallNb, ShouldEqual, expectedAttempts)
 			})
 
@@ -101,16 +110,18 @@ func TestEngineProcessJob(t *testing.T) {
 				evalHandler := NewFakeEvalHandler(1)
 				engine.evalHandler = evalHandler
 
-				engine.processJobWithRetry(context.TODO(), job)
+				err := engine.processJobWithRetry(context.TODO(), job)
+				So(err, ShouldBeNil)
 				So(evalHandler.CallNb, ShouldEqual, expectedAttempts)
 			})
 
 			Convey("some errors before success -> some retries", func() {
-				expectedAttempts := int(math.Ceil(float64(alertMaxAttempts) / 2))
+				expectedAttempts := int(math.Ceil(float64(setting.AlertingMaxAttempts) / 2))
 				evalHandler := NewFakeEvalHandler(expectedAttempts)
 				engine.evalHandler = evalHandler
 
-				engine.processJobWithRetry(context.TODO(), job)
+				err := engine.processJobWithRetry(context.TODO(), job)
+				So(err, ShouldBeNil)
 				So(evalHandler.CallNb, ShouldEqual, expectedAttempts)
 			})
 		})

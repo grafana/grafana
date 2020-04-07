@@ -1,6 +1,6 @@
 // Button backgrounds
 // ------------------
-@mixin buttonBackground($startColor, $endColor, $text-color: #fff, $textShadow: 0px 1px 0 rgba(0,0,0,0.1)) {
+@mixin buttonBackground($startColor, $endColor, $text-color: #fff, $textShadow: 0px 1px 0 rgba(0, 0, 0, 0.1)) {
   // gradientBar will set the background to a pleasing blend of these, to support IE<=9
   @include gradientBar($startColor, $endColor, $text-color, $textShadow);
 
@@ -27,35 +27,32 @@
 }
 
 @mixin button-outline-variant($color) {
-  color: $color;
+  color: $white;
   background-image: none;
   background-color: transparent;
-  border-color: $color;
+  border: 1px solid $white;
 
   @include hover {
-    color: #fff;
+    color: $white;
     background-color: $color;
-    border-color: $color;
   }
 
   &:focus,
   &.focus {
-    color: #fff;
+    color: $white;
     background-color: $color;
-    border-color: $color;
   }
 
   &:active,
   &.active,
   .open > &.dropdown-toggle {
-    color: #fff;
+    color: $white;
     background-color: $color;
-    border-color: $color;
 
     &:hover,
     &:focus,
     &.focus {
-      color: #fff;
+      color: $white;
       background-color: darken($color, 17%);
       border-color: darken($color, 25%);
     }

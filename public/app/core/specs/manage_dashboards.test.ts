@@ -1,12 +1,38 @@
-import { ManageDashboardsCtrl } from 'app/core/components/manage_dashboards/manage_dashboards';
-import { SearchSrv } from 'app/core/services/search_srv';
+// @ts-ignore
 import q from 'q';
+import {
+  ManageDashboardsCtrl,
+  Section,
+  FoldersAndDashboardUids,
+} from 'app/core/components/manage_dashboards/manage_dashboards';
+import { SearchSrv } from 'app/core/services/search_srv';
+import { ContextSrv } from '../services/context_srv';
+
+const mockSection = (overides?: object): Section => {
+  const defaultSection: Section = {
+    id: 0,
+    items: [],
+    checked: false,
+    expanded: false,
+    removable: false,
+    hideHeader: false,
+    icon: '',
+    score: 0,
+    title: 'Some Section',
+    toggle: jest.fn(),
+    uid: 'someuid',
+    url: '/some/url/',
+  };
+
+  return { ...defaultSection, ...overides };
+};
 
 describe('ManageDashboards', () => {
-  let ctrl;
+  let ctrl: ManageDashboardsCtrl;
 
   describe('when browsing dashboards', () => {
     beforeEach(() => {
+      const tags: any[] = [];
       const response = [
         {
           id: 410,
@@ -18,11 +44,11 @@ describe('ManageDashboards', () => {
               title: 'Dashboard Test',
               url: 'dashboard/db/dashboard-test',
               icon: 'fa fa-folder',
-              tags: [],
+              tags,
               isStarred: false,
             },
           ],
-          tags: [],
+          tags,
           isStarred: false,
         },
         {
@@ -37,11 +63,11 @@ describe('ManageDashboards', () => {
               title: 'Dashboard Test',
               url: 'dashboard/db/dashboard-test',
               icon: 'fa fa-folder',
-              tags: [],
+              tags,
               isStarred: false,
             },
           ],
-          tags: [],
+          tags,
           isStarred: false,
         },
       ];
@@ -61,6 +87,7 @@ describe('ManageDashboards', () => {
 
   describe('when browsing dashboards for a folder', () => {
     beforeEach(() => {
+      const tags: any[] = [];
       const response = [
         {
           id: 410,
@@ -72,11 +99,11 @@ describe('ManageDashboards', () => {
               title: 'Dashboard Test',
               url: 'dashboard/db/dashboard-test',
               icon: 'fa fa-folder',
-              tags: [],
+              tags,
               isStarred: false,
             },
           ],
-          tags: [],
+          tags,
           isStarred: false,
         },
       ];
@@ -92,6 +119,7 @@ describe('ManageDashboards', () => {
 
   describe('when searching dashboards', () => {
     beforeEach(() => {
+      const tags: any[] = [];
       const response = [
         {
           checked: false,
@@ -103,7 +131,7 @@ describe('ManageDashboards', () => {
               title: 'Dashboard Test',
               url: 'dashboard/db/dashboard-test',
               icon: 'fa fa-folder',
-              tags: [],
+              tags,
               isStarred: false,
               folderId: 410,
               folderUid: 'uid',
@@ -115,7 +143,7 @@ describe('ManageDashboards', () => {
               title: 'Dashboard Test',
               url: 'dashboard/db/dashboard-test',
               icon: 'fa fa-folder',
-              tags: [],
+              tags,
               folderId: 499,
               isStarred: false,
             },
@@ -160,7 +188,7 @@ describe('ManageDashboards', () => {
 
       describe('when select all is checked', () => {
         beforeEach(() => {
-          ctrl.selectAllChecked = true;
+          ctrl.selectAllChecked = false;
           ctrl.onSelectAllChanged();
         });
 
@@ -217,10 +245,10 @@ describe('ManageDashboards', () => {
 
     describe('with starred filter', () => {
       beforeEach(() => {
-        const yesOption: any = ctrl.starredFilterOptions[1];
+        const yesOption: any = { label: 'Yes', value: true };
 
         ctrl.selectedStarredFilter = yesOption;
-        return ctrl.onStarredFilterChange();
+        return ctrl.onStarredFilterChange(yesOption);
       });
 
       it('should set starred filter', () => {
@@ -245,7 +273,7 @@ describe('ManageDashboards', () => {
   });
 
   describe('when selecting dashboards', () => {
-    let ctrl;
+    let ctrl: ManageDashboardsCtrl;
 
     beforeEach(() => {
       ctrl = createCtrlWithStubs([]);
@@ -254,16 +282,16 @@ describe('ManageDashboards', () => {
     describe('and no dashboards are selected', () => {
       beforeEach(() => {
         ctrl.sections = [
-          {
+          mockSection({
             id: 1,
             items: [{ id: 2, checked: false }],
             checked: false,
-          },
-          {
+          }),
+          mockSection({
             id: 0,
             items: [{ id: 3, checked: false }],
             checked: false,
-          },
+          }),
         ];
         ctrl.selectionChanged();
       });
@@ -278,7 +306,7 @@ describe('ManageDashboards', () => {
 
       describe('when select all is checked', () => {
         beforeEach(() => {
-          ctrl.selectAllChecked = true;
+          ctrl.selectAllChecked = false;
           ctrl.onSelectAllChanged();
         });
 
@@ -302,16 +330,16 @@ describe('ManageDashboards', () => {
     describe('and all folders and dashboards are selected', () => {
       beforeEach(() => {
         ctrl.sections = [
-          {
+          mockSection({
             id: 1,
             items: [{ id: 2, checked: true }],
             checked: true,
-          },
-          {
+          }),
+          mockSection({
             id: 0,
             items: [{ id: 3, checked: true }],
             checked: true,
-          },
+          }),
         ];
         ctrl.selectionChanged();
       });
@@ -326,7 +354,7 @@ describe('ManageDashboards', () => {
 
       describe('when select all is unchecked', () => {
         beforeEach(() => {
-          ctrl.selectAllChecked = false;
+          ctrl.selectAllChecked = true;
           ctrl.onSelectAllChanged();
         });
 
@@ -350,18 +378,18 @@ describe('ManageDashboards', () => {
     describe('and one dashboard in root is selected', () => {
       beforeEach(() => {
         ctrl.sections = [
-          {
+          mockSection({
             id: 1,
             title: 'folder',
             items: [{ id: 2, checked: false }],
             checked: false,
-          },
-          {
+          }),
+          mockSection({
             id: 0,
             title: 'General',
             items: [{ id: 3, checked: true }],
             checked: false,
-          },
+          }),
         ];
         ctrl.selectionChanged();
       });
@@ -378,18 +406,18 @@ describe('ManageDashboards', () => {
     describe('and one child dashboard is selected', () => {
       beforeEach(() => {
         ctrl.sections = [
-          {
+          mockSection({
             id: 1,
             title: 'folder',
             items: [{ id: 2, checked: true }],
             checked: false,
-          },
-          {
+          }),
+          mockSection({
             id: 0,
             title: 'General',
             items: [{ id: 3, checked: false }],
             checked: false,
-          },
+          }),
         ];
 
         ctrl.selectionChanged();
@@ -407,18 +435,18 @@ describe('ManageDashboards', () => {
     describe('and one child dashboard and one dashboard is selected', () => {
       beforeEach(() => {
         ctrl.sections = [
-          {
+          mockSection({
             id: 1,
             title: 'folder',
             items: [{ id: 2, checked: true }],
             checked: false,
-          },
-          {
+          }),
+          mockSection({
             id: 0,
             title: 'General',
             items: [{ id: 3, checked: true }],
             checked: false,
-          },
+          }),
         ];
 
         ctrl.selectionChanged();
@@ -436,24 +464,24 @@ describe('ManageDashboards', () => {
     describe('and one child dashboard and one folder is selected', () => {
       beforeEach(() => {
         ctrl.sections = [
-          {
+          mockSection({
             id: 1,
             title: 'folder',
             items: [{ id: 2, checked: false }],
             checked: true,
-          },
-          {
+          }),
+          mockSection({
             id: 3,
             title: 'folder',
             items: [{ id: 4, checked: true }],
             checked: false,
-          },
-          {
+          }),
+          mockSection({
             id: 0,
             title: 'General',
             items: [{ id: 3, checked: false }],
             checked: false,
-          },
+          }),
         ];
 
         ctrl.selectionChanged();
@@ -470,55 +498,55 @@ describe('ManageDashboards', () => {
   });
 
   describe('when deleting dashboards', () => {
-    let toBeDeleted: any;
+    let toBeDeleted: FoldersAndDashboardUids;
 
     beforeEach(() => {
       ctrl = createCtrlWithStubs([]);
 
       ctrl.sections = [
-        {
+        mockSection({
           id: 1,
           uid: 'folder',
           title: 'folder',
           items: [{ id: 2, checked: true, uid: 'folder-dash' }],
           checked: true,
-        },
-        {
+        }),
+        mockSection({
           id: 3,
           title: 'folder-2',
           items: [{ id: 3, checked: true, uid: 'folder-2-dash' }],
           checked: false,
           uid: 'folder-2',
-        },
-        {
+        }),
+        mockSection({
           id: 0,
           title: 'General',
           items: [{ id: 3, checked: true, uid: 'root-dash' }],
           checked: true,
-        },
+        }),
       ];
 
       toBeDeleted = ctrl.getFoldersAndDashboardsToDelete();
     });
 
     it('should return 1 folder', () => {
-      expect(toBeDeleted.folders.length).toEqual(1);
+      expect(toBeDeleted.folderUids.length).toEqual(1);
     });
 
     it('should return 2 dashboards', () => {
-      expect(toBeDeleted.dashboards.length).toEqual(2);
+      expect(toBeDeleted.dashboardUids.length).toEqual(2);
     });
 
     it('should filter out children if parent is checked', () => {
-      expect(toBeDeleted.folders[0]).toEqual('folder');
+      expect(toBeDeleted.folderUids[0]).toEqual('folder');
     });
 
     it('should not filter out children if parent not is checked', () => {
-      expect(toBeDeleted.dashboards[0]).toEqual('folder-2-dash');
+      expect(toBeDeleted.dashboardUids[0]).toEqual('folder-2-dash');
     });
 
     it('should not filter out children if parent is checked and root', () => {
-      expect(toBeDeleted.dashboards[1]).toEqual('root-dash');
+      expect(toBeDeleted.dashboardUids[1]).toEqual('root-dash');
     });
   });
 
@@ -527,19 +555,19 @@ describe('ManageDashboards', () => {
       ctrl = createCtrlWithStubs([]);
 
       ctrl.sections = [
-        {
+        mockSection({
           id: 1,
           title: 'folder',
           items: [{ id: 2, checked: true, uid: 'dash' }],
           checked: false,
           uid: 'folder',
-        },
-        {
+        }),
+        mockSection({
           id: 0,
           title: 'General',
           items: [{ id: 3, checked: true, uid: 'dash-2' }],
           checked: false,
-        },
+        }),
       ];
     });
 
@@ -562,5 +590,9 @@ function createCtrlWithStubs(searchResponse: any, tags?: any) {
     },
   };
 
-  return new ManageDashboardsCtrl({}, { getNav: () => {} }, searchSrvStub as SearchSrv, { isEditor: true });
+  return new ManageDashboardsCtrl(
+    { $digest: jest.fn() } as any,
+    searchSrvStub as SearchSrv,
+    { isEditor: true } as ContextSrv
+  );
 }

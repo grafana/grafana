@@ -1,34 +1,41 @@
 .dashboard-settings {
-  opacity: 0;
+  position: fixed;
   height: 100%;
+  width: 100%;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: $zindex-sidemenu;
+  background: $body-bg;
+  display: flex;
+  flex-direction: column;
+}
+
+.dashboard-settings__body1 {
+  min-height: 100%;
+  width: 100%;
+}
+
+.dashboard-settings__body2 {
+  min-height: 100%;
+  width: 100%;
   display: flex;
   flex-direction: row;
-}
-
-.dashboard-page--settings-opening {
-  .dashboard-container {
-    display: none;
-  }
-}
-
-.dashboard-page--settings-open {
-  .dashboard-settings {
-    opacity: 1;
-    transition: opacity 300ms ease-in-out;
-  }
+  background: $panel-bg;
 }
 
 .dashboard-settings__content {
   flex-grow: 1;
   min-width: 0;
   height: 100%;
-  padding: 30px;
+  padding: 32px;
   max-width: 1100px;
 }
 
 .dashboard-settings__aside {
-  padding: 27px 0 0 30px;
-  background: $panel-bg;
+  padding: 32px 0 0 32px;
+  background: lightOrDark($gray95, $gray15);
   display: flex;
   flex-direction: column;
 }
@@ -38,7 +45,7 @@
   font-size: $font-size-h3;
   padding-right: 60px;
   white-space: nowrap;
-  margin-bottom: $spacer;
+  margin-bottom: $space-md;
 
   i {
     font-size: 25px;
@@ -50,20 +57,22 @@
 
 .dashboard-settings__header {
   font-size: $font-size-h3;
-  margin-bottom: $spacer*2;
+  margin-bottom: $space-xl;
+  line-height: 36px;
 }
 
 .dashboard-settings__subheader {
   color: $text-muted;
   font-style: italic;
   position: relative;
-  top: -1.5rem;
+  top: -$space-lg;
 }
 
 .dashboard-settings__nav-item {
-  padding: 7px 12px;
+  padding: 8px 40px 8px 8px;
   color: $text-color;
   font-size: $font-size-md;
+  line-height: 20px;
   @include left-brand-border;
 
   &.active {
@@ -73,11 +82,13 @@
 
   .gicon {
     margin-bottom: 2px;
+    margin-right: 4px;
   }
 
   .fa {
     font-size: 17px;
     width: 16px;
+    margin-right: 4px;
   }
 }
 
@@ -86,13 +97,13 @@
   flex-direction: column;
   height: 100%;
   flex-grow: 1;
-  margin: $spacer*3 $spacer*2 0 0;
+  margin: 40px $space-xl 0 0;
 
   button {
-    margin-bottom: 10px;
+    margin-bottom: $space-sm;
   }
 }
 
 .dashboard-settings__json-save-button {
-  margin-top: $spacer;
+  margin-top: $space-md;
 }

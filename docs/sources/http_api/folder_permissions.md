@@ -2,7 +2,7 @@
 title = "Folder Permissions HTTP API "
 description = "Grafana Folder Permissions HTTP API"
 keywords = ["grafana", "http", "documentation", "api", "folder", "permission", "permissions", "acl"]
-aliases = ["/http_api/dashboardpermissions/"]
+aliases = ["/docs/grafana/latest/http_api/dashboardpermissions/"]
 type = "docs"
 [menu.docs]
 name = "Folder Permissions"
@@ -105,7 +105,7 @@ POST /api/folders/nErXDvCkzz/permissions
 Accept: application/json
 Content-Type: application/json
 Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
-
+{
   "items": [
     {
       "role": "Viewer",

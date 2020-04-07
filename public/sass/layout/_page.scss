@@ -11,14 +11,37 @@
 .main-view {
   position: relative;
   flex-grow: 1;
-  background: $page-gradient;
+  background: $page-bg;
+}
+
+.page-explore,
+.page-dashboard {
+  .main-view {
+    background: $body-bg;
+  }
+}
+
+.page-scrollbar-wrapper {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 100%;
+}
+
+.page-scrollbar-content {
+  display: flex;
+  min-height: 100%;
+  flex-direction: column;
+  width: 100%;
 }
 
 .page-container {
+  flex-grow: 1;
+  width: 100%;
   margin-left: auto;
   margin-right: auto;
-  padding-left: $spacer*2;
-  padding-right: $spacer*2;
+  padding-left: $spacer * 2;
+  padding-right: $spacer * 2;
   max-width: 980px;
   @include clearfix();
 }
@@ -36,9 +59,30 @@
   overflow: auto;
   height: 100%;
   -webkit-overflow-scrolling: touch;
+  display: flex;
+  flex-direction: column;
 
   &--dashboard {
     height: calc(100% - 56px);
+  }
+
+  > div {
+    flex-grow: 1;
+  }
+
+  > .footer {
+    flex-shrink: 0;
+  }
+
+  // Render in correct position even ng-view div is not rendered yet
+  > .footer:first-child {
+    flex-grow: 1;
+    display: flex;
+
+    > * {
+      width: 100%;
+      align-self: flex-end;
+    }
   }
 }
 
@@ -50,14 +94,14 @@
 }
 
 .page-body {
-  padding-top: $spacer*2;
-  min-height: 500px;
+  padding-top: $spacer * 2;
+  padding-bottom: $spacer * 4;
 }
 
 .page-heading {
-  font-size: 1.25rem;
+  font-size: $font-size-h4;
   margin-top: 0;
-  margin-bottom: $spacer * 0.7;
+  margin-bottom: $spacer;
 }
 
 .page-action-bar {
@@ -122,5 +166,5 @@
 }
 
 .page-sidebar-section {
-  margin-bottom: $spacer*2;
+  margin-bottom: $spacer * 2;
 }

@@ -1,0 +1,9 @@
+notifiers:
+  - name: notification-channel-1
+     type: slack
+    org_id: 2
+     is_default: true
+   settings:
+      recipient: "XXX"
+      token: "xoxb"
+      uploadImage: true

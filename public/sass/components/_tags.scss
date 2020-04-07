@@ -21,18 +21,33 @@
   border-radius: 3px;
   text-shadow: none;
   font-size: 13px;
-  padding: 3px 6px 1px 6px;
-  border-width: 1px;
-  border-style: solid;
-  box-shadow: 0 0 1px rgba($white, 0.2);
+  padding: 2px 6px 2px 6px;
+  border: 1px solid lighten($purple, 10%);
+
   .icon-tag {
     position: relative;
     top: 1px;
     padding-right: 4px;
   }
-}
 
-.label-tag:hover {
-  opacity: 0.85;
-  background-color: darken($purple, 10%);
+  &.muted {
+    opacity: 0.85;
+    background-color: darken($purple, 10%);
+    color: $text-muted;
+  }
+
+  &:hover {
+    opacity: 0.85;
+    background-color: darken($purple, 10%);
+  }
+
+  &--gray {
+    opacity: 0.85;
+    background-color: $gray-1;
+    border-color: $gray-2;
+
+    &:hover {
+      background-color: $gray-1;
+    }
+  }
 }

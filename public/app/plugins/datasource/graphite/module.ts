@@ -1,14 +1,15 @@
 import { GraphiteDatasource } from './datasource';
 import { GraphiteQueryCtrl } from './query_ctrl';
-import { GraphiteConfigCtrl } from './config_ctrl';
+import { DataSourcePlugin } from '@grafana/data';
+import { ConfigEditor } from './configuration/ConfigEditor';
+import { MetricTankMetaInspector } from './MetricTankMetaInspector';
 
 class AnnotationsQueryCtrl {
   static templateUrl = 'partials/annotations.editor.html';
 }
 
-export {
-  GraphiteDatasource as Datasource,
-  GraphiteQueryCtrl as QueryCtrl,
-  GraphiteConfigCtrl as ConfigCtrl,
-  AnnotationsQueryCtrl,
-};
+export const plugin = new DataSourcePlugin(GraphiteDatasource)
+  .setQueryCtrl(GraphiteQueryCtrl)
+  .setConfigEditor(ConfigEditor)
+  .setMetadataInspector(MetricTankMetaInspector)
+  .setAnnotationQueryCtrl(AnnotationsQueryCtrl);

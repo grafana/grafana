@@ -1,19 +1,22 @@
 package mysql
 
 import (
+	"context"
 	"fmt"
 	"math/rand"
 	"strings"
 	"testing"
 	"time"
 
-	"github.com/go-xorm/xorm"
 	"github.com/grafana/grafana/pkg/components/securejsondata"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/sqlutil"
 	"github.com/grafana/grafana/pkg/tsdb"
+	"github.com/grafana/grafana/pkg/tsdb/sqleng"
+	"xorm.io/xorm"
+
 	. "github.com/smartystreets/goconvey/convey"
 )
 
@@ -37,9 +40,14 @@ func TestMySQL(t *testing.T) {
 	Convey("MySQL", t, func() {
 		x := InitMySQLTestDB(t)
 
-		origXormEngine := tsdb.NewXormEngine
-		tsdb.NewXormEngine = func(d, c string) (*xorm.Engine, error) {
+		origXormEngine := sqleng.NewXormEngine
+		sqleng.NewXormEngine = func(d, c string) (*xorm.Engine, error) {
 			return x, nil
+		}
+
+		origInterpolate := sqleng.Interpolate
+		sqleng.Interpolate = func(query *tsdb.Query, timeRange *tsdb.TimeRange, sql string) (string, error) {
+			return sql, nil
 		}
 
 		endpoint, err := newMysqlQueryEndpoint(&models.DataSource{
@@ -53,13 +61,15 @@ func TestMySQL(t *testing.T) {
 
 		Reset(func() {
 			sess.Close()
-			tsdb.NewXormEngine = origXormEngine
+			sqleng.NewXormEngine = origXormEngine
+			sqleng.Interpolate = origInterpolate
 		})
 
 		Convey("Given a table with different native data types", func() {
 			if exists, err := sess.IsTableExist("mysql_types"); err != nil || exists {
 				So(err, ShouldBeNil)
-				sess.DropTable("mysql_types")
+				err = sess.DropTable("mysql_types")
+				So(err, ShouldBeNil)
 			}
 
 			sql := "CREATE TABLE `mysql_types` ("
@@ -123,7 +133,7 @@ func TestMySQL(t *testing.T) {
 					},
 				}
 
-				resp, err := endpoint.Query(nil, nil, query)
+				resp, err := endpoint.Query(context.Background(), nil, query)
 				So(err, ShouldBeNil)
 				queryResult := resp.Results["A"]
 				So(queryResult.Error, ShouldBeNil)
@@ -172,7 +182,8 @@ func TestMySQL(t *testing.T) {
 
 			if exist, err := sess.IsTableExist(metric{}); err != nil || exist {
 				So(err, ShouldBeNil)
-				sess.DropTable(metric{})
+				err = sess.DropTable(metric{})
+				So(err, ShouldBeNil)
 			}
 			err := sess.CreateTable(metric{})
 			So(err, ShouldBeNil)
@@ -211,7 +222,7 @@ func TestMySQL(t *testing.T) {
 					},
 				}
 
-				resp, err := endpoint.Query(nil, nil, query)
+				resp, err := endpoint.Query(context.Background(), nil, query)
 				So(err, ShouldBeNil)
 				queryResult := resp.Results["A"]
 				So(queryResult.Error, ShouldBeNil)
@@ -258,7 +269,7 @@ func TestMySQL(t *testing.T) {
 					},
 				}
 
-				resp, err := endpoint.Query(nil, nil, query)
+				resp, err := endpoint.Query(context.Background(), nil, query)
 				So(err, ShouldBeNil)
 				queryResult := resp.Results["A"]
 				So(queryResult.Error, ShouldBeNil)
@@ -295,6 +306,40 @@ func TestMySQL(t *testing.T) {
 
 			})
 
+			Convey("When doing a metric query using timeGroup and $__interval", func() {
+				mockInterpolate := sqleng.Interpolate
+				sqleng.Interpolate = origInterpolate
+
+				Reset(func() {
+					sqleng.Interpolate = mockInterpolate
+				})
+
+				Convey("Should replace $__interval", func() {
+					query := &tsdb.TsdbQuery{
+						Queries: []*tsdb.Query{
+							{
+								DataSource: &models.DataSource{JsonData: simplejson.New()},
+								Model: simplejson.NewFromAny(map[string]interface{}{
+									"rawSql": "SELECT $__timeGroup(time, $__interval) AS time, avg(value) as value FROM metric GROUP BY 1 ORDER BY 1",
+									"format": "time_series",
+								}),
+								RefId: "A",
+							},
+						},
+						TimeRange: &tsdb.TimeRange{
+							From: fmt.Sprintf("%v", fromStart.Unix()*1000),
+							To:   fmt.Sprintf("%v", fromStart.Add(30*time.Minute).Unix()*1000),
+						},
+					}
+
+					resp, err := endpoint.Query(context.Background(), nil, query)
+					So(err, ShouldBeNil)
+					queryResult := resp.Results["A"]
+					So(queryResult.Error, ShouldBeNil)
+					So(queryResult.Meta.Get("sql").MustString(), ShouldEqual, "SELECT UNIX_TIMESTAMP(time) DIV 60 * 60 AS time, avg(value) as value FROM metric GROUP BY 1 ORDER BY 1")
+				})
+			})
+
 			Convey("When doing a metric query using timeGroup with value fill enabled", func() {
 				query := &tsdb.TsdbQuery{
 					Queries: []*tsdb.Query{
@@ -312,7 +357,7 @@ func TestMySQL(t *testing.T) {
 					},
 				}
 
-				resp, err := endpoint.Query(nil, nil, query)
+				resp, err := endpoint.Query(context.Background(), nil, query)
 				So(err, ShouldBeNil)
 				queryResult := resp.Results["A"]
 				So(queryResult.Error, ShouldBeNil)
@@ -338,7 +383,7 @@ func TestMySQL(t *testing.T) {
 					},
 				}
 
-				resp, err := endpoint.Query(nil, nil, query)
+				resp, err := endpoint.Query(context.Background(), nil, query)
 				So(err, ShouldBeNil)
 				queryResult := resp.Results["A"]
 				So(queryResult.Error, ShouldBeNil)
@@ -370,7 +415,8 @@ func TestMySQL(t *testing.T) {
 
 			if exist, err := sess.IsTableExist(metric_values{}); err != nil || exist {
 				So(err, ShouldBeNil)
-				sess.DropTable(metric_values{})
+				err = sess.DropTable(metric_values{})
+				So(err, ShouldBeNil)
 			}
 			err := sess.CreateTable(metric_values{})
 			So(err, ShouldBeNil)
@@ -433,7 +479,7 @@ func TestMySQL(t *testing.T) {
 					},
 				}
 
-				resp, err := endpoint.Query(nil, nil, query)
+				resp, err := endpoint.Query(context.Background(), nil, query)
 				So(err, ShouldBeNil)
 				queryResult := resp.Results["A"]
 				So(queryResult.Error, ShouldBeNil)
@@ -455,7 +501,7 @@ func TestMySQL(t *testing.T) {
 					},
 				}
 
-				resp, err := endpoint.Query(nil, nil, query)
+				resp, err := endpoint.Query(context.Background(), nil, query)
 				So(err, ShouldBeNil)
 				queryResult := resp.Results["A"]
 				So(queryResult.Error, ShouldBeNil)
@@ -477,7 +523,7 @@ func TestMySQL(t *testing.T) {
 					},
 				}
 
-				resp, err := endpoint.Query(nil, nil, query)
+				resp, err := endpoint.Query(context.Background(), nil, query)
 				So(err, ShouldBeNil)
 				queryResult := resp.Results["A"]
 				So(queryResult.Error, ShouldBeNil)
@@ -499,7 +545,7 @@ func TestMySQL(t *testing.T) {
 					},
 				}
 
-				resp, err := endpoint.Query(nil, nil, query)
+				resp, err := endpoint.Query(context.Background(), nil, query)
 				So(err, ShouldBeNil)
 				queryResult := resp.Results["A"]
 				So(queryResult.Error, ShouldBeNil)
@@ -521,7 +567,7 @@ func TestMySQL(t *testing.T) {
 					},
 				}
 
-				resp, err := endpoint.Query(nil, nil, query)
+				resp, err := endpoint.Query(context.Background(), nil, query)
 				So(err, ShouldBeNil)
 				queryResult := resp.Results["A"]
 				So(queryResult.Error, ShouldBeNil)
@@ -543,7 +589,7 @@ func TestMySQL(t *testing.T) {
 					},
 				}
 
-				resp, err := endpoint.Query(nil, nil, query)
+				resp, err := endpoint.Query(context.Background(), nil, query)
 				So(err, ShouldBeNil)
 				queryResult := resp.Results["A"]
 				So(queryResult.Error, ShouldBeNil)
@@ -552,7 +598,7 @@ func TestMySQL(t *testing.T) {
 				So(queryResult.Series[0].Points[0][1].Float64, ShouldEqual, float64(tInitial.UnixNano()/1e6))
 			})
 
-			FocusConvey("When doing a metric query using epoch (int32) as time column and value column (int32) should return metric with time in milliseconds", func() {
+			Convey("When doing a metric query using epoch (int32) as time column and value column (int32) should return metric with time in milliseconds", func() {
 				query := &tsdb.TsdbQuery{
 					Queries: []*tsdb.Query{
 						{
@@ -565,7 +611,7 @@ func TestMySQL(t *testing.T) {
 					},
 				}
 
-				resp, err := endpoint.Query(nil, nil, query)
+				resp, err := endpoint.Query(context.Background(), nil, query)
 				So(err, ShouldBeNil)
 				queryResult := resp.Results["A"]
 				So(queryResult.Error, ShouldBeNil)
@@ -587,7 +633,7 @@ func TestMySQL(t *testing.T) {
 					},
 				}
 
-				resp, err := endpoint.Query(nil, nil, query)
+				resp, err := endpoint.Query(context.Background(), nil, query)
 				So(err, ShouldBeNil)
 				queryResult := resp.Results["A"]
 				So(queryResult.Error, ShouldBeNil)
@@ -609,7 +655,7 @@ func TestMySQL(t *testing.T) {
 					},
 				}
 
-				resp, err := endpoint.Query(nil, nil, query)
+				resp, err := endpoint.Query(context.Background(), nil, query)
 				So(err, ShouldBeNil)
 				queryResult := resp.Results["A"]
 				So(queryResult.Error, ShouldBeNil)
@@ -631,7 +677,7 @@ func TestMySQL(t *testing.T) {
 					},
 				}
 
-				resp, err := endpoint.Query(nil, nil, query)
+				resp, err := endpoint.Query(context.Background(), nil, query)
 				So(err, ShouldBeNil)
 				queryResult := resp.Results["A"]
 				So(queryResult.Error, ShouldBeNil)
@@ -653,7 +699,7 @@ func TestMySQL(t *testing.T) {
 					},
 				}
 
-				resp, err := endpoint.Query(nil, nil, query)
+				resp, err := endpoint.Query(context.Background(), nil, query)
 				So(err, ShouldBeNil)
 				queryResult := resp.Results["A"]
 				So(queryResult.Error, ShouldBeNil)
@@ -676,7 +722,7 @@ func TestMySQL(t *testing.T) {
 					},
 				}
 
-				resp, err := endpoint.Query(nil, nil, query)
+				resp, err := endpoint.Query(context.Background(), nil, query)
 				So(err, ShouldBeNil)
 				queryResult := resp.Results["A"]
 				So(queryResult.Error, ShouldBeNil)
@@ -701,7 +747,7 @@ func TestMySQL(t *testing.T) {
 					},
 				}
 
-				resp, err := endpoint.Query(nil, nil, query)
+				resp, err := endpoint.Query(context.Background(), nil, query)
 				So(err, ShouldBeNil)
 				queryResult := resp.Results["A"]
 				So(queryResult.Error, ShouldBeNil)
@@ -710,6 +756,30 @@ func TestMySQL(t *testing.T) {
 				So(queryResult.Series[0].Name, ShouldEqual, "valueOne")
 				So(queryResult.Series[1].Name, ShouldEqual, "valueTwo")
 			})
+		})
+
+		Convey("When doing a query with timeFrom,timeTo,unixEpochFrom,unixEpochTo macros", func() {
+			sqleng.Interpolate = origInterpolate
+			query := &tsdb.TsdbQuery{
+				TimeRange: tsdb.NewFakeTimeRange("5m", "now", fromStart),
+				Queries: []*tsdb.Query{
+					{
+						DataSource: &models.DataSource{JsonData: simplejson.New()},
+						Model: simplejson.NewFromAny(map[string]interface{}{
+							"rawSql": `SELECT time FROM metric_values WHERE time > $__timeFrom() OR time < $__timeTo() OR 1 < $__unixEpochFrom() OR $__unixEpochTo() > 1 ORDER BY 1`,
+							"format": "time_series",
+						}),
+						RefId: "A",
+					},
+				},
+			}
+
+			resp, err := endpoint.Query(context.Background(), nil, query)
+			So(err, ShouldBeNil)
+			queryResult := resp.Results["A"]
+			So(queryResult.Error, ShouldBeNil)
+			So(queryResult.Meta.Get("sql").MustString(), ShouldEqual, "SELECT time FROM metric_values WHERE time > FROM_UNIXTIME(1521118500) OR time < FROM_UNIXTIME(1521118800) OR 1 < 1521118500 OR 1521118800 > 1 ORDER BY 1")
+
 		})
 
 		Convey("Given a table with event data", func() {
@@ -721,7 +791,8 @@ func TestMySQL(t *testing.T) {
 
 			if exist, err := sess.IsTableExist(event{}); err != nil || exist {
 				So(err, ShouldBeNil)
-				sess.DropTable(event{})
+				err = sess.DropTable(event{})
+				So(err, ShouldBeNil)
 			}
 			err := sess.CreateTable(event{})
 			So(err, ShouldBeNil)
@@ -762,7 +833,7 @@ func TestMySQL(t *testing.T) {
 					},
 				}
 
-				resp, err := endpoint.Query(nil, nil, query)
+				resp, err := endpoint.Query(context.Background(), nil, query)
 				queryResult := resp.Results["Deploys"]
 				So(err, ShouldBeNil)
 				So(len(queryResult.Tables[0].Rows), ShouldEqual, 3)
@@ -785,7 +856,7 @@ func TestMySQL(t *testing.T) {
 					},
 				}
 
-				resp, err := endpoint.Query(nil, nil, query)
+				resp, err := endpoint.Query(context.Background(), nil, query)
 				queryResult := resp.Results["Tickets"]
 				So(err, ShouldBeNil)
 				So(len(queryResult.Tables[0].Rows), ShouldEqual, 3)
@@ -811,7 +882,7 @@ func TestMySQL(t *testing.T) {
 					},
 				}
 
-				resp, err := endpoint.Query(nil, nil, query)
+				resp, err := endpoint.Query(context.Background(), nil, query)
 				So(err, ShouldBeNil)
 				queryResult := resp.Results["A"]
 				So(queryResult.Error, ShouldBeNil)
@@ -841,7 +912,7 @@ func TestMySQL(t *testing.T) {
 					},
 				}
 
-				resp, err := endpoint.Query(nil, nil, query)
+				resp, err := endpoint.Query(context.Background(), nil, query)
 				So(err, ShouldBeNil)
 				queryResult := resp.Results["A"]
 				So(queryResult.Error, ShouldBeNil)
@@ -871,7 +942,7 @@ func TestMySQL(t *testing.T) {
 					},
 				}
 
-				resp, err := endpoint.Query(nil, nil, query)
+				resp, err := endpoint.Query(context.Background(), nil, query)
 				So(err, ShouldBeNil)
 				queryResult := resp.Results["A"]
 				So(queryResult.Error, ShouldBeNil)
@@ -901,7 +972,7 @@ func TestMySQL(t *testing.T) {
 					},
 				}
 
-				resp, err := endpoint.Query(nil, nil, query)
+				resp, err := endpoint.Query(context.Background(), nil, query)
 				So(err, ShouldBeNil)
 				queryResult := resp.Results["A"]
 				So(queryResult.Error, ShouldBeNil)
@@ -929,7 +1000,7 @@ func TestMySQL(t *testing.T) {
 					},
 				}
 
-				resp, err := endpoint.Query(nil, nil, query)
+				resp, err := endpoint.Query(context.Background(), nil, query)
 				So(err, ShouldBeNil)
 				queryResult := resp.Results["A"]
 				So(queryResult.Error, ShouldBeNil)
@@ -957,7 +1028,7 @@ func TestMySQL(t *testing.T) {
 					},
 				}
 
-				resp, err := endpoint.Query(nil, nil, query)
+				resp, err := endpoint.Query(context.Background(), nil, query)
 				So(err, ShouldBeNil)
 				queryResult := resp.Results["A"]
 				So(queryResult.Error, ShouldBeNil)

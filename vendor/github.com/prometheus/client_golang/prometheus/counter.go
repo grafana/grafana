@@ -15,6 +15,10 @@ package prometheus
 
 import (
 	"errors"
+	"math"
+	"sync/atomic"
+
+	dto "github.com/prometheus/client_model/go"
 )
 
 // Counter is a Metric that represents a single numerical value that only ever
@@ -42,6 +46,14 @@ type Counter interface {
 type CounterOpts Opts
 
 // NewCounter creates a new Counter based on the provided CounterOpts.
+//
+// The returned implementation tracks the counter value in two separate
+// variables, a float64 and a uint64. The latter is used to track calls of the
+// Inc method and calls of the Add method with a value that can be represented
+// as a uint64. This allows atomic increments of the counter with optimal
+// performance. (It is common to have an Inc call in very hot execution paths.)
+// Both internal tracking values are added up in the Write method. This has to
+// be taken into account when it comes to precision and overflow behavior.
 func NewCounter(opts CounterOpts) Counter {
 	desc := NewDesc(
 		BuildFQName(opts.Namespace, opts.Subsystem, opts.Name),
@@ -49,20 +61,58 @@ func NewCounter(opts CounterOpts) Counter {
 		nil,
 		opts.ConstLabels,
 	)
-	result := &counter{value: value{desc: desc, valType: CounterValue, labelPairs: desc.constLabelPairs}}
+	result := &counter{desc: desc, labelPairs: desc.constLabelPairs}
 	result.init(result) // Init self-collection.
 	return result
 }
 
 type counter struct {
-	value
+	// valBits contains the bits of the represented float64 value, while
+	// valInt stores values that are exact integers. Both have to go first
+	// in the struct to guarantee alignment for atomic operations.
+	// http://golang.org/pkg/sync/atomic/#pkg-note-BUG
+	valBits uint64
+	valInt  uint64
+
+	selfCollector
+	desc *Desc
+
+	labelPairs []*dto.LabelPair
+}
+
+func (c *counter) Desc() *Desc {
+	return c.desc
 }
 
 func (c *counter) Add(v float64) {
 	if v < 0 {
 		panic(errors.New("counter cannot decrease in value"))
 	}
-	c.value.Add(v)
+	ival := uint64(v)
+	if float64(ival) == v {
+		atomic.AddUint64(&c.valInt, ival)
+		return
+	}
+
+	for {
+		oldBits := atomic.LoadUint64(&c.valBits)
+		newBits := math.Float64bits(math.Float64frombits(oldBits) + v)
+		if atomic.CompareAndSwapUint64(&c.valBits, oldBits, newBits) {
+			return
+		}
+	}
+}
+
+func (c *counter) Inc() {
+	atomic.AddUint64(&c.valInt, 1)
+}
+
+func (c *counter) Write(out *dto.Metric) error {
+	fval := math.Float64frombits(atomic.LoadUint64(&c.valBits))
+	ival := atomic.LoadUint64(&c.valInt)
+	val := fval + float64(ival)
+
+	return populateMetric(CounterValue, val, c.labelPairs, out)
 }
 
 // CounterVec is a Collector that bundles a set of Counters that all share the
@@ -85,11 +135,10 @@ func NewCounterVec(opts CounterOpts, labelNames []string) *CounterVec {
 	)
 	return &CounterVec{
 		metricVec: newMetricVec(desc, func(lvs ...string) Metric {
-			result := &counter{value: value{
-				desc:       desc,
-				valType:    CounterValue,
-				labelPairs: makeLabelPairs(desc, lvs),
-			}}
+			if len(lvs) != len(desc.variableLabels) {
+				panic(makeInconsistentCardinalityError(desc.fqName, desc.variableLabels, lvs))
+			}
+			result := &counter{desc: desc, labelPairs: makeLabelPairs(desc, lvs)}
 			result.init(result) // Init self-collection.
 			return result
 		}),
@@ -111,7 +160,7 @@ func NewCounterVec(opts CounterOpts, labelNames []string) *CounterVec {
 // Counter with the same label values is created later.
 //
 // An error is returned if the number of label values is not the same as the
-// number of VariableLabels in Desc.
+// number of VariableLabels in Desc (minus any curried labels).
 //
 // Note that for more than one label value, this method is prone to mistakes
 // caused by an incorrect order of arguments. Consider GetMetricWith(Labels) as
@@ -119,8 +168,8 @@ func NewCounterVec(opts CounterOpts, labelNames []string) *CounterVec {
 // latter has a much more readable (albeit more verbose) syntax, but it comes
 // with a performance overhead (for creating and processing the Labels map).
 // See also the GaugeVec example.
-func (m *CounterVec) GetMetricWithLabelValues(lvs ...string) (Counter, error) {
-	metric, err := m.metricVec.getMetricWithLabelValues(lvs...)
+func (v *CounterVec) GetMetricWithLabelValues(lvs ...string) (Counter, error) {
+	metric, err := v.metricVec.getMetricWithLabelValues(lvs...)
 	if metric != nil {
 		return metric.(Counter), err
 	}
@@ -134,13 +183,13 @@ func (m *CounterVec) GetMetricWithLabelValues(lvs ...string) (Counter, error) {
 // the same as for GetMetricWithLabelValues.
 //
 // An error is returned if the number and names of the Labels are inconsistent
-// with those of the VariableLabels in Desc.
+// with those of the VariableLabels in Desc (minus any curried labels).
 //
 // This method is used for the same purpose as
 // GetMetricWithLabelValues(...string). See there for pros and cons of the two
 // methods.
-func (m *CounterVec) GetMetricWith(labels Labels) (Counter, error) {
-	metric, err := m.metricVec.getMetricWith(labels)
+func (v *CounterVec) GetMetricWith(labels Labels) (Counter, error) {
+	metric, err := v.metricVec.getMetricWith(labels)
 	if metric != nil {
 		return metric.(Counter), err
 	}
@@ -148,18 +197,57 @@ func (m *CounterVec) GetMetricWith(labels Labels) (Counter, error) {
 }
 
 // WithLabelValues works as GetMetricWithLabelValues, but panics where
-// GetMetricWithLabelValues would have returned an error. By not returning an
-// error, WithLabelValues allows shortcuts like
+// GetMetricWithLabelValues would have returned an error. Not returning an
+// error allows shortcuts like
 //     myVec.WithLabelValues("404", "GET").Add(42)
-func (m *CounterVec) WithLabelValues(lvs ...string) Counter {
-	return m.metricVec.withLabelValues(lvs...).(Counter)
+func (v *CounterVec) WithLabelValues(lvs ...string) Counter {
+	c, err := v.GetMetricWithLabelValues(lvs...)
+	if err != nil {
+		panic(err)
+	}
+	return c
 }
 
 // With works as GetMetricWith, but panics where GetMetricWithLabels would have
-// returned an error. By not returning an error, With allows shortcuts like
-//     myVec.With(Labels{"code": "404", "method": "GET"}).Add(42)
-func (m *CounterVec) With(labels Labels) Counter {
-	return m.metricVec.with(labels).(Counter)
+// returned an error. Not returning an error allows shortcuts like
+//     myVec.With(prometheus.Labels{"code": "404", "method": "GET"}).Add(42)
+func (v *CounterVec) With(labels Labels) Counter {
+	c, err := v.GetMetricWith(labels)
+	if err != nil {
+		panic(err)
+	}
+	return c
+}
+
+// CurryWith returns a vector curried with the provided labels, i.e. the
+// returned vector has those labels pre-set for all labeled operations performed
+// on it. The cardinality of the curried vector is reduced accordingly. The
+// order of the remaining labels stays the same (just with the curried labels
+// taken out of the sequence – which is relevant for the
+// (GetMetric)WithLabelValues methods). It is possible to curry a curried
+// vector, but only with labels not yet used for currying before.
+//
+// The metrics contained in the CounterVec are shared between the curried and
+// uncurried vectors. They are just accessed differently. Curried and uncurried
+// vectors behave identically in terms of collection. Only one must be
+// registered with a given registry (usually the uncurried version). The Reset
+// method deletes all metrics, even if called on a curried vector.
+func (v *CounterVec) CurryWith(labels Labels) (*CounterVec, error) {
+	vec, err := v.curryWith(labels)
+	if vec != nil {
+		return &CounterVec{vec}, err
+	}
+	return nil, err
+}
+
+// MustCurryWith works as CurryWith but panics where CurryWith would have
+// returned an error.
+func (v *CounterVec) MustCurryWith(labels Labels) *CounterVec {
+	vec, err := v.CurryWith(labels)
+	if err != nil {
+		panic(err)
+	}
+	return vec
 }
 
 // CounterFunc is a Counter whose value is determined at collect time by calling a

@@ -1,0 +1,47 @@
+{
+  "cost": 0,
+  "timespan": "2019-02-09T14:26:12Z\/2019-02-09T20:26:12Z",
+  "interval": "PT1M",
+  "value": [
+    {
+      "id": "\/subscriptions\/xxx\/resourceGroups\/grafanastaging\/providers\/Microsoft.Compute\/virtualMachines\/grafana\/providers\/Microsoft.Insights\/metrics\/Percentage CPU",
+      "type": "Microsoft.Insights\/metrics",
+      "name": {
+        "value": "Percentage CPU",
+        "localizedValue": "Percentage CPU"
+      },
+      "unit": "Percent",
+      "timeseries": [
+        {
+          "metadatavalues": [
+
+          ],
+          "data": [
+            {
+              "timeStamp": "2019-02-09T14:26:00Z",
+              "maximum": 3.07
+            },
+            {
+              "timeStamp": "2019-02-09T14:27:00Z",
+              "maximum": 2.92
+            },
+            {
+              "timeStamp": "2019-02-09T14:28:00Z",
+              "maximum": 2.87
+            },
+            {
+              "timeStamp": "2019-02-09T14:29:00Z",
+              "maximum": 2.27
+            },
+            {
+              "timeStamp": "2019-02-09T14:30:00Z",
+              "maximum": 2.52
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "namespace": "Microsoft.Compute\/virtualMachines",
+  "resourceregion": "westeurope"
+}

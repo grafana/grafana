@@ -3,7 +3,7 @@ import { SeriesOverridesCtrl } from '../series_overrides_ctrl';
 
 describe('SeriesOverridesCtrl', () => {
   const popoverSrv = {};
-  let $scope;
+  let $scope: any;
 
   beforeEach(() => {
     $scope = {
@@ -14,7 +14,7 @@ describe('SeriesOverridesCtrl', () => {
       },
       render: jest.fn(() => {}),
     };
-    SeriesOverridesCtrl($scope, {}, popoverSrv);
+    SeriesOverridesCtrl($scope, {} as JQuery, popoverSrv);
   });
 
   describe('When setting an override', () => {

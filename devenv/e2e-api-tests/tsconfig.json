@@ -1,0 +1,21 @@
+{
+  "compilerOptions": {
+    "allowSyntheticDefaultImports": true,
+    "declaration": false,
+    "emitDecoratorMetadata": false,
+    "experimentalDecorators": true,
+    "inlineSourceMap": false,
+    "lib": ["es6"],
+    "module": "commonjs",
+    "moduleResolution": "node",
+    "noEmitOnError": false,
+    "noImplicitAny": false,
+    "noImplicitReturns": true,
+    "noImplicitThis": false,
+    "noImplicitUseStrict": false,
+    "noUnusedLocals": true,
+    "sourceMap": true,
+    "target": "es6"
+  },
+  "include": ["*.ts", "**/*.ts"]
+}

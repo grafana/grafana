@@ -19,12 +19,13 @@ import (
 	"bytes"
 	"fmt"
 	"io/ioutil"
+	"net/http"
 	"runtime"
 
 	"gopkg.in/macaron.v1"
 
-	"github.com/grafana/grafana/pkg/log"
-	m "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -102,19 +103,32 @@ func Recovery() macaron.Handler {
 	return func(c *macaron.Context) {
 		defer func() {
 			if err := recover(); err != nil {
-				stack := stack(3)
-
 				panicLogger := log.Root
 				// try to get request logger
 				if ctx, ok := c.Data["ctx"]; ok {
-					ctxTyped := ctx.(*m.ReqContext)
+					ctxTyped := ctx.(*models.ReqContext)
 					panicLogger = ctxTyped.Logger
 				}
 
+				// http.ErrAbortHandler is suppressed by default in the http package
+				// and used as a signal for aborting requests. Suppresses stacktrace
+				// since it doesn't add any important information.
+				if err == http.ErrAbortHandler {
+					panicLogger.Error("Request error", "error", err)
+					return
+				}
+
+				stack := stack(3)
 				panicLogger.Error("Request error", "error", err, "stack", string(stack))
+
+				// if response has already been written, skip.
+				if c.Written() {
+					return
+				}
 
 				c.Data["Title"] = "Server Error"
 				c.Data["AppSubUrl"] = setting.AppSubUrl
+				c.Data["Theme"] = setting.DefaultTheme
 
 				if setting.Env == setting.DEV {
 					if theErr, ok := err.(error); ok {
@@ -124,7 +138,7 @@ func Recovery() macaron.Handler {
 					c.Data["ErrorMsg"] = string(stack)
 				}
 
-				ctx, ok := c.Data["ctx"].(*m.ReqContext)
+				ctx, ok := c.Data["ctx"].(*models.ReqContext)
 
 				if ok && ctx.IsApiRequest() {
 					resp := make(map[string]interface{})
@@ -138,7 +152,7 @@ func Recovery() macaron.Handler {
 
 					c.JSON(500, resp)
 				} else {
-					c.HTML(500, "error")
+					c.HTML(500, setting.ERR_TEMPLATE_NAME)
 				}
 			}
 		}()

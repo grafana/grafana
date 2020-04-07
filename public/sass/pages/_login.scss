@@ -1,7 +1,7 @@
 $login-border: #8daac5;
 
 .login {
-  min-height: 85vh;
+  min-height: 100vh;
   background-position: center;
   background-repeat: no-repeat;
   min-width: 100%;
@@ -10,12 +10,12 @@ $login-border: #8daac5;
   display: flex;
   align-items: center;
   justify-content: center;
-  background-image: url(../img/heatmap_bg_test.svg);
-  background-size: cover;
   color: #d8d9da;
+
   & a {
     color: #d8d9da !important;
   }
+
   & .btn-primary {
     @include buttonBackground(#ff6600, #bc3e06);
   }
@@ -31,9 +31,9 @@ textarea:-webkit-autofill:focus,
 select:-webkit-autofill,
 select:-webkit-autofill:hover,
 select:-webkit-autofill:focus {
-  -webkit-box-shadow: 0 0 0px 1000px $black inset !important;
-  -webkit-text-fill-color: #fbfbfb !important;
-  box-shadow: 0 0 0px 1000px $black inset;
+  -webkit-box-shadow: 0 0 0px 1000px $input-bg inset !important;
+  -webkit-text-fill-color: $input-color !important;
+  box-shadow: 0 0 0px 1000px $input-bg inset;
 }
 
 .login-form-group {
@@ -41,11 +41,11 @@ select:-webkit-autofill:focus {
   flex-direction: column;
   width: 100%;
   align-items: center;
-  margin-bottom: 1rem;
+  margin-bottom: $space-md;
 }
 
 .login-form {
-  margin-bottom: 1rem;
+  margin-bottom: $space-md;
   width: 100%;
 }
 
@@ -67,13 +67,13 @@ select:-webkit-autofill:focus {
   align-items: center;
   justify-content: space-between;
   width: 100%;
-  margin-top: 0.5rem;
+  margin-top: $space-sm;
 
   &--right {
     justify-content: flex-end;
 
     & .btn {
-      margin-left: 1rem;
+      margin-left: $space-md;
     }
   }
   & .btn-inverse {
@@ -88,7 +88,7 @@ select:-webkit-autofill:focus {
 }
 
 .login-button-forgot-password {
-  padding-top: 1rem;
+  padding-top: $space-md;
 }
 
 .login-text {
@@ -97,6 +97,7 @@ select:-webkit-autofill:focus {
 
 .login-content {
   max-width: 700px;
+  width: 100%;
   display: flex;
   align-items: stretch;
   flex-direction: column;
@@ -114,61 +115,67 @@ select:-webkit-autofill:focus {
   align-items: center;
   justify-content: center;
   flex-grow: 0;
-  padding-top: 2rem;
+  padding: $space-xl;
+}
 
-  .logo-icon {
-    width: 70px;
-    margin-bottom: 15px;
+.login-logo {
+  width: 100%;
+  max-width: 250px;
+  margin-bottom: 15px;
+}
+
+.app-grafana {
+  .logo-wordmark {
+    background: url('../img/grafana_typelogo.svg') top center no-repeat;
+    width: 100%;
+    height: 70px;
   }
+}
 
-  .icon-gf-grafana_wordmark {
-    color: darken($white, 11%);
-    position: relative;
-    font-size: 2rem;
-    text-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3);
+.app-enterprise {
+  .logo-wordmark {
+    background: url('../img/grafana_enterprise_typelogo.svg') top center no-repeat;
+    width: 100%;
+    height: 70px;
   }
 }
 
 .login-outer-box {
   display: flex;
   overflow-y: hidden;
+  align-items: center;
+  justify-content: center;
 }
 
 .login-inner-box {
   text-align: center;
-  padding: 2rem;
+  padding: $space-xl;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   flex-grow: 1;
   max-width: 415px;
+  width: 100%;
   transform: tranlate(0px, 0px);
   transition: 0.25s ease;
 
-  &.add {
-    transform: translate(0px, -320px);
-    &.hidden {
-      display: none;
-    }
+  &.hidden {
+    display: none;
   }
 
-  &.remove {
+  &-enter {
     transform: translate(0px, 320px);
-    &.hidden {
-      display: none;
-    }
+    display: flex;
   }
-}
 
-.login-tab-header {
-  background: $tight-form-bg;
-  text-align: center;
-  margin-bottom: 3rem;
+  &-enter-active {
+    transform: translate(0px, 0px);
+  }
 }
 
 .login-change-password-info {
-  padding-bottom: 1.5rem;
+  padding-bottom: $space-lg;
 
   & h5 {
     text-align: left;
@@ -178,45 +185,6 @@ select:-webkit-autofill:focus {
   color: $white;
   border: 1px solid $login-border;
   background-color: $btn-semi-transparent;
-}
-
-.btn-login-tab {
-  background: transparent;
-  border: none;
-  font-size: 15px;
-  padding: 10px 10px;
-
-  &.active {
-    background: darken($tight-form-bg, 5%);
-    color: $white;
-  }
-
-  &:focus {
-    outline: 0;
-  }
-
-  font-weight: bold;
-  display: inline-block;
-  width: 170px;
-  color: $text-color;
-}
-
-.password-strength {
-  display: block;
-  width: 15%;
-  overflow: visible;
-  white-space: nowrap;
-  padding-top: 3px;
-  color: darken($text-color, 20%);
-  border-top: 3px solid $red;
-  &.password-strength-ok {
-    width: 40%;
-    border-top: 3px solid lighten($yellow, 10%);
-  }
-  &.password-strength-good {
-    width: 100%;
-    border-top: 3px solid lighten($green, 10%);
-  }
 }
 
 .login-submit-button-row {
@@ -236,18 +204,10 @@ select:-webkit-autofill:focus {
   width: 100%;
 }
 
-.password-recovery {
-  background: $tight-form-bg;
-  padding: 10px;
-  a {
-    color: $gray-2;
-  }
-}
-
 .login-divider {
   float: left;
   width: 100%;
-  margin: 0 25% 1rem 25%;
+  margin: 0 25% $space-md 25%;
   display: flex;
   justify-content: space-between;
 
@@ -269,7 +229,7 @@ select:-webkit-autofill:focus {
   align-items: center;
   justify-content: flex-end;
   width: 100%;
-  margin-top: 1rem;
+  margin-top: $space-md;
 }
 
 .login-signup-title {
@@ -280,7 +240,7 @@ select:-webkit-autofill:focus {
 
 .login-btn {
   width: 100%;
-  margin: 0 0 1rem;
+  margin: 0 0 $space-md;
 }
 
 .signup-page-background {
@@ -324,23 +284,15 @@ select:-webkit-autofill:focus {
 }
 
 @include media-breakpoint-up(sm) {
+  .login-branding {
+    padding: $space-md;
+  }
+}
+
+@include media-breakpoint-up(md) {
   .login-content {
     flex-direction: row;
-  }
-
-  .login-branding {
-    width: 35%;
-    padding: 4rem 2rem;
-    border-right: 1px solid $login-border;
-
-    .logo-icon {
-      width: 80px;
-    }
-  }
-
-  .login-inner-box {
-    width: 65%;
-    padding: 1rem 2rem;
+    flex: 1 0 100%;
   }
 
   .login-divider {
@@ -348,47 +300,28 @@ select:-webkit-autofill:focus {
       width: 110px;
     }
   }
-}
-
-@include media-breakpoint-up(md) {
-  .login {
-    min-height: 100vh;
-  }
-
-  .login-content {
-    flex: 1 0 100%;
-  }
 
   .login-branding {
     width: 45%;
-    padding: 2rem 4rem;
+    padding: $space-xl;
     flex-grow: 1;
-
-    .logo-icon {
-      width: 130px;
-    }
-
-    .icon-gf-grafana_wordmark {
-      font-size: 3.2rem;
-    }
-  }
-
-  .login-inner-box {
-    width: 55%;
-    padding: 1rem 4rem;
+    border-right: 1px solid $login-border;
   }
 
   .login-button-group {
     flex-direction: row;
   }
 
+  .login-inner-box {
+    width: 55%;
+    padding: $space-md 56px;
+  }
+
   .login-button-forgot-password {
     padding-top: 0;
     padding-left: 10px;
   }
-}
 
-@include media-breakpoint-up(lg) {
   .login-form-input {
     min-width: 300px;
   }

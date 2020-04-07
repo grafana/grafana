@@ -2,11 +2,11 @@
 title = "Singlestat Panel"
 keywords = ["grafana", "dashboard", "documentation", "panels", "singlestat"]
 type = "docs"
-aliases = ["/reference/singlestat/"]
+aliases = ["/docs/grafana/latest/reference/singlestat/"]
 [menu.docs]
 name = "Singlestat"
 parent = "panels"
-weight = 2
+weight = 4
 +++
 
 
@@ -33,7 +33,7 @@ The singlestat panel has a normal query editor to allow you define your exact me
    * **diff** - The difference between 'current' (last value) and 'first'.
    * **range** - The difference between 'min' and 'max'. Useful the show the range of change for a gauge.
 2. **Prefix/Postfix**: The Prefix/Postfix fields let you define a custom label to appear *before/after* the value. The `$__name` variable can be used here to use the series name or alias from the metric query.
-3. **Units**: Units are appended to the the Singlestat  within the panel, and will respect the color and threshold settings for the value.
+3. **Units**: Units are appended to the Singlestat  within the panel, and will respect the color and threshold settings for the value.
 4. **Decimals**: The Decimal field allows you to override the automatic decimal precision, and set it explicitly.
 5. **Font Size**: You can use this section to select the font size of the different texts in the Singlestat Panel, i.e. prefix, value and postfix.
 
@@ -57,31 +57,22 @@ Sparklines are a great way of seeing the historical data related to the summary 
 
 1. **Show**: The show checkbox will toggle whether the spark line is shown in the Panel. When unselected, only the Singlestat value will appear.
 2. **Full Height**: Check if you want the sparklines to take up the full panel height, or uncheck if they should be below the main Singlestat value.
-3. **Line Color**: This color selection applies to the color of the sparkline itself.
-4. **Fill Color**: This color selection applies to the area below the sparkline.
+3. **Y-Min**: The minimum Y value. (default auto)
+4. **Y-Max**: The maximum Y value. (default auto)
+5. **Line Color**: This color selection applies to the color of the sparkline itself.
+6. **Fill Color**: This color selection applies to the area below the sparkline.
 
 <div class="clearfix"></div>
 
 > ***Pro-tip:*** Reduce the opacity on  fill colors for nice looking panels.
-
-### Gauge
-
-Gauges gives a clear picture of how high a value is in it's context. It's a great way to see if a value is close to the thresholds. The gauge uses the colors set in the color options.
-
-{{< docs-imagebox img="/img/docs/v45/singlestat-gauge-options.png" max-width="500px" class="docs-image--right docs-image--no-shadow">}}
-
-1. **Show**: The show checkbox will toggle whether the gauge is shown in the panel. When unselected, only the Singlestat value will appear.
-2. **Min/Max**: This sets the start and end point for the gauge.
-3. **Threshold Labels**: Check if you want to show the threshold labels. Thresholds are set in the color options.
-4. **Threshold Markers**: Check if you want to have a second meter showing the thresholds.
-
-<div class="clearfix"></div>
 
 ### Value/Range to text mapping
 
 {{< docs-imagebox img="/img/docs/v45/singlestat-value-mapping.png" class="docs-image--right docs-image--no-shadow">}}
 
 Value/Range to text mapping allows you to translate the value of the summary stat into explicit text. The text will respect all styling, thresholds and customization defined for the value. This can be useful to translate the number of the main Singlestat value into a context-specific human-readable word or message.
+
+If you want to replace the default "No data" text being displayed when no data is available, add a `value to text mapping` from `null` to your preferred custom text value.
 
 <div class="clearfix"></div>
 
@@ -102,3 +93,9 @@ To fix your singlestat panel:
 
 - Do you have one query?
     - Solution: This likely means your query is returning multiple series. You will want to reduce this down to a single series. This can be accomplished in many ways, depending on your data source. Some common practices include summing the series, averaging or any number of other functions. Consult the documentation for your data source for additional information.
+
+### Gauge
+
+The Gauge feature in this panel is deprecated, please use the new [Gauge panel]({{< relref
+"../../features/panels/gauge.md" >}}) instead.
+

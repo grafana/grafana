@@ -3,6 +3,8 @@
   "name": "Alert List",
   "id": "alertlist",
 
+  "skipDataQuery": true,
+
   "info": {
     "description": "Shows list of alerts and their current status",
     "author": {
@@ -12,7 +14,6 @@
     "logos": {
       "small": "img/icn-singlestat-panel.svg",
       "large": "img/icn-singlestat-panel.svg"
-    },
-    "version": "5.0.0"
+    }
   }
 }

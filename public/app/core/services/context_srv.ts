@@ -1,13 +1,17 @@
-import config from 'app/core/config';
+import config from '../../core/config';
 import _ from 'lodash';
 import coreModule from 'app/core/core_module';
-import store from 'app/core/store';
+import kbn from '../utils/kbn';
 
 export class User {
+  id: number;
   isGrafanaAdmin: any;
   isSignedIn: any;
   orgRole: any;
   orgId: number;
+  orgName: string;
+  login: string;
+  orgCount: number;
   timezone: string;
   helpFlags1: number;
   lightTheme: boolean;
@@ -27,13 +31,11 @@ export class ContextSrv {
   isSignedIn: any;
   isGrafanaAdmin: any;
   isEditor: any;
-  sidemenu: any;
   sidemenuSmallBreakpoint = false;
   hasEditPermissionInFolders: boolean;
+  minRefreshInterval: string;
 
   constructor() {
-    this.sidemenu = store.getBool('grafana.sidemenu', true);
-
     if (!config.bootData) {
       config.bootData = { user: {}, settings: {} };
     }
@@ -43,9 +45,10 @@ export class ContextSrv {
     this.isGrafanaAdmin = this.user.isGrafanaAdmin;
     this.isEditor = this.hasRole('Editor') || this.hasRole('Admin');
     this.hasEditPermissionInFolders = this.user.hasEditPermissionInFolders;
+    this.minRefreshInterval = config.minRefreshInterval;
   }
 
-  hasRole(role) {
+  hasRole(role: string) {
     return this.user.orgRole === role;
   }
 
@@ -53,15 +56,29 @@ export class ContextSrv {
     return !!(document.visibilityState === undefined || document.visibilityState === 'visible');
   }
 
-  toggleSideMenu() {
-    this.sidemenu = !this.sidemenu;
-    store.set('grafana.sidemenu', this.sidemenu);
+  // checks whether the passed interval is longer than the configured minimum refresh rate
+  isAllowedInterval(interval: string) {
+    if (!config.minRefreshInterval) {
+      return true;
+    }
+    return kbn.interval_to_ms(interval) >= kbn.interval_to_ms(config.minRefreshInterval);
+  }
+
+  getValidInterval(interval: string) {
+    if (!this.isAllowedInterval(interval)) {
+      return config.minRefreshInterval;
+    }
+    return interval;
+  }
+
+  hasAccessToExplore() {
+    return (this.isEditor || config.viewersCanEdit) && config.exploreEnabled;
   }
 }
 
 const contextSrv = new ContextSrv();
 export { contextSrv };
 
-coreModule.factory('contextSrv', function() {
+coreModule.factory('contextSrv', () => {
   return contextSrv;
 });

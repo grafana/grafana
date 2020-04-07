@@ -3,18 +3,18 @@ title = "Using InfluxDB in Grafana"
 description = "Guide for using InfluxDB in Grafana"
 keywords = ["grafana", "influxdb", "guide"]
 type = "docs"
-aliases = ["/datasources/influxdb"]
+aliases = ["/docs/grafana/latest/datasources/influxdb"]
 [menu.docs]
 name = "InfluxDB"
 parent = "datasources"
-weight = 3
+weight = 2
 +++
 
 # Using InfluxDB in Grafana
 
-Grafana ships with very feature rich data source plugin for InfluxDB. Supporting a feature rich query editor, annotation and templating queries.
+Grafana ships with a feature-rich data source plugin for InfluxDB. The plugin includes a custom query editor and supports annotations and query templates.
 
-## Adding the data source
+## Add the data source
 
 1. Open the side menu by clicking the Grafana icon in the top header.
 2. In the side menu under the `Dashboards` link you should find a link named `Data Sources`.
@@ -25,13 +25,14 @@ Grafana ships with very feature rich data source plugin for InfluxDB. Supporting
 
 Name | Description
 ------------ | -------------
-*Name* | The data source name. This is how you refer to the data source in panels & queries.
+*Name* | The data source name. This is how you refer to the data source in panels and queries.
 *Default* | Default data source means that it will be pre-selected for new panels.
-*Url* | The http protocol, ip and port of you influxdb api (influxdb api port is by default 8086)
+*Url* | The HTTP protocol, IP address and port of your InfluxDB API (InfluxDB API port is by default 8086)
 *Access* | Server (default) = URL needs to be accessible from the Grafana backend/server, Browser = URL needs to be accessible from the browser.
-*Database* | Name of your influxdb database
+*Database* | Name of your InfluxDB database
 *User* | Name of your database user
 *Password* | Database user's password
+*HTTP mode* | How to query the database (`GET` or `POST` HTTP verb). The `POST` verb allows heavy queries that would return an error using the `GET` verb. Default is `GET`.
 
 Access mode controls how requests to the data source will be handled. Server should be the preferred way if nothing else stated.
 
@@ -63,24 +64,24 @@ Identifier | Description
 
 {{< docs-imagebox img="/img/docs/v45/influxdb_query_still.png" class="docs-image--no-shadow" animated-gif="/img/docs/v45/influxdb_query.gif" >}}
 
-You find the InfluxDB editor in the metrics tab in Graph or Singlestat panel's edit mode. You enter edit mode by clicking the
-panel title, then edit. The editor allows you to select metrics and tags.
+You can access the InfluxDB editor under the metrics tab when you are in the edit mode of the Graph or Singlestat panels. 
+Enter edit mode by clicking the panel title, and clicking **Edit**. The editor allows you to select metrics and tags.
 
 ### Filter data (WHERE)
 To add a tag filter click the plus icon to the right of the `WHERE` condition. You can remove tag filters by clicking on
-the tag key and select `--remove tag filter--`.
+the tag key and then selecting `--remove tag filter--`.
 
 **Regex matching**
 
-You can type in regex patterns for metric names or tag filter values, be sure to wrap the regex pattern in forward slashes (`/`). Grafana
-will automatically adjust the filter tag condition to use the InfluxDB regex match condition operator (`=~`).
+You can type in regex patterns for metric names or tag filter values. Be sure to wrap the regex pattern in forward slashes (`/`). Grafana automatically adjusts the filter tag condition to use the InfluxDB regex match condition operator (`=~`).
 
-### Field & Aggregation functions
+### Field and Aggregation functions
 In the `SELECT` row you can specify what fields and functions you want to use. If you have a
-group by time you need an aggregation function. Some functions like derivative require an aggregation function. The editor tries simplify and unify this part of the query. For example:<br>
-![](/img/docs/influxdb/select_editor.png)<br>
+group by time you need an aggregation function. Some functions like derivative require an aggregation function. The editor tries to simplify and unify this part of the query. For example:
 
-The above will generate the following InfluxDB `SELECT` clause:
+![](/img/docs/influxdb/select_editor.png)
+
+The above generates the following InfluxDB `SELECT` clause:
 
 ```sql
 SELECT derivative(mean("value"), 10s) /10 AS "REQ/s" FROM ....
@@ -116,6 +117,26 @@ You can switch to raw query mode by clicking hamburger icon and then `Switch edi
 You can remove the group by time by clicking on the `time` part and then the `x` icon. You can
 change the option `Format As` to `Table` if you want to show raw data in the `Table` panel.
 
+## Querying Logs (BETA)
+
+> Only available in Grafana v6.3+.
+
+Querying and displaying log data from InfluxDB is available via [Explore]({{< relref "../explore" >}}).
+
+![](/img/docs/v63/influxdb_explore_logs.png)
+
+Select the InfluxDB data source, change to Logs using the Metrics/Logs switcher,
+and then use the `Measurements/Fields` button to display your logs.
+
+### Log Queries
+
+The Logs Explorer (the `Measurements/Fields` button) next to the query field shows a list of measurements and fields. Choose the desired measurement that contains your log data and then choose which field Explore should use to display the log message.
+
+Once the result is returned, the log panel shows a list of log rows and a bar chart where the x-axis shows the time and the y-axis shows the frequency/count.
+
+### Filter search
+
+To add a filter click the plus icon to the right of the `Measurements/Fields` button or a condition. You can remove tag filters by clicking on the first select and choosing `--remove filter--`.
 
 ## Templating
 
@@ -123,7 +144,7 @@ Instead of hard-coding things like server, application and sensor name in you me
 Variables are shown as dropdown select boxes at the top of the dashboard. These dropdowns makes it easy to change the data
 being displayed in your dashboard.
 
-Checkout the [Templating]({{< relref "reference/templating.md" >}}) documentation for an introduction to the templating feature and the different
+Check out the [Templating]({{< relref "../../reference/templating.md" >}}) documentation for an introduction to the templating feature and the different
 types of template variables.
 
 ### Query variable
@@ -173,7 +194,7 @@ Why two ways? The first syntax is easier to read and write but does not allow yo
 options are enabled, Grafana converts the labels from plain text to a regex compatible string. Which means you have to use `=~` instead of `=`.
 
 Example Dashboard:
-[InfluxDB Templated Dashboard](http://play.grafana.org/dashboard/db/influxdb-templated-queries)
+[InfluxDB Templated Dashboard](https://play.grafana.org/dashboard/db/influxdb-templated)
 
 ### Ad hoc filters variable
 
@@ -182,8 +203,7 @@ be applied to all your InfluxDB queries.
 
 ## Annotations
 
-[Annotations]({{< relref "reference/annotations.md" >}}) allows you to overlay rich event information on top of graphs. You add annotation
-queries via the Dashboard menu / Annotations view.
+[Annotations]({{< relref "../../reference/annotations.md" >}}) allows you to overlay rich event information on top of graphs. Add annotation queries using the Annotations view in the Dashboard menu.
 
 An example query:
 
@@ -191,15 +211,13 @@ An example query:
 SELECT title, description from events WHERE $timeFilter ORDER BY time ASC
 ```
 
-For InfluxDB you need to enter a query like in the above example. You need to have the ```where $timeFilter```
-part. If you only select one column you will not need to enter anything in the column mapping fields. The
-Tags field can be a comma separated string.
+For InfluxDB, you need to enter a query like the one in the example above. The ```where $timeFilter``` component is required. If you only select one column, then you do not need to enter anything in the column mapping fields. The **Tags** field can be a comma-separated string.
 
-## Configure the Datasource with Provisioning
+## Configure the data source with provisioning
 
-It's now possible to configure datasources using config files with Grafana's provisioning system. You can read more about how it works and all the settings you can set for datasources on the [provisioning docs page](/administration/provisioning/#datasources)
+You can now configure data sources using config files with Grafana's provisioning system. You can read more about how it works and all the settings you can set for data sources on the [provisioning docs page]({{< relref "../../administration/provisioning/#datasources" >}}).
 
-Here are some provisioning examples for this datasource.
+Here are some provisioning examples for this data source.
 
 ```yaml
 apiVersion: 1
@@ -212,4 +230,6 @@ datasources:
     user: grafana
     password: grafana
     url: http://localhost:8086
+    jsonData:
+      httpMode: GET
 ```

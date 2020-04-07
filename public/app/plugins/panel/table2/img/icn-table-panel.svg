@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!-- Generator: Adobe Illustrator 19.1.0, SVG Export Plug-In . SVG Version: 6.00 Build 0)  -->
+<svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
+	 width="100px" height="100px" viewBox="0 0 100 100" style="enable-background:new 0 0 100 100;" xml:space="preserve">
+<g>
+	<g>
+		<linearGradient id="SVGID_1_" gradientUnits="userSpaceOnUse" x1="15.8113" y1="25" x2="15.8113" y2="-2.5362">
+			<stop  offset="0" style="stop-color:#FFF33B"/>
+			<stop  offset="0.0595" style="stop-color:#FFE029"/>
+			<stop  offset="0.1303" style="stop-color:#FFD218"/>
+			<stop  offset="0.2032" style="stop-color:#FEC90F"/>
+			<stop  offset="0.2809" style="stop-color:#FDC70C"/>
+			<stop  offset="0.6685" style="stop-color:#F3903F"/>
+			<stop  offset="0.8876" style="stop-color:#ED683C"/>
+			<stop  offset="1" style="stop-color:#E93E3A"/>
+		</linearGradient>
+		<rect x="0" style="fill:url(#SVGID_1_);" width="31.623" height="15.049"/>
+		<linearGradient id="SVGID_2_" gradientUnits="userSpaceOnUse" x1="50" y1="25" x2="50" y2="-2.5362">
+			<stop  offset="0" style="stop-color:#FFF33B"/>
+			<stop  offset="0.0595" style="stop-color:#FFE029"/>
+			<stop  offset="0.1303" style="stop-color:#FFD218"/>
+			<stop  offset="0.2032" style="stop-color:#FEC90F"/>
+			<stop  offset="0.2809" style="stop-color:#FDC70C"/>
+			<stop  offset="0.6685" style="stop-color:#F3903F"/>
+			<stop  offset="0.8876" style="stop-color:#ED683C"/>
+			<stop  offset="1" style="stop-color:#E93E3A"/>
+		</linearGradient>
+		<rect x="34.188" style="fill:url(#SVGID_2_);" width="31.623" height="15.049"/>
+		<linearGradient id="SVGID_3_" gradientUnits="userSpaceOnUse" x1="84.1887" y1="25" x2="84.1887" y2="-2.5362">
+			<stop  offset="0" style="stop-color:#FFF33B"/>
+			<stop  offset="0.0595" style="stop-color:#FFE029"/>
+			<stop  offset="0.1303" style="stop-color:#FFD218"/>
+			<stop  offset="0.2032" style="stop-color:#FEC90F"/>
+			<stop  offset="0.2809" style="stop-color:#FDC70C"/>
+			<stop  offset="0.6685" style="stop-color:#F3903F"/>
+			<stop  offset="0.8876" style="stop-color:#ED683C"/>
+			<stop  offset="1" style="stop-color:#E93E3A"/>
+		</linearGradient>
+		<rect x="68.377" style="fill:url(#SVGID_3_);" width="31.623" height="15.049"/>
+	</g>
+	<g>
+		<rect x="0" y="16.99" style="fill:#898989;" width="31.623" height="15.049"/>
+		<rect x="34.188" y="16.99" style="fill:#898989;" width="31.623" height="15.049"/>
+		<rect x="68.377" y="16.99" style="fill:#898989;" width="31.623" height="15.049"/>
+	</g>
+	<g>
+		<rect x="0" y="33.981" style="fill:#6D6E71;" width="31.623" height="15.049"/>
+		<rect x="34.188" y="33.981" style="fill:#6D6E71;" width="31.623" height="15.049"/>
+		<rect x="68.377" y="33.981" style="fill:#6D6E71;" width="31.623" height="15.049"/>
+	</g>
+	<g>
+		<rect x="0" y="50.971" style="fill:#898989;" width="31.623" height="15.049"/>
+		<rect x="34.188" y="50.971" style="fill:#898989;" width="31.623" height="15.049"/>
+		<rect x="68.377" y="50.971" style="fill:#898989;" width="31.623" height="15.049"/>
+	</g>
+	<g>
+		<rect x="0" y="67.961" style="fill:#6D6E71;" width="31.623" height="15.049"/>
+		<rect x="34.188" y="67.961" style="fill:#6D6E71;" width="31.623" height="15.049"/>
+		<rect x="68.377" y="67.961" style="fill:#6D6E71;" width="31.623" height="15.049"/>
+	</g>
+	<g>
+		<rect x="0" y="84.951" style="fill:#898989;" width="31.623" height="15.049"/>
+		<rect x="34.188" y="84.951" style="fill:#898989;" width="31.623" height="15.049"/>
+		<rect x="68.377" y="84.951" style="fill:#898989;" width="31.623" height="15.049"/>
+	</g>
+</g>
+</svg>

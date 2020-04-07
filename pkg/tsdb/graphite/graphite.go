@@ -3,6 +3,7 @@ package graphite
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -13,7 +14,7 @@ import (
 
 	"golang.org/x/net/context/ctxhttp"
 
-	"github.com/grafana/grafana/pkg/log"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb"
@@ -48,13 +49,26 @@ func (e *GraphiteExecutor) Query(ctx context.Context, dsInfo *models.DataSource,
 		"maxDataPoints": []string{"500"},
 	}
 
+	emptyQueries := make([]string, 0)
 	for _, query := range tsdbQuery.Queries {
-		glog.Info("graphite", "query", query.Model)
+		glog.Debug("graphite", "query", query.Model)
+		currTarget := ""
 		if fullTarget, err := query.Model.Get("targetFull").String(); err == nil {
-			target = fixIntervalFormat(fullTarget)
+			currTarget = fullTarget
 		} else {
-			target = fixIntervalFormat(query.Model.Get("target").MustString())
+			currTarget = query.Model.Get("target").MustString()
 		}
+		if currTarget == "" {
+			glog.Debug("graphite", "empty query target", query.Model)
+			emptyQueries = append(emptyQueries, fmt.Sprintf("Query: %v has no target", query.Model))
+			continue
+		}
+		target = fixIntervalFormat(currTarget)
+	}
+
+	if target == "" {
+		glog.Error("No targets in query model", "models without targets", strings.Join(emptyQueries, "\n"))
+		return nil, errors.New("No query target found for the alert rule")
 	}
 
 	formData["target"] = []string{target}
@@ -82,10 +96,12 @@ func (e *GraphiteExecutor) Query(ctx context.Context, dsInfo *models.DataSource,
 
 	defer span.Finish()
 
-	opentracing.GlobalTracer().Inject(
+	if err := opentracing.GlobalTracer().Inject(
 		span.Context(),
 		opentracing.HTTPHeaders,
-		opentracing.HTTPHeadersCarrier(req.Header))
+		opentracing.HTTPHeadersCarrier(req.Header)); err != nil {
+		return nil, err
+	}
 
 	res, err := ctxhttp.Do(ctx, httpClient, req)
 	if err != nil {
@@ -149,7 +165,7 @@ func (e *GraphiteExecutor) createRequest(dsInfo *models.DataSource, data url.Val
 
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	if dsInfo.BasicAuth {
-		req.SetBasicAuth(dsInfo.BasicAuthUser, dsInfo.BasicAuthPassword)
+		req.SetBasicAuth(dsInfo.BasicAuthUser, dsInfo.DecryptedBasicAuthPassword())
 	}
 
 	return req, err
@@ -164,14 +180,12 @@ func formatTimeRange(input string) string {
 
 func fixIntervalFormat(target string) string {
 	rMinute := regexp.MustCompile(`'(\d+)m'`)
-	rMin := regexp.MustCompile("m")
 	target = rMinute.ReplaceAllStringFunc(target, func(m string) string {
-		return rMin.ReplaceAllString(m, "min")
+		return strings.Replace(m, "m", "min", -1)
 	})
 	rMonth := regexp.MustCompile(`'(\d+)M'`)
-	rMon := regexp.MustCompile("M")
 	target = rMonth.ReplaceAllStringFunc(target, func(M string) string {
-		return rMon.ReplaceAllString(M, "mon")
+		return strings.Replace(M, "M", "mon", -1)
 	})
 	return target
 }

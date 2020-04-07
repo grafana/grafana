@@ -3,14 +3,14 @@ const head = document.getElementsByTagName('head')[0];
 
 // get all link tags in the page
 const links = document.getElementsByTagName('link');
-const linkHrefs = [];
+const linkHrefs: string[] = [];
 for (let i = 0; i < links.length; i++) {
   linkHrefs.push(links[i].href);
 }
 
 const isWebkit = !!window.navigator.userAgent.match(/AppleWebKit\/([^ ;]*)/);
-const webkitLoadCheck = function(link, callback) {
-  setTimeout(function() {
+const webkitLoadCheck = (link: HTMLLinkElement, callback: Function) => {
+  setTimeout(() => {
     for (let i = 0; i < document.styleSheets.length; i++) {
       const sheet = document.styleSheets[i];
       if (sheet.href === link.href) {
@@ -21,19 +21,19 @@ const webkitLoadCheck = function(link, callback) {
   }, 10);
 };
 
-const noop = function() {};
+const noop = () => {};
 
-const loadCSS = function(url) {
-  return new Promise(function(resolve, reject) {
+const loadCSS = (url: string) => {
+  return new Promise((resolve, reject) => {
     const link = document.createElement('link');
-    const timeout = setTimeout(function() {
+    const timeout = setTimeout(() => {
       reject('Unable to load CSS');
     }, waitSeconds * 1000);
 
-    const _callback = function(error) {
+    const _callback = (error: any) => {
       clearTimeout(timeout);
       link.onload = link.onerror = noop;
-      setTimeout(function() {
+      setTimeout(() => {
         if (error) {
           reject(error);
         } else {
@@ -47,14 +47,14 @@ const loadCSS = function(url) {
     link.href = url;
 
     if (!isWebkit) {
-      link.onload = function() {
+      link.onload = () => {
         _callback(undefined);
       };
     } else {
       webkitLoadCheck(link, _callback);
     }
 
-    link.onerror = function(evt: any) {
+    link.onerror = (evt: any) => {
       _callback(evt.error || new Error('Error loading CSS file.'));
     };
 
@@ -62,7 +62,7 @@ const loadCSS = function(url) {
   });
 };
 
-export function fetch(load): any {
+export function fetch(load: any): any {
   if (typeof window === 'undefined') {
     return '';
   }

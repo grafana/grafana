@@ -29,15 +29,46 @@ func Register(descriptor *Descriptor) {
 }
 
 func GetServices() []*Descriptor {
-	sort.Slice(services, func(i, j int) bool {
-		return services[i].InitPriority > services[j].InitPriority
+	slice := getServicesWithOverrides()
+
+	sort.Slice(slice, func(i, j int) bool {
+		return slice[i].InitPriority > slice[j].InitPriority
 	})
 
-	return services
+	return slice
+}
+
+type OverrideServiceFunc func(descriptor Descriptor) (*Descriptor, bool)
+
+var overrides []OverrideServiceFunc
+
+func RegisterOverride(fn OverrideServiceFunc) {
+	overrides = append(overrides, fn)
+}
+
+func getServicesWithOverrides() []*Descriptor {
+	slice := []*Descriptor{}
+	for _, s := range services {
+		var descriptor *Descriptor
+		for _, fn := range overrides {
+			if newDescriptor, override := fn(*s); override {
+				descriptor = newDescriptor
+				break
+			}
+		}
+
+		if descriptor != nil {
+			slice = append(slice, descriptor)
+		} else {
+			slice = append(slice, s)
+		}
+	}
+
+	return slice
 }
 
 // Service interface is the lowest common shape that services
-// are expected to forfill to be started within Grafana.
+// are expected to fulfill to be started within Grafana.
 type Service interface {
 
 	// Init is called by Grafana main process which gives the service

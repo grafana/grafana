@@ -1,17 +1,17 @@
 ---
 page_title: Graphite + Grafana + StatsD - Stack Setup Guide
-page_description: Installation and configuration guide & how to for Grafana, Graphite & StatsD
+page_description: Installation and configuration guide and how to for Grafana, Graphite and StatsD
 page_keywords: grafana, tutorials, graphite, statsd, setup, configuration, howto, installation
 author: Torkel Ödegaard
 ---
 
-# Stack Setup & Config Guide: Graphite + Grafana + StatsD
+# Stack Setup and Config Guide: Graphite + Grafana + StatsD
 
 This lengthy article will guide you through installation, configuration and getting started with the amazing metric
 stack that is composed of Graphite, Grafana and StatsD.
 
 Graphite is still king when it comes to time series databases due to its simple data model, ingestion
-with integrated aggregation & rollups, amazing query features and speed. No other time series
+with integrated aggregation and rollups, amazing query features and speed. No other time series
 database has yet to match Graphite's query flexibility and analytics potential.
 
 Graphite has a reputation for being tricky to install and scale. This guide aims to show
@@ -36,7 +36,7 @@ queries that will make the most out of your collected metrics.
 
 ### Carbon
 
-Graphite & Carbon are written in python, so we will start by installing python packages.
+Graphite and Carbon are written in python, so we will start by installing python packages.
 
 ```
 apt-get install \
@@ -228,7 +228,7 @@ Open http://your_server_ip:3000 in your browser and login with the default user 
 - Click on `Data Sources` on the side menu.
 - Click on `Add new` in the top menu
 - Specify name `graphite` and check the `Default ` checkbox
-- Specify Url `http://localhost:8888` and Access `proxy`
+- Specify URL `http://localhost:8888` and Access `proxy`
 - Click `Add ` button
 
 ### Your first dashboard

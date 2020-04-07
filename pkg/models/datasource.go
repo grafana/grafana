@@ -22,13 +22,17 @@ const (
 	DS_MSSQL         = "mssql"
 	DS_ACCESS_DIRECT = "direct"
 	DS_ACCESS_PROXY  = "proxy"
+	DS_STACKDRIVER   = "stackdriver"
+	DS_AZURE_MONITOR = "grafana-azure-monitor-datasource"
+	DS_LOKI          = "loki"
 )
 
 var (
 	ErrDataSourceNotFound           = errors.New("Data source not found")
 	ErrDataSourceNameExists         = errors.New("Data source with same name already exists")
 	ErrDataSourceUpdatingOldVersion = errors.New("Trying to update old version of datasource")
-	ErrDatasourceIsReadOnly         = errors.New("Data source is readonly. Can only be updated from configuration.")
+	ErrDatasourceIsReadOnly         = errors.New("Data source is readonly. Can only be updated from configuration")
+	ErrDataSourceAccessDenied       = errors.New("Data source access denied")
 )
 
 type DsAccess string
@@ -58,36 +62,62 @@ type DataSource struct {
 	Updated time.Time
 }
 
+// DecryptedBasicAuthPassword returns data source basic auth password in plain text. It uses either deprecated
+// basic_auth_password field or encrypted secure_json_data[basicAuthPassword] variable.
+func (ds *DataSource) DecryptedBasicAuthPassword() string {
+	return ds.decryptedValue("basicAuthPassword", ds.BasicAuthPassword)
+}
+
+// DecryptedPassword returns data source password in plain text. It uses either deprecated password field
+// or encrypted secure_json_data[password] variable.
+func (ds *DataSource) DecryptedPassword() string {
+	return ds.decryptedValue("password", ds.Password)
+}
+
+// decryptedValue returns decrypted value from secureJsonData
+func (ds *DataSource) decryptedValue(field string, fallback string) string {
+	if value, ok := ds.DecryptedValue(field); ok {
+		return value
+	}
+	return fallback
+}
+
 var knownDatasourcePlugins = map[string]bool{
-	DS_ES:                       true,
-	DS_GRAPHITE:                 true,
-	DS_INFLUXDB:                 true,
-	DS_INFLUXDB_08:              true,
-	DS_KAIROSDB:                 true,
-	DS_CLOUDWATCH:               true,
-	DS_PROMETHEUS:               true,
-	DS_OPENTSDB:                 true,
-	DS_POSTGRES:                 true,
-	DS_MYSQL:                    true,
-	DS_MSSQL:                    true,
-	"opennms":                   true,
-	"abhisant-druid-datasource": true,
-	"dalmatinerdb-datasource":   true,
-	"gnocci":                    true,
-	"zabbix":                    true,
-	"alexanderzobnin-zabbix-datasource":   true,
-	"newrelic-app":                        true,
-	"grafana-datadog-datasource":          true,
-	"grafana-simple-json":                 true,
-	"grafana-splunk-datasource":           true,
-	"udoprog-heroic-datasource":           true,
-	"grafana-openfalcon-datasource":       true,
-	"opennms-datasource":                  true,
-	"rackerlabs-blueflood-datasource":     true,
-	"crate-datasource":                    true,
-	"ayoungprogrammer-finance-datasource": true,
-	"monasca-datasource":                  true,
-	"vertamedia-clickhouse-datasource":    true,
+	DS_ES:                                    true,
+	DS_GRAPHITE:                              true,
+	DS_INFLUXDB:                              true,
+	DS_INFLUXDB_08:                           true,
+	DS_KAIROSDB:                              true,
+	DS_CLOUDWATCH:                            true,
+	DS_PROMETHEUS:                            true,
+	DS_OPENTSDB:                              true,
+	DS_POSTGRES:                              true,
+	DS_MYSQL:                                 true,
+	DS_MSSQL:                                 true,
+	DS_STACKDRIVER:                           true,
+	DS_AZURE_MONITOR:                         true,
+	DS_LOKI:                                  true,
+	"opennms":                                true,
+	"abhisant-druid-datasource":              true,
+	"dalmatinerdb-datasource":                true,
+	"gnocci":                                 true,
+	"zabbix":                                 true,
+	"newrelic-app":                           true,
+	"grafana-datadog-datasource":             true,
+	"grafana-simple-json":                    true,
+	"grafana-splunk-datasource":              true,
+	"udoprog-heroic-datasource":              true,
+	"grafana-openfalcon-datasource":          true,
+	"opennms-datasource":                     true,
+	"rackerlabs-blueflood-datasource":        true,
+	"crate-datasource":                       true,
+	"ayoungprogrammer-finance-datasource":    true,
+	"monasca-datasource":                     true,
+	"vertamedia-clickhouse-datasource":       true,
+	"alexanderzobnin-zabbix-datasource":      true,
+	"grafana-influxdb-flux-datasource":       true,
+	"doitintl-bigquery-datasource":           true,
+	"grafana-azure-data-explorer-datasource": true,
 }
 
 func IsKnownDataSourcePlugin(dsType string) bool {
@@ -114,9 +144,9 @@ type AddDataSourceCommand struct {
 	IsDefault         bool              `json:"isDefault"`
 	JsonData          *simplejson.Json  `json:"jsonData"`
 	SecureJsonData    map[string]string `json:"secureJsonData"`
-	ReadOnly          bool              `json:"readOnly"`
 
-	OrgId int64 `json:"-"`
+	OrgId    int64 `json:"-"`
+	ReadOnly bool  `json:"-"`
 
 	Result *DataSource
 }
@@ -138,10 +168,10 @@ type UpdateDataSourceCommand struct {
 	JsonData          *simplejson.Json  `json:"jsonData"`
 	SecureJsonData    map[string]string `json:"secureJsonData"`
 	Version           int               `json:"version"`
-	ReadOnly          bool              `json:"readOnly"`
 
-	OrgId int64 `json:"-"`
-	Id    int64 `json:"-"`
+	OrgId    int64 `json:"-"`
+	Id       int64 `json:"-"`
+	ReadOnly bool  `json:"-"`
 
 	Result *DataSource
 }
@@ -165,6 +195,7 @@ type DeleteDataSourceByNameCommand struct {
 
 type GetDataSourcesQuery struct {
 	OrgId  int64
+	User   *SignedInUser
 	Result []*DataSource
 }
 
@@ -185,6 +216,26 @@ type GetDataSourceByNameQuery struct {
 }
 
 // ---------------------
-// EVENTS
-type DataSourceCreatedEvent struct {
+//  Permissions
+// ---------------------
+
+type DsPermissionType int
+
+const (
+	DsPermissionNoAccess DsPermissionType = iota
+	DsPermissionQuery
+)
+
+func (p DsPermissionType) String() string {
+	names := map[int]string{
+		int(DsPermissionQuery):    "Query",
+		int(DsPermissionNoAccess): "No Access",
+	}
+	return names[int(p)]
+}
+
+type DatasourcesPermissionFilterQuery struct {
+	User        *SignedInUser
+	Datasources []*DataSource
+	Result      []*DataSource
 }

@@ -1,24 +1,37 @@
-import { Variable, assignModelProperties, variableTypes } from './variable';
+import {
+  assignModelProperties,
+  ConstantVariableModel,
+  VariableActions,
+  VariableHide,
+  VariableOption,
+  variableTypes,
+} from './types';
+import { VariableSrv } from './all';
+import { VariableType } from '@grafana/data';
 
-export class ConstantVariable implements Variable {
-  query: string;
-  options: any[];
-  current: any;
+export class ConstantVariable implements ConstantVariableModel, VariableActions {
+  type: VariableType;
+  name: string;
+  label: string;
+  hide: VariableHide;
   skipUrlSync: boolean;
+  query: string;
+  options: VariableOption[];
+  current: VariableOption;
 
-  defaults = {
+  defaults: ConstantVariableModel = {
     type: 'constant',
     name: '',
-    hide: 2,
+    hide: VariableHide.hideVariable,
     label: '',
     query: '',
-    current: {},
+    current: {} as VariableOption,
     options: [],
     skipUrlSync: false,
   };
 
   /** @ngInject */
-  constructor(private model, private variableSrv) {
+  constructor(private model: any, private variableSrv: VariableSrv) {
     assignModelProperties(this, model, this.defaults);
   }
 
@@ -27,21 +40,21 @@ export class ConstantVariable implements Variable {
     return this.model;
   }
 
-  setValue(option) {
+  setValue(option: any) {
     this.variableSrv.setOptionAsCurrent(this, option);
   }
 
   updateOptions() {
-    this.options = [{ text: this.query.trim(), value: this.query.trim() }];
+    this.options = [{ text: this.query.trim(), value: this.query.trim(), selected: false }];
     this.setValue(this.options[0]);
     return Promise.resolve();
   }
 
-  dependsOn(variable) {
+  dependsOn(variable: any) {
     return false;
   }
 
-  setValueFromUrl(urlValue) {
+  setValueFromUrl(urlValue: string) {
     return this.variableSrv.setOptionFromUrl(this, urlValue);
   }
 

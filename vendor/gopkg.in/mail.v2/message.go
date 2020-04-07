@@ -295,8 +295,28 @@ func SetCopyFunc(f func(io.Writer) error) FileSetting {
 	}
 }
 
-func (m *Message) appendFile(list []*file, name string, settings []FileSetting) []*file {
-	f := &file{
+// AttachReader attaches a file using an io.Reader
+func (m *Message) AttachReader(name string, r io.Reader, settings ...FileSetting) {
+	m.attachments = m.appendFile(m.attachments, fileFromReader(name, r), settings)
+}
+
+// Attach attaches the files to the email.
+func (m *Message) Attach(filename string, settings ...FileSetting) {
+	m.attachments = m.appendFile(m.attachments, fileFromFilename(filename), settings)
+}
+
+// EmbedReader embeds the images to the email.
+func (m *Message) EmbedReader(name string, r io.Reader, settings ...FileSetting) {
+	m.embedded = m.appendFile(m.embedded, fileFromReader(name, r), settings)
+}
+
+// Embed embeds the images to the email.
+func (m *Message) Embed(filename string, settings ...FileSetting) {
+	m.embedded = m.appendFile(m.embedded, fileFromFilename(filename), settings)
+}
+
+func fileFromFilename(name string) *file {
+	return &file{
 		Name:   filepath.Base(name),
 		Header: make(map[string][]string),
 		CopyFunc: func(w io.Writer) error {
@@ -311,7 +331,22 @@ func (m *Message) appendFile(list []*file, name string, settings []FileSetting) 
 			return h.Close()
 		},
 	}
+}
 
+func fileFromReader(name string, r io.Reader) *file {
+	return &file{
+		Name:   filepath.Base(name),
+		Header: make(map[string][]string),
+		CopyFunc: func(w io.Writer) error {
+			if _, err := io.Copy(w, r); err != nil {
+				return err
+			}
+			return nil
+		},
+	}
+}
+
+func (m *Message) appendFile(list []*file, f *file, settings []FileSetting) []*file {
 	for _, s := range settings {
 		s(f)
 	}
@@ -321,14 +356,4 @@ func (m *Message) appendFile(list []*file, name string, settings []FileSetting) 
 	}
 
 	return append(list, f)
-}
-
-// Attach attaches the files to the email.
-func (m *Message) Attach(filename string, settings ...FileSetting) {
-	m.attachments = m.appendFile(m.attachments, filename, settings)
-}
-
-// Embed embeds the images to the email.
-func (m *Message) Embed(filename string, settings ...FileSetting) {
-	m.embedded = m.appendFile(m.embedded, filename, settings)
 }

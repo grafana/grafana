@@ -6,23 +6,42 @@ import (
 	"strings"
 	"time"
 
-	"github.com/grafana/grafana/pkg/metrics"
+	"github.com/grafana/grafana/pkg/infra/metrics"
+	"github.com/prometheus/client_golang/prometheus"
 	"gopkg.in/macaron.v1"
 )
 
+var (
+	httpRequestsInFlight prometheus.Gauge
+)
+
+func init() {
+	httpRequestsInFlight = prometheus.NewGauge(
+		prometheus.GaugeOpts{
+			Name: "http_request_in_flight",
+			Help: "A gauge of requests currently being served by Grafana.",
+		},
+	)
+
+	prometheus.MustRegister(httpRequestsInFlight)
+}
+
+// RequestMetrics is a middleware handler that instruments the request
 func RequestMetrics(handler string) macaron.Handler {
 	return func(res http.ResponseWriter, req *http.Request, c *macaron.Context) {
 		rw := res.(macaron.ResponseWriter)
 		now := time.Now()
+		httpRequestsInFlight.Inc()
+		defer httpRequestsInFlight.Dec()
 		c.Next()
 
 		status := rw.Status()
 
 		code := sanitizeCode(status)
 		method := sanitizeMethod(req.Method)
-		metrics.M_Http_Request_Total.WithLabelValues(handler, code, method).Inc()
+		metrics.MHttpRequestTotal.WithLabelValues(handler, code, method).Inc()
 		duration := time.Since(now).Nanoseconds() / int64(time.Millisecond)
-		metrics.M_Http_Request_Summary.WithLabelValues(handler, code, method).Observe(float64(duration))
+		metrics.MHttpRequestSummary.WithLabelValues(handler, code, method).Observe(float64(duration))
 
 		if strings.HasPrefix(req.RequestURI, "/api/datasources/proxy") {
 			countProxyRequests(status)
@@ -37,39 +56,39 @@ func RequestMetrics(handler string) macaron.Handler {
 func countApiRequests(status int) {
 	switch status {
 	case 200:
-		metrics.M_Api_Status.WithLabelValues("200").Inc()
+		metrics.MApiStatus.WithLabelValues("200").Inc()
 	case 404:
-		metrics.M_Api_Status.WithLabelValues("404").Inc()
+		metrics.MApiStatus.WithLabelValues("404").Inc()
 	case 500:
-		metrics.M_Api_Status.WithLabelValues("500").Inc()
+		metrics.MApiStatus.WithLabelValues("500").Inc()
 	default:
-		metrics.M_Api_Status.WithLabelValues("unknown").Inc()
+		metrics.MApiStatus.WithLabelValues("unknown").Inc()
 	}
 }
 
 func countPageRequests(status int) {
 	switch status {
 	case 200:
-		metrics.M_Page_Status.WithLabelValues("200").Inc()
+		metrics.MPageStatus.WithLabelValues("200").Inc()
 	case 404:
-		metrics.M_Page_Status.WithLabelValues("404").Inc()
+		metrics.MPageStatus.WithLabelValues("404").Inc()
 	case 500:
-		metrics.M_Page_Status.WithLabelValues("500").Inc()
+		metrics.MPageStatus.WithLabelValues("500").Inc()
 	default:
-		metrics.M_Page_Status.WithLabelValues("unknown").Inc()
+		metrics.MPageStatus.WithLabelValues("unknown").Inc()
 	}
 }
 
 func countProxyRequests(status int) {
 	switch status {
 	case 200:
-		metrics.M_Proxy_Status.WithLabelValues("200").Inc()
+		metrics.MProxyStatus.WithLabelValues("200").Inc()
 	case 404:
-		metrics.M_Proxy_Status.WithLabelValues("400").Inc()
+		metrics.MProxyStatus.WithLabelValues("400").Inc()
 	case 500:
-		metrics.M_Proxy_Status.WithLabelValues("500").Inc()
+		metrics.MProxyStatus.WithLabelValues("500").Inc()
 	default:
-		metrics.M_Proxy_Status.WithLabelValues("unknown").Inc()
+		metrics.MProxyStatus.WithLabelValues("unknown").Inc()
 	}
 }
 

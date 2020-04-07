@@ -9,37 +9,80 @@ import (
 	"crypto/tls"
 	"fmt"
 	"html/template"
+	"io"
 	"net"
 	"strconv"
+	"strings"
 
-	m "github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/setting"
 	gomail "gopkg.in/mail.v2"
+
+	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
 func (ns *NotificationService) send(msg *Message) (int, error) {
-	dialer, err := ns.createDialer()
-	if err != nil {
-		return 0, err
+	messages := []*Message{}
+
+	if msg.SingleEmail {
+		messages = append(messages, msg)
+	} else {
+		for _, address := range msg.To {
+			copy := *msg
+			copy.To = []string{address}
+			messages = append(messages, &copy)
+		}
 	}
 
-	for _, address := range msg.To {
+	return ns.dialAndSend(messages...)
+}
+
+func (ns *NotificationService) dialAndSend(messages ...*Message) (num int, err error) {
+	dialer, err := ns.createDialer()
+	if err != nil {
+		return
+	}
+
+	for _, msg := range messages {
 		m := gomail.NewMessage()
 		m.SetHeader("From", msg.From)
-		m.SetHeader("To", address)
+		m.SetHeader("To", msg.To...)
 		m.SetHeader("Subject", msg.Subject)
-		for _, file := range msg.EmbededFiles {
-			m.Embed(file)
+
+		ns.setFiles(m, msg)
+
+		for _, replyTo := range msg.ReplyTo {
+			m.SetAddressHeader("Reply-To", replyTo, "")
 		}
 
 		m.SetBody("text/html", msg.Body)
 
-		if err := dialer.DialAndSend(m); err != nil {
-			return 0, err
+		if e := dialer.DialAndSend(m); e != nil {
+			err = errutil.Wrapf(e, "Failed to send notification to email addresses: %s", strings.Join(msg.To, ";"))
+			continue
 		}
+
+		num++
 	}
 
-	return len(msg.To), nil
+	return
+}
+
+// setFiles attaches files in various forms
+func (ns *NotificationService) setFiles(
+	m *gomail.Message,
+	msg *Message,
+) {
+	for _, file := range msg.EmbededFiles {
+		m.Embed(file)
+	}
+
+	for _, file := range msg.AttachedFiles {
+		m.Attach(file.Name, gomail.SetCopyFunc(func(writer io.Writer) error {
+			_, err := writer.Write(file.Content)
+			return err
+		}))
+	}
 }
 
 func (ns *NotificationService) createDialer() (*gomail.Dialer, error) {
@@ -77,9 +120,9 @@ func (ns *NotificationService) createDialer() (*gomail.Dialer, error) {
 	return d, nil
 }
 
-func (ns *NotificationService) buildEmailMessage(cmd *m.SendEmailCommand) (*Message, error) {
+func (ns *NotificationService) buildEmailMessage(cmd *models.SendEmailCommand) (*Message, error) {
 	if !ns.Cfg.Smtp.Enabled {
-		return nil, m.ErrSmtpNotEnabled
+		return nil, models.ErrSmtpNotEnabled
 	}
 
 	var buffer bytes.Buffer
@@ -121,10 +164,28 @@ func (ns *NotificationService) buildEmailMessage(cmd *m.SendEmailCommand) (*Mess
 	}
 
 	return &Message{
-		To:           cmd.To,
-		From:         fmt.Sprintf("%s <%s>", ns.Cfg.Smtp.FromName, ns.Cfg.Smtp.FromAddress),
-		Subject:      subject,
-		Body:         buffer.String(),
-		EmbededFiles: cmd.EmbededFiles,
+		To:            cmd.To,
+		SingleEmail:   cmd.SingleEmail,
+		From:          fmt.Sprintf("%s <%s>", ns.Cfg.Smtp.FromName, ns.Cfg.Smtp.FromAddress),
+		Subject:       subject,
+		Body:          buffer.String(),
+		EmbededFiles:  cmd.EmbededFiles,
+		AttachedFiles: buildAttachedFiles(cmd.AttachedFiles),
 	}, nil
+}
+
+// buildAttachedFiles build attached files
+func buildAttachedFiles(
+	attached []*models.SendEmailAttachFile,
+) []*AttachedFile {
+	result := make([]*AttachedFile, 0)
+
+	for _, file := range attached {
+		result = append(result, &AttachedFile{
+			Name:    file.Name,
+			Content: file.Content,
+		})
+	}
+
+	return result
 }

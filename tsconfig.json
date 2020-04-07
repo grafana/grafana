@@ -1,34 +1,23 @@
 {
   "compilerOptions": {
-    "moduleResolution": "node",
-    "outDir": "public/dist",
-    "target": "es5",
-    "lib": ["es6", "dom"],
-    "rootDir": "public/",
     "jsx": "react",
-    "module": "esnext",
-    "declaration": false,
-    "allowSyntheticDefaultImports": true,
-    "esModuleInterop": true,
-    "forceConsistentCasingInFileNames": true,
-    "importHelpers": true,
-    "noEmitHelpers": true,
-    "removeComments": false,
-    "inlineSourceMap": false,
-    "sourceMap": true,
-    "noEmitOnError": false,
-    "emitDecoratorMetadata": false,
-    "experimentalDecorators": true,
-    "noImplicitReturns": true,
-    "noImplicitThis": true,
-    "noImplicitUseStrict": false,
-    "noImplicitAny": false,
-    "noUnusedLocals": true,
-    "baseUrl": "public",
-    "pretty": true,
+    "baseUrl": "public/",
+    "outDir": "public/dist",
     "paths": {
-      "app": ["app"]
-    }
+      "@grafana/slate-react": ["../node_modules/@types/slate-react"],
+      "app": ["app/"],
+      "sass": ["sass/"]
+    },
+    "rootDirs": ["public/"],
+    "typeRoots": ["node_modules/@types", "public/app/types"],
+    "allowJs": true
   },
-  "include": ["public/app/**/*.ts", "public/app/**/*.tsx", "public/test/**/*.ts"]
+  "extends": "@grafana/tsconfig/base.json",
+  "include": [
+    "public/app/**/*.ts*",
+    "public/e2e-test/**/*.ts",
+    "public/test/**/*.ts",
+    "public/vendor/**/*.ts",
+    "packages/jaeger-ui-components/typings"
+  ]
 }

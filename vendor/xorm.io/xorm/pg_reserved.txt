@@ -1,0 +1,746 @@
+A	 	non-reserved	non-reserved	 
+ABORT	non-reserved	 	 	 
+ABS	 	reserved	reserved	 
+ABSENT	 	non-reserved	non-reserved	 
+ABSOLUTE	non-reserved	non-reserved	non-reserved	reserved
+ACCESS	non-reserved	 	 	 
+ACCORDING	 	non-reserved	non-reserved	 
+ACTION	non-reserved	non-reserved	non-reserved	reserved
+ADA	 	non-reserved	non-reserved	non-reserved
+ADD	non-reserved	non-reserved	non-reserved	reserved
+ADMIN	non-reserved	non-reserved	non-reserved	 
+AFTER	non-reserved	non-reserved	non-reserved	 
+AGGREGATE	non-reserved	 	 	 
+ALL	reserved	reserved	reserved	reserved
+ALLOCATE	 	reserved	reserved	reserved
+ALSO	non-reserved	 	 	 
+ALTER	non-reserved	reserved	reserved	reserved
+ALWAYS	non-reserved	non-reserved	non-reserved	 
+ANALYSE	reserved	 	 	 
+ANALYZE	reserved	 	 	 
+AND	reserved	reserved	reserved	reserved
+ANY	reserved	reserved	reserved	reserved
+ARE	 	reserved	reserved	reserved
+ARRAY	reserved	reserved	reserved	 
+ARRAY_AGG	 	reserved	reserved	 
+ARRAY_MAX_CARDINALITY	 	reserved	 	 
+AS	reserved	reserved	reserved	reserved
+ASC	reserved	non-reserved	non-reserved	reserved
+ASENSITIVE	 	reserved	reserved	 
+ASSERTION	non-reserved	non-reserved	non-reserved	reserved
+ASSIGNMENT	non-reserved	non-reserved	non-reserved	 
+ASYMMETRIC	reserved	reserved	reserved	 
+AT	non-reserved	reserved	reserved	reserved
+ATOMIC	 	reserved	reserved	 
+ATTRIBUTE	non-reserved	non-reserved	non-reserved	 
+ATTRIBUTES	 	non-reserved	non-reserved	 
+AUTHORIZATION	reserved (can be function or type)	reserved	reserved	reserved
+AVG	 	reserved	reserved	reserved
+BACKWARD	non-reserved	 	 	 
+BASE64	 	non-reserved	non-reserved	 
+BEFORE	non-reserved	non-reserved	non-reserved	 
+BEGIN	non-reserved	reserved	reserved	reserved
+BEGIN_FRAME	 	reserved	 	 
+BEGIN_PARTITION	 	reserved	 	 
+BERNOULLI	 	non-reserved	non-reserved	 
+BETWEEN	non-reserved (cannot be function or type)	reserved	reserved	reserved
+BIGINT	non-reserved (cannot be function or type)	reserved	reserved	 
+BINARY	reserved (can be function or type)	reserved	reserved	 
+BIT	non-reserved (cannot be function or type)	 	 	reserved
+BIT_LENGTH	 	 	 	reserved
+BLOB	 	reserved	reserved	 
+BLOCKED	 	non-reserved	non-reserved	 
+BOM	 	non-reserved	non-reserved	 
+BOOLEAN	non-reserved (cannot be function or type)	reserved	reserved	 
+BOTH	reserved	reserved	reserved	reserved
+BREADTH	 	non-reserved	non-reserved	 
+BY	non-reserved	reserved	reserved	reserved
+C	 	non-reserved	non-reserved	non-reserved
+CACHE	non-reserved	 	 	 
+CALL	 	reserved	reserved	 
+CALLED	non-reserved	reserved	reserved	 
+CARDINALITY	 	reserved	reserved	 
+CASCADE	non-reserved	non-reserved	non-reserved	reserved
+CASCADED	non-reserved	reserved	reserved	reserved
+CASE	reserved	reserved	reserved	reserved
+CAST	reserved	reserved	reserved	reserved
+CATALOG	non-reserved	non-reserved	non-reserved	reserved
+CATALOG_NAME	 	non-reserved	non-reserved	non-reserved
+CEIL	 	reserved	reserved	 
+CEILING	 	reserved	reserved	 
+CHAIN	non-reserved	non-reserved	non-reserved	 
+CHAR	non-reserved (cannot be function or type)	reserved	reserved	reserved
+CHARACTER	non-reserved (cannot be function or type)	reserved	reserved	reserved
+CHARACTERISTICS	non-reserved	non-reserved	non-reserved	 
+CHARACTERS	 	non-reserved	non-reserved	 
+CHARACTER_LENGTH	 	reserved	reserved	reserved
+CHARACTER_SET_CATALOG	 	non-reserved	non-reserved	non-reserved
+CHARACTER_SET_NAME	 	non-reserved	non-reserved	non-reserved
+CHARACTER_SET_SCHEMA	 	non-reserved	non-reserved	non-reserved
+CHAR_LENGTH	 	reserved	reserved	reserved
+CHECK	reserved	reserved	reserved	reserved
+CHECKPOINT	non-reserved	 	 	 
+CLASS	non-reserved	 	 	 
+CLASS_ORIGIN	 	non-reserved	non-reserved	non-reserved
+CLOB	 	reserved	reserved	 
+CLOSE	non-reserved	reserved	reserved	reserved
+CLUSTER	non-reserved	 	 	 
+COALESCE	non-reserved (cannot be function or type)	reserved	reserved	reserved
+COBOL	 	non-reserved	non-reserved	non-reserved
+COLLATE	reserved	reserved	reserved	reserved
+COLLATION	reserved (can be function or type)	non-reserved	non-reserved	reserved
+COLLATION_CATALOG	 	non-reserved	non-reserved	non-reserved
+COLLATION_NAME	 	non-reserved	non-reserved	non-reserved
+COLLATION_SCHEMA	 	non-reserved	non-reserved	non-reserved
+COLLECT	 	reserved	reserved	 
+COLUMN	reserved	reserved	reserved	reserved
+COLUMNS	 	non-reserved	non-reserved	 
+COLUMN_NAME	 	non-reserved	non-reserved	non-reserved
+COMMAND_FUNCTION	 	non-reserved	non-reserved	non-reserved
+COMMAND_FUNCTION_CODE	 	non-reserved	non-reserved	 
+COMMENT	non-reserved	 	 	 
+COMMENTS	non-reserved	 	 	 
+COMMIT	non-reserved	reserved	reserved	reserved
+COMMITTED	non-reserved	non-reserved	non-reserved	non-reserved
+CONCURRENTLY	reserved (can be function or type)	 	 	 
+CONDITION	 	reserved	reserved	 
+CONDITION_NUMBER	 	non-reserved	non-reserved	non-reserved
+CONFIGURATION	non-reserved	 	 	 
+CONNECT	 	reserved	reserved	reserved
+CONNECTION	non-reserved	non-reserved	non-reserved	reserved
+CONNECTION_NAME	 	non-reserved	non-reserved	non-reserved
+CONSTRAINT	reserved	reserved	reserved	reserved
+CONSTRAINTS	non-reserved	non-reserved	non-reserved	reserved
+CONSTRAINT_CATALOG	 	non-reserved	non-reserved	non-reserved
+CONSTRAINT_NAME	 	non-reserved	non-reserved	non-reserved
+CONSTRAINT_SCHEMA	 	non-reserved	non-reserved	non-reserved
+CONSTRUCTOR	 	non-reserved	non-reserved	 
+CONTAINS	 	reserved	non-reserved	 
+CONTENT	non-reserved	non-reserved	non-reserved	 
+CONTINUE	non-reserved	non-reserved	non-reserved	reserved
+CONTROL	 	non-reserved	non-reserved	 
+CONVERSION	non-reserved	 	 	 
+CONVERT	 	reserved	reserved	reserved
+COPY	non-reserved	 	 	 
+CORR	 	reserved	reserved	 
+CORRESPONDING	 	reserved	reserved	reserved
+COST	non-reserved	 	 	 
+COUNT	 	reserved	reserved	reserved
+COVAR_POP	 	reserved	reserved	 
+COVAR_SAMP	 	reserved	reserved	 
+CREATE	reserved	reserved	reserved	reserved
+CROSS	reserved (can be function or type)	reserved	reserved	reserved
+CSV	non-reserved	 	 	 
+CUBE	 	reserved	reserved	 
+CUME_DIST	 	reserved	reserved	 
+CURRENT	non-reserved	reserved	reserved	reserved
+CURRENT_CATALOG	reserved	reserved	reserved	 
+CURRENT_DATE	reserved	reserved	reserved	reserved
+CURRENT_DEFAULT_TRANSFORM_GROUP	 	reserved	reserved	 
+CURRENT_PATH	 	reserved	reserved	 
+CURRENT_ROLE	reserved	reserved	reserved	 
+CURRENT_ROW	 	reserved	 	 
+CURRENT_SCHEMA	reserved (can be function or type)	reserved	reserved	 
+CURRENT_TIME	reserved	reserved	reserved	reserved
+CURRENT_TIMESTAMP	reserved	reserved	reserved	reserved
+CURRENT_TRANSFORM_GROUP_FOR_TYPE	 	reserved	reserved	 
+CURRENT_USER	reserved	reserved	reserved	reserved
+CURSOR	non-reserved	reserved	reserved	reserved
+CURSOR_NAME	 	non-reserved	non-reserved	non-reserved
+CYCLE	non-reserved	reserved	reserved	 
+DATA	non-reserved	non-reserved	non-reserved	non-reserved
+DATABASE	non-reserved	 	 	 
+DATALINK	 	reserved	reserved	 
+DATE	 	reserved	reserved	reserved
+DATETIME_INTERVAL_CODE	 	non-reserved	non-reserved	non-reserved
+DATETIME_INTERVAL_PRECISION	 	non-reserved	non-reserved	non-reserved
+DAY	non-reserved	reserved	reserved	reserved
+DB	 	non-reserved	non-reserved	 
+DEALLOCATE	non-reserved	reserved	reserved	reserved
+DEC	non-reserved (cannot be function or type)	reserved	reserved	reserved
+DECIMAL	non-reserved (cannot be function or type)	reserved	reserved	reserved
+DECLARE	non-reserved	reserved	reserved	reserved
+DEFAULT	reserved	reserved	reserved	reserved
+DEFAULTS	non-reserved	non-reserved	non-reserved	 
+DEFERRABLE	reserved	non-reserved	non-reserved	reserved
+DEFERRED	non-reserved	non-reserved	non-reserved	reserved
+DEFINED	 	non-reserved	non-reserved	 
+DEFINER	non-reserved	non-reserved	non-reserved	 
+DEGREE	 	non-reserved	non-reserved	 
+DELETE	non-reserved	reserved	reserved	reserved
+DELIMITER	non-reserved	 	 	 
+DELIMITERS	non-reserved	 	 	 
+DENSE_RANK	 	reserved	reserved	 
+DEPTH	 	non-reserved	non-reserved	 
+DEREF	 	reserved	reserved	 
+DERIVED	 	non-reserved	non-reserved	 
+DESC	reserved	non-reserved	non-reserved	reserved
+DESCRIBE	 	reserved	reserved	reserved
+DESCRIPTOR	 	non-reserved	non-reserved	reserved
+DETERMINISTIC	 	reserved	reserved	 
+DIAGNOSTICS	 	non-reserved	non-reserved	reserved
+DICTIONARY	non-reserved	 	 	 
+DISABLE	non-reserved	 	 	 
+DISCARD	non-reserved	 	 	 
+DISCONNECT	 	reserved	reserved	reserved
+DISPATCH	 	non-reserved	non-reserved	 
+DISTINCT	reserved	reserved	reserved	reserved
+DLNEWCOPY	 	reserved	reserved	 
+DLPREVIOUSCOPY	 	reserved	reserved	 
+DLURLCOMPLETE	 	reserved	reserved	 
+DLURLCOMPLETEONLY	 	reserved	reserved	 
+DLURLCOMPLETEWRITE	 	reserved	reserved	 
+DLURLPATH	 	reserved	reserved	 
+DLURLPATHONLY	 	reserved	reserved	 
+DLURLPATHWRITE	 	reserved	reserved	 
+DLURLSCHEME	 	reserved	reserved	 
+DLURLSERVER	 	reserved	reserved	 
+DLVALUE	 	reserved	reserved	 
+DO	reserved	 	 	 
+DOCUMENT	non-reserved	non-reserved	non-reserved	 
+DOMAIN	non-reserved	non-reserved	non-reserved	reserved
+DOUBLE	non-reserved	reserved	reserved	reserved
+DROP	non-reserved	reserved	reserved	reserved
+DYNAMIC	 	reserved	reserved	 
+DYNAMIC_FUNCTION	 	non-reserved	non-reserved	non-reserved
+DYNAMIC_FUNCTION_CODE	 	non-reserved	non-reserved	 
+EACH	non-reserved	reserved	reserved	 
+ELEMENT	 	reserved	reserved	 
+ELSE	reserved	reserved	reserved	reserved
+EMPTY	 	non-reserved	non-reserved	 
+ENABLE	non-reserved	 	 	 
+ENCODING	non-reserved	non-reserved	non-reserved	 
+ENCRYPTED	non-reserved	 	 	 
+END	reserved	reserved	reserved	reserved
+END-EXEC	 	reserved	reserved	reserved
+END_FRAME	 	reserved	 	 
+END_PARTITION	 	reserved	 	 
+ENFORCED	 	non-reserved	 	 
+ENUM	non-reserved	 	 	 
+EQUALS	 	reserved	non-reserved	 
+ESCAPE	non-reserved	reserved	reserved	reserved
+EVENT	non-reserved	 	 	 
+EVERY	 	reserved	reserved	 
+EXCEPT	reserved	reserved	reserved	reserved
+EXCEPTION	 	 	 	reserved
+EXCLUDE	non-reserved	non-reserved	non-reserved	 
+EXCLUDING	non-reserved	non-reserved	non-reserved	 
+EXCLUSIVE	non-reserved	 	 	 
+EXEC	 	reserved	reserved	reserved
+EXECUTE	non-reserved	reserved	reserved	reserved
+EXISTS	non-reserved (cannot be function or type)	reserved	reserved	reserved
+EXP	 	reserved	reserved	 
+EXPLAIN	non-reserved	 	 	 
+EXPRESSION	 	non-reserved	 	 
+EXTENSION	non-reserved	 	 	 
+EXTERNAL	non-reserved	reserved	reserved	reserved
+EXTRACT	non-reserved (cannot be function or type)	reserved	reserved	reserved
+FALSE	reserved	reserved	reserved	reserved
+FAMILY	non-reserved	 	 	 
+FETCH	reserved	reserved	reserved	reserved
+FILE	 	non-reserved	non-reserved	 
+FILTER	 	reserved	reserved	 
+FINAL	 	non-reserved	non-reserved	 
+FIRST	non-reserved	non-reserved	non-reserved	reserved
+FIRST_VALUE	 	reserved	reserved	 
+FLAG	 	non-reserved	non-reserved	 
+FLOAT	non-reserved (cannot be function or type)	reserved	reserved	reserved
+FLOOR	 	reserved	reserved	 
+FOLLOWING	non-reserved	non-reserved	non-reserved	 
+FOR	reserved	reserved	reserved	reserved
+FORCE	non-reserved	 	 	 
+FOREIGN	reserved	reserved	reserved	reserved
+FORTRAN	 	non-reserved	non-reserved	non-reserved
+FORWARD	non-reserved	 	 	 
+FOUND	 	non-reserved	non-reserved	reserved
+FRAME_ROW	 	reserved	 	 
+FREE	 	reserved	reserved	 
+FREEZE	reserved (can be function or type)	 	 	 
+FROM	reserved	reserved	reserved	reserved
+FS	 	non-reserved	non-reserved	 
+FULL	reserved (can be function or type)	reserved	reserved	reserved
+FUNCTION	non-reserved	reserved	reserved	 
+FUNCTIONS	non-reserved	 	 	 
+FUSION	 	reserved	reserved	 
+G	 	non-reserved	non-reserved	 
+GENERAL	 	non-reserved	non-reserved	 
+GENERATED	 	non-reserved	non-reserved	 
+GET	 	reserved	reserved	reserved
+GLOBAL	non-reserved	reserved	reserved	reserved
+GO	 	non-reserved	non-reserved	reserved
+GOTO	 	non-reserved	non-reserved	reserved
+GRANT	reserved	reserved	reserved	reserved
+GRANTED	non-reserved	non-reserved	non-reserved	 
+GREATEST	non-reserved (cannot be function or type)	 	 	 
+GROUP	reserved	reserved	reserved	reserved
+GROUPING	 	reserved	reserved	 
+GROUPS	 	reserved	 	 
+HANDLER	non-reserved	 	 	 
+HAVING	reserved	reserved	reserved	reserved
+HEADER	non-reserved	 	 	 
+HEX	 	non-reserved	non-reserved	 
+HIERARCHY	 	non-reserved	non-reserved	 
+HOLD	non-reserved	reserved	reserved	 
+HOUR	non-reserved	reserved	reserved	reserved
+ID	 	non-reserved	non-reserved	 
+IDENTITY	non-reserved	reserved	reserved	reserved
+IF	non-reserved	 	 	 
+IGNORE	 	non-reserved	non-reserved	 
+ILIKE	reserved (can be function or type)	 	 	 
+IMMEDIATE	non-reserved	non-reserved	non-reserved	reserved
+IMMEDIATELY	 	non-reserved	 	 
+IMMUTABLE	non-reserved	 	 	 
+IMPLEMENTATION	 	non-reserved	non-reserved	 
+IMPLICIT	non-reserved	 	 	 
+IMPORT	 	reserved	reserved	 
+IN	reserved	reserved	reserved	reserved
+INCLUDING	non-reserved	non-reserved	non-reserved	 
+INCREMENT	non-reserved	non-reserved	non-reserved	 
+INDENT	 	non-reserved	non-reserved	 
+INDEX	non-reserved	 	 	 
+INDEXES	non-reserved	 	 	 
+INDICATOR	 	reserved	reserved	reserved
+INHERIT	non-reserved	 	 	 
+INHERITS	non-reserved	 	 	 
+INITIALLY	reserved	non-reserved	non-reserved	reserved
+INLINE	non-reserved	 	 	 
+INNER	reserved (can be function or type)	reserved	reserved	reserved
+INOUT	non-reserved (cannot be function or type)	reserved	reserved	 
+INPUT	non-reserved	non-reserved	non-reserved	reserved
+INSENSITIVE	non-reserved	reserved	reserved	reserved
+INSERT	non-reserved	reserved	reserved	reserved
+INSTANCE	 	non-reserved	non-reserved	 
+INSTANTIABLE	 	non-reserved	non-reserved	 
+INSTEAD	non-reserved	non-reserved	non-reserved	 
+INT	non-reserved (cannot be function or type)	reserved	reserved	reserved
+INTEGER	non-reserved (cannot be function or type)	reserved	reserved	reserved
+INTEGRITY	 	non-reserved	non-reserved	 
+INTERSECT	reserved	reserved	reserved	reserved
+INTERSECTION	 	reserved	reserved	 
+INTERVAL	non-reserved (cannot be function or type)	reserved	reserved	reserved
+INTO	reserved	reserved	reserved	reserved
+INVOKER	non-reserved	non-reserved	non-reserved	 
+IS	reserved (can be function or type)	reserved	reserved	reserved
+ISNULL	reserved (can be function or type)	 	 	 
+ISOLATION	non-reserved	non-reserved	non-reserved	reserved
+JOIN	reserved (can be function or type)	reserved	reserved	reserved
+K	 	non-reserved	non-reserved	 
+KEY	non-reserved	non-reserved	non-reserved	reserved
+KEY_MEMBER	 	non-reserved	non-reserved	 
+KEY_TYPE	 	non-reserved	non-reserved	 
+LABEL	non-reserved	 	 	 
+LAG	 	reserved	reserved	 
+LANGUAGE	non-reserved	reserved	reserved	reserved
+LARGE	non-reserved	reserved	reserved	 
+LAST	non-reserved	non-reserved	non-reserved	reserved
+LAST_VALUE	 	reserved	reserved	 
+LATERAL	reserved	reserved	reserved	 
+LC_COLLATE	non-reserved	 	 	 
+LC_CTYPE	non-reserved	 	 	 
+LEAD	 	reserved	reserved	 
+LEADING	reserved	reserved	reserved	reserved
+LEAKPROOF	non-reserved	 	 	 
+LEAST	non-reserved (cannot be function or type)	 	 	 
+LEFT	reserved (can be function or type)	reserved	reserved	reserved
+LENGTH	 	non-reserved	non-reserved	non-reserved
+LEVEL	non-reserved	non-reserved	non-reserved	reserved
+LIBRARY	 	non-reserved	non-reserved	 
+LIKE	reserved (can be function or type)	reserved	reserved	reserved
+LIKE_REGEX	 	reserved	reserved	 
+LIMIT	reserved	non-reserved	non-reserved	 
+LINK	 	non-reserved	non-reserved	 
+LISTEN	non-reserved	 	 	 
+LN	 	reserved	reserved	 
+LOAD	non-reserved	 	 	 
+LOCAL	non-reserved	reserved	reserved	reserved
+LOCALTIME	reserved	reserved	reserved	 
+LOCALTIMESTAMP	reserved	reserved	reserved	 
+LOCATION	non-reserved	non-reserved	non-reserved	 
+LOCATOR	 	non-reserved	non-reserved	 
+LOCK	non-reserved	 	 	 
+LOWER	 	reserved	reserved	reserved
+M	 	non-reserved	non-reserved	 
+MAP	 	non-reserved	non-reserved	 
+MAPPING	non-reserved	non-reserved	non-reserved	 
+MATCH	non-reserved	reserved	reserved	reserved
+MATCHED	 	non-reserved	non-reserved	 
+MATERIALIZED	non-reserved	 	 	 
+MAX	 	reserved	reserved	reserved
+MAXVALUE	non-reserved	non-reserved	non-reserved	 
+MAX_CARDINALITY	 	 	reserved	 
+MEMBER	 	reserved	reserved	 
+MERGE	 	reserved	reserved	 
+MESSAGE_LENGTH	 	non-reserved	non-reserved	non-reserved
+MESSAGE_OCTET_LENGTH	 	non-reserved	non-reserved	non-reserved
+MESSAGE_TEXT	 	non-reserved	non-reserved	non-reserved
+METHOD	 	reserved	reserved	 
+MIN	 	reserved	reserved	reserved
+MINUTE	non-reserved	reserved	reserved	reserved
+MINVALUE	non-reserved	non-reserved	non-reserved	 
+MOD	 	reserved	reserved	 
+MODE	non-reserved	 	 	 
+MODIFIES	 	reserved	reserved	 
+MODULE	 	reserved	reserved	reserved
+MONTH	non-reserved	reserved	reserved	reserved
+MORE	 	non-reserved	non-reserved	non-reserved
+MOVE	non-reserved	 	 	 
+MULTISET	 	reserved	reserved	 
+MUMPS	 	non-reserved	non-reserved	non-reserved
+NAME	non-reserved	non-reserved	non-reserved	non-reserved
+NAMES	non-reserved	non-reserved	non-reserved	reserved
+NAMESPACE	 	non-reserved	non-reserved	 
+NATIONAL	non-reserved (cannot be function or type)	reserved	reserved	reserved
+NATURAL	reserved (can be function or type)	reserved	reserved	reserved
+NCHAR	non-reserved (cannot be function or type)	reserved	reserved	reserved
+NCLOB	 	reserved	reserved	 
+NESTING	 	non-reserved	non-reserved	 
+NEW	 	reserved	reserved	 
+NEXT	non-reserved	non-reserved	non-reserved	reserved
+NFC	 	non-reserved	non-reserved	 
+NFD	 	non-reserved	non-reserved	 
+NFKC	 	non-reserved	non-reserved	 
+NFKD	 	non-reserved	non-reserved	 
+NIL	 	non-reserved	non-reserved	 
+NO	non-reserved	reserved	reserved	reserved
+NONE	non-reserved (cannot be function or type)	reserved	reserved	 
+NORMALIZE	 	reserved	reserved	 
+NORMALIZED	 	non-reserved	non-reserved	 
+NOT	reserved	reserved	reserved	reserved
+NOTHING	non-reserved	 	 	 
+NOTIFY	non-reserved	 	 	 
+NOTNULL	reserved (can be function or type)	 	 	 
+NOWAIT	non-reserved	 	 	 
+NTH_VALUE	 	reserved	reserved	 
+NTILE	 	reserved	reserved	 
+NULL	reserved	reserved	reserved	reserved
+NULLABLE	 	non-reserved	non-reserved	non-reserved
+NULLIF	non-reserved (cannot be function or type)	reserved	reserved	reserved
+NULLS	non-reserved	non-reserved	non-reserved	 
+NUMBER	 	non-reserved	non-reserved	non-reserved
+NUMERIC	non-reserved (cannot be function or type)	reserved	reserved	reserved
+OBJECT	non-reserved	non-reserved	non-reserved	 
+OCCURRENCES_REGEX	 	reserved	reserved	 
+OCTETS	 	non-reserved	non-reserved	 
+OCTET_LENGTH	 	reserved	reserved	reserved
+OF	non-reserved	reserved	reserved	reserved
+OFF	non-reserved	non-reserved	non-reserved	 
+OFFSET	reserved	reserved	reserved	 
+OIDS	non-reserved	 	 	 
+OLD	 	reserved	reserved	 
+ON	reserved	reserved	reserved	reserved
+ONLY	reserved	reserved	reserved	reserved
+OPEN	 	reserved	reserved	reserved
+OPERATOR	non-reserved	 	 	 
+OPTION	non-reserved	non-reserved	non-reserved	reserved
+OPTIONS	non-reserved	non-reserved	non-reserved	 
+OR	reserved	reserved	reserved	reserved
+ORDER	reserved	reserved	reserved	reserved
+ORDERING	 	non-reserved	non-reserved	 
+ORDINALITY	 	non-reserved	non-reserved	 
+OTHERS	 	non-reserved	non-reserved	 
+OUT	non-reserved (cannot be function or type)	reserved	reserved	 
+OUTER	reserved (can be function or type)	reserved	reserved	reserved
+OUTPUT	 	non-reserved	non-reserved	reserved
+OVER	reserved (can be function or type)	reserved	reserved	 
+OVERLAPS	reserved (can be function or type)	reserved	reserved	reserved
+OVERLAY	non-reserved (cannot be function or type)	reserved	reserved	 
+OVERRIDING	 	non-reserved	non-reserved	 
+OWNED	non-reserved	 	 	 
+OWNER	non-reserved	 	 	 
+P	 	non-reserved	non-reserved	 
+PAD	 	non-reserved	non-reserved	reserved
+PARAMETER	 	reserved	reserved	 
+PARAMETER_MODE	 	non-reserved	non-reserved	 
+PARAMETER_NAME	 	non-reserved	non-reserved	 
+PARAMETER_ORDINAL_POSITION	 	non-reserved	non-reserved	 
+PARAMETER_SPECIFIC_CATALOG	 	non-reserved	non-reserved	 
+PARAMETER_SPECIFIC_NAME	 	non-reserved	non-reserved	 
+PARAMETER_SPECIFIC_SCHEMA	 	non-reserved	non-reserved	 
+PARSER	non-reserved	 	 	 
+PARTIAL	non-reserved	non-reserved	non-reserved	reserved
+PARTITION	non-reserved	reserved	reserved	 
+PASCAL	 	non-reserved	non-reserved	non-reserved
+PASSING	non-reserved	non-reserved	non-reserved	 
+PASSTHROUGH	 	non-reserved	non-reserved	 
+PASSWORD	non-reserved	 	 	 
+PATH	 	non-reserved	non-reserved	 
+PERCENT	 	reserved	 	 
+PERCENTILE_CONT	 	reserved	reserved	 
+PERCENTILE_DISC	 	reserved	reserved	 
+PERCENT_RANK	 	reserved	reserved	 
+PERIOD	 	reserved	 	 
+PERMISSION	 	non-reserved	non-reserved	 
+PLACING	reserved	non-reserved	non-reserved	 
+PLANS	non-reserved	 	 	 
+PLI	 	non-reserved	non-reserved	non-reserved
+PORTION	 	reserved	 	 
+POSITION	non-reserved (cannot be function or type)	reserved	reserved	reserved
+POSITION_REGEX	 	reserved	reserved	 
+POWER	 	reserved	reserved	 
+PRECEDES	 	reserved	 	 
+PRECEDING	non-reserved	non-reserved	non-reserved	 
+PRECISION	non-reserved (cannot be function or type)	reserved	reserved	reserved
+PREPARE	non-reserved	reserved	reserved	reserved
+PREPARED	non-reserved	 	 	 
+PRESERVE	non-reserved	non-reserved	non-reserved	reserved
+PRIMARY	reserved	reserved	reserved	reserved
+PRIOR	non-reserved	non-reserved	non-reserved	reserved
+PRIVILEGES	non-reserved	non-reserved	non-reserved	reserved
+PROCEDURAL	non-reserved	 	 	 
+PROCEDURE	non-reserved	reserved	reserved	reserved
+PROGRAM	non-reserved	 	 	 
+PUBLIC	 	non-reserved	non-reserved	reserved
+QUOTE	non-reserved	 	 	 
+RANGE	non-reserved	reserved	reserved	 
+RANK	 	reserved	reserved	 
+READ	non-reserved	non-reserved	non-reserved	reserved
+READS	 	reserved	reserved	 
+REAL	non-reserved (cannot be function or type)	reserved	reserved	reserved
+REASSIGN	non-reserved	 	 	 
+RECHECK	non-reserved	 	 	 
+RECOVERY	 	non-reserved	non-reserved	 
+RECURSIVE	non-reserved	reserved	reserved	 
+REF	non-reserved	reserved	reserved	 
+REFERENCES	reserved	reserved	reserved	reserved
+REFERENCING	 	reserved	reserved	 
+REFRESH	non-reserved	 	 	 
+REGR_AVGX	 	reserved	reserved	 
+REGR_AVGY	 	reserved	reserved	 
+REGR_COUNT	 	reserved	reserved	 
+REGR_INTERCEPT	 	reserved	reserved	 
+REGR_R2	 	reserved	reserved	 
+REGR_SLOPE	 	reserved	reserved	 
+REGR_SXX	 	reserved	reserved	 
+REGR_SXY	 	reserved	reserved	 
+REGR_SYY	 	reserved	reserved	 
+REINDEX	non-reserved	 	 	 
+RELATIVE	non-reserved	non-reserved	non-reserved	reserved
+RELEASE	non-reserved	reserved	reserved	 
+RENAME	non-reserved	 	 	 
+REPEATABLE	non-reserved	non-reserved	non-reserved	non-reserved
+REPLACE	non-reserved	 	 	 
+REPLICA	non-reserved	 	 	 
+REQUIRING	 	non-reserved	non-reserved	 
+RESET	non-reserved	 	 	 
+RESPECT	 	non-reserved	non-reserved	 
+RESTART	non-reserved	non-reserved	non-reserved	 
+RESTORE	 	non-reserved	non-reserved	 
+RESTRICT	non-reserved	non-reserved	non-reserved	reserved
+RESULT	 	reserved	reserved	 
+RETURN	 	reserved	reserved	 
+RETURNED_CARDINALITY	 	non-reserved	non-reserved	 
+RETURNED_LENGTH	 	non-reserved	non-reserved	non-reserved
+RETURNED_OCTET_LENGTH	 	non-reserved	non-reserved	non-reserved
+RETURNED_SQLSTATE	 	non-reserved	non-reserved	non-reserved
+RETURNING	reserved	non-reserved	non-reserved	 
+RETURNS	non-reserved	reserved	reserved	 
+REVOKE	non-reserved	reserved	reserved	reserved
+RIGHT	reserved (can be function or type)	reserved	reserved	reserved
+ROLE	non-reserved	non-reserved	non-reserved	 
+ROLLBACK	non-reserved	reserved	reserved	reserved
+ROLLUP	 	reserved	reserved	 
+ROUTINE	 	non-reserved	non-reserved	 
+ROUTINE_CATALOG	 	non-reserved	non-reserved	 
+ROUTINE_NAME	 	non-reserved	non-reserved	 
+ROUTINE_SCHEMA	 	non-reserved	non-reserved	 
+ROW	non-reserved (cannot be function or type)	reserved	reserved	 
+ROWS	non-reserved	reserved	reserved	reserved
+ROW_COUNT	 	non-reserved	non-reserved	non-reserved
+ROW_NUMBER	 	reserved	reserved	 
+RULE	non-reserved	 	 	 
+SAVEPOINT	non-reserved	reserved	reserved	 
+SCALE	 	non-reserved	non-reserved	non-reserved
+SCHEMA	non-reserved	non-reserved	non-reserved	reserved
+SCHEMA_NAME	 	non-reserved	non-reserved	non-reserved
+SCOPE	 	reserved	reserved	 
+SCOPE_CATALOG	 	non-reserved	non-reserved	 
+SCOPE_NAME	 	non-reserved	non-reserved	 
+SCOPE_SCHEMA	 	non-reserved	non-reserved	 
+SCROLL	non-reserved	reserved	reserved	reserved
+SEARCH	non-reserved	reserved	reserved	 
+SECOND	non-reserved	reserved	reserved	reserved
+SECTION	 	non-reserved	non-reserved	reserved
+SECURITY	non-reserved	non-reserved	non-reserved	 
+SELECT	reserved	reserved	reserved	reserved
+SELECTIVE	 	non-reserved	non-reserved	 
+SELF	 	non-reserved	non-reserved	 
+SENSITIVE	 	reserved	reserved	 
+SEQUENCE	non-reserved	non-reserved	non-reserved	 
+SEQUENCES	non-reserved	 	 	 
+SERIALIZABLE	non-reserved	non-reserved	non-reserved	non-reserved
+SERVER	non-reserved	non-reserved	non-reserved	 
+SERVER_NAME	 	non-reserved	non-reserved	non-reserved
+SESSION	non-reserved	non-reserved	non-reserved	reserved
+SESSION_USER	reserved	reserved	reserved	reserved
+SET	non-reserved	reserved	reserved	reserved
+SETOF	non-reserved (cannot be function or type)	 	 	 
+SETS	 	non-reserved	non-reserved	 
+SHARE	non-reserved	 	 	 
+SHOW	non-reserved	 	 	 
+SIMILAR	reserved (can be function or type)	reserved	reserved	 
+SIMPLE	non-reserved	non-reserved	non-reserved	 
+SIZE	 	non-reserved	non-reserved	reserved
+SMALLINT	non-reserved (cannot be function or type)	reserved	reserved	reserved
+SNAPSHOT	non-reserved	 	 	 
+SOME	reserved	reserved	reserved	reserved
+SOURCE	 	non-reserved	non-reserved	 
+SPACE	 	non-reserved	non-reserved	reserved
+SPECIFIC	 	reserved	reserved	 
+SPECIFICTYPE	 	reserved	reserved	 
+SPECIFIC_NAME	 	non-reserved	non-reserved	 
+SQL	 	reserved	reserved	reserved
+SQLCODE	 	 	 	reserved
+SQLERROR	 	 	 	reserved
+SQLEXCEPTION	 	reserved	reserved	 
+SQLSTATE	 	reserved	reserved	reserved
+SQLWARNING	 	reserved	reserved	 
+SQRT	 	reserved	reserved	 
+STABLE	non-reserved	 	 	 
+STANDALONE	non-reserved	non-reserved	non-reserved	 
+START	non-reserved	reserved	reserved	 
+STATE	 	non-reserved	non-reserved	 
+STATEMENT	non-reserved	non-reserved	non-reserved	 
+STATIC	 	reserved	reserved	 
+STATISTICS	non-reserved	 	 	 
+STDDEV_POP	 	reserved	reserved	 
+STDDEV_SAMP	 	reserved	reserved	 
+STDIN	non-reserved	 	 	 
+STDOUT	non-reserved	 	 	 
+STORAGE	non-reserved	 	 	 
+STRICT	non-reserved	 	 	 
+STRIP	non-reserved	non-reserved	non-reserved	 
+STRUCTURE	 	non-reserved	non-reserved	 
+STYLE	 	non-reserved	non-reserved	 
+SUBCLASS_ORIGIN	 	non-reserved	non-reserved	non-reserved
+SUBMULTISET	 	reserved	reserved	 
+SUBSTRING	non-reserved (cannot be function or type)	reserved	reserved	reserved
+SUBSTRING_REGEX	 	reserved	reserved	 
+SUCCEEDS	 	reserved	 	 
+SUM	 	reserved	reserved	reserved
+SYMMETRIC	reserved	reserved	reserved	 
+SYSID	non-reserved	 	 	 
+SYSTEM	non-reserved	reserved	reserved	 
+SYSTEM_TIME	 	reserved	 	 
+SYSTEM_USER	 	reserved	reserved	reserved
+T	 	non-reserved	non-reserved	 
+TABLE	reserved	reserved	reserved	reserved
+TABLES	non-reserved	 	 	 
+TABLESAMPLE	 	reserved	reserved	 
+TABLESPACE	non-reserved	 	 	 
+TABLE_NAME	 	non-reserved	non-reserved	non-reserved
+TEMP	non-reserved	 	 	 
+TEMPLATE	non-reserved	 	 	 
+TEMPORARY	non-reserved	non-reserved	non-reserved	reserved
+TEXT	non-reserved	 	 	 
+THEN	reserved	reserved	reserved	reserved
+TIES	 	non-reserved	non-reserved	 
+TIME	non-reserved (cannot be function or type)	reserved	reserved	reserved
+TIMESTAMP	non-reserved (cannot be function or type)	reserved	reserved	reserved
+TIMEZONE_HOUR	 	reserved	reserved	reserved
+TIMEZONE_MINUTE	 	reserved	reserved	reserved
+TO	reserved	reserved	reserved	reserved
+TOKEN	 	non-reserved	non-reserved	 
+TOP_LEVEL_COUNT	 	non-reserved	non-reserved	 
+TRAILING	reserved	reserved	reserved	reserved
+TRANSACTION	non-reserved	non-reserved	non-reserved	reserved
+TRANSACTIONS_COMMITTED	 	non-reserved	non-reserved	 
+TRANSACTIONS_ROLLED_BACK	 	non-reserved	non-reserved	 
+TRANSACTION_ACTIVE	 	non-reserved	non-reserved	 
+TRANSFORM	 	non-reserved	non-reserved	 
+TRANSFORMS	 	non-reserved	non-reserved	 
+TRANSLATE	 	reserved	reserved	reserved
+TRANSLATE_REGEX	 	reserved	reserved	 
+TRANSLATION	 	reserved	reserved	reserved
+TREAT	non-reserved (cannot be function or type)	reserved	reserved	 
+TRIGGER	non-reserved	reserved	reserved	 
+TRIGGER_CATALOG	 	non-reserved	non-reserved	 
+TRIGGER_NAME	 	non-reserved	non-reserved	 
+TRIGGER_SCHEMA	 	non-reserved	non-reserved	 
+TRIM	non-reserved (cannot be function or type)	reserved	reserved	reserved
+TRIM_ARRAY	 	reserved	reserved	 
+TRUE	reserved	reserved	reserved	reserved
+TRUNCATE	non-reserved	reserved	reserved	 
+TRUSTED	non-reserved	 	 	 
+TYPE	non-reserved	non-reserved	non-reserved	non-reserved
+TYPES	non-reserved	 	 	 
+UESCAPE	 	reserved	reserved	 
+UNBOUNDED	non-reserved	non-reserved	non-reserved	 
+UNCOMMITTED	non-reserved	non-reserved	non-reserved	non-reserved
+UNDER	 	non-reserved	non-reserved	 
+UNENCRYPTED	non-reserved	 	 	 
+UNION	reserved	reserved	reserved	reserved
+UNIQUE	reserved	reserved	reserved	reserved
+UNKNOWN	non-reserved	reserved	reserved	reserved
+UNLINK	 	non-reserved	non-reserved	 
+UNLISTEN	non-reserved	 	 	 
+UNLOGGED	non-reserved	 	 	 
+UNNAMED	 	non-reserved	non-reserved	non-reserved
+UNNEST	 	reserved	reserved	 
+UNTIL	non-reserved	 	 	 
+UNTYPED	 	non-reserved	non-reserved	 
+UPDATE	non-reserved	reserved	reserved	reserved
+UPPER	 	reserved	reserved	reserved
+URI	 	non-reserved	non-reserved	 
+USAGE	 	non-reserved	non-reserved	reserved
+USER	reserved	reserved	reserved	reserved
+USER_DEFINED_TYPE_CATALOG	 	non-reserved	non-reserved	 
+USER_DEFINED_TYPE_CODE	 	non-reserved	non-reserved	 
+USER_DEFINED_TYPE_NAME	 	non-reserved	non-reserved	 
+USER_DEFINED_TYPE_SCHEMA	 	non-reserved	non-reserved	 
+USING	reserved	reserved	reserved	reserved
+VACUUM	non-reserved	 	 	 
+VALID	non-reserved	non-reserved	non-reserved	 
+VALIDATE	non-reserved	 	 	 
+VALIDATOR	non-reserved	 	 	 
+VALUE	non-reserved	reserved	reserved	reserved
+VALUES	non-reserved (cannot be function or type)	reserved	reserved	reserved
+VALUE_OF	 	reserved	 	 
+VARBINARY	 	reserved	reserved	 
+VARCHAR	non-reserved (cannot be function or type)	reserved	reserved	reserved
+VARIADIC	reserved	 	 	 
+VARYING	non-reserved	reserved	reserved	reserved
+VAR_POP	 	reserved	reserved	 
+VAR_SAMP	 	reserved	reserved	 
+VERBOSE	reserved (can be function or type)	 	 	 
+VERSION	non-reserved	non-reserved	non-reserved	 
+VERSIONING	 	reserved	 	 
+VIEW	non-reserved	non-reserved	non-reserved	reserved
+VOLATILE	non-reserved	 	 	 
+WHEN	reserved	reserved	reserved	reserved
+WHENEVER	 	reserved	reserved	reserved
+WHERE	reserved	reserved	reserved	reserved
+WHITESPACE	non-reserved	non-reserved	non-reserved	 
+WIDTH_BUCKET	 	reserved	reserved	 
+WINDOW	reserved	reserved	reserved	 
+WITH	reserved	reserved	reserved	reserved
+WITHIN	 	reserved	reserved	 
+WITHOUT	non-reserved	reserved	reserved	 
+WORK	non-reserved	non-reserved	non-reserved	reserved
+WRAPPER	non-reserved	non-reserved	non-reserved	 
+WRITE	non-reserved	non-reserved	non-reserved	reserved
+XML	non-reserved	reserved	reserved	 
+XMLAGG	 	reserved	reserved	 
+XMLATTRIBUTES	non-reserved (cannot be function or type)	reserved	reserved	 
+XMLBINARY	 	reserved	reserved	 
+XMLCAST	 	reserved	reserved	 
+XMLCOMMENT	 	reserved	reserved	 
+XMLCONCAT	non-reserved (cannot be function or type)	reserved	reserved	 
+XMLDECLARATION	 	non-reserved	non-reserved	 
+XMLDOCUMENT	 	reserved	reserved	 
+XMLELEMENT	non-reserved (cannot be function or type)	reserved	reserved	 
+XMLEXISTS	non-reserved (cannot be function or type)	reserved	reserved	 
+XMLFOREST	non-reserved (cannot be function or type)	reserved	reserved	 
+XMLITERATE	 	reserved	reserved	 
+XMLNAMESPACES	 	reserved	reserved	 
+XMLPARSE	non-reserved (cannot be function or type)	reserved	reserved	 
+XMLPI	non-reserved (cannot be function or type)	reserved	reserved	 
+XMLQUERY	 	reserved	reserved	 
+XMLROOT	non-reserved (cannot be function or type)	 	 	 
+XMLSCHEMA	 	non-reserved	non-reserved	 
+XMLSERIALIZE	non-reserved (cannot be function or type)	reserved	reserved	 
+XMLTABLE	 	reserved	reserved	 
+XMLTEXT	 	reserved	reserved	 
+XMLVALIDATE	 	reserved	reserved	 
+YEAR	non-reserved	reserved	reserved	reserved
+YES	non-reserved	non-reserved	non-reserved	 
+ZONE	non-reserved	non-reserved	non-reserved	reserved

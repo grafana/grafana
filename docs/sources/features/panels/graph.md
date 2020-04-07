@@ -2,11 +2,11 @@
 title = "Graph Panel"
 keywords = ["grafana", "graph panel", "documentation", "guide", "graph"]
 type = "docs"
-aliases = ["/reference/graph/"]
+aliases = ["/docs/grafana/latest/reference/graph/"]
 [menu.docs]
 name = "Graph"
 parent = "panels"
-weight = 1
+weight = 4
 +++
 
 # Graph Panel
@@ -17,8 +17,8 @@ The main panel in Grafana is simply named Graph. It provides a very rich set of 
 
 1. Clicking the title for a panel exposes a menu.  The `edit` option opens additional configuration
 options for the panel.
-2. Click to open color & axis selection.
-3. Click to only show this series. Shift/Ctrl + click to hide series.
+2. Click to open color and axis selection.
+3. Click to only show this series. Shift/Ctrl+Click to hide series.
 
 ## General
 
@@ -33,26 +33,12 @@ The general tab allows customization of a panel's appearance and menu options.
 - **Transparent** - If checked, removes the solid background of the panel (default not checked).
 
 ### Repeat
-Repeat a panel for each value of a variable.  Repeating panels are described in more detail [here]({{< relref "reference/templating.md#repeating-panels" >}}).
+Repeat a panel for each value of a variable.  Repeating panels are described in more detail [here]({{< relref "../../reference/templating.md#repeating-panels" >}}).
 
-### Drilldown / detail link
-
-The drilldown section allows adding dynamic links to the panel that can link to other dashboards
-or URLs.
-
-Each link has a title, a type and params.  A link can be either a ``dashboard`` or ``absolute`` links.
-If it is a dashboard link, the `dashboard` value must be the name of a dashboard.  If it is an
-`absolute` link, the URL is the URL to the link.
-
-``params`` allows adding additional URL params to the links.  The format is the ``name=value`` with
-multiple params separated by ``&``.  Template variables can be added as values using ``$myvar``.
-
-When linking to another dashboard that uses template variables, you can use ``var-myvar=value`` to
-populate the template variable to a desired value from the link.
 
 ## Metrics
 
-The metrics tab defines what series data and sources to render.  Each datasource provides different
+The metrics tab defines what series data and sources to render.  Each data source provides different
 options.
 
 ## Axes
@@ -111,11 +97,11 @@ For **Mode** there are three options:
 
 Additional values can be shown along-side the legend names:
 
-- **Min** - Minimum of all values returned from metric query
+- **Min** - Minimum of all values returned from the metric query
 - **Max** - Maximum of all values returned from the metric query
-- **Avg** - Average of all values returned from metric query
+- **Avg** - Average of all values returned from the metric query
 - **Current** - Last value returned from the metric query
-- **Total** - Sum of all values returned from metric query
+- **Total** - Sum of all values returned from the metric query
 - **Decimals** - Controls how many decimals are displayed for legend values (and graph hover tooltips)
 
 The legend values are calculated client side by Grafana and depend on what type of
@@ -151,6 +137,7 @@ Display styles control visual properties of the graph.
 - **Line Width** - The width of the line for a series (default 1).
 - **Staircase** - Draws adjacent points as staircase
 - **Points Radius** - Adjust the size of points when *Points* are selected as *Draw Mode*.
+- **Hidden Series** - Hide series by default in graph.
 
 #### Hover tooltip
 
@@ -160,7 +147,7 @@ Display styles control visual properties of the graph.
    - Individual: the value for the series you hover over
    - Cumulative - sum of series below plus the series you hover over
 
-#### Stacking & Null value
+#### Stacking and Null value
 
 If there are multiple series, they can be displayed as a group.
 
@@ -186,10 +173,25 @@ There is an option under Series overrides to draw lines as dashes. Set Dashes to
 Thresholds allow you to add arbitrary lines or sections to the graph to make it easier to see when
 the graph crosses a particular threshold.
 
+### Time Regions
+
+> Only available in Grafana v5.4 and above.
+
+{{< docs-imagebox img="/img/docs/v54/graph_time_regions.png" max-width= "800px" >}}
+
+Time regions allow you to highlight certain time regions of the graph to make it easier to see for example weekends, business hours and/or off work hours.
+
 ## Time Range
 
 {{< docs-imagebox img="/img/docs/v51/graph-time-range.png"  max-width= "900px" >}}
 
 The time range tab allows you to override the dashboard time range and specify a panel specific time.
 Either through a relative from now time option or through a timeshift.
-Panel time overrides & timeshift are described in more detail [here]({{< relref "reference/timerange.md#panel-time-overrides-timeshift" >}}).
+Panel time overrides and timeshift are described in more detail [here]({{< relref "../../reference/timerange.md#panel-time-overrides-timeshift" >}}).
+
+### Data links
+
+{{< docs-imagebox img="/img/docs/v66/datalinks_graph.png" max-width="1025px" caption="Data links" >}}
+
+Data links allow you add dynamic URL links to your visualizations, [read more on data links]({{< relref "../../reference/datalinks.md" >}}).
+

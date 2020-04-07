@@ -4,7 +4,7 @@ import (
 	"encoding/binary"
 )
 
-type ProcId struct {
+type procId struct {
 	id   uint16
 	name string
 }
@@ -15,22 +15,11 @@ const (
 	fDefaultValue = 2
 )
 
-type Param struct {
+type param struct {
 	Name   string
 	Flags  uint8
 	ti     typeInfo
 	buffer []byte
-}
-
-func MakeProcId(name string) (res ProcId) {
-	res.name = name
-	if len(name) == 0 {
-		panic("Proc name shouln't be empty")
-	}
-	if len(name) >= 0xffff {
-		panic("Invalid length of procedure name, should be less than 0xffff")
-	}
-	return res
 }
 
 const (
@@ -40,24 +29,24 @@ const (
 )
 
 var (
-	Sp_Cursor          = ProcId{1, ""}
-	Sp_CursorOpen      = ProcId{2, ""}
-	Sp_CursorPrepare   = ProcId{3, ""}
-	Sp_CursorExecute   = ProcId{4, ""}
-	Sp_CursorPrepExec  = ProcId{5, ""}
-	Sp_CursorUnprepare = ProcId{6, ""}
-	Sp_CursorFetch     = ProcId{7, ""}
-	Sp_CursorOption    = ProcId{8, ""}
-	Sp_CursorClose     = ProcId{9, ""}
-	Sp_ExecuteSql      = ProcId{10, ""}
-	Sp_Prepare         = ProcId{11, ""}
-	Sp_PrepExec        = ProcId{13, ""}
-	Sp_PrepExecRpc     = ProcId{14, ""}
-	Sp_Unprepare       = ProcId{15, ""}
+	sp_Cursor          = procId{1, ""}
+	sp_CursorOpen      = procId{2, ""}
+	sp_CursorPrepare   = procId{3, ""}
+	sp_CursorExecute   = procId{4, ""}
+	sp_CursorPrepExec  = procId{5, ""}
+	sp_CursorUnprepare = procId{6, ""}
+	sp_CursorFetch     = procId{7, ""}
+	sp_CursorOption    = procId{8, ""}
+	sp_CursorClose     = procId{9, ""}
+	sp_ExecuteSql      = procId{10, ""}
+	sp_Prepare         = procId{11, ""}
+	sp_PrepExec        = procId{13, ""}
+	sp_PrepExecRpc     = procId{14, ""}
+	sp_Unprepare       = procId{15, ""}
 )
 
 // http://msdn.microsoft.com/en-us/library/dd357576.aspx
-func sendRpc(buf *tdsBuffer, headers []headerStruct, proc ProcId, flags uint16, params []Param, resetSession bool) (err error) {
+func sendRpc(buf *tdsBuffer, headers []headerStruct, proc procId, flags uint16, params []param, resetSession bool) (err error) {
 	buf.BeginPacket(packRPCRequest, resetSession)
 	writeAllHeaders(buf, headers)
 	if len(proc.name) == 0 {

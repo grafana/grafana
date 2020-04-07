@@ -1,0 +1,44 @@
+import { Meta, Story, Preview, Props } from '@storybook/addon-docs/blocks';
+import { RadioButtonGroup } from './RadioButtonGroup';
+
+<Meta title="MDX|RadioButtonGroup" component={RadioButtonGroup} />
+
+# RadioButtonGroup
+
+`RadioButtonGroup` is used for selecting single value from multiple options.
+
+Use `RadioButtonGroup` if there are up to four options available. Otherwise use Select component.
+
+### Usage
+
+```jsx
+import { Forms } from '@grafana/ui';
+
+<Forms.RadioButtonGroup options={...} value={...} onChange={...} />
+```
+
+#### Disabling options
+
+To disable some options pass those options to the `RadioButtonGroup` via `disabledOptions` property:
+
+```jsx
+
+const options = [
+  { label: 'Prometheus', value: 'prometheus' },
+  { label: 'Graphite', value: 'graphite' },
+  { label: 'Elastic', value: 'elastic' },
+  { label: 'InfluxDB', value: 'influx' },
+];
+
+const disabledOptions = ['prometheus', 'elastic'];
+
+
+<Forms.RadioButtonGroup
+  options={options}
+  disabledOptions={disabledOptions}
+  value={...}
+  onChange={...}
+/>
+```
+
+<Props of={RadioButtonGroup} />

@@ -1,29 +1,55 @@
-import kbn from 'app/core/utils/kbn';
-import { Variable, containsVariable, assignModelProperties, variableTypes } from './variable';
+import {
+  assignModelProperties,
+  DataSourceVariableModel,
+  VariableActions,
+  VariableHide,
+  VariableOption,
+  VariableRefresh,
+  variableTypes,
+} from './types';
+import { VariableType, stringToJsRegex } from '@grafana/data';
+import { VariableSrv } from './variable_srv';
+import { TemplateSrv } from './template_srv';
+import { DatasourceSrv } from '../plugins/datasource_srv';
+import { config } from '@grafana/runtime';
+import { containsVariable } from './utils';
 
-export class DatasourceVariable implements Variable {
+export class DatasourceVariable implements DataSourceVariableModel, VariableActions {
+  type: VariableType;
+  name: string;
+  label: string;
+  hide: VariableHide;
   regex: any;
   query: string;
-  options: any;
-  current: any;
-  refresh: any;
+  options: VariableOption[];
+  current: VariableOption;
+  multi: boolean;
+  includeAll: boolean;
+  refresh: VariableRefresh;
   skipUrlSync: boolean;
 
-  defaults = {
+  defaults: DataSourceVariableModel = {
     type: 'datasource',
     name: '',
     hide: 0,
     label: '',
-    current: {},
+    current: {} as VariableOption,
     regex: '',
     options: [],
     query: '',
+    multi: false,
+    includeAll: false,
     refresh: 1,
     skipUrlSync: false,
   };
 
   /** @ngInject */
-  constructor(private model, private datasourceSrv, private variableSrv, private templateSrv) {
+  constructor(
+    private model: any,
+    private datasourceSrv: DatasourceSrv,
+    private variableSrv: VariableSrv,
+    private templateSrv: TemplateSrv
+  ) {
     assignModelProperties(this, model, this.defaults);
     this.refresh = 1;
   }
@@ -36,18 +62,18 @@ export class DatasourceVariable implements Variable {
     return this.model;
   }
 
-  setValue(option) {
+  setValue(option: any) {
     return this.variableSrv.setOptionAsCurrent(this, option);
   }
 
   updateOptions() {
-    const options = [];
+    const options: VariableOption[] = [];
     const sources = this.datasourceSrv.getMetricSources({ skipVariables: true });
     let regex;
 
     if (this.regex) {
-      regex = this.templateSrv.replace(this.regex, null, 'regex');
-      regex = kbn.stringToJsRegex(regex);
+      regex = this.templateSrv.replace(this.regex, undefined, 'regex');
+      regex = stringToJsRegex(regex);
     }
 
     for (let i = 0; i < sources.length; i++) {
@@ -61,29 +87,40 @@ export class DatasourceVariable implements Variable {
         continue;
       }
 
-      options.push({ text: source.name, value: source.name });
+      options.push({ text: source.name, value: source.name, selected: false });
     }
 
     if (options.length === 0) {
-      options.push({ text: 'No data sources found', value: '' });
+      options.push({ text: 'No data sources found', value: '', selected: false });
     }
 
     this.options = options;
-    return this.variableSrv.validateVariableSelectionState(this);
+    if (this.includeAll) {
+      this.addAllOption();
+    }
+    const { defaultDatasource } = config.bootData.settings;
+    return this.variableSrv.validateVariableSelectionState(this, defaultDatasource);
   }
 
-  dependsOn(variable) {
+  addAllOption() {
+    this.options.unshift({ text: 'All', value: '$__all', selected: false });
+  }
+
+  dependsOn(variable: any) {
     if (this.regex) {
       return containsVariable(this.regex, variable.name);
     }
     return false;
   }
 
-  setValueFromUrl(urlValue) {
+  setValueFromUrl(urlValue: string | string[]) {
     return this.variableSrv.setOptionFromUrl(this, urlValue);
   }
 
   getValueForUrl() {
+    if (this.current.text === 'All') {
+      return 'All';
+    }
     return this.current.value;
   }
 }
@@ -91,5 +128,6 @@ export class DatasourceVariable implements Variable {
 variableTypes['datasource'] = {
   name: 'Datasource',
   ctor: DatasourceVariable,
+  supportsMulti: true,
   description: 'Enabled you to dynamically switch the datasource for multiple panels',
 };

@@ -3,9 +3,9 @@ package migrations
 import (
 	"testing"
 
-	"github.com/go-xorm/xorm"
 	. "github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/services/sqlstore/sqlutil"
+	"xorm.io/xorm"
 
 	. "github.com/smartystreets/goconvey/convey"
 )
@@ -25,7 +25,8 @@ func TestMigrations(t *testing.T) {
 			x, err := xorm.NewEngine(testDB.DriverName, testDB.ConnStr)
 			So(err, ShouldBeNil)
 
-			NewDialect(x).CleanDB()
+			err = NewDialect(x).CleanDB()
+			So(err, ShouldBeNil)
 
 			_, err = x.SQL(sql).Get(&r)
 			So(err, ShouldNotBeNil)

@@ -1,22 +1,32 @@
-import kbn from 'app/core/utils/kbn';
 import { getFlotTickDecimals } from 'app/core/utils/ticks';
 import _ from 'lodash';
+import { getValueFormat, ValueFormatter, stringToJsRegex, DecimalCount, formattedValueToString } from '@grafana/data';
 
-function matchSeriesOverride(aliasOrRegex, seriesAlias) {
+function matchSeriesOverride(aliasOrRegex: string, seriesAlias: string) {
   if (!aliasOrRegex) {
     return false;
   }
 
   if (aliasOrRegex[0] === '/') {
-    const regex = kbn.stringToJsRegex(aliasOrRegex);
+    const regex = stringToJsRegex(aliasOrRegex);
     return seriesAlias.match(regex) != null;
   }
 
   return aliasOrRegex === seriesAlias;
 }
 
-function translateFillOption(fill) {
+function translateFillOption(fill: number) {
   return fill === 0 ? 0.001 : fill / 10;
+}
+
+function getFillGradient(amount: number) {
+  if (!amount) {
+    return null;
+  }
+
+  return {
+    colors: [{ opacity: 0.0 }, { opacity: amount / 10 }],
+  };
 }
 
 /**
@@ -25,19 +35,19 @@ function translateFillOption(fill) {
  * @param panel
  * @param height
  */
-export function updateLegendValues(data: TimeSeries[], panel, height) {
+export function updateLegendValues(data: TimeSeries[], panel: any, height: number) {
   for (let i = 0; i < data.length; i++) {
     const series = data[i];
     const yaxes = panel.yaxes;
     const seriesYAxis = series.yaxis || 1;
     const axis = yaxes[seriesYAxis - 1];
-    const formater = kbn.valueFormats[axis.format];
+    const formatter = getValueFormat(axis.format);
 
     // decimal override
     if (_.isNumber(panel.decimals)) {
-      series.updateLegendValues(formater, panel.decimals, null);
+      series.updateLegendValues(formatter, panel.decimals, null);
     } else if (_.isNumber(axis.decimals)) {
-      series.updateLegendValues(formater, axis.decimals + 1, null);
+      series.updateLegendValues(formatter, axis.decimals + 1, null);
     } else {
       // auto decimals
       // legend and tooltip gets one more decimal precision
@@ -45,7 +55,7 @@ export function updateLegendValues(data: TimeSeries[], panel, height) {
       const { datamin, datamax } = getDataMinMax(data);
       const { tickDecimals, scaledDecimals } = getFlotTickDecimals(datamin, datamax, axis, height);
       const tickDecimalsPlusOne = (tickDecimals || -1) + 1;
-      series.updateLegendValues(formater, tickDecimalsPlusOne, scaledDecimals + 2);
+      series.updateLegendValues(formatter, tickDecimalsPlusOne, scaledDecimals + 2);
     }
   }
 }
@@ -66,9 +76,18 @@ export function getDataMinMax(data: TimeSeries[]) {
   return { datamin, datamax };
 }
 
+/**
+ * @deprecated: This class should not be used in new panels
+ *
+ * Use DataFrame and helpers instead
+ */
 export default class TimeSeries {
   datapoints: any;
   id: string;
+  // Represents index of original data frame in the quey response
+  dataFrameIndex: number;
+  // Represents index of field in the data frame
+  fieldIndex: number;
   label: string;
   alias: string;
   aliasEscaped: string;
@@ -85,6 +104,7 @@ export default class TimeSeries {
   isOutsideRange: boolean;
 
   lines: any;
+  hiddenSeries: boolean;
   dashes: any;
   bars: any;
   points: any;
@@ -97,7 +117,7 @@ export default class TimeSeries {
   flotpairs: any;
   unit: any;
 
-  constructor(opts) {
+  constructor(opts: any) {
     this.datapoints = opts.datapoints;
     this.label = opts.alias;
     this.id = opts.alias;
@@ -105,14 +125,16 @@ export default class TimeSeries {
     this.aliasEscaped = _.escape(opts.alias);
     this.color = opts.color;
     this.bars = { fillColor: opts.color };
-    this.valueFormater = kbn.valueFormats.none;
+    this.valueFormater = getValueFormat('none');
     this.stats = {};
     this.legend = true;
     this.unit = opts.unit;
+    this.dataFrameIndex = opts.dataFrameIndex;
+    this.fieldIndex = opts.fieldIndex;
     this.hasMsResolution = this.isMsResolutionNeeded();
   }
 
-  applySeriesOverrides(overrides) {
+  applySeriesOverrides(overrides: any[]) {
     this.lines = {};
     this.dashes = {
       dashLength: [],
@@ -144,6 +166,9 @@ export default class TimeSeries {
       }
       if (override.fill !== void 0) {
         this.lines.fill = translateFillOption(override.fill);
+      }
+      if (override.fillGradient !== void 0) {
+        this.lines.fillColor = getFillGradient(override.fillGradient);
       }
       if (override.stack !== void 0) {
         this.stack = override.stack;
@@ -189,10 +214,13 @@ export default class TimeSeries {
       if (override.yaxis !== void 0) {
         this.yaxis = override.yaxis;
       }
+      if (override.hiddenSeries !== void 0) {
+        this.hiddenSeries = override.hiddenSeries;
+      }
     }
   }
 
-  getFlotPairs(fillStyle) {
+  getFlotPairs(fillStyle: string) {
     const result = [];
 
     this.stats.total = 0;
@@ -314,22 +342,22 @@ export default class TimeSeries {
     return result;
   }
 
-  updateLegendValues(formater, decimals, scaledDecimals) {
+  updateLegendValues(formater: ValueFormatter, decimals: DecimalCount, scaledDecimals: DecimalCount) {
     this.valueFormater = formater;
-    this.decimals = decimals;
-    this.scaledDecimals = scaledDecimals;
+    this.decimals = decimals ?? 0;
+    this.scaledDecimals = scaledDecimals ?? 0;
   }
 
-  formatValue(value) {
+  formatValue(value: number) {
     if (!_.isFinite(value)) {
       value = null; // Prevent NaN formatting
     }
-    return this.valueFormater(value, this.decimals, this.scaledDecimals);
+    return formattedValueToString(this.valueFormater(value, this.decimals, this.scaledDecimals));
   }
 
   isMsResolutionNeeded() {
     for (let i = 0; i < this.datapoints.length; i++) {
-      if (this.datapoints[i][1] !== null) {
+      if (this.datapoints[i][1] !== null && this.datapoints[i][1] !== undefined) {
         const timestamp = this.datapoints[i][1].toString();
         if (timestamp.length === 13 && timestamp % 1000 !== 0) {
           return true;
@@ -339,7 +367,7 @@ export default class TimeSeries {
     return false;
   }
 
-  hideFromLegend(options) {
+  hideFromLegend(options: any) {
     if (options.hideEmpty && this.allIsNull) {
       return true;
     }
@@ -356,7 +384,7 @@ export default class TimeSeries {
     return false;
   }
 
-  setColor(color) {
+  setColor(color: string) {
     this.color = color;
     this.bars.fillColor = color;
   }

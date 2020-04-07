@@ -1,0 +1,23 @@
+# Lines starting with '#' are comments.
+# Each line is a file pattern followed by one or more owners.
+
+# More details are here: https://help.github.com/articles/about-codeowners/
+
+# The '*' pattern is global owners.
+
+# Order is important. The last matching pattern has the most precedence.
+# The folders are ordered as follows:
+
+# In each subsection folders are ordered first by depth, then alphabetically.
+# This should make it easy to add new rules without breaking existing ones.
+
+# Documentation owner: Diana Payton
+/docs/ @oddlittlebird
+/contribute/ @oddlittlebird  @marcusolsson
+# @grafana/ui component documentation
+*.mdx @marcusolsson @jessover9000
+
+# Backend code
+*.go @grafana/backend-platform
+go.mod @grafana/backend-platform
+go.sum @grafana/backend-platform

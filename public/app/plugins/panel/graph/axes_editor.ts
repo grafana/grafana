@@ -1,21 +1,20 @@
-import kbn from 'app/core/utils/kbn';
+import { e2e } from '@grafana/e2e';
+import { GraphCtrl } from './module';
 
 export class AxesEditorCtrl {
   panel: any;
-  panelCtrl: any;
-  unitFormats: any;
+  panelCtrl: GraphCtrl;
   logScales: any;
   xAxisModes: any;
   xAxisStatOptions: any;
   xNameSegment: any;
+  selectors: typeof e2e.pages.Dashboard.Panels.Visualization.Graph.VisualizationTab.selectors;
 
   /** @ngInject */
-  constructor(private $scope, private $q) {
-    this.panelCtrl = $scope.ctrl;
+  constructor(private $scope: any) {
+    this.panelCtrl = $scope.ctrl as GraphCtrl;
     this.panel = this.panelCtrl.panel;
     this.$scope.ctrl = this;
-
-    this.unitFormats = kbn.getUnitFormats();
 
     this.logScales = {
       linear: 1,
@@ -46,11 +45,14 @@ export class AxesEditorCtrl {
         this.panel.xaxis.name = 'specify field';
       }
     }
+    this.selectors = e2e.pages.Dashboard.Panels.Visualization.Graph.VisualizationTab.selectors;
   }
 
-  setUnitFormat(axis, subItem) {
-    axis.format = subItem.value;
-    this.panelCtrl.render();
+  setUnitFormat(axis: { format: any }) {
+    return (unit: string) => {
+      axis.format = unit;
+      this.panelCtrl.render();
+    };
   }
 
   render() {
@@ -59,20 +61,11 @@ export class AxesEditorCtrl {
 
   xAxisModeChanged() {
     this.panelCtrl.processor.setPanelDefaultsForNewXAxisMode();
-    this.panelCtrl.onDataReceived(this.panelCtrl.dataList);
+    this.panelCtrl.onDataFramesReceived(this.panelCtrl.dataList);
   }
 
   xAxisValueChanged() {
-    this.panelCtrl.onDataReceived(this.panelCtrl.dataList);
-  }
-
-  getDataFieldNames(onlyNumbers) {
-    const props = this.panelCtrl.processor.getDataFieldNames(this.panelCtrl.dataList, onlyNumbers);
-    const items = props.map(prop => {
-      return { text: prop, value: prop };
-    });
-
-    return this.$q.when(items);
+    this.panelCtrl.onDataFramesReceived(this.panelCtrl.dataList);
   }
 }
 

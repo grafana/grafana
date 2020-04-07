@@ -1,0 +1,17 @@
+{
+  "timeSeries": [{
+    "metric": {
+      "type": "select_slo_compliance(\"projects/test-proj/services/test-service/serviceLevelObjectives/test-slo\")"
+    },
+    "resource": {
+      "type": "gce_instance",
+      "labels": {
+        "instance_id": "114250375703598695",
+        "project_id": "test-proj"
+      }
+    },
+    "metricKind": "DELTA",
+    "valueType": "INT64"
+  }
+  ]
+}

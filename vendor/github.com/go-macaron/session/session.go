@@ -18,6 +18,7 @@ package session
 
 import (
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -26,7 +27,7 @@ import (
 	"gopkg.in/macaron.v1"
 )
 
-const _VERSION = "0.3.0"
+const _VERSION = "0.6.0"
 
 func Version() string {
 	return _VERSION
@@ -94,6 +95,8 @@ type Options struct {
 	IDLength int
 	// Configuration section name. Default is "session".
 	Section string
+	// Ignore release for websocket. Default is false.
+	IgnoreReleaseForWebSocket bool
 }
 
 func prepareOptions(options []Options) Options {
@@ -135,6 +138,9 @@ func prepareOptions(options []Options) Options {
 	}
 	if opt.IDLength == 0 {
 		opt.IDLength = sec.Key("ID_LENGTH").MustInt(16)
+	}
+	if !opt.IgnoreReleaseForWebSocket {
+		opt.IgnoreReleaseForWebSocket = sec.Key("IGNORE_RELEASE_FOR_WEBSOCKET").MustBool()
 	}
 
 	return opt
@@ -184,6 +190,10 @@ func Sessioner(options ...Options) macaron.Handler {
 		ctx.MapTo(s, (*Store)(nil))
 
 		ctx.Next()
+
+		if manager.opt.IgnoreReleaseForWebSocket && ctx.Req.Header.Get("Upgrade") == "websocket" {
+			return
+		}
 
 		if err = sess.Release(); err != nil {
 			panic("session(release): " + err.Error())
@@ -245,20 +255,38 @@ func NewManager(name string, opt Options) (*Manager, error) {
 	return &Manager{p, opt}, p.Init(opt.Maxlifetime, opt.ProviderConfig)
 }
 
-// sessionId generates a new session ID with rand string, unix nano time, remote addr by hash function.
-func (m *Manager) sessionId() string {
+// sessionID generates a new session ID with rand string, unix nano time, remote addr by hash function.
+func (m *Manager) sessionID() string {
 	return hex.EncodeToString(generateRandomKey(m.opt.IDLength / 2))
+}
+
+// validSessionID tests whether a provided session ID is a valid session ID.
+func (m *Manager) validSessionID(sid string) (bool, error) {
+	if len(sid) != m.opt.IDLength {
+		return false, errors.New("invalid 'sid': " + sid)
+	}
+
+	for i := range sid {
+		switch {
+		case '0' <= sid[i] && sid[i] <= '9':
+		case 'a' <= sid[i] && sid[i] <= 'f':
+		default:
+			return false, errors.New("invalid 'sid': " + sid)
+		}
+	}
+	return true, nil
 }
 
 // Start starts a session by generating new one
 // or retrieve existence one by reading session ID from HTTP request if it's valid.
 func (m *Manager) Start(ctx *macaron.Context) (RawStore, error) {
 	sid := ctx.GetCookie(m.opt.CookieName)
-	if len(sid) > 0 && m.provider.Exist(sid) {
+	valid, _ := m.validSessionID(sid)
+	if len(sid) > 0 && valid && m.provider.Exist(sid) {
 		return m.provider.Read(sid)
 	}
 
-	sid = m.sessionId()
+	sid = m.sessionID()
 	sess, err := m.provider.Read(sid)
 	if err != nil {
 		return nil, err
@@ -282,6 +310,11 @@ func (m *Manager) Start(ctx *macaron.Context) (RawStore, error) {
 
 // Read returns raw session store by session ID.
 func (m *Manager) Read(sid string) (RawStore, error) {
+	// Ensure we're trying to read a valid session ID
+	if _, err := m.validSessionID(sid); err != nil {
+		return nil, err
+	}
+
 	return m.provider.Read(sid)
 }
 
@@ -290,6 +323,10 @@ func (m *Manager) Destory(ctx *macaron.Context) error {
 	sid := ctx.GetCookie(m.opt.CookieName)
 	if len(sid) == 0 {
 		return nil
+	}
+
+	if _, err := m.validSessionID(sid); err != nil {
+		return err
 	}
 
 	if err := m.provider.Destory(sid); err != nil {
@@ -308,13 +345,17 @@ func (m *Manager) Destory(ctx *macaron.Context) error {
 
 // RegenerateId regenerates a session store from old session ID to new one.
 func (m *Manager) RegenerateId(ctx *macaron.Context) (sess RawStore, err error) {
-	sid := m.sessionId()
+	sid := m.sessionID()
 	oldsid := ctx.GetCookie(m.opt.CookieName)
+	_, err = m.validSessionID(oldsid)
+	if err != nil {
+		return nil, err
+	}
 	sess, err = m.provider.Regenerate(oldsid, sid)
 	if err != nil {
 		return nil, err
 	}
-	ck := &http.Cookie{
+	cookie := &http.Cookie{
 		Name:     m.opt.CookieName,
 		Value:    sid,
 		Path:     m.opt.CookiePath,
@@ -323,10 +364,10 @@ func (m *Manager) RegenerateId(ctx *macaron.Context) (sess RawStore, err error) 
 		Domain:   m.opt.Domain,
 	}
 	if m.opt.CookieLifeTime >= 0 {
-		ck.MaxAge = m.opt.CookieLifeTime
+		cookie.MaxAge = m.opt.CookieLifeTime
 	}
-	http.SetCookie(ctx.Resp, ck)
-	ctx.Req.AddCookie(ck)
+	http.SetCookie(ctx.Resp, cookie)
+	ctx.Req.AddCookie(cookie)
 	return sess, nil
 }
 
@@ -349,51 +390,4 @@ func (m *Manager) startGC() {
 // SetSecure indicates whether to set cookie with HTTPS or not.
 func (m *Manager) SetSecure(secure bool) {
 	m.opt.Secure = secure
-}
-
-// ___________.____       _____    _________ ___ ___
-// \_   _____/|    |     /  _  \  /   _____//   |   \
-//  |    __)  |    |    /  /_\  \ \_____  \/    ~    \
-//  |     \   |    |___/    |    \/        \    Y    /
-//  \___  /   |_______ \____|__  /_______  /\___|_  /
-//      \/            \/       \/        \/       \/
-
-type Flash struct {
-	ctx *macaron.Context
-	url.Values
-	ErrorMsg, WarningMsg, InfoMsg, SuccessMsg string
-}
-
-func (f *Flash) set(name, msg string, current ...bool) {
-	isShow := false
-	if (len(current) == 0 && macaron.FlashNow) ||
-		(len(current) > 0 && current[0]) {
-		isShow = true
-	}
-
-	if isShow {
-		f.ctx.Data["Flash"] = f
-	} else {
-		f.Set(name, msg)
-	}
-}
-
-func (f *Flash) Error(msg string, current ...bool) {
-	f.ErrorMsg = msg
-	f.set("error", msg, current...)
-}
-
-func (f *Flash) Warning(msg string, current ...bool) {
-	f.WarningMsg = msg
-	f.set("warning", msg, current...)
-}
-
-func (f *Flash) Info(msg string, current ...bool) {
-	f.InfoMsg = msg
-	f.set("info", msg, current...)
-}
-
-func (f *Flash) Success(msg string, current ...bool) {
-	f.SuccessMsg = msg
-	f.set("success", msg, current...)
 }

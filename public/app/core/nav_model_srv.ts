@@ -1,29 +1,7 @@
 import coreModule from 'app/core/core_module';
 import config from 'app/core/config';
 import _ from 'lodash';
-
-export interface NavModelItem {
-  text: string;
-  url: string;
-  icon?: string;
-  img?: string;
-  id: string;
-  active?: boolean;
-  hideFromTabs?: boolean;
-  divider?: boolean;
-  children: NavModelItem[];
-  target?: string;
-}
-
-export class NavModel {
-  breadcrumbs: NavModelItem[];
-  main: NavModelItem;
-  node: NavModelItem;
-
-  constructor() {
-    this.breadcrumbs = [];
-  }
-}
+import { NavModel } from '@grafana/data';
 
 export class NavModelSrv {
   navItems: any;
@@ -37,9 +15,11 @@ export class NavModelSrv {
     return _.find(this.navItems, { id: 'cfg' });
   }
 
-  getNav(...args) {
+  getNav(...args: Array<string | number>) {
     let children = this.navItems;
-    const nav = new NavModel();
+    const nav = {
+      breadcrumbs: [],
+    } as NavModel;
 
     for (const id of args) {
       // if its a number then it's the index to use for main
@@ -48,7 +28,7 @@ export class NavModelSrv {
         break;
       }
 
-      const node = _.find(children, { id: id });
+      const node: any = _.find(children, { id: id });
       nav.breadcrumbs.push(node);
       nav.node = node;
       nav.main = node;
@@ -69,18 +49,25 @@ export class NavModelSrv {
   }
 
   getNotFoundNav() {
-    const node = {
-      text: 'Page not found',
-      icon: 'fa fa-fw fa-warning',
-      subTitle: '404 Error',
-    };
-
-    return {
-      breadcrumbs: [node],
-      node: node,
-      main: node,
-    };
+    return getNotFoundNav(); // the exported function
   }
+}
+
+export function getNotFoundNav(): NavModel {
+  return getWarningNav('Page not found', '404 Error');
+}
+
+export function getWarningNav(text: string, subTitle?: string): NavModel {
+  const node = {
+    text,
+    subTitle,
+    icon: 'fa fa-fw fa-warning',
+  };
+  return {
+    breadcrumbs: [node],
+    node: node,
+    main: node,
+  };
 }
 
 coreModule.service('navModelSrv', NavModelSrv);

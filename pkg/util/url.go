@@ -5,22 +5,26 @@ import (
 	"strings"
 )
 
-type UrlQueryReader struct {
+// URLQueryReader is a ApiURL query type.
+type URLQueryReader struct {
 	values url.Values
 }
 
-func NewUrlQueryReader(urlInfo *url.URL) (*UrlQueryReader, error) {
+// NewURLQueryReader parses a raw query and returns it as a URLQueryReader type.
+func NewURLQueryReader(urlInfo *url.URL) (*URLQueryReader, error) {
 	u, err := url.ParseQuery(urlInfo.RawQuery)
 	if err != nil {
 		return nil, err
 	}
 
-	return &UrlQueryReader{
+	return &URLQueryReader{
 		values: u,
 	}, nil
 }
 
-func (r *UrlQueryReader) Get(name string, def string) string {
+// Get parse parameters from an ApiURL. If the parameter does not exist, it returns
+// the default value.
+func (r *URLQueryReader) Get(name string, def string) string {
 	val := r.values[name]
 	if len(val) == 0 {
 		return def
@@ -29,7 +33,8 @@ func (r *UrlQueryReader) Get(name string, def string) string {
 	return val[0]
 }
 
-func JoinUrlFragments(a, b string) string {
+// JoinURLFragments joins two ApiURL fragments into only one ApiURL string.
+func JoinURLFragments(a, b string) string {
 	aslash := strings.HasSuffix(a, "/")
 	bslash := strings.HasPrefix(b, "/")
 

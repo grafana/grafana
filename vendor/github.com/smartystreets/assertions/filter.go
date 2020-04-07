@@ -17,7 +17,7 @@ func need(needed int, expected []interface{}) string {
 }
 
 func atLeast(minimum int, expected []interface{}) string {
-	if len(expected) < 1 {
+	if len(expected) < minimum {
 		return needNonEmptyCollection
 	}
 	return success

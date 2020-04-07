@@ -40,6 +40,11 @@
         </select>
       </div>
     </div>
+    <gf-form-switch ng-if="ctrl.panel.dataFormat == 'tsbuckets'"
+      class="gf-form" label-class="width-8"
+      label="Reverse order"
+      checked="ctrl.panel.reverseYBuckets" on-change="ctrl.refresh()">
+    </gf-form-switch>
   </div>
 
   <div class="section gf-form-group" ng-if="ctrl.panel.dataFormat == 'timeseries'">
@@ -74,6 +79,8 @@
     <div class="gf-form-inline">
       <div class="gf-form">
         <label class="gf-form-label width-5">X Axis</label>
+      </div>
+      <div class="gf-form">
         <label class="gf-form-label width-5">Buckets</label>
         <input type="number" class="gf-form-input width-5" placeholder="auto" data-placement="right"
                                                                               bs-tooltip="'Number of buckets for X axis.'"

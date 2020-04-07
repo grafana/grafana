@@ -1,7 +1,7 @@
 +++
-title = "What's New in Grafana v5.0"
-description = "Feature & improvement highlights for Grafana v5.0"
-keywords = ["grafana", "new", "documentation", "5.0"]
+title = "What's new in Grafana v5.0"
+description = "Feature and improvement highlights for Grafana v5.0"
+keywords = ["grafana", "new", "documentation", "5.0", "release notes"]
 type = "docs"
 [menu.docs]
 name = "Version 5.0"
@@ -10,7 +10,7 @@ parent = "whatsnew"
 weight = -6
 +++
 
-# What's New in Grafana v5.0
+# What's new in Grafana v5.0
 
 This is the most substantial update that Grafana has ever seen. This article will detail the major new features and enhancements.
 
@@ -20,10 +20,10 @@ This is the most substantial update that Grafana has ever seen. This article wil
 - [Dashboard Folders]({{< relref "#dashboard-folders" >}}) helps you keep your dashboards organized.
 - [Permissions]({{< relref "#dashboard-folders" >}}) on folders and dashboards helps manage larger Grafana installations.
 - [Group users into teams]({{< relref "#teams" >}}) and use them in the new permission system.
-- [Datasource provisioning]({{< relref "#data-sources" >}}) makes it possible to setup datasources via config files.
+- [Data source provisioning]({{< relref "#data-sources" >}}) makes it possible to setup data sources via config files.
 - [Dashboard provisioning]({{< relref "#dashboards" >}}) makes it possible to setup dashboards via config files.
 - [Persistent dashboard url's]({{< relref "#dashboard-model-persistent-url-s-and-api-changes" >}}) makes it possible to rename dashboards without breaking links.
-- [Graphite Tags & Integrated Function Docs]({{< relref "#graphite-tags-integrated-function-docs" >}}).
+- [Graphite Tags and Integrated Function Docs]({{< relref "#graphite-tags-integrated-function-docs" >}}).
 
 ### Video showing new features
 
@@ -36,8 +36,8 @@ This is the most substantial update that Grafana has ever seen. This article wil
 
 The new dashboard layout engine allows for much easier movement and sizing of panels, as other panels now move out of the way in
 a very intuitive way. Panels are sized independently, so rows are no longer necessary to create layouts. This opens
-up many new types of layouts where panels of different heights can be aligned easily. Checkout the new grid in the video
-above or on the [play site](http://play.grafana.org). All your existing dashboards will automatically migrate to the
+up many new types of layouts where panels of different heights can be aligned easily. Check out the new grid in the video
+above or on the [play site](https://play.grafana.org). All your existing dashboards will automatically migrate to the
 new position system and look close to identical. The new panel position makes dashboards saved in v5.0 incompatible
 with older versions of Grafana.
 
@@ -90,7 +90,7 @@ We hope to do more with teams in future releases like integration with LDAP and 
 You can assign permissions to folders and dashboards. The default user role-based permissions can be removed and
 replaced with specific teams or users enabling more control over what a user can see and edit.
 
-Dashboard permissions only limits what dashboards & folders a user can view & edit not which
+Dashboard permissions only limits what dashboards and folders a user can view and edit not which
 data sources a user can access nor what queries a user can issue.
 
 <div class="clearfix"></div>
@@ -118,7 +118,7 @@ which makes it possible to star them, use one as the home dashboard, set permiss
 expects the dashboards to exist in the database. More info in the [dashboard provisioning docs](/administration/provisioning/#dashboards)
 
 
-## Graphite Tags & Integrated Function Docs
+## Graphite Tags and Integrated Function Docs
 
 {{< docs-imagebox img="/img/docs/v50/graphite_tags.png" max-width="1000px" class="docs-image--right" >}}
 
@@ -134,11 +134,11 @@ Read more on [Graphite Tag Support](http://graphite.readthedocs.io/en/latest/tag
 We are introducing a new unique identifier (`uid`) in the dashboard JSON model. It's automatically
 generated if not provided when creating a dashboard and will have a length of 9-12 characters.
 
-The unique identifier allows having persistent URL's for accessing dashboards, sharing them
+The unique identifier allows having persistent URLs for accessing dashboards, sharing them
 between instances and when using [dashboard provisioning](#dashboards). This means that dashboard can
-be renamed without breaking any links. We're changing the url format for dashboards
-from `/dashboard/db/:slug` to `/d/:uid/:slug`. We'll keep supporting the old slug-based url's for dashboards
-and redirects to the new one for backward compatibility. Please note that the old slug-based url's
+be renamed without breaking any links. We're changing the URL format for dashboards
+from `/dashboard/db/:slug` to `/d/:uid/:slug`. We'll keep supporting the old slug-based URLs for dashboards
+and redirects to the new one for backward compatibility. Please note that the old slug-based URLs
 have been deprecated and will be removed in a future release.
 
 Sharing dashboards between instances becomes much easier since the `uid` is unique (unique enough).
@@ -148,5 +148,3 @@ much easier to manage, collaborate and navigate between dashboards.
 ### API changes
 New uid-based routes in the dashboard API have been introduced to retrieve and delete dashboards.
 The corresponding slug-based routes have been deprecated and will be removed in a future release.
-
-

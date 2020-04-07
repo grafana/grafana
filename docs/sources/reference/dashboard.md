@@ -51,7 +51,7 @@ When a user creates a new dashboard, a new dashboard JSON object is initialized 
     "list": []
   },
   "refresh": "5s",
-  "schemaVersion": 16,
+  "schemaVersion": 17,
   "version": 0,
   "links": []
 }
@@ -79,7 +79,7 @@ Each field in the dashboard JSON is explained below with its usage:
 
 ## Panels
 
-Panels are the building blocks of a dashboard. It consists of datasource queries, type of graphs, aliases, etc. Panel JSON consists of an array of JSON objects, each representing a different panel. Most of the fields are common for all panels but some fields depend on the panel type. Following is an example of panel JSON of a text panel.
+Panels are the building blocks of a dashboard. It consists of data source queries, type of graphs, aliases, etc. Panel JSON consists of an array of JSON objects, each representing a different panel. Most of the fields are common for all panels but some fields depend on the panel type. Following is an example of panel JSON of a text panel.
 
 ```json
 "panels": [
@@ -98,7 +98,7 @@ Panels are the building blocks of a dashboard. It consists of datasource queries
   }
 ```
 
-### Panel size & position
+### Panel size and position
 
 The gridPos property describes the panel size and position in grid coordinates.
 
@@ -130,20 +130,6 @@ The grid has a negative gravity that moves panels up if there is empty space abo
       "1d"
     ],
     "status": "Stable",
-    "time_options": [
-      "5m",
-      "15m",
-      "1h",
-      "3h",
-      "6h",
-      "12h",
-      "24h",
-      "2d",
-      "3d",
-      "4d",
-      "7d",
-      "30d"
-    ],
     "type": "timepicker"
   }
 ```
@@ -158,7 +144,6 @@ Usage of the fields is explained below:
 | **now** | TODO |
 | **refresh_intervals** | TODO |
 | **status** | TODO |
-| **time_options** | TODO |
 | **type** | TODO |
 
 ### templating
@@ -197,7 +182,6 @@ The `templating` field contains an array of template variables with their saved 
           }
         ],
         "query": "tag_values(cpu.utilization.average,env)",
-        "refresh": false,
         "refresh": false,
         "type": "query"
       },
@@ -239,15 +223,15 @@ Usage of the above mentioned fields in the templating section is explained below
 | ---- | ----- |
 | **enable** | whether templating is enabled or not |
 | **list** | an array of objects each representing one template variable |
-| **allFormat** | format to use while fetching all values from datasource, eg: `wildcard`, `glob`, `regex`, `pipe`, etc. |
+| **allFormat** | format to use while fetching all values from data source, eg: `wildcard`, `glob`, `regex`, `pipe`, etc. |
 | **current** | shows current selected variable text/value on the dashboard |
-| **datasource** | shows datasource for the variables |
+| **data source** | shows data source for the variables |
 | **includeAll** | whether all value option is available or not |
 | **multi** | whether multiple values can be selected or not from variable value list |
-| **multiFormat** | format to use while fetching timeseries from datasource |
+| **multiFormat** | format to use while fetching timeseries from data source |
 | **name** | name of variable |
 | **options** | array of variable text/value pairs available for selection on dashboard |
-| **query** | datasource query used to fetch values for a variable |
+| **query** | data source query used to fetch values for a variable |
 | **refresh** | TODO |
 | **regex** | TODO |
 | **type** | type of variable, i.e. `custom`, `query` or `interval` |

@@ -2,7 +2,7 @@ export class Edge {
   inputNode: Node;
   outputNode: Node;
 
-  _linkTo(node, direction) {
+  _linkTo(node: Node, direction: number) {
     if (direction <= 0) {
       node.inputEdges.push(this);
     }
@@ -15,6 +15,14 @@ export class Edge {
   }
 
   link(inputNode: Node, outputNode: Node) {
+    if (!inputNode) {
+      throw Error('inputNode is required');
+    }
+
+    if (!outputNode) {
+      throw Error('outputNode is required');
+    }
+
     this.unlink();
     this.inputNode = inputNode;
     this.outputNode = outputNode;
@@ -96,7 +104,7 @@ export class Node {
   }
 
   getOptimizedInputEdges(): Edge[] {
-    const toBeRemoved = [];
+    const toBeRemoved: any[] = [];
     this.inputEdges.forEach(e => {
       const inputEdgesNodes = e.inputNode.inputEdges.map(e => e.inputNode);
 
@@ -113,7 +121,7 @@ export class Node {
 }
 
 export class Graph {
-  nodes = {};
+  nodes: any = {};
 
   constructor() {}
 
@@ -124,7 +132,7 @@ export class Graph {
   }
 
   createNodes(names: string[]): Node[] {
-    const nodes = [];
+    const nodes: Node[] = [];
     names.forEach(name => {
       nodes.push(this.createNode(name));
     });
@@ -134,8 +142,8 @@ export class Graph {
   link(input: string | string[] | Node | Node[], output: string | string[] | Node | Node[]): Edge[] {
     let inputArr = [];
     let outputArr = [];
-    const inputNodes = [];
-    const outputNodes = [];
+    const inputNodes: Node[] = [];
+    const outputNodes: Node[] = [];
 
     if (input instanceof Array) {
       inputArr = input;
@@ -152,7 +160,11 @@ export class Graph {
     for (let n = 0; n < inputArr.length; n++) {
       const i = inputArr[n];
       if (typeof i === 'string') {
-        inputNodes.push(this.getNode(i));
+        const n = this.getNode(i);
+        if (!n) {
+          throw Error(`cannot link input node named ${i} since it doesn't exist in graph`);
+        }
+        inputNodes.push(n);
       } else {
         inputNodes.push(i);
       }
@@ -161,13 +173,17 @@ export class Graph {
     for (let n = 0; n < outputArr.length; n++) {
       const i = outputArr[n];
       if (typeof i === 'string') {
-        outputNodes.push(this.getNode(i));
+        const n = this.getNode(i);
+        if (!n) {
+          throw Error(`cannot link output node named ${i} since it doesn't exist in graph`);
+        }
+        outputNodes.push(n);
       } else {
         outputNodes.push(i);
       }
     }
 
-    const edges = [];
+    const edges: Edge[] = [];
     inputNodes.forEach(input => {
       outputNodes.forEach(output => {
         edges.push(this.createEdge().link(input, output));
@@ -188,11 +204,11 @@ export class Graph {
 export const printGraph = (g: Graph) => {
   Object.keys(g.nodes).forEach(name => {
     const n = g.nodes[name];
-    let outputEdges = n.outputEdges.map(e => e.outputNode.name).join(', ');
+    let outputEdges = n.outputEdges.map((e: Edge) => e.outputNode.name).join(', ');
     if (!outputEdges) {
       outputEdges = '<none>';
     }
-    let inputEdges = n.inputEdges.map(e => e.inputNode.name).join(', ');
+    let inputEdges = n.inputEdges.map((e: Edge) => e.inputNode.name).join(', ');
     if (!inputEdges) {
       inputEdges = '<none>';
     }

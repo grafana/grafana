@@ -8,9 +8,17 @@ awsconfig
 /dist
 /public/build
 /public/views/index.html
+/public/views/error.html
 /emails/dist
-/public_gen
-/public/vendor/npm
+/reports
+/e2e/tmp
+.yarnrc
+.yarn/
+
+# Enterprise emails
+/emails/templates/enterprise_*
+/public/emails/enterprise_*
+
 /tmp
 tools/phantomjs/phantomjs
 tools/phantomjs/phantomjs.exe
@@ -38,13 +46,15 @@ public/css/*.min.css
 /data/*
 /bin/*
 
+# devenv
+/devenv/docker-compose.yaml
+/devenv/.env
+
 conf/custom.ini
-fig.yml
-docker-compose.yml
-docker-compose.yaml
 /conf/provisioning/**/custom.yaml
 /conf/provisioning/**/dev.yaml
 /conf/ldap_dev.toml
+/conf/ldap_freeipa.toml
 profile.cov
 /grafana
 /local
@@ -53,7 +63,9 @@ profile.cov
 /pkg/cmd/grafana-cli/grafana-cli
 /pkg/cmd/grafana-server/grafana-server
 /pkg/cmd/grafana-server/debug
-/pkg/extensions
+/pkg/extensions/*
+!/pkg/extensions/main.go
+/public/app/extensions
 debug.test
 /examples/*/dist
 /packaging/**/*.rpm
@@ -68,7 +80,36 @@ debug.test
 /vendor/**/*.yml
 /vendor/**/*_test.go
 /vendor/**/.editorconfig
-/vendor/**/appengine*
 *.orig
 
 /devenv/bulk-dashboards/*.json
+/devenv/bulk_alerting_dashboards/*.json
+/devenv/datasources_bulk.yaml
+/devenv/bulk_alerting_dashboards/bulk_alerting_datasources.yaml
+
+/scripts/build/release_publisher/release_publisher
+*.patch
+
+# Ignoring frontend packages specifics
+/packages/**/dist
+/packages/**/compiled
+/packages/**/.rpt2_cache
+/packages/**/tsdoc-metadata.json
+
+# Ignore go local build dependencies
+/scripts/go/bin/**
+
+# Ignore compilation stats from `yarn stats`
+compilation-stats.json
+
+# e2e tests
+/packages/grafana-e2e/cypress/screenshots
+/packages/grafana-e2e/cypress/videos
+/packages/grafana-e2e/cypress/logs
+/e2e/server.log
+/e2e/suite1/screenshots
+!/e2e/suite1/screenshots/expeced/*
+/e2e/suite1/videos/*
+
+# report dumping the whole system env
+/report.*.json

@@ -8,9 +8,11 @@ import (
 	"log"
 	"os"
 	"runtime"
+	"sort"
 	"strconv"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 )
 
@@ -52,11 +54,12 @@ func New(opts *LoggerOptions) Logger {
 		name:       opts.Name,
 		timeFormat: TimeFormat,
 		w:          bufio.NewWriter(output),
-		level:      level,
+		level:      new(int32),
 	}
 	if opts.TimeFormat != "" {
 		ret.timeFormat = opts.TimeFormat
 	}
+	atomic.StoreInt32(ret.level, int32(level))
 	return ret
 }
 
@@ -72,7 +75,7 @@ type intLogger struct {
 	// those derived loggers share the bufio.Writer as well.
 	m     *sync.Mutex
 	w     *bufio.Writer
-	level Level
+	level *int32
 
 	implied []interface{}
 }
@@ -87,7 +90,7 @@ const TimeFormat = "2006-01-02T15:04:05.000Z0700"
 // Log a message and a set of key/value pairs if the given level is at
 // or more severe that the threshold configured in the Logger.
 func (z *intLogger) Log(level Level, msg string, args ...interface{}) {
-	if level < z.level {
+	if level < Level(atomic.LoadInt32(z.level)) {
 		return
 	}
 
@@ -347,38 +350,66 @@ func (z *intLogger) Error(msg string, args ...interface{}) {
 
 // Indicate that the logger would emit TRACE level logs
 func (z *intLogger) IsTrace() bool {
-	return z.level == Trace
+	return Level(atomic.LoadInt32(z.level)) == Trace
 }
 
 // Indicate that the logger would emit DEBUG level logs
 func (z *intLogger) IsDebug() bool {
-	return z.level <= Debug
+	return Level(atomic.LoadInt32(z.level)) <= Debug
 }
 
 // Indicate that the logger would emit INFO level logs
 func (z *intLogger) IsInfo() bool {
-	return z.level <= Info
+	return Level(atomic.LoadInt32(z.level)) <= Info
 }
 
 // Indicate that the logger would emit WARN level logs
 func (z *intLogger) IsWarn() bool {
-	return z.level <= Warn
+	return Level(atomic.LoadInt32(z.level)) <= Warn
 }
 
 // Indicate that the logger would emit ERROR level logs
 func (z *intLogger) IsError() bool {
-	return z.level <= Error
+	return Level(atomic.LoadInt32(z.level)) <= Error
 }
 
 // Return a sub-Logger for which every emitted log message will contain
 // the given key/value pairs. This is used to create a context specific
 // Logger.
 func (z *intLogger) With(args ...interface{}) Logger {
+	if len(args)%2 != 0 {
+		panic("With() call requires paired arguments")
+	}
+
 	var nz intLogger = *z
 
+	result := make(map[string]interface{}, len(z.implied)+len(args))
+	keys := make([]string, 0, len(z.implied)+len(args))
+
+	// Read existing args, store map and key for consistent sorting
+	for i := 0; i < len(z.implied); i += 2 {
+		key := z.implied[i].(string)
+		keys = append(keys, key)
+		result[key] = z.implied[i+1]
+	}
+	// Read new args, store map and key for consistent sorting
+	for i := 0; i < len(args); i += 2 {
+		key := args[i].(string)
+		_, exists := result[key]
+		if !exists {
+			keys = append(keys, key)
+		}
+		result[key] = args[i+1]
+	}
+
+	// Sort keys to be consistent
+	sort.Strings(keys)
+
 	nz.implied = make([]interface{}, 0, len(z.implied)+len(args))
-	nz.implied = append(nz.implied, z.implied...)
-	nz.implied = append(nz.implied, args...)
+	for _, k := range keys {
+		nz.implied = append(nz.implied, k)
+		nz.implied = append(nz.implied, result[k])
+	}
 
 	return &nz
 }
@@ -406,6 +437,12 @@ func (z *intLogger) ResetNamed(name string) Logger {
 	nz.name = name
 
 	return &nz
+}
+
+// Update the logging level on-the-fly. This will affect all subloggers as
+// well.
+func (z *intLogger) SetLevel(level Level) {
+	atomic.StoreInt32(z.level, int32(level))
 }
 
 // Create a *log.Logger that will send it's data through this Logger. This

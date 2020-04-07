@@ -1,5 +1,4 @@
 import kbn from 'app/core/utils/kbn';
-
 export class AxesEditorCtrl {
   panel: any;
   panelCtrl: any;
@@ -9,7 +8,7 @@ export class AxesEditorCtrl {
   yBucketBoundModes: any;
 
   /** @ngInject */
-  constructor($scope, uiSegmentSrv) {
+  constructor($scope: any, uiSegmentSrv: any) {
     $scope.editor = this;
     this.panelCtrl = $scope.ctrl;
     this.panel = this.panelCtrl.panel;
@@ -32,10 +31,11 @@ export class AxesEditorCtrl {
       Auto: 'auto',
       Upper: 'upper',
       Lower: 'lower',
+      Middle: 'middle',
     };
   }
 
-  setUnitFormat(subItem) {
+  setUnitFormat(subItem: any) {
     this.panel.yAxis.format = subItem.value;
     this.panelCtrl.render();
   }

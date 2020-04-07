@@ -1,7 +1,7 @@
 +++
-title = "What's New in Grafana v4.4"
-description = "Feature & improvement highlights for Grafana v4.4"
-keywords = ["grafana", "new", "documentation", "4.4.0"]
+title = "What's new in Grafana v4.4"
+description = "Feature and improvement highlights for Grafana v4.4"
+keywords = ["grafana", "new", "documentation", "4.4.0", "release notes"]
 type = "docs"
 [menu.docs]
 name = "Version 4.4"
@@ -10,7 +10,7 @@ parent = "whatsnew"
 weight = -3
 +++
 
-## What's New in Grafana v4.4
+## What's new in Grafana v4.4
 
 Grafana v4.4 is now [available for download](https://grafana.com/grafana/download/4.4.0).
 
@@ -20,7 +20,7 @@ Grafana v4.4 is now [available for download](https://grafana.com/grafana/downloa
 
 ## New Features
 
-**Dashboard History**: View dashboard version history, compare any two versions (summary & json diffs), restore to old version. This big feature
+**Dashboard History**: View dashboard version history, compare any two versions (summary and json diffs), restore to old version. This big feature
 was contributed by **Walmart Labs**. Big thanks to them for this massive contribution!
 Initial feature request: [#4638](https://github.com/grafana/grafana/issues/4638)
 Pull Request: [#8472](https://github.com/grafana/grafana/pull/8472)
@@ -42,9 +42,8 @@ Pull Request: [#8472](https://github.com/grafana/grafana/pull/8472)
 
 ## Download
 
-Head to the [v4.4 download page](https://grafana.com/grafana/download) for download links & instructions.
+Head to the [v4.4 download page](https://grafana.com/grafana/download) for download links and instructions.
 
 ## Thanks
 
 A big thanks to all the Grafana users who contribute by submitting PRs, bug reports, helping out on our [community site](https://community.grafana.com/) and providing feedback!
-

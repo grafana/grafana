@@ -1,6 +1,7 @@
 package conditions
 
 import (
+	"math"
 	"testing"
 
 	. "github.com/smartystreets/goconvey/convey"
@@ -52,15 +53,33 @@ func TestSimpleReducer(t *testing.T) {
 			So(result, ShouldEqual, float64(1))
 		})
 
+		Convey("median should ignore null values", func() {
+			reducer := newSimpleReducer("median")
+			series := &tsdb.TimeSeries{
+				Name: "test time series",
+			}
+
+			series.Points = append(series.Points, tsdb.NewTimePoint(null.FloatFromPtr(nil), 1))
+			series.Points = append(series.Points, tsdb.NewTimePoint(null.FloatFromPtr(nil), 2))
+			series.Points = append(series.Points, tsdb.NewTimePoint(null.FloatFromPtr(nil), 3))
+			series.Points = append(series.Points, tsdb.NewTimePoint(null.FloatFrom(float64(1)), 4))
+			series.Points = append(series.Points, tsdb.NewTimePoint(null.FloatFrom(float64(2)), 5))
+			series.Points = append(series.Points, tsdb.NewTimePoint(null.FloatFrom(float64(3)), 6))
+
+			result := reducer.Reduce(series)
+			So(result.Valid, ShouldEqual, true)
+			So(result.Float64, ShouldEqual, float64(2))
+		})
+
 		Convey("avg", func() {
 			result := testReducer("avg", 1, 2, 3)
 			So(result, ShouldEqual, float64(2))
 		})
 
 		Convey("avg with only nulls", func() {
-			reducer := NewSimpleReducer("avg")
+			reducer := newSimpleReducer("avg")
 			series := &tsdb.TimeSeries{
-				Name: "test time serie",
+				Name: "test time series",
 			}
 
 			series.Points = append(series.Points, tsdb.NewTimePoint(null.FloatFromPtr(nil), 1))
@@ -69,9 +88,9 @@ func TestSimpleReducer(t *testing.T) {
 
 		Convey("count_non_null", func() {
 			Convey("with null values and real values", func() {
-				reducer := NewSimpleReducer("count_non_null")
+				reducer := newSimpleReducer("count_non_null")
 				series := &tsdb.TimeSeries{
-					Name: "test time serie",
+					Name: "test time series",
 				}
 
 				series.Points = append(series.Points, tsdb.NewTimePoint(null.FloatFromPtr(nil), 1))
@@ -84,9 +103,9 @@ func TestSimpleReducer(t *testing.T) {
 			})
 
 			Convey("with null values", func() {
-				reducer := NewSimpleReducer("count_non_null")
+				reducer := newSimpleReducer("count_non_null")
 				series := &tsdb.TimeSeries{
-					Name: "test time serie",
+					Name: "test time series",
 				}
 
 				series.Points = append(series.Points, tsdb.NewTimePoint(null.FloatFromPtr(nil), 1))
@@ -97,9 +116,9 @@ func TestSimpleReducer(t *testing.T) {
 		})
 
 		Convey("avg of number values and null values should ignore nulls", func() {
-			reducer := NewSimpleReducer("avg")
+			reducer := newSimpleReducer("avg")
 			series := &tsdb.TimeSeries{
-				Name: "test time serie",
+				Name: "test time series",
 			}
 
 			series.Points = append(series.Points, tsdb.NewTimePoint(null.FloatFrom(3), 1))
@@ -110,42 +129,279 @@ func TestSimpleReducer(t *testing.T) {
 			So(reducer.Reduce(series).Float64, ShouldEqual, float64(3))
 		})
 
-		Convey("diff one point", func() {
+		// diff function Test Suite
+		Convey("diff of one positive point", func() {
 			result := testReducer("diff", 30)
 			So(result, ShouldEqual, float64(0))
 		})
 
-		Convey("diff two points", func() {
+		Convey("diff of one negative point", func() {
+			result := testReducer("diff", -30)
+			So(result, ShouldEqual, float64(0))
+		})
+
+		Convey("diff of two positive points[1]", func() {
 			result := testReducer("diff", 30, 40)
 			So(result, ShouldEqual, float64(10))
 		})
 
-		Convey("diff three points", func() {
-			result := testReducer("diff", 30, 40, 40)
-			So(result, ShouldEqual, float64(10))
+		Convey("diff of two positive points[2]", func() {
+			result := testReducer("diff", 30, 20)
+			So(result, ShouldEqual, float64(-10))
 		})
 
-		Convey("percent_diff one point", func() {
-			result := testReducer("percent_diff", 40)
+		Convey("diff of two negative points[1]", func() {
+			result := testReducer("diff", -30, -40)
+			So(result, ShouldEqual, float64(-10))
+		})
+
+		Convey("diff of two negative points[2]", func() {
+			result := testReducer("diff", -30, -10)
+			So(result, ShouldEqual, float64(20))
+		})
+
+		Convey("diff of one positive and one negative point", func() {
+			result := testReducer("diff", 30, -40)
+			So(result, ShouldEqual, float64(-70))
+		})
+
+		Convey("diff of one negative and one positive point", func() {
+			result := testReducer("diff", -30, 40)
+			So(result, ShouldEqual, float64(70))
+		})
+
+		Convey("diff of three positive points", func() {
+			result := testReducer("diff", 30, 40, 50)
+			So(result, ShouldEqual, float64(20))
+		})
+
+		Convey("diff of three negative points", func() {
+			result := testReducer("diff", -30, -40, -50)
+			So(result, ShouldEqual, float64(-20))
+		})
+
+		Convey("diff with only nulls", func() {
+			reducer := newSimpleReducer("diff")
+			series := &tsdb.TimeSeries{
+				Name: "test time series",
+			}
+
+			series.Points = append(series.Points, tsdb.NewTimePoint(null.FloatFromPtr(nil), 1))
+			series.Points = append(series.Points, tsdb.NewTimePoint(null.FloatFromPtr(nil), 2))
+
+			So(reducer.Reduce(series).Valid, ShouldEqual, false)
+		})
+
+		// diff_abs function Test Suite
+		Convey("diff_abs of one positive point", func() {
+			result := testReducer("diff_abs", 30)
 			So(result, ShouldEqual, float64(0))
 		})
 
-		Convey("percent_diff two points", func() {
+		Convey("diff_abs of one negative point", func() {
+			result := testReducer("diff_abs", -30)
+			So(result, ShouldEqual, float64(0))
+		})
+
+		Convey("diff_abs of two positive points[1]", func() {
+			result := testReducer("diff_abs", 30, 40)
+			So(result, ShouldEqual, float64(10))
+		})
+
+		Convey("diff_abs of two positive points[2]", func() {
+			result := testReducer("diff_abs", 30, 20)
+			So(result, ShouldEqual, float64(10))
+		})
+
+		Convey("diff_abs of two negative points[1]", func() {
+			result := testReducer("diff_abs", -30, -40)
+			So(result, ShouldEqual, float64(10))
+		})
+
+		Convey("diff_abs of two negative points[2]", func() {
+			result := testReducer("diff_abs", -30, -10)
+			So(result, ShouldEqual, float64(20))
+		})
+
+		Convey("diff_abs of one positive and one negative point", func() {
+			result := testReducer("diff_abs", 30, -40)
+			So(result, ShouldEqual, float64(70))
+		})
+
+		Convey("diff_abs of one negative and one positive point", func() {
+			result := testReducer("diff_abs", -30, 40)
+			So(result, ShouldEqual, float64(70))
+		})
+
+		Convey("diff_abs of three positive points", func() {
+			result := testReducer("diff_abs", 30, 40, 50)
+			So(result, ShouldEqual, float64(20))
+		})
+
+		Convey("diff_abs of three negative points", func() {
+			result := testReducer("diff_abs", -30, -40, -50)
+			So(result, ShouldEqual, float64(20))
+		})
+
+		Convey("diff_abs with only nulls", func() {
+			reducer := newSimpleReducer("diff_abs")
+			series := &tsdb.TimeSeries{
+				Name: "test time series",
+			}
+
+			series.Points = append(series.Points, tsdb.NewTimePoint(null.FloatFromPtr(nil), 1))
+			series.Points = append(series.Points, tsdb.NewTimePoint(null.FloatFromPtr(nil), 2))
+
+			So(reducer.Reduce(series).Valid, ShouldEqual, false)
+		})
+
+		// percent_diff function Test Suite
+		Convey("percent_diff of one positive point", func() {
+			result := testReducer("percent_diff", 30)
+			So(result, ShouldEqual, float64(0))
+		})
+
+		Convey("percent_diff of one negative point", func() {
+			result := testReducer("percent_diff", -30)
+			So(result, ShouldEqual, float64(0))
+		})
+
+		Convey("percent_diff of two positive points[1]", func() {
 			result := testReducer("percent_diff", 30, 40)
 			So(result, ShouldEqual, float64(33.33333333333333))
 		})
 
-		Convey("percent_diff three points", func() {
-			result := testReducer("percent_diff", 30, 40, 40)
+		Convey("percent_diff of two positive points[2]", func() {
+			result := testReducer("percent_diff", 30, 20)
+			So(result, ShouldEqual, float64(-33.33333333333333))
+		})
+
+		Convey("percent_diff of two negative points[1]", func() {
+			result := testReducer("percent_diff", -30, -40)
+			So(result, ShouldEqual, float64(-33.33333333333333))
+		})
+
+		Convey("percent_diff of two negative points[2]", func() {
+			result := testReducer("percent_diff", -30, -10)
+			So(result, ShouldEqual, float64(66.66666666666666))
+		})
+
+		Convey("percent_diff of one positive and one negative point", func() {
+			result := testReducer("percent_diff", 30, -40)
+			So(result, ShouldEqual, float64(-233.33333333333334))
+		})
+
+		Convey("percent_diff of one negative and one positive point", func() {
+			result := testReducer("percent_diff", -30, 40)
+			So(result, ShouldEqual, float64(233.33333333333334))
+		})
+
+		Convey("percent_diff of three positive points", func() {
+			result := testReducer("percent_diff", 30, 40, 50)
+			So(result, ShouldEqual, float64(66.66666666666666))
+		})
+
+		Convey("percent_diff of three negative points", func() {
+			result := testReducer("percent_diff", -30, -40, -50)
+			So(result, ShouldEqual, float64(-66.66666666666666))
+		})
+
+		Convey("percent_diff with only nulls", func() {
+			reducer := newSimpleReducer("percent_diff")
+			series := &tsdb.TimeSeries{
+				Name: "test time series",
+			}
+
+			series.Points = append(series.Points, tsdb.NewTimePoint(null.FloatFromPtr(nil), 1))
+			series.Points = append(series.Points, tsdb.NewTimePoint(null.FloatFromPtr(nil), 2))
+
+			So(reducer.Reduce(series).Valid, ShouldEqual, false)
+		})
+
+		// percent_diff_abs function Test Suite
+		Convey("percent_diff_abs_abs of one positive point", func() {
+			result := testReducer("percent_diff_abs", 30)
+			So(result, ShouldEqual, float64(0))
+		})
+
+		Convey("percent_diff_abs of one negative point", func() {
+			result := testReducer("percent_diff_abs", -30)
+			So(result, ShouldEqual, float64(0))
+		})
+
+		Convey("percent_diff_abs of two positive points[1]", func() {
+			result := testReducer("percent_diff_abs", 30, 40)
 			So(result, ShouldEqual, float64(33.33333333333333))
+		})
+
+		Convey("percent_diff_abs of two positive points[2]", func() {
+			result := testReducer("percent_diff_abs", 30, 20)
+			So(result, ShouldEqual, float64(33.33333333333333))
+		})
+
+		Convey("percent_diff_abs of two negative points[1]", func() {
+			result := testReducer("percent_diff_abs", -30, -40)
+			So(result, ShouldEqual, float64(33.33333333333333))
+		})
+
+		Convey("percent_diff_abs of two negative points[2]", func() {
+			result := testReducer("percent_diff_abs", -30, -10)
+			So(result, ShouldEqual, float64(66.66666666666666))
+		})
+
+		Convey("percent_diff_abs of one positive and one negative point", func() {
+			result := testReducer("percent_diff_abs", 30, -40)
+			So(result, ShouldEqual, float64(233.33333333333334))
+		})
+
+		Convey("percent_diff_abs of one negative and one positive point", func() {
+			result := testReducer("percent_diff_abs", -30, 40)
+			So(result, ShouldEqual, float64(233.33333333333334))
+		})
+
+		Convey("percent_diff_abs of three positive points", func() {
+			result := testReducer("percent_diff_abs", 30, 40, 50)
+			So(result, ShouldEqual, float64(66.66666666666666))
+		})
+
+		Convey("percent_diff_abs of three negative points", func() {
+			result := testReducer("percent_diff_abs", -30, -40, -50)
+			So(result, ShouldEqual, float64(66.66666666666666))
+		})
+
+		Convey("percent_diff_abs with only nulls", func() {
+			reducer := newSimpleReducer("percent_diff_abs")
+			series := &tsdb.TimeSeries{
+				Name: "test time series",
+			}
+
+			series.Points = append(series.Points, tsdb.NewTimePoint(null.FloatFromPtr(nil), 1))
+			series.Points = append(series.Points, tsdb.NewTimePoint(null.FloatFromPtr(nil), 2))
+
+			So(reducer.Reduce(series).Valid, ShouldEqual, false)
+		})
+
+		Convey("min should work with NaNs", func() {
+			result := testReducer("min", math.NaN(), math.NaN(), math.NaN())
+			So(result, ShouldEqual, float64(0))
+		})
+
+		Convey("isValid should treat NaN as invalid", func() {
+			result := isValid(null.FloatFrom(math.NaN()))
+			So(result, ShouldBeFalse)
+		})
+
+		Convey("isValid should treat invalid null.Float as invalid", func() {
+			result := isValid(null.FloatFromPtr(nil))
+			So(result, ShouldBeFalse)
 		})
 	})
 }
 
-func testReducer(typ string, datapoints ...float64) float64 {
-	reducer := NewSimpleReducer(typ)
+func testReducer(reducerType string, datapoints ...float64) float64 {
+	reducer := newSimpleReducer(reducerType)
 	series := &tsdb.TimeSeries{
-		Name: "test time serie",
+		Name: "test time series",
 	}
 
 	for idx := range datapoints {

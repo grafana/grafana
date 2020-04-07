@@ -2,7 +2,7 @@ package alerting
 
 import (
 	"github.com/grafana/grafana/pkg/bus"
-	m "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/models"
 )
 
 func init() {
@@ -10,20 +10,20 @@ func init() {
 	bus.AddHandler("alerting", validateDashboardAlerts)
 }
 
-func validateDashboardAlerts(cmd *m.ValidateDashboardAlertsCommand) error {
-	extractor := NewDashAlertExtractor(cmd.Dashboard, cmd.OrgId)
+func validateDashboardAlerts(cmd *models.ValidateDashboardAlertsCommand) error {
+	extractor := NewDashAlertExtractor(cmd.Dashboard, cmd.OrgId, cmd.User)
 
 	return extractor.ValidateAlerts()
 }
 
-func updateDashboardAlerts(cmd *m.UpdateDashboardAlertsCommand) error {
-	saveAlerts := m.SaveAlertsCommand{
+func updateDashboardAlerts(cmd *models.UpdateDashboardAlertsCommand) error {
+	saveAlerts := models.SaveAlertsCommand{
 		OrgId:       cmd.OrgId,
-		UserId:      cmd.UserId,
+		UserId:      cmd.User.UserId,
 		DashboardId: cmd.Dashboard.Id,
 	}
 
-	extractor := NewDashAlertExtractor(cmd.Dashboard, cmd.OrgId)
+	extractor := NewDashAlertExtractor(cmd.Dashboard, cmd.OrgId, cmd.User)
 
 	alerts, err := extractor.GetAlerts()
 	if err != nil {

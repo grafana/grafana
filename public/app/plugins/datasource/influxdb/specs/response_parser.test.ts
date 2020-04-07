@@ -62,12 +62,18 @@ describe('influxdb response parser', () => {
               {
                 name: 'cpu',
                 columns: ['key', 'value'],
-                values: [['source', 'site'], ['source', 'api']],
+                values: [
+                  ['source', 'site'],
+                  ['source', 'api'],
+                ],
               },
               {
                 name: 'logins',
                 columns: ['key', 'value'],
-                values: [['source', 'site'], ['source', 'webapi']],
+                values: [
+                  ['source', 'site'],
+                  ['source', 'webapi'],
+                ],
               },
             ],
           },
@@ -94,7 +100,11 @@ describe('influxdb response parser', () => {
             {
               name: 'cpu',
               columns: ['time', 'usage_iowait'],
-              values: [[1488465190006040638, 0.0], [1488465190006040638, 15.0], [1488465190006040638, 20.2]],
+              values: [
+                [1488465190006040638, 0.0],
+                [1488465190006040638, 15.0],
+                [1488465190006040638, 20.2],
+              ],
             },
           ],
         },

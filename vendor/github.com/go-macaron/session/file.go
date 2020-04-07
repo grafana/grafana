@@ -25,7 +25,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/Unknwon/com"
+	"github.com/unknwon/com"
 )
 
 // FileStore represents a file session store implementation.
@@ -80,6 +80,11 @@ func (s *FileStore) ID() string {
 func (s *FileStore) Release() error {
 	s.p.lock.Lock()
 	defer s.p.lock.Unlock()
+
+	// Skip encoding if the data is empty
+	if len(s.data) == 0 {
+		return nil
+	}
 
 	data, err := EncodeGob(s.data)
 	if err != nil {

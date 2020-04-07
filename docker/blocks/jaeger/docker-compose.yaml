@@ -1,6 +1,0 @@
-  jaeger:
-    image: jaegertracing/all-in-one:latest
-    ports:
-      - "127.0.0.1:6831:6831/udp"
-      - "16686:16686"
-

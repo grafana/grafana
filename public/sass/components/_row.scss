@@ -37,14 +37,14 @@
 
 .dashboard-row__title {
   flex-grow: 0;
-  font-size: 1.15rem;
+  font-size: $font-size-h5;
   font-weight: $font-weight-semi-bold;
   color: $text-color;
 
   .fa {
     color: $text-muted;
     font-size: $font-size-xs;
-    padding: 0 0.5rem;
+    padding: 0 $space-sm;
   }
 }
 
@@ -75,7 +75,7 @@
 
 .dashboard-row__drag {
   cursor: move;
-  width: 1rem;
+  width: 16px;
   height: 100%;
   background: url('../img/grab_dark.svg') no-repeat 50% 50%;
   background-size: 8px;

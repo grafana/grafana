@@ -1,5 +1,5 @@
 +++
-title = "Export & Import"
+title = "Export and Import"
 keywords = ["grafana", "dashboard", "documentation", "export", "import"]
 type = "docs"
 [menu.docs]
@@ -9,7 +9,7 @@ weight = 8
 
 # Export and Import
 
-Grafana Dashboards can easily be exported and imported, either from the UI or from the HTTP API.
+Grafana Dashboards can easily be exported and imported, either from the UI or from the [HTTP API]({{< relref "../http_api/dashboard.md#create-update-dashboard" >}}).
 
 ## Exporting a dashboard
 
@@ -34,7 +34,7 @@ To import a dashboard open dashboard search and then hit the import button.
 {{< docs-imagebox img="/img/docs/v50/import_step1.png" max-width="700px" >}}
 
 From here you can upload a dashboard json file, paste a [Grafana.com](https://grafana.com) dashboard
-url or paste dashboard json text directly into the text area.
+URL or paste dashboard json text directly into the text area.
 
 {{< docs-imagebox img="/img/docs/v50/import_step2.png"  max-width="700px" >}}
 
@@ -47,7 +47,7 @@ Find dashboards for common server applications at [Grafana.com/dashboards](https
 
 {{< docs-imagebox img="/img/docs/v50/gcom_dashboard_list.png" max-width="700px" >}}
 
-## Import & Sharing with Grafana 2.x or 3.0
+## Import and Sharing with Grafana 2.x or 3.0
 
 Dashboards on Grafana.com use a new feature in Grafana 3.1 that allows the import process
 to update each panel so that they are using a data source of your choosing. If you are running a
@@ -100,10 +100,12 @@ These are then referenced in the dashboard panels like this:
 
 These inputs and their usage in data source properties are automatically added during export in Grafana 3.1.
 If you run an older version of Grafana and want to share a dashboard on Grafana.com you need to manually
-add the inputs and templatize the datasource properties like above.
+add the inputs and templatize the data source properties like above.
 
 If you want to import a dashboard from Grafana.com into an older version of Grafana then you can either import
 it as usual and then update the data source option in the metrics tab so that the panel is using the correct
-data source. Another alternative is to open the json file in a a text editor and update the data source properties
+data source. Another alternative is to open the json file in a text editor and update the data source properties
 to value that matches a name of your data source.
 
+## Note
+In Grafana v5.3.4+ the export modal has new checkbox for sharing for external use (other instances). If the checkbox is not checked then the `__inputs` section will not be included in the exported JSON file.

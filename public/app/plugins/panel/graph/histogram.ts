@@ -30,7 +30,7 @@ export function getSeriesValues(dataList: TimeSeries[]): number[] {
  * @param bucketSize
  */
 export function convertValuesToHistogram(values: number[], bucketSize: number, min: number, max: number): any[] {
-  const histogram = {};
+  const histogram: any = {};
 
   const minBound = getBucketBound(min, bucketSize);
   const maxBound = getBucketBound(max, bucketSize);
@@ -43,6 +43,10 @@ export function convertValuesToHistogram(values: number[], bucketSize: number, m
   }
 
   for (let i = 0; i < values.length; i++) {
+    // filter out values outside the min and max boundaries
+    if (values[i] < min || values[i] > max) {
+      continue;
+    }
     const bound = getBucketBound(values[i], bucketSize);
     histogram[bound] = histogram[bound] + 1;
   }
@@ -67,7 +71,7 @@ export function convertToHistogramData(
   min: number,
   max: number
 ): any[] {
-  return data.map(series => {
+  return data.map((series: any) => {
     const values = getSeriesValues([series]);
     series.histogram = true;
     if (!hiddenSeries[series.alias]) {

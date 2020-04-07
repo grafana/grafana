@@ -1,18 +1,21 @@
 #!/bin/bash
-function exit_if_fail {
-    command=$@
-    echo "Executing '$command'"
-    eval $command
-    rc=$?
-    if [ $rc -ne 0 ]; then
-        echo "'$command' returned $rc."
-        exit $rc
-    fi
-}
 
-exit_if_fail npm run test:coverage
+# shellcheck source=./scripts/helpers/exit-if-fail.sh
+source "$(dirname "$0")/helpers/exit-if-fail.sh"
 
-# publish code coverage
-echo "Publishing javascript code coverage"
-bash <(curl -s https://codecov.io/bash) -cF javascript
-rm -rf coverage
+start=$(date +%s)
+
+exit_if_fail yarn run prettier:check
+exit_if_fail yarn run packages:typecheck
+exit_if_fail yarn run typecheck
+exit_if_fail yarn run test
+
+end=$(date +%s)
+seconds=$((end - start))
+
+exit_if_fail ./scripts/ci-frontend-metrics.sh
+
+if [ "${CIRCLE_BRANCH}" == "master" ]; then
+	exit_if_fail ./scripts/ci-metrics-publisher.sh grafana.ci-performance.frontend-tests=$seconds
+fi
+

@@ -1,0 +1,50 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Render should render component 1`] = `
+<Page
+  navModel={Object {}}
+>
+  <PageContents>
+    <h3
+      className="page-sub-heading"
+    >
+      New Team
+    </h3>
+    <form
+      className="gf-form-group"
+      onSubmit={[Function]}
+    >
+      <FormField
+        className="gf-form"
+        inputWidth={30}
+        label="Name"
+        labelWidth={10}
+        onChange={[Function]}
+        required={true}
+        value=""
+      />
+      <FormField
+        className="gf-form"
+        inputWidth={30}
+        label="Email"
+        labelWidth={10}
+        onChange={[Function]}
+        placeholder="email@test.com"
+        tooltip="This is optional and is primarily used for allowing custom team avatars."
+        type="email"
+        value=""
+      />
+      <div
+        className="gf-form-button-row"
+      >
+        <Button
+          type="submit"
+          variant="primary"
+        >
+          Create
+        </Button>
+      </div>
+    </form>
+  </PageContents>
+</Page>
+`;

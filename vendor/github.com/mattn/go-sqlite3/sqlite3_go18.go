@@ -1,17 +1,15 @@
-// +build cgo
-
 // Copyright (C) 2014 Yasuhiro Matsumoto <mattn.jp@gmail.com>.
 //
 // Use of this source code is governed by an MIT-style
 // license that can be found in the LICENSE file.
 
+// +build cgo
 // +build go1.8
 
 package sqlite3
 
 import (
 	"database/sql/driver"
-	"errors"
 
 	"context"
 )
@@ -19,7 +17,8 @@ import (
 // Ping implement Pinger.
 func (c *SQLiteConn) Ping(ctx context.Context) error {
 	if c.db == nil {
-		return errors.New("Connection was closed")
+		// must be ErrBadConn for sql to close the database
+		return driver.ErrBadConn
 	}
 	return nil
 }

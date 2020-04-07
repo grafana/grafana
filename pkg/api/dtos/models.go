@@ -7,7 +7,8 @@ import (
 	"strings"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	m "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -22,28 +23,29 @@ type LoginCommand struct {
 }
 
 type CurrentUser struct {
-	IsSignedIn                 bool         `json:"isSignedIn"`
-	Id                         int64        `json:"id"`
-	Login                      string       `json:"login"`
-	Email                      string       `json:"email"`
-	Name                       string       `json:"name"`
-	LightTheme                 bool         `json:"lightTheme"`
-	OrgCount                   int          `json:"orgCount"`
-	OrgId                      int64        `json:"orgId"`
-	OrgName                    string       `json:"orgName"`
-	OrgRole                    m.RoleType   `json:"orgRole"`
-	IsGrafanaAdmin             bool         `json:"isGrafanaAdmin"`
-	GravatarUrl                string       `json:"gravatarUrl"`
-	Timezone                   string       `json:"timezone"`
-	Locale                     string       `json:"locale"`
-	HelpFlags1                 m.HelpFlags1 `json:"helpFlags1"`
-	HasEditPermissionInFolders bool         `json:"hasEditPermissionInFolders"`
+	IsSignedIn                 bool              `json:"isSignedIn"`
+	Id                         int64             `json:"id"`
+	Login                      string            `json:"login"`
+	Email                      string            `json:"email"`
+	Name                       string            `json:"name"`
+	LightTheme                 bool              `json:"lightTheme"`
+	OrgCount                   int               `json:"orgCount"`
+	OrgId                      int64             `json:"orgId"`
+	OrgName                    string            `json:"orgName"`
+	OrgRole                    models.RoleType   `json:"orgRole"`
+	IsGrafanaAdmin             bool              `json:"isGrafanaAdmin"`
+	GravatarUrl                string            `json:"gravatarUrl"`
+	Timezone                   string            `json:"timezone"`
+	Locale                     string            `json:"locale"`
+	HelpFlags1                 models.HelpFlags1 `json:"helpFlags1"`
+	HasEditPermissionInFolders bool              `json:"hasEditPermissionInFolders"`
 }
 
 type MetricRequest struct {
 	From    string             `json:"from"`
 	To      string             `json:"to"`
 	Queries []*simplejson.Json `json:"queries"`
+	Debug   bool               `json:"debug"`
 }
 
 type UserStars struct {
@@ -60,7 +62,9 @@ func GetGravatarUrl(text string) string {
 	}
 
 	hasher := md5.New()
-	hasher.Write([]byte(strings.ToLower(text)))
+	if _, err := hasher.Write([]byte(strings.ToLower(text))); err != nil {
+		log.Warn("Failed to hash text: %s", err)
+	}
 	return fmt.Sprintf(setting.AppSubUrl+"/avatar/%x", hasher.Sum(nil))
 }
 

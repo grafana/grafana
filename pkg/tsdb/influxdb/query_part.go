@@ -32,6 +32,8 @@ func init() {
 	renders["median"] = QueryDefinition{Renderer: functionRenderer}
 	renders["sum"] = QueryDefinition{Renderer: functionRenderer}
 	renders["mode"] = QueryDefinition{Renderer: functionRenderer}
+	renders["cumulative_sum"] = QueryDefinition{Renderer: functionRenderer}
+	renders["non_negative_difference"] = QueryDefinition{Renderer: functionRenderer}
 
 	renders["holt_winters"] = QueryDefinition{
 		Renderer: functionRenderer,

@@ -3,7 +3,6 @@ package cloudwatch
 import (
 	"fmt"
 	"os"
-	"strings"
 	"sync"
 	"time"
 
@@ -13,9 +12,11 @@ import (
 	"github.com/aws/aws-sdk-go/aws/credentials/endpointcreds"
 	"github.com/aws/aws-sdk-go/aws/defaults"
 	"github.com/aws/aws-sdk-go/aws/ec2metadata"
+	"github.com/aws/aws-sdk-go/aws/request"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/cloudwatch"
 	"github.com/aws/aws-sdk-go/service/sts"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 type cache struct {
@@ -27,7 +28,7 @@ var awsCredentialCache = make(map[string]cache)
 var credentialCacheLock sync.RWMutex
 
 func GetCredentials(dsInfo *DatasourceInfo) (*credentials.Credentials, error) {
-	cacheKey := dsInfo.AccessKey + ":" + dsInfo.Profile + ":" + dsInfo.AssumeRoleArn
+	cacheKey := fmt.Sprintf("%s:%s:%s:%s", dsInfo.AuthType, dsInfo.AccessKey, dsInfo.Profile, dsInfo.AssumeRoleArn)
 	credentialCacheLock.RLock()
 	if _, ok := awsCredentialCache[cacheKey]; ok {
 		if awsCredentialCache[cacheKey].expiration != nil &&
@@ -42,9 +43,8 @@ func GetCredentials(dsInfo *DatasourceInfo) (*credentials.Credentials, error) {
 	accessKeyId := ""
 	secretAccessKey := ""
 	sessionToken := ""
-	var expiration *time.Time
-	expiration = nil
-	if dsInfo.AuthType == "arn" && strings.Index(dsInfo.AssumeRoleArn, "arn:aws:iam:") == 0 {
+	var expiration *time.Time = nil
+	if dsInfo.AuthType == "arn" {
 		params := &sts.AssumeRoleInput{
 			RoleArn:         aws.String(dsInfo.AssumeRoleArn),
 			RoleSessionName: aws.String("GrafanaSession"),
@@ -149,16 +149,9 @@ func (e *CloudWatchExecutor) getDsInfo(region string) *DatasourceInfo {
 
 	authType := e.DataSource.JsonData.Get("authType").MustString()
 	assumeRoleArn := e.DataSource.JsonData.Get("assumeRoleArn").MustString()
-	accessKey := ""
-	secretKey := ""
-	for key, value := range e.DataSource.SecureJsonData.Decrypt() {
-		if key == "accessKey" {
-			accessKey = value
-		}
-		if key == "secretKey" {
-			secretKey = value
-		}
-	}
+	decrypted := e.DataSource.DecryptedValues()
+	accessKey := decrypted["accessKey"]
+	secretKey := decrypted["secretKey"]
 
 	datasourceInfo := &DatasourceInfo{
 		Region:        region,
@@ -182,6 +175,7 @@ func (e *CloudWatchExecutor) getAwsConfig(dsInfo *DatasourceInfo) (*aws.Config, 
 		Region:      aws.String(dsInfo.Region),
 		Credentials: creds,
 	}
+
 	return cfg, nil
 }
 
@@ -198,5 +192,10 @@ func (e *CloudWatchExecutor) getClient(region string) (*cloudwatch.CloudWatch, e
 	}
 
 	client := cloudwatch.New(sess, cfg)
+
+	client.Handlers.Send.PushFront(func(r *request.Request) {
+		r.HTTPRequest.Header.Set("User-Agent", fmt.Sprintf("Grafana/%s", setting.BuildVersion))
+	})
+
 	return client, nil
 }

@@ -1,13 +1,7 @@
-import '../annotations_srv';
-import 'app/features/dashboard/time_srv';
 import { AnnotationsSrv } from '../annotations_srv';
 
-describe('AnnotationsSrv', function() {
-  const $rootScope = {
-    onAppEvent: jest.fn(),
-  };
-
-  const annotationsSrv = new AnnotationsSrv($rootScope, null, null, null, null);
+describe('AnnotationsSrv', () => {
+  const annotationsSrv = new AnnotationsSrv();
 
   describe('When translating the query result', () => {
     const annotationSource = {
@@ -23,7 +17,7 @@ describe('AnnotationsSrv', function() {
 
     const time = 1507039543000;
     const annotations = [{ id: 1, panelId: 1, text: 'text', time: time }];
-    let translatedAnnotations;
+    let translatedAnnotations: any;
 
     beforeEach(() => {
       translatedAnnotations = annotationsSrv.translateQueryResult(annotationSource, annotations);

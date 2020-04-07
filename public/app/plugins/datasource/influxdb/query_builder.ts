@@ -1,6 +1,7 @@
 import _ from 'lodash';
+import kbn from 'app/core/utils/kbn';
 
-function renderTagCondition(tag, index) {
+function renderTagCondition(tag: { operator: any; value: string; condition: any; key: string }, index: number) {
   let str = '';
   let operator = tag.operator;
   let value = tag.value;
@@ -25,7 +26,7 @@ function renderTagCondition(tag, index) {
 }
 
 export class InfluxQueryBuilder {
-  constructor(private target, private database?) {}
+  constructor(private target: { measurement: any; tags: any; policy?: any }, private database?: string) {}
 
   buildExploreQuery(type: string, withKey?: string, withMeasurementFilter?: string) {
     let query;
@@ -43,7 +44,7 @@ export class InfluxQueryBuilder {
     } else if (type === 'MEASUREMENTS') {
       query = 'SHOW MEASUREMENTS';
       if (withMeasurementFilter) {
-        query += ' WITH MEASUREMENT =~ /' + withMeasurementFilter + '/';
+        query += ' WITH MEASUREMENT =~ /' + kbn.regexEscape(withMeasurementFilter) + '/';
       }
     } else if (type === 'FIELDS') {
       measurement = this.target.measurement;
@@ -84,7 +85,7 @@ export class InfluxQueryBuilder {
     if (this.target.tags && this.target.tags.length > 0) {
       const whereConditions = _.reduce(
         this.target.tags,
-        function(memo, tag) {
+        (memo, tag) => {
           // do not add a condition for the key we want to explore for
           if (tag.key === withKey) {
             return memo;

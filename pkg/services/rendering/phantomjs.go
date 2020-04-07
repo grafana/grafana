@@ -10,13 +10,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/grafana/grafana/pkg/log"
-	"github.com/grafana/grafana/pkg/middleware"
+	"github.com/grafana/grafana/pkg/infra/log"
 )
 
-func (rs *RenderingService) renderViaPhantomJS(ctx context.Context, opts Opts) (*RenderResult, error) {
-	rs.log.Info("Rendering", "path", opts.Path)
-
+func (rs *RenderingService) renderViaPhantomJS(ctx context.Context, renderKey string, opts Opts) (*RenderResult, error) {
 	var executable = "phantomjs"
 	if runtime.GOOS == "windows" {
 		executable = executable + ".exe"
@@ -30,26 +27,27 @@ func (rs *RenderingService) renderViaPhantomJS(ctx context.Context, opts Opts) (
 	}
 
 	scriptPath, _ := filepath.Abs(filepath.Join(rs.Cfg.PhantomDir, "render.js"))
-	pngPath := rs.getFilePathForNewImage()
-
-	renderKey := middleware.AddRenderAuthKey(opts.OrgId, opts.UserId, opts.OrgRole)
-	defer middleware.RemoveRenderAuthKey(renderKey)
+	pngPath, err := rs.getFilePathForNewImage()
+	if err != nil {
+		return nil, err
+	}
 
 	phantomDebugArg := "--debug=false"
-	if log.GetLogLevelFor("renderer") >= log.LvlDebug {
+	if log.GetLogLevelFor("rendering") >= log.LvlDebug {
 		phantomDebugArg = "--debug=true"
 	}
 
 	cmdArgs := []string{
 		"--ignore-ssl-errors=true",
-		"--web-security=false",
+		"--web-security=true",
+		"--local-url-access=false",
 		phantomDebugArg,
 		scriptPath,
 		fmt.Sprintf("url=%v", url),
 		fmt.Sprintf("width=%v", opts.Width),
 		fmt.Sprintf("height=%v", opts.Height),
 		fmt.Sprintf("png=%v", pngPath),
-		fmt.Sprintf("domain=%v", rs.getLocalDomain()),
+		fmt.Sprintf("domain=%v", rs.domain),
 		fmt.Sprintf("timeout=%v", opts.Timeout.Seconds()),
 		fmt.Sprintf("renderKey=%v", renderKey),
 	}
@@ -58,18 +56,40 @@ func (rs *RenderingService) renderViaPhantomJS(ctx context.Context, opts Opts) (
 		cmdArgs = append([]string{fmt.Sprintf("--output-encoding=%s", opts.Encoding)}, cmdArgs...)
 	}
 
+	// gives phantomjs some additional time to timeout and return possible errors.
 	commandCtx, cancel := context.WithTimeout(ctx, opts.Timeout+time.Second*2)
 	defer cancel()
 
 	cmd := exec.CommandContext(commandCtx, binPath, cmdArgs...)
 	cmd.Stderr = cmd.Stdout
 
+	timezone := ""
+
+	cmd.Env = os.Environ()
+
 	if opts.Timezone != "" {
-		baseEnviron := os.Environ()
-		cmd.Env = appendEnviron(baseEnviron, "TZ", isoTimeOffsetToPosixTz(opts.Timezone))
+		timezone = isoTimeOffsetToPosixTz(opts.Timezone)
+		cmd.Env = appendEnviron(cmd.Env, "TZ", timezone)
 	}
 
+	// Added to disable usage of newer version of OPENSSL
+	// that seem to be incompatible with PhantomJS (used in Debian Buster)
+	if runtime.GOOS == "linux" {
+		disableNewOpenssl := "/etc/ssl"
+		cmd.Env = appendEnviron(cmd.Env, "OPENSSL_CONF", disableNewOpenssl)
+	}
+
+	rs.log.Debug("executing Phantomjs", "binPath", binPath, "cmdArgs", cmdArgs, "timezone", timezone)
+
 	out, err := cmd.Output()
+
+	if out != nil {
+		rs.log.Debug("Phantomjs output", "out", string(out))
+	}
+
+	if err != nil {
+		rs.log.Debug("Phantomjs error", "error", err)
+	}
 
 	// check for timeout first
 	if commandCtx.Err() == context.DeadlineExceeded {
@@ -81,8 +101,6 @@ func (rs *RenderingService) renderViaPhantomJS(ctx context.Context, opts Opts) (
 		rs.log.Error("Phantomjs exited with non zero exit code", "error", err)
 		return nil, err
 	}
-
-	rs.log.Debug("Phantomjs output", "out", string(out))
 
 	rs.log.Debug("Image rendered", "path", pngPath)
 	return &RenderResult{FilePath: pngPath}, nil

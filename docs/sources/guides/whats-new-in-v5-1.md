@@ -1,7 +1,7 @@
 +++
-title = "What's New in Grafana v5.1"
-description = "Feature & improvement highlights for Grafana v5.1"
-keywords = ["grafana", "new", "documentation", "5.1"]
+title = "What's new in Grafana v5.1"
+description = "Feature and improvement highlights for Grafana v5.1"
+keywords = ["grafana", "new", "documentation", "5.1", "release notes"]
 type = "docs"
 [menu.docs]
 name = "Version 5.1"
@@ -10,15 +10,15 @@ parent = "whatsnew"
 weight = -7
 +++
 
-# What's New in Grafana v5.1
+# What's new in Grafana v5.1
 
 Grafana v5.1 brings new features, many enhancements and bug fixes. This article will detail the major new features and enhancements.
 
 * [Improved scrolling experience]({{< relref "#improved-scrolling-experience" >}})
 * [Improved docker image]({{< relref "#improved-docker-image-breaking-change" >}}) with a breaking change!
 * [Heatmap support for Prometheus]({{< relref "#prometheus" >}})
-* [Microsoft SQL Server]({{< relref "#microsoft-sql-server" >}}) as metric & table datasource!
-* [Dashboards & Panels]({{< relref "#dashboards-panels" >}}) Improved adding panels to dashboards and enhancements to Graph and Table panels.
+* [Microsoft SQL Server]({{< relref "#microsoft-sql-server" >}}) as metric and table data source!
+* [Dashboards and Panels]({{< relref "#dashboards-panels" >}}) Improved adding panels to dashboards and enhancements to Graph and Table panels.
 * [New variable interpolation syntax]({{< relref "#new-variable-interpolation-syntax" >}})
 * [Improved workflow for provisioned dashboards]({{< relref "#improved-workflow-for-provisioned-dashboards" >}})
 
@@ -29,7 +29,7 @@ the native scrolling functionality. Grafana v5.1 ships with a native scrollbar f
 the dashboard grid and panels that's not overriding the native scrolling functionality. We hope that these changes and improvements should
 make the Grafana user experience much better!
 
-## Improved docker image (breaking change)
+## Improved Docker image (breaking change)
 
 Grafana v5.1 brings an improved official docker image which should make it easier to run and use the Grafana docker image and at the same time give more control to the user how to use/run it.
 
@@ -47,7 +47,7 @@ Please read the [updated documentation](/installation/docker/#migration-from-a-p
 
 {{< docs-imagebox img="/img/docs/v51/prometheus_heatmap.png" max-width="800px" class="docs-image--right" >}}
 
-The Prometheus datasource now support transforming Prometheus histograms to the heatmap panel. Prometheus histogram is a powerful feature, and we're
+The Prometheus data source now support transforming Prometheus histograms to the heatmap panel. Prometheus histogram is a powerful feature, and we're
 really happy to finally allow our users to render those as heatmaps. Please read [Heatmap panel documentation](/features/panels/heatmap/#pre-bucketed-data)
 for more information on how to use it.
 
@@ -61,13 +61,13 @@ Prometheus query editor also got support for autocomplete of template variables.
 
 Grafana v5.1 now ships with a built-in Microsoft SQL Server (MSSQL) data source plugin that allows you to query and visualize data from any
 Microsoft SQL Server 2005 or newer, including Microsoft Azure SQL Database. Do you have metric or log data in MSSQL? You can now visualize
-that data and define alert rules on it like with any of Grafana's other core datasources.
+that data and define alert rules on it like with any of Grafana's other core data sources.
 
 Please read [Using Microsoft SQL Server in Grafana documentation](/features/datasources/mssql/) for more detailed information on how to get started and use it.
 
 <div class="clearfix"></div>
 
-## Dashboards & Panels
+## Dashboards and Panels
 
 ### Adding new panels to dashboards
 
@@ -121,5 +121,5 @@ More information in the [Provisioning documentation](/administration/provisionin
 
 ## Changelog
 
-Checkout the [CHANGELOG.md](https://github.com/grafana/grafana/blob/master/CHANGELOG.md) file for a complete list
+Check out the [CHANGELOG.md](https://github.com/grafana/grafana/blob/master/CHANGELOG.md) file for a complete list
 of new features, changes, and bug fixes.

@@ -6,10 +6,7 @@
   max-width: 200px;
 }
 
-.gf-timepicker-nav-btn {
-  max-width: 120px;
-}
-
+.navbar-buttons--tv,
 .navbar-buttons--actions {
   display: none;
 }
@@ -29,20 +26,15 @@
   .navbar-page-btn {
     max-width: 250px;
   }
-  .gf-timepicker-nav-btn {
-    max-width: 200px;
-  }
 }
 
 @include media-breakpoint-up(md) {
+  .navbar-buttons--tv,
   .navbar-buttons--actions {
     display: flex;
   }
   .navbar-page-btn {
     max-width: 325px;
-  }
-  .gf-timepicker-nav-btn {
-    max-width: 240px;
   }
 }
 
@@ -52,9 +44,6 @@
   }
   .navbar-page-btn {
     max-width: 450px;
-  }
-  .gf-timepicker-nav-btn {
-    max-width: none;
   }
 }
 

@@ -4,7 +4,7 @@
 	<h3 class="page-sub-heading">Hello {{greeting}}.</h3>
 
 	<div class="modal-tagline p-b-2">
-		<em>{{invitedBy}}</em> has invited you to join Grafana and the organization <span class="highlight-word">{{contextSrv.user.orgName}}</span></br>Please complete the following to accept your invitation and continue:
+		<em>{{invitedBy}}</em> has invited you to join Grafana and the organization <span class="highlight-word">{{contextSrv.user.orgName}}</span></br>Please complete the following and choose a password to accept your invitation and continue:
 	</div>
 
 	<form name="inviteForm" class="login-form gf-form-group">
@@ -25,16 +25,12 @@
 			<input type="password" name="password" class="gf-form-input max-width-21" required ng-model="formModel.password" id="inputPassword" placeholder="password">
 		</div>
 
-		<div style="margin-left: 7.5rem; width: 254px;">
-			<password-strength password="formModel.password"></password-strength>
-		</div>
-
 		<div class="gf-form-button-row">
-			<button type="submit" class="btn btn-success" ng-click="submit();" ng-disable="!inviteForm.$valid">
+			<button type="submit" class="btn btn-primary" ng-click="submit();" ng-disable="!inviteForm.$valid">
 				Sign Up
 			</button>
 		</div>
 	</form>
 </div>
 
-
+<footer />

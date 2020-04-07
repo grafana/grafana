@@ -464,7 +464,7 @@ func (v *TimestampValue) decode(r io.Reader) error {
 func timeFromEpochMilli(t int64) time.Time {
 	secs := t / 1e3
 	msec := t % 1e3
-	return time.Unix(secs, msec*int64(time.Millisecond))
+	return time.Unix(secs, msec*int64(time.Millisecond)).UTC()
 }
 
 // An UUIDValue provides eventstream encoding, and representation of a UUID

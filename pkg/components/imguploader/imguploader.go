@@ -5,10 +5,11 @@ import (
 	"fmt"
 	"regexp"
 
-	"github.com/grafana/grafana/pkg/log"
-
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/setting"
 )
+
+const pngExt = ".png"
 
 type ImageUploader interface {
 	Upload(ctx context.Context, path string) (string, error)
@@ -21,6 +22,10 @@ func (NopImageUploader) Upload(ctx context.Context, path string) (string, error)
 	return "", nil
 }
 
+var (
+	logger = log.New("imguploader")
+)
+
 func NewImageUploader() (ImageUploader, error) {
 
 	switch setting.ImageUploadProvider {
@@ -30,6 +35,8 @@ func NewImageUploader() (ImageUploader, error) {
 			return nil, err
 		}
 
+		endpoint := s3sec.Key("endpoint").MustString("")
+		pathStyleAccess := s3sec.Key("path_style_access").MustBool(false)
 		bucket := s3sec.Key("bucket").MustString("")
 		region := s3sec.Key("region").MustString("")
 		path := s3sec.Key("path").MustString("")
@@ -50,7 +57,7 @@ func NewImageUploader() (ImageUploader, error) {
 			region = info.region
 		}
 
-		return NewS3Uploader(region, bucket, path, "public-read", accessKey, secretKey), nil
+		return NewS3Uploader(endpoint, region, bucket, path, "public-read", accessKey, secretKey, pathStyleAccess), nil
 	case "webdav":
 		webdavSec, err := setting.Raw.GetSection("external_image_storage.webdav")
 		if err != nil {
@@ -94,7 +101,7 @@ func NewImageUploader() (ImageUploader, error) {
 	}
 
 	if setting.ImageUploadProvider != "" {
-		log.Error2("The external image storage configuration is invalid", "unsupported provider", setting.ImageUploadProvider)
+		logger.Error("The external image storage configuration is invalid", "unsupported provider", setting.ImageUploadProvider)
 	}
 
 	return NopImageUploader{}, nil

@@ -3,7 +3,7 @@ package sqlstore
 import (
 	"strings"
 
-	m "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/models"
 )
 
 // SearchBuilder is a builder/object mother that builds a dashboard search query
@@ -11,20 +11,32 @@ type SearchBuilder struct {
 	SqlBuilder
 	tags                []string
 	isStarred           bool
-	limit               int
-	signedInUser        *m.SignedInUser
+	limit               int64
+	page                int64
+	signedInUser        *models.SignedInUser
 	whereDashboardIdsIn []int64
 	whereTitle          string
 	whereTypeFolder     bool
 	whereTypeDash       bool
 	whereFolderIds      []int64
-	permission          m.PermissionType
+	permission          models.PermissionType
 }
 
-func NewSearchBuilder(signedInUser *m.SignedInUser, limit int, permission m.PermissionType) *SearchBuilder {
+func NewSearchBuilder(signedInUser *models.SignedInUser, limit int64, page int64, permission models.PermissionType) *SearchBuilder {
+	// Default to page 1
+	if page < 1 {
+		page = 1
+	}
+
+	// default limit
+	if limit <= 0 {
+		limit = 1000
+	}
+
 	searchBuilder := &SearchBuilder{
 		signedInUser: signedInUser,
 		limit:        limit,
+		page:         page,
 		permission:   permission,
 	}
 
@@ -89,11 +101,15 @@ func (sb *SearchBuilder) ToSql() (string, []interface{}) {
 	}
 
 	sb.sql.WriteString(`
+		ORDER BY dashboard.id ` + dialect.LimitOffset(sb.limit, (sb.page-1)*sb.limit) + `) as ids
+		INNER JOIN dashboard on ids.id = dashboard.id
+	`)
+
+	sb.sql.WriteString(`
 		LEFT OUTER JOIN dashboard folder on folder.id = dashboard.folder_id
 		LEFT OUTER JOIN dashboard_tag on dashboard.id = dashboard_tag.dashboard_id`)
 
-	sb.sql.WriteString(" ORDER BY dashboard.title ASC" + dialect.Limit(5000))
-
+	sb.sql.WriteString(" ORDER BY dashboard.title ASC")
 	return sb.sql.String(), sb.params
 }
 
@@ -133,12 +149,7 @@ func (sb *SearchBuilder) buildTagQuery() {
 	sb.buildSearchWhereClause()
 
 	// this ends the inner select (tag filtered part)
-	sb.sql.WriteString(`
-		GROUP BY dashboard.id HAVING COUNT(dashboard.id) >= ?
-		ORDER BY dashboard.id` + dialect.Limit(int64(sb.limit)) + `) as ids
-		INNER JOIN dashboard on ids.id = dashboard.id
-	`)
-
+	sb.sql.WriteString(` GROUP BY dashboard.id HAVING COUNT(dashboard.id) >= ? `)
 	sb.params = append(sb.params, len(sb.tags))
 }
 
@@ -152,7 +163,6 @@ func (sb *SearchBuilder) buildMainQuery() {
 	sb.sql.WriteString(` WHERE `)
 	sb.buildSearchWhereClause()
 
-	sb.sql.WriteString(` ORDER BY dashboard.title` + dialect.Limit(int64(sb.limit)) + `) as ids INNER JOIN dashboard on ids.id = dashboard.id `)
 }
 
 func (sb *SearchBuilder) buildSearchWhereClause() {

@@ -5,14 +5,15 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	m "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/models"
 	. "github.com/smartystreets/goconvey/convey"
 )
 
 func mockTimeNow() {
 	var timeSeed int64
 	timeNow = func() time.Time {
-		fakeNow := time.Unix(timeSeed, 0)
+		loc := time.FixedZone("MockZoneUTC-5", -5*60*60)
+		fakeNow := time.Unix(timeSeed, 0).In(loc)
 		timeSeed++
 		return fakeNow
 	}
@@ -31,7 +32,7 @@ func TestAlertingDataAccess(t *testing.T) {
 
 		testDash := insertTestDashboard("dashboard with alerts", 1, 0, false, "alert")
 		evalData, _ := simplejson.NewJson([]byte(`{"test": "test"}`))
-		items := []*m.Alert{
+		items := []*models.Alert{
 			{
 				PanelId:     1,
 				DashboardId: testDash.Id,
@@ -44,7 +45,7 @@ func TestAlertingDataAccess(t *testing.T) {
 			},
 		}
 
-		cmd := m.SaveAlertsCommand{
+		cmd := models.SaveAlertsCommand{
 			Alerts:      items,
 			DashboardId: testDash.Id,
 			OrgId:       1,
@@ -59,9 +60,9 @@ func TestAlertingDataAccess(t *testing.T) {
 
 		Convey("Can set new states", func() {
 			Convey("new state ok", func() {
-				cmd := &m.SetAlertStateCommand{
+				cmd := &models.SetAlertStateCommand{
 					AlertId: 1,
-					State:   m.AlertStateOK,
+					State:   models.AlertStateOK,
 				}
 
 				err = SetAlertState(cmd)
@@ -72,16 +73,23 @@ func TestAlertingDataAccess(t *testing.T) {
 			stateDateBeforePause := alert.NewStateDate
 
 			Convey("can pause all alerts", func() {
-				pauseAllAlerts(true)
+				err := pauseAllAlerts(true)
+				So(err, ShouldBeNil)
 
 				Convey("cannot updated paused alert", func() {
-					cmd := &m.SetAlertStateCommand{
+					cmd := &models.SetAlertStateCommand{
 						AlertId: 1,
-						State:   m.AlertStateOK,
+						State:   models.AlertStateOK,
 					}
 
 					err = SetAlertState(cmd)
 					So(err, ShouldNotBeNil)
+				})
+
+				Convey("alert is paused", func() {
+					alert, _ = getAlertById(1)
+					currentState := alert.State
+					So(currentState, ShouldEqual, "paused")
 				})
 
 				Convey("pausing alerts should update their NewStateDate", func() {
@@ -91,7 +99,8 @@ func TestAlertingDataAccess(t *testing.T) {
 				})
 
 				Convey("unpausing alerts should update their NewStateDate again", func() {
-					pauseAllAlerts(false)
+					err := pauseAllAlerts(false)
+					So(err, ShouldBeNil)
 					alert, _ = getAlertById(1)
 					stateDateAfterUnpause := alert.NewStateDate
 					So(stateDateBeforePause, ShouldHappenBefore, stateDateAfterUnpause)
@@ -100,7 +109,7 @@ func TestAlertingDataAccess(t *testing.T) {
 		})
 
 		Convey("Can read properties", func() {
-			alertQuery := m.GetAlertsQuery{DashboardIDs: []int64{testDash.Id}, PanelId: 1, OrgId: 1, User: &m.SignedInUser{OrgRole: m.ROLE_ADMIN}}
+			alertQuery := models.GetAlertsQuery{DashboardIDs: []int64{testDash.Id}, PanelId: 1, OrgId: 1, User: &models.SignedInUser{OrgRole: models.ROLE_ADMIN}}
 			err2 := HandleAlertsQuery(&alertQuery)
 
 			alert := alertQuery.Result[0]
@@ -109,7 +118,7 @@ func TestAlertingDataAccess(t *testing.T) {
 			So(alert.DashboardId, ShouldEqual, testDash.Id)
 			So(alert.PanelId, ShouldEqual, 1)
 			So(alert.Name, ShouldEqual, "Alerting title")
-			So(alert.State, ShouldEqual, "pending")
+			So(alert.State, ShouldEqual, models.AlertStateUnknown)
 			So(alert.NewStateDate, ShouldNotBeNil)
 			So(alert.EvalData, ShouldNotBeNil)
 			So(alert.EvalData.Get("test").MustString(), ShouldEqual, "test")
@@ -120,8 +129,8 @@ func TestAlertingDataAccess(t *testing.T) {
 		})
 
 		Convey("Viewer cannot read alerts", func() {
-			viewerUser := &m.SignedInUser{OrgRole: m.ROLE_VIEWER, OrgId: 1}
-			alertQuery := m.GetAlertsQuery{DashboardIDs: []int64{testDash.Id}, PanelId: 1, OrgId: 1, User: viewerUser}
+			viewerUser := &models.SignedInUser{OrgRole: models.ROLE_VIEWER, OrgId: 1}
+			alertQuery := models.GetAlertsQuery{DashboardIDs: []int64{testDash.Id}, PanelId: 1, OrgId: 1, User: viewerUser}
 			err2 := HandleAlertsQuery(&alertQuery)
 
 			So(err2, ShouldBeNil)
@@ -132,7 +141,7 @@ func TestAlertingDataAccess(t *testing.T) {
 			modifiedItems := items
 			modifiedItems[0].Name = "Name"
 
-			modifiedCmd := m.SaveAlertsCommand{
+			modifiedCmd := models.SaveAlertsCommand{
 				DashboardId: testDash.Id,
 				OrgId:       1,
 				UserId:      1,
@@ -146,7 +155,7 @@ func TestAlertingDataAccess(t *testing.T) {
 			})
 
 			Convey("Alerts should be updated", func() {
-				query := m.GetAlertsQuery{DashboardIDs: []int64{testDash.Id}, OrgId: 1, User: &m.SignedInUser{OrgRole: m.ROLE_ADMIN}}
+				query := models.GetAlertsQuery{DashboardIDs: []int64{testDash.Id}, OrgId: 1, User: &models.SignedInUser{OrgRole: models.ROLE_ADMIN}}
 				err2 := HandleAlertsQuery(&query)
 
 				So(err2, ShouldBeNil)
@@ -154,7 +163,7 @@ func TestAlertingDataAccess(t *testing.T) {
 				So(query.Result[0].Name, ShouldEqual, "Name")
 
 				Convey("Alert state should not be updated", func() {
-					So(query.Result[0].State, ShouldEqual, "pending")
+					So(query.Result[0].State, ShouldEqual, models.AlertStateUnknown)
 				})
 			})
 
@@ -165,7 +174,7 @@ func TestAlertingDataAccess(t *testing.T) {
 		})
 
 		Convey("Multiple alerts per dashboard", func() {
-			multipleItems := []*m.Alert{
+			multipleItems := []*models.Alert{
 				{
 					DashboardId: testDash.Id,
 					PanelId:     1,
@@ -195,7 +204,7 @@ func TestAlertingDataAccess(t *testing.T) {
 			Convey("Should save 3 dashboards", func() {
 				So(err, ShouldBeNil)
 
-				queryForDashboard := m.GetAlertsQuery{DashboardIDs: []int64{testDash.Id}, OrgId: 1, User: &m.SignedInUser{OrgRole: m.ROLE_ADMIN}}
+				queryForDashboard := models.GetAlertsQuery{DashboardIDs: []int64{testDash.Id}, OrgId: 1, User: &models.SignedInUser{OrgRole: models.ROLE_ADMIN}}
 				err2 := HandleAlertsQuery(&queryForDashboard)
 
 				So(err2, ShouldBeNil)
@@ -209,7 +218,7 @@ func TestAlertingDataAccess(t *testing.T) {
 				err = SaveAlerts(&cmd)
 
 				Convey("should delete the missing alert", func() {
-					query := m.GetAlertsQuery{DashboardIDs: []int64{testDash.Id}, OrgId: 1, User: &m.SignedInUser{OrgRole: m.ROLE_ADMIN}}
+					query := models.GetAlertsQuery{DashboardIDs: []int64{testDash.Id}, OrgId: 1, User: &models.SignedInUser{OrgRole: models.ROLE_ADMIN}}
 					err2 := HandleAlertsQuery(&query)
 					So(err2, ShouldBeNil)
 					So(len(query.Result), ShouldEqual, 2)
@@ -218,7 +227,7 @@ func TestAlertingDataAccess(t *testing.T) {
 		})
 
 		Convey("When dashboard is removed", func() {
-			items := []*m.Alert{
+			items := []*models.Alert{
 				{
 					PanelId:     1,
 					DashboardId: testDash.Id,
@@ -227,24 +236,24 @@ func TestAlertingDataAccess(t *testing.T) {
 				},
 			}
 
-			cmd := m.SaveAlertsCommand{
+			cmd := models.SaveAlertsCommand{
 				Alerts:      items,
 				DashboardId: testDash.Id,
 				OrgId:       1,
 				UserId:      1,
 			}
 
-			SaveAlerts(&cmd)
+			err = SaveAlerts(&cmd)
+			So(err, ShouldBeNil)
 
-			err = DeleteDashboard(&m.DeleteDashboardCommand{
+			err = DeleteDashboard(&models.DeleteDashboardCommand{
 				OrgId: 1,
 				Id:    testDash.Id,
 			})
-
 			So(err, ShouldBeNil)
 
 			Convey("Alerts should be removed", func() {
-				query := m.GetAlertsQuery{DashboardIDs: []int64{testDash.Id}, OrgId: 1, User: &m.SignedInUser{OrgRole: m.ROLE_ADMIN}}
+				query := models.GetAlertsQuery{DashboardIDs: []int64{testDash.Id}, OrgId: 1, User: &models.SignedInUser{OrgRole: models.ROLE_ADMIN}}
 				err2 := HandleAlertsQuery(&query)
 
 				So(testDash.Id, ShouldEqual, 1)
@@ -268,10 +277,12 @@ func TestPausingAlerts(t *testing.T) {
 		stateDateBeforePause := alert.NewStateDate
 		stateDateAfterPause := stateDateBeforePause
 		Convey("when paused", func() {
-			pauseAlert(testDash.OrgId, 1, true)
+			_, err := pauseAlert(testDash.OrgId, 1, true)
+			So(err, ShouldBeNil)
 
 			Convey("the NewStateDate should be updated", func() {
-				alert, _ := getAlertById(1)
+				alert, err := getAlertById(1)
+				So(err, ShouldBeNil)
 
 				stateDateAfterPause = alert.NewStateDate
 				So(stateDateBeforePause, ShouldHappenBefore, stateDateAfterPause)
@@ -279,10 +290,12 @@ func TestPausingAlerts(t *testing.T) {
 		})
 
 		Convey("when unpaused", func() {
-			pauseAlert(testDash.OrgId, 1, false)
+			_, err := pauseAlert(testDash.OrgId, 1, false)
+			So(err, ShouldBeNil)
 
 			Convey("the NewStateDate should be updated again", func() {
-				alert, _ := getAlertById(1)
+				alert, err := getAlertById(1)
+				So(err, ShouldBeNil)
 
 				stateDateAfterUnpause := alert.NewStateDate
 				So(stateDateAfterPause, ShouldHappenBefore, stateDateAfterUnpause)
@@ -291,7 +304,7 @@ func TestPausingAlerts(t *testing.T) {
 	})
 }
 func pauseAlert(orgId int64, alertId int64, pauseState bool) (int64, error) {
-	cmd := &m.PauseAlertCommand{
+	cmd := &models.PauseAlertCommand{
 		OrgId:    orgId,
 		AlertIds: []int64{alertId},
 		Paused:   pauseState,
@@ -300,8 +313,8 @@ func pauseAlert(orgId int64, alertId int64, pauseState bool) (int64, error) {
 	So(err, ShouldBeNil)
 	return cmd.ResultCount, err
 }
-func insertTestAlert(title string, message string, orgId int64, dashId int64, settings *simplejson.Json) (*m.Alert, error) {
-	items := []*m.Alert{
+func insertTestAlert(title string, message string, orgId int64, dashId int64, settings *simplejson.Json) (*models.Alert, error) {
+	items := []*models.Alert{
 		{
 			PanelId:     1,
 			DashboardId: dashId,
@@ -313,7 +326,7 @@ func insertTestAlert(title string, message string, orgId int64, dashId int64, se
 		},
 	}
 
-	cmd := m.SaveAlertsCommand{
+	cmd := models.SaveAlertsCommand{
 		Alerts:      items,
 		DashboardId: dashId,
 		OrgId:       orgId,
@@ -324,8 +337,8 @@ func insertTestAlert(title string, message string, orgId int64, dashId int64, se
 	return cmd.Alerts[0], err
 }
 
-func getAlertById(id int64) (*m.Alert, error) {
-	q := &m.GetAlertByIdQuery{
+func getAlertById(id int64) (*models.Alert, error) {
+	q := &models.GetAlertByIdQuery{
 		Id: id,
 	}
 	err := GetAlertById(q)
@@ -334,7 +347,7 @@ func getAlertById(id int64) (*m.Alert, error) {
 }
 
 func pauseAllAlerts(pauseState bool) error {
-	cmd := &m.PauseAllAlertCommand{
+	cmd := &models.PauseAllAlertCommand{
 		Paused: pauseState,
 	}
 	err := PauseAllAlerts(cmd)

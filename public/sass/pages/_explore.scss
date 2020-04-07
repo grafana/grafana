@@ -1,169 +1,466 @@
-.explore {
-  width: 100%;
+.icon-margin-right {
+  margin-right: 0.25em;
 
-  &-container {
-    padding: 2rem;
+  @media only screen and (max-width: 1320px) {
+    margin-right: 0;
   }
+}
 
-  &-wrapper {
-    display: flex;
+.icon-brand-gradient {
+  text-shadow: none;
+  background: linear-gradient(180deg, #f05a28 30%, #fbca0a 100%);
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  -moz-text-fill-color: transparent;
+}
 
-    > .explore-split {
-      width: 50%;
+.icon-margin-left {
+  margin-left: 0.25em;
+
+  @media only screen and (max-width: 1320px) {
+    margin-left: 0;
+  }
+}
+
+.explore-active-button {
+  box-shadow: $btn-active-box-shadow;
+  border-color: $orange-dark;
+  background-image: none;
+  background-color: transparent;
+  color: $orange-dark !important;
+  &:focus {
+    background-color: transparent;
+  }
+  i {
+    text-shadow: none;
+    background: linear-gradient(180deg, #f05a28 30%, #fbca0a 100%);
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    -moz-text-fill-color: transparent;
+  }
+}
+.explore-ds-picker {
+  min-width: 200px;
+  max-width: 300px;
+}
+
+.explore-ds-picker--small {
+  min-width: 60px;
+  max-width: 60px;
+
+  .ds-picker {
+    min-width: 60px;
+    max-width: 60px;
+  }
+}
+
+.explore-toolbar {
+  background: inherit;
+  display: flex;
+  flex-flow: row wrap;
+  justify-content: flex-start;
+  height: auto;
+  padding: 0 $dashboard-padding;
+  border-bottom: 1px solid #0000;
+  transition-duration: 0.35s;
+  transition-timing-function: ease-in-out;
+  transition-property: box-shadow, border-bottom;
+}
+
+.explore-toolbar-item {
+  position: relative;
+  align-self: center;
+
+  &:first-child {
+    padding-left: 34px;
+
+    @include media-breakpoint-up(md) {
+      padding-left: 0;
     }
   }
+}
 
-  // Push split button a bit
-  .explore-first-button {
-    margin-left: 15px;
+.explore-toolbar.splitted {
+  .explore-toolbar-item {
+    flex: 1 1 100%;
   }
 
-  // Graph panel needs a bit extra padding at top
-  .panel-container {
-    padding: $panel-padding;
-    padding-top: 10px;
+  .explore-toolbar-content-item:first-child {
+    padding-left: 0;
+    margin-right: auto;
   }
+}
 
-  // Make sure wrap buttons around on small screens
-  .navbar {
-    flex-wrap: wrap;
-    height: auto;
+.explore-toolbar-item:last-child {
+  flex: auto;
+}
+
+.explore-toolbar-header {
+  display: flex;
+  flex: 1 1 0;
+  flex-flow: row nowrap;
+  font-size: 18px;
+  min-height: $navbarHeight;
+  line-height: $navbarHeight;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.explore-toolbar-header-close {
+  margin-left: auto;
+  color: $text-color-weak;
+}
+
+.explore-toolbar-content {
+  display: flex;
+  flex-flow: row wrap;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+.explore-toolbar-content-item {
+  display: flex;
+  padding: 2px 2px;
+
+  &:first-child {
+    padding-left: $dashboard-padding;
+    margin-right: auto;
   }
+}
 
-  .navbar-page-btn {
-    margin-right: 1rem;
-
-    // Explore icon in header
-    .fa {
-      font-size: 100%;
-      opacity: 0.75;
-      margin-right: 0.5em;
+@media only screen and (max-width: 1545px) {
+  .explore-toolbar.splitted {
+    .timepicker-rangestring {
+      display: none;
     }
   }
+}
 
-  // Toggle mode
-  .navbar-button.active {
-    color: $btn-active-text-color;
-    background-color: $btn-active-bg;
+@media only screen and (max-width: 1400px) {
+  .explore-toolbar.splitted {
+    .explore-toolbar-content-item {
+      .navbar-button {
+        span {
+          display: none;
+        }
+      }
+    }
   }
+}
 
-  .navbar-button--no-icon {
-    line-height: 18px;
-  }
-
-  .result-options {
-    margin-top: 2 * $panel-margin;
-  }
-
-  .elapsed-time {
-    position: absolute;
-    left: 0;
-    right: 0;
-    top: 3.5rem;
-    text-align: center;
-    font-size: 0.8rem;
-  }
-
-  .graph-legend {
-    flex-wrap: wrap;
-  }
-
-  .datasource-picker {
-    min-width: 10rem;
-  }
-
+@media only screen and (max-width: 1070px) {
   .timepicker {
-    display: flex;
-
-    &-rangestring {
-      margin-left: 0.5em;
+    .timepicker-rangestring {
+      display: none;
     }
   }
 
-  .run-icon {
-    margin-left: 0.5em;
-    transform: rotate(90deg);
+  .explore-toolbar-content {
+    justify-content: flex-start;
   }
 
-  .relative {
-    position: relative;
+  .explore-toolbar.splitted {
+    .explore-toolbar-content-item {
+      padding: 2px 0;
+    }
   }
+}
 
-  .link {
-    text-decoration: underline;
+@media only screen and (max-width: 897px) {
+  .explore-toolbar {
+    .explore-toolbar-content-item {
+      .navbar-button span {
+        display: none;
+      }
+    }
   }
+}
+
+@media only screen and (max-width: 810px) {
+  .explore-toolbar {
+    .explore-toolbar-content-item {
+      &:first-child {
+        padding-left: 2px;
+        margin: 0 12px 0 16px;
+      }
+    }
+  }
+}
+
+.explore-icon-align {
+  .navbar-button {
+    i {
+      position: relative;
+      top: -1px;
+
+      @media only screen and (max-width: 1320px) {
+        margin: 0 -3px;
+      }
+    }
+  }
+}
+
+.explore-toolbar.splitted {
+  .explore-icon-align {
+    .navbar-button {
+      i {
+        margin: 0 -3px;
+      }
+    }
+  }
+}
+
+.explore {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+}
+
+.explore.explore-live {
+  flex-direction: column-reverse;
 }
 
 .explore + .explore {
   border-left: 1px dotted $table-border;
 }
 
-.query-row {
+.explore-container {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  padding: $dashboard-padding;
+}
+
+.explore-container.explore-live {
+  flex-direction: column-reverse;
+}
+
+.explore-wrapper {
   display: flex;
 
+  > .explore-split {
+    width: 50%;
+  }
+}
+
+.explore-input--ml {
+  margin-left: 4px;
+}
+
+.navbar .elapsed-time {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 48px;
+  text-align: center;
+  font-size: 11px;
+}
+
+.graph-legend {
+  flex-wrap: wrap;
+}
+
+.query-row {
+  display: flex;
+  position: relative;
+  align-items: flex-start;
+
   & + & {
-    margin-top: 0.5rem;
+    margin-top: $space-sm;
   }
 }
 
 .query-row-tools {
-  width: 6rem;
+  white-space: nowrap;
+}
+
+.query-row-status {
+  position: relative;
+  top: 0;
+  right: 35px;
+  z-index: 1015;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  height: $input-height;
+  width: 0;
 }
 
 .query-row-field {
   margin-right: 3px;
-  width: 100%;
+  flex-grow: 1;
 }
 
-.explore {
-  .logs {
-    .logs-entries {
-      display: grid;
-      grid-column-gap: 1rem;
-      grid-row-gap: 0.1rem;
-      grid-template-columns: 4px minmax(100px, max-content) 1fr;
-      font-family: $font-family-monospace;
-    }
+.query-row-break {
+  flex-basis: 100%;
+}
 
-    .logs-row-match-highlight {
-      background-color: lighten($blue, 20%);
-    }
+.query-transactions {
+  display: table;
+}
 
-    .logs-row-level {
-      background-color: transparent;
-      margin: 6px 0;
-      border-radius: 2px;
-      opacity: 0.8;
-    }
+.query-transaction {
+  display: table-row;
+  color: $text-color-weak;
+  line-height: 1.44;
+}
 
-    .logs-row-level-crit,
-    .logs-row-level-error,
-    .logs-row-level-err {
-      background-color: $red;
-    }
+.query-transaction--loading {
+  animation: query-loading-color-change 1s alternate 100;
+}
 
-    .logs-row-level-warn {
-      background-color: $orange;
-    }
-
-    .logs-row-level-info {
-      background-color: $green;
-    }
+@keyframes query-loading-color-change {
+  from {
+    color: $text-color-faint;
   }
+
+  to {
+    color: $blue;
+  }
+}
+
+.query-transaction__type,
+.query-transaction__duration {
+  display: table-cell;
+  font-size: $font-size-xs;
+  text-align: right;
+  padding-right: 0.25em;
 }
 
 // Prometheus-specifics, to be extracted to datasource soon
 
 .explore {
-  .prom-query-field {
-    display: flex;
-  }
-
-  .prom-query-field-wrapper {
-    width: 100%;
-  }
-
   .prom-query-field-info {
     margin: 0.25em 0.5em 0.5em;
+    display: flex;
+
+    details {
+      margin-left: 1em;
+    }
+  }
+}
+
+// ReactTable basic overrides (does not include pivot/groups/filters)
+// When integrating ReactTable as new panel plugin, move to _panel_table.scss
+
+.ReactTable {
+  border: none;
+}
+
+.ReactTable .rt-table {
+  // Allow some space for the no-data text
+  min-height: 90px;
+}
+
+.ReactTable .rt-thead.-header {
+  box-shadow: none;
+  background: $list-item-bg;
+  border-top: 2px solid $body-bg;
+  border-bottom: 2px solid $body-bg;
+  height: 2em;
+}
+
+.ReactTable .rt-thead.-header .rt-th {
+  text-align: left;
+  color: $blue;
+  font-weight: $font-weight-semi-bold;
+}
+
+.ReactTable .rt-thead .rt-td,
+.ReactTable .rt-thead .rt-th {
+  padding: 0.45em 0 0.45em 1.1em;
+  border-right: none;
+  box-shadow: none;
+}
+
+.ReactTable .rt-tbody .rt-td {
+  padding: 0.45em 0 0.45em 1.1em;
+  border-bottom: 2px solid $body-bg;
+  border-right: 2px solid $body-bg;
+}
+
+.ReactTable .rt-tbody .rt-td:last-child {
+  border-right: none;
+}
+
+.ReactTable .-pagination {
+  border-top: none;
+  box-shadow: none;
+  margin-top: $space-sm;
+}
+
+.ReactTable .-pagination .-btn {
+  color: $blue;
+  background: $list-item-bg;
+}
+
+.ReactTable .-pagination input,
+.ReactTable .-pagination select {
+  color: $input-color;
+  background-color: $input-bg;
+}
+
+.ReactTable .-loading {
+  background: $input-bg;
+}
+
+.ReactTable .-loading.-active {
+  opacity: 0.8;
+}
+
+.ReactTable .-loading > div {
+  color: $input-color;
+}
+
+.ReactTable .rt-tr .rt-td:last-child {
+  text-align: right;
+}
+
+.ReactTable .rt-noData {
+  top: 60px;
+  z-index: inherit;
+}
+
+// React-component cascade fix: show "loading" when loading children
+.rc-cascader-menu-item-loading:after {
+  position: absolute;
+  right: 12px;
+  content: 'loading';
+  color: #767980;
+  font-style: italic;
+}
+
+// React-component cascade fix: vertical alignment issue with Safari
+.rc-cascader-menu {
+  vertical-align: top;
+}
+
+// TODO Experimental
+
+.cheat-sheet-item {
+  margin: $space-lg 0;
+  width: 50%;
+}
+
+.cheat-sheet-item__title {
+  font-size: $font-size-h3;
+}
+
+.cheat-sheet-item__example {
+  margin: $space-xs 0;
+  cursor: pointer;
+}
+
+.query-type-toggle {
+  margin-left: 5px;
+
+  .btn.active {
+    background-color: $input-bg;
+    background-image: none;
+    background-clip: padding-box;
+    border: $input-border;
+    border-radius: $input-border-radius;
+    @include box-shadow($input-box-shadow);
+    color: $input-color;
   }
 }

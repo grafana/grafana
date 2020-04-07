@@ -5,10 +5,13 @@ import (
 	"net/url"
 	"strconv"
 
-	"github.com/go-xorm/core"
-	"github.com/grafana/grafana/pkg/log"
+	"github.com/grafana/grafana/pkg/setting"
+
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/tsdb"
+	"github.com/grafana/grafana/pkg/tsdb/sqleng"
+	"xorm.io/core"
 )
 
 func init() {
@@ -19,37 +22,31 @@ func newPostgresQueryEndpoint(datasource *models.DataSource) (tsdb.TsdbQueryEndp
 	logger := log.New("tsdb.postgres")
 
 	cnnstr := generateConnectionString(datasource)
-	logger.Debug("getEngine", "connection", cnnstr)
+	if setting.Env == setting.DEV {
+		logger.Debug("getEngine", "connection", cnnstr)
+	}
 
-	config := tsdb.SqlQueryEndpointConfiguration{
+	config := sqleng.SqlQueryEndpointConfiguration{
 		DriverName:        "postgres",
 		ConnectionString:  cnnstr,
 		Datasource:        datasource,
 		MetricColumnTypes: []string{"UNKNOWN", "TEXT", "VARCHAR", "CHAR"},
 	}
 
-	rowTransformer := postgresRowTransformer{
+	queryResultTransformer := postgresQueryResultTransformer{
 		log: logger,
 	}
 
 	timescaledb := datasource.JsonData.Get("timescaledb").MustBool(false)
 
-	return tsdb.NewSqlQueryEndpoint(&config, &rowTransformer, newPostgresMacroEngine(timescaledb), logger)
+	return sqleng.NewSqlQueryEndpoint(&config, &queryResultTransformer, newPostgresMacroEngine(timescaledb), logger)
 }
 
 func generateConnectionString(datasource *models.DataSource) string {
-	password := ""
-	for key, value := range datasource.SecureJsonData.Decrypt() {
-		if key == "password" {
-			password = value
-			break
-		}
-	}
-
 	sslmode := datasource.JsonData.Get("sslmode").MustString("verify-full")
 	u := &url.URL{
 		Scheme: "postgres",
-		User:   url.UserPassword(datasource.User, password),
+		User:   url.UserPassword(datasource.User, datasource.DecryptedPassword()),
 		Host:   datasource.Url, Path: datasource.Database,
 		RawQuery: "sslmode=" + url.QueryEscape(sslmode),
 	}
@@ -57,11 +54,11 @@ func generateConnectionString(datasource *models.DataSource) string {
 	return u.String()
 }
 
-type postgresRowTransformer struct {
+type postgresQueryResultTransformer struct {
 	log log.Logger
 }
 
-func (t *postgresRowTransformer) Transform(columnTypes []*sql.ColumnType, rows *core.Rows) (tsdb.RowValues, error) {
+func (t *postgresQueryResultTransformer) TransformQueryResult(columnTypes []*sql.ColumnType, rows *core.Rows) (tsdb.RowValues, error) {
 	values := make([]interface{}, len(columnTypes))
 	valuePtrs := make([]interface{}, len(columnTypes))
 
@@ -95,4 +92,8 @@ func (t *postgresRowTransformer) Transform(columnTypes []*sql.ColumnType, rows *
 	}
 
 	return values, nil
+}
+
+func (t *postgresQueryResultTransformer) TransformQueryError(err error) error {
+	return err
 }

@@ -8,6 +8,7 @@ import {
   calculateBucketSize,
   isHeatmapDataEqual,
 } from '../heatmap_data_converter';
+import { HeatmapData } from '../types';
 
 describe('isHeatmapDataEqual', () => {
   const ctx: any = {};
@@ -122,19 +123,31 @@ describe('HeatmapDataConverter', () => {
     ctx.series = [];
     ctx.series.push(
       new TimeSeries({
-        datapoints: [[1, 1422774000000], [1, 1422774000010], [2, 1422774060000]],
+        datapoints: [
+          [1, 1422774000000],
+          [1, 1422774000010],
+          [2, 1422774060000],
+        ],
         alias: 'series1',
       })
     );
     ctx.series.push(
       new TimeSeries({
-        datapoints: [[2, 1422774000000], [2, 1422774000010], [3, 1422774060000]],
+        datapoints: [
+          [2, 1422774000000],
+          [2, 1422774000010],
+          [3, 1422774060000],
+        ],
         alias: 'series2',
       })
     );
     ctx.series.push(
       new TimeSeries({
-        datapoints: [[5, 1422774000000], [3, 1422774000010], [4, 1422774060000]],
+        datapoints: [
+          [5, 1422774000000],
+          [3, 1422774000010],
+          [4, 1422774060000],
+        ],
         alias: 'series3',
       })
     );
@@ -223,21 +236,30 @@ describe('Histogram converter', () => {
     ctx.series = [];
     ctx.series.push(
       new TimeSeries({
-        datapoints: [[1, 1422774000000], [0, 1422774060000]],
+        datapoints: [
+          [1, 1422774000000],
+          [0, 1422774060000],
+        ],
         alias: '1',
         label: '1',
       })
     );
     ctx.series.push(
       new TimeSeries({
-        datapoints: [[5, 1422774000000], [3, 1422774060000]],
+        datapoints: [
+          [5, 1422774000000],
+          [3, 1422774060000],
+        ],
         alias: '2',
         label: '2',
       })
     );
     ctx.series.push(
       new TimeSeries({
-        datapoints: [[0, 1422774000000], [1, 1422774060000]],
+        datapoints: [
+          [0, 1422774000000],
+          [1, 1422774060000],
+        ],
         alias: '3',
         label: '3',
       })
@@ -248,7 +270,7 @@ describe('Histogram converter', () => {
     beforeEach(() => {});
 
     it('should build proper heatmap data', () => {
-      const expectedHeatmap = {
+      const expectedHeatmap: HeatmapData = {
         '1422774000000': {
           x: 1422774000000,
           buckets: {
@@ -322,7 +344,7 @@ describe('Histogram converter', () => {
 });
 
 describe('convertToCards', () => {
-  let buckets = {};
+  let buckets: HeatmapData = {};
 
   beforeEach(() => {
     buckets = {

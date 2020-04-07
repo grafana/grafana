@@ -2,7 +2,7 @@
 title = "User HTTP API "
 description = "Grafana User HTTP API"
 keywords = ["grafana", "http", "documentation", "api", "user"]
-aliases = ["/http_api/user/"]
+aliases = ["/docs/grafana/latest/http_api/user/"]
 type = "docs"
 [menu.docs]
 name = "Users"
@@ -63,7 +63,7 @@ Content-Type: application/json
 Authorization: Basic YWRtaW46YWRtaW4=
 ```
 
-Default value for the `perpage` parameter is `1000` and for the `page` parameter is `1`. The `totalCount` field in the response can be used for pagination of the user list E.g. if `totalCount` is equal to 100 users and the `perpage` parameter is set to 10 then there are 10 pages of users. The `query` parameter is optional and it will return results where the query value is contained in one of the `name`, `login` or `email` fields. Query values with spaces need to be url encoded e.g. `query=Jane%20Doe`.
+Default value for the `perpage` parameter is `1000` and for the `page` parameter is `1`. The `totalCount` field in the response can be used for pagination of the user list E.g. if `totalCount` is equal to 100 users and the `perpage` parameter is set to 10 then there are 10 pages of users. The `query` parameter is optional and it will return results where the query value is contained in one of the `name`, `login` or `email` fields. Query values with spaces need to be URL encoded e.g. `query=Jane%20Doe`.
 
 Requires basic authentication and that the authenticated user is a Grafana Admin.
 
@@ -116,12 +116,18 @@ HTTP/1.1 200
 Content-Type: application/json
 
 {
-  "email": "user@mygraf.com"
+  "id": "1",
+  "email": "user@mygraf.com",
   "name": "admin",
   "login": "admin",
   "theme": "light",
   "orgId": 1,
-  "isGrafanaAdmin": true
+  "isGrafanaAdmin": true,
+  "isDisabled": true,
+  "isExternal": false,
+  "authLabels": [],
+  "updatedAt": "2019-09-09T11:31:26+01:00",
+  "createdAt": "2019-09-09T11:31:26+01:00"
 }
 ```
 
@@ -156,12 +162,18 @@ HTTP/1.1 200
 Content-Type: application/json
 
 {
+  "id": 1,
   "email": "user@mygraf.com",
   "name": "admin",
   "login": "admin",
   "theme": "light",
   "orgId": 1,
-  "isGrafanaAdmin": true
+  "isGrafanaAdmin": true,
+  "isDisabled": false,
+  "isExternal": false,
+  "authLabels": null,
+  "updatedAt": "2019-09-25T14:44:37+01:00",
+  "createdAt": "2019-09-25T14:44:37+01:00"
 }
 ```
 
@@ -196,7 +208,7 @@ Content-Type: application/json
 {"message":"User updated"}
 ```
 
-## Get Organisations for user
+## Get Organizations for user
 
 `GET /api/users/:id/orgs`
 
@@ -225,6 +237,40 @@ Content-Type: application/json
   }
 ]
 ```
+
+## Get Teams for user
+
+`GET /api/users/:id/teams`
+
+**Example Request**:
+
+```http
+GET /api/users/1/teams HTTP/1.1
+Accept: application/json
+Content-Type: application/json
+Authorization: Basic YWRtaW46YWRtaW4=
+```
+
+Requires basic authentication and that the authenticated user is a Grafana Admin.
+
+**Example Response**:
+
+```http
+HTTP/1.1 200
+Content-Type: application/json
+
+[
+  {
+    "id":1,
+    "orgId":1,
+    "name":"team1",
+    "email":"",
+    "avatarUrl":"/avatar/3fcfe295eae3bcb67a49349377428a66",
+    "memberCount":1
+  }
+]
+```
+
 
 ## User
 
@@ -273,8 +319,7 @@ Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 
 {
   "oldPassword": "old_password",
-  "newPassword": "new_password",
-  "confirmNew": "confirm_new_password"
+  "newPassword": "new_password"
 }
 ```
 
@@ -285,6 +330,18 @@ HTTP/1.1 200
 Content-Type: application/json
 
 {"message":"User password changed"}
+```
+
+**Change Password with a Script**
+
+If you need to change a password with a script, here is an example of changing the Admin password using curl with basic auth:
+
+```bash
+curl -X PUT -H "Content-Type: application/json" -d '{
+  "oldPassword": "oldpass",
+  "newPassword": "newpass",
+  "confirmNew": "newpass"
+}' http://admin:oldpass@<your_grafana_host>:3000/api/user/password
 ```
 
 ## Switch user context for a specified user
@@ -333,11 +390,11 @@ Content-Type: application/json
 {"message":"Active organization changed"}
 ```
 
-## Organisations of the actual User
+## Organizations of the actual User
 
 `GET /api/user/orgs`
 
-Return a list of all organisations of the current user.
+Return a list of all organizations of the current user.
 
 **Example Request**:
 
@@ -442,4 +499,84 @@ HTTP/1.1 200
 Content-Type: application/json
 
 {"message":"Dashboard unstarred"}
+```
+
+## Auth tokens of the actual User
+
+`GET /api/user/auth-tokens`
+
+Return a list of all auth tokens (devices) that the actual user currently have logged in from.
+
+**Example Request**:
+
+```http
+GET /api/user/auth-tokens HTTP/1.1
+Accept: application/json
+Content-Type: application/json
+Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+```
+
+**Example Response**:
+
+```http
+HTTP/1.1 200
+Content-Type: application/json
+
+[
+  {
+    "id": 361,
+    "isActive": true,
+    "clientIp": "127.0.0.1",
+    "browser": "Chrome",
+    "browserVersion": "72.0",
+    "os": "Linux",
+    "osVersion": "",
+    "device": "Other",
+    "createdAt": "2019-03-05T21:22:54+01:00",
+    "seenAt": "2019-03-06T19:41:06+01:00"
+  },
+  {
+    "id": 364,
+    "isActive": false,
+    "clientIp": "127.0.0.1",
+    "browser": "Mobile Safari",
+    "browserVersion": "11.0",
+    "os": "iOS",
+    "osVersion": "11.0",
+    "device": "iPhone",
+    "createdAt": "2019-03-06T19:41:19+01:00",
+    "seenAt": "2019-03-06T19:41:21+01:00"
+  }
+]
+```
+
+## Revoke an auth token of the actual User
+
+`POST /api/user/revoke-auth-token`
+
+Revokes the given auth token (device) for the actual user. User of issued auth token (device) will no longer be logged in
+and will be required to authenticate again upon next activity.
+
+**Example Request**:
+
+```http
+POST /api/user/revoke-auth-token HTTP/1.1
+Accept: application/json
+Content-Type: application/json
+Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+
+{
+  "authTokenId": 364
+}
+```
+
+**Example Response**:
+
+```http
+HTTP/1.1 200
+Content-Type: application/json
+
+{
+  "message": "User auth token revoked"
+}
 ```

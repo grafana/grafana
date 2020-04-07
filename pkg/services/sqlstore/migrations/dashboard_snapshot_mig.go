@@ -60,4 +60,8 @@ func addDashboardSnapshotMigrations(mg *Migrator) {
 		{Name: "external_url", Type: DB_NVarchar, Length: 255, Nullable: false},
 		{Name: "dashboard", Type: DB_MediumText, Nullable: false},
 	}))
+
+	mg.AddMigration("Add column external_delete_url to dashboard_snapshots table", NewAddColumnMigration(snapshotV5, &Column{
+		Name: "external_delete_url", Type: DB_NVarchar, Length: 255, Nullable: true,
+	}))
 }

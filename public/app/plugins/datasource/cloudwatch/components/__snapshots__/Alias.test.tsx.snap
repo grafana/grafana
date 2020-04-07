@@ -1,0 +1,18 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Alias should render component 1`] = `
+<div
+  style={
+    Object {
+      "flexGrow": 1,
+    }
+  }
+>
+  <input
+    className="gf-form-input gf-form-input width-16"
+    onChange={[Function]}
+    type="text"
+    value="legend"
+  />
+</div>
+`;

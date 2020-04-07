@@ -1,5 +1,6 @@
 import * as fileExport from '../utils/file_export';
 import { beforeEach, expect } from 'test/lib/common';
+import { TableData } from '@grafana/data';
 
 describe('file_export', () => {
   const ctx: any = {};
@@ -19,7 +20,12 @@ describe('file_export', () => {
       },
       {
         alias: 'series_2',
-        datapoints: [[11, 1500026100000], [12, 1500026200000], [13, 1500026300000], [15, 1500026500000]],
+        datapoints: [
+          [11, 1500026100000],
+          [12, 1500026200000],
+          [13, 1500026300000],
+          [15, 1500026500000],
+        ],
       },
     ];
 
@@ -28,7 +34,7 @@ describe('file_export', () => {
 
   describe('when exporting series as rows', () => {
     it('should export points in proper order', () => {
-      const text = fileExport.convertSeriesListToCsv(ctx.seriesList, ctx.timeFormat);
+      const text = fileExport.convertSeriesListToCsv(ctx.seriesList, { dateTimeFormat: ctx.timeFormat });
       const expectedText =
         '"Series";"Time";"Value"\r\n' +
         '"series_1";"1500026100";1\r\n' +
@@ -48,7 +54,7 @@ describe('file_export', () => {
 
   describe('when exporting series as columns', () => {
     it('should export points in proper order', () => {
-      const text = fileExport.convertSeriesListToCsvColumns(ctx.seriesList, ctx.timeFormat);
+      const text = fileExport.convertSeriesListToCsvColumns(ctx.seriesList, { dateTimeFormat: ctx.timeFormat });
       const expectedText =
         '"Time";"series_1";"series_2"\r\n' +
         '"1500026100";1;11\r\n' +
@@ -60,11 +66,21 @@ describe('file_export', () => {
 
       expect(text).toBe(expectedText);
     });
+
+    it('should not modify series.datapoints', () => {
+      const expectedSeries1DataPoints = ctx.seriesList[0].datapoints.slice();
+      const expectedSeries2DataPoints = ctx.seriesList[1].datapoints.slice();
+
+      fileExport.convertSeriesListToCsvColumns(ctx.seriesList, { dateTimeFormat: ctx.timeFormat });
+
+      expect(expectedSeries1DataPoints).toEqual(ctx.seriesList[0].datapoints);
+      expect(expectedSeries2DataPoints).toEqual(ctx.seriesList[1].datapoints);
+    });
   });
 
   describe('when exporting table data to csv', () => {
     it('should properly escape special characters and quote all string values', () => {
-      const inputTable = {
+      const inputTable: any = {
         columns: [
           { title: 'integer_value' },
           { text: 'string_value' },
@@ -73,6 +89,7 @@ describe('file_export', () => {
         ],
         rows: [
           [123, 'some_string', 1.234, true],
+          [1000, 'some_string', 1.234567891, true],
           [0o765, 'some string with " in the middle', 1e-2, false],
           [0o765, 'some string with "" in the middle', 1e-2, false],
           [0o765, 'some string with """ in the middle', 1e-2, false],
@@ -81,6 +98,7 @@ describe('file_export', () => {
           [0x123, 'some string with \n in the middle', 10.01, false],
           [0b1011, 'some string with ; in the middle', -12.34, true],
           [123, 'some string with ;; in the middle', -12.34, true],
+          [1234, '=a bogus formula  ', '-and another', '+another', '@ref'],
         ],
       };
 
@@ -89,6 +107,7 @@ describe('file_export', () => {
       const expectedText =
         '"integer_value";"string_value";"float_value";"boolean_value"\r\n' +
         '123;"some_string";1.234;true\r\n' +
+        '1000;"some_string";1.234567891;true\r\n' +
         '501;"some string with "" in the middle";0.01;false\r\n' +
         '501;"some string with """" in the middle";0.01;false\r\n' +
         '501;"some string with """""" in the middle";0.01;false\r\n' +
@@ -96,13 +115,14 @@ describe('file_export', () => {
         '501;"some string with "" at the end""";0.01;false\r\n' +
         '291;"some string with \n in the middle";10.01;false\r\n' +
         '11;"some string with ; in the middle";-12.34;true\r\n' +
-        '123;"some string with ;; in the middle";-12.34;true';
+        '123;"some string with ;; in the middle";-12.34;true\r\n' +
+        '1234;"\'=a bogus formula";"\'-and another";"\'+another";"\'@ref"';
 
       expect(returnedText).toBe(expectedText);
     });
 
-    it('should decode HTML encoded characters', function() {
-      const inputTable = {
+    it('should decode HTML encoded characters', () => {
+      const inputTable: TableData = {
         columns: [{ text: 'string_value' }],
         rows: [
           ['&quot;&amp;&auml;'],

@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/bus"
-	m "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/models"
 )
 
 func init() {
@@ -18,7 +18,7 @@ func sqlRandomWalk(m1 string, m2 string, intWalker int64, floatWalker float64, s
 	now := time.Now().UTC()
 	step := time.Minute
 
-	row := &m.SqlTestData{
+	row := &models.SqlTestData{
 		Metric1:      m1,
 		Metric2:      m2,
 		TimeEpoch:    timeWalker.Unix(),
@@ -44,7 +44,7 @@ func sqlRandomWalk(m1 string, m2 string, intWalker int64, floatWalker float64, s
 	return nil
 }
 
-func InsertSqlTestData(cmd *m.InsertSqlTestDataCommand) error {
+func InsertSqlTestData(cmd *models.InsertSqlTestDataCommand) error {
 	return inTransaction(func(sess *DBSession) error {
 		var err error
 
@@ -57,10 +57,12 @@ func InsertSqlTestData(cmd *m.InsertSqlTestDataCommand) error {
 		rows, _ := res.RowsAffected()
 		sqlog.Info("SQL TestData: Truncate done", "rows", rows)
 
-		sqlRandomWalk("server1", "frontend", 100, 1.123, sess)
-		sqlRandomWalk("server2", "frontend", 100, 1.123, sess)
-		sqlRandomWalk("server3", "frontend", 100, 1.123, sess)
-
-		return err
+		if err := sqlRandomWalk("server1", "frontend", 100, 1.123, sess); err != nil {
+			return err
+		}
+		if err := sqlRandomWalk("server2", "frontend", 100, 1.123, sess); err != nil {
+			return err
+		}
+		return sqlRandomWalk("server3", "frontend", 100, 1.123, sess)
 	})
 }

@@ -3,23 +3,21 @@ package models
 import (
 	"strings"
 
+	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/prometheus/client_golang/prometheus"
 	"gopkg.in/macaron.v1"
-
-	"github.com/grafana/grafana/pkg/log"
-	"github.com/grafana/grafana/pkg/services/session"
-	"github.com/grafana/grafana/pkg/setting"
 )
 
 type ReqContext struct {
 	*macaron.Context
 	*SignedInUser
-
-	Session session.SessionStore
+	UserToken *UserToken
 
 	IsSignedIn     bool
 	IsRenderCall   bool
 	AllowAnonymous bool
+	SkipCache      bool
 	Logger         log.Logger
 }
 
@@ -36,7 +34,7 @@ func (ctx *ReqContext) Handle(status int, title string, err error) {
 	ctx.Data["AppSubUrl"] = setting.AppSubUrl
 	ctx.Data["Theme"] = "dark"
 
-	ctx.HTML(status, "error")
+	ctx.HTML(status, setting.ERR_TEMPLATE_NAME)
 }
 
 func (ctx *ReqContext) JsonOK(message string) {

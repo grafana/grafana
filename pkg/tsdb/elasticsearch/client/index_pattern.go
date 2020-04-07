@@ -279,7 +279,7 @@ func formatDate(t time.Time, pattern string) string {
 		isoYearShort := fmt.Sprintf("%d", isoYear)[2:4]
 		formatted = strings.Replace(formatted, "<stdIsoYear>", fmt.Sprintf("%d", isoYear), -1)
 		formatted = strings.Replace(formatted, "<stdIsoYearShort>", isoYearShort, -1)
-		formatted = strings.Replace(formatted, "<stdWeekOfYear>", fmt.Sprintf("%d", isoWeek), -1)
+		formatted = strings.Replace(formatted, "<stdWeekOfYear>", fmt.Sprintf("%02d", isoWeek), -1)
 
 		formatted = strings.Replace(formatted, "<stdUnix>", fmt.Sprintf("%d", t.Unix()), -1)
 

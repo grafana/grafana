@@ -1,26 +1,21 @@
 import React from 'react';
-import tags from 'app/core/utils/tags';
+import { getTagColorsFromName } from '@grafana/ui';
 
 export interface Props {
   label: string;
   removeIcon: boolean;
   count: number;
-  onClick: any;
+  onClick?: any;
 }
 
 export class TagBadge extends React.Component<Props, any> {
-  constructor(props) {
+  constructor(props: Props) {
     super(props);
-    this.onClick = this.onClick.bind(this);
-  }
-
-  onClick(event) {
-    this.props.onClick(event);
   }
 
   render() {
     const { label, removeIcon, count } = this.props;
-    const { color, borderColor } = tags.getTagColorsFromName(label);
+    const { color, borderColor } = getTagColorsFromName(label);
     const tagStyle = {
       backgroundColor: color,
       borderColor: borderColor,
@@ -28,7 +23,7 @@ export class TagBadge extends React.Component<Props, any> {
     const countLabel = count !== 0 && <span className="tag-count-label">{`(${count})`}</span>;
 
     return (
-      <span className={`label label-tag`} onClick={this.onClick} style={tagStyle}>
+      <span className={`label label-tag`} style={tagStyle}>
         {removeIcon && <i className="fa fa-remove" />}
         {label} {countLabel}
       </span>

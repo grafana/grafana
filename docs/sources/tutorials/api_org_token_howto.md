@@ -1,5 +1,5 @@
 +++
-title = "API Tutorial: How To Create API Tokens And Dashboards For A Specific Organization"
+title = "API Tutorial: Create API tokens and dashboards for an organization"
 type = "docs"
 keywords = ["grafana", "tutorials", "API", "Token", "Org", "Organization"]
 [menu.docs]
@@ -7,33 +7,34 @@ parent = "tutorials"
 weight = 10
 +++
 
-# API Tutorial: How To Create API Tokens And Dashboards For A Specific Organization
+# API Tutorial: Create API tokens and dashboards for an organization
 
-A common scenario is to want to via the Grafana API setup new Grafana organizations or to add dynamically generated dashboards to an existing organization.
+Use the Grafana API to setup new Grafana organizations or to add dynamically generated dashboards to an existing organization.
 
 ## Authentication
 
-There are two ways to authenticate against the API: basic authentication and API Tokens.
+There are two authentication methods to access the API: 
 
-Some parts of the API are only available through basic authentication and these parts of the API usually require that the user is a Grafana Admin. But all organization actions are accessed via an API Token. An API Token is tied to an organization and can be used to create dashboards etc but only for that organization.
+- Basic authentication: A Grafana Admin user can access some parts of the Grafana API through basic authentication. 
+- API Tokens: All organization actions are accessed through an API Token. An API Token is associated with an organization. It can be used to create dashboards and other components specific for that organization.
 
-## How To Create A New Organization and an API Token
+## How to create a new organization and an API Token
 
 The task is to create a new organization and then add a Token that can be used by other users. In the examples below which use basic auth, the user is `admin` and the password is `admin`.
 
-1. [Create the org](http://docs.grafana.org/http_api/org/#create-organisation). Here is an example using curl:
+1. [Create the org](http://docs.grafana.org/http_api/org/#create-organization). Here is an example using curl:
     ```bash
     curl -X POST -H "Content-Type: application/json" -d '{"name":"apiorg"}' http://admin:admin@localhost:3000/api/orgs
     ```
 
     This should return a response: `{"message":"Organization created","orgId":6}`. Use the orgId for the next steps.
 
-2. Optional step. If the org was created previously and/or step 3 fails then first [add your Admin user to the org](http://docs.grafana.org/http_api/org/#add-user-in-organisation):
+2. Optional step. If the org was created previously and/or step 3 fails then first [add your Admin user to the org](http://docs.grafana.org/http_api/org/#add-user-in-organization):
     ```bash
     curl -X POST -H "Content-Type: application/json" -d '{"loginOrEmail":"admin", "role": "Admin"}' http://admin:admin@localhost:3000/api/orgs/<org id of new org>/users
     ```
 
-3. [Switch the org context for the Admin user to the new org](http://docs.grafana.org/http_api/user/#switch-user-context):
+3. [Switch the org context for the Admin user to the new org](http://docs.grafana.org/http_api/user/#switch-user-context-for-signed-in-user):
     ```bash
     curl -X POST http://admin:admin@localhost:3000/api/user/using/<id of new org>
     ```
@@ -47,7 +48,7 @@ The task is to create a new organization and then add a Token that can be used b
 
     Save the key returned here in your password manager as it is not possible to fetch again it in the future.
 
-## How To Add A Dashboard
+## How to add a dashboard
 
 Using the Token that was created in the previous step, you can create a dashboard or carry out other actions without having to switch organizations.
 
@@ -71,4 +72,4 @@ Using the Token that was created in the previous step, you can create a dashboar
   }' http://localhost:3000/api/dashboards/db
   ```
 
-  This import will not work if you exported the dashboard via the Share -> Export menu in the Grafana UI (it strips out data source names etc.). View the JSON and save it to a file instead or fetch the dashboard JSON via the API.
+  > **Note.** If you export a dashboard for sharing externally using the Share > Export menu in the Grafana UI, you cannot import that dashboard. Instead, click **View JSON** and save it to a file or fetch the JSON output through the API.

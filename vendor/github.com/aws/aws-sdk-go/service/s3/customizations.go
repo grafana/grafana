@@ -3,6 +3,8 @@ package s3
 import (
 	"github.com/aws/aws-sdk-go/aws/client"
 	"github.com/aws/aws-sdk-go/aws/request"
+	"github.com/aws/aws-sdk-go/internal/s3err"
+	"github.com/aws/aws-sdk-go/service/s3/internal/arn"
 )
 
 func init() {
@@ -12,25 +14,28 @@ func init() {
 
 func defaultInitClientFn(c *client.Client) {
 	// Support building custom endpoints based on config
-	c.Handlers.Build.PushFront(updateEndpointForS3Config)
+	c.Handlers.Build.PushFront(endpointHandler)
 
 	// Require SSL when using SSE keys
 	c.Handlers.Validate.PushBack(validateSSERequiresSSL)
-	c.Handlers.Build.PushBack(computeSSEKeys)
+	c.Handlers.Build.PushBack(computeSSEKeyMD5)
+	c.Handlers.Build.PushBack(computeCopySourceSSEKeyMD5)
 
 	// S3 uses custom error unmarshaling logic
 	c.Handlers.UnmarshalError.Clear()
 	c.Handlers.UnmarshalError.PushBack(unmarshalError)
+	c.Handlers.UnmarshalError.PushBackNamed(s3err.RequestFailureWrapperHandler())
 }
 
 func defaultInitRequestFn(r *request.Request) {
-	// Add reuest handlers for specific platforms.
+	// Add request handlers for specific platforms.
 	// e.g. 100-continue support for PUT requests using Go 1.6
 	platformRequestHandlers(r)
 
 	switch r.Operation.Name {
 	case opPutBucketCors, opPutBucketLifecycle, opPutBucketPolicy,
 		opPutBucketTagging, opDeleteObjects, opPutBucketLifecycleConfiguration,
+		opPutObjectLegalHold, opPutObjectRetention, opPutObjectLockConfiguration,
 		opPutBucketReplication:
 		// These S3 operations require Content-MD5 to be set
 		r.Handlers.Build.PushBack(contentMD5)
@@ -42,6 +47,7 @@ func defaultInitRequestFn(r *request.Request) {
 		r.Handlers.Validate.PushFront(populateLocationConstraint)
 	case opCopyObject, opUploadPartCopy, opCompleteMultipartUpload:
 		r.Handlers.Unmarshal.PushFront(copyMultipartStatusOKUnmarhsalError)
+		r.Handlers.Unmarshal.PushBackNamed(s3err.RequestFailureWrapperHandler())
 	case opPutObject, opUploadPart:
 		r.Handlers.Build.PushBack(computeBodyHashes)
 		// Disabled until #1837 root issue is resolved.
@@ -67,4 +73,9 @@ type sseCustomerKeyGetter interface {
 // "CopySourceSSECustomerKey" field from an S3 type.
 type copySourceSSECustomerKeyGetter interface {
 	getCopySourceSSECustomerKey() string
+}
+
+type endpointARNGetter interface {
+	getEndpointARN() (arn.Resource, error)
+	hasEndpointARN() bool
 }

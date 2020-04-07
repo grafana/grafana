@@ -1,37 +1,99 @@
-import React, { Component } from 'react';
+import React, { MouseEvent, useContext } from 'react';
+import { CallToActionCard, LinkButton, ThemeContext } from '@grafana/ui';
+import { css } from 'emotion';
 
 export interface Props {
-  model: any;
+  title: string;
+  buttonIcon: string;
+  buttonLink?: string;
+  buttonTitle: string;
+  onClick?: (event: MouseEvent) => void;
+  proTip?: string;
+  proTipLink?: string;
+  proTipLinkTitle?: string;
+  proTipTarget?: string;
+  infoBox?: { __html: string };
+  infoBoxTitle?: string;
 }
 
-class EmptyListCTA extends Component<Props, any> {
-  render() {
-    const {
-      title,
-      buttonIcon,
-      buttonLink,
-      buttonTitle,
-      proTip,
-      proTipLink,
-      proTipLinkTitle,
-      proTipTarget,
-    } = this.props.model;
+const ctaStyle = css`
+  text-align: center;
+`;
+
+const infoBoxStyles = css`
+  max-width: 700px;
+  margin: 0 auto;
+`;
+
+const EmptyListCTA: React.FunctionComponent<Props> = ({
+  title,
+  buttonIcon,
+  buttonLink,
+  buttonTitle,
+  onClick,
+  proTip,
+  proTipLink,
+  proTipLinkTitle,
+  proTipTarget,
+  infoBox,
+  infoBoxTitle,
+}) => {
+  const theme = useContext(ThemeContext);
+
+  const footer = () => {
     return (
-      <div className="empty-list-cta">
-        <div className="empty-list-cta__title">{title}</div>
-        <a href={buttonLink} className="empty-list-cta__button btn btn-xlarge btn-success">
-          <i className={buttonIcon} />
-          {buttonTitle}
-        </a>
-        <div className="empty-list-cta__pro-tip">
-          <i className="fa fa-rocket" /> ProTip: {proTip}
-          <a className="text-link empty-list-cta__pro-tip-link" href={proTipLink} target={proTipTarget}>
-            {proTipLinkTitle}
-          </a>
-        </div>
-      </div>
+      <>
+        {proTip ? (
+          <span key="proTipFooter">
+            <i className="fa fa-rocket" />
+            <> ProTip: {proTip} </>
+            <a href={proTipLink} target={proTipTarget} className="text-link">
+              {proTipLinkTitle}
+            </a>
+          </span>
+        ) : (
+          ''
+        )}
+        {infoBox ? (
+          <div key="infoBoxHtml" className={`grafana-info-box ${infoBoxStyles}`}>
+            {infoBoxTitle && <h5>{infoBoxTitle}</h5>}
+            <div dangerouslySetInnerHTML={infoBox} />
+          </div>
+        ) : (
+          ''
+        )}
+      </>
     );
-  }
-}
+  };
+
+  const ctaElementClassName = !footer()
+    ? css`
+        margin-bottom: 20px;
+      `
+    : '';
+
+  const ctaElement = (
+    <LinkButton
+      size="lg"
+      onClick={onClick}
+      href={buttonLink}
+      icon={buttonIcon}
+      className={ctaElementClassName}
+      aria-label={`Call to action button ${buttonTitle}`}
+    >
+      {buttonTitle}
+    </LinkButton>
+  );
+
+  return (
+    <CallToActionCard
+      className={ctaStyle}
+      message={title}
+      footer={footer()}
+      callToActionElement={ctaElement}
+      theme={theme}
+    />
+  );
+};
 
 export default EmptyListCTA;

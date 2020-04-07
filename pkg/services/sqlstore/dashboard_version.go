@@ -4,7 +4,7 @@ import (
 	"strings"
 
 	"github.com/grafana/grafana/pkg/bus"
-	m "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -15,8 +15,8 @@ func init() {
 }
 
 // GetDashboardVersion gets the dashboard version for the given dashboard ID and version number.
-func GetDashboardVersion(query *m.GetDashboardVersionQuery) error {
-	version := m.DashboardVersion{}
+func GetDashboardVersion(query *models.GetDashboardVersionQuery) error {
+	version := models.DashboardVersion{}
 	has, err := x.Where("dashboard_version.dashboard_id=? AND dashboard_version.version=? AND dashboard.org_id=?", query.DashboardId, query.Version, query.OrgId).
 		Join("LEFT", "dashboard", `dashboard.id = dashboard_version.dashboard_id`).
 		Get(&version)
@@ -26,7 +26,7 @@ func GetDashboardVersion(query *m.GetDashboardVersionQuery) error {
 	}
 
 	if !has {
-		return m.ErrDashboardVersionNotFound
+		return models.ErrDashboardVersionNotFound
 	}
 
 	version.Data.Set("id", version.DashboardId)
@@ -35,7 +35,7 @@ func GetDashboardVersion(query *m.GetDashboardVersionQuery) error {
 }
 
 // GetDashboardVersions gets all dashboard versions for the given dashboard ID.
-func GetDashboardVersions(query *m.GetDashboardVersionsQuery) error {
+func GetDashboardVersions(query *models.GetDashboardVersionsQuery) error {
 	if query.Limit == 0 {
 		query.Limit = 1000
 	}
@@ -51,7 +51,7 @@ func GetDashboardVersions(query *m.GetDashboardVersionsQuery) error {
 				dashboard_version.message,
 				dashboard_version.data,`+
 			dialect.Quote("user")+`.login as created_by`).
-		Join("LEFT", "user", `dashboard_version.created_by = `+dialect.Quote("user")+`.id`).
+		Join("LEFT", dialect.Quote("user"), `dashboard_version.created_by = `+dialect.Quote("user")+`.id`).
 		Join("LEFT", "dashboard", `dashboard.id = dashboard_version.dashboard_id`).
 		Where("dashboard_version.dashboard_id=? AND dashboard.org_id=?", query.DashboardId, query.OrgId).
 		OrderBy("dashboard_version.version DESC").
@@ -62,53 +62,73 @@ func GetDashboardVersions(query *m.GetDashboardVersionsQuery) error {
 	}
 
 	if len(query.Result) < 1 {
-		return m.ErrNoVersionsForDashboardId
+		return models.ErrNoVersionsForDashboardId
 	}
 	return nil
 }
 
-const MAX_VERSIONS_TO_DELETE = 100
+const MAX_VERSIONS_TO_DELETE_PER_BATCH = 100
+const MAX_VERSION_DELETION_BATCHES = 50
 
-func DeleteExpiredVersions(cmd *m.DeleteExpiredVersionsCommand) error {
-	return inTransaction(func(sess *DBSession) error {
-		versionsToKeep := setting.DashboardVersionsToKeep
-		if versionsToKeep < 1 {
-			versionsToKeep = 1
-		}
+func DeleteExpiredVersions(cmd *models.DeleteExpiredVersionsCommand) error {
+	return deleteExpiredVersions(cmd, MAX_VERSIONS_TO_DELETE_PER_BATCH, MAX_VERSION_DELETION_BATCHES)
+}
 
-		// Idea of this query is finding version IDs to delete based on formula:
-		// min_version_to_keep = min_version + (versions_count - versions_to_keep)
-		// where version stats is processed for each dashboard. This guarantees that we keep at least versions_to_keep
-		// versions, but in some cases (when versions are sparse) this number may be more.
-		versionIdsToDeleteQuery := `SELECT id
-			FROM dashboard_version, (
-				SELECT dashboard_id, count(version) as count, min(version) as min
-				FROM dashboard_version
-				GROUP BY dashboard_id
-			) AS vtd
-			WHERE dashboard_version.dashboard_id=vtd.dashboard_id
-			AND version < vtd.min + vtd.count - ?`
+func deleteExpiredVersions(cmd *models.DeleteExpiredVersionsCommand, perBatch int, maxBatches int) error {
+	versionsToKeep := setting.DashboardVersionsToKeep
+	if versionsToKeep < 1 {
+		versionsToKeep = 1
+	}
 
-		var versionIdsToDelete []interface{}
-		err := sess.SQL(versionIdsToDeleteQuery, versionsToKeep).Find(&versionIdsToDelete)
-		if err != nil {
-			return err
-		}
+	for batch := 0; batch < maxBatches; batch++ {
+		deleted := int64(0)
 
-		// Don't delete more than MAX_VERSIONS_TO_DELETE version per time
-		if len(versionIdsToDelete) > MAX_VERSIONS_TO_DELETE {
-			versionIdsToDelete = versionIdsToDelete[:MAX_VERSIONS_TO_DELETE]
-		}
+		batchErr := inTransaction(func(sess *DBSession) error {
+			// Idea of this query is finding version IDs to delete based on formula:
+			// min_version_to_keep = min_version + (versions_count - versions_to_keep)
+			// where version stats is processed for each dashboard. This guarantees that we keep at least versions_to_keep
+			// versions, but in some cases (when versions are sparse) this number may be more.
+			versionIdsToDeleteQuery := `SELECT id
+				FROM dashboard_version, (
+					SELECT dashboard_id, count(version) as count, min(version) as min
+					FROM dashboard_version
+					GROUP BY dashboard_id
+				) AS vtd
+				WHERE dashboard_version.dashboard_id=vtd.dashboard_id
+				AND version < vtd.min + vtd.count - ?
+				LIMIT ?`
 
-		if len(versionIdsToDelete) > 0 {
-			deleteExpiredSql := `DELETE FROM dashboard_version WHERE id IN (?` + strings.Repeat(",?", len(versionIdsToDelete)-1) + `)`
-			expiredResponse, err := sess.Exec(deleteExpiredSql, versionIdsToDelete...)
+			var versionIdsToDelete []interface{}
+			err := sess.SQL(versionIdsToDeleteQuery, versionsToKeep, perBatch).Find(&versionIdsToDelete)
 			if err != nil {
 				return err
 			}
-			cmd.DeletedRows, _ = expiredResponse.RowsAffected()
+
+			if len(versionIdsToDelete) < 1 {
+				return nil
+			}
+
+			deleteExpiredSql := `DELETE FROM dashboard_version WHERE id IN (?` + strings.Repeat(",?", len(versionIdsToDelete)-1) + `)`
+			sqlOrArgs := append([]interface{}{deleteExpiredSql}, versionIdsToDelete...)
+			expiredResponse, err := sess.Exec(sqlOrArgs...)
+			if err != nil {
+				return err
+			}
+
+			deleted, err = expiredResponse.RowsAffected()
+			return err
+		})
+
+		if batchErr != nil {
+			return batchErr
 		}
 
-		return nil
-	})
+		cmd.DeletedRows += deleted
+
+		if deleted < int64(perBatch) {
+			break
+		}
+	}
+
+	return nil
 }

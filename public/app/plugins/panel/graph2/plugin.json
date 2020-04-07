@@ -1,0 +1,17 @@
+{
+  "type": "panel",
+  "name": "React Graph",
+  "id": "graph2",
+  "state": "alpha",
+
+  "info": {
+    "author": {
+      "name": "Grafana Project",
+      "url": "https://grafana.com"
+    },
+    "logos": {
+      "small": "img/icn-graph-panel.svg",
+      "large": "img/icn-graph-panel.svg"
+    }
+  }
+}

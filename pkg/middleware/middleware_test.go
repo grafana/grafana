@@ -1,53 +1,136 @@
 package middleware
 
 import (
-	"encoding/json"
+	"context"
+	"errors"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"path/filepath"
 	"testing"
+	"time"
 
-	ms "github.com/go-macaron/session"
+	. "github.com/smartystreets/goconvey/convey"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"gopkg.in/macaron.v1"
+
+	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/bus"
-	m "github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/session"
+	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/remotecache"
+	authproxy "github.com/grafana/grafana/pkg/middleware/auth_proxy"
+	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/auth"
+	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
-	. "github.com/smartystreets/goconvey/convey"
-	"gopkg.in/macaron.v1"
 )
 
-func TestMiddlewareContext(t *testing.T) {
+const errorTemplate = "error-template"
+
+func mockGetTime() {
+	var timeSeed int64
+	getTime = func() time.Time {
+		fakeNow := time.Unix(timeSeed, 0)
+		timeSeed++
+		return fakeNow
+	}
+}
+
+func resetGetTime() {
+	getTime = time.Now
+}
+
+func TestMiddleWareSecurityHeaders(t *testing.T) {
+	setting.ERR_TEMPLATE_NAME = errorTemplate
 
 	Convey("Given the grafana middleware", t, func() {
-		middlewareScenario("middleware should add context to injector", func(sc *scenarioContext) {
+
+		middlewareScenario(t, "middleware should get correct x-xss-protection header", func(sc *scenarioContext) {
+			setting.XSSProtectionHeader = true
+			sc.fakeReq("GET", "/api/").exec()
+			So(sc.resp.Header().Get("X-XSS-Protection"), ShouldEqual, "1; mode=block")
+		})
+
+		middlewareScenario(t, "middleware should not get x-xss-protection when disabled", func(sc *scenarioContext) {
+			setting.XSSProtectionHeader = false
+			sc.fakeReq("GET", "/api/").exec()
+			So(sc.resp.Header().Get("X-XSS-Protection"), ShouldBeEmpty)
+		})
+
+		middlewareScenario(t, "middleware should add correct Strict-Transport-Security header", func(sc *scenarioContext) {
+			setting.StrictTransportSecurity = true
+			setting.Protocol = setting.HTTPS
+			setting.StrictTransportSecurityMaxAge = 64000
+			sc.fakeReq("GET", "/api/").exec()
+			So(sc.resp.Header().Get("Strict-Transport-Security"), ShouldEqual, "max-age=64000")
+			setting.StrictTransportSecurityPreload = true
+			sc.fakeReq("GET", "/api/").exec()
+			So(sc.resp.Header().Get("Strict-Transport-Security"), ShouldEqual, "max-age=64000; preload")
+			setting.StrictTransportSecuritySubDomains = true
+			sc.fakeReq("GET", "/api/").exec()
+			So(sc.resp.Header().Get("Strict-Transport-Security"), ShouldEqual, "max-age=64000; preload; includeSubDomains")
+		})
+	})
+}
+
+func TestMiddlewareContext(t *testing.T) {
+	setting.ERR_TEMPLATE_NAME = errorTemplate
+
+	Convey("Given the grafana middleware", t, func() {
+		middlewareScenario(t, "middleware should add context to injector", func(sc *scenarioContext) {
 			sc.fakeReq("GET", "/").exec()
 			So(sc.context, ShouldNotBeNil)
 		})
 
-		middlewareScenario("Default middleware should allow get request", func(sc *scenarioContext) {
+		middlewareScenario(t, "Default middleware should allow get request", func(sc *scenarioContext) {
 			sc.fakeReq("GET", "/").exec()
 			So(sc.resp.Code, ShouldEqual, 200)
 		})
 
-		middlewareScenario("middleware should add Cache-Control header for GET requests to API", func(sc *scenarioContext) {
+		middlewareScenario(t, "middleware should add Cache-Control header for requests to API", func(sc *scenarioContext) {
 			sc.fakeReq("GET", "/api/search").exec()
 			So(sc.resp.Header().Get("Cache-Control"), ShouldEqual, "no-cache")
 			So(sc.resp.Header().Get("Pragma"), ShouldEqual, "no-cache")
 			So(sc.resp.Header().Get("Expires"), ShouldEqual, "-1")
 		})
 
-		middlewareScenario("middleware should not add Cache-Control header to for non-API GET requests", func(sc *scenarioContext) {
-			sc.fakeReq("GET", "/").exec()
+		middlewareScenario(t, "middleware should not add Cache-Control header for requests to datasource proxy API", func(sc *scenarioContext) {
+			sc.fakeReq("GET", "/api/datasources/proxy/1/test").exec()
 			So(sc.resp.Header().Get("Cache-Control"), ShouldBeEmpty)
+			So(sc.resp.Header().Get("Pragma"), ShouldBeEmpty)
+			So(sc.resp.Header().Get("Expires"), ShouldBeEmpty)
 		})
 
-		middlewareScenario("Non api request should init session", func(sc *scenarioContext) {
+		middlewareScenario(t, "middleware should add Cache-Control header for requests with html response", func(sc *scenarioContext) {
+			sc.handler(func(c *models.ReqContext) {
+				data := &dtos.IndexViewData{
+					User:     &dtos.CurrentUser{},
+					Settings: map[string]interface{}{},
+					NavTree:  []*dtos.NavLink{},
+				}
+				c.HTML(200, "index-template", data)
+			})
 			sc.fakeReq("GET", "/").exec()
-			So(sc.resp.Header().Get("Set-Cookie"), ShouldContainSubstring, "grafana_sess")
+			So(sc.resp.Code, ShouldEqual, 200)
+			So(sc.resp.Header().Get("Cache-Control"), ShouldEqual, "no-cache")
+			So(sc.resp.Header().Get("Pragma"), ShouldEqual, "no-cache")
+			So(sc.resp.Header().Get("Expires"), ShouldEqual, "-1")
 		})
 
-		middlewareScenario("Invalid api key", func(sc *scenarioContext) {
+		middlewareScenario(t, "middleware should add X-Frame-Options header with deny for request when not allowing embedding", func(sc *scenarioContext) {
+			sc.fakeReq("GET", "/api/search").exec()
+			So(sc.resp.Header().Get("X-Frame-Options"), ShouldEqual, "deny")
+		})
+
+		middlewareScenario(t, "middleware should not add X-Frame-Options header for request when allowing embedding", func(sc *scenarioContext) {
+			setting.AllowEmbedding = true
+			sc.fakeReq("GET", "/api/search").exec()
+			So(sc.resp.Header().Get("X-Frame-Options"), ShouldBeEmpty)
+		})
+
+		middlewareScenario(t, "Invalid api key", func(sc *scenarioContext) {
 			sc.apiKey = "invalid_key_test"
 			sc.fakeReq("GET", "/").exec()
 
@@ -57,45 +140,16 @@ func TestMiddlewareContext(t *testing.T) {
 
 			Convey("Should return 401", func() {
 				So(sc.resp.Code, ShouldEqual, 401)
-				So(sc.respJson["message"], ShouldEqual, "Invalid API key")
+				So(sc.respJson["message"], ShouldEqual, errStringInvalidAPIKey)
 			})
 		})
 
-		middlewareScenario("Using basic auth", func(sc *scenarioContext) {
+		middlewareScenario(t, "Valid api key", func(sc *scenarioContext) {
+			keyhash, err := util.EncodePassword("v5nAwpMafFP6znaS4urhdWDLS5511M42", "asd")
+			So(err, ShouldBeNil)
 
-			bus.AddHandler("test", func(query *m.GetUserByLoginQuery) error {
-				query.Result = &m.User{
-					Password: util.EncodePassword("myPass", "salt"),
-					Salt:     "salt",
-				}
-				return nil
-			})
-
-			bus.AddHandler("test", func(loginUserQuery *m.LoginUserQuery) error {
-				return nil
-			})
-
-			bus.AddHandler("test", func(query *m.GetSignedInUserQuery) error {
-				query.Result = &m.SignedInUser{OrgId: 2, UserId: 12}
-				return nil
-			})
-
-			setting.BasicAuthEnabled = true
-			authHeader := util.GetBasicAuthHeader("myUser", "myPass")
-			sc.fakeReq("GET", "/").withAuthorizationHeader(authHeader).exec()
-
-			Convey("Should init middleware context with user", func() {
-				So(sc.context.IsSignedIn, ShouldEqual, true)
-				So(sc.context.OrgId, ShouldEqual, 2)
-				So(sc.context.UserId, ShouldEqual, 12)
-			})
-		})
-
-		middlewareScenario("Valid api key", func(sc *scenarioContext) {
-			keyhash := util.EncodePassword("v5nAwpMafFP6znaS4urhdWDLS5511M42", "asd")
-
-			bus.AddHandler("test", func(query *m.GetApiKeyByNameQuery) error {
-				query.Result = &m.ApiKey{OrgId: 12, Role: m.ROLE_EDITOR, Key: keyhash}
+			bus.AddHandler("test", func(query *models.GetApiKeyByNameQuery) error {
+				query.Result = &models.ApiKey{OrgId: 12, Role: models.ROLE_EDITOR, Key: keyhash}
 				return nil
 			})
 
@@ -108,15 +162,15 @@ func TestMiddlewareContext(t *testing.T) {
 			Convey("Should init middleware context", func() {
 				So(sc.context.IsSignedIn, ShouldEqual, true)
 				So(sc.context.OrgId, ShouldEqual, 12)
-				So(sc.context.OrgRole, ShouldEqual, m.ROLE_EDITOR)
+				So(sc.context.OrgRole, ShouldEqual, models.ROLE_EDITOR)
 			})
 		})
 
-		middlewareScenario("Valid api key, but does not match db hash", func(sc *scenarioContext) {
-			keyhash := "something_not_matching"
+		middlewareScenario(t, "Valid api key, but does not match db hash", func(sc *scenarioContext) {
+			keyhash := "Something_not_matching"
 
-			bus.AddHandler("test", func(query *m.GetApiKeyByNameQuery) error {
-				query.Result = &m.ApiKey{OrgId: 12, Role: m.ROLE_EDITOR, Key: keyhash}
+			bus.AddHandler("test", func(query *models.GetApiKeyByNameQuery) error {
+				query.Result = &models.ApiKey{OrgId: 12, Role: models.ROLE_EDITOR, Key: keyhash}
 				return nil
 			})
 
@@ -124,69 +178,175 @@ func TestMiddlewareContext(t *testing.T) {
 
 			Convey("Should return api key invalid", func() {
 				So(sc.resp.Code, ShouldEqual, 401)
-				So(sc.respJson["message"], ShouldEqual, "Invalid API key")
+				So(sc.respJson["message"], ShouldEqual, errStringInvalidAPIKey)
 			})
 		})
 
-		middlewareScenario("Valid api key via Basic auth", func(sc *scenarioContext) {
-			keyhash := util.EncodePassword("v5nAwpMafFP6znaS4urhdWDLS5511M42", "asd")
+		middlewareScenario(t, "Valid api key, but expired", func(sc *scenarioContext) {
+			mockGetTime()
+			defer resetGetTime()
 
-			bus.AddHandler("test", func(query *m.GetApiKeyByNameQuery) error {
-				query.Result = &m.ApiKey{OrgId: 12, Role: m.ROLE_EDITOR, Key: keyhash}
+			keyhash, err := util.EncodePassword("v5nAwpMafFP6znaS4urhdWDLS5511M42", "asd")
+			So(err, ShouldBeNil)
+
+			bus.AddHandler("test", func(query *models.GetApiKeyByNameQuery) error {
+				// api key expired one second before
+				expires := getTime().Add(-1 * time.Second).Unix()
+				query.Result = &models.ApiKey{OrgId: 12, Role: models.ROLE_EDITOR, Key: keyhash,
+					Expires: &expires}
 				return nil
 			})
 
-			authHeader := util.GetBasicAuthHeader("api_key", "eyJrIjoidjVuQXdwTWFmRlA2em5hUzR1cmhkV0RMUzU1MTFNNDIiLCJuIjoiYXNkIiwiaWQiOjF9")
-			sc.fakeReq("GET", "/").withAuthorizationHeader(authHeader).exec()
+			sc.fakeReq("GET", "/").withValidApiKey().exec()
 
-			Convey("Should return 200", func() {
-				So(sc.resp.Code, ShouldEqual, 200)
-			})
-
-			Convey("Should init middleware context", func() {
-				So(sc.context.IsSignedIn, ShouldEqual, true)
-				So(sc.context.OrgId, ShouldEqual, 12)
-				So(sc.context.OrgRole, ShouldEqual, m.ROLE_EDITOR)
+			Convey("Should return 401", func() {
+				So(sc.resp.Code, ShouldEqual, 401)
+				So(sc.respJson["message"], ShouldEqual, "Expired API key")
 			})
 		})
 
-		middlewareScenario("UserId in session", func(sc *scenarioContext) {
+		middlewareScenario(t, "Non-expired auth token in cookie which not are being rotated", func(sc *scenarioContext) {
+			sc.withTokenSessionCookie("token")
 
-			sc.fakeReq("GET", "/").handler(func(c *m.ReqContext) {
-				c.Session.Set(session.SESS_KEY_USERID, int64(12))
-			}).exec()
-
-			bus.AddHandler("test", func(query *m.GetSignedInUserQuery) error {
-				query.Result = &m.SignedInUser{OrgId: 2, UserId: 12}
+			bus.AddHandler("test", func(query *models.GetSignedInUserQuery) error {
+				query.Result = &models.SignedInUser{OrgId: 2, UserId: 12}
 				return nil
 			})
+
+			sc.userAuthTokenService.LookupTokenProvider = func(ctx context.Context, unhashedToken string) (*models.UserToken, error) {
+				return &models.UserToken{
+					UserId:        12,
+					UnhashedToken: unhashedToken,
+				}, nil
+			}
 
 			sc.fakeReq("GET", "/").exec()
 
-			Convey("should init context with user info", func() {
+			Convey("Should init context with user info", func() {
 				So(sc.context.IsSignedIn, ShouldBeTrue)
 				So(sc.context.UserId, ShouldEqual, 12)
+				So(sc.context.UserToken.UserId, ShouldEqual, 12)
+				So(sc.context.UserToken.UnhashedToken, ShouldEqual, "token")
+			})
+
+			Convey("Should not set cookie", func() {
+				So(sc.resp.Header().Get("Set-Cookie"), ShouldEqual, "")
 			})
 		})
 
-		middlewareScenario("When anonymous access is enabled", func(sc *scenarioContext) {
+		middlewareScenario(t, "Non-expired auth token in cookie which are being rotated", func(sc *scenarioContext) {
+			sc.withTokenSessionCookie("token")
+
+			bus.AddHandler("test", func(query *models.GetSignedInUserQuery) error {
+				query.Result = &models.SignedInUser{OrgId: 2, UserId: 12}
+				return nil
+			})
+
+			sc.userAuthTokenService.LookupTokenProvider = func(ctx context.Context, unhashedToken string) (*models.UserToken, error) {
+				return &models.UserToken{
+					UserId:        12,
+					UnhashedToken: "",
+				}, nil
+			}
+
+			sc.userAuthTokenService.TryRotateTokenProvider = func(ctx context.Context, userToken *models.UserToken, clientIP, userAgent string) (bool, error) {
+				userToken.UnhashedToken = "rotated"
+				return true, nil
+			}
+
+			maxAgeHours := (time.Duration(setting.LoginMaxLifetimeDays) * 24 * time.Hour)
+			maxAge := (maxAgeHours + time.Hour).Seconds()
+
+			sameSitePolicies := []http.SameSite{
+				http.SameSiteNoneMode,
+				http.SameSiteLaxMode,
+				http.SameSiteStrictMode,
+			}
+			for _, sameSitePolicy := range sameSitePolicies {
+				setting.CookieSameSiteMode = sameSitePolicy
+				expectedCookiePath := "/"
+				if len(setting.AppSubUrl) > 0 {
+					expectedCookiePath = setting.AppSubUrl
+				}
+				expectedCookie := &http.Cookie{
+					Name:     setting.LoginCookieName,
+					Value:    "rotated",
+					Path:     expectedCookiePath,
+					HttpOnly: true,
+					MaxAge:   int(maxAge),
+					Secure:   setting.CookieSecure,
+					SameSite: sameSitePolicy,
+				}
+
+				sc.fakeReq("GET", "/").exec()
+
+				Convey(fmt.Sprintf("Should init context with user info and setting.SameSite=%v", sameSitePolicy), func() {
+					So(sc.context.IsSignedIn, ShouldBeTrue)
+					So(sc.context.UserId, ShouldEqual, 12)
+					So(sc.context.UserToken.UserId, ShouldEqual, 12)
+					So(sc.context.UserToken.UnhashedToken, ShouldEqual, "rotated")
+				})
+
+				Convey(fmt.Sprintf("Should set cookie with setting.SameSite=%v", sameSitePolicy), func() {
+					So(sc.resp.Header().Get("Set-Cookie"), ShouldEqual, expectedCookie.String())
+				})
+			}
+
+			Convey("Should not set cookie with SameSite attribute when setting.CookieSameSiteDisabled is true", func() {
+				setting.CookieSameSiteDisabled = true
+				setting.CookieSameSiteMode = http.SameSiteLaxMode
+				expectedCookiePath := "/"
+				if len(setting.AppSubUrl) > 0 {
+					expectedCookiePath = setting.AppSubUrl
+				}
+				expectedCookie := &http.Cookie{
+					Name:     setting.LoginCookieName,
+					Value:    "rotated",
+					Path:     expectedCookiePath,
+					HttpOnly: true,
+					MaxAge:   int(maxAge),
+					Secure:   setting.CookieSecure,
+				}
+
+				sc.fakeReq("GET", "/").exec()
+				So(sc.resp.Header().Get("Set-Cookie"), ShouldEqual, expectedCookie.String())
+			})
+		})
+
+		middlewareScenario(t, "Invalid/expired auth token in cookie", func(sc *scenarioContext) {
+			sc.withTokenSessionCookie("token")
+
+			sc.userAuthTokenService.LookupTokenProvider = func(ctx context.Context, unhashedToken string) (*models.UserToken, error) {
+				return nil, models.ErrUserTokenNotFound
+			}
+
+			sc.fakeReq("GET", "/").exec()
+
+			Convey("Should not init context with user info", func() {
+				So(sc.context.IsSignedIn, ShouldBeFalse)
+				So(sc.context.UserId, ShouldEqual, 0)
+				So(sc.context.UserToken, ShouldBeNil)
+			})
+		})
+
+		middlewareScenario(t, "When anonymous access is enabled", func(sc *scenarioContext) {
 			setting.AnonymousEnabled = true
 			setting.AnonymousOrgName = "test"
-			setting.AnonymousOrgRole = string(m.ROLE_EDITOR)
+			setting.AnonymousOrgRole = string(models.ROLE_EDITOR)
 
-			bus.AddHandler("test", func(query *m.GetOrgByNameQuery) error {
+			bus.AddHandler("test", func(query *models.GetOrgByNameQuery) error {
 				So(query.Name, ShouldEqual, "test")
 
-				query.Result = &m.Org{Id: 2, Name: "test"}
+				query.Result = &models.Org{Id: 2, Name: "test"}
 				return nil
 			})
 
 			sc.fakeReq("GET", "/").exec()
 
-			Convey("should init context with org info", func() {
+			Convey("Should init context with org info", func() {
 				So(sc.context.UserId, ShouldEqual, 0)
 				So(sc.context.OrgId, ShouldEqual, 2)
-				So(sc.context.OrgRole, ShouldEqual, m.ROLE_EDITOR)
+				So(sc.context.OrgRole, ShouldEqual, models.ROLE_EDITOR)
 			})
 
 			Convey("context signed in should be false", func() {
@@ -194,219 +354,226 @@ func TestMiddlewareContext(t *testing.T) {
 			})
 		})
 
-		middlewareScenario("When auth_proxy is enabled enabled and user exists", func(sc *scenarioContext) {
+		Convey("auth_proxy", func() {
 			setting.AuthProxyEnabled = true
-			setting.AuthProxyHeaderName = "X-WEBAUTH-USER"
-			setting.AuthProxyHeaderProperty = "username"
-			setting.LdapEnabled = false
-
-			bus.AddHandler("test", func(query *m.GetSignedInUserQuery) error {
-				query.Result = &m.SignedInUser{OrgId: 2, UserId: 12}
-				return nil
-			})
-
-			bus.AddHandler("test", func(cmd *m.UpsertUserCommand) error {
-				cmd.Result = &m.User{Id: 12}
-				return nil
-			})
-
-			sc.fakeReq("GET", "/")
-			sc.req.Header.Add("X-WEBAUTH-USER", "torkelo")
-			sc.exec()
-
-			Convey("should init context with user info", func() {
-				So(sc.context.IsSignedIn, ShouldBeTrue)
-				So(sc.context.UserId, ShouldEqual, 12)
-				So(sc.context.OrgId, ShouldEqual, 2)
-			})
-		})
-
-		middlewareScenario("When auth_proxy is enabled enabled and user does not exists", func(sc *scenarioContext) {
-			setting.AuthProxyEnabled = true
-			setting.AuthProxyHeaderName = "X-WEBAUTH-USER"
-			setting.AuthProxyHeaderProperty = "username"
+			setting.AuthProxyWhitelist = ""
 			setting.AuthProxyAutoSignUp = true
-			setting.LdapEnabled = false
+			setting.LDAPEnabled = true
+			setting.AuthProxyHeaderName = "X-WEBAUTH-USER"
+			setting.AuthProxyHeaderProperty = "username"
+			setting.AuthProxyHeaders = map[string]string{"Groups": "X-WEBAUTH-GROUPS"}
+			name := "markelog"
+			group := "grafana-core-team"
 
-			bus.AddHandler("test", func(query *m.GetSignedInUserQuery) error {
-				if query.UserId > 0 {
-					query.Result = &m.SignedInUser{OrgId: 4, UserId: 33}
+			middlewareScenario(t, "Should not sync the user if it's in the cache", func(sc *scenarioContext) {
+				bus.AddHandler("test", func(query *models.GetSignedInUserQuery) error {
+					query.Result = &models.SignedInUser{OrgId: 4, UserId: query.UserId}
 					return nil
-				}
-				return m.ErrUserNotFound
+				})
+
+				key := fmt.Sprintf(authproxy.CachePrefix, authproxy.HashCacheKey(name+"-"+group))
+				err := sc.remoteCacheService.Set(key, int64(33), 0)
+				So(err, ShouldBeNil)
+				sc.fakeReq("GET", "/")
+
+				sc.req.Header.Add(setting.AuthProxyHeaderName, name)
+				sc.req.Header.Add("X-WEBAUTH-GROUPS", group)
+				sc.exec()
+
+				Convey("Should init user via cache", func() {
+					So(sc.context.IsSignedIn, ShouldBeTrue)
+					So(sc.context.UserId, ShouldEqual, 33)
+					So(sc.context.OrgId, ShouldEqual, 4)
+				})
 			})
 
-			bus.AddHandler("test", func(cmd *m.UpsertUserCommand) error {
-				cmd.Result = &m.User{Id: 33}
-				return nil
+			middlewareScenario(t, "Should respect auto signup option", func(sc *scenarioContext) {
+				setting.LDAPEnabled = false
+				setting.AuthProxyAutoSignUp = false
+				var actualAuthProxyAutoSignUp *bool = nil
+
+				bus.AddHandler("test", func(cmd *models.UpsertUserCommand) error {
+					actualAuthProxyAutoSignUp = &cmd.SignupAllowed
+					return login.ErrInvalidCredentials
+				})
+
+				sc.fakeReq("GET", "/")
+				sc.req.Header.Add(setting.AuthProxyHeaderName, name)
+				sc.exec()
+
+				assert.False(t, *actualAuthProxyAutoSignUp)
+				assert.Equal(t, sc.resp.Code, 407)
+				assert.Nil(t, sc.context)
 			})
 
-			sc.fakeReq("GET", "/")
-			sc.req.Header.Add("X-WEBAUTH-USER", "torkelo")
-			sc.exec()
+			middlewareScenario(t, "Should create an user from a header", func(sc *scenarioContext) {
+				setting.LDAPEnabled = false
+				setting.AuthProxyAutoSignUp = true
 
-			Convey("Should create user if auto sign up is enabled", func() {
-				So(sc.context.IsSignedIn, ShouldBeTrue)
-				So(sc.context.UserId, ShouldEqual, 33)
-				So(sc.context.OrgId, ShouldEqual, 4)
+				bus.AddHandler("test", func(query *models.GetSignedInUserQuery) error {
+					if query.UserId > 0 {
+						query.Result = &models.SignedInUser{OrgId: 4, UserId: 33}
+						return nil
+					}
+					return models.ErrUserNotFound
+				})
 
-			})
-		})
+				bus.AddHandler("test", func(cmd *models.UpsertUserCommand) error {
+					cmd.Result = &models.User{Id: 33}
+					return nil
+				})
 
-		middlewareScenario("When auth_proxy is enabled and IPv4 request RemoteAddr is not trusted", func(sc *scenarioContext) {
-			setting.AuthProxyEnabled = true
-			setting.AuthProxyHeaderName = "X-WEBAUTH-USER"
-			setting.AuthProxyHeaderProperty = "username"
-			setting.AuthProxyWhitelist = "192.168.1.1, 2001::23"
+				sc.fakeReq("GET", "/")
+				sc.req.Header.Add(setting.AuthProxyHeaderName, name)
+				sc.exec()
 
-			sc.fakeReq("GET", "/")
-			sc.req.Header.Add("X-WEBAUTH-USER", "torkelo")
-			sc.req.RemoteAddr = "192.168.3.1:12345"
-			sc.exec()
-
-			Convey("should return 407 status code", func() {
-				So(sc.resp.Code, ShouldEqual, 407)
-				So(sc.resp.Body.String(), ShouldContainSubstring, "Request for user (torkelo) from 192.168.3.1 is not from the authentication proxy")
-			})
-		})
-
-		middlewareScenario("When auth_proxy is enabled and IPv6 request RemoteAddr is not trusted", func(sc *scenarioContext) {
-			setting.AuthProxyEnabled = true
-			setting.AuthProxyHeaderName = "X-WEBAUTH-USER"
-			setting.AuthProxyHeaderProperty = "username"
-			setting.AuthProxyWhitelist = "192.168.1.1, 2001::23"
-
-			sc.fakeReq("GET", "/")
-			sc.req.Header.Add("X-WEBAUTH-USER", "torkelo")
-			sc.req.RemoteAddr = "[2001:23]:12345"
-			sc.exec()
-
-			Convey("should return 407 status code", func() {
-				So(sc.resp.Code, ShouldEqual, 407)
-				So(sc.resp.Body.String(), ShouldContainSubstring, "Request for user (torkelo) from 2001:23 is not from the authentication proxy")
-			})
-		})
-
-		middlewareScenario("When auth_proxy is enabled and request RemoteAddr is trusted", func(sc *scenarioContext) {
-			setting.AuthProxyEnabled = true
-			setting.AuthProxyHeaderName = "X-WEBAUTH-USER"
-			setting.AuthProxyHeaderProperty = "username"
-			setting.AuthProxyWhitelist = "192.168.1.1, 2001::23"
-
-			bus.AddHandler("test", func(query *m.GetSignedInUserQuery) error {
-				query.Result = &m.SignedInUser{OrgId: 4, UserId: 33}
-				return nil
+				Convey("Should create user from header info", func() {
+					So(sc.context.IsSignedIn, ShouldBeTrue)
+					So(sc.context.UserId, ShouldEqual, 33)
+					So(sc.context.OrgId, ShouldEqual, 4)
+				})
 			})
 
-			bus.AddHandler("test", func(cmd *m.UpsertUserCommand) error {
-				cmd.Result = &m.User{Id: 33}
-				return nil
+			middlewareScenario(t, "Should get an existing user from header", func(sc *scenarioContext) {
+				setting.LDAPEnabled = false
+
+				bus.AddHandler("test", func(query *models.GetSignedInUserQuery) error {
+					query.Result = &models.SignedInUser{OrgId: 2, UserId: 12}
+					return nil
+				})
+
+				bus.AddHandler("test", func(cmd *models.UpsertUserCommand) error {
+					cmd.Result = &models.User{Id: 12}
+					return nil
+				})
+
+				sc.fakeReq("GET", "/")
+				sc.req.Header.Add(setting.AuthProxyHeaderName, name)
+				sc.exec()
+
+				Convey("Should init context with user info", func() {
+					So(sc.context.IsSignedIn, ShouldBeTrue)
+					So(sc.context.UserId, ShouldEqual, 12)
+					So(sc.context.OrgId, ShouldEqual, 2)
+				})
 			})
 
-			sc.fakeReq("GET", "/")
-			sc.req.Header.Add("X-WEBAUTH-USER", "torkelo")
-			sc.req.RemoteAddr = "[2001::23]:12345"
-			sc.exec()
+			middlewareScenario(t, "Should allow the request from whitelist IP", func(sc *scenarioContext) {
+				setting.AuthProxyWhitelist = "192.168.1.0/24, 2001::0/120"
+				setting.LDAPEnabled = false
 
-			Convey("Should init context with user info", func() {
-				So(sc.context.IsSignedIn, ShouldBeTrue)
-				So(sc.context.UserId, ShouldEqual, 33)
-				So(sc.context.OrgId, ShouldEqual, 4)
-			})
-		})
+				bus.AddHandler("test", func(query *models.GetSignedInUserQuery) error {
+					query.Result = &models.SignedInUser{OrgId: 4, UserId: 33}
+					return nil
+				})
 
-		middlewareScenario("When session exists for previous user, create a new session", func(sc *scenarioContext) {
-			setting.AuthProxyEnabled = true
-			setting.AuthProxyHeaderName = "X-WEBAUTH-USER"
-			setting.AuthProxyHeaderProperty = "username"
-			setting.AuthProxyWhitelist = ""
+				bus.AddHandler("test", func(cmd *models.UpsertUserCommand) error {
+					cmd.Result = &models.User{Id: 33}
+					return nil
+				})
 
-			bus.AddHandler("test", func(query *m.UpsertUserCommand) error {
-				query.Result = &m.User{Id: 32}
-				return nil
-			})
+				sc.fakeReq("GET", "/")
+				sc.req.Header.Add(setting.AuthProxyHeaderName, name)
+				sc.req.RemoteAddr = "[2001::23]:12345"
+				sc.exec()
 
-			bus.AddHandler("test", func(query *m.GetSignedInUserQuery) error {
-				query.Result = &m.SignedInUser{OrgId: 4, UserId: 32}
-				return nil
+				Convey("Should init context with user info", func() {
+					So(sc.context.IsSignedIn, ShouldBeTrue)
+					So(sc.context.UserId, ShouldEqual, 33)
+					So(sc.context.OrgId, ShouldEqual, 4)
+				})
 			})
 
-			// create session
-			sc.fakeReq("GET", "/").handler(func(c *m.ReqContext) {
-				c.Session.Set(session.SESS_KEY_USERID, int64(33))
-			}).exec()
+			middlewareScenario(t, "Should not allow the request from whitelist IP", func(sc *scenarioContext) {
+				setting.AuthProxyWhitelist = "8.8.8.8"
+				setting.LDAPEnabled = false
 
-			oldSessionID := sc.context.Session.ID()
+				bus.AddHandler("test", func(query *models.GetSignedInUserQuery) error {
+					query.Result = &models.SignedInUser{OrgId: 4, UserId: 33}
+					return nil
+				})
 
-			sc.req.Header.Add("X-WEBAUTH-USER", "torkelo")
-			sc.exec()
+				bus.AddHandler("test", func(cmd *models.UpsertUserCommand) error {
+					cmd.Result = &models.User{Id: 33}
+					return nil
+				})
 
-			newSessionID := sc.context.Session.ID()
+				sc.fakeReq("GET", "/")
+				sc.req.Header.Add(setting.AuthProxyHeaderName, name)
+				sc.req.RemoteAddr = "[2001::23]:12345"
+				sc.exec()
 
-			Convey("Should not share session with other user", func() {
-				So(oldSessionID, ShouldNotEqual, newSessionID)
-			})
-		})
-
-		middlewareScenario("When auth_proxy and ldap enabled call sync with ldap user", func(sc *scenarioContext) {
-			setting.AuthProxyEnabled = true
-			setting.AuthProxyHeaderName = "X-WEBAUTH-USER"
-			setting.AuthProxyHeaderProperty = "username"
-			setting.AuthProxyWhitelist = ""
-			setting.LdapEnabled = true
-
-			called := false
-			syncGrafanaUserWithLdapUser = func(query *m.LoginUserQuery) error {
-				called = true
-				query.User = &m.User{Id: 32}
-				return nil
-			}
-
-			bus.AddHandler("test", func(query *m.UpsertUserCommand) error {
-				query.Result = &m.User{Id: 32}
-				return nil
+				Convey("Should return 407 status code", func() {
+					So(sc.resp.Code, ShouldEqual, 407)
+					So(sc.context, ShouldBeNil)
+				})
 			})
 
-			bus.AddHandler("test", func(query *m.GetSignedInUserQuery) error {
-				query.Result = &m.SignedInUser{OrgId: 4, UserId: 32}
-				return nil
+			middlewareScenario(t, "Should return 407 status code if LDAP says no", func(sc *scenarioContext) {
+				bus.AddHandler("LDAP", func(cmd *models.UpsertUserCommand) error {
+					return errors.New("Do not add user")
+				})
+
+				sc.fakeReq("GET", "/")
+				sc.req.Header.Add(setting.AuthProxyHeaderName, name)
+				sc.exec()
+
+				Convey("Should return 407 status code", func() {
+					So(sc.resp.Code, ShouldEqual, 407)
+					So(sc.context, ShouldBeNil)
+				})
 			})
 
-			sc.fakeReq("GET", "/")
-			sc.req.Header.Add("X-WEBAUTH-USER", "torkelo")
-			sc.exec()
+			middlewareScenario(t, "Should return 407 status code if there is cache mishap", func(sc *scenarioContext) {
+				bus.AddHandler("Do not have the user", func(query *models.GetSignedInUserQuery) error {
+					return errors.New("Do not add user")
+				})
 
-			Convey("Should call syncGrafanaUserWithLdapUser", func() {
-				So(called, ShouldBeTrue)
+				sc.fakeReq("GET", "/")
+				sc.req.Header.Add(setting.AuthProxyHeaderName, name)
+				sc.exec()
+
+				Convey("Should return 407 status code", func() {
+					So(sc.resp.Code, ShouldEqual, 407)
+					So(sc.context, ShouldBeNil)
+				})
 			})
 		})
 	})
 }
 
-func middlewareScenario(desc string, fn scenarioFunc) {
+func middlewareScenario(t *testing.T, desc string, fn scenarioFunc) {
 	Convey(desc, func() {
 		defer bus.ClearBusHandlers()
 
+		setting.LoginCookieName = "grafana_session"
+		setting.LoginMaxLifetimeDays = 30
+
 		sc := &scenarioContext{}
-		viewsPath, _ := filepath.Abs("../../public/views")
+
+		viewsPath, err := filepath.Abs("../../public/views")
+		require.NoError(t, err)
 
 		sc.m = macaron.New()
+		sc.m.Use(AddDefaultResponseHeaders())
 		sc.m.Use(macaron.Renderer(macaron.RenderOptions{
 			Directory: viewsPath,
 			Delims:    macaron.Delims{Left: "[[", Right: "]]"},
 		}))
 
-		sc.m.Use(GetContextHandler())
-		// mock out gc goroutine
-		session.StartSessionGC = func() {}
-		sc.m.Use(Sessioner(&ms.Options{}, 0))
-		sc.m.Use(OrgRedirect())
-		sc.m.Use(AddDefaultResponseHeaders())
+		sc.userAuthTokenService = auth.NewFakeUserAuthTokenService()
+		sc.remoteCacheService = remotecache.NewFakeStore(t)
 
-		sc.defaultHandler = func(c *m.ReqContext) {
+		sc.m.Use(GetContextHandler(sc.userAuthTokenService, sc.remoteCacheService, nil))
+
+		sc.m.Use(OrgRedirect())
+
+		sc.defaultHandler = func(c *models.ReqContext) {
 			sc.context = c
 			if sc.handlerFunc != nil {
 				sc.handlerFunc(sc.context)
+			} else {
+				c.JsonOK("OK")
 			}
 		}
 
@@ -416,86 +583,87 @@ func middlewareScenario(desc string, fn scenarioFunc) {
 	})
 }
 
-type scenarioContext struct {
-	m              *macaron.Macaron
-	context        *m.ReqContext
-	resp           *httptest.ResponseRecorder
-	apiKey         string
-	authHeader     string
-	respJson       map[string]interface{}
-	handlerFunc    handlerFunc
-	defaultHandler macaron.Handler
-	url            string
+func TestDontRotateTokensOnCancelledRequests(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	reqContext, _, err := initTokenRotationTest(ctx)
+	require.NoError(t, err)
 
-	req *http.Request
+	tryRotateCallCount := 0
+	uts := &auth.FakeUserAuthTokenService{
+		TryRotateTokenProvider: func(ctx context.Context, token *models.UserToken, clientIP, userAgent string) (bool, error) {
+			tryRotateCallCount++
+			return false, nil
+		},
+	}
+
+	token := &models.UserToken{AuthToken: "oldtoken"}
+
+	fn := rotateEndOfRequestFunc(reqContext, uts, token)
+	cancel()
+	fn(reqContext.Resp)
+
+	assert.Equal(t, 0, tryRotateCallCount, "Token rotation was attempted")
 }
 
-func (sc *scenarioContext) withValidApiKey() *scenarioContext {
-	sc.apiKey = "eyJrIjoidjVuQXdwTWFmRlA2em5hUzR1cmhkV0RMUzU1MTFNNDIiLCJuIjoiYXNkIiwiaWQiOjF9"
-	return sc
-}
+func TestTokenRotationAtEndOfRequest(t *testing.T) {
+	reqContext, rr, err := initTokenRotationTest(context.Background())
+	require.NoError(t, err)
 
-func (sc *scenarioContext) withInvalidApiKey() *scenarioContext {
-	sc.apiKey = "nvalidhhhhds"
-	return sc
-}
+	uts := &auth.FakeUserAuthTokenService{
+		TryRotateTokenProvider: func(ctx context.Context, token *models.UserToken, clientIP, userAgent string) (bool, error) {
+			newToken, err := util.RandomHex(16)
+			require.NoError(t, err)
+			token.AuthToken = newToken
+			return true, nil
+		},
+	}
 
-func (sc *scenarioContext) withAuthorizationHeader(authHeader string) *scenarioContext {
-	sc.authHeader = authHeader
-	return sc
-}
+	token := &models.UserToken{AuthToken: "oldtoken"}
 
-func (sc *scenarioContext) fakeReq(method, url string) *scenarioContext {
-	sc.resp = httptest.NewRecorder()
-	req, err := http.NewRequest(method, url, nil)
-	So(err, ShouldBeNil)
-	sc.req = req
+	rotateEndOfRequestFunc(reqContext, uts, token)(reqContext.Resp)
 
-	// add session cookie from last request
-	if sc.context != nil {
-		if sc.context.Session.ID() != "" {
-			req.Header.Add("Cookie", "grafana_sess="+sc.context.Session.ID()+";")
+	foundLoginCookie := false
+	for _, c := range rr.Result().Cookies() {
+		if c.Name == "login_token" {
+			foundLoginCookie = true
+
+			require.NotEqual(t, token.AuthToken, c.Value, "Auth token is still the same")
 		}
 	}
 
-	return sc
+	assert.True(t, foundLoginCookie, "Could not find cookie")
 }
 
-func (sc *scenarioContext) fakeReqWithParams(method, url string, queryParams map[string]string) *scenarioContext {
-	sc.resp = httptest.NewRecorder()
-	req, err := http.NewRequest(method, url, nil)
-	q := req.URL.Query()
-	for k, v := range queryParams {
-		q.Add(k, v)
-	}
-	req.URL.RawQuery = q.Encode()
-	So(err, ShouldBeNil)
-	sc.req = req
+func initTokenRotationTest(ctx context.Context) (*models.ReqContext, *httptest.ResponseRecorder, error) {
+	setting.LoginCookieName = "login_token"
+	setting.LoginMaxLifetimeDays = 7
 
-	return sc
+	rr := httptest.NewRecorder()
+	req, err := http.NewRequestWithContext(ctx, "", "", nil)
+	if err != nil {
+		return nil, nil, err
+	}
+	reqContext := &models.ReqContext{
+		Context: &macaron.Context{
+			Req: macaron.Request{
+				Request: req,
+			},
+		},
+		Logger: log.New("testlogger"),
+	}
+
+	mw := mockWriter{rr}
+	reqContext.Resp = mw
+
+	return reqContext, rr, nil
 }
 
-func (sc *scenarioContext) handler(fn handlerFunc) *scenarioContext {
-	sc.handlerFunc = fn
-	return sc
+type mockWriter struct {
+	*httptest.ResponseRecorder
 }
 
-func (sc *scenarioContext) exec() {
-	if sc.apiKey != "" {
-		sc.req.Header.Add("Authorization", "Bearer "+sc.apiKey)
-	}
-
-	if sc.authHeader != "" {
-		sc.req.Header.Add("Authorization", sc.authHeader)
-	}
-
-	sc.m.ServeHTTP(sc.resp, sc.req)
-
-	if sc.resp.Header().Get("Content-Type") == "application/json; charset=UTF-8" {
-		err := json.NewDecoder(sc.resp.Body).Decode(&sc.respJson)
-		So(err, ShouldBeNil)
-	}
-}
-
-type scenarioFunc func(c *scenarioContext)
-type handlerFunc func(c *m.ReqContext)
+func (mw mockWriter) Flush()                    {}
+func (mw mockWriter) Status() int               { return 0 }
+func (mw mockWriter) Size() int                 { return 0 }
+func (mw mockWriter) Written() bool             { return false }
+func (mw mockWriter) Before(macaron.BeforeFunc) {}

@@ -1,34 +1,37 @@
 package alerting
 
 import (
+	"context"
 	"time"
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/log"
-	"github.com/grafana/grafana/pkg/metrics"
-	m "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/metrics"
+	"github.com/grafana/grafana/pkg/models"
+	"golang.org/x/xerrors"
+
 	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/services/rendering"
 )
 
-type ResultHandler interface {
-	Handle(evalContext *EvalContext) error
+type resultHandler interface {
+	handle(evalContext *EvalContext) error
 }
 
-type DefaultResultHandler struct {
-	notifier NotificationService
+type defaultResultHandler struct {
+	notifier *notificationService
 	log      log.Logger
 }
 
-func NewResultHandler(renderService rendering.Service) *DefaultResultHandler {
-	return &DefaultResultHandler{
+func newResultHandler(renderService rendering.Service) *defaultResultHandler {
+	return &defaultResultHandler{
 		log:      log.New("alerting.resultHandler"),
-		notifier: NewNotificationService(renderService),
+		notifier: newNotificationService(renderService),
 	}
 }
 
-func (handler *DefaultResultHandler) Handle(evalContext *EvalContext) error {
+func (handler *defaultResultHandler) handle(evalContext *EvalContext) error {
 	executionError := ""
 	annotationData := simplejson.New()
 
@@ -43,38 +46,47 @@ func (handler *DefaultResultHandler) Handle(evalContext *EvalContext) error {
 		annotationData.Set("noData", true)
 	}
 
-	metrics.M_Alerting_Result_State.WithLabelValues(string(evalContext.Rule.State)).Inc()
-	if evalContext.ShouldUpdateAlertState() {
-		handler.log.Info("New state change", "alertId", evalContext.Rule.Id, "newState", evalContext.Rule.State, "prev state", evalContext.PrevAlertState)
+	metrics.MAlertingResultState.WithLabelValues(string(evalContext.Rule.State)).Inc()
+	if evalContext.shouldUpdateAlertState() {
+		handler.log.Info("New state change", "ruleId", evalContext.Rule.ID, "newState", evalContext.Rule.State, "prev state", evalContext.PrevAlertState)
 
-		cmd := &m.SetAlertStateCommand{
-			AlertId:  evalContext.Rule.Id,
-			OrgId:    evalContext.Rule.OrgId,
+		cmd := &models.SetAlertStateCommand{
+			AlertId:  evalContext.Rule.ID,
+			OrgId:    evalContext.Rule.OrgID,
 			State:    evalContext.Rule.State,
 			Error:    executionError,
 			EvalData: annotationData,
 		}
 
 		if err := bus.Dispatch(cmd); err != nil {
-			if err == m.ErrCannotChangeStateOnPausedAlert {
+			if err == models.ErrCannotChangeStateOnPausedAlert {
 				handler.log.Error("Cannot change state on alert that's paused", "error", err)
 				return err
 			}
 
-			if err == m.ErrRequiresNewState {
+			if err == models.ErrRequiresNewState {
 				handler.log.Info("Alert already updated")
 				return nil
 			}
 
 			handler.log.Error("Failed to save state", "error", err)
+		} else {
+
+			// StateChanges is used for de duping alert notifications
+			// when two servers are raising. This makes sure that the server
+			// with the last state change always sends a notification.
+			evalContext.Rule.StateChanges = cmd.Result.StateChanges
+
+			// Update the last state change of the alert rule in memory
+			evalContext.Rule.LastStateChange = time.Now()
 		}
 
 		// save annotation
 		item := annotations.Item{
-			OrgId:       evalContext.Rule.OrgId,
-			DashboardId: evalContext.Rule.DashboardId,
-			PanelId:     evalContext.Rule.PanelId,
-			AlertId:     evalContext.Rule.Id,
+			OrgId:       evalContext.Rule.OrgID,
+			DashboardId: evalContext.Rule.DashboardID,
+			PanelId:     evalContext.Rule.PanelID,
+			AlertId:     evalContext.Rule.ID,
 			Text:        "",
 			NewState:    string(evalContext.Rule.State),
 			PrevState:   string(evalContext.PrevAlertState),
@@ -88,19 +100,15 @@ func (handler *DefaultResultHandler) Handle(evalContext *EvalContext) error {
 		}
 	}
 
-	if evalContext.Rule.State == m.AlertStateOK && evalContext.PrevAlertState != m.AlertStateOK {
-		for _, notifierId := range evalContext.Rule.Notifications {
-			cmd := &m.CleanNotificationJournalCommand{
-				AlertId:    evalContext.Rule.Id,
-				NotifierId: notifierId,
-				OrgId:      evalContext.Rule.OrgId,
-			}
-			if err := bus.DispatchCtx(evalContext.Ctx, cmd); err != nil {
-				handler.log.Error("Failed to clean up old notification records", "notifier", notifierId, "alert", evalContext.Rule.Id, "Error", err)
-			}
+	if err := handler.notifier.SendIfNeeded(evalContext); err != nil {
+		if xerrors.Is(err, context.Canceled) {
+			handler.log.Debug("handler.notifier.SendIfNeeded returned context.Canceled")
+		} else if xerrors.Is(err, context.DeadlineExceeded) {
+			handler.log.Debug("handler.notifier.SendIfNeeded returned context.DeadlineExceeded")
+		} else {
+			handler.log.Error("handler.notifier.SendIfNeeded failed", "err", err)
 		}
 	}
-	handler.notifier.SendIfNeeded(evalContext)
 
 	return nil
 }

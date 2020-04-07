@@ -1,0 +1,12 @@
+notifiers:  
+  - name: channel1
+    type: email
+    uid: notifier1
+    org_id: 1
+    settings:
+      addresses: example@example.com
+  - name: channel2
+    type: slack
+    uid: notifier2
+    settings:
+      url: http://slack.com

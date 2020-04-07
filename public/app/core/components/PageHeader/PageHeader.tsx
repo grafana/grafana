@@ -1,9 +1,8 @@
-import React from 'react';
-import { observer } from 'mobx-react';
-import { NavModel, NavModelItem } from '../../nav_model_srv';
-import classNames from 'classnames';
+import React, { FormEvent } from 'react';
+import { Tab, TabsBar } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
-import { toJS } from 'mobx';
+import { NavModel, NavModelItem, NavModelBreadcrumb } from '@grafana/data';
+import { CoreEvents } from 'app/types';
 
 export interface Props {
   model: NavModel;
@@ -14,10 +13,10 @@ const SelectNav = ({ main, customCss }: { main: NavModelItem; customCss: string 
     return navItem.active === true;
   });
 
-  const gotoUrl = evt => {
-    const element = evt.target;
+  const gotoUrl = (evt: FormEvent) => {
+    const element = evt.target as HTMLSelectElement;
     const url = element.options[element.selectedIndex].value;
-    appEvents.emit('location-change', { href: url });
+    appEvents.emit(CoreEvents.locationChange, { href: url });
   };
 
   return (
@@ -46,44 +45,39 @@ const SelectNav = ({ main, customCss }: { main: NavModelItem; customCss: string 
   );
 };
 
-const Tabs = ({ main, customCss }: { main: NavModelItem; customCss: string }) => {
-  return (
-    <ul className={`gf-tabs ${customCss}`}>
-      {main.children.map((tab, idx) => {
-        if (tab.hideFromTabs) {
-          return null;
-        }
-
-        const tabClasses = classNames({
-          'gf-tabs-link': true,
-          active: tab.active,
-        });
-
-        return (
-          <li className="gf-tabs-item" key={tab.url}>
-            <a className={tabClasses} target={tab.target} href={tab.url}>
-              <i className={tab.icon} />
-              {tab.text}
-            </a>
-          </li>
-        );
-      })}
-    </ul>
-  );
-};
-
 const Navigation = ({ main }: { main: NavModelItem }) => {
+  const goToUrl = (index: number) => {
+    main.children.forEach((child, i) => {
+      if (i === index) {
+        appEvents.emit(CoreEvents.locationChange, { href: child.url });
+      }
+    });
+  };
+
   return (
     <nav>
       <SelectNav customCss="page-header__select-nav" main={main} />
-      <Tabs customCss="page-header__tabs" main={main} />
+      <TabsBar className="page-header__tabs" hideBorder={true}>
+        {main.children.map((child, index) => {
+          return (
+            !child.hideFromTabs && (
+              <Tab
+                label={child.text}
+                active={child.active}
+                key={`${child.url}-${index}`}
+                icon={child.icon}
+                onChangeTab={() => goToUrl(index)}
+              />
+            )
+          );
+        })}
+      </TabsBar>
     </nav>
   );
 };
 
-@observer
 export default class PageHeader extends React.Component<Props, any> {
-  constructor(props) {
+  constructor(props: Props) {
     super(props);
   }
 
@@ -92,7 +86,7 @@ export default class PageHeader extends React.Component<Props, any> {
     return true;
   }
 
-  renderTitle(title: string, breadcrumbs: any[]) {
+  renderTitle(title: string, breadcrumbs: NavModelBreadcrumb[]) {
     if (!title && (!breadcrumbs || breadcrumbs.length === 0)) {
       return null;
     }
@@ -102,16 +96,15 @@ export default class PageHeader extends React.Component<Props, any> {
     }
 
     const breadcrumbsResult = [];
-    for (let i = 0; i < breadcrumbs.length; i++) {
-      const bc = breadcrumbs[i];
+    for (const bc of breadcrumbs) {
       if (bc.url) {
         breadcrumbsResult.push(
-          <a className="text-link" key={i} href={bc.url}>
+          <a className="text-link" key={breadcrumbsResult.length} href={bc.url}>
             {bc.title}
           </a>
         );
       } else {
-        breadcrumbsResult.push(<span key={i}> / {bc.title}</span>);
+        breadcrumbsResult.push(<span key={breadcrumbsResult.length}> / {bc.title}</span>);
       }
     }
     breadcrumbsResult.push(<span key={breadcrumbs.length + 1}> / {title}</span>);
@@ -119,7 +112,7 @@ export default class PageHeader extends React.Component<Props, any> {
     return <h1 className="page-header__title">{breadcrumbsResult}</h1>;
   }
 
-  renderHeaderTitle(main) {
+  renderHeaderTitle(main: NavModelItem) {
     return (
       <div className="page-header__inner">
         <span className="page-header__logo">
@@ -130,12 +123,6 @@ export default class PageHeader extends React.Component<Props, any> {
         <div className="page-header__info-block">
           {this.renderTitle(main.text, main.breadcrumbs)}
           {main.subTitle && <div className="page-header__sub-title">{main.subTitle}</div>}
-          {main.subType && (
-            <div className="page-header__stamps">
-              <i className={main.subType.icon} />
-              {main.subType.text}
-            </div>
-          )}
         </div>
       </div>
     );
@@ -148,7 +135,7 @@ export default class PageHeader extends React.Component<Props, any> {
       return null;
     }
 
-    const main = toJS(model.main); // Convert to JS if its a mobx observable
+    const main = model.main;
 
     return (
       <div className="page-header-canvas">

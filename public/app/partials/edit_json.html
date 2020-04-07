@@ -1,24 +1,24 @@
 <div ng-controller="JsonEditorCtrl">
-	<div class="tabbed-view-header">
-		<h2 class="tabbed-view-title">
-			JSON
-		</h2>
+  <div class="tabbed-view-header">
+    <h2 class="tabbed-view-title">
+      JSON
+    </h2>
 
-		<button class="tabbed-view-close-btn" ng-click="dismiss()">
-			<i class="fa fa-remove"></i>
-		</button>
-	</div>
+    <button class="tabbed-view-close-btn" ng-click="dismiss()">
+      <i class="fa fa-remove"></i>
+    </button>
+  </div>
 
-	<div class="tabbed-view-body">
-		<div class="gf-form">
-			<code-editor content="json" data-mode="json" data-max-lines=20 ></code-editor>
-		</div>
+  <div class="tabbed-view-body">
+    <div class="gf-form">
+      <code-editor content="json" data-mode="json" data-max-lines="20"></code-editor>
+    </div>
 
-		<div class="gf-form-button-row">
-			<button type="button" class="btn btn-success" ng-show="canUpdate" ng-click="update(); dismiss();">Update</button>
-			<button class="btn btn-secondary" ng-if="canCopy" clipboard-button="getContentForClipboard()">
-				<i class="fa fa-clipboard"></i>&nbsp;Copy to Clipboard
-			</button>
-		</div>
-	</div>
+    <div class="gf-form-button-row">
+      <button type="button" class="btn btn-primary" ng-show="canUpdate" ng-click="update(); dismiss();">Update</button>
+      <button class="btn btn-secondary" ng-if="canCopy" clipboard-button="getContentForClipboard()">
+        Copy to Clipboard
+      </button>
+    </div>
+  </div>
 </div>

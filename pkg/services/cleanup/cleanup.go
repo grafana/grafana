@@ -8,15 +8,17 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/bus"
-	"github.com/grafana/grafana/pkg/log"
-	m "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/serverlock"
+	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
 type CleanUpService struct {
-	log log.Logger
-	Cfg *setting.Cfg `inject:""`
+	log               log.Logger
+	Cfg               *setting.Cfg                  `inject:""`
+	ServerLockService *serverlock.ServerLockService `inject:""`
 }
 
 func init() {
@@ -38,7 +40,13 @@ func (srv *CleanUpService) Run(ctx context.Context) error {
 			srv.cleanUpTmpFiles()
 			srv.deleteExpiredSnapshots()
 			srv.deleteExpiredDashboardVersions()
-			srv.deleteOldLoginAttempts()
+			err := srv.ServerLockService.LockAndExecute(ctx, "delete old login attempts",
+				time.Minute*10, func() {
+					srv.deleteOldLoginAttempts()
+				})
+			if err != nil {
+				srv.log.Error("failed to lock and execute cleanup of old login attempts", "error", err)
+			}
 		case <-ctx.Done():
 			return ctx.Err()
 		}
@@ -73,7 +81,7 @@ func (srv *CleanUpService) cleanUpTmpFiles() {
 		}
 	}
 
-	srv.log.Debug("Found old rendered image to delete", "deleted", len(toDelete), "keept", len(files))
+	srv.log.Debug("Found old rendered image to delete", "deleted", len(toDelete), "kept", len(files))
 }
 
 func (srv *CleanUpService) shouldCleanupTempFile(filemtime time.Time, now time.Time) bool {
@@ -85,7 +93,7 @@ func (srv *CleanUpService) shouldCleanupTempFile(filemtime time.Time, now time.T
 }
 
 func (srv *CleanUpService) deleteExpiredSnapshots() {
-	cmd := m.DeleteExpiredSnapshotsCommand{}
+	cmd := models.DeleteExpiredSnapshotsCommand{}
 	if err := bus.Dispatch(&cmd); err != nil {
 		srv.log.Error("Failed to delete expired snapshots", "error", err.Error())
 	} else {
@@ -94,7 +102,7 @@ func (srv *CleanUpService) deleteExpiredSnapshots() {
 }
 
 func (srv *CleanUpService) deleteExpiredDashboardVersions() {
-	cmd := m.DeleteExpiredVersionsCommand{}
+	cmd := models.DeleteExpiredVersionsCommand{}
 	if err := bus.Dispatch(&cmd); err != nil {
 		srv.log.Error("Failed to delete expired dashboard versions", "error", err.Error())
 	} else {
@@ -107,7 +115,7 @@ func (srv *CleanUpService) deleteOldLoginAttempts() {
 		return
 	}
 
-	cmd := m.DeleteOldLoginAttemptsCommand{
+	cmd := models.DeleteOldLoginAttemptsCommand{
 		OlderThan: time.Now().Add(time.Minute * -10),
 	}
 	if err := bus.Dispatch(&cmd); err != nil {

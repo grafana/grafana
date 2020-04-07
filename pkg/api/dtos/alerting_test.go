@@ -29,7 +29,7 @@ func TestFormatShort(t *testing.T) {
 		}
 
 		if parsed != tc.interval {
-			t.Errorf("expectes the parsed duration to equal the interval. Got %v expected: %v", parsed, tc.interval)
+			t.Errorf("expects the parsed duration to equal the interval. Got %v expected: %v", parsed, tc.interval)
 		}
 	}
 }

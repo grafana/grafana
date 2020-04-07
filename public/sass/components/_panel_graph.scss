@@ -14,11 +14,7 @@
 
       .graph-legend-series {
         display: block;
-        padding-left: 0px;
-      }
-
-      .graph-legend-table {
-        width: auto;
+        padding-left: 4px;
       }
 
       .graph-legend-table .graph-legend-series {
@@ -32,10 +28,10 @@
   position: relative;
   cursor: crosshair;
   flex-grow: 1;
+  min-height: 65%;
 }
 
 .datapoints-warning {
-  pointer: none;
   position: absolute;
   top: 50%;
   left: 50%;
@@ -51,14 +47,11 @@
 .graph-legend {
   display: flex;
   flex: 0 1 auto;
-  max-height: 30%;
+  max-height: 35%;
   margin: 0;
   text-align: center;
   padding-top: 6px;
   position: relative;
-
-  // fix for Firefox (white stripe on the right of scrollbar)
-  width: calc(100% - 1px);
 
   .popover-content {
     padding: 0;
@@ -67,15 +60,6 @@
 
 .graph-legend-content {
   position: relative;
-
-  // fix for Firefox (white stripe on the right of scrollbar)
-  width: calc(100% - 1px);
-}
-
-.graph-legend-scroll {
-  position: relative;
-  overflow: auto !important;
-  padding: 1px;
 }
 
 .graph-legend-icon {
@@ -87,8 +71,8 @@
 .graph-legend-icon,
 .graph-legend-alias,
 .graph-legend-value {
+  display: inline;
   cursor: pointer;
-  float: left;
   white-space: nowrap;
   font-size: 85%;
   text-align: left;
@@ -125,15 +109,25 @@
   }
 }
 
+// Don't move series to the right if legend is on the right as well
+.graph-panel--legend-right .graph-legend-series--right-y {
+  float: left;
+}
+
 .graph-legend-value {
   padding-left: 6px;
 }
 
 // fix for phantomjs
 .body--phantomjs {
+  .graph-panel {
+    display: -webkit-box;
+  }
+
   .graph-panel--legend-right {
     .graph-legend {
-      display: inline-block;
+      display: block;
+      max-width: min-content;
     }
 
     .graph-panel__chart {
@@ -142,24 +136,15 @@
 
     .graph-legend-table {
       display: table;
-
-      .graph-legend-scroll {
-        display: table;
-      }
+      width: auto;
     }
   }
 }
 
 .graph-legend-table {
-  tbody {
-    display: block;
-    position: relative;
-    overflow-y: auto;
-    overflow-x: hidden;
-    padding-bottom: 1px;
-    padding-right: 5px;
-    padding-left: 5px;
-  }
+  padding-bottom: 1px;
+  padding-right: 5px;
+  padding-left: 5px;
 
   .graph-legend-series {
     display: table-row;
@@ -282,7 +267,7 @@
     text-align: center;
     position: relative;
     top: -3px;
-    padding: 0.2rem;
+    padding: $space-xxs;
     font-weight: bold;
     color: $text-color;
   }
@@ -298,7 +283,7 @@
 
   .graph-tooltip-series-name {
     display: table-cell;
-    padding: 0.15rem;
+    padding: $space-xxs;
     max-width: 650px;
     text-overflow: ellipsis;
     overflow: hidden;
@@ -319,7 +304,7 @@
   }
 
   .graph-annotation__header {
-    background-color: $popover-border-color;
+    background: $popover-header-bg;
     padding: 6px 10px;
     display: flex;
   }
@@ -348,7 +333,7 @@
   }
 
   .graph-annotation__body {
-    padding: 0.65rem;
+    padding: $space-sm;
   }
 
   .graph-annotation__user {
@@ -367,7 +352,7 @@
 
 .left-yaxis-label {
   top: 50%;
-  left: 2px;
+  left: 8px;
   transform: translateX(-50%) translateY(-50%) rotate(-90deg);
   // this is needed for phantomsjs 2.1
   -webkit-transform: translateX(-50%) translateY(-50%) rotate(-90deg);
@@ -375,7 +360,7 @@
 
 .right-yaxis-label {
   top: 50%;
-  right: 2px;
+  right: 8px;
   transform: translateX(50%) translateY(-50%) rotate(90deg);
   // this is needed for phantomsjs 2.1
   -webkit-transform: translateX(50%) translateY(-50%) rotate(90deg);
@@ -387,7 +372,6 @@
   font-size: $font-size-sm;
   position: absolute;
   text-align: center;
-  font-size: 12px;
 }
 
 .alert-handle-wrapper {
@@ -417,21 +401,23 @@
       top: 0px;
       float: left;
       border-right: 1px solid $btn-divider-left;
-      padding: 0.5rem 0.3rem 0.4rem 0.4rem;
+      padding: 6px 4px 4px 6px;
     }
   }
 
   .alert-handle-value {
     border-left: 1px solid $btn-divider-right;
-    padding: 0.5rem;
-    line-height: 2rem;
+    padding: $space-xs $space-sm;
+    padding: 7px;
+    line-height: 24px;
+    height: 24px;
 
     .alert-handle-grip {
       background: url($btn-drag-image) no-repeat 50% 50%;
       background-size: 8px;
       float: right;
-      width: 1rem;
-      height: 2rem;
+      width: 16px;
+      height: 24px;
       margin-right: 2px;
     }
   }

@@ -1,0 +1,178 @@
+$arrowSize: 15px;
+.ColorPicker {
+  @extend .popper;
+  font-size: 12px;
+  // !important because these styles are also provided to popper via .popper classes from Tooltip component
+  // hope to get rid of those soon
+  padding: $arrowSize !important;
+}
+
+.ColorPicker__arrow {
+  width: 0;
+  height: 0;
+  border-style: solid;
+  position: absolute;
+  margin: 0px;
+
+  &[data-placement^='top'] {
+    border-width: $arrowSize $arrowSize 0 $arrowSize;
+    border-left-color: transparent;
+    border-right-color: transparent;
+    border-bottom-color: transparent;
+    bottom: -$arrowSize;
+    left: calc(50%-#{$arrowSize});
+    padding-top: $arrowSize;
+  }
+
+  &[data-placement^='bottom'] {
+    border-width: 0 $arrowSize $arrowSize $arrowSize;
+    border-left-color: transparent;
+    border-right-color: transparent;
+    border-top-color: transparent;
+    top: 0;
+    left: calc(50%-#{$arrowSize});
+  }
+
+  &[data-placement^='bottom-start'] {
+    border-width: 0 $arrowSize $arrowSize $arrowSize;
+    border-left-color: transparent;
+    border-right-color: transparent;
+    border-top-color: transparent;
+    top: 0;
+    left: $arrowSize;
+  }
+
+  &[data-placement^='bottom-end'] & {
+    border-width: 0 $arrowSize $arrowSize $arrowSize;
+    border-left-color: transparent;
+    border-right-color: transparent;
+    border-top-color: transparent;
+    top: 0;
+    left: calc(100%-#{$arrowSize});
+  }
+
+  &[data-placement^='right'] {
+    border-width: $arrowSize $arrowSize $arrowSize 0;
+    border-left-color: transparent;
+    border-top-color: transparent;
+    border-bottom-color: transparent;
+    left: 0;
+    top: calc(50%-#{$arrowSize});
+  }
+
+  &[data-placement^='left'] {
+    border-width: $arrowSize 0 $arrowSize $arrowSize;
+    border-top-color: transparent;
+    border-right-color: transparent;
+    border-bottom-color: transparent;
+    right: -$arrowSize;
+    top: calc(50%-#{$arrowSize});
+  }
+}
+
+.ColorPicker__arrow--light {
+  border-color: #ffffff;
+}
+
+.ColorPicker__arrow--dark {
+  border-color: #1e2028;
+}
+
+// !important because these styles are also provided to popper via .popper classes from Tooltip component
+// hope to get rid of those soon
+.ColorPicker[data-placement^='top'],
+.ColorPicker[data-placement^='bottom'] {
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+}
+
+// !important because these styles are also provided to popper via .popper classes from Tooltip component
+// hope to get rid of those soon
+.ColorPicker[data-placement^='left'],
+.ColorPicker[data-placement^='right'] {
+  padding-top: 0 !important;
+}
+
+.ColorPickerPopover {
+  border-radius: 3px;
+}
+
+.ColorPickerPopover--light {
+  color: black;
+  background: linear-gradient(180deg, #ffffff 0%, #f7f8fa 104.25%);
+  box-shadow: 0px 2px 4px #dde4ed, 0px 0px 2px #dde4ed;
+}
+
+.ColorPickerPopover--dark {
+  color: #d8d9da;
+  background: linear-gradient(180deg, #1e2028 0%, #161719 104.25%);
+  box-shadow: 0px 2px 4px #000000, 0px 0px 2px #000000;
+
+  .ColorPickerPopover__tab {
+    background: #303133;
+    color: white;
+    cursor: pointer;
+  }
+  .ColorPickerPopover__tab--active {
+    background: none;
+  }
+}
+
+.ColorPickerPopover__content {
+  width: 336px;
+  min-height: 184px;
+  padding: 24px;
+}
+
+.ColorPickerPopover__tabs {
+  display: flex;
+  width: 100%;
+  border-radius: 3px 3px 0 0;
+  overflow: hidden;
+}
+
+.ColorPickerPopover__tab {
+  width: 50%;
+  text-align: center;
+  padding: 8px 0;
+  background: #dde4ed;
+}
+
+.ColorPickerPopover__tab--active {
+  background: white;
+}
+
+.ColorPicker__axisSwitch {
+  width: 100%;
+}
+
+.ColorPicker__axisSwitchLabel {
+  display: flex;
+  flex-grow: 1;
+}
+
+.gf-color-picker__body {
+  padding-bottom: $arrowSize;
+  padding-left: 6px;
+}
+
+.drop-popover.gf-color-picker {
+  .drop-content {
+    width: 210px;
+  }
+}
+
+// TODO: Remove. This is a temporary solution until color picker popovers are used
+// with Drop.js.
+.drop-popover.drop-popover--transparent {
+  .drop-content {
+    border: none;
+    background: none;
+    padding: 0;
+    max-width: none;
+
+    &:before {
+      display: none;
+    }
+  }
+}

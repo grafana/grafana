@@ -1,25 +1,13 @@
 import angular from 'angular';
+import coreModule from 'app/core/core_module';
 import _ from 'lodash';
-
-export class CloudWatchQueryParameter {
-  constructor() {
-    return {
-      templateUrl: 'public/app/plugins/datasource/cloudwatch/partials/query.parameter.html',
-      controller: 'CloudWatchQueryParameterCtrl',
-      restrict: 'E',
-      scope: {
-        target: '=',
-        datasource: '=',
-        onChange: '&',
-      },
-    };
-  }
-}
+import { TemplateSrv } from 'app/features/templating/template_srv';
+import DatasourceSrv from 'app/features/plugins/datasource_srv';
 
 export class CloudWatchQueryParameterCtrl {
   /** @ngInject */
-  constructor($scope, templateSrv, uiSegmentSrv, datasourceSrv, $q) {
-    $scope.init = function() {
+  constructor($scope: any, templateSrv: TemplateSrv, uiSegmentSrv: any, datasourceSrv: DatasourceSrv) {
+    $scope.init = () => {
       const target = $scope.target;
       target.namespace = target.namespace || '';
       target.metricName = target.metricName || '';
@@ -29,8 +17,6 @@ export class CloudWatchQueryParameterCtrl {
       target.region = target.region || 'default';
       target.id = target.id || '';
       target.expression = target.expression || '';
-      target.returnData = target.returnData || false;
-      target.highResolution = target.highResolution || false;
 
       $scope.regionSegment = uiSegmentSrv.getSegmentForValue($scope.target.region, 'select region');
       $scope.namespaceSegment = uiSegmentSrv.getSegmentForValue($scope.target.namespace, 'select namespace');
@@ -38,7 +24,7 @@ export class CloudWatchQueryParameterCtrl {
 
       $scope.dimSegments = _.reduce(
         $scope.target.dimensions,
-        function(memo, value, key) {
+        (memo, value, key) => {
           memo.push(uiSegmentSrv.newKey(key));
           memo.push(uiSegmentSrv.newOperator('='));
           memo.push(uiSegmentSrv.newKeyValue(value));
@@ -47,7 +33,7 @@ export class CloudWatchQueryParameterCtrl {
         []
       );
 
-      $scope.statSegments = _.map($scope.target.statistics, function(stat) {
+      $scope.statSegments = _.map($scope.target.statistics, stat => {
         return uiSegmentSrv.getSegmentForValue(stat);
       });
 
@@ -67,15 +53,15 @@ export class CloudWatchQueryParameterCtrl {
       }
 
       if (!$scope.onChange) {
-        $scope.onChange = function() {};
+        $scope.onChange = () => {};
       }
     };
 
-    $scope.getStatSegments = function() {
-      return $q.when(
+    $scope.getStatSegments = () => {
+      return Promise.resolve(
         _.flatten([
           angular.copy($scope.removeStatSegment),
-          _.map($scope.datasource.standardStatistics, function(s) {
+          _.map($scope.datasource.standardStatistics, s => {
             return uiSegmentSrv.getSegmentForValue(s);
           }),
           uiSegmentSrv.getSegmentForValue('pNN.NN'),
@@ -83,7 +69,7 @@ export class CloudWatchQueryParameterCtrl {
       );
     };
 
-    $scope.statSegmentChanged = function(segment, index) {
+    $scope.statSegmentChanged = (segment: any, index: number) => {
       if (segment.value === $scope.removeStatSegment.value) {
         $scope.statSegments.splice(index, 1);
       } else {
@@ -92,7 +78,7 @@ export class CloudWatchQueryParameterCtrl {
 
       $scope.target.statistics = _.reduce(
         $scope.statSegments,
-        function(memo, seg) {
+        (memo, seg) => {
           if (!seg.fake) {
             memo.push(seg.value);
           }
@@ -105,7 +91,7 @@ export class CloudWatchQueryParameterCtrl {
       $scope.onChange();
     };
 
-    $scope.ensurePlusButton = function(segments) {
+    $scope.ensurePlusButton = (segments: any) => {
       const count = segments.length;
       const lastSegment = segments[Math.max(count - 1, 0)];
 
@@ -114,18 +100,19 @@ export class CloudWatchQueryParameterCtrl {
       }
     };
 
-    $scope.getDimSegments = function(segment, $index) {
+    $scope.getDimSegments = (segment: any, $index: number) => {
       if (segment.type === 'operator') {
-        return $q.when([]);
+        return Promise.resolve([]);
       }
 
       const target = $scope.target;
-      let query = $q.when([]);
+      let query = Promise.resolve([]);
 
       if (segment.type === 'key' || segment.type === 'plus-button') {
         query = $scope.datasource.getDimensionKeys($scope.target.namespace, $scope.target.region);
       } else if (segment.type === 'value') {
         const dimensionKey = $scope.dimSegments[$index - 2].value;
+        delete target.dimensions[dimensionKey];
         query = $scope.datasource.getDimensionValues(
           target.region,
           target.namespace,
@@ -135,7 +122,7 @@ export class CloudWatchQueryParameterCtrl {
         );
       }
 
-      return query.then($scope.transformToSegments(true)).then(function(results) {
+      return query.then($scope.transformToSegments(true)).then(results => {
         if (segment.type === 'key') {
           results.splice(0, 0, angular.copy($scope.removeDimSegment));
         }
@@ -143,7 +130,7 @@ export class CloudWatchQueryParameterCtrl {
       });
     };
 
-    $scope.dimSegmentChanged = function(segment, index) {
+    $scope.dimSegmentChanged = (segment: any, index: number) => {
       $scope.dimSegments[index] = segment;
 
       if (segment.value === $scope.removeDimSegment.value) {
@@ -160,8 +147,8 @@ export class CloudWatchQueryParameterCtrl {
       $scope.onChange();
     };
 
-    $scope.syncDimSegmentsWithModel = function() {
-      const dims = {};
+    $scope.syncDimSegmentsWithModel = () => {
+      const dims: any = {};
       const length = $scope.dimSegments.length;
 
       for (let i = 0; i < length - 2; i += 3) {
@@ -175,44 +162,44 @@ export class CloudWatchQueryParameterCtrl {
       $scope.target.dimensions = dims;
     };
 
-    $scope.getRegions = function() {
+    $scope.getRegions = () => {
       return $scope.datasource
         .metricFindQuery('regions()')
-        .then(function(results) {
+        .then((results: any) => {
           results.unshift({ text: 'default' });
           return results;
         })
         .then($scope.transformToSegments(true));
     };
 
-    $scope.getNamespaces = function() {
+    $scope.getNamespaces = () => {
       return $scope.datasource.metricFindQuery('namespaces()').then($scope.transformToSegments(true));
     };
 
-    $scope.getMetrics = function() {
+    $scope.getMetrics = () => {
       return $scope.datasource
         .metricFindQuery('metrics(' + $scope.target.namespace + ',' + $scope.target.region + ')')
         .then($scope.transformToSegments(true));
     };
 
-    $scope.regionChanged = function() {
+    $scope.regionChanged = () => {
       $scope.target.region = $scope.regionSegment.value;
       $scope.onChange();
     };
 
-    $scope.namespaceChanged = function() {
+    $scope.namespaceChanged = () => {
       $scope.target.namespace = $scope.namespaceSegment.value;
       $scope.onChange();
     };
 
-    $scope.metricChanged = function() {
+    $scope.metricChanged = () => {
       $scope.target.metricName = $scope.metricSegment.value;
       $scope.onChange();
     };
 
-    $scope.transformToSegments = function(addTemplateVars) {
-      return function(results) {
-        const segments = _.map(results, function(segment) {
+    $scope.transformToSegments = (addTemplateVars: any) => {
+      return (results: any) => {
+        const segments = _.map(results, segment => {
           return uiSegmentSrv.newSegment({
             value: segment.text,
             expandable: segment.expandable,
@@ -220,7 +207,7 @@ export class CloudWatchQueryParameterCtrl {
         });
 
         if (addTemplateVars) {
-          _.each(templateSrv.variables, function(variable) {
+          _.each(templateSrv.getVariables(), variable => {
             segments.unshift(
               uiSegmentSrv.newSegment({
                 type: 'template',
@@ -239,5 +226,17 @@ export class CloudWatchQueryParameterCtrl {
   }
 }
 
-angular.module('grafana.controllers').directive('cloudwatchQueryParameter', CloudWatchQueryParameter);
-angular.module('grafana.controllers').controller('CloudWatchQueryParameterCtrl', CloudWatchQueryParameterCtrl);
+export function cloudWatchQueryParameter() {
+  return {
+    templateUrl: 'public/app/plugins/datasource/cloudwatch/partials/query.parameter.html',
+    controller: CloudWatchQueryParameterCtrl,
+    restrict: 'E',
+    scope: {
+      target: '=',
+      datasource: '=',
+      onChange: '&',
+    },
+  };
+}
+
+coreModule.directive('cloudwatchQueryParameter', cloudWatchQueryParameter);

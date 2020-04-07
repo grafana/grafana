@@ -2,15 +2,20 @@
   <div class="section gf-form-group">
     <h5 class="section-heading">Options</h5>
 
-    <gf-form-switch class="gf-form" label="Starred" label-class="width-9" checked="ctrl.panel.starred" on-change="ctrl.refresh()"></gf-form-switch>
-    <gf-form-switch class="gf-form" label="Recently viewed" label-class="width-9" checked="ctrl.panel.recent" on-change="ctrl.refresh()"></gf-form-switch>
-    <gf-form-switch class="gf-form" label="Search" label-class="width-9" checked="ctrl.panel.search" on-change="ctrl.refresh()"></gf-form-switch>
+    <gf-form-switch class="gf-form" label="Starred" label-class="width-9" checked="ctrl.panel.starred"
+      on-change="ctrl.refresh()"></gf-form-switch>
+    <gf-form-switch class="gf-form" label="Recently viewed" label-class="width-9" checked="ctrl.panel.recent"
+      on-change="ctrl.refresh()"></gf-form-switch>
+    <gf-form-switch class="gf-form" label="Search" label-class="width-9" checked="ctrl.panel.search"
+      on-change="ctrl.refresh()"></gf-form-switch>
 
-    <gf-form-switch class="gf-form" label="Show headings" label-class="width-9" checked="ctrl.panel.headings" on-change="ctrl.refresh()"></gf-form-switch>
+    <gf-form-switch class="gf-form" label="Show headings" label-class="width-9" checked="ctrl.panel.headings"
+      on-change="ctrl.refresh()"></gf-form-switch>
 
     <div class="gf-form">
       <span class="gf-form-label width-9">Max items</span>
-      <input class="gf-form-input max-width-5" type="number" ng-model="ctrl.panel.limit" ng-model-onblur ng-change="ctrl.refresh()">
+      <input class="gf-form-input max-width-5" type="number" ng-model="ctrl.panel.limit" ng-model-onblur
+        ng-change="ctrl.refresh()">
     </div>
   </div>
 
@@ -19,21 +24,20 @@
 
     <div class="gf-form">
       <span class="gf-form-label width-6">Query</span>
-      <input type="text" class="gf-form-input" placeholder="title query" ng-model="ctrl.panel.query" ng-change="ctrl.refresh()" ng-model-onblur>
+      <input type="text" class="gf-form-input" placeholder="title query" ng-model="ctrl.panel.query"
+        ng-change="ctrl.refresh()" ng-model-onblur>
     </div>
 
     <div class="gf-form">
-      <folder-picker  initial-folder-id="ctrl.panel.folderId"
-											on-change="ctrl.onFolderChange($folder)"
-                      label-class="width-6"
-                      initial-title="'All'"
-                      enable-reset="true">
-			</folder-picker>
+      <folder-picker initial-folder-id="ctrl.panel.folderId" on-change="ctrl.onFolderChange" label-class="width-6"
+        initial-title="'All'" enable-reset="true">
+      </folder-picker>
     </div>
 
     <div class="gf-form">
       <span class="gf-form-label width-6">Tags</span>
-      <bootstrap-tagsinput ng-model="ctrl.panel.tags" tagclass="label label-tag" placeholder="add tags" on-tags-updated="ctrl.refresh()">
+      <bootstrap-tagsinput ng-model="ctrl.panel.tags" tagclass="label label-tag" placeholder="add tags"
+        on-tags-updated="ctrl.refresh()">
       </bootstrap-tagsinput>
     </div>
   </div>

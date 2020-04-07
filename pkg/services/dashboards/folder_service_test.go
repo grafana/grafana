@@ -112,8 +112,9 @@ func TestFolderService(t *testing.T) {
 
 			provisioningValidated := false
 
-			bus.AddHandler("test", func(query *models.IsDashboardProvisionedQuery) error {
+			bus.AddHandler("test", func(query *models.GetProvisionedDashboardDataByIdQuery) error {
 				provisioningValidated = true
+				query.Result = nil
 				return nil
 			})
 

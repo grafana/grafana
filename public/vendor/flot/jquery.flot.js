@@ -931,13 +931,13 @@ Licensed under the MIT license.
             var res = {}, i, axis;
             for (i = 0; i < xaxes.length; ++i) {
                 axis = xaxes[i];
-                if (axis && axis.used)
+                if (axis)
                     res["x" + axis.n] = axis.c2p(pos.left);
             }
 
             for (i = 0; i < yaxes.length; ++i) {
                 axis = yaxes[i];
-                if (axis && axis.used)
+                if (axis)
                     res["y" + axis.n] = axis.c2p(pos.top);
             }
 
@@ -1129,7 +1129,7 @@ Licensed under the MIT license.
                     format.push({ x: true, number: true, required: true });
                     format.push({ y: true, number: true, required: true });
 
-                    if (s.bars.show || (s.lines.show && s.lines.fill)) {
+                    if (s.stack || s.bars.show || (s.lines.show && s.lines.fill)) {
                         var autoscale = !!((s.bars.show && s.bars.zero) || (s.lines.show && s.lines.zero));
                         format.push({ y: true, number: true, required: false, defaultValue: 0, autoscale: autoscale });
                         if (s.bars.horizontal) {
@@ -1357,6 +1357,7 @@ Licensed under the MIT license.
                 // .mouseleave when we drop support for 1.2.6.
 
                 eventHolder.bind("mouseleave", onMouseLeave);
+                $(document).bind("touchend", onTouch);
             }
 
             if (options.grid.clickable)
@@ -1372,6 +1373,7 @@ Licensed under the MIT license.
             eventHolder.unbind("mousemove", onMouseMove);
             eventHolder.unbind("mouseleave", onMouseLeave);
             eventHolder.unbind("click", onClick);
+            $(document).unbind("touchend", onTouch);
 
             executeHooks(hooks.shutdown, [eventHolder]);
         }
@@ -1715,6 +1717,23 @@ Licensed under the MIT license.
             axis.max = max;
         }
 
+        // grafana change
+        function getSignificantDigitCount(n) {
+          //remove decimal and make positive
+          n = Math.abs(String(n).replace(".", ""));
+          if (n == 0) {
+            return 0;
+          }
+
+          // kill the 0s at the end of n
+          while (n != 0 && n % 10 == 0) {
+            n /= 10;
+          }
+
+          // get number of digits
+          return Math.floor(Math.log(n) / Math.LN10) + 1;
+        }
+
         function setupTickGeneration(axis) {
             var opts = axis.options;
 
@@ -1763,8 +1782,11 @@ Licensed under the MIT license.
             axis.delta = delta;
             axis.tickDecimals = Math.max(0, maxDec != null ? maxDec : dec);
             axis.tickSize = opts.tickSize || size;
+
             // grafana addition
-            axis.scaledDecimals = axis.tickDecimals - Math.floor(Math.log(axis.tickSize) / Math.LN10);
+            if (opts.tickDecimals === null || opts.tickDecimals === undefined) {
+              axis.scaledDecimals = axis.tickDecimals + dec;
+            }
 
             // Time mode was moved to a plug-in in 0.8, and since so many people use it
             // we'll add an especially friendly reminder to make sure they included it.
@@ -2271,9 +2293,52 @@ Licensed under the MIT license.
             });
         }
 
+        function drawOrphanedPoints(series) {
+            /* Filters series data for points with no neighbors before or after
+             * and plots single 0.5 radius points for them so that they are displayed.
+             */
+            var abandonedPoints = [];
+            var beforeX = null;
+            var afterX = null;
+            var datapoints = series.datapoints;
+            // find any points with no neighbors before or after
+            var emptyPoints = [];
+            for (var j = 0; j < datapoints.pointsize - 2; j++) {
+                emptyPoints.push(0);
+            }
+            for (var i = 0; i < datapoints.points.length; i += datapoints.pointsize) {
+                var x = datapoints.points[i], y = datapoints.points[i + 1];
+                if (i === datapoints.points.length - datapoints.pointsize) {
+                    afterX = null;
+                } else {
+                    afterX = datapoints.points[i + datapoints.pointsize];
+                }
+                if (x !== null && y !== null && beforeX === null && afterX === null) {
+                    abandonedPoints.push(x);
+                    abandonedPoints.push(y);
+                    abandonedPoints.push.apply(abandonedPoints, emptyPoints);
+                }
+                beforeX = x;
+
+            }
+            var olddatapoints = datapoints.points
+            datapoints.points = abandonedPoints;
+
+            series.points.radius = series.lines.lineWidth/2;
+            // plot the orphan points with a radius of lineWidth/2
+            drawSeriesPoints(series);
+            // reset old info
+            datapoints.points = olddatapoints;
+        }
+
         function drawSeries(series) {
-            if (series.lines.show)
+            if (series.lines.show) {
                 drawSeriesLines(series);
+                if (!series.points.show && !series.bars.show) {
+                    // not necessary if user wants points displayed for everything
+                    drawOrphanedPoints(series);
+                }
+            }
             if (series.bars.show)
                 drawSeriesBars(series);
             if (series.points.show)
@@ -2987,6 +3052,44 @@ Licensed under the MIT license.
           }
 
           triggerClickHoverEvent("plotclick", e, function (s) { return s["clickable"] != false; });
+        }
+
+        // grafana addon - added to support mobile devices click in plot
+        function onTouch(e) {
+            if (!e.cancelable) {
+                return;
+            }
+        
+            if (!eventHolder.is(e.target) && eventHolder.has(e.target).length === 0) {
+                triggerClickHoverEvent("plotleave", e, function (s) { false; });
+                return;
+            }
+
+            onMouseMove(mapFromTouchEvent(e));
+            e.preventDefault();
+        }
+
+        // grafana addon - added to support mobile devices and mapping touch event to click event structure
+        function mapFromTouchEvent(e) {
+            if (!e || !e.originalEvent) {
+                return e;
+            }
+
+            if (e.pageX && e.pageY) {
+                return e;
+            }
+
+            var original = e.originalEvent;
+            
+            if (original.changedTouches.length === 0) {
+                return e;
+            }
+
+            var touch = original.changedTouches[0];
+            e.pageX = touch.pageX;
+            e.pageY = touch.pageY;
+
+            return e;
         }
 
         // trigger click or hover event (they send the same parameters

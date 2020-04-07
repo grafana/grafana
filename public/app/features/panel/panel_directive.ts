@@ -1,93 +1,27 @@
 import angular from 'angular';
-import $ from 'jquery';
-import Drop from 'tether-drop';
+// @ts-ignore
 import baron from 'baron';
+import { PanelEvents } from '@grafana/data';
+import { PanelModel } from '../dashboard/state';
+import { PanelCtrl } from './panel_ctrl';
 
 const module = angular.module('grafana.directives');
 
 const panelTemplate = `
-  <div class="panel-container">
-    <div class="panel-header" ng-class="{'grid-drag-handle': !ctrl.fullscreen}">
-      <span class="panel-info-corner">
-        <i class="fa"></i>
-        <span class="panel-info-corner-inner"></span>
-      </span>
-
-      <span class="panel-loading" ng-show="ctrl.loading">
-        <i class="fa fa-spinner fa-spin"></i>
-      </span>
-
-      <panel-header class="panel-title-container" panel-ctrl="ctrl"></panel-header>
-    </div>
-
-    <div class="panel-content">
-      <ng-transclude class="panel-height-helper"></ng-transclude>
-    </div>
-  </div>
-
-  <div class="panel-full-edit" ng-if="ctrl.editMode">
-    <div class="tabbed-view tabbed-view--panel-edit">
-      <div class="tabbed-view-header">
-        <h3 class="tabbed-view-panel-title">
-          {{ctrl.pluginName}}
-        </h3>
-
-        <ul class="gf-tabs">
-          <li class="gf-tabs-item" ng-repeat="tab in ::ctrl.editorTabs">
-            <a class="gf-tabs-link" ng-click="ctrl.changeTab($index)" ng-class="{active: ctrl.editorTabIndex === $index}">
-              {{::tab.title}}
-            </a>
-          </li>
-        </ul>
-
-        <button class="tabbed-view-close-btn" ng-click="ctrl.exitFullscreen();">
-          <i class="fa fa-remove"></i>
-        </button>
-      </div>
-
-      <div class="tabbed-view-body">
-        <div ng-repeat="tab in ctrl.editorTabs" ng-if="ctrl.editorTabIndex === $index">
-          <panel-editor-tab editor-tab="tab" ctrl="ctrl" index="$index"></panel-editor-tab>
-        </div>
-      </div>
-    </div>
-  </div>
+  <ng-transclude class="panel-height-helper"></ng-transclude>
 `;
 
-module.directive('grafanaPanel', function($rootScope, $document, $timeout) {
+module.directive('grafanaPanel', ($rootScope, $document, $timeout) => {
   return {
     restrict: 'E',
     template: panelTemplate,
     transclude: true,
     scope: { ctrl: '=' },
-    link: function(scope, elem) {
-      const panelContainer = elem.find('.panel-container');
-      const panelContent = elem.find('.panel-content');
-      const cornerInfoElem = elem.find('.panel-info-corner');
-      const ctrl = scope.ctrl;
-      let infoDrop;
-      let panelScrollbar;
+    link: (scope: any, elem) => {
+      const ctrl: PanelCtrl = scope.ctrl;
+      const panel: PanelModel = scope.ctrl.panel;
 
-      // the reason for handling these classes this way is for performance
-      // limit the watchers on panels etc
-      let transparentLastState = false;
-      let lastHasAlertRule = false;
-      let lastAlertState;
-      let hasAlertRule;
-
-      function mouseEnter() {
-        panelContainer.toggleClass('panel-hover-highlight', true);
-        ctrl.dashboard.setPanelFocus(ctrl.panel.id);
-      }
-
-      function mouseLeave() {
-        panelContainer.toggleClass('panel-hover-highlight', false);
-        ctrl.dashboard.setPanelFocus(0);
-      }
-
-      function panelHeightUpdated() {
-        panelContent.css({ height: ctrl.height + 'px' });
-      }
+      let panelScrollbar: any;
 
       function resizeScrollableContent() {
         if (panelScrollbar) {
@@ -95,15 +29,8 @@ module.directive('grafanaPanel', function($rootScope, $document, $timeout) {
         }
       }
 
-      // set initial transparency
-      if (ctrl.panel.transparent) {
-        transparentLastState = true;
-        panelContainer.addClass('panel-transparent', true);
-      }
-
-      // update scrollbar after mounting
-      ctrl.events.on('component-did-mount', () => {
-        if (ctrl.__proto__.constructor.scrollable) {
+      ctrl.events.on(PanelEvents.componentDidMount, () => {
+        if ((ctrl as any).__proto__.constructor.scrollable) {
           const scrollRootClass = 'baron baron__root baron__clipper panel-content--scrollable';
           const scrollerClass = 'baron__scroller';
           const scrollBarHTML = `
@@ -112,8 +39,8 @@ module.directive('grafanaPanel', function($rootScope, $document, $timeout) {
             </div>
           `;
 
-          const scrollRoot = panelContent;
-          const scroller = panelContent.find(':first').find(':first');
+          const scrollRoot = elem;
+          const scroller = elem.find(':first').find(':first');
 
           scrollRoot.addClass(scrollRootClass);
           $(scrollBarHTML).appendTo(scrollRoot);
@@ -131,117 +58,49 @@ module.directive('grafanaPanel', function($rootScope, $document, $timeout) {
         }
       });
 
-      ctrl.events.on('panel-size-changed', () => {
-        ctrl.calculatePanelHeight();
-        panelHeightUpdated();
+      function onPanelSizeChanged() {
         $timeout(() => {
           resizeScrollableContent();
           ctrl.render();
         });
-      });
-
-      // set initial height
-      ctrl.calculatePanelHeight();
-      panelHeightUpdated();
-
-      ctrl.events.on('render', () => {
-        if (transparentLastState !== ctrl.panel.transparent) {
-          panelContainer.toggleClass('panel-transparent', ctrl.panel.transparent === true);
-          transparentLastState = ctrl.panel.transparent;
-        }
-
-        hasAlertRule = ctrl.panel.alert !== undefined;
-        if (lastHasAlertRule !== hasAlertRule) {
-          panelContainer.toggleClass('panel-has-alert', hasAlertRule);
-
-          lastHasAlertRule = hasAlertRule;
-        }
-
-        if (ctrl.alertState) {
-          if (lastAlertState) {
-            panelContainer.removeClass('panel-alert-state--' + lastAlertState);
-          }
-
-          if (ctrl.alertState.state === 'ok' || ctrl.alertState.state === 'alerting') {
-            panelContainer.addClass('panel-alert-state--' + ctrl.alertState.state);
-          }
-
-          lastAlertState = ctrl.alertState.state;
-        } else if (lastAlertState) {
-          panelContainer.removeClass('panel-alert-state--' + lastAlertState);
-          lastAlertState = null;
-        }
-      });
-
-      function updatePanelCornerInfo() {
-        const cornerMode = ctrl.getInfoMode();
-        cornerInfoElem[0].className = 'panel-info-corner panel-info-corner--' + cornerMode;
-
-        if (cornerMode) {
-          if (infoDrop) {
-            infoDrop.destroy();
-          }
-
-          infoDrop = new Drop({
-            target: cornerInfoElem[0],
-            content: function() {
-              return ctrl.getInfoContent({ mode: 'tooltip' });
-            },
-            classes: ctrl.error ? 'drop-error' : 'drop-help',
-            openOn: 'hover',
-            hoverOpenDelay: 100,
-            tetherOptions: {
-              attachment: 'bottom left',
-              targetAttachment: 'top left',
-              constraints: [
-                {
-                  to: 'window',
-                  attachment: 'together',
-                  pin: true,
-                },
-              ],
-            },
-          });
-        }
       }
 
-      scope.$watchGroup(['ctrl.error', 'ctrl.panel.description'], updatePanelCornerInfo);
-      scope.$watchCollection('ctrl.panel.links', updatePanelCornerInfo);
+      function onViewModeChanged() {
+        // first wait one pass for dashboard fullscreen view mode to take effect (classses being applied)
+        setTimeout(() => {
+          // then wait another cycle (this might not be needed)
+          $timeout(() => {
+            ctrl.render();
+            resizeScrollableContent();
+          });
+        }, 10);
+      }
 
-      cornerInfoElem.on('click', function() {
-        infoDrop.close();
-        scope.$apply(ctrl.openInspector.bind(ctrl));
-      });
+      function onPanelModelRender(payload?: any) {
+        ctrl.height = scope.$parent.$parent.size.height;
+        ctrl.width = scope.$parent.$parent.size.width;
+      }
 
-      elem.on('mouseenter', mouseEnter);
-      elem.on('mouseleave', mouseLeave);
+      function onPanelModelRefresh() {
+        ctrl.height = scope.$parent.$parent.size.height;
+        ctrl.width = scope.$parent.$parent.size.width;
+      }
 
-      scope.$on('$destroy', function() {
+      panel.events.on(PanelEvents.refresh, onPanelModelRefresh);
+      panel.events.on(PanelEvents.render, onPanelModelRender);
+      panel.events.on(PanelEvents.panelSizeChanged, onPanelSizeChanged);
+      panel.events.on(PanelEvents.viewModeChanged, onViewModeChanged);
+
+      scope.$on('$destroy', () => {
         elem.off();
-        cornerInfoElem.off();
 
-        if (infoDrop) {
-          infoDrop.destroy();
-        }
+        panel.events.emit(PanelEvents.panelTeardown);
+        panel.events.removeAllListeners();
 
         if (panelScrollbar) {
           panelScrollbar.dispose();
         }
       });
     },
-  };
-});
-
-module.directive('panelHelpCorner', function($rootScope) {
-  return {
-    restrict: 'E',
-    template: `
-    <span class="alert-error panel-error small pointer" ng-if="ctrl.error" ng-click="ctrl.openInspector()">
-    <span data-placement="top" bs-tooltip="ctrl.error">
-    <i class="fa fa-exclamation"></i><span class="panel-error-arrow"></span>
-    </span>
-    </span>
-    `,
-    link: function(scope, elem) {},
   };
 });

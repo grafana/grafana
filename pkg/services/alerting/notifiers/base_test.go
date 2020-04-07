@@ -2,133 +2,207 @@ package notifiers
 
 import (
 	"context"
-	"errors"
 	"testing"
 	"time"
 
-	"github.com/grafana/grafana/pkg/bus"
+	"github.com/stretchr/testify/assert"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	m "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
 	. "github.com/smartystreets/goconvey/convey"
 )
 
 func TestShouldSendAlertNotification(t *testing.T) {
+	tnow := time.Now()
+
 	tcs := []struct {
 		name         string
-		prevState    m.AlertStateType
-		newState     m.AlertStateType
-		expected     bool
+		prevState    models.AlertStateType
+		newState     models.AlertStateType
 		sendReminder bool
+		frequency    time.Duration
+		state        *models.AlertNotificationState
+
+		expect bool
 	}{
 		{
-			name:      "pending -> ok should not trigger an notification",
-			newState:  m.AlertStatePending,
-			prevState: m.AlertStateOK,
-			expected:  false,
+			name:         "pending -> ok should not trigger an notification",
+			newState:     models.AlertStateOK,
+			prevState:    models.AlertStatePending,
+			sendReminder: false,
+
+			expect: false,
 		},
 		{
-			name:      "ok -> alerting should trigger an notification",
-			newState:  m.AlertStateOK,
-			prevState: m.AlertStateAlerting,
-			expected:  true,
+			name:         "ok -> alerting should trigger an notification",
+			newState:     models.AlertStateAlerting,
+			prevState:    models.AlertStateOK,
+			sendReminder: false,
+
+			expect: true,
 		},
 		{
-			name:      "ok -> pending should not trigger an notification",
-			newState:  m.AlertStateOK,
-			prevState: m.AlertStatePending,
-			expected:  false,
+			name:         "ok -> pending should not trigger an notification",
+			newState:     models.AlertStatePending,
+			prevState:    models.AlertStateOK,
+			sendReminder: false,
+
+			expect: false,
 		},
 		{
 			name:         "ok -> ok should not trigger an notification",
-			newState:     m.AlertStateOK,
-			prevState:    m.AlertStateOK,
-			expected:     false,
+			newState:     models.AlertStateOK,
+			prevState:    models.AlertStateOK,
 			sendReminder: false,
-		},
-		{
-			name:         "ok -> alerting should not trigger an notification",
-			newState:     m.AlertStateOK,
-			prevState:    m.AlertStateAlerting,
-			expected:     true,
-			sendReminder: true,
+
+			expect: false,
 		},
 		{
 			name:         "ok -> ok with reminder should not trigger an notification",
-			newState:     m.AlertStateOK,
-			prevState:    m.AlertStateOK,
-			expected:     false,
+			newState:     models.AlertStateOK,
+			prevState:    models.AlertStateOK,
 			sendReminder: true,
+
+			expect: false,
+		},
+		{
+			name:         "alerting -> ok should trigger an notification",
+			newState:     models.AlertStateOK,
+			prevState:    models.AlertStateAlerting,
+			sendReminder: false,
+
+			expect: true,
+		},
+		{
+			name:         "alerting -> ok should trigger an notification when reminders enabled",
+			newState:     models.AlertStateOK,
+			prevState:    models.AlertStateAlerting,
+			frequency:    time.Minute * 10,
+			sendReminder: true,
+			state:        &models.AlertNotificationState{UpdatedAt: tnow.Add(-time.Minute).Unix()},
+
+			expect: true,
+		},
+		{
+			name:         "alerting -> alerting with reminder and no state should trigger",
+			newState:     models.AlertStateAlerting,
+			prevState:    models.AlertStateAlerting,
+			frequency:    time.Minute * 10,
+			sendReminder: true,
+
+			expect: true,
+		},
+		{
+			name:         "alerting -> alerting with reminder and last notification sent 1 minute ago should not trigger",
+			newState:     models.AlertStateAlerting,
+			prevState:    models.AlertStateAlerting,
+			frequency:    time.Minute * 10,
+			sendReminder: true,
+			state:        &models.AlertNotificationState{UpdatedAt: tnow.Add(-time.Minute).Unix()},
+
+			expect: false,
+		},
+		{
+			name:         "alerting -> alerting with reminder and last notifciation sent 11 minutes ago should trigger",
+			newState:     models.AlertStateAlerting,
+			prevState:    models.AlertStateAlerting,
+			frequency:    time.Minute * 10,
+			sendReminder: true,
+			state:        &models.AlertNotificationState{UpdatedAt: tnow.Add(-11 * time.Minute).Unix()},
+
+			expect: true,
+		},
+		{
+			name:      "OK -> alerting with notifciation state pending and updated 30 seconds ago should not trigger",
+			newState:  models.AlertStateAlerting,
+			prevState: models.AlertStateOK,
+			state:     &models.AlertNotificationState{State: models.AlertNotificationStatePending, UpdatedAt: tnow.Add(-30 * time.Second).Unix()},
+
+			expect: false,
+		},
+		{
+			name:      "OK -> alerting with notifciation state pending and updated 2 minutes ago should trigger",
+			newState:  models.AlertStateAlerting,
+			prevState: models.AlertStateOK,
+			state:     &models.AlertNotificationState{State: models.AlertNotificationStatePending, UpdatedAt: tnow.Add(-2 * time.Minute).Unix()},
+
+			expect: true,
+		},
+		{
+			name:      "unknown -> ok",
+			prevState: models.AlertStateUnknown,
+			newState:  models.AlertStateOK,
+
+			expect: false,
+		},
+		{
+			name:      "unknown -> pending",
+			prevState: models.AlertStateUnknown,
+			newState:  models.AlertStatePending,
+
+			expect: false,
+		},
+		{
+			name:      "unknown -> alerting",
+			prevState: models.AlertStateUnknown,
+			newState:  models.AlertStateAlerting,
+
+			expect: true,
+		},
+		{
+			name:      "no_data -> pending",
+			prevState: models.AlertStateNoData,
+			newState:  models.AlertStatePending,
+
+			expect: false,
+		},
+		{
+			name:      "no_data -> ok",
+			prevState: models.AlertStateNoData,
+			newState:  models.AlertStateOK,
+
+			expect: true,
 		},
 	}
 
 	for _, tc := range tcs {
-		evalContext := alerting.NewEvalContext(context.TODO(), &alerting.Rule{
-			State: tc.newState,
+		evalContext := alerting.NewEvalContext(context.Background(), &alerting.Rule{
+			State: tc.prevState,
 		})
 
-		evalContext.Rule.State = tc.prevState
-		if defaultShouldNotify(evalContext, true, 0, time.Now()) != tc.expected {
-			t.Errorf("failed %s. expected %+v to return %v", tc.name, tc, tc.expected)
+		if tc.state == nil {
+			tc.state = &models.AlertNotificationState{}
 		}
+
+		evalContext.Rule.State = tc.newState
+		nb := &NotifierBase{SendReminder: tc.sendReminder, Frequency: tc.frequency}
+
+		r := nb.ShouldNotify(evalContext.Ctx, evalContext, tc.state)
+		assert.Equal(t, r, tc.expect, "failed test %s. expected %+v to return: %v", tc.name, tc, tc.expect)
 	}
-}
-
-func TestShouldNotifyWhenNoJournalingIsFound(t *testing.T) {
-	Convey("base notifier", t, func() {
-		bus.ClearBusHandlers()
-
-		notifier := NewNotifierBase(&m.AlertNotification{
-			Id:       1,
-			Name:     "name",
-			Type:     "email",
-			Settings: simplejson.New(),
-		})
-		evalContext := alerting.NewEvalContext(context.TODO(), &alerting.Rule{})
-
-		Convey("should notify if no journaling is found", func() {
-			bus.AddHandlerCtx("", func(ctx context.Context, q *m.GetLatestNotificationQuery) error {
-				return m.ErrJournalingNotFound
-			})
-
-			if !notifier.ShouldNotify(context.Background(), evalContext) {
-				t.Errorf("should send notifications when ErrJournalingNotFound is returned")
-			}
-		})
-
-		Convey("should not notify query returns error", func() {
-			bus.AddHandlerCtx("", func(ctx context.Context, q *m.GetLatestNotificationQuery) error {
-				return errors.New("some kind of error unknown error")
-			})
-
-			if notifier.ShouldNotify(context.Background(), evalContext) {
-				t.Errorf("should not send notifications when query returns error")
-			}
-		})
-	})
 }
 
 func TestBaseNotifier(t *testing.T) {
 	Convey("default constructor for notifiers", t, func() {
-		bJson := simplejson.New()
+		bJSON := simplejson.New()
 
-		model := &m.AlertNotification{
-			Id:       1,
+		model := &models.AlertNotification{
+			Uid:      "1",
 			Name:     "name",
 			Type:     "email",
-			Settings: bJson,
+			Settings: bJSON,
 		}
 
 		Convey("can parse false value", func() {
-			bJson.Set("uploadImage", false)
+			bJSON.Set("uploadImage", false)
 
 			base := NewNotifierBase(model)
 			So(base.UploadImage, ShouldBeFalse)
 		})
 
 		Convey("can parse true value", func() {
-			bJson.Set("uploadImage", true)
+			bJSON.Set("uploadImage", true)
 
 			base := NewNotifierBase(model)
 			So(base.UploadImage, ShouldBeTrue)
@@ -137,6 +211,11 @@ func TestBaseNotifier(t *testing.T) {
 		Convey("default value should be true for backwards compatibility", func() {
 			base := NewNotifierBase(model)
 			So(base.UploadImage, ShouldBeTrue)
+		})
+
+		Convey("default value should be false for backwards compatibility", func() {
+			base := NewNotifierBase(model)
+			So(base.DisableResolveMessage, ShouldBeFalse)
 		})
 	})
 }

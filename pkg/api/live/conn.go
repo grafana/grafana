@@ -6,7 +6,7 @@ import (
 
 	"github.com/gorilla/websocket"
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/log"
+	"github.com/grafana/grafana/pkg/infra/log"
 )
 
 const (
@@ -35,13 +35,15 @@ type connection struct {
 	hub  *hub
 	ws   *websocket.Conn
 	send chan []byte
+	log  log.Logger
 }
 
-func newConnection(ws *websocket.Conn, hub *hub) *connection {
+func newConnection(ws *websocket.Conn, hub *hub, logger log.Logger) *connection {
 	return &connection{
 		hub:  hub,
 		send: make(chan []byte, 256),
 		ws:   ws,
+		log:  logger,
 	}
 }
 
@@ -52,13 +54,17 @@ func (c *connection) readPump() {
 	}()
 
 	c.ws.SetReadLimit(maxMessageSize)
-	c.ws.SetReadDeadline(time.Now().Add(pongWait))
-	c.ws.SetPongHandler(func(string) error { c.ws.SetReadDeadline(time.Now().Add(pongWait)); return nil })
+	if err := c.ws.SetReadDeadline(time.Now().Add(pongWait)); err != nil {
+		c.log.Warn("Setting read deadline failed", "err", err)
+	}
+	c.ws.SetPongHandler(func(string) error {
+		return c.ws.SetReadDeadline(time.Now().Add(pongWait))
+	})
 	for {
 		_, message, err := c.ws.ReadMessage()
 		if err != nil {
 			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway) {
-				log.Info("error: %v", err)
+				c.log.Info("error", "err", err)
 			}
 			break
 		}
@@ -70,7 +76,7 @@ func (c *connection) readPump() {
 func (c *connection) handleMessage(message []byte) {
 	json, err := simplejson.NewJson(message)
 	if err != nil {
-		log.Error(3, "Unreadable message on websocket channel:", err)
+		log.Error(3, "Unreadable message on websocket channel. error: %v", err)
 	}
 
 	msgType := json.Get("action").MustString()
@@ -91,7 +97,9 @@ func (c *connection) handleMessage(message []byte) {
 }
 
 func (c *connection) write(mt int, payload []byte) error {
-	c.ws.SetWriteDeadline(time.Now().Add(writeWait))
+	if err := c.ws.SetWriteDeadline(time.Now().Add(writeWait)); err != nil {
+		return err
+	}
 	return c.ws.WriteMessage(mt, payload)
 }
 
@@ -106,7 +114,9 @@ func (c *connection) writePump() {
 		select {
 		case message, ok := <-c.send:
 			if !ok {
-				c.write(websocket.CloseMessage, []byte{})
+				if err := c.write(websocket.CloseMessage, []byte{}); err != nil {
+					c.log.Warn("Failed to write close message to connection", "err", err)
+				}
 				return
 			}
 			if err := c.write(websocket.TextMessage, message); err != nil {

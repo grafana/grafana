@@ -1,0 +1,40 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Render should render component 1`] = `
+<div
+  className="sidemenu-item"
+>
+  <a
+    className="sidemenu-link"
+    href="login?redirect=%2F"
+    target="_self"
+  >
+    <span
+      className="icon-circle sidemenu-icon"
+    >
+      <i
+        className="fa fa-fw fa-sign-in"
+      />
+    </span>
+  </a>
+  <a
+    href="login?redirect=%2F"
+    target="_self"
+  >
+    <ul
+      className="dropdown-menu dropdown-menu--sidemenu"
+      role="menu"
+    >
+      <li
+        className="side-menu-header"
+      >
+        <span
+          className="sidemenu-item-text"
+        >
+          Sign In
+        </span>
+      </li>
+    </ul>
+  </a>
+</div>
+`;

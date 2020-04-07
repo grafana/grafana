@@ -3,33 +3,38 @@ package api
 import (
 	"context"
 	"crypto/tls"
-	"errors"
 	"fmt"
 	"net"
 	"net/http"
 	"os"
 	"path"
-	"time"
+	"sync"
 
-	"github.com/grafana/grafana/pkg/api/routing"
-	"github.com/prometheus/client_golang/prometheus"
-
-	"github.com/prometheus/client_golang/prometheus/promhttp"
-
-	gocache "github.com/patrickmn/go-cache"
-	macaron "gopkg.in/macaron.v1"
+	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 
 	"github.com/grafana/grafana/pkg/api/live"
+	"github.com/grafana/grafana/pkg/api/routing"
 	httpstatic "github.com/grafana/grafana/pkg/api/static"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/log"
+	"github.com/grafana/grafana/pkg/infra/localcache"
+	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/registry"
+	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/services/hooks"
+	"github.com/grafana/grafana/pkg/services/login"
+	"github.com/grafana/grafana/pkg/services/provisioning"
+	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/rendering"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util/errutil"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
+	macaron "gopkg.in/macaron.v1"
 )
 
 func init() {
@@ -45,18 +50,27 @@ type HTTPServer struct {
 	macaron       *macaron.Macaron
 	context       context.Context
 	streamManager *live.StreamManager
-	cache         *gocache.Cache
 	httpSrv       *http.Server
 
-	RouteRegister routing.RouteRegister `inject:""`
-	Bus           bus.Bus               `inject:""`
-	RenderService rendering.Service     `inject:""`
-	Cfg           *setting.Cfg          `inject:""`
+	RouteRegister        routing.RouteRegister            `inject:""`
+	Bus                  bus.Bus                          `inject:""`
+	RenderService        rendering.Service                `inject:""`
+	Cfg                  *setting.Cfg                     `inject:""`
+	HooksService         *hooks.HooksService              `inject:""`
+	CacheService         *localcache.CacheService         `inject:""`
+	DatasourceCache      datasources.CacheService         `inject:""`
+	AuthTokenService     models.UserTokenService          `inject:""`
+	QuotaService         *quota.QuotaService              `inject:""`
+	RemoteCacheService   *remotecache.RemoteCache         `inject:""`
+	ProvisioningService  provisioning.ProvisioningService `inject:""`
+	Login                *login.LoginService              `inject:""`
+	License              models.Licensing                 `inject:""`
+	BackendPluginManager backendplugin.Manager            `inject:""`
+	PluginManager        *plugins.PluginManager           `inject:""`
 }
 
 func (hs *HTTPServer) Init() error {
 	hs.log = log.New("http.server")
-	hs.cache = gocache.New(5*time.Minute, 10*time.Minute)
 
 	hs.streamManager = live.NewStreamManager()
 	hs.macaron = hs.newMacaron()
@@ -66,70 +80,98 @@ func (hs *HTTPServer) Init() error {
 }
 
 func (hs *HTTPServer) Run(ctx context.Context) error {
-	var err error
-
 	hs.context = ctx
 
 	hs.applyRoutes()
 	hs.streamManager.Run(ctx)
 
-	listenAddr := fmt.Sprintf("%s:%s", setting.HttpAddr, setting.HttpPort)
-	hs.log.Info("HTTP Server Listen", "address", listenAddr, "protocol", setting.Protocol, "subUrl", setting.AppSubUrl, "socket", setting.SocketPath)
+	hs.httpSrv = &http.Server{
+		Addr:    fmt.Sprintf("%s:%s", setting.HttpAddr, setting.HttpPort),
+		Handler: hs.macaron,
+	}
+	switch setting.Protocol {
+	case setting.HTTP2:
+		if err := hs.configureHttp2(); err != nil {
+			return err
+		}
+	case setting.HTTPS:
+		if err := hs.configureHttps(); err != nil {
+			return err
+		}
+	}
 
-	hs.httpSrv = &http.Server{Addr: listenAddr, Handler: hs.macaron}
+	var listener net.Listener
+	switch setting.Protocol {
+	case setting.HTTP, setting.HTTPS, setting.HTTP2:
+		var err error
+		listener, err = net.Listen("tcp", hs.httpSrv.Addr)
+		if err != nil {
+			return errutil.Wrapf(err, "failed to open listener on address %s", hs.httpSrv.Addr)
+		}
+	case setting.SOCKET:
+		var err error
+		listener, err = net.ListenUnix("unix", &net.UnixAddr{Name: setting.SocketPath, Net: "unix"})
+		if err != nil {
+			return errutil.Wrapf(err, "failed to open listener for socket %s", setting.SocketPath)
+		}
+
+		// Make socket writable by group
+		if err := os.Chmod(setting.SocketPath, 0660); err != nil {
+			return errutil.Wrapf(err, "failed to change socket permissions")
+		}
+	default:
+		hs.log.Error("Invalid protocol", "protocol", setting.Protocol)
+		return fmt.Errorf("invalid protocol %q", setting.Protocol)
+	}
+
+	hs.log.Info("HTTP Server Listen", "address", listener.Addr().String(), "protocol",
+		setting.Protocol, "subUrl", setting.AppSubUrl, "socket", setting.SocketPath)
+
+	var wg sync.WaitGroup
+	wg.Add(1)
 
 	// handle http shutdown on server context done
 	go func() {
+		defer wg.Done()
+
 		<-ctx.Done()
-		// Hacky fix for race condition between ListenAndServe and Shutdown
-		time.Sleep(time.Millisecond * 100)
 		if err := hs.httpSrv.Shutdown(context.Background()); err != nil {
 			hs.log.Error("Failed to shutdown server", "error", err)
 		}
 	}()
 
 	switch setting.Protocol {
-	case setting.HTTP:
-		err = hs.httpSrv.ListenAndServe()
-		if err == http.ErrServerClosed {
-			hs.log.Debug("server was shutdown gracefully")
-			return nil
+	case setting.HTTP, setting.SOCKET:
+		if err := hs.httpSrv.Serve(listener); err != nil {
+			if err == http.ErrServerClosed {
+				hs.log.Debug("server was shutdown gracefully")
+				return nil
+			}
+			return err
 		}
-	case setting.HTTPS:
-		err = hs.listenAndServeTLS(setting.CertFile, setting.KeyFile)
-		if err == http.ErrServerClosed {
-			hs.log.Debug("server was shutdown gracefully")
-			return nil
-		}
-	case setting.SOCKET:
-		ln, err := net.ListenUnix("unix", &net.UnixAddr{Name: setting.SocketPath, Net: "unix"})
-		if err != nil {
-			hs.log.Debug("server was shutdown gracefully")
-			return nil
-		}
-
-		// Make socket writable by group
-		os.Chmod(setting.SocketPath, 0660)
-
-		err = hs.httpSrv.Serve(ln)
-		if err != nil {
-			hs.log.Debug("server was shutdown gracefully")
-			return nil
+	case setting.HTTP2, setting.HTTPS:
+		if err := hs.httpSrv.ServeTLS(listener, setting.CertFile, setting.KeyFile); err != nil {
+			if err == http.ErrServerClosed {
+				hs.log.Debug("server was shutdown gracefully")
+				return nil
+			}
+			return err
 		}
 	default:
-		hs.log.Error("Invalid protocol", "protocol", setting.Protocol)
-		err = errors.New("Invalid Protocol")
+		panic(fmt.Sprintf("Unhandled protocol %q", setting.Protocol))
 	}
 
-	return err
+	wg.Wait()
+
+	return nil
 }
 
-func (hs *HTTPServer) listenAndServeTLS(certfile, keyfile string) error {
-	if certfile == "" {
+func (hs *HTTPServer) configureHttps() error {
+	if setting.CertFile == "" {
 		return fmt.Errorf("cert_file cannot be empty when using HTTPS")
 	}
 
-	if keyfile == "" {
+	if setting.KeyFile == "" {
 		return fmt.Errorf("cert_key cannot be empty when using HTTPS")
 	}
 
@@ -145,25 +187,64 @@ func (hs *HTTPServer) listenAndServeTLS(certfile, keyfile string) error {
 		MinVersion:               tls.VersionTLS12,
 		PreferServerCipherSuites: true,
 		CipherSuites: []uint16{
-			tls.TLS_RSA_WITH_AES_128_CBC_SHA,
-			tls.TLS_RSA_WITH_AES_256_CBC_SHA,
+			tls.TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,
+			tls.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,
+			tls.TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,
+			tls.TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,
+			tls.TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA,
+			tls.TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA,
+			tls.TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA,
+			tls.TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA,
 			tls.TLS_RSA_WITH_AES_128_GCM_SHA256,
 			tls.TLS_RSA_WITH_AES_256_GCM_SHA384,
-			tls.TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA,
-			tls.TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA,
-			tls.TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA,
-			tls.TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA,
-			tls.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,
-			tls.TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,
-			tls.TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,
-			tls.TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,
+			tls.TLS_RSA_WITH_AES_128_CBC_SHA,
+			tls.TLS_RSA_WITH_AES_256_CBC_SHA,
 		},
 	}
 
 	hs.httpSrv.TLSConfig = tlsCfg
 	hs.httpSrv.TLSNextProto = make(map[string]func(*http.Server, *tls.Conn, http.Handler))
 
-	return hs.httpSrv.ListenAndServeTLS(setting.CertFile, setting.KeyFile)
+	return nil
+}
+
+func (hs *HTTPServer) configureHttp2() error {
+	if setting.CertFile == "" {
+		return fmt.Errorf("cert_file cannot be empty when using HTTP2")
+	}
+
+	if setting.KeyFile == "" {
+		return fmt.Errorf("cert_key cannot be empty when using HTTP2")
+	}
+
+	if _, err := os.Stat(setting.CertFile); os.IsNotExist(err) {
+		return fmt.Errorf(`Cannot find SSL cert_file at %v`, setting.CertFile)
+	}
+
+	if _, err := os.Stat(setting.KeyFile); os.IsNotExist(err) {
+		return fmt.Errorf(`Cannot find SSL key_file at %v`, setting.KeyFile)
+	}
+
+	tlsCfg := &tls.Config{
+		MinVersion:               tls.VersionTLS12,
+		PreferServerCipherSuites: false,
+		CipherSuites: []uint16{
+			tls.TLS_CHACHA20_POLY1305_SHA256,
+			tls.TLS_AES_128_GCM_SHA256,
+			tls.TLS_AES_256_GCM_SHA384,
+			tls.TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,
+			tls.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,
+			tls.TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,
+			tls.TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,
+			tls.TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305,
+			tls.TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305,
+		},
+		NextProtos: []string{"h2", "http/1.1"},
+	}
+
+	hs.httpSrv.TLSConfig = tlsCfg
+
+	return nil
 }
 
 func (hs *HTTPServer) newMacaron() *macaron.Macaron {
@@ -184,7 +265,7 @@ func (hs *HTTPServer) applyRoutes() {
 	// then custom app proxy routes
 	hs.initAppPluginRoutes(hs.macaron)
 	// lastly not found route
-	hs.macaron.NotFound(NotFoundHandler)
+	hs.macaron.NotFound(hs.NotFoundHandler)
 }
 
 func (hs *HTTPServer) addMiddlewaresAndStaticRoutes() {
@@ -201,7 +282,7 @@ func (hs *HTTPServer) addMiddlewaresAndStaticRoutes() {
 	for _, route := range plugins.StaticRoutes {
 		pluginRoute := path.Join("/public/plugins/", route.PluginId)
 		hs.log.Debug("Plugins: Adding route", "route", pluginRoute, "dir", route.Directory)
-		hs.mapStatic(hs.macaron, route.Directory, "", pluginRoute)
+		hs.mapStatic(m, route.Directory, "", pluginRoute)
 	}
 
 	hs.mapStatic(m, setting.StaticRootPath, "build", "public/build")
@@ -212,6 +293,12 @@ func (hs *HTTPServer) addMiddlewaresAndStaticRoutes() {
 		hs.mapStatic(m, hs.Cfg.ImagesDir, "", "/public/img/attachments")
 	}
 
+	m.Use(middleware.AddDefaultResponseHeaders())
+
+	if setting.ServeFromSubPath && setting.AppSubUrl != "" {
+		m.SetURLPrefix(setting.AppSubUrl)
+	}
+
 	m.Use(macaron.Renderer(macaron.RenderOptions{
 		Directory:  path.Join(setting.StaticRootPath, "views"),
 		IndentJSON: macaron.Env != macaron.PROD,
@@ -220,8 +307,11 @@ func (hs *HTTPServer) addMiddlewaresAndStaticRoutes() {
 
 	m.Use(hs.healthHandler)
 	m.Use(hs.metricsEndpoint)
-	m.Use(middleware.GetContextHandler())
-	m.Use(middleware.Sessioner(&setting.SessionOptions, setting.SessionConnMaxLifetime))
+	m.Use(middleware.GetContextHandler(
+		hs.AuthTokenService,
+		hs.RemoteCacheService,
+		hs.RenderService,
+	))
 	m.Use(middleware.OrgRedirect())
 
 	// needs to be after context handler
@@ -229,15 +319,25 @@ func (hs *HTTPServer) addMiddlewaresAndStaticRoutes() {
 		m.Use(middleware.ValidateHostHeader(setting.Domain))
 	}
 
-	m.Use(middleware.AddDefaultResponseHeaders())
+	m.Use(middleware.HandleNoCacheHeader())
 }
 
 func (hs *HTTPServer) metricsEndpoint(ctx *macaron.Context) {
-	if ctx.Req.Method != "GET" || ctx.Req.URL.Path != "/metrics" {
+	if !hs.Cfg.MetricsEndpointEnabled {
 		return
 	}
 
-	promhttp.HandlerFor(prometheus.DefaultGatherer, promhttp.HandlerOpts{}).
+	if ctx.Req.Method != http.MethodGet || ctx.Req.URL.Path != "/metrics" {
+		return
+	}
+
+	if hs.metricsEndpointBasicAuthEnabled() && !BasicAuthenticatedRequest(ctx.Req, hs.Cfg.MetricsEndpointBasicAuthUsername, hs.Cfg.MetricsEndpointBasicAuthPassword) {
+		ctx.Resp.WriteHeader(http.StatusUnauthorized)
+		return
+	}
+
+	promhttp.
+		HandlerFor(prometheus.DefaultGatherer, promhttp.HandlerOpts{}).
 		ServeHTTP(ctx.Resp, ctx.Req.Request)
 }
 
@@ -262,7 +362,9 @@ func (hs *HTTPServer) healthHandler(ctx *macaron.Context) {
 	}
 
 	dataBytes, _ := data.EncodePretty()
-	ctx.Resp.Write(dataBytes)
+	if _, err := ctx.Resp.Write(dataBytes); err != nil {
+		hs.log.Error("Failed to write to response", "err", err)
+	}
 }
 
 func (hs *HTTPServer) mapStatic(m *macaron.Macaron, rootDir string, dir string, prefix string) {
@@ -290,4 +392,8 @@ func (hs *HTTPServer) mapStatic(m *macaron.Macaron, rootDir string, dir string, 
 			AddHeaders:  headers,
 		},
 	))
+}
+
+func (hs *HTTPServer) metricsEndpointBasicAuthEnabled() bool {
+	return hs.Cfg.MetricsEndpointBasicAuthUsername != "" && hs.Cfg.MetricsEndpointBasicAuthPassword != ""
 }

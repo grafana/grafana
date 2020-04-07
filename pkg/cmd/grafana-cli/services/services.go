@@ -5,33 +5,48 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"net"
 	"net/http"
-	"net/url"
 	"path"
-	"runtime"
 	"time"
 
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
-	m "github.com/grafana/grafana/pkg/cmd/grafana-cli/models"
+	"github.com/grafana/grafana/pkg/cmd/grafana-cli/models"
 )
 
 var (
-	IoHelper       m.IoUtil = IoUtilImp{}
-	HttpClient     http.Client
-	grafanaVersion string
+	IoHelper            models.IoUtil = IoUtilImp{}
+	HttpClient          http.Client
+	HttpClientNoTimeout http.Client
+	grafanaVersion      string
+	ErrNotFoundError    = errors.New("404 not found error")
 )
+
+type BadRequestError struct {
+	Message string
+	Status  string
+}
+
+func (e *BadRequestError) Error() string {
+	if len(e.Message) > 0 {
+		return fmt.Sprintf("%s: %s", e.Status, e.Message)
+	}
+	return e.Status
+}
 
 func Init(version string, skipTLSVerify bool) {
 	grafanaVersion = version
 
+	HttpClient = makeHttpClient(skipTLSVerify, 10*time.Second)
+	HttpClientNoTimeout = makeHttpClient(skipTLSVerify, 0)
+}
+
+func makeHttpClient(skipTLSVerify bool, timeout time.Duration) http.Client {
 	tr := &http.Transport{
 		Proxy: http.ProxyFromEnvironment,
 		DialContext: (&net.Dialer{
 			Timeout:   30 * time.Second,
 			KeepAlive: 30 * time.Second,
-			DualStack: true,
 		}).DialContext,
 		MaxIdleConns:          100,
 		IdleConnTimeout:       90 * time.Second,
@@ -42,35 +57,13 @@ func Init(version string, skipTLSVerify bool) {
 		},
 	}
 
-	HttpClient = http.Client{
-		Timeout:   10 * time.Second,
+	return http.Client{
+		Timeout:   timeout,
 		Transport: tr,
 	}
 }
 
-func ListAllPlugins(repoUrl string) (m.PluginRepo, error) {
-	body, err := sendRequest(repoUrl, "repo")
-
-	if err != nil {
-		logger.Info("Failed to send request", "error", err)
-		return m.PluginRepo{}, fmt.Errorf("Failed to send request. error: %v", err)
-	}
-
-	if err != nil {
-		return m.PluginRepo{}, err
-	}
-
-	var data m.PluginRepo
-	err = json.Unmarshal(body, &data)
-	if err != nil {
-		logger.Info("Failed to unmarshal graphite response error: %v", err)
-		return m.PluginRepo{}, err
-	}
-
-	return data, nil
-}
-
-func ReadPlugin(pluginDir, pluginName string) (m.InstalledPlugin, error) {
+func ReadPlugin(pluginDir, pluginName string) (models.InstalledPlugin, error) {
 	distPluginDataPath := path.Join(pluginDir, pluginName, "dist", "plugin.json")
 
 	var data []byte
@@ -82,26 +75,28 @@ func ReadPlugin(pluginDir, pluginName string) (m.InstalledPlugin, error) {
 		data, err = IoHelper.ReadFile(pluginDataPath)
 
 		if err != nil {
-			return m.InstalledPlugin{}, errors.New("Could not find dist/plugin.json or plugin.json on  " + pluginName + " in " + pluginDir)
+			return models.InstalledPlugin{}, errors.New("Could not find dist/plugin.json or plugin.json on  " + pluginName + " in " + pluginDir)
 		}
 	}
 
-	res := m.InstalledPlugin{}
-	json.Unmarshal(data, &res)
+	res := models.InstalledPlugin{}
+	if err := json.Unmarshal(data, &res); err != nil {
+		return res, err
+	}
 
 	if res.Info.Version == "" {
 		res.Info.Version = "0.0.0"
 	}
 
 	if res.Id == "" {
-		return m.InstalledPlugin{}, errors.New("could not find plugin " + pluginName + " in " + pluginDir)
+		return models.InstalledPlugin{}, errors.New("could not find plugin " + pluginName + " in " + pluginDir)
 	}
 
 	return res, nil
 }
 
-func GetLocalPlugins(pluginDir string) []m.InstalledPlugin {
-	result := make([]m.InstalledPlugin, 0)
+func GetLocalPlugins(pluginDir string) []models.InstalledPlugin {
+	result := make([]models.InstalledPlugin, 0)
 	files, _ := IoHelper.ReadDir(pluginDir)
 	for _, f := range files {
 		res, err := ReadPlugin(pluginDir, f.Name())
@@ -123,58 +118,4 @@ func RemoveInstalledPlugin(pluginPath, pluginName string) error {
 	}
 
 	return IoHelper.RemoveAll(pluginDir)
-}
-
-func GetPlugin(pluginId, repoUrl string) (m.Plugin, error) {
-	body, err := sendRequest(repoUrl, "repo", pluginId)
-
-	if err != nil {
-		logger.Info("Failed to send request", "error", err)
-		return m.Plugin{}, fmt.Errorf("Failed to send request. error: %v", err)
-	}
-
-	if err != nil {
-		return m.Plugin{}, err
-	}
-
-	var data m.Plugin
-	err = json.Unmarshal(body, &data)
-	if err != nil {
-		logger.Info("Failed to unmarshal graphite response error: %v", err)
-		return m.Plugin{}, err
-	}
-
-	return data, nil
-}
-
-func sendRequest(repoUrl string, subPaths ...string) ([]byte, error) {
-	u, _ := url.Parse(repoUrl)
-	for _, v := range subPaths {
-		u.Path = path.Join(u.Path, v)
-	}
-
-	req, err := http.NewRequest(http.MethodGet, u.String(), nil)
-
-	req.Header.Set("grafana-version", grafanaVersion)
-	req.Header.Set("grafana-os", runtime.GOOS)
-	req.Header.Set("grafana-arch", runtime.GOARCH)
-	req.Header.Set("User-Agent", "grafana "+grafanaVersion)
-
-	if err != nil {
-		return []byte{}, err
-	}
-
-	res, err := HttpClient.Do(req)
-	if err != nil {
-		return []byte{}, err
-	}
-
-	if res.StatusCode/100 != 2 {
-		return []byte{}, fmt.Errorf("Api returned invalid status: %s", res.Status)
-	}
-
-	body, err := ioutil.ReadAll(res.Body)
-	defer res.Body.Close()
-
-	return body, err
 }

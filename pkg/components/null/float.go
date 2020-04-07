@@ -4,8 +4,13 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"math"
 	"reflect"
 	"strconv"
+)
+
+const (
+	nullString = "null"
 )
 
 // Float is a nullable float64.
@@ -38,6 +43,20 @@ func FloatFromPtr(f *float64) Float {
 	return NewFloat(*f, true)
 }
 
+// FloatFromString creates a new Float from string f.
+// If the string is equal to the value of nullString then the Float will be null.
+// An empty string f will return an error.
+func FloatFromString(f string, nullString string) (Float, error) {
+	if f == nullString {
+		return FloatFromPtr(nil), nil
+	}
+	fV, err := strconv.ParseFloat(f, 64)
+	if err != nil {
+		return Float{}, err
+	}
+	return FloatFrom(fV), nil
+}
+
 // UnmarshalJSON implements json.Unmarshaler.
 // It supports number and null input.
 // 0 will not be considered a null Float.
@@ -68,7 +87,7 @@ func (f *Float) UnmarshalJSON(data []byte) error {
 // It will return an error if the input is not an integer, blank, or "null".
 func (f *Float) UnmarshalText(text []byte) error {
 	str := string(text)
-	if str == "" || str == "null" {
+	if str == "" || str == nullString {
 		f.Valid = false
 		return nil
 	}
@@ -81,8 +100,8 @@ func (f *Float) UnmarshalText(text []byte) error {
 // MarshalJSON implements json.Marshaler.
 // It will encode null if this Float is null.
 func (f Float) MarshalJSON() ([]byte, error) {
-	if !f.Valid {
-		return []byte("null"), nil
+	if !f.Valid || math.IsNaN(f.Float64) {
+		return []byte(nullString), nil
 	}
 	return []byte(strconv.FormatFloat(f.Float64, 'f', -1, 64)), nil
 }
@@ -100,7 +119,7 @@ func (f Float) MarshalText() ([]byte, error) {
 // It will encode a blank string if this Float is null.
 func (f Float) String() string {
 	if !f.Valid {
-		return "null"
+		return nullString
 	}
 
 	return fmt.Sprintf("%1.3f", f.Float64)
@@ -109,7 +128,7 @@ func (f Float) String() string {
 // FullString returns float as string in full precision
 func (f Float) FullString() string {
 	if !f.Valid {
-		return "null"
+		return nullString
 	}
 
 	return fmt.Sprintf("%f", f.Float64)

@@ -63,6 +63,10 @@
 
   <div class="section gf-form-group">
     <h5 class="section-heading">Buckets</h5>
+    <gf-form-switch class="gf-form" label-class="width-8"
+      label="Hide zero"
+      checked="ctrl.panel.hideZeroBuckets" on-change="ctrl.render()">
+    </gf-form-switch>
     <div class="gf-form">
       <label class="gf-form-label width-8">Space</label>
       <input type="number" class="gf-form-input width-5" placeholder="auto" data-placement="right" bs-tooltip="''" ng-model="ctrl.panel.cards.cardPadding" ng-change="ctrl.refresh()" ng-model-onblur>

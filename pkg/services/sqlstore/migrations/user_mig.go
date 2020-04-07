@@ -3,9 +3,9 @@ package migrations
 import (
 	"fmt"
 
-	"github.com/go-xorm/xorm"
 	. "github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/util"
+	"xorm.io/xorm"
 )
 
 func addUserMigrations(mg *Migrator) {
@@ -116,6 +116,16 @@ func addUserMigrations(mg *Migrator) {
 
 	// Adds salt & rands for old users who used ldap or oauth
 	mg.AddMigration("Add missing user data", &AddMissingUserSaltAndRandsMigration{})
+
+	// is_disabled indicates whether user disabled or not. Disabled user should not be able to log in.
+	// This field used in couple with LDAP auth to disable users removed from LDAP rather than delete it immediately.
+	mg.AddMigration("Add is_disabled column to user", NewAddColumnMigration(userV2, &Column{
+		Name: "is_disabled", Type: DB_Bool, Nullable: false, Default: "0",
+	}))
+
+	mg.AddMigration("Add index user.login/user.email", NewAddIndexMigration(userV2, &Index{
+		Cols: []string{"login", "email"},
+	}))
 }
 
 type AddMissingUserSaltAndRandsMigration struct {
@@ -134,14 +144,22 @@ type TempUserDTO struct {
 func (m *AddMissingUserSaltAndRandsMigration) Exec(sess *xorm.Session, mg *Migrator) error {
 	users := make([]*TempUserDTO, 0)
 
-	err := sess.Sql(fmt.Sprintf("SELECT id, login from %s WHERE rands = ''", mg.Dialect.Quote("user"))).Find(&users)
+	err := sess.SQL(fmt.Sprintf("SELECT id, login from %s WHERE rands = ''", mg.Dialect.Quote("user"))).Find(&users)
 	if err != nil {
 		return err
 	}
 
 	for _, user := range users {
-		_, err := sess.Exec("UPDATE "+mg.Dialect.Quote("user")+" SET salt = ?, rands = ? WHERE id = ?", util.GetRandomString(10), util.GetRandomString(10), user.Id)
+		salt, err := util.GetRandomString(10)
 		if err != nil {
+			return err
+		}
+		rands, err := util.GetRandomString(10)
+		if err != nil {
+			return err
+		}
+		if _, err := sess.Exec("UPDATE "+mg.Dialect.Quote("user")+
+			" SET salt = ?, rands = ? WHERE id = ?", salt, rands, user.Id); err != nil {
 			return err
 		}
 	}

@@ -13,7 +13,7 @@ var (
 	DefaultLevel  = Info
 )
 
-type Level int
+type Level int32
 
 const (
 	// This is a special level used to indicate that no level has been
@@ -120,6 +120,10 @@ type Logger interface {
 	// This sets the name of the logger to the value directly, unlike Named which honor
 	// the current name as well.
 	ResetNamed(name string) Logger
+
+	// Updates the level. This should affect all sub-loggers as well. If an
+	// implementation cannot update the level on the fly, it should no-op.
+	SetLevel(level Level)
 
 	// Return a value that conforms to the stdlib log.Logger interface
 	StandardLogger(opts *StandardLoggerOptions) *log.Logger

@@ -898,7 +898,7 @@ const unicodeLetterTable = [
   195101,
 ];
 
-const identifierStartTable = [];
+const identifierStartTable: any[] = [];
 
 for (let i = 0; i < 128; i++) {
   identifierStartTable[i] =
@@ -922,33 +922,38 @@ for (let i = 0; i < 128; i++) {
 
 const identifierPartTable = identifierStartTable;
 
-export function Lexer(this: any, expression) {
-  this.input = expression;
-  this.char = 1;
-  this.from = 1;
-}
+export class Lexer {
+  input: any;
+  char: number;
+  from: number;
 
-Lexer.prototype = {
-  peek: function(i) {
+  constructor(expression: any) {
+    this.input = expression;
+    this.char = 1;
+    this.from = 1;
+  }
+
+  peek(i?: number) {
     return this.input.charAt(i || 0);
-  },
+  }
 
-  skip: function(i) {
+  skip(i?: number) {
     i = i || 1;
     this.char += i;
     this.input = this.input.slice(i);
-  },
+  }
 
-  tokenize: function() {
+  tokenize() {
     const list = [];
-    let token;
-    while ((token = this.next())) {
+    let token = this.next();
+    while (token) {
       list.push(token);
+      token = this.next();
     }
     return list;
-  },
+  }
 
-  next: function() {
+  next() {
     this.from = this.char;
 
     // Move to the next non-space character.
@@ -978,9 +983,9 @@ Lexer.prototype = {
 
     // No token could be matched, give up.
     return null;
-  },
+  }
 
-  scanTemplateSequence: function() {
+  scanTemplateSequence() {
     if (this.peek() === '[' && this.peek(1) === '[') {
       return {
         type: 'templateStart',
@@ -998,7 +1003,7 @@ Lexer.prototype = {
     }
 
     return null;
-  },
+  }
 
   /*
    * Extract a JavaScript identifier out of the next sequence of
@@ -1006,7 +1011,7 @@ Lexer.prototype = {
    * to Identifier this method can also produce BooleanLiteral
    * (true/false) and NullLiteral (null).
    */
-  scanIdentifier: function() {
+  scanIdentifier() {
     let id = '';
     let index = 0;
     let type, char;
@@ -1019,7 +1024,7 @@ Lexer.prototype = {
     // Both approach and unicodeLetterTable were borrowed from
     // Google's Traceur.
 
-    function isUnicodeLetter(code) {
+    function isUnicodeLetter(code: number) {
       for (let i = 0; i < unicodeLetterTable.length; ) {
         if (code < unicodeLetterTable[i++]) {
           return false;
@@ -1033,12 +1038,11 @@ Lexer.prototype = {
       return false;
     }
 
-    function isHexDigit(str) {
+    function isHexDigit(str: string) {
       return /^[0-9a-fA-F]$/.test(str);
     }
 
     const readUnicodeEscapeSequence = _.bind(function(this: any) {
-      /*jshint validthis:true */
       index += 1;
 
       if (this.peek(index) !== 'u') {
@@ -1066,7 +1070,6 @@ Lexer.prototype = {
     }, this);
 
     const getIdentifierStart = _.bind(function(this: any) {
-      /*jshint validthis:true */
       const chr = this.peek(index);
       const code = chr.charCodeAt(0);
 
@@ -1097,7 +1100,6 @@ Lexer.prototype = {
     }, this);
 
     const getIdentifierPart = _.bind(function(this: any) {
-      /*jshint validthis:true */
       const chr = this.peek(index);
       const code = chr.charCodeAt(0);
 
@@ -1156,7 +1158,7 @@ Lexer.prototype = {
       value: id,
       pos: this.char,
     };
-  },
+  }
 
   /*
    * Extract a numeric literal out of the next sequence of
@@ -1167,26 +1169,26 @@ Lexer.prototype = {
    * This method's implementation was heavily influenced by the
    * scanNumericLiteral function in the Esprima parser's source code.
    */
-  scanNumericLiteral: function(): any {
+  scanNumericLiteral(): any {
     let index = 0;
     let value = '';
     const length = this.input.length;
     let char = this.peek(index);
     let bad;
 
-    function isDecimalDigit(str) {
+    function isDecimalDigit(str: string) {
       return /^[0-9]$/.test(str);
     }
 
-    function isOctalDigit(str) {
+    function isOctalDigit(str: string) {
       return /^[0-7]$/.test(str);
     }
 
-    function isHexDigit(str) {
+    function isHexDigit(str: string) {
       return /^[0-9a-fA-F]$/.test(str);
     }
 
-    function isIdentifierStart(ch) {
+    function isIdentifierStart(ch: string) {
       return ch === '$' || ch === '_' || ch === '\\' || (ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z');
     }
 
@@ -1368,9 +1370,9 @@ Lexer.prototype = {
       pos: this.char,
       isMalformed: !isFinite(+value),
     };
-  },
+  }
 
-  isPunctuator: function(ch1) {
+  isPunctuator(ch1: string) {
     switch (ch1) {
       case '.':
       case '(':
@@ -1382,9 +1384,9 @@ Lexer.prototype = {
     }
 
     return false;
-  },
+  }
 
-  scanPunctuator: function() {
+  scanPunctuator() {
     const ch1 = this.peek();
 
     if (this.isPunctuator(ch1)) {
@@ -1396,7 +1398,7 @@ Lexer.prototype = {
     }
 
     return null;
-  },
+  }
 
   /*
    * Extract a string out of the next sequence of characters and/or
@@ -1409,8 +1411,7 @@ Lexer.prototype = {
    *   var str = "hello\
    *   world";
    */
-  scanStringLiteral: function() {
-    /*jshint loopfunc:true */
+  scanStringLiteral() {
     const quote = this.peek();
 
     // String must start with a quote.
@@ -1450,5 +1451,5 @@ Lexer.prototype = {
       quote: quote,
       pos: this.char,
     };
-  },
-};
+  }
+}

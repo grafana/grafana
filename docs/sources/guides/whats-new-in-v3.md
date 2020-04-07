@@ -1,7 +1,7 @@
 +++
-title = "What's New in Grafana v3.0"
-description = "Feature & improvement highlights for Grafana v3.0"
-keywords = ["grafana", "new", "documentation", "3.0"]
+title = "What's new in Grafana v3.0"
+description = "Feature and improvement highlights for Grafana v3.0"
+keywords = ["grafana", "new", "documentation", "3.0", "release notes"]
 type = "docs"
 [menu.docs]
 name = "Version 3.0"
@@ -10,7 +10,7 @@ parent = "whatsnew"
 weight = 6
 +++
 
-# What's New in Grafana v3.0
+# What's new in Grafana v3.0
 
 ## Commercial Support
 
@@ -65,7 +65,6 @@ Grafana.net will officially launch along with the stable version of
 Grafana 3.0, but go to <a href=https://grafana.com> and check out the preview
 and sign up for an account</a> in the meantime.
 
-
 ## grafana-cli
 
 Grafana 3.0 comes with a new command line tool called grafana-cli. You
@@ -76,7 +75,7 @@ example:
 grafana-cli install grafana-pie-chart-panel
 ```
 
-## Personalization & Preferences
+## Personalization and Preferences
 
 The home dashboard, timezone and theme can now be customized on Organization
 and user Profile level. Grafana can also track recently viewed dashboards, which
@@ -128,7 +127,7 @@ And here's the new look for Dashboard settings:
 
 <img src="/img/docs/v3/dashboard_settings.png">
 
-Check out the <a href="http://play.grafana.org" target="_blank">Play
+Check out the <a href="https://play.grafana.org" target="_blank">Play
 Site</a> to get a feel for some of the UI changes.
 
 ## Improved Annotations
@@ -197,7 +196,7 @@ you can install it manually from [Grafana.com](https://grafana.com)
 ## Plugin showcase
 
 Discovering and installing plugins is very quick and easy with Grafana 3.0 and [Grafana.com](https://grafana.com). Here
-are a couple that I incurage you try!
+are a couple that I encourage you try!
 
 #### [Clock Panel](https://grafana.com/plugins/grafana-clock-panel)
 Support's both current time and count down mode.
@@ -219,11 +218,10 @@ created and maintained by [Alexander Zobnin](https://github.com/alexanderzobnin/
 
 <img src="/img/docs/v3/zabbix_app.png">
 
-Checkout the full list of plugins on [Grafana.com](https://grafana.com/plugins)
+Check out the full list of plugins on [Grafana.com](https://grafana.com/plugins)
 
 ## CHANGELOG
 
 For a detailed list and link to github issues for everything included
 in the 3.0 release please view the
-[CHANGELOG.md](https://github.com/grafana/grafana/blob/master/CHANGELOG.md)
-file.
+[CHANGELOG.md](https://github.com/grafana/grafana/blob/master/CHANGELOG.md) file.

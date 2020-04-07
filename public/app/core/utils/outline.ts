@@ -5,7 +5,7 @@ function outlineFixer() {
   const styleElement = d.createElement('STYLE');
   const domEvents = 'addEventListener' in d;
 
-  const addEventListener = function(type, callback) {
+  const addEventListener = (type: string, callback: { (): void; (): void }) => {
     // Basic cross-browser event handling
     if (domEvents) {
       d.addEventListener(type, callback);
@@ -14,7 +14,7 @@ function outlineFixer() {
     }
   };
 
-  const setCss = function(cssText) {
+  const setCss = (cssText: string) => {
     // Handle setting of <style> element contents in IE8
     !!styleElement.styleSheet ? (styleElement.styleSheet.cssText = cssText) : (styleElement.innerHTML = cssText);
   };
@@ -22,11 +22,11 @@ function outlineFixer() {
   d.getElementsByTagName('HEAD')[0].appendChild(styleElement);
 
   // Using mousedown instead of mouseover, so that previously focused elements don't lose focus ring on mouse move
-  addEventListener('mousedown', function() {
+  addEventListener('mousedown', () => {
     setCss(':focus{outline:0 !important}::-moz-focus-inner{border:0;}');
   });
 
-  addEventListener('keydown', function() {
+  addEventListener('keydown', () => {
     setCss('');
   });
 }

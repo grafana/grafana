@@ -1,11 +1,11 @@
 +++
-title = "What's New in Grafana v2.0"
-description = "Feature & improvement highlights for Grafana v2.0"
-keywords = ["grafana", "new", "documentation", "2.0"]
+title = "What's new in Grafana v2.0"
+description = "Feature and improvement highlights for Grafana v2.0"
+keywords = ["grafana", "new", "documentation", "2.0", "release notes"]
 type = "docs"
 +++
 
-# What's New in Grafana v2.0
+# What's new in Grafana v2.0
 
 Grafana 2.0 represents months of work by the Grafana team and the community. We are pleased to be able to
 release the Grafana 2.0 beta. This is a guide that describes some of changes and new features that can
@@ -19,7 +19,7 @@ Grafana now ships with its own required backend server. Also completely open-sou
 
 In addition to new features, the backend server makes it much easier to set up and enjoy Grafana. Grafana 2.0 now ships as cross platform binaries with no dependencies. Authentication is built in, and Grafana is now capable of proxying connections to Data Sources.  There are no longer any CORS (Cross Origin Resource Sharing) issues requiring messy workarounds. Elasticsearch is no longer required just to store dashboards.
 
-## User & Organization permissions
+## User and Organization permissions
 
 All Dashboards and Data Sources are linked to an Organization (not to a User). Users are linked to
 Organizations via a role. That role can be:
@@ -34,7 +34,7 @@ Organizations via a role. That role can be:
 
 There are currently no permissions on individual dashboards.
 
-Read more about Grafanas new user model on the [Admin section](../reference/admin/)
+Read more about Grafana's new user model on the [Admin section](../reference/admin/)
 
 ## Dashboard Snapshot sharing
 
@@ -58,7 +58,7 @@ You can publish snapshots locally or to [snapshot.raintank.io](http://snapshot.r
 
 Either way, anyone with the link (and access to your Grafana instance for local snapshots) can view it.
 
-## Panel time overrides & timeshift
+## Panel time overrides and timeshift
 
 In Grafana v2.x you can now override the relative time range for individual panels, causing them to be different than what is selected in the Dashboard time picker in the upper right. You can also add a time shift to individual panels. This allows you to show metrics from different time periods or days at the same time.
 
@@ -114,7 +114,7 @@ The side menubar will become more useful as we build out additional functionalit
 
 You can easily collapse or re-open the side menubar at any time by clicking the Grafana icon in the top left. We never want to get in the way of the data.
 
-## New search view & starring dashboards
+## New search view and starring dashboards
 
 ![](/img/docs/v2/dashboard_search.jpg)
 
@@ -135,7 +135,7 @@ The dashlist is a new panel in Grafana v2.0. It allows you to show your personal
 
 dashlist is used on the new Grafana Home screen. It is included as a reference Panel and is useful to provide basic linking between Dashboards.
 
-## Data Source proxy & admin views
+## Data Source proxy and admin views
 
 Data sources in Grafana v2.0 are no longer defined in a config file. Instead, they are added through the UI or the HTTP API.
 
@@ -173,5 +173,3 @@ Grafana now supports server-side PNG rendering. From the Panel share dialog you 
 > **Note** This requires that your Data Source is accessible from your Grafana instance.
 
 ![](/img/docs/v2/share_dialog_image_highlight.jpg)
-
-

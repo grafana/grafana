@@ -1,0 +1,12 @@
+{
+  "compilerOptions": {
+    "declarationDir": "dist",
+    "outDir": "compiled",
+    "rootDirs": ["."],
+    "typeRoots": ["node_modules/@types"],
+    "types": ["cypress"]
+  },
+  "exclude": ["dist", "node_modules"],
+  "extends": "@grafana/tsconfig",
+  "include": ["src/**/*.ts", "cypress/support/index.d.ts"]
+}

@@ -2,7 +2,7 @@
 title = "Dashboard Versions HTTP API "
 description = "Grafana Dashboard Versions HTTP API"
 keywords = ["grafana", "http", "documentation", "api", "dashboard", "versions"]
-aliases = ["/http_api/dashboardversions/"]
+aliases = ["/docs/grafana/latest/http_api/dashboardversions/"]
 type = "docs"
 [menu.docs]
 name = "Dashboard Versions"
@@ -291,7 +291,7 @@ Content-Type: text/html; charset=UTF-8
 </p>
 ```
 
-The response is a textual respresentation of the diff, with the dashboard values being in JSON, similar to the diffs seen on sites like GitHub or GitLab.
+The response is a textual representation of the diff, with the dashboard values being in JSON, similar to the diffs seen on sites like GitHub or GitLab.
 
 Status Codes:
 

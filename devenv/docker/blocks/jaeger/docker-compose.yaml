@@ -1,0 +1,27 @@
+  jaeger:
+    image: jaegertracing/all-in-one:latest
+    ports:
+      - "6831:6831"
+      - "16686:16686"
+  # Additional loki to generate some traces
+  # datasource URL: http://localhost:3100/
+  loki:
+    image: grafana/loki:master
+    ports:
+      - "3100:3100"
+    command: -config.file=/etc/loki/local-config.yaml
+    # Optional jaeger tracing
+    environment:
+      - JAEGER_AGENT_HOST=jaeger
+      - JAEGER_AGENT_PORT=6831
+      - JAEGER_SAMPLER_TYPE=const
+      - JAEGER_SAMPLER_PARAM=1
+  promtail:
+    image: grafana/promtail:master
+    volumes:
+      - ./docker/blocks/loki/config.yaml:/etc/promtail/docker-config.yaml
+      - /var/log:/var/log
+      - ../data/log:/var/log/grafana
+    command:
+      -config.file=/etc/promtail/docker-config.yaml
+

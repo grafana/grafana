@@ -1,25 +1,27 @@
 import _ from 'lodash';
 import coreModule from 'app/core/core_module';
+// @ts-ignore
 import Drop from 'tether-drop';
+import { GrafanaRootScope } from 'app/routes/GrafanaCtrl';
 
 /** @ngInject */
-function popoverSrv(this: any, $compile, $rootScope, $timeout) {
-  let openDrop = null;
+function popoverSrv(this: any, $compile: any, $rootScope: GrafanaRootScope, $timeout: any) {
+  let openDrop: any = null;
 
-  this.close = function() {
+  this.close = () => {
     if (openDrop) {
       openDrop.close();
     }
   };
 
-  this.show = function(options) {
+  this.show = (options: any) => {
     if (openDrop) {
       openDrop.close();
       openDrop = null;
     }
 
     const scope = _.extend($rootScope.$new(true), options.model);
-    let drop;
+    let drop: any;
 
     const cleanUp = () => {
       setTimeout(() => {
@@ -68,7 +70,7 @@ function popoverSrv(this: any, $compile, $rootScope, $timeout) {
     }, 100);
 
     // return close function
-    return function() {
+    return () => {
       if (drop) {
         drop.close();
       }

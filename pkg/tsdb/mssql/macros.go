@@ -6,19 +6,22 @@ import (
 	"strings"
 	"time"
 
+	"github.com/grafana/grafana/pkg/components/gtime"
 	"github.com/grafana/grafana/pkg/tsdb"
+	"github.com/grafana/grafana/pkg/tsdb/sqleng"
 )
 
 const rsIdentifier = `([_a-zA-Z0-9]+)`
 const sExpr = `\$` + rsIdentifier + `\(([^\)]*)\)`
 
 type msSqlMacroEngine struct {
+	*sqleng.SqlMacroEngineBase
 	timeRange *tsdb.TimeRange
 	query     *tsdb.Query
 }
 
-func newMssqlMacroEngine() tsdb.SqlMacroEngine {
-	return &msSqlMacroEngine{}
+func newMssqlMacroEngine() sqleng.SqlMacroEngine {
+	return &msSqlMacroEngine{SqlMacroEngineBase: sqleng.NewSqlMacroEngineBase()}
 }
 
 func (m *msSqlMacroEngine) Interpolate(query *tsdb.Query, timeRange *tsdb.TimeRange, sql string) (string, error) {
@@ -27,7 +30,7 @@ func (m *msSqlMacroEngine) Interpolate(query *tsdb.Query, timeRange *tsdb.TimeRa
 	rExp, _ := regexp.Compile(sExpr)
 	var macroError error
 
-	sql = replaceAllStringSubmatchFunc(rExp, sql, func(groups []string) string {
+	sql = m.ReplaceAllStringSubmatchFunc(rExp, sql, func(groups []string) string {
 		args := strings.Split(groups[2], ",")
 		for i, arg := range args {
 			args[i] = strings.Trim(arg, " ")
@@ -45,23 +48,6 @@ func (m *msSqlMacroEngine) Interpolate(query *tsdb.Query, timeRange *tsdb.TimeRa
 	}
 
 	return sql, nil
-}
-
-func replaceAllStringSubmatchFunc(re *regexp.Regexp, str string, repl func([]string) string) string {
-	result := ""
-	lastIndex := 0
-
-	for _, v := range re.FindAllSubmatchIndex([]byte(str), -1) {
-		groups := []string{}
-		for i := 0; i < len(v); i += 2 {
-			groups = append(groups, str[v[i]:v[i+1]])
-		}
-
-		result += str[lastIndex:v[0]] + repl(groups)
-		lastIndex = v[1]
-	}
-
-	return result + str[lastIndex:]
 }
 
 func (m *msSqlMacroEngine) evaluateMacro(name string, args []string) (string, error) {
@@ -90,12 +76,12 @@ func (m *msSqlMacroEngine) evaluateMacro(name string, args []string) (string, er
 		if len(args) < 2 {
 			return "", fmt.Errorf("macro %v needs time column and interval", name)
 		}
-		interval, err := time.ParseDuration(strings.Trim(args[1], `'"`))
+		interval, err := gtime.ParseInterval(strings.Trim(args[1], `'"`))
 		if err != nil {
 			return "", fmt.Errorf("error parsing interval %v", args[1])
 		}
 		if len(args) == 3 {
-			err := tsdb.SetupFillmode(m.query, interval, args[2])
+			err := sqleng.SetupFillmode(m.query, interval, args[2])
 			if err != nil {
 				return "", err
 			}
@@ -112,20 +98,25 @@ func (m *msSqlMacroEngine) evaluateMacro(name string, args []string) (string, er
 			return "", fmt.Errorf("missing time column argument for macro %v", name)
 		}
 		return fmt.Sprintf("%s >= %d AND %s <= %d", args[0], m.timeRange.GetFromAsSecondsEpoch(), args[0], m.timeRange.GetToAsSecondsEpoch()), nil
-	case "__unixEpochFrom":
-		return fmt.Sprintf("%d", m.timeRange.GetFromAsSecondsEpoch()), nil
-	case "__unixEpochTo":
-		return fmt.Sprintf("%d", m.timeRange.GetToAsSecondsEpoch()), nil
+	case "__unixEpochNanoFilter":
+		if len(args) == 0 {
+			return "", fmt.Errorf("missing time column argument for macro %v", name)
+		}
+		return fmt.Sprintf("%s >= %d AND %s <= %d", args[0], m.timeRange.GetFromAsTimeUTC().UnixNano(), args[0], m.timeRange.GetToAsTimeUTC().UnixNano()), nil
+	case "__unixEpochNanoFrom":
+		return fmt.Sprintf("%d", m.timeRange.GetFromAsTimeUTC().UnixNano()), nil
+	case "__unixEpochNanoTo":
+		return fmt.Sprintf("%d", m.timeRange.GetToAsTimeUTC().UnixNano()), nil
 	case "__unixEpochGroup":
 		if len(args) < 2 {
 			return "", fmt.Errorf("macro %v needs time column and interval and optional fill value", name)
 		}
-		interval, err := time.ParseDuration(strings.Trim(args[1], `'`))
+		interval, err := gtime.ParseInterval(strings.Trim(args[1], `'`))
 		if err != nil {
 			return "", fmt.Errorf("error parsing interval %v", args[1])
 		}
 		if len(args) == 3 {
-			err := tsdb.SetupFillmode(m.query, interval, args[2])
+			err := sqleng.SetupFillmode(m.query, interval, args[2])
 			if err != nil {
 				return "", err
 			}

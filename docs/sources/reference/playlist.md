@@ -4,64 +4,149 @@ keywords = ["grafana", "dashboard", "documentation", "playlist"]
 type = "docs"
 [menu.docs]
 parent = "dashboard_features"
+identifier = "feature_playlist"
 weight = 4
 +++
 
 
 # Playlist
 
-The Playlist is a special type of Dashboard that rotates through a list of Dashboards. A Playlist can be a great way to build situational awareness, or just show off your metrics to your team or visitors.
+A playlist is a list of dashboards that are displayed in a sequence. You might use a playlist to build situational awareness or to present your metrics to your team or visitors.
 
-Since Grafana automatically scales Dashboards to any resolution they're perfect for big screens!
+Grafana automatically scales dashboards to any resolution, which makes them perfect for big screens.
 
-## Creating a Playlist
+You can access the Playlist feature from Grafana's side menu, in the Dashboards submenu.
 
-{{< docs-imagebox img="/img/docs/v50/playlist.png" max-width="25rem" class="docs-image--right">}}
+{{< docs-imagebox img="/img/docs/v50/playlist.png" max-width="25rem">}}
 
-The Playlist feature can be accessed from Grafana's sidemenu, in the Dashboard submenu.
+## Create a playlist
 
-Click on "New Playlist" button to create a new playlist. Firstly, name your playlist and configure a time interval for Grafana to wait on a particular Dashboard before advancing to the next one on the Playlist.
+You create a playlist to present dashboards in a sequence, with a set order and time interval between dashboards. 
 
-You can search Dashboards by name (or use a regular expression), and add them to your Playlist. Or you could add tags which will include all the dashboards that belongs to a tag when the playlist start playing. By default, your starred dashboards will appear as candidates for the Playlist.
+1. To access the Playlist feature, hover your cursor over Grafana's side menu.
+1. Click **Playlists**.
+1. Click **New playlist**.
+1. In the **Name** text box, enter a name for your playlist.
+1. In the **Interval** text box, enter a time interval.
 
-Be sure to click the "Add to dashboard" button next to the Dashboard name to add it to the Playlist. To remove a dashboard from the playlist click on "Remove[x]" button from the playlist.
+The time interval is the amount of time for Grafana to stay on a particular dashboard before advancing to the next one on the playlist.
 
-Since the Playlist is basically a list of Dashboards, ensure that all the Dashboards you want to appear in your Playlist are added here.
+1. Next to the dashboard(s) you want to add to your playlist, click **Add to playlist**. 
+1. Click **Create**.
 
-## Saving the playlist
+## Edit a playlist
 
-Once all the wanted dashboards are added to a playlist, you can save this playlist by clicking on the green "Save" button. This will generate a unique URL for you playlist which can be shared if needed. Click on the generated URL or on the "Play" button from the "Saved playlists" list to start the playlist. If you want to share the URL, right click on the URL and copy the URL link and share.
+You can edit playlists while creating them or after saving them.
 
-## Starting the playlist
+1. To access the Playlist feature, hover your cursor over Grafana's side menu.
+1. Click **Playlists**.
+1. Click on the Playlist that you want to edit.
 
-Also, if you want, you can start the playlist without saving it by clicking on the green "Start" button at the bottom.
+### Edit the Name of a playlist
 
-## Controlling the Playlist
+1. Double-click within the **Name** text box.
+1. Enter a name. 
+1. Click **Save** to save your changes.
 
-Playlists can also be manually controlled utilizing the Playlist controls at the top of screen when in Playlist mode.
+### Edit the Interval of a playlist
 
-Click the stop button to stop the Playlist, and exit to the current Dashboard.
-Click the next button to advance to the next Dashboard in the Playlist.
-Click the back button to rewind to the previous Dashboard in the Playlist.
+1. Double-click within the **Interval** text box.
+1. Enter a time interval.
+1. Click **Save** to save your changes.
 
-## TV or Kiosk Mode
+### Add a dashboard to a playlist
 
-In TV mode the top navbar, row & panel controls will all fade to transparent.
+1. Next to the dashboard you want to add, click **Add to playlist**.
+1. Click **Save** to save your changes.
 
-This happens automatically after one minute of user inactivity but can also be toggled manually
-with the `d v` sequence shortcut, or by appending the parameter `?inactive` to the dashboard URL. Any mouse movement or keyboard action will
-restore navbar & controls.
+### Search for a dashboard to add
 
-Another feature is the kiosk mode - in kiosk mode the navbar is completely hidden/removed from view. This can be enabled with the `d k`
-shortcut.
+1. Click the **Search dashboards by name** text box. 
+1. Search for the playlist by name or regular expression. 
+1. If needed, filter your results by starred status or tags.  
+   By default, your starred dashboards will appear as options to add to the Playlist.
+1. Click **Save** to save your changes.
 
-To put a playlist into kiosk mode, use the `d k` shortcut after the playlist has started. The same shortcut will toggle the playlist out of kiosk mode.
+### Rearrange dashboard order
 
-### Linking to the Playlist in Kiosk Mode
+1. Next to the dashboard you want to move, click the up or down arrow.
+1. Click **Save** to save your changes.
 
-If you want to create a link to the playlist with kiosk mode enabled:
+### Remove a dashboard
 
-1. Copy the Start Url (by right clicking on the Play button and choosing Copy link address).
-2. Add the `?kiosk` parameter to the url.
+1. Click **Remove[x]** to remove a dashboard from the playlist.
+1. Click **Save** to save your changes.
 
-For example, to open the first playlist on the Grafana Play site in kiosk mode: [http://play.grafana.org/playlists/play/1?kiosk](http://play.grafana.org/playlists/play/1?kiosk)
+### Delete a playlist
+
+1. Click **Playlists**.
+1. Next to the Playlist you want to delete, click **Remove[x]**.
+
+## Save a playlist
+
+You can save a playlist to add it to your **Playlists** page, where you can start it. Be sure that all the dashboards you want to appear in your playlist are added when creating or editing the playlist before saving it. 
+
+1. To access the Playlist feature, hover your cursor over Grafana's side menu.
+1. Click **Playlists**.
+1. Click on the playlist.
+1. Edit the playlist.
+   * Ensure that your playlist has a **Name**, **Interval**, and at least one **Dashboard** added to it.
+1. Click **Save**. 
+
+## Start a playlist
+
+You can start a playlist in five different view modes, which determine how the menus and navigation bar are displayed on the dashboards. 
+
+By default, each dashboard is displayed for the amount of time entered in the Interval field, which can be set while creating or editing a playlist. Once a playlist is started, it can be controlled using the navbar at the top of your screen.
+
+1. From the Dashboards submenu, click **Playlists**.
+1. Next to the playlist you want to start, click **Start playlist**.
+1. In the dropdown, select the mode you want the playlist to display in.
+   - **Normal mode:**
+       - The side menu remains visible. 
+       - The navbar, row and panel controls appear at the top of the screen.
+   - **TV mode:**
+      - The side menu is hidden/removed. 
+      - The navbar, row and panel controls appear at the top of the screen.
+      - Enabled automatically after one minute of user inactivity.
+      - You can enable it manually using the `d v` sequence shortcut, or by appending the parameter `?inactive` to the dashboard URL. 
+      - You can disable it with any mouse mouse movement or keyboard action. 
+   - **TV mode (with auto fit panels):** 
+      - The side menu is hidden/removed. 
+      - The navbar, row and panel controls appear at the top of the screen.
+      - Dashboard panels automatically adjust to optimize space on screen.
+   - **Kiosk mode:** 
+      - The side menu, navbar, row and panel controls are completely hidden/removed from view. 
+      - You can enable it manually using the `d v` sequence shortcut after the playlist has started.
+      - You can disable it manually with the same shortcut.
+   - **Kiosk mode (with auto fit panels):** 
+      - The side menu, navbar, row and panel controls are completely hidden/removed from view. 
+      - Dashboard panels automatically adjust to optimize space on screen.
+
+## Control a playlist
+
+You can control a playlist in **Normal** or **TV** mode after it's started, using the navigation bar at the top of your screen.
+
+| Button | Result |
+| --- | --- |
+| Next (double-right arrow) | Advances to the next dashboard. |
+| Back (left arrow) | Returns to the previous dashboard. |
+| Stop (square) | End the playlist, and exits to the current dashboard. |
+| Cycle view mode (monitor icon) | Rotates the display of the dashboards in different view modes. |
+| Time range | Displays data within a time range. It can be set to display the last 5 minutes up to 5 years ago, or a custom time range, using the down arrow. |
+| Refresh (circle arrow) | Reloads the dashboard, to display the current data. It can be set to reload automatically every 5 seconds to 1 day, using the drop down arrow. |
+
+> Shortcut: Press the Esc key to stop the playlist from your keyboard.
+
+## Share a playlist in a view mode
+
+You can share a playlist by copying the link address on the view mode you prefer, and pasting the URL to your destination. 
+
+1. From the Dashboards submenu, click **Playlists**.
+1. Next to the playlist you want to share, click **Start playlist**.
+1. In the dropdown, right click the view mode you prefer.
+1. Click **Copy Link Address** to copy the URL to your clipboard. 
+
+    Example: The URL for the first playlist on the Grafana Play site in Kiosk mode will look like this:
+[https://play.grafana.org/playlists/play/1?kiosk](https://play.grafana.org/playlists/play/1?kiosk).
+1. Paste the URL to your destination.

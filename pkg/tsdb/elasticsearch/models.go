@@ -25,13 +25,14 @@ type BucketAgg struct {
 
 // MetricAgg represents a metric aggregation of the time series query model of the datasource
 type MetricAgg struct {
-	Field             string           `json:"field"`
-	Hide              bool             `json:"hide"`
-	ID                string           `json:"id"`
-	PipelineAggregate string           `json:"pipelineAgg"`
-	Settings          *simplejson.Json `json:"settings"`
-	Meta              *simplejson.Json `json:"meta"`
-	Type              string           `json:"type"`
+	Field             string            `json:"field"`
+	Hide              bool              `json:"hide"`
+	ID                string            `json:"id"`
+	PipelineAggregate string            `json:"pipelineAgg"`
+	PipelineVariables map[string]string `json:"pipelineVariables"`
+	Settings          *simplejson.Json  `json:"settings"`
+	Meta              *simplejson.Json  `json:"meta"`
+	Type              string            `json:"type"`
 }
 
 var metricAggType = map[string]string{
@@ -45,6 +46,7 @@ var metricAggType = map[string]string{
 	"cardinality":    "Unique Count",
 	"moving_avg":     "Moving Average",
 	"derivative":     "Derivative",
+	"bucket_script":  "Bucket Script",
 	"raw_document":   "Raw Document",
 }
 
@@ -60,8 +62,13 @@ var extendedStats = map[string]string{
 }
 
 var pipelineAggType = map[string]string{
-	"moving_avg": "moving_avg",
-	"derivative": "derivative",
+	"moving_avg":    "moving_avg",
+	"derivative":    "derivative",
+	"bucket_script": "bucket_script",
+}
+
+var pipelineAggWithMultipleBucketPathsType = map[string]string{
+	"bucket_script": "bucket_script",
 }
 
 func isPipelineAgg(metricType string) bool {
@@ -71,7 +78,17 @@ func isPipelineAgg(metricType string) bool {
 	return false
 }
 
+func isPipelineAggWithMultipleBucketPaths(metricType string) bool {
+	if _, ok := pipelineAggWithMultipleBucketPathsType[metricType]; ok {
+		return true
+	}
+	return false
+}
+
 func describeMetric(metricType, field string) string {
 	text := metricAggType[metricType]
+	if metricType == countType {
+		return text
+	}
 	return text + " " + field
 }

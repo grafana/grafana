@@ -4,13 +4,17 @@ import (
 	"database/sql"
 	"fmt"
 	"strconv"
-	"strings"
+
+	"github.com/grafana/grafana/pkg/setting"
 
 	_ "github.com/denisenkom/go-mssqldb"
-	"github.com/go-xorm/core"
-	"github.com/grafana/grafana/pkg/log"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/tsdb"
+	"github.com/grafana/grafana/pkg/tsdb/sqleng"
+	"github.com/grafana/grafana/pkg/util"
+	"github.com/grafana/grafana/pkg/util/errutil"
+	"xorm.io/core"
 )
 
 func init() {
@@ -20,57 +24,59 @@ func init() {
 func newMssqlQueryEndpoint(datasource *models.DataSource) (tsdb.TsdbQueryEndpoint, error) {
 	logger := log.New("tsdb.mssql")
 
-	cnnstr := generateConnectionString(datasource)
-	logger.Debug("getEngine", "connection", cnnstr)
+	cnnstr, err := generateConnectionString(datasource)
+	if err != nil {
+		return nil, err
+	}
+	if setting.Env == setting.DEV {
+		logger.Debug("getEngine", "connection", cnnstr)
+	}
 
-	config := tsdb.SqlQueryEndpointConfiguration{
+	config := sqleng.SqlQueryEndpointConfiguration{
 		DriverName:        "mssql",
 		ConnectionString:  cnnstr,
 		Datasource:        datasource,
 		MetricColumnTypes: []string{"VARCHAR", "CHAR", "NVARCHAR", "NCHAR"},
 	}
 
-	rowTransformer := mssqlRowTransformer{
+	queryResultTransformer := mssqlQueryResultTransformer{
 		log: logger,
 	}
 
-	return tsdb.NewSqlQueryEndpoint(&config, &rowTransformer, newMssqlMacroEngine(), logger)
+	return sqleng.NewSqlQueryEndpoint(&config, &queryResultTransformer, newMssqlMacroEngine(), logger)
 }
 
-func generateConnectionString(datasource *models.DataSource) string {
-	password := ""
-	for key, value := range datasource.SecureJsonData.Decrypt() {
-		if key == "password" {
-			password = value
-			break
-		}
+func generateConnectionString(datasource *models.DataSource) (string, error) {
+	addr, err := util.SplitHostPortDefault(datasource.Url, "localhost", "1433")
+	if err != nil {
+		return "", errutil.Wrapf(err, "Invalid data source URL '%s'", datasource.Url)
 	}
 
-	hostParts := strings.Split(datasource.Url, ":")
-	if len(hostParts) < 2 {
-		hostParts = append(hostParts, "1433")
-	}
-
-	server, port := hostParts[0], hostParts[1]
-	return fmt.Sprintf("server=%s;port=%s;database=%s;user id=%s;password=%s;",
-		server,
-		port,
+	encrypt := datasource.JsonData.Get("encrypt").MustString("false")
+	connStr := fmt.Sprintf("server=%s;port=%s;database=%s;user id=%s;password=%s;",
+		addr.Host,
+		addr.Port,
 		datasource.Database,
 		datasource.User,
-		password,
+		datasource.DecryptedPassword(),
 	)
+	if encrypt != "false" {
+		connStr += fmt.Sprintf("encrypt=%s;", encrypt)
+	}
+	return connStr, nil
 }
 
-type mssqlRowTransformer struct {
+type mssqlQueryResultTransformer struct {
 	log log.Logger
 }
 
-func (t *mssqlRowTransformer) Transform(columnTypes []*sql.ColumnType, rows *core.Rows) (tsdb.RowValues, error) {
+func (t *mssqlQueryResultTransformer) TransformQueryResult(columnTypes []*sql.ColumnType, rows *core.Rows) (tsdb.RowValues, error) {
 	values := make([]interface{}, len(columnTypes))
 	valuePtrs := make([]interface{}, len(columnTypes))
 
-	for i, stype := range columnTypes {
-		t.log.Debug("type", "type", stype)
+	for i := range columnTypes {
+		// debug output on large tables causes high memory utilization/leak
+		// t.log.Debug("type", "type", stype)
 		valuePtrs[i] = &values[i]
 	}
 
@@ -97,4 +103,8 @@ func (t *mssqlRowTransformer) Transform(columnTypes []*sql.ColumnType, rows *cor
 	}
 
 	return values, nil
+}
+
+func (t *mssqlQueryResultTransformer) TransformQueryError(err error) error {
+	return err
 }

@@ -1,4 +1,8 @@
+import { IScope, ITimeoutService } from 'angular';
+
 import coreModule from '../../core/core_module';
+import { backendSrv } from 'app/core/services/backend_srv';
+import { promiseToDigest } from '../../core/utils/promiseToDigest';
 
 export class PlaylistSearchCtrl {
   query: any;
@@ -7,7 +11,7 @@ export class PlaylistSearchCtrl {
   searchStarted: any;
 
   /** @ngInject */
-  constructor($timeout, private backendSrv) {
+  constructor(private $scope: IScope, $timeout: ITimeoutService) {
     this.query = { query: '', tag: [], starred: false, limit: 20 };
 
     $timeout(() => {
@@ -21,12 +25,14 @@ export class PlaylistSearchCtrl {
     this.tagsMode = false;
     const prom: any = {};
 
-    prom.promise = this.backendSrv.search(this.query).then(result => {
-      return {
-        dashboardResult: result,
-        tagResult: [],
-      };
-    });
+    prom.promise = promiseToDigest(this.$scope)(
+      backendSrv.search(this.query).then(result => {
+        return {
+          dashboardResult: result,
+          tagResult: [],
+        };
+      })
+    );
 
     this.searchStarted(prom);
   }
@@ -40,7 +46,7 @@ export class PlaylistSearchCtrl {
     return this.query.query === '' && this.query.starred === false && this.query.tag.length === 0;
   }
 
-  filterByTag(tag, evt) {
+  filterByTag(tag: any, evt: any) {
     this.query.tag.push(tag);
     this.searchDashboards();
     if (evt) {
@@ -51,12 +57,14 @@ export class PlaylistSearchCtrl {
 
   getTags() {
     const prom: any = {};
-    prom.promise = this.backendSrv.get('/api/dashboards/tags').then(result => {
-      return {
-        dashboardResult: [],
-        tagResult: result,
-      };
-    });
+    prom.promise = promiseToDigest(this.$scope)(
+      backendSrv.get('/api/dashboards/tags').then((result: any) => {
+        return {
+          dashboardResult: [],
+          tagResult: result,
+        } as any;
+      })
+    );
 
     this.searchStarted(prom);
   }

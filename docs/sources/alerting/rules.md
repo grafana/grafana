@@ -1,24 +1,20 @@
 +++
-title = "Alerting Engine & Rules Guide"
+title = "Alerting Engine and Rules Guide"
 description = "Configuring Alert Rules"
 keywords = ["grafana", "alerting", "guide", "rules"]
 type = "docs"
 [menu.docs]
-name = "Engine & Rules"
+name = "Engine and Rules"
 parent = "alerting"
 weight = 1
 +++
 
-# Alerting Engine & Rules Guide
-
-> Alerting is only available in Grafana v4.0 and above.
-
-## Introduction
-
-{{< imgbox max-width="40%" img="/img/docs/v4/drag_handles_gif.gif" caption="Alerting overview" >}}
+# Alerting Engine and Rules Guide
 
 Alerting in Grafana allows you to attach rules to your dashboard panels. When you save the dashboard
 Grafana will extract the alert rules into a separate alert rule storage and schedule them for evaluation.
+
+{{< imgbox max-width="40%" img="/img/docs/v4/drag_handles_gif.gif" caption="Alerting overview" >}}
 
 In the alert tab of the graph panel you can configure how often the alert rule should be evaluated
 and the conditions that need to be met for the alert to change state and trigger its
@@ -27,11 +23,10 @@ and the conditions that need to be met for the alert to change state and trigger
 ## Execution
 
 The alert rules are evaluated in the Grafana backend in a scheduler and query execution engine that is part
-of core Grafana. Only some data sources are supported right now. They include `Graphite`, `Prometheus`, `Elasticsearch`, `InfluxDB`, `OpenTSDB`, `MySQL`, `Postgres` and `Cloudwatch`.
+of core Grafana. Only some data sources are supported right now. They include `Graphite`, `Prometheus`, `InfluxDB`, `Elasticsearch`,
+`Stackdriver`, `Cloudwatch`, `Azure Monitor`, `MySQL`, `PostgreSQL`, `MSSQL`, `OpenTSDB`, `Oracle`, and `Azure Data Explorer`.
 
-> Alerting support for Elasticsearch is only available in Grafana v5.2 and above.
-
-### Clustering
+## Clustering
 
 Currently alerting supports a limited form of high availability. Since v4.2.0 of Grafana, alert notifications are deduped when running multiple servers. This means all alerts are executed on every server but no duplicate alert notifications are sent due to the deduping logic. Proper load balancing of alerts will be introduced in the future.
 
@@ -39,29 +34,41 @@ Currently alerting supports a limited form of high availability. Since v4.2.0 of
 
 ## Rule Config
 
-{{< imgbox max-width="40%" img="/img/docs/v4/alerting_conditions.png" caption="Alerting Conditions" >}}
+Currently only the graph panel supports alert rules.
 
-Currently only the graph panel supports alert rules but this will be added to the **Singlestat** and **Table**
-panels as well in a future release.
-
-### Name & Evaluation interval
+### Name and Evaluation interval
 
 Here you can specify the name of the alert rule and how often the scheduler should evaluate the alert rule.
+**Note:** You can set a minimum interval in the `alerting.min_interval_seconds` config field, to set a minimum time between evaluations. Check out the [[configuration]]({{< relref "../installation/configuration.md" >}}#min-interval-seconds) page for more information.
+
+### For
+
+> **Important note regarding No Data:**
+>
+> Do not use `For` with the `If no data or all values are null` setting set to `No Data`. The triggering of `No Data` will trigger instantly and not take `For` into consideration. This may also result in that an OK notification not being sent if alert transitions from `No Data -> Pending -> OK`.
+
+If an alert rule has a configured `For` and the query violates the configured threshold it will first go from `OK` to `Pending`. Going from `OK` to `Pending` Grafana will not send any notifications. Once the alert rule has been firing for more than `For` duration, it will change to `Alerting` and send alert notifications.
+
+Typically, it's always a good idea to use this setting since it's often worse to get false positive than wait a few minutes before the alert notification triggers. Looking at the `Alert list` or `Alert list panels` you will be able to see alerts in pending state.
+
+Below you can see an example timeline of an alert using the `For` setting. At ~16:04 the alert state changes to `Pending` and after 4 minutes it changes to `Alerting` which is when alert notifications are sent. Once the series falls back to normal the alert rule goes back to `OK`.
+{{< imgbox img="/img/docs/v54/alerting-for-dark-theme.png" caption="Alerting For" >}}
+
+{{< imgbox max-width="40%" img="/img/docs/v4/alerting_conditions.png" caption="Alerting Conditions" >}}
 
 ### Conditions
 
 Currently the only condition type that exists is a `Query` condition that allows you to
 specify a query letter, time range and an aggregation function.
 
-
 ### Query condition example
 
 ```sql
-avg() OF query(A, 5m, now) IS BELOW 14
+avg() OF query(A, 15m, now) IS BELOW 14
 ```
 
 - `avg()` Controls how the values for **each** series should be reduced to a value that can be compared against the threshold. Click on the function to change it to another aggregation function.
-- `query(A, 5m, now)`  The letter defines what query to execute from the **Metrics** tab. The second two parameters define the time range, `5m, now` means 5 minutes ago to now. You can also do `10m, now-2m` to define a time range that will be 10 minutes ago to 2 minutes ago. This is useful if you want to ignore the last 2 minutes of data.
+- `query(A, 15m, now)`  The letter defines what query to execute from the **Metrics** tab. The second two parameters define the time range, `15m, now` means 15 minutes ago to now. You can also do `10m, now-2m` to define a time range that will be 10 minutes ago to 2 minutes ago. This is useful if you want to ignore the last 2 minutes of data.
 - `IS BELOW 14`  Defines the type of threshold and the threshold value.  You can click on `IS BELOW` to change the type of threshold.
 
 The query used in an alert rule cannot contain any template variables. Currently we only support `AND` and `OR` operators between conditions and they are executed serially.
@@ -91,7 +98,7 @@ we plan to track state **per series** in a future release.
 > Starting with Grafana v5.3 you can configure reminders to be sent for triggered alerts. This will send additional notifications
 > when an alert continues to fire. If other series (like server2 in the example above) also cause the alert rule to fire they will
 > be included in the reminder notification. Depending on what notification channel you're using you may be able to take advantage
-> of this feature for identifying new/existing series causing alert to fire. [Read more about notification reminders here](/alerting/notifications/#send-reminders).
+> of this feature for identifying new/existing series causing alert to fire. [Read more about notification reminders here]({{< relref "notifications/#send-reminders" >}}).
 
 ### No Data / Null values
 
@@ -123,11 +130,11 @@ The message can contain anything, information about how you might solve the issu
 The actual notifications are configured and shared between multiple alerts. Read the
 [notifications]({{< relref "notifications.md" >}}) guide for how to configure and setup notifications.
 
-## Alert State History & Annotations
+## Alert State History and Annotations
 
 Alert state changes are recorded in the internal annotation table in Grafana's database. The state changes
 are visualized as annotations in the alert rule's graph panel. You can also go into the `State history`
-submenu in the alert tab to view & clear state history.
+submenu in the alert tab to view and clear state history.
 
 ## Troubleshooting
 

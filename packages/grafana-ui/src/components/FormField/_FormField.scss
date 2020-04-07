@@ -1,0 +1,11 @@
+.form-field {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  text-align: left;
+  position: relative;
+
+  &--grow {
+    flex-grow: 1;
+  }
+}

@@ -3,10 +3,10 @@
   right: 0;
   left: 0;
   bottom: 0;
-  top: $navbarHeight;
+  top: 0;
   z-index: $zindex-modal-backdrop;
   background-color: $black;
-  @include opacity(75);
+  @include opacity(60);
 }
 
 .search-container {
@@ -16,38 +16,10 @@
   bottom: 0;
   z-index: ($zindex-modal-backdrop + 10);
   position: fixed;
+  background: $body-bg;
 }
 
 // Search
-.search-field-wrapper {
-  width: 100%;
-  display: flex;
-  background-color: $navbarBackground;
-  box-shadow: $navbarShadow;
-  position: relative;
-
-  & > input {
-    max-width: 653px;
-    //padding: 0.5rem 1.5rem 0.5rem 0;
-    padding: 1rem 1rem 0.75rem 1rem;
-    height: 51px;
-    box-sizing: border-box;
-    outline: none;
-    background: $side-menu-bg;
-    background-color: $navbarButtonBackground;
-    flex-grow: 10;
-  }
-}
-
-.search-field-spacer {
-  flex-grow: 1;
-}
-
-.search-field-icon {
-  font-size: $font-size-lg;
-  padding: 1rem 1rem 0.75rem 1.5rem;
-}
-
 .search-dropdown {
   display: flex;
   flex-direction: column;
@@ -55,11 +27,12 @@
 }
 
 .search-dropdown__col_1 {
-  background: $page-bg;
+  padding: $dashboard-padding;
   max-width: 700px;
   display: flex;
   flex-direction: column;
   flex-grow: 1;
+  height: 100%; // Chrome 74 needs this to make the element scrollable
 
   .search-item--indent {
     margin-left: 14px;
@@ -75,15 +48,16 @@
 }
 
 .search-filter-box {
-  background: $search-filter-box-bg;
-  border-radius: 2px;
-  padding: $spacer*1.5;
+  background: $panel-bg;
+  border: $panel-border;
+  border-radius: 3px;
+  padding: $spacer * 1.5;
   min-width: 340px;
   margin-bottom: $spacer * 1.5;
 }
 
 .search-filter-box__header {
-  border-bottom: 1px solid $dark-5;
+  border-bottom: 1px solid $hr-border-color;
   margin-bottom: $spacer * 1.5;
 }
 
@@ -105,6 +79,10 @@
 .search-results-scroller {
   display: flex;
   position: relative;
+  min-height: 100%;
+  background: $panel-bg;
+  border: $panel-border;
+  border-radius: 3px;
 }
 
 .search-results-container {
@@ -112,12 +90,13 @@
   padding: $spacer;
   position: relative;
   flex-grow: 10;
-  margin-bottom: 1rem;
+  margin-bottom: $space-md;
 
   // Fix for search scroller in mobile view
   height: unset;
 
   .label-tag {
+    margin-top: 2px;
     margin-left: 6px;
     font-size: 11px;
     padding: 2px 6px;
@@ -133,10 +112,9 @@
 
 .search-section {
   background: $panel-bg;
-  border: $panel-border;
+  border-bottom: 1px solid lightOrDark($gray95, $gray25);
   padding: 0px 4px 4px 4px;
   margin-bottom: 3px;
-  border-radius: 5px;
 }
 
 .search-section__header {
@@ -185,13 +163,19 @@
 
   display: flex;
   flex-grow: 1;
-  height: 37px;
-  white-space: nowrap;
+  align-items: center;
+  height: auto;
+  min-height: 37px;
+  white-space: initial;
   padding: 0px;
 
   &:hover,
   &.selected {
     background: $list-item-hover-bg;
+
+    .search-item__body-title {
+      color: $text-color-strong;
+    }
   }
 }
 
@@ -208,11 +192,20 @@
   color: $list-item-link-color;
 }
 
+.search-item__body-folder-title {
+  color: $text-color-weak;
+  font-size: $font-size-xs;
+  line-height: 11px;
+  position: relative;
+  top: -1px;
+}
+
 .search-item__icon {
-  padding: 5px;
+  display: flex;
+  align-items: center;
   flex: 0 0 auto;
   font-size: 19px;
-  padding: 5px 2px 5px 10px;
+  padding: 0 2px 0 10px;
 }
 
 .search-item__tags {
@@ -246,22 +239,26 @@
 
 .search-button-row {
   text-align: center;
-  padding: $spacer*2 $spacer;
+  padding: $spacer * 2 $spacer;
   background: $panel-bg;
 }
 
-@include media-breakpoint-up(sm) {
+@include media-breakpoint-up(md) {
   .search-container {
     left: $side-menu-width;
   }
 
   .search-item__tags {
-    display: block;
+    display: flex;
+    flex: 1 1 auto;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    margin-top: -2px;
   }
 
   .search-dropdown__col_2 {
     display: flex;
-    margin-bottom: 1rem;
+    margin-bottom: $space-md;
   }
 }
 
@@ -272,10 +269,6 @@
     max-width: 700px;
     height: 260px;
     align-items: flex-start;
-  }
-
-  .search-dropdown__col_1 {
-    height: 100%;
   }
 
   .search-filter-box {

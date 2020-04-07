@@ -2,6 +2,7 @@
   "type": "datasource",
   "name": "OpenTSDB",
   "id": "opentsdb",
+  "category": "tsdb",
 
   "metrics": true,
   "defaultMatchFormat": "pipe",
@@ -9,7 +10,7 @@
   "alerting": true,
 
   "info": {
-    "description": "OpenTSDB Data Source for Grafana",
+    "description": "Open source time series database",
     "author": {
       "name": "Grafana Project",
       "url": "https://grafana.com"
@@ -17,7 +18,6 @@
     "logos": {
       "small": "img/opentsdb_logo.png",
       "large": "img/opentsdb_logo.png"
-    },
-    "version": "5.0.0"
+    }
   }
 }

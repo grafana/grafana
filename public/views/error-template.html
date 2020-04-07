@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta name="viewport" content="width=device-width">
+    <meta name="theme-color" content="#000">
+
+    <title>Grafana - Error</title>
+
+    <base href="[[.AppSubUrl]]/" />
+
+    <link rel="stylesheet" href="public/build/grafana.[[ .Theme ]].<%= webpack.hash %>.css">
+
+    <link rel="icon" type="image/png" href="public/img/fav32.png">
+    <link rel="mask-icon" href="public/img/grafana_mask_icon.svg" color="#F05A28">
+
+  </head>
+
+  <body class="theme-[[ .Theme ]]">
+    <div class="main-view">
+      <div class="page-container">
+        <div class="page-header">
+          <div class="page-header__inner">
+            <span class="page-header__logo">
+              <i class="page-header__icon fa fa-frown-o"></i>
+            </span>
+            <div class="page-header__info-block">
+              <h1 class="page-header__title">
+                <a class="text-link" href="login">Grafana</a><span> / Server Error</span><span></span>
+              </h1>
+              <div class="page-header__sub-title">Sadly something went wrong</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="page-container page-body ng-scope" style="padding: 2rem">
+        <div class="alert">
+          <div class="alert-icon"><i class="fa fa-exclamation-triangle"></i></div>
+          <div class="alert-body">
+            <div class="alert-title">[[.Title]]</div>
+          </div>
+        </div>
+        <br />
+        [[if .ErrorMsg]]
+          <h4 class="page-heading">Error details</h4>
+          <div class="alert-text">
+            <pre>[[.ErrorMsg]]</pre>
+          </div>
+        [[end]]
+        <div style="padding: 2rem 0 0">
+          <p>Check the Grafana server logs for the detailed error message.</p>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

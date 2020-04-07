@@ -1,0 +1,25 @@
+﻿// <3: https://medium.com/@brunn/detecting-autofilled-fields-in-javascript-aed598d25da7
+// sass-lint:disable no-empty-rulesets
+@keyframes onAutoFillStart {
+  from {
+    /**/
+  }
+  to {
+    /**/
+  }
+}
+@keyframes onAutoFillCancel {
+  from {
+    /**/
+  }
+  to {
+    /**/
+  }
+}
+input:-webkit-autofill {
+  animation-name: onAutoFillStart;
+  transition: transform 1ms;
+}
+input:not(:-webkit-autofill) {
+  animation-name: onAutoFillCancel;
+}

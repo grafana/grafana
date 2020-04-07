@@ -41,7 +41,7 @@ Restart the Grafana server after changing the config file.
 ## IIS Config
 
 1. Open the IIS Manager and click on the parent website
-2. In the admin console for this website, double click on the Url Rewrite option:
+2. In the admin console for this website, double click on the URL Rewrite option:
     {{< docs-imagebox img="/img/docs/tutorials/IIS_admin_console.png"  max-width= "800px" >}}
 
 3. Click on the `Add Rule(s)...` action
@@ -51,7 +51,7 @@ Restart the Grafana server after changing the config file.
 5. Create an Inbound Rule for the parent website (localhost:8080 in this example) with the following settings:
   - pattern: `grafana(/)?(.*)`
   - check the `Ignore case` checkbox
-  - rewrite url set to `http://localhost:3000/{R:2}`
+  - rewrite URL set to `http://localhost:3000/{R:2}`
   - check the `Append query string` checkbox
   - check the `Stop processing of subsequent rules` checkbox
 
@@ -63,16 +63,16 @@ Finally, navigate to `http://localhost:8080/grafana` (replace `http://localhost:
 
 ### 404 error
 
-When navigating to the grafana url (`http://localhost:8080/grafana` in the example above) and a `HTTP Error 404.0 - Not Found` error is returned then either:
+When navigating to the Grafana URL (`http://localhost:8080/grafana` in the example above) and a `HTTP Error 404.0 - Not Found` error is returned then either:
 
-- the pattern for the Inbound Rule is incorrect. Edit the rule, click on the `Test pattern...` button, test the part of the url after `http://localhost:8080/` and make sure it matches. For `grafana/login` the test should return 3 capture groups: {R:0}: `grafana` {R:1}: `/` and {R:2}: `login`.
-- The `root_url` setting in the Grafana config file does not match the parent url with subpath.
+- the pattern for the Inbound Rule is incorrect. Edit the rule, click on the `Test pattern...` button, test the part of the URL after `http://localhost:8080/` and make sure it matches. For `grafana/login` the test should return 3 capture groups: {R:0}: `grafana` {R:1}: `/` and {R:2}: `login`.
+- The `root_url` setting in the Grafana config file does not match the parent URL with subpath.
 
 ### Grafana Website only shows text with no images or css
 
 {{< docs-imagebox img="/img/docs/tutorials/IIS_proxy_error.png"  max-width= "800px" >}}
 
-1. The `root_url` setting in the Grafana config file does not match the parent url with subpath. This could happen if the root_url is commented out by mistake (`;` is used for commenting out a line in .ini files):
+1. The `root_url` setting in the Grafana config file does not match the parent URL with subpath. This could happen if the root_url is commented out by mistake (`;` is used for commenting out a line in .ini files):
 
     `; root_url = %(protocol)s://%(domain)s/grafana/`
 
@@ -82,8 +82,8 @@ When navigating to the grafana url (`http://localhost:8080/grafana` in the examp
 
     pattern in Inbound Rule: `wrongsubpath(/)?(.*)`
 
-3. or if the Rewrite Url in the Inbound Rule is incorrect. 
+3. or if the Rewrite URL in the Inbound Rule is incorrect. 
 
-    The Rewrite Url should not include the subpath. 
+    The Rewrite URL should not include the subpath. 
 
-    The Rewrite Url should contain the capture group from the pattern matching that returns the part of the url after the subpath. The pattern used above returns 3 capture groups and the third one {R:2} returns the part of the url after `http://localhost:8080/grafana/`.
+    The Rewrite URL should contain the capture group from the pattern matching that returns the part of the URL after the subpath. The pattern used above returns 3 capture groups and the third one {R:2} returns the part of the URL after `http://localhost:8080/grafana/`.

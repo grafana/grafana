@@ -1,0 +1,15 @@
+  elasticsearch5:
+    image: elasticsearch:5
+    command: elasticsearch
+    ports:
+      - '10200:9200'
+      - '10300:9300'
+
+  fake-elastic5-data:
+    image: grafana/fake-data-gen
+    links:
+      - elasticsearch5
+    environment:
+      FD_SERVER: elasticsearch5
+      FD_DATASOURCE: elasticsearch
+      FD_PORT: 9200

@@ -27,8 +27,8 @@ func TestIntegratedDashboardService(t *testing.T) {
 				return nil
 			})
 
-			bus.AddHandler("test", func(cmd *models.IsDashboardProvisionedQuery) error {
-				cmd.Result = false
+			bus.AddHandler("test", func(cmd *models.GetProvisionedDashboardDataByIdQuery) error {
+				cmd.Result = nil
 				return nil
 			})
 
@@ -932,29 +932,6 @@ func TestIntegratedDashboardService(t *testing.T) {
 	})
 }
 
-type scenarioContext struct {
-	dashboardGuardianMock *guardian.FakeDashboardGuardian
-}
-
-type scenarioFunc func(c *scenarioContext)
-
-func dashboardGuardianScenario(desc string, mock *guardian.FakeDashboardGuardian, fn scenarioFunc) {
-	Convey(desc, func() {
-		origNewDashboardGuardian := guardian.New
-		guardian.MockDashboardGuardian(mock)
-
-		sc := &scenarioContext{
-			dashboardGuardianMock: mock,
-		}
-
-		defer func() {
-			guardian.New = origNewDashboardGuardian
-		}()
-
-		fn(sc)
-	})
-}
-
 type dashboardPermissionScenarioContext struct {
 	dashboardGuardianMock *guardian.FakeDashboardGuardian
 }
@@ -987,13 +964,13 @@ func permissionScenario(desc string, canSave bool, fn dashboardPermissionScenari
 
 func callSaveWithResult(cmd models.SaveDashboardCommand) *models.Dashboard {
 	dto := toSaveDashboardDto(cmd)
-	res, _ := dashboards.NewService().SaveDashboard(&dto)
+	res, _ := dashboards.NewService().SaveDashboard(&dto, false)
 	return res
 }
 
 func callSaveWithError(cmd models.SaveDashboardCommand) error {
 	dto := toSaveDashboardDto(cmd)
-	_, err := dashboards.NewService().SaveDashboard(&dto)
+	_, err := dashboards.NewService().SaveDashboard(&dto, false)
 	return err
 }
 
@@ -1017,7 +994,7 @@ func saveTestDashboard(title string, orgId int64, folderId int64) *models.Dashbo
 		},
 	}
 
-	res, err := dashboards.NewService().SaveDashboard(&dto)
+	res, err := dashboards.NewService().SaveDashboard(&dto, false)
 	So(err, ShouldBeNil)
 
 	return res
@@ -1043,7 +1020,7 @@ func saveTestFolder(title string, orgId int64) *models.Dashboard {
 		},
 	}
 
-	res, err := dashboards.NewService().SaveDashboard(&dto)
+	res, err := dashboards.NewService().SaveDashboard(&dto, false)
 	So(err, ShouldBeNil)
 
 	return res

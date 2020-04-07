@@ -1,24 +1,33 @@
-import moment from 'moment';
 import { MssqlDatasource } from '../datasource';
-import { TemplateSrvStub } from 'test/specs/helpers';
+import { TimeSrvStub } from 'test/specs/helpers';
 import { CustomVariable } from 'app/features/templating/custom_variable';
-import q from 'q';
 
-describe('MSSQLDatasource', function() {
+import { dateTime } from '@grafana/data';
+import { TemplateSrv } from 'app/features/templating/template_srv';
+import { backendSrv } from 'app/core/services/backend_srv'; // will use the version in __mocks__
+
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  getBackendSrv: () => backendSrv,
+}));
+
+describe('MSSQLDatasource', () => {
+  const templateSrv: TemplateSrv = new TemplateSrv();
+  const datasourceRequestMock = jest.spyOn(backendSrv, 'datasourceRequest');
+
   const ctx: any = {
-    backendSrv: {},
-    templateSrv: new TemplateSrvStub(),
+    timeSrv: new TimeSrvStub(),
   };
 
-  beforeEach(function() {
-    ctx.$q = q;
-    ctx.instanceSettings = { name: 'mssql' };
+  beforeEach(() => {
+    jest.clearAllMocks();
 
-    ctx.ds = new MssqlDatasource(ctx.instanceSettings, ctx.backendSrv, ctx.$q, ctx.templateSrv);
+    ctx.instanceSettings = { name: 'mssql' };
+    ctx.ds = new MssqlDatasource(ctx.instanceSettings, templateSrv, ctx.timeSrv);
   });
 
-  describe('When performing annotationQuery', function() {
-    let results;
+  describe('When performing annotationQuery', () => {
+    let results: any;
 
     const annotationName = 'MyAnno';
 
@@ -28,8 +37,8 @@ describe('MSSQLDatasource', function() {
         rawQuery: 'select time, text, tags from table;',
       },
       range: {
-        from: moment(1432288354),
-        to: moment(1432288401),
+        from: dateTime(1432288354),
+        to: dateTime(1432288401),
       },
     };
 
@@ -52,16 +61,14 @@ describe('MSSQLDatasource', function() {
     };
 
     beforeEach(() => {
-      ctx.backendSrv.datasourceRequest = options => {
-        return ctx.$q.when({ data: response, status: 200 });
-      };
+      datasourceRequestMock.mockImplementation((options: any) => Promise.resolve({ data: response, status: 200 }));
 
-      return ctx.ds.annotationQuery(options).then(data => {
+      return ctx.ds.annotationQuery(options).then((data: any) => {
         results = data;
       });
     });
 
-    it('should return annotation list', function() {
+    it('should return annotation list', () => {
       expect(results.length).toBe(3);
 
       expect(results[0].text).toBe('some text');
@@ -75,8 +82,8 @@ describe('MSSQLDatasource', function() {
     });
   });
 
-  describe('When performing metricFindQuery', function() {
-    let results;
+  describe('When performing metricFindQuery', () => {
+    let results: any;
     const query = 'select * from atable';
     const response = {
       results: {
@@ -88,32 +95,34 @@ describe('MSSQLDatasource', function() {
           tables: [
             {
               columns: [{ text: 'title' }, { text: 'text' }],
-              rows: [['aTitle', 'some text'], ['aTitle2', 'some text2'], ['aTitle3', 'some text3']],
+              rows: [
+                ['aTitle', 'some text'],
+                ['aTitle2', 'some text2'],
+                ['aTitle3', 'some text3'],
+              ],
             },
           ],
         },
       },
     };
 
-    beforeEach(function() {
-      ctx.backendSrv.datasourceRequest = function(options) {
-        return ctx.$q.when({ data: response, status: 200 });
-      };
+    beforeEach(() => {
+      datasourceRequestMock.mockImplementation((options: any) => Promise.resolve({ data: response, status: 200 }));
 
-      return ctx.ds.metricFindQuery(query).then(function(data) {
+      return ctx.ds.metricFindQuery(query).then((data: any) => {
         results = data;
       });
     });
 
-    it('should return list of all column values', function() {
+    it('should return list of all column values', () => {
       expect(results.length).toBe(6);
       expect(results[0].text).toBe('aTitle');
       expect(results[5].text).toBe('some text3');
     });
   });
 
-  describe('When performing metricFindQuery with key, value columns', function() {
-    let results;
+  describe('When performing metricFindQuery with key, value columns', () => {
+    let results: any;
     const query = 'select * from atable';
     const response = {
       results: {
@@ -125,24 +134,26 @@ describe('MSSQLDatasource', function() {
           tables: [
             {
               columns: [{ text: '__value' }, { text: '__text' }],
-              rows: [['value1', 'aTitle'], ['value2', 'aTitle2'], ['value3', 'aTitle3']],
+              rows: [
+                ['value1', 'aTitle'],
+                ['value2', 'aTitle2'],
+                ['value3', 'aTitle3'],
+              ],
             },
           ],
         },
       },
     };
 
-    beforeEach(function() {
-      ctx.backendSrv.datasourceRequest = function(options) {
-        return ctx.$q.when({ data: response, status: 200 });
-      };
+    beforeEach(() => {
+      datasourceRequestMock.mockImplementation((options: any) => Promise.resolve({ data: response, status: 200 }));
 
-      return ctx.ds.metricFindQuery(query).then(function(data) {
+      return ctx.ds.metricFindQuery(query).then((data: any) => {
         results = data;
       });
     });
 
-    it('should return list of as text, value', function() {
+    it('should return list of as text, value', () => {
       expect(results.length).toBe(3);
       expect(results[0].text).toBe('aTitle');
       expect(results[0].value).toBe('value1');
@@ -151,8 +162,8 @@ describe('MSSQLDatasource', function() {
     });
   });
 
-  describe('When performing metricFindQuery with key, value columns and with duplicate keys', function() {
-    let results;
+  describe('When performing metricFindQuery with key, value columns and with duplicate keys', () => {
+    let results: any;
     const query = 'select * from atable';
     const response = {
       results: {
@@ -164,33 +175,77 @@ describe('MSSQLDatasource', function() {
           tables: [
             {
               columns: [{ text: '__text' }, { text: '__value' }],
-              rows: [['aTitle', 'same'], ['aTitle', 'same'], ['aTitle', 'diff']],
+              rows: [
+                ['aTitle', 'same'],
+                ['aTitle', 'same'],
+                ['aTitle', 'diff'],
+              ],
             },
           ],
         },
       },
     };
 
-    beforeEach(function() {
-      ctx.backendSrv.datasourceRequest = function(options) {
-        return ctx.$q.when({ data: response, status: 200 });
-      };
-
-      return ctx.ds.metricFindQuery(query).then(function(data) {
+    beforeEach(() => {
+      datasourceRequestMock.mockImplementation((options: any) => Promise.resolve({ data: response, status: 200 }));
+      return ctx.ds.metricFindQuery(query).then((data: any) => {
         results = data;
       });
     });
 
-    it('should return list of unique keys', function() {
+    it('should return list of unique keys', () => {
       expect(results.length).toBe(1);
       expect(results[0].text).toBe('aTitle');
       expect(results[0].value).toBe('same');
     });
   });
 
+  describe('When performing metricFindQuery', () => {
+    let results: any;
+    const query = 'select * from atable';
+    const response = {
+      results: {
+        tempvar: {
+          meta: {
+            rowCount: 1,
+          },
+          refId: 'tempvar',
+          tables: [
+            {
+              columns: [{ text: 'title' }],
+              rows: [['aTitle']],
+            },
+          ],
+        },
+      },
+    };
+    const time = {
+      from: dateTime(1521545610656),
+      to: dateTime(1521546251185),
+    };
+
+    beforeEach(() => {
+      ctx.timeSrv.setTime(time);
+
+      datasourceRequestMock.mockImplementation((options: any) => {
+        results = options.data;
+        return Promise.resolve({ data: response, status: 200 });
+      });
+
+      return ctx.ds.metricFindQuery(query);
+    });
+
+    it('should pass timerange to datasourceRequest', () => {
+      expect(results.from).toBe(time.from.valueOf().toString());
+      expect(results.to).toBe(time.to.valueOf().toString());
+      expect(results.queries.length).toBe(1);
+      expect(results.queries[0].rawSql).toBe(query);
+    });
+  });
+
   describe('When interpolating variables', () => {
-    beforeEach(function() {
-      ctx.variable = new CustomVariable({}, {});
+    beforeEach(() => {
+      ctx.variable = new CustomVariable({}, {} as any);
     });
 
     describe('and value is a string', () => {
@@ -230,6 +285,53 @@ describe('MSSQLDatasource', function() {
         ctx.variable.includeAll = true;
         expect(ctx.ds.interpolateVariable('abc', ctx.variable)).toEqual("'abc'");
       });
+    });
+  });
+
+  describe('targetContainsTemplate', () => {
+    it('given query that contains template variable it should return true', () => {
+      const rawSql = `SELECT
+      $__timeGroup(createdAt,'$summarize') as time,
+      avg(value) as value,
+      hostname as metric
+    FROM
+      grafana_metric
+    WHERE
+      $__timeFilter(createdAt) AND
+      measurement = 'logins.count' AND
+      hostname IN($host)
+    GROUP BY $__timeGroup(createdAt,'$summarize'), hostname
+    ORDER BY 1`;
+      const query = {
+        rawSql,
+      };
+      templateSrv.init([
+        { type: 'query', name: 'summarize', current: { value: '1m' } },
+        { type: 'query', name: 'host', current: { value: 'a' } },
+      ]);
+      expect(ctx.ds.targetContainsTemplate(query)).toBeTruthy();
+    });
+
+    it('given query that only contains global template variable it should return false', () => {
+      const rawSql = `SELECT
+      $__timeGroup(createdAt,'$__interval') as time,
+      avg(value) as value,
+      hostname as metric
+    FROM
+      grafana_metric
+    WHERE
+      $__timeFilter(createdAt) AND
+      measurement = 'logins.count'
+    GROUP BY $__timeGroup(createdAt,'$summarize'), hostname
+    ORDER BY 1`;
+      const query = {
+        rawSql,
+      };
+      templateSrv.init([
+        { type: 'query', name: 'summarize', current: { value: '1m' } },
+        { type: 'query', name: 'host', current: { value: 'a' } },
+      ]);
+      expect(ctx.ds.targetContainsTemplate(query)).toBeFalsy();
     });
   });
 });

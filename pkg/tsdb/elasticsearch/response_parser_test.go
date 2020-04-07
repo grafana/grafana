@@ -787,6 +787,84 @@ func TestResponseParser(t *testing.T) {
 			So(rows[0][2].(null.Float).Float64, ShouldEqual, 3000)
 		})
 
+		Convey("With bucket_script", func() {
+			targets := map[string]string{
+				"A": `{
+					"timeField": "@timestamp",
+					"metrics": [
+						{ "id": "1", "type": "sum", "field": "@value" },
+            { "id": "3", "type": "max", "field": "@value" },
+            {
+              "id": "4",
+              "field": "select field",
+              "pipelineVariables": [{ "name": "var1", "pipelineAgg": "1" }, { "name": "var2", "pipelineAgg": "3" }],
+              "settings": { "script": "params.var1 * params.var2" },
+              "type": "bucket_script"
+            }
+					],
+          "bucketAggs": [{ "type": "date_histogram", "field": "@timestamp", "id": "2" }]
+				}`,
+			}
+			response := `{
+        "responses": [
+          {
+            "aggregations": {
+              "2": {
+                "buckets": [
+                  {
+                    "1": { "value": 2 },
+                    "3": { "value": 3 },
+                    "4": { "value": 6 },
+                    "doc_count": 60,
+                    "key": 1000
+                  },
+                  {
+                    "1": { "value": 3 },
+                    "3": { "value": 4 },
+                    "4": { "value": 12 },
+                    "doc_count": 60,
+                    "key": 2000
+                  }
+                ]
+              }
+            }
+          }
+        ]
+			}`
+			rp, err := newResponseParserForTest(targets, response)
+			So(err, ShouldBeNil)
+			result, err := rp.getTimeSeries()
+			So(err, ShouldBeNil)
+			So(result.Results, ShouldHaveLength, 1)
+
+			queryRes := result.Results["A"]
+			So(queryRes, ShouldNotBeNil)
+			So(queryRes.Series, ShouldHaveLength, 3)
+			seriesOne := queryRes.Series[0]
+			So(seriesOne.Name, ShouldEqual, "Sum @value")
+			So(seriesOne.Points, ShouldHaveLength, 2)
+			So(seriesOne.Points[0][0].Float64, ShouldEqual, 2)
+			So(seriesOne.Points[0][1].Float64, ShouldEqual, 1000)
+			So(seriesOne.Points[1][0].Float64, ShouldEqual, 3)
+			So(seriesOne.Points[1][1].Float64, ShouldEqual, 2000)
+
+			seriesTwo := queryRes.Series[1]
+			So(seriesTwo.Name, ShouldEqual, "Max @value")
+			So(seriesTwo.Points, ShouldHaveLength, 2)
+			So(seriesTwo.Points[0][0].Float64, ShouldEqual, 3)
+			So(seriesTwo.Points[0][1].Float64, ShouldEqual, 1000)
+			So(seriesTwo.Points[1][0].Float64, ShouldEqual, 4)
+			So(seriesTwo.Points[1][1].Float64, ShouldEqual, 2000)
+
+			seriesThree := queryRes.Series[2]
+			So(seriesThree.Name, ShouldEqual, "Sum @value * Max @value")
+			So(seriesThree.Points, ShouldHaveLength, 2)
+			So(seriesThree.Points[0][0].Float64, ShouldEqual, 6)
+			So(seriesThree.Points[0][1].Float64, ShouldEqual, 1000)
+			So(seriesThree.Points[1][0].Float64, ShouldEqual, 12)
+			So(seriesThree.Points[1][1].Float64, ShouldEqual, 2000)
+		})
+
 		// Convey("Raw documents query", func() {
 		// 	targets := map[string]string{
 		// 		"A": `{
@@ -876,5 +954,5 @@ func newResponseParserForTest(tsdbQueries map[string]string, responseBody string
 		return nil, err
 	}
 
-	return newResponseParser(response.Responses, queries), nil
+	return newResponseParser(response.Responses, queries, nil), nil
 }

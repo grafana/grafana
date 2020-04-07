@@ -1,26 +1,43 @@
-import angular from 'angular';
+// Libaries
+import angular, { auto, ILocationService, IPromise, IQService } from 'angular';
 import _ from 'lodash';
+// Utils & Services
 import coreModule from 'app/core/core_module';
-import { variableTypes } from './variable';
+import { variableTypes } from './types';
 import { Graph } from 'app/core/utils/dag';
+import { TemplateSrv } from 'app/features/templating/template_srv';
+import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
+import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
+// Types
+import { AppEvents, TimeRange } from '@grafana/data';
+import { CoreEvents } from 'app/types';
+import { UrlQueryMap } from '@grafana/runtime';
+import { appEvents, contextSrv } from 'app/core/core';
 
 export class VariableSrv {
-  dashboard: any;
-  variables: any;
+  dashboard: DashboardModel;
+  variables: any[] = [];
 
   /** @ngInject */
-  constructor(private $rootScope, private $q, private $location, private $injector, private templateSrv) {
-    // update time variant variables
-    $rootScope.$on('refresh', this.onDashboardRefresh.bind(this), $rootScope);
-    $rootScope.$on('template-variable-value-updated', this.updateUrlParamsWithCurrentVariables.bind(this), $rootScope);
-  }
+  constructor(
+    private $q: IQService,
+    private $location: ILocationService,
+    private $injector: auto.IInjectorService,
+    private templateSrv: TemplateSrv,
+    private timeSrv: TimeSrv
+  ) {}
 
-  init(dashboard) {
+  init(dashboard: DashboardModel) {
     this.dashboard = dashboard;
+    this.dashboard.events.on(CoreEvents.timeRangeUpdated, this.onTimeRangeUpdated.bind(this));
+    this.dashboard.events.on(
+      CoreEvents.templateVariableValueUpdated,
+      this.updateUrlParamsWithCurrentVariables.bind(this)
+    );
 
     // create working class models representing variables
     this.variables = dashboard.templating.list = dashboard.templating.list.map(this.createVariableFromModel.bind(this));
-    this.templateSrv.init(this.variables);
+    this.templateSrv.init(this.variables, this.timeSrv.timeRange());
 
     // init variables
     for (const variable of this.variables) {
@@ -35,29 +52,53 @@ export class VariableSrv {
         })
       )
       .then(() => {
-        this.templateSrv.updateTemplateData();
+        this.templateSrv.updateIndex();
+        this.templateSrv.setGlobalVariable('__dashboard', {
+          value: {
+            name: dashboard.title,
+            uid: dashboard.uid,
+            toString: function() {
+              return this.uid;
+            },
+          },
+        });
+        this.templateSrv.setGlobalVariable('__org', {
+          value: {
+            name: contextSrv.user.orgName,
+            id: contextSrv.user.id,
+            toString: function() {
+              return this.id;
+            },
+          },
+        });
       });
   }
 
-  onDashboardRefresh(evt, payload) {
-    if (payload && payload.fromVariableValueUpdated) {
-      return Promise.resolve({});
-    }
+  onTimeRangeUpdated(timeRange: TimeRange) {
+    this.templateSrv.updateTimeRange(timeRange);
+    const promises = this.variables
+      .filter(variable => variable.refresh === 2)
+      .map(variable => {
+        const previousOptions = variable.options.slice();
 
-    const promises = this.variables.filter(variable => variable.refresh === 2).map(variable => {
-      const previousOptions = variable.options.slice();
-
-      return variable.updateOptions().then(() => {
-        if (angular.toJson(previousOptions) !== angular.toJson(variable.options)) {
-          this.$rootScope.$emit('template-variable-value-updated');
-        }
+        return variable.updateOptions().then(() => {
+          if (angular.toJson(previousOptions) !== angular.toJson(variable.options)) {
+            this.dashboard.templateVariableValueUpdated();
+          }
+        });
       });
-    });
 
-    return this.$q.all(promises);
+    return this.$q
+      .all(promises)
+      .then(() => {
+        this.dashboard.startRefresh();
+      })
+      .catch(e => {
+        appEvents.emit(AppEvents.alertError, ['Template variable service failed', e.message]);
+      });
   }
 
-  processVariable(variable, queryParams) {
+  processVariable(variable: any, queryParams: any) {
     const dependencies = [];
 
     for (const otherVariable of this.variables) {
@@ -86,7 +127,8 @@ export class VariableSrv {
       });
   }
 
-  createVariableFromModel(model) {
+  createVariableFromModel(model: any) {
+    // @ts-ignore
     const ctor = variableTypes[model.type].ctor;
     if (!ctor) {
       throw {
@@ -98,46 +140,47 @@ export class VariableSrv {
     return variable;
   }
 
-  addVariable(variable) {
+  addVariable(variable: any) {
     this.variables.push(variable);
-    this.templateSrv.updateTemplateData();
+    this.templateSrv.updateIndex();
     this.dashboard.updateSubmenuVisibility();
   }
 
-  removeVariable(variable) {
+  removeVariable(variable: any) {
     const index = _.indexOf(this.variables, variable);
     this.variables.splice(index, 1);
-    this.templateSrv.updateTemplateData();
+    this.templateSrv.updateIndex();
     this.dashboard.updateSubmenuVisibility();
   }
 
-  updateOptions(variable) {
+  updateOptions(variable: any) {
     return variable.updateOptions();
   }
 
-  variableUpdated(variable, emitChangeEvents?) {
+  variableUpdated(variable: any, emitChangeEvents?: any) {
     // if there is a variable lock ignore cascading update because we are in a boot up scenario
     if (variable.initLock) {
       return this.$q.when();
     }
 
     const g = this.createGraph();
-    const promises = g
-      .getNode(variable.name)
-      .getOptimizedInputEdges()
-      .map(e => {
+    const node = g.getNode(variable.name);
+    let promises = [];
+    if (node) {
+      promises = node.getOptimizedInputEdges().map(e => {
         return this.updateOptions(this.variables.find(v => v.name === e.inputNode.name));
       });
+    }
 
     return this.$q.all(promises).then(() => {
       if (emitChangeEvents) {
-        this.$rootScope.$emit('template-variable-value-updated');
-        this.$rootScope.$broadcast('refresh', { fromVariableValueUpdated: true });
+        this.dashboard.templateVariableValueUpdated();
+        this.dashboard.startRefresh();
       }
     });
   }
 
-  selectOptionsForCurrentValue(variable) {
+  selectOptionsForCurrentValue(variable: any) {
     let i, y, value, option;
     const selected: any = [];
 
@@ -161,7 +204,7 @@ export class VariableSrv {
     return selected;
   }
 
-  validateVariableSelectionState(variable) {
+  validateVariableSelectionState(variable: any, defaultValue?: string) {
     if (!variable.current) {
       variable.current = {};
     }
@@ -174,32 +217,55 @@ export class VariableSrv {
         selected = variable.options[0];
       } else {
         selected = {
-          value: _.map(selected, function(val) {
+          value: _.map(selected, val => {
             return val.value;
           }),
-          text: _.map(selected, function(val) {
+          text: _.map(selected, val => {
             return val.text;
-          }).join(' + '),
+          }),
         };
       }
 
       return variable.setValue(selected);
     } else {
-      const currentOption = _.find(variable.options, {
+      let option: any = undefined;
+
+      // 1. find the current value
+      option = _.find(variable.options, {
         text: variable.current.text,
       });
-      if (currentOption) {
-        return variable.setValue(currentOption);
-      } else {
-        if (!variable.options.length) {
-          return Promise.resolve();
+      if (option) {
+        return variable.setValue(option);
+      }
+
+      // 2. find the default value
+      if (defaultValue) {
+        option = _.find(variable.options, {
+          text: defaultValue,
+        });
+        if (option) {
+          return variable.setValue(option);
         }
+      }
+
+      // 3. use the first value
+      if (variable.options) {
         return variable.setValue(variable.options[0]);
       }
+
+      // 4... give up
+      return Promise.resolve();
     }
   }
 
-  setOptionFromUrl(variable, urlValue) {
+  /**
+   * Sets the current selected option (or options) based on the query params in the url. It is possible for values
+   * in the url to not match current options of the variable. In that case the variables current value will be still set
+   * to that value.
+   * @param variable Instance of Variable
+   * @param urlValue Value of the query parameter
+   */
+  setOptionFromUrl(variable: any, urlValue: string | string[]): IPromise<any> {
     let promise = this.$q.when();
 
     if (variable.refresh) {
@@ -207,41 +273,80 @@ export class VariableSrv {
     }
 
     return promise.then(() => {
-      let option = _.find(variable.options, op => {
+      // Simple case. Value in url matches existing options text or value.
+      let option: any = _.find(variable.options, op => {
         return op.text === urlValue || op.value === urlValue;
       });
 
-      let defaultText = urlValue;
-      const defaultValue = urlValue;
+      // No luck either it is array or value does not exist in the variables options.
+      if (!option) {
+        let defaultText = urlValue;
+        const defaultValue = urlValue;
 
-      if (!option && _.isArray(urlValue)) {
-        defaultText = [];
+        if (_.isArray(urlValue)) {
+          // Multiple values in the url. We construct text as a list of texts from all matched options.
+          defaultText = urlValue.reduce((acc, item) => {
+            const t: any = _.find(variable.options, { value: item });
+            if (t) {
+              acc.push(t.text);
+            } else {
+              acc.push(item);
+            }
 
-        for (let n = 0; n < urlValue.length; n++) {
-          const t = _.find(variable.options, op => {
-            return op.value === urlValue[n];
-          });
-
-          if (t) {
-            defaultText.push(t.text);
-          }
+            return acc;
+          }, []);
         }
+
+        // It is possible that we did not match the value to any existing option. In that case the url value will be
+        // used anyway for both text and value.
+        option = { text: defaultText, value: defaultValue };
       }
 
-      option = option || { text: defaultText, value: defaultValue };
+      if (variable.multi) {
+        // In case variable is multiple choice, we cast to array to preserve the same behaviour as when selecting
+        // the option directly, which will return even single value in an array.
+        option = { text: _.castArray(option.text), value: _.castArray(option.value) };
+      }
+
       return variable.setValue(option);
     });
   }
 
-  setOptionAsCurrent(variable, option) {
+  setOptionAsCurrent(variable: any, option: any) {
     variable.current = _.cloneDeep(option);
 
-    if (_.isArray(variable.current.text)) {
+    if (_.isArray(variable.current.text) && variable.current.text.length > 0) {
       variable.current.text = variable.current.text.join(' + ');
+    } else if (_.isArray(variable.current.value) && variable.current.value[0] !== '$__all') {
+      variable.current.text = variable.current.value.join(' + ');
     }
 
     this.selectOptionsForCurrentValue(variable);
     return this.variableUpdated(variable);
+  }
+
+  templateVarsChangedInUrl(vars: UrlQueryMap) {
+    const update: Array<Promise<any>> = [];
+    for (const v of this.variables) {
+      const key = `var-${v.name}`;
+      if (vars.hasOwnProperty(key)) {
+        if (this.isVariableUrlValueDifferentFromCurrent(v, vars[key])) {
+          update.push(v.setValueFromUrl(vars[key]));
+        }
+      }
+    }
+
+    if (update.length) {
+      Promise.all(update).then(() => {
+        this.dashboard.templateVariableValueUpdated();
+        this.dashboard.startRefresh();
+      });
+    }
+  }
+
+  isVariableUrlValueDifferentFromCurrent(variable: any, urlValue: any) {
+    // lodash _.isEqual handles array of value equality checks as well
+    return !_.isEqual(variable.current.value, urlValue);
   }
 
   updateUrlParamsWithCurrentVariables() {
@@ -249,7 +354,7 @@ export class VariableSrv {
     const params = this.$location.search();
 
     // remove variable params
-    _.each(params, function(value, key) {
+    _.each(params, (value, key) => {
       if (key.indexOf('var-') === 0) {
         delete params[key];
       }
@@ -261,11 +366,11 @@ export class VariableSrv {
     this.$location.search(params);
   }
 
-  setAdhocFilter(options) {
-    let variable = _.find(this.variables, {
+  setAdhocFilter(options: any) {
+    let variable: any = _.find(this.variables, {
       type: 'adhoc',
       datasource: options.datasource,
-    });
+    } as any);
     if (!variable) {
       variable = this.createVariableFromModel({
         name: 'Filters',
@@ -276,7 +381,7 @@ export class VariableSrv {
     }
 
     const filters = variable.filters;
-    let filter = _.find(filters, { key: options.key, value: options.value });
+    let filter: any = _.find(filters, { key: options.key, value: options.value });
 
     if (!filter) {
       filter = { key: options.key, value: options.value };
@@ -290,9 +395,11 @@ export class VariableSrv {
   createGraph() {
     const g = new Graph();
 
-    this.variables.forEach(v1 => {
-      g.createNode(v1.name);
+    this.variables.forEach(v => {
+      g.createNode(v.name);
+    });
 
+    this.variables.forEach(v1 => {
       this.variables.forEach(v2 => {
         if (v1 === v2) {
           return;

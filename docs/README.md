@@ -1,72 +1,38 @@
-# Building The Docs
+# Building the docs locally
 
-To build the docs locally, you need to have docker installed.  The
-docs are built using [Hugo](http://gohugo.io/) - a static site generator.
+When you contribute to documentation, it is a good practice to build the docs on your local machine to make sure your changes appear as you expect. This README explains the process for doing that.
 
-**Prepare the Docker Image**:
+## Requirements
 
-Git clone `grafana/grafana.org` repo. Run these commands in the root of that repo. **Note** that you may require ``sudo``
-when running ``make docs-build`` depending on how your system's docker
-service is configured):
+Docker >= 2.1.0.3
 
-```
-git clone https://github.com/grafana/grafana.org
-cd grafana.org
-make docs-build
-```
+## Build the doc site
 
-**Build the Documentation**:
+1. In the command line, make sure you are in the docs folder: `cd docs`.
+2. Run `make docs`. This launches a preview of the docs website at `http://localhost:3002/docs/grafana/latest/` which will refresh automatically when changes to content in the `sources` directory are made.
 
-Now that the docker image has been prepared we can build the
-grafana docs and start a docs server. 
+---
 
-If you have not cloned the Grafana repository already then:
+## Content guidelines
 
-```
-cd ..
-git clone https://github.com/grafana/grafana
-```
+Edit content in the `sources` directory.
 
-Switch your working directory to the directory this file
-(README.md) is in.
+### Using `relref` for internal links
 
-```
-cd grafana/docs
-```
+Use the Hugo shortcode [relref](https://gohugo.io/content-management/cross-references/#use-ref-and-relref) any time you are linking to other internal docs pages.
 
-An AWS config file is required to build the docs Docker image and to publish the site to AWS. If you are building locally only and do not have any AWS credentials for docs.grafana.org then create an empty file named `awsconfig` in the current directory.
+### Edit the side menu
 
-```
-touch awsconfig
-```
+Edit [sources/menu.yaml](sources/menu.yaml) to make changes to the sidebar. Stop and rerun the `make docs` command for changes to take effect.
 
-Then run (possibly with ``sudo``):
+### Add images
 
-```
-make watch
-```
+Images are currently hosted in the grafana/website repo.
 
-This command will not return control of the shell to the user. Instead
-the command is now running a new docker container built from the image
-we created in the previous step.
+---
 
-Open [localhost:3004](http://localhost:3004) to view the docs.
+## Deploy changes to grafana.com
 
-### Images & Content
+When a PR is merged to master with changes in the `docs` directory, those changes are automatically synched to the grafana/website repo on the `docs-grafana` branch.
 
-All markdown files are located in this repo (main grafana repo). But all images are added to the https://github.com/grafana/grafana.org repo. So the process of adding images is a bit complicated. 
-
-First you need create a feature (PR) branch of https://github.com/grafana/grafana.org so you can make change. Then add the image to the `/static/img/docs` directory. Then make a commit that adds the image. 
-
-Then run:
-```
-make docs-build
-```
-
-This will rebuild the docs docker container. 
-
-To be able to use the image your have to quit  (CTRL-C) the `make watch` command (that you run in the same directory as this README). Then simply rerun `make watch`, it will restart the docs server but now with access to your image. 
-
-### Editing content
-
-Changes to the markdown files should automatically cause a docs rebuild and live reload should reload the page in your browser. 
+In order to make those changes live, open a PR in the website repo that merges the `docs-grafana` branch into `master`. Then follow the publishing guidelines in that repo.

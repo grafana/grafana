@@ -1,9 +1,8 @@
 package models
 
 import (
-	"time"
-
 	"fmt"
+	"time"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 )
@@ -19,6 +18,7 @@ const (
 	AlertStateAlerting AlertStateType = "alerting"
 	AlertStateOK       AlertStateType = "ok"
 	AlertStatePending  AlertStateType = "pending"
+	AlertStateUnknown  AlertStateType = "unknown"
 )
 
 const (
@@ -35,11 +35,16 @@ const (
 
 var (
 	ErrCannotChangeStateOnPausedAlert = fmt.Errorf("Cannot change state on pause alert")
-	ErrRequiresNewState               = fmt.Errorf("update alert state requires a new state.")
+	ErrRequiresNewState               = fmt.Errorf("update alert state requires a new state")
 )
 
 func (s AlertStateType) IsValid() bool {
-	return s == AlertStateOK || s == AlertStateNoData || s == AlertStatePaused || s == AlertStatePending
+	return s == AlertStateOK ||
+		s == AlertStateNoData ||
+		s == AlertStatePaused ||
+		s == AlertStatePending ||
+		s == AlertStateAlerting ||
+		s == AlertStateUnknown
 }
 
 func (s NoDataOption) IsValid() bool {
@@ -66,16 +71,17 @@ type Alert struct {
 	PanelId        int64
 	Name           string
 	Message        string
-	Severity       string
+	Severity       string //Unused
 	State          AlertStateType
-	Handler        int64
+	Handler        int64 //Unused
 	Silenced       bool
 	ExecutionError string
 	Frequency      int64
+	For            time.Duration
 
 	EvalData     *simplejson.Json
 	NewStateDate time.Time
-	StateChanges int
+	StateChanges int64
 
 	Created time.Time
 	Updated time.Time
@@ -109,6 +115,21 @@ func (this *Alert) ContainsUpdates(other *Alert) bool {
 
 	//don't compare .State! That would be insane.
 	return result
+}
+
+func (alert *Alert) GetTagsFromSettings() []*Tag {
+	tags := []*Tag{}
+	if alert.Settings != nil {
+		if data, ok := alert.Settings.CheckGet("alertRuleTags"); ok {
+			for tagNameString, tagValue := range data.MustMap() {
+				// MustMap() already guarantees the return of a `map[string]interface{}`.
+				// Therefore we only need to verify that tagValue is a String.
+				tagValueString := simplejson.NewFromAny(tagValue).MustString()
+				tags = append(tags, &Tag{Key: tagNameString, Value: tagValueString})
+			}
+		}
+	}
+	return tags
 }
 
 type AlertingClusterInfo struct {
@@ -156,7 +177,7 @@ type SetAlertStateCommand struct {
 	Error    string
 	EvalData *simplejson.Json
 
-	Timestamp time.Time
+	Result Alert
 }
 
 //Queries
@@ -215,13 +236,14 @@ type AlertStateInfoDTO struct {
 // "Internal" commands
 
 type UpdateDashboardAlertsCommand struct {
-	UserId    int64
 	OrgId     int64
 	Dashboard *Dashboard
+	User      *SignedInUser
 }
 
 type ValidateDashboardAlertsCommand struct {
 	UserId    int64
 	OrgId     int64
 	Dashboard *Dashboard
+	User      *SignedInUser
 }

@@ -15,7 +15,7 @@ import (
 	"net/url"
 
 	"github.com/grafana/grafana/pkg/components/null"
-	"github.com/grafana/grafana/pkg/log"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb"
@@ -84,7 +84,7 @@ func (e *OpenTsdbExecutor) createRequest(dsInfo *models.DataSource, data OpenTsd
 
 	postData, err := json.Marshal(data)
 	if err != nil {
-		plog.Info("Failed marshalling data", "error", err)
+		plog.Info("Failed marshaling data", "error", err)
 		return nil, fmt.Errorf("Failed to create request. error: %v", err)
 	}
 
@@ -96,7 +96,7 @@ func (e *OpenTsdbExecutor) createRequest(dsInfo *models.DataSource, data OpenTsd
 
 	req.Header.Set("Content-Type", "application/json")
 	if dsInfo.BasicAuth {
-		req.SetBasicAuth(dsInfo.BasicAuthUser, dsInfo.BasicAuthPassword)
+		req.SetBasicAuth(dsInfo.BasicAuthUser, dsInfo.DecryptedBasicAuthPassword())
 	}
 
 	return req, err

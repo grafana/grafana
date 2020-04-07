@@ -1,5 +1,5 @@
 import _ from 'lodash';
-import kbn from 'app/core/utils/kbn';
+import { getValueFormats } from '@grafana/data';
 
 export class ColumnOptionsCtrl {
   panel: any;
@@ -15,14 +15,22 @@ export class ColumnOptionsCtrl {
   activeStyleIndex: number;
   mappingTypes: any;
 
+  alignTypes: any;
+  static readonly alignTypesEnum = [
+    { text: 'auto', value: '' },
+    { text: 'left', value: 'left' },
+    { text: 'center', value: 'center' },
+    { text: 'right', value: 'right' },
+  ];
+
   /** @ngInject */
-  constructor($scope) {
+  constructor($scope: any) {
     $scope.editor = this;
 
     this.activeStyleIndex = 0;
     this.panelCtrl = $scope.ctrl;
     this.panel = this.panelCtrl.panel;
-    this.unitFormats = kbn.getUnitFormats();
+    this.unitFormats = getValueFormats();
     this.colorModes = [
       { text: 'Disabled', value: null },
       { text: 'Cell', value: 'cell' },
@@ -41,14 +49,19 @@ export class ColumnOptionsCtrl {
       { text: 'YYYY-MM-DD HH:mm:ss.SSS', value: 'YYYY-MM-DD HH:mm:ss.SSS' },
       { text: 'MM/DD/YY h:mm:ss a', value: 'MM/DD/YY h:mm:ss a' },
       { text: 'MMMM D, YYYY LT', value: 'MMMM D, YYYY LT' },
+      { text: 'YYYY-MM-DD', value: 'YYYY-MM-DD' },
     ];
-    this.mappingTypes = [{ text: 'Value to text', value: 1 }, { text: 'Range to text', value: 2 }];
+    this.mappingTypes = [
+      { text: 'Value to text', value: 1 },
+      { text: 'Range to text', value: 2 },
+    ];
+    this.alignTypes = ColumnOptionsCtrl.alignTypesEnum;
 
     this.getColumnNames = () => {
       if (!this.panelCtrl.table) {
         return [];
       }
-      return _.map(this.panelCtrl.table.columns, function(col: any) {
+      return _.map(this.panelCtrl.table.columns, (col: any) => {
         return col.text;
       });
     };
@@ -60,13 +73,15 @@ export class ColumnOptionsCtrl {
     this.panelCtrl.render();
   }
 
-  setUnitFormat(column, subItem) {
-    column.unit = subItem.value;
-    this.panelCtrl.render();
+  setUnitFormat(column: any) {
+    return (value: any) => {
+      column.unit = value;
+      this.panelCtrl.render();
+    };
   }
 
   addColumnStyle() {
-    const newStyleRule = {
+    const newStyleRule: object = {
       unit: 'short',
       type: 'number',
       alias: '',
@@ -77,6 +92,7 @@ export class ColumnOptionsCtrl {
       dateFormat: 'YYYY-MM-DD HH:mm:ss',
       thresholds: [],
       mappingType: 1,
+      align: 'auto',
     };
 
     const styles = this.panel.styles;
@@ -95,11 +111,11 @@ export class ColumnOptionsCtrl {
     this.activeStyleIndex = indexToInsert;
   }
 
-  removeColumnStyle(style) {
+  removeColumnStyle(style: any) {
     this.panel.styles = _.without(this.panel.styles, style);
   }
 
-  invertColorOrder(index) {
+  invertColorOrder(index: number) {
     const ref = this.panel.styles[index].colors;
     const copy = ref[0];
     ref[0] = ref[2];
@@ -107,14 +123,14 @@ export class ColumnOptionsCtrl {
     this.panelCtrl.render();
   }
 
-  onColorChange(styleIndex, colorIndex) {
-    return newColor => {
-      this.panel.styles[styleIndex].colors[colorIndex] = newColor;
+  onColorChange(style: any, colorIndex: number) {
+    return (newColor: string) => {
+      style.colors[colorIndex] = newColor;
       this.render();
     };
   }
 
-  addValueMap(style) {
+  addValueMap(style: any) {
     if (!style.valueMaps) {
       style.valueMaps = [];
     }
@@ -122,12 +138,12 @@ export class ColumnOptionsCtrl {
     this.panelCtrl.render();
   }
 
-  removeValueMap(style, index) {
+  removeValueMap(style: any, index: number) {
     style.valueMaps.splice(index, 1);
     this.panelCtrl.render();
   }
 
-  addRangeMap(style) {
+  addRangeMap(style: any) {
     if (!style.rangeMaps) {
       style.rangeMaps = [];
     }
@@ -135,14 +151,13 @@ export class ColumnOptionsCtrl {
     this.panelCtrl.render();
   }
 
-  removeRangeMap(style, index) {
+  removeRangeMap(style: any, index: number) {
     style.rangeMaps.splice(index, 1);
     this.panelCtrl.render();
   }
 }
 
-/** @ngInject */
-export function columnOptionsTab($q, uiSegmentSrv) {
+export function columnOptionsTab(uiSegmentSrv: any) {
   'use strict';
   return {
     restrict: 'E',

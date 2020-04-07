@@ -1,8 +1,8 @@
 import { AdhocVariable } from '../adhoc_variable';
 
-describe('AdhocVariable', function() {
-  describe('when serializing to url', function() {
-    it('should set return key value and op separated by pipe', function() {
+describe('AdhocVariable', () => {
+  describe('when serializing to url', () => {
+    it('should set return key value and op separated by pipe', () => {
       const variable = new AdhocVariable({
         filters: [
           { key: 'key1', operator: '=', value: 'value1' },
@@ -15,8 +15,8 @@ describe('AdhocVariable', function() {
     });
   });
 
-  describe('when deserializing from url', function() {
-    it('should restore filters', function() {
+  describe('when deserializing from url', () => {
+    it('should restore filters', () => {
       const variable = new AdhocVariable({});
       variable.setValueFromUrl(['key1|=|value1', 'key2|!=|value2', 'key3|=|value3a__gfp__value3b__gfp__value3c']);
 

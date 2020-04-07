@@ -1,19 +1,25 @@
 import _ from 'lodash';
+import { getBackendSrv } from '@grafana/runtime';
+import { DataSourceApi, DataSourceInstanceSettings } from '@grafana/data';
 
-class GrafanaDatasource {
+import templateSrv from 'app/features/templating/template_srv';
+
+class GrafanaDatasource extends DataSourceApi<any> {
   /** @ngInject */
-  constructor(private backendSrv, private $q) {}
+  constructor(instanceSettings: DataSourceInstanceSettings) {
+    super(instanceSettings);
+  }
 
-  query(options) {
-    return this.backendSrv
+  query(options: any) {
+    return getBackendSrv()
       .get('/api/tsdb/testdata/random-walk', {
         from: options.range.from.valueOf(),
         to: options.range.to.valueOf(),
         intervalMs: options.intervalMs,
         maxDataPoints: options.maxDataPoints,
       })
-      .then(res => {
-        const data = [];
+      .then((res: any) => {
+        const data: any[] = [];
 
         if (res.results) {
           _.forEach(res.results, queryRes => {
@@ -30,22 +36,23 @@ class GrafanaDatasource {
       });
   }
 
-  metricFindQuery(options) {
-    return this.$q.when({ data: [] });
+  metricFindQuery(options: any) {
+    return Promise.resolve([]);
   }
 
-  annotationQuery(options) {
+  annotationQuery(options: any) {
     const params: any = {
       from: options.range.from.valueOf(),
       to: options.range.to.valueOf(),
       limit: options.annotation.limit,
       tags: options.annotation.tags,
+      matchAny: options.annotation.matchAny,
     };
 
     if (options.annotation.type === 'dashboard') {
       // if no dashboard id yet return
       if (!options.dashboard.id) {
-        return this.$q.when([]);
+        return Promise.resolve([]);
       }
       // filter by dashboard id
       params.dashboardId = options.dashboard.id;
@@ -54,11 +61,34 @@ class GrafanaDatasource {
     } else {
       // require at least one tag
       if (!_.isArray(options.annotation.tags) || options.annotation.tags.length === 0) {
-        return this.$q.when([]);
+        return Promise.resolve([]);
       }
+      const delimiter = '__delimiter__';
+      const tags = [];
+      for (const t of params.tags) {
+        const renderedValues = templateSrv.replace(t, {}, (value: any) => {
+          if (typeof value === 'string') {
+            return value;
+          }
+
+          return value.join(delimiter);
+        });
+        for (const tt of renderedValues.split(delimiter)) {
+          tags.push(tt);
+        }
+      }
+      params.tags = tags;
     }
 
-    return this.backendSrv.get('/api/annotations', params);
+    return getBackendSrv().get(
+      '/api/annotations',
+      params,
+      `grafana-data-source-annotations-${options.annotation.name}-${options.dashboard?.id}`
+    );
+  }
+
+  testDatasource() {
+    return Promise.resolve();
   }
 }
 

@@ -85,7 +85,9 @@ type AddColumnMigration struct {
 }
 
 func NewAddColumnMigration(table Table, col *Column) *AddColumnMigration {
-	return &AddColumnMigration{tableName: table.Name, column: col}
+	m := &AddColumnMigration{tableName: table.Name, column: col}
+	m.Condition = &IfColumnNotExistsCondition{TableName: table.Name, ColumnName: col.Name}
+	return m
 }
 
 func (m *AddColumnMigration) Table(tableName string) *AddColumnMigration {
@@ -109,7 +111,9 @@ type AddIndexMigration struct {
 }
 
 func NewAddIndexMigration(table Table, index *Index) *AddIndexMigration {
-	return &AddIndexMigration{tableName: table.Name, index: index}
+	m := &AddIndexMigration{tableName: table.Name, index: index}
+	m.Condition = &IfIndexNotExistsCondition{TableName: table.Name, IndexName: index.XName(table.Name)}
+	return m
 }
 
 func (m *AddIndexMigration) Table(tableName string) *AddIndexMigration {
@@ -128,7 +132,9 @@ type DropIndexMigration struct {
 }
 
 func NewDropIndexMigration(table Table, index *Index) *DropIndexMigration {
-	return &DropIndexMigration{tableName: table.Name, index: index}
+	m := &DropIndexMigration{tableName: table.Name, index: index}
+	m.Condition = &IfIndexExistsCondition{TableName: table.Name, IndexName: index.XName(table.Name)}
+	return m
 }
 
 func (m *DropIndexMigration) Sql(dialect Dialect) string {
@@ -179,11 +185,6 @@ func NewRenameTableMigration(oldName string, newName string) *RenameTableMigrati
 	return &RenameTableMigration{oldName: oldName, newName: newName}
 }
 
-func (m *RenameTableMigration) IfTableExists(tableName string) *RenameTableMigration {
-	m.Condition = &IfTableExistsCondition{TableName: tableName}
-	return m
-}
-
 func (m *RenameTableMigration) Rename(oldName string, newName string) *RenameTableMigration {
 	m.oldName = oldName
 	m.newName = newName
@@ -209,11 +210,6 @@ func NewCopyTableDataMigration(targetTable string, sourceTable string, colMap ma
 		m.targetCols = append(m.targetCols, key)
 		m.sourceCols = append(m.sourceCols, value)
 	}
-	return m
-}
-
-func (m *CopyTableDataMigration) IfTableExists(tableName string) *CopyTableDataMigration {
-	m.Condition = &IfTableExistsCondition{TableName: tableName}
 	return m
 }
 

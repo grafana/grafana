@@ -103,10 +103,12 @@ func (p *AnnotationType) UnmarshalText(text []byte) error {
 //  - ServiceName: Service name in lowercase, such as "memcache" or "zipkin-web"
 //
 // Conventionally, when the service name isn't known, service_name = "unknown".
+//  - Ipv6: IPv6 host address packed into 16 bytes. Ex Inet6Address.getBytes()
 type Endpoint struct {
 	Ipv4        int32  `thrift:"ipv4,1" json:"ipv4"`
 	Port        int16  `thrift:"port,2" json:"port"`
 	ServiceName string `thrift:"service_name,3" json:"service_name"`
+	Ipv6        []byte `thrift:"ipv6,4" json:"ipv6,omitempty"`
 }
 
 func NewEndpoint() *Endpoint {
@@ -124,6 +126,16 @@ func (p *Endpoint) GetPort() int16 {
 func (p *Endpoint) GetServiceName() string {
 	return p.ServiceName
 }
+
+var Endpoint_Ipv6_DEFAULT []byte
+
+func (p *Endpoint) GetIpv6() []byte {
+	return p.Ipv6
+}
+func (p *Endpoint) IsSetIpv6() bool {
+	return p.Ipv6 != nil
+}
+
 func (p *Endpoint) Read(iprot thrift.TProtocol) error {
 	if _, err := iprot.ReadStructBegin(); err != nil {
 		return thrift.PrependError(fmt.Sprintf("%T read error: ", p), err)
@@ -148,6 +160,10 @@ func (p *Endpoint) Read(iprot thrift.TProtocol) error {
 			}
 		case 3:
 			if err := p.readField3(iprot); err != nil {
+				return err
+			}
+		case 4:
+			if err := p.readField4(iprot); err != nil {
 				return err
 			}
 		default:
@@ -192,6 +208,15 @@ func (p *Endpoint) readField3(iprot thrift.TProtocol) error {
 	return nil
 }
 
+func (p *Endpoint) readField4(iprot thrift.TProtocol) error {
+	if v, err := iprot.ReadBinary(); err != nil {
+		return thrift.PrependError("error reading field 4: ", err)
+	} else {
+		p.Ipv6 = v
+	}
+	return nil
+}
+
 func (p *Endpoint) Write(oprot thrift.TProtocol) error {
 	if err := oprot.WriteStructBegin("Endpoint"); err != nil {
 		return thrift.PrependError(fmt.Sprintf("%T write struct begin error: ", p), err)
@@ -203,6 +228,9 @@ func (p *Endpoint) Write(oprot thrift.TProtocol) error {
 		return err
 	}
 	if err := p.writeField3(oprot); err != nil {
+		return err
+	}
+	if err := p.writeField4(oprot); err != nil {
 		return err
 	}
 	if err := oprot.WriteFieldStop(); err != nil {
@@ -249,6 +277,21 @@ func (p *Endpoint) writeField3(oprot thrift.TProtocol) (err error) {
 	}
 	if err := oprot.WriteFieldEnd(); err != nil {
 		return thrift.PrependError(fmt.Sprintf("%T write field end error 3:service_name: ", p), err)
+	}
+	return err
+}
+
+func (p *Endpoint) writeField4(oprot thrift.TProtocol) (err error) {
+	if p.IsSetIpv6() {
+		if err := oprot.WriteFieldBegin("ipv6", thrift.STRING, 4); err != nil {
+			return thrift.PrependError(fmt.Sprintf("%T write field begin error 4:ipv6: ", p), err)
+		}
+		if err := oprot.WriteBinary(p.Ipv6); err != nil {
+			return thrift.PrependError(fmt.Sprintf("%T.ipv6 (4) field write error: ", p), err)
+		}
+		if err := oprot.WriteFieldEnd(); err != nil {
+			return thrift.PrependError(fmt.Sprintf("%T write field end error 4:ipv6: ", p), err)
+		}
 	}
 	return err
 }
@@ -707,6 +750,8 @@ func (p *BinaryAnnotation) String() string {
 // this field non-atomically is implementation-specific.
 //
 // This field is i64 vs i32 to support spans longer than 35 minutes.
+//  - TraceIDHigh: Optional unique 8-byte additional identifier for a trace. If non zero, this
+// means the trace uses 128 bit traceIds instead of 64 bit.
 type Span struct {
 	TraceID int64 `thrift:"trace_id,1" json:"trace_id"`
 	// unused field # 2
@@ -719,6 +764,7 @@ type Span struct {
 	Debug             bool                `thrift:"debug,9" json:"debug,omitempty"`
 	Timestamp         *int64              `thrift:"timestamp,10" json:"timestamp,omitempty"`
 	Duration          *int64              `thrift:"duration,11" json:"duration,omitempty"`
+	TraceIDHigh       *int64              `thrift:"trace_id_high,12" json:"trace_id_high,omitempty"`
 }
 
 func NewSpan() *Span {
@@ -777,6 +823,15 @@ func (p *Span) GetDuration() int64 {
 	}
 	return *p.Duration
 }
+
+var Span_TraceIDHigh_DEFAULT int64
+
+func (p *Span) GetTraceIDHigh() int64 {
+	if !p.IsSetTraceIDHigh() {
+		return Span_TraceIDHigh_DEFAULT
+	}
+	return *p.TraceIDHigh
+}
 func (p *Span) IsSetParentID() bool {
 	return p.ParentID != nil
 }
@@ -791,6 +846,10 @@ func (p *Span) IsSetTimestamp() bool {
 
 func (p *Span) IsSetDuration() bool {
 	return p.Duration != nil
+}
+
+func (p *Span) IsSetTraceIDHigh() bool {
+	return p.TraceIDHigh != nil
 }
 
 func (p *Span) Read(iprot thrift.TProtocol) error {
@@ -841,6 +900,10 @@ func (p *Span) Read(iprot thrift.TProtocol) error {
 			}
 		case 11:
 			if err := p.readField11(iprot); err != nil {
+				return err
+			}
+		case 12:
+			if err := p.readField12(iprot); err != nil {
 				return err
 			}
 		default:
@@ -961,6 +1024,15 @@ func (p *Span) readField11(iprot thrift.TProtocol) error {
 	return nil
 }
 
+func (p *Span) readField12(iprot thrift.TProtocol) error {
+	if v, err := iprot.ReadI64(); err != nil {
+		return thrift.PrependError("error reading field 12: ", err)
+	} else {
+		p.TraceIDHigh = &v
+	}
+	return nil
+}
+
 func (p *Span) Write(oprot thrift.TProtocol) error {
 	if err := oprot.WriteStructBegin("Span"); err != nil {
 		return thrift.PrependError(fmt.Sprintf("%T write struct begin error: ", p), err)
@@ -990,6 +1062,9 @@ func (p *Span) Write(oprot thrift.TProtocol) error {
 		return err
 	}
 	if err := p.writeField11(oprot); err != nil {
+		return err
+	}
+	if err := p.writeField12(oprot); err != nil {
 		return err
 	}
 	if err := oprot.WriteFieldStop(); err != nil {
@@ -1137,6 +1212,21 @@ func (p *Span) writeField11(oprot thrift.TProtocol) (err error) {
 		}
 		if err := oprot.WriteFieldEnd(); err != nil {
 			return thrift.PrependError(fmt.Sprintf("%T write field end error 11:duration: ", p), err)
+		}
+	}
+	return err
+}
+
+func (p *Span) writeField12(oprot thrift.TProtocol) (err error) {
+	if p.IsSetTraceIDHigh() {
+		if err := oprot.WriteFieldBegin("trace_id_high", thrift.I64, 12); err != nil {
+			return thrift.PrependError(fmt.Sprintf("%T write field begin error 12:trace_id_high: ", p), err)
+		}
+		if err := oprot.WriteI64(int64(*p.TraceIDHigh)); err != nil {
+			return thrift.PrependError(fmt.Sprintf("%T.trace_id_high (12) field write error: ", p), err)
+		}
+		if err := oprot.WriteFieldEnd(); err != nil {
+			return thrift.PrependError(fmt.Sprintf("%T write field end error 12:trace_id_high: ", p), err)
 		}
 	}
 	return err

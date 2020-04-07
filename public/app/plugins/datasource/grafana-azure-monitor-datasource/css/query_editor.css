@@ -1,0 +1,31 @@
+.min-width-10 {
+  min-width: 10rem;
+}
+
+.min-width-12 {
+  min-width: 12rem;
+}
+
+.min-width-20 {
+  min-width: 20rem;
+}
+
+.gf-form-select-wrapper select.gf-form-input {
+  height: 2.64rem;
+}
+
+.gf-form-select-wrapper--caret-indent.gf-form-select-wrapper::after {
+  right: 0.775rem;
+}
+
+.service-dropdown {
+  width: 12rem;
+}
+
+.aggregation-dropdown-wrapper {
+  max-width: 29.1rem;
+}
+
+.timegrainunit-dropdown-wrapper {
+  width: 8rem;
+}

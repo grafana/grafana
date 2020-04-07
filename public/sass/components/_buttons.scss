@@ -7,7 +7,9 @@
 
 // Core
 .btn {
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   font-weight: $btn-font-weight;
   line-height: $btn-line-height;
   font-size: $font-size-base;
@@ -15,15 +17,16 @@
   vertical-align: middle;
   cursor: pointer;
   border: none;
+  height: $height-md;
 
-  @include button-size($btn-padding-y, $btn-padding-x, $font-size-base, $btn-border-radius);
+  @include button-size($btn-padding-y, $space-md, $font-size-base, $border-radius-sm);
 
   &,
   &:active,
   &.active {
     &:focus,
     &.focus {
-      @include tab-focus();
+      @include no-focus();
     }
   }
 
@@ -46,82 +49,73 @@
     cursor: $cursor-disabled;
     opacity: 0.65;
     @include box-shadow(none);
+    pointer-events: none;
+  }
+
+  &--radius-left-0 {
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
+  }
+
+  &--radius-right-0 {
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
   }
 }
 
 // Button Sizes
 // --------------------------------------------------
-// XLarge
-.btn-xlarge {
-  @include button-size($btn-padding-y-xl, $btn-padding-x-xl, $font-size-lg, $btn-border-radius);
-  font-weight: normal;
-  padding-bottom: $btn-padding-y-xl - 3;
-  .gicon {
-    font-size: 31px;
-    margin-right: 1rem;
-  }
-}
 
 // Large
 .btn-large {
-  @include button-size($btn-padding-y-lg, $btn-padding-x-lg, $font-size-lg, $btn-border-radius);
+  @include button-size($btn-padding-y-lg, $space-lg, $font-size-lg, $border-radius-sm);
   font-weight: normal;
+  height: $height-lg;
+
+  .gicon {
+    //font-size: 31px;
+    margin-right: $space-sm;
+    filter: brightness(100);
+  }
 }
 
 .btn-small {
-  @include button-size($btn-padding-y-sm, $btn-padding-x-sm, $font-size-sm, $btn-border-radius);
+  @include button-size($btn-padding-y-sm, $space-sm, $font-size-sm, $border-radius-sm);
+  height: $height-sm;
 }
 
+// Deprecated, only used by old plugins
 .btn-mini {
-  @include button-size($btn-padding-y-sm, $btn-padding-x-sm, $font-size-xs, $btn-border-radius);
+  @include button-size($btn-padding-y-sm, $space-sm, $font-size-sm, $border-radius-sm);
+  height: $height-sm;
 }
 
 .btn-link {
   color: $btn-link-color;
+  background: transparent;
 }
 
 // Set the backgrounds
 // -------------------------
+.btn-success,
 .btn-primary {
   @include buttonBackground($btn-primary-bg, $btn-primary-bg-hl);
 }
+
 .btn-secondary {
   @include buttonBackground($btn-secondary-bg, $btn-secondary-bg-hl);
-}
-// Warning appears are orange
-.btn-warning {
-  @include buttonBackground($btn-warning-bg, $btn-warning-bg-hl);
 }
 
 // Danger and error appear as red
 .btn-danger {
   @include buttonBackground($btn-danger-bg, $btn-danger-bg-hl);
 }
-// Success appears as green
-.btn-success {
-  @include buttonBackground($btn-success-bg, $btn-success-bg-hl);
 
-  &--processing {
-    @include button-outline-variant($gray-1);
-    @include box-shadow(none);
-    cursor: default;
-
-    &:hover,
-    &:active,
-    &:active:hover,
-    &:focus,
-    &:disabled {
-      color: $gray-1;
-      background-color: transparent;
-      border-color: $gray-1;
-    }
-  }
-}
 // Info appears as a neutral blue
 .btn-secondary {
   @include buttonBackground($btn-secondary-bg, $btn-secondary-bg-hl);
+  // Inverse appears as dark gray
 }
-// Inverse appears as dark gray
 .btn-inverse {
   @include buttonBackground($btn-inverse-bg, $btn-inverse-bg-hl, $btn-inverse-text-color, $btn-inverse-text-shadow);
   //background: $card-background;
@@ -137,20 +131,15 @@
   @include button-outline-variant($btn-primary-bg);
 }
 .btn-outline-secondary {
-  @include button-outline-variant($btn-secondary-bg);
+  @include button-outline-variant($btn-secondary-bg-hl);
 }
 .btn-outline-inverse {
   @include button-outline-variant($btn-inverse-bg);
 }
-.btn-outline-success {
-  @include button-outline-variant($btn-success-bg);
-}
-.btn-outline-warning {
-  @include button-outline-variant($btn-warning-bg);
-}
 .btn-outline-danger {
   @include button-outline-variant($btn-danger-bg);
 }
+
 .btn-outline-disabled {
   @include button-outline-variant($gray-1);
   @include box-shadow(none);
@@ -170,6 +159,12 @@
 .btn-p-x-2 {
   padding-left: 20px;
   padding-right: 20px;
+}
+
+// No horizontal padding
+.btn-p-x-0 {
+  padding-left: 0;
+  padding-right: 0;
 }
 
 // External services
@@ -201,8 +196,8 @@ $btn-service-icon-width: 35px;
   left: 0;
   height: 100%;
   top: 0;
-  padding-left: 0.5rem;
-  padding-right: 0.5rem;
+  padding-left: $space-sm;
+  padding-right: $space-sm;
   width: $btn-service-icon-width;
   text-align: center;
 
@@ -214,10 +209,53 @@ $btn-service-icon-width: 35px;
 
 .btn-service--grafanacom {
   .btn-service-icon {
-    background-image: url(/public/img/grafana_mask_icon_white.svg);
+    background-image: url(../img/grafana_mask_icon_white.svg);
     background-repeat: no-repeat;
     background-position: 50%;
     background-size: 60%;
+  }
+}
+
+.btn-service--azuread {
+  .btn-service-icon {
+    background-image: url(../img/microsoft_auth_icon.svg);
+    background-repeat: no-repeat;
+    background-position: 50%;
+    background-size: 60%;
+  }
+}
+
+.btn-service--okta {
+  .btn-service-icon {
+    background-image: url(../img/okta_logo_white.png);
+    background-repeat: no-repeat;
+    background-position: 50%;
+    background-size: 60%;
+  }
+}
+
+//Toggle button
+
+.toggle-btn {
+  background: $input-label-bg;
+  color: $text-color-weak;
+  box-shadow: $card-shadow;
+
+  &:first-child {
+    border-radius: 2px 0 0 2px;
+    margin: 0;
+  }
+  &:last-child {
+    border-radius: 0 2px 2px 0;
+    margin-left: 0 !important;
+  }
+
+  &.active {
+    background-color: lighten($input-label-bg, 5%);
+    color: $link-color;
+    &:hover {
+      cursor: default;
+    }
   }
 }
 

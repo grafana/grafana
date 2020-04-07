@@ -1,9 +1,21 @@
 import _ from 'lodash';
 import { isVersionGtOrEq } from 'app/core/utils/version';
+import { InterpolateFunction } from '@grafana/data';
 
-const index = {};
+const index: any = {};
 
-function addFuncDef(funcDef) {
+export interface FuncDef {
+  name: any;
+  category?: string;
+  params?: any;
+  defaultParams?: any;
+  shortName?: any;
+  fake?: boolean;
+  version?: string;
+  description?: string;
+}
+
+function addFuncDef(funcDef: FuncDef) {
   funcDef.params = funcDef.params || [];
   funcDef.defaultParams = funcDef.defaultParams || [];
 
@@ -121,7 +133,10 @@ addFuncDef({
 addFuncDef({
   name: 'percentileOfSeries',
   category: 'Combine',
-  params: [{ name: 'n', type: 'int' }, { name: 'interpolate', type: 'boolean', options: ['true', 'false'] }],
+  params: [
+    { name: 'n', type: 'int' },
+    { name: 'interpolate', type: 'boolean', options: ['true', 'false'] },
+  ],
   defaultParams: [95, 'false'],
 });
 
@@ -161,7 +176,10 @@ addFuncDef({
 addFuncDef({
   name: 'aliasSub',
   category: 'Alias',
-  params: [{ name: 'search', type: 'string' }, { name: 'replace', type: 'string' }],
+  params: [
+    { name: 'search', type: 'string' },
+    { name: 'replace', type: 'string' },
+  ],
   defaultParams: ['', '\\1'],
 });
 
@@ -554,7 +572,10 @@ addFuncDef({
 addFuncDef({
   name: 'stdev',
   category: 'Calculate',
-  params: [{ name: 'n', type: 'int' }, { name: 'tolerance', type: 'int' }],
+  params: [
+    { name: 'n', type: 'int' },
+    { name: 'tolerance', type: 'int' },
+  ],
   defaultParams: [5, 0.1],
 });
 
@@ -603,7 +624,11 @@ addFuncDef({
 addFuncDef({
   name: 'useSeriesAbove',
   category: 'Filter Series',
-  params: [{ name: 'value', type: 'int' }, { name: 'search', type: 'string' }, { name: 'replace', type: 'string' }],
+  params: [
+    { name: 'value', type: 'int' },
+    { name: 'search', type: 'string' },
+    { name: 'replace', type: 'string' },
+  ],
   defaultParams: [0, 'search', 'replace'],
 });
 
@@ -940,7 +965,7 @@ addFuncDef({
   version: '1.1',
 });
 
-function isVersionRelatedFunction(obj, graphiteVersion) {
+function isVersionRelatedFunction(obj: { version: string }, graphiteVersion: string) {
   return !obj.version || isVersionGtOrEq(graphiteVersion, obj.version);
 }
 
@@ -950,7 +975,7 @@ export class FuncInstance {
   text: any;
   added: boolean;
 
-  constructor(funcDef, options) {
+  constructor(funcDef: any, options: { withDefaultParams: any }) {
     this.def = funcDef;
     this.params = [];
 
@@ -961,24 +986,31 @@ export class FuncInstance {
     this.updateText();
   }
 
-  render(metricExp) {
+  render(metricExp: string, replaceVariables: InterpolateFunction): string {
     const str = this.def.name + '(';
 
     const parameters = _.map(this.params, (value, index) => {
       let paramType;
+
       if (index < this.def.params.length) {
         paramType = this.def.params[index].type;
       } else if (_.get(_.last(this.def.params), 'multiple')) {
         paramType = _.get(_.last(this.def.params), 'type');
       }
+
       // param types that should never be quoted
       if (_.includes(['value_or_series', 'boolean', 'int', 'float', 'node'], paramType)) {
         return value;
       }
+
+      const valueInterpolated = _.isString(value) ? replaceVariables(value) : value;
+
       // param types that might be quoted
-      if (_.includes(['int_or_interval', 'node_or_tag'], paramType) && _.isFinite(+value)) {
-        return _.toString(+value);
+      // To quote variables correctly we need to interpolate it to check if it contains a numeric or string value
+      if (_.includes(['int_or_interval', 'node_or_tag'], paramType) && _.isFinite(+valueInterpolated)) {
+        return _.toString(value);
       }
+
       return "'" + value + "'";
     });
 
@@ -994,7 +1026,7 @@ export class FuncInstance {
     return str + parameters.join(', ') + ')';
   }
 
-  _hasMultipleParamsInString(strValue, index) {
+  _hasMultipleParamsInString(strValue: any, index: number) {
     if (strValue.indexOf(',') === -1) {
       return false;
     }
@@ -1010,7 +1042,7 @@ export class FuncInstance {
     return false;
   }
 
-  updateParam(strValue, index) {
+  updateParam(strValue: any, index: any) {
     // handle optional parameters
     // if string contains ',' and next param is optional, split and update both
     if (this._hasMultipleParamsInString(strValue, index)) {
@@ -1042,26 +1074,26 @@ export class FuncInstance {
   }
 }
 
-function createFuncInstance(funcDef, options?, idx?) {
+function createFuncInstance(funcDef: any, options?: { withDefaultParams: any }, idx?: any) {
   if (_.isString(funcDef)) {
     funcDef = getFuncDef(funcDef, idx);
   }
   return new FuncInstance(funcDef, options);
 }
 
-function getFuncDef(name, idx?) {
+function getFuncDef(name: string, idx?: any) {
   if (!(idx || index)[name]) {
     throw { message: 'Method not found ' + name };
   }
   return (idx || index)[name];
 }
 
-function getFuncDefs(graphiteVersion, idx?) {
-  const funcs = {};
-  _.forEach(idx || index, function(funcDef) {
+function getFuncDefs(graphiteVersion: string, idx?: any) {
+  const funcs: any = {};
+  _.forEach(idx || index, funcDef => {
     if (isVersionRelatedFunction(funcDef, graphiteVersion)) {
       funcs[funcDef.name] = _.assign({}, funcDef, {
-        params: _.filter(funcDef.params, function(param) {
+        params: _.filter(funcDef.params, param => {
           return isVersionRelatedFunction(param, graphiteVersion);
         }),
       });
@@ -1071,8 +1103,8 @@ function getFuncDefs(graphiteVersion, idx?) {
 }
 
 // parse response from graphite /functions endpoint into internal format
-function parseFuncDefs(rawDefs) {
-  const funcDefs = {};
+function parseFuncDefs(rawDefs: any) {
+  const funcDefs: any = {};
 
   _.forEach(rawDefs || {}, (funcDef, funcName) => {
     // skip graphite graph functions
@@ -1089,9 +1121,9 @@ function parseFuncDefs(rawDefs) {
         .replace(/.. code-block *:: *none/g, '.. code-block::');
     }
 
-    const func = {
+    const func: FuncDef = {
       name: funcDef.name,
-      description: description,
+      description,
       category: funcDef.group,
       params: [],
       defaultParams: [],
@@ -1114,7 +1146,7 @@ function parseFuncDefs(rawDefs) {
     }
 
     _.forEach(funcDef.params, rawParam => {
-      const param = {
+      const param: any = {
         name: rawParam.name,
         type: 'string',
         optional: !rawParam.required,

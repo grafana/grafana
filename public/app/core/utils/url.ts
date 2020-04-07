@@ -2,24 +2,43 @@
  * @preserve jquery-param (c) 2015 KNOWLEDGECODE | MIT
  */
 
-export function toUrlParams(a) {
-  const s = [];
+import { UrlQueryMap } from '@grafana/runtime';
+
+export function renderUrl(path: string, query: UrlQueryMap | undefined): string {
+  if (query && Object.keys(query).length > 0) {
+    path += '?' + toUrlParams(query);
+  }
+  return path;
+}
+
+export function encodeURIComponentAsAngularJS(val: string, pctEncodeSpaces?: boolean) {
+  return encodeURIComponent(val)
+    .replace(/%40/gi, '@')
+    .replace(/%3A/gi, ':')
+    .replace(/%24/g, '$')
+    .replace(/%2C/gi, ',')
+    .replace(/%3B/gi, ';')
+    .replace(/%20/g, pctEncodeSpaces ? '%20' : '+');
+}
+
+export function toUrlParams(a: any) {
+  const s: any[] = [];
   const rbracket = /\[\]$/;
 
-  const isArray = function(obj) {
+  const isArray = (obj: any) => {
     return Object.prototype.toString.call(obj) === '[object Array]';
   };
 
-  const add = function(k, v) {
+  const add = (k: string, v: any) => {
     v = typeof v === 'function' ? v() : v === null ? '' : v === undefined ? '' : v;
     if (typeof v !== 'boolean') {
-      s[s.length] = encodeURIComponent(k) + '=' + encodeURIComponent(v);
+      s[s.length] = encodeURIComponentAsAngularJS(k, true) + '=' + encodeURIComponentAsAngularJS(v, true);
     } else {
-      s[s.length] = encodeURIComponent(k);
+      s[s.length] = encodeURIComponentAsAngularJS(k, true);
     }
   };
 
-  const buildParams = function(prefix, obj) {
+  const buildParams = (prefix: string, obj: any) => {
     let i, len, key;
 
     if (prefix) {
@@ -50,7 +69,44 @@ export function toUrlParams(a) {
     return s;
   };
 
-  return buildParams('', a)
-    .join('&')
-    .replace(/%20/g, '+');
+  return buildParams('', a).join('&');
+}
+
+export function appendQueryToUrl(url: string, stringToAppend: string) {
+  if (stringToAppend !== undefined && stringToAppend !== null && stringToAppend !== '') {
+    const pos = url.indexOf('?');
+    if (pos !== -1) {
+      if (url.length - pos > 1) {
+        url += '&';
+      }
+    } else {
+      url += '?';
+    }
+    url += stringToAppend;
+  }
+
+  return url;
+}
+
+/**
+ * Return search part (as object) of current url
+ */
+export function getUrlSearchParams() {
+  const search = window.location.search.substring(1);
+  const searchParamsSegments = search.split('&');
+  const params: any = {};
+  for (const p of searchParamsSegments) {
+    const keyValuePair = p.split('=');
+    if (keyValuePair.length > 1) {
+      // key-value param
+      const key = decodeURIComponent(keyValuePair[0]);
+      const value = decodeURIComponent(keyValuePair[1]);
+      params[key] = value;
+    } else if (keyValuePair.length === 1) {
+      // boolean param
+      const key = decodeURIComponent(keyValuePair[0]);
+      params[key] = true;
+    }
+  }
+  return params;
 }

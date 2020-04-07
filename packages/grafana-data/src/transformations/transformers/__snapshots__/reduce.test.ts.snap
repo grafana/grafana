@@ -1,0 +1,73 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Reducer Transformer filters by include 1`] = `
+Object {
+  "fields": Array [
+    Object {
+      "config": Object {},
+      "labels": undefined,
+      "name": "Field",
+      "type": "string",
+      "values": Array [
+        "A",
+        "B",
+      ],
+    },
+    Object {
+      "config": Object {
+        "title": "First",
+      },
+      "labels": undefined,
+      "name": "first",
+      "type": "number",
+      "values": Array [
+        1,
+        "a",
+      ],
+    },
+    Object {
+      "config": Object {
+        "title": "Min",
+      },
+      "labels": undefined,
+      "name": "min",
+      "type": "number",
+      "values": Array [
+        1,
+        null,
+      ],
+    },
+    Object {
+      "config": Object {
+        "title": "Max",
+      },
+      "labels": undefined,
+      "name": "max",
+      "type": "number",
+      "values": Array [
+        4,
+        null,
+      ],
+    },
+    Object {
+      "config": Object {
+        "title": "Delta",
+      },
+      "labels": undefined,
+      "name": "delta",
+      "type": "number",
+      "values": Array [
+        3,
+        0,
+      ],
+    },
+  ],
+  "meta": Object {
+    "transformations": Array [
+      "reduce",
+    ],
+  },
+  "name": undefined,
+  "refId": undefined,
+}
+`;
