@@ -17,6 +17,20 @@ export const plugin = new PanelPlugin<Options, CustomFieldConfig>(TablePanel)
             max: 300,
           },
         })
+        .addRadio({
+          path: 'align',
+          name: 'Column alignment',
+          description: 'column alignment (for table)',
+          settings: {
+            options: [
+              { label: 'auto', value: null },
+              { label: 'left', value: 'left' },
+              { label: 'center', value: 'center' },
+              { label: 'right', value: 'right' },
+            ],
+          },
+          defaultValue: null,
+        })
         .addSelect({
           path: 'displayMode',
           name: 'Cell display mode',
