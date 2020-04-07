@@ -12,7 +12,7 @@ import { getBackendSrv } from '@grafana/runtime';
 
 // Types
 import { AppEvents, TimeRange } from '@grafana/data';
-import { CoreEvents } from 'app/types';
+import { CoreEvents, User } from 'app/types';
 import { UrlQueryMap } from '@grafana/runtime';
 import { appEvents, contextSrv } from 'app/core/core';
 

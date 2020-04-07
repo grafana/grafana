@@ -11,7 +11,7 @@ import {
   VariableWithOptions,
   VariableWithMultiSupport,
 } from '../../templating/types';
-import { StoreState, ThunkResult } from '../../../types';
+import { User, StoreState, ThunkResult } from '../../../types';
 import { getVariable, getVariables } from './selectors';
 import { variableAdapters } from '../adapters';
 import { Graph } from '../../../core/utils/dag';
@@ -107,7 +107,7 @@ export const completeDashboardTemplating = (dashboard: DashboardModel): ThunkRes
     getBackendSrv()
       .get('/api/users/' + contextSrv.user.id)
       .then((user: User) => {
-        this.templateSrv.setGlobalVariable('__user', {
+        templateSrv.setGlobalVariable('__user', {
           value: {
             name: user.name,
             login: user.login,
