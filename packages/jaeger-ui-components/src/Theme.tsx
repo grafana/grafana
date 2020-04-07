@@ -105,13 +105,39 @@ export const createStyle = <Fn extends (this: any, ...newArgs: any[]) => ReturnT
   return memoizeOne(fn);
 };
 
-export function autoColor(theme: Theme, hex: string) {
+/**
+ * Tries to get a dark variant color. Either by simply inverting the luminosity and darkening or lightening the color
+ * a bit, or if base is provided, tries 2 variants of lighter and darker colors and checks which is more readable with
+ * the base.
+ * @param theme
+ * @param hex
+ * @param base
+ */
+export function autoColor(theme: Theme, hex: string, base?: string) {
   if (isLight(theme)) {
     return hex;
   } else {
+    if (base) {
+      const color = tinycolor(hex);
+      return tinycolor
+        .mostReadable(
+          base,
+          [
+            color.clone().lighten(25),
+            color.clone().lighten(10),
+            color,
+            color.clone().darken(10),
+            color.clone().darken(25),
+          ],
+          {
+            includeFallbackColors: false,
+          }
+        )
+        .toHex8String();
+    }
     const color = tinycolor(hex).toHsl();
     color.l = 1 - color.l;
     const newColor = tinycolor(color);
-    return newColor.isLight() ? newColor.darken(5).toHexString() : newColor.lighten(5).toHexString();
+    return newColor.isLight() ? newColor.darken(5).toHex8String() : newColor.lighten(5).toHex8String();
   }
 }

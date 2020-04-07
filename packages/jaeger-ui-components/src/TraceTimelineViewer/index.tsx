@@ -48,19 +48,19 @@ const getStyles = createStyle((theme: Theme) => {
       }
 
       & .json-markup-bool {
-        color: firebrick;
+        color: ${autoColor(theme, 'firebrick')};
       }
 
       & .json-markup-string {
-        color: teal;
+        color: ${autoColor(theme, 'teal')};
       }
 
       & .json-markup-null {
-        color: teal;
+        color: ${autoColor(theme, 'teal')};
       }
 
       & .json-markup-number {
-        color: blue;
+        color: ${autoColor(theme, 'blue', 'black')};
       }
     `,
   };

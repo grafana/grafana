@@ -115,7 +115,7 @@ const getStyles = createStyle((theme: Theme) => {
     TracePageHeaderOverviewItems: css`
       label: TracePageHeaderOverviewItems;
       border-bottom: 1px solid #e4e4e4;
-      padding: 0.25rem 0.5rem;
+      padding: 0.25rem 0.5rem !important;
     `,
     TracePageHeaderOverviewItemValueDetail,
     TracePageHeaderOverviewItemValue: css`

@@ -45,6 +45,10 @@ const getStyles = createStyle((theme: Theme) => {
       text-overflow: ellipsis;
       white-space: nowrap;
     `,
+    TimelineHeaderWrapper: css`
+      label: TimelineHeaderWrapper;
+      align-items: center;
+    `,
   };
 });
 
@@ -82,8 +86,8 @@ export default function TimelineHeaderRow(props: TimelineHeaderRowProps) {
   const styles = getStyles(useTheme());
   return (
     <TimelineRow className={styles.TimelineHeaderRow} data-test-id="TimelineHeaderRow">
-      <TimelineRow.Cell className={cx(ubFlex, ubPx2)} width={nameColumnWidth}>
-        <h3 className={styles.TimelineHeaderRowTitle}>Service &amp; Operation</h3>
+      <TimelineRow.Cell className={cx(ubFlex, ubPx2, styles.TimelineHeaderWrapper)} width={nameColumnWidth}>
+        <h4 className={styles.TimelineHeaderRowTitle}>Service &amp; Operation</h4>
         <TimelineCollapser
           onCollapseAll={onCollapseAll}
           onExpandAll={onExpandAll}
