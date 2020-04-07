@@ -8,6 +8,8 @@ import { Graph } from 'app/core/utils/dag';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
+import { getBackendSrv } from '@grafana/runtime';
+
 // Types
 import { AppEvents, TimeRange } from '@grafana/data';
 import { CoreEvents } from 'app/types';
@@ -71,17 +73,21 @@ export class VariableSrv {
             },
           },
         });
-        this.templateSrv.setGlobalVariable('__user', {
-          value: {
-            name: contextSrv.user.name,
-            login: contextSrv.user.login,
-            email: contextSrv.user.email,
-            id: contextSrv.user.id,
-            toString: function() {
-              return this.id;
-            },
-          },
-        });
+        getBackendSrv()
+          .get('/api/users/' + contextSrv.user.id)
+          .then((user: User) => {
+            this.templateSrv.setGlobalVariable('__user', {
+              value: {
+                name: user.name,
+                login: user.login,
+                email: user.email,
+                id: contextSrv.user.id,
+                toString: function() {
+                  return this.id;
+                },
+              },
+            });
+          });
       });
   }
 

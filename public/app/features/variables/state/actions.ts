@@ -1,5 +1,5 @@
 import castArray from 'lodash/castArray';
-import { UrlQueryMap, UrlQueryValue } from '@grafana/runtime';
+import { UrlQueryMap, UrlQueryValue, getBackendSrv } from '@grafana/runtime';
 import { AppEvents, TimeRange } from '@grafana/data';
 import angular from 'angular';
 
@@ -103,6 +103,22 @@ export const completeDashboardTemplating = (dashboard: DashboardModel): ThunkRes
         },
       },
     });
+
+    getBackendSrv()
+      .get('/api/users/' + contextSrv.user.id)
+      .then((user: User) => {
+        this.templateSrv.setGlobalVariable('__user', {
+          value: {
+            name: user.name,
+            login: user.login,
+            email: user.email,
+            id: contextSrv.user.id,
+            toString: function() {
+              return this.id;
+            },
+          },
+        });
+      });
   };
 };
 

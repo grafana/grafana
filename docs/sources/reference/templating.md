@@ -390,9 +390,9 @@ This variable is the ID of the current organization.
 > Only available in Grafana v6.8+
 
 This variable is the ID of the current user.
-`${__org.name}` is the name of the current user.
-`${__org.login}` is the login of the current user.
-`${__org.email}` is the email of the current user.
+`${__user.name}` is the name of the current user.
+`${__user.login}` is the login of the current user.
+`${__user.email}` is the email of the current user.
 
 
 ## Repeating Panels
