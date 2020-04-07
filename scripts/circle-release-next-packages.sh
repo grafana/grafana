@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+set -eo pipefail
 
 PACKAGES=(ui toolkit data runtime e2e)
 
@@ -28,13 +29,9 @@ function unpublish_previous_canary () {
       echo "Unpublish @grafana/${PACKAGE}@${CURRENT_CANARY}"
       npm unpublish "@grafana/${PACKAGE}@${CURRENT_CANARY}" || (
         # We want to deprecate here, rather than fail and return an non-0 exit code
-        npm deprecate \
-          "@grafana/${PACKAGE}@${CURRENT_CANARY}" \
-          "Unpublish failed with [$?]. Deprecating \"@grafana/${PACKAGE}@${CURRENT_CANARY}\"" || (
-            # Echoing a log message will ultimately change the error code, so save the error
-            # code and return it after printing an error log.
-            echo "Could not deprecate \"@grafana/${PACKAGE}@${CURRENT_CANARY}\". Received exit-code [$?]"
-        )
+        echo "Unpublish unsucessful [$?]. Deprecating @grafana/${PACKAGE}@${CURRENT_CANARY}"
+        # But if this fails, return the error code
+        npm deprecate "@grafana/${PACKAGE}@${CURRENT_CANARY}"
       )
     fi
   done

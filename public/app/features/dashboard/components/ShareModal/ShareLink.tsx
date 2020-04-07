@@ -1,7 +1,7 @@
 import React, { PureComponent } from 'react';
 import { e2e } from '@grafana/e2e';
-import { Switch, LegacyForms, ClipboardButton } from '@grafana/ui';
-const { Select } = LegacyForms;
+import { LegacyForms, ClipboardButton } from '@grafana/ui';
+const { Select, Switch } = LegacyForms;
 import { SelectableValue, PanelModel, AppEvents } from '@grafana/data';
 import { DashboardModel } from 'app/features/dashboard/state';
 import { buildImageUrl, buildShareUrl } from './utils';
