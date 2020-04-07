@@ -115,14 +115,15 @@ export type PanelOptionEditorsRegistry = Registry<PanelOptionsEditorItem>;
 
 export interface PanelOptionsEditorProps<TValue> extends StandardEditorProps<TValue> {}
 
-export interface PanelOptionsEditorItem<TValue = any, TSettings = any>
-  extends OptionsEditorItem<TSettings, PanelOptionsEditorProps<TValue>> {}
+export interface PanelOptionsEditorItem<TOptions = any, TValue = any, TSettings = any>
+  extends OptionsEditorItem<TOptions, TSettings, PanelOptionsEditorProps<TValue>, TValue> {}
 
-export interface PanelOptionsEditorConfig<TSettings = any> {
-  id: string;
+export interface PanelOptionsEditorConfig<TOptions, TSettings = any, TValue = any> {
+  path: (keyof TOptions & string) | string;
   name: string;
   description: string;
   settings?: TSettings;
+  defaultValue?: TValue;
 }
 
 export interface PanelMenuItem {

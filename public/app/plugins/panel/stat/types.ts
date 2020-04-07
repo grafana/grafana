@@ -1,13 +1,5 @@
 import { SingleStatBaseOptions, BigValueColorMode, BigValueGraphMode, BigValueJustifyMode } from '@grafana/ui';
-import {
-  VizOrientation,
-  ReducerID,
-  ReduceDataOptions,
-  SelectableValue,
-  FieldConfigSource,
-  ThresholdsMode,
-  standardEditorsRegistry,
-} from '@grafana/data';
+import { VizOrientation, ReducerID, ReduceDataOptions, SelectableValue, standardEditorsRegistry } from '@grafana/data';
 import { PanelOptionsEditorBuilder } from '@grafana/data/src/utils/OptionsUIBuilders';
 
 // Structure copied from angular
@@ -37,23 +29,9 @@ export const commonValueOptionDefaults: ReduceDataOptions = {
   calcs: [ReducerID.mean],
 };
 
-export const standardFieldConfig: FieldConfigSource = {
-  defaults: {
-    thresholds: {
-      mode: ThresholdsMode.Absolute,
-      steps: [
-        { value: -Infinity, color: 'green' },
-        { value: 80, color: 'red' }, // 80%
-      ],
-    },
-    mappings: [],
-  },
-  overrides: [],
-};
-
-export function addStandardDataReduceOptions(builder: PanelOptionsEditorBuilder) {
+export function addStandardDataReduceOptions(builder: PanelOptionsEditorBuilder<StatPanelOptions>) {
   builder.addRadio({
-    id: 'reduceOptions.values',
+    path: 'reduceOptions.values',
     name: 'Show',
     description: 'Calculate a single value per colum or series or show each row',
     settings: {
@@ -65,7 +43,7 @@ export function addStandardDataReduceOptions(builder: PanelOptionsEditorBuilder)
   });
 
   builder.addNumberInput({
-    id: 'reduceOptions.limit',
+    path: 'reduceOptions.limit',
     name: 'Limit',
     description: 'Max number of rows to display',
     settings: {
@@ -78,13 +56,14 @@ export function addStandardDataReduceOptions(builder: PanelOptionsEditorBuilder)
 
   builder.addCustomEditor({
     id: 'reduceOptions.calcs',
+    path: 'reduceOptions.calcs',
     name: 'Value',
     description: 'Choose a reducer function / calculation',
     editor: standardEditorsRegistry.get('stats-picker').editor as any,
   });
 
   builder.addRadio({
-    id: 'orientation',
+    path: 'orientation',
     name: 'Orientation',
     description: 'Stacking direction in case of multiple series or fields',
     settings: {

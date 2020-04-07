@@ -2,6 +2,11 @@ const path = require('path');
 
 // https://github.com/visionmedia/debug/issues/701#issuecomment-505487361
 function shouldExclude(filename) {
+  // There is external js code inside this which needs to be processed by babel.
+  if (filename.indexOf(`jaeger-ui-components`) > 0) {
+    return false;
+  }
+
   const packagesToProcessbyBabel = ['debug', 'lru-cache', 'yallist', 'apache-arrow', 'react-hook-form', 'rc-trigger'];
   for (const package of packagesToProcessbyBabel) {
     if (filename.indexOf(`node_modules/${package}`) > 0) {

@@ -7,20 +7,13 @@ export { Portal } from './Portal/Portal';
 export { CustomScrollbar } from './CustomScrollbar/CustomScrollbar';
 
 export { ClipboardButton } from './ClipboardButton/ClipboardButton';
-
-// Select
-export { Select, AsyncSelect } from './Select/Select';
-export { IndicatorsContainer } from './Select/IndicatorsContainer';
-export { NoOptionsMessage } from './Select/NoOptionsMessage';
-export { default as resetSelectStyles } from './Forms/Select/resetSelectStyles';
-export { ButtonSelect } from './Select/ButtonSelect';
-export { ButtonCascader } from './ButtonCascader/ButtonCascader';
 export { Cascader, CascaderOption } from './Cascader/Cascader';
+export { ButtonCascader } from './ButtonCascader/ButtonCascader';
 
 // Forms
 export { FormLabel } from './FormLabel/FormLabel';
 export { FormField } from './FormField/FormField';
-export { SecretFormField } from './SecretFormFied/SecretFormField';
+export { SecretFormField } from './SecretFormField/SecretFormField';
 
 export { LoadingPlaceholder } from './LoadingPlaceholder/LoadingPlaceholder';
 export { ColorPicker, SeriesColorPicker } from './ColorPicker/ColorPicker';
@@ -33,7 +26,6 @@ export { EmptySearchResult } from './EmptySearchResult/EmptySearchResult';
 export { PieChart, PieChartType } from './PieChart/PieChart';
 export { UnitPicker } from './UnitPicker/UnitPicker';
 export { StatsPicker } from './StatsPicker/StatsPicker';
-export { Input, InputStatus } from './Input/Input';
 export { RefreshPicker } from './RefreshPicker/RefreshPicker';
 export { TimePicker } from './TimePicker/TimePicker';
 export { TimeOfDayPicker } from './TimePicker/TimeOfDayPicker';
@@ -111,8 +103,6 @@ export { DataLinkInput } from './DataLinks/DataLinkInput';
 export { DataLinksContextMenu } from './DataLinks/DataLinksContextMenu';
 export { SeriesIcon } from './Legend/SeriesIcon';
 export { transformersUIRegistry } from './TransformersUI/transformers';
-export { TransformationRow } from './TransformersUI/TransformationRow';
-export { TransformationsEditor } from './TransformersUI/TransformationsEditor';
 export { JSONFormatter } from './JSONFormatter/JSONFormatter';
 export { JsonExplorer } from './JSONFormatter/json_explorer/json_explorer';
 export { ErrorBoundary, ErrorBoundaryAlert } from './ErrorBoundary/ErrorBoundary';
@@ -140,4 +130,35 @@ export * from './Button';
 export { ValuePicker } from './ValuePicker/ValuePicker';
 export { fieldMatchersUI } from './MatchersUI/fieldMatchersUI';
 
+export { default as resetSelectStyles } from './Select/resetSelectStyles';
+export * from './Select/Select';
+export { ButtonSelect } from './Select/ButtonSelect';
+
 export { HorizontalGroup, VerticalGroup, Container } from './Layout/Layout';
+export { RadioButtonGroup } from './Forms/RadioButtonGroup/RadioButtonGroup';
+
+export { Input } from './Input/Input';
+
+// Legacy forms
+
+// Select
+import { Select, AsyncSelect } from './Forms/Legacy/Select/Select';
+import { IndicatorsContainer } from './Forms/Legacy/Select/IndicatorsContainer';
+import { NoOptionsMessage } from './Forms/Legacy/Select/NoOptionsMessage';
+import { ButtonSelect } from './Forms/Legacy/Select/ButtonSelect';
+
+//Input
+import { Input, LegacyInputStatus } from './Forms/Legacy/Input/Input';
+// Export these until  Enterprise migrations have been merged
+// export { Input, InputStatus}
+
+const LegacyForms = {
+  Select,
+  AsyncSelect,
+  IndicatorsContainer,
+  NoOptionsMessage,
+  ButtonSelect,
+  Input,
+};
+
+export { LegacyForms, LegacyInputStatus };

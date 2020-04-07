@@ -9,7 +9,13 @@ import { createTextBoxVariableAdapter } from '../textbox/adapter';
 import { createConstantVariableAdapter } from '../constant/adapter';
 import { reduxTester } from '../../../../test/core/redux/reduxTester';
 import { TemplatingState } from 'app/features/variables/state/reducers';
-import { initDashboardTemplating, processVariables, setOptionFromUrl, validateVariableSelectionState } from './actions';
+import {
+  initDashboardTemplating,
+  processVariables,
+  setOptionFromUrl,
+  validateVariableSelectionState,
+  changeVariableMultiValue,
+} from './actions';
 import {
   addInitLock,
   addVariable,
@@ -17,6 +23,7 @@ import {
   removeVariable,
   resolveInitLock,
   setCurrentVariableValue,
+  changeVariableProp,
 } from './sharedReducer';
 import { NEW_VARIABLE_ID, toVariableIdentifier, toVariablePayload } from './types';
 import {
@@ -35,6 +42,12 @@ variableAdapters.setInit(() => [
   createTextBoxVariableAdapter(),
   createConstantVariableAdapter(),
 ]);
+
+jest.mock('app/features/dashboard/services/TimeSrv', () => ({
+  getTimeSrv: () => ({
+    timeRange: jest.fn().mockReturnValue(undefined),
+  }),
+}));
 
 describe('shared actions', () => {
   describe('when initDashboardTemplating is dispatched', () => {
@@ -136,17 +149,24 @@ describe('shared actions', () => {
 
   describe('when setOptionFromUrl is dispatched with a custom variable (no refresh property)', () => {
     it.each`
-      urlValue      | expected
-      ${'B'}        | ${['B']}
-      ${['B']}      | ${['B']}
-      ${'X'}        | ${['X']}
-      ${''}         | ${['']}
-      ${['A', 'B']} | ${['A', 'B']}
-      ${null}       | ${[null]}
-      ${undefined}  | ${[undefined]}
-    `('and urlValue is $urlValue then correct actions are dispatched', async ({ urlValue, expected }) => {
+      urlValue      | isMulti  | expected
+      ${'B'}        | ${false} | ${'B'}
+      ${['B']}      | ${false} | ${'B'}
+      ${'X'}        | ${false} | ${'X'}
+      ${''}         | ${false} | ${''}
+      ${null}       | ${false} | ${null}
+      ${undefined}  | ${false} | ${undefined}
+      ${'B'}        | ${true}  | ${['B']}
+      ${['B']}      | ${true}  | ${['B']}
+      ${'X'}        | ${true}  | ${['X']}
+      ${''}         | ${true}  | ${['']}
+      ${['A', 'B']} | ${true}  | ${['A', 'B']}
+      ${null}       | ${true}  | ${[null]}
+      ${undefined}  | ${true}  | ${[undefined]}
+    `('and urlValue is $urlValue then correct actions are dispatched', async ({ urlValue, expected, isMulti }) => {
       const custom = customBuilder()
         .withId('0')
+        .withMulti(isMulti)
         .withOptions('A', 'B', 'C')
         .withCurrent('A')
         .build();
@@ -435,6 +455,74 @@ describe('shared actions', () => {
               newName: 'textbox',
               errorText: 'Variable with the same name already exists',
             })
+          );
+      });
+    });
+  });
+
+  describe('changeVariableMultiValue', () => {
+    describe('when changeVariableMultiValue is dispatched for variable with multi enabled', () => {
+      it('then correct actions are dispatched', () => {
+        const custom = customBuilder()
+          .withId('custom')
+          .withMulti(true)
+          .withCurrent(['A'], ['A'])
+          .build();
+
+        reduxTester<{ templating: TemplatingState }>()
+          .givenRootReducer(getTemplatingRootReducer())
+          .whenActionIsDispatched(addVariable(toVariablePayload(custom, { global: false, index: 0, model: custom })))
+          .whenActionIsDispatched(changeVariableMultiValue(toVariableIdentifier(custom), false), true)
+          .thenDispatchedActionsShouldEqual(
+            changeVariableProp(
+              toVariablePayload(custom, {
+                propName: 'multi',
+                propValue: false,
+              })
+            ),
+            changeVariableProp(
+              toVariablePayload(custom, {
+                propName: 'current',
+                propValue: {
+                  value: 'A',
+                  text: 'A',
+                  selected: true,
+                },
+              })
+            )
+          );
+      });
+    });
+
+    describe('when changeVariableMultiValue is dispatched for variable with multi disabled', () => {
+      it('then correct actions are dispatched', () => {
+        const custom = customBuilder()
+          .withId('custom')
+          .withMulti(false)
+          .withCurrent(['A'], ['A'])
+          .build();
+
+        reduxTester<{ templating: TemplatingState }>()
+          .givenRootReducer(getTemplatingRootReducer())
+          .whenActionIsDispatched(addVariable(toVariablePayload(custom, { global: false, index: 0, model: custom })))
+          .whenActionIsDispatched(changeVariableMultiValue(toVariableIdentifier(custom), true), true)
+          .thenDispatchedActionsShouldEqual(
+            changeVariableProp(
+              toVariablePayload(custom, {
+                propName: 'multi',
+                propValue: true,
+              })
+            ),
+            changeVariableProp(
+              toVariablePayload(custom, {
+                propName: 'current',
+                propValue: {
+                  value: ['A'],
+                  text: ['A'],
+                  selected: true,
+                },
+              })
+            )
           );
       });
     });

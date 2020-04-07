@@ -122,6 +122,12 @@ only give access to members of the group `example` which has Id `8bab1c86-8fba-3
 allowed_groups = 8bab1c86-8fba-33e5-2089-1d1c80ec267d
 ```
 
+You'll need to ensure that you've [enabled group attributes](https://docs.microsoft.com/en-us/azure/active-directory/hybrid/how-to-connect-fed-group-claims#configure-the-azure-ad-application-registration-for-group-attributes) in your Azure AD Application Registration manifest file (Azure Portal -> Azure Active Directory -> Application Registrations -> Select Application -> Manifest)
+
+```json
+"groupMembershipClaims": "ApplicationGroup"
+```
+
 The `allowed_domains` option limits access to the users belonging to the specific domains. Domains should be separated by space or comma.
 
 ```ini

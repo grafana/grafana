@@ -32,5 +32,5 @@ In this case, make sure the template has a single `<div>...</div>` root.  The pl
 ### Examples
 
 - [clock-panel](https://github.com/grafana/clock-panel)
-- [singlestat-panel](https://github.com/grafana/grafana/blob/master/public/app/plugins/panel/singlestat/module.ts)
+- [singlestat-panel](https://github.com/grafana/grafana/tree/master/public/app/plugins/panel/singlestat)
 

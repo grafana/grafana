@@ -128,6 +128,7 @@ export class KeybindingSrv {
 
     if (search.editPanel) {
       delete search.editPanel;
+      delete search.tab;
       this.$location.search(search);
       return;
     }

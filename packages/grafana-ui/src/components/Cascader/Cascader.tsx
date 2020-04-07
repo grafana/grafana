@@ -2,9 +2,9 @@ import React from 'react';
 import { Icon } from '../Icon/Icon';
 import RCCascader from 'rc-cascader';
 
-import { Select } from '../Forms/Select/Select';
+import { Select } from '../Select/Select';
 import { FormInputSize } from '../Forms/types';
-import { Input } from '../Forms/Input/Input';
+import { Input } from '../Input/Input';
 import { SelectableValue } from '@grafana/data';
 import { css } from 'emotion';
 import { onChangeCascader } from './optionMappings';

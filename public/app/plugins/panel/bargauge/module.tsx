@@ -2,20 +2,20 @@ import { sharedSingleStatPanelChangedHandler } from '@grafana/ui';
 import { PanelPlugin } from '@grafana/data';
 import { BarGaugePanel } from './BarGaugePanel';
 import { BarGaugeOptions, defaults } from './types';
-import { standardFieldConfig, addStandardDataReduceOptions } from '../stat/types';
+import { addStandardDataReduceOptions } from '../stat/types';
 import { BarGaugePanelEditor } from './BarGaugePanelEditor';
 import { barGaugePanelMigrationHandler } from './BarGaugeMigrations';
 
 export const plugin = new PanelPlugin<BarGaugeOptions>(BarGaugePanel)
   .setDefaults(defaults)
   .setEditor(BarGaugePanelEditor)
-  .setFieldConfigDefaults(standardFieldConfig)
+  .useFieldConfig()
   .setPanelOptions(builder => {
     addStandardDataReduceOptions(builder);
 
     builder
       .addRadio({
-        id: 'displayMode',
+        path: 'displayMode',
         name: 'Display mode',
         description: 'Controls the bar style',
         settings: {
@@ -27,7 +27,7 @@ export const plugin = new PanelPlugin<BarGaugeOptions>(BarGaugePanel)
         },
       })
       .addBooleanSwitch({
-        id: 'showUnfilled',
+        path: 'showUnfilled',
         name: 'Show unfilled area',
         description: 'When enabled renders the unfilled region as gray',
       });
