@@ -1,6 +1,6 @@
 import React from 'react';
 import { FieldConfigEditorProps, StringFieldConfigSettings } from '@grafana/data';
-import { Input } from '../Forms/Input/Input';
+import { Input } from '../Input/Input';
 
 export const StringValueEditor: React.FC<FieldConfigEditorProps<string, StringFieldConfigSettings>> = ({
   value,

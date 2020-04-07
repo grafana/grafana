@@ -77,7 +77,7 @@ function buildData(theme: GrafanaTheme, overrides: ConfigOverrideRule[]): DataFr
 
   return applyFieldOverrides({
     data: [data],
-    fieldOptions: {
+    fieldConfig: {
       overrides,
       defaults: {},
     },
@@ -105,10 +105,10 @@ export const BarGaugeCell = () => {
     {
       matcher: { id: FieldMatcherID.byName, options: 'Progress' },
       properties: [
-        { prop: 'width', value: '200', custom: true },
-        { prop: 'displayMode', value: 'gradient-gauge', custom: true },
-        { prop: 'min', value: '0' },
-        { prop: 'max', value: '100' },
+        { id: 'width', value: '200', isCustom: true },
+        { id: 'displayMode', value: 'gradient-gauge', isCustom: true },
+        { id: 'min', value: '0' },
+        { id: 'max', value: '100' },
       ],
     },
   ]);
@@ -141,11 +141,11 @@ export const ColoredCells = () => {
     {
       matcher: { id: FieldMatcherID.byName, options: 'Progress' },
       properties: [
-        { prop: 'width', value: '80', custom: true },
-        { prop: 'displayMode', value: 'color-background', custom: true },
-        { prop: 'min', value: '0' },
-        { prop: 'max', value: '100' },
-        { prop: 'thresholds', value: defaultThresholds },
+        { id: 'width', value: '80', isCustom: true },
+        { id: 'displayMode', value: 'color-background', isCustom: true },
+        { id: 'min', value: '0' },
+        { id: 'max', value: '100' },
+        { id: 'thresholds', value: defaultThresholds },
       ],
     },
   ]);

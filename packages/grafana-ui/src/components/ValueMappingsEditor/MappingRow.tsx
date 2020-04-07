@@ -2,7 +2,7 @@ import React, { ChangeEvent } from 'react';
 import { HorizontalGroup } from '../Layout/Layout';
 import { Select } from '../index';
 import Forms from '../Forms';
-import { Input } from '../Forms/Input/Input';
+import { Input } from '../Input/Input';
 import { MappingType, RangeMap, ValueMap, ValueMapping } from '@grafana/data';
 import * as styleMixins from '../../themes/mixins';
 import { useTheme } from '../../themes';

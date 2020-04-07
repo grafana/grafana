@@ -7,7 +7,7 @@ import { Span, filterSpans } from '@jaegertracing/jaeger-ui-components';
  */
 export function useSearch(spans?: Span[]) {
   const [search, setSearch] = useState('');
-  let spanFindMatches;
+  let spanFindMatches: Set<string> | undefined;
   if (search && spans) {
     spanFindMatches = filterSpans(search, spans);
   }
