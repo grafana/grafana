@@ -1,0 +1,34 @@
+import { Props, Preview } from "@storybook/addon-docs/blocks";
+import { Select, AsyncSelect, MultiSelect, AsyncMultiSelect } from "./Select";
+
+# Select variants
+
+Select is an input with the ability to search and create new values. It should be used when you have list of options. If the data has a tree structure, consider using `Cascader` instead.
+Select has some features:
+
+- Search a list of values
+- Select multiple values
+- Select from async data
+- Create custom values that aren't in the list
+
+## Select
+
+Select is the base for every component on this page. The approaches mentioned here are also applicable to `AsyncSelect`, `MultiSelect`, `AsyncMultiSelect`.
+
+### Creatable option
+
+## AsyncSelect
+
+Like regular Select but handles data asynchronously.
+
+## MultiSelect
+
+Possible to Select multiple values at the same time.
+
+## AsyncMultiSelect
+
+Like MultiSelect but handles data asynchronously.
+
+## Props
+
+<Props of={Select} />

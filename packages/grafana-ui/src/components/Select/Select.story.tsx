@@ -10,11 +10,18 @@ import { ButtonSelect } from './ButtonSelect';
 import { getIconKnob } from '../../utils/storybook/knobs';
 import kebabCase from 'lodash/kebabCase';
 import { generateOptions } from './mockOptions';
+import mdx from './Select.mdx';
 
 export default {
   title: 'Forms/Select',
   component: Select,
   decorators: [withCenteredStory, withHorizontallyCenteredStory],
+  subcomponents: { AsyncSelect, MultiSelect, AsyncMultiSelect },
+  parameters: {
+    docs: {
+      page: mdx,
+    },
+  },
 };
 
 const loadAsyncOptions = () => {
