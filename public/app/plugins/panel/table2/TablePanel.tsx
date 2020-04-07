@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 
 import { Table } from '@grafana/ui';
-import { PanelProps, Field, FieldMatcherID } from '@grafana/data';
+import { Field, FieldMatcherID, PanelProps } from '@grafana/data';
 import { Options } from './types';
 
 interface Props extends PanelProps<Options> {}
@@ -31,14 +31,19 @@ export class TablePanel extends Component<Props> {
   };
 
   render() {
-    const { data, height, width, options } = this.props;
+    const {
+      data,
+      height,
+      width,
+      options: { showHeader, resizable },
+    } = this.props;
 
     if (data.series.length < 1) {
       return <div>No Table Data...</div>;
     }
 
     return (
-      <Table height={height - 16} width={width} data={data.series[0]} noHeader={!options.showHeader} resizable={true} />
+      <Table height={height - 16} width={width} data={data.series[0]} noHeader={!showHeader} resizable={resizable} />
     );
   }
 }
