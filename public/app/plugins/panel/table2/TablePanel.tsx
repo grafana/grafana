@@ -43,7 +43,7 @@ export class TablePanel extends Component<Props> {
         width={width}
         data={data.series[0]}
         noHeader={!options.showHeader}
-        resizable={options.resizable}
+        resizable={true}
         onColumnResize={this.onColumnResize}
       />
     );
