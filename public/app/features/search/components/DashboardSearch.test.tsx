@@ -32,6 +32,7 @@ describe('DashboardSearch', () => {
       tags: [],
       tag: [],
       starred: false,
+      folderIds: [],
     });
   });
 
@@ -53,6 +54,7 @@ describe('DashboardSearch', () => {
       tags: [],
       tag: [],
       starred: false,
+      folderIds: [],
     });
   });
 
@@ -97,6 +99,7 @@ describe('DashboardSearch', () => {
       tags: ['TestTag'],
       tag: ['TestTag'],
       starred: false,
+      folderIds: [],
     });
   });
 });
