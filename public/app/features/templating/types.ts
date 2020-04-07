@@ -1,6 +1,5 @@
 import { assignModelProperties } from 'app/core/utils/model_utils';
 import { Deferred } from '../../core/utils/deferred';
-import { VariableModel as BaseVariableModel } from '@grafana/data';
 
 export enum VariableRefresh {
   never,
@@ -38,6 +37,8 @@ export interface VariableOption {
   isNone?: boolean;
   tags?: VariableTag[];
 }
+
+export type VariableType = 'query' | 'adhoc' | 'constant' | 'datasource' | 'interval' | 'textbox' | 'custom';
 
 export interface AdHocVariableFilter {
   key: string;
@@ -92,9 +93,12 @@ export interface VariableWithOptions extends VariableModel {
   query: string;
 }
 
-export interface VariableModel extends BaseVariableModel {
+export interface VariableModel {
   id?: string; // only exists for variables in redux state
   global?: boolean; // only exists for variables in redux state
+  type: VariableType;
+  name: string;
+  label: string | null;
   hide: VariableHide;
   skipUrlSync: boolean;
   index?: number;

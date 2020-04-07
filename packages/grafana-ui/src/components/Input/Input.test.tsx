@@ -2,8 +2,8 @@ import React from 'react';
 import renderer from 'react-test-renderer';
 import { shallow } from 'enzyme';
 import { Input } from './Input';
-import { EventsWithValidation } from '../../../../utils';
-import { ValidationEvents } from '../../../../types';
+import { EventsWithValidation } from '../../utils';
+import { ValidationEvents } from '../../types';
 
 const TEST_ERROR_MESSAGE = 'Value must be empty or less than 3 chars';
 const testBlurValidation: ValidationEvents = {

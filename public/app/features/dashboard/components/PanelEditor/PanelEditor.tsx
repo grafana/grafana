@@ -30,6 +30,11 @@ import { VariableModel } from 'app/features/templating/types';
 import { getVariables } from 'app/features/variables/state/selectors';
 import { SubMenuItems } from 'app/features/dashboard/components/SubMenu/SubMenuItems';
 
+enum Pane {
+  Right,
+  Top,
+}
+
 interface OwnProps {
   dashboard: DashboardModel;
   sourcePanel: PanelModel;
@@ -250,7 +255,7 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
   }
 
   renderOptionsPane() {
-    const { plugin, dashboard, data, panel, uiState } = this.props;
+    const { plugin, dashboard, data, panel } = this.props;
 
     if (!plugin) {
       return <div />;
@@ -262,7 +267,6 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
         dashboard={dashboard}
         data={data}
         panel={panel}
-        width={uiState.rightPaneSize as number}
         onClose={this.onTogglePanelOptions}
         onFieldConfigsChange={this.onFieldConfigChange}
         onPanelOptionsChanged={this.onPanelOptionsChanged}
@@ -337,11 +341,6 @@ const mapDispatchToProps: MapDispatchToProps<DispatchProps, OwnProps> = {
 };
 
 export const PanelEditor = connect(mapStateToProps, mapDispatchToProps)(PanelEditorUnconnected);
-
-enum Pane {
-  Right,
-  Top,
-}
 
 /*
  * Styles

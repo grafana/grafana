@@ -1,5 +1,5 @@
 import React from 'react';
-import { useTheme, stylesFactory } from '../../../themes';
+import { useTheme, stylesFactory, selectThemeVariant as stv } from '../../../themes';
 import { GrafanaTheme } from '@grafana/data';
 import { css, cx } from 'emotion';
 import { getFocusCss, getPropertiesForButtonSize } from '../commonStyles';
@@ -21,15 +21,15 @@ const getRadioButtonStyles = stylesFactory((theme: GrafanaTheme, size: RadioButt
   const horizontalPadding = theme.spacing[size] ?? theme.spacing.md;
   const c = theme.colors;
 
-  const textColor = theme.isLight ? c.gray33 : c.gray70;
-  const textColorHover = theme.isLight ? c.blueShade : c.blueLight;
-  const textColorActive = theme.isLight ? c.blueShade : c.blueLight;
-  const borderColor = theme.isLight ? c.gray4 : c.gray25;
-  const borderColorHover = theme.isLight ? c.gray70 : c.gray33;
-  const borderColorActive = theme.isLight ? c.blueShade : c.blueLight;
-  const bg = c.pageBg;
-  const bgDisabled = theme.isLight ? c.gray95 : c.gray15;
-  const bgActive = theme.isLight ? c.white : c.gray05;
+  const textColor = stv({ light: c.gray33, dark: c.gray70 }, theme.type);
+  const textColorHover = stv({ light: c.blueShade, dark: c.blueLight }, theme.type);
+  const textColorActive = stv({ light: c.blueShade, dark: c.blueLight }, theme.type);
+  const borderColor = stv({ light: c.gray4, dark: c.gray25 }, theme.type);
+  const borderColorHover = stv({ light: c.gray70, dark: c.gray33 }, theme.type);
+  const borderColorActive = stv({ light: c.blueShade, dark: c.blueLight }, theme.type);
+  const bg = stv({ light: c.gray98, dark: c.gray10 }, theme.type);
+  const bgDisabled = stv({ light: c.gray95, dark: c.gray15 }, theme.type);
+  const bgActive = stv({ light: c.white, dark: c.gray05 }, theme.type);
 
   const border = `1px solid ${borderColor}`;
   const borderActive = `1px solid ${borderColorActive}`;

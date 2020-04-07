@@ -7,12 +7,13 @@ import {
   PanelOptionsGroup,
   FormLabel,
   LegacyForms,
+  Switch,
   FieldPropertiesEditor,
   ThresholdsEditor,
   LegacyValueMappingsEditor,
   DataLinksEditor,
 } from '@grafana/ui';
-const { Select, Switch } = LegacyForms;
+const { Select } = LegacyForms;
 import {
   DataLink,
   FieldConfig,

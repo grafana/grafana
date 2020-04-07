@@ -1,6 +1,6 @@
+import { FieldConfigEditorRegistry, FieldPropertyEditorItem } from '../types/fieldOverrides';
 import { Registry, RegistryItem } from '../utils/Registry';
 import { ComponentType } from 'react';
-import { FieldConfigOptionsRegistry } from './FieldConfigOptionsRegistry';
 
 export interface StandardEditorProps<TValue = any, TSettings = any> {
   value: TValue;
@@ -11,6 +11,6 @@ export interface StandardEditorsRegistryItem<TValue = any, TSettings = any> exte
   editor: ComponentType<StandardEditorProps<TValue, TSettings>>;
   settings?: TSettings;
 }
-export const standardFieldConfigEditorRegistry = new FieldConfigOptionsRegistry();
+export const standardFieldConfigEditorRegistry: FieldConfigEditorRegistry = new Registry<FieldPropertyEditorItem>();
 
 export const standardEditorsRegistry = new Registry<StandardEditorsRegistryItem<any>>();

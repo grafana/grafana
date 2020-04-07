@@ -101,10 +101,7 @@ import { MyComponent } from "./MyComponent";
 
 ### MDX file without a relationship to a component
 
-An MDX file can exist by itself without any connection to a story. This can be good for writing things such as a general guidelines page. Two things are required for this to work:
-
-- The file needs to be named `*.story.mdx`
-- A `Meta` tag must exist that says where in the hierarchy the component lives. It can look like this:
+An MDX file can exist by itself without any connection to a story. This can be good for writing things such as a general guidelines page. Something that is required when the MDX file has no relation to a component is a `Meta` tag that says where in the hierarchy the component will live. It can look like this:
 
 ```jsx
 <Meta title="Docs Overview/Color Palettes"/>

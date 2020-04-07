@@ -1,13 +1,12 @@
 package gtime
 
 import (
-	"fmt"
 	"regexp"
 	"strconv"
 	"time"
 )
 
-var dateUnitPattern = regexp.MustCompile(`^(\d+)([dwMy])$`)
+var dateUnitPattern = regexp.MustCompile(`(\d+)([wdy])`)
 
 // ParseInterval parses an interval with support for all units that Grafana uses.
 func ParseInterval(interval string) (time.Duration, error) {
@@ -19,18 +18,14 @@ func ParseInterval(interval string) (time.Duration, error) {
 
 	num, _ := strconv.Atoi(string(result[1]))
 	period := string(result[2])
-	now := time.Now()
 
-	switch period {
-	case "d":
-		return now.Sub(now.AddDate(0, 0, -num)), nil
-	case "w":
-		return now.Sub(now.AddDate(0, 0, -num*7)), nil
-	case "M":
-		return now.Sub(now.AddDate(0, -num, 0)), nil
-	case "y":
-		return now.Sub(now.AddDate(-num, 0, 0)), nil
+	if period == `d` {
+		return time.Hour * 24 * time.Duration(num), nil
 	}
 
-	return 0, fmt.Errorf("ParseInterval: invalid duration %q", interval)
+	if period == `w` {
+		return time.Hour * 24 * 7 * time.Duration(num), nil
+	}
+
+	return time.Hour * 24 * 7 * 365 * time.Duration(num), nil
 }

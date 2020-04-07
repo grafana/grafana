@@ -13,39 +13,16 @@ export interface Props {
   onClose: () => void;
 }
 
-export function getAllPanelPluginMeta(): PanelPluginMeta[] {
-  const allPanels = config.panels;
-
-  return Object.keys(allPanels)
-    .filter(key => allPanels[key]['hideFromList'] === false)
-    .map(key => allPanels[key])
-    .sort((a: PanelPluginMeta, b: PanelPluginMeta) => a.sort - b.sort);
-}
-
-export function filterPluginList(pluginsList: PanelPluginMeta[], searchQuery: string): PanelPluginMeta[] {
-  if (!searchQuery.length) {
-    return pluginsList;
-  }
-  const query = searchQuery.toLowerCase();
-  const first: PanelPluginMeta[] = [];
-  const match: PanelPluginMeta[] = [];
-  for (const item of pluginsList) {
-    const name = item.name.toLowerCase();
-    const idx = name.indexOf(query);
-    if (idx === 0) {
-      first.push(item);
-    } else if (idx > 0) {
-      match.push(item);
-    }
-  }
-  return first.concat(match);
-}
-
 export const VizTypePicker: React.FC<Props> = ({ searchQuery, onTypeChange, current }) => {
   const theme = useTheme();
   const styles = getStyles(theme);
   const pluginsList: PanelPluginMeta[] = useMemo(() => {
-    return getAllPanelPluginMeta();
+    const allPanels = config.panels;
+
+    return Object.keys(allPanels)
+      .filter(key => allPanels[key]['hideFromList'] === false)
+      .map(key => allPanels[key])
+      .sort((a: PanelPluginMeta, b: PanelPluginMeta) => a.sort - b.sort);
   }, []);
 
   const renderVizPlugin = (plugin: PanelPluginMeta, index: number) => {
@@ -65,7 +42,10 @@ export const VizTypePicker: React.FC<Props> = ({ searchQuery, onTypeChange, curr
   };
 
   const getFilteredPluginList = useCallback((): PanelPluginMeta[] => {
-    return filterPluginList(pluginsList, searchQuery);
+    const regex = new RegExp(searchQuery, 'i');
+    return pluginsList.filter(item => {
+      return regex.test(item.name);
+    });
   }, [searchQuery]);
 
   const filteredPluginList = getFilteredPluginList();
@@ -88,8 +68,7 @@ export const VizTypePicker: React.FC<Props> = ({ searchQuery, onTypeChange, curr
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
   return {
     wrapper: css`
-      // this needed here to make the box shadow not be clicked by the parent scroll container
-      padding-top: ${theme.spacing.md};
+      padding-right: ${theme.spacing.md};
     `,
     grid: css`
       max-width: 100%;

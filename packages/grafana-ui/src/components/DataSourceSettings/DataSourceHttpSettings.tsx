@@ -9,7 +9,7 @@ import { DataSourceSettings } from '@grafana/data';
 import { HttpSettingsProps } from './types';
 import { CustomHeadersSettings } from './CustomHeadersSettings';
 import { Select } from '../Forms/Legacy/Select/Select';
-import { Input } from '../Forms/Legacy/Input/Input';
+import { Input } from '../Input/Input';
 import { FormField } from '../FormField/FormField';
 import { FormLabel } from '../FormLabel/FormLabel';
 import { Switch } from '../Switch/Switch';

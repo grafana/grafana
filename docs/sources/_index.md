@@ -8,8 +8,7 @@ aliases = ["/docs/grafana/v1.1", "/docs/grafana/latest/guides/reference/admin", 
 
 # Grafana documentation
 
-## Installing Grafana
-
+<h2>Installing Grafana</h2>
 <div class="nav-cards">
     <a href="{{< relref "installation/debian.md" >}}" class="nav-cards__item nav-cards__item--install">
         <div class="nav-cards__icon fa fa-linux">
@@ -27,7 +26,7 @@ aliases = ["/docs/grafana/v1.1", "/docs/grafana/latest/guides/reference/admin", 
         <h5>Install on Windows</h5>
     </a>
     <a href="{{< relref "installation/docker.md" >}}" class="nav-cards__item nav-cards__item--install">
-        <img src="/static/img/logos/logo-docker.svg">
+        <img src="/img/docs/logos/icon_docker.png">
         <h5>Run Docker image</h5>
     </a>
     <a href="https://grafana.com/cloud/grafana" class="nav-cards__item nav-cards__item--install">
@@ -42,7 +41,7 @@ aliases = ["/docs/grafana/v1.1", "/docs/grafana/latest/guides/reference/admin", 
     </a>
 </div>
 
-## Guides
+<h2>Guides</h2>
 
 <div class="nav-cards">
     <a href="{{< relref "guides/what-is-grafana.md" >}}" class="nav-cards__item nav-cards__item--guide">
@@ -72,8 +71,7 @@ aliases = ["/docs/grafana/v1.1", "/docs/grafana/latest/guides/reference/admin", 
 
 </div>
 
-## Data source guides
-
+<h2>Data source guides</h2>
 <div class="nav-cards">
     <a href="{{< relref "features/datasources/graphite.md" >}}" class="nav-cards__item nav-cards__item--ds">
       <img src="/img/docs/logos/icon_graphite.svg" >

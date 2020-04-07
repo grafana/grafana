@@ -15,8 +15,7 @@ import {
   LinkModel,
   Field,
 } from '@grafana/data';
-import { LegacyForms, LogLabels, ToggleButtonGroup, ToggleButton, LogRows } from '@grafana/ui';
-const { Switch } = LegacyForms;
+import { Switch, LogLabels, ToggleButtonGroup, ToggleButton, LogRows } from '@grafana/ui';
 import store from 'app/core/store';
 
 import { ExploreGraphPanel } from './ExploreGraphPanel';

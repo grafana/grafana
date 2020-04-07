@@ -28,18 +28,19 @@
 
   .fa-caret-down {
     font-size: 75%;
-    padding-left: 8px;
+    position: relative;
+    top: -1px;
+    left: 1px;
   }
 }
 
 .variable-value-link {
   padding-right: 10px;
-  padding: 0 $space-sm;
+  padding: $space-sm;
   background-color: $input-bg;
   border: 1px solid $input-border-color;
   border-radius: $input-border-radius;
-  display: flex;
-  align-items: center;
+  display: inline-block;
   color: $text-color;
   height: $input-height;
 

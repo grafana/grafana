@@ -3,10 +3,12 @@ import cloneDeep from 'lodash/cloneDeep';
 import {
   FieldConfigSource,
   DataFrame,
-  FieldConfigPropertyItem,
+  FieldPropertyEditorItem,
   VariableSuggestionsScope,
+  standardFieldConfigEditorRegistry,
   PanelPlugin,
   SelectableValue,
+  FieldConfigProperty,
 } from '@grafana/data';
 import { Forms, fieldMatchersUI, ValuePicker, useTheme } from '@grafana/ui';
 import { getDataLinksVariableSuggestions } from '../../../panel/panellinks/link_srv';
@@ -16,6 +18,7 @@ import { css } from 'emotion';
 interface Props {
   plugin: PanelPlugin;
   config: FieldConfigSource;
+  include?: FieldConfigProperty[]; // Ordered list of which fields should be shown/included
   onChange: (config: FieldConfigSource) => void;
   /* Helpful for IntelliSense */
   data: DataFrame[];
@@ -59,10 +62,31 @@ export const OverrideFieldConfigEditor: React.FC<Props> = props => {
 
   const renderOverrides = () => {
     const { config, data, plugin } = props;
-    const { fieldConfigRegistry } = plugin;
+    const { customFieldConfigs } = plugin;
 
     if (config.overrides.length === 0) {
       return null;
+    }
+
+    let configPropertiesOptions = plugin.standardFieldConfigProperties.map(i => {
+      const editor = standardFieldConfigEditorRegistry.get(i);
+      return {
+        label: editor.name,
+        value: editor.id,
+        description: editor.description,
+        custom: false,
+      };
+    });
+
+    if (customFieldConfigs) {
+      configPropertiesOptions = configPropertiesOptions.concat(
+        customFieldConfigs.list().map(i => ({
+          label: i.name,
+          value: i.id,
+          description: i.description,
+          custom: true,
+        }))
+      );
     }
 
     return (
@@ -76,7 +100,8 @@ export const OverrideFieldConfigEditor: React.FC<Props> = props => {
               override={o}
               onChange={value => onOverrideChange(i, value)}
               onRemove={() => onOverrideRemove(i)}
-              registry={fieldConfigRegistry}
+              configPropertiesOptions={configPropertiesOptions}
+              customPropertiesRegistry={customFieldConfigs}
             />
           );
         })}
@@ -110,7 +135,7 @@ export const OverrideFieldConfigEditor: React.FC<Props> = props => {
   );
 };
 
-export const DefaultFieldConfigEditor: React.FC<Props> = ({ data, onChange, config, plugin }) => {
+export const DefaultFieldConfigEditor: React.FC<Props> = ({ include, data, onChange, config, plugin }) => {
   const setDefaultValue = useCallback(
     (name: string, value: any, custom: boolean) => {
       const defaults = { ...config.defaults };
@@ -142,20 +167,16 @@ export const DefaultFieldConfigEditor: React.FC<Props> = ({ data, onChange, conf
   );
 
   const renderEditor = useCallback(
-    (item: FieldConfigPropertyItem) => {
+    (item: FieldPropertyEditorItem, custom: boolean) => {
       const defaults = config.defaults;
-      const value = item.isCustom
-        ? defaults.custom
-          ? defaults.custom[item.path]
-          : undefined
-        : (defaults as any)[item.path];
+      const value = custom ? (defaults.custom ? defaults.custom[item.id] : undefined) : (defaults as any)[item.id];
 
       return (
-        <Forms.Field label={item.name} description={item.description} key={`${item.id}`}>
+        <Forms.Field label={item.name} description={item.description} key={`${item.id}/${custom}`}>
           <item.editor
             item={item}
             value={value}
-            onChange={v => setDefaultValue(item.path, v, item.isCustom)}
+            onChange={v => setDefaultValue(item.id, v, custom)}
             context={{
               data,
               getSuggestions: (scope?: VariableSuggestionsScope) => getDataLinksVariableSuggestions(data, scope),
@@ -167,6 +188,28 @@ export const DefaultFieldConfigEditor: React.FC<Props> = ({ data, onChange, conf
     [config]
   );
 
-  // render all field configs
-  return <>{plugin.fieldConfigRegistry.list().map(renderEditor)}</>;
+  const renderStandardConfigs = useCallback(() => {
+    if (include && include.length === 0) {
+      return null;
+    }
+    if (include) {
+      return <>{include.map(f => renderEditor(standardFieldConfigEditorRegistry.get(f), false))}</>;
+    }
+    return <>{standardFieldConfigEditorRegistry.list().map(f => renderEditor(f, false))}</>;
+  }, [plugin, config]);
+
+  const renderCustomConfigs = useCallback(() => {
+    if (!plugin.customFieldConfigs) {
+      return null;
+    }
+
+    return plugin.customFieldConfigs.list().map(f => renderEditor(f, true));
+  }, [plugin, config]);
+
+  return (
+    <>
+      {plugin.customFieldConfigs && renderCustomConfigs()}
+      {renderStandardConfigs()}
+    </>
+  );
 };

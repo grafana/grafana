@@ -28,7 +28,7 @@ type Frame struct {
 	Fields []*Field
 
 	RefID    string
-	Meta     *FrameMeta
+	Meta     *QueryResultMeta
 	Warnings []Warning
 }
 
@@ -263,13 +263,29 @@ func FrameTestCompareOptions() []cmp.Option {
 		if x == nil && y == nil {
 			return true
 		}
-		if y == nil && x != nil || y != nil && x == nil {
-			return false
+		if y == nil {
+			if math.IsNaN(float64(*x)) {
+				return true
+			}
+			if math.IsInf(float64(*x), 1) {
+				return true
+			}
+			if math.IsInf(float64(*x), -1) {
+				return true
+			}
 		}
-		return (math.IsNaN(float64(*x)) && math.IsNaN(float64(*y))) ||
-			(math.IsInf(float64(*x), 1) && math.IsInf(float64(*y), 1)) ||
-			(math.IsInf(float64(*x), -1) && math.IsInf(float64(*y), -1)) ||
-			*x == *y
+		if x == nil {
+			if math.IsNaN(float64(*y)) {
+				return true
+			}
+			if math.IsInf(float64(*y), 1) {
+				return true
+			}
+			if math.IsInf(float64(*y), -1) {
+				return true
+			}
+		}
+		return *x == *y
 	})
 	f64s := cmp.Comparer(func(x, y float64) bool {
 		return (math.IsNaN(x) && math.IsNaN(y)) ||
@@ -281,13 +297,29 @@ func FrameTestCompareOptions() []cmp.Option {
 		if x == nil && y == nil {
 			return true
 		}
-		if y == nil && x != nil || y != nil && x == nil {
-			return false
+		if y == nil {
+			if math.IsNaN(float64(*x)) {
+				return true
+			}
+			if math.IsInf(float64(*x), 1) {
+				return true
+			}
+			if math.IsInf(float64(*x), -1) {
+				return true
+			}
 		}
-		return (math.IsNaN(float64(*x)) && math.IsNaN(float64(*y))) ||
-			(math.IsInf(float64(*x), 1) && math.IsInf(float64(*y), 1)) ||
-			(math.IsInf(float64(*x), -1) && math.IsInf(float64(*y), -1)) ||
-			*x == *y
+		if x == nil {
+			if math.IsNaN(float64(*y)) {
+				return true
+			}
+			if math.IsInf(float64(*y), 1) {
+				return true
+			}
+			if math.IsInf(float64(*y), -1) {
+				return true
+			}
+		}
+		return *x == *y
 	})
 	f32s := cmp.Comparer(func(x, y float32) bool {
 		return (math.IsNaN(float64(x)) && math.IsNaN(float64(y))) ||
@@ -337,8 +369,6 @@ func (f *Frame) StringTable(maxFields, maxRows int) (string, error) {
 
 	sb := &strings.Builder{}
 	sb.WriteString(fmt.Sprintf("Name: %v\n", f.Name))
-	sb.WriteString(fmt.Sprintf("Dimensions: %v Fields by %v Rows\n", len(f.Fields), rowLen))
-
 	table := tablewriter.NewWriter(sb)
 
 	// table formatting options
@@ -346,6 +376,9 @@ func (f *Frame) StringTable(maxFields, maxRows int) (string, error) {
 	table.SetHeaderAlignment(tablewriter.ALIGN_LEFT)
 	table.SetAutoWrapText(false)
 	table.SetAlignment(tablewriter.ALIGN_LEFT)
+
+	// (caption is below the table)
+	table.SetCaption(true, fmt.Sprintf("Field Count: %v\nRow Count: %v", len(f.Fields), rowLen))
 
 	// set table headers
 	headers := make([]string, width)

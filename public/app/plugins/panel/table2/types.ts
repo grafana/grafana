@@ -1,6 +1,5 @@
 export interface Options {
   showHeader: boolean;
-  resizable: boolean;
 }
 
 export interface CustomFieldConfig {
@@ -10,5 +9,4 @@ export interface CustomFieldConfig {
 
 export const defaults: Options = {
   showHeader: true,
-  resizable: false,
 };

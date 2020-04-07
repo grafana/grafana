@@ -1,6 +1,6 @@
 import React, { FC } from 'react';
-import { FormLabel, LegacyForms } from '@grafana/ui';
-const { Input, Switch } = LegacyForms;
+import { FormLabel, LegacyForms, Switch } from '@grafana/ui';
+const { Input } = LegacyForms;
 import { e2e } from '@grafana/e2e';
 
 export interface Props {

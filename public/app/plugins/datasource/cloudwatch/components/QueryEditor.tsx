@@ -1,7 +1,7 @@
 import React, { PureComponent, ChangeEvent } from 'react';
 import { ExploreQueryFieldProps } from '@grafana/data';
-import { LegacyForms, ValidationEvents, EventsWithValidation } from '@grafana/ui';
-const { Input, Switch } = LegacyForms;
+import { LegacyForms, ValidationEvents, EventsWithValidation, Switch } from '@grafana/ui';
+const { Input } = LegacyForms;
 import isEmpty from 'lodash/isEmpty';
 import { CloudWatchQuery } from '../types';
 import CloudWatchDatasource from '../datasource';

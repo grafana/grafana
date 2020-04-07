@@ -32,7 +32,7 @@ export const TableCell: FC<Props> = ({ cell, field, tableStyles, onCellClick }) 
   }
 
   return (
-    <div {...cellProps} onClick={onClick} className={tableStyles.tableCellWrapper}>
+    <div {...cellProps} onClick={onClick}>
       {cell.render('Cell', { field, tableStyles })}
     </div>
   );

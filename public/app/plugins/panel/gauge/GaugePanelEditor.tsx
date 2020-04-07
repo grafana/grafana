@@ -3,14 +3,13 @@ import React, { PureComponent } from 'react';
 import {
   PanelOptionsGrid,
   FieldDisplayEditor,
-  LegacyForms,
+  Switch,
   PanelOptionsGroup,
   FieldPropertiesEditor,
   ThresholdsEditor,
   LegacyValueMappingsEditor,
   DataLinksEditor,
 } from '@grafana/ui';
-const { Switch } = LegacyForms;
 import {
   PanelEditorProps,
   ReduceDataOptions,

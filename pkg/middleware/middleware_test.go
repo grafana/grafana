@@ -264,14 +264,10 @@ func TestMiddlewareContext(t *testing.T) {
 			}
 			for _, sameSitePolicy := range sameSitePolicies {
 				setting.CookieSameSiteMode = sameSitePolicy
-				expectedCookiePath := "/"
-				if len(setting.AppSubUrl) > 0 {
-					expectedCookiePath = setting.AppSubUrl
-				}
 				expectedCookie := &http.Cookie{
 					Name:     setting.LoginCookieName,
 					Value:    "rotated",
-					Path:     expectedCookiePath,
+					Path:     setting.AppSubUrl + "/",
 					HttpOnly: true,
 					MaxAge:   int(maxAge),
 					Secure:   setting.CookieSecure,
@@ -295,14 +291,10 @@ func TestMiddlewareContext(t *testing.T) {
 			Convey("Should not set cookie with SameSite attribute when setting.CookieSameSiteDisabled is true", func() {
 				setting.CookieSameSiteDisabled = true
 				setting.CookieSameSiteMode = http.SameSiteLaxMode
-				expectedCookiePath := "/"
-				if len(setting.AppSubUrl) > 0 {
-					expectedCookiePath = setting.AppSubUrl
-				}
 				expectedCookie := &http.Cookie{
 					Name:     setting.LoginCookieName,
 					Value:    "rotated",
-					Path:     expectedCookiePath,
+					Path:     setting.AppSubUrl + "/",
 					HttpOnly: true,
 					MaxAge:   int(maxAge),
 					Secure:   setting.CookieSecure,

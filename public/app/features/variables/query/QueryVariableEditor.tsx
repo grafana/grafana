@@ -1,7 +1,6 @@
 import React, { ChangeEvent, PureComponent } from 'react';
 import { e2e } from '@grafana/e2e';
-import { FormLabel, LegacyForms } from '@grafana/ui';
-const { Switch } = LegacyForms;
+import { FormLabel, Switch } from '@grafana/ui';
 
 import templateSrv from '../../templating/template_srv';
 import { SelectionOptionsEditor } from '../editor/SelectionOptionsEditor';

@@ -17,7 +17,7 @@ import {
   VariableIdentifier,
 } from '../state/types';
 import cloneDeep from 'lodash/cloneDeep';
-import { VariableType } from '@grafana/data';
+import { VariableType } from '../../templating/types';
 import { addVariable, removeVariable, storeNewVariable } from '../state/sharedReducer';
 
 export const variableEditorMount = (identifier: VariableIdentifier): ThunkResult<void> => {

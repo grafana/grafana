@@ -9,7 +9,7 @@ import {
   readCSV,
 } from '@grafana/data';
 
-import { getQueryOptions } from './testHelpers';
+import { getQueryOptions } from 'test/helpers/getQueryOptions';
 
 describe('InputDatasource', () => {
   const data = readCSV('a,b,c\n1,2,3\n4,5,6');

@@ -1,6 +1,5 @@
 import React, { FunctionComponent, useEffect, useState } from 'react';
-import { LegacyForms } from '@grafana/ui';
-const { Switch } = LegacyForms;
+import { Switch } from '@grafana/ui';
 
 interface Props {
   annotations: any[];

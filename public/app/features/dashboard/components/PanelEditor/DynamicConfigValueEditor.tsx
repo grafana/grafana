@@ -1,11 +1,11 @@
 import React from 'react';
-import { DynamicConfigValue, FieldConfigOptionsRegistry, FieldOverrideContext, GrafanaTheme } from '@grafana/data';
+import { DynamicConfigValue, FieldConfigEditorRegistry, FieldOverrideContext, GrafanaTheme } from '@grafana/data';
 import { FieldConfigItemHeaderTitle, selectThemeVariant, stylesFactory, useTheme } from '@grafana/ui';
 
 import { css } from 'emotion';
 interface DynamicConfigValueEditorProps {
   property: DynamicConfigValue;
-  registry: FieldConfigOptionsRegistry;
+  editorsRegistry: FieldConfigEditorRegistry;
   onChange: (value: DynamicConfigValue) => void;
   context: FieldOverrideContext;
   onRemove: () => void;
@@ -14,13 +14,13 @@ interface DynamicConfigValueEditorProps {
 export const DynamicConfigValueEditor: React.FC<DynamicConfigValueEditorProps> = ({
   property,
   context,
-  registry,
+  editorsRegistry,
   onChange,
   onRemove,
 }) => {
   const theme = useTheme();
   const styles = getStyles(theme);
-  const item = registry?.getIfExists(property.id);
+  const item = editorsRegistry?.getIfExists(property.prop);
 
   if (!item) {
     return null;

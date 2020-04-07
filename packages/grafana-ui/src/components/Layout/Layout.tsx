@@ -12,7 +12,7 @@ type Justify = 'flex-start' | 'flex-end' | 'space-between' | 'center';
 type Align = 'normal' | 'flex-start' | 'flex-end' | 'center';
 
 export interface LayoutProps {
-  children: React.ReactNode[] | React.ReactNode;
+  children: React.ReactNode[];
   orientation?: Orientation;
   spacing?: Spacing;
   justify?: Justify;

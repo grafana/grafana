@@ -10,7 +10,7 @@ import {
 } from '@grafana/data';
 import { colors } from '../../utils';
 import { ThemeContext } from '../../themes/ThemeContext';
-import { Input } from '../Input/Input';
+import { Input } from '../Forms/Input/Input';
 import { ColorPicker } from '../ColorPicker/ColorPicker';
 import { stylesFactory } from '../../themes';
 import { Icon } from '../Icon/Icon';

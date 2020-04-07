@@ -95,7 +95,6 @@ export class StatPanel extends PureComponent<PanelProps<StatPanelOptions>> {
         width={width}
         height={height}
         source={data}
-        itemSpacing={3}
         renderCounter={renderCounter}
         autoGrid={true}
         orientation={options.orientation}

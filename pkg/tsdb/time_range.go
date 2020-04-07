@@ -1,11 +1,10 @@
 package tsdb
 
 import (
+	"fmt"
 	"strconv"
 	"strings"
 	"time"
-
-	"github.com/timberio/go-datemath"
 )
 
 func NewTimeRange(from, to string) *TimeRange {
@@ -80,26 +79,38 @@ func tryParseUnixMsEpoch(val string) (time.Time, bool) {
 }
 
 func (tr *TimeRange) ParseFrom() (time.Time, error) {
-	return parse(tr.From, tr.now, false)
-}
-
-func (tr *TimeRange) ParseTo() (time.Time, error) {
-	return parse(tr.To, tr.now, true)
-}
-
-func parse(s string, now time.Time, withRoundUp bool) (time.Time, error) {
-	if res, ok := tryParseUnixMsEpoch(s); ok {
+	if res, ok := tryParseUnixMsEpoch(tr.From); ok {
 		return res, nil
 	}
 
-	withoutNow := strings.Replace(s, "now-", "", 1)
-
-	diff, err := time.ParseDuration("-" + withoutNow)
+	fromRaw := strings.Replace(tr.From, "now-", "", 1)
+	diff, err := time.ParseDuration("-" + fromRaw)
 	if err != nil {
-		return datemath.ParseAndEvaluate(s, datemath.WithNow(now), datemath.WithRoundUp(withRoundUp))
+		return time.Time{}, err
 	}
 
-	return now.Add(diff), nil
+	return tr.now.Add(diff), nil
+}
+
+func (tr *TimeRange) ParseTo() (time.Time, error) {
+	if tr.To == "now" {
+		return tr.now, nil
+	} else if strings.HasPrefix(tr.To, "now-") {
+		withoutNow := strings.Replace(tr.To, "now-", "", 1)
+
+		diff, err := time.ParseDuration("-" + withoutNow)
+		if err != nil {
+			return time.Time{}, nil
+		}
+
+		return tr.now.Add(diff), nil
+	}
+
+	if res, ok := tryParseUnixMsEpoch(tr.To); ok {
+		return res, nil
+	}
+
+	return time.Time{}, fmt.Errorf("cannot parse to value %s", tr.To)
 }
 
 // EpochPrecisionToMs converts epoch precision to millisecond, if needed.

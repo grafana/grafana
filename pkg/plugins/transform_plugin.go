@@ -103,25 +103,14 @@ func (tw *TransformWrapper) Transform(ctx context.Context, query *tsdb.TsdbQuery
 		return nil, err
 	}
 
-	tR := &tsdb.Response{
-		Results: make(map[string]*tsdb.QueryResult, len(pbRes.Responses)),
-	}
-	for refID, res := range pbRes.Responses {
-		tRes := &tsdb.QueryResult{
-			RefId:      refID,
-			Dataframes: res.Frames,
-		}
-		if len(res.JsonMeta) != 0 {
-			tRes.Meta = simplejson.NewFromAny(res.JsonMeta)
-		}
-		if res.Error != "" {
-			tRes.Error = fmt.Errorf(res.Error)
-			tRes.ErrorString = res.Error
-		}
-		tR.Results[refID] = tRes
-	}
-
-	return tR, nil
+	return &tsdb.Response{
+		Results: map[string]*tsdb.QueryResult{
+			"": {
+				Dataframes: pbRes.Frames,
+				Meta:       simplejson.NewFromAny(pbRes.Metadata),
+			},
+		},
+	}, nil
 }
 
 type transformCallback struct {
@@ -179,16 +168,18 @@ func (s *transformCallback) QueryData(ctx context.Context, req *pluginv2.QueryDa
 	}
 	// Convert tsdb results (map) to plugin-model/datasource (slice) results.
 	// Only error, tsdb.Series, and encoded Dataframes responses are mapped.
-	responses := make(map[string]*pluginv2.DataResponse, len(tsdbRes.Results))
+
+	encodedFrames := [][]byte{}
 	for refID, res := range tsdbRes.Results {
-		pRes := &pluginv2.DataResponse{}
+
 		if res.Error != nil {
-			pRes.Error = res.Error.Error()
+			// TODO add Errors property to Frame
+			encodedFrames = append(encodedFrames, nil)
+			continue
 		}
 
 		if res.Dataframes != nil {
-			pRes.Frames = res.Dataframes
-			responses[refID] = pRes
+			encodedFrames = append(encodedFrames, res.Dataframes...)
 			continue
 		}
 
@@ -202,18 +193,8 @@ func (s *transformCallback) QueryData(ctx context.Context, req *pluginv2.QueryDa
 			if err != nil {
 				return nil, err
 			}
-			pRes.Frames = append(pRes.Frames, encFrame)
+			encodedFrames = append(encodedFrames, encFrame)
 		}
-		if res.Meta != nil {
-			b, err := res.Meta.MarshalJSON()
-			if err != nil {
-				s.logger.Error("failed to marhsal json metadata", err)
-			}
-			pRes.JsonMeta = b
-		}
-		responses[refID] = pRes
 	}
-	return &pluginv2.QueryDataResponse{
-		Responses: responses,
-	}, nil
+	return &pluginv2.QueryDataResponse{Frames: encodedFrames}, nil
 }

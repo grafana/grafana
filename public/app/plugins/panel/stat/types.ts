@@ -1,5 +1,13 @@
 import { SingleStatBaseOptions, BigValueColorMode, BigValueGraphMode, BigValueJustifyMode } from '@grafana/ui';
-import { VizOrientation, ReducerID, ReduceDataOptions, SelectableValue, standardEditorsRegistry } from '@grafana/data';
+import {
+  VizOrientation,
+  ReducerID,
+  ReduceDataOptions,
+  SelectableValue,
+  ThresholdsMode,
+  standardEditorsRegistry,
+  FieldConfigProperty,
+} from '@grafana/data';
 import { PanelOptionsEditorBuilder } from '@grafana/data/src/utils/OptionsUIBuilders';
 
 // Structure copied from angular
@@ -29,9 +37,20 @@ export const commonValueOptionDefaults: ReduceDataOptions = {
   calcs: [ReducerID.mean],
 };
 
+export const standardFieldConfigDefaults: Partial<Record<FieldConfigProperty, any>> = {
+  [FieldConfigProperty.Thresholds]: {
+    mode: ThresholdsMode.Absolute,
+    steps: [
+      { value: -Infinity, color: 'green' },
+      { value: 80, color: 'red' },
+    ],
+  },
+  [FieldConfigProperty.Mappings]: [],
+};
+
 export function addStandardDataReduceOptions(builder: PanelOptionsEditorBuilder<StatPanelOptions>) {
   builder.addRadio({
-    path: 'reduceOptions.values',
+    id: 'reduceOptions.values',
     name: 'Show',
     description: 'Calculate a single value per colum or series or show each row',
     settings: {
@@ -43,7 +62,7 @@ export function addStandardDataReduceOptions(builder: PanelOptionsEditorBuilder<
   });
 
   builder.addNumberInput({
-    path: 'reduceOptions.limit',
+    id: 'reduceOptions.limit',
     name: 'Limit',
     description: 'Max number of rows to display',
     settings: {
@@ -56,14 +75,13 @@ export function addStandardDataReduceOptions(builder: PanelOptionsEditorBuilder<
 
   builder.addCustomEditor({
     id: 'reduceOptions.calcs',
-    path: 'reduceOptions.calcs',
     name: 'Value',
     description: 'Choose a reducer function / calculation',
     editor: standardEditorsRegistry.get('stats-picker').editor as any,
   });
 
   builder.addRadio({
-    path: 'orientation',
+    id: 'orientation',
     name: 'Orientation',
     description: 'Stacking direction in case of multiple series or fields',
     settings: {

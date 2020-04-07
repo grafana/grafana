@@ -4,6 +4,7 @@ import { ReplaySubject, Unsubscribable, Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 
 // Services & Utils
+import { config } from 'app/core/config';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import kbn from 'app/core/utils/kbn';
 import templateSrv from 'app/features/templating/template_srv';
@@ -69,37 +70,36 @@ export class PanelQueryRunner {
     return this.subject.pipe(
       map((data: PanelData) => {
         let processedData = data;
-
-        // Apply transformations
-
-        if (transform) {
-          const transformations = this.dataConfigSource.getTransformations();
-
-          if (transformations && transformations.length > 0) {
-            processedData = {
-              ...processedData,
-              series: transformDataFrame(this.dataConfigSource.getTransformations(), data.series),
-            };
-          }
+        // apply transformations
+        if (transform && this.hasTransformations()) {
+          processedData = {
+            ...processedData,
+            series: transformDataFrame(this.dataConfigSource.getTransformations(), data.series),
+          };
         }
-
-        // Apply field defaults & overrides
-        const fieldConfig = this.dataConfigSource.getFieldOverrideOptions();
-
-        if (fieldConfig) {
+        // apply overrides
+        if (this.hasFieldOverrideOptions()) {
           processedData = {
             ...processedData,
             series: applyFieldOverrides({
               data: processedData.series,
-              ...fieldConfig,
+              ...this.dataConfigSource.getFieldOverrideOptions(),
             }),
           };
         }
-
         return processedData;
       })
     );
   }
+
+  hasTransformations = () => {
+    const transformations = this.dataConfigSource.getTransformations();
+    return config.featureToggles.transformations && transformations && transformations.length > 0;
+  };
+
+  hasFieldOverrideOptions = () => {
+    return this.dataConfigSource.getFieldOverrideOptions();
+  };
 
   async run(options: QueryRunnerOptions) {
     const {

@@ -13,7 +13,6 @@ describe('Manifest', () => {
         "manifest.ts",
         "nodeVersionChecker.ts",
         "package.build.ts",
-        "plugin/bundle.managed.ts",
         "plugin/bundle.ts",
         "plugin/create.ts",
         "plugin/tests.ts",

@@ -7,7 +7,6 @@ const TerserPlugin = require('terser-webpack-plugin');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const OptimizeCssAssetsPlugin = require('optimize-css-assets-webpack-plugin');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
-const ForkTsCheckerWebpackPlugin = require('fork-ts-checker-webpack-plugin');
 
 const readdirPromise = util.promisify(fs.readdir);
 const accessPromise = util.promisify(fs.access);
@@ -124,11 +123,6 @@ const getCommonPlugins = (options: WebpackConfigurationOptions) => {
         ],
       },
     ]),
-    new ForkTsCheckerWebpackPlugin({
-      tsconfig: path.join(process.cwd(), 'tsconfig.json'),
-      // Only report problems in detected in plugin's code
-      reportFiles: ['**/*.{ts,tsx}'],
-    }),
   ];
 };
 
@@ -211,10 +205,7 @@ const getBaseWebpackConfig: WebpackConfigurationGetter = async options => {
             },
             {
               loader: 'ts-loader',
-              options: {
-                onlyCompileBundledFiles: true,
-                transpileOnly: true,
-              },
+              options: { onlyCompileBundledFiles: true },
             },
           ],
           exclude: /(node_modules)/,

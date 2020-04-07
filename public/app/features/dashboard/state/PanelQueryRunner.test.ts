@@ -210,7 +210,7 @@ describe('PanelQueryRunner', () => {
     },
     {
       getFieldOverrideOptions: () => ({
-        fieldConfig: {
+        fieldOptions: {
           defaults: {
             unit: 'm/s',
           },

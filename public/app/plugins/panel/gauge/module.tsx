@@ -8,20 +8,21 @@ import { gaugePanelMigrationHandler, gaugePanelChangedHandler } from './GaugeMig
 export const plugin = new PanelPlugin<GaugeOptions>(GaugePanel)
   .setDefaults(defaults)
   .setEditor(GaugePanelEditor)
-  .useFieldConfig()
   .setPanelOptions(builder => {
     addStandardDataReduceOptions(builder);
+
     builder
       .addBooleanSwitch({
-        path: 'showThresholdLabels',
+        id: 'showThresholdLabels',
         name: 'Show threshold Labels',
         description: 'Render the threshold values around the gauge bar',
       })
       .addBooleanSwitch({
-        path: 'showThresholdMarkers',
+        id: 'showThresholdMarkers',
         name: 'Show threshold markers',
         description: 'Renders the thresholds as an outer bar',
       });
   })
   .setPanelChangeHandler(gaugePanelChangedHandler)
-  .setMigrationHandler(gaugePanelMigrationHandler);
+  .setMigrationHandler(gaugePanelMigrationHandler)
+  .useStandardFieldConfig();

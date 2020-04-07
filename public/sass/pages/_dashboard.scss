@@ -5,6 +5,10 @@
   box-sizing: border-box;
 }
 
+.template-variable {
+  color: $variable;
+}
+
 div.flot-text {
   color: $text-color !important;
 }
@@ -52,8 +56,8 @@ div.flot-text {
   width: 100%;
 
   &--transparent {
-    background-color: transparent;
-    border: 1px solid transparent;
+    background-color: $page-bg;
+    border: none;
   }
 
   &:hover {

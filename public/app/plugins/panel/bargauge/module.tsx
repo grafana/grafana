@@ -9,13 +9,12 @@ import { barGaugePanelMigrationHandler } from './BarGaugeMigrations';
 export const plugin = new PanelPlugin<BarGaugeOptions>(BarGaugePanel)
   .setDefaults(defaults)
   .setEditor(BarGaugePanelEditor)
-  .useFieldConfig()
   .setPanelOptions(builder => {
     addStandardDataReduceOptions(builder);
 
     builder
       .addRadio({
-        path: 'displayMode',
+        id: 'displayMode',
         name: 'Display mode',
         description: 'Controls the bar style',
         settings: {
@@ -27,10 +26,11 @@ export const plugin = new PanelPlugin<BarGaugeOptions>(BarGaugePanel)
         },
       })
       .addBooleanSwitch({
-        path: 'showUnfilled',
+        id: 'showUnfilled',
         name: 'Show unfilled area',
         description: 'When enabled renders the unfilled region as gray',
       });
   })
   .setPanelChangeHandler(sharedSingleStatPanelChangedHandler)
-  .setMigrationHandler(barGaugePanelMigrationHandler);
+  .setMigrationHandler(barGaugePanelMigrationHandler)
+  .useStandardFieldConfig();

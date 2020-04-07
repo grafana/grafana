@@ -7,21 +7,17 @@ import {
   ThresholdsMode,
   FieldColorMode,
   ColorScheme,
+  FieldConfigEditorRegistry,
   FieldOverrideContext,
   ScopedVars,
   ApplyFieldOverrideOptions,
-  FieldConfigPropertyItem,
 } from '../types';
 import { fieldMatchers, ReducerID, reduceField } from '../transformations';
 import { FieldMatcher } from '../types/transformations';
 import isNumber from 'lodash/isNumber';
-import set from 'lodash/set';
-import unset from 'lodash/unset';
-import get from 'lodash/get';
 import { getDisplayProcessor } from './displayProcessor';
 import { guessFieldTypeForField } from '../dataframe';
 import { standardFieldConfigEditorRegistry } from './standardFieldConfigEditorRegistry';
-import { FieldConfigOptionsRegistry } from './FieldConfigOptionsRegistry';
 
 interface OverrideProps {
   match: FieldMatcher;
@@ -63,12 +59,10 @@ export function applyFieldOverrides(options: ApplyFieldOverrideOptions): DataFra
     return [];
   }
 
-  const source = options.fieldConfig;
+  const source = options.fieldOptions;
   if (!source) {
     return options.data;
   }
-
-  const fieldConfigRegistry = options.fieldConfigRegistry ?? standardFieldConfigEditorRegistry;
 
   let range: GlobalMinMax | undefined = undefined;
 
@@ -111,7 +105,7 @@ export function applyFieldOverrides(options: ApplyFieldOverrideOptions): DataFra
         data: options.data!,
         dataFrameIndex: index,
         replaceVariables: options.replaceVariables,
-        fieldConfigRegistry: fieldConfigRegistry,
+        custom: options.custom,
       };
 
       // Anything in the field config that's not set by the datasource
@@ -194,12 +188,13 @@ export function applyFieldOverrides(options: ApplyFieldOverrideOptions): DataFra
 }
 
 export interface FieldOverrideEnv extends FieldOverrideContext {
-  fieldConfigRegistry: FieldConfigOptionsRegistry;
+  custom?: FieldConfigEditorRegistry;
 }
 
-export function setDynamicConfigValue(config: FieldConfig, value: DynamicConfigValue, context: FieldOverrideEnv) {
-  const reg = context.fieldConfigRegistry;
-  const item = reg.getIfExists(value.id);
+function setDynamicConfigValue(config: FieldConfig, value: DynamicConfigValue, context: FieldOverrideEnv) {
+  const reg = value.custom ? context.custom : standardFieldConfigEditorRegistry;
+
+  const item = reg?.getIfExists(value.prop);
   if (!item || !item.shouldApply(context.field!)) {
     return;
   }
@@ -209,19 +204,19 @@ export function setDynamicConfigValue(config: FieldConfig, value: DynamicConfigV
   const remove = val === undefined || val === null;
 
   if (remove) {
-    if (item.isCustom && config.custom) {
-      unset(config.custom, item.path);
+    if (value.custom && config.custom) {
+      delete config.custom[value.prop];
     } else {
-      unset(config, item.path);
+      delete (config as any)[value.prop];
     }
   } else {
-    if (item.isCustom) {
+    if (value.custom) {
       if (!config.custom) {
         config.custom = {};
       }
-      set(config.custom, item.path, val);
+      config.custom[value.prop] = val;
     } else {
-      set(config, item.path, val);
+      (config as any)[value.prop] = val;
     }
   }
 }
@@ -229,39 +224,48 @@ export function setDynamicConfigValue(config: FieldConfig, value: DynamicConfigV
 // config -> from DS
 // defaults -> from Panel config
 export function setFieldConfigDefaults(config: FieldConfig, defaults: FieldConfig, context: FieldOverrideEnv) {
-  for (const fieldConfigProperty of context.fieldConfigRegistry.list()) {
-    if (fieldConfigProperty.isCustom && !config.custom) {
-      config.custom = {};
-    }
-    processFieldConfigValue(
-      fieldConfigProperty.isCustom ? config.custom : config,
-      fieldConfigProperty.isCustom ? defaults.custom : defaults,
-      fieldConfigProperty,
-      context
-    );
-  }
+  if (defaults) {
+    const keys = Object.keys(defaults);
+    for (const key of keys) {
+      if (key === 'custom') {
+        if (!context.custom) {
+          continue;
+        }
+        if (!config.custom) {
+          config.custom = {};
+        }
+        const customKeys = Object.keys(defaults.custom!);
 
+        for (const customKey of customKeys) {
+          processFieldConfigValue(config.custom!, defaults.custom!, customKey, context.custom, context);
+        }
+      } else {
+        // when config from ds exists for a given field -> use it
+        processFieldConfigValue(config, defaults, key, standardFieldConfigEditorRegistry, context);
+      }
+    }
+  }
   validateFieldConfig(config);
 }
 
 const processFieldConfigValue = (
   destination: Record<string, any>, // it's mutable
   source: Record<string, any>,
-  fieldConfigProperty: FieldConfigPropertyItem,
-  context: FieldOverrideEnv
+  key: string,
+  registry: FieldConfigEditorRegistry,
+  context: FieldOverrideContext
 ) => {
-  const currentConfig = get(destination, fieldConfigProperty.path);
-
+  const currentConfig = destination[key];
   if (currentConfig === null || currentConfig === undefined) {
-    const item = context.fieldConfigRegistry.getIfExists(fieldConfigProperty.id);
+    const item = registry.getIfExists(key);
     if (!item) {
       return;
     }
 
     if (item && item.shouldApply(context.field!)) {
-      const val = item.process(get(source, item.path), context, item.settings);
+      const val = item.process(source[key], context, item.settings);
       if (val !== undefined && val !== null) {
-        set(destination, item.path, val);
+        destination[key] = val;
       }
     }
   }

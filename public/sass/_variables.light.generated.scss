@@ -198,15 +198,15 @@ $btn-active-box-shadow: 0px 0px 4px rgba(234, 161, 51, 0.6);
 $input-bg: $white;
 $input-bg-disabled: $gray-5;
 
-$input-color: #343b40;
-$input-border-color: #e9edf2;
+$input-color: $dark-2;
+$input-border-color: $gray-5;
 $input-box-shadow: none;
-$input-border-focus: #5794f2;
-$input-box-shadow-focus: #5794f2;
+$input-border-focus: $gray-5 !default;
+$input-box-shadow-focus: $blue-light !default;
 $input-color-placeholder: #9fa7b3;
-$input-label-bg: #e9edf2;
-$input-label-border-color: #e9edf2;
-$input-color-select-arrow: #7b8087;
+$input-label-bg: $gray-5;
+$input-label-border-color: $gray-5;
+$input-color-select-arrow: $gray-1;
 
 // search
 $search-shadow: 0 1px 5px 0 $gray-5;

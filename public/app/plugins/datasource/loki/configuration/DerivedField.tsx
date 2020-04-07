@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { css } from 'emotion';
-import { Button, FormField, DataLinkInput, stylesFactory, LegacyForms } from '@grafana/ui';
-const { Switch } = LegacyForms;
+import { Button, FormField, DataLinkInput, stylesFactory, Switch } from '@grafana/ui';
 import { VariableSuggestion } from '@grafana/data';
 import { DataSourceSelectItem } from '@grafana/data';
 

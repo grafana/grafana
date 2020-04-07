@@ -10,6 +10,8 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/grafana/grafana/pkg/services/licensing"
+
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
@@ -17,7 +19,6 @@ import (
 	"github.com/grafana/grafana/pkg/login"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/auth"
-	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/stretchr/testify/assert"
@@ -108,16 +109,12 @@ func TestLoginErrorCookieApiEndpoint(t *testing.T) {
 
 	oauthError := errors.New("User not a member of one of the required organizations")
 	encryptedError, _ := util.Encrypt([]byte(oauthError.Error()), setting.SecretKey)
-	expCookiePath := "/"
-	if len(setting.AppSubUrl) > 0 {
-		expCookiePath = setting.AppSubUrl
-	}
 	cookie := http.Cookie{
 		Name:     LoginErrorCookieName,
 		MaxAge:   60,
 		Value:    hex.EncodeToString(encryptedError),
 		HttpOnly: true,
-		Path:     expCookiePath,
+		Path:     setting.AppSubUrl + "/",
 		Secure:   hs.Cfg.CookieSecure,
 		SameSite: hs.Cfg.CookieSameSiteMode,
 	}
@@ -213,16 +210,12 @@ func TestLoginViewRedirect(t *testing.T) {
 		hs.Cfg.AppUrl = c.appURL
 		hs.Cfg.AppSubUrl = c.appSubURL
 		t.Run(c.desc, func(t *testing.T) {
-			expCookiePath := "/"
-			if len(hs.Cfg.AppSubUrl) > 0 {
-				expCookiePath = hs.Cfg.AppSubUrl
-			}
 			cookie := http.Cookie{
 				Name:     "redirect_to",
 				MaxAge:   60,
 				Value:    c.url,
 				HttpOnly: true,
-				Path:     expCookiePath,
+				Path:     hs.Cfg.AppSubUrl + "/",
 				Secure:   hs.Cfg.CookieSecure,
 				SameSite: hs.Cfg.CookieSameSiteMode,
 			}
@@ -245,7 +238,7 @@ func TestLoginViewRedirect(t *testing.T) {
 					expCookieValue = ""
 					expCookieMaxAge = 0
 				}
-				expCookie := fmt.Sprintf("redirect_to=%v; Path=%v; Max-Age=%v; HttpOnly; Secure", expCookieValue, expCookiePath, expCookieMaxAge)
+				expCookie := fmt.Sprintf("redirect_to=%v; Path=%v; Max-Age=%v; HttpOnly; Secure", expCookieValue, hs.Cfg.AppSubUrl+"/", expCookieMaxAge)
 				for _, cookieValue := range setCookie {
 					if cookieValue == expCookie {
 						redirectToCookieFound = true
@@ -339,16 +332,12 @@ func TestLoginPostRedirect(t *testing.T) {
 		hs.Cfg.AppUrl = c.appURL
 		hs.Cfg.AppSubUrl = c.appSubURL
 		t.Run(c.desc, func(t *testing.T) {
-			expCookiePath := "/"
-			if len(hs.Cfg.AppSubUrl) > 0 {
-				expCookiePath = hs.Cfg.AppSubUrl
-			}
 			cookie := http.Cookie{
 				Name:     "redirect_to",
 				MaxAge:   60,
 				Value:    c.url,
 				HttpOnly: true,
-				Path:     expCookiePath,
+				Path:     hs.Cfg.AppSubUrl + "/",
 				Secure:   hs.Cfg.CookieSecure,
 				SameSite: hs.Cfg.CookieSameSiteMode,
 			}
@@ -369,7 +358,7 @@ func TestLoginPostRedirect(t *testing.T) {
 			assert.True(t, ok, "Set-Cookie exists")
 			assert.Greater(t, len(setCookie), 0)
 			var redirectToCookieFound bool
-			expCookieValue := fmt.Sprintf("redirect_to=; Path=%v; Max-Age=0; HttpOnly; Secure", expCookiePath)
+			expCookieValue := fmt.Sprintf("redirect_to=; Path=%v; Max-Age=0; HttpOnly; Secure", hs.Cfg.AppSubUrl+"/")
 			for _, cookieValue := range setCookie {
 				if cookieValue == expCookieValue {
 					redirectToCookieFound = true

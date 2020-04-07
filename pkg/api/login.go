@@ -46,12 +46,8 @@ func (hs *HTTPServer) validateRedirectTo(redirectTo string) error {
 }
 
 func (hs *HTTPServer) cookieOptionsFromCfg() middleware.CookieOptions {
-	path := "/"
-	if len(hs.Cfg.AppSubUrl) > 0 {
-		path = hs.Cfg.AppSubUrl
-	}
 	return middleware.CookieOptions{
-		Path:             path,
+		Path:             hs.Cfg.AppSubUrl + "/",
 		Secure:           hs.Cfg.CookieSecure,
 		SameSiteDisabled: hs.Cfg.CookieSameSiteDisabled,
 		SameSiteMode:     hs.Cfg.CookieSameSiteMode,

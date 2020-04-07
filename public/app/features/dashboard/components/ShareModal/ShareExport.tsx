@@ -1,7 +1,6 @@
 import React, { PureComponent } from 'react';
 import { saveAs } from 'file-saver';
-import { Button, LegacyForms, Icon } from '@grafana/ui';
-const { Switch } = LegacyForms;
+import { Button, Switch, Icon } from '@grafana/ui';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 import { DashboardExporter } from 'app/features/dashboard/components/DashExportModal';
 import { appEvents } from 'app/core/core';

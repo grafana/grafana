@@ -3,8 +3,10 @@ import {
   ConfigOverrideRule,
   DataFrame,
   DynamicConfigValue,
-  FieldConfigOptionsRegistry,
+  FieldConfigEditorRegistry,
+  standardFieldConfigEditorRegistry,
   VariableSuggestionsScope,
+  SelectableValue,
   GrafanaTheme,
 } from '@grafana/data';
 import { fieldMatchersUI, stylesFactory, useTheme, ValuePicker, selectThemeVariant } from '@grafana/ui';
@@ -19,10 +21,18 @@ interface OverrideEditorProps {
   override: ConfigOverrideRule;
   onChange: (config: ConfigOverrideRule) => void;
   onRemove: () => void;
-  registry: FieldConfigOptionsRegistry;
+  customPropertiesRegistry?: FieldConfigEditorRegistry;
+  configPropertiesOptions: Array<SelectableValue<string>>;
 }
 
-export const OverrideEditor: React.FC<OverrideEditorProps> = ({ data, override, onChange, onRemove, registry }) => {
+export const OverrideEditor: React.FC<OverrideEditorProps> = ({
+  data,
+  override,
+  onChange,
+  onRemove,
+  customPropertiesRegistry,
+  configPropertiesOptions,
+}) => {
   const theme = useTheme();
   const onMatcherConfigChange = useCallback(
     (matcherConfig: any) => {
@@ -49,9 +59,10 @@ export const OverrideEditor: React.FC<OverrideEditorProps> = ({ data, override, 
   );
 
   const onDynamicConfigValueAdd = useCallback(
-    (id: string) => {
+    (prop: string, custom?: boolean) => {
       const propertyConfig: DynamicConfigValue = {
-        id,
+        prop,
+        custom,
       };
       if (override.properties) {
         override.properties.push(propertyConfig);
@@ -62,14 +73,6 @@ export const OverrideEditor: React.FC<OverrideEditorProps> = ({ data, override, 
     },
     [override, onChange]
   );
-
-  let configPropertiesOptions = registry.list().map(item => {
-    return {
-      label: item.name,
-      value: item.id,
-      description: item.description,
-    };
-  });
 
   const matcherUi = fieldMatchersUI.get(override.matcher.id);
   const styles = getStyles(theme);
@@ -87,19 +90,20 @@ export const OverrideEditor: React.FC<OverrideEditorProps> = ({ data, override, 
       </FieldConfigItemHeaderTitle>
       <div>
         {override.properties.map((p, j) => {
-          const item = registry.getIfExists(p.id);
+          const reg = p.custom ? customPropertiesRegistry : standardFieldConfigEditorRegistry;
+          const item = reg?.getIfExists(p.prop);
 
           if (!item) {
-            return <div>Unknown property: {p.id}</div>;
+            return <div>Unknown property: {p.prop}</div>;
           }
 
           return (
-            <div key={`${p.id}/${j}`}>
+            <div key={`${p.prop}/${j}`}>
               <DynamicConfigValueEditor
                 onChange={value => onDynamicConfigValueChange(j, value)}
                 onRemove={() => onDynamicConfigValueRemove(j)}
                 property={p}
-                registry={registry}
+                editorsRegistry={reg}
                 context={{
                   data,
                   getSuggestions: (scope?: VariableSuggestionsScope) => getDataLinksVariableSuggestions(data, scope),
@@ -115,7 +119,7 @@ export const OverrideEditor: React.FC<OverrideEditorProps> = ({ data, override, 
             options={configPropertiesOptions}
             variant={'link'}
             onChange={o => {
-              onDynamicConfigValueAdd(o.value);
+              onDynamicConfigValueAdd(o.value, o.custom);
             }}
           />
         </div>

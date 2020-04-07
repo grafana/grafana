@@ -30,6 +30,7 @@ export type IconName =
   | 'tag-alt'
   | 'forward'
   | 'check'
+  | 'add-panel'
   | 'copy'
   | 'lock'
   | 'panel-add'
@@ -127,6 +128,7 @@ export const getAvailableIcons = (): IconName[] => [
   'camera',
   'forward',
   'check',
+  'add-panel',
   'copy',
   'lock',
   'panel-add',

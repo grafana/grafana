@@ -5,13 +5,12 @@ import { useTheme, Icon, stylesFactory } from '@grafana/ui';
 
 interface Props {
   title: string;
-  defaultToClosed?: boolean;
 }
 
-export const OptionsGroup: FC<Props> = ({ title, children, defaultToClosed }) => {
-  const [isExpanded, toggleExpand] = useState(defaultToClosed ? false : true);
+export const OptionsGroup: FC<Props> = ({ title, children }) => {
+  const [isExpanded, toggleExpand] = useState(true);
   const theme = useTheme();
-  const styles = getStyles(theme, isExpanded);
+  const styles = getStyles(theme);
 
   return (
     <div className={styles.box}>
@@ -26,7 +25,7 @@ export const OptionsGroup: FC<Props> = ({ title, children, defaultToClosed }) =>
   );
 };
 
-const getStyles = stylesFactory((theme: GrafanaTheme, isExpanded: boolean) => {
+const getStyles = stylesFactory((theme: GrafanaTheme) => {
   return {
     box: css`
       border-bottom: 1px solid ${theme.colors.pageHeaderBorder};
@@ -41,7 +40,6 @@ const getStyles = stylesFactory((theme: GrafanaTheme, isExpanded: boolean) => {
       justify-content: space-between;
       align-items: center;
       padding: ${theme.spacing.sm} ${theme.spacing.md};
-      color: ${isExpanded ? theme.colors.text : theme.colors.formLabel};
       font-weight: ${theme.typography.weight.semibold};
 
       &:hover {

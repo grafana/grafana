@@ -3,7 +3,7 @@ import tinycolor from 'tinycolor2';
 import debounce from 'lodash/debounce';
 
 import { ColorPickerProps } from './ColorPickerPopover';
-import { Input } from '../Forms/Legacy/Input/Input';
+import { Input } from '../Input/Input';
 
 interface ColorInputState {
   previousColor: string;

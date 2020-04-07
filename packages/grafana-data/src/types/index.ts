@@ -19,7 +19,6 @@ export * from './datasource';
 export * from './panel';
 export * from './plugin';
 export * from './thresholds';
-export * from './templateVars';
 export * from './fieldColor';
 export * from './theme';
 export * from './orgs';

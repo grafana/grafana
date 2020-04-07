@@ -1,4 +1,4 @@
-import React, { FC, useCallback, useState } from 'react';
+import React, { FC, useState } from 'react';
 import { css } from 'emotion';
 import { GrafanaTheme, PanelPlugin, PanelPluginMeta } from '@grafana/data';
 import { CustomScrollbar, useTheme, stylesFactory, Icon, Input } from '@grafana/ui';
@@ -6,8 +6,7 @@ import { changePanelPlugin } from '../../state/actions';
 import { StoreState } from 'app/types';
 import { PanelModel } from '../../state/PanelModel';
 import { connect, MapStateToProps, MapDispatchToProps } from 'react-redux';
-import { VizTypePicker, getAllPanelPluginMeta, filterPluginList } from '../../panel_editor/VizTypePicker';
-import { Field } from '@grafana/ui/src/components/Forms/Field';
+import { VizTypePicker } from '../../panel_editor/VizTypePicker';
 
 interface OwnProps {
   panel: PanelModel;
@@ -35,21 +34,6 @@ export const VisualizationTabUnconnected: FC<Props> = ({ panel, plugin, changePa
   const onPluginTypeChange = (meta: PanelPluginMeta) => {
     changePanelPlugin(panel, meta.id);
   };
-
-  const onKeyPress = useCallback(
-    (e: React.KeyboardEvent<HTMLInputElement>) => {
-      if (e.key === 'Enter') {
-        const query = e.currentTarget.value;
-        const plugins = getAllPanelPluginMeta();
-        const match = filterPluginList(plugins, query);
-        if (match && match.length) {
-          onPluginTypeChange(match[0]);
-        }
-      }
-    },
-    [onPluginTypeChange]
-  );
-
   const suffix =
     searchQuery !== '' ? (
       <span className={styles.searchClear} onClick={() => setSearchQuery('')}>
@@ -61,17 +45,14 @@ export const VisualizationTabUnconnected: FC<Props> = ({ panel, plugin, changePa
   return (
     <div className={styles.wrapper}>
       <div className={styles.search}>
-        <Field label="Filters">
-          <Input
-            value={searchQuery}
-            onChange={e => setSearchQuery(e.currentTarget.value)}
-            onKeyPress={onKeyPress}
-            prefix={<Icon name="filter" className={styles.icon} />}
-            suffix={suffix}
-            placeholder="Filter visualisations"
-            autoFocus
-          />
-        </Field>
+        <Input
+          value={searchQuery}
+          onChange={e => setSearchQuery(e.currentTarget.value)}
+          prefix={<Icon name="filter" className={styles.icon} />}
+          suffix={suffix}
+          placeholder="Filter visualisations"
+          autoFocus
+        />
       </div>
       <div className={styles.visList}>
         <CustomScrollbar>
@@ -97,11 +78,12 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       flex-direction: column;
       flex-grow: 1;
       max-height: 100%;
-      padding: ${theme.spacing.md};
     `,
     search: css`
+      padding: ${theme.spacing.sm} ${theme.spacing.md};
       flex-grow: 0;
       flex-shrink: 1;
+      margin-bottom: ${theme.spacing.sm};
     `,
     searchClear: css`
       color: ${theme.colors.gray60};
@@ -111,6 +93,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       flex-grow: 1;
       height: 100%;
       overflow: hidden;
+      padding-left: ${theme.spacing.md};
     `,
   };
 });
