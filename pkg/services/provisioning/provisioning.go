@@ -39,7 +39,7 @@ func NewProvisioningServiceImpl(
 	provisionDatasources func(string) error,
 ) *provisioningServiceImpl {
 	return &provisioningServiceImpl{
-		log:                     log.New("provisioning"),
+		log: log.New("provisioning"),
 		newDashboardProvisioner: newDashboardProvisioner,
 		provisionNotifiers:      provisionNotifiers,
 		provisionDatasources:    provisionDatasources,
@@ -75,6 +75,7 @@ func (ps *provisioningServiceImpl) Run(ctx context.Context) error {
 	err := ps.ProvisionDashboards()
 	if err != nil {
 		ps.log.Error("Failed to provision dashboard", "error", err)
+		return err
 	}
 
 	for {
