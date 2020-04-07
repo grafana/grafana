@@ -34,6 +34,7 @@ export class FieldConfigEditorBuilder<TOptions> extends OptionsUIRegistryBuilder
   addNumberInput<TSettings>(config: FieldConfigEditorConfig<TOptions, TSettings & NumberFieldConfigSettings, number>) {
     return this.addCustomEditor({
       ...config,
+      id: config.path,
       override: standardEditorsRegistry.get('number').editor as any,
       editor: standardEditorsRegistry.get('number').editor as any,
       process: numberOverrideProcessor,
@@ -45,6 +46,7 @@ export class FieldConfigEditorBuilder<TOptions> extends OptionsUIRegistryBuilder
   addTextInput<TSettings>(config: FieldConfigEditorConfig<TOptions, TSettings & StringFieldConfigSettings, string>) {
     return this.addCustomEditor({
       ...config,
+      id: config.path,
       override: standardEditorsRegistry.get('text').editor as any,
       editor: standardEditorsRegistry.get('text').editor as any,
       process: stringOverrideProcessor,
@@ -58,6 +60,7 @@ export class FieldConfigEditorBuilder<TOptions> extends OptionsUIRegistryBuilder
   ) {
     return this.addCustomEditor({
       ...config,
+      id: config.path,
       override: standardEditorsRegistry.get('select').editor as any,
       editor: standardEditorsRegistry.get('select').editor as any,
       process: selectOverrideProcessor,
@@ -70,6 +73,7 @@ export class FieldConfigEditorBuilder<TOptions> extends OptionsUIRegistryBuilder
   addRadio<TOption, TSettings = any>(config: FieldConfigEditorConfig<TOptions, TSettings, TOption>) {
     return this.addCustomEditor({
       ...config,
+      id: config.path,
       override: standardEditorsRegistry.get('radio').editor as any,
       editor: standardEditorsRegistry.get('radio').editor as any,
       process: selectOverrideProcessor,
@@ -82,6 +86,7 @@ export class FieldConfigEditorBuilder<TOptions> extends OptionsUIRegistryBuilder
   addBooleanSwitch<TSettings = any>(config: FieldConfigEditorConfig<TOptions, TSettings, boolean>) {
     return this.addCustomEditor({
       ...config,
+      id: config.path,
       editor: standardEditorsRegistry.get('boolean').editor as any,
       override: standardEditorsRegistry.get('boolean').editor as any,
       process: booleanOverrideProcessor,
@@ -95,6 +100,7 @@ export class FieldConfigEditorBuilder<TOptions> extends OptionsUIRegistryBuilder
   ) {
     return this.addCustomEditor({
       ...config,
+      id: config.path,
       editor: standardEditorsRegistry.get('color').editor as any,
       override: standardEditorsRegistry.get('color').editor as any,
       process: identityOverrideProcessor,
@@ -108,6 +114,7 @@ export class FieldConfigEditorBuilder<TOptions> extends OptionsUIRegistryBuilder
   ) {
     return this.addCustomEditor({
       ...config,
+      id: config.path,
       editor: standardEditorsRegistry.get('unit').editor as any,
       override: standardEditorsRegistry.get('unit').editor as any,
       process: unitOverrideProcessor,
@@ -128,6 +135,7 @@ export class PanelOptionsEditorBuilder<TOptions> extends OptionsUIRegistryBuilde
   addNumberInput<TSettings>(config: PanelOptionsEditorConfig<TOptions, TSettings & NumberFieldConfigSettings, number>) {
     return this.addCustomEditor({
       ...config,
+      id: config.path,
       editor: standardEditorsRegistry.get('number').editor as any,
     });
   }
@@ -135,6 +143,7 @@ export class PanelOptionsEditorBuilder<TOptions> extends OptionsUIRegistryBuilde
   addTextInput<TSettings>(config: PanelOptionsEditorConfig<TOptions, TSettings & StringFieldConfigSettings, string>) {
     return this.addCustomEditor({
       ...config,
+      id: config.path,
       editor: standardEditorsRegistry.get('text').editor as any,
     });
   }
@@ -144,6 +153,7 @@ export class PanelOptionsEditorBuilder<TOptions> extends OptionsUIRegistryBuilde
   ) {
     return this.addCustomEditor({
       ...config,
+      id: config.path,
       editor: standardEditorsRegistry.get('select').editor as any,
     });
   }
@@ -153,6 +163,7 @@ export class PanelOptionsEditorBuilder<TOptions> extends OptionsUIRegistryBuilde
   ) {
     return this.addCustomEditor({
       ...config,
+      id: config.path,
       editor: standardEditorsRegistry.get('radio').editor as any,
     });
   }
@@ -160,6 +171,7 @@ export class PanelOptionsEditorBuilder<TOptions> extends OptionsUIRegistryBuilde
   addBooleanSwitch<TSettings = any>(config: PanelOptionsEditorConfig<TOptions, TSettings, boolean>) {
     return this.addCustomEditor({
       ...config,
+      id: config.path,
       editor: standardEditorsRegistry.get('boolean').editor as any,
     });
   }
@@ -169,6 +181,7 @@ export class PanelOptionsEditorBuilder<TOptions> extends OptionsUIRegistryBuilde
   ): this {
     return this.addCustomEditor({
       ...config,
+      id: config.path,
       editor: standardEditorsRegistry.get('color').editor as any,
       settings: config.settings || {},
     });
@@ -179,6 +192,7 @@ export class PanelOptionsEditorBuilder<TOptions> extends OptionsUIRegistryBuilde
   ): this {
     return this.addCustomEditor({
       ...config,
+      id: config.path,
       editor: standardEditorsRegistry.get('unit').editor as any,
     });
   }

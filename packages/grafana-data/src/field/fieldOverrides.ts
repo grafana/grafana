@@ -7,7 +7,6 @@ import {
   ThresholdsMode,
   FieldColorMode,
   ColorScheme,
-  FieldConfigEditorRegistry,
   FieldOverrideContext,
   ScopedVars,
   ApplyFieldOverrideOptions,
@@ -18,6 +17,7 @@ import isNumber from 'lodash/isNumber';
 import { getDisplayProcessor } from './displayProcessor';
 import { guessFieldTypeForField } from '../dataframe';
 import { standardFieldConfigEditorRegistry } from './standardFieldConfigEditorRegistry';
+import { FieldConfigOptionsRegistry } from './FieldConfigOptionsRegistry';
 
 interface OverrideProps {
   match: FieldMatcher;
@@ -59,10 +59,12 @@ export function applyFieldOverrides(options: ApplyFieldOverrideOptions): DataFra
     return [];
   }
 
-  const source = options.fieldOptions;
+  const source = options.fieldConfig;
   if (!source) {
     return options.data;
   }
+
+  const fieldConfigRegistry = options.fieldConfigRegistry ?? standardFieldConfigEditorRegistry;
 
   let range: GlobalMinMax | undefined = undefined;
 
@@ -105,7 +107,7 @@ export function applyFieldOverrides(options: ApplyFieldOverrideOptions): DataFra
         data: options.data!,
         dataFrameIndex: index,
         replaceVariables: options.replaceVariables,
-        custom: options.custom,
+        fieldConfigRegistry: fieldConfigRegistry,
       };
 
       // Anything in the field config that's not set by the datasource
@@ -188,13 +190,13 @@ export function applyFieldOverrides(options: ApplyFieldOverrideOptions): DataFra
 }
 
 export interface FieldOverrideEnv extends FieldOverrideContext {
-  custom?: FieldConfigEditorRegistry;
+  fieldConfigRegistry: FieldConfigOptionsRegistry;
 }
 
 function setDynamicConfigValue(config: FieldConfig, value: DynamicConfigValue, context: FieldOverrideEnv) {
-  const reg = value.custom ? context.custom : standardFieldConfigEditorRegistry;
+  const reg = context.fieldConfigRegistry;
 
-  const item = reg?.getIfExists(value.prop);
+  const item = reg.getIfExists(value.id);
   if (!item || !item.shouldApply(context.field!)) {
     return;
   }
@@ -204,19 +206,19 @@ function setDynamicConfigValue(config: FieldConfig, value: DynamicConfigValue, c
   const remove = val === undefined || val === null;
 
   if (remove) {
-    if (value.custom && config.custom) {
-      delete config.custom[value.prop];
+    if (value.isCustom && config.custom) {
+      delete config.custom[item.path];
     } else {
-      delete (config as any)[value.prop];
+      delete (config as any)[item.path];
     }
   } else {
-    if (value.custom) {
+    if (value.isCustom) {
       if (!config.custom) {
         config.custom = {};
       }
-      config.custom[value.prop] = val;
+      config.custom[item.path] = val;
     } else {
-      (config as any)[value.prop] = val;
+      (config as any)[item.path] = val;
     }
   }
 }
@@ -228,23 +230,24 @@ export function setFieldConfigDefaults(config: FieldConfig, defaults: FieldConfi
     const keys = Object.keys(defaults);
     for (const key of keys) {
       if (key === 'custom') {
-        if (!context.custom) {
+        if (!context.fieldConfigRegistry) {
           continue;
         }
         if (!config.custom) {
           config.custom = {};
         }
-        const customKeys = Object.keys(defaults.custom!);
 
+        const customKeys = Object.keys(defaults.custom!);
         for (const customKey of customKeys) {
-          processFieldConfigValue(config.custom!, defaults.custom!, customKey, context.custom, context);
+          processFieldConfigValue(config.custom!, defaults.custom!, `custom.${customKey}`, context);
         }
       } else {
         // when config from ds exists for a given field -> use it
-        processFieldConfigValue(config, defaults, key, standardFieldConfigEditorRegistry, context);
+        processFieldConfigValue(config, defaults, key, context);
       }
     }
   }
+
   validateFieldConfig(config);
 }
 
@@ -252,20 +255,19 @@ const processFieldConfigValue = (
   destination: Record<string, any>, // it's mutable
   source: Record<string, any>,
   key: string,
-  registry: FieldConfigEditorRegistry,
-  context: FieldOverrideContext
+  context: FieldOverrideEnv
 ) => {
   const currentConfig = destination[key];
   if (currentConfig === null || currentConfig === undefined) {
-    const item = registry.getIfExists(key);
+    const item = context.fieldConfigRegistry.getIfExists(key);
     if (!item) {
       return;
     }
 
     if (item && item.shouldApply(context.field!)) {
-      const val = item.process(source[key], context, item.settings);
+      const val = item.process(source[item.path], context, item.settings);
       if (val !== undefined && val !== null) {
-        destination[key] = val;
+        destination[item.path] = val;
       }
     }
   }
