@@ -7,6 +7,7 @@ import { getConfig } from 'app/core/config';
 import { variableRegex } from './utils';
 import { isAdHoc } from '../variables/guard';
 import { VariableModel } from './types';
+import { setTemplateSrv, TemplateSrv as BaseTemplateSrv } from '@grafana/runtime';
 
 function luceneEscape(value: string) {
   return value.replace(/([\!\*\+\-\=<>\s\&\|\(\)\[\]\{\}\^\~\?\:\\/"])/g, '\\$1');
@@ -28,7 +29,7 @@ const runtimeDependencies: TemplateSrvDependencies = {
   getVariableWithName,
 };
 
-export class TemplateSrv {
+export class TemplateSrv implements BaseTemplateSrv {
   private _variables: any[];
   private regex = variableRegex;
   private index: any = {};
@@ -448,4 +449,7 @@ export class TemplateSrv {
   };
 }
 
-export default new TemplateSrv();
+// Expose the template srv
+const srv = new TemplateSrv();
+setTemplateSrv(srv);
+export default srv;

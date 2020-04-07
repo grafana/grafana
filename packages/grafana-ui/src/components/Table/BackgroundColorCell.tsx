@@ -20,11 +20,14 @@ export const BackgroundColoredCell: FC<TableCellProps> = props => {
 
   const styles: CSSProperties = {
     background: `linear-gradient(120deg, ${bgColor2}, ${displayValue.color})`,
-    borderRadius: '0px',
     color: 'white',
     height: tableStyles.cellHeight,
     padding: tableStyles.cellPadding,
   };
 
-  return <div style={styles}>{formattedValueToString(displayValue)}</div>;
+  return (
+    <div className={tableStyles.tableCell} style={styles}>
+      {formattedValueToString(displayValue)}
+    </div>
+  );
 };

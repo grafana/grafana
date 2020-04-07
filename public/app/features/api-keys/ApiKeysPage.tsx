@@ -13,16 +13,8 @@ import ApiKeysAddedModal from './ApiKeysAddedModal';
 import config from 'app/core/config';
 import appEvents from 'app/core/app_events';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
-import {
-  DeleteButton,
-  EventsWithValidation,
-  FormLabel,
-  LegacyForms,
-  Switch,
-  ValidationEvents,
-  Icon,
-} from '@grafana/ui';
-const { Input } = LegacyForms;
+import { DeleteButton, EventsWithValidation, FormLabel, LegacyForms, ValidationEvents, Icon } from '@grafana/ui';
+const { Input, Switch } = LegacyForms;
 import { dateTime, isDateTime, NavModel } from '@grafana/data';
 import { FilterInput } from 'app/core/components/FilterInput/FilterInput';
 import { store } from 'app/store/store';
