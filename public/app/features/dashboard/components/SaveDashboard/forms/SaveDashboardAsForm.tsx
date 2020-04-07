@@ -4,8 +4,6 @@ import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
 import { SaveDashboardFormProps } from '../types';
 
-export const NEW_DASHBOARD_DEFAULT_TITLE = 'New dashboard';
-
 interface SaveDashboardAsFormDTO {
   title: string;
   $folder: { id: number; title: string };
@@ -67,15 +65,30 @@ export const SaveDashboardAsForm: React.FC<SaveDashboardFormProps & { isNew?: bo
           },
           dashboard
         );
+
         if (result.status === 'success') {
           onSuccess();
         }
       }}
     >
-      {({ register, control, errors }) => (
+      {({ register, control, errors, getValues }) => (
         <>
-          <Forms.Field label="Dashboard name" invalid={!!errors.title} error="Dashboard name is required">
-            <Input name="title" ref={register({ required: true })} aria-label="Save dashboard title field" autoFocus />
+          <Forms.Field label="Dashboard name" invalid={!!errors.title} error={errors.title?.message}>
+            <Input
+              name="title"
+              ref={register({
+                validate: v => {
+                  if (v.trim() === '') {
+                    return 'Dashboard name is required';
+                  } else if (v && v === getValues().$folder.title.trim()) {
+                    return 'Dashboard name cannot be the same as folder';
+                  }
+                  return true;
+                },
+              })}
+              aria-label="Save dashboard title field"
+              autoFocus
+            />
           </Forms.Field>
           <Forms.Field label="Folder">
             <Forms.InputControl
