@@ -43,6 +43,13 @@ export const Icon = React.forwardRef<HTMLDivElement, IconProps>(
     const theme = useTheme();
     const styles = getIconStyles(theme, type);
     const svgSize = getSvgSize(size, theme);
+
+    /* Temporary solution to display also font awesome icons */
+    const isFontAwesome = name?.includes('fa-');
+    if (isFontAwesome) {
+      return <i className={cx(name, className)} {...divElementProps} style={style} />;
+    }
+
     const iconName = type === 'default' ? `Uil${toPascalCase(name)}` : toPascalCase(name);
 
     /* Unicons don't have type definitions */

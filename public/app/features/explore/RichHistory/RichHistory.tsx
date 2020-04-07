@@ -10,7 +10,7 @@ import { stylesFactory, withTheme } from '@grafana/ui';
 //Types
 import { RichHistoryQuery, ExploreId } from 'app/types/explore';
 import { SelectableValue, GrafanaTheme } from '@grafana/data';
-import { TabsBar, Tab, TabContent, Themeable, CustomScrollbar } from '@grafana/ui';
+import { TabsBar, Tab, TabContent, Themeable, CustomScrollbar, IconName } from '@grafana/ui';
 
 //Components
 import { RichHistorySettings } from './RichHistorySettings';
@@ -216,7 +216,7 @@ class UnThemedRichHistory extends PureComponent<RichHistoryProps, RichHistorySta
               label={t.label}
               active={t.value === activeTab}
               onChangeTab={() => this.onSelectTab(t)}
-              icon={t.icon}
+              icon={t.icon as IconName}
             />
           ))}
           <div className={styles.close} onClick={onClose}>

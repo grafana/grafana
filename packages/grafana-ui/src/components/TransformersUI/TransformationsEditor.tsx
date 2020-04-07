@@ -118,7 +118,7 @@ export class TransformationsEditor extends React.PureComponent<TransformationsEd
     return (
       <>
         {this.renderTransformationEditors()}
-        <Button variant="secondary" icon="fa fa-plus" onClick={this.onTransformationAdd}>
+        <Button variant="secondary" icon="plus" onClick={this.onTransformationAdd}>
           Add transformation
         </Button>
       </>

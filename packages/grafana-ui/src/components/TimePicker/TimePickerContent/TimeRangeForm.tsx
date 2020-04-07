@@ -62,7 +62,7 @@ export const TimeRangeForm: React.FC<Props> = props => {
     [timeZone]
   );
 
-  const icon = isFullscreen ? null : <Button icon="fa fa-calendar" variant="secondary" onClick={onOpen} />;
+  const icon = isFullscreen ? null : <Button icon="calendar-alt" variant="secondary" onClick={onOpen} />;
 
   return (
     <>

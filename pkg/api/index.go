@@ -116,7 +116,7 @@ func (hs *HTTPServer) setIndexViewData(c *models.ReqContext) (*dtos.IndexViewDat
 			children = append(children, &dtos.NavLink{Text: "Folder", SubTitle: "Create a new folder to organize your dashboards", Id: "folder", Icon: "folder-plus", Url: setting.AppSubUrl + "/dashboards/folder/new"})
 		}
 
-		children = append(children, &dtos.NavLink{Text: "Import", SubTitle: "Import dashboard from file or Grafana.com", Id: "import", Icon: "upload", Url: setting.AppSubUrl + "/dashboard/import"})
+		children = append(children, &dtos.NavLink{Text: "Import", SubTitle: "Import dashboard from file or Grafana.com", Id: "import", Icon: "import", Url: setting.AppSubUrl + "/dashboard/import"})
 
 		data.NavTree = append(data.NavTree, &dtos.NavLink{
 			Text:       "Create",

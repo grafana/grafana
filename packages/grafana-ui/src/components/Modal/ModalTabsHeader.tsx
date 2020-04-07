@@ -7,7 +7,7 @@ import { ModalHeader } from './ModalHeader';
 interface ModalTab {
   value: string;
   label: string;
-  icon?: string;
+  icon?: IconName;
 }
 
 interface Props {

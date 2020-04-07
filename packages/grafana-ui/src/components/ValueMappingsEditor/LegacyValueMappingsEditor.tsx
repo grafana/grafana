@@ -98,7 +98,7 @@ export class LegacyValueMappingsEditor extends PureComponent<Props, State> {
                 removeValueMapping={() => this.onRemoveMapping(valueMapping.id)}
               />
             ))}
-          <Button variant="primary" icon="fa fa-plus" onClick={this.onAddMapping}>
+          <Button variant="primary" icon="plus" onClick={this.onAddMapping}>
             Add mapping
           </Button>
         </div>

@@ -151,7 +151,7 @@ export class ApiKeysPage extends PureComponent<Props, any> {
         {!isAdding && (
           <EmptyListCTA
             title="You haven't added any API Keys yet."
-            buttonIcon="gicon gicon-apikeys"
+            buttonIcon="key-skeleton-alt"
             buttonLink="#"
             onClick={this.onToggleAdding}
             buttonTitle=" New API Key"

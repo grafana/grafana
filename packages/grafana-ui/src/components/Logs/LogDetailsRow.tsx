@@ -129,7 +129,7 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
                     <LinkButton
                       variant="link"
                       size={'sm'}
-                      icon={cx('fa', link.onClick ? 'fa-list' : 'fa-external-link')}
+                      icon={link.onClick ? 'list-ul' : 'external-link-alt'}
                       href={link.href}
                       target={'_blank'}
                       onClick={

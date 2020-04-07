@@ -1,6 +1,8 @@
 export type IconType = 'mono' | 'default';
 
 export type IconName =
+  | 'fa fa-fw fa-unlock'
+  | 'fa fa-envelope'
   | 'question-circle'
   | 'plus'
   | 'angle-up'
@@ -11,12 +13,19 @@ export type IconName =
   | 'plane'
   | 'power'
   | 'trash-alt'
+  | 'plus-square'
+  | 'folder-plus'
+  | 'folder-open'
+  | 'file-copy-alt'
+  | 'exchange-alt'
+  | 'import'
   | 'exclamation-triangle'
   | 'times'
+  | 'cloud-upload'
   | 'step-backward'
   | 'square-shape'
-  | 'filter'
   | 'share-alt'
+  | 'tag-alt'
   | 'forward'
   | 'check'
   | 'add-panel'
@@ -24,6 +33,8 @@ export type IconName =
   | 'lock'
   | 'panel-add'
   | 'arrow-random'
+  | 'arrow-down'
+  | 'arrow-up'
   | 'arrow-from-right'
   | 'keyboard'
   | 'search'
@@ -40,11 +51,15 @@ export type IconName =
   | 'link'
   | 'upload'
   | 'home-alt'
+  | 'channel-add'
+  | 'calendar-alt'
+  | 'calculator-alt'
   | 'compass'
   | 'sliders-v-alt'
   | 'bell'
   | 'database'
   | 'user'
+  | 'camera'
   | 'plug'
   | 'shield'
   | 'key-skeleton-alt'
@@ -58,22 +73,34 @@ export type IconName =
   | 'bug'
   | 'cube'
   | 'star'
+  | 'list-ul'
   | 'edit'
   | 'shield'
   | 'eye'
+  | 'filter'
   | 'monitor'
+  | 'plus-circle'
+  | 'arrow-left'
+  | 'repeat'
+  | 'external-link-alt'
   | 'favorite';
 
 export const getAvailableIcons = (): IconName[] => [
   'question-circle',
   'plane',
   'plus',
+  'plus-circle',
   'angle-up',
   'shield',
   'angle-down',
   'angle-left',
   'angle-right',
+  'calendar-alt',
+  'tag-alt',
+  'calculator-alt',
   'pen',
+  'repeat',
+  'external-link-alt',
   'power',
   'trash-alt',
   'exclamation-triangle',
@@ -81,6 +108,7 @@ export const getAvailableIcons = (): IconName[] => [
   'step-backward',
   'square-shape',
   'share-alt',
+  'camera',
   'forward',
   'check',
   'add-panel',
@@ -89,6 +117,7 @@ export const getAvailableIcons = (): IconName[] => [
   'panel-add',
   'arrow-random',
   'arrow-from-right',
+  'arrow-left',
   'keyboard',
   'search',
   'chart-line',
@@ -116,7 +145,9 @@ export const getAvailableIcons = (): IconName[] => [
   'graph-bar',
   'book',
   'bolt',
+  'cloud-upload',
   'comments-alt',
+  'list-ul',
   'document-info',
   'info-circle',
   'bug',
@@ -124,6 +155,15 @@ export const getAvailableIcons = (): IconName[] => [
   'star',
   'edit',
   'eye',
+  'channel-add',
   'monitor',
   'favorite',
+  'folder-plus',
+  'plus-square',
+  'import',
+  'folder-open',
+  'file-copy-alt',
+  'arrow-down',
+  'arrow-up',
+  'exchange-alt',
 ];
