@@ -3,10 +3,12 @@ import { css, cx } from 'emotion';
 import { GrafanaTheme } from '@grafana/data';
 import { Icon, stylesFactory, useTheme } from '@grafana/ui';
 import { IconType } from '@grafana/ui/src/components/Icon/types';
+import PageLoader from 'app/core/components/PageLoader/PageLoader';
+import appEvents from 'app/core/app_events';
+import { CoreEvents } from 'app/types';
 import { DashboardSection, ItemClickWithEvent, SearchAction } from '../types';
 import { SearchItem } from './SearchItem';
 import { SearchCheckbox } from './SearchCheckbox';
-import PageLoader from '../../../core/components/PageLoader/PageLoader';
 
 export interface Props {
   dispatch?: Dispatch<SearchAction>;
@@ -114,7 +116,11 @@ const SectionHeader: FC<SectionHeaderProps> = ({ section, onSectionClick, onTogg
 
       <span className={styles.text}>{section.title}</span>
       {section.url && (
-        <a href={section.url} className={styles.link}>
+        <a
+          href={section.url}
+          className={styles.link}
+          onClick={() => appEvents.emit(CoreEvents.hideDashSearch, { target: 'search-item' })}
+        >
           <Icon name="cog" />
         </a>
       )}
