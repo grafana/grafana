@@ -7,8 +7,8 @@ import (
 )
 
 var (
-	pluginRequestCounter *prometheus.CounterVec
-	pluginRequestLatency *prometheus.SummaryVec
+	pluginRequestCounter  *prometheus.CounterVec
+	pluginRequestDuration *prometheus.SummaryVec
 )
 
 func init() {
@@ -17,13 +17,13 @@ func init() {
 		Help: "The total amount of plugin requests",
 	}, []string{"plugin_id", "endpoint", "status"})
 
-	pluginRequestLatency = prometheus.NewSummaryVec(prometheus.SummaryOpts{
-		Name:       "plugin_request_latency_milliseconds",
-		Help:       "Plugin request latency",
+	pluginRequestDuration = prometheus.NewSummaryVec(prometheus.SummaryOpts{
+		Name:       "plugin_request_duration_milliseconds",
+		Help:       "Plugin request duration",
 		Objectives: map[float64]float64{0.5: 0.05, 0.9: 0.01, 0.99: 0.001},
 	}, []string{"plugin_id", "endpoint"})
 
-	prometheus.MustRegister(pluginRequestCounter, pluginRequestLatency)
+	prometheus.MustRegister(pluginRequestCounter, pluginRequestDuration)
 }
 
 // InstrumentPluginRequest instruments success rate and latency of `fn`
@@ -38,7 +38,7 @@ func InstrumentPluginRequest(pluginID string, endpoint string, fn func() error) 
 	}
 
 	elapsed := time.Since(start) / time.Millisecond
-	pluginRequestLatency.WithLabelValues(pluginID, endpoint).Observe(float64(elapsed))
+	pluginRequestDuration.WithLabelValues(pluginID, endpoint).Observe(float64(elapsed))
 	pluginRequestCounter.WithLabelValues(pluginID, endpoint, status).Inc()
 
 	return err
