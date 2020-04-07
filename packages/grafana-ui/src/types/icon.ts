@@ -85,6 +85,7 @@ export type IconName =
   | 'shield'
   | 'eye'
   | 'eye-slash'
+  | 'filter'
   | 'monitor'
   | 'plus-circle'
   | 'arrow-left'
@@ -102,6 +103,7 @@ export type IconName =
 export const getAvailableIcons = (): IconName[] => [
   'question-circle',
   'plane',
+  'plus',
   'plus-circle',
   'angle-up',
   'shield',
