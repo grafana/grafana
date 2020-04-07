@@ -3,6 +3,7 @@ import { e2e } from '@grafana/e2e';
 import EmptyListCTA from '../../../core/components/EmptyListCTA/EmptyListCTA';
 import { QueryVariableModel, VariableModel } from '../../templating/types';
 import { toVariableIdentifier, VariableIdentifier } from '../state/types';
+import { Icon } from '@grafana/ui';
 
 export interface Props {
   variables: VariableModel[];
@@ -148,7 +149,7 @@ export class VariableEditorList extends PureComponent<Props> {
                               variable.name
                             )}
                           >
-                            <i className="fa fa-remove" />
+                            <Icon name="times" />
                           </a>
                         </td>
                       </tr>

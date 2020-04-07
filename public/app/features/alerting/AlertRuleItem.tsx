@@ -1,8 +1,8 @@
 import React, { PureComponent } from 'react';
 // @ts-ignore
 import Highlighter from 'react-highlight-words';
-import classNames from 'classnames';
 import { AlertRule } from '../../types';
+import { Icon, IconName } from '@grafana/ui';
 
 export interface Props {
   rule: AlertRule;
@@ -24,19 +24,11 @@ class AlertRuleItem extends PureComponent<Props> {
   render() {
     const { rule, onTogglePause } = this.props;
 
-    const iconClassName = classNames({
-      fa: true,
-      'fa-play': rule.state === 'paused',
-      'fa-pause': rule.state !== 'paused',
-    });
-
     const ruleUrl = `${rule.url}?panelId=${rule.panelId}&fullscreen&edit&tab=alert`;
 
     return (
       <li className="alert-rule-item">
-        <span className={`alert-rule-item__icon ${rule.stateClass}`}>
-          <i className={rule.stateIcon} />
-        </span>
+        <Icon size="xl" name={rule.stateIcon as IconName} className={`alert-rule-item__icon ${rule.stateClass}`} />
         <div className="alert-rule-item__body">
           <div className="alert-rule-item__header">
             <div className="alert-rule-item__name">
@@ -56,10 +48,10 @@ class AlertRuleItem extends PureComponent<Props> {
             title="Pausing an alert rule prevents it from executing"
             onClick={onTogglePause}
           >
-            <i className={iconClassName} />
+            <Icon name={rule.state === 'paused' ? 'play' : 'pause'} />
           </button>
           <a className="btn btn-small btn-inverse alert-list__btn width-2" href={ruleUrl} title="Edit alert rule">
-            <i className="gicon gicon-cog" />
+            <Icon name="cog" />
           </a>
         </div>
       </li>

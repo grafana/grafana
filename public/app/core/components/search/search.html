@@ -38,24 +38,25 @@
 
       <div class="search-filter-box" ng-if="ctrl.isEditor || ctrl.hasEditPermissionInFolders">
         <a href="dashboard/new" class="search-filter-box-link">
-          <icon name="'plus-square'" size="'xl'" style="margin-right: 8px;"></icon> New dashboard
+          <icon name="'plus-square'" type="'mono'" size="'xl'" style="margin-right: 8px;"></icon> New dashboard
         </a>
         <a href="dashboards/folder/new" class="search-filter-box-link" ng-if="ctrl.isEditor">
-          <icon name="'folder-plus'" size="'xl'" style="margin-right: 8px;"></icon> New folder
+          <icon name="'folder-plus'" type="'mono'" size="'xl'" style="margin-right: 8px;"></icon> New folder
         </a>
         <a
           href="dashboard/import"
           class="search-filter-box-link"
           ng-if="ctrl.isEditor || ctrl.hasEditPermissionInFolders"
         >
-          <icon name="'import'" size="'xl'" style="margin-right: 8px;"></icon> Import dashboard
+          <icon name="'import'" type="'mono'" size="'xl'" style="margin-right: 8px;"></icon> Import dashboard
         </a>
         <a
           class="search-filter-box-link"
           target="_blank"
           href="https://grafana.com/dashboards?utm_source=grafana_search"
         >
-          <icon name="'apps'" size="'xl'" style="margin-right: 8px;"></icon> Find dashboards on Grafana.com
+          <icon name="'apps'" type="'mono'" size="'xl'" style="margin-right: 8px;"></icon> Find dashboards on
+          Grafana.com
         </a>
       </div>
     </div>

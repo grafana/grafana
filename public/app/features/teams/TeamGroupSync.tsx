@@ -66,7 +66,7 @@ export class TeamGroupSync extends PureComponent<Props, State> {
         <td>{group.groupId}</td>
         <td style={{ width: '1%' }}>
           <a className="btn btn-danger btn-small" onClick={() => this.onRemoveGroup(group)}>
-            <i className="fa fa-remove" />
+            <Icon name="times" />
           </a>
         </td>
       </tr>
@@ -95,7 +95,7 @@ export class TeamGroupSync extends PureComponent<Props, State> {
         <SlideDown in={isAdding}>
           <div className="cta-form">
             <button className="cta-form__close btn btn-transparent" onClick={this.onToggleAdding}>
-              <i className="fa fa-close" />
+              <Icon name="times" />
             </button>
             <h5>Add External Group</h5>
             <form className="gf-form-inline" onSubmit={this.onAddGroup}>

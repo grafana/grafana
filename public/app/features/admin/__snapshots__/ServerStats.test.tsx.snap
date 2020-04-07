@@ -52,7 +52,11 @@ exports[`ServerStats Should render table with stats 1`] = `
               >
                 <span
                   className="page-header__logo"
-                />
+                >
+                  <i
+                    className="fa fa-fw fa-warning css-1lgsh82"
+                  />
+                </span>
                 <div
                   className="page-header__info-block"
                 >
@@ -99,6 +103,7 @@ exports[`ServerStats Should render table with stats 1`] = `
                       className="css-vohy86"
                       onClick={[Function]}
                     >
+                      <div />
                       Admin
                     </li>
                   </ul>

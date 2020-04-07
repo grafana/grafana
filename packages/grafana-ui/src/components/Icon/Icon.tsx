@@ -39,7 +39,7 @@ const getIconStyles = stylesFactory((theme: GrafanaTheme, type: IconType) => {
 });
 
 export const Icon = React.forwardRef<HTMLDivElement, IconProps>(
-  ({ size = 'md', type = 'default', title, name, className, style, ...divElementProps }, ref) => {
+  ({ size = 'md', type = 'default', name, className, style, ...divElementProps }, ref) => {
     const theme = useTheme();
     const styles = getIconStyles(theme, type);
     const svgSize = getSvgSize(size, theme);

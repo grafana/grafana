@@ -23,15 +23,6 @@ angular.module('grafana.routes', ['ngRoute']);
 jest.mock('app/core/core', () => ({}));
 jest.mock('app/features/plugins/plugin_loader', () => ({}));
 
-/* Temporary solution as Jest can't parse Unicons imports.
- * Therefore we are mocking in for all tests. Needs to be fixed before merging to master.
- */
-jest.mock('@grafana/ui/src/components/Icon/Icon', () => {
-  return {
-    Icon: () => null as any,
-  };
-});
-
 configure({ adapter: new Adapter() });
 
 const localStorageMock = (() => {

@@ -112,7 +112,7 @@ export const OverrideFieldConfigEditor: React.FC<Props> = props => {
   const renderAddOverride = () => {
     return (
       <ValuePicker
-        icon="plus"
+        icon="plus-circle"
         label="Add override"
         variant="secondary"
         options={fieldMatchersUI

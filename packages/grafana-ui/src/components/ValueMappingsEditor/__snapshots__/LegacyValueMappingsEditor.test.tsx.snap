@@ -35,7 +35,7 @@ exports[`Render should render component 1`] = `
       }
     />
     <Button
-      icon="plus"
+      icon="plus-circle"
       onClick={[Function]}
       variant="primary"
     >

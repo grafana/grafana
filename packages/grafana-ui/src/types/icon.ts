@@ -3,10 +3,12 @@ export type IconType = 'mono' | 'default';
 export type IconName =
   | 'fa fa-fw fa-unlock'
   | 'fa fa-envelope'
+  | 'fa fa-spinner'
   | 'question-circle'
-  | 'plus'
   | 'angle-up'
+  | 'history'
   | 'angle-down'
+  | 'filter'
   | 'angle-left'
   | 'angle-right'
   | 'pen'
@@ -34,6 +36,8 @@ export type IconName =
   | 'panel-add'
   | 'arrow-random'
   | 'arrow-down'
+  | 'comment-alt'
+  | 'arrow-right'
   | 'arrow-up'
   | 'arrow-from-right'
   | 'keyboard'
@@ -50,9 +54,12 @@ export type IconName =
   | 'folder-plus'
   | 'link'
   | 'upload'
+  | 'columns'
   | 'home-alt'
   | 'channel-add'
   | 'calendar-alt'
+  | 'play'
+  | 'pause'
   | 'calculator-alt'
   | 'compass'
   | 'sliders-v-alt'
@@ -77,12 +84,20 @@ export type IconName =
   | 'edit'
   | 'shield'
   | 'eye'
+  | 'eye-slash'
   | 'filter'
   | 'monitor'
   | 'plus-circle'
   | 'arrow-left'
   | 'repeat'
   | 'external-link-alt'
+  | 'minus'
+  | 'signal'
+  | 'search-plus'
+  | 'search-minus'
+  | 'table'
+  | 'plus'
+  | 'heart'
   | 'favorite';
 
 export const getAvailableIcons = (): IconName[] => [
@@ -102,6 +117,8 @@ export const getAvailableIcons = (): IconName[] => [
   'repeat',
   'external-link-alt',
   'power',
+  'play',
+  'pause',
   'trash-alt',
   'exclamation-triangle',
   'times',
@@ -152,8 +169,10 @@ export const getAvailableIcons = (): IconName[] => [
   'info-circle',
   'bug',
   'cube',
+  'history',
   'star',
   'edit',
+  'columns',
   'eye',
   'channel-add',
   'monitor',
@@ -164,6 +183,7 @@ export const getAvailableIcons = (): IconName[] => [
   'folder-open',
   'file-copy-alt',
   'arrow-down',
+  'filter',
   'arrow-up',
   'exchange-alt',
 ];

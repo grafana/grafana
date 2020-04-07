@@ -70,7 +70,7 @@ export const DerivedFields = (props: Props) => {
             className={css`
               margin-right: 10px;
             `}
-            icon="plus"
+            icon="plus-circle"
             onClick={event => {
               event.preventDefault();
               const newDerivedFields = [...(value || []), { name: '', matcherRegex: '' }];

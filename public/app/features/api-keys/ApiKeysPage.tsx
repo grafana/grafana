@@ -13,7 +13,15 @@ import ApiKeysAddedModal from './ApiKeysAddedModal';
 import config from 'app/core/config';
 import appEvents from 'app/core/app_events';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
-import { DeleteButton, EventsWithValidation, FormLabel, LegacyForms, Switch, ValidationEvents } from '@grafana/ui';
+import {
+  DeleteButton,
+  EventsWithValidation,
+  FormLabel,
+  LegacyForms,
+  Switch,
+  ValidationEvents,
+  Icon,
+} from '@grafana/ui';
 const { Input } = LegacyForms;
 import { dateTime, isDateTime, NavModel } from '@grafana/data';
 import { FilterInput } from 'app/core/components/FilterInput/FilterInput';
@@ -181,7 +189,7 @@ export class ApiKeysPage extends PureComponent<Props, any> {
       <SlideDown in={isAdding}>
         <div className="cta-form">
           <button className="cta-form__close btn btn-transparent" onClick={this.onToggleAdding}>
-            <i className="fa fa-close" />
+            <Icon name="times" />
           </button>
           <h5>Add API Key</h5>
           <form className="gf-form-group" onSubmit={this.onAddApiKey}>
