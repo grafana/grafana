@@ -1,7 +1,7 @@
 import { css } from 'emotion';
 import React from 'react';
 import { transformersUIRegistry } from '@grafana/ui/src/components/TransformersUI/transformers';
-import { DataTransformerID, DataTransformerConfig, DataFrame, transformDataFrame } from '@grafana/data';
+import { DataTransformerConfig, DataFrame, transformDataFrame, SelectableValue } from '@grafana/data';
 import { Button, Select } from '@grafana/ui';
 import { TransformationRow } from './TransformationRow';
 
@@ -12,45 +12,41 @@ interface Props {
 }
 
 interface State {
-  updateCounter: number;
+  addingTransformation: boolean;
 }
 
 export class TransformationsEditor extends React.PureComponent<Props, State> {
-  state = { updateCounter: 0 };
+  state = { addingTransformation: false };
 
-  onTransformationAdd = () => {
+  onTransformationAdd = (selectable: SelectableValue<string>) => {
     const { transformations, onChange } = this.props;
     onChange([
       ...transformations,
       {
-        id: DataTransformerID.noop,
+        id: selectable.value as string,
         options: {},
       },
     ]);
-    this.setState({ updateCounter: this.state.updateCounter + 1 });
+    this.setState({ addingTransformation: false });
   };
 
   onTransformationChange = (idx: number, config: DataTransformerConfig) => {
     const { transformations, onChange } = this.props;
-    transformations[idx] = config;
-    onChange(transformations);
-    this.setState({ updateCounter: this.state.updateCounter + 1 });
+    const next = Array.from(transformations);
+    next[idx] = config;
+    onChange(next);
   };
 
   onTransformationRemove = (idx: number) => {
     const { transformations, onChange } = this.props;
-    transformations.splice(idx, 1);
-    onChange(transformations);
-    this.setState({ updateCounter: this.state.updateCounter + 1 });
+    const next = Array.from(transformations);
+    next.splice(idx, 1);
+    onChange(next);
   };
 
-  renderTransformationEditors = () => {
-    const { transformations, dataFrames } = this.props;
-    const hasTransformations = transformations.length > 0;
-    const preTransformData = dataFrames;
-
-    if (!hasTransformations) {
-      return undefined;
+  renderTransformationSelector = () => {
+    if (!this.state.addingTransformation) {
+      return null;
     }
 
     const availableTransformers = transformersUIRegistry.list().map(t => {
@@ -61,29 +57,31 @@ export class TransformationsEditor extends React.PureComponent<Props, State> {
     });
 
     return (
+      <div
+        className={css`
+          margin-bottom: 10px;
+        `}
+      >
+        <Select
+          options={availableTransformers}
+          placeholder="Select transformation"
+          onChange={this.onTransformationAdd}
+        />
+      </div>
+    );
+  };
+
+  renderTransformationEditors = () => {
+    const { transformations, dataFrames } = this.props;
+    const preTransformData = dataFrames;
+
+    return (
       <>
         {transformations.map((t, i) => {
-          let editor, input;
-          if (t.id === DataTransformerID.noop) {
-            return (
-              <Select
-                className={css`
-                  margin-bottom: 10px;
-                `}
-                key={`${t.id}-${i}`}
-                options={availableTransformers}
-                placeholder="Select transformation"
-                onChange={v => {
-                  this.onTransformationChange(i, {
-                    id: v.value as string,
-                    options: {},
-                  });
-                }}
-              />
-            );
-          }
+          let editor;
+
           const transformationUI = transformersUIRegistry.getIfExists(t.id);
-          input = transformDataFrame(transformations.slice(0, i), preTransformData);
+          const input = transformDataFrame(transformations.slice(0, i), preTransformData);
 
           if (transformationUI) {
             editor = React.createElement(transformationUI.component, {
@@ -121,7 +119,8 @@ export class TransformationsEditor extends React.PureComponent<Props, State> {
           visualized.
         </p>
         {this.renderTransformationEditors()}
-        <Button variant="secondary" icon="plus-circle" onClick={this.onTransformationAdd}>
+        {this.renderTransformationSelector()}
+        <Button variant="secondary" icon="plus-circle" onClick={() => this.setState({ addingTransformation: true })}>
           Add transformation
         </Button>
       </div>
