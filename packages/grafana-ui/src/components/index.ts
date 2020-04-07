@@ -140,6 +140,7 @@ export { HorizontalGroup, VerticalGroup, Container } from './Layout/Layout';
 export { RadioButtonGroup } from './Forms/RadioButtonGroup/RadioButtonGroup';
 
 export { Input } from './Input/Input';
+export { FormInputSize } from './Forms/types';
 
 // Legacy forms
 
