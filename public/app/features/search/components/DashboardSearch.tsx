@@ -192,10 +192,17 @@ const getStyles = (theme: GrafanaTheme) => {
     closeBtn: css`
       font-size: 22px;
       margin-top: 14px;
+      margin-right: 6px;
 
       &:hover {
         cursor: pointer;
         color: ${theme.colors.white};
+      }
+
+      @media only screen and (max-width: ${theme.breakpoints.md}) {
+        position: absolute;
+        right: 15px;
+        top: 60px;
       }
     `,
     scroller: css`
