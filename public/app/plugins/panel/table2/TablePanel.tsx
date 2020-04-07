@@ -16,18 +16,18 @@ export class TablePanel extends Component<Props> {
     const matcherId = FieldMatcherID.byName;
     const prop = 'width';
     const overrides = current.overrides.filter(
-      o => o.matcher.id !== matcherId || o.matcher.options !== field.name || o.properties[0].prop !== prop
+      o => o.matcher.id !== matcherId || o.matcher.options !== field.name || o.properties[0].id !== prop
     );
 
     overrides.push({
       matcher: { id: matcherId, options: field.name },
-      properties: [{ custom: true, prop, value: width }],
+      properties: [{ isCustom: true, id: prop, value: width }],
     });
 
-    // this.props.onFieldConfigChange({
-    //   ...current,
-    //   overrides,
-    // });
+    this.props.onFieldConfigChange({
+      ...current,
+      overrides,
+    });
   };
 
   render() {
