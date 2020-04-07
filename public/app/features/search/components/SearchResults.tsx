@@ -93,11 +93,11 @@ const getSectionStyles = stylesFactory((theme: GrafanaTheme) => {
 interface SectionHeaderProps {
   section: DashboardSection;
   onSectionClick: (section: DashboardSection) => void;
-  onToggleSelection: ItemClickWithEvent;
+  onToggleSelection?: ItemClickWithEvent;
   editable: boolean;
 }
 
-const SectionHeader: FC<SectionHeaderProps> = ({ section, onSectionClick, onToggleSelection, editable }) => {
+const SectionHeader: FC<SectionHeaderProps> = ({ section, onSectionClick, onToggleSelection = () => {}, editable }) => {
   const theme = useTheme();
   const styles = getSectionHeaderStyles(theme, section.selected);
 

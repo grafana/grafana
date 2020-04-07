@@ -3,7 +3,7 @@ import { css } from 'emotion';
 import { Forms, stylesFactory } from '@grafana/ui';
 
 interface Props {
-  checked: boolean;
+  checked?: boolean;
   onClick: any;
   editable?: boolean;
 }
