@@ -84,8 +84,8 @@ export const simple = () => {
     <div style={{ width: containerWidth }}>
       <Input
         disabled={disabled}
-        invalid={invalid}
         prefix={prefixEl}
+        invalid={invalid}
         suffix={suffixEl}
         loading={loading}
         addonBefore={before && addonBefore}
