@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+set -eo pipefail
 
 PACKAGES=(ui toolkit data runtime e2e)
 
