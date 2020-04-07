@@ -96,11 +96,7 @@ export const Table: FC<Props> = memo(({ data, height, onCellClick, width, column
 
 function renderHeaderCell(column: any, className: string, field?: Field) {
   const headerProps = column.getHeaderProps(column.getSortByToggleProps());
-  const fieldTextAlign = getTextAlign(field);
-
-  if (fieldTextAlign) {
-    headerProps.style.textAlign = fieldTextAlign;
-  }
+  headerProps.style.textAlign = getTextAlign(field);
 
   return (
     <div className={className} {...headerProps}>
