@@ -100,7 +100,7 @@ export const Table: FC<Props> = memo(
                   return (
                     <div className={tableStyles.thead} {...headerGroup.getHeaderGroupProps()} ref={ref}>
                       {headerGroup.headers.map((column: Column, index: number) =>
-                        renderHeaderCell(column, tableStyles, data.fields[index], onColumnResize)
+                        renderHeaderCell(column, tableStyles, data.fields[index])
                       )}
                     </div>
                   );
@@ -125,18 +125,10 @@ export const Table: FC<Props> = memo(
 
 Table.displayName = 'Table';
 
-function renderHeaderCell(
-  column: any,
-  tableStyles: TableStyles,
-  field?: Field,
-  onColumnResize?: ColumnResizeActionCallback
-) {
+function renderHeaderCell(column: any, tableStyles: TableStyles, field?: Field) {
   const headerProps = column.getHeaderProps();
   if (column.canResize) {
     headerProps.style.userSelect = column.isResizing ? 'none' : 'auto'; // disables selecting text while resizing
-    if (onColumnResize && field && column.isResizing) {
-      onColumnResize(field, column.width);
-    }
   }
 
   headerProps.style.textAlign = getTextAlign(field);
