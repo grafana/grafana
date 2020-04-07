@@ -32,14 +32,16 @@ export class TransformationsEditor extends React.PureComponent<Props, State> {
 
   onTransformationChange = (idx: number, config: DataTransformerConfig) => {
     const { transformations, onChange } = this.props;
-    transformations[idx] = config;
-    onChange(transformations);
+    const next = Array.from(transformations);
+    next[idx] = config;
+    onChange(next);
   };
 
   onTransformationRemove = (idx: number) => {
     const { transformations, onChange } = this.props;
-    transformations.splice(idx, 1);
-    onChange(transformations);
+    const next = Array.from(transformations);
+    next.splice(idx, 1);
+    onChange(next);
   };
 
   renderTransformationSelector = () => {
