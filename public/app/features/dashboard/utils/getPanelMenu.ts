@@ -62,12 +62,14 @@ export function getPanelMenu(
     sharePanel(dashboard, panel);
   };
 
-  const onInspectPanel = (event: React.MouseEvent<any>) => {
+  const onInspectPanel = (tab?: string) => {
     event.preventDefault();
+
     getLocationSrv().update({
       partial: true,
       query: {
         inspect: panel.id,
+        tab: tab,
       },
     });
   };
@@ -131,11 +133,35 @@ export function getPanelMenu(
     });
   }
 
+  const inspectMenu: PanelMenuItem[] = [];
+
+  // Only show the data/query inspectors when queries exist
+  if (panel.targets?.length) {
+    inspectMenu.push({
+      text: 'Data',
+      onClick: (e: React.MouseEvent<any>) => onInspectPanel('data'),
+      shortcut: 'i d',
+    });
+
+    inspectMenu.push({
+      text: 'Query',
+      onClick: (e: React.MouseEvent<any>) => onInspectPanel('query'),
+      shortcut: 'i q',
+    });
+  }
+
+  inspectMenu.push({
+    text: 'Panel JSON',
+    onClick: (e: React.MouseEvent<any>) => onInspectPanel('json'),
+    shortcut: 'i p',
+  });
+
   menu.push({
+    type: 'submenu',
     text: 'Inspect',
     iconClassName: 'fa fa-fw fa-info-circle',
-    onClick: onInspectPanel,
-    shortcut: 'p i',
+    onClick: (e: React.MouseEvent<any>) => onInspectPanel(),
+    subMenu: inspectMenu,
   });
 
   if (config.featureToggles.newEdit) {
