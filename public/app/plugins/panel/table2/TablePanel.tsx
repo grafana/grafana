@@ -24,10 +24,10 @@ export class TablePanel extends Component<Props> {
       properties: [{ custom: true, prop, value: width }],
     });
 
-    this.props.onFieldConfigChange({
-      ...current,
-      overrides,
-    });
+    // this.props.onFieldConfigChange({
+    //   ...current,
+    //   overrides,
+    // });
   };
 
   render() {

@@ -64,9 +64,9 @@ export const Table: FC<Props> = memo(
     );
     const { getTableProps, headerGroups, rows, prepareRow, totalColumnsWidth } = useTable(
       options,
-      useSortBy,
       useBlockLayout,
-      useResizeColumns
+      useResizeColumns,
+      useSortBy
     );
 
     const RenderRow = React.useCallback(
@@ -131,25 +131,25 @@ function renderHeaderCell(
   field?: Field,
   onColumnResize?: ColumnResizeActionCallback
 ) {
-  const headerProps = column.getHeaderProps(column.getSortByToggleProps());
+  const headerProps = column.getHeaderProps();
   if (column.canResize) {
     headerProps.style.userSelect = column.isResizing ? 'none' : 'auto'; // disables selecting text while resizing
-    column.disableSortBy = column.isResizing; // disables sorting while resizing, unfortunate side effect that the column will not be sortable until re-render
     if (onColumnResize && field && column.isResizing) {
       onColumnResize(field, column.width);
     }
   }
 
-  const fieldTextAlign = getTextAlign(field);
-
-  if (fieldTextAlign) {
-    headerProps.style.textAlign = fieldTextAlign;
-  }
+  headerProps.style.textAlign = getTextAlign(field);
 
   return (
     <div className={tableStyles.headerCell} {...headerProps}>
-      {column.render('Header')}
-      {column.isSorted && (column.isSortedDesc ? <Icon name="caret-down" /> : <Icon name="caret-up" />)}
+      {column.canSort && (
+        <div {...column.getSortByToggleProps()}>
+          {column.render('Header')}
+          {column.isSorted && (column.isSortedDesc ? <Icon name="caret-down" /> : <Icon name="caret-up" />)}
+        </div>
+      )}
+      {!column.canSort && <div>{column.render('Header')}</div>}
       {column.canResize && <div {...column.getResizerProps()} className={tableStyles.resizeHandle} />}
     </div>
   );
