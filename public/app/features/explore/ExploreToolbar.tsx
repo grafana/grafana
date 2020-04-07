@@ -1,4 +1,3 @@
-import omitBy from 'lodash/omitBy';
 import React, { PureComponent } from 'react';
 import { connect } from 'react-redux';
 import { hot } from 'react-hot-loader';
@@ -133,18 +132,15 @@ export class UnConnectedExploreToolbar extends PureComponent<Props> {
       });
     }
 
-    const dashViewOptions = {
-      fullscreen: withChanges || dash.meta.fullscreen,
-      edit: withChanges || dash.meta.isEditing,
-    };
+    const query: any = {};
 
-    this.props.updateLocation({
-      path: `/d/${dash.uid}/:${titleSlug}`,
-      query: {
-        ...omitBy(dashViewOptions, v => !v),
-        panelId: originPanelId,
-      },
-    });
+    if (withChanges || dash.panelInEdit) {
+      query.editPanel = originPanelId;
+    } else if (dash.panelInView) {
+      query.viewPanel = originPanelId;
+    }
+
+    this.props.updateLocation({ path: `/d/${dash.uid}/:${titleSlug}`, query });
   };
 
   // Remove explore specific parameters from queries

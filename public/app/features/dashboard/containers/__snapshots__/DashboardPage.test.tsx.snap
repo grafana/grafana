@@ -40,8 +40,6 @@ exports[`DashboardPage Dashboard init completed  Should render dashboard grid 1`
           "canSave": true,
           "canShare": true,
           "canStar": true,
-          "fullscreen": false,
-          "isEditing": false,
           "showSettings": true,
         },
         "originalTemplating": Array [],
@@ -98,7 +96,6 @@ exports[`DashboardPage Dashboard init completed  Should render dashboard grid 1`
         "version": 0,
       }
     }
-    isEditing={false}
     isFullscreen={false}
     onAddPanel={[Function]}
   />
@@ -119,102 +116,6 @@ exports[`DashboardPage Dashboard init completed  Should render dashboard grid 1`
       <div
         className="dashboard-container"
       >
-        <SubMenu
-          dashboard={
-            DashboardModel {
-              "annotations": Object {
-                "list": Array [
-                  Object {
-                    "builtIn": 1,
-                    "datasource": "-- Grafana --",
-                    "enable": true,
-                    "hide": true,
-                    "iconColor": "rgba(0, 211, 255, 1)",
-                    "name": "Annotations & Alerts",
-                    "type": "dashboard",
-                  },
-                ],
-              },
-              "autoUpdate": undefined,
-              "description": undefined,
-              "editable": true,
-              "events": Emitter {
-                "emitter": EventEmitter {
-                  "_events": Object {},
-                  "_eventsCount": 0,
-                },
-              },
-              "getVariables": [Function],
-              "getVariablesFromState": [Function],
-              "gnetId": null,
-              "graphTooltip": 0,
-              "id": null,
-              "links": Array [],
-              "meta": Object {
-                "canEdit": true,
-                "canMakeEditable": false,
-                "canSave": true,
-                "canShare": true,
-                "canStar": true,
-                "fullscreen": false,
-                "isEditing": false,
-                "showSettings": true,
-              },
-              "originalTemplating": Array [],
-              "originalTime": Object {
-                "from": "now-6h",
-                "to": "now",
-              },
-              "panels": Array [
-                PanelModel {
-                  "cachedPluginOptions": Object {},
-                  "datasource": null,
-                  "events": Emitter {
-                    "emitter": EventEmitter {
-                      "_events": Object {},
-                      "_eventsCount": 0,
-                    },
-                  },
-                  "gridPos": Object {
-                    "h": 1,
-                    "w": 1,
-                    "x": 0,
-                    "y": 0,
-                  },
-                  "id": 1,
-                  "options": Object {},
-                  "replaceVariables": [Function],
-                  "targets": Array [
-                    Object {
-                      "refId": "A",
-                    },
-                  ],
-                  "title": "My graph",
-                  "transparent": false,
-                  "type": "graph",
-                },
-              ],
-              "refresh": undefined,
-              "revision": undefined,
-              "schemaVersion": 23,
-              "snapshot": undefined,
-              "style": "dark",
-              "tags": Array [],
-              "templating": Object {
-                "list": Array [],
-              },
-              "time": Object {
-                "from": "now-6h",
-                "to": "now",
-              },
-              "timepicker": Object {},
-              "timezone": "",
-              "title": "My dashboard",
-              "uid": null,
-              "version": 0,
-            }
-          }
-        />
         <DashboardGrid
           dashboard={
             DashboardModel {
@@ -252,8 +153,6 @@ exports[`DashboardPage Dashboard init completed  Should render dashboard grid 1`
                 "canSave": true,
                 "canShare": true,
                 "canStar": true,
-                "fullscreen": false,
-                "isEditing": false,
                 "showSettings": true,
               },
               "originalTemplating": Array [],
@@ -310,9 +209,9 @@ exports[`DashboardPage Dashboard init completed  Should render dashboard grid 1`
               "version": 0,
             }
           }
-          isEditing={false}
-          isFullscreen={false}
+          editPanel={null}
           scrollTop={0}
+          viewPanel={null}
         />
       </div>
     </CustomScrollbar>
@@ -378,8 +277,6 @@ exports[`DashboardPage When dashboard has editview url state should render setti
           "canSave": true,
           "canShare": true,
           "canStar": true,
-          "fullscreen": false,
-          "isEditing": false,
           "showSettings": true,
         },
         "originalTemplating": Array [],
@@ -436,7 +333,6 @@ exports[`DashboardPage When dashboard has editview url state should render setti
         "version": 0,
       }
     }
-    isEditing={false}
     isFullscreen={false}
     onAddPanel={[Function]}
   />
@@ -457,102 +353,6 @@ exports[`DashboardPage When dashboard has editview url state should render setti
       <div
         className="dashboard-container"
       >
-        <SubMenu
-          dashboard={
-            DashboardModel {
-              "annotations": Object {
-                "list": Array [
-                  Object {
-                    "builtIn": 1,
-                    "datasource": "-- Grafana --",
-                    "enable": true,
-                    "hide": true,
-                    "iconColor": "rgba(0, 211, 255, 1)",
-                    "name": "Annotations & Alerts",
-                    "type": "dashboard",
-                  },
-                ],
-              },
-              "autoUpdate": undefined,
-              "description": undefined,
-              "editable": true,
-              "events": Emitter {
-                "emitter": EventEmitter {
-                  "_events": Object {},
-                  "_eventsCount": 0,
-                },
-              },
-              "getVariables": [Function],
-              "getVariablesFromState": [Function],
-              "gnetId": null,
-              "graphTooltip": 0,
-              "id": null,
-              "links": Array [],
-              "meta": Object {
-                "canEdit": true,
-                "canMakeEditable": false,
-                "canSave": true,
-                "canShare": true,
-                "canStar": true,
-                "fullscreen": false,
-                "isEditing": false,
-                "showSettings": true,
-              },
-              "originalTemplating": Array [],
-              "originalTime": Object {
-                "from": "now-6h",
-                "to": "now",
-              },
-              "panels": Array [
-                PanelModel {
-                  "cachedPluginOptions": Object {},
-                  "datasource": null,
-                  "events": Emitter {
-                    "emitter": EventEmitter {
-                      "_events": Object {},
-                      "_eventsCount": 0,
-                    },
-                  },
-                  "gridPos": Object {
-                    "h": 1,
-                    "w": 1,
-                    "x": 0,
-                    "y": 0,
-                  },
-                  "id": 1,
-                  "options": Object {},
-                  "replaceVariables": [Function],
-                  "targets": Array [
-                    Object {
-                      "refId": "A",
-                    },
-                  ],
-                  "title": "My graph",
-                  "transparent": false,
-                  "type": "graph",
-                },
-              ],
-              "refresh": undefined,
-              "revision": undefined,
-              "schemaVersion": 23,
-              "snapshot": undefined,
-              "style": "dark",
-              "tags": Array [],
-              "templating": Object {
-                "list": Array [],
-              },
-              "time": Object {
-                "from": "now-6h",
-                "to": "now",
-              },
-              "timepicker": Object {},
-              "timezone": "",
-              "title": "My dashboard",
-              "uid": null,
-              "version": 0,
-            }
-          }
-        />
         <DashboardGrid
           dashboard={
             DashboardModel {
@@ -590,8 +390,6 @@ exports[`DashboardPage When dashboard has editview url state should render setti
                 "canSave": true,
                 "canShare": true,
                 "canStar": true,
-                "fullscreen": false,
-                "isEditing": false,
                 "showSettings": true,
               },
               "originalTemplating": Array [],
@@ -648,9 +446,9 @@ exports[`DashboardPage When dashboard has editview url state should render setti
               "version": 0,
             }
           }
-          isEditing={false}
-          isFullscreen={false}
+          editPanel={null}
           scrollTop={0}
+          viewPanel={null}
         />
       </div>
     </CustomScrollbar>
@@ -692,8 +490,6 @@ exports[`DashboardPage When dashboard has editview url state should render setti
           "canSave": true,
           "canShare": true,
           "canStar": true,
-          "fullscreen": false,
-          "isEditing": false,
           "showSettings": true,
         },
         "originalTemplating": Array [],
