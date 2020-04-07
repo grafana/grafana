@@ -144,13 +144,13 @@ github.com/gosimple/slug
 # github.com/grafana/grafana-plugin-model v0.0.0-20190930120109-1fc953a61fb4
 github.com/grafana/grafana-plugin-model/go/datasource
 github.com/grafana/grafana-plugin-model/go/renderer
-# github.com/grafana/grafana-plugin-sdk-go v0.33.0 => github.com/grafana/grafana-plugin-sdk-go v0.34.1-0.20200407114739-2348b6364137
+# github.com/grafana/grafana-plugin-sdk-go v0.33.0 => github.com/grafana/grafana-plugin-sdk-go v0.34.1-0.20200407203640-77049df63cd2
 github.com/grafana/grafana-plugin-sdk-go/backend/grpcplugin
 github.com/grafana/grafana-plugin-sdk-go/data
 github.com/grafana/grafana-plugin-sdk-go/genproto/pluginv2
 # github.com/hashicorp/go-hclog v0.0.0-20180709165350-ff2cf002a8dd
 github.com/hashicorp/go-hclog
-# github.com/hashicorp/go-plugin v1.1.0 => github.com/marefr/go-plugin v1.2.1-0.20200407114521-e9b3d6437e05
+# github.com/hashicorp/go-plugin v1.2.2
 github.com/hashicorp/go-plugin
 github.com/hashicorp/go-plugin/internal/plugin
 # github.com/hashicorp/go-version v1.1.0

@@ -7,12 +7,11 @@ import (
 	"io"
 
 	empty "github.com/golang/protobuf/ptypes/empty"
+	hclog "github.com/hashicorp/go-hclog"
+	"github.com/hashicorp/go-plugin/internal/plugin"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-
-	hclog "github.com/hashicorp/go-hclog"
-	"github.com/hashicorp/go-plugin/internal/plugin"
 )
 
 // grpcStdioBuffer is the buffer size we try to fill when sending a chunk of
@@ -104,16 +103,10 @@ func newGRPCStdioClient(
 	// If we get an Unavailable or Unimplemented error, this means that the plugin isn't
 	// updated and linking to the latest version of go-plugin that supports
 	// this. We fall back to the previous behavior of just not syncing anything.
-	if err != nil {
-		log.Error("newGRPCStdioClient failed", "error", err)
-		if st, ok := status.FromError(err); ok {
-			log.Error("newGRPCStdioClient failed", "code", st.Code())
-			if st.Code() == codes.Unavailable || st.Code() == codes.Unimplemented {
-				log.Warn("stdio service not available, stdout/stderr syncing unavailable")
-				stdioClient = nil
-				err = nil
-			}
-		}
+	if status.Code(err) == codes.Unavailable || status.Code(err) == codes.Unimplemented {
+		log.Warn("stdio service not available, stdout/stderr syncing unavailable")
+		stdioClient = nil
+		err = nil
 	}
 	if err != nil {
 		return nil, err
