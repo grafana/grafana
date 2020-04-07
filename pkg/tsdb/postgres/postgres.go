@@ -63,16 +63,13 @@ func generateConnectionString(datasource *models.DataSource, logger log.Logger) 
 	sslcert := datasource.JsonData.Get("sslCertFile").MustString("")
 	sslkey := datasource.JsonData.Get("sslKeyFile").MustString("")
 	if sslcert != "" && sslkey != "" {
-		logger.Debug("Setting TLS client auth", "sslcert", sslcert, "sslkey", sslkey)
+		logger.Debug("Setting SSL client auth", "sslcert", sslcert)
 		sslopts += "&sslcert=" + url.QueryEscape(sslcert) + "&sslkey=" + url.QueryEscape(sslkey)
 
 	} else if sslcert != "" || sslkey != "" {
-		return "", fmt.Errorf("TLS client and certificate must BOTH be specified")
+		return "", fmt.Errorf("SSL client and certificate must both be specified")
 	}
 
-	logger.Debug("Raw query string", "query", sslopts)
-
-	// Build URL
 	u := &url.URL{
 		Scheme: "postgres",
 		User:   url.UserPassword(datasource.User, datasource.DecryptedPassword()),
