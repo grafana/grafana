@@ -26,7 +26,7 @@ export const BackgroundColoredCell: FC<TableCellProps> = props => {
   };
 
   return (
-    <div className={styles.tableCell} style={styles}>
+    <div className={tableStyles.tableCell} style={styles}>
       {formattedValueToString(displayValue)}
     </div>
   );
