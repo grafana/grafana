@@ -82,7 +82,7 @@ func (pm *PluginManager) Init() error {
 	plugDir = path.Join(setting.HomePath, "plugins-bundled")
 	if _, err := os.Stat(plugDir); !os.IsNotExist(err) {
 		if err := pm.scan(plugDir); err != nil {
-			return errutil.Wrapf(err, "Failed to scan bundled plugin directory '%s'", plugDir)
+			return errutil.Wrapf(err, "failed to scan bundled plugin directory '%s'", plugDir)
 		}
 	}
 
