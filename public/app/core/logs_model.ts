@@ -140,14 +140,15 @@ export function makeSeriesForLogs(rows: LogRowModel[], intervalMs: number, timeZ
 
     // EEEP: converts GraphSeriesXY to DataFrame and back again!
     const data = toDataFrame(series);
+    const fieldCache = new FieldCache(data);
 
-    const timeField = data.fields.find(field => field.type === FieldType.time);
+    const timeField = fieldCache.getFirstFieldOfType(FieldType.time);
     timeField.display = getDisplayProcessor({
       field: timeField,
       timeZone,
     });
 
-    const valueField = data.fields.find(field => field.type !== FieldType.time);
+    const valueField = fieldCache.getFirstFieldOfType(FieldType.number);
     valueField.config = {
       ...valueField.config,
       color: series.color,
