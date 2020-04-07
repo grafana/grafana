@@ -133,8 +133,9 @@ export class KeybindingSrv {
       return;
     }
 
-    if (search.fullscreen) {
-      appEvents.emit(PanelEvents.panelChangeView, { fullscreen: false, edit: false });
+    if (search.viewPanel) {
+      delete search.viewPanel;
+      this.$location.search(search);
       return;
     }
 
@@ -213,23 +214,16 @@ export class KeybindingSrv {
     // edit panel
     this.bind('e', () => {
       if (dashboard.canEditPanelById(dashboard.meta.focusPanelId)) {
-        appEvents.emit(PanelEvents.panelChangeView, {
-          fullscreen: true,
-          edit: true,
-          panelId: dashboard.meta.focusPanelId,
-          toggle: true,
-        });
+        const search = _.extend(this.$location.search(), { editPanel: dashboard.meta.focusPanelId });
+        this.$location.search(search);
       }
     });
 
     // view panel
     this.bind('v', () => {
       if (dashboard.meta.focusPanelId) {
-        appEvents.emit(PanelEvents.panelChangeView, {
-          fullscreen: true,
-          panelId: dashboard.meta.focusPanelId,
-          toggle: true,
-        });
+        const search = _.extend(this.$location.search(), { viewPanel: dashboard.meta.focusPanelId });
+        this.$location.search(search);
       }
     });
 

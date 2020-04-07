@@ -37,7 +37,7 @@ export interface GridPos {
 
 const notPersistedProperties: { [str: string]: boolean } = {
   events: true,
-  fullscreen: true,
+  isViewing: true,
   isEditing: true,
   isInView: true,
   hasRefreshed: true,
@@ -134,7 +134,7 @@ export class PanelModel implements DataConfigSource {
   transparent: boolean;
 
   // non persisted
-  fullscreen: boolean;
+  isViewing: boolean;
   isEditing: boolean;
   isInView: boolean;
   hasRefreshed: boolean;
@@ -215,10 +215,8 @@ export class PanelModel implements DataConfigSource {
     return model;
   }
 
-  setViewMode(fullscreen: boolean, isEditing: boolean) {
-    this.fullscreen = fullscreen;
-    this.isEditing = isEditing;
-    this.events.emit(PanelEvents.viewModeChanged);
+  setIsViewing(isViewing: boolean) {
+    this.isViewing = isViewing;
   }
 
   updateGridPos(newPos: GridPos) {
@@ -394,6 +392,7 @@ export class PanelModel implements DataConfigSource {
     sourceModel.editSourceId = this.id;
 
     const clone = new PanelModel(sourceModel);
+    clone.isEditing = true;
     const sourceQueryRunner = this.getQueryRunner();
 
     // pipe last result to new clone query runner

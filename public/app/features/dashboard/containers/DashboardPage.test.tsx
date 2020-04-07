@@ -133,9 +133,7 @@ describe('DashboardPage', () => {
       ctx.mount();
       ctx.setDashboardProp();
       ctx.wrapper?.setProps({
-        urlFullscreen: true,
-        urlEdit: true,
-        urlPanelId: '1',
+        urlEditPanel: '1',
       });
     });
 
@@ -148,8 +146,8 @@ describe('DashboardPage', () => {
     it('Should update component state to fullscreen and edit', () => {
       const state = ctx.wrapper?.state();
       expect(state).not.toBe(null);
-      expect(state?.isEditing).toBe(true);
-      expect(state?.isFullscreen).toBe(true);
+      expect(state?.isEditingPanel).toBe(true);
+      expect(state?.isViewingPanel).toBe(true);
     });
   });
 
@@ -180,8 +178,8 @@ describe('DashboardPage', () => {
       const state = ctx.wrapper?.state();
       expect(ctx.wrapper).not.toBe(null);
       expect(state).not.toBe(null);
-      expect(state?.isEditing).toBe(false);
-      expect(state?.isFullscreen).toBe(false);
+      expect(state?.isEditingPanel).toBe(false);
+      expect(state?.isViewingPanel).toBe(false);
       expect(state?.scrollTop).toBe(100);
     });
   });

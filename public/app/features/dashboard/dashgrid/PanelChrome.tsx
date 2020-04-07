@@ -33,7 +33,7 @@ export interface Props {
   panel: PanelModel;
   dashboard: DashboardModel;
   plugin: PanelPlugin;
-  isFullscreen: boolean;
+  isViewing: boolean;
   isEditing?: boolean;
   isInView: boolean;
   width: number;
@@ -175,6 +175,8 @@ export class PanelChrome extends PureComponent<Props, State> {
       return;
     }
 
+    console.log('PanelChrome.onRefresh', panel.id);
+
     const timeData = applyPanelTimeOverrides(panel, this.timeSrv.timeRange());
 
     // Issue Query
@@ -213,6 +215,7 @@ export class PanelChrome extends PureComponent<Props, State> {
   onRender = () => {
     const stateUpdate = { renderCounter: this.state.renderCounter + 1 };
     this.setState(stateUpdate);
+    console.log('PanelChrome.onRender', this.props.panel.id);
   };
 
   onOptionsChange = (options: any) => {
@@ -278,6 +281,8 @@ export class PanelChrome extends PureComponent<Props, State> {
     });
     const panelOptions = panel.getOptions();
 
+    console.log('PanelChrome.renderPanel', panel.id);
+
     return (
       <>
         <div className={panelContentClassNames}>
@@ -320,7 +325,7 @@ export class PanelChrome extends PureComponent<Props, State> {
   }
 
   render() {
-    const { dashboard, panel, isFullscreen, width, height, updateLocation } = this.props;
+    const { dashboard, panel, isViewing, isEditing, width, height, updateLocation } = this.props;
     const { errorMessage, data } = this.state;
     const { transparent } = panel;
 
@@ -341,7 +346,8 @@ export class PanelChrome extends PureComponent<Props, State> {
           scopedVars={panel.scopedVars}
           links={panel.links}
           error={errorMessage}
-          isFullscreen={isFullscreen}
+          isEditing={isEditing}
+          isViewing={isViewing}
           data={data}
           updateLocation={updateLocation}
         />

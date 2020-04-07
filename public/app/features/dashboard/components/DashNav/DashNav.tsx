@@ -21,7 +21,6 @@ import { sanitizeUrl } from 'app/core/utils/text';
 
 export interface OwnProps {
   dashboard: DashboardModel;
-  isEditing: boolean;
   isFullscreen: boolean;
   $injector: any;
   updateLocation: typeof updateLocation;
@@ -54,7 +53,7 @@ export class DashNav extends PureComponent<Props> {
 
   onClose = () => {
     this.props.updateLocation({
-      query: { panelId: null, edit: null, fullscreen: null, tab: null },
+      query: { edit: null, viewPanel: null },
       partial: true,
     });
   };

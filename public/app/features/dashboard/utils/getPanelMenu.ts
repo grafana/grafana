@@ -21,9 +21,7 @@ export function getPanelMenu(
     store.dispatch(
       updateLocation({
         query: {
-          panelId: panel.id,
-          edit: null,
-          fullscreen: true,
+          viewPanel: panel.id,
         },
         partial: true,
       })
@@ -35,9 +33,7 @@ export function getPanelMenu(
     store.dispatch(
       updateLocation({
         query: {
-          panelId: panel.id,
-          edit: true,
-          fullscreen: true,
+          editPanel: panel.id,
         },
         partial: true,
       })
@@ -132,7 +128,7 @@ export function getPanelMenu(
 
   const subMenu: PanelMenuItem[] = [];
 
-  if (!panel.fullscreen && dashboard.canEditPanel(panel)) {
+  if (dashboard.canEditPanel(panel) && !(panel.isViewing || panel.isEditing)) {
     subMenu.push({
       text: 'Duplicate',
       onClick: onDuplicatePanel,

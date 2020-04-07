@@ -21,7 +21,7 @@ export interface OwnProps {
   panel: PanelModel;
   dashboard: DashboardModel;
   isEditing: boolean;
-  isFullscreen: boolean;
+  isViewing: boolean;
   isInView: boolean;
 }
 
@@ -71,7 +71,7 @@ export class DashboardPanelUnconnected extends PureComponent<Props, State> {
   };
 
   renderPanel(plugin: PanelPlugin) {
-    const { dashboard, panel, isFullscreen, isInView, isEditing, updateLocation } = this.props;
+    const { dashboard, panel, isViewing, isInView, isEditing, updateLocation } = this.props;
 
     return (
       <AutoSizer>
@@ -86,7 +86,8 @@ export class DashboardPanelUnconnected extends PureComponent<Props, State> {
                 plugin={plugin}
                 panel={panel}
                 dashboard={dashboard}
-                isFullscreen={isFullscreen}
+                isViewing={isViewing}
+                isEditing={isEditing}
                 isInView={isInView}
                 width={width}
                 height={height}
@@ -99,7 +100,7 @@ export class DashboardPanelUnconnected extends PureComponent<Props, State> {
               plugin={plugin}
               panel={panel}
               dashboard={dashboard}
-              isFullscreen={isFullscreen}
+              isViewing={isViewing}
               isEditing={isEditing}
               isInView={isInView}
               width={width}
@@ -113,7 +114,7 @@ export class DashboardPanelUnconnected extends PureComponent<Props, State> {
   }
 
   render() {
-    const { isFullscreen, isEditing, plugin } = this.props;
+    const { isViewing, plugin } = this.props;
     const { isLazy } = this.state;
 
     // if we have not loaded plugin exports yet, wait
@@ -128,7 +129,7 @@ export class DashboardPanelUnconnected extends PureComponent<Props, State> {
 
     const panelWrapperClass = classNames({
       'panel-wrapper': true,
-      'panel-wrapper--view': isFullscreen && !isEditing,
+      'panel-wrapper--view': isViewing,
     });
 
     return (
