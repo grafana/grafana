@@ -1,4 +1,5 @@
 import React from 'react';
+import { Icon } from '../../../Icon/Icon';
 
 // Ignoring because I couldn't get @types/react-select work wih Torkel's fork
 // @ts-ignore
@@ -8,9 +9,7 @@ export const IndicatorsContainer = (props: any) => {
   const isOpen = props.selectProps.menuIsOpen;
   return (
     <components.IndicatorsContainer {...props}>
-      <span
-        className={`gf-form-select-box__select-arrow ${isOpen ? `gf-form-select-box__select-arrow--reversed` : ''}`}
-      />
+      <Icon name={isOpen ? 'angle-up' : 'angle-down'} style={{ marginTop: '9px' }} />
     </components.IndicatorsContainer>
   );
 };

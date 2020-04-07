@@ -108,8 +108,8 @@ exports[`Render should render groups table 1`] = `
       className="btn btn-primary pull-right"
       onClick={[Function]}
     >
-      <i
-        className="fa fa-plus"
+      <Icon
+        name="plus-circle"
       />
        Add group
     </button>

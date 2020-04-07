@@ -12,7 +12,7 @@ export const BackButton: React.FC<Props> = props => {
   return (
     <Tooltip content="Go back (Esc)" placement="bottom">
       <button className={styles.wrapper} {...props}>
-        <Icon name="arrow-left" />
+        <Icon name="arrow-left" size="xl" />
       </button>
     </Tooltip>
   );

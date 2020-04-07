@@ -264,8 +264,8 @@ const Body = memo<Props>(({ onChange, from, to }) => {
       className={styles.body}
       tileClassName={styles.title}
       value={value}
-      nextLabel={<span className="fa fa-angle-right" />}
-      prevLabel={<span className="fa fa-angle-left" />}
+      nextLabel={<Icon name="angle-right" />}
+      prevLabel={<Icon name="angle-left" />}
       onChange={value => valueToInput(value, onChange)}
       locale="en"
     />

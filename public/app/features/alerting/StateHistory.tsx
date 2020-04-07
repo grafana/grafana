@@ -52,7 +52,7 @@ class StateHistory extends PureComponent<Props, State> {
     appEvents.emit(CoreEvents.showConfirmModal, {
       title: 'Delete Alert History',
       text: 'Are you sure you want to remove all history & annotations for this alert?',
-      icon: 'fa-trash',
+      icon: 'trash-alt',
       yesText: 'Yes',
       onConfirm: () => {
         getBackendSrv()

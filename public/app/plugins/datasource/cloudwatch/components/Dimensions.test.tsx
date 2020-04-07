@@ -43,7 +43,7 @@ describe('Dimensions', () => {
         />
       );
       expect(wrapper.html()).toEqual(
-        `<div class="gf-form"><a class="gf-form-label query-part">somekey</a></div><label class="gf-form-label query-segment-operator">=</label><div class="gf-form"><a class="gf-form-label query-part">somevalue</a></div><div class="gf-form"><a class="gf-form-label query-part"><icon name="'plus-circle'"></icon></a></div>`
+        `<div class=\"gf-form\"><a class=\"gf-form-label query-part\">somekey</a></div><label class=\"gf-form-label query-segment-operator\">=</label><div class=\"gf-form\"><a class=\"gf-form-label query-part\">somevalue</a></div><div class=\"gf-form\"><a class=\"gf-form-label query-part\"><div class=\"css-z4i1sc\"><svg xmlns=\"http://www.w3.org/2000/svg\" width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"currentColor\" class=\"css-pu0bzu\"><path d=\"M12,2A10,10,0,1,0,22,12,10,10,0,0,0,12,2Zm0,18a8,8,0,1,1,8-8A8,8,0,0,1,12,20Zm4-9H13V8a1,1,0,0,0-2,0v3H8a1,1,0,0,0,0,2h3v3a1,1,0,0,0,2,0V13h3a1,1,0,0,0,0-2Z\"></path></svg></div></a></div>`
       );
     });
   });

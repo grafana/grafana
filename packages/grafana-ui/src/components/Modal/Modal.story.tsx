@@ -36,7 +36,7 @@ ModalStories.add('default', () => {
     <Modal
       title={
         <div className="modal-header-title">
-          <Icon name="exclamation-triangle" />
+          <Icon name="exclamation-triangle" size="lg" />
           <span className="p-l-1">My Modal</span>
         </div>
       }

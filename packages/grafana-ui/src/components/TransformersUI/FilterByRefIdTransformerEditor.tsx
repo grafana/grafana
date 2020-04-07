@@ -7,8 +7,9 @@ import {
 } from '@grafana/data';
 import { TransformerUIProps, TransformerUIRegistyItem } from './types';
 import { ThemeContext } from '../../themes/ThemeContext';
-import { css, cx } from 'emotion';
+import { css } from 'emotion';
 import { InlineList } from '../List/InlineList';
+import { Icon } from '../Icon/Icon';
 
 interface FilterByRefIdTransformerEditorProps extends TransformerUIProps<FilterFramesByRefIdTransformerOptions> {}
 
@@ -145,13 +146,11 @@ const FilterPill: React.FC<FilterPillProps> = ({ label, selected, onClick }) => 
       onClick={onClick}
     >
       {selected && (
-        <i
-          className={cx(
-            'fa fa-check',
-            css`
-              margin-right: 4px;
-            `
-          )}
+        <Icon
+          className={css`
+            margin-right: 4px;
+          `}
+          name="check"
         />
       )}
       {label}

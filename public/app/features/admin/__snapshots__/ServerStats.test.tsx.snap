@@ -161,9 +161,22 @@ exports[`ServerStats Should render table with stats 1`] = `
                   rel="noopener"
                   target="_blank"
                 >
-                  <i
-                    className="document-info"
-                  />
+                  <div
+                    className="css-z4i1sc"
+                  >
+                    <svg
+                      className="css-pu0bzu"
+                      fill="currentColor"
+                      height={16}
+                      viewBox="0 0 24 24"
+                      width={16}
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <path
+                        d="M12,14a1,1,0,0,0-1,1v2a1,1,0,0,0,2,0V15A1,1,0,0,0,12,14Zm.38-2.92A1,1,0,0,0,11.8,11l-.18.06-.18.09-.15.12A1,1,0,0,0,11,12a1,1,0,0,0,.29.71,1,1,0,0,0,.33.21A.84.84,0,0,0,12,13a1,1,0,0,0,.71-.29A1,1,0,0,0,13,12a1,1,0,0,0-.29-.71A1.15,1.15,0,0,0,12.38,11.08ZM20,8.94a1.31,1.31,0,0,0-.06-.27l0-.09a1.07,1.07,0,0,0-.19-.28h0l-6-6h0a1.07,1.07,0,0,0-.28-.19l-.1,0A1.1,1.1,0,0,0,13.06,2H7A3,3,0,0,0,4,5V19a3,3,0,0,0,3,3H17a3,3,0,0,0,3-3V9S20,9,20,8.94ZM14,5.41,16.59,8H15a1,1,0,0,1-1-1ZM18,19a1,1,0,0,1-1,1H7a1,1,0,0,1-1-1V5A1,1,0,0,1,7,4h5V7a3,3,0,0,0,3,3h3Z"
+                      />
+                    </svg>
+                  </div>
                    
                   Documentation
                 </a>
@@ -174,9 +187,22 @@ exports[`ServerStats Should render table with stats 1`] = `
                   rel="noopener"
                   target="_blank"
                 >
-                  <i
-                    className="question-circle"
-                  />
+                  <div
+                    className="css-z4i1sc"
+                  >
+                    <svg
+                      className="css-pu0bzu"
+                      fill="currentColor"
+                      height={16}
+                      viewBox="0 0 24 24"
+                      width={16}
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <path
+                        d="M11.29,15.29a1.58,1.58,0,0,0-.12.15.76.76,0,0,0-.09.18.64.64,0,0,0-.06.18,1.36,1.36,0,0,0,0,.2.84.84,0,0,0,.08.38.9.9,0,0,0,.54.54.94.94,0,0,0,.76,0,.9.9,0,0,0,.54-.54A1,1,0,0,0,13,16a1,1,0,0,0-.29-.71A1,1,0,0,0,11.29,15.29ZM12,2A10,10,0,1,0,22,12,10,10,0,0,0,12,2Zm0,18a8,8,0,1,1,8-8A8,8,0,0,1,12,20ZM12,7A3,3,0,0,0,9.4,8.5a1,1,0,1,0,1.73,1A1,1,0,0,1,12,9a1,1,0,0,1,0,2,1,1,0,0,0-1,1v1a1,1,0,0,0,2,0v-.18A3,3,0,0,0,12,7Z"
+                      />
+                    </svg>
+                  </div>
                    
                   Support
                 </a>
@@ -187,9 +213,22 @@ exports[`ServerStats Should render table with stats 1`] = `
                   rel="noopener"
                   target="_blank"
                 >
-                  <i
-                    className="comments-alt"
-                  />
+                  <div
+                    className="css-z4i1sc"
+                  >
+                    <svg
+                      className="css-pu0bzu"
+                      fill="currentColor"
+                      height={16}
+                      viewBox="0 0 24 24"
+                      width={16}
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <path
+                        d="M19,8H18V5a3,3,0,0,0-3-3H5A3,3,0,0,0,2,5V17a1,1,0,0,0,.62.92A.84.84,0,0,0,3,18a1,1,0,0,0,.71-.29l2.81-2.82H8v1.44a3,3,0,0,0,3,3h6.92l2.37,2.38A1,1,0,0,0,21,22a.84.84,0,0,0,.38-.08A1,1,0,0,0,22,21V11A3,3,0,0,0,19,8ZM8,11v1.89H6.11a1,1,0,0,0-.71.29L4,14.59V5A1,1,0,0,1,5,4H15a1,1,0,0,1,1,1V8H11A3,3,0,0,0,8,11Zm12,7.59-1-1a1,1,0,0,0-.71-.3H11a1,1,0,0,1-1-1V11a1,1,0,0,1,1-1h8a1,1,0,0,1,1,1Z"
+                      />
+                    </svg>
+                  </div>
                    
                   Community
                 </a>
@@ -198,7 +237,7 @@ exports[`ServerStats Should render table with stats 1`] = `
                 <a
                   rel="noopener"
                 >
-                  <i />
+                  <div />
                    
                   undefined
                 </a>
@@ -207,7 +246,7 @@ exports[`ServerStats Should render table with stats 1`] = `
                 <a
                   rel="noopener"
                 >
-                  <i />
+                  <div />
                    
                   vv1.0 (1)
                 </a>
