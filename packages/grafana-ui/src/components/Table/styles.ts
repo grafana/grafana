@@ -20,6 +20,7 @@ export const getTableStyles = stylesFactory(
   (theme: GrafanaTheme): TableStyles => {
     const colors = theme.colors;
     const headerBg = theme.isLight ? colors.gray98 : colors.gray15;
+    const resizerColor = theme.isLight ? colors.gray85 : colors.black;
     const padding = 6;
     const lineHeight = theme.typography.lineHeight.md;
     const bodyFontSize = 14;
@@ -64,7 +65,7 @@ export const getTableStyles = stylesFactory(
         label: resizeHandle;
         cursor: col-resize !important;
         display: inline-block;
-        border-right: 2px solid ${colors.blue};
+        border-right: 2px solid ${resizerColor};
         width: 10px;
         height: 100%;
         position: absolute;
