@@ -49,10 +49,9 @@ export const OverrideEditor: React.FC<OverrideEditorProps> = ({ data, override, 
   );
 
   const onDynamicConfigValueAdd = useCallback(
-    (id: string, custom?: boolean) => {
+    (id: string) => {
       const propertyConfig: DynamicConfigValue = {
         id,
-        isCustom: custom,
       };
       if (override.properties) {
         override.properties.push(propertyConfig);
@@ -69,7 +68,6 @@ export const OverrideEditor: React.FC<OverrideEditorProps> = ({ data, override, 
       label: item.name,
       value: item.id,
       description: item.description,
-      custom: item.isCustom,
     };
   });
 
@@ -117,7 +115,7 @@ export const OverrideEditor: React.FC<OverrideEditorProps> = ({ data, override, 
             options={configPropertiesOptions}
             variant={'link'}
             onChange={o => {
-              onDynamicConfigValueAdd(o.value, o.custom);
+              onDynamicConfigValueAdd(o.value);
             }}
           />
         </div>

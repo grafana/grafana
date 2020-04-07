@@ -2,6 +2,7 @@ import {
   FieldOverrideEnv,
   findNumericFieldMinMax,
   setFieldConfigDefaults,
+  setDynamicConfigValue,
   applyFieldOverrides,
 } from './fieldOverrides';
 import { MutableDataFrame, toDataFrame } from '../dataframe';
@@ -35,8 +36,16 @@ const property2 = {
   shouldApply: () => true,
 } as any;
 
+const property3 = {
+  id: 'custom.property3', // Match field properties
+  path: 'property3.nested', // Match field properties
+  isCustom: true,
+  process: (value: any) => value,
+  shouldApply: () => true,
+} as any;
+
 export const customFieldRegistry: FieldConfigOptionsRegistry = new Registry<FieldConfigPropertyItem>(() => {
-  return [property1, property2, ...mockStandardProperties()];
+  return [property1, property2, property3, ...mockStandardProperties()];
 });
 
 describe('Global MinMax', () => {
@@ -284,5 +293,120 @@ describe('setFieldConfigDefaults', () => {
         },
       }
     `);
+  });
+});
+
+describe('setDynamicConfigValue', () => {
+  it('applies dynamic config values', () => {
+    const config = {
+      title: 'test',
+      // custom: {
+      //   property1: 1,
+      // },
+    };
+    setDynamicConfigValue(
+      config,
+      {
+        id: 'title',
+        value: 'applied',
+      },
+      {
+        fieldConfigRegistry: customFieldRegistry,
+        data: [] as any,
+        field: { type: FieldType.number } as any,
+        dataFrameIndex: 0,
+      }
+    );
+
+    expect(config.title).toEqual('applied');
+  });
+
+  it('applies custom dynamic config values', () => {
+    const config = {
+      custom: {
+        property1: 1,
+      },
+    };
+    setDynamicConfigValue(
+      config,
+      {
+        id: 'custom.property1',
+        value: 'applied',
+      },
+      {
+        fieldConfigRegistry: customFieldRegistry,
+        data: [] as any,
+        field: { type: FieldType.number } as any,
+        dataFrameIndex: 0,
+      }
+    );
+
+    expect(config.custom.property1).toEqual('applied');
+  });
+
+  it('applies nested custom dynamic config values', () => {
+    const config = {
+      custom: {
+        property3: {
+          nested: 1,
+        },
+      },
+    };
+    setDynamicConfigValue(
+      config,
+      {
+        id: 'custom.property3',
+        value: 'applied',
+      },
+      {
+        fieldConfigRegistry: customFieldRegistry,
+        data: [] as any,
+        field: { type: FieldType.number } as any,
+        dataFrameIndex: 0,
+      }
+    );
+
+    expect(config.custom.property3.nested).toEqual('applied');
+  });
+
+  it('removes properties', () => {
+    const config = {
+      title: 'title',
+      custom: {
+        property3: {
+          nested: 1,
+        },
+      },
+    };
+    setDynamicConfigValue(
+      config,
+      {
+        id: 'custom.property3',
+        value: undefined,
+      },
+      {
+        fieldConfigRegistry: customFieldRegistry,
+        data: [] as any,
+        field: { type: FieldType.number } as any,
+        dataFrameIndex: 0,
+      }
+    );
+
+    setDynamicConfigValue(
+      config,
+      {
+        id: 'title',
+        value: undefined,
+      },
+      {
+        fieldConfigRegistry: customFieldRegistry,
+        data: [] as any,
+        field: { type: FieldType.number } as any,
+        dataFrameIndex: 0,
+      }
+    );
+
+    expect(config.custom.property3).toBeUndefined();
+    expect(config.title).toBeUndefined();
   });
 });

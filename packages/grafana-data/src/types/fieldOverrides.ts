@@ -17,7 +17,6 @@ import { OptionsEditorItem } from './OptionsUIRegistryBuilder';
 export interface DynamicConfigValue {
   id: string;
   value?: any;
-  isCustom?: boolean;
 }
 
 export interface ConfigOverrideRule {

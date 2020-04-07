@@ -196,9 +196,8 @@ export interface FieldOverrideEnv extends FieldOverrideContext {
   fieldConfigRegistry: FieldConfigOptionsRegistry;
 }
 
-function setDynamicConfigValue(config: FieldConfig, value: DynamicConfigValue, context: FieldOverrideEnv) {
+export function setDynamicConfigValue(config: FieldConfig, value: DynamicConfigValue, context: FieldOverrideEnv) {
   const reg = context.fieldConfigRegistry;
-
   const item = reg.getIfExists(value.id);
   if (!item || !item.shouldApply(context.field!)) {
     return;
@@ -209,19 +208,19 @@ function setDynamicConfigValue(config: FieldConfig, value: DynamicConfigValue, c
   const remove = val === undefined || val === null;
 
   if (remove) {
-    if (value.isCustom && config.custom) {
-      delete config.custom[item.path];
+    if (item.isCustom && config.custom) {
+      delete config.custom[item.path.split('.')[0]];
     } else {
-      delete (config as any)[item.path];
+      delete (config as any)[item.path.split('.')[0]];
     }
   } else {
-    if (value.isCustom) {
+    if (item.isCustom) {
       if (!config.custom) {
         config.custom = {};
       }
-      config.custom[item.path] = val;
+      set(config.custom, item.path, val);
     } else {
-      (config as any)[item.path] = val;
+      set(config, item.path, val);
     }
   }
 }
