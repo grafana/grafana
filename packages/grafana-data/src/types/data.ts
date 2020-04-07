@@ -55,7 +55,7 @@ export interface QueryResultMetaNotice {
   severity: 'info' | 'warning' | 'error';
 
   /**
-   * The text that should be displayed
+   * Notice descriptive text
    */
   text: string;
 
@@ -66,7 +66,7 @@ export interface QueryResultMetaNotice {
   link?: string;
 
   /**
-   * Optionally suggest an appropriate for the panel inspector
+   * Optionally suggest an appropriate tab for the panel inspector
    */
   inspect?: 'meta' | 'error' | 'data' | 'stats';
 }
