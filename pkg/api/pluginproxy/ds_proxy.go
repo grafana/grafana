@@ -302,7 +302,7 @@ func checkWhiteList(c *models.ReqContext, host string) bool {
 func addOAuthPassThruAuth(c *models.ReqContext, req *http.Request) {
 	authInfoQuery := &models.GetAuthInfoQuery{UserId: c.UserId}
 	if err := bus.Dispatch(authInfoQuery); err != nil {
-		logger.Error("Error feching oauth information for user", "error", err)
+		logger.Error("Error fetching oauth information for user", "error", err)
 		return
 	}
 

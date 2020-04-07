@@ -97,11 +97,11 @@ For **Mode** there are three options:
 
 Additional values can be shown along-side the legend names:
 
-- **Min** - Minimum of all values returned from metric query
+- **Min** - Minimum of all values returned from the metric query
 - **Max** - Maximum of all values returned from the metric query
-- **Avg** - Average of all values returned from metric query
+- **Avg** - Average of all values returned from the metric query
 - **Current** - Last value returned from the metric query
-- **Total** - Sum of all values returned from metric query
+- **Total** - Sum of all values returned from the metric query
 - **Decimals** - Controls how many decimals are displayed for legend values (and graph hover tooltips)
 
 The legend values are calculated client side by Grafana and depend on what type of

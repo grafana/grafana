@@ -56,6 +56,8 @@
       name: GitHub
     - link: /auth/gitlab/
       name: GitLab
+    - link: /auth/okta/
+      name: Okta
     - link: /auth/saml/
       name: SAML
     - link: /auth/team-sync/
@@ -145,7 +147,7 @@
   - name: Data sources
     link: /features/datasources/
     children:
-    - link: /features/datasources/add-data-source/
+    - link: /features/datasources/add-a-data-source/
       name: Add data source
     - link: /features/datasources/cloudwatch/
       name: AWS Cloudwatch

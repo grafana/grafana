@@ -1,11 +1,11 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
-import { TextBoxVariableModel, VariableHide, VariableOption } from '../../templating/variable';
-import { EMPTY_UUID, getInstanceState, VariablePayload } from '../state/types';
+import { TextBoxVariableModel, VariableHide, VariableOption } from '../../templating/types';
+import { getInstanceState, NEW_VARIABLE_ID, VariablePayload } from '../state/types';
 import { initialVariablesState, VariablesState } from '../state/variablesReducer';
 
 export const initialTextBoxVariableModelState: TextBoxVariableModel = {
-  uuid: EMPTY_UUID,
+  id: NEW_VARIABLE_ID,
   global: false,
   index: -1,
   type: 'textbox',
@@ -24,7 +24,7 @@ export const textBoxVariableSlice = createSlice({
   initialState: initialVariablesState,
   reducers: {
     createTextBoxOptions: (state: VariablesState, action: PayloadAction<VariablePayload>) => {
-      const instanceState = getInstanceState<TextBoxVariableModel>(state, action.payload.uuid!);
+      const instanceState = getInstanceState<TextBoxVariableModel>(state, action.payload.id!);
       instanceState.options = [
         { text: instanceState.query.trim(), value: instanceState.query.trim(), selected: false },
       ];

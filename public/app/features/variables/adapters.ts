@@ -2,14 +2,33 @@ import { ComponentType } from 'react';
 import { Reducer } from 'redux';
 import { UrlQueryValue } from '@grafana/runtime';
 
-import { VariableModel, VariableOption, VariableType } from '../templating/variable';
+import {
+  AdHocVariableModel,
+  ConstantVariableModel,
+  CustomVariableModel,
+  DataSourceVariableModel,
+  IntervalVariableModel,
+  QueryVariableModel,
+  TextBoxVariableModel,
+  VariableModel,
+  VariableOption,
+} from '../templating/types';
 import { VariableEditorProps } from './editor/types';
 import { VariablesState } from './state/variablesReducer';
 import { VariablePickerProps } from './pickers/types';
+import { Registry, VariableType } from '@grafana/data';
+import { createQueryVariableAdapter } from './query/adapter';
+import { createCustomVariableAdapter } from './custom/adapter';
+import { createTextBoxVariableAdapter } from './textbox/adapter';
+import { createConstantVariableAdapter } from './constant/adapter';
+import { createDataSourceVariableAdapter } from './datasource/adapter';
+import { createIntervalVariableAdapter } from './interval/adapter';
+import { createAdHocVariableAdapter } from './adhoc/adapter';
 
 export interface VariableAdapter<Model extends VariableModel> {
+  id: VariableType;
   description: string;
-  label: string;
+  name: string;
   initialState: Model;
   dependsOn: (variable: Model, variableToTest: Model) => boolean;
   setValue: (variable: Model, option: VariableOption, emitChanges?: boolean) => Promise<void>;
@@ -22,40 +41,24 @@ export interface VariableAdapter<Model extends VariableModel> {
   reducer: Reducer<VariablesState>;
 }
 
-const allVariableAdapters: Record<VariableType, VariableAdapter<any> | null> = {
-  interval: null,
-  query: null,
-  datasource: null,
-  custom: null,
-  constant: null,
-  adhoc: null,
-  textbox: null,
-};
+export type VariableModels =
+  | QueryVariableModel
+  | CustomVariableModel
+  | TextBoxVariableModel
+  | ConstantVariableModel
+  | DataSourceVariableModel
+  | IntervalVariableModel
+  | AdHocVariableModel;
+export type VariableTypeRegistry<Model extends VariableModel = VariableModel> = Registry<VariableAdapter<Model>>;
 
-export interface VariableAdapters {
-  contains: (type: VariableType) => boolean;
-  get: (type: VariableType) => VariableAdapter<any>;
-  set: (type: VariableType, adapter: VariableAdapter<any>) => void;
-  registeredTypes: () => Array<{ type: VariableType; label: string }>;
-}
+export const getDefaultVariableAdapters = () => [
+  createQueryVariableAdapter(),
+  createCustomVariableAdapter(),
+  createTextBoxVariableAdapter(),
+  createConstantVariableAdapter(),
+  createDataSourceVariableAdapter(),
+  createIntervalVariableAdapter(),
+  createAdHocVariableAdapter(),
+];
 
-export const variableAdapters: VariableAdapters = {
-  contains: (type: VariableType): boolean => !!allVariableAdapters[type],
-  get: (type: VariableType): VariableAdapter<any> => {
-    if (allVariableAdapters[type] !== null) {
-      // @ts-ignore
-      // Suppressing strict null check in this case we know that this is an instance otherwise we throw
-      // Type 'VariableAdapter<any, any> | null' is not assignable to type 'VariableAdapter<any, any>'.
-      // Type 'null' is not assignable to type 'VariableAdapter<any, any>'.
-      return allVariableAdapters[type];
-    }
-
-    throw new Error(`There is no adapter for type:${type}`);
-  },
-  set: (type, adapter) => (allVariableAdapters[type] = adapter),
-  registeredTypes: (): Array<{ type: VariableType; label: string }> => {
-    return Object.keys(allVariableAdapters)
-      .filter((key: VariableType) => allVariableAdapters[key] !== null)
-      .map((key: VariableType) => ({ type: key, label: allVariableAdapters[key]!.label }));
-  },
-};
+export const variableAdapters: VariableTypeRegistry = new Registry<VariableAdapter<VariableModels>>();

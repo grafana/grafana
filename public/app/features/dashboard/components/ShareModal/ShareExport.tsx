@@ -1,6 +1,7 @@
 import React, { PureComponent } from 'react';
 import { saveAs } from 'file-saver';
-import { Button, Switch } from '@grafana/ui';
+import { Button, LegacyForms } from '@grafana/ui';
+const { Switch } = LegacyForms;
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 import { DashboardExporter } from 'app/features/dashboard/components/DashExportModal';
 import { appEvents } from 'app/core/core';
@@ -108,7 +109,7 @@ export class ShareExport extends PureComponent<Props, State> {
               <Button variant="secondary" onClick={this.onViewJson}>
                 View JSON
               </Button>
-              <Button variant="inverse" onClick={onDismiss}>
+              <Button variant="secondary" onClick={onDismiss}>
                 Cancel
               </Button>
             </div>

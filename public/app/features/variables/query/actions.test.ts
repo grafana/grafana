@@ -1,11 +1,10 @@
 import { variableAdapters } from '../adapters';
 import { createQueryVariableAdapter } from './adapter';
 import { reduxTester } from '../../../../test/core/redux/reduxTester';
-import { getTemplatingRootReducer } from '../state/helpers';
-import { QueryVariableModel, VariableHide, VariableRefresh, VariableSort } from '../../templating/variable';
+import { getRootReducer } from '../state/helpers';
+import { QueryVariableModel, VariableHide, VariableRefresh, VariableSort } from '../../templating/types';
 import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE, toVariablePayload } from '../state/types';
-import { changeVariableProp, setCurrentVariableValue } from '../state/sharedReducer';
-import { initDashboardTemplating } from '../state/actions';
+import { changeVariableProp, setCurrentVariableValue, addVariable } from '../state/sharedReducer';
 import { TemplatingState } from '../state/reducers';
 import {
   changeQueryVariableDataSource,
@@ -46,8 +45,12 @@ jest.mock('../../plugins/plugin_loader', () => ({
   importDataSourcePlugin: () => mocks.pluginLoader.importDataSourcePlugin(),
 }));
 
+jest.mock('../../templating/template_srv', () => ({
+  replace: jest.fn().mockReturnValue(''),
+}));
+
 describe('query actions', () => {
-  variableAdapters.set('query', createQueryVariableAdapter());
+  variableAdapters.setInit(() => [createQueryVariableAdapter()]);
 
   describe('when updateQueryVariableOptions is dispatched for variable with tags and includeAll', () => {
     it('then correct actions are dispatched', async () => {
@@ -58,17 +61,18 @@ describe('query actions', () => {
       mockDatasourceMetrics(variable, optionsMetrics, tagsMetrics);
 
       const tester = await reduxTester<{ templating: TemplatingState }>()
-        .givenRootReducer(getTemplatingRootReducer())
-        .whenActionIsDispatched(initDashboardTemplating([variable]))
+        .givenRootReducer(getRootReducer())
+        .whenActionIsDispatched(addVariable(toVariablePayload(variable, { global: false, index: 0, model: variable })))
         .whenAsyncActionIsDispatched(updateQueryVariableOptions(toVariablePayload(variable)), true);
 
       const option = createOption(ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE);
+      const update = { results: optionsMetrics, templatedRegex: '' };
 
       tester.thenDispatchedActionsPredicateShouldEqual(actions => {
         const [updateOptions, updateTags, setCurrentAction] = actions;
         const expectedNumberOfActions = 3;
 
-        expect(updateOptions).toEqual(updateVariableOptions(toVariablePayload(variable, optionsMetrics)));
+        expect(updateOptions).toEqual(updateVariableOptions(toVariablePayload(variable, update)));
         expect(updateTags).toEqual(updateVariableTags(toVariablePayload(variable, tagsMetrics)));
         expect(setCurrentAction).toEqual(setCurrentVariableValue(toVariablePayload(variable, { option })));
         return actions.length === expectedNumberOfActions;
@@ -85,17 +89,18 @@ describe('query actions', () => {
       mockDatasourceMetrics(variable, optionsMetrics, tagsMetrics);
 
       const tester = await reduxTester<{ templating: TemplatingState }>()
-        .givenRootReducer(getTemplatingRootReducer())
-        .whenActionIsDispatched(initDashboardTemplating([variable]))
+        .givenRootReducer(getRootReducer())
+        .whenActionIsDispatched(addVariable(toVariablePayload(variable, { global: false, index: 0, model: variable })))
         .whenAsyncActionIsDispatched(updateQueryVariableOptions(toVariablePayload(variable)), true);
 
       const option = createOption('A');
+      const update = { results: optionsMetrics, templatedRegex: '' };
 
       tester.thenDispatchedActionsPredicateShouldEqual(actions => {
         const [updateOptions, updateTags, setCurrentAction] = actions;
         const expectedNumberOfActions = 3;
 
-        expect(updateOptions).toEqual(updateVariableOptions(toVariablePayload(variable, optionsMetrics)));
+        expect(updateOptions).toEqual(updateVariableOptions(toVariablePayload(variable, update)));
         expect(updateTags).toEqual(updateVariableTags(toVariablePayload(variable, tagsMetrics)));
         expect(setCurrentAction).toEqual(setCurrentVariableValue(toVariablePayload(variable, { option })));
         return actions.length === expectedNumberOfActions;
@@ -111,17 +116,18 @@ describe('query actions', () => {
       mockDatasourceMetrics(variable, optionsMetrics, []);
 
       const tester = await reduxTester<{ templating: TemplatingState }>()
-        .givenRootReducer(getTemplatingRootReducer())
-        .whenActionIsDispatched(initDashboardTemplating([variable]))
+        .givenRootReducer(getRootReducer())
+        .whenActionIsDispatched(addVariable(toVariablePayload(variable, { global: false, index: 0, model: variable })))
         .whenAsyncActionIsDispatched(updateQueryVariableOptions(toVariablePayload(variable)), true);
 
       const option = createOption('A');
+      const update = { results: optionsMetrics, templatedRegex: '' };
 
       tester.thenDispatchedActionsPredicateShouldEqual(actions => {
         const [updateOptions, setCurrentAction] = actions;
         const expectedNumberOfActions = 2;
 
-        expect(updateOptions).toEqual(updateVariableOptions(toVariablePayload(variable, optionsMetrics)));
+        expect(updateOptions).toEqual(updateVariableOptions(toVariablePayload(variable, update)));
         expect(setCurrentAction).toEqual(setCurrentVariableValue(toVariablePayload(variable, { option })));
         return actions.length === expectedNumberOfActions;
       });
@@ -136,17 +142,18 @@ describe('query actions', () => {
       mockDatasourceMetrics(variable, optionsMetrics, []);
 
       const tester = await reduxTester<{ templating: TemplatingState }>()
-        .givenRootReducer(getTemplatingRootReducer())
-        .whenActionIsDispatched(initDashboardTemplating([variable]))
+        .givenRootReducer(getRootReducer())
+        .whenActionIsDispatched(addVariable(toVariablePayload(variable, { global: false, index: 0, model: variable })))
         .whenAsyncActionIsDispatched(updateQueryVariableOptions(toVariablePayload(variable)), true);
 
       const option = createOption(ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE);
+      const update = { results: optionsMetrics, templatedRegex: '' };
 
       tester.thenDispatchedActionsPredicateShouldEqual(actions => {
         const [updateOptions, setCurrentAction] = actions;
         const expectedNumberOfActions = 2;
 
-        expect(updateOptions).toEqual(updateVariableOptions(toVariablePayload(variable, optionsMetrics)));
+        expect(updateOptions).toEqual(updateVariableOptions(toVariablePayload(variable, update)));
         expect(setCurrentAction).toEqual(setCurrentVariableValue(toVariablePayload(variable, { option })));
         return actions.length === expectedNumberOfActions;
       });
@@ -161,19 +168,20 @@ describe('query actions', () => {
       mockDatasourceMetrics(variable, optionsMetrics, []);
 
       const tester = await reduxTester<{ templating: TemplatingState }>()
-        .givenRootReducer(getTemplatingRootReducer())
-        .whenActionIsDispatched(initDashboardTemplating([variable]))
-        .whenActionIsDispatched(setIdInEditor({ id: variable.uuid! }))
+        .givenRootReducer(getRootReducer())
+        .whenActionIsDispatched(addVariable(toVariablePayload(variable, { global: false, index: 0, model: variable })))
+        .whenActionIsDispatched(setIdInEditor({ id: variable.id! }))
         .whenAsyncActionIsDispatched(updateQueryVariableOptions(toVariablePayload(variable)), true);
 
       const option = createOption(ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE);
+      const update = { results: optionsMetrics, templatedRegex: '' };
 
       tester.thenDispatchedActionsPredicateShouldEqual(actions => {
         const [clearErrors, updateOptions, setCurrentAction] = actions;
         const expectedNumberOfActions = 3;
 
         expect(clearErrors).toEqual(removeVariableEditorError({ errorProp: 'update' }));
-        expect(updateOptions).toEqual(updateVariableOptions(toVariablePayload(variable, optionsMetrics)));
+        expect(updateOptions).toEqual(updateVariableOptions(toVariablePayload(variable, update)));
         expect(setCurrentAction).toEqual(setCurrentVariableValue(toVariablePayload(variable, { option })));
         return actions.length === expectedNumberOfActions;
       });
@@ -188,9 +196,9 @@ describe('query actions', () => {
       mocks[variable.datasource!].metricFindQuery = jest.fn(() => Promise.reject(error));
 
       const tester = await reduxTester<{ templating: TemplatingState }>()
-        .givenRootReducer(getTemplatingRootReducer())
-        .whenActionIsDispatched(initDashboardTemplating([variable]))
-        .whenActionIsDispatched(setIdInEditor({ id: variable.uuid! }))
+        .givenRootReducer(getRootReducer())
+        .whenActionIsDispatched(addVariable(toVariablePayload(variable, { global: false, index: 0, model: variable })))
+        .whenActionIsDispatched(setIdInEditor({ id: variable.id! }))
         .whenAsyncActionIsDispatched(updateQueryVariableOptions(toVariablePayload(variable)), true);
 
       tester.thenDispatchedActionsPredicateShouldEqual(actions => {
@@ -217,8 +225,8 @@ describe('query actions', () => {
       });
 
       const tester = await reduxTester<{ templating: TemplatingState }>()
-        .givenRootReducer(getTemplatingRootReducer())
-        .whenActionIsDispatched(initDashboardTemplating([variable]))
+        .givenRootReducer(getRootReducer())
+        .whenActionIsDispatched(addVariable(toVariablePayload(variable, { global: false, index: 0, model: variable })))
         .whenAsyncActionIsDispatched(initQueryVariableEditor(toVariablePayload(variable)), true);
 
       tester.thenDispatchedActionsPredicateShouldEqual(actions => {
@@ -250,8 +258,8 @@ describe('query actions', () => {
       });
 
       const tester = await reduxTester<{ templating: TemplatingState }>()
-        .givenRootReducer(getTemplatingRootReducer())
-        .whenActionIsDispatched(initDashboardTemplating([variable]))
+        .givenRootReducer(getRootReducer())
+        .whenActionIsDispatched(addVariable(toVariablePayload(variable, { global: false, index: 0, model: variable })))
         .whenAsyncActionIsDispatched(initQueryVariableEditor(toVariablePayload(variable)), true);
 
       tester.thenDispatchedActionsPredicateShouldEqual(actions => {
@@ -282,8 +290,8 @@ describe('query actions', () => {
       });
 
       const tester = await reduxTester<{ templating: TemplatingState }>()
-        .givenRootReducer(getTemplatingRootReducer())
-        .whenActionIsDispatched(initDashboardTemplating([variable]))
+        .givenRootReducer(getRootReducer())
+        .whenActionIsDispatched(addVariable(toVariablePayload(variable, { global: false, index: 0, model: variable })))
         .whenAsyncActionIsDispatched(initQueryVariableEditor(toVariablePayload(variable)), true);
 
       tester.thenDispatchedActionsPredicateShouldEqual(actions => {
@@ -308,8 +316,8 @@ describe('query actions', () => {
       const ds = { name: '', value: '', meta: {}, sort: '' };
 
       const tester = await reduxTester<{ templating: TemplatingState }>()
-        .givenRootReducer(getTemplatingRootReducer())
-        .whenActionIsDispatched(initDashboardTemplating([variable]))
+        .givenRootReducer(getRootReducer())
+        .whenActionIsDispatched(addVariable(toVariablePayload(variable, { global: false, index: 0, model: variable })))
         .whenAsyncActionIsDispatched(initQueryVariableEditor(toVariablePayload(variable)), true);
 
       tester.thenDispatchedActionsPredicateShouldEqual(actions => {
@@ -332,8 +340,8 @@ describe('query actions', () => {
       });
 
       const tester = await reduxTester<{ templating: TemplatingState }>()
-        .givenRootReducer(getTemplatingRootReducer())
-        .whenActionIsDispatched(initDashboardTemplating([variable]))
+        .givenRootReducer(getRootReducer())
+        .whenActionIsDispatched(addVariable(toVariablePayload(variable, { global: false, index: 0, model: variable })))
         .whenAsyncActionIsDispatched(changeQueryVariableDataSource(toVariablePayload(variable), 'datasource'), true);
 
       tester.thenDispatchedActionsPredicateShouldEqual(actions => {
@@ -362,8 +370,8 @@ describe('query actions', () => {
       });
 
       const tester = await reduxTester<{ templating: TemplatingState }>()
-        .givenRootReducer(getTemplatingRootReducer())
-        .whenActionIsDispatched(initDashboardTemplating([variable]))
+        .givenRootReducer(getRootReducer())
+        .whenActionIsDispatched(addVariable(toVariablePayload(variable, { global: false, index: 0, model: variable })))
         .whenAsyncActionIsDispatched(changeQueryVariableDataSource(toVariablePayload(variable), 'datasource'), true);
 
       tester.thenDispatchedActionsPredicateShouldEqual(actions => {
@@ -394,11 +402,12 @@ describe('query actions', () => {
       mockDatasourceMetrics({ ...variable, query }, optionsMetrics, tagsMetrics);
 
       const tester = await reduxTester<{ templating: TemplatingState }>()
-        .givenRootReducer(getTemplatingRootReducer())
-        .whenActionIsDispatched(initDashboardTemplating([variable]))
+        .givenRootReducer(getRootReducer())
+        .whenActionIsDispatched(addVariable(toVariablePayload(variable, { global: false, index: 0, model: variable })))
         .whenAsyncActionIsDispatched(changeQueryVariableQuery(toVariablePayload(variable), query, definition), true);
 
       const option = createOption(ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE);
+      const update = { results: optionsMetrics, templatedRegex: '' };
 
       tester.thenDispatchedActionsPredicateShouldEqual(actions => {
         const [clearError, changeQuery, changeDefinition, updateOptions, updateTags, setOption] = actions;
@@ -411,7 +420,7 @@ describe('query actions', () => {
         expect(changeDefinition).toEqual(
           changeVariableProp(toVariablePayload(variable, { propName: 'definition', propValue: definition }))
         );
-        expect(updateOptions).toEqual(updateVariableOptions(toVariablePayload(variable, optionsMetrics)));
+        expect(updateOptions).toEqual(updateVariableOptions(toVariablePayload(variable, update)));
         expect(updateTags).toEqual(updateVariableTags(toVariablePayload(variable, tagsMetrics)));
         expect(setOption).toEqual(setCurrentVariableValue(toVariablePayload(variable, { option })));
 
@@ -431,11 +440,12 @@ describe('query actions', () => {
       mockDatasourceMetrics({ ...variable, query }, optionsMetrics, []);
 
       const tester = await reduxTester<{ templating: TemplatingState }>()
-        .givenRootReducer(getTemplatingRootReducer())
-        .whenActionIsDispatched(initDashboardTemplating([variable]))
+        .givenRootReducer(getRootReducer())
+        .whenActionIsDispatched(addVariable(toVariablePayload(variable, { global: false, index: 0, model: variable })))
         .whenAsyncActionIsDispatched(changeQueryVariableQuery(toVariablePayload(variable), query, definition), true);
 
       const option = createOption(ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE);
+      const update = { results: optionsMetrics, templatedRegex: '' };
 
       tester.thenDispatchedActionsPredicateShouldEqual(actions => {
         const [clearError, changeQuery, changeDefinition, updateOptions, setOption] = actions;
@@ -448,7 +458,7 @@ describe('query actions', () => {
         expect(changeDefinition).toEqual(
           changeVariableProp(toVariablePayload(variable, { propName: 'definition', propValue: definition }))
         );
-        expect(updateOptions).toEqual(updateVariableOptions(toVariablePayload(variable, optionsMetrics)));
+        expect(updateOptions).toEqual(updateVariableOptions(toVariablePayload(variable, update)));
         expect(setOption).toEqual(setCurrentVariableValue(toVariablePayload(variable, { option })));
 
         return actions.length === expectedNumberOfActions;
@@ -466,11 +476,12 @@ describe('query actions', () => {
       mockDatasourceMetrics({ ...variable, query }, optionsMetrics, []);
 
       const tester = await reduxTester<{ templating: TemplatingState }>()
-        .givenRootReducer(getTemplatingRootReducer())
-        .whenActionIsDispatched(initDashboardTemplating([variable]))
+        .givenRootReducer(getRootReducer())
+        .whenActionIsDispatched(addVariable(toVariablePayload(variable, { global: false, index: 0, model: variable })))
         .whenAsyncActionIsDispatched(changeQueryVariableQuery(toVariablePayload(variable), query, definition), true);
 
       const option = createOption('A');
+      const update = { results: optionsMetrics, templatedRegex: '' };
 
       tester.thenDispatchedActionsPredicateShouldEqual(actions => {
         const [clearError, changeQuery, changeDefinition, updateOptions, setOption] = actions;
@@ -483,7 +494,7 @@ describe('query actions', () => {
         expect(changeDefinition).toEqual(
           changeVariableProp(toVariablePayload(variable, { propName: 'definition', propValue: definition }))
         );
-        expect(updateOptions).toEqual(updateVariableOptions(toVariablePayload(variable, optionsMetrics)));
+        expect(updateOptions).toEqual(updateVariableOptions(toVariablePayload(variable, update)));
         expect(setOption).toEqual(setCurrentVariableValue(toVariablePayload(variable, { option })));
 
         return actions.length === expectedNumberOfActions;
@@ -498,8 +509,8 @@ describe('query actions', () => {
       const definition = 'depends on datasource variable';
 
       const tester = await reduxTester<{ templating: TemplatingState }>()
-        .givenRootReducer(getTemplatingRootReducer())
-        .whenActionIsDispatched(initDashboardTemplating([variable]))
+        .givenRootReducer(getRootReducer())
+        .whenActionIsDispatched(addVariable(toVariablePayload(variable, { global: false, index: 0, model: variable })))
         .whenAsyncActionIsDispatched(changeQueryVariableQuery(toVariablePayload(variable), query, definition), true);
 
       const errorText = 'Query cannot contain a reference to itself. Variable: $' + variable.name;
@@ -530,7 +541,7 @@ function mockDatasourceMetrics(variable: QueryVariableModel, optionsMetrics: any
 function createVariable(extend?: Partial<QueryVariableModel>): QueryVariableModel {
   return {
     type: 'query',
-    uuid: '0',
+    id: '0',
     global: false,
     current: createOption(''),
     options: [],
@@ -559,14 +570,13 @@ function createOption(text: string, value?: string) {
   const metric = createMetric(text);
   return {
     ...metric,
-    value: value ?? metric.value,
+    value: value ?? metric.text,
     selected: false,
   };
 }
 
 function createMetric(value: string) {
   return {
-    value: value,
     text: value,
   };
 }

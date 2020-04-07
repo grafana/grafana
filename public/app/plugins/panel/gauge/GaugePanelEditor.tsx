@@ -3,16 +3,17 @@ import React, { PureComponent } from 'react';
 import {
   PanelOptionsGrid,
   FieldDisplayEditor,
-  Switch,
+  LegacyForms,
   PanelOptionsGroup,
   FieldPropertiesEditor,
   ThresholdsEditor,
   LegacyValueMappingsEditor,
   DataLinksEditor,
 } from '@grafana/ui';
+const { Switch } = LegacyForms;
 import {
   PanelEditorProps,
-  FieldDisplayOptions,
+  ReduceDataOptions,
   ThresholdsConfig,
   DataLink,
   FieldConfig,
@@ -24,6 +25,7 @@ import {
   getCalculationValueDataLinksVariableSuggestions,
   getDataLinksVariableSuggestions,
 } from '../../../features/panel/panellinks/link_srv';
+import { NewPanelEditorContext } from '../../../features/dashboard/components/PanelEditor/PanelEditor';
 
 export class GaugePanelEditor extends PureComponent<PanelEditorProps<GaugeOptions>> {
   labelWidth = 6;
@@ -38,14 +40,14 @@ export class GaugePanelEditor extends PureComponent<PanelEditorProps<GaugeOption
     });
 
   onDisplayOptionsChanged = (
-    fieldOptions: FieldDisplayOptions,
+    fieldOptions: ReduceDataOptions,
     event?: React.SyntheticEvent<HTMLElement>,
     callback?: () => void
   ) => {
     this.props.onOptionsChange(
       {
         ...this.props.options,
-        fieldOptions,
+        reduceOptions: fieldOptions,
       },
       callback
     );
@@ -93,57 +95,69 @@ export class GaugePanelEditor extends PureComponent<PanelEditorProps<GaugeOption
 
   render() {
     const { options, fieldConfig } = this.props;
-    const { showThresholdLabels, showThresholdMarkers, fieldOptions } = options;
+    const { showThresholdLabels, showThresholdMarkers, reduceOptions: valueOptions } = options;
 
     const { defaults } = fieldConfig;
 
-    const suggestions = fieldOptions.values
+    const suggestions = valueOptions.values
       ? getDataLinksVariableSuggestions(this.props.data.series)
       : getCalculationValueDataLinksVariableSuggestions(this.props.data.series);
+
     return (
-      <>
-        <PanelOptionsGrid>
-          <PanelOptionsGroup title="Display">
-            <FieldDisplayEditor
-              onChange={this.onDisplayOptionsChanged}
-              value={fieldOptions}
-              labelWidth={this.labelWidth}
-            />
-            <Switch
-              label="Labels"
-              labelClass={`width-${this.labelWidth}`}
-              checked={showThresholdLabels}
-              onChange={this.onToggleThresholdLabels}
-            />
-            <Switch
-              label="Markers"
-              labelClass={`width-${this.labelWidth}`}
-              checked={showThresholdMarkers}
-              onChange={this.onToggleThresholdMarkers}
-            />
-          </PanelOptionsGroup>
+      <NewPanelEditorContext.Consumer>
+        {useNewEditor => {
+          if (useNewEditor) {
+            return null;
+          }
 
-          <PanelOptionsGroup title="Field">
-            <FieldPropertiesEditor
-              showMinMax={true}
-              showTitle={true}
-              onChange={this.onDefaultsChange}
-              value={defaults}
-            />
-          </PanelOptionsGroup>
-          <ThresholdsEditor onChange={this.onThresholdsChanged} thresholds={defaults.thresholds} />
-        </PanelOptionsGrid>
-        <LegacyValueMappingsEditor onChange={this.onValueMappingsChanged} valueMappings={defaults.mappings} />
+          return (
+            <>
+              <PanelOptionsGrid>
+                <PanelOptionsGroup title="Display">
+                  <FieldDisplayEditor
+                    onChange={this.onDisplayOptionsChanged}
+                    value={valueOptions}
+                    labelWidth={this.labelWidth}
+                  />
+                  <Switch
+                    label="Labels"
+                    labelClass={`width-${this.labelWidth}`}
+                    checked={showThresholdLabels}
+                    onChange={this.onToggleThresholdLabels}
+                  />
+                  <Switch
+                    label="Markers"
+                    labelClass={`width-${this.labelWidth}`}
+                    checked={showThresholdMarkers}
+                    onChange={this.onToggleThresholdMarkers}
+                  />
+                </PanelOptionsGroup>
 
-        <PanelOptionsGroup title="Data links">
-          <DataLinksEditor
-            value={defaults.links}
-            onChange={this.onDataLinksChanged}
-            suggestions={suggestions}
-            maxLinks={10}
-          />
-        </PanelOptionsGroup>
-      </>
+                <PanelOptionsGroup title="Field">
+                  <FieldPropertiesEditor
+                    showMinMax={true}
+                    showTitle={true}
+                    onChange={this.onDefaultsChange}
+                    value={defaults}
+                  />
+                </PanelOptionsGroup>
+
+                <ThresholdsEditor onChange={this.onThresholdsChanged} thresholds={defaults.thresholds} />
+              </PanelOptionsGrid>
+
+              <LegacyValueMappingsEditor onChange={this.onValueMappingsChanged} valueMappings={defaults.mappings} />
+              <PanelOptionsGroup title="Data links">
+                <DataLinksEditor
+                  value={defaults.links}
+                  onChange={this.onDataLinksChanged}
+                  suggestions={suggestions}
+                  maxLinks={10}
+                />
+              </PanelOptionsGroup>
+            </>
+          );
+        }}
+      </NewPanelEditorContext.Consumer>
     );
   }
 }

@@ -1,6 +1,6 @@
 import cloneDeep from 'lodash/cloneDeep';
 
-import { containsVariable, QueryVariableModel, VariableRefresh } from '../../templating/variable';
+import { QueryVariableModel, VariableRefresh } from '../../templating/types';
 import { initialQueryVariableModelState, queryVariableReducer } from './reducer';
 import { dispatch } from '../../../store/store';
 import { setOptionAsCurrent, setOptionFromUrl } from '../state/actions';
@@ -9,11 +9,13 @@ import { OptionsPicker } from '../pickers';
 import { QueryVariableEditor } from './QueryVariableEditor';
 import { updateQueryVariableOptions } from './actions';
 import { ALL_VARIABLE_TEXT, toVariableIdentifier } from '../state/types';
+import { containsVariable } from '../../templating/utils';
 
 export const createQueryVariableAdapter = (): VariableAdapter<QueryVariableModel> => {
   return {
+    id: 'query',
     description: 'Variable values are fetched from a datasource query',
-    label: 'Query',
+    name: 'Query',
     initialState: initialQueryVariableModelState,
     reducer: queryVariableReducer,
     picker: OptionsPicker,
@@ -31,7 +33,7 @@ export const createQueryVariableAdapter = (): VariableAdapter<QueryVariableModel
       await dispatch(updateQueryVariableOptions(toVariableIdentifier(variable), searchFilter));
     },
     getSaveModel: variable => {
-      const { index, uuid, initLock, global, queryValue, ...rest } = cloneDeep(variable);
+      const { index, id, initLock, global, queryValue, ...rest } = cloneDeep(variable);
       // remove options
       if (variable.refresh !== VariableRefresh.never) {
         return { ...rest, options: [] };

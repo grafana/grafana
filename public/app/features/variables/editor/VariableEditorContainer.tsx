@@ -1,13 +1,13 @@
 import React, { MouseEvent, PureComponent } from 'react';
-import { EMPTY_UUID, toVariableIdentifier, toVariablePayload, VariableIdentifier } from '../state/types';
+import { NEW_VARIABLE_ID, toVariableIdentifier, toVariablePayload, VariableIdentifier } from '../state/types';
 import { StoreState } from '../../../types';
 import { e2e } from '@grafana/e2e';
 import { VariableEditorList } from './VariableEditorList';
 import { VariableEditorEditor } from './VariableEditorEditor';
 import { MapDispatchToProps, MapStateToProps } from 'react-redux';
 import { connectWithStore } from '../../../core/utils/connectWithReduxStore';
-import { getVariableClones } from '../state/selectors';
-import { VariableModel } from '../../templating/variable';
+import { getVariables } from '../state/selectors';
+import { VariableModel } from '../../templating/types';
 import { switchToEditMode, switchToListMode, switchToNewMode } from './actions';
 import { changeVariableOrder, duplicateVariable, removeVariable } from '../state/sharedReducer';
 
@@ -53,7 +53,7 @@ class VariableEditorContainerUnconnected extends PureComponent<Props> {
   };
 
   onDuplicateVariable = (identifier: VariableIdentifier) => {
-    this.props.duplicateVariable(toVariablePayload(identifier, { newUuid: (undefined as unknown) as string }));
+    this.props.duplicateVariable(toVariablePayload(identifier, { newId: (undefined as unknown) as string }));
   };
 
   onRemoveVariable = (identifier: VariableIdentifier) => {
@@ -61,7 +61,7 @@ class VariableEditorContainerUnconnected extends PureComponent<Props> {
   };
 
   render() {
-    const variableToEdit = this.props.variables.find(s => s.uuid === this.props.idInEditor) ?? null;
+    const variableToEdit = this.props.variables.find(s => s.id === this.props.idInEditor) ?? null;
     return (
       <div>
         <div className="page-action-bar">
@@ -72,7 +72,7 @@ class VariableEditorContainerUnconnected extends PureComponent<Props> {
             >
               Variables
             </a>
-            {this.props.idInEditor === EMPTY_UUID && (
+            {this.props.idInEditor === NEW_VARIABLE_ID && (
               <span>
                 <i
                   className="fa fa-fw fa-chevron-right"
@@ -81,7 +81,7 @@ class VariableEditorContainerUnconnected extends PureComponent<Props> {
                 New
               </span>
             )}
-            {this.props.idInEditor && this.props.idInEditor !== EMPTY_UUID && (
+            {this.props.idInEditor && this.props.idInEditor !== NEW_VARIABLE_ID && (
               <span>
                 <i
                   className="fa fa-fw fa-chevron-right"
@@ -122,7 +122,7 @@ class VariableEditorContainerUnconnected extends PureComponent<Props> {
 }
 
 const mapStateToProps: MapStateToProps<ConnectedProps, OwnProps, StoreState> = state => ({
-  variables: getVariableClones(state, true),
+  variables: getVariables(state, true),
   idInEditor: state.templating.editor.id,
 });
 

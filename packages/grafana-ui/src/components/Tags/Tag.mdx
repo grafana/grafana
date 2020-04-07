@@ -1,0 +1,23 @@
+import { Story, Preview, Props } from '@storybook/addon-docs/blocks';
+import { Tag } from './Tag';
+
+# Tag
+
+Used for displaying metadata, for example to add more details to search results. Background and border colors are generated from the tag name.
+
+<Preview>
+  <div>
+    <Tag name='Tag' onClick={(name) => console.log(name)} />
+  </div>
+</Preview>
+
+### Usage
+
+```jsx
+import { Tag } from '@grafana/ui';
+
+<Tag name='Tag' onClick={(name) => console.log(name)} />
+```
+
+### Props
+<Props of={Tag} />

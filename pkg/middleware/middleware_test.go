@@ -2,7 +2,6 @@ package middleware
 
 import (
 	"context"
-	"encoding/base32"
 	"errors"
 	"fmt"
 	"net/http"
@@ -265,10 +264,14 @@ func TestMiddlewareContext(t *testing.T) {
 			}
 			for _, sameSitePolicy := range sameSitePolicies {
 				setting.CookieSameSiteMode = sameSitePolicy
+				expectedCookiePath := "/"
+				if len(setting.AppSubUrl) > 0 {
+					expectedCookiePath = setting.AppSubUrl
+				}
 				expectedCookie := &http.Cookie{
 					Name:     setting.LoginCookieName,
 					Value:    "rotated",
-					Path:     setting.AppSubUrl + "/",
+					Path:     expectedCookiePath,
 					HttpOnly: true,
 					MaxAge:   int(maxAge),
 					Secure:   setting.CookieSecure,
@@ -292,10 +295,14 @@ func TestMiddlewareContext(t *testing.T) {
 			Convey("Should not set cookie with SameSite attribute when setting.CookieSameSiteDisabled is true", func() {
 				setting.CookieSameSiteDisabled = true
 				setting.CookieSameSiteMode = http.SameSiteLaxMode
+				expectedCookiePath := "/"
+				if len(setting.AppSubUrl) > 0 {
+					expectedCookiePath = setting.AppSubUrl
+				}
 				expectedCookie := &http.Cookie{
 					Name:     setting.LoginCookieName,
 					Value:    "rotated",
-					Path:     setting.AppSubUrl + "/",
+					Path:     expectedCookiePath,
 					HttpOnly: true,
 					MaxAge:   int(maxAge),
 					Secure:   setting.CookieSecure,
@@ -364,7 +371,7 @@ func TestMiddlewareContext(t *testing.T) {
 					return nil
 				})
 
-				key := fmt.Sprintf(authproxy.CachePrefix, base32.StdEncoding.EncodeToString([]byte(name+"-"+group)))
+				key := fmt.Sprintf(authproxy.CachePrefix, authproxy.HashCacheKey(name+"-"+group))
 				err := sc.remoteCacheService.Set(key, int64(33), 0)
 				So(err, ShouldBeNil)
 				sc.fakeReq("GET", "/")

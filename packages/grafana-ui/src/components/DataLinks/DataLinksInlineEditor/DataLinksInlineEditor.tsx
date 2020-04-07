@@ -1,7 +1,7 @@
 import { DataFrame, DataLink, GrafanaTheme, VariableSuggestion } from '@grafana/data';
 import React, { useState } from 'react';
 import { css } from 'emotion';
-import Forms from '../../Forms';
+import { Button } from '../../Button/Button';
 import cloneDeep from 'lodash/cloneDeep';
 import { Modal } from '../../Modal/Modal';
 import { FullWidthButtonContainer } from '../../Button/FullWidthButtonContainer';
@@ -10,7 +10,7 @@ import { DataLinksListItem } from './DataLinksListItem';
 import { DataLinkEditorModalContent } from './DataLinkEditorModalContent';
 
 interface DataLinksInlineEditorProps {
-  links: DataLink[];
+  links?: DataLink[];
   onChange: (links: DataLink[]) => void;
   suggestions: VariableSuggestion[];
   data: DataFrame[];
@@ -23,6 +23,9 @@ export const DataLinksInlineEditor: React.FC<DataLinksInlineEditorProps> = ({ li
   const styles = getDataLinksInlineEditorStyles(theme);
 
   const onDataLinkChange = (index: number, link: DataLink) => {
+    if (!links) {
+      return;
+    }
     const update = cloneDeep(links);
     update[index] = link;
     onChange(update);
@@ -48,6 +51,9 @@ export const DataLinksInlineEditor: React.FC<DataLinksInlineEditorProps> = ({ li
   };
 
   const onDataLinkRemove = (index: number) => {
+    if (!links) {
+      return;
+    }
     const update = cloneDeep(links);
     update.splice(index, 1);
     onChange(update);
@@ -55,7 +61,7 @@ export const DataLinksInlineEditor: React.FC<DataLinksInlineEditorProps> = ({ li
 
   return (
     <>
-      {links && (
+      {links && links.length > 0 && (
         <div className={styles.wrapper}>
           {links.map((l, i) => {
             return (
@@ -84,7 +90,7 @@ export const DataLinksInlineEditor: React.FC<DataLinksInlineEditorProps> = ({ li
         >
           <DataLinkEditorModalContent
             index={editIndex}
-            link={links[editIndex]}
+            link={links![editIndex]}
             data={data}
             onChange={onDataLinkChange}
             onClose={() => setEditIndex(null)}
@@ -94,9 +100,9 @@ export const DataLinksInlineEditor: React.FC<DataLinksInlineEditorProps> = ({ li
       )}
 
       <FullWidthButtonContainer>
-        <Forms.Button size="sm" icon="fa fa-plus" onClick={onDataLinkAdd}>
-          Add data link
-        </Forms.Button>
+        <Button size="sm" icon="fa fa-plus" onClick={onDataLinkAdd} variant="secondary">
+          Add link
+        </Button>
       </FullWidthButtonContainer>
     </>
   );

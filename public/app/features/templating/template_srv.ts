@@ -1,11 +1,13 @@
 import kbn from 'app/core/utils/kbn';
 import _ from 'lodash';
-import { variableRegex } from 'app/features/templating/variable';
 import { escapeHtml } from 'app/core/utils/text';
-import { ScopedVars, TimeRange } from '@grafana/data';
-import { getVariableWithName } from '../variables/state/selectors';
-import { getState } from '../../store/store';
+import { deprecationWarning, ScopedVars, TimeRange } from '@grafana/data';
+import { getFilteredVariables, getVariables, getVariableWithName } from '../variables/state/selectors';
 import { getConfig } from 'app/core/config';
+import { variableRegex } from './utils';
+import { isAdHoc } from '../variables/guard';
+import { VariableModel } from './types';
+import { setTemplateSrv, TemplateSrv as BaseTemplateSrv } from '@grafana/runtime';
 
 function luceneEscape(value: string) {
   return value.replace(/([\!\*\+\-\=<>\s\&\|\(\)\[\]\{\}\^\~\?\:\\/"])/g, '\\$1');
@@ -15,9 +17,20 @@ interface FieldAccessorCache {
   [key: string]: (obj: any) => any;
 }
 
-export class TemplateSrv {
-  variables: any[];
+export interface TemplateSrvDependencies {
+  getFilteredVariables: typeof getFilteredVariables;
+  getVariables: typeof getVariables;
+  getVariableWithName: typeof getVariableWithName;
+}
 
+const runtimeDependencies: TemplateSrvDependencies = {
+  getFilteredVariables,
+  getVariables,
+  getVariableWithName,
+};
+
+export class TemplateSrv implements BaseTemplateSrv {
+  private _variables: any[];
   private regex = variableRegex;
   private index: any = {};
   private grafanaVariables: any = {};
@@ -25,14 +38,14 @@ export class TemplateSrv {
   private timeRange?: TimeRange | null = null;
   private fieldAccessorCache: FieldAccessorCache = {};
 
-  constructor() {
+  constructor(private dependencies: TemplateSrvDependencies = runtimeDependencies) {
     this.builtIns['__interval'] = { text: '1s', value: '1s' };
     this.builtIns['__interval_ms'] = { text: '100', value: '100' };
-    this.variables = [];
+    this._variables = [];
   }
 
   init(variables: any, timeRange?: TimeRange) {
-    this.variables = variables;
+    this._variables = variables;
     this.timeRange = timeRange;
     this.updateIndex();
   }
@@ -41,10 +54,28 @@ export class TemplateSrv {
     return this.builtIns.__interval.value;
   }
 
+  /**
+   * @deprecated: this instance variable should not be used and will be removed in future releases
+   *
+   * Use getVariables function instead
+   */
+  get variables(): any[] {
+    deprecationWarning('template_srv.ts', 'variables', 'getVariables');
+    return this.getVariables();
+  }
+
+  getVariables(): VariableModel[] {
+    if (getConfig().featureToggles.newVariables) {
+      return this.dependencies.getVariables();
+    }
+
+    return this._variables;
+  }
+
   updateIndex() {
     const existsOrEmpty = (value: any) => value || value === '';
 
-    this.index = this.variables.reduce((acc, currentValue) => {
+    this.index = this._variables.reduce((acc, currentValue) => {
       if (currentValue.current && (currentValue.current.isNone || existsOrEmpty(currentValue.current.value))) {
         acc[currentValue.name] = currentValue;
       }
@@ -79,20 +110,12 @@ export class TemplateSrv {
   getAdhocFilters(datasourceName: string) {
     let filters: any = [];
 
-    if (this.variables) {
-      for (let i = 0; i < this.variables.length; i++) {
-        const variable = this.variables[i];
-        if (variable.type !== 'adhoc') {
-          continue;
-        }
-
-        // null is the "default" datasource
-        if (variable.datasource === null || variable.datasource === datasourceName) {
+    for (const variable of this.getAdHocVariables()) {
+      if (variable.datasource === null || variable.datasource === datasourceName) {
+        filters = filters.concat(variable.filters);
+      } else if (variable.datasource.indexOf('$') === 0) {
+        if (this.replace(variable.datasource) === datasourceName) {
           filters = filters.concat(variable.filters);
-        } else if (variable.datasource.indexOf('$') === 0) {
-          if (this.replace(variable.datasource) === datasourceName) {
-            filters = filters.concat(variable.filters);
-          }
         }
       }
     }
@@ -184,6 +207,30 @@ export class TemplateSrv {
           return this.encodeURIComponentStrict('{' + value.join(',') + '}');
         }
         return this.encodeURIComponentStrict(value);
+      }
+      case 'singlequote': {
+        // escape single quotes with backslash
+        const regExp = new RegExp(`'`, 'g');
+        if (_.isArray(value)) {
+          return _.map(value, v => `'${_.replace(v, regExp, `\\'`)}'`).join(',');
+        }
+        return `'${_.replace(value, regExp, `\\'`)}'`;
+      }
+      case 'doublequote': {
+        // escape double quotes with backslash
+        const regExp = new RegExp('"', 'g');
+        if (_.isArray(value)) {
+          return _.map(value, v => `"${_.replace(v, regExp, '\\"')}"`).join(',');
+        }
+        return `"${_.replace(value, regExp, '\\"')}"`;
+      }
+      case 'sqlstring': {
+        // escape single quotes by pairing them
+        const regExp = new RegExp(`'`, 'g');
+        if (_.isArray(value)) {
+          return _.map(value, v => `'${_.replace(v, regExp, "''")}'`).join(',');
+        }
+        return `'${_.replace(value, regExp, "''")}'`;
       }
       default: {
         if (_.isArray(value) && value.length > 1) {
@@ -353,7 +400,7 @@ export class TemplateSrv {
   }
 
   fillVariableValuesForUrl(params: any, scopedVars?: ScopedVars) {
-    _.each(this.variables, variable => {
+    _.each(this._variables, variable => {
       if (scopedVars && scopedVars[variable.name] !== void 0) {
         if (scopedVars[variable.name].skipUrlSync) {
           return;
@@ -385,11 +432,24 @@ export class TemplateSrv {
     }
 
     if (getConfig().featureToggles.newVariables && !this.index[name]) {
-      return getVariableWithName(name, getState());
+      return this.dependencies.getVariableWithName(name);
     }
 
     return this.index[name];
   };
+
+  private getAdHocVariables = (): any[] => {
+    if (getConfig().featureToggles.newVariables) {
+      return this.dependencies.getFilteredVariables(isAdHoc);
+    }
+    if (Array.isArray(this._variables)) {
+      return this._variables.filter(isAdHoc);
+    }
+    return [];
+  };
 }
 
-export default new TemplateSrv();
+// Expose the template srv
+const srv = new TemplateSrv();
+setTemplateSrv(srv);
+export default srv;

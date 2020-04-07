@@ -1,9 +1,10 @@
 import React from 'react';
 import _ from 'lodash';
 
-import { Select } from '@grafana/ui';
+import { LegacyForms } from '@grafana/ui';
 import { SelectableValue } from '@grafana/data';
 import { Variable } from 'app/types/templates';
+const { Select } = LegacyForms;
 
 export interface Props {
   onChange: (value: string) => void;

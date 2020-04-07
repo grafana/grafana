@@ -42,10 +42,12 @@ type PluginScanner struct {
 	pluginPath           string
 	errors               []error
 	backendPluginManager backendplugin.Manager
+	cfg                  *setting.Cfg
 }
 
 type PluginManager struct {
 	BackendPluginManager backendplugin.Manager `inject:""`
+	Cfg                  *setting.Cfg          `inject:""`
 	log                  log.Logger
 }
 
@@ -74,6 +76,14 @@ func (pm *PluginManager) Init() error {
 	plugDir := path.Join(setting.StaticRootPath, "app/plugins")
 	if err := pm.scan(plugDir); err != nil {
 		return errutil.Wrapf(err, "Failed to scan main plugin directory '%s'", plugDir)
+	}
+
+	pm.log.Info("Checking Bundled Plugins")
+	plugDir = path.Join(setting.HomePath, "plugins-bundled")
+	if _, err := os.Stat(plugDir); !os.IsNotExist(err) {
+		if err := pm.scan(plugDir); err != nil {
+			return errutil.Wrapf(err, "failed to scan bundled plugin directory '%s'", plugDir)
+		}
 	}
 
 	// check if plugins dir exists
@@ -164,6 +174,7 @@ func (pm *PluginManager) scan(pluginDir string) error {
 	scanner := &PluginScanner{
 		pluginPath:           pluginDir,
 		backendPluginManager: pm.BackendPluginManager,
+		cfg:                  pm.Cfg,
 	}
 
 	if err := util.Walk(pluginDir, true, true, scanner.walker); err != nil {
@@ -211,6 +222,14 @@ func (scanner *PluginScanner) walker(currentPath string, f os.FileInfo, err erro
 
 	if f.IsDir() {
 		return nil
+	}
+
+	if !scanner.cfg.FeatureToggles["tracingIntegration"] {
+		// Do not load tracing datasources if
+		prefix := path.Join(setting.StaticRootPath, "app/plugins/datasource")
+		if strings.Contains(currentPath, path.Join(prefix, "jaeger")) || strings.Contains(currentPath, path.Join(prefix, "zipkin")) {
+			return nil
+		}
 	}
 
 	if f.Name() == "plugin.json" {

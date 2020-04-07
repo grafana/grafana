@@ -4,11 +4,11 @@ import (
 	"context"
 	"time"
 
-	"github.com/go-xorm/xorm"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/util/errutil"
 	"github.com/mattn/go-sqlite3"
+	"xorm.io/xorm"
 )
 
 // WithTransactionalDbSession calls the callback with an session within a transaction
@@ -22,7 +22,7 @@ func (ss *SqlStore) InTransaction(ctx context.Context, fn func(ctx context.Conte
 
 func (ss *SqlStore) inTransactionWithRetry(ctx context.Context, fn func(ctx context.Context) error, retry int) error {
 	return inTransactionWithRetryCtx(ctx, ss.engine, func(sess *DBSession) error {
-		withValue := context.WithValue(ctx, ContextSessionName, sess)
+		withValue := context.WithValue(ctx, ContextSessionKey{}, sess)
 		return fn(withValue)
 	}, retry)
 }

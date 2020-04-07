@@ -1,7 +1,7 @@
 import { AnyAction } from 'redux';
 import { UrlQueryMap } from '@grafana/runtime';
 
-import { getTemplatingAndLocationRootReducer, getTemplatingRootReducer, variableMockBuilder } from './helpers';
+import { getTemplatingAndLocationRootReducer, getTemplatingRootReducer } from './helpers';
 import { variableAdapters } from '../adapters';
 import { createQueryVariableAdapter } from '../query/adapter';
 import { createCustomVariableAdapter } from '../custom/adapter';
@@ -11,34 +11,52 @@ import { reduxTester } from '../../../../test/core/redux/reduxTester';
 import { TemplatingState } from 'app/features/variables/state/reducers';
 import {
   initDashboardTemplating,
-  onTimeRangeUpdated,
-  OnTimeRangeUpdatedDependencies,
   processVariables,
   setOptionFromUrl,
   validateVariableSelectionState,
+  changeVariableMultiValue,
 } from './actions';
-import { addInitLock, addVariable, removeInitLock, resolveInitLock, setCurrentVariableValue } from './sharedReducer';
-import { toVariableIdentifier, toVariablePayload } from './types';
-import { TemplateSrv } from '../../templating/template_srv';
-import { Emitter } from '../../../core/core';
-import { createIntervalVariableAdapter } from '../interval/adapter';
-import { VariableRefresh } from '../../templating/variable';
-import { DashboardModel } from '../../dashboard/state';
-import { DashboardState } from '../../../types';
-import { dateTime, TimeRange } from '@grafana/data';
+import {
+  addInitLock,
+  addVariable,
+  removeInitLock,
+  removeVariable,
+  resolveInitLock,
+  setCurrentVariableValue,
+  changeVariableProp,
+} from './sharedReducer';
+import { NEW_VARIABLE_ID, toVariableIdentifier, toVariablePayload } from './types';
+import {
+  constantBuilder,
+  customBuilder,
+  datasourceBuilder,
+  queryBuilder,
+  textboxBuilder,
+} from '../shared/testing/builders';
+import { changeVariableName } from '../editor/actions';
+import { changeVariableNameFailed, changeVariableNameSucceeded, setIdInEditor } from '../editor/reducer';
+
+variableAdapters.setInit(() => [
+  createQueryVariableAdapter(),
+  createCustomVariableAdapter(),
+  createTextBoxVariableAdapter(),
+  createConstantVariableAdapter(),
+]);
+
+jest.mock('app/features/dashboard/services/TimeSrv', () => ({
+  getTimeSrv: () => ({
+    timeRange: jest.fn().mockReturnValue(undefined),
+  }),
+}));
 
 describe('shared actions', () => {
   describe('when initDashboardTemplating is dispatched', () => {
     it('then correct actions are dispatched', () => {
-      variableAdapters.set('query', createQueryVariableAdapter());
-      variableAdapters.set('custom', createCustomVariableAdapter());
-      variableAdapters.set('textbox', createTextBoxVariableAdapter());
-      variableAdapters.set('constant', createConstantVariableAdapter());
-      const query = variableMockBuilder('query').create();
-      const constant = variableMockBuilder('constant').create();
-      const datasource = variableMockBuilder('datasource').create();
-      const custom = variableMockBuilder('custom').create();
-      const textbox = variableMockBuilder('textbox').create();
+      const query = queryBuilder().build();
+      const constant = constantBuilder().build();
+      const datasource = datasourceBuilder().build();
+      const custom = customBuilder().build();
+      const textbox = textboxBuilder().build();
       const list = [query, constant, datasource, custom, textbox];
 
       reduxTester<{ templating: TemplatingState }>()
@@ -62,16 +80,16 @@ describe('shared actions', () => {
           // because uuid are dynamic we need to get the uuid from the resulting state
           // an alternative would be to add our own uuids in the model above instead
           expect(dispatchedActions[4]).toEqual(
-            addInitLock(toVariablePayload({ ...query, uuid: dispatchedActions[4].payload.uuid }))
+            addInitLock(toVariablePayload({ ...query, id: dispatchedActions[4].payload.id }))
           );
           expect(dispatchedActions[5]).toEqual(
-            addInitLock(toVariablePayload({ ...constant, uuid: dispatchedActions[5].payload.uuid }))
+            addInitLock(toVariablePayload({ ...constant, id: dispatchedActions[5].payload.id }))
           );
           expect(dispatchedActions[6]).toEqual(
-            addInitLock(toVariablePayload({ ...custom, uuid: dispatchedActions[6].payload.uuid }))
+            addInitLock(toVariablePayload({ ...custom, id: dispatchedActions[6].payload.id }))
           );
           expect(dispatchedActions[7]).toEqual(
-            addInitLock(toVariablePayload({ ...textbox, uuid: dispatchedActions[7].payload.uuid }))
+            addInitLock(toVariablePayload({ ...textbox, id: dispatchedActions[7].payload.id }))
           );
 
           return true;
@@ -81,15 +99,11 @@ describe('shared actions', () => {
 
   describe('when processVariables is dispatched', () => {
     it('then correct actions are dispatched', async () => {
-      variableAdapters.set('query', createQueryVariableAdapter());
-      variableAdapters.set('custom', createCustomVariableAdapter());
-      variableAdapters.set('textbox', createTextBoxVariableAdapter());
-      variableAdapters.set('constant', createConstantVariableAdapter());
-      const query = variableMockBuilder('query').create();
-      const constant = variableMockBuilder('constant').create();
-      const datasource = variableMockBuilder('datasource').create();
-      const custom = variableMockBuilder('custom').create();
-      const textbox = variableMockBuilder('textbox').create();
+      const query = queryBuilder().build();
+      const constant = constantBuilder().build();
+      const datasource = datasourceBuilder().build();
+      const custom = customBuilder().build();
+      const textbox = textboxBuilder().build();
       const list = [query, constant, datasource, custom, textbox];
 
       const tester = await reduxTester<{ templating: TemplatingState; location: { query: UrlQueryMap } }>({
@@ -103,29 +117,29 @@ describe('shared actions', () => {
         expect(dispatchedActions.length).toEqual(8);
 
         expect(dispatchedActions[0]).toEqual(
-          resolveInitLock(toVariablePayload({ ...query, uuid: dispatchedActions[0].payload.uuid }))
+          resolveInitLock(toVariablePayload({ ...query, id: dispatchedActions[0].payload.id }))
         );
         expect(dispatchedActions[1]).toEqual(
-          resolveInitLock(toVariablePayload({ ...constant, uuid: dispatchedActions[1].payload.uuid }))
+          resolveInitLock(toVariablePayload({ ...constant, id: dispatchedActions[1].payload.id }))
         );
         expect(dispatchedActions[2]).toEqual(
-          resolveInitLock(toVariablePayload({ ...custom, uuid: dispatchedActions[2].payload.uuid }))
+          resolveInitLock(toVariablePayload({ ...custom, id: dispatchedActions[2].payload.id }))
         );
         expect(dispatchedActions[3]).toEqual(
-          resolveInitLock(toVariablePayload({ ...textbox, uuid: dispatchedActions[3].payload.uuid }))
+          resolveInitLock(toVariablePayload({ ...textbox, id: dispatchedActions[3].payload.id }))
         );
 
         expect(dispatchedActions[4]).toEqual(
-          removeInitLock(toVariablePayload({ ...query, uuid: dispatchedActions[4].payload.uuid }))
+          removeInitLock(toVariablePayload({ ...query, id: dispatchedActions[4].payload.id }))
         );
         expect(dispatchedActions[5]).toEqual(
-          removeInitLock(toVariablePayload({ ...constant, uuid: dispatchedActions[5].payload.uuid }))
+          removeInitLock(toVariablePayload({ ...constant, id: dispatchedActions[5].payload.id }))
         );
         expect(dispatchedActions[6]).toEqual(
-          removeInitLock(toVariablePayload({ ...custom, uuid: dispatchedActions[6].payload.uuid }))
+          removeInitLock(toVariablePayload({ ...custom, id: dispatchedActions[6].payload.id }))
         );
         expect(dispatchedActions[7]).toEqual(
-          removeInitLock(toVariablePayload({ ...textbox, uuid: dispatchedActions[7].payload.uuid }))
+          removeInitLock(toVariablePayload({ ...textbox, id: dispatchedActions[7].payload.id }))
         );
 
         return true;
@@ -135,21 +149,27 @@ describe('shared actions', () => {
 
   describe('when setOptionFromUrl is dispatched with a custom variable (no refresh property)', () => {
     it.each`
-      urlValue      | expected
-      ${'B'}        | ${['B']}
-      ${['B']}      | ${['B']}
-      ${'X'}        | ${['X']}
-      ${''}         | ${['']}
-      ${['A', 'B']} | ${['A', 'B']}
-      ${null}       | ${[null]}
-      ${undefined}  | ${[undefined]}
-    `('and urlValue is $urlValue then correct actions are dispatched', async ({ urlValue, expected }) => {
-      variableAdapters.set('custom', createCustomVariableAdapter());
-      const custom = variableMockBuilder('custom')
-        .withUuid('0')
+      urlValue      | isMulti  | expected
+      ${'B'}        | ${false} | ${'B'}
+      ${['B']}      | ${false} | ${'B'}
+      ${'X'}        | ${false} | ${'X'}
+      ${''}         | ${false} | ${''}
+      ${null}       | ${false} | ${null}
+      ${undefined}  | ${false} | ${undefined}
+      ${'B'}        | ${true}  | ${['B']}
+      ${['B']}      | ${true}  | ${['B']}
+      ${'X'}        | ${true}  | ${['X']}
+      ${''}         | ${true}  | ${['']}
+      ${['A', 'B']} | ${true}  | ${['A', 'B']}
+      ${null}       | ${true}  | ${[null]}
+      ${undefined}  | ${true}  | ${[undefined]}
+    `('and urlValue is $urlValue then correct actions are dispatched', async ({ urlValue, expected, isMulti }) => {
+      const custom = customBuilder()
+        .withId('0')
+        .withMulti(isMulti)
         .withOptions('A', 'B', 'C')
         .withCurrent('A')
-        .create();
+        .build();
 
       const tester = await reduxTester<{ templating: TemplatingState }>()
         .givenRootReducer(getTemplatingRootReducer())
@@ -159,7 +179,7 @@ describe('shared actions', () => {
       await tester.thenDispatchedActionsShouldEqual(
         setCurrentVariableValue(
           toVariablePayload(
-            { type: 'custom', uuid: '0' },
+            { type: 'custom', id: '0' },
             { option: { text: expected, value: expected, selected: false } }
           )
         )
@@ -178,23 +198,20 @@ describe('shared actions', () => {
         ${['A', 'B', 'C']} | ${'X'}       | ${'C'}       | ${'C'}
         ${undefined}       | ${'B'}       | ${undefined} | ${'A'}
       `('then correct actions are dispatched', async ({ withOptions, withCurrent, defaultValue, expected }) => {
-        variableAdapters.set('custom', createCustomVariableAdapter());
         let custom;
 
         if (!withOptions) {
-          custom = variableMockBuilder('custom')
-            .withUuid('0')
+          custom = customBuilder()
+            .withId('0')
             .withCurrent(withCurrent)
-            .create();
-          custom.options = undefined;
-        }
-
-        if (withOptions) {
-          custom = variableMockBuilder('custom')
-            .withUuid('0')
+            .withoutOptions()
+            .build();
+        } else {
+          custom = customBuilder()
+            .withId('0')
             .withOptions(...withOptions)
             .withCurrent(withCurrent)
-            .create();
+            .build();
         }
 
         const tester = await reduxTester<{ templating: TemplatingState }>()
@@ -211,7 +228,7 @@ describe('shared actions', () => {
             : [
                 setCurrentVariableValue(
                   toVariablePayload(
-                    { type: 'custom', uuid: '0' },
+                    { type: 'custom', id: '0' },
                     { option: { text: expected, value: expected, selected: false } }
                   )
                 ),
@@ -234,25 +251,22 @@ describe('shared actions', () => {
       `(
         'then correct actions are dispatched',
         async ({ withOptions, withCurrent, defaultValue, expectedText, expectedSelected }) => {
-          variableAdapters.set('custom', createCustomVariableAdapter());
           let custom;
 
           if (!withOptions) {
-            custom = variableMockBuilder('custom')
-              .withUuid('0')
+            custom = customBuilder()
+              .withId('0')
               .withMulti()
               .withCurrent(withCurrent)
-              .create();
-            custom.options = undefined;
-          }
-
-          if (withOptions) {
-            custom = variableMockBuilder('custom')
-              .withUuid('0')
+              .withoutOptions()
+              .build();
+          } else {
+            custom = customBuilder()
+              .withId('0')
               .withMulti()
               .withOptions(...withOptions)
               .withCurrent(withCurrent)
-              .create();
+              .build();
           }
 
           const tester = await reduxTester<{ templating: TemplatingState }>()
@@ -269,7 +283,7 @@ describe('shared actions', () => {
               : [
                   setCurrentVariableValue(
                     toVariablePayload(
-                      { type: 'custom', uuid: '0' },
+                      { type: 'custom', id: '0' },
                       { option: { text: expectedText, value: expectedText, selected: expectedSelected } }
                     )
                   ),
@@ -282,159 +296,234 @@ describe('shared actions', () => {
     });
   });
 
-  describe('when onTimeRangeUpdated is dispatched', () => {
-    const getOnTimeRangeUpdatedContext = (args: { update?: boolean; throw?: boolean }) => {
-      const range: TimeRange = {
-        from: dateTime(new Date().getTime()).subtract(1, 'minutes'),
-        to: dateTime(new Date().getTime()),
-        raw: {
-          from: 'now-1m',
-          to: 'now',
-        },
-      };
-      const updateTimeRangeMock = jest.fn();
-      const templateSrvMock = ({ updateTimeRange: updateTimeRangeMock } as unknown) as TemplateSrv;
-      const emitMock = jest.fn();
-      const appEventsMock = ({ emit: emitMock } as unknown) as Emitter;
-      const dependencies: OnTimeRangeUpdatedDependencies = { templateSrv: templateSrvMock, appEvents: appEventsMock };
-      const templateVariableValueUpdatedMock = jest.fn();
-      const dashboard = ({
-        getModel: () =>
-          (({
-            templateVariableValueUpdated: templateVariableValueUpdatedMock,
-            startRefresh: startRefreshMock,
-          } as unknown) as DashboardModel),
-      } as unknown) as DashboardState;
-      const startRefreshMock = jest.fn();
-      const adapter = createIntervalVariableAdapter();
-      adapter.updateOptions = args.throw
-        ? jest.fn().mockRejectedValue('Something broke')
-        : jest.fn().mockResolvedValue({});
-      variableAdapters.set('interval', adapter);
-      variableAdapters.set('constant', createConstantVariableAdapter());
+  describe('changeVariableName', () => {
+    describe('when changeVariableName is dispatched with the same name', () => {
+      it('then no actions are dispatched', () => {
+        const textbox = textboxBuilder()
+          .withId('textbox')
+          .withName('textbox')
+          .build();
+        const constant = constantBuilder()
+          .withId('constant')
+          .withName('constant')
+          .build();
 
-      // initial variable state
-      const initialVariable = variableMockBuilder('interval')
-        .withUuid('0')
-        .withName('interval-0')
-        .withOptions('1m', '10m', '30m', '1h', '6h', '12h', '1d', '7d', '14d', '30d')
-        .withCurrent('1m')
-        .withRefresh(VariableRefresh.onTimeRangeChanged)
-        .create();
-
-      // the constant variable should be filtered out
-      const constant = variableMockBuilder('constant')
-        .withUuid('1')
-        .withName('constant-1')
-        .withOptions('a constant')
-        .withCurrent('a constant')
-        .create();
-      const initialState = {
-        templating: { variables: { '0': { ...initialVariable }, '1': { ...constant } } },
-        dashboard,
-      };
-
-      // updated variable state
-      const updatedVariable = variableMockBuilder('interval')
-        .withUuid('0')
-        .withName('interval-0')
-        .withOptions('1m')
-        .withCurrent('1m')
-        .withRefresh(VariableRefresh.onTimeRangeChanged)
-        .create();
-
-      const variable = args.update ? { ...updatedVariable } : { ...initialVariable };
-      const state = { templating: { variables: { '0': variable, '1': { ...constant } } }, dashboard };
-      const getStateMock = jest
-        .fn()
-        .mockReturnValueOnce(initialState)
-        .mockReturnValue(state);
-      const dispatchMock = jest.fn();
-
-      return {
-        range,
-        dependencies,
-        dispatchMock,
-        getStateMock,
-        updateTimeRangeMock,
-        templateVariableValueUpdatedMock,
-        startRefreshMock,
-        emitMock,
-      };
-    };
-
-    describe('and options are changed by update', () => {
-      it('then correct dependencies are called', async () => {
-        const {
-          range,
-          dependencies,
-          dispatchMock,
-          getStateMock,
-          updateTimeRangeMock,
-          templateVariableValueUpdatedMock,
-          startRefreshMock,
-          emitMock,
-        } = getOnTimeRangeUpdatedContext({ update: true });
-
-        await onTimeRangeUpdated(range, dependencies)(dispatchMock, getStateMock, undefined);
-
-        expect(dispatchMock).toHaveBeenCalledTimes(0);
-        expect(getStateMock).toHaveBeenCalledTimes(4);
-        expect(updateTimeRangeMock).toHaveBeenCalledTimes(1);
-        expect(updateTimeRangeMock).toHaveBeenCalledWith(range);
-        expect(templateVariableValueUpdatedMock).toHaveBeenCalledTimes(1);
-        expect(startRefreshMock).toHaveBeenCalledTimes(1);
-        expect(emitMock).toHaveBeenCalledTimes(0);
+        reduxTester<{ templating: TemplatingState }>()
+          .givenRootReducer(getTemplatingRootReducer())
+          .whenActionIsDispatched(addVariable(toVariablePayload(textbox, { global: false, index: 0, model: textbox })))
+          .whenActionIsDispatched(
+            addVariable(toVariablePayload(constant, { global: false, index: 1, model: constant }))
+          )
+          .whenActionIsDispatched(changeVariableName(toVariableIdentifier(constant), constant.name), true)
+          .thenNoActionsWhereDispatched();
       });
     });
 
-    describe('and options are not changed by update', () => {
-      it('then correct dependencies are called', async () => {
-        const {
-          range,
-          dependencies,
-          dispatchMock,
-          getStateMock,
-          updateTimeRangeMock,
-          templateVariableValueUpdatedMock,
-          startRefreshMock,
-          emitMock,
-        } = getOnTimeRangeUpdatedContext({ update: false });
+    describe('when changeVariableName is dispatched with an unique name', () => {
+      it('then the correct actions are dispatched', () => {
+        const textbox = textboxBuilder()
+          .withId('textbox')
+          .withName('textbox')
+          .build();
+        const constant = constantBuilder()
+          .withId('constant')
+          .withName('constant')
+          .build();
 
-        await onTimeRangeUpdated(range, dependencies)(dispatchMock, getStateMock, undefined);
-
-        expect(dispatchMock).toHaveBeenCalledTimes(0);
-        expect(getStateMock).toHaveBeenCalledTimes(3);
-        expect(updateTimeRangeMock).toHaveBeenCalledTimes(1);
-        expect(updateTimeRangeMock).toHaveBeenCalledWith(range);
-        expect(templateVariableValueUpdatedMock).toHaveBeenCalledTimes(0);
-        expect(startRefreshMock).toHaveBeenCalledTimes(1);
-        expect(emitMock).toHaveBeenCalledTimes(0);
+        reduxTester<{ templating: TemplatingState }>()
+          .givenRootReducer(getTemplatingRootReducer())
+          .whenActionIsDispatched(addVariable(toVariablePayload(textbox, { global: false, index: 0, model: textbox })))
+          .whenActionIsDispatched(
+            addVariable(toVariablePayload(constant, { global: false, index: 1, model: constant }))
+          )
+          .whenActionIsDispatched(changeVariableName(toVariableIdentifier(constant), 'constant1'), true)
+          .thenDispatchedActionsShouldEqual(
+            addVariable({
+              type: 'constant',
+              id: 'constant1',
+              data: {
+                global: false,
+                index: 1,
+                model: { ...constant, name: 'constant1', id: 'constant1', global: false, index: 1 },
+              },
+            }),
+            changeVariableNameSucceeded({ type: 'constant', id: 'constant1', data: { newName: 'constant1' } }),
+            setIdInEditor({ id: 'constant1' }),
+            removeVariable({ type: 'constant', id: 'constant', data: { reIndex: false } })
+          );
       });
     });
 
-    describe('and updateOptions throws', () => {
-      it('then correct dependencies are called', async () => {
-        const {
-          range,
-          dependencies,
-          dispatchMock,
-          getStateMock,
-          updateTimeRangeMock,
-          templateVariableValueUpdatedMock,
-          startRefreshMock,
-          emitMock,
-        } = getOnTimeRangeUpdatedContext({ update: false, throw: true });
+    describe('when changeVariableName is dispatched with an unique name for a new variable', () => {
+      it('then the correct actions are dispatched', () => {
+        const textbox = textboxBuilder()
+          .withId('textbox')
+          .withName('textbox')
+          .build();
+        const constant = constantBuilder()
+          .withId(NEW_VARIABLE_ID)
+          .withName('constant')
+          .build();
 
-        await onTimeRangeUpdated(range, dependencies)(dispatchMock, getStateMock, undefined);
+        reduxTester<{ templating: TemplatingState }>()
+          .givenRootReducer(getTemplatingRootReducer())
+          .whenActionIsDispatched(addVariable(toVariablePayload(textbox, { global: false, index: 0, model: textbox })))
+          .whenActionIsDispatched(
+            addVariable(toVariablePayload(constant, { global: false, index: 1, model: constant }))
+          )
+          .whenActionIsDispatched(changeVariableName(toVariableIdentifier(constant), 'constant1'), true)
+          .thenDispatchedActionsShouldEqual(
+            changeVariableNameSucceeded({ type: 'constant', id: NEW_VARIABLE_ID, data: { newName: 'constant1' } })
+          );
+      });
+    });
 
-        expect(dispatchMock).toHaveBeenCalledTimes(0);
-        expect(getStateMock).toHaveBeenCalledTimes(1);
-        expect(updateTimeRangeMock).toHaveBeenCalledTimes(1);
-        expect(updateTimeRangeMock).toHaveBeenCalledWith(range);
-        expect(templateVariableValueUpdatedMock).toHaveBeenCalledTimes(0);
-        expect(startRefreshMock).toHaveBeenCalledTimes(0);
-        expect(emitMock).toHaveBeenCalledTimes(1);
+    describe('when changeVariableName is dispatched with __newName', () => {
+      it('then the correct actions are dispatched', () => {
+        const textbox = textboxBuilder()
+          .withId('textbox')
+          .withName('textbox')
+          .build();
+        const constant = constantBuilder()
+          .withId('constant')
+          .withName('constant')
+          .build();
+
+        reduxTester<{ templating: TemplatingState }>()
+          .givenRootReducer(getTemplatingRootReducer())
+          .whenActionIsDispatched(addVariable(toVariablePayload(textbox, { global: false, index: 0, model: textbox })))
+          .whenActionIsDispatched(
+            addVariable(toVariablePayload(constant, { global: false, index: 1, model: constant }))
+          )
+          .whenActionIsDispatched(changeVariableName(toVariableIdentifier(constant), '__newName'), true)
+          .thenDispatchedActionsShouldEqual(
+            changeVariableNameFailed({
+              newName: '__newName',
+              errorText: "Template names cannot begin with '__', that's reserved for Grafana's global variables",
+            })
+          );
+      });
+    });
+
+    describe('when changeVariableName is dispatched with illegal characters', () => {
+      it('then the correct actions are dispatched', () => {
+        const textbox = textboxBuilder()
+          .withId('textbox')
+          .withName('textbox')
+          .build();
+        const constant = constantBuilder()
+          .withId('constant')
+          .withName('constant')
+          .build();
+
+        reduxTester<{ templating: TemplatingState }>()
+          .givenRootReducer(getTemplatingRootReducer())
+          .whenActionIsDispatched(addVariable(toVariablePayload(textbox, { global: false, index: 0, model: textbox })))
+          .whenActionIsDispatched(
+            addVariable(toVariablePayload(constant, { global: false, index: 1, model: constant }))
+          )
+          .whenActionIsDispatched(changeVariableName(toVariableIdentifier(constant), '#constant!'), true)
+          .thenDispatchedActionsShouldEqual(
+            changeVariableNameFailed({
+              newName: '#constant!',
+              errorText: 'Only word and digit characters are allowed in variable names',
+            })
+          );
+      });
+    });
+
+    describe('when changeVariableName is dispatched with a name that is already used', () => {
+      it('then the correct actions are dispatched', () => {
+        const textbox = textboxBuilder()
+          .withId('textbox')
+          .withName('textbox')
+          .build();
+        const constant = constantBuilder()
+          .withId('constant')
+          .withName('constant')
+          .build();
+
+        reduxTester<{ templating: TemplatingState }>()
+          .givenRootReducer(getTemplatingRootReducer())
+          .whenActionIsDispatched(addVariable(toVariablePayload(textbox, { global: false, index: 0, model: textbox })))
+          .whenActionIsDispatched(
+            addVariable(toVariablePayload(constant, { global: false, index: 1, model: constant }))
+          )
+          .whenActionIsDispatched(changeVariableName(toVariableIdentifier(constant), 'textbox'), true)
+          .thenDispatchedActionsShouldEqual(
+            changeVariableNameFailed({
+              newName: 'textbox',
+              errorText: 'Variable with the same name already exists',
+            })
+          );
+      });
+    });
+  });
+
+  describe('changeVariableMultiValue', () => {
+    describe('when changeVariableMultiValue is dispatched for variable with multi enabled', () => {
+      it('then correct actions are dispatched', () => {
+        const custom = customBuilder()
+          .withId('custom')
+          .withMulti(true)
+          .withCurrent(['A'], ['A'])
+          .build();
+
+        reduxTester<{ templating: TemplatingState }>()
+          .givenRootReducer(getTemplatingRootReducer())
+          .whenActionIsDispatched(addVariable(toVariablePayload(custom, { global: false, index: 0, model: custom })))
+          .whenActionIsDispatched(changeVariableMultiValue(toVariableIdentifier(custom), false), true)
+          .thenDispatchedActionsShouldEqual(
+            changeVariableProp(
+              toVariablePayload(custom, {
+                propName: 'multi',
+                propValue: false,
+              })
+            ),
+            changeVariableProp(
+              toVariablePayload(custom, {
+                propName: 'current',
+                propValue: {
+                  value: 'A',
+                  text: 'A',
+                  selected: true,
+                },
+              })
+            )
+          );
+      });
+    });
+
+    describe('when changeVariableMultiValue is dispatched for variable with multi disabled', () => {
+      it('then correct actions are dispatched', () => {
+        const custom = customBuilder()
+          .withId('custom')
+          .withMulti(false)
+          .withCurrent(['A'], ['A'])
+          .build();
+
+        reduxTester<{ templating: TemplatingState }>()
+          .givenRootReducer(getTemplatingRootReducer())
+          .whenActionIsDispatched(addVariable(toVariablePayload(custom, { global: false, index: 0, model: custom })))
+          .whenActionIsDispatched(changeVariableMultiValue(toVariableIdentifier(custom), true), true)
+          .thenDispatchedActionsShouldEqual(
+            changeVariableProp(
+              toVariablePayload(custom, {
+                propName: 'multi',
+                propValue: true,
+              })
+            ),
+            changeVariableProp(
+              toVariablePayload(custom, {
+                propName: 'current',
+                propValue: {
+                  value: ['A'],
+                  text: ['A'],
+                  selected: true,
+                },
+              })
+            )
+          );
       });
     });
   });

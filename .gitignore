@@ -84,6 +84,8 @@ debug.test
 
 /devenv/bulk-dashboards/*.json
 /devenv/bulk_alerting_dashboards/*.json
+/devenv/datasources_bulk.yaml
+/devenv/bulk_alerting_dashboards/bulk_alerting_datasources.yaml
 
 /scripts/build/release_publisher/release_publisher
 *.patch
@@ -108,3 +110,6 @@ compilation-stats.json
 /e2e/suite1/screenshots
 !/e2e/suite1/screenshots/expeced/*
 /e2e/suite1/videos/*
+
+# report dumping the whole system env
+/report.*.json

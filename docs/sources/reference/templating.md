@@ -114,6 +114,33 @@ String to interpolate: '${servers:percentencode}'
 Interpolation result: 'foo%28%29bar%20BAZ%2Ctest2'
 ```
 
+### Singlequote
+Formats single- and multi-valued variables into a comma-separated string, escapes `'` in each value by `\'` and quotes each value with `'`.
+
+```bash
+servers = ['test1', 'test2']
+String to interpolate: '${servers:singlequote}'
+Interpolation result: "'test1','test2'"
+```
+
+### Doublequote
+Formats single- and multi-valued variables into a comma-separated string, escapes `"` in each value by `\"` and quotes each value with `"`.
+
+```bash
+servers = ['test1', 'test2']
+String to interpolate: '${servers:doublequote}'
+Interpolation result: '"test1","test2"'
+```
+
+### Sqlstring
+Formats single- and multi-valued variables into a comma-separated string, escapes `'` in each value by `''` and quotes each value with `'`.
+
+```bash
+servers = ["test'1", "test2"]
+String to interpolate: '${servers:sqlstring}'
+Interpolation result: "'test''1','test2'"
+```
+
 Test the formatting options on the [Grafana Play site](https://play.grafana.org/d/cJtIfcWiz/template-variable-formatting-options?orgId=1).
 
 If any invalid formatting option is specified, then `glob` is the default/fallback option.
@@ -379,6 +406,8 @@ By choosing `vertical` the panels will be arranged from top to bottom in a colum
 
 Only make changes to the first panel (the original template). To have the changes take effect on all panels you need to trigger a dynamic dashboard re-build.
 You can do this by either changing the variable value (that is the basis for the repeat) or reload the dashboard.
+
+> **Note:** Repeating panels require variables to have one or more items selected; you cannot repeat a panel zero times to hide it.
 
 ## Repeating Rows
 

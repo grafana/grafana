@@ -144,6 +144,7 @@ export interface GrafanaTheme extends GrafanaThemeCommons {
     gray95: string;
     gray85: string;
     gray70: string;
+    gray60: string;
     gray33: string;
     gray25: string;
     gray15: string;
@@ -208,6 +209,7 @@ export interface GrafanaTheme extends GrafanaThemeCommons {
 
     // panel
     panelBg: string;
+    panelBorder: string;
 
     // TODO: move to background section
     bodyBg: string;

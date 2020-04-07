@@ -1,5 +1,5 @@
 import React from 'react';
-import { Button, Forms, HorizontalGroup } from '@grafana/ui';
+import { Button, Forms, HorizontalGroup, Input } from '@grafana/ui';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
 import { SaveDashboardFormProps } from '../types';
@@ -75,12 +75,7 @@ export const SaveDashboardAsForm: React.FC<SaveDashboardFormProps & { isNew?: bo
       {({ register, control, errors }) => (
         <>
           <Forms.Field label="Dashboard name" invalid={!!errors.title} error="Dashboard name is required">
-            <Forms.Input
-              name="title"
-              ref={register({ required: true })}
-              aria-label="Save dashboard title field"
-              autoFocus
-            />
+            <Input name="title" ref={register({ required: true })} aria-label="Save dashboard title field" autoFocus />
           </Forms.Field>
           <Forms.Field label="Folder">
             <Forms.InputControl
@@ -101,9 +96,9 @@ export const SaveDashboardAsForm: React.FC<SaveDashboardFormProps & { isNew?: bo
             <Button type="submit" aria-label="Save dashboard button">
               Save
             </Button>
-            <Forms.Button variant="secondary" onClick={onCancel}>
+            <Button variant="secondary" onClick={onCancel}>
               Cancel
-            </Forms.Button>
+            </Button>
           </HorizontalGroup>
         </>
       )}

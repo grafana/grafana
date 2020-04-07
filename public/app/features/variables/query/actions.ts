@@ -1,9 +1,9 @@
 import { AppEvents, DataSourcePluginMeta, DataSourceSelectItem } from '@grafana/data';
-
 import { validateVariableSelectionState } from '../state/actions';
-import { QueryVariableModel, VariableRefresh } from '../../templating/variable';
+import { QueryVariableModel, VariableRefresh } from '../../templating/types';
 import { ThunkResult } from '../../../types';
 import { getDatasourceSrv } from '../../plugins/datasource_srv';
+import templateSrv from '../../templating/template_srv';
 import { getTimeSrv } from '../../dashboard/services/TimeSrv';
 import appEvents from '../../../core/app_events';
 import { importDataSourcePlugin } from '../../plugins/plugin_loader';
@@ -20,9 +20,9 @@ export const updateQueryVariableOptions = (
   searchFilter?: string
 ): ThunkResult<void> => {
   return async (dispatch, getState) => {
-    const variableInState = getVariable<QueryVariableModel>(identifier.uuid!, getState());
+    const variableInState = getVariable<QueryVariableModel>(identifier.id!, getState());
     try {
-      if (getState().templating.editor.id === variableInState.uuid) {
+      if (getState().templating.editor.id === variableInState.id) {
         dispatch(removeVariableEditorError({ errorProp: 'update' }));
       }
       const dataSource = await getDatasourceSrv().get(variableInState.datasource ?? '');
@@ -36,7 +36,8 @@ export const updateQueryVariableOptions = (
       }
 
       const results = await dataSource.metricFindQuery(variableInState.query, queryOptions);
-      await dispatch(updateVariableOptions(toVariablePayload(variableInState, results)));
+      const templatedRegex = getTemplatedRegex(variableInState);
+      await dispatch(updateVariableOptions(toVariablePayload(variableInState, { results, templatedRegex })));
 
       if (variableInState.useTags) {
         const tagResults = await dataSource.metricFindQuery(variableInState.tagsQuery, queryOptions);
@@ -49,7 +50,7 @@ export const updateQueryVariableOptions = (
       if (err.data && err.data.message) {
         err.message = err.data.message;
       }
-      if (getState().templating.editor.id === variableInState.uuid) {
+      if (getState().templating.editor.id === variableInState.id) {
         dispatch(addVariableEditorError({ errorProp: 'update', errorText: err.message }));
       }
       appEvents.emit(AppEvents.alertError, [
@@ -72,7 +73,7 @@ export const initQueryVariableEditor = (identifier: VariableIdentifier): ThunkRe
   const allDataSources = [defaultDatasource].concat(dataSources);
   dispatch(changeVariableEditorExtended({ propName: 'dataSources', propValue: allDataSources }));
 
-  const variable = getVariable<QueryVariableModel>(identifier.uuid!, getState());
+  const variable = getVariable<QueryVariableModel>(identifier.id!, getState());
   if (!variable.datasource) {
     return;
   }
@@ -101,7 +102,7 @@ export const changeQueryVariableQuery = (
   query: any,
   definition: string
 ): ThunkResult<void> => async (dispatch, getState) => {
-  const variableInState = getVariable<QueryVariableModel>(identifier.uuid!, getState());
+  const variableInState = getVariable<QueryVariableModel>(identifier.id!, getState());
   if (typeof query === 'string' && query.match(new RegExp('\\$' + variableInState.name + '(/| |$)'))) {
     const errorText = 'Query cannot contain a reference to itself. Variable: $' + variableInState.name;
     dispatch(addVariableEditorError({ errorProp: 'query', errorText }));
@@ -112,4 +113,16 @@ export const changeQueryVariableQuery = (
   dispatch(changeVariableProp(toVariablePayload(identifier, { propName: 'query', propValue: query })));
   dispatch(changeVariableProp(toVariablePayload(identifier, { propName: 'definition', propValue: definition })));
   await variableAdapters.get(identifier.type).updateOptions(variableInState);
+};
+
+const getTemplatedRegex = (variable: QueryVariableModel): string => {
+  if (!variable) {
+    return '';
+  }
+
+  if (!variable.regex) {
+    return '';
+  }
+
+  return templateSrv.replace(variable.regex, {}, 'regex');
 };

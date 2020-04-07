@@ -26,9 +26,7 @@ export class OrgSwitcher extends React.PureComponent<Props, State> {
 
   getUserOrgs = async () => {
     const orgs: UserOrgDTO[] = await getBackendSrv().get('/api/user/orgs');
-    this.setState({
-      orgs: orgs.sort((a, b) => a.orgId - b.orgId),
-    });
+    this.setState({ orgs });
   };
 
   setCurrentOrg = async (org: UserOrgDTO) => {
@@ -65,7 +63,7 @@ export class OrgSwitcher extends React.PureComponent<Props, State> {
                   {org.orgId === currentOrgId ? (
                     <Button size="sm">Current</Button>
                   ) : (
-                    <Button variant="inverse" size="sm" onClick={() => this.setCurrentOrg(org)}>
+                    <Button variant="secondary" size="sm" onClick={() => this.setCurrentOrg(org)}>
                       Switch to
                     </Button>
                   )}

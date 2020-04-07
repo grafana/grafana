@@ -1,7 +1,7 @@
 import React, { ChangeEvent, FocusEvent, PureComponent } from 'react';
 import { e2e } from '@grafana/e2e';
 
-import { ConstantVariableModel } from '../../templating/variable';
+import { ConstantVariableModel } from '../../templating/types';
 import { VariableEditorProps } from '../editor/types';
 
 export interface Props extends VariableEditorProps<ConstantVariableModel> {}

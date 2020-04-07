@@ -23,8 +23,8 @@ const testContext = (options: any = {}) => {
     name: 'A-series',
     refId: 'A',
     fields: [
-      { name: 'A-series', type: FieldType.number, values: [4, 5, 6] },
       { name: 'time', type: FieldType.time, values: [100, 200, 300] },
+      { name: 'A-series', type: FieldType.number, values: [4, 5, 6] },
     ],
   });
 
@@ -100,8 +100,8 @@ describe('ResultProcessor', () => {
     describe('when calling getGraphResult', () => {
       it('then it should return correct graph result', () => {
         const { resultProcessor, dataFrames } = testContext();
-        const timeField = dataFrames[0].fields[1];
-        const valueField = dataFrames[0].fields[0];
+        const timeField = dataFrames[0].fields[0];
+        const valueField = dataFrames[0].fields[1];
         const theResult = resultProcessor.getGraphResult();
 
         expect(theResult).toEqual([
@@ -164,8 +164,8 @@ describe('ResultProcessor', () => {
     describe('when calling getLogsResult', () => {
       it('then it should return correct logs result', () => {
         const { resultProcessor, dataFrames } = testContext({ mode: ExploreMode.Logs });
-        const timeField = dataFrames[0].fields[1];
-        const valueField = dataFrames[0].fields[0];
+        const timeField = dataFrames[0].fields[0];
+        const valueField = dataFrames[0].fields[1];
         const logsDataFrame = dataFrames[1];
         const theResult = resultProcessor.getLogsResult();
 
