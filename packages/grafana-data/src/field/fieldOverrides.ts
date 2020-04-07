@@ -16,6 +16,7 @@ import { fieldMatchers, ReducerID, reduceField } from '../transformations';
 import { FieldMatcher } from '../types/transformations';
 import isNumber from 'lodash/isNumber';
 import set from 'lodash/set';
+import unset from 'lodash/unset';
 import get from 'lodash/get';
 import { getDisplayProcessor } from './displayProcessor';
 import { guessFieldTypeForField } from '../dataframe';
@@ -209,9 +210,9 @@ export function setDynamicConfigValue(config: FieldConfig, value: DynamicConfigV
 
   if (remove) {
     if (item.isCustom && config.custom) {
-      delete config.custom[item.path.split('.')[0]];
+      unset(config.custom, item.path);
     } else {
-      delete (config as any)[item.path.split('.')[0]];
+      unset(config, item.path);
     }
   } else {
     if (item.isCustom) {

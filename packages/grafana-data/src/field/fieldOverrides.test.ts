@@ -37,7 +37,7 @@ const property2 = {
 } as any;
 
 const property3 = {
-  id: 'custom.property3', // Match field properties
+  id: 'custom.property3.nested', // Match field properties
   path: 'property3.nested', // Match field properties
   isCustom: true,
   process: (value: any) => value,
@@ -355,7 +355,7 @@ describe('setDynamicConfigValue', () => {
     setDynamicConfigValue(
       config,
       {
-        id: 'custom.property3',
+        id: 'custom.property3.nested',
         value: 'applied',
       },
       {
@@ -381,7 +381,7 @@ describe('setDynamicConfigValue', () => {
     setDynamicConfigValue(
       config,
       {
-        id: 'custom.property3',
+        id: 'custom.property3.nested',
         value: undefined,
       },
       {
@@ -406,7 +406,7 @@ describe('setDynamicConfigValue', () => {
       }
     );
 
-    expect(config.custom.property3).toBeUndefined();
+    expect(config.custom.property3).toEqual({});
     expect(config.title).toBeUndefined();
   });
 });
