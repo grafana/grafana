@@ -3,7 +3,7 @@ import cloneDeep from 'lodash/cloneDeep';
 import {
   FieldConfigSource,
   DataFrame,
-  FieldPropertyEditorItem,
+  FieldConfigPropertyItem,
   VariableSuggestionsScope,
   PanelPlugin,
   SelectableValue,
@@ -142,7 +142,7 @@ export const DefaultFieldConfigEditor: React.FC<Props> = ({ data, onChange, conf
   );
 
   const renderEditor = useCallback(
-    (item: FieldPropertyEditorItem) => {
+    (item: FieldConfigPropertyItem) => {
       const defaults = config.defaults;
       const value = item.isCustom
         ? defaults.custom
