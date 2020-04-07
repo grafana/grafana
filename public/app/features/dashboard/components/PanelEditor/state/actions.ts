@@ -17,7 +17,7 @@ export function initPanelEditor(sourcePanel: PanelModel, dashboard: DashboardMod
     const panel = dashboard.initPanelEditor(sourcePanel);
 
     const queryRunner = panel.getQueryRunner();
-    const querySubscription = queryRunner.getData().subscribe({
+    const querySubscription = queryRunner.getData(false).subscribe({
       next: (data: PanelData) => dispatch(setEditorPanelData(data)),
     });
 

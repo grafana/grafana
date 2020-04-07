@@ -2,7 +2,8 @@
 import React, { PureComponent } from 'react';
 // Types
 import { PanelEditorProps } from '@grafana/data';
-import { Switch } from '@grafana/ui';
+import { LegacyForms } from '@grafana/ui';
+const { Switch } = LegacyForms;
 import { Options } from './types';
 
 export class TablePanelEditor extends PureComponent<PanelEditorProps<Options>> {
