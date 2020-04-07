@@ -8,16 +8,14 @@ interface Props {
   editable?: boolean;
 }
 
-export const SearchCheckbox: FC<Props> = memo(({ checked = false, onClick, editable = false }) => {
+export const SearchCheckbox: FC<Props> = memo(({ onClick, checked = false, editable = false }) => {
   const styles = getStyles();
 
-  return (
-    editable && (
-      <div onClick={onClick} className={styles.wrapper}>
-        <Forms.Checkbox value={checked} />
-      </div>
-    )
-  );
+  return editable ? (
+    <div onClick={onClick} className={styles.wrapper}>
+      <Forms.Checkbox value={checked} />
+    </div>
+  ) : null;
 });
 
 const getStyles = stylesFactory(() => ({

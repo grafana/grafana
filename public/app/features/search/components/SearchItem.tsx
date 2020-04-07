@@ -11,16 +11,16 @@ import { SearchCheckbox } from './SearchCheckbox';
 export interface Props {
   item: DashboardSectionItem;
   editable?: boolean;
-  onToggleSelection: ItemClickWithEvent;
+  onToggleSelection?: ItemClickWithEvent;
   onTagSelected: (name: string) => any;
 }
 
 const { selectors } = e2e.pages.Dashboards;
 
-export const SearchItem: FC<Props> = ({ item, editable, onToggleSelection, onTagSelected }) => {
+export const SearchItem: FC<Props> = ({ item, editable, onToggleSelection = () => {}, onTagSelected }) => {
   const theme = useTheme();
   const styles = getResultsItemStyles(theme);
-  const inputEl = useRef(null);
+  const inputEl = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     const preventDef = (event: MouseEvent) => {
@@ -31,7 +31,7 @@ export const SearchItem: FC<Props> = ({ item, editable, onToggleSelection, onTag
       inputEl.current.addEventListener('click', preventDef);
     }
     return () => {
-      inputEl.current.removeEventListener('click', preventDef);
+      inputEl.current!.removeEventListener('click', preventDef);
     };
   }, []);
 

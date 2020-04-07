@@ -51,7 +51,10 @@ export const DashboardSearch: FC<Props> = ({ closeSearch, payload = {} }) => {
   const search = () => {
     let folderIds: number[] = [];
     if (query.parsedQuery.folder === 'current') {
-      folderIds.push(getDashboardSrv().getCurrent().meta.folderId);
+      const { folderId } = getDashboardSrv().getCurrent().meta;
+      if (folderId) {
+        folderIds.push(folderId);
+      }
     }
     searchSrv.search({ ...query, tag: query.tags, query: query.parsedQuery.text, folderIds }).then(results => {
       dispatch({ type: FETCH_RESULTS, payload: results });

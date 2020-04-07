@@ -94,10 +94,15 @@ interface SectionHeaderProps {
   section: DashboardSection;
   onSectionClick: (section: DashboardSection) => void;
   onToggleSelection?: ItemClickWithEvent;
-  editable: boolean;
+  editable?: boolean;
 }
 
-const SectionHeader: FC<SectionHeaderProps> = ({ section, onSectionClick, onToggleSelection = () => {}, editable }) => {
+const SectionHeader: FC<SectionHeaderProps> = ({
+  section,
+  onSectionClick,
+  onToggleSelection = () => {},
+  editable = false,
+}) => {
   const theme = useTheme();
   const styles = getSectionHeaderStyles(theme, section.selected);
 
