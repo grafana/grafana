@@ -23,10 +23,16 @@ export const SearchItem: FC<Props> = ({ item, editable, onToggleSelection, onTag
   const inputEl = useRef(null);
 
   useEffect(() => {
-    inputEl.current.addEventListener('click', (event: MouseEvent) => {
+    const preventDef = (event: MouseEvent) => {
       // manually prevent default on TagList click, as doing it via normal onClick doesn't work inside angular
       event.preventDefault();
-    });
+    };
+    if (inputEl.current) {
+      inputEl.current.addEventListener('click', preventDef);
+    }
+    return () => {
+      inputEl.current.removeEventListener('click', preventDef);
+    };
   }, []);
 
   const onItemClick = () => {
@@ -36,9 +42,9 @@ export const SearchItem: FC<Props> = ({ item, editable, onToggleSelection, onTag
     }
   };
 
-  const tagSelected = (tag: string, event: React.MouseEvent<HTMLElement>) => {
+  const tagSelected = useCallback((tag: string, event: React.MouseEvent<HTMLElement>) => {
     onTagSelected(tag);
-  };
+  }, []);
 
   const toggleItem = useCallback(
     (event: React.MouseEvent<HTMLElement>) => {
