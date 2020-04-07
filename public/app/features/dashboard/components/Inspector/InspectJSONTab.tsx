@@ -155,16 +155,12 @@ export class InspectJSONTab extends PureComponent<Props, State> {
             <JSONFormatter json={this.getJSONObject(show)} open={4} />
           </CustomScrollbar>
         )}
-        <div>
-          {isPanelJSON && canEdit && (
-            <>
-              <Button onClick={this.onApplyPanelModel}>Apply</Button>&nbsp;
-            </>
-          )}
+        <HorizontalGroup>
+          {isPanelJSON && canEdit && <Button onClick={this.onApplyPanelModel}>Apply</Button>}
           <ClipboardButton variant="secondary" getText={this.getClipboardText} onClipboardCopy={this.onClipboardCopied}>
             Copy to Clipboard
           </ClipboardButton>
-        </div>
+        </HorizontalGroup>
       </div>
     );
   }
@@ -187,14 +183,12 @@ const getStyles = stylesFactory(() => {
       border: 0px solid green;
     `,
     editor: css`
-      flex: 1; /* ???????? */
+      flex: 1; /* ???????? fill!!! */
       height: 100%;
-      border: 1px solid #222;
-      background: inherit;
-      color: inherit;
       width: 100%;
-      margin-bottom: 5px;
       font-family: monospace;
+      border: 1px solid #222;
+      margin-bottom: 5px;
     `,
   };
 });

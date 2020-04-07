@@ -18,6 +18,7 @@ import {
   stylesFactory,
   CustomScrollbar,
   Button,
+  Icon,
 } from '@grafana/ui';
 const { Select } = LegacyForms;
 import { getLocationSrv, getDataSourceSrv } from '@grafana/runtime';
@@ -366,7 +367,9 @@ export class PanelInspector extends PureComponent<Props, State> {
     return (
       <Drawer title={this.drawerHeader} width={drawerWidth} onClose={this.onDismiss}>
         {loading ? (
-          <div>loading...</div>
+          <div>
+            Loading <Icon name="spinner" className="fa-spin" />
+          </div>
         ) : (
           <TabContent className={styles.tabContent}>
             {tab === InspectTab.Data && this.renderDataTab()}
