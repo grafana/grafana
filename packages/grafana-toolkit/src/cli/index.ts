@@ -18,6 +18,7 @@ import { githubPublishTask } from './tasks/plugin.utils';
 import { ciBuildPluginTask, ciBuildPluginDocsTask, ciPackagePluginTask, ciPluginReportTask } from './tasks/plugin.ci';
 import { buildPackageTask } from './tasks/package.build';
 import { pluginCreateTask } from './tasks/plugin.create';
+import { bundleManagedTask } from './tasks/plugin/bundle.managed';
 
 export const run = (includeInternalScripts = false) => {
   if (includeInternalScripts) {
@@ -193,6 +194,13 @@ export const run = (includeInternalScripts = false) => {
       await execTask(ciPluginReportTask)({
         upload: cmd.upload,
       });
+    });
+
+  program
+    .command('plugin:bundle-managed')
+    .description('Builds managed plugins')
+    .action(async cmd => {
+      await execTask(bundleManagedTask)({});
     });
 
   program

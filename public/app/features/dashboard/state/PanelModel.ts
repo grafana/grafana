@@ -415,9 +415,9 @@ export class PanelModel implements DataConfigSource {
     }
 
     return {
-      fieldOptions: this.fieldConfig,
+      fieldConfig: this.fieldConfig,
       replaceVariables: this.replaceVariables,
-      custom: this.plugin.customFieldConfigs,
+      fieldConfigRegistry: this.plugin.fieldConfigRegistry,
       theme: config.theme,
     };
   }

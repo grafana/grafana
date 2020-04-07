@@ -1,0 +1,22 @@
+import { Meta, Story, Preview, Props } from '@storybook/addon-docs/blocks';
+import { Icon } from './Icon';
+
+<Meta title="MDX|Icon" component={Icon} />
+
+# Icon
+
+Grafana's wrapper component over [Font Awesome](https://fontawesome.com/) and Unicons icons
+
+
+### Changing icon size
+
+By default `Icon` has width and height of `16px` and font-size of `14px`. Pass `className` to control icon's size:
+
+```jsx
+import { css } from 'emotion';
+
+<Icon name="check" />
+```
+
+
+<Props of={Icon} />

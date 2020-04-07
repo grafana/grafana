@@ -1,22 +1,21 @@
-import { DataTransformerID, DataTransformerConfig, DataFrame, transformDataFrame } from '@grafana/data';
-import { Select } from '../Forms/Legacy/Select/Select';
-import { transformersUIRegistry } from './transformers';
-import React from 'react';
-import { TransformationRow } from './TransformationRow';
-import { Button } from '../Button';
 import { css } from 'emotion';
+import React from 'react';
+import { transformersUIRegistry } from '@grafana/ui/src/components/TransformersUI/transformers';
+import { DataTransformerID, DataTransformerConfig, DataFrame, transformDataFrame } from '@grafana/data';
+import { Button, Select } from '@grafana/ui';
+import { TransformationRow } from './TransformationRow';
 
-interface TransformationsEditorState {
-  updateCounter: number;
-}
-
-interface TransformationsEditorProps {
+interface Props {
   onChange: (transformations: DataTransformerConfig[]) => void;
   transformations: DataTransformerConfig[];
   dataFrames: DataFrame[];
 }
 
-export class TransformationsEditor extends React.PureComponent<TransformationsEditorProps, TransformationsEditorState> {
+interface State {
+  updateCounter: number;
+}
+
+export class TransformationsEditor extends React.PureComponent<Props, State> {
   state = { updateCounter: 0 };
 
   onTransformationAdd = () => {
@@ -116,12 +115,16 @@ export class TransformationsEditor extends React.PureComponent<TransformationsEd
 
   render() {
     return (
-      <>
+      <div className="panel-editor__content">
+        <p className="muted text-center" style={{ padding: '8px' }}>
+          Transformations allow you to combine, re-order, hide and rename specific parts the the data set before being
+          visualized.
+        </p>
         {this.renderTransformationEditors()}
         <Button variant="secondary" icon="plus-circle" onClick={this.onTransformationAdd}>
           Add transformation
         </Button>
-      </>
+      </div>
     );
   }
 }

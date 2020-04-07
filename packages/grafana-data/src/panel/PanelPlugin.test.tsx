@@ -1,11 +1,23 @@
 import React from 'react';
-import { identityOverrideProcessor, standardEditorsRegistry } from '../field';
-import { PanelPlugin, standardFieldConfigProperties } from './PanelPlugin';
+import { identityOverrideProcessor, standardEditorsRegistry, standardFieldConfigEditorRegistry } from '../field';
+import { PanelPlugin } from './PanelPlugin';
 import { FieldConfigProperty } from '../types';
 
 describe('PanelPlugin', () => {
   describe('declarative options', () => {
     beforeAll(() => {
+      standardFieldConfigEditorRegistry.setInit(() => {
+        return [
+          {
+            id: 'min',
+            path: 'min',
+          },
+          {
+            id: 'max',
+            path: 'max',
+          },
+        ] as any;
+      });
       standardEditorsRegistry.setInit(() => {
         return [
           {
@@ -14,26 +26,29 @@ describe('PanelPlugin', () => {
         ] as any;
       });
     });
+
     test('field config UI API', () => {
       const panel = new PanelPlugin(() => {
         return <div>Panel</div>;
       });
 
-      panel.setCustomFieldOptions(builder => {
-        builder.addCustomEditor({
-          id: 'custom',
-          name: 'Custom',
-          description: 'Custom field config property description',
-          editor: () => <div>Editor</div>,
-          override: () => <div>Editor</div>,
-          process: identityOverrideProcessor,
-          settings: {},
-          shouldApply: () => true,
-        });
+      panel.useFieldConfig({
+        useCustomConfig: builder => {
+          builder.addCustomEditor({
+            id: 'custom',
+            path: 'custom',
+            name: 'Custom',
+            description: 'Custom field config property description',
+            editor: () => <div>Editor</div>,
+            override: () => <div>Editor</div>,
+            process: identityOverrideProcessor,
+            settings: {},
+            shouldApply: () => true,
+          });
+        },
       });
 
-      expect(panel.customFieldConfigs).toBeDefined();
-      expect(panel.customFieldConfigs!.list()).toHaveLength(1);
+      expect(panel.fieldConfigRegistry.list()).toHaveLength(3);
     });
 
     test('options UI API', () => {
@@ -44,6 +59,7 @@ describe('PanelPlugin', () => {
       panel.setPanelOptions(builder => {
         builder.addCustomEditor({
           id: 'option',
+          path: 'option',
           name: 'Option editor',
           description: 'Option editor description',
           editor: () => <div>Editor</div>,
@@ -66,18 +82,19 @@ describe('PanelPlugin', () => {
         panel.setPanelOptions(builder => {
           builder
             .addNumberInput({
-              id: 'numericOption',
+              path: 'numericOption',
               name: 'Option editor',
               description: 'Option editor description',
               defaultValue: 10,
             })
             .addNumberInput({
-              id: 'numericOptionNoDefault',
+              path: 'numericOptionNoDefault',
               name: 'Option editor',
               description: 'Option editor description',
             })
             .addCustomEditor({
               id: 'customOption',
+              path: 'customOption',
               name: 'Option editor',
               description: 'Option editor description',
               editor: () => <div>Editor</div>,
@@ -101,7 +118,7 @@ describe('PanelPlugin', () => {
 
         panel.setPanelOptions(builder => {
           builder.addNumberInput({
-            id: 'numericOption.nested',
+            path: 'numericOption.nested',
             name: 'Option editor',
             description: 'Option editor description',
             defaultValue: 10,
@@ -122,30 +139,33 @@ describe('PanelPlugin', () => {
           return <div>Panel</div>;
         });
 
-        panel.setCustomFieldOptions(builder => {
-          builder
-            .addNumberInput({
-              id: 'numericOption',
-              name: 'Option editor',
-              description: 'Option editor description',
-              defaultValue: 10,
-            })
-            .addNumberInput({
-              id: 'numericOptionNoDefault',
-              name: 'Option editor',
-              description: 'Option editor description',
-            })
-            .addCustomEditor({
-              id: 'customOption',
-              name: 'Option editor',
-              description: 'Option editor description',
-              editor: () => <div>Editor</div>,
-              override: () => <div>Override editor</div>,
-              process: identityOverrideProcessor,
-              shouldApply: () => true,
-              settings: {},
-              defaultValue: { value: 'Custom default value' },
-            });
+        panel.useFieldConfig({
+          useCustomConfig: builder => {
+            builder
+              .addNumberInput({
+                path: 'numericOption',
+                name: 'Option editor',
+                description: 'Option editor description',
+                defaultValue: 10,
+              })
+              .addNumberInput({
+                path: 'numericOptionNoDefault',
+                name: 'Option editor',
+                description: 'Option editor description',
+              })
+              .addCustomEditor({
+                id: 'customOption',
+                path: 'customOption',
+                name: 'Option editor',
+                description: 'Option editor description',
+                editor: () => <div>Editor</div>,
+                override: () => <div>Override editor</div>,
+                process: identityOverrideProcessor,
+                shouldApply: () => true,
+                settings: {},
+                defaultValue: { value: 'Custom default value' },
+              });
+          },
         });
 
         const expectedDefaults = {
@@ -161,13 +181,15 @@ describe('PanelPlugin', () => {
           return <div>Panel</div>;
         });
 
-        panel.setCustomFieldOptions(builder => {
-          builder.addNumberInput({
-            id: 'numericOption.nested',
-            name: 'Option editor',
-            description: 'Option editor description',
-            defaultValue: 10,
-          });
+        panel.useFieldConfig({
+          useCustomConfig: builder => {
+            builder.addNumberInput({
+              path: 'numericOption.nested',
+              name: 'Option editor',
+              description: 'Option editor description',
+              defaultValue: 10,
+            });
+          },
         });
 
         const expectedDefaults = {
@@ -184,8 +206,8 @@ describe('PanelPlugin', () => {
           return <div>Panel</div>;
         });
 
-        panel.useStandardFieldConfig();
-        expect(panel.standardFieldConfigProperties).toEqual(Array.from(standardFieldConfigProperties.keys()));
+        panel.useFieldConfig();
+        expect(panel.fieldConfigRegistry.list()).toHaveLength(2);
       });
 
       test('selected standard config', () => {
@@ -193,8 +215,10 @@ describe('PanelPlugin', () => {
           return <div>Panel</div>;
         });
 
-        panel.useStandardFieldConfig([FieldConfigProperty.Min, FieldConfigProperty.Thresholds]);
-        expect(panel.standardFieldConfigProperties).toEqual(['min', 'thresholds']);
+        panel.useFieldConfig({
+          standardOptions: [FieldConfigProperty.Min, FieldConfigProperty.Max],
+        });
+        expect(panel.fieldConfigRegistry.list()).toHaveLength(2);
       });
 
       describe('default values', () => {
@@ -203,17 +227,21 @@ describe('PanelPlugin', () => {
             return <div>Panel</div>;
           });
 
-          panel.useStandardFieldConfig([FieldConfigProperty.Color, FieldConfigProperty.Min], {
-            [FieldConfigProperty.Color]: '#ff00ff',
-            [FieldConfigProperty.Min]: 10,
+          panel.useFieldConfig({
+            standardOptions: [FieldConfigProperty.Max, FieldConfigProperty.Min],
+            standardOptionsDefaults: {
+              [FieldConfigProperty.Max]: 20,
+              [FieldConfigProperty.Min]: 10,
+            },
           });
 
-          expect(panel.standardFieldConfigProperties).toEqual(['color', 'min']);
+          expect(panel.fieldConfigRegistry.list()).toHaveLength(2);
 
           expect(panel.fieldConfigDefaults).toEqual({
             defaults: {
               min: 10,
-              color: '#ff00ff',
+              max: 20,
+              custom: {},
             },
             overrides: [],
           });
@@ -224,16 +252,20 @@ describe('PanelPlugin', () => {
             return <div>Panel</div>;
           });
 
-          panel.useStandardFieldConfig([FieldConfigProperty.Color], {
-            [FieldConfigProperty.Color]: '#ff00ff',
-            [FieldConfigProperty.Min]: 10,
+          panel.useFieldConfig({
+            standardOptions: [FieldConfigProperty.Max],
+            standardOptionsDefaults: {
+              [FieldConfigProperty.Max]: 20,
+              [FieldConfigProperty.Min]: 10,
+            },
           });
 
-          expect(panel.standardFieldConfigProperties).toEqual(['color']);
+          expect(panel.fieldConfigRegistry.list()).toHaveLength(1);
 
           expect(panel.fieldConfigDefaults).toEqual({
             defaults: {
-              color: '#ff00ff',
+              max: 20,
+              custom: {},
             },
             overrides: [],
           });

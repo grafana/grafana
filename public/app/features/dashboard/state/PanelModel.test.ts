@@ -1,9 +1,45 @@
 import { PanelModel } from './PanelModel';
 import { getPanelPlugin } from '../../plugins/__mocks__/pluginMocks';
-import { PanelProps, FieldConfigProperty } from '@grafana/data';
+import {
+  FieldConfigProperty,
+  identityOverrideProcessor,
+  PanelProps,
+  standardFieldConfigEditorRegistry,
+} from '@grafana/data';
 import { ComponentClass } from 'react';
 
 class TablePanelCtrl {}
+
+export const mockStandardProperties = () => {
+  const unit = {
+    id: 'unit',
+    path: 'unit',
+    name: 'Unit',
+    description: 'Value units',
+    // @ts-ignore
+    editor: () => null,
+    // @ts-ignore
+    override: () => null,
+    process: identityOverrideProcessor,
+    shouldApply: () => true,
+  };
+
+  const decimals = {
+    id: 'decimals',
+    path: 'decimals',
+    name: 'Decimals',
+    description: 'Number of decimal to be shown for a value',
+    // @ts-ignore
+    editor: () => null,
+    // @ts-ignore
+    override: () => null,
+    process: identityOverrideProcessor,
+    shouldApply: () => true,
+  };
+
+  return [unit, decimals];
+};
+standardFieldConfigEditorRegistry.setInit(() => mockStandardProperties());
 
 describe('PanelModel', () => {
   describe('when creating new panel model', () => {
@@ -79,9 +115,16 @@ describe('PanelModel', () => {
         TablePanelCtrl // angular
       );
       panelPlugin.setDefaults(defaultOptionsMock);
-      panelPlugin.useStandardFieldConfig([FieldConfigProperty.Unit, FieldConfigProperty.Decimals], {
-        [FieldConfigProperty.Unit]: 'flop',
-        [FieldConfigProperty.Decimals]: 2,
+      /*   panelPlugin.useStandardFieldConfig([FieldConfigOptionId.Unit, FieldConfigOptionId.Decimals], {
+        [FieldConfigOptionId.Unit]: 'flop',
+        [FieldConfigOptionId.Decimals]: 2,
+      }); */
+      panelPlugin.useFieldConfig({
+        standardOptions: [FieldConfigProperty.Unit, FieldConfigProperty.Decimals],
+        standardOptionsDefaults: {
+          [FieldConfigProperty.Unit]: 'flop',
+          [FieldConfigProperty.Decimals]: 2,
+        },
       });
       model.pluginLoaded(panelPlugin);
     });
@@ -100,9 +143,9 @@ describe('PanelModel', () => {
 
     it('should apply field config defaults', () => {
       // default unit is overriden by model
-      expect(model.getFieldOverrideOptions().fieldOptions.defaults.unit).toBe('mpg');
+      expect(model.getFieldOverrideOptions().fieldConfig.defaults.unit).toBe('mpg');
       // default decimals are aplied
-      expect(model.getFieldOverrideOptions().fieldOptions.defaults.decimals).toBe(2);
+      expect(model.getFieldOverrideOptions().fieldConfig.defaults.decimals).toBe(2);
     });
 
     it('should set model props on instance', () => {
