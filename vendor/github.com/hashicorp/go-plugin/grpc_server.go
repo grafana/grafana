@@ -14,6 +14,7 @@ import (
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/health"
 	"google.golang.org/grpc/health/grpc_health_v1"
+	"google.golang.org/grpc/reflection"
 )
 
 // GRPCServiceName is the name of the service that the health check should
@@ -73,6 +74,9 @@ func (s *GRPCServer) Init() error {
 	healthCheck.SetServingStatus(
 		GRPCServiceName, grpc_health_v1.HealthCheckResponse_SERVING)
 	grpc_health_v1.RegisterHealthServer(s.server, healthCheck)
+
+	// Register the reflection service
+	reflection.Register(s.server)
 
 	// Register the broker service
 	brokerServer := newGRPCBrokerServer()
