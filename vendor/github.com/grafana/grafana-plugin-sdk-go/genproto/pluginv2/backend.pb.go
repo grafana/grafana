@@ -954,7 +954,9 @@ func init() {
 	proto.RegisterType((*CheckHealthResponse)(nil), "pluginv2.CheckHealthResponse")
 }
 
-func init() { proto.RegisterFile("backend.proto", fileDescriptor_5ab9ba5b8d8b2ba5) }
+func init() {
+	proto.RegisterFile("backend.proto", fileDescriptor_5ab9ba5b8d8b2ba5)
+}
 
 var fileDescriptor_5ab9ba5b8d8b2ba5 = []byte{
 	// 1115 bytes of a gzipped FileDescriptorProto
@@ -1032,11 +1034,11 @@ var fileDescriptor_5ab9ba5b8d8b2ba5 = []byte{
 
 // Reference imports to suppress errors if they are not otherwise used.
 var _ context.Context
-var _ grpc.ClientConn
+var _ grpc.ClientConnInterface
 
 // This is a compile-time assertion to ensure that this generated file
 // is compatible with the grpc package it is being compiled against.
-const _ = grpc.SupportPackageIsVersion4
+const _ = grpc.SupportPackageIsVersion6
 
 // ResourceClient is the client API for Resource service.
 //
@@ -1046,10 +1048,10 @@ type ResourceClient interface {
 }
 
 type resourceClient struct {
-	cc *grpc.ClientConn
+	cc grpc.ClientConnInterface
 }
 
-func NewResourceClient(cc *grpc.ClientConn) ResourceClient {
+func NewResourceClient(cc grpc.ClientConnInterface) ResourceClient {
 	return &resourceClient{cc}
 }
 
@@ -1145,10 +1147,10 @@ type DataClient interface {
 }
 
 type dataClient struct {
-	cc *grpc.ClientConn
+	cc grpc.ClientConnInterface
 }
 
-func NewDataClient(cc *grpc.ClientConn) DataClient {
+func NewDataClient(cc grpc.ClientConnInterface) DataClient {
 	return &dataClient{cc}
 }
 
@@ -1218,10 +1220,10 @@ type DiagnosticsClient interface {
 }
 
 type diagnosticsClient struct {
-	cc *grpc.ClientConn
+	cc grpc.ClientConnInterface
 }
 
-func NewDiagnosticsClient(cc *grpc.ClientConn) DiagnosticsClient {
+func NewDiagnosticsClient(cc grpc.ClientConnInterface) DiagnosticsClient {
 	return &diagnosticsClient{cc}
 }
 
@@ -1325,10 +1327,10 @@ type TransformClient interface {
 }
 
 type transformClient struct {
-	cc *grpc.ClientConn
+	cc grpc.ClientConnInterface
 }
 
-func NewTransformClient(cc *grpc.ClientConn) TransformClient {
+func NewTransformClient(cc grpc.ClientConnInterface) TransformClient {
 	return &transformClient{cc}
 }
 
@@ -1397,10 +1399,10 @@ type TransformDataCallBackClient interface {
 }
 
 type transformDataCallBackClient struct {
-	cc *grpc.ClientConn
+	cc grpc.ClientConnInterface
 }
 
-func NewTransformDataCallBackClient(cc *grpc.ClientConn) TransformDataCallBackClient {
+func NewTransformDataCallBackClient(cc grpc.ClientConnInterface) TransformDataCallBackClient {
 	return &transformDataCallBackClient{cc}
 }
 

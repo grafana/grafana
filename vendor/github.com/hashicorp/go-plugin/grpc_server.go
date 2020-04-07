@@ -51,9 +51,10 @@ type GRPCServer struct {
 	Stdout io.Reader
 	Stderr io.Reader
 
-	config GRPCServerConfig
-	server *grpc.Server
-	broker *GRPCBroker
+	config      GRPCServerConfig
+	server      *grpc.Server
+	broker      *GRPCBroker
+	stdioServer *grpcStdioServer
 
 	logger hclog.Logger
 }
@@ -80,10 +81,12 @@ func (s *GRPCServer) Init() error {
 	go s.broker.Run()
 
 	// Register the controller
-	controllerServer := &grpcControllerServer{
-		server: s,
-	}
+	controllerServer := &grpcControllerServer{server: s}
 	plugin.RegisterGRPCControllerServer(s.server, controllerServer)
+
+	// Register the stdio service
+	s.stdioServer = newGRPCStdioServer(s.logger, s.Stdout, s.Stderr)
+	plugin.RegisterGRPCStdioServer(s.server, s.stdioServer)
 
 	// Register all our plugins onto the gRPC server.
 	for k, raw := range s.Plugins {
