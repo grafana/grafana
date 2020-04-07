@@ -112,4 +112,4 @@ export const getStyles = stylesFactory(() => {
   };
 });
 
-export const plugin = new PanelPlugin(GrafanaLinksPanel).setDefaults({}).setNoPadding();
+export const plugin = new PanelPlugin(GrafanaLinksPanel).setNoPadding();
