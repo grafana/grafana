@@ -26,21 +26,13 @@ export interface Props {
 }
 
 export const Table: FC<Props> = memo(
-  ({
-    data,
-    height,
-    onCellClick,
-    width,
-    columnMinWidth = COLUMN_MIN_WIDTH,
-    noHeader,
-    resizable = false,
-    onColumnResize,
-  }) => {
+  ({ data, height, onCellClick, width, columnMinWidth = COLUMN_MIN_WIDTH, noHeader, resizable = false }) => {
     const theme = useTheme();
     const [ref, headerRowMeasurements] = useMeasure();
     const tableStyles = getTableStyles(theme);
     const memoizedColumns = useMemo(() => getColumns(data, width, columnMinWidth), [data, width, columnMinWidth]);
     const memoizedData = useMemo(() => getTableRows(data), [data]);
+
     const defaultColumn = React.useMemo(
       () => ({
         minWidth: memoizedColumns.reduce((minWidth, column) => {
@@ -53,6 +45,7 @@ export const Table: FC<Props> = memo(
       }),
       [columnMinWidth, memoizedColumns]
     );
+
     const options: any = useMemo(
       () => ({
         columns: memoizedColumns,
@@ -62,6 +55,7 @@ export const Table: FC<Props> = memo(
       }),
       [memoizedColumns, memoizedData, resizable, defaultColumn]
     );
+
     const { getTableProps, headerGroups, rows, prepareRow, totalColumnsWidth } = useTable(
       options,
       useBlockLayout,
