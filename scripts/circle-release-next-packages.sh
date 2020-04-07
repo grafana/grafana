@@ -30,7 +30,7 @@ function unpublish_previous_canary () {
       echo "$_response" | grep "404" || (
         # We want to deprecate here, rather than fail and return an non-0 exit code
         echo "Unpublish unsuccessful [$?]. Deprecating @grafana/${_package}@${CURRENT_CANARY}"
-        _response=$(npm deprecate @grafana/"${_package}"@"${CURRENT_CANARY}" "this package has been deprecated") || (
+        _response=$(npm deprecate @grafana/"${_package}"@"${CURRENT_CANARY}" "this package has been deprecated" 2>&1) || (
           echo "$_response" | grep "404" && return 0
         )
       )
