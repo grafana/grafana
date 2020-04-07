@@ -1,7 +1,7 @@
 import React, { FC, useReducer, useState } from 'react';
 import { useDebounce } from 'react-use';
-import { css, cx } from 'emotion';
-import { Icon, useTheme } from '@grafana/ui';
+import { css } from 'emotion';
+import { Icon, useTheme, CustomScrollbar } from '@grafana/ui';
 import { getLocationSrv } from '@grafana/runtime';
 import { GrafanaTheme } from '@grafana/data';
 import { SearchSrv } from 'app/core/services/search_srv';
@@ -130,7 +130,7 @@ export const DashboardSearch: FC<Props> = ({ closeSearch, payload = {} }) => {
       <SearchField query={query} onChange={onQueryChange} onKeyDown={onKeyDown} autoFocus={true} />
       <div className="search-dropdown">
         <div className="search-dropdown__col_1">
-          <div className={cx('search-results-scroller', styles.scroller)}>
+          <CustomScrollbar>
             <div className="search-results-container">
               <SearchResults
                 results={results}
@@ -141,7 +141,7 @@ export const DashboardSearch: FC<Props> = ({ closeSearch, payload = {} }) => {
                 onToggleSection={toggleSection}
               />
             </div>
-          </div>
+          </CustomScrollbar>
         </div>
         <div className="search-dropdown__col_2">
           <div className="search-filter-box">
@@ -204,9 +204,6 @@ const getStyles = (theme: GrafanaTheme) => {
         right: 15px;
         top: 60px;
       }
-    `,
-    scroller: css`
-      overflow-y: auto;
     `,
   };
 };
