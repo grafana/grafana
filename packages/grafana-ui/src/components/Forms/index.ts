@@ -5,7 +5,6 @@ import { RadioButtonGroup } from './RadioButtonGroup/RadioButtonGroup';
 import { Form } from './Form';
 import { Field } from './Field';
 import { Legend } from './Legend';
-import { TextArea } from './TextArea/TextArea';
 import { Checkbox } from './Checkbox';
 
 const Forms = {
@@ -15,7 +14,6 @@ const Forms = {
   Form,
   Field,
   InputControl,
-  TextArea,
   Checkbox,
   Legend,
 };
