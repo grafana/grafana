@@ -1,8 +1,7 @@
 import React, { FC, Dispatch } from 'react';
 import { css, cx } from 'emotion';
 import { GrafanaTheme } from '@grafana/data';
-import { Icon, stylesFactory, useTheme } from '@grafana/ui';
-import { IconType } from '@grafana/ui/src/components/Icon/types';
+import { Icon, stylesFactory, useTheme, IconName } from '@grafana/ui';
 import PageLoader from 'app/core/components/PageLoader/PageLoader';
 import appEvents from 'app/core/app_events';
 import { CoreEvents } from 'app/types';
@@ -117,7 +116,7 @@ const SectionHeader: FC<SectionHeaderProps> = ({
         checked={section.checked}
         onClick={(e: MouseEvent) => onToggleSelection(section, e)}
       />
-      <Icon className={styles.icon} name={section.icon as IconType} />
+      <Icon className={styles.icon} name={section.icon as IconName} />
 
       <span className={styles.text}>{section.title}</span>
       {section.url && (

@@ -1,6 +1,6 @@
 import React, { useContext } from 'react';
 import { css, cx } from 'emotion';
-import { ThemeContext } from '@grafana/ui';
+import { ThemeContext, Icon } from '@grafana/ui';
 import { GrafanaTheme } from '@grafana/data';
 import { SearchQuery } from 'app/core/components/search/search';
 

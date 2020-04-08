@@ -147,7 +147,7 @@ export const DashboardSearch: FC<Props> = ({ onCloseSearch, payload = {} }) => {
               Filter by:
               {query.tags.length > 0 && (
                 <a className="pointer pull-right small" onClick={onClearSearchFilters}>
-                  <Icon name="remove" /> Clear
+                  <Icon name="times" /> Clear
                 </a>
               )}
             </div>
@@ -178,7 +178,7 @@ export const DashboardSearch: FC<Props> = ({ onCloseSearch, payload = {} }) => {
             </div>
           )}
         </div>
-        <Icon onClick={onCloseSearch} className={styles.closeBtn} name="remove" />
+        <Icon onClick={onCloseSearch} className={styles.closeBtn} name="times" />
       </div>
     </div>
   );
