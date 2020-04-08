@@ -644,7 +644,7 @@ Syslog tag. By default, the process's `argv[0]` is used.
 
 ## [metrics]
 
-For instructions, refer to [Internal Grafana metrics]().
+For detailed instructions, refer to [Internal Grafana metrics]({{< relref "../administration/metrics.md" >}}).
 
 ### enabled
 Enable metrics reporting. defaults true. Available via HTTP API `/metrics`.

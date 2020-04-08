@@ -132,7 +132,6 @@ TagValues
 tag_values(server, server=~${__searchFilter:regex})
 ```
 
-
 ### Variable Usage
 
 You can use a variable in a metric node path or as a parameter to a function.
@@ -168,6 +167,10 @@ queries via the Dashboard menu / Annotations view.
 
 Graphite supports two ways to query annotations. A regular metric query, for this you use the `Graphite query` textbox. A Graphite events query, use the `Graphite event tags` textbox,
 specify a tag or wildcard (leave empty should also work)
+
+## Getting Grafana metrics into Graphite
+
+Grafana exposes metrics for Graphite on the `/metrics` endpoint. For detailed instructions, refer to [Internal Grafana metrics]({{< relref "../../administration/metrics.md">}}).
 
 ## Configure the data source with provisioning
 
