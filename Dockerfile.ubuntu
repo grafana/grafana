@@ -1,4 +1,4 @@
-FROM golang:1.13.4 AS go-builder
+FROM golang:1.14.1 AS go-builder
 
 WORKDIR /src/grafana
 
@@ -26,15 +26,15 @@ COPY packages packages
 
 RUN yarn install --pure-lockfile
 
-COPY Gruntfile.js tsconfig.json tslint.json .browserslistrc ./
-COPY public public 
+COPY Gruntfile.js tsconfig.json .eslintrc .editorconfig .browserslistrc ./
+COPY public public
 COPY scripts scripts
 COPY emails emails
 
 ENV NODE_ENV production
 RUN ./node_modules/.bin/grunt build
 
-FROM ubuntu:18.10
+FROM ubuntu:19.10
 
 LABEL maintainer="Grafana team <hello@grafana.com>"
 EXPOSE 3000

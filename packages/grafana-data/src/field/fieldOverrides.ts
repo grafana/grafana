@@ -1,24 +1,27 @@
-import set from 'lodash/set';
 import {
-  GrafanaTheme,
   DynamicConfigValue,
   FieldConfig,
-  InterpolateFunction,
   DataFrame,
   Field,
   FieldType,
-  FieldConfigSource,
   ThresholdsMode,
   FieldColorMode,
   ColorScheme,
-  TimeZone,
+  FieldOverrideContext,
+  ScopedVars,
+  ApplyFieldOverrideOptions,
+  FieldConfigPropertyItem,
 } from '../types';
 import { fieldMatchers, ReducerID, reduceField } from '../transformations';
 import { FieldMatcher } from '../types/transformations';
 import isNumber from 'lodash/isNumber';
-import toNumber from 'lodash/toNumber';
+import set from 'lodash/set';
+import unset from 'lodash/unset';
+import get from 'lodash/get';
 import { getDisplayProcessor } from './displayProcessor';
 import { guessFieldTypeForField } from '../dataframe';
+import { standardFieldConfigEditorRegistry } from './standardFieldConfigEditorRegistry';
+import { FieldConfigOptionsRegistry } from './FieldConfigOptionsRegistry';
 
 interface OverrideProps {
   match: FieldMatcher;
@@ -28,15 +31,6 @@ interface OverrideProps {
 interface GlobalMinMax {
   min: number;
   max: number;
-}
-
-export interface ApplyFieldOverrideOptions {
-  data?: DataFrame[];
-  fieldOptions: FieldConfigSource;
-  replaceVariables: InterpolateFunction;
-  theme: GrafanaTheme;
-  timeZone?: TimeZone;
-  autoMinMax?: boolean;
 }
 
 export function findNumericFieldMinMax(data: DataFrame[]): GlobalMinMax {
@@ -69,10 +63,12 @@ export function applyFieldOverrides(options: ApplyFieldOverrideOptions): DataFra
     return [];
   }
 
-  const source = options.fieldOptions;
+  const source = options.fieldConfig;
   if (!source) {
     return options.data;
   }
+
+  const fieldConfigRegistry = options.fieldConfigRegistry ?? standardFieldConfigEditorRegistry;
 
   let range: GlobalMinMax | undefined = undefined;
 
@@ -96,24 +92,38 @@ export function applyFieldOverrides(options: ApplyFieldOverrideOptions): DataFra
       name = `Series[${index}]`;
     }
 
-    const fields: Field[] = frame.fields.map(field => {
+    const scopedVars: ScopedVars = {
+      __series: { text: 'Series', value: { name } },
+    };
+
+    const fields: Field[] = frame.fields.map((field, fieldIndex) => {
       // Config is mutable within this scope
-      const config: FieldConfig = { ...field.config } || {};
-      if (field.type === FieldType.number) {
-        setFieldConfigDefaults(config, source.defaults);
+      let fieldName = field.name;
+      if (!fieldName) {
+        fieldName = `Field[${fieldIndex}]`;
       }
+
+      scopedVars['__field'] = { text: 'Field', value: { name: fieldName } };
+
+      const config: FieldConfig = { ...field.config, scopedVars } || {};
+      const context = {
+        field,
+        data: options.data!,
+        dataFrameIndex: index,
+        replaceVariables: options.replaceVariables,
+        fieldConfigRegistry: fieldConfigRegistry,
+      };
+
+      // Anything in the field config that's not set by the datasource
+      // will be filled in by panel's field configuration
+      setFieldConfigDefaults(config, source.defaults, context);
 
       // Find any matching rules and then override
       for (const rule of override) {
         if (rule.match(field)) {
           for (const prop of rule.properties) {
-            setDynamicConfigValue(config, {
-              value: prop,
-              config,
-              field,
-              data: frame,
-              replaceVariables: options.replaceVariables,
-            });
+            // config.scopedVars is set already here
+            setDynamicConfigValue(config, prop, context);
           }
         }
       }
@@ -165,6 +175,7 @@ export function applyFieldOverrides(options: ApplyFieldOverrideOptions): DataFra
         config,
         type,
       };
+
       // and set the display processor using it
       f.display = getDisplayProcessor({
         field: f,
@@ -182,64 +193,79 @@ export function applyFieldOverrides(options: ApplyFieldOverrideOptions): DataFra
   });
 }
 
-interface DynamicConfigValueOptions {
-  value: DynamicConfigValue;
-  config: FieldConfig;
-  field: Field;
-  data: DataFrame;
-  replaceVariables: InterpolateFunction;
+export interface FieldOverrideEnv extends FieldOverrideContext {
+  fieldConfigRegistry: FieldConfigOptionsRegistry;
 }
 
-const numericFieldProps: any = {
-  decimals: true,
-  min: true,
-  max: true,
-};
-
-function prepareConfigValue(key: string, input: any, options?: DynamicConfigValueOptions): any {
-  if (options) {
-    // TODO template variables etc
+export function setDynamicConfigValue(config: FieldConfig, value: DynamicConfigValue, context: FieldOverrideEnv) {
+  const reg = context.fieldConfigRegistry;
+  const item = reg.getIfExists(value.id);
+  if (!item || !item.shouldApply(context.field!)) {
+    return;
   }
 
-  if (numericFieldProps[key]) {
-    const num = toNumber(input);
-    if (isNaN(num)) {
-      return null;
-    }
-    return num;
-  } else if (input) {
-    // skips empty string
-    if (key === 'unit' && input === 'none') {
-      return null;
-    }
-  }
-  return input;
-}
+  const val = item.process(value.value, context, item.settings);
 
-export function setDynamicConfigValue(config: FieldConfig, options: DynamicConfigValueOptions) {
-  const { value } = options;
-  const v = prepareConfigValue(value.path, value.value, options);
-  set(config, value.path, v);
-}
+  const remove = val === undefined || val === null;
 
-/**
- * For numeric values, only valid numbers will be applied
- * for units, 'none' will be skipped
- */
-export function setFieldConfigDefaults(config: FieldConfig, props?: FieldConfig) {
-  if (props) {
-    const keys = Object.keys(props);
-    for (const key of keys) {
-      const val = prepareConfigValue(key, (props as any)[key]);
-      if (val === null || val === undefined) {
-        continue;
+  if (remove) {
+    if (item.isCustom && config.custom) {
+      unset(config.custom, item.path);
+    } else {
+      unset(config, item.path);
+    }
+  } else {
+    if (item.isCustom) {
+      if (!config.custom) {
+        config.custom = {};
       }
-      set(config, key, val);
+      set(config.custom, item.path, val);
+    } else {
+      set(config, item.path, val);
     }
+  }
+}
+
+// config -> from DS
+// defaults -> from Panel config
+export function setFieldConfigDefaults(config: FieldConfig, defaults: FieldConfig, context: FieldOverrideEnv) {
+  for (const fieldConfigProperty of context.fieldConfigRegistry.list()) {
+    if (fieldConfigProperty.isCustom && !config.custom) {
+      config.custom = {};
+    }
+    processFieldConfigValue(
+      fieldConfigProperty.isCustom ? config.custom : config,
+      fieldConfigProperty.isCustom ? defaults.custom : defaults,
+      fieldConfigProperty,
+      context
+    );
   }
 
   validateFieldConfig(config);
 }
+
+const processFieldConfigValue = (
+  destination: Record<string, any>, // it's mutable
+  source: Record<string, any>,
+  fieldConfigProperty: FieldConfigPropertyItem,
+  context: FieldOverrideEnv
+) => {
+  const currentConfig = get(destination, fieldConfigProperty.path);
+
+  if (currentConfig === null || currentConfig === undefined) {
+    const item = context.fieldConfigRegistry.getIfExists(fieldConfigProperty.id);
+    if (!item) {
+      return;
+    }
+
+    if (item && item.shouldApply(context.field!)) {
+      const val = item.process(get(source, item.path), context, item.settings);
+      if (val !== undefined && val !== null) {
+        set(destination, item.path, val);
+      }
+    }
+  }
+};
 
 /**
  * This checks that all options on FieldConfig make sense.  It mutates any value that needs

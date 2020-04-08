@@ -109,7 +109,7 @@ function drawColorLegend(
   const widthFactor = legendWidth / (rangeTo - rangeFrom);
   const valuesRange = d3.range(rangeFrom, rangeTo, rangeStep);
 
-  const colorScale = getColorScale(colorScheme, contextSrv.user.lightTheme, maxValue, minValue);
+  const colorScale = getColorScale(colorScheme, contextSrv.user.lightTheme, rangeTo, rangeFrom);
   legend
     .append('g')
     .attr('class', 'legend-color-bar')
@@ -147,7 +147,7 @@ function drawOpacityLegend(
   const widthFactor = legendWidth / (rangeTo - rangeFrom);
   const valuesRange = d3.range(rangeFrom, rangeTo, rangeStep);
 
-  const opacityScale = getOpacityScale(options, maxValue, minValue);
+  const opacityScale = getOpacityScale(options, rangeTo, rangeFrom);
   legend
     .append('g')
     .attr('class', 'legend-color-bar')

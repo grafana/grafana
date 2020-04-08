@@ -3,15 +3,13 @@ import { pluginBuildRunner } from './plugin.build';
 import { restoreCwd } from '../utils/cwd';
 import { getPluginJson } from '../../config/utils/pluginValidation';
 import { getPluginId } from '../../config/utils/getPluginId';
-import { PluginMeta } from '@grafana/data';
 
 // @ts-ignore
 import execa = require('execa');
 import path = require('path');
-import fs from 'fs';
-import { getPackageDetails, findImagesInFolder, getGrafanaVersions, readGitLog } from '../../plugins/utils';
+import fs from 'fs-extra';
+import { getPackageDetails, getGrafanaVersions, readGitLog } from '../../plugins/utils';
 import {
-  job,
   getJobFolder,
   writeJobStats,
   getCiFolder,
@@ -20,13 +18,15 @@ import {
   getCircleDownloadBaseURL,
 } from '../../plugins/env';
 import { agregateWorkflowInfo, agregateCoverageInfo, agregateTestInfo } from '../../plugins/workflow';
-import { PluginPackageDetails, PluginBuildReport, TestResultsInfo } from '../../plugins/types';
-import { runEndToEndTests } from '../../plugins/e2e/launcher';
-import { getEndToEndSettings } from '../../plugins/index';
+import { PluginPackageDetails, PluginBuildReport } from '../../plugins/types';
+import { manifestTask } from './manifest';
+import { execTask } from '../utils/execTask';
+import rimrafCallback from 'rimraf';
+import { promisify } from 'util';
+const rimraf = promisify(rimrafCallback);
 
 export interface PluginCIOptions {
-  backend?: boolean;
-  full?: boolean;
+  finish?: boolean;
   upload?: boolean;
 }
 
@@ -41,33 +41,26 @@ export interface PluginCIOptions {
  *  Anything that should be put into the final zip file should be put in:
  *   ~/ci/jobs/build_xxx/dist
  */
-const buildPluginRunner: TaskRunner<PluginCIOptions> = async ({ backend }) => {
+const buildPluginRunner: TaskRunner<PluginCIOptions> = async ({ finish }) => {
   const start = Date.now();
-  const workDir = getJobFolder();
-  await execa('rimraf', [workDir]);
-  fs.mkdirSync(workDir);
 
-  if (backend) {
-    const makefile = path.resolve(process.cwd(), 'Makefile');
-    if (!fs.existsSync(makefile)) {
-      throw new Error(`Missing: ${makefile}. A Makefile is required for backend plugins.`);
+  if (finish) {
+    const workDir = getJobFolder();
+    await rimraf(workDir);
+    fs.mkdirSync(workDir);
+
+    // Move local folders to the scoped job folder
+    for (const name of ['dist', 'coverage']) {
+      const dir = path.resolve(process.cwd(), name);
+      if (fs.existsSync(dir)) {
+        fs.moveSync(dir, path.resolve(workDir, name));
+      }
     }
-
-    // Run plugin-ci task
-    execa('make', ['backend-plugin-ci']).stdout!.pipe(process.stdout);
+    writeJobStats(start, workDir);
   } else {
     // Do regular build process with coverage
     await pluginBuildRunner({ coverage: true });
   }
-
-  // Move local folders to the scoped job folder
-  for (const name of ['dist', 'coverage']) {
-    const dir = path.resolve(process.cwd(), name);
-    if (fs.existsSync(dir)) {
-      fs.renameSync(dir, path.resolve(workDir, name));
-    }
-  }
-  writeJobStats(start, workDir);
 };
 
 export const ciBuildPluginTask = new Task<PluginCIOptions>('Build Plugin', buildPluginRunner);
@@ -121,6 +114,14 @@ const packagePluginRunner: TaskRunner<PluginCIOptions> = async () => {
   const packagesDir = path.resolve(ciDir, 'packages');
   const distDir = path.resolve(ciDir, 'dist');
   const docsDir = path.resolve(ciDir, 'docs');
+  const jobsDir = path.resolve(ciDir, 'jobs');
+
+  fs.exists(jobsDir, jobsDirExists => {
+    if (!jobsDirExists) {
+      throw 'You must run plugin:ci-build prior to running plugin:ci-package';
+    }
+  });
+
   const grafanaEnvDir = path.resolve(ciDir, 'grafana-test-env');
   await execa('rimraf', [packagesDir, distDir, grafanaEnvDir]);
   fs.mkdirSync(packagesDir);
@@ -161,6 +162,13 @@ const packagePluginRunner: TaskRunner<PluginCIOptions> = async () => {
       throw new Error('Error writing: ' + pluginJsonFile);
     }
   });
+
+  // Write a manifest.txt file in the dist folder
+  try {
+    await execTask(manifestTask)({ folder: distContentDir });
+  } catch (err) {
+    console.warn(`Error signing manifest: ${distContentDir}`, err);
+  }
 
   console.log('Building ZIP');
   let zipName = pluginInfo.id + '-' + pluginInfo.info.version + '.zip';
@@ -222,85 +230,6 @@ const packagePluginRunner: TaskRunner<PluginCIOptions> = async () => {
 };
 
 export const ciPackagePluginTask = new Task<PluginCIOptions>('Bundle Plugin', packagePluginRunner);
-
-/**
- * 3. Test (end-to-end)
- *
- *  deploy the zip to a running grafana instance
- *
- */
-const testPluginRunner: TaskRunner<PluginCIOptions> = async ({ full }) => {
-  const start = Date.now();
-  const workDir = getJobFolder();
-  const results: TestResultsInfo = { job, passed: 0, failed: 0, screenshots: [] };
-  const args = {
-    withCredentials: true,
-    baseURL: process.env.BASE_URL || 'http://localhost:3000/',
-    responseType: 'json',
-    auth: {
-      username: 'admin',
-      password: 'admin',
-    },
-  };
-
-  const settings = getEndToEndSettings();
-  await execa('rimraf', [settings.outputFolder]);
-  fs.mkdirSync(settings.outputFolder);
-
-  const tempDir = path.resolve(process.cwd(), 'e2e-temp');
-  await execa('rimraf', [tempDir]);
-  fs.mkdirSync(tempDir);
-
-  try {
-    const axios = require('axios');
-    const frontendSettings = await axios.get('api/frontend/settings', args);
-    results.grafana = frontendSettings.data.buildInfo;
-
-    console.log('Grafana: ' + JSON.stringify(results.grafana, null, 2));
-
-    const loadedMetaRsp = await axios.get(`api/plugins/${settings.plugin.id}/settings`, args);
-    const loadedMeta: PluginMeta = loadedMetaRsp.data;
-    console.log('Plugin Info: ' + JSON.stringify(loadedMeta, null, 2));
-    if (loadedMeta.info.build) {
-      const currentHash = settings.plugin.info.build!.hash;
-      console.log('Check version: ', settings.plugin.info.build);
-      if (loadedMeta.info.build.hash !== currentHash) {
-        console.warn(`Testing wrong plugin version.  Expected: ${currentHash}, found: ${loadedMeta.info.build.hash}`);
-        throw new Error('Wrong plugin version');
-      }
-    }
-
-    if (!fs.existsSync('e2e-temp')) {
-      fs.mkdirSync(tempDir);
-    }
-
-    await execa('cp', [
-      'node_modules/@grafana/toolkit/src/plugins/e2e/commonPluginTests.ts',
-      path.resolve(tempDir, 'common.test.ts'),
-    ]);
-
-    await runEndToEndTests(settings.outputFolder, results);
-  } catch (err) {
-    results.error = err;
-    console.log('Test Error', err);
-  }
-  await execa('rimraf', [tempDir]);
-
-  // Now copy everything to work folder
-  await execa('cp', ['-rv', settings.outputFolder + '/.', workDir]);
-  results.screenshots = findImagesInFolder(workDir);
-
-  const f = path.resolve(workDir, 'results.json');
-  fs.writeFile(f, JSON.stringify(results, null, 2), err => {
-    if (err) {
-      throw new Error('Error saving: ' + f);
-    }
-  });
-
-  writeJobStats(start, workDir);
-};
-
-export const ciTestPluginTask = new Task<PluginCIOptions>('Test Plugin (e2e)', testPluginRunner);
 
 /**
  * 4. Report

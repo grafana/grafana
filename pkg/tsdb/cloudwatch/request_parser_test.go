@@ -2,6 +2,7 @@ package cloudwatch
 
 import (
 	"testing"
+	"time"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/tsdb"
@@ -127,66 +128,86 @@ func TestRequestParser(t *testing.T) {
 					"period":     "auto",
 				})
 
-				Convey("when time range is short", func() {
+				Convey("when time range is 5 minutes", func() {
 					query.Set("period", "auto")
-					timeRange := tsdb.NewTimeRange("now-2h", "now-1h")
-					from, _ := timeRange.ParseFrom()
-					to, _ := timeRange.ParseTo()
+					to := time.Now()
+					from := to.Local().Add(time.Minute * time.Duration(5))
 
 					res, err := parseRequestQuery(query, "ref1", from, to)
 					So(err, ShouldBeNil)
 					So(res.Period, ShouldEqual, 60)
 				})
 
-				Convey("when time range is 5y", func() {
-					timeRange := tsdb.NewTimeRange("now-5y", "now")
-					from, _ := timeRange.ParseFrom()
-					to, _ := timeRange.ParseTo()
+				Convey("when time range is 1 day", func() {
+					query.Set("period", "auto")
+					to := time.Now()
+					from := to.AddDate(0, 0, -1)
+
+					res, err := parseRequestQuery(query, "ref1", from, to)
+					So(err, ShouldBeNil)
+					So(res.Period, ShouldEqual, 60)
+				})
+
+				Convey("when time range is 2 days", func() {
+					query.Set("period", "auto")
+					to := time.Now()
+					from := to.AddDate(0, 0, -2)
+					res, err := parseRequestQuery(query, "ref1", from, to)
+					So(err, ShouldBeNil)
+					So(res.Period, ShouldEqual, 300)
+				})
+
+				Convey("when time range is 7 days", func() {
+					query.Set("period", "auto")
+					to := time.Now()
+					from := to.AddDate(0, 0, -7)
+
+					res, err := parseRequestQuery(query, "ref1", from, to)
+					So(err, ShouldBeNil)
+					So(res.Period, ShouldEqual, 900)
+				})
+
+				Convey("when time range is 30 days", func() {
+					query.Set("period", "auto")
+					to := time.Now()
+					from := to.AddDate(0, 0, -30)
+
+					res, err := parseRequestQuery(query, "ref1", from, to)
+					So(err, ShouldBeNil)
+					So(res.Period, ShouldEqual, 3600)
+				})
+
+				Convey("when time range is 90 days", func() {
+					query.Set("period", "auto")
+					to := time.Now()
+					from := to.AddDate(0, 0, -90)
 
 					res, err := parseRequestQuery(query, "ref1", from, to)
 					So(err, ShouldBeNil)
 					So(res.Period, ShouldEqual, 21600)
 				})
-			})
 
-			Convey("closest works as expected", func() {
-				periods := []int{60, 300, 900, 3600, 21600}
-				Convey("and input is lower than 60", func() {
-					So(closest(periods, 6), ShouldEqual, 60)
+				Convey("when time range is 1 year", func() {
+					query.Set("period", "auto")
+					to := time.Now()
+					from := to.AddDate(-1, 0, 0)
+
+					res, err := parseRequestQuery(query, "ref1", from, to)
+					So(err, ShouldBeNil)
+					So(res.Period, ShouldEqual, 21600)
 				})
 
-				Convey("and input is exactly 60", func() {
-					So(closest(periods, 60), ShouldEqual, 60)
-				})
+				Convey("when time range is 2 years", func() {
+					query.Set("period", "auto")
+					to := time.Now()
+					from := to.AddDate(-2, 0, 0)
 
-				Convey("and input is exactly between two steps", func() {
-					So(closest(periods, 180), ShouldEqual, 300)
-				})
-
-				Convey("and input is exactly 2000", func() {
-					So(closest(periods, 2000), ShouldEqual, 900)
-				})
-
-				Convey("and input is exactly 5000", func() {
-					So(closest(periods, 5000), ShouldEqual, 3600)
-				})
-
-				Convey("and input is exactly 50000", func() {
-					So(closest(periods, 50000), ShouldEqual, 21600)
-				})
-
-				Convey("and period isn't shorter than min retension for 15 days", func() {
-					So(closest(periods, (60*60*24*15)+1/2000), ShouldBeGreaterThanOrEqualTo, 300)
-				})
-
-				Convey("and period isn't shorter than min retension for 63 days", func() {
-					So(closest(periods, (60*60*24*63)+1/2000), ShouldBeGreaterThanOrEqualTo, 3600)
-				})
-
-				Convey("and period isn't shorter than min retension for 455 days", func() {
-					So(closest(periods, (60*60*24*455)+1/2000), ShouldBeGreaterThanOrEqualTo, 21600)
+					res, err := parseRequestQuery(query, "ref1", from, to)
+					So(err, ShouldBeNil)
+					So(res.Period, ShouldEqual, 86400)
 				})
 			})
+
 		})
 	})
 }

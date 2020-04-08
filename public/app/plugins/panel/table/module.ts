@@ -1,17 +1,17 @@
 import _ from 'lodash';
 import $ from 'jquery';
 import { MetricsPanelCtrl } from 'app/plugins/sdk';
-import config from 'app/core/config';
+import config, { getConfig } from 'app/core/config';
 import { transformDataToTable } from './transformers';
 import { tablePanelEditor } from './editor';
 import { columnOptionsTab } from './column_options';
 import { TableRenderer } from './renderer';
-import { isTableData } from '@grafana/data';
+import { isTableData, PanelEvents, PanelPlugin } from '@grafana/data';
 import { TemplateSrv } from 'app/features/templating/template_srv';
-import { PanelEvents } from '@grafana/data';
-import { CoreEvents } from 'app/types';
+import { dispatch } from 'app/store/store';
+import { applyFilterFromTable } from 'app/features/variables/adhoc/actions';
 
-class TablePanelCtrl extends MetricsPanelCtrl {
+export class TablePanelCtrl extends MetricsPanelCtrl {
   static templateUrl = 'module.html';
 
   pageIndex: number;
@@ -75,16 +75,11 @@ class TablePanelCtrl extends MetricsPanelCtrl {
     this.events.on(PanelEvents.dataReceived, this.onDataReceived.bind(this));
     this.events.on(PanelEvents.dataSnapshotLoad, this.onDataReceived.bind(this));
     this.events.on(PanelEvents.editModeInitialized, this.onInitEditMode.bind(this));
-    this.events.on(PanelEvents.initPanelActions, this.onInitPanelActions.bind(this));
   }
 
   onInitEditMode() {
     this.addEditorTab('Options', tablePanelEditor, 2);
     this.addEditorTab('Column Styles', columnOptionsTab, 3);
-  }
-
-  onInitPanelActions(actions: any[]) {
-    actions.push({ text: 'Export CSV', click: 'ctrl.exportCsv()' });
   }
 
   issueQueries(datasource: any) {
@@ -164,17 +159,6 @@ class TablePanelCtrl extends MetricsPanelCtrl {
       this.panel.sort.desc = true;
     }
     this.render();
-  }
-
-  exportCsv() {
-    const scope = this.$scope.$new(true);
-    scope.tableData = this.renderer.render_values();
-    scope.panel = 'table';
-    this.publishAppEvent(CoreEvents.showModal, {
-      templateHtml: '<export-data-modal panel="panel" data="tableData"></export-data-modal>',
-      scope,
-      modalClass: 'modal--narrow',
-    });
   }
 
   link(scope: any, elem: JQuery, attrs: any, ctrl: TablePanelCtrl) {
@@ -258,7 +242,11 @@ class TablePanelCtrl extends MetricsPanelCtrl {
         operator: filterData.operator,
       };
 
-      ctrl.variableSrv.setAdhocFilter(options);
+      if (getConfig().featureToggles.newVariables) {
+        dispatch(applyFilterFromTable(options));
+      } else {
+        ctrl.variableSrv.setAdhocFilter(options);
+      }
     }
 
     elem.on('click', '.table-panel-page-link', switchPage);
@@ -280,4 +268,6 @@ class TablePanelCtrl extends MetricsPanelCtrl {
   }
 }
 
-export { TablePanelCtrl, TablePanelCtrl as PanelCtrl };
+export const plugin = new PanelPlugin(null);
+plugin.angularPanelCtrl = TablePanelCtrl;
+plugin.setNoPadding();

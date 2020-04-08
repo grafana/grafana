@@ -1,7 +1,7 @@
 import angular from 'angular';
 import _ from 'lodash';
 import './link_srv';
-import { BackendSrv } from 'app/core/services/backend_srv';
+import { backendSrv } from 'app/core/services/backend_srv';
 
 function panelLinksEditor() {
   return {
@@ -17,7 +17,7 @@ function panelLinksEditor() {
 
 export class PanelLinksEditorCtrl {
   /** @ngInject */
-  constructor($scope: any, backendSrv: BackendSrv) {
+  constructor($scope: any) {
     $scope.panel.links = $scope.panel.links || [];
 
     $scope.addLink = () => {

@@ -55,6 +55,7 @@ describe('grafanaGraph', () => {
       panel: {
         events: {
           on: () => {},
+          emit: () => {},
         },
         legend: {},
         grid: {},

@@ -1,9 +1,10 @@
 import React from 'react';
 import _ from 'lodash';
 
-import { Select } from '@grafana/ui';
+import { LegacyForms } from '@grafana/ui';
 import { SelectableValue } from '@grafana/data';
 import { Variable } from 'app/types/templates';
+const { Select } = LegacyForms;
 
 export interface Props {
   onChange: (value: string) => void;
@@ -70,7 +71,6 @@ export class MetricSelect extends React.Component<Props, State> {
     const { placeholder, className, isSearchable, onChange } = this.props;
     const { options } = this.state;
     const selectedOption = this.getSelectedOption();
-
     return (
       <Select
         className={className}

@@ -24,7 +24,7 @@ const defaultActions = {
   },
 };
 
-const ConfirmModalStories = storiesOf('UI/ConfirmModal', module);
+const ConfirmModalStories = storiesOf('General/ConfirmModal', module);
 
 ConfirmModalStories.addDecorator(withCenteredStory);
 

@@ -11,7 +11,7 @@ const BasicGreen = getColorDefinitionByName('green');
 const BasicRed = getColorDefinitionByName('red');
 const LightBlue = getColorDefinitionByName('light-blue');
 
-const NamedColorsPaletteStories = storiesOf('UI/ColorPicker/Palettes/NamedColorsPalette', module);
+const NamedColorsPaletteStories = storiesOf('General/ColorPicker/Palettes/NamedColorsPalette', module);
 
 NamedColorsPaletteStories.addDecorator(withCenteredStory);
 

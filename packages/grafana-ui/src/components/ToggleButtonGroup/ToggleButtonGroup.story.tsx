@@ -6,7 +6,7 @@ import { ToggleButton, ToggleButtonGroup } from './ToggleButtonGroup';
 import { UseState } from '../../utils/storybook/UseState';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 
-const ToggleButtonGroupStories = storiesOf('UI/ToggleButtonGroup', module);
+const ToggleButtonGroupStories = storiesOf('General/ToggleButtonGroup', module);
 
 const options = [
   { value: 'first', label: 'First' },

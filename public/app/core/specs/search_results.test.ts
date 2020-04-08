@@ -1,5 +1,7 @@
+import { ILocationService, IScope } from 'angular';
+
 import { SearchResultsCtrl } from '../components/search/search_results';
-import { beforeEach, afterEach } from 'test/lib/common';
+import { afterEach, beforeEach } from 'test/lib/common';
 import appEvents from 'app/core/app_events';
 import { CoreEvents } from 'app/types';
 
@@ -11,13 +13,15 @@ jest.mock('app/core/app_events', () => {
 
 describe('SearchResultsCtrl', () => {
   let ctrl: any;
+  const $location = {} as ILocationService;
+  const $scope = ({ $evalAsync: jest.fn() } as any) as IScope;
 
   describe('when checking an item that is not checked', () => {
     const item = { checked: false };
     let selectionChanged = false;
 
     beforeEach(() => {
-      ctrl = new SearchResultsCtrl({});
+      ctrl = new SearchResultsCtrl($location, $scope);
       ctrl.onSelectionChanged = () => (selectionChanged = true);
       ctrl.toggleSelection(item);
     });
@@ -36,7 +40,7 @@ describe('SearchResultsCtrl', () => {
     let selectionChanged = false;
 
     beforeEach(() => {
-      ctrl = new SearchResultsCtrl({});
+      ctrl = new SearchResultsCtrl($location, $scope);
       ctrl.onSelectionChanged = () => (selectionChanged = true);
       ctrl.toggleSelection(item);
     });
@@ -54,7 +58,7 @@ describe('SearchResultsCtrl', () => {
     let selectedTag: any = null;
 
     beforeEach(() => {
-      ctrl = new SearchResultsCtrl({});
+      ctrl = new SearchResultsCtrl($location, $scope);
       ctrl.onTagSelected = (tag: any) => (selectedTag = tag);
       ctrl.selectTag('tag-test');
     });
@@ -68,7 +72,7 @@ describe('SearchResultsCtrl', () => {
     let folderExpanded = false;
 
     beforeEach(() => {
-      ctrl = new SearchResultsCtrl({});
+      ctrl = new SearchResultsCtrl($location, $scope);
       ctrl.onFolderExpanding = () => {
         folderExpanded = true;
       };
@@ -90,7 +94,7 @@ describe('SearchResultsCtrl', () => {
     let folderExpanded = false;
 
     beforeEach(() => {
-      ctrl = new SearchResultsCtrl({});
+      ctrl = new SearchResultsCtrl($location, $scope);
       ctrl.onFolderExpanding = () => {
         folderExpanded = true;
       };
@@ -110,12 +114,12 @@ describe('SearchResultsCtrl', () => {
 
   describe('when clicking on a link in search result', () => {
     const dashPath = 'dashboard/path';
-    const $location = { path: () => dashPath };
+    const $location = ({ path: () => dashPath } as any) as ILocationService;
     const appEventsMock = appEvents as any;
 
     describe('with the same url as current path', () => {
       beforeEach(() => {
-        ctrl = new SearchResultsCtrl($location);
+        ctrl = new SearchResultsCtrl($location, $scope);
         const item = { url: dashPath };
         ctrl.onItemClick(item);
       });
@@ -128,7 +132,7 @@ describe('SearchResultsCtrl', () => {
 
     describe('with a different url than current path', () => {
       beforeEach(() => {
-        ctrl = new SearchResultsCtrl($location);
+        ctrl = new SearchResultsCtrl($location, $scope);
         const item = { url: 'another/path' };
         ctrl.onItemClick(item);
       });

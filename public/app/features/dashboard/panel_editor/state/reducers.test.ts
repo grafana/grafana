@@ -5,6 +5,7 @@ import {
   panelEditorCleanUp,
   panelEditorInitCompleted,
   panelEditorReducer,
+  PanelEditorState,
   PanelEditorTab,
   PanelEditorTabIds,
 } from './reducers';
@@ -18,7 +19,7 @@ describe('panelEditorReducer', () => {
         getPanelEditorTab(PanelEditorTabIds.Visualization),
         getPanelEditorTab(PanelEditorTabIds.Advanced),
       ];
-      reducerTester()
+      reducerTester<PanelEditorState>()
         .givenReducer(panelEditorReducer, initialState)
         .whenActionIsDispatched(panelEditorInitCompleted({ activeTab, tabs }))
         .thenStateShouldEqual({ activeTab, tabs });
@@ -33,7 +34,7 @@ describe('panelEditorReducer', () => {
         getPanelEditorTab(PanelEditorTabIds.Visualization),
         getPanelEditorTab(PanelEditorTabIds.Advanced),
       ];
-      reducerTester()
+      reducerTester<PanelEditorState>()
         .givenReducer(panelEditorReducer, { activeTab, tabs })
         .whenActionIsDispatched(panelEditorCleanUp())
         .thenStateShouldEqual(initialState);

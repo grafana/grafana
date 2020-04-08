@@ -6,9 +6,9 @@ import {
   ldapReducer,
   ldapSyncStatusLoadedAction,
   userAdminReducer,
-  userProfileLoadedAction,
   userMappingInfoFailedAction,
   userMappingInfoLoadedAction,
+  userProfileLoadedAction,
   userSessionsLoadedAction,
 } from './reducers';
 import { LdapState, LdapUser, UserAdminState, UserDTO } from 'app/types';
@@ -70,7 +70,7 @@ describe('LDAP page reducer', () => {
                 available: true,
                 host: 'localhost',
                 port: 389,
-                error: null,
+                error: (null as unknown) as string,
               },
             ])
           )
@@ -81,7 +81,7 @@ describe('LDAP page reducer', () => {
                 available: true,
                 host: 'localhost',
                 port: 389,
-                error: null,
+                error: (null as unknown) as string,
               },
             ],
             ldapError: null,

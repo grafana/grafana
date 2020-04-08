@@ -1,5 +1,5 @@
 // Libraries
-import React from 'react';
+import React, { ReactNode } from 'react';
 
 import {
   ButtonCascader,
@@ -69,12 +69,11 @@ export interface LokiQueryFieldFormProps extends ExploreQueryFieldProps<LokiData
   absoluteRange: AbsoluteTimeRange;
   onLoadOptions: (selectedOptions: CascaderOption[]) => void;
   onLabelsRefresh?: () => void;
+  ExtraFieldElement?: ReactNode;
 }
 
 export class LokiQueryFieldForm extends React.PureComponent<LokiQueryFieldFormProps> {
   plugins: Plugin[];
-  modifiedSearch: string;
-  modifiedQuery: string;
 
   constructor(props: LokiQueryFieldFormProps, context: React.Context<any>) {
     super(props, context);
@@ -136,18 +135,25 @@ export class LokiQueryFieldForm extends React.PureComponent<LokiQueryFieldFormPr
   };
 
   render() {
-    const { data, query, syntaxLoaded, logLabelOptions, onLoadOptions, onLabelsRefresh, datasource } = this.props;
+    const {
+      ExtraFieldElement,
+      query,
+      syntaxLoaded,
+      logLabelOptions,
+      onLoadOptions,
+      onLabelsRefresh,
+      datasource,
+    } = this.props;
     const lokiLanguageProvider = datasource.languageProvider as LokiLanguageProvider;
     const cleanText = datasource.languageProvider ? lokiLanguageProvider.cleanText : undefined;
     const hasLogLabels = logLabelOptions && logLabelOptions.length > 0;
     const chooserText = getChooserText(syntaxLoaded, hasLogLabels);
     const buttonDisabled = !(syntaxLoaded && hasLogLabels);
-    const showError = data && data.error && data.error.refId === query.refId;
 
     return (
       <>
-        <div className="gf-form-inline">
-          <div className="gf-form">
+        <div className="gf-form-inline gf-form-inline--nowrap flex-grow-1">
+          <div className="gf-form flex-shrink-0">
             <ButtonCascader
               options={logLabelOptions || []}
               disabled={buttonDisabled}
@@ -158,7 +164,7 @@ export class LokiQueryFieldForm extends React.PureComponent<LokiQueryFieldFormPr
               {chooserText}
             </ButtonCascader>
           </div>
-          <div className="gf-form gf-form--grow">
+          <div className="gf-form gf-form--grow flex-shrink-1">
             <QueryField
               additionalPlugins={this.plugins}
               cleanText={cleanText}
@@ -173,8 +179,8 @@ export class LokiQueryFieldForm extends React.PureComponent<LokiQueryFieldFormPr
               syntaxLoaded={syntaxLoaded}
             />
           </div>
+          {ExtraFieldElement}
         </div>
-        <div>{showError ? <div className="prom-query-field-info text-error">{data.error.message}</div> : null}</div>
       </>
     );
   }

@@ -1,0 +1,26 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`PrometheusExploreExtraField should render component 1`] = `
+<div
+  className="gf-form-inline explore-input--ml"
+>
+  <div
+    className="gf-form"
+  >
+    <Component
+      tooltip={null}
+      width={5}
+    >
+      Prometheus Explore Extra Field
+    </Component>
+    <input
+      className="gf-form-input width-4"
+      onChange={[MockFunction]}
+      onKeyDown={[MockFunction]}
+      placeholder="auto"
+      type="text"
+      value="123"
+    />
+  </div>
+</div>
+`;

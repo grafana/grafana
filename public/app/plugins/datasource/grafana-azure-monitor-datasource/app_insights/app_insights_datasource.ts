@@ -1,6 +1,6 @@
 import { TimeSeries, toDataFrame } from '@grafana/data';
 import { DataQueryRequest, DataQueryResponseData, DataSourceInstanceSettings } from '@grafana/data';
-import { BackendSrv } from 'app/core/services/backend_srv';
+import { getBackendSrv } from '@grafana/runtime';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import _ from 'lodash';
 
@@ -21,14 +21,26 @@ export default class AppInsightsDatasource {
   logAnalyticsColumns: { [key: string]: LogAnalyticsColumn[] } = {};
 
   /** @ngInject */
-  constructor(
-    instanceSettings: DataSourceInstanceSettings<AzureDataSourceJsonData>,
-    private backendSrv: BackendSrv,
-    private templateSrv: TemplateSrv
-  ) {
+  constructor(instanceSettings: DataSourceInstanceSettings<AzureDataSourceJsonData>, private templateSrv: TemplateSrv) {
     this.id = instanceSettings.id;
     this.applicationId = instanceSettings.jsonData.appInsightsAppId;
-    this.baseUrl = `/appinsights/${this.version}/apps/${this.applicationId}`;
+
+    switch (instanceSettings.jsonData.cloudName) {
+      // Azure US Government
+      case 'govazuremonitor':
+        break;
+      // Azure Germany
+      case 'germanyazuremonitor':
+        break;
+      // Azue China
+      case 'chinaazuremonitor':
+        this.baseUrl = `/chinaappinsights/${this.version}/apps/${this.applicationId}`;
+        break;
+      // Azure Global
+      default:
+        this.baseUrl = `/appinsights/${this.version}/apps/${this.applicationId}`;
+    }
+
     this.url = instanceSettings.url;
   }
 
@@ -119,7 +131,7 @@ export default class AppInsightsDatasource {
       return;
     }
 
-    const { data } = await this.backendSrv.datasourceRequest({
+    const { data } = await getBackendSrv().datasourceRequest({
       url: '/api/tsdb/query',
       method: 'POST',
       data: {
@@ -228,8 +240,8 @@ export default class AppInsightsDatasource {
       });
   }
 
-  doRequest(url: any, maxRetries = 1) {
-    return this.backendSrv
+  doRequest(url: any, maxRetries = 1): Promise<any> {
+    return getBackendSrv()
       .datasourceRequest({
         url: this.url + url,
         method: 'GET',

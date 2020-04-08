@@ -46,7 +46,7 @@ export class ResultTransformer {
 
     metricLabel = this.createMetricLabel(metricData.metric, options);
 
-    const stepMs = parseInt(options.step, 10) * 1000;
+    const stepMs = parseFloat(options.step) * 1000;
     let baseTimestamp = start * 1000;
 
     if (metricData.values === undefined) {
@@ -166,7 +166,7 @@ export class ResultTransformer {
       if (aliasData[g1]) {
         return aliasData[g1];
       }
-      return g1;
+      return '';
     });
   }
 

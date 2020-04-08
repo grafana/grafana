@@ -26,18 +26,13 @@ var netClient = &http.Client{
 	Transport: netTransport,
 }
 
-func (rs *RenderingService) renderViaHttp(ctx context.Context, opts Opts) (*RenderResult, error) {
+func (rs *RenderingService) renderViaHttp(ctx context.Context, renderKey string, opts Opts) (*RenderResult, error) {
 	filePath, err := rs.getFilePathForNewImage()
 	if err != nil {
 		return nil, err
 	}
 
 	rendererUrl, err := url.Parse(rs.Cfg.RendererUrl)
-	if err != nil {
-		return nil, err
-	}
-
-	renderKey, err := rs.getRenderKey(opts.OrgId, opts.UserId, opts.OrgRole)
 	if err != nil {
 		return nil, err
 	}

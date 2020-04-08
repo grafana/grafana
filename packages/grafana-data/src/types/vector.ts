@@ -29,7 +29,7 @@ export interface MutableVector<T = any> extends ReadWriteVector<T> {
   add: (value: T) => void;
 
   /**
-   * modifies the vector so it is now the oposite order
+   * modifies the vector so it is now the opposite order
    */
   reverse: () => void;
 }

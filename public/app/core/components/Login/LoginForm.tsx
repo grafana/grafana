@@ -103,7 +103,7 @@ export class LoginForm extends PureComponent<Props, State> {
               Log In
             </button>
           ) : (
-            <button type="submit" className="btn btn-large p-x-2 btn-inverse btn-loading">
+            <button type="submit" disabled className="btn btn-large p-x-2 btn-inverse btn-loading">
               Logging In<span>.</span>
               <span>.</span>
               <span>.</span>

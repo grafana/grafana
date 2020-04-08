@@ -7,7 +7,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
-	m "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/models"
 )
 
 type StreamManager struct {
@@ -51,11 +51,11 @@ func (sm *StreamManager) Serve(w http.ResponseWriter, r *http.Request) {
 	c.readPump()
 }
 
-func (s *StreamManager) GetStreamList() m.StreamList {
-	list := make(m.StreamList, 0)
+func (s *StreamManager) GetStreamList() models.StreamList {
+	list := make(models.StreamList, 0)
 
 	for _, stream := range s.streams {
-		list = append(list, &m.StreamInfo{
+		list = append(list, &models.StreamInfo{
 			Name: stream.name,
 		})
 	}
@@ -63,7 +63,7 @@ func (s *StreamManager) GetStreamList() m.StreamList {
 	return list
 }
 
-func (s *StreamManager) Push(packet *m.StreamPacket) {
+func (s *StreamManager) Push(packet *models.StreamPacket) {
 	stream, exist := s.streams[packet.Stream]
 
 	if !exist {
@@ -87,7 +87,7 @@ func NewStream(name string) *Stream {
 	}
 }
 
-func (s *Stream) Push(packet *m.StreamPacket) {
+func (s *Stream) Push(packet *models.StreamPacket) {
 
 	messageBytes, _ := simplejson.NewFromAny(packet).Encode()
 

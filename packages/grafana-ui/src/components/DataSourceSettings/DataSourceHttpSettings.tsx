@@ -7,8 +7,9 @@ import { HttpProxySettings } from './HttpProxySettings';
 import { TLSAuthSettings } from './TLSAuthSettings';
 import { DataSourceSettings } from '@grafana/data';
 import { HttpSettingsProps } from './types';
-import { Select } from '../Select/Select';
-import { Input } from '../Input/Input';
+import { CustomHeadersSettings } from './CustomHeadersSettings';
+import { Select } from '../Forms/Legacy/Select/Select';
+import { Input } from '../Forms/Legacy/Input/Input';
 import { FormField } from '../FormField/FormField';
 import { FormLabel } from '../FormLabel/FormLabel';
 import { Switch } from '../Switch/Switch';
@@ -207,6 +208,8 @@ export const DataSourceHttpSettings: React.FC<HttpSettingsProps> = props => {
         {(dataSourceConfig.jsonData.tlsAuth || dataSourceConfig.jsonData.tlsAuthWithCACert) && (
           <TLSAuthSettings dataSourceConfig={dataSourceConfig} onChange={onChange} />
         )}
+
+        <CustomHeadersSettings dataSourceConfig={dataSourceConfig} onChange={onChange} />
       </>
     </div>
   );

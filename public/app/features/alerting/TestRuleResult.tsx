@@ -3,13 +3,13 @@ import { LoadingPlaceholder, JSONFormatter } from '@grafana/ui';
 
 import appEvents from 'app/core/app_events';
 import { CopyToClipboard } from 'app/core/components/CopyToClipboard/CopyToClipboard';
-import { DashboardModel } from '../dashboard/state/DashboardModel';
-import { getBackendSrv, BackendSrv } from '@grafana/runtime';
+import { DashboardModel, PanelModel } from '../dashboard/state';
+import { getBackendSrv } from '@grafana/runtime';
 import { AppEvents } from '@grafana/data';
 
 export interface Props {
-  panelId: number;
   dashboard: DashboardModel;
+  panel: PanelModel;
 }
 
 interface State {
@@ -27,23 +27,26 @@ export class TestRuleResult extends PureComponent<Props, State> {
 
   formattedJson: any;
   clipboard: any;
-  backendSrv: BackendSrv = null;
-
-  constructor(props: Props) {
-    super(props);
-    this.backendSrv = getBackendSrv();
-  }
 
   componentDidMount() {
     this.testRule();
   }
 
   async testRule() {
-    const { panelId, dashboard } = this.props;
-    const payload = { dashboard: dashboard.getSaveModelClone(), panelId };
+    const { dashboard, panel } = this.props;
+
+    // dashboard save model
+    const model = dashboard.getSaveModelClone();
+
+    // now replace panel to get current edits
+    model.panels = model.panels.map(dashPanel => {
+      return dashPanel.id === panel.editSourceId ? panel.getSaveModel() : dashPanel;
+    });
+
+    const payload = { dashboard: model, panelId: panel.id };
 
     this.setState({ isLoading: true });
-    const testRuleResponse = await this.backendSrv.post(`/api/alerts/test`, payload);
+    const testRuleResponse = await getBackendSrv().post(`/api/alerts/test`, payload);
     this.setState({ isLoading: false, testRuleResponse });
   }
 

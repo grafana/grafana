@@ -33,15 +33,16 @@ export type DataSourceOptionsType<DSType extends DataSourceApi<any, any>> = DSTy
 export class DataSourcePlugin<
   DSType extends DataSourceApi<TQuery, TOptions>,
   TQuery extends DataQuery = DataSourceQueryType<DSType>,
-  TOptions extends DataSourceJsonData = DataSourceOptionsType<DSType>
+  TOptions extends DataSourceJsonData = DataSourceOptionsType<DSType>,
+  TSecureOptions = {}
 > extends GrafanaPlugin<DataSourcePluginMeta<TOptions>> {
-  components: DataSourcePluginComponents<DSType, TQuery, TOptions> = {};
+  components: DataSourcePluginComponents<DSType, TQuery, TOptions, TSecureOptions> = {};
 
   constructor(public DataSourceClass: DataSourceConstructor<DSType, TQuery, TOptions>) {
     super();
   }
 
-  setConfigEditor(editor: ComponentType<DataSourcePluginOptionsEditorProps<TOptions>>) {
+  setConfigEditor(editor: ComponentType<DataSourcePluginOptionsEditorProps<TOptions, TSecureOptions>>) {
     this.components.ConfigEditor = editor;
     return this;
   }
@@ -114,6 +115,7 @@ export interface DataSourcePluginMeta<T extends KeyValue = {}> extends PluginMet
   logs?: boolean;
   annotations?: boolean;
   alerting?: boolean;
+  tracing?: boolean;
   mixed?: boolean;
   hasQueryHelp?: boolean;
   category?: string;
@@ -131,7 +133,8 @@ interface PluginMetaQueryOptions {
 export interface DataSourcePluginComponents<
   DSType extends DataSourceApi<TQuery, TOptions>,
   TQuery extends DataQuery = DataQuery,
-  TOptions extends DataSourceJsonData = DataSourceJsonData
+  TOptions extends DataSourceJsonData = DataSourceJsonData,
+  TSecureOptions = {}
 > {
   QueryCtrl?: any;
   AnnotationsQueryCtrl?: any;
@@ -141,7 +144,7 @@ export interface DataSourcePluginComponents<
   ExploreMetricsQueryField?: ComponentType<ExploreQueryFieldProps<DSType, TQuery, TOptions>>;
   ExploreLogsQueryField?: ComponentType<ExploreQueryFieldProps<DSType, TQuery, TOptions>>;
   ExploreStartPage?: ComponentType<ExploreStartPageProps>;
-  ConfigEditor?: ComponentType<DataSourcePluginOptionsEditorProps<TOptions>>;
+  ConfigEditor?: ComponentType<DataSourcePluginOptionsEditorProps<TOptions, TSecureOptions>>;
   MetadataInspector?: ComponentType<MetadataInspectorProps<DSType, TQuery, TOptions>>;
 }
 
@@ -182,6 +185,7 @@ export abstract class DataSourceApi<
   constructor(instanceSettings: DataSourceInstanceSettings<TOptions>) {
     this.name = instanceSettings.name;
     this.id = instanceSettings.id;
+    this.meta = {} as DataSourcePluginMeta;
   }
 
   /**
@@ -246,7 +250,7 @@ export abstract class DataSourceApi<
   /**
    * static information about the datasource
    */
-  meta?: DataSourcePluginMeta;
+  meta: DataSourcePluginMeta;
 
   /**
    * Used by alerting to check if query contains template variables
@@ -276,7 +280,7 @@ export abstract class DataSourceApi<
    */
   annotationQuery?(options: AnnotationQueryRequest<TQuery>): Promise<AnnotationEvent[]>;
 
-  interpolateVariablesInQueries?(queries: TQuery[]): TQuery[];
+  interpolateVariablesInQueries?(queries: TQuery[], scopedVars: ScopedVars | {}): TQuery[];
 }
 
 export interface MetadataInspectorProps<
@@ -310,6 +314,12 @@ export enum DataSourceStatus {
   Disconnected,
 }
 
+export enum ExploreMode {
+  Logs = 'Logs',
+  Metrics = 'Metrics',
+  Tracing = 'Tracing',
+}
+
 export interface ExploreQueryFieldProps<
   DSType extends DataSourceApi<TQuery, TOptions>,
   TQuery extends DataQuery = DataQuery,
@@ -318,11 +328,12 @@ export interface ExploreQueryFieldProps<
   history: any[];
   onBlur?: () => void;
   absoluteRange?: AbsoluteTimeRange;
+  exploreMode?: ExploreMode;
 }
 
 export interface ExploreStartPageProps {
   datasource?: DataSourceApi;
-  exploreMode: 'Logs' | 'Metrics';
+  exploreMode: ExploreMode;
   onClickExample: (query: DataQuery) => void;
 }
 
@@ -359,6 +370,11 @@ export interface DataQueryResponse {
   state?: LoadingState;
 }
 
+/**
+ * These are the common properties avaliable to all queries in all datasources
+ * Specific implementations will extend this interface adding the required properties
+ * for the given context
+ */
 export interface DataQuery {
   /**
    * A - Z
@@ -366,7 +382,7 @@ export interface DataQuery {
   refId: string;
 
   /**
-   * true if query is disabled (ie not executed / sent to TSDB)
+   * true if query is disabled (ie should not be returned to the dashboard)
    */
   hide?: boolean;
 
@@ -376,12 +392,15 @@ export interface DataQuery {
   key?: string;
 
   /**
+   * Specify the query flavor
+   */
+  queryType?: string;
+
+  /**
    * For mixed data sources the selected datasource is on the query level.
    * For non mixed scenarios this is undefined.
    */
   datasource?: string | null;
-
-  metric?: any;
 }
 
 export interface DataQueryError {
@@ -412,13 +431,17 @@ export interface DataQueryRequest<TQuery extends DataQuery = DataQuery> {
   app: CoreApp | string;
 
   cacheTimeout?: string;
-  exploreMode?: 'Logs' | 'Metrics';
+  exploreMode?: ExploreMode;
   rangeRaw?: RawTimeRange;
   timeInfo?: string; // The query time description (blue text in the upper right)
 
   // Request Timing
   startTime: number;
   endTime?: number;
+}
+
+export interface DataQueryTimings {
+  dataProcessingTime: number;
 }
 
 export interface QueryFix {
@@ -493,9 +516,9 @@ export interface DataSourceInstanceSettings<T extends DataSourceJsonData = DataS
 
   /**
    * This is the full Authorization header if basic auth is ennabled.
-   * Only available here when access is Browser (direct), when acess is Server (proxy)
+   * Only available here when access is Browser (direct), when access is Server (proxy)
    * The basic auth header, username & password is never exposted to browser/Frontend
-   * so this will be emtpy then.
+   * so this will be empty then.
    */
   basicAuth?: string;
   withCredentials?: boolean;

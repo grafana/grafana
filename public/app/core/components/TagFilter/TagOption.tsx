@@ -2,7 +2,7 @@
 import React from 'react';
 // @ts-ignore
 import { components } from '@torkelo/react-select';
-import { OptionProps } from 'react-select/lib/components/Option';
+import { OptionProps } from 'react-select/src/components/Option';
 import { TagBadge } from './TagBadge';
 
 // https://github.com/JedWatson/react-select/issues/3038

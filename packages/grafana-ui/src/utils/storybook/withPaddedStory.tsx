@@ -1,5 +1,5 @@
 import React from 'react';
-import { RenderFunction } from '@storybook/react';
+import { RenderFunction } from '../../types';
 
 const PaddedStory: React.FunctionComponent<{}> = ({ children }) => {
   return (

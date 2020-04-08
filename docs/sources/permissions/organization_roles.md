@@ -12,7 +12,7 @@ weight = 2
 
 # Organization Roles
 
-Users can be belong to one or more organizations. A user's organization membership is tied to a role that defines what the user is allowed to do
+Users can belong to one or more organizations. A user's organization membership is tied to a role that defines what the user is allowed to do
 in that organization.
 
 ## Admin Role

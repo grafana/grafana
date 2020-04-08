@@ -103,6 +103,7 @@ exports[`Render should render alpha info text 1`] = `
             DataSourcePlugin {
               "DataSourceClass": Object {},
               "components": Object {},
+              "meta": Object {},
             }
           }
         />
@@ -292,6 +293,7 @@ exports[`Render should render is ready only message 1`] = `
             DataSourcePlugin {
               "DataSourceClass": Object {},
               "components": Object {},
+              "meta": Object {},
             }
           }
         />

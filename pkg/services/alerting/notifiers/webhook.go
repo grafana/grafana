@@ -97,7 +97,7 @@ func (wn *WebhookNotifier) Notify(evalContext *alerting.EvalContext) error {
 		bodyJSON.Set("ruleUrl", ruleURL)
 	}
 
-	if evalContext.ImagePublicURL != "" {
+	if wn.NeedsImage() && evalContext.ImagePublicURL != "" {
 		bodyJSON.Set("imageUrl", evalContext.ImagePublicURL)
 	}
 

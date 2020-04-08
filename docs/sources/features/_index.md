@@ -1,6 +1,6 @@
 +++
-title = "Beginner Guides"
-description = "Beginner guides"
+title = "Features"
+description = "List of features"
 type = "docs"
 [menu.docs]
 name = "Features"

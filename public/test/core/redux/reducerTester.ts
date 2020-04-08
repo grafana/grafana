@@ -2,7 +2,12 @@ import { Reducer } from 'redux';
 import { PayloadAction } from '@reduxjs/toolkit';
 
 export interface Given<State> {
-  givenReducer: (reducer: Reducer<State, PayloadAction<any>>, state: State, disableDeepFreeze?: boolean) => When<State>;
+  givenReducer: (
+    reducer: Reducer<State, PayloadAction<any>>,
+    state: State,
+    showDebugOutput?: boolean,
+    disableDeepFreeze?: boolean
+  ) => When<State>;
 }
 
 export interface When<State> {
@@ -52,10 +57,12 @@ export const reducerTester = <State>(): Given<State> => {
   let reducerUnderTest: Reducer<State, PayloadAction<any>>;
   let resultingState: State;
   let initialState: State;
+  let showDebugOutput = false;
 
   const givenReducer = (
     reducer: Reducer<State, PayloadAction<any>>,
     state: State,
+    debug = false,
     disableDeepFreeze = false
   ): When<State> => {
     reducerUnderTest = reducer;
@@ -63,6 +70,7 @@ export const reducerTester = <State>(): Given<State> => {
     if (!disableDeepFreeze) {
       initialState = deepFreeze(initialState);
     }
+    showDebugOutput = debug;
 
     return instance;
   };
@@ -74,12 +82,18 @@ export const reducerTester = <State>(): Given<State> => {
   };
 
   const thenStateShouldEqual = (state: State): When<State> => {
-    expect(state).toEqual(resultingState);
+    if (showDebugOutput) {
+      console.log(JSON.stringify(resultingState, null, 2));
+    }
+    expect(resultingState).toEqual(state);
 
     return instance;
   };
 
   const thenStatePredicateShouldEqual = (predicate: (resultingState: State) => boolean): When<State> => {
+    if (showDebugOutput) {
+      console.log(JSON.stringify(resultingState, null, 2));
+    }
     expect(predicate(resultingState)).toBe(true);
 
     return instance;

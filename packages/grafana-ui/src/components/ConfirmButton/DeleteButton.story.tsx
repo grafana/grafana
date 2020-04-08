@@ -12,7 +12,7 @@ const getKnobs = () => {
   };
 };
 
-storiesOf('UI/ConfirmButton', module)
+storiesOf('General/ConfirmButton', module)
   .addDecorator(withCenteredStory)
   .add('delete button', () => {
     const { disabled, size } = getKnobs();

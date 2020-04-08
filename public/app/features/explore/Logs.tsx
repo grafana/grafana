@@ -15,10 +15,12 @@ import {
   LinkModel,
   Field,
 } from '@grafana/data';
-import { Switch, LogLabels, ToggleButtonGroup, ToggleButton, LogRows } from '@grafana/ui';
+import { LegacyForms, LogLabels, ToggleButtonGroup, ToggleButton, LogRows } from '@grafana/ui';
+const { Switch } = LegacyForms;
 import store from 'app/core/store';
 
 import { ExploreGraphPanel } from './ExploreGraphPanel';
+import { MetaInfoText } from './MetaInfoText';
 
 const SETTINGS_KEYS = {
   showLabels: 'grafana.explore.logs.showLabels',
@@ -219,14 +221,14 @@ export class Logs extends PureComponent<Props, State> {
         </div>
 
         {hasData && meta && (
-          <div className="logs-panel-meta">
-            {meta.map(item => (
-              <div className="logs-panel-meta__item" key={item.label}>
-                <span className="logs-panel-meta__label">{item.label}:</span>
-                <span className="logs-panel-meta__value">{renderMetaItem(item.value, item.kind)}</span>
-              </div>
-            ))}
-          </div>
+          <MetaInfoText
+            metaItems={meta.map(item => {
+              return {
+                label: item.label,
+                value: renderMetaItem(item.value, item.kind),
+              };
+            })}
+          />
         )}
 
         <LogRows

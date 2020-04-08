@@ -4,7 +4,6 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
-	"github.com/grafana/grafana/pkg/services/licensing"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
@@ -18,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/login"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/auth"
+	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/stretchr/testify/assert"
@@ -66,12 +66,13 @@ func (stub *FakeLogger) Info(testMessage string, ctx ...interface{}) {
 }
 
 type redirectCase struct {
-	desc      string
-	url       string
-	status    int
-	err       error
-	appURL    string
-	appSubURL string
+	desc        string
+	url         string
+	status      int
+	err         error
+	appURL      string
+	appSubURL   string
+	redirectURL string
 }
 
 func TestLoginErrorCookieApiEndpoint(t *testing.T) {
@@ -107,12 +108,16 @@ func TestLoginErrorCookieApiEndpoint(t *testing.T) {
 
 	oauthError := errors.New("User not a member of one of the required organizations")
 	encryptedError, _ := util.Encrypt([]byte(oauthError.Error()), setting.SecretKey)
+	expCookiePath := "/"
+	if len(setting.AppSubUrl) > 0 {
+		expCookiePath = setting.AppSubUrl
+	}
 	cookie := http.Cookie{
 		Name:     LoginErrorCookieName,
 		MaxAge:   60,
 		Value:    hex.EncodeToString(encryptedError),
 		HttpOnly: true,
-		Path:     setting.AppSubUrl + "/",
+		Path:     expCookiePath,
 		Secure:   hs.Cfg.CookieSecure,
 		SameSite: hs.Cfg.CookieSameSiteMode,
 	}
@@ -151,46 +156,56 @@ func TestLoginViewRedirect(t *testing.T) {
 
 	redirectCases := []redirectCase{
 		{
-			desc:   "grafana relative url without subpath",
-			url:    "/profile",
-			appURL: "http://localhost:3000",
-			status: 302,
+			desc:        "grafana relative url without subpath",
+			url:         "/profile",
+			redirectURL: "/profile",
+			appURL:      "http://localhost:3000/",
+			status:      302,
 		},
 		{
-			desc:      "grafana relative url with subpath",
-			url:       "/grafana/profile",
-			appURL:    "http://localhost:3000",
-			appSubURL: "grafana",
-			status:    302,
+			desc:        "grafana invalid relative url starting with the subpath",
+			url:         "/grafanablah",
+			redirectURL: "/grafana/",
+			appURL:      "http://localhost:3000/",
+			appSubURL:   "/grafana",
+			status:      302,
 		},
 		{
-			desc:      "relative url with missing subpath",
-			url:       "/profile",
-			appURL:    "http://localhost:3000",
-			appSubURL: "grafana",
-			status:    200,
-			err:       login.ErrInvalidRedirectTo,
+			desc:        "grafana relative url with subpath with leading slash",
+			url:         "/grafana/profile",
+			redirectURL: "/grafana/profile",
+			appURL:      "http://localhost:3000",
+			appSubURL:   "/grafana",
+			status:      302,
 		},
 		{
-			desc:   "grafana absolute url",
-			url:    "http://localhost:3000/profile",
-			appURL: "http://localhost:3000",
-			status: 200,
-			err:    login.ErrAbsoluteRedirectTo,
+			desc:        "relative url with missing subpath",
+			url:         "/profile",
+			redirectURL: "/grafana/",
+			appURL:      "http://localhost:3000/",
+			appSubURL:   "/grafana",
+			status:      302,
 		},
 		{
-			desc:   "non grafana absolute url",
-			url:    "http://example.com",
-			appURL: "http://localhost:3000",
-			status: 200,
-			err:    login.ErrAbsoluteRedirectTo,
+			desc:        "grafana absolute url",
+			url:         "http://localhost:3000/profile",
+			redirectURL: "/",
+			appURL:      "http://localhost:3000/",
+			status:      302,
 		},
 		{
-			desc:   "invalid url",
-			url:    ":foo",
-			appURL: "http://localhost:3000",
-			status: 200,
-			err:    login.ErrInvalidRedirectTo,
+			desc:        "non grafana absolute url",
+			url:         "http://example.com",
+			redirectURL: "/",
+			appURL:      "http://localhost:3000/",
+			status:      302,
+		},
+		{
+			desc:        "invalid url",
+			url:         ":foo",
+			redirectURL: "/",
+			appURL:      "http://localhost:3000/",
+			status:      302,
 		},
 	}
 
@@ -198,12 +213,16 @@ func TestLoginViewRedirect(t *testing.T) {
 		hs.Cfg.AppUrl = c.appURL
 		hs.Cfg.AppSubUrl = c.appSubURL
 		t.Run(c.desc, func(t *testing.T) {
+			expCookiePath := "/"
+			if len(hs.Cfg.AppSubUrl) > 0 {
+				expCookiePath = hs.Cfg.AppSubUrl
+			}
 			cookie := http.Cookie{
 				Name:     "redirect_to",
 				MaxAge:   60,
 				Value:    c.url,
 				HttpOnly: true,
-				Path:     hs.Cfg.AppSubUrl + "/",
+				Path:     expCookiePath,
 				Secure:   hs.Cfg.CookieSecure,
 				SameSite: hs.Cfg.CookieSameSiteMode,
 			}
@@ -213,15 +232,22 @@ func TestLoginViewRedirect(t *testing.T) {
 			if c.status == 302 {
 				location, ok := sc.resp.Header()["Location"]
 				assert.True(t, ok)
-				assert.Equal(t, location[0], c.url)
+				assert.Equal(t, location[0], c.redirectURL)
 
 				setCookie, ok := sc.resp.Header()["Set-Cookie"]
 				assert.True(t, ok, "Set-Cookie exists")
 				assert.Greater(t, len(setCookie), 0)
 				var redirectToCookieFound bool
-				expCookieValue := fmt.Sprintf("redirect_to=%v; Path=%v; Max-Age=60; HttpOnly; Secure", c.url, hs.Cfg.AppSubUrl+"/")
+				redirectToCookieShouldBeDeleted := c.url != c.redirectURL
+				expCookieValue := c.redirectURL
+				expCookieMaxAge := 60
+				if redirectToCookieShouldBeDeleted {
+					expCookieValue = ""
+					expCookieMaxAge = 0
+				}
+				expCookie := fmt.Sprintf("redirect_to=%v; Path=%v; Max-Age=%v; HttpOnly; Secure", expCookieValue, expCookiePath, expCookieMaxAge)
 				for _, cookieValue := range setCookie {
-					if cookieValue == expCookieValue {
+					if cookieValue == expCookie {
 						redirectToCookieFound = true
 						break
 					}
@@ -273,31 +299,38 @@ func TestLoginPostRedirect(t *testing.T) {
 		{
 			desc:   "grafana relative url without subpath",
 			url:    "/profile",
-			appURL: "https://localhost:3000",
+			appURL: "https://localhost:3000/",
 		},
 		{
-			desc:      "grafana relative url with subpath",
+			desc:      "grafana relative url with subpath with leading slash",
 			url:       "/grafana/profile",
-			appURL:    "https://localhost:3000",
-			appSubURL: "grafana",
+			appURL:    "https://localhost:3000/",
+			appSubURL: "/grafana",
+		},
+		{
+			desc:      "grafana invalid relative url starting with subpath",
+			url:       "/grafanablah",
+			appURL:    "https://localhost:3000/",
+			appSubURL: "/grafana",
+			err:       login.ErrInvalidRedirectTo,
 		},
 		{
 			desc:      "relative url with missing subpath",
 			url:       "/profile",
-			appURL:    "https://localhost:3000",
-			appSubURL: "grafana",
+			appURL:    "https://localhost:3000/",
+			appSubURL: "/grafana",
 			err:       login.ErrInvalidRedirectTo,
 		},
 		{
 			desc:   "grafana absolute url",
 			url:    "http://localhost:3000/profile",
-			appURL: "http://localhost:3000",
+			appURL: "http://localhost:3000/",
 			err:    login.ErrAbsoluteRedirectTo,
 		},
 		{
 			desc:   "non grafana absolute url",
 			url:    "http://example.com",
-			appURL: "https://localhost:3000",
+			appURL: "https://localhost:3000/",
 			err:    login.ErrAbsoluteRedirectTo,
 		},
 	}
@@ -306,12 +339,16 @@ func TestLoginPostRedirect(t *testing.T) {
 		hs.Cfg.AppUrl = c.appURL
 		hs.Cfg.AppSubUrl = c.appSubURL
 		t.Run(c.desc, func(t *testing.T) {
+			expCookiePath := "/"
+			if len(hs.Cfg.AppSubUrl) > 0 {
+				expCookiePath = hs.Cfg.AppSubUrl
+			}
 			cookie := http.Cookie{
 				Name:     "redirect_to",
 				MaxAge:   60,
 				Value:    c.url,
 				HttpOnly: true,
-				Path:     hs.Cfg.AppSubUrl + "/",
+				Path:     expCookiePath,
 				Secure:   hs.Cfg.CookieSecure,
 				SameSite: hs.Cfg.CookieSameSiteMode,
 			}
@@ -332,7 +369,7 @@ func TestLoginPostRedirect(t *testing.T) {
 			assert.True(t, ok, "Set-Cookie exists")
 			assert.Greater(t, len(setCookie), 0)
 			var redirectToCookieFound bool
-			expCookieValue := fmt.Sprintf("redirect_to=; Path=%v; Max-Age=0; HttpOnly; Secure", hs.Cfg.AppSubUrl+"/")
+			expCookieValue := fmt.Sprintf("redirect_to=; Path=%v; Max-Age=0; HttpOnly; Secure", expCookiePath)
 			for _, cookieValue := range setCookie {
 				if cookieValue == expCookieValue {
 					redirectToCookieFound = true

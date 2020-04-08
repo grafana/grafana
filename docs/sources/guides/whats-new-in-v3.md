@@ -1,7 +1,7 @@
 +++
-title = "What's New in Grafana v3.0"
+title = "What's new in Grafana v3.0"
 description = "Feature and improvement highlights for Grafana v3.0"
-keywords = ["grafana", "new", "documentation", "3.0"]
+keywords = ["grafana", "new", "documentation", "3.0", "release notes"]
 type = "docs"
 [menu.docs]
 name = "Version 3.0"
@@ -10,7 +10,7 @@ parent = "whatsnew"
 weight = 6
 +++
 
-# What's New in Grafana v3.0
+# What's new in Grafana v3.0
 
 ## Commercial Support
 
@@ -64,7 +64,6 @@ perform Dashboard backups, and more.
 Grafana.net will officially launch along with the stable version of
 Grafana 3.0, but go to <a href=https://grafana.com> and check out the preview
 and sign up for an account</a> in the meantime.
-
 
 ## grafana-cli
 
@@ -225,5 +224,4 @@ Check out the full list of plugins on [Grafana.com](https://grafana.com/plugins)
 
 For a detailed list and link to github issues for everything included
 in the 3.0 release please view the
-[CHANGELOG.md](https://github.com/grafana/grafana/blob/master/CHANGELOG.md)
-file.
+[CHANGELOG.md](https://github.com/grafana/grafana/blob/master/CHANGELOG.md) file.

@@ -1,10 +1,10 @@
 import config from '../../../core/config';
-import { getBackendSrv } from '@grafana/runtime';
+import { getBackendSrv } from 'app/core/services/backend_srv';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { updateLocation, updateNavIndex } from 'app/core/actions';
 import { buildNavModel } from './navModel';
 import { DataSourcePluginMeta, DataSourceSettings } from '@grafana/data';
-import { DataSourcePluginCategory, ThunkResult } from 'app/types';
+import { DataSourcePluginCategory, ThunkResult, ThunkDispatch } from 'app/types';
 import { getPluginSettings } from 'app/features/plugins/PluginSettingsCache';
 import { importDataSourcePlugin } from 'app/features/plugins/plugin_loader';
 import {
@@ -13,13 +13,101 @@ import {
   dataSourcePluginsLoad,
   dataSourcePluginsLoaded,
   dataSourcesLoaded,
+  initDataSourceSettingsFailed,
+  initDataSourceSettingsSucceeded,
+  testDataSourceStarting,
+  testDataSourceSucceeded,
+  testDataSourceFailed,
 } from './reducers';
 import { buildCategories } from './buildCategories';
+import { getDataSource, getDataSourceMeta } from './selectors';
+import { getDataSourceSrv } from '@grafana/runtime';
 
 export interface DataSourceTypesLoadedPayload {
   plugins: DataSourcePluginMeta[];
   categories: DataSourcePluginCategory[];
 }
+
+export interface InitDataSourceSettingDependencies {
+  loadDataSource: typeof loadDataSource;
+  getDataSource: typeof getDataSource;
+  getDataSourceMeta: typeof getDataSourceMeta;
+  importDataSourcePlugin: typeof importDataSourcePlugin;
+}
+
+export interface TestDataSourceDependencies {
+  getDatasourceSrv: typeof getDataSourceSrv;
+  getBackendSrv: typeof getBackendSrv;
+}
+
+export const initDataSourceSettings = (
+  pageId: number,
+  dependencies: InitDataSourceSettingDependencies = {
+    loadDataSource,
+    getDataSource,
+    getDataSourceMeta,
+    importDataSourcePlugin,
+  }
+): ThunkResult<void> => {
+  return async (dispatch: ThunkDispatch, getState) => {
+    if (isNaN(pageId)) {
+      dispatch(initDataSourceSettingsFailed(new Error('Invalid ID')));
+      return;
+    }
+
+    try {
+      await dispatch(dependencies.loadDataSource(pageId));
+      if (getState().dataSourceSettings.plugin) {
+        return;
+      }
+
+      const dataSource = dependencies.getDataSource(getState().dataSources, pageId);
+      const dataSourceMeta = dependencies.getDataSourceMeta(getState().dataSources, dataSource.type);
+      const importedPlugin = await dependencies.importDataSourcePlugin(dataSourceMeta);
+
+      dispatch(initDataSourceSettingsSucceeded(importedPlugin));
+    } catch (err) {
+      console.log('Failed to import plugin module', err);
+      dispatch(initDataSourceSettingsFailed(err));
+    }
+  };
+};
+
+export const testDataSource = (
+  dataSourceName: string,
+  dependencies: TestDataSourceDependencies = {
+    getDatasourceSrv,
+    getBackendSrv,
+  }
+): ThunkResult<void> => {
+  return async (dispatch: ThunkDispatch, getState) => {
+    const dsApi = await dependencies.getDatasourceSrv().get(dataSourceName);
+
+    if (!dsApi.testDatasource) {
+      return;
+    }
+
+    dispatch(testDataSourceStarting());
+
+    dependencies.getBackendSrv().withNoBackendCache(async () => {
+      try {
+        const result = await dsApi.testDatasource();
+
+        dispatch(testDataSourceSucceeded(result));
+      } catch (err) {
+        let message = '';
+
+        if (err.statusText) {
+          message = 'HTTP Error ' + err.statusText;
+        } else {
+          message = err.message;
+        }
+
+        dispatch(testDataSourceFailed({ message }));
+      }
+    });
+  };
+};
 
 export function loadDataSources(): ThunkResult<void> {
   return async dispatch => {
@@ -123,7 +211,7 @@ export function findNewName(dataSources: ItemWithName[], name: string) {
 function updateFrontendSettings() {
   return getBackendSrv()
     .get('/api/frontend/settings')
-    .then(settings => {
+    .then((settings: any) => {
       config.datasources = settings.datasources;
       config.defaultDatasource = settings.defaultDatasource;
       getDatasourceSrv().init();

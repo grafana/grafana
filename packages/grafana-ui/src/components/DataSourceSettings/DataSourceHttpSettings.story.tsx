@@ -31,7 +31,7 @@ const settingsMock: DataSourceSettings<any, any> = {
   readOnly: true,
 };
 
-const DataSourceHttpSettingsStories = storiesOf('UI/DataSource/DataSourceHttpSettings', module);
+const DataSourceHttpSettingsStories = storiesOf('Panel/DataSource/DataSourceHttpSettings', module);
 
 DataSourceHttpSettingsStories.add('default', () => {
   return (

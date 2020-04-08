@@ -24,26 +24,40 @@ You can install Grafana using our official APT repository, by downloading a `.de
 
 If you install from the APT repository, then Grafana is automatically updated every time you run `apt-get update`. 
 
-The APT repository installs the open source edition of Grafana.
+| Grafana Version | Package | Repository |
+|-----------------|---------|------------|
+| Grafana OSS     | grafana | `https://packages.grafana.com/oss/deb stable main` |
+| Grafana OSS (Beta)     | grafana | `https://packages.grafana.com/oss/deb beta main` |
+| Grafana Enterprise     | grafana-enterprise | `https://packages.grafana.com/enterprise/deb stable main` |
+| Grafana Enterprise (Beta)     | grafana-enterprise | `https://packages.grafana.com/enterprise/deb beta main` |
 
-#### To install the latest stable release:
+> We recommend all users to install the Enterprise Edition of Grafana, which can be seamlessly upgraded with a Grafana Enterprise [subscription](https://grafana.com/products/enterprise/?utm_source=grafana-install-page).
+
+#### To install the latest Enterprise edition:
 
 ```bash
 sudo apt-get install -y apt-transport-https
 sudo apt-get install -y software-properties-common wget
 wget -q -O - https://packages.grafana.com/gpg.key | sudo apt-key add -
-sudo add-apt-repository "deb https://packages.grafana.com/oss/deb stable main"
+
+
+# Alternatively you can add the beta repository, see in the table above
+sudo add-apt-repository "deb https://packages.grafana.com/enterprise/deb stable main"
+
 sudo apt-get update
-sudo apt-get install grafana
+sudo apt-get install grafana-enterprise
 ```
 
-#### To install the latest beta release:
+#### To install the latest OSS release:
 
 ```bash
 sudo apt-get install -y apt-transport-https
 sudo apt-get install -y software-properties-common wget
 wget -q -O - https://packages.grafana.com/gpg.key | sudo apt-key add -
-sudo add-apt-repository "deb https://packages.grafana.com/oss/deb beta main"
+
+# Alternatively you can add the beta repository, see in the table above
+sudo add-apt-repository "deb https://packages.grafana.com/oss/deb stable main"
+
 sudo apt-get update
 sudo apt-get install grafana
 ```
@@ -72,7 +86,7 @@ If you install the `.deb` package, then you will need to manually update Grafana
    * The **Version** field displays only finished releases. If you want to install a beta version, click **Nightly Builds** and then select a version.
 1. Select an **Edition**.
    * **Enterprise** - Recommended download. Functionally identical to the open source version, but includes features you can unlock with a license if you so choose.
-   * **Open Source** - Functionally identical to the enterprise version, but you will need to download the enterprise version if you want enterprise features.
+   * **Open Source** - Functionally identical to the Enterprise version, but you will need to download the Enterprise version if you want Enterprise features.
 1. Depending on which system you are running, click **Linux** or **ARM**.
 1. Copy and paste the code from the installation page into your command line and run. It follows the pattern shown below.
 
@@ -154,4 +168,4 @@ Refer to the [Getting Started]({{< relref "../guides/getting_started/" >}}) guid
 
 ## Configure Grafana
 
-Refer the [Configuration]({{< relref "configuration.md" >}}) page for details on options for customizing your environment, logging, database, and so on.
+Refer to the [Configuration]({{< relref "configuration.md" >}}) page for details on options for customizing your environment, logging, database, and so on.

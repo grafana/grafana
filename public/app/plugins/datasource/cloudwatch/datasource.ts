@@ -7,20 +7,21 @@ import { AppNotificationTimeout } from 'app/types';
 import { store } from 'app/store/store';
 import kbn from 'app/core/utils/kbn';
 import {
+  DataQueryRequest,
+  DataSourceApi,
+  DataSourceInstanceSettings,
   dateMath,
   ScopedVars,
-  toDataFrame,
   TimeRange,
-  DataSourceApi,
-  DataQueryRequest,
-  DataSourceInstanceSettings,
+  toDataFrame,
 } from '@grafana/data';
-import { BackendSrv } from 'app/core/services/backend_srv';
+import { getBackendSrv } from '@grafana/runtime';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { ThrottlingErrorMessage } from './components/ThrottlingErrorMessage';
 import memoizedDebounce from './memoizedDebounce';
-import { CloudWatchQuery, CloudWatchJsonData } from './types';
+import { CloudWatchJsonData, CloudWatchQuery } from './types';
+import { VariableWithMultiSupport } from 'app/features/templating/types';
 
 const displayAlert = (datasourceName: string, region: string) =>
   store.dispatch(
@@ -48,7 +49,6 @@ export default class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery,
   /** @ngInject */
   constructor(
     instanceSettings: DataSourceInstanceSettings<CloudWatchJsonData>,
-    private backendSrv: BackendSrv,
     private templateSrv: TemplateSrv,
     private timeSrv: TimeSrv
   ) {
@@ -69,7 +69,7 @@ export default class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery,
       return (
         (item.id !== '' || item.hide !== true) &&
         ((!!item.region && !!item.namespace && !!item.metricName && !_.isEmpty(item.statistics)) ||
-          item.expression.length > 0)
+          item.expression?.length > 0)
       );
     }).map(item => {
       item.region = this.replace(this.getActualRegion(item.region), options.scopedVars, true, 'region');
@@ -113,8 +113,8 @@ export default class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery,
     }
 
     const request = {
-      from: options.range.from.valueOf().toString(),
-      to: options.range.to.valueOf().toString(),
+      from: options?.range?.from.valueOf().toString(),
+      to: options?.range?.to.valueOf().toString(),
       queries: queries,
     };
 
@@ -122,7 +122,7 @@ export default class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery,
   }
 
   get variables() {
-    return this.templateSrv.variables.map(v => `$${v.name}`);
+    return this.templateSrv.getVariables().map(v => `$${v.name}`);
   }
 
   getPeriod(target: any, options: any) {
@@ -193,7 +193,7 @@ export default class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery,
     )}`;
   }
 
-  performTimeSeriesQuery(request: any, { from, to }: TimeRange) {
+  performTimeSeriesQuery(request: any, { from, to }: TimeRange): Promise<any> {
     return this.awsRequest('/api/tsdb/query', request)
       .then((res: any) => {
         if (!res.results) {
@@ -530,9 +530,11 @@ export default class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery,
       data,
     };
 
-    return this.backendSrv.datasourceRequest(options).then((result: any) => {
-      return result.data;
-    });
+    return getBackendSrv()
+      .datasourceRequest(options)
+      .then((result: any) => {
+        return result.data;
+      });
   }
 
   getDefaultRegion() {
@@ -561,9 +563,11 @@ export default class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery,
         return { ...result, [key]: value };
       }
 
-      const valueVar = this.templateSrv.variables.find(({ name }) => name === this.templateSrv.getVariableName(value));
+      const valueVar = this.templateSrv
+        .getVariables()
+        .find(({ name }) => name === this.templateSrv.getVariableName(value));
       if (valueVar) {
-        if (valueVar.multi) {
+        if (((valueVar as unknown) as VariableWithMultiSupport).multi) {
           const values = this.templateSrv.replace(value, scopedVars, 'pipe').split('|');
           return { ...result, [key]: values };
         }
@@ -576,8 +580,10 @@ export default class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery,
 
   replace(target: string, scopedVars: ScopedVars, displayErrorIfIsMultiTemplateVariable?: boolean, fieldName?: string) {
     if (displayErrorIfIsMultiTemplateVariable) {
-      const variable = this.templateSrv.variables.find(({ name }) => name === this.templateSrv.getVariableName(target));
-      if (variable && variable.multi) {
+      const variable = this.templateSrv
+        .getVariables()
+        .find(({ name }) => name === this.templateSrv.getVariableName(target));
+      if (variable && ((variable as unknown) as VariableWithMultiSupport).multi) {
         this.debouncedCustomAlert(
           'CloudWatch templating error',
           `Multi template variables are not supported for ${fieldName || target}`

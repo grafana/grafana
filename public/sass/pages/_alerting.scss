@@ -28,7 +28,15 @@
   border: 0;
 }
 
+.panel-alert-icon {
+  display: none;
+}
+
 .panel-has-alert {
+  .panel-alert-icon {
+    display: inline-block;
+  }
+
   .panel-alert-icon:before {
     content: '\e611';
     position: relative;
@@ -40,7 +48,6 @@
 .panel-alert-state {
   &--alerting {
     box-shadow: 0 0 10px rgba($critical, 0.5);
-    position: relative;
 
     .panel-alert-icon:before {
       color: $critical;

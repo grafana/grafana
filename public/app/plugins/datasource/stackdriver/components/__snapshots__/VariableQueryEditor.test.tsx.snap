@@ -17,8 +17,13 @@ Array [
         className="gf-form-input"
         onChange={[Function]}
         required={true}
-        value="services"
+        value="projects"
       >
+        <option
+          value="projects"
+        >
+          Projects
+        </option>
         <option
           value="services"
         >
@@ -58,6 +63,21 @@ Array [
           value="alignmentPeriods"
         >
           Alignment Periods
+        </option>
+        <option
+          value="selectors"
+        >
+          Selectors
+        </option>
+        <option
+          value="sloServices"
+        >
+          SLO Services
+        </option>
+        <option
+          value="slo"
+        >
+          Service Level Objectives (SLO)
         </option>
       </select>
     </div>

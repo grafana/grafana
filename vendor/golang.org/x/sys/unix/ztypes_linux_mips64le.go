@@ -55,6 +55,16 @@ type Timex struct {
 	_         [44]byte
 }
 
+const (
+	TIME_OK    = 0x0
+	TIME_INS   = 0x1
+	TIME_DEL   = 0x2
+	TIME_OOP   = 0x3
+	TIME_WAIT  = 0x4
+	TIME_ERROR = 0x5
+	TIME_BAD   = 0x5
+)
+
 type Time_t int64
 
 type Tms struct {
@@ -594,7 +604,7 @@ const (
 	IFLA_NEW_IFINDEX        = 0x31
 	IFLA_MIN_MTU            = 0x32
 	IFLA_MAX_MTU            = 0x33
-	IFLA_MAX                = 0x33
+	IFLA_MAX                = 0x35
 	IFLA_INFO_KIND          = 0x1
 	IFLA_INFO_DATA          = 0x2
 	IFLA_INFO_XSTATS        = 0x3
@@ -2791,7 +2801,7 @@ const (
 	DEVLINK_ATTR_DPIPE_FIELD_MAPPING_TYPE     = 0x3c
 	DEVLINK_ATTR_PAD                          = 0x3d
 	DEVLINK_ATTR_ESWITCH_ENCAP_MODE           = 0x3e
-	DEVLINK_ATTR_MAX                          = 0x89
+	DEVLINK_ATTR_MAX                          = 0x8c
 	DEVLINK_DPIPE_FIELD_MAPPING_TYPE_NONE     = 0x0
 	DEVLINK_DPIPE_FIELD_MAPPING_TYPE_IFINDEX  = 0x1
 	DEVLINK_DPIPE_MATCH_TYPE_FIELD_EXACT      = 0x0

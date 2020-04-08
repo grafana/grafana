@@ -1,30 +1,35 @@
 import React from 'react';
-import { useTheme, stylesFactory, selectThemeVariant as stv } from '../../../themes';
+import { useTheme, stylesFactory } from '../../../themes';
 import { GrafanaTheme } from '@grafana/data';
 import { css, cx } from 'emotion';
 import { getFocusCss, getPropertiesForButtonSize } from '../commonStyles';
 
 export type RadioButtonSize = 'sm' | 'md';
+
 export interface RadioButtonProps {
   size?: RadioButtonSize;
   disabled?: boolean;
+  name?: string;
   active: boolean;
-  onClick: () => void;
+  id: string;
+  onChange: () => void;
+  fullWidth?: boolean;
 }
 
-const getRadioButtonStyles = stylesFactory((theme: GrafanaTheme, size: RadioButtonSize) => {
-  const { padding, fontSize, height } = getPropertiesForButtonSize(theme, size);
+const getRadioButtonStyles = stylesFactory((theme: GrafanaTheme, size: RadioButtonSize, fullWidth?: boolean) => {
+  const { fontSize, height } = getPropertiesForButtonSize(theme, size);
+  const horizontalPadding = theme.spacing[size] ?? theme.spacing.md;
   const c = theme.colors;
 
-  const textColor = stv({ light: c.gray33, dark: c.gray70 }, theme.type);
-  const textColorHover = stv({ light: c.blueShade, dark: c.blueLight }, theme.type);
-  const textColorActive = stv({ light: c.blueShade, dark: c.blueLight }, theme.type);
-  const borderColor = stv({ light: c.gray4, dark: c.gray25 }, theme.type);
-  const borderColorHover = stv({ light: c.gray70, dark: c.gray33 }, theme.type);
-  const borderColorActive = stv({ light: c.blueShade, dark: c.blueLight }, theme.type);
-  const bg = stv({ light: c.gray98, dark: c.gray10 }, theme.type);
-  const bgDisabled = stv({ light: c.gray95, dark: c.gray15 }, theme.type);
-  const bgActive = stv({ light: c.white, dark: c.gray05 }, theme.type);
+  const textColor = theme.isLight ? c.gray33 : c.gray70;
+  const textColorHover = theme.isLight ? c.blueShade : c.blueLight;
+  const textColorActive = theme.isLight ? c.blueShade : c.blueLight;
+  const borderColor = theme.isLight ? c.gray4 : c.gray25;
+  const borderColorHover = theme.isLight ? c.gray70 : c.gray33;
+  const borderColorActive = theme.isLight ? c.blueShade : c.blueLight;
+  const bg = c.pageBg;
+  const bgDisabled = theme.isLight ? c.gray95 : c.gray15;
+  const bgActive = theme.isLight ? c.white : c.gray05;
 
   const border = `1px solid ${borderColor}`;
   const borderActive = `1px solid ${borderColorActive}`;
@@ -32,133 +37,59 @@ const getRadioButtonStyles = stylesFactory((theme: GrafanaTheme, size: RadioButt
   const fakeBold = `0 0 0.65px ${textColorHover}, 0 0 0.65px ${textColorHover}`;
 
   return {
-    button: css`
-      cursor: pointer;
-      position: relative;
-      z-index: 0;
-      background: ${bg};
-      border: ${border};
-      color: ${textColor};
-      font-size: ${fontSize};
-      padding: ${padding};
-      height: ${height};
-      border-left: 0;
+    radio: css`
+      position: absolute;
+      top: 0;
+      left: -100vw;
+      opacity: 0;
+      z-index: -1000;
 
-      /* This pseudo element is responsible for rendering the lines between buttons when they are groupped */
-      &:before {
-        content: '';
-        position: absolute;
-        top: -1px;
-        left: -1px;
-        width: 1px;
-        height: calc(100% + 2px);
-      }
-
-      &:hover {
-        border: ${borderHover};
-        border-left: 0;
-        &:before {
-          /* renders line between elements */
-          background: ${borderColorHover};
-        }
-        &:first-child {
-          border-left: ${borderHover};
-        }
-        &:last-child {
-          border-right: ${borderHover};
-        }
-        &:first-child:before {
-          /* Don't render divider line on first element*/
-          display: none;
-        }
-      }
-
-      &:not(:disabled):hover {
-        color: ${textColorHover};
-        /* The text shadow imitates font-weight:bold;
-         * Using font weight on hover makes the button size slighlty change which looks like a glitch
-         * */
+      &:checked + label {
+        border: ${borderActive};
+        color: ${textColorActive};
         text-shadow: ${fakeBold};
+        background: ${bgActive};
+        z-index: 3;
       }
 
-      &:focus {
-        z-index: 1;
+      &:focus + label {
         ${getFocusCss(theme)};
-        &:before {
-          background: ${borderColor};
-        }
-        &:hover {
-          &:before {
-            background: ${borderColorHover};
-          }
-        }
+        z-index: 3;
       }
 
-      &:disabled {
+      &:disabled + label {
+        cursor: default;
         background: ${bgDisabled};
         color: ${textColor};
       }
 
-      &:first-child {
-        border-top-left-radius: ${theme.border.radius.sm};
-        border-bottom-left-radius: ${theme.border.radius.sm};
-        border-left: ${border};
-      }
-      &:last-child {
-        border-top-right-radius: ${theme.border.radius.sm};
-        border-bottom-right-radius: ${theme.border.radius.sm};
-        border-right: ${border};
+      &:enabled + label:hover {
+        text-shadow: ${fakeBold};
       }
     `,
+    radioLabel: css`
+      display: inline-block;
+      position: relative;
+      font-size: ${fontSize};
+      height: ${height};
+      line-height: ${height};
+      color: ${textColor};
+      padding: 0 ${horizontalPadding};
+      margin-left: -1px;
+      border-radius: ${theme.border.radius.sm};
+      border: ${border};
+      background: ${bg};
+      cursor: pointer;
+      z-index: 1;
+      flex-grow: ${fullWidth ? 1 : 0};
+      text-align: center;
 
-    buttonActive: css`
-      background: ${bgActive};
-      border: ${borderActive};
-      border-left: none;
-      color: ${textColorActive};
-      text-shadow: ${fakeBold};
+      user-select: none;
 
       &:hover {
-        border: ${borderActive};
-        border-left: none;
-      }
-
-      &:focus {
-        &:before {
-          background: ${borderColorActive};
-        }
-        &:hover:before {
-          background: ${borderColorActive};
-        }
-      }
-
-      &:before,
-      &:hover:before {
-        background: ${borderColorActive};
-      }
-
-      &:first-child,
-      &:first-child:hover {
-        border-left: ${borderActive};
-      }
-      &:last-child,
-      &:last-child:hover {
-        border-right: ${borderActive};
-      }
-
-      &:first-child {
-        &:before {
-          display: none;
-        }
-      }
-
-      & + button:hover {
-        &:before {
-          display: none;
-        }
-      }
-      &:focus {
-        border-color: ${borderActive};
+        color: ${textColorHover};
+        border: ${borderHover};
+        z-index: 2;
       }
     `,
   };
@@ -169,20 +100,29 @@ export const RadioButton: React.FC<RadioButtonProps> = ({
   active = false,
   disabled = false,
   size = 'md',
-  onClick,
+  onChange,
+  id,
+  name = undefined,
+  fullWidth,
 }) => {
   const theme = useTheme();
-  const styles = getRadioButtonStyles(theme, size);
+  const styles = getRadioButtonStyles(theme, size, fullWidth);
 
   return (
-    <button
-      type="button"
-      className={cx(styles.button, active && styles.buttonActive)}
-      onClick={onClick}
-      disabled={disabled}
-    >
-      {children}
-    </button>
+    <>
+      <input
+        type="radio"
+        className={cx(styles.radio)}
+        onChange={onChange}
+        disabled={disabled}
+        id={id}
+        checked={active}
+        name={name}
+      />
+      <label className={cx(styles.radioLabel)} htmlFor={id}>
+        {children}
+      </label>
+    </>
   );
 };
 

@@ -1,15 +1,15 @@
 {
-  "extends": "../tsconfig.json",
-  "include": ["src/**/*.ts", "src/**/*.tsx"],
-  "exclude": ["dist", "node_modules"],
   "compilerOptions": {
-    "rootDirs": [".", "stories"],
-    "typeRoots": ["./node_modules/@types", "types"],
-    "baseUrl": "./node_modules/@types",
+    "baseUrl": "node_modules/@types",
+    "declarationDir": "dist",
+    "outDir": "compiled",
     "paths": {
       "@grafana/slate-react": ["slate-react"]
     },
-    "declarationDir": "dist",
-    "outDir": "compiled"
-  }
+    "rootDirs": [".", "stories"],
+    "typeRoots": ["node_modules/@types"]
+  },
+  "exclude": ["dist", "node_modules"],
+  "extends": "@grafana/tsconfig",
+  "include": ["src/**/*.ts*"]
 }

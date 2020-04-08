@@ -3,12 +3,13 @@ import React from 'react';
 // @ts-ignore
 import { components } from '@torkelo/react-select';
 // @ts-ignore
-import AsyncSelect from '@torkelo/react-select/lib/Async';
+import AsyncSelect from '@torkelo/react-select/async';
 import { escapeStringForRegex } from '@grafana/data';
 // Components
 import { TagOption } from './TagOption';
 import { TagBadge } from './TagBadge';
-import { IndicatorsContainer, NoOptionsMessage, resetSelectStyles } from '@grafana/ui';
+import { resetSelectStyles, LegacyForms } from '@grafana/ui';
+const { IndicatorsContainer, NoOptionsMessage } = LegacyForms;
 
 export interface TermCount {
   term: string;
@@ -39,7 +40,9 @@ export class TagFilter extends React.Component<Props, any> {
   };
 
   onChange = (newTags: any[]) => {
-    this.props.onChange(newTags.map(tag => tag.value));
+    // On remove with 1 item returns null, so we need to make sure it's an empty array in that case
+    // https://github.com/JedWatson/react-select/issues/3632
+    this.props.onChange((newTags || []).map(tag => tag.value));
   };
 
   render() {

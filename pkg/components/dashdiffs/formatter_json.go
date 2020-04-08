@@ -59,7 +59,7 @@ var (
 	<span class="diff-line-number">
 		{{if .RightLine }}{{ .RightLine }}{{ end }}
 	</span>
-	<span class="diff-value diff-indent-{{ .Indent }}" title="{{ .Text }}">
+	<span class="diff-value diff-indent-{{ .Indent }}" title="{{ .Text }}" ng-non-bindable>
 		{{ .Text }}
 	</span>
 	<span class="diff-line-icon">{{ ctos .Change }}</span>

@@ -56,11 +56,7 @@ func (e *CloudWatchExecutor) transformQueryResponseToQueryResult(cloudwatchRespo
 	responsesByRefID := make(map[string][]*cloudwatchResponse)
 
 	for _, res := range cloudwatchResponses {
-		if _, ok := responsesByRefID[res.RefId]; ok {
-			responsesByRefID[res.RefId] = append(responsesByRefID[res.RefId], res)
-		} else {
-			responsesByRefID[res.RefId] = []*cloudwatchResponse{res}
-		}
+		responsesByRefID[res.RefId] = append(responsesByRefID[res.RefId], res)
 	}
 
 	for refID, responses := range responsesByRefID {
@@ -100,7 +96,7 @@ func (e *CloudWatchExecutor) transformQueryResponseToQueryResult(cloudwatchRespo
 		}
 
 		if partialData {
-			queryResult.ErrorString = "Cloudwatch GetMetricData error: Too many datapoints requested - your search have been limited. Please try to reduce the time range"
+			queryResult.ErrorString = "Cloudwatch GetMetricData error: Too many datapoints requested - your search has been limited. Please try to reduce the time range"
 		}
 
 		queryResult.Series = append(queryResult.Series, timeSeries...)

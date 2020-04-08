@@ -1,8 +1,6 @@
-import { BackendSrv } from 'app/core/services/backend_srv';
+import { backendSrv } from 'app/core/services/backend_srv';
 
 export class FolderPageLoader {
-  constructor(private backendSrv: BackendSrv) {}
-
   load(ctrl: any, uid: any, activeChildId: any) {
     ctrl.navModel = {
       main: {
@@ -38,7 +36,7 @@ export class FolderPageLoader {
       },
     };
 
-    return this.backendSrv.getFolderByUid(uid).then((folder: any) => {
+    return backendSrv.getFolderByUid(uid).then((folder: any) => {
       ctrl.folderId = folder.id;
       const folderTitle = folder.title;
       const folderUrl = folder.url;

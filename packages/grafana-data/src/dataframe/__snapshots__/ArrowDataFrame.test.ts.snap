@@ -103,18 +103,22 @@ Array [
 ]
 `;
 
-exports[`Read/Write arrow Table to DataFrame should parse output with dataframe 1`] = `
+exports[`Read/Write arrow Table to DataFrame should read all types 1`] = `
 Object {
   "fields": Array [
     Object {
       "config": Object {},
-      "labels": undefined,
+      "labels": Object {
+        "aLabelKey": "aLabelValue",
+      },
       "name": "string_values",
       "type": "string",
       "values": Array [
-        "Grafana",
-        "❤️",
-        "Transforms",
+        "Go Min",
+        "JS Min (for >= 64)",
+        "0 / nil / misc",
+        "JS Max (for >= 64)",
+        "Go Max",
       ],
     },
     Object {
@@ -134,12 +138,17 @@ Object {
         "nullValueMode": "null",
         "title": "Grafana ❤️ (Previous should be heart emoji) 🦥 (Previous should be sloth emoji)",
       },
-      "labels": undefined,
+      "labels": Object {
+        "aLabelKey": "aLabelValue",
+        "bLabelKey": "bLabelValue",
+      },
       "name": "nullable_string_values",
       "type": "string",
       "values": Array [
-        "🦥",
+        "Grafana",
+        "❤️",
         null,
+        "🦥",
         "update your unicode/font if no sloth, is 2019.",
       ],
     },
@@ -153,7 +162,9 @@ Object {
       "type": "number",
       "values": Array [
         -128,
-        1,
+        -128,
+        0,
+        127,
         127,
       ],
     },
@@ -164,7 +175,9 @@ Object {
       "type": "number",
       "values": Array [
         -128,
+        -128,
         null,
+        127,
         127,
       ],
     },
@@ -175,7 +188,9 @@ Object {
       "type": "number",
       "values": Array [
         -32768,
-        1,
+        -32768,
+        0,
+        32767,
         32767,
       ],
     },
@@ -186,7 +201,9 @@ Object {
       "type": "number",
       "values": Array [
         -32768,
+        -32768,
         null,
+        32767,
         32767,
       ],
     },
@@ -197,7 +214,9 @@ Object {
       "type": "number",
       "values": Array [
         -2147483648,
+        -2147483648,
         1,
+        2147483647,
         2147483647,
       ],
     },
@@ -208,7 +227,9 @@ Object {
       "type": "number",
       "values": Array [
         -2147483648,
+        -2147483648,
         null,
+        2147483647,
         2147483647,
       ],
     },
@@ -219,7 +240,9 @@ Object {
       "type": "number",
       "values": Array [
         "\\"-9223372036854775808\\"",
+        "\\"-9007199254740991\\"",
         "\\"1\\"",
+        "\\"9007199254740991\\"",
         "\\"9223372036854775807\\"",
       ],
     },
@@ -230,7 +253,9 @@ Object {
       "type": "number",
       "values": Array [
         "\\"-9223372036854775808\\"",
+        "\\"-9007199254740991\\"",
         null,
+        "\\"9007199254740991\\"",
         "\\"9223372036854775807\\"",
       ],
     },
@@ -241,7 +266,9 @@ Object {
       "type": "number",
       "values": Array [
         0,
+        0,
         1,
+        255,
         255,
       ],
     },
@@ -252,7 +279,9 @@ Object {
       "type": "number",
       "values": Array [
         0,
+        0,
         null,
+        255,
         255,
       ],
     },
@@ -263,7 +292,9 @@ Object {
       "type": "number",
       "values": Array [
         0,
+        0,
         1,
+        65535,
         65535,
       ],
     },
@@ -274,7 +305,9 @@ Object {
       "type": "number",
       "values": Array [
         0,
+        0,
         null,
+        65535,
         65535,
       ],
     },
@@ -285,7 +318,9 @@ Object {
       "type": "number",
       "values": Array [
         0,
+        0,
         1,
+        4294967295,
         4294967295,
       ],
     },
@@ -296,7 +331,9 @@ Object {
       "type": "number",
       "values": Array [
         0,
+        0,
         null,
+        4294967295,
         4294967295,
       ],
     },
@@ -307,7 +344,9 @@ Object {
       "type": "number",
       "values": Array [
         "\\"0\\"",
+        "\\"0\\"",
         "\\"1\\"",
+        "\\"9007199254740991\\"",
         "\\"18446744073709551615\\"",
       ],
     },
@@ -318,7 +357,9 @@ Object {
       "type": "number",
       "values": Array [
         "\\"0\\"",
+        "\\"0\\"",
         null,
+        "\\"9007199254740991\\"",
         "\\"18446744073709551615\\"",
       ],
     },
@@ -329,7 +370,9 @@ Object {
       "type": "number",
       "values": Array [
         1.401298464324817e-45,
+        1.401298464324817e-45,
         1,
+        3.4028234663852886e+38,
         3.4028234663852886e+38,
       ],
     },
@@ -340,7 +383,9 @@ Object {
       "type": "number",
       "values": Array [
         1.401298464324817e-45,
+        1.401298464324817e-45,
         null,
+        3.4028234663852886e+38,
         3.4028234663852886e+38,
       ],
     },
@@ -351,7 +396,9 @@ Object {
       "type": "number",
       "values": Array [
         5e-324,
+        -9007199254740991,
         1,
+        9007199254740991,
         1.7976931348623157e+308,
       ],
     },
@@ -362,8 +409,10 @@ Object {
       "type": "number",
       "values": Array [
         5e-324,
+        -9007199254740991,
         null,
         1.7976931348623157e+308,
+        9007199254740991,
       ],
     },
     Object {
@@ -372,6 +421,8 @@ Object {
       "name": "bool_values",
       "type": "boolean",
       "values": Array [
+        true,
+        false,
         true,
         true,
         false,
@@ -384,7 +435,9 @@ Object {
       "type": "boolean",
       "values": Array [
         true,
+        false,
         null,
+        true,
         false,
       ],
     },
@@ -394,9 +447,11 @@ Object {
       "name": "timestamps",
       "type": "time",
       "values": Array [
+        0,
         1568039445000,
         1568039450000,
-        1568039455000,
+        9007199254.740992,
+        9223372036854.775,
       ],
     },
     Object {
@@ -405,9 +460,11 @@ Object {
       "name": "nullable_timestamps",
       "type": "time",
       "values": Array [
+        0,
         1568039445000,
         null,
-        1568039455000,
+        9007199254.740992,
+        9223372036854.775,
       ],
     },
   ],

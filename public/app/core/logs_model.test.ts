@@ -1,14 +1,14 @@
 import {
   DataFrame,
   FieldType,
-  LogsMetaKind,
-  LogsDedupStrategy,
   LogLevel,
+  LogRowModel,
+  LogsDedupStrategy,
+  LogsMetaKind,
   MutableDataFrame,
   toDataFrame,
-  LogRowModel,
 } from '@grafana/data';
-import { dedupLogRows, dataFrameToLogsModel } from './logs_model';
+import { dataFrameToLogsModel, dedupLogRows } from './logs_model';
 
 describe('dedupLogRows()', () => {
   test('should return rows as is when dedup is set to none', () => {
@@ -223,7 +223,6 @@ describe('dataFrameToLogsModel', () => {
     expect(logsModel.rows).toHaveLength(2);
     expect(logsModel.rows).toMatchObject([
       {
-        timestamp: '2019-04-26T09:28:11.352440161Z',
         entry: 't=2019-04-26T11:05:28+0200 lvl=info msg="Initializing DatasourceCacheService" logger=server',
         labels: { filename: '/var/log/grafana/grafana.log', job: 'grafana' },
         logLevel: 'info',
@@ -231,7 +230,6 @@ describe('dataFrameToLogsModel', () => {
         uid: 'foo',
       },
       {
-        timestamp: '2019-04-26T14:42:50.991981292Z',
         entry: 't=2019-04-26T16:42:50+0200 lvl=eror msg="new token…t unhashed token=56d9fdc5c8b7400bd51b060eea8ca9d7',
         labels: { filename: '/var/log/grafana/grafana.log', job: 'grafana' },
         logLevel: 'error',
@@ -242,12 +240,12 @@ describe('dataFrameToLogsModel', () => {
 
     expect(logsModel.series).toHaveLength(2);
     expect(logsModel.meta).toHaveLength(2);
-    expect(logsModel.meta[0]).toMatchObject({
+    expect(logsModel.meta![0]).toMatchObject({
       label: 'Common labels',
       value: series[0].fields[1].labels,
       kind: LogsMetaKind.LabelsMap,
     });
-    expect(logsModel.meta[1]).toMatchObject({
+    expect(logsModel.meta![1]).toMatchObject({
       label: 'Limit',
       value: `1000 (2 returned)`,
       kind: LogsMetaKind.String,
@@ -366,7 +364,7 @@ describe('dataFrameToLogsModel', () => {
 
     expect(logsModel.series).toHaveLength(2);
     expect(logsModel.meta).toHaveLength(1);
-    expect(logsModel.meta[0]).toMatchObject({
+    expect(logsModel.meta![0]).toMatchObject({
       label: 'Common labels',
       value: {
         foo: 'bar',

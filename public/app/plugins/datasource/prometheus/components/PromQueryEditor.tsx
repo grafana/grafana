@@ -2,8 +2,10 @@ import _ from 'lodash';
 import React, { PureComponent } from 'react';
 
 // Types
-import { FormLabel, Select, Switch } from '@grafana/ui';
+import { FormLabel, LegacyForms } from '@grafana/ui';
 import { SelectableValue, QueryEditorProps } from '@grafana/data';
+
+const { Select, Switch } = LegacyForms;
 
 import { PrometheusDatasource } from '../datasource';
 import { PromQuery, PromOptions } from '../types';
@@ -37,7 +39,9 @@ export class PromQueryEditor extends PureComponent<Props, State> {
 
   constructor(props: Props) {
     super(props);
-    const { query } = props;
+    // Use default query to prevent undefined input values
+    const defaultQuery: Partial<PromQuery> = { expr: '', legendFormat: '', interval: '' };
+    const query = Object.assign({}, defaultQuery, props.query);
     this.query = query;
     // Query target properties that are fully controlled inputs
     this.state = {

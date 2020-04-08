@@ -1,9 +1,10 @@
 import React, { PureComponent } from 'react';
 
-import { FormLabel, Select } from '@grafana/ui';
+import { FormLabel, LegacyForms } from '@grafana/ui';
+const { Select } = LegacyForms;
 
 import { DashboardSearchHit, DashboardSearchHitType } from 'app/types';
-import { getBackendSrv } from 'app/core/services/backend_srv';
+import { backendSrv } from 'app/core/services/backend_srv';
 
 export interface Props {
   resourceUri: string;
@@ -29,7 +30,7 @@ const timezones = [
 ];
 
 export class SharedPreferences extends PureComponent<Props, State> {
-  backendSrv = getBackendSrv();
+  backendSrv = backendSrv;
 
   constructor(props: Props) {
     super(props);
@@ -43,8 +44,8 @@ export class SharedPreferences extends PureComponent<Props, State> {
   }
 
   async componentDidMount() {
-    const prefs = await this.backendSrv.get(`/api/${this.props.resourceUri}/preferences`);
-    const dashboards = await this.backendSrv.search({ starred: true });
+    const prefs = await backendSrv.get(`/api/${this.props.resourceUri}/preferences`);
+    const dashboards = await backendSrv.search({ starred: true });
     const defaultDashboardHit: DashboardSearchHit = {
       id: 0,
       title: 'Default',
@@ -62,7 +63,7 @@ export class SharedPreferences extends PureComponent<Props, State> {
     };
 
     if (prefs.homeDashboardId > 0 && !dashboards.find(d => d.id === prefs.homeDashboardId)) {
-      const missing = await this.backendSrv.search({ dashboardIds: [prefs.homeDashboardId] });
+      const missing = await backendSrv.search({ dashboardIds: [prefs.homeDashboardId] });
       if (missing && missing.length > 0) {
         dashboards.push(missing[0]);
       }
@@ -81,7 +82,7 @@ export class SharedPreferences extends PureComponent<Props, State> {
 
     const { homeDashboardId, theme, timezone } = this.state;
 
-    await this.backendSrv.put(`/api/${this.props.resourceUri}/preferences`, {
+    await backendSrv.put(`/api/${this.props.resourceUri}/preferences`, {
       homeDashboardId,
       theme,
       timezone,

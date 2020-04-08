@@ -4,7 +4,6 @@ import { ReplaySubject, Unsubscribable, Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 
 // Services & Utils
-import { config } from 'app/core/config';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import kbn from 'app/core/utils/kbn';
 import templateSrv from 'app/features/templating/template_srv';
@@ -23,6 +22,8 @@ import {
   DataTransformerConfig,
   transformDataFrame,
   ScopedVars,
+  applyFieldOverrides,
+  DataConfigSource,
 } from '@grafana/data';
 
 export interface QueryRunnerOptions<
@@ -53,35 +54,51 @@ function getNextRequestId() {
 export class PanelQueryRunner {
   private subject?: ReplaySubject<PanelData>;
   private subscription?: Unsubscribable;
-  private transformations?: DataTransformerConfig[];
   private lastResult?: PanelData;
+  private dataConfigSource: DataConfigSource;
 
-  constructor() {
+  constructor(dataConfigSource: DataConfigSource) {
     this.subject = new ReplaySubject(1);
+    this.dataConfigSource = dataConfigSource;
   }
 
   /**
    * Returns an observable that subscribes to the shared multi-cast subject (that reply last result).
    */
   getData(transform = true): Observable<PanelData> {
-    if (transform) {
-      return this.subject.pipe(
-        map((data: PanelData) => {
-          if (this.hasTransformations()) {
-            const newSeries = transformDataFrame(this.transformations, data.series);
-            return { ...data, series: newSeries };
+    return this.subject.pipe(
+      map((data: PanelData) => {
+        let processedData = data;
+
+        // Apply transformations
+
+        if (transform) {
+          const transformations = this.dataConfigSource.getTransformations();
+
+          if (transformations && transformations.length > 0) {
+            processedData = {
+              ...processedData,
+              series: transformDataFrame(this.dataConfigSource.getTransformations(), data.series),
+            };
           }
-          return data;
-        })
-      );
-    }
+        }
 
-    // Just pass it directly
-    return this.subject.pipe();
-  }
+        // Apply field defaults & overrides
+        const fieldConfig = this.dataConfigSource.getFieldOverrideOptions();
 
-  hasTransformations() {
-    return config.featureToggles.transformations && this.transformations && this.transformations.length > 0;
+        if (fieldConfig) {
+          processedData = {
+            ...processedData,
+            series: applyFieldOverrides({
+              data: processedData.series,
+              ...fieldConfig,
+            }),
+          };
+        }
+
+        return processedData;
+      })
+    );
   }
 
   async run(options: QueryRunnerOptions) {
@@ -98,7 +115,6 @@ export class PanelQueryRunner {
       maxDataPoints,
       scopedVars,
       minInterval,
-      // delayStateNotification,
     } = options;
 
     if (isSharedDashboardQuery(datasource)) {
@@ -164,14 +180,22 @@ export class PanelQueryRunner {
     this.subscription = observable.subscribe({
       next: (data: PanelData) => {
         this.lastResult = preProcessPanelData(data, this.lastResult);
+        // Store preprocessed query results for applying overrides later on in the pipeline
         this.subject.next(this.lastResult);
       },
     });
   }
 
-  setTransformations(transformations?: DataTransformerConfig[]) {
-    this.transformations = transformations;
-  }
+  pipeDataToSubject = (data: PanelData) => {
+    this.subject.next(data);
+    this.lastResult = data;
+  };
+
+  resendLastResult = () => {
+    if (this.lastResult) {
+      this.subject.next(this.lastResult);
+    }
+  };
 
   /**
    * Called when the panel is closed
@@ -185,6 +209,10 @@ export class PanelQueryRunner {
     if (this.subscription) {
       this.subscription.unsubscribe();
     }
+  }
+
+  getLastResult(): PanelData {
+    return this.lastResult;
   }
 }
 

@@ -1,6 +1,7 @@
 // Libraries
 import React, { PureComponent } from 'react';
-import { Switch, PanelOptionsGrid, PanelOptionsGroup, FormLabel, Select } from '@grafana/ui';
+import { PanelOptionsGrid, PanelOptionsGroup, FormLabel, LegacyForms } from '@grafana/ui';
+const { Select, Switch } = LegacyForms;
 
 // Types
 import { Options } from './types';
@@ -48,7 +49,7 @@ export class LogsPanelEditor extends PureComponent<PanelEditorProps<Options>> {
         <PanelOptionsGrid>
           <PanelOptionsGroup title="Columns">
             <Switch label="Time" labelClass="width-10" checked={showTime} onChange={this.onToggleTime} />
-            <Switch label="Labels" labelClass="width-10" checked={showLabels} onChange={this.onToggleLabels} />
+            <Switch label="Unique labels" labelClass="width-10" checked={showLabels} onChange={this.onToggleLabels} />
             <Switch
               label="Wrap lines"
               labelClass="width-10"

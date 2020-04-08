@@ -136,29 +136,29 @@ export function makeSeriesForLogs(rows: LogRowModel[], intervalMs: number, timeZ
   }
 
   return seriesList.map((series, i) => {
-    series.datapoints.sort((a: number[], b: number[]) => {
-      return a[1] - b[1];
-    });
+    series.datapoints.sort((a: number[], b: number[]) => a[1] - b[1]);
 
     // EEEP: converts GraphSeriesXY to DataFrame and back again!
     const data = toDataFrame(series);
-    const points = getFlotPairs({
-      xField: data.fields[1],
-      yField: data.fields[0],
-      nullValueMode: NullValueMode.Null,
-    });
+    const fieldCache = new FieldCache(data);
 
-    const timeField = data.fields[1];
+    const timeField = fieldCache.getFirstFieldOfType(FieldType.time);
     timeField.display = getDisplayProcessor({
       field: timeField,
       timeZone,
     });
 
-    const valueField = data.fields[0];
+    const valueField = fieldCache.getFirstFieldOfType(FieldType.number);
     valueField.config = {
       ...valueField.config,
       color: series.color,
     };
+
+    const points = getFlotPairs({
+      xField: timeField,
+      yField: valueField,
+      nullValueMode: NullValueMode.Null,
+    });
 
     const graphSeries: GraphSeriesXY = {
       color: series.color,
@@ -312,7 +312,7 @@ export function logSeriesToLogsModel(logSeries: DataFrame[]): LogsModel | undefi
       const searchWords = series.meta && series.meta.searchWords ? series.meta.searchWords : [];
 
       let logLevel = LogLevel.unknown;
-      if (logLevelField) {
+      if (logLevelField && logLevelField.values.get(j)) {
         logLevel = getLogLevelFromKey(logLevelField.values.get(j));
       } else if (seriesLogLevel) {
         logLevel = seriesLogLevel;
@@ -328,14 +328,13 @@ export function logSeriesToLogsModel(logSeries: DataFrame[]): LogsModel | undefi
         timeFromNow: time.fromNow(),
         timeEpochMs: time.valueOf(),
         timeLocal: time.format(logTimeFormat),
-        timeUtc: toUtc(ts).format(logTimeFormat),
+        timeUtc: toUtc(time.valueOf()).format(logTimeFormat),
         uniqueLabels,
         hasAnsi,
         searchWords,
         entry: hasAnsi ? ansicolor.strip(message) : message,
         raw: message,
         labels: stringField.labels,
-        timestamp: ts,
         uid: idField ? idField.values.get(j) : j.toString(),
       });
     }
@@ -354,11 +353,17 @@ export function logSeriesToLogsModel(logSeries: DataFrame[]): LogsModel | undefi
   }
 
   const limits = logSeries.filter(series => series.meta && series.meta.limit);
+  const limitValue = Object.values(
+    limits.reduce((acc: any, elem: any) => {
+      acc[elem.refId] = elem.meta.limit;
+      return acc;
+    }, {})
+  ).reduce((acc: number, elem: any) => (acc += elem), 0);
 
   if (limits.length > 0) {
     meta.push({
       label: 'Limit',
-      value: `${limits[0].meta.limit} (${deduplicatedLogRows.length} returned)`,
+      value: `${limitValue} (${deduplicatedLogRows.length} returned)`,
       kind: LogsMetaKind.String,
     });
   }

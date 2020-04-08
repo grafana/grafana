@@ -6,8 +6,9 @@ import {
   TimeZone,
   toDataFrame,
   getDisplayProcessor,
+  ExploreMode,
 } from '@grafana/data';
-import { ExploreItemState, ExploreMode } from 'app/types/explore';
+import { ExploreItemState } from 'app/types/explore';
 import TableModel, { mergeTablesIntoModel } from 'app/core/table_model';
 import { sortLogsResult, refreshIntervalToSortOrder } from 'app/core/utils/explore';
 import { dataFrameToLogsModel } from 'app/core/logs_model';
@@ -113,7 +114,7 @@ export class ResultProcessor {
 
 export function isTimeSeries(frame: DataFrame): boolean {
   if (frame.fields.length === 2) {
-    if (frame.fields[1].type === FieldType.time) {
+    if (frame.fields[0].type === FieldType.time) {
       return true;
     }
   }

@@ -4,6 +4,7 @@ import $ from 'jquery';
 import 'vendor/flot/jquery.flot';
 import 'vendor/flot/jquery.flot.gauge';
 import 'app/features/panel/panellinks/link_srv';
+import locationUtil from 'app/core/utils/location_util';
 
 import {
   DataFrame,
@@ -174,7 +175,8 @@ class SingleStatCtrl extends MetricsPanelCtrl {
     }
 
     const distinct = getDistinctNames(frames);
-    let fieldInfo = distinct.byName[panel.tableColumn]; //
+    let fieldInfo: FieldInfo | undefined = distinct.byName[panel.tableColumn];
+
     this.fieldNames = distinct.names;
 
     if (!fieldInfo) {
@@ -348,8 +350,11 @@ class SingleStatCtrl extends MetricsPanelCtrl {
     const panel = ctrl.panel;
     const templateSrv = this.templateSrv;
     let linkInfo: LinkModel<any> | null = null;
-    const $panelContainer = elem.find('.panel-container');
     elem = elem.find('.singlestat-panel');
+
+    function getPanelContainer() {
+      return elem.closest('.panel-container');
+    }
 
     function applyColoringThresholds(valueString: string) {
       const data = ctrl.data;
@@ -588,18 +593,18 @@ class SingleStatCtrl extends MetricsPanelCtrl {
       if (panel.colorBackground) {
         const color = getColorForValue(data, data.display.numeric);
         if (color) {
-          $panelContainer.css('background-color', color);
+          getPanelContainer().css('background-color', color);
           if (scope.fullscreen) {
             elem.css('background-color', color);
           } else {
             elem.css('background-color', '');
           }
         } else {
-          $panelContainer.css('background-color', '');
+          getPanelContainer().css('background-color', '');
           elem.css('background-color', '');
         }
       } else {
-        $panelContainer.css('background-color', '');
+        getPanelContainer().css('background-color', '');
         elem.css('background-color', '');
       }
 
@@ -653,7 +658,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
           window.location.href = linkInfo.href;
         } else {
           $timeout(() => {
-            $location.url(linkInfo.href);
+            $location.url(locationUtil.stripBaseFromUrl(linkInfo.href));
           });
         }
 
@@ -695,7 +700,7 @@ function getColorForValue(data: any, value: number) {
 
 //------------------------------------------------
 // Private utility functions
-// Somethign like this should be avaliable in a
+// Something like this should be avaliable in a
 //  DataFrame[] abstraction helper
 //------------------------------------------------
 

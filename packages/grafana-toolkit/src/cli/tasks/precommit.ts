@@ -61,7 +61,7 @@ const precommitRunner: TaskRunner<PrecommitOptions> = async () => {
   }
 
   console.log(chalk.yellow('Skipping precommit checks, no front-end changes detected'));
-  return;
+  return undefined;
 };
 
 export const precommitTask = new Task<PrecommitOptions>('Precommit task', precommitRunner);

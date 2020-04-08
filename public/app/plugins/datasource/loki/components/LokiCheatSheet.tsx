@@ -1,8 +1,7 @@
 import React, { PureComponent } from 'react';
 import { shuffle } from 'lodash';
-import { ExploreStartPageProps, DataQuery } from '@grafana/data';
+import { ExploreStartPageProps, DataQuery, ExploreMode } from '@grafana/data';
 import LokiLanguageProvider from '../language_provider';
-import { ExploreMode } from 'app/types';
 
 const DEFAULT_EXAMPLES = ['{job="default/prometheus"}'];
 const PREFERRED_LABELS = ['job', 'app', 'k8s_app'];

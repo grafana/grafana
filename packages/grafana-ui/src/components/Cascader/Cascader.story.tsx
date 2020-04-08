@@ -6,7 +6,7 @@ import mdx from './Cascader.mdx';
 import React from 'react';
 
 export default {
-  title: 'UI/Cascader',
+  title: 'General/Cascader',
   component: Cascader,
   decorators: [withCenteredStory],
   parameters: {
@@ -47,3 +47,17 @@ export const simple = () => (
 export const withInitialValue = () => (
   <Cascader options={options} initialValue="3" onSelect={val => console.log(val)} />
 );
+
+export const withCustomValue = () => {
+  const onCreateLabel = text('Custom value creation label', 'Create new value: ');
+  return (
+    <Cascader
+      options={options}
+      allowCustomValue
+      formatCreateLabel={val => onCreateLabel + val}
+      initialValue="Custom Initial Value"
+      onSelect={val => console.log(val)}
+      size="md"
+    />
+  );
+};

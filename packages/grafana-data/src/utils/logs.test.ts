@@ -6,6 +6,7 @@ import {
   getParser,
   LogsParsers,
   calculateStats,
+  getLogLevelFromKey,
 } from './logs';
 
 describe('getLoglevel()', () => {
@@ -23,6 +24,10 @@ describe('getLoglevel()', () => {
     expect(getLogLevel('[Warn]')).toBe('warning');
   });
 
+  it('returns correct log level when level is capitalized', () => {
+    expect(getLogLevel('WARN')).toBe(LogLevel.warn);
+  });
+
   it('returns log level on line contains a log level', () => {
     expect(getLogLevel('warn: it is looking bad')).toBe(LogLevel.warn);
     expect(getLogLevel('2007-12-12 12:12:12 [WARN]: it is looking bad')).toBe(LogLevel.warn);
@@ -30,6 +35,16 @@ describe('getLoglevel()', () => {
 
   it('returns first log level found', () => {
     expect(getLogLevel('WARN this could be a debug message')).toBe(LogLevel.warn);
+    expect(getLogLevel('WARN this is a non-critical message')).toBe(LogLevel.warn);
+  });
+});
+
+describe('getLogLevelFromKey()', () => {
+  it('returns correct log level', () => {
+    expect(getLogLevelFromKey('info')).toBe(LogLevel.info);
+  });
+  it('returns correct log level when level is capitalized', () => {
+    expect(getLogLevelFromKey('INFO')).toBe(LogLevel.info);
   });
 });
 
