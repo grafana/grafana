@@ -40,23 +40,23 @@
     <span class="gf-form-label width-10">SSL Root Certificate</span>
     <input type="text" class="gf-form-input gf-form-input--has-help-icon" ng-model='ctrl.current.jsonData.sslRootCertFile' placeholder="SSL/TLS root cert file"></input>
     <info-popover mode="right-absolute">
-      If the selected SSL/TLS mode needs a root certificate, provide the path to the file here.
+      If the selected SSL mode requires a server root certificate, provide the path to the file here.
       Be sure that the file is readable by the user executing the grafana process.
     </info-popover>
   </div>
   <div class="gf-form max-width-30" ng-if="ctrl.current.jsonData.sslmode != 'disable'">
     <span class="gf-form-label width-10">SSL Client Certificate</span>
-    <input type="text" class="gf-form-input gf-form-input--has-help-icon" ng-model='ctrl.current.jsonData.sslCertFile' placeholder="SSL/TLS user cert file"></input>
+    <input type="text" class="gf-form-input gf-form-input--has-help-icon" ng-model='ctrl.current.jsonData.sslCertFile' placeholder="SSL/TLS client cert file"></input>
     <info-popover mode="right-absolute">
-      If the selected SSL/TLS mode needs a client certificate, provide the path to the file here.
+      To authenticate with an SSL/TLS client certificate, provide the path to the file here.
       Be sure that the file is readable by the user executing the grafana process.
     </info-popover>
   </div>
   <div class="gf-form max-width-30" ng-if="ctrl.current.jsonData.sslmode != 'disable'">
     <span class="gf-form-label width-10">SSL Client Key</span>
-    <input type="text" class="gf-form-input gf-form-input--has-help-icon" ng-model='ctrl.current.jsonData.sslKeyFile' placeholder="SSL/TLS user key file"></input>
+    <input type="text" class="gf-form-input gf-form-input--has-help-icon" ng-model='ctrl.current.jsonData.sslKeyFile' placeholder="SSL/TLS client key file"></input>
     <info-popover mode="right-absolute">
-      If the selected SSL/TLS mode needs a client key, provide the path to the file here.
+      To authenticate with a client SSL/TLS certificate, provide the path to the corresponding key file here.
       Be sure that the file is <i>only</i> readable by the user executing the grafana process.
     </info-popover>
   </div>

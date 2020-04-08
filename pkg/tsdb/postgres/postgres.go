@@ -68,7 +68,7 @@ func generateConnectionString(datasource *models.DataSource, logger log.Logger) 
 
 		// Attach root certificate if provided
 		if sslRootCert := datasource.JsonData.Get("sslRootCertFile").MustString(""); sslRootCert != "" {
-			logger.Debug("Setting server CA certificate", "sslRootCert", sslRootCert)
+			logger.Debug("Setting server root certificate", "sslRootCert", sslRootCert)
 			sslOpts = fmt.Sprintf("%s&sslrootcert=%s", sslOpts, url.QueryEscape(sslRootCert))
 		}
 
