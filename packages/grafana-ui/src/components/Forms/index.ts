@@ -6,6 +6,7 @@ import { Form } from './Form';
 import { Field } from './Field';
 import { Legend } from './Legend';
 import { Checkbox } from './Checkbox';
+import { TextArea } from '../TextArea/TextArea';
 
 const Forms = {
   RadioButtonGroup,
@@ -16,6 +17,7 @@ const Forms = {
   InputControl,
   Checkbox,
   Legend,
+  TextArea,
 };
 
 export default Forms;
