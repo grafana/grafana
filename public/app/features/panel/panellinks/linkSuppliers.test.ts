@@ -129,7 +129,7 @@ describe('getLinksFromLogsField', () => {
           ],
         }),
       ],
-      fieldOptions: {
+      fieldConfig: {
         defaults: {},
         overrides: [],
       },
