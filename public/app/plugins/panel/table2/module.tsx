@@ -1,9 +1,8 @@
 import { PanelPlugin } from '@grafana/data';
 import { TablePanel } from './TablePanel';
-import { CustomFieldConfig, defaults, Options } from './types';
+import { CustomFieldConfig, Options } from './types';
 
 export const plugin = new PanelPlugin<Options, CustomFieldConfig>(TablePanel)
-  .setDefaults(defaults)
   .useFieldConfig({
     useCustomConfig: builder => {
       builder
@@ -47,16 +46,17 @@ export const plugin = new PanelPlugin<Options, CustomFieldConfig>(TablePanel)
     },
   })
   .setPanelOptions(builder => {
-    builder.addBooleanSwitch({
-      path: 'showHeader',
-      name: 'Show header',
-      description: "To display table's header or not to display",
-    });
-  })
-  .setPanelOptions(builder => {
-    builder.addBooleanSwitch({
-      path: 'resizable',
-      name: 'Resizable',
-      description: 'Toggles if table columns are resizable or not',
-    });
+    builder
+      .addBooleanSwitch({
+        path: 'showHeader',
+        name: 'Show header',
+        description: "To display table's header or not to display",
+        defaultValue: true,
+      })
+      .addBooleanSwitch({
+        path: 'resizable',
+        name: 'Resizable',
+        description: 'Toggles if table columns are resizable or not',
+        defaultValue: false,
+      });
   });

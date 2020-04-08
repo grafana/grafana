@@ -1,5 +1,5 @@
 import { SingleStatBaseOptions, BigValueColorMode, BigValueGraphMode, BigValueJustifyMode } from '@grafana/ui';
-import { VizOrientation, ReducerID, ReduceDataOptions, SelectableValue, standardEditorsRegistry } from '@grafana/data';
+import { ReducerID, SelectableValue, standardEditorsRegistry } from '@grafana/data';
 import { PanelOptionsEditorBuilder } from '@grafana/data/src/utils/OptionsUIBuilders';
 
 // Structure copied from angular
@@ -24,12 +24,10 @@ export const justifyModes: Array<SelectableValue<BigValueJustifyMode>> = [
   { value: BigValueJustifyMode.Center, label: 'Center' },
 ];
 
-export const commonValueOptionDefaults: ReduceDataOptions = {
-  values: false,
-  calcs: [ReducerID.mean],
-};
-
-export function addStandardDataReduceOptions(builder: PanelOptionsEditorBuilder<StatPanelOptions>) {
+export function addStandardDataReduceOptions(
+  builder: PanelOptionsEditorBuilder<SingleStatBaseOptions>,
+  includeOrientation = true
+) {
   builder.addRadio({
     path: 'reduceOptions.values',
     name: 'Show',
@@ -40,6 +38,7 @@ export function addStandardDataReduceOptions(builder: PanelOptionsEditorBuilder<
         { value: true, label: 'All values' },
       ],
     },
+    defaultValue: false,
   });
 
   builder.addNumberInput({
@@ -60,26 +59,22 @@ export function addStandardDataReduceOptions(builder: PanelOptionsEditorBuilder<
     name: 'Value',
     description: 'Choose a reducer function / calculation',
     editor: standardEditorsRegistry.get('stats-picker').editor as any,
+    defaultValue: [ReducerID.mean],
   });
 
-  builder.addRadio({
-    path: 'orientation',
-    name: 'Orientation',
-    description: 'Stacking direction in case of multiple series or fields',
-    settings: {
-      options: [
-        { value: 'auto', label: 'Auto' },
-        { value: 'horizontal', label: 'Horizontal' },
-        { value: 'vertical', label: 'Vertical' },
-      ],
-    },
-  });
+  if (includeOrientation) {
+    builder.addRadio({
+      path: 'orientation',
+      name: 'Orientation',
+      description: 'Stacking direction in case of multiple series or fields',
+      settings: {
+        options: [
+          { value: 'auto', label: 'Auto' },
+          { value: 'horizontal', label: 'Horizontal' },
+          { value: 'vertical', label: 'Vertical' },
+        ],
+      },
+      defaultValue: 'auto',
+    });
+  }
 }
-
-export const defaults: StatPanelOptions = {
-  graphMode: BigValueGraphMode.Area,
-  colorMode: BigValueColorMode.Value,
-  justifyMode: BigValueJustifyMode.Auto,
-  reduceOptions: commonValueOptionDefaults,
-  orientation: VizOrientation.Auto,
-};
