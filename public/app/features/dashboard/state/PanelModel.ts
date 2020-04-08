@@ -448,6 +448,7 @@ export class PanelModel implements DataConfigSource {
 
   setTransformations(transformations: DataTransformerConfig[]) {
     this.transformations = transformations;
+    this.resendLastResult();
   }
 
   replaceVariables(value: string, extraVars?: ScopedVars, format?: string) {

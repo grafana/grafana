@@ -1,7 +1,7 @@
 import React from 'react';
 import { mount } from 'enzyme';
 import { RichHistorySettings, RichHistorySettingsProps } from './RichHistorySettings';
-import { Forms, Select } from '@grafana/ui';
+import { Select, Switch } from '@grafana/ui';
 
 const setup = (propOverrides?: Partial<RichHistorySettingsProps>) => {
   const props: RichHistorySettingsProps = {
@@ -29,7 +29,7 @@ describe('RichHistorySettings', () => {
     const wrapper = setup();
     expect(
       wrapper
-        .find(Forms.Switch)
+        .find(Switch)
         .at(0)
         .prop('value')
     ).toBe(true);
@@ -38,7 +38,7 @@ describe('RichHistorySettings', () => {
     const wrapper = setup();
     expect(
       wrapper
-        .find(Forms.Switch)
+        .find(Switch)
         .at(1)
         .prop('value')
     ).toBe(false);
