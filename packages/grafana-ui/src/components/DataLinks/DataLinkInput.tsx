@@ -119,15 +119,7 @@ export const DataLinkInput: React.FC<DataLinkInputProps> = memo(
     };
 
     return (
-      <div
-        className={cx(
-          'gf-form-input',
-          css`
-            position: relative;
-            height: auto;
-          `
-        )}
-      >
+      <div className="slate-query-field__wrapper">
         <div className="slate-query-field">
           {showingSuggestions && (
             <Portal>
