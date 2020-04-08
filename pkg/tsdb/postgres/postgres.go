@@ -46,7 +46,13 @@ func newPostgresQueryEndpoint(datasource *models.DataSource) (tsdb.TsdbQueryEndp
 
 	timescaledb := datasource.JsonData.Get("timescaledb").MustBool(false)
 
-	return sqleng.NewSqlQueryEndpoint(&config, &queryResultTransformer, newPostgresMacroEngine(timescaledb), logger)
+	endpoint, err := sqleng.NewSqlQueryEndpoint(&config, &queryResultTransformer, newPostgresMacroEngine(timescaledb), logger)
+	if err == nil {
+		logger.Debug("Successfully connected to Postgres")
+	} else {
+		logger.Debug("Failed connecting to Postgres", "err", err)
+	}
+	return endpoint, err
 }
 
 func generateConnectionString(datasource *models.DataSource, logger log.Logger) (string, error) {
@@ -63,7 +69,7 @@ func generateConnectionString(datasource *models.DataSource, logger log.Logger) 
 		// Attach root certificate if provided
 		if sslRootCert := datasource.JsonData.Get("sslRootCertFile").MustString(""); sslRootCert != "" {
 			logger.Debug("Setting server CA certificate", "sslRootCert", sslRootCert)
-			sslOpts = fmt.Sprintf("%s&sslrootcert=%s", url.QueryEscape(sslRootCert))
+			sslOpts = fmt.Sprintf("%s&sslrootcert=%s", sslOpts, url.QueryEscape(sslRootCert))
 		}
 
 		// Attach client certificate and key if both are provided
