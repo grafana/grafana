@@ -1,5 +1,5 @@
 import React, { FC } from 'react';
-import { Forms, HorizontalGroup, Button, LinkButton, Input } from '@grafana/ui';
+import { Forms, HorizontalGroup, Button, LinkButton, Input, Switch } from '@grafana/ui';
 import { getConfig } from 'app/core/config';
 import { OrgRole } from 'app/types';
 import { getBackendSrv } from '@grafana/runtime';
@@ -63,7 +63,7 @@ export const UserInviteForm: FC<Props> = ({ updateLocation }) => {
               <Forms.InputControl as={Forms.RadioButtonGroup} control={control} options={roles} name="role" />
             </Forms.Field>
             <Forms.Field invalid={!!errors.sendEmail} label="Send invite email">
-              <Forms.Switch name="sendEmail" ref={register} />
+              <Switch name="sendEmail" ref={register} />
             </Forms.Field>
             <HorizontalGroup>
               <Button type="submit">Submit</Button>

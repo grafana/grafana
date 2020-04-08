@@ -1,7 +1,7 @@
 import React, { FC, useReducer, useState } from 'react';
 import { useDebounce } from 'react-use';
 import { css } from 'emotion';
-import { Icon, useTheme, CustomScrollbar } from '@grafana/ui';
+import { Icon, useTheme, CustomScrollbar, stylesFactory } from '@grafana/ui';
 import { getLocationSrv } from '@grafana/runtime';
 import { GrafanaTheme } from '@grafana/data';
 import { SearchSrv } from 'app/core/services/search_srv';
@@ -30,11 +30,11 @@ const { isEditor, hasEditPermissionInFolders } = contextSrv;
 const canEdit = isEditor || hasEditPermissionInFolders;
 
 export interface Props {
-  closeSearch: () => void;
+  onCloseSearch: () => void;
   payload?: OpenSearchParams;
 }
 
-export const DashboardSearch: FC<Props> = ({ closeSearch, payload = {} }) => {
+export const DashboardSearch: FC<Props> = ({ onCloseSearch, payload = {} }) => {
   const [query, setQuery] = useState({ ...defaultQuery, ...payload, parsedQuery: parseQuery(payload.query) });
   const [{ results, loading }, dispatch] = useReducer(searchReducer, initialState);
   const theme = useTheme();
@@ -55,7 +55,7 @@ export const DashboardSearch: FC<Props> = ({ closeSearch, payload = {} }) => {
 
   useDebounce(search, 300, [query]);
 
-  const toggleSection = (section: DashboardSection) => {
+  const onToggleSection = (section: DashboardSection) => {
     if (hasId(section.title) && !section.items.length) {
       backendSrv.search({ ...defaultQuery, folderIds: [section.id] }).then(items => {
         dispatch({ type: FETCH_ITEMS, payload: { section, items } });
@@ -77,7 +77,7 @@ export const DashboardSearch: FC<Props> = ({ closeSearch, payload = {} }) => {
   const onKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
     switch (event.key) {
       case 'Escape':
-        closeSearch();
+        onCloseSearch();
         break;
       case 'ArrowUp':
         dispatch({ type: MOVE_SELECTION_UP });
@@ -89,11 +89,11 @@ export const DashboardSearch: FC<Props> = ({ closeSearch, payload = {} }) => {
         const selectedItem = findSelected(results);
         if (selectedItem) {
           if (selectedItem.type === DashboardSearchItemType.DashFolder) {
-            toggleSection(selectedItem as DashboardSection);
+            onToggleSection(selectedItem as DashboardSection);
           } else {
             getLocationSrv().update({ path: selectedItem.url });
             // Delay closing to prevent current page flicker
-            setTimeout(() => closeSearch(), 0);
+            setTimeout(onCloseSearch, 0);
           }
         }
     }
@@ -101,10 +101,10 @@ export const DashboardSearch: FC<Props> = ({ closeSearch, payload = {} }) => {
 
   // The main search input has own keydown handler, also TagFilter uses input, so
   // clicking Esc when tagFilter is active shouldn't close the whole search overlay
-  const handleClose = (e: React.KeyboardEvent<HTMLElement>) => {
+  const onClose = (e: React.KeyboardEvent<HTMLElement>) => {
     const target = e.target as HTMLElement;
     if ((target.tagName as any) !== 'INPUT' && ['Escape', 'ArrowLeft'].includes(e.key)) {
-      closeSearch();
+      onCloseSearch();
     }
   };
 
@@ -112,18 +112,18 @@ export const DashboardSearch: FC<Props> = ({ closeSearch, payload = {} }) => {
     setQuery(q => ({ ...q, tags }));
   };
 
-  const filterByTag = (tag: string) => {
+  const onTagSelected = (tag: string) => {
     if (tag && !query.tags.includes(tag)) {
       setQuery(q => ({ ...q, tags: [...q.tags, tag] }));
     }
   };
 
-  const clearSearchFilter = () => {
+  const onClearSearchFilters = () => {
     setQuery(q => ({ ...q, tags: [] }));
   };
 
   return (
-    <div tabIndex={0} className="search-container" onKeyDown={handleClose}>
+    <div tabIndex={0} className="search-container" onKeyDown={onClose}>
       <SearchField query={query} onChange={onQueryChange} onKeyDown={onKeyDown} autoFocus={true} />
       <div className="search-dropdown">
         <div className="search-dropdown__col_1">
@@ -132,10 +132,10 @@ export const DashboardSearch: FC<Props> = ({ closeSearch, payload = {} }) => {
               <SearchResults
                 results={results}
                 loading={loading}
-                onTagSelected={filterByTag}
+                onTagSelected={onTagSelected}
                 dispatch={dispatch}
                 editable={false}
-                onToggleSection={toggleSection}
+                onToggleSection={onToggleSection}
               />
             </div>
           </CustomScrollbar>
@@ -146,8 +146,8 @@ export const DashboardSearch: FC<Props> = ({ closeSearch, payload = {} }) => {
               <Icon name="filter" />
               Filter by:
               {query.tags.length > 0 && (
-                <a className="pointer pull-right small" onClick={clearSearchFilter}>
-                  <Icon name="remove" /> Clear
+                <a className="pointer pull-right small" onClick={onClearSearchFilters}>
+                  <Icon name="times" /> Clear
                 </a>
               )}
             </div>
@@ -156,7 +156,7 @@ export const DashboardSearch: FC<Props> = ({ closeSearch, payload = {} }) => {
           </div>
 
           {canEdit && (
-            <div className="search-filter-box" onClick={closeSearch}>
+            <div className="search-filter-box" onClick={onCloseSearch}>
               <a href="dashboard/new" className="search-filter-box-link">
                 <i className="gicon gicon-dashboard-new"></i> New dashboard
               </a>
@@ -178,13 +178,13 @@ export const DashboardSearch: FC<Props> = ({ closeSearch, payload = {} }) => {
             </div>
           )}
         </div>
-        <Icon onClick={closeSearch} className={styles.closeBtn} name="remove" />
+        <Icon onClick={onCloseSearch} className={styles.closeBtn} name="times" />
       </div>
     </div>
   );
 };
 
-const getStyles = (theme: GrafanaTheme) => {
+const getStyles = stylesFactory((theme: GrafanaTheme) => {
   return {
     closeBtn: css`
       font-size: 22px;
@@ -203,4 +203,4 @@ const getStyles = (theme: GrafanaTheme) => {
       }
     `,
   };
-};
+});

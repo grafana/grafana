@@ -1,6 +1,6 @@
 import React, { useContext } from 'react';
 import { css, cx } from 'emotion';
-import { ThemeContext } from '@grafana/ui';
+import { ThemeContext, Icon } from '@grafana/ui';
 import { GrafanaTheme } from '@grafana/data';
 import { SearchQuery } from 'app/core/components/search/search';
 
@@ -54,7 +54,7 @@ export const SearchField: React.FunctionComponent<SearchFieldProps> = ({ query, 
       {/* based on it GrafanaCtrl (L256) decides whether or not hide search */}
       <div className={`${styles.wrapper} search-field-wrapper`}>
         <div className={styles.icon}>
-          <i className="fa fa-search" />
+          <Icon name="search" />
         </div>
 
         <input

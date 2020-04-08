@@ -126,7 +126,7 @@ const DraggableFieldName: React.FC<DraggableFieldProps> = ({
               className={styles.toggle}
               variant="link"
               size="md"
-              icon={visible ? 'fa fa-eye' : 'fa fa-eye-slash'}
+              icon={visible ? 'eye' : 'eye-slash'}
               onClick={() => onToggleVisibility(fieldName, visible)}
             />
             <span className={styles.name}>{fieldName}</span>

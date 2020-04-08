@@ -127,8 +127,8 @@ exports[`Render should render users table 1`] = `
           className="btn btn-danger btn-small"
           onClick={[Function]}
         >
-          <i
-            className="fa fa-remove"
+          <Icon
+            name="times"
           />
         </div>
       </td>
@@ -193,8 +193,8 @@ exports[`Render should render users table 1`] = `
           className="btn btn-danger btn-small"
           onClick={[Function]}
         >
-          <i
-            className="fa fa-remove"
+          <Icon
+            name="times"
           />
         </div>
       </td>
@@ -259,8 +259,8 @@ exports[`Render should render users table 1`] = `
           className="btn btn-danger btn-small"
           onClick={[Function]}
         >
-          <i
-            className="fa fa-remove"
+          <Icon
+            name="times"
           />
         </div>
       </td>
@@ -325,8 +325,8 @@ exports[`Render should render users table 1`] = `
           className="btn btn-danger btn-small"
           onClick={[Function]}
         >
-          <i
-            className="fa fa-remove"
+          <Icon
+            name="times"
           />
         </div>
       </td>
@@ -391,8 +391,8 @@ exports[`Render should render users table 1`] = `
           className="btn btn-danger btn-small"
           onClick={[Function]}
         >
-          <i
-            className="fa fa-remove"
+          <Icon
+            name="times"
           />
         </div>
       </td>
@@ -457,8 +457,8 @@ exports[`Render should render users table 1`] = `
           className="btn btn-danger btn-small"
           onClick={[Function]}
         >
-          <i
-            className="fa fa-remove"
+          <Icon
+            name="times"
           />
         </div>
       </td>

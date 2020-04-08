@@ -20,8 +20,8 @@ afterEach(() => {
  */
 describe('DashboardSearch', () => {
   it('should call search api with default query when initialised', async () => {
-    await act(async () => {
-      mount(<DashboardSearch closeSearch={() => {}} />);
+    await act(() => {
+      mount(<DashboardSearch onCloseSearch={() => {}} />);
       jest.runAllTimers();
     });
 
@@ -38,12 +38,12 @@ describe('DashboardSearch', () => {
 
   it('should call api with updated query on query change', async () => {
     let wrapper: any;
-    await act(async () => {
-      wrapper = mount(<DashboardSearch closeSearch={() => {}} />);
+    await act(() => {
+      wrapper = mount(<DashboardSearch onCloseSearch={() => {}} />);
       jest.runAllTimers();
     });
 
-    await act(async () => {
+    await act(() => {
       wrapper.find({ placeholder: 'Search dashboards by name' }).prop('onChange')({ currentTarget: { value: 'Test' } });
       jest.runAllTimers();
     });
@@ -60,8 +60,8 @@ describe('DashboardSearch', () => {
 
   it("should render 'No results' message when there are no dashboards", async () => {
     let wrapper: any;
-    await act(async () => {
-      wrapper = mount(<DashboardSearch closeSearch={() => {}} />);
+    await act(() => {
+      wrapper = mount(<DashboardSearch onCloseSearch={() => {}} />);
       jest.runAllTimers();
     });
     wrapper.update();
@@ -71,10 +71,11 @@ describe('DashboardSearch', () => {
   });
 
   it('should render search results', async () => {
+    //@ts-ignore
     mockSearch.mockImplementation(() => Promise.resolve(searchResults));
     let wrapper: any;
-    await act(async () => {
-      wrapper = mount(<DashboardSearch closeSearch={() => {}} />);
+    await act(() => {
+      wrapper = mount(<DashboardSearch onCloseSearch={() => {}} />);
       jest.runAllTimers();
     });
     wrapper.update();
@@ -84,12 +85,12 @@ describe('DashboardSearch', () => {
 
   it('should call search with selected tags', async () => {
     let wrapper: any;
-    await act(async () => {
-      wrapper = mount(<DashboardSearch closeSearch={() => {}} />);
+    await act(() => {
+      wrapper = mount(<DashboardSearch onCloseSearch={() => {}} />);
       jest.runAllTimers();
     });
 
-    await act(async () => {
+    await act(() => {
       wrapper.find('TagFilter').prop('onChange')(['TestTag']);
       jest.runAllTimers();
     });

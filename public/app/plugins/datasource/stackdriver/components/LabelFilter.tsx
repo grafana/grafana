@@ -13,7 +13,7 @@ export interface Props {
 }
 
 const removeText = '-- remove filter --';
-const removeOption: SelectableValue<string> = { label: removeText, value: removeText, icon: 'fa fa-remove' };
+const removeOption: SelectableValue<string> = { label: removeText, value: removeText, icon: 'times' };
 const operators = ['=', '!=', '=~', '!=~'];
 
 export const LabelFilter: FunctionComponent<Props> = ({
