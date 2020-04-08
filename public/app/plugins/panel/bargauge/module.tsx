@@ -17,13 +17,14 @@ export const plugin = new PanelPlugin<BarGaugeOptions>(BarGaugePanel)
         settings: {
           options: displayModes,
         },
-        defaultValue: 'lcd',
+        defaultValue: 'gradient',
       })
       .addBooleanSwitch({
         path: 'showUnfilled',
         name: 'Show unfilled area',
         description: 'When enabled renders the unfilled region as gray',
         defaultValue: true,
+        showIf: options => options.displayMode !== 'lcd',
       });
   })
   .setPanelChangeHandler(sharedSingleStatPanelChangedHandler)
