@@ -174,6 +174,7 @@ export const DefaultFieldConfigEditor: React.FC<Props> = ({ data, onChange, conf
     },
     [config]
   );
+
   const groupedConfigs = groupBy(plugin.fieldConfigRegistry.list(), i => i.category && i.category[0]);
 
   return (

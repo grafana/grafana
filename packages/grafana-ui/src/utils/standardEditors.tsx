@@ -20,6 +20,7 @@ import {
   ThresholdsMode,
 } from '@grafana/data';
 import { NumberValueEditor, Forms, StringValueEditor, Select } from '../components';
+import { Switch } from '../components/Forms/Switch';
 import { ValueMappingsValueEditor } from '../components/OptionsUI/mappings';
 import { ThresholdsValueEditor } from '../components/OptionsUI/thresholds';
 import { UnitValueEditor } from '../components/OptionsUI/units';
@@ -231,7 +232,7 @@ export const getStandardOptionEditors = () => {
     id: 'boolean',
     name: 'Boolean',
     description: 'Allows boolean values input',
-    editor: props => <Forms.Switch {...props} onChange={e => props.onChange(e.currentTarget.checked)} />,
+    editor: props => <Switch {...props} onChange={e => props.onChange(e.currentTarget.checked)} />,
   };
 
   const select: StandardEditorsRegistryItem<any> = {

@@ -29,7 +29,6 @@ export const PanelOptionsEditor: React.FC<PanelOptionsEditorProps<any>> = ({ plu
           <>
             {optionEditors[c].map(e => {
               const label = (
-                // Ignore top level category
                 <Forms.Label description={e.description} category={e.category}>
                   {e.name}
                 </Forms.Label>
