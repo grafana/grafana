@@ -34,10 +34,11 @@ export const plugin = new PanelPlugin<Options, CustomFieldConfig>(TablePanel)
         .addSelect({
           path: 'displayMode',
           name: 'Cell display mode',
-          description: 'Color value, background, show as gauge, etc',
+          description: 'Color text, background, show as gauge, etc',
           settings: {
             options: [
               { value: 'auto', label: 'Auto' },
+              { value: 'color-text', label: 'Color text' },
               { value: 'color-background', label: 'Color background' },
               { value: 'gradient-gauge', label: 'Gradient gauge' },
               { value: 'lcd-gauge', label: 'LCD gauge' },

@@ -5,6 +5,7 @@ import { DefaultCell } from './DefaultCell';
 import { BarGaugeCell } from './BarGaugeCell';
 import { BackgroundColoredCell } from './BackgroundColorCell';
 import { TableCellDisplayMode, TableFieldOptions, TableRow } from './types';
+import { TextColorCell } from './TextColorCell';
 
 export function getTableRows(data: DataFrame): TableRow[] {
   const tableData = [];
@@ -81,6 +82,8 @@ export function getColumns(data: DataFrame, availableWidth: number, columnMinWid
 
 function getCellComponent(displayMode: TableCellDisplayMode) {
   switch (displayMode) {
+    case TableCellDisplayMode.ColorText:
+      return TextColorCell;
     case TableCellDisplayMode.ColorBackground:
       return BackgroundColoredCell;
     case TableCellDisplayMode.LcdGauge:
