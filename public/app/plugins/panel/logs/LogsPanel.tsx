@@ -21,7 +21,10 @@ export const LogsPanel: React.FunctionComponent<LogsPanelProps> = ({
     );
   }
 
-  const newResults = data ? dataFrameToLogsModel(data.series, data.request.intervalMs, timeZone) : null;
+  const intervalMs: number = data.request?.intervalMs ?? 1000;
+  const newResults = data
+    ? dataFrameToLogsModel(data.series, intervalMs, timeZone)
+    : { hasUniqueLabels: false, rows: [] };
   const sortedNewResults = sortLogsResult(newResults, sortOrder);
 
   return (

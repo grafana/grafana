@@ -91,7 +91,7 @@ export default class TimeSeries {
   label: string;
   alias: string;
   aliasEscaped: string;
-  color: string;
+  color: string | null;
   valueFormater: any;
   stats: any;
   legend: boolean;
