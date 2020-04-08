@@ -1,4 +1,5 @@
 import React, { FC } from 'react';
+import { Icon } from '@grafana/ui';
 
 export type LayoutMode = LayoutModes.Grid | LayoutModes.List;
 
@@ -22,7 +23,7 @@ const LayoutSelector: FC<Props> = props => {
         }}
         className={mode === LayoutModes.List ? 'active' : ''}
       >
-        <i className="fa fa-list" />
+        <Icon name="list-ul" />
       </button>
       <button
         onClick={() => {
@@ -30,7 +31,7 @@ const LayoutSelector: FC<Props> = props => {
         }}
         className={mode === LayoutModes.Grid ? 'active' : ''}
       >
-        <i className="fa fa-th" />
+        <Icon name="table" />
       </button>
     </div>
   );
