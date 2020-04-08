@@ -122,9 +122,18 @@ func (pm *PluginManager) Init() error {
 	}
 
 	for _, p := range Plugins {
-		if !p.IsCorePlugin {
+		if p.IsCorePlugin {
+			p.Signature = PluginSignatureInternal
+		} else {
+			p.Signature = PluginSignatureUnsigned
+			manifestPath := path.Join(p.PluginDir, "MANIFEST.txt")
+			info, _ := os.Stat(manifestPath)
+			if info != nil && info.Size() > 1 {
+				p.Signature = PluginSignatureInvalid
+			}
 			metrics.SetPluginBuildInformation(p.Id, p.Type, p.Info.Version)
 		}
+		log.Info("PLUGIN [%s] %s", p.Signature, p.BaseUrl)
 	}
 
 	return nil
