@@ -2,12 +2,13 @@ import { Task, TaskRunner } from './task';
 import fs from 'fs';
 import path from 'path';
 import execa from 'execa';
+import { ManifestInfo } from '../../plugins/types';
 
 interface ManifestOptions {
   folder: string;
 }
 
-export function getFilePaths(root: string, work?: string, acc?: string[]): string[] {
+export function getFilesForManifest(root: string, work?: string, acc?: string[]): string[] {
   if (!acc) {
     acc = [];
   }
@@ -17,37 +18,76 @@ export function getFilePaths(root: string, work?: string, acc?: string[]): strin
     const f = path.join(abs, file);
     const stat = fs.statSync(f);
     if (stat.isDirectory()) {
-      acc = getFilePaths(root, f, acc);
+      acc = getFilesForManifest(root, f, acc);
     } else {
+      const idx = f.lastIndexOf('.');
+      if (idx > 0) {
+        // Don't hash images
+        const suffix = f.substring(idx + 1).toLowerCase();
+        if (suffix === 'png' || suffix == 'gif' || suffix === 'svg') {
+          return;
+        }
+      }
       acc!.push(f.substring(root.length + 1).replace('\\', '/'));
     }
   });
   return acc;
 }
 
-const manifestRunner: TaskRunner<ManifestOptions> = async ({ folder }) => {
-  const filename = 'MANIFEST.txt';
-  const files = getFilePaths(folder).filter(f => f !== filename);
+export function convertSha1SumsToManifest(sums: string): ManifestInfo {
+  const files: Record<string, string> = {};
+  for (const line of sums.split(/\r?\n/)) {
+    const idx = line.indexOf(' ');
+    if (idx > 0) {
+      const hash = line.substring(0, idx).trim();
+      const path = line.substring(idx + 1).trim();
+      files[path] = hash;
+    }
+  }
+  return {
+    time: Date.now(),
+    keyId: '<none>',
+    files,
+  };
+}
 
+const manifestRunner: TaskRunner<ManifestOptions> = async ({ folder }) => {
+  const GRAFANA_API_KEY = process.env.GRAFANA_API_KEY;
+  if (!GRAFANA_API_KEY) {
+    console.log('Plugin signing requires a grafana API key');
+  }
+  const filename = 'MANIFEST.txt';
+  const files = getFilesForManifest(folder).filter(f => f !== filename);
+
+  // Run sha1sum
   const originalDir = __dirname;
   process.chdir(folder);
   const { stdout } = await execa('sha1sum', files);
-
-  // Write the process output
-  fs.writeFileSync(path.join(folder, filename), stdout);
-
-  // Call a signing service
-  const GRAFANA_API_KEY = process.env.GRAFANA_API_KEY;
-  if (GRAFANA_API_KEY) {
-    const pluginPath = path.join(folder, 'plugin.json');
-    const plugin = require(pluginPath);
-    const url = `https://grafana.com/api/plugins/${plugin.id}/sign`;
-    console.log(`TODO: sign and save: ${url}`);
-  }
-
-  // Go back to where you were
   process.chdir(originalDir);
-  console.log('Wrote manifest: ', filename);
+
+  // Send the manifest to grafana API
+  const manifest = convertSha1SumsToManifest(stdout);
+  const outputPath = path.join(folder, filename);
+
+  const pluginPath = path.join(folder, 'plugin.json');
+  const plugin = require(pluginPath);
+  const url = `https://grafana.com/api/plugins/${plugin.id}/sign`;
+
+  console.log('Send:', url);
+  const axios = require('axios');
+  const info = await axios.post(url, manifest, {
+    headers: { Authorization: 'Bearer ' + GRAFANA_API_KEY },
+    responseType: 'arraybuffer',
+  });
+  if (info.status === 200) {
+    console.log('OK: ', info.data);
+    const buffer = new Buffer(info.data, 'binary');
+    fs.writeFileSync(outputPath, buffer);
+  } else {
+    console.warn('Error: ', info);
+    console.log( 'Saving the unsigned manifest' );
+    fs.writeFileSync(outputPath, JSON.stringify(manifest, null, 2));
+  }
 };
 
 export const manifestTask = new Task<ManifestOptions>('Build Manifest', manifestRunner);

@@ -87,3 +87,9 @@ export interface GitLogInfo {
   author: UserInfo;
   commiter: UserInfo;
 }
+
+export interface ManifestInfo {
+  time: number;
+  keyId: string;
+  files: Record<string, string>;
+}
