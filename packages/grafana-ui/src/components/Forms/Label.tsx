@@ -3,6 +3,7 @@ import { useTheme, stylesFactory } from '../../themes';
 import { GrafanaTheme } from '@grafana/data';
 import { css, cx } from 'emotion';
 import { Icon } from '../Icon/Icon';
+import tinycolor from 'tinycolor2';
 
 export interface LabelProps extends React.LabelHTMLAttributes<HTMLLabelElement> {
   children: string;
@@ -29,7 +30,13 @@ export const getLabelStyles = stylesFactory((theme: GrafanaTheme) => {
       display: block;
     `,
     categories: css`
-      color: ${theme.isLight ? theme.colors.gray70 : theme.colors.gray70};
+      color: ${theme.isLight
+        ? tinycolor(theme.colors.formLabel)
+            .lighten(10)
+            .toHexString()
+        : tinycolor(theme.colors.formLabel)
+            .darken(10)
+            .toHexString()};
       display: inline-flex;
       align-items: center;
     `,

@@ -3,6 +3,7 @@ import { PanelOptionsEditorItem, PanelPlugin } from '@grafana/data';
 import { set as lodashSet, get as lodashGet } from 'lodash';
 import { Forms } from '@grafana/ui';
 import groupBy from 'lodash/groupBy';
+import { OptionsGroup } from './OptionsGroup';
 
 interface PanelOptionsEditorProps<TOptions> {
   plugin: PanelPlugin;
@@ -13,7 +14,7 @@ interface PanelOptionsEditorProps<TOptions> {
 export const PanelOptionsEditor: React.FC<PanelOptionsEditorProps<any>> = ({ plugin, options, onChange }) => {
   const optionEditors = useMemo<Record<string, PanelOptionsEditorItem[]>>(() => {
     return groupBy(plugin.optionEditors.list(), i => {
-      return i.category ? i.category[0] : 'No category';
+      return i.category ? i.category[0] : 'Display';
     });
   }, [plugin]);
 
@@ -26,10 +27,10 @@ export const PanelOptionsEditor: React.FC<PanelOptionsEditorProps<any>> = ({ plu
     <>
       {Object.keys(optionEditors).map(c => {
         return (
-          <>
+          <OptionsGroup title={c} defaultToClosed>
             {optionEditors[c].map(e => {
               const label = (
-                <Forms.Label description={e.description} category={e.category}>
+                <Forms.Label description={e.description} category={e.category?.slice(1)}>
                   {e.name}
                 </Forms.Label>
               );
@@ -43,7 +44,7 @@ export const PanelOptionsEditor: React.FC<PanelOptionsEditorProps<any>> = ({ plu
                 </Forms.Field>
               );
             })}
-          </>
+          </OptionsGroup>
         );
       })}
     </>
