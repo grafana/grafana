@@ -11,7 +11,7 @@ exports[`Render should render component 1`] = `
       className="add-panel-widget__header grid-drag-handle"
     >
       <Icon
-        name="apps"
+        name="panel-add"
         size="xl"
         style={
           Object {

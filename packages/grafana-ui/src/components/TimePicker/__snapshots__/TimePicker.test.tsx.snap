@@ -41,6 +41,7 @@ exports[`TimePicker renders buttons correctly 1`] = `
           <Icon
             className="css-znfyx6"
             name="clock-nine"
+            size="lg"
           />
           <Memo()
             onChange={[Function]}
@@ -281,6 +282,7 @@ exports[`TimePicker renders buttons correctly 1`] = `
           >
             <Icon
               name="angle-down"
+              size="lg"
             />
           </span>
         </button>
@@ -292,6 +294,7 @@ exports[`TimePicker renders buttons correctly 1`] = `
     >
       <Icon
         name="angle-right"
+        size="lg"
       />
     </button>
     <Component
@@ -304,6 +307,7 @@ exports[`TimePicker renders buttons correctly 1`] = `
       >
         <Icon
           name="search-minus"
+          size="lg"
         />
       </button>
     </Component>
@@ -352,6 +356,7 @@ exports[`TimePicker renders content correctly after beeing open 1`] = `
           <Icon
             className="css-znfyx6"
             name="clock-nine"
+            size="lg"
           />
           <Memo()
             onChange={[Function]}
@@ -592,6 +597,7 @@ exports[`TimePicker renders content correctly after beeing open 1`] = `
           >
             <Icon
               name="angle-up"
+              size="lg"
             />
           </span>
         </button>
@@ -808,6 +814,7 @@ exports[`TimePicker renders content correctly after beeing open 1`] = `
     >
       <Icon
         name="angle-right"
+        size="lg"
       />
     </button>
     <Component
@@ -820,6 +827,7 @@ exports[`TimePicker renders content correctly after beeing open 1`] = `
       >
         <Icon
           name="search-minus"
+          size="lg"
         />
       </button>
     </Component>

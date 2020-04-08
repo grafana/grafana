@@ -174,7 +174,15 @@ class DashNav extends PureComponent<Props> {
         )}
 
         <div className="navbar-buttons navbar-buttons--actions">
-          {canSave && <DashNavButton classSuffix="save" tooltip="Add panel" icon="panel-add" onClick={onAddPanel} />}
+          {canSave && (
+            <DashNavButton
+              classSuffix="save"
+              tooltip="Add panel"
+              icon="panel-add"
+              onClick={onAddPanel}
+              iconType="default"
+            />
+          )}
 
           {canStar && (
             <DashNavButton

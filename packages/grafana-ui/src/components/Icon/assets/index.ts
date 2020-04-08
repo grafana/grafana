@@ -8,3 +8,4 @@ export * from './PlusSquare';
 export * from './FolderPlus';
 export * from './Folder';
 export * from './Import';
+export * from './PanelAdd';
