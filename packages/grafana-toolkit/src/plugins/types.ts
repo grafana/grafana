@@ -89,8 +89,8 @@ export interface GitLogInfo {
 }
 
 export interface ManifestInfo {
-  time: number;
-  keyId: string;
+  // time: number;  << filled in by the server
+  // keyId: string; << filled in by the server
   plugin: string;
   version: string;
   files: Record<string, string>;

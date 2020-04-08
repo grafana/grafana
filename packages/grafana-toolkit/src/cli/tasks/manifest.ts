@@ -45,10 +45,8 @@ export function convertSha1SumsToManifest(sums: string): ManifestInfo {
     }
   }
   return {
-    time: Date.now(),
     plugin: '<?>',
     version: '<?>',
-    keyId: '<none>',
     files,
   };
 }

@@ -48,7 +48,6 @@ f134ab85caff88b59ea903c5491c6a08c221622f  img/sheets.svg
 bfcae42976f0feca58eed3636655bce51702d3ed  plugin.json`;
 
     const manifest = convertSha1SumsToManifest(sha1output);
-    manifest.time = 12345;
 
     expect(manifest).toMatchInlineSnapshot(`
       Object {
@@ -67,9 +66,7 @@ bfcae42976f0feca58eed3636655bce51702d3ed  plugin.json`;
           "module.js.map": "3c04068eb581f73a262a2081f4adca2edbb14edf",
           "plugin.json": "bfcae42976f0feca58eed3636655bce51702d3ed",
         },
-        "keyId": "<none>",
         "plugin": "<?>",
-        "time": 12345,
         "version": "<?>",
       }
     `);
