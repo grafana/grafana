@@ -62,24 +62,6 @@ describe('PanelModel', () => {
     let model: any;
     let modelJson: any;
     let persistedOptionsMock;
-    const defaultOptionsMock = {
-      fieldOptions: {
-        thresholds: [
-          {
-            color: '#F2495C',
-            index: 1,
-            value: 50,
-          },
-          {
-            color: '#73BF69',
-            index: 0,
-            value: null,
-          },
-        ],
-      },
-      arrayWith2Values: [{ value: 'name' }, { value: 'name2' }],
-      showThresholds: true,
-    };
 
     beforeEach(() => {
       persistedOptionsMock = {
