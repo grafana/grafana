@@ -85,7 +85,9 @@ export const PanelOptionsTab: FC<Props> = ({
   }
 
   if (plugin.angularPanelCtrl) {
-    elements.push(<AngularPanelOptions panel={panel} dashboard={dashboard} plugin={plugin} />);
+    elements.push(
+      <AngularPanelOptions panel={panel} dashboard={dashboard} plugin={plugin} key="angular panel options" />
+    );
   }
 
   elements.push(
