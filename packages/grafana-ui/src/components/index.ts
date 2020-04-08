@@ -150,7 +150,7 @@ import { ButtonSelect } from './Forms/Legacy/Select/ButtonSelect';
 //Input
 import { Input, LegacyInputStatus } from './Forms/Legacy/Input/Input';
 
-import { Switch } from './Switch/Switch';
+import { Switch } from './Forms/Legacy/Switch/Switch';
 
 const LegacyForms = {
   Select,

@@ -1,6 +1,6 @@
 import React, { PureComponent } from 'react';
 import uniqueId from 'lodash/uniqueId';
-import { Tooltip } from '../Tooltip/Tooltip';
+import { Tooltip } from '../../../Tooltip/Tooltip';
 import * as PopperJS from 'popper.js';
 
 export interface Props {
