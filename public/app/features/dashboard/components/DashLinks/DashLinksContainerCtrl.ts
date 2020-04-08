@@ -55,7 +55,6 @@ function dashLink($compile: any, $sanitize: any, linkSrv: LinkSrv) {
 
       function update() {
         const linkInfo = linkSrv.getAnchorInfo(link);
-
         const anchor = elem.find('a');
         const span = elem.find('span');
         span.text(linkInfo.title);

@@ -233,6 +233,7 @@ export const getCalculationValueDataLinksVariableSuggestions = (dataFrames: Data
 
 export interface LinkService {
   getDataLinkUIModel: <T>(link: DataLink, scopedVars: ScopedVars, origin: T) => LinkModel<T>;
+  getAnchorInfo: (link: any) => any;
 }
 
 export class LinkSrv implements LinkService {
