@@ -123,9 +123,12 @@ function getBackgroundColorStyle(props: TableCellProps) {
     return tableStyles;
   }
 
-  const themeFactor = tableStyles.theme.isDark ? 1 : -0.7;
   const displayValue = field.display(cell.value);
+  if (!displayValue.color) {
+    return tableStyles;
+  }
 
+  const themeFactor = tableStyles.theme.isDark ? 1 : -0.7;
   const bgColor2 = tinycolor(displayValue.color)
     .darken(10 * themeFactor)
     .spin(5)
