@@ -2,7 +2,7 @@ import React from 'react';
 import {
   DataLink,
   dataLinksOverrideProcessor,
-  FieldPropertyEditorItem,
+  FieldConfigPropertyItem,
   FieldType,
   identityOverrideProcessor,
   NumberFieldConfigSettings,
@@ -20,6 +20,7 @@ import {
   ThresholdsMode,
 } from '@grafana/data';
 import { NumberValueEditor, Forms, StringValueEditor, Select } from '../components';
+import { Switch } from '../components/Forms/Switch';
 import { ValueMappingsValueEditor } from '../components/OptionsUI/mappings';
 import { ThresholdsValueEditor } from '../components/OptionsUI/thresholds';
 import { UnitValueEditor } from '../components/OptionsUI/units';
@@ -31,7 +32,7 @@ import { StatsPickerEditor } from '../components/OptionsUI/stats';
  * Returns collection of common field config properties definitions
  */
 export const getStandardFieldConfigs = () => {
-  const title: FieldPropertyEditorItem<any, string, StringFieldConfigSettings> = {
+  const title: FieldConfigPropertyItem<any, string, StringFieldConfigSettings> = {
     id: 'title',
     path: 'title',
     name: 'Title',
@@ -46,7 +47,7 @@ export const getStandardFieldConfigs = () => {
     shouldApply: field => field.type !== FieldType.time,
   };
 
-  const unit: FieldPropertyEditorItem<any, string, StringFieldConfigSettings> = {
+  const unit: FieldConfigPropertyItem<any, string, StringFieldConfigSettings> = {
     id: 'unit',
     path: 'unit',
     name: 'Unit',
@@ -63,7 +64,7 @@ export const getStandardFieldConfigs = () => {
     shouldApply: field => field.type === FieldType.number,
   };
 
-  const min: FieldPropertyEditorItem<any, number, NumberFieldConfigSettings> = {
+  const min: FieldConfigPropertyItem<any, number, NumberFieldConfigSettings> = {
     id: 'min',
     path: 'min',
     name: 'Min',
@@ -79,7 +80,7 @@ export const getStandardFieldConfigs = () => {
     shouldApply: field => field.type === FieldType.number,
   };
 
-  const max: FieldPropertyEditorItem<any, number, NumberFieldConfigSettings> = {
+  const max: FieldConfigPropertyItem<any, number, NumberFieldConfigSettings> = {
     id: 'max',
     path: 'max',
     name: 'Max',
@@ -96,7 +97,7 @@ export const getStandardFieldConfigs = () => {
     shouldApply: field => field.type === FieldType.number,
   };
 
-  const decimals: FieldPropertyEditorItem<any, number, NumberFieldConfigSettings> = {
+  const decimals: FieldConfigPropertyItem<any, number, NumberFieldConfigSettings> = {
     id: 'decimals',
     path: 'decimals',
     name: 'Decimals',
@@ -116,7 +117,7 @@ export const getStandardFieldConfigs = () => {
     shouldApply: field => field.type === FieldType.number,
   };
 
-  const thresholds: FieldPropertyEditorItem<any, ThresholdsConfig, ThresholdsFieldConfigSettings> = {
+  const thresholds: FieldConfigPropertyItem<any, ThresholdsConfig, ThresholdsFieldConfigSettings> = {
     id: 'thresholds',
     path: 'thresholds',
     name: 'Thresholds',
@@ -136,7 +137,7 @@ export const getStandardFieldConfigs = () => {
     shouldApply: field => field.type === FieldType.number,
   };
 
-  const mappings: FieldPropertyEditorItem<any, ValueMapping[], ValueMappingFieldConfigSettings> = {
+  const mappings: FieldConfigPropertyItem<any, ValueMapping[], ValueMappingFieldConfigSettings> = {
     id: 'mappings',
     path: 'mappings',
     name: 'Value mappings',
@@ -150,7 +151,7 @@ export const getStandardFieldConfigs = () => {
     shouldApply: field => field.type === FieldType.number,
   };
 
-  const noValue: FieldPropertyEditorItem<any, string, StringFieldConfigSettings> = {
+  const noValue: FieldConfigPropertyItem<any, string, StringFieldConfigSettings> = {
     id: 'noValue',
     path: 'noValue',
     name: 'No Value',
@@ -167,7 +168,7 @@ export const getStandardFieldConfigs = () => {
     shouldApply: () => true,
   };
 
-  const links: FieldPropertyEditorItem<any, DataLink[], StringFieldConfigSettings> = {
+  const links: FieldConfigPropertyItem<any, DataLink[], StringFieldConfigSettings> = {
     id: 'links',
     path: 'links',
     name: 'DataLinks',
@@ -181,7 +182,7 @@ export const getStandardFieldConfigs = () => {
     shouldApply: () => true,
   };
 
-  const color: FieldPropertyEditorItem<any, string, StringFieldConfigSettings> = {
+  const color: FieldConfigPropertyItem<any, string, StringFieldConfigSettings> = {
     id: 'color',
     path: 'color',
     name: 'Color',
@@ -220,7 +221,7 @@ export const getStandardOptionEditors = () => {
     id: 'boolean',
     name: 'Boolean',
     description: 'Allows boolean values input',
-    editor: props => <Forms.Switch {...props} onChange={e => props.onChange(e.currentTarget.checked)} />,
+    editor: props => <Switch {...props} onChange={e => props.onChange(e.currentTarget.checked)} />,
   };
 
   const select: StandardEditorsRegistryItem<any> = {

@@ -137,6 +137,7 @@ export { HorizontalGroup, VerticalGroup, Container } from './Layout/Layout';
 export { RadioButtonGroup } from './Forms/RadioButtonGroup/RadioButtonGroup';
 
 export { Input } from './Input/Input';
+export { Switch } from './Forms/Switch';
 
 // Legacy forms
 
@@ -160,5 +161,4 @@ const LegacyForms = {
   Input,
   Switch,
 };
-export { Switch };
 export { LegacyForms, LegacyInputStatus };

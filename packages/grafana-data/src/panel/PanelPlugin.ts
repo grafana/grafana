@@ -276,7 +276,6 @@ export class PanelPlugin<TOptions = any, TFieldConfigOptions extends object = an
         }
       } else {
         for (const fieldConfigProp of standardFieldConfigEditorRegistry.list()) {
-          console.log(fieldConfigProp);
           registry.register(fieldConfigProp);
         }
       }
