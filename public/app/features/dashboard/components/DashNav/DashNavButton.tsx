@@ -1,19 +1,30 @@
 // Libraries
 import React, { FunctionComponent } from 'react';
 // Components
-import { Tooltip } from '@grafana/ui';
+import { Tooltip, Icon, IconName, IconType, IconSize } from '@grafana/ui';
 import { e2e } from '@grafana/e2e';
 
 interface Props {
-  icon?: string;
+  icon?: IconName;
   tooltip: string;
   classSuffix?: string;
   onClick?: () => void;
   href?: string;
   children?: React.ReactNode;
+  iconType?: IconType;
+  iconSize?: IconSize;
 }
 
-export const DashNavButton: FunctionComponent<Props> = ({ icon, tooltip, classSuffix, onClick, href, children }) => {
+export const DashNavButton: FunctionComponent<Props> = ({
+  icon,
+  iconType,
+  iconSize,
+  tooltip,
+  classSuffix,
+  onClick,
+  href,
+  children,
+}) => {
   if (onClick) {
     return (
       <Tooltip content={tooltip} placement="bottom">
@@ -22,7 +33,7 @@ export const DashNavButton: FunctionComponent<Props> = ({ icon, tooltip, classSu
           onClick={onClick}
           aria-label={e2e.pages.Dashboard.Toolbar.selectors.toolbarItems(tooltip)}
         >
-          {icon && <i className={icon} />}
+          {icon && <Icon name={icon} type={iconType} size={iconSize || 'lg'} />}
           {children}
         </button>
       </Tooltip>
@@ -32,7 +43,7 @@ export const DashNavButton: FunctionComponent<Props> = ({ icon, tooltip, classSu
   return (
     <Tooltip content={tooltip} placement="bottom">
       <a className={`btn navbar-button navbar-button--${classSuffix}`} href={href}>
-        {icon && <i className={icon} />}
+        {icon && <Icon name={icon} type={iconType} size="lg" />}
         {children}
       </a>
     </Tooltip>

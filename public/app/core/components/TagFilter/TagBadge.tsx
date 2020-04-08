@@ -1,5 +1,5 @@
 import React from 'react';
-import { getTagColorsFromName } from '@grafana/ui';
+import { getTagColorsFromName, Icon } from '@grafana/ui';
 
 export interface Props {
   label: string;
@@ -24,7 +24,7 @@ export class TagBadge extends React.Component<Props, any> {
 
     return (
       <span className={`label label-tag`} style={tagStyle}>
-        {removeIcon && <i className="fa fa-remove" />}
+        {removeIcon && <Icon name="times" />}
         {label} {countLabel}
       </span>
     );

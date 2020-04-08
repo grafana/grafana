@@ -30,10 +30,10 @@ describe('QueryRowActions', () => {
   });
   it('should change icon to fa-eye-slash when query row result is hidden', () => {
     const wrapper = setup({ isDisabled: true });
-    expect(wrapper.find('i.fa-eye-slash')).toHaveLength(1);
+    expect(wrapper.find({ title: 'Enable query' })).toHaveLength(1);
   });
   it('should change icon to fa-eye when query row result is not hidden', () => {
     const wrapper = setup({ isDisabled: false });
-    expect(wrapper.find('i.fa-eye')).toHaveLength(1);
+    expect(wrapper.find({ title: 'Disable query' })).toHaveLength(1);
   });
 });

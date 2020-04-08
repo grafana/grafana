@@ -6,7 +6,7 @@
 - **Dashboard**: Fixed issue with saving new dashboard after changing title . [#23104](https://github.com/grafana/grafana/pull/23104), [@dprokop](https://github.com/dprokop)
 - **DataLinks**: make sure we use the correct datapoint when dataset contains null value.. [#22981](https://github.com/grafana/grafana/pull/22981), [@mckn](https://github.com/mckn)
 - **Plugins**: Fixed issue for plugins that imported dateMath util . [#23069](https://github.com/grafana/grafana/pull/23069), [@mckn](https://github.com/mckn)
-- **Security**: Fix for dashboard snapshot original dashboard link could contain XSS vulnerability in url. [#23254](https://github.com/grafana/grafana/pull/23254), [@torkelo](https://github.com/torkelo)
+- **Security**: Fix for dashboard snapshot original dashboard link could contain XSS vulnerability in url. [#23254](https://github.com/grafana/grafana/pull/23254), [@torkelo](https://github.com/torkelo). Big thanks to Ahmed A. Sherif for reporting this issue. 
 - **Variables**: Fixes issue with too many queries being issued for nested template variables after value change. [#23220](https://github.com/grafana/grafana/pull/23220), [@torkelo](https://github.com/torkelo)
 - **Plugins**: Expose promiseToDigest. [#23249](https://github.com/grafana/grafana/pull/23249), [@torkelo](https://github.com/torkelo)
 - **Reporting (Enterprise)**: Fixes issue updating a report created by someone else

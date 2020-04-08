@@ -12,7 +12,7 @@ CallToActionCardStories.add('default', () => {
   const ctaElements: { [key: string]: JSX.Element } = {
     custom: <h1>This is just H1 tag, you can any component as CTA element</h1>,
     button: (
-      <Button size="lg" icon="fa fa-plus" onClick={action('cta button clicked')}>
+      <Button size="lg" icon="plus-circle" onClick={action('cta button clicked')}>
         Add datasource
       </Button>
     ),
