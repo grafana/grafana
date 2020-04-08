@@ -72,14 +72,16 @@ export const withTheme = <Props extends { theme: Theme }, Statics extends {} = {
   let WithTheme: React.ComponentType<Omit<Props, 'theme'>> = props => {
     return (
       <ThemeConsumer>
-        {(theme: Theme) => (
-          <Component
-            {...({
-              ...props,
-              theme,
-            } as Props & { theme: Theme })}
-          />
-        )}
+        {(theme: Theme) => {
+          return (
+            <Component
+              {...({
+                ...props,
+                theme,
+              } as Props & { theme: Theme })}
+            />
+          );
+        }}
       </ThemeConsumer>
     );
   };

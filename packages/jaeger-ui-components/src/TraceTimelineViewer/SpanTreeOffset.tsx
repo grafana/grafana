@@ -82,6 +82,8 @@ type TProps = {
 };
 
 export class UnthemedSpanTreeOffset extends React.PureComponent<TProps> {
+  static displayName = 'UnthemedSpanTreeOffset';
+
   ancestorIds: string[];
 
   static defaultProps = {

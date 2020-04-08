@@ -322,6 +322,7 @@ type SpanBarRowProps = {
  * performance than the stateless function.
  */
 export class UnthemedSpanBarRow extends React.PureComponent<SpanBarRowProps> {
+  static displayName = 'UnthemedSpanBarRow';
   static defaultProps: Partial<SpanBarRowProps> = {
     className: '',
     rpc: null,

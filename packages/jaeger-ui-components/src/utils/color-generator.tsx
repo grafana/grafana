@@ -118,8 +118,13 @@ class ColorGenerator {
   }
 }
 
-const darkGenerator = new ColorGenerator(COLORS_HEX_DARK);
-const lightGenerator = new ColorGenerator(COLORS_HEX);
+let darkGenerator = new ColorGenerator(COLORS_HEX_DARK);
+let lightGenerator = new ColorGenerator(COLORS_HEX);
+
+export function clear() {
+  darkGenerator = new ColorGenerator(COLORS_HEX_DARK);
+  lightGenerator = new ColorGenerator(COLORS_HEX);
+}
 
 export function getColorByKey(key: string, theme: Theme) {
   return (isLight(theme) ? lightGenerator : darkGenerator).getColorByKey(key);
