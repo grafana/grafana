@@ -11,15 +11,22 @@
     class="btn btn-primary"
     ng-click="ctrl.setupNew()"
     ng-if="ctrl.dashboard.links.length > 0"
-    ng-hide="ctrl.mode === 'edit' || ctrl.mode === 'new'">
-    New
-  </a
+    ng-hide="ctrl.mode === 'edit' || ctrl.mode === 'new'"
   >
+    New
+  </a>
 </div>
 
 <div ng-if="ctrl.mode == 'list'">
   <div ng-if="ctrl.dashboard.links.length === 0">
-    <empty-list-cta on-click="ctrl.setupNew" title="ctrl.emptyListCta.title" buttonIcon="ctrl.emptyListCta.buttonIcon" buttonTitle="ctrl.emptyListCta.buttonTitle" infoBox="ctrl.emptyListCta.infoBox" infoBoxTitle="ctrl.emptyListCta.infoBoxTitle"/>
+    <empty-list-cta
+      on-click="ctrl.setupNew"
+      title="ctrl.emptyListCta.title"
+      buttonIcon="ctrl.emptyListCta.buttonIcon"
+      buttonTitle="ctrl.emptyListCta.buttonTitle"
+      infoBox="ctrl.emptyListCta.infoBox"
+      infoBoxTitle="ctrl.emptyListCta.infoBoxTitle"
+    />
   </div>
 
   <div ng-if="ctrl.dashboard.links.length > 0">
@@ -62,7 +69,7 @@
           </td>
           <td style="width: 1%">
             <a ng-click="ctrl.deleteLink($index)" class="btn btn-danger btn-small" ng-hide="annotation.builtIn">
-              <i class="fa fa-remove"></i>
+              <icon name="'times'"></icon>
             </a>
           </td>
         </tr>

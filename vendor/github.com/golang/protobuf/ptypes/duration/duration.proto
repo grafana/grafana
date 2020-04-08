@@ -61,7 +61,7 @@ option objc_class_prefix = "GPB";
 //     if (duration.seconds < 0 && duration.nanos > 0) {
 //       duration.seconds += 1;
 //       duration.nanos -= 1000000000;
-//     } else if (durations.seconds > 0 && duration.nanos < 0) {
+//     } else if (duration.seconds > 0 && duration.nanos < 0) {
 //       duration.seconds -= 1;
 //       duration.nanos += 1000000000;
 //     }
@@ -101,7 +101,6 @@ option objc_class_prefix = "GPB";
 //
 //
 message Duration {
-
   // Signed seconds of the span of time. Must be from -315,576,000,000
   // to +315,576,000,000 inclusive. Note: these bounds are computed from:
   // 60 sec/min * 60 min/hr * 24 hr/day * 365.25 days/year * 10000 years

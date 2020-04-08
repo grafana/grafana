@@ -1,5 +1,5 @@
 import React, { PureComponent, ChangeEvent, MouseEvent } from 'react';
-import { Button, FormLabel, LegacyForms, Tooltip } from '@grafana/ui';
+import { Button, FormLabel, LegacyForms, Tooltip, Icon } from '@grafana/ui';
 const { Input } = LegacyForms;
 import { User } from 'app/types';
 import config from 'app/core/config';
@@ -73,7 +73,7 @@ export class UserProfileEditForm extends PureComponent<Props, State> {
             />
             {disableLoginForm && (
               <Tooltip content="Login Details Locked - managed in another system.">
-                <i className="fa fa-lock gf-form-icon--right-absolute" />
+                <Icon name="lock" className="gf-form-icon--right-absolute" />
               </Tooltip>
             )}
           </div>
@@ -88,7 +88,7 @@ export class UserProfileEditForm extends PureComponent<Props, State> {
             />
             {disableLoginForm && (
               <Tooltip content="Login Details Locked - managed in another system.">
-                <i className="fa fa-lock gf-form-icon--right-absolute" />
+                <Icon name="lock" className="gf-form-icon--right-absolute" />
               </Tooltip>
             )}
           </div>

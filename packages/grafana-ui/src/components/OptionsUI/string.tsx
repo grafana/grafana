@@ -1,17 +1,20 @@
 import React from 'react';
 import { FieldConfigEditorProps, StringFieldConfigSettings } from '@grafana/data';
 import { Input } from '../Input/Input';
+import { TextArea } from '../Forms/TextArea/TextArea';
 
 export const StringValueEditor: React.FC<FieldConfigEditorProps<string, StringFieldConfigSettings>> = ({
   value,
   onChange,
   item,
 }) => {
+  const Component = item.settings?.useTextarea ? TextArea : Input;
   return (
-    <Input
+    <Component
       placeholder={item.settings?.placeholder}
       value={value || ''}
-      onChange={e => onChange(e.currentTarget.value)}
+      rows={item.settings?.useTextarea && item.settings.rows}
+      onChange={(e: React.FormEvent<any>) => onChange(e.currentTarget.value)}
     />
   );
 };

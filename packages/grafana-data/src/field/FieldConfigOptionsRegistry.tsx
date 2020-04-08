@@ -1,4 +1,4 @@
 import { Registry } from '../utils';
-import { FieldPropertyEditorItem } from '../types';
+import { FieldConfigPropertyItem } from '../types';
 
-export class FieldConfigOptionsRegistry extends Registry<FieldPropertyEditorItem> {}
+export class FieldConfigOptionsRegistry extends Registry<FieldConfigPropertyItem> {}

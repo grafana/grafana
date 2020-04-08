@@ -12,7 +12,8 @@ import { loadRSSFeed } from './rss';
 
 // Types
 import { PanelProps, DataFrameView, dateTime } from '@grafana/data';
-import { NewsOptions, NewsItem, DEFAULT_FEED_URL } from './types';
+import { NewsOptions, NewsItem } from './types';
+import { DEFAULT_FEED_URL, PROXY_PREFIX } from './constants';
 
 interface Props extends PanelProps<NewsOptions> {}
 
@@ -41,7 +42,11 @@ export class NewsPanel extends PureComponent<Props, State> {
   async loadFeed() {
     const { options } = this.props;
     try {
-      const url = options.feedUrl ?? DEFAULT_FEED_URL;
+      const url = options.feedUrl
+        ? options.useProxy
+          ? `${PROXY_PREFIX}${options.feedUrl}`
+          : options.feedUrl
+        : DEFAULT_FEED_URL;
       const res = await loadRSSFeed(url);
       const frame = feedToDataFrame(res);
       this.setState({

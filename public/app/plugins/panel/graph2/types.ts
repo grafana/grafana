@@ -1,6 +1,5 @@
 import { LegendOptions, GraphTooltipOptions } from '@grafana/ui';
 import { YAxis } from '@grafana/data';
-import { GraphLegendEditorLegendOptions } from './GraphLegendEditor';
 
 export interface SeriesOptions {
   color?: string;
@@ -36,3 +35,10 @@ export const defaults: Options = {
   series: {},
   tooltipOptions: { mode: 'single' },
 };
+
+export interface GraphLegendEditorLegendOptions extends LegendOptions {
+  stats?: string[];
+  decimals?: number;
+  sortBy?: string;
+  sortDesc?: boolean;
+}

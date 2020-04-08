@@ -1,9 +1,8 @@
 import { PanelPlugin } from '@grafana/data';
 import { TablePanel } from './TablePanel';
-import { CustomFieldConfig, defaults, Options } from './types';
+import { CustomFieldConfig, Options } from './types';
 
 export const plugin = new PanelPlugin<Options, CustomFieldConfig>(TablePanel)
-  .setDefaults(defaults)
   .useFieldConfig({
     useCustomConfig: builder => {
       builder
@@ -16,6 +15,20 @@ export const plugin = new PanelPlugin<Options, CustomFieldConfig>(TablePanel)
             min: 20,
             max: 300,
           },
+        })
+        .addRadio({
+          path: 'align',
+          name: 'Column alignment',
+          description: 'column alignment (for table)',
+          settings: {
+            options: [
+              { label: 'auto', value: null },
+              { label: 'left', value: 'left' },
+              { label: 'center', value: 'center' },
+              { label: 'right', value: 'right' },
+            ],
+          },
+          defaultValue: null,
         })
         .addSelect({
           path: 'displayMode',
@@ -33,9 +46,17 @@ export const plugin = new PanelPlugin<Options, CustomFieldConfig>(TablePanel)
     },
   })
   .setPanelOptions(builder => {
-    builder.addBooleanSwitch({
-      path: 'showHeader',
-      name: 'Show header',
-      description: "To display table's header or not to display",
-    });
+    builder
+      .addBooleanSwitch({
+        path: 'showHeader',
+        name: 'Show header',
+        description: "To display table's header or not to display",
+        defaultValue: true,
+      })
+      .addBooleanSwitch({
+        path: 'resizable',
+        name: 'Resizable',
+        description: 'Toggles if table columns are resizable or not',
+        defaultValue: false,
+      });
   });

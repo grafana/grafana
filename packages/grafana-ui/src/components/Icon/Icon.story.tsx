@@ -4,7 +4,7 @@ import { css } from 'emotion';
 import { Input } from '../Input/Input';
 import { Field } from '../Forms/Field';
 import { Icon } from './Icon';
-import { getAvailableIcons, IconType } from './types';
+import { getAvailableIcons, IconName } from '../../types';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { useTheme, selectThemeVariant } from '../../themes';
 import mdx from './Icon.mdx';
@@ -20,7 +20,7 @@ export default {
   },
 };
 
-const IconWrapper: React.FC<{ name: IconType }> = ({ name }) => {
+const IconWrapper: React.FC<{ name: IconName }> = ({ name }) => {
   const theme = useTheme();
   const borderColor = selectThemeVariant(
     {
@@ -43,12 +43,7 @@ const IconWrapper: React.FC<{ name: IconType }> = ({ name }) => {
         }
       `}
     >
-      <Icon
-        name={name}
-        className={css`
-          font-size: 18px;
-        `}
-      />
+      <Icon name={name} />
       <div
         className={css`
           padding-top: 16px;

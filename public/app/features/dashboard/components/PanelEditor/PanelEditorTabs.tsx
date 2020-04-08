@@ -1,7 +1,7 @@
 import React from 'react';
 import { config } from 'app/core/config';
 import { css } from 'emotion';
-import { TabsBar, Tab, stylesFactory, TabContent, TransformationsEditor } from '@grafana/ui';
+import { TabsBar, Tab, stylesFactory, TabContent, IconName } from '@grafana/ui';
 import { DataTransformerConfig, LoadingState, PanelData } from '@grafana/data';
 import { PanelEditorTab, PanelEditorTabId } from './types';
 import { DashboardModel } from '../../state';
@@ -9,6 +9,7 @@ import { QueriesTab } from '../../panel_editor/QueriesTab';
 import { PanelModel } from '../../state/PanelModel';
 import { AlertTab } from 'app/features/alerting/AlertTab';
 import { VisualizationTab } from './VisualizationTab';
+import { TransformationsEditor } from '../TransformationsEditor/TransformationsEditor';
 
 interface PanelEditorTabsProps {
   panel: PanelModel;
@@ -40,7 +41,7 @@ export const PanelEditorTabs: React.FC<PanelEditorTabsProps> = ({ panel, dashboa
               label={tab.text}
               active={tab.active}
               onChangeTab={() => onChangeTab(tab)}
-              icon={tab.icon}
+              icon={tab.icon as IconName}
             />
           );
         })}

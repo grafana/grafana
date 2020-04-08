@@ -103,7 +103,7 @@ export function getPanelMenu(
 
   menu.push({
     text: 'View',
-    iconClassName: 'gicon gicon-viewer',
+    iconClassName: 'eye',
     onClick: onViewPanel,
     shortcut: 'v',
   });
@@ -111,7 +111,7 @@ export function getPanelMenu(
   if (dashboard.canEditPanel(panel)) {
     menu.push({
       text: 'Edit',
-      iconClassName: 'gicon gicon-editor',
+      iconClassName: 'edit',
       onClick: onEditPanel,
       shortcut: 'e',
     });
@@ -119,7 +119,7 @@ export function getPanelMenu(
 
   menu.push({
     text: 'Share',
-    iconClassName: 'fa fa-fw fa-share',
+    iconClassName: 'share-alt',
     onClick: onSharePanel,
     shortcut: 'p s',
   });
@@ -127,7 +127,7 @@ export function getPanelMenu(
   if (contextSrv.hasAccessToExplore() && !(panel.plugin && panel.plugin.meta.skipDataQuery)) {
     menu.push({
       text: 'Explore',
-      iconClassName: 'gicon gicon-explore',
+      iconClassName: 'compass',
       shortcut: 'x',
       onClick: onNavigateToExplore,
     });
@@ -159,15 +159,15 @@ export function getPanelMenu(
   menu.push({
     type: 'submenu',
     text: 'Inspect',
-    iconClassName: 'fa fa-fw fa-info-circle',
+    iconClassName: 'info-circle',
     onClick: (e: React.MouseEvent<any>) => onInspectPanel(),
-    subMenu: inspectMenu,
+    shortcut: 'p i',
   });
 
   if (config.featureToggles.newEdit) {
     menu.push({
       text: 'New edit',
-      iconClassName: 'gicon gicon-editor',
+      iconClassName: 'edit',
       onClick: onNewEditPanel,
       shortcut: 'p i',
     });
@@ -214,7 +214,7 @@ export function getPanelMenu(
   menu.push({
     type: 'submenu',
     text: 'More...',
-    iconClassName: 'fa fa-fw fa-cube',
+    iconClassName: 'cube',
     subMenu: subMenu,
     onClick: onMore,
   });
@@ -224,7 +224,7 @@ export function getPanelMenu(
 
     menu.push({
       text: 'Remove',
-      iconClassName: 'fa fa-fw fa-trash',
+      iconClassName: 'trash-alt',
       onClick: onRemovePanel,
       shortcut: 'p r',
     });

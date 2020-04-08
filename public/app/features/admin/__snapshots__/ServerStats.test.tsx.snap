@@ -54,7 +54,7 @@ exports[`ServerStats Should render table with stats 1`] = `
                   className="page-header__logo"
                 >
                   <i
-                    className="page-header__icon fa fa-fw fa-warning"
+                    className="fa fa-fw fa-warning css-1lgsh82"
                   />
                 </span>
                 <div
@@ -100,12 +100,10 @@ exports[`ServerStats Should render table with stats 1`] = `
                     className="css-payll4"
                   >
                     <li
-                      className="css-1lu9djy"
+                      className="css-12nfddj"
                       onClick={[Function]}
                     >
-                      <i
-                        className="icon"
-                      />
+                      <div />
                       Admin
                     </li>
                   </ul>
@@ -164,7 +162,7 @@ exports[`ServerStats Should render table with stats 1`] = `
                   target="_blank"
                 >
                   <i
-                    className="fa fa-file-code-o"
+                    className="document-info"
                   />
                    
                   Documentation
@@ -177,7 +175,7 @@ exports[`ServerStats Should render table with stats 1`] = `
                   target="_blank"
                 >
                   <i
-                    className="fa fa-support"
+                    className="question-circle"
                   />
                    
                   Support
@@ -190,7 +188,7 @@ exports[`ServerStats Should render table with stats 1`] = `
                   target="_blank"
                 >
                   <i
-                    className="fa fa-comments-o"
+                    className="comments-alt"
                   />
                    
                   Community
