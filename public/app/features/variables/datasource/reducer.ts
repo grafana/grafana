@@ -1,6 +1,12 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-import { DataSourceVariableModel, VariableHide, VariableOption, VariableRefresh } from '../../templating/variable';
-import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE, EMPTY_UUID, getInstanceState, VariablePayload } from '../state/types';
+import { DataSourceVariableModel, VariableHide, VariableOption, VariableRefresh } from '../../templating/types';
+import {
+  ALL_VARIABLE_TEXT,
+  ALL_VARIABLE_VALUE,
+  getInstanceState,
+  NEW_VARIABLE_ID,
+  VariablePayload,
+} from '../state/types';
 import { initialVariablesState, VariablesState } from '../state/variablesReducer';
 import { DataSourceSelectItem } from '@grafana/data';
 
@@ -9,7 +15,7 @@ export interface DataSourceVariableEditorState {
 }
 
 export const initialDataSourceVariableModelState: DataSourceVariableModel = {
-  uuid: EMPTY_UUID,
+  id: NEW_VARIABLE_ID,
   global: false,
   type: 'datasource',
   name: '',
@@ -37,7 +43,7 @@ export const dataSourceVariableSlice = createSlice({
     ) => {
       const { sources, regex } = action.payload.data;
       const options: VariableOption[] = [];
-      const instanceState = getInstanceState<DataSourceVariableModel>(state, action.payload.uuid);
+      const instanceState = getInstanceState<DataSourceVariableModel>(state, action.payload.id);
       for (let i = 0; i < sources.length; i++) {
         const source = sources[i];
         // must match on type
@@ -66,5 +72,4 @@ export const dataSourceVariableSlice = createSlice({
 });
 
 export const dataSourceVariableReducer = dataSourceVariableSlice.reducer;
-
 export const { createDataSourceOptions } = dataSourceVariableSlice.actions;

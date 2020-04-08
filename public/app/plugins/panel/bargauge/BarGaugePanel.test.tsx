@@ -8,6 +8,7 @@ import {
   PanelProps,
   LoadingState,
   dateTime,
+  FieldConfigSource,
   toDataFrame,
 } from '@grafana/data';
 import { BarGaugeDisplayMode } from '@grafana/ui';
@@ -64,14 +65,16 @@ function createBarGaugePanelWithData(data: PanelData): ReactWrapper<PanelProps<B
 
   const options: BarGaugeOptions = {
     displayMode: BarGaugeDisplayMode.Lcd,
-    fieldOptions: {
+    reduceOptions: {
       calcs: ['mean'],
-      defaults: {},
       values: false,
-      overrides: [],
     },
     orientation: VizOrientation.Horizontal,
     showUnfilled: true,
+  };
+  const fieldConfig: FieldConfigSource = {
+    defaults: {},
+    overrides: [],
   };
 
   return mount<BarGaugePanel>(
@@ -81,6 +84,8 @@ function createBarGaugePanelWithData(data: PanelData): ReactWrapper<PanelProps<B
       timeRange={timeRange}
       timeZone={'utc'}
       options={options}
+      fieldConfig={fieldConfig}
+      onFieldConfigChange={() => {}}
       onOptionsChange={() => {}}
       onChangeTimeRange={() => {}}
       replaceVariables={s => s}

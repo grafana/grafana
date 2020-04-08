@@ -1,12 +1,11 @@
 import React from 'react';
-import { DynamicConfigValue, FieldConfigEditorRegistry, FieldOverrideContext, GrafanaTheme } from '@grafana/data';
-import { selectThemeVariant, stylesFactory, useTheme } from '@grafana/ui';
+import { DynamicConfigValue, FieldConfigOptionsRegistry, FieldOverrideContext, GrafanaTheme } from '@grafana/data';
+import { FieldConfigItemHeaderTitle, selectThemeVariant, stylesFactory, useTheme } from '@grafana/ui';
 
-import { OverrideHeader } from './OverrideHeader';
 import { css } from 'emotion';
 interface DynamicConfigValueEditorProps {
   property: DynamicConfigValue;
-  editorsRegistry: FieldConfigEditorRegistry;
+  registry: FieldConfigOptionsRegistry;
   onChange: (value: DynamicConfigValue) => void;
   context: FieldOverrideContext;
   onRemove: () => void;
@@ -15,13 +14,13 @@ interface DynamicConfigValueEditorProps {
 export const DynamicConfigValueEditor: React.FC<DynamicConfigValueEditorProps> = ({
   property,
   context,
-  editorsRegistry,
+  registry,
   onChange,
   onRemove,
 }) => {
   const theme = useTheme();
   const styles = getStyles(theme);
-  const item = editorsRegistry?.getIfExists(property.prop);
+  const item = registry?.getIfExists(property.id);
 
   if (!item) {
     return null;
@@ -29,17 +28,18 @@ export const DynamicConfigValueEditor: React.FC<DynamicConfigValueEditorProps> =
 
   return (
     <div className={styles.wrapper}>
-      <OverrideHeader onRemove={onRemove} title={item.name} description={item.description} />
-      <div className={styles.property}>
-        <item.override
-          value={property.value}
-          onChange={value => {
-            onChange(value);
-          }}
-          item={item}
-          context={context}
-        />
-      </div>
+      <FieldConfigItemHeaderTitle onRemove={onRemove} title={item.name} description={item.description} transparent>
+        <div className={styles.property}>
+          <item.override
+            value={property.value}
+            onChange={value => {
+              onChange(value);
+            }}
+            item={item}
+            context={context}
+          />
+        </div>
+      </FieldConfigItemHeaderTitle>
     </div>
   );
 };

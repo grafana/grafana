@@ -1,13 +1,13 @@
 import _ from 'lodash';
 import {
   DataFrame,
-  dateMath,
-  ScopedVars,
-  DataQueryResponse,
   DataQueryRequest,
-  toDataFrame,
+  DataQueryResponse,
   DataSourceApi,
+  dateMath,
   QueryResultMetaStat,
+  ScopedVars,
+  toDataFrame,
 } from '@grafana/data';
 import { isVersionGtOrEq, SemVersion } from 'app/core/utils/version';
 import gfunc from './gfunc';
@@ -15,8 +15,8 @@ import { getBackendSrv } from '@grafana/runtime';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 // Types
 import { GraphiteOptions, GraphiteQuery, GraphiteType, MetricTankRequestMeta } from './types';
-import { getSearchFilterScopedVar } from '../../../features/templating/variable';
 import { getRollupNotice, getRuntimeConsolidationNotice } from 'app/plugins/datasource/graphite/meta';
+import { getSearchFilterScopedVar } from '../../../features/templating/utils';
 
 export class GraphiteDatasource extends DataSourceApi<GraphiteQuery, GraphiteOptions> {
   basicAuth: string;

@@ -70,7 +70,7 @@ func (hs *HTTPServer) OAuthLogin(ctx *models.ReqContext) {
 		}
 
 		hashedState := hashStatecode(state, setting.OAuthService.OAuthInfos[name].ClientSecret)
-		middleware.WriteCookie(ctx.Resp, OauthStateCookieName, hashedState, 60, hs.cookieOptionsFromCfg)
+		middleware.WriteCookie(ctx.Resp, OauthStateCookieName, hashedState, hs.Cfg.OAuthCookieMaxAge, hs.cookieOptionsFromCfg)
 		if setting.OAuthService.OAuthInfos[name].HostedDomain == "" {
 			ctx.Redirect(connect.AuthCodeURL(state, oauth2.AccessTypeOnline))
 		} else {
@@ -218,7 +218,11 @@ func (hs *HTTPServer) OAuthLogin(ctx *models.ReqContext) {
 	}
 
 	// login
-	hs.loginUserWithUser(cmd.Result, ctx)
+	err = hs.loginUserWithUser(cmd.Result, ctx)
+	if err != nil {
+		hs.redirectWithError(ctx, err)
+		return
+	}
 
 	metrics.MApiLoginOAuth.Inc()
 

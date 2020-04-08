@@ -37,13 +37,13 @@ func NewFromSQLRows(rows *sql.Rows, converters ...SQLStringConverter) (*Frame, m
 		if mapper.ConversionFunc == nil {
 			continue
 		}
-		vec := frame.Fields[fieldIdx]
-		for i := 0; i < vec.Len(); i++ {
-			v, err := mapper.ConversionFunc(vec.vector.At(i).(*string))
+		field := frame.Fields[fieldIdx]
+		for i := 0; i < field.Len(); i++ {
+			v, err := mapper.ConversionFunc(field.At(i).(*string))
 			if err != nil {
 				return nil, nil, err
 			}
-			vec.vector.Set(i, v)
+			field.Set(i, v)
 		}
 		if mapper.Replacer == nil {
 			continue
@@ -121,11 +121,10 @@ func newForSQLRows(rows *sql.Rows, converters ...SQLStringConverter) (*Frame, ma
 func (f *Frame) newScannableRow() []interface{} {
 	row := make([]interface{}, len(f.Fields))
 	for i, field := range f.Fields {
-		vec := field.vector
-		vec.Extend(1)
+		field.Extend(1)
 		// non-nullable fields will be *T, and nullable fields will be **T
-		vecItemPointer := vec.PointerAt(vec.Len() - 1)
-		row[i] = vecItemPointer
+		ptr := field.PointerAt(field.Len() - 1)
+		row[i] = ptr
 	}
 	return row
 }
@@ -150,7 +149,7 @@ type SQLStringConverter struct {
 // Note: SQLStringConverter is perhaps better understood as []byte. However, currently
 // the Vector type ([][]byte) is not supported. https://github.com/grafana/grafana-plugin-sdk-go/issues/57
 
-// StringFieldReplacer is used to replace a *string Field in a data. The type
+// StringFieldReplacer is used to replace a *string Field in a Frame. The type
 // returned by the ReplaceFunc must match the type of elements of VectorType.
 // Both properties must be non-nil.
 type StringFieldReplacer struct {

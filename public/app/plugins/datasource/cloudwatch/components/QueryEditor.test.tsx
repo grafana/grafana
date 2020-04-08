@@ -5,7 +5,7 @@ import { act } from 'react-dom/test-utils';
 import { DataSourceInstanceSettings } from '@grafana/data';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { CustomVariable } from 'app/features/templating/all';
-import { Props, QueryEditor } from './QueryEditor';
+import { Props, QueryEditor, normalizeQuery } from './QueryEditor';
 import CloudWatchDatasource from '../datasource';
 
 const setup = () => {
@@ -86,26 +86,19 @@ describe('QueryEditor', () => {
       });
     });
 
-    it('should init props correctly', async () => {
-      // @ts-ignore strict null error TS2345: Argument of type '() => Promise<void>' is not assignable to parameter of type '() => void | undefined'.
-      await act(async () => {
-        const props = setup();
-        props.query.namespace = (null as unknown) as string;
-        props.query.metricName = (null as unknown) as string;
-        props.query.expression = (null as unknown) as string;
-        props.query.dimensions = (null as unknown) as { [key: string]: string | string[] };
-        props.query.region = (null as unknown) as string;
-        props.query.statistics = (null as unknown) as string[];
-        const wrapper = mount(<QueryEditor {...props} />);
-        const {
-          query: { namespace, region, metricName, dimensions, statistics, expression },
-        } = wrapper.props();
-        expect(namespace).toEqual('');
-        expect(metricName).toEqual('');
-        expect(expression).toEqual('');
-        expect(region).toEqual('default');
-        expect(statistics).toEqual(['Average']);
-        expect(dimensions).toEqual({});
+    it('should normalize query with default values', () => {
+      expect(normalizeQuery({ refId: '42' } as any)).toEqual({
+        namespace: '',
+        metricName: '',
+        expression: '',
+        dimensions: {},
+        region: 'default',
+        id: '',
+        alias: '',
+        statistics: ['Average'],
+        matchExact: true,
+        period: '',
+        refId: '42',
       });
     });
   });

@@ -81,9 +81,9 @@ export class DashboardExporter {
             // add data source type to require list
             requires['datasource' + ds.meta?.id] = {
               type: 'datasource',
-              id: ds.meta?.id,
-              name: ds.meta?.name,
-              version: ds.meta?.info.version || '1.0.0',
+              id: ds.meta.id,
+              name: ds.meta.name,
+              version: ds.meta.info.version || '1.0.0',
             };
 
             // if used via variable we can skip templatizing usage

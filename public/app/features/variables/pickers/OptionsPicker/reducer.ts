@@ -1,14 +1,10 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { cloneDeep } from 'lodash';
-import {
-  containsSearchFilter,
-  VariableOption,
-  VariableTag,
-  VariableWithMultiSupport,
-} from '../../../templating/variable';
+import { VariableOption, VariableTag, VariableWithMultiSupport } from '../../../templating/types';
 import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE } from '../../state/types';
 import { isQuery } from '../../guard';
 import { applyStateChanges } from '../../../../core/utils/applyStateChanges';
+import { containsSearchFilter } from '../../../templating/utils';
 
 export interface ToggleOption {
   option: VariableOption;
@@ -17,7 +13,7 @@ export interface ToggleOption {
 }
 
 export interface OptionsPickerState {
-  uuid: string;
+  id: string;
   selectedValues: VariableOption[];
   selectedTags: VariableTag[];
   queryValue: string | null;
@@ -28,7 +24,7 @@ export interface OptionsPickerState {
 }
 
 export const initialState: OptionsPickerState = {
-  uuid: '',
+  id: '',
   highlightIndex: -1,
   queryValue: null,
   selectedTags: [],
@@ -76,7 +72,7 @@ const optionsPickerSlice = createSlice({
       state.options = cloneDeep(options);
       state.tags = getTags(action.payload);
       state.multi = multi ?? false;
-      state.uuid = action.payload.uuid!;
+      state.id = action.payload.id!;
       state.queryValue = '';
 
       if (isQuery(action.payload)) {

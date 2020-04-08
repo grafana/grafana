@@ -1,5 +1,6 @@
 import React, { PureComponent } from 'react';
-import { DataSourceHttpSettings, FormLabel, Select, Switch } from '@grafana/ui';
+import { DataSourceHttpSettings, FormLabel, LegacyForms } from '@grafana/ui';
+const { Select, Switch } = LegacyForms;
 import {
   DataSourcePluginOptionsEditorProps,
   onUpdateDatasourceJsonDataOptionSelect,

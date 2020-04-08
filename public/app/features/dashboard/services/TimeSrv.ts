@@ -102,10 +102,15 @@ export class TimeSrv {
       return value;
     }
     if (value.length === 8) {
-      return toUtc(value, 'YYYYMMDD');
-    }
-    if (value.length === 15) {
-      return toUtc(value, 'YYYYMMDDTHHmmss');
+      const utcValue = toUtc(value, 'YYYYMMDD');
+      if (utcValue.isValid()) {
+        return utcValue;
+      }
+    } else if (value.length === 15) {
+      const utcValue = toUtc(value, 'YYYYMMDDTHHmmss');
+      if (utcValue.isValid()) {
+        return utcValue;
+      }
     }
 
     if (!isNaN(value)) {

@@ -1,5 +1,5 @@
 import { SingleStatBaseOptions, BarGaugeDisplayMode } from '@grafana/ui';
-import { standardGaugeFieldOptions } from '../gauge/types';
+import { commonValueOptionDefaults } from '../stat/types';
 import { VizOrientation, SelectableValue } from '@grafana/data';
 
 export interface BarGaugeOptions extends SingleStatBaseOptions {
@@ -16,6 +16,6 @@ export const displayModes: Array<SelectableValue<string>> = [
 export const defaults: BarGaugeOptions = {
   displayMode: BarGaugeDisplayMode.Lcd,
   orientation: VizOrientation.Horizontal,
-  fieldOptions: standardGaugeFieldOptions,
+  reduceOptions: commonValueOptionDefaults,
   showUnfilled: true,
 };

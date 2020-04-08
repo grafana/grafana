@@ -115,6 +115,7 @@ export interface DataSourcePluginMeta<T extends KeyValue = {}> extends PluginMet
   logs?: boolean;
   annotations?: boolean;
   alerting?: boolean;
+  tracing?: boolean;
   mixed?: boolean;
   hasQueryHelp?: boolean;
   category?: string;
@@ -184,6 +185,7 @@ export abstract class DataSourceApi<
   constructor(instanceSettings: DataSourceInstanceSettings<TOptions>) {
     this.name = instanceSettings.name;
     this.id = instanceSettings.id;
+    this.meta = {} as DataSourcePluginMeta;
   }
 
   /**
@@ -248,7 +250,7 @@ export abstract class DataSourceApi<
   /**
    * static information about the datasource
    */
-  meta?: DataSourcePluginMeta;
+  meta: DataSourcePluginMeta;
 
   /**
    * Used by alerting to check if query contains template variables
@@ -315,6 +317,7 @@ export enum DataSourceStatus {
 export enum ExploreMode {
   Logs = 'Logs',
   Metrics = 'Metrics',
+  Tracing = 'Tracing',
 }
 
 export interface ExploreQueryFieldProps<
@@ -367,6 +370,11 @@ export interface DataQueryResponse {
   state?: LoadingState;
 }
 
+/**
+ * These are the common properties avaliable to all queries in all datasources
+ * Specific implementations will extend this interface adding the required properties
+ * for the given context
+ */
 export interface DataQuery {
   /**
    * A - Z
@@ -374,7 +382,7 @@ export interface DataQuery {
   refId: string;
 
   /**
-   * true if query is disabled (ie not executed / sent to TSDB)
+   * true if query is disabled (ie should not be returned to the dashboard)
    */
   hide?: boolean;
 
@@ -384,17 +392,15 @@ export interface DataQuery {
   key?: string;
 
   /**
+   * Specify the query flavor
+   */
+  queryType?: string;
+
+  /**
    * For mixed data sources the selected datasource is on the query level.
    * For non mixed scenarios this is undefined.
    */
   datasource?: string | null;
-
-  metric?: any;
-
-  /**
-   * For limiting result lines.
-   */
-  maxLines?: number;
 }
 
 export interface DataQueryError {

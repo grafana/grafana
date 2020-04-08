@@ -1,5 +1,5 @@
 import React, { FunctionComponent, useMemo } from 'react';
-import { VariableHide, VariableModel } from '../../templating/variable';
+import { VariableHide, VariableModel } from '../../templating/types';
 import { e2e } from '@grafana/e2e';
 import { variableAdapters } from '../adapters';
 
@@ -19,7 +19,7 @@ export const PickerRenderer: FunctionComponent<Props> = props => {
     <div className="gf-form">
       {props.variable.hide === VariableHide.dontHide && (
         <label
-          className="gf-form-label template-variable"
+          className="gf-form-label gf-form-label--variable"
           aria-label={e2e.pages.Dashboard.SubMenu.selectors.submenuItemLabels(labelOrName)}
         >
           {labelOrName}

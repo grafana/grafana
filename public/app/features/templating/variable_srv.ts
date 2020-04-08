@@ -3,7 +3,7 @@ import angular, { auto, ILocationService, IPromise, IQService } from 'angular';
 import _ from 'lodash';
 // Utils & Services
 import coreModule from 'app/core/core_module';
-import { variableTypes } from './variable';
+import { variableTypes } from './types';
 import { Graph } from 'app/core/utils/dag';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
@@ -330,15 +330,23 @@ export class VariableSrv {
     for (const v of this.variables) {
       const key = `var-${v.name}`;
       if (vars.hasOwnProperty(key)) {
-        update.push(v.setValueFromUrl(vars[key]));
+        if (this.isVariableUrlValueDifferentFromCurrent(v, vars[key])) {
+          update.push(v.setValueFromUrl(vars[key]));
+        }
       }
     }
+
     if (update.length) {
       Promise.all(update).then(() => {
         this.dashboard.templateVariableValueUpdated();
         this.dashboard.startRefresh();
       });
     }
+  }
+
+  isVariableUrlValueDifferentFromCurrent(variable: any, urlValue: any) {
+    // lodash _.isEqual handles array of value equality checks as well
+    return !_.isEqual(variable.current.value, urlValue);
   }
 
   updateUrlParamsWithCurrentVariables() {

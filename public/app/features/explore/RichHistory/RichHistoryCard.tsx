@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { connect } from 'react-redux';
 import { hot } from 'react-hot-loader';
 import { css, cx } from 'emotion';
-import { stylesFactory, useTheme, Forms } from '@grafana/ui';
+import { stylesFactory, useTheme, Forms, Button } from '@grafana/ui';
 import { GrafanaTheme, AppEvents, DataSourceApi } from '@grafana/data';
 import { RichHistoryQuery, ExploreId } from 'app/types/explore';
 import { copyStringToClipboard, createUrlFromRichHistory, createDataQuery } from 'app/core/utils/richHistory';
@@ -35,8 +35,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme, isRemoved: boolean) => {
       : theme.colors.white
     : isRemoved
     ? theme.colors.gray15
-    : theme.colors.dark7;
-  const cardBoxShadow = theme.isLight ? `0px 2px 2px ${borderColor}` : `0px 2px 4px black`;
+    : theme.colors.gray05;
 
   return {
     queryCard: css`
@@ -44,9 +43,8 @@ const getStyles = stylesFactory((theme: GrafanaTheme, isRemoved: boolean) => {
       flex-direction: column;
       border: 1px solid ${borderColor};
       margin: ${theme.spacing.sm} 0;
-      box-shadow: ${cardBoxShadow};
       background-color: ${cardColor};
-      border-radius: ${theme.border.radius};
+      border-radius: ${theme.border.radius.sm};
       .starred {
         color: ${theme.colors.orange};
       }
@@ -71,7 +69,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme, isRemoved: boolean) => {
       display: flex;
       align-items: center;
       font-size: ${theme.typography.size.sm};
-      font-weight: ${theme.typography.weight.bold};
+      font-weight: ${theme.typography.weight.semibold};
     `,
     queryActionButtons: css`
       max-width: ${rigtColumnContentWidth};
@@ -84,7 +82,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme, isRemoved: boolean) => {
       }
     `,
     queryContainer: css`
-      font-weight: ${theme.typography.weight.bold};
+      font-weight: ${theme.typography.weight.semibold};
       width: calc(100% - ${rigtColumnWidth});
     `,
     queryRow: css`
@@ -204,10 +202,10 @@ export function RichHistoryCard(props: Props) {
         className={styles.textArea}
       />
       <div className={styles.commentButtonRow}>
-        <Forms.Button onClick={onUpdateComment}>Save comment</Forms.Button>
-        <Forms.Button variant="secondary" onClick={onCancelUpdateComment}>
+        <Button onClick={onUpdateComment}>Save comment</Button>
+        <Button variant="secondary" onClick={onCancelUpdateComment}>
           Cancel
-        </Forms.Button>
+        </Button>
       </div>
     </div>
   );
@@ -236,7 +234,7 @@ export function RichHistoryCard(props: Props) {
         <div className={styles.datasourceContainer}>
           <img src={dsImg} aria-label="Data source icon" />
           <div aria-label="Data source name">
-            {isRemoved ? 'Not linked to existing data source' : query.datasourceName}
+            {isRemoved ? 'Data source does not exist anymore' : query.datasourceName}
           </div>
         </div>
         {queryActionButtons}
@@ -259,9 +257,9 @@ export function RichHistoryCard(props: Props) {
         </div>
         {!activeUpdateComment && (
           <div className={styles.runButton}>
-            <Forms.Button variant="secondary" onClick={onRunQuery} disabled={isRemoved}>
+            <Button variant="secondary" onClick={onRunQuery} disabled={isRemoved}>
               {datasourceInstance?.name === query.datasourceName ? 'Run query' : 'Switch data source and run query'}
-            </Forms.Button>
+            </Button>
           </div>
         )}
       </div>

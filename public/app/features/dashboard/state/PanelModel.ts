@@ -15,6 +15,7 @@ import {
   PanelEvents,
   PanelPlugin,
   ScopedVars,
+  FieldConfigSource,
 } from '@grafana/data';
 import { EDIT_PANEL_ID } from 'app/core/constants';
 
@@ -44,6 +45,7 @@ const notPersistedProperties: { [str: string]: boolean } = {
   plugin: true,
   queryRunner: true,
   replaceVariables: true,
+  editSourceId: true,
 };
 
 // For angular panels we need to clean up properties when changing type
@@ -81,6 +83,7 @@ const mustKeepProps: { [str: string]: boolean } = {
   pluginVersion: true,
   queryRunner: true,
   transformations: true,
+  fieldConfig: true,
 };
 
 const defaults: any = {
@@ -94,6 +97,7 @@ const defaults: any = {
 export class PanelModel implements DataConfigSource {
   /* persisted id, used in URL to identify a panel */
   id: number;
+  editSourceId: number;
   gridPos: GridPos;
   type: string;
   title: string;
@@ -121,6 +125,7 @@ export class PanelModel implements DataConfigSource {
   options: {
     [key: string]: any;
   };
+  fieldConfig: FieldConfigSource;
 
   maxDataPoints?: number;
   interval?: string;
@@ -177,9 +182,19 @@ export class PanelModel implements DataConfigSource {
   getOptions() {
     return this.options;
   }
+  getFieldConfig() {
+    return this.fieldConfig;
+  }
 
   updateOptions(options: object) {
     this.options = options;
+
+    this.render();
+  }
+
+  updateFieldConfig(config: FieldConfigSource) {
+    this.fieldConfig = config;
+
     this.resendLastResult();
     this.render();
   }
@@ -273,6 +288,23 @@ export class PanelModel implements DataConfigSource {
         return srcValue;
       }
     });
+
+    this.fieldConfig = {
+      defaults: _.mergeWith(
+        {},
+        plugin.fieldConfigDefaults.defaults,
+        this.fieldConfig ? this.fieldConfig.defaults : {},
+        (objValue: any, srcValue: any): any => {
+          if (_.isArray(srcValue)) {
+            return srcValue;
+          }
+        }
+      ),
+      overrides: [
+        ...plugin.fieldConfigDefaults.overrides,
+        ...(this.fieldConfig && this.fieldConfig.overrides ? this.fieldConfig.overrides : []),
+      ],
+    };
   }
 
   pluginLoaded(plugin: PanelPlugin) {
@@ -359,6 +391,7 @@ export class PanelModel implements DataConfigSource {
 
     // Temporary id for the clone, restored later in redux action when changes are saved
     sourceModel.id = EDIT_PANEL_ID;
+    sourceModel.editSourceId = this.id;
 
     const clone = new PanelModel(sourceModel);
     const sourceQueryRunner = this.getQueryRunner();
@@ -382,9 +415,9 @@ export class PanelModel implements DataConfigSource {
     }
 
     return {
-      fieldOptions: this.options.fieldOptions,
+      fieldConfig: this.fieldConfig,
       replaceVariables: this.replaceVariables,
-      custom: this.plugin.customFieldConfigs,
+      fieldConfigRegistry: this.plugin.fieldConfigRegistry,
       theme: config.theme,
     };
   }
@@ -415,6 +448,7 @@ export class PanelModel implements DataConfigSource {
 
   setTransformations(transformations: DataTransformerConfig[]) {
     this.transformations = transformations;
+    this.resendLastResult();
   }
 
   replaceVariables(value: string, extraVars?: ScopedVars, format?: string) {

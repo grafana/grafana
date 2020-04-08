@@ -71,9 +71,9 @@ describe('RichHistoryCard', () => {
     const wrapper = setup();
     expect(wrapper.find({ 'aria-label': 'Data source name' }).text()).toEqual('Test datasource');
   });
-  it('should render "Not linked to existing data source" if removed data source', () => {
+  it('should render "Data source does not exist anymore" if removed data source', () => {
     const wrapper = setup({ isRemoved: true });
-    expect(wrapper.find({ 'aria-label': 'Data source name' }).text()).toEqual('Not linked to existing data source');
+    expect(wrapper.find({ 'aria-label': 'Data source name' }).text()).toEqual('Data source does not exist anymore');
   });
 
   describe('commenting', () => {

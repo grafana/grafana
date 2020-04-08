@@ -36,7 +36,7 @@ func TestNotificationService(t *testing.T) {
 
 		require.Equalf(t, 1, scenarioCtx.renderCount, "expected render to be called, but wasn't")
 		require.Equalf(t, 1, scenarioCtx.imageUploadCount, "expected image to be uploaded, but wasn't")
-		require.Truef(t, evalCtx.Ctx.Value("notificationSent").(bool), "expected notification to be sent, but wasn't")
+		require.Truef(t, evalCtx.Ctx.Value(notificationSent{}).(bool), "expected notification to be sent, but wasn't")
 	})
 
 	notificationServiceScenario(t, "Given alert rule with upload image disabled should not render and upload image, but send notification", evalCtx, false, func(scenarioCtx *scenarioContext) {
@@ -45,7 +45,7 @@ func TestNotificationService(t *testing.T) {
 
 		require.Equalf(t, 0, scenarioCtx.renderCount, "expected render not to be called, but it was")
 		require.Equalf(t, 0, scenarioCtx.imageUploadCount, "expected image not to be uploaded, but it was")
-		require.Truef(t, evalCtx.Ctx.Value("notificationSent").(bool), "expected notification to be sent, but wasn't")
+		require.Truef(t, evalCtx.Ctx.Value(notificationSent{}).(bool), "expected notification to be sent, but wasn't")
 	})
 
 	notificationServiceScenario(t, "Given alert rule with upload image enabled and render times out should send notification", evalCtx, true, func(scenarioCtx *scenarioContext) {
@@ -74,7 +74,7 @@ func TestNotificationService(t *testing.T) {
 
 		require.Equalf(t, 0, scenarioCtx.renderCount, "expected render not to be called, but it was")
 		require.Equalf(t, 0, scenarioCtx.imageUploadCount, "expected image not to be uploaded, but it was")
-		require.Truef(t, evalCtx.Ctx.Value("notificationSent").(bool), "expected notification to be sent, but wasn't")
+		require.Truef(t, evalCtx.Ctx.Value(notificationSent{}).(bool), "expected notification to be sent, but wasn't")
 	})
 
 	notificationServiceScenario(t, "Given alert rule with upload image enabled and upload times out should send notification", evalCtx, true, func(scenarioCtx *scenarioContext) {
@@ -103,7 +103,7 @@ func TestNotificationService(t *testing.T) {
 
 		require.Equalf(t, 1, scenarioCtx.renderCount, "expected render to be called, but wasn't")
 		require.Equalf(t, 0, scenarioCtx.imageUploadCount, "expected image not to be uploaded, but it was")
-		require.Truef(t, evalCtx.Ctx.Value("notificationSent").(bool), "expected notification to be sent, but wasn't")
+		require.Truef(t, evalCtx.Ctx.Value(notificationSent{}).(bool), "expected notification to be sent, but wasn't")
 	})
 }
 
@@ -244,8 +244,10 @@ func newTestNotifier(model *models.AlertNotification) (Notifier, error) {
 	}, nil
 }
 
+type notificationSent struct{}
+
 func (n *testNotifier) Notify(evalCtx *EvalContext) error {
-	evalCtx.Ctx = context.WithValue(evalCtx.Ctx, "notificationSent", true)
+	evalCtx.Ctx = context.WithValue(evalCtx.Ctx, notificationSent{}, true)
 	return nil
 }
 

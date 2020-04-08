@@ -22,12 +22,12 @@ import { RichHistory, Tabs } from './RichHistory';
 import { deleteRichHistory } from '../state/actions';
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
-  const containerBackground = theme.isLight ? theme.colors.gray7 : theme.colors.dark2;
+  const containerBackground = theme.isLight ? theme.colors.gray95 : theme.colors.gray15;
   const containerBorderColor = theme.isLight ? theme.colors.gray5 : theme.colors.dark6;
-  const handleBackground = theme.isLight ? theme.colors.gray5 : theme.colors.gray15;
-  const handleDots = theme.isLight ? theme.colors.gray70 : theme.colors.gray33;
-  const handleBackgroundHover = theme.isLight ? theme.colors.gray70 : theme.colors.gray33;
-  const handleDotsHover = theme.isLight ? theme.colors.gray5 : theme.colors.dark7;
+  const handleBackground = theme.isLight ? theme.colors.white : theme.colors.gray15;
+  const handleDots = theme.isLight ? theme.colors.gray85 : theme.colors.gray33;
+  const handleBackgroundHover = theme.isLight ? theme.colors.gray85 : theme.colors.gray33;
+  const handleDotsHover = theme.isLight ? theme.colors.gray70 : theme.colors.dark7;
 
   return {
     container: css`
@@ -41,7 +41,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
     `,
     drawerActive: css`
       opacity: 1;
-      transition: transform 0.5s ease-in;
+      transition: transform 0.5s ease-out;
     `,
     drawerNotActive: css`
       opacity: 0;

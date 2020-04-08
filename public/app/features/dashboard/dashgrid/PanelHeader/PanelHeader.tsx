@@ -22,7 +22,7 @@ export interface Props {
   title?: string;
   description?: string;
   scopedVars?: ScopedVars;
-  angularComponent?: AngularComponent;
+  angularComponent?: AngularComponent | null;
   links?: DataLink[];
   error?: string;
   isFullscreen: boolean;
@@ -108,11 +108,11 @@ export class PanelHeader extends Component<Props, State> {
     return (
       <Tooltip content={notice.text} key={notice.severity}>
         {notice.inspect ? (
-          <div className="panel-info-notice" onClick={e => this.openInspect(e, notice.inspect)}>
+          <div className="panel-info-notice" onClick={e => this.openInspect(e, notice.inspect!)}>
             <span className="fa fa-info-circle" style={{ marginRight: '8px', cursor: 'pointer' }} />
           </div>
         ) : (
-          <a className="panel-info-notice" href={notice.url} target="_blank">
+          <a className="panel-info-notice" href={notice.link} target="_blank">
             <span className="fa fa-info-circle" style={{ marginRight: '8px', cursor: 'pointer' }} />
           </a>
         )}

@@ -1,11 +1,11 @@
 import React, { ChangeEvent, FormEvent, PureComponent } from 'react';
 import isEqual from 'lodash/isEqual';
-import { AppEvents } from '@grafana/data';
+import { AppEvents, VariableType } from '@grafana/data';
 import { FormLabel } from '@grafana/ui';
 import { e2e } from '@grafana/e2e';
 import { variableAdapters } from '../adapters';
-import { EMPTY_UUID, toVariablePayload, VariableIdentifier } from '../state/types';
-import { VariableHide, VariableModel, VariableType } from '../../templating/variable';
+import { NEW_VARIABLE_ID, toVariablePayload, VariableIdentifier } from '../state/types';
+import { VariableHide, VariableModel } from '../../templating/types';
 import { appEvents } from '../../../core/core';
 import { VariableValuesPreview } from './VariableValuesPreview';
 import { changeVariableName, onEditorAdd, onEditorUpdate, variableEditorMount, variableEditorUnMount } from './actions';
@@ -97,11 +97,11 @@ export class VariableEditorEditorUnConnected extends PureComponent<Props> {
       return;
     }
 
-    if (this.props.variable.uuid !== EMPTY_UUID) {
+    if (this.props.variable.id !== NEW_VARIABLE_ID) {
       await this.props.onEditorUpdate(this.props.identifier);
     }
 
-    if (this.props.variable.uuid === EMPTY_UUID) {
+    if (this.props.variable.id === NEW_VARIABLE_ID) {
       await this.props.onEditorAdd(this.props.identifier);
     }
   };
@@ -111,7 +111,7 @@ export class VariableEditorEditorUnConnected extends PureComponent<Props> {
     if (!EditorToRender) {
       return null;
     }
-    const newVariable = this.props.variable.uuid && this.props.variable.uuid === EMPTY_UUID;
+    const newVariable = this.props.variable.id && this.props.variable.id === NEW_VARIABLE_ID;
 
     return (
       <div>
@@ -143,9 +143,9 @@ export class VariableEditorEditorUnConnected extends PureComponent<Props> {
                     onChange={this.onTypeChange}
                     aria-label={e2e.pages.Dashboard.Settings.Variables.Edit.General.selectors.generalTypeSelect}
                   >
-                    {variableAdapters.registeredTypes().map(item => (
-                      <option key={item.type} label={item.label} value={item.type}>
-                        {item.label}
+                    {variableAdapters.list().map(({ id, name }) => (
+                      <option key={id} label={name} value={id}>
+                        {name}
                       </option>
                     ))}
                   </select>
@@ -227,7 +227,7 @@ export class VariableEditorEditorUnConnected extends PureComponent<Props> {
 
 const mapStateToProps: MapStateToProps<ConnectedProps, OwnProps, StoreState> = (state, ownProps) => ({
   editor: state.templating.editor,
-  variable: getVariable(ownProps.identifier.uuid!, state),
+  variable: getVariable(ownProps.identifier.id, state, false), // we could be renaming a variable and we don't want this to throw
 });
 
 const mapDispatchToProps: MapDispatchToProps<DispatchProps, OwnProps> = {

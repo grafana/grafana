@@ -1,7 +1,7 @@
 import React from 'react';
 import { config } from 'app/core/config';
 import { css } from 'emotion';
-import { TabsBar, Tab, stylesFactory, TabContent, TransformationsEditor } from '@grafana/ui';
+import { TabsBar, Tab, stylesFactory, TabContent } from '@grafana/ui';
 import { DataTransformerConfig, LoadingState, PanelData } from '@grafana/data';
 import { PanelEditorTab, PanelEditorTabId } from './types';
 import { DashboardModel } from '../../state';
@@ -9,6 +9,7 @@ import { QueriesTab } from '../../panel_editor/QueriesTab';
 import { PanelModel } from '../../state/PanelModel';
 import { AlertTab } from 'app/features/alerting/AlertTab';
 import { VisualizationTab } from './VisualizationTab';
+import { TransformationsEditor } from '../TransformationsEditor/TransformationsEditor';
 
 interface PanelEditorTabsProps {
   panel: PanelModel;
@@ -34,13 +35,21 @@ export const PanelEditorTabs: React.FC<PanelEditorTabsProps> = ({ panel, dashboa
     <div className={styles.wrapper}>
       <TabsBar className={styles.tabBar}>
         {tabs.map(tab => {
-          return <Tab key={tab.id} label={tab.text} active={tab.active} onChangeTab={() => onChangeTab(tab)} />;
+          return (
+            <Tab
+              key={tab.id}
+              label={tab.text}
+              active={tab.active}
+              onChangeTab={() => onChangeTab(tab)}
+              icon={tab.icon}
+            />
+          );
         })}
       </TabsBar>
       <TabContent className={styles.tabContent}>
-        {activeTab.id === PanelEditorTabId.Queries && <QueriesTab panel={panel} dashboard={dashboard} />}
+        {activeTab.id === PanelEditorTabId.Query && <QueriesTab panel={panel} dashboard={dashboard} />}
         {activeTab.id === PanelEditorTabId.Alert && <AlertTab panel={panel} dashboard={dashboard} />}
-        {activeTab.id === PanelEditorTabId.Visualization && <VisualizationTab panel={panel} />}
+        {activeTab.id === PanelEditorTabId.Visualize && <VisualizationTab panel={panel} />}
         {activeTab.id === PanelEditorTabId.Transform && data.state !== LoadingState.NotStarted && (
           <TransformationsEditor
             transformations={panel.transformations || []}
@@ -63,7 +72,7 @@ const getPanelEditorTabsStyles = stylesFactory(() => {
       height: 100%;
     `,
     tabBar: css`
-      padding-left: ${theme.spacing.sm};
+      padding-left: ${theme.spacing.md};
     `,
     tabContent: css`
       padding: 0;
@@ -71,7 +80,8 @@ const getPanelEditorTabsStyles = stylesFactory(() => {
       flex-direction: column;
       flex-grow: 1;
       min-height: 0;
-      background: ${theme.colors.pageBg};
+      background: ${theme.colors.panelBg};
+      border-right: 1px solid ${theme.colors.pageHeaderBorder};
 
       .toolbar {
         background: transparent;

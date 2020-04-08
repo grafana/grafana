@@ -41,7 +41,7 @@ exports[`Render should render teams table 1`] = `
       <div
         className="gf-form gf-form--grow"
       >
-        <ForwardRef
+        <Component
           inputClassName="gf-form-input"
           labelClassName="gf-form--has-input-icon gf-form--grow"
           onChange={[Function]}
@@ -376,7 +376,7 @@ exports[`Render when feature toggle editorsCanAdmin is turned on and signedin us
       <div
         className="gf-form gf-form--grow"
       >
-        <ForwardRef
+        <Component
           inputClassName="gf-form-input"
           labelClassName="gf-form--has-input-icon gf-form--grow"
           onChange={[Function]}
@@ -503,7 +503,7 @@ exports[`Render when feature toggle editorsCanAdmin is turned on and signedin us
       <div
         className="gf-form gf-form--grow"
       >
-        <ForwardRef
+        <Component
           inputClassName="gf-form-input"
           labelClassName="gf-form--has-input-icon gf-form--grow"
           onChange={[Function]}

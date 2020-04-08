@@ -1,19 +1,23 @@
 import React, { FunctionComponent, useCallback } from 'react';
-import { Switch } from '@grafana/ui';
+import { LegacyForms } from '@grafana/ui';
+const { Switch } = LegacyForms;
 import { e2e } from '@grafana/e2e';
 
-import { VariableWithMultiSupport } from '../../templating/variable';
+import { VariableWithMultiSupport } from '../../templating/types';
 import { VariableEditorProps } from './types';
+import { VariableIdentifier, toVariableIdentifier } from '../state/types';
 
 export interface SelectionOptionsEditorProps<Model extends VariableWithMultiSupport = VariableWithMultiSupport>
-  extends VariableEditorProps<Model> {}
+  extends VariableEditorProps<Model> {
+  onMultiChanged: (identifier: VariableIdentifier, value: boolean) => void;
+}
 
 export const SelectionOptionsEditor: FunctionComponent<SelectionOptionsEditorProps> = props => {
   const onMultiChanged = useCallback(
     (event: React.ChangeEvent<HTMLInputElement>) => {
-      props.onPropChange({ propName: 'multi', propValue: event.target.checked });
+      props.onMultiChanged(toVariableIdentifier(props.variable), event.target.checked);
     },
-    [props.onPropChange]
+    [props.onMultiChanged]
   );
 
   const onIncludeAllChanged = useCallback(

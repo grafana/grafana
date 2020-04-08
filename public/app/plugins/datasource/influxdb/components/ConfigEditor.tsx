@@ -8,7 +8,8 @@ import {
   onUpdateDatasourceJsonDataOptionSelect,
   onUpdateDatasourceSecureJsonDataOption,
 } from '@grafana/data';
-import { DataSourceHttpSettings, FormLabel, Input, SecretFormField, Select } from '@grafana/ui';
+import { DataSourceHttpSettings, FormLabel, SecretFormField, LegacyForms } from '@grafana/ui';
+const { Select, Input } = LegacyForms;
 import { InfluxOptions, InfluxSecureJsonData } from '../types';
 
 const httpModes = [

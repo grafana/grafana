@@ -1,7 +1,7 @@
 import { reducerTester } from '../../../../test/core/redux/reducerTester';
 import { VariablesState } from '../state/variablesReducer';
 import { createDataSourceOptions, dataSourceVariableReducer } from './reducer';
-import { DataSourceVariableModel } from '../../templating/variable';
+import { DataSourceVariableModel } from '../../templating/types';
 import { getVariableTestContext } from '../state/helpers';
 import cloneDeep from 'lodash/cloneDeep';
 import { createDataSourceVariableAdapter } from './adapter';
@@ -46,7 +46,7 @@ describe('dataSourceVariableReducer', () => {
       "when called with query: '$query' and regex: '$regex' and includeAll: '$includeAll' then state should be correct",
       ({ query, regex, includeAll, expected }) => {
         const { initialState } = getVariableTestContext<DataSourceVariableModel>(adapter, { query, includeAll });
-        const payload = toVariablePayload({ uuid: '0', type: 'datasource' }, { sources, regex });
+        const payload = toVariablePayload({ id: '0', type: 'datasource' }, { sources, regex });
 
         reducerTester<VariablesState>()
           .givenReducer(dataSourceVariableReducer, cloneDeep(initialState))
