@@ -28,7 +28,11 @@ that you cannot use this API for retrieving information about the General folder
 
 `GET /api/folders`
 
-Returns all folders that the authenticated user has permission to view.
+Returns all folders that the authenticated user has permission to view. 
+
+**Query parameters**:
+
+* **limit**: Number of results to return. Defaults to `1000`
 
 **Example Request**:
 
