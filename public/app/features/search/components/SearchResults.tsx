@@ -128,7 +128,7 @@ const SectionHeader: FC<SectionHeaderProps> = ({
           <Icon name="cog" />
         </a>
       )}
-      <Icon name={section.expanded ? 'angle-down' : 'angle-right'} className={styles.toggle} />
+      <Icon name={section.expanded ? 'angle-down' : 'angle-right'} />
     </div>
   ) : (
     <div className={styles.wrapper} />
@@ -161,7 +161,6 @@ const getSectionHeaderStyles = stylesFactory((theme: GrafanaTheme, selected = fa
       { selected }
     ),
     icon: css`
-      padding: 5px 0;
       width: 43px;
     `,
     text: css`
@@ -173,9 +172,6 @@ const getSectionHeaderStyles = stylesFactory((theme: GrafanaTheme, selected = fa
       color: ${theme.colors.textWeak};
       opacity: 0;
       transition: opacity 150ms ease-in-out;
-    `,
-    toggle: css`
-      padding: 5px;
     `,
   };
 });
