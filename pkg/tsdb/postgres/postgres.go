@@ -54,27 +54,26 @@ func generateConnectionString(datasource *models.DataSource, logger log.Logger) 
 	isSSLDisabled := sslMode == "disable"
 
 	// Always pass SSL mode
-	sslopts := "sslmode=" + url.QueryEscape(sslMode)
+	sslOpts := fmt.Sprintf("sslmode=%s", url.QueryEscape(sslMode))
 	if isSSLDisabled {
 		logger.Debug("Postgres SSL is disabled")
 	} else {
-		logger.Debug("Postgres SSL is not disabled", "sslMode", sslMode)
+		logger.Debug("Postgres SSL is enabled", "sslMode", sslMode)
 
 		// Attach root certificate if provided
-		if sslrootcert := datasource.JsonData.Get("sslRootCertFile").MustString(""); sslrootcert != "" {
-			logger.Debug("Setting CA certificate", "sslRootCert", sslrootcert)
-			sslopts += "&sslrootcert=" + url.QueryEscape(sslrootcert)
+		if sslRootCert := datasource.JsonData.Get("sslRootCertFile").MustString(""); sslRootCert != "" {
+			logger.Debug("Setting server CA certificate", "sslRootCert", sslRootCert)
+			sslOpts = fmt.Sprintf("%s&sslrootcert=%s", url.QueryEscape(sslRootCert))
 		}
 
 		// Attach client certificate and key if both are provided
-		sslcert := datasource.JsonData.Get("sslCertFile").MustString("")
-		sslkey := datasource.JsonData.Get("sslKeyFile").MustString("")
-		if sslcert != "" && sslkey != "" {
-			logger.Debug("Setting SSL client auth", "sslcert", sslcert)
-			sslopts += "&sslcert=" + url.QueryEscape(sslcert) + "&sslkey=" + url.QueryEscape(sslkey)
-
-		} else if sslcert != "" || sslkey != "" {
-			return "", fmt.Errorf("SSL client and certificate must both be specified")
+		sslCert := datasource.JsonData.Get("sslCertFile").MustString("")
+		sslKey := datasource.JsonData.Get("sslKeyFile").MustString("")
+		if sslCert != "" && sslKey != "" {
+			logger.Debug("Setting SSL client auth", "sslCert", sslCert, "sslKey", sslKey)
+			sslOpts = fmt.Sprintf("%s&sslcert=%s&sslkey=%s", sslOpts, url.QueryEscape(sslCert), url.QueryEscape(sslKey))
+		} else if sslCert != "" || sslKey != "" {
+			return "", fmt.Errorf("SSL client certificate and key must both be specified")
 		}
 	}
 
@@ -82,7 +81,7 @@ func generateConnectionString(datasource *models.DataSource, logger log.Logger) 
 		Scheme: "postgres",
 		User:   url.UserPassword(datasource.User, datasource.DecryptedPassword()),
 		Host:   datasource.Url, Path: datasource.Database,
-		RawQuery: sslopts,
+		RawQuery: sslOpts,
 	}
 
 	return u.String(), nil
