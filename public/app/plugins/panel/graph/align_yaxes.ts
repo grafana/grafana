@@ -141,10 +141,10 @@ function getRate(yLeft: AxisSide, yRight: AxisSide): number {
     const absLeftMax: number = Math.abs(yLeft.max);
     const absRightMin: number = Math.abs(yRight.min);
     const absRightMax: number = Math.abs(yRight.max);
-    const upLeft: number = _.max([absLeftMin, absLeftMax]) || 0;
-    const downLeft: number = _.min([absLeftMin, absLeftMax]) || 0;
-    const upRight: number = _.max([absRightMin, absRightMax]) || 0;
-    const downRight: number = _.min([absRightMin, absRightMax]) || 0;
+    const upLeft: number = Math.max(absLeftMin, absLeftMax);
+    const downLeft: number = Math.min(absLeftMin, absLeftMax);
+    const upRight: number = Math.max(absRightMin, absRightMax);
+    const downRight: number = Math.min(absRightMin, absRightMax);
 
     const rateLeft: number = downLeft !== 0 ? upLeft / downLeft : upLeft;
     const rateRight: number = downRight !== 0 ? upRight / downRight : upRight;
