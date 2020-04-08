@@ -36,7 +36,11 @@ export const PanelOptionsEditor: React.FC<PanelOptionsEditorProps<any>> = ({ plu
               );
               return (
                 <Forms.Field label={label}>
-                  <e.editor value={lodashGet(options, e.id)} onChange={value => onOptionChange(e.id, value)} item={e} />
+                  <e.editor
+                    value={lodashGet(options, e.path)}
+                    onChange={value => onOptionChange(e.path, value)}
+                    item={e}
+                  />
                 </Forms.Field>
               );
             })}

@@ -1,7 +1,6 @@
 import { reduxTester } from '../../../../test/core/redux/reduxTester';
 import { TemplatingState } from '../state/reducers';
-import { getTemplatingRootReducer } from '../state/helpers';
-import { initDashboardTemplating } from '../state/actions';
+import { getRootReducer } from '../state/helpers';
 import { toVariableIdentifier, toVariablePayload } from '../state/types';
 import { variableAdapters } from '../adapters';
 import { createDataSourceVariableAdapter } from './adapter';
@@ -13,7 +12,7 @@ import {
 import { DataSourcePluginMeta, DataSourceSelectItem } from '@grafana/data';
 import { getMockPlugin } from '../../plugins/__mocks__/pluginMocks';
 import { createDataSourceOptions } from './reducer';
-import { setCurrentVariableValue } from '../state/sharedReducer';
+import { setCurrentVariableValue, addVariable } from '../state/sharedReducer';
 import { changeVariableEditorExtended } from '../editor/reducer';
 import { datasourceBuilder } from '../shared/testing/builders';
 
@@ -47,8 +46,10 @@ describe('data source actions', () => {
           .build();
 
         const tester = await reduxTester<{ templating: TemplatingState }>()
-          .givenRootReducer(getTemplatingRootReducer())
-          .whenActionIsDispatched(initDashboardTemplating([datasource]))
+          .givenRootReducer(getRootReducer())
+          .whenActionIsDispatched(
+            addVariable(toVariablePayload(datasource, { global: false, index: 0, model: datasource }))
+          )
           .whenAsyncActionIsDispatched(
             updateDataSourceVariableOptions(toVariableIdentifier(datasource), dependencies),
             true
@@ -98,8 +99,10 @@ describe('data source actions', () => {
           .withRegEx('/.*(second-name).*/')
           .build();
         const tester = await reduxTester<{ templating: TemplatingState }>()
-          .givenRootReducer(getTemplatingRootReducer())
-          .whenActionIsDispatched(initDashboardTemplating([datasource]))
+          .givenRootReducer(getRootReducer())
+          .whenActionIsDispatched(
+            addVariable(toVariablePayload(datasource, { global: false, index: 0, model: datasource }))
+          )
           .whenAsyncActionIsDispatched(
             updateDataSourceVariableOptions(toVariableIdentifier(datasource), dependencies),
             true
@@ -156,7 +159,7 @@ describe('data source actions', () => {
       const dependencies: DataSourceVariableActionDependencies = { getDatasourceSrv: getDatasourceSrvMock };
 
       const tester = await reduxTester<{ templating: TemplatingState }>()
-        .givenRootReducer(getTemplatingRootReducer())
+        .givenRootReducer(getRootReducer())
         .whenAsyncActionIsDispatched(initDataSourceVariableEditor(dependencies));
 
       await tester.thenDispatchedActionsShouldEqual(

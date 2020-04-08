@@ -60,47 +60,19 @@
   </div>
 
   <div class="search-results" ng-show="ctrl.sections.length > 0">
-    <div class="search-results-filter-row">
-      <gf-form-checkbox
-        on-change="ctrl.onSelectAllChanged()"
-        checked="ctrl.selectAllChecked"
-        switch-class="gf-form-checkbox--transparent"
-      />
-      <div class="search-results-filter-row__filters">
-        <div class="gf-form-select-wrapper" ng-show="!(ctrl.canMove || ctrl.canDelete)">
-          <select
-            class="search-results-filter-row__filters-item gf-form-input"
-            ng-model="ctrl.selectedStarredFilter"
-            ng-options="t.text disable when t.disabled for t in ctrl.starredFilterOptions"
-            ng-change="ctrl.onStarredFilterChange()"
-          />
-        </div>
-        <div class="gf-form-select-wrapper" ng-show="!(ctrl.canMove || ctrl.canDelete)">
-          <select
-            class="search-results-filter-row__filters-item gf-form-input"
-            ng-model="ctrl.selectedTagFilter"
-            ng-options="t.term disable when t.disabled for t in ctrl.tagFilterOptions"
-            ng-change="ctrl.onTagFilterChange()"
-          />
-        </div>
-        <div class="gf-form-button-row" ng-show="ctrl.canMove || ctrl.canDelete">
-          <button	type="button"
-            class="btn gf-form-button btn-inverse"
-            ng-disabled="!ctrl.canMove"
-            ng-click="ctrl.moveTo()"
-            bs-tooltip="ctrl.canMove ? '' : 'Select a dashboard to move (cannot move folders)'"
-            data-placement="bottom">
-          <i class="fa fa-exchange"></i>&nbsp;&nbsp;Move
-          </button>
-          <button type="button"
-            class="btn gf-form-button btn-danger"
-            ng-click="ctrl.delete()"
-            ng-disabled="!ctrl.canDelete">
-            <i class="fa fa-trash"></i>&nbsp;&nbsp;Delete
-          </button>
-        </div>
-      </div>
-    </div>
+    <search-filters
+        on-select-all-changed="ctrl.onSelectAllChanged"
+        all-checked="ctrl.selectAllChecked"
+        can-move="ctrl.canMove"
+        can-delete="ctrl.canDelete"
+        move-to="ctrl.moveTo"
+        delete-item="ctrl.delete"
+        tag-filter-options="ctrl.tagFilterOptions"
+        selected-starred-filter="ctrl.selectedStarredFilter"
+        on-starred-filter-change="ctrl.onStarredFilterChange"
+        selected-tag-filter="ctrl.selectedTagFilter"
+        on-tagfilter-change="ctrl.onTagFilterChange"
+    />
     <div class="search-results-container">
       <search-results
         results="ctrl.sections"

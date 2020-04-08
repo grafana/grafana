@@ -1,12 +1,10 @@
 import React, { useCallback } from 'react';
 import cloneDeep from 'lodash/cloneDeep';
-import groupBy from 'lodash/groupBy';
 import {
   FieldConfigSource,
   DataFrame,
-  FieldPropertyEditorItem,
+  FieldConfigPropertyItem,
   VariableSuggestionsScope,
-  standardFieldConfigEditorRegistry,
   PanelPlugin,
   SelectableValue,
 } from '@grafana/data';
@@ -14,12 +12,12 @@ import { Forms, fieldMatchersUI, ValuePicker, useTheme } from '@grafana/ui';
 import { getDataLinksVariableSuggestions } from '../../../panel/panellinks/link_srv';
 import { OverrideEditor } from './OverrideEditor';
 import { css } from 'emotion';
+import groupBy from 'lodash/groupBy';
 import { OptionsGroup } from './OptionsGroup';
 
 interface Props {
   plugin: PanelPlugin;
   config: FieldConfigSource;
-  include?: string[]; // Ordered list of which fields should be shown/included
   onChange: (config: FieldConfigSource) => void;
   /* Helpful for IntelliSense */
   data: DataFrame[];
@@ -63,28 +61,10 @@ export const OverrideFieldConfigEditor: React.FC<Props> = props => {
 
   const renderOverrides = () => {
     const { config, data, plugin } = props;
-    const { customFieldConfigs } = plugin;
+    const { fieldConfigRegistry } = plugin;
 
     if (config.overrides.length === 0) {
       return null;
-    }
-
-    let configPropertiesOptions = standardFieldConfigEditorRegistry.list().map(i => ({
-      label: i.name,
-      value: i.id,
-      description: i.description,
-      custom: false,
-    }));
-
-    if (customFieldConfigs) {
-      configPropertiesOptions = configPropertiesOptions.concat(
-        customFieldConfigs.list().map(i => ({
-          label: i.name,
-          value: i.id,
-          description: i.description,
-          custom: true,
-        }))
-      );
     }
 
     return (
@@ -98,8 +78,7 @@ export const OverrideFieldConfigEditor: React.FC<Props> = props => {
               override={o}
               onChange={value => onOverrideChange(i, value)}
               onRemove={() => onOverrideRemove(i)}
-              configPropertiesOptions={configPropertiesOptions}
-              customPropertiesRegistry={customFieldConfigs}
+              registry={fieldConfigRegistry}
             />
           );
         })}
@@ -133,7 +112,7 @@ export const OverrideFieldConfigEditor: React.FC<Props> = props => {
   );
 };
 
-export const DefaultFieldConfigEditor: React.FC<Props> = ({ include, data, onChange, config, plugin }) => {
+export const DefaultFieldConfigEditor: React.FC<Props> = ({ data, onChange, config, plugin }) => {
   const setDefaultValue = useCallback(
     (name: string, value: any, custom: boolean) => {
       const defaults = { ...config.defaults };
@@ -165,21 +144,26 @@ export const DefaultFieldConfigEditor: React.FC<Props> = ({ include, data, onCha
   );
 
   const renderEditor = useCallback(
-    (item: FieldPropertyEditorItem, custom: boolean) => {
+    (item: FieldConfigPropertyItem) => {
       const defaults = config.defaults;
-      const value = custom ? (defaults.custom ? defaults.custom[item.id] : undefined) : (defaults as any)[item.id];
+      const value = item.isCustom
+        ? defaults.custom
+          ? defaults.custom[item.path]
+          : undefined
+        : (defaults as any)[item.path];
+
       const label = (
-        <Forms.Label description={item.description} category={item.category.slice(1)}>
+        <Forms.Label description={item.description} category={item.category?.slice(1)}>
           {item.name}
         </Forms.Label>
       );
 
       return (
-        <Forms.Field label={label} key={`${item.id}/${custom}`}>
+        <Forms.Field label={label} key={`${item.id}/${item.isCustom}`}>
           <item.editor
             item={item}
             value={value}
-            onChange={v => setDefaultValue(item.id, v, custom)}
+            onChange={v => setDefaultValue(item.path, v, item.isCustom)}
             context={{
               data,
               getSuggestions: (scope?: VariableSuggestionsScope) => getDataLinksVariableSuggestions(data, scope),
@@ -190,62 +174,21 @@ export const DefaultFieldConfigEditor: React.FC<Props> = ({ include, data, onCha
     },
     [config]
   );
-
-  const renderStandardConfigs = useCallback(() => {
-    let editors;
-
-    if (include) {
-      editors = (
-        <>
-          {include.map(f => {
-            return renderEditor(standardFieldConfigEditorRegistry.get(f), false);
-          })}
-        </>
-      );
-    } else {
-      const r = groupBy(standardFieldConfigEditorRegistry.list(), i => {
-        return i.category ? i.category[0] : 'No category';
-      });
-
-      editors = Object.keys(r).map(c => {
-        return (
-          <OptionsGroup title={c} expanded={false}>
-            {r[c].map(e => {
-              return renderEditor(standardFieldConfigEditorRegistry.get(e.id), false);
-            })}
-          </OptionsGroup>
-        );
-      });
-    }
-
-    return editors;
-  }, [plugin, config]);
-
-  const renderCustomConfigs = useCallback(() => {
-    if (!plugin.customFieldConfigs) {
-      return null;
-    }
-
-    const r = groupBy(plugin.customFieldConfigs.list(), i => {
-      return i.category ? i.category[0] : 'No category';
-    });
-
-    return Object.keys(r).map(c => {
-      return (
-        <OptionsGroup title={c} expanded={false}>
-          {r[c].map(e => {
-            return renderEditor(plugin.customFieldConfigs.get(e.id), false);
-          })}
-        </OptionsGroup>
-      );
-    });
-    // return plugin.customFieldConfigs.list().map(f => renderEditor(f, true));
-  }, [plugin, config]);
+  const groupedConfigs = groupBy(plugin.fieldConfigRegistry.list(), i => i.category && i.category[0]);
 
   return (
     <>
-      {plugin.customFieldConfigs && renderCustomConfigs()}
-      {renderStandardConfigs()}
+      {Object.keys(groupedConfigs).map(k => {
+        return (
+          <OptionsGroup title={k}>
+            <>
+              {groupedConfigs[k].map(c => {
+                return renderEditor(c);
+              })}
+            </>
+          </OptionsGroup>
+        );
+      })}
     </>
   );
 };

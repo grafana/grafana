@@ -204,17 +204,14 @@ $input-bg: $input-black;
 $input-bg-disabled: $dark-6;
 
 $input-color: ${theme.colors.formInputText};
-$input-border-color: $dark-6;
+$input-border-color: ${theme.colors.gray15};
 $input-box-shadow: inset 1px 0px 4px 0px rgba(150, 150, 150, 0.1);
-$input-border-focus: $dark-6 !default;
+$input-border-focus: ${theme.colors.blue95};
 $input-box-shadow-focus: $blue-light !default;
 $input-color-placeholder: ${theme.colors.formInputPlaceholderText};
-$input-label-bg: $gray-blue;
-$input-label-border-color: $dark-6;
+$input-label-bg: ${theme.colors.gray15};
+$input-label-border-color: ${theme.colors.gray15};
 $input-color-select-arrow: $white;
-
-// Input placeholder text color
-$placeholderText: darken($text-color, 25%);
 
 // Search
 $search-shadow: 0 0 30px 0 $black;

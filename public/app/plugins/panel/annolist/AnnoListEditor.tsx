@@ -2,7 +2,8 @@
 import React, { PureComponent, ChangeEvent } from 'react';
 
 // Components
-import { PanelOptionsGroup, PanelOptionsGrid, Switch, FormField, FormLabel } from '@grafana/ui';
+import { PanelOptionsGroup, PanelOptionsGrid, FormField, FormLabel, LegacyForms } from '@grafana/ui';
+const { Switch } = LegacyForms;
 
 import { PanelEditorProps, toIntegerOrUndefined, toNumberString } from '@grafana/data';
 

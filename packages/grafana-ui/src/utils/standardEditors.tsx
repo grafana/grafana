@@ -2,7 +2,7 @@ import React from 'react';
 import {
   DataLink,
   dataLinksOverrideProcessor,
-  FieldPropertyEditorItem,
+  FieldConfigPropertyItem,
   FieldType,
   identityOverrideProcessor,
   NumberFieldConfigSettings,
@@ -17,8 +17,9 @@ import {
   ValueMapping,
   ValueMappingFieldConfigSettings,
   valueMappingsOverrideProcessor,
+  ThresholdsMode,
 } from '@grafana/data';
-import { NumberValueEditor, Forms, StringValueEditor } from '../components';
+import { NumberValueEditor, Forms, StringValueEditor, Select } from '../components';
 import { ValueMappingsValueEditor } from '../components/OptionsUI/mappings';
 import { ThresholdsValueEditor } from '../components/OptionsUI/thresholds';
 import { UnitValueEditor } from '../components/OptionsUI/units';
@@ -30,25 +31,26 @@ import { StatsPickerEditor } from '../components/OptionsUI/stats';
  * Returns collection of common field config properties definitions
  */
 export const getStandardFieldConfigs = () => {
-  const category = ['Field options'];
-
-  const title: FieldPropertyEditorItem<string, StringFieldConfigSettings> = {
+  const category = ['Standard field options'];
+  const title: FieldConfigPropertyItem<any, string, StringFieldConfigSettings> = {
     id: 'title',
+    path: 'title',
     name: 'Title',
     description: "Field's title",
     editor: standardEditorsRegistry.get('text').editor as any,
     override: standardEditorsRegistry.get('text').editor as any,
     process: stringOverrideProcessor,
     settings: {
-      placeholder: 'auto',
+      placeholder: 'none',
       expandTemplateVars: true,
     },
     shouldApply: field => field.type !== FieldType.time,
     category,
   };
 
-  const unit: FieldPropertyEditorItem<string, StringFieldConfigSettings> = {
+  const unit: FieldConfigPropertyItem<any, string, StringFieldConfigSettings> = {
     id: 'unit',
+    path: 'unit',
     name: 'Unit',
     description: 'Value units',
 
@@ -64,8 +66,9 @@ export const getStandardFieldConfigs = () => {
     category,
   };
 
-  const min: FieldPropertyEditorItem<number, NumberFieldConfigSettings> = {
+  const min: FieldConfigPropertyItem<any, number, NumberFieldConfigSettings> = {
     id: 'min',
+    path: 'min',
     name: 'Min',
     description: 'Minimum expected value',
 
@@ -80,8 +83,9 @@ export const getStandardFieldConfigs = () => {
     category,
   };
 
-  const max: FieldPropertyEditorItem<number, NumberFieldConfigSettings> = {
+  const max: FieldConfigPropertyItem<any, number, NumberFieldConfigSettings> = {
     id: 'max',
+    path: 'max',
     name: 'Max',
     description: 'Maximum expected value',
 
@@ -97,8 +101,9 @@ export const getStandardFieldConfigs = () => {
     category,
   };
 
-  const decimals: FieldPropertyEditorItem<number, NumberFieldConfigSettings> = {
+  const decimals: FieldConfigPropertyItem<any, number, NumberFieldConfigSettings> = {
     id: 'decimals',
+    path: 'decimals',
     name: 'Decimals',
     description: 'Number of decimal to be shown for a value',
 
@@ -117,41 +122,45 @@ export const getStandardFieldConfigs = () => {
     category,
   };
 
-  const thresholds: FieldPropertyEditorItem<ThresholdsConfig, ThresholdsFieldConfigSettings> = {
+  const thresholds: FieldConfigPropertyItem<any, ThresholdsConfig, ThresholdsFieldConfigSettings> = {
     id: 'thresholds',
+    path: 'thresholds',
     name: 'Thresholds',
     description: 'Manage thresholds',
 
     editor: standardEditorsRegistry.get('thresholds').editor as any,
     override: standardEditorsRegistry.get('thresholds').editor as any,
     process: thresholdsOverrideProcessor,
-
-    settings: {
-      // ??
+    settings: {},
+    defaultValue: {
+      mode: ThresholdsMode.Absolute,
+      steps: [
+        { value: -Infinity, color: 'green' },
+        { value: 80, color: 'red' },
+      ],
     },
-
     shouldApply: field => field.type === FieldType.number,
     category: ['Color & thresholds'],
   };
 
-  const mappings: FieldPropertyEditorItem<ValueMapping[], ValueMappingFieldConfigSettings> = {
+  const mappings: FieldConfigPropertyItem<any, ValueMapping[], ValueMappingFieldConfigSettings> = {
     id: 'mappings',
+    path: 'mappings',
     name: 'Value mappings',
     description: 'Manage value mappings',
 
     editor: standardEditorsRegistry.get('mappings').editor as any,
     override: standardEditorsRegistry.get('mappings').editor as any,
     process: valueMappingsOverrideProcessor,
-    settings: {
-      // ??
-    },
-
+    settings: {},
+    defaultValue: [],
     shouldApply: field => field.type === FieldType.number,
     category: ['Value mappings'],
   };
 
-  const noValue: FieldPropertyEditorItem<string, StringFieldConfigSettings> = {
+  const noValue: FieldConfigPropertyItem<any, string, StringFieldConfigSettings> = {
     id: 'noValue',
+    path: 'noValue',
     name: 'No Value',
     description: 'What to show when there is no value',
 
@@ -167,8 +176,9 @@ export const getStandardFieldConfigs = () => {
     category,
   };
 
-  const links: FieldPropertyEditorItem<DataLink[], StringFieldConfigSettings> = {
+  const links: FieldConfigPropertyItem<any, DataLink[], StringFieldConfigSettings> = {
     id: 'links',
+    path: 'links',
     name: 'DataLinks',
     description: 'Manage date links',
     editor: standardEditorsRegistry.get('links').editor as any,
@@ -181,8 +191,9 @@ export const getStandardFieldConfigs = () => {
     category: ['Data links'],
   };
 
-  const color: FieldPropertyEditorItem<string, StringFieldConfigSettings> = {
+  const color: FieldConfigPropertyItem<any, string, StringFieldConfigSettings> = {
     id: 'color',
+    path: 'color',
     name: 'Color',
     description: 'Customise color',
     editor: standardEditorsRegistry.get('color').editor as any,
@@ -228,11 +239,7 @@ export const getStandardOptionEditors = () => {
     name: 'Select',
     description: 'Allows option selection',
     editor: props => (
-      <Forms.Select
-        defaultValue={props.value}
-        onChange={e => props.onChange(e.value)}
-        options={props.item.settings?.options}
-      />
+      <Select value={props.value} onChange={e => props.onChange(e.value)} options={props.item.settings?.options} />
     ),
   };
 

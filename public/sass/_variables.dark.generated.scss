@@ -93,7 +93,7 @@ $body-bg: #0b0c0e;
 $page-bg: #141619;
 
 $body-color: #d8d9da;
-$text-color: #d8d9da;
+$text-color: #c7d0d9;
 $text-color-strong: #ffffff;
 $text-color-weak: #8e8e8e;
 $text-color-faint: #222426;
@@ -207,17 +207,14 @@ $input-bg: $input-black;
 $input-bg-disabled: $dark-6;
 
 $input-color: #c7d0d9;
-$input-border-color: $dark-6;
+$input-border-color: #202226;
 $input-box-shadow: inset 1px 0px 4px 0px rgba(150, 150, 150, 0.1);
-$input-border-focus: $dark-6 !default;
+$input-border-focus: #5794f2;
 $input-box-shadow-focus: $blue-light !default;
-$input-color-placeholder: #464c54;
-$input-label-bg: $gray-blue;
-$input-label-border-color: $dark-6;
+$input-color-placeholder: #555555;
+$input-label-bg: #202226;
+$input-label-border-color: #202226;
 $input-color-select-arrow: $white;
-
-// Input placeholder text color
-$placeholderText: darken($text-color, 25%);
 
 // Search
 $search-shadow: 0 0 30px 0 $black;
