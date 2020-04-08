@@ -1,6 +1,6 @@
 module github.com/grafana/grafana
 
-go 1.13
+go 1.14
 
 require (
 	cloud.google.com/go v0.38.0 // indirect
