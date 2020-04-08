@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import { LegacyForms } from '@grafana/ui';
+import { LegacyForms, Icon } from '@grafana/ui';
 import { dashboardPermissionLevels } from 'app/types/acl';
 const { Select } = LegacyForms;
 
@@ -15,7 +15,7 @@ export default class DisabledPermissionListItem extends Component<Props, any> {
     return (
       <tr className="gf-form-disabled">
         <td style={{ width: '1%' }}>
-          <i style={{ width: '25px', height: '25px' }} className="gicon gicon-shield" />
+          <Icon size="lg" name="shield" />
         </td>
         <td style={{ width: '90%' }}>
           {item.name}
@@ -36,7 +36,7 @@ export default class DisabledPermissionListItem extends Component<Props, any> {
         </td>
         <td>
           <button className="btn btn-inverse btn-small">
-            <i className="fa fa-lock" />
+            <Icon name="lock" />
           </button>
         </td>
       </tr>

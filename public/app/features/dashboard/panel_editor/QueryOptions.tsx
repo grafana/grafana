@@ -5,9 +5,9 @@ import React, { PureComponent, ChangeEvent, FocusEvent, ReactText } from 'react'
 import { rangeUtil, DataSourceSelectItem } from '@grafana/data';
 
 // Components
-import { EventsWithValidation, LegacyInputStatus, LegacyForms, Switch, ValidationEvents, FormLabel } from '@grafana/ui';
+import { EventsWithValidation, LegacyInputStatus, LegacyForms, ValidationEvents, FormLabel } from '@grafana/ui';
 import { DataSourceOption } from './DataSourceOption';
-const { Input } = LegacyForms;
+const { Input, Switch } = LegacyForms;
 
 // Types
 import { PanelModel } from '../state';

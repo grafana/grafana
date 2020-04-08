@@ -77,7 +77,7 @@ export class TeamList extends PureComponent<Props, any> {
     return (
       <EmptyListCTA
         title="You haven't created any teams yet."
-        buttonIcon="gicon gicon-team"
+        buttonIcon="users-alt"
         buttonLink="org/teams/new"
         buttonTitle=" New team"
         proTip="Assign folder and dashboard permissions to teams instead of users to ease administration."

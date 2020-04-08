@@ -54,7 +54,7 @@ export const SearchField: React.FunctionComponent<SearchFieldProps> = ({ query, 
       {/* based on it GrafanaCtrl (L256) decides whether or not hide search */}
       <div className={`${styles.wrapper} search-field-wrapper`}>
         <div className={styles.icon}>
-          <i className="fa fa-search" />
+          <Icon name="search" />
         </div>
 
         <input

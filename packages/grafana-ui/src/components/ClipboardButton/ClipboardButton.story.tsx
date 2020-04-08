@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { storiesOf } from '@storybook/react';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { ClipboardButton } from './ClipboardButton';
-import { Input } from '../Input/Input';
+import { Input } from '../Forms/Legacy/Input/Input';
 import { text } from '@storybook/addon-knobs';
 
 const getKnobs = () => {
