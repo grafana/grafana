@@ -3,9 +3,10 @@ import { DataFrame, Field, FieldType } from '@grafana/data';
 import { Column } from 'react-table';
 import { DefaultCell } from './DefaultCell';
 import { BarGaugeCell } from './BarGaugeCell';
-import { BackgroundColoredCell } from './BackgroundColorCell';
-import { TableCellDisplayMode, TableFieldOptions, TableRow } from './types';
-import { TextColorCell } from './TextColorCell';
+import { TableCellDisplayMode, TableCellProps, TableFieldOptions, TableRow } from './types';
+import { css, cx } from 'emotion';
+import { withTableStyles } from './withTableStyles';
+import tinycolor from 'tinycolor2';
 
 export function getTableRows(data: DataFrame): TableRow[] {
   const tableData = [];
@@ -83,13 +84,62 @@ export function getColumns(data: DataFrame, availableWidth: number, columnMinWid
 function getCellComponent(displayMode: TableCellDisplayMode) {
   switch (displayMode) {
     case TableCellDisplayMode.ColorText:
-      return TextColorCell;
+      return withTableStyles(DefaultCell, getTextColorStyle);
     case TableCellDisplayMode.ColorBackground:
-      return BackgroundColoredCell;
+      return withTableStyles(DefaultCell, getBackgroundColorStyle);
     case TableCellDisplayMode.LcdGauge:
     case TableCellDisplayMode.GradientGauge:
       return BarGaugeCell;
     default:
       return DefaultCell;
   }
+}
+
+function getTextColorStyle(props: TableCellProps) {
+  const { field, cell, tableStyles } = props;
+
+  if (!field.display) {
+    return tableStyles;
+  }
+
+  const displayValue = field.display(cell.value);
+  if (!displayValue.color) {
+    return tableStyles;
+  }
+
+  const extendedStyle = css`
+    color: ${displayValue.color};
+  `;
+
+  return {
+    ...tableStyles,
+    tableCell: cx(tableStyles.tableCell, extendedStyle),
+  };
+}
+
+function getBackgroundColorStyle(props: TableCellProps) {
+  const { field, cell, tableStyles } = props;
+  if (!field.display) {
+    return tableStyles;
+  }
+
+  const themeFactor = tableStyles.theme.isDark ? 1 : -0.7;
+  const displayValue = field.display(cell.value);
+
+  const bgColor2 = tinycolor(displayValue.color)
+    .darken(10 * themeFactor)
+    .spin(5)
+    .toRgbString();
+
+  const extendedStyle = css`
+    background: linear-gradient(120deg, ${bgColor2}, ${displayValue.color});
+    color: white;
+    height: ${tableStyles.cellHeight}px;
+    padding: ${tableStyles.cellPadding}px;
+  `;
+
+  return {
+    ...tableStyles,
+    tableCell: cx(tableStyles.tableCell, extendedStyle),
+  };
 }

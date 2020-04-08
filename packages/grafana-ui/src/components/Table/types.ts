@@ -1,6 +1,7 @@
-import { Cell, CellProps } from 'react-table';
+import { CellProps } from 'react-table';
 import { Field } from '@grafana/data';
 import { TableStyles } from './styles';
+import { FC } from 'react';
 
 export interface TableFieldOptions {
   width: number;
@@ -28,5 +29,6 @@ export type ColumnResizeActionCallback = (field: Field, width: number) => void;
 export interface TableCellProps extends CellProps<any> {
   tableStyles: TableStyles;
   field: Field;
-  getExtendedStyle?: (field: Field, cell: Cell, tableStyles: TableStyles) => string;
 }
+
+export type CellComponent = FC<TableCellProps>;
