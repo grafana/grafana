@@ -1,3 +1,5 @@
+import { Action } from 'redux';
+
 export enum DashboardSearchItemType {
   DashDB = 'dash-db',
   DashHome = 'dash-home',
@@ -60,10 +62,9 @@ export interface SectionsState {
 
 export type ItemClickWithEvent = (item: DashboardSectionItem | DashboardSection, event: any) => void;
 
-export type SearchAction = {
-  type: string;
+export interface SearchAction extends Action {
   payload?: any;
-};
+}
 
 export interface OpenSearchParams {
   query?: string;

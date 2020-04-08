@@ -1,4 +1,4 @@
-import { findSelected, getFlattenedSections, markSelected } from './utils';
+import { findSelected, getFlattenedSections, markSelected, mergeReducers } from './utils';
 import { DashboardSection } from './types';
 import { sections } from './testData';
 
@@ -89,6 +89,37 @@ describe('Search utils', () => {
         const found = findSelected(results);
         expect(found.id).toEqual(2);
       });
+    });
+  });
+
+  describe('mergeReducers', () => {
+    const reducer1 = (state: any = { reducer1: false }, action: any) => {
+      if (action.type === 'reducer1') {
+        return { ...state, reducer1: !state.reducer1 };
+      }
+      return state;
+    };
+
+    const reducer2 = (state: any = { reducer2: false }, action: any) => {
+      if (action.type === 'reducer2') {
+        return { ...state, reducer2: !state.reducer2 };
+      }
+      return state;
+    };
+
+    const mergedReducers = mergeReducers([reducer1, reducer2]);
+
+    it('should merge state from all reducers into one without nesting', () => {
+      expect(mergedReducers(undefined, { type: '' })).toEqual({ reducer1: false, reducer2: false });
+    });
+
+    it('should keep the original functionality of mered reducers', () => {
+      expect(mergedReducers(undefined, { type: 'reducer1' })).toEqual({ reducer1: true, reducer2: false });
+    });
+
+    it('should work when state is provided', () => {
+      const state = { reducer1: false, reducer2: true };
+      expect(mergedReducers(state, { type: 'reducer2' })).toEqual({ reducer1: false, reducer2: false });
     });
   });
 });

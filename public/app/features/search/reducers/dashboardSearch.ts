@@ -14,7 +14,7 @@ export const initialState: State = {
   selectedIndex: 0,
 };
 
-export const searchReducer = (state: any, action: SearchAction) => {
+export const searchReducer = (state: any = initialState, action: SearchAction) => {
   switch (action.type) {
     case FETCH_RESULTS: {
       const results = action.payload;

@@ -1,4 +1,4 @@
-import { DashboardSection, DashboardSectionItem } from './types';
+import { DashboardSection, DashboardSectionItem, SearchAction } from './types';
 import { NO_ID_SECTIONS } from './constants';
 import { parse, SearchParserResult } from 'search-query-parser';
 
@@ -96,4 +96,17 @@ export const parseQuery = (query: any) => {
   }
 
   return parsedQuery;
+};
+
+/**
+ * Merge multiple reducers into one, keeping the state structure flat (no nested
+ * separate state for each reducer). If there are multiple state slices with the same
+ * key, the latest reducer's state is applied.
+ * Compared to Redux's combineReducers this allows multiple reducers to operate
+ * on the same state or different slices of the same state. Useful when multiple
+ * components have the same structure but different or extra logic when modifying it
+ * @param reducers
+ */
+export const mergeReducers = (reducers: any[]) => (prevState: any, action: SearchAction) => {
+  return reducers.reduce((nextState, reducer) => ({ ...nextState, ...reducer(prevState, action) }), {});
 };
