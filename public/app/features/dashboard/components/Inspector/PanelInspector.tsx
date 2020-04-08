@@ -1,7 +1,7 @@
 import React, { PureComponent } from 'react';
 import AutoSizer from 'react-virtualized-auto-sizer';
 import { saveAs } from 'file-saver';
-import { css } from 'emotion';
+import { css, cx } from 'emotion';
 
 import { InspectHeader } from './InspectHeader';
 
@@ -197,7 +197,7 @@ export class PanelInspector extends PureComponent<Props, State> {
       return <div>No Data</div>;
     }
 
-    const choices = data.map((frame, index) => {
+    const dataFrames = data.map((frame, index) => {
       return {
         value: index,
         label: `${frame.name} (${index})`,
@@ -216,26 +216,26 @@ export class PanelInspector extends PureComponent<Props, State> {
       })
     );
 
-    console.log(processed);
-
     return (
       <div className={styles.dataTabContent}>
         <div className={styles.toolbar}>
-          {choices.length > 1 && (
-            <div className={styles.dataFrameSelect}>
+          <div className={styles.selects}>
+            {dataFrames.length > 1 && (
+              <div className={styles.select}>
+                <Select
+                  options={dataFrames}
+                  value={dataFrames.find(t => t.value === selected)}
+                  onChange={this.onSelectedFrameChanged}
+                />
+              </div>
+            )}
+            <div className={cx(styles.select, styles.transformationSelect)}>
               <Select
-                options={choices}
-                value={choices.find(t => t.value === selected)}
-                onChange={this.onSelectedFrameChanged}
+                options={transformations}
+                value={transformations.find(t => t.value === transformation)}
+                onChange={this.onSelectedTransformationChanged}
               />
             </div>
-          )}
-          <div className={styles.transformationSelect}>
-            <Select
-              options={transformations}
-              value={transformations.find(t => t.value === transformation)}
-              onChange={this.onSelectedTransformationChanged}
-            />
           </div>
           <div className={styles.downloadCsv}>
             <Button variant="primary" onClick={() => this.exportCsv(processed[selected])}>
@@ -421,11 +421,16 @@ const getStyles = stylesFactory(() => {
       justify-content: flex-end;
       align-items: center;
     `,
-    dataFrameSelect: css`
-      flex-grow: 2;
+    selects: css`
+      flex-grow: 1;
+      display: flex;
+    `,
+    select: css`
+      width: 50%;
+      max-width: 220px;
     `,
     transformationSelect: css`
-      flex-grow: 1;
+      margin-left: 8px;
     `,
     downloadCsv: css`
       margin-left: 16px;
