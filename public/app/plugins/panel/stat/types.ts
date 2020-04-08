@@ -25,7 +25,7 @@ export const justifyModes: Array<SelectableValue<BigValueJustifyMode>> = [
 ];
 
 export function addStandardDataReduceOptions(
-  builder: PanelOptionsEditorBuilder<StatPanelOptions>,
+  builder: PanelOptionsEditorBuilder<SingleStatBaseOptions>,
   includeOrientation = true
 ) {
   builder.addRadio({

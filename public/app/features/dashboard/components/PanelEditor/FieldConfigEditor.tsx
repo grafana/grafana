@@ -143,6 +143,9 @@ export const DefaultFieldConfigEditor: React.FC<Props> = ({ data, onChange, conf
 
   const renderEditor = useCallback(
     (item: FieldConfigPropertyItem) => {
+      if (item.isCustom && item.showIf && !item.showIf(config.defaults.custom)) {
+        return null;
+      }
       const defaults = config.defaults;
       const value = item.isCustom
         ? defaults.custom
