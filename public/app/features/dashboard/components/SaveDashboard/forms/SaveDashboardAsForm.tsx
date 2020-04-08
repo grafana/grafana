@@ -80,7 +80,7 @@ export const SaveDashboardAsForm: React.FC<SaveDashboardFormProps & { isNew?: bo
                 validate: v => {
                   if (v.trim() === '') {
                     return 'Dashboard name is required';
-                  } else if (v && v === getValues().$folder.title.trim()) {
+                  } else if (v && v === getValues().$folder.title?.trim()) {
                     return 'Dashboard name cannot be the same as folder';
                   }
                   return true;
