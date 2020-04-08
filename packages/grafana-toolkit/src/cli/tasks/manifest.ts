@@ -46,6 +46,8 @@ export function convertSha1SumsToManifest(sums: string): ManifestInfo {
   }
   return {
     time: Date.now(),
+    plugin: '<?>',
+    version: '<?>',
     keyId: '<none>',
     files,
   };
@@ -72,8 +74,10 @@ const manifestRunner: TaskRunner<ManifestOptions> = async ({ folder }) => {
   const pluginPath = path.join(folder, 'plugin.json');
   const plugin = require(pluginPath);
   const url = `https://grafana.com/api/plugins/${plugin.id}/sign`;
+  manifest.plugin = plugin.id;
+  manifest.version = plugin.version;
 
-  console.log('Send:', url);
+  console.log('Request Signature:', url);
   const axios = require('axios');
   const info = await axios.post(url, manifest, {
     headers: { Authorization: 'Bearer ' + GRAFANA_API_KEY },
@@ -85,7 +89,7 @@ const manifestRunner: TaskRunner<ManifestOptions> = async ({ folder }) => {
     fs.writeFileSync(outputPath, buffer);
   } else {
     console.warn('Error: ', info);
-    console.log( 'Saving the unsigned manifest' );
+    console.log('Saving the unsigned manifest');
     fs.writeFileSync(outputPath, JSON.stringify(manifest, null, 2));
   }
 };

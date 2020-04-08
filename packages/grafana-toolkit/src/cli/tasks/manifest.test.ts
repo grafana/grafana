@@ -68,7 +68,9 @@ bfcae42976f0feca58eed3636655bce51702d3ed  plugin.json`;
           "plugin.json": "bfcae42976f0feca58eed3636655bce51702d3ed",
         },
         "keyId": "<none>",
+        "plugin": "<?>",
         "time": 12345,
+        "version": "<?>",
       }
     `);
   });

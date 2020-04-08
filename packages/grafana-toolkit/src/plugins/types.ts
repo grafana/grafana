@@ -91,5 +91,7 @@ export interface GitLogInfo {
 export interface ManifestInfo {
   time: number;
   keyId: string;
+  plugin: string;
+  version: string;
   files: Record<string, string>;
 }
