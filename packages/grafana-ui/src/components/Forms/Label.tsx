@@ -64,24 +64,3 @@ export const Label: React.FC<LabelProps> = ({ children, description, className, 
     </div>
   );
 };
-// export const CategorisedLabel: React.FC<LabelProps & { category: string[] }> = ({
-//                                                                                   children,
-//   description,
-//   className,
-//   category,
-//   ...labelProps
-// }) => {
-//   const theme = useTheme();
-//   const styles = getLabelStyles(theme);
-//
-//
-//   return (
-//     <div className={cx(styles.label, className)}>
-//       <label {...labelProps}>
-//         {categories}
-//         {children}
-//       </label>
-//       {description && <span className={styles.description}>{description}</span>}
-//     </div>
-//   );
-// };
