@@ -82,7 +82,7 @@ const getBodyStyles = stylesFactory((theme: GrafanaTheme) => {
 
   return {
     title: css`
-      color: ${theme.colors.text}
+      color: ${theme.colors.text};
       background-color: ${colors.background};
       font-size: ${theme.typography.size.md};
       border: 1px solid transparent;

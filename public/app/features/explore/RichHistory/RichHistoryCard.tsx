@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 import { connect } from 'react-redux';
 import { hot } from 'react-hot-loader';
 import { css, cx } from 'emotion';
-import { stylesFactory, useTheme, TextArea, Button } from '@grafana/ui';
+import { stylesFactory, useTheme, TextArea, Button, Icon } from '@grafana/ui';
+
 import { GrafanaTheme, AppEvents, DataSourceApi } from '@grafana/data';
 import { RichHistoryQuery, ExploreId } from 'app/types/explore';
 import { copyStringToClipboard, createUrlFromRichHistory, createDataQuery } from 'app/core/utils/richHistory';
@@ -76,9 +77,8 @@ const getStyles = stylesFactory((theme: GrafanaTheme, isRemoved: boolean) => {
       display: flex;
       justify-content: flex-end;
       font-size: ${theme.typography.size.base};
-      i {
-        margin: ${theme.spacing.xs};
-        cursor: pointer;
+      svg {
+        margin-left: ${theme.spacing.sm};
       }
     `,
     queryContainer: css`
@@ -212,19 +212,20 @@ export function RichHistoryCard(props: Props) {
 
   const queryActionButtons = (
     <div className={styles.queryActionButtons}>
-      <i
-        className="fa fa-fw fa-comment-o"
+      <Icon
+        name="comment-alt"
         onClick={toggleActiveUpdateComment}
         title={query.comment?.length > 0 ? 'Edit comment' : 'Add comment'}
-      ></i>
-      <i className="fa fa-fw fa-copy" onClick={onCopyQuery} title="Copy query to clipboard"></i>
-      {!isRemoved && <i className="fa fa-fw fa-link" onClick={onCreateLink} title="Copy link to clipboard"></i>}
-      <i className={'fa fa-trash'} title={'Delete query'} onClick={onDeleteQuery}></i>
-      <i
-        className={cx('fa fa-fw', query.starred ? 'fa-star starred' : 'fa-star-o')}
+      />
+      <Icon name="copy" onClick={onCopyQuery} title="Copy query to clipboard" />
+      {!isRemoved && <Icon name="link" onClick={onCreateLink} title="Copy link to clipboard" />}
+      <Icon name="trash-alt" title={'Delete query'} onClick={onDeleteQuery} />
+      <Icon
+        name={query.starred ? 'favorite' : 'star'}
+        type={query.starred ? 'mono' : 'default'}
         onClick={onStarrQuery}
         title={query.starred ? 'Unstar query' : 'Star query'}
-      ></i>
+      />
     </div>
   );
 

@@ -1,8 +1,7 @@
 import React, { FC } from 'react';
 import { css, cx } from 'emotion';
 import { GrafanaTheme } from '@grafana/data';
-import { Icon, stylesFactory, useTheme } from '@grafana/ui';
-import { IconType } from '@grafana/ui/src/components/Icon/types';
+import { Icon, IconName, stylesFactory, useTheme } from '@grafana/ui';
 import { DashboardSection, ItemClickWithEvent } from '../types';
 import { SearchItem } from './SearchItem';
 import { SearchCheckbox } from './SearchCheckbox';
@@ -99,7 +98,7 @@ const SectionHeader: FC<SectionHeaderProps> = ({ section, onSectionClick, onTogg
         checked={section.checked}
         onClick={(e: MouseEvent) => onToggleSelection(section, e)}
       />
-      <Icon className={styles.icon} name={section.icon as IconType} />
+      <Icon className={styles.icon} name={section.icon as IconName} />
 
       <span className={styles.text}>{section.title}</span>
       {section.url && (
@@ -107,7 +106,7 @@ const SectionHeader: FC<SectionHeaderProps> = ({ section, onSectionClick, onTogg
           <Icon name="cog" />
         </a>
       )}
-      <Icon name={section.expanded ? 'angle-down' : 'angle-right'} className={styles.toggle} />
+      <Icon name={section.expanded ? 'angle-down' : 'angle-right'} />
     </div>
   ) : (
     <div className={styles.wrapper} />
@@ -140,7 +139,6 @@ const getSectionHeaderStyles = stylesFactory((theme: GrafanaTheme, selected = fa
       { selected }
     ),
     icon: css`
-      padding: 5px 0;
       width: 43px;
     `,
     text: css`
@@ -152,9 +150,6 @@ const getSectionHeaderStyles = stylesFactory((theme: GrafanaTheme, selected = fa
       color: ${theme.colors.textWeak};
       opacity: 0;
       transition: opacity 150ms ease-in-out;
-    `,
-    toggle: css`
-      padding: 5px;
     `,
   };
 });
