@@ -1,6 +1,7 @@
 import React, { PureComponent, ReactElement } from 'react';
 import Select from './Select';
 import { PopoverContent } from '../../../Tooltip/Tooltip';
+import { Icon } from '../../../Icon/Icon';
 import { SelectableValue } from '@grafana/data';
 
 interface ButtonComponentProps {
@@ -23,8 +24,8 @@ const ButtonComponent = (buttonProps: ButtonComponentProps) => (props: any) => {
       <div className="select-button">
         {iconClass && <i className={`select-button-icon ${iconClass}`} />}
         <span className="select-button-value">{label ? label : ''}</span>
-        {!props.menuIsOpen && <i className="fa fa-caret-down fa-fw" />}
-        {props.menuIsOpen && <i className="fa fa-caret-up fa-fw" />}
+        {!props.menuIsOpen && <Icon name="angle-down" style={{ marginBottom: 0 }} size="lg" />}
+        {props.menuIsOpen && <Icon name="angle-up" style={{ marginBottom: 0 }} size="lg" />}
       </div>
     </div>
   );

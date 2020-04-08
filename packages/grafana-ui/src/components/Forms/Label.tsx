@@ -41,10 +41,7 @@ export const getLabelStyles = stylesFactory((theme: GrafanaTheme) => {
       align-items: center;
     `,
     chevron: css`
-      margin: 0 ${theme.spacing.xs};
-      font-size: 8px;
-      width: 8px;
-      height: 9px;
+      margin: 0 ${theme.spacing.xxs};
     `,
   };
 });
@@ -56,7 +53,7 @@ export const Label: React.FC<LabelProps> = ({ children, description, className, 
     return (
       <span className={styles.categories}>
         <span>{c}</span>
-        <Icon name="chevron-right" className={styles.chevron} />
+        <Icon name="angle-right" className={styles.chevron} />
       </span>
     );
   });

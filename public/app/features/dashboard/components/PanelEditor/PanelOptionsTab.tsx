@@ -84,9 +84,7 @@ export const PanelOptionsTab: FC<Props> = ({
 
   if (plugin.angularPanelCtrl) {
     elements.push(
-      <OptionsGroup title="Display" key="angular plugin editor">
-        <AngularPanelOptions panel={panel} dashboard={dashboard} plugin={plugin} />
-      </OptionsGroup>
+      <AngularPanelOptions panel={panel} dashboard={dashboard} plugin={plugin} key="angular panel options" />
     );
   }
 

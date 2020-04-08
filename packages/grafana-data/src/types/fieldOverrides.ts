@@ -61,6 +61,7 @@ export interface FieldConfigEditorConfig<TOptions, TSettings = any, TValue = any
   settings?: TSettings;
   shouldApply?: (field: Field) => boolean;
   defaultValue?: TValue;
+  showIf?: (currentConfig: TOptions) => boolean;
 }
 
 export interface FieldConfigPropertyItem<TOptions = any, TValue = any, TSettings extends {} = any>

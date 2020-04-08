@@ -37,7 +37,6 @@ func dialGRPCConn(tls *tls.Config, dialer func(string, time.Duration) (net.Conn,
 		grpc.WithDefaultCallOptions(grpc.MaxCallRecvMsgSize(math.MaxInt32)),
 		grpc.WithDefaultCallOptions(grpc.MaxCallSendMsgSize(math.MaxInt32)))
 
-
 	// Connect. Note the first parameter is unused because we use a custom
 	// dialer that has the state to see the address.
 	conn, err := grpc.Dial("unused", opts...)
@@ -61,6 +60,13 @@ func newGRPCClient(doneCtx context.Context, c *Client) (*GRPCClient, error) {
 	broker := newGRPCBroker(brokerGRPCClient, c.config.TLSConfig)
 	go broker.Run()
 	go brokerGRPCClient.StartStream()
+
+	// Start the stdio client
+	stdioClient, err := newGRPCStdioClient(doneCtx, c.logger.Named("stdio"), conn)
+	if err != nil {
+		return nil, err
+	}
+	go stdioClient.Run(c.config.SyncStdout, c.config.SyncStderr)
 
 	cl := &GRPCClient{
 		Conn:       conn,

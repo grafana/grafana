@@ -26,26 +26,34 @@ export const PanelOptionsEditor: React.FC<PanelOptionsEditorProps<any>> = ({ plu
   return (
     <>
       {Object.keys(optionEditors).map(c => {
-        return (
+        const optionsToShow = optionEditors[c]
+          .map((e, i) => {
+            if (e.showIf && !e.showIf(options)) {
+              return null;
+            }
+
+            const label = (
+              <Forms.Label description={e.description} category={e.category?.slice(1)}>
+                {e.name}
+              </Forms.Label>
+            );
+            return (
+              <Forms.Field label={label} key={`${e.id}/i`}>
+                <e.editor
+                  value={lodashGet(options, e.path)}
+                  onChange={value => onOptionChange(e.path, value)}
+                  item={e}
+                />
+              </Forms.Field>
+            );
+          })
+          .filter(e => e !== null);
+
+        return optionsToShow.length > 0 ? (
           <OptionsGroup title={c} defaultToClosed>
-            {optionEditors[c].map(e => {
-              const label = (
-                <Forms.Label description={e.description} category={e.category?.slice(1)}>
-                  {e.name}
-                </Forms.Label>
-              );
-              return (
-                <Forms.Field label={label}>
-                  <e.editor
-                    value={lodashGet(options, e.path)}
-                    onChange={value => onOptionChange(e.path, value)}
-                    item={e}
-                  />
-                </Forms.Field>
-              );
-            })}
+            <div>{optionsToShow}</div>
           </OptionsGroup>
-        );
+        ) : null;
       })}
     </>
   );

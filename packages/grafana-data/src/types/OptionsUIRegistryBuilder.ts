@@ -11,6 +11,7 @@ export interface OptionsEditorItem<TOptions, TSettings, TEditorProps, TValue> ex
   settings?: TSettings;
   category?: string[];
   defaultValue?: TValue;
+  showIf?: (currentConfig: TOptions) => boolean;
 }
 
 /**

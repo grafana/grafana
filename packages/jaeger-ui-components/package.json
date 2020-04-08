@@ -34,7 +34,6 @@
     "lru-memoize": "^1.1.0",
     "memoize-one": "^5.0.0",
     "moment": "^2.18.1",
-    "react": "^16.3.2",
     "react-icons": "2.2.7",
     "recompose": "^0.25.0",
     "tween-functions": "^1.2.0"
