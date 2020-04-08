@@ -123,7 +123,7 @@ export const Collapse: FunctionComponent<Props> = ({ isOpen, label, loading, col
     <div className={panelClass}>
       <div className={headerClass} onClick={onClickToggle}>
         <div className={headerButtonsClass}>
-          <Icon name={isOpen ? 'caret-up' : 'caret-down'} />
+          <Icon name={isOpen ? 'angle-up' : 'angle-down'} />
         </div>
         <div className={cx([style.headerLabel])}>{label}</div>
       </div>

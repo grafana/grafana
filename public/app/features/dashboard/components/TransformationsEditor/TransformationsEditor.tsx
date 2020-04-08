@@ -120,7 +120,7 @@ export class TransformationsEditor extends React.PureComponent<Props, State> {
         </p>
         {this.renderTransformationEditors()}
         {this.renderTransformationSelector()}
-        <Button variant="secondary" icon="fa fa-plus" onClick={() => this.setState({ addingTransformation: true })}>
+        <Button variant="secondary" icon="plus-circle" onClick={() => this.setState({ addingTransformation: true })}>
           Add transformation
         </Button>
       </div>

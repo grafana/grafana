@@ -1,6 +1,6 @@
 module github.com/grafana/grafana
 
-go 1.13
+go 1.14
 
 replace github.com/grafana/grafana-plugin-sdk-go => github.com/grafana/grafana-plugin-sdk-go v0.37.1-0.20200407221904-8a55f2f6e8c0
 
