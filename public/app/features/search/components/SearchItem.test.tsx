@@ -19,6 +19,7 @@ const data = {
 
 const setup = (propOverrides?: Partial<Props>, renderMethod = shallow) => {
   const props: Props = {
+    //@ts-ignore
     item: data,
     onToggleSelection: jest.fn(),
     onTagSelected: jest.fn(),

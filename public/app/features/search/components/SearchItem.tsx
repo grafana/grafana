@@ -11,34 +11,40 @@ import { SearchCheckbox } from './SearchCheckbox';
 export interface Props {
   item: DashboardSectionItem;
   editable?: boolean;
-  onToggleSelection: ItemClickWithEvent;
+  onToggleSelection?: ItemClickWithEvent;
   onTagSelected: (name: string) => any;
 }
 
 const { selectors } = e2e.pages.Dashboards;
 
-export const SearchItem: FC<Props> = ({ item, editable, onToggleSelection, onTagSelected }) => {
+export const SearchItem: FC<Props> = ({ item, editable, onToggleSelection = () => {}, onTagSelected }) => {
   const theme = useTheme();
   const styles = getResultsItemStyles(theme);
-  const inputEl = useRef(null);
+  const inputEl = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    inputEl.current.addEventListener('click', (event: MouseEvent) => {
+    const preventDef = (event: MouseEvent) => {
       // manually prevent default on TagList click, as doing it via normal onClick doesn't work inside angular
       event.preventDefault();
-    });
+    };
+    if (inputEl.current) {
+      inputEl.current.addEventListener('click', preventDef);
+    }
+    return () => {
+      inputEl.current!.removeEventListener('click', preventDef);
+    };
   }, []);
 
   const onItemClick = () => {
     //Check if one string can be found in the other
     if (window.location.pathname.includes(item.url) || item.url.includes(window.location.pathname)) {
-      appEvents.emit(CoreEvents.hideDashSearch);
+      appEvents.emit(CoreEvents.hideDashSearch, { target: 'search-item' });
     }
   };
 
-  const tagSelected = (tag: string, event: React.MouseEvent<HTMLElement>) => {
+  const tagSelected = useCallback((tag: string, event: React.MouseEvent<HTMLElement>) => {
     onTagSelected(tag);
-  };
+  }, []);
 
   const toggleItem = useCallback(
     (event: React.MouseEvent<HTMLElement>) => {
