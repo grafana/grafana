@@ -40,14 +40,6 @@ export const DashboardSearch: FC<Props> = ({ onCloseSearch, payload = {} }) => {
   const theme = useTheme();
   const styles = getStyles(theme);
 
-  useDebounce(
-    () => {
-      search();
-    },
-    300,
-    [query]
-  );
-
   const search = () => {
     let folderIds: number[] = [];
     if (query.parsedQuery.folder === 'current') {
@@ -60,6 +52,8 @@ export const DashboardSearch: FC<Props> = ({ onCloseSearch, payload = {} }) => {
       dispatch({ type: FETCH_RESULTS, payload: results });
     });
   };
+
+  useDebounce(search, 300, [query]);
 
   const onToggleSection = (section: DashboardSection) => {
     if (hasId(section.title) && !section.items.length) {
