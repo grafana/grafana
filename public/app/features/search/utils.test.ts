@@ -110,16 +110,15 @@ describe('Search utils', () => {
     const mergedReducers = mergeReducers([reducer1, reducer2]);
 
     it('should merge state from all reducers into one without nesting', () => {
-      expect(mergedReducers(undefined, { type: '' })).toEqual({ reducer1: false, reducer2: false });
+      expect(mergedReducers({ reducer1: false }, { type: '' })).toEqual({ reducer1: false });
     });
 
-    it('should keep the original functionality of mered reducers', () => {
-      expect(mergedReducers(undefined, { type: 'reducer1' })).toEqual({ reducer1: true, reducer2: false });
-    });
-
-    it('should work when state is provided', () => {
+    it('should correctly set state from multiple reducers', () => {
       const state = { reducer1: false, reducer2: true };
-      expect(mergedReducers(state, { type: 'reducer2' })).toEqual({ reducer1: false, reducer2: false });
+      const newState = mergedReducers(state, { type: 'reducer2' });
+      expect(newState).toEqual({ reducer1: false, reducer2: false });
+      const newState2 = mergedReducers(newState, { type: 'reducer1' });
+      expect(newState2).toEqual({ reducer1: true, reducer2: false });
     });
   });
 });

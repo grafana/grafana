@@ -1,6 +1,7 @@
 import { FETCH_ITEMS, FETCH_RESULTS, TOGGLE_SECTION, MOVE_SELECTION_DOWN, MOVE_SELECTION_UP } from './actionTypes';
 import { searchReducer as reducer, initialState } from './dashboardSearch';
 import { searchResults, sections } from '../testData';
+import { DashboardSection } from '../types';
 
 describe('Dashboard Search reducer', () => {
   it('should return the initial state', () => {
@@ -13,9 +14,15 @@ describe('Dashboard Search reducer', () => {
   });
 
   it('should toggle selected section', () => {
-    const newState = reducer({ loading: false, results: sections }, { type: TOGGLE_SECTION, payload: sections[5] });
+    const newState = reducer(
+      { selectedIndex: 0, loading: false, results: sections as DashboardSection[] },
+      { type: TOGGLE_SECTION, payload: sections[5] }
+    );
     expect(newState.results[5].expanded).toBeFalsy();
-    const newState2 = reducer({ loading: false, results: sections }, { type: TOGGLE_SECTION, payload: sections[1] });
+    const newState2 = reducer(
+      { selectedIndex: 0, loading: false, results: sections as DashboardSection[] },
+      { type: TOGGLE_SECTION, payload: sections[1] }
+    );
     expect(newState2.results[1].expanded).toBeTruthy();
   });
 
@@ -37,7 +44,7 @@ describe('Dashboard Search reducer', () => {
       },
     ];
     const newState = reducer(
-      { loading: false, results: sections },
+      { selectedIndex: 0, loading: false, results: sections as DashboardSection[] },
       {
         type: FETCH_ITEMS,
         payload: {
@@ -51,7 +58,7 @@ describe('Dashboard Search reducer', () => {
 
   it('should handle MOVE_SELECTION_DOWN', () => {
     const newState = reducer(
-      { loading: false, selectedIndex: 0, results: sections },
+      { loading: false, selectedIndex: 0, results: sections as DashboardSection[] },
       {
         type: MOVE_SELECTION_DOWN,
       }
@@ -69,7 +76,7 @@ describe('Dashboard Search reducer', () => {
 
     // Shouldn't go over the visible results length - 1 (9)
     const newState3 = reducer(
-      { loading: false, selectedIndex: 9, results: sections },
+      { loading: false, selectedIndex: 9, results: sections as DashboardSection[] },
       {
         type: MOVE_SELECTION_DOWN,
       }
@@ -80,7 +87,7 @@ describe('Dashboard Search reducer', () => {
   it('should handle MOVE_SELECTION_UP', () => {
     // shouldn't move beyond 0
     const newState = reducer(
-      { loading: false, selectedIndex: 0, results: sections },
+      { loading: false, selectedIndex: 0, results: sections as DashboardSection[] },
       {
         type: MOVE_SELECTION_UP,
       }
@@ -89,7 +96,7 @@ describe('Dashboard Search reducer', () => {
     expect(newState.selectedIndex).toEqual(0);
 
     const newState2 = reducer(
-      { loading: false, selectedIndex: 3, results: sections },
+      { loading: false, selectedIndex: 3, results: sections as DashboardSection[] },
       {
         type: MOVE_SELECTION_UP,
       }

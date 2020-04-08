@@ -7,7 +7,7 @@ import { SearchSrv } from 'app/core/services/search_srv';
 import { SearchAction } from '../types';
 import { mergeReducers } from '../utils';
 
-export interface InitialState {
+export interface State {
   canMove: boolean;
   canDelete: boolean;
   canSave: boolean;
@@ -15,7 +15,7 @@ export interface InitialState {
   hasEditPermissionInFolders: boolean;
 }
 
-const initialState: InitialState = {
+const initialState: State = {
   canMove: false,
   canDelete: false,
   canSave: false,
@@ -24,7 +24,7 @@ const initialState: InitialState = {
 };
 
 export const TOGGLE_FOLDER_CAN_SAVE = 'TOGGLE_CAN_SAVE';
-const manageDashboardsReducer = (state: InitialState = initialState, action: SearchAction) => {
+const manageDashboardsReducer = (state: State, action: SearchAction) => {
   switch (action.type) {
     case TOGGLE_FOLDER_CAN_SAVE:
       return { ...state, canSave: action.payload };
@@ -86,6 +86,5 @@ export const ManageDashboards: FC<Props> = ({ folderId, folderUid }) => {
   };
 
   useDebounce(search, 300, [query]);
-
   return <div />;
 };

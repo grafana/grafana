@@ -104,9 +104,11 @@ export const parseQuery = (query: any) => {
  * key, the latest reducer's state is applied.
  * Compared to Redux's combineReducers this allows multiple reducers to operate
  * on the same state or different slices of the same state. Useful when multiple
- * components have the same structure but different or extra logic when modifying it
+ * components have the same structure but different or extra logic when modifying it.
+ * If reducers have the same action types, the action types from the rightmost reducer
+ * take precedence
  * @param reducers
  */
 export const mergeReducers = (reducers: any[]) => (prevState: any, action: SearchAction) => {
-  return reducers.reduce((nextState, reducer) => ({ ...nextState, ...reducer(prevState, action) }), {});
+  return reducers.reduce((nextState, reducer) => ({ ...nextState, ...reducer(nextState, action) }), prevState);
 };
