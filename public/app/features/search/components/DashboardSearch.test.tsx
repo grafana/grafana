@@ -21,7 +21,7 @@ afterEach(() => {
 describe('DashboardSearch', () => {
   it('should call search api with default query when initialised', async () => {
     await act(async () => {
-      mount(<DashboardSearch closeSearch={() => {}} />);
+      mount(<DashboardSearch onCloseSearch={() => {}} />);
       jest.runAllTimers();
     });
 
@@ -39,7 +39,7 @@ describe('DashboardSearch', () => {
   it('should call api with updated query on query change', async () => {
     let wrapper: any;
     await act(async () => {
-      wrapper = mount(<DashboardSearch closeSearch={() => {}} />);
+      wrapper = mount(<DashboardSearch onCloseSearch={() => {}} />);
       jest.runAllTimers();
     });
 
@@ -61,7 +61,7 @@ describe('DashboardSearch', () => {
   it("should render 'No results' message when there are no dashboards", async () => {
     let wrapper: any;
     await act(async () => {
-      wrapper = mount(<DashboardSearch closeSearch={() => {}} />);
+      wrapper = mount(<DashboardSearch onCloseSearch={() => {}} />);
       jest.runAllTimers();
     });
     wrapper.update();
@@ -74,7 +74,7 @@ describe('DashboardSearch', () => {
     mockSearch.mockImplementation(() => Promise.resolve(searchResults));
     let wrapper: any;
     await act(async () => {
-      wrapper = mount(<DashboardSearch closeSearch={() => {}} />);
+      wrapper = mount(<DashboardSearch onCloseSearch={() => {}} />);
       jest.runAllTimers();
     });
     wrapper.update();
@@ -85,7 +85,7 @@ describe('DashboardSearch', () => {
   it('should call search with selected tags', async () => {
     let wrapper: any;
     await act(async () => {
-      wrapper = mount(<DashboardSearch closeSearch={() => {}} />);
+      wrapper = mount(<DashboardSearch onCloseSearch={() => {}} />);
       jest.runAllTimers();
     });
 

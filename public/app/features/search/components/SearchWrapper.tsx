@@ -34,7 +34,7 @@ export const SearchWrapper: FC = () => {
     isOpen && (
       <>
         <div className="search-backdrop" />
-        <DashboardSearch closeSearch={() => setIsOpen(false)} payload={payload} />
+        <DashboardSearch onCloseSearch={() => setIsOpen(false)} payload={payload} />
       </>
     )
   );
