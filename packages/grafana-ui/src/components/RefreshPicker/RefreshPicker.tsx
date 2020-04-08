@@ -88,7 +88,7 @@ export class RefreshPickerBase extends PureComponent<Props> {
                 className="btn btn--radius-right-0 navbar-button navbar-button--border-right-0"
                 onClick={onRefresh!}
               >
-                <Icon name="sync" />
+                <Icon name="sync" size="lg" />
               </button>
             </Tooltip>
           )}

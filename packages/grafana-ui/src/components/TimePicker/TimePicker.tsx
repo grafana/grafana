@@ -161,9 +161,9 @@ export class UnthemedTimePicker extends PureComponent<Props, State> {
           <div>
             <Tooltip content={<TimePickerTooltip timeRange={value} />} placement="bottom">
               <button aria-label="TimePicker Open Button" className={timePickerButtonClass} onClick={this.onOpen}>
-                <Icon name="clock-nine" className={cx(styles.clockIcon, timePickerIconClass)} />
+                <Icon name="clock-nine" className={cx(styles.clockIcon, timePickerIconClass)} size="lg" />
                 <TimePickerButtonLabel {...this.props} />
-                <span className={styles.caretIcon}>{<Icon name={isOpen ? 'angle-up' : 'angle-down'} />}</span>
+                <span className={styles.caretIcon}>{<Icon name={isOpen ? 'angle-up' : 'angle-down'} size="lg" />}</span>
               </button>
             </Tooltip>
             {isOpen && (
@@ -184,13 +184,13 @@ export class UnthemedTimePicker extends PureComponent<Props, State> {
 
           {hasAbsolute && (
             <button className="btn navbar-button navbar-button--tight" onClick={onMoveForward}>
-              <Icon name="angle-right" />
+              <Icon name="angle-right" size="lg" />
             </button>
           )}
 
           <Tooltip content={ZoomOutTooltip} placement="bottom">
             <button className="btn navbar-button navbar-button--zoom" onClick={onZoom}>
-              <Icon name="search-minus" />
+              <Icon name="search-minus" size="lg" />
             </button>
           </Tooltip>
         </div>

@@ -204,7 +204,7 @@ export class UnConnectedExploreToolbar extends PureComponent<Props> {
                 <span className="navbar-page-btn">
                   <Icon
                     name="compass"
-                    size="xl"
+                    size="lg"
                     className={css`
                       margin-right: 6px;
                       margin-bottom: 3px;
