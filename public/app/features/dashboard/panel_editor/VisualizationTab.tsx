@@ -164,7 +164,7 @@ export class VisualizationTab extends PureComponent<Props, State> {
           <div className="toolbar__main" onClick={this.onOpenVizPicker}>
             <img className="toolbar__main-image" src={meta.info.logos.small} />
             <div className="toolbar__main-name">{meta.name}</div>
-            <Icon name="angle-down" />
+            <Icon name="angle-down" style={{ marginLeft: '4px', marginBottom: 0 }} />
           </div>
           <PluginStateinfo state={meta.state} />
         </>

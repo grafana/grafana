@@ -34,7 +34,7 @@ export const FormLabel: FunctionComponent<Props> = ({
       {tooltip && (
         <Tooltip placement="top" content={tooltip} theme={'info'}>
           <div className="gf-form-help-icon gf-form-help-icon--right-normal">
-            <Icon name="info-circle" size="sm" style={{ marginBottom: 0 }} />
+            <Icon name="info-circle" size="xs" style={{ marginBottom: 0, marginLeft: '10px' }} />
           </div>
         </Tooltip>
       )}

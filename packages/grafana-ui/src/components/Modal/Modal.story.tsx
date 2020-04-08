@@ -5,7 +5,7 @@ import { text, boolean } from '@storybook/addon-knobs';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { UseState } from '../../utils/storybook/UseState';
 import { Modal } from './Modal';
-import { Icon } from '/../Icon/Icon';
+import { Icon } from '../Icon/Icon';
 import { ModalTabsHeader } from './ModalTabsHeader';
 import { TabContent } from '../Tabs/TabContent';
 

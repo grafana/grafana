@@ -199,7 +199,6 @@ export const getAvailableIcons = (): IconName[] => [
   'import',
   'folder-open',
   'file-copy-alt',
-  'file-alt',
   'arrow-down',
   'filter',
   'arrow-up',

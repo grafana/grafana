@@ -84,15 +84,15 @@ exports[`UserPicker renders correctly 1`] = `
           className="gf-form-select-box__indicators css-q46mcr-IndicatorsContainer"
         >
           <div
-            className="css-z4i1sc"
+            className="css-1cvxpvr"
           >
             <svg
-              className="css-pu0bzu"
+              className="css-cl2p4e"
               fill="currentColor"
               height={16}
               style={
                 Object {
-                  "marginTop": "9px",
+                  "marginTop": "7px",
                 }
               }
               viewBox="0 0 24 24"
