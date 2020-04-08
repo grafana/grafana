@@ -356,7 +356,7 @@ WHERE
 
 **Example region query using time and timeend columns with epoch values:**
 
-From Grafana v6.6, region annotations (with a `timeend`) are supported in the PostgreSQL plugin.
+> Only available in Grafana v6.6+.
 
 ```sql
 SELECT
