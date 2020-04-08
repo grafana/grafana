@@ -112,7 +112,7 @@ export class PanelHeader extends Component<Props, State> {
             <span className="fa fa-info-circle" style={{ marginRight: '8px', cursor: 'pointer' }} />
           </div>
         ) : (
-          <a className="panel-info-notice" href={notice.url} target="_blank">
+          <a className="panel-info-notice" href={notice.link} target="_blank">
             <span className="fa fa-info-circle" style={{ marginRight: '8px', cursor: 'pointer' }} />
           </a>
         )}
