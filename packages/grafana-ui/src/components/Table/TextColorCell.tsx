@@ -1,26 +1,27 @@
 import React, { FC } from 'react';
 import { css } from 'emotion';
-import { formattedValueToString } from '@grafana/data';
+import { Field } from '@grafana/data';
 
 import { TableCellProps } from './types';
+import { DefaultCell } from './DefaultCell';
+import { Cell } from 'react-table';
+import { TableStyles } from './styles';
 
 export const TextColorCell: FC<TableCellProps> = props => {
-  const { field, cell, tableStyles } = props;
+  return <DefaultCell {...props} getExtendedStyle={getTextColorStyle} />;
+};
 
+function getTextColorStyle(field: Field, cell: Cell, tableStyles: TableStyles) {
   if (!field.display) {
-    return null;
+    return tableStyles.tableCell;
   }
 
   const displayValue = field.display(cell.value);
-
   if (!displayValue.color) {
-    return <div className={tableStyles.tableCell}>{formattedValueToString(displayValue)}</div>;
+    return tableStyles.tableCell;
   }
 
-  const style = css`
-    ${tableStyles.tableCell};
+  return css`
     color: ${displayValue.color};
   `;
-
-  return <div className={style}>{formattedValueToString(displayValue)}</div>;
-};
+}
