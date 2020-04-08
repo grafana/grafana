@@ -1,7 +1,7 @@
 import React, { FC, useContext } from 'react';
 import { css } from 'emotion';
 import { Modal } from '../Modal/Modal';
-import { IconType } from '../Icon/types';
+import { IconName } from '../../types';
 import { Button } from '../Button';
 import { stylesFactory, ThemeContext } from '../../themes';
 import { GrafanaTheme } from '@grafana/data';
@@ -22,7 +22,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => ({
   `,
 }));
 
-const defaultIcon: IconType = 'exclamation-triangle';
+const defaultIcon: IconName = 'exclamation-triangle';
 
 interface Props {
   isOpen: boolean;
@@ -30,7 +30,7 @@ interface Props {
   body: React.ReactNode;
   confirmText: string;
   dismissText?: string;
-  icon?: IconType;
+  icon?: IconName;
   onConfirm(): void;
   onDismiss(): void;
 }

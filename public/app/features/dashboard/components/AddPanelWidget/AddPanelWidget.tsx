@@ -2,6 +2,7 @@
 import React from 'react';
 import _ from 'lodash';
 import { LocationUpdate } from '@grafana/runtime';
+import { Icon, IconName } from '@grafana/ui';
 import { e2e } from '@grafana/e2e';
 import { connect, MapDispatchToProps } from 'react-redux';
 // Utils
@@ -132,7 +133,7 @@ export class AddPanelWidgetUnconnected extends React.Component<Props, State> {
     dashboard.removePanel(this.props.panel);
   };
 
-  renderOptionLink = (icon: string, text: string, onClick: any) => {
+  renderOptionLink = (icon: IconName, text: string, onClick: any) => {
     return (
       <div>
         <a
@@ -142,7 +143,7 @@ export class AddPanelWidgetUnconnected extends React.Component<Props, State> {
           aria-label={e2e.pages.AddDashboard.selectors.ctaButtons(text)}
         >
           <div className="add-panel-widget__icon">
-            <i className={`gicon gicon-${icon}`} />
+            <Icon name={icon} size="xl" />
           </div>
           <span>{text}</span>
         </a>
@@ -157,10 +158,10 @@ export class AddPanelWidgetUnconnected extends React.Component<Props, State> {
       <div className="panel-container add-panel-widget-container">
         <div className="add-panel-widget">
           <div className="add-panel-widget__header grid-drag-handle">
-            <i className="gicon gicon-add-panel" />
+            <Icon name="panel-add" type="mono" size="xl" style={{ margin: '4px', marginRight: '8px' }} />
             <span className="add-panel-widget__title">New Panel</span>
             <button className="add-panel-widget__close" onClick={this.handleCloseAddPanel}>
-              <i className="fa fa-close" />
+              <Icon name="times" />
             </button>
           </div>
           <div className="add-panel-widget__btn-container">

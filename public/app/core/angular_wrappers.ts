@@ -16,6 +16,7 @@ import {
   SecretFormField,
   SeriesColorPickerPopoverWithTheme,
   UnitPicker,
+  Icon,
 } from '@grafana/ui';
 import { FunctionEditor } from 'app/plugins/datasource/graphite/FunctionEditor';
 import ReactProfileWrapper from 'app/features/profile/ReactProfileWrapper';
@@ -32,6 +33,13 @@ import { SearchField, SearchResults, SearchResultsFilter } from '../features/sea
 
 export function registerAngularDirectives() {
   react2AngularDirective('footer', Footer, []);
+  react2AngularDirective('icon', Icon, [
+    'color',
+    'name',
+    'size',
+    'type',
+    ['onClick', { watchDepth: 'reference', wrapApply: true }],
+  ]);
   react2AngularDirective('helpModal', HelpModal, []);
   react2AngularDirective('sidemenu', SideMenu, []);
   react2AngularDirective('functionEditor', FunctionEditor, ['func', 'onRemove', 'onMoveLeft', 'onMoveRight']);
