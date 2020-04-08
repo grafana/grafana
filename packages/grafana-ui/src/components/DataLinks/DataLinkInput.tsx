@@ -9,7 +9,7 @@ import { Editor } from '@grafana/slate-react';
 import { Value } from 'slate';
 import Plain from 'slate-plain-serializer';
 import { Popper as ReactPopper } from 'react-popper';
-import { css, cx } from 'emotion';
+import { css } from 'emotion';
 
 import { SlatePrism } from '../../slate-plugins';
 import { SCHEMA } from '../../utils/slate';
