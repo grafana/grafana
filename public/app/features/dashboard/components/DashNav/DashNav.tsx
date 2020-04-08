@@ -1,5 +1,5 @@
 // Libaries
-import React, { PureComponent } from 'react';
+import React, { PureComponent, FC } from 'react';
 import { connect } from 'react-redux';
 import { e2e } from '@grafana/e2e';
 // Utils & Services
@@ -26,6 +26,12 @@ export interface OwnProps {
   $injector: any;
   updateLocation: typeof updateLocation;
   onAddPanel: () => void;
+}
+
+const customNavbarContent: Array<FC<Partial<OwnProps>>> = [];
+
+export function addNavbarContent(content: FC<Partial<OwnProps>>) {
+  customNavbarContent.push(content);
 }
 
 export interface StateProps {
@@ -163,6 +169,10 @@ export class DashNav extends PureComponent<Props> {
             />
           </div>
         )}
+
+        {customNavbarContent.map((Component, index) => (
+          <Component {...this.props} key={`navbar-custom-content-${index}`} />
+        ))}
 
         <div className="navbar-buttons navbar-buttons--actions">
           {canSave && (
