@@ -112,7 +112,7 @@ export class PanelHeader extends Component<Props, State> {
             <Icon name="info-circle" style={{ marginRight: '8px' }} />
           </div>
         ) : (
-          <a className="panel-info-notice" href={notice.url} target="_blank">
+          <a className="panel-info-notice" href={notice.link} target="_blank">
             <Icon name="info-circle" style={{ marginRight: '8px' }} />
           </a>
         )}
