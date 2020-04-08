@@ -1,6 +1,7 @@
 import omit from 'lodash/omit';
 import React, { InputHTMLAttributes, FunctionComponent } from 'react';
 import { FormField } from '../FormField/FormField';
+import { Button } from '../Button/Button';
 import { css, cx } from 'emotion';
 
 interface Props extends Omit<InputHTMLAttributes<HTMLInputElement>, 'onReset'> {
@@ -61,13 +62,9 @@ export const SecretFormField: FunctionComponent<Props> = ({
               value="configured"
               {...omit(inputProps, 'value')}
             />
-            <button
-              className={cx('btn btn-secondary gf-form-btn', styles.noRadiusButton)}
-              onClick={onReset}
-              style={{ height: '100%' }}
-            >
-              reset
-            </button>
+            <Button onClick={onReset} variant="secondary">
+              Reset
+            </Button>
           </>
         ) : (
           <input
