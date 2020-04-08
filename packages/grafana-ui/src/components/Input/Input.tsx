@@ -246,7 +246,7 @@ export const Input = React.forwardRef<HTMLInputElement, Props>((props, ref) => {
 
         {(suffix || loading) && (
           <div className={styles.suffix} ref={suffixRef}>
-            {loading && <Icon name="spinner" className={cx('fa-spin', styles.loadingIndicator)} />}
+            {loading && <Icon name="fa fa-spinner" className={cx('fa-spin', styles.loadingIndicator)} />}
             {suffix}
           </div>
         )}

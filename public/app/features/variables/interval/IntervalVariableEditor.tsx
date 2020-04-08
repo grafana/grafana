@@ -2,7 +2,8 @@ import React, { ChangeEvent, FocusEvent, PureComponent } from 'react';
 
 import { IntervalVariableModel } from '../../templating/types';
 import { VariableEditorProps } from '../editor/types';
-import { FormLabel, Switch } from '@grafana/ui';
+import { FormLabel, LegacyForms } from '@grafana/ui';
+const { Switch } = LegacyForms;
 
 export interface Props extends VariableEditorProps<IntervalVariableModel> {}
 

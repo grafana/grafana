@@ -5,7 +5,6 @@ import React, { PureComponent } from 'react';
 // Types
 import { FieldConfig, PanelEditorProps } from '@grafana/data';
 import {
-  Switch,
   LegendOptions,
   GraphTooltipOptions,
   PanelOptionsGrid,
@@ -13,7 +12,7 @@ import {
   LegacyForms,
   FieldPropertiesEditor,
 } from '@grafana/ui';
-const { Select } = LegacyForms;
+const { Select, Switch } = LegacyForms;
 import { Options, GraphOptions } from './types';
 import { GraphLegendEditor } from './GraphLegendEditor';
 import { NewPanelEditorContext } from 'app/features/dashboard/components/PanelEditor/PanelEditor';
