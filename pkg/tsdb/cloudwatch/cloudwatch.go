@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"regexp"
+	"sync"
 
 	"github.com/aws/aws-sdk-go/aws/request"
 	"github.com/aws/aws-sdk-go/service/cloudwatch"
@@ -18,11 +19,50 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb"
 )
 
+var (
+	// In order to properly cache sessions per-datasource we need to
+	// keep a state for each datasource.
+	executors     = make(map[int64]*CloudWatchExecutor)
+	executor_lock = sync.Mutex{}
+)
+
 type CloudWatchExecutor struct {
 	*models.DataSource
+
+	// sessions caches our aws-sdk-go session on a region basis.
+	sessions *sessionCache
+
+	// We cache custom metrics and dimensions on a per-datasource per-version basis
+	// These are of type (profile -> region -> namespace
+	customMetricsMetricsMap    map[string]map[string]map[string]*CustomMetricsCache
+	metricsCacheLock           sync.Mutex
+	customMetricsDimensionsMap map[string]map[string]map[string]*CustomMetricsCache
+	dimensionsCacheLock        sync.Mutex
+}
+
+func getExecutor(dsInfo *models.DataSource) *CloudWatchExecutor {
+	executor_lock.Lock()
+	defer executor_lock.Unlock()
+
+	// If the version has been updated we want to break the cache
+	if exec := executors[dsInfo.Id]; exec != nil && exec.DataSource.Version >= dsInfo.Version {
+		return exec
+	}
+
+	exec := &CloudWatchExecutor{
+		DataSource:                 dsInfo,
+		sessions:                   newSessionCache(),
+		customMetricsMetricsMap:    make(map[string]map[string]map[string]*CustomMetricsCache),
+		customMetricsDimensionsMap: make(map[string]map[string]map[string]*CustomMetricsCache),
+	}
+
+	executors[dsInfo.Id] = exec
+	return exec
 }
 
 type DatasourceInfo struct {
+	Id int64
+
 	Profile       string
 	Region        string
 	AuthType      string
@@ -34,7 +74,7 @@ type DatasourceInfo struct {
 }
 
 func NewCloudWatchExecutor(dsInfo *models.DataSource) (tsdb.TsdbQueryEndpoint, error) {
-	return &CloudWatchExecutor{}, nil
+	return getExecutor(dsInfo), nil
 }
 
 var (
@@ -50,7 +90,6 @@ func init() {
 
 func (e *CloudWatchExecutor) Query(ctx context.Context, dsInfo *models.DataSource, queryContext *tsdb.TsdbQuery) (*tsdb.Response, error) {
 	var result *tsdb.Response
-	e.DataSource = dsInfo
 	queryType := queryContext.Queries[0].Model.Get("type").MustString("")
 	var err error
 
@@ -81,6 +120,7 @@ func (e *CloudWatchExecutor) getDsInfo(region string) *DatasourceInfo {
 	secretKey := decrypted["secretKey"]
 
 	datasourceInfo := &DatasourceInfo{
+		Id:            e.DataSource.Id,
 		Region:        region,
 		Profile:       e.DataSource.Database,
 		AuthType:      authType,
@@ -93,7 +133,7 @@ func (e *CloudWatchExecutor) getDsInfo(region string) *DatasourceInfo {
 }
 
 func (e *CloudWatchExecutor) getCloudWatchClient(region string) (cloudwatchiface.CloudWatchAPI, error) {
-	sess, err := globalSessionCache.Get(e.getDsInfo(region))
+	sess, err := e.sessions.Get(e.getDsInfo(region))
 	if err != nil {
 		return nil, err
 	}
@@ -106,7 +146,7 @@ func (e *CloudWatchExecutor) getCloudWatchClient(region string) (cloudwatchiface
 }
 
 func (e *CloudWatchExecutor) getEc2Client(region string) (ec2iface.EC2API, error) {
-	sess, err := globalSessionCache.Get(e.getDsInfo(region))
+	sess, err := e.sessions.Get(e.getDsInfo(region))
 	if err != nil {
 		return nil, err
 	}
@@ -116,7 +156,7 @@ func (e *CloudWatchExecutor) getEc2Client(region string) (ec2iface.EC2API, error
 }
 
 func (e *CloudWatchExecutor) getRgtaClient(region string) (resourcegroupstaggingapiiface.ResourceGroupsTaggingAPIAPI, error) {
-	sess, err := globalSessionCache.Get(e.getDsInfo(region))
+	sess, err := e.sessions.Get(e.getDsInfo(region))
 	if err != nil {
 		return nil, err
 	}
