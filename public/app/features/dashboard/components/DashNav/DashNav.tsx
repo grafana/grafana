@@ -180,7 +180,8 @@ class DashNav extends PureComponent<Props> {
               tooltip="Add panel"
               icon="panel-add"
               onClick={onAddPanel}
-              iconType="default"
+              iconType="mono"
+              iconSize="xl"
             />
           )}
 

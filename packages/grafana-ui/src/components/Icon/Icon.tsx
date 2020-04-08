@@ -3,7 +3,7 @@ import { css, cx } from 'emotion';
 import { GrafanaTheme, toPascalCase } from '@grafana/data';
 import { stylesFactory } from '../../themes';
 import { useTheme } from '../../themes/ThemeContext';
-import { IconName, IconType } from '../../types';
+import { IconName, IconType, IconSize } from '../../types';
 import { ComponentSize } from '../../types/size';
 //@ts-ignore
 import * as DefaultIcon from '@iconscout/react-unicons';
@@ -11,7 +11,7 @@ import * as MonoIcon from './assets';
 
 interface IconProps extends React.HTMLAttributes<HTMLDivElement> {
   name: IconName;
-  size?: ComponentSize | 'xl' | 'xxl';
+  size?: IconSize;
   type?: IconType;
 }
 export interface SvgProps extends React.HTMLAttributes<SVGElement> {
@@ -20,8 +20,7 @@ export interface SvgProps extends React.HTMLAttributes<SVGElement> {
   className?: string;
 }
 
-const getIconStyles = stylesFactory((theme: GrafanaTheme, type: IconType) => {
-  const defaultIconColor = type === 'default' ? 'currentColor' : theme.colors.orange;
+const getIconStyles = stylesFactory((theme: GrafanaTheme) => {
   return {
     container: css`
       display: inline-block;
@@ -31,9 +30,10 @@ const getIconStyles = stylesFactory((theme: GrafanaTheme, type: IconType) => {
       display: inline-block;
       margin-bottom: ${theme.spacing.xxs};
       cursor: pointer;
-      * {
-        fill: ${defaultIconColor};
-      }
+      fill: currentColor;
+    `,
+    orange: css`
+      fill: ${theme.colors.orange};
     `,
   };
 });
@@ -41,7 +41,7 @@ const getIconStyles = stylesFactory((theme: GrafanaTheme, type: IconType) => {
 export const Icon = React.forwardRef<HTMLDivElement, IconProps>(
   ({ size = 'md', type = 'default', name, className, style, ...divElementProps }, ref) => {
     const theme = useTheme();
-    const styles = getIconStyles(theme, type);
+    const styles = getIconStyles(theme);
     const svgSize = getSvgSize(size, theme);
 
     /* Temporary solution to display also font awesome icons */
@@ -63,7 +63,13 @@ export const Icon = React.forwardRef<HTMLDivElement, IconProps>(
     return (
       <div className={styles.container} {...divElementProps} ref={ref}>
         {type === 'default' && <Component size={svgSize} className={cx(styles.icon, className)} style={style} />}
-        {type === 'mono' && <Component size={svgSize} className={cx(styles.icon, className)} style={style} />}
+        {type === 'mono' && (
+          <Component
+            size={svgSize}
+            className={cx(styles.icon, { [styles.orange]: name === 'favorite' }, className)}
+            style={style}
+          />
+        )}
       </div>
     );
   }
