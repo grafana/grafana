@@ -137,17 +137,17 @@ function getRate(yLeft: AxisSide, yRight: AxisSide): number {
   }
 
   if (checkOneSide(yLeft, yRight)) {
-    const absLeftMin: number = Math.abs(yLeft.min);
-    const absLeftMax: number = Math.abs(yLeft.max);
-    const absRightMin: number = Math.abs(yRight.min);
-    const absRightMax: number = Math.abs(yRight.max);
-    const upLeft: number = Math.max(absLeftMin, absLeftMax);
-    const downLeft: number = Math.min(absLeftMin, absLeftMax);
-    const upRight: number = Math.max(absRightMin, absRightMax);
-    const downRight: number = Math.min(absRightMin, absRightMax);
+    const absLeftMin = Math.abs(yLeft.min);
+    const absLeftMax = Math.abs(yLeft.max);
+    const absRightMin = Math.abs(yRight.min);
+    const absRightMax = Math.abs(yRight.max);
+    const upLeft = Math.max(absLeftMin, absLeftMax);
+    const downLeft = Math.min(absLeftMin, absLeftMax);
+    const upRight = Math.max(absRightMin, absRightMax);
+    const downRight = Math.min(absRightMin, absRightMax);
 
-    const rateLeft: number = downLeft !== 0 ? upLeft / downLeft : upLeft;
-    const rateRight: number = downRight !== 0 ? upRight / downRight : upRight;
+    const rateLeft = downLeft !== 0 ? upLeft / downLeft : upLeft;
+    const rateRight = downRight !== 0 ? upRight / downRight : upRight;
 
     return rateLeft > rateRight ? rateLeft : rateRight;
   }
