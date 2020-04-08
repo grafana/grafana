@@ -28,7 +28,7 @@ that you cannot use this API for retrieving information about the General folder
 
 `GET /api/folders`
 
-Returns all folders that the authenticated user has permission to view.
+Returns all folders that the authenticated user has permission to view. You can control the maximum number of folders returned through the `limit` query parameter, the default is 1000.
 
 **Example Request**:
 
