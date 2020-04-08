@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/url"
 	"strconv"
+	"strings"
 
 	"github.com/grafana/grafana/pkg/setting"
 
@@ -21,6 +22,7 @@ func init() {
 
 func newPostgresQueryEndpoint(datasource *models.DataSource) (tsdb.TsdbQueryEndpoint, error) {
 	logger := log.New("tsdb.postgres")
+	logger.Debug("Creating Postgres query endpoint")
 
 	cnnstr, err := generateConnectionString(datasource, logger)
 	if err != nil {
@@ -48,26 +50,32 @@ func newPostgresQueryEndpoint(datasource *models.DataSource) (tsdb.TsdbQueryEndp
 }
 
 func generateConnectionString(datasource *models.DataSource, logger log.Logger) (string, error) {
-	sslmode := datasource.JsonData.Get("sslmode").MustString("verify-full")
+	sslMode := strings.TrimSpace(strings.ToLower(datasource.JsonData.Get("sslmode").MustString("verify-full")))
+	isSSLDisabled := sslMode == "disable"
 
 	// Always pass SSL mode
-	sslopts := "sslmode=" + url.QueryEscape(sslmode)
+	sslopts := "sslmode=" + url.QueryEscape(sslMode)
+	if isSSLDisabled {
+		logger.Debug("Postgres SSL is disabled")
+	} else {
+		logger.Debug("Postgres SSL is not disabled", "sslMode", sslMode)
 
-	// Attach root certificate if provided
-	if sslrootcert := datasource.JsonData.Get("sslRootCertFile").MustString(""); sslrootcert != "" {
-		logger.Debug("Setting CA certificate", "sslRootCert", sslrootcert)
-		sslopts += "&sslrootcert=" + url.QueryEscape(sslrootcert)
-	}
+		// Attach root certificate if provided
+		if sslrootcert := datasource.JsonData.Get("sslRootCertFile").MustString(""); sslrootcert != "" {
+			logger.Debug("Setting CA certificate", "sslRootCert", sslrootcert)
+			sslopts += "&sslrootcert=" + url.QueryEscape(sslrootcert)
+		}
 
-	// Attach client certificate and key if both are provided
-	sslcert := datasource.JsonData.Get("sslCertFile").MustString("")
-	sslkey := datasource.JsonData.Get("sslKeyFile").MustString("")
-	if sslcert != "" && sslkey != "" {
-		logger.Debug("Setting SSL client auth", "sslcert", sslcert)
-		sslopts += "&sslcert=" + url.QueryEscape(sslcert) + "&sslkey=" + url.QueryEscape(sslkey)
+		// Attach client certificate and key if both are provided
+		sslcert := datasource.JsonData.Get("sslCertFile").MustString("")
+		sslkey := datasource.JsonData.Get("sslKeyFile").MustString("")
+		if sslcert != "" && sslkey != "" {
+			logger.Debug("Setting SSL client auth", "sslcert", sslcert)
+			sslopts += "&sslcert=" + url.QueryEscape(sslcert) + "&sslkey=" + url.QueryEscape(sslkey)
 
-	} else if sslcert != "" || sslkey != "" {
-		return "", fmt.Errorf("SSL client and certificate must both be specified")
+		} else if sslcert != "" || sslkey != "" {
+			return "", fmt.Errorf("SSL client and certificate must both be specified")
+		}
 	}
 
 	u := &url.URL{
