@@ -1,6 +1,9 @@
 package sqlstore
 
 import (
+	"github.com/prometheus/client_golang/prometheus"
+	"reflect"
+	"strconv"
 	"strings"
 	"time"
 
@@ -9,6 +12,14 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/search"
 	"github.com/grafana/grafana/pkg/util"
+)
+
+var shadowSearchCounter = prometheus.NewCounterVec(
+	prometheus.CounterOpts{
+		Subsystem: "db_dashboard",
+		Name:      "search_shadow",
+	},
+	[]string{"equal", "error"},
 )
 
 func init() {
@@ -26,6 +37,8 @@ func init() {
 	bus.AddHandler("sql", ValidateDashboardBeforeSave)
 	bus.AddHandler("sql", HasEditPermissionInFolders)
 	bus.AddHandler("sql", HasAdminPermissionInFolders)
+
+	prometheus.MustRegister(shadowSearchCounter)
 }
 
 var generateNewUid func() string = util.GenerateShortUID
@@ -229,6 +242,22 @@ func findDashboards(query *search.FindPersistedDashboardsQuery) ([]DashboardSear
 	if err != nil {
 		return nil, err
 	}
+
+	var shadowRes []DashboardSearchProjection
+	shadowSql, shadowParams := sb.ShadowSql()
+	err = x.SQL(shadowSql, shadowParams...).Find(&shadowRes)
+	equal := reflect.DeepEqual(shadowRes, res)
+	shadowSearchCounter.With(prometheus.Labels{
+		"equal": strconv.FormatBool(equal),
+		"error": strconv.FormatBool(err != nil),
+	}).Inc()
+	sqlog.Debug(
+		"shadow search query result",
+		"err", err,
+		"equal", equal,
+		"shadowQuery", strings.Replace(strings.Replace(shadowSql, "\n", " ", -1), "\t", " ", -1),
+		"query", strings.Replace(strings.Replace(sql, "\n", " ", -1), "\t", " ", -1),
+	)
 
 	return res, nil
 }

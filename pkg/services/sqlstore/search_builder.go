@@ -1,6 +1,7 @@
 package sqlstore
 
 import (
+	"github.com/grafana/grafana/pkg/services/sqlstore/search"
 	"strings"
 
 	"github.com/grafana/grafana/pkg/models"
@@ -20,6 +21,7 @@ type SearchBuilder struct {
 	whereTypeDash       bool
 	whereFolderIds      []int64
 	permission          models.PermissionType
+	shadow              search.Builder
 }
 
 func NewSearchBuilder(signedInUser *models.SignedInUser, limit int64, page int64, permission models.PermissionType) *SearchBuilder {
@@ -38,6 +40,13 @@ func NewSearchBuilder(signedInUser *models.SignedInUser, limit int64, page int64
 		limit:        limit,
 		page:         page,
 		permission:   permission,
+		shadow: search.Builder{
+			Dialect: dialect,
+			Filters: []interface{}{
+				search.OrgFilter{OrgId: signedInUser.OrgId},
+				search.TitleSorter{},
+			},
+		},
 	}
 
 	return searchBuilder
@@ -46,6 +55,7 @@ func NewSearchBuilder(signedInUser *models.SignedInUser, limit int64, page int64
 func (sb *SearchBuilder) WithTags(tags []string) *SearchBuilder {
 	if len(tags) > 0 {
 		sb.tags = tags
+		sb.shadow.Filters = append(sb.shadow.Filters, search.TagsFilter{Tags: tags})
 	}
 
 	return sb
@@ -53,6 +63,7 @@ func (sb *SearchBuilder) WithTags(tags []string) *SearchBuilder {
 
 func (sb *SearchBuilder) IsStarred() *SearchBuilder {
 	sb.isStarred = true
+	sb.shadow.Filters = append(sb.shadow.Filters, search.StarredFilter{UserId: sb.signedInUser.UserId})
 
 	return sb
 }
@@ -61,17 +72,20 @@ func (sb *SearchBuilder) WithDashboardIdsIn(ids []int64) *SearchBuilder {
 	if len(ids) > 0 {
 		sb.whereDashboardIdsIn = ids
 	}
+	sb.shadow.Filters = append(sb.shadow.Filters, search.DashboardFilter{IDs: ids})
 
 	return sb
 }
 
 func (sb *SearchBuilder) WithTitle(title string) *SearchBuilder {
 	sb.whereTitle = title
+	sb.shadow.Filters = append(sb.shadow.Filters, search.TitleFilter{Dialect: dialect, Title: title})
 
 	return sb
 }
 
 func (sb *SearchBuilder) WithType(queryType string) *SearchBuilder {
+	sb.shadow.Filters = append(sb.shadow.Filters, search.TypeFilter{Type: queryType, Dialect: dialect})
 	if len(queryType) > 0 && queryType == "dash-folder" {
 		sb.whereTypeFolder = true
 	}
@@ -85,6 +99,7 @@ func (sb *SearchBuilder) WithType(queryType string) *SearchBuilder {
 
 func (sb *SearchBuilder) WithFolderIds(folderIds []int64) *SearchBuilder {
 	sb.whereFolderIds = folderIds
+	sb.shadow.Filters = append(sb.shadow.Filters, search.FolderFilter{IDs: folderIds})
 	return sb
 }
 
@@ -111,6 +126,10 @@ func (sb *SearchBuilder) ToSql() (string, []interface{}) {
 
 	sb.sql.WriteString(" ORDER BY dashboard.title ASC")
 	return sb.sql.String(), sb.params
+}
+
+func (sb *SearchBuilder) ShadowSql() (string, []interface{}) {
+	return sb.shadow.ToSql(sb.limit, sb.page)
 }
 
 func (sb *SearchBuilder) buildSelect() {
