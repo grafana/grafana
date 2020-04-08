@@ -123,7 +123,6 @@ class UnThemedConfirmButton extends PureComponent<Props, State> {
       disabled,
       confirmText,
       confirmVariant: confirmButtonVariant,
-      onConfirm,
       children,
     } = this.props;
     const styles = getStyles(theme);
