@@ -33,7 +33,7 @@ func InstrumentPluginRequest(pluginID string, endpoint string, fn func() error) 
 	start := time.Now()
 
 	err := fn()
-	if err != nil && err != ErrStreamDrained {
+	if err != nil {
 		status = "error"
 	}
 

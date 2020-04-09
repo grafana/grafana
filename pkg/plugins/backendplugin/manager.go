@@ -191,17 +191,17 @@ func (m *manager) CheckHealth(ctx context.Context, pluginConfig *PluginConfig) (
 var ErrStreamDrained error = errors.New("stream is drained")
 
 // CallResource calls a plugin resource.
-func (m *manager) CallResource(config PluginConfig, c *models.ReqContext, path string) {
+func (m *manager) CallResource(config PluginConfig, reqCtx *models.ReqContext, path string) {
 	m.pluginsMu.RLock()
 	p, registered := m.plugins[config.PluginID]
 	m.pluginsMu.RUnlock()
 
 	if !registered {
-		c.JsonApiErr(404, "Plugin not registered", nil)
+		reqCtx.JsonApiErr(404, "Plugin not registered", nil)
 		return
 	}
 
-	clonedReq := c.Req.Clone(c.Req.Context())
+	clonedReq := reqCtx.Req.Clone(reqCtx.Req.Context())
 	keepCookieNames := []string{}
 	if config.JSONData != nil {
 		if keepCookies := config.JSONData.Get("keepCookies"); keepCookies != nil {
@@ -212,9 +212,9 @@ func (m *manager) CallResource(config PluginConfig, c *models.ReqContext, path s
 	proxyutil.ClearCookieHeader(clonedReq, keepCookieNames)
 	proxyutil.PrepareProxyRequest(clonedReq)
 
-	body, err := c.Req.Body().Bytes()
+	body, err := reqCtx.Req.Body().Bytes()
 	if err != nil {
-		c.JsonApiErr(500, "Failed to read request body", err)
+		reqCtx.JsonApiErr(500, "Failed to read request body", err)
 		return
 	}
 
@@ -225,7 +225,7 @@ func (m *manager) CallResource(config PluginConfig, c *models.ReqContext, path s
 		URL:     clonedReq.URL.String(),
 		Headers: clonedReq.Header,
 		Body:    body,
-		User:    c.SignedInUser,
+		User:    reqCtx.SignedInUser,
 	}
 
 	err = InstrumentPluginRequest(p.id, "resource", func() error {
@@ -234,58 +234,67 @@ func (m *manager) CallResource(config PluginConfig, c *models.ReqContext, path s
 			return errutil.Wrap("Failed to call resource", err)
 		}
 
-		processedStreams := 0
-
-		for {
-			resp, err := stream.Recv()
-			if err == io.EOF {
-				if processedStreams == 0 {
-					return errors.New("Received empty resource response")
-				}
-				return ErrStreamDrained
-			}
-			if err != nil {
-				if processedStreams == 0 {
-					return errutil.Wrap("Failed to receive response from resource call", err)
-				}
-
-				p.logger.Error("Failed to receive response from resource call", "error", err)
-				return ErrStreamDrained
-			}
-
-			// Expected that headers and status are only part of first stream
-			if processedStreams == 0 {
-				// Make sure a content type always is returned in response
-				if _, exists := resp.Headers["Content-Type"]; !exists {
-					resp.Headers["Content-Type"] = []string{"application/json"}
-				}
-
-				for k, values := range resp.Headers {
-					// Due to security reasons we don't want to forward
-					// cookies from a backend plugin to clients/browsers.
-					if k == "Set-Cookie" {
-						continue
-					}
-
-					for _, v := range values {
-						c.Resp.Header().Add(k, v)
-					}
-				}
-
-				c.WriteHeader(resp.Status)
-			}
-
-			if _, err := c.Write(resp.Body); err != nil {
-				p.logger.Error("Failed to write resource response", "error", err)
-			}
-
-			c.Resp.Flush()
-			processedStreams++
+		err = flushStream(p, stream, reqCtx)
+		if err == ErrStreamDrained {
+			return nil
 		}
+
+		return err
 	})
 
 	if err != nil {
-		c.JsonApiErr(500, "Failed to ", err)
+		reqCtx.JsonApiErr(500, "Failed to ", err)
+	}
+}
+
+func flushStream(plugin *BackendPlugin, stream callResourceResultStream, reqCtx *models.ReqContext) error {
+	processedStreams := 0
+
+	for {
+		resp, err := stream.Recv()
+		if err == io.EOF {
+			if processedStreams == 0 {
+				return errors.New("Received empty resource response")
+			}
+			return ErrStreamDrained
+		}
+		if err != nil {
+			if processedStreams == 0 {
+				return errutil.Wrap("Failed to receive response from resource call", err)
+			}
+
+			plugin.logger.Error("Failed to receive response from resource call", "error", err)
+			return ErrStreamDrained
+		}
+
+		// Expected that headers and status are only part of first stream
+		if processedStreams == 0 {
+			// Make sure a content type always is returned in response
+			if _, exists := resp.Headers["Content-Type"]; !exists {
+				resp.Headers["Content-Type"] = []string{"application/json"}
+			}
+
+			for k, values := range resp.Headers {
+				// Due to security reasons we don't want to forward
+				// cookies from a backend plugin to clients/browsers.
+				if k == "Set-Cookie" {
+					continue
+				}
+
+				for _, v := range values {
+					reqCtx.Resp.Header().Add(k, v)
+				}
+			}
+
+			reqCtx.WriteHeader(resp.Status)
+		}
+
+		if _, err := reqCtx.Write(resp.Body); err != nil {
+			plugin.logger.Error("Failed to write resource response", "error", err)
+		}
+
+		reqCtx.Resp.Flush()
+		processedStreams++
 	}
 }
 
