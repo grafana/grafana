@@ -465,6 +465,14 @@ export class PanelModel implements DataConfigSource {
 
     this.getQueryRunner().resendLastResult();
   }
+
+  /*
+   * Panel have a different id while in edit mode (to more easily be able to discard changes)
+   * Use this to always get the underlying source id
+   * */
+  getSavedId(): number {
+    return this.editSourceId ?? this.id;
+  }
 }
 
 function getPluginVersion(plugin: PanelPlugin): string {
