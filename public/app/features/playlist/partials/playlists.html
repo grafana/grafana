@@ -46,7 +46,7 @@
         </td>
         <td  class="text-right">
           <a ng-click="ctrl.removePlaylist(playlist)" class="btn btn-danger btn-small">
-            <i class="fa fa-remove"></i>
+            <icon name="'times'"></icon>
           </a>
         </td>
       </tr>
@@ -55,7 +55,7 @@
   <div ng-if="ctrl.playlists.length === 0">
     <empty-list-cta
       title="'There are no playlists created yet'"
-      buttonIcon="'fa fa-plus'"
+      buttonIcon="'plus'"
       buttonLink="'playlists/create'"
       buttonTitle="'Create Playlist'"
       proTip="'You can use playlists to cycle dashboards on TVs without user control'"

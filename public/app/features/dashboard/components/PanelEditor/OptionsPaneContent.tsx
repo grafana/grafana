@@ -158,7 +158,7 @@ export const TabsBarContent: React.FC<{
                   ref={elem => elem && elem.focus()}
                   placeholder="Search all options"
                   suffix={
-                    <Icon name="remove" onClick={() => setSearchMode(false)} className={styles.searchRemoveIcon} />
+                    <Icon name="times" onClick={() => setSearchMode(false)} className={styles.searchRemoveIcon} />
                   }
                 />
               </div>
@@ -197,7 +197,8 @@ export const TabsBarContent: React.FC<{
 
       <div className={styles.tabsButton}>
         <DashNavButton
-          icon="fa fa-search"
+          icon="search"
+          iconSize="md"
           tooltip="Search all options"
           classSuffix="search-options"
           onClick={() => setSearchMode(true)}
@@ -205,10 +206,11 @@ export const TabsBarContent: React.FC<{
       </div>
       <div className={styles.tabsButton}>
         <DashNavButton
-          icon="fa fa-chevron-right"
+          icon="angle-right"
           tooltip="Close options pane"
           classSuffix="close-options"
           onClick={onClose}
+          iconSize="lg"
         />
       </div>
     </>

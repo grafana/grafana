@@ -1,12 +1,7 @@
-import {
-  FieldType,
-  FieldConfigEditorProps,
-  FieldPropertyEditorItem,
-  PanelOptionsEditorConfig,
-  PanelOptionsEditorItem,
-  FieldConfigEditorConfig,
-} from '../types';
+import { FieldConfigEditorProps, FieldConfigPropertyItem, FieldConfigEditorConfig } from '../types/fieldOverrides';
 import { OptionsUIRegistryBuilder } from '../types/OptionsUIRegistryBuilder';
+import { FieldType } from '../types/dataFrame';
+import { PanelOptionsEditorConfig, PanelOptionsEditorItem } from '../types/panel';
 import {
   numberOverrideProcessor,
   selectOverrideProcessor,
@@ -29,7 +24,7 @@ import {
 export class FieldConfigEditorBuilder<TOptions> extends OptionsUIRegistryBuilder<
   TOptions,
   FieldConfigEditorProps<any, any>,
-  FieldPropertyEditorItem<TOptions>
+  FieldConfigPropertyItem<TOptions>
 > {
   addNumberInput<TSettings>(config: FieldConfigEditorConfig<TOptions, TSettings & NumberFieldConfigSettings, number>) {
     return this.addCustomEditor({

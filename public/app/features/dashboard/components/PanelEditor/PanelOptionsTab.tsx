@@ -1,7 +1,7 @@
 import React, { FC, useMemo } from 'react';
 import { PanelModel, DashboardModel } from '../../state';
 import { SelectableValue, PanelPlugin, FieldConfigSource, PanelData } from '@grafana/data';
-import { Forms, Select, DataLinksInlineEditor, Input } from '@grafana/ui';
+import { Forms, Switch, Select, DataLinksInlineEditor, Input, TextArea } from '@grafana/ui';
 import { OptionsGroup } from './OptionsGroup';
 import { getPanelLinksVariableSuggestions } from '../../../panel/panellinks/link_srv';
 import { getVariables } from '../../../variables/state/selectors';
@@ -45,16 +45,13 @@ export const PanelOptionsTab: FC<Props> = ({
         <Input defaultValue={panel.title} onBlur={e => onPanelConfigChange('title', e.currentTarget.value)} />
       </Forms.Field>
       <Forms.Field label="Description" description="Panel description supports markdown and links.">
-        <Forms.TextArea
+        <TextArea
           defaultValue={panel.description}
           onBlur={e => onPanelConfigChange('description', e.currentTarget.value)}
         />
       </Forms.Field>
-      <Forms.Field label="Transparent" description="Display panel without background.">
-        <Forms.Switch
-          value={panel.transparent}
-          onChange={e => onPanelConfigChange('transparent', e.currentTarget.checked)}
-        />
+      <Forms.Field label="Transparent" description="Display panel without a background.">
+        <Switch value={panel.transparent} onChange={e => onPanelConfigChange('transparent', e.currentTarget.checked)} />
       </Forms.Field>
     </OptionsGroup>
   );
@@ -89,9 +86,7 @@ export const PanelOptionsTab: FC<Props> = ({
 
   if (plugin.angularPanelCtrl) {
     elements.push(
-      <OptionsGroup title="Display" key="angular plugin editor">
-        <AngularPanelOptions panel={panel} dashboard={dashboard} plugin={plugin} />
-      </OptionsGroup>
+      <AngularPanelOptions panel={panel} dashboard={dashboard} plugin={plugin} key="angular panel options" />
     );
   }
 
