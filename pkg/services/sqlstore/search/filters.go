@@ -6,20 +6,29 @@ import (
 	"strings"
 )
 
-type filterWhere interface {
-	WhereClause() (string, []interface{})
+// FilterWhere limits the set of dashboard IDs to the dashboards for
+// which the filter is applicable. Results where the first value is
+// an empty string are discarded.
+type FilterWhere interface {
+	Where() (string, []interface{})
 }
 
-type filterGroupBy interface {
-	GroupByClause() (string, []interface{})
+// FilterGroupBy should be used after performing an outer join on the
+// search result to ensure there is only one of each ID in the results.
+type FilterGroupBy interface {
+	GroupBy() (string, []interface{})
 }
 
-type filterOrderBy interface {
-	OrderByClause() string
+// FilterOrderBy provides an ordering for the search result.
+type FilterOrderBy interface {
+	OrderBy() string
 }
 
-type filterLeftJoin interface {
-	LeftJoinClause() string
+// FilterLeftJoin adds the returned string as a "LEFT OUTER JOIN" to
+// allow for fetching extra columns from a table outside of the
+// dashboard column.
+type FilterLeftJoin interface {
+	LeftJoin() string
 }
 
 const (
@@ -32,7 +41,7 @@ type TypeFilter struct {
 	Type    string
 }
 
-func (f TypeFilter) WhereClause() (string, []interface{}) {
+func (f TypeFilter) Where() (string, []interface{}) {
 	if f.Type == TypeFolder {
 		return "dashboard.is_folder = " + f.Dialect.BooleanStr(true), nil
 	}
@@ -48,7 +57,7 @@ type OrgFilter struct {
 	OrgId int64
 }
 
-func (f OrgFilter) WhereClause() (string, []interface{}) {
+func (f OrgFilter) Where() (string, []interface{}) {
 	return "dashboard.org_id=?", []interface{}{f.OrgId}
 }
 
@@ -56,7 +65,7 @@ type StarredFilter struct {
 	UserId int64
 }
 
-func (f StarredFilter) WhereClause() (string, []interface{}) {
+func (f StarredFilter) Where() (string, []interface{}) {
 	return `(SELECT count(*)
 			 FROM star
 			 WHERE star.dashboard_id = dashboard.id AND star.user_id = ?) > 0`, []interface{}{f.UserId}
@@ -67,7 +76,7 @@ type TitleFilter struct {
 	Title   string
 }
 
-func (f TitleFilter) WhereClause() (string, []interface{}) {
+func (f TitleFilter) Where() (string, []interface{}) {
 	return fmt.Sprintf("dashboard.title %s ?", f.Dialect.LikeStr()), []interface{}{"%" + f.Title + "%"}
 }
 
@@ -75,7 +84,7 @@ type FolderFilter struct {
 	IDs []int64
 }
 
-func (f FolderFilter) WhereClause() (string, []interface{}) {
+func (f FolderFilter) Where() (string, []interface{}) {
 	return sqlIDin("dashboard.folder_id", f.IDs)
 }
 
@@ -83,7 +92,7 @@ type DashboardFilter struct {
 	IDs []int64
 }
 
-func (f DashboardFilter) WhereClause() (string, []interface{}) {
+func (f DashboardFilter) Where() (string, []interface{}) {
 	return sqlIDin("dashboard.id", f.IDs)
 }
 
@@ -91,15 +100,15 @@ type TagsFilter struct {
 	Tags []string
 }
 
-func (f TagsFilter) LeftJoinClause() string {
+func (f TagsFilter) LeftJoin() string {
 	return `dashboard_tag ON dashboard_tag.dashboard_id = dashboard.id`
 }
 
-func (f TagsFilter) GroupByClause() (string, []interface{}) {
+func (f TagsFilter) GroupBy() (string, []interface{}) {
 	return `dashboard.id HAVING COUNT(dashboard.id) >= ?`, []interface{}{len(f.Tags)}
 }
 
-func (f TagsFilter) WhereClause() (string, []interface{}) {
+func (f TagsFilter) Where() (string, []interface{}) {
 	params := make([]interface{}, len(f.Tags))
 	for i, tag := range f.Tags {
 		params[i] = tag
@@ -110,7 +119,7 @@ func (f TagsFilter) WhereClause() (string, []interface{}) {
 type TitleSorter struct {
 }
 
-func (s TitleSorter) OrderByClause() string {
+func (s TitleSorter) OrderBy() string {
 	return "dashboard.title ASC"
 }
 

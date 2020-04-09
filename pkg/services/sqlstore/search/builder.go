@@ -65,28 +65,28 @@ func (b *Builder) applyFilters() {
 	orders := []string{}
 
 	for _, f := range b.Filters {
-		if f, ok := f.(filterLeftJoin); ok {
-			joins = append(joins, fmt.Sprintf(" LEFT OUTER JOIN %s ", f.LeftJoinClause()))
+		if f, ok := f.(FilterLeftJoin); ok {
+			joins = append(joins, fmt.Sprintf(" LEFT OUTER JOIN %s ", f.LeftJoin()))
 		}
 
-		if f, ok := f.(filterWhere); ok {
-			sql, params := f.WhereClause()
+		if f, ok := f.(FilterWhere); ok {
+			sql, params := f.Where()
 			if sql != "" {
 				wheres = append(wheres, sql)
 				whereParams = append(whereParams, params...)
 			}
 		}
 
-		if f, ok := f.(filterGroupBy); ok {
-			sql, params := f.GroupByClause()
+		if f, ok := f.(FilterGroupBy); ok {
+			sql, params := f.GroupBy()
 			if sql != "" {
 				groups = append(groups, sql)
 				groupParams = append(groupParams, params...)
 			}
 		}
 
-		if f, ok := f.(filterOrderBy); ok {
-			orders = append(orders, f.OrderByClause())
+		if f, ok := f.(FilterOrderBy); ok {
+			orders = append(orders, f.OrderBy())
 		}
 	}
 

@@ -1,6 +1,7 @@
 package sqlstore
 
 import (
+	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/services/sqlstore/search"
 	"strings"
 
@@ -10,6 +11,8 @@ import (
 // SearchBuilder is a builder/object mother that builds a dashboard search query
 type SearchBuilder struct {
 	SqlBuilder
+
+	dialect             migrator.Dialect
 	tags                []string
 	isStarred           bool
 	limit               int64
@@ -40,6 +43,7 @@ func NewSearchBuilder(signedInUser *models.SignedInUser, limit int64, page int64
 		limit:        limit,
 		page:         page,
 		permission:   permission,
+		dialect:      dialect,
 		shadow: search.Builder{
 			Dialect: dialect,
 			Filters: []interface{}{
@@ -50,6 +54,11 @@ func NewSearchBuilder(signedInUser *models.SignedInUser, limit int64, page int64
 	}
 
 	return searchBuilder
+}
+
+func (sb *SearchBuilder) WithDialect(dialect migrator.Dialect) *SearchBuilder {
+	sb.dialect = dialect
+	return sb
 }
 
 func (sb *SearchBuilder) WithTags(tags []string) *SearchBuilder {
@@ -79,13 +88,13 @@ func (sb *SearchBuilder) WithDashboardIdsIn(ids []int64) *SearchBuilder {
 
 func (sb *SearchBuilder) WithTitle(title string) *SearchBuilder {
 	sb.whereTitle = title
-	sb.shadow.Filters = append(sb.shadow.Filters, search.TitleFilter{Dialect: dialect, Title: title})
+	sb.shadow.Filters = append(sb.shadow.Filters, search.TitleFilter{Dialect: sb.dialect, Title: title})
 
 	return sb
 }
 
 func (sb *SearchBuilder) WithType(queryType string) *SearchBuilder {
-	sb.shadow.Filters = append(sb.shadow.Filters, search.TypeFilter{Type: queryType, Dialect: dialect})
+	sb.shadow.Filters = append(sb.shadow.Filters, search.TypeFilter{Type: queryType, Dialect: sb.dialect})
 	if len(queryType) > 0 && queryType == "dash-folder" {
 		sb.whereTypeFolder = true
 	}
@@ -116,7 +125,7 @@ func (sb *SearchBuilder) ToSql() (string, []interface{}) {
 	}
 
 	sb.sql.WriteString(`
-		ORDER BY dashboard.id ` + dialect.LimitOffset(sb.limit, (sb.page-1)*sb.limit) + `) as ids
+		ORDER BY dashboard.id ` + sb.dialect.LimitOffset(sb.limit, (sb.page-1)*sb.limit) + `) as ids
 		INNER JOIN dashboard on ids.id = dashboard.id
 	`)
 
@@ -203,16 +212,16 @@ func (sb *SearchBuilder) buildSearchWhereClause() {
 	sb.writeDashboardPermissionFilter(sb.signedInUser, sb.permission)
 
 	if len(sb.whereTitle) > 0 {
-		sb.sql.WriteString(" AND dashboard.title " + dialect.LikeStr() + " ?")
+		sb.sql.WriteString(" AND dashboard.title " + sb.dialect.LikeStr() + " ?")
 		sb.params = append(sb.params, "%"+sb.whereTitle+"%")
 	}
 
 	if sb.whereTypeFolder {
-		sb.sql.WriteString(" AND dashboard.is_folder = " + dialect.BooleanStr(true))
+		sb.sql.WriteString(" AND dashboard.is_folder = " + sb.dialect.BooleanStr(true))
 	}
 
 	if sb.whereTypeDash {
-		sb.sql.WriteString(" AND dashboard.is_folder = " + dialect.BooleanStr(false))
+		sb.sql.WriteString(" AND dashboard.is_folder = " + sb.dialect.BooleanStr(false))
 	}
 
 	if len(sb.whereFolderIds) > 0 {
