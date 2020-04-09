@@ -23,55 +23,13 @@ When enabled, Grafana exposes a number of metrics, including:
 * http status codes
 * Requests by routing group
 * Grafana active alerts
-* Prometheus alerts
 * Grafana performance
 
-## View Grafana metrics in Prometheus
+## Pull metrics from Grafana into Prometheus
 
 These instructions assume you have already added Prometheus as a data source in Grafana.
 
 1. Enable sending metrics to Prometheus. In your configuration file (`grafana.ini` or `custom.ini` depending on your operating system) remove the semicolon to enable the following configuration options: 
-
-   ```
-   # Metrics available at HTTP API Url /metrics
-   [metrics]
-   # Disable / Enable internal metrics
-   enabled           = true
-
-   # Disable total stats (stat_totals_*) metrics to be generated
-   disable_total_stats = false
-   ```
-
-2. (optional) If you want to require authorization to view the metrics endpoint, then uncomment and set the following options:
-
-   ```
-   basic_auth_username =
-   basic_auth_password =
-   ```
-
-3. Restart Grafana. Grafana now sends metrics to http://localhost:3000/metrics.
-4. Add the job to your prometheus.yml file.
-   Example:
-
-   ```
-   - job_name: 'grafana_metrics'
-
-      scrape_interval: 6s
-      scrape_timeout: 5s
-  
-      static_configs:
-        - targets: ['localhost:3000']
-   ```
-5. Restart Prometheus. Your new job should appear on the Targets tab.
-6. In Grafana, hover your mouse over the **Configuration** (gear) icon on the left sidebar and then click **Data Sources**.
-7. Select the **Prometheus** data source.
-8. On the Dashboards tab, **Import** the Grafana metrics dashboard. All scraped Grafana metrics are available in the dashboard.
-
-## View Grafana metrics in Graphite
-
-These instructions assume you have already added Prometheus as a data source in Grafana.
-
-1. Enable sending metrics to Graphite. In your configuration file (`grafana.ini` or `custom.ini` depending on your operating system) remove the semicolon to enable the following configuration options: 
 
    ```
    # Metrics available at HTTP API Url /metrics
@@ -90,6 +48,40 @@ These instructions assume you have already added Prometheus as a data source in 
    basic_auth_password =
    ```
 
+1. Restart Grafana. Grafana now exposes metrics at http://localhost:3000/metrics.
+1. Add the job to your prometheus.yml file.
+   Example:
+
+   ```
+   - job_name: 'grafana_metrics'
+
+      scrape_interval: 15s
+      scrape_timeout: 5s
+  
+      static_configs:
+        - targets: ['localhost:3000']
+   ```
+1. Restart Prometheus. Your new job should appear on the Targets tab.
+1. In Grafana, hover your mouse over the **Configuration** (gear) icon on the left sidebar and then click **Data Sources**.
+1. Select the **Prometheus** data source.
+1. On the Dashboards tab, **Import** the Grafana metrics dashboard. All scraped Grafana metrics are available in the dashboard.
+
+## View Grafana metrics in Graphite
+
+These instructions assume you have already added Graphite as a data source in Grafana.
+
+1. Enable sending metrics to Graphite. In your configuration file (`grafana.ini` or `custom.ini` depending on your operating system) remove the semicolon to enable the following configuration options: 
+
+   ```
+   # Metrics available at HTTP API Url /metrics
+   [metrics]
+   # Disable / Enable internal metrics
+   enabled           = true
+
+   # Disable total stats (stat_totals_*) metrics to be generated
+   disable_total_stats = false
+   ```
+
 1. Enable [metrics.graphite] options:
    ```
    # Send internal metrics to Graphite
@@ -99,4 +91,4 @@ These instructions assume you have already added Prometheus as a data source in 
    prefix = prod.grafana.%(instance_name)s.
    ```
 
-1. Restart Grafana. Grafana now sends metrics to http://localhost:3000/metrics and to Graphite.
+1. Restart Grafana. Grafana now exposes metrics at http://localhost:3000/metrics and sends them to the Graphite location you specified.
