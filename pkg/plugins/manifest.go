@@ -37,7 +37,7 @@ type PluginManifest struct {
 	Files   map[string]string `json:"files"`
 }
 
-// ReadPluginManifest attempts to read and verify the plugin manifest
+// readPluginManifest attempts to read and verify the plugin manifest
 // if any error occurs or the manifest is not valid, this will return an error
 func readPluginManifest(body []byte) (*PluginManifest, error) {
 	fmt.Printf("TODO... verify: %s", publicKeyText)
