@@ -19,8 +19,7 @@ import {
   FieldConfigSource,
 } from '@grafana/data';
 
-import { SeriesOptions, GraphOptions } from './types';
-import { GraphLegendEditorLegendOptions } from './GraphLegendEditor';
+import { SeriesOptions, GraphOptions, GraphLegendEditorLegendOptions } from './types';
 
 export const getGraphSeriesModel = (
   dataFrames: DataFrame[],
@@ -63,8 +62,8 @@ export const getGraphSeriesModel = (
       });
 
       if (points.length > 0) {
-        const seriesStats = reduceField({ field, reducers: legendOptions.stats });
-        let statsDisplayValues: DisplayValue[];
+        const seriesStats = reduceField({ field, reducers: legendOptions.stats || [] });
+        let statsDisplayValues: DisplayValue[] = [];
 
         if (legendOptions.stats) {
           statsDisplayValues = legendOptions.stats.map<DisplayValue>(stat => {

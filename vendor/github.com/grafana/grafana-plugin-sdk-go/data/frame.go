@@ -121,6 +121,19 @@ func (f *Frame) EmptyCopy() *Frame {
 	return newFrame
 }
 
+// NewFrameOfFieldTypes returns a Frame where the Fields are initalized to the
+// corresponding field type in fTypes. Each Field will be of length FieldLen.
+func NewFrameOfFieldTypes(name string, fieldLen int, fTypes ...FieldType) *Frame {
+	f := &Frame{
+		Name:   name,
+		Fields: make(Fields, len(fTypes)),
+	}
+	for i, fT := range fTypes {
+		f.Fields[i] = NewFieldFromFieldType(fT, fieldLen)
+	}
+	return f
+}
+
 // TypeIndices returns a slice of Field index positions for the given fTypes.
 func (f *Frame) TypeIndices(fTypes ...FieldType) []int {
 	indices := []int{}
@@ -224,6 +237,22 @@ func (f *Frame) RowLen() (int, error) {
 // It will panic if either the fieldIdx or rowIdx are out of range.
 func (f *Frame) FloatAt(fieldIdx int, rowIdx int) (float64, error) {
 	return f.Fields[fieldIdx].FloatAt(rowIdx)
+}
+
+// SetFieldNames sets each Field Name in the frame to the corresponding frame.
+// If the number of provided names does not match the number of Fields in the frame an error is returned.
+func (f *Frame) SetFieldNames(names ...string) error {
+	fieldLen := 0
+	if f.Fields != nil {
+		fieldLen = len(f.Fields)
+	}
+	if fieldLen != len(names) {
+		return fmt.Errorf("can not set field names, number of names %v does not match frame field length %v", len(names), fieldLen)
+	}
+	for i, name := range names {
+		f.Fields[i].Name = name
+	}
+	return nil
 }
 
 // FrameTestCompareOptions returns go-cmp testing options to allow testing of Frame equivelnce.

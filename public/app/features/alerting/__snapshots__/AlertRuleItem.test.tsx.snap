@@ -4,13 +4,11 @@ exports[`Render should render component 1`] = `
 <li
   className="alert-rule-item"
 >
-  <span
+  <Icon
     className="alert-rule-item__icon state class"
-  >
-    <i
-      className="icon"
-    />
-  </span>
+    name="icon"
+    size="xl"
+  />
   <div
     className="alert-rule-item__body"
   >
@@ -67,8 +65,8 @@ exports[`Render should render component 1`] = `
       onClick={[MockFunction]}
       title="Pausing an alert rule prevents it from executing"
     >
-      <i
-        className="fa fa-pause"
+      <Icon
+        name="pause"
       />
     </button>
     <a
@@ -76,8 +74,8 @@ exports[`Render should render component 1`] = `
       href="https://something.something.darkside?panelId=1&fullscreen&edit&tab=alert"
       title="Edit alert rule"
     >
-      <i
-        className="gicon gicon-cog"
+      <Icon
+        name="cog"
       />
     </a>
   </div>

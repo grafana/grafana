@@ -51,7 +51,7 @@ export const getStandardFieldConfigs = () => {
     id: 'unit',
     path: 'unit',
     name: 'Unit',
-    description: 'Value units',
+    description: '',
 
     editor: standardEditorsRegistry.get('unit').editor as any,
     override: standardEditorsRegistry.get('unit').editor as any,
@@ -68,7 +68,7 @@ export const getStandardFieldConfigs = () => {
     id: 'min',
     path: 'min',
     name: 'Min',
-    description: 'Minimum expected value',
+    description: 'Leave empty to calculate based on all values',
 
     editor: standardEditorsRegistry.get('number').editor as any,
     override: standardEditorsRegistry.get('number').editor as any,
@@ -84,7 +84,7 @@ export const getStandardFieldConfigs = () => {
     id: 'max',
     path: 'max',
     name: 'Max',
-    description: 'Maximum expected value',
+    description: 'Leave empty to calculate based on all values',
 
     editor: standardEditorsRegistry.get('number').editor as any,
     override: standardEditorsRegistry.get('number').editor as any,
@@ -101,7 +101,7 @@ export const getStandardFieldConfigs = () => {
     id: 'decimals',
     path: 'decimals',
     name: 'Decimals',
-    description: 'Number of decimal to be shown for a value',
+    description: '',
 
     editor: standardEditorsRegistry.get('number').editor as any,
     override: standardEditorsRegistry.get('number').editor as any,
@@ -121,7 +121,7 @@ export const getStandardFieldConfigs = () => {
     id: 'thresholds',
     path: 'thresholds',
     name: 'Thresholds',
-    description: 'Manage thresholds',
+    description: '',
 
     editor: standardEditorsRegistry.get('thresholds').editor as any,
     override: standardEditorsRegistry.get('thresholds').editor as any,
@@ -141,7 +141,7 @@ export const getStandardFieldConfigs = () => {
     id: 'mappings',
     path: 'mappings',
     name: 'Value mappings',
-    description: 'Manage value mappings',
+    description: '',
 
     editor: standardEditorsRegistry.get('mappings').editor as any,
     override: standardEditorsRegistry.get('mappings').editor as any,

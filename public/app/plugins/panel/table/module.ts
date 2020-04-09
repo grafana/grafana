@@ -9,6 +9,8 @@ import { TableRenderer } from './renderer';
 import { isTableData, PanelEvents, PanelPlugin } from '@grafana/data';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { dispatch } from 'app/store/store';
+import { ComponentType } from 'react';
+import { PanelProps } from '@grafana/data';
 import { applyFilterFromTable } from 'app/features/variables/adhoc/actions';
 
 export class TablePanelCtrl extends MetricsPanelCtrl {
@@ -268,6 +270,6 @@ export class TablePanelCtrl extends MetricsPanelCtrl {
   }
 }
 
-export const plugin = new PanelPlugin(null);
+export const plugin = new PanelPlugin((null as unknown) as ComponentType<PanelProps<any>>);
 plugin.angularPanelCtrl = TablePanelCtrl;
 plugin.setNoPadding();

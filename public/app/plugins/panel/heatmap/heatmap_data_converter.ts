@@ -275,7 +275,7 @@ function pushToYBuckets(
   }
   if (buckets[bucketNum]) {
     buckets[bucketNum].values.push(value);
-    buckets[bucketNum].points.push(point);
+    buckets[bucketNum].points?.push(point);
     buckets[bucketNum].count += count;
   } else {
     buckets[bucketNum] = {

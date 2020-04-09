@@ -11,9 +11,9 @@ export interface Props extends Omit<HTMLProps<HTMLInputElement>, 'prefix' | 'siz
   /** Show an invalid state around the input */
   invalid?: boolean;
   /** Show an icon as a prefix in the input */
-  prefix?: JSX.Element | string | null;
+  prefix?: ReactNode;
   /** Show an icon as a suffix in the input */
-  suffix?: JSX.Element | string | null;
+  suffix?: ReactNode;
   /** Show a loading indicator as a suffix in the input */
   loading?: boolean;
   /** Add a component as an addon before the input  */
@@ -246,7 +246,7 @@ export const Input = React.forwardRef<HTMLInputElement, Props>((props, ref) => {
 
         {(suffix || loading) && (
           <div className={styles.suffix} ref={suffixRef}>
-            {loading && <Icon name="spinner" className={cx('fa-spin', styles.loadingIndicator)} />}
+            {loading && <Icon name="fa fa-spinner" className={cx('fa-spin', styles.loadingIndicator)} />}
             {suffix}
           </div>
         )}

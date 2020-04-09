@@ -192,14 +192,19 @@ function isLogsData(series: DataFrame) {
  * @param dataFrame
  * @param intervalMs In case there are no metrics series, we use this for computing it from log rows.
  */
-export function dataFrameToLogsModel(dataFrame: DataFrame[], intervalMs: number, timeZone: TimeZone): LogsModel {
+export function dataFrameToLogsModel(
+  dataFrame: DataFrame[],
+  intervalMs: number | undefined,
+  timeZone: TimeZone
+): LogsModel {
   const { logSeries, metricSeries } = separateLogsAndMetrics(dataFrame);
   const logsModel = logSeriesToLogsModel(logSeries);
 
   if (logsModel) {
     if (metricSeries.length === 0) {
       // Create metrics from logs
-      logsModel.series = makeSeriesForLogs(logsModel.rows, intervalMs, timeZone);
+      // If interval is not defined or 0 we cannot really compute the series
+      logsModel.series = intervalMs ? makeSeriesForLogs(logsModel.rows, intervalMs, timeZone) : [];
     } else {
       // We got metrics in the dataFrame so process those
       logsModel.series = getGraphSeriesModel(
@@ -270,7 +275,7 @@ export function logSeriesToLogsModel(logSeries: DataFrame[]): LogsModel | undefi
     // Assume the first string field in the dataFrame is the message. This was right so far but probably needs some
     // more explicit checks.
     const stringField = fieldCache.getFirstFieldOfType(FieldType.string);
-    if (stringField.labels) {
+    if (stringField?.labels) {
       allLabels.push(stringField.labels);
     }
     return {
@@ -279,7 +284,7 @@ export function logSeriesToLogsModel(logSeries: DataFrame[]): LogsModel | undefi
       stringField,
       logLevelField: fieldCache.getFieldByName('level'),
       idField: getIdField(fieldCache),
-    };
+    } as LogFields;
   });
 
   const commonLabels = allLabels.length > 0 ? findCommonLabels(allLabels) : {};
@@ -334,7 +339,7 @@ export function logSeriesToLogsModel(logSeries: DataFrame[]): LogsModel | undefi
         searchWords,
         entry: hasAnsi ? ansicolor.strip(message) : message,
         raw: message,
-        labels: stringField.labels,
+        labels: stringField.labels || {},
         uid: idField ? idField.values.get(j) : j.toString(),
       });
     }

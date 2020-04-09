@@ -2,6 +2,7 @@
 import React, { PureComponent } from 'react';
 
 import { PanelProps } from '@grafana/data';
+import { Icon } from '@grafana/ui';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { contextSrv } from 'app/core/core';
@@ -144,7 +145,7 @@ export class GettingStarted extends PureComponent<PanelProps, State> {
     return (
       <div className="progress-tracker-container">
         <button className="progress-tracker-close-btn" onClick={this.dismiss}>
-          <i className="fa fa-remove" />
+          <Icon name="times" />
         </button>
         <div className="progress-tracker">
           {this.steps.map((step, index) => {

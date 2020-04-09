@@ -10,6 +10,7 @@ export interface OptionsEditorItem<TOptions, TSettings, TEditorProps, TValue> ex
   editor: ComponentType<TEditorProps>;
   settings?: TSettings;
   defaultValue?: TValue;
+  showIf?: (currentConfig: TOptions) => boolean;
 }
 
 /**
