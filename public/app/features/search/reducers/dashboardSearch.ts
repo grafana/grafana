@@ -2,7 +2,7 @@ import { DashboardSection, SearchAction } from '../types';
 import { getFlattenedSections, getLookupField, markSelected } from '../utils';
 import { FETCH_ITEMS, FETCH_RESULTS, TOGGLE_SECTION, MOVE_SELECTION_DOWN, MOVE_SELECTION_UP } from './actionTypes';
 
-interface State {
+export interface State {
   results: DashboardSection[];
   loading: boolean;
   selectedIndex: number;
