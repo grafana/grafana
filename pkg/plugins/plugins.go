@@ -147,26 +147,21 @@ func getPluginSignatureState(dir string) PluginSignature {
 
 	// 2. check the manifest contents... currently looks like:
 	//
-	// 7df059597099bb7dcf25d2a9aedfaf4465f72d8d  LICENSE
-	// 4ebed28a02dc029719296aa847bffcea8eb5b9ff  README.md
-	// e9cb53cd0493676600dd5135b5fdbe327694855b  docs/img/copy-range.png
-	// 63d79d0e0f9db21ea168324bd4e180d6892b9d2b  docs/img/dashboard.png
-	// 262f2bfddb004c7ce567042e8096f9e033c9b1bd  docs/img/query-editor.png
-	// 6d1837e04d57c69477d92de32e445b3c8fdb4a11  docs/img/spreadsheet.png
-	// fc42c37063781010fa61fe7b00bfaae5f40347e2  docs/img/spreadsheets-list.png
-	// 4493f107eb175b085f020c1afea04614232dc0fd  gfx_sheets_darwin_amd64
-	// d8b05884e3829d1389a9c0e4b79b0aba8c19ca4a  gfx_sheets_linux_amd64
-	// 88f33db20182e17c72c2823fe3bed87d8c45b0fd  gfx_sheets_windows_amd64.exe
-	// e6d8f6704dbe85d5f032d4e8ba44ebc5d4a68c43  img/config-page.png
-	// 63d79d0e0f9db21ea168324bd4e180d6892b9d2b  img/dashboard.png
-	// 7ea6295954b24be55b27320af2074852fb088fa1  img/graph.png
-	// 262f2bfddb004c7ce567042e8096f9e033c9b1bd  img/query-editor.png
-	// f134ab85caff88b59ea903c5491c6a08c221622f  img/sheets.svg
-	// 6d1837e04d57c69477d92de32e445b3c8fdb4a11  img/spreadsheet.png
-	// 8edb4a5967f128cb1b4bb060870895e15392fe57  img/table.png
-	// 40b8c38cea260caed3cdc01d6e3c1eca483ab5c1  module.js
-	// 3c04068eb581f73a262a2081f4adca2edbb14edf  module.js.map
-	// bfcae42976f0feca58eed3636655bce51702d3ed  plugin.json
+
+-----BEGIN PGP SIGNED MESSAGE-----
+Hash: SHA512
+
+Hello there
+-----BEGIN PGP SIGNATURE-----
+Version: OpenPGP.js v4.10.1
+Comment: https://openpgpjs.org
+
+wl4EARYKAAYFAl6OYU8ACgkQ1uNw7xqtn46lNQD+IojxLTmT7yCaVsREzNuV
+DOlTO2nLfa3K8zYt1vSaghsA/R7TViBrnjgt3dg3iu8GolZUy9IZeFttKm/z
+Ld5KOdYB
+=4GVX
+-----END PGP SIGNATURE-----
+
 
 	// For now everything is invalid or missing
 	return PluginSignatureInvalid
