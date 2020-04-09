@@ -2,18 +2,7 @@ import React, { useCallback, useState, CSSProperties } from 'react';
 import Transition from 'react-transition-group/Transition';
 import { FieldConfigSource, GrafanaTheme, PanelData, PanelPlugin, SelectableValue } from '@grafana/data';
 import { DashboardModel, PanelModel } from '../../state';
-import {
-  CustomScrollbar,
-  stylesFactory,
-  Tab,
-  TabContent,
-  TabsBar,
-  Select,
-  useTheme,
-  Container,
-  Icon,
-  Input,
-} from '@grafana/ui';
+import { CustomScrollbar, stylesFactory, Tab, TabContent, TabsBar, Select, useTheme, Icon, Input } from '@grafana/ui';
 import { DefaultFieldConfigEditor, OverrideFieldConfigEditor } from './FieldConfigEditor';
 import { css } from 'emotion';
 import { PanelOptionsTab } from './PanelOptionsTab';
@@ -54,14 +43,12 @@ export const OptionsPaneContent: React.FC<{
       }
 
       return (
-        <Container padding="md">
-          <DefaultFieldConfigEditor
-            config={fieldConfig}
-            plugin={plugin}
-            onChange={onFieldConfigsChange}
-            data={data.series}
-          />
-        </Container>
+        <DefaultFieldConfigEditor
+          config={fieldConfig}
+          plugin={plugin}
+          onChange={onFieldConfigsChange}
+          data={data.series}
+        />
       );
     },
     [data, plugin, panel, onFieldConfigsChange]

@@ -16,10 +16,10 @@ export const OptionsGroup: FC<Props> = ({ title, children, defaultToClosed }) =>
   return (
     <div className={styles.box}>
       <div className={styles.header} onClick={() => toggleExpand(!isExpanded)}>
-        {title}
         <div className={cx(styles.toggle, 'editor-options-group-toggle')}>
-          <Icon name={isExpanded ? 'angle-down' : 'angle-left'} />
+          <Icon name={isExpanded ? 'angle-down' : 'angle-right'} />
         </div>
+        {title}
       </div>
       {isExpanded && <div className={styles.body}>{children}</div>}
     </div>
@@ -34,13 +34,13 @@ const getStyles = stylesFactory((theme: GrafanaTheme, isExpanded: boolean) => {
     toggle: css`
       color: ${theme.colors.textWeak};
       font-size: ${theme.typography.size.lg};
+      margin-right: ${theme.spacing.sm};
     `,
     header: css`
       display: flex;
       cursor: pointer;
-      justify-content: space-between;
-      align-items: center;
-      padding: ${theme.spacing.sm} ${theme.spacing.md};
+      align-items: baseline;
+      padding: ${theme.spacing.sm} ${theme.spacing.md} ${theme.spacing.sm} ${theme.spacing.sm};
       color: ${isExpanded ? theme.colors.text : theme.colors.formLabel};
       font-weight: ${theme.typography.weight.semibold};
 
@@ -51,7 +51,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme, isExpanded: boolean) => {
       }
     `,
     body: css`
-      padding: 0 ${theme.spacing.md} ${theme.spacing.md} ${theme.spacing.md};
+      padding: 0 ${theme.spacing.md} ${theme.spacing.md} ${theme.spacing.xl};
     `,
   };
 });
