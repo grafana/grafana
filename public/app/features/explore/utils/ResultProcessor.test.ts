@@ -113,7 +113,7 @@ describe('ResultProcessor', () => {
               [200, 5],
               [300, 6],
             ],
-            info: undefined,
+            info: [],
             isVisible: true,
             yAxis: {
               index: 1,
@@ -234,7 +234,7 @@ describe('ResultProcessor', () => {
                 [200, 5],
                 [300, 6],
               ],
-              info: undefined,
+              info: [],
               isVisible: true,
               yAxis: {
                 index: 1,
