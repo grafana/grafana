@@ -17,6 +17,34 @@ Dataframes are a new concept in Grafana 7.0 and they replace the "Time Series" a
 
 A dataframe is a [Columnar oriented](https://en.wikipedia.org/wiki/Column-oriented_DBMS) table like structure, meaning it stores data by column and not by row.
 
+A simplified conceptual model of a dataframe is:
+
+```ts
+interface DataFrame {
+    name?:  string;
+    // reference to query that create the frame
+    refId?: string;
+
+    fields: []Field;
+}
+```
+
+```ts
+interface Field {
+    name:    string;
+     // Prometheus like Labels / Tags
+    labels?: Record<string, string>;
+
+    // For example string, number, time (or more specific primitives in the backend)
+    type:   FieldType;
+    // Array of values all of the same type
+    values: Vector<T>;
+
+    // Optional display data for the field (e.g. unit, name over-ride, etc)
+    config: FieldConfig;
+}
+```
+
 With dataframes, each column is represented by a **Field**. So the essence of a dataframe is an Field array with additional properties. Those additional properties on a Field include Name, Labels (a.k.a (Tags)), Optional display data and the data type of the Field's values. There are also additional properties display and metadata properties on the Frame itself.
 
 One restriction on dataframes is that all Fields in the frame must be of the same length to be a valid dataframe.
@@ -35,7 +63,7 @@ The dataframe structure is inspired by and uses the [Apache Arrow Project](https
 
 ### Javascript
 
-The javascript implementation of dataframes is in the [`/src/dataframe` folder](https://github.com/grafana/grafana/tree/master/packages/grafana-data/src/dataframe) of the [`@grafana/data` package](https://github.com/grafana/grafana/tree/master/packages/grafana-data).
+The javascript implementation of dataframes is in the [`/src/dataframe` folder](https://github.com/grafana/grafana/tree/master/packages/grafana-data/src/dataframe) and [`/src/types/dataframe.ts](https://github.com/grafana/grafana/blob/master/packages/grafana-data/src/types/dataFrame.ts) of the [`@grafana/data` package](https://github.com/grafana/grafana/tree/master/packages/grafana-data).
 
 ### Go
 
