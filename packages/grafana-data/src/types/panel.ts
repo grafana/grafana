@@ -121,7 +121,7 @@ export interface PanelOptionsEditorItem<TOptions = any, TValue = any, TSettings 
 export interface PanelOptionsEditorConfig<TOptions, TSettings = any, TValue = any> {
   path: (keyof TOptions & string) | string;
   name: string;
-  description: string;
+  description?: string;
   settings?: TSettings;
   defaultValue?: TValue;
   showIf?: (currentConfig: TOptions) => boolean;

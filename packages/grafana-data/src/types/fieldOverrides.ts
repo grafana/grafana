@@ -56,7 +56,7 @@ export interface FieldOverrideEditorProps<TValue, TSettings> extends Omit<Standa
 export interface FieldConfigEditorConfig<TOptions, TSettings = any, TValue = any> {
   path: (keyof TOptions & string) | string;
   name: string;
-  description: string;
+  description?: string;
   settings?: TSettings;
   shouldApply?: (field: Field) => boolean;
   defaultValue?: TValue;
