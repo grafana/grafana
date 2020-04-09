@@ -2,7 +2,7 @@ import React, { AnchorHTMLAttributes, ButtonHTMLAttributes, useContext } from 'r
 import { css, cx } from 'emotion';
 import tinycolor from 'tinycolor2';
 import { selectThemeVariant, stylesFactory, ThemeContext } from '../../themes';
-import { IconName } from '../../types';
+import { IconName } from '../../types/icon';
 import { getFocusStyle, getPropertiesForButtonSize } from '../Forms/commonStyles';
 import { GrafanaTheme } from '@grafana/data';
 import { ButtonContent } from './ButtonContent';

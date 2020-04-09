@@ -38,7 +38,7 @@ module.exports = ({ config, mode }) => {
     use: [
       {
         loader: 'style-loader',
-        options: { injectType: 'lazyStyleTag' }
+        options: { injectType: 'lazyStyleTag' },
       },
       {
         loader: 'css-loader',
@@ -76,19 +76,18 @@ module.exports = ({ config, mode }) => {
     ],
   });
 
-  config.optimization = {
+  (config.optimization = {
     nodeEnv: 'production',
     minimizer: [
       new TerserPlugin({
         cache: false,
         parallel: false,
-        sourceMap: false,
+        sourceMap: true,
       }),
       new OptimizeCSSAssetsPlugin({}),
     ],
-  },
-
-  config.resolve.extensions.push('.ts', '.tsx', '.mdx');
+  }),
+    config.resolve.extensions.push('.ts', '.tsx', '.mdx');
   config.stats = {
     warningsFilter: /export .* was not found in/,
   };
