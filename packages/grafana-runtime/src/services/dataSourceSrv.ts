@@ -1,11 +1,18 @@
 import { ScopedVars, DataSourceApi } from '@grafana/data';
 
 /**
- * Used to retrieve the {@link DataSourceSrv} that can be used to
+ * This is the entry point for communicating with a datasource that is added as
+ * a plugin (both external and internal). Via this service you will get access
+ * to the {@link @grafana/data#DataSourceApi | DataSourceApi} that have a rich api for
+ * communicating with the datasource.
  *
  * @public
  */
 export interface DataSourceSrv {
+  /**
+   * @param name - name of the datasource plugin you want to use.
+   * @param scopedVars - variables used to interpolate a templated passed as name.
+   */
   get(name?: string, scopedVars?: ScopedVars): Promise<DataSourceApi>;
 }
 
@@ -22,7 +29,8 @@ export function setDataSourceSrv(instance: DataSourceSrv) {
 }
 
 /**
- * Used to retrieve the {@link DataSourceSrv} that can be used to
+ * Used to retrieve the {@link DataSourceSrv} that is the entry point for communicating with
+ * a datasource that is added as a plugin (both external and internal).
  *
  * @public
  */

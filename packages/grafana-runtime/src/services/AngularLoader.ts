@@ -9,8 +9,8 @@
  *   angularComponent: AngularComponent;
  *
  *   componentDidMount() {
- *     const template = '' // angular template here;
- *     const scopeProps = {}; // angular scope properties here
+ *     const template = '<angular-component />' // angular template here;
+ *     const scopeProps = { ctrl: angularController }; // angular scope properties here
  *     const loader = getAngularLoader();
  *     this.angularComponent = loader.load(this.element, scopeProps, template);
  *   }
@@ -53,6 +53,12 @@ export interface AngularComponent {
  * @public
  */
 export interface AngularLoader {
+  /**
+   *
+   * @param elem - the element that the Angular component will be loaded into.
+   * @param scopeProps - values that will be accessed via the Angular scope.
+   * @param template  - template used by the Angular component.
+   */
   load(elem: any, scopeProps: any, template: string): AngularComponent;
 }
 
