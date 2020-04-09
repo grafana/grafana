@@ -11,7 +11,7 @@ import { TagFilter } from 'app/core/components/TagFilter/TagFilter';
 import { contextSrv } from 'app/core/services/context_srv';
 import { DashboardSearchItemType, DashboardSection, OpenSearchParams } from '../types';
 import { findSelected, hasId, parseQuery } from '../utils';
-import { searchReducer, initialState } from '../reducers/dashboardSearch';
+import { searchReducer, dashboardsSearchState } from '../reducers/dashboardSearch';
 import { getDashboardSrv } from '../../dashboard/services/DashboardSrv';
 import {
   FETCH_ITEMS,
@@ -36,7 +36,7 @@ export interface Props {
 
 export const DashboardSearch: FC<Props> = ({ onCloseSearch, payload = {} }) => {
   const [query, setQuery] = useState({ ...defaultQuery, ...payload, parsedQuery: parseQuery(payload.query) });
-  const [{ results, loading }, dispatch] = useReducer(searchReducer, initialState);
+  const [{ results, loading }, dispatch] = useReducer(searchReducer, dashboardsSearchState);
   const theme = useTheme();
   const styles = getStyles(theme);
 

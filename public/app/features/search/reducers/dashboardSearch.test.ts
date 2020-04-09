@@ -1,14 +1,14 @@
 import { FETCH_ITEMS, FETCH_RESULTS, TOGGLE_SECTION, MOVE_SELECTION_DOWN, MOVE_SELECTION_UP } from './actionTypes';
-import { searchReducer as reducer, initialState } from './dashboardSearch';
+import { searchReducer as reducer, dashboardsSearchState } from './dashboardSearch';
 import { searchResults, sections } from '../testData';
 import { DashboardSection } from '../types';
 
 describe('Dashboard Search reducer', () => {
   it('should return the initial state', () => {
-    expect(reducer(initialState, {} as any)).toEqual(initialState);
+    expect(reducer(dashboardsSearchState, {} as any)).toEqual(dashboardsSearchState);
   });
   it('should set the results and mark first item as selected', () => {
-    const newState = reducer(initialState, { type: FETCH_RESULTS, payload: searchResults });
+    const newState = reducer(dashboardsSearchState, { type: FETCH_RESULTS, payload: searchResults });
     expect(newState).toEqual({ loading: false, selectedIndex: 0, results: searchResults });
     expect(newState.results[0].selected).toBeTruthy();
   });

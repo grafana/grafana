@@ -1,48 +1,14 @@
 import React, { FC, useReducer, useState } from 'react';
 import { contextSrv } from 'app/core/services/context_srv';
-import { searchReducer, State as DashboardSearchState, initialState as searchState } from '../reducers/dashboardSearch';
 import { useDebounce } from 'react-use';
+import { Icon } from '@grafana/ui';
+import { manageDashboardsState, reducer } from '../reducers/manageDashboards';
 import { FETCH_RESULTS } from '../reducers/actionTypes';
 import { SearchSrv } from 'app/core/services/search_srv';
 import { backendSrv } from 'app/core/services/backend_srv';
-import { SearchAction } from '../types';
-import { mergeReducers } from '../utils';
-import { Icon } from '@grafana/ui';
 import { SearchResultsFilter } from './SearchResultsFilter';
 import { SearchResults } from './SearchResults';
-
-export interface State extends DashboardSearchState {
-  canMove: boolean;
-  canDelete: boolean;
-  canSave: boolean;
-  allChecked: boolean;
-  hasEditPermissionInFolders: boolean;
-}
-
-const initialState: State = {
-  ...searchState,
-  canMove: false,
-  canDelete: false,
-  canSave: false,
-  allChecked: false,
-  hasEditPermissionInFolders: false,
-};
-
-export const TOGGLE_FOLDER_CAN_SAVE = 'TOGGLE_CAN_SAVE';
-export const TOGGLE_EDIT_PERMISSIONS = 'TOGGLE_EDIT_PERMISSIONS';
-const manageDashboardsReducer = (state: State, action: SearchAction) => {
-  switch (action.type) {
-    case TOGGLE_FOLDER_CAN_SAVE:
-      return { ...state, canSave: action.payload };
-    case TOGGLE_EDIT_PERMISSIONS:
-      return { ...state, hasEditPermissionInFolders: action.payload };
-
-    default:
-      return state;
-  }
-};
-
-const reducer = mergeReducers([searchReducer, manageDashboardsReducer]);
+import { TOGGLE_EDIT_PERMISSIONS, TOGGLE_FOLDER_CAN_SAVE } from '../reducers/actionTypes';
 
 export interface Props {
   folderId?: number;
@@ -58,6 +24,7 @@ class Query {
   skipStarred: boolean;
   folderIds: number[];
 }
+
 const searchSrv = new SearchSrv();
 
 const defaultQuery: Query = {
@@ -84,7 +51,7 @@ export const ManageDashboards: FC<Props> = ({ folderId, folderUid }) => {
     { canMove, canDelete, canSave, allChecked, isEditor, hasEditPermissionInFolders, results, loading },
     dispatch,
   ] = useReducer(reducer, {
-    ...initialState,
+    ...manageDashboardsState,
     hasEditPermissionInFolders: contextSrv.hasEditPermissionInFolders,
   });
 

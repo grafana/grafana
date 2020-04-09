@@ -2,19 +2,19 @@ import { DashboardSection, SearchAction } from '../types';
 import { getFlattenedSections, getLookupField, markSelected } from '../utils';
 import { FETCH_ITEMS, FETCH_RESULTS, TOGGLE_SECTION, MOVE_SELECTION_DOWN, MOVE_SELECTION_UP } from './actionTypes';
 
-export interface State {
+export interface DashboardsSearchState {
   results: DashboardSection[];
   loading: boolean;
   selectedIndex: number;
 }
 
-export const initialState: State = {
+export const dashboardsSearchState: DashboardsSearchState = {
   results: [],
   loading: true,
   selectedIndex: 0,
 };
 
-export const searchReducer = (state: State, action: SearchAction) => {
+export const searchReducer = (state: DashboardsSearchState, action: SearchAction) => {
   switch (action.type) {
     case FETCH_RESULTS: {
       const results = action.payload;
