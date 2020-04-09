@@ -23,7 +23,9 @@ One restriction on dataframes is that all Fields in the frame must be of the sam
 
 ### When is a Dataframe a Time Series or a Table
 
-Because the Fields of a dataframe each have a type, we can use the types of the Fields (the schema of the dataframe) to determine if it (or a collection of dataframes) can be time series. In the simplest case, if a Frame has a Time type Field and Number field that it is a time series (the frame should be sorted by time ascending).
+Any valid dataframe can be a table. If you have a row oriented response from something, the rows need to be converted to column oriented structure.
+
+Because the Fields of a dataframe each have a type, we can use the types of the Fields (the schema of the dataframe) to determine if it (or a collection of dataframes) can be time series. In the simplest case, if a Frame has a Time type Field and Number type Field then it can be a time series (the frame should be sorted by time ascending).
 
 ## Technical References
 
