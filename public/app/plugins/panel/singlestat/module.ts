@@ -658,7 +658,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
           window.location.href = linkInfo.href;
         } else {
           $timeout(() => {
-            $location.url(locationUtil.stripBaseFromUrl(linkInfo.href));
+            $location.url(locationUtil.stripBaseFromUrl(linkInfo!.href));
           });
         }
 
