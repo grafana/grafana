@@ -863,7 +863,7 @@ jobs:
           command: "./scripts/ci-job-succeeded.sh"
           when: on_success
 
-  scan-docker-master:
+  scan-docker-images:
     docker:
       - image: circleci/buildpack-deps:stretch
     steps:
@@ -886,11 +886,29 @@ jobs:
           name: Clear trivy cache
           command: trivy --clear-cache
       - run:
-          name: Scan the latest grafana master alpine image with trivy
+          name: Scan grafana/grafana:master
           command: trivy --exit-code 1 grafana/grafana:master
       - run:
-          name: Scan the latest grafana master ubuntu image with trivy
+          name: Scan grafana/grafana:master-ubuntu
           command: trivy --exit-code 1 grafana/grafana:master-ubuntu
+      - run:
+          name: Scan grafana/grafana-enterprise:master
+          command: trivy --exit-code 1 grafana/grafana-enterprise:master
+      - run:
+          name: Scan grafana/grafana-enterprise:master-ubuntu
+          command: trivy --exit-code 1 grafana/grafana-enterprise:master-ubuntu
+      - run:
+          name: Scan grafana/grafana:latest
+          command: trivy --exit-code 1 grafana/grafana:latest
+      - run:
+          name: Scan grafana/grafana:latest-ubuntu
+          command: trivy --exit-code 1 grafana/grafana:latest-ubuntu
+      - run:
+          name: Scan grafana/grafana-enterprise:latest
+          command: trivy --exit-code 1 grafana/grafana-enterprise:latest
+      - run:
+          name: Scan grafana/grafana-enterprise:latest-ubuntu
+          command: trivy --exit-code 1 grafana/grafana-enterprise:latest-ubuntu
       - save_cache:
           key: vulnerability-db
           paths:
@@ -1226,4 +1244,4 @@ workflows:
           cron: "0 0 * * *"
           filters: *filter-only-master
     jobs:
-      - scan-docker-master
+      - scan-docker-images
