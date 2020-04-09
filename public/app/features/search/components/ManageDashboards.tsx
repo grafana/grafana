@@ -4,6 +4,7 @@ import { searchReducer, initialState as searchState } from '../reducers/dashboar
 import { useDebounce } from 'react-use';
 import { FETCH_RESULTS } from '../reducers/actionTypes';
 import { SearchSrv } from 'app/core/services/search_srv';
+import { backendSrv } from 'app/core/services/backend_srv';
 import { SearchAction } from '../types';
 import { mergeReducers } from '../utils';
 
@@ -24,10 +25,13 @@ const initialState: State = {
 };
 
 export const TOGGLE_FOLDER_CAN_SAVE = 'TOGGLE_CAN_SAVE';
+export const TOGGLE_EDIT_PERMISSIONS = 'TOGGLE_EDIT_PERMISSIONS';
 const manageDashboardsReducer = (state: State, action: SearchAction) => {
   switch (action.type) {
     case TOGGLE_FOLDER_CAN_SAVE:
       return { ...state, canSave: action.payload };
+    case TOGGLE_EDIT_PERMISSIONS:
+      return { ...state, hasEditPermissionInFolders: action.payload };
 
     default:
       return state;
@@ -79,12 +83,25 @@ export const ManageDashboards: FC<Props> = ({ folderId, folderUid }) => {
   });
 
   const search = () => {
-    searchSrv.search(query).then(results => {
-      dispatch({ type: FETCH_RESULTS, payload: results });
-      dispatch({ type: TOGGLE_FOLDER_CAN_SAVE, payload: true });
-    });
+    searchSrv
+      .search(query)
+      .then(results => {
+        dispatch({ type: FETCH_RESULTS, payload: results });
+      })
+      .then(() => {
+        if (!folderUid) {
+          return undefined;
+        }
+
+        return backendSrv.getFolderByUid(folderUid).then(folder => {
+          dispatch({ type: TOGGLE_FOLDER_CAN_SAVE, payload: folder.canSave });
+          if (!folder.canSave) {
+            dispatch({ type: TOGGLE_EDIT_PERMISSIONS, payload: false });
+          }
+        });
+      });
   };
 
-  useDebounce(search, 300, [query]);
+  useDebounce(search, 300, [query, folderUid]);
   return <div />;
 };
