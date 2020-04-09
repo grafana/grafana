@@ -13,7 +13,7 @@ type DashboardProvisioner interface {
 	Provision() error
 	PollChanges(ctx context.Context)
 	GetProvisionerResolvedPath(name string) string
-	GetAllowUiUpdatesFromConfig(name string) bool
+	GetAllowUIUpdatesFromConfig(name string) bool
 }
 
 type DashboardProvisionerFactory func(string) (DashboardProvisioner, error)
@@ -24,7 +24,8 @@ type DashboardProvisionerImpl struct {
 	configs     []*DashboardsAsConfig
 }
 
-func NewDashboardProvisionerImpl(configDirectory string) (*DashboardProvisionerImpl, error) {
+// New returns a new DashboardProvisioner
+func New(configDirectory string) (*DashboardProvisionerImpl, error) {
 	logger := log.New("provisioning.dashboard")
 	cfgReader := &configReader{path: configDirectory, log: logger}
 	configs, err := cfgReader.readConfig()
@@ -48,6 +49,8 @@ func NewDashboardProvisionerImpl(configDirectory string) (*DashboardProvisionerI
 	return d, nil
 }
 
+// Provision starts scanning the disc for dashboards and updates
+// the database with the latest versions of those dashboards
 func (provider *DashboardProvisionerImpl) Provision() error {
 	for _, reader := range provider.fileReaders {
 		if err := reader.startWalkingDisk(); err != nil {
@@ -83,7 +86,8 @@ func (provider *DashboardProvisionerImpl) GetProvisionerResolvedPath(name string
 	return ""
 }
 
-func (provider *DashboardProvisionerImpl) GetAllowUiUpdatesFromConfig(name string) bool {
+// GetAllowUIUpdatesFromConfig return if a dashboard provisioner allows updates from the UI
+func (provider *DashboardProvisionerImpl) GetAllowUIUpdatesFromConfig(name string) bool {
 	for _, config := range provider.configs {
 		if config.Name == name {
 			return config.AllowUiUpdates

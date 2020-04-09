@@ -1,13 +1,14 @@
 package dashboards
 
 import (
-	"github.com/grafana/grafana/pkg/util"
 	"math/rand"
 	"os"
 	"path/filepath"
 	"runtime"
 	"testing"
 	"time"
+
+	"github.com/grafana/grafana/pkg/util"
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
@@ -21,7 +22,7 @@ var (
 	defaultDashboards = "testdata/test-dashboards/folder-one"
 	brokenDashboards  = "testdata/test-dashboards/broken-dashboards"
 	oneDashboard      = "testdata/test-dashboards/one-dashboard"
-	containingId      = "testdata/test-dashboards/containing-id"
+	containingID      = "testdata/test-dashboards/containing-id"
 	unprovision       = "testdata/test-dashboards/unprovision"
 
 	fakeService *fakeDashboardProvisioningService
@@ -140,7 +141,7 @@ func TestDashboardFileReader(t *testing.T) {
 			})
 
 			Convey("Overrides id from dashboard.json files", func() {
-				cfg.Options["path"] = containingId
+				cfg.Options["path"] = containingID
 
 				reader, err := NewDashboardFileReader(cfg, logger)
 				So(err, ShouldBeNil)
@@ -171,8 +172,8 @@ func TestDashboardFileReader(t *testing.T) {
 			})
 
 			Convey("Two dashboard providers should be able to provisioned the same dashboard without uid", func() {
-				cfg1 := &DashboardsAsConfig{Name: "1", Type: "file", OrgId: 1, Folder: "f1", Options: map[string]interface{}{"path": containingId}}
-				cfg2 := &DashboardsAsConfig{Name: "2", Type: "file", OrgId: 1, Folder: "f2", Options: map[string]interface{}{"path": containingId}}
+				cfg1 := &DashboardsAsConfig{Name: "1", Type: "file", OrgId: 1, Folder: "f1", Options: map[string]interface{}{"path": containingID}}
+				cfg2 := &DashboardsAsConfig{Name: "2", Type: "file", OrgId: 1, Folder: "f2", Options: map[string]interface{}{"path": containingID}}
 
 				reader1, err := NewDashboardFileReader(cfg1, logger)
 				So(err, ShouldBeNil)

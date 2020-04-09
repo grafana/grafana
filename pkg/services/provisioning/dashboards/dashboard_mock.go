@@ -2,24 +2,26 @@ package dashboards
 
 import "context"
 
-type Calls struct {
+// Calls is a mock implementation of the provisioner interface
+type calls struct {
 	Provision                   []interface{}
 	PollChanges                 []interface{}
 	GetProvisionerResolvedPath  []interface{}
-	GetAllowUiUpdatesFromConfig []interface{}
+	GetAllowUIUpdatesFromConfig []interface{}
 }
 
 type DashboardProvisionerMock struct {
-	Calls                           *Calls
+	Calls                           *calls
 	ProvisionFunc                   func() error
 	PollChangesFunc                 func(ctx context.Context)
 	GetProvisionerResolvedPathFunc  func(name string) string
-	GetAllowUiUpdatesFromConfigFunc func(name string) bool
+	GetAllowUIUpdatesFromConfigFunc func(name string) bool
 }
 
+// NewDashboardProvisionerMock returns a new dashboardprovisionermock
 func NewDashboardProvisionerMock() *DashboardProvisionerMock {
 	return &DashboardProvisionerMock{
-		Calls: &Calls{},
+		Calls: &calls{},
 	}
 }
 
@@ -46,10 +48,10 @@ func (dpm *DashboardProvisionerMock) GetProvisionerResolvedPath(name string) str
 	return ""
 }
 
-func (dpm *DashboardProvisionerMock) GetAllowUiUpdatesFromConfig(name string) bool {
-	dpm.Calls.GetAllowUiUpdatesFromConfig = append(dpm.Calls.GetAllowUiUpdatesFromConfig, name)
-	if dpm.GetAllowUiUpdatesFromConfigFunc != nil {
-		return dpm.GetAllowUiUpdatesFromConfigFunc(name)
+func (dpm *DashboardProvisionerMock) GetAllowUIUpdatesFromConfig(name string) bool {
+	dpm.Calls.GetAllowUIUpdatesFromConfig = append(dpm.Calls.GetAllowUIUpdatesFromConfig, name)
+	if dpm.GetAllowUIUpdatesFromConfigFunc != nil {
+		return dpm.GetAllowUIUpdatesFromConfigFunc(name)
 	}
 	return false
 }
