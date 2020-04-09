@@ -19,8 +19,7 @@ RUN if [ $GF_INSTALL_IMAGE_RENDERER_PLUGIN = "true" ]; then \
     apt-get upgrade -y && \
     apt-get install -y chromium-browser && \
     apt-get autoremove -y && \
-    rm -rf /var/lib/apt/lists/* && \
-    rm -rf /usr/share/grafana/tools/phantomjs; \
+    rm -rf /var/lib/apt/lists/* \
 fi
 
 USER grafana

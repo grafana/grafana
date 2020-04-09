@@ -6,6 +6,7 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/grafana/grafana/pkg/infra/remotecache"
@@ -22,8 +23,6 @@ func init() {
 	remotecache.Register(&RenderUser{})
 	registry.RegisterService(&RenderingService{})
 }
-
-var IsPhantomJSEnabled = false
 
 const renderKeyPrefix = "render-%s"
 
@@ -76,26 +75,23 @@ func (rs *RenderingService) Run(ctx context.Context) error {
 		return nil
 	}
 
-	if plugins.Renderer == nil {
-		rs.log = rs.log.New("renderer", "phantomJS")
-		rs.log.Info("Backend rendering via phantomJS")
-		rs.log.Warn("phantomJS is deprecated and will be removed in a future release. " +
-			"You should consider migrating from phantomJS to grafana-image-renderer plugin. " +
-			"Read more at https://grafana.com/docs/grafana/latest/administration/image_rendering/")
-		rs.renderAction = rs.renderViaPhantomJS
-		IsPhantomJSEnabled = true
+	if plugins.Renderer != nil {
+		rs.log = rs.log.New("renderer", "plugin")
+		rs.pluginInfo = plugins.Renderer
+
+		if err := rs.startPlugin(ctx); err != nil {
+			return err
+		}
+
+		rs.renderAction = rs.renderViaPlugin
 		<-ctx.Done()
 		return nil
 	}
 
-	rs.log = rs.log.New("renderer", "plugin")
-	rs.pluginInfo = plugins.Renderer
+	rs.log.Debug("No image renderer found/installed. " +
+		"For image rendering support please install the grafana-image-renderer plugin. " +
+		"Read more at https://grafana.com/docs/grafana/latest/administration/image_rendering/")
 
-	if err := rs.startPlugin(ctx); err != nil {
-		return err
-	}
-
-	rs.renderAction = rs.renderViaPlugin
 	<-ctx.Done()
 	return nil
 }
@@ -208,4 +204,15 @@ func (rs *RenderingService) deleteRenderKey(key string) {
 	if err != nil {
 		rs.log.Error("Failed to delete render key", "error", err)
 	}
+}
+
+func isoTimeOffsetToPosixTz(isoOffset string) string {
+	// invert offset
+	if strings.HasPrefix(isoOffset, "UTC+") {
+		return strings.Replace(isoOffset, "UTC+", "UTC-", 1)
+	}
+	if strings.HasPrefix(isoOffset, "UTC-") {
+		return strings.Replace(isoOffset, "UTC-", "UTC+", 1)
+	}
+	return isoOffset
 }

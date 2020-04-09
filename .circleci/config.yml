@@ -50,7 +50,7 @@ commands:
       - run:
           name: "Install Grafana build pipeline tool"
           command: |
-            VERSION=0.2.8
+            VERSION=0.2.9-phantomjs-2
             curl -fLO https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v${VERSION}/grabpl
             chmod +x grabpl
             mv grabpl /tmp
