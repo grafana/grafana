@@ -2,6 +2,7 @@ package sqlstore
 
 import (
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
+	"github.com/grafana/grafana/pkg/services/sqlstore/permissions"
 	"github.com/grafana/grafana/pkg/services/sqlstore/search"
 	"strings"
 
@@ -49,6 +50,13 @@ func NewSearchBuilder(signedInUser *models.SignedInUser, limit int64, page int64
 			Filters: []interface{}{
 				search.OrgFilter{OrgId: signedInUser.OrgId},
 				search.TitleSorter{},
+				permissions.DashboardPermissionFilter{
+					OrgRole:         signedInUser.OrgRole,
+					OrgId:           signedInUser.OrgId,
+					Dialect:         dialect,
+					UserId:          signedInUser.UserId,
+					PermissionLevel: permission,
+				},
 			},
 		},
 	}

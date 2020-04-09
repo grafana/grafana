@@ -8,6 +8,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
+	"github.com/grafana/grafana/pkg/services/sqlstore/permissions"
 	"github.com/grafana/grafana/pkg/services/sqlstore/search"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -115,8 +116,6 @@ func TestBuilder_Pagination(t *testing.T) {
 }
 
 func TestBuilder_Permissions(t *testing.T) {
-	t.Skip("Permissions are not implemented in the new search builder yet!")
-
 	user := &models.SignedInUser{
 		UserId:  1,
 		OrgId:   1,
@@ -127,15 +126,24 @@ func TestBuilder_Permissions(t *testing.T) {
 	err := createDashboards(0, 1, user.OrgId)
 	require.NoError(t, err)
 
+	level := models.PERMISSION_EDIT
+
 	builder := &search.Builder{
 		Filters: []interface{}{
 			search.OrgFilter{OrgId: user.OrgId},
 			search.TitleSorter{},
+			permissions.DashboardPermissionFilter{
+				Dialect:         dialect,
+				OrgRole:         user.OrgRole,
+				OrgId:           user.OrgId,
+				UserId:          user.UserId,
+				PermissionLevel: level,
+			},
 		},
 		Dialect: dialect,
 	}
 
-	prevBuilder := sqlstore.NewSearchBuilder(user, limit, page, models.PERMISSION_EDIT)
+	prevBuilder := sqlstore.NewSearchBuilder(user, limit, page, level)
 	prevBuilder.WithDialect(dialect)
 
 	newRes := []sqlstore.DashboardSearchProjection{}
