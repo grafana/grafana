@@ -40,6 +40,7 @@ type PluginManifest struct {
 // ReadPluginManifest attempts to read and verify the plugin manifest
 // if any error occurs or the manifest is not valid, this will return an error
 func readPluginManifest(body []byte) (*PluginManifest, error) {
+	fmt.Printf("TODO... verify: %s", publicKeyText)
 	// block, _ := clearsign.Decode(body)
 	// if block == nil {
 	// 	return nil, fmt.Errorf("unable to decode manifest")

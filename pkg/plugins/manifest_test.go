@@ -46,8 +46,8 @@ qX6kODEP
 
 		manifest, err := readPluginManifest([]byte(txt))
 
-		// For now OK
-		So(err, ShouldBeNil)
-		So(manifest, ShouldNotBeNil)
+		// Always an error for now
+		So(err, ShouldNotBeNil)
+		So(manifest, ShouldBeNil)
 	})
 }
