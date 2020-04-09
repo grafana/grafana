@@ -50,7 +50,7 @@ export const PanelOptionsTab: FC<Props> = ({
           onBlur={e => onPanelConfigChange('description', e.currentTarget.value)}
         />
       </Forms.Field>
-      <Forms.Field label="Transparent" description="Display panel without background.">
+      <Forms.Field label="Transparent" description="Display panel without a background.">
         <Switch value={panel.transparent} onChange={e => onPanelConfigChange('transparent', e.currentTarget.checked)} />
       </Forms.Field>
     </OptionsGroup>
