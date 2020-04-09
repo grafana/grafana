@@ -16,6 +16,9 @@ import {
   SecretFormField,
   SeriesColorPickerPopoverWithTheme,
   UnitPicker,
+  Button,
+  LinkButton,
+  Input,
   Icon,
 } from '@grafana/ui';
 import { FunctionEditor } from 'app/plugins/datasource/graphite/FunctionEditor';
@@ -32,6 +35,9 @@ import { VariableEditorContainer } from '../features/variables/editor/VariableEd
 import { SearchField, SearchResults, SearchWrapper, SearchResultsFilter } from '../features/search';
 
 export function registerAngularDirectives() {
+  react2AngularDirective('reactButton', Button, ['onClick', 'variant']);
+  react2AngularDirective('linkButton', LinkButton, ['onClick', 'variant', 'href']);
+  react2AngularDirective('reactInput', Input, ['onChange']);
   react2AngularDirective('footer', Footer, []);
   react2AngularDirective('icon', Icon, [
     'color',
