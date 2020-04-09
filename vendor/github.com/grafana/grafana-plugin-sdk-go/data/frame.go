@@ -43,7 +43,7 @@ type Frame struct {
 	Warnings []Warning // TODO: Remove, will be replaced with FrameMeta.Notices.
 }
 
-// Frames is a a collection of Frames as a slice of Frame pointers.
+// Frames is a slice of Frame pointers.
 // It is the main data container within a backend.DataResponse.
 type Frames []*Frame
 
