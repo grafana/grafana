@@ -3,7 +3,6 @@ package backendplugin
 import (
 	"time"
 
-	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/prometheus/client_golang/prometheus"
 )
 
@@ -14,13 +13,13 @@ var (
 
 func init() {
 	pluginRequestCounter = prometheus.NewCounterVec(prometheus.CounterOpts{
-		Namespace: metrics.ExporterName,
+		Namespace: "grafana",
 		Name:      "plugin_request_total",
 		Help:      "The total amount of plugin requests",
 	}, []string{"plugin_id", "endpoint", "status"})
 
 	pluginRequestDuration = prometheus.NewSummaryVec(prometheus.SummaryOpts{
-		Namespace:  metrics.ExporterName,
+		Namespace:  "grafana",
 		Name:       "plugin_request_duration_milliseconds",
 		Help:       "Plugin request duration",
 		Objectives: map[float64]float64{0.5: 0.05, 0.9: 0.01, 0.99: 0.001},
