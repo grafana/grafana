@@ -124,6 +124,7 @@ export interface PanelOptionsEditorConfig<TOptions, TSettings = any, TValue = an
   description: string;
   settings?: TSettings;
   defaultValue?: TValue;
+  showIf?: (currentConfig: TOptions) => boolean;
 }
 
 export interface PanelMenuItem {

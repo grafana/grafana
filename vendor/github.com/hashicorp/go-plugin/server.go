@@ -15,10 +15,8 @@ import (
 	"sort"
 	"strconv"
 	"strings"
-	"sync/atomic"
 
-	"github.com/hashicorp/go-hclog"
-
+	hclog "github.com/hashicorp/go-hclog"
 	"google.golang.org/grpc"
 )
 
@@ -85,6 +83,21 @@ type ServeConfig struct {
 	// Logger is used to pass a logger into the server. If none is provided the
 	// server will create a default logger.
 	Logger hclog.Logger
+
+	// Listener is the listener that the plugin server will listen for
+	// plugin connections. THIS DOES NOT NORMALLY NEED TO BE SET. If this
+	// isn't set, the plugin chooses a listener. This is exposed in case you
+	// want to carefully control how a plugin is served.
+	//
+	// If TLSProvider is set, this listener will be wrapped with a TLS
+	// listener. If you want to manually control TLS you should set
+	// TLSProvider to nil but be aware that the client side will need to be
+	// manually made aware of the certificate used.
+	//
+	// Serve will take ownership of this listener and close it when it is
+	// complete. The caller should NOT close this listener once `Serve` is
+	// called.
+	Listener net.Listener
 }
 
 // protocolVersion determines the protocol version and plugin set to be used by
@@ -173,13 +186,28 @@ func protocolVersion(opts *ServeConfig) (int, Protocol, PluginSet) {
 //
 // This is the method that plugins should call in their main() functions.
 func Serve(opts *ServeConfig) {
+	// We use this to trigger an `os.Exit` so that we can execute our other
+	// deferred functions.
+	exitCode := -1
+	defer func() {
+		if exitCode >= 0 {
+			os.Exit(exitCode)
+		}
+	}()
+
+	// If our listener is not nil, then we want to close that on exit.
+	if opts.Listener != nil {
+		defer opts.Listener.Close()
+	}
+
 	// Validate the handshake config
 	if opts.MagicCookieKey == "" || opts.MagicCookieValue == "" {
 		fmt.Fprintf(os.Stderr,
 			"Misconfigured ServeConfig given to serve this plugin: no magic cookie\n"+
 				"key or value was set. Please notify the plugin author and report\n"+
 				"this as a bug.\n")
-		os.Exit(1)
+		exitCode = 1
+		return
 	}
 
 	// First check the cookie
@@ -188,7 +216,8 @@ func Serve(opts *ServeConfig) {
 			"This binary is a plugin. These are not meant to be executed directly.\n"+
 				"Please execute the program that consumes these plugins, which will\n"+
 				"load any plugins automatically\n")
-		os.Exit(1)
+		exitCode = 1
+		return
 	}
 
 	// negotiate the version and plugins
@@ -221,18 +250,21 @@ func Serve(opts *ServeConfig) {
 		os.Exit(1)
 	}
 
-	// Register a listener so we can accept a connection
-	listener, err := serverListener()
-	if err != nil {
-		logger.Error("plugin init error", "error", err)
-		return
-	}
+	listener := opts.Listener
+	if listener == nil {
+		// Register a listener so we can accept a connection
+		listener, err = serverListener()
+		if err != nil {
+			logger.Error("plugin init error", "error", err)
+			return
+		}
 
-	// Close the listener on return. We wrap this in a func() on purpose
-	// because the "listener" reference may change to TLS.
-	defer func() {
-		listener.Close()
-	}()
+		// Close the listener on return. We wrap this in a func() on purpose
+		// because the "listener" reference may change to TLS.
+		defer func() {
+			listener.Close()
+		}()
+	}
 
 	var tlsConfig *tls.Config
 	if opts.TLSProvider != nil {
@@ -337,11 +369,11 @@ func Serve(opts *ServeConfig) {
 	ch := make(chan os.Signal, 1)
 	signal.Notify(ch, os.Interrupt)
 	go func() {
-		var count int32 = 0
+		count := 0
 		for {
 			<-ch
-			newCount := atomic.AddInt32(&count, 1)
-			logger.Debug("plugin received interrupt signal, ignoring", "count", newCount)
+			count++
+			logger.Trace("plugin received interrupt signal, ignoring", "count", count)
 		}
 	}()
 
@@ -351,6 +383,11 @@ func Serve(opts *ServeConfig) {
 
 	// Accept connections and wait for completion
 	go server.Serve(listener)
+
+	// Note that given the documentation of Serve we should probably be
+	// setting exitCode = 0 and using os.Exit here. That's how it used to
+	// work before extracting this library. However, for years we've done
+	// this so we'll keep this functionality.
 	<-doneCh
 }
 
@@ -390,7 +427,7 @@ func serverListener_tcp() (net.Listener, error) {
 	}
 
 	if minPort > maxPort {
-		return nil, fmt.Errorf("ENV_MIN_PORT value of %d is greater than PLUGIN_MAX_PORT value of %d", minPort, maxPort)
+		return nil, fmt.Errorf("PLUGIN_MIN_PORT value of %d is greater than PLUGIN_MAX_PORT value of %d", minPort, maxPort)
 	}
 
 	for port := minPort; port <= maxPort; port++ {

@@ -218,7 +218,7 @@ const ContextMenuItem: React.FC<ContextMenuItemProps> = React.memo(
       <div className={styles.item}>
         <a
           href={url ? url : undefined}
-          target={target || '_self'}
+          target={target}
           className={cx(className, styles.link)}
           onClick={e => {
             if (onClick) {
