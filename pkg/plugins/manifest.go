@@ -79,7 +79,7 @@ type PluginManifest struct {
 // ReadPluginManifest attempts to read and verify the plugin manifest
 // if any error occurs or the manifest is not valid, this will return an error
 func readPluginManifest(bytes []byte) (*PluginManifest, error) {
-	return nil, fmt.Errorf("actually parse manifest!!!")
+	return nil, fmt.Errorf("todo... actually parse manifest")
 
 	// publicKey, err := crypto.NewKeyFromArmored(__publicKeyText)
 	// if err != nil {
@@ -106,9 +106,10 @@ func readPluginManifest(bytes []byte) (*PluginManifest, error) {
 
 // GetPluginSignatureState returns the signature state for a plugin
 func GetPluginSignatureState(plugin *PluginBase) PluginSignature {
-	manifestPath := path.Join(p.PluginDir, "MANIFEST.txt")
+	manifestPath := path.Join(plugin.PluginDir, "MANIFEST.txt")
+
 	byteValue, err := ioutil.ReadFile(manifestPath)
-	if err != null || len(byteValue) < 10 {
+	if err != nil || len(byteValue) < 10 {
 		return PluginSignatureUnsigned
 	}
 
@@ -118,14 +119,14 @@ func GetPluginSignatureState(plugin *PluginBase) PluginSignature {
 	}
 
 	// Make sure the versions all match
-	if manifest.Plugin != plugin.Id || manifest.Version != plugin.Version {
+	if manifest.Plugin != plugin.Id || manifest.Version != plugin.Info.Version {
 		return PluginSignatureInvalid
 	}
 
 	// Verify the manifest contents
 	for p, hash := range manifest.Files {
 		// Open the file
-		f, err := os.Open(path.Join(p.PluginDir, p))
+		f, err := os.Open(path.Join(plugin.PluginDir, p))
 		if err != nil {
 			log.Info("error opening plugin path: %s / %s", plugin.Id, p)
 			return PluginSignatureModified
@@ -137,7 +138,7 @@ func GetPluginSignatureState(plugin *PluginBase) PluginSignature {
 			log.Info("error reading body: %s / %s", plugin.Id, p)
 			return PluginSignatureModified
 		}
-		sum := hash.Sum(nil)
+		sum := (string)(h.Sum(nil))
 		if sum != hash {
 			log.Info("plugin mismatch: %s / %s", plugin.Id, p)
 			return PluginSignatureModified
