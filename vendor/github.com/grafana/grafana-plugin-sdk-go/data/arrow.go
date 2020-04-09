@@ -17,7 +17,7 @@ import (
 
 // MarshalArrow converts the Frame to an arrow table and returns a byte
 // representation of that table.
-func MarshalArrow(f *Frame) ([]byte, error) {
+func (f *Frame) MarshalArrow() ([]byte, error) {
 	arrowFields, err := buildArrowFields(f)
 	if err != nil {
 		return nil, err
@@ -640,8 +640,8 @@ func populateFrameFields(fR *ipc.FileReader, nullable []bool, frame *Frame) erro
 	return nil
 }
 
-// UnmarshalArrow converts a byte representation of an arrow table to a Frame
-func UnmarshalArrow(b []byte) (*Frame, error) {
+// UnmarshalArrowFrame converts a byte representation of an arrow table to a Frame.
+func UnmarshalArrowFrame(b []byte) (*Frame, error) {
 	fB := filebuffer.New(b)
 	fR, err := ipc.NewFileReader(fB)
 	if err != nil {
@@ -693,12 +693,15 @@ func toJSONString(val interface{}) (string, error) {
 	return string(b), nil
 }
 
-// BytesSliceToFrames decodes a slice of encoded Arrow frames to a slice of *Frame.
-func BytesSliceToFrames(bFrames [][]byte) ([]*Frame, error) {
-	frames := make([]*Frame, len(bFrames))
+// UnmarshalArrowFrames decodes a slice of Arrow encoded frames to Frames ([]*Frame) by calling
+// the UnmarshalArrow function on each encoded frame.
+// If an error occurs Frames will be nil.
+// See Frames.UnMarshalArrow() for the inverse operation.
+func UnmarshalArrowFrames(bFrames [][]byte) (Frames, error) {
+	frames := make(Frames, len(bFrames))
 	var err error
 	for i, encodedFrame := range bFrames {
-		frames[i], err = UnmarshalArrow(encodedFrame)
+		frames[i], err = UnmarshalArrowFrame(encodedFrame)
 		if err != nil {
 			return nil, err
 		}
@@ -706,12 +709,14 @@ func BytesSliceToFrames(bFrames [][]byte) ([]*Frame, error) {
 	return frames, nil
 }
 
-// FramesToBytesSlice encodes a slice of Frames into a slice of []byte.
-func FramesToBytesSlice(frames []*Frame) ([][]byte, error) {
+// MarshalArrow encodes Frames into a slice of []byte using *Frame's MarshalArrow method on each Frame.
+// If an error occurs [][]byte will be nil.
+// See BytesSliceToFrames for the inverse operation.
+func (frames Frames) MarshalArrow() ([][]byte, error) {
 	bs := make([][]byte, len(frames))
 	var err error
 	for i, frame := range frames {
-		bs[i], err = MarshalArrow(frame)
+		bs[i], err = frame.MarshalArrow()
 		if err != nil {
 			return nil, err
 		}

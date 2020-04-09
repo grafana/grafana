@@ -8,23 +8,41 @@ import (
 )
 
 // Field represents a typed column of data within a Frame.
-// The data in the Field is a not exported, so methods on the Field are used to to manipulate its data.
+//
+// A Field is essentially a slice of various types with extra properties and methods.
+// See NewField() for supported types.
+//
+// The slice data in the Field is a not exported, so methods on the Field are used to to manipulate its data.
 type Field struct {
-	Name   string
-	Config *FieldConfig
-	vector vector
+	// Name is default identifer of the field. The name does not have to be unique, but the combination
+	// of name and Labels should be unique for proper behavior in all situations.
+	Name string
+
+	// Labels is an optional set of key=value pairs that in addition to the name, should uniquely
+	// identify a Field within a Frame.
 	Labels Labels
+
+	// Config is optional display configuration information for Grafana
+	Config *FieldConfig
+
+	// vector is the unexported values. it is unexported so we can change the underlying structure without
+	// major breaking changes.
+	vector vector
 }
 
 // Fields is a slice of Field pointers.
 type Fields []*Field
 
-// NewField returns a instance of *Field.
+// NewField returns a instance of *Field. Supported types for values are:
 //
-// Supported types for values are: []int8, []*int8, []int16, []*int16, []int32, []*int32, []int64, []*int64,
-// []uint8, []*uint8, []uint16, []*uint16, []uint32, []*uint32, []uint64, []*uint64,
-// []float32, []*float32, []float64, []*float64,
-// []string, []*string, []bool, []*bool, []time.Time, and []*time.Time.
+// Integers:
+//  []int8, []*int8, []int16, []*int16, []int32, []*int32, []int64, []*int64
+// Unsigned Integers:
+//  []uint8, []*uint8, []uint16, []*uint16, []uint32, []*uint32, []uint64, []*uint64
+// Floats:
+//  []float32, []*float32, []float64, []*float64
+// String, Bool, and Time:
+//  []string, []*string, []bool, []*bool, []time.Time, and []*time.Time.
 //
 // If an unsupported values type is passed, NewField will panic.
 func NewField(name string, labels Labels, values interface{}) *Field {
@@ -172,17 +190,21 @@ func NewField(name string, labels Labels, values interface{}) *Field {
 }
 
 // Set sets the Field's value at index idx to val.
-// It will panic if idx is out of range.
+// It will panic if idx is out of range or if
+// the underlying type of val does not match the element type of the Field.
 func (f *Field) Set(idx int, val interface{}) {
 	f.vector.Set(idx, val)
 }
 
-// Append appends element i to the Field.
-func (f *Field) Append(i interface{}) {
-	f.vector.Append(i)
+// Append appends element e to the Field.
+// it will panic if the underlying type of e does not match the element type of the Field.
+func (f *Field) Append(e interface{}) {
+	f.vector.Append(e)
 }
 
 // Extend extends the Field length by i.
+// Consider using Frame.Extend() when possible since all Fields within
+// a Frame need to be of the same length before marshalling and transmission.
 func (f *Field) Extend(i int) {
 	f.vector.Extend(i)
 }
@@ -198,7 +220,7 @@ func (f *Field) Len() int {
 	return f.vector.Len()
 }
 
-// Type returns the underlying primitive type of the Field.
+// Type returns the FieldType of the Field, which indicates what type of slice it is.
 func (f *Field) Type() FieldType {
 	return f.vector.Type()
 }
@@ -228,12 +250,17 @@ func (f *Field) Nullable() bool {
 	return f.Type().Nullable()
 }
 
-// FloatAt returns a float64 at the specified index idx.
+// FloatAt returns a float64 at the specified index idx for all supported Field types.
 // It will panic if idx is out of range.
-// If the Field type is numeric and the value at idx is nil, NaN is returned. Precision may be lost on large numbers.
+//
+// If the Field type is numeric and the value at idx is nil, NaN is returned.
+// Precision may be lost on large numbers.
+//
 // If the Field type is a bool then 0 is return if false or nil, and 1 if true.
+//
 // If the Field type is time.Time, then the millisecond epoch representation of the time
 // is returned, or NaN is the value is nil.
+//
 // If the Field type is a string, then strconv.ParseFloat is called on it and will return
 // an error if ParseFloat errors. If the value is nil, NaN is returned.
 func (f *Field) FloatAt(idx int) (float64, error) {

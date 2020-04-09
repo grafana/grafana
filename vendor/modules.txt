@@ -175,7 +175,7 @@ github.com/gosimple/slug
 ## explicit
 github.com/grafana/grafana-plugin-model/go/datasource
 github.com/grafana/grafana-plugin-model/go/renderer
-# github.com/grafana/grafana-plugin-sdk-go v0.39.0
+# github.com/grafana/grafana-plugin-sdk-go v0.40.1-0.20200409163705-fd66aee09a52
 ## explicit
 github.com/grafana/grafana-plugin-sdk-go/backend/grpcplugin
 github.com/grafana/grafana-plugin-sdk-go/data

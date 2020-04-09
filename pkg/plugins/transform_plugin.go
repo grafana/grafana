@@ -7,7 +7,6 @@ import (
 	"path"
 	"strconv"
 
-	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana-plugin-sdk-go/genproto/pluginv2"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
@@ -198,7 +197,7 @@ func (s *transformCallback) QueryData(ctx context.Context, req *pluginv2.QueryDa
 			if err != nil {
 				return nil, err
 			}
-			encFrame, err := data.MarshalArrow(frame)
+			encFrame, err := frame.MarshalArrow()
 			if err != nil {
 				return nil, err
 			}
@@ -207,7 +206,7 @@ func (s *transformCallback) QueryData(ctx context.Context, req *pluginv2.QueryDa
 		if res.Meta != nil {
 			b, err := res.Meta.MarshalJSON()
 			if err != nil {
-				s.logger.Error("failed to marhsal json metadata", err)
+				s.logger.Error("failed to marshal json metadata", err)
 			}
 			pRes.JsonMeta = b
 		}
