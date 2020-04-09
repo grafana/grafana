@@ -135,6 +135,7 @@ export type ButtonProps = {
   htmlType?: ButtonHTMLType;
   icon?: string;
   onClick?: React.MouseEventHandler<HTMLButtonElement>;
+  disabled?: boolean;
 };
 
 export const UIButton = function UIButton(props: ButtonProps) {
@@ -162,7 +163,42 @@ export const UIDivider = function UIDivider(props: DividerProps) {
   );
 };
 
-type Elements = {
+export type InputProps = {
+  autosize?: boolean | null;
+  placeholder?: string;
+  onChange: (value: React.ChangeEvent<HTMLInputElement>) => void;
+  suffix: React.ReactNode;
+  value?: string;
+};
+
+export const UIInput: React.FC<InputProps> = function UIInput(props: InputProps) {
+  return (
+    <GetElementsContext>
+      {(elements: Elements) => {
+        return <elements.Input {...props} />;
+      }}
+    </GetElementsContext>
+  );
+};
+
+export type InputGroupProps = {
+  className?: string;
+  compact?: boolean;
+  style?: React.CSSProperties;
+  children?: React.ReactNode;
+};
+
+export const UIInputGroup = function UIInputGroup(props: InputGroupProps) {
+  return (
+    <GetElementsContext>
+      {(elements: Elements) => {
+        return <elements.InputGroup {...props} />;
+      }}
+    </GetElementsContext>
+  );
+};
+
+export type Elements = {
   Popover: React.ComponentType<PopoverProps>;
   Tooltip: React.ComponentType<TooltipProps>;
   Icon: React.ComponentType<IconProps>;
@@ -171,6 +207,8 @@ type Elements = {
   MenuItem: React.ComponentType<MenuItemProps>;
   Button: React.ComponentType<ButtonProps>;
   Divider: React.ComponentType<DividerProps>;
+  Input: React.ComponentType<InputProps>;
+  InputGroup: React.ComponentType<InputGroupProps>;
 };
 
 /**

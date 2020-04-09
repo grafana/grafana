@@ -1,48 +1,61 @@
-import React, { FC } from 'react';
+import React, { FC, Dispatch } from 'react';
 import { css, cx } from 'emotion';
 import { GrafanaTheme } from '@grafana/data';
-import { Icon, IconName, stylesFactory, useTheme } from '@grafana/ui';
-import { DashboardSection, ItemClickWithEvent } from '../types';
+import { Icon, stylesFactory, useTheme, IconName } from '@grafana/ui';
+import PageLoader from 'app/core/components/PageLoader/PageLoader';
+import appEvents from 'app/core/app_events';
+import { CoreEvents } from 'app/types';
+import { DashboardSection, ItemClickWithEvent, SearchAction } from '../types';
 import { SearchItem } from './SearchItem';
 import { SearchCheckbox } from './SearchCheckbox';
 
 export interface Props {
-  results: DashboardSection[] | undefined;
-  onSelectionChanged: () => void;
+  dispatch?: Dispatch<SearchAction>;
+  editable?: boolean;
+  loading?: boolean;
+  onFolderExpanding?: () => void;
+  onSelectionChanged?: () => void;
   onTagSelected: (name: string) => any;
-  onFolderExpanding: () => void;
-  onToggleSelection: ItemClickWithEvent;
-  editable: boolean;
+  onToggleSection?: any;
+  onToggleSelection?: ItemClickWithEvent;
+  results: DashboardSection[] | undefined;
 }
 
 export const SearchResults: FC<Props> = ({
-  results,
+  editable,
+  loading,
+  onFolderExpanding,
   onSelectionChanged,
   onTagSelected,
-  onFolderExpanding,
+  onToggleSection,
   onToggleSelection,
-  editable,
+  results,
 }) => {
   const theme = useTheme();
   const styles = getSectionStyles(theme);
 
   const toggleFolderExpand = (section: DashboardSection) => {
-    if (section.toggle) {
-      if (!section.expanded && onFolderExpanding) {
-        onFolderExpanding();
-      }
-
-      section.toggle(section).then(() => {
-        if (onSelectionChanged) {
-          onSelectionChanged();
+    if (onToggleSection) {
+      onToggleSection(section);
+    } else {
+      if (section.toggle) {
+        if (!section.expanded && onFolderExpanding) {
+          onFolderExpanding();
         }
-      });
+
+        section.toggle(section).then(() => {
+          if (onSelectionChanged) {
+            onSelectionChanged();
+          }
+        });
+      }
     }
   };
 
-  // TODO display 'No results' messages after manage dashboards is refactored
-  if (!results) {
-    return null;
+  if (loading) {
+    return <PageLoader />;
+  } else if (!results || !results.length) {
+    return <h6>No dashboards matching your query were found.</h6>;
   }
 
   return (
@@ -79,11 +92,16 @@ const getSectionStyles = stylesFactory((theme: GrafanaTheme) => {
 interface SectionHeaderProps {
   section: DashboardSection;
   onSectionClick: (section: DashboardSection) => void;
-  onToggleSelection: ItemClickWithEvent;
-  editable: boolean;
+  onToggleSelection?: ItemClickWithEvent;
+  editable?: boolean;
 }
 
-const SectionHeader: FC<SectionHeaderProps> = ({ section, onSectionClick, onToggleSelection, editable }) => {
+const SectionHeader: FC<SectionHeaderProps> = ({
+  section,
+  onSectionClick,
+  onToggleSelection = () => {},
+  editable = false,
+}) => {
   const theme = useTheme();
   const styles = getSectionHeaderStyles(theme, section.selected);
 
@@ -102,7 +120,11 @@ const SectionHeader: FC<SectionHeaderProps> = ({ section, onSectionClick, onTogg
 
       <span className={styles.text}>{section.title}</span>
       {section.url && (
-        <a href={section.url} className={styles.link}>
+        <a
+          href={section.url}
+          className={styles.link}
+          onClick={() => appEvents.emit(CoreEvents.hideDashSearch, { target: 'search-item' })}
+        >
           <Icon name="cog" />
         </a>
       )}

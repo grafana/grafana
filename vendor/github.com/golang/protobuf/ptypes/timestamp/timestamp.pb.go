@@ -20,17 +20,19 @@ var _ = math.Inf
 // proto package needs to be updated.
 const _ = proto.ProtoPackageIsVersion3 // please upgrade the proto package
 
-// A Timestamp represents a point in time independent of any time zone
-// or calendar, represented as seconds and fractions of seconds at
-// nanosecond resolution in UTC Epoch time. It is encoded using the
-// Proleptic Gregorian Calendar which extends the Gregorian calendar
-// backwards to year one. It is encoded assuming all minutes are 60
-// seconds long, i.e. leap seconds are "smeared" so that no leap second
-// table is needed for interpretation. Range is from
-// 0001-01-01T00:00:00Z to 9999-12-31T23:59:59.999999999Z.
-// By restricting to that range, we ensure that we can convert to
-// and from  RFC 3339 date strings.
-// See [https://www.ietf.org/rfc/rfc3339.txt](https://www.ietf.org/rfc/rfc3339.txt).
+// A Timestamp represents a point in time independent of any time zone or local
+// calendar, encoded as a count of seconds and fractions of seconds at
+// nanosecond resolution. The count is relative to an epoch at UTC midnight on
+// January 1, 1970, in the proleptic Gregorian calendar which extends the
+// Gregorian calendar backwards to year one.
+//
+// All minutes are 60 seconds long. Leap seconds are "smeared" so that no leap
+// second table is needed for interpretation, using a [24-hour linear
+// smear](https://developers.google.com/time/smear).
+//
+// The range is from 0001-01-01T00:00:00Z to 9999-12-31T23:59:59.999999999Z. By
+// restricting to that range, we ensure that we can convert to and from [RFC
+// 3339](https://www.ietf.org/rfc/rfc3339.txt) date strings.
 //
 // # Examples
 //
@@ -91,12 +93,14 @@ const _ = proto.ProtoPackageIsVersion3 // please upgrade the proto package
 // 01:30 UTC on January 15, 2017.
 //
 // In JavaScript, one can convert a Date object to this format using the
-// standard [toISOString()](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Date/toISOString]
+// standard
+// [toISOString()](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Date/toISOString)
 // method. In Python, a standard `datetime.datetime` object can be converted
-// to this format using [`strftime`](https://docs.python.org/2/library/time.html#time.strftime)
-// with the time format spec '%Y-%m-%dT%H:%M:%S.%fZ'. Likewise, in Java, one
-// can use the Joda Time's [`ISODateTimeFormat.dateTime()`](
-// http://www.joda.org/joda-time/apidocs/org/joda/time/format/ISODateTimeFormat.html#dateTime--
+// to this format using
+// [`strftime`](https://docs.python.org/2/library/time.html#time.strftime) with
+// the time format spec '%Y-%m-%dT%H:%M:%S.%fZ'. Likewise, in Java, one can use
+// the Joda Time's [`ISODateTimeFormat.dateTime()`](
+// http://www.joda.org/joda-time/apidocs/org/joda/time/format/ISODateTimeFormat.html#dateTime%2D%2D
 // ) to obtain a formatter capable of generating timestamps in this format.
 //
 //
@@ -160,7 +164,9 @@ func init() {
 	proto.RegisterType((*Timestamp)(nil), "google.protobuf.Timestamp")
 }
 
-func init() { proto.RegisterFile("google/protobuf/timestamp.proto", fileDescriptor_292007bbfe81227e) }
+func init() {
+	proto.RegisterFile("google/protobuf/timestamp.proto", fileDescriptor_292007bbfe81227e)
+}
 
 var fileDescriptor_292007bbfe81227e = []byte{
 	// 191 bytes of a gzipped FileDescriptorProto
