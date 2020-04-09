@@ -70,7 +70,6 @@ func (m *manager) Run(ctx context.Context) error {
 
 // Register registers a backend plugin
 func (m *manager) Register(descriptor PluginDescriptor) error {
-	println(m.logger)
 	m.logger.Debug("Registering backend plugin", "pluginId", descriptor.pluginID, "executablePath", descriptor.executablePath)
 	m.pluginsMu.Lock()
 	defer m.pluginsMu.Unlock()
