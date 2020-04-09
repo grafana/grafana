@@ -11,6 +11,7 @@ import {
 } from './richHistory';
 import store from 'app/core/store';
 import { SortOrder } from './explore';
+import { dateTime } from '@grafana/data';
 
 const mock: any = {
   history: [
@@ -164,6 +165,8 @@ describe('createDateStringFromTs', () => {
 
 describe('createQueryHeading', () => {
   it('should correctly create heading for queries when sort order is ascending ', () => {
+    // Have to offset the timezone of a 1 microsecond epoch, and then reverse the changes
+    mock.history[0].ts = 1 + -1 * dateTime().utcOffset() * 60 * 1000;
     const heading = createQueryHeading(mock.history[0], SortOrder.Ascending);
     expect(heading).toEqual('January 1');
   });

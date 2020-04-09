@@ -2,7 +2,7 @@ import React, { FormEvent, PureComponent } from 'react';
 import { connect, MapDispatchToProps, MapStateToProps } from 'react-redux';
 import { css } from 'emotion';
 import { AppEvents, NavModel } from '@grafana/data';
-import { Button, Forms, stylesFactory, Input } from '@grafana/ui';
+import { Button, Forms, stylesFactory, Input, TextArea } from '@grafana/ui';
 import Page from 'app/core/components/Page/Page';
 import { ImportDashboardOverview } from './components/ImportDashboardOverview';
 import { DashboardFileUpload } from './components/DashboardFileUpload';
@@ -111,7 +111,7 @@ class DashboardImportUnConnected extends PureComponent<Props> {
                   invalid={!!errors.dashboardJson}
                   error={errors.dashboardJson && errors.dashboardJson.message}
                 >
-                  <Forms.TextArea
+                  <TextArea
                     name="dashboardJson"
                     ref={register({
                       required: 'Need a dashboard json model',

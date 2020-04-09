@@ -1,3 +1,4 @@
+export { Icon } from './Icon/Icon';
 export { ConfirmButton } from './ConfirmButton/ConfirmButton';
 export { DeleteButton } from './ConfirmButton/DeleteButton';
 export { Tooltip, PopoverContent } from './Tooltip/Tooltip';
@@ -113,7 +114,6 @@ export { FadeTransition } from './transitions/FadeTransition';
 export { SlideOutTransition } from './transitions/SlideOutTransition';
 export { Segment, SegmentAsync, SegmentInput, SegmentSelect } from './Segment/';
 export { default as Chart } from './Chart';
-export { Icon } from './Icon/Icon';
 export { Drawer } from './Drawer/Drawer';
 export { Slider } from './Slider/Slider';
 
@@ -138,6 +138,7 @@ export { RadioButtonGroup } from './Forms/RadioButtonGroup/RadioButtonGroup';
 
 export { Input } from './Input/Input';
 export { Switch } from './Forms/Switch';
+export { TextArea } from './TextArea/TextArea';
 
 // Legacy forms
 
