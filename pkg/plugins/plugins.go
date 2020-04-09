@@ -125,46 +125,12 @@ func (pm *PluginManager) Init() error {
 		if p.IsCorePlugin {
 			p.Signature = PluginSignatureInternal
 		} else {
-			p.Signature = getPluginSignatureState(p.PluginDir)
+			p.Signature = GetPluginSignatureState(p)
 			metrics.SetPluginBuildInformation(p.Id, p.Type, p.Info.Version)
 		}
 	}
 
 	return nil
-}
-
-func getPluginSignatureState(dir string) PluginSignature {
-	manifestPath := path.Join(dir, "MANIFEST.txt")
-	info, _ := os.Stat(manifestPath)
-	if info == nil || info.Size() < 5 {
-		return PluginSignatureUnsigned
-	}
-
-	// 1. TODO: validate PGP signature
-	// if( !valid ) {
-	//   return PluginSignatureInvalid
-	// }
-
-	// 2. check the manifest contents... currently looks like:
-	//
-
------BEGIN PGP SIGNED MESSAGE-----
-Hash: SHA512
-
-Hello there
------BEGIN PGP SIGNATURE-----
-Version: OpenPGP.js v4.10.1
-Comment: https://openpgpjs.org
-
-wl4EARYKAAYFAl6OYU8ACgkQ1uNw7xqtn46lNQD+IojxLTmT7yCaVsREzNuV
-DOlTO2nLfa3K8zYt1vSaghsA/R7TViBrnjgt3dg3iu8GolZUy9IZeFttKm/z
-Ld5KOdYB
-=4GVX
------END PGP SIGNATURE-----
-
-
-	// For now everything is invalid or missing
-	return PluginSignatureInvalid
 }
 
 func (pm *PluginManager) Run(ctx context.Context) error {

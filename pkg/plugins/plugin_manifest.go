@@ -1,18 +1,17 @@
-package util
+package plugins
 
 import (
-	"encoding/json"
+	"crypto/sha256"
 	"fmt"
+	"io"
 	"io/ioutil"
+	"os"
+	"path"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/plugins"
-
-	"github.com/ProtonMail/gopenpgp/v2/crypto"
 )
 
-var _PluginPublicKey = `-----BEGIN PGP PUBLIC KEY BLOCK-----
+var publicKeyText = `-----BEGIN PGP PUBLIC KEY BLOCK-----
 Version: OpenPGP.js v4.10.1
 Comment: https://openpgpjs.org
 
@@ -80,55 +79,47 @@ type PluginManifest struct {
 // ReadPluginManifest attempts to read and verify the plugin manifest
 // if any error occurs or the manifest is not valid, this will return an error
 func readPluginManifest(bytes []byte) (*PluginManifest, error) {
+	return nil, fmt.Errorf("actually parse manifest!!!")
 
-	verifiedPlainText, err := helper.VerifyCleartextMessageArmored(
-		publicKey, 
-		(string)(bytes), 
-		crypto.GetUnixTime())
+	// publicKey, err := crypto.NewKeyFromArmored(__publicKeyText)
+	// if err != nil {
+	// 	return nil, err
+	// }
 
-		
-	if err != nil {
-		return nil, err
-	}
+	// // Find the plaintext
+	// verifiedPlainText, err := helper.VerifyCleartextMessageArmored(
+	// 	publicKey,
+	// 	(string)(bytes),
+	// 	crypto.GetUnixTime())
+	// if err != nil {
+	// 	return nil, err
+	// }
 
-	manifest := &PluginManifest{}
-	err = json.Unmarshal([]byte(verifiedPlainText), &manifest)
-	if err == nil {
-		return nil, fmt.Errorf("Error parsing manifest JSON: %s", err)
-	}
-
-	signature, err := ioutil.ReadAll(signed.ArmoredSignature.Body)
-	if err != nil {
-		return nil, fmt.Errorf("Could not read plugin manifest signature: %s", err)
-	}
-
-	// TODO?????
-	// validate the signature against public key
-
-	return manifest, nil
+	// // Convert to a well typed object
+	// manifest := &PluginManifest{}
+	// err = json.Unmarshal([]byte(verifiedPlainText), &manifest)
+	// if err == nil {
+	// 	return nil, fmt.Errorf("Error parsing manifest JSON: %s", err)
+	// }
+	// return manifest, nil
 }
 
-func verifyPluginManifest(manifest *PluginManifest, plugin *plugins.PluginBase) error {
-	if(manifest.Plugin != plugin.Id)
-
-	return nil
-}
-
-func GetPluginSignatureState(plugin *PluginBase) plugins.PluginSignature {
+// GetPluginSignatureState returns the signature state for a plugin
+func GetPluginSignatureState(plugin *PluginBase) PluginSignature {
 	manifestPath := path.Join(p.PluginDir, "MANIFEST.txt")
-	byteValue, err := ioutil.ReadFile(manifestPath);
+	byteValue, err := ioutil.ReadFile(manifestPath)
 	if err != null || len(byteValue) < 10 {
-		return plugins.PluginSignatureUnsigned
+		return PluginSignatureUnsigned
 	}
 
 	manifest, err := readPluginManifest(byteValue)
-	if(err != nil) {
-		return plugins.PluginSignatureInvalid
+	if err != nil {
+		return PluginSignatureInvalid
 	}
 
 	// Make sure the versions all match
 	if manifest.Plugin != plugin.Id || manifest.Version != plugin.Version {
-		return plugins.PluginSignatureInvalid
+		return PluginSignatureInvalid
 	}
 
 	// Verify the manifest contents
@@ -137,21 +128,21 @@ func GetPluginSignatureState(plugin *PluginBase) plugins.PluginSignature {
 		f, err := os.Open(path.Join(p.PluginDir, p))
 		if err != nil {
 			log.Info("error opening plugin path: %s / %s", plugin.Id, p)
-			return plugins.PluginSignatureModified
+			return PluginSignatureModified
 		}
 		defer f.Close()
 
 		h := sha256.New()
 		if _, err := io.Copy(h, f); err != nil {
 			log.Info("error reading body: %s / %s", plugin.Id, p)
-			return plugins.PluginSignatureModified
+			return PluginSignatureModified
 		}
 		sum := hash.Sum(nil)
-		if( sum != hash) {
+		if sum != hash {
 			log.Info("plugin mismatch: %s / %s", plugin.Id, p)
-			return plugins.PluginSignatureModified
+			return PluginSignatureModified
 		}
-    }
+	}
 
 	// Everything OK
 	return PluginSignatureValid
