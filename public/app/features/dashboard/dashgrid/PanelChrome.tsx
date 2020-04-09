@@ -278,8 +278,6 @@ export class PanelChrome extends PureComponent<Props, State> {
     });
     const panelOptions = panel.getOptions();
 
-    console.log('PanelChrome.renderPanel', panel.id);
-
     return (
       <>
         <div className={panelContentClassNames}>
