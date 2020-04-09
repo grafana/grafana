@@ -3,12 +3,12 @@ import { contextSrv } from 'app/core/services/context_srv';
 import { useDebounce } from 'react-use';
 import { Icon } from '@grafana/ui';
 import { manageDashboardsState, reducer } from '../reducers/manageDashboards';
-import { FETCH_RESULTS } from '../reducers/actionTypes';
+import { FETCH_RESULTS, TOGGLE_EDIT_PERMISSIONS, TOGGLE_FOLDER_CAN_SAVE } from '../reducers/actionTypes';
 import { SearchSrv } from 'app/core/services/search_srv';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { SearchResultsFilter } from './SearchResultsFilter';
 import { SearchResults } from './SearchResults';
-import { TOGGLE_EDIT_PERMISSIONS, TOGGLE_FOLDER_CAN_SAVE } from '../reducers/actionTypes';
+import { DashboardActions } from './DashboardActions';
 
 export interface Props {
   folderId?: number;
@@ -80,8 +80,7 @@ export const ManageDashboards: FC<Props> = ({ folderId, folderUid }) => {
   const onQueryChange = (query: any) => {
     setQuery(query);
   };
-  const createDashboardUrl = () => '';
-  const importDashboardUrl = () => '';
+
   const onTagRemove = () => {};
   const onRemoveStarred = () => {};
   const onClearFilters = () => {};
@@ -92,8 +91,9 @@ export const ManageDashboards: FC<Props> = ({ folderId, folderUid }) => {
   const filterByTag = () => {};
   const onToggleSelection = () => {};
   const onSelectAllChanged = () => {};
-  const canEdit = hasEditPermissionInFolders || canSave;
+
   const hasFilters = query.query.length > 0 || query.tag.length > 0 || query.starred;
+
   return (
     <div className="dashboard-list">
       <div className="page-action-bar page-action-bar--narrow">
@@ -108,22 +108,7 @@ export const ManageDashboards: FC<Props> = ({ folderId, folderUid }) => {
           />
           <Icon className="gf-form-input-icon" name="search" />
         </label>
-        <div className="page-action-bar__spacer" />
-        {canEdit && (
-          <a className="btn btn-primary" href={createDashboardUrl()}>
-            New Dashboard
-          </a>
-        )}
-        {!folderId && isEditor && (
-          <a className="btn btn-primary" href="dashboards/folder/new">
-            New Folder
-          </a>
-        )}
-        {canEdit && (
-          <a className="btn btn-primary" href={importDashboardUrl()}>
-            Import
-          </a>
-        )}
+        <DashboardActions isEditor={isEditor} canEdit={hasEditPermissionInFolders || canSave} folderId={folderId} />
       </div>
 
       {hasFilters && (
