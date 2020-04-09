@@ -89,8 +89,6 @@ class MetricsPanelCtrl extends PanelCtrl {
     delete this.error;
     this.loading = true;
 
-    console.log('MetricsPanelCtrl.refresh', this.panel.id);
-
     // load datasource service
     return this.datasourceSrv
       .get(this.panel.datasource, this.panel.scopedVars)

@@ -175,8 +175,6 @@ export class PanelChrome extends PureComponent<Props, State> {
       return;
     }
 
-    console.log('PanelChrome.onRefresh', panel.id);
-
     const timeData = applyPanelTimeOverrides(panel, this.timeSrv.timeRange());
 
     // Issue Query
