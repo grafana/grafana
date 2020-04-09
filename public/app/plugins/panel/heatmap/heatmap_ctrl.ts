@@ -296,7 +296,7 @@ export class HeatmapCtrl extends MetricsPanelCtrl {
   // Directly support DataFrame
   onDataFramesReceived(data: DataFrame[]) {
     this.series = this.processor.getSeriesList({ dataList: data, range: this.range }).map(ts => {
-      ts.color = null; // remove whatever the processor set
+      ts.color = undefined; // remove whatever the processor set
       ts.flotpairs = ts.getFlotPairs(this.panel.nullPointMode);
       return ts;
     });

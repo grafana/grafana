@@ -217,7 +217,7 @@ export class ThresholdsEditor extends PureComponent<Props, State> {
                   })}
               </div>
 
-              <Field label="Threshold mode">
+              <Field label="Threshold mode" description="Percentage means thresholds relative to min & max">
                 <FullWidthButtonContainer>
                   <RadioButtonGroup size="sm" options={modes} onChange={this.onModeChanged} value={thresholds.mode} />
                 </FullWidthButtonContainer>
