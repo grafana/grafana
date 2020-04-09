@@ -5,11 +5,12 @@ import { GrafanaTheme } from '@grafana/data';
 
 interface QueryOperationActionProps {
   icon: IconName;
+  title?: string;
   onClick: (e: React.MouseEvent) => void;
   disabled?: boolean;
 }
 
-export const QueryOperationAction: React.FC<QueryOperationActionProps> = ({ icon, disabled, ...otherProps }) => {
+export const QueryOperationAction: React.FC<QueryOperationActionProps> = ({ icon, disabled, title, ...otherProps }) => {
   const theme = useTheme();
   const styles = getQueryOperationActionStyles(theme, !!disabled);
   const onClick = (e: React.MouseEvent) => {
@@ -17,8 +18,11 @@ export const QueryOperationAction: React.FC<QueryOperationActionProps> = ({ icon
       otherProps.onClick(e);
     }
   };
-
-  return <Icon name={icon} className={styles.icon} onClick={onClick} />;
+  return (
+    <div title={title}>
+      <Icon name={icon} className={styles.icon} onClick={onClick} aria-label={`${title} query operation action`} />
+    </div>
+  );
 };
 
 const getQueryOperationActionStyles = stylesFactory((theme: GrafanaTheme, disabled: boolean) => {

@@ -12,6 +12,7 @@ interface QueryOperationRowProps {
   onOpen?: () => void;
   onClose?: () => void;
   children: React.ReactNode;
+  isOpen?: boolean;
 }
 
 export const QueryOperationRow: React.FC<QueryOperationRowProps> = ({
@@ -20,11 +21,11 @@ export const QueryOperationRow: React.FC<QueryOperationRowProps> = ({
   title,
   onClose,
   onOpen,
+  isOpen,
 }: QueryOperationRowProps) => {
-  const [isContentVisible, setIsContentVisible] = useState(true);
+  const [isContentVisible, setIsContentVisible] = useState(isOpen !== undefined ? isOpen : true);
   const theme = useTheme();
   const styles = getQueryOperationRowStyles(theme);
-
   useUpdateEffect(() => {
     if (isContentVisible) {
       if (onOpen) {
@@ -54,7 +55,13 @@ export const QueryOperationRow: React.FC<QueryOperationRowProps> = ({
     <div className={styles.wrapper}>
       <div className={styles.header}>
         <HorizontalGroup justify="space-between">
-          <div className={styles.titleWrapper} onClick={() => setIsContentVisible(!isContentVisible)}>
+          <div
+            className={styles.titleWrapper}
+            onClick={() => {
+              setIsContentVisible(!isContentVisible);
+            }}
+            aria-label="Query operation row title"
+          >
             <Icon name={isContentVisible ? 'angle-down' : 'angle-right'} className={styles.collapseIcon} />
             {title && <span className={styles.title}>{titleElement}</span>}
           </div>

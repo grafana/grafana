@@ -224,18 +224,27 @@ export class QueryEditorRow extends PureComponent<Props, State> {
       <HorizontalGroup>
         {hasTextEditMode && (
           <QueryOperationAction
+            title="Toggle text edit mode"
             icon="pen"
             onClick={e => {
               this.onToggleEditMode(e, props);
             }}
           />
         )}
-        <QueryOperationAction icon="arrow-down" onClick={() => this.props.onMoveQuery(query, 1)} />
-        <QueryOperationAction icon="arrow-up" onClick={() => this.props.onMoveQuery(query, -1)} />
+        <QueryOperationAction
+          title="Move query down"
+          icon="arrow-down"
+          onClick={() => this.props.onMoveQuery(query, 1)}
+        />
+        <QueryOperationAction title="Move query up" icon="arrow-up" onClick={() => this.props.onMoveQuery(query, -1)} />
 
-        <QueryOperationAction icon="copy" onClick={this.onCopyQuery} />
-        <QueryOperationAction icon={isDisabled ? 'eye-slash' : 'eye'} onClick={this.onDisableQuery} />
-        <QueryOperationAction icon="trash-alt" onClick={this.onRemoveQuery} />
+        <QueryOperationAction title="Duplicate query" icon="copy" onClick={this.onCopyQuery} />
+        <QueryOperationAction
+          title="Disable/enable query"
+          icon={isDisabled ? 'eye-slash' : 'eye'}
+          onClick={this.onDisableQuery}
+        />
+        <QueryOperationAction title="Remove query" icon="trash-alt" onClick={this.onRemoveQuery} />
       </HorizontalGroup>
     );
   };
