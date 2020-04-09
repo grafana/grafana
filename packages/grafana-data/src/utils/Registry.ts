@@ -124,7 +124,7 @@ export class Registry<T extends RegistryItem> {
     if (!this.initialized) {
       this.getIfExists('xxx'); // will trigger init
     }
-    return [...this.ordered]; // copy of everythign just in case
+    return this.ordered; // copy of everythign just in case
   }
 
   register(ext: T) {

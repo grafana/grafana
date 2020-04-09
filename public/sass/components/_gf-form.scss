@@ -40,8 +40,7 @@ $input-border: 1px solid $input-border-color;
 
   .gf-form-input-icon {
     position: absolute;
-    top: 50%;
-    margin-top: -9px;
+    top: 10px;
     font-size: $font-size-lg;
     left: 10px;
     color: $input-color-placeholder;
@@ -102,13 +101,14 @@ $input-border: 1px solid $input-border-color;
 }
 
 .gf-form-label {
+  display: flex;
+  align-items: center;
   padding: $input-padding;
   flex-shrink: 0;
   font-weight: $font-weight-semi-bold;
   font-size: $font-size-sm;
 
   background-color: $input-label-bg;
-  display: block;
   height: $input-height;
 
   border: $border-width solid $input-label-border-color;
@@ -128,6 +128,13 @@ $input-border: 1px solid $input-border-color;
     border: 0;
     text-align: right;
     padding-left: 0px;
+  }
+
+  &--variable {
+    color: $variable;
+    background: $panel-bg;
+    border: $panel-border;
+    border-right: none;
   }
 
   &--btn {
@@ -370,7 +377,6 @@ $input-border: 1px solid $input-border-color;
 
 .gf-form-help-icon {
   flex-grow: 0;
-  padding-left: $spacer;
   color: $text-color-weak;
 
   &--bold {

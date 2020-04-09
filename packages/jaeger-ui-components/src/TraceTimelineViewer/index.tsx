@@ -33,6 +33,7 @@ type TExtractUiFindFromStateReturn = {
 const getStyles = createStyle(() => {
   return {
     TraceTimelineViewer: css`
+      label: TraceTimelineViewer;
       border-bottom: 1px solid #bbb;
 
       & .json-markup {
@@ -98,6 +99,11 @@ type TProps = TExtractUiFindFromStateReturn & {
   linksGetter: (span: Span, items: KeyValuePair[], itemIndex: number) => Link[];
 };
 
+type State = {
+  // Will be set to real height of the component so it can be passed down to size some other elements.
+  height: number;
+};
+
 const NUM_TICKS = 5;
 
 /**
@@ -106,7 +112,12 @@ const NUM_TICKS = 5;
  * re-render the ListView every time the cursor is moved on the trace minimap
  * or `TimelineHeaderRow`.
  */
-export default class TraceTimelineViewer extends React.PureComponent<TProps> {
+export default class TraceTimelineViewer extends React.PureComponent<TProps, State> {
+  constructor(props: TProps) {
+    super(props);
+    this.state = { height: 0 };
+  }
+
   componentDidMount() {
     mergeShortcuts({
       collapseAll: this.collapseAll,
@@ -147,7 +158,10 @@ export default class TraceTimelineViewer extends React.PureComponent<TProps> {
 
     return (
       <ExternalLinkContext.Provider value={createLinkToExternalSpan}>
-        <div className={styles.TraceTimelineViewer}>
+        <div
+          className={styles.TraceTimelineViewer}
+          ref={(ref: HTMLDivElement | null) => ref && this.setState({ height: ref.getBoundingClientRect().height })}
+        >
           <TimelineHeaderRow
             duration={trace.duration}
             nameColumnWidth={traceTimeline.spanNameColumnWidth}
@@ -160,6 +174,7 @@ export default class TraceTimelineViewer extends React.PureComponent<TProps> {
             viewRangeTime={viewRange.time}
             updateNextViewRangeTime={updateNextViewRangeTime}
             updateViewRangeTime={updateViewRangeTime}
+            columnResizeHandleHeight={this.state.height}
           />
           <VirtualizedTraceView
             {...rest}

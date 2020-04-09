@@ -1,7 +1,7 @@
 import React, { PureComponent } from 'react';
 import { e2e } from '@grafana/e2e';
-import { Switch, LegacyForms, ClipboardButton } from '@grafana/ui';
-const { Select } = LegacyForms;
+import { LegacyForms, ClipboardButton, Icon } from '@grafana/ui';
+const { Select, Switch } = LegacyForms;
 import { SelectableValue, PanelModel, AppEvents } from '@grafana/data';
 import { DashboardModel } from 'app/features/dashboard/state';
 import { buildImageUrl, buildShareUrl } from './utils';
@@ -90,9 +90,7 @@ export class ShareLink extends PureComponent<Props, State> {
     return (
       <div className="share-modal-body">
         <div className="share-modal-header">
-          <div className="share-modal-big-icon">
-            <i className="gicon gicon-link"></i>
-          </div>
+          <Icon name="link" className="share-modal-big-icon" size="xxl" />
           <div className="share-modal-content">
             <p className="share-modal-info-text">
               Create a direct link to this dashboard or panel, customized with the options below.

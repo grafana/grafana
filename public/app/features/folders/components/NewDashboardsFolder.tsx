@@ -1,7 +1,7 @@
 import React, { PureComponent } from 'react';
 import { connect, MapDispatchToProps, MapStateToProps } from 'react-redux';
 import { NavModel } from '@grafana/data';
-import { Forms, Button } from '@grafana/ui';
+import { Forms, Button, Input } from '@grafana/ui';
 import Page from 'app/core/components/Page/Page';
 import { createNewFolder } from '../state/actions';
 import { getNavModel } from 'app/core/selectors/navModel';
@@ -55,7 +55,7 @@ export class NewDashboardsFolder extends PureComponent<Props> {
                   invalid={!!errors.folderName}
                   error={errors.folderName && errors.folderName.message}
                 >
-                  <Forms.Input
+                  <Input
                     name="folderName"
                     ref={register({
                       required: 'Folder name is required.',

@@ -1,7 +1,7 @@
 import React, { ChangeEvent, PureComponent } from 'react';
 import { SelectableValue } from '@grafana/data';
-import { Input, FormLabel, LegacyForms, Button } from '@grafana/ui';
-const { Select } = LegacyForms;
+import { FormLabel, LegacyForms, Button } from '@grafana/ui';
+const { Select, Input } = LegacyForms;
 
 export interface Props {
   selectedAzureCloud?: string;

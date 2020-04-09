@@ -34,6 +34,7 @@ export interface PluginMeta<T extends KeyValue = {}> {
   enabled?: boolean;
   defaultNavUrl?: string;
   hasUpdate?: boolean;
+  enterprise?: boolean;
   latestVersion?: string;
   pinned?: boolean;
 }

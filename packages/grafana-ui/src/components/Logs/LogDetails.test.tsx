@@ -37,7 +37,7 @@ describe('LogDetails', () => {
   describe('when labels are present', () => {
     it('should render heading', () => {
       const wrapper = setup(undefined, { labels: { key1: 'label1', key2: 'label2' } });
-      expect(wrapper.find({ 'aria-label': 'Log Labels' })).toHaveLength(1);
+      expect(wrapper.find({ 'aria-label': 'Log Labels' }).hostNodes()).toHaveLength(1);
     });
     it('should render labels', () => {
       const wrapper = setup(undefined, { labels: { key1: 'label1', key2: 'label2' } });
@@ -47,7 +47,7 @@ describe('LogDetails', () => {
   describe('when row entry has parsable fields', () => {
     it('should render heading ', () => {
       const wrapper = setup(undefined, { entry: 'test=successful' });
-      expect(wrapper.find({ title: 'Ad-hoc statistics' })).toHaveLength(1);
+      expect(wrapper.find({ title: 'Ad-hoc statistics' }).hostNodes()).toHaveLength(1);
     });
     it('should render parsed fields', () => {
       const wrapper = setup(undefined, { entry: 'test=successful' });
@@ -116,7 +116,7 @@ describe('LogDetails', () => {
     expect(wrapper.find(LogDetailsRow).length).toBe(3);
     const traceIdRow = wrapper.find(LogDetailsRow).filter({ parsedKey: 'traceId' });
     expect(traceIdRow.length).toBe(1);
-    expect(traceIdRow.find('a').length).toBe(1);
+    expect(traceIdRow.find('a').hostNodes().length).toBe(1);
     expect((traceIdRow.find('a').getDOMNode() as HTMLAnchorElement).href).toBe('localhost:3210/1234');
   });
 });

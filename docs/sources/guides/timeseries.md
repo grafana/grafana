@@ -96,15 +96,15 @@ Here are some of the TSDBs supported by Grafana:
 - [InfluxDB](https://www.influxdata.com/products/influxdb-overview/)
 - [Prometheus](https://prometheus.io/)
 
-```
-weather,location=us-midwest temperature=82 1465839830100400200
-  |    -------------------- --------------  |
-  |             |             |             |
-  |             |             |             |
-+-----------+--------+-+---------+-+---------+
-|measurement|,tag_set| |field_set| |timestamp|
-+-----------+--------+-+---------+-+---------+
-```
+    ```
+    weather,location=us-midwest temperature=82 1465839830100400200
+      |    -------------------- --------------  |
+      |             |             |             |
+      |             |             |             |
+    +-----------+--------+-+---------+-+---------+
+    |measurement|,tag_set| |field_set| |timestamp|
+    +-----------+--------+-+---------+-+---------+
+    ```
 
 ### Collecting time series data
 

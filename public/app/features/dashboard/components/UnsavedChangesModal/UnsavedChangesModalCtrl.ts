@@ -9,7 +9,7 @@ const template = `
     </h2>
 
     <a class="modal-header-close" ng-click="ctrl.dismiss();">
-      <i class="fa fa-remove"></i>
+      <icon name="'times'"></icon>
     </a>
   </div>
 

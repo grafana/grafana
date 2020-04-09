@@ -10,30 +10,30 @@ export const getPanelEditorTabs = memoizeOne((location: LocationState, plugin?: 
     return tabs;
   }
 
-  let defaultTab = PanelEditorTabId.Visualization;
+  let defaultTab = PanelEditorTabId.Visualize;
 
   if (!plugin.meta.skipDataQuery) {
-    defaultTab = PanelEditorTabId.Queries;
+    defaultTab = PanelEditorTabId.Query;
 
     tabs.push({
-      id: PanelEditorTabId.Queries,
-      text: 'Queries',
-      icon: 'gicon gicon-datasources',
+      id: PanelEditorTabId.Query,
+      text: 'Query',
+      icon: 'database',
       active: false,
     });
 
     tabs.push({
       id: PanelEditorTabId.Transform,
       text: 'Transform',
-      icon: 'fa fa-exchange',
+      icon: 'process',
       active: false,
     });
   }
 
   tabs.push({
-    id: PanelEditorTabId.Visualization,
-    text: 'Visualization',
-    icon: 'fa fa-bar-chart',
+    id: PanelEditorTabId.Visualize,
+    text: 'Visualize',
+    icon: 'chart-bar',
     active: false,
   });
 
@@ -41,7 +41,7 @@ export const getPanelEditorTabs = memoizeOne((location: LocationState, plugin?: 
     tabs.push({
       id: PanelEditorTabId.Alert,
       text: 'Alert',
-      icon: 'gicon gicon-alert',
+      icon: 'bell',
       active: false,
     });
   }

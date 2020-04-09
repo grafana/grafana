@@ -1,6 +1,7 @@
 import React, { PureComponent } from 'react';
 import uniqueId from 'lodash/uniqueId';
 import { Tooltip } from '../Tooltip/Tooltip';
+import { Icon } from '../Icon/Icon';
 import * as PopperJS from 'popper.js';
 
 export interface Props {
@@ -54,7 +55,7 @@ export class Switch extends PureComponent<Props, State> {
               {tooltip && (
                 <Tooltip placement={tooltipPlacement ? tooltipPlacement : 'auto'} content={tooltip} theme={'info'}>
                   <div className="gf-form-help-icon gf-form-help-icon--right-normal">
-                    <i className="fa fa-info-circle" />
+                    <Icon name="info-circle" />
                   </div>
                 </Tooltip>
               )}

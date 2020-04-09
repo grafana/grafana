@@ -1,5 +1,6 @@
 import React, { ChangeEvent, forwardRef } from 'react';
-import { Input, FormLabel } from '@grafana/ui';
+import { LegacyForms, FormLabel } from '@grafana/ui';
+const { Input } = LegacyForms;
 
 export interface Props {
   label: string;

@@ -21,12 +21,10 @@ export { SeriesColorPickerPopover, SeriesColorPickerPopoverWithTheme } from './C
 export { PanelOptionsGroup } from './PanelOptionsGroup/PanelOptionsGroup';
 export { PanelOptionsGrid } from './PanelOptionsGrid/PanelOptionsGrid';
 export { LegacyValueMappingsEditor } from './ValueMappingsEditor/LegacyValueMappingsEditor';
-export { Switch } from './Switch/Switch';
 export { EmptySearchResult } from './EmptySearchResult/EmptySearchResult';
 export { PieChart, PieChartType } from './PieChart/PieChart';
 export { UnitPicker } from './UnitPicker/UnitPicker';
 export { StatsPicker } from './StatsPicker/StatsPicker';
-export { Input, InputStatus } from './Input/Input';
 export { RefreshPicker } from './RefreshPicker/RefreshPicker';
 export { TimePicker } from './TimePicker/TimePicker';
 export { TimeOfDayPicker } from './TimePicker/TimeOfDayPicker';
@@ -104,8 +102,6 @@ export { DataLinkInput } from './DataLinks/DataLinkInput';
 export { DataLinksContextMenu } from './DataLinks/DataLinksContextMenu';
 export { SeriesIcon } from './Legend/SeriesIcon';
 export { transformersUIRegistry } from './TransformersUI/transformers';
-export { TransformationRow } from './TransformersUI/TransformationRow';
-export { TransformationsEditor } from './TransformersUI/TransformationsEditor';
 export { JSONFormatter } from './JSONFormatter/JSONFormatter';
 export { JsonExplorer } from './JSONFormatter/json_explorer/json_explorer';
 export { ErrorBoundary, ErrorBoundaryAlert } from './ErrorBoundary/ErrorBoundary';
@@ -140,6 +136,9 @@ export { ButtonSelect } from './Select/ButtonSelect';
 export { HorizontalGroup, VerticalGroup, Container } from './Layout/Layout';
 export { RadioButtonGroup } from './Forms/RadioButtonGroup/RadioButtonGroup';
 
+export { Input } from './Input/Input';
+export { Switch } from './Forms/Switch';
+
 // Legacy forms
 
 // Select
@@ -148,12 +147,18 @@ import { IndicatorsContainer } from './Forms/Legacy/Select/IndicatorsContainer';
 import { NoOptionsMessage } from './Forms/Legacy/Select/NoOptionsMessage';
 import { ButtonSelect } from './Forms/Legacy/Select/ButtonSelect';
 
+//Input
+import { Input, LegacyInputStatus } from './Forms/Legacy/Input/Input';
+
+import { Switch } from './Switch/Switch';
+
 const LegacyForms = {
   Select,
   AsyncSelect,
   IndicatorsContainer,
   NoOptionsMessage,
   ButtonSelect,
+  Input,
+  Switch,
 };
-
-export { LegacyForms };
+export { LegacyForms, LegacyInputStatus };

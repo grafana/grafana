@@ -1,6 +1,6 @@
 import React, { PureComponent } from 'react';
-import { Switch, LegacyForms } from '@grafana/ui';
-const { Select } = LegacyForms;
+import { LegacyForms, Icon } from '@grafana/ui';
+const { Select, Switch } = LegacyForms;
 import { SelectableValue } from '@grafana/data';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 import { buildIframeHtml } from './utils';
@@ -79,9 +79,7 @@ export class ShareEmbed extends PureComponent<Props, State> {
     return (
       <div className="share-modal-body">
         <div className="share-modal-header">
-          <div className="share-modal-big-icon">
-            <i className="gicon gicon-link"></i>
-          </div>
+          <Icon name="link" className="share-modal-big-icon" size="xxl" />
           <div className="share-modal-content">
             <div className="gf-form-group">
               <Switch
