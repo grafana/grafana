@@ -46,7 +46,7 @@
         </thead>
         <tbody>
           <tr ng-repeat="variable in variables">
-            <td style="width: 1%">
+            <td style="width: 1%;">
               <span
                 ng-click="edit(variable)"
                 class="pointer template-variable"
@@ -63,23 +63,23 @@
             >
               {{ variable.definition ? variable.definition : variable.query }}
             </td>
-            <td style="width: 1%">
+            <td style="width: 1%;">
               <icon
                 ng-click="_.move(variables,$index,$index-1)"
                 ng-hide="$first"
                 name="'arrow-up'"
                 aria-label="{{::selectors.tableRowArrowUpButtons(variable.name)}}"
-              ></icon>
+              ></icon
             </td>
-            <td style="width: 1%">
-              <i
+            <td style="width: 1%;">
+              <icon
                 ng-click="_.move(variables,$index,$index+1)"
                 ng-hide="$last"
                 name="'arrow-down'"
                 aria-label="{{::selectors.tableRowArrowDownButtons(variable.name)}}"
               ></icon>
             </td>
-            <td style="width: 1%">
+            <td style="width: 1%;">
               <a
                 ng-click="duplicate(variable)"
                 class="btn btn-inverse btn-small"
@@ -88,7 +88,7 @@
                 Duplicate
               </a>
             </td>
-            <td style="width: 1%">
+            <td style="width: 1%;">
               <a
                 ng-click="removeVariable(variable)"
                 class="btn btn-danger btn-small"
