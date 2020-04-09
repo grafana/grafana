@@ -9,7 +9,7 @@ import {
   GrafanaTheme,
   TimeZone,
 } from '../types';
-import { Registry } from '../utils';
+import { Registry } from '../utils/Registry';
 import { InterpolateFunction } from './panel';
 import { StandardEditorProps } from '../field';
 import { OptionsEditorItem } from './OptionsUIRegistryBuilder';
