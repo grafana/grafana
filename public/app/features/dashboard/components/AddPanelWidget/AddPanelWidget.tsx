@@ -71,7 +71,7 @@ export class AddPanelWidgetUnconnected extends React.Component<Props, State> {
     this.props.dashboard.removePanel(this.props.panel);
   }
 
-  onCreateNewPanel = () => {
+  onCreateNewPanel = (tab = 'queries') => {
     const dashboard = this.props.dashboard;
     const { gridPos } = this.props.panel;
 
@@ -86,10 +86,17 @@ export class AddPanelWidgetUnconnected extends React.Component<Props, State> {
 
     const location: LocationUpdate = {
       query: {
-        editPanel: newPanel.id,
+        panelId: newPanel.id,
+        edit: true,
+        fullscreen: true,
       },
       partial: true,
     };
+
+    if (tab === 'visualization') {
+      location.query.tab = 'visualization';
+      location.query.openVizPicker = true;
+    }
 
     reduxStore.dispatch(updateLocation(location));
   };
@@ -166,7 +173,10 @@ export class AddPanelWidgetUnconnected extends React.Component<Props, State> {
           </div>
           <div className="add-panel-widget__btn-container">
             <div className="add-panel-widget__create">
-              {this.renderOptionLink('queries', 'Edit Panel', this.onCreateNewPanel)}
+              {this.renderOptionLink('database', 'Add Query', this.onCreateNewPanel)}
+              {this.renderOptionLink('chart-line', 'Choose Visualization', () =>
+                this.onCreateNewPanel('visualization')
+              )}
             </div>
             <div className="add-panel-widget__actions">
               <button className="btn btn-inverse add-panel-widget__action" onClick={this.onCreateNewRow}>
