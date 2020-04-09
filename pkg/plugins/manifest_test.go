@@ -8,7 +8,7 @@ import (
 
 func TestManifestParsing(t *testing.T) {
 
-	Convey("When reading a manifest", t, func() {
+	Convey("Should validate manifest", t, func() {
 		txt := `
 -----BEGIN PGP SIGNED MESSAGE-----
 Hash: SHA512
@@ -46,11 +46,8 @@ qX6kODEP
 
 		manifest, err := readPluginManifest([]byte(txt))
 
-		// Oposite... for now :(
-		So(err, ShouldNotBeNil)
-		So(manifest, ShouldBeNil)
-
-		// So(err, ShouldBeNil)
-		// So(manifest.Plugin, ShouldEqual, "grafana-googlesheets-datasource")
+		// For now OK
+		So(err, ShouldBeNil)
+		So(manifest, ShouldNotBeNil)
 	})
 }
