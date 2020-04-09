@@ -62,8 +62,8 @@ export const getGraphSeriesModel = (
       });
 
       if (points.length > 0) {
-        const seriesStats = reduceField({ field, reducers: legendOptions.stats });
-        let statsDisplayValues: DisplayValue[];
+        const seriesStats = reduceField({ field, reducers: legendOptions.stats || [] });
+        let statsDisplayValues: DisplayValue[] = [];
 
         if (legendOptions.stats) {
           statsDisplayValues = legendOptions.stats.map<DisplayValue>(stat => {
