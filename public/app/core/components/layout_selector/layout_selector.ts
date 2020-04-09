@@ -9,7 +9,7 @@ const template = `
     <i class="fa fa-list"></i>
   </button>
   <button ng-click="ctrl.gridView()" ng-class="{active: ctrl.mode === 'grid'}">
-    <i class="fa fa-th"></i>
+    <icon name="table"></i>
   </button>
 </div>
 `;

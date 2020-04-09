@@ -18,7 +18,7 @@ export const OptionsGroup: FC<Props> = ({ title, children, defaultToClosed }) =>
       <div className={styles.header} onClick={() => toggleExpand(!isExpanded)}>
         {title}
         <div className={cx(styles.toggle, 'editor-options-group-toggle')}>
-          <Icon name={isExpanded ? 'chevron-down' : 'chevron-left'} />
+          <Icon name={isExpanded ? 'angle-down' : 'angle-left'} />
         </div>
       </div>
       {isExpanded && <div className={styles.body}>{children}</div>}

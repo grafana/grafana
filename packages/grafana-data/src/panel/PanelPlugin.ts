@@ -38,7 +38,7 @@ export class PanelPlugin<TOptions = any, TFieldConfigOptions extends object = an
   private _optionEditors?: PanelOptionEditorsRegistry;
   private registerOptionEditors?: (builder: PanelOptionsEditorBuilder<TOptions>) => void;
 
-  panel: ComponentType<PanelProps<TOptions>>;
+  panel: ComponentType<PanelProps<TOptions>> | null;
   editor?: ComponentClass<PanelEditorProps<TOptions>>;
   onPanelMigration?: PanelMigrationHandler<TOptions>;
   onPanelTypeChanged?: PanelTypeChangedHandler<TOptions>;
@@ -49,7 +49,7 @@ export class PanelPlugin<TOptions = any, TFieldConfigOptions extends object = an
    */
   angularPanelCtrl?: any;
 
-  constructor(panel: ComponentType<PanelProps<TOptions>>) {
+  constructor(panel: ComponentType<PanelProps<TOptions>> | null) {
     super();
     this.panel = panel;
   }

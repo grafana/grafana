@@ -7,7 +7,7 @@
     <ol class="alert-rule-list">
       <li class="alert-rule-item" ng-repeat="alert in ctrl.currentAlerts">
         <div class="alert-rule-item__icon  {{alert.stateModel.stateClass}}">
-          <i class="{{alert.stateModel.iconClass}}"></i>
+          <icon name="'{{alert.stateModel.iconClass}}'" size="'xl'" style="margin-right: 4px;"></icon>
         </div>
         <div class="alert-rule-item__body">
           <div class="alert-rule-item__header">
