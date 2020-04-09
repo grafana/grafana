@@ -129,6 +129,11 @@ exports[`Render should render users table 1`] = `
         >
           <Icon
             name="times"
+            style={
+              Object {
+                "marginBottom": 0,
+              }
+            }
           />
         </div>
       </td>
@@ -195,6 +200,11 @@ exports[`Render should render users table 1`] = `
         >
           <Icon
             name="times"
+            style={
+              Object {
+                "marginBottom": 0,
+              }
+            }
           />
         </div>
       </td>
@@ -261,6 +271,11 @@ exports[`Render should render users table 1`] = `
         >
           <Icon
             name="times"
+            style={
+              Object {
+                "marginBottom": 0,
+              }
+            }
           />
         </div>
       </td>
@@ -327,6 +342,11 @@ exports[`Render should render users table 1`] = `
         >
           <Icon
             name="times"
+            style={
+              Object {
+                "marginBottom": 0,
+              }
+            }
           />
         </div>
       </td>
@@ -393,6 +413,11 @@ exports[`Render should render users table 1`] = `
         >
           <Icon
             name="times"
+            style={
+              Object {
+                "marginBottom": 0,
+              }
+            }
           />
         </div>
       </td>
@@ -459,6 +484,11 @@ exports[`Render should render users table 1`] = `
         >
           <Icon
             name="times"
+            style={
+              Object {
+                "marginBottom": 0,
+              }
+            }
           />
         </div>
       </td>

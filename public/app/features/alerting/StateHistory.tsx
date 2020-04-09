@@ -79,7 +79,7 @@ class StateHistory extends PureComponent<Props, State> {
           <div className="p-b-1">
             <span className="muted">Last 50 state changes</span>
             <button className="btn btn-small btn-danger pull-right" onClick={this.clearHistory}>
-              <Icon name="trash-alt" style={{ marginRight: '4px', marginBottom: '2px' }} size="xs" /> {` Clear history`}
+              <Icon name="trash-alt" style={{ marginRight: '4px' }} size="xs" /> {` Clear history`}
             </button>
           </div>
         )}

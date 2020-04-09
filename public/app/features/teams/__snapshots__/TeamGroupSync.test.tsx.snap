@@ -200,6 +200,11 @@ exports[`Render should render groups table 1`] = `
             >
               <Icon
                 name="times"
+                style={
+                  Object {
+                    "marginBottom": 0,
+                  }
+                }
               />
             </a>
           </td>
@@ -223,6 +228,11 @@ exports[`Render should render groups table 1`] = `
             >
               <Icon
                 name="times"
+                style={
+                  Object {
+                    "marginBottom": 0,
+                  }
+                }
               />
             </a>
           </td>
@@ -246,6 +256,11 @@ exports[`Render should render groups table 1`] = `
             >
               <Icon
                 name="times"
+                style={
+                  Object {
+                    "marginBottom": 0,
+                  }
+                }
               />
             </a>
           </td>

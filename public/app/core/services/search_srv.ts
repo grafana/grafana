@@ -81,7 +81,7 @@ export class SearchSrv {
       if (result.length > 0) {
         sections['starred'] = {
           title: 'Starred',
-          icon: 'star',
+          icon: 'favorite',
           score: -2,
           expanded: this.starredIsOpen,
           toggle: this.toggleStarred.bind(this),

@@ -196,6 +196,7 @@ export const getInputStyles = stylesFactory(({ theme, invalid = false }: StyleDe
         label: input-suffix;
         padding-right: ${theme.spacing.sm};
         padding-left: ${theme.spacing.xs};
+        margin-bottom: -2px;
         border-left: none;
         border-top-left-radius: 0;
         border-bottom-left-radius: 0;

@@ -149,7 +149,7 @@ export class VariableEditorList extends PureComponent<Props> {
                               variable.name
                             )}
                           >
-                            <Icon name="times" />
+                            <Icon name="times" style={{ marginBottom: 0 }} />
                           </a>
                         </td>
                       </tr>

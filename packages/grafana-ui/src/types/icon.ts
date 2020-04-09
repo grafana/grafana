@@ -6,6 +6,7 @@ export type IconName =
   | 'fa fa-fw fa-unlock'
   | 'fa fa-envelope'
   | 'fa fa-spinner'
+  | 'grafana'
   | 'question-circle'
   | 'angle-up'
   | 'history'

@@ -169,7 +169,7 @@
     </div>
     <div class="gf-form" ng-repeat="option in currentOverrides">
       <label class="gf-form-label">
-        <icon name="'times'" ng-click="removeOverride(option)"></icon>
+        <icon name="'times'" size="'sm'" ng-click="removeOverride(option)" style="margin-right: 4px;"></icon>
         <span ng-show="option.propertyName === 'color'">
           Color: <icon name="'circle'" type="'mono'" ng-style="{color:option.value}"></icon>
         </span>

@@ -28,7 +28,7 @@ export function SecondaryActions(props: Props) {
           onClick={props.onClickAddQueryRowButton}
           disabled={props.addQueryRowButtonDisabled}
         >
-          <Icon className="icon-margin-right" name="plus-circle" />
+          <Icon className="icon-margin-right" name="plus-circle" size="sm" />
           <span className="btn-title">{'\xA0' + 'Add query'}</span>
         </button>
       )}
@@ -39,7 +39,7 @@ export function SecondaryActions(props: Props) {
         })}
         onClick={props.onClickRichHistoryButton}
       >
-        <Icon className="icon-margin-right" name="history" />
+        <Icon className="icon-margin-right" name="history" size="sm" />
         <span className="btn-title">{'\xA0' + 'Query history'}</span>
       </button>
     </div>
