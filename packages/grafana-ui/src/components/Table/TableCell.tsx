@@ -26,9 +26,8 @@ export const TableCell: FC<Props> = ({ cell, field, tableStyles, onCellClick }) 
     onClick = () => onCellClick(cell.column.Header as string, cell.value);
   }
 
-  const fieldTextAlign = getTextAlign(field);
-  if (fieldTextAlign && cellProps.style) {
-    cellProps.style.textAlign = fieldTextAlign;
+  if (cellProps.style) {
+    cellProps.style.textAlign = getTextAlign(field);
   }
 
   return (
