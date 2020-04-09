@@ -84,7 +84,7 @@ revive-alerting: scripts/go/bin/revive
 	@echo "lint alerting via revive"
 	@scripts/go/bin/revive \
 		-formatter stylish \
-		./pkg/services/alerting/...
+		./pkg/services/provisioning/datasources/...
 
 scripts/go/bin/golangci-lint: scripts/go/go.mod
 	@cd scripts/go; \
