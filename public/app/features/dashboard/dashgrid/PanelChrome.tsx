@@ -213,7 +213,6 @@ export class PanelChrome extends PureComponent<Props, State> {
   onRender = () => {
     const stateUpdate = { renderCounter: this.state.renderCounter + 1 };
     this.setState(stateUpdate);
-    console.log('PanelChrome.onRender', this.props.panel.id);
   };
 
   onOptionsChange = (options: any) => {
