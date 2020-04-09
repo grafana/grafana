@@ -159,11 +159,8 @@ type ClientConfig struct {
 
 	// SyncStdout, SyncStderr can be set to override the
 	// respective os.Std* values in the plugin. Care should be taken to
-	// avoid races here. If these are nil, then this will automatically be
-	// hooked up to os.Stdin, Stdout, and Stderr, respectively.
-	//
-	// If the default values (nil) are used, then this package will not
-	// sync any of these streams.
+	// avoid races here. If these are nil, then this will be set to
+	// ioutil.Discard.
 	SyncStdout io.Writer
 	SyncStderr io.Writer
 
@@ -690,14 +687,14 @@ func (c *Client) Start() (addr net.Addr, err error) {
 
 		// Check the core protocol. Wrapped in a {} for scoping.
 		{
-			var coreProtocol int64
-			coreProtocol, err = strconv.ParseInt(parts[0], 10, 0)
+			var coreProtocol int
+			coreProtocol, err = strconv.Atoi(parts[0])
 			if err != nil {
 				err = fmt.Errorf("Error parsing core protocol version: %s", err)
 				return
 			}
 
-			if int(coreProtocol) != CoreProtocolVersion {
+			if coreProtocol != CoreProtocolVersion {
 				err = fmt.Errorf("Incompatible core API version with plugin. "+
 					"Plugin version: %s, Core version: %d\n\n"+
 					"To fix this, the plugin usually only needs to be recompiled.\n"+
@@ -788,7 +785,10 @@ func (c *Client) reattach() (net.Addr, error) {
 	// Verify the process still exists. If not, then it is an error
 	p, err := os.FindProcess(c.config.Reattach.Pid)
 	if err != nil {
-		return nil, err
+		// On Unix systems, FindProcess never returns an error.
+		// On Windows, for non-existent pids it returns:
+		// os.SyscallError - 'OpenProcess: the paremter is incorrect'
+		return nil, ErrProcessNotFound
 	}
 
 	// Attempt to connect to the addr since on Unix systems FindProcess

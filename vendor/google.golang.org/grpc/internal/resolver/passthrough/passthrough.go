@@ -26,7 +26,7 @@ const scheme = "passthrough"
 
 type passthroughBuilder struct{}
 
-func (*passthroughBuilder) Build(target resolver.Target, cc resolver.ClientConn, opts resolver.BuildOption) (resolver.Resolver, error) {
+func (*passthroughBuilder) Build(target resolver.Target, cc resolver.ClientConn, opts resolver.BuildOptions) (resolver.Resolver, error) {
 	r := &passthroughResolver{
 		target: target,
 		cc:     cc,
@@ -48,7 +48,7 @@ func (r *passthroughResolver) start() {
 	r.cc.UpdateState(resolver.State{Addresses: []resolver.Address{{Addr: r.target.Endpoint}}})
 }
 
-func (*passthroughResolver) ResolveNow(o resolver.ResolveNowOption) {}
+func (*passthroughResolver) ResolveNow(o resolver.ResolveNowOptions) {}
 
 func (*passthroughResolver) Close() {}
 

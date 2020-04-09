@@ -1,9 +1,9 @@
 import React, { HTMLProps } from 'react';
 import { GrafanaTheme } from '@grafana/data';
 import { css, cx } from 'emotion';
-import { stylesFactory, useTheme } from '../../../themes';
-import { getFocusStyle, inputSizes, sharedInputStyle } from '../commonStyles';
-import { FormInputSize } from '../types';
+import { stylesFactory, useTheme } from '../../themes';
+import { getFocusStyle, inputSizes, sharedInputStyle } from '../Forms/commonStyles';
+import { FormInputSize } from '../Forms/types';
 
 export interface Props extends Omit<HTMLProps<HTMLTextAreaElement>, 'size'> {
   /** Show an invalid state around the input */
