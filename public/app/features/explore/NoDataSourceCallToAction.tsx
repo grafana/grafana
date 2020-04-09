@@ -9,7 +9,7 @@ export const NoDataSourceCallToAction = () => {
     'Explore requires at least one data source. Once you have added a data source, you can query it here.';
   const footer = (
     <>
-      <Icon name="plane" />
+      <Icon name="rocket" />
       <> ProTip: You can also define data sources through configuration files. </>
       <a
         href="http://docs.grafana.org/administration/provisioning/#datasources?utm_source=explore"

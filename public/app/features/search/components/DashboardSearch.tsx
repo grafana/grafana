@@ -158,22 +158,22 @@ export const DashboardSearch: FC<Props> = ({ onCloseSearch, payload = {} }) => {
           {canEdit && (
             <div className="search-filter-box" onClick={onCloseSearch}>
               <a href="dashboard/new" className="search-filter-box-link">
-                <i className="gicon gicon-dashboard-new"></i> New dashboard
+                <Icon name="create-dashboard" size="xl" style={{ marginRight: '8px' }} /> New dashboard
               </a>
               {isEditor && (
                 <a href="dashboards/folder/new" className="search-filter-box-link">
-                  <i className="gicon gicon-folder-new"></i> New folder
+                  <Icon name="folder-plus" size="xl" style={{ marginRight: '8px' }} /> New folder
                 </a>
               )}
               <a href="dashboard/import" className="search-filter-box-link">
-                <i className="gicon gicon-dashboard-import"></i> Import dashboard
+                <Icon name="import" size="xl" style={{ marginRight: '8px' }} /> Import dashboard
               </a>
               <a
                 className="search-filter-box-link"
                 target="_blank"
                 href="https://grafana.com/dashboards?utm_source=grafana_search"
               >
-                <img src="public/img/icn-dashboard-tiny.svg" width="20" /> Find dashboards on Grafana.com
+                <Icon name="apps" size="xl" style={{ marginRight: '8px' }} /> Find dashboards on Grafana.com
               </a>
             </div>
           )}

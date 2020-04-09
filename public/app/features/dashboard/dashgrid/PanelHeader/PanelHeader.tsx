@@ -164,7 +164,7 @@ export class PanelHeader extends Component<Props, State> {
               {Object.values(notices).map(this.renderNotice)}
               {alertState && (
                 <Icon
-                  name={alertState === 'alerting' ? 'heartbeat' : 'heart'}
+                  name={alertState === 'alerting' ? 'heart-break' : 'heart'}
                   className="icon-gf panel-alert-icon"
                   style={{ marginRight: '4px' }}
                   size="sm"
