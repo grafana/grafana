@@ -70,6 +70,7 @@ func (m *manager) Run(ctx context.Context) error {
 
 // Register registers a backend plugin
 func (m *manager) Register(descriptor PluginDescriptor) error {
+	println(m.logger)
 	m.logger.Debug("Registering backend plugin", "pluginId", descriptor.pluginID, "executablePath", descriptor.executablePath)
 	m.pluginsMu.Lock()
 	defer m.pluginsMu.Unlock()
@@ -187,9 +188,6 @@ func (m *manager) CheckHealth(ctx context.Context, pluginConfig *PluginConfig) (
 	return checkHealthResultFromProto(res), nil
 }
 
-// ErrStreamDrained indicates that the stream is drained
-var ErrStreamDrained error = errors.New("stream is drained")
-
 // CallResource calls a plugin resource.
 func (m *manager) CallResource(config PluginConfig, reqCtx *models.ReqContext, path string) {
 	m.pluginsMu.RLock()
@@ -234,12 +232,7 @@ func (m *manager) CallResource(config PluginConfig, reqCtx *models.ReqContext, p
 			return errutil.Wrap("Failed to call resource", err)
 		}
 
-		err = flushStream(p, stream, reqCtx)
-		if err == ErrStreamDrained {
-			return nil
-		}
-
-		return err
+		return flushStream(p, stream, reqCtx)
 	})
 
 	if err != nil {
@@ -256,7 +249,7 @@ func flushStream(plugin *BackendPlugin, stream callResourceResultStream, reqCtx 
 			if processedStreams == 0 {
 				return errors.New("Received empty resource response")
 			}
-			return ErrStreamDrained
+			return nil
 		}
 		if err != nil {
 			if processedStreams == 0 {
@@ -264,7 +257,7 @@ func flushStream(plugin *BackendPlugin, stream callResourceResultStream, reqCtx 
 			}
 
 			plugin.logger.Error("Failed to receive response from resource call", "error", err)
-			return ErrStreamDrained
+			return nil
 		}
 
 		// Expected that headers and status are only part of first stream
