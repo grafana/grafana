@@ -109,7 +109,7 @@ func (hs *HTTPServer) setIndexViewData(c *models.ReqContext) (*dtos.IndexViewDat
 
 	if hasEditPermissionInFoldersQuery.Result {
 		children := []*dtos.NavLink{
-			{Text: "Dashboard", Icon: "create-dashboard", Url: setting.AppSubUrl + "/dashboard/new"},
+			{Text: "Dashboard", Icon: "apps", Url: setting.AppSubUrl + "/dashboard/new"},
 		}
 
 		if c.OrgRole == models.ROLE_ADMIN || c.OrgRole == models.ROLE_EDITOR {

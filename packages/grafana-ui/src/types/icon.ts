@@ -111,7 +111,6 @@ export type IconName =
   | 'search-plus'
   | 'search-minus'
   | 'minus-circle'
-  | 'create-dashboard'
   | 'table'
   | 'plus'
   | 'heart'
@@ -224,7 +223,6 @@ export const getAvailableIcons = (): IconName[] => [
   'search-plus',
   'search-minus',
   'minus-circle',
-  'create-dashboard',
   'table',
   'plus',
   'heart',
