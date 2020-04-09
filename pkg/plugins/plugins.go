@@ -122,7 +122,10 @@ func (pm *PluginManager) Init() error {
 	}
 
 	for _, p := range Plugins {
-		if !p.IsCorePlugin {
+		if p.IsCorePlugin {
+			p.Signature = PluginSignatureInternal
+		} else {
+			p.Signature = GetPluginSignatureState(p)
 			metrics.SetPluginBuildInformation(p.Id, p.Type, p.Info.Version)
 		}
 	}
