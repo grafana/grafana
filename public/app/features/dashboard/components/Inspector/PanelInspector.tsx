@@ -10,8 +10,9 @@ import {
   Button,
   CustomScrollbar,
   Drawer,
+  Forms,
   JSONFormatter,
-  LegacyForms,
+  Select,
   stylesFactory,
   TabContent,
   Table,
@@ -35,8 +36,6 @@ import {
 } from '@grafana/data';
 
 import { config } from 'app/core/config';
-
-const { Select } = LegacyForms;
 
 interface Props {
   dashboard: DashboardModel;
@@ -161,14 +160,9 @@ export class PanelInspector extends PureComponent<Props, State> {
   };
 
   onSelectedTransformationChanged = (item: SelectableValue<DataTransformerID>) => {
-    /*
-      When applying a transformation we will have a MutableDataFrame with one element,
-      we need to set selected to 0 to avoid out out range error.
-   */
-    this.setState(prevState => ({
-      selected: item.value !== DataTransformerID.noop ? 0 : prevState.selected,
+    this.setState({
       transformation: item.value,
-    }));
+    });
   };
 
   exportCsv = (dataFrame: DataFrame) => {
@@ -216,29 +210,33 @@ export class PanelInspector extends PureComponent<Props, State> {
       })
     );
 
+    const selectedDataFrame = dataFrames.find(t => t.value === selected);
+    const selectedTransformation = transformations.find(t => t.value === transformation);
+    const processedDataFrameIndex = transformation !== DataTransformerID.noop ? 0 : selected;
+
     return (
       <div className={styles.dataTabContent}>
         <div className={styles.toolbar}>
           <div className={styles.selects}>
             {dataFrames.length > 1 && (
               <div className={styles.select}>
-                <Select
-                  options={dataFrames}
-                  value={dataFrames.find(t => t.value === selected)}
-                  onChange={this.onSelectedFrameChanged}
-                />
+                <Forms.Field label="Data frame">
+                  <Select options={dataFrames} value={selectedDataFrame} onChange={this.onSelectedFrameChanged} />
+                </Forms.Field>
               </div>
             )}
             <div className={cx(styles.select, styles.transformationSelect)}>
-              <Select
-                options={transformations}
-                value={transformations.find(t => t.value === transformation)}
-                onChange={this.onSelectedTransformationChanged}
-              />
+              <Forms.Field label="Transformation">
+                <Select
+                  options={transformations}
+                  value={selectedTransformation}
+                  onChange={this.onSelectedTransformationChanged}
+                />
+              </Forms.Field>
             </div>
           </div>
           <div className={styles.downloadCsv}>
-            <Button variant="primary" onClick={() => this.exportCsv(processed[selected])}>
+            <Button variant="primary" onClick={() => this.exportCsv(processed[processedDataFrameIndex])}>
               Download CSV
             </Button>
           </div>
@@ -252,7 +250,7 @@ export class PanelInspector extends PureComponent<Props, State> {
 
               return (
                 <div style={{ width, height }}>
-                  <Table width={width} height={height} data={processed[selected]} />
+                  <Table width={width} height={height} data={processed[processedDataFrameIndex]} />
                 </div>
               );
             }}
