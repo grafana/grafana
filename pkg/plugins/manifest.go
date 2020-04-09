@@ -103,7 +103,7 @@ func GetPluginSignatureState(plugin *PluginBase) PluginSignature {
 		if _, err := io.Copy(h, f); err != nil {
 			return PluginSignatureModified
 		}
-		sum := (string)(h.Sum(nil))
+		sum := string(h.Sum(nil))
 		if sum != hash {
 			return PluginSignatureModified
 		}
