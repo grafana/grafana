@@ -65,7 +65,7 @@ storiesOf('General/ConfirmButton', module)
                 action('Saved')('save!');
               }}
             >
-              <Button size={size} variant="secondary" icon="fa fa-pencil">
+              <Button size={size} variant="secondary" icon="pen">
                 {buttonText}
               </Button>
             </ConfirmButton>

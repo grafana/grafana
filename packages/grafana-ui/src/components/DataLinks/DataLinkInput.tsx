@@ -9,7 +9,7 @@ import { Editor } from '@grafana/slate-react';
 import { Value } from 'slate';
 import Plain from 'slate-plain-serializer';
 import { Popper as ReactPopper } from 'react-popper';
-import { css, cx } from 'emotion';
+import { css } from 'emotion';
 
 import { SlatePrism } from '../../slate-plugins';
 import { SCHEMA } from '../../utils/slate';
@@ -119,15 +119,7 @@ export const DataLinkInput: React.FC<DataLinkInputProps> = memo(
     };
 
     return (
-      <div
-        className={cx(
-          'gf-form-input',
-          css`
-            position: relative;
-            height: auto;
-          `
-        )}
-      >
+      <div className="slate-query-field__wrapper">
         <div className="slate-query-field">
           {showingSuggestions && (
             <Portal>

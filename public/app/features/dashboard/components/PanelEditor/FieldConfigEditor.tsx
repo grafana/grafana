@@ -87,7 +87,7 @@ export const OverrideFieldConfigEditor: React.FC<Props> = props => {
   const renderAddOverride = () => {
     return (
       <ValuePicker
-        icon="plus"
+        icon="plus-circle"
         label="Add override"
         variant="secondary"
         options={fieldMatchersUI
@@ -143,6 +143,9 @@ export const DefaultFieldConfigEditor: React.FC<Props> = ({ data, onChange, conf
 
   const renderEditor = useCallback(
     (item: FieldConfigPropertyItem) => {
+      if (item.isCustom && item.showIf && !item.showIf(config.defaults.custom)) {
+        return null;
+      }
       const defaults = config.defaults;
       const value = item.isCustom
         ? defaults.custom

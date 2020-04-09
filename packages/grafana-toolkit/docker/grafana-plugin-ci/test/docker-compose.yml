@@ -6,3 +6,5 @@ services:
     volumes:
       - ../scripts:/home/circleci/scripts
       - ../install:/home/circleci/install
+      - ${HOME}/.ssh:/root/.ssh
+      - ../../..:/home/circleci/grafana-toolkit

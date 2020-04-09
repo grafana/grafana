@@ -19,8 +19,7 @@ import {
   FieldConfigSource,
 } from '@grafana/data';
 
-import { SeriesOptions, GraphOptions } from './types';
-import { GraphLegendEditorLegendOptions } from './GraphLegendEditor';
+import { SeriesOptions, GraphOptions, GraphLegendEditorLegendOptions } from './types';
 
 export const getGraphSeriesModel = (
   dataFrames: DataFrame[],
