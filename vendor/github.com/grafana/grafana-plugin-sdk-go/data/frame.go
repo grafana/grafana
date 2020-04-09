@@ -28,7 +28,7 @@ type Frame struct {
 	Fields []*Field
 
 	RefID    string
-	Meta     *QueryResultMeta
+	Meta     *FrameMeta
 	Warnings []Warning
 }
 
@@ -119,6 +119,19 @@ func (f *Frame) EmptyCopy() *Frame {
 		newFrame.Fields = append(newFrame.Fields, copy)
 	}
 	return newFrame
+}
+
+// NewFrameOfFieldTypes returns a Frame where the Fields are initalized to the
+// corresponding field type in fTypes. Each Field will be of length FieldLen.
+func NewFrameOfFieldTypes(name string, fieldLen int, fTypes ...FieldType) *Frame {
+	f := &Frame{
+		Name:   name,
+		Fields: make(Fields, len(fTypes)),
+	}
+	for i, fT := range fTypes {
+		f.Fields[i] = NewFieldFromFieldType(fT, fieldLen)
+	}
+	return f
 }
 
 // TypeIndices returns a slice of Field index positions for the given fTypes.
@@ -226,6 +239,22 @@ func (f *Frame) FloatAt(fieldIdx int, rowIdx int) (float64, error) {
 	return f.Fields[fieldIdx].FloatAt(rowIdx)
 }
 
+// SetFieldNames sets each Field Name in the frame to the corresponding frame.
+// If the number of provided names does not match the number of Fields in the frame an error is returned.
+func (f *Frame) SetFieldNames(names ...string) error {
+	fieldLen := 0
+	if f.Fields != nil {
+		fieldLen = len(f.Fields)
+	}
+	if fieldLen != len(names) {
+		return fmt.Errorf("can not set field names, number of names %v does not match frame field length %v", len(names), fieldLen)
+	}
+	for i, name := range names {
+		f.Fields[i].Name = name
+	}
+	return nil
+}
+
 // FrameTestCompareOptions returns go-cmp testing options to allow testing of Frame equivelnce.
 // Since the data within a Frame's Fields is not exported, this function allows the unexported
 // values to be tested.
@@ -263,29 +292,13 @@ func FrameTestCompareOptions() []cmp.Option {
 		if x == nil && y == nil {
 			return true
 		}
-		if y == nil {
-			if math.IsNaN(float64(*x)) {
-				return true
-			}
-			if math.IsInf(float64(*x), 1) {
-				return true
-			}
-			if math.IsInf(float64(*x), -1) {
-				return true
-			}
+		if y == nil && x != nil || y != nil && x == nil {
+			return false
 		}
-		if x == nil {
-			if math.IsNaN(float64(*y)) {
-				return true
-			}
-			if math.IsInf(float64(*y), 1) {
-				return true
-			}
-			if math.IsInf(float64(*y), -1) {
-				return true
-			}
-		}
-		return *x == *y
+		return (math.IsNaN(float64(*x)) && math.IsNaN(float64(*y))) ||
+			(math.IsInf(float64(*x), 1) && math.IsInf(float64(*y), 1)) ||
+			(math.IsInf(float64(*x), -1) && math.IsInf(float64(*y), -1)) ||
+			*x == *y
 	})
 	f64s := cmp.Comparer(func(x, y float64) bool {
 		return (math.IsNaN(x) && math.IsNaN(y)) ||
@@ -297,29 +310,13 @@ func FrameTestCompareOptions() []cmp.Option {
 		if x == nil && y == nil {
 			return true
 		}
-		if y == nil {
-			if math.IsNaN(float64(*x)) {
-				return true
-			}
-			if math.IsInf(float64(*x), 1) {
-				return true
-			}
-			if math.IsInf(float64(*x), -1) {
-				return true
-			}
+		if y == nil && x != nil || y != nil && x == nil {
+			return false
 		}
-		if x == nil {
-			if math.IsNaN(float64(*y)) {
-				return true
-			}
-			if math.IsInf(float64(*y), 1) {
-				return true
-			}
-			if math.IsInf(float64(*y), -1) {
-				return true
-			}
-		}
-		return *x == *y
+		return (math.IsNaN(float64(*x)) && math.IsNaN(float64(*y))) ||
+			(math.IsInf(float64(*x), 1) && math.IsInf(float64(*y), 1)) ||
+			(math.IsInf(float64(*x), -1) && math.IsInf(float64(*y), -1)) ||
+			*x == *y
 	})
 	f32s := cmp.Comparer(func(x, y float32) bool {
 		return (math.IsNaN(float64(x)) && math.IsNaN(float64(y))) ||
@@ -369,6 +366,8 @@ func (f *Frame) StringTable(maxFields, maxRows int) (string, error) {
 
 	sb := &strings.Builder{}
 	sb.WriteString(fmt.Sprintf("Name: %v\n", f.Name))
+	sb.WriteString(fmt.Sprintf("Dimensions: %v Fields by %v Rows\n", len(f.Fields), rowLen))
+
 	table := tablewriter.NewWriter(sb)
 
 	// table formatting options
@@ -376,9 +375,6 @@ func (f *Frame) StringTable(maxFields, maxRows int) (string, error) {
 	table.SetHeaderAlignment(tablewriter.ALIGN_LEFT)
 	table.SetAutoWrapText(false)
 	table.SetAlignment(tablewriter.ALIGN_LEFT)
-
-	// (caption is below the table)
-	table.SetCaption(true, fmt.Sprintf("Field Count: %v\nRow Count: %v", len(f.Fields), rowLen))
 
 	// set table headers
 	headers := make([]string, width)

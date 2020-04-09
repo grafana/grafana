@@ -1,5 +1,6 @@
 // Libraries
 import React, { FunctionComponent } from 'react';
+import { Icon } from '@grafana/ui';
 
 interface Props {
   title?: string | JSX.Element;
@@ -26,7 +27,7 @@ export const PanelOptionsGroup: FunctionComponent<Props> = props => {
             <span className="panel-options-group__title">{props.title}</span>
             {props.onClose && (
               <button className="btn btn-link" onClick={props.onClose}>
-                <i className="fa fa-remove" />
+                <Icon name="times" />
               </button>
             )}
           </div>

@@ -111,7 +111,7 @@ interface CaretProps {
 const Caret: FC<CaretProps> = ({ wrapperStyle = '' }) => {
   return (
     <div className={wrapperStyle}>
-      <Icon name="caret-down" />
+      <Icon name="angle-down" />
     </div>
   );
 };

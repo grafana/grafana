@@ -78,6 +78,14 @@ func (pm *PluginManager) Init() error {
 		return errutil.Wrapf(err, "Failed to scan main plugin directory '%s'", plugDir)
 	}
 
+	pm.log.Info("Checking Bundled Plugins")
+	plugDir = path.Join(setting.HomePath, "plugins-bundled")
+	if _, err := os.Stat(plugDir); !os.IsNotExist(err) {
+		if err := pm.scan(plugDir); err != nil {
+			return errutil.Wrapf(err, "failed to scan bundled plugin directory '%s'", plugDir)
+		}
+	}
+
 	// check if plugins dir exists
 	if _, err := os.Stat(setting.PluginsPath); os.IsNotExist(err) {
 		if err = os.MkdirAll(setting.PluginsPath, os.ModePerm); err != nil {
@@ -114,7 +122,10 @@ func (pm *PluginManager) Init() error {
 	}
 
 	for _, p := range Plugins {
-		if !p.IsCorePlugin {
+		if p.IsCorePlugin {
+			p.Signature = PluginSignatureInternal
+		} else {
+			p.Signature = GetPluginSignatureState(p)
 			metrics.SetPluginBuildInformation(p.Id, p.Type, p.Info.Version)
 		}
 	}

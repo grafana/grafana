@@ -8,6 +8,7 @@ export * from './labels';
 export * from './object';
 export * from './namedColorsPalette';
 export * from './series';
+export * from './OptionsUIBuilders';
 
 export { getMappedValue } from './valueMappings';
 export { getFlotPairs, getFlotPairsConstant } from './flotPairs';

@@ -3,9 +3,6 @@
 # shellcheck source=./scripts/helpers/exit-if-fail.sh
 source "$(dirname "$0")/helpers/exit-if-fail.sh"
 
-# use vendor folder for packages
-export GOFLAGS=-mod=vendor
-
 echo "building backend with install to cache pkgs"
 exit_if_fail time go install ./pkg/cmd/grafana-server
 
