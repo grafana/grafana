@@ -12,27 +12,33 @@ export interface SelectCommonProps<T> {
   value?: SelectValue<T>;
   getOptionLabel?: (item: SelectableValue<T>) => string;
   getOptionValue?: (item: SelectableValue<T>) => string;
+  /** allowCustomValue must be enabled. Function decides what to do with that custom value. */
   onCreateOption?: (value: string) => void;
   onChange: (value: SelectableValue<T>) => {} | void;
   onInputChange?: (label: string) => void;
   onKeyDown?: (event: React.KeyboardEvent) => void;
   placeholder?: string;
   disabled?: boolean;
+  /** Disables the possibility to type into the input*/
   isSearchable?: boolean;
   isClearable?: boolean;
+  /** Focus is set to the Select when rendered*/
   autoFocus?: boolean;
   openMenuOnFocus?: boolean;
   onBlur?: () => void;
   maxMenuHeight?: number;
   isLoading?: boolean;
+  /** The message to display when no options could be found */
   noOptionsMessage?: string;
   isMulti?: boolean;
   backspaceRemovesValue?: boolean;
   isOpen?: boolean;
+  /** Used for custom components . For more information, see `react-select` */
   components?: any;
   onOpenMenu?: () => void;
   onCloseMenu?: () => void;
   tabSelectsValue?: boolean;
+  /**   Function for formatting the text that is displayed when creating a new value*/
   formatCreateLabel?: (input: string) => string;
   allowCustomValue?: boolean;
   width?: number;
