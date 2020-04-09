@@ -58,8 +58,8 @@ func (u *S3Uploader) Upload(ctx context.Context, imageDiskPath string) (string, 
 				SecretAccessKey: u.secretKey,
 			}},
 			&credentials.EnvProvider{},
-			remoteCredProvider(sess),
 			webIdentityProvider(sess),
+			remoteCredProvider(sess),
 		})
 	cfg := &aws.Config{
 		Region:           aws.String(u.region),

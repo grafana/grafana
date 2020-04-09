@@ -106,8 +106,8 @@ func GetCredentials(dsInfo *DatasourceInfo) (*credentials.Credentials, error) {
 				SecretAccessKey: dsInfo.SecretKey,
 			}},
 			&credentials.SharedCredentialsProvider{Filename: "", Profile: dsInfo.Profile},
-			remoteCredProvider(sess),
 			webIdentityProvider(sess),
+			remoteCredProvider(sess),
 		})
 
 	credentialCacheLock.Lock()
