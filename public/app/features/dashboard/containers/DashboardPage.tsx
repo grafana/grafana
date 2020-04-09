@@ -32,6 +32,7 @@ import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 import { InspectTab, PanelInspector } from '../components/Inspector/PanelInspector';
 import { getConfig } from '../../../core/config';
 import { SubMenu } from '../components/SubMenu/SubMenu';
+import { AngularSubMenu } from '../components/SubMenu';
 
 export interface Props {
   urlUid?: string;
