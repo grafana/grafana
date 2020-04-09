@@ -1,12 +1,17 @@
 import React, { useMemo, useCallback } from 'react';
 import { css, cx } from 'emotion';
-import { OrganizeFieldsTransformerOptions } from '@grafana/data/src/transformations/transformers/organize';
 import { DragDropContext, Droppable, Draggable, DropResult } from 'react-beautiful-dnd';
+import {
+  DataTransformerID,
+  transformersRegistry,
+  DataFrame,
+  GrafanaTheme,
+  createOrderFieldsComparer,
+  OrganizeFieldsTransformerOptions,
+} from '@grafana/data';
 import { TransformerUIRegistyItem, TransformerUIProps } from './types';
-import { DataTransformerID, transformersRegistry, DataFrame, GrafanaTheme } from '@grafana/data';
 import { stylesFactory, useTheme } from '../../themes';
-import { Button } from '../Button';
-import { createFieldsComparer } from '@grafana/data/src/transformations/transformers/order';
+import { Button } from '../Button/Button';
 import { VerticalGroup } from '../Layout/Layout';
 import { Input } from '../Input/Input';
 
@@ -189,7 +194,7 @@ const orderFieldNamesByIndex = (fieldNames: string[], indexByName: Record<string
   if (!indexByName || Object.keys(indexByName).length === 0) {
     return fieldNames;
   }
-  const comparer = createFieldsComparer(indexByName);
+  const comparer = createOrderFieldsComparer(indexByName);
   return fieldNames.sort(comparer);
 };
 
