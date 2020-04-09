@@ -19,8 +19,7 @@ const setup = (propOverrides?: Partial<Props>, renderMethod = shallow) => {
     onStarredFilterChange: noop,
     onTagFilterChange: noop,
     selectedStarredFilter: 'starred',
-    selectedTagFilter: 'tag',
-    tagFilterOptions: [],
+    selectedTagFilter: ['tag'],
   };
 
   Object.assign(props, propOverrides);
@@ -79,7 +78,7 @@ describe('SearchResultsFilter', () => {
       { value: 'tag2', label: 'Tag 2' },
     ];
     //@ts-ignore
-    const { wrapper } = setup({ onTagFilterChange: mockFilterByTags, tagFilterOptions: tags }, mount);
+    const { wrapper } = setup({ onTagFilterChange: mockFilterByTags }, mount);
     wrapper
       .find({ placeholder: 'Filter by tag' })
       .at(0)

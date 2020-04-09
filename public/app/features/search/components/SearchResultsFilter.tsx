@@ -2,6 +2,8 @@ import React, { FC } from 'react';
 import { css } from 'emotion';
 import { Button, Select, Forms, stylesFactory, useTheme, HorizontalGroup } from '@grafana/ui';
 import { GrafanaTheme, SelectableValue } from '@grafana/data';
+import { TagFilter } from 'app/core/components/TagFilter/TagFilter';
+import { SearchSrv } from 'app/core/services/search_srv';
 
 type onSelectChange = (value: SelectableValue) => void;
 
@@ -15,14 +17,15 @@ export interface Props {
   onStarredFilterChange: onSelectChange;
   onTagFilterChange: onSelectChange;
   selectedStarredFilter: string;
-  selectedTagFilter: string;
-  tagFilterOptions: SelectableValue[];
+  selectedTagFilter: string[];
 }
 
 const starredFilterOptions = [
   { label: 'Yes', value: true },
   { label: 'No', value: false },
 ];
+
+const searchSrv = new SearchSrv();
 
 export const SearchResultsFilter: FC<Props> = ({
   allChecked,
@@ -35,7 +38,6 @@ export const SearchResultsFilter: FC<Props> = ({
   onTagFilterChange,
   selectedStarredFilter,
   selectedTagFilter,
-  tagFilterOptions,
 }) => {
   const showActions = canDelete || canMove;
   const theme = useTheme();
@@ -63,12 +65,13 @@ export const SearchResultsFilter: FC<Props> = ({
             onChange={onStarredFilterChange}
           />
 
-          <Select
+          <TagFilter
             size="sm"
             placeholder="Filter by tag"
-            key={selectedTagFilter}
-            options={tagFilterOptions}
+            tags={selectedTagFilter}
+            tagOptions={searchSrv.getDashboardTags}
             onChange={onTagFilterChange}
+            hideValues
           />
         </HorizontalGroup>
       )}

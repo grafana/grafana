@@ -1,6 +1,7 @@
 import { IScope } from 'angular';
 import _ from 'lodash';
 import { SelectableValue } from '@grafana/data';
+//@ts-ignore
 import coreModule from 'app/core/core_module';
 import appEvents from 'app/core/app_events';
 import { SearchSrv } from 'app/core/services/search_srv';
@@ -373,4 +374,4 @@ export function manageDashboardsDirective() {
   };
 }
 
-coreModule.directive('manageDashboards', manageDashboardsDirective);
+//coreModule.directive('manageDashboards', manageDashboardsDirective);

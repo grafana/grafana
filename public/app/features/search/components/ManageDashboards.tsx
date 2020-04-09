@@ -83,15 +83,18 @@ export const ManageDashboards: FC<Props> = ({ folderId, folderUid }) => {
 
   const onTagRemove = () => {};
   const onRemoveStarred = () => {};
-  const onClearFilters = () => {};
+  const onClearFilters = () => {
+    setQuery(q => ({ ...q, tag: [] }));
+  };
   const moveTo = () => {};
   const onItemDelete = () => {};
   const onStarredFilterChange = () => {};
-  const onTagFilterChange = () => {};
+  const onTagFilterChange = (tags: string[]) => {
+    setQuery(q => ({ ...q, tag: tags }));
+  };
   const filterByTag = () => {};
   const onToggleSelection = () => {};
   const onSelectAllChanged = () => {};
-
   const hasFilters = query.query.length > 0 || query.tag.length > 0 || query.starred;
 
   return (
@@ -120,7 +123,7 @@ export const ManageDashboards: FC<Props> = ({ folderId, folderUid }) => {
                 <div className="gf-form-input gf-form-input--plaintext">
                   {query.tag.map(tag => {
                     return (
-                      <a onClick={onTagRemove} tag-color-from-name="tagName" className="tag label label-tag">
+                      <a key={tag} onClick={onTagRemove} tag-color-from-name="tagName" className="tag label label-tag">
                         <Icon name="times" />
                         &nbsp;{tag}
                       </a>
@@ -159,10 +162,9 @@ export const ManageDashboards: FC<Props> = ({ folderId, folderUid }) => {
           canDelete={canDelete}
           moveTo={moveTo}
           deleteItem={onItemDelete}
-          tagFilterOptions={[]}
           selectedStarredFilter={null}
           onStarredFilterChange={onStarredFilterChange}
-          selectedTagFilter={''}
+          selectedTagFilter={query.tag}
           onTagFilterChange={onTagFilterChange}
         />
         <div className="search-results-container">
