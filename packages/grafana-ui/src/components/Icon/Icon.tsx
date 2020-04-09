@@ -1,9 +1,9 @@
 import React from 'react';
 import { css, cx } from 'emotion';
 import { GrafanaTheme, toPascalCase } from '@grafana/data';
-import { stylesFactory } from '../../themes';
+import { stylesFactory } from '../../themes/stylesFactory';
 import { useTheme } from '../../themes/ThemeContext';
-import { IconName, IconType, IconSize } from '../../types';
+import { IconName, IconType, IconSize } from '../../types/icon';
 import { ComponentSize } from '../../types/size';
 //@ts-ignore
 import * as DefaultIcon from '@iconscout/react-unicons';
@@ -13,11 +13,6 @@ interface IconProps extends React.HTMLAttributes<HTMLDivElement> {
   name: IconName;
   size?: IconSize;
   type?: IconType;
-}
-export interface SvgProps extends React.HTMLAttributes<SVGElement> {
-  size: number;
-  secondaryColor?: string;
-  className?: string;
 }
 
 const getIconStyles = stylesFactory((theme: GrafanaTheme) => {
