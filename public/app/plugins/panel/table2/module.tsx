@@ -8,18 +8,17 @@ export const plugin = new PanelPlugin<Options, CustomFieldConfig>(TablePanel)
       builder
         .addNumberInput({
           path: 'width',
-          name: 'Width',
+          name: 'Column width',
           description: 'column width (for table)',
           settings: {
             placeholder: 'auto',
             min: 20,
             max: 300,
           },
-          category: ['Column'],
         })
         .addRadio({
           path: 'align',
-          name: 'Alignment',
+          name: 'Column alignment',
           description: 'column alignment (for table)',
           settings: {
             options: [
@@ -30,7 +29,6 @@ export const plugin = new PanelPlugin<Options, CustomFieldConfig>(TablePanel)
             ],
           },
           defaultValue: null,
-          category: ['Column'],
         })
         .addSelect({
           path: 'displayMode',
@@ -44,7 +42,6 @@ export const plugin = new PanelPlugin<Options, CustomFieldConfig>(TablePanel)
               { value: 'lcd-gauge', label: 'LCD gauge' },
             ],
           },
-          category: ['Cell'],
         });
     },
   })
