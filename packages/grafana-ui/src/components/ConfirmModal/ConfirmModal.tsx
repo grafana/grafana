@@ -1,7 +1,7 @@
 import React, { FC, useContext } from 'react';
 import { css } from 'emotion';
 import { Modal } from '../Modal/Modal';
-import { IconName } from '../../types';
+import { IconName } from '../../types/icon';
 import { Button } from '../Button';
 import { stylesFactory, ThemeContext } from '../../themes';
 import { GrafanaTheme } from '@grafana/data';

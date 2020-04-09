@@ -16,7 +16,7 @@ import Forms from './index';
 import mdx from './Form.mdx';
 import { ValidateResult } from 'react-hook-form';
 import { boolean } from '@storybook/addon-knobs';
-import { TextArea } from './TextArea/TextArea';
+import { TextArea } from '../TextArea/TextArea';
 
 export default {
   title: 'Forms/Example forms',
