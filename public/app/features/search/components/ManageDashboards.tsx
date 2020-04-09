@@ -1,7 +1,7 @@
 import React, { FC, useReducer, useState } from 'react';
 import { contextSrv } from 'app/core/services/context_srv';
 import { useDebounce } from 'react-use';
-import { Icon } from '@grafana/ui';
+import { Icon, TagList } from '@grafana/ui';
 import { manageDashboardsState, reducer } from '../reducers/manageDashboards';
 import { FETCH_RESULTS, TOGGLE_EDIT_PERMISSIONS, TOGGLE_FOLDER_CAN_SAVE } from '../reducers/actionTypes';
 import { SearchSrv } from 'app/core/services/search_srv';
@@ -81,17 +81,19 @@ export const ManageDashboards: FC<Props> = ({ folderId, folderUid }) => {
     setQuery(query);
   };
 
-  const onTagRemove = () => {};
   const onRemoveStarred = () => {};
+  const onTagRemove = (tag: string) => {
+    setQuery(q => ({ ...q, tag: q.tag.filter(t => tag !== t) }));
+  };
   const onClearFilters = () => {
     setQuery(q => ({ ...q, tag: [] }));
+  };
+  const onTagFilterChange = (tags: string[]) => {
+    setQuery(q => ({ ...q, tag: tags }));
   };
   const moveTo = () => {};
   const onItemDelete = () => {};
   const onStarredFilterChange = () => {};
-  const onTagFilterChange = (tags: string[]) => {
-    setQuery(q => ({ ...q, tag: tags }));
-  };
   const filterByTag = () => {};
   const onToggleSelection = () => {};
   const onSelectAllChanged = () => {};
@@ -120,16 +122,7 @@ export const ManageDashboards: FC<Props> = ({ folderId, folderUid }) => {
             {query.tag.length > 0 && (
               <div className="gf-form">
                 <label className="gf-form-label width-4">Tags</label>
-                <div className="gf-form-input gf-form-input--plaintext">
-                  {query.tag.map(tag => {
-                    return (
-                      <a key={tag} onClick={onTagRemove} tag-color-from-name="tagName" className="tag label label-tag">
-                        <Icon name="times" />
-                        &nbsp;{tag}
-                      </a>
-                    );
-                  })}
-                </div>
+                <TagList tags={query.tag} onClick={onTagRemove} />
               </div>
             )}
             {query.starred && (
