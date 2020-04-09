@@ -1,11 +1,11 @@
 import React, { ChangeEvent, FormEvent, PureComponent } from 'react';
 import isEqual from 'lodash/isEqual';
-import { AppEvents } from '@grafana/data';
+import { AppEvents, VariableType } from '@grafana/data';
 import { FormLabel } from '@grafana/ui';
 import { e2e } from '@grafana/e2e';
 import { variableAdapters } from '../adapters';
 import { NEW_VARIABLE_ID, toVariablePayload, VariableIdentifier } from '../state/types';
-import { VariableHide, VariableModel, VariableType } from '../../templating/variable';
+import { VariableHide, VariableModel } from '../../templating/types';
 import { appEvents } from '../../../core/core';
 import { VariableValuesPreview } from './VariableValuesPreview';
 import { changeVariableName, onEditorAdd, onEditorUpdate, variableEditorMount, variableEditorUnMount } from './actions';

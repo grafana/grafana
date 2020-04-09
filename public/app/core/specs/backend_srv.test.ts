@@ -345,7 +345,8 @@ describe('backendSrv', () => {
       it('then it should not emit message', async () => {
         const url = 'http://localhost:3000/api/some-mock';
         const { backendSrv, appEventsMock, expectDataSourceRequestCallChain } = getTestContext({ url });
-        const result = await backendSrv.datasourceRequest({ url, method: 'GET', silent: true });
+        const options = { url, method: 'GET', silent: true };
+        const result = await backendSrv.datasourceRequest(options);
         expect(result).toEqual({
           data: { test: 'hello world' },
           ok: true,
@@ -354,16 +355,7 @@ describe('backendSrv', () => {
           statusText: 'Ok',
           type: 'basic',
           url,
-          request: {
-            url,
-            method: 'GET',
-            body: undefined,
-            headers: {
-              map: {
-                accept: 'application/json, text/plain, */*',
-              },
-            },
-          },
+          config: options,
         });
         expect(appEventsMock.emit).not.toHaveBeenCalled();
         expectDataSourceRequestCallChain({ url, method: 'GET', silent: true });
@@ -374,7 +366,8 @@ describe('backendSrv', () => {
       it('then it should not emit message', async () => {
         const url = 'http://localhost:3000/api/some-mock';
         const { backendSrv, appEventsMock, expectDataSourceRequestCallChain } = getTestContext({ url });
-        const result = await backendSrv.datasourceRequest({ url, method: 'GET' });
+        const options = { url, method: 'GET' };
+        const result = await backendSrv.datasourceRequest(options);
         const expectedResult = {
           data: { test: 'hello world' },
           ok: true,
@@ -383,16 +376,7 @@ describe('backendSrv', () => {
           statusText: 'Ok',
           type: 'basic',
           url,
-          request: {
-            url,
-            method: 'GET',
-            body: undefined as any,
-            headers: {
-              map: {
-                accept: 'application/json, text/plain, */*',
-              },
-            },
-          },
+          config: options,
         };
 
         expect(result).toEqual(expectedResult);
@@ -447,16 +431,7 @@ describe('backendSrv', () => {
           statusText: 'Ok',
           type: 'basic',
           url: '/api/dashboard/',
-          request: {
-            url: '/api/dashboard/',
-            method: 'GET',
-            body: undefined,
-            headers: {
-              map: {
-                accept: 'application/json, text/plain, */*',
-              },
-            },
-          },
+          config: options,
         });
 
         const result = await slowRequest;
@@ -464,16 +439,7 @@ describe('backendSrv', () => {
           data: [],
           status: -1,
           statusText: 'Request was aborted',
-          request: {
-            url: '/api/dashboard/',
-            method: 'GET',
-            body: undefined,
-            headers: {
-              map: {
-                accept: 'application/json, text/plain, */*',
-              },
-            },
-          },
+          config: options,
         });
         expect(unsubscribe).toHaveBeenCalledTimes(1);
       });

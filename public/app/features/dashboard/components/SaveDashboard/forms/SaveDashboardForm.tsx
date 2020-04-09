@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 
-import { Forms, Button, HorizontalGroup } from '@grafana/ui';
+import { Forms, Button, HorizontalGroup, TextArea } from '@grafana/ui';
 import { e2e } from '@grafana/e2e';
 import { SaveDashboardFormProps } from '../types';
 
@@ -50,21 +50,16 @@ export const SaveDashboardForm: React.FC<SaveDashboardFormProps> = ({ dashboard,
             )}
             {(hasVariableChanged || hasTimeChanged) && <div className="gf-form-group" />}
 
-            <Forms.TextArea
-              name="message"
-              ref={register}
-              placeholder="Add a note to describe your changes..."
-              autoFocus
-            />
+            <TextArea name="message" ref={register} placeholder="Add a note to describe your changes..." autoFocus />
           </div>
 
           <HorizontalGroup>
             <Button type="submit" aria-label={e2e.pages.SaveDashboardModal.selectors.save}>
               Save
             </Button>
-            <Forms.Button variant="secondary" onClick={onCancel}>
+            <Button variant="secondary" onClick={onCancel}>
               Cancel
-            </Forms.Button>
+            </Button>
           </HorizontalGroup>
         </>
       )}

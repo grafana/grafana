@@ -1,14 +1,13 @@
 import debounce from 'lodash/debounce';
 import { StoreState, ThunkDispatch, ThunkResult } from 'app/types';
 import {
-  containsSearchFilter,
   QueryVariableModel,
   VariableOption,
   VariableRefresh,
   VariableTag,
   VariableWithMultiSupport,
   VariableWithOptions,
-} from '../../../templating/variable';
+} from '../../../templating/types';
 import { variableAdapters } from '../../adapters';
 import { getVariable } from '../../state/selectors';
 import { NavigationKey } from '../types';
@@ -26,6 +25,7 @@ import { getDataSourceSrv } from '@grafana/runtime';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { changeVariableProp, setCurrentVariableValue } from '../../state/sharedReducer';
 import { toVariablePayload } from '../../state/types';
+import { containsSearchFilter } from '../../../templating/utils';
 
 export const navigateOptions = (key: NavigationKey, clearOthers: boolean): ThunkResult<void> => {
   return async (dispatch, getState) => {

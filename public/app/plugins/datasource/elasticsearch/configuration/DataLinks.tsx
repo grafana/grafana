@@ -63,11 +63,11 @@ export const DataLinks = (props: Props) => {
           })}
         <div>
           <Button
-            variant={'inverse'}
+            variant={'secondary'}
             className={css`
               margin-right: 10px;
             `}
-            icon="fa fa-plus"
+            icon="plus-circle"
             onClick={event => {
               event.preventDefault();
               const newDataLinks = [...(value || []), { field: '', url: '' }];

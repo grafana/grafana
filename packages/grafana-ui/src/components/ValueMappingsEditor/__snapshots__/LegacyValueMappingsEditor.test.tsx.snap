@@ -35,9 +35,9 @@ exports[`Render should render component 1`] = `
       }
     />
     <Button
-      icon="fa fa-plus"
+      icon="plus-circle"
       onClick={[Function]}
-      variant="inverse"
+      variant="primary"
     >
       Add mapping
     </Button>

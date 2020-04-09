@@ -11,8 +11,8 @@ exports[`TimePicker renders buttons correctly 1`] = `
       className="btn navbar-button navbar-button--tight"
       onClick={[Function]}
     >
-      <i
-        className="fa fa-chevron-left"
+      <Icon
+        name="angle-left"
       />
     </button>
     <div>
@@ -38,8 +38,10 @@ exports[`TimePicker renders buttons correctly 1`] = `
           className="btn navbar-button navbar-button--tight"
           onClick={[Function]}
         >
-          <i
-            className="fa fa-clock-o fa-fw"
+          <Icon
+            className="css-znfyx6"
+            name="clock-nine"
+            size="lg"
           />
           <Memo()
             onChange={[Function]}
@@ -82,7 +84,7 @@ exports[`TimePicker renders buttons correctly 1`] = `
                   "blueLight": "#5794f2",
                   "blueShade": "#1f60c4",
                   "body": "#d8d9da",
-                  "bodyBg": "#161719",
+                  "bodyBg": "#0b0c0e",
                   "brandDanger": "#e02f44",
                   "brandPrimary": "#eb7b18",
                   "brandSuccess": "#299c46",
@@ -102,7 +104,7 @@ exports[`TimePicker renders buttons correctly 1`] = `
                   "formCheckboxBgChecked": "#5794f2",
                   "formCheckboxBgCheckedHover": "#3274d9",
                   "formCheckboxCheckmark": "#343b40",
-                  "formDescription": "#7B8087",
+                  "formDescription": "#7b8087",
                   "formFocusOutline": "#1f60c4",
                   "formInputBg": "#0b0c0e",
                   "formInputBgDisabled": "#141619",
@@ -111,7 +113,7 @@ exports[`TimePicker renders buttons correctly 1`] = `
                   "formInputBorderHover": "#464c54",
                   "formInputBorderInvalid": "#e02f44",
                   "formInputDisabledText": "#9fa7b3",
-                  "formInputPlaceholderText": "#464c54",
+                  "formInputPlaceholderText": "#555555",
                   "formInputText": "#c7d0d9",
                   "formInputTextStrong": "#c7d0d9",
                   "formInputTextWhite": "#ffffff",
@@ -136,7 +138,7 @@ exports[`TimePicker renders buttons correctly 1`] = `
                   "gray4": "#d8d9da",
                   "gray5": "#ececec",
                   "gray6": "#f4f5f8",
-                  "gray60": "#7B8087",
+                  "gray60": "#7b8087",
                   "gray7": "#fbfbfb",
                   "gray70": "#9fa7b3",
                   "gray85": "#c7d0d9",
@@ -146,7 +148,7 @@ exports[`TimePicker renders buttons correctly 1`] = `
                   "greenBase": "#299c46",
                   "greenShade": "#23843b",
                   "headingColor": "#d8d9da",
-                  "inputBlack": "#09090b",
+                  "inputBlack": "#0b0c0e",
                   "link": "#d8d9da",
                   "linkDisabled": "#8e8e8e",
                   "linkExternal": "#33b5e5",
@@ -154,9 +156,10 @@ exports[`TimePicker renders buttons correctly 1`] = `
                   "online": "#299c46",
                   "orange": "#eb7b18",
                   "orangeDark": "#ff780a",
-                  "pageBg": "#161719",
+                  "pageBg": "#141619",
                   "pageHeaderBorder": "#202226",
-                  "panelBg": "#212124",
+                  "panelBg": "#141619",
+                  "panelBorder": "#202226",
                   "purple": "#9933cc",
                   "queryGreen": "#74e680",
                   "queryKeyword": "#66d9ef",
@@ -167,7 +170,7 @@ exports[`TimePicker renders buttons correctly 1`] = `
                   "red88": "#e02f44",
                   "redBase": "#e02f44",
                   "redShade": "#c4162a",
-                  "text": "#d8d9da",
+                  "text": "#c7d0d9",
                   "textEmphasis": "#ececec",
                   "textFaint": "#222426",
                   "textStrong": "#ffffff",
@@ -275,10 +278,11 @@ exports[`TimePicker renders buttons correctly 1`] = `
             }
           />
           <span
-            className="css-6x26ye"
+            className="css-132xth5"
           >
-            <i
-              className="fa fa-caret-down fa-fw"
+            <Icon
+              name="angle-down"
+              size="lg"
             />
           </span>
         </button>
@@ -288,8 +292,9 @@ exports[`TimePicker renders buttons correctly 1`] = `
       className="btn navbar-button navbar-button--tight"
       onClick={[Function]}
     >
-      <i
-        className="fa fa-chevron-right"
+      <Icon
+        name="angle-right"
+        size="lg"
       />
     </button>
     <Component
@@ -300,8 +305,9 @@ exports[`TimePicker renders buttons correctly 1`] = `
         className="btn navbar-button navbar-button--zoom"
         onClick={[Function]}
       >
-        <i
-          className="fa fa-search-minus"
+        <Icon
+          name="search-minus"
+          size="lg"
         />
       </button>
     </Component>
@@ -320,8 +326,8 @@ exports[`TimePicker renders content correctly after beeing open 1`] = `
       className="btn navbar-button navbar-button--tight"
       onClick={[Function]}
     >
-      <i
-        className="fa fa-chevron-left"
+      <Icon
+        name="angle-left"
       />
     </button>
     <div>
@@ -347,8 +353,10 @@ exports[`TimePicker renders content correctly after beeing open 1`] = `
           className="btn navbar-button navbar-button--tight"
           onClick={[Function]}
         >
-          <i
-            className="fa fa-clock-o fa-fw"
+          <Icon
+            className="css-znfyx6"
+            name="clock-nine"
+            size="lg"
           />
           <Memo()
             onChange={[Function]}
@@ -391,7 +399,7 @@ exports[`TimePicker renders content correctly after beeing open 1`] = `
                   "blueLight": "#5794f2",
                   "blueShade": "#1f60c4",
                   "body": "#d8d9da",
-                  "bodyBg": "#161719",
+                  "bodyBg": "#0b0c0e",
                   "brandDanger": "#e02f44",
                   "brandPrimary": "#eb7b18",
                   "brandSuccess": "#299c46",
@@ -411,7 +419,7 @@ exports[`TimePicker renders content correctly after beeing open 1`] = `
                   "formCheckboxBgChecked": "#5794f2",
                   "formCheckboxBgCheckedHover": "#3274d9",
                   "formCheckboxCheckmark": "#343b40",
-                  "formDescription": "#7B8087",
+                  "formDescription": "#7b8087",
                   "formFocusOutline": "#1f60c4",
                   "formInputBg": "#0b0c0e",
                   "formInputBgDisabled": "#141619",
@@ -420,7 +428,7 @@ exports[`TimePicker renders content correctly after beeing open 1`] = `
                   "formInputBorderHover": "#464c54",
                   "formInputBorderInvalid": "#e02f44",
                   "formInputDisabledText": "#9fa7b3",
-                  "formInputPlaceholderText": "#464c54",
+                  "formInputPlaceholderText": "#555555",
                   "formInputText": "#c7d0d9",
                   "formInputTextStrong": "#c7d0d9",
                   "formInputTextWhite": "#ffffff",
@@ -445,7 +453,7 @@ exports[`TimePicker renders content correctly after beeing open 1`] = `
                   "gray4": "#d8d9da",
                   "gray5": "#ececec",
                   "gray6": "#f4f5f8",
-                  "gray60": "#7B8087",
+                  "gray60": "#7b8087",
                   "gray7": "#fbfbfb",
                   "gray70": "#9fa7b3",
                   "gray85": "#c7d0d9",
@@ -455,7 +463,7 @@ exports[`TimePicker renders content correctly after beeing open 1`] = `
                   "greenBase": "#299c46",
                   "greenShade": "#23843b",
                   "headingColor": "#d8d9da",
-                  "inputBlack": "#09090b",
+                  "inputBlack": "#0b0c0e",
                   "link": "#d8d9da",
                   "linkDisabled": "#8e8e8e",
                   "linkExternal": "#33b5e5",
@@ -463,9 +471,10 @@ exports[`TimePicker renders content correctly after beeing open 1`] = `
                   "online": "#299c46",
                   "orange": "#eb7b18",
                   "orangeDark": "#ff780a",
-                  "pageBg": "#161719",
+                  "pageBg": "#141619",
                   "pageHeaderBorder": "#202226",
-                  "panelBg": "#212124",
+                  "panelBg": "#141619",
+                  "panelBorder": "#202226",
                   "purple": "#9933cc",
                   "queryGreen": "#74e680",
                   "queryKeyword": "#66d9ef",
@@ -476,7 +485,7 @@ exports[`TimePicker renders content correctly after beeing open 1`] = `
                   "red88": "#e02f44",
                   "redBase": "#e02f44",
                   "redShade": "#c4162a",
-                  "text": "#d8d9da",
+                  "text": "#c7d0d9",
                   "textEmphasis": "#ececec",
                   "textFaint": "#222426",
                   "textStrong": "#ffffff",
@@ -584,10 +593,11 @@ exports[`TimePicker renders content correctly after beeing open 1`] = `
             }
           />
           <span
-            className="css-6x26ye"
+            className="css-132xth5"
           >
-            <i
-              className="fa fa-caret-up fa-fw"
+            <Icon
+              name="angle-up"
+              size="lg"
             />
           </span>
         </button>
@@ -802,8 +812,9 @@ exports[`TimePicker renders content correctly after beeing open 1`] = `
       className="btn navbar-button navbar-button--tight"
       onClick={[Function]}
     >
-      <i
-        className="fa fa-chevron-right"
+      <Icon
+        name="angle-right"
+        size="lg"
       />
     </button>
     <Component
@@ -814,8 +825,9 @@ exports[`TimePicker renders content correctly after beeing open 1`] = `
         className="btn navbar-button navbar-button--zoom"
         onClick={[Function]}
       >
-        <i
-          className="fa fa-search-minus"
+        <Icon
+          name="search-minus"
+          size="lg"
         />
       </button>
     </Component>

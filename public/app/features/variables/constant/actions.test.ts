@@ -3,12 +3,11 @@ import { createConstantVariableAdapter } from './adapter';
 import { reduxTester } from '../../../../test/core/redux/reduxTester';
 import { TemplatingState } from 'app/features/variables/state/reducers';
 import { updateConstantVariableOptions } from './actions';
-import { getTemplatingRootReducer } from '../state/helpers';
-import { ConstantVariableModel, VariableHide, VariableOption } from '../../templating/variable';
+import { getRootReducer } from '../state/helpers';
+import { ConstantVariableModel, VariableHide, VariableOption } from '../../templating/types';
 import { toVariablePayload } from '../state/types';
 import { createConstantOptionsFromQuery } from './reducer';
-import { setCurrentVariableValue } from '../state/sharedReducer';
-import { initDashboardTemplating } from '../state/actions';
+import { setCurrentVariableValue, addVariable } from '../state/sharedReducer';
 
 describe('constant actions', () => {
   variableAdapters.setInit(() => [createConstantVariableAdapter()]);
@@ -40,8 +39,8 @@ describe('constant actions', () => {
       };
 
       const tester = await reduxTester<{ templating: TemplatingState }>()
-        .givenRootReducer(getTemplatingRootReducer())
-        .whenActionIsDispatched(initDashboardTemplating([variable]))
+        .givenRootReducer(getRootReducer())
+        .whenActionIsDispatched(addVariable(toVariablePayload(variable, { global: false, index: 0, model: variable })))
         .whenAsyncActionIsDispatched(updateConstantVariableOptions(toVariablePayload(variable)), true);
 
       tester.thenDispatchedActionsPredicateShouldEqual(actions => {

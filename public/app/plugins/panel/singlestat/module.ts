@@ -658,7 +658,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
           window.location.href = linkInfo.href;
         } else {
           $timeout(() => {
-            $location.url(locationUtil.stripBaseFromUrl(linkInfo.href));
+            $location.url(locationUtil.stripBaseFromUrl(linkInfo!.href));
           });
         }
 
@@ -700,7 +700,7 @@ function getColorForValue(data: any, value: number) {
 
 //------------------------------------------------
 // Private utility functions
-// Somethign like this should be avaliable in a
+// Something like this should be avaliable in a
 //  DataFrame[] abstraction helper
 //------------------------------------------------
 

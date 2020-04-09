@@ -115,8 +115,10 @@ func main() {
 	go listenToSystemSignals(server)
 
 	err := server.Run()
-
-	code := server.ExitCode(err)
+	code := 0
+	if err != nil {
+		code = server.ExitCode(err)
+	}
 	trace.Stop()
 	log.Close()
 

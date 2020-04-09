@@ -29,7 +29,7 @@ export interface OwnProps {
 }
 
 export interface ConnectedProps {
-  plugin?: PanelPlugin;
+  plugin?: PanelPlugin | null;
 }
 
 export interface DispatchProps {

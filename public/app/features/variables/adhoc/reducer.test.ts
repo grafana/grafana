@@ -4,7 +4,7 @@ import { getVariableTestContext } from '../state/helpers';
 import { toVariablePayload } from '../state/types';
 import { adHocVariableReducer, filterAdded, filterRemoved, filtersRestored, filterUpdated } from './reducer';
 import { VariablesState } from '../state/variablesReducer';
-import { AdHocVariableFilter, AdHocVariableModel } from '../../templating/variable';
+import { AdHocVariableFilter, AdHocVariableModel } from '../../templating/types';
 import { createAdHocVariableAdapter } from './adapter';
 
 describe('adHocVariableReducer', () => {

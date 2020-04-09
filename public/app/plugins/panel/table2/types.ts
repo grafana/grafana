@@ -1,7 +1,9 @@
 export interface Options {
   showHeader: boolean;
+  resizable: boolean;
 }
 
-export const defaults: Options = {
-  showHeader: true,
-};
+export interface CustomFieldConfig {
+  width: number;
+  displayMode: string;
+}

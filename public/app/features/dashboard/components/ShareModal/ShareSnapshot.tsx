@@ -1,5 +1,6 @@
 import React, { PureComponent } from 'react';
-import { Button, ClipboardButton, Input, LinkButton, Select } from '@grafana/ui';
+import { Button, ClipboardButton, LinkButton, LegacyForms, Icon } from '@grafana/ui';
+const { Select, Input } = LegacyForms;
 import { AppEvents, SelectableValue } from '@grafana/data';
 import { getBackendSrv } from '@grafana/runtime';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
@@ -249,7 +250,7 @@ export class ShareSnapshot extends PureComponent<Props, State> {
               {sharingButtonText}
             </Button>
           )}
-          <Button variant="inverse" onClick={onDismiss}>
+          <Button variant="secondary" onClick={onDismiss}>
             Cancel
           </Button>
         </div>
@@ -268,7 +269,7 @@ export class ShareSnapshot extends PureComponent<Props, State> {
               <i className="fa fa-external-link-square"></i> {snapshotUrl}
             </a>
             <br />
-            <ClipboardButton variant="inverse" getText={this.getSnapshotUrl} onClipboardCopy={this.onSnapshotUrlCopy}>
+            <ClipboardButton variant="secondary" getText={this.getSnapshotUrl} onClipboardCopy={this.onSnapshotUrlCopy}>
               Copy Link
             </ClipboardButton>
           </div>
@@ -301,9 +302,13 @@ export class ShareSnapshot extends PureComponent<Props, State> {
     return (
       <div className="share-modal-body">
         <div className="share-modal-header">
-          <div className="share-modal-big-icon">
-            {isLoading ? <i className="fa fa-spinner fa-spin"></i> : <i className="gicon gicon-snapshots"></i>}
-          </div>
+          {isLoading ? (
+            <div className="share-modal-big-icon">
+              <i className="fa fa-spinner fa-spin"></i>
+            </div>
+          ) : (
+            <Icon name="camera" className="share-modal-big-icon" size="xxl" />
+          )}
           <div className="share-modal-content">
             {step === 1 && this.renderStep1()}
             {step === 2 && this.renderStep2()}

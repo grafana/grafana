@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 import { connect } from 'react-redux';
 import { hot } from 'react-hot-loader';
 import { css, cx } from 'emotion';
-import { stylesFactory, useTheme, Forms } from '@grafana/ui';
+import { stylesFactory, useTheme, TextArea, Button, Icon } from '@grafana/ui';
+
 import { GrafanaTheme, AppEvents, DataSourceApi } from '@grafana/data';
 import { RichHistoryQuery, ExploreId } from 'app/types/explore';
 import { copyStringToClipboard, createUrlFromRichHistory, createDataQuery } from 'app/core/utils/richHistory';
@@ -36,7 +37,6 @@ const getStyles = stylesFactory((theme: GrafanaTheme, isRemoved: boolean) => {
     : isRemoved
     ? theme.colors.gray15
     : theme.colors.gray05;
-  const cardBoxShadow = theme.isLight ? `0px 2px 2px ${borderColor}` : `0px 2px 4px black`;
 
   return {
     queryCard: css`
@@ -44,7 +44,6 @@ const getStyles = stylesFactory((theme: GrafanaTheme, isRemoved: boolean) => {
       flex-direction: column;
       border: 1px solid ${borderColor};
       margin: ${theme.spacing.sm} 0;
-      box-shadow: ${cardBoxShadow};
       background-color: ${cardColor};
       border-radius: ${theme.border.radius.sm};
       .starred {
@@ -78,9 +77,8 @@ const getStyles = stylesFactory((theme: GrafanaTheme, isRemoved: boolean) => {
       display: flex;
       justify-content: flex-end;
       font-size: ${theme.typography.size.base};
-      i {
-        margin: ${theme.spacing.xs};
-        cursor: pointer;
+      svg {
+        margin-left: ${theme.spacing.sm};
       }
     `,
     queryContainer: css`
@@ -197,36 +195,37 @@ export function RichHistoryCard(props: Props) {
 
   const updateComment = (
     <div className={styles.updateCommentContainer}>
-      <Forms.TextArea
+      <TextArea
         value={comment}
         placeholder={comment ? undefined : 'An optional description of what the query does.'}
         onChange={e => setComment(e.currentTarget.value)}
         className={styles.textArea}
       />
       <div className={styles.commentButtonRow}>
-        <Forms.Button onClick={onUpdateComment}>Save comment</Forms.Button>
-        <Forms.Button variant="secondary" onClick={onCancelUpdateComment}>
+        <Button onClick={onUpdateComment}>Save comment</Button>
+        <Button variant="secondary" onClick={onCancelUpdateComment}>
           Cancel
-        </Forms.Button>
+        </Button>
       </div>
     </div>
   );
 
   const queryActionButtons = (
     <div className={styles.queryActionButtons}>
-      <i
-        className="fa fa-fw fa-comment-o"
+      <Icon
+        name="comment-alt"
         onClick={toggleActiveUpdateComment}
         title={query.comment?.length > 0 ? 'Edit comment' : 'Add comment'}
-      ></i>
-      <i className="fa fa-fw fa-copy" onClick={onCopyQuery} title="Copy query to clipboard"></i>
-      {!isRemoved && <i className="fa fa-fw fa-link" onClick={onCreateLink} title="Copy link to clipboard"></i>}
-      <i className={'fa fa-trash'} title={'Delete query'} onClick={onDeleteQuery}></i>
-      <i
-        className={cx('fa fa-fw', query.starred ? 'fa-star starred' : 'fa-star-o')}
+      />
+      <Icon name="copy" onClick={onCopyQuery} title="Copy query to clipboard" />
+      {!isRemoved && <Icon name="link" onClick={onCreateLink} title="Copy link to clipboard" />}
+      <Icon name="trash-alt" title={'Delete query'} onClick={onDeleteQuery} />
+      <Icon
+        name={query.starred ? 'favorite' : 'star'}
+        type={query.starred ? 'mono' : 'default'}
         onClick={onStarrQuery}
         title={query.starred ? 'Unstar query' : 'Star query'}
-      ></i>
+      />
     </div>
   );
 
@@ -259,9 +258,9 @@ export function RichHistoryCard(props: Props) {
         </div>
         {!activeUpdateComment && (
           <div className={styles.runButton}>
-            <Forms.Button variant="secondary" onClick={onRunQuery} disabled={isRemoved}>
+            <Button variant="secondary" onClick={onRunQuery} disabled={isRemoved}>
               {datasourceInstance?.name === query.datasourceName ? 'Run query' : 'Switch data source and run query'}
-            </Forms.Button>
+            </Button>
           </div>
         )}
       </div>

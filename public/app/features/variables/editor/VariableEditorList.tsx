@@ -1,8 +1,9 @@
 import React, { MouseEvent, PureComponent } from 'react';
 import { e2e } from '@grafana/e2e';
 import EmptyListCTA from '../../../core/components/EmptyListCTA/EmptyListCTA';
-import { QueryVariableModel, VariableModel } from '../../templating/variable';
+import { QueryVariableModel, VariableModel } from '../../templating/types';
 import { toVariableIdentifier, VariableIdentifier } from '../state/types';
+import { Icon } from '@grafana/ui';
 
 export interface Props {
   variables: VariableModel[];
@@ -47,7 +48,7 @@ export class VariableEditorList extends PureComponent<Props> {
             <div>
               <EmptyListCTA
                 title="There are no variables yet"
-                buttonIcon="gicon gicon-variable"
+                buttonIcon="calculator-alt"
                 buttonTitle="Add variable"
                 infoBox={{
                   __html: ` <p>
@@ -148,7 +149,7 @@ export class VariableEditorList extends PureComponent<Props> {
                               variable.name
                             )}
                           >
-                            <i className="fa fa-remove" />
+                            <Icon name="times" />
                           </a>
                         </td>
                       </tr>

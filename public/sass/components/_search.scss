@@ -3,10 +3,10 @@
   right: 0;
   left: 0;
   bottom: 0;
-  top: $navbarHeight;
+  top: 0;
   z-index: $zindex-modal-backdrop;
   background-color: $black;
-  @include opacity(75);
+  @include opacity(60);
 }
 
 .search-container {
@@ -16,6 +16,7 @@
   bottom: 0;
   z-index: ($zindex-modal-backdrop + 10);
   position: fixed;
+  background: $body-bg;
 }
 
 // Search
@@ -26,7 +27,7 @@
 }
 
 .search-dropdown__col_1 {
-  background: $page-bg;
+  padding: $dashboard-padding;
   max-width: 700px;
   display: flex;
   flex-direction: column;
@@ -47,8 +48,9 @@
 }
 
 .search-filter-box {
-  background: $search-filter-box-bg;
-  border-radius: 2px;
+  background: $panel-bg;
+  border: $panel-border;
+  border-radius: 3px;
   padding: $spacer * 1.5;
   min-width: 340px;
   margin-bottom: $spacer * 1.5;
@@ -72,11 +74,18 @@
     font-size: 20px;
     margin-right: 5px;
   }
+  svg {
+    color: $orange;
+  }
 }
 
 .search-results-scroller {
   display: flex;
   position: relative;
+  min-height: 100%;
+  background: $panel-bg;
+  border: $panel-border;
+  border-radius: 3px;
 }
 
 .search-results-container {
@@ -106,10 +115,9 @@
 
 .search-section {
   background: $panel-bg;
-  border: $panel-border;
+  border-bottom: 1px solid lightOrDark($gray95, $gray25);
   padding: 0px 4px 4px 4px;
   margin-bottom: 3px;
-  border-radius: 5px;
 }
 
 .search-section__header {

@@ -3,7 +3,7 @@ import classNames from 'classnames';
 import { isEqual } from 'lodash';
 import { DataLink, ScopedVars, PanelMenuItem, PanelData, LoadingState, QueryResultMetaNotice } from '@grafana/data';
 import { AngularComponent } from '@grafana/runtime';
-import { ClickOutsideWrapper, Tooltip } from '@grafana/ui';
+import { ClickOutsideWrapper, Tooltip, Icon } from '@grafana/ui';
 import { e2e } from '@grafana/e2e';
 
 import PanelHeaderCorner from './PanelHeaderCorner';
@@ -22,7 +22,7 @@ export interface Props {
   title?: string;
   description?: string;
   scopedVars?: ScopedVars;
-  angularComponent?: AngularComponent;
+  angularComponent?: AngularComponent | null;
   links?: DataLink[];
   error?: string;
   isFullscreen: boolean;
@@ -108,12 +108,12 @@ export class PanelHeader extends Component<Props, State> {
     return (
       <Tooltip content={notice.text} key={notice.severity}>
         {notice.inspect ? (
-          <div className="panel-info-notice" onClick={e => this.openInspect(e, notice.inspect)}>
-            <span className="fa fa-info-circle" style={{ marginRight: '8px', cursor: 'pointer' }} />
+          <div className="panel-info-notice" onClick={e => this.openInspect(e, notice.inspect!)}>
+            <Icon name="info-circle" style={{ marginRight: '8px' }} />
           </div>
         ) : (
-          <a className="panel-info-notice" href={notice.url} target="_blank">
-            <span className="fa fa-info-circle" style={{ marginRight: '8px', cursor: 'pointer' }} />
+          <a className="panel-info-notice" href={notice.link} target="_blank">
+            <Icon name="info-circle" style={{ marginRight: '8px' }} />
           </a>
         )}
       </Tooltip>
@@ -163,7 +163,8 @@ export class PanelHeader extends Component<Props, State> {
               {Object.values(notices).map(this.renderNotice)}
               <span className="icon-gf panel-alert-icon" />
               <span className="panel-title-text">
-                {title} <span className="fa fa-caret-down panel-menu-toggle" />
+                {title}
+                <Icon name="angle-down" className="panel-menu-toggle" />
               </span>
               {this.state.panelMenuOpen && (
                 <ClickOutsideWrapper onClick={this.closeMenu}>
@@ -172,7 +173,7 @@ export class PanelHeader extends Component<Props, State> {
               )}
               {data.request && data.request.timeInfo && (
                 <span className="panel-time-info">
-                  <i className="fa fa-clock-o" /> {data.request.timeInfo}
+                  <Icon name="clock-nine" /> {data.request.timeInfo}
                 </span>
               )}
             </div>

@@ -1,4 +1,5 @@
 import React, { forwardRef } from 'react';
+import { IconName, Icon } from '@grafana/ui';
 
 export enum IconSide {
   left = 'left',
@@ -10,6 +11,7 @@ interface Props extends React.HTMLAttributes<HTMLDivElement> {
   title: string;
   onClick: () => void;
   buttonClassName?: string;
+  icon?: IconName;
   iconClassName?: string;
   iconSide?: IconSide;
   disabled?: boolean;
@@ -25,7 +27,17 @@ export const ResponsiveButton = forwardRef<HTMLDivElement, Props>((props, ref) =
   };
 
   props = { ...defaultProps, ...props };
-  const { title, onClick, buttonClassName, iconClassName, splitted, iconSide, disabled, ...divElementProps } = props;
+  const {
+    title,
+    onClick,
+    buttonClassName,
+    icon,
+    iconClassName,
+    splitted,
+    iconSide,
+    disabled,
+    ...divElementProps
+  } = props;
 
   return (
     <div ref={ref} {...divElementProps}>
@@ -34,9 +46,9 @@ export const ResponsiveButton = forwardRef<HTMLDivElement, Props>((props, ref) =
         onClick={onClick}
         disabled={disabled || false}
       >
-        {iconClassName && iconSide === IconSide.left ? <i className={`${iconClassName}`} /> : null}
+        {icon && iconSide === IconSide.left ? <Icon name={icon} className={iconClassName} /> : null}
         <span className="btn-title">{!splitted ? formatBtnTitle(title, iconSide) : ''}</span>
-        {iconClassName && iconSide === IconSide.right ? <i className={`${iconClassName}`} /> : null}
+        {icon && iconSide === IconSide.right ? <Icon name={icon} className={iconClassName} /> : null}
       </button>
     </div>
   );

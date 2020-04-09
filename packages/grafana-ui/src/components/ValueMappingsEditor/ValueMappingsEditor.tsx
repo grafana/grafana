@@ -1,6 +1,6 @@
 import React from 'react';
 import { MappingType, ValueMapping } from '@grafana/data';
-import Forms from '../Forms';
+import { Button } from '../Button/Button';
 import { FullWidthButtonContainer } from '../Button/FullWidthButtonContainer';
 import { MappingRow } from './MappingRow';
 
@@ -66,9 +66,15 @@ export const ValueMappingsEditor: React.FC<Props> = ({ valueMappings, onChange, 
         </>
       )}
       <FullWidthButtonContainer>
-        <Forms.Button size="sm" icon="fa fa-plus" onClick={onAdd} aria-label="ValueMappingsEditor add mapping button">
+        <Button
+          size="sm"
+          icon="plus-circle"
+          onClick={onAdd}
+          aria-label="ValueMappingsEditor add mapping button"
+          variant="secondary"
+        >
           Add mapping
-        </Forms.Button>
+        </Button>
       </FullWidthButtonContainer>
     </>
   );

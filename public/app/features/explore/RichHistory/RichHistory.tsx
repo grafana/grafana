@@ -10,7 +10,7 @@ import { stylesFactory, withTheme } from '@grafana/ui';
 //Types
 import { RichHistoryQuery, ExploreId } from 'app/types/explore';
 import { SelectableValue, GrafanaTheme } from '@grafana/data';
-import { TabsBar, Tab, TabContent, Themeable, CustomScrollbar } from '@grafana/ui';
+import { TabsBar, Tab, TabContent, Themeable, CustomScrollbar, IconName, Icon } from '@grafana/ui';
 
 //Components
 import { RichHistorySettings } from './RichHistorySettings';
@@ -51,24 +51,23 @@ interface RichHistoryState {
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
   const borderColor = theme.isLight ? theme.colors.gray5 : theme.colors.dark6;
-  const tabBarBg = theme.isLight ? theme.colors.white : theme.colors.black;
-  const tabContentBg = theme.isLight ? theme.colors.gray7 : theme.colors.dark2;
+  const tabContentBg = theme.colors.pageBg;
   return {
     container: css`
       height: 100%;
-      background-color: ${tabContentBg};
     `,
     tabContent: css`
-      background-color: ${tabContentBg};
       padding: ${theme.spacing.md};
+      background-color: ${tabContentBg};
     `,
     close: css`
       position: absolute;
-      right: ${theme.spacing.sm};
+      right: 16px;
+      top: 5px;
       cursor: pointer;
+      font-size: ${theme.typography.size.lg};
     `,
     tabs: css`
-      background-color: ${tabBarBg};
       padding-top: ${theme.spacing.sm};
       border-color: ${borderColor};
       ul {
@@ -170,7 +169,7 @@ class UnThemedRichHistory extends PureComponent<RichHistoryProps, RichHistorySta
           height={height}
         />
       ),
-      icon: 'fa fa-history',
+      icon: 'history',
     };
 
     const StarredTab = {
@@ -187,7 +186,7 @@ class UnThemedRichHistory extends PureComponent<RichHistoryProps, RichHistorySta
           exploreId={exploreId}
         />
       ),
-      icon: 'fa fa-star',
+      icon: 'star',
     };
 
     const SettingsTab = {
@@ -204,7 +203,7 @@ class UnThemedRichHistory extends PureComponent<RichHistoryProps, RichHistorySta
           deleteRichHistory={deleteRichHistory}
         />
       ),
-      icon: 'gicon gicon-preferences',
+      icon: 'sliders-v-alt',
     };
 
     let tabs = [QueriesTab, StarredTab, SettingsTab];
@@ -217,11 +216,11 @@ class UnThemedRichHistory extends PureComponent<RichHistoryProps, RichHistorySta
               label={t.label}
               active={t.value === activeTab}
               onChangeTab={() => this.onSelectTab(t)}
-              icon={t.icon}
+              icon={t.icon as IconName}
             />
           ))}
           <div className={styles.close} onClick={onClose}>
-            <i className="fa fa-times" title="Close query history" />
+            <Icon name="times" title="Close query history" />
           </div>
         </TabsBar>
         <CustomScrollbar

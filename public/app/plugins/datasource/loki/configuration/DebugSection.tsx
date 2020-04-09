@@ -4,7 +4,7 @@ import cx from 'classnames';
 import { FormField } from '@grafana/ui';
 import { DerivedFieldConfig } from '../types';
 import { getLinksFromLogsField } from '../../../../features/panel/panellinks/linkSuppliers';
-import { ArrayVector, FieldType } from '@grafana/data';
+import { ArrayVector, Field, FieldType, LinkModel } from '@grafana/data';
 
 type Props = {
   derivedFields: DerivedFieldConfig[];
@@ -90,7 +90,7 @@ function makeDebugFields(derivedFields: DerivedFieldConfig[], debugText: string)
       try {
         const testMatch = debugText.match(field.matcherRegex);
         const value = testMatch && testMatch[1];
-        let link;
+        let link: LinkModel<Field>;
 
         if (field.url && value) {
           link = getLinksFromLogsField(
@@ -103,7 +103,7 @@ function makeDebugFields(derivedFields: DerivedFieldConfig[], debugText: string)
               },
             },
             0
-          )[0];
+          )[0].linkModel;
         }
 
         return {

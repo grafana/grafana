@@ -1,36 +1,39 @@
-import React, { useCallback, useState, useMemo } from 'react';
-import { FieldConfigSource, GrafanaTheme, PanelData, PanelPlugin } from '@grafana/data';
+import React, { useCallback, useState, CSSProperties } from 'react';
+import Transition from 'react-transition-group/Transition';
+import { FieldConfigSource, GrafanaTheme, PanelData, PanelPlugin, SelectableValue } from '@grafana/data';
 import { DashboardModel, PanelModel } from '../../state';
-import {
-  CustomScrollbar,
-  stylesFactory,
-  Tab,
-  TabContent,
-  TabsBar,
-  useTheme,
-  Forms,
-  DataLinksInlineEditor,
-  Container,
-} from '@grafana/ui';
+import { CustomScrollbar, stylesFactory, Tab, TabContent, TabsBar, Select, useTheme, Icon, Input } from '@grafana/ui';
 import { DefaultFieldConfigEditor, OverrideFieldConfigEditor } from './FieldConfigEditor';
-import { AngularPanelOptions } from './AngularPanelOptions';
 import { css } from 'emotion';
-import { OptionsGroup } from './OptionsGroup';
-import { getPanelLinksVariableSuggestions } from '../../../panel/panellinks/link_srv';
+import { PanelOptionsTab } from './PanelOptionsTab';
+import { DashNavButton } from 'app/features/dashboard/components/DashNav/DashNavButton';
 
 export const OptionsPaneContent: React.FC<{
-  plugin?: PanelPlugin;
+  plugin: PanelPlugin;
   panel: PanelModel;
   data: PanelData;
+  width: number;
   dashboard: DashboardModel;
+  onClose: () => void;
   onFieldConfigsChange: (config: FieldConfigSource) => void;
   onPanelOptionsChanged: (options: any) => void;
   onPanelConfigChange: (configKey: string, value: any) => void;
-}> = ({ plugin, panel, data, onFieldConfigsChange, onPanelOptionsChanged, onPanelConfigChange, dashboard }) => {
+}> = ({
+  plugin,
+  panel,
+  data,
+  width,
+  onFieldConfigsChange,
+  onPanelOptionsChanged,
+  onPanelConfigChange,
+  onClose,
+  dashboard,
+}) => {
   const theme = useTheme();
   const styles = getStyles(theme);
+  const [activeTab, setActiveTab] = useState('options');
+  const [isSearching, setSearchMode] = useState(false);
 
-  const linkVariablesSuggestions = useMemo(() => getPanelLinksVariableSuggestions(), []);
   const renderFieldOptions = useCallback(
     (plugin: PanelPlugin) => {
       const fieldConfig = panel.getFieldConfig();
@@ -40,19 +43,17 @@ export const OptionsPaneContent: React.FC<{
       }
 
       return (
-        <Container padding="md">
-          {renderCustomPanelSettings(plugin)}
-          <DefaultFieldConfigEditor
-            config={fieldConfig}
-            plugin={plugin}
-            onChange={onFieldConfigsChange}
-            data={data.series}
-          />
-        </Container>
+        <DefaultFieldConfigEditor
+          config={fieldConfig}
+          plugin={plugin}
+          onChange={onFieldConfigsChange}
+          data={data.series}
+        />
       );
     },
     [data, plugin, panel, onFieldConfigsChange]
   );
+
   const renderFieldOverrideOptions = useCallback(
     (plugin: PanelPlugin) => {
       const fieldConfig = panel.getFieldConfig();
@@ -73,88 +74,36 @@ export const OptionsPaneContent: React.FC<{
     [data, plugin, panel, onFieldConfigsChange]
   );
 
-  const renderCustomPanelSettings = useCallback(
-    (plugin: PanelPlugin) => {
-      if (plugin.editor && panel) {
-        return (
-          <div className={styles.legacyOptions}>
-            <plugin.editor
-              data={data}
-              options={panel.getOptions()}
-              onOptionsChange={onPanelOptionsChanged}
-              fieldConfig={panel.getFieldConfig()}
-              onFieldConfigChange={onFieldConfigsChange}
-            />
-          </div>
-        );
-      }
-
-      return (
-        <div className={styles.legacyOptions}>
-          <AngularPanelOptions panel={panel} dashboard={dashboard} plugin={plugin} />
-        </div>
-      );
-    },
-    [data, plugin, panel, onFieldConfigsChange]
-  );
-
-  const renderPanelSettings = useCallback(() => {
-    console.log(panel.transparent);
-    return (
-      <div>
-        <OptionsGroup title="Panel settings">
-          <>
-            <Forms.Field label="Panel title">
-              <Forms.Input
-                defaultValue={panel.title}
-                onBlur={e => onPanelConfigChange('title', e.currentTarget.value)}
-              />
-            </Forms.Field>
-            <Forms.Field label="Description" description="Panel description supports markdown and links">
-              <Forms.TextArea
-                defaultValue={panel.description}
-                onBlur={e => onPanelConfigChange('description', e.currentTarget.value)}
-              />
-            </Forms.Field>
-            <Forms.Field label="Transparent" description="Display panel without background">
-              <Forms.Switch
-                value={panel.transparent}
-                onChange={e => onPanelConfigChange('transparent', e.currentTarget.checked)}
-              />
-            </Forms.Field>
-          </>
-        </OptionsGroup>
-        <OptionsGroup title="Panel links">
-          <DataLinksInlineEditor
-            links={panel.links}
-            onChange={links => onPanelConfigChange('links', links)}
-            suggestions={linkVariablesSuggestions}
-            data={data.series}
-          />
-        </OptionsGroup>
-        <OptionsGroup title="Panel repeating">
-          <div>TODO</div>
-        </OptionsGroup>
-      </div>
-    );
-  }, [data, plugin, panel, onFieldConfigsChange]);
-
-  const [activeTab, setActiveTab] = useState('defaults');
-
   return (
     <div className={styles.panelOptionsPane}>
       {plugin && (
         <div className={styles.wrapper}>
-          <TabsBar>
-            <Tab label="Options" active={activeTab === 'defaults'} onChangeTab={() => setActiveTab('defaults')} />
-            <Tab label="Overrides" active={activeTab === 'overrides'} onChangeTab={() => setActiveTab('overrides')} />
-            <Tab label="General" active={activeTab === 'panel'} onChangeTab={() => setActiveTab('panel')} />
+          <TabsBar className={styles.tabsBar}>
+            <TabsBarContent
+              width={width}
+              isSearching={isSearching}
+              styles={styles}
+              activeTab={activeTab}
+              onClose={onClose}
+              setSearchMode={setSearchMode}
+              setActiveTab={setActiveTab}
+            />
           </TabsBar>
           <TabContent className={styles.tabContent}>
             <CustomScrollbar>
+              {activeTab === 'options' && (
+                <PanelOptionsTab
+                  panel={panel}
+                  plugin={plugin}
+                  dashboard={dashboard}
+                  data={data}
+                  onPanelConfigChange={onPanelConfigChange}
+                  onFieldConfigsChange={onFieldConfigsChange}
+                  onPanelOptionsChanged={onPanelOptionsChanged}
+                />
+              )}
               {activeTab === 'defaults' && renderFieldOptions(plugin)}
               {activeTab === 'overrides' && renderFieldOverrideOptions(plugin)}
-              {activeTab === 'panel' && renderPanelSettings()}
             </CustomScrollbar>
           </TabContent>
         </div>
@@ -163,17 +112,139 @@ export const OptionsPaneContent: React.FC<{
   );
 };
 
+export const TabsBarContent: React.FC<{
+  width: number;
+  isSearching: boolean;
+  activeTab: string;
+  styles: OptionsPaneStyles;
+  onClose: () => void;
+  setSearchMode: (mode: boolean) => void;
+  setActiveTab: (tab: string) => void;
+}> = ({ width, isSearching, activeTab, onClose, setSearchMode, setActiveTab, styles }) => {
+  if (isSearching) {
+    const defaultStyles = {
+      transition: 'width 50ms ease-in-out',
+      width: '50%',
+      display: 'flex',
+    };
+
+    const transitionStyles: { [str: string]: CSSProperties } = {
+      entered: { width: '100%' },
+    };
+
+    return (
+      <Transition in={true} timeout={0} appear={true}>
+        {state => {
+          return (
+            <div className={styles.searchWrapper}>
+              <div style={{ ...defaultStyles, ...transitionStyles[state] }}>
+                <Input
+                  className={styles.searchInput}
+                  type="text"
+                  prefix={<Icon name="search" />}
+                  ref={elem => elem && elem.focus()}
+                  placeholder="Search all options"
+                  suffix={
+                    <Icon name="times" onClick={() => setSearchMode(false)} className={styles.searchRemoveIcon} />
+                  }
+                />
+              </div>
+            </div>
+          );
+        }}
+      </Transition>
+    );
+  }
+
+  return (
+    <>
+      {width < 352 ? (
+        <div className="flex-grow-1">
+          <Select
+            options={tabSelections}
+            value={tabSelections.find(v => v.value === activeTab)}
+            onChange={v => {
+              setActiveTab(v.value);
+            }}
+          />
+        </div>
+      ) : (
+        <>
+          {tabSelections.map(item => (
+            <Tab
+              key={item.value}
+              label={item.label}
+              active={activeTab === item.value}
+              onChangeTab={() => setActiveTab(item.value)}
+            />
+          ))}
+          <div className="flex-grow-1" />
+        </>
+      )}
+
+      <div className={styles.tabsButton}>
+        <DashNavButton
+          icon="search"
+          iconSize="md"
+          tooltip="Search all options"
+          classSuffix="search-options"
+          onClick={() => setSearchMode(true)}
+        />
+      </div>
+      <div className={styles.tabsButton}>
+        <DashNavButton
+          icon="angle-right"
+          tooltip="Close options pane"
+          classSuffix="close-options"
+          onClick={onClose}
+          iconSize="lg"
+        />
+      </div>
+    </>
+  );
+};
+
+const tabSelections: Array<SelectableValue<string>> = [
+  {
+    label: 'Panel',
+    value: 'options',
+  },
+  {
+    label: 'Fields',
+    value: 'defaults',
+  },
+  {
+    label: 'Overrides',
+    value: 'overrides',
+  },
+];
+
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
   return {
     wrapper: css`
       display: flex;
       flex-direction: column;
       height: 100%;
+      padding-top: ${theme.spacing.md};
     `,
     panelOptionsPane: css`
       height: 100%;
       width: 100%;
-      border-bottom: none;
+    `,
+    tabsBar: css`
+      padding-right: ${theme.spacing.sm};
+    `,
+    searchWrapper: css`
+      display: flex;
+      flex-grow: 1;
+      flex-direction: row-reverse;
+    `,
+    searchInput: css`
+      color: ${theme.colors.textWeak};
+      flex-grow: 1;
+    `,
+    searchRemoveIcon: css`
+      cursor: pointer;
     `,
     tabContent: css`
       padding: 0;
@@ -184,6 +255,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       background: ${theme.colors.pageBg};
       border-left: 1px solid ${theme.colors.pageHeaderBorder};
     `,
+    tabsButton: css``,
     legacyOptions: css`
       label: legacy-options;
       .panel-options-grid {
@@ -208,3 +280,5 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
     `,
   };
 });
+
+type OptionsPaneStyles = ReturnType<typeof getStyles>;
