@@ -211,7 +211,7 @@
     "@types/md5": "^2.1.33",
     "@types/react-loadable": "5.5.2",
     "@types/react-virtualized-auto-sizer": "1.0.0",
-    "@welldone-software/why-did-you-render": "^4.0.6",
+    "@welldone-software/why-did-you-render": "4.0.6",
     "abortcontroller-polyfill": "1.4.0",
     "angular": "1.6.9",
     "angular-bindonce": "0.3.1",
