@@ -48,19 +48,15 @@ export class BridgeSrv {
     });
 
     this.$rootScope.$on('$routeChangeSuccess', (evt, data) => {
-      const state = store.getState();
-
       this.angularUrl = this.$location.url();
 
-      if (state.location.url !== this.angularUrl) {
-        store.dispatch(
-          updateLocation({
-            path: this.$location.path(),
-            query: this.$location.search(),
-            routeParams: this.$route.current.params,
-          })
-        );
-      }
+      store.dispatch(
+        updateLocation({
+          path: this.$location.path(),
+          query: this.$location.search(),
+          routeParams: this.$route.current.params,
+        })
+      );
     });
 
     // Listen for changes in redux location -> update angular location
