@@ -76,7 +76,7 @@ module.exports = ({ config, mode }) => {
     ],
   });
 
-  (config.optimization = {
+  config.optimization = {
     nodeEnv: 'production',
     minimizer: [
       new TerserPlugin({
@@ -86,8 +86,10 @@ module.exports = ({ config, mode }) => {
       }),
       new OptimizeCSSAssetsPlugin({}),
     ],
-  }),
-    config.resolve.extensions.push('.ts', '.tsx', '.mdx');
+  };
+
+  config.resolve.extensions.push('.ts', '.tsx', '.mdx');
+
   config.stats = {
     warningsFilter: /export .* was not found in/,
   };
