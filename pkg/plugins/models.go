@@ -26,7 +26,7 @@ var (
 
 type PluginSignature string
 
-var (
+const (
 	PluginSignatureInternal PluginSignature = "internal" // core plugin, no signature
 	PluginSignatureValid    PluginSignature = "valid"    // signed and accurate MANIFEST
 	PluginSignatureInvalid  PluginSignature = "invalid"  // invalid signature
