@@ -381,7 +381,7 @@ Read more about variable formatting options in the [Variables]({{< relref "../..
 Name | Description
 ------------ | -------------
 time | The name of the date/time field. Could be a column with a native SQL date/time data type or epoch value.
-timeend | Optional name of the end date/time field. Could be a column with a native SQL date/time data type or epoch value.
+timeend | Optional name of the end date/time field. Could be a column with a native SQL date/time data type or epoch value. (Grafana v6.6+)
 text | Event description field.
 tags | Optional field name to use for event tags as a comma separated string.
 
@@ -402,6 +402,23 @@ We also use the database table defined in [Time series queries](#time-series-que
 ```sql
 SELECT
   time_sec as time,
+  description as [text],
+  tags
+FROM
+  [events]
+WHERE
+  $__unixEpochFilter(time_sec)
+ORDER BY 1
+```
+
+**Example region query using time and timeend columns with epoch values:**
+
+> Only available in Grafana v6.6+.
+
+```sql
+SELECT
+  time_sec as time,
+  time_end_sec as timeend,
   description as [text],
   tags
 FROM

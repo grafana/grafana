@@ -185,13 +185,20 @@ export const TabsBarContent: React.FC<{
       <div className={styles.tabsButton}>
         <DashNavButton
           icon="search"
+          iconSize="md"
           tooltip="Search all options"
           classSuffix="search-options"
           onClick={() => setSearchMode(true)}
         />
       </div>
       <div className={styles.tabsButton}>
-        <DashNavButton icon="angle-right" tooltip="Close options pane" classSuffix="close-options" onClick={onClose} />
+        <DashNavButton
+          icon="angle-right"
+          tooltip="Close options pane"
+          classSuffix="close-options"
+          onClick={onClose}
+          iconSize="lg"
+        />
       </div>
     </>
   );
