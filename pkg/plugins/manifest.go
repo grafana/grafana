@@ -42,6 +42,8 @@ type PluginManifest struct {
 // ReadPluginManifest attempts to read and verify the plugin manifest
 // if any error occurs or the manifest is not valid, this will return an error
 func readPluginManifest(bytes []byte) (*PluginManifest, error) {
+	fmt.Printf("TODO... use publicKey: %s", publicKeyText)
+
 	return nil, fmt.Errorf("todo... actually parse manifest")
 
 	// publicKey, err := crypto.NewKeyFromArmored(__publicKeyText)

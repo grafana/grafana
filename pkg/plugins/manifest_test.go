@@ -46,8 +46,10 @@ qX6kODEP
 
 		manifest, err := readPluginManifest([]byte(txt))
 
-		// For now!!!!!!
+		// Oposite... for now :(
 		So(err, ShouldNotBeNil)
+		So(manifest, ShouldBeNil)
+
 		// So(err, ShouldBeNil)
 		// So(manifest.Plugin, ShouldEqual, "grafana-googlesheets-datasource")
 	})
