@@ -42,8 +42,8 @@ export const Layout: React.FC<LayoutProps> = ({
   );
 };
 
-export const HorizontalGroup: React.FC<Omit<LayoutProps, 'orientation'>> = ({ children, spacing, justify }) => (
-  <Layout spacing={spacing} justify={justify} orientation={Orientation.Horizontal}>
+export const HorizontalGroup: React.FC<Omit<LayoutProps, 'orientation'>> = ({ children, spacing, justify, align }) => (
+  <Layout spacing={spacing} justify={justify} orientation={Orientation.Horizontal} align={align}>
     {children}
   </Layout>
 );
