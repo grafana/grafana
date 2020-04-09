@@ -115,16 +115,16 @@ For example a Long format Series:
 ```text
 Name: Long
 Dimensions: 4 Fields by 4 Rows
-+---------------------+-----------------+-----------------+------------------+
-| Name: time          | Name: aMetric   | Name: bMetric   | Name: SomeFactor |
-| Labels:             | Labels:         | Labels:         | Labels:          |
-| Type: []time.Time   | Type: []float64 | Type: []float64 | Type: []string   |
-+---------------------+-----------------+-----------------+------------------+
-| 2020-01-02 03:04:00 | 2               | 10              | foo              |
-| 2020-01-02 03:04:00 | 5               | 15              | bar              |
-| 2020-01-02 03:05:00 | 3               | 11              | foo              |
-| 2020-01-02 03:05:00 | 6               | 16              | bar              |
-+---------------------+-----------------+-----------------+------------------+
++---------------------+-----------------+-----------------+----------------+
+| Name: time          | Name: aMetric   | Name: bMetric   | Name: host     |
+| Labels:             | Labels:         | Labels:         | Labels:        |
+| Type: []time.Time   | Type: []float64 | Type: []float64 | Type: []string |
++---------------------+-----------------+-----------------+----------------+
+| 2020-01-02 03:04:00 | 2               | 10              | foo            |
+| 2020-01-02 03:04:00 | 5               | 15              | bar            |
+| 2020-01-02 03:05:00 | 3               | 11              | foo            |
+| 2020-01-02 03:05:00 | 6               | 16              | bar            |
++---------------------+-----------------+-----------------+----------------+
 ```
 
 Would look like the following in "Wide" format:
@@ -132,14 +132,14 @@ Would look like the following in "Wide" format:
 ```text
 Name: Wide
 Dimensions: 5 Fields by 2 Rows
-+---------------------+------------------------+------------------------+------------------------+------------------------+
-| Name: time          | Name: aMetric          | Name: bMetric          | Name: aMetric          | Name: bMetric          |
-| Labels:             | Labels: SomeFactor=foo | Labels: SomeFactor=foo | Labels: SomeFactor=bar | Labels: SomeFactor=bar |
-| Type: []time.Time   | Type: []float64        | Type: []float64        | Type: []float64        | Type: []float64        |
-+---------------------+------------------------+------------------------+------------------------+------------------------+
-| 2020-01-02 03:04:00 | 2                      | 10                     | 5                      | 15                     |
-| 2020-01-02 03:05:00 | 3                      | 11                     | 6                      | 16                     |
-+---------------------+------------------------+------------------------+------------------------+------------------------+
++---------------------+------------------+------------------+------------------+------------------+
+| Name: time          | Name: aMetric    | Name: bMetric    | Name: aMetric    | Name: bMetric    |
+| Labels:             | Labels: host=foo | Labels: host=foo | Labels: host=bar | Labels: host=bar |
+| Type: []time.Time   | Type: []float64  | Type: []float64  | Type: []float64  | Type: []float64  |
++---------------------+------------------+------------------+------------------+------------------+
+| 2020-01-02 03:04:00 | 2                | 10               | 5                | 15               |
+| 2020-01-02 03:05:00 | 3                | 11               | 6                | 16               |
++---------------------+------------------+------------------+------------------+------------------+
 ```
 
 ## Technical References
