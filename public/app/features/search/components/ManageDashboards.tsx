@@ -169,16 +169,16 @@ export const ManageDashboards: FC<Props> = ({ folderId, folderUid }) => {
 
       <div className="search-results">
         <SearchResultsFilter
-          onSelectAllChanged={onSelectAllChanged}
           allChecked={allChecked}
-          canMove={canMove}
           canDelete={canDelete}
-          moveTo={moveTo}
+          canMove={canMove}
           deleteItem={onItemDelete}
-          selectedStarredFilter={null}
+          moveTo={moveTo}
+          onSelectAllChanged={onSelectAllChanged}
           onStarredFilterChange={onStarredFilterChange}
-          selectedTagFilter={query.tag}
           onTagFilterChange={onTagFilterChange}
+          selectedStarredFilter={null}
+          selectedTagFilter={query.tag}
         />
         <div className="search-results-container">
           <SearchResults

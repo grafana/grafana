@@ -1,5 +1,5 @@
 import { SearchAction } from '../types';
-import { TOGGLE_FOLDER_CAN_SAVE, TOGGLE_EDIT_PERMISSIONS } from './actionTypes';
+import { TOGGLE_FOLDER_CAN_SAVE, TOGGLE_EDIT_PERMISSIONS, TOGGLE_ALL_CHECKED } from './actionTypes';
 import { dashboardsSearchState, DashboardsSearchState, searchReducer } from './dashboardSearch';
 import { mergeReducers } from '../utils';
 
@@ -26,6 +26,15 @@ const manageDashboardsReducer = (state: ManageDashboardsState, action: SearchAct
       return { ...state, canSave: action.payload };
     case TOGGLE_EDIT_PERMISSIONS:
       return { ...state, hasEditPermissionInFolders: action.payload };
+    case TOGGLE_ALL_CHECKED:
+      const newAllChecked = !state.allChecked;
+      return {
+        ...state,
+        results: state.results.map(result => {
+          return { ...result, checked: newAllChecked };
+        }),
+        allChecked: newAllChecked,
+      };
 
     default:
       return state;
