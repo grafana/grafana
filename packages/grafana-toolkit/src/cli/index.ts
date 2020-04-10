@@ -115,6 +115,11 @@ export const run = (includeInternalScripts = false) => {
           milestone: cmd.milestone,
         });
       });
+
+    // React generator
+    program.command('component:create').action(async () => {
+      await execTask(componentCreateTask)({});
+    });
   }
 
   program
@@ -225,11 +230,6 @@ export const run = (includeInternalScripts = false) => {
     .action(async cmd => {
       await execTask(manifestTask)({ folder: process.cwd() });
     });
-
-  // React generator
-  program.command('component:create').action(async () => {
-    await execTask(componentCreateTask)({});
-  });
 
   program.on('command:*', () => {
     console.error('Invalid command: %s\nSee --help for a list of available commands.', program.args.join(' '));
