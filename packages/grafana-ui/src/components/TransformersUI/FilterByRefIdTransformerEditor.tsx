@@ -1,11 +1,12 @@
 import React, { useContext } from 'react';
 import {
-  FilterFramesByRefIdTransformerOptions,
   DataTransformerID,
-  transformersRegistry,
+  FilterFramesByRefIdTransformerOptions,
   KeyValue,
+  standardTransformers,
+  TransformerRegistyItem,
+  TransformerUIProps,
 } from '@grafana/data';
-import { TransformerUIProps, TransformerUIRegistyItem } from './types';
 import { ThemeContext } from '../../themes/ThemeContext';
 import { css, cx } from 'emotion';
 import { InlineList } from '../List/InlineList';
@@ -159,10 +160,10 @@ const FilterPill: React.FC<FilterPillProps> = ({ label, selected, onClick }) => 
   );
 };
 
-export const filterFramesByRefIdTransformRegistryItem: TransformerUIRegistyItem<FilterFramesByRefIdTransformerOptions> = {
+export const filterFramesByRefIdTransformRegistryItem: TransformerRegistyItem<FilterFramesByRefIdTransformerOptions> = {
   id: DataTransformerID.filterByRefId,
   component: FilterByRefIdTransformerEditor,
-  transformer: transformersRegistry.get(DataTransformerID.filterByRefId),
+  transformation: standardTransformers.filterFramesByRefIdTransformer,
   name: 'Filter by refId',
   description: 'Filter results by refId',
 };
