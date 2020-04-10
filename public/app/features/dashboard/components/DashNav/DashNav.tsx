@@ -139,7 +139,7 @@ class DashNav extends PureComponent<Props> {
   renderBackButton() {
     return (
       <div className="navbar-edit">
-        <BackButton onClick={this.onClose} aria-label={e2e.pages.Dashboard.Toolbar.selectors.backArrow} />
+        <BackButton onClick={this.onClose} />
       </div>
     );
   }

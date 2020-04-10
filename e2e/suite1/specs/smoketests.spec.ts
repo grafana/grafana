@@ -23,35 +23,7 @@ e2e.scenario({
 
     e2e.pages.Components.BackButton.backArrow().click();
 
-    e2e.pages.Dashboard.Panels.Panel.title('Panel Title').click();
-
-    e2e.pages.Dashboard.Panels.Panel.headerItems('Share').click();
-
-    e2e.pages.SharePanelModal.linkToRenderedImage().then(($a: any) => {
-      // extract the fully qualified href property
-      const url = $a.prop('href');
-
-      // Test that the image renderer returns 200 OK
-      e2e().request({ method: 'GET', url, timeout: 120000 });
-
-      // Download image
-      if (!e2e.env('CIRCLE_SHA1')) {
-        return;
-      }
-
-      const theOutputImage = `${e2e.config().screenshotsFolder}/received/smoke-test-scenario.png`;
-      const theTruthImage = `${e2e.config().screenshotsFolder}/expected/smoke-test-scenario.png`;
-
-      e2e().wrap(
-        e2e.imgSrcToBlob(url).then((blob: any) => {
-          e2e.blobToBase64String(blob).then((base64String: string) => {
-            const data = base64String.replace(/^data:image\/\w+;base64,/, '');
-            e2e().writeFile(theOutputImage, data, 'base64');
-          });
-        })
-      );
-      e2e().wait(1000); // give the io a chance to flush image to disk
-      e2e().compareSnapshot({ pathToFileA: theOutputImage, pathToFileB: theTruthImage });
-    });
+    // e2e.pages.Dashboard.Panels.Panel.title('Panel Title').click();
+    // e2e.pages.Dashboard.Panels.Panel.headerItems('Inspect').click();
   },
 });

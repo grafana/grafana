@@ -284,8 +284,8 @@ export class DashboardPage extends PureComponent<Props, State> {
             {initError && this.renderInitFailedState()}
 
             <div className={gridWrapperClasses}>
-              {!!editPanel && !featureToggles.newVariables && <AngularSubMenu dashboard={dashboard} />}
-              {!!editPanel && featureToggles.newVariables && <SubMenu dashboard={dashboard} />}
+              {!editPanel && !featureToggles.newVariables && <AngularSubMenu dashboard={dashboard} />}
+              {!editPanel && featureToggles.newVariables && <SubMenu dashboard={dashboard} />}
               <DashboardGrid
                 dashboard={dashboard}
                 viewPanel={viewPanel}
