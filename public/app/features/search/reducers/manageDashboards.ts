@@ -5,6 +5,8 @@ import {
   TOGGLE_ALL_CHECKED,
   TOGGLE_CHECKED,
   TOGGLE_CAN_MODIFY,
+  MOVE_ITEM,
+  DELETE_ITEM,
 } from './actionTypes';
 import { dashboardsSearchState, DashboardsSearchState, searchReducer } from './dashboardSearch';
 import { mergeReducers } from '../utils';
@@ -55,6 +57,11 @@ const reducer = (state: ManageDashboardsState, action: SearchAction) => {
           return result;
         }),
       };
+
+    case MOVE_ITEM:
+      return state;
+    case DELETE_ITEM:
+
     default:
       return state;
   }

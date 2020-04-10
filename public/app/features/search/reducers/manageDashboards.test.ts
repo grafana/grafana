@@ -8,7 +8,7 @@ import {
   TOGGLE_CAN_MODIFY,
 } from './actionTypes';
 import { manageDashboardsReducer as reducer, manageDashboardsState as state } from './manageDashboards';
-import { searchResults, sections } from '../testData';
+import { sections } from '../testData';
 
 describe('Manage dashboards reducer', () => {
   it('should return the initial state', () => {
@@ -46,7 +46,7 @@ describe('Manage dashboards reducer', () => {
       score: 3,
       checked: true,
     };
-    const newState2 = reducer({ ...state, results: [...searchResults, checkedSection] }, { type: TOGGLE_CAN_MODIFY });
+    const newState2 = reducer({ ...state, results: [...sections, checkedSection] }, { type: TOGGLE_CAN_MODIFY });
     expect(newState2.canMove).toBe(false);
     expect(newState2.canDelete).toBe(true);
 
@@ -86,7 +86,7 @@ describe('Manage dashboards reducer', () => {
       score: 3,
       checked: false,
     };
-    const newState3 = reducer({ ...state, results: [...searchResults, checkedItems] }, { type: TOGGLE_CAN_MODIFY });
+    const newState3 = reducer({ ...state, results: [...sections, checkedItems] }, { type: TOGGLE_CAN_MODIFY });
     expect(newState3.canDelete).toBe(true);
     expect(newState3.canMove).toBe(true);
 
@@ -101,11 +101,11 @@ describe('Manage dashboards reducer', () => {
   });
 
   it('should handle TOGGLE_CHECKED', () => {
-    const newState = reducer({ ...state, results: searchResults }, { type: TOGGLE_CHECKED, payload: searchResults[0] });
-    expect(newState.results[0].checked).toBe(true);
-    expect(newState.results[1].checked).toBe(false);
+    const newState = reducer({ ...state, results: sections }, { type: TOGGLE_CHECKED, payload: sections[2] });
+    expect(newState.results[2].checked).toBe(true);
+    expect(newState.results[3].checked).toBeFalsy();
 
-    const newState2 = reducer(newState, { type: TOGGLE_CHECKED, payload: searchResults[1] });
+    const newState2 = reducer(newState, { type: TOGGLE_CHECKED, payload: sections[1] });
     expect(newState2.results[0].checked).toBe(true);
     expect(newState2.results[1].checked).toBe(true);
   });
