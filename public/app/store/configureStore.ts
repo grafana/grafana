@@ -25,13 +25,8 @@ export function configureStore() {
 
   const reduxDefaultMiddlewars = getDefaultMiddleware<StoreState>({
     thunk: true,
-    serializableCheck: {
-      ignoredActions: getActionsToIgnoreSerializableCheckOn(),
-      ignoredPaths: getPathsToIgnoreMutationAndSerializableCheckOn(),
-    },
-    immutableCheck: {
-      ignoredPaths: getPathsToIgnoreMutationAndSerializableCheckOn(),
-    },
+    serializableCheck: false,
+    immutableCheck: false,
   } as any);
 
   const store = reduxConfigureStore<StoreState>({
@@ -47,6 +42,7 @@ export function configureStore() {
   return store;
 }
 
+/* 
 function getActionsToIgnoreSerializableCheckOn() {
   return [
     'dashboard/setPanelAngularComponent',
@@ -62,7 +58,7 @@ function getActionsToIgnoreSerializableCheckOn() {
 }
 
 function getPathsToIgnoreMutationAndSerializableCheckOn() {
-  return [
+  return [    
     'plugins.panels',
     'dashboard.panels',
     'dashboard.getModel',
@@ -70,6 +66,8 @@ function getPathsToIgnoreMutationAndSerializableCheckOn() {
     'panelEditorNew.getPanel',
     'panelEditorNew.getSourcePanel',
     'panelEditorNew.getData',
+    'explore.left.queryResponse',
+    'explore.right.queryResponse',
     'explore.left.datasourceInstance',
     'explore.right.datasourceInstance',
     'explore.left.range',
@@ -77,7 +75,7 @@ function getPathsToIgnoreMutationAndSerializableCheckOn() {
     'explore.right.eventBridge',
     'explore.right.range',
     'explore.left.querySubscription',
-    'explore.right.querySubscription',
-    'explore/queryStreamUpdated',
+    'explore.right.querySubscription',    
   ];
 }
+*/
