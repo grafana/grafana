@@ -17,9 +17,9 @@ import { CancelablePromise, makePromiseCancelable } from 'app/core/utils/Cancela
 
 const authProviderOptions = [
   { label: 'AWS SDK Default', value: 'sdk' },
+  { label: 'Assume Role', value: 'arn' },
   { label: 'Access & secret key', value: 'keys' },
   { label: 'Credentials file', value: 'credentials' },
-  { label: 'ARN', value: 'arn' },
 ] as SelectableValue[];
 
 export type Props = DataSourcePluginOptionsEditorProps<CloudWatchJsonData, CloudWatchSecureJsonData>;
@@ -126,7 +126,12 @@ export class ConfigEditor extends PureComponent<Props, State> {
         <div className="gf-form-group">
           <div className="gf-form-inline">
             <div className="gf-form">
-              <FormLabel className="width-14">Auth Provider</FormLabel>
+              <FormLabel
+                className="width-14"
+                tooltip="Which AWS credentials chain to use. AWS SDK Default is the recommended option for EKS, ECS or if you've attached an IAM role to your EC2 instance."
+              >
+                Authentication Provider
+              </FormLabel>
               <Select
                 className="width-30"
                 value={authProviderOptions.find(authProvider => authProvider.value === options.jsonData.authType)}
@@ -232,7 +237,10 @@ export class ConfigEditor extends PureComponent<Props, State> {
           {options.jsonData.authType === 'arn' && (
             <div className="gf-form-inline">
               <div className="gf-form">
-                <FormLabel className="width-14" tooltip="ARN of Assume Role">
+                <FormLabel
+                  className="width-14"
+                  tooltip="ARN of Role to Assume. The AWS SDK Default credentials-chain will be used to assume it."
+                >
                   Assume Role ARN
                 </FormLabel>
                 <div className="width-30">
