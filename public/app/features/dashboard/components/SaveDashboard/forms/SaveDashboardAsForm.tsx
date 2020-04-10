@@ -3,6 +3,7 @@ import { Button, Forms, HorizontalGroup, Input, Switch } from '@grafana/ui';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
 import { SaveDashboardFormProps } from '../types';
+import validationSrv from '../../../../manage-dashboards/services/ValidationSrv';
 
 interface SaveDashboardAsFormDTO {
   title: string;
@@ -48,6 +49,18 @@ export const SaveDashboardAsForm: React.FC<SaveDashboardFormProps & { isNew?: bo
     copyTags: false,
   };
 
+  const validateDashboardName = (getFormValues: () => SaveDashboardAsFormDTO) => async (dashboardName: string) => {
+    if (dashboardName && dashboardName === getFormValues().$folder.title?.trim()) {
+      return 'Dashboard name cannot be the same as folder';
+    }
+    try {
+      await validationSrv.validateNewDashboardName(getFormValues().$folder.id, dashboardName);
+      return true;
+    } catch (e) {
+      return e.message;
+    }
+  };
+
   return (
     <Forms.Form
       defaultValues={defaultValues}
@@ -77,14 +90,7 @@ export const SaveDashboardAsForm: React.FC<SaveDashboardFormProps & { isNew?: bo
             <Input
               name="title"
               ref={register({
-                validate: v => {
-                  if (v.trim() === '') {
-                    return 'Dashboard name is required';
-                  } else if (v && v === getValues().$folder.title?.trim()) {
-                    return 'Dashboard name cannot be the same as folder';
-                  }
-                  return true;
-                },
+                validate: validateDashboardName(getValues),
               })}
               aria-label="Save dashboard title field"
               autoFocus
