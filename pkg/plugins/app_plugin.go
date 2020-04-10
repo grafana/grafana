@@ -23,17 +23,29 @@ type AppPlugin struct {
 	Pinned            bool             `json:"-"`
 }
 
+// AppPluginRoute describes a plugin routes that is defined in
+// in the plugin.json file for a plugin
 type AppPluginRoute struct {
-	Path         string                 `json:"path"`
-	Method       string                 `json:"method"`
-	ReqRole      models.RoleType        `json:"reqRole"`
-	Url          string                 `json:"url"`
-	Headers      []AppPluginRouteHeader `json:"headers"`
-	TokenAuth    *JwtTokenAuth          `json:"tokenAuth"`
-	JwtTokenAuth *JwtTokenAuth          `json:"jwtTokenAuth"`
+	Path         string                    `json:"path"`
+	Method       string                    `json:"method"`
+	ReqRole      models.RoleType           `json:"reqRole"`
+	Url          string                    `json:"url"`
+	Params       []AppPluginRouteURLParams `json:"params"`
+	Headers      []AppPluginRouteHeader    `json:"headers"`
+	TokenAuth    *JwtTokenAuth             `json:"tokenAuth"`
+	JwtTokenAuth *JwtTokenAuth             `json:"jwtTokenAuth"`
 }
 
+// AppPluginRouteHeader describes an HTTP header that is forwarded with
+// the proxied request for a plugin route
 type AppPluginRouteHeader struct {
+	Name    string `json:"name"`
+	Content string `json:"content"`
+}
+
+// AppPluginRouteURLParams describes query string parameters for
+// a url in a plugin route
+type AppPluginRouteURLParams struct {
 	Name    string `json:"name"`
 	Content string `json:"content"`
 }

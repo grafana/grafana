@@ -39,6 +39,10 @@ func ApplyRoute(ctx context.Context, req *http.Request, proxyPath string, route 
 	req.Host = routeURL.Host
 	req.URL.Path = util.JoinURLFragments(routeURL.Path, proxyPath)
 
+	if err := addQueryString(req, route, data); err != nil {
+		logger.Error("Failed to render plugin url query string", "error", err)
+	}
+
 	if err := addHeaders(&req.Header, route, data); err != nil {
 		logger.Error("Failed to render plugin headers", "error", err)
 	}
@@ -77,6 +81,26 @@ func ApplyRoute(ctx context.Context, req *http.Request, proxyPath string, route 
 	}
 
 	logger.Info("Requesting", "url", req.URL.String())
+}
+
+func addQueryString(req *http.Request, route *plugins.AppPluginRoute, data templateData) error {
+	q := req.URL.Query()
+	for _, param := range route.Params {
+		interpolatedName, err := InterpolateString(param.Name, data)
+		if err != nil {
+			return err
+		}
+
+		interpolatedContent, err := InterpolateString(param.Content, data)
+		if err != nil {
+			return err
+		}
+
+		q.Add(interpolatedName, interpolatedContent)
+	}
+	req.URL.RawQuery = q.Encode()
+
+	return nil
 }
 
 func addHeaders(reqHeaders *http.Header, route *plugins.AppPluginRoute, data templateData) error {
