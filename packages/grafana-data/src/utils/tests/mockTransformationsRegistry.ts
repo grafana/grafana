@@ -9,7 +9,7 @@ export const mockTransformationsRegistry = (transformers: Array<DataTransformerI
         name: t.name,
         transformation: t,
         description: t.description,
-        component: () => null,
+        editor: () => null,
       };
     });
   });
