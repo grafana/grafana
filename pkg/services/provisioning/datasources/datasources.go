@@ -37,7 +37,7 @@ func newDatasourceProvisioner(log log.Logger) DatasourceProvisioner {
 	}
 }
 
-func (dc *DatasourceProvisioner) apply(cfg *DatasourcesAsConfig) error {
+func (dc *DatasourceProvisioner) apply(cfg *Configs) error {
 	if err := dc.deleteDatasources(cfg.DeleteDatasources); err != nil {
 		return err
 	}

@@ -12,10 +12,10 @@ type ConfigVersion struct {
 	APIVersion int64 `json:"apiVersion" yaml:"apiVersion"`
 }
 
-type DatasourcesAsConfig struct {
+type Configs struct {
 	APIVersion int64
 
-	Datasources       []*DataSourceFromConfig
+	Datasources       []*UpsertDataSourceFromConfig
 	DeleteDatasources []*DeleteDatasourceConfig
 }
 
@@ -24,7 +24,7 @@ type DeleteDatasourceConfig struct {
 	Name  string
 }
 
-type DataSourceFromConfig struct {
+type UpsertDataSourceFromConfig struct {
 	OrgID   int64
 	Version int
 
@@ -45,19 +45,19 @@ type DataSourceFromConfig struct {
 	Editable          bool
 }
 
-type DatasourcesAsConfigV0 struct {
+type ConfigsV0 struct {
 	ConfigVersion
 
-	Datasources       []*DataSourceFromConfigV0   `json:"datasources" yaml:"datasources"`
-	DeleteDatasources []*DeleteDatasourceConfigV0 `json:"delete_datasources" yaml:"delete_datasources"`
+	Datasources       []*UpsertDataSourceFromConfigV0 `json:"datasources" yaml:"datasources"`
+	DeleteDatasources []*DeleteDatasourceConfigV0     `json:"delete_datasources" yaml:"delete_datasources"`
 }
 
-type DatasourcesAsConfigV1 struct {
+type ConfigsV1 struct {
 	ConfigVersion
 	log log.Logger
 
-	Datasources       []*DataSourceFromConfigV1   `json:"datasources" yaml:"datasources"`
-	DeleteDatasources []*DeleteDatasourceConfigV1 `json:"deleteDatasources" yaml:"deleteDatasources"`
+	Datasources       []*UpsertDataSourceFromConfigV1 `json:"datasources" yaml:"datasources"`
+	DeleteDatasources []*DeleteDatasourceConfigV1     `json:"deleteDatasources" yaml:"deleteDatasources"`
 }
 
 type DeleteDatasourceConfigV0 struct {
@@ -70,7 +70,7 @@ type DeleteDatasourceConfigV1 struct {
 	Name  values.StringValue `json:"name" yaml:"name"`
 }
 
-type DataSourceFromConfigV0 struct {
+type UpsertDataSourceFromConfigV0 struct {
 	OrgID             int64                  `json:"org_id" yaml:"org_id"`
 	Version           int                    `json:"version" yaml:"version"`
 	Name              string                 `json:"name" yaml:"name"`
@@ -90,7 +90,7 @@ type DataSourceFromConfigV0 struct {
 	Editable          bool                   `json:"editable" yaml:"editable"`
 }
 
-type DataSourceFromConfigV1 struct {
+type UpsertDataSourceFromConfigV1 struct {
 	OrgID             values.Int64Value     `json:"orgId" yaml:"orgId"`
 	Version           values.IntValue       `json:"version" yaml:"version"`
 	Name              values.StringValue    `json:"name" yaml:"name"`
@@ -110,8 +110,8 @@ type DataSourceFromConfigV1 struct {
 	Editable          values.BoolValue      `json:"editable" yaml:"editable"`
 }
 
-func (cfg *DatasourcesAsConfigV1) mapToDatasourceFromConfig(apiVersion int64) *DatasourcesAsConfig {
-	r := &DatasourcesAsConfig{}
+func (cfg *ConfigsV1) mapToDatasourceFromConfig(apiVersion int64) *Configs {
+	r := &Configs{}
 
 	r.APIVersion = apiVersion
 
@@ -120,7 +120,7 @@ func (cfg *DatasourcesAsConfigV1) mapToDatasourceFromConfig(apiVersion int64) *D
 	}
 
 	for _, ds := range cfg.Datasources {
-		r.Datasources = append(r.Datasources, &DataSourceFromConfig{
+		r.Datasources = append(r.Datasources, &UpsertDataSourceFromConfig{
 			OrgID:             ds.OrgID.Value(),
 			Name:              ds.Name.Value(),
 			Type:              ds.Type.Value(),
@@ -168,8 +168,8 @@ func (cfg *DatasourcesAsConfigV1) mapToDatasourceFromConfig(apiVersion int64) *D
 	return r
 }
 
-func (cfg *DatasourcesAsConfigV0) mapToDatasourceFromConfig(apiVersion int64) *DatasourcesAsConfig {
-	r := &DatasourcesAsConfig{}
+func (cfg *ConfigsV0) mapToDatasourceFromConfig(apiVersion int64) *Configs {
+	r := &Configs{}
 
 	r.APIVersion = apiVersion
 
@@ -178,7 +178,7 @@ func (cfg *DatasourcesAsConfigV0) mapToDatasourceFromConfig(apiVersion int64) *D
 	}
 
 	for _, ds := range cfg.Datasources {
-		r.Datasources = append(r.Datasources, &DataSourceFromConfig{
+		r.Datasources = append(r.Datasources, &UpsertDataSourceFromConfig{
 			OrgID:             ds.OrgID,
 			Name:              ds.Name,
 			Type:              ds.Type,
@@ -209,7 +209,7 @@ func (cfg *DatasourcesAsConfigV0) mapToDatasourceFromConfig(apiVersion int64) *D
 	return r
 }
 
-func createInsertCommand(ds *DataSourceFromConfig) *models.AddDataSourceCommand {
+func createInsertCommand(ds *UpsertDataSourceFromConfig) *models.AddDataSourceCommand {
 	jsonData := simplejson.New()
 	if len(ds.JSONData) > 0 {
 		for k, v := range ds.JSONData {
@@ -237,7 +237,7 @@ func createInsertCommand(ds *DataSourceFromConfig) *models.AddDataSourceCommand 
 	}
 }
 
-func createUpdateCommand(ds *DataSourceFromConfig, id int64) *models.UpdateDataSourceCommand {
+func createUpdateCommand(ds *UpsertDataSourceFromConfig, id int64) *models.UpdateDataSourceCommand {
 	jsonData := simplejson.New()
 	if len(ds.JSONData) > 0 {
 		for k, v := range ds.JSONData {
