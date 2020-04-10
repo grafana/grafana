@@ -1,7 +1,6 @@
 import { configureStore as reduxConfigureStore, getDefaultMiddleware } from '@reduxjs/toolkit';
 import { createLogger } from 'redux-logger';
-import thunk, { ThunkMiddleware } from 'redux-thunk';
-
+import { ThunkMiddleware } from 'redux-thunk';
 import { setStore } from './store';
 import { StoreState } from 'app/types/store';
 import { toggleLogActionsMiddleware } from 'app/core/middlewares/application';
@@ -22,11 +21,22 @@ export function configureStore() {
     },
   });
 
-  const middleware = process.env.NODE_ENV !== 'production' ? [toggleLogActionsMiddleware, thunk, logger] : [thunk];
+  const middleware = process.env.NODE_ENV !== 'production' ? [toggleLogActionsMiddleware, logger] : [];
+
+  const reduxDefaultMiddlewars = getDefaultMiddleware<StoreState>({
+    thunk: true,
+    serializableCheck: {
+      ignoredActions: getActionsToIgnoreSerializableCheckOn(),
+      ignoredPaths: getPathsToIgnoreMutationAndSerializableCheckOn(),
+    },
+    immutableCheck: {
+      ignoredPaths: getPathsToIgnoreMutationAndSerializableCheckOn(),
+    },
+  } as any);
 
   const store = reduxConfigureStore<StoreState>({
     reducer: createRootReducer(),
-    middleware: [...getDefaultMiddleware<StoreState>(), ...middleware] as [ThunkMiddleware<StoreState>],
+    middleware: [...reduxDefaultMiddlewars, ...middleware] as [ThunkMiddleware<StoreState>],
     devTools: process.env.NODE_ENV !== 'production',
     preloadedState: {
       navIndex: buildInitialState(),
@@ -35,4 +45,39 @@ export function configureStore() {
 
   setStore(store);
   return store;
+}
+
+function getActionsToIgnoreSerializableCheckOn() {
+  return [
+    'dashboard/setPanelAngularComponent',
+    'dashboard/panelModelAndPluginReady',
+    'dashboard/dashboardInitCompleted',
+    'plugins/panelPluginLoaded',
+    'explore/initializeExplore',
+    'explore/changeRange',
+    'explore/updateDatasourceInstance',
+    'explore/queryStoreSubscription',
+    'explore/queryStreamUpdated',
+  ];
+}
+
+function getPathsToIgnoreMutationAndSerializableCheckOn() {
+  return [
+    'plugins.panels',
+    'dashboard.panels',
+    'dashboard.getModel',
+    'payload.plugin',
+    'panelEditorNew.getPanel',
+    'panelEditorNew.getSourcePanel',
+    'panelEditorNew.getData',
+    'explore.left.datasourceInstance',
+    'explore.right.datasourceInstance',
+    'explore.left.range',
+    'explore.left.eventBridge',
+    'explore.right.eventBridge',
+    'explore.right.range',
+    'explore.left.querySubscription',
+    'explore.right.querySubscription',
+    'explore/queryStreamUpdated',
+  ];
 }
