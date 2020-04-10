@@ -89,7 +89,6 @@ $critical: ${theme.colors.critical};
 $body-bg: ${theme.colors.bodyBg};
 $page-bg: ${theme.colors.pageBg};
 
-$body-color: ${theme.colors.body};
 $text-color: ${theme.colors.text};
 $text-color-strong: ${theme.colors.textStrong};
 $text-color-weak: ${theme.colors.textWeak};
@@ -148,7 +147,6 @@ $card-shadow: -1px -1px 0 0 hsla(0, 0%, 100%, 0.1), 1px 1px 0 0 rgba(0, 0, 0, 0.
 // Lists
 $list-item-bg: $card-background;
 $list-item-hover-bg: $card-background-hover;
-$list-item-link-color: $text-color;
 $list-item-shadow: $card-shadow;
 
 $empty-list-cta-bg: $gray-blue;
@@ -228,10 +226,9 @@ $dropdownBorder: ${theme.colors.panelBorder};
 $dropdownDividerTop: transparent;
 $dropdownDividerBottom: ${theme.colors.gray25};
 
-$dropdownLinkColor: $text-color;
+$dropdownLinkColor: $link-color;
 $dropdownLinkColorHover: $white;
 $dropdownLinkColorActive: $white;
-
 $dropdownLinkBackgroundHover: $dark-9;
 
 // Horizontal forms & lists
@@ -253,7 +250,6 @@ $side-menu-bg-mobile: $panel-bg;
 $side-menu-border: none;
 $side-menu-item-hover-bg: $dark-3;
 $side-menu-shadow: 0 0 20px black;
-$side-menu-link-color: $link-color;
 
 // Menu dropdowns
 // -------------------------

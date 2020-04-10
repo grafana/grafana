@@ -82,7 +82,6 @@ $critical: ${theme.colors.critical};
 $body-bg: ${theme.colors.bodyBg};
 $page-bg: ${theme.colors.pageBg};
 
-$body-color: ${theme.colors.body};
 $text-color: ${theme.colors.text};
 $text-color-strong: ${theme.colors.textStrong};
 $text-color-weak: ${theme.colors.textWeak};
@@ -140,7 +139,6 @@ $card-shadow: -1px -1px 0 0 hsla(0, 0%, 100%, 0.1), 1px 1px 0 0 rgba(0, 0, 0, 0.
 // Lists
 $list-item-bg: $gray-7;
 $list-item-hover-bg: $gray-6;
-$list-item-link-color: $text-color;
 $list-item-shadow: $card-shadow;
 
 $empty-list-cta-bg: $gray-6;
@@ -245,7 +243,6 @@ $side-menu-border: 1px solid ${theme.colors.gray25};
 $side-menu-bg-mobile: rgba(0, 0, 0, 0); //$gray-6;
 $side-menu-item-hover-bg: ${theme.colors.gray25};
 $side-menu-shadow: 5px 0px 10px -5px $gray-1;
-$side-menu-link-color: $gray-6;
 
 // Menu dropdowns
 // -------------------------

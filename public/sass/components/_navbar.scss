@@ -45,10 +45,17 @@
   white-space: nowrap;
   display: block;
   margin: 0;
-  color: $headings-color;
   font-size: $font-size-lg;
   min-height: $navbarHeight;
   line-height: $navbarHeight;
+
+  a {
+    color: $text-color;
+
+    &:hover {
+      color: $link-color;
+    }
+  }
 
   .gicon {
     top: -2px;
@@ -74,7 +81,6 @@
 }
 
 .navbar-page-btn__folder {
-  color: $text-color-weak;
   display: none;
   padding-right: 8px;
 

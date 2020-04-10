@@ -200,7 +200,6 @@ export interface GrafanaTheme extends GrafanaThemeCommons {
     linkExternal: string;
 
     // Text colors
-    body: string;
     text: string;
     textStrong: string;
     textWeak: string;
