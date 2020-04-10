@@ -57,6 +57,7 @@ export interface FieldConfigEditorConfig<TOptions, TSettings = any, TValue = any
   path: (keyof TOptions & string) | string;
   name: string;
   description: string;
+  category?: string[];
   settings?: TSettings;
   shouldApply?: (field: Field) => boolean;
   defaultValue?: TValue;
