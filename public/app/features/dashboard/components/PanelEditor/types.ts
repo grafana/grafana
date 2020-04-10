@@ -2,12 +2,13 @@ export interface PanelEditorTab {
   id: string;
   text: string;
   active: boolean;
+  icon: string;
 }
 
 export enum PanelEditorTabId {
-  Queries = 'queries',
+  Query = 'Query',
   Transform = 'transform',
-  Visualization = 'visualization',
+  Visualize = 'visualize',
   Alert = 'alert',
 }
 

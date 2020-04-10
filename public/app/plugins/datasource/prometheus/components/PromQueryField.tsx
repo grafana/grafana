@@ -292,12 +292,11 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
   };
 
   render() {
-    const { data, query, ExtraFieldElement } = this.props;
+    const { query, ExtraFieldElement } = this.props;
     const { metricsOptions, syntaxLoaded, hint } = this.state;
     const cleanText = this.languageProvider ? this.languageProvider.cleanText : undefined;
     const chooserText = getChooserText(syntaxLoaded, metricsOptions);
     const buttonDisabled = !(syntaxLoaded && metricsOptions && metricsOptions.length > 0);
-    const showError = data && data.error && data.error.refId === query.refId;
 
     return (
       <>
@@ -324,11 +323,6 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
           </div>
           {ExtraFieldElement}
         </div>
-        {showError ? (
-          <div className="query-row-break">
-            <div className="prom-query-field-info text-error">{data.error.message}</div>
-          </div>
-        ) : null}
         {hint ? (
           <div className="query-row-break">
             <div className="prom-query-field-info text-warning">

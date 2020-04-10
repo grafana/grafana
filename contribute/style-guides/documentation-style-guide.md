@@ -139,6 +139,10 @@ Two words, not one
 * Correct, but passive voice: Your list of active alarms is displayed.
 * Incorrect: The list of active alarms displays.
 
+#### intro, introduction
+
+"Introduction" is the preferred word. Use "intro" if there are space constraints (like on the side menu) or you are specifically trying for a less formal, more conversational tone.
+
 #### metadata
 
 One word, not two.

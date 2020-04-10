@@ -1,7 +1,7 @@
 import { Unsubscribable } from 'rxjs';
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { PanelModel } from '../../../state/PanelModel';
-import { PanelData, LoadingState, DefaultTimeRange } from '@grafana/data';
+import { DefaultTimeRange, LoadingState, PanelData } from '@grafana/data';
 import { DisplayMode } from '../types';
 import store from '../../../../../core/store';
 
@@ -38,21 +38,23 @@ export interface PanelEditorStateNew {
   ui: PanelEditorUIState;
 }
 
-export const initialState: PanelEditorStateNew = {
-  getPanel: () => new PanelModel({}),
-  getSourcePanel: () => new PanelModel({}),
-  getData: () => ({
-    state: LoadingState.NotStarted,
-    series: [],
-    timeRange: DefaultTimeRange,
-  }),
-  initDone: false,
-  shouldDiscardChanges: false,
-  isOpen: false,
-  ui: {
-    ...DEFAULT_PANEL_EDITOR_UI_STATE,
-    ...store.getObject(PANEL_EDITOR_UI_STATE_STORAGE_KEY, DEFAULT_PANEL_EDITOR_UI_STATE),
-  },
+export const initialState = (): PanelEditorStateNew => {
+  return {
+    getPanel: () => new PanelModel({}),
+    getSourcePanel: () => new PanelModel({}),
+    getData: () => ({
+      state: LoadingState.NotStarted,
+      series: [],
+      timeRange: DefaultTimeRange,
+    }),
+    initDone: false,
+    shouldDiscardChanges: false,
+    isOpen: false,
+    ui: {
+      ...DEFAULT_PANEL_EDITOR_UI_STATE,
+      ...store.getObject(PANEL_EDITOR_UI_STATE_STORAGE_KEY, DEFAULT_PANEL_EDITOR_UI_STATE),
+    },
+  };
 };
 
 interface InitEditorPayload {
@@ -63,7 +65,7 @@ interface InitEditorPayload {
 
 const pluginsSlice = createSlice({
   name: 'panelEditorNew',
-  initialState,
+  initialState: initialState(),
   reducers: {
     updateEditorInitState: (state, action: PayloadAction<InitEditorPayload>) => {
       state.getPanel = () => action.payload.panel;

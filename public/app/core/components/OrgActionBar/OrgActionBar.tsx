@@ -28,7 +28,7 @@ export default class OrgActionBar extends PureComponent<Props> {
             inputClassName="gf-form-input width-20"
             value={searchQuery}
             onChange={setSearchQuery}
-            placeholder={'Filter by name or type'}
+            placeholder={'Search by name or type'}
           />
           <LayoutSelector mode={layoutMode} onLayoutModeChanged={(mode: LayoutMode) => onSetLayoutMode(mode)} />
         </div>

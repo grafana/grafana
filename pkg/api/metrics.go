@@ -19,10 +19,6 @@ import (
 // QueryMetricsV2 returns query metrics
 // POST /api/ds/query   DataSource query w/ expressions
 func (hs *HTTPServer) QueryMetricsV2(c *models.ReqContext, reqDto dtos.MetricRequest) Response {
-	if !setting.IsExpressionsEnabled() {
-		return Error(404, "Expressions feature toggle is not enabled", nil)
-	}
-
 	if len(reqDto.Queries) == 0 {
 		return Error(500, "No queries found in query", nil)
 	}
@@ -76,6 +72,10 @@ func (hs *HTTPServer) QueryMetricsV2(c *models.ReqContext, reqDto dtos.MetricReq
 			return Error(500, "Metric request error", err)
 		}
 	} else {
+		if !setting.IsExpressionsEnabled() {
+			return Error(404, "Expressions feature toggle is not enabled", nil)
+		}
+
 		resp, err = plugins.Transform.Transform(c.Req.Context(), request)
 		if err != nil {
 			return Error(500, "Transform request error", err)

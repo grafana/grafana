@@ -92,6 +92,14 @@ member_of = "memberOf"
 email =  "email"
 ```
 
+### Using environment variables
+
+You can interpolate variables in the TOML config from environment variables. For instance, you could externalize your `bind_password` that way:
+
+```bash
+bind_password = "${LDAP_ADMIN_PASSWORD}"
+```
+
 ## LDAP Debug View
 
 > Only available in Grafana v6.4+

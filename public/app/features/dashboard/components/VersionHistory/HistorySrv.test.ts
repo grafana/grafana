@@ -1,4 +1,4 @@
-import { versions, restore } from './__mocks__/history';
+import { restore, versions } from './__mocks__/history';
 import { HistorySrv } from './HistorySrv';
 import { DashboardModel } from '../../state/DashboardModel';
 
@@ -49,7 +49,7 @@ describe('historySrv', () => {
     });
 
     it('should return an empty array when not given a dashboard', () => {
-      return historySrv.getHistoryList(null, historyListOpts).then((versions: any) => {
+      return historySrv.getHistoryList((null as unknown) as DashboardModel, historyListOpts).then((versions: any) => {
         expect(versions).toEqual([]);
       });
     });

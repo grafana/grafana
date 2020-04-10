@@ -7,27 +7,31 @@ type = "docs"
 [menu.docs]
 name = "White-labeling"
 parent = "enterprise"
-weight = 5
+weight = 700
 +++
 
 # White labeling
 
+White labeling allows you to replace the Grafana brand and logo with your own corporate brand and logo.
+
 > Only available in Grafana Enterprise v6.6+.
 
-{{< docs-imagebox img="/img/docs/v66/whitelabeling_1.png" max-width="800px" caption="White labeling example" >}}
-
-Grafana Enterprise has white labeling options in the `grafana.ini` file (can also be set via ENV variables).
+Grafana Enterprise has white labeling options in the `grafana.ini` file. As with all configuration options, you can also be set set them with environment variables.
 
 You can change the following elements:
 
-- Application Title
-- Login Background
-- Login Logo
+- Application title
+- Login background
+- Login logo
 - Side menu top logo
-- Footer & Help menu links
+- Footer and help menu links
 - Fav icon (shown in browser tab)
 
-> You will have to host your logo and other images used by the white labeling feature separately.
+> You will have to host your logo and other images used by the white labeling feature separately. Make sure Grafana can access the URL where the assets are stored.
+
+{{< docs-imagebox img="/img/docs/v66/whitelabeling_1.png" max-width="800px" caption="White labeling example" >}}
+
+The configuration file in Grafana Enterprise contains the following options. Each option is defined in the file. For more information about configuring Grafana, refer to [Configuration]({{< relref "../installation/configuration.md">}}).
 
 ```ini
 # Enterprise only
@@ -50,21 +54,24 @@ You can change the following elements:
 
 # Set to complete URL to override apple/ios icon
 ;apple_touch_icon =
-
-# Below is an example for how to replace the default footer & help links with 2 custom links
-;footer_links = support guides
-;footer_links_support_text = Support
-;footer_links_support_url = http://your.support.site
-;footer_links_guides_text = Guides
-;footer_links_guides_url = http://your.guides.site
 ```
 
+Below is an example for how to replace the default footer and help links with two custom links.
 
-ENV Variables:
+```ini
+footer_links = support guides
+footer_links_support_text = Support
+footer_links_support_url = http://your.support.site
+footer_links_guides_text = Guides
+footer_links_guides_url = http://your.guides.site
 ```
-- GF_WHITE_LABELING_FOOTER_LINKS=support guides
-- GF_WHITE_LABELING_FOOTER_LINKS_SUPPORT_TEXT=Support
-- GF_WHITE_LABELING_FOOTER_LINKS_SUPPORT_URL=http://your.support.site
-- GF_WHITE_LABELING_FOOTER_LINKS_GUIDES_TEXT=Guides
-- GF_WHITE_LABELING_FOOTER_LINKS_GUIDES_URL=http://your.guides.site 
+
+Here is the same example using environment variables instead of the custom.ini or grafana.ini file.
+
+```
+GF_WHITE_LABELING_FOOTER_LINKS=support guides
+GF_WHITE_LABELING_FOOTER_LINKS_SUPPORT_TEXT=Support
+GF_WHITE_LABELING_FOOTER_LINKS_SUPPORT_URL=http://your.support.site
+GF_WHITE_LABELING_FOOTER_LINKS_GUIDES_TEXT=Guides
+GF_WHITE_LABELING_FOOTER_LINKS_GUIDES_URL=http://your.guides.site 
 ```

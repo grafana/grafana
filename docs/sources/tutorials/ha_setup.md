@@ -39,12 +39,12 @@ you can use any stateless routing strategy in your load balancer (ex round robin
 
 ### Sticky sessions
 Using sticky sessions, all traffic for one user will always be sent to the same server. Which means that session related data can be
-stored on disk rather than on a shared database. This is the default behavior for Grafana and if only want multiple servers for fail over this is a good solution since it requires the least amount of work.
+stored on disk rather than on a shared database. This is the default behavior for Grafana and if you only want multiple servers for fail over this is a good solution since it requires the least amount of work.
 
 ### Stateless sessions
 You can also choose to store session data in a Redis/Memcache/Postgres/MySQL which means that the load balancer can send a user to any Grafana server without having to log in on each server. This requires a little bit more work from the operator but enables you to remove/add grafana servers without impacting the user experience.
 If you use MySQL/Postgres for session storage, you first need a table to store the session data in. More details about that in [[sessions]]({{< relref "../installation/configuration.md" >}}#session)
 
-For Grafana itself it doesn't really matter if you store the session data on disk or database/redis/memcache. But we recommend using a database/redis/memcache since it makes it easier manage the grafana servers.
+For Grafana itself it doesn't really matter if you store the session data on disk or database/redis/memcache. But we recommend using a database/redis/memcache since it makes it easier to manage the grafana servers.
 
 

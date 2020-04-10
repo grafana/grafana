@@ -1,7 +1,6 @@
 package cloudwatch
 
 import (
-	"fmt"
 	"os"
 	"testing"
 
@@ -25,7 +24,7 @@ func TestECSCredProvider(t *testing.T) {
 		So(ecsProvider, ShouldNotBeNil)
 		So(ok, ShouldBeTrue)
 
-		So(ecsProvider.Client.Endpoint, ShouldEqual, fmt.Sprintf("http://169.254.170.2/abc/123"))
+		So(ecsProvider.Client.Endpoint, ShouldEqual, "http://169.254.170.2/abc/123")
 	})
 }
 

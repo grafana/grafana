@@ -13,117 +13,135 @@
   "style": "dark",
   "timezone": "browser",
   "editable": true,
-  "hideControls": false,
-  "sharedCrosshair": false,
-  "rows": [
+  "gnetId": null,
+  "graphTooltip": 0,
+  "id": null,
+  "panels": [
     {
-      "collapsable": true,
-      "collapse": false,
+      "aliasColors": {},
+      "annotate": {
+        "enable": false
+      },
+      "bars": false,
+      "dashLength": 10,
+      "dashes": false,
+      "datasource": "${DS_NAME}",
       "editable": true,
-      "height": "350px",
-      "notice": false,
-      "panels": [
+      "fill": 0,
+      "fillGradient": 0,
+      "grid": {
+        "max": null,
+        "min": 0
+      },
+      "gridPos": {
+        "h": 10,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "hiddenSeries": false,
+      "id": 1,
+      "legend": {
+        "avg": false,
+        "current": false,
+        "max": false,
+        "min": false,
+        "show": true,
+        "total": false,
+        "values": false
+      },
+      "lines": true,
+      "linewidth": 1,
+      "loadingEditor": false,
+      "nullPointMode": "null as zero",
+      "options": {
+        "dataLinks": []
+      },
+      "percentage": false,
+      "pointradius": 5,
+      "points": false,
+      "renderer": "flot",
+      "resolution": 100,
+      "scale": 1,
+      "seriesOverrides": [
         {
-          "aliasColors": {},
-          "annotate": {
-            "enable": false
-          },
-          "bars": false,
-          "datasource": "${DS_NAME}",
-          "editable": true,
-          "fill": 0,
-          "grid": {
-            "leftLogBase": 1,
-            "leftMax": null,
-            "leftMin": null,
-            "max": null,
-            "min": 0,
-            "rightLogBase": 1,
-            "rightMax": null,
-            "rightMin": null,
-            "threshold1": null,
-            "threshold1Color": "rgba(216, 200, 27, 0.27)",
-            "threshold2": null,
-            "threshold2Color": "rgba(234, 112, 112, 0.22)"
-          },
-          "id": 1,
-          "legend": {
-            "avg": false,
-            "current": false,
-            "max": false,
-            "min": false,
-            "show": true,
-            "total": false,
-            "values": false
-          },
-          "lines": true,
-          "linewidth": 1,
-          "loadingEditor": false,
-          "nullPointMode": "null as zero",
-          "percentage": false,
-          "pointradius": 5,
-          "points": false,
-          "renderer": "flot",
-          "resolution": 100,
-          "scale": 1,
-          "seriesOverrides": [
-            {
-              "alias": "Points Per Update",
-              "yaxis": 2
-            },
-            {
-              "alias": "CPU",
-              "yaxis": 2
-            }
-          ],
-          "span": 12,
-          "stack": false,
-          "steppedLine": false,
-          "targets": [
-            {
-              "refId": "A",
-              "target": "alias(sumSeries(carbon.agents.*.updateOperations),\"Updates\") "
-            },
-            {
-              "refId": "B",
-              "target": "alias(sumSeries(carbon.agents.*.metricsReceived),'Metrics Received')"
-            },
-            {
-              "refId": "C",
-              "target": "alias(sumSeries(carbon.agents.*.committedPoints),'Committed Points')"
-            },
-            {
-              "refId": "D",
-              "target": "alias(sumSeries(carbon.agents.*.pointsPerUpdate),'Points Per Update')"
-            },
-            {
-              "refId": "E",
-              "target": "alias(averageSeries(carbon.agents.*.cpuUsage),'CPU')"
-            },
-            {
-              "refId": "F",
-              "target": "alias(sumSeries(carbon.agents.*.creates),'Creates')"
-            }
-          ],
-          "timeFrom": null,
-          "timeShift": null,
-          "title": "Graphite Carbon Metrics",
-          "tooltip": {
-            "query_as_alias": true,
-            "shared": false,
-            "value_type": "cumulative"
-          },
-          "type": "graph",
-          "x-axis": true,
-          "y-axis": true,
-          "y_formats": [
-            "short",
-            "short"
-          ],
-          "zerofill": true
+          "alias": "Points Per Update",
+          "yaxis": 2
+        },
+        {
+          "alias": "CPU",
+          "yaxis": 2
         }
       ],
-      "title": "Row1"
+      "spaceLength": 10,
+      "stack": false,
+      "steppedLine": false,
+      "targets": [
+        {
+          "refId": "A",
+          "target": "alias(sumSeries(carbon.agents.*.updateOperations),\"Updates\") "
+        },
+        {
+          "refId": "B",
+          "target": "alias(sumSeries(carbon.agents.*.metricsReceived),'Metrics Received')"
+        },
+        {
+          "refId": "C",
+          "target": "alias(sumSeries(carbon.agents.*.committedPoints),'Committed Points')"
+        },
+        {
+          "refId": "D",
+          "target": "alias(sumSeries(carbon.agents.*.pointsPerUpdate),'Points Per Update')"
+        },
+        {
+          "refId": "E",
+          "target": "alias(averageSeries(carbon.agents.*.cpuUsage),'CPU')"
+        },
+        {
+          "refId": "F",
+          "target": "alias(sumSeries(carbon.agents.*.creates),'Creates')"
+        }
+      ],
+      "thresholds": [],
+      "timeFrom": null,
+      "timeRegions": [],
+      "timeShift": null,
+      "title": "Graphite Carbon Metrics",
+      "tooltip": {
+        "query_as_alias": true,
+        "shared": false,
+        "sort": 0,
+        "value_type": "cumulative"
+      },
+      "type": "graph",
+      "xaxis": {
+        "buckets": null,
+        "mode": "time",
+        "name": null,
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "format": "short",
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        },
+        {
+          "format": "short",
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        }
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      },
+      "zerofill": true
     }
   ],
   "time": {
@@ -135,30 +153,9 @@
     "enable": true,
     "notice": false,
     "now": true,
-    "refresh_intervals": [
-      "5s",
-      "10s",
-      "30s",
-      "1m",
-      "5m",
-      "15m",
-      "30m",
-      "1h",
-      "2h",
-      "1d"
-    ],
+    "refresh_intervals": ["5s", "10s", "30s", "1m", "5m", "15m", "30m", "1h", "2h", "1d"],
     "status": "Stable",
-    "time_options": [
-      "5m",
-      "15m",
-      "1h",
-      "6h",
-      "12h",
-      "24h",
-      "2d",
-      "7d",
-      "30d"
-    ],
+    "time_options": ["5m", "15m", "1h", "6h", "12h", "24h", "2d", "7d", "30d"],
     "type": "timepicker"
   },
   "templating": {
@@ -170,7 +167,7 @@
     "list": []
   },
   "refresh": false,
-  "schemaVersion": 8,
-  "version": 2,
+  "schemaVersion": 22,
+  "version": 3,
   "links": []
 }

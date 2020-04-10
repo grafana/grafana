@@ -116,7 +116,7 @@ func (vn *VictoropsNotifier) Notify(evalContext *alerting.EvalContext) error {
 		bodyJSON.Set("error_message", evalContext.Error.Error())
 	}
 
-	if evalContext.ImagePublicURL != "" {
+	if vn.NeedsImage() && evalContext.ImagePublicURL != "" {
 		bodyJSON.Set("image_url", evalContext.ImagePublicURL)
 	}
 

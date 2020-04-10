@@ -1,15 +1,17 @@
 import { DataSourcePluginMeta, PluginType } from '@grafana/data';
 import { DataSourcePluginCategory } from 'app/types';
+import { config } from '@grafana/runtime';
 
 export function buildCategories(plugins: DataSourcePluginMeta[]): DataSourcePluginCategory[] {
   const categories: DataSourcePluginCategory[] = [
     { id: 'tsdb', title: 'Time series databases', plugins: [] },
     { id: 'logging', title: 'Logging & document databases', plugins: [] },
+    config.featureToggles.tracingIntegration ? { id: 'tracing', title: 'Distributed tracing', plugins: [] } : null,
     { id: 'sql', title: 'SQL', plugins: [] },
     { id: 'cloud', title: 'Cloud', plugins: [] },
     { id: 'enterprise', title: 'Enterprise plugins', plugins: [] },
     { id: 'other', title: 'Others', plugins: [] },
-  ];
+  ].filter(item => item);
 
   const categoryIndex: Record<string, DataSourcePluginCategory> = {};
   const pluginIndex: Record<string, DataSourcePluginMeta> = {};
@@ -66,6 +68,7 @@ function sortPlugins(plugins: DataSourcePluginMeta[]) {
     graphite: 95,
     loki: 90,
     mysql: 80,
+    jaeger: 100,
     postgres: 79,
     gcloud: -1,
   };

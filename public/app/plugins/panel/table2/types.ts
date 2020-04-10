@@ -1,14 +1,9 @@
-import { FieldConfigSource } from '@grafana/data';
-
 export interface Options {
-  fieldOptions: FieldConfigSource;
   showHeader: boolean;
+  resizable: boolean;
 }
 
-export const defaults: Options = {
-  fieldOptions: {
-    defaults: {},
-    overrides: [],
-  },
-  showHeader: true,
-};
+export interface CustomFieldConfig {
+  width: number;
+  displayMode: string;
+}

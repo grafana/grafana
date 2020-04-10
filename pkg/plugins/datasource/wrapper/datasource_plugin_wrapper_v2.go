@@ -2,23 +2,24 @@ package wrapper
 
 import (
 	"context"
+	"fmt"
 	"time"
 
+	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 
 	"github.com/grafana/grafana-plugin-sdk-go/genproto/pluginv2"
-	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/tsdb"
 )
 
-func NewDatasourcePluginWrapperV2(log log.Logger, pluginId, pluginType string, plugin backendplugin.CorePlugin) *DatasourcePluginWrapperV2 {
-	return &DatasourcePluginWrapperV2{CorePlugin: plugin, logger: log, pluginId: pluginId, pluginType: pluginType}
+func NewDatasourcePluginWrapperV2(log log.Logger, pluginId, pluginType string, plugin backendplugin.DataPlugin) *DatasourcePluginWrapperV2 {
+	return &DatasourcePluginWrapperV2{DataPlugin: plugin, logger: log, pluginId: pluginId, pluginType: pluginType}
 }
 
 type DatasourcePluginWrapperV2 struct {
-	backendplugin.CorePlugin
+	backendplugin.DataPlugin
 	logger     log.Logger
 	pluginId   string
 	pluginType string
@@ -30,22 +31,21 @@ func (tw *DatasourcePluginWrapperV2) Query(ctx context.Context, ds *models.DataS
 		return nil, err
 	}
 
-	pbQuery := &pluginv2.DataQueryRequest{
+	pbQuery := &pluginv2.QueryDataRequest{
 		Config: &pluginv2.PluginConfig{
-			OrgId:                   ds.OrgId,
-			PluginId:                tw.pluginId,
-			PluginType:              tw.pluginType,
-			UpdatedMS:               ds.Updated.UnixNano() / int64(time.Millisecond),
-			JsonData:                jsonDataBytes,
-			DecryptedSecureJsonData: ds.DecryptedValues(),
+			OrgId:         ds.OrgId,
+			PluginId:      tw.pluginId,
+			LastUpdatedMS: ds.Updated.UnixNano() / int64(time.Millisecond),
 			DatasourceConfig: &pluginv2.DataSourceConfig{
-				Id:               ds.Id,
-				Name:             ds.Name,
-				Url:              ds.Url,
-				Database:         ds.Database,
-				User:             ds.User,
-				BasicAuthEnabled: ds.BasicAuth,
-				BasicAuthUser:    ds.BasicAuthUser,
+				Id:                      ds.Id,
+				Name:                    ds.Name,
+				Url:                     ds.Url,
+				Database:                ds.Database,
+				User:                    ds.User,
+				BasicAuthEnabled:        ds.BasicAuth,
+				BasicAuthUser:           ds.BasicAuthUser,
+				JsonData:                jsonDataBytes,
+				DecryptedSecureJsonData: ds.DecryptedValues(),
 			},
 		},
 		Queries: []*pluginv2.DataQuery{},
@@ -77,17 +77,36 @@ func (tw *DatasourcePluginWrapperV2) Query(ctx context.Context, ds *models.DataS
 		})
 	}
 
-	pbRes, err := tw.CorePlugin.DataQuery(ctx, pbQuery)
+	var pbRes *pluginv2.QueryDataResponse
+	err = backendplugin.InstrumentPluginRequest(ds.Type, "dataquery", func() error {
+		var err error
+		pbRes, err = tw.DataPlugin.QueryData(ctx, pbQuery)
+
+		return err
+	})
+
 	if err != nil {
 		return nil, err
 	}
 
-	return &tsdb.Response{
-		Results: map[string]*tsdb.QueryResult{
-			"": {
-				Dataframes: pbRes.Frames,
-				Meta:       simplejson.NewFromAny(pbRes.Metadata),
-			},
-		},
-	}, nil
+	tR := &tsdb.Response{
+		Results: make(map[string]*tsdb.QueryResult, len(pbRes.Responses)),
+	}
+
+	for refID, pRes := range pbRes.Responses {
+		qr := &tsdb.QueryResult{
+			RefId:      refID,
+			Dataframes: pRes.Frames,
+		}
+		if len(pRes.JsonMeta) != 0 {
+			qr.Meta = simplejson.NewFromAny(pRes.JsonMeta)
+		}
+		if pRes.Error != "" {
+			qr.Error = fmt.Errorf(pRes.Error)
+			qr.ErrorString = pRes.Error
+		}
+		tR.Results[refID] = qr
+	}
+
+	return tR, nil
 }

@@ -1,18 +1,15 @@
   prometheus:
     build: docker/blocks/prometheus2
-    network_mode: host
     ports:
       - "9090:9090"
 
   node_exporter:
     image: prom/node-exporter
-    network_mode: host
     ports:
       - "9100:9100"
 
   fake-prometheus-data:
     image: grafana/fake-data-gen
-    network_mode: host
     ports:
       - "9091:9091"
     environment:
@@ -20,12 +17,10 @@
 
   alertmanager:
     image: quay.io/prometheus/alertmanager
-    network_mode: host
     ports:
       - "9093:9093"
 
   prometheus-random-data:
     build: docker/blocks/prometheus_random_data
-    network_mode: host
     ports:
       - "8081:8080"

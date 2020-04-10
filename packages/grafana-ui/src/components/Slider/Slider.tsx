@@ -14,8 +14,10 @@ export interface Props {
   /** Set current positions of handle(s). If only 1 value supplied, only 1 handle displayed. */
   value?: number[];
   reverse?: boolean;
+  tooltipAlwaysVisible?: boolean;
   formatTooltipResult?: (value: number) => number | string;
   onChange?: (values: number[]) => void;
+  onAfterChange?: (values: number[]) => void;
 }
 
 const getStyles = stylesFactory((theme: GrafanaTheme, isHorizontal: boolean) => {
@@ -98,10 +100,12 @@ export const Slider: FunctionComponent<Props> = ({
   min,
   max,
   onChange,
+  onAfterChange,
   orientation = 'horizontal',
   reverse,
   formatTooltipResult,
   value,
+  tooltipAlwaysVisible = true,
 }) => {
   const isHorizontal = orientation === 'horizontal';
   const theme = useTheme();
@@ -112,12 +116,16 @@ export const Slider: FunctionComponent<Props> = ({
       {/** Slider tooltip's parent component is body and therefore we need Global component to do css overrides for it. */}
       <Global styles={styles.tooltip} />
       <RangeWithTooltip
-        tipProps={{ visible: true, placement: isHorizontal ? 'top' : 'right' }}
+        tipProps={{
+          visible: tooltipAlwaysVisible,
+          placement: isHorizontal ? 'top' : 'right',
+        }}
         min={min}
         max={max}
         defaultValue={value || [min, max]}
         tipFormatter={(value: number) => (formatTooltipResult ? formatTooltipResult(value) : value)}
         onChange={onChange}
+        onAfterChange={onAfterChange}
         vertical={!isHorizontal}
         reverse={reverse}
       />

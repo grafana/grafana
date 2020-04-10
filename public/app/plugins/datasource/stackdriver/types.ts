@@ -21,6 +21,9 @@ export enum MetricFindQueryTypes {
   Aggregations = 'aggregations',
   Aligners = 'aligners',
   AlignmentPeriods = 'alignmentPeriods',
+  Selectors = 'selectors',
+  SLOServices = 'sloServices',
+  SLO = 'slo',
 }
 
 export interface VariableQueryData {
@@ -28,30 +31,57 @@ export interface VariableQueryData {
   metricDescriptors: MetricDescriptor[];
   selectedService: string;
   selectedMetricType: string;
+  selectedSLOService: string;
   labels: string[];
   labelKey: string;
   metricTypes: Array<{ value: string; name: string }>;
   services: Array<{ value: string; name: string }>;
   projects: Array<{ value: string; name: string }>;
+  sloServices: Array<{ value: string; name: string }>;
   projectName: string;
 }
 
-export interface StackdriverQuery extends DataQuery {
+export enum QueryType {
+  METRICS = 'metrics',
+  SLO = 'slo',
+}
+
+export const queryTypes = [
+  { label: 'Metrics', value: QueryType.METRICS },
+  { label: 'Service Level Objectives (SLO)', value: QueryType.SLO },
+];
+
+export interface MetricQuery {
   projectName: string;
   unit?: string;
   metricType: string;
-  service?: string;
-  refId: string;
   crossSeriesReducer: string;
   alignmentPeriod?: string;
-  perSeriesAligner: string;
+  perSeriesAligner?: string;
   groupBys?: string[];
   filters?: string[];
   aliasBy?: string;
-  metricKind: string;
-  valueType: string;
-  datasourceId?: number;
+  metricKind?: string;
+  valueType?: string;
   view?: string;
+}
+
+export interface SLOQuery {
+  projectName: string;
+  alignmentPeriod?: string;
+  perSeriesAligner?: string;
+  aliasBy?: string;
+  selectorName: string;
+  serviceId: string;
+  sloId: string;
+  goal?: number;
+}
+
+export interface StackdriverQuery extends DataQuery {
+  datasourceId?: number; // Should not be necessary anymore
+  queryType: QueryType;
+  metricQuery: MetricQuery;
+  sloQuery?: SLOQuery;
 }
 
 export interface StackdriverOptions extends DataSourceJsonData {
@@ -100,5 +130,5 @@ export interface Filter {
   key: string;
   operator: string;
   value: string;
-  condition: string;
+  condition?: string;
 }

@@ -1,7 +1,7 @@
-import { Subject, Observable } from 'rxjs';
+import { Observable, Subject } from 'rxjs';
 import * as rxJsWebSocket from 'rxjs/webSocket';
 import { LiveStreams } from './live_streams';
-import { DataFrameView, Labels, formatLabels, DataFrame } from '@grafana/data';
+import { DataFrame, DataFrameView, formatLabels, Labels } from '@grafana/data';
 import { noop } from 'lodash';
 
 let fakeSocket: Subject<any>;
@@ -59,7 +59,7 @@ describe('Live Stream Tests', () => {
     stream.subscribe({
       next: val => {
         const test = tests.shift();
-        test(val);
+        test!(val);
       },
       complete: () => done(),
     });

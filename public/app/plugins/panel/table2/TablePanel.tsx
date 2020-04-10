@@ -1,37 +1,49 @@
-// Libraries
 import React, { Component } from 'react';
 
-// Types
 import { Table } from '@grafana/ui';
-import { PanelProps, applyFieldOverrides } from '@grafana/data';
+import { Field, FieldMatcherID, PanelProps } from '@grafana/data';
 import { Options } from './types';
-import { config } from 'app/core/config';
-import { tableFieldRegistry } from './custom';
 
 interface Props extends PanelProps<Options> {}
-
-const paddingBottom = 16;
 
 export class TablePanel extends Component<Props> {
   constructor(props: Props) {
     super(props);
   }
 
+  onColumnResize = (field: Field, width: number) => {
+    const current = this.props.fieldConfig;
+    const matcherId = FieldMatcherID.byName;
+    const prop = 'width';
+    const overrides = current.overrides.filter(
+      o => o.matcher.id !== matcherId || o.matcher.options !== field.name || o.properties[0].id !== prop
+    );
+
+    overrides.push({
+      matcher: { id: matcherId, options: field.name },
+      properties: [{ id: prop, value: width }],
+    });
+
+    this.props.onFieldConfigChange({
+      ...current,
+      overrides,
+    });
+  };
+
   render() {
-    const { data, height, width, replaceVariables, options } = this.props;
+    const {
+      data,
+      height,
+      width,
+      options: { showHeader, resizable },
+    } = this.props;
 
     if (data.series.length < 1) {
       return <div>No Table Data...</div>;
     }
 
-    const dataProcessed = applyFieldOverrides({
-      data: data.series,
-      fieldOptions: options.fieldOptions,
-      theme: config.theme,
-      replaceVariables,
-      custom: tableFieldRegistry,
-    })[0];
-
-    return <Table height={height - paddingBottom} width={width} data={dataProcessed} />;
+    return (
+      <Table height={height - 16} width={width} data={data.series[0]} noHeader={!showHeader} resizable={resizable} />
+    );
   }
 }

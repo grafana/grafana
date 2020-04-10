@@ -63,7 +63,7 @@ export class ChangePasswordForm extends PureComponent<Props, State> {
           <Button variant="primary" onClick={this.onSubmitChangePassword} disabled={isSaving}>
             Change Password
           </Button>
-          <LinkButton variant="transparent" href={`${config.appSubUrl}/profile`}>
+          <LinkButton variant="secondary" href={`${config.appSubUrl}/profile`}>
             Cancel
           </LinkButton>
         </div>

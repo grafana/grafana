@@ -1,11 +1,13 @@
-import { ComponentClass, ComponentType } from 'react';
-import { DataQueryError, DataQueryRequest } from './datasource';
-import { GrafanaPlugin, PluginMeta } from './plugin';
+import { DataQueryError, DataQueryRequest, DataQueryTimings } from './datasource';
+import { PluginMeta } from './plugin';
 import { ScopedVars } from './ScopedVars';
 import { LoadingState } from './data';
 import { DataFrame } from './dataFrame';
 import { AbsoluteTimeRange, TimeRange, TimeZone } from './time';
-import { FieldConfigEditorRegistry } from './fieldOverrides';
+import { FieldConfigSource } from './fieldOverrides';
+import { Registry } from '../utils';
+import { StandardEditorProps } from '../field';
+import { OptionsEditorItem } from './OptionsUIRegistryBuilder';
 
 export type InterpolateFunction = (value: string, scopedVars?: ScopedVars, format?: string | Function) => string;
 
@@ -16,11 +18,34 @@ export interface PanelPluginMeta extends PluginMeta {
 }
 
 export interface PanelData {
+  /**
+   * State of the data (loading, done, error, streaming)
+   */
   state: LoadingState;
+
+  /**
+   * Contains data frames with field overrides applied
+   */
   series: DataFrame[];
+
+  /**
+   * Request contains the queries and properties sent to the datasource
+   */
   request?: DataQueryRequest;
+
+  /**
+   * Timing measurements
+   */
+  timings?: DataQueryTimings;
+
+  /**
+   * Any query errors
+   */
   error?: DataQueryError;
-  // Contains the range from the request or a shifted time range if a request uses relative time
+
+  /**
+   *  Contains the range from the request or a shifted time range if a request uses relative time
+   */
   timeRange: TimeRange;
 }
 
@@ -31,6 +56,10 @@ export interface PanelProps<T = any> {
   timeZone: TimeZone;
   options: T;
   onOptionsChange: (options: T) => void;
+  /** Panel fields configuration */
+  fieldConfig: FieldConfigSource;
+  /** Enables panel field config manipulation */
+  onFieldConfigChange: (config: FieldConfigSource) => void;
   renderCounter: number;
   transparent: boolean;
   width: number;
@@ -47,11 +76,23 @@ export interface PanelEditorProps<T = any> {
     callback?: () => void
   ) => void;
   data: PanelData;
+
+  /**
+   * Panel fields configuration - temporart solution
+   * TODO[FieldConfig]: Remove when we switch old editor to new
+   */
+  fieldConfig: FieldConfigSource;
+  /**
+   * Enables panel field config manipulation
+   * TODO[FieldConfig]: Remove when we switch old editor to new
+   */
+  onFieldConfigChange: (config: FieldConfigSource) => void;
 }
 
 export interface PanelModel<TOptions = any> {
   id: number;
   options: TOptions;
+  fieldConfig: FieldConfigSource;
   pluginVersion?: string;
   scopedVars?: ScopedVars;
 }
@@ -62,72 +103,61 @@ export interface PanelModel<TOptions = any> {
 export type PanelMigrationHandler<TOptions = any> = (panel: PanelModel<TOptions>) => Partial<TOptions>;
 
 /**
- * Called before a panel is initialized
+ * Called before a panel is initialized. Allows panel inspection for any updates before changing the panel type.
  */
 export type PanelTypeChangedHandler<TOptions = any> = (
-  options: Partial<TOptions>,
+  panel: PanelModel<TOptions>,
   prevPluginId: string,
   prevOptions: any
 ) => Partial<TOptions>;
 
-export class PanelPlugin<TOptions = any> extends GrafanaPlugin<PanelPluginMeta> {
-  panel: ComponentType<PanelProps<TOptions>>;
-  editor?: ComponentClass<PanelEditorProps<TOptions>>;
-  customFieldConfigs?: FieldConfigEditorRegistry;
-  defaults?: TOptions;
-  onPanelMigration?: PanelMigrationHandler<TOptions>;
-  onPanelTypeChanged?: PanelTypeChangedHandler<TOptions>;
-  noPadding?: boolean;
+export type PanelOptionEditorsRegistry = Registry<PanelOptionsEditorItem>;
 
+export interface PanelOptionsEditorProps<TValue> extends StandardEditorProps<TValue> {}
+
+export interface PanelOptionsEditorItem<TOptions = any, TValue = any, TSettings = any>
+  extends OptionsEditorItem<TOptions, TSettings, PanelOptionsEditorProps<TValue>, TValue> {}
+
+export interface PanelOptionsEditorConfig<TOptions, TSettings = any, TValue = any> {
   /**
-   * Legacy angular ctrl.  If this exists it will be used instead of the panel
-   */
-  angularPanelCtrl?: any;
-
-  constructor(panel: ComponentType<PanelProps<TOptions>>) {
-    super();
-    this.panel = panel;
-  }
-
-  setEditor(editor: ComponentClass<PanelEditorProps<TOptions>>) {
-    this.editor = editor;
-    return this;
-  }
-
-  setDefaults(defaults: TOptions) {
-    this.defaults = defaults;
-    return this;
-  }
-
-  setNoPadding() {
-    this.noPadding = true;
-    return this;
-  }
-
-  /**
-   * This function is called before the panel first loads if
-   * the current version is different than the version that was saved.
+   * Path of the option property to control.
    *
-   * This is a good place to support any changes to the options model
+   * @example
+   * Given options object of a type:
+   * ```ts
+   * interface Options {
+   *   a: {
+   *     b: string;
+   *   }
+   * }
+   * ```
+   *
+   * path can be either 'a' or 'a.b'.
    */
-  setMigrationHandler(handler: PanelMigrationHandler) {
-    this.onPanelMigration = handler;
-    return this;
-  }
-
+  path: (keyof TOptions & string) | string;
   /**
-   * This function is called when the visualization was changed.  This
-   * passes in the options that were used in the previous visualization
+   * Name of the option. Will be displayed in the UI as form element label.
    */
-  setPanelChangeHandler(handler: PanelTypeChangedHandler) {
-    this.onPanelTypeChanged = handler;
-    return this;
-  }
-
-  setCustomFieldConfigs(registry: FieldConfigEditorRegistry) {
-    this.customFieldConfigs = registry;
-    return this;
-  }
+  name: string;
+  /**
+   * Description of the option. Will be displayed in the UI as form element description.
+   */
+  description: string;
+  /**al
+   * Custom settings of the editor.
+   */
+  settings?: TSettings;
+  /**
+   * Array of strings representing category of the option. First element in the array will make option render as collapsible section.
+   */
+  category?: string[];
+  defaultValue?: TValue;
+  /**
+   * Function that enables configuration of when option editor should be shown based on current panel option properties.
+   *
+   * @param currentConfig Current panel options
+   */
+  showIf?: (currentConfig: TOptions) => boolean;
 }
 
 export interface PanelMenuItem {

@@ -10,6 +10,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/credentials/ec2rolecreds"
 	"github.com/aws/aws-sdk-go/aws/credentials/endpointcreds"
+	"github.com/aws/aws-sdk-go/aws/credentials/stscreds"
 	"github.com/aws/aws-sdk-go/aws/defaults"
 	"github.com/aws/aws-sdk-go/aws/ec2metadata"
 	"github.com/aws/aws-sdk-go/aws/request"
@@ -28,7 +29,7 @@ var awsCredentialCache = make(map[string]cache)
 var credentialCacheLock sync.RWMutex
 
 func GetCredentials(dsInfo *DatasourceInfo) (*credentials.Credentials, error) {
-	cacheKey := dsInfo.AccessKey + ":" + dsInfo.Profile + ":" + dsInfo.AssumeRoleArn
+	cacheKey := fmt.Sprintf("%s:%s:%s:%s", dsInfo.AuthType, dsInfo.AccessKey, dsInfo.Profile, dsInfo.AssumeRoleArn)
 	credentialCacheLock.RLock()
 	if _, ok := awsCredentialCache[cacheKey]; ok {
 		if awsCredentialCache[cacheKey].expiration != nil &&
@@ -60,6 +61,7 @@ func GetCredentials(dsInfo *DatasourceInfo) (*credentials.Credentials, error) {
 				&credentials.EnvProvider{},
 				&credentials.SharedCredentialsProvider{Filename: "", Profile: dsInfo.Profile},
 				remoteCredProvider(stsSess),
+				webIdentityProvider(stsSess),
 			})
 		stsConfig := &aws.Config{
 			Region:      aws.String(dsInfo.Region),
@@ -104,6 +106,7 @@ func GetCredentials(dsInfo *DatasourceInfo) (*credentials.Credentials, error) {
 				SecretAccessKey: dsInfo.SecretKey,
 			}},
 			&credentials.SharedCredentialsProvider{Filename: "", Profile: dsInfo.Profile},
+			webIdentityProvider(sess),
 			remoteCredProvider(sess),
 		})
 
@@ -115,6 +118,15 @@ func GetCredentials(dsInfo *DatasourceInfo) (*credentials.Credentials, error) {
 	credentialCacheLock.Unlock()
 
 	return creds, nil
+}
+
+func webIdentityProvider(sess *session.Session) credentials.Provider {
+	svc := sts.New(sess)
+
+	roleARN := os.Getenv("AWS_ROLE_ARN")
+	tokenFilepath := os.Getenv("AWS_WEB_IDENTITY_TOKEN_FILE")
+	roleSessionName := os.Getenv("AWS_ROLE_SESSION_NAME")
+	return stscreds.NewWebIdentityRoleProvider(svc, roleARN, roleSessionName, tokenFilepath)
 }
 
 func remoteCredProvider(sess *session.Session) credentials.Provider {

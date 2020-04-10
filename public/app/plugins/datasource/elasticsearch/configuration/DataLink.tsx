@@ -49,9 +49,9 @@ export const DataLink = (props: Props) => {
           onChange={handleChange('field')}
         />
         <Button
-          variant={'inverse'}
+          variant={'destructive'}
           title="Remove field"
-          icon={'fa fa-times'}
+          icon="times"
           onClick={event => {
             event.preventDefault();
             onDelete();

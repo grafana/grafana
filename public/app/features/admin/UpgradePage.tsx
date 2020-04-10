@@ -3,7 +3,7 @@ import { css } from 'emotion';
 import { NavModel } from '@grafana/data';
 import Page from '../../core/components/Page/Page';
 import { LicenseChrome } from './LicenseChrome';
-import { Forms } from '@grafana/ui';
+import { LinkButton } from '@grafana/ui';
 import { hot } from 'react-hot-loader';
 import { StoreState } from '../../types';
 import { getNavModel } from '../../core/selectors/navModel';
@@ -69,13 +69,13 @@ const GetEnterprise: React.FC = () => {
 
 const CallToAction: React.FC = () => {
   return (
-    <Forms.LinkButton
+    <LinkButton
       variant="primary"
       size="lg"
       href="https://grafana.com/contact?about=grafana-enterprise&utm_source=grafana-upgrade-page"
     >
       Contact us and get a free trial
-    </Forms.LinkButton>
+    </LinkButton>
   );
 };
 

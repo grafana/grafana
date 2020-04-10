@@ -2,8 +2,10 @@ import _ from 'lodash';
 import React, { PureComponent } from 'react';
 
 // Types
-import { FormLabel, Select, Switch } from '@grafana/ui';
+import { FormLabel, LegacyForms } from '@grafana/ui';
 import { SelectableValue, QueryEditorProps } from '@grafana/data';
+
+const { Select, Switch } = LegacyForms;
 
 import { PrometheusDatasource } from '../datasource';
 import { PromQuery, PromOptions } from '../types';
