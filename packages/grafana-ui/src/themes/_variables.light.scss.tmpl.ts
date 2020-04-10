@@ -243,6 +243,7 @@ $side-menu-border: 1px solid ${theme.colors.gray25};
 $side-menu-bg-mobile: rgba(0, 0, 0, 0); //$gray-6;
 $side-menu-item-hover-bg: ${theme.colors.gray25};
 $side-menu-shadow: 5px 0px 10px -5px $gray-1;
+$side-menu-link-color: $gray-4;
 
 // Menu dropdowns
 // -------------------------

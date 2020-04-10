@@ -92,7 +92,7 @@ $critical: #e02f44;
 $body-bg: #0b0c0e;
 $page-bg: #141619;
 
-$text-color: #b3b3b3;
+$text-color: #c7d0d9;
 $text-color-strong: #ffffff;
 $text-color-weak: #8e8e8e;
 $text-color-faint: #222426;
@@ -114,7 +114,7 @@ $external-link-color: #33b5e5;
 
 // Typography
 // -------------------------
-$headings-color: #b3b3b3;
+$headings-color: #d8d9da;
 $abbr-border-color: $gray-2 !default;
 $text-muted: $text-color-weak;
 
@@ -253,6 +253,7 @@ $side-menu-bg-mobile: $panel-bg;
 $side-menu-border: none;
 $side-menu-item-hover-bg: $dark-3;
 $side-menu-shadow: 0 0 20px black;
+$side-menu-link-color: $text-color;
 
 // Menu dropdowns
 // -------------------------

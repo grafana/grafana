@@ -64,8 +64,8 @@ const darkTheme: GrafanaTheme = {
     bodyBg: basicColors.gray05,
     pageBg: basicColors.gray10,
 
-    headingColor: basicColors.gray3,
-    text: basicColors.gray3,
+    headingColor: basicColors.gray4,
+    text: basicColors.gray85,
     textStrong: basicColors.white,
     textWeak: basicColors.gray2,
     textEmphasis: basicColors.gray5,

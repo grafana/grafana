@@ -49,14 +49,6 @@
   min-height: $navbarHeight;
   line-height: $navbarHeight;
 
-  a {
-    color: $text-color;
-
-    &:hover {
-      color: $link-color;
-    }
-  }
-
   .gicon {
     top: -2px;
     position: relative;
