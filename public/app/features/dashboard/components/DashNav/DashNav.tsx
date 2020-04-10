@@ -2,7 +2,6 @@
 import React, { PureComponent, FC } from 'react';
 import { connect } from 'react-redux';
 import { css } from 'emotion';
-import { e2e } from '@grafana/e2e';
 // Utils & Services
 import { appEvents } from 'app/core/app_events';
 import { PlaylistSrv } from 'app/features/playlist/playlist_srv';
