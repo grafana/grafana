@@ -7,6 +7,7 @@ describe('Dashboard Search reducer', () => {
   it('should return the initial state', () => {
     expect(reducer(dashboardsSearchState, {} as any)).toEqual(dashboardsSearchState);
   });
+
   it('should set the results and mark first item as selected', () => {
     const newState = reducer(dashboardsSearchState, { type: FETCH_RESULTS, payload: searchResults });
     expect(newState).toEqual({ loading: false, selectedIndex: 0, results: searchResults });

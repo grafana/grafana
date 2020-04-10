@@ -2,7 +2,7 @@ import React, { FC, useReducer, useState } from 'react';
 import { contextSrv } from 'app/core/services/context_srv';
 import { useDebounce } from 'react-use';
 import { Icon, TagList } from '@grafana/ui';
-import { manageDashboardsState, reducer } from '../reducers/manageDashboards';
+import { manageDashboardsState, manageDashboardsReducer } from '../reducers/manageDashboards';
 import {
   FETCH_ITEMS,
   FETCH_RESULTS,
@@ -58,7 +58,7 @@ export const ManageDashboards: FC<Props> = ({ folderId, folderUid }) => {
   const [
     { canMove, canDelete, canSave, allChecked, isEditor, hasEditPermissionInFolders, results, loading },
     dispatch,
-  ] = useReducer(reducer, {
+  ] = useReducer(manageDashboardsReducer, {
     ...manageDashboardsState,
     hasEditPermissionInFolders: contextSrv.hasEditPermissionInFolders,
   });

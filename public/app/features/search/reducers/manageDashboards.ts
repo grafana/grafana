@@ -20,7 +20,7 @@ export const manageDashboardsState: ManageDashboardsState = {
   hasEditPermissionInFolders: false,
 };
 
-const manageDashboardsReducer = (state: ManageDashboardsState, action: SearchAction) => {
+const reducer = (state: ManageDashboardsState, action: SearchAction) => {
   switch (action.type) {
     case TOGGLE_FOLDER_CAN_SAVE:
       return { ...state, canSave: action.payload };
@@ -41,4 +41,4 @@ const manageDashboardsReducer = (state: ManageDashboardsState, action: SearchAct
   }
 };
 
-export const reducer = mergeReducers([searchReducer, manageDashboardsReducer]);
+export const manageDashboardsReducer = mergeReducers([searchReducer, reducer]);
