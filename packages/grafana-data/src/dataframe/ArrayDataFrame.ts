@@ -42,7 +42,7 @@ export class ArrayDataFrame<T = any> extends FunctionalVector<T> implements Data
 
   private theFields: Field[] = [];
 
-  constructor(private source: Array<T>, names?: string[]) {
+  constructor(private source: T[], names?: string[]) {
     super();
 
     const first: any = source.length ? source[0] : {};
