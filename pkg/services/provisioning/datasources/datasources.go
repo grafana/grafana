@@ -37,7 +37,7 @@ func newDatasourceProvisioner(log log.Logger) DatasourceProvisioner {
 	}
 }
 
-func (dc *DatasourceProvisioner) apply(cfg *Configs) error {
+func (dc *DatasourceProvisioner) apply(cfg *configs) error {
 	if err := dc.deleteDatasources(cfg.DeleteDatasources); err != nil {
 		return err
 	}
@@ -82,7 +82,7 @@ func (dc *DatasourceProvisioner) applyChanges(configPath string) error {
 	return nil
 }
 
-func (dc *DatasourceProvisioner) deleteDatasources(dsToDelete []*DeleteDatasourceConfig) error {
+func (dc *DatasourceProvisioner) deleteDatasources(dsToDelete []*deleteDatasourceConfig) error {
 	for _, ds := range dsToDelete {
 		cmd := &models.DeleteDataSourceByNameCommand{OrgId: ds.OrgID, Name: ds.Name}
 		if err := bus.Dispatch(cmd); err != nil {

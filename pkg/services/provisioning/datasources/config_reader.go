@@ -14,8 +14,8 @@ type configReader struct {
 	log log.Logger
 }
 
-func (cr *configReader) readConfig(path string) ([]*Configs, error) {
-	var datasources []*Configs
+func (cr *configReader) readConfig(path string) ([]*configs, error) {
+	var datasources []*configs
 
 	files, err := ioutil.ReadDir(path)
 	if err != nil {
@@ -44,25 +44,25 @@ func (cr *configReader) readConfig(path string) ([]*Configs, error) {
 	return datasources, nil
 }
 
-func (cr *configReader) parseDatasourceConfig(path string, file os.FileInfo) (*Configs, error) {
+func (cr *configReader) parseDatasourceConfig(path string, file os.FileInfo) (*configs, error) {
 	filename, _ := filepath.Abs(filepath.Join(path, file.Name()))
 	yamlFile, err := ioutil.ReadFile(filename)
 	if err != nil {
 		return nil, err
 	}
 
-	var apiVersion *ConfigVersion
+	var apiVersion *configVersion
 	err = yaml.Unmarshal(yamlFile, &apiVersion)
 	if err != nil {
 		return nil, err
 	}
 
 	if apiVersion == nil {
-		apiVersion = &ConfigVersion{APIVersion: 0}
+		apiVersion = &configVersion{APIVersion: 0}
 	}
 
 	if apiVersion.APIVersion > 0 {
-		v1 := &ConfigsV1{log: cr.log}
+		v1 := &configsV1{log: cr.log}
 		err = yaml.Unmarshal(yamlFile, v1)
 		if err != nil {
 			return nil, err
@@ -71,7 +71,7 @@ func (cr *configReader) parseDatasourceConfig(path string, file os.FileInfo) (*C
 		return v1.mapToDatasourceFromConfig(apiVersion.APIVersion), nil
 	}
 
-	var v0 *ConfigsV0
+	var v0 *configsV0
 	err = yaml.Unmarshal(yamlFile, &v0)
 	if err != nil {
 		return nil, err
@@ -82,7 +82,7 @@ func (cr *configReader) parseDatasourceConfig(path string, file os.FileInfo) (*C
 	return v0.mapToDatasourceFromConfig(apiVersion.APIVersion), nil
 }
 
-func validateDefaultUniqueness(datasources []*Configs) error {
+func validateDefaultUniqueness(datasources []*configs) error {
 	defaultCount := map[int64]int{}
 	for i := range datasources {
 		if datasources[i].Datasources == nil {

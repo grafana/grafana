@@ -8,23 +8,23 @@ import (
 )
 
 // ConfigVersion is used to figure out apiversion a config uses.
-type ConfigVersion struct {
+type configVersion struct {
 	APIVersion int64 `json:"apiVersion" yaml:"apiVersion"`
 }
 
-type Configs struct {
+type configs struct {
 	APIVersion int64
 
-	Datasources       []*UpsertDataSourceFromConfig
-	DeleteDatasources []*DeleteDatasourceConfig
+	Datasources       []*upsertDataSourceFromConfig
+	DeleteDatasources []*deleteDatasourceConfig
 }
 
-type DeleteDatasourceConfig struct {
+type deleteDatasourceConfig struct {
 	OrgID int64
 	Name  string
 }
 
-type UpsertDataSourceFromConfig struct {
+type upsertDataSourceFromConfig struct {
 	OrgID   int64
 	Version int
 
@@ -45,32 +45,32 @@ type UpsertDataSourceFromConfig struct {
 	Editable          bool
 }
 
-type ConfigsV0 struct {
-	ConfigVersion
+type configsV0 struct {
+	configVersion
 
-	Datasources       []*UpsertDataSourceFromConfigV0 `json:"datasources" yaml:"datasources"`
-	DeleteDatasources []*DeleteDatasourceConfigV0     `json:"delete_datasources" yaml:"delete_datasources"`
+	Datasources       []*upsertDataSourceFromConfigV0 `json:"datasources" yaml:"datasources"`
+	DeleteDatasources []*deleteDatasourceConfigV0     `json:"delete_datasources" yaml:"delete_datasources"`
 }
 
-type ConfigsV1 struct {
-	ConfigVersion
+type configsV1 struct {
+	configVersion
 	log log.Logger
 
-	Datasources       []*UpsertDataSourceFromConfigV1 `json:"datasources" yaml:"datasources"`
-	DeleteDatasources []*DeleteDatasourceConfigV1     `json:"deleteDatasources" yaml:"deleteDatasources"`
+	Datasources       []*upsertDataSourceFromConfigV1 `json:"datasources" yaml:"datasources"`
+	DeleteDatasources []*deleteDatasourceConfigV1     `json:"deleteDatasources" yaml:"deleteDatasources"`
 }
 
-type DeleteDatasourceConfigV0 struct {
+type deleteDatasourceConfigV0 struct {
 	OrgID int64  `json:"org_id" yaml:"org_id"`
 	Name  string `json:"name" yaml:"name"`
 }
 
-type DeleteDatasourceConfigV1 struct {
+type deleteDatasourceConfigV1 struct {
 	OrgID values.Int64Value  `json:"orgId" yaml:"orgId"`
 	Name  values.StringValue `json:"name" yaml:"name"`
 }
 
-type UpsertDataSourceFromConfigV0 struct {
+type upsertDataSourceFromConfigV0 struct {
 	OrgID             int64                  `json:"org_id" yaml:"org_id"`
 	Version           int                    `json:"version" yaml:"version"`
 	Name              string                 `json:"name" yaml:"name"`
@@ -90,7 +90,7 @@ type UpsertDataSourceFromConfigV0 struct {
 	Editable          bool                   `json:"editable" yaml:"editable"`
 }
 
-type UpsertDataSourceFromConfigV1 struct {
+type upsertDataSourceFromConfigV1 struct {
 	OrgID             values.Int64Value     `json:"orgId" yaml:"orgId"`
 	Version           values.IntValue       `json:"version" yaml:"version"`
 	Name              values.StringValue    `json:"name" yaml:"name"`
@@ -110,8 +110,8 @@ type UpsertDataSourceFromConfigV1 struct {
 	Editable          values.BoolValue      `json:"editable" yaml:"editable"`
 }
 
-func (cfg *ConfigsV1) mapToDatasourceFromConfig(apiVersion int64) *Configs {
-	r := &Configs{}
+func (cfg *configsV1) mapToDatasourceFromConfig(apiVersion int64) *configs {
+	r := &configs{}
 
 	r.APIVersion = apiVersion
 
@@ -120,7 +120,7 @@ func (cfg *ConfigsV1) mapToDatasourceFromConfig(apiVersion int64) *Configs {
 	}
 
 	for _, ds := range cfg.Datasources {
-		r.Datasources = append(r.Datasources, &UpsertDataSourceFromConfig{
+		r.Datasources = append(r.Datasources, &upsertDataSourceFromConfig{
 			OrgID:             ds.OrgID.Value(),
 			Name:              ds.Name.Value(),
 			Type:              ds.Type.Value(),
@@ -159,7 +159,7 @@ func (cfg *ConfigsV1) mapToDatasourceFromConfig(apiVersion int64) *Configs {
 	}
 
 	for _, ds := range cfg.DeleteDatasources {
-		r.DeleteDatasources = append(r.DeleteDatasources, &DeleteDatasourceConfig{
+		r.DeleteDatasources = append(r.DeleteDatasources, &deleteDatasourceConfig{
 			OrgID: ds.OrgID.Value(),
 			Name:  ds.Name.Value(),
 		})
@@ -168,8 +168,8 @@ func (cfg *ConfigsV1) mapToDatasourceFromConfig(apiVersion int64) *Configs {
 	return r
 }
 
-func (cfg *ConfigsV0) mapToDatasourceFromConfig(apiVersion int64) *Configs {
-	r := &Configs{}
+func (cfg *configsV0) mapToDatasourceFromConfig(apiVersion int64) *configs {
+	r := &configs{}
 
 	r.APIVersion = apiVersion
 
@@ -178,7 +178,7 @@ func (cfg *ConfigsV0) mapToDatasourceFromConfig(apiVersion int64) *Configs {
 	}
 
 	for _, ds := range cfg.Datasources {
-		r.Datasources = append(r.Datasources, &UpsertDataSourceFromConfig{
+		r.Datasources = append(r.Datasources, &upsertDataSourceFromConfig{
 			OrgID:             ds.OrgID,
 			Name:              ds.Name,
 			Type:              ds.Type,
@@ -200,7 +200,7 @@ func (cfg *ConfigsV0) mapToDatasourceFromConfig(apiVersion int64) *Configs {
 	}
 
 	for _, ds := range cfg.DeleteDatasources {
-		r.DeleteDatasources = append(r.DeleteDatasources, &DeleteDatasourceConfig{
+		r.DeleteDatasources = append(r.DeleteDatasources, &deleteDatasourceConfig{
 			OrgID: ds.OrgID,
 			Name:  ds.Name,
 		})
@@ -209,7 +209,7 @@ func (cfg *ConfigsV0) mapToDatasourceFromConfig(apiVersion int64) *Configs {
 	return r
 }
 
-func createInsertCommand(ds *UpsertDataSourceFromConfig) *models.AddDataSourceCommand {
+func createInsertCommand(ds *upsertDataSourceFromConfig) *models.AddDataSourceCommand {
 	jsonData := simplejson.New()
 	if len(ds.JSONData) > 0 {
 		for k, v := range ds.JSONData {
@@ -237,7 +237,7 @@ func createInsertCommand(ds *UpsertDataSourceFromConfig) *models.AddDataSourceCo
 	}
 }
 
-func createUpdateCommand(ds *UpsertDataSourceFromConfig, id int64) *models.UpdateDataSourceCommand {
+func createUpdateCommand(ds *upsertDataSourceFromConfig, id int64) *models.UpdateDataSourceCommand {
 	jsonData := simplejson.New()
 	if len(ds.JSONData) > 0 {
 		for k, v := range ds.JSONData {

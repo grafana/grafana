@@ -195,14 +195,14 @@ func TestDatasourceAsConfig(t *testing.T) {
 	})
 }
 
-func validateDeleteDatasources(dsCfg *Configs) {
+func validateDeleteDatasources(dsCfg *configs) {
 	So(len(dsCfg.DeleteDatasources), ShouldEqual, 1)
 	deleteDs := dsCfg.DeleteDatasources[0]
 	So(deleteDs.Name, ShouldEqual, "old-graphite3")
 	So(deleteDs.OrgID, ShouldEqual, 2)
 }
 
-func validateDatasource(dsCfg *Configs) {
+func validateDatasource(dsCfg *configs) {
 	ds := dsCfg.Datasources[0]
 	So(ds.Name, ShouldEqual, "name")
 	So(ds.Type, ShouldEqual, "type")
