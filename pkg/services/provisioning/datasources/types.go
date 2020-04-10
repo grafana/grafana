@@ -31,7 +31,7 @@ type DataSourceFromConfig struct {
 	Name              string
 	Type              string
 	Access            string
-	Url               string
+	URL               string
 	Password          string
 	User              string
 	Database          string
@@ -41,7 +41,7 @@ type DataSourceFromConfig struct {
 	WithCredentials   bool
 	IsDefault         bool
 	JSONData          map[string]interface{}
-	SecureJsonData    map[string]string
+	SecureJSONData    map[string]string
 	Editable          bool
 }
 
@@ -76,7 +76,7 @@ type DataSourceFromConfigV0 struct {
 	Name              string                 `json:"name" yaml:"name"`
 	Type              string                 `json:"type" yaml:"type"`
 	Access            string                 `json:"access" yaml:"access"`
-	Url               string                 `json:"url" yaml:"url"`
+	URL               string                 `json:"url" yaml:"url"`
 	Password          string                 `json:"password" yaml:"password"`
 	User              string                 `json:"user" yaml:"user"`
 	Database          string                 `json:"database" yaml:"database"`
@@ -86,7 +86,7 @@ type DataSourceFromConfigV0 struct {
 	WithCredentials   bool                   `json:"with_credentials" yaml:"with_credentials"`
 	IsDefault         bool                   `json:"is_default" yaml:"is_default"`
 	JSONData          map[string]interface{} `json:"json_data" yaml:"json_data"`
-	SecureJsonData    map[string]string      `json:"secure_json_data" yaml:"secure_json_data"`
+	SecureJSONData    map[string]string      `json:"secure_json_data" yaml:"secure_json_data"`
 	Editable          bool                   `json:"editable" yaml:"editable"`
 }
 
@@ -96,7 +96,7 @@ type DataSourceFromConfigV1 struct {
 	Name              values.StringValue    `json:"name" yaml:"name"`
 	Type              values.StringValue    `json:"type" yaml:"type"`
 	Access            values.StringValue    `json:"access" yaml:"access"`
-	Url               values.StringValue    `json:"url" yaml:"url"`
+	URL               values.StringValue    `json:"url" yaml:"url"`
 	Password          values.StringValue    `json:"password" yaml:"password"`
 	User              values.StringValue    `json:"user" yaml:"user"`
 	Database          values.StringValue    `json:"database" yaml:"database"`
@@ -106,7 +106,7 @@ type DataSourceFromConfigV1 struct {
 	WithCredentials   values.BoolValue      `json:"withCredentials" yaml:"withCredentials"`
 	IsDefault         values.BoolValue      `json:"isDefault" yaml:"isDefault"`
 	JSONData          values.JSONValue      `json:"jsonData" yaml:"jsonData"`
-	SecureJsonData    values.StringMapValue `json:"secureJsonData" yaml:"secureJsonData"`
+	SecureJSONData    values.StringMapValue `json:"secureJsonData" yaml:"secureJsonData"`
 	Editable          values.BoolValue      `json:"editable" yaml:"editable"`
 }
 
@@ -125,7 +125,7 @@ func (cfg *DatasourcesAsConfigV1) mapToDatasourceFromConfig(apiVersion int64) *D
 			Name:              ds.Name.Value(),
 			Type:              ds.Type.Value(),
 			Access:            ds.Access.Value(),
-			Url:               ds.Url.Value(),
+			URL:               ds.URL.Value(),
 			Password:          ds.Password.Value(),
 			User:              ds.User.Value(),
 			Database:          ds.Database.Value(),
@@ -135,7 +135,7 @@ func (cfg *DatasourcesAsConfigV1) mapToDatasourceFromConfig(apiVersion int64) *D
 			WithCredentials:   ds.WithCredentials.Value(),
 			IsDefault:         ds.IsDefault.Value(),
 			JSONData:          ds.JSONData.Value(),
-			SecureJsonData:    ds.SecureJsonData.Value(),
+			SecureJSONData:    ds.SecureJSONData.Value(),
 			Editable:          ds.Editable.Value(),
 			Version:           ds.Version.Value(),
 		})
@@ -183,7 +183,7 @@ func (cfg *DatasourcesAsConfigV0) mapToDatasourceFromConfig(apiVersion int64) *D
 			Name:              ds.Name,
 			Type:              ds.Type,
 			Access:            ds.Access,
-			Url:               ds.Url,
+			URL:               ds.URL,
 			Password:          ds.Password,
 			User:              ds.User,
 			Database:          ds.Database,
@@ -193,7 +193,7 @@ func (cfg *DatasourcesAsConfigV0) mapToDatasourceFromConfig(apiVersion int64) *D
 			WithCredentials:   ds.WithCredentials,
 			IsDefault:         ds.IsDefault,
 			JSONData:          ds.JSONData,
-			SecureJsonData:    ds.SecureJsonData,
+			SecureJSONData:    ds.SecureJSONData,
 			Editable:          ds.Editable,
 			Version:           ds.Version,
 		})
@@ -222,7 +222,7 @@ func createInsertCommand(ds *DataSourceFromConfig) *models.AddDataSourceCommand 
 		Name:              ds.Name,
 		Type:              ds.Type,
 		Access:            models.DsAccess(ds.Access),
-		Url:               ds.Url,
+		Url:               ds.URL,
 		Password:          ds.Password,
 		User:              ds.User,
 		Database:          ds.Database,
@@ -232,7 +232,7 @@ func createInsertCommand(ds *DataSourceFromConfig) *models.AddDataSourceCommand 
 		WithCredentials:   ds.WithCredentials,
 		IsDefault:         ds.IsDefault,
 		JsonData:          jsonData,
-		SecureJsonData:    ds.SecureJsonData,
+		SecureJsonData:    ds.SecureJSONData,
 		ReadOnly:          !ds.Editable,
 	}
 }
@@ -251,7 +251,7 @@ func createUpdateCommand(ds *DataSourceFromConfig, id int64) *models.UpdateDataS
 		Name:              ds.Name,
 		Type:              ds.Type,
 		Access:            models.DsAccess(ds.Access),
-		Url:               ds.Url,
+		Url:               ds.URL,
 		Password:          ds.Password,
 		User:              ds.User,
 		Database:          ds.Database,
@@ -261,7 +261,7 @@ func createUpdateCommand(ds *DataSourceFromConfig, id int64) *models.UpdateDataS
 		WithCredentials:   ds.WithCredentials,
 		IsDefault:         ds.IsDefault,
 		JsonData:          jsonData,
-		SecureJsonData:    ds.SecureJsonData,
+		SecureJsonData:    ds.SecureJSONData,
 		ReadOnly:          !ds.Editable,
 	}
 }
