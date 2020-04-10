@@ -1,6 +1,6 @@
 import React, { PureComponent } from 'react';
 import { FieldConfigSource, GrafanaTheme, PanelData, PanelPlugin } from '@grafana/data';
-import { Button, stylesFactory, Icon, Forms } from '@grafana/ui';
+import { Button, stylesFactory, Icon, Forms, IconButton } from '@grafana/ui';
 import { css, cx } from 'emotion';
 import config from 'app/core/config';
 import AutoSizer from 'react-virtualized-auto-sizer';
@@ -17,7 +17,6 @@ import { Unsubscribable } from 'rxjs';
 import { DisplayMode, displayModes, PanelEditorTab } from './types';
 import { PanelEditorTabs } from './PanelEditorTabs';
 import { DashNavTimeControls } from '../DashNav/DashNavTimeControls';
-import { BackButton } from 'app/core/components/BackButton/BackButton';
 import { LocationState } from 'app/types';
 import { calculatePanelSize } from './utils';
 import { initPanelEditor, panelEditorCleanUp, updatePanelEditorUIState } from './state/actions';
@@ -232,7 +231,7 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
     return (
       <div className={styles.editorToolbar}>
         <div className={styles.toolbarLeft}>
-          <BackButton onClick={this.onPanelExit} />
+          <IconButton name="arrow-left" onClick={this.onPanelExit} size="xl" />
           <span className={styles.editorTitle}>{dashboard.title} / Edit Panel</span>
         </div>
         <div className={styles.toolbarLeft}>

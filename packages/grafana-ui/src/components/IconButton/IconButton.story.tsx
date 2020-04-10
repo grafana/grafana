@@ -45,7 +45,6 @@ function renderScenario(surface: string, theme: GrafanaTheme, sizes: IconSize[],
   return (
     <div
       className={css`
-        height: 300px;
         padding: 30px;
         background: ${bg};
         button {

@@ -6,7 +6,7 @@ import { css, cx } from 'emotion';
 import { useTheme } from '../../themes/ThemeContext';
 import { GrafanaTheme } from '@grafana/data';
 
-export interface Props extends React.HTMLAttributes<HTMLButtonElement> {
+export interface Props extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   name: IconName;
   size?: IconSize;
   /** Need this to change hover effect based on what surface it is on */
@@ -60,6 +60,13 @@ const getStyles = stylesFactory((theme: GrafanaTheme, surface: SurfaceType, size
       z-index: 0;
       margin-right: ${theme.spacing.xs};
 
+      &[disabled],
+      &:disabled {
+        cursor: not-allowed;
+        opacity: 0.65;
+        box-shadow: none;
+      }
+
       &:before {
         content: '';
         display: block;
@@ -80,6 +87,8 @@ const getStyles = stylesFactory((theme: GrafanaTheme, surface: SurfaceType, size
       }
 
       &:hover {
+        color: ${theme.colors.linkHover};
+
         &:before {
           background-color: ${hoverColor};
           border: none;
