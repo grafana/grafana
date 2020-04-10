@@ -182,9 +182,9 @@ export const DefaultFieldConfigEditor: React.FC<Props> = ({ data, onChange, conf
 
   return (
     <>
-      {Object.keys(groupedConfigs).map(k => {
+      {Object.keys(groupedConfigs).map((k, i) => {
         return (
-          <OptionsGroup title={k}>
+          <OptionsGroup title={k} key={`${k}/${i}`}>
             <>
               {groupedConfigs[k].map(c => {
                 return renderEditor(c);
