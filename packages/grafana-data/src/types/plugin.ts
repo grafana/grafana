@@ -4,6 +4,7 @@ import { KeyValue } from './data';
 export enum PluginState {
   alpha = 'alpha', // Only included it `enable_alpha` is true
   beta = 'beta', // Will show a warning banner
+  deprecated = 'deprecated', // Will continue to work -- but not show up in the the options to add
 }
 
 export enum PluginType {

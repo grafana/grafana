@@ -1,6 +1,6 @@
 import React, { PureComponent } from 'react';
 import { Field, LinkModel, LogRowModel, TimeZone, DataQueryResponse, GrafanaTheme } from '@grafana/data';
-import { Icon } from '@grafana/ui';
+import { Icon } from '../Icon/Icon';
 import { cx, css } from 'emotion';
 
 import {

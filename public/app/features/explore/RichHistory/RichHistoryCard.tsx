@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 import { connect } from 'react-redux';
 import { hot } from 'react-hot-loader';
 import { css, cx } from 'emotion';
-import { stylesFactory, useTheme, Forms, Button, Icon } from '@grafana/ui';
+import { stylesFactory, useTheme, TextArea, Button, Icon } from '@grafana/ui';
+
 import { GrafanaTheme, AppEvents, DataSourceApi } from '@grafana/data';
 import { RichHistoryQuery, ExploreId } from 'app/types/explore';
 import { copyStringToClipboard, createUrlFromRichHistory, createDataQuery } from 'app/core/utils/richHistory';
@@ -194,7 +195,7 @@ export function RichHistoryCard(props: Props) {
 
   const updateComment = (
     <div className={styles.updateCommentContainer}>
-      <Forms.TextArea
+      <TextArea
         value={comment}
         placeholder={comment ? undefined : 'An optional description of what the query does.'}
         onChange={e => setComment(e.currentTarget.value)}
