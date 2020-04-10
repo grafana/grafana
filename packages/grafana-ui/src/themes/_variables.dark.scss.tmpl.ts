@@ -126,9 +126,9 @@ $panel-header-hover-bg: ${theme.colors.gray15};
 $panel-corner: $panel-bg;
 
 // page header
-$page-header-bg: ${theme.colors.gray15};
+$page-header-bg: ${theme.colors.pageHeaderBg};
 $page-header-shadow: inset 0px -4px 14px $dark-3;
-$page-header-border-color: $dark-9;
+$page-header-border-color: ${theme.colors.pageHeaderBorder};
 
 $divider-border-color: $gray-1;
 

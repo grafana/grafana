@@ -4,7 +4,6 @@ import { GrafanaTheme, toPascalCase } from '@grafana/data';
 import { stylesFactory } from '../../themes/stylesFactory';
 import { useTheme } from '../../themes/ThemeContext';
 import { IconName, IconType, IconSize } from '../../types/icon';
-import { ComponentSize } from '../../types/size';
 //@ts-ignore
 import * as DefaultIcon from '@iconscout/react-unicons';
 import * as MonoIcon from './assets';
@@ -72,7 +71,7 @@ export const Icon = React.forwardRef<HTMLDivElement, IconProps>(
 Icon.displayName = 'Icon';
 
 /* Transform string with px to number and add 2 pxs as path in svg is 2px smaller */
-const getSvgSize = (size: ComponentSize | 'xl' | 'xxl', theme: GrafanaTheme) => {
+export const getSvgSize = (size: IconSize, theme: GrafanaTheme) => {
   let svgSize;
   if (size === 'xl') {
     svgSize = Number(theme.typography.heading.h1.slice(0, -2));
