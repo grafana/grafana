@@ -80,7 +80,7 @@ export class TransformationsEditor extends React.PureComponent<Props> {
           const output = transformDataFrame(transformations.slice(i), input);
 
           if (transformationUI) {
-            editor = React.createElement(transformationUI.component, {
+            editor = React.createElement(transformationUI.editor, {
               options: { ...transformationUI.transformation.defaultOptions, ...t.options },
               input,
               onChange: (options: any) => {

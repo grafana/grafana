@@ -3,16 +3,26 @@ import React from 'react';
 import { DataFrame, DataTransformerInfo } from '../types';
 
 export interface TransformerUIProps<T> {
-  // Transformer configuration, persisted on panel's model
+  /**
+   * Transformer configuration, persisted on panel's model
+   */
   options: T;
-  // Pre-transformation data frame
+  /**
+   * Pre-transform data rames
+   */
   input: DataFrame[];
   onChange: (options: T) => void;
 }
 
 export interface TransformerRegistyItem<TOptions> extends RegistryItem {
-  component: React.ComponentType<TransformerUIProps<TOptions>>;
+  /**
+   * Object describing transformer configuration
+   */
   transformation: DataTransformerInfo<TOptions>;
+  /**
+   * React component used as UI for the transformer
+   */
+  editor: React.ComponentType<TransformerUIProps<TOptions>>;
 }
 
 /**

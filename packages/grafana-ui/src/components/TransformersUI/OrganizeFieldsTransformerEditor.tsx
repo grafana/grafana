@@ -220,7 +220,7 @@ const fieldNamesFromInput = (input: DataFrame[]): string[] => {
 
 export const organizeFieldsTransformRegistryItem: TransformerRegistyItem<OrganizeFieldsTransformerOptions> = {
   id: DataTransformerID.organize,
-  component: OrganizeFieldsTransformerEditor,
+  editor: OrganizeFieldsTransformerEditor,
   transformation: standardTransformers.organizeFieldsTransformer,
   name: 'Organize fields',
   description: 'Order, filter and rename fields',

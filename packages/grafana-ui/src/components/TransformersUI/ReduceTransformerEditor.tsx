@@ -32,7 +32,7 @@ export const ReduceTransformerEditor: React.FC<TransformerUIProps<ReduceTransfor
 
 export const reduceTransformRegistryItem: TransformerRegistyItem<ReduceTransformerOptions> = {
   id: DataTransformerID.reduce,
-  component: ReduceTransformerEditor,
+  editor: ReduceTransformerEditor,
   transformation: standardTransformers.reduceTransformer,
   name: 'Reduce',
   description: 'Return a DataFrame with the reduction results',

@@ -162,7 +162,7 @@ const FilterPill: React.FC<FilterPillProps> = ({ label, selected, onClick }) => 
 
 export const filterFieldsByNameTransformRegistryItem: TransformerRegistyItem<FilterFieldsByNameTransformerOptions> = {
   id: DataTransformerID.filterFieldsByName,
-  component: FilterByNameTransformerEditor,
+  editor: FilterByNameTransformerEditor,
   transformation: standardTransformers.filterFieldsByNameTransformer,
   name: 'Filter by name',
   description: 'Filter fields by name',

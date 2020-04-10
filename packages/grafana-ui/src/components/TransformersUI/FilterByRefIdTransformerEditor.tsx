@@ -162,7 +162,7 @@ const FilterPill: React.FC<FilterPillProps> = ({ label, selected, onClick }) => 
 
 export const filterFramesByRefIdTransformRegistryItem: TransformerRegistyItem<FilterFramesByRefIdTransformerOptions> = {
   id: DataTransformerID.filterByRefId,
-  component: FilterByRefIdTransformerEditor,
+  editor: FilterByRefIdTransformerEditor,
   transformation: standardTransformers.filterFramesByRefIdTransformer,
   name: 'Filter by refId',
   description: 'Filter results by refId',
