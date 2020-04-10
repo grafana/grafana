@@ -49,7 +49,7 @@ export interface OptionsEditorItem<TOptions, TSettings, TEditorProps, TValue> ex
 interface OptionEditorConfig<TOptions, TSettings, TValue = any> {
   id: keyof TOptions & string;
   name: string;
-  description: string;
+  description?: string;
   settings?: TSettings;
   defaultValue?: TValue;
 }

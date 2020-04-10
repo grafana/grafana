@@ -40,8 +40,6 @@ exports[`DashboardPage Dashboard init completed  Should render dashboard grid 1`
           "canSave": true,
           "canShare": true,
           "canStar": true,
-          "fullscreen": false,
-          "isEditing": false,
           "showSettings": true,
         },
         "originalTemplating": Array [],
@@ -98,7 +96,6 @@ exports[`DashboardPage Dashboard init completed  Should render dashboard grid 1`
         "version": 0,
       }
     }
-    isEditing={false}
     isFullscreen={false}
     onAddPanel={[Function]}
   />
@@ -156,8 +153,6 @@ exports[`DashboardPage Dashboard init completed  Should render dashboard grid 1`
                 "canSave": true,
                 "canShare": true,
                 "canStar": true,
-                "fullscreen": false,
-                "isEditing": false,
                 "showSettings": true,
               },
               "originalTemplating": Array [],
@@ -252,8 +247,6 @@ exports[`DashboardPage Dashboard init completed  Should render dashboard grid 1`
                 "canSave": true,
                 "canShare": true,
                 "canStar": true,
-                "fullscreen": false,
-                "isEditing": false,
                 "showSettings": true,
               },
               "originalTemplating": Array [],
@@ -310,9 +303,9 @@ exports[`DashboardPage Dashboard init completed  Should render dashboard grid 1`
               "version": 0,
             }
           }
-          isEditing={false}
-          isFullscreen={false}
+          editPanel={null}
           scrollTop={0}
+          viewPanel={null}
         />
       </div>
     </CustomScrollbar>
@@ -378,8 +371,6 @@ exports[`DashboardPage When dashboard has editview url state should render setti
           "canSave": true,
           "canShare": true,
           "canStar": true,
-          "fullscreen": false,
-          "isEditing": false,
           "showSettings": true,
         },
         "originalTemplating": Array [],
@@ -436,7 +427,6 @@ exports[`DashboardPage When dashboard has editview url state should render setti
         "version": 0,
       }
     }
-    isEditing={false}
     isFullscreen={false}
     onAddPanel={[Function]}
   />
@@ -494,8 +484,6 @@ exports[`DashboardPage When dashboard has editview url state should render setti
                 "canSave": true,
                 "canShare": true,
                 "canStar": true,
-                "fullscreen": false,
-                "isEditing": false,
                 "showSettings": true,
               },
               "originalTemplating": Array [],
@@ -590,8 +578,6 @@ exports[`DashboardPage When dashboard has editview url state should render setti
                 "canSave": true,
                 "canShare": true,
                 "canStar": true,
-                "fullscreen": false,
-                "isEditing": false,
                 "showSettings": true,
               },
               "originalTemplating": Array [],
@@ -648,9 +634,9 @@ exports[`DashboardPage When dashboard has editview url state should render setti
               "version": 0,
             }
           }
-          isEditing={false}
-          isFullscreen={false}
+          editPanel={null}
           scrollTop={0}
+          viewPanel={null}
         />
       </div>
     </CustomScrollbar>
@@ -692,8 +678,6 @@ exports[`DashboardPage When dashboard has editview url state should render setti
           "canSave": true,
           "canShare": true,
           "canStar": true,
-          "fullscreen": false,
-          "isEditing": false,
           "showSettings": true,
         },
         "originalTemplating": Array [],

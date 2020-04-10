@@ -16,6 +16,7 @@ Array [
   >
     <Icon
       name="bars"
+      size="xl"
     />
     <span
       className="sidemenu__close"
