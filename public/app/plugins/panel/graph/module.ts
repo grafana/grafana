@@ -360,35 +360,35 @@ export const plugin = new PanelPlugin<GraphPanelOptions, GraphFieldConfig>(null)
   .setPanelOptions(builder => {
     builder
       .addBooleanSwitch({
-        category: 'Draw Mode',
+        category: ['Draw Mode'],
         path: 'bars',
         name: 'Bars',
         description: 'show bars',
         defaultValue: false,
       })
       .addBooleanSwitch({
-        category: 'Draw Mode',
+        category: ['Draw Mode'],
         path: 'lines',
         name: 'Lines',
         description: 'show bars',
         defaultValue: true,
       })
       .addBooleanSwitch({
-        category: 'Draw Mode',
+        category: ['Draw Mode'],
         path: 'points',
         name: 'Points',
         description: 'show bars',
         defaultValue: false,
       })
       .addBooleanSwitch({
-        category: 'Legend',
+        category: ['Legend'],
         path: 'legend.isVisible',
         name: 'Show',
         description: 'Display the Y axis',
         defaultValue: true,
       })
       .addBooleanSwitch({
-        category: 'Legend',
+        category: ['Legend'],
         path: 'legend.asTable',
         name: 'As Table',
         description: 'Show the legend as a table',
