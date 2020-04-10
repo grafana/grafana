@@ -24,7 +24,6 @@ const getIconStyles = stylesFactory((theme: GrafanaTheme) => {
       vertical-align: middle;
       display: inline-block;
       margin-bottom: ${theme.spacing.xxs};
-      cursor: pointer;
       fill: currentColor;
     `,
     orange: css`

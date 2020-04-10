@@ -94,16 +94,3 @@ func FrameToSeriesSlice(frame *data.Frame) (TimeSeriesSlice, error) {
 	return seriesSlice, nil
 
 }
-
-// FramesFromBytes returns a data.Frame slice from marshalled arrow dataframes.
-func FramesFromBytes(bFrames [][]byte) ([]*data.Frame, error) {
-	frames := make([]*data.Frame, len(bFrames))
-	for i, bFrame := range bFrames {
-		var err error
-		frames[i], err = data.UnmarshalArrow(bFrame)
-		if err != nil {
-			return nil, err
-		}
-	}
-	return frames, nil
-}

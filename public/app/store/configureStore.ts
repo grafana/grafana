@@ -1,6 +1,6 @@
-import { configureStore as reduxConfigureStore } from '@reduxjs/toolkit';
+import { configureStore as reduxConfigureStore, getDefaultMiddleware } from '@reduxjs/toolkit';
 import { createLogger } from 'redux-logger';
-import thunk from 'redux-thunk';
+import thunk, { ThunkMiddleware } from 'redux-thunk';
 
 import { setStore } from './store';
 import { StoreState } from 'app/types/store';
@@ -26,7 +26,7 @@ export function configureStore() {
 
   const store = reduxConfigureStore<StoreState>({
     reducer: createRootReducer(),
-    middleware,
+    middleware: [...getDefaultMiddleware<StoreState>(), ...middleware] as [ThunkMiddleware<StoreState>],
     devTools: process.env.NODE_ENV !== 'production',
     preloadedState: {
       navIndex: buildInitialState(),

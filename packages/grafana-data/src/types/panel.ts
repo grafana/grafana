@@ -123,6 +123,7 @@ export interface PanelOptionsEditorConfig<TOptions, TSettings = any, TValue = an
   name: string;
   description?: string;
   settings?: TSettings;
+  category?: string[];
   defaultValue?: TValue;
   showIf?: (currentConfig: TOptions) => boolean;
 }
