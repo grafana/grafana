@@ -117,9 +117,14 @@ export const run = (includeInternalScripts = false) => {
       });
 
     // React generator
-    program.command('component:create').action(async () => {
-      await execTask(componentCreateTask)({});
-    });
+    program
+      .command('component:create')
+      .description(
+        'Scaffold React components. Optionally add test, story and .mdx files. The components are created in the same dir the script is run from.'
+      )
+      .action(async () => {
+        await execTask(componentCreateTask)({});
+      });
   }
 
   program
