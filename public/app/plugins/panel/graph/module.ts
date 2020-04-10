@@ -19,10 +19,13 @@ import {
   DataLink,
   DateTimeInput,
   VariableSuggestion,
+  PanelPlugin,
 } from '@grafana/data';
 
 import { GraphContextMenuCtrl } from './GraphContextMenuCtrl';
 import { getDataLinksVariableSuggestions } from 'app/features/panel/panellinks/link_srv';
+import { graphPanelMigrationHandler, graphPanelChangedHandler } from './GraphMigrations';
+import { GraphPanelOptions,GraphFieldConfig } from './types';
 
 import { auto } from 'angular';
 import { AnnotationsSrv } from 'app/features/annotations/all';
@@ -351,4 +354,86 @@ class GraphCtrl extends MetricsPanelCtrl {
   };
 }
 
-export { GraphCtrl, GraphCtrl as PanelCtrl };
+
+// Use new react style configuration
+export const plugin = new PanelPlugin<GraphPanelOptions,GraphFieldConfig>(null)
+  .useFieldConfig({})
+  .setPanelOptions(builder => {
+    builder
+      .addBooleanSwitch({
+        category: 'Draw Mode',
+        path: 'bars',
+        name: 'Bars',
+        description: "show bars",
+        defaultValue: false,
+      })
+      .addBooleanSwitch({
+        category: 'Draw Mode',
+        path: 'lines',
+        name: 'Lines',
+        description: "show bars",
+        defaultValue: true,
+      })
+      .addBooleanSwitch({
+        category: 'Draw Mode',
+        path: 'points',
+        name: 'Points',
+        description: "show bars",
+        defaultValue: false,
+      })
+      .addBooleanSwitch({
+        category: 'Legend',
+        path: 'legend.isVisible',
+        name: 'Show',
+        description: "Display the Y axis",
+        defaultValue: true,
+      })
+      .addBooleanSwitch({
+        category: 'Legend',
+        path: 'legend.asTable',
+        name: 'As Table',
+        description: "Show the legend as a table",
+        defaultValue: false,
+      })
+  })
+  .setPanelChangeHandler(graphPanelChangedHandler)
+  .setMigrationHandler(graphPanelMigrationHandler);
+
+// Use the angular ctrt rather than a react one
+plugin.angularPanelCtrl = GraphCtrl;
+
+
+
+
+
+  // useCustomConfig: builder => {
+  //   builder
+  //     .addBooleanSwitch({
+  //       path: 'showAxis',
+  //       name: 'Show Axis',
+  //       description: "Display the Y axis",
+  //       defaultValue: true,
+  //     })
+  //     .addSelect({
+  //       path: 'logBase',
+  //       name: 'Scale',
+  //       description: 'y axis display scaling',
+  //       settings: {
+  //         options: [
+  //           { value: 1, label: 'linear' },
+  //           { value: 2, label: 'log (base 2)' },
+  //           { value: 3, label: 'log (base 10)' },
+  //           { value: 4, label: 'log (base 32)' },
+  //           { value: 5, label: 'log (base 1024)' },
+  //         ],
+  //       },
+  //       defaultValue: 1,
+  //     })
+  //     .addTextInput({
+  //       path: 'axisLabel',
+  //       name: 'Axis Label',
+  //       description: 'the Y axis label',
+  //       settings: { },
+  //     });
+  //   },
+  // })
