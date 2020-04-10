@@ -5,43 +5,44 @@ import { FormInputSize } from '../Forms/types';
 export type SelectValue<T> = T | SelectableValue<T> | T[] | Array<SelectableValue<T>>;
 
 export interface SelectCommonProps<T> {
+  allowCustomValue?: boolean;
+  autoFocus?: boolean;
+  backspaceRemovesValue?: boolean;
   className?: string;
-  options?: Array<SelectableValue<T>>;
+  components?: any;
   defaultValue?: any;
-  inputValue?: string;
-  value?: SelectValue<T>;
+  disabled?: boolean;
+  formatCreateLabel?: (input: string) => string;
   getOptionLabel?: (item: SelectableValue<T>) => string;
   getOptionValue?: (item: SelectableValue<T>) => string;
-  onCreateOption?: (value: string) => void;
+  inputValue?: string;
+  isClearable?: boolean;
+  isLoading?: boolean;
+  isMulti?: boolean;
+  isOpen?: boolean;
+  isSearchable?: boolean;
+  maxMenuHeight?: number;
+  menuPlacement?: 'auto' | 'bottom' | 'top';
+  menuPosition?: 'fixed' | 'absolute';
+  noOptionsMessage?: string;
+  onBlur?: () => void;
   onChange: (value: SelectableValue<T>) => {} | void;
+  onCloseMenu?: () => void;
+  onCreateOption?: (value: string) => void;
   onInputChange?: (label: string) => void;
   onKeyDown?: (event: React.KeyboardEvent) => void;
-  placeholder?: string;
-  disabled?: boolean;
-  isSearchable?: boolean;
-  isClearable?: boolean;
-  autoFocus?: boolean;
-  openMenuOnFocus?: boolean;
-  onBlur?: () => void;
-  maxMenuHeight?: number;
-  isLoading?: boolean;
-  noOptionsMessage?: string;
-  isMulti?: boolean;
-  backspaceRemovesValue?: boolean;
-  isOpen?: boolean;
-  components?: any;
   onOpenMenu?: () => void;
-  onCloseMenu?: () => void;
-  tabSelectsValue?: boolean;
-  formatCreateLabel?: (input: string) => string;
-  allowCustomValue?: boolean;
-  width?: number;
-  size?: FormInputSize;
+  openMenuOnFocus?: boolean;
+  options?: Array<SelectableValue<T>>;
+  placeholder?: string;
   /** item to be rendered in front of the input */
   prefix?: JSX.Element | string | null;
   /** Use a custom element to control Select. A proper ref to the renderControl is needed if 'portal' isn't set to null*/
   renderControl?: ControlComponent<T>;
-  menuPosition?: 'fixed' | 'absolute';
+  size?: FormInputSize;
+  tabSelectsValue?: boolean;
+  value?: SelectValue<T>;
+  width?: number;
 }
 
 export interface SelectAsyncProps<T> {

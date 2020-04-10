@@ -19,7 +19,7 @@ exports[`Render should render component 1`] = `
         className="alert-rule-item__name"
       >
         <a
-          href="https://something.something.darkside?panelId=1&fullscreen&edit&tab=alert"
+          href="https://something.something.darkside?editPanel=1&tab=alert"
         >
           <Highlighter
             highlightClassName="highlight-search-match"
@@ -71,7 +71,7 @@ exports[`Render should render component 1`] = `
     </button>
     <a
       className="btn btn-small btn-inverse alert-list__btn width-2"
-      href="https://something.something.darkside?panelId=1&fullscreen&edit&tab=alert"
+      href="https://something.something.darkside?editPanel=1&tab=alert"
       title="Edit alert rule"
     >
       <Icon

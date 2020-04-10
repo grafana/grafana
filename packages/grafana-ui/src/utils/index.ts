@@ -8,8 +8,9 @@ export { default as ansicolor } from './ansicolor';
 
 import * as DOMUtil from './dom'; // includes Element.closest polyfil
 export { DOMUtil };
+export { renderOrCallToRender } from './renderOrCallToRender';
 
 // Exposes standard editors for registries of optionsUi config and panel options UI
 export { getStandardFieldConfigs, getStandardOptionEditors } from './standardEditors';
-
-export { renderOrCallToRender } from './renderOrCallToRender';
+// Exposes standard transformers for registry of Transformations
+export { getStandardTransformers } from './standardTransformers';

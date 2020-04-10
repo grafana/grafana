@@ -25,9 +25,9 @@ export const PanelOptionsEditor: React.FC<PanelOptionsEditorProps<any>> = ({ plu
 
   return (
     <>
-      {Object.keys(optionEditors).map(c => {
+      {Object.keys(optionEditors).map((c, i) => {
         const optionsToShow = optionEditors[c]
-          .map((e, i) => {
+          .map((e, j) => {
             if (e.showIf && !e.showIf(options)) {
               return null;
             }
@@ -38,7 +38,7 @@ export const PanelOptionsEditor: React.FC<PanelOptionsEditorProps<any>> = ({ plu
               </Forms.Label>
             );
             return (
-              <Forms.Field label={label} key={`${e.id}/i`}>
+              <Forms.Field label={label} key={`${e.id}/${j}`}>
                 <e.editor
                   value={lodashGet(options, e.path)}
                   onChange={value => onOptionChange(e.path, value)}
@@ -50,7 +50,7 @@ export const PanelOptionsEditor: React.FC<PanelOptionsEditorProps<any>> = ({ plu
           .filter(e => e !== null);
 
         return optionsToShow.length > 0 ? (
-          <OptionsGroup title={c} defaultToClosed>
+          <OptionsGroup title={c} defaultToClosed key={`${c}/${i}`}>
             <div>{optionsToShow}</div>
           </OptionsGroup>
         ) : null;

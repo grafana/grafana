@@ -41,7 +41,7 @@ export const VisualizationTabUnconnected: FC<Props> = ({ panel, plugin, changePa
       if (e.key === 'Enter') {
         const query = e.currentTarget.value;
         const plugins = getAllPanelPluginMeta();
-        const match = filterPluginList(plugins, query);
+        const match = filterPluginList(plugins, query, plugin.meta);
         if (match && match.length) {
           onPluginTypeChange(match[0]);
         }
