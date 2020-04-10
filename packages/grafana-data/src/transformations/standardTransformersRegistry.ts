@@ -1,6 +1,6 @@
-import { Registry, RegistryItem } from '../utils';
 import React from 'react';
 import { DataFrame, DataTransformerInfo } from '../types';
+import { Registry, RegistryItem } from '../utils/Registry';
 
 export interface TransformerUIProps<T> {
   /**
