@@ -19,17 +19,15 @@ export abstract class FunctionalVector<T = any> implements Vector<T>, Iterable<T
   }
 
   forEach(iterator: (row: T) => void) {
-    for (let i = 0; i < this.length; i++) {
-      iterator(this.get(i));
-    }
+    return vectorator(this).forEach(iterator);
   }
 
-  map<V>(iterator: (item: T, index: number) => V) {
-    const acc: V[] = [];
-    for (let i = 0; i < this.length; i++) {
-      acc.push(iterator(this.get(i), i));
-    }
-    return acc;
+  map<V>(transform: (item: T, index: number) => V) {
+    return vectorator(this).map(transform);
+  }
+
+  filter<V>(predicate: (item: T) => V) {
+    return vectorator(this).filter(predicate);
   }
 
   toArray(): T[] {
@@ -52,10 +50,16 @@ export function vectorator<T>(vector: Vector<T>) {
       }
     },
 
-    map<V>(transform: (item: T) => V) {
+    forEach(iterator: (row: T) => void) {
+      for (let i = 0; i < vector.length; i++) {
+        iterator(vector.get(i));
+      }
+    },
+
+    map<V>(transform: (item: T, index: number) => V) {
       const result: V[] = [];
-      for (const val of this) {
-        result.push(transform(val));
+      for (let i = 0; i < vector.length; i++) {
+        result.push(transform(vector.get(i), i));
       }
       return result;
     },
