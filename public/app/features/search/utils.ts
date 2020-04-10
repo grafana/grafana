@@ -112,3 +112,20 @@ export const parseQuery = (query: any) => {
 export const mergeReducers = (reducers: any[]) => (prevState: any, action: SearchAction) => {
   return reducers.reduce((nextState, reducer) => ({ ...nextState, ...reducer(nextState, action) }), prevState);
 };
+
+/**
+ * Collect uids of all checked folders and dashboards. Used for delete operation, among others
+ * @param sections
+ */
+export const getCheckedUids = (sections: DashboardSection[]): { folders: string[]; dashboards: string[] } => {
+  return sections.reduce(
+    (result, section) => {
+      if (section?.id !== 0 && section.checked) {
+        return { ...result, folders: [...result.folders, section.uid] };
+      } else {
+        return { ...result, dashboards: section.items.filter(item => item.checked).map(item => item.uid) };
+      }
+    },
+    { folders: [], dashboards: [] }
+  );
+};

@@ -1,6 +1,6 @@
-import { findSelected, getFlattenedSections, markSelected, mergeReducers } from './utils';
+import { findSelected, getCheckedUids, getFlattenedSections, markSelected, mergeReducers } from './utils';
 import { DashboardSection } from './types';
-import { sections } from './testData';
+import { sections, searchResults } from './testData';
 
 describe('Search utils', () => {
   describe('getFlattenedSections', () => {
@@ -119,6 +119,19 @@ describe('Search utils', () => {
       expect(newState).toEqual({ reducer1: false, reducer2: false });
       const newState2 = mergedReducers(newState, { type: 'reducer1' });
       expect(newState2).toEqual({ reducer1: true, reducer2: false });
+    });
+  });
+
+  describe('getCheckedUids', () => {
+    it('should return object with empty arrays if no checked items are available', () => {
+      expect(getCheckedUids(sections as DashboardSection[])).toEqual({ folders: [], dashboards: [] });
+    });
+
+    it('should return uids for all checked items', () => {
+      expect(getCheckedUids(searchResults as DashboardSection[])).toEqual({
+        folders: ['JB_zdOUWk'],
+        dashboards: ['lBdLINUWk', '8DY63kQZk'],
+      });
     });
   });
 });
