@@ -409,7 +409,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme, props: Props) => {
         cursor: col-resize;
         width: ${paneSpaceing};
         border-right-width: 1px;
-        margin-top: ${paneSpaceing + 2};
+        margin-top: 18px;
       `
     ),
     resizerH: cx(
