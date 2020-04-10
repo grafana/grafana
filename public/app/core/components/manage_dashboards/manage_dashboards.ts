@@ -338,26 +338,6 @@ export class ManageDashboardsCtrl {
 
     return url;
   }
-
-  // TODO handle this inside SearchResults component
-  toggleSelection = (item: any, evt: any) => {
-    if (evt) {
-      evt.stopPropagation();
-      evt.preventDefault();
-    }
-
-    item.checked = !item.checked;
-
-    if (item.items) {
-      _.each(item.items, i => {
-        i.checked = item.checked;
-      });
-    }
-
-    if (this.selectionChanged) {
-      this.selectionChanged();
-    }
-  };
 }
 
 export function manageDashboardsDirective() {
