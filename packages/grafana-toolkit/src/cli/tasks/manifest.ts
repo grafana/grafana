@@ -71,7 +71,7 @@ const manifestRunner: TaskRunner<ManifestOptions> = async ({ folder }) => {
 
   const pluginPath = path.join(folder, 'plugin.json');
   const plugin = require(pluginPath);
-  const url = `https://grafana.com/api/plugins/${plugin.id}/sign`;
+  const url = `https://grafana.com/api/plugins/${plugin.id}/ci/sign`;
   manifest.plugin = plugin.id;
   manifest.version = plugin.version;
 
