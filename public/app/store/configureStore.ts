@@ -23,7 +23,7 @@ export function configureStore() {
 
   const middleware = process.env.NODE_ENV !== 'production' ? [toggleLogActionsMiddleware, logger] : [];
 
-  const reduxDefaultMiddlewars = getDefaultMiddleware<StoreState>({
+  const reduxDefaultMiddleware = getDefaultMiddleware<StoreState>({
     thunk: true,
     serializableCheck: false,
     immutableCheck: false,
