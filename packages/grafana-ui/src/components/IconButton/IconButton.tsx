@@ -1,6 +1,6 @@
 import React from 'react';
 import { Icon, getSvgSize } from '../Icon/Icon';
-import { IconName, IconSize } from '../../types/icon';
+import { IconName, IconSize, IconType } from '../../types/icon';
 import { stylesFactory } from '../../themes/stylesFactory';
 import { css, cx } from 'emotion';
 import { useTheme } from '../../themes/ThemeContext';
@@ -11,18 +11,19 @@ export interface Props extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   size?: IconSize;
   /** Need this to change hover effect based on what surface it is on */
   surface?: SurfaceType;
+  iconType?: IconType;
 }
 
 type SurfaceType = 'body' | 'panel' | 'header';
 
 export const IconButton = React.forwardRef<HTMLButtonElement, Props>(
-  ({ name, size = 'md', surface = 'panel', className, ...restProps }, ref) => {
+  ({ name, size = 'md', surface = 'panel', iconType, className, ...restProps }, ref) => {
     const theme = useTheme();
     const styles = getStyles(theme, surface, size);
 
     return (
       <button ref={ref} {...restProps} className={cx(styles.button, className)}>
-        <Icon name={name} size={size} />
+        <Icon name={name} size={size} className={styles.icon} type={iconType} />
       </button>
     );
   }
@@ -31,22 +32,22 @@ export const IconButton = React.forwardRef<HTMLButtonElement, Props>(
 function getHoverColor(theme: GrafanaTheme, surface: SurfaceType): string {
   switch (surface) {
     case 'body':
-      return theme.isLight ? theme.colors.gray85 : theme.colors.gray15;
+      return theme.isLight ? theme.colors.gray95 : theme.colors.gray15;
     case 'panel':
-      return theme.isLight ? theme.colors.gray70 : theme.colors.gray25;
+      return theme.isLight ? theme.colors.gray6 : theme.colors.gray25;
     case 'header':
-      return theme.isLight ? theme.colors.gray70 : theme.colors.gray33;
+      return theme.isLight ? theme.colors.gray85 : theme.colors.gray25;
   }
 }
 
 const getStyles = stylesFactory((theme: GrafanaTheme, surface: SurfaceType, size: IconSize) => {
   const hoverColor = getHoverColor(theme, surface);
-  const pixelSize = getSvgSize(size, theme);
+  const pixelSize = getSvgSize(size);
 
   return {
     button: css`
-      width: ${pixelSize * theme.typography.lineHeight.md}px;
-      height: ${pixelSize * theme.typography.lineHeight.md}px;
+      width: ${pixelSize}px;
+      height: ${pixelSize}px;
       background: transparent;
       border: none;
       padding: 0;
@@ -94,9 +95,13 @@ const getStyles = stylesFactory((theme: GrafanaTheme, surface: SurfaceType, size
           border: none;
           box-shadow: none;
           opacity: 1;
-          transform: scale(0.7);
+          transform: scale(0.8);
         }
       }
+    `,
+    icon: css`
+      margin-bottom: 0;
+      display: flex;
     `,
   };
 });

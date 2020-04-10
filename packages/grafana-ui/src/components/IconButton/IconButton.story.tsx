@@ -20,9 +20,9 @@ export const simple = () => {
 
   return (
     <div>
-      {renderScenario('body', theme, ['sm', 'md', 'lg', 'xl'], ['search', 'trash-alt', 'arrow-left', 'times'])}
-      {renderScenario('panel', theme, ['sm', 'md', 'lg', 'xl'], ['search', 'trash-alt', 'arrow-left', 'times'])}
-      {renderScenario('header', theme, ['sm', 'md', 'lg', 'xl'], ['search', 'trash-alt', 'arrow-left', 'times'])}
+      {renderScenario('body', theme, ['sm', 'md', 'lg', 'xl', 'xxl'], ['search', 'trash-alt', 'arrow-left', 'times'])}
+      {renderScenario('panel', theme, ['sm', 'md', 'lg', 'xl', 'xxl'], ['search', 'trash-alt', 'arrow-left', 'times'])}
+      {renderScenario('header', theme, ['sm', 'md', 'lg', 'xl', 'xxl'], ['search', 'trash-alt', 'arrow-left', 'times'])}
     </div>
   );
 };
@@ -48,16 +48,16 @@ function renderScenario(surface: string, theme: GrafanaTheme, sizes: IconSize[],
         padding: 30px;
         background: ${bg};
         button {
-          margin-right: 16px;
-          margin-left: 16px;
-          margin-bottom: 16px;
+          margin-right: 8px;
+          margin-left: 8px;
+          margin-bottom: 8px;
         }
       `}
     >
       {icons.map(icon => {
         return sizes.map(size => (
           <span key={icon + size}>
-            <IconButton name={icon} size={size} />
+            <IconButton name={icon} size={size} surface={surface as any} />
           </span>
         ));
       })}

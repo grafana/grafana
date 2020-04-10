@@ -32,8 +32,8 @@ export const InspectHeader: FC<Props> = ({
   return (
     <div className={styles.header}>
       <div className={styles.actions}>
-        <IconButton name="angle-left" size="lg" onClick={onToggleExpand} />
-        <IconButton name="times" size="lg" onClick={onClose} />
+        <IconButton name="angle-left" size="xl" onClick={onToggleExpand} surface="header" />
+        <IconButton name="times" size="xl" onClick={onClose} surface="header" />
       </div>
       <div className={styles.titleWrapper}>
         <h3>{panel.title}</h3>

@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { connect } from 'react-redux';
 import { hot } from 'react-hot-loader';
 import { css, cx } from 'emotion';
-import { stylesFactory, useTheme, TextArea, Button, Icon } from '@grafana/ui';
+import { stylesFactory, useTheme, TextArea, Button, Icon, IconButton } from '@grafana/ui';
 
 import { GrafanaTheme, AppEvents, DataSourceApi } from '@grafana/data';
 import { RichHistoryQuery, ExploreId } from 'app/types/explore';
@@ -77,7 +77,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme, isRemoved: boolean) => {
       display: flex;
       justify-content: flex-end;
       font-size: ${theme.typography.size.base};
-      svg {
+      button {
         margin-left: ${theme.spacing.sm};
       }
     `,
@@ -212,17 +212,17 @@ export function RichHistoryCard(props: Props) {
 
   const queryActionButtons = (
     <div className={styles.queryActionButtons}>
-      <Icon
+      <IconButton
         name="comment-alt"
         onClick={toggleActiveUpdateComment}
         title={query.comment?.length > 0 ? 'Edit comment' : 'Add comment'}
       />
-      <Icon name="copy" onClick={onCopyQuery} title="Copy query to clipboard" />
-      {!isRemoved && <Icon name="link" onClick={onCreateLink} title="Copy link to clipboard" />}
-      <Icon name="trash-alt" title={'Delete query'} onClick={onDeleteQuery} />
-      <Icon
+      <IconButton name="copy" onClick={onCopyQuery} title="Copy query to clipboard" />
+      {!isRemoved && <IconButton name="link" onClick={onCreateLink} title="Copy link to clipboard" />}
+      <IconButton name="trash-alt" title={'Delete query'} onClick={onDeleteQuery} />
+      <IconButton
         name={query.starred ? 'favorite' : 'star'}
-        type={query.starred ? 'mono' : 'default'}
+        iconType={query.starred ? 'mono' : 'default'}
         onClick={onStarrQuery}
         title={query.starred ? 'Unstar query' : 'Star query'}
       />
