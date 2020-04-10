@@ -1,9 +1,11 @@
-import React, { FC } from 'react';
+import React, { Dispatch, FC } from 'react';
 import { css } from 'emotion';
 import { Button, Select, Forms, stylesFactory, useTheme, HorizontalGroup } from '@grafana/ui';
 import { GrafanaTheme, SelectableValue } from '@grafana/data';
 import { TagFilter } from 'app/core/components/TagFilter/TagFilter';
 import { SearchSrv } from 'app/core/services/search_srv';
+import { SearchAction } from '../types';
+import { TOGGLE_ALL_CHECKED } from '../reducers/actionTypes';
 
 type onSelectChange = (value: SelectableValue) => void;
 
@@ -13,11 +15,11 @@ export interface Props {
   canMove?: boolean;
   deleteItem: () => void;
   moveTo: () => void;
-  onSelectAllChanged: any;
   onStarredFilterChange: onSelectChange;
   onTagFilterChange: onSelectChange;
   selectedStarredFilter: string;
   selectedTagFilter: string[];
+  dispatch?: Dispatch<SearchAction>;
 }
 
 const starredFilterOptions = [
@@ -33,7 +35,7 @@ export const SearchResultsFilter: FC<Props> = ({
   canMove,
   deleteItem,
   moveTo,
-  onSelectAllChanged,
+  dispatch,
   onStarredFilterChange,
   onTagFilterChange,
   selectedStarredFilter,
@@ -45,7 +47,7 @@ export const SearchResultsFilter: FC<Props> = ({
 
   return (
     <div className={styles.wrapper}>
-      <Forms.Checkbox value={allChecked} onChange={onSelectAllChanged} />
+      <Forms.Checkbox value={allChecked} onChange={() => dispatch({ type: TOGGLE_ALL_CHECKED })} />
       {showActions ? (
         <HorizontalGroup spacing="md">
           <Button disabled={!canMove} onClick={moveTo} icon="exchange-alt" variant="secondary">

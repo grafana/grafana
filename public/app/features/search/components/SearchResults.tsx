@@ -5,52 +5,23 @@ import { Icon, stylesFactory, useTheme, IconName } from '@grafana/ui';
 import PageLoader from 'app/core/components/PageLoader/PageLoader';
 import appEvents from 'app/core/app_events';
 import { CoreEvents } from 'app/types';
-import { DashboardSection, ItemClickWithEvent, SearchAction } from '../types';
+import { DashboardSection, SearchAction } from '../types';
 import { SearchItem } from './SearchItem';
 import { SearchCheckbox } from './SearchCheckbox';
+import { TOGGLE_CHECKED } from '../reducers/actionTypes';
 
 export interface Props {
   dispatch?: Dispatch<SearchAction>;
   editable?: boolean;
   loading?: boolean;
-  onFolderExpanding?: () => void;
-  onSelectionChanged?: () => void;
   onTagSelected: (name: string) => any;
   onToggleSection?: any;
-  onToggleSelection?: ItemClickWithEvent;
   results: DashboardSection[] | undefined;
 }
 
-export const SearchResults: FC<Props> = ({
-  editable,
-  loading,
-  onFolderExpanding,
-  onSelectionChanged,
-  onTagSelected,
-  onToggleSection,
-  onToggleSelection,
-  results,
-}) => {
+export const SearchResults: FC<Props> = ({ editable, dispatch, loading, onTagSelected, onToggleSection, results }) => {
   const theme = useTheme();
   const styles = getSectionStyles(theme);
-
-  const toggleFolderExpand = (section: DashboardSection) => {
-    if (onToggleSection) {
-      onToggleSection(section);
-    } else {
-      if (section.toggle) {
-        if (!section.expanded && onFolderExpanding) {
-          onFolderExpanding();
-        }
-
-        section.toggle(section).then(() => {
-          if (onSelectionChanged) {
-            onSelectionChanged();
-          }
-        });
-      }
-    }
-  };
 
   if (loading) {
     return <PageLoader />;
@@ -62,12 +33,10 @@ export const SearchResults: FC<Props> = ({
     <ul className={styles.wrapper}>
       {results.map(section => (
         <li aria-label="Search section" className={styles.section} key={section.title}>
-          <SectionHeader onSectionClick={toggleFolderExpand} {...{ onToggleSelection, editable, section }} />
+          <SectionHeader onSectionClick={onToggleSection} {...{ dispatch, editable, section }} />
           <ul aria-label="Search items" className={styles.wrapper}>
             {section.expanded &&
-              section.items.map(item => (
-                <SearchItem key={item.id} {...{ item, editable, onToggleSelection, onTagSelected }} />
-              ))}
+              section.items.map(item => <SearchItem key={item.id} {...{ item, editable, dispatch, onTagSelected }} />)}
           </ul>
         </li>
       ))}
@@ -90,18 +59,13 @@ const getSectionStyles = stylesFactory((theme: GrafanaTheme) => {
 });
 
 interface SectionHeaderProps {
-  section: DashboardSection;
-  onSectionClick: (section: DashboardSection) => void;
-  onToggleSelection?: ItemClickWithEvent;
+  dispatch?: Dispatch<SearchAction>;
   editable?: boolean;
+  onSectionClick: (section: DashboardSection) => void;
+  section: DashboardSection;
 }
 
-const SectionHeader: FC<SectionHeaderProps> = ({
-  section,
-  onSectionClick,
-  onToggleSelection = () => {},
-  editable = false,
-}) => {
+const SectionHeader: FC<SectionHeaderProps> = ({ section, onSectionClick, editable = false, dispatch }) => {
   const theme = useTheme();
   const styles = getSectionHeaderStyles(theme, section.selected);
 
@@ -114,7 +78,11 @@ const SectionHeader: FC<SectionHeaderProps> = ({
       <SearchCheckbox
         editable={editable}
         checked={section.checked}
-        onClick={(e: MouseEvent) => onToggleSelection(section, e)}
+        onClick={(e: React.MouseEvent) => {
+          e.preventDefault();
+          e.stopPropagation();
+          dispatch({ type: TOGGLE_CHECKED, payload: section });
+        }}
       />
       <Icon className={styles.icon} name={section.icon as IconName} />
 

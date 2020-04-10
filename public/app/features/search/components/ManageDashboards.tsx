@@ -7,7 +7,7 @@ import {
   FETCH_ITEMS,
   FETCH_RESULTS,
   TOGGLE_EDIT_PERMISSIONS,
-  TOGGLE_FOLDER_CAN_SAVE,
+  TOGGLE_CAN_SAVE,
   TOGGLE_SECTION,
 } from '../reducers/actionTypes';
 import { SearchSrv } from 'app/core/services/search_srv';
@@ -16,7 +16,7 @@ import { SearchResultsFilter } from './SearchResultsFilter';
 import { SearchResults } from './SearchResults';
 import { DashboardActions } from './DashboardActions';
 import { DashboardSection } from '../types';
-import { hasId } from '../utils';
+import { ConfirmDeleteModal } from './ConfirmDeleteModal';
 
 export interface Props {
   folderId?: number;
@@ -54,6 +54,7 @@ const initQuery = (folderId: number) => {
 
 export const ManageDashboards: FC<Props> = ({ folderId, folderUid }) => {
   const [query, setQuery] = useState(() => initQuery(folderId));
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
 
   const [
     { canMove, canDelete, canSave, allChecked, isEditor, hasEditPermissionInFolders, results, loading },
@@ -75,7 +76,7 @@ export const ManageDashboards: FC<Props> = ({ folderId, folderUid }) => {
         }
 
         return backendSrv.getFolderByUid(folderUid).then(folder => {
-          dispatch({ type: TOGGLE_FOLDER_CAN_SAVE, payload: folder.canSave });
+          dispatch({ type: TOGGLE_CAN_SAVE, payload: folder.canSave });
           if (!folder.canSave) {
             dispatch({ type: TOGGLE_EDIT_PERMISSIONS, payload: false });
           }
@@ -100,13 +101,16 @@ export const ManageDashboards: FC<Props> = ({ folderId, folderUid }) => {
     setQuery(q => ({ ...q, tag: tags }));
   };
   const moveTo = () => {};
-  const onItemDelete = () => {};
+  const onItemDelete = () => {
+    setIsDeleteModalOpen(true);
+  };
+
   const onStarredFilterChange = () => {};
   const filterByTag = () => {};
 
   // TODO move to reusable hook
   const onToggleSection = (section: DashboardSection) => {
-    if (hasId(section.title) && !section.items.length) {
+    if (!section.items.length) {
       backendSrv.search({ ...defaultQuery, folderIds: [section.id] }).then(items => {
         dispatch({ type: FETCH_ITEMS, payload: { section, items } });
         dispatch({ type: TOGGLE_SECTION, payload: section });
@@ -116,7 +120,6 @@ export const ManageDashboards: FC<Props> = ({ folderId, folderUid }) => {
     }
   };
 
-  const onSelectAllChanged = () => {};
   const hasFilters = query.query.length > 0 || query.tag.length > 0 || query.starred;
 
   return (
@@ -174,7 +177,7 @@ export const ManageDashboards: FC<Props> = ({ folderId, folderUid }) => {
           canMove={canMove}
           deleteItem={onItemDelete}
           moveTo={moveTo}
-          onSelectAllChanged={onSelectAllChanged}
+          dispatch={dispatch}
           onStarredFilterChange={onStarredFilterChange}
           onTagFilterChange={onTagFilterChange}
           selectedStarredFilter={null}
@@ -187,9 +190,16 @@ export const ManageDashboards: FC<Props> = ({ folderId, folderUid }) => {
             editable
             onTagSelected={filterByTag}
             onToggleSection={onToggleSection}
+            dispatch={dispatch}
           />
         </div>
       </div>
+      <ConfirmDeleteModal
+        dispatch={dispatch}
+        results={results}
+        isOpen={isDeleteModalOpen}
+        onClose={() => setIsDeleteModalOpen(false)}
+      />
     </div>
   );
 };

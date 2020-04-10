@@ -1,23 +1,24 @@
-import React, { FC, useCallback, useRef, useEffect } from 'react';
+import React, { FC, useCallback, useRef, useEffect, Dispatch } from 'react';
 import { css, cx } from 'emotion';
 import { GrafanaTheme } from '@grafana/data';
 import { e2e } from '@grafana/e2e';
 import { Icon, useTheme, TagList, styleMixins, stylesFactory } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
 import { CoreEvents } from 'app/types';
-import { DashboardSectionItem, ItemClickWithEvent } from '../types';
+import { DashboardSectionItem, SearchAction } from '../types';
 import { SearchCheckbox } from './SearchCheckbox';
+import { TOGGLE_CHECKED } from '../reducers/actionTypes';
 
 export interface Props {
   item: DashboardSectionItem;
   editable?: boolean;
-  onToggleSelection?: ItemClickWithEvent;
   onTagSelected: (name: string) => any;
+  dispatch?: Dispatch<SearchAction>;
 }
 
 const { selectors } = e2e.pages.Dashboards;
 
-export const SearchItem: FC<Props> = ({ item, editable, onToggleSelection = () => {}, onTagSelected }) => {
+export const SearchItem: FC<Props> = ({ item, editable, dispatch, onTagSelected }) => {
   const theme = useTheme();
   const styles = getResultsItemStyles(theme);
   const inputEl = useRef<HTMLInputElement>(null);
@@ -47,8 +48,10 @@ export const SearchItem: FC<Props> = ({ item, editable, onToggleSelection = () =
   }, []);
 
   const toggleItem = useCallback(
-    (event: React.MouseEvent<HTMLElement>) => {
-      onToggleSelection(item, event);
+    (event: React.MouseEvent) => {
+      event.preventDefault();
+      console.log('click');
+      dispatch({ type: TOGGLE_CHECKED, payload: item });
     },
     [item]
   );

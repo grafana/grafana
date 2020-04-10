@@ -3,8 +3,8 @@ import {
   TOGGLE_EDIT_PERMISSIONS,
   TOGGLE_ALL_CHECKED,
   TOGGLE_CHECKED,
-  MOVE_ITEM,
-  DELETE_ITEM,
+  // MOVE_ITEM,
+  // DELETE_ITEM,
   TOGGLE_CAN_MODIFY,
 } from './actionTypes';
 import { manageDashboardsReducer as reducer, manageDashboardsState as state } from './manageDashboards';

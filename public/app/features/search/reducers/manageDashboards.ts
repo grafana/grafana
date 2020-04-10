@@ -52,7 +52,11 @@ const reducer = (state: ManageDashboardsState, action: SearchAction) => {
         ...state,
         results: state.results.map(result => {
           if (result.id === action.payload.id) {
-            return { ...result, checked: !result.checked };
+            return {
+              ...result,
+              checked: !result.checked,
+              items: result.items.map(item => ({ ...item, checked: !result.checked })),
+            };
           }
           return result;
         }),
@@ -61,7 +65,7 @@ const reducer = (state: ManageDashboardsState, action: SearchAction) => {
     case MOVE_ITEM:
       return state;
     case DELETE_ITEM:
-
+      return state;
     default:
       return state;
   }
