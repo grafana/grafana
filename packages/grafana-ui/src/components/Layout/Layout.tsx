@@ -12,7 +12,7 @@ type Justify = 'flex-start' | 'flex-end' | 'space-between' | 'center';
 type Align = 'normal' | 'flex-start' | 'flex-end' | 'center';
 
 export interface LayoutProps {
-  children: React.ReactNode[];
+  children: React.ReactNode[] | React.ReactNode;
   orientation?: Orientation;
   spacing?: Spacing;
   justify?: Justify;
@@ -42,8 +42,8 @@ export const Layout: React.FC<LayoutProps> = ({
   );
 };
 
-export const HorizontalGroup: React.FC<Omit<LayoutProps, 'orientation'>> = ({ children, spacing, justify }) => (
-  <Layout spacing={spacing} justify={justify} orientation={Orientation.Horizontal}>
+export const HorizontalGroup: React.FC<Omit<LayoutProps, 'orientation'>> = ({ children, spacing, justify, align }) => (
+  <Layout spacing={spacing} justify={justify} orientation={Orientation.Horizontal} align={align}>
     {children}
   </Layout>
 );

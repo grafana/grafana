@@ -119,11 +119,13 @@ export interface PanelOptionsEditorItem<TOptions = any, TValue = any, TSettings 
   extends OptionsEditorItem<TOptions, TSettings, PanelOptionsEditorProps<TValue>, TValue> {}
 
 export interface PanelOptionsEditorConfig<TOptions, TSettings = any, TValue = any> {
-  id: (keyof TOptions & string) | string;
+  path: (keyof TOptions & string) | string;
   name: string;
   description: string;
   settings?: TSettings;
+  category?: string[];
   defaultValue?: TValue;
+  showIf?: (currentConfig: TOptions) => boolean;
 }
 
 export interface PanelMenuItem {

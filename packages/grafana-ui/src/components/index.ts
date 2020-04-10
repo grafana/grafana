@@ -1,3 +1,4 @@
+export { Icon } from './Icon/Icon';
 export { ConfirmButton } from './ConfirmButton/ConfirmButton';
 export { DeleteButton } from './ConfirmButton/DeleteButton';
 export { Tooltip, PopoverContent } from './Tooltip/Tooltip';
@@ -21,7 +22,6 @@ export { SeriesColorPickerPopover, SeriesColorPickerPopoverWithTheme } from './C
 export { PanelOptionsGroup } from './PanelOptionsGroup/PanelOptionsGroup';
 export { PanelOptionsGrid } from './PanelOptionsGrid/PanelOptionsGrid';
 export { LegacyValueMappingsEditor } from './ValueMappingsEditor/LegacyValueMappingsEditor';
-export { Switch } from './Switch/Switch';
 export { EmptySearchResult } from './EmptySearchResult/EmptySearchResult';
 export { PieChart, PieChartType } from './PieChart/PieChart';
 export { UnitPicker } from './UnitPicker/UnitPicker';
@@ -103,8 +103,6 @@ export { DataLinkInput } from './DataLinks/DataLinkInput';
 export { DataLinksContextMenu } from './DataLinks/DataLinksContextMenu';
 export { SeriesIcon } from './Legend/SeriesIcon';
 export { transformersUIRegistry } from './TransformersUI/transformers';
-export { TransformationRow } from './TransformersUI/TransformationRow';
-export { TransformationsEditor } from './TransformersUI/TransformationsEditor';
 export { JSONFormatter } from './JSONFormatter/JSONFormatter';
 export { JsonExplorer } from './JSONFormatter/json_explorer/json_explorer';
 export { ErrorBoundary, ErrorBoundaryAlert } from './ErrorBoundary/ErrorBoundary';
@@ -116,7 +114,6 @@ export { FadeTransition } from './transitions/FadeTransition';
 export { SlideOutTransition } from './transitions/SlideOutTransition';
 export { Segment, SegmentAsync, SegmentInput, SegmentSelect } from './Segment/';
 export { default as Chart } from './Chart';
-export { Icon } from './Icon/Icon';
 export { Drawer } from './Drawer/Drawer';
 export { Slider } from './Slider/Slider';
 
@@ -139,7 +136,9 @@ export { ButtonSelect } from './Select/ButtonSelect';
 export { HorizontalGroup, VerticalGroup, Container } from './Layout/Layout';
 export { RadioButtonGroup } from './Forms/RadioButtonGroup/RadioButtonGroup';
 
-export { Input } from './Forms/Input/Input';
+export { Input } from './Input/Input';
+export { Switch } from './Forms/Switch';
+export { TextArea } from './TextArea/TextArea';
 
 // Legacy forms
 
@@ -150,9 +149,9 @@ import { NoOptionsMessage } from './Forms/Legacy/Select/NoOptionsMessage';
 import { ButtonSelect } from './Forms/Legacy/Select/ButtonSelect';
 
 //Input
-import { Input, LegacyInputStatus } from './Input/Input';
-// Export these until  Enterprise migrations have been merged
-// export { Input, InputStatus}
+import { Input, LegacyInputStatus } from './Forms/Legacy/Input/Input';
+
+import { Switch } from './Switch/Switch';
 
 const LegacyForms = {
   Select,
@@ -161,6 +160,6 @@ const LegacyForms = {
   NoOptionsMessage,
   ButtonSelect,
   Input,
+  Switch,
 };
-
 export { LegacyForms, LegacyInputStatus };

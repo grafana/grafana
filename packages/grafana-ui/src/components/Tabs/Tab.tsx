@@ -1,12 +1,14 @@
 import React, { FC } from 'react';
 import { css, cx } from 'emotion';
 import { GrafanaTheme } from '@grafana/data';
+import { Icon } from '../Icon/Icon';
+import { IconName } from '../../types';
 import { stylesFactory, useTheme } from '../../themes';
 
 export interface TabProps {
   label: string;
   active?: boolean;
-  icon?: string;
+  icon?: IconName;
   onChangeTab: () => void;
 }
 
@@ -16,7 +18,7 @@ const getTabStyles = stylesFactory((theme: GrafanaTheme) => {
   return {
     tabItem: css`
       list-style: none;
-      padding: 10px 15px 9px;
+      padding: 11px 15px 9px;
       margin-right: ${theme.spacing.md};
       position: relative;
       display: block;
@@ -26,13 +28,8 @@ const getTabStyles = stylesFactory((theme: GrafanaTheme) => {
       color: ${colors.text};
       cursor: pointer;
 
-      i {
+      svg {
         margin-right: ${theme.spacing.sm};
-      }
-
-      .gicon {
-        position: relative;
-        top: -2px;
       }
 
       &:hover,
@@ -67,7 +64,7 @@ export const Tab: FC<TabProps> = ({ label, active, icon, onChangeTab }) => {
 
   return (
     <li className={cx(tabsStyles.tabItem, active && tabsStyles.activeStyle)} onClick={onChangeTab}>
-      {icon && <i className={icon} />}
+      {icon && <Icon name={icon} />}
       {label}
     </li>
   );

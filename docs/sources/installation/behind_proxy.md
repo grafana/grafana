@@ -38,7 +38,7 @@ domain = foo.bar
 Nginx is a high performance load balancer, web server and reverse proxy: https://www.nginx.com/
 
 #### Nginx configuration with HTTP and Reverse Proxy enabled
-```bash
+```nginx
 server {
   listen 80;
   root /usr/share/nginx/html;
@@ -62,7 +62,7 @@ root_url = https://foo.bar
 
 Instead of http://foo.bar:3000/?orgId=1, this configuration will redirect all HTTP requests to HTTPS and re-write the URL so that port 3000 isn't visible and will result in https://foo.bar/?orgId=1
 
-```bash
+```nginx
 server {
   listen 80;
   server_name foo.bar;
@@ -98,7 +98,7 @@ root_url = %(protocol)s://%(domain)s/grafana/
 ```
 
 #### Nginx configuration with sub path
-```bash
+```nginx
 server {
   listen 80;
   root /usr/share/nginx/www;
