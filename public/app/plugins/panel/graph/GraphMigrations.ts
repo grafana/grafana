@@ -6,26 +6,24 @@ import { GaugeOptions } from './types';
  * Called when upgrading from a previously saved versoin
  */
 export const graphPanelMigrationHandler = (panel: PanelModel<any>): Partial<any> => {
-  const fieldConfig:FieldConfig = {
+  const fieldConfig: FieldConfig = {
     defaults: {},
     overrides: [],
   };
 
   console.log('GRAPH migration', panel);
 
-
   const y0 = panel.yaxes[0];
-  if(y0) {
-    if(y0.format !== undefined ) {
+  if (y0) {
+    if (y0.format !== undefined) {
       fieldConfig.unit = y0.format;
     }
-    if(y0.decimals !== undefined ) {
+    if (y0.decimals !== undefined) {
       fieldConfig.decimals = y0.decimals;
     }
   }
 
   const y1 = panel.yaxes[0];
-
 
   // HACK: Mutates the panel state directly
   panel.fieldConfig;

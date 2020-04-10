@@ -3,6 +3,7 @@ import { graphPanelMigrationHandler, graphPanelChangedHandler } from './GraphMig
 
 describe('Graph Panel Migrations', () => {
   it('from 6.7.1', () => {
+    // Saved from play dashboard
     const panel = {
       datasource: 'graphite',
       aliasColors: {
