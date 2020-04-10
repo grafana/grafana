@@ -11,7 +11,7 @@ weight = 9
 
 Dataframes are a new concept in Grafana 7.0 and they replace the "Time Series" and "Table" types in Grafana. Dataframes are a more generic structure that can hold different shapes of time series, tables, and other types.
 
-A dataframe is a [Columnar oriented](https://en.wikipedia.org/wiki/Column-oriented_DBMS) table like structure, meaning it stores data by column and not by row.
+A dataframe is a [Columnar oriented](https://en.wikipedia.org/wiki/Column-oriented_DBMS) table structure, meaning it stores data by column and not by row.
 
 A simplified conceptual model of a dataframe is:
 
@@ -41,7 +41,7 @@ interface Field {
 }
 ```
 
-With dataframes, each column is represented by a **Field**. So the essence of a dataframe is an Field array with additional properties. Those additional properties on a Field include Name, Labels (a.k.a (Tags)), Optional display data and the data type of the Field's values. There are also additional properties display and metadata properties on the Frame itself.
+With dataframes, each column is represented by a **Field**. So the essence of a dataframe is an Field array with additional properties on both the dataframe and its Fields.
 
 One restriction on dataframes is that all Fields in the frame must be of the same length to be a valid dataframe.
 
