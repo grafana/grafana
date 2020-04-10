@@ -1,7 +1,8 @@
 import { DataTransformerID } from './ids';
 import { toDataFrame } from '../../dataframe/processDataFrame';
-import { transformDataFrame } from '../transformers';
-import { transformersRegistry } from '../transformers';
+import { mockTransformationsRegistry } from '../../utils/tests/mockTransformationsRegistry';
+import { appendTransformer } from './append';
+import { transformDataFrame } from '../transformDataFrame';
 
 const seriesAB = toDataFrame({
   columns: [{ text: 'A' }, { text: 'B' }],
@@ -20,13 +21,14 @@ const seriesBC = toDataFrame({
 });
 
 describe('Append Transformer', () => {
+  beforeAll(() => {
+    mockTransformationsRegistry([appendTransformer]);
+  });
   it('filters by include', () => {
     const cfg = {
       id: DataTransformerID.append,
       options: {},
     };
-    const x = transformersRegistry.get(DataTransformerID.append);
-    expect(x.id).toBe(cfg.id);
 
     const processed = transformDataFrame([cfg], [seriesAB, seriesBC])[0];
     expect(processed.fields.length).toBe(3);
