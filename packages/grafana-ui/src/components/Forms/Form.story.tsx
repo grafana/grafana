@@ -4,19 +4,19 @@ import { Legend } from './Legend';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { withStoryContainer } from '../../utils/storybook/withStoryContainer';
 import { Field } from './Field';
-import { Input } from './Input/Input';
+import { Input } from '../Input/Input';
 import { Button } from '../Button';
 import { Form } from './Form';
 import { Switch } from './Switch';
 import { Checkbox } from './Checkbox';
 
 import { RadioButtonGroup } from './RadioButtonGroup/RadioButtonGroup';
-import { Select } from './Select/Select';
+import { Select } from '../Select/Select';
 import Forms from './index';
 import mdx from './Form.mdx';
 import { ValidateResult } from 'react-hook-form';
 import { boolean } from '@storybook/addon-knobs';
-import { TextArea } from './TextArea/TextArea';
+import { TextArea } from '../TextArea/TextArea';
 
 export default {
   title: 'Forms/Example forms',

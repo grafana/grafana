@@ -1,5 +1,6 @@
 import { IScope } from 'angular';
 import _ from 'lodash';
+import { SelectableValue } from '@grafana/data';
 import coreModule from 'app/core/core_module';
 import appEvents from 'app/core/app_events';
 import { SearchSrv } from 'app/core/services/search_srv';
@@ -21,6 +22,7 @@ export interface Section {
   checked: boolean;
   hideHeader: boolean;
   toggle: Function;
+  type?: string;
 }
 
 export interface FoldersAndDashboardUids {
@@ -54,7 +56,6 @@ export class ManageDashboardsCtrl {
   hasFilters = false;
   tagFilterOptions: any[];
   selectedTagFilter: any;
-  starredFilterOptions = [{ text: 'Filter by Starred', disabled: true }, { text: 'Yes' }, { text: 'No' }];
   selectedStarredFilter: any;
 
   // used when managing dashboards for a specific folder
@@ -87,8 +88,6 @@ export class ManageDashboardsCtrl {
     if (this.folderId) {
       this.query.folderIds = [this.folderId];
     }
-
-    this.selectedStarredFilter = this.starredFilterOptions[0];
 
     this.refreshList().then(() => {
       this.initTagFilter();
@@ -185,7 +184,7 @@ export class ManageDashboardsCtrl {
     return ids;
   }
 
-  delete() {
+  delete = () => {
     const data = this.getFoldersAndDashboardsToDelete();
     const folderCount = data.folderUids.length;
     const dashCount = data.dashboardUids.length;
@@ -211,7 +210,7 @@ export class ManageDashboardsCtrl {
         this.deleteFoldersAndDashboards(data.folderUids, data.dashboardUids);
       },
     });
-  }
+  };
 
   private deleteFoldersAndDashboards(folderUids: string[], dashboardUids: string[]) {
     promiseToDigest(this.$scope)(
@@ -232,7 +231,7 @@ export class ManageDashboardsCtrl {
     return selectedDashboards;
   }
 
-  moveTo() {
+  moveTo = () => {
     const selectedDashboards = this.getDashboardsToMove();
 
     const template =
@@ -247,12 +246,11 @@ export class ManageDashboardsCtrl {
         afterSave: this.refreshList.bind(this),
       },
     });
-  }
+  };
 
   initTagFilter() {
     return this.searchSrv.getDashboardTags().then((results: any) => {
-      this.tagFilterOptions = [{ term: 'Filter By Tag', disabled: true }].concat(results);
-      this.selectedTagFilter = this.tagFilterOptions[0];
+      this.tagFilterOptions = results.map((result: any) => ({ value: result.term, label: result.term }));
     });
   }
 
@@ -269,11 +267,11 @@ export class ManageDashboardsCtrl {
     return this.refreshList();
   }
 
-  onTagFilterChange() {
-    const res = this.filterByTag(this.selectedTagFilter.term);
-    this.selectedTagFilter = this.tagFilterOptions[0];
+  onTagFilterChange = (filter: SelectableValue) => {
+    const res = this.filterByTag(filter.value);
+    this.selectedTagFilter = filter.value;
     return res;
-  }
+  };
 
   removeTag(tag: any, evt: Event) {
     this.query.tag = _.without(this.query.tag, tag);
@@ -289,13 +287,15 @@ export class ManageDashboardsCtrl {
     return this.refreshList();
   }
 
-  onStarredFilterChange() {
-    this.query.starred = this.selectedStarredFilter.text === 'Yes';
-    this.selectedStarredFilter = this.starredFilterOptions[0];
+  onStarredFilterChange = (filter: SelectableValue) => {
+    this.query.starred = filter.value;
+    this.selectedStarredFilter = filter.value;
     return this.refreshList();
-  }
+  };
 
-  onSelectAllChanged() {
+  onSelectAllChanged = () => {
+    this.selectAllChecked = !this.selectAllChecked;
+
     for (const section of this.sections) {
       if (!section.hideHeader) {
         section.checked = this.selectAllChecked;
@@ -306,14 +306,15 @@ export class ManageDashboardsCtrl {
         return item;
       });
     }
-
     this.selectionChanged();
-  }
+  };
 
   clearFilters() {
     this.query.query = '';
     this.query.tag = [];
     this.query.starred = false;
+    this.selectedStarredFilter = 'starred';
+    this.selectedTagFilter = 'tag';
     this.refreshList();
   }
 

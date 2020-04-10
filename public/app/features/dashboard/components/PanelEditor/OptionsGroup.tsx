@@ -5,27 +5,28 @@ import { useTheme, Icon, stylesFactory } from '@grafana/ui';
 
 interface Props {
   title: string;
+  defaultToClosed?: boolean;
 }
 
-export const OptionsGroup: FC<Props> = ({ title, children }) => {
-  const [isExpanded, toggleExpand] = useState(true);
+export const OptionsGroup: FC<Props> = ({ title, children, defaultToClosed }) => {
+  const [isExpanded, toggleExpand] = useState(defaultToClosed ? false : true);
   const theme = useTheme();
-  const styles = getStyles(theme);
+  const styles = getStyles(theme, isExpanded);
 
   return (
     <div className={styles.box}>
       <div className={styles.header} onClick={() => toggleExpand(!isExpanded)}>
-        {title}
         <div className={cx(styles.toggle, 'editor-options-group-toggle')}>
-          <Icon name={isExpanded ? 'chevron-down' : 'chevron-left'} />
+          <Icon name={isExpanded ? 'angle-down' : 'angle-right'} />
         </div>
+        {title}
       </div>
       {isExpanded && <div className={styles.body}>{children}</div>}
     </div>
   );
 };
 
-const getStyles = stylesFactory((theme: GrafanaTheme) => {
+const getStyles = stylesFactory((theme: GrafanaTheme, isExpanded: boolean) => {
   return {
     box: css`
       border-bottom: 1px solid ${theme.colors.pageHeaderBorder};
@@ -33,13 +34,14 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
     toggle: css`
       color: ${theme.colors.textWeak};
       font-size: ${theme.typography.size.lg};
+      margin-right: ${theme.spacing.sm};
     `,
     header: css`
       display: flex;
       cursor: pointer;
-      justify-content: space-between;
-      align-items: center;
-      padding: ${theme.spacing.sm} ${theme.spacing.md};
+      align-items: baseline;
+      padding: ${theme.spacing.sm} ${theme.spacing.md} ${theme.spacing.sm} ${theme.spacing.sm};
+      color: ${isExpanded ? theme.colors.text : theme.colors.formLabel};
       font-weight: ${theme.typography.weight.semibold};
 
       &:hover {
@@ -49,7 +51,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       }
     `,
     body: css`
-      padding: 0 ${theme.spacing.md} ${theme.spacing.md} ${theme.spacing.md};
+      padding: 0 ${theme.spacing.md} ${theme.spacing.md} ${theme.spacing.xl};
     `,
   };
 });

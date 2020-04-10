@@ -4,17 +4,17 @@ export enum DashboardSearchHitType {
   DashHitFolder = 'dash-folder',
 }
 export interface DashboardSearchHit {
+  folderId?: number;
+  folderTitle?: string;
+  folderUid?: string;
+  folderUrl?: string;
   id: number;
-  uid: string;
+  isStarred: boolean;
+  slug: string;
+  tags: string[];
   title: string;
+  type: DashboardSearchHitType;
+  uid: string;
   uri: string;
   url: string;
-  slug: string;
-  type: DashboardSearchHitType;
-  tags: string[];
-  isStarred: boolean;
-  folderId?: number;
-  folderUid?: string;
-  folderTitle?: string;
-  folderUrl?: string;
 }

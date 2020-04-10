@@ -1,33 +1,67 @@
 import { PanelModel } from './PanelModel';
 import { getPanelPlugin } from '../../plugins/__mocks__/pluginMocks';
-import { PanelProps, StandardFieldConfigProperties } from '@grafana/data';
+import {
+  FieldConfigProperty,
+  identityOverrideProcessor,
+  PanelProps,
+  standardEditorsRegistry,
+  standardFieldConfigEditorRegistry,
+} from '@grafana/data';
 import { ComponentClass } from 'react';
 
 class TablePanelCtrl {}
+
+export const mockStandardProperties = () => {
+  const unit = {
+    id: 'unit',
+    path: 'unit',
+    name: 'Unit',
+    description: 'Value units',
+    // @ts-ignore
+    editor: () => null,
+    // @ts-ignore
+    override: () => null,
+    process: identityOverrideProcessor,
+    shouldApply: () => true,
+  };
+
+  const decimals = {
+    id: 'decimals',
+    path: 'decimals',
+    name: 'Decimals',
+    description: 'Number of decimal to be shown for a value',
+    // @ts-ignore
+    editor: () => null,
+    // @ts-ignore
+    override: () => null,
+    process: identityOverrideProcessor,
+    shouldApply: () => true,
+  };
+
+  const boolean = {
+    id: 'boolean',
+    path: 'boolean',
+    name: 'Boolean',
+    description: '',
+    // @ts-ignore
+    editor: () => null,
+    // @ts-ignore
+    override: () => null,
+    process: identityOverrideProcessor,
+    shouldApply: () => true,
+  };
+
+  return [unit, decimals, boolean];
+};
+
+standardFieldConfigEditorRegistry.setInit(() => mockStandardProperties());
+standardEditorsRegistry.setInit(() => mockStandardProperties());
 
 describe('PanelModel', () => {
   describe('when creating new panel model', () => {
     let model: any;
     let modelJson: any;
     let persistedOptionsMock;
-    const defaultOptionsMock = {
-      fieldOptions: {
-        thresholds: [
-          {
-            color: '#F2495C',
-            index: 1,
-            value: 50,
-          },
-          {
-            color: '#73BF69',
-            index: 0,
-            value: null,
-          },
-        ],
-      },
-      arrayWith2Values: [{ value: 'name' }, { value: 'name2' }],
-      showThresholds: true,
-    };
 
     beforeEach(() => {
       persistedOptionsMock = {
@@ -78,10 +112,22 @@ describe('PanelModel', () => {
         (null as unknown) as ComponentClass<PanelProps>, // react
         TablePanelCtrl // angular
       );
-      panelPlugin.setDefaults(defaultOptionsMock);
-      panelPlugin.useStandardFieldConfig([StandardFieldConfigProperties.Unit, StandardFieldConfigProperties.Decimals], {
-        [StandardFieldConfigProperties.Unit]: 'flop',
-        [StandardFieldConfigProperties.Decimals]: 2,
+
+      panelPlugin.setPanelOptions(builder => {
+        builder.addBooleanSwitch({
+          name: 'Show thresholds',
+          path: 'showThresholds',
+          defaultValue: true,
+          description: '',
+        });
+      });
+
+      panelPlugin.useFieldConfig({
+        standardOptions: [FieldConfigProperty.Unit, FieldConfigProperty.Decimals],
+        standardOptionsDefaults: {
+          [FieldConfigProperty.Unit]: 'flop',
+          [FieldConfigProperty.Decimals]: 2,
+        },
       });
       model.pluginLoaded(panelPlugin);
     });
@@ -100,9 +146,9 @@ describe('PanelModel', () => {
 
     it('should apply field config defaults', () => {
       // default unit is overriden by model
-      expect(model.getFieldOverrideOptions().fieldOptions.defaults.unit).toBe('mpg');
+      expect(model.getFieldOverrideOptions().fieldConfig.defaults.unit).toBe('mpg');
       // default decimals are aplied
-      expect(model.getFieldOverrideOptions().fieldOptions.defaults.decimals).toBe(2);
+      expect(model.getFieldOverrideOptions().fieldConfig.defaults.decimals).toBe(2);
     });
 
     it('should set model props on instance', () => {
@@ -157,13 +203,17 @@ describe('PanelModel', () => {
     });
 
     describe('when changing panel type', () => {
-      const newPanelPluginDefaults = {
-        showThresholdLabels: false,
-      };
-
       beforeEach(() => {
         const newPlugin = getPanelPlugin({ id: 'graph' });
-        newPlugin.setDefaults(newPanelPluginDefaults);
+        newPlugin.setPanelOptions(builder => {
+          builder.addBooleanSwitch({
+            name: 'Show thresholds labels',
+            path: 'showThresholdLabels',
+            defaultValue: false,
+            description: '',
+          });
+        });
+
         model.changePlugin(newPlugin);
         model.alert = { id: 2 };
       });

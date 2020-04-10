@@ -1,33 +1,40 @@
+export enum DashboardSearchItemType {
+  DashDB = 'dash-db',
+  DashHome = 'dash-home',
+  DashFolder = 'dash-folder',
+}
+
 export interface DashboardSection {
   id: number;
   uid?: string;
   title: string;
-  expanded: boolean;
+  expanded?: boolean;
   url: string;
   icon: string;
   score: number;
   hideHeader?: boolean;
-  checked: boolean;
+  checked?: boolean;
   items: DashboardSectionItem[];
   toggle?: (section: DashboardSection) => Promise<DashboardSection>;
   selected?: boolean;
+  type: DashboardSearchItemType;
 }
 
 export interface DashboardSectionItem {
+  checked?: boolean;
+  folderId?: number;
+  folderTitle?: string;
+  folderUid?: string;
+  folderUrl?: string;
   id: number;
-  uid: string;
+  isStarred: boolean;
+  selected?: boolean;
+  tags: string[];
   title: string;
+  type: DashboardSearchItemType;
+  uid: string;
   uri: string;
   url: string;
-  type: string;
-  tags: string[];
-  isStarred: boolean;
-  folderId?: number;
-  folderUid?: string;
-  folderTitle?: string;
-  folderUrl?: string;
-  checked: boolean;
-  selected?: boolean;
 }
 
 export interface DashboardTag {
@@ -52,3 +59,12 @@ export interface SectionsState {
 }
 
 export type ItemClickWithEvent = (item: DashboardSectionItem | DashboardSection, event: any) => void;
+
+export type SearchAction = {
+  type: string;
+  payload?: any;
+};
+
+export interface OpenSearchParams {
+  query?: string;
+}

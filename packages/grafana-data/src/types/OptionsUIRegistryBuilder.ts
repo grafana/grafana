@@ -6,10 +6,12 @@ import { NumberFieldConfigSettings, SelectFieldConfigSettings, StringFieldConfig
  * Option editor registry item
  */
 export interface OptionsEditorItem<TOptions, TSettings, TEditorProps, TValue> extends RegistryItem {
-  id: (keyof TOptions & string) | string;
+  path: (keyof TOptions & string) | string;
   editor: ComponentType<TEditorProps>;
   settings?: TSettings;
+  category?: string[];
   defaultValue?: TValue;
+  showIf?: (currentConfig: TOptions) => boolean;
 }
 
 /**

@@ -3,7 +3,7 @@ import { UserDTO } from 'app/types';
 import { cx, css } from 'emotion';
 import { config } from 'app/core/config';
 import { GrafanaTheme } from '@grafana/data';
-import { ConfirmButton, ConfirmModal, InputStatus, Button, stylesFactory, Forms } from '@grafana/ui';
+import { ConfirmButton, ConfirmModal, LegacyInputStatus, Button, stylesFactory, Input } from '@grafana/ui';
 
 interface Props {
   user: UserDTO;
@@ -82,7 +82,8 @@ export class UserProfile extends PureComponent<Props, State> {
   render() {
     const { user } = this.props;
     const { showDeleteModal, showDisableModal } = this.state;
-    const lockMessage = 'Synced via LDAP';
+    const authSource = user.authLabels?.length && user.authLabels[0];
+    const lockMessage = authSource ? `Synced via ${authSource}` : '';
     const styles = getStyles(config.theme);
 
     return (
@@ -217,16 +218,16 @@ export class UserProfileRow extends PureComponent<UserProfileRowProps, UserProfi
     this.setState({ editing: false, value: this.props.value || '' });
   };
 
-  onInputChange = (event: React.ChangeEvent<HTMLInputElement>, status?: InputStatus) => {
-    if (status === InputStatus.Invalid) {
+  onInputChange = (event: React.ChangeEvent<HTMLInputElement>, status?: LegacyInputStatus) => {
+    if (status === LegacyInputStatus.Invalid) {
       return;
     }
 
     this.setState({ value: event.target.value });
   };
 
-  onInputBlur = (event: React.FocusEvent<HTMLInputElement>, status?: InputStatus) => {
-    if (status === InputStatus.Invalid) {
+  onInputBlur = (event: React.FocusEvent<HTMLInputElement>, status?: LegacyInputStatus) => {
+    if (status === LegacyInputStatus.Invalid) {
       return;
     }
 
@@ -265,7 +266,7 @@ export class UserProfileRow extends PureComponent<UserProfileRowProps, UserProfi
         <td className={labelClass}>{label}</td>
         <td className="width-25" colSpan={2}>
           {this.state.editing ? (
-            <Forms.Input
+            <Input
               size="md"
               type={inputType}
               defaultValue={value}

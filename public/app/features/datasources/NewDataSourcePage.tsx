@@ -143,7 +143,7 @@ const DataSourceTypeCard: FC<DataSourceTypeCardProps> = props => {
             target="_blank"
             rel="noopener"
             onClick={onLearnMoreClick}
-            icon="fa fa-external-link"
+            icon="external-link-alt"
           >
             {learnMoreLink.name}
           </LinkButton>

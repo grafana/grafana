@@ -2,6 +2,7 @@ import React, { AnchorHTMLAttributes, ButtonHTMLAttributes, useContext } from 'r
 import { css, cx } from 'emotion';
 import tinycolor from 'tinycolor2';
 import { selectThemeVariant, stylesFactory, ThemeContext } from '../../themes';
+import { IconName } from '../../types/icon';
 import { getFocusStyle, getPropertiesForButtonSize } from '../Forms/commonStyles';
 import { GrafanaTheme } from '@grafana/data';
 import { ButtonContent } from './ButtonContent';
@@ -134,7 +135,7 @@ export type ButtonVariant = 'primary' | 'secondary' | 'destructive' | 'link';
 type CommonProps = {
   size?: ComponentSize;
   variant?: ButtonVariant;
-  icon?: string;
+  icon?: IconName;
   className?: string;
 };
 
@@ -151,7 +152,9 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
 
     return (
       <button className={cx(styles.button, className)} {...otherProps} ref={ref}>
-        <ButtonContent icon={icon}>{children}</ButtonContent>
+        <ButtonContent icon={icon} size={otherProps.size}>
+          {children}
+        </ButtonContent>
       </button>
     );
   }
@@ -171,7 +174,9 @@ export const LinkButton = React.forwardRef<HTMLAnchorElement, ButtonLinkProps>(
 
     return (
       <a className={cx(styles.button, className)} {...otherProps} ref={ref}>
-        <ButtonContent icon={icon}>{children}</ButtonContent>
+        <ButtonContent icon={icon} size={otherProps.size}>
+          {children}
+        </ButtonContent>
       </a>
     );
   }

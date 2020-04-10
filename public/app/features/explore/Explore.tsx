@@ -59,6 +59,8 @@ import { getTimeZone } from '../profile/state/selectors';
 import { ErrorContainer } from './ErrorContainer';
 import { scanStopAction } from './state/actionTypes';
 import { ExploreGraphPanel } from './ExploreGraphPanel';
+import { TraceView } from './TraceView/TraceView';
+import { SecondaryActions } from './SecondaryActions';
 
 const getStyles = stylesFactory(() => {
   return {
@@ -70,18 +72,6 @@ const getStyles = stylesFactory(() => {
     `,
     button: css`
       margin: 1em 4px 0 0;
-    `,
-    // Utility class for iframe parents so that we can show iframe content with reasonable height instead of squished
-    // or some random explicit height.
-    fullHeight: css`
-      label: fullHeight;
-      height: 100%;
-    `,
-    iframe: css`
-      label: iframe;
-      border: none;
-      width: 100%;
-      height: 100%;
     `,
   };
 });
@@ -319,44 +309,23 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
         {datasourceInstance && (
           <div className="explore-container">
             <QueryRows exploreEvents={this.exploreEvents} exploreId={exploreId} queryKeys={queryKeys} />
-            <div className="gf-form">
-              <button
-                aria-label="Add row button"
-                className={`gf-form-label gf-form-label--btn ${styles.button}`}
-                onClick={this.onClickAddQueryRowButton}
-                disabled={isLive}
-              >
-                <i className={'fa fa-fw fa-plus icon-margin-right'} />
-                <span className="btn-title">{'\xA0' + 'Add query'}</span>
-              </button>
-              <button
-                aria-label="Rich history button"
-                className={cx(`gf-form-label gf-form-label--btn ${styles.button}`, {
-                  ['explore-active-button']: showRichHistory,
-                })}
-                onClick={this.toggleShowRichHistory}
-              >
-                <i className={'fa fa-fw fa-history icon-margin-right '} />
-                <span className="btn-title">{'\xA0' + 'Query history'}</span>
-              </button>
-            </div>
+            <SecondaryActions
+              addQueryRowButtonDisabled={isLive}
+              // We cannot show multiple traces at the same time right now so we do not show add query button.
+              addQueryRowButtonHidden={mode === ExploreMode.Tracing}
+              richHistoryButtonActive={showRichHistory}
+              onClickAddQueryRowButton={this.onClickAddQueryRowButton}
+              onClickRichHistoryButton={this.toggleShowRichHistory}
+            />
             <ErrorContainer queryError={queryError} />
-            <AutoSizer className={styles.fullHeight} onResize={this.onResize} disableHeight>
+            <AutoSizer onResize={this.onResize} disableHeight>
               {({ width }) => {
                 if (width === 0) {
                   return null;
                 }
 
                 return (
-                  <main
-                    className={cx(
-                      styles.logsMain,
-                      // We need height to be 100% for tracing iframe to look good but in case of metrics mode
-                      // it makes graph and table also full page high when they do not need to be.
-                      mode === ExploreMode.Tracing && styles.fullHeight
-                    )}
-                    style={{ width }}
-                  >
+                  <main className={cx(styles.logsMain)} style={{ width }}>
                     <ErrorBoundaryAlert>
                       {showStartPage && StartPage && (
                         <div className={'grafana-info-box grafana-info-box--max-lg'}>
@@ -400,18 +369,12 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
                               onStopScanning={this.onStopScanning}
                             />
                           )}
-                          {mode === ExploreMode.Tracing && (
-                            <div className={styles.fullHeight}>
-                              {queryResponse &&
-                                !!queryResponse.series.length &&
-                                queryResponse.series[0].fields[0].values.get(0) && (
-                                  <iframe
-                                    className={styles.iframe}
-                                    src={queryResponse.series[0].fields[0].values.get(0)}
-                                  />
-                                )}
-                            </div>
-                          )}
+                          {mode === ExploreMode.Tracing &&
+                            // We expect only one trace at the moment to be in the dataframe
+                            // If there is not data (like 404) we show a separate error so no need to show anything here
+                            queryResponse.series[0] && (
+                              <TraceView trace={queryResponse.series[0].fields[0].values.get(0) as any} />
+                            )}
                         </>
                       )}
                       {showRichHistory && (

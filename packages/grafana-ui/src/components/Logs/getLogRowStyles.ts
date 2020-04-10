@@ -158,8 +158,10 @@ export const getLogRowStyles = stylesFactory((theme: GrafanaTheme, logLevel?: Lo
     logsDetailsIcon: css`
       label: logs-row-details__icon;
       position: relative;
-      padding-right: ${theme.spacing.md};
       color: ${theme.colors.gray3};
+      svg {
+        margin-right: ${theme.spacing.md};
+      }
     `,
     logDetailsLabel: css`
       label: logs-row-details__label;

@@ -1,20 +1,19 @@
 import { sharedSingleStatMigrationHandler, sharedSingleStatPanelChangedHandler } from '@grafana/ui';
-import { defaultStandardFieldConfigProperties, PanelPlugin } from '@grafana/data';
-import { StatPanelOptions, defaults, standardFieldConfigDefaults, addStandardDataReduceOptions } from './types';
+import { PanelPlugin } from '@grafana/data';
+import { StatPanelOptions, addStandardDataReduceOptions } from './types';
 import { StatPanel } from './StatPanel';
-import { StatPanelEditor } from './StatPanelEditor';
 
 export const plugin = new PanelPlugin<StatPanelOptions>(StatPanel)
-  .setDefaults(defaults)
-  .setEditor(StatPanelEditor)
+  .useFieldConfig()
   .setPanelOptions(builder => {
     addStandardDataReduceOptions(builder);
 
     builder
       .addRadio({
-        id: 'colorMode',
+        path: 'colorMode',
         name: 'Color mode',
         description: 'Color either the value or the background',
+        defaultValue: 'value',
         settings: {
           options: [
             { value: 'value', label: 'Value' },
@@ -23,9 +22,10 @@ export const plugin = new PanelPlugin<StatPanelOptions>(StatPanel)
         },
       })
       .addRadio({
-        id: 'graphMode',
+        path: 'graphMode',
         name: 'Graph mode',
         description: 'Stat panel graph / sparkline mode',
+        defaultValue: 'area',
         settings: {
           options: [
             { value: 'none', label: 'None' },
@@ -34,9 +34,10 @@ export const plugin = new PanelPlugin<StatPanelOptions>(StatPanel)
         },
       })
       .addRadio({
-        id: 'justifyMode',
+        path: 'justifyMode',
         name: 'Justify mode',
         description: 'Value & title posititioning',
+        defaultValue: 'auto',
         settings: {
           options: [
             { value: 'auto', label: 'Auto' },
@@ -47,5 +48,4 @@ export const plugin = new PanelPlugin<StatPanelOptions>(StatPanel)
   })
   .setNoPadding()
   .setPanelChangeHandler(sharedSingleStatPanelChangedHandler)
-  .setMigrationHandler(sharedSingleStatMigrationHandler)
-  .useStandardFieldConfig(defaultStandardFieldConfigProperties, standardFieldConfigDefaults);
+  .setMigrationHandler(sharedSingleStatMigrationHandler);

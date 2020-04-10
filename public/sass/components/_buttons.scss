@@ -82,6 +82,9 @@
 .btn-small {
   @include button-size($btn-padding-y-sm, $space-sm, $font-size-sm, $border-radius-sm);
   height: $height-sm;
+  svg {
+    margin-bottom: 0;
+  }
 }
 
 // Deprecated, only used by old plugins
@@ -219,6 +222,15 @@ $btn-service-icon-width: 35px;
 .btn-service--azuread {
   .btn-service-icon {
     background-image: url(../img/microsoft_auth_icon.svg);
+    background-repeat: no-repeat;
+    background-position: 50%;
+    background-size: 60%;
+  }
+}
+
+.btn-service--okta {
+  .btn-service-icon {
+    background-image: url(../img/okta_logo_white.png);
     background-repeat: no-repeat;
     background-position: 50%;
     background-size: 60%;

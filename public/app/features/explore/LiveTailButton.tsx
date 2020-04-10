@@ -128,11 +128,8 @@ export function LiveTailButton(props: LiveTailButtonProps) {
             [styles.isLive]: isLive && !isPaused,
             [styles.isPaused]: isLive && isPaused,
           })}
-          iconClassName={classNames(
-            'fa',
-            isPaused || !isLive ? 'fa-play' : 'fa-pause',
-            isLive && 'icon-brand-gradient'
-          )}
+          icon={!isLive ? 'play' : 'pause'}
+          iconClassName={isLive && 'icon-brand-gradient'}
           onClick={onClickMain}
           title={'\xa0Live'}
         />
