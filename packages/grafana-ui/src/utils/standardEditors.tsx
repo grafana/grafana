@@ -32,6 +32,7 @@ import { StatsPickerEditor } from '../components/OptionsUI/stats';
  * Returns collection of common field config properties definitions
  */
 export const getStandardFieldConfigs = () => {
+  const category = ['Standard field options'];
   const title: FieldConfigPropertyItem<any, string, StringFieldConfigSettings> = {
     id: 'title',
     path: 'title',
@@ -45,13 +46,14 @@ export const getStandardFieldConfigs = () => {
       expandTemplateVars: true,
     },
     shouldApply: field => field.type !== FieldType.time,
+    category,
   };
 
   const unit: FieldConfigPropertyItem<any, string, StringFieldConfigSettings> = {
     id: 'unit',
     path: 'unit',
     name: 'Unit',
-    description: 'Value units',
+    description: '',
 
     editor: standardEditorsRegistry.get('unit').editor as any,
     override: standardEditorsRegistry.get('unit').editor as any,
@@ -62,13 +64,14 @@ export const getStandardFieldConfigs = () => {
     },
 
     shouldApply: field => field.type === FieldType.number,
+    category,
   };
 
   const min: FieldConfigPropertyItem<any, number, NumberFieldConfigSettings> = {
     id: 'min',
     path: 'min',
     name: 'Min',
-    description: 'Minimum expected value',
+    description: 'Leave empty to calculate based on all values',
 
     editor: standardEditorsRegistry.get('number').editor as any,
     override: standardEditorsRegistry.get('number').editor as any,
@@ -78,13 +81,14 @@ export const getStandardFieldConfigs = () => {
       placeholder: 'auto',
     },
     shouldApply: field => field.type === FieldType.number,
+    category,
   };
 
   const max: FieldConfigPropertyItem<any, number, NumberFieldConfigSettings> = {
     id: 'max',
     path: 'max',
     name: 'Max',
-    description: 'Maximum expected value',
+    description: 'Leave empty to calculate based on all values',
 
     editor: standardEditorsRegistry.get('number').editor as any,
     override: standardEditorsRegistry.get('number').editor as any,
@@ -95,13 +99,14 @@ export const getStandardFieldConfigs = () => {
     },
 
     shouldApply: field => field.type === FieldType.number,
+    category,
   };
 
   const decimals: FieldConfigPropertyItem<any, number, NumberFieldConfigSettings> = {
     id: 'decimals',
     path: 'decimals',
     name: 'Decimals',
-    description: 'Number of decimal to be shown for a value',
+    description: '',
 
     editor: standardEditorsRegistry.get('number').editor as any,
     override: standardEditorsRegistry.get('number').editor as any,
@@ -115,13 +120,14 @@ export const getStandardFieldConfigs = () => {
     },
 
     shouldApply: field => field.type === FieldType.number,
+    category,
   };
 
   const thresholds: FieldConfigPropertyItem<any, ThresholdsConfig, ThresholdsFieldConfigSettings> = {
     id: 'thresholds',
     path: 'thresholds',
     name: 'Thresholds',
-    description: 'Manage thresholds',
+    description: '',
 
     editor: standardEditorsRegistry.get('thresholds').editor as any,
     override: standardEditorsRegistry.get('thresholds').editor as any,
@@ -135,13 +141,14 @@ export const getStandardFieldConfigs = () => {
       ],
     },
     shouldApply: field => field.type === FieldType.number,
+    category: ['Color & thresholds'],
   };
 
   const mappings: FieldConfigPropertyItem<any, ValueMapping[], ValueMappingFieldConfigSettings> = {
     id: 'mappings',
     path: 'mappings',
     name: 'Value mappings',
-    description: 'Manage value mappings',
+    description: '',
 
     editor: standardEditorsRegistry.get('mappings').editor as any,
     override: standardEditorsRegistry.get('mappings').editor as any,
@@ -149,6 +156,7 @@ export const getStandardFieldConfigs = () => {
     settings: {},
     defaultValue: [],
     shouldApply: field => field.type === FieldType.number,
+    category: ['Value mappings'],
   };
 
   const noValue: FieldConfigPropertyItem<any, string, StringFieldConfigSettings> = {
@@ -166,6 +174,7 @@ export const getStandardFieldConfigs = () => {
     },
     // ??? any optionsUi with no value
     shouldApply: () => true,
+    category,
   };
 
   const links: FieldConfigPropertyItem<any, DataLink[], StringFieldConfigSettings> = {
@@ -180,6 +189,7 @@ export const getStandardFieldConfigs = () => {
       placeholder: '-',
     },
     shouldApply: () => true,
+    category: ['Data links'],
   };
 
   const color: FieldConfigPropertyItem<any, string, StringFieldConfigSettings> = {
@@ -194,9 +204,10 @@ export const getStandardFieldConfigs = () => {
       placeholder: '-',
     },
     shouldApply: () => true,
+    category: ['Color & thresholds'],
   };
 
-  return [unit, min, max, decimals, title, noValue, thresholds, mappings, links, color];
+  return [unit, min, max, decimals, title, noValue, color, thresholds, mappings, links];
 };
 
 /**

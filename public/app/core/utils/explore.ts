@@ -507,7 +507,7 @@ export enum SortOrder {
 export const refreshIntervalToSortOrder = (refreshInterval?: string) =>
   RefreshPicker.isLive(refreshInterval) ? SortOrder.Ascending : SortOrder.Descending;
 
-export const sortLogsResult = (logsResult: LogsModel, sortOrder: SortOrder): LogsModel => {
+export const sortLogsResult = (logsResult: LogsModel | null, sortOrder: SortOrder): LogsModel => {
   const rows = logsResult ? logsResult.rows : [];
   sortOrder === SortOrder.Ascending ? rows.sort(sortInAscendingOrder) : rows.sort(sortInDescendingOrder);
   const result: LogsModel = logsResult ? { ...logsResult, rows } : { hasUniqueLabels: false, rows };

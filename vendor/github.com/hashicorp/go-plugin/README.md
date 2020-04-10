@@ -141,11 +141,6 @@ This plugin system will give host processes a system for constraining
 versions. This is in addition to the protocol versioning already present
 which is more for larger underlying changes.
 
-**Plugin fetching.** We will integrate with [go-getter](https://github.com/hashicorp/go-getter)
-to support automatic download + install of plugins. Paired with cryptographically
-secure plugins (above), we can make this a safe operation for an amazing
-user experience.
-
 ## What About Shared Libraries?
 
 When we started using plugins (late 2012, early 2013), plugins over RPC

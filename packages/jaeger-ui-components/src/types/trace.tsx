@@ -19,7 +19,7 @@
 // TODO: Everett Tech Debt: Fix KeyValuePair types
 export type KeyValuePair = {
   key: string;
-  type: string;
+  type?: string;
   value: any;
 };
 

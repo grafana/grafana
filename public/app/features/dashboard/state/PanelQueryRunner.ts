@@ -90,6 +90,7 @@ export class PanelQueryRunner {
           processedData = {
             ...processedData,
             series: applyFieldOverrides({
+              autoMinMax: true,
               data: processedData.series,
               ...fieldConfig,
             }),

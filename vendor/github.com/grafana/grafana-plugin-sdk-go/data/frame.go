@@ -20,17 +20,32 @@ import (
 	"github.com/olekukonko/tablewriter"
 )
 
-// Frame represents a columnar storage with optional labels.
-// Each Field in Fields represents a column, all Fields
-// must be of the same the length.
+// Frame is a columnar data structure where each column is a Field.
+//
+// Each Field is well typed by its FieldType and supports optional Labels.
+//
+// A Frame is a general data container for Grafana. A Frame can be table data
+// or time series data depending on its content and field types.
 type Frame struct {
-	Name   string
+	// Name is used in some Grafana visualizations.
+	Name string
+
+	// Fields are the columns of a frame.
+	// All Fields must be of the same the length when marshalling the Frame for transmission.
 	Fields []*Field
 
-	RefID    string
-	Meta     *FrameMeta
-	Warnings []Warning
+	// RefID is a property that can be set to match a Frame to its orginating query
+	RefID string
+
+	// Meta is metadata about the Frame, and includes space for custom metadata.
+	Meta *FrameMeta
+
+	Warnings []Warning // TODO: Remove, will be replaced with FrameMeta.Notices.
 }
+
+// Frames is a slice of Frame pointers.
+// It is the main data container within a backend.DataResponse.
+type Frames []*Frame
 
 // AppendRow adds a new row to the Frame by appending to each element of vals to
 // the corresponding Field in the data.
@@ -121,6 +136,19 @@ func (f *Frame) EmptyCopy() *Frame {
 	return newFrame
 }
 
+// NewFrameOfFieldTypes returns a Frame where the Fields are initalized to the
+// corresponding field type in fTypes. Each Field will be of length FieldLen.
+func NewFrameOfFieldTypes(name string, fieldLen int, fTypes ...FieldType) *Frame {
+	f := &Frame{
+		Name:   name,
+		Fields: make(Fields, len(fTypes)),
+	}
+	for i, fT := range fTypes {
+		f.Fields[i] = NewFieldFromFieldType(fT, fieldLen)
+	}
+	return f
+}
+
 // TypeIndices returns a slice of Field index positions for the given fTypes.
 func (f *Frame) TypeIndices(fTypes ...FieldType) []int {
 	indices := []int{}
@@ -175,7 +203,8 @@ func (f *Frame) CopyAt(fieldIdx int, rowIdx int) interface{} {
 }
 
 // Set set the val to the specified fieldIdx and rowIdx.
-// It will panic if either the fieldIdx or rowIdx are out of range.
+// It will panic if either the fieldIdx or rowIdx are out of range or
+// if the underlying type of val does not match the element type of the Field.
 func (f *Frame) Set(fieldIdx int, rowIdx int, val interface{}) {
 	f.Fields[fieldIdx].vector.Set(rowIdx, val)
 }
@@ -226,7 +255,23 @@ func (f *Frame) FloatAt(fieldIdx int, rowIdx int) (float64, error) {
 	return f.Fields[fieldIdx].FloatAt(rowIdx)
 }
 
-// FrameTestCompareOptions returns go-cmp testing options to allow testing of Frame equivelnce.
+// SetFieldNames sets each Field Name in the frame to the corresponding frame.
+// If the number of provided names does not match the number of Fields in the frame an error is returned.
+func (f *Frame) SetFieldNames(names ...string) error {
+	fieldLen := 0
+	if f.Fields != nil {
+		fieldLen = len(f.Fields)
+	}
+	if fieldLen != len(names) {
+		return fmt.Errorf("can not set field names, number of names %v does not match frame field length %v", len(names), fieldLen)
+	}
+	for i, name := range names {
+		f.Fields[i].Name = name
+	}
+	return nil
+}
+
+// FrameTestCompareOptions returns go-cmp testing options to allow testing of Frame equivalence.
 // Since the data within a Frame's Fields is not exported, this function allows the unexported
 // values to be tested.
 // The intent is to only use this for testing.

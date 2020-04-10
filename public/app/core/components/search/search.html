@@ -12,7 +12,6 @@
     <div class="search-dropdown__col_1">
       <div class="search-results-scroller">
         <div class="search-results-container" grafana-scrollbar>
-          <h6 ng-show="!ctrl.isLoading && ctrl.results.length === 0">No dashboards matching your query were found.</h6>
           <search-results
             results="ctrl.results"
             on-tag-selected="ctrl.filterByTag"

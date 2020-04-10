@@ -9,7 +9,7 @@ import {
   GrafanaTheme,
   TimeZone,
 } from '../types';
-import { Registry } from '../utils';
+import { Registry } from '../utils/Registry';
 import { InterpolateFunction } from './panel';
 import { StandardEditorProps } from '../field';
 import { OptionsEditorItem } from './OptionsUIRegistryBuilder';
@@ -57,9 +57,11 @@ export interface FieldConfigEditorConfig<TOptions, TSettings = any, TValue = any
   path: (keyof TOptions & string) | string;
   name: string;
   description: string;
+  category?: string[];
   settings?: TSettings;
   shouldApply?: (field: Field) => boolean;
   defaultValue?: TValue;
+  showIf?: (currentConfig: TOptions) => boolean;
 }
 
 export interface FieldConfigPropertyItem<TOptions = any, TValue = any, TSettings extends {} = any>

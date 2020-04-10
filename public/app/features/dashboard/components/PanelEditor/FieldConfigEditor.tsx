@@ -12,6 +12,8 @@ import { Forms, fieldMatchersUI, ValuePicker, useTheme } from '@grafana/ui';
 import { getDataLinksVariableSuggestions } from '../../../panel/panellinks/link_srv';
 import { OverrideEditor } from './OverrideEditor';
 import { css } from 'emotion';
+import groupBy from 'lodash/groupBy';
+import { OptionsGroup } from './OptionsGroup';
 
 interface Props {
   plugin: PanelPlugin;
@@ -143,6 +145,9 @@ export const DefaultFieldConfigEditor: React.FC<Props> = ({ data, onChange, conf
 
   const renderEditor = useCallback(
     (item: FieldConfigPropertyItem) => {
+      if (item.isCustom && item.showIf && !item.showIf(config.defaults.custom)) {
+        return null;
+      }
       const defaults = config.defaults;
       const value = item.isCustom
         ? defaults.custom
@@ -150,8 +155,14 @@ export const DefaultFieldConfigEditor: React.FC<Props> = ({ data, onChange, conf
           : undefined
         : (defaults as any)[item.path];
 
+      const label = (
+        <Forms.Label description={item.description} category={item.category?.slice(1)}>
+          {item.name}
+        </Forms.Label>
+      );
+
       return (
-        <Forms.Field label={item.name} description={item.description} key={`${item.id}`}>
+        <Forms.Field label={label} key={`${item.id}/${item.isCustom}`}>
           <item.editor
             item={item}
             value={value}
@@ -167,6 +178,21 @@ export const DefaultFieldConfigEditor: React.FC<Props> = ({ data, onChange, conf
     [config]
   );
 
-  // render all field configs
-  return <>{plugin.fieldConfigRegistry.list().map(renderEditor)}</>;
+  const groupedConfigs = groupBy(plugin.fieldConfigRegistry.list(), i => i.category && i.category[0]);
+
+  return (
+    <>
+      {Object.keys(groupedConfigs).map(k => {
+        return (
+          <OptionsGroup title={k}>
+            <>
+              {groupedConfigs[k].map(c => {
+                return renderEditor(c);
+              })}
+            </>
+          </OptionsGroup>
+        );
+      })}
+    </>
+  );
 };
