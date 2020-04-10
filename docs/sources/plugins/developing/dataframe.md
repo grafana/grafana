@@ -1,14 +1,10 @@
 +++
 title = "Introduction Dataframes"
-description = "Guide to understanding Dataframes"
-keywords = ["grafana", "dataframe", "guide"]
 type = "docs"
-aliases = ["/docs/grafana/latest/guides/dataframe"]
 [menu.docs]
 name = "Dataframes"
-identifier = "dataframes_guide"
-parent = "guides"
-weight = 350
+parent = "developing"
+weight = 9
 +++
 
 ## Introduction to Dataframes
