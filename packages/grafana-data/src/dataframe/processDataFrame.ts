@@ -230,17 +230,19 @@ export function guessFieldTypeForField(field: Field): FieldType | undefined {
 }
 
 /**
- * @returns a copy of the series with the best guess for each field type
- * If the series already has field types defined, they will be used
+ * @returns A copy of the series with the best guess for each field type.
+ * If the series already has field types defined, they will be used, unless `guessDefined` is true.
+ * @param series The DataFrame whose field's types should be guessed
+ * @param guessDefined Whether to guess types of fields with already defined types
  */
-export const guessFieldTypes = (series: DataFrame): DataFrame => {
+export const guessFieldTypes = (series: DataFrame, guessDefined = false): DataFrame => {
   for (let i = 0; i < series.fields.length; i++) {
-    if (!series.fields[i].type) {
+    if (!series.fields[i].type || guessDefined) {
       // Something is missing a type, return a modified copy
       return {
         ...series,
         fields: series.fields.map(field => {
-          if (field.type && field.type !== FieldType.other) {
+          if (field.type && field.type !== FieldType.other && !guessDefined) {
             return field;
           }
           // Calculate a reasonable schema value

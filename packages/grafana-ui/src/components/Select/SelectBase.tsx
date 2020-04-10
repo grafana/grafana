@@ -23,6 +23,7 @@ import { useTheme } from '../../themes';
 import { getSelectStyles } from './getSelectStyles';
 import { cleanValue } from './utils';
 import { SelectBaseProps, SelectValue } from './types';
+import { deprecationWarning } from '@grafana/data';
 
 interface ExtraValuesIndicatorProps {
   maxVisibleValues?: number | undefined;
@@ -91,6 +92,7 @@ export function SelectBase<T>({
   allowCustomValue = false,
   autoFocus = false,
   backspaceRemovesValue = true,
+  cacheOptions,
   className,
   closeMenuOnSelect = true,
   components,
@@ -206,6 +208,13 @@ export function SelectBase<T>({
     value: isMulti ? selectedValue : selectedValue[0],
   };
 
+  // width property is deprecated in favor of size or className
+  let widthClass = className ?? '';
+  if (width && !className) {
+    deprecationWarning('Select', 'width property', 'size or className');
+    widthClass = 'width-' + width;
+  }
+
   if (allowCustomValue) {
     ReactSelectComponent = Creatable;
     creatableProps.formatCreateLabel = formatCreateLabel ?? ((input: string) => `Create: ${input}`);
@@ -217,6 +226,7 @@ export function SelectBase<T>({
     ReactSelectComponent = allowCustomValue ? AsyncCreatable : ReactAsyncSelect;
     asyncSelectProps = {
       loadOptions,
+      cacheOptions,
       defaultOptions,
     };
   }
@@ -336,6 +346,10 @@ export function SelectBase<T>({
           container: () => ({
             position: 'relative',
             width: width ? `${8 * width}px` : '100%',
+          }),
+          option: (provided: any, state: any) => ({
+            ...provided,
+            opacity: state.isDisabled ? 0.5 : 1,
           }),
         }}
         className={className}

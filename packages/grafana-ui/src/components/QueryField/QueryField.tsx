@@ -167,6 +167,7 @@ export class QueryField extends React.PureComponent<QueryFieldProps, QueryFieldS
    */
   handleBlur = (event: Event, editor: CoreEditor, next: Function) => {
     const { onBlur } = this.props;
+
     if (onBlur) {
       onBlur();
     } else {

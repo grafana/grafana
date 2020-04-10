@@ -24,6 +24,7 @@ interface Props extends Themeable {
   wrapLogMessage: boolean;
   errors?: LogRowContextQueryErrors;
   context?: LogRowContextRows;
+  showContextToggle?: boolean;
   highlighterExpressions?: string[];
   getRows: () => LogRowModel[];
   onToggleContext: () => void;
@@ -75,6 +76,7 @@ class UnThemedLogRowMessage extends PureComponent<Props> {
       updateLimit,
       context,
       showContext,
+      showContextToggle,
       wrapLogMessage,
       onToggleContext,
     } = this.props;
@@ -126,7 +128,7 @@ class UnThemedLogRowMessage extends PureComponent<Props> {
               entry
             )}
           </span>
-          {row.searchWords && row.searchWords.length > 0 && (
+          {((row.searchWords && row.searchWords.length > 0) || showContextToggle) && (
             <span onClick={this.onContextToggle} className={cx(style.context)}>
               {showContext ? 'Hide' : 'Show'} context
             </span>

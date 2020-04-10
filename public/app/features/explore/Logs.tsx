@@ -21,6 +21,7 @@ import store from 'app/core/store';
 
 import { ExploreGraphPanel } from './ExploreGraphPanel';
 import { MetaInfoText } from './MetaInfoText';
+import { RowContextOptions } from '@grafana/ui/src/components/Logs/LogRowContextProvider';
 
 const SETTINGS_KEYS = {
   showLabels: 'grafana.explore.logs.showLabels',
@@ -60,7 +61,7 @@ interface Props {
   onStopScanning?: () => void;
   onDedupStrategyChange: (dedupStrategy: LogsDedupStrategy) => void;
   onToggleLogLevel: (hiddenLogLevels: LogLevel[]) => void;
-  getRowContext?: (row: LogRowModel, options?: any) => Promise<any>;
+  getRowContext?: (row: LogRowModel, options?: RowContextOptions) => Promise<any>;
   getFieldLinks: (field: Field, rowIndex: number) => Array<LinkModel<Field>>;
 }
 

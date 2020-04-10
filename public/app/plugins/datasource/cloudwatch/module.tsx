@@ -1,15 +1,20 @@
 import './query_parameter_ctrl';
 import { DataSourcePlugin } from '@grafana/data';
 import { ConfigEditor } from './components/ConfigEditor';
-import { QueryEditor } from './components/QueryEditor';
-import CloudWatchDatasource from './datasource';
+import { MetricsQueryEditor } from './components/MetricsQueryEditor';
+import { CloudWatchDatasource } from './datasource';
 import { CloudWatchAnnotationsQueryCtrl } from './annotations_query_ctrl';
 import { CloudWatchJsonData, CloudWatchQuery } from './types';
+import { CloudWatchLogsQueryEditor } from './components/LogsQueryEditor';
+import { PanelQueryEditor } from './components/PanelQueryEditor';
+import LogsCheatSheet from './components/LogsCheatSheet';
 
 export const plugin = new DataSourcePlugin<CloudWatchDatasource, CloudWatchQuery, CloudWatchJsonData>(
   CloudWatchDatasource
 )
+  .setExploreStartPage(LogsCheatSheet)
   .setConfigEditor(ConfigEditor)
-  .setQueryEditor(QueryEditor)
-  .setExploreQueryField(QueryEditor)
+  .setQueryEditor(PanelQueryEditor)
+  .setExploreMetricsQueryField(MetricsQueryEditor)
+  .setExploreLogsQueryField(CloudWatchLogsQueryEditor)
   .setAnnotationQueryCtrl(CloudWatchAnnotationsQueryCtrl);

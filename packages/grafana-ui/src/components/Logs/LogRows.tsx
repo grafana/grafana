@@ -8,6 +8,7 @@ import { getLogRowStyles } from './getLogRowStyles';
 
 //Components
 import { LogRow } from './LogRow';
+import { RowContextOptions } from './LogRowContextProvider';
 
 export const PREVIEW_LIMIT = 100;
 export const RENDER_LIMIT = 500;
@@ -26,7 +27,7 @@ export interface Props extends Themeable {
   previewLimit?: number;
   onClickFilterLabel?: (key: string, value: string) => void;
   onClickFilterOutLabel?: (key: string, value: string) => void;
-  getRowContext?: (row: LogRowModel, options?: any) => Promise<any>;
+  getRowContext?: (row: LogRowModel, options?: RowContextOptions) => Promise<any>;
   getFieldLinks?: (field: Field, rowIndex: number) => Array<LinkModel<Field>>;
 }
 

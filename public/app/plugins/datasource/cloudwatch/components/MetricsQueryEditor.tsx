@@ -1,11 +1,12 @@
 import React, { PureComponent, ChangeEvent } from 'react';
+import isEmpty from 'lodash/isEmpty';
+
 import { ExploreQueryFieldProps } from '@grafana/data';
 import { LegacyForms, ValidationEvents, EventsWithValidation, Icon } from '@grafana/ui';
 const { Input, Switch } = LegacyForms;
-import isEmpty from 'lodash/isEmpty';
-import { CloudWatchQuery } from '../types';
-import CloudWatchDatasource from '../datasource';
-import { QueryField, Alias, QueryFieldsEditor } from './';
+import { CloudWatchQuery, CloudWatchMetricsQuery } from '../types';
+import { CloudWatchDatasource } from '../datasource';
+import { QueryField, Alias, MetricsQueryFieldsEditor } from './';
 
 export type Props = ExploreQueryFieldProps<CloudWatchDatasource, CloudWatchQuery>;
 
@@ -33,7 +34,7 @@ export const normalizeQuery = ({
   statistics,
   period,
   ...rest
-}: CloudWatchQuery): CloudWatchQuery => {
+}: CloudWatchMetricsQuery): CloudWatchMetricsQuery => {
   const normalizedQuery = {
     namespace: namespace || '',
     metricName: metricName || '',
@@ -49,10 +50,53 @@ export const normalizeQuery = ({
   return !rest.hasOwnProperty('matchExact') ? { ...normalizedQuery, matchExact: true } : normalizedQuery;
 };
 
-export class QueryEditor extends PureComponent<Props, State> {
+export class MetricsQueryEditor extends PureComponent<Props, State> {
   state: State = { showMeta: false };
 
-  onChange(query: CloudWatchQuery) {
+  static getDerivedStateFromProps(props: Props, state: State) {
+    const { query } = props;
+    const metricsQuery = query as CloudWatchMetricsQuery;
+
+    if (!query.namespace) {
+      query.namespace = '';
+    }
+
+    if (!metricsQuery.metricName) {
+      metricsQuery.metricName = '';
+    }
+
+    if (!query.expression) {
+      query.expression = '';
+    }
+
+    if (!metricsQuery.dimensions) {
+      metricsQuery.dimensions = {};
+    }
+
+    if (!query.region) {
+      query.region = 'default';
+    }
+
+    if (!query.id) {
+      query.id = '';
+    }
+
+    if (!metricsQuery.alias) {
+      metricsQuery.alias = '';
+    }
+
+    if (!metricsQuery.statistics || !metricsQuery.statistics.length) {
+      metricsQuery.statistics = ['Average'];
+    }
+
+    if (!query.hasOwnProperty('matchExact')) {
+      metricsQuery.matchExact = true;
+    }
+
+    return state;
+  }
+
+  onChange(query: CloudWatchMetricsQuery) {
     const { onChange, onRunQuery } = this.props;
     onChange(query);
     onRunQuery();
@@ -60,12 +104,14 @@ export class QueryEditor extends PureComponent<Props, State> {
 
   render() {
     const { data, onRunQuery } = this.props;
+    const metricsQuery = this.props.query as CloudWatchMetricsQuery;
     const { showMeta } = this.state;
-    const query = normalizeQuery(this.props.query);
+    const query = normalizeQuery(metricsQuery);
     const metaDataExist = data && Object.values(data).length && data.state === 'Done';
+
     return (
       <>
-        <QueryFieldsEditor {...{ ...this.props, query }}></QueryFieldsEditor>
+        <MetricsQueryFieldsEditor {...{ ...this.props, query }}></MetricsQueryFieldsEditor>
         {query.statistics.length <= 1 && (
           <div className="gf-form-inline">
             <div className="gf-form">
@@ -77,7 +123,7 @@ export class QueryEditor extends PureComponent<Props, State> {
                   className="gf-form-input width-8"
                   onBlur={onRunQuery}
                   onChange={(event: ChangeEvent<HTMLInputElement>) =>
-                    this.onChange({ ...query, id: event.target.value })
+                    this.onChange({ ...metricsQuery, id: event.target.value })
                   }
                   validationEvents={idValidationEvents}
                   value={query.id}
@@ -93,9 +139,9 @@ export class QueryEditor extends PureComponent<Props, State> {
                 <Input
                   className="gf-form-input"
                   onBlur={onRunQuery}
-                  value={query.expression}
+                  value={query.expression || ''}
                   onChange={(event: ChangeEvent<HTMLInputElement>) =>
-                    this.onChange({ ...query, expression: event.target.value })
+                    this.onChange({ ...metricsQuery, expression: event.target.value })
                   }
                 />
               </QueryField>
@@ -107,11 +153,11 @@ export class QueryEditor extends PureComponent<Props, State> {
             <QueryField label="Period" tooltip="Minimum interval between points in seconds">
               <Input
                 className="gf-form-input width-8"
-                value={query.period}
+                value={query.period || ''}
                 placeholder="auto"
                 onBlur={onRunQuery}
                 onChange={(event: ChangeEvent<HTMLInputElement>) =>
-                  this.onChange({ ...query, period: event.target.value })
+                  this.onChange({ ...metricsQuery, period: event.target.value })
                 }
               />
             </QueryField>
@@ -121,14 +167,22 @@ export class QueryEditor extends PureComponent<Props, State> {
               label="Alias"
               tooltip="Alias replacement variables: {{metric}}, {{stat}}, {{namespace}}, {{region}}, {{period}}, {{label}}, {{YOUR_DIMENSION_NAME}}"
             >
-              <Alias value={query.alias} onChange={(value: string) => this.onChange({ ...query, alias: value })} />
+              <Alias
+                value={metricsQuery.alias}
+                onChange={(value: string) => this.onChange({ ...metricsQuery, alias: value })}
+              />
             </QueryField>
             <Switch
               label="Match Exact"
               labelClass="query-keyword"
               tooltip="Only show metrics that exactly match all defined dimension names."
-              checked={query.matchExact}
-              onChange={() => this.onChange({ ...query, matchExact: !query.matchExact })}
+              checked={metricsQuery.matchExact}
+              onChange={() =>
+                this.onChange({
+                  ...metricsQuery,
+                  matchExact: !metricsQuery.matchExact,
+                })
+              }
             />
             <label className="gf-form-label">
               <a

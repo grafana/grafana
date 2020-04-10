@@ -1,17 +1,21 @@
-jest.mock('@grafana/data/src/datetime/moment_wrapper', () => ({
-  dateTime: (ts: any) => {
-    return {
-      valueOf: () => ts,
-      fromNow: () => 'fromNow() jest mocked',
-      format: (fmt: string) => 'format() jest mocked',
-    };
-  },
-  toUtc: (ts: any) => {
-    return {
-      format: (fmt: string) => 'format() jest mocked',
-    };
-  },
-}));
+jest.mock('@grafana/data/src/datetime/moment_wrapper', () => {
+  const momentMock = {
+    dateTime: (ts: any) => {
+      return {
+        valueOf: () => ts,
+        fromNow: () => 'fromNow() jest mocked',
+        format: (fmt: string) => 'format() jest mocked',
+      };
+    },
+    toUtc: null as any,
+  };
+  momentMock.toUtc = (ts: any) => ({
+    format: (fmt: string) => 'format() jest mocked',
+    local: () => momentMock.dateTime(ts),
+  });
+
+  return momentMock;
+});
 
 import { ResultProcessor } from './ResultProcessor';
 import { ExploreItemState } from 'app/types/explore';

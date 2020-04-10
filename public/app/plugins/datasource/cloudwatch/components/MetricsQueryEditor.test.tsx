@@ -5,8 +5,9 @@ import { act } from 'react-dom/test-utils';
 import { DataSourceInstanceSettings } from '@grafana/data';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { CustomVariable } from 'app/features/templating/all';
-import { Props, QueryEditor, normalizeQuery } from './QueryEditor';
-import CloudWatchDatasource from '../datasource';
+import { MetricsQueryEditor, Props, normalizeQuery } from './MetricsQueryEditor';
+import { CloudWatchDatasource } from '../datasource';
+import { CloudWatchMetricsQuery } from '../types';
 
 const setup = () => {
   const instanceSettings = {
@@ -37,6 +38,7 @@ const setup = () => {
 
   const props: Props = {
     query: {
+      mode: 'Metrics',
       refId: '',
       id: '',
       region: 'us-east-1',
@@ -63,7 +65,7 @@ describe('QueryEditor', () => {
     const { act } = renderer;
     await act(async () => {
       const props = setup();
-      const tree = renderer.create(<QueryEditor {...props} />).toJSON();
+      const tree = renderer.create(<MetricsQueryEditor {...props} />).toJSON();
       expect(tree).toMatchSnapshot();
     });
   });
@@ -74,7 +76,7 @@ describe('QueryEditor', () => {
       await act(async () => {
         const props = setup();
         props.query.region = (null as unknown) as string;
-        const wrapper = mount(<QueryEditor {...props} />);
+        const wrapper = mount(<MetricsQueryEditor {...props} />);
         expect(
           wrapper
             .find('.gf-form-inline')
@@ -83,6 +85,30 @@ describe('QueryEditor', () => {
             .first()
             .text()
         ).toEqual('default');
+      });
+    });
+
+    it('should init props correctly', async () => {
+      await act(async () => {
+        const props = setup();
+        const metricsQuery = props.query as CloudWatchMetricsQuery;
+
+        metricsQuery.namespace = null;
+        metricsQuery.metricName = null;
+        metricsQuery.expression = null;
+        metricsQuery.dimensions = null;
+        metricsQuery.region = null;
+        metricsQuery.statistics = null;
+        const wrapper = mount(<MetricsQueryEditor {...props} />);
+        const {
+          query: { namespace, region, metricName, dimensions, statistics, expression },
+        } = wrapper.props();
+        expect(namespace).toEqual('');
+        expect(metricName).toEqual('');
+        expect(expression).toEqual('');
+        expect(region).toEqual('default');
+        expect(statistics).toEqual(['Average']);
+        expect(dimensions).toEqual({});
       });
     });
 

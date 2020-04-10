@@ -43,6 +43,7 @@ import {
 import { LiveStreams, LokiLiveTarget } from './live_streams';
 import LanguageProvider from './language_provider';
 import { serializeParams } from '../../../core/utils/fetch';
+import { RowContextOptions } from '@grafana/ui/src/components/Logs/LogRowContextProvider';
 
 export type RangeQueryOptions = Pick<DataQueryRequest<LokiQuery>, 'range' | 'intervalMs' | 'maxDataPoints' | 'reverse'>;
 export const DEFAULT_MAX_LINES = 1000;
@@ -56,11 +57,6 @@ const DEFAULT_QUERY_PARAMS: Partial<LokiRangeQueryRequest> = {
   limit: DEFAULT_MAX_LINES,
   query: '',
 };
-
-interface LokiContextQueryOptions {
-  direction?: 'BACKWARD' | 'FORWARD';
-  limit?: number;
-}
 
 export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
   private streams = new LiveStreams();
@@ -384,7 +380,7 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
     return Math.ceil(date.valueOf() * 1e6);
   }
 
-  getLogRowContext = (row: LogRowModel, options?: LokiContextQueryOptions): Promise<{ data: DataFrame[] }> => {
+  getLogRowContext = (row: LogRowModel, options?: RowContextOptions): Promise<{ data: DataFrame[] }> => {
     const target = this.prepareLogRowContextQueryTarget(
       row,
       (options && options.limit) || 10,
