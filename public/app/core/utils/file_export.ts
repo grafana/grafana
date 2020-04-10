@@ -12,10 +12,11 @@ const END_ROW = '\r\n';
 const QUOTE = '"';
 const EXPORT_FILENAME = 'grafana_data_export.csv';
 
-interface SeriesListToCsvColumnsOptions {
+interface ExportToCsvOptions {
   dateTimeFormat: string;
   excel: boolean;
   timezone: TimeZone;
+  useLocale: boolean;
 }
 
 type SeriesList = Array<{
@@ -23,10 +24,11 @@ type SeriesList = Array<{
   alias: any;
 }>;
 
-const defaultOptions: SeriesListToCsvColumnsOptions = {
+const defaultOptions: ExportToCsvOptions = {
   dateTimeFormat: DEFAULT_DATETIME_FORMAT,
   excel: false,
   timezone: '',
+  useLocale: false,
 };
 
 function csvEscaped(text: string) {
@@ -59,11 +61,14 @@ function formatSpecialHeader(useExcelHeader: boolean) {
   return useExcelHeader ? `sep=${END_COLUMN}${END_ROW}` : '';
 }
 
-function formatRow(row: any[], addEndRowDelimiter = true) {
+function formatRow(row: any[], addEndRowDelimiter = true, useLocale = false) {
   let text = '';
   for (let i = 0; i < row.length; i += 1) {
-    if (isBoolean(row[i]) || isNumber(row[i]) || isNullOrUndefined(row[i])) {
+    if (isBoolean(row[i]) || isNullOrUndefined(row[i])) {
       text += row[i];
+    } else if (isNumber(row[i])) {
+      text += useLocale ? row[i].toLocaleString() : row[i];
+      console.log('was number');
     } else {
       text += `${QUOTE}${csvEscaped(htmlUnescaped(htmlDecoded(row[i])))}${QUOTE}`;
     }
@@ -75,8 +80,8 @@ function formatRow(row: any[], addEndRowDelimiter = true) {
   return addEndRowDelimiter ? text + END_ROW : text;
 }
 
-export function convertSeriesListToCsv(seriesList: SeriesList, options: Partial<SeriesListToCsvColumnsOptions>) {
-  const { dateTimeFormat, excel, timezone } = { ...defaultOptions, ...options };
+export function convertSeriesListToCsv(seriesList: SeriesList, options: Partial<ExportToCsvOptions>) {
+  const { dateTimeFormat, excel, timezone, useLocale } = { ...defaultOptions, ...options };
   let text = formatSpecialHeader(excel) + formatRow(['Series', 'Time', 'Value']);
   for (let seriesIndex = 0; seriesIndex < seriesList.length; seriesIndex += 1) {
     for (let i = 0; i < seriesList[seriesIndex].datapoints.length; i += 1) {
@@ -90,20 +95,21 @@ export function convertSeriesListToCsv(seriesList: SeriesList, options: Partial<
             : dateTime(seriesList[seriesIndex].datapoints[i][POINT_TIME_INDEX]).format(dateTimeFormat),
           seriesList[seriesIndex].datapoints[i][POINT_VALUE_INDEX],
         ],
-        i < seriesList[seriesIndex].datapoints.length - 1 || seriesIndex < seriesList.length - 1
+        i < seriesList[seriesIndex].datapoints.length - 1 || seriesIndex < seriesList.length - 1,
+        useLocale
       );
     }
   }
   return text;
 }
 
-export function exportSeriesListToCsv(seriesList: SeriesList, options: Partial<SeriesListToCsvColumnsOptions>) {
+export function exportSeriesListToCsv(seriesList: SeriesList, options: Partial<ExportToCsvOptions>) {
   const text = convertSeriesListToCsv(seriesList, options);
   saveSaveBlob(text, EXPORT_FILENAME);
 }
 
-export function convertSeriesListToCsvColumns(seriesList: SeriesList, options: Partial<SeriesListToCsvColumnsOptions>) {
-  const { dateTimeFormat, excel, timezone } = { ...defaultOptions, ...options };
+export function convertSeriesListToCsvColumns(seriesList: SeriesList, options: Partial<ExportToCsvOptions>) {
+  const { dateTimeFormat, excel, timezone, useLocale } = { ...defaultOptions, ...options };
   // add header
   let text =
     formatSpecialHeader(excel) +
@@ -132,7 +138,8 @@ export function convertSeriesListToCsvColumns(seriesList: SeriesList, options: P
           return datapoints[i][POINT_VALUE_INDEX];
         })
       ),
-      i < extendedDatapointsList[0].length - 1
+      i < extendedDatapointsList[0].length - 1,
+      useLocale
     );
   }
 
@@ -172,12 +179,13 @@ function mergeSeriesByTime(seriesList: SeriesList) {
   return result;
 }
 
-export function exportSeriesListToCsvColumns(seriesList: SeriesList, options: Partial<SeriesListToCsvColumnsOptions>) {
+export function exportSeriesListToCsvColumns(seriesList: SeriesList, options: Partial<ExportToCsvOptions>) {
   const text = convertSeriesListToCsvColumns(seriesList, options);
   saveSaveBlob(text, EXPORT_FILENAME);
 }
 
-export function convertTableDataToCsv(table: TableData, excel = false) {
+export function convertTableDataToCsv(table: TableData, options: Partial<ExportToCsvOptions>) {
+  const { excel } = { ...defaultOptions, ...options };
   let text = formatSpecialHeader(excel);
   // add headline
   text += formatRow(table.columns.map((val: any) => val.title || val.text));
@@ -188,8 +196,8 @@ export function convertTableDataToCsv(table: TableData, excel = false) {
   return text;
 }
 
-export function exportTableDataToCsv(table: TableData, excel = false) {
-  const text = convertTableDataToCsv(table, excel);
+export function exportTableDataToCsv(table: TableData, options: Partial<ExportToCsvOptions>) {
+  const text = convertTableDataToCsv(table, options);
   saveSaveBlob(text, EXPORT_FILENAME);
 }
 

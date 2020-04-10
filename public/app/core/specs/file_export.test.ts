@@ -102,7 +102,7 @@ describe('file_export', () => {
         ],
       };
 
-      const returnedText = fileExport.convertTableDataToCsv(inputTable, false);
+      const returnedText = fileExport.convertTableDataToCsv(inputTable, {});
 
       const expectedText =
         '"integer_value";"string_value";"float_value";"boolean_value"\r\n' +
@@ -131,7 +131,7 @@ describe('file_export', () => {
         ],
       };
 
-      const returnedText = fileExport.convertTableDataToCsv(inputTable, false);
+      const returnedText = fileExport.convertTableDataToCsv(inputTable, {});
 
       const expectedText =
         '"string_value"\r\n' +
