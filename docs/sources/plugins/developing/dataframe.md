@@ -13,7 +13,7 @@ Dataframes are a new concept in Grafana 7.0 and they replace the "Time Series" a
 
 A dataframe is a [Columnar oriented](https://en.wikipedia.org/wiki/Column-oriented_DBMS) table structure, meaning it stores data by column and not by row.
 
-A simplified conceptual model of a dataframe is:
+**Simplified Dataframe Model**:
 
 ```ts
 interface DataFrame {
@@ -47,9 +47,9 @@ One restriction on dataframes is that all Fields in the frame must be of the sam
 
 ### When is a Dataframe a Time Series or a Table
 
-Any valid dataframe can be a table. If you have a row oriented response from something, the rows need to be converted to column oriented structure.
+Any valid dataframe can be a table. If you have row oriented data, the rows need to be converted to the dataframe's column oriented structure.
 
-Because the Fields of a dataframe each have a type, we can use the types of the Fields (the schema of the dataframe) to determine if it (or a collection of dataframes) can be time series. In the simplest case, if a Frame has a Time type Field and Number type Field then it can be a time series (the frame should be sorted by time ascending).
+Because each Field in a dataframe has a type, we can use the types of the Fields (the schema of the dataframe) to determine if it dataframe, or a collection of dataframes, can be time series. In the simplest case, if a Frame has a Time Field and Number Field then it can be a time series (the frame should be sorted by time ascending).
 
 #### Time Series (Non-shared time values)
 
