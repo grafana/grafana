@@ -9,6 +9,7 @@ import { SaveDashboardAsModal } from './saveDashboardAsModal';
 import { Dashboards } from './dashboards';
 import { DashboardSettings } from './dashboardSettings';
 import { EditPanel } from './editPanel';
+import { Explore } from './explore';
 import { TestData } from './testdata';
 import { Graph } from './graph';
 import { SaveDashboardModal } from './saveDashboardModal';
@@ -60,5 +61,9 @@ export const Pages = {
         backArrow: 'Go Back button',
       },
     }),
+  },
+  Explore: {
+    visit: () => Explore.visit(),
+    General: Explore,
   },
 };

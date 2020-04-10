@@ -61,6 +61,7 @@ import { scanStopAction } from './state/actionTypes';
 import { ExploreGraphPanel } from './ExploreGraphPanel';
 import { TraceView } from './TraceView/TraceView';
 import { SecondaryActions } from './SecondaryActions';
+import { e2e } from '@grafana/e2e';
 
 const getStyles = stylesFactory(() => {
   return {
@@ -303,7 +304,7 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
     const queryError = getFirstNonQueryRowSpecificError(queryErrors);
 
     return (
-      <div className={exploreClass} ref={this.getRef}>
+      <div className={exploreClass} ref={this.getRef} aria-label={e2e.pages.Explore.General.selectors.container}>
         <ExploreToolbar exploreId={exploreId} onChangeTime={this.onChangeTime} />
         {datasourceMissing ? this.renderEmptyState() : null}
         {datasourceInstance && (
