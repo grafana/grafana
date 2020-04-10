@@ -142,7 +142,7 @@ export interface PanelOptionsEditorConfig<TOptions, TSettings = any, TValue = an
   /**
    * Description of the option. Will be displayed in the UI as form element description.
    */
-  description: string;
+  description?: string;
   /**al
    * Custom settings of the editor.
    */

@@ -2,7 +2,6 @@
 import React, { PureComponent, FC } from 'react';
 import { connect } from 'react-redux';
 import { css } from 'emotion';
-import { e2e } from '@grafana/e2e';
 // Utils & Services
 import { appEvents } from 'app/core/app_events';
 import { PlaylistSrv } from 'app/features/playlist/playlist_srv';
@@ -22,7 +21,6 @@ import { sanitizeUrl } from 'app/core/utils/text';
 
 export interface OwnProps {
   dashboard: DashboardModel;
-  isEditing: boolean;
   isFullscreen: boolean;
   $injector: any;
   updateLocation: typeof updateLocation;
@@ -61,7 +59,7 @@ class DashNav extends PureComponent<Props> {
 
   onClose = () => {
     this.props.updateLocation({
-      query: { panelId: null, edit: null, fullscreen: null, tab: null },
+      query: { edit: null, viewPanel: null },
       partial: true,
     });
   };
@@ -140,7 +138,7 @@ class DashNav extends PureComponent<Props> {
   renderBackButton() {
     return (
       <div className="navbar-edit">
-        <BackButton onClick={this.onClose} aria-label={e2e.pages.Dashboard.Toolbar.selectors.backArrow} />
+        <BackButton onClick={this.onClose} />
       </div>
     );
   }

@@ -24,7 +24,8 @@ interface OwnProps {
   panel: PanelModel;
   dashboard: DashboardModel;
   plugin: PanelPlugin;
-  isFullscreen: boolean;
+  isViewing: boolean;
+  isEditing: boolean;
   isInView: boolean;
   width: number;
   height: number;
@@ -217,7 +218,7 @@ export class PanelChromeAngularUnconnected extends PureComponent<Props, State> {
   }
 
   render() {
-    const { dashboard, panel, isFullscreen, plugin, angularComponent, updateLocation } = this.props;
+    const { dashboard, panel, isViewing, isEditing, plugin, angularComponent, updateLocation } = this.props;
     const { errorMessage, data, alertState } = this.state;
     const { transparent } = panel;
 
@@ -246,7 +247,8 @@ export class PanelChromeAngularUnconnected extends PureComponent<Props, State> {
           angularComponent={angularComponent}
           links={panel.links}
           error={errorMessage}
-          isFullscreen={isFullscreen}
+          isViewing={isViewing}
+          isEditing={isEditing}
           data={data}
           updateLocation={updateLocation}
         />
