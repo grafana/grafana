@@ -23,7 +23,7 @@ func Provision(configDirectory string) error {
 	return dc.applyChanges(configDirectory)
 }
 
-// DatasourceProvisioner is responsible provision datasources based on
+// DatasourceProvisioner is responsible for provisioning datasources based on
 // configuration read bu the `configReader`
 type DatasourceProvisioner struct {
 	log         log.Logger
