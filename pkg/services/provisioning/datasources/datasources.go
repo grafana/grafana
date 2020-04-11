@@ -17,7 +17,7 @@ var (
 )
 
 // Provision scans a directory for provisioning config files
-// and provision the datasource in those files.
+// and provisions the datasource in those files.
 func Provision(configDirectory string) error {
 	dc := newDatasourceProvisioner(log.New("provisioning.datasources"))
 	return dc.applyChanges(configDirectory)
