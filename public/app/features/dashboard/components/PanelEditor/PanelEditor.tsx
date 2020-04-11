@@ -230,7 +230,7 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
     return (
       <div className={styles.editorToolbar}>
         <div className={styles.toolbarLeft}>
-          <IconButton name="arrow-left" onClick={this.onPanelExit} size="xxl" />
+          <IconButton surface="panel" name="arrow-left" onClick={this.onPanelExit} size="xxl" />
           <span className={styles.editorTitle}>{dashboard.title} / Edit Panel</span>
         </div>
         <div className={styles.toolbarLeft}>

@@ -5,6 +5,8 @@ import { stylesFactory } from '../../themes/stylesFactory';
 import { css, cx } from 'emotion';
 import { useTheme } from '../../themes/ThemeContext';
 import { GrafanaTheme } from '@grafana/data';
+import { Tooltip } from '../Tooltip/Tooltip';
+import { TooltipPlacement } from '../Tooltip/PopoverController';
 
 export interface Props extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   name: IconName;
@@ -12,20 +14,32 @@ export interface Props extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   /** Need this to change hover effect based on what surface it is on */
   surface?: SurfaceType;
   iconType?: IconType;
+  tooltip?: string;
+  tooltipPlacement?: TooltipPlacement;
 }
 
 type SurfaceType = 'body' | 'panel' | 'header';
 
 export const IconButton = React.forwardRef<HTMLButtonElement, Props>(
-  ({ name, size = 'md', surface = 'panel', iconType, className, ...restProps }, ref) => {
+  ({ name, size = 'md', surface = 'panel', iconType, tooltip, tooltipPlacement, className, ...restProps }, ref) => {
     const theme = useTheme();
     const styles = getStyles(theme, surface, size);
 
-    return (
+    const button = (
       <button ref={ref} {...restProps} className={cx(styles.button, className)}>
         <Icon name={name} size={size} className={styles.icon} type={iconType} />
       </button>
     );
+
+    if (tooltip) {
+      return (
+        <Tooltip content={tooltip} placement={tooltipPlacement}>
+          {button}
+        </Tooltip>
+      );
+    }
+
+    return button;
   }
 );
 

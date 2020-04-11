@@ -50,7 +50,7 @@ export class DashboardSettings extends PureComponent<Props> {
       <div className="dashboard-settings">
         <div className="navbar navbar--shadow">
           <div className="navbar-edit">
-            <BackButton onClick={this.onClose} />
+            <BackButton surface="body" onClick={this.onClose} />
           </div>
           <div className="navbar-page-btn">
             {haveFolder && <div className="navbar-page-btn__folder">{folderTitle} / </div>}
