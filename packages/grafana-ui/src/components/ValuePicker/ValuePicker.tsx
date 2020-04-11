@@ -31,7 +31,7 @@ export function ValuePicker<T>({
   const [isPicking, setIsPicking] = useState(false);
 
   const buttonEl = (
-    <Button size={size || 'sm'} icon={icon || 'plus-circle'} onClick={() => setIsPicking(true)} variant={variant}>
+    <Button size={size || 'sm'} icon={icon || 'plus'} onClick={() => setIsPicking(true)} variant={variant}>
       {label}
     </Button>
   );

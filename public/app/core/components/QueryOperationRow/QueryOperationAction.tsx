@@ -1,6 +1,6 @@
-import { Icon, IconName, stylesFactory, useTheme } from '@grafana/ui';
+import { IconName, IconButton, stylesFactory, useTheme } from '@grafana/ui';
 import React from 'react';
-import { css, cx } from 'emotion';
+import { css } from 'emotion';
 import { GrafanaTheme } from '@grafana/data';
 
 interface QueryOperationActionProps {
@@ -12,7 +12,8 @@ interface QueryOperationActionProps {
 
 export const QueryOperationAction: React.FC<QueryOperationActionProps> = ({ icon, disabled, title, ...otherProps }) => {
   const theme = useTheme();
-  const styles = getQueryOperationActionStyles(theme, !!disabled);
+  const styles = getStyles(theme);
+
   const onClick = (e: React.MouseEvent) => {
     if (!disabled) {
       otherProps.onClick(e);
@@ -20,26 +21,23 @@ export const QueryOperationAction: React.FC<QueryOperationActionProps> = ({ icon
   };
   return (
     <div title={title}>
-      <Icon name={icon} className={styles.icon} onClick={onClick} aria-label={`${title} query operation action`} />
+      <IconButton
+        name={icon}
+        className={styles.icon}
+        disabled={!!disabled}
+        onClick={onClick}
+        aria-label={`${title} query operation action`}
+      />
     </div>
   );
 };
 
-const getQueryOperationActionStyles = stylesFactory((theme: GrafanaTheme, disabled: boolean) => {
+QueryOperationAction.displayName = 'QueryOperationAction';
+
+const getStyles = stylesFactory((theme: GrafanaTheme) => {
   return {
-    icon: cx(
-      !disabled &&
-        css`
-          cursor: pointer;
-          color: ${theme.colors.textWeak};
-        `,
-      disabled &&
-        css`
-          color: ${theme.colors.gray25};
-          cursor: disabled;
-        `
-    ),
+    icon: css`
+      color: ${theme.colors.textWeak};
+    `,
   };
 });
-
-QueryOperationAction.displayName = 'QueryOperationAction';

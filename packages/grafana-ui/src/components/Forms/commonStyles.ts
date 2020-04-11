@@ -1,6 +1,7 @@
 import { css } from 'emotion';
 import { GrafanaTheme } from '@grafana/data';
 import { ComponentSize } from '../../types/size';
+import { IconName } from '../../types';
 
 export const getFocusCss = (theme: GrafanaTheme) => `
   outline: 2px dotted transparent;
@@ -90,34 +91,29 @@ export const inputSizesPixels = (size: string) => {
   }
 };
 
-export const getPropertiesForButtonSize = (theme: GrafanaTheme, size: ComponentSize) => {
+export const getPropertiesForButtonSize = (theme: GrafanaTheme, size: ComponentSize, icon?: IconName) => {
+  const { spacing, typography, height } = theme;
+
   switch (size) {
     case 'sm':
       return {
-        padding: `0 ${theme.spacing.sm}`,
-        fontSize: theme.typography.size.sm,
-        height: theme.height.sm,
-      };
-
-    case 'md':
-      return {
-        padding: `0 ${theme.spacing.md}`,
-        fontSize: theme.typography.size.md,
-        height: `${theme.spacing.formButtonHeight}px`,
+        padding: `0 ${spacing.sm}`,
+        fontSize: typography.size.sm,
+        height: height.sm,
       };
 
     case 'lg':
       return {
-        padding: `0 ${theme.spacing.lg}`,
-        fontSize: theme.typography.size.lg,
-        height: theme.height.lg,
+        padding: `0 ${spacing.lg} 0 ${icon ? spacing.md : spacing.lg}`,
+        fontSize: typography.size.lg,
+        height: height.lg,
       };
-
+    case 'md':
     default:
       return {
-        padding: `0 ${theme.spacing.md}`,
-        fontSize: theme.typography.size.base,
-        height: theme.height.md,
+        padding: `0 ${spacing.md} 0 ${icon ? spacing.sm : spacing.md}`,
+        fontSize: typography.size.md,
+        height: height.md,
       };
   }
 };

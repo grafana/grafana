@@ -62,8 +62,12 @@ const lightTheme: GrafanaTheme = {
     online: basicColors.greenShade,
     warn: '#f79520',
     critical: basicColors.redShade,
+
+    // Backgrounds
     bodyBg: basicColors.gray7,
     pageBg: basicColors.white,
+    pageHeaderBg: basicColors.gray95,
+    panelBg: basicColors.white,
 
     // Text colors
     text: basicColors.gray1,
@@ -78,11 +82,10 @@ const lightTheme: GrafanaTheme = {
     linkHover: basicColors.dark1,
     linkExternal: basicColors.blueLight,
     headingColor: basicColors.gray1,
-    pageHeaderBorder: basicColors.gray4,
 
-    // panel
-    panelBg: basicColors.white,
+    // Borders
     panelBorder: basicColors.gray95,
+    pageHeaderBorder: basicColors.gray4,
 
     // Next-gen forms functional colors
     formLabel: basicColors.gray33,

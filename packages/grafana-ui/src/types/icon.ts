@@ -1,6 +1,6 @@
 import { ComponentSize } from './size';
 export type IconType = 'mono' | 'default';
-export type IconSize = ComponentSize | 'xl' | 'xxl';
+export type IconSize = ComponentSize | 'xl' | 'xxl' | 'xxxl';
 
 export type IconName =
   | 'fa fa-fw fa-unlock'
