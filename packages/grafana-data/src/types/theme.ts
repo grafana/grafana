@@ -214,6 +214,7 @@ export interface GrafanaTheme extends GrafanaThemeCommons {
     // TODO: move to background section
     bodyBg: string;
     pageBg: string;
+    pageHeaderBg: string;
     headingColor: string;
 
     pageHeaderBorder: string;

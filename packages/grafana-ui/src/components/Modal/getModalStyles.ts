@@ -37,10 +37,11 @@ export const getModalStyles = stylesFactory((theme: GrafanaTheme) => {
       opacity: 0.7;
     `,
     modalHeader: css`
-      background: ${theme.background.pageHeader};
+      background: ${theme.colors.pageHeaderBg};
       box-shadow: ${theme.shadow.pageHeader};
       border-bottom: 1px solid ${theme.colors.pageHeaderBorder};
       display: flex;
+      height: 42px;
     `,
     modalHeaderTitle: css`
       font-size: ${theme.typography.heading.h3};
@@ -55,8 +56,12 @@ export const getModalStyles = stylesFactory((theme: GrafanaTheme) => {
       }
     `,
     modalHeaderClose: css`
-      margin-left: auto;
-      padding: 9px ${theme.spacing.d};
+      height: 100%;
+      display: flex;
+      align-items: center;
+      flex-grow: 1;
+      justify-content: flex-end;
+      padding-right: ${theme.spacing.sm};
     `,
     modalContent: css`
       padding: calc(${theme.spacing.d} * 2);

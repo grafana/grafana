@@ -138,7 +138,7 @@ class DashNav extends PureComponent<Props> {
   renderBackButton() {
     return (
       <div className="navbar-edit">
-        <BackButton onClick={this.onClose} />
+        <BackButton surface="body" onClick={this.onClose} />
       </div>
     );
   }
