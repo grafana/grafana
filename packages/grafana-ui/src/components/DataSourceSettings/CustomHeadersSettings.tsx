@@ -76,7 +76,7 @@ const CustomHeaderRow: React.FC<CustomHeaderRowProps> = ({ header, onBlur, onCha
         onChange={e => onChange({ ...header, value: e.target.value })}
         onBlur={onBlur}
       />
-      <Button variant="destructive" size="xs" onClick={_e => onRemove(header.id)}>
+      <Button variant="secondary" size="xs" onClick={_e => onRemove(header.id)}>
         <i className="fa fa-trash" />
       </Button>
     </div>
@@ -203,12 +203,12 @@ export class CustomHeadersSettings extends PureComponent<Props, State> {
         <div className="gf-form">
           <Button
             variant="secondary"
-            size="xs"
+            icon="plus"
             onClick={e => {
               this.onHeaderAdd();
             }}
           >
-            Add Header
+            Add header
           </Button>
         </div>
       </div>

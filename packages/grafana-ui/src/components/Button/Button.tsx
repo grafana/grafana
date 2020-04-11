@@ -1,8 +1,8 @@
 import React, { AnchorHTMLAttributes, ButtonHTMLAttributes, useContext } from 'react';
 import { css, cx } from 'emotion';
 import tinycolor from 'tinycolor2';
-import { selectThemeVariant, stylesFactory, ThemeContext } from '../../themes';
-import { IconName } from '../../types';
+import { stylesFactory, ThemeContext } from '../../themes';
+import { IconName } from '../../types/icon';
 import { getFocusStyle, getPropertiesForButtonSize } from '../Forms/commonStyles';
 import { GrafanaTheme } from '@grafana/data';
 import { ButtonContent } from './ButtonContent';
@@ -25,26 +25,17 @@ const buttonVariantStyles = (from: string, to: string, textColor: string) => css
 const getPropertiesForVariant = (theme: GrafanaTheme, variant: ButtonVariant) => {
   switch (variant) {
     case 'secondary':
-      const from = selectThemeVariant({ light: theme.colors.gray7, dark: theme.colors.gray15 }, theme.type) as string;
-      const to = selectThemeVariant(
-        {
-          light: tinycolor(from)
+      const from = theme.isLight ? theme.colors.gray7 : theme.colors.gray15;
+      const to = theme.isLight
+        ? tinycolor(from)
             .darken(5)
-            .toString(),
-          dark: tinycolor(from)
+            .toString()
+        : tinycolor(from)
             .lighten(4)
-            .toString(),
-        },
-        theme.type
-      ) as string;
-
+            .toString();
       return {
-        borderColor: selectThemeVariant({ light: theme.colors.gray85, dark: theme.colors.gray25 }, theme.type),
-        background: buttonVariantStyles(
-          from,
-          to,
-          selectThemeVariant({ light: theme.colors.gray25, dark: theme.colors.gray4 }, theme.type) as string
-        ),
+        borderColor: theme.isLight ? theme.colors.gray85 : theme.colors.gray25,
+        background: buttonVariantStyles(from, to, theme.isLight ? theme.colors.gray25 : theme.colors.gray4),
       };
 
     case 'destructive':
@@ -76,12 +67,13 @@ const getPropertiesForVariant = (theme: GrafanaTheme, variant: ButtonVariant) =>
 export interface StyleProps {
   theme: GrafanaTheme;
   size: ComponentSize;
+  icon?: IconName;
   variant: ButtonVariant;
   textAndIcon?: boolean;
 }
 
-export const getButtonStyles = stylesFactory(({ theme, size, variant }: StyleProps) => {
-  const { padding, fontSize, height } = getPropertiesForButtonSize(theme, size);
+export const getButtonStyles = stylesFactory(({ theme, size, variant, icon }: StyleProps) => {
+  const { padding, fontSize, height } = getPropertiesForButtonSize(theme, size, icon);
   const { background, borderColor, variantStyles } = getPropertiesForVariant(theme, variant);
 
   return {
@@ -148,6 +140,7 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       theme,
       size: otherProps.size || 'md',
       variant: variant || 'primary',
+      icon,
     });
 
     return (
@@ -170,6 +163,7 @@ export const LinkButton = React.forwardRef<HTMLAnchorElement, ButtonLinkProps>(
       theme,
       size: otherProps.size || 'md',
       variant: variant || 'primary',
+      icon,
     });
 
     return (
