@@ -76,7 +76,7 @@ func (fr *fileReader) startWalkingDisk() error {
 		return err
 	}
 
-	folderId, err := getOrCreateFolderId(fr.Cfg, fr.dashboardProvisioningService)
+	folderID, err := getOrCreateFolderID(fr.Cfg, fr.dashboardProvisioningService)
 	if err != nil && err != ErrFolderNameMissing {
 		return err
 	}
@@ -98,7 +98,7 @@ func (fr *fileReader) startWalkingDisk() error {
 
 	// save dashboards based on json files
 	for path, fileInfo := range filesFoundOnDisk {
-		provisioningMetadata, err := fr.saveDashboard(path, folderId, fileInfo, provisionedDashboardRefs)
+		provisioningMetadata, err := fr.saveDashboard(path, folderID, fileInfo, provisionedDashboardRefs)
 		sanityChecker.track(provisioningMetadata)
 		if err != nil {
 			fr.log.Error("failed to save dashboard", "error", err)
@@ -123,27 +123,27 @@ func (fr *fileReader) handleMissingDashboardFiles(provisionedDashboardRefs map[s
 	if fr.Cfg.DisableDeletion {
 		// If deletion is disabled for the provisioner we just remove provisioning metadata about the dashboard
 		// so afterwards the dashboard is considered unprovisioned.
-		for _, dashboardId := range dashboardToDelete {
-			fr.log.Debug("unprovisioning provisioned dashboard. missing on disk", "id", dashboardId)
-			err := fr.dashboardProvisioningService.UnprovisionDashboard(dashboardId)
+		for _, dashboardID := range dashboardToDelete {
+			fr.log.Debug("unprovisioning provisioned dashboard. missing on disk", "id", dashboardID)
+			err := fr.dashboardProvisioningService.UnprovisionDashboard(dashboardID)
 			if err != nil {
-				fr.log.Error("failed to unprovision dashboard", "dashboard_id", dashboardId, "error", err)
+				fr.log.Error("failed to unprovision dashboard", "dashboard_id", dashboardID, "error", err)
 			}
 		}
 	} else {
 		// delete dashboard that are missing json file
-		for _, dashboardId := range dashboardToDelete {
-			fr.log.Debug("deleting provisioned dashboard. missing on disk", "id", dashboardId)
-			err := fr.dashboardProvisioningService.DeleteProvisionedDashboard(dashboardId, fr.Cfg.OrgId)
+		for _, dashboardID := range dashboardToDelete {
+			fr.log.Debug("deleting provisioned dashboard. missing on disk", "id", dashboardID)
+			err := fr.dashboardProvisioningService.DeleteProvisionedDashboard(dashboardID, fr.Cfg.OrgId)
 			if err != nil {
-				fr.log.Error("failed to delete dashboard", "id", dashboardId, "error", err)
+				fr.log.Error("failed to delete dashboard", "id", dashboardID, "error", err)
 			}
 		}
 	}
 }
 
 // saveDashboard saves or updates the dashboard provisioning file at path.
-func (fr *fileReader) saveDashboard(path string, folderId int64, fileInfo os.FileInfo, provisionedDashboardRefs map[string]*models.DashboardProvisioning) (provisioningMetadata, error) {
+func (fr *fileReader) saveDashboard(path string, folderID int64, fileInfo os.FileInfo, provisionedDashboardRefs map[string]*models.DashboardProvisioning) (provisioningMetadata, error) {
 	provisioningMetadata := provisioningMetadata{}
 	resolvedFileInfo, err := resolveSymlink(fileInfo, path)
 	if err != nil {
@@ -153,7 +153,7 @@ func (fr *fileReader) saveDashboard(path string, folderId int64, fileInfo os.Fil
 	provisionedData, alreadyProvisioned := provisionedDashboardRefs[path]
 	upToDate := alreadyProvisioned && provisionedData.Updated >= resolvedFileInfo.ModTime().Unix()
 
-	jsonFile, err := fr.readDashboardFromFile(path, resolvedFileInfo.ModTime(), folderId)
+	jsonFile, err := fr.readDashboardFromFile(path, resolvedFileInfo.ModTime(), folderID)
 	if err != nil {
 		fr.log.Error("failed to load dashboard from ", "file", path, "error", err)
 		return provisioningMetadata, nil
@@ -207,7 +207,7 @@ func getProvisionedDashboardByPath(service dashboards.DashboardProvisioningServi
 	return byPath, nil
 }
 
-func getOrCreateFolderId(cfg *DashboardsAsConfig, service dashboards.DashboardProvisioningService) (int64, error) {
+func getOrCreateFolderID(cfg *DashboardsAsConfig, service dashboards.DashboardProvisioningService) (int64, error) {
 	if cfg.Folder == "" {
 		return 0, ErrFolderNameMissing
 	}
@@ -288,13 +288,13 @@ func validateWalkablePath(fileInfo os.FileInfo) (bool, error) {
 	return true, nil
 }
 
-type dashboardJsonFile struct {
+type dashboardJSONFile struct {
 	dashboard    *dashboards.SaveDashboardDTO
 	checkSum     string
 	lastModified time.Time
 }
 
-func (fr *fileReader) readDashboardFromFile(path string, lastModified time.Time, folderId int64) (*dashboardJsonFile, error) {
+func (fr *fileReader) readDashboardFromFile(path string, lastModified time.Time, folderID int64) (*dashboardJSONFile, error) {
 	reader, err := os.Open(path)
 	if err != nil {
 		return nil, err
@@ -316,12 +316,12 @@ func (fr *fileReader) readDashboardFromFile(path string, lastModified time.Time,
 		return nil, err
 	}
 
-	dash, err := createDashboardJson(data, lastModified, fr.Cfg, folderId)
+	dash, err := createDashboardJson(data, lastModified, fr.Cfg, folderID)
 	if err != nil {
 		return nil, err
 	}
 
-	return &dashboardJsonFile{
+	return &dashboardJSONFile{
 		dashboard:    dash,
 		checkSum:     checkSum,
 		lastModified: lastModified,
@@ -370,10 +370,10 @@ type provisioningSanityChecker struct {
 
 func (checker provisioningSanityChecker) track(pm provisioningMetadata) {
 	if len(pm.uid) > 0 {
-		checker.uidUsage[pm.uid] += 1
+		checker.uidUsage[pm.uid]++
 	}
 	if len(pm.title) > 0 {
-		checker.titleUsage[pm.title] += 1
+		checker.titleUsage[pm.title]++
 	}
 }
 

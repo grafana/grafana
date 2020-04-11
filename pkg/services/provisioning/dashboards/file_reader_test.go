@@ -213,7 +213,7 @@ func TestDashboardFileReader(t *testing.T) {
 				},
 			}
 
-			_, err := getOrCreateFolderId(cfg, fakeService)
+			_, err := getOrCreateFolderID(cfg, fakeService)
 			So(err, ShouldEqual, ErrFolderNameMissing)
 		})
 
@@ -228,7 +228,7 @@ func TestDashboardFileReader(t *testing.T) {
 				},
 			}
 
-			folderId, err := getOrCreateFolderId(cfg, fakeService)
+			folderId, err := getOrCreateFolderID(cfg, fakeService)
 			So(err, ShouldBeNil)
 			inserted := false
 			for _, d := range fakeService.inserted {
