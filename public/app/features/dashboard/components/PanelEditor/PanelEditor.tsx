@@ -169,9 +169,8 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
                       <DashboardPanel
                         dashboard={dashboard}
                         panel={panel}
-                        isEditing={false}
-                        isInEditMode
-                        isFullscreen={false}
+                        isEditing={true}
+                        isViewing={false}
                         isInView={true}
                       />
                     </div>
@@ -410,6 +409,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme, props: Props) => {
         cursor: col-resize;
         width: ${paneSpaceing};
         border-right-width: 1px;
+        margin-top: 18px;
       `
     ),
     resizerH: cx(
@@ -418,9 +418,10 @@ const getStyles = stylesFactory((theme: GrafanaTheme, props: Props) => {
         height: ${paneSpaceing};
         cursor: row-resize;
         position: relative;
-        top: 49px;
+        top: 0px;
         z-index: 1;
         border-top-width: 1px;
+        margin-left: ${paneSpaceing};
       `
     ),
     tabsWrapper: css`

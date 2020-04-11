@@ -1,7 +1,8 @@
 import React, { ButtonHTMLAttributes } from 'react';
 import { css } from 'emotion';
 import { GrafanaTheme } from '@grafana/data';
-import { stylesFactory, useTheme, Tooltip, selectThemeVariant } from '@grafana/ui';
+import { selectThemeVariant, stylesFactory, Tooltip, useTheme } from '@grafana/ui';
+import { e2e } from '@grafana/e2e';
 
 export type Props = ButtonHTMLAttributes<HTMLButtonElement>;
 
@@ -11,7 +12,7 @@ export const BackButton: React.FC<Props> = props => {
 
   return (
     <Tooltip content="Go back (Esc)" placement="bottom">
-      <button className={styles.wrapper} {...props}>
+      <button className={styles.wrapper} {...props} aria-label={e2e.pages.Components.BackButton.selectors.backArrow}>
         <i className="gicon gicon-arrow-left" />
       </button>
     </Tooltip>
