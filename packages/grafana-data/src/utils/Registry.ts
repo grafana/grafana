@@ -3,7 +3,7 @@ import { SelectableValue } from '../types/select';
 export interface RegistryItem {
   id: string; // Unique Key -- saved in configs
   name: string; // Display Name, can change without breaking configs
-  description: string;
+  description?: string;
   aliasIds?: string[]; // when the ID changes, we may want backwards compatibility ('current' => 'last')
 
   /**

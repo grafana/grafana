@@ -22,7 +22,6 @@ export { ColorPicker, SeriesColorPicker } from './ColorPicker/ColorPicker';
 export { SeriesColorPickerPopover, SeriesColorPickerPopoverWithTheme } from './ColorPicker/SeriesColorPickerPopover';
 export { PanelOptionsGroup } from './PanelOptionsGroup/PanelOptionsGroup';
 export { PanelOptionsGrid } from './PanelOptionsGrid/PanelOptionsGrid';
-export { LegacyValueMappingsEditor } from './ValueMappingsEditor/LegacyValueMappingsEditor';
 export { EmptySearchResult } from './EmptySearchResult/EmptySearchResult';
 export { PieChart, PieChartType } from './PieChart/PieChart';
 export { UnitPicker } from './UnitPicker/UnitPicker';
@@ -93,7 +92,6 @@ export { getLogRowStyles } from './Logs/getLogRowStyles';
 export { ToggleButtonGroup, ToggleButton } from './ToggleButtonGroup/ToggleButtonGroup';
 // Panel editors
 export { FullWidthButtonContainer } from './Button/FullWidthButtonContainer';
-export { ThresholdsEditor } from './ThresholdsEditor/ThresholdsEditor';
 export { ClickOutsideWrapper } from './ClickOutsideWrapper/ClickOutsideWrapper';
 export * from './SingleStatShared/index';
 export { CallToActionCard } from './CallToActionCard/CallToActionCard';
@@ -103,7 +101,7 @@ export { DataLinksInlineEditor } from './DataLinks/DataLinksInlineEditor/DataLin
 export { DataLinkInput } from './DataLinks/DataLinkInput';
 export { DataLinksContextMenu } from './DataLinks/DataLinksContextMenu';
 export { SeriesIcon } from './Legend/SeriesIcon';
-export { transformersUIRegistry } from './TransformersUI/transformers';
+
 export { JSONFormatter } from './JSONFormatter/JSONFormatter';
 export { JsonExplorer } from './JSONFormatter/json_explorer/json_explorer';
 export { ErrorBoundary, ErrorBoundaryAlert } from './ErrorBoundary/ErrorBoundary';

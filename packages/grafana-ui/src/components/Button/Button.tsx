@@ -25,15 +25,13 @@ const buttonVariantStyles = (from: string, to: string, textColor: string) => css
 const getPropertiesForVariant = (theme: GrafanaTheme, variant: ButtonVariant) => {
   switch (variant) {
     case 'secondary':
-      const from = selectThemeVariant({ light: theme.colors.gray7, dark: theme.colors.gray15 }, theme.type) as string;
+      const from = selectThemeVariant({ light: theme.colors.gray7, dark: theme.colors.gray10 }, theme.type) as string;
       const to = selectThemeVariant(
         {
           light: tinycolor(from)
             .darken(5)
             .toString(),
-          dark: tinycolor(from)
-            .lighten(4)
-            .toString(),
+          dark: theme.colors.gray05,
         },
         theme.type
       ) as string;

@@ -4,6 +4,7 @@ import { SelectableValue } from '@grafana/data';
 import { Button, ButtonVariant } from '../Button';
 import { Select } from '../Select/Select';
 import { FullWidthButtonContainer } from '../Button/FullWidthButtonContainer';
+import { ComponentSize } from '../../types/size';
 
 interface ValuePickerProps<T> {
   /** Label to display on the picker button */
@@ -14,20 +15,29 @@ interface ValuePickerProps<T> {
   options: Array<SelectableValue<T>>;
   onChange: (value: SelectableValue<T>) => void;
   variant?: ButtonVariant;
+  size?: ComponentSize;
+  isFullWidth?: boolean;
 }
 
-export function ValuePicker<T>({ label, icon, options, onChange, variant }: ValuePickerProps<T>) {
+export function ValuePicker<T>({
+  label,
+  icon,
+  options,
+  onChange,
+  variant,
+  size,
+  isFullWidth = true,
+}: ValuePickerProps<T>) {
   const [isPicking, setIsPicking] = useState(false);
 
+  const buttonEl = (
+    <Button size={size || 'sm'} icon={icon || 'plus-circle'} onClick={() => setIsPicking(true)} variant={variant}>
+      {label}
+    </Button>
+  );
   return (
     <>
-      {!isPicking && (
-        <FullWidthButtonContainer>
-          <Button size="sm" icon={icon || 'plus-circle'} onClick={() => setIsPicking(true)} variant={variant}>
-            {label}
-          </Button>
-        </FullWidthButtonContainer>
-      )}
+      {!isPicking && (isFullWidth ? <FullWidthButtonContainer>{buttonEl}</FullWidthButtonContainer> : buttonEl)}
 
       {isPicking && (
         <Select
