@@ -21,17 +21,22 @@ import (
 )
 
 var (
+	// ErrFolderNameMissing is returned when folder name is missing.
 	ErrFolderNameMissing = errors.New("Folder name missing")
 )
 
-type fileReader struct {
+// FileReader is responsible for reading dashboards from disc and
+// insert/update dashboards to the Grafana database using
+// `dashboards.DashboardProvisioningService`
+type FileReader struct {
 	Cfg                          *DashboardsAsConfig
 	Path                         string
 	log                          log.Logger
 	dashboardProvisioningService dashboards.DashboardProvisioningService
 }
 
-func NewDashboardFileReader(cfg *DashboardsAsConfig, log log.Logger) (*fileReader, error) {
+// NewDashboardFileReader returns a new filereader based on `DashboardsAsConfig`
+func NewDashboardFileReader(cfg *DashboardsAsConfig, log log.Logger) (*FileReader, error) {
 	var path string
 	path, ok := cfg.Options["path"].(string)
 	if !ok {
@@ -43,7 +48,7 @@ func NewDashboardFileReader(cfg *DashboardsAsConfig, log log.Logger) (*fileReade
 		log.Warn("[Deprecated] The folder property is deprecated. Please use path instead.")
 	}
 
-	return &fileReader{
+	return &FileReader{
 		Cfg:                          cfg,
 		Path:                         path,
 		log:                          log,
@@ -52,7 +57,7 @@ func NewDashboardFileReader(cfg *DashboardsAsConfig, log log.Logger) (*fileReade
 }
 
 // pollChanges periodically runs startWalkingDisk based on interval specified in the config.
-func (fr *fileReader) pollChanges(ctx context.Context) {
+func (fr *FileReader) pollChanges(ctx context.Context) {
 
 	ticker := time.NewTicker(time.Duration(int64(time.Second) * fr.Cfg.UpdateIntervalSeconds))
 	for {
@@ -69,7 +74,7 @@ func (fr *fileReader) pollChanges(ctx context.Context) {
 
 // startWalkingDisk traverses the file system for defined path, reads dashboard definition files and applies any change
 // to the database.
-func (fr *fileReader) startWalkingDisk() error {
+func (fr *FileReader) startWalkingDisk() error {
 	fr.log.Debug("Start walking disk", "path", fr.Path)
 	resolvedPath := fr.resolvedPath()
 	if _, err := os.Stat(resolvedPath); err != nil {
@@ -110,7 +115,7 @@ func (fr *fileReader) startWalkingDisk() error {
 }
 
 // handleMissingDashboardFiles will unprovision or delete dashboards which are missing on disk.
-func (fr *fileReader) handleMissingDashboardFiles(provisionedDashboardRefs map[string]*models.DashboardProvisioning, filesFoundOnDisk map[string]os.FileInfo) {
+func (fr *FileReader) handleMissingDashboardFiles(provisionedDashboardRefs map[string]*models.DashboardProvisioning, filesFoundOnDisk map[string]os.FileInfo) {
 	// find dashboards to delete since json file is missing
 	var dashboardToDelete []int64
 	for path, provisioningData := range provisionedDashboardRefs {
@@ -143,7 +148,7 @@ func (fr *fileReader) handleMissingDashboardFiles(provisionedDashboardRefs map[s
 }
 
 // saveDashboard saves or updates the dashboard provisioning file at path.
-func (fr *fileReader) saveDashboard(path string, folderID int64, fileInfo os.FileInfo, provisionedDashboardRefs map[string]*models.DashboardProvisioning) (provisioningMetadata, error) {
+func (fr *FileReader) saveDashboard(path string, folderID int64, fileInfo os.FileInfo, provisionedDashboardRefs map[string]*models.DashboardProvisioning) (provisioningMetadata, error) {
 	provisioningMetadata := provisioningMetadata{}
 	resolvedFileInfo, err := resolveSymlink(fileInfo, path)
 	if err != nil {
@@ -294,7 +299,7 @@ type dashboardJSONFile struct {
 	lastModified time.Time
 }
 
-func (fr *fileReader) readDashboardFromFile(path string, lastModified time.Time, folderID int64) (*dashboardJSONFile, error) {
+func (fr *FileReader) readDashboardFromFile(path string, lastModified time.Time, folderID int64) (*dashboardJSONFile, error) {
 	reader, err := os.Open(path)
 	if err != nil {
 		return nil, err
@@ -328,7 +333,7 @@ func (fr *fileReader) readDashboardFromFile(path string, lastModified time.Time,
 	}, nil
 }
 
-func (fr *fileReader) resolvedPath() string {
+func (fr *FileReader) resolvedPath() string {
 	if _, err := os.Stat(fr.Path); os.IsNotExist(err) {
 		fr.log.Error("Cannot read directory", "error", err)
 	}

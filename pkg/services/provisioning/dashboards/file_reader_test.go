@@ -228,11 +228,11 @@ func TestDashboardFileReader(t *testing.T) {
 				},
 			}
 
-			folderId, err := getOrCreateFolderID(cfg, fakeService)
+			folderID, err := getOrCreateFolderID(cfg, fakeService)
 			So(err, ShouldBeNil)
 			inserted := false
 			for _, d := range fakeService.inserted {
-				if d.Dashboard.IsFolder && d.Dashboard.Id == folderId {
+				if d.Dashboard.IsFolder && d.Dashboard.Id == folderID {
 					inserted = true
 				}
 			}
@@ -411,10 +411,10 @@ func (s *fakeDashboardProvisioningService) SaveFolderForProvisionedDashboards(dt
 	return dto.Dashboard, nil
 }
 
-func (s *fakeDashboardProvisioningService) UnprovisionDashboard(dashboardId int64) error {
+func (s *fakeDashboardProvisioningService) UnprovisionDashboard(dashboardID int64) error {
 	for key, val := range s.provisioned {
 		for index, dashboard := range val {
-			if dashboard.DashboardId == dashboardId {
+			if dashboard.DashboardId == dashboardID {
 				s.provisioned[key] = append(s.provisioned[key][:index], s.provisioned[key][index+1:]...)
 			}
 		}
@@ -422,21 +422,21 @@ func (s *fakeDashboardProvisioningService) UnprovisionDashboard(dashboardId int6
 	return nil
 }
 
-func (s *fakeDashboardProvisioningService) DeleteProvisionedDashboard(dashboardId int64, orgId int64) error {
-	err := s.UnprovisionDashboard(dashboardId)
+func (s *fakeDashboardProvisioningService) DeleteProvisionedDashboard(dashboardID int64, orgID int64) error {
+	err := s.UnprovisionDashboard(dashboardID)
 	if err != nil {
 		return err
 	}
 
 	for index, val := range s.inserted {
-		if val.Dashboard.Id == dashboardId {
+		if val.Dashboard.Id == dashboardID {
 			s.inserted = append(s.inserted[:index], s.inserted[util.MinInt(index+1, len(s.inserted)):]...)
 		}
 	}
 	return nil
 }
 
-func (s *fakeDashboardProvisioningService) GetProvisionedDashboardDataByDashboardId(dashboardId int64) (*models.DashboardProvisioning, error) {
+func (s *fakeDashboardProvisioningService) GetProvisionedDashboardDataByDashboardId(dashboardID int64) (*models.DashboardProvisioning, error) {
 	return nil, nil
 }
 

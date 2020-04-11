@@ -24,7 +24,7 @@ type DashboardProvisionerFactory func(string) (DashboardProvisioner, error)
 // Provisioner is responsible for syncing dashboard from disc to Grafanas database.
 type Provisioner struct {
 	log         log.Logger
-	fileReaders []*fileReader
+	fileReaders []*FileReader
 	configs     []*DashboardsAsConfig
 }
 
@@ -100,8 +100,8 @@ func (provider *Provisioner) GetAllowUIUpdatesFromConfig(name string) bool {
 	return false
 }
 
-func getFileReaders(configs []*DashboardsAsConfig, logger log.Logger) ([]*fileReader, error) {
-	var readers []*fileReader
+func getFileReaders(configs []*DashboardsAsConfig, logger log.Logger) ([]*FileReader, error) {
+	var readers []*FileReader
 
 	for _, config := range configs {
 		switch config.Type {
