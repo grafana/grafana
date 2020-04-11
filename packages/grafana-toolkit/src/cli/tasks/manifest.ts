@@ -75,7 +75,7 @@ const manifestRunner: TaskRunner<ManifestOptions> = async ({ folder }) => {
   manifest.plugin = plugin.id;
   manifest.version = plugin.version;
   if (!plugin.version) {
-    console.error('Missing Vection', plugin);
+    console.error('Missing version', plugin);
   }
 
   console.log('Request Signature:', url, manifest);
