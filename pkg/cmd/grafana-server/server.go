@@ -100,7 +100,7 @@ func (s *Server) Run() (err error) {
 			continue
 		}
 
-		s.log.Info("Initializing " + service.Name)
+		s.log.Debug("Initializing " + service.Name)
 
 		if err := service.Instance.Init(); err != nil {
 			return errutil.Wrapf(err, "Service init failed")
