@@ -28,6 +28,7 @@ import { DashNavButton } from 'app/features/dashboard/components/DashNav/DashNav
 import { VariableModel } from 'app/features/templating/types';
 import { getVariables } from 'app/features/variables/state/selectors';
 import { SubMenuItems } from 'app/features/dashboard/components/SubMenu/SubMenuItems';
+import { BackButton } from 'app/core/components/BackButton/BackButton';
 
 interface OwnProps {
   dashboard: DashboardModel;
@@ -230,7 +231,7 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
     return (
       <div className={styles.editorToolbar}>
         <div className={styles.toolbarLeft}>
-          <IconButton surface="panel" name="arrow-left" onClick={this.onPanelExit} size="xxl" />
+          <BackButton onClick={this.onPanelExit} surface="panel" />
           <span className={styles.editorTitle}>{dashboard.title} / Edit Panel</span>
         </div>
         <div className={styles.toolbarLeft}>
