@@ -7,7 +7,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/provisioning/values"
 )
 
-// ConfigVersion is used to figure out apiversion a config uses.
+// ConfigVersion is used to figure out which API version a config uses.
 type configVersion struct {
 	APIVersion int64 `json:"apiVersion" yaml:"apiVersion"`
 }
