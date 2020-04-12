@@ -2,7 +2,7 @@
 
 exports[`TimePickerContent renders correctly in full screen 1`] = `
 <div
-  className="css-1fbt695"
+  className="css-1l5oyux"
 >
   <div
     className="css-13dsoi7"
@@ -93,7 +93,7 @@ exports[`TimePickerContent renders correctly in full screen 1`] = `
 
 exports[`TimePickerContent renders correctly in narrow screen 1`] = `
 <div
-  className="css-1fbt695"
+  className="css-1l5oyux"
 >
   <div
     className="css-13dsoi7"
@@ -184,7 +184,7 @@ exports[`TimePickerContent renders correctly in narrow screen 1`] = `
 
 exports[`TimePickerContent renders recent absolute ranges correctly 1`] = `
 <div
-  className="css-1fbt695"
+  className="css-1l5oyux"
 >
   <div
     className="css-13dsoi7"

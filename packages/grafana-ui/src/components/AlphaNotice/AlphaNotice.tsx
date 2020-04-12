@@ -16,8 +16,8 @@ export const AlphaNotice: FC<Props> = ({ state, text, className }) => {
   const styles = cx(
     className,
     css`
-      background: linear-gradient(to bottom, ${theme.colors.blueBase}, ${theme.colors.blueShade});
-      color: ${theme.colors.gray7};
+      background: linear-gradient(to bottom, ${theme.palette.blueBase}, ${theme.palette.blueShade});
+      color: ${theme.palette.gray7};
       white-space: nowrap;
       border-radius: 3px;
       text-shadow: none;

@@ -40,7 +40,7 @@ export const LegendTable: React.FunctionComponent<LegendTableProps> = ({
               <th
                 key={columnHeader}
                 className={css`
-                  color: ${theme.colors.blue};
+                  color: ${theme.palette.blue};
                   font-weight: bold;
                   text-align: right;
                   cursor: pointer;

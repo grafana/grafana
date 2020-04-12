@@ -16,7 +16,7 @@ const getCallToActionCardStyles = stylesFactory((theme: GrafanaTheme) => ({
   wrapper: css`
     label: call-to-action-card;
     padding: ${theme.spacing.lg};
-    background: ${selectThemeVariant({ light: theme.colors.gray6, dark: theme.colors.grayBlue }, theme.type)};
+    background: ${selectThemeVariant({ light: theme.palette.gray6, dark: theme.palette.grayBlue }, theme.type)};
     border-radius: ${theme.border.radius.md};
     display: flex;
     flex-direction: column;

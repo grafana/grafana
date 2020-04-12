@@ -193,7 +193,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
 
       &:hover {
         cursor: pointer;
-        color: ${theme.colors.white};
+        color: ${theme.palette.white};
       }
 
       @media only screen and (max-width: ${theme.breakpoints.md}) {

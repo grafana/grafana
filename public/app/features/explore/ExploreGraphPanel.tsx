@@ -24,11 +24,11 @@ const getStyles = (theme: GrafanaTheme) => ({
     padding: 10px 0;
     border-radius: ${theme.border.radius.md};
     text-align: center;
-    background-color: ${selectThemeVariant({ light: theme.colors.white, dark: theme.colors.dark4 }, theme.type)};
+    background-color: ${selectThemeVariant({ light: theme.palette.white, dark: theme.palette.dark4 }, theme.type)};
   `,
   disclaimerIcon: css`
     label: disclaimer-icon;
-    color: ${theme.colors.yellow};
+    color: ${theme.palette.yellow};
     margin-right: ${theme.spacing.xs};
   `,
   showAllTimeSeries: css`

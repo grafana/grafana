@@ -82,7 +82,7 @@ const getLabelStyles = stylesFactory((theme: GrafanaTheme) => {
       display: inline-block;
     `,
     utc: css`
-      color: ${theme.colors.orange};
+      color: ${theme.palette.orange};
       font-size: 75%;
       padding: 3px;
       font-weight: ${theme.typography.weight.semibold};

@@ -159,8 +159,8 @@ const getFieldNameStyles = stylesFactory((theme: GrafanaTheme) => ({
     width: 35%;
     padding: 0 8px;
     border-radius: 3px;
-    background-color: ${theme.isDark ? theme.colors.grayBlue : theme.colors.gray6};
-    border: 1px solid ${theme.isDark ? theme.colors.dark6 : theme.colors.gray5};
+    background-color: ${theme.isDark ? theme.palette.grayBlue : theme.palette.gray6};
+    border: 1px solid ${theme.isDark ? theme.palette.dark6 : theme.palette.gray5};
   `,
   right: css`
     width: 65%;

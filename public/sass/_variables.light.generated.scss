@@ -82,10 +82,10 @@ $critical: #c4162a;
 
 // Scaffolding
 // -------------------------
-$body-bg: #f7f8fa;
+$body-bg: #ffffff;
 $page-bg: #ffffff;
+$dashboard-bg: #f7f8fa;
 
-$body-color: #52545c;
 $text-color: #52545c;
 $text-color-strong: #41444b;
 $text-color-weak: #767980;
@@ -121,9 +121,9 @@ $panel-header-hover-bg: $gray-6;
 $panel-corner: $gray-4;
 
 // Page header
-$page-header-bg: #e9edf2;
+$page-header-bg: #f7f8fa;
 $page-header-shadow: inset 0px -3px 10px $gray-6;
-$page-header-border-color: #c7d0d9;
+$page-header-border-color: #e9edf2;
 
 $divider-border-color: $gray-2;
 
@@ -143,7 +143,6 @@ $card-shadow: -1px -1px 0 0 hsla(0, 0%, 100%, 0.1), 1px 1px 0 0 rgba(0, 0, 0, 0.
 // Lists
 $list-item-bg: $gray-7;
 $list-item-hover-bg: $gray-6;
-$list-item-link-color: $text-color;
 $list-item-shadow: $card-shadow;
 
 $empty-list-cta-bg: $gray-6;
@@ -248,7 +247,7 @@ $side-menu-border: 1px solid #343b40;
 $side-menu-bg-mobile: rgba(0, 0, 0, 0); //$gray-6;
 $side-menu-item-hover-bg: #343b40;
 $side-menu-shadow: 5px 0px 10px -5px $gray-1;
-$side-menu-link-color: $gray-6;
+$side-menu-link-color: $gray-4;
 
 // Menu dropdowns
 // -------------------------

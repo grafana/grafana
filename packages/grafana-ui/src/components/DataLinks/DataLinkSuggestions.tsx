@@ -18,48 +18,48 @@ interface DataLinkSuggestionsProps {
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
   const wrapperBg = selectThemeVariant(
     {
-      light: theme.colors.white,
-      dark: theme.colors.dark2,
+      light: theme.palette.white,
+      dark: theme.palette.dark2,
     },
     theme.type
   );
 
   const wrapperShadow = selectThemeVariant(
     {
-      light: theme.colors.gray5,
-      dark: theme.colors.black,
+      light: theme.palette.gray5,
+      dark: theme.palette.black,
     },
     theme.type
   );
 
   const itemColor = selectThemeVariant(
     {
-      light: theme.colors.black,
-      dark: theme.colors.white,
+      light: theme.palette.black,
+      dark: theme.palette.white,
     },
     theme.type
   );
 
   const itemDocsColor = selectThemeVariant(
     {
-      light: theme.colors.dark3,
-      dark: theme.colors.gray2,
+      light: theme.palette.dark3,
+      dark: theme.palette.gray2,
     },
     theme.type
   );
 
   const itemBgHover = selectThemeVariant(
     {
-      light: theme.colors.gray5,
-      dark: theme.colors.dark7,
+      light: theme.palette.gray5,
+      dark: theme.palette.dark7,
     },
     theme.type
   );
 
   const itemBgActive = selectThemeVariant(
     {
-      light: theme.colors.gray6,
-      dark: theme.colors.dark9,
+      light: theme.palette.gray6,
+      dark: theme.palette.dark9,
     },
     theme.type
   );
