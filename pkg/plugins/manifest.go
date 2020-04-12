@@ -1,12 +1,17 @@
 package plugins
 
 import (
+	"bytes"
 	"crypto/sha256"
+	"encoding/json"
 	"fmt"
 	"io"
 	"io/ioutil"
 	"os"
 	"path"
+
+	"golang.org/x/crypto/openpgp"
+	"golang.org/x/crypto/openpgp/clearsign"
 )
 
 // Soon we can fetch keys from:
@@ -15,16 +20,15 @@ var publicKeyText = `-----BEGIN PGP PUBLIC KEY BLOCK-----
 Version: OpenPGP.js v4.10.1
 Comment: https://openpgpjs.org
 
-xjMEXo5V+RYJKwYBBAHaRw8BAQdAxIzDC0767A5eOHESiU8ACz5c9BWIrkbJ
-/5a4m/zsFWnNG0pvbiBTbWl0aCA8am9uQGV4YW1wbGUuY29tPsJ4BBAWCgAg
-BQJejlX5BgsJBwgDAgQVCAoCBBYCAQACGQECGwMCHgEACgkQ1uNw7xqtn452
-hQD+LK/+1k5vdVVQDxRDyjN3+6Wiy/jK2wwH1JtHdnTUKKsA/iot3glN57wb
-gaIQgQSZaE5E9tsIhGYhhNi8R743Oh4GzjgEXo5V+RIKKwYBBAGXVQEFAQEH
-QCmdY+K50okUPp1NCFJxdje+Icr859fTwwRy9+hq+vUIAwEIB8JhBBgWCAAJ
-BQJejlX5AhsMAAoJENbjcO8arZ+OpMwBAIcGCY1jMPo64h9G4MmFyPjL+wxn
-U2YVAvfHQZnN+gD3AP47klt0/0tmSlbNwEvimZxA3tpUfNrtUO1K4E8VxSIn
-Dg==
-=PA1c
+xjMEXpDb3BYJKwYBBAHaRw8BAQdAshYq1Z7bl9dg3uKqCqky1eiXNg+p0TZ+
+8CINKoLdSXvNGUdyYWZhbmEgPGVuZ0BncmFmYW5hLmNvbT7CeAQQFgoAIAUC
+XpDb3AYLCQcIAwIEFQgKAgQWAgEAAhkBAhsDAh4BAAoJEIfd+UIbIeMRUTkB
+APd39n6n14HNO0LkQcd7hSZlw7LJY61s07s1gTjnsH90AQCUN9cUpqCESIq1
+0m0ADZ/Ogc37nrtTgotpwX14ciSACc44BF6Q29wSCisGAQQBl1UBBQEBB0Bn
+VsrtQl2Dq21y7S64Y6ODmP2mCM7V2kLzblzRH2SkIQMBCAfCYQQYFggACQUC
+XpDb3AIbDAAKCRCH3flCGyHjEbTVAP9lV6vhCauoycIjwQGmOJRoSe/hg8y/
+H28G9O6n1prDfgD+PuSfm4QoOI8waUYlmHLuZbvRergzTWOShff/V8hy7wo=
+=yXhq
 -----END PGP PUBLIC KEY BLOCK-----
 `
 
@@ -40,35 +44,33 @@ type PluginManifest struct {
 // readPluginManifest attempts to read and verify the plugin manifest
 // if any error occurs or the manifest is not valid, this will return an error
 func readPluginManifest(body []byte) (*PluginManifest, error) {
-	fmt.Printf("TODO... verify: %s", publicKeyText)
-	// block, _ := clearsign.Decode(body)
-	// if block == nil {
-	// 	return nil, fmt.Errorf("unable to decode manifest")
-	// }
+	block, _ := clearsign.Decode(body)
+	if block == nil {
+		return nil, fmt.Errorf("unable to decode manifest")
+	}
 
-	// txt := string(block.Plaintext)
-	// fmt.Printf("PLAINTEXT: %s", txt)
+	txt := string(block.Plaintext)
+	fmt.Printf("PLAINTEXT: %s", txt)
 
-	// // Convert to a well typed object
-	// manifest := &PluginManifest{}
-	// err := json.Unmarshal(block.Plaintext, &manifest)
-	// if err != nil {
-	// 	return nil, fmt.Errorf("Error parsing manifest JSON: %s", err)
-	// }
+	// Convert to a well typed object
+	manifest := &PluginManifest{}
+	err := json.Unmarshal(block.Plaintext, &manifest)
+	if err != nil {
+		return nil, fmt.Errorf("Error parsing manifest JSON: %s", err)
+	}
 
-	// keyring, err := openpgp.ReadArmoredKeyRing(bytes.NewBufferString(publicKeyText))
-	// if err != nil {
-	// 	return nil, fmt.Errorf("failed to parse public key: %s", err)
-	// }
+	keyring, err := openpgp.keys.ReadArmoredKeyRing(bytes.NewBufferString(publicKeyText))
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse public key: %s", err)
+	}
 
-	// if _, err := openpgp.CheckDetachedSignature(keyring,
-	// 	bytes.NewBuffer(block.Bytes),
-	// 	block.ArmoredSignature.Body); err != nil {
-	// 	return nil, fmt.Errorf("failed to check signature: %s", err)
-	// }
+	if _, err := openpgp.CheckDetachedSignature(keyring,
+		bytes.NewBuffer(block.Bytes),
+		block.ArmoredSignature.Body); err != nil {
+		return nil, fmt.Errorf("failed to check signature: %s", err)
+	}
 
-	// return manifest, nil
-	return nil, fmt.Errorf("not yet parsing the manifest")
+	return manifest, nil
 }
 
 // GetPluginSignatureState returns the signature state for a plugin
