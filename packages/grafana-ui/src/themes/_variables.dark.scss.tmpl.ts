@@ -87,7 +87,8 @@ $critical: ${theme.palette.critical};
 // Scaffolding
 // -------------------------
 $body-bg: ${theme.colors.bodyBg};
-$page-bg: ${theme.colors.pageBg};
+$page-bg: ${theme.colors.bodyBg};
+$dashboard-bg: ${theme.colors.dashboardBg};
 
 $text-color: ${theme.colors.text};
 $text-color-strong: ${theme.colors.textStrong};

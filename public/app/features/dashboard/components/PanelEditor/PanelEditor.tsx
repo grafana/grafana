@@ -376,7 +376,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme, props: Props) => {
       left: 0;
       right: 0;
       bottom: 0;
-      background: ${theme.colors.bodyBg};
+      background: ${theme.colors.dashboardBg};
       display: flex;
       flex-direction: column;
     `,

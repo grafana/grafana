@@ -51,7 +51,7 @@ interface RichHistoryState {
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
   const borderColor = theme.isLight ? theme.palette.gray5 : theme.palette.dark6;
-  const tabContentBg = theme.colors.pageBg;
+  const tabContentBg = theme.colors.bodyBg;
   return {
     container: css`
       height: 100%;

@@ -84,7 +84,7 @@ const getQueryOperationRowStyles = stylesFactory((theme: GrafanaTheme) => {
       padding: ${theme.spacing.sm};
       border-radius: ${theme.border.radius.sm};
       border: 1px solid ${borderColor};
-      background: ${theme.colors.pageBg};
+      background: ${theme.colors.bodyBg};
     `,
     collapseIcon: css`
       color: ${theme.colors.textWeak};
@@ -103,9 +103,9 @@ const getQueryOperationRowStyles = stylesFactory((theme: GrafanaTheme) => {
     content: css`
       border: 1px solid ${borderColor};
       margin-top: -1px;
-      background: ${theme.colors.pageBg};
+      background: ${theme.colors.bodyBg};
       margin-left: ${theme.spacing.xl};
-      border-top: 1px solid ${theme.colors.pageBg};
+      border-top: 1px solid ${theme.colors.bodyBg};
       border-radis: 0 ${theme.border.radius.sm};
       padding: 0 ${theme.spacing.sm} ${theme.spacing.sm} ${theme.spacing.lg};
     `,

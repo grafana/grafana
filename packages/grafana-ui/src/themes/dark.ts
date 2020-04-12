@@ -41,9 +41,10 @@ const basicColors = {
 };
 
 const backgrounds = {
-  bg1: basicColors.gray05,
-  bg2: basicColors.gray10,
-  bg3: basicColors.gray15,
+  bg1: basicColors.gray10,
+  bg2: basicColors.gray15,
+  bg3: basicColors.gray25,
+  dashboardBg: basicColors.gray05,
 };
 
 const borders = {
@@ -109,9 +110,8 @@ const darkTheme: GrafanaTheme = {
     ...form,
 
     bodyBg: backgrounds.bg1,
-    pageBg: backgrounds.bg2,
-    panelBg: backgrounds.bg2,
-    pageHeaderBg: backgrounds.bg3,
+    panelBg: backgrounds.bg1,
+    pageHeaderBg: backgrounds.bg2,
     pageHeaderBorder: borders.border1,
     panelBorder: borders.border1,
 

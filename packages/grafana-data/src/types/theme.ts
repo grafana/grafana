@@ -193,8 +193,8 @@ export interface GrafanaTheme extends GrafanaThemeCommons {
     border1: string;
     border2: string;
 
+    dashboardBg: string;
     bodyBg: string;
-    pageBg: string;
     panelBg: string;
     panelBorder: string;
     pageHeaderBg: string;

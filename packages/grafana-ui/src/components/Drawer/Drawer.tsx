@@ -29,7 +29,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme, scollableContent: boolean)
   return {
     drawer: css`
       .drawer-content {
-        background-color: ${theme.colors.pageBg};
+        background-color: ${theme.colors.bodyBg};
         display: flex;
         flex-direction: column;
         overflow: hidden;
@@ -42,7 +42,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme, scollableContent: boolean)
       justify-content: space-between;
       border-bottom: 1px solid ${borderColor};
       padding: ${theme.spacing.sm} 0 ${theme.spacing.sm} ${theme.spacing.md};
-      background-color: ${theme.colors.pageBg};
+      background-color: ${theme.colors.bodyBg};
       top: 0;
       z-index: 1;
       flex-grow: 0;

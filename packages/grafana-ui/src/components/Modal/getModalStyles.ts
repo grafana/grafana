@@ -9,7 +9,7 @@ export const getModalStyles = stylesFactory((theme: GrafanaTheme) => {
     modal: css`
       position: fixed;
       z-index: ${theme.zIndex.modal};
-      background: ${theme.colors.pageBg};
+      background: ${theme.colors.bodyBg};
       box-shadow: 0 3px 7px rgba(0, 0, 0, 0.3);
       background-clip: padding-box;
       outline: none;

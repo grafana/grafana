@@ -92,7 +92,7 @@ export const getLogRowStyles = stylesFactory((theme: GrafanaTheme, logLevel?: Lo
       }
 
       &:hover {
-        background: ${theme.colors.pageBg};
+        background: ${theme.colors.bodyBg};
       }
     `,
     logsRowDuplicates: css`

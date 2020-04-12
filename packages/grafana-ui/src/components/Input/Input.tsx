@@ -47,6 +47,7 @@ export const getInputStyles = stylesFactory(({ theme, invalid = false }: StyleDe
     height: 100%;
     /* Min width specified for prefix/suffix classes used outside React component*/
     min-width: ${prefixSuffixStaticWidth};
+    color: ${theme.colors.textWeak};
   `;
 
   return {

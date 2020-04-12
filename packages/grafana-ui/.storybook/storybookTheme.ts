@@ -13,8 +13,8 @@ const createTheme = (theme: GrafanaTheme) => {
     colorSecondary: theme.palette.brandPrimary,
 
     // UI
-    appBg: theme.colors.pageBg,
-    appContentBg: theme.colors.pageBg,
+    appBg: theme.colors.bodyBg,
+    appContentBg: theme.colors.bodyBg,
     appBorderColor: theme.colors.pageHeaderBorder,
     appBorderRadius: 4,
 
@@ -29,7 +29,7 @@ const createTheme = (theme: GrafanaTheme) => {
     // Toolbar default and active colors
     barTextColor: theme.colors.formInputBorderActive,
     barSelectedColor: theme.palette.brandPrimary,
-    barBg: theme.colors.pageBg,
+    barBg: theme.colors.pageHeaderBg,
 
     // Form colors
     inputBg: theme.colors.formInputBg,
