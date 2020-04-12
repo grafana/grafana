@@ -1,6 +1,7 @@
 package plugins
 
 import (
+	"strings"
 	"testing"
 
 	. "github.com/smartystreets/goconvey/convey"
@@ -46,5 +47,11 @@ PSjgC2n1m40AVLZ0+GCRLspAYTEFrlpWWzqSrQ==
 
 		So(err, ShouldBeNil)
 		So(manifest, ShouldNotBeNil)
+		So(manifest.Plugin, ShouldEqual, "grafana-googlesheets-datasource")
+
+		// Modified text should fail
+		modified := strings.ReplaceAll(txt, "README.md", "xxxxxxxxxx")
+		manifest, err = readPluginManifest([]byte(modified))
+		So(err, ShouldNotBeNil)
 	})
 }
