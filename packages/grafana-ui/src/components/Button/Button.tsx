@@ -87,7 +87,6 @@ export const getButtonStyles = stylesFactory(({ theme, size, variant, icon }: St
         font-size: ${fontSize};
         padding: ${padding};
         height: ${height};
-        line-height: ${height};
         vertical-align: middle;
         cursor: pointer;
         border: 1px solid ${borderColor};

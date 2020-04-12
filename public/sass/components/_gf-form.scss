@@ -6,6 +6,7 @@ $input-border: 1px solid $input-border-color;
   align-items: flex-start;
   text-align: left;
   position: relative;
+  margin-bottom: $space-xs;
 
   &--offset-1 {
     margin-left: $spacer;
@@ -109,7 +110,6 @@ $input-border: 1px solid $input-border-color;
   background-color: $input-label-bg;
   height: $input-height;
   margin-right: $space-xs;
-  margin-bottom: $space-xs;
   border-radius: $input-border-radius;
   justify-content: space-between;
 
@@ -185,7 +185,6 @@ $input-border: 1px solid $input-border-color;
   border: $input-border;
   border-radius: $input-border-radius;
   margin-right: $space-xs;
-  margin-bottom: $space-xs;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
