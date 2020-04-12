@@ -28,6 +28,7 @@ export { UnitPicker } from './UnitPicker/UnitPicker';
 export { StatsPicker } from './StatsPicker/StatsPicker';
 export { RefreshPicker } from './RefreshPicker/RefreshPicker';
 export { TimePicker } from './TimePicker/TimePicker';
+export { TimeZonePicker } from './TimePicker/TimeZonePicker';
 export { TimeOfDayPicker } from './TimePicker/TimeOfDayPicker';
 export { List } from './List/List';
 export { TagsInput } from './TagsInput/TagsInput';
@@ -120,6 +121,7 @@ export { Slider } from './Slider/Slider';
 export { StringValueEditor } from './OptionsUI/string';
 export { NumberValueEditor } from './OptionsUI/number';
 export { SelectValueEditor } from './OptionsUI/select';
+export { TimeZoneValueEditor } from './OptionsUI/timezone';
 export { FieldConfigItemHeaderTitle } from './FieldConfigs/FieldConfigItemHeaderTitle';
 
 // Next-gen forms

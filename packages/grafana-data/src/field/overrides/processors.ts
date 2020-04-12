@@ -111,3 +111,7 @@ export const booleanOverrideProcessor = (
 export interface ColorFieldConfigSettings {
   enableNamedColors?: boolean;
 }
+
+export interface TimeZoneFieldConfigSettings {
+  includeDefault?: boolean;
+}
