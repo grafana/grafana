@@ -26,15 +26,15 @@ const getStyles = stylesFactory((theme: GrafanaTheme, scollableContent: boolean)
   const closeButtonWidth = '50px';
   const borderColor = selectThemeVariant(
     {
-      light: theme.colors.gray4,
-      dark: theme.colors.dark9,
+      light: theme.palette.gray4,
+      dark: theme.palette.dark9,
     },
     theme.type
   );
   return {
     drawer: css`
       .drawer-content {
-        background-color: ${theme.colors.pageBg};
+        background-color: ${theme.palette.pageBg};
         display: flex;
         flex-direction: column;
         overflow: hidden;
@@ -47,7 +47,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme, scollableContent: boolean)
       justify-content: space-between;
       border-bottom: 1px solid ${borderColor};
       padding: ${theme.spacing.sm} 0 ${theme.spacing.sm} ${theme.spacing.md};
-      background-color: ${theme.colors.bodyBg};
+      background-color: ${theme.palette.bodyBg};
       top: 0;
       z-index: 1;
       flex-grow: 0;

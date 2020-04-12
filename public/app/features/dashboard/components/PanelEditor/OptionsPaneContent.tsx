@@ -257,7 +257,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       flex-direction: row-reverse;
     `,
     searchInput: css`
-      color: ${theme.colors.textWeak};
+      color: ${theme.palette.textWeak};
       flex-grow: 1;
     `,
     searchRemoveIcon: css`
@@ -269,8 +269,8 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       flex-direction: column;
       flex-grow: 1;
       min-height: 0;
-      background: ${theme.colors.pageBg};
-      border-left: 1px solid ${theme.colors.pageHeaderBorder};
+      background: ${theme.palette.pageBg};
+      border-left: 1px solid ${theme.palette.pageHeaderBorder};
     `,
     tabsButton: css``,
     legacyOptions: css`

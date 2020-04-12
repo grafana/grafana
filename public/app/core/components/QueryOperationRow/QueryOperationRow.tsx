@@ -74,7 +74,7 @@ export const QueryOperationRow: React.FC<QueryOperationRowProps> = ({
 };
 
 const getQueryOperationRowStyles = stylesFactory((theme: GrafanaTheme) => {
-  const borderColor = theme.isLight ? theme.colors.gray85 : theme.colors.gray25;
+  const borderColor = theme.isLight ? theme.palette.gray85 : theme.palette.gray25;
 
   return {
     wrapper: css`
@@ -84,10 +84,10 @@ const getQueryOperationRowStyles = stylesFactory((theme: GrafanaTheme) => {
       padding: ${theme.spacing.sm};
       border-radius: ${theme.border.radius.sm};
       border: 1px solid ${borderColor};
-      background: ${theme.colors.pageBg};
+      background: ${theme.palette.pageBg};
     `,
     collapseIcon: css`
-      color: ${theme.colors.textWeak};
+      color: ${theme.palette.textWeak};
     `,
     titleWrapper: css`
       display: flex;
@@ -97,15 +97,15 @@ const getQueryOperationRowStyles = stylesFactory((theme: GrafanaTheme) => {
 
     title: css`
       font-weight: ${theme.typography.weight.semibold};
-      color: ${theme.colors.blue95};
+      color: ${theme.palette.blue95};
       margin-left: ${theme.spacing.sm};
     `,
     content: css`
       border: 1px solid ${borderColor};
       margin-top: -1px;
-      background: ${theme.colors.pageBg};
+      background: ${theme.palette.pageBg};
       margin-left: ${theme.spacing.xl};
-      border-top: 1px solid ${theme.colors.pageBg};
+      border-top: 1px solid ${theme.palette.pageBg};
       border-radis: 0 ${theme.border.radius.sm};
       padding: 0 ${theme.spacing.sm} ${theme.spacing.sm} ${theme.spacing.lg};
     `,

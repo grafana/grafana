@@ -16,11 +16,11 @@ interface Props {
 }
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
-  const bgColor = stv({ light: theme.colors.white, dark: theme.colors.formInputBg }, theme.type);
-  const menuShadowColor = stv({ light: theme.colors.gray4, dark: theme.colors.black }, theme.type);
-  const optionBgHover = stv({ light: theme.colors.gray7, dark: theme.colors.gray10 }, theme.type);
+  const bgColor = stv({ light: theme.palette.white, dark: theme.palette.formInputBg }, theme.type);
+  const menuShadowColor = stv({ light: theme.palette.gray4, dark: theme.palette.black }, theme.type);
+  const optionBgHover = stv({ light: theme.palette.gray7, dark: theme.palette.gray10 }, theme.type);
   const borderRadius = theme.border.radius.sm;
-  const borderColor = theme.colors.formInputBorder;
+  const borderColor = theme.palette.formInputBorder;
   return {
     caretWrapper: css`
       position: absolute;
@@ -40,7 +40,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
           outline-width: 2px;
           &.rc-time-picker-panel-select-option-selected {
             background-color: inherit;
-            border: 1px solid ${theme.colors.orange};
+            border: 1px solid ${theme.palette.orange};
             border-radius: ${borderRadius};
           }
 

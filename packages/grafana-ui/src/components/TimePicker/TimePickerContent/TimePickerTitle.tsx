@@ -8,7 +8,7 @@ const getStyle = stylesFactory((theme: GrafanaTheme) => {
     text: css`
       font-size: ${theme.typography.size.md};
       font-weight: ${theme.typography.weight.semibold};
-      color: ${theme.colors.formLabel};
+      color: ${theme.palette.formLabel};
     `,
   };
 });

@@ -46,7 +46,7 @@ const darkTheme: GrafanaTheme = {
   isDark: true,
   isLight: false,
   name: 'Grafana Dark',
-  colors: {
+  palette: {
     ...basicColors,
     inputBlack: basicColors.gray05,
     brandPrimary: basicColors.orange,

@@ -19,7 +19,7 @@ export interface RadioButtonProps {
 const getRadioButtonStyles = stylesFactory((theme: GrafanaTheme, size: RadioButtonSize, fullWidth?: boolean) => {
   const { fontSize, height } = getPropertiesForButtonSize(theme, size);
   const horizontalPadding = theme.spacing[size] ?? theme.spacing.md;
-  const c = theme.colors;
+  const c = theme.palette;
 
   const textColor = theme.isLight ? c.gray33 : c.gray70;
   const textColorHover = theme.isLight ? c.blueShade : c.blueLight;

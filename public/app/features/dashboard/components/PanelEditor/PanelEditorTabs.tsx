@@ -80,8 +80,8 @@ const getPanelEditorTabsStyles = stylesFactory(() => {
       flex-direction: column;
       flex-grow: 1;
       min-height: 0;
-      background: ${theme.colors.panelBg};
-      border-right: 1px solid ${theme.colors.pageHeaderBorder};
+      background: ${theme.palette.panelBg};
+      border-right: 1px solid ${theme.palette.pageHeaderBorder};
 
       .toolbar {
         background: transparent;

@@ -33,8 +33,8 @@ interface Props extends Themeable {
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
   const outlineColor = selectThemeVariant(
     {
-      light: theme.colors.white,
-      dark: theme.colors.black,
+      light: theme.palette.white,
+      dark: theme.palette.black,
     },
     theme.type
   );

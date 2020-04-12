@@ -32,13 +32,13 @@ function renderScenario(surface: string, theme: GrafanaTheme, sizes: IconSize[],
 
   switch (surface) {
     case 'body':
-      bg = theme.colors.bodyBg;
+      bg = theme.palette.bodyBg;
       break;
     case 'panel':
-      bg = theme.colors.pageBg;
+      bg = theme.palette.pageBg;
       break;
     case 'header': {
-      bg = theme.colors.pageHeaderBg;
+      bg = theme.palette.pageHeaderBg;
     }
   }
 

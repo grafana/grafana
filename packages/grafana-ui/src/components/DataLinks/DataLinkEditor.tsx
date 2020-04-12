@@ -22,7 +22,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => ({
   infoText: css`
     padding-bottom: ${theme.spacing.md};
     margin-left: 66px;
-    color: ${theme.colors.textWeak};
+    color: ${theme.palette.textWeak};
   `,
 }));
 

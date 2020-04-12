@@ -8,7 +8,7 @@ import { DataLink } from './DataLink';
 const getStyles = stylesFactory((theme: GrafanaTheme) => ({
   infoText: css`
     padding-bottom: ${theme.spacing.md};
-    color: ${theme.colors.textWeak};
+    color: ${theme.palette.textWeak};
   `,
   dataLink: css`
     margin-bottom: ${theme.spacing.sm};

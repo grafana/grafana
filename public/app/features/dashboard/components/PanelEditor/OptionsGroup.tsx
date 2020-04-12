@@ -29,10 +29,10 @@ export const OptionsGroup: FC<Props> = ({ title, children, defaultToClosed }) =>
 const getStyles = stylesFactory((theme: GrafanaTheme, isExpanded: boolean) => {
   return {
     box: css`
-      border-bottom: 1px solid ${theme.colors.pageHeaderBorder};
+      border-bottom: 1px solid ${theme.palette.pageHeaderBorder};
     `,
     toggle: css`
-      color: ${theme.colors.textWeak};
+      color: ${theme.palette.textWeak};
       font-size: ${theme.typography.size.lg};
       margin-right: ${theme.spacing.sm};
     `,
@@ -41,12 +41,12 @@ const getStyles = stylesFactory((theme: GrafanaTheme, isExpanded: boolean) => {
       cursor: pointer;
       align-items: baseline;
       padding: ${theme.spacing.sm} ${theme.spacing.md} ${theme.spacing.sm} ${theme.spacing.sm};
-      color: ${isExpanded ? theme.colors.text : theme.colors.formLabel};
+      color: ${isExpanded ? theme.palette.text : theme.palette.formLabel};
       font-weight: ${theme.typography.weight.semibold};
 
       &:hover {
         .editor-options-group-toggle {
-          color: ${theme.colors.text};
+          color: ${theme.palette.text};
         }
       }
     `,

@@ -115,7 +115,7 @@ const getConfirmPluginDashboardSaveModalStyles = stylesFactory((theme: GrafanaTh
   `,
   modalText: css`
     font-size: ${theme.typography.heading.h4};
-    color: ${theme.colors.link};
+    color: ${theme.palette.link};
     margin-bottom: calc(${theme.spacing.d} * 2);
     padding-top: ${theme.spacing.d};
   `,

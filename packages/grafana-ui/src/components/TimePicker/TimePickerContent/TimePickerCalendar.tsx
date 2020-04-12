@@ -82,7 +82,7 @@ const getBodyStyles = stylesFactory((theme: GrafanaTheme) => {
 
   return {
     title: css`
-      color: ${theme.colors.text};
+      color: ${theme.palette.text};
       background-color: ${colors.background};
       font-size: ${theme.typography.size.md};
       border: 1px solid transparent;
@@ -101,7 +101,7 @@ const getBodyStyles = stylesFactory((theme: GrafanaTheme) => {
       .react-calendar__navigation {
         padding-top: 4px;
         background-color: inherit;
-        color: ${theme.colors.text};
+        color: ${theme.palette.text};
         border: 0;
         font-weight: ${theme.typography.weight.semibold};
       }
@@ -109,7 +109,7 @@ const getBodyStyles = stylesFactory((theme: GrafanaTheme) => {
       .react-calendar__month-view__weekdays {
         background-color: inherit;
         text-align: center;
-        color: ${theme.colors.blueShade};
+        color: ${theme.palette.blueShade};
 
         abbr {
           border: 0;
@@ -139,9 +139,9 @@ const getBodyStyles = stylesFactory((theme: GrafanaTheme) => {
 
       .react-calendar__tile--active,
       .react-calendar__tile--active:hover {
-        color: ${theme.colors.white};
+        color: ${theme.palette.white};
         font-weight: ${theme.typography.weight.semibold};
-        background: ${theme.colors.blue95};
+        background: ${theme.palette.blue95};
         box-shadow: none;
         border: 0px;
       }
@@ -150,12 +150,12 @@ const getBodyStyles = stylesFactory((theme: GrafanaTheme) => {
       .react-calendar__tile--rangeStart {
         padding: 0;
         border: 0px;
-        color: ${theme.colors.white};
+        color: ${theme.palette.white};
         font-weight: ${theme.typography.weight.semibold};
-        background: ${theme.colors.blue95};
+        background: ${theme.palette.blue95};
 
         abbr {
-          background-color: ${theme.colors.blue77};
+          background-color: ${theme.palette.blue77};
           border-radius: 100px;
           display: block;
           padding-top: 2px;

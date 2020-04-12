@@ -29,7 +29,7 @@ interface StyleDeps {
 }
 
 export const getInputStyles = stylesFactory(({ theme, invalid = false }: StyleDeps) => {
-  const colors = theme.colors;
+  const colors = theme.palette;
   const borderRadius = theme.border.radius.sm;
   const height = theme.spacing.formInputHeight;
 

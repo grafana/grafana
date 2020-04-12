@@ -37,7 +37,7 @@ QueryOperationAction.displayName = 'QueryOperationAction';
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
   return {
     icon: css`
-      color: ${theme.colors.textWeak};
+      color: ${theme.palette.textWeak};
     `,
   };
 });

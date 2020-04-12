@@ -4,11 +4,11 @@ import { css } from 'emotion';
 import { GrafanaTheme } from '@grafana/data';
 
 export const getSelectStyles = stylesFactory((theme: GrafanaTheme) => {
-  const bgColor = stv({ light: theme.colors.white, dark: theme.colors.formInputBg }, theme.type);
-  const menuShadowColor = stv({ light: theme.colors.gray4, dark: theme.colors.black }, theme.type);
-  const optionBgHover = stv({ light: theme.colors.gray7, dark: theme.colors.gray10 }, theme.type);
-  const multiValueContainerBg = stv({ light: theme.colors.gray6, dark: theme.colors.gray05 }, theme.type);
-  const multiValueColor = stv({ light: theme.colors.gray25, dark: theme.colors.gray85 }, theme.type);
+  const bgColor = stv({ light: theme.palette.white, dark: theme.palette.formInputBg }, theme.type);
+  const menuShadowColor = stv({ light: theme.palette.gray4, dark: theme.palette.black }, theme.type);
+  const optionBgHover = stv({ light: theme.palette.gray7, dark: theme.palette.gray10 }, theme.type);
+  const multiValueContainerBg = stv({ light: theme.palette.gray6, dark: theme.palette.gray05 }, theme.type);
+  const multiValueColor = stv({ light: theme.palette.gray25, dark: theme.palette.gray85 }, theme.type);
 
   return {
     menu: css`
@@ -37,7 +37,7 @@ export const getSelectStyles = stylesFactory((theme: GrafanaTheme) => {
     optionDescription: css`
       font-weight: normal;
       font-size: ${theme.typography.size.sm};
-      color: ${theme.colors.textWeak};
+      color: ${theme.palette.textWeak};
       white-space: normal;
     `,
     optionBody: css`
@@ -57,7 +57,7 @@ export const getSelectStyles = stylesFactory((theme: GrafanaTheme) => {
       border-left-width: 2px;
     `,
     singleValue: css`
-      color: ${theme.colors.formInputText};
+      color: ${theme.palette.formInputText};
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;

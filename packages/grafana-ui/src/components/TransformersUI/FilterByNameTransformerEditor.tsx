@@ -138,7 +138,7 @@ const FilterPill: React.FC<FilterPillProps> = ({ label, selected, onClick }) => 
       className={css`
         padding: ${theme.spacing.xxs} ${theme.spacing.sm};
         color: white;
-        background: ${selected ? theme.colors.blueLight : theme.colors.blueShade};
+        background: ${selected ? theme.palette.blueLight : theme.palette.blueShade};
         border-radius: 16px;
         display: inline-block;
         cursor: pointer;

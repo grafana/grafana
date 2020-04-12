@@ -15,8 +15,8 @@ const STATS_ROW_LIMIT = 5;
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
   const borderColor = selectThemeVariant(
     {
-      light: theme.colors.gray5,
-      dark: theme.colors.dark9,
+      light: theme.palette.gray5,
+      dark: theme.palette.dark9,
     },
     theme.type
   );
@@ -25,7 +25,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       label: logs-stats;
       column-span: 2;
       background: inherit;
-      color: ${theme.colors.text};
+      color: ${theme.palette.text};
       word-break: break-all;
     `,
     logsStatsHeader: css`

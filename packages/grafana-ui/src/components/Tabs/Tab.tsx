@@ -13,7 +13,7 @@ export interface TabProps {
 }
 
 const getTabStyles = stylesFactory((theme: GrafanaTheme) => {
-  const colors = theme.colors;
+  const colors = theme.palette;
 
   return {
     tabItem: css`

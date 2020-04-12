@@ -22,14 +22,14 @@ const getStyles = (theme: GrafanaTheme) => ({
   `,
   logsRowFade: css`
     label: logs-row-fresh;
-    color: ${theme.colors.text};
-    background-color: ${tinycolor(theme.colors.blueLight)
+    color: ${theme.palette.text};
+    background-color: ${tinycolor(theme.palette.blueLight)
       .setAlpha(0.25)
       .toString()};
     animation: fade 1s ease-out 1s 1 normal forwards;
     @keyframes fade {
       from {
-        background-color: ${tinycolor(theme.colors.blueLight)
+        background-color: ${tinycolor(theme.palette.blueLight)
           .setAlpha(0.25)
           .toString()};
       }

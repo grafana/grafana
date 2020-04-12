@@ -63,7 +63,7 @@ const getStyles = (theme: GrafanaTheme) => ({
     padding: 4px 8px 4px 8px;
     position: relative;
     height: 35px;
-    background: ${theme.colors.textFaint};
+    background: ${theme.palette.textFaint};
     border-radius: 4px 4px 0 0;
     flex-wrap: nowrap;
     justify-content: space-between;
@@ -71,7 +71,7 @@ const getStyles = (theme: GrafanaTheme) => ({
   `,
   name: css`
     font-weight: ${theme.typography.weight.semibold};
-    color: ${theme.colors.blue};
+    color: ${theme.palette.blue};
   `,
   iconRow: css`
     display: flex;
@@ -81,10 +81,10 @@ const getStyles = (theme: GrafanaTheme) => ({
     border: none;
     box-shadow: none;
     cursor: pointer;
-    color: ${theme.colors.textWeak};
+    color: ${theme.palette.textWeak};
     margin-left: ${theme.spacing.sm};
     &:hover {
-      color: ${theme.colors.text};
+      color: ${theme.palette.text};
     }
   `,
   editor: css`
@@ -107,8 +107,8 @@ const getStyles = (theme: GrafanaTheme) => ({
     text-align: center;
     font-family: ${theme.typography.fontFamily.monospace};
     font-size: ${theme.typography.size.sm};
-    color: ${theme.colors.blueBase};
-    border-bottom: 1px dashed ${theme.colors.gray15};
+    color: ${theme.palette.blueBase};
+    border-bottom: 1px dashed ${theme.palette.gray15};
     flex-grow: 0;
     flex-shrink: 1;
   `,
@@ -116,8 +116,8 @@ const getStyles = (theme: GrafanaTheme) => ({
   debug: css`
     margin-top: ${theme.spacing.md};
     padding: 0 ${theme.spacing.sm} ${theme.spacing.sm} ${theme.spacing.sm};
-    border: 1px dashed ${theme.colors.gray15};
-    background: ${theme.colors.gray05};
+    border: 1px dashed ${theme.palette.gray15};
+    background: ${theme.palette.gray05};
     border-radius: ${theme.border.radius.sm};
     width: 100%;
     height: 300px;

@@ -347,7 +347,7 @@ enum Pane {
  */
 const getStyles = stylesFactory((theme: GrafanaTheme, props: Props) => {
   const { uiState } = props;
-  const handleColor = theme.colors.blueLight;
+  const handleColor = theme.palette.blueLight;
   const paneSpaceing = theme.spacing.md;
 
   const resizer = css`
@@ -376,7 +376,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme, props: Props) => {
       left: 0;
       right: 0;
       bottom: 0;
-      background: ${theme.colors.bodyBg};
+      background: ${theme.palette.bodyBg};
       display: flex;
       flex-direction: column;
     `,
@@ -431,9 +431,9 @@ const getStyles = stylesFactory((theme: GrafanaTheme, props: Props) => {
     editorToolbar: css`
       display: flex;
       padding: ${theme.spacing.sm};
-      background: ${theme.colors.panelBg};
+      background: ${theme.palette.panelBg};
       justify-content: space-between;
-      border-bottom: 1px solid ${theme.colors.panelBorder};
+      border-bottom: 1px solid ${theme.palette.panelBorder};
     `,
     panelToolbar: css`
       display: flex;

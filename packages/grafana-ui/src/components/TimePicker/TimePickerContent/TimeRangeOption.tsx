@@ -6,8 +6,8 @@ import { useTheme, stylesFactory, selectThemeVariant } from '../../../themes';
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
   const background = selectThemeVariant(
     {
-      light: theme.colors.gray7,
-      dark: theme.colors.dark3,
+      light: theme.palette.gray7,
+      dark: theme.palette.dark3,
     },
     theme.type
   );

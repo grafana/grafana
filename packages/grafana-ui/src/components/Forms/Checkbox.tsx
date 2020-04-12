@@ -50,10 +50,10 @@ export const getCheckboxStyles = stylesFactory((theme: GrafanaTheme) => {
        * */
       &:checked + span {
         background: blue;
-        background: ${theme.colors.formCheckboxBgChecked};
+        background: ${theme.palette.formCheckboxBgChecked};
         border: none;
         &:hover {
-          background: ${theme.colors.formCheckboxBgCheckedHover};
+          background: ${theme.palette.formCheckboxBgCheckedHover};
         }
         &:after {
           content: '';
@@ -62,7 +62,7 @@ export const getCheckboxStyles = stylesFactory((theme: GrafanaTheme) => {
           top: 1px;
           width: 6px;
           height: 12px;
-          border: solid ${theme.colors.formCheckboxCheckmark};
+          border: solid ${theme.palette.formCheckboxCheckmark};
           border-width: 0 3px 3px 0;
           transform: rotate(45deg);
         }
@@ -74,14 +74,14 @@ export const getCheckboxStyles = stylesFactory((theme: GrafanaTheme) => {
       height: ${checkboxSize};
       border-radius: ${theme.border.radius.sm};
       margin-right: ${theme.spacing.formSpacingBase}px;
-      background: ${theme.colors.formCheckboxBg};
-      border: 1px solid ${theme.colors.formInputBorder};
+      background: ${theme.palette.formCheckboxBg};
+      border: 1px solid ${theme.palette.formInputBorder};
       position: absolute;
       top: 1px;
       left: 0;
       &:hover {
         cursor: pointer;
-        border-color: ${theme.colors.formInputBorderHover};
+        border-color: ${theme.palette.formInputBorderHover};
       }
     `,
   };

@@ -81,8 +81,8 @@ const getSectionStyles = stylesFactory((theme: GrafanaTheme) => {
       list-style: none;
     `,
     section: css`
-      background: ${theme.colors.panelBg};
-      border-bottom: solid 1px ${theme.isLight ? theme.colors.gray95 : theme.colors.gray25};
+      background: ${theme.palette.panelBg};
+      border-bottom: solid 1px ${theme.isLight ? theme.palette.gray95 : theme.palette.gray25};
       padding: 0px 4px 4px 4px;
       margin-bottom: 3px;
     `,
@@ -144,11 +144,11 @@ const getSectionHeaderStyles = stylesFactory((theme: GrafanaTheme, selected = fa
         align-items: center;
         font-size: ${theme.typography.size.base};
         padding: ${sm} ${xs} ${xs};
-        color: ${theme.colors.textWeak};
+        color: ${theme.palette.textWeak};
 
         &:hover,
         &.selected {
-          color: ${theme.colors.text};
+          color: ${theme.palette.text};
         }
 
         &:hover {
@@ -169,7 +169,7 @@ const getSectionHeaderStyles = stylesFactory((theme: GrafanaTheme, selected = fa
     `,
     link: css`
       padding: 2px 10px 0;
-      color: ${theme.colors.textWeak};
+      color: ${theme.palette.textWeak};
       opacity: 0;
       transition: opacity 150ms ease-in-out;
     `,

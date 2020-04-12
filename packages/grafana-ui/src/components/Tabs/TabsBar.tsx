@@ -12,7 +12,7 @@ export interface Props {
 }
 
 const getTabsBarStyles = stylesFactory((theme: GrafanaTheme, hideBorder = false) => {
-  const colors = theme.colors;
+  const colors = theme.palette;
 
   return {
     tabsWrapper:

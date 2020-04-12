@@ -5,8 +5,8 @@ import { selectThemeVariant, stylesFactory } from '../../themes';
 export const getModalStyles = stylesFactory((theme: GrafanaTheme) => {
   const backdropBackground = selectThemeVariant(
     {
-      light: theme.colors.bodyBg,
-      dark: theme.colors.gray25,
+      light: theme.palette.bodyBg,
+      dark: theme.palette.gray25,
     },
     theme.type
   );
@@ -14,7 +14,7 @@ export const getModalStyles = stylesFactory((theme: GrafanaTheme) => {
     modal: css`
       position: fixed;
       z-index: ${theme.zIndex.modal};
-      background: ${theme.colors.pageBg};
+      background: ${theme.palette.pageBg};
       box-shadow: 0 3px 7px rgba(0, 0, 0, 0.3);
       background-clip: padding-box;
       outline: none;
@@ -37,9 +37,9 @@ export const getModalStyles = stylesFactory((theme: GrafanaTheme) => {
       opacity: 0.7;
     `,
     modalHeader: css`
-      background: ${theme.colors.pageHeaderBg};
+      background: ${theme.palette.pageHeaderBg};
       box-shadow: ${theme.shadow.pageHeader};
-      border-bottom: 1px solid ${theme.colors.pageHeaderBorder};
+      border-bottom: 1px solid ${theme.palette.pageHeaderBorder};
       display: flex;
       height: 42px;
     `,

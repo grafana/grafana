@@ -17,9 +17,9 @@ const getSearchFieldStyles = (theme: GrafanaTheme) => ({
     width: 100%;
     height: 55px; /* this variable is not part of GrafanaTheme yet*/
     display: flex;
-    background-color: ${theme.colors.formInputBg};
+    background-color: ${theme.palette.formInputBg};
     position: relative;
-    box-shadow: 0 0 10px ${theme.isLight ? theme.colors.gray85 : theme.colors.black};
+    box-shadow: 0 0 10px ${theme.isLight ? theme.palette.gray85 : theme.palette.black};
   `,
   input: css`
     max-width: 653px;
@@ -27,8 +27,8 @@ const getSearchFieldStyles = (theme: GrafanaTheme) => ({
     height: 51px;
     box-sizing: border-box;
     outline: none;
-    background-color: ${theme.colors.formInputBg};
-    background: ${theme.colors.formInputBg};
+    background-color: ${theme.palette.formInputBg};
+    background: ${theme.palette.formInputBg};
     flex-grow: 10;
   `,
   spacer: css`
@@ -36,7 +36,7 @@ const getSearchFieldStyles = (theme: GrafanaTheme) => ({
   `,
   icon: cx(
     css`
-      color: ${theme.colors.textWeak};
+      color: ${theme.palette.textWeak};
       font-size: ${theme.typography.size.lg};
       padding: ${theme.spacing.md} ${theme.spacing.md} ${theme.spacing.sm} ${theme.spacing.md};
     `,

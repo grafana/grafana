@@ -46,7 +46,7 @@ const lightTheme: GrafanaTheme = {
   isDark: false,
   isLight: true,
   name: 'Grafana Light',
-  colors: {
+  palette: {
     ...basicColors,
     variable: basicColors.blue,
     inputBlack: '#09090b',

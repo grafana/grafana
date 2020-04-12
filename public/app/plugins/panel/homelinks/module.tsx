@@ -100,7 +100,7 @@ export const getStyles = stylesFactory(() => {
       padding: ${theme.spacing.sm};
       border-radius: 0;
       box-shadow: none;
-      color: ${theme.colors.textWeak};
+      color: ${theme.palette.textWeak};
     `,
     item: css`
       ${styleMixins.listItem(theme)}

@@ -31,66 +31,66 @@ export interface ContextMenuProps {
 const getContextMenuStyles = stylesFactory((theme: GrafanaTheme) => {
   const linkColor = selectThemeVariant(
     {
-      light: theme.colors.dark2,
-      dark: theme.colors.text,
+      light: theme.palette.dark2,
+      dark: theme.palette.text,
     },
     theme.type
   );
   const linkColorHover = selectThemeVariant(
     {
-      light: theme.colors.link,
-      dark: theme.colors.white,
+      light: theme.palette.link,
+      dark: theme.palette.white,
     },
     theme.type
   );
   const wrapperBg = selectThemeVariant(
     {
-      light: theme.colors.gray7,
-      dark: theme.colors.dark2,
+      light: theme.palette.gray7,
+      dark: theme.palette.dark2,
     },
     theme.type
   );
   const wrapperShadow = selectThemeVariant(
     {
-      light: theme.colors.gray3,
-      dark: theme.colors.black,
+      light: theme.palette.gray3,
+      dark: theme.palette.black,
     },
     theme.type
   );
   const itemColor = selectThemeVariant(
     {
-      light: theme.colors.black,
-      dark: theme.colors.white,
+      light: theme.palette.black,
+      dark: theme.palette.white,
     },
     theme.type
   );
 
   const groupLabelColor = selectThemeVariant(
     {
-      light: theme.colors.gray1,
-      dark: theme.colors.textWeak,
+      light: theme.palette.gray1,
+      dark: theme.palette.textWeak,
     },
     theme.type
   );
 
   const itemBgHover = selectThemeVariant(
     {
-      light: theme.colors.gray5,
-      dark: theme.colors.dark7,
+      light: theme.palette.gray5,
+      dark: theme.palette.dark7,
     },
     theme.type
   );
   const headerBg = selectThemeVariant(
     {
-      light: theme.colors.white,
-      dark: theme.colors.dark1,
+      light: theme.palette.white,
+      dark: theme.palette.dark1,
     },
     theme.type
   );
   const headerSeparator = selectThemeVariant(
     {
-      light: theme.colors.white,
-      dark: theme.colors.dark7,
+      light: theme.palette.white,
+      dark: theme.palette.dark7,
     },
     theme.type
   );
@@ -144,7 +144,7 @@ const getContextMenuStyles = stylesFactory((theme: GrafanaTheme) => {
       height: 12px;
       display: inline-block;
       margin-right: 10px;
-      color: ${theme.colors.linkDisabled};
+      color: ${theme.palette.linkDisabled};
       position: relative;
       top: 4px;
     `,

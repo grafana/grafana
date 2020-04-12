@@ -14,7 +14,7 @@ import { GrafanaTheme } from '@grafana/data';
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
   const singleValue = css`
     label: singleValue;
-    color: ${theme.colors.formInputText};
+    color: ${theme.palette.formInputText};
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;

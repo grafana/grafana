@@ -20,8 +20,8 @@ interface State {
 const getSelectOptionGroupStyles = stylesFactory((theme: GrafanaTheme) => {
   const optionBorder = selectThemeVariant(
     {
-      light: theme.colors.gray4,
-      dark: theme.colors.dark9,
+      light: theme.palette.gray4,
+      dark: theme.palette.dark9,
     },
     theme.type
   );

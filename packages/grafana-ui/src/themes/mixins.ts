@@ -6,9 +6,9 @@ import { stylesFactory } from './stylesFactory';
 export function cardChrome(theme: GrafanaTheme): string {
   if (theme.isDark) {
     return `
-       background: linear-gradient(135deg, ${theme.colors.dark8}, ${theme.colors.dark6});
+       background: linear-gradient(135deg, ${theme.palette.dark8}, ${theme.palette.dark6});
        &:hover {
-         background: linear-gradient(135deg, ${theme.colors.dark9}, ${theme.colors.dark6});
+         background: linear-gradient(135deg, ${theme.palette.dark9}, ${theme.palette.dark6});
        }
        box-shadow: -1px -1px 0 0 hsla(0, 0%, 100%, 0.1), 1px 1px 0 0 rgba(0, 0, 0, 0.3);
        border-radius: ${theme.border.radius.md};
@@ -16,9 +16,9 @@ export function cardChrome(theme: GrafanaTheme): string {
   }
 
   return `
-       background: linear-gradient(135deg, ${theme.colors.gray6}, ${theme.colors.gray7});
+       background: linear-gradient(135deg, ${theme.palette.gray6}, ${theme.palette.gray7});
        &:hover {
-         background: linear-gradient(135deg, ${theme.colors.gray7}, ${theme.colors.gray6});
+         background: linear-gradient(135deg, ${theme.palette.gray7}, ${theme.palette.gray6});
        }
        box-shadow: -1px -1px 0 0 hsla(0, 0%, 100%, 0.1), 1px 1px 0 0 rgba(0, 0, 0, 0.1);
        border-radius: ${theme.border.radius.md};
@@ -28,9 +28,9 @@ export function cardChrome(theme: GrafanaTheme): string {
 export function listItem(theme: GrafanaTheme): string {
   if (theme.isDark) {
     return `
-       background: ${theme.colors.dark7};
+       background: ${theme.palette.dark7};
        &:hover {
-         background: ${theme.colors.dark9};
+         background: ${theme.palette.dark9};
        }
        box-shadow: -1px -1px 0 0 hsla(0, 0%, 100%, 0.1), 1px 1px 0 0 rgba(0, 0, 0, 0.3);
        border-radius: ${theme.border.radius.md};
@@ -38,9 +38,9 @@ export function listItem(theme: GrafanaTheme): string {
   }
 
   return `
-       background: ${theme.colors.gray7};
+       background: ${theme.palette.gray7};
        &:hover {
-         background: ${theme.colors.gray6};
+         background: ${theme.palette.gray6};
        }
        box-shadow: -1px -1px 0 0 hsla(0, 0%, 100%, 0.1), 1px 1px 0 0 rgba(0, 0, 0, 0.1);
        border-radius: ${theme.border.radius.md};
@@ -49,30 +49,30 @@ export function listItem(theme: GrafanaTheme): string {
 
 export function listItemSelected(theme: GrafanaTheme): string {
   return `
-       background: ${theme.isLight ? theme.colors.gray6 : theme.colors.dark9};
-       color: ${theme.colors.textStrong};
+       background: ${theme.isLight ? theme.palette.gray6 : theme.palette.dark9};
+       color: ${theme.palette.textStrong};
     `;
 }
 
 export const panelEditorNestedListStyles = stylesFactory((theme: GrafanaTheme) => {
   const borderColor = selectThemeVariant(
     {
-      light: theme.colors.gray85,
-      dark: theme.colors.dark9,
+      light: theme.palette.gray85,
+      dark: theme.palette.dark9,
     },
     theme.type
   );
   const shadow = selectThemeVariant(
     {
-      light: theme.colors.gray85,
-      dark: theme.colors.black,
+      light: theme.palette.gray85,
+      dark: theme.palette.black,
     },
     theme.type
   );
   const headerBg = selectThemeVariant(
     {
-      light: theme.colors.white,
-      dark: theme.colors.dark1,
+      light: theme.palette.white,
+      dark: theme.palette.dark1,
     },
     theme.type
   );

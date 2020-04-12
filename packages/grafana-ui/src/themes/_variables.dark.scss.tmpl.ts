@@ -12,88 +12,88 @@ $theme-name: dark;
 
 // New Colors
 // -------------------------
-$blue-faint: ${theme.colors.blueFaint};
-$blue-light: ${theme.colors.blueLight};
-$blue-base: ${theme.colors.blueBase};
-$blue-shade: ${theme.colors.blueShade};
-$red-base: ${theme.colors.redBase};
-$red-shade: ${theme.colors.redShade};
-$green-base: ${theme.colors.greenBase};
-$green-shade: ${theme.colors.greenShade};
-$orange-dark: ${theme.colors.orangeDark};
+$blue-faint: ${theme.palette.blueFaint};
+$blue-light: ${theme.palette.blueLight};
+$blue-base: ${theme.palette.blueBase};
+$blue-shade: ${theme.palette.blueShade};
+$red-base: ${theme.palette.redBase};
+$red-shade: ${theme.palette.redShade};
+$green-base: ${theme.palette.greenBase};
+$green-shade: ${theme.palette.greenShade};
+$orange-dark: ${theme.palette.orangeDark};
 
-$gray98: ${theme.colors.gray98};
-$gray95: ${theme.colors.gray95};
-$gray85: ${theme.colors.gray85};
-$gray70: ${theme.colors.gray70};
-$gray60: ${theme.colors.gray60};
-$gray33: ${theme.colors.gray33};
-$gray25: ${theme.colors.gray25};
-$gray15: ${theme.colors.gray15};
-$gray10: ${theme.colors.gray10};
-$gray05: ${theme.colors.gray05};
+$gray98: ${theme.palette.gray98};
+$gray95: ${theme.palette.gray95};
+$gray85: ${theme.palette.gray85};
+$gray70: ${theme.palette.gray70};
+$gray60: ${theme.palette.gray60};
+$gray33: ${theme.palette.gray33};
+$gray25: ${theme.palette.gray25};
+$gray15: ${theme.palette.gray15};
+$gray10: ${theme.palette.gray10};
+$gray05: ${theme.palette.gray05};
 
 // Grays
 // -------------------------
-$black: ${theme.colors.black};
-$dark-1: ${theme.colors.dark1};
-$dark-2: ${theme.colors.dark2};
-$dark-3: ${theme.colors.dark3};
-$dark-4: ${theme.colors.dark4};
-$dark-5: ${theme.colors.dark5};
-$dark-6: ${theme.colors.dark6};
-$dark-7: ${theme.colors.dark7};
-$dark-8: ${theme.colors.dark8};
-$dark-9: ${theme.colors.dark9};
-$dark-10: ${theme.colors.dark10};
-$gray-1: ${theme.colors.gray1};
-$gray-2: ${theme.colors.gray2};
-$gray-3: ${theme.colors.gray3};
-$gray-4: ${theme.colors.gray4};
-$gray-5: ${theme.colors.gray5};
-$gray-6: ${theme.colors.gray6};
+$black: ${theme.palette.black};
+$dark-1: ${theme.palette.dark1};
+$dark-2: ${theme.palette.dark2};
+$dark-3: ${theme.palette.dark3};
+$dark-4: ${theme.palette.dark4};
+$dark-5: ${theme.palette.dark5};
+$dark-6: ${theme.palette.dark6};
+$dark-7: ${theme.palette.dark7};
+$dark-8: ${theme.palette.dark8};
+$dark-9: ${theme.palette.dark9};
+$dark-10: ${theme.palette.dark10};
+$gray-1: ${theme.palette.gray1};
+$gray-2: ${theme.palette.gray2};
+$gray-3: ${theme.palette.gray3};
+$gray-4: ${theme.palette.gray4};
+$gray-5: ${theme.palette.gray5};
+$gray-6: ${theme.palette.gray6};
 
-$gray-blue: ${theme.colors.grayBlue};
-$input-black: ${theme.colors.formInputBg};
+$gray-blue: ${theme.palette.grayBlue};
+$input-black: ${theme.palette.formInputBg};
 
-$white: ${theme.colors.white};
+$white: ${theme.palette.white};
 
 // Accent colors
 // -------------------------
-$blue: ${theme.colors.blue};
+$blue: ${theme.palette.blue};
 $red: $red-base;
-$yellow: ${theme.colors.yellow};
-$orange: ${theme.colors.orange};
-$purple: ${theme.colors.purple};
-$variable: ${theme.colors.variable};
+$yellow: ${theme.palette.yellow};
+$orange: ${theme.palette.orange};
+$purple: ${theme.palette.purple};
+$variable: ${theme.palette.variable};
 
-$brand-primary: ${theme.colors.brandPrimary};
-$brand-success: ${theme.colors.brandSuccess};
-$brand-warning: ${theme.colors.brandWarning};
-$brand-danger: ${theme.colors.brandDanger};
+$brand-primary: ${theme.palette.brandPrimary};
+$brand-success: ${theme.palette.brandSuccess};
+$brand-warning: ${theme.palette.brandWarning};
+$brand-danger: ${theme.palette.brandDanger};
 
-$query-red: ${theme.colors.queryRed};
-$query-green: ${theme.colors.queryGreen};
-$query-purple: ${theme.colors.queryPurple};
-$query-orange: ${theme.colors.orange};
-$query-keyword: ${theme.colors.queryKeyword};
+$query-red: ${theme.palette.queryRed};
+$query-green: ${theme.palette.queryGreen};
+$query-purple: ${theme.palette.queryPurple};
+$query-orange: ${theme.palette.orange};
+$query-keyword: ${theme.palette.queryKeyword};
 
 // Status colors
 // -------------------------
-$online: ${theme.colors.online};
-$warn: ${theme.colors.warn};
-$critical: ${theme.colors.critical};
+$online: ${theme.palette.online};
+$warn: ${theme.palette.warn};
+$critical: ${theme.palette.critical};
 
 // Scaffolding
 // -------------------------
-$body-bg: ${theme.colors.bodyBg};
-$page-bg: ${theme.colors.pageBg};
+$body-bg: ${theme.palette.bodyBg};
+$page-bg: ${theme.palette.pageBg};
 
-$text-color: ${theme.colors.text};
-$text-color-strong: ${theme.colors.textStrong};
-$text-color-weak: ${theme.colors.textWeak};
-$text-color-faint: ${theme.colors.textFaint};
-$text-color-emphasis: ${theme.colors.textEmphasis};
+$text-color: ${theme.palette.text};
+$text-color-strong: ${theme.palette.textStrong};
+$text-color-weak: ${theme.palette.textWeak};
+$text-color-faint: ${theme.palette.textFaint};
+$text-color-emphasis: ${theme.palette.textEmphasis};
 
 $text-shadow-faint: 1px 1px 4px rgb(45, 45, 45);
 $textShadow: none;
@@ -104,14 +104,14 @@ $brand-gradient-vertical: linear-gradient(#f05a28 30%, #fbca0a 99%);
 
 // Links
 // -------------------------
-$link-color: ${theme.colors.link};
-$link-color-disabled: ${theme.colors.linkDisabled};
-$link-hover-color: ${theme.colors.linkHover};
-$external-link-color: ${theme.colors.linkExternal};
+$link-color: ${theme.palette.link};
+$link-color-disabled: ${theme.palette.linkDisabled};
+$link-hover-color: ${theme.palette.linkHover};
+$external-link-color: ${theme.palette.linkExternal};
 
 // Typography
 // -------------------------
-$headings-color: ${theme.colors.headingColor};
+$headings-color: ${theme.palette.headingColor};
 $abbr-border-color: $gray-2 !default;
 $text-muted: $text-color-weak;
 
@@ -119,15 +119,15 @@ $hr-border-color: $dark-9;
 
 // Panel
 // -------------------------
-$panel-bg: ${theme.colors.panelBg};
-$panel-border: 1px solid ${theme.colors.panelBorder};
-$panel-header-hover-bg: ${theme.colors.gray15};
+$panel-bg: ${theme.palette.panelBg};
+$panel-border: 1px solid ${theme.palette.panelBorder};
+$panel-header-hover-bg: ${theme.palette.gray15};
 $panel-corner: $panel-bg;
 
 // page header
-$page-header-bg: ${theme.colors.pageHeaderBg};
+$page-header-bg: ${theme.palette.pageHeaderBg};
 $page-header-shadow: inset 0px -4px 14px $dark-3;
-$page-header-border-color: ${theme.colors.pageHeaderBorder};
+$page-header-border-color: ${theme.palette.pageHeaderBorder};
 
 $divider-border-color: $gray-1;
 
@@ -201,14 +201,14 @@ $btn-active-box-shadow: 0px 0px 4px rgba(255, 120, 10, 0.5);
 $input-bg: $input-black;
 $input-bg-disabled: $dark-6;
 
-$input-color: ${theme.colors.formInputText};
-$input-border-color: ${theme.colors.gray15};
+$input-color: ${theme.palette.formInputText};
+$input-border-color: ${theme.palette.gray15};
 $input-box-shadow: inset 1px 0px 4px 0px rgba(150, 150, 150, 0.1);
-$input-border-focus: ${theme.colors.blue95};
+$input-border-focus: ${theme.palette.blue95};
 $input-box-shadow-focus: $blue-light !default;
-$input-color-placeholder: ${theme.colors.formInputPlaceholderText};
-$input-label-bg: ${theme.colors.gray15};
-$input-label-border-color: ${theme.colors.gray15};
+$input-color-placeholder: ${theme.palette.formInputPlaceholderText};
+$input-label-bg: ${theme.palette.gray15};
+$input-label-border-color: ${theme.palette.gray15};
 $input-color-select-arrow: $white;
 
 // Search
@@ -222,9 +222,9 @@ $typeahead-selected-color: $yellow;
 // Dropdowns
 // -------------------------
 $dropdownBackground: $panel-bg;
-$dropdownBorder: ${theme.colors.panelBorder};
+$dropdownBorder: ${theme.palette.panelBorder};
 $dropdownDividerTop: transparent;
-$dropdownDividerBottom: ${theme.colors.gray25};
+$dropdownDividerBottom: ${theme.palette.gray25};
 
 $dropdownLinkColor: $link-color;
 $dropdownLinkColorHover: $white;

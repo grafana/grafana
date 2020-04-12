@@ -118,7 +118,7 @@ export interface GrafanaTheme extends GrafanaThemeCommons {
     scrollbar2: string;
     pageHeader: string;
   };
-  colors: {
+  palette: {
     black: string;
     white: string;
     dark1: string;

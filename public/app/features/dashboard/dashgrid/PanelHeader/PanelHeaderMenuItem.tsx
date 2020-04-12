@@ -22,7 +22,7 @@ export const PanelHeaderMenuItem: FC<Props & PanelMenuItem> = props => {
     position: absolute;
     top: 7px;
     right: ${theme.spacing.xs};
-    color: ${theme.colors.textWeak};
+    color: ${theme.palette.textWeak};
   `;
   return isDivider ? (
     <li className="divider" />

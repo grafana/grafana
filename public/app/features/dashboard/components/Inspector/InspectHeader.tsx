@@ -56,7 +56,7 @@ export const InspectHeader: FC<Props> = ({
 };
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
-  const headerBackground = theme.isLight ? theme.colors.gray95 : theme.colors.gray15;
+  const headerBackground = theme.isLight ? theme.palette.gray95 : theme.palette.gray15;
   return {
     header: css`
       background-color: ${headerBackground};
