@@ -51,7 +51,7 @@ export class SnapshotListCtrl {
       title: 'Delete',
       text: 'Are you sure you want to delete snapshot ' + snapshot.name + '?',
       yesText: 'Delete',
-      icon: 'fa-trash',
+      icon: 'trash-alt',
       onConfirm: () => {
         this.removeSnapshotConfirmed(snapshot);
       },
