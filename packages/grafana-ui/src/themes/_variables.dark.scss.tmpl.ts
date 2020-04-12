@@ -251,7 +251,7 @@ $side-menu-bg-mobile: $panel-bg;
 $side-menu-border: none;
 $side-menu-item-hover-bg: $dark-3;
 $side-menu-shadow: 0 0 20px black;
-$side-menu-link-color: $text-color;
+$side-menu-link-color: ${theme.palette.gray70};
 
 // Menu dropdowns
 // -------------------------
