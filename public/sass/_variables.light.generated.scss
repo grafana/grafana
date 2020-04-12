@@ -61,7 +61,7 @@ $red: $red-base;
 $yellow: #ff851b;
 $orange: #ff7941;
 $purple: #9954bb;
-$variable: #0083b3;
+$variable: #339ae5;
 
 $brand-primary: #ff7941;
 $brand-success: #3eb15b;
@@ -72,7 +72,6 @@ $query-red: #e02f44;
 $query-green: #3eb15b;
 $query-purple: #9954bb;
 $query-orange: #ff7941;
-$query-keyword: #3274d9;
 
 // Status colors
 // -------------------------
@@ -91,6 +90,7 @@ $text-color-strong: #41444b;
 $text-color-weak: #767980;
 $text-color-faint: #35373f;
 $text-color-emphasis: #41444b;
+$text-blue: #339ae5;
 
 $text-shadow-faint: none;
 
@@ -198,13 +198,12 @@ $input-bg: $white;
 $input-bg-disabled: $gray-5;
 
 $input-color: #343b40;
-$input-border-color: #e9edf2;
+$input-border-color: #c7d0d9;
 $input-box-shadow: none;
 $input-border-focus: #5794f2;
 $input-box-shadow-focus: #5794f2;
 $input-color-placeholder: #9fa7b3;
-$input-label-bg: #e9edf2;
-$input-label-border-color: #e9edf2;
+$input-label-bg: #f7f8fa;
 $input-color-select-arrow: #7b8087;
 
 // search
@@ -348,7 +347,7 @@ $variable-option-bg: $dropdownLinkBackgroundHover;
 $switch-bg: $white;
 $switch-slider-color: $gray-7;
 $switch-slider-off-bg: $gray-5;
-$switch-slider-on-bg: linear-gradient(90deg, #ff9830, #e55400);
+$switch-slider-on-bg: #1f60c4;
 $switch-slider-shadow: 0 0 3px $dark-2;
 
 //Checkbox

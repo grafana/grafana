@@ -22,7 +22,6 @@ const basicColors = {
   gray5: '#dde4ed',
   gray6: '#e9edf2', // same as gray95
   gray7: '#f7f8fa', // same as gray98
-  grayBlue: '#212327', // not used in light theme
   blueBase: '#3274d9',
   blueShade: '#1f60c4',
   blueLight: '#5794f2',
@@ -35,7 +34,6 @@ const basicColors = {
   red: '#d44939',
   yellow: '#ff851b',
   purple: '#9954bb',
-  variable: '#007580',
   orange: '#ff7941',
   orangeDark: '#ed5700',
 };
@@ -90,7 +88,6 @@ const lightTheme: GrafanaTheme = {
   name: 'Grafana Light',
   palette: {
     ...basicColors,
-    variable: basicColors.blue,
     brandPrimary: basicColors.orange,
     brandSuccess: basicColors.greenBase,
     brandWarning: basicColors.orange,
@@ -98,7 +95,6 @@ const lightTheme: GrafanaTheme = {
     queryRed: basicColors.redBase,
     queryGreen: basicColors.greenBase,
     queryPurple: basicColors.purple,
-    queryKeyword: basicColors.blueBase,
     queryOrange: basicColors.orange,
     online: basicColors.greenShade,
     warn: '#f79520',
@@ -124,6 +120,7 @@ const lightTheme: GrafanaTheme = {
     textWeak: basicColors.gray2,
     textEmphasis: basicColors.dark5,
     textFaint: basicColors.dark4,
+    textBlue: basicColors.blue85,
 
     // Link colors
     link: basicColors.gray1,

@@ -50,7 +50,7 @@ function getHoverColor(theme: GrafanaTheme, surface: SurfaceType): string {
     case 'panel':
       return theme.isLight ? theme.palette.gray6 : theme.palette.gray25;
     case 'header':
-      return theme.isLight ? theme.palette.gray85 : theme.palette.gray25;
+      return theme.isLight ? theme.colors.bg3 : theme.palette.gray25;
   }
 }
 

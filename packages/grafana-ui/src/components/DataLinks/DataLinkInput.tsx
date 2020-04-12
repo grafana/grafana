@@ -38,7 +38,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => ({
       color: ${theme.palette.queryGreen};
     }
     .token.variable {
-      color: ${theme.palette.queryKeyword};
+      color: ${theme.colors.textBlue};
     }
   `,
 }));

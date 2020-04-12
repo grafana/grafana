@@ -277,7 +277,7 @@ export function SelectBase<T>({
             width: inputSizesPixels(size),
           }),
         }}
-        className={widthClass}
+        className={cx('select-container', widthClass)}
         {...commonSelectProps}
         {...creatableProps}
         {...asyncSelectProps}

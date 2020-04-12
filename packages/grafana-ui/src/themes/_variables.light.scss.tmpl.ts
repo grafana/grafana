@@ -58,7 +58,7 @@ $red: $red-base;
 $yellow: ${theme.palette.yellow};
 $orange: ${theme.palette.orange};
 $purple: ${theme.palette.purple};
-$variable: ${theme.palette.variable};
+$variable: ${theme.colors.textBlue};
 
 $brand-primary: ${theme.palette.brandPrimary};
 $brand-success: ${theme.palette.brandSuccess};
@@ -69,7 +69,6 @@ $query-red: ${theme.palette.queryRed};
 $query-green: ${theme.palette.queryGreen};
 $query-purple: ${theme.palette.queryPurple};
 $query-orange: ${theme.palette.orange};
-$query-keyword: ${theme.palette.queryKeyword};
 
 // Status colors
 // -------------------------
@@ -88,6 +87,7 @@ $text-color-strong: ${theme.colors.textStrong};
 $text-color-weak: ${theme.colors.textWeak};
 $text-color-faint: ${theme.colors.textFaint};
 $text-color-emphasis: ${theme.colors.textEmphasis};
+$text-blue: ${theme.colors.textBlue};
 
 $text-shadow-faint: none;
 
@@ -195,13 +195,12 @@ $input-bg: $white;
 $input-bg-disabled: $gray-5;
 
 $input-color: ${theme.colors.formInputText};
-$input-border-color: ${theme.palette.gray95};
+$input-border-color: ${theme.colors.formInputBorder};
 $input-box-shadow: none;
 $input-border-focus: ${theme.palette.blue95};
 $input-box-shadow-focus: ${theme.palette.blue95};
 $input-color-placeholder: ${theme.colors.formInputPlaceholderText};
-$input-label-bg: ${theme.palette.gray95};
-$input-label-border-color: ${theme.palette.gray95};
+$input-label-bg: ${theme.colors.bg2};
 $input-color-select-arrow: ${theme.palette.gray60};
 
 // search
@@ -345,7 +344,7 @@ $variable-option-bg: $dropdownLinkBackgroundHover;
 $switch-bg: $white;
 $switch-slider-color: $gray-7;
 $switch-slider-off-bg: $gray-5;
-$switch-slider-on-bg: linear-gradient(90deg, #ff9830, #e55400);
+$switch-slider-on-bg: ${theme.palette.blueShade};
 $switch-slider-shadow: 0 0 3px $dark-2;
 
 //Checkbox
