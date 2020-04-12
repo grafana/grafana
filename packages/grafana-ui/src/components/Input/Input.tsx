@@ -29,7 +29,7 @@ interface StyleDeps {
 }
 
 export const getInputStyles = stylesFactory(({ theme, invalid = false }: StyleDeps) => {
-  const colors = theme.colors;
+  const { palette, colors } = theme;
   const borderRadius = theme.border.radius.sm;
   const height = theme.spacing.formInputHeight;
 
@@ -47,6 +47,7 @@ export const getInputStyles = stylesFactory(({ theme, invalid = false }: StyleDe
     height: 100%;
     /* Min width specified for prefix/suffix classes used outside React component*/
     min-width: ${prefixSuffixStaticWidth};
+    color: ${theme.colors.textWeak};
   `;
 
   return {
@@ -62,7 +63,7 @@ export const getInputStyles = stylesFactory(({ theme, invalid = false }: StyleDe
           > .prefix,
           .suffix,
           .input {
-            border-color: ${invalid ? colors.redBase : colors.formInputBorder};
+            border-color: ${invalid ? palette.redBase : colors.formInputBorder};
           }
 
           // only show number buttons on hover

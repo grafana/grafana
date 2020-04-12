@@ -16,7 +16,7 @@ const getStyles = stylesFactory(({ theme, name }: { theme: GrafanaTheme; name: s
   return {
     itemStyle: css`
       background-color: ${color};
-      color: ${theme.colors.white};
+      color: ${theme.palette.white};
       border: 1px solid ${borderColor};
       border-radius: 3px;
       padding: 3px 6px;

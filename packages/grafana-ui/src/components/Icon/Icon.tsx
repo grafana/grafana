@@ -26,7 +26,7 @@ const getIconStyles = stylesFactory((theme: GrafanaTheme) => {
       fill: currentColor;
     `,
     orange: css`
-      fill: ${theme.colors.orange};
+      fill: ${theme.palette.orange};
     `,
   };
 });

@@ -25,7 +25,7 @@ const buttonVariantStyles = (from: string, to: string, textColor: string) => css
 const getPropertiesForVariant = (theme: GrafanaTheme, variant: ButtonVariant) => {
   switch (variant) {
     case 'secondary':
-      const from = theme.isLight ? theme.colors.gray7 : theme.colors.gray15;
+      const from = theme.isLight ? theme.palette.gray7 : theme.palette.gray15;
       const to = theme.isLight
         ? tinycolor(from)
             .darken(5)
@@ -34,14 +34,14 @@ const getPropertiesForVariant = (theme: GrafanaTheme, variant: ButtonVariant) =>
             .lighten(4)
             .toString();
       return {
-        borderColor: theme.isLight ? theme.colors.gray85 : theme.colors.gray25,
-        background: buttonVariantStyles(from, to, theme.isLight ? theme.colors.gray25 : theme.colors.gray4),
+        borderColor: theme.isLight ? theme.palette.gray85 : theme.palette.gray25,
+        background: buttonVariantStyles(from, to, theme.isLight ? theme.palette.gray25 : theme.palette.gray4),
       };
 
     case 'destructive':
       return {
-        borderColor: theme.colors.redShade,
-        background: buttonVariantStyles(theme.colors.redBase, theme.colors.redShade, theme.colors.white),
+        borderColor: theme.palette.redShade,
+        background: buttonVariantStyles(theme.palette.redBase, theme.palette.redShade, theme.palette.white),
       };
 
     case 'link':
@@ -58,8 +58,8 @@ const getPropertiesForVariant = (theme: GrafanaTheme, variant: ButtonVariant) =>
     case 'primary':
     default:
       return {
-        borderColor: theme.colors.blueShade,
-        background: buttonVariantStyles(theme.colors.blueBase, theme.colors.blueShade, theme.colors.white),
+        borderColor: theme.palette.blueShade,
+        background: buttonVariantStyles(theme.palette.blueBase, theme.palette.blueShade, theme.palette.white),
       };
   }
 };
