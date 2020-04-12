@@ -114,7 +114,7 @@ $hr-border-color: $gray-4 !default;
 // -------------------------
 $panel-bg: ${theme.colors.panelBg};
 $panel-border: 1px solid ${theme.colors.panelBorder};
-$panel-header-hover-bg: $gray-6;
+$panel-header-hover-bg: ${theme.colors.bg2};
 $panel-corner: $gray-4;
 
 // Page header
