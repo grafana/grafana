@@ -2,6 +2,7 @@ import React, { FC, useContext } from 'react';
 import { css, cx } from 'emotion';
 import { ThemeContext } from '../../index';
 import { PluginState } from '@grafana/data';
+import { Icon } from '../Icon/Icon';
 
 interface Props {
   state?: PluginState;
@@ -30,7 +31,7 @@ export const AlphaNotice: FC<Props> = ({ state, text, className }) => {
 
   return (
     <div className={styles} title={tooltipContent}>
-      <i className="fa fa-warning" /> {state}
+      <Icon name="exclamation-triangle" /> {state}
     </div>
   );
 };

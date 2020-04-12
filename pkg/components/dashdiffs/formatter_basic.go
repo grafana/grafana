@@ -332,7 +332,7 @@ var (
 <div class="diff-group">
 	<div class="diff-block">
 		<h2 class="diff-block-title">
-			<i class="diff-circle diff-circle-{{ getChange .Change }} fa fa-circle"></i>
+			<icon class="diff-circle diff-circle-{{ getChange .Change }}" name="'circle'" type="'mono'"></icon>
 			<strong class="diff-title">{{ .Title }}</strong> {{ getChange .Change }}
 		</h2>
 
@@ -340,7 +340,7 @@ var (
 		<!-- Overview -->
 		{{ if .Old }}
 			<div class="diff-label" ng-non-bindable>{{ .Old }}</div>
-			<i class="diff-arrow fa fa-long-arrow-right"></i>
+			<icon name="'arrow-right'"></icon>
 		{{ end }}
 		{{ if .New }}
 				<div class="diff-label" ng-non-bindable>{{ .New }}</div>
@@ -381,7 +381,7 @@ var (
 		<div class="diff-change-item">
 			{{ if .Old }}
 				<div class="diff-label" ng-non-bindable>{{ .Old }}</div>
-				<i class="diff-arrow fa fa-long-arrow-right"></i>
+				<icon name="'arrow-right'"></icon>
 			{{ end }}
 			{{ if .New }}
 					<div class="diff-label" ng-non-bindable>{{ .New }}</div>
@@ -402,7 +402,7 @@ var (
 	// tplSummary is for basic summaries.
 	tplSummary = `{{ define "summary" -}}
 <div class="diff-group-name">
-	<i class="diff-circle diff-circle-{{ getChange .Change }} fa fa-circle-o diff-list-circle"></i>
+	<icon class="diff-circle diff-circle-{{ getChange .Change }} diff-list-circle" name="'circle'"></icon>
 
 	{{ if .Count }}
 		<strong>{{ .Count }}</strong>

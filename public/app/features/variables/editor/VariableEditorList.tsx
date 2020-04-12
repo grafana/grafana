@@ -110,9 +110,9 @@ export class VariableEditorList extends PureComponent<Props> {
 
                         <td style={{ width: '1%' }}>
                           {index > 0 && (
-                            <i
+                            <Icon
                               onClick={event => this.onChangeVariableOrder(event, variable, MoveType.up)}
-                              className="pointer fa fa-arrow-up"
+                              name="arrow-up"
                               aria-label={e2e.pages.Dashboard.Settings.Variables.List.selectors.tableRowArrowUpButtons(
                                 variable.name
                               )}
@@ -121,9 +121,9 @@ export class VariableEditorList extends PureComponent<Props> {
                         </td>
                         <td style={{ width: '1%' }}>
                           {index < this.props.variables.length - 1 && (
-                            <i
+                            <Icon
                               onClick={event => this.onChangeVariableOrder(event, variable, MoveType.down)}
-                              className="pointer fa fa-arrow-down"
+                              name="arrow-down"
                               aria-label={e2e.pages.Dashboard.Settings.Variables.List.selectors.tableRowArrowDownButtons(
                                 variable.name
                               )}
@@ -149,7 +149,7 @@ export class VariableEditorList extends PureComponent<Props> {
                               variable.name
                             )}
                           >
-                            <Icon name="times" />
+                            <Icon name="times" style={{ marginBottom: 0 }} />
                           </a>
                         </td>
                       </tr>
