@@ -13,7 +13,7 @@ export interface TabProps {
 }
 
 const getTabStyles = stylesFactory((theme: GrafanaTheme) => {
-  const colors = theme.palette;
+  const colors = theme.colors;
 
   return {
     tabItem: css`
@@ -38,7 +38,7 @@ const getTabStyles = stylesFactory((theme: GrafanaTheme) => {
       }
     `,
     activeStyle: css`
-      border-color: ${colors.orange} ${colors.pageHeaderBorder} transparent;
+      border-color: ${theme.palette.orange} ${colors.pageHeaderBorder} transparent;
       background: ${colors.pageBg};
       color: ${colors.link};
       overflow: hidden;

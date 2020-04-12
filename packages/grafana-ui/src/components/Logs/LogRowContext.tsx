@@ -60,7 +60,7 @@ const getLogRowContextStyles = (theme: GrafanaTheme) => {
       height: 250px;
       z-index: 2;
       overflow: hidden;
-      background: ${theme.palette.pageBg};
+      background: ${theme.colors.pageBg};
       background: linear-gradient(180deg, ${gradientTop} 0%, ${gradientBottom} 104.25%);
       box-shadow: 0px 2px 4px ${boxShadowColor}, 0px 0px 2px ${boxShadowColor};
       border: 1px solid ${borderColor};

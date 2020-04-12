@@ -117,7 +117,7 @@ const getEmptyListStyles = stylesFactory((theme: GrafanaTheme) => {
       }
     `,
     link: css`
-      color: ${theme.palette.linkExternal};
+      color: ${theme.colors.linkExternal};
     `,
   };
 });

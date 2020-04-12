@@ -102,7 +102,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme, surface: SurfaceType, size
       }
 
       &:hover {
-        color: ${theme.palette.linkHover};
+        color: ${theme.colors.linkHover};
 
         &:before {
           background-color: ${hoverColor};

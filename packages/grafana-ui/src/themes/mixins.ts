@@ -50,7 +50,7 @@ export function listItem(theme: GrafanaTheme): string {
 export function listItemSelected(theme: GrafanaTheme): string {
   return `
        background: ${theme.isLight ? theme.palette.gray6 : theme.palette.dark9};
-       color: ${theme.palette.textStrong};
+       color: ${theme.colors.textStrong};
     `;
 }
 

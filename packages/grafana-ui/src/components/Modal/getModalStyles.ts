@@ -1,20 +1,15 @@
 import { css } from 'emotion';
 import { GrafanaTheme } from '@grafana/data';
-import { selectThemeVariant, stylesFactory } from '../../themes';
+import { stylesFactory } from '../../themes';
 
 export const getModalStyles = stylesFactory((theme: GrafanaTheme) => {
-  const backdropBackground = selectThemeVariant(
-    {
-      light: theme.palette.bodyBg,
-      dark: theme.palette.gray25,
-    },
-    theme.type
-  );
+  const backdropBackground = theme.colors.bg1;
+
   return {
     modal: css`
       position: fixed;
       z-index: ${theme.zIndex.modal};
-      background: ${theme.palette.pageBg};
+      background: ${theme.colors.pageBg};
       box-shadow: 0 3px 7px rgba(0, 0, 0, 0.3);
       background-clip: padding-box;
       outline: none;
@@ -37,9 +32,9 @@ export const getModalStyles = stylesFactory((theme: GrafanaTheme) => {
       opacity: 0.7;
     `,
     modalHeader: css`
-      background: ${theme.palette.pageHeaderBg};
-      box-shadow: ${theme.shadow.pageHeader};
-      border-bottom: 1px solid ${theme.palette.pageHeaderBorder};
+      background: ${theme.colors.bg1};
+      box-shadow: 0 0 20px ${theme.colors.dropdownShadow};
+      border-bottom: 1px solid ${theme.colors.pageHeaderBorder};
       display: flex;
       height: 42px;
     `,

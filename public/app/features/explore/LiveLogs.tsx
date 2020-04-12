@@ -22,7 +22,7 @@ const getStyles = (theme: GrafanaTheme) => ({
   `,
   logsRowFade: css`
     label: logs-row-fresh;
-    color: ${theme.palette.text};
+    color: ${theme.colors.text};
     background-color: ${tinycolor(theme.palette.blueLight)
       .setAlpha(0.25)
       .toString()};

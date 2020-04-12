@@ -9,7 +9,7 @@ import { DebugSection } from './DebugSection';
 const getStyles = stylesFactory((theme: GrafanaTheme) => ({
   infoText: css`
     padding-bottom: ${theme.spacing.md};
-    color: ${theme.palette.textWeak};
+    color: ${theme.colors.textWeak};
   `,
   derivedField: css`
     margin-bottom: ${theme.spacing.sm};

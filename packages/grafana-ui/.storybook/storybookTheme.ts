@@ -13,9 +13,9 @@ const createTheme = (theme: GrafanaTheme) => {
     colorSecondary: theme.palette.brandPrimary,
 
     // UI
-    appBg: theme.palette.pageBg,
-    appContentBg: theme.palette.pageBg,
-    appBorderColor: theme.palette.pageHeaderBorder,
+    appBg: theme.colors.pageBg,
+    appContentBg: theme.colors.pageBg,
+    appBorderColor: theme.colors.pageHeaderBorder,
     appBorderRadius: 4,
 
     // Typography
@@ -23,18 +23,18 @@ const createTheme = (theme: GrafanaTheme) => {
     fontCode: ThemeCommons.typography.fontFamily.monospace,
 
     // Text colors
-    textColor: theme.palette.text,
+    textColor: theme.colors.text,
     textInverseColor: 'rgba(255,255,255,0.9)',
 
     // Toolbar default and active colors
-    barTextColor: theme.palette.formInputBorderActive,
+    barTextColor: theme.colors.formInputBorderActive,
     barSelectedColor: theme.palette.brandPrimary,
-    barBg: theme.palette.pageBg,
+    barBg: theme.colors.pageBg,
 
     // Form colors
-    inputBg: theme.palette.formInputBg,
-    inputBorder: theme.palette.formInputBorder,
-    inputTextColor: theme.palette.formInputText,
+    inputBg: theme.colors.formInputBg,
+    inputBorder: theme.colors.formInputBorder,
+    inputTextColor: theme.colors.formInputText,
     inputBorderRadius: 4,
 
     brandTitle: 'Grafana UI',

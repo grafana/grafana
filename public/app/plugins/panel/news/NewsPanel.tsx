@@ -105,7 +105,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => ({
     margin-right: ${theme.spacing.sm};
   `,
   title: css`
-    color: ${theme.palette.linkExternal};
+    color: ${theme.colors.linkExternal};
     max-width: calc(100% - 70px);
     font-size: 16px;
     margin-bottom: ${theme.spacing.sm};
@@ -119,12 +119,12 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => ({
     position: absolute;
     top: 0;
     right: 0;
-    background: ${theme.palette.panelBg};
+    background: ${theme.colors.panelBg};
     width: 55px;
     text-align: right;
     padding: ${theme.spacing.xs};
     font-weight: 500;
     border-radius: 0 0 0 3px;
-    color: ${theme.palette.textWeak};
+    color: ${theme.colors.textWeak};
   `,
 }));

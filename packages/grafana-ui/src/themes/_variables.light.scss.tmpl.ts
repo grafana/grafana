@@ -79,14 +79,14 @@ $critical: ${theme.palette.critical};
 
 // Scaffolding
 // -------------------------
-$body-bg: ${theme.palette.bodyBg};
-$page-bg: ${theme.palette.pageBg};
+$body-bg: ${theme.colors.bodyBg};
+$page-bg: ${theme.colors.pageBg};
 
-$text-color: ${theme.palette.text};
-$text-color-strong: ${theme.palette.textStrong};
-$text-color-weak: ${theme.palette.textWeak};
-$text-color-faint: ${theme.palette.textFaint};
-$text-color-emphasis: ${theme.palette.textEmphasis};
+$text-color: ${theme.colors.text};
+$text-color-strong: ${theme.colors.textStrong};
+$text-color-weak: ${theme.colors.textWeak};
+$text-color-faint: ${theme.colors.textFaint};
+$text-color-emphasis: ${theme.colors.textEmphasis};
 
 $text-shadow-faint: none;
 
@@ -96,14 +96,14 @@ $brand-gradient-vertical: linear-gradient(#f05a28 30%, #fbca0a 99%);
 
 // Links
 // -------------------------
-$link-color: ${theme.palette.link};
-$link-color-disabled: ${theme.palette.linkDisabled};
-$link-hover-color: ${theme.palette.linkHover};
-$external-link-color: ${theme.palette.linkExternal};
+$link-color: ${theme.colors.link};
+$link-color-disabled: ${theme.colors.linkDisabled};
+$link-hover-color: ${theme.colors.linkHover};
+$external-link-color: ${theme.colors.linkExternal};
 
 // Typography
 // -------------------------
-$headings-color: ${theme.palette.headingColor};
+$headings-color: ${theme.colors.headingColor};
 $abbr-border-color: $gray-2 !default;
 $text-muted: $text-color-weak;
 
@@ -111,15 +111,15 @@ $hr-border-color: $gray-4 !default;
 
 // Panel
 // -------------------------
-$panel-bg: ${theme.palette.panelBg};
-$panel-border: 1px solid ${theme.palette.panelBorder};
+$panel-bg: ${theme.colors.panelBg};
+$panel-border: 1px solid ${theme.colors.panelBorder};
 $panel-header-hover-bg: $gray-6;
 $panel-corner: $gray-4;
 
 // Page header
-$page-header-bg: ${theme.palette.pageHeaderBg};
+$page-header-bg: ${theme.colors.pageHeaderBg};
 $page-header-shadow: inset 0px -3px 10px $gray-6;
-$page-header-border-color: ${theme.palette.pageHeaderBorder};
+$page-header-border-color: ${theme.colors.pageHeaderBorder};
 
 $divider-border-color: $gray-2;
 
@@ -193,12 +193,12 @@ $btn-active-box-shadow: 0px 0px 4px rgba(234, 161, 51, 0.6);
 $input-bg: $white;
 $input-bg-disabled: $gray-5;
 
-$input-color: ${theme.palette.formInputText};
+$input-color: ${theme.colors.formInputText};
 $input-border-color: ${theme.palette.gray95};
 $input-box-shadow: none;
 $input-border-focus: ${theme.palette.blue95};
 $input-box-shadow-focus: ${theme.palette.blue95};
-$input-color-placeholder: ${theme.palette.formInputPlaceholderText};
+$input-color-placeholder: ${theme.colors.formInputPlaceholderText};
 $input-label-bg: ${theme.palette.gray95};
 $input-label-border-color: ${theme.palette.gray95};
 $input-color-select-arrow: ${theme.palette.gray60};

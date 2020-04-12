@@ -40,13 +40,13 @@ const getStyles = (theme: GrafanaTheme) => ({
     label: logs-stats-row__bar;
     height: 4px;
     overflow: hidden;
-    background: ${theme.palette.textFaint};
+    background: ${theme.colors.textFaint};
   `,
   logsStatsRowInnerBar: css`
     label: logs-stats-row__innerbar;
     height: 4px;
     overflow: hidden;
-    background: ${theme.palette.textFaint};
+    background: ${theme.colors.textFaint};
     background: ${theme.palette.blue};
   `,
 });

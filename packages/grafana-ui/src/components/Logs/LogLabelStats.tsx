@@ -25,7 +25,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       label: logs-stats;
       column-span: 2;
       background: inherit;
-      color: ${theme.palette.text};
+      color: ${theme.colors.text};
       word-break: break-all;
     `,
     logsStatsHeader: css`

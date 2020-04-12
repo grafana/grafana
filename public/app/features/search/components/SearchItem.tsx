@@ -98,7 +98,7 @@ const getResultsItemStyles = stylesFactory((theme: GrafanaTheme) => ({
     padding: 0 10px;
   `,
   folderTitle: css`
-    color: ${theme.palette.textWeak};
+    color: ${theme.colors.textWeak};
     font-size: ${theme.typography.size.xs};
     line-height: ${theme.typography.lineHeight.xs};
     position: relative;

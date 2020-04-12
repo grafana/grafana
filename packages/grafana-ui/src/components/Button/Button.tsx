@@ -47,7 +47,7 @@ const getPropertiesForVariant = (theme: GrafanaTheme, variant: ButtonVariant) =>
     case 'link':
       return {
         borderColor: 'transparent',
-        background: buttonVariantStyles('transparent', 'transparent', theme.palette.linkExternal),
+        background: buttonVariantStyles('transparent', 'transparent', theme.colors.linkExternal),
         variantStyles: css`
           &:focus {
             outline: none;

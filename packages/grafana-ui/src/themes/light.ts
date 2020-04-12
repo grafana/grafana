@@ -46,14 +46,9 @@ const lightTheme: GrafanaTheme = {
   isDark: false,
   isLight: true,
   name: 'Grafana Light',
-  colors: {
-    dropdownBg: basicColors.white,
-    dropdownShadow: basicColors.gray1,
-  },
   palette: {
     ...basicColors,
     variable: basicColors.blue,
-    inputBlack: '#09090b',
     brandPrimary: basicColors.orange,
     brandSuccess: basicColors.greenBase,
     brandWarning: basicColors.orange,
@@ -66,12 +61,23 @@ const lightTheme: GrafanaTheme = {
     online: basicColors.greenShade,
     warn: '#f79520',
     critical: basicColors.redShade,
+  },
+  colors: {
+    bg1: basicColors.gray7,
+    bg2: basicColors.white,
+    bg3: basicColors.gray95,
+    border1: basicColors.gray15,
+    border2: basicColors.gray25,
 
-    // Backgrounds
     bodyBg: basicColors.gray7,
     pageBg: basicColors.white,
     pageHeaderBg: basicColors.gray95,
+    pageHeaderBorder: basicColors.gray15,
     panelBg: basicColors.white,
+    panelBorder: basicColors.gray95,
+
+    dropdownBg: basicColors.white,
+    dropdownShadow: basicColors.gray1,
 
     // Text colors
     text: basicColors.gray1,
@@ -86,10 +92,6 @@ const lightTheme: GrafanaTheme = {
     linkHover: basicColors.dark1,
     linkExternal: basicColors.blueLight,
     headingColor: basicColors.gray1,
-
-    // Borders
-    panelBorder: basicColors.gray95,
-    pageHeaderBorder: basicColors.gray4,
 
     // Next-gen forms functional colors
     formLabel: basicColors.gray33,
@@ -119,9 +121,6 @@ const lightTheme: GrafanaTheme = {
     formCheckboxBgChecked: basicColors.blueShade,
     formCheckboxBgCheckedHover: basicColors.blueBase,
     formCheckboxCheckmark: basicColors.white,
-  },
-  shadow: {
-    pageHeader: `inset 0px -3px 10px ${basicColors.gray6}`,
   },
 };
 

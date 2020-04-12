@@ -46,13 +46,8 @@ const darkTheme: GrafanaTheme = {
   isDark: true,
   isLight: false,
   name: 'Grafana Dark',
-  colors: {
-    dropdownBg: basicColors.gray10,
-    dropdownShadow: basicColors.black,
-  },
   palette: {
     ...basicColors,
-    inputBlack: basicColors.gray05,
     brandPrimary: basicColors.orange,
     brandSuccess: basicColors.greenBase,
     brandWarning: basicColors.orange,
@@ -65,12 +60,25 @@ const darkTheme: GrafanaTheme = {
     online: basicColors.greenBase,
     warn: '#f79520',
     critical: basicColors.redBase,
+  },
+  colors: {
+    bg1: basicColors.gray05,
+    bg2: basicColors.gray10,
+    bg3: basicColors.gray15,
+    border1: basicColors.gray15,
+    border2: basicColors.gray25,
 
     bodyBg: basicColors.gray05,
     pageBg: basicColors.gray10,
     panelBg: basicColors.gray10,
     pageHeaderBg: basicColors.gray15,
+    pageHeaderBorder: basicColors.gray25,
+    panelBorder: basicColors.gray15,
 
+    dropdownBg: basicColors.gray10,
+    dropdownShadow: basicColors.black,
+
+    // text
     headingColor: basicColors.gray4,
     text: basicColors.gray85,
     textStrong: basicColors.white,
@@ -82,10 +90,6 @@ const darkTheme: GrafanaTheme = {
     linkDisabled: basicColors.gray2,
     linkHover: basicColors.white,
     linkExternal: basicColors.blue,
-
-    // Borders
-    pageHeaderBorder: basicColors.gray15,
-    panelBorder: basicColors.gray15,
 
     // Next-gen forms functional colors
     formLabel: basicColors.gray70,
@@ -115,9 +119,6 @@ const darkTheme: GrafanaTheme = {
     formCheckboxBgChecked: basicColors.blueLight,
     formCheckboxBgCheckedHover: basicColors.blueBase,
     formCheckboxCheckmark: basicColors.gray25,
-  },
-  shadow: {
-    pageHeader: `inset 0px -4px 14px ${basicColors.dark3}`,
   },
 };
 

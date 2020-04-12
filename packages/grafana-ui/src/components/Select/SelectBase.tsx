@@ -213,7 +213,7 @@ export function SelectBase<T>({
                 css(props.getStyles('placeholder', props)),
                 css`
                   display: inline-block;
-                  color: ${theme.palette.formInputPlaceholderText};
+                  color: ${theme.colors.formInputPlaceholderText};
                   position: absolute;
                   top: 50%;
                   transform: translateY(-50%);

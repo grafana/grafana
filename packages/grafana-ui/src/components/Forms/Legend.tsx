@@ -14,7 +14,7 @@ export const getLegendStyles = stylesFactory((theme: GrafanaTheme) => {
       font-size: ${theme.typography.heading.h3};
       font-weight: ${theme.typography.weight.regular};
       margin: ${theme.spacing.formLegendMargin};
-      color: ${theme.palette.formLegend};
+      color: ${theme.colors.formLegend};
     `,
   };
 });

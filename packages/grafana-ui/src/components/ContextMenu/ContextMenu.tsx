@@ -32,13 +32,13 @@ const getContextMenuStyles = stylesFactory((theme: GrafanaTheme) => {
   const linkColor = selectThemeVariant(
     {
       light: theme.palette.dark2,
-      dark: theme.palette.text,
+      dark: theme.colors.text,
     },
     theme.type
   );
   const linkColorHover = selectThemeVariant(
     {
-      light: theme.palette.link,
+      light: theme.colors.link,
       dark: theme.palette.white,
     },
     theme.type
@@ -68,7 +68,7 @@ const getContextMenuStyles = stylesFactory((theme: GrafanaTheme) => {
   const groupLabelColor = selectThemeVariant(
     {
       light: theme.palette.gray1,
-      dark: theme.palette.textWeak,
+      dark: theme.colors.textWeak,
     },
     theme.type
   );
@@ -144,7 +144,7 @@ const getContextMenuStyles = stylesFactory((theme: GrafanaTheme) => {
       height: 12px;
       display: inline-block;
       margin-right: 10px;
-      color: ${theme.palette.linkDisabled};
+      color: ${theme.colors.linkDisabled};
       position: relative;
       top: 4px;
     `,

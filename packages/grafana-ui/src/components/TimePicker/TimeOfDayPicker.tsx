@@ -16,11 +16,11 @@ interface Props {
 }
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
-  const bgColor = stv({ light: theme.palette.white, dark: theme.palette.formInputBg }, theme.type);
+  const bgColor = theme.colors.formInputBg;
   const menuShadowColor = stv({ light: theme.palette.gray4, dark: theme.palette.black }, theme.type);
   const optionBgHover = stv({ light: theme.palette.gray7, dark: theme.palette.gray10 }, theme.type);
   const borderRadius = theme.border.radius.sm;
-  const borderColor = theme.palette.formInputBorder;
+  const borderColor = theme.colors.formInputBorder;
   return {
     caretWrapper: css`
       position: absolute;

@@ -99,7 +99,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       }
     `,
     label: css`
-      color: ${theme.palette.textWeak};
+      color: ${theme.colors.textWeak};
     `,
     activeItem: css`
       background: ${itemBgActive};

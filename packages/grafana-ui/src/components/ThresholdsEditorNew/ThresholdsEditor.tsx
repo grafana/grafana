@@ -300,18 +300,18 @@ const getStyles = stylesFactory(
       `,
       percentIcon: css`
         font-size: ${theme.typography.size.sm};
-        color: ${theme.palette.textWeak};
+        color: ${theme.colors.textWeak};
       `,
       inputPrefix: css`
         display: flex;
         align-items: center;
       `,
       trashIcon: css`
-        color: ${theme.palette.textWeak};
+        color: ${theme.colors.textWeak};
         cursor: pointer;
 
         &:hover {
-          color: ${theme.palette.text};
+          color: ${theme.colors.text};
         }
       `,
     };

@@ -54,7 +54,7 @@ $gray-5: ${theme.palette.gray5};
 $gray-6: ${theme.palette.gray6};
 
 $gray-blue: ${theme.palette.grayBlue};
-$input-black: ${theme.palette.formInputBg};
+$input-black: ${theme.colors.formInputBg};
 
 $white: ${theme.palette.white};
 
@@ -86,14 +86,14 @@ $critical: ${theme.palette.critical};
 
 // Scaffolding
 // -------------------------
-$body-bg: ${theme.palette.bodyBg};
-$page-bg: ${theme.palette.pageBg};
+$body-bg: ${theme.colors.bodyBg};
+$page-bg: ${theme.colors.pageBg};
 
-$text-color: ${theme.palette.text};
-$text-color-strong: ${theme.palette.textStrong};
-$text-color-weak: ${theme.palette.textWeak};
-$text-color-faint: ${theme.palette.textFaint};
-$text-color-emphasis: ${theme.palette.textEmphasis};
+$text-color: ${theme.colors.text};
+$text-color-strong: ${theme.colors.textStrong};
+$text-color-weak: ${theme.colors.textWeak};
+$text-color-faint: ${theme.colors.textFaint};
+$text-color-emphasis: ${theme.colors.textEmphasis};
 
 $text-shadow-faint: 1px 1px 4px rgb(45, 45, 45);
 $textShadow: none;
@@ -104,14 +104,14 @@ $brand-gradient-vertical: linear-gradient(#f05a28 30%, #fbca0a 99%);
 
 // Links
 // -------------------------
-$link-color: ${theme.palette.link};
-$link-color-disabled: ${theme.palette.linkDisabled};
-$link-hover-color: ${theme.palette.linkHover};
-$external-link-color: ${theme.palette.linkExternal};
+$link-color: ${theme.colors.link};
+$link-color-disabled: ${theme.colors.linkDisabled};
+$link-hover-color: ${theme.colors.linkHover};
+$external-link-color: ${theme.colors.linkExternal};
 
 // Typography
 // -------------------------
-$headings-color: ${theme.palette.headingColor};
+$headings-color: ${theme.colors.headingColor};
 $abbr-border-color: $gray-2 !default;
 $text-muted: $text-color-weak;
 
@@ -119,15 +119,15 @@ $hr-border-color: $dark-9;
 
 // Panel
 // -------------------------
-$panel-bg: ${theme.palette.panelBg};
-$panel-border: 1px solid ${theme.palette.panelBorder};
-$panel-header-hover-bg: ${theme.palette.gray15};
+$panel-bg: ${theme.colors.panelBg};
+$panel-border: 1px solid ${theme.colors.panelBorder};
+$panel-header-hover-bg: ${theme.colors.bg3};
 $panel-corner: $panel-bg;
 
 // page header
-$page-header-bg: ${theme.palette.pageHeaderBg};
+$page-header-bg: ${theme.colors.pageHeaderBg};
 $page-header-shadow: inset 0px -4px 14px $dark-3;
-$page-header-border-color: ${theme.palette.pageHeaderBorder};
+$page-header-border-color: ${theme.colors.pageHeaderBorder};
 
 $divider-border-color: $gray-1;
 
@@ -201,12 +201,12 @@ $btn-active-box-shadow: 0px 0px 4px rgba(255, 120, 10, 0.5);
 $input-bg: $input-black;
 $input-bg-disabled: $dark-6;
 
-$input-color: ${theme.palette.formInputText};
+$input-color: ${theme.colors.formInputText};
 $input-border-color: ${theme.palette.gray15};
 $input-box-shadow: inset 1px 0px 4px 0px rgba(150, 150, 150, 0.1);
 $input-border-focus: ${theme.palette.blue95};
 $input-box-shadow-focus: $blue-light !default;
-$input-color-placeholder: ${theme.palette.formInputPlaceholderText};
+$input-color-placeholder: ${theme.colors.formInputPlaceholderText};
 $input-label-bg: ${theme.palette.gray15};
 $input-label-border-color: ${theme.palette.gray15};
 $input-color-select-arrow: $white;
@@ -222,7 +222,7 @@ $typeahead-selected-color: $yellow;
 // Dropdowns
 // -------------------------
 $dropdownBackground: $panel-bg;
-$dropdownBorder: ${theme.palette.panelBorder};
+$dropdownBorder: ${theme.colors.panelBorder};
 $dropdownDividerTop: transparent;
 $dropdownDividerBottom: ${theme.palette.gray25};
 

@@ -78,7 +78,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme, isHorizontal: boolean) => 
       }
 
       .rc-slider-tooltip-inner {
-        color: ${theme.palette.text};
+        color: ${theme.colors.text};
         background-color: transparent !important;
         border-radius: 0;
         box-shadow: none;

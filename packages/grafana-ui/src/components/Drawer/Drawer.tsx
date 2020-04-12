@@ -3,7 +3,7 @@ import { GrafanaTheme } from '@grafana/data';
 import RcDrawer from 'rc-drawer';
 import { css } from 'emotion';
 import CustomScrollbar from '../CustomScrollbar/CustomScrollbar';
-import { stylesFactory, useTheme, selectThemeVariant } from '../../themes';
+import { stylesFactory, useTheme } from '../../themes';
 
 export interface Props {
   children: ReactNode;
@@ -24,17 +24,12 @@ export interface Props {
 
 const getStyles = stylesFactory((theme: GrafanaTheme, scollableContent: boolean) => {
   const closeButtonWidth = '50px';
-  const borderColor = selectThemeVariant(
-    {
-      light: theme.palette.gray4,
-      dark: theme.palette.dark9,
-    },
-    theme.type
-  );
+  const borderColor = theme.colors.border2;
+
   return {
     drawer: css`
       .drawer-content {
-        background-color: ${theme.palette.pageBg};
+        background-color: ${theme.colors.pageBg};
         display: flex;
         flex-direction: column;
         overflow: hidden;
@@ -47,7 +42,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme, scollableContent: boolean)
       justify-content: space-between;
       border-bottom: 1px solid ${borderColor};
       padding: ${theme.spacing.sm} 0 ${theme.spacing.sm} ${theme.spacing.md};
-      background-color: ${theme.palette.bodyBg};
+      background-color: ${theme.colors.pageBg};
       top: 0;
       z-index: 1;
       flex-grow: 0;

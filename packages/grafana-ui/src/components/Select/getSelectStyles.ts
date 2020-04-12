@@ -4,8 +4,8 @@ import { css } from 'emotion';
 import { GrafanaTheme } from '@grafana/data';
 
 export const getSelectStyles = stylesFactory((theme: GrafanaTheme) => {
-  const bgColor = stv({ light: theme.palette.white, dark: theme.palette.formInputBg }, theme.type);
-  const menuShadowColor = stv({ light: theme.palette.gray4, dark: theme.palette.black }, theme.type);
+  const bgColor = theme.colors.formInputBg;
+  const menuShadowColor = theme.colors.dropdownShadow;
   const optionBgHover = stv({ light: theme.palette.gray7, dark: theme.palette.gray10 }, theme.type);
   const multiValueContainerBg = stv({ light: theme.palette.gray6, dark: theme.palette.gray05 }, theme.type);
   const multiValueColor = stv({ light: theme.palette.gray25, dark: theme.palette.gray85 }, theme.type);
@@ -37,7 +37,7 @@ export const getSelectStyles = stylesFactory((theme: GrafanaTheme) => {
     optionDescription: css`
       font-weight: normal;
       font-size: ${theme.typography.size.sm};
-      color: ${theme.palette.textWeak};
+      color: ${theme.colors.textWeak};
       white-space: normal;
     `,
     optionBody: css`
@@ -57,7 +57,7 @@ export const getSelectStyles = stylesFactory((theme: GrafanaTheme) => {
       border-left-width: 2px;
     `,
     singleValue: css`
-      color: ${theme.palette.formInputText};
+      color: ${theme.colors.formInputText};
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;

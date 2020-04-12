@@ -18,7 +18,7 @@ const getStyles = (theme: GrafanaTheme, height: number, visible: boolean) => {
       overflow-x: hidden;
       outline: none;
       background: ${selectThemeVariant({ light: theme.palette.white, dark: theme.palette.dark4 }, theme.type)};
-      color: ${theme.palette.text};
+      color: ${theme.colors.text};
       box-shadow: ${selectThemeVariant(
         { light: `0 5px 10px 0 ${theme.palette.gray5}`, dark: `0 5px 10px 0 ${theme.palette.black}` },
         theme.type

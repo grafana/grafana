@@ -6,7 +6,7 @@ import { stylesFactory, ThemeContext } from '@grafana/ui';
 const getStyles = stylesFactory((theme: GrafanaTheme) => ({
   metaContainer: css`
     flex: 1;
-    color: ${theme.palette.textWeak};
+    color: ${theme.colors.textWeak};
     margin-bottom: ${theme.spacing.d};
     min-width: 30%;
     display: flex;

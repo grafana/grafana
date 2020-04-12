@@ -50,7 +50,7 @@ const getQueryEditorRowTitleStyles = stylesFactory((theme: GrafanaTheme) => {
     collapsedText: css`
       font-weight: ${theme.typography.weight.regular};
       font-size: ${theme.typography.size.sm};
-      color: ${theme.palette.textWeak};
+      color: ${theme.colors.textWeak};
       padding: 0 10px;
       display: flex;
       align-items: center;
@@ -65,7 +65,7 @@ const getQueryEditorRowTitleStyles = stylesFactory((theme: GrafanaTheme) => {
     contextInfo: css`
       font-size: ${theme.typography.size.sm};
       font-style: italic;
-      color: ${theme.palette.textWeak};
+      color: ${theme.colors.textWeak};
       padding-left: 10px;
     `,
   };

@@ -23,15 +23,15 @@ export const getSwitchStyles = stylesFactory((theme: GrafanaTheme) => {
         position: absolute;
 
         &:disabled + label {
-          background: ${theme.palette.formSwitchBgDisabled};
+          background: ${theme.colors.formSwitchBgDisabled};
           cursor: not-allowed;
         }
 
         &:checked + label {
-          background: ${theme.palette.formSwitchBgActive};
+          background: ${theme.colors.formSwitchBgActive};
 
           &:hover {
-            background: ${theme.palette.formSwitchBgActiveHover};
+            background: ${theme.colors.formSwitchBgActiveHover};
           }
 
           &::after {
@@ -50,11 +50,11 @@ export const getSwitchStyles = stylesFactory((theme: GrafanaTheme) => {
         cursor: pointer;
         border: none;
         border-radius: 50px;
-        background: ${theme.palette.formSwitchBg};
+        background: ${theme.colors.formSwitchBg};
         transition: all 0.3s ease;
 
         &:hover {
-          background: ${theme.palette.formSwitchBgHover};
+          background: ${theme.colors.formSwitchBgHover};
         }
 
         &::after {
@@ -64,7 +64,7 @@ export const getSwitchStyles = stylesFactory((theme: GrafanaTheme) => {
           width: 12px;
           height: 12px;
           border-radius: 6px;
-          background: ${theme.palette.formSwitchDot};
+          background: ${theme.colors.formSwitchDot};
           top: 50%;
           transform: translate3d(2px, -50%, 0);
           transition: transform 0.2s cubic-bezier(0.19, 1, 0.22, 1);

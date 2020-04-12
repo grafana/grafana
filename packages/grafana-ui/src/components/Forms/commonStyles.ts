@@ -6,7 +6,7 @@ import { IconName } from '../../types';
 export const getFocusCss = (theme: GrafanaTheme) => `
   outline: 2px dotted transparent;
   outline-offset: 2px;
-  box-shadow: 0 0 0 2px ${theme.palette.pageBg}, 0 0 0px 4px ${theme.palette.formFocusOutline};
+  box-shadow: 0 0 0 2px ${theme.colors.pageBg}, 0 0 0px 4px ${theme.colors.formFocusOutline};
   transition: all 0.2s cubic-bezier(0.19, 1, 0.22, 1);
 `;
 
@@ -17,8 +17,8 @@ export const getFocusStyle = (theme: GrafanaTheme) => css`
 `;
 
 export const sharedInputStyle = (theme: GrafanaTheme, invalid = false) => {
-  const colors = theme.palette;
-  const borderColor = invalid ? colors.redBase : colors.formInputBorder;
+  const colors = theme.colors;
+  const borderColor = invalid ? theme.palette.redBase : colors.formInputBorder;
 
   return css`
     background-color: ${colors.formInputBg};
@@ -36,7 +36,7 @@ export const sharedInputStyle = (theme: GrafanaTheme, invalid = false) => {
 
     &:-webkit-autofill:focus {
       /* Welcome to 2005. This is a HACK to get rid od Chromes default autofill styling */
-      box-shadow: 0 0 0 2px ${theme.palette.pageBg}, 0 0 0px 4px ${theme.palette.formFocusOutline},
+      box-shadow: 0 0 0 2px ${theme.colors.pageBg}, 0 0 0px 4px ${theme.colors.formFocusOutline},
         inset 0 0 0 1px rgba(255, 255, 255, 0), inset 0 0 0 100px ${colors.formInputBg}!important;
     }
 

@@ -19,11 +19,11 @@ export const getLabelStyles = stylesFactory((theme: GrafanaTheme) => {
       line-height: 1.25;
       margin: ${theme.spacing.formLabelMargin};
       padding: ${theme.spacing.formLabelPadding};
-      color: ${theme.palette.formLabel};
+      color: ${theme.colors.formLabel};
       max-width: 480px;
     `,
     description: css`
-      color: ${theme.palette.formDescription};
+      color: ${theme.colors.formDescription};
       font-size: ${theme.typography.size.sm};
       font-weight: ${theme.typography.weight.regular};
       margin-top: ${theme.spacing.xxs};
@@ -31,10 +31,10 @@ export const getLabelStyles = stylesFactory((theme: GrafanaTheme) => {
     `,
     categories: css`
       color: ${theme.isLight
-        ? tinycolor(theme.palette.formLabel)
+        ? tinycolor(theme.colors.formLabel)
             .lighten(10)
             .toHexString()
-        : tinycolor(theme.palette.formLabel)
+        : tinycolor(theme.colors.formLabel)
             .darken(10)
             .toHexString()};
       display: inline-flex;

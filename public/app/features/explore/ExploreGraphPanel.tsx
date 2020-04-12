@@ -34,7 +34,7 @@ const getStyles = (theme: GrafanaTheme) => ({
   showAllTimeSeries: css`
     label: show-all-time-series;
     cursor: pointer;
-    color: ${theme.palette.linkExternal};
+    color: ${theme.colors.linkExternal};
   `,
 });
 

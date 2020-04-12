@@ -140,7 +140,7 @@ const getStyles = stylesFactory(() => {
     `,
     stepDescription: css`
       font-size: ${theme.typography.size.sm};
-      color: ${theme.palette.textWeak};
+      color: ${theme.colors.textWeak};
       margin-bottom: ${theme.spacing.sm};
     `,
     step: css`

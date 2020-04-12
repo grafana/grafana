@@ -12,7 +12,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
   return {
     container: css`
       padding: 36px 79px;
-      background: ${theme.palette.panelBg};
+      background: ${theme.colors.panelBg};
     `,
     footer: css`
       text-align: center;

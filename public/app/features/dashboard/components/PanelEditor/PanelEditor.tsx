@@ -376,7 +376,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme, props: Props) => {
       left: 0;
       right: 0;
       bottom: 0;
-      background: ${theme.palette.bodyBg};
+      background: ${theme.colors.bodyBg};
       display: flex;
       flex-direction: column;
     `,
@@ -431,9 +431,9 @@ const getStyles = stylesFactory((theme: GrafanaTheme, props: Props) => {
     editorToolbar: css`
       display: flex;
       padding: ${theme.spacing.sm};
-      background: ${theme.palette.panelBg};
+      background: ${theme.colors.panelBg};
       justify-content: space-between;
-      border-bottom: 1px solid ${theme.palette.panelBorder};
+      border-bottom: 1px solid ${theme.colors.panelBorder};
     `,
     panelToolbar: css`
       display: flex;

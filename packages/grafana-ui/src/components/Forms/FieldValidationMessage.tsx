@@ -15,8 +15,8 @@ export const getFieldValidationMessageStyles = stylesFactory((theme: GrafanaThem
       font-weight: ${theme.typography.weight.semibold};
       margin: ${theme.spacing.formValidationMessageMargin};
       padding: ${theme.spacing.formValidationMessagePadding};
-      color: ${theme.palette.formValidationMessageText};
-      background: ${theme.palette.formValidationMessageBg};
+      color: ${theme.colors.formValidationMessageText};
+      background: ${theme.colors.formValidationMessageBg};
       border-radius: ${theme.border.radius.sm};
       position: relative;
       display: inline-block;
@@ -30,7 +30,7 @@ export const getFieldValidationMessageStyles = stylesFactory((theme: GrafanaThem
         height: 0;
         border-left: 4px solid transparent;
         border-right: 4px solid transparent;
-        border-bottom: 4px solid ${theme.palette.formValidationMessageBg};
+        border-bottom: 4px solid ${theme.colors.formValidationMessageBg};
       }
     `,
     fieldValidationMessageIcon: css`

@@ -74,7 +74,7 @@ export const QueryOperationRow: React.FC<QueryOperationRowProps> = ({
 };
 
 const getQueryOperationRowStyles = stylesFactory((theme: GrafanaTheme) => {
-  const borderColor = theme.isLight ? theme.palette.gray85 : theme.palette.gray25;
+  const borderColor = theme.colors.border2;
 
   return {
     wrapper: css`
@@ -84,10 +84,10 @@ const getQueryOperationRowStyles = stylesFactory((theme: GrafanaTheme) => {
       padding: ${theme.spacing.sm};
       border-radius: ${theme.border.radius.sm};
       border: 1px solid ${borderColor};
-      background: ${theme.palette.pageBg};
+      background: ${theme.colors.pageBg};
     `,
     collapseIcon: css`
-      color: ${theme.palette.textWeak};
+      color: ${theme.colors.textWeak};
     `,
     titleWrapper: css`
       display: flex;
@@ -103,9 +103,9 @@ const getQueryOperationRowStyles = stylesFactory((theme: GrafanaTheme) => {
     content: css`
       border: 1px solid ${borderColor};
       margin-top: -1px;
-      background: ${theme.palette.pageBg};
+      background: ${theme.colors.pageBg};
       margin-left: ${theme.spacing.xl};
-      border-top: 1px solid ${theme.palette.pageBg};
+      border-top: 1px solid ${theme.colors.pageBg};
       border-radis: 0 ${theme.border.radius.sm};
       padding: 0 ${theme.spacing.sm} ${theme.spacing.sm} ${theme.spacing.lg};
     `,

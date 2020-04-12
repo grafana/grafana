@@ -51,7 +51,7 @@ const getStyles = (theme: GrafanaTheme) => ({
 
   typeaheadItemGroupTitle: css`
     label: type-ahead-item-group-title;
-    color: ${theme.palette.textWeak};
+    color: ${theme.colors.textWeak};
     font-size: ${theme.typography.size.sm};
     line-height: ${theme.typography.lineHeight.md};
     padding: ${theme.spacing.sm};

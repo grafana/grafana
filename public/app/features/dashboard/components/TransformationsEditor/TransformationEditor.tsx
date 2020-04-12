@@ -63,7 +63,7 @@ const getStyles = (theme: GrafanaTheme) => ({
     padding: 4px 8px 4px 8px;
     position: relative;
     height: 35px;
-    background: ${theme.palette.textFaint};
+    background: ${theme.colors.textFaint};
     border-radius: 4px 4px 0 0;
     flex-wrap: nowrap;
     justify-content: space-between;
@@ -81,10 +81,10 @@ const getStyles = (theme: GrafanaTheme) => ({
     border: none;
     box-shadow: none;
     cursor: pointer;
-    color: ${theme.palette.textWeak};
+    color: ${theme.colors.textWeak};
     margin-left: ${theme.spacing.sm};
     &:hover {
-      color: ${theme.palette.text};
+      color: ${theme.colors.text};
     }
   `,
   editor: css`

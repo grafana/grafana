@@ -15,7 +15,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
     `,
     buttonDisabled: css`
       text-decoration: none;
-      color: ${theme.palette.text};
+      color: ${theme.colors.text};
       opacity: 0.65;
       cursor: not-allowed;
       pointer-events: none;
