@@ -247,14 +247,15 @@ $navbar-button-border: #2f2f32;
 $side-menu-bg: $panel-bg;
 $side-menu-bg-mobile: $panel-bg;
 $side-menu-border: none;
-$side-menu-item-hover-bg: $dark-3;
+$side-menu-item-hover-bg: ${theme.colors.bg2};
 $side-menu-shadow: 0 0 20px black;
-$side-menu-link-color: ${theme.palette.gray70};
+$side-menu-icon-color: ${theme.palette.gray70};
+$side-menu-header-color: ${theme.colors.text};
 
 // Menu dropdowns
 // -------------------------
-$menu-dropdown-bg: $panel-bg;
-$menu-dropdown-hover-bg: $dark-3;
+$menu-dropdown-bg: ${theme.colors.bg1};
+$menu-dropdown-hover-bg: ${theme.colors.bg2};
 $menu-dropdown-shadow: 5px 5px 20px -5px $black;
 
 // Tabs

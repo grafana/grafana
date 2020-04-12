@@ -244,6 +244,8 @@ $side-menu-bg-mobile: rgba(0, 0, 0, 0); //$gray-6;
 $side-menu-item-hover-bg: ${theme.palette.gray25};
 $side-menu-shadow: 5px 0px 10px -5px $gray-1;
 $side-menu-link-color: $gray-4;
+$side-menu-icon-color: ${theme.palette.gray70};
+$side-menu-header-color: ${theme.palette.gray95};
 
 // Menu dropdowns
 // -------------------------
