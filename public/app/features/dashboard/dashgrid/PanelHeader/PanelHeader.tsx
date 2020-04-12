@@ -26,7 +26,8 @@ export interface Props {
   links?: DataLink[];
   error?: string;
   alertState?: string;
-  isFullscreen: boolean;
+  isViewing: boolean;
+  isEditing: boolean;
   data: PanelData;
   updateLocation: typeof updateLocation;
 }
@@ -122,13 +123,13 @@ export class PanelHeader extends Component<Props, State> {
   };
 
   render() {
-    const { panel, scopedVars, error, isFullscreen, data, alertState } = this.props;
+    const { panel, scopedVars, error, isViewing, isEditing, data, alertState } = this.props;
     const { menuItems } = this.state;
     const title = templateSrv.replaceWithText(panel.title, scopedVars);
 
     const panelHeaderClass = classNames({
       'panel-header': true,
-      'grid-drag-handle': !isFullscreen,
+      'grid-drag-handle': !(isViewing || isEditing),
     });
 
     // dedupe on severity

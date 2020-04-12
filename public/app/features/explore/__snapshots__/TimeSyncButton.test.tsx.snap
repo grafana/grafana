@@ -28,12 +28,12 @@ exports[`TimeSyncButton should render component 1`] = `
             className="css-1cvxpvr"
           >
             <UilLink
-              className="icon-brand-gradient css-1280p79-topPadding"
+              className="icon-brand-gradient css-1q2xpj8-topPadding"
               color="currentColor"
               size={16}
             >
               <svg
-                className="icon-brand-gradient css-1280p79-topPadding"
+                className="icon-brand-gradient css-1q2xpj8-topPadding"
                 fill="currentColor"
                 height={16}
                 viewBox="0 0 24 24"

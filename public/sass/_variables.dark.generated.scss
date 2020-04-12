@@ -89,10 +89,10 @@ $critical: #e02f44;
 
 // Scaffolding
 // -------------------------
-$body-bg: #0b0c0e;
+$body-bg: #141619;
 $page-bg: #141619;
+$dashboard-bg: #0b0c0e;
 
-$body-color: #d8d9da;
 $text-color: #c7d0d9;
 $text-color-strong: #ffffff;
 $text-color-weak: #8e8e8e;
@@ -125,13 +125,13 @@ $hr-border-color: $dark-9;
 // -------------------------
 $panel-bg: #141619;
 $panel-border: 1px solid #202226;
-$panel-header-hover-bg: #202226;
+$panel-header-hover-bg: #343b40;
 $panel-corner: $panel-bg;
 
 // page header
 $page-header-bg: #202226;
 $page-header-shadow: inset 0px -4px 14px $dark-3;
-$page-header-border-color: $dark-9;
+$page-header-border-color: #202226;
 
 $divider-border-color: $gray-1;
 
@@ -151,7 +151,6 @@ $card-shadow: -1px -1px 0 0 hsla(0, 0%, 100%, 0.1), 1px 1px 0 0 rgba(0, 0, 0, 0.
 // Lists
 $list-item-bg: $card-background;
 $list-item-hover-bg: $card-background-hover;
-$list-item-link-color: $text-color;
 $list-item-shadow: $card-shadow;
 
 $empty-list-cta-bg: $gray-blue;
@@ -231,10 +230,9 @@ $dropdownBorder: #202226;
 $dropdownDividerTop: transparent;
 $dropdownDividerBottom: #343b40;
 
-$dropdownLinkColor: $text-color;
+$dropdownLinkColor: $link-color;
 $dropdownLinkColorHover: $white;
 $dropdownLinkColorActive: $white;
-
 $dropdownLinkBackgroundHover: $dark-9;
 
 // Horizontal forms & lists
@@ -256,7 +254,7 @@ $side-menu-bg-mobile: $panel-bg;
 $side-menu-border: none;
 $side-menu-item-hover-bg: $dark-3;
 $side-menu-shadow: 0 0 20px black;
-$side-menu-link-color: $link-color;
+$side-menu-link-color: #9fa7b3;
 
 // Menu dropdowns
 // -------------------------

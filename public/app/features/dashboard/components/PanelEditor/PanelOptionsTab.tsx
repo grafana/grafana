@@ -73,14 +73,12 @@ export const PanelOptionsTab: FC<Props> = ({
 
   if (plugin.optionEditors && panel) {
     elements.push(
-      <OptionsGroup title="Display" key="panel plugin options">
-        <PanelOptionsEditor
-          key="panel options"
-          options={panel.getOptions()}
-          onChange={onPanelOptionsChanged}
-          plugin={plugin}
-        />
-      </OptionsGroup>
+      <PanelOptionsEditor
+        key="panel options"
+        options={panel.getOptions()}
+        onChange={onPanelOptionsChanged}
+        plugin={plugin}
+      />
     );
   }
 

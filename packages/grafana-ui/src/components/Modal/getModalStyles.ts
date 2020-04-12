@@ -1,20 +1,15 @@
 import { css } from 'emotion';
 import { GrafanaTheme } from '@grafana/data';
-import { selectThemeVariant, stylesFactory } from '../../themes';
+import { stylesFactory } from '../../themes';
 
 export const getModalStyles = stylesFactory((theme: GrafanaTheme) => {
-  const backdropBackground = selectThemeVariant(
-    {
-      light: theme.colors.bodyBg,
-      dark: theme.colors.gray25,
-    },
-    theme.type
-  );
+  const backdropBackground = theme.colors.bg1;
+
   return {
     modal: css`
       position: fixed;
       z-index: ${theme.zIndex.modal};
-      background: ${theme.colors.pageBg};
+      background: ${theme.colors.bodyBg};
       box-shadow: 0 3px 7px rgba(0, 0, 0, 0.3);
       background-clip: padding-box;
       outline: none;
@@ -37,10 +32,11 @@ export const getModalStyles = stylesFactory((theme: GrafanaTheme) => {
       opacity: 0.7;
     `,
     modalHeader: css`
-      background: ${theme.background.pageHeader};
-      box-shadow: ${theme.shadow.pageHeader};
+      background: ${theme.colors.bg1};
+      box-shadow: 0 0 20px ${theme.colors.dropdownShadow};
       border-bottom: 1px solid ${theme.colors.pageHeaderBorder};
       display: flex;
+      height: 42px;
     `,
     modalHeaderTitle: css`
       font-size: ${theme.typography.heading.h3};
@@ -55,8 +51,12 @@ export const getModalStyles = stylesFactory((theme: GrafanaTheme) => {
       }
     `,
     modalHeaderClose: css`
-      margin-left: auto;
-      padding: 9px ${theme.spacing.d};
+      height: 100%;
+      display: flex;
+      align-items: center;
+      flex-grow: 1;
+      justify-content: flex-end;
+      padding-right: ${theme.spacing.sm};
     `,
     modalContent: css`
       padding: calc(${theme.spacing.d} * 2);

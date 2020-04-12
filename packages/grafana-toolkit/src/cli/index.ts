@@ -19,6 +19,7 @@ import { ciBuildPluginTask, ciBuildPluginDocsTask, ciPackagePluginTask, ciPlugin
 import { buildPackageTask } from './tasks/package.build';
 import { pluginCreateTask } from './tasks/plugin.create';
 import { bundleManagedTask } from './tasks/plugin/bundle.managed';
+import { componentCreateTask } from './tasks/component.create';
 
 export const run = (includeInternalScripts = false) => {
   if (includeInternalScripts) {
@@ -113,6 +114,16 @@ export const run = (includeInternalScripts = false) => {
         await execTask(closeMilestoneTask)({
           milestone: cmd.milestone,
         });
+      });
+
+    // React generator
+    program
+      .command('component:create')
+      .description(
+        'Scaffold React components. Optionally add test, story and .mdx files. The components are created in the same dir the script is run from.'
+      )
+      .action(async () => {
+        await execTask(componentCreateTask)({});
       });
   }
 

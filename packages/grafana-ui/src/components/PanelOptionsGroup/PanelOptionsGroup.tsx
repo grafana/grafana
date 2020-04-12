@@ -1,6 +1,6 @@
 // Libraries
 import React, { FunctionComponent } from 'react';
-import { Icon } from '@grafana/ui';
+import { Icon } from '../Icon/Icon';
 
 interface Props {
   title?: string | JSX.Element;

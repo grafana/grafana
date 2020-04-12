@@ -84,7 +84,7 @@ $mobile-menu-breakpoint: md;
 }
 
 .sidemenu-link {
-  color: $link-color;
+  color: $side-menu-link-color !important;
   line-height: 42px;
   padding: 0px 10px 0px 10px;
   display: block;
@@ -116,9 +116,7 @@ $mobile-menu-breakpoint: md;
   width: 35px;
   height: 35px;
   display: inline-block;
-  color: $side-menu-link-color;
   position: relative;
-  opacity: 0.7;
 
   img {
     position: relative;
@@ -130,18 +128,16 @@ $mobile-menu-breakpoint: md;
   white-space: nowrap;
   background-color: $side-menu-item-hover-bg;
   font-size: 17px;
-  color: #ebedf2;
+  color: $side-menu-link-color;
 }
 
 .side-menu-header-link {
-  // Removes left-brand-border-gradient from link
-  color: #ebedf2 !important;
+  color: $side-menu-link-color !important;
   border: none !important;
   padding: 0 !important;
 }
 
 .dropdown-menu--sidemenu > li > .side-menu-header-link:hover {
-  // Makes sure it looks good on light theme
   color: #fff !important;
   background-color: $side-menu-item-hover-bg !important;
 }

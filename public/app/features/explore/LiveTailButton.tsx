@@ -10,11 +10,11 @@ import { GrafanaTheme } from '@grafana/data';
 import { ResponsiveButton } from './ResponsiveButton';
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
-  const bgColor = selectThemeVariant({ light: theme.colors.gray5, dark: theme.colors.dark1 }, theme.type);
-  const orangeLighter = tinycolor(theme.colors.orangeDark)
+  const bgColor = selectThemeVariant({ light: theme.palette.gray5, dark: theme.palette.dark1 }, theme.type);
+  const orangeLighter = tinycolor(theme.palette.orangeDark)
     .lighten(10)
     .toString();
-  const pulseTextColor = tinycolor(theme.colors.orangeDark)
+  const pulseTextColor = tinycolor(theme.palette.orangeDark)
     .desaturate(90)
     .toString();
   return {
@@ -28,13 +28,13 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
     `,
     isLive: css`
       label: isLive;
-      border-color: ${theme.colors.orangeDark};
-      color: ${theme.colors.orangeDark};
+      border-color: ${theme.palette.orangeDark};
+      color: ${theme.palette.orangeDark};
       background: transparent;
       &:focus {
         background: transparent;
-        border-color: ${theme.colors.orangeDark};
-        color: ${theme.colors.orangeDark};
+        border-color: ${theme.palette.orangeDark};
+        color: ${theme.palette.orangeDark};
       }
       &:hover {
         background-color: ${bgColor};
@@ -47,12 +47,12 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
     `,
     isPaused: css`
       label: isPaused;
-      border-color: ${theme.colors.orangeDark};
+      border-color: ${theme.palette.orangeDark};
       background: transparent;
       animation: pulse 3s ease-out 0s infinite normal forwards;
       &:focus {
         background: transparent;
-        border-color: ${theme.colors.orangeDark};
+        border-color: ${theme.palette.orangeDark};
       }
       &:hover {
         background-color: ${bgColor};
@@ -66,7 +66,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
           color: ${pulseTextColor};
         }
         50% {
-          color: ${theme.colors.orangeDark};
+          color: ${theme.palette.orangeDark};
         }
         100% {
           color: ${pulseTextColor};

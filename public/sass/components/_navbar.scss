@@ -45,7 +45,6 @@
   white-space: nowrap;
   display: block;
   margin: 0;
-  color: $headings-color;
   font-size: $font-size-lg;
   min-height: $navbarHeight;
   line-height: $navbarHeight;
@@ -74,7 +73,6 @@
 }
 
 .navbar-page-btn__folder {
-  color: $text-color-weak;
   display: none;
   padding-right: 8px;
 
@@ -184,7 +182,7 @@ i.navbar-page-btn__search {
   }
 
   &:hover {
-    .fa {
+    svg {
       color: $text-color;
     }
   }

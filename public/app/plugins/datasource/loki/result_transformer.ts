@@ -420,7 +420,7 @@ export const enhanceDataFrame = (dataFrame: DataFrame, config: LokiOptions | nul
   }, {} as Record<string, any>);
 
   const view = new DataFrameView(dataFrame);
-  view.forEachRow((row: { line: string }) => {
+  view.forEach((row: { line: string }) => {
     for (const field of derivedFields) {
       const logMatch = row.line.match(field.matcherRegex);
       fields[field.name].values.add(logMatch && logMatch[1]);

@@ -1,6 +1,12 @@
 import React, { useContext } from 'react';
-import { FilterFieldsByNameTransformerOptions, DataTransformerID, transformersRegistry, KeyValue } from '@grafana/data';
-import { TransformerUIProps, TransformerUIRegistyItem } from './types';
+import {
+  DataTransformerID,
+  FilterFieldsByNameTransformerOptions,
+  KeyValue,
+  standardTransformers,
+  TransformerRegistyItem,
+  TransformerUIProps,
+} from '@grafana/data';
 import { ThemeContext } from '../../themes/ThemeContext';
 import { css } from 'emotion';
 import { InlineList } from '../List/InlineList';
@@ -133,7 +139,7 @@ const FilterPill: React.FC<FilterPillProps> = ({ label, selected, onClick }) => 
       className={css`
         padding: ${theme.spacing.xxs} ${theme.spacing.sm};
         color: white;
-        background: ${selected ? theme.colors.blueLight : theme.colors.blueShade};
+        background: ${selected ? theme.palette.blueLight : theme.palette.blueShade};
         border-radius: 16px;
         display: inline-block;
         cursor: pointer;
@@ -153,10 +159,10 @@ const FilterPill: React.FC<FilterPillProps> = ({ label, selected, onClick }) => 
   );
 };
 
-export const filterFieldsByNameTransformRegistryItem: TransformerUIRegistyItem<FilterFieldsByNameTransformerOptions> = {
+export const filterFieldsByNameTransformRegistryItem: TransformerRegistyItem<FilterFieldsByNameTransformerOptions> = {
   id: DataTransformerID.filterFieldsByName,
-  component: FilterByNameTransformerEditor,
-  transformer: transformersRegistry.get(DataTransformerID.filterFieldsByName),
+  editor: FilterByNameTransformerEditor,
+  transformation: standardTransformers.filterFieldsByNameTransformer,
   name: 'Filter by name',
-  description: 'UI for filter by name transformation',
+  description: 'Filter fields by name',
 };

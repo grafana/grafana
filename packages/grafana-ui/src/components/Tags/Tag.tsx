@@ -38,7 +38,7 @@ const getTagStyles = (theme: GrafanaTheme, name: string) => {
       line-height: ${theme.typography.lineHeight.xs};
       vertical-align: baseline;
       background-color: ${color};
-      color: ${theme.colors.white};
+      color: ${theme.palette.white};
       white-space: nowrap;
       text-shadow: none;
       padding: 3px 6px;

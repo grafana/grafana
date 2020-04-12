@@ -105,7 +105,7 @@ export const DataSourceHttpSettings: React.FC<HttpSettingsProps> = props => {
   );
 
   const notValidStyle = css`
-    box-shadow: inset 0 0px 5px ${theme.colors.red};
+    box-shadow: inset 0 0px 5px ${theme.palette.red};
   `;
 
   const inputStyle = cx({ [`width-20`]: true, [notValidStyle]: !isValidUrl });

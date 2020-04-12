@@ -1,6 +1,6 @@
 import { Dispatch, Middleware, MiddlewareAPI } from 'redux';
-import thunk from 'redux-thunk';
-import { AnyAction, configureStore, EnhancedStore, Reducer } from '@reduxjs/toolkit';
+import thunk, { ThunkMiddleware } from 'redux-thunk';
+import { AnyAction, configureStore, EnhancedStore, Reducer, getDefaultMiddleware } from '@reduxjs/toolkit';
 
 import { StoreState } from '../../../app/types';
 import { setStore } from '../../../app/store/store';
@@ -53,7 +53,7 @@ export const reduxTester = <State>(args?: ReduxTesterArguments<State>): ReduxTes
   const givenRootReducer = (rootReducer: Reducer<State>): ReduxTesterWhen<State> => {
     store = configureStore<State>({
       reducer: rootReducer,
-      middleware: [logActionsMiddleWare, thunk],
+      middleware: [...getDefaultMiddleware<State>(), logActionsMiddleWare, thunk] as [ThunkMiddleware<State>],
       preloadedState,
     });
 

@@ -1,11 +1,12 @@
 import React, { useContext } from 'react';
 import {
-  FilterFramesByRefIdTransformerOptions,
   DataTransformerID,
-  transformersRegistry,
+  FilterFramesByRefIdTransformerOptions,
   KeyValue,
+  standardTransformers,
+  TransformerRegistyItem,
+  TransformerUIProps,
 } from '@grafana/data';
-import { TransformerUIProps, TransformerUIRegistyItem } from './types';
 import { ThemeContext } from '../../themes/ThemeContext';
 import { css } from 'emotion';
 import { InlineList } from '../List/InlineList';
@@ -138,7 +139,7 @@ const FilterPill: React.FC<FilterPillProps> = ({ label, selected, onClick }) => 
       className={css`
         padding: ${theme.spacing.xxs} ${theme.spacing.sm};
         color: white;
-        background: ${selected ? theme.colors.blueLight : theme.colors.blueShade};
+        background: ${selected ? theme.palette.blueLight : theme.palette.blueShade};
         border-radius: 16px;
         display: inline-block;
         cursor: pointer;
@@ -158,10 +159,10 @@ const FilterPill: React.FC<FilterPillProps> = ({ label, selected, onClick }) => 
   );
 };
 
-export const filterFramesByRefIdTransformRegistryItem: TransformerUIRegistyItem<FilterFramesByRefIdTransformerOptions> = {
+export const filterFramesByRefIdTransformRegistryItem: TransformerRegistyItem<FilterFramesByRefIdTransformerOptions> = {
   id: DataTransformerID.filterByRefId,
-  component: FilterByRefIdTransformerEditor,
-  transformer: transformersRegistry.get(DataTransformerID.filterByRefId),
+  editor: FilterByRefIdTransformerEditor,
+  transformation: standardTransformers.filterFramesByRefIdTransformer,
   name: 'Filter by refId',
   description: 'Filter results by refId',
 };

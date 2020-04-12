@@ -6,9 +6,13 @@ import {
   toDataFrame,
   transformDataFrame,
 } from '@grafana/data';
-import { SeriesToColumnsOptions } from './seriesToColumns';
+import { SeriesToColumnsOptions, seriesToColumnsTransformer } from './seriesToColumns';
+import { mockTransformationsRegistry } from '../../utils/tests/mockTransformationsRegistry';
 
 describe('SeriesToColumns Transformer', () => {
+  beforeAll(() => {
+    mockTransformationsRegistry([seriesToColumnsTransformer]);
+  });
   const everySecondSeries = toDataFrame({
     name: 'even',
     fields: [

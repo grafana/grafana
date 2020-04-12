@@ -6,9 +6,14 @@ import {
   toDataFrame,
   transformDataFrame,
 } from '@grafana/data';
-import { RenameFieldsTransformerOptions } from './rename';
+import { RenameFieldsTransformerOptions, renameFieldsTransformer } from './rename';
+import { mockTransformationsRegistry } from '../../utils/tests/mockTransformationsRegistry';
 
 describe('Rename Transformer', () => {
+  beforeAll(() => {
+    mockTransformationsRegistry([renameFieldsTransformer]);
+  });
+
   describe('when consistent data is received', () => {
     const data = toDataFrame({
       name: 'A',

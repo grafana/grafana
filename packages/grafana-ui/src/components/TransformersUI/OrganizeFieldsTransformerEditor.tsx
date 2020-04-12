@@ -1,12 +1,18 @@
-import React, { useMemo, useCallback } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import { css, cx } from 'emotion';
-import { OrganizeFieldsTransformerOptions } from '@grafana/data/src/transformations/transformers/organize';
-import { DragDropContext, Droppable, Draggable, DropResult } from 'react-beautiful-dnd';
-import { TransformerUIRegistyItem, TransformerUIProps } from './types';
-import { DataTransformerID, transformersRegistry, DataFrame, GrafanaTheme } from '@grafana/data';
+import { DragDropContext, Draggable, Droppable, DropResult } from 'react-beautiful-dnd';
+import {
+  createOrderFieldsComparer,
+  DataFrame,
+  DataTransformerID,
+  GrafanaTheme,
+  OrganizeFieldsTransformerOptions,
+  standardTransformers,
+  TransformerRegistyItem,
+  TransformerUIProps,
+} from '@grafana/data';
 import { stylesFactory, useTheme } from '../../themes';
-import { Button } from '../Button';
-import { createFieldsComparer } from '@grafana/data/src/transformations/transformers/order';
+import { Button } from '../Button/Button';
 import { VerticalGroup } from '../Layout/Layout';
 import { Input } from '../Input/Input';
 
@@ -153,8 +159,8 @@ const getFieldNameStyles = stylesFactory((theme: GrafanaTheme) => ({
     width: 35%;
     padding: 0 8px;
     border-radius: 3px;
-    background-color: ${theme.isDark ? theme.colors.grayBlue : theme.colors.gray6};
-    border: 1px solid ${theme.isDark ? theme.colors.dark6 : theme.colors.gray5};
+    background-color: ${theme.isDark ? theme.palette.grayBlue : theme.palette.gray6};
+    border: 1px solid ${theme.isDark ? theme.palette.dark6 : theme.palette.gray5};
   `,
   right: css`
     width: 65%;
@@ -189,7 +195,7 @@ const orderFieldNamesByIndex = (fieldNames: string[], indexByName: Record<string
   if (!indexByName || Object.keys(indexByName).length === 0) {
     return fieldNames;
   }
-  const comparer = createFieldsComparer(indexByName);
+  const comparer = createOrderFieldsComparer(indexByName);
   return fieldNames.sort(comparer);
 };
 
@@ -212,10 +218,10 @@ const fieldNamesFromInput = (input: DataFrame[]): string[] => {
   );
 };
 
-export const organizeFieldsTransformRegistryItem: TransformerUIRegistyItem<OrganizeFieldsTransformerOptions> = {
+export const organizeFieldsTransformRegistryItem: TransformerRegistyItem<OrganizeFieldsTransformerOptions> = {
   id: DataTransformerID.organize,
-  component: OrganizeFieldsTransformerEditor,
-  transformer: transformersRegistry.get(DataTransformerID.organize),
+  editor: OrganizeFieldsTransformerEditor,
+  transformation: standardTransformers.organizeFieldsTransformer,
   name: 'Organize fields',
-  description: 'UI for organizing fields',
+  description: 'Order, filter and rename fields',
 };
