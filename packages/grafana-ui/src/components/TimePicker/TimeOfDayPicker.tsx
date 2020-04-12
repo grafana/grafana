@@ -2,7 +2,7 @@ import React, { FC } from 'react';
 import RcTimePicker from 'rc-time-picker';
 import { css, cx } from 'emotion';
 import { dateTime, DateTime, dateTimeAsMoment, GrafanaTheme } from '@grafana/data';
-import { useTheme, Icon, selectThemeVariant as stv } from '../../index';
+import { useTheme, Icon } from '../../index';
 import { stylesFactory } from '../../themes';
 import { inputSizes, getFocusCss } from '../Forms/commonStyles';
 import { FormInputSize } from '../Forms/types';
@@ -17,8 +17,8 @@ interface Props {
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
   const bgColor = theme.colors.formInputBg;
-  const menuShadowColor = stv({ light: theme.palette.gray4, dark: theme.palette.black }, theme.type);
-  const optionBgHover = stv({ light: theme.palette.gray7, dark: theme.palette.gray10 }, theme.type);
+  const menuShadowColor = theme.colors.dropdownShadow;
+  const optionBgHover = theme.colors.dropdownOptionHoverBg;
   const borderRadius = theme.border.radius.sm;
   const borderColor = theme.colors.formInputBorder;
   return {

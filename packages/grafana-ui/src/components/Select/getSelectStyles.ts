@@ -1,14 +1,13 @@
 import { stylesFactory } from '../../themes/stylesFactory';
-import { selectThemeVariant as stv } from '../../themes/selectThemeVariant';
 import { css } from 'emotion';
 import { GrafanaTheme } from '@grafana/data';
 
 export const getSelectStyles = stylesFactory((theme: GrafanaTheme) => {
   const bgColor = theme.colors.formInputBg;
   const menuShadowColor = theme.colors.dropdownShadow;
-  const optionBgHover = stv({ light: theme.palette.gray7, dark: theme.palette.gray10 }, theme.type);
-  const multiValueContainerBg = stv({ light: theme.palette.gray6, dark: theme.palette.gray05 }, theme.type);
-  const multiValueColor = stv({ light: theme.palette.gray25, dark: theme.palette.gray85 }, theme.type);
+  const optionBgHover = theme.colors.dropdownOptionHoverBg;
+  const multiValueContainerBg = theme.colors.bg3;
+  const multiValueColor = theme.colors.text;
 
   return {
     menu: css`
@@ -87,12 +86,13 @@ export const getSelectStyles = stylesFactory((theme: GrafanaTheme) => {
       line-height: 1;
       background: ${multiValueContainerBg};
       border-radius: ${theme.border.radius.sm};
-      padding: ${theme.spacing.xs} ${theme.spacing.xxs} ${theme.spacing.xs} ${theme.spacing.sm};
-      margin: ${theme.spacing.xxs} ${theme.spacing.xs} ${theme.spacing.xxs} 0;
+      margin: 0 ${theme.spacing.sm} 0 0;
+      padding: ${theme.spacing.xxs} 0 ${theme.spacing.xxs} ${theme.spacing.sm};
       color: ${multiValueColor};
+      font-size: ${theme.typography.size.sm};
     `,
     multiValueRemove: css`
-      margin-left: ${theme.spacing.xs};
+      margin: 0 ${theme.spacing.xs};
     `,
   };
 });

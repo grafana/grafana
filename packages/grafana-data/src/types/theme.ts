@@ -202,6 +202,7 @@ export interface GrafanaTheme extends GrafanaThemeCommons {
 
     dropdownBg: string;
     dropdownShadow: string;
+    dropdownOptionHoverBg: string;
 
     // Link colors
     link: string;

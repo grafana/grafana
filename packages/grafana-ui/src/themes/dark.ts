@@ -40,6 +40,48 @@ const basicColors = {
   orangeDark: '#ff780a',
 };
 
+const backgrounds = {
+  bg1: basicColors.gray05,
+  bg2: basicColors.gray10,
+  bg3: basicColors.gray15,
+};
+
+const borders = {
+  border1: basicColors.gray15,
+  border2: basicColors.gray25,
+};
+
+const form = {
+  // Next-gen forms functional colors
+  formLabel: basicColors.gray70,
+  formDescription: basicColors.gray60,
+  formLegend: basicColors.gray85,
+  formInputBg: basicColors.gray05,
+  formInputBgDisabled: basicColors.gray10,
+  formInputBorder: basicColors.gray25,
+  formInputBorderHover: basicColors.gray33,
+  formInputBorderActive: basicColors.blue95,
+  formInputBorderInvalid: basicColors.red88,
+  formInputPlaceholderText: basicColors.gray1,
+  formInputText: basicColors.gray85,
+  formInputDisabledText: basicColors.gray70,
+  formInputTextStrong: basicColors.gray85,
+  formInputTextWhite: basicColors.white,
+  formFocusOutline: basicColors.blueShade,
+  formValidationMessageText: basicColors.white,
+  formValidationMessageBg: basicColors.red88,
+  formSwitchBg: basicColors.gray25,
+  formSwitchBgActive: basicColors.blueLight,
+  formSwitchBgHover: basicColors.gray33,
+  formSwitchBgActiveHover: basicColors.blueBase,
+  formSwitchBgDisabled: basicColors.gray25,
+  formSwitchDot: basicColors.gray15,
+  formCheckboxBg: basicColors.dark5,
+  formCheckboxBgChecked: basicColors.blueLight,
+  formCheckboxBgCheckedHover: basicColors.blueBase,
+  formCheckboxCheckmark: basicColors.gray25,
+};
+
 const darkTheme: GrafanaTheme = {
   ...defaultTheme,
   type: GrafanaThemeType.Dark,
@@ -62,21 +104,20 @@ const darkTheme: GrafanaTheme = {
     critical: basicColors.redBase,
   },
   colors: {
-    bg1: basicColors.gray05,
-    bg2: basicColors.gray10,
-    bg3: basicColors.gray15,
-    border1: basicColors.gray15,
-    border2: basicColors.gray25,
+    ...backgrounds,
+    ...borders,
+    ...form,
 
-    bodyBg: basicColors.gray05,
-    pageBg: basicColors.gray10,
-    panelBg: basicColors.gray10,
-    pageHeaderBg: basicColors.gray15,
-    pageHeaderBorder: basicColors.gray25,
-    panelBorder: basicColors.gray15,
+    bodyBg: backgrounds.bg1,
+    pageBg: backgrounds.bg2,
+    panelBg: backgrounds.bg2,
+    pageHeaderBg: backgrounds.bg3,
+    pageHeaderBorder: borders.border1,
+    panelBorder: borders.border1,
 
-    dropdownBg: basicColors.gray10,
+    dropdownBg: form.formInputBg,
     dropdownShadow: basicColors.black,
+    dropdownOptionHoverBg: backgrounds.bg2,
 
     // text
     headingColor: basicColors.gray4,
@@ -90,35 +131,6 @@ const darkTheme: GrafanaTheme = {
     linkDisabled: basicColors.gray2,
     linkHover: basicColors.white,
     linkExternal: basicColors.blue,
-
-    // Next-gen forms functional colors
-    formLabel: basicColors.gray70,
-    formDescription: basicColors.gray60,
-    formLegend: basicColors.gray85,
-    formInputBg: basicColors.gray05,
-    formInputBgDisabled: basicColors.gray10,
-    formInputBorder: basicColors.gray25,
-    formInputBorderHover: basicColors.gray33,
-    formInputBorderActive: basicColors.blue95,
-    formInputBorderInvalid: basicColors.red88,
-    formInputPlaceholderText: basicColors.gray1,
-    formInputText: basicColors.gray85,
-    formInputDisabledText: basicColors.gray70,
-    formInputTextStrong: basicColors.gray85,
-    formInputTextWhite: basicColors.white,
-    formFocusOutline: basicColors.blueShade,
-    formValidationMessageText: basicColors.white,
-    formValidationMessageBg: basicColors.red88,
-    formSwitchBg: basicColors.gray25,
-    formSwitchBgActive: basicColors.blueLight,
-    formSwitchBgHover: basicColors.gray33,
-    formSwitchBgActiveHover: basicColors.blueBase,
-    formSwitchBgDisabled: basicColors.gray25,
-    formSwitchDot: basicColors.gray15,
-    formCheckboxBg: basicColors.dark5,
-    formCheckboxBgChecked: basicColors.blueLight,
-    formCheckboxBgCheckedHover: basicColors.blueBase,
-    formCheckboxCheckmark: basicColors.gray25,
   },
 };
 
