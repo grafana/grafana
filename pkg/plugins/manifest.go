@@ -59,7 +59,7 @@ func readPluginManifest(body []byte) (*PluginManifest, error) {
 		return nil, fmt.Errorf("Error parsing manifest JSON: %s", err)
 	}
 
-	keyring, err := openpgp.keys.ReadArmoredKeyRing(bytes.NewBufferString(publicKeyText))
+	keyring, err := openpgp.ReadArmoredKeyRing(bytes.NewBufferString(publicKeyText))
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse public key: %s", err)
 	}
