@@ -10,20 +10,8 @@ export const getThemeColors = (theme: GrafanaTheme) => {
       },
       theme.type
     ),
-    background: selectThemeVariant(
-      {
-        dark: theme.palette.dark2,
-        light: theme.background.dropdown,
-      },
-      theme.type
-    ),
-    shadow: selectThemeVariant(
-      {
-        light: theme.palette.gray85,
-        dark: theme.palette.black,
-      },
-      theme.type
-    ),
+    background: theme.colors.dropdownBg,
+    shadow: theme.colors.dropdownShadow,
     formBackground: selectThemeVariant(
       {
         dark: theme.palette.gray15,

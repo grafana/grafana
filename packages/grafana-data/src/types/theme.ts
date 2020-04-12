@@ -112,11 +112,9 @@ export interface GrafanaTheme extends GrafanaThemeCommons {
   type: GrafanaThemeType;
   isDark: boolean;
   isLight: boolean;
-  background: {
-    dropdown: string;
-    scrollbar: string;
-    scrollbar2: string;
-    pageHeader: string;
+  colors: {
+    dropdownBg: string;
+    dropdownShadow: string;
   };
   palette: {
     black: string;

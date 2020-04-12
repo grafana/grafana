@@ -46,6 +46,10 @@ const lightTheme: GrafanaTheme = {
   isDark: false,
   isLight: true,
   name: 'Grafana Light',
+  colors: {
+    dropdownBg: basicColors.white,
+    dropdownShadow: basicColors.gray1,
+  },
   palette: {
     ...basicColors,
     variable: basicColors.blue,
@@ -115,12 +119,6 @@ const lightTheme: GrafanaTheme = {
     formCheckboxBgChecked: basicColors.blueShade,
     formCheckboxBgCheckedHover: basicColors.blueBase,
     formCheckboxCheckmark: basicColors.white,
-  },
-  background: {
-    dropdown: basicColors.white,
-    scrollbar: basicColors.gray5,
-    scrollbar2: basicColors.gray5,
-    pageHeader: `linear-gradient(90deg, ${basicColors.white}, ${basicColors.gray7})`,
   },
   shadow: {
     pageHeader: `inset 0px -3px 10px ${basicColors.gray6}`,
