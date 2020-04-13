@@ -1,9 +1,10 @@
 import React, { Dispatch, FC } from 'react';
 import { ConfirmModal } from '@grafana/ui';
+import { getLocationSrv } from '@grafana/runtime';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { DashboardSection, SearchAction } from '../types';
 import { getCheckedUids } from '../utils';
-import { DELETE_ITEM } from '../reducers/actionTypes';
+import { DELETE_ITEMS } from '../reducers/actionTypes';
 
 interface Props {
   dispatch: Dispatch<SearchAction>;
@@ -21,7 +22,7 @@ export const ConfirmDeleteModal: FC<Props> = ({ results, dispatch, isOpen, onClo
 
   if (folderCount > 0 && dashCount > 0) {
     text += `selected folder${folderCount === 1 ? '' : 's'} and dashboard${dashCount === 1 ? '' : 's'}?`;
-    text += `\nAll dashboards of the selected folder${folderCount === 1 ? '' : 's'} will also be deleted`;
+    text += `All dashboards of the selected folder${folderCount === 1 ? '' : 's'} will also be deleted`;
   } else if (folderCount > 0) {
     text += `selected folder${folderCount === 1 ? '' : 's'} and all its dashboards?`;
   } else {
@@ -30,7 +31,10 @@ export const ConfirmDeleteModal: FC<Props> = ({ results, dispatch, isOpen, onClo
 
   const deleteItems = () => {
     backendSrv.deleteFoldersAndDashboards(folders, dashboards).then(() => {
-      dispatch({ type: DELETE_ITEM, payload: uids });
+      onClose();
+      // Redirect to /dashboard in case folder was deleted from f/:folder.uid
+      getLocationSrv().update({ path: '/dashboards' });
+      dispatch({ type: DELETE_ITEMS, payload: { folders, dashboards } });
     });
   };
 

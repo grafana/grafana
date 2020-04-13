@@ -4,8 +4,8 @@ import {
   TOGGLE_EDIT_PERMISSIONS,
   TOGGLE_ALL_CHECKED,
   TOGGLE_CHECKED,
-  MOVE_ITEM,
-  DELETE_ITEM,
+  MOVE_ITEMS,
+  DELETE_ITEMS,
 } from './actionTypes';
 import { dashboardsSearchState, DashboardsSearchState, searchReducer } from './dashboardSearch';
 import { mergeReducers } from '../utils';
@@ -52,11 +52,23 @@ const reducer = (state: ManageDashboardsState, action: SearchAction) => {
           return result;
         }),
       };
-
-    case MOVE_ITEM:
+    case MOVE_ITEMS:
       return state;
-    case DELETE_ITEM:
-      return state;
+    case DELETE_ITEMS: {
+      const { folders, dashboards } = action.payload;
+      if (!folders.length && !dashboards.length) {
+        return state;
+      }
+      return {
+        ...state,
+        results: state.results.reduce((filtered, result) => {
+          if (!folders.includes(result.uid)) {
+            return [...filtered, { ...result, items: result.items.filter(item => !dashboards.includes(item.uid)) }];
+          }
+          return filtered;
+        }, []),
+      };
+    }
     default:
       return state;
   }

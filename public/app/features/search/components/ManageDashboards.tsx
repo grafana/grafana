@@ -52,11 +52,12 @@ const initQuery = (folderId: number) => {
   return defaultQuery;
 };
 
+const { isEditor } = contextSrv;
 export const ManageDashboards: FC<Props> = ({ folderId, folderUid }) => {
   const [query, setQuery] = useState(() => initQuery(folderId));
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
 
-  const [{ canSave, allChecked, isEditor, hasEditPermissionInFolders, results, loading }, dispatch] = useReducer(
+  const [{ canSave, allChecked, hasEditPermissionInFolders, results, loading }, dispatch] = useReducer(
     manageDashboardsReducer,
     {
       ...manageDashboardsState,

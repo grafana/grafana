@@ -1,4 +1,4 @@
-import { DashboardSection, DashboardSectionItem, SearchAction } from './types';
+import { DashboardSection, DashboardSectionItem, SearchAction, UidsToDelete } from './types';
 import { NO_ID_SECTIONS } from './constants';
 import { parse, SearchParserResult } from 'search-query-parser';
 
@@ -117,7 +117,7 @@ export const mergeReducers = (reducers: any[]) => (prevState: any, action: Searc
  * Collect uids of all checked folders and dashboards. Used for delete operation, among others
  * @param sections
  */
-export const getCheckedUids = (sections: DashboardSection[]): { folders: string[]; dashboards: string[] } => {
+export const getCheckedUids = (sections: DashboardSection[]): UidsToDelete => {
   return sections.reduce(
     (result, section) => {
       if (section?.id !== 0 && section.checked) {
