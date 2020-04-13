@@ -47,9 +47,18 @@ const borders = {
   border2: basicColors.gray85,
 };
 
+const textColors = {
+  // Text colors
+  text: basicColors.gray33,
+  textStrong: basicColors.gray15,
+  textWeak: basicColors.gray60,
+  textFaint: basicColors.gray70,
+  textBlue: basicColors.blue85,
+};
+
 const form = {
-  formLabel: basicColors.gray33,
-  formDescription: basicColors.gray33,
+  formLabel: textColors.text,
+  formDescription: textColors.textWeak,
   formLegend: basicColors.gray25,
   formInputBg: basicColors.white,
   formInputBgDisabled: basicColors.gray95,
@@ -57,10 +66,9 @@ const form = {
   formInputBorderHover: basicColors.gray70,
   formInputBorderActive: basicColors.blue77,
   formInputBorderInvalid: basicColors.red88,
-  formInputText: basicColors.gray25,
-  formInputPlaceholderText: basicColors.gray70,
-  formInputDisabledText: basicColors.gray33,
-  formInputTextStrong: basicColors.gray25,
+  formInputText: textColors.text,
+  formInputPlaceholderText: textColors.textFaint,
+  formInputDisabledText: textColors.textWeak,
   formFocusOutline: basicColors.blue95,
   formValidationMessageText: basicColors.white,
   formValidationMessageBg: basicColors.red88,
@@ -99,6 +107,8 @@ const lightTheme: GrafanaTheme = {
   colors: {
     ...backgrounds,
     ...borders,
+    ...textColors,
+    ...form,
 
     bodyBg: backgrounds.bg1,
     panelBg: backgrounds.bg1,
@@ -110,22 +120,12 @@ const lightTheme: GrafanaTheme = {
     dropdownShadow: basicColors.gray3,
     dropdownOptionHoverBg: backgrounds.bg2,
 
-    // Text colors
-    text: basicColors.gray1,
-    textStrong: basicColors.dark2,
-    textWeak: basicColors.gray2,
-    textEmphasis: basicColors.dark5,
-    textFaint: basicColors.dark4,
-    textBlue: basicColors.blue85,
-
     // Link colors
-    link: basicColors.gray1,
-    linkDisabled: basicColors.gray3,
-    linkHover: basicColors.dark1,
+    link: textColors.text,
+    linkDisabled: textColors.textWeak,
+    linkHover: textColors.textStrong,
     linkExternal: basicColors.blue85,
-    textHeading: basicColors.gray1,
-
-    ...form,
+    textHeading: basicColors.gray25,
   },
 };
 

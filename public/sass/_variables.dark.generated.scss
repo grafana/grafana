@@ -91,10 +91,10 @@ $page-bg: #141619;
 $dashboard-bg: #0b0c0e;
 
 $text-color: #c7d0d9;
-$text-color-strong: #ffffff;
-$text-color-weak: #8e8e8e;
-$text-color-faint: #222426;
-$text-color-emphasis: #ececec;
+$text-color-strong: #f7f8fa;
+$text-color-weak: #7b8087;
+$text-color-faint: #464c54;
+$text-color-emphasis: #f7f8fa;
 $text-blue: #33a2e5;
 
 $text-shadow-faint: 1px 1px 4px rgb(45, 45, 45);
@@ -208,7 +208,7 @@ $input-border-color: #343b40;
 $input-box-shadow: none;
 $input-border-focus: #5794f2;
 $input-box-shadow-focus: $blue-light !default;
-$input-color-placeholder: #555555;
+$input-color-placeholder: #464c54;
 $input-label-bg: #202226;
 $input-color-select-arrow: $white;
 
@@ -381,7 +381,7 @@ $panel-editor-viz-item-bg-hover: darken($blue-base, 46%);
 $panel-options-group-border: none;
 $panel-options-group-header-bg: #202226;
 
-$panel-grid-placeholder-bg: #1f60c4;
+$panel-grid-placeholder-bg: darken(#1f60c4, 30%);
 $panel-grid-placeholder-shadow: 0 0 4px #3274d9;
 
 // logs

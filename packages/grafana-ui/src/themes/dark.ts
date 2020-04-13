@@ -48,21 +48,28 @@ const borders = {
   border2: basicColors.gray25,
 };
 
+const textColors = {
+  textHeading: basicColors.gray4,
+  text: basicColors.gray85,
+  textStrong: basicColors.gray98,
+  textWeak: basicColors.gray60,
+  textFaint: basicColors.gray33,
+  textBlue: basicColors.blue85,
+};
+
 const form = {
   // Next-gen forms functional colors
   formLabel: basicColors.gray70,
   formDescription: basicColors.gray60,
-  formLegend: basicColors.gray85,
   formInputBg: basicColors.gray05,
   formInputBgDisabled: basicColors.gray10,
   formInputBorder: basicColors.gray25,
   formInputBorderHover: basicColors.gray33,
   formInputBorderActive: basicColors.blue95,
   formInputBorderInvalid: basicColors.red88,
-  formInputPlaceholderText: basicColors.gray1,
+  formInputPlaceholderText: textColors.textFaint,
   formInputText: basicColors.gray85,
   formInputDisabledText: basicColors.gray70,
-  formInputTextStrong: basicColors.gray85,
   formFocusOutline: basicColors.blue77,
   formValidationMessageText: basicColors.white,
   formValidationMessageBg: basicColors.red88,
@@ -102,6 +109,7 @@ const darkTheme: GrafanaTheme = {
     ...backgrounds,
     ...borders,
     ...form,
+    ...textColors,
 
     bodyBg: backgrounds.bg1,
     panelBg: backgrounds.bg1,
@@ -112,15 +120,6 @@ const darkTheme: GrafanaTheme = {
     dropdownBg: form.formInputBg,
     dropdownShadow: basicColors.black,
     dropdownOptionHoverBg: backgrounds.bg2,
-
-    // text
-    textHeading: basicColors.gray4,
-    text: basicColors.gray85,
-    textStrong: basicColors.white,
-    textWeak: basicColors.gray2,
-    textEmphasis: basicColors.gray5,
-    textFaint: basicColors.dark5,
-    textBlue: basicColors.blue85,
 
     link: basicColors.gray4,
     linkDisabled: basicColors.gray2,

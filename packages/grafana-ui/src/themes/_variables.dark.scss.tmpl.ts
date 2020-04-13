@@ -91,7 +91,7 @@ $text-color: ${theme.colors.text};
 $text-color-strong: ${theme.colors.textStrong};
 $text-color-weak: ${theme.colors.textWeak};
 $text-color-faint: ${theme.colors.textFaint};
-$text-color-emphasis: ${theme.colors.textEmphasis};
+$text-color-emphasis: ${theme.colors.textStrong};
 $text-blue: ${theme.colors.textBlue};
 
 $text-shadow-faint: 1px 1px 4px rgb(45, 45, 45);
@@ -378,7 +378,7 @@ $panel-editor-viz-item-bg-hover: darken($blue-base, 46%);
 $panel-options-group-border: none;
 $panel-options-group-header-bg: ${theme.colors.bg2};
 
-$panel-grid-placeholder-bg: ${theme.palette.blue77};
+$panel-grid-placeholder-bg: darken(${theme.palette.blue77}, 30%);
 $panel-grid-placeholder-shadow: 0 0 4px ${theme.palette.blue80};
 
 // logs

@@ -2,7 +2,7 @@ import React, { FC } from 'react';
 import { css, cx } from 'emotion';
 import { useTheme } from '../../themes/ThemeContext';
 import { Icon } from '../Icon/Icon';
-import { HorizontalGroup, VerticalGroup } from '../Layout/Layout';
+import { HorizontalGroup } from '../Layout/Layout';
 
 interface DemoBoxProps {
   bg: string;
@@ -92,9 +92,6 @@ export const ThemeColors = () => {
             <DemoText color={theme.colors.textFaint}>
               textFaint <Icon name="trash-alt" />
             </DemoText>
-            <DemoText color={theme.colors.textEmphasis}>
-              textEmphasis <Icon name="trash-alt" />
-            </DemoText>
             <DemoText color={theme.colors.textStrong}>
               textStrong <Icon name="trash-alt" />
             </DemoText>
@@ -119,7 +116,6 @@ export const ThemeColors = () => {
         <DemoBox bg={theme.colors.formInputBg}>
           This is inside form input bg (same as dashboard bg)
           <DemoText color={theme.colors.formInputText}>formInputText</DemoText>
-          <DemoText color={theme.colors.formInputTextStrong}>formInputTextStrong</DemoText>
           <DemoText color={theme.colors.formInputDisabledText}>formInputDisabledText</DemoText>
           <DemoText color={theme.colors.formInputPlaceholderText}>formInputPlaceholderText</DemoText>
         </DemoBox>
@@ -133,9 +129,6 @@ export const ThemeColors = () => {
           </DemoText>
           <DemoText color={theme.colors.textFaint}>
             textFaint <Icon name="trash-alt" />
-          </DemoText>
-          <DemoText color={theme.colors.textEmphasis}>
-            textEmphasis <Icon name="trash-alt" />
           </DemoText>
           <DemoText color={theme.colors.textStrong}>
             textStrong <Icon name="trash-alt" />

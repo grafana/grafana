@@ -87,7 +87,6 @@ const theme: GrafanaThemeCommons = {
     formSpacingBase: SPACING_BASE,
     formMargin: `${SPACING_BASE * 4}px`,
     formFieldsetMargin: `${SPACING_BASE * 2}px`,
-    formLegendMargin: `0 0 ${SPACING_BASE * 2}px 0`,
     formInputHeight: `${SPACING_BASE * 4}px`,
     formButtonHeight: SPACING_BASE * 4,
     formInputPaddingHorizontal: `${SPACING_BASE}px`,

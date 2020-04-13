@@ -84,11 +84,11 @@ $body-bg: #ffffff;
 $page-bg: #ffffff;
 $dashboard-bg: #f7f8fa;
 
-$text-color: #52545c;
-$text-color-strong: #41444b;
-$text-color-weak: #767980;
-$text-color-faint: #35373f;
-$text-color-emphasis: #41444b;
+$text-color: #464c54;
+$text-color-strong: #202226;
+$text-color-weak: #7b8087;
+$text-color-faint: #9fa7b3;
+$text-color-emphasis: #202226;
 $text-blue: #33a2e5;
 
 $text-shadow-faint: none;
@@ -99,14 +99,14 @@ $brand-gradient-vertical: linear-gradient(#f05a28 30%, #fbca0a 99%);
 
 // Links
 // -------------------------
-$link-color: #52545c;
-$link-color-disabled: #acb6bf;
-$link-hover-color: #1e2028;
+$link-color: #464c54;
+$link-color-disabled: #7b8087;
+$link-hover-color: #202226;
 $external-link-color: #33a2e5;
 
 // Typography
 // -------------------------
-$headings-color: #52545c;
+$headings-color: #343b40;
 $abbr-border-color: $gray-2 !default;
 $text-muted: $text-color-weak;
 
@@ -196,7 +196,7 @@ $btn-active-box-shadow: 0px 0px 4px rgba(234, 161, 51, 0.6);
 $input-bg: $white;
 $input-bg-disabled: $gray-5;
 
-$input-color: #343b40;
+$input-color: #464c54;
 $input-border-color: #c7d0d9;
 $input-box-shadow: none;
 $input-border-focus: #5794f2;
@@ -374,7 +374,7 @@ $panel-editor-viz-item-bg-hover: lighten($blue-base, 45%);
 $panel-options-group-border: none;
 $panel-options-group-header-bg: $gray-5;
 
-$panel-grid-placeholder-bg: #1f60c4;
+$panel-grid-placeholder-bg: lighten(#5794f2, 30%);
 $panel-grid-placeholder-shadow: 0 0 4px #5794f2;
 
 // logs

@@ -6,9 +6,9 @@ import { stylesFactory } from './stylesFactory';
 export function cardChrome(theme: GrafanaTheme): string {
   if (theme.isDark) {
     return `
-       background: linear-gradient(135deg, ${theme.palette.dark8}, ${theme.palette.dark6});
+       background: ${theme.colors.bg2};
        &:hover {
-         background: linear-gradient(135deg, ${theme.palette.dark9}, ${theme.palette.dark6});
+         background: ${theme.colors.bg3};
        }
        box-shadow: -1px -1px 0 0 hsla(0, 0%, 100%, 0.1), 1px 1px 0 0 rgba(0, 0, 0, 0.3);
        border-radius: ${theme.border.radius.md};
@@ -28,9 +28,9 @@ export function cardChrome(theme: GrafanaTheme): string {
 export function listItem(theme: GrafanaTheme): string {
   if (theme.isDark) {
     return `
-       background: ${theme.palette.dark7};
+       background: ${theme.colors.bg2};
        &:hover {
-         background: ${theme.palette.dark9};
+         background: ${theme.colors.bg3};
        }
        box-shadow: -1px -1px 0 0 hsla(0, 0%, 100%, 0.1), 1px 1px 0 0 rgba(0, 0, 0, 0.3);
        border-radius: ${theme.border.radius.md};

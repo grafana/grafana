@@ -67,7 +67,6 @@ export interface GrafanaThemeCommons {
     formSpacingBase: number;
     formMargin: string;
     formFieldsetMargin: string;
-    formLegendMargin: string;
     formInputHeight: string;
     formButtonHeight: number;
     formInputPaddingHorizontal: string;
@@ -210,14 +209,12 @@ export interface GrafanaTheme extends GrafanaThemeCommons {
     textStrong: string;
     textWeak: string;
     textFaint: string;
-    textEmphasis: string;
     textHeading: string;
     textBlue: string;
 
     // Next-gen forms functional colors
     formLabel: string;
     formDescription: string;
-    formLegend: string;
     formInputBg: string;
     formInputBgDisabled: string;
     formInputBorder: string;
@@ -228,7 +225,6 @@ export interface GrafanaTheme extends GrafanaThemeCommons {
     formInputText: string;
     formInputDisabledText: string;
     formInputPlaceholderText: string;
-    formInputTextStrong: string;
     formValidationMessageText: string;
     formValidationMessageBg: string;
     formSwitchBg: string;
