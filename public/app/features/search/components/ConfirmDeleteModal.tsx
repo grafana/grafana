@@ -1,11 +1,12 @@
 import React, { Dispatch, FC } from 'react';
-import { ConfirmModal, stylesFactory } from '@grafana/ui';
+import { css } from 'emotion';
+import { GrafanaTheme } from '@grafana/data';
+import { ConfirmModal, stylesFactory, useTheme } from '@grafana/ui';
 import { getLocationSrv } from '@grafana/runtime';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { DashboardSection, SearchAction } from '../types';
 import { getCheckedUids } from '../utils';
 import { DELETE_ITEMS } from '../reducers/actionTypes';
-import { css } from 'emotion';
 
 interface Props {
   dispatch: Dispatch<SearchAction>;
@@ -15,7 +16,8 @@ interface Props {
 }
 
 export const ConfirmDeleteModal: FC<Props> = ({ results, dispatch, isOpen, onClose }) => {
-  const styles = getStyles();
+  const theme = useTheme();
+  const styles = getStyles(theme);
   const uids = getCheckedUids(results);
   const { folders, dashboards } = uids;
   const folderCount = folders.length;
@@ -59,11 +61,11 @@ export const ConfirmDeleteModal: FC<Props> = ({ results, dispatch, isOpen, onClo
   );
 };
 
-const getStyles = stylesFactory(() => {
+const getStyles = stylesFactory((theme: GrafanaTheme) => {
   return {
     subtitle: css`
-      font-size: 14px;
-      padding-top: 14px;
+      font-size: ${theme.typography.size.base};
+      padding-top: ${theme.spacing.md};
     `,
   };
 });
