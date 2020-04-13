@@ -9,7 +9,7 @@ rm /bin/cp
 mv /usr/local/bin/cp /bin/cp
 
 sed -i -e 's/v[[:digit:]]\..*\//edge\//g' /etc/apk/repositories
-apk add nodejs npm yarn build-base
+apk add nodejs npm yarn build-base openssh
 
 # Install Go
 filename="go1.14.linux-amd64.tar.gz"
