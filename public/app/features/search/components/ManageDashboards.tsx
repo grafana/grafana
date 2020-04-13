@@ -56,13 +56,13 @@ export const ManageDashboards: FC<Props> = ({ folderId, folderUid }) => {
   const [query, setQuery] = useState(() => initQuery(folderId));
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
 
-  const [
-    { canMove, canDelete, canSave, allChecked, isEditor, hasEditPermissionInFolders, results, loading },
-    dispatch,
-  ] = useReducer(manageDashboardsReducer, {
-    ...manageDashboardsState,
-    hasEditPermissionInFolders: contextSrv.hasEditPermissionInFolders,
-  });
+  const [{ canSave, allChecked, isEditor, hasEditPermissionInFolders, results, loading }, dispatch] = useReducer(
+    manageDashboardsReducer,
+    {
+      ...manageDashboardsState,
+      hasEditPermissionInFolders: contextSrv.hasEditPermissionInFolders,
+    }
+  );
 
   const search = () => {
     searchSrv
@@ -121,6 +121,9 @@ export const ManageDashboards: FC<Props> = ({ folderId, folderUid }) => {
   };
 
   const hasFilters = query.query.length > 0 || query.tag.length > 0 || query.starred;
+  // TODO Memoize?
+  const canMove = results.some((result: DashboardSection) => result.items.some(item => item.checked));
+  const canDelete = canMove || results.some((result: DashboardSection) => result.checked);
 
   return (
     <div className="dashboard-list">

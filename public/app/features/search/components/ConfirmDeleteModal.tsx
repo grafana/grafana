@@ -1,9 +1,9 @@
 import React, { Dispatch, FC } from 'react';
 import { ConfirmModal } from '@grafana/ui';
+import { backendSrv } from 'app/core/services/backend_srv';
 import { DashboardSection, SearchAction } from '../types';
 import { getCheckedUids } from '../utils';
 import { DELETE_ITEM } from '../reducers/actionTypes';
-import { backendSrv } from '../../../core/services/backend_srv';
 
 interface Props {
   dispatch: Dispatch<SearchAction>;
@@ -18,11 +18,10 @@ export const ConfirmDeleteModal: FC<Props> = ({ results, dispatch, isOpen, onClo
   const folderCount = folders.length;
   const dashCount = dashboards.length;
   let text = 'Do you want to delete the ';
-  let text2;
 
   if (folderCount > 0 && dashCount > 0) {
     text += `selected folder${folderCount === 1 ? '' : 's'} and dashboard${dashCount === 1 ? '' : 's'}?`;
-    text2 = `All dashboards of the selected folder${folderCount === 1 ? '' : 's'} will also be deleted`;
+    text += `\nAll dashboards of the selected folder${folderCount === 1 ? '' : 's'} will also be deleted`;
   } else if (folderCount > 0) {
     text += `selected folder${folderCount === 1 ? '' : 's'} and all its dashboards?`;
   } else {
@@ -39,8 +38,8 @@ export const ConfirmDeleteModal: FC<Props> = ({ results, dispatch, isOpen, onClo
     <ConfirmModal
       isOpen={isOpen}
       title="Delete"
-      body={text + text2}
-      confirmText={'Confirm'}
+      body={text}
+      confirmText="Delete"
       onConfirm={deleteItems}
       onDismiss={onClose}
     />
