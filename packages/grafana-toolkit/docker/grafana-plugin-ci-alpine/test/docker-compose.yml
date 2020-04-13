@@ -8,3 +8,11 @@ services:
       - ../install:/home/circleci/install
       - ${HOME}/.ssh:/root/.ssh
       - ../../..:/home/circleci/grafana-toolkit
+  cibuilt:
+    image: "srclosson/grafana-plugin-ci-alpine"
+    user: root
+    volumes:
+      - ../scripts:/home/circleci/scripts
+      - ../install:/home/circleci/install
+      - ${HOME}/.ssh:/root/.ssh
+      - ../../..:/home/circleci/grafana-toolkit
