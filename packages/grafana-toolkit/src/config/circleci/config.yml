@@ -121,7 +121,7 @@ jobs:
     - run:
         name: Setup Grafana (local install)
         command: |
-          gget latest
+          ginstall latest
           /opt/grafana/bin/grafana-server -config ci/grafana-test-env/custom.ini -homepath /opt/grafana &
           /opt/grafana/bin/grafana-cli --version
     - run:
