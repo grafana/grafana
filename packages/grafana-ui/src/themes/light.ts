@@ -64,7 +64,6 @@ const form = {
   formInputPlaceholderText: basicColors.gray70,
   formInputDisabledText: basicColors.gray33,
   formInputTextStrong: basicColors.gray25,
-  formInputTextWhite: basicColors.white,
   formFocusOutline: basicColors.blueLight,
   formValidationMessageText: basicColors.white,
   formValidationMessageBg: basicColors.red88,
@@ -127,7 +126,7 @@ const lightTheme: GrafanaTheme = {
     linkDisabled: basicColors.gray3,
     linkHover: basicColors.dark1,
     linkExternal: basicColors.blueLight,
-    headingColor: basicColors.gray1,
+    textHeading: basicColors.gray1,
 
     ...form,
   },

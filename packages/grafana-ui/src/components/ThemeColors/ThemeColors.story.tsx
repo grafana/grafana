@@ -1,7 +1,9 @@
-import React from 'react';
+import React, { FC } from 'react';
 import { css, cx } from 'emotion';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { useTheme } from '../../themes/ThemeContext';
+import { Icon } from '../Icon/Icon';
+import { HorizontalGroup } from '../Layout/Layout';
 
 export default {
   title: 'General/ThemeColors',
@@ -12,23 +14,22 @@ export default {
   },
 };
 
-interface DemoElement {
-  name: string;
+interface DemoBoxProps {
   bg: string;
   border?: string;
   textColor?: string;
-  child?: DemoElement;
 }
 
-function renderElement(el: DemoElement) {
+const DemoBox: FC<DemoBoxProps> = ({ bg, border, children }) => {
   const style = cx(
     css`
-      padding: 36px;
-      background: ${el.bg};
+      padding: 16px 32px;
+      background: ${bg};
+      width: 100%;
     `,
-    el.border
+    border
       ? css`
-          border: 1px solid ${el.border};
+          border: 1px solid ${border};
         `
       : null
   );
@@ -37,40 +38,117 @@ function renderElement(el: DemoElement) {
     <div className={style}>
       <div
         className={css`
-          padding: 8px;
+          padding-bottom: 16px;
         `}
       >
-        {el.name}
+        {name}
       </div>
-      {el.child && renderElement(el.child)}
+      {children}
     </div>
   );
-}
+};
+
+const DemoText: FC<{ color?: string }> = ({ color, children }) => {
+  const style = css`
+    padding: 4px;
+    color: ${color ?? 'inherit'};
+  `;
+
+  return <div className={style}>{children}</div>;
+};
 
 export const BackgroundsAndBorders = () => {
   const theme = useTheme();
 
-  const lvl1 = {
-    name: 'dashbord background',
-    bg: theme.colors.dashboardBg,
-    child: {
-      name: 'colors.bg1',
-      bg: theme.colors.bg1,
-      border: theme.colors.border1,
-      child: {
-        name:
-          'colors.bg2 background used for elements placed on colors.bg1. Using colors.border1 should be used on elements placed ontop of bg1',
-        bg: theme.colors.bg2,
-        border: theme.colors.border2,
-        child: {
-          name:
-            'colors.bg3 background used for elements placed on colors.bg2 with colors.border2 used for elements placed on bg2',
-          bg: theme.colors.bg3,
-          border: theme.colors.border2,
-        },
-      },
-    },
-  };
+  return (
+    <DemoBox bg={theme.colors.dashboardBg}>
+      <DemoText>theme.colors.dashboardBg</DemoText>
+      <DemoBox bg={theme.colors.bg1} border={theme.colors.border1}>
+        <DemoText>theme.colors.bg1 is the main & preferred content background for text and elements</DemoText>
+        <DemoBox bg={theme.colors.bg2} border={theme.colors.border2}>
+          <DemoText>
+            colors.bg2 background used for elements placed on colors.bg1. Using colors.border1 should be used on
+            elements placed ontop of bg1
+          </DemoText>
+          <DemoBox bg={theme.colors.bg3} border={theme.colors.border2}>
+            <DemoText>
+              colors.bg3 background used for elements placed on colors.bg2 with colors.border2 used for elements placed
+              on bg2
+            </DemoText>
+          </DemoBox>
+        </DemoBox>
+      </DemoBox>
+    </DemoBox>
+  );
+};
 
-  return <div>{renderElement(lvl1)}</div>;
+export const TextColors = () => {
+  const theme = useTheme();
+
+  return (
+    <HorizontalGroup>
+      <DemoBox bg={theme.colors.bodyBg}>
+        <>
+          Text on main body background (bg1)
+          <DemoText color={theme.colors.textHeading}>
+            textHeading <Icon name="trash-alt" />
+          </DemoText>
+          <DemoText color={theme.colors.text}>
+            text <Icon name="trash-alt" />
+          </DemoText>
+          <DemoText color={theme.colors.textWeak}>
+            textWeak <Icon name="trash-alt" />
+          </DemoText>
+          <DemoText color={theme.colors.textFaint}>
+            textFaint <Icon name="trash-alt" />
+          </DemoText>
+          <DemoText color={theme.colors.textEmphasis}>
+            textEmphasis <Icon name="trash-alt" />
+          </DemoText>
+          <DemoText color={theme.colors.textStrong}>
+            textStrong <Icon name="trash-alt" />
+          </DemoText>
+          <DemoText color={theme.colors.formInputText}>
+            formInputText <Icon name="trash-alt" />
+          </DemoText>
+          <DemoText color={theme.colors.formLabel}>
+            formLabel <Icon name="trash-alt" />
+          </DemoText>
+          <DemoText color={theme.colors.formDescription}>
+            formDescription <Icon name="trash-alt" />
+          </DemoText>
+          <DemoText color={theme.colors.textBlue}>textBlue</DemoText>
+          <DemoText color={theme.colors.link}>link</DemoText>
+          <DemoText color={theme.colors.linkHover}>linkHover</DemoText>
+          <DemoText color={theme.colors.linkDisabled}>linkDisabled</DemoText>
+          <DemoText color={theme.colors.linkExternal}>linkExternal</DemoText>
+        </>
+      </DemoBox>
+      <DemoBox bg={theme.colors.formInputBg}>
+        This is inside form input bg (same as dashboard bg)
+        <DemoText color={theme.colors.formInputText}>formInputText</DemoText>
+        <DemoText color={theme.colors.formInputTextStrong}>formInputTextStrong</DemoText>
+        <DemoText color={theme.colors.formInputDisabledText}>formInputDisabledText</DemoText>
+        <DemoText color={theme.colors.formInputPlaceholderText}>formInputPlaceholderText</DemoText>
+      </DemoBox>
+      <DemoBox bg={theme.colors.bg2}>
+        Inside bg2
+        <DemoText color={theme.colors.text}>
+          text <Icon name="trash-alt" />
+        </DemoText>
+        <DemoText color={theme.colors.textWeak}>
+          textWeak <Icon name="trash-alt" />
+        </DemoText>
+        <DemoText color={theme.colors.textFaint}>
+          textFaint <Icon name="trash-alt" />
+        </DemoText>
+        <DemoText color={theme.colors.textEmphasis}>
+          textEmphasis <Icon name="trash-alt" />
+        </DemoText>
+        <DemoText color={theme.colors.textStrong}>
+          textStrong <Icon name="trash-alt" />
+        </DemoText>
+      </DemoBox>
+    </HorizontalGroup>
+  );
 };

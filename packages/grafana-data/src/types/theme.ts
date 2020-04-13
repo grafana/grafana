@@ -212,7 +212,7 @@ export interface GrafanaTheme extends GrafanaThemeCommons {
     textWeak: string;
     textFaint: string;
     textEmphasis: string;
-    headingColor: string;
+    textHeading: string;
     textBlue: string;
 
     // Next-gen forms functional colors
@@ -230,7 +230,6 @@ export interface GrafanaTheme extends GrafanaThemeCommons {
     formInputDisabledText: string;
     formInputPlaceholderText: string;
     formInputTextStrong: string;
-    formInputTextWhite: string;
     formValidationMessageText: string;
     formValidationMessageBg: string;
     formSwitchBg: string;

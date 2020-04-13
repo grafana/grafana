@@ -111,7 +111,7 @@ $external-link-color: ${theme.colors.linkExternal};
 
 // Typography
 // -------------------------
-$headings-color: ${theme.colors.headingColor};
+$headings-color: ${theme.colors.textHeading};
 $abbr-border-color: $gray-2 !default;
 $text-muted: $text-color-weak;
 

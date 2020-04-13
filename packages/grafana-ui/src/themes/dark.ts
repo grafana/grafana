@@ -66,7 +66,6 @@ const form = {
   formInputText: basicColors.gray85,
   formInputDisabledText: basicColors.gray70,
   formInputTextStrong: basicColors.gray85,
-  formInputTextWhite: basicColors.white,
   formFocusOutline: basicColors.blueShade,
   formValidationMessageText: basicColors.white,
   formValidationMessageBg: basicColors.red88,
@@ -118,7 +117,7 @@ const darkTheme: GrafanaTheme = {
     dropdownOptionHoverBg: backgrounds.bg2,
 
     // text
-    headingColor: basicColors.gray4,
+    textHeading: basicColors.gray4,
     text: basicColors.gray85,
     textStrong: basicColors.white,
     textWeak: basicColors.gray2,
