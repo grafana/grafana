@@ -2,7 +2,7 @@
 
 const fs = require('fs');
 
-entrypoint = () => {
+const entrypoint = () => {
   const defaultEntryPoint = '../src/cli/index.js';
   const toolkitDirectory = `${process.env['PWD']}/node_modules/@grafana/toolkit`;
 
@@ -25,4 +25,4 @@ entrypoint = () => {
   return defaultEntryPoint;
 };
 
-require(entrypoint()).run();
+require(entrypoint());

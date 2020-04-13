@@ -5,6 +5,9 @@ aliases:
   - &filter-only-master
     branches:
       only: master
+  - &filter-only-release
+    branches:
+      only: /^v[1-9]*[0-9]+\.[1-9]*[0-9]+\.x$/
 
 workflows:
   version: 2
@@ -24,11 +27,11 @@ workflows:
           type: approval
           requires:
             - test_integration
-          filters: *filter-only-master
+          filters: *filter-only-release
       - publish_github_release:
           requires:
             - approve_release
-          filters: *filter-only-master
+          filters: *filter-only-release
 
 executors:
   default_exec: # declares a reusable executor
