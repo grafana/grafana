@@ -65,7 +65,7 @@ export const MoveToFolderModal: FC<Props> = ({ results, dispatch, isOpen, onDism
             Move the {selectedDashboards.length} selected dashboard{selectedDashboards.length === 1 ? '' : 's'} to the
             following folder:
           </p>
-          <FolderPicker onChange={f => setFolder(f)} useNewForms />
+          <FolderPicker onChange={f => setFolder(f as FolderInfo)} useNewForms />
         </div>
 
         <HorizontalGroup justify="center">

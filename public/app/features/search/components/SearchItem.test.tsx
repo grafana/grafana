@@ -22,6 +22,7 @@ const setup = (propOverrides?: Partial<Props>, renderMethod = shallow) => {
     item: data,
     onTagSelected: jest.fn(),
     editable: false,
+    dispatch: jest.fn(),
   };
 
   Object.assign(props, propOverrides);

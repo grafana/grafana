@@ -19,6 +19,7 @@ const setup = (propOverrides?: Partial<Props>, renderMethod = shallow) => {
     onTagFilterChange: noop,
     selectedStarredFilter: 'starred',
     selectedTagFilter: ['tag'],
+    dispatch: jest.fn(),
   };
 
   Object.assign(props, propOverrides);
