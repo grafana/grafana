@@ -188,7 +188,7 @@ export default class AdminEditUserCtrl {
       $scope.appEvent(CoreEvents.showConfirmModal, {
         title: 'Delete',
         text: 'Do you want to delete ' + user.login + '?',
-        icon: 'fa-trash',
+        icon: 'trash-alt',
         yesText: 'Delete',
         onConfirm: () => {
           promiseToDigest($scope)(

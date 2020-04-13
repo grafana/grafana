@@ -13,7 +13,7 @@ export function graphiteAddFunc($compile: any) {
   const buttonTemplate =
     '<a class="gf-form-label query-part dropdown-toggle"' +
     ' tabindex="1" gf-dropdown="functionMenu" data-toggle="dropdown">' +
-    '<i class="fa fa-plus"></i></a>';
+    '<icon name="fa fa-plus"></i></a>';
 
   return {
     link: function($scope: any, elem: JQuery) {

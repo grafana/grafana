@@ -3,6 +3,7 @@ import { GrafanaTheme } from '@grafana/data';
 import RcDrawer from 'rc-drawer';
 import { css } from 'emotion';
 import CustomScrollbar from '../CustomScrollbar/CustomScrollbar';
+import { Icon } from '../Icon/Icon';
 import { stylesFactory, useTheme } from '../../themes';
 
 export interface Props {
@@ -93,7 +94,7 @@ export const Drawer: FC<Props> = ({
         <div className={drawerStyles.titleWrapper}>
           <div>{title}</div>
           <div className={drawerStyles.close} onClick={onClose}>
-            <i className="fa fa-close" />
+            <Icon name="times" />
           </div>
         </div>
       )}

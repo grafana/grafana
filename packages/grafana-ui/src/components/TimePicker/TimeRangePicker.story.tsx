@@ -2,16 +2,16 @@ import React from 'react';
 import { storiesOf } from '@storybook/react';
 import { action } from '@storybook/addon-actions';
 
-import { TimePicker } from './TimePicker';
+import { TimeRangePicker } from './TimeRangePicker';
 import { UseState } from '../../utils/storybook/UseState';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { TimeFragment, dateTime } from '@grafana/data';
 
-const TimePickerStories = storiesOf('General/TimePicker', module);
+const TimeRangePickerStories = storiesOf('General/TimeRangePicker', module);
 
-TimePickerStories.addDecorator(withCenteredStory);
+TimeRangePickerStories.addDecorator(withCenteredStory);
 
-TimePickerStories.add('default', () => {
+TimeRangePickerStories.add('default', () => {
   return (
     <UseState
       initialState={{
@@ -22,7 +22,7 @@ TimePickerStories.add('default', () => {
     >
       {(value, updateValue) => {
         return (
-          <TimePicker
+          <TimeRangePicker
             timeZone="browser"
             value={value}
             onChange={timeRange => {

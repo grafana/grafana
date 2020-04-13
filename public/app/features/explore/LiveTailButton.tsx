@@ -3,7 +3,7 @@ import classNames from 'classnames';
 import tinycolor from 'tinycolor2';
 import { css } from 'emotion';
 import { CSSTransition } from 'react-transition-group';
-import { useTheme, Tooltip, stylesFactory, selectThemeVariant } from '@grafana/ui';
+import { useTheme, Tooltip, stylesFactory, selectThemeVariant, Icon } from '@grafana/ui';
 import { GrafanaTheme } from '@grafana/data';
 
 //Components
@@ -151,7 +151,7 @@ export function LiveTailButton(props: LiveTailButtonProps) {
             className={`btn navbar-button navbar-button--attached explore-active-button ${styles.isLive}`}
             onClick={stop}
           >
-            <i className={classNames('fa fa-stop icon-brand-gradient')} />
+            <Icon className="icon-brand-gradient" name="square-shape" />
           </button>
         </div>
       </CSSTransition>

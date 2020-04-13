@@ -71,22 +71,22 @@ export class SettingsCtrl {
       this.sections.push({
         title: 'General',
         id: 'settings',
-        icon: 'gicon gicon-preferences',
+        icon: 'sliders-v-alt',
       });
       this.sections.push({
         title: 'Annotations',
         id: 'annotations',
-        icon: 'gicon gicon-annotation',
+        icon: 'comment-alt',
       });
       this.sections.push({
         title: 'Variables',
         id: 'templating',
-        icon: 'gicon gicon-variable',
+        icon: 'calculator-alt',
       });
       this.sections.push({
         title: 'Links',
         id: 'links',
-        icon: 'gicon gicon-link',
+        icon: 'link',
       });
     }
 
@@ -94,7 +94,7 @@ export class SettingsCtrl {
       this.sections.push({
         title: 'Versions',
         id: 'versions',
-        icon: 'fa fa-fw fa-history',
+        icon: 'history',
       });
     }
 
@@ -102,14 +102,14 @@ export class SettingsCtrl {
       this.sections.push({
         title: 'Permissions',
         id: 'permissions',
-        icon: 'fa fa-fw fa-lock',
+        icon: 'lock',
       });
     }
 
     if (this.dashboard.meta.canMakeEditable) {
       this.sections.push({
         title: 'General',
-        icon: 'gicon gicon-preferences',
+        icon: 'sliders-v-alt',
         id: 'make_editable',
       });
     }
@@ -117,7 +117,7 @@ export class SettingsCtrl {
     this.sections.push({
       title: 'JSON Model',
       id: 'dashboard_json',
-      icon: 'gicon gicon-json',
+      icon: 'arrow',
     });
 
     const params = this.$location.search();
@@ -145,7 +145,7 @@ export class SettingsCtrl {
       this.sections.unshift({
         title: 'Not found',
         id: '404',
-        icon: 'fa fa-fw fa-warning',
+        icon: 'exclamation-triangle',
       });
       this.viewId = '404';
     }
@@ -201,7 +201,7 @@ export class SettingsCtrl {
           File path: ${this.dashboard.meta.provisionedExternalId}
         `,
         text2htmlBind: true,
-        icon: 'fa-trash',
+        icon: 'trash-alt',
         noText: 'OK',
       });
       return;
@@ -220,7 +220,7 @@ export class SettingsCtrl {
       title: 'Delete',
       text: 'Do you want to delete this dashboard?',
       text2: text2,
-      icon: 'fa-trash',
+      icon: 'trash-alt',
       confirmText: confirmText,
       yesText: 'Delete',
       onConfirm: () => {

@@ -107,7 +107,7 @@ export interface State {
   isOpen: boolean;
 }
 
-export class UnthemedTimePicker extends PureComponent<Props, State> {
+export class UnthemedTimeRangePicker extends PureComponent<Props, State> {
   state: State = {
     isOpen: false,
   };
@@ -245,4 +245,4 @@ const adjustedTime = (time: DateTime, isUTC: boolean) => {
   return time.local() || null;
 };
 
-export const TimePicker = withTheme(UnthemedTimePicker);
+export const TimeRangePicker = withTheme(UnthemedTimeRangePicker);

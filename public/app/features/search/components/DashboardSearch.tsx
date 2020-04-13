@@ -143,11 +143,11 @@ export const DashboardSearch: FC<Props> = ({ onCloseSearch, payload = {} }) => {
         <div className="search-dropdown__col_2">
           <div className="search-filter-box">
             <div className="search-filter-box__header">
-              <Icon name="filter" />
+              <Icon name="filter" className={styles.filter} size="sm" />
               Filter by:
               {query.tags.length > 0 && (
                 <a className="pointer pull-right small" onClick={onClearSearchFilters}>
-                  <Icon name="times" /> Clear
+                  <Icon name="times" size="sm" /> Clear
                 </a>
               )}
             </div>
@@ -158,22 +158,22 @@ export const DashboardSearch: FC<Props> = ({ onCloseSearch, payload = {} }) => {
           {canEdit && (
             <div className="search-filter-box" onClick={onCloseSearch}>
               <a href="dashboard/new" className="search-filter-box-link">
-                <i className="gicon gicon-dashboard-new"></i> New dashboard
+                <Icon name="apps" size="xl" className={styles.icon} /> New dashboard
               </a>
               {isEditor && (
                 <a href="dashboards/folder/new" className="search-filter-box-link">
-                  <i className="gicon gicon-folder-new"></i> New folder
+                  <Icon name="folder-plus" size="xl" className={styles.icon} /> New folder
                 </a>
               )}
               <a href="dashboard/import" className="search-filter-box-link">
-                <i className="gicon gicon-dashboard-import"></i> Import dashboard
+                <Icon name="import" size="xl" className={styles.icon} /> Import dashboard
               </a>
               <a
                 className="search-filter-box-link"
                 target="_blank"
                 href="https://grafana.com/dashboards?utm_source=grafana_search"
               >
-                <img src="public/img/icn-dashboard-tiny.svg" width="20" /> Find dashboards on Grafana.com
+                <Icon name="search" size="xl" className={styles.icon} /> Find dashboards on Grafana.com
               </a>
             </div>
           )}
@@ -201,6 +201,13 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
         right: 15px;
         top: 60px;
       }
+    `,
+    icon: css`
+      margin-right: ${theme.spacing.sm};
+      color: ${theme.palette.blue95};
+    `,
+    filter: css`
+      margin-right: ${theme.spacing.xs};
     `,
   };
 });

@@ -24,6 +24,7 @@ import { getRouteParamsId } from 'app/core/selectors/location';
 // Types
 import { CoreEvents, StoreState } from 'app/types/';
 import { UrlQueryMap } from '@grafana/runtime';
+import { Icon } from '@grafana/ui';
 import { DataSourcePluginMeta, DataSourceSettings, NavModel } from '@grafana/data';
 import { getDataSourceLoadingNav } from '../state/navModel';
 import PluginStateinfo from 'app/features/plugins/PluginStateInfo';
@@ -78,7 +79,7 @@ export class DataSourceSettingsPage extends PureComponent<Props> {
       title: 'Delete',
       text: 'Are you sure you want to delete this data source?',
       yesText: 'Delete',
-      icon: 'fa-trash',
+      icon: 'trash-alt',
       onConfirm: () => {
         this.confirmDelete();
       },
@@ -129,7 +130,7 @@ export class DataSourceSettingsPage extends PureComponent<Props> {
     const node = {
       text: msg,
       subTitle: 'Data Source Error',
-      icon: 'fa fa-fw fa-warning',
+      icon: 'exclamation-triangle',
     };
     const nav = {
       node: node,
@@ -206,11 +207,7 @@ export class DataSourceSettingsPage extends PureComponent<Props> {
           {testingStatus && testingStatus.message && (
             <div className={`alert-${testingStatus.status} alert`} aria-label={e2e.pages.DataSource.selectors.alert}>
               <div className="alert-icon">
-                {testingStatus.status === 'error' ? (
-                  <i className="fa fa-exclamation-triangle" />
-                ) : (
-                  <i className="fa fa-check" />
-                )}
+                {testingStatus.status === 'error' ? <Icon name="exclamation-triangle" /> : <Icon name="check" />}
               </div>
               <div className="alert-body">
                 <div className="alert-title" aria-label={e2e.pages.DataSource.selectors.alertMessage}>

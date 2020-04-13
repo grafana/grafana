@@ -43,8 +43,6 @@ $select-input-bg-disabled: $input-bg-disabled;
 }
 
 .gf-form-select-box__input {
-  padding-left: 5px;
-
   input {
     line-height: inherit;
   }
@@ -122,7 +120,7 @@ $select-input-bg-disabled: $input-bg-disabled;
 
 .gf-form-select-box__value-container {
   display: inline-block;
-  padding: 6px 16px 6px 10px;
+  padding: 6px 20px 6px 10px;
   vertical-align: middle;
 
   > div {

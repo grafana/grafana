@@ -26,21 +26,26 @@ const getStyles = stylesFactory(() => {
       label: popup;
       z-index: 100;
     `,
+    icon: css`
+      margin-left: 4px;
+    `,
   };
 });
 
 export const ButtonCascader: React.FC<ButtonCascaderProps> = props => {
   const { onChange, className, loadData, ...rest } = props;
+  const styles = getStyles();
+
   return (
     <RCCascader
       onChange={onChangeCascader(onChange)}
       loadData={onLoadDataCascader(loadData)}
-      popupClassName={getStyles().popup}
+      popupClassName={styles.popup}
       {...rest}
       expandIcon={null}
     >
       <button className={cx('gf-form-label', className)} disabled={props.disabled}>
-        {props.children} <Icon name="angle-down" />
+        {props.children} <Icon name="angle-down" className={styles.icon} />
       </button>
     </RCCascader>
   );

@@ -41,7 +41,7 @@ class InviteeRow extends PureComponent<Props> {
         </td>
         <td>
           <button className="btn btn-danger btn-small" onClick={() => revokeInvite(invitee.code)}>
-            <Icon name="times" />
+            <Icon name="times" style={{ marginBottom: 0 }} />
           </button>
         </td>
       </tr>
