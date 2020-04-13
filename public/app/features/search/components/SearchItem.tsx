@@ -13,7 +13,7 @@ export interface Props {
   item: DashboardSectionItem;
   editable?: boolean;
   onTagSelected: (name: string) => any;
-  dispatch?: Dispatch<SearchAction>;
+  dispatch: Dispatch<SearchAction>;
 }
 
 const { selectors } = e2e.pages.Dashboards;

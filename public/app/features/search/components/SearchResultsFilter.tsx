@@ -19,7 +19,7 @@ export interface Props {
   onTagFilterChange: onSelectChange;
   selectedStarredFilter: string;
   selectedTagFilter: string[];
-  dispatch?: Dispatch<SearchAction>;
+  dispatch: Dispatch<SearchAction>;
 }
 
 const starredFilterOptions = [

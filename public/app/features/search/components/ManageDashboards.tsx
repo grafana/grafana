@@ -46,7 +46,7 @@ const defaultQuery: Query = {
   folderIds: [],
 };
 
-const initQuery = (folderId: number) => {
+const initQuery = (folderId: number | undefined) => {
   if (folderId) {
     return { ...defaultQuery, folderIds: [folderId] };
   }
@@ -55,7 +55,7 @@ const initQuery = (folderId: number) => {
 
 const { isEditor } = contextSrv;
 export const ManageDashboards: FC<Props> = ({ folderId, folderUid }) => {
-  const [query, setQuery] = useState(() => initQuery(folderId));
+  const [query, setQuery] = useState<Query>(() => initQuery(folderId));
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isMoveModalOpen, setIsMoveModalOpen] = useState(false);
 
@@ -190,7 +190,7 @@ export const ManageDashboards: FC<Props> = ({ folderId, folderUid }) => {
           dispatch={dispatch}
           onStarredFilterChange={onStarredFilterChange}
           onTagFilterChange={onTagFilterChange}
-          selectedStarredFilter={null}
+          selectedStarredFilter={''}
           selectedTagFilter={query.tag}
         />
         <div className="search-results-container">

@@ -2,6 +2,7 @@ import React, { Dispatch, FC, useState } from 'react';
 import { css } from 'emotion';
 import { Button, HorizontalGroup, Modal, stylesFactory, useTheme } from '@grafana/ui';
 import { AppEvents, GrafanaTheme } from '@grafana/data';
+import { FolderInfo } from 'app/types';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
 import appEvents from 'app/core/app_events';
 import { backendSrv } from 'app/core/services/backend_srv';
@@ -17,33 +18,37 @@ interface Props {
 }
 
 export const MoveToFolderModal: FC<Props> = ({ results, dispatch, isOpen, onDismiss }) => {
-  const [folder, setFolder] = useState(null);
+  const [folder, setFolder] = useState<FolderInfo | null>(null);
   const theme = useTheme();
   const styles = getStyles(theme);
   const selectedDashboards = getCheckedDashboards(results);
 
   const moveTo = () => {
-    const folderTitle = folder.title ?? 'General';
+    if (folder) {
+      const folderTitle = folder.title ?? 'General';
 
-    backendSrv
-      .moveDashboards(
-        selectedDashboards.map(d => d.uid),
-        folder
-      )
-      .then((result: any) => {
-        if (result.successCount > 0) {
-          const header = `Dashboard${result.successCount === 1 ? '' : 's'} Moved`;
-          const msg = `${result.successCount} dashboard${result.successCount === 1 ? '' : 's'} moved to ${folderTitle}`;
-          appEvents.emit(AppEvents.alertSuccess, [header, msg]);
-        }
+      backendSrv
+        .moveDashboards(
+          selectedDashboards.map(d => d.uid),
+          folder
+        )
+        .then((result: any) => {
+          if (result.successCount > 0) {
+            const header = `Dashboard${result.successCount === 1 ? '' : 's'} Moved`;
+            const msg = `${result.successCount} dashboard${
+              result.successCount === 1 ? '' : 's'
+            } moved to ${folderTitle}`;
+            appEvents.emit(AppEvents.alertSuccess, [header, msg]);
+          }
 
-        if (result.totalCount === result.alreadyInFolderCount) {
-          appEvents.emit(AppEvents.alertError, ['Error', `Dashboards already belongs to folder ${folderTitle}`]);
-        }
+          if (result.totalCount === result.alreadyInFolderCount) {
+            appEvents.emit(AppEvents.alertError, ['Error', `Dashboards already belongs to folder ${folderTitle}`]);
+          }
 
-        dispatch({ type: MOVE_ITEMS, payload: { dashboards: selectedDashboards, folder } });
-        onDismiss();
-      });
+          dispatch({ type: MOVE_ITEMS, payload: { dashboards: selectedDashboards, folder } });
+          onDismiss();
+        });
+    }
   };
 
   return (
@@ -60,7 +65,7 @@ export const MoveToFolderModal: FC<Props> = ({ results, dispatch, isOpen, onDism
             Move the {selectedDashboards.length} selected dashboard{selectedDashboards.length === 1 ? '' : 's'} to the
             following folder:
           </p>
-          <FolderPicker onChange={folder => setFolder(folder)} useNewForms />
+          <FolderPicker onChange={f => setFolder(f)} useNewForms />
         </div>
 
         <HorizontalGroup justify="center">

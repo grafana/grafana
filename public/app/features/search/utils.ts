@@ -156,5 +156,5 @@ export const getCheckedUids = (sections: DashboardSection[]): UidsToDelete => {
     } else {
       return { ...result, dashboards: getCheckedDashboardsUids(sections) };
     }
-  }, emptyResults);
+  }, emptyResults) as UidsToDelete;
 };

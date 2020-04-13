@@ -6,13 +6,12 @@ import {
   markSelected,
   mergeReducers,
 } from './utils';
-import { DashboardSection } from './types';
 import { sections, searchResults } from './testData';
 
 describe('Search utils', () => {
   describe('getFlattenedSections', () => {
     it('should return an array of items plus children for expanded items', () => {
-      const flatSections = getFlattenedSections(sections as DashboardSection[]);
+      const flatSections = getFlattenedSections(sections as any[]);
       expect(flatSections).toHaveLength(10);
       expect(flatSections).toEqual([
         'Starred',
@@ -87,14 +86,14 @@ describe('Search utils', () => {
         const results = [...sections, { id: 'Test', selected: true }];
 
         const found = findSelected(results);
-        expect(found.id).toEqual('Test');
+        expect(found?.id).toEqual('Test');
       });
 
       it('should find selected item', () => {
         const results = [{ expanded: true, id: 'Test', items: [{ id: 1 }, { id: 2, selected: true }, { id: 3 }] }];
 
         const found = findSelected(results);
-        expect(found.id).toEqual(2);
+        expect(found?.id).toEqual(2);
       });
     });
   });
@@ -131,11 +130,11 @@ describe('Search utils', () => {
 
   describe('getCheckedUids', () => {
     it('should return object with empty arrays if no checked items are available', () => {
-      expect(getCheckedUids(sections as DashboardSection[])).toEqual({ folders: [], dashboards: [] });
+      expect(getCheckedUids(sections as any[])).toEqual({ folders: [], dashboards: [] });
     });
 
     it('should return uids for all checked items', () => {
-      expect(getCheckedUids(searchResults as DashboardSection[])).toEqual({
+      expect(getCheckedUids(searchResults as any[])).toEqual({
         folders: ['JB_zdOUWk'],
         dashboards: ['lBdLINUWk', '8DY63kQZk'],
       });
@@ -144,7 +143,7 @@ describe('Search utils', () => {
 
   describe('getCheckedDashboardsUids', () => {
     it('should get uids of all checked dashboards', () => {
-      expect(getCheckedDashboardsUids(searchResults as DashboardSection[])).toEqual(['lBdLINUWk', '8DY63kQZk']);
+      expect(getCheckedDashboardsUids(searchResults as any[])).toEqual(['lBdLINUWk', '8DY63kQZk']);
     });
   });
 });
