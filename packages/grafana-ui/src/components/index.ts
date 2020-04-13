@@ -27,7 +27,7 @@ export { PieChart, PieChartType } from './PieChart/PieChart';
 export { UnitPicker } from './UnitPicker/UnitPicker';
 export { StatsPicker } from './StatsPicker/StatsPicker';
 export { RefreshPicker } from './RefreshPicker/RefreshPicker';
-export { TimePicker } from './TimePicker/TimePicker';
+export { TimeRangePicker } from './TimePicker/TimeRangePicker';
 export { TimeOfDayPicker } from './TimePicker/TimeOfDayPicker';
 export { List } from './List/List';
 export { TagsInput } from './TagsInput/TagsInput';
