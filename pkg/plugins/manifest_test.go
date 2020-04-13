@@ -53,5 +53,6 @@ PSjgC2n1m40AVLZ0+GCRLspAYTEFrlpWWzqSrQ==
 		modified := strings.ReplaceAll(txt, "README.md", "xxxxxxxxxx")
 		manifest, err = readPluginManifest([]byte(modified))
 		So(err, ShouldNotBeNil)
+		So(manifest, ShouldBeNil)
 	})
 }
