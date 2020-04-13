@@ -46,12 +46,14 @@ const backgrounds = {
 const borders = {
   border1: basicColors.gray15,
   border2: basicColors.gray25,
+  border3: basicColors.gray33,
 };
 
 const textColors = {
+  textStrong: basicColors.gray98,
   textHeading: basicColors.gray4,
   text: basicColors.gray85,
-  textStrong: basicColors.gray98,
+  textSemiWeak: basicColors.gray70,
   textWeak: basicColors.gray60,
   textFaint: basicColors.gray33,
   textBlue: basicColors.blue85,
@@ -59,11 +61,11 @@ const textColors = {
 
 const form = {
   // Next-gen forms functional colors
-  formLabel: basicColors.gray70,
+  formLabel: textColors.textSemiWeak,
   formDescription: basicColors.gray60,
   formInputBg: basicColors.gray05,
   formInputBgDisabled: basicColors.gray10,
-  formInputBorder: basicColors.gray25,
+  formInputBorder: borders.border2,
   formInputBorderHover: basicColors.gray33,
   formInputBorderActive: basicColors.blue95,
   formInputBorderInvalid: basicColors.red88,
@@ -125,6 +127,9 @@ const darkTheme: GrafanaTheme = {
     linkDisabled: basicColors.gray2,
     linkHover: basicColors.white,
     linkExternal: basicColors.blue85,
+  },
+  shadows: {
+    listItem: '-1px -1px 0 0 hsla(0, 0%, 100%, 0.1), 1px 1px 0 0 rgba(0, 0, 0, 0.3)',
   },
 };
 

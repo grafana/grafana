@@ -39,7 +39,7 @@ export const GroupBys: FunctionComponent<Props> = ({ groupBys = [], values = [],
         <Segment
           Component={
             <a className="gf-form-label query-part">
-              <Icon name="plus-circle" />
+              <Icon name="plus" />
             </a>
           }
           allowCustomValue

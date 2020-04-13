@@ -86,6 +86,9 @@ export const ThemeColors = () => {
             <DemoText color={theme.colors.text}>
               text <Icon name="trash-alt" />
             </DemoText>
+            <DemoText color={theme.colors.textSemiWeak}>
+              textSemiWeak <Icon name="trash-alt" />
+            </DemoText>
             <DemoText color={theme.colors.textWeak}>
               textWeak <Icon name="trash-alt" />
             </DemoText>

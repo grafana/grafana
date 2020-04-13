@@ -45,12 +45,14 @@ const backgrounds = {
 const borders = {
   border1: basicColors.gray95,
   border2: basicColors.gray85,
+  border3: basicColors.gray70,
 };
 
 const textColors = {
   // Text colors
-  text: basicColors.gray33,
   textStrong: basicColors.gray15,
+  text: basicColors.gray33,
+  textSemiWeak: basicColors.gray33,
   textWeak: basicColors.gray60,
   textFaint: basicColors.gray70,
   textBlue: basicColors.blue85,
@@ -126,6 +128,9 @@ const lightTheme: GrafanaTheme = {
     linkHover: textColors.textStrong,
     linkExternal: basicColors.blue85,
     textHeading: basicColors.gray25,
+  },
+  shadows: {
+    listItem: '-1px -1px 0 0 hsla(0, 0%, 100%, 0.1), 1px 1px 0 0 rgba(0, 0, 0, 0.1)',
   },
 };
 

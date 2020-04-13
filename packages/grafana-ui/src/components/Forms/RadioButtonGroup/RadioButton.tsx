@@ -21,11 +21,11 @@ const getRadioButtonStyles = stylesFactory((theme: GrafanaTheme, size: RadioButt
   const horizontalPadding = theme.spacing[size] ?? theme.spacing.md;
   const c = theme.palette;
 
-  const textColor = theme.isLight ? c.gray33 : c.gray70;
-  const textColorHover = theme.isLight ? c.blue77 : c.blue95;
+  const textColor = theme.colors.textSemiWeak;
+  const textColorHover = theme.colors.text;
   const textColorActive = theme.isLight ? c.blue77 : c.blue95;
-  const borderColor = theme.isLight ? c.gray4 : c.gray25;
-  const borderColorHover = theme.isLight ? c.gray70 : c.gray33;
+  const borderColor = theme.colors.border2;
+  const borderColorHover = theme.colors.border3;
   const borderColorActive = theme.isLight ? c.blue77 : c.blue95;
   const bg = theme.colors.bodyBg;
   const bgDisabled = theme.isLight ? c.gray95 : c.gray15;

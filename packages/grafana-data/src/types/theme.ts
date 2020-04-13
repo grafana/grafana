@@ -183,6 +183,7 @@ export interface GrafanaTheme extends GrafanaThemeCommons {
     bg3: string;
     border1: string;
     border2: string;
+    border3: string;
 
     bgBlue1: string;
     bgBlue2: string;
@@ -205,11 +206,12 @@ export interface GrafanaTheme extends GrafanaThemeCommons {
     linkExternal: string;
 
     // Text colors
-    text: string;
     textStrong: string;
+    textHeading: string;
+    text: string;
+    textSemiWeak: string;
     textWeak: string;
     textFaint: string;
-    textHeading: string;
     textBlue: string;
 
     // Next-gen forms functional colors
@@ -237,5 +239,8 @@ export interface GrafanaTheme extends GrafanaThemeCommons {
     formCheckboxBgChecked: string;
     formCheckboxBgCheckedHover: string;
     formCheckboxCheckmark: string;
+  };
+  shadows: {
+    listItem: string;
   };
 }
