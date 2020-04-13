@@ -46,11 +46,11 @@ export const IconButton = React.forwardRef<HTMLButtonElement, Props>(
 function getHoverColor(theme: GrafanaTheme, surface: SurfaceType): string {
   switch (surface) {
     case 'body':
-      return theme.isLight ? theme.colors.gray95 : theme.colors.gray15;
+      return theme.isLight ? theme.palette.gray95 : theme.palette.gray10;
     case 'panel':
-      return theme.isLight ? theme.colors.gray6 : theme.colors.gray25;
+      return theme.isLight ? theme.palette.gray6 : theme.palette.gray15;
     case 'header':
-      return theme.isLight ? theme.colors.gray85 : theme.colors.gray25;
+      return theme.isLight ? theme.colors.bg3 : theme.palette.gray25;
   }
 }
 

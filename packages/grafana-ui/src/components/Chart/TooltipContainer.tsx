@@ -13,7 +13,7 @@ interface TooltipContainerProps {
 }
 
 const getTooltipContainerStyles = stylesFactory((theme: GrafanaTheme) => {
-  const bgColor = selectThemeVariant({ light: theme.colors.gray5, dark: theme.colors.dark1 }, theme.type);
+  const bgColor = selectThemeVariant({ light: theme.palette.gray5, dark: theme.palette.dark1 }, theme.type);
   return {
     wrapper: css`
       overflow: hidden;

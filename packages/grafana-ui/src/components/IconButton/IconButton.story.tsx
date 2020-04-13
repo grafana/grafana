@@ -35,7 +35,7 @@ function renderScenario(surface: string, theme: GrafanaTheme, sizes: IconSize[],
       bg = theme.colors.bodyBg;
       break;
     case 'panel':
-      bg = theme.colors.pageBg;
+      bg = theme.colors.bodyBg;
       break;
     case 'header': {
       bg = theme.colors.pageHeaderBg;

@@ -61,7 +61,7 @@ export function getWarningNav(text: string, subTitle?: string): NavModel {
   const node = {
     text,
     subTitle,
-    icon: 'fa fa-fw fa-warning',
+    icon: 'exclamation-triangle',
   };
   return {
     breadcrumbs: [node],

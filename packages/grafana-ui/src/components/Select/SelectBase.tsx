@@ -243,7 +243,7 @@ export function SelectBase<T>({
             );
           },
           LoadingIndicator: (props: any) => {
-            return <i className="fa fa-spinner fa-spin" />;
+            return <Icon className="fa-spin" name="fa fa-spinner" />;
           },
           LoadingMessage: (props: any) => {
             return <div className={styles.loadingMessage}>{loadingMessage}</div>;
@@ -277,7 +277,7 @@ export function SelectBase<T>({
             width: inputSizesPixels(size),
           }),
         }}
-        className={widthClass}
+        className={cx('select-container', widthClass)}
         {...commonSelectProps}
         {...creatableProps}
         {...asyncSelectProps}

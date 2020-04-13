@@ -15,7 +15,7 @@ import { DashNav } from '../components/DashNav';
 import { AngularSubMenu } from '../components/SubMenu';
 import { DashboardSettings } from '../components/DashboardSettings';
 import { PanelEditor } from '../components/PanelEditor/PanelEditor';
-import { Alert, CustomScrollbar } from '@grafana/ui';
+import { Alert, CustomScrollbar, Icon } from '@grafana/ui';
 // Redux
 import { initDashboard } from '../state/initDashboard';
 import { cleanUpDashboard } from '../state/reducers';
@@ -216,7 +216,7 @@ export class DashboardPage extends PureComponent<Props, State> {
     return (
       <div className="dashboard-loading">
         <div className="dashboard-loading__text">
-          <i className="fa fa-spinner fa-spin" /> {this.props.initPhase}
+          <Icon name="fa fa-spinner" className="fa-spin" /> {this.props.initPhase}
         </div>
       </div>
     );

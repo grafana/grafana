@@ -8,6 +8,8 @@ import { IconName, IconType, IconSize } from '../../types/icon';
 import * as DefaultIcon from '@iconscout/react-unicons';
 import * as MonoIcon from './assets';
 
+const alwaysMonoIcons = ['grafana', 'favorite'];
+
 interface IconProps extends React.HTMLAttributes<HTMLDivElement> {
   name: IconName;
   size?: IconSize;
@@ -26,7 +28,7 @@ const getIconStyles = stylesFactory((theme: GrafanaTheme) => {
       fill: currentColor;
     `,
     orange: css`
-      fill: ${theme.colors.orange};
+      fill: ${theme.palette.orange};
     `,
   };
 });
@@ -41,6 +43,10 @@ export const Icon = React.forwardRef<HTMLDivElement, IconProps>(
     const isFontAwesome = name?.includes('fa-');
     if (isFontAwesome) {
       return <i className={cx(name, className)} {...divElementProps} style={style} />;
+    }
+
+    if (alwaysMonoIcons.includes(name)) {
+      type = 'mono';
     }
 
     const iconName = type === 'default' ? `Uil${toPascalCase(name)}` : toPascalCase(name);

@@ -11,7 +11,7 @@ const getStyles = (theme: GrafanaTheme) => ({
   `,
   logsStatsRowActive: css`
     label: logs-stats-row--active;
-    color: ${theme.colors.blue};
+    color: ${theme.palette.blue};
     position: relative;
   `,
   logsStatsRowLabel: css`
@@ -47,7 +47,7 @@ const getStyles = (theme: GrafanaTheme) => ({
     height: 4px;
     overflow: hidden;
     background: ${theme.colors.textFaint};
-    background: ${theme.colors.blue};
+    background: ${theme.palette.blue};
   `,
 });
 
