@@ -15,7 +15,6 @@ const setup = (propOverrides?: Partial<Props>, renderMethod = shallow) => {
     canMove: false,
     deleteItem: noop,
     moveTo: noop,
-    onSelectAllChanged: noop,
     onStarredFilterChange: noop,
     onTagFilterChange: noop,
     selectedStarredFilter: 'starred',
@@ -85,12 +84,5 @@ describe('SearchResultsFilter', () => {
       .prop('onChange')(tags[0]);
     expect(mockFilterByTags).toHaveBeenCalledTimes(1);
     expect(mockFilterByTags).toHaveBeenCalledWith(tags[0]);
-  });
-
-  it('should call "onSelectAllChanged" when checkbox is changed', () => {
-    const mockSelectAll = jest.fn();
-    const { wrapper } = setup({ onSelectAllChanged: mockSelectAll });
-    wrapper.find('Checkbox').simulate('change');
-    expect(mockSelectAll).toHaveBeenCalledTimes(1);
   });
 });
