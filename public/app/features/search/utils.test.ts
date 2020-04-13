@@ -1,4 +1,11 @@
-import { findSelected, getCheckedUids, getFlattenedSections, markSelected, mergeReducers } from './utils';
+import {
+  findSelected,
+  getCheckedDashboardsUids,
+  getCheckedUids,
+  getFlattenedSections,
+  markSelected,
+  mergeReducers,
+} from './utils';
 import { DashboardSection } from './types';
 import { sections, searchResults } from './testData';
 
@@ -132,6 +139,12 @@ describe('Search utils', () => {
         folders: ['JB_zdOUWk'],
         dashboards: ['lBdLINUWk', '8DY63kQZk'],
       });
+    });
+  });
+
+  describe('getCheckedDashboardsUids', () => {
+    it('should get uids of all checked dashboards', () => {
+      expect(getCheckedDashboardsUids(searchResults as DashboardSection[])).toEqual(['lBdLINUWk', '8DY63kQZk']);
     });
   });
 });

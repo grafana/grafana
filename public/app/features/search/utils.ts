@@ -114,6 +114,16 @@ export const mergeReducers = (reducers: any[]) => (prevState: any, action: Searc
 };
 
 /**
+ * Collect uids of all the checked dashboards
+ * @param sections
+ */
+export const getCheckedDashboardsUids = (sections: DashboardSection[]) => {
+  return sections.reduce((uids, section) => {
+    return [...uids, ...section.items.filter(item => item.checked).map(item => item.uid)];
+  }, []);
+};
+
+/**
  * Collect uids of all checked folders and dashboards. Used for delete operation, among others
  * @param sections
  */
@@ -123,7 +133,7 @@ export const getCheckedUids = (sections: DashboardSection[]): UidsToDelete => {
       if (section?.id !== 0 && section.checked) {
         return { ...result, folders: [...result.folders, section.uid] };
       } else {
-        return { ...result, dashboards: section.items.filter(item => item.checked).map(item => item.uid) };
+        return { ...result, dashboards: getCheckedDashboardsUids(sections) };
       }
     },
     { folders: [], dashboards: [] }
