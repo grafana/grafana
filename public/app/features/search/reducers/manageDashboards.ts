@@ -39,17 +39,21 @@ const reducer = (state: ManageDashboardsState, action: SearchAction) => {
         allChecked: newAllChecked,
       };
     case TOGGLE_CHECKED:
+      const { id } = action.payload;
       return {
         ...state,
         results: state.results.map(result => {
-          if (result.id === action.payload.id) {
+          if (result.id === id) {
             return {
               ...result,
               checked: !result.checked,
               items: result.items.map(item => ({ ...item, checked: !result.checked })),
             };
           }
-          return result;
+          return {
+            ...result,
+            items: result.items.map(item => (item.id === id ? { ...item, checked: !item.checked } : item)),
+          };
         }),
       };
     case MOVE_ITEMS:

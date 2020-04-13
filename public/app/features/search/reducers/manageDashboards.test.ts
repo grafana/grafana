@@ -37,7 +37,7 @@ describe('Manage dashboards reducer', () => {
     expect(newState.hasEditPermissionInFolders).toBe(true);
   });
 
-  it('should handle TOGGLE_CHECKED', () => {
+  it('should handle TOGGLE_CHECKED sections', () => {
     const newState = reducer({ ...state, results }, { type: TOGGLE_CHECKED, payload: results[0] });
     expect(newState.results[0].checked).toBe(true);
     expect(newState.results[1].checked).toBeFalsy();
@@ -45,6 +45,16 @@ describe('Manage dashboards reducer', () => {
     const newState2 = reducer(newState, { type: TOGGLE_CHECKED, payload: results[1] });
     expect(newState2.results[0].checked).toBe(true);
     expect(newState2.results[1].checked).toBe(true);
+  });
+
+  it('should handle TOGGLE_CHECKED items', () => {
+    const newState = reducer({ ...state, results }, { type: TOGGLE_CHECKED, payload: { id: 4069 } });
+    expect(newState.results[3].items[0].checked).toBe(true);
+
+    const newState2 = reducer(newState, { type: TOGGLE_CHECKED, payload: { id: 1 } });
+    expect(newState2.results[3].items[0].checked).toBe(true);
+    expect(newState2.results[3].items[1].checked).toBeFalsy();
+    expect(newState2.results[3].items[2].checked).toBe(true);
   });
 
   it('should handle DELETE_ITEMS', () => {
