@@ -53,7 +53,6 @@ $gray-4: ${theme.palette.gray4};
 $gray-5: ${theme.palette.gray5};
 $gray-6: ${theme.palette.gray6};
 
-$gray-blue: ${theme.palette.grayBlue};
 $input-black: ${theme.colors.formInputBg};
 
 $white: ${theme.palette.white};
@@ -65,7 +64,7 @@ $red: $red-base;
 $yellow: ${theme.palette.yellow};
 $orange: ${theme.palette.orange};
 $purple: ${theme.palette.purple};
-$variable: ${theme.palette.variable};
+$variable: ${theme.colors.textBlue};
 
 $brand-primary: ${theme.palette.brandPrimary};
 $brand-success: ${theme.palette.brandSuccess};
@@ -76,10 +75,9 @@ $query-red: ${theme.palette.queryRed};
 $query-green: ${theme.palette.queryGreen};
 $query-purple: ${theme.palette.queryPurple};
 $query-orange: ${theme.palette.orange};
-$query-keyword: ${theme.palette.queryKeyword};
 
 // Status colors
-// -------------------------
+// -------------------------¨
 $online: ${theme.palette.online};
 $warn: ${theme.palette.warn};
 $critical: ${theme.palette.critical};
@@ -95,6 +93,7 @@ $text-color-strong: ${theme.colors.textStrong};
 $text-color-weak: ${theme.colors.textWeak};
 $text-color-faint: ${theme.colors.textFaint};
 $text-color-emphasis: ${theme.colors.textEmphasis};
+$text-blue: ${theme.colors.textBlue};
 
 $text-shadow-faint: 1px 1px 4px rgb(45, 45, 45);
 $textShadow: none;
@@ -122,7 +121,7 @@ $hr-border-color: $dark-9;
 // -------------------------
 $panel-bg: ${theme.colors.panelBg};
 $panel-border: 1px solid ${theme.colors.panelBorder};
-$panel-header-hover-bg: ${theme.colors.bg3};
+$panel-header-hover-bg: ${theme.colors.bg2};
 $panel-corner: $panel-bg;
 
 // page header
@@ -150,7 +149,7 @@ $list-item-bg: $card-background;
 $list-item-hover-bg: $card-background-hover;
 $list-item-shadow: $card-shadow;
 
-$empty-list-cta-bg: $gray-blue;
+$empty-list-cta-bg: ${theme.colors.bg2};
 
 // Scrollbars
 $scrollbarBackground: #404357;
@@ -203,13 +202,12 @@ $input-bg: $input-black;
 $input-bg-disabled: $dark-6;
 
 $input-color: ${theme.colors.formInputText};
-$input-border-color: ${theme.palette.gray15};
-$input-box-shadow: inset 1px 0px 4px 0px rgba(150, 150, 150, 0.1);
+$input-border-color: ${theme.colors.formInputBorder};
+$input-box-shadow: none;
 $input-border-focus: ${theme.palette.blue95};
 $input-box-shadow-focus: $blue-light !default;
 $input-color-placeholder: ${theme.colors.formInputPlaceholderText};
-$input-label-bg: ${theme.palette.gray15};
-$input-label-border-color: ${theme.palette.gray15};
+$input-label-bg: ${theme.colors.bg2};
 $input-color-select-arrow: $white;
 
 // Search
@@ -249,14 +247,15 @@ $navbar-button-border: #2f2f32;
 $side-menu-bg: $panel-bg;
 $side-menu-bg-mobile: $panel-bg;
 $side-menu-border: none;
-$side-menu-item-hover-bg: $dark-3;
+$side-menu-item-hover-bg: ${theme.colors.bg2};
 $side-menu-shadow: 0 0 20px black;
-$side-menu-link-color: ${theme.palette.gray70};
+$side-menu-icon-color: ${theme.palette.gray70};
+$side-menu-header-color: ${theme.colors.text};
 
 // Menu dropdowns
 // -------------------------
-$menu-dropdown-bg: $panel-bg;
-$menu-dropdown-hover-bg: $dark-3;
+$menu-dropdown-bg: ${theme.colors.bg1};
+$menu-dropdown-hover-bg: ${theme.colors.bg2};
 $menu-dropdown-shadow: 5px 5px 20px -5px $black;
 
 // Tabs
@@ -354,7 +353,7 @@ $variable-option-bg: $dropdownLinkBackgroundHover;
 $switch-bg: $input-bg;
 $switch-slider-color: $dark-3;
 $switch-slider-off-bg: $gray-1;
-$switch-slider-on-bg: linear-gradient(90deg, #eb7b18, #d44a3a);
+$switch-slider-on-bg: ${theme.palette.blueLight};
 $switch-slider-shadow: 0 0 3px black;
 
 //Checkbox
@@ -378,7 +377,7 @@ $panel-editor-tabs-line-color: #e3e3e3;
 $panel-editor-viz-item-bg-hover: darken($blue-base, 46%);
 
 $panel-options-group-border: none;
-$panel-options-group-header-bg: $gray-blue;
+$panel-options-group-header-bg: ${theme.colors.bg2};
 
 $panel-grid-placeholder-bg: $blue-faint;
 $panel-grid-placeholder-shadow: 0 0 4px $blue-shade;

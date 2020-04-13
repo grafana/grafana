@@ -3,14 +3,8 @@ import { selectThemeVariant } from '../../../themes/selectThemeVariant';
 
 export const getThemeColors = (theme: GrafanaTheme) => {
   return {
-    border: selectThemeVariant(
-      {
-        light: theme.palette.gray4,
-        dark: theme.palette.gray25,
-      },
-      theme.type
-    ),
-    background: theme.colors.dropdownBg,
+    border: theme.colors.border1,
+    background: theme.colors.bodyBg,
     shadow: theme.colors.dropdownShadow,
     formBackground: selectThemeVariant(
       {

@@ -34,7 +34,6 @@ const getRadioButtonStyles = stylesFactory((theme: GrafanaTheme, size: RadioButt
   const border = `1px solid ${borderColor}`;
   const borderActive = `1px solid ${borderColorActive}`;
   const borderHover = `1px solid ${borderColorHover}`;
-  const fakeBold = `0 0 0.65px ${textColorHover}, 0 0 0.65px ${textColorHover}`;
 
   return {
     radio: css`
@@ -47,7 +46,6 @@ const getRadioButtonStyles = stylesFactory((theme: GrafanaTheme, size: RadioButt
       &:checked + label {
         border: ${borderActive};
         color: ${textColorActive};
-        text-shadow: ${fakeBold};
         background: ${bgActive};
         z-index: 3;
       }
@@ -61,10 +59,6 @@ const getRadioButtonStyles = stylesFactory((theme: GrafanaTheme, size: RadioButt
         cursor: default;
         background: ${bgDisabled};
         color: ${textColor};
-      }
-
-      &:enabled + label:hover {
-        text-shadow: ${fakeBold};
       }
     `,
     radioLabel: css`

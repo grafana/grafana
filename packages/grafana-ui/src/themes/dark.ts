@@ -22,7 +22,6 @@ const basicColors = {
   gray5: '#ececec',
   gray6: '#f4f5f8', // not used in dark theme
   gray7: '#fbfbfb', // not used in dark theme
-  grayBlue: '#212327',
   blueBase: '#3274d9',
   blueShade: '#1f60c4',
   blueLight: '#5794f2',
@@ -98,7 +97,6 @@ const darkTheme: GrafanaTheme = {
     queryRed: basicColors.redBase,
     queryGreen: '#74e680',
     queryPurple: '#fe85fc',
-    queryKeyword: '#66d9ef',
     queryOrange: basicColors.orange,
     online: basicColors.greenBase,
     warn: '#f79520',
@@ -126,6 +124,7 @@ const darkTheme: GrafanaTheme = {
     textWeak: basicColors.gray2,
     textEmphasis: basicColors.gray5,
     textFaint: basicColors.dark5,
+    textBlue: basicColors.blue85,
 
     link: basicColors.gray4,
     linkDisabled: basicColors.gray2,

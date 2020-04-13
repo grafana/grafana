@@ -153,8 +153,6 @@ export interface GrafanaTheme extends GrafanaThemeCommons {
     // New reds palette used by next-gen form elements
     red88: string;
 
-    grayBlue: string;
-
     // Accent colors
     blue: string;
     blueBase: string;
@@ -168,13 +166,11 @@ export interface GrafanaTheme extends GrafanaThemeCommons {
     red: string;
     yellow: string;
     purple: string;
-    variable: string;
     orange: string;
     orangeDark: string;
     queryRed: string;
     queryGreen: string;
     queryPurple: string;
-    queryKeyword: string;
     queryOrange: string;
     brandPrimary: string;
     brandSuccess: string;
@@ -217,6 +213,7 @@ export interface GrafanaTheme extends GrafanaThemeCommons {
     textFaint: string;
     textEmphasis: string;
     headingColor: string;
+    textBlue: string;
 
     // Next-gen forms functional colors
     formLabel: string;
