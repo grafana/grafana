@@ -205,7 +205,7 @@ export class ManageDashboardsCtrl {
       title: 'Delete',
       text: text,
       text2: text2,
-      icon: 'fa-trash',
+      icon: 'trash-alt',
       yesText: 'Delete',
       onConfirm: () => {
         this.deleteFoldersAndDashboards(data.folderUids, data.dashboardUids);

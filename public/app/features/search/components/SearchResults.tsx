@@ -51,7 +51,7 @@ const getSectionStyles = stylesFactory((theme: GrafanaTheme) => {
     `,
     section: css`
       background: ${theme.colors.panelBg};
-      border-bottom: solid 1px ${theme.isLight ? theme.colors.gray95 : theme.colors.gray25};
+      border-bottom: solid 1px ${theme.isLight ? theme.palette.gray95 : theme.palette.gray25};
       padding: 0px 4px 4px 4px;
       margin-bottom: 3px;
     `,

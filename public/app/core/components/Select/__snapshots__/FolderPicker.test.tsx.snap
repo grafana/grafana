@@ -21,7 +21,6 @@ exports[`FolderPicker should render 1`] = `
         loadingMessage="Loading folders..."
         onChange={[Function]}
         onCreateOption={[Function]}
-        size="sm"
         value={Object {}}
       />
     </div>

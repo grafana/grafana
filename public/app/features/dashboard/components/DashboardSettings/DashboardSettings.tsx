@@ -7,7 +7,6 @@ import { AngularComponent, getAngularLoader } from '@grafana/runtime';
 // Types
 import { DashboardModel } from '../../state/DashboardModel';
 import { BackButton } from 'app/core/components/BackButton/BackButton';
-import { e2e } from '@grafana/e2e';
 import { updateLocation } from 'app/core/actions';
 import { CustomScrollbar } from '@grafana/ui';
 
@@ -51,7 +50,7 @@ export class DashboardSettings extends PureComponent<Props> {
       <div className="dashboard-settings">
         <div className="navbar navbar--shadow">
           <div className="navbar-edit">
-            <BackButton onClick={this.onClose} aria-label={e2e.pages.Dashboard.Toolbar.selectors.backArrow} />
+            <BackButton surface="body" onClick={this.onClose} />
           </div>
           <div className="navbar-page-btn">
             {haveFolder && <div className="navbar-page-btn__folder">{folderTitle} / </div>}
