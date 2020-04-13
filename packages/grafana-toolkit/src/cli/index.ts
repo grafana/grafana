@@ -230,7 +230,7 @@ export const run = (includeInternalScripts = false) => {
     });
 
   program
-    .command('plugin:update')
+    .command('plugin:update-circleci')
     .description('Update plugin')
     .action(async cmd => {
       await execTask(pluginUpdateTask)({});
