@@ -39,7 +39,7 @@ All requests will be made from the browser to Grafana backend/server which in tu
 
 ### Browser (Direct) access
 
-All requests will be made from the browser directly to the data source and may be subject to Cross-Origin Resource Sharing (CORS) requirements. The URL needs to be accessible from the browser if you select this access mode.
+All requests will be made from the browser directly to the data source and may be subjected to Cross-Origin Resource Sharing (CORS) requirements. The URL needs to be accessible from the browser if you select this access mode.
 
 If you select Browser access you must update your Elasticsearch configuration to allow other domains to access
 Elasticsearch from the browser. You do this by specifying these to options in your **elasticsearch.yml** config file.
@@ -83,7 +83,7 @@ Identifier | Description
 
 > Only available in Grafana v6.3+.
 
-There are two parameters, `Message field name` and `Level field name`, that can optionally be configured from the data source settings page that determine
+There are two parameters, `Message field name` and `Level field name`, that can optionally be configured from the data source settings page that determines
 which fields will be used for log messages and log levels when visualizing logs in [Explore]({{< relref "../explore" >}}).
 
 For example, if you're using a default setup of Filebeat for shipping logs to Elasticsearch the following configuration should work:
@@ -172,7 +172,7 @@ Example dashboard:
 
 ## Annotations
 
-[Annotations]({{< relref "../../reference/annotations.md" >}}) allows you to overlay rich event information on top of graphs. You add annotation
+[Annotations]({{< relref "../../reference/annotations.md" >}}) allow you to overlay rich event information on top of graphs. You add annotation
 queries via the Dashboard menu / Annotations view. Grafana can query any Elasticsearch index
 for annotation events.
 
