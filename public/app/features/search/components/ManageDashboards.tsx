@@ -17,6 +17,7 @@ import { SearchResults } from './SearchResults';
 import { DashboardActions } from './DashboardActions';
 import { DashboardSection } from '../types';
 import { ConfirmDeleteModal } from './ConfirmDeleteModal';
+import { MoveToFolderModal } from './MoveToFolderModal';
 
 export interface Props {
   folderId?: number;
@@ -56,6 +57,7 @@ const { isEditor } = contextSrv;
 export const ManageDashboards: FC<Props> = ({ folderId, folderUid }) => {
   const [query, setQuery] = useState(() => initQuery(folderId));
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [isMoveModalOpen, setIsMoveModalOpen] = useState(false);
 
   const [{ canSave, allChecked, hasEditPermissionInFolders, results, loading }, dispatch] = useReducer(
     manageDashboardsReducer,
@@ -101,7 +103,11 @@ export const ManageDashboards: FC<Props> = ({ folderId, folderUid }) => {
   const onTagFilterChange = (tags: string[]) => {
     setQuery(q => ({ ...q, tag: tags }));
   };
-  const moveTo = () => {};
+
+  const onMoveTo = () => {
+    setIsMoveModalOpen(true);
+  };
+
   const onItemDelete = () => {
     setIsDeleteModalOpen(true);
   };
@@ -180,7 +186,7 @@ export const ManageDashboards: FC<Props> = ({ folderId, folderUid }) => {
           canDelete={canDelete}
           canMove={canMove}
           deleteItem={onItemDelete}
-          moveTo={moveTo}
+          moveTo={onMoveTo}
           dispatch={dispatch}
           onStarredFilterChange={onStarredFilterChange}
           onTagFilterChange={onTagFilterChange}
@@ -202,7 +208,13 @@ export const ManageDashboards: FC<Props> = ({ folderId, folderUid }) => {
         dispatch={dispatch}
         results={results}
         isOpen={isDeleteModalOpen}
-        onClose={() => setIsDeleteModalOpen(false)}
+        onDismiss={() => setIsDeleteModalOpen(false)}
+      />
+      <MoveToFolderModal
+        dispatch={dispatch}
+        results={results}
+        isOpen={isMoveModalOpen}
+        onDismiss={() => setIsMoveModalOpen(false)}
       />
     </div>
   );

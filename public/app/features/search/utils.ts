@@ -118,6 +118,10 @@ export const mergeReducers = (reducers: any[]) => (prevState: any, action: Searc
  * @param sections
  */
 export const getCheckedDashboardsUids = (sections: DashboardSection[]) => {
+  if (!sections.length) {
+    return [];
+  }
+
   return sections.reduce((uids, section) => {
     return [...uids, ...section.items.filter(item => item.checked).map(item => item.uid)];
   }, []);
@@ -128,14 +132,17 @@ export const getCheckedDashboardsUids = (sections: DashboardSection[]) => {
  * @param sections
  */
 export const getCheckedUids = (sections: DashboardSection[]): UidsToDelete => {
-  return sections.reduce(
-    (result, section) => {
-      if (section?.id !== 0 && section.checked) {
-        return { ...result, folders: [...result.folders, section.uid] };
-      } else {
-        return { ...result, dashboards: getCheckedDashboardsUids(sections) };
-      }
-    },
-    { folders: [], dashboards: [] }
-  );
+  const emptyResults: UidsToDelete = { folders: [], dashboards: [] };
+
+  if (!sections.length) {
+    return emptyResults;
+  }
+
+  return sections.reduce((result, section) => {
+    if (section?.id !== 0 && section.checked) {
+      return { ...result, folders: [...result.folders, section.uid] };
+    } else {
+      return { ...result, dashboards: getCheckedDashboardsUids(sections) };
+    }
+  }, emptyResults);
 };

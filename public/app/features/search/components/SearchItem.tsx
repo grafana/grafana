@@ -50,7 +50,6 @@ export const SearchItem: FC<Props> = ({ item, editable, dispatch, onTagSelected 
   const toggleItem = useCallback(
     (event: React.MouseEvent) => {
       event.preventDefault();
-      console.log('click');
       dispatch({ type: TOGGLE_CHECKED, payload: item });
     },
     [item]

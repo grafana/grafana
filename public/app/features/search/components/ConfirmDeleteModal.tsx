@@ -12,10 +12,10 @@ interface Props {
   dispatch: Dispatch<SearchAction>;
   results: DashboardSection[];
   isOpen: boolean;
-  onClose: () => void;
+  onDismiss: () => void;
 }
 
-export const ConfirmDeleteModal: FC<Props> = ({ results, dispatch, isOpen, onClose }) => {
+export const ConfirmDeleteModal: FC<Props> = ({ results, dispatch, isOpen, onDismiss }) => {
   const theme = useTheme();
   const styles = getStyles(theme);
   const uids = getCheckedUids(results);
@@ -38,7 +38,7 @@ export const ConfirmDeleteModal: FC<Props> = ({ results, dispatch, isOpen, onClo
 
   const deleteItems = () => {
     backendSrv.deleteFoldersAndDashboards(folders, dashboards).then(() => {
-      onClose();
+      onDismiss();
       // Redirect to /dashboard in case folder was deleted from f/:folder.uid
       getLocationSrv().update({ path: '/dashboards' });
       dispatch({ type: DELETE_ITEMS, payload: { folders, dashboards } });
@@ -56,7 +56,7 @@ export const ConfirmDeleteModal: FC<Props> = ({ results, dispatch, isOpen, onClo
       }
       confirmText="Delete"
       onConfirm={deleteItems}
-      onDismiss={onClose}
+      onDismiss={onDismiss}
     />
   );
 };
