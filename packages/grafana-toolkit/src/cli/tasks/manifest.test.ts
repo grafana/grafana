@@ -23,6 +23,7 @@ describe('Manifest', () => {
         "plugin.create.ts",
         "plugin.dev.ts",
         "plugin.tests.ts",
+        "plugin.update.ts",
         "plugin.utils.ts",
         "precommit.ts",
         "searchTestDataSetup.ts",
