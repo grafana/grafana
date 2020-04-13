@@ -7,13 +7,13 @@ parent = "developing"
 weight = 9
 +++
 
-## Introduction to Dataframes
+## Introduction to dataframes
 
-Dataframes are a new concept in Grafana 7.0 and they replace the "Time Series" and "Table" types in Grafana. Dataframes are a more generic structure that can hold different shapes of time series, tables, and other types.
+Dataframes are a new concept in Grafana 7.0 and they replace the Time Series and Table types in Grafana. Dataframes are a more generic structure that can hold different shapes of time series, tables, and other types.
 
 A dataframe is a [Columnar oriented](https://en.wikipedia.org/wiki/Column-oriented_DBMS) table structure, meaning it stores data by column and not by row.
 
-**Simplified Dataframe Model**:
+**Simplified dataframe model**:
 
 ```ts
 interface DataFrame {
@@ -45,15 +45,15 @@ With dataframes, each column is represented by a **Field**. So the essence of a 
 
 One restriction on dataframes is that all Fields in the frame must be of the same length to be a valid dataframe.
 
-### When is a Dataframe a Time Series or a Table
+### When is a dataframe a time series or a table
 
 Any valid dataframe can be a table. If you have row oriented data, the rows need to be converted to the dataframe's column oriented structure.
 
 Because each Field in a dataframe has a type, we can use the types of the Fields (the schema of the dataframe) to determine if it dataframe, or a collection of dataframes, can be time series. In the simplest case, if a Frame has a Time Field and Number Field then it can be a time series (the frame should be sorted by time ascending).
 
-#### Time Series (Non-shared time values)
+#### Time series with unshared time values
 
-An array of Frames is how a collection of time series that do not share a time index would be represented. For example two time series (differentiated by their labels):
+An array of frames is how a collection of time series that do not share a time index would be represented. For example two time series (differentiated by their labels):
 
 ```text
 Name: cpu
@@ -81,7 +81,7 @@ Dimensions: 2 Fields by 2 Rows
 
 The name of the time Field does not matter, nor does its order in the frame (unless there are multiple time columns, in which case the first is used).
 
-#### Time Series (Shared time values)
+#### Time series with shared time values
 
 If all the series share the same time values, then a "wide" format can be used:
 
@@ -98,11 +98,11 @@ Dimensions: 3 Fields by 2 Rows
 +---------------------+-----------------+-----------------+
 ```
 
-#### Time Series (Long Format)
+#### Time series in long format
 
 (Note: Currently supported on backend only: [Grafana Issue #22219](https://github.com/grafana/grafana/issues/22219)).
 
-A common CSV or SQL format is the [Long (a.k.a Tall/Narrow) Format](https://en.wikipedia.org/wiki/Wide_and_narrow_data) of time series data.
+A common CSV or SQL format is the [long (a.k.a tall/narrow) Format](https://en.wikipedia.org/wiki/Wide_and_narrow_data) of time series data.
 
 This format is supported and is detected when there are also string columns in the dataframe. There can be multiple number and multiple string columns, and the series will be grouped.
 
@@ -138,7 +138,9 @@ Dimensions: 5 Fields by 2 Rows
 +---------------------+------------------+------------------+------------------+------------------+
 ```
 
-## Technical References
+## Technical references
+
+This section contains links to technical reference and implementations of dataframes.
 
 ### Apache Arrow
 
