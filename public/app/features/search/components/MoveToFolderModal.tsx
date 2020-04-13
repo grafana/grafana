@@ -6,7 +6,7 @@ import { FolderPicker } from 'app/core/components/Select/FolderPicker';
 import appEvents from 'app/core/app_events';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { DashboardSection, SearchAction } from '../types';
-import { getCheckedDashboardsUids } from '../utils';
+import { getCheckedDashboards } from '../utils';
 import { MOVE_ITEMS } from '../reducers/actionTypes';
 
 interface Props {
@@ -20,25 +20,30 @@ export const MoveToFolderModal: FC<Props> = ({ results, dispatch, isOpen, onDism
   const [folder, setFolder] = useState(null);
   const theme = useTheme();
   const styles = getStyles(theme);
-  const selectedDashboards = getCheckedDashboardsUids(results);
+  const selectedDashboards = getCheckedDashboards(results);
 
   const moveTo = () => {
     const folderTitle = folder.title ?? 'General';
 
-    backendSrv.moveDashboards(selectedDashboards, folder).then((result: any) => {
-      if (result.successCount > 0) {
-        const header = `Dashboard${result.successCount === 1 ? '' : 's'} Moved`;
-        const msg = `${result.successCount} dashboard${result.successCount === 1 ? '' : 's'} moved to ${folderTitle}`;
-        appEvents.emit(AppEvents.alertSuccess, [header, msg]);
-      }
+    backendSrv
+      .moveDashboards(
+        selectedDashboards.map(d => d.uid),
+        folder
+      )
+      .then((result: any) => {
+        if (result.successCount > 0) {
+          const header = `Dashboard${result.successCount === 1 ? '' : 's'} Moved`;
+          const msg = `${result.successCount} dashboard${result.successCount === 1 ? '' : 's'} moved to ${folderTitle}`;
+          appEvents.emit(AppEvents.alertSuccess, [header, msg]);
+        }
 
-      if (result.totalCount === result.alreadyInFolderCount) {
-        appEvents.emit(AppEvents.alertError, ['Error', `Dashboards already belongs to folder ${folderTitle}`]);
-      }
+        if (result.totalCount === result.alreadyInFolderCount) {
+          appEvents.emit(AppEvents.alertError, ['Error', `Dashboards already belongs to folder ${folderTitle}`]);
+        }
 
-      dispatch({ type: MOVE_ITEMS, payload: { dashboards: selectedDashboards, folder } });
-      onDismiss();
-    });
+        dispatch({ type: MOVE_ITEMS, payload: { dashboards: selectedDashboards, folder } });
+        onDismiss();
+      });
   };
 
   return (

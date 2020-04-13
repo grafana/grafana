@@ -4,6 +4,7 @@ import {
   TOGGLE_ALL_CHECKED,
   TOGGLE_CHECKED,
   DELETE_ITEMS,
+  MOVE_ITEMS,
 } from './actionTypes';
 import { manageDashboardsReducer as reducer, manageDashboardsState as state } from './manageDashboards';
 import { sections } from '../testData';
@@ -64,5 +65,34 @@ describe('Manage dashboards reducer', () => {
     expect(newState.results[1].id).toEqual(4074);
     expect(newState.results[2].items).toHaveLength(1);
     expect(newState.results[2].items[0].id).toEqual(4069);
+  });
+
+  it('should handle MOVE_ITEMS', () => {
+    // Move 2 dashboards to a folder with id 2
+    const toMove = {
+      dashboards: [
+        {
+          id: 4072,
+          uid: 'OzAIf_rWz',
+          title: 'New dashboard Copy 3',
+          type: 'dash-db',
+          isStarred: false,
+        },
+        {
+          id: 1,
+          uid: 'lBdLINUWk',
+          title: 'Prom dash',
+          type: 'dash-db',
+          isStarred: true,
+        },
+      ],
+      folder: { id: 2 },
+    };
+    const newState = reducer({ ...state, results }, { type: MOVE_ITEMS, payload: toMove });
+    expect(newState.results[0].items).toHaveLength(2);
+    expect(newState.results[0].items[0].uid).toEqual('OzAIf_rWz');
+    expect(newState.results[0].items[1].uid).toEqual('lBdLINUWk');
+    expect(newState.results[3].items).toHaveLength(1);
+    expect(newState.results[3].items[0].uid).toEqual('LCFWfl9Zz');
   });
 });

@@ -114,6 +114,20 @@ export const mergeReducers = (reducers: any[]) => (prevState: any, action: Searc
 };
 
 /**
+ * Collect all the checked dashboards
+ * @param sections
+ */
+export const getCheckedDashboards = (sections: DashboardSection[]): DashboardSectionItem[] => {
+  if (!sections.length) {
+    return [];
+  }
+
+  return sections.reduce((uids, section) => {
+    return [...uids, ...section.items.filter(item => item.checked)];
+  }, []);
+};
+
+/**
  * Collect uids of all the checked dashboards
  * @param sections
  */
@@ -122,9 +136,7 @@ export const getCheckedDashboardsUids = (sections: DashboardSection[]) => {
     return [];
   }
 
-  return sections.reduce((uids, section) => {
-    return [...uids, ...section.items.filter(item => item.checked).map(item => item.uid)];
-  }, []);
+  return getCheckedDashboards(sections).map(item => item.uid);
 };
 
 /**

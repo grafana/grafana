@@ -1,4 +1,4 @@
-import { SearchAction } from '../types';
+import { DashboardSectionItem, SearchAction } from '../types';
 import {
   TOGGLE_CAN_SAVE,
   TOGGLE_EDIT_PERMISSIONS,
@@ -56,8 +56,20 @@ const reducer = (state: ManageDashboardsState, action: SearchAction) => {
           };
         }),
       };
-    case MOVE_ITEMS:
-      return state;
+    case MOVE_ITEMS: {
+      const { dashboards, folder } = action.payload;
+      const uids = dashboards.map((d: DashboardSectionItem) => d.uid);
+      return {
+        ...state,
+        results: state.results.map(result => {
+          if (folder.id === result.id) {
+            return { ...result, items: [...result.items, ...dashboards] };
+          } else {
+            return { ...result, items: result.items.filter(item => !uids.includes(item.uid)) };
+          }
+        }),
+      };
+    }
     case DELETE_ITEMS: {
       const { folders, dashboards } = action.payload;
       if (!folders.length && !dashboards.length) {
