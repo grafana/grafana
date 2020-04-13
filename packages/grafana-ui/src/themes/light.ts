@@ -22,15 +22,10 @@ const basicColors = {
   gray5: '#dde4ed',
   gray6: '#e9edf2', // same as gray95
   gray7: '#f7f8fa', // same as gray98
-  blueBase: '#3274d9',
-  blueShade: '#1f60c4',
-  blueLight: '#5794f2',
-  blueFaint: '#f5f9ff',
   redBase: '#e02f44',
   redShade: '#c4162a',
   greenBase: '#3eb15b',
   greenShade: '#369b4f',
-  blue: '#0083b3',
   red: '#d44939',
   yellow: '#ff851b',
   purple: '#9954bb',
@@ -43,6 +38,8 @@ const backgrounds = {
   bg2: basicColors.gray98,
   bg3: basicColors.gray95,
   dashboardBg: basicColors.gray98,
+  bgBlue1: basicColors.blue80,
+  bgBlue2: basicColors.blue77,
 };
 
 const borders = {
@@ -64,18 +61,18 @@ const form = {
   formInputPlaceholderText: basicColors.gray70,
   formInputDisabledText: basicColors.gray33,
   formInputTextStrong: basicColors.gray25,
-  formFocusOutline: basicColors.blueLight,
+  formFocusOutline: basicColors.blue95,
   formValidationMessageText: basicColors.white,
   formValidationMessageBg: basicColors.red88,
   formSwitchBg: basicColors.gray85,
-  formSwitchBgActive: basicColors.blueShade,
+  formSwitchBgActive: basicColors.blue77,
   formSwitchBgHover: basicColors.gray3,
-  formSwitchBgActiveHover: basicColors.blueBase,
+  formSwitchBgActiveHover: basicColors.blue80,
   formSwitchBgDisabled: basicColors.gray4,
   formSwitchDot: basicColors.white,
   formCheckboxBg: basicColors.white,
-  formCheckboxBgChecked: basicColors.blueShade,
-  formCheckboxBgCheckedHover: basicColors.blueBase,
+  formCheckboxBgChecked: basicColors.blue77,
+  formCheckboxBgCheckedHover: basicColors.blue80,
   formCheckboxCheckmark: basicColors.white,
 };
 
@@ -125,7 +122,7 @@ const lightTheme: GrafanaTheme = {
     link: basicColors.gray1,
     linkDisabled: basicColors.gray3,
     linkHover: basicColors.dark1,
-    linkExternal: basicColors.blueLight,
+    linkExternal: basicColors.blue85,
     textHeading: basicColors.gray1,
 
     ...form,

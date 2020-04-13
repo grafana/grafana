@@ -148,17 +148,13 @@ export interface GrafanaTheme extends GrafanaThemeCommons {
     // New blues palette used by next-gen form elements
     blue95: string;
     blue85: string;
+    blue80: string;
     blue77: string;
 
     // New reds palette used by next-gen form elements
     red88: string;
 
     // Accent colors
-    blue: string;
-    blueBase: string;
-    blueShade: string;
-    blueLight: string;
-    blueFaint: string;
     redBase: string;
     redShade: string;
     greenBase: string;
@@ -188,6 +184,9 @@ export interface GrafanaTheme extends GrafanaThemeCommons {
     bg3: string;
     border1: string;
     border2: string;
+
+    bgBlue1: string;
+    bgBlue2: string;
 
     dashboardBg: string;
     bodyBg: string;

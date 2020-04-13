@@ -15,7 +15,6 @@ $theme-name: light;
 
 // New Colors
 // -------------------------
-$blue-faint: #f5f9ff;
 $blue-light: #5794f2;
 $blue-base: #3274d9;
 $blue-shade: #1f60c4;
@@ -56,12 +55,12 @@ $white: #ffffff;
 
 // Accent colors
 // -------------------------
-$blue: #0083b3;
+$blue: #33a2e5;
 $red: $red-base;
 $yellow: #ff851b;
 $orange: #ff7941;
 $purple: #9954bb;
-$variable: #339ae5;
+$variable: #33a2e5;
 
 $brand-primary: #ff7941;
 $brand-success: #3eb15b;
@@ -90,7 +89,7 @@ $text-color-strong: #41444b;
 $text-color-weak: #767980;
 $text-color-faint: #35373f;
 $text-color-emphasis: #41444b;
-$text-blue: #339ae5;
+$text-blue: #33a2e5;
 
 $text-shadow-faint: none;
 
@@ -103,7 +102,7 @@ $brand-gradient-vertical: linear-gradient(#f05a28 30%, #fbca0a 99%);
 $link-color: #52545c;
 $link-color-disabled: #acb6bf;
 $link-hover-color: #1e2028;
-$external-link-color: #5794f2;
+$external-link-color: #33a2e5;
 
 // Typography
 // -------------------------
@@ -375,8 +374,8 @@ $panel-editor-viz-item-bg-hover: lighten($blue-base, 45%);
 $panel-options-group-border: none;
 $panel-options-group-header-bg: $gray-5;
 
-$panel-grid-placeholder-bg: $blue-faint;
-$panel-grid-placeholder-shadow: 0 0 4px $blue-light;
+$panel-grid-placeholder-bg: #1f60c4;
+$panel-grid-placeholder-shadow: 0 0 4px #5794f2;
 
 // logs
 $logs-color-unkown: $gray-5;

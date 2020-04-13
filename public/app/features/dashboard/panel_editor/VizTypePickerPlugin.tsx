@@ -49,8 +49,8 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       padding-bottom: 6px;
 
       &:hover {
-        box-shadow: 0 0 4px ${theme.palette.blueLight};
-        border: 1px solid ${theme.palette.blueLight};
+        box-shadow: 0 0 4px ${theme.palette.blue95};
+        border: 1px solid ${theme.palette.blue95};
       }
     `,
     current: css`

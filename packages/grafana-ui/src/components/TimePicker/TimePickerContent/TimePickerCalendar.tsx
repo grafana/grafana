@@ -110,7 +110,7 @@ const getBodyStyles = stylesFactory((theme: GrafanaTheme) => {
       .react-calendar__month-view__weekdays {
         background-color: inherit;
         text-align: center;
-        color: ${theme.palette.blueShade};
+        color: ${theme.palette.blue77};
 
         abbr {
           border: 0;
