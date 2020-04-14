@@ -157,7 +157,7 @@ const DataSourceTypeCard: FC<DataSourceTypeCardProps> = props => {
 
 const SigningStatusInfo: FC<DataSourceTypeCardProps> = props => {
   const { plugin } = props;
-
+  // TODO: make this look nicer... and should eventually be able to reuse it in the datasource page
   return (
     <>
       <span className="add-data-source-item-tag">{plugin.signature}</span>
