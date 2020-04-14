@@ -4,6 +4,7 @@ import uniqueId from 'lodash/uniqueId';
 import { DataSourceSettings } from '@grafana/data';
 import { Button } from '../Button';
 import { FormField } from '../FormField/FormField';
+import { Icon } from '../Icon/Icon';
 import { SecretFormField } from '../SecretFormField/SecretFormField';
 import { stylesFactory } from '../../themes';
 
@@ -76,8 +77,8 @@ const CustomHeaderRow: React.FC<CustomHeaderRowProps> = ({ header, onBlur, onCha
         onChange={e => onChange({ ...header, value: e.target.value })}
         onBlur={onBlur}
       />
-      <Button variant="destructive" size="xs" onClick={_e => onRemove(header.id)}>
-        <i className="fa fa-trash" />
+      <Button variant="secondary" size="xs" onClick={_e => onRemove(header.id)}>
+        <Icon name="trash-alt" />
       </Button>
     </div>
   );
@@ -203,12 +204,12 @@ export class CustomHeadersSettings extends PureComponent<Props, State> {
         <div className="gf-form">
           <Button
             variant="secondary"
-            size="xs"
+            icon="plus"
             onClick={e => {
               this.onHeaderAdd();
             }}
           >
-            Add Header
+            Add header
           </Button>
         </div>
       </div>

@@ -127,8 +127,13 @@ exports[`Render should render users table 1`] = `
           className="btn btn-danger btn-small"
           onClick={[Function]}
         >
-          <i
-            className="fa fa-remove"
+          <Icon
+            name="times"
+            style={
+              Object {
+                "marginBottom": 0,
+              }
+            }
           />
         </div>
       </td>
@@ -193,8 +198,13 @@ exports[`Render should render users table 1`] = `
           className="btn btn-danger btn-small"
           onClick={[Function]}
         >
-          <i
-            className="fa fa-remove"
+          <Icon
+            name="times"
+            style={
+              Object {
+                "marginBottom": 0,
+              }
+            }
           />
         </div>
       </td>
@@ -259,8 +269,13 @@ exports[`Render should render users table 1`] = `
           className="btn btn-danger btn-small"
           onClick={[Function]}
         >
-          <i
-            className="fa fa-remove"
+          <Icon
+            name="times"
+            style={
+              Object {
+                "marginBottom": 0,
+              }
+            }
           />
         </div>
       </td>
@@ -325,8 +340,13 @@ exports[`Render should render users table 1`] = `
           className="btn btn-danger btn-small"
           onClick={[Function]}
         >
-          <i
-            className="fa fa-remove"
+          <Icon
+            name="times"
+            style={
+              Object {
+                "marginBottom": 0,
+              }
+            }
           />
         </div>
       </td>
@@ -391,8 +411,13 @@ exports[`Render should render users table 1`] = `
           className="btn btn-danger btn-small"
           onClick={[Function]}
         >
-          <i
-            className="fa fa-remove"
+          <Icon
+            name="times"
+            style={
+              Object {
+                "marginBottom": 0,
+              }
+            }
           />
         </div>
       </td>
@@ -457,8 +482,13 @@ exports[`Render should render users table 1`] = `
           className="btn btn-danger btn-small"
           onClick={[Function]}
         >
-          <i
-            className="fa fa-remove"
+          <Icon
+            name="times"
+            style={
+              Object {
+                "marginBottom": 0,
+              }
+            }
           />
         </div>
       </td>

@@ -38,7 +38,7 @@ module.exports = ({ config, mode }) => {
     use: [
       {
         loader: 'style-loader',
-        options: { injectType: 'lazyStyleTag' }
+        options: { injectType: 'lazyStyleTag' },
       },
       {
         loader: 'css-loader',
@@ -82,13 +82,14 @@ module.exports = ({ config, mode }) => {
       new TerserPlugin({
         cache: false,
         parallel: false,
-        sourceMap: true,
+        sourceMap: false,
       }),
       new OptimizeCSSAssetsPlugin({}),
     ],
-  },
+  };
 
   config.resolve.extensions.push('.ts', '.tsx', '.mdx');
+
   config.stats = {
     warningsFilter: /export .* was not found in/,
   };

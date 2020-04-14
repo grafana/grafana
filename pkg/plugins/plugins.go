@@ -122,7 +122,10 @@ func (pm *PluginManager) Init() error {
 	}
 
 	for _, p := range Plugins {
-		if !p.IsCorePlugin {
+		if p.IsCorePlugin {
+			p.Signature = PluginSignatureInternal
+		} else {
+			p.Signature = GetPluginSignatureState(p)
 			metrics.SetPluginBuildInformation(p.Id, p.Type, p.Info.Version)
 		}
 	}
@@ -179,11 +182,11 @@ func (pm *PluginManager) scan(pluginDir string) error {
 
 	if err := util.Walk(pluginDir, true, true, scanner.walker); err != nil {
 		if xerrors.Is(err, os.ErrNotExist) {
-			pm.log.Debug("Couldn't scan dir '%s' since it doesn't exist")
+			pm.log.Debug("Couldn't scan directory since it doesn't exist", "pluginDir", pluginDir)
 			return nil
 		}
 		if xerrors.Is(err, os.ErrPermission) {
-			pm.log.Debug("Couldn't scan dir '%s' due to lack of permissions")
+			pm.log.Debug("Couldn't scan directory due to lack of permissions", "pluginDir", pluginDir)
 			return nil
 		}
 		if pluginDir != "data/plugins" {

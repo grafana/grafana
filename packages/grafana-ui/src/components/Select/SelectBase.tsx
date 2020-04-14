@@ -86,6 +86,7 @@ export function SelectBase<T>({
   loadingMessage = 'Loading options...',
   maxMenuHeight = 300,
   menuPosition,
+  menuPlacement = 'auto',
   noOptionsMessage = 'No options found',
   onBlur,
   onChange,
@@ -158,7 +159,7 @@ export function SelectBase<T>({
     isSearchable,
     maxMenuHeight,
     menuIsOpen: isOpen,
-    menuPlacement: 'auto',
+    menuPlacement,
     menuPosition,
     menuShouldScrollIntoView: false,
     onBlur,
@@ -242,7 +243,7 @@ export function SelectBase<T>({
             );
           },
           LoadingIndicator: (props: any) => {
-            return <Icon name="spinner" className="fa fa-spin" />;
+            return <Icon className="fa-spin" name="fa fa-spinner" />;
           },
           LoadingMessage: (props: any) => {
             return <div className={styles.loadingMessage}>{loadingMessage}</div>;
@@ -276,7 +277,7 @@ export function SelectBase<T>({
             width: inputSizesPixels(size),
           }),
         }}
-        className={widthClass}
+        className={cx('select-container', widthClass)}
         {...commonSelectProps}
         {...creatableProps}
         {...asyncSelectProps}

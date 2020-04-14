@@ -15,6 +15,7 @@ import { SaveDashboardModal } from './saveDashboardModal';
 import { Panel } from './panel';
 import { SharePanelModal } from './sharePanelModal';
 import { ConstantVariable, QueryVariable, VariableGeneral, Variables, VariablesSubMenu } from './variables';
+import { pageFactory } from '../support';
 
 export const Pages = {
   Login,
@@ -53,4 +54,11 @@ export const Pages = {
   SaveDashboardAsModal,
   SaveDashboardModal,
   SharePanelModal,
+  Components: {
+    BackButton: pageFactory({
+      selectors: {
+        backArrow: 'Go Back button',
+      },
+    }),
+  },
 };

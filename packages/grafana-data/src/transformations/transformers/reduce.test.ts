@@ -1,7 +1,9 @@
 import { ReducerID } from '../fieldReducer';
 import { DataTransformerID } from './ids';
 import { toDataFrame, toDataFrameDTO } from '../../dataframe/processDataFrame';
-import { transformDataFrame } from '../transformers';
+import { mockTransformationsRegistry } from '../../utils/tests/mockTransformationsRegistry';
+import { reduceTransformer } from './reduce';
+import { transformDataFrame } from '../transformDataFrame';
 
 const seriesWithValues = toDataFrame({
   fields: [
@@ -11,6 +13,9 @@ const seriesWithValues = toDataFrame({
 });
 
 describe('Reducer Transformer', () => {
+  beforeAll(() => {
+    mockTransformationsRegistry([reduceTransformer]);
+  });
   it('filters by include', () => {
     const cfg = {
       id: DataTransformerID.reduce,

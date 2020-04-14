@@ -1,14 +1,12 @@
 import React, { useContext } from 'react';
 import { css, cx } from 'emotion';
-// @ts-ignore
-import tinycolor from 'tinycolor2';
-import { ThemeContext } from '@grafana/ui';
+import { ThemeContext, Icon } from '@grafana/ui';
 import { GrafanaTheme } from '@grafana/data';
 import { SearchQuery } from 'app/core/components/search/search';
 
 type Omit<T, K extends keyof T> = Pick<T, Exclude<keyof T, K>>;
 
-interface SearchFieldProps extends Omit<React.HTMLAttributes<HTMLInputElement>, 'onChange'> {
+interface SearchFieldProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'onChange'> {
   query: SearchQuery;
   onChange: (query: string) => void;
   onKeyDown: (e: React.KeyboardEvent<HTMLInputElement>) => void;
@@ -19,18 +17,19 @@ const getSearchFieldStyles = (theme: GrafanaTheme) => ({
     width: 100%;
     height: 55px; /* this variable is not part of GrafanaTheme yet*/
     display: flex;
-    background-color: ${theme.colors.formInputBg};
+    background-color: ${theme.colors.panelBg};
+    border-bottom: 1px solid ${theme.colors.panelBorder};
     position: relative;
-    box-shadow: 0 0 10px ${theme.isLight ? theme.colors.gray85 : theme.colors.black};
+    align-items: center;
   `,
   input: css`
     max-width: 653px;
-    padding: ${theme.spacing.md} ${theme.spacing.md} ${theme.spacing.sm} ${theme.spacing.md};
+    padding: 0 ${theme.spacing.md};
     height: 51px;
     box-sizing: border-box;
     outline: none;
-    background-color: ${theme.colors.formInputBg};
-    background: ${theme.colors.formInputBg};
+    background-color: ${theme.colors.panelBg};
+    background: ${theme.colors.panelBg};
     flex-grow: 10;
   `,
   spacer: css`
@@ -39,10 +38,8 @@ const getSearchFieldStyles = (theme: GrafanaTheme) => ({
   icon: cx(
     css`
       color: ${theme.colors.textWeak};
-      font-size: ${theme.typography.size.lg};
-      padding: ${theme.spacing.md} ${theme.spacing.md} ${theme.spacing.sm} ${theme.spacing.md};
-    `,
-    'pointer'
+      padding: 0 ${theme.spacing.md};
+    `
   ),
 });
 
@@ -56,7 +53,7 @@ export const SearchField: React.FunctionComponent<SearchFieldProps> = ({ query, 
       {/* based on it GrafanaCtrl (L256) decides whether or not hide search */}
       <div className={`${styles.wrapper} search-field-wrapper`}>
         <div className={styles.icon}>
-          <i className="fa fa-search" />
+          <Icon name="search" size="lg" />
         </div>
 
         <input

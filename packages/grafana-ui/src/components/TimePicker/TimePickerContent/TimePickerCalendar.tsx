@@ -1,11 +1,12 @@
 import React, { memo, useState, useEffect } from 'react';
-import { css, cx } from 'emotion';
+import { css } from 'emotion';
 import Calendar from 'react-calendar/dist/entry.nostyle';
 import { GrafanaTheme, dateTime, TIME_FORMAT } from '@grafana/data';
 import { stringToDateTimeType } from '../time';
 import { useTheme, stylesFactory } from '../../../themes';
 import { TimePickerTitle } from './TimePickerTitle';
 import { Button } from '../../Button';
+import { Icon } from '../../Icon/Icon';
 import { Portal } from '../../Portal/Portal';
 import { getThemeColors } from './colors';
 import { ClickOutsideWrapper } from '../../ClickOutsideWrapper/ClickOutsideWrapper';
@@ -82,7 +83,7 @@ const getBodyStyles = stylesFactory((theme: GrafanaTheme) => {
 
   return {
     title: css`
-      color: ${theme.colors.text}
+      color: ${theme.colors.text};
       background-color: ${colors.background};
       font-size: ${theme.typography.size.md};
       border: 1px solid transparent;
@@ -109,7 +110,7 @@ const getBodyStyles = stylesFactory((theme: GrafanaTheme) => {
       .react-calendar__month-view__weekdays {
         background-color: inherit;
         text-align: center;
-        color: ${theme.colors.blueShade};
+        color: ${theme.palette.blueShade};
 
         abbr {
           border: 0;
@@ -139,9 +140,9 @@ const getBodyStyles = stylesFactory((theme: GrafanaTheme) => {
 
       .react-calendar__tile--active,
       .react-calendar__tile--active:hover {
-        color: ${theme.colors.white};
+        color: ${theme.palette.white};
         font-weight: ${theme.typography.weight.semibold};
-        background: ${theme.colors.blue95};
+        background: ${theme.palette.blue95};
         box-shadow: none;
         border: 0px;
       }
@@ -150,12 +151,12 @@ const getBodyStyles = stylesFactory((theme: GrafanaTheme) => {
       .react-calendar__tile--rangeStart {
         padding: 0;
         border: 0px;
-        color: ${theme.colors.white};
+        color: ${theme.palette.white};
         font-weight: ${theme.typography.weight.semibold};
-        background: ${theme.colors.blue95};
+        background: ${theme.palette.blue95};
 
         abbr {
-          background-color: ${theme.colors.blue77};
+          background-color: ${theme.palette.blue77};
           border-radius: 100px;
           display: block;
           padding-top: 2px;
@@ -185,10 +186,6 @@ const getHeaderStyles = stylesFactory((theme: GrafanaTheme) => {
       display: flex;
       justify-content: space-between;
       padding: 7px;
-    `,
-    close: css`
-      cursor: pointer;
-      font-size: ${theme.typography.size.lg};
     `,
   };
 });
@@ -245,7 +242,7 @@ const Header = memo<Props>(({ onClose }) => {
   return (
     <div className={styles.container}>
       <TimePickerTitle>Select a time range</TimePickerTitle>
-      <i className={cx(styles.close, 'fa', 'fa-times')} onClick={onClose} />
+      <Icon name="times" onClick={onClose} />
     </div>
   );
 });
@@ -267,8 +264,8 @@ const Body = memo<Props>(({ onChange, from, to }) => {
       className={styles.body}
       tileClassName={styles.title}
       value={value}
-      nextLabel={<span className="fa fa-angle-right" />}
-      prevLabel={<span className="fa fa-angle-left" />}
+      nextLabel={<Icon name="angle-right" />}
+      prevLabel={<Icon name="angle-left" />}
       onChange={value => valueToInput(value, onChange)}
       locale="en"
     />

@@ -31,6 +31,7 @@
     "@grafana/data": "7.0.0-pre.0",
     "@grafana/slate-react": "0.22.9-grafana",
     "@grafana/tsconfig": "^1.0.0-rc1",
+    "@iconscout/react-unicons": "^1.0.0",
     "@torkelo/react-select": "3.0.8",
     "@types/react-beautiful-dnd": "12.1.2",
     "@types/react-color": "3.0.1",

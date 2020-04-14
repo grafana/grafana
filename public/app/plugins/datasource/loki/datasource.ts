@@ -646,7 +646,7 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
       }
       const view = new DataFrameView<{ ts: string; line: string }>(frame);
 
-      view.forEachRow(row => {
+      view.forEach(row => {
         annotations.push({
           time: new Date(row.ts).valueOf(),
           text: row.line,

@@ -42,10 +42,10 @@ export const DataLinksListItem: FC<DataLinksListItemProps> = ({
 
         <HorizontalGroup>
           <div onClick={onEdit} className={styles.action}>
-            <Icon name="pencil" />
+            <Icon name="pen" />
           </div>
           <div onClick={onRemove} className={cx(styles.action, styles.remove)}>
-            <Icon name="trash" />
+            <Icon name="trash-alt" />
           </div>
         </HorizontalGroup>
       </HorizontalGroup>
@@ -56,15 +56,15 @@ export const DataLinksListItem: FC<DataLinksListItemProps> = ({
 const getDataLinkListItemStyles = stylesFactory((theme: GrafanaTheme) => {
   const borderColor = selectThemeVariant(
     {
-      light: theme.colors.gray85,
-      dark: theme.colors.dark9,
+      light: theme.palette.gray85,
+      dark: theme.palette.dark9,
     },
     theme.type
   );
   const bg = selectThemeVariant(
     {
-      light: theme.colors.white,
-      dark: theme.colors.dark1,
+      light: theme.palette.white,
+      dark: theme.palette.dark1,
     },
     theme.type
   );
@@ -92,7 +92,7 @@ const getDataLinkListItemStyles = stylesFactory((theme: GrafanaTheme) => {
       font-size: ${theme.typography.size.sm};
     `,
     remove: css`
-      color: ${theme.colors.red88};
+      color: ${theme.palette.red88};
     `,
   };
 });

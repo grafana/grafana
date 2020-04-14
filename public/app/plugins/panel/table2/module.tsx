@@ -1,9 +1,8 @@
 import { PanelPlugin } from '@grafana/data';
 import { TablePanel } from './TablePanel';
-import { CustomFieldConfig, defaults, Options } from './types';
+import { CustomFieldConfig, Options } from './types';
 
 export const plugin = new PanelPlugin<Options, CustomFieldConfig>(TablePanel)
-  .setDefaults(defaults)
   .useFieldConfig({
     useCustomConfig: builder => {
       builder
@@ -34,10 +33,11 @@ export const plugin = new PanelPlugin<Options, CustomFieldConfig>(TablePanel)
         .addSelect({
           path: 'displayMode',
           name: 'Cell display mode',
-          description: 'Color value, background, show as gauge, etc',
+          description: 'Color text, background, show as gauge, etc',
           settings: {
             options: [
               { value: 'auto', label: 'Auto' },
+              { value: 'color-text', label: 'Color text' },
               { value: 'color-background', label: 'Color background' },
               { value: 'gradient-gauge', label: 'Gradient gauge' },
               { value: 'lcd-gauge', label: 'LCD gauge' },
@@ -47,9 +47,17 @@ export const plugin = new PanelPlugin<Options, CustomFieldConfig>(TablePanel)
     },
   })
   .setPanelOptions(builder => {
-    builder.addBooleanSwitch({
-      path: 'showHeader',
-      name: 'Show header',
-      description: "To display table's header or not to display",
-    });
+    builder
+      .addBooleanSwitch({
+        path: 'showHeader',
+        name: 'Show header',
+        description: "To display table's header or not to display",
+        defaultValue: true,
+      })
+      .addBooleanSwitch({
+        path: 'resizable',
+        name: 'Resizable',
+        description: 'Toggles if table columns are resizable or not',
+        defaultValue: false,
+      });
   });

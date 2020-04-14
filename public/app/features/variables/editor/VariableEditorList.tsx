@@ -3,6 +3,7 @@ import { e2e } from '@grafana/e2e';
 import EmptyListCTA from '../../../core/components/EmptyListCTA/EmptyListCTA';
 import { QueryVariableModel, VariableModel } from '../../templating/types';
 import { toVariableIdentifier, VariableIdentifier } from '../state/types';
+import { Icon } from '@grafana/ui';
 
 export interface Props {
   variables: VariableModel[];
@@ -47,7 +48,7 @@ export class VariableEditorList extends PureComponent<Props> {
             <div>
               <EmptyListCTA
                 title="There are no variables yet"
-                buttonIcon="gicon gicon-variable"
+                buttonIcon="calculator-alt"
                 buttonTitle="Add variable"
                 infoBox={{
                   __html: ` <p>
@@ -109,9 +110,9 @@ export class VariableEditorList extends PureComponent<Props> {
 
                         <td style={{ width: '1%' }}>
                           {index > 0 && (
-                            <i
+                            <Icon
                               onClick={event => this.onChangeVariableOrder(event, variable, MoveType.up)}
-                              className="pointer fa fa-arrow-up"
+                              name="arrow-up"
                               aria-label={e2e.pages.Dashboard.Settings.Variables.List.selectors.tableRowArrowUpButtons(
                                 variable.name
                               )}
@@ -120,9 +121,9 @@ export class VariableEditorList extends PureComponent<Props> {
                         </td>
                         <td style={{ width: '1%' }}>
                           {index < this.props.variables.length - 1 && (
-                            <i
+                            <Icon
                               onClick={event => this.onChangeVariableOrder(event, variable, MoveType.down)}
-                              className="pointer fa fa-arrow-down"
+                              name="arrow-down"
                               aria-label={e2e.pages.Dashboard.Settings.Variables.List.selectors.tableRowArrowDownButtons(
                                 variable.name
                               )}
@@ -148,7 +149,7 @@ export class VariableEditorList extends PureComponent<Props> {
                               variable.name
                             )}
                           >
-                            <i className="fa fa-remove" />
+                            <Icon name="times" style={{ marginBottom: 0 }} />
                           </a>
                         </td>
                       </tr>

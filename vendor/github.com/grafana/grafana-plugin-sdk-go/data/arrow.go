@@ -17,7 +17,7 @@ import (
 
 // MarshalArrow converts the Frame to an arrow table and returns a byte
 // representation of that table.
-func MarshalArrow(f *Frame) ([]byte, error) {
+func (f *Frame) MarshalArrow() ([]byte, error) {
 	arrowFields, err := buildArrowFields(f)
 	if err != nil {
 		return nil, err
@@ -640,8 +640,8 @@ func populateFrameFields(fR *ipc.FileReader, nullable []bool, frame *Frame) erro
 	return nil
 }
 
-// UnmarshalArrow converts a byte representation of an arrow table to a Frame
-func UnmarshalArrow(b []byte) (*Frame, error) {
+// UnmarshalArrowFrame converts a byte representation of an arrow table to a Frame.
+func UnmarshalArrowFrame(b []byte) (*Frame, error) {
 	fB := filebuffer.New(b)
 	fR, err := ipc.NewFileReader(fB)
 	if err != nil {
@@ -657,7 +657,7 @@ func UnmarshalArrow(b []byte) (*Frame, error) {
 
 	if metaAsString, ok := getMDKey("meta", metaData); ok {
 		var err error
-		frame.Meta, err = QueryResultMetaFromJSON(metaAsString)
+		frame.Meta, err = FrameMetaFromJSON(metaAsString)
 		if err != nil {
 			return nil, err
 		}
@@ -691,4 +691,35 @@ func toJSONString(val interface{}) (string, error) {
 		return "", err
 	}
 	return string(b), nil
+}
+
+// UnmarshalArrowFrames decodes a slice of Arrow encoded frames to Frames ([]*Frame) by calling
+// the UnmarshalArrow function on each encoded frame.
+// If an error occurs Frames will be nil.
+// See Frames.UnMarshalArrow() for the inverse operation.
+func UnmarshalArrowFrames(bFrames [][]byte) (Frames, error) {
+	frames := make(Frames, len(bFrames))
+	var err error
+	for i, encodedFrame := range bFrames {
+		frames[i], err = UnmarshalArrowFrame(encodedFrame)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return frames, nil
+}
+
+// MarshalArrow encodes Frames into a slice of []byte using *Frame's MarshalArrow method on each Frame.
+// If an error occurs [][]byte will be nil.
+// See UnmarshalArrowFrames for the inverse operation.
+func (frames Frames) MarshalArrow() ([][]byte, error) {
+	bs := make([][]byte, len(frames))
+	var err error
+	for i, frame := range frames {
+		bs[i], err = frame.MarshalArrow()
+		if err != nil {
+			return nil, err
+		}
+	}
+	return bs, nil
 }
