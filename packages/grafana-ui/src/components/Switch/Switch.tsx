@@ -95,7 +95,6 @@ export const Switch = React.forwardRef<HTMLInputElement, SwitchProps>(
           ref={ref}
         />
         <label htmlFor={switchId} />
-
       </div>
     );
   }
