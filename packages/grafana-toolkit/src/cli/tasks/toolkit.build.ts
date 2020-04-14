@@ -40,7 +40,7 @@ export const savePackage = useSpinner<{
 
 const preparePackage = async (pkg: any) => {
   pkg.bin = {
-    'grafana-toolkit': './bin/grafana-toolkit.dist.js',
+    'grafana-toolkit': './bin/grafana-toolkit.js',
   };
 
   await savePackage({
@@ -54,7 +54,6 @@ const copyFiles = () => {
     'README.md',
     'CHANGELOG.md',
     'config/circleci/config.yml',
-    'bin/grafana-toolkit.dist.js',
     'bin/grafana-toolkit.js',
     'src/config/prettier.plugin.config.json',
     'src/config/prettier.plugin.rc.js',
