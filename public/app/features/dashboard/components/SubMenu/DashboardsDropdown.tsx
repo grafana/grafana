@@ -4,6 +4,7 @@ import { getLinkSrv } from '../../../panel/panellinks/link_srv';
 import { DashboardLink } from './DashboardLinks';
 import { DashboardSearchHit } from '../../../../types';
 import { Icon } from '@grafana/ui';
+import { sanitize, sanitizeUrl } from '../../../../core/utils/text';
 
 interface Props {
   link: DashboardLink;
@@ -57,8 +58,8 @@ export class DashboardsDropdown extends PureComponent<Props, State> {
             searchHits.map((dashboard: any, index: number) => {
               return (
                 <li key={`${dashboard.id}-${index}`}>
-                  <a href={dashboard.url} target={dashboard.target}>
-                    {dashboard.title}
+                  <a href={sanitizeUrl(dashboard.url)} target={dashboard.target}>
+                    {sanitize(dashboard.title)}
                   </a>
                 </li>
               );

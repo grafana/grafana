@@ -1,9 +1,9 @@
-import React, { PureComponent } from 'react';
-import { DashboardModel } from '../../state';
-import { getLinkSrv } from '../../../panel/panellinks/link_srv';
-import { Icon } from '@grafana/ui';
-import { getBackendSrv } from '../../../../core/services/backend_srv';
+import React, { FC } from 'react';
+import { Icon, IconName } from '@grafana/ui';
 import { DashboardsDropdown } from './DashboardsDropdown';
+import { getLinkSrv } from '../../../panel/panellinks/link_srv';
+import { DashboardModel } from '../../state';
+import { sanitize, sanitizeUrl } from '../../../../core/utils/text';
 
 export interface Props {
   dashboard: DashboardModel;
@@ -20,28 +20,12 @@ export interface DashboardLink {
   asDropdown: boolean;
   tags: [];
   searchHits?: [];
+  target: string;
 }
 
-export class DashboardLinks extends PureComponent<Props> {
-  onDropDownClick = async (link: DashboardLink) => {
-    const { dashboard } = this.props;
-
-    const limit = 7;
-    const dashboards = await getBackendSrv().search({ tag: link.tags, limit });
-    const processed = dashboards
-      .filter(dash => dash.id !== dashboard.id)
-      .map(dash => {
-        return {
-          ...dash,
-          url: getLinkSrv().getLinkUrl(dash),
-        };
-      });
-    return processed;
-  };
-
-  render() {
-    const { dashboard } = this.props;
-    return dashboard.links.length > 0 ? (
+export const DashboardLinks: FC<Props> = ({ dashboard }) => {
+  return (
+    dashboard.links.length > 0 && (
       <>
         {dashboard.links.map((link: DashboardLink, index: number) => {
           const linkInfo = getLinkSrv().getAnchorInfo(link);
@@ -51,16 +35,18 @@ export class DashboardLinks extends PureComponent<Props> {
             return <DashboardsDropdown key={key} link={link} linkInfo={linkInfo} dashboardId={dashboard.id} />;
           }
 
+          console.log(link.icon);
+
           return (
             <div key={key} className="gf-form">
-              <a className="gf-form-label" href={linkInfo.href} target={link.target}>
-                <Icon name={`${link.icon.replace(' ', '-')}`} />
-                <span>{linkInfo.title}</span>
+              <a className="gf-form-label" href={sanitizeUrl(linkInfo.href)} target={link.target}>
+                <Icon name={`${link.icon.replace(' ', '-')}` as IconName} />
+                <span>{sanitize(linkInfo.title)}</span>
               </a>
             </div>
           );
         })}
       </>
-    ) : null;
-  }
-}
+    )
+  );
+};
