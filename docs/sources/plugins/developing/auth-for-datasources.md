@@ -20,17 +20,17 @@ The proxy supports:
 
 The user saves the API key/password on the plugin config page and it is encrypted (using the `secureJsonData` feature) and saved in the Grafana database. When a request from the data source is made, the Grafana Proxy will:
 
-1. intercept the original request sent from the data source plugin.
-1. load the `secureJsonData` data from the database and decrypt the API key or password on the Grafana backend.
-1. if using token authentication, carry out authentication and generate an OAuth token that will be added as an `Authorization` HTTP header to the requests (or alternatively it will add a HTTP header with the API key).
-1. renew the token if it has expired.
-1. after adding CORS headers and authorization headers, forward the request to the external API.
+1. Intercept the original request sent from the data source plugin.
+1. Load the `secureJsonData` data from the database and decrypt the API key or password on the Grafana backend.
+1. If using token authentication, carry out authentication and generate an OAuth token that will be added as an `Authorization` HTTP header to the requests (or alternatively it will add a HTTP header with the API key).
+1. Renew the token if it has expired.
+1. After adding CORS headers and authorization headers, forward the request to the external API.
 
 This means that users that access the data source config page cannot access the API key or password after they have saved it the first time and that no secret keys are sent in plain text through the browser where they can be spied on.
 
 For backend authentication to work, the external/third-party API must either have an OAuth endpoint or that the API accepts an API key as a HTTP header for authentication.
 
-## Encrypting Sensitive Data
+## Encrypting sensitive data
 
 When a user saves a password or secret with your data source plugin's Config page, then you can save data in an encrypted blob in the Grafana database called `secureJsonData`. Any data saved in the blob is encrypted by Grafana and can only be decrypted by the Grafana server on the backend. This means once a password is saved, no sensitive data is sent to the browser. If the password is saved in the `jsonData` blob or the `password` field then it is unencrypted and anyone with Admin access (with the help of Chrome Developer Tools) can read it.
 
@@ -72,7 +72,7 @@ When you build your URL to the third-party API in your data source class, the UR
 - then the Grafana proxy will transform the url from the original request into `https://management.azure.com/foo/bar`
 - finally, it will add CORS headers and forward the request to the new url. This example does not do any authentication.
 
-The `method` parameter is optional. It can be set to a specific HTTP verb to provide more fine-grained control - for example you might have two plugin routes, one for GET requests and one for POST requests.
+The `method` parameter is optional. It can be set to a specific HTTP verb to provide more fine-grained control. For example you might have two plugin routes, one for GET requests and one for POST requests.
 
 ### Dynamic routes
 
@@ -133,7 +133,7 @@ The token auth section in the `plugin.json` file looks like this:
 }
 ```
 
-This interpolates in data from both `jsonData` and `secureJsonData` to generate the token request to the third-party API. It is common for tokens to have a short expiry period (30 minutes). The Grafana proxy will automatically renew the token if it has expired.
+This interpolates in data from both `jsonData` and `secureJsonData` to generate the token request to the third-party API. It is common for tokens to have a short expiry period (30 minutes). The Grafana proxy automatically renews the token if it has expired.
 
 ## Always restart the Grafana server after route changes
 
