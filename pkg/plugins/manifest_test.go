@@ -8,7 +8,6 @@ import (
 )
 
 func TestManifestParsing(t *testing.T) {
-
 	txt := `-----BEGIN PGP SIGNED MESSAGE-----
 Hash: SHA512
 
@@ -40,15 +39,18 @@ NR7DnB0CCQHO+4FlSPtXFTzNepoc+CytQyDAeOLMLmf2Tqhk2YShk+G/YlVX
 =hBea
 -----END PGP SIGNATURE-----`
 
-	manifest, err := readPluginManifest([]byte(txt))
+	t.Run("valid manifest", func(t *testing.T) {
+		manifest, err := readPluginManifest([]byte(txt))
 
-	assert.Nil(t, err)
-	assert.NotNil(t, manifest)
-	assert.Equal(t, manifest.Plugin, "grafana-googlesheets-datasource")
+		assert.Nil(t, err)
+		assert.NotNil(t, manifest)
+		assert.Equal(t, manifest.Plugin, "grafana-googlesheets-datasource")
+	})
 
-	// Modified text should fail
-	modified := strings.ReplaceAll(txt, "README.md", "xxxxxxxxxx")
-	manifest, err = readPluginManifest([]byte(modified))
-	assert.NotNil(t, err)
-	assert.Nil(t, manifest)
+	t.Run("invalid manifest", func(t *testing.T) {
+		modified := strings.ReplaceAll(txt, "README.md", "xxxxxxxxxx")
+		manifest, err := readPluginManifest([]byte(modified))
+		assert.NotNil(t, err)
+		assert.Nil(t, manifest)
+	})
 }
