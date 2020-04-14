@@ -19,8 +19,6 @@ const isLinkedMode = () => {
   } catch {
     return false;
   }
-
-  return false;
 };
 
 const entrypoint = () => {
