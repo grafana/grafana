@@ -115,14 +115,14 @@ $hr-border-color: $gray-4 !default;
 // Panel
 // -------------------------
 $panel-bg: #ffffff;
-$panel-border: 1px solid #e9edf2;
-$panel-header-hover-bg: #f7f8fa;
+$panel-border: 1px solid #dce1e6;
+$panel-header-hover-bg: #f1f5f9;
 $panel-corner: $gray-4;
 
 // Page header
-$page-header-bg: #f7f8fa;
+$page-header-bg: #f1f5f9;
 $page-header-shadow: inset 0px -3px 10px $gray-6;
-$page-header-border-color: #e9edf2;
+$page-header-border-color: #dce1e6;
 
 $divider-border-color: $gray-2;
 
@@ -202,7 +202,7 @@ $input-box-shadow: none;
 $input-border-focus: #5794f2;
 $input-box-shadow-focus: #5794f2;
 $input-color-placeholder: #9fa7b3;
-$input-label-bg: #f7f8fa;
+$input-label-bg: #f1f5f9;
 $input-color-select-arrow: #7b8087;
 
 // search

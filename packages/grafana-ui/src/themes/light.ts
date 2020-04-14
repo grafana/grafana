@@ -35,7 +35,7 @@ const basicColors = {
 
 const backgrounds = {
   bg1: basicColors.white,
-  bg2: basicColors.gray98,
+  bg2: basicColors.gray97,
   bg3: basicColors.gray95,
   dashboardBg: basicColors.gray98,
   bgBlue1: basicColors.blue80,
@@ -43,7 +43,7 @@ const backgrounds = {
 };
 
 const borders = {
-  border1: basicColors.gray95,
+  border1: basicColors.gray90,
   border2: basicColors.gray85,
   border3: basicColors.gray70,
 };
