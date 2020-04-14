@@ -39,7 +39,7 @@ func NewProvisioningServiceImpl(
 	provisionDatasources func(string) error,
 ) *provisioningServiceImpl {
 	return &provisioningServiceImpl{
-		log: log.New("provisioning"),
+		log:                     log.New("provisioning"),
 		newDashboardProvisioner: newDashboardProvisioner,
 		provisionNotifiers:      provisionNotifiers,
 		provisionDatasources:    provisionDatasources,
