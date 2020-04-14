@@ -4,13 +4,12 @@ import (
 	"strings"
 	"testing"
 
-	. "github.com/smartystreets/goconvey/convey"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestManifestParsing(t *testing.T) {
 
-	Convey("Should validate manifest", t, func() {
-		txt := `-----BEGIN PGP SIGNED MESSAGE-----
+	txt := `-----BEGIN PGP SIGNED MESSAGE-----
 Hash: SHA512
 
 {
@@ -41,16 +40,15 @@ NR7DnB0CCQHO+4FlSPtXFTzNepoc+CytQyDAeOLMLmf2Tqhk2YShk+G/YlVX
 =hBea
 -----END PGP SIGNATURE-----`
 
-		manifest, err := readPluginManifest([]byte(txt))
+	manifest, err := readPluginManifest([]byte(txt))
 
-		So(err, ShouldBeNil)
-		So(manifest, ShouldNotBeNil)
-		So(manifest.Plugin, ShouldEqual, "grafana-googlesheets-datasource")
+	assert.Nil(t, err)
+	assert.NotNil(t, manifest)
+	assert.Equal(t, manifest.Plugin, "grafana-googlesheets-datasource")
 
-		// Modified text should fail
-		modified := strings.ReplaceAll(txt, "README.md", "xxxxxxxxxx")
-		manifest, err = readPluginManifest([]byte(modified))
-		So(err, ShouldNotBeNil)
-		So(manifest, ShouldBeNil)
-	})
+	// Modified text should fail
+	modified := strings.ReplaceAll(txt, "README.md", "xxxxxxxxxx")
+	manifest, err = readPluginManifest([]byte(modified))
+	assert.NotNil(t, err)
+	assert.Nil(t, manifest)
 }
