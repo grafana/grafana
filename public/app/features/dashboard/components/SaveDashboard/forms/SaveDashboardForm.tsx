@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 
-import { Forms, Button, HorizontalGroup, TextArea } from '@grafana/ui';
+import { Button, HorizontalGroup, TextArea, Form, Checkbox } from '@grafana/ui';
 import { e2e } from '@grafana/e2e';
 import { SaveDashboardFormProps } from '../types';
 
@@ -15,7 +15,7 @@ export const SaveDashboardForm: React.FC<SaveDashboardFormProps> = ({ dashboard,
   const hasVariableChanged = useMemo(() => dashboard.hasVariableValuesChanged(), [dashboard]);
 
   return (
-    <Forms.Form
+    <Form
       onSubmit={async (data: SaveDashboardFormDTO) => {
         const result = await onSubmit(dashboard.getSaveModelClone(data), data, dashboard);
         if (result.status === 'success') {
@@ -33,7 +33,7 @@ export const SaveDashboardForm: React.FC<SaveDashboardFormProps> = ({ dashboard,
         <>
           <div className="gf-form-group">
             {hasTimeChanged && (
-              <Forms.Checkbox
+              <Checkbox
                 label="Save current time range as dashboard default"
                 name="saveTimerange"
                 ref={register}
@@ -41,7 +41,7 @@ export const SaveDashboardForm: React.FC<SaveDashboardFormProps> = ({ dashboard,
               />
             )}
             {hasVariableChanged && (
-              <Forms.Checkbox
+              <Checkbox
                 label="Save current variable values as dashboard default"
                 name="saveVariables"
                 ref={register}
@@ -63,6 +63,6 @@ export const SaveDashboardForm: React.FC<SaveDashboardFormProps> = ({ dashboard,
           </HorizontalGroup>
         </>
       )}
-    </Forms.Form>
+    </Form>
   );
 };

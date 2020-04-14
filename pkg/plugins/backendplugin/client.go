@@ -30,9 +30,12 @@ var handshake = goplugin.HandshakeConfig{
 	MagicCookieValue: grpcplugin.MagicCookieValue,
 }
 
-func newClientConfig(executablePath string, logger log.Logger, versionedPlugins map[int]goplugin.PluginSet) *goplugin.ClientConfig {
+func newClientConfig(executablePath string, env []string, logger log.Logger, versionedPlugins map[int]goplugin.PluginSet) *goplugin.ClientConfig {
+	cmd := exec.Command(executablePath)
+	cmd.Env = env
+
 	return &goplugin.ClientConfig{
-		Cmd:              exec.Command(executablePath),
+		Cmd:              cmd,
 		HandshakeConfig:  handshake,
 		VersionedPlugins: versionedPlugins,
 		Logger:           logWrapper{Logger: logger},

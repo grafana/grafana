@@ -124,9 +124,16 @@ export { FieldConfigItemHeaderTitle } from './FieldConfigs/FieldConfigItemHeader
 
 // Next-gen forms
 export { default as Forms } from './Forms';
+export { Form } from './Forms/Form';
+export { InputControl } from './InputControl';
 export * from './Button';
 export { ValuePicker } from './ValuePicker/ValuePicker';
 export { fieldMatchersUI } from './MatchersUI/fieldMatchersUI';
+export { getFormStyles } from './Forms/getFormStyles';
+
+export { Label } from './Forms/Label';
+export { Field } from './Forms/Field';
+export { Legend } from './Forms/Legend';
 
 export { default as resetSelectStyles } from './Select/resetSelectStyles';
 export * from './Select/Select';
@@ -137,6 +144,7 @@ export { RadioButtonGroup } from './Forms/RadioButtonGroup/RadioButtonGroup';
 
 export { Input } from './Input/Input';
 export { Switch } from './Forms/Switch';
+export { Checkbox } from './Forms/Checkbox';
 export { TextArea } from './TextArea/TextArea';
 
 // Legacy forms
