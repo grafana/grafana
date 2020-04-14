@@ -40,6 +40,7 @@ export const PanelEditorTabs: React.FC<PanelEditorTabsProps> = ({ panel, dashboa
               key={tab.id}
               label={tab.text}
               active={tab.active}
+              counter={5}
               onChangeTab={() => onChangeTab(tab)}
               icon={tab.icon as IconName}
             />
