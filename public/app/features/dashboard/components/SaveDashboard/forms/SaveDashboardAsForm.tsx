@@ -3,8 +3,7 @@ import { Button, Forms, HorizontalGroup, Input, Switch, Form, Field, InputContro
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
 import { SaveDashboardFormProps } from '../types';
-
-export const NEW_DASHBOARD_DEFAULT_TITLE = 'New dashboard';
+import validationSrv from 'app/features/manage-dashboards/services/ValidationSrv';
 
 interface SaveDashboardAsFormDTO {
   title: string;
@@ -50,6 +49,18 @@ export const SaveDashboardAsForm: React.FC<SaveDashboardFormProps & { isNew?: bo
     copyTags: false,
   };
 
+  const validateDashboardName = (getFormValues: () => SaveDashboardAsFormDTO) => async (dashboardName: string) => {
+    if (dashboardName && dashboardName === getFormValues().$folder.title?.trim()) {
+      return 'Dashboard name cannot be the same as folder';
+    }
+    try {
+      await validationSrv.validateNewDashboardName(getFormValues().$folder.id, dashboardName);
+      return true;
+    } catch (e) {
+      return e.message;
+    }
+  };
+
   return (
     <Form
       defaultValues={defaultValues}
@@ -67,15 +78,24 @@ export const SaveDashboardAsForm: React.FC<SaveDashboardFormProps & { isNew?: bo
           },
           dashboard
         );
+
         if (result.status === 'success') {
           onSuccess();
         }
       }}
     >
-      {({ register, control, errors }) => (
+      {({ register, control, errors, getValues }) => (
         <>
-          <Field label="Dashboard name" invalid={!!errors.title} error="Dashboard name is required">
-            <Input name="title" ref={register({ required: true })} aria-label="Save dashboard title field" autoFocus />
+
+          <Field label="Dashboard name" invalid={!!errors.title} error={errors.title?.message}>
+            <Input
+              name="title"
+              ref={register({
+                validate: validateDashboardName(getValues),
+              })}
+              aria-label="Save dashboard title field"
+              autoFocus
+            />
           </Field>
           <Field label="Folder">
             <InputControl

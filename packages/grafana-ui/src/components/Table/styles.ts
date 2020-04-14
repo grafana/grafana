@@ -19,7 +19,7 @@ export interface TableStyles {
 
 export const getTableStyles = stylesFactory(
   (theme: GrafanaTheme): TableStyles => {
-    const palette = theme.palette;
+    const { palette, colors } = theme;
     const headerBg = theme.colors.panelBorder;
     const headerBorderColor = theme.isLight ? palette.gray70 : palette.gray05;
     const resizerColor = theme.isLight ? palette.blue77 : palette.blue95;
@@ -51,7 +51,7 @@ export const getTableStyles = stylesFactory(
         padding: ${padding}px 10px;
         cursor: pointer;
         white-space: nowrap;
-        color: ${palette.blue};
+        color: ${colors.textBlue};
         border-right: 1px solid ${headerBorderColor};
 
         &:last-child {

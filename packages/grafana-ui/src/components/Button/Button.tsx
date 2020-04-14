@@ -58,8 +58,8 @@ const getPropertiesForVariant = (theme: GrafanaTheme, variant: ButtonVariant) =>
     case 'primary':
     default:
       return {
-        borderColor: theme.palette.blueShade,
-        background: buttonVariantStyles(theme.palette.blueBase, theme.palette.blueShade, theme.palette.white),
+        borderColor: theme.colors.bgBlue1,
+        background: buttonVariantStyles(theme.colors.bgBlue1, theme.colors.bgBlue2, theme.palette.white),
       };
   }
 };

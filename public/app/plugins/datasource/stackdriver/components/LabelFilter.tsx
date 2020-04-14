@@ -76,7 +76,7 @@ export const LabelFilter: FunctionComponent<Props> = ({
           allowCustomValue
           Component={
             <a className="gf-form-label query-part">
-              <Icon name="plus-circle" />
+              <Icon name="plus" />
             </a>
           }
           options={[variableOptionGroup, ...labelsToGroupedOptions(Object.keys(labels))]}

@@ -28,7 +28,7 @@ export function SecondaryActions(props: Props) {
           onClick={props.onClickAddQueryRowButton}
           disabled={props.addQueryRowButtonDisabled}
         >
-          <Icon className="icon-margin-right" name="plus-circle" size="sm" />
+          <Icon className="icon-margin-right" name="plus" size="sm" />
           <span className="btn-title">{'\xA0' + 'Add query'}</span>
         </button>
       )}

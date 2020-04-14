@@ -37,8 +37,8 @@ export class NewDashboardsFolder extends PureComponent<Props> {
       .then(() => {
         return true;
       })
-      .catch(() => {
-        return 'Folder already exists.';
+      .catch(e => {
+        return e.message;
       });
   };
 

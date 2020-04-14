@@ -6,7 +6,7 @@ import { Icon } from '../Icon/Icon';
 
 const AddButton = (
   <a className="gf-form-label query-part">
-    <Icon name="plus-circle" />
+    <Icon name="plus" />
   </a>
 );
 

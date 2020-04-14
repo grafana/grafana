@@ -12,10 +12,9 @@ $theme-name: dark;
 
 // New Colors
 // -------------------------
-$blue-faint: ${theme.palette.blueFaint};
-$blue-light: ${theme.palette.blueLight};
-$blue-base: ${theme.palette.blueBase};
-$blue-shade: ${theme.palette.blueShade};
+$blue-light: ${theme.palette.blue95};
+$blue-base: ${theme.palette.blue80};
+$blue-shade: ${theme.palette.blue77};
 $red-base: ${theme.palette.redBase};
 $red-shade: ${theme.palette.redShade};
 $green-base: ${theme.palette.greenBase};
@@ -59,7 +58,7 @@ $white: ${theme.palette.white};
 
 // Accent colors
 // -------------------------
-$blue: ${theme.palette.blue};
+$blue: ${theme.palette.blue85};
 $red: $red-base;
 $yellow: ${theme.palette.yellow};
 $orange: ${theme.palette.orange};
@@ -92,7 +91,7 @@ $text-color: ${theme.colors.text};
 $text-color-strong: ${theme.colors.textStrong};
 $text-color-weak: ${theme.colors.textWeak};
 $text-color-faint: ${theme.colors.textFaint};
-$text-color-emphasis: ${theme.colors.textEmphasis};
+$text-color-emphasis: ${theme.colors.textStrong};
 $text-blue: ${theme.colors.textBlue};
 
 $text-shadow-faint: 1px 1px 4px rgb(45, 45, 45);
@@ -111,7 +110,7 @@ $external-link-color: ${theme.colors.linkExternal};
 
 // Typography
 // -------------------------
-$headings-color: ${theme.colors.headingColor};
+$headings-color: ${theme.colors.textHeading};
 $abbr-border-color: $gray-2 !default;
 $text-muted: $text-color-weak;
 
@@ -353,7 +352,7 @@ $variable-option-bg: $dropdownLinkBackgroundHover;
 $switch-bg: $input-bg;
 $switch-slider-color: $dark-3;
 $switch-slider-off-bg: $gray-1;
-$switch-slider-on-bg: ${theme.palette.blueLight};
+$switch-slider-on-bg: ${theme.palette.blue77};
 $switch-slider-shadow: 0 0 3px black;
 
 //Checkbox
@@ -379,8 +378,8 @@ $panel-editor-viz-item-bg-hover: darken($blue-base, 46%);
 $panel-options-group-border: none;
 $panel-options-group-header-bg: ${theme.colors.bg2};
 
-$panel-grid-placeholder-bg: $blue-faint;
-$panel-grid-placeholder-shadow: 0 0 4px $blue-shade;
+$panel-grid-placeholder-bg: darken(${theme.palette.blue77}, 30%);
+$panel-grid-placeholder-shadow: 0 0 4px ${theme.palette.blue80};
 
 // logs
 $logs-color-unkown: $gray-2;

@@ -22,15 +22,10 @@ const basicColors = {
   gray5: '#ececec',
   gray6: '#f4f5f8', // not used in dark theme
   gray7: '#fbfbfb', // not used in dark theme
-  blueBase: '#3274d9',
-  blueShade: '#1f60c4',
-  blueLight: '#5794f2',
-  blueFaint: '#041126',
   redBase: '#e02f44',
   redShade: '#c4162a',
   greenBase: '#299c46',
   greenShade: '#23843b',
-  blue: '#33b5e5',
   red: '#d44a3a',
   yellow: '#ecbb13',
   purple: '#9933cc',
@@ -44,41 +39,51 @@ const backgrounds = {
   bg2: basicColors.gray15,
   bg3: basicColors.gray25,
   dashboardBg: basicColors.gray05,
+  bgBlue1: basicColors.blue80,
+  bgBlue2: basicColors.blue77,
 };
 
 const borders = {
   border1: basicColors.gray15,
   border2: basicColors.gray25,
+  border3: basicColors.gray33,
+};
+
+const textColors = {
+  textStrong: basicColors.gray98,
+  textHeading: basicColors.gray4,
+  text: basicColors.gray85,
+  textSemiWeak: basicColors.gray70,
+  textWeak: basicColors.gray60,
+  textFaint: basicColors.gray33,
+  textBlue: basicColors.blue85,
 };
 
 const form = {
   // Next-gen forms functional colors
-  formLabel: basicColors.gray70,
+  formLabel: textColors.textSemiWeak,
   formDescription: basicColors.gray60,
-  formLegend: basicColors.gray85,
   formInputBg: basicColors.gray05,
   formInputBgDisabled: basicColors.gray10,
-  formInputBorder: basicColors.gray25,
+  formInputBorder: borders.border2,
   formInputBorderHover: basicColors.gray33,
   formInputBorderActive: basicColors.blue95,
   formInputBorderInvalid: basicColors.red88,
-  formInputPlaceholderText: basicColors.gray1,
+  formInputPlaceholderText: textColors.textFaint,
   formInputText: basicColors.gray85,
   formInputDisabledText: basicColors.gray70,
-  formInputTextStrong: basicColors.gray85,
-  formInputTextWhite: basicColors.white,
-  formFocusOutline: basicColors.blueShade,
+  formFocusOutline: basicColors.blue77,
   formValidationMessageText: basicColors.white,
   formValidationMessageBg: basicColors.red88,
   formSwitchBg: basicColors.gray25,
-  formSwitchBgActive: basicColors.blueLight,
+  formSwitchBgActive: basicColors.blue95,
   formSwitchBgHover: basicColors.gray33,
-  formSwitchBgActiveHover: basicColors.blueBase,
+  formSwitchBgActiveHover: basicColors.blue80,
   formSwitchBgDisabled: basicColors.gray25,
   formSwitchDot: basicColors.gray15,
   formCheckboxBg: basicColors.dark5,
-  formCheckboxBgChecked: basicColors.blueLight,
-  formCheckboxBgCheckedHover: basicColors.blueBase,
+  formCheckboxBgChecked: basicColors.blue95,
+  formCheckboxBgCheckedHover: basicColors.blue80,
   formCheckboxCheckmark: basicColors.gray25,
 };
 
@@ -106,6 +111,7 @@ const darkTheme: GrafanaTheme = {
     ...backgrounds,
     ...borders,
     ...form,
+    ...textColors,
 
     bodyBg: backgrounds.bg1,
     panelBg: backgrounds.bg1,
@@ -117,19 +123,13 @@ const darkTheme: GrafanaTheme = {
     dropdownShadow: basicColors.black,
     dropdownOptionHoverBg: backgrounds.bg2,
 
-    // text
-    headingColor: basicColors.gray4,
-    text: basicColors.gray85,
-    textStrong: basicColors.white,
-    textWeak: basicColors.gray2,
-    textEmphasis: basicColors.gray5,
-    textFaint: basicColors.dark5,
-    textBlue: basicColors.blue85,
-
     link: basicColors.gray4,
     linkDisabled: basicColors.gray2,
     linkHover: basicColors.white,
-    linkExternal: basicColors.blue,
+    linkExternal: basicColors.blue85,
+  },
+  shadows: {
+    listItem: '-1px -1px 0 0 hsla(0, 0%, 100%, 0.1), 1px 1px 0 0 rgba(0, 0, 0, 0.3)',
   },
 };
 

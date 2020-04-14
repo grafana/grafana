@@ -16,7 +16,7 @@ export const PanelOptionsGroup: FunctionComponent<Props> = props => {
         <div className="panel-options-group__header">
           <button className="panel-options-group__add-btn" onClick={props.onAdd}>
             <div className="panel-options-group__add-circle">
-              <Icon name="plus-circle" />
+              <Icon name="plus" />
             </div>
             <span className="panel-options-group__title">{props.title}</span>
           </button>
