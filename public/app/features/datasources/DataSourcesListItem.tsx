@@ -9,6 +9,7 @@ export interface Props {
 export class DataSourcesListItem extends PureComponent<Props> {
   render() {
     const { dataSource } = this.props;
+    console.log('XXX', dataSource);
     return (
       <li className="card-item-wrapper">
         <a className="card-item" href={`datasources/edit/${dataSource.id}`}>
@@ -23,6 +24,8 @@ export class DataSourcesListItem extends PureComponent<Props> {
               <div className="card-item-name" aria-label={e2e.pages.DataSources.selectors.dataSources(dataSource.name)}>
                 {dataSource.name}
                 {dataSource.isDefault && <span className="btn btn-secondary btn-small card-item-label">default</span>}
+
+                <span className="btn btn-secondary btn-small card-item-label">{dataSource.version}</span>
               </div>
               <div className="card-item-sub-name">{dataSource.url}</div>
             </div>

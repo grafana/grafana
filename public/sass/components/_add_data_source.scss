@@ -65,6 +65,11 @@
   max-height: 55px;
 }
 
+.add-data-source-item-tag {
+  border: 1px solid red;
+  display: inline-block;
+}
+
 .add-data-source-item-actions {
   opacity: 0;
   padding-left: $space-md;

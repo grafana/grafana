@@ -2,7 +2,7 @@ import React, { FC, PureComponent } from 'react';
 import classNames from 'classnames';
 import { connect } from 'react-redux';
 import { hot } from 'react-hot-loader';
-import { DataSourcePluginMeta, NavModel } from '@grafana/data';
+import { DataSourcePluginMeta, NavModel, SigningStatus } from '@grafana/data';
 import { List, LinkButton, Button } from '@grafana/ui';
 import { e2e } from '@grafana/e2e';
 
@@ -134,6 +134,7 @@ const DataSourceTypeCard: FC<DataSourceTypeCardProps> = props => {
       <div className="add-data-source-item-text-wrapper">
         <span className="add-data-source-item-text">{plugin.name}</span>
         {plugin.info.description && <span className="add-data-source-item-desc">{plugin.info.description}</span>}
+        {!isPhantom && plugin.signature !== SigningStatus.internal && <SigningStatusInfo {...props} />}
       </div>
       <div className="add-data-source-item-actions">
         {learnMoreLink && (
@@ -151,6 +152,17 @@ const DataSourceTypeCard: FC<DataSourceTypeCardProps> = props => {
         {!isPhantom && <Button>Select</Button>}
       </div>
     </div>
+  );
+};
+
+const SigningStatusInfo: FC<DataSourceTypeCardProps> = props => {
+  const { plugin } = props;
+
+  return (
+    <>
+      <span className="add-data-source-item-tag">{plugin.signature}</span>
+      <span className="add-data-source-item-tag">{plugin.info.version}</span>
+    </>
   );
 };
 
