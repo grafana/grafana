@@ -508,14 +508,16 @@ export class DashboardMigrator {
       }
     }
 
-    // Grafana 7.0
-    // - migrate existing tables to 'table-old'
     if (oldVersion < 24) {
+      // 7.0
+      // - migrate existing tables to 'table-old'
       panelUpgrades.push((panel: any) => {
-        if (panel.type !== 'table') {
+        const wasAngularTable = panel.type === 'table';
+        const wasReactTable = panel.table === 'table2';
+        if (!wasAngularTable || wasReactTable) {
           return;
         }
-        panel.type = 'table-old';
+        panel.type = wasAngularTable ? 'table-old' : 'table';
       });
     }
 
