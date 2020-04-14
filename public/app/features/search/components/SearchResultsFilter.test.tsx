@@ -17,7 +17,7 @@ const setup = (propOverrides?: Partial<Props>, renderMethod = shallow) => {
     moveTo: noop,
     onStarredFilterChange: noop,
     onTagFilterChange: noop,
-    selectedStarredFilter: 'starred',
+    selectedStarredFilter: false,
     selectedTagFilter: ['tag'],
     dispatch: jest.fn(),
   };

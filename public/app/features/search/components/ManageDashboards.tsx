@@ -2,6 +2,9 @@ import React, { FC, useReducer, useState } from 'react';
 import { contextSrv } from 'app/core/services/context_srv';
 import { useDebounce } from 'react-use';
 import { Icon, TagList } from '@grafana/ui';
+import { SelectableValue } from '@grafana/data';
+import { SearchSrv } from 'app/core/services/search_srv';
+import { backendSrv } from 'app/core/services/backend_srv';
 import { manageDashboardsState, manageDashboardsReducer } from '../reducers/manageDashboards';
 import {
   FETCH_ITEMS,
@@ -10,8 +13,6 @@ import {
   TOGGLE_CAN_SAVE,
   TOGGLE_SECTION,
 } from '../reducers/actionTypes';
-import { SearchSrv } from 'app/core/services/search_srv';
-import { backendSrv } from 'app/core/services/backend_srv';
 import { SearchResultsFilter } from './SearchResultsFilter';
 import { SearchResults } from './SearchResults';
 import { DashboardActions } from './DashboardActions';
@@ -54,6 +55,7 @@ const initQuery = (folderId: number | undefined) => {
 };
 
 const { isEditor } = contextSrv;
+
 export const ManageDashboards: FC<Props> = ({ folderId, folderUid }) => {
   const [query, setQuery] = useState<Query>(() => initQuery(folderId));
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -89,19 +91,31 @@ export const ManageDashboards: FC<Props> = ({ folderId, folderUid }) => {
 
   useDebounce(search, 300, [query, folderUid]);
 
-  const onQueryChange = (query: any) => {
-    setQuery(query);
+  const onQueryChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    event.persist();
+    setQuery(q => ({ ...q, query: event.target.value }));
   };
 
-  const onRemoveStarred = () => {};
+  const onRemoveStarred = () => {
+    setQuery(q => ({ ...q, starred: false }));
+  };
   const onTagRemove = (tag: string) => {
     setQuery(q => ({ ...q, tag: q.tag.filter(t => tag !== t) }));
   };
   const onClearFilters = () => {
-    setQuery(q => ({ ...q, tag: [] }));
+    setQuery(q => ({ ...q, tag: [], starred: false }));
   };
   const onTagFilterChange = (tags: string[]) => {
     setQuery(q => ({ ...q, tag: tags }));
+  };
+
+  const onStarredFilterChange = (filter: SelectableValue) => {
+    setQuery(q => ({ ...q, starred: filter.value }));
+  };
+  const filterByTag = (tag: string) => {
+    if (tag && !query.tag.includes(tag)) {
+      setQuery(q => ({ ...q, tag: [...q.tag, tag] }));
+    }
   };
 
   const onMoveTo = () => {
@@ -111,9 +125,6 @@ export const ManageDashboards: FC<Props> = ({ folderId, folderUid }) => {
   const onItemDelete = () => {
     setIsDeleteModalOpen(true);
   };
-
-  const onStarredFilterChange = () => {};
-  const filterByTag = () => {};
 
   // TODO move to reusable hook
   const onToggleSection = (section: DashboardSection) => {
@@ -190,7 +201,7 @@ export const ManageDashboards: FC<Props> = ({ folderId, folderUid }) => {
           dispatch={dispatch}
           onStarredFilterChange={onStarredFilterChange}
           onTagFilterChange={onTagFilterChange}
-          selectedStarredFilter={''}
+          selectedStarredFilter={query.starred}
           selectedTagFilter={query.tag}
         />
         <div className="search-results-container">

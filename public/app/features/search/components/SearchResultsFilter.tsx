@@ -17,7 +17,7 @@ export interface Props {
   moveTo: () => void;
   onStarredFilterChange: onSelectChange;
   onTagFilterChange: onSelectChange;
-  selectedStarredFilter: string;
+  selectedStarredFilter: boolean;
   selectedTagFilter: string[];
   dispatch: Dispatch<SearchAction>;
 }
@@ -38,7 +38,7 @@ export const SearchResultsFilter: FC<Props> = ({
   dispatch,
   onStarredFilterChange,
   onTagFilterChange,
-  selectedStarredFilter,
+  selectedStarredFilter = false,
   selectedTagFilter,
 }) => {
   const showActions = canDelete || canMove;
@@ -62,7 +62,7 @@ export const SearchResultsFilter: FC<Props> = ({
           <Select
             size="sm"
             placeholder="Filter by starred"
-            key={selectedStarredFilter}
+            key={starredFilterOptions.find(f => f.value === selectedStarredFilter).label}
             options={starredFilterOptions}
             onChange={onStarredFilterChange}
           />
