@@ -27,6 +27,11 @@ func TestPluginSettings(t *testing.T) {
 	_, err = sec.NewKey("key4", "value4")
 	require.NoError(t, err)
 
+	sec, err = cfg.Raw.NewSection("other")
+	require.NoError(t, err)
+	_, err = sec.NewKey("keySomething", "whatever")
+	require.NoError(t, err)
+
 	ps := extractPluginSettings(cfg.Raw.Sections())
 	require.Len(t, ps, 2)
 	require.Len(t, ps["plugin"], 2)
