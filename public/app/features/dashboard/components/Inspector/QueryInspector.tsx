@@ -208,7 +208,7 @@ export class QueryInspector extends PureComponent<Props, State> {
       <VerticalGroup spacing="md">
         <HorizontalGroup spacing="md">
           {this.renderExpandCollapse()}
-          <CopyToClipboard text={this.getTextForClipboard} onSuccess={this.onClipboardSuccess}>
+          <CopyToClipboard text={this.getTextForClipboard} onSuccess={this.onClipboardSuccess} elType="div">
             <Button icon="copy" size="sm" variant="secondary">
               Copy to clipboard
             </Button>
