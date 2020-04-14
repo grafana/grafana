@@ -32,7 +32,7 @@ export const getModalStyles = stylesFactory((theme: GrafanaTheme) => {
       opacity: 0.7;
     `,
     modalHeader: css`
-      background: ${theme.colors.bg1};
+      background: ${theme.colors.bg2};
       border-bottom: 1px solid ${theme.colors.pageHeaderBorder};
       display: flex;
       height: 42px;

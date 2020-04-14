@@ -71,7 +71,7 @@ const getStyles = (theme: GrafanaTheme) => ({
   `,
   name: css`
     font-weight: ${theme.typography.weight.semibold};
-    color: ${theme.palette.blue};
+    color: ${theme.colors.textBlue};
   `,
   iconRow: css`
     display: flex;
@@ -107,7 +107,7 @@ const getStyles = (theme: GrafanaTheme) => ({
     text-align: center;
     font-family: ${theme.typography.fontFamily.monospace};
     font-size: ${theme.typography.size.sm};
-    color: ${theme.palette.blueBase};
+    color: ${theme.palette.blue80};
     border-bottom: 1px dashed ${theme.palette.gray15};
     flex-grow: 0;
     flex-shrink: 1;

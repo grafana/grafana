@@ -171,6 +171,7 @@ export class FolderPicker extends PureComponent<Props, State> {
                 defaultOptions
                 defaultValue={folder}
                 value={folder}
+                className={'width-20'}
                 allowCustomValue={enableCreateNew}
                 loadOptions={this.debouncedSearch}
                 onChange={this.onFolderChange}

@@ -67,7 +67,6 @@ export interface GrafanaThemeCommons {
     formSpacingBase: number;
     formMargin: string;
     formFieldsetMargin: string;
-    formLegendMargin: string;
     formInputHeight: string;
     formButtonHeight: number;
     formInputPaddingHorizontal: string;
@@ -148,17 +147,13 @@ export interface GrafanaTheme extends GrafanaThemeCommons {
     // New blues palette used by next-gen form elements
     blue95: string;
     blue85: string;
+    blue80: string;
     blue77: string;
 
     // New reds palette used by next-gen form elements
     red88: string;
 
     // Accent colors
-    blue: string;
-    blueBase: string;
-    blueShade: string;
-    blueLight: string;
-    blueFaint: string;
     redBase: string;
     redShade: string;
     greenBase: string;
@@ -188,6 +183,10 @@ export interface GrafanaTheme extends GrafanaThemeCommons {
     bg3: string;
     border1: string;
     border2: string;
+    border3: string;
+
+    bgBlue1: string;
+    bgBlue2: string;
 
     dashboardBg: string;
     bodyBg: string;
@@ -207,18 +206,17 @@ export interface GrafanaTheme extends GrafanaThemeCommons {
     linkExternal: string;
 
     // Text colors
-    text: string;
     textStrong: string;
+    textHeading: string;
+    text: string;
+    textSemiWeak: string;
     textWeak: string;
     textFaint: string;
-    textEmphasis: string;
-    headingColor: string;
     textBlue: string;
 
     // Next-gen forms functional colors
     formLabel: string;
     formDescription: string;
-    formLegend: string;
     formInputBg: string;
     formInputBgDisabled: string;
     formInputBorder: string;
@@ -229,8 +227,6 @@ export interface GrafanaTheme extends GrafanaThemeCommons {
     formInputText: string;
     formInputDisabledText: string;
     formInputPlaceholderText: string;
-    formInputTextStrong: string;
-    formInputTextWhite: string;
     formValidationMessageText: string;
     formValidationMessageBg: string;
     formSwitchBg: string;
@@ -243,5 +239,8 @@ export interface GrafanaTheme extends GrafanaThemeCommons {
     formCheckboxBgChecked: string;
     formCheckboxBgCheckedHover: string;
     formCheckboxCheckmark: string;
+  };
+  shadows: {
+    listItem: string;
   };
 }
