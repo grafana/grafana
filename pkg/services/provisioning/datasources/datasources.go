@@ -11,14 +11,20 @@ import (
 )
 
 var (
+	// ErrInvalidConfigToManyDefault indicates that multiple datasource in the provisioning files
+	// contains more than one datasource marked as default.
 	ErrInvalidConfigToManyDefault = errors.New("datasource.yaml config is invalid. Only one datasource per organization can be marked as default")
 )
 
+// Provision scans a directory for provisioning config files
+// and provisions the datasource in those files.
 func Provision(configDirectory string) error {
 	dc := newDatasourceProvisioner(log.New("provisioning.datasources"))
 	return dc.applyChanges(configDirectory)
 }
 
+// DatasourceProvisioner is responsible for provisioning datasources based on
+// configuration read by the `configReader`
 type DatasourceProvisioner struct {
 	log         log.Logger
 	cfgProvider *configReader
@@ -31,13 +37,13 @@ func newDatasourceProvisioner(log log.Logger) DatasourceProvisioner {
 	}
 }
 
-func (dc *DatasourceProvisioner) apply(cfg *DatasourcesAsConfig) error {
+func (dc *DatasourceProvisioner) apply(cfg *configs) error {
 	if err := dc.deleteDatasources(cfg.DeleteDatasources); err != nil {
 		return err
 	}
 
 	for _, ds := range cfg.Datasources {
-		cmd := &models.GetDataSourceByNameQuery{OrgId: ds.OrgId, Name: ds.Name}
+		cmd := &models.GetDataSourceByNameQuery{OrgId: ds.OrgID, Name: ds.Name}
 		err := bus.Dispatch(cmd)
 		if err != nil && err != models.ErrDataSourceNotFound {
 			return err
@@ -76,9 +82,9 @@ func (dc *DatasourceProvisioner) applyChanges(configPath string) error {
 	return nil
 }
 
-func (dc *DatasourceProvisioner) deleteDatasources(dsToDelete []*DeleteDatasourceConfig) error {
+func (dc *DatasourceProvisioner) deleteDatasources(dsToDelete []*deleteDatasourceConfig) error {
 	for _, ds := range dsToDelete {
-		cmd := &models.DeleteDataSourceByNameCommand{OrgId: ds.OrgId, Name: ds.Name}
+		cmd := &models.DeleteDataSourceByNameCommand{OrgId: ds.OrgID, Name: ds.Name}
 		if err := bus.Dispatch(cmd); err != nil {
 			return err
 		}

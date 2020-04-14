@@ -9,3 +9,4 @@ export * from './FolderPlus';
 export * from './Folder';
 export * from './Import';
 export * from './PanelAdd';
+export * from './Circle';

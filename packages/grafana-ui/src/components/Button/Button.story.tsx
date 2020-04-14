@@ -28,7 +28,7 @@ export const simple = () => {
   const icon = getIconKnob();
 
   return (
-    <Button variant={variant as ButtonVariant} size={size as ComponentSize} icon={icon && `fa fa-${icon}`}>
+    <Button variant={variant as ButtonVariant} size={size as ComponentSize} icon={icon}>
       {buttonText}
     </Button>
   );

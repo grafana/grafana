@@ -4,7 +4,7 @@
      ng-class="{active: ctrl.viewId === section.id}"
      ng-repeat="section in ctrl.sections"
      aria-label="{{ctrl.selectors.sectionItems(section.title)}}">
-    <i class="{{::section.icon}}"></i>
+    <icon name="'{{::section.icon}}'" style="margin-right: 4px;"></icon>
     {{::section.title}}
   </a>
 

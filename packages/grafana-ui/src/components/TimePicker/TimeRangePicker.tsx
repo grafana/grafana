@@ -82,7 +82,7 @@ const getLabelStyles = stylesFactory((theme: GrafanaTheme) => {
       display: inline-block;
     `,
     utc: css`
-      color: ${theme.colors.orange};
+      color: ${theme.palette.orange};
       font-size: 75%;
       padding: 3px;
       font-weight: ${theme.typography.weight.semibold};
@@ -107,7 +107,7 @@ export interface State {
   isOpen: boolean;
 }
 
-export class UnthemedTimePicker extends PureComponent<Props, State> {
+export class UnthemedTimeRangePicker extends PureComponent<Props, State> {
   state: State = {
     isOpen: false,
   };
@@ -245,4 +245,4 @@ const adjustedTime = (time: DateTime, isUTC: boolean) => {
   return time.local() || null;
 };
 
-export const TimePicker = withTheme(UnthemedTimePicker);
+export const TimeRangePicker = withTheme(UnthemedTimeRangePicker);
