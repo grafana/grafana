@@ -4,8 +4,7 @@ interface SizeMeta {
 }
 
 /**
- * Type interface describing the meta information that are sent together with
- * each event.
+ * Interface describing the meta information that are sent together with each event.
  *
  * @public
  */
@@ -41,7 +40,7 @@ export interface EchoMeta {
 }
 
 /**
- * Type interface describing echo backends that can be registered to receive of events.
+ * Interface describing echo backends that can be registered to receive of events.
  *
  * @public
  */
@@ -53,7 +52,7 @@ export interface EchoBackend<T extends EchoEvent = any, O = any> {
 }
 
 /**
- * Type interface describing an echo event.
+ * Interface describing an echo event.
  *
  * @public
  */
