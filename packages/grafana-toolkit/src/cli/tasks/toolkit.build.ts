@@ -53,6 +53,7 @@ const copyFiles = () => {
   const files = [
     'README.md',
     'CHANGELOG.md',
+    'config/circleci/config.yml',
     'bin/grafana-toolkit.dist.js',
     'src/config/prettier.plugin.config.json',
     'src/config/prettier.plugin.rc.js',
@@ -66,6 +67,10 @@ const copyFiles = () => {
   return useSpinner<void>(`Moving ${files.join(', ')} files`, async () => {
     const promises = files.map(file => {
       return new Promise((resolve, reject) => {
+        const basedir = path.dirname(`${distDir}/${file}`);
+        if (!fs.existsSync(basedir)) {
+          fs.mkdirSync(basedir, { recursive: true });
+        }
         fs.copyFile(`${cwd}/${file}`, `${distDir}/${file}`, err => {
           if (err) {
             reject(err);
