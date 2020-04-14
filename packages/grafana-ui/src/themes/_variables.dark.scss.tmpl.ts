@@ -352,7 +352,7 @@ $variable-option-bg: $dropdownLinkBackgroundHover;
 $switch-bg: $input-bg;
 $switch-slider-color: $dark-3;
 $switch-slider-off-bg: $gray-1;
-$switch-slider-on-bg: ${theme.palette.blue77};
+$switch-slider-on-bg: ${theme.palette.blue95};
 $switch-slider-shadow: 0 0 3px black;
 
 //Checkbox

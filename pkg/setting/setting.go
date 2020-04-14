@@ -259,6 +259,7 @@ type Cfg struct {
 	MetricsEndpointDisableTotalStats bool
 	PluginsEnableAlpha               bool
 	PluginsAppsSkipVerifyTLS         bool
+	PluginSettings                   PluginSettings
 	DisableSanitizeHtml              bool
 	EnterpriseLicensePath            string
 

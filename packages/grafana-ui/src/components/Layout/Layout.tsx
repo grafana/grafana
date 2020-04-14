@@ -36,13 +36,22 @@ export const Layout: React.FC<LayoutProps> = ({
   return (
     <div className={styles.layout}>
       {React.Children.map(children, (child, index) => {
-        return <div className={styles.buttonWrapper}>{child}</div>;
+        return (
+          <div className={styles.buttonWrapper} key={index}>
+            {child}
+          </div>
+        );
       })}
     </div>
   );
 };
 
-export const HorizontalGroup: React.FC<Omit<LayoutProps, 'orientation'>> = ({ children, spacing, justify, align }) => (
+export const HorizontalGroup: React.FC<Omit<LayoutProps, 'orientation'>> = ({
+  children,
+  spacing,
+  justify,
+  align = 'center',
+}) => (
   <Layout spacing={spacing} justify={justify} orientation={Orientation.Horizontal} align={align}>
     {children}
   </Layout>
@@ -72,6 +81,9 @@ const getStyles = stylesFactory(
       buttonWrapper: css`
         margin-bottom: ${orientation === Orientation.Horizontal ? 0 : theme.spacing[spacing]};
         margin-right: ${orientation === Orientation.Horizontal ? theme.spacing[spacing] : 0};
+        display: flex;
+        align-items: ${align};
+        height: 100%;
 
         &:last-child {
           margin-bottom: 0;

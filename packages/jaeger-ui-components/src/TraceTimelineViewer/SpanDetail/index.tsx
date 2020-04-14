@@ -27,53 +27,72 @@ import LabeledList from '../../common/LabeledList';
 import { TNil } from '../../types';
 import { KeyValuePair, Link, Log, Span } from '../../types/trace';
 import AccordianReferences from './AccordianReferences';
-import { createStyle } from '../../Theme';
+import { autoColor, createStyle, Theme, useTheme } from '../../Theme';
 import { UIDivider } from '../../uiElementsContext';
 import { ubFlex, ubFlexAuto, ubItemsCenter, ubM0, ubMb1, ubMy1, ubTxRightAlign } from '../../uberUtilityStyles';
 
-const getStyles = createStyle(() => {
+const getStyles = createStyle((theme: Theme) => {
   return {
     divider: css`
-      background: #ddd;
+      label: divider;
+      background: ${autoColor(theme, '#ddd')};
+    `,
+    dividerVertical: css`
+      label: dividerVertical;
+      display: block;
+      height: 1px;
+      width: 100%;
+      margin: 24px 0;
+      clear: both;
+      vertical-align: middle;
+      position: relative;
+      top: -0.06em;
     `,
     debugInfo: css`
+      label: debugInfo;
       display: block;
       letter-spacing: 0.25px;
       margin: 0.5em 0 -0.75em;
       text-align: right;
     `,
     debugLabel: css`
+      label: debugLabel;
       &::before {
-        color: #bbb;
+        color: ${autoColor(theme, '#bbb')};
         content: attr(data-label);
       }
     `,
     debugValue: css`
+      label: debugValue;
       background-color: inherit;
       border: none;
-      color: #888;
+      color: ${autoColor(theme, '#888')};
       cursor: pointer;
       &:hover {
-        color: #333;
+        color: ${autoColor(theme, '#333')};
       }
     `,
     AccordianWarnings: css`
-      background: #fafafa;
-      border: 1px solid #e4e4e4;
+      label: AccordianWarnings;
+      background: ${autoColor(theme, '#fafafa')};
+      border: 1px solid ${autoColor(theme, '#e4e4e4')};
       margin-bottom: 0.25rem;
     `,
     AccordianWarningsHeader: css`
-      background: #fff7e6;
+      label: AccordianWarningsHeader;
+      background: ${autoColor(theme, '#fff7e6')};
       padding: 0.25rem 0.5rem;
       &:hover {
-        background: #ffe7ba;
+        background: ${autoColor(theme, '#ffe7ba')};
       }
     `,
     AccordianWarningsHeaderOpen: css`
-      border-bottom: 1px solid #e8e8e8;
+      label: AccordianWarningsHeaderOpen;
+      border-bottom: 1px solid ${autoColor(theme, '#e8e8e8')};
     `,
     AccordianWarningsLabel: css`
-      color: #d36c08;
+      label: AccordianWarningsLabel;
+      color: ${autoColor(theme, '#d36c08')};
     `,
   };
 });
@@ -126,7 +145,7 @@ export default function SpanDetail(props: SpanDetailProps) {
     },
   ];
   const deepLinkCopyText = `${window.location.origin}${window.location.pathname}?uiFind=${spanID}`;
-  const styles = getStyles();
+  const styles = getStyles(useTheme());
 
   return (
     <div>
@@ -134,7 +153,7 @@ export default function SpanDetail(props: SpanDetailProps) {
         <h2 className={cx(ubFlexAuto, ubM0)}>{operationName}</h2>
         <LabeledList className={ubTxRightAlign} dividerClassName={styles.divider} items={overviewItems} />
       </div>
-      <UIDivider className={cx(styles.divider, ubMy1)} />
+      <UIDivider className={cx(styles.divider, styles.dividerVertical, ubMy1)} />
       <div>
         <div>
           <AccordianKeyValues
