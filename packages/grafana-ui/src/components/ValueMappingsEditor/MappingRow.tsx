@@ -1,7 +1,7 @@
 import React, { ChangeEvent } from 'react';
 import { HorizontalGroup } from '../Layout/Layout';
 import { Select } from '../index';
-import Forms from '../Forms';
+import { Field } from '../Forms/Field';
 import { Input } from '../Input/Input';
 import { MappingType, RangeMap, ValueMap, ValueMapping } from '@grafana/data';
 import * as styleMixins from '../../themes/mixins';
@@ -48,30 +48,30 @@ export const MappingRow: React.FC<Props> = ({ valueMapping, updateValueMapping, 
       return (
         <>
           <HorizontalGroup>
-            <Forms.Field label="From">
+            <Field label="From">
               <Input type="number" defaultValue={(valueMapping as RangeMap).from!} onBlur={onMappingFromChange} />
-            </Forms.Field>
-            <Forms.Field label="To">
+            </Field>
+            <Field label="To">
               <Input type="number" defaultValue={(valueMapping as RangeMap).to} onBlur={onMappingToChange} />
-            </Forms.Field>
+            </Field>
           </HorizontalGroup>
 
-          <Forms.Field label="Text">
+          <Field label="Text">
             <Input defaultValue={valueMapping.text} onBlur={onMappingTextChange} />
-          </Forms.Field>
+          </Field>
         </>
       );
     }
 
     return (
       <>
-        <Forms.Field label="Value">
+        <Field label="Value">
           <Input type="number" defaultValue={(valueMapping as ValueMap).value} onBlur={onMappingValueChange} />
-        </Forms.Field>
+        </Field>
 
-        <Forms.Field label="Text">
+        <Field label="Text">
           <Input defaultValue={valueMapping.text} onBlur={onMappingTextChange} />
-        </Forms.Field>
+        </Field>
       </>
     );
   };

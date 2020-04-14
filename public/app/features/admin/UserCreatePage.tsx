@@ -1,7 +1,7 @@
 import React, { useCallback } from 'react';
 import { hot } from 'react-hot-loader';
 import { connect } from 'react-redux';
-import { Forms, Form, Button, Input } from '@grafana/ui';
+import { Form, Button, Input, Field } from '@grafana/ui';
 import { NavModel } from '@grafana/data';
 import { getBackendSrv } from '@grafana/runtime';
 import { StoreState } from '../../types';
@@ -36,18 +36,18 @@ const UserCreatePage: React.FC<UserCreatePageProps> = ({ navModel, updateLocatio
           {({ register, errors }) => {
             return (
               <>
-                <Forms.Field label="Name" required invalid={!!errors.name} error={!!errors.name && 'Name is required'}>
+                <Field label="Name" required invalid={!!errors.name} error={!!errors.name && 'Name is required'}>
                   <Input name="name" size="md" ref={register({ required: true })} />
-                </Forms.Field>
+                </Field>
 
-                <Forms.Field label="E-mail">
+                <Field label="E-mail">
                   <Input name="email" size="md" ref={register} />
-                </Forms.Field>
+                </Field>
 
-                <Forms.Field label="Username">
+                <Field label="Username">
                   <Input name="login" size="md" ref={register} />
-                </Forms.Field>
-                <Forms.Field
+                </Field>
+                <Field
                   label="Password"
                   required
                   invalid={!!errors.password}
@@ -61,7 +61,7 @@ const UserCreatePage: React.FC<UserCreatePageProps> = ({ navModel, updateLocatio
                       validate: value => value.trim() !== '' && value.length >= 4,
                     })}
                   />
-                </Forms.Field>
+                </Field>
                 <Button type="submit">Create user</Button>
               </>
             );

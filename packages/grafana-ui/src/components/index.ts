@@ -131,6 +131,7 @@ export { fieldMatchersUI } from './MatchersUI/fieldMatchersUI';
 export { getFormStyles } from './Forms/getFormStyles';
 
 export { Label } from './Forms/Label';
+export { Field } from './Forms/Field';
 
 export { default as resetSelectStyles } from './Select/resetSelectStyles';
 export * from './Select/Select';

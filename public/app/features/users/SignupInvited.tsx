@@ -4,7 +4,7 @@ import { connect, MapStateToProps, MapDispatchToProps } from 'react-redux';
 import { StoreState } from 'app/types';
 import { updateLocation } from 'app/core/actions';
 import { UrlQueryValue, getBackendSrv } from '@grafana/runtime';
-import { Forms, Button, Input, Form } from '@grafana/ui';
+import { Button, Input, Form, Field } from '@grafana/ui';
 import { useAsync } from 'react-use';
 import Page from 'app/core/components/Page/Page';
 import { contextSrv } from 'app/core/core';
@@ -72,7 +72,7 @@ const SingupInvitedPageUnconnected: FC<DispatchProps & ConnectedProps> = ({ code
         <Form defaultValues={initFormModel} onSubmit={onSubmit}>
           {({ register, errors }) => (
             <>
-              <Forms.Field invalid={!!errors.email} error={!!errors.email && errors.email.message} label="Email">
+              <Field invalid={!!errors.email} error={!!errors.email && errors.email.message} label="Email">
                 <Input
                   size="md"
                   placeholder="email@example.com"
@@ -85,27 +85,19 @@ const SingupInvitedPageUnconnected: FC<DispatchProps & ConnectedProps> = ({ code
                     },
                   })}
                 />
-              </Forms.Field>
-              <Forms.Field invalid={!!errors.name} error={!!errors.name && errors.name.message} label="Name">
+              </Field>
+              <Field invalid={!!errors.name} error={!!errors.name && errors.name.message} label="Name">
                 <Input size="md" placeholder="Name (optional)" name="name" ref={register} />
-              </Forms.Field>
-              <Forms.Field
-                invalid={!!errors.username}
-                error={!!errors.username && errors.username.message}
-                label="Username"
-              >
+              </Field>
+              <Field invalid={!!errors.username} error={!!errors.username && errors.username.message} label="Username">
                 <Input
                   size="md"
                   placeholder="Username"
                   name="username"
                   ref={register({ required: 'Username is required' })}
                 />
-              </Forms.Field>
-              <Forms.Field
-                invalid={!!errors.password}
-                error={!!errors.password && errors.password.message}
-                label="Password"
-              >
+              </Field>
+              <Field invalid={!!errors.password} error={!!errors.password && errors.password.message} label="Password">
                 <Input
                   size="md"
                   type="password"
@@ -113,7 +105,7 @@ const SingupInvitedPageUnconnected: FC<DispatchProps & ConnectedProps> = ({ code
                   name="password"
                   ref={register({ required: 'Password is required' })}
                 />
-              </Forms.Field>
+              </Field>
 
               <Button type="submit">Sign Up</Button>
             </>

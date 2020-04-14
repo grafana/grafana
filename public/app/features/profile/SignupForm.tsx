@@ -1,5 +1,5 @@
 import React, { FC } from 'react';
-import { Forms, Button, LinkButton, Input, Form } from '@grafana/ui';
+import { Button, LinkButton, Input, Form, Field } from '@grafana/ui';
 import { css } from 'emotion';
 
 import { getConfig } from 'app/core/config';
@@ -65,19 +65,19 @@ export const SignupForm: FC<Props> = props => {
         return (
           <>
             {verifyEmailEnabled && (
-              <Forms.Field label="Email verification code (sent to your email)">
+              <Field label="Email verification code (sent to your email)">
                 <Input name="code" size="md" ref={register} placeholder="Code" />
-              </Forms.Field>
+              </Field>
             )}
             {!autoAssignOrg && (
-              <Forms.Field label="Org. name">
+              <Field label="Org. name">
                 <Input size="md" name="orgName" placeholder="Org. name" ref={register} />
-              </Forms.Field>
+              </Field>
             )}
-            <Forms.Field label="Your name">
+            <Field label="Your name">
               <Input size="md" name="name" placeholder="(optional)" ref={register} />
-            </Forms.Field>
-            <Forms.Field label="Email" invalid={!!errors.email} error={!!errors.email && errors.email.message}>
+            </Field>
+            <Field label="Email" invalid={!!errors.email} error={!!errors.email && errors.email.message}>
               <Input
                 size="md"
                 name="email"
@@ -91,12 +91,8 @@ export const SignupForm: FC<Props> = props => {
                   },
                 })}
               />
-            </Forms.Field>
-            <Forms.Field
-              label="Password"
-              invalid={!!errors.password}
-              error={!!errors.password && errors.password.message}
-            >
+            </Field>
+            <Field label="Password" invalid={!!errors.password} error={!!errors.password && errors.password.message}>
               <Input
                 size="md"
                 name="password"
@@ -104,7 +100,7 @@ export const SignupForm: FC<Props> = props => {
                 placeholder="Password"
                 ref={register({ required: 'Password is required' })}
               />
-            </Forms.Field>
+            </Field>
 
             <Button type="submit">Submit</Button>
             <span className={buttonSpacing}>

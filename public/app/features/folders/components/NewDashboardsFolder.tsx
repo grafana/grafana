@@ -1,7 +1,7 @@
 import React, { PureComponent } from 'react';
 import { connect, MapDispatchToProps, MapStateToProps } from 'react-redux';
 import { NavModel } from '@grafana/data';
-import { Forms, Button, Input, Form } from '@grafana/ui';
+import { Button, Input, Form, Field } from '@grafana/ui';
 import Page from 'app/core/components/Page/Page';
 import { createNewFolder } from '../state/actions';
 import { getNavModel } from 'app/core/selectors/navModel';
@@ -50,7 +50,7 @@ export class NewDashboardsFolder extends PureComponent<Props> {
           <Form defaultValues={initialFormModel} onSubmit={this.onSubmit}>
             {({ register, errors }) => (
               <>
-                <Forms.Field
+                <Field
                   label="Folder name"
                   invalid={!!errors.folderName}
                   error={errors.folderName && errors.folderName.message}
@@ -62,7 +62,7 @@ export class NewDashboardsFolder extends PureComponent<Props> {
                       validate: async v => await this.validateFolderName(v),
                     })}
                   />
-                </Forms.Field>
+                </Field>
                 <Button type="submit">Create</Button>
               </>
             )}

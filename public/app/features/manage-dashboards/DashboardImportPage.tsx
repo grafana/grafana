@@ -2,7 +2,7 @@ import React, { FormEvent, PureComponent } from 'react';
 import { connect, MapDispatchToProps, MapStateToProps } from 'react-redux';
 import { css } from 'emotion';
 import { AppEvents, NavModel } from '@grafana/data';
-import { Button, Forms, stylesFactory, Input, TextArea } from '@grafana/ui';
+import { Button, Forms, stylesFactory, Input, TextArea, Field } from '@grafana/ui';
 import Page from 'app/core/components/Page/Page';
 import { ImportDashboardOverview } from './components/ImportDashboardOverview';
 import { DashboardFileUpload } from './components/DashboardFileUpload';
@@ -83,10 +83,7 @@ class DashboardImportUnConnected extends PureComponent<Props> {
           <Forms.Legend>Import via grafana.com</Forms.Legend>
           <Form onSubmit={this.getGcomDashboard} defaultValues={{ gcomDashboard: '' }}>
             {({ register, errors }) => (
-              <Forms.Field
-                invalid={!!errors.gcomDashboard}
-                error={errors.gcomDashboard && errors.gcomDashboard.message}
-              >
+              <Field invalid={!!errors.gcomDashboard} error={errors.gcomDashboard && errors.gcomDashboard.message}>
                 <Input
                   size="md"
                   name="gcomDashboard"
@@ -98,7 +95,7 @@ class DashboardImportUnConnected extends PureComponent<Props> {
                   })}
                   addonAfter={<Button type="submit">Load</Button>}
                 />
-              </Forms.Field>
+              </Field>
             )}
           </Form>
         </div>
@@ -107,10 +104,7 @@ class DashboardImportUnConnected extends PureComponent<Props> {
           <Form onSubmit={this.getDashboardFromJson} defaultValues={{ dashboardJson: '' }}>
             {({ register, errors }) => (
               <>
-                <Forms.Field
-                  invalid={!!errors.dashboardJson}
-                  error={errors.dashboardJson && errors.dashboardJson.message}
-                >
+                <Field invalid={!!errors.dashboardJson} error={errors.dashboardJson && errors.dashboardJson.message}>
                   <TextArea
                     name="dashboardJson"
                     ref={register({
@@ -119,7 +113,7 @@ class DashboardImportUnConnected extends PureComponent<Props> {
                     })}
                     rows={10}
                   />
-                </Forms.Field>
+                </Field>
                 <Button type="submit">Load</Button>
               </>
             )}
