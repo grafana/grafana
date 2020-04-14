@@ -143,6 +143,7 @@ export { RadioButtonGroup } from './Forms/RadioButtonGroup/RadioButtonGroup';
 
 export { Input } from './Input/Input';
 export { Switch } from './Forms/Switch';
+export { Checkbox } from './Forms/Checkbox';
 export { TextArea } from './TextArea/TextArea';
 
 // Legacy forms

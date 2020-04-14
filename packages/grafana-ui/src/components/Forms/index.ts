@@ -5,7 +5,7 @@ export { Controller as InputControl } from 'react-hook-form';
 // import { Form } from './Form';
 // import { Field } from './Field';
 import { Legend } from './Legend';
-import { Checkbox } from './Checkbox';
+// import { Checkbox } from './Checkbox';
 import { TextArea } from '../TextArea/TextArea';
 
 const Forms = {
@@ -15,7 +15,7 @@ const Forms = {
   // Form,
   // Field,
   // InputControl,
-  Checkbox,
+  // Checkbox,
   Legend,
   TextArea,
 };
