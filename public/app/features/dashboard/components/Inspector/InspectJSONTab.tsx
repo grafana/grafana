@@ -4,20 +4,12 @@ import { chain } from 'lodash';
 
 import { PanelData, SelectableValue, AppEvents } from '@grafana/data';
 import { getLocationSrv } from '@grafana/runtime';
-import {
-  Forms,
-  JSONFormatter,
-  CustomScrollbar,
-  stylesFactory,
-  Button,
-  Select,
-  ClipboardButton,
-  HorizontalGroup,
-} from '@grafana/ui';
+import { Forms, stylesFactory, Button, Select, ClipboardButton, HorizontalGroup } from '@grafana/ui';
 import { css } from 'emotion';
 import { appEvents } from 'app/core/core';
 import { replacePanel } from 'app/features/dashboard/utils/panel';
 import { PanelModel, DashboardModel } from '../../state';
+import { Field } from '@grafana/ui/src/components/Forms/Field';
 
 enum ShowContent {
   PanelJSON = 'panel',
@@ -32,12 +24,12 @@ const options: Array<SelectableValue<ShowContent>> = [
     value: ShowContent.PanelJSON,
   },
   {
-    label: 'Panel Data',
+    label: 'Panel data',
     description: 'The raw model passed to the panel visualization',
     value: ShowContent.PanelData,
   },
   {
-    label: 'DataFrame Structure',
+    label: 'DataFrame structure',
     description: 'Response info without any values',
     value: ShowContent.DataStructure,
   },
@@ -134,7 +126,7 @@ export class InspectJSONTab extends PureComponent<Props, State> {
 
     // Close the inspector
     getLocationSrv().update({
-      query: { inspect: null, tab: null },
+      query: { inspect: null, inspectTab: null },
       partial: true,
     });
   };
@@ -150,8 +142,10 @@ export class InspectJSONTab extends PureComponent<Props, State> {
 
     return (
       <div className={styles.wrap}>
-        <Select options={options} value={selected} onChange={this.onSelectChanged} />
-        {isPanelJSON && canEdit ? (
+        <Field label="Select source">
+          <Select options={options} value={selected} onChange={this.onSelectChanged} />
+        </Field>
+        <Field label="JSON">
           <Forms.TextArea
             spellCheck={false}
             value={this.state.text}
@@ -159,15 +153,11 @@ export class InspectJSONTab extends PureComponent<Props, State> {
             className={styles.editor}
             rows={20}
           />
-        ) : (
-          <CustomScrollbar className={styles.content}>
-            <JSONFormatter json={this.getJSONObject(show)} open={4} />
-          </CustomScrollbar>
-        )}
+        </Field>
         <HorizontalGroup>
           {isPanelJSON && canEdit && <Button onClick={this.onApplyPanelModel}>Apply</Button>}
           <ClipboardButton variant="secondary" getText={this.getClipboardText} onClipboardCopy={this.onClipboardCopied}>
-            Copy to Clipboard
+            Copy to clipboard
           </ClipboardButton>
         </HorizontalGroup>
       </div>
