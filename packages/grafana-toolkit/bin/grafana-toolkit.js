@@ -3,7 +3,7 @@
 const fs = require('fs');
 const path = require('path');
 
-let includeInternalScripts = true;
+let includeInternalScripts = false;
 
 const isLinkedMode = () => {
   let pwd = process.env['PWD'];
