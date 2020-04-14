@@ -149,7 +149,7 @@ export const getLogRowStyles = stylesFactory((theme: GrafanaTheme, logLevel?: Lo
     `,
     logDetailsTable: css`
       label: logs-row-details-table;
-      line-height: 1.7;
+      line-height: 18px;
       width: 100%;
       td:last-child {
         width: 100%;

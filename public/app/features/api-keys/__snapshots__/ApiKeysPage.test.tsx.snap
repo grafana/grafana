@@ -53,7 +53,7 @@ exports[`Render should render CTA if there are no API keys 1`] = `
           className="cta-form__close btn btn-transparent"
           onClick={[Function]}
         >
-          <Icon
+          <IconButton
             name="times"
           />
         </button>
