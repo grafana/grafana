@@ -34,7 +34,7 @@ export const Stats: FunctionComponent<Props> = ({ stats, values, onChange, varia
     <Segment
       Component={
         <a className="gf-form-label query-part">
-          <Icon name="plus-circle" />
+          <Icon name="plus" />
         </a>
       }
       allowCustomValue

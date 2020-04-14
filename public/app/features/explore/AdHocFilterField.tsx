@@ -7,7 +7,7 @@ export const DEFAULT_REMOVE_FILTER_VALUE = '-- remove filter --';
 
 const addFilterButton = (onAddFilter: (event: React.MouseEvent) => void) => (
   <button className="gf-form-label gf-form-label--btn query-part" onClick={onAddFilter}>
-    <Icon name="plus-circle" />
+    <Icon name="plus" />
   </button>
 );
 

@@ -15,7 +15,6 @@ $theme-name: light;
 
 // New Colors
 // -------------------------
-$blue-faint: #f5f9ff;
 $blue-light: #5794f2;
 $blue-base: #3274d9;
 $blue-shade: #1f60c4;
@@ -31,7 +30,7 @@ $gray85: #c7d0d9;
 $gray70: #9fa7b3;
 $gray60: #7b8087;
 $gray33: #464c54;
-$gray25: #343b40;
+$gray25: #2c3235;
 $gray15: #202226;
 $gray10: #141619;
 $gray05: #0b0c0e;
@@ -56,12 +55,12 @@ $white: #ffffff;
 
 // Accent colors
 // -------------------------
-$blue: #0083b3;
+$blue: #33a2e5;
 $red: $red-base;
 $yellow: #ff851b;
 $orange: #ff7941;
 $purple: #9954bb;
-$variable: #339ae5;
+$variable: #33a2e5;
 
 $brand-primary: #ff7941;
 $brand-success: #3eb15b;
@@ -85,12 +84,12 @@ $body-bg: #ffffff;
 $page-bg: #ffffff;
 $dashboard-bg: #f7f8fa;
 
-$text-color: #52545c;
-$text-color-strong: #41444b;
-$text-color-weak: #767980;
-$text-color-faint: #35373f;
-$text-color-emphasis: #41444b;
-$text-blue: #339ae5;
+$text-color: #464c54;
+$text-color-strong: #202226;
+$text-color-weak: #7b8087;
+$text-color-faint: #9fa7b3;
+$text-color-emphasis: #202226;
+$text-blue: #33a2e5;
 
 $text-shadow-faint: none;
 
@@ -100,14 +99,14 @@ $brand-gradient-vertical: linear-gradient(#f05a28 30%, #fbca0a 99%);
 
 // Links
 // -------------------------
-$link-color: #52545c;
-$link-color-disabled: #acb6bf;
-$link-hover-color: #1e2028;
-$external-link-color: #5794f2;
+$link-color: #464c54;
+$link-color-disabled: #7b8087;
+$link-hover-color: #202226;
+$external-link-color: #33a2e5;
 
 // Typography
 // -------------------------
-$headings-color: #52545c;
+$headings-color: #2c3235;
 $abbr-border-color: $gray-2 !default;
 $text-muted: $text-color-weak;
 
@@ -116,14 +115,14 @@ $hr-border-color: $gray-4 !default;
 // Panel
 // -------------------------
 $panel-bg: #ffffff;
-$panel-border: 1px solid #e9edf2;
-$panel-header-hover-bg: #f7f8fa;
+$panel-border: 1px solid #dce1e6;
+$panel-header-hover-bg: #f1f5f9;
 $panel-corner: $gray-4;
 
 // Page header
-$page-header-bg: #f7f8fa;
+$page-header-bg: #f1f5f9;
 $page-header-shadow: inset 0px -3px 10px $gray-6;
-$page-header-border-color: #e9edf2;
+$page-header-border-color: #dce1e6;
 
 $divider-border-color: $gray-2;
 
@@ -197,13 +196,13 @@ $btn-active-box-shadow: 0px 0px 4px rgba(234, 161, 51, 0.6);
 $input-bg: $white;
 $input-bg-disabled: $gray-5;
 
-$input-color: #343b40;
+$input-color: #464c54;
 $input-border-color: #c7d0d9;
 $input-box-shadow: none;
 $input-border-focus: #5794f2;
 $input-box-shadow-focus: #5794f2;
 $input-color-placeholder: #9fa7b3;
-$input-label-bg: #f7f8fa;
+$input-label-bg: #f1f5f9;
 $input-color-select-arrow: #7b8087;
 
 // search
@@ -242,9 +241,9 @@ $navbar-button-border: $gray-4;
 // Sidemenu
 // -------------------------
 $side-menu-bg: #202226;
-$side-menu-border: 1px solid #343b40;
+$side-menu-border: 1px solid #2c3235;
 $side-menu-bg-mobile: rgba(0, 0, 0, 0); //$gray-6;
-$side-menu-item-hover-bg: #343b40;
+$side-menu-item-hover-bg: #2c3235;
 $side-menu-shadow: 5px 0px 10px -5px $gray-1;
 $side-menu-link-color: $gray-4;
 $side-menu-icon-color: #9fa7b3;
@@ -375,8 +374,8 @@ $panel-editor-viz-item-bg-hover: lighten($blue-base, 45%);
 $panel-options-group-border: none;
 $panel-options-group-header-bg: $gray-5;
 
-$panel-grid-placeholder-bg: $blue-faint;
-$panel-grid-placeholder-shadow: 0 0 4px $blue-light;
+$panel-grid-placeholder-bg: lighten(#5794f2, 30%);
+$panel-grid-placeholder-shadow: 0 0 4px #5794f2;
 
 // logs
 $logs-color-unkown: $gray-5;

@@ -1,6 +1,9 @@
 import React from 'react';
 import { ButtonProps, Elements } from '@jaegertracing/jaeger-ui-components';
-import { Button, Input } from '@grafana/ui';
+import { Button, Input, stylesFactory, useTheme } from '@grafana/ui';
+import { css } from 'emotion';
+import { GrafanaTheme } from '@grafana/data';
+import cx from 'classnames';
 
 /**
  * Right now Jaeger components need some UI elements to be injected. This is to get rid of AntD UI library that was
@@ -29,17 +32,20 @@ export const UIElements: Elements = {
   ),
 };
 
+const getStyles = stylesFactory((theme: GrafanaTheme) => {
+  return {
+    Divider: css`
+      display: inline-block;
+      background: ${theme.isDark ? '#242424' : '#e8e8e8'};
+      width: 1px;
+      height: 0.9em;
+      margin: 0 8px;
+      vertical-align: middle;
+    `,
+  };
+});
+
 function Divider({ className }: { className?: string }) {
-  return (
-    <div
-      style={{
-        display: 'inline-block',
-        background: '#e8e8e8',
-        width: '1px',
-        height: '0.9em',
-        margin: '0 8px',
-      }}
-      className={className}
-    />
-  );
+  const styles = getStyles(useTheme());
+  return <div style={{}} className={cx(styles.Divider, className)} />;
 }

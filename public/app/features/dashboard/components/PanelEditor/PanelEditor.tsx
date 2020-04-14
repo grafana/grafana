@@ -347,7 +347,7 @@ enum Pane {
  */
 const getStyles = stylesFactory((theme: GrafanaTheme, props: Props) => {
   const { uiState } = props;
-  const handleColor = theme.palette.blueLight;
+  const handleColor = theme.palette.blue95;
   const paneSpaceing = theme.spacing.md;
 
   const resizer = css`

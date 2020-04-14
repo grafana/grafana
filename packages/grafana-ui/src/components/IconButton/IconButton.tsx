@@ -43,6 +43,8 @@ export const IconButton = React.forwardRef<HTMLButtonElement, Props>(
   }
 );
 
+IconButton.displayName = 'IconButton';
+
 function getHoverColor(theme: GrafanaTheme, surface: SurfaceType): string {
   switch (surface) {
     case 'body':
