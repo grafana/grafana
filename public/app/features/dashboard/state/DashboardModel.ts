@@ -51,6 +51,7 @@ export class DashboardModel {
   gnetId: any;
   panels: PanelModel[];
   panelInEdit?: PanelModel;
+  panelInView: PanelModel;
 
   // ------------------
   // not persisted
@@ -69,6 +70,7 @@ export class DashboardModel {
     originalTime: true,
     originalTemplating: true,
     panelInEdit: true,
+    panelInView: true,
     getVariablesFromState: true,
   };
 
@@ -144,8 +146,6 @@ export class DashboardModel {
     meta.canEdit = meta.canEdit !== false;
     meta.showSettings = meta.canEdit;
     meta.canMakeEditable = meta.canSave && !this.editable;
-    meta.fullscreen = false;
-    meta.isEditing = false;
 
     if (!this.editable) {
       meta.canEdit = false;
@@ -263,15 +263,6 @@ export class DashboardModel {
     }
   }
 
-  setViewMode(panel: PanelModel, fullscreen: boolean, isEditing: boolean) {
-    this.meta.fullscreen = fullscreen;
-    this.meta.isEditing = isEditing && this.meta.canEdit;
-
-    panel.setViewMode(fullscreen, this.meta.isEditing);
-
-    this.events.emit(PanelEvents.viewModeChanged, panel);
-  }
-
   timeRangeUpdated(timeRange: TimeRange) {
     this.events.emit(CoreEvents.timeRangeUpdated, timeRange);
     if (getConfig().featureToggles.newVariables) {
@@ -317,12 +308,22 @@ export class DashboardModel {
   }
 
   otherPanelInFullscreen(panel: PanelModel) {
-    return (this.meta.fullscreen && !panel.fullscreen) || this.panelInEdit;
+    return (this.panelInEdit || this.panelInView) && !(panel.isViewing || panel.isEditing);
   }
 
-  initPanelEditor(sourcePanel: PanelModel): PanelModel {
+  initEditPanel(sourcePanel: PanelModel): PanelModel {
     this.panelInEdit = sourcePanel.getEditClone();
     return this.panelInEdit;
+  }
+
+  initViewPanel(panel: PanelModel) {
+    this.panelInView = panel;
+    panel.setIsViewing(true);
+  }
+
+  exitViewPanel(panel: PanelModel) {
+    this.panelInView = undefined;
+    panel.setIsViewing(false);
   }
 
   exitPanelEditor() {

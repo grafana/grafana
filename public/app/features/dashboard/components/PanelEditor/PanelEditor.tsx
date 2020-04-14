@@ -17,7 +17,6 @@ import { Unsubscribable } from 'rxjs';
 import { DisplayMode, displayModes, PanelEditorTab } from './types';
 import { PanelEditorTabs } from './PanelEditorTabs';
 import { DashNavTimeControls } from '../DashNav/DashNavTimeControls';
-import { BackButton } from 'app/core/components/BackButton/BackButton';
 import { LocationState } from 'app/types';
 import { calculatePanelSize } from './utils';
 import { initPanelEditor, panelEditorCleanUp, updatePanelEditorUIState } from './state/actions';
@@ -29,6 +28,7 @@ import { DashNavButton } from 'app/features/dashboard/components/DashNav/DashNav
 import { VariableModel } from 'app/features/templating/types';
 import { getVariables } from 'app/features/variables/state/selectors';
 import { SubMenuItems } from 'app/features/dashboard/components/SubMenu/SubMenuItems';
+import { BackButton } from 'app/core/components/BackButton/BackButton';
 
 interface OwnProps {
   dashboard: DashboardModel;
@@ -169,9 +169,8 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
                       <DashboardPanel
                         dashboard={dashboard}
                         panel={panel}
-                        isEditing={false}
-                        isInEditMode
-                        isFullscreen={false}
+                        isEditing={true}
+                        isViewing={false}
                         isInView={true}
                       />
                     </div>
@@ -232,7 +231,7 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
     return (
       <div className={styles.editorToolbar}>
         <div className={styles.toolbarLeft}>
-          <BackButton onClick={this.onPanelExit} />
+          <BackButton onClick={this.onPanelExit} surface="panel" />
           <span className={styles.editorTitle}>{dashboard.title} / Edit Panel</span>
         </div>
         <div className={styles.toolbarLeft}>
@@ -348,7 +347,7 @@ enum Pane {
  */
 const getStyles = stylesFactory((theme: GrafanaTheme, props: Props) => {
   const { uiState } = props;
-  const handleColor = theme.colors.blueLight;
+  const handleColor = theme.palette.blueLight;
   const paneSpaceing = theme.spacing.md;
 
   const resizer = css`
@@ -377,7 +376,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme, props: Props) => {
       left: 0;
       right: 0;
       bottom: 0;
-      background: ${theme.colors.bodyBg};
+      background: ${theme.colors.dashboardBg};
       display: flex;
       flex-direction: column;
     `,
@@ -410,6 +409,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme, props: Props) => {
         cursor: col-resize;
         width: ${paneSpaceing};
         border-right-width: 1px;
+        margin-top: 18px;
       `
     ),
     resizerH: cx(
@@ -418,9 +418,10 @@ const getStyles = stylesFactory((theme: GrafanaTheme, props: Props) => {
         height: ${paneSpaceing};
         cursor: row-resize;
         position: relative;
-        top: 49px;
+        top: 0px;
         z-index: 1;
         border-top-width: 1px;
+        margin-left: ${paneSpaceing};
       `
     ),
     tabsWrapper: css`

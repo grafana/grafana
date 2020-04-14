@@ -15,6 +15,7 @@ import { PanelModel, DashboardModel } from '../state';
 import { VizPickerSearch } from './VizPickerSearch';
 import PluginStateinfo from 'app/features/plugins/PluginStateInfo';
 import { Unsubscribable } from 'rxjs';
+import { Icon } from '@grafana/ui';
 import {
   PanelPlugin,
   PanelPluginMeta,
@@ -163,7 +164,7 @@ export class VisualizationTab extends PureComponent<Props, State> {
           <div className="toolbar__main" onClick={this.onOpenVizPicker}>
             <img className="toolbar__main-image" src={meta.info.logos.small} />
             <div className="toolbar__main-name">{meta.name}</div>
-            <i className="fa fa-caret-down" />
+            <Icon name="angle-down" style={{ marginLeft: '4px', marginBottom: 0 }} />
           </div>
           <PluginStateinfo state={meta.state} />
         </>
@@ -193,7 +194,7 @@ export class VisualizationTab extends PureComponent<Props, State> {
 
     const pluginHelp: EditorToolbarView = {
       heading: 'Help',
-      icon: 'fa fa-question',
+      icon: 'question-circle',
       render: this.renderHelp,
     };
 

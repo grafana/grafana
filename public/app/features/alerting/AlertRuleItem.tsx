@@ -24,7 +24,7 @@ class AlertRuleItem extends PureComponent<Props> {
   render() {
     const { rule, onTogglePause } = this.props;
 
-    const ruleUrl = `${rule.url}?panelId=${rule.panelId}&fullscreen&edit&tab=alert`;
+    const ruleUrl = `${rule.url}?editPanel=${rule.panelId}&tab=alert`;
 
     return (
       <li className="alert-rule-item">

@@ -56,7 +56,7 @@ const UsersTable: FC<Props> = props => {
               </td>
               <td>
                 <div onClick={() => onRemoveUser(user)} className="btn btn-danger btn-small">
-                  <Icon name="times" />
+                  <Icon name="times" style={{ marginBottom: 0 }} />
                 </div>
               </td>
             </tr>
