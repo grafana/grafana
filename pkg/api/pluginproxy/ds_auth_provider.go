@@ -22,7 +22,7 @@ func ApplyRoute(ctx context.Context, req *http.Request, proxyPath string, route 
 		SecureJsonData: ds.SecureJsonData.Decrypt(),
 	}
 
-	interpolatedURL, err := InterpolateString(route.Url, data)
+	interpolatedURL, err := InterpolateString(route.URL, data)
 	if err != nil {
 		logger.Error("Error interpolating proxy url", "error", err)
 		return
@@ -85,7 +85,7 @@ func ApplyRoute(ctx context.Context, req *http.Request, proxyPath string, route 
 
 func addQueryString(req *http.Request, route *plugins.AppPluginRoute, data templateData) error {
 	q := req.URL.Query()
-	for _, param := range route.Params {
+	for _, param := range route.URLParams {
 		interpolatedName, err := InterpolateString(param.Name, data)
 		if err != nil {
 			return err

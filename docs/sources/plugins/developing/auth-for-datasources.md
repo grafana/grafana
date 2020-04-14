@@ -78,7 +78,7 @@ The `method` parameter is optional. It can be set to a specific HTTP verb to pro
 
 When using routes, you can also reference a variable stored in JsonData or SecureJsonData which is interpolated (replacing the variable text with a value) when the data source makes a request to the proxy. These are variables that were entered by the user on the data source configuration page and saved in the Grafana database.
 
-In this example, the value for `dynamicUrl` comes from the JsonData blob and the api key's value is set from the SecureJsonData blob. The `params` field is for query string parameters for HTTP GET requests.
+In this example, the value for `dynamicUrl` comes from the JsonData blob and the api key's value is set from the SecureJsonData blob. The `urlParams` field is for query string parameters for HTTP GET requests.
 
 ```json
 "routes": [
@@ -86,7 +86,7 @@ In this example, the value for `dynamicUrl` comes from the JsonData blob and the
       "path": "custom/api/v5/*",
       "method": "GET",
       "url": "{{.JsonData.dynamicUrl}}",
-      "params": [
+      "urlParams": [
         {"name": "apiKey", "content": "{{.SecureJsonData.apiKey}}"}
       ]
   }

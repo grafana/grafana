@@ -29,8 +29,8 @@ type AppPluginRoute struct {
 	Path         string                    `json:"path"`
 	Method       string                    `json:"method"`
 	ReqRole      models.RoleType           `json:"reqRole"`
-	Url          string                    `json:"url"`
-	Params       []AppPluginRouteURLParams `json:"params"`
+	URL          string                    `json:"url"`
+	URLParams    []AppPluginRouteURLParams `json:"urlParams"`
 	Headers      []AppPluginRouteHeader    `json:"headers"`
 	TokenAuth    *JwtTokenAuth             `json:"tokenAuth"`
 	JwtTokenAuth *JwtTokenAuth             `json:"jwtTokenAuth"`
