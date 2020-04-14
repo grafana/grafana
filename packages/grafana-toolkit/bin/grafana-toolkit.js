@@ -1,12 +1,39 @@
 #!/usr/bin/env node
 
-var path = require('path');
+const fs = require('fs');
+const path = require('path');
 
-// This bin is used for cli executed internally
-var tsProjectPath = path.resolve(__dirname, '../tsconfig.json');
-require('ts-node').register({
-  project: tsProjectPath,
-  transpileOnly: true,
-});
+let includeInternalScripts = false;
 
-require('../src/cli/index.ts').run(true);
+const entrypoint = () => {
+  const defaultEntryPoint = '../src/cli/index.js';
+  const toolkitDirectory = `${process.env['PWD']}/node_modules/@grafana/toolkit`;
+
+  // IF we have a toolkit directory AND linked grafana toolkit AND the toolkit dir is a symbolic lik
+  // THEN run everything in linked mode
+  if (fs.existsSync(toolkitDirectory)) {
+    const tkStat = fs.lstatSync(toolkitDirectory);
+    if (tkStat.isSymbolicLink()) {
+      console.log('Running in linked mode');
+      // This bin is used for cli executed internally
+      var tsProjectPath = path.resolve(__dirname, '../tsconfig.json');
+      require('ts-node').register({
+        project: tsProjectPath,
+        transpileOnly: true,
+      });
+
+      includeInternalScripts = true;
+      return '../src/cli/index.ts';
+    }
+  }
+
+  // We are using npx, and a relative path does not find index.js
+  if (!fs.existsSync(defaultEntryPoint) && fs.existsSync(`${__dirname}/../dist/src/cli/index.js`)) {
+    return `${__dirname}/../dist/src/cli/index.js`;
+  }
+
+  // The default entrypoint must exist, return it now.
+  return defaultEntryPoint;
+};
+
+require(entrypoint()).run(includeInternalScripts);
