@@ -8,7 +8,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
     counter: css`
       label: counter;
       border-radius: ${theme.spacing.lg};
-      background-color: ${theme.isLight ? theme.palette.gray98 : theme.palette.gray15};
+      background-color: ${theme.colors.bg2};
       padding: ${theme.spacing.xxs} ${theme.spacing.xs};
       color: ${theme.colors.textWeak};
     `,
