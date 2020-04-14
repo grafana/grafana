@@ -1,6 +1,6 @@
 /**
- * Used to enable rendering of angular components within a
- * react component without loosing proper typings.
+ * Used to enable rendering of Angular components within a
+ * React component without loosing proper typings.
  *
  * @example
  * ```typescript
@@ -33,21 +33,21 @@
  */
 export interface AngularComponent {
   /**
-   * Should be called when the react component will unmount.
+   * Should be called when the React component will unmount.
    */
   destroy(): void;
   /**
-   * Can be used to trigger a re-render of the angular component.
+   * Can be used to trigger a re-render of the Angular component.
    */
   digest(): void;
   /**
-   * Used to access the angular scope from the react component.
+   * Used to access the Angular scope from the React component.
    */
   getScope(): any;
 }
 
 /**
- * Used to load an angular component from the context of a react component.
+ * Used to load an Angular component from the context of a React component.
  * Please see the {@link AngularComponent} for a proper example.
  *
  * @public
@@ -75,8 +75,8 @@ export function setAngularLoader(v: AngularLoader) {
 }
 
 /**
- * Used to retrieve the {@link AngularLoader} that enables the use of angular
- * components within a react component.
+ * Used to retrieve the {@link AngularLoader} that enables the use of Angular
+ * components within a React component.
  *
  * Please see the {@link AngularComponent} for a proper example.
  *
