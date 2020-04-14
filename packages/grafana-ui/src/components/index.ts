@@ -127,6 +127,9 @@ export { default as Forms } from './Forms';
 export * from './Button';
 export { ValuePicker } from './ValuePicker/ValuePicker';
 export { fieldMatchersUI } from './MatchersUI/fieldMatchersUI';
+export { getFormStyles } from './Forms/getFormStyles';
+
+export { Label } from './Forms/Label';
 
 export { default as resetSelectStyles } from './Select/resetSelectStyles';
 export * from './Select/Select';

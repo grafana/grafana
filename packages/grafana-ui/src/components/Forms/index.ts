@@ -1,6 +1,6 @@
 import { Controller as InputControl } from 'react-hook-form';
-import { getFormStyles } from './getFormStyles';
-import { Label } from './Label';
+// import { getFormStyles } from './getFormStyles';
+// import { Label } from './Label';
 // import { RadioButtonGroup } from './RadioButtonGroup/RadioButtonGroup';
 import { Form } from './Form';
 import { Field } from './Field';
@@ -10,8 +10,8 @@ import { TextArea } from '../TextArea/TextArea';
 
 const Forms = {
   // RadioButtonGroup
-  getFormStyles,
-  Label,
+  // getFormStyles,
+  // Label,
   Form,
   Field,
   InputControl,
