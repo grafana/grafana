@@ -1,7 +1,7 @@
 import React, { FC } from 'react';
 import { getBackendSrv } from '@grafana/runtime';
 import Page from 'app/core/components/Page/Page';
-import { Button, Input, Field } from '@grafana/ui';
+import { Button, Input, Field, Form } from '@grafana/ui';
 import { getConfig } from 'app/core/config';
 import { StoreState } from 'app/types';
 import { hot } from 'react-hot-loader';
