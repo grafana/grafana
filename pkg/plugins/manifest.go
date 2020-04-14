@@ -42,8 +42,8 @@ N1c5v9v/4h6qeA==
 -----END PGP PUBLIC KEY BLOCK-----
 `
 
-// PluginManifest holds details for the file manifest
-type PluginManifest struct {
+// pluginManifest holds details for the file manifest
+type pluginManifest struct {
 	Plugin  string            `json:"plugin"`
 	Version string            `json:"version"`
 	KeyID   string            `json:"keyId"`
@@ -53,14 +53,14 @@ type PluginManifest struct {
 
 // readPluginManifest attempts to read and verify the plugin manifest
 // if any error occurs or the manifest is not valid, this will return an error
-func readPluginManifest(body []byte) (*PluginManifest, error) {
+func readPluginManifest(body []byte) (*pluginManifest, error) {
 	block, _ := clearsign.Decode(body)
 	if block == nil {
 		return nil, errors.New("unable to decode manifest")
 	}
 
 	// Convert to a well typed object
-	manifest := &PluginManifest{}
+	manifest := &pluginManifest{}
 	err := json.Unmarshal(block.Plaintext, &manifest)
 	if err != nil {
 		return nil, errutil.Wrap("Error parsing manifest JSON", err)
