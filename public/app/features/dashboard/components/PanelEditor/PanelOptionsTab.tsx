@@ -1,7 +1,7 @@
 import React, { FC, useMemo } from 'react';
 import { PanelModel, DashboardModel } from '../../state';
 import { SelectableValue, PanelPlugin, FieldConfigSource, PanelData } from '@grafana/data';
-import { Forms, Switch, Select, DataLinksInlineEditor, Input, TextArea } from '@grafana/ui';
+import { Forms, Switch, Select, DataLinksInlineEditor, Input, TextArea, RadioButtonGroup } from '@grafana/ui';
 import { OptionsGroup } from './OptionsGroup';
 import { getPanelLinksVariableSuggestions } from '../../../panel/panellinks/link_srv';
 import { getVariables } from '../../../variables/state/selectors';
@@ -115,7 +115,7 @@ export const PanelOptionsTab: FC<Props> = ({
       </Forms.Field>
       {panel.repeat && (
         <Forms.Field label="Repeat direction">
-          <Forms.RadioButtonGroup
+          <RadioButtonGroup
             options={directionOptions}
             value={panel.repeatDirection || 'h'}
             onChange={value => onPanelConfigChange('repeatDirection', value)}
