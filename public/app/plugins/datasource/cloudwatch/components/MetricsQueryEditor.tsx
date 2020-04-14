@@ -53,49 +53,6 @@ export const normalizeQuery = ({
 export class MetricsQueryEditor extends PureComponent<Props, State> {
   state: State = { showMeta: false };
 
-  static getDerivedStateFromProps(props: Props, state: State) {
-    const { query } = props;
-    const metricsQuery = query as CloudWatchMetricsQuery;
-
-    if (!query.namespace) {
-      query.namespace = '';
-    }
-
-    if (!metricsQuery.metricName) {
-      metricsQuery.metricName = '';
-    }
-
-    if (!query.expression) {
-      query.expression = '';
-    }
-
-    if (!metricsQuery.dimensions) {
-      metricsQuery.dimensions = {};
-    }
-
-    if (!query.region) {
-      query.region = 'default';
-    }
-
-    if (!query.id) {
-      query.id = '';
-    }
-
-    if (!metricsQuery.alias) {
-      metricsQuery.alias = '';
-    }
-
-    if (!metricsQuery.statistics || !metricsQuery.statistics.length) {
-      metricsQuery.statistics = ['Average'];
-    }
-
-    if (!query.hasOwnProperty('matchExact')) {
-      metricsQuery.matchExact = true;
-    }
-
-    return state;
-  }
-
   onChange(query: CloudWatchMetricsQuery) {
     const { onChange, onRunQuery } = this.props;
     onChange(query);
