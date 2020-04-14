@@ -78,16 +78,16 @@ See [Validation](#validation) for examples on validation and validation rules.
 
 By default `Form` component assumes form elements are uncontrolled (https://reactjs.org/docs/glossary.html#controlled-vs-uncontrolled-components).
 There are some components like `RadioButton` or `Select` that are controlled-only and require some extra work. To make
-them work with the form, you need to render those using `Forms.InputControl` component:
+them work with the form, you need to render those using `InputControl` component:
 
 ```jsx
-import { Forms } from '@grafana/ui';
+import { Form, Field, InputControl } from '@grafana/ui';
 
 // render function
 <Form ...>{({register, errors, control}) => (
   <>
     <Field label="RadioButtonExample">
-      <Forms.InputControl
+      <InputControl
         {/* Render InputControl as controlled input (RadioButtonGroup) */}
         as={RadioButtonGroup}
         {/* Pass control exposed from Form render prop */}
@@ -98,7 +98,7 @@ import { Forms } from '@grafana/ui';
     </Field>
 
     <Field label="SelectExample">
-      <Forms.InputControl
+      <InputControl
         {/* Render InputControl as controlled input (Select) */}
         as={Select}
         {/* Pass control exposed from Form render prop */}
@@ -112,7 +112,7 @@ import { Forms } from '@grafana/ui';
 </Form>
 ```
 
-Note that when using `Forms.InputControl`, it expects the name of the prop that handles input change to be called `onChange`.
+Note that when using `InputControl`, it expects the name of the prop that handles input change to be called `onChange`.
 If the property is named differently for any specific component, additional `onChangeName` prop has to be provided, specifying the name.
 Additionally, the `onChange` arguments passed as an array. Check [react-hook-form docs](https://react-hook-form.com/api/#Controller)
 for more prop options.
@@ -128,7 +128,7 @@ const onSelectChange = ([value]) => {
 }
 
 <Field label="SelectExample">
-  <Forms.InputControl
+  <InputControl
     as={DashboardPicker}
     control={control}
     name="select"

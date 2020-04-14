@@ -1,4 +1,4 @@
-import { Controller as InputControl } from 'react-hook-form';
+export { Controller as InputControl } from 'react-hook-form';
 // import { getFormStyles } from './getFormStyles';
 // import { Label } from './Label';
 // import { RadioButtonGroup } from './RadioButtonGroup/RadioButtonGroup';
@@ -14,7 +14,7 @@ const Forms = {
   // Label,
   // Form,
   // Field,
-  InputControl,
+  // InputControl,
   Checkbox,
   Legend,
   TextArea,

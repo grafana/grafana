@@ -1,5 +1,15 @@
 import React, { FC, useEffect, useState } from 'react';
-import { Button, Forms, FormAPI, FormsOnSubmit, HorizontalGroup, FormFieldErrors, Input, Field } from '@grafana/ui';
+import {
+  Button,
+  Forms,
+  FormAPI,
+  FormsOnSubmit,
+  HorizontalGroup,
+  FormFieldErrors,
+  Input,
+  Field,
+  InputControl,
+} from '@grafana/ui';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
 import DataSourcePicker from 'app/core/components/Select/DataSourcePicker';
 import { DashboardInput, DashboardInputs, DataSourceInput, ImportDashboardDTO } from '../state/reducers';
@@ -54,7 +64,7 @@ export const ImportDashboardForm: FC<Props> = ({
         />
       </Field>
       <Field label="Folder">
-        <Forms.InputControl
+        <InputControl
           as={FolderPicker}
           name="folderId"
           useNewForms
@@ -98,7 +108,7 @@ export const ImportDashboardForm: FC<Props> = ({
               invalid={errors.dataSources && !!errors.dataSources[index]}
               error={errors.dataSources && errors.dataSources[index] && 'A data source is required'}
             >
-              <Forms.InputControl
+              <InputControl
                 as={DataSourcePicker}
                 name={`${dataSourceOption}`}
                 datasources={input.options}

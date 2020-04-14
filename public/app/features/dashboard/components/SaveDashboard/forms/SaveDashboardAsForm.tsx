@@ -1,5 +1,5 @@
 import React from 'react';
-import { Button, Forms, HorizontalGroup, Input, Switch, Form, Field } from '@grafana/ui';
+import { Button, Forms, HorizontalGroup, Input, Switch, Form, Field, InputControl } from '@grafana/ui';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
 import { SaveDashboardFormProps } from '../types';
@@ -78,7 +78,7 @@ export const SaveDashboardAsForm: React.FC<SaveDashboardFormProps & { isNew?: bo
             <Input name="title" ref={register({ required: true })} aria-label="Save dashboard title field" autoFocus />
           </Field>
           <Field label="Folder">
-            <Forms.InputControl
+            <InputControl
               as={FolderPicker}
               control={control}
               name="$folder"

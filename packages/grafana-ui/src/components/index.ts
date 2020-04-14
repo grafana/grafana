@@ -125,6 +125,7 @@ export { FieldConfigItemHeaderTitle } from './FieldConfigs/FieldConfigItemHeader
 // Next-gen forms
 export { default as Forms } from './Forms';
 export { Form } from './Forms/Form';
+export { InputControl } from './Forms';
 export * from './Button';
 export { ValuePicker } from './ValuePicker/ValuePicker';
 export { fieldMatchersUI } from './MatchersUI/fieldMatchersUI';
