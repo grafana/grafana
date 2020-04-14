@@ -1,5 +1,5 @@
 import React, { FC } from 'react';
-import { Forms, Button, LinkButton, Input } from '@grafana/ui';
+import { Forms, Button, LinkButton, Input, Form } from '@grafana/ui';
 import { css } from 'emotion';
 
 import { getConfig } from 'app/core/config';
@@ -60,7 +60,7 @@ export const SignupForm: FC<Props> = props => {
   };
 
   return (
-    <Forms.Form defaultValues={defaultValues} onSubmit={onSubmit}>
+    <Form defaultValues={defaultValues} onSubmit={onSubmit}>
       {({ register, errors }) => {
         return (
           <>
@@ -115,6 +115,6 @@ export const SignupForm: FC<Props> = props => {
           </>
         );
       }}
-    </Forms.Form>
+    </Form>
   );
 };

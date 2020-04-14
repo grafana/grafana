@@ -4,7 +4,7 @@ import { connect, MapStateToProps, MapDispatchToProps } from 'react-redux';
 import { StoreState } from 'app/types';
 import { updateLocation } from 'app/core/actions';
 import { UrlQueryValue, getBackendSrv } from '@grafana/runtime';
-import { Forms, Button, Input } from '@grafana/ui';
+import { Forms, Button, Input, Form } from '@grafana/ui';
 import { useAsync } from 'react-use';
 import Page from 'app/core/components/Page/Page';
 import { contextSrv } from 'app/core/core';
@@ -69,7 +69,7 @@ const SingupInvitedPageUnconnected: FC<DispatchProps & ConnectedProps> = ({ code
           <br />
           Please complete the following and choose a password to accept your invitation and continue:
         </div>
-        <Forms.Form defaultValues={initFormModel} onSubmit={onSubmit}>
+        <Form defaultValues={initFormModel} onSubmit={onSubmit}>
           {({ register, errors }) => (
             <>
               <Forms.Field invalid={!!errors.email} error={!!errors.email && errors.email.message} label="Email">
@@ -118,7 +118,7 @@ const SingupInvitedPageUnconnected: FC<DispatchProps & ConnectedProps> = ({ code
               <Button type="submit">Sign Up</Button>
             </>
           )}
-        </Forms.Form>
+        </Form>
       </Page.Contents>
     </Page>
   );

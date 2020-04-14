@@ -1,5 +1,5 @@
 import React, { FC } from 'react';
-import { Forms, HorizontalGroup, Button, LinkButton, Input, Switch, RadioButtonGroup } from '@grafana/ui';
+import { Forms, HorizontalGroup, Button, LinkButton, Input, Switch, RadioButtonGroup, Form } from '@grafana/ui';
 import { getConfig } from 'app/core/config';
 import { OrgRole } from 'app/types';
 import { getBackendSrv } from '@grafana/runtime';
@@ -45,7 +45,7 @@ export const UserInviteForm: FC<Props> = ({ updateLocation }) => {
   };
 
   return (
-    <Forms.Form defaultValues={defaultValues} onSubmit={onSubmit}>
+    <Form defaultValues={defaultValues} onSubmit={onSubmit}>
       {({ register, control, errors }) => {
         return (
           <>
@@ -74,7 +74,7 @@ export const UserInviteForm: FC<Props> = ({ updateLocation }) => {
           </>
         );
       }}
-    </Forms.Form>
+    </Form>
   );
 };
 

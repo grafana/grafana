@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 
-import { Forms, Button, HorizontalGroup, TextArea } from '@grafana/ui';
+import { Forms, Button, HorizontalGroup, TextArea, Form } from '@grafana/ui';
 import { e2e } from '@grafana/e2e';
 import { SaveDashboardFormProps } from '../types';
 
@@ -15,7 +15,7 @@ export const SaveDashboardForm: React.FC<SaveDashboardFormProps> = ({ dashboard,
   const hasVariableChanged = useMemo(() => dashboard.hasVariableValuesChanged(), [dashboard]);
 
   return (
-    <Forms.Form
+    <Form
       onSubmit={async (data: SaveDashboardFormDTO) => {
         const result = await onSubmit(dashboard.getSaveModelClone(data), data, dashboard);
         if (result.status === 'success') {
@@ -63,6 +63,6 @@ export const SaveDashboardForm: React.FC<SaveDashboardFormProps> = ({ dashboard,
           </HorizontalGroup>
         </>
       )}
-    </Forms.Form>
+    </Form>
   );
 };

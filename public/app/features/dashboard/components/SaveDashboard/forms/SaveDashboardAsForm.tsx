@@ -1,5 +1,5 @@
 import React from 'react';
-import { Button, Forms, HorizontalGroup, Input, Switch } from '@grafana/ui';
+import { Button, Forms, HorizontalGroup, Input, Switch, Form } from '@grafana/ui';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
 import { SaveDashboardFormProps } from '../types';
@@ -51,7 +51,7 @@ export const SaveDashboardAsForm: React.FC<SaveDashboardFormProps & { isNew?: bo
   };
 
   return (
-    <Forms.Form
+    <Form
       defaultValues={defaultValues}
       onSubmit={async (data: SaveDashboardAsFormDTO) => {
         const clone = getSaveAsDashboardClone(dashboard);
@@ -102,6 +102,6 @@ export const SaveDashboardAsForm: React.FC<SaveDashboardFormProps & { isNew?: bo
           </HorizontalGroup>
         </>
       )}
-    </Forms.Form>
+    </Form>
   );
 };

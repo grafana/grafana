@@ -49,7 +49,7 @@ export const NewOrgPage: FC<PropsWithState> = ({ navModel }) => {
           deployments.{' '}
         </p>
 
-        <Forms.Form<CreateOrgFormDTO> onSubmit={createOrg}>
+        <Form<CreateOrgFormDTO> onSubmit={createOrg}>
           {({ register, errors }) => {
             return (
               <>
@@ -72,7 +72,7 @@ export const NewOrgPage: FC<PropsWithState> = ({ navModel }) => {
               </>
             );
           }}
-        </Forms.Form>
+        </Form>
       </Page.Contents>
     </Page>
   );

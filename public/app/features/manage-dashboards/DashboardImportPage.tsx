@@ -81,7 +81,7 @@ class DashboardImportUnConnected extends PureComponent<Props> {
         </div>
         <div className={styles.option}>
           <Forms.Legend>Import via grafana.com</Forms.Legend>
-          <Forms.Form onSubmit={this.getGcomDashboard} defaultValues={{ gcomDashboard: '' }}>
+          <Form onSubmit={this.getGcomDashboard} defaultValues={{ gcomDashboard: '' }}>
             {({ register, errors }) => (
               <Forms.Field
                 invalid={!!errors.gcomDashboard}
@@ -100,11 +100,11 @@ class DashboardImportUnConnected extends PureComponent<Props> {
                 />
               </Forms.Field>
             )}
-          </Forms.Form>
+          </Form>
         </div>
         <div className={styles.option}>
           <Forms.Legend>Import via panel json</Forms.Legend>
-          <Forms.Form onSubmit={this.getDashboardFromJson} defaultValues={{ dashboardJson: '' }}>
+          <Form onSubmit={this.getDashboardFromJson} defaultValues={{ dashboardJson: '' }}>
             {({ register, errors }) => (
               <>
                 <Forms.Field
@@ -123,7 +123,7 @@ class DashboardImportUnConnected extends PureComponent<Props> {
                 <Button type="submit">Load</Button>
               </>
             )}
-          </Forms.Form>
+          </Form>
         </div>
       </>
     );

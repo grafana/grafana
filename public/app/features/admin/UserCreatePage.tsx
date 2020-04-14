@@ -1,7 +1,7 @@
 import React, { useCallback } from 'react';
 import { hot } from 'react-hot-loader';
 import { connect } from 'react-redux';
-import { Forms, Button, Input } from '@grafana/ui';
+import { Forms, Form, Button, Input } from '@grafana/ui';
 import { NavModel } from '@grafana/data';
 import { getBackendSrv } from '@grafana/runtime';
 import { StoreState } from '../../types';
@@ -32,7 +32,7 @@ const UserCreatePage: React.FC<UserCreatePageProps> = ({ navModel, updateLocatio
     <Page navModel={navModel}>
       <Page.Contents>
         <h1>Add new user</h1>
-        <Forms.Form onSubmit={onSubmit} validateOn="onBlur">
+        <Form onSubmit={onSubmit} validateOn="onBlur">
           {({ register, errors }) => {
             return (
               <>
@@ -66,7 +66,7 @@ const UserCreatePage: React.FC<UserCreatePageProps> = ({ navModel, updateLocatio
               </>
             );
           }}
-        </Forms.Form>
+        </Form>
       </Page.Contents>
     </Page>
   );
