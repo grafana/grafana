@@ -1,7 +1,7 @@
 import React, { PureComponent } from 'react';
 import appEvents from 'app/core/app_events';
 import { CopyToClipboard } from 'app/core/components/CopyToClipboard/CopyToClipboard';
-import { JSONFormatter, LoadingPlaceholder, Icon } from '@grafana/ui';
+import { JSONFormatter, LoadingPlaceholder, Button, HorizontalGroup, VerticalGroup } from '@grafana/ui';
 import { CoreEvents } from 'app/types';
 import { AppEvents, PanelEvents } from '@grafana/data';
 import { PanelModel } from 'app/features/dashboard/state';
@@ -181,17 +181,19 @@ export class QueryInspector extends PureComponent<Props, State> {
   renderExpandCollapse = () => {
     const { allNodesExpanded } = this.state;
 
-    const collapse = (
-      <>
-        <Icon name="minus-circle" /> Collapse All
-      </>
+    if (allNodesExpanded) {
+      return (
+        <Button icon="minus" size="sm" variant="secondary">
+          Collapse all
+        </Button>
+      );
+    }
+
+    return (
+      <Button icon="plus" title="Can take along time / hang browser" size="sm" variant="secondary">
+        Expand all
+      </Button>
     );
-    const expand = (
-      <>
-        <Icon name="plus-circle" /> Expand All
-      </>
-    );
-    return allNodesExpanded ? collapse : expand;
   };
 
   render() {
@@ -203,22 +205,18 @@ export class QueryInspector extends PureComponent<Props, State> {
     }
 
     return (
-      <>
-        <div className="pull-right">
-          <button className="btn btn-transparent btn-p-x-0 m-r-1" onClick={this.onToggleExpand}>
-            {this.renderExpandCollapse()}
-          </button>
-          <CopyToClipboard
-            className="btn btn-transparent btn-p-x-0"
-            text={this.getTextForClipboard}
-            onSuccess={this.onClipboardSuccess}
-          >
-            <Icon name="copy" /> Copy to Clipboard
+      <VerticalGroup spacing="md">
+        <HorizontalGroup spacing="md">
+          {this.renderExpandCollapse()}
+          <CopyToClipboard text={this.getTextForClipboard} onSuccess={this.onClipboardSuccess}>
+            <Button icon="copy" size="sm" variant="secondary">
+              Copy to clipboard
+            </Button>
           </CopyToClipboard>
-        </div>
+        </HorizontalGroup>
 
         <JSONFormatter json={response} open={openNodes} onDidRender={this.setFormattedJson} />
-      </>
+      </VerticalGroup>
     );
   }
 }

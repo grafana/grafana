@@ -34,13 +34,14 @@ import {
   FieldType,
   formattedValueToString,
   QueryResultMetaStat,
+  LoadingState,
 } from '@grafana/data';
 import { config } from 'app/core/config';
 
 interface Props {
   dashboard: DashboardModel;
   panel: PanelModel;
-  selectedTab: InspectTab;
+  defaultTab: InspectTab;
 }
 
 export enum InspectTab {
@@ -74,21 +75,30 @@ interface State {
 }
 
 export class PanelInspector extends PureComponent<Props, State> {
-  querySubscription: Unsubscribable;
+  querySubscription?: Unsubscribable;
 
   constructor(props: Props) {
     super(props);
+
     this.state = {
       loading: true,
       last: {} as PanelData,
       data: [],
       selected: 0,
-      tab: props.selectedTab || InspectTab.Data,
+      tab: this.getDefaultTab(props.panel, props.defaultTab),
       drawerWidth: '50%',
     };
   }
 
-  async componentDidMount() {
+  getDefaultTab(panel: PanelModel, defaultTab?: InspectTab) {
+    if (defaultTab) {
+      return defaultTab;
+    }
+
+    return panel.plugin && panel.plugin.meta.skipDataQuery ? InspectTab.JSON : InspectTab.Data;
+  }
+
+  componentDidMount() {
     const { panel } = this.props;
 
     if (!panel) {
@@ -96,14 +106,14 @@ export class PanelInspector extends PureComponent<Props, State> {
       return;
     }
 
-    // Listen for changes to the results
-    this.querySubscription = panel
-      .getQueryRunner()
-      .getData()
-      // .pipe(take(1))
-      .subscribe({
-        next: data => this.onUpdateData(data),
-      });
+    if (panel.plugin && !panel.plugin.meta.skipDataQuery) {
+      this.querySubscription = panel
+        .getQueryRunner()
+        .getData()
+        .subscribe({
+          next: data => this.onUpdateData(data),
+        });
+    }
   }
 
   componentWillUnmount() {
@@ -136,7 +146,7 @@ export class PanelInspector extends PureComponent<Props, State> {
 
     // Set last result, but no metadata inspector
     this.setState(prevState => ({
-      loading: false,
+      loading: lastResult.state === LoadingState.Loading,
       last: lastResult,
       data,
       metaDS,
@@ -146,7 +156,7 @@ export class PanelInspector extends PureComponent<Props, State> {
 
   onDismiss = () => {
     getLocationSrv().update({
-      query: { inspect: null, tab: null },
+      query: { inspect: null, InspectTab: null },
       partial: true,
     });
   };
@@ -184,8 +194,16 @@ export class PanelInspector extends PureComponent<Props, State> {
   }
 
   renderDataTab() {
-    const { data, selected } = this.state;
+    const { data, selected, loading } = this.state;
     const styles = getStyles();
+
+    if (loading) {
+      return (
+        <div>
+          Loading <Icon name="fa fa-spinner" className="fa-spin" size="lg" />
+        </div>
+      );
+    }
 
     if (!data || !data.length) {
       return <div>No Data</div>;
@@ -323,21 +341,24 @@ export class PanelInspector extends PureComponent<Props, State> {
   }
 
   drawerHeader = () => {
+    const { dashboard, panel } = this.props;
     const { tab, last } = this.state;
     const error = last?.error;
     const tabs = [];
 
-    if (last && last?.series?.length > 0) {
+    if (panel.plugin && !panel.plugin.meta.skipDataQuery) {
       tabs.push({ label: 'Data', value: InspectTab.Data });
+      tabs.push({ label: 'Stats', value: InspectTab.Stats });
     }
-
-    tabs.push({ label: 'Stats', value: InspectTab.Stats });
 
     if (this.state.metaDS) {
       tabs.push({ label: 'Meta Data', value: InspectTab.Meta });
     }
 
-    tabs.push({ label: 'Query', value: InspectTab.Query });
+    if (dashboard.meta.canEdit) {
+      tabs.push({ label: 'Query', value: InspectTab.Query });
+    }
+
     tabs.push({ label: 'JSON', value: InspectTab.JSON });
 
     if (error && error.message) {
@@ -351,7 +372,7 @@ export class PanelInspector extends PureComponent<Props, State> {
         panelData={last}
         onSelectTab={this.onSelectTab}
         onClose={this.onDismiss}
-        panel={this.props.panel}
+        panel={panel}
         onToggleExpand={this.onToggleExpand}
         isExpanded={this.state.drawerWidth === '100%'}
       />
@@ -360,28 +381,22 @@ export class PanelInspector extends PureComponent<Props, State> {
 
   render() {
     const { panel, dashboard } = this.props;
-    const { loading, last, tab, drawerWidth } = this.state;
+    const { last, tab, drawerWidth } = this.state;
     const styles = getStyles();
     const error = last?.error;
 
     return (
       <Drawer title={this.drawerHeader} width={drawerWidth} onClose={this.onDismiss}>
-        {loading ? (
-          <div>
-            Loading <Icon name="spinner" className="fa-spin" />
-          </div>
-        ) : (
-          <TabContent className={styles.tabContent}>
-            {tab === InspectTab.Data && this.renderDataTab()}
-            <CustomScrollbar autoHeightMin="100%">
-              {tab === InspectTab.Meta && this.renderMetadataInspector()}
-              {tab === InspectTab.JSON && <InspectJSONTab panel={panel} dashboard={dashboard} data={last} />}
-              {tab === InspectTab.Error && this.renderErrorTab(error)}
-              {tab === InspectTab.Stats && this.renderStatsTab()}
-              {tab === InspectTab.Query && <QueryInspector panel={panel} />}
-            </CustomScrollbar>
-          </TabContent>
-        )}
+        <TabContent className={styles.tabContent}>
+          {tab === InspectTab.Data && this.renderDataTab()}
+          <CustomScrollbar autoHeightMin="100%">
+            {tab === InspectTab.Meta && this.renderMetadataInspector()}
+            {tab === InspectTab.JSON && <InspectJSONTab panel={panel} dashboard={dashboard} data={last} />}
+            {tab === InspectTab.Error && this.renderErrorTab(error)}
+            {tab === InspectTab.Stats && this.renderStatsTab()}
+            {tab === InspectTab.Query && <QueryInspector panel={panel} />}
+          </CustomScrollbar>
+        </TabContent>
       </Drawer>
     );
   }
