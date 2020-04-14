@@ -111,4 +111,3 @@ const options = bootData.settings;
 options.bootData = bootData;
 
 export const config = new GrafanaBootConfig(options);
-console.log('config', config);
