@@ -25,4 +25,4 @@ const entrypoint = () => {
   return defaultEntryPoint;
 };
 
-require(entrypoint());
+require(entrypoint()).run();
