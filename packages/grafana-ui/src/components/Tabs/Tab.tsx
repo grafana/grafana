@@ -4,12 +4,14 @@ import { GrafanaTheme } from '@grafana/data';
 import { Icon } from '../Icon/Icon';
 import { IconName } from '../../types';
 import { stylesFactory, useTheme } from '../../themes';
+import { Counter } from '../Counter/Counter';
 
 export interface TabProps {
   label: string;
   active?: boolean;
   icon?: IconName;
   onChangeTab: () => void;
+  counter?: number;
 }
 
 const getTabStyles = stylesFactory((theme: GrafanaTheme) => {
@@ -36,6 +38,10 @@ const getTabStyles = stylesFactory((theme: GrafanaTheme) => {
       &:focus {
         color: ${colors.linkHover};
       }
+
+      .counter {
+        margin-left: ${theme.spacing.xs};
+      }
     `,
     activeStyle: css`
       border-color: ${colors.orange} ${colors.pageHeaderBorder} transparent;
@@ -58,7 +64,7 @@ const getTabStyles = stylesFactory((theme: GrafanaTheme) => {
   };
 });
 
-export const Tab: FC<TabProps> = ({ label, active, icon, onChangeTab }) => {
+export const Tab: FC<TabProps> = ({ label, active, icon, onChangeTab, counter }) => {
   const theme = useTheme();
   const tabsStyles = getTabStyles(theme);
 
@@ -66,6 +72,7 @@ export const Tab: FC<TabProps> = ({ label, active, icon, onChangeTab }) => {
     <li className={cx(tabsStyles.tabItem, active && tabsStyles.activeStyle)} onClick={onChangeTab}>
       {icon && <Icon name={icon} />}
       {label}
+      {!!counter && <Counter value={counter} />}
     </li>
   );
 };
