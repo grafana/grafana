@@ -25,7 +25,9 @@ export interface Props {
   angularComponent?: AngularComponent | null;
   links?: DataLink[];
   error?: string;
-  isFullscreen: boolean;
+  alertState?: string;
+  isViewing: boolean;
+  isEditing: boolean;
   data: PanelData;
   updateLocation: typeof updateLocation;
 }
@@ -88,7 +90,7 @@ export class PanelHeader extends Component<Props, State> {
   private renderLoadingState(): JSX.Element {
     return (
       <div className="panel-loading">
-        <i className="fa fa-spinner fa-spin" />
+        <Icon className="fa-spin" name="fa fa-spinner" />
       </div>
     );
   }
@@ -121,13 +123,13 @@ export class PanelHeader extends Component<Props, State> {
   };
 
   render() {
-    const { panel, scopedVars, error, isFullscreen, data } = this.props;
+    const { panel, scopedVars, error, isViewing, isEditing, data, alertState } = this.props;
     const { menuItems } = this.state;
     const title = templateSrv.replaceWithText(panel.title, scopedVars);
 
     const panelHeaderClass = classNames({
       'panel-header': true,
-      'grid-drag-handle': !isFullscreen,
+      'grid-drag-handle': !(isViewing || isEditing),
     });
 
     // dedupe on severity
@@ -161,7 +163,14 @@ export class PanelHeader extends Component<Props, State> {
           >
             <div className="panel-title">
               {Object.values(notices).map(this.renderNotice)}
-              <span className="icon-gf panel-alert-icon" />
+              {alertState && (
+                <Icon
+                  name={alertState === 'alerting' ? 'heart-break' : 'heart'}
+                  className="icon-gf panel-alert-icon"
+                  style={{ marginRight: '4px' }}
+                  size="sm"
+                />
+              )}
               <span className="panel-title-text">
                 {title}
                 <Icon name="angle-down" className="panel-menu-toggle" />

@@ -41,7 +41,7 @@ export const VisualizationTabUnconnected: FC<Props> = ({ panel, plugin, changePa
       if (e.key === 'Enter') {
         const query = e.currentTarget.value;
         const plugins = getAllPanelPluginMeta();
-        const match = filterPluginList(plugins, query);
+        const match = filterPluginList(plugins, query, plugin.meta);
         if (match && match.length) {
           onPluginTypeChange(match[0]);
         }
@@ -90,7 +90,7 @@ export const VisualizationTabUnconnected: FC<Props> = ({ panel, plugin, changePa
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
   return {
     icon: css`
-      color: ${theme.colors.gray33};
+      color: ${theme.palette.gray33};
     `,
     wrapper: css`
       display: flex;
@@ -104,7 +104,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       flex-shrink: 1;
     `,
     searchClear: css`
-      color: ${theme.colors.gray60};
+      color: ${theme.palette.gray60};
       cursor: pointer;
     `,
     visList: css`

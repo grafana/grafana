@@ -19,7 +19,8 @@ import CopyIcon from '../../common/CopyIcon';
 
 import KeyValuesTable, { LinkValue, getStyles } from './KeyValuesTable';
 import { UIDropdown, UIIcon } from '../../uiElementsContext';
-import {ubInlineBlock} from "../../uberUtilityStyles";
+import { ubInlineBlock } from '../../uberUtilityStyles';
+import { defaultTheme } from '../../Theme';
 
 describe('LinkValue', () => {
   const title = 'titleValue';
@@ -38,7 +39,7 @@ describe('LinkValue', () => {
   });
 
   it('renders correct Icon', () => {
-    const styles = getStyles();
+    const styles = getStyles(defaultTheme);
     expect(wrapper.find(UIIcon).hasClass(styles.linkIcon)).toBe(true);
     expect(wrapper.find(UIIcon).prop('type')).toBe('export');
   });

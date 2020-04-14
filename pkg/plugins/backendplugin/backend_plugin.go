@@ -141,7 +141,14 @@ func (p *BackendPlugin) CollectMetrics(ctx context.Context) (*pluginv2.CollectMe
 		}, nil
 	}
 
-	res, err := p.diagnostics.CollectMetrics(ctx, &pluginv2.CollectMetricsRequest{})
+	var res *pluginv2.CollectMetricsResponse
+	err := InstrumentPluginRequest(p.id, "metrics", func() error {
+		var innerErr error
+		res, innerErr = p.diagnostics.CollectMetrics(ctx, &pluginv2.CollectMetricsRequest{})
+
+		return innerErr
+	})
+
 	if err != nil {
 		if st, ok := status.FromError(err); ok {
 			if st.Code() == codes.Unimplemented {
@@ -197,7 +204,13 @@ func (p *BackendPlugin) checkHealth(ctx context.Context, config *PluginConfig) (
 		}
 	}
 
-	res, err := p.diagnostics.CheckHealth(ctx, &pluginv2.CheckHealthRequest{Config: pconfig})
+	var res *pluginv2.CheckHealthResponse
+	err = InstrumentPluginRequest(p.id, "checkhealth", func() error {
+		var innerErr error
+		res, innerErr = p.diagnostics.CheckHealth(ctx, &pluginv2.CheckHealthRequest{Config: pconfig})
+		return innerErr
+	})
+
 	if err != nil {
 		if st, ok := status.FromError(err); ok {
 			if st.Code() == codes.Unimplemented {

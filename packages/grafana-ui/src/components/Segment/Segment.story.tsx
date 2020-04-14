@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
 import { action } from '@storybook/addon-actions';
 import { Segment } from './';
+import { Icon } from '../Icon/Icon';
 
 const AddButton = (
   <a className="gf-form-label query-part">
-    <i className="fa fa-plus" />
+    <Icon name="plus-circle" />
   </a>
 );
 

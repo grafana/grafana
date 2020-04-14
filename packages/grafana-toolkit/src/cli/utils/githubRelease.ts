@@ -77,7 +77,14 @@ class GitHubRelease {
       if (latestRelease.data.tag_name === `v${pluginInfo.version}`) {
         await this.git.client.delete(`releases/${latestRelease.data.id}`);
       }
+    } catch (reason) {
+      if (reason.response.status !== 404) {
+        // 404 just means no release found. Not an error. Anything else though, re throw the error
+        throw reason;
+      }
+    }
 
+    try {
       // Now make the release
       const newReleaseResponse = await this.git.client.post('releases', {
         tag_name: `v${pluginInfo.version}`,

@@ -10,6 +10,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util/errutil"
 	"github.com/grafana/grafana/pkg/util/proxyutil"
 
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -203,17 +204,17 @@ func (m *manager) CheckHealth(ctx context.Context, pluginConfig *PluginConfig) (
 }
 
 // CallResource calls a plugin resource.
-func (m *manager) CallResource(config PluginConfig, c *models.ReqContext, path string) {
+func (m *manager) CallResource(config PluginConfig, reqCtx *models.ReqContext, path string) {
 	m.pluginsMu.RLock()
 	p, registered := m.plugins[config.PluginID]
 	m.pluginsMu.RUnlock()
 
 	if !registered {
-		c.JsonApiErr(404, "Plugin not registered", nil)
+		reqCtx.JsonApiErr(404, "Plugin not registered", nil)
 		return
 	}
 
-	clonedReq := c.Req.Clone(c.Req.Context())
+	clonedReq := reqCtx.Req.Clone(reqCtx.Req.Context())
 	keepCookieNames := []string{}
 	if config.JSONData != nil {
 		if keepCookies := config.JSONData.Get("keepCookies"); keepCookies != nil {
@@ -224,9 +225,9 @@ func (m *manager) CallResource(config PluginConfig, c *models.ReqContext, path s
 	proxyutil.ClearCookieHeader(clonedReq, keepCookieNames)
 	proxyutil.PrepareProxyRequest(clonedReq)
 
-	body, err := c.Req.Body().Bytes()
+	body, err := reqCtx.Req.Body().Bytes()
 	if err != nil {
-		c.JsonApiErr(500, "Failed to read request body", err)
+		reqCtx.JsonApiErr(500, "Failed to read request body", err)
 		return
 	}
 
@@ -237,32 +238,41 @@ func (m *manager) CallResource(config PluginConfig, c *models.ReqContext, path s
 		URL:     clonedReq.URL.String(),
 		Headers: clonedReq.Header,
 		Body:    body,
-		User:    c.SignedInUser,
+		User:    reqCtx.SignedInUser,
 	}
 
-	stream, err := p.callResource(clonedReq.Context(), req)
+	err = InstrumentPluginRequest(p.id, "resource", func() error {
+		stream, err := p.callResource(clonedReq.Context(), req)
+		if err != nil {
+			return errutil.Wrap("Failed to call resource", err)
+		}
+
+		return flushStream(p, stream, reqCtx)
+	})
+
 	if err != nil {
-		c.JsonApiErr(500, "Failed to call resource", err)
-		return
+		reqCtx.JsonApiErr(500, "Failed to ", err)
 	}
+}
 
+func flushStream(plugin *BackendPlugin, stream callResourceResultStream, reqCtx *models.ReqContext) error {
 	processedStreams := 0
 
 	for {
 		resp, err := stream.Recv()
 		if err == io.EOF {
 			if processedStreams == 0 {
-				c.JsonApiErr(500, "Received empty resource response ", nil)
+				return errors.New("Received empty resource response")
 			}
-			return
+			return nil
 		}
 		if err != nil {
 			if processedStreams == 0 {
-				c.JsonApiErr(500, "Failed to receive response from resource call", err)
-			} else {
-				p.logger.Error("Failed to receive response from resource call", "error", err)
+				return errutil.Wrap("Failed to receive response from resource call", err)
 			}
-			return
+
+			plugin.logger.Error("Failed to receive response from resource call", "error", err)
+			return nil
 		}
 
 		// Expected that headers and status are only part of first stream
@@ -280,18 +290,18 @@ func (m *manager) CallResource(config PluginConfig, c *models.ReqContext, path s
 				}
 
 				for _, v := range values {
-					c.Resp.Header().Add(k, v)
+					reqCtx.Resp.Header().Add(k, v)
 				}
 			}
 
-			c.WriteHeader(resp.Status)
+			reqCtx.WriteHeader(resp.Status)
 		}
 
-		if _, err := c.Write(resp.Body); err != nil {
-			p.logger.Error("Failed to write resource response", "error", err)
+		if _, err := reqCtx.Write(resp.Body); err != nil {
+			plugin.logger.Error("Failed to write resource response", "error", err)
 		}
 
-		c.Resp.Flush()
+		reqCtx.Resp.Flush()
 		processedStreams++
 	}
 }

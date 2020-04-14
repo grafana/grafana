@@ -82,9 +82,6 @@
 .btn-small {
   @include button-size($btn-padding-y-sm, $space-sm, $font-size-sm, $border-radius-sm);
   height: $height-sm;
-  svg {
-    margin-bottom: 0;
-  }
 }
 
 // Deprecated, only used by old plugins

@@ -46,16 +46,16 @@ func NewFrameInputConverter(fieldConvs []FieldConverter, rowLen int) (*FrameInpu
 // Converter is not nil, then the Converter function is called before setting the value (otherwise Frame.Set is called directly).
 // If an error is returned from the Converter function this function returns that error.
 // Like Frame.Set and Field.Set, it will panic if fieldIdx or rowIdx are out of range.
-func (fcb *FrameInputConverter) Set(fieldIdx, rowIdx int, val interface{}) error {
-	if fcb.fieldConverters[fieldIdx].Converter == nil {
-		fcb.Frame.Set(fieldIdx, rowIdx, val)
+func (fic *FrameInputConverter) Set(fieldIdx, rowIdx int, val interface{}) error {
+	if fic.fieldConverters[fieldIdx].Converter == nil {
+		fic.Frame.Set(fieldIdx, rowIdx, val)
 		return nil
 	}
-	convertedVal, err := fcb.fieldConverters[fieldIdx].Converter(val)
+	convertedVal, err := fic.fieldConverters[fieldIdx].Converter(val)
 	if err != nil {
 		return err
 	}
-	fcb.Frame.Set(fieldIdx, rowIdx, convertedVal)
+	fic.Frame.Set(fieldIdx, rowIdx, convertedVal)
 	return nil
 }
 
