@@ -10,7 +10,7 @@ export interface SelectCommonProps<T> {
   autoFocus?: boolean;
   backspaceRemovesValue?: boolean;
   className?: string;
-  /** Used for custom components . For more information, see `react-select` */
+  /** Used for custom components. For more information, see `react-select` */
   components?: any;
   defaultValue?: any;
   disabled?: boolean;
