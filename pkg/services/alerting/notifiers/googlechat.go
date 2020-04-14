@@ -126,7 +126,7 @@ func (gcn *GoogleChatNotifier) Notify(evalContext *alerting.EvalContext) error {
 		gcn.log.Error("evalContext returned an invalid rule URL")
 	}
 
-	var widgets []widget
+	widgets := []widget{}
 	if len(evalContext.Rule.Message) > 0 {
 		// add a text paragraph widget for the message if there is a message
 		// Google Chat API doesn't accept an empty text property
