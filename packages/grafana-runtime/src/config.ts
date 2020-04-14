@@ -1,4 +1,4 @@
-import extend from 'lodash/extend';
+import merge from 'lodash/merge';
 import { getTheme } from '@grafana/ui';
 import { DataSourceInstanceSettings, GrafanaTheme, GrafanaThemeType, PanelPluginMeta } from '@grafana/data';
 
@@ -97,7 +97,7 @@ export class GrafanaBootConfig {
       disableSanitizeHtml: false,
     };
 
-    extend(this, defaults, options);
+    merge(this, defaults, options);
   }
 }
 
@@ -111,3 +111,4 @@ const options = bootData.settings;
 options.bootData = bootData;
 
 export const config = new GrafanaBootConfig(options);
+console.log('config', config);
