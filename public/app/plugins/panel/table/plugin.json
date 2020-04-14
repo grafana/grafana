@@ -4,7 +4,6 @@
   "id": "table",
 
   "info": {
-    "description": "Table Panel for Grafana",
     "author": {
       "name": "Grafana Project",
       "url": "https://grafana.com"

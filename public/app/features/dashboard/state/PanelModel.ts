@@ -312,7 +312,7 @@ export class PanelModel implements DataConfigSource {
       const version = getPluginVersion(plugin);
 
       if (version !== this.pluginVersion) {
-        this.options = plugin.onPanelMigration(this);
+        this.options = plugin.onPanelMigration(this); // may throw PanelTypeShouldChange
         this.pluginVersion = version;
       }
     }
