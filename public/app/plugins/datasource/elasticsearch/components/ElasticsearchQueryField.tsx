@@ -26,7 +26,7 @@ class ElasticsearchQueryField extends React.PureComponent<Props, State> {
     ];
 
     this.state = {
-      syntaxLoaded: false,
+      syntaxLoaded: true,
     };
   }
 
