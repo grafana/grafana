@@ -1,5 +1,5 @@
 import React from 'react';
-import { Button, Forms, HorizontalGroup, Input, Switch, Form, Field, InputControl } from '@grafana/ui';
+import { Button, HorizontalGroup, Input, Switch, Form, Field, InputControl } from '@grafana/ui';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
 import { SaveDashboardFormProps } from '../types';
