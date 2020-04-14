@@ -29,7 +29,7 @@ export interface BuildInfo {
  *
  * @public
  */
-interface FeatureToggles {
+export interface FeatureToggles {
   transformations: boolean;
   expressions: boolean;
   newEdit: boolean;
@@ -47,7 +47,7 @@ interface FeatureToggles {
  *
  * @public
  */
-interface LicenseInfo {
+export interface LicenseInfo {
   hasLicense: boolean;
   expiry: number;
   licenseUrl: string;

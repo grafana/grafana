@@ -1,10 +1,15 @@
-interface SizeMeta {
+/**
+ * Describes a size with width/height
+ *
+ * @public
+ */
+export interface SizeMeta {
   width: number;
   height: number;
 }
 
 /**
- * Interface describing the meta information that are sent together with each event.
+ * Describes the meta information that are sent together with each event.
  *
  * @public
  */
@@ -40,7 +45,7 @@ export interface EchoMeta {
 }
 
 /**
- * Interface describing echo backends that can be registered to receive of events.
+ * Describes echo backends that can be registered to receive of events.
  *
  * @public
  */
@@ -52,7 +57,7 @@ export interface EchoBackend<T extends EchoEvent = any, O = any> {
 }
 
 /**
- * Interface describing an echo event.
+ * Describes an echo event.
  *
  * @public
  */
@@ -77,7 +82,7 @@ export enum EchoEventType {
 
 /**
  * Used to send events to all the registered backends. This should be accessed via the
- * {@link getEchoSrv()} function. Will, by default, flush events to the backends every
+ * {@link getEchoSrv} function. Will, by default, flush events to the backends every
  * 10s or when the flush function is triggered.
  *
  * @public
@@ -105,7 +110,7 @@ let singletonInstance: EchoSrv;
 
 /**
  * Used during startup by Grafana to set the EchoSrv so it is available
- * via the the {@link getEchoSrv()} to the rest of the application.
+ * via the the {@link getEchoSrv} to the rest of the application.
  *
  * @internal
  */

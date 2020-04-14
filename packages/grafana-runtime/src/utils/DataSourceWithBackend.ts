@@ -102,6 +102,8 @@ export class DataSourceWithBackend<
 
   /**
    * Override to apply template variables
+   *
+   * @virtual
    */
   applyTemplateVariables(query: DataQuery) {
     return query;

@@ -5,6 +5,7 @@ import { VariableModel } from '@grafana/data';
  * that can be used within the current active dashboard.
  *
  * For a mor in-depth description visit: https://grafana.com/docs/grafana/latest/reference/templating
+ * @public
  */
 export interface TemplateSrv {
   getVariables(): VariableModel[];
@@ -14,7 +15,7 @@ let singletonInstance: TemplateSrv;
 
 /**
  * Used during startup by Grafana to set the TemplateSrv so it is available
- * via the the {@link getTemplateSrv()} to the rest of the application.
+ * via the the {@link getTemplateSrv} to the rest of the application.
  *
  * @internal
  */
