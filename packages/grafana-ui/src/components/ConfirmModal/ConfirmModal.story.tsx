@@ -24,7 +24,7 @@ const defaultActions = {
   },
 };
 
-const ConfirmModalStories = storiesOf('General/ConfirmModal', module);
+const ConfirmModalStories = storiesOf('Overlays/ConfirmModal', module);
 
 ConfirmModalStories.addDecorator(withCenteredStory);
 
