@@ -5,7 +5,17 @@ import { chain } from 'lodash';
 
 import { PanelData, SelectableValue, AppEvents } from '@grafana/data';
 import { getLocationSrv } from '@grafana/runtime';
-import { TextArea, stylesFactory, Button, Select, ClipboardButton, HorizontalGroup, Label } from '@grafana/ui';
+import {
+  TextArea,
+  stylesFactory,
+  Button,
+  Select,
+  ClipboardButton,
+  HorizontalGroup,
+  Label,
+  CustomScrollbar,
+  JSONFormatter,
+} from '@grafana/ui';
 import { css } from 'emotion';
 import { appEvents } from 'app/core/core';
 import { replacePanel } from 'app/features/dashboard/utils/panel';
@@ -147,13 +157,14 @@ export class InspectJSONTab extends PureComponent<Props, State> {
           <Select options={options} value={selected} onChange={this.onSelectChanged} />
         </Field>
         <div className={styles.content}>
-          <Label>JSON</Label>
+          {/* <Label>JSON</Label> */}
           <AutoSizer disableWidth={true}>
             {({ height }) => {
+              const jsonStyles = { height: height - 30 };
               if (isPanelJSON) {
                 return (
                   <TextArea
-                    style={{ height: height - 30 }}
+                    style={jsonStyles}
                     spellCheck={false}
                     value={this.state.text}
                     onChange={this.onTextChanged}
@@ -161,7 +172,11 @@ export class InspectJSONTab extends PureComponent<Props, State> {
                   />
                 );
               }
-              return <div>XXXXX</div>;
+              return (
+                <div style={jsonStyles} className={styles.viewer}>
+                  <JSONFormatter json={this.getJSONObject(show)} />
+                </div>
+              );
             }}
           </AutoSizer>
         </div>
@@ -201,6 +216,9 @@ const getStyles = stylesFactory(() => {
       font-family: monospace;
       border: 1px solid #222;
       margin-bottom: 5px;
+    `,
+    viewer: css`
+      overflow: scroll;
     `,
   };
 });
