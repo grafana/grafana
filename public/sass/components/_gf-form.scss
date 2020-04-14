@@ -112,6 +112,7 @@ $input-border: 1px solid $input-border-color;
   margin-right: $space-xs;
   border-radius: $input-border-radius;
   justify-content: space-between;
+  border: none;
 
   &--grow {
     flex-grow: 1;
@@ -132,6 +133,10 @@ $input-border: 1px solid $input-border-color;
     color: $variable;
     background: $panel-bg;
     border: $panel-border;
+  }
+
+  &--justify-left {
+    justify-content: left;
   }
 
   &--btn {

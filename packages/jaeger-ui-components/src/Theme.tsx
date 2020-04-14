@@ -12,19 +12,31 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import React from 'react';
+import React, { useContext } from 'react';
 import hoistNonReactStatics from 'hoist-non-react-statics';
 import memoizeOne from 'memoize-one';
+import tinycolor from 'tinycolor2';
 
 export type ThemeOptions = Partial<Theme>;
 
+export enum ThemeType {
+  Dark,
+  Light,
+}
+
 export type Theme = {
+  type: ThemeType;
   borderStyle: string;
 };
 
 export const defaultTheme: Theme = {
+  type: ThemeType.Light,
   borderStyle: '1px solid #bbb',
 };
+
+export function isLight(theme: Theme) {
+  return theme.type === ThemeType.Light;
+}
 
 const ThemeContext = React.createContext<ThemeOptions | undefined>(undefined);
 ThemeContext.displayName = 'ThemeContext';
@@ -60,14 +72,16 @@ export const withTheme = <Props extends { theme: Theme }, Statics extends {} = {
   let WithTheme: React.ComponentType<Omit<Props, 'theme'>> = props => {
     return (
       <ThemeConsumer>
-        {(theme: Theme) => (
-          <Component
-            {...({
-              ...props,
-              theme,
-            } as Props & { theme: Theme })}
-          />
-        )}
+        {(theme: Theme) => {
+          return (
+            <Component
+              {...({
+                ...props,
+                theme,
+              } as Props & { theme: Theme })}
+            />
+          );
+        }}
       </ThemeConsumer>
     );
   };
@@ -81,6 +95,51 @@ export const withTheme = <Props extends { theme: Theme }, Statics extends {} = {
   return WithTheme as WrappedWithThemeComponent<Props>;
 };
 
+export function useTheme(): Theme {
+  const theme = useContext(ThemeContext);
+  return {
+    ...defaultTheme,
+    ...theme,
+  };
+}
+
 export const createStyle = <Fn extends (this: any, ...newArgs: any[]) => ReturnType<Fn>>(fn: Fn) => {
   return memoizeOne(fn);
 };
+
+/**
+ * Tries to get a dark variant color. Either by simply inverting the luminosity and darkening or lightening the color
+ * a bit, or if base is provided, tries 2 variants of lighter and darker colors and checks which is more readable with
+ * the base.
+ * @param theme
+ * @param hex
+ * @param base
+ */
+export function autoColor(theme: Theme, hex: string, base?: string) {
+  if (isLight(theme)) {
+    return hex;
+  } else {
+    if (base) {
+      const color = tinycolor(hex);
+      return tinycolor
+        .mostReadable(
+          base,
+          [
+            color.clone().lighten(25),
+            color.clone().lighten(10),
+            color,
+            color.clone().darken(10),
+            color.clone().darken(25),
+          ],
+          {
+            includeFallbackColors: false,
+          }
+        )
+        .toHex8String();
+    }
+    const color = tinycolor(hex).toHsl();
+    color.l = 1 - color.l;
+    const newColor = tinycolor(color);
+    return newColor.isLight() ? newColor.darken(5).toHex8String() : newColor.lighten(5).toHex8String();
+  }
+}

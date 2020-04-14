@@ -77,10 +77,11 @@ const getQueryOperationRowStyles = stylesFactory((theme: GrafanaTheme) => {
       margin-bottom: ${theme.spacing.formSpacingBase * 2}px;
     `,
     header: css`
-      padding: ${theme.spacing.sm};
+      padding: 0 ${theme.spacing.sm};
       border-radius: ${theme.border.radius.sm};
       background: ${theme.colors.bg2};
       height: ${theme.spacing.formInputHeight};
+      line-height: ${theme.spacing.formInputHeight};
       display: flex;
       align-items: center;
       justify-content: space-between;
@@ -93,14 +94,13 @@ const getQueryOperationRowStyles = stylesFactory((theme: GrafanaTheme) => {
       align-items: center;
       cursor: pointer;
     `,
-
     title: css`
       font-weight: ${theme.typography.weight.semibold};
       color: ${theme.colors.textBlue};
       margin-left: ${theme.spacing.sm};
     `,
     content: css`
-      margin-top: ${theme.spacing.xs};
+      margin-top: ${theme.spacing.inlineFormMargin};
       margin-left: ${theme.spacing.xl};
     `,
   };

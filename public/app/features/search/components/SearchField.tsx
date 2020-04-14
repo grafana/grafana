@@ -1,6 +1,6 @@
 import React, { useContext } from 'react';
 import { css, cx } from 'emotion';
-import { ThemeContext, Icon } from '@grafana/ui';
+import { ThemeContext, Icon, Input } from '@grafana/ui';
 import { GrafanaTheme } from '@grafana/data';
 import { SearchQuery } from 'app/core/components/search/search';
 
@@ -23,9 +23,9 @@ const getSearchFieldStyles = (theme: GrafanaTheme) => ({
     align-items: center;
   `,
   input: css`
-    max-width: 653px;
-    padding: 0 ${theme.spacing.md};
-    height: 51px;
+    max-width: 683px;
+    padding-left: ${theme.spacing.md};
+    margin-right: 90px;
     box-sizing: border-box;
     outline: none;
     background-color: ${theme.colors.panelBg};
@@ -41,9 +41,14 @@ const getSearchFieldStyles = (theme: GrafanaTheme) => ({
       padding: 0 ${theme.spacing.md};
     `
   ),
+  clearButton: css`
+    font-size: ${theme.typography.size.sm};
+    color: ${theme.colors.textWeak};
+    text-decoration: underline;
+  `,
 });
 
-export const SearchField: React.FunctionComponent<SearchFieldProps> = ({ query, onChange, ...inputProps }) => {
+export const SearchField: React.FunctionComponent<SearchFieldProps> = ({ query, onChange, size, ...inputProps }) => {
   const theme = useContext(ThemeContext);
   const styles = getSearchFieldStyles(theme);
 
@@ -52,11 +57,7 @@ export const SearchField: React.FunctionComponent<SearchFieldProps> = ({ query, 
       {/* search-field-wrapper class name left on purpose until we migrate entire search to React */}
       {/* based on it GrafanaCtrl (L256) decides whether or not hide search */}
       <div className={`${styles.wrapper} search-field-wrapper`}>
-        <div className={styles.icon}>
-          <Icon name="search" size="lg" />
-        </div>
-
-        <input
+        <Input
           type="text"
           placeholder="Search dashboards by name"
           value={query.query}
@@ -65,8 +66,14 @@ export const SearchField: React.FunctionComponent<SearchFieldProps> = ({ query, 
           }}
           tabIndex={1}
           spellCheck={false}
-          {...inputProps}
           className={styles.input}
+          prefix={<Icon name="search" />}
+          suffix={
+            <a className={styles.clearButton} onClick={() => onChange('')}>
+              Clear
+            </a>
+          }
+          {...inputProps}
         />
 
         <div className={styles.spacer} />

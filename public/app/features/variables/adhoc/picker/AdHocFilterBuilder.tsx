@@ -71,7 +71,7 @@ function filterAddButton(key: string | null): ReactElement | undefined {
 
   return (
     <a className="gf-form-label query-part">
-      <Icon name="plus-circle" />
+      <Icon name="plus" />
     </a>
   );
 }
