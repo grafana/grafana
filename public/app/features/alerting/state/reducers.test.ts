@@ -131,7 +131,7 @@ describe('Alert rules', () => {
               state: 'alerting',
               stateAge: newStateDateAge,
               stateClass: 'alert-state-critical',
-              stateIcon: 'heartbeat',
+              stateIcon: 'heart-break',
               stateText: 'ALERTING',
               url: '/d/ggHbN42mk/alerting-with-testdata',
             },

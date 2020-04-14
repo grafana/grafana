@@ -77,7 +77,7 @@ export interface FieldConfigEditorConfig<TOptions, TSettings = any, TValue = any
   /**
    * Description of the field config property. Will be displayed in the UI as form element description.
    */
-  description: string;
+  description?: string;
   /**
    * Array of strings representing category of the field config property. First element in the array will make option render as collapsible section.
    */

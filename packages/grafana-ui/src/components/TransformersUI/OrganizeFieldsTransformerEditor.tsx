@@ -1,15 +1,16 @@
-import React, { useMemo, useCallback } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import { css, cx } from 'emotion';
-import { DragDropContext, Droppable, Draggable, DropResult } from 'react-beautiful-dnd';
+import { DragDropContext, Draggable, Droppable, DropResult } from 'react-beautiful-dnd';
 import {
-  DataTransformerID,
-  transformersRegistry,
-  DataFrame,
-  GrafanaTheme,
   createOrderFieldsComparer,
+  DataFrame,
+  DataTransformerID,
+  GrafanaTheme,
   OrganizeFieldsTransformerOptions,
+  standardTransformers,
+  TransformerRegistyItem,
+  TransformerUIProps,
 } from '@grafana/data';
-import { TransformerUIRegistyItem, TransformerUIProps } from './types';
 import { stylesFactory, useTheme } from '../../themes';
 import { Button } from '../Button/Button';
 import { VerticalGroup } from '../Layout/Layout';
@@ -158,8 +159,7 @@ const getFieldNameStyles = stylesFactory((theme: GrafanaTheme) => ({
     width: 35%;
     padding: 0 8px;
     border-radius: 3px;
-    background-color: ${theme.isDark ? theme.colors.grayBlue : theme.colors.gray6};
-    border: 1px solid ${theme.isDark ? theme.colors.dark6 : theme.colors.gray5};
+    background-color: ${theme.colors.bg2};
   `,
   right: css`
     width: 65%;
@@ -217,10 +217,10 @@ const fieldNamesFromInput = (input: DataFrame[]): string[] => {
   );
 };
 
-export const organizeFieldsTransformRegistryItem: TransformerUIRegistyItem<OrganizeFieldsTransformerOptions> = {
+export const organizeFieldsTransformRegistryItem: TransformerRegistyItem<OrganizeFieldsTransformerOptions> = {
   id: DataTransformerID.organize,
-  component: OrganizeFieldsTransformerEditor,
-  transformer: transformersRegistry.get(DataTransformerID.organize),
+  editor: OrganizeFieldsTransformerEditor,
+  transformation: standardTransformers.organizeFieldsTransformer,
   name: 'Organize fields',
-  description: 'UI for organizing fields',
+  description: 'Order, filter and rename fields',
 };

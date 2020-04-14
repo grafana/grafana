@@ -19,7 +19,7 @@ export interface RadioButtonProps {
 const getRadioButtonStyles = stylesFactory((theme: GrafanaTheme, size: RadioButtonSize, fullWidth?: boolean) => {
   const { fontSize, height } = getPropertiesForButtonSize(theme, size);
   const horizontalPadding = theme.spacing[size] ?? theme.spacing.md;
-  const c = theme.colors;
+  const c = theme.palette;
 
   const textColor = theme.isLight ? c.gray33 : c.gray70;
   const textColorHover = theme.isLight ? c.blueShade : c.blueLight;
@@ -27,14 +27,13 @@ const getRadioButtonStyles = stylesFactory((theme: GrafanaTheme, size: RadioButt
   const borderColor = theme.isLight ? c.gray4 : c.gray25;
   const borderColorHover = theme.isLight ? c.gray70 : c.gray33;
   const borderColorActive = theme.isLight ? c.blueShade : c.blueLight;
-  const bg = c.pageBg;
+  const bg = theme.colors.bodyBg;
   const bgDisabled = theme.isLight ? c.gray95 : c.gray15;
   const bgActive = theme.isLight ? c.white : c.gray05;
 
   const border = `1px solid ${borderColor}`;
   const borderActive = `1px solid ${borderColorActive}`;
   const borderHover = `1px solid ${borderColorHover}`;
-  const fakeBold = `0 0 0.65px ${textColorHover}, 0 0 0.65px ${textColorHover}`;
 
   return {
     radio: css`
@@ -47,7 +46,6 @@ const getRadioButtonStyles = stylesFactory((theme: GrafanaTheme, size: RadioButt
       &:checked + label {
         border: ${borderActive};
         color: ${textColorActive};
-        text-shadow: ${fakeBold};
         background: ${bgActive};
         z-index: 3;
       }
@@ -61,10 +59,6 @@ const getRadioButtonStyles = stylesFactory((theme: GrafanaTheme, size: RadioButt
         cursor: default;
         background: ${bgDisabled};
         color: ${textColor};
-      }
-
-      &:enabled + label:hover {
-        text-shadow: ${fakeBold};
       }
     `,
     radioLabel: css`

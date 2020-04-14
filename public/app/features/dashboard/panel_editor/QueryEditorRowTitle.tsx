@@ -42,7 +42,7 @@ const getQueryEditorRowTitleStyles = stylesFactory((theme: GrafanaTheme) => {
   return {
     refId: css`
       font-weight: ${theme.typography.weight.semibold};
-      color: ${theme.colors.blue95};
+      color: ${theme.colors.textBlue};
       cursor: pointer;
       display: flex;
       align-items: center;

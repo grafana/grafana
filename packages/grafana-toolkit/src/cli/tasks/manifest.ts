@@ -71,11 +71,11 @@ const manifestRunner: TaskRunner<ManifestOptions> = async ({ folder }) => {
 
   const pluginPath = path.join(folder, 'plugin.json');
   const plugin = require(pluginPath);
-  const url = `https://grafana.com/api/plugins/${plugin.id}/sign`;
+  const url = `https://grafana.com/api/plugins/${plugin.id}/ci/sign`;
   manifest.plugin = plugin.id;
-  manifest.version = plugin.version;
+  manifest.version = plugin.info.version;
 
-  console.log('Request Signature:', url);
+  console.log('Request Signature:', url, manifest);
   const axios = require('axios');
 
   try {

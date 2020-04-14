@@ -66,7 +66,7 @@ export class TeamGroupSync extends PureComponent<Props, State> {
         <td>{group.groupId}</td>
         <td style={{ width: '1%' }}>
           <a className="btn btn-danger btn-small" onClick={() => this.onRemoveGroup(group)}>
-            <Icon name="times" />
+            <Icon name="times" style={{ marginBottom: 0 }} />
           </a>
         </td>
       </tr>
@@ -87,7 +87,7 @@ export class TeamGroupSync extends PureComponent<Props, State> {
           <div className="page-action-bar__spacer" />
           {groups.length > 0 && (
             <button className="btn btn-primary pull-right" onClick={this.onToggleAdding}>
-              <i className="fa fa-plus" /> Add group
+              <Icon name="plus-circle" /> Add group
             </button>
           )}
         </div>

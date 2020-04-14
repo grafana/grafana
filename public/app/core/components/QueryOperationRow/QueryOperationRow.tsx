@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { renderOrCallToRender, HorizontalGroup, Icon, stylesFactory, useTheme } from '@grafana/ui';
+import { renderOrCallToRender, Icon, stylesFactory, useTheme } from '@grafana/ui';
 import { GrafanaTheme } from '@grafana/data';
 import { css } from 'emotion';
 import { useUpdateEffect } from 'react-use';
@@ -54,19 +54,17 @@ export const QueryOperationRow: React.FC<QueryOperationRowProps> = ({
   return (
     <div className={styles.wrapper}>
       <div className={styles.header}>
-        <HorizontalGroup justify="space-between">
-          <div
-            className={styles.titleWrapper}
-            onClick={() => {
-              setIsContentVisible(!isContentVisible);
-            }}
-            aria-label="Query operation row title"
-          >
-            <Icon name={isContentVisible ? 'angle-down' : 'angle-right'} className={styles.collapseIcon} />
-            {title && <span className={styles.title}>{titleElement}</span>}
-          </div>
-          {actions && <div>{actionsElement}</div>}
-        </HorizontalGroup>
+        <div
+          className={styles.titleWrapper}
+          onClick={() => {
+            setIsContentVisible(!isContentVisible);
+          }}
+          aria-label="Query operation row title"
+        >
+          <Icon name={isContentVisible ? 'angle-down' : 'angle-right'} className={styles.collapseIcon} />
+          {title && <span className={styles.title}>{titleElement}</span>}
+        </div>
+        {actions && actionsElement}
       </div>
       {isContentVisible && <div className={styles.content}>{children}</div>}
     </div>
@@ -74,8 +72,6 @@ export const QueryOperationRow: React.FC<QueryOperationRowProps> = ({
 };
 
 const getQueryOperationRowStyles = stylesFactory((theme: GrafanaTheme) => {
-  const borderColor = theme.isLight ? theme.colors.gray85 : theme.colors.gray25;
-
   return {
     wrapper: css`
       margin-bottom: ${theme.spacing.formSpacingBase * 2}px;
@@ -83,8 +79,11 @@ const getQueryOperationRowStyles = stylesFactory((theme: GrafanaTheme) => {
     header: css`
       padding: ${theme.spacing.sm};
       border-radius: ${theme.border.radius.sm};
-      border: 1px solid ${borderColor};
-      background: ${theme.colors.pageBg};
+      background: ${theme.colors.bg2};
+      height: ${theme.spacing.formInputHeight};
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
     `,
     collapseIcon: css`
       color: ${theme.colors.textWeak};
@@ -97,17 +96,12 @@ const getQueryOperationRowStyles = stylesFactory((theme: GrafanaTheme) => {
 
     title: css`
       font-weight: ${theme.typography.weight.semibold};
-      color: ${theme.colors.blue95};
+      color: ${theme.colors.textBlue};
       margin-left: ${theme.spacing.sm};
     `,
     content: css`
-      border: 1px solid ${borderColor};
-      margin-top: -1px;
-      background: ${theme.colors.pageBg};
+      margin-top: ${theme.spacing.xs};
       margin-left: ${theme.spacing.xl};
-      border-top: 1px solid ${theme.colors.pageBg};
-      border-radis: 0 ${theme.border.radius.sm};
-      padding: 0 ${theme.spacing.sm} ${theme.spacing.sm} ${theme.spacing.lg};
     `,
   };
 });
