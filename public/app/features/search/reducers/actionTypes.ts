@@ -11,4 +11,12 @@ export const TOGGLE_ALL_CHECKED = 'TOGGLE_ALL_CHECKED';
 export const TOGGLE_CHECKED = 'TOGGLE_SECTION_CHECKED';
 export const MOVE_ITEMS = 'MOVE_ITEMS';
 export const DELETE_ITEMS = 'DELETE_ITEMS';
+
+// Search Query
 export const TOGGLE_STARRED = 'TOGGLE_STARRED';
+export const REMOVE_STARRED = 'REMOVE_STARRED';
+export const QUERY_CHANGE = 'QUERY_CHANGE';
+export const REMOVE_TAG = 'REMOVE_TAG';
+export const CLEAR_FILTERS = 'CLEAR_FILTERS';
+export const SET_TAGS = 'SET_TAGS';
+export const ADD_TAG = 'ADD_TAG';

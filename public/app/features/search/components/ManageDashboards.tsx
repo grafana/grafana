@@ -2,7 +2,6 @@ import React, { FC, useReducer, useState } from 'react';
 import { contextSrv } from 'app/core/services/context_srv';
 import { useDebounce } from 'react-use';
 import { Icon, TagList } from '@grafana/ui';
-import { SelectableValue } from '@grafana/data';
 import { SearchSrv } from 'app/core/services/search_srv';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { manageDashboardsState, manageDashboardsReducer } from '../reducers/manageDashboards';
@@ -19,47 +18,32 @@ import { DashboardActions } from './DashboardActions';
 import { DashboardSection } from '../types';
 import { ConfirmDeleteModal } from './ConfirmDeleteModal';
 import { MoveToFolderModal } from './MoveToFolderModal';
+import { defaultQuery } from '../reducers/searchQueryReducer';
+import { useSearchQuery } from '../hooks/useSearchQuery';
 
 export interface Props {
   folderId?: number;
   folderUid?: string;
 }
 
-class Query {
-  query: string;
-  mode: string;
-  tag: any[];
-  starred: boolean;
-  skipRecent: boolean;
-  skipStarred: boolean;
-  folderIds: number[];
-}
-
 const searchSrv = new SearchSrv();
-
-const defaultQuery: Query = {
-  query: '',
-  mode: 'tree',
-  tag: [],
-  starred: false,
-  skipRecent: true,
-  skipStarred: true,
-  folderIds: [],
-};
-
-const initQuery = (folderId: number | undefined) => {
-  if (folderId) {
-    return { ...defaultQuery, folderIds: [folderId] };
-  }
-  return defaultQuery;
-};
 
 const { isEditor } = contextSrv;
 
 export const ManageDashboards: FC<Props> = ({ folderId, folderUid }) => {
-  const [query, setQuery] = useState<Query>(() => initQuery(folderId));
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isMoveModalOpen, setIsMoveModalOpen] = useState(false);
+  const {
+    query,
+    hasFilters,
+    onQueryChange,
+    onRemoveStarred,
+    onTagRemove,
+    onClearFilters,
+    onTagFilterChange,
+    onStarredFilterChange,
+    onTagAdd,
+  } = useSearchQuery(folderId);
 
   const [{ canSave, allChecked, hasEditPermissionInFolders, results, loading }, dispatch] = useReducer(
     manageDashboardsReducer,
@@ -91,33 +75,6 @@ export const ManageDashboards: FC<Props> = ({ folderId, folderUid }) => {
 
   useDebounce(search, 300, [query, folderUid]);
 
-  const onQueryChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    event.persist();
-    setQuery(q => ({ ...q, query: event.target.value }));
-  };
-
-  const onRemoveStarred = () => {
-    setQuery(q => ({ ...q, starred: false }));
-  };
-  const onTagRemove = (tag: string) => {
-    setQuery(q => ({ ...q, tag: q.tag.filter(t => tag !== t) }));
-  };
-  const onClearFilters = () => {
-    setQuery(q => ({ ...q, tag: [], starred: false }));
-  };
-  const onTagFilterChange = (tags: string[]) => {
-    setQuery(q => ({ ...q, tag: tags }));
-  };
-
-  const onStarredFilterChange = (filter: SelectableValue) => {
-    setQuery(q => ({ ...q, starred: filter.value }));
-  };
-  const filterByTag = (tag: string) => {
-    if (tag && !query.tag.includes(tag)) {
-      setQuery(q => ({ ...q, tag: [...q.tag, tag] }));
-    }
-  };
-
   const onMoveTo = () => {
     setIsMoveModalOpen(true);
   };
@@ -138,7 +95,6 @@ export const ManageDashboards: FC<Props> = ({ folderId, folderUid }) => {
     }
   };
 
-  const hasFilters = query.query.length > 0 || query.tag.length > 0 || query.starred;
   // TODO Memoize?
   const canMove = results.some((result: DashboardSection) => result.items.some(item => item.checked));
   const canDelete = canMove || results.some((result: DashboardSection) => result.checked);
@@ -209,7 +165,7 @@ export const ManageDashboards: FC<Props> = ({ folderId, folderUid }) => {
             loading={loading}
             results={results}
             editable
-            onTagSelected={filterByTag}
+            onTagSelected={onTagAdd}
             onToggleSection={onToggleSection}
             dispatch={dispatch}
           />

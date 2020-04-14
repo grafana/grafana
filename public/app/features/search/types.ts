@@ -44,16 +44,6 @@ export interface DashboardTag {
   count: number;
 }
 
-export interface DashboardQuery {
-  query: string;
-  mode: string;
-  tag: string[];
-  starred: boolean;
-  skipRecent: boolean;
-  skipStarred: boolean;
-  folderIds: number[];
-}
-
 export interface SectionsState {
   sections: DashboardSection[];
   allChecked: boolean;
@@ -73,4 +63,14 @@ export interface OpenSearchParams {
 export interface UidsToDelete {
   folders: string[];
   dashboards: string[];
+}
+
+export interface DashboardQuery {
+  query: string;
+  mode: string;
+  tag: string[];
+  starred: boolean;
+  skipRecent: boolean;
+  skipStarred: boolean;
+  folderIds: number[];
 }
