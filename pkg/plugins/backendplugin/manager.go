@@ -51,7 +51,8 @@ type Manager interface {
 }
 
 type manager struct {
-	Cfg            *setting.Cfg `inject:""`
+	Cfg            *setting.Cfg     `inject:""`
+	License        models.Licensing `inject:""`
 	pluginsMu      sync.RWMutex
 	plugins        map[string]*BackendPlugin
 	logger         log.Logger
@@ -90,8 +91,14 @@ func (m *manager) Register(descriptor PluginDescriptor) error {
 
 	hostEnv := []string{
 		fmt.Sprintf("GF_VERSION=%s", setting.BuildVersion),
+		fmt.Sprintf("GF_EDITION=%s", m.License.Edition()),
 		fmt.Sprintf("GF_PLUGIN_ID=%s", descriptor.pluginID),
 	}
+
+	if m.License.HasLicense() {
+		hostEnv = append(hostEnv, fmt.Sprintf("GF_ENTERPRISE_LICENSE_PATH=%s", m.Cfg.EnterpriseLicensePath))
+	}
+
 	env := pluginSettings.ToEnv("GF_PLUGIN", hostEnv)
 
 	pluginLogger := m.logger.New("pluginId", descriptor.pluginID)
