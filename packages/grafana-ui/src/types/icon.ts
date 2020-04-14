@@ -3,6 +3,8 @@ export type IconType = 'mono' | 'default';
 export type IconSize = ComponentSize | 'xl' | 'xxl' | 'xxxl';
 
 export type IconName =
+  | 'fa fa-fw fa-unlock'
+  | 'fa fa-envelope'
   | 'fa fa-spinner'
   | 'grafana'
   | 'question-circle'
