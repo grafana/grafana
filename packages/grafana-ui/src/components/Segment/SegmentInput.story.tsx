@@ -78,7 +78,7 @@ export const InputWithAutoFocus = () => {
           setInputComponents([...inputComponents, InputComponent]);
         }}
       >
-        <Icon name="plus-circle" />
+        <Icon name="plus" />
       </a>
     </SegmentFrame>
   );

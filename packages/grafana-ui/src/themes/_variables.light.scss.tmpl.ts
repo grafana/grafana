@@ -12,10 +12,9 @@ $theme-name: light;
 
 // New Colors
 // -------------------------
-$blue-faint: ${theme.palette.blueFaint};
-$blue-light: ${theme.palette.blueLight};
-$blue-base: ${theme.palette.blueBase};
-$blue-shade: ${theme.palette.blueShade};
+$blue-light: ${theme.palette.blue95};
+$blue-base: ${theme.palette.blue80};
+$blue-shade: ${theme.palette.blue77};
 $red-base: ${theme.palette.redBase};
 $red-shade: ${theme.palette.redShade};
 $green-base: ${theme.palette.greenBase};
@@ -53,7 +52,7 @@ $white: ${theme.palette.white};
 
 // Accent colors
 // -------------------------
-$blue: ${theme.palette.blue};
+$blue: ${theme.colors.textBlue};
 $red: $red-base;
 $yellow: ${theme.palette.yellow};
 $orange: ${theme.palette.orange};
@@ -86,7 +85,7 @@ $text-color: ${theme.colors.text};
 $text-color-strong: ${theme.colors.textStrong};
 $text-color-weak: ${theme.colors.textWeak};
 $text-color-faint: ${theme.colors.textFaint};
-$text-color-emphasis: ${theme.colors.textEmphasis};
+$text-color-emphasis: ${theme.colors.textStrong};
 $text-blue: ${theme.colors.textBlue};
 
 $text-shadow-faint: none;
@@ -104,7 +103,7 @@ $external-link-color: ${theme.colors.linkExternal};
 
 // Typography
 // -------------------------
-$headings-color: ${theme.colors.headingColor};
+$headings-color: ${theme.colors.textHeading};
 $abbr-border-color: $gray-2 !default;
 $text-muted: $text-color-weak;
 
@@ -346,7 +345,7 @@ $variable-option-bg: $dropdownLinkBackgroundHover;
 $switch-bg: $white;
 $switch-slider-color: $gray-7;
 $switch-slider-off-bg: $gray-5;
-$switch-slider-on-bg: ${theme.palette.blueShade};
+$switch-slider-on-bg: ${theme.palette.blue77};
 $switch-slider-shadow: 0 0 3px $dark-2;
 
 //Checkbox
@@ -372,8 +371,8 @@ $panel-editor-viz-item-bg-hover: lighten($blue-base, 45%);
 $panel-options-group-border: none;
 $panel-options-group-header-bg: $gray-5;
 
-$panel-grid-placeholder-bg: $blue-faint;
-$panel-grid-placeholder-shadow: 0 0 4px $blue-light;
+$panel-grid-placeholder-bg: lighten(${theme.palette.blue95}, 30%);
+$panel-grid-placeholder-shadow: 0 0 4px ${theme.palette.blue95};
 
 // logs
 $logs-color-unkown: $gray-5;

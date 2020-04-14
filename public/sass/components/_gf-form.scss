@@ -112,6 +112,7 @@ $input-border: 1px solid $input-border-color;
   margin-right: $space-xs;
   border-radius: $input-border-radius;
   justify-content: space-between;
+  border: none;
 
   &--grow {
     flex-grow: 1;

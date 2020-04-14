@@ -11,11 +11,11 @@
       <input type="text" class="gf-form-input" placeholder="{{ctrl.scenario.stringInput}}" ng-model="ctrl.target.stringInput" ng-change="ctrl.refresh()" ng-model-onblur>
 		</div>
 		<div class="gf-form">
-			<label class="gf-form-label query-keyword">Alias</label>
+			<label class="gf-form-label query-keyword width-7">Alias</label>
 			<input type="text" class="gf-form-input width-14" placeholder="optional" ng-model="ctrl.target.alias" ng-change="ctrl.refresh()" ng-model-onblur>
 		</div>
 		<div ng-if="ctrl.showLabels" class="gf-form gf-form--grow">
-			<label class="gf-form-label query-keyword">
+			<label class="gf-form-label query-keyword width-7">
 				Labels
 				<info-popover mode="right-normal">
 					Set labels using a key=value syntax:<br/>
@@ -62,7 +62,7 @@
     <div class="gf-form">
 			<label class="gf-form-label query-keyword width-7">Start value</label>
 			<input type="number"
-				class="gf-form-input width-6"
+				class="gf-form-input width-14"
 				placeholder="auto"
 				ng-model="ctrl.target.startValue"
 				step="1"

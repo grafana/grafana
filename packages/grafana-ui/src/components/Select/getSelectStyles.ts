@@ -6,7 +6,7 @@ export const getSelectStyles = stylesFactory((theme: GrafanaTheme) => {
   const bgColor = theme.colors.formInputBg;
   const menuShadowColor = theme.colors.dropdownShadow;
   const optionBgHover = theme.colors.dropdownOptionHoverBg;
-  const multiValueContainerBg = theme.colors.bg3;
+  const multiValueContainerBg = theme.colors.bg2;
   const multiValueColor = theme.colors.text;
 
   return {
