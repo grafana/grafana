@@ -6,24 +6,18 @@ const path = require('path');
 let includeInternalScripts = false;
 
 const isLinkedMode = () => {
-  let pwd = process.env['PWD'];
-
   // In circleci we are in linked mode. Detect by using the circle working directory,
   // rather than the present working directory.
-  if (process.env['CIRCLE_WORKING_DIRECTORY']) {
-    pwd = process.env['CIRCLE_WORKING_DIRECTORY'];
-  }
+  const pwd = process.env.CIRCLE_WORKING_DIRECTORY || process.env.PWD;
 
   if (path.basename(pwd) === 'grafana-toolkit') {
     return true;
   }
 
-  const linkedDir = `${pwd}/node_modules/@grafana/toolkit`.replace('~', process.env.HOME);
-  if (fs.existsSync(linkedDir)) {
-    const tkStat = fs.lstatSync(linkedDir);
-    if (tkStat.isSymbolicLink()) {
-      return true;
-    }
+  try {
+    return fs.lstatSync(`${pwd}/node_modules/@grafana/toolkit`.replace('~', process.env.HOME)).isSymbolicLink();
+  } catch {
+    return false;
   }
 
   return false;
