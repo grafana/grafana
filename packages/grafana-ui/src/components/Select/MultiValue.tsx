@@ -27,7 +27,7 @@ export const MultiValueRemove: React.FC<MultiValueRemoveProps> = ({ children, in
   const styles = getSelectStyles(theme);
   return (
     <div {...innerProps} className={styles.multiValueRemove}>
-      <Icon name="times" />
+      <Icon name="times" size="sm" />
     </div>
   );
 };

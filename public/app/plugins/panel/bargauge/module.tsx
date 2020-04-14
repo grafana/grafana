@@ -13,7 +13,6 @@ export const plugin = new PanelPlugin<BarGaugeOptions>(BarGaugePanel)
       .addRadio({
         path: 'displayMode',
         name: 'Display mode',
-        description: 'Controls the bar style',
         settings: {
           options: displayModes,
         },
@@ -24,7 +23,7 @@ export const plugin = new PanelPlugin<BarGaugeOptions>(BarGaugePanel)
         name: 'Show unfilled area',
         description: 'When enabled renders the unfilled region as gray',
         defaultValue: true,
-        showIf: options => options.displayMode !== 'lcd',
+        showIf: (options: BarGaugeOptions) => options.displayMode !== 'lcd',
       });
   })
   .setPanelChangeHandler(sharedSingleStatPanelChangedHandler)

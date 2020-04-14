@@ -82,7 +82,8 @@ export class UserProfile extends PureComponent<Props, State> {
   render() {
     const { user } = this.props;
     const { showDeleteModal, showDisableModal } = this.state;
-    const lockMessage = 'Synced via LDAP';
+    const authSource = user.authLabels?.length && user.authLabels[0];
+    const lockMessage = authSource ? `Synced via ${authSource}` : '';
     const styles = getStyles(config.theme);
 
     return (

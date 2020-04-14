@@ -1,6 +1,6 @@
 // Libraries
 import React, { FunctionComponent } from 'react';
-import { Icon } from '@grafana/ui';
+import { Icon } from '../Icon/Icon';
 
 interface Props {
   title?: string | JSX.Element;
@@ -16,7 +16,7 @@ export const PanelOptionsGroup: FunctionComponent<Props> = props => {
         <div className="panel-options-group__header">
           <button className="panel-options-group__add-btn" onClick={props.onAdd}>
             <div className="panel-options-group__add-circle">
-              <i className="fa fa-plus" />
+              <Icon name="plus-circle" />
             </div>
             <span className="panel-options-group__title">{props.title}</span>
           </button>
