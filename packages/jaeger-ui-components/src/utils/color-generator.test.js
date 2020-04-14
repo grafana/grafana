@@ -12,26 +12,27 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import colorGenerator from './color-generator';
+import { getColorByKey, clear } from './color-generator';
+import { defaultTheme } from '../Theme';
 
 it('gives the same color for the same key', () => {
-  colorGenerator.clear();
-  const colorOne = colorGenerator.getColorByKey('serviceA');
-  const colorTwo = colorGenerator.getColorByKey('serviceA');
+  clear();
+  const colorOne = getColorByKey('serviceA', defaultTheme);
+  const colorTwo = getColorByKey('serviceA', defaultTheme);
   expect(colorOne).toBe(colorTwo);
 });
 
 it('gives different colors for each for each key', () => {
-  colorGenerator.clear();
-  const colorOne = colorGenerator.getColorByKey('serviceA');
-  const colorTwo = colorGenerator.getColorByKey('serviceB');
+  clear();
+  const colorOne = getColorByKey('serviceA', defaultTheme);
+  const colorTwo = getColorByKey('serviceB', defaultTheme);
   expect(colorOne).not.toBe(colorTwo);
 });
 
 it('should clear cache', () => {
-  colorGenerator.clear();
-  const colorOne = colorGenerator.getColorByKey('serviceA');
-  colorGenerator.clear();
-  const colorTwo = colorGenerator.getColorByKey('serviceB');
+  clear();
+  const colorOne = getColorByKey('serviceA', defaultTheme);
+  clear();
+  const colorTwo = getColorByKey('serviceB', defaultTheme);
   expect(colorOne).toBe(colorTwo);
 });
