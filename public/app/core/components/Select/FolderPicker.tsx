@@ -110,7 +110,7 @@ export class FolderPicker extends PureComponent<Props, State> {
 
     let folder: SelectableValue<number> = { value: -1 };
 
-    if (initialFolderId !== undefined && initialFolderId > -1) {
+    if (initialFolderId !== undefined && initialFolderId !== null && initialFolderId > -1) {
       folder = options.find(option => option.value === initialFolderId) || { value: -1 };
     } else if (enableReset && initialTitle) {
       folder = resetFolder;
@@ -159,7 +159,6 @@ export class FolderPicker extends PureComponent<Props, State> {
             loadOptions={this.debouncedSearch}
             onChange={this.onFolderChange}
             onCreateOption={this.createNewFolder}
-            size="sm"
             menuPosition="fixed"
           />
         )}
@@ -176,7 +175,6 @@ export class FolderPicker extends PureComponent<Props, State> {
                 loadOptions={this.debouncedSearch}
                 onChange={this.onFolderChange}
                 onCreateOption={this.createNewFolder}
-                size="sm"
               />
             </div>
           </div>

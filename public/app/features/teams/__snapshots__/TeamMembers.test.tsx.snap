@@ -37,8 +37,8 @@ exports[`Render should render component 1`] = `
         className="cta-form__close btn btn-transparent"
         onClick={[Function]}
       >
-        <i
-          className="fa fa-close"
+        <Icon
+          name="times"
         />
       </button>
       <h5>
@@ -131,8 +131,8 @@ exports[`Render should render team members 1`] = `
         className="cta-form__close btn btn-transparent"
         onClick={[Function]}
       >
-        <i
-          className="fa fa-close"
+        <Icon
+          name="times"
         />
       </button>
       <h5>

@@ -101,7 +101,7 @@ export class ShareModal extends React.Component<Props, State> {
     return (
       <ModalTabsHeader
         title={title}
-        icon="share-square-o"
+        icon="share-alt"
         tabs={tabs}
         activeTab={activeTab}
         onChangeTab={this.onSelectTab}

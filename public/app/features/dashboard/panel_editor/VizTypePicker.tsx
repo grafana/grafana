@@ -3,7 +3,7 @@ import React, { useCallback, useMemo } from 'react';
 import config from 'app/core/config';
 import VizTypePickerPlugin from './VizTypePickerPlugin';
 import { EmptySearchResult, stylesFactory, useTheme } from '@grafana/ui';
-import { GrafanaTheme, PanelPluginMeta } from '@grafana/data';
+import { GrafanaTheme, PanelPluginMeta, PluginState } from '@grafana/data';
 import { css } from 'emotion';
 
 export interface Props {
@@ -22,14 +22,26 @@ export function getAllPanelPluginMeta(): PanelPluginMeta[] {
     .sort((a: PanelPluginMeta, b: PanelPluginMeta) => a.sort - b.sort);
 }
 
-export function filterPluginList(pluginsList: PanelPluginMeta[], searchQuery: string): PanelPluginMeta[] {
+export function filterPluginList(
+  pluginsList: PanelPluginMeta[],
+  searchQuery: string,
+  current: PanelPluginMeta
+): PanelPluginMeta[] {
   if (!searchQuery.length) {
-    return pluginsList;
+    return pluginsList.filter(p => {
+      if (p.state === PluginState.deprecated) {
+        return current.id === p.id;
+      }
+      return true;
+    });
   }
   const query = searchQuery.toLowerCase();
   const first: PanelPluginMeta[] = [];
   const match: PanelPluginMeta[] = [];
   for (const item of pluginsList) {
+    if (item.state === PluginState.deprecated && current.id !== item.id) {
+      continue;
+    }
     const name = item.name.toLowerCase();
     const idx = name.indexOf(query);
     if (idx === 0) {
@@ -65,7 +77,7 @@ export const VizTypePicker: React.FC<Props> = ({ searchQuery, onTypeChange, curr
   };
 
   const getFilteredPluginList = useCallback((): PanelPluginMeta[] => {
-    return filterPluginList(pluginsList, searchQuery);
+    return filterPluginList(pluginsList, searchQuery, current);
   }, [searchQuery]);
 
   const filteredPluginList = getFilteredPluginList();

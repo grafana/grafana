@@ -99,7 +99,7 @@ export class UtilSrv {
     scope.onConfirm = payload.onConfirm;
     scope.onAltAction = payload.onAltAction;
     scope.altActionText = payload.altActionText;
-    scope.icon = payload.icon || 'fa-check';
+    scope.icon = payload.icon || 'check';
     scope.yesText = payload.yesText || 'Yes';
     scope.noText = payload.noText || 'Cancel';
     scope.confirmTextValid = scope.confirmText ? false : true;

@@ -1,0 +1,94 @@
+import { useState } from 'react';
+import { Span } from '@jaegertracing/jaeger-ui-components';
+
+/**
+ * Children state means whether spans are collapsed or not. Also provides some functions to manipulate that state.
+ */
+export function useChildrenState() {
+  const [childrenHiddenIDs, setChildrenHiddenIDs] = useState(new Set<string>());
+
+  function expandOne(spans: Span[]) {
+    if (childrenHiddenIDs.size === 0) {
+      return;
+    }
+    let prevExpandedDepth = -1;
+    let expandNextHiddenSpan = true;
+    const newChildrenHiddenIDs = spans.reduce((res, s) => {
+      if (s.depth <= prevExpandedDepth) {
+        expandNextHiddenSpan = true;
+      }
+      if (expandNextHiddenSpan && res.has(s.spanID)) {
+        res.delete(s.spanID);
+        expandNextHiddenSpan = false;
+        prevExpandedDepth = s.depth;
+      }
+      return res;
+    }, new Set(childrenHiddenIDs));
+    setChildrenHiddenIDs(newChildrenHiddenIDs);
+  }
+
+  function collapseOne(spans: Span[]) {
+    if (shouldDisableCollapse(spans, childrenHiddenIDs)) {
+      return;
+    }
+    let nearestCollapsedAncestor: Span | undefined;
+    const newChildrenHiddenIDs = spans.reduce((res, curSpan) => {
+      if (nearestCollapsedAncestor && curSpan.depth <= nearestCollapsedAncestor.depth) {
+        res.add(nearestCollapsedAncestor.spanID);
+        if (curSpan.hasChildren) {
+          nearestCollapsedAncestor = curSpan;
+        }
+      } else if (curSpan.hasChildren && !res.has(curSpan.spanID)) {
+        nearestCollapsedAncestor = curSpan;
+      }
+      return res;
+    }, new Set(childrenHiddenIDs));
+    // The last one
+    if (nearestCollapsedAncestor) {
+      newChildrenHiddenIDs.add(nearestCollapsedAncestor.spanID);
+    }
+    setChildrenHiddenIDs(newChildrenHiddenIDs);
+  }
+
+  function expandAll() {
+    setChildrenHiddenIDs(new Set<string>());
+  }
+
+  function collapseAll(spans: Span[]) {
+    if (shouldDisableCollapse(spans, childrenHiddenIDs)) {
+      return;
+    }
+    const newChildrenHiddenIDs = spans.reduce((res, s) => {
+      if (s.hasChildren) {
+        res.add(s.spanID);
+      }
+      return res;
+    }, new Set<string>());
+
+    setChildrenHiddenIDs(newChildrenHiddenIDs);
+  }
+
+  function childrenToggle(spanID: string) {
+    const newChildrenHiddenIDs = new Set(childrenHiddenIDs);
+    if (childrenHiddenIDs.has(spanID)) {
+      newChildrenHiddenIDs.delete(spanID);
+    } else {
+      newChildrenHiddenIDs.add(spanID);
+    }
+    setChildrenHiddenIDs(newChildrenHiddenIDs);
+  }
+
+  return {
+    childrenHiddenIDs,
+    expandOne,
+    collapseOne,
+    expandAll,
+    collapseAll,
+    childrenToggle,
+  };
+}
+
+function shouldDisableCollapse(allSpans: Span[], hiddenSpansIds: Set<string>) {
+  const allParentSpans = allSpans.filter(s => s.hasChildren);
+  return allParentSpans.length === hiddenSpansIds.size;
+}

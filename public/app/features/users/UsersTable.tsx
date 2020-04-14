@@ -1,5 +1,6 @@
 import React, { FC } from 'react';
 import { OrgUser } from 'app/types';
+import { Icon } from '@grafana/ui';
 
 export interface Props {
   users: OrgUser[];
@@ -55,7 +56,7 @@ const UsersTable: FC<Props> = props => {
               </td>
               <td>
                 <div onClick={() => onRemoveUser(user)} className="btn btn-danger btn-small">
-                  <i className="fa fa-remove" />
+                  <Icon name="times" style={{ marginBottom: 0 }} />
                 </div>
               </td>
             </tr>

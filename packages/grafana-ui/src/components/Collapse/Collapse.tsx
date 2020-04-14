@@ -36,7 +36,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => ({
       animation: loader 2s cubic-bezier(0.17, 0.67, 0.83, 0.67) 500ms;
       animation-iteration-count: 100;
       left: -25%;
-      background: ${theme.colors.blue};
+      background: ${theme.palette.blue};
     }
     @keyframes loader {
       from {
@@ -123,7 +123,7 @@ export const Collapse: FunctionComponent<Props> = ({ isOpen, label, loading, col
     <div className={panelClass}>
       <div className={headerClass} onClick={onClickToggle}>
         <div className={headerButtonsClass}>
-          <Icon name={isOpen ? 'caret-up' : 'caret-down'} />
+          <Icon name={isOpen ? 'angle-up' : 'angle-down'} />
         </div>
         <div className={cx([style.headerLabel])}>{label}</div>
       </div>

@@ -21,7 +21,7 @@ export default class AdminListOrgsCtrl {
         title: 'Delete',
         text: `Do you want to delete organization ${org.name}?`,
         text2: 'All dashboards for this organization will be removed!',
-        icon: 'fa-trash',
+        icon: 'trash-alt',
         yesText: 'Delete',
         onConfirm: async () => {
           await getBackendSrv().delete('/api/orgs/' + org.id);

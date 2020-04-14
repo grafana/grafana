@@ -113,7 +113,7 @@ export class DashLinksContainerCtrl {
               keepTime: linkDef.keepTime,
               includeVars: linkDef.includeVars,
               target: linkDef.targetBlank ? '_blank' : '_self',
-              icon: 'fa fa-bars',
+              icon: 'bars',
               asDropdown: true,
             },
           ]);
@@ -160,7 +160,7 @@ export class DashLinksContainerCtrl {
                   title: dash.title,
                   url: dash.url,
                   target: link.target === '_self' ? '' : link.target,
-                  icon: 'fa fa-th-large',
+                  icon: 'table',
                   keepTime: link.keepTime,
                   includeVars: link.includeVars,
                 });

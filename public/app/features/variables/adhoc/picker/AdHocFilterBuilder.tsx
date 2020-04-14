@@ -1,5 +1,5 @@
 import React, { FC, ReactElement, useState } from 'react';
-import { SegmentAsync } from '@grafana/ui';
+import { SegmentAsync, Icon } from '@grafana/ui';
 import { OperatorSegment } from './OperatorSegment';
 import { AdHocVariableFilter } from 'app/features/templating/types';
 import { SelectableValue } from '@grafana/data';
@@ -71,7 +71,7 @@ function filterAddButton(key: string | null): ReactElement | undefined {
 
   return (
     <a className="gf-form-label query-part">
-      <i className="fa fa-plus" />
+      <Icon name="plus-circle" />
     </a>
   );
 }
