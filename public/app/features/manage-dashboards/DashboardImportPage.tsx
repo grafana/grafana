@@ -2,7 +2,7 @@ import React, { FormEvent, PureComponent } from 'react';
 import { connect, MapDispatchToProps, MapStateToProps } from 'react-redux';
 import { css } from 'emotion';
 import { AppEvents, NavModel } from '@grafana/data';
-import { Button, Forms, stylesFactory, Input, TextArea, Field } from '@grafana/ui';
+import { Button, stylesFactory, Input, TextArea, Field, Form, Legend } from '@grafana/ui';
 import Page from 'app/core/components/Page/Page';
 import { ImportDashboardOverview } from './components/ImportDashboardOverview';
 import { DashboardFileUpload } from './components/DashboardFileUpload';
@@ -80,7 +80,7 @@ class DashboardImportUnConnected extends PureComponent<Props> {
           <DashboardFileUpload onFileUpload={this.onFileUpload} />
         </div>
         <div className={styles.option}>
-          <Forms.Legend>Import via grafana.com</Forms.Legend>
+          <Legend>Import via grafana.com</Legend>
           <Form onSubmit={this.getGcomDashboard} defaultValues={{ gcomDashboard: '' }}>
             {({ register, errors }) => (
               <Field invalid={!!errors.gcomDashboard} error={errors.gcomDashboard && errors.gcomDashboard.message}>
@@ -100,7 +100,7 @@ class DashboardImportUnConnected extends PureComponent<Props> {
           </Form>
         </div>
         <div className={styles.option}>
-          <Forms.Legend>Import via panel json</Forms.Legend>
+          <Legend>Import via panel json</Legend>
           <Form onSubmit={this.getDashboardFromJson} defaultValues={{ dashboardJson: '' }}>
             {({ register, errors }) => (
               <>
