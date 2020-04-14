@@ -120,16 +120,7 @@ export function initDashboardPanel(panel: PanelModel): ThunkResult<void> {
     }
 
     if (!panel.plugin) {
-      try {
-        panel.pluginLoaded(plugin);
-      } catch (err) {
-        if (err.changePanelType) {
-          console.log('Plugin loading requires chaning panel type:', err.changePanelType);
-          await dispatch(changePanelPlugin(panel, err.changePanelType));
-          return; // dispatch will send the required events
-        }
-        console.log('Error loading panel', err, panel);
-      }
+      panel.pluginLoaded(plugin);
     }
 
     dispatch(panelModelAndPluginReady({ panelId: panel.id, plugin }));

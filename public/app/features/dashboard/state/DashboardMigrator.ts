@@ -32,7 +32,7 @@ export class DashboardMigrator {
     let i, j, k, n;
     const oldVersion = this.dashboard.schemaVersion;
     const panelUpgrades = [];
-    this.dashboard.schemaVersion = 23;
+    this.dashboard.schemaVersion = 24;
 
     if (oldVersion === this.dashboard.schemaVersion) {
       return;
@@ -506,6 +506,17 @@ export class DashboardMigrator {
         const { multi, current } = variable;
         variable.current = alignCurrentWithMulti(current, multi);
       }
+    }
+
+    // Grafana 7.0
+    // - migrate existing tables to 'table-old'
+    if (oldVersion < 24) {
+      panelUpgrades.push((panel: any) => {
+        if (panel.type !== 'table') {
+          return;
+        }
+        panel.type = 'table-old';
+      });
     }
 
     if (panelUpgrades.length === 0) {

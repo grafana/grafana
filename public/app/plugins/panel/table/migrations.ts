@@ -1,6 +1,5 @@
 import { PanelModel } from '@grafana/data';
 import { Options } from './types';
-import { ChangePanelTypeError } from 'app/features/dashboard/state/ChangePanelTypeError';
 
 /**
  * At 7.0, the `table` panel was swapped from an angular implementation to a react one.
@@ -10,8 +9,7 @@ import { ChangePanelTypeError } from 'app/features/dashboard/state/ChangePanelTy
 export const tableMigrationHandler = (panel: PanelModel<Options>): Partial<Options> => {
   // Table was saved as an angular table, lets just swap to the 'table-old' panel
   if (!panel.pluginVersion && (panel as any).columns) {
-    // TODO: depending on the configuration, we be able to automatically migrate
-    throw new ChangePanelTypeError('table-old');
+    console.log('Was angular table', panel);
   }
 
   // Nothing changed
