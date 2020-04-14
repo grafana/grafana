@@ -11,9 +11,9 @@ export function graphiteAddFunc($compile: any) {
     '<input type="text"' + ' class="gf-form-input"' + ' spellcheck="false" style="display:none"></input>';
 
   const buttonTemplate =
-    '<a class="gf-form-label query-part dropdown-toggle"' +
+    '<a class="gf-form-label dropdown-toggle"' +
     ' tabindex="1" gf-dropdown="functionMenu" data-toggle="dropdown">' +
-    '<i class="fa fa-plus"></i></a>';
+    '<icon name="\'plus\'" size="\'sm\'"></name></a>';
 
   return {
     link: function($scope: any, elem: JQuery) {

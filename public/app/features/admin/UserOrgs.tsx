@@ -79,7 +79,7 @@ const getOrgRowStyles = stylesFactory((theme: GrafanaTheme) => {
     removeButton: css`
       margin-right: 0.6rem;
       text-decoration: underline;
-      color: ${theme.colors.blue95};
+      color: ${theme.palette.blue95};
     `,
     label: css`
       font-weight: 500;

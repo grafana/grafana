@@ -1,7 +1,7 @@
 import React, { PureComponent } from 'react';
 import appEvents from 'app/core/app_events';
 import { CopyToClipboard } from 'app/core/components/CopyToClipboard/CopyToClipboard';
-import { JSONFormatter, LoadingPlaceholder } from '@grafana/ui';
+import { JSONFormatter, LoadingPlaceholder, Icon } from '@grafana/ui';
 import { CoreEvents } from 'app/types';
 import { AppEvents, PanelEvents } from '@grafana/data';
 import { PanelModel } from 'app/features/dashboard/state';
@@ -183,12 +183,12 @@ export class QueryInspector extends PureComponent<Props, State> {
 
     const collapse = (
       <>
-        <i className="fa fa-minus-square-o" /> Collapse All
+        <Icon name="minus-circle" /> Collapse All
       </>
     );
     const expand = (
       <>
-        <i className="fa fa-plus-square-o" /> Expand All
+        <Icon name="plus-circle" /> Expand All
       </>
     );
     return allNodesExpanded ? collapse : expand;
@@ -213,7 +213,7 @@ export class QueryInspector extends PureComponent<Props, State> {
             text={this.getTextForClipboard}
             onSuccess={this.onClipboardSuccess}
           >
-            <i className="fa fa-clipboard" /> Copy to Clipboard
+            <Icon name="copy" /> Copy to Clipboard
           </CopyToClipboard>
         </div>
 

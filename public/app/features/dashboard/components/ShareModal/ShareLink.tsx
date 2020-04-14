@@ -130,7 +130,7 @@ export class ShareLink extends PureComponent<Props, State> {
             {panel && (
               <div className="gf-form">
                 <a href={imageUrl} target="_blank" aria-label={selectors.linkToRenderedImage}>
-                  <i className="fa fa-camera"></i> Direct link rendered image
+                  <Icon name="camera" /> Direct link rendered image
                 </a>
               </div>
             )}

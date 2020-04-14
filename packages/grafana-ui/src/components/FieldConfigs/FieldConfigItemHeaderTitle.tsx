@@ -37,8 +37,8 @@ export const FieldConfigItemHeaderTitle: React.FC<FieldConfigItemHeaderTitleProp
 const getFieldConfigItemHeaderTitleStyles = stylesFactory((theme: GrafanaTheme) => {
   const headerBg = selectThemeVariant(
     {
-      light: theme.colors.white,
-      dark: theme.colors.dark1,
+      light: theme.palette.white,
+      dark: theme.palette.dark1,
     },
     theme.type
   );
@@ -57,7 +57,7 @@ const getFieldConfigItemHeaderTitleStyles = stylesFactory((theme: GrafanaTheme) 
       flex-grow: 0;
       flex-shrink: 0;
       cursor: pointer;
-      color: ${theme.colors.red88};
+      color: ${theme.palette.red88};
     `,
   };
 });

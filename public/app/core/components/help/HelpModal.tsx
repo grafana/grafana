@@ -34,11 +34,11 @@ export class HelpModal extends React.PureComponent {
     'Time Range': [
       { keys: ['t', 'z'], description: 'Zoom out time range' },
       {
-        keys: ['t', <i className="fa fa-long-arrow-left" />],
+        keys: ['t', <Icon name="arrow-left" />],
         description: 'Move time range back',
       },
       {
-        keys: ['t', <i className="fa fa-long-arrow-right" />],
+        keys: ['t', <Icon name="arrow-right" />],
         description: 'Move time range forward',
       },
     ],

@@ -35,7 +35,7 @@ export const orderFieldsTransformer: DataTransformerInfo<OrderFieldsTransformerO
   },
 };
 
-export const createFieldsComparer = (indexByName: Record<string, number>) => (a: string, b: string) => {
+export const createOrderFieldsComparer = (indexByName: Record<string, number>) => (a: string, b: string) => {
   return indexOfField(a, indexByName) - indexOfField(b, indexByName);
 };
 
@@ -46,7 +46,7 @@ const createFieldsOrderer = (indexByName: Record<string, number>) => (fields: Fi
   if (!indexByName || Object.keys(indexByName).length === 0) {
     return fields;
   }
-  const comparer = createFieldsComparer(indexByName);
+  const comparer = createOrderFieldsComparer(indexByName);
   return fields.sort((a, b) => comparer(a.name, b.name));
 };
 

@@ -6,7 +6,7 @@ import { IconName } from '../../types';
 import { Themeable } from '../../types';
 import { getModalStyles } from './getModalStyles';
 import { ModalHeader } from './ModalHeader';
-import { Icon } from '../Icon/Icon';
+import { IconButton } from '../IconButton/IconButton';
 
 interface Props extends Themeable {
   icon?: IconName;
@@ -50,9 +50,9 @@ export class UnthemedModal extends React.PureComponent<Props> {
         <div className={cx(styles.modal, className)}>
           <div className={styles.modalHeader}>
             {typeof title === 'string' ? this.renderDefaultHeader(title) : title}
-            <a className={styles.modalHeaderClose} onClick={this.onDismiss}>
-              <Icon name="times" />
-            </a>
+            <div className={styles.modalHeaderClose}>
+              <IconButton surface="header" name="times" size="lg" onClick={this.onDismiss} />
+            </div>
           </div>
           <div className={styles.modalContent}>{this.props.children}</div>
         </div>

@@ -1,6 +1,5 @@
 import { updateLocation } from 'app/core/actions';
 import { store } from 'app/store/store';
-import config from 'app/core/config';
 import { getDataSourceSrv, getLocationSrv, AngularComponent } from '@grafana/runtime';
 import { PanelMenuItem } from '@grafana/data';
 import { copyPanel, duplicatePanel, removePanel, sharePanel } from 'app/features/dashboard/utils/panel';
@@ -22,9 +21,7 @@ export function getPanelMenu(
     store.dispatch(
       updateLocation({
         query: {
-          panelId: panel.id,
-          edit: null,
-          fullscreen: true,
+          viewPanel: panel.id,
         },
         partial: true,
       })
@@ -32,20 +29,6 @@ export function getPanelMenu(
   };
 
   const onEditPanel = (event: React.MouseEvent<any>) => {
-    event.preventDefault();
-    store.dispatch(
-      updateLocation({
-        query: {
-          panelId: panel.id,
-          edit: true,
-          fullscreen: true,
-        },
-        partial: true,
-      })
-    );
-  };
-
-  const onNewEditPanel = (event: React.MouseEvent<any>) => {
     event.preventDefault();
     store.dispatch(
       updateLocation({
@@ -164,18 +147,9 @@ export function getPanelMenu(
     shortcut: 'p i',
   });
 
-  if (config.featureToggles.newEdit) {
-    menu.push({
-      text: 'New edit',
-      iconClassName: 'edit',
-      onClick: onNewEditPanel,
-      shortcut: 'p i',
-    });
-  }
-
   const subMenu: PanelMenuItem[] = [];
 
-  if (!panel.fullscreen && dashboard.canEditPanel(panel)) {
+  if (dashboard.canEditPanel(panel) && !(panel.isViewing || panel.isEditing)) {
     subMenu.push({
       text: 'Duplicate',
       onClick: onDuplicatePanel,

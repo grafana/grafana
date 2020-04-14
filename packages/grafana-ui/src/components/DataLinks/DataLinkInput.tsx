@@ -35,10 +35,10 @@ const plugins = [
 const getStyles = stylesFactory((theme: GrafanaTheme) => ({
   editor: css`
     .token.builtInVariable {
-      color: ${theme.colors.queryGreen};
+      color: ${theme.palette.queryGreen};
     }
     .token.variable {
-      color: ${theme.colors.queryKeyword};
+      color: ${theme.colors.textBlue};
     }
   `,
 }));

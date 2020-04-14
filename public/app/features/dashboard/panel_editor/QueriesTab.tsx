@@ -253,7 +253,7 @@ export class QueriesTab extends PureComponent<Props, State> {
 
     const dsHelp: EditorToolbarView = {
       heading: 'Help',
-      icon: 'fa fa-question',
+      icon: 'question-circle',
       render: this.renderHelp,
     };
 

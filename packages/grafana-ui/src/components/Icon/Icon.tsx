@@ -1,23 +1,19 @@
 import React from 'react';
 import { css, cx } from 'emotion';
 import { GrafanaTheme, toPascalCase } from '@grafana/data';
-import { stylesFactory } from '../../themes';
+import { stylesFactory } from '../../themes/stylesFactory';
 import { useTheme } from '../../themes/ThemeContext';
-import { IconName, IconType, IconSize } from '../../types';
-import { ComponentSize } from '../../types/size';
+import { IconName, IconType, IconSize } from '../../types/icon';
 //@ts-ignore
 import * as DefaultIcon from '@iconscout/react-unicons';
 import * as MonoIcon from './assets';
+
+const alwaysMonoIcons = ['grafana', 'favorite'];
 
 interface IconProps extends React.HTMLAttributes<HTMLDivElement> {
   name: IconName;
   size?: IconSize;
   type?: IconType;
-}
-export interface SvgProps extends React.HTMLAttributes<SVGElement> {
-  size: number;
-  secondaryColor?: string;
-  className?: string;
 }
 
 const getIconStyles = stylesFactory((theme: GrafanaTheme) => {
@@ -29,11 +25,10 @@ const getIconStyles = stylesFactory((theme: GrafanaTheme) => {
       vertical-align: middle;
       display: inline-block;
       margin-bottom: ${theme.spacing.xxs};
-      cursor: pointer;
       fill: currentColor;
     `,
     orange: css`
-      fill: ${theme.colors.orange};
+      fill: ${theme.palette.orange};
     `,
   };
 });
@@ -42,12 +37,16 @@ export const Icon = React.forwardRef<HTMLDivElement, IconProps>(
   ({ size = 'md', type = 'default', name, className, style, ...divElementProps }, ref) => {
     const theme = useTheme();
     const styles = getIconStyles(theme);
-    const svgSize = getSvgSize(size, theme);
+    const svgSize = getSvgSize(size);
 
     /* Temporary solution to display also font awesome icons */
     const isFontAwesome = name?.includes('fa-');
     if (isFontAwesome) {
       return <i className={cx(name, className)} {...divElementProps} style={style} />;
+    }
+
+    if (alwaysMonoIcons.includes(name)) {
+      type = 'mono';
     }
 
     const iconName = type === 'default' ? `Uil${toPascalCase(name)}` : toPascalCase(name);
@@ -78,14 +77,21 @@ export const Icon = React.forwardRef<HTMLDivElement, IconProps>(
 Icon.displayName = 'Icon';
 
 /* Transform string with px to number and add 2 pxs as path in svg is 2px smaller */
-const getSvgSize = (size: ComponentSize | 'xl' | 'xxl', theme: GrafanaTheme) => {
-  let svgSize;
-  if (size === 'xl') {
-    svgSize = Number(theme.typography.heading.h1.slice(0, -2));
-  } else if (size === 'xxl') {
-    svgSize = Number(theme.height.lg.slice(0, -2));
-  } else {
-    svgSize = Number(theme.typography.size[size].slice(0, -2)) + 2;
+export const getSvgSize = (size: IconSize) => {
+  switch (size) {
+    case 'xs':
+      return 12;
+    case 'sm':
+      return 14;
+    case 'md':
+      return 16;
+    case 'lg':
+      return 18;
+    case 'xl':
+      return 28;
+    case 'xxl':
+      return 36;
+    case 'xxxl':
+      return 48;
   }
-  return svgSize;
 };
