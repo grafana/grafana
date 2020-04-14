@@ -3,8 +3,6 @@ export type IconType = 'mono' | 'default';
 export type IconSize = ComponentSize | 'xl' | 'xxl' | 'xxxl';
 
 export type IconName =
-  | 'fa fa-fw fa-unlock'
-  | 'fa fa-envelope'
   | 'fa fa-spinner'
   | 'grafana'
   | 'question-circle'
@@ -45,6 +43,7 @@ export type IconName =
   | 'add-panel'
   | 'copy'
   | 'lock'
+  | 'unlock'
   | 'panel-add'
   | 'arrow-random'
   | 'arrow-down'
@@ -158,6 +157,7 @@ export const getAvailableIcons = (): IconName[] => [
   'add-panel',
   'copy',
   'lock',
+  'unlock',
   'panel-add',
   'arrow-random',
   'arrow-down',

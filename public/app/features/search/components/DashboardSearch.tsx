@@ -189,7 +189,7 @@ export const DashboardSearch: FC<Props> = ({ onCloseSearch, payload = {} }) => {
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
   return {
     closeBtn: css`
-      top: 19px;
+      top: 20px;
       right: 8px;
       position: absolute;
       font-size: ${theme.typography.size.xs};
@@ -210,6 +210,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
     `,
     close: css`
       margin-left: ${theme.spacing.xs};
+      margin-bottom: 1px;
     `,
   };
 });
