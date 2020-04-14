@@ -1,7 +1,7 @@
 import React, { FC, useReducer, useState } from 'react';
 import { useDebounce } from 'react-use';
 import { css } from 'emotion';
-import { Icon, IconButton, useTheme, CustomScrollbar, stylesFactory } from '@grafana/ui';
+import { Icon, useTheme, CustomScrollbar, stylesFactory } from '@grafana/ui';
 import { getLocationSrv } from '@grafana/runtime';
 import { GrafanaTheme } from '@grafana/data';
 import { SearchSrv } from 'app/core/services/search_srv';
@@ -178,7 +178,9 @@ export const DashboardSearch: FC<Props> = ({ onCloseSearch, payload = {} }) => {
             </div>
           )}
         </div>
-        <IconButton onClick={onCloseSearch} className={styles.closeBtn} name="times" />
+        <div className={styles.closeBtn} onClick={onCloseSearch}>
+          Close search <Icon name="times" className={styles.close} />
+        </div>
       </div>
     </div>
   );
@@ -187,14 +189,16 @@ export const DashboardSearch: FC<Props> = ({ onCloseSearch, payload = {} }) => {
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
   return {
     closeBtn: css`
-      top: 21px;
+      top: 20px;
       right: 8px;
       position: absolute;
-
-      @media only screen and (max-width: ${theme.breakpoints.md}) {
-        position: absolute;
-        right: 15px;
-        top: 60px;
+      font-size: ${theme.typography.size.xs};
+      color: ${theme.colors.link};
+      display: flex;
+      align-items: center;
+      cursor: pointer;
+      &:hover {
+        color: ${theme.colors.linkHover};
       }
     `,
     icon: css`
@@ -203,6 +207,10 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
     `,
     filter: css`
       margin-right: ${theme.spacing.xs};
+    `,
+    close: css`
+      margin-left: ${theme.spacing.xs};
+      margin-bottom: 1px;
     `,
   };
 });
