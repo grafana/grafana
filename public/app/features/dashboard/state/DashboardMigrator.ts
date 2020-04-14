@@ -513,8 +513,8 @@ export class DashboardMigrator {
       // - migrate existing tables to 'table-old'
       panelUpgrades.push((panel: any) => {
         const wasAngularTable = panel.type === 'table';
-        if (wasAngularTable && !panel.columns) {
-          return; // if nothing was configured just stick with table
+        if (wasAngularTable && !panel.styles) {
+          return; // styles are missing so assumes default settings
         }
         const wasReactTable = panel.table === 'table2';
         if (!wasAngularTable || wasReactTable) {
