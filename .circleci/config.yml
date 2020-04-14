@@ -496,12 +496,12 @@ jobs:
             elif [[ $CIRCLE_BRANCH == "master" ]]; then
               echo $GCP_GRAFANA_UPLOAD_KEY > /tmp/gcpkey.json
               gcloud auth activate-service-account --key-file=/tmp/gcpkey.json
-              gsutil -m rsync -d -r ./packages/grafana-ui/dist/storybook gs://developers.grafana.com/ui/canary
+              gsutil -m rsync -d -r ./packages/grafana-ui/dist/storybook gs://grafana-storybook/canary
             elif [[ -n $CIRCLE_TAG ]]; then
               echo $GCP_GRAFANA_UPLOAD_KEY > /tmp/gcpkey.json
               gcloud auth activate-service-account --key-file=/tmp/gcpkey.json
-              gsutil -m rsync -d -r ./packages/grafana-ui/dist/storybook gs://developers.grafana.com/ui/latest
-              gsutil -m rsync -d -r ./packages/grafana-ui/dist/storybook gs://developers.grafana.com/ui/$CIRCLE_TAG
+              gsutil -m rsync -d -r ./packages/grafana-ui/dist/storybook gs://grafana-storybook/latest
+              gsutil -m rsync -d -r ./packages/grafana-ui/dist/storybook gs://grafana-storybook/$CIRCLE_TAG
             fi
       - run:
           name: CI job failed
