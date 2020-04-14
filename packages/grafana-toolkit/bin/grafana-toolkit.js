@@ -35,7 +35,7 @@ const entrypoint = () => {
   // IF we have a toolkit directory AND linked grafana toolkit AND the toolkit dir is a symbolic lik
   // THEN run everything in linked mode
   if (isLinkedMode()) {
-    console.log('Running in typescript/linked mode');
+    console.log('Running in local/linked mode');
     // This bin is used for cli executed internally
     var tsProjectPath = path.resolve(__dirname, '../tsconfig.json');
     require('ts-node').register({
