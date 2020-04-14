@@ -4,7 +4,6 @@ import { Table, Select } from '@grafana/ui';
 import { Field, FieldMatcherID, PanelProps, DataFrame, SelectableValue } from '@grafana/data';
 import { Options } from './types';
 import { css } from 'emotion';
-import config from 'app/core/config';
 
 interface Props extends PanelProps<Options> {}
 
@@ -69,16 +68,12 @@ export class TablePanel extends Component<Props> {
           value: index,
         };
       });
-      const theme: GrafanaTheme = config.theme;
       return (
         <div className={tableStyles.wrapper} style={{ height }}>
-          <div className={tableStyles.table}>
-            <div style={{ width, height: height - theme.spacing.formInputHeight }}>
-              {this.renderTable(data.series[index], width, height)}
-            </div>
-            ;
-          </div>
           <Select options={names} value={names[index]} onChange={this.onChangeTableSelection} />
+          <div className={tableStyles.table}>
+            <div style={{ width, height: height - 32 - 5 }}>{this.renderTable(data.series[index], width, height)}</div>;
+          </div>
         </div>
       );
     }
