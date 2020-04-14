@@ -1,8 +1,10 @@
 import React, { PureComponent } from 'react';
+import AutoSizer from 'react-virtualized-auto-sizer';
 import appEvents from 'app/core/app_events';
 import { CopyToClipboard } from 'app/core/components/CopyToClipboard/CopyToClipboard';
-import { JSONFormatter, LoadingPlaceholder, Button, HorizontalGroup, VerticalGroup } from '@grafana/ui';
+import { stylesFactory, JSONFormatter, LoadingPlaceholder, Button, HorizontalGroup } from '@grafana/ui';
 import { CoreEvents } from 'app/types';
+import { css } from 'emotion';
 import { AppEvents, PanelEvents } from '@grafana/data';
 import { PanelModel } from 'app/features/dashboard/state';
 
@@ -183,14 +185,14 @@ export class QueryInspector extends PureComponent<Props, State> {
 
     if (allNodesExpanded) {
       return (
-        <Button icon="minus" size="sm" variant="secondary">
+        <Button icon="minus" variant="secondary">
           Collapse all
         </Button>
       );
     }
 
     return (
-      <Button icon="plus" title="Can take along time / hang browser" size="sm" variant="secondary">
+      <Button icon="plus" title="Can take along time / hang browser" variant="secondary">
         Expand all
       </Button>
     );
@@ -203,20 +205,50 @@ export class QueryInspector extends PureComponent<Props, State> {
     if (isLoading) {
       return <LoadingPlaceholder text="Loading query inspector..." />;
     }
+    const styles = getStyles();
 
     return (
-      <VerticalGroup spacing="md">
-        <HorizontalGroup spacing="md">
-          {this.renderExpandCollapse()}
-          <CopyToClipboard text={this.getTextForClipboard} onSuccess={this.onClipboardSuccess} elType="div">
-            <Button icon="copy" size="sm" variant="secondary">
-              Copy to clipboard
-            </Button>
-          </CopyToClipboard>
-        </HorizontalGroup>
-
-        <JSONFormatter json={response} open={openNodes} onDidRender={this.setFormattedJson} />
-      </VerticalGroup>
+      <div className={styles.wrap}>
+        <div className={styles.content}>
+          <AutoSizer disableWidth={true}>
+            {({ height }) => {
+              const jsonStyles = { height: height - 30 };
+              return (
+                <div style={jsonStyles} className={styles.viewer}>
+                  <JSONFormatter json={response} open={openNodes} onDidRender={this.setFormattedJson} />
+                </div>
+              );
+            }}
+          </AutoSizer>
+        </div>
+        <div>
+          <HorizontalGroup>
+            {this.renderExpandCollapse()}
+            <CopyToClipboard text={this.getTextForClipboard} onSuccess={this.onClipboardSuccess} elType="div">
+              <Button icon="copy" variant="secondary">
+                Copy to clipboard
+              </Button>
+            </CopyToClipboard>
+          </HorizontalGroup>
+        </div>
+      </div>
     );
   }
 }
+
+const getStyles = stylesFactory(() => {
+  return {
+    wrap: css`
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      width: 100%;
+    `,
+    content: css`
+      flex: 1;
+    `,
+    viewer: css`
+      overflow: scroll;
+    `,
+  };
+});

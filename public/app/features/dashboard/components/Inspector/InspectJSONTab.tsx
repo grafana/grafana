@@ -5,17 +5,7 @@ import { chain } from 'lodash';
 
 import { PanelData, SelectableValue, AppEvents } from '@grafana/data';
 import { getLocationSrv } from '@grafana/runtime';
-import {
-  TextArea,
-  stylesFactory,
-  Button,
-  Select,
-  ClipboardButton,
-  HorizontalGroup,
-  Label,
-  CustomScrollbar,
-  JSONFormatter,
-} from '@grafana/ui';
+import { TextArea, stylesFactory, Button, Select, ClipboardButton, HorizontalGroup, JSONFormatter } from '@grafana/ui';
 import { css } from 'emotion';
 import { appEvents } from 'app/core/core';
 import { replacePanel } from 'app/features/dashboard/utils/panel';
