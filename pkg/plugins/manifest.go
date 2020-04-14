@@ -5,7 +5,6 @@ import (
 	"crypto/sha256"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"io"
 	"io/ioutil"
 	"os"
@@ -59,9 +58,6 @@ func readPluginManifest(body []byte) (*PluginManifest, error) {
 	if block == nil {
 		return nil, errors.New("unable to decode manifest")
 	}
-
-	txt := string(block.Plaintext)
-	fmt.Printf("PLAINTEXT: %s", txt)
 
 	// Convert to a well typed object
 	manifest := &PluginManifest{}
