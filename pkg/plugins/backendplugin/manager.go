@@ -92,7 +92,6 @@ func (m *manager) Register(descriptor PluginDescriptor) error {
 	hostEnv := []string{
 		fmt.Sprintf("GF_VERSION=%s", setting.BuildVersion),
 		fmt.Sprintf("GF_EDITION=%s", m.License.Edition()),
-		fmt.Sprintf("GF_PLUGIN_ID=%s", descriptor.pluginID),
 	}
 
 	if m.License.HasLicense() {

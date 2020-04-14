@@ -21,25 +21,19 @@ func (ps pluginSettings) ToEnv(prefix string, hostEnv []string) []string {
 }
 
 func extractPluginSettings(cfg *setting.Cfg) map[string]pluginSettings {
-	pluginSettings := map[string]pluginSettings{}
-	for _, section := range cfg.Raw.Sections() {
-		sectionName := section.Name()
-		if !strings.HasPrefix(sectionName, "plugin.") {
-			continue
-		}
-
-		pluginID := strings.Replace(sectionName, "plugin.", "", 1)
-		settings := map[string]string{}
-		for k, v := range section.KeysHash() {
+	psMap := map[string]pluginSettings{}
+	for pluginID, settings := range cfg.PluginSettings {
+		ps := pluginSettings{}
+		for k, v := range settings {
 			if k == "path" || strings.ToLower(k) == "id" {
 				continue
 			}
 
-			settings[k] = v
+			ps[k] = v
 		}
 
-		pluginSettings[pluginID] = settings
+		psMap[pluginID] = ps
 	}
 
-	return pluginSettings
+	return psMap
 }
