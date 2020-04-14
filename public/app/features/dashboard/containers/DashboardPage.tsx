@@ -32,7 +32,6 @@ import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 import { InspectTab, PanelInspector } from '../components/Inspector/PanelInspector';
 import { getConfig } from '../../../core/config';
 import { SubMenu } from '../components/SubMenu/SubMenu';
-import { AngularSubMenu } from '../components/SubMenu';
 
 export interface Props {
   urlUid?: string;
@@ -269,7 +268,6 @@ export class DashboardPage extends PureComponent<Props, State> {
 
     // Only trigger render when the scroll has moved by 25
     const approximateScrollTop = Math.round(scrollTop / 25) * 25;
-    const newVariables = getConfig().featureToggles.newVariables;
 
     return (
       <div>
@@ -285,8 +283,8 @@ export class DashboardPage extends PureComponent<Props, State> {
             {initError && this.renderInitFailedState()}
 
             <div className={gridWrapperClasses}>
-              {!newVariables && <SubMenu dashboard={dashboard} />}
-              {!editPanel && newVariables && <SubMenu dashboard={dashboard} />}
+              {!featureToggles.newVariables && <SubMenu dashboard={dashboard} />}
+              {!editPanel && featureToggles.newVariables && <SubMenu dashboard={dashboard} />}
               <DashboardGrid
                 dashboard={dashboard}
                 viewPanel={viewPanel}
