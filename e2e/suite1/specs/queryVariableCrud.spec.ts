@@ -617,11 +617,5 @@ e2e.scenario({
 
     // assert that move up works
     assertMoveUpItem(queryVariables);
-
-    e2e()
-      .window()
-      .then((win: any) => {
-        logSection('This scenario ran with these featureToggles', win.grafanaBootData.settings.featureToggles);
-      });
   },
 });
