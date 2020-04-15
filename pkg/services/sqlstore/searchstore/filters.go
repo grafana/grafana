@@ -1,4 +1,4 @@
-package search
+package searchstore
 
 import (
 	"fmt"

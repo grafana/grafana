@@ -1,5 +1,5 @@
 // package search_test contains integration tests for search
-package search_test
+package searchstore_test
 
 import (
 	"context"
@@ -9,7 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/services/sqlstore/permissions"
-	"github.com/grafana/grafana/pkg/services/sqlstore/search"
+	"github.com/grafana/grafana/pkg/services/sqlstore/searchstore"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"testing"
@@ -39,10 +39,10 @@ func TestBuilder_EqualResults_Basic(t *testing.T) {
 	err = createDashboards(1, 2, 2)
 	require.NoError(t, err)
 
-	builder := &search.Builder{
+	builder := &searchstore.Builder{
 		Filters: []interface{}{
-			search.OrgFilter{OrgId: user.OrgId},
-			search.TitleSorter{},
+			searchstore.OrgFilter{OrgId: user.OrgId},
+			searchstore.TitleSorter{},
 		},
 		Dialect: dialect,
 	}
@@ -79,10 +79,10 @@ func TestBuilder_Pagination(t *testing.T) {
 	err := createDashboards(0, 25, user.OrgId)
 	require.NoError(t, err)
 
-	builder := &search.Builder{
+	builder := &searchstore.Builder{
 		Filters: []interface{}{
-			search.OrgFilter{OrgId: user.OrgId},
-			search.TitleSorter{},
+			searchstore.OrgFilter{OrgId: user.OrgId},
+			searchstore.TitleSorter{},
 		},
 		Dialect: dialect,
 	}
@@ -128,10 +128,10 @@ func TestBuilder_Permissions(t *testing.T) {
 
 	level := models.PERMISSION_EDIT
 
-	builder := &search.Builder{
+	builder := &searchstore.Builder{
 		Filters: []interface{}{
-			search.OrgFilter{OrgId: user.OrgId},
-			search.TitleSorter{},
+			searchstore.OrgFilter{OrgId: user.OrgId},
+			searchstore.TitleSorter{},
 			permissions.DashboardPermissionFilter{
 				Dialect:         dialect,
 				OrgRole:         user.OrgRole,
