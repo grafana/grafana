@@ -10,7 +10,7 @@ export interface SeriesToColumnsOptions {
 
 export const seriesToColumnsTransformer: DataTransformerInfo<SeriesToColumnsOptions> = {
   id: DataTransformerID.seriesToColumns,
-  name: 'Series as Columns',
+  name: 'Series as columns',
   description: 'Groups series by field and returns values as columns',
   defaultOptions: {},
   transformer: options => (data: DataFrame[]) => {

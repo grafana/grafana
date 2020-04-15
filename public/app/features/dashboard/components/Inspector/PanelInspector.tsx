@@ -53,8 +53,6 @@ interface State {
   last: PanelData;
   // Data from the last response
   data: DataFrame[];
-  // The selected data frame
-  selectedDataFrame: number;
   // The Selected Tab
   currentTab: InspectTab;
   // If the datasource supports custom metadata
@@ -73,7 +71,6 @@ export class PanelInspectorUnconnected extends PureComponent<Props, State> {
       isLoading: true,
       last: {} as PanelData,
       data: [],
-      selectedDataFrame: 0,
       currentTab: props.defaultTab ?? InspectTab.Data,
       drawerWidth: '50%',
     };
@@ -165,10 +162,6 @@ export class PanelInspectorUnconnected extends PureComponent<Props, State> {
     this.setState({ currentTab: item.value || InspectTab.Data });
   };
 
-  onSelectedFrameChanged = (item: SelectableValue<number>) => {
-    this.setState({ selectedDataFrame: item.value || 0 });
-  };
-
   renderMetadataInspector() {
     const { metaDS, data } = this.state;
     if (!metaDS || !metaDS.components?.MetadataInspector) {
@@ -178,16 +171,8 @@ export class PanelInspectorUnconnected extends PureComponent<Props, State> {
   }
 
   renderDataTab() {
-    const { last, isLoading, selectedDataFrame } = this.state;
-
-    return (
-      <InspectDataTab
-        data={last.series}
-        isLoading={isLoading}
-        dataFrameIndex={selectedDataFrame}
-        onSelectedFrameChanged={this.onSelectedFrameChanged}
-      />
-    );
+    const { last, isLoading } = this.state;
+    return <InspectDataTab data={last.series} isLoading={isLoading} />;
   }
 
   renderErrorTab(error?: DataQueryError) {

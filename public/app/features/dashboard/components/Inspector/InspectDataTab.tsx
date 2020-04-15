@@ -1,21 +1,36 @@
 import React, { PureComponent } from 'react';
-import { DataFrame, applyFieldOverrides, toCSV, SelectableValue } from '@grafana/data';
-import { Button, Select, Icon, Table } from '@grafana/ui';
+import {
+  DataFrame,
+  applyFieldOverrides,
+  toCSV,
+  SelectableValue,
+  DataTransformerID,
+  standardTransformers,
+} from '@grafana/data';
+import { Button, Select, Icon, Table, Field } from '@grafana/ui';
 import { getPanelInspectorStyles } from './styles';
 import { config } from 'app/core/config';
 import AutoSizer from 'react-virtualized-auto-sizer';
 import { saveAs } from 'file-saver';
+import { cx } from 'emotion';
 
 interface Props {
   data: DataFrame[];
-  dataFrameIndex: number;
   isLoading: boolean;
-  onSelectedFrameChanged: (item: SelectableValue<number>) => void;
 }
 
-export class InspectDataTab extends PureComponent<Props> {
+interface State {
+  transformation?: DataTransformerID;
+  dataFrameIndex: number;
+}
+
+export class InspectDataTab extends PureComponent<Props, State> {
   constructor(props: Props) {
     super(props);
+
+    this.state = {
+      dataFrameIndex: 0,
+    };
   }
 
   exportCsv = (dataFrame: DataFrame) => {
@@ -28,8 +43,28 @@ export class InspectDataTab extends PureComponent<Props> {
     saveAs(blob, dataFrame.name + '-' + new Date().getUTCDate() + '.csv');
   };
 
+  onSelectedFrameChanged = (item: SelectableValue<number>) => {
+    this.setState({ dataFrameIndex: item.value || 0 });
+  };
+
+  getTransformationOptions() {
+    const seriesToColumns = standardTransformers.seriesToColumnsTransformer;
+    const transformations: Array<SelectableValue<DataTransformerID>> = [
+      { value: DataTransformerID.noop, label: 'None' },
+      { value: DataTransformerID.seriesToColumns, label: seriesToColumns.name },
+    ];
+
+    return transformations;
+  }
+
+  onTransformationChange(value: SelectableValue<DataTransformerID>) {
+    this.setState({ transformation: value.value });
+  }
+
   render() {
-    const { data, dataFrameIndex, isLoading, onSelectedFrameChanged } = this.props;
+    const { data, isLoading } = this.props;
+    const { dataFrameIndex, transformation } = this.state;
+
     const styles = getPanelInspectorStyles();
 
     if (isLoading) {
@@ -63,10 +98,17 @@ export class InspectDataTab extends PureComponent<Props> {
     return (
       <div className={styles.dataTabContent}>
         <div className={styles.toolbar}>
+          <Field label="Transformer" className="flex-grow-1">
+            <Select
+              options={this.getTransformationOptions()}
+              value={transformation}
+              onChange={this.onTransformationChange}
+            />
+          </Field>
           {choices.length > 1 && (
-            <div className={styles.dataFrameSelect}>
-              <Select options={choices} value={dataFrameIndex} onChange={onSelectedFrameChanged} />
-            </div>
+            <Field label="Select result" className={cx(styles.toolbarItem, 'flex-grow-1')}>
+              <Select options={choices} value={dataFrameIndex} onChange={this.onSelectedFrameChanged} />
+            </Field>
           )}
           <div className={styles.downloadCsv}>
             <Button variant="primary" onClick={() => this.exportCsv(processed[dataFrameIndex])}>
