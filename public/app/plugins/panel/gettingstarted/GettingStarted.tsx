@@ -2,7 +2,8 @@
 import React, { PureComponent } from 'react';
 
 import { PanelProps } from '@grafana/data';
-import { Icon } from '@grafana/ui';
+import { Icon, stylesFactory } from '@grafana/ui';
+import { css } from 'emotion';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { contextSrv } from 'app/core/core';
@@ -25,7 +26,7 @@ interface State {
 
 export class GettingStarted extends PureComponent<PanelProps, State> {
   stepIndex = 0;
-  readonly steps: Step[];
+  readonly steps: { basic: Step[]; advanced: Step[] };
 
   constructor(props: PanelProps) {
     super(props);
@@ -34,67 +35,63 @@ export class GettingStarted extends PureComponent<PanelProps, State> {
       checksDone: false,
     };
 
-    this.steps = [
-      {
-        title: 'Install Grafana',
-        icon: 'icon-gf icon-gf-check',
-        href: 'http://docs.grafana.org/',
-        target: '_blank',
-        note: 'Review the installation docs',
-        check: () => Promise.resolve(true),
-      },
-      {
-        title: 'Create a data source',
-        cta: 'Add data source',
-        icon: 'gicon gicon-datasources',
-        href: 'datasources/new?gettingstarted',
-        check: () => {
-          return new Promise(resolve => {
-            resolve(
-              getDatasourceSrv()
-                .getMetricSources()
-                .filter(item => {
-                  return item.meta.builtIn !== true;
-                }).length > 0
-            );
-          });
+    this.steps = {
+      basic: [
+        {
+          title: 'Create a data source',
+          cta: 'Add data source',
+          icon: 'gicon gicon-datasources',
+          href: 'datasources/new?gettingstarted',
+          check: () => {
+            return new Promise(resolve => {
+              resolve(
+                getDatasourceSrv()
+                  .getMetricSources()
+                  .filter(item => {
+                    return item.meta.builtIn !== true;
+                  }).length > 0
+              );
+            });
+          },
         },
-      },
-      {
-        title: 'Build a dashboard',
-        cta: 'New dashboard',
-        icon: 'gicon gicon-dashboard',
-        href: 'dashboard/new?gettingstarted',
-        check: () => {
-          return backendSrv.search({ limit: 1 }).then(result => {
-            return result.length > 0;
-          });
+        {
+          title: 'Build a dashboard',
+          cta: 'New dashboard',
+          icon: 'gicon gicon-dashboard',
+          href: 'dashboard/new?gettingstarted',
+          check: () => {
+            return backendSrv.search({ limit: 1 }).then(result => {
+              return result.length > 0;
+            });
+          },
         },
-      },
-      {
-        title: 'Invite your team',
-        cta: 'Add Users',
-        icon: 'gicon gicon-team',
-        href: 'org/users?gettingstarted',
-        check: () => {
-          return backendSrv.get('/api/org/users/lookup').then((res: any) => {
-            /* return res.length > 1; */
-            return false;
-          });
+      ],
+      advanced: [
+        {
+          title: 'Invite your team',
+          cta: 'Add Users',
+          icon: 'gicon gicon-team',
+          href: 'org/users?gettingstarted',
+          check: () => {
+            return backendSrv.get('/api/org/users/lookup').then((res: any) => {
+              /* return res.length > 1; */
+              return false;
+            });
+          },
         },
-      },
-      {
-        title: 'Install apps & plugins',
-        cta: 'Explore plugin repository',
-        icon: 'gicon gicon-plugins',
-        href: 'https://grafana.com/plugins?utm_source=grafana_getting_started',
-        check: () => {
-          return backendSrv.get('/api/plugins', { embedded: 0, core: 0 }).then((plugins: any[]) => {
-            return plugins.length > 0;
-          });
+        {
+          title: 'Install apps & plugins',
+          cta: 'Explore plugin repository',
+          icon: 'gicon gicon-plugins',
+          href: 'https://grafana.com/plugins?utm_source=grafana_getting_started',
+          check: () => {
+            return backendSrv.get('/api/plugins', { embedded: 0, core: 0 }).then((plugins: any[]) => {
+              return plugins.length > 0;
+            });
+          },
         },
-      },
-    ];
+      ],
+    };
   }
 
   componentDidMount() {
@@ -105,12 +102,12 @@ export class GettingStarted extends PureComponent<PanelProps, State> {
   }
 
   nextStep(): any {
-    if (this.stepIndex === this.steps.length - 1) {
+    if (this.stepIndex === this.steps.basic.length - 1) {
       return Promise.resolve();
     }
 
     this.stepIndex += 1;
-    const currentStep = this.steps[this.stepIndex];
+    const currentStep = this.steps.basic[this.stepIndex];
     return currentStep.check().then(passed => {
       if (passed) {
         currentStep.done = true;
@@ -142,13 +139,15 @@ export class GettingStarted extends PureComponent<PanelProps, State> {
       return <div>checking...</div>;
     }
 
+    const styles = getStyles();
+
     return (
-      <div className="progress-tracker-container">
+      <div className={styles.container}>
         <button className="progress-tracker-close-btn" onClick={this.dismiss}>
           <Icon name="times" />
         </button>
         <div className="progress-tracker">
-          {this.steps.map((step, index) => {
+          {this.steps.basic.map((step, index) => {
             return (
               <div key={index} className={step.done ? 'progress-step completed' : 'progress-step active'}>
                 <a className="progress-link" href={step.href} target={step.target} title={step.note}>
@@ -168,3 +167,15 @@ export class GettingStarted extends PureComponent<PanelProps, State> {
     );
   }
 }
+
+const getStyles = stylesFactory(() => {
+  return {
+    container: css`
+      height: 100%;
+      height: 450px;
+      display: flex;
+      align-items: center;
+      background: url('public/img/getting_started_background.png') no-repeat;
+    `,
+  };
+});
