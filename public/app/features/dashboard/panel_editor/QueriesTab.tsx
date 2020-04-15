@@ -168,7 +168,7 @@ export class QueriesTab extends PureComponent<Props, State> {
         <div className="flex-grow-1" />
         {showAddButton && (
           <button className="btn navbar-button" onClick={this.onAddQueryClick}>
-            Add Query
+            Add query
           </button>
         )}
         {isAddingMixed && this.renderMixedPicker()}

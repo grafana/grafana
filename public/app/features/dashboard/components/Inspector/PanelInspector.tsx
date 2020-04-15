@@ -1,6 +1,7 @@
 import React, { PureComponent } from 'react';
 import { Unsubscribable } from 'rxjs';
 import AutoSizer from 'react-virtualized-auto-sizer';
+import { connect, MapStateToProps } from 'react-redux';
 import { saveAs } from 'file-saver';
 import { InspectHeader } from './InspectHeader';
 import { InspectJSONTab } from './InspectJSONTab';
@@ -23,15 +24,23 @@ import {
   formattedValueToString,
   QueryResultMetaStat,
   LoadingState,
+  PanelPlugin,
 } from '@grafana/data';
 import { config } from 'app/core/config';
 import { getPanelInspectorStyles } from './styles';
+import { StoreState } from 'app/types';
 
-interface Props {
+interface OwnProps {
   dashboard: DashboardModel;
   panel: PanelModel;
   defaultTab: InspectTab;
 }
+
+export interface ConnectedProps {
+  plugin?: PanelPlugin | null;
+}
+
+export type Props = OwnProps & ConnectedProps;
 
 export enum InspectTab {
   Data = 'data',
@@ -51,14 +60,16 @@ interface State {
   // The selected data frame
   selected: number;
   // The Selected Tab
-  tab: InspectTab;
+  currentTab: InspectTab;
   // If the datasource supports custom metadata
   metaDS?: DataSourceApi;
   // drawer width
   drawerWidth: string;
+  // after plugin is loaded
+  isInitialized: boolean;
 }
 
-export class PanelInspector extends PureComponent<Props, State> {
+export class PanelInspectorUnconnected extends PureComponent<Props, State> {
   querySubscription?: Unsubscribable;
 
   constructor(props: Props) {
@@ -66,31 +77,37 @@ export class PanelInspector extends PureComponent<Props, State> {
 
     this.state = {
       isLoading: true,
+      isInitialized: false,
       last: {} as PanelData,
       data: [],
       selected: 0,
-      tab: this.getDefaultTab(props.panel, props.defaultTab),
+      currentTab: props.defaultTab ?? InspectTab.Data,
       drawerWidth: '50%',
     };
   }
 
-  getDefaultTab(panel: PanelModel, defaultTab?: InspectTab) {
-    if (defaultTab) {
-      return defaultTab;
-    }
+  componentDidMount() {
+    const { plugin } = this.props;
 
-    return panel.plugin && panel.plugin.meta.skipDataQuery ? InspectTab.JSON : InspectTab.Data;
+    if (plugin) {
+      this.init();
+    }
   }
 
-  componentDidMount() {
-    const { panel } = this.props;
-
-    if (!panel) {
-      this.onClose(); // Try to close the component
-      return;
+  componentDidUpdate(prevProps: Props) {
+    if (prevProps.plugin !== this.props.plugin) {
+      this.init();
     }
+  }
 
-    if (panel.plugin && !panel.plugin.meta.skipDataQuery) {
+  /**
+   * This init process where we do not have a plugin to start with is to handle full page reloads with inspect url parameter
+   * When this inspect drawer loads the plugin is not yet loaded.
+   */
+  init() {
+    const { plugin, panel } = this.props;
+
+    if (plugin && !plugin.meta.skipDataQuery) {
       this.querySubscription = panel
         .getQueryRunner()
         .getData()
@@ -134,7 +151,7 @@ export class PanelInspector extends PureComponent<Props, State> {
       last: lastResult,
       data,
       metaDS,
-      tab: error ? InspectTab.Error : prevState.tab,
+      currentTab: error ? InspectTab.Error : prevState.currentTab,
     }));
   }
 
@@ -152,7 +169,7 @@ export class PanelInspector extends PureComponent<Props, State> {
   };
 
   onSelectTab = (item: SelectableValue<InspectTab>) => {
-    this.setState({ tab: item.value || InspectTab.Data });
+    this.setState({ currentTab: item.value || InspectTab.Data });
   };
 
   onSelectedFrameChanged = (item: SelectableValue<number>) => {
@@ -325,12 +342,12 @@ export class PanelInspector extends PureComponent<Props, State> {
   }
 
   drawerHeader = () => {
-    const { dashboard, panel } = this.props;
-    const { tab, last } = this.state;
+    const { dashboard, panel, plugin } = this.props;
+    const { currentTab, last } = this.state;
     const error = last?.error;
     const tabs = [];
 
-    if (panel.plugin && !panel.plugin.meta.skipDataQuery) {
+    if (plugin && !plugin.meta.skipDataQuery) {
       tabs.push({ label: 'Data', value: InspectTab.Data });
       tabs.push({ label: 'Stats', value: InspectTab.Stats });
     }
@@ -349,10 +366,16 @@ export class PanelInspector extends PureComponent<Props, State> {
       tabs.push({ label: 'Query', value: InspectTab.Query });
     }
 
+    // Validate that the active tab is actually valid and allowed
+    let activeTab = currentTab;
+    if (!tabs.find(item => item.value === currentTab)) {
+      activeTab = InspectTab.JSON;
+    }
+
     return (
       <InspectHeader
         tabs={tabs}
-        tab={tab}
+        tab={activeTab}
         panelData={last}
         onSelectTab={this.onSelectTab}
         onClose={this.onClose}
@@ -364,10 +387,14 @@ export class PanelInspector extends PureComponent<Props, State> {
   };
 
   render() {
-    const { panel, dashboard } = this.props;
-    const { last, tab, drawerWidth } = this.state;
+    const { panel, dashboard, plugin } = this.props;
+    const { last, currentTab: tab, drawerWidth } = this.state;
     const styles = getPanelInspectorStyles();
     const error = last?.error;
+
+    if (!plugin) {
+      return null;
+    }
 
     return (
       <Drawer title={this.drawerHeader} width={drawerWidth} onClose={this.onClose}>
@@ -398,3 +425,16 @@ function formatStat(stat: QueryResultMetaStat): string {
   });
   return formattedValueToString(display(stat.value));
 }
+
+const mapStateToProps: MapStateToProps<ConnectedProps, OwnProps, StoreState> = (state, props) => {
+  const panelState = state.dashboard.panels[props.panel.id];
+  if (!panelState) {
+    return { plugin: null };
+  }
+
+  return {
+    plugin: panelState.plugin,
+  };
+};
+
+export const PanelInspector = connect(mapStateToProps)(PanelInspectorUnconnected);

@@ -245,7 +245,7 @@ export class DashboardPage extends PureComponent<Props, State> {
     const inspectPanel = dashboard.getPanelById(parseInt(inspectPanelId, 10));
 
     // cannot inspect panels plugin is not already loaded
-    if (!inspectPanel || !inspectPanel.plugin) {
+    if (!inspectPanel) {
       return null;
     }
 
