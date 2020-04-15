@@ -57,7 +57,7 @@ type configs struct {
 	AllowUIUpdates        values.BoolValue   `json:"allowUiUpdates" yaml:"allowUiUpdates"`
 }
 
-func createDashboardJson(data *simplejson.Json, lastModified time.Time, cfg *config, folderID int64) (*dashboards.SaveDashboardDTO, error) {
+func createDashboardJSON(data *simplejson.Json, lastModified time.Time, cfg *config, folderID int64) (*dashboards.SaveDashboardDTO, error) {
 	dash := &dashboards.SaveDashboardDTO{}
 	dash.Dashboard = models.NewDashboardFromJson(data)
 	dash.UpdatedAt = lastModified

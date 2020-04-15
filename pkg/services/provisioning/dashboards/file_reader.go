@@ -321,7 +321,7 @@ func (fr *FileReader) readDashboardFromFile(path string, lastModified time.Time,
 		return nil, err
 	}
 
-	dash, err := createDashboardJson(data, lastModified, fr.Cfg, folderID)
+	dash, err := createDashboardJSON(data, lastModified, fr.Cfg, folderID)
 	if err != nil {
 		return nil, err
 	}
