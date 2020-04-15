@@ -1,4 +1,4 @@
-import React, { useReducer } from 'react';
+import { useReducer } from 'react';
 import { SelectableValue } from '@grafana/data';
 import { defaultQuery, queryReducer } from '../reducers/searchQueryReducer';
 import {
@@ -15,15 +15,8 @@ export const useSearchQuery = (queryParams: Partial<DashboardQuery>) => {
   const initialState = { ...defaultQuery, queryParams };
   const [query, dispatch] = useReducer(queryReducer, initialState);
 
-  const onQueryChange = (event: React.ChangeEvent<HTMLInputElement> | string) => {
-    let payload = event;
-
-    if (typeof event !== 'string') {
-      event.persist();
-      payload = event.target.value;
-    }
-
-    dispatch({ type: QUERY_CHANGE, payload });
+  const onQueryChange = (query: string) => {
+    dispatch({ type: QUERY_CHANGE, payload: query });
   };
 
   const onRemoveStarred = () => {
