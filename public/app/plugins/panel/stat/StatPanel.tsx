@@ -24,8 +24,6 @@ import {
   DisplayValueAlignmentFactors,
 } from '@grafana/data';
 
-import { getFieldLinksSupplier } from 'app/features/panel/panellinks/linkSuppliers';
-
 export class StatPanel extends PureComponent<PanelProps<StatPanelOptions>> {
   renderValue = (valueProps: VizRepeaterRenderValueProps<FieldDisplay, DisplayValueAlignmentFactors>): JSX.Element => {
     const { timeRange, options } = this.props;
@@ -46,9 +44,19 @@ export class StatPanel extends PureComponent<PanelProps<StatPanelOptions>> {
         sparkline.highlightIndex = sparkline.data.length - 1;
       }
     }
+    const linksSupplier = value.view.dataFrame.fields[value.colIndex].getDataLinksSupplier;
 
     return (
-      <DataLinksContextMenu links={getFieldLinksSupplier(value)}>
+      <DataLinksContextMenu
+        links={
+          linksSupplier
+            ? linksSupplier({
+                calculatedValue: value,
+                valueRowIndex: value.rowIndex,
+              })
+            : null
+        }
+      >
         {({ openMenu, targetClassName }) => {
           return (
             <BigValue

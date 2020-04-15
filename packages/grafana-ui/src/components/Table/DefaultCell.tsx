@@ -1,14 +1,35 @@
 import React, { FC } from 'react';
 import { TableCellProps } from './types';
-import { formattedValueToString } from '@grafana/data';
+import { formattedValueToString, LinkModel } from '@grafana/data';
 
 export const DefaultCell: FC<TableCellProps> = props => {
-  const { field, cell, tableStyles } = props;
+  const { field, cell, tableStyles, row } = props;
+  let link: LinkModel<any> | undefined;
 
   if (!field.display) {
     return null;
   }
 
   const displayValue = field.display(cell.value);
-  return <div className={tableStyles.tableCell}>{formattedValueToString(displayValue)}</div>;
+
+  if (field.getDataLinksSupplier) {
+    link = field
+      .getDataLinksSupplier({
+        valueRowIndex: row.index,
+      })
+      .getLinks()[0];
+  }
+  const value = formattedValueToString(displayValue);
+
+  return (
+    <div className={tableStyles.tableCell}>
+      {link ? (
+        <a href={link.href} target={link.target} title={link.title}>
+          {value}
+        </a>
+      ) : (
+        value
+      )}
+    </div>
+  );
 };

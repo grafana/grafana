@@ -13,7 +13,6 @@ import {
   getDisplayValueAlignmentFactors,
   DisplayValueAlignmentFactors,
 } from '@grafana/data';
-import { getFieldLinksSupplier } from 'app/features/panel/panellinks/linkSuppliers';
 
 export class BarGaugePanel extends PureComponent<PanelProps<BarGaugeOptions>> {
   renderValue = (valueProps: VizRepeaterRenderValueProps<FieldDisplay, DisplayValueAlignmentFactors>): JSX.Element => {
@@ -21,8 +20,19 @@ export class BarGaugePanel extends PureComponent<PanelProps<BarGaugeOptions>> {
     const { value, alignmentFactors, orientation, width, height } = valueProps;
     const { field, display, view, colIndex } = value;
 
+    const linksSupplier = value.view.dataFrame.fields[value.colIndex].getDataLinksSupplier;
+
     return (
-      <DataLinksContextMenu links={getFieldLinksSupplier(value)}>
+      <DataLinksContextMenu
+        links={
+          linksSupplier
+            ? linksSupplier({
+                calculatedValue: value,
+                valueRowIndex: value.rowIndex,
+              })
+            : null
+        }
+      >
         {({ openMenu, targetClassName }) => {
           return (
             <BarGauge
