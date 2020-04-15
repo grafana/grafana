@@ -1,34 +1,17 @@
 import extend from 'lodash/extend';
 import { getTheme } from '@grafana/ui';
-import { DataSourceInstanceSettings, GrafanaTheme, GrafanaThemeType, PanelPluginMeta } from '@grafana/data';
+import {
+  DataSourceInstanceSettings,
+  GrafanaTheme,
+  GrafanaThemeType,
+  PanelPluginMeta,
+  GrafanaConfig,
+  LicenseInfo,
+  BuildInfo,
+  FeatureToggles,
+} from '@grafana/data';
 
-export interface BuildInfo {
-  version: string;
-  commit: string;
-  isEnterprise: boolean; // deprecated: use licenseInfo.hasLicense instead
-  env: string;
-  edition: string;
-  latestVersion: string;
-  hasUpdate: boolean;
-}
-
-interface FeatureToggles {
-  transformations: boolean;
-  expressions: boolean;
-  newEdit: boolean;
-  meta: boolean; // enterprise
-  newVariables: boolean;
-  tracingIntegration: boolean;
-}
-
-interface LicenseInfo {
-  hasLicense: boolean;
-  expiry: number;
-  licenseUrl: string;
-  stateInfo: string;
-}
-
-export class GrafanaBootConfig {
+export class GrafanaBootConfig implements GrafanaConfig {
   datasources: { [str: string]: DataSourceInstanceSettings } = {};
   panels: { [key: string]: PanelPluginMeta } = {};
   minRefreshInterval = '';
