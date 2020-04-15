@@ -52,7 +52,6 @@ export function TraceView(props: Props) {
 
   const traceProp = useMemo(() => transformTraceData(props.trace), [props.trace]);
   const { search, setSearch, spanFindMatches } = useSearch(traceProp?.spans);
-  const theme = useTheme();
 
   const theme = useTheme();
   const traceTheme = useMemo(() => ({ type: theme.isDark ? ThemeType.Dark : ThemeType.Light }), [theme]);
