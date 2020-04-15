@@ -30,20 +30,10 @@ describe('getPanelMenu', () => {
         Object {
           "iconClassName": "info-circle",
           "onClick": [Function],
+          "shortcut": "i",
           "subMenu": Array [
             Object {
               "onClick": [Function],
-              "shortcut": "i d",
-              "text": "Data",
-            },
-            Object {
-              "onClick": [Function],
-              "shortcut": "i q",
-              "text": "Query",
-            },
-            Object {
-              "onClick": [Function],
-              "shortcut": "i p",
               "text": "Panel JSON",
             },
           ],
