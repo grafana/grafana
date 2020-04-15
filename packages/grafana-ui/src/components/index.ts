@@ -143,6 +143,7 @@ export { HorizontalGroup, VerticalGroup, Container } from './Layout/Layout';
 export { RadioButtonGroup } from './Forms/RadioButtonGroup/RadioButtonGroup';
 
 export { Input } from './Input/Input';
+export { FormInputSize } from './Forms/types';
 
 export { Switch } from './Switch/Switch';
 export { Checkbox } from './Forms/Checkbox';
