@@ -1,6 +1,5 @@
 import React, { PureComponent } from 'react';
 import { connect } from 'react-redux';
-import classNames from 'classnames';
 import { setUsersSearchQuery } from './state/reducers';
 import { getInviteesCount, getUsersSearchQuery } from './state/selectors';
 import { FilterInput } from 'app/core/components/FilterInput/FilterInput';
