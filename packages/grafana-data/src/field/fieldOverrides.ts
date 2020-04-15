@@ -23,6 +23,7 @@ import { guessFieldTypeForField } from '../dataframe';
 import { standardFieldConfigEditorRegistry } from './standardFieldConfigEditorRegistry';
 import { FieldConfigOptionsRegistry } from './FieldConfigOptionsRegistry';
 import { DataLinkBuiltInVars, locationUtil } from '../utils';
+import { getFieldDisplayValuesProxy } from './getFieldDisplayValuesProxy';
 
 interface OverrideProps {
   match: FieldMatcher;
