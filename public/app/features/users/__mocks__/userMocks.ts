@@ -1,4 +1,4 @@
-import { OrgRole } from 'app/types';
+import { OrgRole, OrgUser } from 'app/types';
 
 export const getMockUsers = (amount: number) => {
   const users = [];
@@ -12,12 +12,12 @@ export const getMockUsers = (amount: number) => {
       lastSeenAtAge: '',
       login: `user-${i}`,
       orgId: 1,
-      role: 'Admin' as OrgRole,
+      role: 'Admin',
       userId: i,
     });
   }
 
-  return users;
+  return users as OrgUser[];
 };
 
 export const getMockUser = () => {
@@ -31,7 +31,7 @@ export const getMockUser = () => {
     orgId: 1,
     role: 'Admin' as OrgRole,
     userId: 2,
-  };
+  } as OrgUser;
 };
 
 export const getMockInvitees = (amount: number) => {
@@ -50,7 +50,7 @@ export const getMockInvitees = (amount: number) => {
       invitedByName: 'admin',
       name: `invitee-${i}`,
       orgId: 1,
-      role: 'viewer' as OrgRole,
+      role: 'viewer',
       status: 'not accepted',
       url: `localhost/invite/${i}`,
     });
