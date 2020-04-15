@@ -2,7 +2,19 @@
  * @preserve jquery-param (c) 2015 KNOWLEDGECODE | MIT
  */
 
-import { UrlQueryMap } from '@grafana/runtime';
+/**
+ * Type to represent the value of a single query variable.
+ *
+ * @public
+ */
+export type UrlQueryValue = string | number | boolean | string[] | number[] | boolean[] | undefined | null;
+
+/**
+ * Type to represent the values parsed from the query string.
+ *
+ * @public
+ */
+export type UrlQueryMap = Record<string, UrlQueryValue>;
 
 function renderUrl(path: string, query: UrlQueryMap | undefined): string {
   if (query && Object.keys(query).length > 0) {
