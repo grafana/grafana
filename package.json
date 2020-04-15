@@ -267,7 +267,7 @@
     "regenerator-runtime": "0.13.3",
     "reselect": "4.0.0",
     "rst2html": "github:thoward/rst2html#990cb89",
-    "rxjs": "6.5.4",
+    "rxjs": "6.5.5",
     "search-query-parser": "1.5.4",
     "slate": "0.47.8",
     "slate-plain-serializer": "0.7.10",

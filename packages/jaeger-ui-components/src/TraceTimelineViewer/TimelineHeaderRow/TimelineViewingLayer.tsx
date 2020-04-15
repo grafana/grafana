@@ -24,6 +24,7 @@ import { createStyle } from '../../Theme';
 export const getStyles = createStyle(() => {
   return {
     TimelineViewingLayer: css`
+      label: TimelineViewingLayer;
       bottom: 0;
       cursor: vertical-text;
       left: 0;
@@ -31,7 +32,8 @@ export const getStyles = createStyle(() => {
       right: 0;
       top: 0;
     `,
-    cursorGuide: css`
+    TimelineViewingLayerCursorGuide: css`
+      label: TimelineViewingLayerCursorGuide;
       position: absolute;
       top: 0;
       bottom: 0;
@@ -39,26 +41,32 @@ export const getStyles = createStyle(() => {
       width: 1px;
       background-color: red;
     `,
-    dragged: css`
+    TimelineViewingLayerDragged: css`
+      label: TimelineViewingLayerDragged;
       position: absolute;
       top: 0;
       bottom: 0;
     `,
-    draggedDraggingLeft: css`
+    TimelineViewingLayerDraggedDraggingLeft: css`
+      label: TimelineViewingLayerDraggedDraggingLeft;
       border-left: 1px solid;
     `,
-    draggedDraggingRight: css`
+    TimelineViewingLayerDraggedDraggingRight: css`
+      label: TimelineViewingLayerDraggedDraggingRight;
       border-right: 1px solid;
     `,
-    draggedShiftDrag: css`
+    TimelineViewingLayerDraggedShiftDrag: css`
+      label: TimelineViewingLayerDraggedShiftDrag;
       background-color: rgba(68, 68, 255, 0.2);
       border-color: #44f;
     `,
-    draggedReframeDrag: css`
+    TimelineViewingLayerDraggedReframeDrag: css`
+      label: TimelineViewingLayerDraggedReframeDrag;
       background-color: rgba(255, 68, 68, 0.2);
       border-color: #f44;
     `,
-    fullOverlay: css`
+    TimelineViewingLayerFullOverlay: css`
+      label: TimelineViewingLayerFullOverlay;
       bottom: 0;
       cursor: col-resize;
       left: 0;
@@ -151,13 +159,13 @@ function getMarkers(viewStart: number, viewEnd: number, from: number, to: number
   const { isDraggingLeft, left, width } = layout;
   const styles = getStyles();
   const cls = cx({
-    [styles.draggedDraggingRight]: !isDraggingLeft,
-    [styles.draggedReframeDrag]: !isShift,
-    [styles.draggedShiftDrag]: isShift,
+    [styles.TimelineViewingLayerDraggedDraggingRight]: !isDraggingLeft,
+    [styles.TimelineViewingLayerDraggedReframeDrag]: !isShift,
+    [styles.TimelineViewingLayerDraggedShiftDrag]: isShift,
   });
   return (
     <div
-      className={cx(styles.dragged, styles.draggedDraggingLeft, cls)}
+      className={cx(styles.TimelineViewingLayerDragged, styles.TimelineViewingLayerDraggedDraggingLeft, cls)}
       style={{ left, width }}
       data-test-id="Dragged"
     />
@@ -260,7 +268,7 @@ export default class TimelineViewingLayer extends React.PureComponent<TimelineVi
       >
         {cusrorPosition != null && (
           <div
-            className={styles.cursorGuide}
+            className={styles.TimelineViewingLayerCursorGuide}
             style={{ left: cusrorPosition }}
             data-test-id="TimelineViewingLayer--cursorGuide"
           />

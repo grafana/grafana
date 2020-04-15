@@ -32,7 +32,7 @@ export class DashboardMigrator {
     let i, j, k, n;
     const oldVersion = this.dashboard.schemaVersion;
     const panelUpgrades = [];
-    this.dashboard.schemaVersion = 23;
+    this.dashboard.schemaVersion = 24;
 
     if (oldVersion === this.dashboard.schemaVersion) {
       return;
@@ -506,6 +506,22 @@ export class DashboardMigrator {
         const { multi, current } = variable;
         variable.current = alignCurrentWithMulti(current, multi);
       }
+    }
+
+    if (oldVersion < 24) {
+      // 7.0
+      // - migrate existing tables to 'table-old'
+      panelUpgrades.push((panel: any) => {
+        const wasAngularTable = panel.type === 'table';
+        if (wasAngularTable && !panel.styles) {
+          return; // styles are missing so assumes default settings
+        }
+        const wasReactTable = panel.table === 'table2';
+        if (!wasAngularTable || wasReactTable) {
+          return;
+        }
+        panel.type = wasAngularTable ? 'table-old' : 'table';
+      });
     }
 
     if (panelUpgrades.length === 0) {

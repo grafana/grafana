@@ -20,13 +20,13 @@ type ProvisioningService interface {
 	ProvisionNotifications() error
 	ProvisionDashboards() error
 	GetDashboardProvisionerResolvedPath(name string) string
-	GetAllowUiUpdatesFromConfig(name string) bool
+	GetAllowUIUpdatesFromConfig(name string) bool
 }
 
 func init() {
 	registry.RegisterService(NewProvisioningServiceImpl(
 		func(path string) (dashboards.DashboardProvisioner, error) {
-			return dashboards.NewDashboardProvisionerImpl(path)
+			return dashboards.New(path)
 		},
 		notifiers.Provision,
 		datasources.Provision,
@@ -75,6 +75,7 @@ func (ps *provisioningServiceImpl) Run(ctx context.Context) error {
 	err := ps.ProvisionDashboards()
 	if err != nil {
 		ps.log.Error("Failed to provision dashboard", "error", err)
+		return err
 	}
 
 	for {
@@ -137,8 +138,8 @@ func (ps *provisioningServiceImpl) GetDashboardProvisionerResolvedPath(name stri
 	return ps.dashboardProvisioner.GetProvisionerResolvedPath(name)
 }
 
-func (ps *provisioningServiceImpl) GetAllowUiUpdatesFromConfig(name string) bool {
-	return ps.dashboardProvisioner.GetAllowUiUpdatesFromConfig(name)
+func (ps *provisioningServiceImpl) GetAllowUIUpdatesFromConfig(name string) bool {
+	return ps.dashboardProvisioner.GetAllowUIUpdatesFromConfig(name)
 }
 
 func (ps *provisioningServiceImpl) cancelPolling() {

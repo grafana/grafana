@@ -1,10 +1,9 @@
 import React from 'react';
-import { Button, Forms, HorizontalGroup, Input, Switch } from '@grafana/ui';
+import { Button, HorizontalGroup, Input, Switch, Form, Field, InputControl } from '@grafana/ui';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
 import { SaveDashboardFormProps } from '../types';
-
-export const NEW_DASHBOARD_DEFAULT_TITLE = 'New dashboard';
+import validationSrv from 'app/features/manage-dashboards/services/ValidationSrv';
 
 interface SaveDashboardAsFormDTO {
   title: string;
@@ -50,8 +49,20 @@ export const SaveDashboardAsForm: React.FC<SaveDashboardFormProps & { isNew?: bo
     copyTags: false,
   };
 
+  const validateDashboardName = (getFormValues: () => SaveDashboardAsFormDTO) => async (dashboardName: string) => {
+    if (dashboardName && dashboardName === getFormValues().$folder.title?.trim()) {
+      return 'Dashboard name cannot be the same as folder';
+    }
+    try {
+      await validationSrv.validateNewDashboardName(getFormValues().$folder.id, dashboardName);
+      return true;
+    } catch (e) {
+      return e.message;
+    }
+  };
+
   return (
-    <Forms.Form
+    <Form
       defaultValues={defaultValues}
       onSubmit={async (data: SaveDashboardAsFormDTO) => {
         const clone = getSaveAsDashboardClone(dashboard);
@@ -67,18 +78,26 @@ export const SaveDashboardAsForm: React.FC<SaveDashboardFormProps & { isNew?: bo
           },
           dashboard
         );
+
         if (result.status === 'success') {
           onSuccess();
         }
       }}
     >
-      {({ register, control, errors }) => (
+      {({ register, control, errors, getValues }) => (
         <>
-          <Forms.Field label="Dashboard name" invalid={!!errors.title} error="Dashboard name is required">
-            <Input name="title" ref={register({ required: true })} aria-label="Save dashboard title field" autoFocus />
-          </Forms.Field>
-          <Forms.Field label="Folder">
-            <Forms.InputControl
+          <Field label="Dashboard name" invalid={!!errors.title} error={errors.title?.message}>
+            <Input
+              name="title"
+              ref={register({
+                validate: validateDashboardName(getValues),
+              })}
+              aria-label="Save dashboard title field"
+              autoFocus
+            />
+          </Field>
+          <Field label="Folder">
+            <InputControl
               as={FolderPicker}
               control={control}
               name="$folder"
@@ -88,10 +107,10 @@ export const SaveDashboardAsForm: React.FC<SaveDashboardFormProps & { isNew?: bo
               enableCreateNew
               useNewForms
             />
-          </Forms.Field>
-          <Forms.Field label="Copy tags">
+          </Field>
+          <Field label="Copy tags">
             <Switch name="copyTags" ref={register} />
-          </Forms.Field>
+          </Field>
           <HorizontalGroup>
             <Button type="submit" aria-label="Save dashboard button">
               Save
@@ -102,6 +121,6 @@ export const SaveDashboardAsForm: React.FC<SaveDashboardFormProps & { isNew?: bo
           </HorizontalGroup>
         </>
       )}
-    </Forms.Form>
+    </Form>
   );
 };

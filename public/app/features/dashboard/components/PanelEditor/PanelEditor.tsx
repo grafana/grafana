@@ -1,6 +1,6 @@
 import React, { PureComponent } from 'react';
 import { FieldConfigSource, GrafanaTheme, PanelData, PanelPlugin } from '@grafana/data';
-import { Button, stylesFactory, Icon, Forms } from '@grafana/ui';
+import { Button, stylesFactory, Icon, RadioButtonGroup } from '@grafana/ui';
 import { css, cx } from 'emotion';
 import config from 'app/core/config';
 import AutoSizer from 'react-virtualized-auto-sizer';
@@ -209,7 +209,7 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
         {this.renderTemplateVariables(styles)}
         <div className="flex-grow-1" />
         <div className={styles.toolbarItem}>
-          <Forms.RadioButtonGroup value={uiState.mode} options={displayModes} onChange={this.onDiplayModeChange} />
+          <RadioButtonGroup value={uiState.mode} options={displayModes} onChange={this.onDiplayModeChange} />
         </div>
         <div className={styles.toolbarItem}>
           <DashNavTimeControls dashboard={dashboard} location={location} updateLocation={updateLocation} />
@@ -347,7 +347,7 @@ enum Pane {
  */
 const getStyles = stylesFactory((theme: GrafanaTheme, props: Props) => {
   const { uiState } = props;
-  const handleColor = theme.palette.blueLight;
+  const handleColor = theme.palette.blue95;
   const paneSpaceing = theme.spacing.md;
 
   const resizer = css`

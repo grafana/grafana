@@ -15,35 +15,6 @@
   margin: 20px 0;
 }
 
-.gf-form-query {
-  .gf-form,
-  .gf-form-filler {
-    margin-bottom: 2px;
-  }
-
-  .gf-form-switch,
-  .gf-form-switch label,
-  .gf-form-input,
-  .gf-form-select-wrapper,
-  .gf-form-filler,
-  .gf-form-label {
-    margin-right: 2px;
-  }
-
-  .gf-form-label {
-    border-right: 1px solid $input-border-color;
-    border-radius: $border-radius;
-  }
-
-  .gf-form-input {
-    border-radius: $border-radius;
-  }
-
-  .gf-form + .gf-form {
-    margin-left: 0;
-  }
-}
-
 .tight-form-func {
   background: $tight-form-func-bg;
 

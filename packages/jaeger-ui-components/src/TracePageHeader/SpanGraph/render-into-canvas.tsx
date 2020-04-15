@@ -15,7 +15,6 @@
 import { TNil } from '../..';
 
 // exported for tests
-export const BG_COLOR = '#fff';
 export const ITEM_ALPHA = 0.8;
 export const MIN_ITEM_HEIGHT = 2;
 export const MAX_TOTAL_HEIGHT = 200;
@@ -27,7 +26,8 @@ export default function renderIntoCanvas(
   canvas: HTMLCanvasElement,
   items: Array<{ valueWidth: number; valueOffset: number; serviceName: string }>,
   totalValueWidth: number,
-  getFillColor: (serviceName: string) => [number, number, number]
+  getFillColor: (serviceName: string) => [number, number, number],
+  bgColor: string
 ) {
   const fillCache: Map<string, string | TNil> = new Map();
   const cHeight = items.length < MIN_TOTAL_HEIGHT ? MIN_TOTAL_HEIGHT : Math.min(items.length, MAX_TOTAL_HEIGHT);
@@ -40,7 +40,7 @@ export default function renderIntoCanvas(
   const itemYChange = cHeight / items.length;
 
   const ctx = canvas.getContext('2d', { alpha: false }) as CanvasRenderingContext2D;
-  ctx.fillStyle = BG_COLOR;
+  ctx.fillStyle = bgColor;
   ctx.fillRect(0, 0, cWidth, cHeight);
   for (let i = 0; i < items.length; i++) {
     const { valueWidth, valueOffset, serviceName } = items[i];
