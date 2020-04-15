@@ -55,11 +55,12 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
 
   const highlightColor = selectThemeVariant(
     {
-      light: theme.palette.blueLight,
-      dark: theme.palette.blueShade,
+      light: theme.palette.blue95,
+      dark: theme.palette.blue77,
     },
     theme.type
   );
+
   return {
     wrapper: css`
       border-top: 1px dashed ${borderColor};

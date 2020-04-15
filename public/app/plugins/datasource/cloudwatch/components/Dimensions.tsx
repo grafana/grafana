@@ -69,7 +69,7 @@ export const Dimensions: FunctionComponent<Props> = ({ dimensions, loadValues, l
           allowCustomValue
           Component={
             <a className="gf-form-label query-part">
-              <Icon name="plus-circle" />
+              <Icon name="plus" />
             </a>
           }
           loadOptions={() => loadKeys().then(excludeUsedKeys)}

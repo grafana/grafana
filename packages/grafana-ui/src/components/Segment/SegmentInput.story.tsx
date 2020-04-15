@@ -30,8 +30,8 @@ export const BasicInput = () => {
 };
 
 export default {
-  title: 'Panel/Segment/SegmentInput',
-  component: BasicInput,
+  title: 'Data Source/Segment/SegmentInput',
+  component: SegmentInput,
 };
 
 export const BasicInputWithPlaceholder = () => {
@@ -78,7 +78,7 @@ export const InputWithAutoFocus = () => {
           setInputComponents([...inputComponents, InputComponent]);
         }}
       >
-        <Icon name="plus-circle" />
+        <Icon name="plus" />
       </a>
     </SegmentFrame>
   );

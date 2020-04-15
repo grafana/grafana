@@ -48,7 +48,6 @@ const getTabStyles = stylesFactory((theme: GrafanaTheme) => {
       background: ${colors.bodyBg};
       color: ${colors.link};
       overflow: hidden;
-      cursor: not-allowed;
 
       &::before {
         display: block;

@@ -109,7 +109,7 @@ exports[`Render should render groups table 1`] = `
       onClick={[Function]}
     >
       <Icon
-        name="plus-circle"
+        name="plus"
       />
        Add group
     </button>

@@ -27,7 +27,7 @@ func TestProvsionedSymlinkedFolder(t *testing.T) {
 		t.Error("expected err to be nil")
 	}
 
-	want, err := filepath.Abs(containingId)
+	want, err := filepath.Abs(containingID)
 
 	if err != nil {
 		t.Errorf("expected err to be nil")
