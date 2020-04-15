@@ -1,33 +1,64 @@
-import extend from 'lodash/extend';
+import merge from 'lodash/merge';
 import { getTheme } from '@grafana/ui';
 import { DataSourceInstanceSettings, GrafanaTheme, GrafanaThemeType, PanelPluginMeta } from '@grafana/data';
 
+/**
+ * Describes the build information that will be available via the Grafana cofiguration.
+ *
+ * @public
+ */
 export interface BuildInfo {
   version: string;
   commit: string;
-  isEnterprise: boolean; // deprecated: use licenseInfo.hasLicense instead
+  /**
+   * Is set to true when running Grafana Enterprise edition.
+   *
+   * @deprecated use `licenseInfo.hasLicense` instead
+   */
+  isEnterprise: boolean;
   env: string;
   edition: string;
   latestVersion: string;
   hasUpdate: boolean;
 }
 
-interface FeatureToggles {
+/**
+ * Describes available feature toggles in Grafana. These can be configured via the
+ * `conf/custom.ini` to enable features under development or not yet available in
+ * stable version.
+ *
+ * @public
+ */
+export interface FeatureToggles {
   transformations: boolean;
   expressions: boolean;
   newEdit: boolean;
-  meta: boolean; // enterprise
+  /**
+   * @remarks
+   * Available only in Grafana Enterprise
+   */
+  meta: boolean;
   newVariables: boolean;
   tracingIntegration: boolean;
 }
 
-interface LicenseInfo {
+/**
+ * Describes the license information about the current running instance of Grafana.
+ *
+ * @public
+ */
+export interface LicenseInfo {
   hasLicense: boolean;
   expiry: number;
   licenseUrl: string;
   stateInfo: string;
 }
 
+/**
+ * Describes all the different Grafana configuration values available for an instance.
+ *
+ * @public
+ */
 export class GrafanaBootConfig {
   datasources: { [str: string]: DataSourceInstanceSettings } = {};
   panels: { [key: string]: PanelPluginMeta } = {};
@@ -96,7 +127,7 @@ export class GrafanaBootConfig {
       disableSanitizeHtml: false,
     };
 
-    extend(this, defaults, options);
+    merge(this, defaults, options);
   }
 }
 
@@ -109,4 +140,9 @@ const bootData = (window as any).grafanaBootData || {
 const options = bootData.settings;
 options.bootData = bootData;
 
+/**
+ * Use this to access the {@link GrafanaBootConfig} for the current running Grafana instance.
+ *
+ * @public
+ */
 export const config = new GrafanaBootConfig(options);
