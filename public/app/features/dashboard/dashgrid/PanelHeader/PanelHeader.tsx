@@ -182,7 +182,7 @@ export class PanelHeader extends Component<Props, State> {
               )}
               {data.request && data.request.timeInfo && (
                 <span className="panel-time-info">
-                  <Icon name="clock-nine" /> {data.request.timeInfo}
+                  <Icon name="clock-nine" size="sm" /> {data.request.timeInfo}
                 </span>
               )}
             </div>
