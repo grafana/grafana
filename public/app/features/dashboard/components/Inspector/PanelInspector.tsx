@@ -398,9 +398,9 @@ export class PanelInspectorUnconnected extends PureComponent<Props, State> {
 
     return (
       <Drawer title={this.drawerHeader} width={drawerWidth} onClose={this.onClose}>
-        <TabContent className={styles.tabContent}>
-          {tab === InspectTab.Data && this.renderDataTab()}
-          <CustomScrollbar autoHeightMin="100%">
+        {tab === InspectTab.Data && this.renderDataTab()}
+        <CustomScrollbar autoHeightMin="100%">
+          <TabContent className={styles.tabContent}>
             {tab === InspectTab.Meta && this.renderMetadataInspector()}
             {tab === InspectTab.JSON && (
               <InspectJSONTab panel={panel} dashboard={dashboard} data={last} onClose={this.onClose} />
@@ -408,8 +408,8 @@ export class PanelInspectorUnconnected extends PureComponent<Props, State> {
             {tab === InspectTab.Error && this.renderErrorTab(error)}
             {tab === InspectTab.Stats && this.renderStatsTab()}
             {tab === InspectTab.Query && <QueryInspector panel={panel} />}
-          </CustomScrollbar>
-        </TabContent>
+          </TabContent>
+        </CustomScrollbar>
       </Drawer>
     );
   }

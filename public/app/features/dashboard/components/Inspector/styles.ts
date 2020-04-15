@@ -45,6 +45,8 @@ export const getPanelInspectorStyles = stylesFactory(() => {
     `,
     tabContent: css`
       height: 100%;
+      display: flex;
+      flex-direction: column;
     `,
     dataTabContent: css`
       display: flex;
