@@ -39,6 +39,16 @@ func TestNotificationService(t *testing.T) {
 		require.Truef(t, evalCtx.Ctx.Value(notificationSent{}).(bool), "expected notification to be sent, but wasn't")
 	})
 
+	notificationServiceScenario(t, "Given alert rule with upload image enabled but no renderer available should not render and upload image, but send notification", evalCtx, true, func(scenarioCtx *scenarioContext) {
+		scenarioCtx.rendererAvailable = false
+		err := scenarioCtx.notificationService.SendIfNeeded(evalCtx)
+		require.NoError(t, err)
+
+		require.Equalf(t, 0, scenarioCtx.renderCount, "expected render to be called, but wasn't")
+		require.Equalf(t, 0, scenarioCtx.imageUploadCount, "expected image to be uploaded, but wasn't")
+		require.Truef(t, evalCtx.Ctx.Value(notificationSent{}).(bool), "expected notification to be sent, but wasn't")
+	})
+
 	notificationServiceScenario(t, "Given alert rule with upload image disabled should not render and upload image, but send notification", evalCtx, false, func(scenarioCtx *scenarioContext) {
 		err := scenarioCtx.notificationService.SendIfNeeded(evalCtx)
 		require.NoError(t, err)
@@ -114,6 +124,7 @@ type scenarioContext struct {
 	renderCount         int
 	uploadProvider      func(ctx context.Context, path string) (string, error)
 	renderProvider      func(ctx context.Context, opts rendering.Opts) (*rendering.RenderResult, error)
+	rendererAvailable   bool
 }
 
 type scenarioFunc func(c *scenarioContext)
@@ -197,7 +208,12 @@ func notificationServiceScenario(t *testing.T, name string, evalCtx *EvalContext
 			return &rendering.RenderResult{FilePath: "image.png"}, nil
 		}
 
+		scenarioCtx.rendererAvailable = true
+
 		renderService := &testRenderService{
+			isAvailableProvider: func() bool {
+				return scenarioCtx.rendererAvailable
+			},
 			renderProvider: func(ctx context.Context, opts rendering.Opts) (*rendering.RenderResult, error) {
 				if scenarioCtx.renderProvider != nil {
 					if _, err := scenarioCtx.renderProvider(ctx, opts); err != nil {
@@ -286,8 +302,17 @@ func (n *testNotifier) GetFrequency() time.Duration {
 var _ Notifier = &testNotifier{}
 
 type testRenderService struct {
+	isAvailableProvider      func() bool
 	renderProvider           func(ctx context.Context, opts rendering.Opts) (*rendering.RenderResult, error)
 	renderErrorImageProvider func(error error) (*rendering.RenderResult, error)
+}
+
+func (s *testRenderService) IsAvailable() bool {
+	if s.isAvailableProvider != nil {
+		return s.isAvailableProvider()
+	}
+
+	return true
 }
 
 func (s *testRenderService) Render(ctx context.Context, opts rendering.Opts) (*rendering.RenderResult, error) {

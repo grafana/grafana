@@ -96,6 +96,10 @@ func (rs *RenderingService) Run(ctx context.Context) error {
 	return nil
 }
 
+func (rs *RenderingService) IsAvailable() bool {
+	return rs.renderAction != nil
+}
+
 func (rs *RenderingService) RenderErrorImage(err error) (*RenderResult, error) {
 	imgUrl := "public/img/rendering_error.png"
 

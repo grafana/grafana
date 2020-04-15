@@ -210,7 +210,8 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *models.ReqContext) (map[string]i
 			"stateInfo":  hs.License.StateInfo(),
 			"licenseUrl": hs.License.LicenseURL(c.SignedInUser),
 		},
-		"featureToggles": hs.Cfg.FeatureToggles,
+		"featureToggles":    hs.Cfg.FeatureToggles,
+		"rendererAvailable": hs.RenderService.IsAvailable(),
 	}
 
 	return jsonObj, nil
