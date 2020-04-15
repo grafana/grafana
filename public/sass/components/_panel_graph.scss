@@ -118,29 +118,6 @@
   padding-left: 6px;
 }
 
-// fix for phantomjs
-.body--phantomjs {
-  .graph-panel {
-    display: -webkit-box;
-  }
-
-  .graph-panel--legend-right {
-    .graph-legend {
-      display: block;
-      max-width: min-content;
-    }
-
-    .graph-panel__chart {
-      display: flex;
-    }
-
-    .graph-legend-table {
-      display: table;
-      width: auto;
-    }
-  }
-}
-
 .graph-legend-table {
   padding-bottom: 1px;
   padding-right: 5px;

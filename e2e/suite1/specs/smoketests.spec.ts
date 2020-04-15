@@ -21,8 +21,6 @@ e2e.scenario({
       .contains('Show')
       .click();
 
-    e2e.pages.Components.BackButton.backArrow().click();
-
     // e2e.pages.Dashboard.Panels.Panel.title('Panel Title').click();
     // e2e.pages.Dashboard.Panels.Panel.headerItems('Inspect').click();
   },
