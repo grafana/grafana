@@ -14,9 +14,10 @@ const searchSrv = new SearchSrv();
  * further extended.
  * @param query
  * @param reducer - return result of useReducer
- * @param queryParsing - toggle to enable custom query parsing
+ * @param params - custom params
  */
-export const useSearch: UseSearch = (query, reducer, queryParsing = false) => {
+export const useSearch: UseSearch = (query, reducer, params) => {
+  const { queryParsing, folderUid, searchCallback } = params;
   const [state, dispatch] = reducer;
 
   const search = () => {
@@ -32,11 +33,19 @@ export const useSearch: UseSearch = (query, reducer, queryParsing = false) => {
       q = { ...q, query: parseQuery(query.query).text as string, folderIds };
     }
     searchSrv.search(q).then(results => {
+      // Remove header for folder search
+      if (query.folderIds.length === 1) {
+        results[0].hideHeader = true;
+      }
       dispatch({ type: FETCH_RESULTS, payload: results });
+
+      if (searchCallback) {
+        searchCallback(folderUid);
+      }
     });
   };
 
-  useDebounce(search, 300, [query]);
+  useDebounce(search, 300, [query, folderUid]);
 
   const onToggleSection = (section: DashboardSection) => {
     if (hasId(section.title) && !section.items.length) {

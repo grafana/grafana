@@ -88,7 +88,7 @@ export function registerAngularDirectives() {
     ['onTagFilterChange', { watchDepth: 'reference' }],
   ]);
   react2AngularDirective('searchWrapper', SearchWrapper, []);
-  react2AngularDirective('manageDashboards', ManageDashboards, []);
+  react2AngularDirective('manageDashboards', ManageDashboards, ['folderId', 'folderUid']);
   react2AngularDirective('tagFilter', TagFilter, [
     'tags',
     ['onChange', { watchDepth: 'reference' }],

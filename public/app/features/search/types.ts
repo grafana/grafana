@@ -77,11 +77,16 @@ export interface DashboardQuery {
 }
 
 export type SearchReducer<S> = [S, Dispatch<SearchAction>];
+interface UseSearchParams {
+  queryParsing?: boolean;
+  searchCallback?: (folderUid: string) => any;
+  folderUid?: string;
+}
 
 export type UseSearch = <S>(
   query: DashboardQuery,
   reducer: SearchReducer<S>,
-  queryParsing?: boolean
+  params: UseSearchParams
 ) => { state: S; dispatch: Dispatch<SearchAction>; onToggleSection: (section: DashboardSection) => void };
 
 export type OnToggleChecked = (item: DashboardSectionItem | DashboardSection) => void;

@@ -12,7 +12,7 @@ export const useDashboardSearch = (query: DashboardQuery, onCloseSearch: () => v
     state: { results, loading },
     onToggleSection,
     dispatch,
-  } = useSearch<DashboardsSearchState>(query, reducer, true);
+  } = useSearch<DashboardsSearchState>(query, reducer, { queryParsing: true });
 
   const onKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
     switch (event.key) {

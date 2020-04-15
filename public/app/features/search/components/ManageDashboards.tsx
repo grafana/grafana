@@ -50,7 +50,7 @@ export const ManageDashboards: FC<Props> = ({ folderId, folderUid }) => {
     onToggleAllChecked,
     onDeleteItems,
     onMoveItems,
-  } = useManageDashboards(query, { hasEditPermissionInFolders: contextSrv.hasEditPermissionInFolders });
+  } = useManageDashboards(query, { hasEditPermissionInFolders: contextSrv.hasEditPermissionInFolders }, folderUid);
 
   const onMoveTo = () => {
     setIsMoveModalOpen(true);

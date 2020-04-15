@@ -1,20 +1,43 @@
 import { useMemo, useReducer } from 'react';
+import { backendSrv } from 'app/core/services/backend_srv';
 import { DashboardQuery, DashboardSection, OnDeleteItems, OnMoveItems, OnToggleChecked } from '../types';
-import { DELETE_ITEMS, MOVE_ITEMS, TOGGLE_ALL_CHECKED, TOGGLE_CHECKED } from '../reducers/actionTypes';
+import {
+  DELETE_ITEMS,
+  MOVE_ITEMS,
+  TOGGLE_ALL_CHECKED,
+  TOGGLE_CHECKED,
+  TOGGLE_CAN_SAVE,
+  TOGGLE_EDIT_PERMISSIONS,
+} from '../reducers/actionTypes';
 import { manageDashboardsReducer, manageDashboardsState, ManageDashboardsState } from '../reducers/manageDashboards';
 import { useSearch } from './useSearch';
 
-export const useManageDashboards = (query: DashboardQuery, state: Partial<ManageDashboardsState> = {}) => {
+export const useManageDashboards = (
+  query: DashboardQuery,
+  state: Partial<ManageDashboardsState> = {},
+  folderUid: string
+) => {
   const reducer = useReducer(manageDashboardsReducer, {
     ...manageDashboardsState,
     ...state,
   });
 
+  const searchCallback = (folderUid: string) => {
+    if (folderUid) {
+      backendSrv.getFolderByUid(folderUid).then(folder => {
+        dispatch({ type: TOGGLE_CAN_SAVE, payload: folder.canSave });
+        if (!folder.canSave) {
+          dispatch({ type: TOGGLE_EDIT_PERMISSIONS, payload: false });
+        }
+      });
+    }
+  };
+
   const {
     state: { results, loading, canSave, allChecked, hasEditPermissionInFolders },
     onToggleSection,
     dispatch,
-  } = useSearch<ManageDashboardsState>(query, reducer);
+  } = useSearch<ManageDashboardsState>(query, reducer, { folderUid, searchCallback });
 
   const onToggleChecked: OnToggleChecked = item => {
     dispatch({ type: TOGGLE_CHECKED, payload: item });
