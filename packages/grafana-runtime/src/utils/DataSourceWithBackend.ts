@@ -37,7 +37,7 @@ export interface HealthCheckResult {
 
 /**
  * Extend this class to implement a data source plugin that is depending on the Grafana
- * backend api.
+ * backend API.
  *
  * @public
  */

@@ -39,7 +39,7 @@ export type BackendSrvRequest = {
 };
 
 /**
- * Used to communicate via http(s) to a remote backend such as the grafana backend,
+ * Used to communicate via http(s) to a remote backend such as the Grafana backend,
  * a datasource etc. The BackendSrv is using the {@link https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API | Fetch API}
  * under the hood to handle all the communication.
  *
@@ -64,7 +64,7 @@ export interface BackendSrv {
 
   /**
    * Special function used to communicate with datasources that will emit core
-   * events that the grafana QueryInspector and QueryEditor is listening for to be able
+   * events that the Grafana QueryInspector and QueryEditor is listening for to be able
    * to display datasource query information. Can be skipped by adding `option.silent`
    * when initializing the request.
    */
@@ -85,7 +85,7 @@ export const setBackendSrv = (instance: BackendSrv) => {
 
 /**
  * Used to retrieve the {@link BackendSrv} that can be used to communicate
- * via http(s) to a remote backend such as the grafana backend, a datasource etc.
+ * via http(s) to a remote backend such as the Grafana backend, a datasource etc.
  *
  * @public
  */

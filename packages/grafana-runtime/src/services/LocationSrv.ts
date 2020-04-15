@@ -21,7 +21,7 @@ export interface LocationUpdate {
   partial?: boolean;
 
   /**
-   * Used internally to sync the redux state from Angular to make sure that the redux location
+   * Used internally to sync the Redux state from Angular to make sure that the Redux location
    * state is in sync when navigating using the Angular router.
    *
    * @remarks
@@ -38,7 +38,7 @@ export interface LocationUpdate {
 }
 
 /**
- * Type to represent the value of a singel query variable.
+ * Type to represent the value of a single query variable.
  *
  * @public
  */
