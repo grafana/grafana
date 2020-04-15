@@ -1,5 +1,6 @@
 import React from 'react';
 import classNames from 'classnames';
+import { Icon } from '@grafana/ui';
 import { PanelModel } from '../../state/PanelModel';
 import { DashboardModel } from '../../state/DashboardModel';
 import templateSrv from 'app/features/templating/template_srv';
@@ -74,11 +75,6 @@ export class DashboardRow extends React.Component<DashboardRowProps, any> {
       'dashboard-row': true,
       'dashboard-row--collapsed': this.state.collapsed,
     });
-    const chevronClass = classNames({
-      fa: true,
-      'fa-chevron-down': !this.state.collapsed,
-      'fa-chevron-right': this.state.collapsed,
-    });
 
     const title = templateSrv.replaceWithText(this.props.panel.title, this.props.panel.scopedVars);
     const count = this.props.panel.panels ? this.props.panel.panels.length : 0;
@@ -88,7 +84,7 @@ export class DashboardRow extends React.Component<DashboardRowProps, any> {
     return (
       <div className={classes}>
         <a className="dashboard-row__title pointer" onClick={this.onToggle}>
-          <i className={chevronClass} />
+          <Icon name={this.state.collapsed ? 'angle-right' : 'angle-down'} />
           {title}
           <span className="dashboard-row__panel_count">
             ({count} {panels})
@@ -97,10 +93,10 @@ export class DashboardRow extends React.Component<DashboardRowProps, any> {
         {canEdit && (
           <div className="dashboard-row__actions">
             <a className="pointer" onClick={this.onOpenSettings}>
-              <i className="gicon gicon-cog" />
+              <Icon name="cog" />
             </a>
             <a className="pointer" onClick={this.onDelete}>
-              <i className="fa fa-trash" />
+              <Icon name="trash-alt" />
             </a>
           </div>
         )}

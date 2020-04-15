@@ -1,13 +1,13 @@
 package dashboards
 
 import (
-	"github.com/grafana/grafana/pkg/services/provisioning/values"
+	"fmt"
 	"time"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/services/dashboards"
-
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/provisioning/values"
 )
 
 type DashboardsAsConfig struct {
@@ -73,10 +73,16 @@ func createDashboardJson(data *simplejson.Json, lastModified time.Time, cfg *Das
 	return dash, nil
 }
 
-func mapV0ToDashboardAsConfig(v0 []*DashboardsAsConfigV0) []*DashboardsAsConfig {
+func mapV0ToDashboardsAsConfig(v0 []*DashboardsAsConfigV0) ([]*DashboardsAsConfig, error) {
 	var r []*DashboardsAsConfig
+	seen := make(map[string]bool)
 
 	for _, v := range v0 {
+		if _, ok := seen[v.Name]; ok {
+			return nil, fmt.Errorf("dashboard name %q is not unique", v.Name)
+		}
+		seen[v.Name] = true
+
 		r = append(r, &DashboardsAsConfig{
 			Name:                  v.Name,
 			Type:                  v.Type,
@@ -91,13 +97,19 @@ func mapV0ToDashboardAsConfig(v0 []*DashboardsAsConfigV0) []*DashboardsAsConfig 
 		})
 	}
 
-	return r
+	return r, nil
 }
 
-func (dc *DashboardAsConfigV1) mapToDashboardAsConfig() []*DashboardsAsConfig {
+func (dc *DashboardAsConfigV1) mapToDashboardsAsConfig() ([]*DashboardsAsConfig, error) {
 	var r []*DashboardsAsConfig
+	seen := make(map[string]bool)
 
 	for _, v := range dc.Providers {
+		if _, ok := seen[v.Name.Value()]; ok {
+			return nil, fmt.Errorf("dashboard name %q is not unique", v.Name.Value())
+		}
+		seen[v.Name.Value()] = true
+
 		r = append(r, &DashboardsAsConfig{
 			Name:                  v.Name.Value(),
 			Type:                  v.Type.Value(),
@@ -112,5 +124,5 @@ func (dc *DashboardAsConfigV1) mapToDashboardAsConfig() []*DashboardsAsConfig {
 		})
 	}
 
-	return r
+	return r, nil
 }

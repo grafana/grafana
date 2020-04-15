@@ -1,8 +1,12 @@
-import { css } from 'emotion';
 import React from 'react';
-import { transformersUIRegistry } from '@grafana/ui';
-import { DataTransformerConfig, DataFrame, transformDataFrame, SelectableValue } from '@grafana/data';
-import { Button, CustomScrollbar, Select, Container } from '@grafana/ui';
+import { Container, CustomScrollbar, ValuePicker } from '@grafana/ui';
+import {
+  DataFrame,
+  DataTransformerConfig,
+  SelectableValue,
+  standardTransformersRegistry,
+  transformDataFrame,
+} from '@grafana/data';
 import { TransformationOperationRow } from './TransformationOperationRow';
 
 interface Props {
@@ -11,13 +15,7 @@ interface Props {
   dataFrames: DataFrame[];
 }
 
-interface State {
-  addingTransformation: boolean;
-}
-
-export class TransformationsEditor extends React.PureComponent<Props, State> {
-  state = { addingTransformation: false };
-
+export class TransformationsEditor extends React.PureComponent<Props> {
   onTransformationAdd = (selectable: SelectableValue<string>) => {
     const { transformations, onChange } = this.props;
     onChange([
@@ -27,7 +25,6 @@ export class TransformationsEditor extends React.PureComponent<Props, State> {
         options: {},
       },
     ]);
-    this.setState({ addingTransformation: false });
   };
 
   onTransformationChange = (idx: number, config: DataTransformerConfig) => {
@@ -45,32 +42,23 @@ export class TransformationsEditor extends React.PureComponent<Props, State> {
   };
 
   renderTransformationSelector = () => {
-    if (!this.state.addingTransformation) {
-      return null;
-    }
-
-    const availableTransformers = transformersUIRegistry.list().map(t => {
+    const availableTransformers = standardTransformersRegistry.list().map(t => {
       return {
-        value: t.transformer.id,
-        label: t.transformer.name,
+        value: t.transformation.id,
+        label: t.name,
+        description: t.description,
       };
     });
 
     return (
-      <div
-        className={css`
-          margin-bottom: 10px;
-          max-width: 300px;
-        `}
-      >
-        <Select
-          options={availableTransformers}
-          placeholder="Select transformation"
-          onChange={this.onTransformationAdd}
-          autoFocus={true}
-          openMenuOnFocus={true}
-        />
-      </div>
+      <ValuePicker
+        size="md"
+        variant="secondary"
+        label="Add transformation"
+        options={availableTransformers}
+        onChange={this.onTransformationAdd}
+        isFullWidth={false}
+      />
     );
   };
 
@@ -83,7 +71,7 @@ export class TransformationsEditor extends React.PureComponent<Props, State> {
         {transformations.map((t, i) => {
           let editor;
 
-          const transformationUI = transformersUIRegistry.getIfExists(t.id);
+          const transformationUI = standardTransformersRegistry.getIfExists(t.id);
           if (!transformationUI) {
             return null;
           }
@@ -92,8 +80,8 @@ export class TransformationsEditor extends React.PureComponent<Props, State> {
           const output = transformDataFrame(transformations.slice(i), input);
 
           if (transformationUI) {
-            editor = React.createElement(transformationUI.component, {
-              options: { ...transformationUI.transformer.defaultOptions, ...t.options },
+            editor = React.createElement(transformationUI.editor, {
+              options: { ...transformationUI.transformation.defaultOptions, ...t.options },
               input,
               onChange: (options: any) => {
                 this.onTransformationChange(i, {
@@ -124,15 +112,12 @@ export class TransformationsEditor extends React.PureComponent<Props, State> {
     return (
       <CustomScrollbar autoHeightMin="100%">
         <Container padding="md">
-          <p className="muted text-center" style={{ padding: '8px' }}>
+          <p className="muted">
             Transformations allow you to combine, re-order, hide and rename specific parts the the data set before being
             visualized.
           </p>
           {this.renderTransformationEditors()}
           {this.renderTransformationSelector()}
-          <Button variant="secondary" icon="plus" onClick={() => this.setState({ addingTransformation: true })}>
-            Add transformation
-          </Button>
         </Container>
       </CustomScrollbar>
     );

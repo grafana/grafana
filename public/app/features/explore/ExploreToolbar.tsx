@@ -1,4 +1,3 @@
-import omitBy from 'lodash/omitBy';
 import React, { PureComponent } from 'react';
 import { connect } from 'react-redux';
 import { hot } from 'react-hot-loader';
@@ -7,7 +6,7 @@ import classNames from 'classnames';
 import { css } from 'emotion';
 
 import { ExploreId, ExploreItemState } from 'app/types/explore';
-import { ToggleButtonGroup, ToggleButton, Tooltip, LegacyForms, SetInterval, Icon } from '@grafana/ui';
+import { ToggleButtonGroup, ToggleButton, Tooltip, LegacyForms, SetInterval, Icon, IconButton } from '@grafana/ui';
 const { ButtonSelect } = LegacyForms;
 import { RawTimeRange, TimeZone, TimeRange, DataQuery, ExploreMode } from '@grafana/data';
 import { DataSourcePicker } from 'app/core/components/Select/DataSourcePicker';
@@ -133,18 +132,15 @@ export class UnConnectedExploreToolbar extends PureComponent<Props> {
       });
     }
 
-    const dashViewOptions = {
-      fullscreen: withChanges || dash.meta.fullscreen,
-      edit: withChanges || dash.meta.isEditing,
-    };
+    const query: any = {};
 
-    this.props.updateLocation({
-      path: `/d/${dash.uid}/:${titleSlug}`,
-      query: {
-        ...omitBy(dashViewOptions, v => !v),
-        panelId: originPanelId,
-      },
-    });
+    if (withChanges || dash.panelInEdit) {
+      query.editPanel = originPanelId;
+    } else if (dash.panelInView) {
+      query.viewPanel = originPanelId;
+    }
+
+    this.props.updateLocation({ path: `/d/${dash.uid}/:${titleSlug}`, query });
   };
 
   // Remove explore specific parameters from queries
@@ -215,9 +211,7 @@ export class UnConnectedExploreToolbar extends PureComponent<Props> {
               )}
             </div>
             {splitted && (
-              <a className="explore-toolbar-header-close" onClick={() => closeSplit(exploreId)}>
-                <Icon name="times" />
-              </a>
+              <IconButton className="explore-toolbar-header-close" onClick={() => closeSplit(exploreId)} name="times" />
             )}
           </div>
         </div>

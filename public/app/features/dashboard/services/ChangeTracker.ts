@@ -53,6 +53,7 @@ export class ChangeTracker {
       if (this.originalPath === $location.path()) {
         return true;
       }
+
       if (this.ignoreChanges()) {
         return true;
       }

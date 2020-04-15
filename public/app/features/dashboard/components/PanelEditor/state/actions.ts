@@ -14,7 +14,7 @@ import store from '../../../../../core/store';
 
 export function initPanelEditor(sourcePanel: PanelModel, dashboard: DashboardModel): ThunkResult<void> {
   return dispatch => {
-    const panel = dashboard.initPanelEditor(sourcePanel);
+    const panel = dashboard.initEditPanel(sourcePanel);
 
     const queryRunner = panel.getQueryRunner();
     const querySubscription = queryRunner.getData(false).subscribe({

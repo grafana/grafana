@@ -1,9 +1,8 @@
 import { updateLocation } from 'app/core/actions';
 import { store } from 'app/store/store';
-import config from 'app/core/config';
 import { getDataSourceSrv, getLocationSrv, AngularComponent } from '@grafana/runtime';
 import { PanelMenuItem } from '@grafana/data';
-import { copyPanel, duplicatePanel, editPanelJson, removePanel, sharePanel } from 'app/features/dashboard/utils/panel';
+import { copyPanel, duplicatePanel, removePanel, sharePanel } from 'app/features/dashboard/utils/panel';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { contextSrv } from '../../../core/services/context_srv';
@@ -22,9 +21,7 @@ export function getPanelMenu(
     store.dispatch(
       updateLocation({
         query: {
-          panelId: panel.id,
-          edit: null,
-          fullscreen: true,
+          viewPanel: panel.id,
         },
         partial: true,
       })
@@ -32,20 +29,6 @@ export function getPanelMenu(
   };
 
   const onEditPanel = (event: React.MouseEvent<any>) => {
-    event.preventDefault();
-    store.dispatch(
-      updateLocation({
-        query: {
-          panelId: panel.id,
-          edit: true,
-          fullscreen: true,
-        },
-        partial: true,
-      })
-    );
-  };
-
-  const onNewEditPanel = (event: React.MouseEvent<any>) => {
     event.preventDefault();
     store.dispatch(
       updateLocation({
@@ -62,12 +45,14 @@ export function getPanelMenu(
     sharePanel(dashboard, panel);
   };
 
-  const onInspectPanel = (event: React.MouseEvent<any>) => {
+  const onInspectPanel = (tab?: string) => {
     event.preventDefault();
+
     getLocationSrv().update({
       partial: true,
       query: {
         inspect: panel.id,
+        inspectTab: tab,
       },
     });
   };
@@ -84,11 +69,6 @@ export function getPanelMenu(
   const onCopyPanel = (event: React.MouseEvent<any>) => {
     event.preventDefault();
     copyPanel(panel);
-  };
-
-  const onEditPanelJson = (event: React.MouseEvent<any>) => {
-    event.preventDefault();
-    editPanelJson(dashboard, panel);
   };
 
   const onRemovePanel = (event: React.MouseEvent<any>) => {
@@ -136,25 +116,40 @@ export function getPanelMenu(
     });
   }
 
-  menu.push({
-    text: 'Inspect',
-    iconClassName: 'info-circle',
-    onClick: onInspectPanel,
-    shortcut: 'p i',
+  const inspectMenu: PanelMenuItem[] = [];
+
+  // Only show these inspect actions for data plugins
+  if (panel.plugin && !panel.plugin.meta.skipDataQuery) {
+    inspectMenu.push({
+      text: 'Data',
+      onClick: (e: React.MouseEvent<any>) => onInspectPanel('data'),
+    });
+
+    if (dashboard.meta.canEdit) {
+      inspectMenu.push({
+        text: 'Query',
+        onClick: (e: React.MouseEvent<any>) => onInspectPanel('query'),
+      });
+    }
+  }
+
+  inspectMenu.push({
+    text: 'Panel JSON',
+    onClick: (e: React.MouseEvent<any>) => onInspectPanel('json'),
   });
 
-  if (config.featureToggles.newEdit) {
-    menu.push({
-      text: 'New edit',
-      iconClassName: 'edit',
-      onClick: onNewEditPanel,
-      shortcut: 'p i',
-    });
-  }
+  menu.push({
+    type: 'submenu',
+    text: 'Inspect',
+    iconClassName: 'info-circle',
+    onClick: (e: React.MouseEvent<any>) => onInspectPanel(),
+    shortcut: 'i',
+    subMenu: inspectMenu,
+  });
 
   const subMenu: PanelMenuItem[] = [];
 
-  if (!panel.fullscreen && dashboard.canEditPanel(panel)) {
+  if (dashboard.canEditPanel(panel) && !(panel.isViewing || panel.isEditing)) {
     subMenu.push({
       text: 'Duplicate',
       onClick: onDuplicatePanel,
@@ -166,11 +161,6 @@ export function getPanelMenu(
       onClick: onCopyPanel,
     });
   }
-
-  subMenu.push({
-    text: 'Panel JSON',
-    onClick: onEditPanelJson,
-  });
 
   // add old angular panel options
   if (angularComponent) {

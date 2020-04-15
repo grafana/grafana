@@ -19,8 +19,9 @@ import {
   valueMappingsOverrideProcessor,
   ThresholdsMode,
 } from '@grafana/data';
-import { NumberValueEditor, Forms, StringValueEditor, Select } from '../components';
-import { Switch } from '../components/Forms/Switch';
+
+import { Switch } from '../components/Switch/Switch';
+import { NumberValueEditor, RadioButtonGroup, StringValueEditor, Select } from '../components';
 import { ValueMappingsValueEditor } from '../components/OptionsUI/mappings';
 import { ThresholdsValueEditor } from '../components/OptionsUI/thresholds';
 import { UnitValueEditor } from '../components/OptionsUI/units';
@@ -248,7 +249,7 @@ export const getStandardOptionEditors = () => {
     id: 'radio',
     name: 'Radio',
     description: 'Allows option selection',
-    editor: props => <Forms.RadioButtonGroup {...props} options={props.item.settings?.options} fullWidth />,
+    editor: props => <RadioButtonGroup {...props} options={props.item.settings?.options} fullWidth />,
   };
 
   const unit: StandardEditorsRegistryItem<string> = {
