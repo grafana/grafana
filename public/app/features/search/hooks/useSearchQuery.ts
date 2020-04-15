@@ -12,7 +12,7 @@ import {
 import { DashboardQuery } from '../types';
 
 export const useSearchQuery = (queryParams: Partial<DashboardQuery>) => {
-  const initialState = { ...defaultQuery, queryParams };
+  const initialState = { ...defaultQuery, ...queryParams };
   const [query, dispatch] = useReducer(queryReducer, initialState);
 
   const onQueryChange = (query: string) => {
