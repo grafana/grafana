@@ -7,6 +7,7 @@ import { variableRegex } from './utils';
 import { isAdHoc } from '../variables/guard';
 import { VariableModel } from './types';
 import { setTemplateSrv, TemplateSrv as BaseTemplateSrv } from '@grafana/runtime';
+import { variableAdapters } from '../variables/adapters';
 
 function luceneEscape(value: string) {
   return value.replace(/([\!\*\+\-\=<>\s\&\|\(\)\[\]\{\}\^\~\?\:\\/"])/g, '\\$1');
@@ -398,8 +399,8 @@ export class TemplateSrv implements BaseTemplateSrv {
     });
   }
 
-  fillVariableValuesForUrl(params: any, scopedVars?: ScopedVars) {
-    _.each(this._variables, variable => {
+  fillVariableValuesForUrl = (params: any, scopedVars?: ScopedVars) => {
+    _.each(this.getVariables(), variable => {
       if (scopedVars && scopedVars[variable.name] !== void 0) {
         if (scopedVars[variable.name].skipUrlSync) {
           return;
@@ -409,10 +410,10 @@ export class TemplateSrv implements BaseTemplateSrv {
         if (variable.skipUrlSync) {
           return;
         }
-        params['var-' + variable.name] = variable.getValueForUrl();
+        params['var-' + variable.name] = variableAdapters.get(variable.type).getValueForUrl(variable);
       }
     });
-  }
+  };
 
   distributeVariable(value: any, variable: any) {
     value = _.map(value, (val: any, index: number) => {
