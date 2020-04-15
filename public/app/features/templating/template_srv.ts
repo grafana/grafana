@@ -1,7 +1,6 @@
 import kbn from 'app/core/utils/kbn';
 import _ from 'lodash';
-import { escapeHtml } from 'app/core/utils/text';
-import { deprecationWarning, ScopedVars, TimeRange } from '@grafana/data';
+import { deprecationWarning, ScopedVars, textUtil, TimeRange } from '@grafana/data';
 import { getFilteredVariables, getVariables, getVariableWithName } from '../variables/state/selectors';
 import { getConfig } from 'app/core/config';
 import { variableRegex } from './utils';
@@ -194,9 +193,9 @@ export class TemplateSrv implements BaseTemplateSrv {
       }
       case 'html': {
         if (_.isArray(value)) {
-          return escapeHtml(value.join(', '));
+          return textUtil.escapeHtml(value.join(', '));
         }
-        return escapeHtml(value);
+        return textUtil.escapeHtml(value);
       }
       case 'json': {
         return JSON.stringify(value);

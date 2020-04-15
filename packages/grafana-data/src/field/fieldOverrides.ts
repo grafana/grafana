@@ -22,6 +22,7 @@ import { getDisplayProcessor } from './displayProcessor';
 import { guessFieldTypeForField } from '../dataframe';
 import { standardFieldConfigEditorRegistry } from './standardFieldConfigEditorRegistry';
 import { FieldConfigOptionsRegistry } from './FieldConfigOptionsRegistry';
+import { DataLinkBuiltInVars, locationUtil } from '../utils';
 
 interface OverrideProps {
   match: FieldMatcher;

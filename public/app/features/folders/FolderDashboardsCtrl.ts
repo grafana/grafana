@@ -1,9 +1,9 @@
 import { ILocationService, IScope } from 'angular';
 
 import { FolderPageLoader } from './services/FolderPageLoader';
-import locationUtil from 'app/core/utils/location_util';
 import { NavModelSrv } from 'app/core/core';
 import { promiseToDigest } from '../../core/utils/promiseToDigest';
+import { locationUtil } from '@grafana/data';
 
 export default class FolderDashboardsCtrl {
   navModel: any;
