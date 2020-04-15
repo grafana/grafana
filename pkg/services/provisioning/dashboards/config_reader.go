@@ -92,7 +92,7 @@ func (cr *configReader) readConfig() ([]*DashboardsAsConfig, error) {
 			dashboard.UpdateIntervalSeconds = 10
 		}
 		if len(dashboard.FolderUid) > 0 {
-			uidUsage[dashboard.FolderUid] += 1
+			uidUsage[dashboard.FolderUid]++
 		}
 	}
 
