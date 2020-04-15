@@ -16,7 +16,7 @@ const getStyles = memoizeOne((theme: GrafanaTheme) => {
     selectButton: css`
       label: selectButton;
       .select-button-value {
-        color: ${theme.colors.orange};
+        color: ${theme.palette.orange};
       }
     `,
   };

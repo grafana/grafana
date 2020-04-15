@@ -6,9 +6,13 @@ import {
   toDataFrame,
   transformDataFrame,
 } from '@grafana/data';
-import { OrderFieldsTransformerOptions } from './order';
+import { orderFieldsTransformer, OrderFieldsTransformerOptions } from './order';
+import { mockTransformationsRegistry } from '../../utils/tests/mockTransformationsRegistry';
 
 describe('Order Transformer', () => {
+  beforeAll(() => {
+    mockTransformationsRegistry([orderFieldsTransformer]);
+  });
   describe('when consistent data is received', () => {
     const data = toDataFrame({
       name: 'A',

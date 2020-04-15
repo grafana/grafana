@@ -1,5 +1,5 @@
 import React, { FunctionComponent } from 'react';
-import { SvgProps } from '../Icon';
+import { SvgProps } from './types';
 
 export const Favorite: FunctionComponent<SvgProps> = ({ size, ...rest }) => {
   return (

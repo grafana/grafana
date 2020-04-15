@@ -2,54 +2,37 @@ import { GrafanaTheme } from '@grafana/data';
 import { selectThemeVariant } from './selectThemeVariant';
 import { css } from 'emotion';
 import { stylesFactory } from './stylesFactory';
+import tinycolor from 'tinycolor2';
 
 export function cardChrome(theme: GrafanaTheme): string {
-  if (theme.isDark) {
-    return `
-       background: linear-gradient(135deg, ${theme.colors.dark8}, ${theme.colors.dark6});
-       &:hover {
-         background: linear-gradient(135deg, ${theme.colors.dark9}, ${theme.colors.dark6});
-       }
-       box-shadow: -1px -1px 0 0 hsla(0, 0%, 100%, 0.1), 1px 1px 0 0 rgba(0, 0, 0, 0.3);
-       border-radius: ${theme.border.radius.md};
-    `;
-  }
-
   return `
-       background: linear-gradient(135deg, ${theme.colors.gray6}, ${theme.colors.gray7});
+       background: ${theme.colors.bg2};
        &:hover {
-         background: linear-gradient(135deg, ${theme.colors.gray7}, ${theme.colors.gray6});
+         background: ${hoverColor(theme.colors.bg2, theme)};
        }
-       box-shadow: -1px -1px 0 0 hsla(0, 0%, 100%, 0.1), 1px 1px 0 0 rgba(0, 0, 0, 0.1);
+       box-shadow: ${theme.shadows.listItem};
        border-radius: ${theme.border.radius.md};
     `;
 }
 
-export function listItem(theme: GrafanaTheme): string {
-  if (theme.isDark) {
-    return `
-       background: ${theme.colors.dark7};
-       &:hover {
-         background: ${theme.colors.dark9};
-       }
-       box-shadow: -1px -1px 0 0 hsla(0, 0%, 100%, 0.1), 1px 1px 0 0 rgba(0, 0, 0, 0.3);
-       border-radius: ${theme.border.radius.md};
-    `;
-  }
+export function hoverColor(color: string, theme: GrafanaTheme) {
+  return theme.isDark ? tinycolor(color).brighten(2) : tinycolor(color).darken(2);
+}
 
+export function listItem(theme: GrafanaTheme): string {
   return `
-       background: ${theme.colors.gray7};
-       &:hover {
-         background: ${theme.colors.gray6};
-       }
-       box-shadow: -1px -1px 0 0 hsla(0, 0%, 100%, 0.1), 1px 1px 0 0 rgba(0, 0, 0, 0.1);
-       border-radius: ${theme.border.radius.md};
-    `;
+  background: ${theme.colors.bg2};
+  &:hover {
+    background: ${hoverColor(theme.colors.bg2, theme)};
+  }
+  box-shadow: ${theme.shadows.listItem};
+  border-radius: ${theme.border.radius.md};
+`;
 }
 
 export function listItemSelected(theme: GrafanaTheme): string {
   return `
-       background: ${theme.isLight ? theme.colors.gray6 : theme.colors.dark9};
+       background: ${hoverColor(theme.colors.bg2, theme)};
        color: ${theme.colors.textStrong};
     `;
 }
@@ -57,22 +40,22 @@ export function listItemSelected(theme: GrafanaTheme): string {
 export const panelEditorNestedListStyles = stylesFactory((theme: GrafanaTheme) => {
   const borderColor = selectThemeVariant(
     {
-      light: theme.colors.gray85,
-      dark: theme.colors.dark9,
+      light: theme.palette.gray85,
+      dark: theme.palette.dark9,
     },
     theme.type
   );
   const shadow = selectThemeVariant(
     {
-      light: theme.colors.gray85,
-      dark: theme.colors.black,
+      light: theme.palette.gray85,
+      dark: theme.palette.black,
     },
     theme.type
   );
   const headerBg = selectThemeVariant(
     {
-      light: theme.colors.white,
-      dark: theme.colors.dark1,
+      light: theme.palette.white,
+      dark: theme.palette.dark1,
     },
     theme.type
   );

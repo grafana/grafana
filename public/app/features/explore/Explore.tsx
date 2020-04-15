@@ -308,15 +308,19 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
         {datasourceMissing ? this.renderEmptyState() : null}
         {datasourceInstance && (
           <div className="explore-container">
-            <QueryRows exploreEvents={this.exploreEvents} exploreId={exploreId} queryKeys={queryKeys} />
-            <SecondaryActions
-              addQueryRowButtonDisabled={isLive}
-              // We cannot show multiple traces at the same time right now so we do not show add query button.
-              addQueryRowButtonHidden={mode === ExploreMode.Tracing}
-              richHistoryButtonActive={showRichHistory}
-              onClickAddQueryRowButton={this.onClickAddQueryRowButton}
-              onClickRichHistoryButton={this.toggleShowRichHistory}
-            />
+            <div className="panel-container">
+              <div className="panel-content">
+                <QueryRows exploreEvents={this.exploreEvents} exploreId={exploreId} queryKeys={queryKeys} />
+                <SecondaryActions
+                  addQueryRowButtonDisabled={isLive}
+                  // We cannot show multiple traces at the same time right now so we do not show add query button.
+                  addQueryRowButtonHidden={mode === ExploreMode.Tracing}
+                  richHistoryButtonActive={showRichHistory}
+                  onClickAddQueryRowButton={this.onClickAddQueryRowButton}
+                  onClickRichHistoryButton={this.toggleShowRichHistory}
+                />
+              </div>
+            </div>
             <ErrorContainer queryError={queryError} />
             <AutoSizer onResize={this.onResize} disableHeight>
               {({ width }) => {

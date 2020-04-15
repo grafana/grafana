@@ -2,18 +2,7 @@ import React, { useCallback, useState, CSSProperties } from 'react';
 import Transition from 'react-transition-group/Transition';
 import { FieldConfigSource, GrafanaTheme, PanelData, PanelPlugin, SelectableValue } from '@grafana/data';
 import { DashboardModel, PanelModel } from '../../state';
-import {
-  CustomScrollbar,
-  stylesFactory,
-  Tab,
-  TabContent,
-  TabsBar,
-  Select,
-  useTheme,
-  Container,
-  Icon,
-  Input,
-} from '@grafana/ui';
+import { CustomScrollbar, stylesFactory, Tab, TabContent, TabsBar, Select, useTheme, Icon, Input } from '@grafana/ui';
 import { DefaultFieldConfigEditor, OverrideFieldConfigEditor } from './FieldConfigEditor';
 import { css } from 'emotion';
 import { PanelOptionsTab } from './PanelOptionsTab';
@@ -54,14 +43,12 @@ export const OptionsPaneContent: React.FC<{
       }
 
       return (
-        <Container padding="md">
-          <DefaultFieldConfigEditor
-            config={fieldConfig}
-            plugin={plugin}
-            onChange={onFieldConfigsChange}
-            data={data.series}
-          />
-        </Container>
+        <DefaultFieldConfigEditor
+          config={fieldConfig}
+          plugin={plugin}
+          onChange={onFieldConfigsChange}
+          data={data.series}
+        />
       );
     },
     [data, plugin, panel, onFieldConfigsChange]
@@ -87,6 +74,9 @@ export const OptionsPaneContent: React.FC<{
     [data, plugin, panel, onFieldConfigsChange]
   );
 
+  // When the panel has no query only show the main tab
+  const showMainTab = activeTab === 'options' || plugin.meta.skipDataQuery;
+
   return (
     <div className={styles.panelOptionsPane}>
       {plugin && (
@@ -94,6 +84,7 @@ export const OptionsPaneContent: React.FC<{
           <TabsBar className={styles.tabsBar}>
             <TabsBarContent
               width={width}
+              showFields={!plugin.meta.skipDataQuery}
               isSearching={isSearching}
               styles={styles}
               activeTab={activeTab}
@@ -104,7 +95,7 @@ export const OptionsPaneContent: React.FC<{
           </TabsBar>
           <TabContent className={styles.tabContent}>
             <CustomScrollbar>
-              {activeTab === 'options' && (
+              {showMainTab ? (
                 <PanelOptionsTab
                   panel={panel}
                   plugin={plugin}
@@ -114,9 +105,12 @@ export const OptionsPaneContent: React.FC<{
                   onFieldConfigsChange={onFieldConfigsChange}
                   onPanelOptionsChanged={onPanelOptionsChanged}
                 />
+              ) : (
+                <>
+                  {activeTab === 'defaults' && renderFieldOptions(plugin)}
+                  {activeTab === 'overrides' && renderFieldOverrideOptions(plugin)}
+                </>
               )}
-              {activeTab === 'defaults' && renderFieldOptions(plugin)}
-              {activeTab === 'overrides' && renderFieldOverrideOptions(plugin)}
             </CustomScrollbar>
           </TabContent>
         </div>
@@ -127,13 +121,14 @@ export const OptionsPaneContent: React.FC<{
 
 export const TabsBarContent: React.FC<{
   width: number;
+  showFields: boolean;
   isSearching: boolean;
   activeTab: string;
   styles: OptionsPaneStyles;
   onClose: () => void;
   setSearchMode: (mode: boolean) => void;
   setActiveTab: (tab: string) => void;
-}> = ({ width, isSearching, activeTab, onClose, setSearchMode, setActiveTab, styles }) => {
+}> = ({ width, showFields, isSearching, activeTab, onClose, setSearchMode, setActiveTab, styles }) => {
   if (isSearching) {
     const defaultStyles = {
       transition: 'width 50ms ease-in-out',
@@ -169,13 +164,21 @@ export const TabsBarContent: React.FC<{
     );
   }
 
+  // Show the appropriate tabs
+  let tabs = tabSelections;
+  let active = tabs.find(v => v.value === activeTab);
+  if (!showFields) {
+    active = tabSelections[0];
+    tabs = [active];
+  }
+
   return (
     <>
       {width < 352 ? (
         <div className="flex-grow-1">
           <Select
-            options={tabSelections}
-            value={tabSelections.find(v => v.value === activeTab)}
+            options={tabs}
+            value={active}
             onChange={v => {
               setActiveTab(v.value);
             }}
@@ -183,11 +186,11 @@ export const TabsBarContent: React.FC<{
         </div>
       ) : (
         <>
-          {tabSelections.map(item => (
+          {tabs.map(item => (
             <Tab
               key={item.value}
               label={item.label}
-              active={activeTab === item.value}
+              active={active.value === item.value}
               onChangeTab={() => setActiveTab(item.value)}
             />
           ))}
@@ -195,6 +198,7 @@ export const TabsBarContent: React.FC<{
         </>
       )}
 
+      {/* 
       <div className={styles.tabsButton}>
         <DashNavButton
           icon="search"
@@ -203,7 +207,7 @@ export const TabsBarContent: React.FC<{
           classSuffix="search-options"
           onClick={() => setSearchMode(true)}
         />
-      </div>
+      </div> */}
       <div className={styles.tabsButton}>
         <DashNavButton
           icon="angle-right"
@@ -265,7 +269,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       flex-direction: column;
       flex-grow: 1;
       min-height: 0;
-      background: ${theme.colors.pageBg};
+      background: ${theme.colors.bodyBg};
       border-left: 1px solid ${theme.colors.pageHeaderBorder};
     `,
     tabsButton: css``,

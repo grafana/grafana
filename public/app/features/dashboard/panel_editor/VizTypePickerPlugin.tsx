@@ -28,12 +28,10 @@ const VizTypePickerPlugin: React.FC<Props> = ({ isCurrent, plugin, onClick, disa
 };
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
-  const itemBorder = `1px solid ${theme.isLight ? theme.colors.gray85 : theme.colors.gray25}`;
-
   return {
     item: css`
-      background: ${theme.isLight ? theme.colors.gray98 : theme.colors.gray15};
-      border: ${itemBorder};
+      background: ${theme.colors.bg2};
+      border: 1px solid ${theme.colors.border2};
       border-radius: 3px;
       height: 100px;
       width: 100%;
@@ -49,13 +47,13 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       padding-bottom: 6px;
 
       &:hover {
-        box-shadow: 0 0 4px ${theme.colors.blueLight};
-        border: 1px solid ${theme.colors.blueLight};
+        box-shadow: 0 0 4px ${theme.palette.blue95};
+        border: 1px solid ${theme.palette.blue95};
       }
     `,
     current: css`
-      box-shadow: 0 0 6px ${theme.colors.orange} !important;
-      border: 1px solid ${theme.colors.orange} !important;
+      box-shadow: 0 0 6px ${theme.palette.orange} !important;
+      border: 1px solid ${theme.palette.orange} !important;
     `,
     disabled: css`
       opacity: 0.2;
@@ -63,7 +61,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       cursor: default;
       &:hover {
         box-shadow: none;
-        border: ${itemBorder};
+        border: 1px solid ${theme.colors.border2};
       }
     `,
     name: css`

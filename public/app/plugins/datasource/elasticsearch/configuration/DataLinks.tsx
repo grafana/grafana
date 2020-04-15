@@ -67,7 +67,7 @@ export const DataLinks = (props: Props) => {
             className={css`
               margin-right: 10px;
             `}
-            icon="plus-circle"
+            icon="plus"
             onClick={event => {
               event.preventDefault();
               const newDataLinks = [...(value || []), { field: '', url: '' }];

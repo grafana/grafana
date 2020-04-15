@@ -19,8 +19,9 @@ import {
   valueMappingsOverrideProcessor,
   ThresholdsMode,
 } from '@grafana/data';
-import { NumberValueEditor, Forms, StringValueEditor, Select } from '../components';
-import { Switch } from '../components/Forms/Switch';
+
+import { Switch } from '../components/Switch/Switch';
+import { NumberValueEditor, RadioButtonGroup, StringValueEditor, Select } from '../components';
 import { ValueMappingsValueEditor } from '../components/OptionsUI/mappings';
 import { ThresholdsValueEditor } from '../components/OptionsUI/thresholds';
 import { UnitValueEditor } from '../components/OptionsUI/units';
@@ -32,6 +33,7 @@ import { StatsPickerEditor } from '../components/OptionsUI/stats';
  * Returns collection of common field config properties definitions
  */
 export const getStandardFieldConfigs = () => {
+  const category = ['Standard field options'];
   const title: FieldConfigPropertyItem<any, string, StringFieldConfigSettings> = {
     id: 'title',
     path: 'title',
@@ -45,6 +47,7 @@ export const getStandardFieldConfigs = () => {
       expandTemplateVars: true,
     },
     shouldApply: field => field.type !== FieldType.time,
+    category,
   };
 
   const unit: FieldConfigPropertyItem<any, string, StringFieldConfigSettings> = {
@@ -62,6 +65,7 @@ export const getStandardFieldConfigs = () => {
     },
 
     shouldApply: field => field.type === FieldType.number,
+    category,
   };
 
   const min: FieldConfigPropertyItem<any, number, NumberFieldConfigSettings> = {
@@ -78,6 +82,7 @@ export const getStandardFieldConfigs = () => {
       placeholder: 'auto',
     },
     shouldApply: field => field.type === FieldType.number,
+    category,
   };
 
   const max: FieldConfigPropertyItem<any, number, NumberFieldConfigSettings> = {
@@ -95,6 +100,7 @@ export const getStandardFieldConfigs = () => {
     },
 
     shouldApply: field => field.type === FieldType.number,
+    category,
   };
 
   const decimals: FieldConfigPropertyItem<any, number, NumberFieldConfigSettings> = {
@@ -115,6 +121,7 @@ export const getStandardFieldConfigs = () => {
     },
 
     shouldApply: field => field.type === FieldType.number,
+    category,
   };
 
   const thresholds: FieldConfigPropertyItem<any, ThresholdsConfig, ThresholdsFieldConfigSettings> = {
@@ -135,6 +142,7 @@ export const getStandardFieldConfigs = () => {
       ],
     },
     shouldApply: field => field.type === FieldType.number,
+    category: ['Color & thresholds'],
   };
 
   const mappings: FieldConfigPropertyItem<any, ValueMapping[], ValueMappingFieldConfigSettings> = {
@@ -149,6 +157,7 @@ export const getStandardFieldConfigs = () => {
     settings: {},
     defaultValue: [],
     shouldApply: field => field.type === FieldType.number,
+    category: ['Value mappings'],
   };
 
   const noValue: FieldConfigPropertyItem<any, string, StringFieldConfigSettings> = {
@@ -166,6 +175,7 @@ export const getStandardFieldConfigs = () => {
     },
     // ??? any optionsUi with no value
     shouldApply: () => true,
+    category,
   };
 
   const links: FieldConfigPropertyItem<any, DataLink[], StringFieldConfigSettings> = {
@@ -180,6 +190,7 @@ export const getStandardFieldConfigs = () => {
       placeholder: '-',
     },
     shouldApply: () => true,
+    category: ['Data links'],
   };
 
   const color: FieldConfigPropertyItem<any, string, StringFieldConfigSettings> = {
@@ -194,9 +205,10 @@ export const getStandardFieldConfigs = () => {
       placeholder: '-',
     },
     shouldApply: () => true,
+    category: ['Color & thresholds'],
   };
 
-  return [unit, min, max, decimals, title, noValue, thresholds, mappings, links, color];
+  return [unit, min, max, decimals, title, noValue, color, thresholds, mappings, links];
 };
 
 /**
@@ -237,7 +249,7 @@ export const getStandardOptionEditors = () => {
     id: 'radio',
     name: 'Radio',
     description: 'Allows option selection',
-    editor: props => <Forms.RadioButtonGroup {...props} options={props.item.settings?.options} fullWidth />,
+    editor: props => <RadioButtonGroup {...props} options={props.item.settings?.options} fullWidth />,
   };
 
   const unit: StandardEditorsRegistryItem<string> = {

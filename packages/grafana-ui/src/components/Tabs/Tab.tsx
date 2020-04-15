@@ -38,11 +38,10 @@ const getTabStyles = stylesFactory((theme: GrafanaTheme) => {
       }
     `,
     activeStyle: css`
-      border-color: ${colors.orange} ${colors.pageHeaderBorder} transparent;
-      background: ${colors.pageBg};
+      border-color: ${theme.palette.orange} ${colors.pageHeaderBorder} transparent;
+      background: ${colors.bodyBg};
       color: ${colors.link};
       overflow: hidden;
-      cursor: not-allowed;
 
       &::before {
         display: block;

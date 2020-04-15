@@ -1,6 +1,6 @@
 import React, { FC } from 'react';
 import { css } from 'emotion';
-import { Button, Select, Forms, stylesFactory, useTheme, HorizontalGroup } from '@grafana/ui';
+import { Button, Select, Checkbox, stylesFactory, useTheme, HorizontalGroup } from '@grafana/ui';
 import { GrafanaTheme, SelectableValue } from '@grafana/data';
 
 type onSelectChange = (value: SelectableValue) => void;
@@ -43,7 +43,7 @@ export const SearchResultsFilter: FC<Props> = ({
 
   return (
     <div className={styles.wrapper}>
-      <Forms.Checkbox value={allChecked} onChange={onSelectAllChanged} />
+      <Checkbox value={allChecked} onChange={onSelectAllChanged} />
       {showActions ? (
         <HorizontalGroup spacing="md">
           <Button disabled={!canMove} onClick={moveTo} icon="exchange-alt" variant="secondary">
