@@ -34,6 +34,7 @@ import { getTraceLinks } from '../model/link-patterns';
 import ExternalLinks from '../common/ExternalLinks';
 import { createStyle } from '../Theme';
 import { uTxMuted } from '../uberUtilityStyles';
+import { useMemo } from 'react';
 
 const getStyles = createStyle((theme: Theme) => {
   const TracePageHeaderOverviewItemValueDetail = css`
@@ -222,7 +223,7 @@ export default function TracePageHeader(props: TracePageHeaderEmbedProps) {
     return null;
   }
 
-  const links = getTraceLinks(trace);
+  const links = useMemo(() => getTraceLinks(trace), [trace]);
 
   const summaryItems =
     !hideSummary &&
