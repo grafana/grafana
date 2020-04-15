@@ -75,6 +75,7 @@ func (ps *provisioningServiceImpl) Run(ctx context.Context) error {
 	err := ps.ProvisionDashboards()
 	if err != nil {
 		ps.log.Error("Failed to provision dashboard", "error", err)
+		return err
 	}
 
 	for {

@@ -1,6 +1,6 @@
 import React, { Dispatch, FC } from 'react';
 import { css } from 'emotion';
-import { Button, Select, Forms, stylesFactory, useTheme, HorizontalGroup } from '@grafana/ui';
+import { Button, Select, Checkbox, stylesFactory, useTheme, HorizontalGroup } from '@grafana/ui';
 import { GrafanaTheme, SelectableValue } from '@grafana/data';
 import { TagFilter } from 'app/core/components/TagFilter/TagFilter';
 import { SearchSrv } from 'app/core/services/search_srv';
@@ -47,7 +47,7 @@ export const SearchResultsFilter: FC<Props> = ({
 
   return (
     <div className={styles.wrapper}>
-      <Forms.Checkbox value={allChecked} onChange={() => dispatch({ type: TOGGLE_ALL_CHECKED })} />
+      <Checkbox value={allChecked} onChange={() => dispatch({ type: TOGGLE_ALL_CHECKED })} />
       {showActions ? (
         <HorizontalGroup spacing="md">
           <Button disabled={!canMove} onClick={moveTo} icon="exchange-alt" variant="secondary">

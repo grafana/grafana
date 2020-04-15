@@ -1,7 +1,7 @@
 import React, { FC, Dispatch } from 'react';
 import { css, cx } from 'emotion';
 import { GrafanaTheme } from '@grafana/data';
-import { Icon, stylesFactory, useTheme, IconName } from '@grafana/ui';
+import { Icon, stylesFactory, useTheme, IconName, IconButton } from '@grafana/ui';
 import PageLoader from 'app/core/components/PageLoader/PageLoader';
 import appEvents from 'app/core/app_events';
 import { CoreEvents } from 'app/types';
@@ -93,7 +93,7 @@ const SectionHeader: FC<SectionHeaderProps> = ({ section, onSectionClick, editab
           className={styles.link}
           onClick={() => appEvents.emit(CoreEvents.hideDashSearch, { target: 'search-item' })}
         >
-          <Icon name="cog" />
+          <IconButton name="cog" className={styles.button} />
         </a>
       )}
       <Icon name={section.expanded ? 'angle-down' : 'angle-right'} />
@@ -140,6 +140,9 @@ const getSectionHeaderStyles = stylesFactory((theme: GrafanaTheme, selected = fa
       color: ${theme.colors.textWeak};
       opacity: 0;
       transition: opacity 150ms ease-in-out;
+    `,
+    button: css`
+      margin-top: 3px;
     `,
   };
 });

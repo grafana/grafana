@@ -178,7 +178,9 @@ export const DashboardSearch: FC<Props> = ({ onCloseSearch, payload = {} }) => {
             </div>
           )}
         </div>
-        <Icon onClick={onCloseSearch} className={styles.closeBtn} name="times" />
+        <div className={styles.closeBtn} onClick={onCloseSearch}>
+          Close search <Icon name="times" className={styles.close} />
+        </div>
       </div>
     </div>
   );
@@ -187,19 +189,16 @@ export const DashboardSearch: FC<Props> = ({ onCloseSearch, payload = {} }) => {
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
   return {
     closeBtn: css`
-      font-size: 22px;
-      margin-top: 14px;
-      margin-right: 6px;
-
+      top: 20px;
+      right: 8px;
+      position: absolute;
+      font-size: ${theme.typography.size.xs};
+      color: ${theme.colors.link};
+      display: flex;
+      align-items: center;
+      cursor: pointer;
       &:hover {
-        cursor: pointer;
-        color: ${theme.palette.white};
-      }
-
-      @media only screen and (max-width: ${theme.breakpoints.md}) {
-        position: absolute;
-        right: 15px;
-        top: 60px;
+        color: ${theme.colors.linkHover};
       }
     `,
     icon: css`
@@ -208,6 +207,10 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
     `,
     filter: css`
       margin-right: ${theme.spacing.xs};
+    `,
+    close: css`
+      margin-left: ${theme.spacing.xs};
+      margin-bottom: 1px;
     `,
   };
 });
