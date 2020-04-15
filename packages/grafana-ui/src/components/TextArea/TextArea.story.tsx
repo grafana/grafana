@@ -25,8 +25,6 @@ export const simple = () => {
   // ---
   const placeholder = text('Placeholder', 'This is just a placeholder', VISUAL_GROUP);
   const cols = number('Cols', 30, { range: true, min: 5, max: 50, step: 5 }, VISUAL_GROUP);
-  const size = select('Size', ['sm', 'md', 'lg', 'auto'], undefined, VISUAL_GROUP);
-
   const CONTAINER_GROUP = 'Container options';
   // ---
   const containerWidth = number(
