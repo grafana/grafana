@@ -4,7 +4,6 @@ import { PanelData, SelectableValue, AppEvents } from '@grafana/data';
 import { TextArea, Button, Select, ClipboardButton, JSONFormatter } from '@grafana/ui';
 
 import { appEvents } from 'app/core/core';
-import { replacePanel } from 'app/features/dashboard/utils/panel';
 import { PanelModel, DashboardModel } from '../../state';
 import { Field } from '@grafana/ui/src/components/Forms/Field';
 import { getPanelInspectorStyles } from './styles';
@@ -110,12 +109,14 @@ export class InspectJSONTab extends PureComponent<Props, State> {
 
   onApplyPanelModel = () => {
     const { panel, dashboard, onClose } = this.props;
+
     try {
       if (!dashboard.meta.canEdit) {
         appEvents.emit(AppEvents.alertError, ['Unable to apply']);
       } else {
-        const newPanel = JSON.parse(this.state.text);
-        replacePanel(dashboard, newPanel, panel);
+        const updates = JSON.parse(this.state.text);
+        panel.restoreModel(updates);
+        panel.refresh();
         appEvents.emit(AppEvents.alertSuccess, ['Panel model updated']);
       }
     } catch (err) {

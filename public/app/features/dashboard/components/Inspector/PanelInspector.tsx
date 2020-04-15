@@ -338,9 +338,27 @@ export class PanelInspectorUnconnected extends PureComponent<Props, State> {
     );
   }
 
-  drawerHeader = () => {
-    const { dashboard, panel, plugin } = this.props;
-    const { currentTab, last } = this.state;
+  drawerHeader(tabs: Array<{ label: string; value: InspectTab }>, activeTab: InspectTab) {
+    const { panel } = this.props;
+    const { last } = this.state;
+
+    return (
+      <InspectHeader
+        tabs={tabs}
+        tab={activeTab}
+        panelData={last}
+        onSelectTab={this.onSelectTab}
+        onClose={this.onClose}
+        panel={panel}
+        onToggleExpand={this.onToggleExpand}
+        isExpanded={this.state.drawerWidth === '100%'}
+      />
+    );
+  }
+
+  getTabs() {
+    const { dashboard, plugin } = this.props;
+    const { last } = this.state;
     const error = last?.error;
     const tabs = [];
 
@@ -362,6 +380,21 @@ export class PanelInspectorUnconnected extends PureComponent<Props, State> {
     if (dashboard.meta.canEdit) {
       tabs.push({ label: 'Query', value: InspectTab.Query });
     }
+    return tabs;
+  }
+
+  render() {
+    const { panel, dashboard, plugin } = this.props;
+    const { currentTab } = this.state;
+
+    if (!plugin) {
+      return null;
+    }
+
+    const { last, drawerWidth } = this.state;
+    const styles = getPanelInspectorStyles();
+    const error = last?.error;
+    const tabs = this.getTabs();
 
     // Validate that the active tab is actually valid and allowed
     let activeTab = currentTab;
@@ -370,41 +403,17 @@ export class PanelInspectorUnconnected extends PureComponent<Props, State> {
     }
 
     return (
-      <InspectHeader
-        tabs={tabs}
-        tab={activeTab}
-        panelData={last}
-        onSelectTab={this.onSelectTab}
-        onClose={this.onClose}
-        panel={panel}
-        onToggleExpand={this.onToggleExpand}
-        isExpanded={this.state.drawerWidth === '100%'}
-      />
-    );
-  };
-
-  render() {
-    const { panel, dashboard, plugin } = this.props;
-    const { last, currentTab: tab, drawerWidth } = this.state;
-    const styles = getPanelInspectorStyles();
-    const error = last?.error;
-
-    if (!plugin) {
-      return null;
-    }
-
-    return (
-      <Drawer title={this.drawerHeader} width={drawerWidth} onClose={this.onClose}>
-        {tab === InspectTab.Data && this.renderDataTab()}
+      <Drawer title={this.drawerHeader(tabs, activeTab)} width={drawerWidth} onClose={this.onClose}>
+        {activeTab === InspectTab.Data && this.renderDataTab()}
         <CustomScrollbar autoHeightMin="100%">
           <TabContent className={styles.tabContent}>
-            {tab === InspectTab.Meta && this.renderMetadataInspector()}
-            {tab === InspectTab.JSON && (
+            {activeTab === InspectTab.Meta && this.renderMetadataInspector()}
+            {activeTab === InspectTab.JSON && (
               <InspectJSONTab panel={panel} dashboard={dashboard} data={last} onClose={this.onClose} />
             )}
-            {tab === InspectTab.Error && this.renderErrorTab(error)}
-            {tab === InspectTab.Stats && this.renderStatsTab()}
-            {tab === InspectTab.Query && <QueryInspector panel={panel} />}
+            {activeTab === InspectTab.Error && this.renderErrorTab(error)}
+            {activeTab === InspectTab.Stats && this.renderStatsTab()}
+            {activeTab === InspectTab.Query && <QueryInspector panel={panel} />}
           </TabContent>
         </CustomScrollbar>
       </Drawer>

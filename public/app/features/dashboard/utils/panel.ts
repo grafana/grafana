@@ -51,22 +51,6 @@ export const copyPanel = (panel: PanelModel) => {
   appEvents.emit(AppEvents.alertSuccess, ['Panel copied. Open Add Panel to paste']);
 };
 
-export const replacePanel = (dashboard: DashboardModel, newPanel: PanelModel, oldPanel: PanelModel) => {
-  const index = dashboard.panels.findIndex(panel => {
-    return panel.id === oldPanel.id;
-  });
-
-  const deletedPanel = dashboard.panels.splice(index, 1)[0];
-  dashboard.events.emit(panelRemoved, deletedPanel);
-
-  newPanel = new PanelModel(newPanel);
-  newPanel.id = oldPanel.id;
-
-  dashboard.panels.splice(index, 0, newPanel);
-  dashboard.sortPanelsByGridPos();
-  dashboard.events.emit(panelAdded, newPanel);
-};
-
 export const sharePanel = (dashboard: DashboardModel, panel: PanelModel) => {
   appEvents.emit(CoreEvents.showModalReact, {
     component: ShareModal,
