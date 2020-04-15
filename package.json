@@ -240,6 +240,7 @@
     "md5": "^2.2.1",
     "memoize-one": "5.1.1",
     "moment": "2.24.0",
+    "moment-timezone": "0.5.28",
     "mousetrap": "1.6.5",
     "mousetrap-global-bind": "1.1.0",
     "nodemon": "2.0.2",
