@@ -15,21 +15,13 @@ e2e.scenario({
     e2e.pages.Dashboard.Toolbar.toolbarItems('Add panel').click();
     e2e.pages.AddDashboard.ctaButtons('Add Query').click();
 
-    e2e.pages.Dashboard.Panels.EditPanel.tabItems('Queries').click();
     e2e.pages.Dashboard.Panels.DataSource.TestData.QueryTab.scenarioSelect().select('CSV Metric Values');
-
-    e2e.pages.Dashboard.Panels.EditPanel.tabItems('Visualization').click();
 
     e2e.pages.Dashboard.Panels.Visualization.Graph.VisualizationTab.xAxisSection()
       .contains('Show')
       .click();
 
-    e2e.flows.saveDashboard();
-
-    e2e.pages.Dashboard.Toolbar.backArrow().click();
-
-    e2e.pages.Dashboard.Panels.Panel.title('Panel Title').click();
-
-    e2e.pages.Dashboard.Panels.Panel.headerItems('Share').click();
+    // e2e.pages.Dashboard.Panels.Panel.title('Panel Title').click();
+    // e2e.pages.Dashboard.Panels.Panel.headerItems('Inspect').click();
   },
 });

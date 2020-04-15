@@ -8,10 +8,12 @@ import {
   PanelPlugin,
   SelectableValue,
 } from '@grafana/data';
-import { Forms, fieldMatchersUI, ValuePicker, useTheme } from '@grafana/ui';
+import { fieldMatchersUI, ValuePicker, useTheme, Label, Field } from '@grafana/ui';
 import { getDataLinksVariableSuggestions } from '../../../panel/panellinks/link_srv';
 import { OverrideEditor } from './OverrideEditor';
 import { css } from 'emotion';
+import groupBy from 'lodash/groupBy';
+import { OptionsGroup } from './OptionsGroup';
 
 interface Props {
   plugin: PanelPlugin;
@@ -87,7 +89,7 @@ export const OverrideFieldConfigEditor: React.FC<Props> = props => {
   const renderAddOverride = () => {
     return (
       <ValuePicker
-        icon="plus-circle"
+        icon="plus"
         label="Add override"
         variant="secondary"
         options={fieldMatchersUI
@@ -153,8 +155,14 @@ export const DefaultFieldConfigEditor: React.FC<Props> = ({ data, onChange, conf
           : undefined
         : (defaults as any)[item.path];
 
+      const label = (
+        <Label description={item.description} category={item.category?.slice(1)}>
+          {item.name}
+        </Label>
+      );
+
       return (
-        <Forms.Field label={item.name} description={item.description} key={`${item.id}`}>
+        <Field label={label} key={`${item.id}/${item.isCustom}`}>
           <item.editor
             item={item}
             value={value}
@@ -164,12 +172,27 @@ export const DefaultFieldConfigEditor: React.FC<Props> = ({ data, onChange, conf
               getSuggestions: (scope?: VariableSuggestionsScope) => getDataLinksVariableSuggestions(data, scope),
             }}
           />
-        </Forms.Field>
+        </Field>
       );
     },
     [config]
   );
 
-  // render all field configs
-  return <>{plugin.fieldConfigRegistry.list().map(renderEditor)}</>;
+  const groupedConfigs = groupBy(plugin.fieldConfigRegistry.list(), i => i.category && i.category[0]);
+
+  return (
+    <>
+      {Object.keys(groupedConfigs).map((k, i) => {
+        return (
+          <OptionsGroup title={k} key={`${k}/${i}`}>
+            <>
+              {groupedConfigs[k].map(c => {
+                return renderEditor(c);
+              })}
+            </>
+          </OptionsGroup>
+        );
+      })}
+    </>
+  );
 };

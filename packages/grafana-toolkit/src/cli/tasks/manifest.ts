@@ -71,24 +71,29 @@ const manifestRunner: TaskRunner<ManifestOptions> = async ({ folder }) => {
 
   const pluginPath = path.join(folder, 'plugin.json');
   const plugin = require(pluginPath);
-  const url = `https://grafana.com/api/plugins/${plugin.id}/sign`;
+  const url = `https://grafana.com/api/plugins/${plugin.id}/ci/sign`;
   manifest.plugin = plugin.id;
-  manifest.version = plugin.version;
+  manifest.version = plugin.info.version;
 
-  console.log('Request Signature:', url);
+  console.log('Request Signature:', url, manifest);
   const axios = require('axios');
-  const info = await axios.post(url, manifest, {
-    headers: { Authorization: 'Bearer ' + GRAFANA_API_KEY },
-    responseType: 'arraybuffer',
-  });
-  if (info.status === 200) {
-    console.log('OK: ', info.data);
-    const buffer = new Buffer(info.data, 'binary');
-    fs.writeFileSync(outputPath, buffer);
-  } else {
-    console.warn('Error: ', info);
-    console.log('Saving the unsigned manifest');
-    fs.writeFileSync(outputPath, JSON.stringify(manifest, null, 2));
+
+  try {
+    const info = await axios.post(url, manifest, {
+      headers: { Authorization: 'Bearer ' + GRAFANA_API_KEY },
+      responseType: 'arraybuffer',
+    });
+    if (info.status === 200) {
+      console.log('OK: ', info.data);
+      const buffer = new Buffer(info.data, 'binary');
+      fs.writeFileSync(outputPath, buffer);
+    } else {
+      console.warn('Error: ', info);
+      console.log('Saving the unsigned manifest');
+      fs.writeFileSync(outputPath, JSON.stringify(manifest, null, 2));
+    }
+  } catch (err) {
+    console.log('ERROR Fetching response', err);
   }
 };
 

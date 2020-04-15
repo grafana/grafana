@@ -19,22 +19,21 @@ export interface RadioButtonProps {
 const getRadioButtonStyles = stylesFactory((theme: GrafanaTheme, size: RadioButtonSize, fullWidth?: boolean) => {
   const { fontSize, height } = getPropertiesForButtonSize(theme, size);
   const horizontalPadding = theme.spacing[size] ?? theme.spacing.md;
-  const c = theme.colors;
+  const c = theme.palette;
 
-  const textColor = theme.isLight ? c.gray33 : c.gray70;
-  const textColorHover = theme.isLight ? c.blueShade : c.blueLight;
-  const textColorActive = theme.isLight ? c.blueShade : c.blueLight;
-  const borderColor = theme.isLight ? c.gray4 : c.gray25;
-  const borderColorHover = theme.isLight ? c.gray70 : c.gray33;
-  const borderColorActive = theme.isLight ? c.blueShade : c.blueLight;
-  const bg = c.pageBg;
+  const textColor = theme.colors.textSemiWeak;
+  const textColorHover = theme.colors.text;
+  const textColorActive = theme.isLight ? c.blue77 : c.blue95;
+  const borderColor = theme.colors.border2;
+  const borderColorHover = theme.colors.border3;
+  const borderColorActive = theme.isLight ? c.blue77 : c.blue95;
+  const bg = theme.colors.bodyBg;
   const bgDisabled = theme.isLight ? c.gray95 : c.gray15;
   const bgActive = theme.isLight ? c.white : c.gray05;
 
   const border = `1px solid ${borderColor}`;
   const borderActive = `1px solid ${borderColorActive}`;
   const borderHover = `1px solid ${borderColorHover}`;
-  const fakeBold = `0 0 0.65px ${textColorHover}, 0 0 0.65px ${textColorHover}`;
 
   return {
     radio: css`
@@ -47,7 +46,6 @@ const getRadioButtonStyles = stylesFactory((theme: GrafanaTheme, size: RadioButt
       &:checked + label {
         border: ${borderActive};
         color: ${textColorActive};
-        text-shadow: ${fakeBold};
         background: ${bgActive};
         z-index: 3;
       }
@@ -61,10 +59,6 @@ const getRadioButtonStyles = stylesFactory((theme: GrafanaTheme, size: RadioButt
         cursor: default;
         background: ${bgDisabled};
         color: ${textColor};
-      }
-
-      &:enabled + label:hover {
-        text-shadow: ${fakeBold};
       }
     `,
     radioLabel: css`

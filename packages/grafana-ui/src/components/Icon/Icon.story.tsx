@@ -24,8 +24,8 @@ const IconWrapper: React.FC<{ name: IconName }> = ({ name }) => {
   const theme = useTheme();
   const borderColor = selectThemeVariant(
     {
-      light: theme.colors.gray5,
-      dark: theme.colors.dark6,
+      light: theme.palette.gray5,
+      dark: theme.palette.dark6,
     },
     theme.type
   );

@@ -1,9 +1,10 @@
 import React, { PureComponent } from 'react';
-import { css, cx } from 'emotion';
+import { css } from 'emotion';
 import { GrafanaTheme } from '@grafana/data';
 import { GroupProps } from 'react-select';
 import { stylesFactory, withTheme, selectThemeVariant } from '../../themes';
 import { Themeable } from '../../types';
+import { Icon } from '../Icon/Icon';
 
 interface ExtendedGroupProps extends GroupProps<any>, Themeable {
   data: {
@@ -20,8 +21,8 @@ interface State {
 const getSelectOptionGroupStyles = stylesFactory((theme: GrafanaTheme) => {
   const optionBorder = selectThemeVariant(
     {
-      light: theme.colors.gray4,
-      dark: theme.colors.dark9,
+      light: theme.palette.gray4,
+      dark: theme.palette.dark9,
     },
     theme.type
   );
@@ -79,12 +80,11 @@ class UnthemedSelectOptionGroup extends PureComponent<ExtendedGroupProps, State>
     const { children, label, theme } = this.props;
     const { expanded } = this.state;
     const styles = getSelectOptionGroupStyles(theme);
-    const icon = expanded ? 'fa-caret-left' : 'fa-caret-down';
     return (
       <div>
         <div className={styles.header} onClick={this.onToggleChildren}>
           <span className={styles.label}>{label}</span>
-          <i className={cx('fa', icon, styles.icon)} />{' '}
+          <Icon className={styles.icon} name={expanded ? 'angle-left' : 'angle-down'} />{' '}
         </div>
         {expanded && children}
       </div>

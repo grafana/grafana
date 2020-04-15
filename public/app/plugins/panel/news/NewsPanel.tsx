@@ -4,7 +4,7 @@ import { css } from 'emotion';
 
 // Utils & Services
 import { GrafanaTheme } from '@grafana/data';
-import { stylesFactory, CustomScrollbar, styleMixins } from '@grafana/ui';
+import { stylesFactory, CustomScrollbar } from '@grafana/ui';
 import config from 'app/core/config';
 import { feedToDataFrame } from './utils';
 import { sanitize } from 'app/core/utils/text';
@@ -82,8 +82,8 @@ export class NewsPanel extends PureComponent<Props, State> {
                 <a href={item.link} target="_blank">
                   <div className={styles.title}>{item.title}</div>
                   <div className={styles.date}>{dateTime(item.date).format('MMM DD')} </div>
-                  <div className={styles.content} dangerouslySetInnerHTML={{ __html: sanitize(item.content) }} />
                 </a>
+                <div className={styles.content} dangerouslySetInnerHTML={{ __html: sanitize(item.content) }} />
               </div>
             );
           })}
@@ -98,11 +98,11 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => ({
     height: 100%;
   `,
   item: css`
-    ${styleMixins.listItem(theme)}
     padding: ${theme.spacing.sm};
     position: relative;
     margin-bottom: 4px;
     margin-right: ${theme.spacing.sm};
+    border-bottom: 2px solid ${theme.colors.border1};
   `,
   title: css`
     color: ${theme.colors.linkExternal};
@@ -113,6 +113,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => ({
   content: css`
     p {
       margin-bottom: 4px;
+      color: ${theme.colors.text};
     }
   `,
   date: css`

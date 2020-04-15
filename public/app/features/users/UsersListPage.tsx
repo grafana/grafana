@@ -71,7 +71,7 @@ export class UsersListPage extends PureComponent<Props, State> {
       title: 'Delete',
       text: 'Are you sure you want to delete user ' + user.login + '?',
       yesText: 'Delete',
-      icon: 'fa-warning',
+      icon: 'exclamation-triangle',
       onConfirm: () => {
         this.props.removeUser(user.userId);
       },

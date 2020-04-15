@@ -2,7 +2,7 @@
 import React from 'react';
 import _ from 'lodash';
 import { LocationUpdate } from '@grafana/runtime';
-import { Icon, IconName } from '@grafana/ui';
+import { Icon, IconName, IconButton } from '@grafana/ui';
 import { e2e } from '@grafana/e2e';
 import { connect, MapDispatchToProps } from 'react-redux';
 // Utils
@@ -86,16 +86,13 @@ export class AddPanelWidgetUnconnected extends React.Component<Props, State> {
 
     const location: LocationUpdate = {
       query: {
-        panelId: newPanel.id,
-        edit: true,
-        fullscreen: true,
+        editPanel: newPanel.id,
       },
       partial: true,
     };
 
-    if (tab === 'visualization') {
-      location.query.tab = 'visualization';
-      location.query.openVizPicker = true;
+    if (tab === 'visualize') {
+      location.query.tab = 'visualize';
     }
 
     reduxStore.dispatch(updateLocation(location));
@@ -168,15 +165,13 @@ export class AddPanelWidgetUnconnected extends React.Component<Props, State> {
             <Icon name="panel-add" type="mono" size="xl" style={{ margin: '4px', marginRight: '8px' }} />
             <span className="add-panel-widget__title">New Panel</span>
             <button className="add-panel-widget__close" onClick={this.handleCloseAddPanel}>
-              <Icon name="times" />
+              <IconButton name="times" />
             </button>
           </div>
           <div className="add-panel-widget__btn-container">
             <div className="add-panel-widget__create">
-              {this.renderOptionLink('search', 'Add Query', this.onCreateNewPanel)}
-              {this.renderOptionLink('chart-line', 'Choose Visualization', () =>
-                this.onCreateNewPanel('visualization')
-              )}
+              {this.renderOptionLink('database', 'Add Query', this.onCreateNewPanel)}
+              {this.renderOptionLink('chart-line', 'Choose Visualization', () => this.onCreateNewPanel('visualize'))}
             </div>
             <div className="add-panel-widget__actions">
               <button className="btn btn-inverse add-panel-widget__action" onClick={this.onCreateNewRow}>

@@ -354,12 +354,10 @@
   padding: 7px;
   background: $list-item-bg;
   box-shadow: $list-item-shadow;
-  color: $list-item-link-color;
   border-radius: $border-radius;
 
   &:hover {
     background: $list-item-hover-bg;
-    color: $list-item-link-color;
   }
 }
 

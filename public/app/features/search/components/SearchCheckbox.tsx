@@ -1,6 +1,6 @@
 import React, { FC, memo } from 'react';
 import { css } from 'emotion';
-import { Forms, stylesFactory } from '@grafana/ui';
+import { Checkbox, stylesFactory } from '@grafana/ui';
 
 interface Props {
   checked?: boolean;
@@ -13,7 +13,7 @@ export const SearchCheckbox: FC<Props> = memo(({ onClick, checked = false, edita
 
   return editable ? (
     <div onClick={onClick} className={styles.wrapper}>
-      <Forms.Checkbox value={checked} />
+      <Checkbox value={checked} />
     </div>
   ) : null;
 });

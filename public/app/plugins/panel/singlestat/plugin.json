@@ -2,6 +2,7 @@
   "type": "panel",
   "name": "Singlestat",
   "id": "singlestat",
+  "state": "deprecated",
 
   "info": {
     "description": "Singlestat Panel for Grafana",

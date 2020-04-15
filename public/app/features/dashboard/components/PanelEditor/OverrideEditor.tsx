@@ -111,7 +111,7 @@ export const OverrideEditor: React.FC<OverrideEditorProps> = ({ data, override, 
         <div className={styles.propertyPickerWrapper}>
           <ValuePicker
             label="Set config property"
-            icon="plus-circle"
+            icon="plus"
             options={configPropertiesOptions}
             variant={'link'}
             onChange={o => {
@@ -127,16 +127,16 @@ export const OverrideEditor: React.FC<OverrideEditorProps> = ({ data, override, 
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
   const borderColor = selectThemeVariant(
     {
-      light: theme.colors.gray85,
-      dark: theme.colors.dark9,
+      light: theme.palette.gray85,
+      dark: theme.palette.dark9,
     },
     theme.type
   );
 
   const shadow = selectThemeVariant(
     {
-      light: theme.colors.gray85,
-      dark: theme.colors.black,
+      light: theme.palette.gray85,
+      dark: theme.palette.black,
     },
     theme.type
   );

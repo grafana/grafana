@@ -95,7 +95,7 @@ export class PanelCtrl {
   }
 
   otherPanelInFullscreenMode() {
-    return this.dashboard.meta.fullscreen && !this.panel.fullscreen;
+    return this.dashboard.otherPanelInFullscreen(this.panel);
   }
 
   render(payload?: any) {

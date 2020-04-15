@@ -32,7 +32,7 @@ ButtonSelectStories.add('default', () => {
             }}
             label={value.label ? value.label : ''}
             className="refresh-select"
-            iconClass={text('iconClass', 'fa fa-clock-o fa-fw')}
+            iconClass={text('iconClass', 'clock-nine')}
           />
         );
       }}
