@@ -275,6 +275,8 @@ export function SelectBase<T>({
           container: () => ({
             position: 'relative',
             width: inputSizesPixels(size),
+            // This puts the menu above Inputs (z-index: 1)
+            zIndex: 10,
           }),
         }}
         className={cx('select-container', widthClass)}
