@@ -20,7 +20,6 @@ import {
   ThresholdsMode,
 } from '@grafana/data';
 
-
 import { Switch } from '../components/Switch/Switch';
 import { NumberValueEditor, RadioButtonGroup, StringValueEditor, Select } from '../components';
 import { ValueMappingsValueEditor } from '../components/OptionsUI/mappings';
