@@ -13,8 +13,9 @@ import (
 )
 
 const (
-	TestLogin    = "test@example.com"
-	TestPassword = "password"
+	TestLogin        = "test@example.com"
+	TestPassword     = "password"
+	nonExistingOrgID = 1000
 )
 
 func TestAdminApiEndpoint(t *testing.T) {
@@ -185,15 +186,15 @@ func TestAdminApiEndpoint(t *testing.T) {
 		var userLogin string
 		var orgId int64
 
-		bus.AddHandler("test", func(cmd *m.CreateUserCommand) error {
+		bus.AddHandler("test", func(cmd *models.CreateUserCommand) error {
 			userLogin = cmd.Login
 			orgId = cmd.OrgId
 
-			if orgId == 1000 {
-				return m.ErrOrgNotFound
+			if orgId == nonExistingOrgID {
+				return models.ErrOrgNotFound
 			}
 
-			cmd.Result = m.User{Id: TestUserID}
+			cmd.Result = models.User{Id: TestUserID}
 			return nil
 		})
 
@@ -210,7 +211,9 @@ func TestAdminApiEndpoint(t *testing.T) {
 				respJSON, err := simplejson.NewJson(sc.resp.Body.Bytes())
 				So(err, ShouldBeNil)
 				So(respJSON.Get("id").MustInt64(), ShouldEqual, TestUserID)
+				So(respJSON.Get("message").MustString(), ShouldEqual, "User created")
 
+				// test that userLogin and orgId were transmitted correctly to the handler
 				So(userLogin, ShouldEqual, TestLogin)
 				So(orgId, ShouldEqual, 0)
 			})
@@ -230,6 +233,7 @@ func TestAdminApiEndpoint(t *testing.T) {
 				respJSON, err := simplejson.NewJson(sc.resp.Body.Bytes())
 				So(err, ShouldBeNil)
 				So(respJSON.Get("id").MustInt64(), ShouldEqual, TestUserID)
+				So(respJSON.Get("message").MustString(), ShouldEqual, "User created")
 
 				So(userLogin, ShouldEqual, TestLogin)
 				So(orgId, ShouldEqual, TestOrgID)
@@ -240,7 +244,7 @@ func TestAdminApiEndpoint(t *testing.T) {
 			createCmd := dtos.AdminCreateUserForm{
 				Login:    TestLogin,
 				Password: TestPassword,
-				OrgId:    1000,
+				OrgId:    nonExistingOrgID,
 			}
 
 			adminCreateUserScenario("Should create the user", "/api/admin/users", "/api/admin/users", createCmd, func(sc *scenarioContext) {
@@ -411,7 +415,7 @@ func adminCreateUserScenario(desc string, url string, routePattern string, cmd d
 		defer bus.ClearBusHandlers()
 
 		sc := setupScenarioContext(url)
-		sc.defaultHandler = Wrap(func(c *m.ReqContext) {
+		sc.defaultHandler = Wrap(func(c *models.ReqContext) {
 			sc.context = c
 			sc.context.UserId = TestUserID
 

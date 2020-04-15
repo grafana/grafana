@@ -3,9 +3,10 @@ package sqlstore
 import (
 	"context"
 	"fmt"
-	"github.com/grafana/grafana/pkg/setting"
 	"testing"
 	"time"
+
+	"github.com/grafana/grafana/pkg/setting"
 
 	. "github.com/smartystreets/goconvey/convey"
 
@@ -101,15 +102,16 @@ func TestUserDataAccess(t *testing.T) {
 			})
 
 			Convey("Don't create user assigned to unknown organization", func() {
+				const nonExistingOrgID = 10000
 				cmd := &models.CreateUserCommand{
 					Email: "usertest@test.com",
 					Name:  "user name",
 					Login: "user_test_login",
-					OrgId: 10000,
+					OrgId: nonExistingOrgID,
 				}
 
 				err := CreateUser(context.Background(), cmd)
-				So(err, ShouldNotBeNil)
+				So(err, ShouldEqual, models.ErrOrgNotFound)
 			})
 		})
 
