@@ -1,8 +1,11 @@
 import { PanelPlugin } from '@grafana/data';
 import { TablePanel } from './TablePanel';
 import { CustomFieldConfig, Options } from './types';
+import { tablePanelChangedHandler, tableMigrationHandler } from './migrations';
 
 export const plugin = new PanelPlugin<Options, CustomFieldConfig>(TablePanel)
+  .setPanelChangeHandler(tablePanelChangedHandler)
+  .setMigrationHandler(tableMigrationHandler)
   .useFieldConfig({
     useCustomConfig: builder => {
       builder

@@ -1,6 +1,6 @@
 import React, { useContext } from 'react';
 import { css } from 'emotion';
-import { CustomScrollbar, Icon, JSONFormatter, ThemeContext } from '@grafana/ui';
+import { Icon, JSONFormatter, ThemeContext } from '@grafana/ui';
 import { GrafanaTheme, DataFrame } from '@grafana/data';
 
 interface TransformationEditorProps {
@@ -17,42 +17,27 @@ export const TransformationEditor = ({ editor, input, output, debugMode }: Trans
   const styles = getStyles(theme);
 
   return (
-    <div>
-      <div className={styles.editor}>
-        {editor}
-        {debugMode && (
-          <div className={styles.debugWrapper}>
-            <div className={styles.debug}>
-              <div className={styles.debugTitle}>Input</div>
-              <div className={styles.debugJson}>
-                <CustomScrollbar
-                  className={css`
-                    height: 100%;
-                  `}
-                >
-                  <JSONFormatter json={input} />
-                </CustomScrollbar>
-              </div>
-            </div>
-            <div className={styles.debugSeparator}>
-              <Icon name="arrow-right" />
-            </div>
-            <div className={styles.debug}>
-              <div className={styles.debugTitle}>Output</div>
-
-              <div className={styles.debugJson}>
-                <CustomScrollbar
-                  className={css`
-                    height: 100%;
-                  `}
-                >
-                  <JSONFormatter json={output} />
-                </CustomScrollbar>
-              </div>
+    <div className={styles.editor}>
+      {editor}
+      {debugMode && (
+        <div className={styles.debugWrapper}>
+          <div className={styles.debug}>
+            <div className={styles.debugTitle}>Input</div>
+            <div className={styles.debugJson}>
+              <JSONFormatter json={input} />
             </div>
           </div>
-        )}
-      </div>
+          <div className={styles.debugSeparator}>
+            <Icon name="arrow-right" />
+          </div>
+          <div className={styles.debug}>
+            <div className={styles.debugTitle}>Output</div>
+            <div className={styles.debugJson}>
+              <JSONFormatter json={output} />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
@@ -63,7 +48,6 @@ const getStyles = (theme: GrafanaTheme) => ({
     padding: 4px 8px 4px 8px;
     position: relative;
     height: 35px;
-    background: ${theme.colors.textFaint};
     border-radius: 4px 4px 0 0;
     flex-wrap: nowrap;
     justify-content: space-between;
@@ -87,9 +71,7 @@ const getStyles = (theme: GrafanaTheme) => ({
       color: ${theme.colors.text};
     }
   `,
-  editor: css`
-    padding-top: ${theme.spacing.sm};
-  `,
+  editor: css``,
   debugWrapper: css`
     display: flex;
     flex-direction: row;
