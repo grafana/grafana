@@ -40,7 +40,7 @@ const getTabStyles = stylesFactory((theme: GrafanaTheme) => {
       }
 
       .counter {
-        margin-left: ${theme.spacing.xs};
+        margin-left: ${theme.spacing.sm};
       }
     `,
     activeStyle: css`
