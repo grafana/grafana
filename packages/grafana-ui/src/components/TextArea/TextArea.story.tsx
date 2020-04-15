@@ -43,7 +43,7 @@ export const simple = () => {
 
   return (
     <div style={{ width: containerWidth }}>
-      <TextArea invalid={invalid} placeholder={placeholder} cols={cols} disabled={disabled} size={size} />
+      <TextArea invalid={invalid} placeholder={placeholder} cols={cols} disabled={disabled} />
     </div>
   );
 };

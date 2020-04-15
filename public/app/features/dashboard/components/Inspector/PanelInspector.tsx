@@ -65,8 +65,6 @@ interface State {
   metaDS?: DataSourceApi;
   // drawer width
   drawerWidth: string;
-  // after plugin is loaded
-  isInitialized: boolean;
 }
 
 export class PanelInspectorUnconnected extends PureComponent<Props, State> {
@@ -77,7 +75,6 @@ export class PanelInspectorUnconnected extends PureComponent<Props, State> {
 
     this.state = {
       isLoading: true,
-      isInitialized: false,
       last: {} as PanelData,
       data: [],
       selected: 0,
