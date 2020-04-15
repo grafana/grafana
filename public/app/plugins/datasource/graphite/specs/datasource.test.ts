@@ -165,7 +165,7 @@ describe('graphiteDatasource', () => {
     });
 
     it('should convert to millisecond resolution', () => {
-      expect(results.data[0].fields[0].values.get(0)).toBe(10);
+      expect(results.data[0].fields[1].values.get(0)).toBe(10);
     });
   });
 

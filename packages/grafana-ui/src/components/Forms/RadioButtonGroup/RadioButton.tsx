@@ -1,10 +1,11 @@
 import React from 'react';
-import { useTheme, stylesFactory, selectThemeVariant as stv } from '../../../themes';
+import { useTheme, stylesFactory } from '../../../themes';
 import { GrafanaTheme } from '@grafana/data';
 import { css, cx } from 'emotion';
 import { getFocusCss, getPropertiesForButtonSize } from '../commonStyles';
 
 export type RadioButtonSize = 'sm' | 'md';
+
 export interface RadioButtonProps {
   size?: RadioButtonSize;
   disabled?: boolean;
@@ -12,27 +13,27 @@ export interface RadioButtonProps {
   active: boolean;
   id: string;
   onChange: () => void;
+  fullWidth?: boolean;
 }
 
-const getRadioButtonStyles = stylesFactory((theme: GrafanaTheme, size: RadioButtonSize) => {
+const getRadioButtonStyles = stylesFactory((theme: GrafanaTheme, size: RadioButtonSize, fullWidth?: boolean) => {
   const { fontSize, height } = getPropertiesForButtonSize(theme, size);
   const horizontalPadding = theme.spacing[size] ?? theme.spacing.md;
-  const c = theme.colors;
+  const c = theme.palette;
 
-  const textColor = stv({ light: c.gray33, dark: c.gray70 }, theme.type);
-  const textColorHover = stv({ light: c.blueShade, dark: c.blueLight }, theme.type);
-  const textColorActive = stv({ light: c.blueShade, dark: c.blueLight }, theme.type);
-  const borderColor = stv({ light: c.gray4, dark: c.gray25 }, theme.type);
-  const borderColorHover = stv({ light: c.gray70, dark: c.gray33 }, theme.type);
-  const borderColorActive = stv({ light: c.blueShade, dark: c.blueLight }, theme.type);
-  const bg = stv({ light: c.gray98, dark: c.gray10 }, theme.type);
-  const bgDisabled = stv({ light: c.gray95, dark: c.gray15 }, theme.type);
-  const bgActive = stv({ light: c.white, dark: c.gray05 }, theme.type);
+  const textColor = theme.colors.textSemiWeak;
+  const textColorHover = theme.colors.text;
+  const textColorActive = theme.isLight ? c.blue77 : c.blue95;
+  const borderColor = theme.colors.border2;
+  const borderColorHover = theme.colors.border3;
+  const borderColorActive = theme.isLight ? c.blue77 : c.blue95;
+  const bg = theme.colors.bodyBg;
+  const bgDisabled = theme.isLight ? c.gray95 : c.gray15;
+  const bgActive = theme.isLight ? c.white : c.gray05;
 
   const border = `1px solid ${borderColor}`;
   const borderActive = `1px solid ${borderColorActive}`;
   const borderHover = `1px solid ${borderColorHover}`;
-  const fakeBold = `0 0 0.65px ${textColorHover}, 0 0 0.65px ${textColorHover}`;
 
   return {
     radio: css`
@@ -45,7 +46,6 @@ const getRadioButtonStyles = stylesFactory((theme: GrafanaTheme, size: RadioButt
       &:checked + label {
         border: ${borderActive};
         color: ${textColorActive};
-        text-shadow: ${fakeBold};
         background: ${bgActive};
         z-index: 3;
       }
@@ -60,26 +60,23 @@ const getRadioButtonStyles = stylesFactory((theme: GrafanaTheme, size: RadioButt
         background: ${bgDisabled};
         color: ${textColor};
       }
-
-      &:enabled + label:hover {
-        text-shadow: ${fakeBold};
-      }
     `,
     radioLabel: css`
       display: inline-block;
       position: relative;
       font-size: ${fontSize};
-      min-height: ${fontSize};
+      height: ${height};
+      line-height: ${height};
       color: ${textColor};
-      padding: calc((${height} - ${fontSize}) / 2) ${horizontalPadding} calc((${height} - ${fontSize}) / 2)
-        ${horizontalPadding};
-      line-height: 1;
+      padding: 0 ${horizontalPadding};
       margin-left: -1px;
       border-radius: ${theme.border.radius.sm};
       border: ${border};
       background: ${bg};
       cursor: pointer;
       z-index: 1;
+      flex-grow: ${fullWidth ? 1 : 0};
+      text-align: center;
 
       user-select: none;
 
@@ -100,9 +97,10 @@ export const RadioButton: React.FC<RadioButtonProps> = ({
   onChange,
   id,
   name = undefined,
+  fullWidth,
 }) => {
   const theme = useTheme();
-  const styles = getRadioButtonStyles(theme, size);
+  const styles = getRadioButtonStyles(theme, size, fullWidth);
 
   return (
     <>

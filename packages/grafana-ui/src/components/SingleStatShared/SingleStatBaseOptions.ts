@@ -11,7 +11,7 @@ import {
   MappingType,
   VizOrientation,
   PanelModel,
-  FieldDisplayOptions,
+  ReduceDataOptions,
   ThresholdsMode,
   ThresholdsConfig,
   validateFieldConfig,
@@ -19,11 +19,11 @@ import {
 } from '@grafana/data';
 
 export interface SingleStatBaseOptions {
-  fieldOptions: FieldDisplayOptions;
+  reduceOptions: ReduceDataOptions;
   orientation: VizOrientation;
 }
 
-const optionsToKeep = ['fieldOptions', 'orientation'];
+const optionsToKeep = ['reduceOptions', 'orientation'];
 
 export function sharedSingleStatPanelChangedHandler(
   panel: PanelModel<Partial<SingleStatBaseOptions>> | any,
@@ -131,9 +131,9 @@ export function sharedSingleStatMigrationHandler(panel: PanelModel<SingleStatBas
     options = moveThresholdsAndMappingsToField(options);
   }
 
-  if (previousVersion < 6.6) {
-    const { fieldOptions } = options;
+  const { fieldOptions } = options;
 
+  if (previousVersion < 6.6) {
     // discard the old `override` options and enter an empty array
     if (fieldOptions && fieldOptions.override) {
       const { override, ...rest } = options.fieldOptions;
@@ -178,16 +178,24 @@ export function sharedSingleStatMigrationHandler(panel: PanelModel<SingleStatBas
     panel.fieldConfig = panel.fieldConfig || { defaults: {}, overrides: [] };
     panel.fieldConfig = {
       defaults:
-        options.fieldOptions && options.fieldOptions.defaults
-          ? { ...panel.fieldConfig.defaults, ...options.fieldOptions.defaults }
+        fieldOptions && fieldOptions.defaults
+          ? { ...panel.fieldConfig.defaults, ...fieldOptions.defaults }
           : panel.fieldConfig.defaults,
       overrides:
-        options.fieldOptions && options.fieldOptions.overrides
-          ? [...panel.fieldConfig.overrides, ...options.fieldOptions.overrides]
+        fieldOptions && fieldOptions.overrides
+          ? [...panel.fieldConfig.overrides, ...fieldOptions.overrides]
           : panel.fieldConfig.overrides,
     };
-    delete options.fieldOptions.defaults;
-    delete options.fieldOptions.overrides;
+
+    if (fieldOptions) {
+      options.reduceOptions = {
+        values: fieldOptions.values,
+        limit: fieldOptions.limit,
+        calcs: fieldOptions.calcs,
+      };
+    }
+
+    delete options.fieldOptions;
   }
 
   return options as SingleStatBaseOptions;

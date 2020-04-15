@@ -4,7 +4,7 @@ import { connect, MapStateToProps, MapDispatchToProps } from 'react-redux';
 import { StoreState } from 'app/types';
 import { updateLocation } from 'app/core/actions';
 import { UrlQueryValue, getBackendSrv } from '@grafana/runtime';
-import { Forms } from '@grafana/ui';
+import { Forms, Button, Input } from '@grafana/ui';
 import { useAsync } from 'react-use';
 import Page from 'app/core/components/Page/Page';
 import { contextSrv } from 'app/core/core';
@@ -27,7 +27,7 @@ interface FormModel {
 
 const navModel = {
   main: {
-    icon: 'gicon gicon-branding',
+    icon: 'grafana',
     text: 'Invite',
     subTitle: 'Register your Grafana account',
     breadcrumbs: [{ title: 'Login', url: 'login' }],
@@ -73,7 +73,7 @@ const SingupInvitedPageUnconnected: FC<DispatchProps & ConnectedProps> = ({ code
           {({ register, errors }) => (
             <>
               <Forms.Field invalid={!!errors.email} error={!!errors.email && errors.email.message} label="Email">
-                <Forms.Input
+                <Input
                   size="md"
                   placeholder="email@example.com"
                   name="email"
@@ -87,14 +87,14 @@ const SingupInvitedPageUnconnected: FC<DispatchProps & ConnectedProps> = ({ code
                 />
               </Forms.Field>
               <Forms.Field invalid={!!errors.name} error={!!errors.name && errors.name.message} label="Name">
-                <Forms.Input size="md" placeholder="Name (optional)" name="name" ref={register} />
+                <Input size="md" placeholder="Name (optional)" name="name" ref={register} />
               </Forms.Field>
               <Forms.Field
                 invalid={!!errors.username}
                 error={!!errors.username && errors.username.message}
                 label="Username"
               >
-                <Forms.Input
+                <Input
                   size="md"
                   placeholder="Username"
                   name="username"
@@ -106,7 +106,7 @@ const SingupInvitedPageUnconnected: FC<DispatchProps & ConnectedProps> = ({ code
                 error={!!errors.password && errors.password.message}
                 label="Password"
               >
-                <Forms.Input
+                <Input
                   size="md"
                   type="password"
                   placeholder="Password"
@@ -115,7 +115,7 @@ const SingupInvitedPageUnconnected: FC<DispatchProps & ConnectedProps> = ({ code
                 />
               </Forms.Field>
 
-              <Forms.Button type="submit">Sign Up</Forms.Button>
+              <Button type="submit">Sign Up</Button>
             </>
           )}
         </Forms.Form>

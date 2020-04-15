@@ -4,7 +4,7 @@
   height: $navbarHeight;
   padding: 0 16px 0 60px;
   display: flex;
-  flex-grow: 1;
+  flex-grow: 0;
   border-bottom: 1px solid transparent;
   transition-duration: 350ms;
   transition-timing-function: ease-in-out;
@@ -45,7 +45,6 @@
   white-space: nowrap;
   display: block;
   margin: 0;
-  color: $headings-color;
   font-size: $font-size-lg;
   min-height: $navbarHeight;
   line-height: $navbarHeight;
@@ -63,10 +62,17 @@
       display: inline-block;
     }
   }
+
+  .navbar-page-btn__folder-icon {
+    display: none;
+
+    @include media-breakpoint-up(md) {
+      display: inline-block;
+    }
+  }
 }
 
 .navbar-page-btn__folder {
-  color: $text-color-weak;
   display: none;
   padding-right: 8px;
 
@@ -118,7 +124,6 @@ i.navbar-page-btn__search {
   align-items: center;
   font-weight: $btn-font-weight;
   padding: 0 $space-sm;
-  line-height: 32px;
   height: 32px;
   color: $text-muted;
   border: 1px solid $navbar-button-border;
@@ -171,12 +176,12 @@ i.navbar-page-btn__search {
     }
   }
 
-  &--secondary {
-    @include buttonBackground($btn-secondary-bg, $btn-secondary-bg-hl);
+  &--primary {
+    @include buttonBackground($btn-primary-bg, $btn-primary-bg-hl);
   }
 
   &:hover {
-    .fa {
+    svg {
       color: $text-color;
     }
   }

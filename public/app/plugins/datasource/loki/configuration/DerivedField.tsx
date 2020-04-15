@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { css } from 'emotion';
-import { Button, FormField, DataLinkInput, stylesFactory, Switch } from '@grafana/ui';
+import { Button, FormField, DataLinkInput, stylesFactory, LegacyForms } from '@grafana/ui';
+const { Switch } = LegacyForms;
 import { VariableSuggestion } from '@grafana/data';
 import { DataSourceSelectItem } from '@grafana/data';
 
@@ -66,9 +67,9 @@ export const DerivedField = (props: Props) => {
           }
         />
         <Button
-          variant={'inverse'}
+          variant="destructive"
           title="Remove field"
-          icon={'fa fa-times'}
+          icon="times"
           onClick={event => {
             event.preventDefault();
             onDelete();

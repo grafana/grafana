@@ -8,7 +8,6 @@ import { store } from 'app/store/store';
 import { AppEventEmitter, CoreEvents } from 'app/types';
 
 import Mousetrap from 'mousetrap';
-import { PanelEvents } from '@grafana/data';
 import 'mousetrap-global-bind';
 import { ContextSrv } from './context_srv';
 import { ILocationService, IRootScopeService, ITimeoutService } from 'angular';
@@ -128,12 +127,14 @@ export class KeybindingSrv {
 
     if (search.editPanel) {
       delete search.editPanel;
+      delete search.tab;
       this.$location.search(search);
       return;
     }
 
-    if (search.fullscreen) {
-      appEvents.emit(PanelEvents.panelChangeView, { fullscreen: false, edit: false });
+    if (search.viewPanel) {
+      delete search.viewPanel;
+      this.$location.search(search);
       return;
     }
 
@@ -212,23 +213,16 @@ export class KeybindingSrv {
     // edit panel
     this.bind('e', () => {
       if (dashboard.canEditPanelById(dashboard.meta.focusPanelId)) {
-        appEvents.emit(PanelEvents.panelChangeView, {
-          fullscreen: true,
-          edit: true,
-          panelId: dashboard.meta.focusPanelId,
-          toggle: true,
-        });
+        const search = _.extend(this.$location.search(), { editPanel: dashboard.meta.focusPanelId });
+        this.$location.search(search);
       }
     });
 
     // view panel
     this.bind('v', () => {
       if (dashboard.meta.focusPanelId) {
-        appEvents.emit(PanelEvents.panelChangeView, {
-          fullscreen: true,
-          panelId: dashboard.meta.focusPanelId,
-          toggle: true,
-        });
+        const search = _.extend(this.$location.search(), { viewPanel: dashboard.meta.focusPanelId });
+        this.$location.search(search);
       }
     });
 

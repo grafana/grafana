@@ -330,15 +330,23 @@ export class VariableSrv {
     for (const v of this.variables) {
       const key = `var-${v.name}`;
       if (vars.hasOwnProperty(key)) {
-        update.push(v.setValueFromUrl(vars[key]));
+        if (this.isVariableUrlValueDifferentFromCurrent(v, vars[key])) {
+          update.push(v.setValueFromUrl(vars[key]));
+        }
       }
     }
+
     if (update.length) {
       Promise.all(update).then(() => {
         this.dashboard.templateVariableValueUpdated();
         this.dashboard.startRefresh();
       });
     }
+  }
+
+  isVariableUrlValueDifferentFromCurrent(variable: any, urlValue: any) {
+    // lodash _.isEqual handles array of value equality checks as well
+    return !_.isEqual(variable.current.value, urlValue);
   }
 
   updateUrlParamsWithCurrentVariables() {

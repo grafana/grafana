@@ -4,7 +4,7 @@
      ng-class="{active: ctrl.viewId === section.id}"
      ng-repeat="section in ctrl.sections"
      aria-label="{{ctrl.selectors.sectionItems(section.title)}}">
-    <i class="{{::section.icon}}"></i>
+    <icon name="'{{::section.icon}}'" style="margin-right: 4px;"></icon>
     {{::section.title}}
   </a>
 
@@ -13,7 +13,7 @@
       <save-dashboard-button getDashboard="ctrl.getDashboard" aria-label="Dashboard settings aside actions Save button" />
     </div>
     <div ng-show="ctrl.canSaveAs">
-      <save-dashboard-as-button getDashboard="ctrl.getDashboard" aria-label="Dashboard settings aside actions Save as button" variant="'secondary'" useNewForms="true"/>
+      <save-dashboard-as-button getDashboard="ctrl.getDashboard" aria-label="Dashboard settings aside actions Save as button" variant="'secondary'" />
     </div>
   </div>
 </aside>

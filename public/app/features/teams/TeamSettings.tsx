@@ -1,6 +1,7 @@
 import React from 'react';
 import { connect } from 'react-redux';
-import { FormLabel, Input } from '@grafana/ui';
+import { FormLabel, LegacyForms } from '@grafana/ui';
+const { Input } = LegacyForms;
 
 import { SharedPreferences } from 'app/core/components/SharedPreferences/SharedPreferences';
 import { updateTeam } from './state/actions';

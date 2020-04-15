@@ -16,9 +16,9 @@ import {
   SecretFormField,
   SeriesColorPickerPopoverWithTheme,
   UnitPicker,
+  Icon,
 } from '@grafana/ui';
 import { FunctionEditor } from 'app/plugins/datasource/graphite/FunctionEditor';
-import { SearchField } from './components/search/SearchField';
 import ReactProfileWrapper from 'app/features/profile/ReactProfileWrapper';
 import { LokiAnnotationsQueryEditor } from '../plugins/datasource/loki/components/AnnotationsQueryEditor';
 import { HelpModal } from './components/help/HelpModal';
@@ -29,9 +29,17 @@ import {
   SaveDashboardButtonConnected,
 } from '../features/dashboard/components/SaveDashboard/SaveDashboardButton';
 import { VariableEditorContainer } from '../features/variables/editor/VariableEditorContainer';
+import { SearchField, SearchResults, SearchWrapper, SearchResultsFilter } from '../features/search';
 
 export function registerAngularDirectives() {
   react2AngularDirective('footer', Footer, []);
+  react2AngularDirective('icon', Icon, [
+    'color',
+    'name',
+    'size',
+    'type',
+    ['onClick', { watchDepth: 'reference', wrapApply: true }],
+  ]);
   react2AngularDirective('helpModal', HelpModal, []);
   react2AngularDirective('sidemenu', SideMenu, []);
   react2AngularDirective('functionEditor', FunctionEditor, ['func', 'onRemove', 'onMoveLeft', 'onMoveRight']);
@@ -50,12 +58,36 @@ export function registerAngularDirectives() {
     'infoBox',
     'infoBoxTitle',
   ]);
+  //Search
   react2AngularDirective('searchField', SearchField, [
     'query',
     'autoFocus',
     ['onChange', { watchDepth: 'reference' }],
     ['onKeyDown', { watchDepth: 'reference' }],
   ]);
+  react2AngularDirective('searchResults', SearchResults, [
+    'results',
+    'editable',
+    'selectors',
+    ['onSelectionChanged', { watchDepth: 'reference' }],
+    ['onTagSelected', { watchDepth: 'reference' }],
+    ['onFolderExpanding', { watchDepth: 'reference' }],
+    ['onToggleSelection', { watchDepth: 'reference' }],
+  ]);
+  react2AngularDirective('searchFilters', SearchResultsFilter, [
+    'allChecked',
+    'canMove',
+    'canDelete',
+    'tagFilterOptions',
+    'selectedStarredFilter',
+    'selectedTagFilter',
+    ['onSelectAllChanged', { watchDepth: 'reference' }],
+    ['deleteItem', { watchDepth: 'reference' }],
+    ['moveTo', { watchDepth: 'reference' }],
+    ['onStarredFilterChange', { watchDepth: 'reference' }],
+    ['onTagFilterChange', { watchDepth: 'reference' }],
+  ]);
+  react2AngularDirective('searchWrapper', SearchWrapper, []);
   react2AngularDirective('tagFilter', TagFilter, [
     'tags',
     ['onChange', { watchDepth: 'reference' }],
@@ -163,7 +195,6 @@ export function registerAngularDirectives() {
   ]);
   react2AngularDirective('saveDashboardAsButton', SaveDashboardAsButtonConnected, [
     'variant',
-    'useNewForms',
     ['getDashboard', { watchDepth: 'reference', wrapApply: true }],
     ['onSaveSuccess', { watchDepth: 'reference', wrapApply: true }],
   ]);

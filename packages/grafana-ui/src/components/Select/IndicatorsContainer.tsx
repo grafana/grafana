@@ -1,18 +1,24 @@
 import React from 'react';
+import { useTheme } from '../../themes/ThemeContext';
+import { getInputStyles } from '../Input/Input';
+import { cx, css } from 'emotion';
 
-// Ignoring because I couldn't get @types/react-select work wih Torkel's fork
-// @ts-ignore
-import { components } from '@torkelo/react-select';
+export const IndicatorsContainer = React.forwardRef<HTMLDivElement, React.PropsWithChildren<any>>((props, ref) => {
+  const { children } = props;
+  const theme = useTheme();
+  const styles = getInputStyles({ theme, invalid: false });
 
-export const IndicatorsContainer = (props: any) => {
-  const isOpen = props.selectProps.menuIsOpen;
   return (
-    <components.IndicatorsContainer {...props}>
-      <span
-        className={`gf-form-select-box__select-arrow ${isOpen ? `gf-form-select-box__select-arrow--reversed` : ''}`}
-      />
-    </components.IndicatorsContainer>
+    <div
+      className={cx(
+        styles.suffix,
+        css`
+          position: relative;
+        `
+      )}
+      ref={ref}
+    >
+      {children}
+    </div>
   );
-};
-
-export default IndicatorsContainer;
+});

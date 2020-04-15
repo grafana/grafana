@@ -7,16 +7,8 @@ import coreModule from 'app/core/core_module';
 // Utils & Services
 import { dedupAnnotations } from './events_processing';
 // Types
-import { DashboardModel } from '../dashboard/state/DashboardModel';
-import {
-  AnnotationEvent,
-  AppEvents,
-  DataSourceApi,
-  PanelEvents,
-  PanelModel,
-  ScopedVars,
-  TimeRange,
-} from '@grafana/data';
+import { DashboardModel, PanelModel } from '../dashboard/state';
+import { AnnotationEvent, AppEvents, DataSourceApi, PanelEvents, ScopedVars, TimeRange } from '@grafana/data';
 import { getBackendSrv, getDataSourceSrv } from '@grafana/runtime';
 import templateSrv from '../templating/template_srv';
 import { appEvents } from 'app/core/core';
@@ -45,10 +37,12 @@ export class AnnotationsSrv {
       .then(results => {
         // combine the annotations and flatten results
         let annotations: AnnotationEvent[] = flattenDeep(results[0]);
+        // when in edit mode we need to use this function to get the saved id
+        let panelFilterId = options.panel.getSavedId();
 
         annotations = annotations.filter(item => {
           return (
-            this.matchPanelId(item, options.panel.id) &&
+            this.matchPanelId(item, panelFilterId) &&
             (!options.panel.options.annotation ||
               this.matchPanelAnnotationTags(
                 item,
@@ -62,7 +56,7 @@ export class AnnotationsSrv {
         annotations = dedupAnnotations(annotations);
 
         // look for alert state for this panel
-        const alertState: any = results[1].find((res: any) => res.panelId === options.panel.id);
+        const alertState: any = results[1].find((res: any) => res.panelId === panelFilterId);
 
         return {
           annotations: annotations,

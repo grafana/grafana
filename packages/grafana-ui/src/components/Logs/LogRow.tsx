@@ -1,5 +1,6 @@
 import React, { PureComponent } from 'react';
 import { Field, LinkModel, LogRowModel, TimeZone, DataQueryResponse, GrafanaTheme } from '@grafana/data';
+import { Icon } from '../Icon/Icon';
 import { cx, css } from 'emotion';
 
 import {
@@ -43,11 +44,13 @@ interface State {
 }
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
-  const bgColor = selectThemeVariant({ light: theme.colors.gray7, dark: theme.colors.dark2 }, theme.type);
+  const bgColor = selectThemeVariant({ light: theme.palette.gray7, dark: theme.palette.dark2 }, theme.type);
   return {
     topVerticalAlign: css`
       label: topVerticalAlign;
       vertical-align: top;
+      margin-top: -${theme.spacing.xs};
+      margin-left: -${theme.spacing.xxs};
     `,
     hoverBackground: css`
       label: hoverBackground;
@@ -129,9 +132,6 @@ class UnThemedLogRow extends PureComponent<Props, State> {
     const style = getLogRowStyles(theme, row.logLevel);
     const styles = getStyles(theme);
     const showUtc = timeZone === 'utc';
-    const showDetailsClassName = showDetails
-      ? cx(['fa fa-chevron-down', styles.topVerticalAlign])
-      : cx(['fa fa-chevron-right', styles.topVerticalAlign]);
     const hoverBackground = cx(style.logsRow, { [styles.hoverBackground]: hasHoverBackground });
 
     return (
@@ -150,7 +150,7 @@ class UnThemedLogRow extends PureComponent<Props, State> {
           <td className={style.logsRowLevel} />
           {!allowDetails && (
             <td title={showDetails ? 'Hide log details' : 'See log details'} className={style.logsRowToggleDetails}>
-              <i className={showDetailsClassName} />
+              <Icon className={styles.topVerticalAlign} name={showDetails ? 'angle-down' : 'angle-right'} />
             </td>
           )}
           {showTime && showUtc && (

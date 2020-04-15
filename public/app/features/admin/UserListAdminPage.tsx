@@ -3,7 +3,7 @@ import { css, cx } from 'emotion';
 import { hot } from 'react-hot-loader';
 import { connect, MapDispatchToProps, MapStateToProps } from 'react-redux';
 import { NavModel } from '@grafana/data';
-import { Pagination, Forms, Tooltip, HorizontalGroup, stylesFactory } from '@grafana/ui';
+import { Pagination, Tooltip, HorizontalGroup, stylesFactory, LinkButton, Input, Icon } from '@grafana/ui';
 import { StoreState, UserDTO } from '../../types';
 import Page from 'app/core/components/Page/Page';
 import { getNavModel } from '../../core/selectors/navModel';
@@ -42,20 +42,20 @@ const UserListAdminPageUnConnected: React.FC<Props> = props => {
         <>
           <div>
             <HorizontalGroup justify="space-between">
-              <Forms.Input
+              <Input
                 size="md"
                 type="text"
-                placeholder="Find user by name/login/email"
+                placeholder="Search user by login,email or name"
                 tabIndex={1}
                 autoFocus={true}
                 value={props.query}
                 spellCheck={false}
                 onChange={event => props.changeQuery(event.currentTarget.value)}
-                prefix={<i className="fa fa-search" />}
+                prefix={<Icon name="search" />}
               />
-              <Forms.LinkButton href="admin/users/create" variant="primary">
+              <LinkButton href="admin/users/create" variant="primary">
                 New user
-              </Forms.LinkButton>
+              </LinkButton>
             </HorizontalGroup>
           </div>
 
@@ -70,7 +70,7 @@ const UserListAdminPageUnConnected: React.FC<Props> = props => {
                   <th>
                     Seen&nbsp;
                     <Tooltip placement="top" content="Time since user was seen using Grafana">
-                      <i className="fa fa-question-circle" />
+                      <Icon name="question-circle" />
                     </Tooltip>
                   </th>
                   <th></th>
@@ -113,7 +113,7 @@ const renderUser = (user: UserDTO) => {
         {user.isAdmin && (
           <a href={editUrl}>
             <Tooltip placement="top" content="Grafana Admin">
-              <i className="fa fa-shield" />
+              <Icon name="shield" />
             </Tooltip>
           </a>
         )}

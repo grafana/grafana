@@ -117,9 +117,9 @@ export class MetricTankMetaInspector extends PureComponent<Props, State> {
 
 const getStyles = stylesFactory(() => {
   const { theme } = config;
-  const borderColor = theme.isDark ? theme.colors.gray25 : theme.colors.gray85;
-  const background = theme.isDark ? theme.colors.dark1 : theme.colors.white;
-  const headerBg = theme.isDark ? theme.colors.gray15 : theme.colors.gray85;
+  const borderColor = theme.isDark ? theme.palette.gray25 : theme.palette.gray85;
+  const background = theme.isDark ? theme.palette.dark1 : theme.palette.white;
+  const headerBg = theme.isDark ? theme.palette.gray15 : theme.palette.gray85;
 
   return {
     metaItem: css`
@@ -160,14 +160,14 @@ const getStyles = stylesFactory(() => {
       width: 60px;
     `,
     bucketRetention: css`
-      background: linear-gradient(0deg, ${theme.colors.blue85}, ${theme.colors.blue95});
+      background: linear-gradient(0deg, ${theme.palette.blue85}, ${theme.palette.blue95});
       text-align: center;
-      color: ${theme.colors.white};
+      color: ${theme.palette.white};
       margin-right: ${theme.spacing.md};
       border-radius: ${theme.border.radius.md};
     `,
     bucketRetentionActive: css`
-      background: linear-gradient(0deg, ${theme.colors.greenBase}, ${theme.colors.greenShade});
+      background: linear-gradient(0deg, ${theme.palette.greenBase}, ${theme.palette.greenShade});
     `,
   };
 });

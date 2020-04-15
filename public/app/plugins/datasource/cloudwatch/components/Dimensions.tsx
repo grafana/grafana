@@ -1,7 +1,7 @@
 import React, { FunctionComponent, Fragment, useState, useEffect } from 'react';
 import isEqual from 'lodash/isEqual';
 import { SelectableValue } from '@grafana/data';
-import { SegmentAsync } from '@grafana/ui';
+import { SegmentAsync, Icon } from '@grafana/ui';
 import { SelectableStrings } from '../types';
 
 export interface Props {
@@ -69,7 +69,7 @@ export const Dimensions: FunctionComponent<Props> = ({ dimensions, loadValues, l
           allowCustomValue
           Component={
             <a className="gf-form-label query-part">
-              <i className="fa fa-plus" />
+              <Icon name="plus" />
             </a>
           }
           loadOptions={() => loadKeys().then(excludeUsedKeys)}

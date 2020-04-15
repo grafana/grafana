@@ -190,13 +190,17 @@ const assertAdding3dependantQueryVariablesScenario = (queryVariables: QueryVaria
   for (let queryVariableIndex = 0; queryVariableIndex < queryVariables.length; queryVariableIndex++) {
     const { name, label, query, options, selectedOption } = queryVariables[queryVariableIndex];
     const asserts = queryVariables.slice(0, queryVariableIndex + 1);
-    createQueryVariable({
-      dataSourceName: e2e.context().get('lastAddedDataSource'),
-      name,
-      label,
-      query,
-      options,
-      selectedOption,
+    // @todo remove `@ts-ignore` when possible
+    // @ts-ignore
+    e2e.getScenarioContext().then(({ lastAddedDataSource }) => {
+      createQueryVariable({
+        dataSourceName: lastAddedDataSource,
+        name,
+        label,
+        query,
+        options,
+        selectedOption,
+      });
     });
 
     assertVariableTable(asserts);
@@ -205,7 +209,7 @@ const assertAdding3dependantQueryVariablesScenario = (queryVariables: QueryVaria
     e2e.pages.SaveDashboardModal.save().click();
     e2e.flows.assertSuccessNotification();
 
-    e2e.pages.Dashboard.Toolbar.backArrow().click();
+    e2e.pages.Components.BackButton.backArrow().click();
 
     assertVariableLabelsAndComponents(asserts);
 
@@ -260,7 +264,7 @@ const assertDuplicateItem = (queryVariables: QueryVariableData[]) => {
   e2e.pages.SaveDashboardModal.save().click();
   e2e.flows.assertSuccessNotification();
 
-  e2e.pages.Dashboard.Toolbar.backArrow().click();
+  e2e.pages.Components.BackButton.backArrow().click();
 
   e2e.pages.Dashboard.SubMenu.submenuItemLabels(newItem.label).should('be.visible');
   e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownValueLinkTexts(newItem.selectedOption)
@@ -296,7 +300,7 @@ const assertDeleteItem = (queryVariables: QueryVariableData[]) => {
   e2e.pages.SaveDashboardModal.save().click();
   e2e.flows.assertSuccessNotification();
 
-  e2e.pages.Dashboard.Toolbar.backArrow().click();
+  e2e.pages.Components.BackButton.backArrow().click();
 
   e2e.pages.Dashboard.SubMenu.submenuItemLabels(itemToDelete.label).should('not.exist');
 
@@ -343,7 +347,7 @@ const assertUpdateItem = (data: QueryVariableData[]) => {
   e2e.pages.Dashboard.Settings.Variables.Edit.General.generalHideSelect().select('');
   e2e.pages.Dashboard.Settings.Variables.Edit.ConstantVariable.constantOptionsQueryInput().type(updatedItem.query);
 
-  e2e.pages.Dashboard.Toolbar.backArrow().click();
+  e2e.pages.Components.BackButton.backArrow().click();
 
   e2e()
     .window()
@@ -403,7 +407,7 @@ const assertMoveDownItem = (data: QueryVariableData[]) => {
       });
   });
 
-  e2e.pages.Dashboard.Toolbar.backArrow().click();
+  e2e.pages.Components.BackButton.backArrow().click();
 
   assertVariableLabelsAndComponents(queryVariables);
 
@@ -548,7 +552,7 @@ const assertMoveUpItem = (data: QueryVariableData[]) => {
       });
   });
 
-  e2e.pages.Dashboard.Toolbar.backArrow().click();
+  e2e.pages.Components.BackButton.backArrow().click();
 
   assertVariableLabelsAndComponents(queryVariables);
 
@@ -565,7 +569,11 @@ e2e.scenario({
   addScenarioDashBoard: true,
   skipScenario: false,
   scenario: () => {
-    e2e.flows.openDashboard(e2e.context().get('lastAddedDashboardUid'));
+    // @todo remove `@ts-ignore` when possible
+    // @ts-ignore
+    e2e.getScenarioContext().then(({ lastAddedDashboardUid }) => {
+      e2e.flows.openDashboard(lastAddedDashboardUid);
+    });
     e2e.pages.Dashboard.Toolbar.toolbarItems('Dashboard settings').click();
     e2e.pages.Dashboard.Settings.General.sectionItems('Variables').click();
     e2e.pages.Dashboard.Settings.Variables.List.addVariableCTA().click();
@@ -619,5 +627,11 @@ e2e.scenario({
 
     // assert that move up works
     assertMoveUpItem(queryVariables);
+
+    e2e()
+      .window()
+      .then((win: any) => {
+        logSection('This scenario ran with these featureToggles', win.grafanaBootData.settings.featureToggles);
+      });
   },
 });

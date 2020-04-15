@@ -56,6 +56,8 @@
       name: GitHub
     - link: /auth/gitlab/
       name: GitLab
+    - link: /auth/okta/
+      name: Okta
     - link: /auth/saml/
       name: SAML
     - link: /auth/team-sync/
@@ -265,7 +267,7 @@
     link: /enterprise/license-expiration/
   - name: Export dashboard as PDF
     link: /enterprise/export-pdf/
-- name: Tutorials
+- name: Guides
   link: /tutorials/
   children:
   - name: Run Grafana behind a reverse proxy

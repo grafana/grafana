@@ -1,11 +1,11 @@
 import React from 'react';
-import { DynamicConfigValue, FieldConfigEditorRegistry, FieldOverrideContext, GrafanaTheme } from '@grafana/data';
+import { DynamicConfigValue, FieldConfigOptionsRegistry, FieldOverrideContext, GrafanaTheme } from '@grafana/data';
 import { FieldConfigItemHeaderTitle, selectThemeVariant, stylesFactory, useTheme } from '@grafana/ui';
 
 import { css } from 'emotion';
 interface DynamicConfigValueEditorProps {
   property: DynamicConfigValue;
-  editorsRegistry: FieldConfigEditorRegistry;
+  registry: FieldConfigOptionsRegistry;
   onChange: (value: DynamicConfigValue) => void;
   context: FieldOverrideContext;
   onRemove: () => void;
@@ -14,13 +14,13 @@ interface DynamicConfigValueEditorProps {
 export const DynamicConfigValueEditor: React.FC<DynamicConfigValueEditorProps> = ({
   property,
   context,
-  editorsRegistry,
+  registry,
   onChange,
   onRemove,
 }) => {
   const theme = useTheme();
   const styles = getStyles(theme);
-  const item = editorsRegistry?.getIfExists(property.prop);
+  const item = registry?.getIfExists(property.id);
 
   if (!item) {
     return null;
@@ -47,19 +47,20 @@ export const DynamicConfigValueEditor: React.FC<DynamicConfigValueEditorProps> =
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
   const borderColor = selectThemeVariant(
     {
-      light: theme.colors.gray85,
-      dark: theme.colors.dark9,
+      light: theme.palette.gray85,
+      dark: theme.palette.dark9,
     },
     theme.type
   );
 
   const highlightColor = selectThemeVariant(
     {
-      light: theme.colors.blueLight,
-      dark: theme.colors.blueShade,
+      light: theme.palette.blue95,
+      dark: theme.palette.blue77,
     },
     theme.type
   );
+
   return {
     wrapper: css`
       border-top: 1px dashed ${borderColor};

@@ -21,7 +21,8 @@ import {
 // Components
 import RichHistoryCard from './RichHistoryCard';
 import { sortOrderOptions } from './RichHistory';
-import { Select, Slider } from '@grafana/ui';
+import { LegacyForms, Slider } from '@grafana/ui';
+const { Select } = LegacyForms;
 
 export interface Props {
   queries: RichHistoryQuery[];
@@ -36,7 +37,7 @@ export interface Props {
 }
 
 const getStyles = stylesFactory((theme: GrafanaTheme, height: number) => {
-  const bgColor = theme.isLight ? theme.colors.gray5 : theme.colors.dark4;
+  const bgColor = theme.isLight ? theme.palette.gray5 : theme.palette.dark4;
 
   /* 134px is based on the width of the Query history tabs bar, so the content is aligned to right side of the tab */
   const cardWidth = '100% - 134px';

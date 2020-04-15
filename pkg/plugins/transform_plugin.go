@@ -7,7 +7,6 @@ import (
 	"path"
 	"strconv"
 
-	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana-plugin-sdk-go/genproto/pluginv2"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
@@ -103,14 +102,25 @@ func (tw *TransformWrapper) Transform(ctx context.Context, query *tsdb.TsdbQuery
 		return nil, err
 	}
 
-	return &tsdb.Response{
-		Results: map[string]*tsdb.QueryResult{
-			"": {
-				Dataframes: pbRes.Frames,
-				Meta:       simplejson.NewFromAny(pbRes.Metadata),
-			},
-		},
-	}, nil
+	tR := &tsdb.Response{
+		Results: make(map[string]*tsdb.QueryResult, len(pbRes.Responses)),
+	}
+	for refID, res := range pbRes.Responses {
+		tRes := &tsdb.QueryResult{
+			RefId:      refID,
+			Dataframes: res.Frames,
+		}
+		if len(res.JsonMeta) != 0 {
+			tRes.Meta = simplejson.NewFromAny(res.JsonMeta)
+		}
+		if res.Error != "" {
+			tRes.Error = fmt.Errorf(res.Error)
+			tRes.ErrorString = res.Error
+		}
+		tR.Results[refID] = tRes
+	}
+
+	return tR, nil
 }
 
 type transformCallback struct {
@@ -168,18 +178,16 @@ func (s *transformCallback) QueryData(ctx context.Context, req *pluginv2.QueryDa
 	}
 	// Convert tsdb results (map) to plugin-model/datasource (slice) results.
 	// Only error, tsdb.Series, and encoded Dataframes responses are mapped.
-
-	encodedFrames := [][]byte{}
+	responses := make(map[string]*pluginv2.DataResponse, len(tsdbRes.Results))
 	for refID, res := range tsdbRes.Results {
-
+		pRes := &pluginv2.DataResponse{}
 		if res.Error != nil {
-			// TODO add Errors property to Frame
-			encodedFrames = append(encodedFrames, nil)
-			continue
+			pRes.Error = res.Error.Error()
 		}
 
 		if res.Dataframes != nil {
-			encodedFrames = append(encodedFrames, res.Dataframes...)
+			pRes.Frames = res.Dataframes
+			responses[refID] = pRes
 			continue
 		}
 
@@ -189,12 +197,22 @@ func (s *transformCallback) QueryData(ctx context.Context, req *pluginv2.QueryDa
 			if err != nil {
 				return nil, err
 			}
-			encFrame, err := data.MarshalArrow(frame)
+			encFrame, err := frame.MarshalArrow()
 			if err != nil {
 				return nil, err
 			}
-			encodedFrames = append(encodedFrames, encFrame)
+			pRes.Frames = append(pRes.Frames, encFrame)
 		}
+		if res.Meta != nil {
+			b, err := res.Meta.MarshalJSON()
+			if err != nil {
+				s.logger.Error("failed to marshal json metadata", err)
+			}
+			pRes.JsonMeta = b
+		}
+		responses[refID] = pRes
 	}
-	return &pluginv2.QueryDataResponse{Frames: encodedFrames}, nil
+	return &pluginv2.QueryDataResponse{
+		Responses: responses,
+	}, nil
 }
