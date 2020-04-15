@@ -47,10 +47,6 @@ export const locationUtil = {
    * @internal
    */
   initialise: ({ getConfig, buildParamsFromVariables, getTimeRangeForUrl }: LocationUtilDependencies) => {
-    if (grafanaConfig && getTimeRangeUrlParams && getVariablesUrlParams) {
-      throw new Error('locationUtil already initialized');
-    }
-
     grafanaConfig = getConfig;
     getTimeRangeUrlParams = getTimeRangeForUrl;
     getVariablesUrlParams = buildParamsFromVariables;
