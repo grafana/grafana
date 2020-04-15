@@ -15,9 +15,15 @@ export const useSearchQuery = (queryParams: Partial<DashboardQuery>) => {
   const initialState = { ...defaultQuery, queryParams };
   const [query, dispatch] = useReducer(queryReducer, initialState);
 
-  const onQueryChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    event.persist();
-    dispatch({ type: QUERY_CHANGE, payload: event.target.value });
+  const onQueryChange = (event: React.ChangeEvent<HTMLInputElement> | string) => {
+    let payload = event;
+
+    if (typeof event !== 'string') {
+      event.persist();
+      payload = event.target.value;
+    }
+
+    dispatch({ type: QUERY_CHANGE, payload });
   };
 
   const onRemoveStarred = () => {
@@ -28,20 +34,20 @@ export const useSearchQuery = (queryParams: Partial<DashboardQuery>) => {
     dispatch({ type: REMOVE_STARRED, payload: tag });
   };
 
-  const onClearFilters = () => {
-    dispatch({ type: CLEAR_FILTERS });
-  };
-
   const onTagFilterChange = (tags: string[]) => {
     dispatch({ type: SET_TAGS, payload: tags });
   };
 
-  const onStarredFilterChange = (filter: SelectableValue) => {
-    dispatch({ type: TOGGLE_STARRED, payload: filter.value });
-  };
-
   const onTagAdd = (tag: string) => {
     dispatch({ type: ADD_TAG, payload: tag });
+  };
+
+  const onClearFilters = () => {
+    dispatch({ type: CLEAR_FILTERS });
+  };
+
+  const onStarredFilterChange = (filter: SelectableValue) => {
+    dispatch({ type: TOGGLE_STARRED, payload: filter.value });
   };
 
   const hasFilters = query.query.length > 0 || query.tag.length > 0 || query.starred;

@@ -2,12 +2,12 @@ import React, { useContext } from 'react';
 import { css, cx } from 'emotion';
 import { ThemeContext, Icon, Input } from '@grafana/ui';
 import { GrafanaTheme } from '@grafana/data';
-import { SearchQuery } from 'app/core/components/search/search';
+import { DashboardQuery } from '../types';
 
 type Omit<T, K extends keyof T> = Pick<T, Exclude<keyof T, K>>;
 
 interface SearchFieldProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'onChange'> {
-  query: SearchQuery;
+  query: DashboardQuery;
   onChange: (query: string) => void;
   onKeyDown: (e: React.KeyboardEvent<HTMLInputElement>) => void;
 }

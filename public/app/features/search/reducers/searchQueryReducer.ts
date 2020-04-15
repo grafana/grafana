@@ -11,7 +11,6 @@ import {
 
 export const defaultQuery: DashboardQuery = {
   query: '',
-  mode: 'tree',
   tag: [],
   starred: false,
   skipRecent: false,

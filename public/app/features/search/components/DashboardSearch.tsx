@@ -1,4 +1,4 @@
-import React, { FC, useReducer, useState } from 'react';
+import React, { FC, useReducer } from 'react';
 import { useDebounce } from 'react-use';
 import { css } from 'emotion';
 import { Icon, useTheme, CustomScrollbar, stylesFactory } from '@grafana/ui';
@@ -22,9 +22,11 @@ import {
 } from '../reducers/actionTypes';
 import { SearchField } from './SearchField';
 import { SearchResults } from './SearchResults';
+import { useSearchQuery } from '../hooks/useSearchQuery';
 
 const searchSrv = new SearchSrv();
 
+// TODO remove when search is refactored
 const defaultQuery: SearchQuery = { query: '', parsedQuery: { text: '' }, tags: [], starred: false };
 const { isEditor, hasEditPermissionInFolders } = contextSrv;
 const canEdit = isEditor || hasEditPermissionInFolders;
@@ -35,20 +37,20 @@ export interface Props {
 }
 
 export const DashboardSearch: FC<Props> = ({ onCloseSearch, payload = {} }) => {
-  const [query, setQuery] = useState({ ...defaultQuery, ...payload, parsedQuery: parseQuery(payload.query) });
+  const { query, onQueryChange, onClearFilters, onTagFilterChange, onTagAdd } = useSearchQuery(payload);
   const [{ results, loading }, dispatch] = useReducer(searchReducer, dashboardsSearchState);
   const theme = useTheme();
   const styles = getStyles(theme);
 
   const search = () => {
     let folderIds: number[] = [];
-    if (query.parsedQuery.folder === 'current') {
+    if (parseQuery(query.query).folder === 'current') {
       const { folderId } = getDashboardSrv().getCurrent().meta;
       if (folderId) {
         folderIds.push(folderId);
       }
     }
-    searchSrv.search({ ...query, tag: query.tags, query: query.parsedQuery.text, folderIds }).then(results => {
+    searchSrv.search({ ...query, query: parseQuery(query.query).text, folderIds }).then(results => {
       dispatch({ type: FETCH_RESULTS, payload: results });
     });
   };
@@ -64,14 +66,6 @@ export const DashboardSearch: FC<Props> = ({ onCloseSearch, payload = {} }) => {
     } else {
       dispatch({ type: TOGGLE_SECTION, payload: section });
     }
-  };
-
-  const onQueryChange = (searchQuery: string) => {
-    setQuery(q => ({
-      ...q,
-      parsedQuery: parseQuery(searchQuery),
-      query: searchQuery,
-    }));
   };
 
   const onKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
@@ -108,20 +102,6 @@ export const DashboardSearch: FC<Props> = ({ onCloseSearch, payload = {} }) => {
     }
   };
 
-  const onTagFiltersChanged = (tags: string[]) => {
-    setQuery(q => ({ ...q, tags }));
-  };
-
-  const onTagSelected = (tag: string) => {
-    if (tag && !query.tags.includes(tag)) {
-      setQuery(q => ({ ...q, tags: [...q.tags, tag] }));
-    }
-  };
-
-  const onClearSearchFilters = () => {
-    setQuery(q => ({ ...q, tags: [] }));
-  };
-
   return (
     <div tabIndex={0} className="search-container" onKeyDown={onClose}>
       <SearchField query={query} onChange={onQueryChange} onKeyDown={onKeyDown} autoFocus={true} />
@@ -132,7 +112,7 @@ export const DashboardSearch: FC<Props> = ({ onCloseSearch, payload = {} }) => {
               <SearchResults
                 results={results}
                 loading={loading}
-                onTagSelected={onTagSelected}
+                onTagSelected={onTagAdd}
                 dispatch={dispatch}
                 editable={false}
                 onToggleSection={onToggleSection}
@@ -145,14 +125,14 @@ export const DashboardSearch: FC<Props> = ({ onCloseSearch, payload = {} }) => {
             <div className="search-filter-box__header">
               <Icon name="filter" className={styles.filter} size="sm" />
               Filter by:
-              {query.tags.length > 0 && (
-                <a className="pointer pull-right small" onClick={onClearSearchFilters}>
+              {query.tag.length > 0 && (
+                <a className="pointer pull-right small" onClick={onClearFilters}>
                   <Icon name="times" size="sm" /> Clear
                 </a>
               )}
             </div>
 
-            <TagFilter tags={query.tags} tagOptions={searchSrv.getDashboardTags} onChange={onTagFiltersChanged} />
+            <TagFilter tags={query.tag} tagOptions={searchSrv.getDashboardTags} onChange={onTagFilterChange} />
           </div>
 
           {canEdit && (
