@@ -3,7 +3,7 @@ import store from 'app/core/store';
 
 // Models
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
-import { PanelModel, panelRemoved, panelAdded } from 'app/features/dashboard/state/PanelModel';
+import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { TimeRange, AppEvents } from '@grafana/data';
 
 // Utils
