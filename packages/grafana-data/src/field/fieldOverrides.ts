@@ -11,6 +11,11 @@ import {
   ScopedVars,
   ApplyFieldOverrideOptions,
   FieldConfigPropertyItem,
+  LinkModel,
+  InterpolateFunction,
+  ValueLinkConfig,
+  LinkModelSupplier,
+  GrafanaTheme,
 } from '../types';
 import { fieldMatchers, ReducerID, reduceField } from '../transformations';
 import { FieldMatcher } from '../types/transformations';
@@ -19,10 +24,11 @@ import set from 'lodash/set';
 import unset from 'lodash/unset';
 import get from 'lodash/get';
 import { getDisplayProcessor } from './displayProcessor';
-import { guessFieldTypeForField } from '../dataframe';
+import { getTimeField, guessFieldTypeForField } from '../dataframe';
 import { standardFieldConfigEditorRegistry } from './standardFieldConfigEditorRegistry';
 import { FieldConfigOptionsRegistry } from './FieldConfigOptionsRegistry';
 import { DataLinkBuiltInVars, locationUtil } from '../utils';
+import { formattedValueToString } from '../valueFormats';
 import { getFieldDisplayValuesProxy } from './getFieldDisplayValuesProxy';
 
 interface OverrideProps {
@@ -104,10 +110,10 @@ export function applyFieldOverrides(options: ApplyFieldOverrideOptions): DataFra
       if (!fieldName) {
         fieldName = `Field[${fieldIndex}]`;
       }
+      const fieldScopedVars = { ...scopedVars };
+      fieldScopedVars['__field'] = { text: 'Field', value: { name: fieldName } };
 
-      scopedVars['__field'] = { text: 'Field', value: { name: fieldName } };
-
-      const config: FieldConfig = { ...field.config, scopedVars } || {};
+      const config: FieldConfig = { ...field.config, scopedVars: fieldScopedVars } || {};
       const context = {
         field,
         data: options.data!,
@@ -184,6 +190,14 @@ export function applyFieldOverrides(options: ApplyFieldOverrideOptions): DataFra
         theme: options.theme,
         timeZone: options.timeZone,
       });
+
+      // Attach data links supplier
+      if (f.config.links && f.config.links.length > 0) {
+        f.getDataLinksSupplier = getLinksSupplier(frame, f, fieldScopedVars, context.replaceVariables, {
+          theme: options.theme,
+        });
+      }
+
       return f;
     });
 
@@ -316,3 +330,90 @@ export function validateFieldConfig(config: FieldConfig) {
     config.min = tmp;
   }
 }
+
+const getLinksSupplier = (
+  frame: DataFrame,
+  field: Field,
+  fieldScopedVars: ScopedVars,
+  replaceVariables: InterpolateFunction,
+  options: {
+    theme: GrafanaTheme;
+  }
+) => (config: ValueLinkConfig): LinkModelSupplier<Field> => {
+  return {
+    getLinks: (scopedVars?: any): Array<LinkModel<Field>> => {
+      if (!field.config.links || field.config.links.length === 0) {
+        return [];
+      }
+      const timeRangeUrl = locationUtil.getTimeRangeUrlParams();
+      const { timeField } = getTimeField(frame);
+
+      return field.config.links.map(link => {
+        let href = link.url;
+        let dataFrameVars = {};
+        let valueVars = {};
+
+        const info: LinkModel<Field> = {
+          href: locationUtil.assureBaseUrl(href.replace(/\n/g, '')),
+          title: replaceVariables(link.title || '', scopedVars),
+          target: link.targetBlank ? '_blank' : '_self',
+          origin: field,
+        };
+
+        const variablesQuery = locationUtil.getVariablesUrlParams(scopedVars);
+
+        // We are not displaying reduction result
+        if (config.valueRowIndex !== undefined && !isNaN(config.valueRowIndex)) {
+          const fieldsProxy = getFieldDisplayValuesProxy(frame, config.valueRowIndex, options);
+          valueVars = {
+            raw: field.values.get(config.valueRowIndex),
+            numeric: fieldsProxy[field.name].numeric,
+            text: fieldsProxy[field.name].text,
+            time: timeField ? timeField.values.get(config.valueRowIndex) : undefined,
+          };
+          dataFrameVars = {
+            __data: {
+              value: {
+                name: frame.name,
+                refId: frame.refId,
+                fields: fieldsProxy,
+              },
+              text: 'Data',
+            },
+          };
+        } else {
+          if (config.calculatedValue) {
+            valueVars = {
+              raw: config.calculatedValue.display.numeric,
+              numeric: config.calculatedValue.display.numeric,
+              text: formattedValueToString(config.calculatedValue.display),
+              calc: config.calculatedValue.name,
+            };
+          }
+        }
+
+        info.href = replaceVariables(info.href, {
+          ...scopedVars,
+          ...fieldScopedVars,
+          __value: {
+            text: 'Value',
+            value: valueVars,
+          },
+          ...dataFrameVars,
+          [DataLinkBuiltInVars.keepTime]: {
+            text: timeRangeUrl,
+            value: timeRangeUrl,
+          },
+          [DataLinkBuiltInVars.includeVars]: {
+            text: variablesQuery,
+            value: variablesQuery,
+          },
+        });
+
+        info.href = locationUtil.processUrl(info.href);
+
+        return info;
+      });
+    },
+  };
+};
