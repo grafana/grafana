@@ -43,6 +43,7 @@ jest.mock('@grafana/runtime', () => ({
   getDataSourceSrv: () => {
     return datasourceSrv;
   },
+  setTemplateSrv: () => {},
 }));
 
 jest.mock('app/core/core', () => ({
@@ -113,7 +114,7 @@ describe('AnnotationsSrv', function(this: any) {
         type: 'event',
       };
       options = {
-        panel: { id: 1, options: {} },
+        panel: { id: 1, options: {}, getSavedId: () => 1 },
         dashboard: { annotations: { list: [annotationSource] } },
       };
       annotationsSrv = new AnnotationsSrv();
