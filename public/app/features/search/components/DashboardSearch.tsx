@@ -104,7 +104,7 @@ export const DashboardSearch: FC<Props> = ({ onCloseSearch, payload = {} }) => {
 
   return (
     <div tabIndex={0} className="search-container" onKeyDown={onClose}>
-      <SearchField query={query} onChange={onQueryChange} onKeyDown={onKeyDown} autoFocus={true} />
+      <SearchField query={query} onChange={onQueryChange} onKeyDown={onKeyDown} autoFocus clearable />
       <div className="search-dropdown">
         <div className="search-dropdown__col_1">
           <CustomScrollbar>

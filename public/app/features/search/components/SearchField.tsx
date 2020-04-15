@@ -1,4 +1,4 @@
-import React, { useContext } from 'react';
+import React, { FC, useContext } from 'react';
 import { css, cx } from 'emotion';
 import { ThemeContext, Icon, Input } from '@grafana/ui';
 import { GrafanaTheme } from '@grafana/data';
@@ -9,7 +9,8 @@ type Omit<T, K extends keyof T> = Pick<T, Exclude<keyof T, K>>;
 interface SearchFieldProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'onChange'> {
   query: DashboardQuery;
   onChange: (query: string) => void;
-  onKeyDown: (e: React.KeyboardEvent<HTMLInputElement>) => void;
+  onKeyDown?: (e: React.KeyboardEvent<HTMLInputElement>) => void;
+  clearable?: boolean;
 }
 
 const getSearchFieldStyles = (theme: GrafanaTheme) => ({
@@ -45,10 +46,15 @@ const getSearchFieldStyles = (theme: GrafanaTheme) => ({
     font-size: ${theme.typography.size.sm};
     color: ${theme.colors.textWeak};
     text-decoration: underline;
+
+    &:hover {
+      cursor: pointer;
+      color: ${theme.colors.textStrong};
+    }
   `,
 });
 
-export const SearchField: React.FunctionComponent<SearchFieldProps> = ({ query, onChange, size, ...inputProps }) => {
+export const SearchField: FC<SearchFieldProps> = ({ query, onChange, size, clearable, className, ...inputProps }) => {
   const theme = useContext(ThemeContext);
   const styles = getSearchFieldStyles(theme);
 
@@ -66,12 +72,14 @@ export const SearchField: React.FunctionComponent<SearchFieldProps> = ({ query, 
           }}
           tabIndex={1}
           spellCheck={false}
-          className={styles.input}
+          className={cx(styles.input, className)}
           prefix={<Icon name="search" />}
           suffix={
-            <a className={styles.clearButton} onClick={() => onChange('')}>
-              Clear
-            </a>
+            clearable && (
+              <span className={styles.clearButton} onClick={() => onChange('')}>
+                Clear
+              </span>
+            )
           }
           {...inputProps}
         />

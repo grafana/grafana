@@ -1,7 +1,9 @@
 import React, { FC, useReducer, useState } from 'react';
 import { contextSrv } from 'app/core/services/context_srv';
 import { useDebounce } from 'react-use';
-import { Icon, TagList } from '@grafana/ui';
+import { css } from 'emotion';
+import { Icon, TagList, HorizontalGroup, stylesFactory, useTheme } from '@grafana/ui';
+import { GrafanaTheme } from '@grafana/data';
 import { SearchSrv } from 'app/core/services/search_srv';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { manageDashboardsState, manageDashboardsReducer } from '../reducers/manageDashboards';
@@ -12,14 +14,15 @@ import {
   TOGGLE_CAN_SAVE,
   TOGGLE_SECTION,
 } from '../reducers/actionTypes';
-import { SearchResultsFilter } from './SearchResultsFilter';
-import { SearchResults } from './SearchResults';
-import { DashboardActions } from './DashboardActions';
 import { DashboardSection } from '../types';
 import { ConfirmDeleteModal } from './ConfirmDeleteModal';
 import { MoveToFolderModal } from './MoveToFolderModal';
 import { defaultQuery } from '../reducers/searchQueryReducer';
 import { useSearchQuery } from '../hooks/useSearchQuery';
+import { SearchResultsFilter } from './SearchResultsFilter';
+import { SearchResults } from './SearchResults';
+import { DashboardActions } from './DashboardActions';
+import { SearchField } from './SearchField';
 
 export interface Props {
   folderId?: number;
@@ -31,6 +34,8 @@ const searchSrv = new SearchSrv();
 const { isEditor } = contextSrv;
 
 export const ManageDashboards: FC<Props> = ({ folderId, folderUid }) => {
+  const theme = useTheme();
+  const styles = getStyles(theme);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isMoveModalOpen, setIsMoveModalOpen] = useState(false);
   const queryParams = { skipRecent: true, skipStarred: true, folderIds: folderId ? [folderId] : [] };
@@ -102,24 +107,13 @@ export const ManageDashboards: FC<Props> = ({ folderId, folderUid }) => {
 
   return (
     <div className="dashboard-list">
-      <div className="page-action-bar page-action-bar--narrow">
-        <label className="gf-form gf-form--grow gf-form--has-input-icon">
-          <input
-            value={query.query}
-            type="text"
-            className="gf-form-input max-width-30"
-            placeholder="Search dashboards by name"
-            tabIndex={1}
-            spellCheck={false}
-            onChange={onQueryChange}
-          />
-          <Icon className="gf-form-input-icon" name="search" />
-        </label>
+      <HorizontalGroup justify="space-between">
+        <SearchField query={query} onChange={onQueryChange} className={styles.searchField} />
         <DashboardActions isEditor={isEditor} canEdit={hasEditPermissionInFolders || canSave} folderId={folderId} />
-      </div>
+      </HorizontalGroup>
 
       {hasFilters && (
-        <div className="page-action-bar page-action-bar--narrow">
+        <HorizontalGroup>
           <div className="gf-form-inline">
             {query.tag.length > 0 && (
               <div className="gf-form">
@@ -146,7 +140,7 @@ export const ManageDashboards: FC<Props> = ({ folderId, folderUid }) => {
               </label>
             </div>
           </div>
-        </div>
+        </HorizontalGroup>
       )}
 
       <div className="search-results">
@@ -188,3 +182,13 @@ export const ManageDashboards: FC<Props> = ({ folderId, folderUid }) => {
     </div>
   );
 };
+
+const getStyles = stylesFactory((theme: GrafanaTheme) => {
+  return {
+    searchField: css`
+      padding: 0;
+      margin: 0;
+      width: 400px;
+    `,
+  };
+});

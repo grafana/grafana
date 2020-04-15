@@ -1,4 +1,5 @@
 import React, { FC } from 'react';
+import { HorizontalGroup } from '@grafana/ui';
 
 export interface Props {
   folderId?: number;
@@ -18,7 +19,7 @@ export const DashboardActions: FC<Props> = ({ folderId, isEditor, canEdit }) => 
   };
 
   return (
-    <>
+    <HorizontalGroup spacing="md" align="center">
       {canEdit && (
         <a className="btn btn-primary" href={actionUrl('new')}>
           New Dashboard
@@ -34,6 +35,6 @@ export const DashboardActions: FC<Props> = ({ folderId, isEditor, canEdit }) => 
           Import
         </a>
       )}
-    </>
+    </HorizontalGroup>
   );
 };
