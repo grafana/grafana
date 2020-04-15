@@ -9,9 +9,10 @@ import {
   SET_TAGS,
   TOGGLE_STARRED,
 } from '../reducers/actionTypes';
+import { DashboardQuery } from '../types';
 
-export const useSearchQuery = (folderId: number | undefined) => {
-  const initialState = folderId ? { ...defaultQuery, folderIds: [folderId] } : defaultQuery;
+export const useSearchQuery = (queryParams: Partial<DashboardQuery>) => {
+  const initialState = { ...defaultQuery, queryParams };
   const [query, dispatch] = useReducer(queryReducer, initialState);
 
   const onQueryChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -22,12 +23,15 @@ export const useSearchQuery = (folderId: number | undefined) => {
   const onRemoveStarred = () => {
     dispatch({ type: REMOVE_STARRED });
   };
+
   const onTagRemove = (tag: string) => {
     dispatch({ type: REMOVE_STARRED, payload: tag });
   };
+
   const onClearFilters = () => {
     dispatch({ type: CLEAR_FILTERS });
   };
+
   const onTagFilterChange = (tags: string[]) => {
     dispatch({ type: SET_TAGS, payload: tags });
   };
@@ -35,6 +39,7 @@ export const useSearchQuery = (folderId: number | undefined) => {
   const onStarredFilterChange = (filter: SelectableValue) => {
     dispatch({ type: TOGGLE_STARRED, payload: filter.value });
   };
+
   const onTagAdd = (tag: string) => {
     dispatch({ type: ADD_TAG, payload: tag });
   };

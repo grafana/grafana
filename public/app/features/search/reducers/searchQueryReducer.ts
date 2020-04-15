@@ -14,8 +14,8 @@ export const defaultQuery: DashboardQuery = {
   mode: 'tree',
   tag: [],
   starred: false,
-  skipRecent: true,
-  skipStarred: true,
+  skipRecent: false,
+  skipStarred: false,
   folderIds: [],
 };
 
@@ -37,7 +37,7 @@ export const queryReducer = (state: DashboardQuery, action: SearchAction) => {
       return { ...state, starred: false };
 
     case CLEAR_FILTERS:
-      return defaultQuery;
+      return { ...state, query: '', tag: [] };
     default:
       return state;
   }

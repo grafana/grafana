@@ -33,6 +33,7 @@ const { isEditor } = contextSrv;
 export const ManageDashboards: FC<Props> = ({ folderId, folderUid }) => {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isMoveModalOpen, setIsMoveModalOpen] = useState(false);
+  const queryParams = { skipRecent: true, skipStarred: true, folderIds: folderId ? [folderId] : [] };
   const {
     query,
     hasFilters,
@@ -43,7 +44,7 @@ export const ManageDashboards: FC<Props> = ({ folderId, folderUid }) => {
     onTagFilterChange,
     onStarredFilterChange,
     onTagAdd,
-  } = useSearchQuery(folderId);
+  } = useSearchQuery(queryParams);
 
   const [{ canSave, allChecked, hasEditPermissionInFolders, results, loading }, dispatch] = useReducer(
     manageDashboardsReducer,
@@ -104,6 +105,7 @@ export const ManageDashboards: FC<Props> = ({ folderId, folderUid }) => {
       <div className="page-action-bar page-action-bar--narrow">
         <label className="gf-form gf-form--grow gf-form--has-input-icon">
           <input
+            value={query.query}
             type="text"
             className="gf-form-input max-width-30"
             placeholder="Search dashboards by name"
