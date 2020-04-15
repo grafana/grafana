@@ -11,7 +11,6 @@ interface Props {
   placeholder?: string;
   onChange: (stats: string[]) => void;
   stats: string[];
-  width?: number;
   allowMultiple?: boolean;
   defaultStat?: string;
 }
@@ -58,17 +57,16 @@ export class StatsPicker extends PureComponent<Props> {
     if (isArray(item)) {
       onChange(item.map(v => v.value));
     } else {
-      onChange(item.value ? [item.value] : []);
+      onChange(item && item.value ? [item.value] : []);
     }
   };
 
   render() {
-    const { width, stats, allowMultiple, defaultStat, placeholder } = this.props;
+    const { stats, allowMultiple, defaultStat, placeholder } = this.props;
 
     const select = fieldReducers.selectOptions(stats);
     return (
       <Select
-        width={width}
         value={select.current}
         isClearable={!defaultStat}
         isMulti={allowMultiple}

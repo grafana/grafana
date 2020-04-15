@@ -450,6 +450,11 @@ Text used as placeholder text on login page for password input.
 Grafana provides many ways to authenticate users. The docs for authentication has been split in to many different pages
 below.
 
+### oauth_state_cookie_max_age
+
+How long the OAuth state cookie lives before being deleted. Default is `60` (seconds)
+Administrators can increase it if they experience OAuth login state mismatch errors.
+
 - [Authentication Overview]({{< relref "../auth/overview.md" >}}) (anonymous access options, hide login and more)
 - [Google OAuth]({{< relref "../auth/google.md" >}}) (auth.google)
 - [GitHub OAuth]({{< relref "../auth/github.md" >}}) (auth.github)
@@ -501,6 +506,13 @@ Set to false to disable all checks to https://grafana.com for new versions of in
 ### versions_to_keep
 
 Number dashboard versions to keep (per dashboard). Default: `20`, Minimum: `1`.
+
+### min_refresh_interval
+
+> Only available in Grafana v6.7+.
+
+When set, this will restrict users to set the refresh interval of a dashboard lower than given interval. Per default this is not set/unrestricted.
+The interval string is a possibly signed sequence of decimal numbers, followed by a unit suffix (ms, s, m, h, d), e.g. `30s` or `1m`.
 
 ## [dashboards.json]
 
@@ -837,7 +849,7 @@ for the full list. Environment variables will override any settings provided her
 
 ### address
 
-The host:port destination for reporting spans. (ex: `localhost:6381`)
+The host:port destination for reporting spans. (ex: `localhost:6831`)
 
 Can be set with the environment variables `JAEGER_AGENT_HOST` and `JAEGER_AGENT_PORT`.
 

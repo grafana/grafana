@@ -3,28 +3,29 @@ import _ from 'lodash';
 // Utils
 import { Emitter } from 'app/core/utils/emitter';
 import { getNextRefIdChar } from 'app/core/utils/query';
+import templateSrv from 'app/features/templating/template_srv';
 // Types
 import {
+  DataConfigSource,
+  DataLink,
   DataQuery,
   DataQueryResponseData,
-  PanelPlugin,
-  PanelEvents,
-  DataLink,
   DataTransformerConfig,
+  eventFactory,
+  PanelEvents,
+  PanelPlugin,
   ScopedVars,
+  FieldConfigSource,
 } from '@grafana/data';
-import { AngularComponent } from '@grafana/runtime';
 import { EDIT_PANEL_ID } from 'app/core/constants';
 
 import config from 'app/core/config';
 
 import { PanelQueryRunner } from './PanelQueryRunner';
-import { eventFactory } from '@grafana/data';
 import { take } from 'rxjs/operators';
 
 export const panelAdded = eventFactory<PanelModel | undefined>('panel-added');
 export const panelRemoved = eventFactory<PanelModel | undefined>('panel-removed');
-export const angularPanelUpdated = eventFactory('panel-angular-panel-updated');
 
 export interface GridPos {
   x: number;
@@ -36,15 +37,15 @@ export interface GridPos {
 
 const notPersistedProperties: { [str: string]: boolean } = {
   events: true,
-  fullscreen: true,
+  isViewing: true,
   isEditing: true,
   isInView: true,
   hasRefreshed: true,
   cachedPluginOptions: true,
   plugin: true,
   queryRunner: true,
-  angularPanel: true,
-  restoreModel: true,
+  replaceVariables: true,
+  editSourceId: true,
 };
 
 // For angular panels we need to clean up properties when changing type
@@ -82,6 +83,7 @@ const mustKeepProps: { [str: string]: boolean } = {
   pluginVersion: true,
   queryRunner: true,
   transformations: true,
+  fieldConfig: true,
 };
 
 const defaults: any = {
@@ -92,9 +94,10 @@ const defaults: any = {
   options: {},
 };
 
-export class PanelModel {
+export class PanelModel implements DataConfigSource {
   /* persisted id, used in URL to identify a panel */
   id: number;
+  editSourceId: number;
   gridPos: GridPos;
   type: string;
   title: string;
@@ -122,6 +125,7 @@ export class PanelModel {
   options: {
     [key: string]: any;
   };
+  fieldConfig: FieldConfigSource;
 
   maxDataPoints?: number;
   interval?: string;
@@ -130,16 +134,15 @@ export class PanelModel {
   transparent: boolean;
 
   // non persisted
-  fullscreen: boolean;
+  isViewing: boolean;
   isEditing: boolean;
   isInView: boolean;
   hasRefreshed: boolean;
   events: Emitter;
   cacheTimeout?: any;
   cachedPluginOptions?: any;
-  legend?: { show: boolean };
+  legend?: { show: boolean; sort?: string; sortDesc?: boolean };
   plugin?: PanelPlugin;
-  angularPanel?: AngularComponent;
 
   private queryRunner?: PanelQueryRunner;
 
@@ -149,10 +152,11 @@ export class PanelModel {
     // this should not be removed in save model as exporter needs to templatize it
     this.datasource = null;
     this.restoreModel(model);
+    this.replaceVariables = this.replaceVariables.bind(this);
   }
 
   /** Given a persistened PanelModel restores property values */
-  restoreModel = (model: any) => {
+  restoreModel(model: any) {
     // copy properties from persisted model
     for (const property in model) {
       (this as any)[property] = model[property];
@@ -163,7 +167,7 @@ export class PanelModel {
 
     // queries must have refId
     this.ensureQueryIds();
-  };
+  }
 
   ensureQueryIds() {
     if (this.targets && _.isArray(this.targets)) {
@@ -178,9 +182,20 @@ export class PanelModel {
   getOptions() {
     return this.options;
   }
+  getFieldConfig() {
+    return this.fieldConfig;
+  }
 
   updateOptions(options: object) {
     this.options = options;
+
+    this.render();
+  }
+
+  updateFieldConfig(config: FieldConfigSource) {
+    this.fieldConfig = config;
+
+    this.resendLastResult();
     this.render();
   }
 
@@ -200,10 +215,8 @@ export class PanelModel {
     return model;
   }
 
-  setViewMode(fullscreen: boolean, isEditing: boolean) {
-    this.fullscreen = fullscreen;
-    this.isEditing = isEditing;
-    this.events.emit(PanelEvents.viewModeChanged);
+  setIsViewing(isViewing: boolean) {
+    this.isViewing = isViewing;
   }
 
   updateGridPos(newPos: GridPos) {
@@ -273,6 +286,23 @@ export class PanelModel {
         return srcValue;
       }
     });
+
+    this.fieldConfig = {
+      defaults: _.mergeWith(
+        {},
+        plugin.fieldConfigDefaults.defaults,
+        this.fieldConfig ? this.fieldConfig.defaults : {},
+        (objValue: any, srcValue: any): any => {
+          if (_.isArray(srcValue)) {
+            return srcValue;
+          }
+        }
+      ),
+      overrides: [
+        ...plugin.fieldConfigDefaults.overrides,
+        ...(this.fieldConfig && this.fieldConfig.overrides ? this.fieldConfig.overrides : []),
+      ],
+    };
   }
 
   pluginLoaded(plugin: PanelPlugin) {
@@ -288,6 +318,7 @@ export class PanelModel {
     }
 
     this.applyPluginOptionDefaults(plugin);
+    this.resendLastResult();
   }
 
   changePlugin(newPlugin: PanelPlugin) {
@@ -295,10 +326,6 @@ export class PanelModel {
     const oldOptions: any = this.getOptionsToRemember();
     const oldPluginId = this.type;
     const wasAngular = !!this.plugin.angularPanelCtrl;
-
-    if (this.angularPanel) {
-      this.setAngularPanel(undefined);
-    }
 
     // remove panel type specific  options
     for (const key of _.keys(this)) {
@@ -322,12 +349,15 @@ export class PanelModel {
         old = oldOptions.options;
       }
       this.options = this.options || {};
-      Object.assign(this.options, newPlugin.onPanelTypeChanged(this.options, oldPluginId, old));
+      Object.assign(this.options, newPlugin.onPanelTypeChanged(this, oldPluginId, old));
     }
 
     // switch
     this.type = pluginId;
     this.plugin = newPlugin;
+
+    // For some reason I need to rebind replace variables here, otherwise the viz repeater does not work
+    this.replaceVariables = this.replaceVariables.bind(this);
     this.applyPluginOptionDefaults(newPlugin);
 
     if (newPlugin.onPanelMigration) {
@@ -359,8 +389,10 @@ export class PanelModel {
 
     // Temporary id for the clone, restored later in redux action when changes are saved
     sourceModel.id = EDIT_PANEL_ID;
+    sourceModel.editSourceId = this.id;
 
     const clone = new PanelModel(sourceModel);
+    clone.isEditing = true;
     const sourceQueryRunner = this.getQueryRunner();
 
     // pipe last result to new clone query runner
@@ -372,10 +404,26 @@ export class PanelModel {
     return clone;
   }
 
+  getTransformations() {
+    return this.transformations;
+  }
+
+  getFieldOverrideOptions() {
+    if (!this.plugin) {
+      return undefined;
+    }
+
+    return {
+      fieldConfig: this.fieldConfig,
+      replaceVariables: this.replaceVariables,
+      fieldConfigRegistry: this.plugin.fieldConfigRegistry,
+      theme: config.theme,
+    };
+  }
+
   getQueryRunner(): PanelQueryRunner {
     if (!this.queryRunner) {
-      this.queryRunner = new PanelQueryRunner();
-      this.setTransformations(this.transformations);
+      this.queryRunner = new PanelQueryRunner(this);
     }
     return this.queryRunner;
   }
@@ -395,25 +443,35 @@ export class PanelModel {
       this.queryRunner.destroy();
       this.queryRunner = null;
     }
-
-    if (this.angularPanel) {
-      this.angularPanel.destroy();
-    }
   }
 
   setTransformations(transformations: DataTransformerConfig[]) {
     this.transformations = transformations;
-    this.getQueryRunner().setTransformations(transformations);
+    this.resendLastResult();
   }
 
-  setAngularPanel(component: AngularComponent) {
-    if (this.angularPanel) {
-      // this will remove all event listeners
-      this.angularPanel.destroy();
+  replaceVariables(value: string, extraVars?: ScopedVars, format?: string) {
+    let vars = this.scopedVars;
+    if (extraVars) {
+      vars = vars ? { ...vars, ...extraVars } : extraVars;
+    }
+    return templateSrv.replace(value, vars, format);
+  }
+
+  resendLastResult() {
+    if (!this.plugin) {
+      return;
     }
 
-    this.angularPanel = component;
-    this.events.emit(angularPanelUpdated);
+    this.getQueryRunner().resendLastResult();
+  }
+
+  /*
+   * Panel have a different id while in edit mode (to more easily be able to discard changes)
+   * Use this to always get the underlying source id
+   * */
+  getSavedId(): number {
+    return this.editSourceId ?? this.id;
   }
 }
 

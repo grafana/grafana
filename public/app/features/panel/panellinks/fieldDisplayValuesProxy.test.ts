@@ -21,7 +21,7 @@ describe('getFieldDisplayValuesProxy', () => {
         ],
       }),
     ],
-    fieldOptions: {
+    fieldConfig: {
       defaults: {},
       overrides: [],
     },

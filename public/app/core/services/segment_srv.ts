@@ -95,7 +95,7 @@ export function uiSegmentSrv(this: any, $sce: any, templateSrv: any) {
       });
 
       if (addTemplateVars) {
-        _.each(templateSrv.variables, variable => {
+        _.each(templateSrv.getVariables(), variable => {
           if (variableTypeFilter === void 0 || variableTypeFilter === variable.type) {
             segments.unshift(self.newSegment({ type: 'value', value: '$' + variable.name, expandable: true }));
           }

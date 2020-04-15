@@ -41,7 +41,7 @@ const _ = proto.ProtoPackageIsVersion3 // please upgrade the proto package
 //     if (duration.seconds < 0 && duration.nanos > 0) {
 //       duration.seconds += 1;
 //       duration.nanos -= 1000000000;
-//     } else if (durations.seconds > 0 && duration.nanos < 0) {
+//     } else if (duration.seconds > 0 && duration.nanos < 0) {
 //       duration.seconds -= 1;
 //       duration.nanos += 1000000000;
 //     }
@@ -142,7 +142,9 @@ func init() {
 	proto.RegisterType((*Duration)(nil), "google.protobuf.Duration")
 }
 
-func init() { proto.RegisterFile("google/protobuf/duration.proto", fileDescriptor_23597b2ebd7ac6c5) }
+func init() {
+	proto.RegisterFile("google/protobuf/duration.proto", fileDescriptor_23597b2ebd7ac6c5)
+}
 
 var fileDescriptor_23597b2ebd7ac6c5 = []byte{
 	// 190 bytes of a gzipped FileDescriptorProto

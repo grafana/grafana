@@ -177,6 +177,10 @@ export class TimeSrvStub {
 export class ContextSrvStub {
   isGrafanaVisibile = jest.fn();
 
+  getValidInterval() {
+    return '10s';
+  }
+
   hasRole() {
     return true;
   }

@@ -1,7 +1,7 @@
 import React, { PureComponent } from 'react';
 import appEvents from 'app/core/app_events';
 import { CopyToClipboard } from 'app/core/components/CopyToClipboard/CopyToClipboard';
-import { JSONFormatter, LoadingPlaceholder } from '@grafana/ui';
+import { JSONFormatter, LoadingPlaceholder, Icon } from '@grafana/ui';
 import { CoreEvents } from 'app/types';
 import { AppEvents, PanelEvents } from '@grafana/data';
 
@@ -96,7 +96,10 @@ export class QueryInspector extends PureComponent<Props, State> {
       delete response.headers;
     }
 
-    if (response.request) {
+    if (response.config) {
+      response.request = response.config;
+
+      delete response.config;
       delete response.request.transformRequest;
       delete response.request.transformResponse;
       delete response.request.paramSerializer;
@@ -111,6 +114,7 @@ export class QueryInspector extends PureComponent<Props, State> {
     if (response.data) {
       response.response = response.data;
 
+      delete response.config;
       delete response.data;
       delete response.status;
       delete response.statusText;
@@ -120,6 +124,7 @@ export class QueryInspector extends PureComponent<Props, State> {
       delete response.type;
       delete response.$$config;
     }
+
     this.setState(prevState => ({
       ...prevState,
       dsQuery: {
@@ -177,12 +182,12 @@ export class QueryInspector extends PureComponent<Props, State> {
 
     const collapse = (
       <>
-        <i className="fa fa-minus-square-o" /> Collapse All
+        <Icon name="minus-circle" /> Collapse All
       </>
     );
     const expand = (
       <>
-        <i className="fa fa-plus-square-o" /> Expand All
+        <Icon name="plus-circle" /> Expand All
       </>
     );
     return allNodesExpanded ? collapse : expand;
@@ -207,7 +212,7 @@ export class QueryInspector extends PureComponent<Props, State> {
             text={this.getTextForClipboard}
             onSuccess={this.onClipboardSuccess}
           >
-            <i className="fa fa-clipboard" /> Copy to Clipboard
+            <Icon name="copy" /> Copy to Clipboard
           </CopyToClipboard>
         </div>
 

@@ -7,6 +7,7 @@ import {
   PanelState,
   QueriesToUpdateOnDashboardLoad,
 } from 'app/types';
+import { AngularComponent } from '@grafana/runtime';
 import { EDIT_PANEL_ID } from 'app/core/constants';
 import { processAclItems } from 'app/core/utils/acl';
 import { panelEditorReducer } from '../panel_editor/state/reducers';
@@ -82,6 +83,9 @@ const dashbardSlice = createSlice({
     cleanUpEditPanel: (state, action: PayloadAction) => {
       delete state.panels[EDIT_PANEL_ID];
     },
+    setPanelAngularComponent: (state: DashboardState, action: PayloadAction<SetPanelAngularComponentPayload>) => {
+      updatePanelState(state, action.payload.panelId, { angularComponent: action.payload.angularComponent });
+    },
     addPanel: (state, action: PayloadAction<PanelModel>) => {
       state.panels[action.payload.id] = { pluginId: action.payload.type };
     },
@@ -101,6 +105,11 @@ export interface PanelModelAndPluginReadyPayload {
   plugin: PanelPlugin;
 }
 
+export interface SetPanelAngularComponentPayload {
+  panelId: number;
+  angularComponent: AngularComponent | null;
+}
+
 export const {
   loadDashboardPermissions,
   dashboardInitFetching,
@@ -114,6 +123,7 @@ export const {
   panelModelAndPluginReady,
   addPanel,
   cleanUpEditPanel,
+  setPanelAngularComponent,
 } = dashbardSlice.actions;
 
 export const dashboardReducer = dashbardSlice.reducer;

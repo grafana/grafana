@@ -1,7 +1,6 @@
 // Libraries
 import React, { PureComponent } from 'react';
 // Utils & Services
-import { AngularComponent } from '@grafana/runtime';
 import { connect } from 'react-redux';
 import { StoreState } from 'app/types';
 import { updateLocation } from 'app/core/actions';
@@ -16,7 +15,15 @@ import { PanelModel, DashboardModel } from '../state';
 import { VizPickerSearch } from './VizPickerSearch';
 import PluginStateinfo from 'app/features/plugins/PluginStateInfo';
 import { Unsubscribable } from 'rxjs';
-import { PanelPlugin, PanelPluginMeta, PanelData, LoadingState, DefaultTimeRange } from '@grafana/data';
+import { Icon } from '@grafana/ui';
+import {
+  PanelPlugin,
+  PanelPluginMeta,
+  PanelData,
+  LoadingState,
+  DefaultTimeRange,
+  FieldConfigSource,
+} from '@grafana/data';
 
 interface Props {
   panel: PanelModel;
@@ -37,7 +44,6 @@ interface State {
 
 export class VisualizationTab extends PureComponent<Props, State> {
   element: HTMLElement;
-  angularOptions: AngularComponent;
   querySubscription: Unsubscribable;
 
   constructor(props: Props) {
@@ -61,18 +67,16 @@ export class VisualizationTab extends PureComponent<Props, State> {
     return panel.getOptions();
   };
 
+  getReactPanelFieldConfig = () => {
+    const { panel } = this.props;
+    return panel.getFieldConfig();
+  };
+
   renderPanelOptions() {
     const { plugin, dashboard, panel } = this.props;
 
     if (plugin.angularPanelCtrl) {
-      return (
-        <AngularPanelOptions
-          plugin={plugin}
-          dashboard={dashboard}
-          panel={panel}
-          onPluginTypeChange={this.onPluginTypeChange}
-        />
-      );
+      return <AngularPanelOptions plugin={plugin} dashboard={dashboard} panel={panel} />;
     }
 
     if (plugin.editor) {
@@ -81,6 +85,10 @@ export class VisualizationTab extends PureComponent<Props, State> {
           data={this.state.data}
           options={this.getReactPanelOptions()}
           onOptionsChange={this.onPanelOptionsChanged}
+          // TODO[FieldConfig]: Remove when we switch old editor to new
+          fieldConfig={this.getReactPanelFieldConfig()}
+          // TODO[FieldConfig]: Remove when we switch old editor to new
+          onFieldConfigChange={this.onPanelFieldConfigChange}
         />
       );
     }
@@ -109,6 +117,12 @@ export class VisualizationTab extends PureComponent<Props, State> {
 
   onPanelOptionsChanged = (options: any, callback?: () => void) => {
     this.props.panel.updateOptions(options);
+    this.forceUpdate(callback);
+  };
+
+  // TODO[FieldConfig]: Remove when we switch old editor to new
+  onPanelFieldConfigChange = (config: FieldConfigSource, callback?: () => void) => {
+    this.props.panel.updateFieldConfig(config);
     this.forceUpdate(callback);
   };
 
@@ -150,7 +164,7 @@ export class VisualizationTab extends PureComponent<Props, State> {
           <div className="toolbar__main" onClick={this.onOpenVizPicker}>
             <img className="toolbar__main-image" src={meta.info.logos.small} />
             <div className="toolbar__main-name">{meta.name}</div>
-            <i className="fa fa-caret-down" />
+            <Icon name="angle-down" style={{ marginLeft: '4px', marginBottom: 0 }} />
           </div>
           <PluginStateinfo state={meta.state} />
         </>
@@ -180,7 +194,7 @@ export class VisualizationTab extends PureComponent<Props, State> {
 
     const pluginHelp: EditorToolbarView = {
       heading: 'Help',
-      icon: 'fa fa-question',
+      icon: 'question-circle',
       render: this.renderHelp,
     };
 

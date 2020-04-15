@@ -1,5 +1,5 @@
 # Golang build container
-FROM golang:1.13.4-alpine
+FROM golang:1.14.1-alpine
 
 RUN apk add --no-cache gcc g++
 
@@ -35,7 +35,7 @@ COPY packages packages
 
 RUN yarn install --pure-lockfile --no-progress
 
-COPY Gruntfile.js tsconfig.json .eslintrc .browserslistrc ./
+COPY Gruntfile.js tsconfig.json .eslintrc .editorconfig .browserslistrc ./
 COPY public public
 COPY scripts scripts
 COPY emails emails

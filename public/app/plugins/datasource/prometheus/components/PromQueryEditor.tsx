@@ -2,8 +2,10 @@ import _ from 'lodash';
 import React, { PureComponent } from 'react';
 
 // Types
-import { FormLabel, Select, Switch } from '@grafana/ui';
+import { FormLabel, LegacyForms, Select } from '@grafana/ui';
 import { SelectableValue, QueryEditorProps } from '@grafana/data';
+
+const { Switch } = LegacyForms;
 
 import { PrometheusDatasource } from '../datasource';
 import { PromQuery, PromOptions } from '../types';
@@ -160,7 +162,7 @@ export class PromQueryEditor extends PureComponent<Props, State> {
           </div>
 
           <div className="gf-form">
-            <div className="gf-form-label">Format</div>
+            <div className="gf-form-label width-7">Format</div>
             <Select isSearchable={false} options={FORMAT_OPTIONS} onChange={this.onFormatChange} value={formatOption} />
             <Switch label="Instant" checked={instant} onChange={this.onInstantChange} />
 

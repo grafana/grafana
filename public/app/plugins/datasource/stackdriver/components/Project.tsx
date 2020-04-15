@@ -1,32 +1,37 @@
 import React from 'react';
-import { Input } from '@grafana/ui';
+import { SelectableValue } from '@grafana/data';
+import { SegmentAsync } from '@grafana/ui';
 import StackdriverDatasource from '../datasource';
 
 export interface Props {
   datasource: StackdriverDatasource;
-}
-
-interface State {
+  onChange: (projectName: string) => void;
+  templateVariableOptions: Array<SelectableValue<string>>;
   projectName: string;
 }
 
-export class Project extends React.Component<Props, State> {
-  state: State = {
-    projectName: 'Loading project...',
-  };
-
-  async componentDidMount() {
-    const projectName = await this.props.datasource.getDefaultProject();
-    this.setState({ projectName });
-  }
-
-  render() {
-    const { projectName } = this.state;
-    return (
-      <div className="gf-form">
-        <span className="gf-form-label width-9 query-keyword">Project</span>
-        <Input className="gf-form-input width-15" disabled type="text" value={projectName} />
+export function Project({ projectName, datasource, onChange, templateVariableOptions }: Props) {
+  return (
+    <div className="gf-form-inline">
+      <span className="gf-form-label width-9 query-keyword">Project</span>
+      <SegmentAsync
+        allowCustomValue
+        onChange={({ value }) => onChange(value!)}
+        loadOptions={() =>
+          datasource.getProjects().then(projects => [
+            {
+              label: 'Template Variables',
+              options: templateVariableOptions,
+            },
+            ...projects,
+          ])
+        }
+        value={projectName}
+        placeholder="Select Project"
+      />
+      <div className="gf-form gf-form--grow">
+        <div className="gf-form-label gf-form-label--grow" />
       </div>
-    );
-  }
+    </div>
+  );
 }

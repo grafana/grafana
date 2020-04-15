@@ -1,8 +1,7 @@
 import React, { PureComponent } from 'react';
-import { hot } from 'react-hot-loader';
-import { connect } from 'react-redux';
+import { connect, MapStateToProps, MapDispatchToProps } from 'react-redux';
 import { css } from 'emotion';
-import { Alert, Button } from '@grafana/ui';
+import { Alert, Button, IconName } from '@grafana/ui';
 
 import { AngularComponent, getAngularLoader, getDataSourceSrv } from '@grafana/runtime';
 import appEvents from 'app/core/app_events';
@@ -14,18 +13,27 @@ import StateHistory from './StateHistory';
 import 'app/features/alerting/AlertTabCtrl';
 
 import { DashboardModel } from '../dashboard/state/DashboardModel';
-import { PanelModel, angularPanelUpdated } from '../dashboard/state/PanelModel';
+import { PanelModel } from '../dashboard/state/PanelModel';
 import { TestRuleResult } from './TestRuleResult';
 import { AppNotificationSeverity, StoreState } from 'app/types';
 import { PanelEditorTabIds, getPanelEditorTab } from '../dashboard/panel_editor/state/reducers';
 import { changePanelEditorTab } from '../dashboard/panel_editor/state/actions';
 import { CoreEvents } from 'app/types';
 
-interface Props {
+interface OwnProps {
   dashboard: DashboardModel;
   panel: PanelModel;
+}
+
+interface ConnectedProps {
+  angularPanelComponent: AngularComponent;
+}
+
+interface DispatchProps {
   changePanelEditorTab: typeof changePanelEditorTab;
 }
+
+export type Props = OwnProps & ConnectedProps & DispatchProps;
 
 interface State {
   validatonMessage: string;
@@ -42,7 +50,6 @@ class UnConnectedAlertTab extends PureComponent<Props, State> {
 
   componentDidMount() {
     this.loadAlertTab();
-    this.props.panel.events.on(angularPanelUpdated, this.onAngularPanelUpdated);
   }
 
   onAngularPanelUpdated = () => {
@@ -60,13 +67,13 @@ class UnConnectedAlertTab extends PureComponent<Props, State> {
   }
 
   async loadAlertTab() {
-    const { panel } = this.props;
+    const { panel, angularPanelComponent } = this.props;
 
-    if (!this.element || !panel.angularPanel || this.component) {
+    if (!this.element || !angularPanelComponent || this.component) {
       return;
     }
 
-    const scope = panel.angularPanel.getScope();
+    const scope = angularPanelComponent.getScope();
 
     // When full page reloading in edit mode the angular panel has on fully compiled & instantiated yet
     if (!scope.$$childHead) {
@@ -97,13 +104,15 @@ class UnConnectedAlertTab extends PureComponent<Props, State> {
   }
 
   stateHistory = (): EditorToolbarView => {
+    const { panel, dashboard } = this.props;
+
     return {
       title: 'State history',
       render: () => {
         return (
           <StateHistory
-            dashboard={this.props.dashboard}
-            panelId={this.props.panel.id}
+            dashboard={dashboard}
+            panelId={panel.editSourceId ?? panel.id}
             onRefresh={this.panelCtrl.refresh}
           />
         );
@@ -121,7 +130,7 @@ class UnConnectedAlertTab extends PureComponent<Props, State> {
           title: 'Delete Alert',
           text: 'Are you sure you want to delete this alert rule?',
           text2: 'You need to save dashboard for the delete to take effect',
-          icon: 'fa-trash',
+          icon: 'trash-alt',
           yesText: 'Delete',
           onConfirm: () => {
             delete panel.alert;
@@ -136,8 +145,8 @@ class UnConnectedAlertTab extends PureComponent<Props, State> {
   };
 
   renderTestRuleResult = () => {
-    const { panel, dashboard } = this.props;
-    return <TestRuleResult panelId={panel.id} dashboard={dashboard} />;
+    const { dashboard, panel } = this.props;
+    return <TestRuleResult panel={panel} dashboard={dashboard} />;
   };
 
   testRule = (): EditorToolbarView => ({
@@ -169,7 +178,7 @@ class UnConnectedAlertTab extends PureComponent<Props, State> {
         <h2>{validatonMessage}</h2>
         <br />
         <div className="gf-form-group">
-          <Button size={'md'} variant={'secondary'} icon="fa fa-arrow-left" onClick={this.switchToQueryTab}>
+          <Button size={'md'} variant={'secondary'} icon="arrow-left" onClick={this.switchToQueryTab}>
             Go back to Queries
           </Button>
         </div>
@@ -190,7 +199,7 @@ class UnConnectedAlertTab extends PureComponent<Props, State> {
 
     const model = {
       title: 'Panel has no alert rule defined',
-      buttonIcon: 'gicon gicon-alert',
+      buttonIcon: 'bell' as IconName,
       onClick: this.onAddAlert,
       buttonTitle: 'Create Alert',
     };
@@ -213,8 +222,12 @@ class UnConnectedAlertTab extends PureComponent<Props, State> {
   }
 }
 
-export const mapStateToProps = (state: StoreState) => ({});
+const mapStateToProps: MapStateToProps<ConnectedProps, OwnProps, StoreState> = (state, props) => {
+  return {
+    angularPanelComponent: state.dashboard.panels[props.panel.id].angularComponent,
+  };
+};
 
-const mapDispatchToProps = { changePanelEditorTab };
+const mapDispatchToProps: MapDispatchToProps<DispatchProps, OwnProps> = { changePanelEditorTab };
 
-export const AlertTab = hot(module)(connect(mapStateToProps, mapDispatchToProps)(UnConnectedAlertTab));
+export const AlertTab = connect(mapStateToProps, mapDispatchToProps)(UnConnectedAlertTab);

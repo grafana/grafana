@@ -12,6 +12,7 @@ import {
   GraphSeriesToggler,
   GraphSeriesTogglerAPI,
   Chart,
+  Icon,
 } from '@grafana/ui';
 
 const MAX_NUMBER_OF_TIME_SERIES = 20;
@@ -24,11 +25,11 @@ const getStyles = (theme: GrafanaTheme) => ({
     padding: 10px 0;
     border-radius: ${theme.border.radius.md};
     text-align: center;
-    background-color: ${selectThemeVariant({ light: theme.colors.white, dark: theme.colors.dark4 }, theme.type)};
+    background-color: ${selectThemeVariant({ light: theme.palette.white, dark: theme.palette.dark4 }, theme.type)};
   `,
   disclaimerIcon: css`
     label: disclaimer-icon;
-    color: ${theme.colors.yellow};
+    color: ${theme.palette.yellow};
     margin-right: ${theme.spacing.xs};
   `,
   showAllTimeSeries: css`
@@ -156,7 +157,7 @@ class UnThemedExploreGraphPanel extends PureComponent<Props, State> {
       <>
         {series && series.length > MAX_NUMBER_OF_TIME_SERIES && !showAllTimeSeries && (
           <div className={cx([style.timeSeriesDisclaimer])}>
-            <i className={cx(['fa fa-fw fa-warning', style.disclaimerIcon])} />
+            <Icon className={style.disclaimerIcon} name="exclamation-triangle" />
             {`Showing only ${MAX_NUMBER_OF_TIME_SERIES} time series. `}
             <span
               className={cx([style.showAllTimeSeries])}

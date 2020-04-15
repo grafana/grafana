@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { action } from '@storybook/addon-actions';
 import { SegmentInput } from '.';
+import { Icon } from '../Icon/Icon';
 
 const SegmentFrame = ({ children }: any) => (
   <>
@@ -77,7 +78,7 @@ export const InputWithAutoFocus = () => {
           setInputComponents([...inputComponents, InputComponent]);
         }}
       >
-        <i className="fa fa-plus" />
+        <Icon name="plus" />
       </a>
     </SegmentFrame>
   );

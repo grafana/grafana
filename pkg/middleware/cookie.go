@@ -14,8 +14,12 @@ type CookieOptions struct {
 }
 
 func newCookieOptions() CookieOptions {
+	path := "/"
+	if len(setting.AppSubUrl) > 0 {
+		path = setting.AppSubUrl
+	}
 	return CookieOptions{
-		Path:             setting.AppSubUrl + "/",
+		Path:             path,
 		Secure:           setting.CookieSecure,
 		SameSiteDisabled: setting.CookieSameSiteDisabled,
 		SameSiteMode:     setting.CookieSameSiteMode,

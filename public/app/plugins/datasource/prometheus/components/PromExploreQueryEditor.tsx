@@ -38,6 +38,7 @@ export function PromExploreQueryEditor(props: Props) {
       query={query}
       onRunQuery={onRunQuery}
       onChange={onChange}
+      onBlur={() => {}}
       history={history}
       data={data}
       ExtraFieldElement={
@@ -47,7 +48,9 @@ export function PromExploreQueryEditor(props: Props) {
           onKeyDownFunc={onReturnKeyDown}
           value={query.interval || ''}
           hasTooltip={true}
-          tooltipContent={'Needs to be a valid time unit string, for example 5s, 1m, 3h, 1d, 1y'}
+          tooltipContent={
+            'Time units can be used here, for example: 5s, 1m, 3h, 1d, 1y (Default if no unit is specified: s)'
+          }
         />
       }
     />

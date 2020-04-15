@@ -22,7 +22,7 @@ export class DashLinksEditorCtrl {
 
   emptyListCta = {
     title: 'There are no dashboard links added yet',
-    buttonIcon: 'gicon gicon-link',
+    buttonIcon: 'link',
     buttonTitle: 'Add Dashboard Link',
     infoBox: {
       __html: `<p>

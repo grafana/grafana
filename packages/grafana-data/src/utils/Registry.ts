@@ -3,7 +3,7 @@ import { SelectableValue } from '../types/select';
 export interface RegistryItem {
   id: string; // Unique Key -- saved in configs
   name: string; // Display Name, can change without breaking configs
-  description: string;
+  description?: string;
   aliasIds?: string[]; // when the ID changes, we may want backwards compatibility ('current' => 'last')
 
   /**
@@ -124,7 +124,7 @@ export class Registry<T extends RegistryItem> {
     if (!this.initialized) {
       this.getIfExists('xxx'); // will trigger init
     }
-    return [...this.ordered]; // copy of everythign just in case
+    return this.ordered; // copy of everythign just in case
   }
 
   register(ext: T) {

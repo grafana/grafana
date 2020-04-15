@@ -3,9 +3,9 @@
 		<label class="gf-form-label query-keyword width-7">
 			Metric
 			&nbsp;
-			<a ng-click="toggleShowMetric()" bs-tooltip="'Click to toggle show / hide metric'">
-				<i class="fa fa-eye" ng-hide="agg.hide"></i>
-				<i class="fa fa-eye-slash" ng-show="agg.hide"></i>
+			<a ng-click="toggleShowMetric()" bs-tooltip="'Click to toggle show / hide metric'" style="margin-top: 2px;">
+				<icon name="'eye'" size="'sm'" ng-hide="agg.hide"></icon>
+				<icon name="'eye-slash'" size="'sm'" ng-show="agg.hide"></icon>
 			</a>
 		</label>
 	</div>
@@ -19,8 +19,8 @@
   <div class="gf-form gf-form--grow" ng-if="aggDef.isPipelineAgg && aggDef.supportsMultipleBucketPaths">
 		<label class="gf-form-label gf-form-label--grow">
 			<a ng-click="toggleVariables()">
-				<i class="fa fa-caret-down" ng-show="showVariables"></i>
-				<i class="fa fa-caret-right" ng-hide="showVariables"></i>
+				<icon name="'angle-down'" ng-show="showVariables"></icon>
+				<icon name="'angle-right'" ng-hide="showVariables"></icon>
         {{variablesLinkText}}
 			</a>
 		</label>
@@ -29,8 +29,8 @@
 	<div class="gf-form gf-form--grow">
 		<label class="gf-form-label gf-form-label--grow">
 			<a ng-click="toggleOptions()" ng-if="settingsLinkText">
-				<i class="fa fa-caret-down" ng-show="showOptions"></i>
-				<i class="fa fa-caret-right" ng-hide="showOptions"></i>
+				<icon name="'angle-down'" ng-show="showOptions"></icon>
+				<icon name="'angle-right'" ng-hide="showOptions"></icon>
 					{{settingsLinkText}}
 			</a>
 		</label>
@@ -38,10 +38,10 @@
 
 	<div class="gf-form">
 		<label class="gf-form-label" ng-if="isFirst">
-			<a class="pointer" ng-click="addMetricAgg()"><i class="fa fa-plus"></i></a>
+			<a class="pointer" ng-click="addMetricAgg()"><icon name="'plus'"></icon></a>
 		</label>
 		<label class="gf-form-label" ng-if="!isSingle">
-			<a class="pointer" ng-click="removeMetricAgg()"><i class="fa fa-minus"></i></a>
+			<a class="pointer" ng-click="removeMetricAgg()"><icon name="'minus'"></icon></a>
 		</label>
 	</div>
 </div>

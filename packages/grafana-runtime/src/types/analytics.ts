@@ -1,18 +1,35 @@
 import { EchoEvent, EchoEventType } from '../services/EchoSrv';
 
-export interface MetaAnalyticsEventPayload {
-  eventName: string;
-  dashboardId?: number;
-  dashboardUid?: string;
-  dashboardName?: string;
+export interface DashboardInfo {
+  dashboardId: number;
+  dashboardUid: string;
+  dashboardName: string;
   folderName?: string;
-  panelId?: number;
-  panelName?: string;
+}
+
+export interface DataRequestInfo extends Partial<DashboardInfo> {
   datasourceName: string;
   datasourceId?: number;
-  error?: string;
+  panelId?: number;
+  panelName?: string;
   duration: number;
+  error?: string;
   dataSize?: number;
 }
+
+export enum MetaAnalyticsEventName {
+  DashboardView = 'dashboard-view',
+  DataRequest = 'data-request',
+}
+
+export interface DashboardViewEventPayload extends DashboardInfo {
+  eventName: MetaAnalyticsEventName.DashboardView;
+}
+
+export interface DataRequestEventPayload extends DataRequestInfo {
+  eventName: MetaAnalyticsEventName.DataRequest;
+}
+
+export type MetaAnalyticsEventPayload = DashboardViewEventPayload | DataRequestEventPayload;
 
 export interface MetaAnalyticsEvent extends EchoEvent<EchoEventType.MetaAnalytics, MetaAnalyticsEventPayload> {}

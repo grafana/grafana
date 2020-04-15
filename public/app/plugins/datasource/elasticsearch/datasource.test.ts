@@ -37,26 +37,41 @@ describe('ElasticDatasource', function(this: any) {
     getAdhocFilters: jest.fn(() => []),
   };
 
-  const timeSrv: any = {
-    time: { from: 'now-1h', to: 'now' },
-    timeRange: jest.fn(() => {
-      return {
-        from: dateMath.parse(timeSrv.time.from, false),
-        to: dateMath.parse(timeSrv.time.to, true),
-      };
-    }),
-    setTime: jest.fn(time => {
-      this.time = time;
-    }),
-  };
+  const timeSrv: any = createTimeSrv('now-1h');
 
   const ctx = {
     $rootScope,
   } as any;
 
+  function createTimeSrv(from: string) {
+    const srv: any = {
+      time: { from: from, to: 'now' },
+    };
+
+    srv.timeRange = jest.fn(() => {
+      return {
+        from: dateMath.parse(srv.time.from, false),
+        to: dateMath.parse(srv.time.to, true),
+      };
+    });
+
+    srv.setTime = jest.fn(time => {
+      srv.time = time;
+    });
+
+    return srv;
+  }
+
   function createDatasource(instanceSettings: DataSourceInstanceSettings<ElasticsearchOptions>) {
+    createDatasourceWithTime(instanceSettings, timeSrv as TimeSrv);
+  }
+
+  function createDatasourceWithTime(
+    instanceSettings: DataSourceInstanceSettings<ElasticsearchOptions>,
+    timeSrv: TimeSrv
+  ) {
     instanceSettings.jsonData = instanceSettings.jsonData || ({} as ElasticsearchOptions);
-    ctx.ds = new ElasticDatasource(instanceSettings, templateSrv as TemplateSrv, timeSrv as TimeSrv);
+    ctx.ds = new ElasticDatasource(instanceSettings, templateSrv as TemplateSrv, timeSrv);
   }
 
   describe('When testing datasource with index pattern', () => {
@@ -352,6 +367,123 @@ describe('ElasticDatasource', function(this: any) {
 
       const fields = _.map(fieldObjects, 'text');
       expect(fields).toEqual(['@timestamp']);
+    });
+  });
+
+  describe('When getting field mappings on indices with gaps', () => {
+    const twoWeekTimeSrv: any = createTimeSrv('now-2w');
+
+    const basicResponse = {
+      data: {
+        metricbeat: {
+          mappings: {
+            metricsets: {
+              _all: {},
+              properties: {
+                '@timestamp': { type: 'date' },
+                beat: {
+                  properties: {
+                    hostname: { type: 'string' },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    };
+
+    const alternateResponse = {
+      data: {
+        metricbeat: {
+          mappings: {
+            metricsets: {
+              _all: {},
+              properties: {
+                '@timestamp': { type: 'date' },
+              },
+            },
+          },
+        },
+      },
+    };
+
+    beforeEach(() => {
+      createDatasourceWithTime(
+        {
+          url: 'http://es.com',
+          database: '[asd-]YYYY.MM.DD',
+          jsonData: { interval: 'Daily', esVersion: 50 } as ElasticsearchOptions,
+        } as DataSourceInstanceSettings<ElasticsearchOptions>,
+        twoWeekTimeSrv
+      );
+    });
+
+    it('should return fields of the newest available index', async () => {
+      const twoDaysBefore = toUtc()
+        .subtract(2, 'day')
+        .format('YYYY.MM.DD');
+
+      const threeDaysBefore = toUtc()
+        .subtract(3, 'day')
+        .format('YYYY.MM.DD');
+
+      datasourceRequestMock.mockImplementation(options => {
+        if (options.url === `http://es.com/asd-${twoDaysBefore}/_mapping`) {
+          return Promise.resolve(basicResponse);
+        } else if (options.url === `http://es.com/asd-${threeDaysBefore}/_mapping`) {
+          return Promise.resolve(alternateResponse);
+        }
+        return Promise.reject({ status: 404 });
+      });
+
+      const fieldObjects = await ctx.ds.getFields({
+        find: 'fields',
+        query: '*',
+      });
+      const fields = _.map(fieldObjects, 'text');
+      expect(fields).toEqual(['@timestamp', 'beat.hostname']);
+    });
+
+    it('should not retry when ES is down', async () => {
+      const twoDaysBefore = toUtc()
+        .subtract(2, 'day')
+        .format('YYYY.MM.DD');
+
+      datasourceRequestMock.mockImplementation(options => {
+        if (options.url === `http://es.com/asd-${twoDaysBefore}/_mapping`) {
+          return Promise.resolve(basicResponse);
+        }
+        return Promise.reject({ status: 500 });
+      });
+
+      expect.assertions(2);
+      try {
+        await ctx.ds.getFields({
+          find: 'fields',
+          query: '*',
+        });
+      } catch (e) {
+        expect(e).toStrictEqual({ status: 500 });
+        expect(datasourceRequestMock).toBeCalledTimes(1);
+      }
+    });
+
+    it('should not retry more than 7 indices', async () => {
+      datasourceRequestMock.mockImplementation(() => {
+        return Promise.reject({ status: 404 });
+      });
+
+      expect.assertions(2);
+      try {
+        await ctx.ds.getFields({
+          find: 'fields',
+          query: '*',
+        });
+      } catch (e) {
+        expect(e).toStrictEqual({ status: 404 });
+        expect(datasourceRequestMock).toBeCalledTimes(7);
+      }
     });
   });
 

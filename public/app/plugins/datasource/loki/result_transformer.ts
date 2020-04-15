@@ -395,11 +395,16 @@ export const enhanceDataFrame = (dataFrame: DataFrame, config: LokiOptions | nul
 
   const fields = derivedFields.reduce((acc, field) => {
     const config: FieldConfig = {};
-    if (field.url) {
+    if (field.url || field.datasourceName) {
       config.links = [
         {
           url: field.url,
           title: '',
+          meta: field.datasourceName
+            ? {
+                datasourceName: field.datasourceName,
+              }
+            : undefined,
         },
       ];
     }
@@ -415,7 +420,7 @@ export const enhanceDataFrame = (dataFrame: DataFrame, config: LokiOptions | nul
   }, {} as Record<string, any>);
 
   const view = new DataFrameView(dataFrame);
-  view.forEachRow((row: { line: string }) => {
+  view.forEach((row: { line: string }) => {
     for (const field of derivedFields) {
       const logMatch = row.line.match(field.matcherRegex);
       fields[field.name].values.add(logMatch && logMatch[1]);

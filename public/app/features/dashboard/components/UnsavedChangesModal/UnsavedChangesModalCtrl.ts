@@ -4,12 +4,12 @@ const template = `
 <div class="modal-body">
   <div class="modal-header">
     <h2 class="modal-header-title">
-      <i class="fa fa-exclamation"></i>
+      <icon name="'exclamation-triangle'" size="'lg'"></icon>
       <span class="p-l-1">Unsaved changes</span>
     </h2>
 
     <a class="modal-header-close" ng-click="ctrl.dismiss();">
-      <i class="fa fa-remove"></i>
+      <icon name="'times'"></icon>
     </a>
   </div>
 
@@ -20,7 +20,7 @@ const template = `
     </div>
 
     <div class="confirm-modal-buttons">
-      <button type="button" class="btn btn-primary" ng-click="ctrl.save()">Save</button>
+      <save-dashboard-button dashboard="ctrl.unsavedChangesSrv.tracker.current" onSaveSuccess="ctrl.onSaveSuccess" >Save</save-dashboard-button>
       <button type="button" class="btn btn-danger" ng-click="ctrl.discard()">Discard</button>
       <button type="button" class="btn btn-inverse" ng-click="ctrl.dismiss()">Cancel</button>
     </div>
@@ -44,6 +44,11 @@ export class UnsavedChangesModalCtrl {
     this.dismiss();
     this.unsavedChangesSrv.tracker.saveChanges();
   }
+
+  onSaveSuccess = () => {
+    this.dismiss();
+    this.unsavedChangesSrv.tracker.onSaveSuccess();
+  };
 }
 
 export function unsavedChangesModalDirective() {

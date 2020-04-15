@@ -1,6 +1,7 @@
 import { DashboardAcl } from './acl';
 import { DataQuery, PanelPlugin } from '@grafana/data';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
+import { AngularComponent } from '@grafana/runtime';
 
 export interface DashboardDTO {
   redirectUri?: string;
@@ -17,9 +18,7 @@ export interface DashboardMeta {
   canAdmin?: boolean;
   url?: string;
   folderId?: number;
-  fullscreen?: boolean;
   fromExplore?: boolean;
-  isEditing?: boolean;
   canMakeEditable?: boolean;
   submenuEnabled?: boolean;
   provisioned?: boolean;
@@ -70,6 +69,7 @@ export interface QueriesToUpdateOnDashboardLoad {
 export interface PanelState {
   pluginId: string;
   plugin?: PanelPlugin;
+  angularComponent?: AngularComponent | null;
 }
 
 export interface DashboardState {

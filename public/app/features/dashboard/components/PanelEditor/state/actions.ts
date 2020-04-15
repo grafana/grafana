@@ -9,15 +9,15 @@ import {
   setPanelEditorUIState,
   PANEL_EDITOR_UI_STATE_STORAGE_KEY,
 } from './reducers';
-import { cleanUpEditPanel } from '../../../state/reducers';
+import { cleanUpEditPanel, panelModelAndPluginReady } from '../../../state/reducers';
 import store from '../../../../../core/store';
 
 export function initPanelEditor(sourcePanel: PanelModel, dashboard: DashboardModel): ThunkResult<void> {
   return dispatch => {
-    const panel = dashboard.initPanelEditor(sourcePanel);
+    const panel = dashboard.initEditPanel(sourcePanel);
 
     const queryRunner = panel.getQueryRunner();
-    const querySubscription = queryRunner.getData().subscribe({
+    const querySubscription = queryRunner.getData(false).subscribe({
       next: (data: PanelData) => dispatch(setEditorPanelData(data)),
     });
 
@@ -40,21 +40,34 @@ export function panelEditorCleanUp(): ThunkResult<void> {
       const panel = getPanel();
       const modifiedSaveModel = panel.getSaveModel();
       const sourcePanel = getSourcePanel();
+      const panelTypeChanged = sourcePanel.type !== panel.type;
 
       // restore the source panel id before we update source panel
       modifiedSaveModel.id = sourcePanel.id;
 
       sourcePanel.restoreModel(modifiedSaveModel);
 
+      if (panelTypeChanged) {
+        dispatch(panelModelAndPluginReady({ panelId: sourcePanel.id, plugin: panel.plugin! }));
+      }
+
       // Resend last query result on source panel query runner
       // But do this after the panel edit editor exit process has completed
       setTimeout(() => {
-        sourcePanel.getQueryRunner().pipeDataToSubject(panel.getQueryRunner().getLastResult());
-      });
+        const lastResult = panel.getQueryRunner().getLastResult();
+        if (lastResult) {
+          sourcePanel.getQueryRunner().pipeDataToSubject(lastResult);
+        }
+      }, 20);
     }
 
-    dashboard.exitPanelEditor();
-    querySubscription.unsubscribe();
+    if (dashboard) {
+      dashboard.exitPanelEditor();
+    }
+
+    if (querySubscription) {
+      querySubscription.unsubscribe();
+    }
 
     dispatch(cleanUpEditPanel());
     dispatch(closeCompleted());

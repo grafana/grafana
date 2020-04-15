@@ -9,12 +9,12 @@ import (
 // and back into our Logger. This is basically the only way to
 // build upon *log.Logger.
 type stdlogAdapter struct {
-	log         Logger
+	hl          Logger
 	inferLevels bool
 }
 
 // Take the data, infer the levels if configured, and send it through
-// a regular Logger.
+// a regular Logger
 func (s *stdlogAdapter) Write(data []byte) (int, error) {
 	str := string(bytes.TrimRight(data, " \t\n"))
 
@@ -22,26 +22,26 @@ func (s *stdlogAdapter) Write(data []byte) (int, error) {
 		level, str := s.pickLevel(str)
 		switch level {
 		case Trace:
-			s.log.Trace(str)
+			s.hl.Trace(str)
 		case Debug:
-			s.log.Debug(str)
+			s.hl.Debug(str)
 		case Info:
-			s.log.Info(str)
+			s.hl.Info(str)
 		case Warn:
-			s.log.Warn(str)
+			s.hl.Warn(str)
 		case Error:
-			s.log.Error(str)
+			s.hl.Error(str)
 		default:
-			s.log.Info(str)
+			s.hl.Info(str)
 		}
 	} else {
-		s.log.Info(str)
+		s.hl.Info(str)
 	}
 
 	return len(data), nil
 }
 
-// Detect, based on conventions, what log level this is.
+// Detect, based on conventions, what log level this is
 func (s *stdlogAdapter) pickLevel(str string) (Level, string) {
 	switch {
 	case strings.HasPrefix(str, "[DEBUG]"):

@@ -11,12 +11,13 @@
 .main-view {
   position: relative;
   flex-grow: 1;
-  background: $page-gradient;
+  background: $page-bg;
 }
 
-.panel-in-fullscreen {
+.page-explore,
+.page-dashboard {
   .main-view {
-    background: $edit-gradient;
+    background: $dashboard-bg;
   }
 }
 
@@ -148,8 +149,7 @@
 
 .page-sub-heading-icon {
   margin-left: $spacer;
-  vertical-align: 6px;
-  font-size: 13px;
+  margin-top: $space-xs;
 }
 
 .page-sidebar {

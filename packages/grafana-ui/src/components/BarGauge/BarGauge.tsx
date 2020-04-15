@@ -37,7 +37,7 @@ export interface Props extends Themeable {
   height: number;
   width: number;
   field: FieldConfig;
-  display: DisplayProcessor;
+  display?: DisplayProcessor;
   value: DisplayValue;
   orientation: VizOrientation;
   itemSpacing?: number;
@@ -72,7 +72,7 @@ export class BarGauge extends PureComponent<Props> {
         steps: [],
       },
     },
-    itemSpacing: 10,
+    itemSpacing: 8,
     showUnfilled: true,
   };
 

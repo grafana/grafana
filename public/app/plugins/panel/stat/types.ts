@@ -1,5 +1,6 @@
 import { SingleStatBaseOptions, BigValueColorMode, BigValueGraphMode, BigValueJustifyMode } from '@grafana/ui';
-import { VizOrientation, ReducerID, FieldDisplayOptions, SelectableValue, ThresholdsMode } from '@grafana/data';
+import { ReducerID, SelectableValue, standardEditorsRegistry } from '@grafana/data';
+import { PanelOptionsEditorBuilder } from '@grafana/data';
 
 // Structure copied from angular
 export interface StatPanelOptions extends SingleStatBaseOptions {
@@ -23,26 +24,58 @@ export const justifyModes: Array<SelectableValue<BigValueJustifyMode>> = [
   { value: BigValueJustifyMode.Center, label: 'Center' },
 ];
 
-export const standardFieldDisplayOptions: FieldDisplayOptions = {
-  values: false,
-  calcs: [ReducerID.mean],
-  defaults: {
-    thresholds: {
-      mode: ThresholdsMode.Absolute,
-      steps: [
-        { value: -Infinity, color: 'green' },
-        { value: 80, color: 'red' }, // 80%
+export function addStandardDataReduceOptions(
+  builder: PanelOptionsEditorBuilder<SingleStatBaseOptions>,
+  includeOrientation = true
+) {
+  builder.addRadio({
+    path: 'reduceOptions.values',
+    name: 'Show',
+    description: 'Calculate a single value per colum or series or show each row',
+    settings: {
+      options: [
+        { value: false, label: 'Calculate' },
+        { value: true, label: 'All values' },
       ],
     },
-    mappings: [],
-  },
-  overrides: [],
-};
+    defaultValue: false,
+  });
 
-export const defaults: StatPanelOptions = {
-  graphMode: BigValueGraphMode.Area,
-  colorMode: BigValueColorMode.Value,
-  justifyMode: BigValueJustifyMode.Auto,
-  fieldOptions: standardFieldDisplayOptions,
-  orientation: VizOrientation.Auto,
-};
+  builder.addNumberInput({
+    path: 'reduceOptions.limit',
+    name: 'Limit',
+    description: 'Max number of rows to display',
+    settings: {
+      placeholder: '5000',
+      integer: true,
+      min: 1,
+      max: 5000,
+    },
+    showIf: options => options.reduceOptions.values,
+  });
+
+  builder.addCustomEditor({
+    id: 'reduceOptions.calcs',
+    path: 'reduceOptions.calcs',
+    name: 'Value',
+    description: 'Choose a reducer function / calculation',
+    editor: standardEditorsRegistry.get('stats-picker').editor as any,
+    defaultValue: [ReducerID.mean],
+  });
+
+  if (includeOrientation) {
+    builder.addRadio({
+      path: 'orientation',
+      name: 'Orientation',
+      description: 'Stacking direction in case of multiple series or fields',
+      settings: {
+        options: [
+          { value: 'auto', label: 'Auto' },
+          { value: 'horizontal', label: 'Horizontal' },
+          { value: 'vertical', label: 'Vertical' },
+        ],
+      },
+      defaultValue: 'auto',
+    });
+  }
+}

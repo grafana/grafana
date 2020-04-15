@@ -2,6 +2,8 @@
 
 This style guide applies to all documentation created for Grafana products.
 
+For information about how to write technical documentation, we suggest reviewing the content of the [Google Technical Writing courses](https://developers.google.com/tech-writing).
+
 ## Contributing
 
 The *Documentation style guide* is a living document. Add to it whenever a style decision is made or a question is answered regarding style, grammar, or word choice.
@@ -136,6 +138,10 @@ Two words, not one
 * Correct, active voice: Grafana displays your list of active alarms.
 * Correct, but passive voice: Your list of active alarms is displayed.
 * Incorrect: The list of active alarms displays.
+
+#### intro, introduction
+
+"Introduction" is the preferred word. Use "intro" if there are space constraints (like on the side menu) or you are specifically trying for a less formal, more conversational tone.
 
 #### metadata
 

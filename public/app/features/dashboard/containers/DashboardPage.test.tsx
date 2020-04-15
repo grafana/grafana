@@ -62,8 +62,6 @@ function dashboardPageScenario(description: string, scenarioFn: (ctx: ScenarioCo
           urlUid: '11',
           $injector: {},
           routeInfo: DashboardRouteInfo.Normal,
-          urlEdit: false,
-          urlFullscreen: false,
           initPhase: DashboardInitPhase.NotStarted,
           isInitSlow: false,
           initDashboard: jest.fn(),
@@ -133,55 +131,39 @@ describe('DashboardPage', () => {
       ctx.mount();
       ctx.setDashboardProp();
       ctx.wrapper?.setProps({
-        urlFullscreen: true,
-        urlEdit: true,
-        urlPanelId: '1',
+        urlEditPanelId: '1',
       });
-    });
-
-    it('Should update model state to fullscreen & edit', () => {
-      expect(ctx.dashboard).not.toBe(null);
-      expect(ctx.dashboard?.meta.fullscreen).toBe(true);
-      expect(ctx.dashboard?.meta.isEditing).toBe(true);
     });
 
     it('Should update component state to fullscreen and edit', () => {
       const state = ctx.wrapper?.state();
       expect(state).not.toBe(null);
-      expect(state?.isEditing).toBe(true);
-      expect(state?.isFullscreen).toBe(true);
+      expect(state?.editPanel).toBeDefined();
     });
   });
 
-  dashboardPageScenario('When user goes back to dashboard from panel edit', ctx => {
+  dashboardPageScenario('When user goes back to dashboard from view panel', ctx => {
     ctx.setup(() => {
       ctx.mount();
       ctx.setDashboardProp();
       ctx.wrapper?.setState({ scrollTop: 100 });
       ctx.wrapper?.setProps({
-        urlFullscreen: true,
-        urlEdit: true,
-        urlPanelId: '1',
+        urlEditPanelId: '1',
       });
       ctx.wrapper?.setProps({
-        urlFullscreen: false,
-        urlEdit: false,
-        urlPanelId: (null as unknown) as string,
+        urlEditPanelId: undefined,
       });
     });
 
     it('Should update model state normal state', () => {
-      expect(ctx.dashboard).not.toBe(null);
-      expect(ctx.dashboard?.meta.fullscreen).toBe(false);
-      expect(ctx.dashboard?.meta.isEditing).toBe(false);
+      expect(ctx.dashboard.panelInEdit).toBeUndefined();
     });
 
     it('Should update component state to normal and restore scrollTop', () => {
       const state = ctx.wrapper?.state();
       expect(ctx.wrapper).not.toBe(null);
       expect(state).not.toBe(null);
-      expect(state?.isEditing).toBe(false);
-      expect(state?.isFullscreen).toBe(false);
+      expect(state?.editPanel).toBe(null);
       expect(state?.scrollTop).toBe(100);
     });
   });
@@ -197,10 +179,6 @@ describe('DashboardPage', () => {
 
     it('should render settings view', () => {
       expect(ctx.wrapper).toMatchSnapshot();
-    });
-
-    it('should set animation state', () => {
-      expect(ctx.wrapper?.state().isSettingsOpening).toBe(true);
     });
   });
 
@@ -232,9 +210,7 @@ describe('DashboardPage', () => {
         schemaVersion: 17,
       });
       ctx.wrapper?.setProps({
-        urlEdit: true,
-        urlFullscreen: true,
-        urlPanelId: '0',
+        urlEditPanelId: '0',
       });
     });
 
@@ -242,8 +218,7 @@ describe('DashboardPage', () => {
       const state = ctx.wrapper?.state();
       expect(ctx.wrapper).not.toBe(null);
       expect(state).not.toBe(null);
-      expect(state?.fullscreenPanel).not.toBe(null);
-      expect(state?.fullscreenPanel?.id).toBe(0);
+      expect(state?.editPanel).not.toBe(null);
     });
   });
 
@@ -262,13 +237,12 @@ describe('DashboardPage', () => {
     });
   });
 
-  describe('mapStateToProps with bool fullscreen', () => {
+  describe('mapStateToProps with editPanel', () => {
     const props = mapStateToProps({
       location: {
         routeParams: {},
         query: {
-          fullscreen: true,
-          edit: false,
+          editPanel: '1',
         },
       },
       panelEditorNew: {},
@@ -277,8 +251,7 @@ describe('DashboardPage', () => {
       },
     } as any);
 
-    expect(props.urlFullscreen).toBe(true);
-    expect(props.urlEdit).toBe(false);
+    expect(props.urlEditPanelId).toBe('1');
   });
 
   describe('mapStateToProps with string edit true', () => {
@@ -286,8 +259,7 @@ describe('DashboardPage', () => {
       location: {
         routeParams: {},
         query: {
-          fullscreen: false,
-          edit: 'true',
+          viewPanel: '2',
         },
       },
       panelEditorNew: {},
@@ -296,7 +268,6 @@ describe('DashboardPage', () => {
       },
     } as any);
 
-    expect(props.urlFullscreen).toBe(false);
-    expect(props.urlEdit).toBe(true);
+    expect(props.urlViewPanelId).toBe('2');
   });
 });

@@ -7,6 +7,7 @@ const TerserPlugin = require('terser-webpack-plugin');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const OptimizeCssAssetsPlugin = require('optimize-css-assets-webpack-plugin');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
+const ForkTsCheckerWebpackPlugin = require('fork-ts-checker-webpack-plugin');
 
 const readdirPromise = util.promisify(fs.readdir);
 const accessPromise = util.promisify(fs.access);
@@ -82,6 +83,7 @@ const getEntries = async () => {
 };
 
 const getCommonPlugins = (options: WebpackConfigurationOptions) => {
+  const hasREADME = fs.existsSync(path.resolve(process.cwd(), 'src', 'README.md'));
   const packageJson = require(path.resolve(process.cwd(), 'package.json'));
   return [
     new MiniCssExtractPlugin({
@@ -91,8 +93,9 @@ const getCommonPlugins = (options: WebpackConfigurationOptions) => {
     new webpack.optimize.OccurrenceOrderPlugin(true),
     new CopyWebpackPlugin(
       [
+        // If src/README.md exists use it; otherwise the root README
+        { from: hasREADME ? 'README.md' : '../README.md', to: '.', force: true },
         { from: 'plugin.json', to: '.' },
-        { from: '../README.md', to: '.' },
         { from: '../LICENSE', to: '.' },
         { from: '**/*.json', to: '.' },
         { from: '**/*.svg', to: '.' },
@@ -121,6 +124,11 @@ const getCommonPlugins = (options: WebpackConfigurationOptions) => {
         ],
       },
     ]),
+    new ForkTsCheckerWebpackPlugin({
+      tsconfig: path.join(process.cwd(), 'tsconfig.json'),
+      // Only report problems in detected in plugin's code
+      reportFiles: ['**/*.{ts,tsx}'],
+    }),
   ];
 };
 
@@ -203,7 +211,10 @@ const getBaseWebpackConfig: WebpackConfigurationGetter = async options => {
             },
             {
               loader: 'ts-loader',
-              options: { onlyCompileBundledFiles: true },
+              options: {
+                onlyCompileBundledFiles: true,
+                transpileOnly: true,
+              },
             },
           ],
           exclude: /(node_modules)/,

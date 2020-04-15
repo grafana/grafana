@@ -26,6 +26,7 @@ import {
 import { ExploreItemState, ExploreId } from 'app/types/explore';
 import { Emitter } from 'app/core/utils/emitter';
 import { highlightLogsExpressionAction, removeQueryRowAction } from './state/actionTypes';
+import { ErrorContainer } from './ErrorContainer';
 
 interface PropsFromParent {
   exploreId: ExploreId;
@@ -137,43 +138,46 @@ export class QueryRow extends PureComponent<QueryRowProps, QueryRowState> {
     }
 
     return (
-      <div className="query-row">
-        <div className="query-row-field flex-shrink-1">
-          {QueryField ? (
-            <QueryField
-              datasource={datasourceInstance}
-              query={query}
-              history={history}
-              onRunQuery={this.onRunQuery}
-              onBlur={noopOnBlur}
-              onChange={this.onChange}
-              data={queryResponse}
-              absoluteRange={absoluteRange}
-              exploreMode={mode}
-            />
-          ) : (
-            <QueryEditor
-              error={queryErrors}
-              datasource={datasourceInstance}
-              onQueryChange={this.onChange}
-              onExecuteQuery={this.onRunQuery}
-              initialQuery={query}
-              exploreEvents={exploreEvents}
-              range={range}
-              textEditModeEnabled={this.state.textEditModeEnabled}
-            />
-          )}
+      <>
+        <div className="query-row">
+          <div className="query-row-field flex-shrink-1">
+            {QueryField ? (
+              <QueryField
+                datasource={datasourceInstance}
+                query={query}
+                history={history}
+                onRunQuery={this.onRunQuery}
+                onBlur={noopOnBlur}
+                onChange={this.onChange}
+                data={queryResponse}
+                absoluteRange={absoluteRange}
+                exploreMode={mode}
+              />
+            ) : (
+              <QueryEditor
+                error={queryErrors}
+                datasource={datasourceInstance}
+                onQueryChange={this.onChange}
+                onExecuteQuery={this.onRunQuery}
+                initialQuery={query}
+                exploreEvents={exploreEvents}
+                range={range}
+                textEditModeEnabled={this.state.textEditModeEnabled}
+              />
+            )}
+          </div>
+          <QueryRowActions
+            canToggleEditorModes={canToggleEditorModes}
+            isDisabled={query.hide}
+            isNotStarted={isNotStarted}
+            latency={latency}
+            onClickToggleEditorMode={this.onClickToggleEditorMode}
+            onClickToggleDisabled={this.onClickToggleDisabled}
+            onClickRemoveButton={this.onClickRemoveButton}
+          />
         </div>
-        <QueryRowActions
-          canToggleEditorModes={canToggleEditorModes}
-          isDisabled={query.hide}
-          isNotStarted={isNotStarted}
-          latency={latency}
-          onClickToggleEditorMode={this.onClickToggleEditorMode}
-          onClickToggleDisabled={this.onClickToggleDisabled}
-          onClickRemoveButton={this.onClickRemoveButton}
-        />
-      </div>
+        {queryErrors.length > 0 && <ErrorContainer queryError={queryErrors[0]} />}
+      </>
     );
   }
 }

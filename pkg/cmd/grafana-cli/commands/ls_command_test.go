@@ -2,10 +2,11 @@ package commands
 
 import (
 	"errors"
-	"github.com/grafana/grafana/pkg/cmd/grafana-cli/commands/commandstest"
-	s "github.com/grafana/grafana/pkg/cmd/grafana-cli/services"
-	. "github.com/smartystreets/goconvey/convey"
 	"testing"
+
+	"github.com/grafana/grafana/pkg/cmd/grafana-cli/commands/commandstest"
+	"github.com/grafana/grafana/pkg/cmd/grafana-cli/services"
+	. "github.com/smartystreets/goconvey/convey"
 )
 
 func TestMissingPath(t *testing.T) {
@@ -18,7 +19,7 @@ func TestMissingPath(t *testing.T) {
 			cmd := Command{}
 			c, err := commandstest.NewCliContext(map[string]string{})
 			So(err, ShouldBeNil)
-			s.IoHelper = &commandstest.FakeIoUtil{}
+			services.IoHelper = &commandstest.FakeIoUtil{}
 
 			Convey("should return error", func() {
 				err := cmd.lsCommand(c)
@@ -29,7 +30,7 @@ func TestMissingPath(t *testing.T) {
 		Convey("Path is not a directory", func() {
 			c, err := commandstest.NewCliContext(map[string]string{"path": "/var/lib/grafana/plugins"})
 			So(err, ShouldBeNil)
-			s.IoHelper = &commandstest.FakeIoUtil{
+			services.IoHelper = &commandstest.FakeIoUtil{
 				FakeIsDirectory: false,
 			}
 			cmd := Command{}

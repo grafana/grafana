@@ -9,12 +9,12 @@ export const gaugePanelMigrationHandler = (panel: PanelModel<GaugeOptions>): Par
 
 // This is called when the panel changes from another panel
 export const gaugePanelChangedHandler = (
-  options: Partial<GaugeOptions> | any,
+  panel: PanelModel<Partial<GaugeOptions>> | any,
   prevPluginId: string,
   prevOptions: any
 ) => {
   // This handles most config changes
-  const opts = sharedSingleStatPanelChangedHandler(options, prevPluginId, prevOptions) as GaugeOptions;
+  const opts = sharedSingleStatPanelChangedHandler(panel, prevPluginId, prevOptions) as GaugeOptions;
 
   // Changing from angular singlestat
   if (prevPluginId === 'singlestat' && prevOptions.angular) {

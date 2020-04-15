@@ -10,11 +10,11 @@ weight = 8
 
 # Image rendering
 
-Grafana supports automatic rendering of panels and dashboards as PNG images. This allows Grafana to automatically generate images of your panels to include in alert [Notifications]({{ < relref "../alerting/notifications.md" >}}).
+Grafana supports automatic rendering of panels and dashboards as PNG images. This allows Grafana to automatically generate images of your panels to include in [alert notifications]({{< relref "../alerting/notifications.md" >}}).
 
 When an image is being rendered the PNG-image is temporarily written to the file system. When an image is rendered, the PNG image is temporary written to the `png` folder in the Grafana `data` folder.
 
-A background job runs every 10 minutes and removes temporary images. You can configure how long an image should be stored before being removed by configuring the [temp-data-lifetime]({{ < relref "/installation/configuration/#temp-data-lifetime" > }}) setting.
+A background job runs every 10 minutes and removes temporary images. You can configure how long an image should be stored before being removed by configuring the [temp-data-lifetime]({{< relref "../installation/configuration/#temp-data-lifetime" >}}) setting.
 
 You can also render a PNG by clicking the dropdown arrow next to a panel title, then clicking **Share > Direct link rendered image**.
 
@@ -22,7 +22,7 @@ You can also render a PNG by clicking the dropdown arrow next to a panel title, 
 
 Minimum free memory recommendation is 16GB on the system doing the rendering.
 
-Rendering images can require a lot of memory, mainly because Grafama creates browser instances in the background for the actual rendering. If multiple images are rendered in parallel, then the rendering has a bigger memory footprint. One advantage of using the remote rendering service is that the rendering will be done on the remote system, so your local system resources will not be affected by rendering.
+Rendering images can require a lot of memory, mainly because Grafana creates browser instances in the background for the actual rendering. If multiple images are rendered in parallel, then the rendering has a bigger memory footprint. One advantage of using the remote rendering service is that the rendering will be done on the remote system, so your local system resources will not be affected by rendering.
 
 ## Alerting and render limits
 
@@ -36,9 +36,9 @@ To install the plugin, refer to the [Grafana Image Renderer Installation instruc
 
 ## Run in custom Grafana Docker image
 
- We recommend setting up another Docker container for rendering and using remote rendering. Refer to [Remote rendering service](#remote-rendering-service) for instructions.
+ We recommend setting up another Docker container for rendering and using remote rendering. Refer to [Remote rendering service]({{< relref "#remote-rendering-service" >}}) for instructions.
 
-If you still want to install the plugin in the Grafana Docker image, refer to [Build with Grafana Image Renderer plugin pre-installed]({{ < relref "/installation/docker/#build-with-grafana-image-renderer-plugin-pre-installed" > }}).
+If you still want to install the plugin in the Grafana Docker image, refer to [Build with Grafana Image Renderer plugin pre-installed]({{< relref "../installation/docker/#build-with-grafana-image-renderer-plugin-pre-installed" >}}).
 
 ## Remote rendering service
 
@@ -85,22 +85,25 @@ The following example describes how to build and run the remote HTTP rendering s
 1. Clone the [Grafana image renderer plugin](https://grafana.com/grafana/plugins/grafana-image-renderer) Git repository.
 2. Install dependencies and build:
 
-```bash
-yarn install --pure-lockfile
-yarn run build
-```
-3. Run the server
+    ```bash
+    yarn install --pure-lockfile
+    yarn run build
+    ```
 
-```bash
-node build/app.js server --port=8081
-```
+3. Run the server:
+
+    ```bash
+    node build/app.js server --port=8081
+    ```
+
 4. Update Grafana configuration:
 
-```
-[rendering]
-server_url = http://localhost:8081/render
-callback_url = http://localhost:3000/
-```
+    ```
+    [rendering]
+    server_url = http://localhost:8081/render
+    callback_url = http://localhost:3000/
+    ```
+
 5. Restart Grafana.
 
 ## PhantomJS

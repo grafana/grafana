@@ -1,4 +1,3 @@
-import AdminListUsersCtrl from './AdminListUsersCtrl';
 import AdminEditUserCtrl from './AdminEditUserCtrl';
 import AdminListOrgsCtrl from './AdminListOrgsCtrl';
 import AdminEditOrgCtrl from './AdminEditOrgCtrl';
@@ -15,7 +14,6 @@ class AdminHomeCtrl {
   }
 }
 
-coreModule.controller('AdminListUsersCtrl', AdminListUsersCtrl);
 coreModule.controller('AdminEditUserCtrl', AdminEditUserCtrl);
 coreModule.controller('AdminListOrgsCtrl', AdminListOrgsCtrl);
 coreModule.controller('AdminEditOrgCtrl', AdminEditOrgCtrl);

@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"strings"
 
-	m "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -22,6 +22,16 @@ type PluginState string
 var (
 	PluginStateAlpha PluginState = "alpha"
 	PluginStateBeta  PluginState = "beta"
+)
+
+type PluginSignature string
+
+const (
+	PluginSignatureInternal PluginSignature = "internal" // core plugin, no signature
+	PluginSignatureValid    PluginSignature = "valid"    // signed and accurate MANIFEST
+	PluginSignatureInvalid  PluginSignature = "invalid"  // invalid signature
+	PluginSignatureModified PluginSignature = "modified" // valid signature, but content mismatch
+	PluginSignatureUnsigned PluginSignature = "unsigned" // no MANIFEST file
 )
 
 type PluginNotFoundError struct {
@@ -49,6 +59,7 @@ type PluginBase struct {
 	HideFromList bool               `json:"hideFromList,omitempty"`
 	Preload      bool               `json:"preload"`
 	State        PluginState        `json:"state,omitempty"`
+	Signature    PluginSignature    `json:"signature"`
 
 	IncludedInAppId string `json:"-"`
 	PluginDir       string `json:"-"`
@@ -78,7 +89,7 @@ func (pb *PluginBase) registerPlugin(pluginDir string) error {
 
 	for _, include := range pb.Includes {
 		if include.Role == "" {
-			include.Role = m.ROLE_VIEWER
+			include.Role = models.ROLE_VIEWER
 		}
 	}
 
@@ -93,14 +104,14 @@ type PluginDependencies struct {
 }
 
 type PluginInclude struct {
-	Name       string     `json:"name"`
-	Path       string     `json:"path"`
-	Type       string     `json:"type"`
-	Component  string     `json:"component"`
-	Role       m.RoleType `json:"role"`
-	AddToNav   bool       `json:"addToNav"`
-	DefaultNav bool       `json:"defaultNav"`
-	Slug       string     `json:"slug"`
+	Name       string          `json:"name"`
+	Path       string          `json:"path"`
+	Type       string          `json:"type"`
+	Component  string          `json:"component"`
+	Role       models.RoleType `json:"role"`
+	AddToNav   bool            `json:"addToNav"`
+	DefaultNav bool            `json:"defaultNav"`
+	Slug       string          `json:"slug"`
 
 	Id string `json:"-"`
 }

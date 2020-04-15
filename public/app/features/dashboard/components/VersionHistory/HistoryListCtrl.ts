@@ -8,6 +8,7 @@ import { AppEvents, dateTime, DateTimeInput, toUtc } from '@grafana/data';
 import { GrafanaRootScope } from 'app/routes/GrafanaCtrl';
 import { CoreEvents } from 'app/types';
 import { promiseToDigest } from '../../../../core/utils/promiseToDigest';
+import { appEvents } from 'app/core/app_events';
 
 export class HistoryListCtrl {
   appending: boolean;
@@ -42,7 +43,7 @@ export class HistoryListCtrl {
     this.start = 0;
     this.canCompare = false;
 
-    this.$rootScope.onAppEvent(CoreEvents.dashboardSaved, this.onDashboardSaved.bind(this), $scope);
+    appEvents.on(CoreEvents.dashboardSaved, this.onDashboardSaved.bind(this), $scope);
     this.resetFromSource();
   }
 

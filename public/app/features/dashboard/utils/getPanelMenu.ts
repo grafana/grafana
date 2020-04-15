@@ -1,7 +1,6 @@
 import { updateLocation } from 'app/core/actions';
 import { store } from 'app/store/store';
-import config from 'app/core/config';
-import { getDataSourceSrv, getLocationSrv } from '@grafana/runtime';
+import { getDataSourceSrv, getLocationSrv, AngularComponent } from '@grafana/runtime';
 import { PanelMenuItem } from '@grafana/data';
 import { copyPanel, duplicatePanel, editPanelJson, removePanel, sharePanel } from 'app/features/dashboard/utils/panel';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
@@ -12,15 +11,17 @@ import { getExploreUrl } from '../../../core/utils/explore';
 import { getTimeSrv } from '../services/TimeSrv';
 import { PanelCtrl } from '../../panel/panel_ctrl';
 
-export function getPanelMenu(dashboard: DashboardModel, panel: PanelModel): PanelMenuItem[] {
+export function getPanelMenu(
+  dashboard: DashboardModel,
+  panel: PanelModel,
+  angularComponent?: AngularComponent | null
+): PanelMenuItem[] {
   const onViewPanel = (event: React.MouseEvent<any>) => {
     event.preventDefault();
     store.dispatch(
       updateLocation({
         query: {
-          panelId: panel.id,
-          edit: null,
-          fullscreen: true,
+          viewPanel: panel.id,
         },
         partial: true,
       })
@@ -28,20 +29,6 @@ export function getPanelMenu(dashboard: DashboardModel, panel: PanelModel): Pane
   };
 
   const onEditPanel = (event: React.MouseEvent<any>) => {
-    event.preventDefault();
-    store.dispatch(
-      updateLocation({
-        query: {
-          panelId: panel.id,
-          edit: true,
-          fullscreen: true,
-        },
-        partial: true,
-      })
-    );
-  };
-
-  const onNewEditPanel = (event: React.MouseEvent<any>) => {
     event.preventDefault();
     store.dispatch(
       updateLocation({
@@ -102,7 +89,7 @@ export function getPanelMenu(dashboard: DashboardModel, panel: PanelModel): Pane
 
   menu.push({
     text: 'View',
-    iconClassName: 'gicon gicon-viewer',
+    iconClassName: 'eye',
     onClick: onViewPanel,
     shortcut: 'v',
   });
@@ -110,7 +97,7 @@ export function getPanelMenu(dashboard: DashboardModel, panel: PanelModel): Pane
   if (dashboard.canEditPanel(panel)) {
     menu.push({
       text: 'Edit',
-      iconClassName: 'gicon gicon-editor',
+      iconClassName: 'edit',
       onClick: onEditPanel,
       shortcut: 'e',
     });
@@ -118,41 +105,30 @@ export function getPanelMenu(dashboard: DashboardModel, panel: PanelModel): Pane
 
   menu.push({
     text: 'Share',
-    iconClassName: 'fa fa-fw fa-share',
+    iconClassName: 'share-alt',
     onClick: onSharePanel,
     shortcut: 'p s',
   });
 
-  if (contextSrv.hasAccessToExplore() && !panel.plugin.meta.skipDataQuery) {
+  if (contextSrv.hasAccessToExplore() && !(panel.plugin && panel.plugin.meta.skipDataQuery)) {
     menu.push({
       text: 'Explore',
-      iconClassName: 'gicon gicon-explore',
+      iconClassName: 'compass',
       shortcut: 'x',
       onClick: onNavigateToExplore,
     });
   }
 
-  if (config.featureToggles.inspect) {
-    menu.push({
-      text: 'Inspect',
-      iconClassName: 'fa fa-fw fa-info-circle',
-      onClick: onInspectPanel,
-      shortcut: 'p i',
-    });
-  }
-
-  if (config.featureToggles.newEdit) {
-    menu.push({
-      text: 'New edit',
-      iconClassName: 'gicon gicon-editor',
-      onClick: onNewEditPanel,
-      shortcut: 'p i',
-    });
-  }
+  menu.push({
+    text: 'Inspect',
+    iconClassName: 'info-circle',
+    onClick: onInspectPanel,
+    shortcut: 'p i',
+  });
 
   const subMenu: PanelMenuItem[] = [];
 
-  if (!panel.fullscreen && dashboard.canEditPanel(panel)) {
+  if (dashboard.canEditPanel(panel) && !(panel.isViewing || panel.isEditing)) {
     subMenu.push({
       text: 'Duplicate',
       onClick: onDuplicatePanel,
@@ -171,8 +147,8 @@ export function getPanelMenu(dashboard: DashboardModel, panel: PanelModel): Pane
   });
 
   // add old angular panel options
-  if (panel.angularPanel) {
-    const scope = panel.angularPanel.getScope();
+  if (angularComponent) {
+    const scope = angularComponent.getScope();
     const panelCtrl: PanelCtrl = scope.$$childHead.ctrl;
     const angularMenuItems = panelCtrl.getExtendedMenu();
 
@@ -196,7 +172,7 @@ export function getPanelMenu(dashboard: DashboardModel, panel: PanelModel): Pane
   menu.push({
     type: 'submenu',
     text: 'More...',
-    iconClassName: 'fa fa-fw fa-cube',
+    iconClassName: 'cube',
     subMenu: subMenu,
     onClick: onMore,
   });
@@ -206,7 +182,7 @@ export function getPanelMenu(dashboard: DashboardModel, panel: PanelModel): Pane
 
     menu.push({
       text: 'Remove',
-      iconClassName: 'fa fa-fw fa-trash',
+      iconClassName: 'trash-alt',
       onClick: onRemovePanel,
       shortcut: 'p r',
     });

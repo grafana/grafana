@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 
-	m "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
 	"gopkg.in/macaron.v1"
 )
@@ -19,7 +19,7 @@ var (
 )
 
 type Response interface {
-	WriteTo(ctx *m.ReqContext)
+	WriteTo(ctx *models.ReqContext)
 }
 
 type NormalResponse struct {
@@ -32,7 +32,7 @@ type NormalResponse struct {
 
 func Wrap(action interface{}) macaron.Handler {
 
-	return func(c *m.ReqContext) {
+	return func(c *models.ReqContext) {
 		var res Response
 		val, err := c.Invoke(action)
 		if err == nil && val != nil && len(val) > 0 {
@@ -45,9 +45,10 @@ func Wrap(action interface{}) macaron.Handler {
 	}
 }
 
-func (r *NormalResponse) WriteTo(ctx *m.ReqContext) {
+func (r *NormalResponse) WriteTo(ctx *models.ReqContext) {
 	if r.err != nil {
-		ctx.Logger.Error(r.errMessage, "error", r.err)
+		ctx.Logger.Error(r.errMessage, "error", r.err, "remote_addr", ctx.RemoteAddr())
+
 	}
 
 	header := ctx.Resp.Header()
@@ -142,7 +143,7 @@ type RedirectResponse struct {
 	location string
 }
 
-func (r *RedirectResponse) WriteTo(ctx *m.ReqContext) {
+func (r *RedirectResponse) WriteTo(ctx *models.ReqContext) {
 	ctx.Redirect(r.location)
 }
 

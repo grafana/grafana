@@ -4,7 +4,7 @@ function getNotFoundModel(): NavModel {
   const node: NavModelItem = {
     id: 'not-found',
     text: 'Page not found',
-    icon: 'fa fa-fw fa-warning',
+    icon: 'exclamation-triangle',
     subTitle: '404 Error',
     url: 'not-found',
   };
@@ -15,19 +15,25 @@ function getNotFoundModel(): NavModel {
   };
 }
 
-export function getNavModel(navIndex: NavIndex, id: string, fallback?: NavModel): NavModel {
+export function getNavModel(navIndex: NavIndex, id: string, fallback?: NavModel, onlyChild = false): NavModel {
   if (navIndex[id]) {
     const node = navIndex[id];
-    const main = {
-      ...node.parentItem,
-    };
 
-    main.children = main.children.map(item => {
-      return {
-        ...item,
-        active: item.url === node.url,
-      };
-    });
+    let main: NavModelItem;
+    if (!onlyChild && node.parentItem) {
+      main = { ...node.parentItem };
+
+      main.children =
+        main.children &&
+        main.children.map(item => {
+          return {
+            ...item,
+            active: item.url === node.url,
+          };
+        });
+    } else {
+      main = node;
+    }
 
     return {
       node: node,

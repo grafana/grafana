@@ -3,18 +3,18 @@ package sqlstore
 import (
 	"testing"
 
-	m "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/models"
 	. "github.com/smartystreets/goconvey/convey"
 )
 
 func TestSearchBuilder(t *testing.T) {
 	Convey("Testing building a search", t, func() {
-		signedInUser := &m.SignedInUser{
+		signedInUser := &models.SignedInUser{
 			OrgId:  1,
 			UserId: 1,
 		}
 
-		sb := NewSearchBuilder(signedInUser, 1000, 0, m.PERMISSION_VIEW)
+		sb := NewSearchBuilder(signedInUser, 1000, 0, models.PERMISSION_VIEW)
 
 		Convey("When building a normal search", func() {
 			sql, params := sb.IsStarred().WithTitle("test").ToSql()

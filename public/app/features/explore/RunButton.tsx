@@ -20,7 +20,7 @@ const getStyles = memoizeOne(() => {
 type Props = {
   splitted: boolean;
   loading: boolean;
-  onRun: () => void;
+  onRun: (loading: boolean) => void;
   refreshInterval?: string;
   onChangeRefreshInterval: (interval: string) => void;
   showDropdown: boolean;
@@ -29,13 +29,19 @@ type Props = {
 export function RunButton(props: Props) {
   const { splitted, loading, onRun, onChangeRefreshInterval, refreshInterval, showDropdown } = props;
   const styles = getStyles();
+
   const runButton = (
     <ResponsiveButton
       splitted={splitted}
-      title="Run Query"
-      onClick={onRun}
-      buttonClassName={classNames('navbar-button--secondary', { 'btn--radius-right-0': showDropdown })}
-      iconClassName={loading ? 'fa fa-spinner fa-fw fa-spin run-icon' : 'fa fa-refresh fa-fw'}
+      title={loading ? 'Cancel' : 'Run Query'}
+      onClick={() => onRun(loading)}
+      buttonClassName={classNames({
+        'navbar-button--primary': !loading,
+        'navbar-button--danger': loading,
+        'btn--radius-right-0': showDropdown,
+      })}
+      icon={loading ? 'fa fa-spinner' : 'sync'}
+      iconClassName={loading && ' fa-spin run-icon'}
     />
   );
 
@@ -44,7 +50,9 @@ export function RunButton(props: Props) {
       <RefreshPicker
         onIntervalChanged={onChangeRefreshInterval}
         value={refreshInterval}
-        buttonSelectClassName={`navbar-button--secondary ${styles.selectButtonOverride}`}
+        buttonSelectClassName={`${loading ? 'navbar-button--danger' : 'navbar-button--primary'} ${
+          styles.selectButtonOverride
+        }`}
         refreshButton={runButton}
       />
     );

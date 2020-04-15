@@ -9,8 +9,8 @@ const createTheme = (theme: GrafanaTheme) => {
   return create({
     base: theme.name.includes('Light') ? 'light' : 'dark',
 
-    colorPrimary: theme.colors.brandPrimary,
-    colorSecondary: theme.colors.brandPrimary,
+    colorPrimary: theme.palette.brandPrimary,
+    colorSecondary: theme.palette.brandPrimary,
 
     // UI
     appBg: theme.colors.bodyBg,
@@ -28,8 +28,8 @@ const createTheme = (theme: GrafanaTheme) => {
 
     // Toolbar default and active colors
     barTextColor: theme.colors.formInputBorderActive,
-    barSelectedColor: theme.colors.brandPrimary,
-    barBg: theme.colors.bodyBg,
+    barSelectedColor: theme.palette.brandPrimary,
+    barBg: theme.colors.pageHeaderBg,
 
     // Form colors
     inputBg: theme.colors.formInputBg,
@@ -38,8 +38,8 @@ const createTheme = (theme: GrafanaTheme) => {
     inputBorderRadius: 4,
 
     brandTitle: 'Grafana UI',
-    brandUrl: '/',
-    brandImage: '/grafana_icon.svg',
+    brandUrl: './',
+    brandImage: './grafana_icon.svg',
   });
 };
 

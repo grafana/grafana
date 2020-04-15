@@ -21,8 +21,8 @@ The Gauge is a single value panel that can repeat a gauge for every series, colu
 * Calc
   * Specify calculation / reducer function. Since this panel is designed to only show a single value Grafana needs to
     know how to reduce a fields many values to a single value.
-** Labels - Controls if thresholds values are shown.
-** Markers - Controls if a thresholds band is shown outside the inner gauge value band.
+* Labels - Controls if thresholds values are shown.
+* Markers - Controls if a thresholds band is shown outside the inner gauge value band.
 
 ## Field
 
@@ -37,7 +37,7 @@ The Gauge is a single value panel that can repeat a gauge for every series, colu
 ### Thresholds
 
 Define thresholds that will set the color of either the value or the background depending on your `Color` display option. The
-thresholds are automatically sorted from lowerst value to highest. The `Base` value represents minus infinity.
+thresholds are automatically sorted from lowest value to highest. The `Base` value represents minus infinity.
 
 
 ### Value mappings
