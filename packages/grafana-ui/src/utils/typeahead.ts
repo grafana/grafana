@@ -8,8 +8,8 @@ export const flattenGroupItems = (groupedItems: CompletionItemGroup[]): Completi
       label,
       kind: CompletionItemKind.GroupTitle,
     };
-    all.push(titleItem, ...items);
-    return all;
+
+    return all.concat(titleItem, items);
   }, []);
 };
 

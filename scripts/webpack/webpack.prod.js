@@ -9,6 +9,45 @@ const HtmlWebpackPlugin = require('html-webpack-plugin');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const OptimizeCSSAssetsPlugin = require('optimize-css-assets-webpack-plugin');
 
+const babelLoaderOptions = {
+  cacheDirectory: true,
+  babelrc: false,
+  // Note: order is top-to-bottom and/or left-to-right
+  plugins: [
+    [
+      require('@rtsao/plugin-proposal-class-properties'),
+      {
+        loose: true,
+      },
+    ],
+    '@babel/plugin-proposal-nullish-coalescing-operator',
+    '@babel/plugin-proposal-optional-chaining',
+    '@babel/plugin-syntax-dynamic-import', // needed for `() => import()` in routes.ts
+    'angularjs-annotate',
+  ],
+  // Note: order is bottom-to-top and/or right-to-left
+  presets: [
+    [
+      '@babel/preset-env',
+      {
+        targets: {
+          browsers: 'last 3 versions',
+        },
+        useBuiltIns: 'entry',
+        corejs: 3,
+        modules: false,
+      },
+    ],
+    [
+      '@babel/preset-typescript',
+      {
+        allowNamespaces: true,
+      },
+    ],
+    '@babel/preset-react',
+  ],
+};
+
 module.exports = merge(common, {
   mode: 'production',
   devtool: 'source-map',
@@ -22,49 +61,23 @@ module.exports = merge(common, {
     // Note: order is bottom-to-top and/or right-to-left
     rules: [
       {
+        test: /\.worker\.ts$/,
+        exclude: /node_modules/,
+        use: [
+          { loader: 'worker-loader' },
+          {
+            loader: 'babel-loader',
+            options: babelLoaderOptions,
+          },
+        ],
+      },
+      {
         test: /\.tsx?$/,
         exclude: /node_modules/,
         use: [
           {
             loader: 'babel-loader',
-            options: {
-              cacheDirectory: true,
-              babelrc: false,
-              // Note: order is top-to-bottom and/or left-to-right
-              plugins: [
-                [
-                  require('@rtsao/plugin-proposal-class-properties'),
-                  {
-                    loose: true,
-                  },
-                ],
-                '@babel/plugin-proposal-nullish-coalescing-operator',
-                '@babel/plugin-proposal-optional-chaining',
-                '@babel/plugin-syntax-dynamic-import', // needed for `() => import()` in routes.ts
-                'angularjs-annotate',
-              ],
-              // Note: order is bottom-to-top and/or right-to-left
-              presets: [
-                [
-                  '@babel/preset-env',
-                  {
-                    targets: {
-                      browsers: 'last 3 versions',
-                    },
-                    useBuiltIns: 'entry',
-                    corejs: 3,
-                    modules: false,
-                  },
-                ],
-                [
-                  '@babel/preset-typescript',
-                  {
-                    allowNamespaces: true,
-                  },
-                ],
-                '@babel/preset-react',
-              ],
-            },
+            options: babelLoaderOptions,
           },
           {
             loader: 'eslint-loader',

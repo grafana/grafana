@@ -22,9 +22,11 @@ import { DOMUtil, SuggestionsState } from '@grafana/ui';
 import { PrometheusDatasource } from '../datasource';
 import PromQlLanguageProvider from '../language_provider';
 
+// @ts-ignore
+import GroupMetricsByPrefix, { GroupMetricsByPrefixWorker } from '../workers/GroupMetricsByPrefix.worker';
+
 const HISTOGRAM_GROUP = '__histograms__';
 const PRISM_SYNTAX = 'promql';
-export const RECORDING_RULES_GROUP = '__recording_rules__';
 
 function getChooserText(hasSyntax: boolean, metrics: string[]) {
   if (!hasSyntax) {
@@ -36,49 +38,18 @@ function getChooserText(hasSyntax: boolean, metrics: string[]) {
   return 'Metrics';
 }
 
-function addMetricsMetadata(metric: string, metadata?: PromMetricsMetadata): CascaderOption {
-  const option: CascaderOption = { label: metric, value: metric };
-  if (metadata && metadata[metric]) {
-    const { type = '', help } = metadata[metric][0];
-    option.title = [metric, type.toUpperCase(), help].join('\n');
-  }
-  return option;
-}
+// If this pattern is used again, it should be generalized into some
+// utility that simply forwards any arguments.
+function groupMetricsByPrefix(metrics: string[], metricsMetadata: PromMetricsMetadata): Promise<CascaderOption[]> {
+  return new Promise(resolve => {
+    const groupMetricsWorker = new GroupMetricsByPrefix() as GroupMetricsByPrefixWorker;
 
-export function groupMetricsByPrefix(metrics: string[], metadata?: PromMetricsMetadata): CascaderOption[] {
-  // Filter out recording rules and insert as first option
-  const ruleRegex = /:\w+:/;
-  const ruleNames = metrics.filter(metric => ruleRegex.test(metric));
-  const rulesOption = {
-    label: 'Recording rules',
-    value: RECORDING_RULES_GROUP,
-    children: ruleNames
-      .slice()
-      .sort()
-      .map(name => ({ label: name, value: name })),
-  };
+    groupMetricsWorker.onmessage = (e: any) => {
+      resolve(e.data);
+    };
 
-  const options = ruleNames.length > 0 ? [rulesOption] : [];
-
-  const delimiter = '_';
-  const metricsOptions = _.chain(metrics)
-    .filter((metric: string) => !ruleRegex.test(metric))
-    .groupBy((metric: string) => metric.split(delimiter)[0])
-    .map(
-      (metricsForPrefix: string[], prefix: string): CascaderOption => {
-        const prefixIsMetric = metricsForPrefix.length === 1 && metricsForPrefix[0] === prefix;
-        const children = prefixIsMetric ? [] : metricsForPrefix.sort().map(m => addMetricsMetadata(m, metadata));
-        return {
-          children,
-          label: prefix,
-          value: prefix,
-        };
-      }
-    )
-    .sortBy('label')
-    .value();
-
-  return [...options, ...metricsOptions];
+    groupMetricsWorker.postMessage({ metrics, metadata: metricsMetadata });
+  });
 }
 
 export function willApplySuggestion(suggestion: string, { typeaheadContext, typeaheadText }: SuggestionsState): string {
@@ -238,7 +209,7 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
     onRunQuery();
   };
 
-  onUpdateLanguage = () => {
+  onUpdateLanguage = async () => {
     const {
       histogramMetrics,
       metrics,
@@ -251,7 +222,7 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
     }
 
     // Build metrics tree
-    const metricsByPrefix = groupMetricsByPrefix(metrics, metricsMetadata);
+    const metricsByPrefix = await groupMetricsByPrefix(metrics, metricsMetadata);
     const histogramOptions = histogramMetrics.map((hm: any) => ({ label: hm, value: hm }));
     const metricsOptions =
       histogramMetrics.length > 0
@@ -265,7 +236,7 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
     let hint: QueryHint;
     if (lookupsDisabled) {
       hint = {
-        label: `Dynamic label lookup is disabled for datasources with more than ${lookupMetricsThreshold} metrics.`,
+        label: `Metric names were truncated to the first ${lookupMetricsThreshold} and dynamic label lookup was disabled.`,
         type: 'INFO',
       };
     }

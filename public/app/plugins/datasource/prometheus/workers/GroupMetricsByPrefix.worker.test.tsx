@@ -1,4 +1,4 @@
-import { groupMetricsByPrefix, RECORDING_RULES_GROUP } from './PromQueryField';
+import { groupMetricsByPrefix, RECORDING_RULES_GROUP } from './GroupMetricsByPrefix.worker';
 
 describe('groupMetricsByPrefix()', () => {
   it('returns an empty group for no metrics', () => {

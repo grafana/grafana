@@ -91,6 +91,7 @@
     "@types/marked": "0.6.5",
     "@types/mousetrap": "1.6.3",
     "@types/node": "13.7.0",
+    "@types/oboe": "^2.0.28",
     "@types/papaparse": "4.5.9",
     "@types/pixelmatch": "4.0.0",
     "@types/pngjs": "3.4.1",
@@ -201,6 +202,7 @@
     "webpack-cli": "3.3.10",
     "webpack-dev-server": "3.10.3",
     "webpack-merge": "4.2.2",
+    "worker-loader": "^2.0.0",
     "zone.js": "0.7.8"
   },
   "dependencies": {
@@ -243,6 +245,7 @@
     "mousetrap": "1.6.5",
     "mousetrap-global-bind": "1.1.0",
     "nodemon": "2.0.2",
+    "oboe": "2.1.4",
     "papaparse": "4.6.3",
     "prismjs": "1.19.0",
     "prop-types": "15.7.2",

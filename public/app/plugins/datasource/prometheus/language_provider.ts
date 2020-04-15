@@ -11,11 +11,14 @@ import PromqlSyntax, { FUNCTIONS, RATE_RANGES } from './promql';
 import { PrometheusDatasource } from './datasource';
 import { PromQuery, PromMetricsMetadata } from './types';
 
+import { JSON_STREAM_DONE } from './workers/consts';
+import StreamJSONResponse, { StreamJSONResponseWorker } from './workers/StreamJSONResponse.worker';
+
 const DEFAULT_KEYS = ['job', 'instance'];
 const EMPTY_SELECTOR = '{}';
 const HISTORY_ITEM_COUNT = 5;
 const HISTORY_COUNT_CUTOFF = 1000 * 60 * 60 * 24; // 24h
-export const DEFAULT_LOOKUP_METRICS_THRESHOLD = 10000; // number of metrics defining an installation that's too big
+export const DEFAULT_LOOKUP_METRICS_THRESHOLD = 100000; // number of metrics defining an installation that's too big
 
 const wrapLabel = (label: string): CompletionItem => ({ label });
 
@@ -58,6 +61,7 @@ export default class PromQlLanguageProvider extends LanguageProvider {
   timeRange?: { start: number; end: number };
   metrics?: string[];
   metricsMetadata?: PromMetricsMetadata;
+  metricsWithMetadata: CompletionItem[];
   startTask: Promise<any>;
   datasource: PrometheusDatasource;
   lookupMetricsThreshold: number;
@@ -111,11 +115,54 @@ export default class PromQlLanguageProvider extends LanguageProvider {
     return defaultValue;
   };
 
+  requestViaWorker(url: string, hasObjectResponse?: false): Promise<string[]>;
+  requestViaWorker(url: string, hasObjectResponse?: true): Promise<PromMetricsMetadata>;
+  requestViaWorker(url: string, hasObjectResponse?: boolean): Promise<string[] | PromMetricsMetadata>;
+  requestViaWorker(url: string, hasObjectResponse = false): Promise<string[] | PromMetricsMetadata> {
+    return new Promise(resolve => {
+      let nodes: string[] | PromMetricsMetadata = hasObjectResponse ? {} : [];
+      const streamWorker = new (StreamJSONResponse as any)() as StreamJSONResponseWorker;
+
+      streamWorker.onmessage = e => {
+        if (e.data === JSON_STREAM_DONE) {
+          streamWorker.terminate();
+          resolve(nodes);
+        }
+
+        if (Array.isArray(nodes)) {
+          nodes = nodes.concat(e.data);
+        } else {
+          Object.assign(nodes, e.data);
+        }
+      };
+
+      streamWorker.onerror = error => {
+        resolve(nodes);
+      };
+
+      streamWorker.postMessage({
+        chunkSize: Math.ceil(this.lookupMetricsThreshold / 20),
+        headers: this.datasource.basicAuth ? { Authorization: this.datasource.basicAuth } : { 'X-Grafana-Org-Id': 1 },
+        limit: this.lookupMetricsThreshold,
+        url: this.datasource.url + url,
+        withCredentials: this.datasource.basicAuth || this.datasource.withCredentials,
+      });
+    });
+  }
+
   start = async (): Promise<any[]> => {
-    this.metrics = await this.request('/api/v1/label/__name__/values', []);
-    this.lookupsDisabled = this.metrics.length > this.lookupMetricsThreshold;
-    this.metricsMetadata = await this.request('/api/v1/metadata', {});
-    this.processHistogramMetrics(this.metrics);
+    const [metrics, metricsMetadata] = await Promise.all([
+      this.requestViaWorker('/api/v1/label/__name__/values'),
+      this.requestViaWorker('/api/v1/metadata', true),
+    ]);
+
+    this.metrics = metrics;
+    this.metricsMetadata = metricsMetadata;
+    this.metricsWithMetadata = this.metrics.map(m => addMetricsMetadata(m, this.metricsMetadata));
+
+    this.lookupsDisabled = metrics.length >= this.lookupMetricsThreshold;
+    this.processHistogramMetrics(metrics);
+
     return [];
   };
 
@@ -211,7 +258,7 @@ export default class PromQlLanguageProvider extends LanguageProvider {
   };
 
   getTermCompletionItems = (): TypeaheadOutput => {
-    const { metrics, metricsMetadata } = this;
+    const { metrics } = this;
     const suggestions = [];
 
     suggestions.push({
@@ -223,7 +270,7 @@ export default class PromQlLanguageProvider extends LanguageProvider {
     if (metrics && metrics.length) {
       suggestions.push({
         label: 'Metrics',
-        items: metrics.map(m => addMetricsMetadata(m, metricsMetadata)),
+        items: this.metricsWithMetadata,
       });
     }
 
