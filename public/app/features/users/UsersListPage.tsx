@@ -65,18 +65,6 @@ export class UsersListPage extends PureComponent<Props, State> {
     this.props.updateUser(updatedUser);
   };
 
-  onRemoveUser = (user: OrgUser) => {
-    appEvents.emit(CoreEvents.showConfirmModal, {
-      title: 'Delete',
-      text: 'Are you sure you want to delete user ' + user.login + '?',
-      yesText: 'Delete',
-      icon: 'exclamation-triangle',
-      onConfirm: () => {
-        this.props.removeUser(user.userId);
-      },
-    });
-  };
-
   onShowInvites = () => {
     this.setState(prevState => ({
       showInvites: !prevState.showInvites,

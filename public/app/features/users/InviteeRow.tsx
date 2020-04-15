@@ -1,4 +1,4 @@
-import React, { createRef, PureComponent } from 'react';
+import React, { PureComponent } from 'react';
 import { connect } from 'react-redux';
 import { Invitee } from 'app/types';
 import { revokeInvite } from './state/actions';
@@ -23,9 +23,7 @@ class InviteeRow extends PureComponent<Props> {
           &nbsp;
         </td>
         <td>
-          <Button variant="destructive" size="sm" icon="fa fa-remove" onClick={() => revokeInvite(invitee.code)}>
-            <Icon name="times" style={{ marginBottom: 0 }} />
-          </Button>
+          <Button variant="destructive" size="sm" icon="times" onClick={() => revokeInvite(invitee.code)} />
         </td>
       </tr>
     );
