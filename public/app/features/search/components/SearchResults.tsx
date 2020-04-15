@@ -11,7 +11,7 @@ import { SearchCheckbox } from './SearchCheckbox';
 import { TOGGLE_CHECKED } from '../reducers/actionTypes';
 
 export interface Props {
-  dispatch: Dispatch<SearchAction>;
+  dispatch?: Dispatch<SearchAction>;
   editable?: boolean;
   loading?: boolean;
   onTagSelected: (name: string) => any;
@@ -59,7 +59,7 @@ const getSectionStyles = stylesFactory((theme: GrafanaTheme) => {
 });
 
 interface SectionHeaderProps {
-  dispatch: Dispatch<SearchAction>;
+  dispatch?: Dispatch<SearchAction>;
   editable?: boolean;
   onSectionClick: (section: DashboardSection) => void;
   section: DashboardSection;

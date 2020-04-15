@@ -1,33 +1,19 @@
-import React, { FC, useReducer } from 'react';
-import { useDebounce } from 'react-use';
+import React, { FC } from 'react';
 import { css } from 'emotion';
 import { Icon, useTheme, CustomScrollbar, stylesFactory } from '@grafana/ui';
-import { getLocationSrv } from '@grafana/runtime';
 import { GrafanaTheme } from '@grafana/data';
 import { SearchSrv } from 'app/core/services/search_srv';
-import { backendSrv } from 'app/core/services/backend_srv';
-import { SearchQuery } from 'app/core/components/search/search';
 import { TagFilter } from 'app/core/components/TagFilter/TagFilter';
 import { contextSrv } from 'app/core/services/context_srv';
-import { DashboardSearchItemType, DashboardSection, OpenSearchParams } from '../types';
-import { findSelected, hasId, parseQuery } from '../utils';
-import { searchReducer, dashboardsSearchState } from '../reducers/dashboardSearch';
-import { getDashboardSrv } from '../../dashboard/services/DashboardSrv';
-import {
-  FETCH_ITEMS,
-  FETCH_RESULTS,
-  TOGGLE_SECTION,
-  MOVE_SELECTION_DOWN,
-  MOVE_SELECTION_UP,
-} from '../reducers/actionTypes';
+import { OpenSearchParams } from '../types';
+
 import { SearchField } from './SearchField';
 import { SearchResults } from './SearchResults';
 import { useSearchQuery } from '../hooks/useSearchQuery';
+import { useDashboardSearch } from '../hooks/useDashboardSearch';
 
 const searchSrv = new SearchSrv();
 
-// TODO remove when search is refactored
-const defaultQuery: SearchQuery = { query: '', parsedQuery: { text: '' }, tags: [], starred: false };
 const { isEditor, hasEditPermissionInFolders } = contextSrv;
 const canEdit = isEditor || hasEditPermissionInFolders;
 
@@ -38,60 +24,9 @@ export interface Props {
 
 export const DashboardSearch: FC<Props> = ({ onCloseSearch, payload = {} }) => {
   const { query, onQueryChange, onClearFilters, onTagFilterChange, onTagAdd } = useSearchQuery(payload);
-  const [{ results, loading }, dispatch] = useReducer(searchReducer, dashboardsSearchState);
+  const { results, loading, onToggleSection, onKeyDown } = useDashboardSearch(query, onCloseSearch);
   const theme = useTheme();
   const styles = getStyles(theme);
-
-  const search = () => {
-    let folderIds: number[] = [];
-    if (parseQuery(query.query).folder === 'current') {
-      const { folderId } = getDashboardSrv().getCurrent().meta;
-      if (folderId) {
-        folderIds.push(folderId);
-      }
-    }
-    searchSrv.search({ ...query, query: parseQuery(query.query).text, folderIds }).then(results => {
-      dispatch({ type: FETCH_RESULTS, payload: results });
-    });
-  };
-
-  useDebounce(search, 300, [query]);
-
-  const onToggleSection = (section: DashboardSection) => {
-    if (hasId(section.title) && !section.items.length) {
-      backendSrv.search({ ...defaultQuery, folderIds: [section.id] }).then(items => {
-        dispatch({ type: FETCH_ITEMS, payload: { section, items } });
-        dispatch({ type: TOGGLE_SECTION, payload: section });
-      });
-    } else {
-      dispatch({ type: TOGGLE_SECTION, payload: section });
-    }
-  };
-
-  const onKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
-    switch (event.key) {
-      case 'Escape':
-        onCloseSearch();
-        break;
-      case 'ArrowUp':
-        dispatch({ type: MOVE_SELECTION_UP });
-        break;
-      case 'ArrowDown':
-        dispatch({ type: MOVE_SELECTION_DOWN });
-        break;
-      case 'Enter':
-        const selectedItem = findSelected(results);
-        if (selectedItem) {
-          if (selectedItem.type === DashboardSearchItemType.DashFolder) {
-            onToggleSection(selectedItem as DashboardSection);
-          } else {
-            getLocationSrv().update({ path: selectedItem.url });
-            // Delay closing to prevent current page flicker
-            setTimeout(onCloseSearch, 0);
-          }
-        }
-    }
-  };
 
   // The main search input has own keydown handler, also TagFilter uses input, so
   // clicking Esc when tagFilter is active shouldn't close the whole search overlay
@@ -113,7 +48,6 @@ export const DashboardSearch: FC<Props> = ({ onCloseSearch, payload = {} }) => {
                 results={results}
                 loading={loading}
                 onTagSelected={onTagAdd}
-                dispatch={dispatch}
                 editable={false}
                 onToggleSection={onToggleSection}
               />
