@@ -27,8 +27,6 @@ const getStyles = stylesFactory((theme: GrafanaTheme, isRemoved: boolean) => {
   const rigtColumnWidth = '240px';
   const rigtColumnContentWidth = '170px';
 
-  const borderColor = theme.isLight ? theme.palette.gray5 : theme.palette.gray25;
-
   /* If datasource was removed, card will have inactive color */
   const cardColor = theme.isLight
     ? isRemoved
@@ -42,7 +40,8 @@ const getStyles = stylesFactory((theme: GrafanaTheme, isRemoved: boolean) => {
     queryCard: css`
       display: flex;
       flex-direction: column;
-      border: 1px solid ${borderColor};
+      border: 1px solid ${theme.colors.formInputBorder};
+      box-shadow: 0 1px 4px ${theme.colors.dropdownShadow};
       margin: ${theme.spacing.sm} 0;
       background-color: ${cardColor};
       border-radius: ${theme.border.radius.sm};
@@ -57,7 +56,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme, isRemoved: boolean) => {
       padding: ${theme.spacing.sm};
       border-bottom: none;
       :first-of-type {
-        border-bottom: 1px solid ${borderColor};
+        border-bottom: 1px solid ${theme.colors.formInputBorder};
         padding: ${theme.spacing.xs} ${theme.spacing.sm};
       }
       img {
@@ -86,7 +85,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme, isRemoved: boolean) => {
       width: calc(100% - ${rigtColumnWidth});
     `,
     queryRow: css`
-      border-top: 1px solid ${borderColor};
+      border-top: 1px solid ${theme.colors.formInputBorder};
       word-break: break-all;
       padding: 4px 2px;
       :first-child {
@@ -110,7 +109,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme, isRemoved: boolean) => {
       }
     `,
     textArea: css`
-      border: 1px solid ${borderColor};
+      border: 1px solid ${theme.colors.formInputBorder};
       background: inherit;
       color: inherit;
       width: 100%;
@@ -125,7 +124,8 @@ const getStyles = stylesFactory((theme: GrafanaTheme, isRemoved: boolean) => {
       justify-content: flex-end;
       button {
         height: auto;
-        padding: ${theme.spacing.sm} ${theme.spacing.md};
+        padding: ${theme.spacing.xs} ${theme.spacing.md};
+        line-height: 1.4;
         span {
           white-space: normal !important;
         }

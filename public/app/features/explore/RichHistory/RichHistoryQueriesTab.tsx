@@ -60,12 +60,12 @@ const getStyles = stylesFactory((theme: GrafanaTheme, height: number) => {
       width: calc(${cardWidth});
     `,
     containerSlider: css`
-      width: 127px;
+      width: 129px;
       margin-right: ${theme.spacing.sm};
       .slider {
         bottom: 10px;
         height: ${sliderHeight};
-        width: 127px;
+        width: 129px;
         padding: ${theme.spacing.sm} 0;
       }
     `,

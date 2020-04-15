@@ -22,22 +22,18 @@ import { RichHistory, Tabs } from './RichHistory';
 import { deleteRichHistory } from '../state/actions';
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
-  const containerBackground = theme.isLight ? theme.palette.gray95 : theme.palette.gray15;
-  const containerBorderColor = theme.isLight ? theme.palette.gray5 : theme.palette.dark6;
-  const handleBackground = theme.isLight ? theme.palette.white : theme.palette.gray15;
-  const handleDots = theme.isLight ? theme.palette.gray85 : theme.palette.gray33;
-  const handleBackgroundHover = theme.isLight ? theme.palette.gray85 : theme.palette.gray33;
-  const handleDotsHover = theme.isLight ? theme.palette.gray70 : theme.palette.dark7;
+  const shadowColor = theme.isLight ? theme.palette.gray4 : theme.palette.black;
 
   return {
     container: css`
       position: fixed !important;
       bottom: 0;
-      background: ${containerBackground};
-      border-top: 1px solid ${containerBorderColor};
+      background: ${theme.colors.pageHeaderBg};
+      border-top: 1px solid ${theme.colors.formInputBorder};
       margin: 0px;
       margin-right: -${theme.spacing.md};
       margin-left: -${theme.spacing.md};
+      box-shadow: 0 0 4px ${shadowColor};
     `,
     drawerActive: css`
       opacity: 1;
@@ -48,30 +44,17 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       transform: translateY(400px);
     `,
     rzHandle: css`
-      background: ${handleBackground};
+      background: ${theme.colors.formInputBorder};
       transition: 0.3s background ease-in-out;
       position: relative;
       width: 200px !important;
+      height: 7px !important;
       left: calc(50% - 100px) !important;
+      top: -4px !important;
       cursor: grab;
       border-radius: 4px;
-
       &:hover {
-        background-color: ${handleBackgroundHover};
-
-        &:after {
-          border-color: ${handleDotsHover};
-        }
-      }
-
-      &:after {
-        content: '';
-        display: block;
-        height: 2px;
-        position: relative;
-        top: 4px;
-        border-top: 4px dotted ${handleDots};
-        margin: 0 4px;
+        background: ${theme.colors.formInputBorderHover};
       }
     `,
   };

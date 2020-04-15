@@ -24,7 +24,7 @@
 
 .explore-active-button {
   box-shadow: $btn-active-box-shadow;
-  border-color: $orange-dark;
+  border: 1px solid $orange-dark;
   background-image: none;
   background-color: transparent;
   color: $orange-dark !important;
