@@ -1,11 +1,11 @@
-import extend from 'lodash/extend';
+import merge from 'lodash/merge';
 import { getTheme } from '@grafana/ui';
 import {
   DataSourceInstanceSettings,
   GrafanaTheme,
   GrafanaThemeType,
   PanelPluginMeta,
-  GrafanaConfig,
+  GrafanConfig,
   LicenseInfo,
   BuildInfo,
   FeatureToggles,
@@ -80,7 +80,7 @@ export class GrafanaBootConfig implements GrafanaConfig {
       disableSanitizeHtml: false,
     };
 
-    extend(this, defaults, options);
+    merge(this, defaults, options);
   }
 }
 
@@ -93,4 +93,9 @@ const bootData = (window as any).grafanaBootData || {
 const options = bootData.settings;
 options.bootData = bootData;
 
+/**
+ * Use this to access the {@link GrafanaBootConfig} for the current running Grafana instance.
+ *
+ * @public
+ */
 export const config = new GrafanaBootConfig(options);

@@ -2,25 +2,51 @@ import { DataSourceInstanceSettings } from './datasource';
 import { PanelPluginMeta } from './panel';
 import { GrafanaTheme } from './theme';
 
+/**
+ * Describes the build information that will be available via the Grafana cofiguration.
+ *
+ * @public
+ */
 export interface BuildInfo {
   version: string;
   commit: string;
-  isEnterprise: boolean; // deprecated: use licenseInfo.hasLicense instead
+  /**
+   * Is set to true when running Grafana Enterprise edition.
+   *
+   * @deprecated use `licenseInfo.hasLicense` instead
+   */
+  isEnterprise: boolean;
   env: string;
   edition: string;
   latestVersion: string;
   hasUpdate: boolean;
 }
 
+/**
+ * Describes available feature toggles in Grafana. These can be configured via the
+ * `conf/custom.ini` to enable features under development or not yet available in
+ * stable version.
+ *
+ * @public
+ */
 export interface FeatureToggles {
   transformations: boolean;
   expressions: boolean;
   newEdit: boolean;
-  meta: boolean; // enterprise
+  /**
+   * @remarks
+   * Available only in Grafana Enterprise
+   */
+  meta: boolean;
   newVariables: boolean;
   tracingIntegration: boolean;
 }
 
+/**
+ * Describes the license information about the current running instance of Grafana.
+ *
+ * @public
+ */
 export interface LicenseInfo {
   hasLicense: boolean;
   expiry: number;
@@ -28,6 +54,11 @@ export interface LicenseInfo {
   stateInfo: string;
 }
 
+/**
+ * Describes all the different Grafana configuration values available for an instance.
+ *
+ * @public
+ */
 export interface GrafanaConfig {
   datasources: { [str: string]: DataSourceInstanceSettings };
   panels: { [key: string]: PanelPluginMeta };
