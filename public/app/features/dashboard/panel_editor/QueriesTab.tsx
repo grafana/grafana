@@ -247,7 +247,7 @@ export class QueriesTab extends PureComponent<Props, State> {
   render() {
     const { scrollTop } = this.state;
     const queryInspector: EditorToolbarView = {
-      title: 'Query Inspector',
+      title: 'Query inspector',
       onClick: this.openQueryInspector,
     };
 
@@ -259,7 +259,7 @@ export class QueriesTab extends PureComponent<Props, State> {
 
     return (
       <EditorTabBody
-        heading="Query"
+        heading="Data source"
         renderToolbar={this.renderToolbar}
         toolbarItems={[queryInspector, dsHelp]}
         setScrollTop={this.setScrollTop}
