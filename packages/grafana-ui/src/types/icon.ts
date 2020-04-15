@@ -28,6 +28,7 @@ export type IconName =
   | 'folder-plus'
   | 'folder-open'
   | 'file-copy-alt'
+  | 'file-alt'
   | 'exchange-alt'
   | 'import'
   | 'exclamation-triangle'
@@ -44,6 +45,7 @@ export type IconName =
   | 'add-panel'
   | 'copy'
   | 'lock'
+  | 'unlock'
   | 'panel-add'
   | 'arrow-random'
   | 'arrow-down'
@@ -140,6 +142,7 @@ export const getAvailableIcons = (): IconName[] => [
   'folder-plus',
   'folder-open',
   'file-copy-alt',
+  'file-alt',
   'exchange-alt',
   'import',
   'exclamation-triangle',
@@ -156,6 +159,7 @@ export const getAvailableIcons = (): IconName[] => [
   'add-panel',
   'copy',
   'lock',
+  'unlock',
   'panel-add',
   'arrow-random',
   'arrow-down',

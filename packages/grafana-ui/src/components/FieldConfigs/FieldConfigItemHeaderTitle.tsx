@@ -2,7 +2,7 @@ import React from 'react';
 import { GrafanaTheme } from '@grafana/data';
 import { css } from 'emotion';
 import { selectThemeVariant, stylesFactory, useTheme } from '../../themes';
-import Forms from '../Forms';
+import { Label } from '../Forms/Label';
 import { Icon } from '../Icon/Icon';
 
 interface FieldConfigItemHeaderTitleProps {
@@ -24,7 +24,7 @@ export const FieldConfigItemHeaderTitle: React.FC<FieldConfigItemHeaderTitleProp
   return (
     <div className={!transparent ? styles.headerWrapper : ''}>
       <div className={styles.header}>
-        <Forms.Label description={description}>{title}</Forms.Label>
+        <Label description={description}>{title}</Label>
         <div className={styles.remove} onClick={() => onRemove()} aria-label="FieldConfigItemHeaderTitle remove button">
           <Icon name="trash-alt" />
         </div>

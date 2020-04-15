@@ -1,10 +1,12 @@
 {
   "type": "panel",
-  "name": "React Table",
-  "id": "table2",
-  "state": "alpha",
+  "name": "Table (old)",
+  "id": "table-old",
+
+  "state": "deprecated",
 
   "info": {
+    "description": "Table Panel for Grafana",
     "author": {
       "name": "Grafana Project",
       "url": "https://grafana.com"
