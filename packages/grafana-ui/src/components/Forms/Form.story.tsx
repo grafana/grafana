@@ -7,7 +7,7 @@ import { Field } from './Field';
 import { Input } from '../Input/Input';
 import { Button } from '../Button';
 import { Form } from './Form';
-import { Switch } from './Switch';
+import { Switch } from '../Switch/Switch';
 import { Checkbox } from './Checkbox';
 
 import { RadioButtonGroup } from './RadioButtonGroup/RadioButtonGroup';

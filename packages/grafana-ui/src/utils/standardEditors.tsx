@@ -19,8 +19,9 @@ import {
   valueMappingsOverrideProcessor,
   ThresholdsMode,
 } from '@grafana/data';
+
+import { Switch } from '../components/Switch/Switch';
 import { NumberValueEditor, RadioButtonGroup, StringValueEditor, Select } from '../components';
-import { Switch } from '../components/Forms/Switch';
 import { ValueMappingsValueEditor } from '../components/OptionsUI/mappings';
 import { ThresholdsValueEditor } from '../components/OptionsUI/thresholds';
 import { UnitValueEditor } from '../components/OptionsUI/units';
