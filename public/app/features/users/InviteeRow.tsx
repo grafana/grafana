@@ -2,7 +2,7 @@ import React, { PureComponent } from 'react';
 import { connect } from 'react-redux';
 import { Invitee } from 'app/types';
 import { revokeInvite } from './state/actions';
-import { Button, ClipboardButton, Icon } from '@grafana/ui';
+import { Button, ClipboardButton } from '@grafana/ui';
 
 export interface Props {
   invitee: Invitee;
