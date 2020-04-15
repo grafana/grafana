@@ -1,7 +1,7 @@
 import React, { FC, useState } from 'react';
 import { OrgUser } from 'app/types';
 import { OrgRolePicker } from '../admin/OrgRolePicker';
-import { Button, ConfirmModal } from '@grafana/ui';
+import { Button, ConfirmModal, Icon } from '@grafana/ui';
 import { OrgRole } from '@grafana/data';
 
 export interface Props {
@@ -52,7 +52,9 @@ const UsersTable: FC<Props> = props => {
                   variant="destructive"
                   onClick={() => setShowRemoveModal(user.login)}
                   icon="fa fa-remove"
-                />
+                >
+                  <Icon name="times" style={{ marginBottom: 0 }} />
+                </Button>
                 <ConfirmModal
                   body={`Are you sure you want to delete user ${user.login}?`}
                   confirmText="Delete"

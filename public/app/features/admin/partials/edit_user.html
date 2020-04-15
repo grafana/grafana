@@ -108,7 +108,7 @@
         </td>
         <td style="width: 1%">
           <a ng-click="removeOrgUser(org)" class="btn btn-danger btn-small">
-            <i class="fa fa-remove"></i>
+            <icon name="'times'" style="margin-bottom: 0;"></icon>
           </a>
         </td>
       </tr>
@@ -138,7 +138,7 @@
             <td>{{session.browser}} on {{session.os}} {{session.osVersion}}</td>
             <td>
               <button class="btn btn-danger btn-small" ng-click="revokeUserSession(session.id)">
-                <i class="fa fa-power-off"></i>
+                <icon name="'power'" style="margin-top: -2px;"></icon>
               </button>
             </td>
           </tr>
@@ -151,7 +151,6 @@
       </button>
     </div>
   </div>
-
 
   <h3 class="page-heading">User status</h3>
 
@@ -177,7 +176,9 @@
       >
         Enable
       </button>
-      <button type="submit" class="btn btn-danger" ng-click="deleteUser(user)" ng-show="!createMode">Delete User</button>
+      <button type="submit" class="btn btn-danger" ng-click="deleteUser(user)" ng-show="!createMode">
+        Delete User
+      </button>
     </div>
   </div>
 </div>

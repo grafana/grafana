@@ -7,9 +7,9 @@ import {
   withTheme,
   ConfirmButton,
   Button,
-  Forms,
   HorizontalGroup,
   Container,
+  Field,
 } from '@grafana/ui';
 import { GrafanaTheme } from '@grafana/data';
 import { UserOrg, Organization, OrgRole } from 'app/types';
@@ -79,7 +79,7 @@ const getOrgRowStyles = stylesFactory((theme: GrafanaTheme) => {
     removeButton: css`
       margin-right: 0.6rem;
       text-decoration: underline;
-      color: ${theme.colors.blue95};
+      color: ${theme.palette.blue95};
     `,
     label: css`
       font-weight: 500;
@@ -225,12 +225,12 @@ export class AddToOrgModal extends PureComponent<AddToOrgModalProps, AddToOrgMod
 
     return (
       <Modal className={styles.modal} title="Add to an organization" isOpen={isOpen} onDismiss={this.onCancel}>
-        <Forms.Field label="Organisation">
+        <Field label="Organisation">
           <OrgPicker onSelected={this.onOrgSelect} />
-        </Forms.Field>
-        <Forms.Field label="Role">
+        </Field>
+        <Field label="Role">
           <OrgRolePicker value={role} onChange={this.onOrgRoleChange} />
-        </Forms.Field>
+        </Field>
         <Container padding="md">
           <HorizontalGroup spacing="md" justify="center">
             <Button variant="primary" onClick={this.onAddUserToOrg}>

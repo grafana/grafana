@@ -59,7 +59,7 @@ import { getTimeZone } from '../profile/state/selectors';
 import { ErrorContainer } from './ErrorContainer';
 import { scanStopAction } from './state/actionTypes';
 import { ExploreGraphPanel } from './ExploreGraphPanel';
-import { TraceView } from './TraceView';
+import { TraceView } from './TraceView/TraceView';
 import { SecondaryActions } from './SecondaryActions';
 
 const getStyles = stylesFactory(() => {
@@ -72,18 +72,6 @@ const getStyles = stylesFactory(() => {
     `,
     button: css`
       margin: 1em 4px 0 0;
-    `,
-    // Utility class for iframe parents so that we can show iframe content with reasonable height instead of squished
-    // or some random explicit height.
-    fullHeight: css`
-      label: fullHeight;
-      height: 100%;
-    `,
-    iframe: css`
-      label: iframe;
-      border: none;
-      width: 100%;
-      height: 100%;
     `,
   };
 });
@@ -320,32 +308,28 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
         {datasourceMissing ? this.renderEmptyState() : null}
         {datasourceInstance && (
           <div className="explore-container">
-            <QueryRows exploreEvents={this.exploreEvents} exploreId={exploreId} queryKeys={queryKeys} />
-            <SecondaryActions
-              addQueryRowButtonDisabled={isLive}
-              // We cannot show multiple traces at the same time right now so we do not show add query button.
-              addQueryRowButtonHidden={mode === ExploreMode.Tracing}
-              richHistoryButtonActive={showRichHistory}
-              onClickAddQueryRowButton={this.onClickAddQueryRowButton}
-              onClickRichHistoryButton={this.toggleShowRichHistory}
-            />
+            <div className="panel-container">
+              <div className="panel-content">
+                <QueryRows exploreEvents={this.exploreEvents} exploreId={exploreId} queryKeys={queryKeys} />
+                <SecondaryActions
+                  addQueryRowButtonDisabled={isLive}
+                  // We cannot show multiple traces at the same time right now so we do not show add query button.
+                  addQueryRowButtonHidden={mode === ExploreMode.Tracing}
+                  richHistoryButtonActive={showRichHistory}
+                  onClickAddQueryRowButton={this.onClickAddQueryRowButton}
+                  onClickRichHistoryButton={this.toggleShowRichHistory}
+                />
+              </div>
+            </div>
             <ErrorContainer queryError={queryError} />
-            <AutoSizer className={styles.fullHeight} onResize={this.onResize} disableHeight>
+            <AutoSizer onResize={this.onResize} disableHeight>
               {({ width }) => {
                 if (width === 0) {
                   return null;
                 }
 
                 return (
-                  <main
-                    className={cx(
-                      styles.logsMain,
-                      // We need height to be 100% for tracing iframe to look good but in case of metrics mode
-                      // it makes graph and table also full page high when they do not need to be.
-                      mode === ExploreMode.Tracing && styles.fullHeight
-                    )}
-                    style={{ width }}
-                  >
+                  <main className={cx(styles.logsMain)} style={{ width }}>
                     <ErrorBoundaryAlert>
                       {showStartPage && StartPage && (
                         <div className={'grafana-info-box grafana-info-box--max-lg'}>

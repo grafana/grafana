@@ -35,10 +35,10 @@ executors:
       - image: cimg/go:1.14
   grafana-build:
     docker:
-      - image: grafana/build-container:1.2.13
+      - image: grafana/build-container:1.2.15
   grafana-publish:
     docker:
-      - image: grafana/grafana-ci-deploy:1.2.4
+      - image: grafana/grafana-ci-deploy:1.2.5
   windows-installer:
     docker:
       - image: grafana/wix-toolset-ci:v3
@@ -732,6 +732,7 @@ jobs:
               -E varcheck -E goconst -E errcheck -E staticcheck ./pkg/...
             ./scripts/go/bin/revive -formatter stylish -config ./scripts/go/configs/revive.toml ./pkg/...
             ./scripts/go/bin/revive -formatter stylish ./pkg/services/alerting/...
+            ./scripts/go/bin/revive -formatter stylish ./pkg/services/provisioning/datasources/...
             ./scripts/go/bin/gosec -quiet -exclude=G104,G107,G108,G201,G202,G204,G301,G304,G401,G402,G501 \
               -conf=./scripts/go/configs/gosec.json ./pkg/...
 
@@ -789,8 +790,7 @@ jobs:
           when: on_success
 
   build-docs-website:
-    docker:
-      - image: grafana/build-container:1.2.13
+    executor: grafana-build
     working_directory: /docs
     steps:
       - checkout

@@ -2,7 +2,7 @@ import React, { PureComponent } from 'react';
 import { connect } from 'react-redux';
 
 import { SlideDown } from 'app/core/components/Animations/SlideDown';
-import { LegacyForms, Tooltip } from '@grafana/ui';
+import { LegacyForms, Tooltip, Icon } from '@grafana/ui';
 const { Input } = LegacyForms;
 
 import { TeamGroup } from '../../types';
@@ -66,7 +66,7 @@ export class TeamGroupSync extends PureComponent<Props, State> {
         <td>{group.groupId}</td>
         <td style={{ width: '1%' }}>
           <a className="btn btn-danger btn-small" onClick={() => this.onRemoveGroup(group)}>
-            <i className="fa fa-remove" />
+            <Icon name="times" style={{ marginBottom: 0 }} />
           </a>
         </td>
       </tr>
@@ -82,14 +82,12 @@ export class TeamGroupSync extends PureComponent<Props, State> {
         <div className="page-action-bar">
           <h3 className="page-sub-heading">External group sync</h3>
           <Tooltip placement="auto" content={headerTooltip}>
-            <div className="page-sub-heading-icon">
-              <i className="gicon gicon-question gicon--has-hover" />
-            </div>
+            <Icon className="icon--has-hover page-sub-heading-icon" name="question-circle" />
           </Tooltip>
           <div className="page-action-bar__spacer" />
           {groups.length > 0 && (
             <button className="btn btn-primary pull-right" onClick={this.onToggleAdding}>
-              <i className="fa fa-plus" /> Add group
+              <Icon name="plus" /> Add group
             </button>
           )}
         </div>
@@ -97,7 +95,7 @@ export class TeamGroupSync extends PureComponent<Props, State> {
         <SlideDown in={isAdding}>
           <div className="cta-form">
             <button className="cta-form__close btn btn-transparent" onClick={this.onToggleAdding}>
-              <i className="fa fa-close" />
+              <Icon name="times" />
             </button>
             <h5>Add External Group</h5>
             <form className="gf-form-inline" onSubmit={this.onAddGroup}>
@@ -123,7 +121,7 @@ export class TeamGroupSync extends PureComponent<Props, State> {
         {groups.length === 0 && !isAdding && (
           <EmptyListCTA
             onClick={this.onToggleAdding}
-            buttonIcon="gicon gicon-team"
+            buttonIcon="users-alt"
             title="There are no external groups to sync with"
             buttonTitle="Add Group"
             proTip={headerTooltip}

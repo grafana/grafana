@@ -113,8 +113,8 @@ func (hs *HTTPServer) GetDashboard(c *models.ReqContext) Response {
 	}
 
 	if provisioningData != nil {
-		allowUiUpdate := hs.ProvisioningService.GetAllowUiUpdatesFromConfig(provisioningData.Name)
-		if !allowUiUpdate {
+		allowUIUpdate := hs.ProvisioningService.GetAllowUIUpdatesFromConfig(provisioningData.Name)
+		if !allowUIUpdate {
 			meta.Provisioned = true
 		}
 
@@ -232,7 +232,7 @@ func (hs *HTTPServer) PostDashboard(c *models.ReqContext, cmd models.SaveDashboa
 
 	allowUiUpdate := true
 	if provisioningData != nil {
-		allowUiUpdate = hs.ProvisioningService.GetAllowUiUpdatesFromConfig(provisioningData.Name)
+		allowUiUpdate = hs.ProvisioningService.GetAllowUIUpdatesFromConfig(provisioningData.Name)
 	}
 
 	dashItem := &dashboards.SaveDashboardDTO{

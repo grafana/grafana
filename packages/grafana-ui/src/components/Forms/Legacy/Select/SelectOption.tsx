@@ -1,4 +1,5 @@
 import React from 'react';
+import { Icon } from '../../../Icon/Icon';
 
 // Ignoring because I couldn't get @types/react-select work wih Torkel's fork
 // @ts-ignore
@@ -24,7 +25,7 @@ export const SelectOption = (props: ExtendedOptionProps) => {
           <div>{children}</div>
           {data.description && <div className="gf-form-select-box__desc-option__desc">{data.description}</div>}
         </div>
-        {isSelected && <i className="fa fa-check" aria-hidden="true" />}
+        {isSelected && <Icon name="check" aria-hidden="true" />}
       </div>
     </components.Option>
   );

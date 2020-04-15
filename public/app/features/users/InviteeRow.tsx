@@ -2,7 +2,7 @@ import React, { createRef, PureComponent } from 'react';
 import { connect } from 'react-redux';
 import { Invitee } from 'app/types';
 import { revokeInvite } from './state/actions';
-import { Button, ClipboardButton } from '@grafana/ui';
+import { Button, ClipboardButton, Icon } from '@grafana/ui';
 
 export interface Props {
   invitee: Invitee;
@@ -23,7 +23,9 @@ class InviteeRow extends PureComponent<Props> {
           &nbsp;
         </td>
         <td>
-          <Button variant="destructive" size="sm" icon="fa fa-remove" onClick={() => revokeInvite(invitee.code)} />
+          <Button variant="destructive" size="sm" icon="fa fa-remove" onClick={() => revokeInvite(invitee.code)}>
+            <Icon name="times" style={{ marginBottom: 0 }} />
+          </Button>
         </td>
       </tr>
     );

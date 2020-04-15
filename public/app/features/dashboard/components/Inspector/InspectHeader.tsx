@@ -1,6 +1,6 @@
 import React, { FC } from 'react';
 import { css } from 'emotion';
-import { Icon, stylesFactory, Tab, TabsBar, useTheme } from '@grafana/ui';
+import { stylesFactory, Tab, TabsBar, useTheme, IconButton } from '@grafana/ui';
 import { GrafanaTheme, SelectableValue, PanelData, getValueFormat, formattedValueToString } from '@grafana/data';
 import { InspectTab } from './PanelInspector';
 import { PanelModel } from '../../state';
@@ -32,12 +32,8 @@ export const InspectHeader: FC<Props> = ({
   return (
     <div className={styles.header}>
       <div className={styles.actions}>
-        <div className={styles.iconWrapper} onClick={onToggleExpand}>
-          <Icon name={isExpanded ? 'chevron-right' : 'chevron-left'} className={styles.icon} />
-        </div>
-        <div className={styles.iconWrapper} onClick={onClose}>
-          <Icon name="times" className={styles.icon} />
-        </div>
+        <IconButton name="angle-left" size="xl" onClick={onToggleExpand} surface="header" />
+        <IconButton name="times" size="xl" onClick={onClose} surface="header" />
       </div>
       <div className={styles.titleWrapper}>
         <h3>{panel.title}</h3>
@@ -60,32 +56,24 @@ export const InspectHeader: FC<Props> = ({
 };
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
-  const headerBackground = theme.isLight ? theme.colors.gray95 : theme.colors.gray15;
+  const headerBackground = theme.colors.bg2;
+
   return {
     header: css`
       background-color: ${headerBackground};
       z-index: 1;
       flex-grow: 0;
+      padding-top: ${theme.spacing.sm};
     `,
     actions: css`
+      position: absolute;
       display: flex;
       align-items: baseline;
       justify-content: space-between;
-      margin: ${theme.spacing.md};
+      right: ${theme.spacing.sm};
     `,
     tabsBar: css`
       padding-left: ${theme.spacing.md};
-    `,
-    iconWrapper: css`
-      cursor: pointer;
-      width: 25px;
-      height: 100%;
-      display: flex;
-      flex-shrink: 0;
-      justify-content: center;
-    `,
-    icon: css`
-      font-size: ${theme.typography.size.lg};
     `,
     titleWrapper: css`
       margin-bottom: ${theme.spacing.lg};

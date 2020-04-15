@@ -12,11 +12,11 @@ import { Checkbox } from './Checkbox';
 
 import { RadioButtonGroup } from './RadioButtonGroup/RadioButtonGroup';
 import { Select } from '../Select/Select';
-import Forms from './index';
+import { InputControl } from '../InputControl';
 import mdx from './Form.mdx';
 import { ValidateResult } from 'react-hook-form';
 import { boolean } from '@storybook/addon-knobs';
-import { TextArea } from './TextArea/TextArea';
+import { TextArea } from '../TextArea/TextArea';
 
 export default {
   title: 'Forms/Example forms',
@@ -103,11 +103,11 @@ const renderForm = (defaultValues?: Partial<FormDTO>) => (
           </Field>
 
           <Field label="RadioButton">
-            <Forms.InputControl name="radio" control={control} options={selectOptions} as={RadioButtonGroup} />
+            <InputControl name="radio" control={control} options={selectOptions} as={RadioButtonGroup} />
           </Field>
 
           <Field label="Select" invalid={!!errors.select} error="Select is required">
-            <Forms.InputControl
+            <InputControl
               name="select"
               control={control}
               rules={{
