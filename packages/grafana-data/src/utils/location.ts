@@ -32,6 +32,12 @@ const assureBaseUrl = (url: string) => {
   return url;
 };
 
+interface LocationUtilDependencies {
+  getConfig: () => GrafanaConfig;
+  getTimeRangeForUrl: () => RawTimeRange;
+  buildParamsFromVariables: (params: any, scopedVars?: ScopedVars) => string;
+}
+
 export const locationUtil = {
   /**
    *
@@ -40,15 +46,11 @@ export const locationUtil = {
    * @param getTimeRangeForUrl
    * @internal
    */
-  initialise: ({
-    getConfig,
-    buildParamsFromVariables,
-    getTimeRangeForUrl,
-  }: {
-    getConfig: () => GrafanaConfig;
-    getTimeRangeForUrl: () => RawTimeRange;
-    buildParamsFromVariables: (params: any, scopedVars?: ScopedVars) => string;
-  }) => {
+  initialise: ({ getConfig, buildParamsFromVariables, getTimeRangeForUrl }: LocationUtilDependencies) => {
+    if (grafanaConfig && getTimeRangeUrlParams && getVariablesUrlParams) {
+      throw new Error('locationUtil already initialized');
+    }
+
     grafanaConfig = getConfig;
     getTimeRangeUrlParams = getTimeRangeForUrl;
     getVariablesUrlParams = buildParamsFromVariables;
