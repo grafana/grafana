@@ -5,6 +5,7 @@ const { Select } = LegacyForms;
 
 import { DashboardSearchHit, DashboardSearchHitType } from 'app/types';
 import { backendSrv } from 'app/core/services/backend_srv';
+import { getTimeZoneGroups } from '@grafana/data';
 
 export interface Props {
   resourceUri: string;
@@ -23,11 +24,17 @@ const themes = [
   { value: 'light', label: 'Light' },
 ];
 
-const timezones = [
+const grafanaTimeZones = [
   { value: '', label: 'Default' },
   { value: 'browser', label: 'Local browser time' },
   { value: 'utc', label: 'UTC' },
 ];
+
+const timeZones = getTimeZoneGroups().reduce((tzs, group) => {
+  const options = group.options.map(tz => ({ value: tz, label: tz }));
+  tzs.push.apply(tzs, options);
+  return tzs;
+}, grafanaTimeZones);
 
 export class SharedPreferences extends PureComponent<Props, State> {
   backendSrv = backendSrv;
@@ -145,10 +152,10 @@ export class SharedPreferences extends PureComponent<Props, State> {
         <div className="gf-form">
           <label className="gf-form-label width-11">Timezone</label>
           <Select
-            isSearchable={false}
-            value={timezones.find(item => item.value === timezone)}
+            isSearchable={true}
+            value={timeZones.find(item => item.value === timezone)}
             onChange={timezone => this.onTimeZoneChanged(timezone.value)}
-            options={timezones}
+            options={timeZones}
             width={20}
           />
         </div>
