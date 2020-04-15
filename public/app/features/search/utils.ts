@@ -83,8 +83,7 @@ export const findSelected = (sections: any): DashboardSection | DashboardSection
   return null;
 };
 
-// TODO check if there are any use cases where query isn't a string
-export const parseQuery = (query: any) => {
+export const parseQuery = (query: string) => {
   const parsedQuery = parse(query, {
     keywords: ['folder'],
   });

@@ -1,24 +1,12 @@
-import React, { FC, useReducer, useState } from 'react';
+import React, { FC, useState } from 'react';
 import { contextSrv } from 'app/core/services/context_srv';
-import { useDebounce } from 'react-use';
 import { css } from 'emotion';
 import { Icon, TagList, HorizontalGroup, stylesFactory, useTheme } from '@grafana/ui';
 import { GrafanaTheme } from '@grafana/data';
-import { SearchSrv } from 'app/core/services/search_srv';
-import { backendSrv } from 'app/core/services/backend_srv';
-import { manageDashboardsState, manageDashboardsReducer } from '../reducers/manageDashboards';
-import {
-  FETCH_ITEMS,
-  FETCH_RESULTS,
-  TOGGLE_EDIT_PERMISSIONS,
-  TOGGLE_CAN_SAVE,
-  TOGGLE_SECTION,
-} from '../reducers/actionTypes';
-import { DashboardSection } from '../types';
 import { ConfirmDeleteModal } from './ConfirmDeleteModal';
 import { MoveToFolderModal } from './MoveToFolderModal';
-import { defaultQuery } from '../reducers/searchQueryReducer';
 import { useSearchQuery } from '../hooks/useSearchQuery';
+import { useManageDashboards } from '../hooks/useManageDashboards';
 import { SearchResultsFilter } from './SearchResultsFilter';
 import { SearchResults } from './SearchResults';
 import { DashboardActions } from './DashboardActions';
@@ -28,8 +16,6 @@ export interface Props {
   folderId?: number;
   folderUid?: string;
 }
-
-const searchSrv = new SearchSrv();
 
 const { isEditor } = contextSrv;
 
@@ -51,35 +37,20 @@ export const ManageDashboards: FC<Props> = ({ folderId, folderUid }) => {
     onTagAdd,
   } = useSearchQuery(queryParams);
 
-  const [{ canSave, allChecked, hasEditPermissionInFolders, results, loading }, dispatch] = useReducer(
-    manageDashboardsReducer,
-    {
-      ...manageDashboardsState,
-      hasEditPermissionInFolders: contextSrv.hasEditPermissionInFolders,
-    }
-  );
-
-  const search = () => {
-    searchSrv
-      .search(query)
-      .then(results => {
-        dispatch({ type: FETCH_RESULTS, payload: results });
-      })
-      .then(() => {
-        if (!folderUid) {
-          return undefined;
-        }
-
-        return backendSrv.getFolderByUid(folderUid).then(folder => {
-          dispatch({ type: TOGGLE_CAN_SAVE, payload: folder.canSave });
-          if (!folder.canSave) {
-            dispatch({ type: TOGGLE_EDIT_PERMISSIONS, payload: false });
-          }
-        });
-      });
-  };
-
-  useDebounce(search, 300, [query, folderUid]);
+  const {
+    results,
+    loading,
+    canSave,
+    allChecked,
+    hasEditPermissionInFolders,
+    canMove,
+    canDelete,
+    onToggleSection,
+    onToggleChecked,
+    onToggleAllChecked,
+    onDeleteItems,
+    onMoveItems,
+  } = useManageDashboards(query, { hasEditPermissionInFolders: contextSrv.hasEditPermissionInFolders });
 
   const onMoveTo = () => {
     setIsMoveModalOpen(true);
@@ -88,22 +59,6 @@ export const ManageDashboards: FC<Props> = ({ folderId, folderUid }) => {
   const onItemDelete = () => {
     setIsDeleteModalOpen(true);
   };
-
-  // TODO move to reusable hook
-  const onToggleSection = (section: DashboardSection) => {
-    if (!section.items.length) {
-      backendSrv.search({ ...defaultQuery, folderIds: [section.id] }).then(items => {
-        dispatch({ type: FETCH_ITEMS, payload: { section, items } });
-        dispatch({ type: TOGGLE_SECTION, payload: section });
-      });
-    } else {
-      dispatch({ type: TOGGLE_SECTION, payload: section });
-    }
-  };
-
-  // TODO Memoize?
-  const canMove = results.some((result: DashboardSection) => result.items.some(item => item.checked));
-  const canDelete = canMove || results.some((result: DashboardSection) => result.checked);
 
   return (
     <div className="dashboard-list">
@@ -150,7 +105,7 @@ export const ManageDashboards: FC<Props> = ({ folderId, folderUid }) => {
           canMove={canMove}
           deleteItem={onItemDelete}
           moveTo={onMoveTo}
-          dispatch={dispatch}
+          onToggleAllChecked={onToggleAllChecked}
           onStarredFilterChange={onStarredFilterChange}
           onTagFilterChange={onTagFilterChange}
           selectedStarredFilter={query.starred}
@@ -163,18 +118,18 @@ export const ManageDashboards: FC<Props> = ({ folderId, folderUid }) => {
             editable
             onTagSelected={onTagAdd}
             onToggleSection={onToggleSection}
-            dispatch={dispatch}
+            onToggleChecked={onToggleChecked}
           />
         </div>
       </div>
       <ConfirmDeleteModal
-        dispatch={dispatch}
+        onDeleteItems={onDeleteItems}
         results={results}
         isOpen={isDeleteModalOpen}
         onDismiss={() => setIsDeleteModalOpen(false)}
       />
       <MoveToFolderModal
-        dispatch={dispatch}
+        onMoveItems={onMoveItems}
         results={results}
         isOpen={isMoveModalOpen}
         onDismiss={() => setIsMoveModalOpen(false)}

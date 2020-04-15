@@ -1,5 +1,6 @@
 import { Dispatch } from 'react';
 import { Action } from 'redux';
+import { FolderInfo } from '../../types';
 
 export enum DashboardSearchItemType {
   DashDB = 'dash-db',
@@ -75,10 +76,14 @@ export interface DashboardQuery {
   folderIds: number[];
 }
 
-export type SearchReducer<S> = { state: S; dispatch: Dispatch<SearchAction> };
+export type SearchReducer<S> = [S, Dispatch<SearchAction>];
 
 export type UseSearch = <S>(
   query: DashboardQuery,
   reducer: SearchReducer<S>,
   queryParsing?: boolean
 ) => { state: S; dispatch: Dispatch<SearchAction>; onToggleSection: (section: DashboardSection) => void };
+
+export type OnToggleChecked = (item: DashboardSectionItem | DashboardSection) => void;
+export type OnDeleteItems = (folders: string[], dashboards: string[]) => void;
+export type OnMoveItems = (selectedDashboards: DashboardSectionItem[], folder: FolderInfo | null) => void;

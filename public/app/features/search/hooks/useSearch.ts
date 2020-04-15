@@ -9,8 +9,7 @@ import { parseQuery, hasId } from '../utils';
 const searchSrv = new SearchSrv();
 
 /**
- * Base hook for search functionality. Basically a wrapper for useReducer, extending
- * its actions.
+ * Base hook for search functionality.
  * Returns state and dispatch, among others, from 'reducer' param, so it can be
  * further extended.
  * @param query
@@ -18,21 +17,23 @@ const searchSrv = new SearchSrv();
  * @param queryParsing - toggle to enable custom query parsing
  */
 export const useSearch: UseSearch = (query, reducer, queryParsing = false) => {
-  const { state, dispatch } = reducer;
+  const [state, dispatch] = reducer;
 
   const search = () => {
+    let folderIds: number[] = [];
+    let q = query;
     if (queryParsing) {
-      let folderIds: number[] = [];
       if (parseQuery(query.query).folder === 'current') {
         const { folderId } = getDashboardSrv().getCurrent().meta;
         if (folderId) {
           folderIds.push(folderId);
         }
       }
-      searchSrv.search({ ...query, query: parseQuery(query.query).text, folderIds }).then(results => {
-        dispatch({ type: FETCH_RESULTS, payload: results });
-      });
+      q = { ...q, query: parseQuery(query.query).text as string, folderIds };
     }
+    searchSrv.search(q).then(results => {
+      dispatch({ type: FETCH_RESULTS, payload: results });
+    });
   };
 
   useDebounce(search, 300, [query]);

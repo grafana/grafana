@@ -1,4 +1,4 @@
-import React, { Dispatch, FC, useState } from 'react';
+import React, { FC, useState } from 'react';
 import { css } from 'emotion';
 import { Button, HorizontalGroup, Modal, stylesFactory, useTheme } from '@grafana/ui';
 import { AppEvents, GrafanaTheme } from '@grafana/data';
@@ -6,18 +6,17 @@ import { FolderInfo } from 'app/types';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
 import appEvents from 'app/core/app_events';
 import { backendSrv } from 'app/core/services/backend_srv';
-import { DashboardSection, SearchAction } from '../types';
+import { DashboardSection, OnMoveItems } from '../types';
 import { getCheckedDashboards } from '../utils';
-import { MOVE_ITEMS } from '../reducers/actionTypes';
 
 interface Props {
-  dispatch: Dispatch<SearchAction>;
+  onMoveItems: OnMoveItems;
   results: DashboardSection[];
   isOpen: boolean;
   onDismiss: () => void;
 }
 
-export const MoveToFolderModal: FC<Props> = ({ results, dispatch, isOpen, onDismiss }) => {
+export const MoveToFolderModal: FC<Props> = ({ results, onMoveItems, isOpen, onDismiss }) => {
   const [folder, setFolder] = useState<FolderInfo | null>(null);
   const theme = useTheme();
   const styles = getStyles(theme);
@@ -45,7 +44,7 @@ export const MoveToFolderModal: FC<Props> = ({ results, dispatch, isOpen, onDism
             appEvents.emit(AppEvents.alertError, ['Error', `Dashboards already belongs to folder ${folderTitle}`]);
           }
 
-          dispatch({ type: MOVE_ITEMS, payload: { dashboards: selectedDashboards, folder } });
+          onMoveItems(selectedDashboards, folder);
           onDismiss();
         });
     }

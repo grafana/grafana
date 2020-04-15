@@ -1,25 +1,31 @@
-import React, { FC, Dispatch } from 'react';
+import React, { FC } from 'react';
 import { css, cx } from 'emotion';
 import { GrafanaTheme } from '@grafana/data';
 import { Icon, stylesFactory, useTheme, IconName, IconButton } from '@grafana/ui';
 import PageLoader from 'app/core/components/PageLoader/PageLoader';
 import appEvents from 'app/core/app_events';
 import { CoreEvents } from 'app/types';
-import { DashboardSection, SearchAction } from '../types';
+import { DashboardSection, OnToggleChecked } from '../types';
 import { SearchItem } from './SearchItem';
 import { SearchCheckbox } from './SearchCheckbox';
-import { TOGGLE_CHECKED } from '../reducers/actionTypes';
 
 export interface Props {
-  dispatch?: Dispatch<SearchAction>;
   editable?: boolean;
   loading?: boolean;
   onTagSelected: (name: string) => any;
-  onToggleSection?: any;
+  onToggleChecked?: OnToggleChecked;
+  onToggleSection?: (section: DashboardSection) => void;
   results: DashboardSection[] | undefined;
 }
 
-export const SearchResults: FC<Props> = ({ editable, dispatch, loading, onTagSelected, onToggleSection, results }) => {
+export const SearchResults: FC<Props> = ({
+  editable,
+  loading,
+  onTagSelected,
+  onToggleChecked,
+  onToggleSection,
+  results,
+}) => {
   const theme = useTheme();
   const styles = getSectionStyles(theme);
 
@@ -33,10 +39,12 @@ export const SearchResults: FC<Props> = ({ editable, dispatch, loading, onTagSel
     <ul className={styles.wrapper}>
       {results.map(section => (
         <li aria-label="Search section" className={styles.section} key={section.title}>
-          <SectionHeader onSectionClick={onToggleSection} {...{ dispatch, editable, section }} />
+          <SectionHeader onSectionClick={onToggleSection} {...{ onToggleChecked, editable, section }} />
           <ul aria-label="Search items" className={styles.wrapper}>
             {section.expanded &&
-              section.items.map(item => <SearchItem key={item.id} {...{ item, editable, dispatch, onTagSelected }} />)}
+              section.items.map(item => (
+                <SearchItem key={item.id} {...{ item, editable, onToggleChecked, onTagSelected }} />
+              ))}
           </ul>
         </li>
       ))}
@@ -59,13 +67,13 @@ const getSectionStyles = stylesFactory((theme: GrafanaTheme) => {
 });
 
 interface SectionHeaderProps {
-  dispatch?: Dispatch<SearchAction>;
+  onToggleChecked?: OnToggleChecked;
   editable?: boolean;
   onSectionClick: (section: DashboardSection) => void;
   section: DashboardSection;
 }
 
-const SectionHeader: FC<SectionHeaderProps> = ({ section, onSectionClick, editable = false, dispatch }) => {
+const SectionHeader: FC<SectionHeaderProps> = ({ section, onSectionClick, editable = false, onToggleChecked }) => {
   const theme = useTheme();
   const styles = getSectionHeaderStyles(theme, section.selected);
 
@@ -81,7 +89,7 @@ const SectionHeader: FC<SectionHeaderProps> = ({ section, onSectionClick, editab
         onClick={(e: React.MouseEvent) => {
           e.preventDefault();
           e.stopPropagation();
-          dispatch({ type: TOGGLE_CHECKED, payload: section });
+          onToggleChecked(section);
         }}
       />
       <Icon className={styles.icon} name={section.icon as IconName} />

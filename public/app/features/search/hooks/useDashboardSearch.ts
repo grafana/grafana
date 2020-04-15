@@ -1,16 +1,13 @@
-import { KeyboardEvent } from 'react';
+import { KeyboardEvent, useReducer } from 'react';
 import { getLocationSrv } from '@grafana/runtime';
-import { DashboardQuery, DashboardSearchItemType, DashboardSection, SearchReducer } from '../types';
+import { DashboardQuery, DashboardSearchItemType, DashboardSection } from '../types';
 import { MOVE_SELECTION_DOWN, MOVE_SELECTION_UP } from '../reducers/actionTypes';
+import { dashboardsSearchState, DashboardsSearchState, searchReducer } from '../reducers/dashboardSearch';
 import { findSelected } from '../utils';
 import { useSearch } from './useSearch';
-import { DashboardsSearchState } from '../reducers/dashboardSearch';
 
-export const useDashboardSearch = (
-  query: DashboardQuery,
-  reducer: SearchReducer<DashboardsSearchState>,
-  onCloseSearch: () => void
-) => {
+export const useDashboardSearch = (query: DashboardQuery, onCloseSearch: () => void) => {
+  const reducer = useReducer(searchReducer, dashboardsSearchState);
   const {
     state: { results, loading },
     onToggleSection,

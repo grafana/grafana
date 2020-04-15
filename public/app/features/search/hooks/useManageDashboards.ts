@@ -1,18 +1,22 @@
-import { useMemo } from 'react';
-import { DashboardQuery, DashboardSection, DashboardSectionItem, SearchReducer } from '../types';
+import { useMemo, useReducer } from 'react';
+import { DashboardQuery, DashboardSection, OnDeleteItems, OnMoveItems, OnToggleChecked } from '../types';
 import { DELETE_ITEMS, MOVE_ITEMS, TOGGLE_ALL_CHECKED, TOGGLE_CHECKED } from '../reducers/actionTypes';
-import { FolderInfo } from '../../../types';
-import { ManageDashboardsState } from '../reducers/manageDashboards';
+import { manageDashboardsReducer, manageDashboardsState, ManageDashboardsState } from '../reducers/manageDashboards';
 import { useSearch } from './useSearch';
 
-export const useManageDashboards = (query: DashboardQuery, reducer: SearchReducer<ManageDashboardsState>) => {
+export const useManageDashboards = (query: DashboardQuery, state: Partial<ManageDashboardsState> = {}) => {
+  const reducer = useReducer(manageDashboardsReducer, {
+    ...manageDashboardsState,
+    ...state,
+  });
+
   const {
     state: { results, loading, canSave, allChecked, hasEditPermissionInFolders },
     onToggleSection,
     dispatch,
   } = useSearch<ManageDashboardsState>(query, reducer);
 
-  const onToggleChecked = (item: DashboardSectionItem) => {
+  const onToggleChecked: OnToggleChecked = item => {
     dispatch({ type: TOGGLE_CHECKED, payload: item });
   };
 
@@ -20,11 +24,11 @@ export const useManageDashboards = (query: DashboardQuery, reducer: SearchReduce
     dispatch({ type: TOGGLE_ALL_CHECKED });
   };
 
-  const onDeleteItems = (folders: string[], dashboards: string[]) => {
+  const onDeleteItems: OnDeleteItems = (folders, dashboards) => {
     dispatch({ type: DELETE_ITEMS, payload: { folders, dashboards } });
   };
 
-  const onMoveItems = (selectedDashboards: DashboardSectionItem[], folder: FolderInfo | null) => {
+  const onMoveItems: OnMoveItems = (selectedDashboards, folder) => {
     dispatch({ type: MOVE_ITEMS, payload: { dashboards: selectedDashboards, folder } });
   };
 
