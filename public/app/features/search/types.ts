@@ -1,3 +1,4 @@
+import { Dispatch } from 'react';
 import { Action } from 'redux';
 
 export enum DashboardSearchItemType {
@@ -73,3 +74,11 @@ export interface DashboardQuery {
   skipStarred: boolean;
   folderIds: number[];
 }
+
+export type SearchReducer<S> = { state: S; dispatch: Dispatch<SearchAction> };
+
+export type UseSearch = <S>(
+  query: DashboardQuery,
+  reducer: SearchReducer<S>,
+  queryParsing?: boolean
+) => { state: S; dispatch: Dispatch<SearchAction>; onToggleSection: (section: DashboardSection) => void };

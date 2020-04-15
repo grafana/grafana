@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import React, { FC, useReducer } from 'react';
 import { css } from 'emotion';
 import { Icon, useTheme, CustomScrollbar, stylesFactory } from '@grafana/ui';
 import { GrafanaTheme } from '@grafana/data';
@@ -11,6 +11,7 @@ import { SearchField } from './SearchField';
 import { SearchResults } from './SearchResults';
 import { useSearchQuery } from '../hooks/useSearchQuery';
 import { useDashboardSearch } from '../hooks/useDashboardSearch';
+import { dashboardsSearchState, searchReducer } from '../reducers/dashboardSearch';
 
 const searchSrv = new SearchSrv();
 
@@ -24,7 +25,12 @@ export interface Props {
 
 export const DashboardSearch: FC<Props> = ({ onCloseSearch, payload = {} }) => {
   const { query, onQueryChange, onClearFilters, onTagFilterChange, onTagAdd } = useSearchQuery(payload);
-  const { results, loading, onToggleSection, onKeyDown } = useDashboardSearch(query, onCloseSearch);
+  const [state, dispatch] = useReducer(searchReducer, dashboardsSearchState);
+  const { results, loading, onToggleSection, onKeyDown } = useDashboardSearch(
+    query,
+    { state, dispatch },
+    onCloseSearch
+  );
   const theme = useTheme();
   const styles = getStyles(theme);
 

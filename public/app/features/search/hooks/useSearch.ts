@@ -1,26 +1,24 @@
-import { useReducer } from 'react';
 import { useDebounce } from 'react-use';
 import { SearchSrv } from 'app/core/services/search_srv';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { getDashboardSrv } from '../../dashboard/services/DashboardSrv';
 import { FETCH_RESULTS, FETCH_ITEMS, TOGGLE_SECTION } from '../reducers/actionTypes';
-import { dashboardsSearchState, searchReducer } from '../reducers/dashboardSearch';
-import { DashboardQuery, DashboardSection } from '../types';
+import { DashboardSection, UseSearch } from '../types';
 import { parseQuery, hasId } from '../utils';
 
 const searchSrv = new SearchSrv();
 
 /**
- * Base hook for search functionality. In addition to search related data, returns
- * dispatch from useReducer, so the functionality can be extended by other hooks.
- * Accepts optional reducer param, which should extend searchReducer or be able
- * to handle its action types
+ * Base hook for search functionality. Basically a wrapper for useReducer, extending
+ * its actions.
+ * Returns state and dispatch, among others, from 'reducer' param, so it can be
+ * further extended.
  * @param query
+ * @param reducer - return result of useReducer
  * @param queryParsing - toggle to enable custom query parsing
- * @param reducer
  */
-export const useSearch = (query: DashboardQuery, queryParsing = false, reducer = searchReducer) => {
-  const [{ results, loading }, dispatch] = useReducer(reducer, dashboardsSearchState);
+export const useSearch: UseSearch = (query, reducer, queryParsing = false) => {
+  const { state, dispatch } = reducer;
 
   const search = () => {
     if (queryParsing) {
@@ -50,5 +48,5 @@ export const useSearch = (query: DashboardQuery, queryParsing = false, reducer =
     }
   };
 
-  return { results, loading, onToggleSection, dispatch };
+  return { state, dispatch, onToggleSection };
 };
