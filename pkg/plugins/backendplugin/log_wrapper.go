@@ -10,7 +10,8 @@ import (
 )
 
 type logWrapper struct {
-	Logger glog.Logger
+	Logger      glog.Logger
+	discardLogs bool
 }
 
 func formatArgs(args ...interface{}) []interface{} {
@@ -35,18 +36,33 @@ func formatArgs(args ...interface{}) []interface{} {
 }
 
 func (lw logWrapper) Trace(msg string, args ...interface{}) {
+	if lw.discardLogs {
+		return
+	}
 	lw.Logger.Debug(msg, formatArgs(args...)...)
 }
 func (lw logWrapper) Debug(msg string, args ...interface{}) {
+	if lw.discardLogs {
+		return
+	}
 	lw.Logger.Debug(msg, formatArgs(args...)...)
 }
 func (lw logWrapper) Info(msg string, args ...interface{}) {
+	if lw.discardLogs {
+		return
+	}
 	lw.Logger.Info(msg, formatArgs(args...)...)
 }
 func (lw logWrapper) Warn(msg string, args ...interface{}) {
+	if lw.discardLogs {
+		return
+	}
 	lw.Logger.Warn(msg, formatArgs(args...)...)
 }
 func (lw logWrapper) Error(msg string, args ...interface{}) {
+	if lw.discardLogs {
+		return
+	}
 	lw.Logger.Error(msg, formatArgs(args...)...)
 }
 
@@ -60,7 +76,18 @@ func (lw logWrapper) With(args ...interface{}) hclog.Logger {
 	return logWrapper{Logger: lw.Logger.New(args...)}
 }
 func (lw logWrapper) Named(name string) hclog.Logger {
-	return logWrapper{Logger: lw.Logger.New()}
+	discardLogs := false
+	if name == "stdio" {
+		// discard logs from stdio hashicorp/go-plugin gRPC service since
+		// it's not enabled/in use per default.
+		// discard debug log of "waiting for stdio data".
+		// discard warn log of "received EOF, stopping recv loop".
+		discardLogs = true
+	}
+	return logWrapper{
+		Logger:      lw.Logger.New(),
+		discardLogs: discardLogs,
+	}
 }
 
 func (lw logWrapper) ResetNamed(name string) hclog.Logger {
