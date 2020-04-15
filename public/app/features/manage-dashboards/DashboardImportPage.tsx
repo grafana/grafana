@@ -7,7 +7,7 @@ import Page from 'app/core/components/Page/Page';
 import { ImportDashboardOverview } from './components/ImportDashboardOverview';
 import { DashboardFileUpload } from './components/DashboardFileUpload';
 import { validateDashboardJson, validateGcomDashboard } from './utils/validation';
-import { fetchGcomDashboard, importDashboardJson } from './state/actions';
+import { fetchGcomDashboard, importDashboardJson, resetDashboard } from './state/actions';
 import appEvents from 'app/core/app_events';
 import { getNavModel } from 'app/core/selectors/navModel';
 import { StoreState } from 'app/types';
@@ -22,11 +22,16 @@ interface ConnectedProps {
 interface DispatchProps {
   fetchGcomDashboard: typeof fetchGcomDashboard;
   importDashboardJson: typeof importDashboardJson;
+  resetDashboard: typeof resetDashboard;
 }
 
 type Props = OwnProps & ConnectedProps & DispatchProps;
 
 class DashboardImportUnConnected extends PureComponent<Props> {
+  componentWillUnmount() {
+    this.props.resetDashboard();
+  }
+
   onFileUpload = (event: FormEvent<HTMLInputElement>) => {
     const { importDashboardJson } = this.props;
     const file = event.currentTarget.files && event.currentTarget.files.length > 0 && event.currentTarget.files[0];
@@ -147,6 +152,7 @@ const mapStateToProps: MapStateToProps<ConnectedProps, OwnProps, StoreState> = (
 const mapDispatchToProps: MapDispatchToProps<DispatchProps, Props> = {
   fetchGcomDashboard,
   importDashboardJson,
+  resetDashboard,
 };
 
 export const DashboardImportPage = connect(mapStateToProps, mapDispatchToProps)(DashboardImportUnConnected);
