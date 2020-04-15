@@ -10,8 +10,14 @@ datasources:
     jsonData:
       derivedFields:
         - name: "traceID"
-          matcherRegex: "traceID=(\\w+)"
+          matcherRegex: "trace_id=(\\w+)"
           url: "$${__value.raw}"
-          datasourceName: "Jaeger"
+          datasourceUid: jaeger1234
 
+  - name: jaeger-derived-test
+    type: jaeger
+    uid: jaeger1234
+    access: proxy
+    url: http://localhost:16686
+    editable: false
 
