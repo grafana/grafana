@@ -162,6 +162,14 @@ func UpdateDataSource(cmd *models.UpdateDataSourceCommand) error {
 			cmd.JsonData = simplejson.New()
 		}
 
+		if cmd.Uid == "" {
+			uid, err := generateNewDatasourceUid(sess, cmd.OrgId)
+			if err != nil {
+				return errutil.Wrapf(err, "Failed to generate Uid for Datasource %s", cmd.Name)
+			}
+			cmd.Uid = uid
+		}
+
 		ds := &models.DataSource{
 			Id:                cmd.Id,
 			OrgId:             cmd.OrgId,
@@ -182,6 +190,7 @@ func UpdateDataSource(cmd *models.UpdateDataSourceCommand) error {
 			Updated:           time.Now(),
 			ReadOnly:          cmd.ReadOnly,
 			Version:           cmd.Version + 1,
+			Uid:               cmd.Uid,
 		}
 
 		sess.UseBool("is_default")

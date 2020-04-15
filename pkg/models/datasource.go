@@ -171,6 +171,7 @@ type UpdateDataSourceCommand struct {
 	JsonData          *simplejson.Json  `json:"jsonData"`
 	SecureJsonData    map[string]string `json:"secureJsonData"`
 	Version           int               `json:"version"`
+	Uid               string            `json:"uid"`
 
 	OrgId    int64 `json:"-"`
 	Id       int64 `json:"-"`

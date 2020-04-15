@@ -237,6 +237,7 @@ func createInsertCommand(ds *upsertDataSourceFromConfig) *models.AddDataSourceCo
 		JsonData:          jsonData,
 		SecureJsonData:    ds.SecureJSONData,
 		ReadOnly:          !ds.Editable,
+		Uid:               ds.Uid,
 	}
 }
 
@@ -250,6 +251,7 @@ func createUpdateCommand(ds *upsertDataSourceFromConfig, id int64) *models.Updat
 
 	return &models.UpdateDataSourceCommand{
 		Id:                id,
+		Uid:               ds.Uid,
 		OrgId:             ds.OrgID,
 		Name:              ds.Name,
 		Type:              ds.Type,
