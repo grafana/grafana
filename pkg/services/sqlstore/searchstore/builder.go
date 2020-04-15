@@ -23,7 +23,6 @@ func (b *Builder) ToSql(limit, page int64) (string, []interface{}) {
 	b.buildSelect()
 
 	b.sql.WriteString("( ")
-	// FIXME Add permissions filter
 	b.applyFilters()
 
 	b.sql.WriteString(b.Dialect.LimitOffset(limit, (page-1)*limit) + `) as ids
