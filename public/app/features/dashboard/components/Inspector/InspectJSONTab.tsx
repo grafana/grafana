@@ -1,11 +1,9 @@
 import React, { PureComponent } from 'react';
 import { chain } from 'lodash';
 import { PanelData, SelectableValue, AppEvents } from '@grafana/data';
-import { TextArea, Button, Select, ClipboardButton, JSONFormatter } from '@grafana/ui';
-
+import { TextArea, Button, Select, ClipboardButton, JSONFormatter, Field } from '@grafana/ui';
 import { appEvents } from 'app/core/core';
 import { PanelModel, DashboardModel } from '../../state';
-import { Field } from '@grafana/ui/src/components/Forms/Field';
 import { getPanelInspectorStyles } from './styles';
 
 enum ShowContent {

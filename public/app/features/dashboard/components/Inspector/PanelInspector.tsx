@@ -1,23 +1,18 @@
 import React, { PureComponent } from 'react';
 import { Unsubscribable } from 'rxjs';
-import AutoSizer from 'react-virtualized-auto-sizer';
 import { connect, MapStateToProps } from 'react-redux';
-import { saveAs } from 'file-saver';
 import { InspectHeader } from './InspectHeader';
 import { InspectJSONTab } from './InspectJSONTab';
 import { QueryInspector } from './QueryInspector';
 
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
-import { JSONFormatter, Drawer, LegacyForms, Table, TabContent, CustomScrollbar, Button, Icon } from '@grafana/ui';
-const { Select } = LegacyForms;
+import { JSONFormatter, Drawer, TabContent, CustomScrollbar } from '@grafana/ui';
 import { getLocationSrv, getDataSourceSrv } from '@grafana/runtime';
 import {
   DataFrame,
   DataSourceApi,
   SelectableValue,
   getDisplayProcessor,
-  applyFieldOverrides,
-  toCSV,
   DataQueryError,
   PanelData,
   FieldType,
@@ -29,6 +24,7 @@ import {
 import { config } from 'app/core/config';
 import { getPanelInspectorStyles } from './styles';
 import { StoreState } from 'app/types';
+import { InspectDataTab } from './InspectDataTab';
 
 interface OwnProps {
   dashboard: DashboardModel;
@@ -58,7 +54,7 @@ interface State {
   // Data from the last response
   data: DataFrame[];
   // The selected data frame
-  selected: number;
+  selectedDataFrame: number;
   // The Selected Tab
   currentTab: InspectTab;
   // If the datasource supports custom metadata
@@ -77,7 +73,7 @@ export class PanelInspectorUnconnected extends PureComponent<Props, State> {
       isLoading: true,
       last: {} as PanelData,
       data: [],
-      selected: 0,
+      selectedDataFrame: 0,
       currentTab: props.defaultTab ?? InspectTab.Data,
       drawerWidth: '50%',
     };
@@ -170,17 +166,7 @@ export class PanelInspectorUnconnected extends PureComponent<Props, State> {
   };
 
   onSelectedFrameChanged = (item: SelectableValue<number>) => {
-    this.setState({ selected: item.value || 0 });
-  };
-
-  exportCsv = (dataFrame: DataFrame) => {
-    const dataFrameCsv = toCSV([dataFrame]);
-
-    const blob = new Blob([dataFrameCsv], {
-      type: 'application/csv;charset=utf-8',
-    });
-
-    saveAs(blob, dataFrame.name + '-' + new Date().getUTCDate() + '.csv');
+    this.setState({ selectedDataFrame: item.value || 0 });
   };
 
   renderMetadataInspector() {
@@ -192,71 +178,15 @@ export class PanelInspectorUnconnected extends PureComponent<Props, State> {
   }
 
   renderDataTab() {
-    const { data, selected, isLoading: loading } = this.state;
-    const styles = getPanelInspectorStyles();
-
-    if (loading) {
-      return (
-        <div>
-          Loading <Icon name="fa fa-spinner" className="fa-spin" size="lg" />
-        </div>
-      );
-    }
-
-    if (!data || !data.length) {
-      return <div>No Data</div>;
-    }
-
-    const choices = data.map((frame, index) => {
-      return {
-        value: index,
-        label: `${frame.name} (${index})`,
-      };
-    });
-
-    const processed = applyFieldOverrides({
-      data,
-      theme: config.theme,
-      fieldConfig: { defaults: {}, overrides: [] },
-      replaceVariables: (value: string) => {
-        return value;
-      },
-    });
+    const { last, isLoading, selectedDataFrame } = this.state;
 
     return (
-      <div className={styles.dataTabContent}>
-        <div className={styles.toolbar}>
-          {choices.length > 1 && (
-            <div className={styles.dataFrameSelect}>
-              <Select
-                options={choices}
-                value={choices.find(t => t.value === selected)}
-                onChange={this.onSelectedFrameChanged}
-              />
-            </div>
-          )}
-          <div className={styles.downloadCsv}>
-            <Button variant="primary" onClick={() => this.exportCsv(processed[selected])}>
-              Download CSV
-            </Button>
-          </div>
-        </div>
-        <div style={{ flexGrow: 1 }}>
-          <AutoSizer>
-            {({ width, height }) => {
-              if (width === 0) {
-                return null;
-              }
-
-              return (
-                <div style={{ width, height }}>
-                  <Table width={width} height={height} data={processed[selected]} />
-                </div>
-              );
-            }}
-          </AutoSizer>
-        </div>
-      </div>
+      <InspectDataTab
+        data={last.series}
+        isLoading={isLoading}
+        dataFrameIndex={selectedDataFrame}
+        onSelectedFrameChanged={this.onSelectedFrameChanged}
+      />
     );
   }
 
