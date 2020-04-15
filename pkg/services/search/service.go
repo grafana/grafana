@@ -1,6 +1,7 @@
 package search
 
 import (
+	"github.com/grafana/grafana/pkg/setting"
 	"sort"
 
 	"github.com/grafana/grafana/pkg/bus"
@@ -41,11 +42,14 @@ type FindPersistedDashboardsQuery struct {
 	Page         int64
 	Permission   models.PermissionType
 
+	FeatureSearch2 bool
+
 	Result HitList
 }
 
 type SearchService struct {
-	Bus bus.Bus `inject:""`
+	Bus bus.Bus     `inject:""`
+	Cfg setting.Cfg `inject:""`
 }
 
 func (s *SearchService) Init() error {
@@ -55,16 +59,17 @@ func (s *SearchService) Init() error {
 
 func (s *SearchService) searchHandler(query *Query) error {
 	dashboardQuery := FindPersistedDashboardsQuery{
-		Title:        query.Title,
-		SignedInUser: query.SignedInUser,
-		IsStarred:    query.IsStarred,
-		DashboardIds: query.DashboardIds,
-		Type:         query.Type,
-		FolderIds:    query.FolderIds,
-		Tags:         query.Tags,
-		Limit:        query.Limit,
-		Page:         query.Page,
-		Permission:   query.Permission,
+		Title:          query.Title,
+		SignedInUser:   query.SignedInUser,
+		IsStarred:      query.IsStarred,
+		DashboardIds:   query.DashboardIds,
+		Type:           query.Type,
+		FolderIds:      query.FolderIds,
+		Tags:           query.Tags,
+		Limit:          query.Limit,
+		Page:           query.Page,
+		Permission:     query.Permission,
+		FeatureSearch2: s.Cfg.FeatureToggles["search2"],
 	}
 
 	if err := bus.Dispatch(&dashboardQuery); err != nil {

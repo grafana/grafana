@@ -1,6 +1,8 @@
 package sqlstore
 
 import (
+	"github.com/grafana/grafana/pkg/services/sqlstore/permissions"
+	"github.com/grafana/grafana/pkg/services/sqlstore/searchstore"
 	"github.com/prometheus/client_golang/prometheus"
 	"reflect"
 	"strconv"
@@ -219,20 +221,37 @@ func findDashboards(query *search.FindPersistedDashboardsQuery) ([]DashboardSear
 		WithTags(query.Tags).
 		WithDashboardIdsIn(query.DashboardIds)
 
+	sb2filters := []interface{}{
+		searchstore.TitleSorter{},
+		searchstore.TagsFilter{Tags: query.Tags},
+		searchstore.DashboardFilter{IDs: query.DashboardIds},
+		permissions.DashboardPermissionFilter{
+			OrgRole:         query.SignedInUser.OrgRole,
+			OrgId:           query.SignedInUser.OrgId,
+			Dialect:         dialect,
+			UserId:          query.SignedInUser.UserId,
+			PermissionLevel: query.Permission,
+		},
+	}
+
 	if query.IsStarred {
 		sb.IsStarred()
+		sb2filters = append(sb2filters, searchstore.StarredFilter{UserId: query.SignedInUser.UserId})
 	}
 
 	if len(query.Title) > 0 {
 		sb.WithTitle(query.Title)
+		sb2filters = append(sb2filters, searchstore.TitleFilter{Title: query.Title})
 	}
 
 	if len(query.Type) > 0 {
 		sb.WithType(query.Type)
+		sb2filters = append(sb2filters, searchstore.TypeFilter{Dialect: dialect, Type: query.Type})
 	}
 
 	if len(query.FolderIds) > 0 {
 		sb.WithFolderIds(query.FolderIds)
+		sb2filters = append(sb2filters, searchstore.FolderFilter{IDs: query.FolderIds})
 	}
 
 	var res []DashboardSearchProjection
@@ -243,21 +262,26 @@ func findDashboards(query *search.FindPersistedDashboardsQuery) ([]DashboardSear
 		return nil, err
 	}
 
-	var shadowRes []DashboardSearchProjection
-	shadowSql, shadowParams := sb.ShadowSql()
-	err = x.SQL(shadowSql, shadowParams...).Find(&shadowRes)
-	equal := reflect.DeepEqual(shadowRes, res)
-	shadowSearchCounter.With(prometheus.Labels{
-		"equal": strconv.FormatBool(equal),
-		"error": strconv.FormatBool(err != nil),
-	}).Inc()
-	sqlog.Debug(
-		"shadow search query result",
-		"err", err,
-		"equal", equal,
-		"shadowQuery", strings.Replace(strings.Replace(shadowSql, "\n", " ", -1), "\t", " ", -1),
-		"query", strings.Replace(strings.Replace(sql, "\n", " ", -1), "\t", " ", -1),
-	)
+	if query.FeatureSearch2 {
+		var res2 []DashboardSearchProjection
+		sb := &searchstore.Builder{Dialect: dialect, Filters: sb2filters}
+		shadowSql, params := sb.ToSql(query.Limit, query.Page)
+		err = x.SQL(shadowSql, params...).Find(&res2)
+
+		equal := reflect.DeepEqual(res2, res)
+		shadowSearchCounter.With(prometheus.Labels{
+			"equal": strconv.FormatBool(equal),
+			"error": strconv.FormatBool(err != nil),
+		}).Inc()
+		sqlog.Debug(
+			"shadow search query result",
+			"err", err,
+			"equal", equal,
+			"shadowQuery", strings.Replace(strings.Replace(shadowSql, "\n", " ", -1), "\t", " ", -1),
+			"query", strings.Replace(strings.Replace(sql, "\n", " ", -1), "\t", " ", -1),
+		)
+		return res2, nil
+	}
 
 	return res, nil
 }
