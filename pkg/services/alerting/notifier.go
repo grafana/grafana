@@ -68,7 +68,7 @@ func (n *notificationService) SendIfNeeded(evalCtx *EvalContext) error {
 			evalCtx.ImageOnDiskPath = uploadEvalCtx.ImageOnDiskPath
 			evalCtx.ImagePublicURL = uploadEvalCtx.ImagePublicURL
 		} else {
-			n.log.Warn("Couldn't render image for alert notifaction, no image renderer found/installed. " +
+			n.log.Warn("Could not render image for alert notification, no image renderer found/installed. " +
 				"For image rendering support please install the grafana-image-renderer plugin. " +
 				"Read more at https://grafana.com/docs/grafana/latest/administration/image_rendering/")
 		}
