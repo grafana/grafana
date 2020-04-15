@@ -147,7 +147,7 @@ export class JaegerQueryField extends React.PureComponent<Props, State> {
     try {
       return await datasource.metadataRequest(url);
     } catch (error) {
-      appEvents.emit(AppEvents.alertError, ['Failed to load services from Jaeger', error]);
+      appEvents.emit(AppEvents.alertError, ['Failed to load operations from Jaeger', error]);
     }
     return [];
   };
@@ -170,7 +170,7 @@ export class JaegerQueryField extends React.PureComponent<Props, State> {
     try {
       return await datasource.metadataRequest(url, traceSearch);
     } catch (error) {
-      appEvents.emit(AppEvents.alertError, ['Failed to load services from Jaeger', error]);
+      appEvents.emit(AppEvents.alertError, ['Failed to load traces from Jaeger', error]);
     }
     return [];
   };
