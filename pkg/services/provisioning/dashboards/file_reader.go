@@ -139,7 +139,7 @@ func (fr *FileReader) handleMissingDashboardFiles(provisionedDashboardRefs map[s
 		// delete dashboard that are missing json file
 		for _, dashboardID := range dashboardToDelete {
 			fr.log.Debug("deleting provisioned dashboard. missing on disk", "id", dashboardID)
-			err := fr.dashboardProvisioningService.DeleteProvisionedDashboard(dashboardID, fr.Cfg.OrgId)
+			err := fr.dashboardProvisioningService.DeleteProvisionedDashboard(dashboardID, fr.Cfg.OrgID)
 			if err != nil {
 				fr.log.Error("failed to delete dashboard", "id", dashboardID, "error", err)
 			}
@@ -217,7 +217,7 @@ func getOrCreateFolderID(cfg *config, service dashboards.DashboardProvisioningSe
 		return 0, ErrFolderNameMissing
 	}
 
-	cmd := &models.GetDashboardQuery{Slug: models.SlugifyTitle(cfg.Folder), OrgId: cfg.OrgId}
+	cmd := &models.GetDashboardQuery{Slug: models.SlugifyTitle(cfg.Folder), OrgId: cfg.OrgID}
 	err := bus.Dispatch(cmd)
 
 	if err != nil && err != models.ErrDashboardNotFound {
@@ -230,9 +230,9 @@ func getOrCreateFolderID(cfg *config, service dashboards.DashboardProvisioningSe
 		dash.Dashboard = models.NewDashboardFolder(cfg.Folder)
 		dash.Dashboard.IsFolder = true
 		dash.Overwrite = true
-		dash.OrgId = cfg.OrgId
+		dash.OrgId = cfg.OrgID
 		// set dashboard folderUid if given
-		dash.Dashboard.SetUid(cfg.FolderUid)
+		dash.Dashboard.SetUid(cfg.FolderUID)
 		dbDash, err := service.SaveFolderForProvisionedDashboards(dash)
 		if err != nil {
 			return 0, err

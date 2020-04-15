@@ -94,7 +94,7 @@ func (provider *Provisioner) GetProvisionerResolvedPath(name string) string {
 func (provider *Provisioner) GetAllowUIUpdatesFromConfig(name string) bool {
 	for _, config := range provider.configs {
 		if config.Name == name {
-			return config.AllowUiUpdates
+			return config.AllowUIUpdates
 		}
 	}
 	return false

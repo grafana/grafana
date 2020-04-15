@@ -33,7 +33,7 @@ func TestCreatingNewDashboardFileReader(t *testing.T) {
 		cfg := &config{
 			Name:    "Default",
 			Type:    "file",
-			OrgId:   1,
+			OrgID:   1,
 			Folder:  "",
 			Options: map[string]interface{}{},
 		}
@@ -91,7 +91,7 @@ func TestDashboardFileReader(t *testing.T) {
 			cfg := &config{
 				Name:    "Default",
 				Type:    "file",
-				OrgId:   1,
+				OrgID:   1,
 				Folder:  "",
 				Options: map[string]interface{}{},
 			}
@@ -156,7 +156,7 @@ func TestDashboardFileReader(t *testing.T) {
 				cfg := &config{
 					Name:   "Default",
 					Type:   "file",
-					OrgId:  1,
+					OrgID:  1,
 					Folder: "",
 				}
 
@@ -172,8 +172,8 @@ func TestDashboardFileReader(t *testing.T) {
 			})
 
 			Convey("Two dashboard providers should be able to provisioned the same dashboard without uid", func() {
-				cfg1 := &config{Name: "1", Type: "file", OrgId: 1, Folder: "f1", Options: map[string]interface{}{"path": containingID}}
-				cfg2 := &config{Name: "2", Type: "file", OrgId: 1, Folder: "f2", Options: map[string]interface{}{"path": containingID}}
+				cfg1 := &config{Name: "1", Type: "file", OrgID: 1, Folder: "f1", Options: map[string]interface{}{"path": containingID}}
+				cfg2 := &config{Name: "2", Type: "file", OrgID: 1, Folder: "f2", Options: map[string]interface{}{"path": containingID}}
 
 				reader1, err := NewDashboardFileReader(cfg1, logger)
 				So(err, ShouldBeNil)
@@ -206,7 +206,7 @@ func TestDashboardFileReader(t *testing.T) {
 			cfg := &config{
 				Name:   "Default",
 				Type:   "file",
-				OrgId:  1,
+				OrgID:  1,
 				Folder: "",
 				Options: map[string]interface{}{
 					"folder": defaultDashboards,
@@ -221,7 +221,7 @@ func TestDashboardFileReader(t *testing.T) {
 			cfg := &config{
 				Name:   "Default",
 				Type:   "file",
-				OrgId:  1,
+				OrgID:  1,
 				Folder: "TEAM A",
 				Options: map[string]interface{}{
 					"folder": defaultDashboards,
@@ -258,7 +258,7 @@ func TestDashboardFileReader(t *testing.T) {
 			cfg := &config{
 				Name:  "Default",
 				Type:  "file",
-				OrgId: 1,
+				OrgID: 1,
 				Options: map[string]interface{}{
 					"folder": unprovision,
 				},

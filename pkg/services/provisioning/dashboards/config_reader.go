@@ -23,7 +23,7 @@ func (cr *configReader) parseConfigs(file os.FileInfo) ([]*config, error) {
 		return nil, err
 	}
 
-	apiVersion := &configVersion{ApiVersion: 0}
+	apiVersion := &configVersion{APIVersion: 0}
 
 	// We ignore the error here because it errors out for version 0 which does not have apiVersion
 	// specified (so 0 is default). This can also error in case the apiVersion is not an integer but at the moment
@@ -32,7 +32,7 @@ func (cr *configReader) parseConfigs(file os.FileInfo) ([]*config, error) {
 	//  integer > max version?).
 	_ = yaml.Unmarshal(yamlFile, &apiVersion)
 
-	if apiVersion.ApiVersion > 0 {
+	if apiVersion.APIVersion > 0 {
 		v1 := &configV1{}
 		err := yaml.Unmarshal(yamlFile, &v1)
 		if err != nil {
@@ -84,15 +84,15 @@ func (cr *configReader) readConfig() ([]*config, error) {
 
 	uidUsage := map[string]uint8{}
 	for _, dashboard := range dashboards {
-		if dashboard.OrgId == 0 {
-			dashboard.OrgId = 1
+		if dashboard.OrgID == 0 {
+			dashboard.OrgID = 1
 		}
 
 		if dashboard.UpdateIntervalSeconds == 0 {
 			dashboard.UpdateIntervalSeconds = 10
 		}
-		if len(dashboard.FolderUid) > 0 {
-			uidUsage[dashboard.FolderUid]++
+		if len(dashboard.FolderUID) > 0 {
+			uidUsage[dashboard.FolderUID]++
 		}
 	}
 

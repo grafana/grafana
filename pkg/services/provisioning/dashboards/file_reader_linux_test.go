@@ -17,7 +17,7 @@ func TestProvsionedSymlinkedFolder(t *testing.T) {
 	cfg := &config{
 		Name:    "Default",
 		Type:    "file",
-		OrgId:   1,
+		OrgID:   1,
 		Folder:  "",
 		Options: map[string]interface{}{"path": symlinkedFolder},
 	}
