@@ -5,7 +5,7 @@ import {
   GrafanaTheme,
   GrafanaThemeType,
   PanelPluginMeta,
-  GrafanConfig,
+  GrafanaConfig,
   LicenseInfo,
   BuildInfo,
   FeatureToggles,
