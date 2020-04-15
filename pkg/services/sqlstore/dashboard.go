@@ -1,7 +1,6 @@
 package sqlstore
 
 import (
-	"github.com/grafana/grafana/pkg/services/sqlstore/permissions"
 	"github.com/grafana/grafana/pkg/services/sqlstore/searchstore"
 	"github.com/prometheus/client_golang/prometheus"
 	"reflect"
@@ -222,16 +221,22 @@ func findDashboards(query *search.FindPersistedDashboardsQuery) ([]DashboardSear
 		WithDashboardIdsIn(query.DashboardIds)
 
 	sb2filters := []interface{}{
-		searchstore.TitleSorter{},
-		searchstore.TagsFilter{Tags: query.Tags},
-		searchstore.DashboardFilter{IDs: query.DashboardIds},
-		permissions.DashboardPermissionFilter{
+		query.SortBy,
+		/*permissions.DashboardPermissionFilter{
 			OrgRole:         query.SignedInUser.OrgRole,
 			OrgId:           query.SignedInUser.OrgId,
 			Dialect:         dialect,
 			UserId:          query.SignedInUser.UserId,
 			PermissionLevel: query.Permission,
-		},
+		},*/
+	}
+
+	if len(query.Tags) > 0 {
+		sb2filters = append(sb2filters, searchstore.TagsFilter{Tags: query.Tags})
+	}
+
+	if len(query.DashboardIds) > 0 {
+		sb2filters = append(sb2filters, searchstore.DashboardFilter{IDs: query.DashboardIds})
 	}
 
 	if query.IsStarred {
@@ -265,7 +270,16 @@ func findDashboards(query *search.FindPersistedDashboardsQuery) ([]DashboardSear
 	if query.FeatureSearch2 {
 		var res2 []DashboardSearchProjection
 		sb := &searchstore.Builder{Dialect: dialect, Filters: sb2filters}
-		shadowSql, params := sb.ToSql(query.Limit, query.Page)
+		limit := query.Limit
+		if limit < 1 {
+			limit = 1000
+		}
+
+		page := query.Page
+		if page < 1 {
+			page = 1
+		}
+		shadowSql, params := sb.ToSql(limit, page)
 		err = x.SQL(shadowSql, params...).Find(&res2)
 
 		equal := reflect.DeepEqual(res2, res)

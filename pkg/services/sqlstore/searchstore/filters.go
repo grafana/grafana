@@ -117,9 +117,14 @@ func (f TagsFilter) Where() (string, []interface{}) {
 }
 
 type TitleSorter struct {
+	Descending bool
 }
 
 func (s TitleSorter) OrderBy() string {
+	if s.Descending {
+		return "dashboard.title DESC"
+	}
+
 	return "dashboard.title ASC"
 }
 
