@@ -45,8 +45,8 @@ export const ArrayOptions = () => {
 };
 
 export default {
-  title: 'Panel/Segment/SegmentSync',
-  component: ArrayOptions,
+  title: 'Data Source/Segment/SegmentSync',
+  component: Segment,
 };
 
 export const ArrayOptionsWithPrimitiveValue = () => {
