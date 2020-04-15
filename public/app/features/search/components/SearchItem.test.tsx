@@ -1,7 +1,8 @@
 import React from 'react';
 import { shallow, mount } from 'enzyme';
-import { SearchItem, Props } from './SearchItem';
 import { Tag } from '@grafana/ui';
+import { SearchItem, Props } from './SearchItem';
+import { DashboardSearchItemType } from '../types';
 
 const data = {
   id: 1,
@@ -10,8 +11,7 @@ const data = {
   uri: 'db/test1',
   url: '/d/lBdLINUWk/test1',
   slug: '',
-  type: 'dash-db',
-  //@ts-ignore
+  type: DashboardSearchItemType.DashDB,
   tags: ['Tag1', 'Tag2'],
   isStarred: false,
   checked: false,

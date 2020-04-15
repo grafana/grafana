@@ -23,17 +23,18 @@ import { TUpdateViewRangeTimeFunction, ViewRange, ViewRangeTimeUpdate } from './
 import { TNil } from '../types';
 import { Span, Trace, Log, KeyValuePair, Link } from '../types/trace';
 import TTraceTimeline from '../types/TTraceTimeline';
-import { createStyle } from '../Theme';
+import { autoColor, createStyle, Theme, withTheme } from '../Theme';
 import ExternalLinkContext from '../url/externalLinkContext';
 
 type TExtractUiFindFromStateReturn = {
   uiFind: string | undefined;
 };
 
-const getStyles = createStyle(() => {
+const getStyles = createStyle((theme: Theme) => {
   return {
     TraceTimelineViewer: css`
-      border-bottom: 1px solid #bbb;
+      label: TraceTimelineViewer;
+      border-bottom: 1px solid ${autoColor(theme, '#bbb')};
 
       & .json-markup {
         line-height: 17px;
@@ -47,19 +48,19 @@ const getStyles = createStyle(() => {
       }
 
       & .json-markup-bool {
-        color: firebrick;
+        color: ${autoColor(theme, 'firebrick')};
       }
 
       & .json-markup-string {
-        color: teal;
+        color: ${autoColor(theme, 'teal')};
       }
 
       & .json-markup-null {
-        color: teal;
+        color: ${autoColor(theme, 'teal')};
       }
 
       & .json-markup-number {
-        color: blue;
+        color: ${autoColor(theme, 'blue', 'black')};
       }
     `,
   };
@@ -96,6 +97,12 @@ type TProps = TExtractUiFindFromStateReturn & {
   addHoverIndentGuideId: (spanID: string) => void;
   removeHoverIndentGuideId: (spanID: string) => void;
   linksGetter: (span: Span, items: KeyValuePair[], itemIndex: number) => Link[];
+  theme: Theme;
+};
+
+type State = {
+  // Will be set to real height of the component so it can be passed down to size some other elements.
+  height: number;
 };
 
 const NUM_TICKS = 5;
@@ -106,7 +113,12 @@ const NUM_TICKS = 5;
  * re-render the ListView every time the cursor is moved on the trace minimap
  * or `TimelineHeaderRow`.
  */
-export default class TraceTimelineViewer extends React.PureComponent<TProps> {
+export class UnthemedTraceTimelineViewer extends React.PureComponent<TProps, State> {
+  constructor(props: TProps) {
+    super(props);
+    this.state = { height: 0 };
+  }
+
   componentDidMount() {
     mergeShortcuts({
       collapseAll: this.collapseAll,
@@ -140,14 +152,18 @@ export default class TraceTimelineViewer extends React.PureComponent<TProps> {
       viewRange,
       createLinkToExternalSpan,
       traceTimeline,
+      theme,
       ...rest
     } = this.props;
     const { trace } = rest;
-    const styles = getStyles();
+    const styles = getStyles(theme);
 
     return (
       <ExternalLinkContext.Provider value={createLinkToExternalSpan}>
-        <div className={styles.TraceTimelineViewer}>
+        <div
+          className={styles.TraceTimelineViewer}
+          ref={(ref: HTMLDivElement | null) => ref && this.setState({ height: ref.getBoundingClientRect().height })}
+        >
           <TimelineHeaderRow
             duration={trace.duration}
             nameColumnWidth={traceTimeline.spanNameColumnWidth}
@@ -160,6 +176,7 @@ export default class TraceTimelineViewer extends React.PureComponent<TProps> {
             viewRangeTime={viewRange.time}
             updateNextViewRangeTime={updateNextViewRangeTime}
             updateViewRangeTime={updateViewRangeTime}
+            columnResizeHandleHeight={this.state.height}
           />
           <VirtualizedTraceView
             {...rest}
@@ -172,3 +189,5 @@ export default class TraceTimelineViewer extends React.PureComponent<TProps> {
     );
   }
 }
+
+export default withTheme(UnthemedTraceTimelineViewer);

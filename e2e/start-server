@@ -18,6 +18,7 @@ else
 
   cp -r ./bin $RUNDIR
   cp -r ./public $RUNDIR
+  cp -r ./tools $RUNDIR
 
   mkdir $RUNDIR/conf
   mkdir $PROV_DIR
@@ -25,7 +26,6 @@ else
   mkdir $PROV_DIR/dashboards
 
   cp ./conf/defaults.ini $RUNDIR/conf/defaults.ini
-  cp ./conf/sample.ini $RUNDIR/conf/custom.ini
 fi
 
 echo -e "Copy provisioning setup from devenv"

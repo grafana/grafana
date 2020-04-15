@@ -267,7 +267,7 @@
     link: /enterprise/license-expiration/
   - name: Export dashboard as PDF
     link: /enterprise/export-pdf/
-- name: Tutorials
+- name: Guides
   link: /tutorials/
   children:
   - name: Run Grafana behind a reverse proxy

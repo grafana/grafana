@@ -33,9 +33,9 @@ export interface Props {
   panel: PanelModel;
   dashboard: DashboardModel;
   plugin: PanelPlugin;
-  isFullscreen: boolean;
+  isViewing: boolean;
+  isEditing?: boolean;
   isInView: boolean;
-  isInEditMode?: boolean;
   width: number;
   height: number;
   updateLocation: typeof updateLocation;
@@ -69,7 +69,8 @@ export class PanelChrome extends PureComponent<Props, State> {
   }
 
   componentDidMount() {
-    const { panel, dashboard, isInEditMode } = this.props;
+    const { panel, dashboard, isEditing } = this.props;
+
     panel.events.on(PanelEvents.refresh, this.onRefresh);
     panel.events.on(PanelEvents.render, this.onRender);
     dashboard.panelInitialized(this.props.panel);
@@ -85,7 +86,7 @@ export class PanelChrome extends PureComponent<Props, State> {
         isFirstLoad: false,
       });
     } else {
-      if (isInEditMode) {
+      if (isEditing) {
         this.querySubscription = panel
           .getQueryRunner()
           .getData()
@@ -319,7 +320,7 @@ export class PanelChrome extends PureComponent<Props, State> {
   }
 
   render() {
-    const { dashboard, panel, isFullscreen, width, height, updateLocation } = this.props;
+    const { dashboard, panel, isViewing, isEditing, width, height, updateLocation } = this.props;
     const { errorMessage, data } = this.state;
     const { transparent } = panel;
 
@@ -340,7 +341,8 @@ export class PanelChrome extends PureComponent<Props, State> {
           scopedVars={panel.scopedVars}
           links={panel.links}
           error={errorMessage}
-          isFullscreen={isFullscreen}
+          isEditing={isEditing}
+          isViewing={isViewing}
           data={data}
           updateLocation={updateLocation}
         />

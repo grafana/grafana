@@ -1,5 +1,6 @@
 import React from 'react';
 import { appEvents } from 'app/core/core';
+import { Icon } from '@grafana/ui';
 
 export class HelpModal extends React.PureComponent {
   static tabIndex = 0;
@@ -33,11 +34,11 @@ export class HelpModal extends React.PureComponent {
     'Time Range': [
       { keys: ['t', 'z'], description: 'Zoom out time range' },
       {
-        keys: ['t', <i className="fa fa-long-arrow-left" />],
+        keys: ['t', <Icon name="arrow-left" />],
         description: 'Move time range back',
       },
       {
-        keys: ['t', <i className="fa fa-long-arrow-right" />],
+        keys: ['t', <Icon name="arrow-right" />],
         description: 'Move time range forward',
       },
     ],
@@ -52,11 +53,11 @@ export class HelpModal extends React.PureComponent {
       <div className="modal-body">
         <div className="modal-header">
           <h2 className="modal-header-title">
-            <i className="fa fa-keyboard-o" />
+            <Icon name="keyboard" size="lg" />
             <span className="p-l-1">Shortcuts</span>
           </h2>
           <a className="modal-header-close" onClick={this.dismiss}>
-            <i className="fa fa-remove" />
+            <Icon name="times" style={{ margin: '3px 0 0 0' }} />
           </a>
         </div>
 

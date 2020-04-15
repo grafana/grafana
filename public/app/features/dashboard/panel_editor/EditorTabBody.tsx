@@ -2,7 +2,7 @@
 import React, { PureComponent } from 'react';
 
 // Components
-import { CustomScrollbar, PanelOptionsGroup } from '@grafana/ui';
+import { CustomScrollbar, PanelOptionsGroup, Icon, IconName } from '@grafana/ui';
 import { FadeIn } from 'app/core/components/Animations/FadeIn';
 
 interface Props {
@@ -90,7 +90,7 @@ export class EditorTabBody extends PureComponent<Props, State> {
     return (
       <div className="nav-buttons" key={view.title + view.icon}>
         <button className="btn navbar-button" onClick={onClick} disabled={view.disabled}>
-          {view.icon && <i className={view.icon} />} {view.title}
+          {view.icon && <Icon name={view.icon as IconName} />} {view.title}
         </button>
       </div>
     );

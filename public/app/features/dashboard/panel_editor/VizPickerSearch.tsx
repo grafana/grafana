@@ -2,6 +2,7 @@ import React, { PureComponent } from 'react';
 
 import { FilterInput } from 'app/core/components/FilterInput/FilterInput';
 import { PanelPluginMeta } from '@grafana/data';
+import { Icon } from '@grafana/ui';
 
 interface Props {
   plugin: PanelPluginMeta;
@@ -17,7 +18,7 @@ export class VizPickerSearch extends PureComponent<Props> {
       <>
         <FilterInput placeholder="" onChange={onChange} value={searchQuery} />
         <button className="btn btn-link toolbar__close" onClick={onClose}>
-          <i className="fa fa-chevron-up" />
+          <Icon name="angle-up" />
         </button>
       </>
     );

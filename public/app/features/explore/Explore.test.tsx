@@ -19,7 +19,7 @@ import { toggleGraph } from './state/actions';
 import { Provider } from 'react-redux';
 import { configureStore } from 'app/store/configureStore';
 import { SecondaryActions } from './SecondaryActions';
-import { TraceView } from './TraceView';
+import { TraceView } from './TraceView/TraceView';
 
 const dummyProps: ExploreProps = {
   changeSize: jest.fn(),

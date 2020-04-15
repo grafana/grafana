@@ -1,5 +1,5 @@
 import React, { PureComponent } from 'react';
-import { LegacyForms } from '@grafana/ui';
+import { LegacyForms, Icon } from '@grafana/ui';
 import { SelectableValue } from '@grafana/data';
 import { dashboardPermissionLevels, DashboardAcl, PermissionLevel } from 'app/types/acl';
 import { FolderInfo } from 'app/types';
@@ -17,10 +17,10 @@ function ItemAvatar({ item }: { item: DashboardAcl }) {
     return <img className="filter-table__avatar" src={item.teamAvatarUrl} />;
   }
   if (item.role === 'Editor') {
-    return <i style={{ width: '25px', height: '25px' }} className="gicon gicon-editor" />;
+    return <Icon size="lg" name="edit" />;
   }
 
-  return <i style={{ width: '25px', height: '25px' }} className="gicon gicon-viewer" />;
+  return <Icon size="lg" name="eye" />;
 }
 
 function ItemDescription({ item }: { item: DashboardAcl }) {
@@ -89,11 +89,11 @@ export default class PermissionsListItem extends PureComponent<Props> {
         <td>
           {!item.inherited ? (
             <a className="btn btn-danger btn-small" onClick={this.onRemoveItem}>
-              <i className="fa fa-remove" />
+              <Icon name="times" style={{ marginBottom: 0 }} />
             </a>
           ) : (
             <button className="btn btn-inverse btn-small">
-              <i className="fa fa-lock" />
+              <Icon name="lock" style={{ marginBottom: '3px' }} />
             </button>
           )}
         </td>

@@ -6,7 +6,7 @@ import store from 'app/core/store';
 import { contextSrv } from 'app/core/services/context_srv';
 import { backendSrv } from './backend_srv';
 import { Section } from '../components/manage_dashboards/manage_dashboards';
-import { DashboardSearchHit } from 'app/types/search';
+import { DashboardSearchHit, DashboardSearchHitType } from 'app/types/search';
 
 interface Sections {
   [key: string]: Partial<Section>;
@@ -26,12 +26,13 @@ export class SearchSrv {
       if (result.length > 0) {
         sections['recent'] = {
           title: 'Recent',
-          icon: 'clock-o',
+          icon: 'clock-nine',
           score: -1,
           removable: true,
           expanded: this.recentIsOpen,
           toggle: this.toggleRecent.bind(this),
           items: result,
+          type: DashboardSearchHitType.DashHitFolder,
         };
       }
     });
@@ -81,11 +82,12 @@ export class SearchSrv {
       if (result.length > 0) {
         sections['starred'] = {
           title: 'Starred',
-          icon: 'star-o',
+          icon: 'star',
           score: -2,
           expanded: this.starredIsOpen,
           toggle: this.toggleStarred.bind(this),
           items: result,
+          type: DashboardSearchHitType.DashHitFolder,
         };
       }
     });
@@ -143,6 +145,7 @@ export class SearchSrv {
           url: hit.url,
           icon: 'folder',
           score: _.keys(sections).length,
+          type: hit.type,
         };
       }
     }
@@ -164,6 +167,7 @@ export class SearchSrv {
             icon: 'folder-open',
             toggle: this.toggleFolder.bind(this),
             score: _.keys(sections).length,
+            type: DashboardSearchHitType.DashHitFolder,
           };
         } else {
           section = {
@@ -173,6 +177,7 @@ export class SearchSrv {
             icon: 'folder-open',
             toggle: this.toggleFolder.bind(this),
             score: _.keys(sections).length,
+            type: DashboardSearchHitType.DashHitFolder,
           };
         }
         // add section

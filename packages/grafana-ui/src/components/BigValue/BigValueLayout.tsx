@@ -115,7 +115,7 @@ export abstract class BigValueLayout {
         panelStyles.background = `linear-gradient(120deg, ${bgColor2}, ${bgColor3})`;
         break;
       case BigValueColorMode.Value:
-        panelStyles.background = `${theme.colors.panelBg}`;
+        panelStyles.background = `transparent`;
         break;
     }
 

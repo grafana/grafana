@@ -22,18 +22,18 @@ import CopyIcon from '../../common/CopyIcon';
 import { TNil } from '../../types';
 import { KeyValuePair, Link } from '../../types/trace';
 import { UIDropdown, UIIcon, UIMenu, UIMenuItem } from '../../uiElementsContext';
-import { createStyle } from '../../Theme';
+import { autoColor, createStyle, Theme, useTheme } from '../../Theme';
 import { ubInlineBlock, uWidth100 } from '../../uberUtilityStyles';
 
-export const getStyles = createStyle(() => {
+export const getStyles = createStyle((theme: Theme) => {
   const copyIcon = css`
     label: copyIcon;
   `;
   return {
     KeyValueTable: css`
       label: KeyValueTable;
-      background: #fff;
-      border: 1px solid #ddd;
+      background: ${autoColor(theme, '#fff')};
+      border: 1px solid ${autoColor(theme, '#ddd')};
       margin-bottom: 0.7em;
       max-height: 450px;
       overflow: auto;
@@ -50,7 +50,7 @@ export const getStyles = createStyle(() => {
         vertical-align: top;
       }
       &:nth-child(2n) > td {
-        background: #f5f5f5;
+        background: ${autoColor(theme, '#f5f5f5')};
       }
       &:not(:hover) .${copyIcon} {
         display: none;
@@ -58,7 +58,7 @@ export const getStyles = createStyle(() => {
     `,
     keyColumn: css`
       label: keyColumn;
-      color: #888;
+      color: ${autoColor(theme, '#888')};
       white-space: pre;
       width: 125px;
     `,
@@ -90,7 +90,7 @@ function parseIfComplexJson(value: any) {
 }
 
 export const LinkValue = (props: { href: string; title?: string; children: React.ReactNode }) => {
-  const styles = getStyles();
+  const styles = getStyles(useTheme());
   return (
     <a href={props.href} title={props.title} target="_blank" rel="noopener noreferrer">
       {props.children} <UIIcon className={styles.linkIcon} type="export" />
@@ -120,7 +120,7 @@ type KeyValuesTableProps = {
 
 export default function KeyValuesTable(props: KeyValuesTableProps) {
   const { data, linksGetter } = props;
-  const styles = getStyles();
+  const styles = getStyles(useTheme());
   return (
     <div className={cx(styles.KeyValueTable)} data-test-id="KeyValueTable">
       <table className={uWidth100}>

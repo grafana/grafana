@@ -60,6 +60,8 @@ export interface StringFieldConfigSettings {
   placeholder?: string;
   maxLength?: number;
   expandTemplateVars?: boolean;
+  useTextarea?: boolean;
+  rows?: number;
 }
 
 export const stringOverrideProcessor = (

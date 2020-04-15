@@ -1,6 +1,6 @@
 import React from 'react';
 import { css } from 'emotion';
-import { stylesFactory, useTheme, Forms, Select, Button } from '@grafana/ui';
+import { stylesFactory, useTheme, Forms, Select, Button, Switch } from '@grafana/ui';
 import { GrafanaTheme, AppEvents } from '@grafana/data';
 import appEvents from 'app/core/app_events';
 import { CoreEvents } from 'app/types';
@@ -63,7 +63,7 @@ export function RichHistorySettings(props: RichHistorySettingsProps) {
       title: 'Delete',
       text: 'Are you sure you want to permanently delete your query history?',
       yesText: 'Delete',
-      icon: 'fa-trash',
+      icon: 'trash-alt',
       onConfirm: () => {
         deleteRichHistory();
         appEvents.emit(AppEvents.alertSuccess, ['Query history deleted']);
@@ -84,13 +84,13 @@ export function RichHistorySettings(props: RichHistorySettingsProps) {
       </Forms.Field>
       <Forms.Field label="Default active tab" description=" " className="space-between">
         <div className={styles.switch}>
-          <Forms.Switch value={starredTabAsFirstTab} onChange={toggleStarredTabAsFirstTab}></Forms.Switch>
+          <Switch value={starredTabAsFirstTab} onChange={toggleStarredTabAsFirstTab}></Switch>
           <div className={styles.label}>Change the default active tab from “Query history” to “Starred”</div>
         </div>
       </Forms.Field>
       <Forms.Field label="Data source behaviour" description=" " className="space-between">
         <div className={styles.switch}>
-          <Forms.Switch value={activeDatasourceOnly} onChange={toggleactiveDatasourceOnly}></Forms.Switch>
+          <Switch value={activeDatasourceOnly} onChange={toggleactiveDatasourceOnly}></Switch>
           <div className={styles.label}>Only show queries for data source currently active in Explore</div>
         </div>
       </Forms.Field>
