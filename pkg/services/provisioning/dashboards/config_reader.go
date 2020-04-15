@@ -16,14 +16,14 @@ type configReader struct {
 	log  log.Logger
 }
 
-func (cr *configReader) parseConfigs(file os.FileInfo) ([]*DashboardsAsConfig, error) {
+func (cr *configReader) parseConfigs(file os.FileInfo) ([]*config, error) {
 	filename, _ := filepath.Abs(filepath.Join(cr.path, file.Name()))
 	yamlFile, err := ioutil.ReadFile(filename)
 	if err != nil {
 		return nil, err
 	}
 
-	apiVersion := &ConfigVersion{ApiVersion: 0}
+	apiVersion := &configVersion{ApiVersion: 0}
 
 	// We ignore the error here because it errors out for version 0 which does not have apiVersion
 	// specified (so 0 is default). This can also error in case the apiVersion is not an integer but at the moment
@@ -33,7 +33,7 @@ func (cr *configReader) parseConfigs(file os.FileInfo) ([]*DashboardsAsConfig, e
 	_ = yaml.Unmarshal(yamlFile, &apiVersion)
 
 	if apiVersion.ApiVersion > 0 {
-		v1 := &DashboardAsConfigV1{}
+		v1 := &configV1{}
 		err := yaml.Unmarshal(yamlFile, &v1)
 		if err != nil {
 			return nil, err
@@ -43,7 +43,7 @@ func (cr *configReader) parseConfigs(file os.FileInfo) ([]*DashboardsAsConfig, e
 			return v1.mapToDashboardsAsConfig()
 		}
 	} else {
-		var v0 []*DashboardsAsConfigV0
+		var v0 []*configV0
 		err := yaml.Unmarshal(yamlFile, &v0)
 		if err != nil {
 			return nil, err
@@ -55,11 +55,11 @@ func (cr *configReader) parseConfigs(file os.FileInfo) ([]*DashboardsAsConfig, e
 		}
 	}
 
-	return []*DashboardsAsConfig{}, nil
+	return []*config{}, nil
 }
 
-func (cr *configReader) readConfig() ([]*DashboardsAsConfig, error) {
-	var dashboards []*DashboardsAsConfig
+func (cr *configReader) readConfig() ([]*config, error) {
+	var dashboards []*config
 
 	files, err := ioutil.ReadDir(cr.path)
 	if err != nil {

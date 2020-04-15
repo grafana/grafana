@@ -10,7 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/provisioning/values"
 )
 
-type DashboardsAsConfig struct {
+type config struct {
 	Name                  string
 	Type                  string
 	OrgId                 int64
@@ -23,7 +23,7 @@ type DashboardsAsConfig struct {
 	AllowUiUpdates        bool
 }
 
-type DashboardsAsConfigV0 struct {
+type configV0 struct {
 	Name                  string                 `json:"name" yaml:"name"`
 	Type                  string                 `json:"type" yaml:"type"`
 	OrgId                 int64                  `json:"org_id" yaml:"org_id"`
@@ -36,15 +36,15 @@ type DashboardsAsConfigV0 struct {
 	AllowUiUpdates        bool                   `json:"allowUiUpdates" yaml:"allowUiUpdates"`
 }
 
-type ConfigVersion struct {
+type configVersion struct {
 	ApiVersion int64 `json:"apiVersion" yaml:"apiVersion"`
 }
 
-type DashboardAsConfigV1 struct {
-	Providers []*DashboardProviderConfigs `json:"providers" yaml:"providers"`
+type configV1 struct {
+	Providers []*configs `json:"providers" yaml:"providers"`
 }
 
-type DashboardProviderConfigs struct {
+type configs struct {
 	Name                  values.StringValue `json:"name" yaml:"name"`
 	Type                  values.StringValue `json:"type" yaml:"type"`
 	OrgId                 values.Int64Value  `json:"orgId" yaml:"orgId"`
@@ -57,7 +57,7 @@ type DashboardProviderConfigs struct {
 	AllowUiUpdates        values.BoolValue   `json:"allowUiUpdates" yaml:"allowUiUpdates"`
 }
 
-func createDashboardJson(data *simplejson.Json, lastModified time.Time, cfg *DashboardsAsConfig, folderId int64) (*dashboards.SaveDashboardDTO, error) {
+func createDashboardJson(data *simplejson.Json, lastModified time.Time, cfg *config, folderId int64) (*dashboards.SaveDashboardDTO, error) {
 	dash := &dashboards.SaveDashboardDTO{}
 	dash.Dashboard = models.NewDashboardFromJson(data)
 	dash.UpdatedAt = lastModified
@@ -73,8 +73,8 @@ func createDashboardJson(data *simplejson.Json, lastModified time.Time, cfg *Das
 	return dash, nil
 }
 
-func mapV0ToDashboardsAsConfig(v0 []*DashboardsAsConfigV0) ([]*DashboardsAsConfig, error) {
-	var r []*DashboardsAsConfig
+func mapV0ToDashboardsAsConfig(v0 []*configV0) ([]*config, error) {
+	var r []*config
 	seen := make(map[string]bool)
 
 	for _, v := range v0 {
@@ -83,7 +83,7 @@ func mapV0ToDashboardsAsConfig(v0 []*DashboardsAsConfigV0) ([]*DashboardsAsConfi
 		}
 		seen[v.Name] = true
 
-		r = append(r, &DashboardsAsConfig{
+		r = append(r, &config{
 			Name:                  v.Name,
 			Type:                  v.Type,
 			OrgId:                 v.OrgId,
@@ -100,8 +100,8 @@ func mapV0ToDashboardsAsConfig(v0 []*DashboardsAsConfigV0) ([]*DashboardsAsConfi
 	return r, nil
 }
 
-func (dc *DashboardAsConfigV1) mapToDashboardsAsConfig() ([]*DashboardsAsConfig, error) {
-	var r []*DashboardsAsConfig
+func (dc *configV1) mapToDashboardsAsConfig() ([]*config, error) {
+	var r []*config
 	seen := make(map[string]bool)
 
 	for _, v := range dc.Providers {
@@ -110,7 +110,7 @@ func (dc *DashboardAsConfigV1) mapToDashboardsAsConfig() ([]*DashboardsAsConfig,
 		}
 		seen[v.Name.Value()] = true
 
-		r = append(r, &DashboardsAsConfig{
+		r = append(r, &config{
 			Name:                  v.Name.Value(),
 			Type:                  v.Type.Value(),
 			OrgId:                 v.OrgId.Value(),

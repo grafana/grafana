@@ -30,7 +30,7 @@ var (
 
 func TestCreatingNewDashboardFileReader(t *testing.T) {
 	Convey("creating new dashboard file reader", t, func() {
-		cfg := &DashboardsAsConfig{
+		cfg := &config{
 			Name:    "Default",
 			Type:    "file",
 			OrgId:   1,
@@ -88,7 +88,7 @@ func TestDashboardFileReader(t *testing.T) {
 
 		Convey("Reading dashboards from disk", func() {
 
-			cfg := &DashboardsAsConfig{
+			cfg := &config{
 				Name:    "Default",
 				Type:    "file",
 				OrgId:   1,
@@ -153,7 +153,7 @@ func TestDashboardFileReader(t *testing.T) {
 			})
 
 			Convey("Invalid configuration should return error", func() {
-				cfg := &DashboardsAsConfig{
+				cfg := &config{
 					Name:   "Default",
 					Type:   "file",
 					OrgId:  1,
@@ -172,8 +172,8 @@ func TestDashboardFileReader(t *testing.T) {
 			})
 
 			Convey("Two dashboard providers should be able to provisioned the same dashboard without uid", func() {
-				cfg1 := &DashboardsAsConfig{Name: "1", Type: "file", OrgId: 1, Folder: "f1", Options: map[string]interface{}{"path": containingID}}
-				cfg2 := &DashboardsAsConfig{Name: "2", Type: "file", OrgId: 1, Folder: "f2", Options: map[string]interface{}{"path": containingID}}
+				cfg1 := &config{Name: "1", Type: "file", OrgId: 1, Folder: "f1", Options: map[string]interface{}{"path": containingID}}
+				cfg2 := &config{Name: "2", Type: "file", OrgId: 1, Folder: "f2", Options: map[string]interface{}{"path": containingID}}
 
 				reader1, err := NewDashboardFileReader(cfg1, logger)
 				So(err, ShouldBeNil)
@@ -203,7 +203,7 @@ func TestDashboardFileReader(t *testing.T) {
 		})
 
 		Convey("Should not create new folder if folder name is missing", func() {
-			cfg := &DashboardsAsConfig{
+			cfg := &config{
 				Name:   "Default",
 				Type:   "file",
 				OrgId:  1,
@@ -218,7 +218,7 @@ func TestDashboardFileReader(t *testing.T) {
 		})
 
 		Convey("can get or Create dashboard folder", func() {
-			cfg := &DashboardsAsConfig{
+			cfg := &config{
 				Name:   "Default",
 				Type:   "file",
 				OrgId:  1,
@@ -255,7 +255,7 @@ func TestDashboardFileReader(t *testing.T) {
 		})
 
 		Convey("Given missing dashboard file", func() {
-			cfg := &DashboardsAsConfig{
+			cfg := &config{
 				Name:  "Default",
 				Type:  "file",
 				OrgId: 1,

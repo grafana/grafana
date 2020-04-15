@@ -29,14 +29,14 @@ var (
 // insert/update dashboards to the Grafana database using
 // `dashboards.DashboardProvisioningService`
 type FileReader struct {
-	Cfg                          *DashboardsAsConfig
+	Cfg                          *config
 	Path                         string
 	log                          log.Logger
 	dashboardProvisioningService dashboards.DashboardProvisioningService
 }
 
-// NewDashboardFileReader returns a new filereader based on `DashboardsAsConfig`
-func NewDashboardFileReader(cfg *DashboardsAsConfig, log log.Logger) (*FileReader, error) {
+// NewDashboardFileReader returns a new filereader based on `config`
+func NewDashboardFileReader(cfg *config, log log.Logger) (*FileReader, error) {
 	var path string
 	path, ok := cfg.Options["path"].(string)
 	if !ok {
@@ -212,7 +212,7 @@ func getProvisionedDashboardByPath(service dashboards.DashboardProvisioningServi
 	return byPath, nil
 }
 
-func getOrCreateFolderID(cfg *DashboardsAsConfig, service dashboards.DashboardProvisioningService) (int64, error) {
+func getOrCreateFolderID(cfg *config, service dashboards.DashboardProvisioningService) (int64, error) {
 	if cfg.Folder == "" {
 		return 0, ErrFolderNameMissing
 	}

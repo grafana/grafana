@@ -59,7 +59,7 @@ func TestDashboardsAsConfig(t *testing.T) {
 		})
 	})
 }
-func validateDashboardAsConfig(t *testing.T, cfg []*DashboardsAsConfig) {
+func validateDashboardAsConfig(t *testing.T, cfg []*config) {
 	t.Helper()
 
 	So(len(cfg), ShouldEqual, 2)

@@ -14,7 +14,7 @@ var (
 )
 
 func TestProvsionedSymlinkedFolder(t *testing.T) {
-	cfg := &DashboardsAsConfig{
+	cfg := &config{
 		Name:    "Default",
 		Type:    "file",
 		OrgId:   1,
