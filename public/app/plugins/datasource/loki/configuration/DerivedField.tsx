@@ -33,7 +33,7 @@ type Props = {
 export const DerivedField = (props: Props) => {
   const { value, onChange, onDelete, suggestions, className } = props;
   const styles = getStyles();
-  const [hasIntenalLink, setHasInternalLink] = useState(!!value.datasourceName);
+  const [hasIntenalLink, setHasInternalLink] = useState(!!value.datasourceUid);
 
   const handleChange = (field: keyof typeof value) => (event: React.ChangeEvent<HTMLInputElement>) => {
     onChange({
@@ -81,11 +81,11 @@ export const DerivedField = (props: Props) => {
       </div>
 
       <FormField
-        label="URL"
+        label={hasIntenalLink ? 'Query' : 'URL'}
         labelWidth={5}
         inputEl={
           <DataLinkInput
-            placeholder={'http://example.com/${__value.raw}'}
+            placeholder={hasIntenalLink ? '${__value.raw}' : 'http://example.com/${__value.raw}'}
             value={value.url || ''}
             onChange={newValue =>
               onChange({
@@ -110,7 +110,7 @@ export const DerivedField = (props: Props) => {
               if (hasIntenalLink) {
                 onChange({
                   ...value,
-                  datasourceName: undefined,
+                  datasourceUid: undefined,
                 });
               }
               setHasInternalLink(!hasIntenalLink);
@@ -119,13 +119,13 @@ export const DerivedField = (props: Props) => {
 
           {hasIntenalLink && (
             <DataSourceSection
-              onChange={datasourceName => {
+              onChange={datasourceUid => {
                 onChange({
                   ...value,
-                  datasourceName,
+                  datasourceUid,
                 });
               }}
-              datasourceName={value.datasourceName}
+              datasourceUid={value.datasourceUid}
             />
           )}
         </div>
@@ -135,29 +135,25 @@ export const DerivedField = (props: Props) => {
 };
 
 type DataSourceSectionProps = {
-  datasourceName?: string;
-  onChange: (name: string) => void;
+  datasourceUid?: string;
+  onChange: (uid: string) => void;
 };
+
 const DataSourceSection = (props: DataSourceSectionProps) => {
-  const { datasourceName, onChange } = props;
+  const { datasourceUid, onChange } = props;
   const datasources: DataSourceSelectItem[] = getDatasourceSrv()
     .getExternal()
     .map(
-      (ds: any) =>
+      ds =>
         ({
-          value: ds.name,
+          value: ds.uid,
           name: ds.name,
           meta: ds.meta,
         } as DataSourceSelectItem)
     );
-  const selectedDatasource = datasourceName && datasources.find(d => d.name === datasourceName);
+
+  let selectedDatasource = datasourceUid && datasources.find(d => d.value === datasourceUid);
   return (
-    <DataSourcePicker
-      onChange={newValue => {
-        onChange(newValue.name);
-      }}
-      datasources={datasources}
-      current={selectedDatasource}
-    />
+    <DataSourcePicker onChange={ds => onChange(ds.value)} datasources={datasources} current={selectedDatasource} />
   );
 };

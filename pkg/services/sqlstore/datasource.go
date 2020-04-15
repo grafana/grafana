@@ -1,6 +1,7 @@
 package sqlstore
 
 import (
+	"github.com/grafana/grafana/pkg/util/errutil"
 	"time"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
@@ -101,6 +102,14 @@ func AddDataSource(cmd *models.AddDataSourceCommand) error {
 			cmd.JsonData = simplejson.New()
 		}
 
+		if cmd.Uid == "" {
+			uid, err := generateNewDatasourceUid(sess, cmd.OrgId)
+			if err != nil {
+				return errutil.Wrapf(err, "Failed to generate Uid for Datasource %s", cmd.Name)
+			}
+			cmd.Uid = uid
+		}
+
 		ds := &models.DataSource{
 			OrgId:             cmd.OrgId,
 			Name:              cmd.Name,
@@ -121,6 +130,7 @@ func AddDataSource(cmd *models.AddDataSourceCommand) error {
 			Updated:           time.Now(),
 			Version:           1,
 			ReadOnly:          cmd.ReadOnly,
+			Uid:               cmd.Uid,
 		}
 
 		if _, err := sess.Insert(ds); err != nil {
@@ -208,4 +218,21 @@ func UpdateDataSource(cmd *models.UpdateDataSourceCommand) error {
 		cmd.Result = ds
 		return err
 	})
+}
+
+func generateNewDatasourceUid(sess *DBSession, orgId int64) (string, error) {
+	for i := 0; i < 3; i++ {
+		uid := generateNewUid()
+
+		exists, err := sess.Where("org_id=? AND uid=?", orgId, uid).Get(&models.DataSource{})
+		if err != nil {
+			return "", err
+		}
+
+		if !exists {
+			return uid, nil
+		}
+	}
+
+	return "", models.ErrDashboardFailedGenerateUniqueUid
 }
