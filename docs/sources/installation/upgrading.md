@@ -238,3 +238,9 @@ Due to this change in Chrome, the `[security]` setting `cookie_samesite` configu
 
 This version of Chrome also rejects insecure `SameSite=None` cookies. See https://www.chromestatus.com/feature/5633521622188032 for more information. Make sure that you
 change the `[security]` setting `cookie_secure` to `true` and use HTTPS when `cookie_samesite` is configured to `none`, otherwise authentication in Grafana won't work properly.
+
+## Upgrading to v7.0
+
+### PhantomJS removed
+
+PhantomJS was deprecated in [Grafana v6.4](https://grafana.com/docs/grafana/latest/guides/whats-new-in-v6-4/#phantomjs-deprecation) and starting from Grafana v7.0.0 PhantomJS support have been removed. This means that Grafana no longer ships with a built-in image renderer and we adwise you to install the [Grafana Image Renderer plugin](https://grafana.com/grafana/plugins/grafana-image-renderer).
