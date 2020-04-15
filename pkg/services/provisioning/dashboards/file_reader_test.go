@@ -436,7 +436,7 @@ func (s *fakeDashboardProvisioningService) DeleteProvisionedDashboard(dashboardI
 	return nil
 }
 
-func (s *fakeDashboardProvisioningService) GetProvisionedDashboardDataByDashboardId(dashboardID int64) (*models.DashboardProvisioning, error) {
+func (s *fakeDashboardProvisioningService) GetProvisionedDashboardDataByDashboardID(dashboardID int64) (*models.DashboardProvisioning, error) {
 	return nil, nil
 }
 
