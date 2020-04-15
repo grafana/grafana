@@ -3,7 +3,7 @@
     "declarationDir": "dist",
     "outDir": "compiled",
     "rootDirs": ["."],
-    "typeRoots": ["node_modules/@types"]
+    "typeRoots": ["node_modules/@types", "types"]
   },
   "exclude": ["dist", "node_modules"],
   "extends": "@grafana/tsconfig",

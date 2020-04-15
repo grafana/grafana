@@ -42,7 +42,9 @@ describe('getFieldDisplayValuesProxy', () => {
 
   it('should format the time values in UTC', () => {
     // Test Proxies in general
-    const p = getFieldDisplayValuesProxy(data, 0);
+    const p = getFieldDisplayValuesProxy(data, 0, {
+      theme: {} as GrafanaTheme,
+    });
     const time = p.Time;
     expect(time.numeric).toEqual(1);
     expect(time.text).toEqual('1970-01-01 00:00:00');
@@ -53,7 +55,9 @@ describe('getFieldDisplayValuesProxy', () => {
   });
 
   it('Lookup by name, index, or title', () => {
-    const p = getFieldDisplayValuesProxy(data, 2);
+    const p = getFieldDisplayValuesProxy(data, 2, {
+      theme: {} as GrafanaTheme,
+    });
     expect(p.power.numeric).toEqual(300);
     expect(p['power'].numeric).toEqual(300);
     expect(p['The Power'].numeric).toEqual(300);
@@ -61,7 +65,9 @@ describe('getFieldDisplayValuesProxy', () => {
   });
 
   it('should return undefined when missing', () => {
-    const p = getFieldDisplayValuesProxy(data, 0);
+    const p = getFieldDisplayValuesProxy(data, 0, {
+      theme: {} as GrafanaTheme,
+    });
     expect(p.xyz).toBeUndefined();
     expect(p[100]).toBeUndefined();
   });
