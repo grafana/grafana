@@ -20,11 +20,17 @@ describe('Manage dashboards reducer', () => {
 
   it('should handle TOGGLE_ALL_CHECKED', () => {
     const newState = reducer({ ...state, results }, { type: TOGGLE_ALL_CHECKED });
-    expect(newState.results.every((result: any) => result.checked === true));
+    expect(newState.results.every((result: any) => result.checked === true)).toBe(true);
+    expect(newState.results.every((result: any) => result.items.every((item: any) => item.checked === true))).toBe(
+      true
+    );
     expect(newState.allChecked).toBe(true);
 
     const newState2 = reducer({ ...newState, results }, { type: TOGGLE_ALL_CHECKED });
-    expect(newState2.results.every((result: any) => result.checked === false));
+    expect(newState2.results.every((result: any) => result.checked === false)).toBe(true);
+    expect(newState2.results.every((result: any) => result.items.every((item: any) => item.checked === false))).toBe(
+      true
+    );
     expect(newState2.allChecked).toBe(false);
   });
 

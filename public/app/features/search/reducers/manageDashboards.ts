@@ -34,7 +34,11 @@ const reducer = (state: ManageDashboardsState, action: SearchAction) => {
       return {
         ...state,
         results: state.results.map(result => {
-          return { ...result, checked: newAllChecked };
+          return {
+            ...result,
+            checked: newAllChecked,
+            items: result.items.map(item => ({ ...item, checked: newAllChecked })),
+          };
         }),
         allChecked: newAllChecked,
       };
