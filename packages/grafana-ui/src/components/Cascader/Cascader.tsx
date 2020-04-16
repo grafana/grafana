@@ -15,6 +15,8 @@ interface CascaderProps {
   placeholder?: string;
   options: CascaderOption[];
   onSelect(val: string): void;
+  /** Sets the width to a multiple of 8px. Should only be used with inline forms. Settings width of the container is preferred in other cases.*/
+  width?: number;
   size?: FormInputSize;
   initialValue?: string;
   allowCustomValue?: boolean;
@@ -174,7 +176,7 @@ export class Cascader extends React.PureComponent<CascaderProps, CascaderState> 
   };
 
   render() {
-    const { size, allowCustomValue, placeholder } = this.props;
+    const { size, allowCustomValue, placeholder, width } = this.props;
     const { focusCascade, isSearching, searchableOptions, rcValue, activeLabel } = this.state;
 
     return (
@@ -190,6 +192,7 @@ export class Cascader extends React.PureComponent<CascaderProps, CascaderState> 
             size={size}
             onCreateOption={this.onCreateOption}
             formatCreateLabel={this.props.formatCreateLabel}
+            width={width}
           />
         ) : (
           <RCCascader
@@ -206,6 +209,7 @@ export class Cascader extends React.PureComponent<CascaderProps, CascaderState> 
           >
             <div className={disableDivFocus}>
               <Input
+                width={width}
                 size={size}
                 placeholder={placeholder}
                 onBlur={this.onBlurCascade}

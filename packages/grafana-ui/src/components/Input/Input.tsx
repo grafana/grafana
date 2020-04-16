@@ -8,6 +8,8 @@ import { useClientRect } from '../../utils/useClientRect';
 import { FormInputSize } from '../Forms/types';
 
 export interface Props extends Omit<HTMLProps<HTMLInputElement>, 'prefix' | 'size'> {
+  /** Sets the width to a multiple of 8px. Should only be used with inline forms. Settings width of the container is preferred in other cases.*/
+  width?: number;
   /** Show an invalid state around the input */
   invalid?: boolean;
   /** Show an icon as a prefix in the input */
@@ -26,9 +28,10 @@ export interface Props extends Omit<HTMLProps<HTMLInputElement>, 'prefix' | 'siz
 interface StyleDeps {
   theme: GrafanaTheme;
   invalid: boolean;
+  width?: number;
 }
 
-export const getInputStyles = stylesFactory(({ theme, invalid = false }: StyleDeps) => {
+export const getInputStyles = stylesFactory(({ theme, invalid = false, width }: StyleDeps) => {
   const { palette, colors } = theme;
   const borderRadius = theme.border.radius.sm;
   const height = theme.spacing.formInputHeight;
@@ -56,7 +59,7 @@ export const getInputStyles = stylesFactory(({ theme, invalid = false }: StyleDe
       css`
         label: input-wrapper;
         display: flex;
-        width: 100%;
+        width: ${width ? `${8 * width}px` : 'auto'};
         height: ${height};
         border-radius: ${borderRadius};
         &:hover {
@@ -213,7 +216,18 @@ export const getInputStyles = stylesFactory(({ theme, invalid = false }: StyleDe
 });
 
 export const Input = React.forwardRef<HTMLInputElement, Props>((props, ref) => {
-  const { className, addonAfter, addonBefore, prefix, suffix, invalid, loading, size = 'auto', ...restProps } = props;
+  const {
+    className,
+    addonAfter,
+    addonBefore,
+    prefix,
+    suffix,
+    invalid,
+    loading,
+    width = 0,
+    size = 'auto',
+    ...restProps
+  } = props;
   /**
    * Prefix & suffix are positioned absolutely within inputWrapper. We use client rects below to apply correct padding to the input
    * when prefix/suffix is larger than default (28px = 16px(icon) + 12px(left/right paddings)).
@@ -223,10 +237,10 @@ export const Input = React.forwardRef<HTMLInputElement, Props>((props, ref) => {
   const [suffixRect, suffixRef] = useClientRect<HTMLDivElement>();
 
   const theme = useTheme();
-  const styles = getInputStyles({ theme, invalid: !!invalid });
+  const styles = getInputStyles({ theme, invalid: !!invalid, width });
 
   return (
-    <div className={cx(styles.wrapper, inputSizes()[size], className)}>
+    <div className={cx(styles.wrapper, !(width || size === 'auto') && inputSizes()[size], className)}>
       {!!addonBefore && <div className={styles.addon}>{addonBefore}</div>}
 
       <div className={styles.inputWrapper}>

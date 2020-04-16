@@ -177,13 +177,6 @@ export function SelectBase<T>({
     value: isMulti ? selectedValue : selectedValue[0],
   };
 
-  // width property is deprecated in favor of size or className
-  let widthClass = '';
-  if (width) {
-    deprecationWarning('Select', 'width property', 'size or className');
-    widthClass = 'width-' + width;
-  }
-
   if (allowCustomValue) {
     ReactSelectComponent = Creatable;
     creatableProps.formatCreateLabel = formatCreateLabel ?? ((input: string) => `Create: ${input}`);
@@ -274,10 +267,10 @@ export function SelectBase<T>({
           }),
           container: () => ({
             position: 'relative',
-            width: inputSizesPixels(size),
+            width: width ? `${8 * width}px` : inputSizesPixels(size),
           }),
         }}
-        className={cx('select-container', widthClass)}
+        className={cx('select-container')}
         {...commonSelectProps}
         {...creatableProps}
         {...asyncSelectProps}

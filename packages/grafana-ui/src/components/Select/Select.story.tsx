@@ -3,7 +3,7 @@ import { Select, AsyncSelect, MultiSelect, AsyncMultiSelect } from './Select';
 import { withCenteredStory, withHorizontallyCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { SelectableValue } from '@grafana/data';
 import { getAvailableIcons, IconName } from '../../types';
-import { select, boolean } from '@storybook/addon-knobs';
+import { select, boolean, number } from '@storybook/addon-knobs';
 import { Icon } from '../Icon/Icon';
 import { Button } from '../Button';
 import { ButtonSelect } from './ButtonSelect';
@@ -50,6 +50,7 @@ const getKnobs = () => {
   const VISUAL_GROUP = 'Visual options';
   // ---
   const prefix = select('Prefix', prefixSuffixOpts, null, VISUAL_GROUP);
+  const width = number('Width', 0, undefined, VISUAL_GROUP);
 
   let prefixEl: any = prefix;
   if (prefix && prefix.match(/icon-/g)) {
@@ -57,6 +58,7 @@ const getKnobs = () => {
   }
 
   return {
+    width,
     disabled,
     invalid,
     loading,
@@ -67,6 +69,7 @@ const getKnobs = () => {
 const getDynamicProps = () => {
   const knobs = getKnobs();
   return {
+    width: knobs.width,
     disabled: knobs.disabled,
     isLoading: knobs.loading,
     invalid: knobs.invalid,
