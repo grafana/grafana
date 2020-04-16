@@ -46,9 +46,9 @@ export const ResponsiveButton = forwardRef<HTMLDivElement, Props>((props, ref) =
         onClick={onClick}
         disabled={disabled || false}
       >
-        {icon && iconSide === IconSide.left ? <Icon name={icon} className={iconClassName} /> : null}
+        {icon && iconSide === IconSide.left ? <Icon name={icon} className={iconClassName} size="lg" /> : null}
         <span className="btn-title">{!splitted ? formatBtnTitle(title, iconSide) : ''}</span>
-        {icon && iconSide === IconSide.right ? <Icon name={icon} className={iconClassName} /> : null}
+        {icon && iconSide === IconSide.right ? <Icon name={icon} className={iconClassName} size="lg" /> : null}
       </button>
     </div>
   );
