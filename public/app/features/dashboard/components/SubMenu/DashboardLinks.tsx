@@ -4,23 +4,10 @@ import { DashboardsDropdown } from './DashboardsDropdown';
 import { getLinkSrv } from '../../../panel/panellinks/link_srv';
 import { DashboardModel } from '../../state';
 import { sanitize, sanitizeUrl } from '../../../../core/utils/text';
+import { DashboardLink } from '../../state/DashboardModel';
 
 export interface Props {
   dashboard: DashboardModel;
-}
-
-type DashboardLinkType = 'link' | 'dashboards';
-
-export interface DashboardLink {
-  icon: string;
-  title: string;
-  tooltip: string;
-  type: DashboardLinkType;
-  url: string;
-  asDropdown: boolean;
-  tags: [];
-  searchHits?: [];
-  target: string;
 }
 
 export const DashboardLinks: FC<Props> = ({ dashboard }) => {
@@ -34,8 +21,6 @@ export const DashboardLinks: FC<Props> = ({ dashboard }) => {
           if (link.asDropdown) {
             return <DashboardsDropdown key={key} link={link} linkInfo={linkInfo} dashboardId={dashboard.id} />;
           }
-
-          console.log(link.icon);
 
           return (
             <div key={key} className="gf-form">

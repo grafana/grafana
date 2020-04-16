@@ -1,10 +1,10 @@
 import React, { PureComponent } from 'react';
-import { getBackendSrv } from '../../../../core/services/backend_srv';
-import { getLinkSrv } from '../../../panel/panellinks/link_srv';
-import { DashboardLink } from './DashboardLinks';
-import { DashboardSearchHit } from '../../../../types';
 import { Icon } from '@grafana/ui';
-import { sanitize, sanitizeUrl } from '../../../../core/utils/text';
+import { getBackendSrv } from 'app/core/services/backend_srv';
+import { sanitize, sanitizeUrl } from 'app/core/utils/text';
+import { DashboardSearchHit } from 'app/types';
+import { getLinkSrv } from '../../../panel/panellinks/link_srv';
+import { DashboardLink } from '../../state/DashboardModel';
 
 interface Props {
   link: DashboardLink;

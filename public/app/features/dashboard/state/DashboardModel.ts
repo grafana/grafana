@@ -25,6 +25,20 @@ export interface CloneOptions {
   message?: string;
 }
 
+type DashboardLinkType = 'link' | 'dashboards';
+
+export interface DashboardLink {
+  icon: string;
+  title: string;
+  tooltip: string;
+  type: DashboardLinkType;
+  url: string;
+  asDropdown: boolean;
+  tags: [];
+  searchHits?: [];
+  target: string;
+}
+
 export class DashboardModel {
   id: any;
   uid: string;
@@ -47,7 +61,7 @@ export class DashboardModel {
   schemaVersion: number;
   version: number;
   revision: number;
-  links: any;
+  links: DashboardLink[];
   gnetId: any;
   panels: PanelModel[];
   panelInEdit?: PanelModel;
