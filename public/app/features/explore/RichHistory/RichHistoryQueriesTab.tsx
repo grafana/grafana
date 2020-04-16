@@ -141,7 +141,7 @@ export function RichHistoryQueriesTab(props: Props) {
 
   const listOfDatasourceFilters = datasourceFilters?.map(d => d.value);
   const filteredQueriesByDatasource =
-    listOfDatasourceFilters?.length > 0
+    listOfDatasourceFilters && listOfDatasourceFilters?.length > 0
       ? queries?.filter(q => listOfDatasourceFilters?.includes(q.datasourceName))
       : queries;
 

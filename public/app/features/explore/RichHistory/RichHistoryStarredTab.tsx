@@ -87,7 +87,7 @@ export function RichHistoryStarredTab(props: Props) {
 
   const starredQueries = queries.filter(q => q.starred === true);
   const starredQueriesFilteredByDatasource =
-    listOfDatasourceFilters?.length > 0
+    listOfDatasourceFilters && listOfDatasourceFilters?.length > 0
       ? starredQueries?.filter(q => listOfDatasourceFilters?.includes(q.datasourceName))
       : starredQueries;
 
