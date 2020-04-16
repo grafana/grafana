@@ -1,21 +1,25 @@
-import React, { CSSProperties, FC, ReactNode } from 'react';
+import React, { CSSProperties, FC, ReactNode, useState } from 'react';
 import { GrafanaTheme } from '@grafana/data';
 import RcDrawer from 'rc-drawer';
 import { css } from 'emotion';
 import CustomScrollbar from '../CustomScrollbar/CustomScrollbar';
-import { Icon } from '../Icon/Icon';
+import { IconButton } from '../IconButton/IconButton';
 import { stylesFactory, useTheme } from '../../themes';
 
 export interface Props {
   children: ReactNode;
   /** Title shown at the top of the drawer */
   title?: JSX.Element | string;
+  /** Subtitle shown below the title */
+  subtitle?: JSX.Element | string;
   /** Should the Drawer be closable by clicking on the mask */
   closeOnMaskClick?: boolean;
   /** Render the drawer inside a container on the page */
   inline?: boolean;
   /** Either a number in px or a string with unit postfix */
   width?: number | string;
+  /** Should the Drawer be expandable to full width */
+  expandable?: boolean;
 
   /** Set to true if the component rendered within in drawer content has its own scroll */
   scrollableContent?: boolean;
@@ -24,9 +28,6 @@ export interface Props {
 }
 
 const getStyles = stylesFactory((theme: GrafanaTheme, scollableContent: boolean) => {
-  const closeButtonWidth = '50px';
-  const borderColor = theme.colors.border2;
-
   return {
     drawer: css`
       .drawer-content {
@@ -36,25 +37,22 @@ const getStyles = stylesFactory((theme: GrafanaTheme, scollableContent: boolean)
         overflow: hidden;
       }
     `,
-    titleWrapper: css`
-      font-size: ${theme.typography.size.lg};
+    header: css`
+      background-color: ${theme.colors.bg2};
+      z-index: 1;
+      flex-grow: 0;
+      padding-top: ${theme.spacing.sm};
+    `,
+    actions: css`
+      position: absolute;
       display: flex;
       align-items: baseline;
       justify-content: space-between;
-      border-bottom: 1px solid ${borderColor};
-      padding: ${theme.spacing.sm} 0 ${theme.spacing.sm} ${theme.spacing.md};
-      background-color: ${theme.colors.bodyBg};
-      top: 0;
-      z-index: 1;
-      flex-grow: 0;
+      right: ${theme.spacing.sm};
     `,
-    close: css`
-      cursor: pointer;
-      width: ${closeButtonWidth};
-      height: 100%;
-      display: flex;
-      flex-shrink: 0;
-      justify-content: center;
+    titleWrapper: css`
+      margin-bottom: ${theme.spacing.lg};
+      padding: ${theme.spacing.sm} ${theme.spacing.sm} 0 ${theme.spacing.lg};
     `,
     content: css`
       padding: ${theme.spacing.md};
@@ -72,10 +70,13 @@ export const Drawer: FC<Props> = ({
   closeOnMaskClick = false,
   scrollableContent = false,
   title,
+  subtitle,
   width = '40%',
+  expandable = false,
 }) => {
   const theme = useTheme();
   const drawerStyles = getStyles(theme, scrollableContent);
+  const [currentWidth, setCurrentWidth] = useState(width);
 
   return (
     <RcDrawer
@@ -85,16 +86,28 @@ export const Drawer: FC<Props> = ({
       onClose={onClose}
       maskClosable={closeOnMaskClick}
       placement="right"
-      width={width}
+      width={currentWidth}
       getContainer={inline ? false : 'body'}
       style={{ position: `${inline && 'absolute'}` } as CSSProperties}
       className={drawerStyles.drawer}
     >
       {typeof title === 'string' && (
-        <div className={drawerStyles.titleWrapper}>
-          <div>{title}</div>
-          <div className={drawerStyles.close} onClick={onClose}>
-            <Icon name="times" />
+        <div className={drawerStyles.header}>
+          <div className={drawerStyles.actions}>
+            {expandable && (
+              <IconButton
+                name={currentWidth === '100%' ? 'angle-right' : 'angle-left'}
+                size="xl"
+                onClick={() => setCurrentWidth(prevWidth => (prevWidth === '100%' ? width : '100%'))}
+                surface="header"
+              />
+            )}
+            <IconButton name="times" size="xl" onClick={onClose} surface="header" />
+          </div>
+          <div className={drawerStyles.titleWrapper}>
+            <h3>{title}</h3>
+            {typeof subtitle === 'string' && <div className="muted">{subtitle}</div>}
+            {typeof subtitle !== 'string' && subtitle}
           </div>
         </div>
       )}
