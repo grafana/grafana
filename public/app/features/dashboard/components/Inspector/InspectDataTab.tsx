@@ -146,18 +146,17 @@ export class InspectDataTab extends PureComponent<Props, State> {
 }
 
 function buildTransformationOptions() {
-  const seriesToColumns = standardTransformers.seriesToColumnsTransformer;
-  const transformations: Array<SelectableValue<DataTransformerID>> = [
+  const transformations: Array<SelectableValue<string>> = [
     {
-      value: DataTransformerID.noop,
+      value: 'Do nothing',
       label: 'None',
       transformer: {
         id: DataTransformerID.noop,
       },
     },
     {
-      value: DataTransformerID.seriesToColumns,
-      label: seriesToColumns.name,
+      value: 'join by time',
+      label: 'Join by time',
       transformer: {
         id: DataTransformerID.seriesToColumns,
         options: { byField: 'Time' },
