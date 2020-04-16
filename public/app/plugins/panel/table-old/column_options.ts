@@ -157,12 +157,12 @@ export class ColumnOptionsCtrl {
   }
 }
 
-export function columnOptionsTab(uiSegmentSrv: any) {
+export function columnOptionsTab() {
   'use strict';
   return {
     restrict: 'E',
     scope: true,
-    templateUrl: 'public/app/plugins/panel/table/column_options.html',
+    templateUrl: 'public/app/plugins/panel/table-old/column_options.html',
     controller: ColumnOptionsCtrl,
   };
 }

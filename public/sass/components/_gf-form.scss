@@ -147,10 +147,6 @@ $input-border: 1px solid $input-border-color;
       background: $list-item-hover-bg;
       color: $link-color;
     }
-
-    .fa-caret-down {
-      padding-left: 4px;
-    }
   }
 
   &:disabled {
@@ -198,7 +194,8 @@ $input-border: 1px solid $input-border-color;
   @at-root textarea#{&} {
     overflow: auto;
     white-space: pre-wrap;
-    height: auto;
+    padding: 6px $space-sm;
+    min-height: $input-height;
   }
 
   // Unstyle the caret on `<select>`s in IE10+.
@@ -390,7 +387,7 @@ $input-border: 1px solid $input-border-color;
   &--right-absolute {
     position: absolute;
     right: $spacer;
-    top: 10px;
+    top: 6px;
   }
 
   &--right-normal {

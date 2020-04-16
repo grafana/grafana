@@ -108,7 +108,7 @@ The following example describes how to build and run the remote HTTP rendering s
 
 ## PhantomJS
 
-> PhantomJS is deprecated since Grafana v6.4 and will be removed in a future release. Please migrate to the Grafana Image Renderer plugin or remote rendering service.
+> Starting from Grafana v7.0.0, all PhantomJS support has been removed. Please use the Grafana Image Renderer plugin or remote rendering service.
 
 ## Troubleshoot image rendering
 

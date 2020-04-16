@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import {
   KeyValuePair,
   Link,
@@ -50,27 +50,36 @@ export function TraceView(props: Props) {
    */
   const [slim, setSlim] = useState(false);
 
-  const traceProp = transformTraceData(props.trace);
+  const traceProp = useMemo(() => transformTraceData(props.trace), [props.trace]);
   const { search, setSearch, spanFindMatches } = useSearch(traceProp?.spans);
+
   const theme = useTheme();
+  const traceTheme = useMemo(() => ({ type: theme.isDark ? ThemeType.Dark : ThemeType.Light }), [theme]);
+  const traceTimeline: TTraceTimeline = useMemo(
+    () => ({
+      childrenHiddenIDs,
+      detailStates,
+      hoverIndentGuideIds,
+      shouldScrollToFirstUiFindMatch: false,
+      spanNameColumnWidth,
+      traceID: traceProp.traceID,
+    }),
+    [childrenHiddenIDs, detailStates, hoverIndentGuideIds, spanNameColumnWidth, traceProp.traceID]
+  );
 
   return (
-    <ThemeProvider
-      value={{
-        type: theme.isDark ? ThemeType.Dark : ThemeType.Light,
-      }}
-    >
+    <ThemeProvider value={traceTheme}>
       <UIElementsContext.Provider value={UIElements}>
         <TracePageHeader
           canCollapse={true}
-          clearSearch={() => {}}
-          focusUiFindMatches={() => {}}
+          clearSearch={useCallback(() => {}, [])}
+          focusUiFindMatches={useCallback(() => {}, [])}
           hideMap={false}
           hideSummary={false}
-          nextResult={() => {}}
-          onSlimViewClicked={() => setSlim(!slim)}
-          onTraceGraphViewClicked={() => {}}
-          prevResult={() => {}}
+          nextResult={useCallback(() => {}, [])}
+          onSlimViewClicked={useCallback(() => setSlim(!slim), [])}
+          onTraceGraphViewClicked={useCallback(() => {}, [])}
+          prevResult={useCallback(() => {}, [])}
           resultCount={0}
           slimView={slim}
           textFilter={null}
@@ -84,32 +93,23 @@ export function TraceView(props: Props) {
           hideSearchButtons={true}
         />
         <TraceTimelineViewer
-          registerAccessors={() => {}}
-          scrollToFirstVisibleSpan={() => {}}
+          registerAccessors={useCallback(() => {}, [])}
+          scrollToFirstVisibleSpan={useCallback(() => {}, [])}
           findMatchesIDs={spanFindMatches}
           trace={traceProp}
-          traceTimeline={
-            {
-              childrenHiddenIDs,
-              detailStates,
-              hoverIndentGuideIds,
-              shouldScrollToFirstUiFindMatch: false,
-              spanNameColumnWidth,
-              traceID: '50b96206cf81dd64',
-            } as TTraceTimeline
-          }
+          traceTimeline={traceTimeline}
           updateNextViewRangeTime={updateNextViewRangeTime}
           updateViewRangeTime={updateViewRangeTime}
           viewRange={viewRange}
-          focusSpan={() => {}}
-          createLinkToExternalSpan={() => ''}
+          focusSpan={useCallback(() => {}, [])}
+          createLinkToExternalSpan={useCallback(() => '', [])}
           setSpanNameColumnWidth={setSpanNameColumnWidth}
           collapseAll={collapseAll}
           collapseOne={collapseOne}
           expandAll={expandAll}
           expandOne={expandOne}
           childrenToggle={childrenToggle}
-          clearShouldScrollToFirstUiFindMatch={() => {}}
+          clearShouldScrollToFirstUiFindMatch={useCallback(() => {}, [])}
           detailLogItemToggle={detailLogItemToggle}
           detailLogsToggle={detailLogsToggle}
           detailWarningsToggle={detailWarningsToggle}
@@ -117,10 +117,10 @@ export function TraceView(props: Props) {
           detailProcessToggle={detailProcessToggle}
           detailTagsToggle={detailTagsToggle}
           detailToggle={toggleDetail}
-          setTrace={(trace: Trace | null, uiFind: string | null) => {}}
+          setTrace={useCallback((trace: Trace | null, uiFind: string | null) => {}, [])}
           addHoverIndentGuideId={addHoverIndentGuideId}
           removeHoverIndentGuideId={removeHoverIndentGuideId}
-          linksGetter={(span: Span, items: KeyValuePair[], itemIndex: number) => [] as Link[]}
+          linksGetter={useCallback((span: Span, items: KeyValuePair[], itemIndex: number) => [] as Link[], [])}
           uiFind={search}
         />
       </UIElementsContext.Provider>

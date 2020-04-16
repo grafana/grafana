@@ -3,7 +3,7 @@ import { Slider } from './Slider';
 import { select, number, boolean } from '@storybook/addon-knobs';
 
 export default {
-  title: 'General/Slider',
+  title: 'Forms/Slider',
   component: Slider,
 };
 

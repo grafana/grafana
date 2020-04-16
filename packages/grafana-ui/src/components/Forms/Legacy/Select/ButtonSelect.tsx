@@ -23,7 +23,7 @@ const ButtonComponent = (buttonProps: ButtonComponentProps) => (props: any) => {
       tabIndex={0} // necessary to get onBlur to work https://developer.mozilla.org/en-US/docs/Web/HTML/Element/button#Clicking_and_focus
     >
       <div className="select-button">
-        {iconClass && <Icon className={'select-button-icon'} name={iconClass as IconName} />}
+        {iconClass && <Icon className={'select-button-icon'} name={iconClass as IconName} size="lg" />}
         <span className="select-button-value">{label ? label : ''}</span>
         {!props.menuIsOpen && <Icon name="angle-down" style={{ marginBottom: 0 }} size="lg" />}
         {props.menuIsOpen && <Icon name="angle-up" style={{ marginBottom: 0 }} size="lg" />}
