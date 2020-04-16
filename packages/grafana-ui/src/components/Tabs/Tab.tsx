@@ -4,7 +4,7 @@ import { GrafanaTheme } from '@grafana/data';
 import { Icon } from '../Icon/Icon';
 import { IconName } from '../../types';
 import { stylesFactory, useTheme } from '../../themes';
-import { Counter } from '../Counter/Counter';
+import { Counter } from './Counter';
 
 export interface TabProps {
   label: string;
