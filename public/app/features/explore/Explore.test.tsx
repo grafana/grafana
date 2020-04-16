@@ -119,6 +119,7 @@ const dummyProps: ExploreProps = {
   originPanelId: 1,
   addQueryRow: jest.fn(),
   theme: getTheme(),
+  runAppendQueries: jest.fn(),
 };
 
 const setupErrors = (hasRefId?: boolean) => {
