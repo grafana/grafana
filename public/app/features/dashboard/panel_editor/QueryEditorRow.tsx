@@ -334,7 +334,14 @@ export function filterPanelDataToQuery(data: PanelData, refId: string): PanelDat
   const series = data.series.filter(series => series.refId === refId);
 
   // No matching series
-  if (!series.length) {
+  if (!series?.length) {
+    // If there was an error with no data, pass it to the QueryEditors
+    if (data.error) {
+      return {
+        ...data,
+        state: LoadingState.Error,
+      };
+    }
     return undefined;
   }
 
