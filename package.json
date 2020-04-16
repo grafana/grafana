@@ -89,6 +89,7 @@
     "@types/lodash": "4.14.149",
     "@types/lru-cache": "^5.1.0",
     "@types/marked": "0.6.5",
+    "@types/moment-timezone": "0.5.13",
     "@types/mousetrap": "1.6.3",
     "@types/node": "13.7.0",
     "@types/papaparse": "4.5.9",

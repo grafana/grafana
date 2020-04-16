@@ -10,7 +10,15 @@ import sortByKeys from 'app/core/utils/sort_by_keys';
 // Types
 import { GridPos, panelAdded, PanelModel, panelRemoved } from './PanelModel';
 import { DashboardMigrator } from './DashboardMigrator';
-import { AppEvent, dateTime, DateTimeInput, isDateTime, PanelEvents, TimeRange, TimeZone, toUtc } from '@grafana/data';
+import {
+  AppEvent,
+  DateTimeInput,
+  PanelEvents,
+  TimeRange,
+  TimeZone,
+  getDateTimeFormatter,
+  DateTimeFormatter,
+} from '@grafana/data';
 import { UrlQueryValue } from '@grafana/runtime';
 import { CoreEvents, DashboardMeta, KIOSK_MODE_TV } from 'app/types';
 import { getConfig } from '../../../core/config';
@@ -52,6 +60,7 @@ export class DashboardModel {
   panels: PanelModel[];
   panelInEdit?: PanelModel;
   panelInView: PanelModel;
+  dateTimeFormatter: DateTimeFormatter;
 
   // ------------------
   // not persisted
@@ -89,6 +98,7 @@ export class DashboardModel {
     this.tags = data.tags || [];
     this.style = data.style || 'dark';
     this.timezone = data.timezone || '';
+    this.dateTimeFormatter = getDateTimeFormatter(this.getTimezone);
     this.editable = data.editable !== false;
     this.graphTooltip = data.graphTooltip || 0;
     this.time = data.time || { from: 'now-6h', to: 'now' };
@@ -787,11 +797,7 @@ export class DashboardModel {
   }
 
   formatDate(date: DateTimeInput, format?: string) {
-    date = isDateTime(date) ? date : dateTime(date);
-    format = format || 'YYYY-MM-DD HH:mm:ss';
-    const timezone = this.getTimezone();
-
-    return timezone === 'browser' ? dateTime(date).format(format) : toUtc(date).format(format);
+    return this.dateTimeFormatter.format(date, format);
   }
 
   destroy() {
@@ -906,13 +912,7 @@ export class DashboardModel {
   }
 
   getRelativeTime(date: DateTimeInput) {
-    date = isDateTime(date) ? date : dateTime(date);
-
-    return this.timezone === 'browser' ? dateTime(date).fromNow() : toUtc(date).fromNow();
-  }
-
-  isTimezoneUtc() {
-    return this.getTimezone() === 'utc';
+    return this.dateTimeFormatter.timeAgo(date);
   }
 
   isSnapshot() {
