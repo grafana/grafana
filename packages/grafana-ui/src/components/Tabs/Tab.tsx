@@ -38,10 +38,6 @@ const getTabStyles = stylesFactory((theme: GrafanaTheme) => {
       &:focus {
         color: ${colors.linkHover};
       }
-
-      .counter {
-        margin-left: ${theme.spacing.sm};
-      }
     `,
     activeStyle: css`
       border-color: ${theme.palette.orange} ${colors.pageHeaderBorder} transparent;

@@ -1,5 +1,5 @@
 import React, { FC, useContext } from 'react';
-import { css, cx } from 'emotion';
+import { css } from 'emotion';
 import { stylesFactory, ThemeContext } from '../../themes';
 import { GrafanaTheme, locale } from '@grafana/data';
 
@@ -7,6 +7,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
   return {
     counter: css`
       label: counter;
+      margin-left: ${theme.spacing.sm};
       border-radius: ${theme.spacing.lg};
       background-color: ${theme.colors.bg2};
       padding: ${theme.spacing.xxs} ${theme.spacing.sm};
@@ -25,5 +26,5 @@ export const Counter: FC<CounterProps> = ({ value }) => {
   const theme = useContext(ThemeContext);
   const styles = getStyles(theme);
 
-  return <span className={cx([styles.counter, 'counter'])}>{locale(value, 0).text}</span>;
+  return <span className={styles.counter}>{locale(value, 0).text}</span>;
 };
