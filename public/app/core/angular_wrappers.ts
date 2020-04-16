@@ -33,10 +33,16 @@ import {
 } from '../features/dashboard/components/SaveDashboard/SaveDashboardButton';
 import { VariableEditorContainer } from '../features/variables/editor/VariableEditorContainer';
 import { SearchField, SearchResults, SearchWrapper, SearchResultsFilter } from '../features/search';
+import { FilterInput } from './components/FilterInput/FilterInput';
 
 export function registerAngularDirectives() {
-  react2AngularDirective('reactButton', Button, ['onClick', 'variant']);
-  react2AngularDirective('linkButton', LinkButton, ['onClick', 'variant', 'href']);
+  react2AngularDirective('filterInput', FilterInput, [
+    'placeholder',
+    'value',
+    ['onChange', { watchDepth: 'reference', wrapApply: true }],
+  ]);
+  react2AngularDirective('reactButton', Button, ['onClick', 'variant', 'children']);
+  react2AngularDirective('linkButton', LinkButton, ['onClick', 'variant', 'href', 'children']);
   react2AngularDirective('reactInput', Input, ['onChange']);
   react2AngularDirective('footer', Footer, []);
   react2AngularDirective('icon', Icon, [

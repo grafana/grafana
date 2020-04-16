@@ -3,38 +3,28 @@
     class="page-action-bar page-action-bar--narrow"
     ng-hide="ctrl.folderId && !ctrl.hasFilters && ctrl.sections.length === 0"
   >
-    <label class="gf-form gf-form--grow gf-form--has-input-icon">
-      <input
+
+      <filter-input
         type="text"
-        class="gf-form-input max-width-30"
-        placeholder="Search dashboards by name"
-        tabindex="1"
-        give-focus="true"
-        ng-model="ctrl.query.query"
+        placeholder="'Search dashboards by name'"
+        value="ctrl.query.query"
         ng-model-options="{ debounce: 500 }"
-        spellcheck="false"
-        ng-change="ctrl.onQueryChange()"
+        on-change="ctrl.onQueryChange"
       />
-      <icon class="gf-form-input-icon" name="'search'"></icon>
-    </label>
+
     <div class="page-action-bar__spacer"></div>
     <link-button
       variant="primary"
-      ng-href="{{ctrl.createDashboardUrl()}}"
+      href="ctrl.newDashboardUrl"
       ng-if="ctrl.hasEditPermissionInFolders || ctrl.canSave"
-    >
-      New Dashboard
-    </link-button>
-    <a class="btn btn-primary" href="dashboards/folder/new" ng-if="!ctrl.folderId && ctrl.isEditor">
-      New Folder
-    </a>
-    <a
-      class="btn btn-primary"
-      href="{{ctrl.importDashboardUrl()}}"
+      children="'New Dashboard'"
+    />
+    <link-button href="'dashboards/folder/new'" ng-if="!ctrl.folderId && ctrl.isEditor" children="'New Folder'">
+    <link-button
+      href="ctrl.importDashboardUrl"
       ng-if="ctrl.hasEditPermissionInFolders || ctrl.canSave"
-    >
-      Import
-    </a>
+      children="'Import'"
+    />
   </div>
 
   <div class="page-action-bar page-action-bar--narrow" ng-show="ctrl.hasFilters">

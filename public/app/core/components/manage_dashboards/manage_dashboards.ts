@@ -70,6 +70,9 @@ export class ManageDashboardsCtrl {
 
   hasEditPermissionInFolders: boolean;
 
+  newDashboardUrl: string;
+  importDashboardUrl: string;
+
   /** @ngInject */
   constructor(private $scope: IScope, private searchSrv: SearchSrv, private contextSrv: ContextSrv) {
     this.isEditor = this.contextSrv.isEditor;
@@ -92,6 +95,9 @@ export class ManageDashboardsCtrl {
     this.refreshList().then(() => {
       this.initTagFilter();
     });
+
+    this.newDashboardUrl = this.createDashboardUrl();
+    this.importDashboardUrl = this.createImportDashboardUrl();
   }
 
   refreshList() {
@@ -263,9 +269,10 @@ export class ManageDashboardsCtrl {
     return this.refreshList();
   };
 
-  onQueryChange() {
+  onQueryChange = (val: string) => {
+    this.query.query = val;
     return this.refreshList();
-  }
+  };
 
   onTagFilterChange = (filter: SelectableValue) => {
     const res = this.filterByTag(filter.value);
@@ -328,7 +335,7 @@ export class ManageDashboardsCtrl {
     return url;
   }
 
-  importDashboardUrl() {
+  createImportDashboardUrl() {
     let url = 'dashboard/import';
 
     if (this.folderId) {
