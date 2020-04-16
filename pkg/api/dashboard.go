@@ -366,7 +366,7 @@ func addGettingStartedPanelToHomeDashboard(dash *simplejson.Json) {
 			"x": 0,
 			"y": 3,
 			"w": 24,
-			"h": 4,
+			"h": 12,
 		},
 	})
 
