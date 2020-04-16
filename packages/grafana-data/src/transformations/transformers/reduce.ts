@@ -1,12 +1,14 @@
 import { DataTransformerID } from './ids';
-import { MatcherConfig, DataTransformerInfo } from '../../types/transformations';
-import { ReducerID, fieldReducers, reduceField } from '../fieldReducer';
+import { DataTransformerInfo, MatcherConfig } from '../../types/transformations';
+import { fieldReducers, reduceField, ReducerID } from '../fieldReducer';
 import { alwaysFieldMatcher } from '../matchers/predicates';
 import { DataFrame, Field, FieldType } from '../../types/dataFrame';
 import { ArrayVector } from '../../vector/ArrayVector';
 import { KeyValue } from '../../types/data';
 import { guessFieldTypeForField } from '../../dataframe/processDataFrame';
 import { getFieldMatcher } from '../matchers';
+import { FieldMatcherID } from '../matchers/ids';
+import { filterFieldsTransformer } from './filter';
 
 export interface ReduceTransformerOptions {
   reducers: ReducerID[];
@@ -32,7 +34,8 @@ export const reduceTransformer: DataTransformerInfo<ReduceTransformerOptions> = 
 
     return (data: DataFrame[]) => {
       const processed: DataFrame[] = [];
-      for (const series of data) {
+      for (let seriesIndex = 0; seriesIndex < data.length; seriesIndex++) {
+        const series = data[seriesIndex];
         const values: ArrayVector[] = [];
         const fields: Field[] = [];
         const byId: KeyValue<ArrayVector> = {};
@@ -59,13 +62,20 @@ export const reduceTransformer: DataTransformerInfo<ReduceTransformerOptions> = 
         }
         for (let i = 0; i < series.fields.length; i++) {
           const field = series.fields[i];
+          if (field.type === FieldType.time) {
+            continue;
+          }
+
           if (matcher(field)) {
             const results = reduceField({
               field,
               reducers,
             });
             // Update the name list
-            values[0].buffer.push(field.name);
+            const seriesName = series.name ?? series.refId ?? seriesIndex;
+            const fieldName =
+              field.name === seriesName || data.length === 1 ? field.name : `${field.name} {${seriesName}}`;
+            values[0].buffer.push(fieldName);
             for (const info of calculators) {
               const v = results[info.id];
               byId[info.id].buffer.push(v);
@@ -84,7 +94,32 @@ export const reduceTransformer: DataTransformerInfo<ReduceTransformerOptions> = 
           length: values[0].length,
         });
       }
-      return processed;
+
+      const withoutTime = filterFieldsTransformer.transformer({ exclude: { id: FieldMatcherID.time } })(processed);
+      return mergeResults(withoutTime);
     };
   },
+};
+
+const mergeResults = (data: DataFrame[]) => {
+  if (data.length <= 1) {
+    return data;
+  }
+
+  const baseFrame = data[0];
+  for (let seriesIndex = 1; seriesIndex < data.length; seriesIndex++) {
+    const series = data[seriesIndex];
+    for (const baseField of baseFrame.fields) {
+      for (const field of series.fields) {
+        if (baseField.type !== field.type || baseField.name !== field.name) {
+          continue;
+        }
+        const baseValues: any[] = ((baseField.values as unknown) as ArrayVector).buffer;
+        const values: any[] = ((field.values as unknown) as ArrayVector).buffer;
+        ((baseField.values as unknown) as ArrayVector).buffer = baseValues.concat(values);
+      }
+    }
+  }
+
+  return data;
 };
