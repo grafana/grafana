@@ -75,7 +75,7 @@ export const MappingRow: React.FC<Props> = ({ valueMapping, updateValueMapping, 
   const label = (
     <HorizontalGroup justify="space-between" align="center">
       <Label>Mapping type</Label>
-      <IconButton name="times" onClick={removeValueMapping} />
+      <IconButton name="times" onClick={removeValueMapping} aria-label="ValueMappingsEditor remove button" />
     </HorizontalGroup>
   );
   return (
