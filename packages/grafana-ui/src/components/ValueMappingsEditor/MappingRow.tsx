@@ -1,12 +1,9 @@
 import React, { ChangeEvent } from 'react';
 import { HorizontalGroup } from '../Layout/Layout';
-import { Select } from '../index';
+import { FullWidthButtonContainer, IconButton, Label, RadioButtonGroup } from '../index';
 import { Field } from '../Forms/Field';
 import { Input } from '../Input/Input';
-import { MappingType, RangeMap, ValueMap, ValueMapping } from '@grafana/data';
-import * as styleMixins from '../../themes/mixins';
-import { useTheme } from '../../themes';
-import { FieldConfigItemHeaderTitle } from '../FieldConfigs/FieldConfigItemHeaderTitle';
+import { MappingType, RangeMap, SelectableValue, ValueMap, ValueMapping } from '@grafana/data';
 
 export interface Props {
   valueMapping: ValueMapping;
@@ -14,13 +11,12 @@ export interface Props {
   removeValueMapping: () => void;
 }
 
-const MAPPING_OPTIONS = [
+const MAPPING_OPTIONS: Array<SelectableValue<MappingType>> = [
   { value: MappingType.ValueToText, label: 'Value' },
   { value: MappingType.RangeToText, label: 'Range' },
 ];
 
 export const MappingRow: React.FC<Props> = ({ valueMapping, updateValueMapping, removeValueMapping }) => {
-  const theme = useTheme();
   const { type } = valueMapping;
 
   const onMappingValueChange = (event: ChangeEvent<HTMLInputElement>) => {
@@ -76,22 +72,26 @@ export const MappingRow: React.FC<Props> = ({ valueMapping, updateValueMapping, 
     );
   };
 
-  const styles = styleMixins.panelEditorNestedListStyles(theme);
-
+  const label = (
+    <HorizontalGroup justify="space-between" align="center">
+      <Label>Mapping type</Label>
+      <IconButton name="times" onClick={removeValueMapping} />
+    </HorizontalGroup>
+  );
   return (
-    <div className={styles.wrapper}>
-      <FieldConfigItemHeaderTitle title="Mapping type" onRemove={removeValueMapping}>
-        <div className={styles.itemContent}>
-          <Select
-            placeholder="Choose type"
-            isSearchable={false}
+    <div>
+      <Field label={label}>
+        <FullWidthButtonContainer>
+          <RadioButtonGroup
             options={MAPPING_OPTIONS}
-            value={MAPPING_OPTIONS.find(o => o.value === type)}
-            onChange={type => onMappingTypeChange(type.value!)}
+            value={type}
+            onChange={type => {
+              onMappingTypeChange(type!);
+            }}
           />
-        </div>
-      </FieldConfigItemHeaderTitle>
-      <div className={styles.content}>{renderRow()}</div>
+        </FullWidthButtonContainer>
+      </Field>
+      {renderRow()}
     </div>
   );
 };

@@ -6,14 +6,15 @@ import { Icon } from '../Icon/Icon';
 import tinycolor from 'tinycolor2';
 
 export interface LabelProps extends React.LabelHTMLAttributes<HTMLLabelElement> {
-  children: string;
-  description?: string;
+  children: React.ReactNode;
+  description?: React.ReactNode;
   category?: string[];
 }
 
 export const getLabelStyles = stylesFactory((theme: GrafanaTheme) => {
   return {
     label: css`
+      label: Label;
       font-size: ${theme.typography.size.sm};
       font-weight: ${theme.typography.weight.semibold};
       line-height: 1.25;
@@ -22,7 +23,12 @@ export const getLabelStyles = stylesFactory((theme: GrafanaTheme) => {
       color: ${theme.colors.formLabel};
       max-width: 480px;
     `,
+    labelContent: css`
+      display: flex;
+      align-items: center;
+    `,
     description: css`
+      label: Label-description;
       color: ${theme.colors.formDescription};
       font-size: ${theme.typography.size.sm};
       font-weight: ${theme.typography.weight.regular};
@@ -30,6 +36,7 @@ export const getLabelStyles = stylesFactory((theme: GrafanaTheme) => {
       display: block;
     `,
     categories: css`
+      label: Label-categories;
       color: ${theme.isLight
         ? tinycolor(theme.colors.formLabel)
             .lighten(10)
@@ -61,8 +68,10 @@ export const Label: React.FC<LabelProps> = ({ children, description, className, 
   return (
     <div className={cx(styles.label, className)}>
       <label {...labelProps}>
-        {categories}
-        {children}
+        <div className={styles.labelContent}>
+          {categories}
+          {children}
+        </div>
         {description && <span className={styles.description}>{description}</span>}
       </label>
     </div>
