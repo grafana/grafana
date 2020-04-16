@@ -4,6 +4,7 @@ import { Table, Select } from '@grafana/ui';
 import { Field, FieldMatcherID, PanelProps, DataFrame, SelectableValue } from '@grafana/data';
 import { Options } from './types';
 import { css } from 'emotion';
+import { config } from 'app/core/config';
 
 interface Props extends PanelProps<Options> {}
 
@@ -57,10 +58,14 @@ export class TablePanel extends Component<Props> {
     } = this.props;
 
     const count = data.series?.length;
+
     if (!count || count < 1) {
-      return <div>No Table Data...</div>;
+      return <div>No data</div>;
     }
+
     if (count > 1) {
+      const inputHeight = config.theme.spacing.formInputHeight;
+      const padding = 8;
       const index = frameIndex > 0 && frameIndex < count ? frameIndex : 0;
       const names = data.series.map((frame, index) => {
         return {
@@ -68,15 +73,15 @@ export class TablePanel extends Component<Props> {
           value: index,
         };
       });
+
       return (
-        <div className={tableStyles.wrapper} style={{ height }}>
+        <div className={tableStyles.wrapper}>
+          {this.renderTable(data.series[index], width, height - inputHeight - padding)}
           <Select options={names} value={names[index]} onChange={this.onChangeTableSelection} />
-          <div className={tableStyles.table}>
-            <div style={{ width, height: height - 32 - 5 }}>{this.renderTable(data.series[index], width, height)}</div>;
-          </div>
         </div>
       );
     }
+
     return this.renderTable(data.series[0], width, height);
   }
 }
@@ -85,9 +90,7 @@ const tableStyles = {
   wrapper: css`
     display: flex;
     flex-direction: column;
-  `,
-  table: css`
-    display: flex;
-    flex: 1;
+    justify-content: space-between;
+    height: 100%;
   `,
 };
