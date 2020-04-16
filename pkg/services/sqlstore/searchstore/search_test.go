@@ -16,7 +16,7 @@ import (
 	"time"
 )
 
-var dialect = &migrator.Sqlite3{}
+var dialect migrator.Dialect
 
 const (
 	limit int64 = 15
@@ -166,8 +166,9 @@ func TestBuilder_Permissions(t *testing.T) {
 
 func setupTestEnvironment(t *testing.T) *sqlstore.SqlStore {
 	t.Helper()
-
-	return sqlstore.InitTestDB(t)
+	store := sqlstore.InitTestDB(t)
+	dialect = store.Dialect
+	return store
 }
 
 func createDashboards(startID, endID int, orgID int64) error {
