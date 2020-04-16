@@ -79,7 +79,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       text-align: right;
     `,
     yAxisLabel: css`
-      color: ${theme.colors.gray2};
+      color: ${theme.palette.gray2};
     `,
   };
 });

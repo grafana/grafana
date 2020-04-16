@@ -1,7 +1,7 @@
 import React, { PureComponent } from 'react';
 import classNames from 'classnames';
 import { TimeSeries } from 'app/core/core';
-import { SeriesColorPicker } from '@grafana/ui';
+import { SeriesColorPicker, Icon } from '@grafana/ui';
 
 export const LEGEND_STATS = ['min', 'max', 'avg', 'current', 'total'];
 
@@ -156,7 +156,7 @@ interface LegendSeriesIconState {
 }
 
 function SeriesIcon({ color }: { color: string }) {
-  return <i className="fa fa-minus pointer" style={{ color }} />;
+  return <Icon name="minus" style={{ color }} />;
 }
 
 class LegendSeriesIcon extends PureComponent<LegendSeriesIconProps, LegendSeriesIconState> {

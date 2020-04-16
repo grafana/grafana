@@ -145,13 +145,7 @@ $link-hover-decoration: none !default;
 
 // Forms
 $input-line-height: 18px !default;
-
-$input-border-radius: 0 $border-radius $border-radius 0 !default;
-$input-border-radius-sm: 0 $border-radius-sm $border-radius-sm 0 !default;
-
-$label-border-radius: $border-radius 0 0 $border-radius !default;
-$label-border-radius-sm: $border-radius-sm 0 0 $border-radius-sm !default;
-
+$input-border-radius: $border-radius;
 $input-padding: 0 8px;
 $input-height: 32px !default;
 

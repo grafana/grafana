@@ -89,11 +89,11 @@ export default class PermissionsListItem extends PureComponent<Props> {
         <td>
           {!item.inherited ? (
             <a className="btn btn-danger btn-small" onClick={this.onRemoveItem}>
-              <Icon name="times" />
+              <Icon name="times" style={{ marginBottom: 0 }} />
             </a>
           ) : (
             <button className="btn btn-inverse btn-small">
-              <Icon name="lock" />
+              <Icon name="lock" style={{ marginBottom: '3px' }} />
             </button>
           )}
         </td>

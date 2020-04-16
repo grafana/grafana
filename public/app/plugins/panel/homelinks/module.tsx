@@ -92,7 +92,8 @@ export const getStyles = stylesFactory(() => {
       margin-right: ${theme.spacing.sm};
     `,
     footer: css`
-      ${styleMixins.listItem(theme)}
+      background: ${theme.colors.bg2};
+      font-size: ${theme.typography.size.sm};
       position: absolute;
       bottom: 0;
       width: 100%;
