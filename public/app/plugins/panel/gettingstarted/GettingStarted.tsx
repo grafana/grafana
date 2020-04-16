@@ -2,14 +2,15 @@
 import React, { PureComponent } from 'react';
 
 import { PanelProps } from '@grafana/data';
-import { Icon, stylesFactory } from '@grafana/ui';
+import { Button, stylesFactory } from '@grafana/ui';
 import { css } from 'emotion';
-import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
-import { backendSrv } from 'app/core/services/backend_srv';
 import { contextSrv } from 'app/core/core';
+import { backendSrv } from 'app/core/services/backend_srv';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
+import { Step } from './components/Step';
+import { getSteps } from './steps';
 
-interface Step {
+interface Stepz {
   title: string;
   cta?: string;
   icon: string;
@@ -22,98 +23,19 @@ interface Step {
 
 interface State {
   checksDone: boolean;
+  currentStep: number;
 }
 
 export class GettingStarted extends PureComponent<PanelProps, State> {
-  stepIndex = 0;
-  readonly steps: { basic: Step[]; advanced: Step[] };
-
-  constructor(props: PanelProps) {
-    super(props);
-
-    this.state = {
-      checksDone: false,
-    };
-
-    this.steps = {
-      basic: [
-        {
-          title: 'Create a data source',
-          cta: 'Add data source',
-          icon: 'gicon gicon-datasources',
-          href: 'datasources/new?gettingstarted',
-          check: () => {
-            return new Promise(resolve => {
-              resolve(
-                getDatasourceSrv()
-                  .getMetricSources()
-                  .filter(item => {
-                    return item.meta.builtIn !== true;
-                  }).length > 0
-              );
-            });
-          },
-        },
-        {
-          title: 'Build a dashboard',
-          cta: 'New dashboard',
-          icon: 'gicon gicon-dashboard',
-          href: 'dashboard/new?gettingstarted',
-          check: () => {
-            return backendSrv.search({ limit: 1 }).then(result => {
-              return result.length > 0;
-            });
-          },
-        },
-      ],
-      advanced: [
-        {
-          title: 'Invite your team',
-          cta: 'Add Users',
-          icon: 'gicon gicon-team',
-          href: 'org/users?gettingstarted',
-          check: () => {
-            return backendSrv.get('/api/org/users/lookup').then((res: any) => {
-              /* return res.length > 1; */
-              return false;
-            });
-          },
-        },
-        {
-          title: 'Install apps & plugins',
-          cta: 'Explore plugin repository',
-          icon: 'gicon gicon-plugins',
-          href: 'https://grafana.com/plugins?utm_source=grafana_getting_started',
-          check: () => {
-            return backendSrv.get('/api/plugins', { embedded: 0, core: 0 }).then((plugins: any[]) => {
-              return plugins.length > 0;
-            });
-          },
-        },
-      ],
-    };
-  }
+  state = {
+    checksDone: false,
+    currentStep: 0,
+    steps: getSteps(),
+  };
 
   componentDidMount() {
-    this.stepIndex = -1;
-    return this.nextStep().then((res: any) => {
-      this.setState({ checksDone: true });
-    });
-  }
-
-  nextStep(): any {
-    if (this.stepIndex === this.steps.basic.length - 1) {
-      return Promise.resolve();
-    }
-
-    this.stepIndex += 1;
-    const currentStep = this.steps.basic[this.stepIndex];
-    return currentStep.check().then(passed => {
-      if (passed) {
-        currentStep.done = true;
-        return this.nextStep();
-      }
-      return Promise.resolve();
+    this.setState({
+      checksDone: true,
     });
   }
 
@@ -143,25 +65,41 @@ export class GettingStarted extends PureComponent<PanelProps, State> {
 
     return (
       <div className={styles.container}>
-        <button className="progress-tracker-close-btn" onClick={this.dismiss}>
-          <Icon name="times" />
-        </button>
-        <div className="progress-tracker">
-          {this.steps.basic.map((step, index) => {
-            return (
-              <div key={index} className={step.done ? 'progress-step completed' : 'progress-step active'}>
-                <a className="progress-link" href={step.href} target={step.target} title={step.note}>
-                  <span className="progress-marker">
-                    <i className={step.icon} />
-                  </span>
-                  <span className="progress-text">{step.title}</span>
-                </a>
-                <a className="btn-small progress-step-cta" href={step.href} target={step.target}>
-                  {step.cta}
-                </a>
+        <div className={styles.content}>
+          <div className={styles.header}>
+            <div className={styles.heading}>
+              <h1>{this.state.steps[0].heading}</h1>
+              <p>{this.state.steps[0].subheading}</p>
+            </div>
+            <div className={styles.help}>
+              <h3>Need help?</h3>
+              <div className={styles.helpOptions}>
+                {['Documentation', 'Tutorials', 'Community', 'Public Slack'].map((item: string, index: number) => {
+                  return (
+                    <a href="" key={`${item}-${index}`} className={styles.helpOption}>
+                      <Button
+                        variant="primary"
+                        size="md"
+                        className={css`
+                          width: 150px;
+                          justify-content: center;
+                        `}
+                      >
+                        {item}
+                      </Button>
+                    </a>
+                  );
+                })}
               </div>
-            );
-          })}
+            </div>
+          </div>
+
+          <Step step={this.state.steps[0]} />
+        </div>
+        <div className={styles.dismiss}>
+          <Button variant="secondary" onClick={this.dismiss}>
+            Remove this panel
+          </Button>
         </div>
       </div>
     );
@@ -171,11 +109,41 @@ export class GettingStarted extends PureComponent<PanelProps, State> {
 const getStyles = stylesFactory(() => {
   return {
     container: css`
-      height: 100%;
-      height: 450px;
       display: flex;
-      align-items: center;
+      flex-direction: column;
+      height: 100%;
       background: url('public/img/getting_started_background.png') no-repeat;
+      background-size: cover;
+    `,
+    content: css`
+      margin-left: 410px;
+      margin-top: 50px;
+    `,
+    header: css`
+      margin-bottom: 85px;
+      display: flex;
+      flex-direction: row;
+    `,
+    heading: css`
+      margin-right: 200px;
+    `,
+    help: css`
+      width: 330px;
+      padding-left: 16px;
+      border-left: 3px solid pink;
+    `,
+    helpOptions: css`
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+    `,
+    helpOption: css`
+      margin-top: 8px;
+    `,
+    dismiss: css`
+      display: flex;
+      justify-content: center;
+      margin-bottom: 16px;
     `,
   };
 });
