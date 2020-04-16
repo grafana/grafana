@@ -26,6 +26,7 @@ import {
   toggleGraph,
   addQueryRow,
   updateTimeRange,
+  runAppendQueries,
 } from './state/actions';
 // Types
 import {
@@ -122,6 +123,7 @@ export interface ExploreProps {
   originPanelId: number;
   addQueryRow: typeof addQueryRow;
   theme: GrafanaTheme;
+  runAppendQueries: typeof runAppendQueries;
 }
 
 interface ExploreState {
@@ -284,6 +286,11 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
     );
   };
 
+  showMoreLogs = () => {
+    const { exploreId } = this.props;
+    this.props.runAppendQueries(exploreId);
+  };
+
   render() {
     const {
       datasourceInstance,
@@ -380,6 +387,7 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
                               onClickFilterOutLabel={this.onClickFilterOutLabel}
                               onStartScanning={this.onStartScanning}
                               onStopScanning={this.onStopScanning}
+                              showMoreLogs={this.showMoreLogs}
                             />
                           )}
                           {mode === ExploreMode.Tracing &&
@@ -498,6 +506,7 @@ const mapDispatchToProps: Partial<ExploreProps> = {
   updateTimeRange,
   toggleGraph,
   addQueryRow,
+  runAppendQueries,
 };
 
 export default compose(
