@@ -30,8 +30,8 @@ export const BasicInput = () => {
 };
 
 export default {
-  title: 'Panel/Segment/SegmentInput',
-  component: BasicInput,
+  title: 'Data Source/Segment/SegmentInput',
+  component: SegmentInput,
 };
 
 export const BasicInputWithPlaceholder = () => {
