@@ -226,3 +226,38 @@ export function preProcessPanelData(data: PanelData, lastResult: PanelData): Pan
     timings: { dataProcessingTime: STOPTIME - STARTTIME },
   };
 }
+
+/**
+ * This function combines multiple series with the same refId.
+ * Mainly used when running append queries.
+ */
+function combineSeries(series: DataFrame[]): DataFrame[] {
+  // TODO: combine multiple series into one
+  // right now returns unchanged series
+  return series;
+}
+
+export function preProcessAppendPanelData(data: PanelData, lastResult: PanelData): PanelData {
+  const { series } = data;
+
+  //  for loading states with no data, use last result
+  if (data.state === LoadingState.Loading && series.length === 0) {
+    if (!lastResult) {
+      lastResult = data;
+    }
+
+    return { ...lastResult, state: LoadingState.Loading };
+  }
+
+  // Make sure the data frames are properly formatted
+  const STARTTIME = performance.now();
+  const processedDataFrames = combineSeries(getProcessedDataFrames([...lastResult.series, ...series]));
+  const STOPTIME = performance.now();
+
+  return {
+    ...lastResult,
+    ...data,
+    series: processedDataFrames,
+    timings: { dataProcessingTime: STOPTIME - STARTTIME },
+  };
+}
