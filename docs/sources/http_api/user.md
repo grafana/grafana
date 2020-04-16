@@ -42,7 +42,7 @@ Content-Type: application/json
     "isDisabled": false,
     "lastSeenAt": "2020-04-10T20:29:27+03:00",
     "lastSeenAtAge': "2m",
-    "authLabels": ["OAuth"]}
+    "authLabels": ["OAuth"]
   },
   {
     "id": 2,
@@ -53,7 +53,7 @@ Content-Type: application/json
     "isDisabled": false,
     "lastSeenAt": "2020-01-24T12:38:47+02:00",
     "lastSeenAtAge": "2M",
-    "authLabels": []}
+    "authLabels": []
   }
 ]
 ```
@@ -92,7 +92,7 @@ Content-Type: application/json
       "isDisabled": false,
       "lastSeenAt": "2020-04-10T20:29:27+03:00",
       "lastSeenAtAge': "2m",
-      "authLabels": ["OAuth"]},
+      "authLabels": ["OAuth"]
     },
     {
       "id": 2,
@@ -103,7 +103,7 @@ Content-Type: application/json
       "isDisabled": false,
       "lastSeenAt": "2020-01-24T12:38:47+02:00",
       "lastSeenAtAge": "2M",
-      "authLabels": []}
+      "authLabels": []
     }
   ],
   "page": 1,
