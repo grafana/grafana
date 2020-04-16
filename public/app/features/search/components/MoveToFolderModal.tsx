@@ -33,15 +33,14 @@ export const MoveToFolderModal: FC<Props> = ({ results, onMoveItems, isOpen, onD
         )
         .then((result: any) => {
           if (result.successCount > 0) {
-            const header = `Dashboard${result.successCount === 1 ? '' : 's'} Moved`;
-            const msg = `${result.successCount} dashboard${
-              result.successCount === 1 ? '' : 's'
-            } moved to ${folderTitle}`;
+            const ending = result.successCount === 1 ? '' : 's';
+            const header = `Dashboard${ending} Moved`;
+            const msg = `${result.successCount} dashboard${ending} moved to ${folderTitle}`;
             appEvents.emit(AppEvents.alertSuccess, [header, msg]);
           }
 
           if (result.totalCount === result.alreadyInFolderCount) {
-            appEvents.emit(AppEvents.alertError, ['Error', `Dashboards already belongs to folder ${folderTitle}`]);
+            appEvents.emit(AppEvents.alertError, ['Error', `Dashboard already belongs to folder ${folderTitle}`]);
           }
 
           onMoveItems(selectedDashboards, folder);

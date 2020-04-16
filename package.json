@@ -39,8 +39,7 @@
     "test": "grunt test",
     "themes:generate": "ts-node --project ./scripts/cli/tsconfig.json ./scripts/cli/generateSassVariableFiles.ts",
     "typecheck": "tsc --noEmit",
-    "watch": "yarn start -d watch,start core:start --watchTheme ",
-    "generate": "grafana-toolkit component:create"
+    "watch": "yarn start -d watch,start core:start --watchTheme "
   },
   "husky": {
     "hooks": {
