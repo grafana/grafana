@@ -1,5 +1,5 @@
 import React, { PureComponent } from 'react';
-import { dateTime, SelectableValue } from '@grafana/data';
+import { dateTime } from '@grafana/data';
 import { Forms } from '@grafana/ui';
 import { connect, MapDispatchToProps, MapStateToProps } from 'react-redux';
 import { ImportDashboardForm } from './ImportDashboardForm';
@@ -14,7 +14,7 @@ interface ConnectedProps {
   inputs: DashboardInputs;
   source: DashboardSource;
   meta?: any;
-  folderId: SelectableValue<number>;
+  folderId: { id: number; title?: string };
 }
 
 interface DispatchProps {
@@ -97,7 +97,7 @@ class ImportDashboardOverviewUnConnected extends PureComponent<Props, State> {
               onCancel={this.onCancel}
               onUidReset={this.onUidReset}
               onSubmit={this.onSubmit}
-              initialFolderId={folderId.value}
+              initialFolderId={folderId.id}
             />
           )}
         </Forms.Form>
@@ -111,7 +111,7 @@ const mapStateToProps: MapStateToProps<ConnectedProps, OwnProps, StoreState> = (
   meta: state.importDashboard.meta,
   source: state.importDashboard.source,
   inputs: state.importDashboard.inputs,
-  folderId: state.location.routeParams.folderId ? { value: Number(state.location.routeParams.folderId) } : { value: 0 },
+  folderId: state.location.routeParams.folderId ? { id: Number(state.location.routeParams.folderId) } : { id: 0 },
 });
 
 const mapDispatchToProps: MapDispatchToProps<DispatchProps, OwnProps> = {

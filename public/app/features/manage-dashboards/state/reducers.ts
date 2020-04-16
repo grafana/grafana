@@ -1,5 +1,5 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-import { DataSourceSelectItem, SelectableValue } from '@grafana/data';
+import { DataSourceSelectItem } from '@grafana/data';
 
 export enum DashboardSource {
   Gcom = 0,
@@ -12,7 +12,7 @@ export interface ImportDashboardDTO {
   gnetId: string;
   constants: string[];
   dataSources: DataSourceSelectItem[];
-  folderId: SelectableValue<number>;
+  folderId: { id: number; title?: string };
 }
 
 export enum InputType {
