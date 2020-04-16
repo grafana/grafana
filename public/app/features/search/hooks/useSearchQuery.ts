@@ -6,6 +6,7 @@ import {
   CLEAR_FILTERS,
   QUERY_CHANGE,
   REMOVE_STARRED,
+  REMOVE_TAG,
   SET_TAGS,
   TOGGLE_STARRED,
 } from '../reducers/actionTypes';
@@ -24,7 +25,7 @@ export const useSearchQuery = (queryParams: Partial<DashboardQuery>) => {
   };
 
   const onTagRemove = (tag: string) => {
-    dispatch({ type: REMOVE_STARRED, payload: tag });
+    dispatch({ type: REMOVE_TAG, payload: tag });
   };
 
   const onTagFilterChange = (tags: string[]) => {
