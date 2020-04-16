@@ -15,8 +15,7 @@ import { sortQueries, createDatasourcesList } from '../../../core/utils/richHist
 // Components
 import RichHistoryCard from './RichHistoryCard';
 import { sortOrderOptions } from './RichHistory';
-import { LegacyForms } from '@grafana/ui';
-const { Select } = LegacyForms;
+import { Select } from '@grafana/ui';
 
 export interface Props {
   queries: RichHistoryQuery[];
