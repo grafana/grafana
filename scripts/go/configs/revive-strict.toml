@@ -14,13 +14,13 @@ warningCode = 1
 [rule.error-strings]
 [rule.error-naming]
 [rule.exported]
+[rule.unexported-return]
+[rule.dot-imports]
+[rule.receiver-naming]
+[rule.blank-imports]
+[rule.var-naming]
 
 # This can be checked by other tools like megacheck
 [rule.unreachable-code]
 
-# Those are probably should be enabled at some point
-# [rule.unexported-return]
-# [rule.var-naming]
-# [rule.dot-imports]
-# [rule.receiver-naming]
-# [rule.blank-imports]
+
