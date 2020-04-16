@@ -85,7 +85,8 @@ revive-alerting: scripts/go/bin/revive
 	@scripts/go/bin/revive \
 		-formatter stylish \
 		./pkg/services/alerting/... \
-		./pkg/services/provisioning/datasources/...
+		./pkg/services/provisioning/datasources/... \
+		./pkg/services/provisioning/dashboards/...
 
 scripts/go/bin/golangci-lint: scripts/go/go.mod
 	@cd scripts/go; \

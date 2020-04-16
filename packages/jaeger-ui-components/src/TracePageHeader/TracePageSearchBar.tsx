@@ -24,6 +24,7 @@ import { TNil } from '../types';
 import { UIButton, UIInputGroup } from '../uiElementsContext';
 import { createStyle } from '../Theme';
 import { ubFlexAuto, ubJustifyEnd } from '../uberUtilityStyles';
+import { memo } from 'react';
 
 export const getStyles = createStyle(() => {
   return {
@@ -71,7 +72,7 @@ type TracePageSearchBarProps = {
   hideSearchButtons?: boolean;
 };
 
-export default function TracePageSearchBar(props: TracePageSearchBarProps) {
+export default memo(function TracePageSearchBar(props: TracePageSearchBarProps) {
   const {
     clearSearch,
     focusUiFindMatches,
@@ -141,4 +142,4 @@ export default function TracePageSearchBar(props: TracePageSearchBarProps) {
       </UIInputGroup>
     </div>
   );
-}
+});

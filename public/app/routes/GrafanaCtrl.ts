@@ -166,11 +166,6 @@ export function grafanaAppDirective(
         elem.toggleClass('view-mode--playlist', false);
       });
 
-      // check if we are in server side render
-      if (config.phantomJSRenderer && document.cookie.indexOf('renderKey') !== -1) {
-        body.addClass('body--phantomjs');
-      }
-
       // tooltip removal fix
       // manage page classes
       let pageClass: string;

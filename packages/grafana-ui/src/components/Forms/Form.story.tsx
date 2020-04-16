@@ -7,7 +7,7 @@ import { Field } from './Field';
 import { Input } from '../Input/Input';
 import { Button } from '../Button';
 import { Form } from './Form';
-import { Switch } from './Switch';
+import { Switch } from '../Switch/Switch';
 import { Checkbox } from './Checkbox';
 
 import { RadioButtonGroup } from './RadioButtonGroup/RadioButtonGroup';
@@ -91,7 +91,7 @@ const renderForm = (defaultValues?: Partial<FormDTO>) => (
           </Field>
 
           <Field label="Textarea" invalid={!!errors.text} error="Text is required">
-            <TextArea name="text" placeholder="Long text" size="md" ref={register({ required: true })} />
+            <TextArea name="text" placeholder="Long text" ref={register({ required: true })} />
           </Field>
 
           <Field label="Checkbox" invalid={!!errors.checkbox} error="We need your consent">
