@@ -1,5 +1,4 @@
 import React, { useCallback } from 'react';
-import { deprecationWarning } from '@grafana/data';
 // @ts-ignore
 import { default as ReactSelect } from '@torkelo/react-select';
 // @ts-ignore
