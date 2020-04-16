@@ -1,9 +1,11 @@
 import React, { PureComponent } from 'react';
 import appEvents from 'app/core/app_events';
 import { CopyToClipboard } from 'app/core/components/CopyToClipboard/CopyToClipboard';
-import { JSONFormatter, LoadingPlaceholder, Icon } from '@grafana/ui';
+import { JSONFormatter, LoadingPlaceholder, Button } from '@grafana/ui';
 import { CoreEvents } from 'app/types';
 import { AppEvents, PanelEvents } from '@grafana/data';
+import { PanelModel } from 'app/features/dashboard/state';
+import { getPanelInspectorStyles } from './styles';
 
 interface DsQuery {
   isLoading: boolean;
@@ -11,7 +13,7 @@ interface DsQuery {
 }
 
 interface Props {
-  panel: any;
+  panel: PanelModel;
 }
 
 interface State {
@@ -39,14 +41,14 @@ export class QueryInspector extends PureComponent<Props, State> {
   }
 
   componentDidMount() {
-    const { panel } = this.props;
-
     appEvents.on(CoreEvents.dsRequestResponse, this.onDataSourceResponse);
     appEvents.on(CoreEvents.dsRequestError, this.onRequestError);
-
-    panel.events.on(PanelEvents.refresh, this.onPanelRefresh);
-    panel.refresh();
+    this.props.panel.events.on(PanelEvents.refresh, this.onPanelRefresh);
   }
+
+  onIssueNewQuery = () => {
+    this.props.panel.refresh();
+  };
 
   componentWillUnmount() {
     const { panel } = this.props;
@@ -177,46 +179,58 @@ export class QueryInspector extends PureComponent<Props, State> {
     }));
   };
 
-  renderExpandCollapse = () => {
-    const { allNodesExpanded } = this.state;
-
-    const collapse = (
-      <>
-        <Icon name="minus-circle" /> Collapse All
-      </>
-    );
-    const expand = (
-      <>
-        <Icon name="plus-circle" /> Expand All
-      </>
-    );
-    return allNodesExpanded ? collapse : expand;
-  };
-
   render() {
+    const { allNodesExpanded } = this.state;
     const { response, isLoading } = this.state.dsQuery;
     const openNodes = this.getNrOfOpenNodes();
-
-    if (isLoading) {
-      return <LoadingPlaceholder text="Loading query inspector..." />;
-    }
+    const styles = getPanelInspectorStyles();
+    const haveData = Object.keys(response).length > 0;
 
     return (
       <>
-        <div className="pull-right">
-          <button className="btn btn-transparent btn-p-x-0 m-r-1" onClick={this.onToggleExpand}>
-            {this.renderExpandCollapse()}
-          </button>
-          <CopyToClipboard
-            className="btn btn-transparent btn-p-x-0"
-            text={this.getTextForClipboard}
-            onSuccess={this.onClipboardSuccess}
-          >
-            <Icon name="copy" /> Copy to Clipboard
-          </CopyToClipboard>
+        <div>
+          <h3 className="section-heading">Query inspector</h3>
+          <p className="small muted">
+            Query inspector allows you to view raw request and response. To collect this data Grafana needs to issue a
+            new query. Hit refresh button below to trigger a new query.
+          </p>
         </div>
+        <div className={styles.toolbar}>
+          <Button icon="sync" onClick={this.onIssueNewQuery}>
+            Refresh
+          </Button>
 
-        <JSONFormatter json={response} open={openNodes} onDidRender={this.setFormattedJson} />
+          {haveData && allNodesExpanded && (
+            <Button icon="minus" variant="secondary" className={styles.toolbarItem} onClick={this.onToggleExpand}>
+              Collapse all
+            </Button>
+          )}
+          {haveData && !allNodesExpanded && (
+            <Button icon="plus" variant="secondary" className={styles.toolbarItem} onClick={this.onToggleExpand}>
+              Expand all
+            </Button>
+          )}
+
+          {haveData && (
+            <CopyToClipboard
+              text={this.getTextForClipboard}
+              onSuccess={this.onClipboardSuccess}
+              elType="div"
+              className={styles.toolbarItem}
+            >
+              <Button icon="copy" variant="secondary">
+                Copy to clipboard
+              </Button>
+            </CopyToClipboard>
+          )}
+        </div>
+        <div className={styles.contentQueryInspector}>
+          {isLoading && <LoadingPlaceholder text="Loading query inspector..." />}
+          {!isLoading && haveData && (
+            <JSONFormatter json={response} open={openNodes} onDidRender={this.setFormattedJson} />
+          )}
+          {!isLoading && !haveData && <p className="muted">No request & response collected yet. Hit refresh button</p>}
+        </div>
       </>
     );
   }

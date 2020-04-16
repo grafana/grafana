@@ -24,12 +24,8 @@ const assertDefaultsForNewVariable = () => {
   e2e()
     .window()
     .then((win: any) => {
-      let chainer = 'not.exist';
-      let value: string = undefined;
-      if (win.grafanaBootData.settings.featureToggles.newVariables) {
-        chainer = 'have.text';
-        value = '';
-      }
+      const chainer = 'have.text';
+      const value = '';
 
       e2e.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsDataSourceSelect().within(select => {
         e2e()
@@ -85,10 +81,8 @@ const createQueryVariable = ({ name, label, dataSourceName, query }: CreateQuery
   e2e()
     .window()
     .then((win: any) => {
-      let text = `string:${dataSourceName}`;
-      if (win.grafanaBootData.settings.featureToggles.newVariables) {
-        text = `${dataSourceName}`;
-      }
+      const text = `${dataSourceName}`;
+
       e2e.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsDataSourceSelect()
         .select(text)
         .blur();
@@ -352,11 +346,7 @@ const assertUpdateItem = (data: QueryVariableData[]) => {
   e2e()
     .window()
     .then((win: any) => {
-      if (win.grafanaBootData.settings.featureToggles.newVariables) {
-        queryVariables[1].selectedOption = 'A constant';
-      } else {
-        queryVariables[1].selectedOption = 'undefined';
-      }
+      queryVariables[1].selectedOption = 'A constant';
       assertVariableLabelAndComponent(queryVariables[1]);
     });
 
@@ -627,11 +617,5 @@ e2e.scenario({
 
     // assert that move up works
     assertMoveUpItem(queryVariables);
-
-    e2e()
-      .window()
-      .then((win: any) => {
-        logSection('This scenario ran with these featureToggles', win.grafanaBootData.settings.featureToggles);
-      });
   },
 });

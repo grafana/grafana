@@ -147,10 +147,6 @@ $input-border: 1px solid $input-border-color;
       background: $list-item-hover-bg;
       color: $link-color;
     }
-
-    .fa-caret-down {
-      padding-left: 4px;
-    }
   }
 
   &:disabled {
@@ -390,7 +386,7 @@ $input-border: 1px solid $input-border-color;
   &--right-absolute {
     position: absolute;
     right: $spacer;
-    top: 10px;
+    top: 6px;
   }
 
   &--right-normal {

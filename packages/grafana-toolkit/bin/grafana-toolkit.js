@@ -15,7 +15,7 @@ const isLinkedMode = () => {
   }
 
   try {
-    return fs.lstatSync(`${pwd}/node_modules/@grafana/toolkit`.replace('~', process.env.HOME)).isSymbolicLink();
+    return fs.lstatSync(`${__dirname}/../../../node_modules/@grafana/toolkit`).isSymbolicLink();
   } catch {
     return false;
   }

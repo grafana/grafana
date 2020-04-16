@@ -6,7 +6,7 @@ import { Tab } from './Tab';
 import { TabContent } from './TabContent';
 
 export default {
-  title: 'General/Tabs',
+  title: 'Layout/Tabs',
   decorators: [withCenteredStory],
 };
 
