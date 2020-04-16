@@ -3,11 +3,11 @@ package backendplugin
 import (
 	"os/exec"
 
-	"github.com/grafana/grafana-plugin-sdk-go/backend/grpcplugin"
-	"github.com/grafana/grafana/pkg/infra/log"
-
 	datasourceV1 "github.com/grafana/grafana-plugin-model/go/datasource"
 	rendererV1 "github.com/grafana/grafana-plugin-model/go/renderer"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/grpcplugin"
+	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/plugins/backendplugin/pluginextensionv2"
 	goplugin "github.com/hashicorp/go-plugin"
 )
 
@@ -80,6 +80,10 @@ func NewBackendPluginDescriptor(pluginID, executablePath string, startFns Plugin
 				"resource":    &grpcplugin.ResourceGRPCPlugin{},
 				"data":        &grpcplugin.DataGRPCPlugin{},
 				"transform":   &grpcplugin.TransformGRPCPlugin{},
+				// needs to be here since hashicorp/go-plugin returns error
+				// when calling rpcClient.Dispense("renderer") for an existing
+				// plugin compiled against SDK.
+				"renderer": &pluginextensionv2.RendererGRPCPlugin{},
 			},
 		},
 		startFns: startFns,
@@ -96,6 +100,10 @@ func NewRendererPluginDescriptor(pluginID, executablePath string, startFns Plugi
 		versionedPlugins: map[int]goplugin.PluginSet{
 			DefaultProtocolVersion: {
 				pluginID: &rendererV1.RendererPluginImpl{},
+			},
+			grpcplugin.ProtocolVersion: {
+				"diagnostics": &grpcplugin.DiagnosticsGRPCPlugin{},
+				"renderer":    &pluginextensionv2.RendererGRPCPlugin{},
 			},
 		},
 		startFns: startFns,
@@ -129,4 +137,5 @@ type Client struct {
 	ResourcePlugin  ResourcePlugin
 	DataPlugin      DataPlugin
 	TransformPlugin TransformPlugin
+	RendererPlugin  pluginextensionv2.RendererPlugin
 }
