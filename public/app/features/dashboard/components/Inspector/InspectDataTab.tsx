@@ -6,6 +6,7 @@ import {
   SelectableValue,
   DataTransformerID,
   standardTransformers,
+  transformDataFrame,
 } from '@grafana/data';
 import { Button, Select, Icon, Table, Field } from '@grafana/ui';
 import { getPanelInspectorStyles } from './styles';
@@ -20,8 +21,9 @@ interface Props {
 }
 
 interface State {
-  transformation?: DataTransformerID;
+  transformId: DataTransformerID;
   dataFrameIndex: number;
+  transformationOptions: Array<SelectableValue<DataTransformerID>>;
 }
 
 export class InspectDataTab extends PureComponent<Props, State> {
@@ -30,6 +32,8 @@ export class InspectDataTab extends PureComponent<Props, State> {
 
     this.state = {
       dataFrameIndex: 0,
+      transformId: DataTransformerID.noop,
+      transformationOptions: buildTransformationOptions(),
     };
   }
 
@@ -47,24 +51,40 @@ export class InspectDataTab extends PureComponent<Props, State> {
     this.setState({ dataFrameIndex: item.value || 0 });
   };
 
-  getTransformationOptions() {
-    const seriesToColumns = standardTransformers.seriesToColumnsTransformer;
-    const transformations: Array<SelectableValue<DataTransformerID>> = [
-      { value: DataTransformerID.noop, label: 'None' },
-      { value: DataTransformerID.seriesToColumns, label: seriesToColumns.name },
-    ];
+  onTransformationChange = (value: SelectableValue<DataTransformerID>) => {
+    this.setState({ transformId: value.value });
+  };
 
-    return transformations;
+  getTransformedData(): DataFrame[] {
+    const { transformId, transformationOptions } = this.state;
+    const { data } = this.props;
+
+    if (!data) {
+      return [];
+    }
+
+    const currentTransform = transformationOptions.find(item => item.value === transformId);
+
+    if (currentTransform && currentTransform.transformer.id !== DataTransformerID.noop) {
+      return transformDataFrame([currentTransform.transformer], data);
+    }
+    return data;
   }
 
-  onTransformationChange(value: SelectableValue<DataTransformerID>) {
-    this.setState({ transformation: value.value });
+  getProcessedData(): DataFrame[] {
+    return applyFieldOverrides({
+      data: this.getTransformedData(),
+      theme: config.theme,
+      fieldConfig: { defaults: {}, overrides: [] },
+      replaceVariables: (value: string) => {
+        return value;
+      },
+    });
   }
 
   render() {
-    const { data, isLoading } = this.props;
-    const { dataFrameIndex, transformation } = this.state;
-
+    const { isLoading } = this.props;
+    const { dataFrameIndex, transformId, transformationOptions } = this.state;
     const styles = getPanelInspectorStyles();
 
     if (isLoading) {
@@ -75,35 +95,24 @@ export class InspectDataTab extends PureComponent<Props, State> {
       );
     }
 
-    if (!data || !data.length) {
+    const dataFrames = this.getProcessedData();
+
+    if (!dataFrames || !dataFrames.length) {
       return <div>No Data</div>;
     }
 
-    const choices = data.map((frame, index) => {
+    const choices = dataFrames.map((frame, index) => {
       return {
         value: index,
         label: `${frame.name} (${index})`,
       };
     });
 
-    const processed = applyFieldOverrides({
-      data,
-      theme: config.theme,
-      fieldConfig: { defaults: {}, overrides: [] },
-      replaceVariables: (value: string) => {
-        return value;
-      },
-    });
-
     return (
       <div className={styles.dataTabContent}>
         <div className={styles.toolbar}>
           <Field label="Transformer" className="flex-grow-1">
-            <Select
-              options={this.getTransformationOptions()}
-              value={transformation}
-              onChange={this.onTransformationChange}
-            />
+            <Select options={transformationOptions} value={transformId} onChange={this.onTransformationChange} />
           </Field>
           {choices.length > 1 && (
             <Field label="Select result" className={cx(styles.toolbarItem, 'flex-grow-1')}>
@@ -111,7 +120,7 @@ export class InspectDataTab extends PureComponent<Props, State> {
             </Field>
           )}
           <div className={styles.downloadCsv}>
-            <Button variant="primary" onClick={() => this.exportCsv(processed[dataFrameIndex])}>
+            <Button variant="primary" onClick={() => this.exportCsv(dataFrames[dataFrameIndex])}>
               Download CSV
             </Button>
           </div>
@@ -125,7 +134,7 @@ export class InspectDataTab extends PureComponent<Props, State> {
 
               return (
                 <div style={{ width, height }}>
-                  <Table width={width} height={height} data={processed[dataFrameIndex]} />
+                  <Table width={width} height={height} data={dataFrames[dataFrameIndex]} />
                 </div>
               );
             }}
@@ -134,4 +143,27 @@ export class InspectDataTab extends PureComponent<Props, State> {
       </div>
     );
   }
+}
+
+function buildTransformationOptions() {
+  const seriesToColumns = standardTransformers.seriesToColumnsTransformer;
+  const transformations: Array<SelectableValue<DataTransformerID>> = [
+    {
+      value: DataTransformerID.noop,
+      label: 'None',
+      transformer: {
+        id: DataTransformerID.noop,
+      },
+    },
+    {
+      value: DataTransformerID.seriesToColumns,
+      label: seriesToColumns.name,
+      transformer: {
+        id: DataTransformerID.seriesToColumns,
+        options: { byField: 'Time' },
+      },
+    },
+  ];
+
+  return transformations;
 }
