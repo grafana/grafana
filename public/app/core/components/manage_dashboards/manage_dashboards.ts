@@ -254,11 +254,13 @@ export class ManageDashboardsCtrl {
     });
   };
 
-  initTagFilter() {
+  initTagFilter = () => {
     return this.searchSrv.getDashboardTags().then((results: any) => {
       this.tagFilterOptions = results.map((result: any) => ({ value: result.term, label: result.term }));
+      // Required for the list to be populated
+      this.refreshList();
     });
-  }
+  };
 
   filterByTag = (tag: any) => {
     if (tag) {
