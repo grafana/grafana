@@ -53,7 +53,7 @@ describe('Reducer Transformer', () => {
         reducers: [ReducerID.first, ReducerID.min, ReducerID.max, ReducerID.last],
       },
     };
-    const processed = transformDataFrame([cfg], [seriesAWithMultipleFields, seriesBWithMultipleFields])[0];
+    const processed = transformDataFrame([cfg], [seriesAWithMultipleFields, seriesBWithMultipleFields]);
     const expected: Field[] = [
       {
         name: 'Field',
@@ -86,7 +86,10 @@ describe('Reducer Transformer', () => {
         config: { title: 'Last' },
       },
     ];
-    expect(processed.fields).toEqual(expected);
+
+    expect(processed.length).toEqual(1);
+    expect(processed[0].length).toEqual(4);
+    expect(processed[0].fields).toEqual(expected);
   });
 
   it('reduces multiple data frames with single field', () => {
@@ -96,7 +99,7 @@ describe('Reducer Transformer', () => {
         reducers: [ReducerID.first, ReducerID.min, ReducerID.max, ReducerID.last],
       },
     };
-    const processed = transformDataFrame([cfg], [seriesAWithSingleField, seriesBWithSingleField])[0];
+    const processed = transformDataFrame([cfg], [seriesAWithSingleField, seriesBWithSingleField]);
     const expected: Field[] = [
       {
         name: 'Field',
@@ -129,7 +132,10 @@ describe('Reducer Transformer', () => {
         config: { title: 'Last' },
       },
     ];
-    expect(processed.fields).toEqual(expected);
+
+    expect(processed.length).toEqual(1);
+    expect(processed[0].length).toEqual(2);
+    expect(processed[0].fields).toEqual(expected);
   });
 
   it('reduces single data frame with many fields', () => {
@@ -139,7 +145,7 @@ describe('Reducer Transformer', () => {
         reducers: [ReducerID.first, ReducerID.min, ReducerID.max, ReducerID.last],
       },
     };
-    const processed = transformDataFrame([cfg], [seriesAWithMultipleFields])[0];
+    const processed = transformDataFrame([cfg], [seriesAWithMultipleFields]);
     const expected: Field[] = [
       {
         name: 'Field',
@@ -172,7 +178,10 @@ describe('Reducer Transformer', () => {
         config: { title: 'Last' },
       },
     ];
-    expect(processed.fields).toEqual(expected);
+
+    expect(processed.length).toEqual(1);
+    expect(processed[0].length).toEqual(2);
+    expect(processed[0].fields).toEqual(expected);
   });
 
   it('reduces single data frame with single field', () => {
@@ -182,7 +191,7 @@ describe('Reducer Transformer', () => {
         reducers: [ReducerID.first, ReducerID.min, ReducerID.max, ReducerID.last],
       },
     };
-    const processed = transformDataFrame([cfg], [seriesAWithSingleField])[0];
+    const processed = transformDataFrame([cfg], [seriesAWithSingleField]);
     const expected: Field[] = [
       {
         name: 'Field',
@@ -215,6 +224,9 @@ describe('Reducer Transformer', () => {
         config: { title: 'Last' },
       },
     ];
-    expect(processed.fields).toEqual(expected);
+
+    expect(processed.length).toEqual(1);
+    expect(processed[0].length).toEqual(1);
+    expect(processed[0].fields).toEqual(expected);
   });
 });

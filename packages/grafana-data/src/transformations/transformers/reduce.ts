@@ -121,5 +121,8 @@ const mergeResults = (data: DataFrame[]) => {
     }
   }
 
-  return data;
+  baseFrame.name = undefined;
+  baseFrame.length = baseFrame.fields[0].values.length;
+
+  return [baseFrame];
 };
