@@ -15,7 +15,7 @@ interface CascaderProps {
   placeholder?: string;
   options: CascaderOption[];
   onSelect(val: string): void;
-  /** Sets the width to a multiple of 8px. Should only be used with inline forms. Settings width of the container is preferred in other cases.*/
+  /** Sets the width to a multiple of 8px. Should only be used with inline forms. Setting width of the container is preferred in other cases.*/
   width?: number;
   size?: FormInputSize;
   initialValue?: string;

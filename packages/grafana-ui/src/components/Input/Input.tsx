@@ -8,7 +8,7 @@ import { useClientRect } from '../../utils/useClientRect';
 import { FormInputSize } from '../Forms/types';
 
 export interface Props extends Omit<HTMLProps<HTMLInputElement>, 'prefix' | 'size'> {
-  /** Sets the width to a multiple of 8px. Should only be used with inline forms. Settings width of the container is preferred in other cases.*/
+  /** Sets the width to a multiple of 8px. Should only be used with inline forms. Setting width of the container is preferred in other cases.*/
   width?: number;
   /** Show an invalid state around the input */
   invalid?: boolean;
