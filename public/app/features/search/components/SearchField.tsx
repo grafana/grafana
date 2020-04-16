@@ -59,33 +59,29 @@ export const SearchField: FC<SearchFieldProps> = ({ query, onChange, size, clear
   const styles = getSearchFieldStyles(theme);
 
   return (
-    <>
-      {/* search-field-wrapper class name left on purpose until we migrate entire search to React */}
-      {/* based on it GrafanaCtrl (L256) decides whether or not hide search */}
-      <div className={`${styles.wrapper} search-field-wrapper`}>
-        <Input
-          type="text"
-          placeholder="Search dashboards by name"
-          value={query.query}
-          onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
-            onChange(event.currentTarget.value);
-          }}
-          tabIndex={1}
-          spellCheck={false}
-          className={cx(styles.input, className)}
-          prefix={<Icon name="search" />}
-          suffix={
-            clearable && (
-              <span className={styles.clearButton} onClick={() => onChange('')}>
-                Clear
-              </span>
-            )
-          }
-          {...inputProps}
-        />
+    <div className={styles.wrapper}>
+      <Input
+        type="text"
+        placeholder="Search dashboards by name"
+        value={query.query}
+        onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
+          onChange(event.currentTarget.value);
+        }}
+        tabIndex={1}
+        spellCheck={false}
+        className={cx(styles.input, className)}
+        prefix={<Icon name="search" />}
+        suffix={
+          clearable && (
+            <span className={styles.clearButton} onClick={() => onChange('')}>
+              Clear
+            </span>
+          )
+        }
+        {...inputProps}
+      />
 
-        <div className={styles.spacer} />
-      </div>
-    </>
+      <div className={styles.spacer} />
+    </div>
   );
 };
