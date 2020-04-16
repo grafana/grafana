@@ -34,7 +34,7 @@ export const useSearch: UseSearch = (query, reducer, params) => {
     }
     searchSrv.search(q).then(results => {
       // Remove header for folder search
-      if (query.folderIds.length === 1) {
+      if (query.folderIds.length === 1 && results.length) {
         results[0].hideHeader = true;
       }
       dispatch({ type: FETCH_RESULTS, payload: results });

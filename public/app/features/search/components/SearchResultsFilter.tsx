@@ -86,6 +86,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       display: flex;
       justify-content: space-between;
       align-items: center;
+      margin-bottom: ${theme.spacing.sm};
 
       label {
         height: 20px;
