@@ -1,7 +1,0 @@
-#!/bin/sh
-
-if [ "$1" == "-rn" ]; then
-  false | busybox cp -i -r "$2" "$3" 2>/dev/null
-else
-  busybox cp $*
-fi
