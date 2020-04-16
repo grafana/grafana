@@ -38,7 +38,14 @@ export const DashboardSearch: FC<Props> = ({ onCloseSearch, payload = {} }) => {
 
   return (
     <div tabIndex={0} className="search-container" onKeyDown={onClose}>
-      <SearchField query={query} onChange={onQueryChange} onKeyDown={onKeyDown} autoFocus clearable />
+      <SearchField
+        query={query}
+        onChange={onQueryChange}
+        onKeyDown={onKeyDown}
+        autoFocus
+        clearable
+        className={styles.searchField}
+      />
       <div className="search-dropdown">
         <div className="search-dropdown__col_1">
           <CustomScrollbar>
@@ -124,6 +131,9 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
     close: css`
       margin-left: ${theme.spacing.xs};
       margin-bottom: 1px;
+    `,
+    searchField: css`
+      padding-left: ${theme.spacing.md};
     `,
   };
 });

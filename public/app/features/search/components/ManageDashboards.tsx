@@ -141,9 +141,13 @@ export const ManageDashboards: FC<Props> = ({ folderId, folderUid }) => {
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
   return {
     searchField: css`
+      height: auto;
+      border-bottom: none;
       padding: 0;
       margin: 0;
-      width: 400px;
+      input {
+        width: 400px;
+      }
     `,
   };
 });

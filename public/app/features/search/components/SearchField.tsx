@@ -25,7 +25,6 @@ const getSearchFieldStyles = (theme: GrafanaTheme) => ({
   `,
   input: css`
     max-width: 683px;
-    padding-left: ${theme.spacing.md};
     margin-right: 90px;
     box-sizing: border-box;
     outline: none;
@@ -59,7 +58,7 @@ export const SearchField: FC<SearchFieldProps> = ({ query, onChange, size, clear
   const styles = getSearchFieldStyles(theme);
 
   return (
-    <div className={styles.wrapper}>
+    <div className={cx(styles.wrapper, className)}>
       <Input
         type="text"
         placeholder="Search dashboards by name"
@@ -69,7 +68,7 @@ export const SearchField: FC<SearchFieldProps> = ({ query, onChange, size, clear
         }}
         tabIndex={1}
         spellCheck={false}
-        className={cx(styles.input, className)}
+        className={styles.input}
         prefix={<Icon name="search" />}
         suffix={
           clearable && (
