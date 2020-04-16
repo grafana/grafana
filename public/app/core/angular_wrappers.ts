@@ -20,6 +20,7 @@ import {
   LinkButton,
   Input,
   Icon,
+  HorizontalGroup,
 } from '@grafana/ui';
 import { FunctionEditor } from 'app/plugins/datasource/graphite/FunctionEditor';
 import ReactProfileWrapper from 'app/features/profile/ReactProfileWrapper';
@@ -41,9 +42,8 @@ export function registerAngularDirectives() {
     'value',
     ['onChange', { watchDepth: 'reference', wrapApply: true }],
   ]);
-  react2AngularDirective('reactButton', Button, ['onClick', 'variant', 'children']);
+  react2AngularDirective('horizontalGroup', HorizontalGroup, ['spacing', 'justify']);
   react2AngularDirective('linkButton', LinkButton, ['onClick', 'variant', 'href', 'children']);
-  react2AngularDirective('reactInput', Input, ['onChange']);
   react2AngularDirective('footer', Footer, []);
   react2AngularDirective('icon', Icon, [
     'color',
