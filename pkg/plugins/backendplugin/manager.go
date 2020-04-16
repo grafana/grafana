@@ -3,11 +3,13 @@ package backendplugin
 import (
 	"context"
 	"errors"
+	"fmt"
 	"io"
 	"sync"
 	"time"
 
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util/errutil"
 	"github.com/grafana/grafana/pkg/util/proxyutil"
 
@@ -49,14 +51,18 @@ type Manager interface {
 }
 
 type manager struct {
-	pluginsMu sync.RWMutex
-	plugins   map[string]*BackendPlugin
-	logger    log.Logger
+	Cfg            *setting.Cfg     `inject:""`
+	License        models.Licensing `inject:""`
+	pluginsMu      sync.RWMutex
+	plugins        map[string]*BackendPlugin
+	logger         log.Logger
+	pluginSettings map[string]pluginSettings
 }
 
 func (m *manager) Init() error {
 	m.plugins = make(map[string]*BackendPlugin)
 	m.logger = log.New("plugins.backend")
+	m.pluginSettings = extractPluginSettings(m.Cfg)
 
 	return nil
 }
@@ -78,13 +84,29 @@ func (m *manager) Register(descriptor PluginDescriptor) error {
 		return errors.New("Backend plugin already registered")
 	}
 
+	pluginSettings := pluginSettings{}
+	if ps, exists := m.pluginSettings[descriptor.pluginID]; exists {
+		pluginSettings = ps
+	}
+
+	hostEnv := []string{
+		fmt.Sprintf("GF_VERSION=%s", setting.BuildVersion),
+		fmt.Sprintf("GF_EDITION=%s", m.License.Edition()),
+	}
+
+	if m.License.HasLicense() {
+		hostEnv = append(hostEnv, fmt.Sprintf("GF_ENTERPRISE_LICENSE_PATH=%s", m.Cfg.EnterpriseLicensePath))
+	}
+
+	env := pluginSettings.ToEnv("GF_PLUGIN", hostEnv)
+
 	pluginLogger := m.logger.New("pluginId", descriptor.pluginID)
 	plugin := &BackendPlugin{
 		id:             descriptor.pluginID,
 		executablePath: descriptor.executablePath,
 		managed:        descriptor.managed,
 		clientFactory: func() *plugin.Client {
-			return plugin.NewClient(newClientConfig(descriptor.executablePath, pluginLogger, descriptor.versionedPlugins))
+			return plugin.NewClient(newClientConfig(descriptor.executablePath, env, pluginLogger, descriptor.versionedPlugins))
 		},
 		startFns: descriptor.startFns,
 		logger:   pluginLogger,

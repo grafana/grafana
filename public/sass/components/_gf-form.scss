@@ -135,6 +135,10 @@ $input-border: 1px solid $input-border-color;
     border: $panel-border;
   }
 
+  &--justify-left {
+    justify-content: left;
+  }
+
   &--btn {
     border: none;
     border-radius: $border-radius;

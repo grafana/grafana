@@ -32,11 +32,12 @@ export const InspectHeader: FC<Props> = ({
   return (
     <div className={styles.header}>
       <div className={styles.actions}>
-        <IconButton name="angle-left" size="xl" onClick={onToggleExpand} surface="header" />
+        {!isExpanded && <IconButton name="angle-left" size="xl" onClick={onToggleExpand} surface="header" />}
+        {isExpanded && <IconButton name="angle-right" size="xl" onClick={onToggleExpand} surface="header" />}
         <IconButton name="times" size="xl" onClick={onClose} surface="header" />
       </div>
       <div className={styles.titleWrapper}>
-        <h3>{panel.title}</h3>
+        <h3>{panel.title || 'Panel inspect'}</h3>
         <div className="muted">{formatStats(panelData)}</div>
       </div>
       <TabsBar className={styles.tabsBar}>

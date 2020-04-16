@@ -4,9 +4,9 @@ import _ from 'lodash';
 // Components
 import { EditorTabBody, EditorToolbarView } from './EditorTabBody';
 import { DataSourcePicker } from 'app/core/components/Select/DataSourcePicker';
-import { QueryInspector } from './QueryInspector';
 import { QueryOptions } from './QueryOptions';
 import { PanelOptionsGroup } from '@grafana/ui';
+import { getLocationSrv } from '@grafana/runtime';
 import { QueryEditorRows } from './QueryEditorRows';
 // Services
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
@@ -119,9 +119,12 @@ export class QueriesTab extends PureComponent<Props, State> {
     });
   };
 
-  renderQueryInspector = () => {
+  openQueryInspector = () => {
     const { panel } = this.props;
-    return <QueryInspector panel={panel} />;
+    getLocationSrv().update({
+      query: { inspect: panel.id, inspectTab: 'query' },
+      partial: true,
+    });
   };
 
   renderHelp = () => {
@@ -165,7 +168,7 @@ export class QueriesTab extends PureComponent<Props, State> {
         <div className="flex-grow-1" />
         {showAddButton && (
           <button className="btn navbar-button" onClick={this.onAddQueryClick}>
-            Add Query
+            Add query
           </button>
         )}
         {isAddingMixed && this.renderMixedPicker()}
@@ -244,8 +247,8 @@ export class QueriesTab extends PureComponent<Props, State> {
   render() {
     const { scrollTop } = this.state;
     const queryInspector: EditorToolbarView = {
-      title: 'Query Inspector',
-      render: this.renderQueryInspector,
+      title: 'Query inspector',
+      onClick: this.openQueryInspector,
     };
 
     const dsHelp: EditorToolbarView = {
@@ -256,7 +259,7 @@ export class QueriesTab extends PureComponent<Props, State> {
 
     return (
       <EditorTabBody
-        heading="Query"
+        heading="Data source"
         renderToolbar={this.renderToolbar}
         toolbarItems={[queryInspector, dsHelp]}
         setScrollTop={this.setScrollTop}

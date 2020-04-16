@@ -2,7 +2,7 @@
 import React from 'react';
 import _ from 'lodash';
 import { LocationUpdate } from '@grafana/runtime';
-import { Icon, IconName } from '@grafana/ui';
+import { Icon, IconName, IconButton } from '@grafana/ui';
 import { e2e } from '@grafana/e2e';
 import { connect, MapDispatchToProps } from 'react-redux';
 // Utils
@@ -165,7 +165,7 @@ export class AddPanelWidgetUnconnected extends React.Component<Props, State> {
             <Icon name="panel-add" type="mono" size="xl" style={{ margin: '4px', marginRight: '8px' }} />
             <span className="add-panel-widget__title">New Panel</span>
             <button className="add-panel-widget__close" onClick={this.handleCloseAddPanel}>
-              <Icon name="times" />
+              <IconButton name="times" />
             </button>
           </div>
           <div className="add-panel-widget__btn-container">
