@@ -37,6 +37,7 @@ export const useSearch: UseSearch = (query, reducer, params) => {
 
   useDebounce(search, 300, [query, folderUid, queryParsing]);
 
+  // TODO as possible improvement, show spinner after expanding section while items are fetching
   const onToggleSection = (section: DashboardSection) => {
     if (hasId(section.title) && !section.items.length) {
       backendSrv.search({ ...query, folderIds: [section.id] }).then(items => {
