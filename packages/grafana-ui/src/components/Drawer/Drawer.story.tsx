@@ -6,7 +6,7 @@ import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import mdx from './Drawer.mdx';
 
 export default {
-  title: 'General/Drawer',
+  title: 'Overlays/Drawer',
   component: Drawer,
   decorators: [withCenteredStory],
   parameters: {

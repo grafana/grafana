@@ -7,7 +7,7 @@ import { SecretFormField } from './SecretFormField';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { UseState } from '../../utils/storybook/UseState';
 
-const SecretFormFieldStories = storiesOf('General/SecretFormField/SecretFormField', module);
+const SecretFormFieldStories = storiesOf('Forms/SecretFormField', module);
 
 SecretFormFieldStories.addDecorator(withCenteredStory);
 const getSecretFormFieldKnobs = () => {
