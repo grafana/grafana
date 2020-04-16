@@ -267,15 +267,6 @@
     link: /enterprise/license-expiration/
   - name: Export dashboard as PDF
     link: /enterprise/export-pdf/
-- name: Guides
-  link: /tutorials/
-  children:
-  - name: Run Grafana behind a reverse proxy
-    link: /installation/behind_proxy/
-  - name: Run Grafana with IIS Reverse Proxy on Windows
-    link: /tutorials/iis/
-  - name: Integrate Hubot and Grafana
-    link: /tutorials/hubot_howto/
 - name: Plugins
   link: /plugins/
   children:

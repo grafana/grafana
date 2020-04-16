@@ -4,7 +4,6 @@ import (
 	"strconv"
 
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/rendering"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/util"
@@ -213,7 +212,7 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *models.ReqContext) (map[string]i
 			"licenseUrl": hs.License.LicenseURL(c.SignedInUser),
 		},
 		"featureToggles":    hs.Cfg.FeatureToggles,
-		"phantomJSRenderer": rendering.IsPhantomJSEnabled,
+		"rendererAvailable": hs.RenderService.IsAvailable(),
 	}
 
 	return jsonObj, nil

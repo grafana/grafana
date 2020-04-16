@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Span, filterSpans } from '@jaegertracing/jaeger-ui-components';
 
 /**
@@ -7,9 +7,9 @@ import { Span, filterSpans } from '@jaegertracing/jaeger-ui-components';
  */
 export function useSearch(spans?: Span[]) {
   const [search, setSearch] = useState('');
-  let spanFindMatches: Set<string> | undefined;
-  if (search && spans) {
-    spanFindMatches = filterSpans(search, spans);
-  }
+  const spanFindMatches: Set<string> | undefined = useMemo(() => {
+    return search && spans ? filterSpans(search, spans) : undefined;
+  }, [search, spans]);
+
   return { search, setSearch, spanFindMatches };
 }
