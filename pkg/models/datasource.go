@@ -29,7 +29,8 @@ const (
 
 var (
 	ErrDataSourceNotFound                = errors.New("Data source not found")
-	ErrDataSourceNameExists              = errors.New("Data source with same name already exists")
+	ErrDataSourceNameExists              = errors.New("Data source with the same name already exists")
+	ErrDataSourceUidExists               = errors.New("Data source with the same uid already exists")
 	ErrDataSourceUpdatingOldVersion      = errors.New("Trying to update old version of datasource")
 	ErrDatasourceIsReadOnly              = errors.New("Data source is readonly. Can only be updated from configuration")
 	ErrDataSourceAccessDenied            = errors.New("Data source access denied")

@@ -2,6 +2,7 @@ package sqlstore
 
 import (
 	"github.com/grafana/grafana/pkg/util/errutil"
+	"strings"
 	"time"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
@@ -134,6 +135,9 @@ func AddDataSource(cmd *models.AddDataSourceCommand) error {
 		}
 
 		if _, err := sess.Insert(ds); err != nil {
+			if dialect.IsUniqueConstraintViolation(err) && strings.Contains(dialect.ErrorMessage(err), "uid") {
+				return models.ErrDataSourceUidExists
+			}
 			return err
 		}
 		if err := updateIsDefaultFlag(ds, sess); err != nil {
@@ -160,14 +164,6 @@ func UpdateDataSource(cmd *models.UpdateDataSourceCommand) error {
 	return inTransaction(func(sess *DBSession) error {
 		if cmd.JsonData == nil {
 			cmd.JsonData = simplejson.New()
-		}
-
-		if cmd.Uid == "" {
-			uid, err := generateNewDatasourceUid(sess, cmd.OrgId)
-			if err != nil {
-				return errutil.Wrapf(err, "Failed to generate Uid for Datasource %s", cmd.Name)
-			}
-			cmd.Uid = uid
 		}
 
 		ds := &models.DataSource{
@@ -243,5 +239,5 @@ func generateNewDatasourceUid(sess *DBSession, orgId int64) (string, error) {
 		}
 	}
 
-	return "", models.ErrDashboardFailedGenerateUniqueUid
+	return "", models.ErrDataSourceFailedGenerateUniqueUid
 }

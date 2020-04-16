@@ -136,7 +136,7 @@ func addDataSourceMigration(mg *Migrator) {
 
 	// add column Uid column for linking
 	mg.AddMigration("Add uid column", NewAddColumnMigration(tableV2, &Column{
-		Name: "uid", Type: DB_Text, Nullable: false, Default: "0",
+		Name: "uid", Type: DB_NVarchar, Length: 40, Nullable: false, Default: "0",
 	}))
 
 	// Initialize as id as that is unique already
