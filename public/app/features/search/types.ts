@@ -79,7 +79,7 @@ export interface DashboardQuery {
 export type SearchReducer<S> = [S, Dispatch<SearchAction>];
 interface UseSearchParams {
   queryParsing?: boolean;
-  searchCallback?: (folderUid: string) => any;
+  searchCallback?: (folderUid: string | undefined) => any;
   folderUid?: string;
 }
 

@@ -15,14 +15,14 @@ import { useSearch } from './useSearch';
 export const useManageDashboards = (
   query: DashboardQuery,
   state: Partial<ManageDashboardsState> = {},
-  folderUid: string
+  folderUid?: string
 ) => {
   const reducer = useReducer(manageDashboardsReducer, {
     ...manageDashboardsState,
     ...state,
   });
 
-  const searchCallback = (folderUid: string) => {
+  const searchCallback = (folderUid: string | undefined) => {
     if (folderUid) {
       backendSrv.getFolderByUid(folderUid).then(folder => {
         dispatch({ type: TOGGLE_CAN_SAVE, payload: folder.canSave });

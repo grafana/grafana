@@ -60,7 +60,7 @@ export const SearchResultsFilter: FC<Props> = ({
           <Select
             size="sm"
             placeholder="Filter by starred"
-            key={starredFilterOptions.find(f => f.value === selectedStarredFilter).label}
+            key={starredFilterOptions?.find(f => f.value === selectedStarredFilter)?.label}
             options={starredFilterOptions}
             onChange={onStarredFilterChange}
           />

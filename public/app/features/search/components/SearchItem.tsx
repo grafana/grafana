@@ -49,7 +49,9 @@ export const SearchItem: FC<Props> = ({ item, editable, onToggleChecked, onTagSe
   const toggleItem = useCallback(
     (event: React.MouseEvent) => {
       event.preventDefault();
-      onToggleChecked(item);
+      if (onToggleChecked) {
+        onToggleChecked(item);
+      }
     },
     [item]
   );

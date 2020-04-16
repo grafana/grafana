@@ -13,7 +13,7 @@ export interface Props {
   loading?: boolean;
   onTagSelected: (name: string) => any;
   onToggleChecked?: OnToggleChecked;
-  onToggleSection?: (section: DashboardSection) => void;
+  onToggleSection: (section: DashboardSection) => void;
   results: DashboardSection[] | undefined;
 }
 
@@ -96,7 +96,9 @@ const SectionHeader: FC<SectionHeaderProps> = ({ section, onSectionClick, editab
         onClick={(e: React.MouseEvent) => {
           e.preventDefault();
           e.stopPropagation();
-          onToggleChecked(section);
+          if (onToggleChecked) {
+            onToggleChecked(section);
+          }
         }}
       />
       <Icon className={styles.icon} name={section.icon as IconName} />
