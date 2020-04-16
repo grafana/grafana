@@ -34,9 +34,8 @@ export const queryReducer = (state: DashboardQuery, action: SearchAction) => {
       return { ...state, starred: action.payload };
     case REMOVE_STARRED:
       return { ...state, starred: false };
-
     case CLEAR_FILTERS:
-      return { ...state, query: '', tag: [] };
+      return { ...state, query: '', tag: [], starred: false };
     default:
       return state;
   }

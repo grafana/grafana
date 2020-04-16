@@ -46,14 +46,6 @@ export interface DashboardTag {
   count: number;
 }
 
-export interface SectionsState {
-  sections: DashboardSection[];
-  allChecked: boolean;
-  dashboardTags: DashboardTag[];
-}
-
-export type ItemClickWithEvent = (item: DashboardSectionItem | DashboardSection, event: any) => void;
-
 export interface SearchAction extends Action {
   payload?: any;
 }

@@ -1,11 +1,9 @@
-import { useEffect } from 'react';
 import { useDebounce } from 'react-use';
 import { SearchSrv } from 'app/core/services/search_srv';
 import { backendSrv } from 'app/core/services/backend_srv';
-import { getDashboardSrv } from '../../dashboard/services/DashboardSrv';
-import { FETCH_RESULTS, FETCH_ITEMS, TOGGLE_SECTION, SEARCH_START } from '../reducers/actionTypes';
+import { FETCH_RESULTS, FETCH_ITEMS, TOGGLE_SECTION } from '../reducers/actionTypes';
 import { DashboardSection, UseSearch } from '../types';
-import { parseQuery, hasId } from '../utils';
+import { hasId, getParsedQuery } from '../utils';
 
 const searchSrv = new SearchSrv();
 
@@ -22,18 +20,9 @@ export const useSearch: UseSearch = (query, reducer, params) => {
   const [state, dispatch] = reducer;
 
   const search = () => {
-    let folderIds: number[] = [];
-    let q = query;
-    if (queryParsing) {
-      if (parseQuery(query.query).folder === 'current') {
-        const { folderId } = getDashboardSrv().getCurrent().meta;
-        if (folderId) {
-          folderIds.push(folderId);
-        }
-      }
-      q = { ...q, query: parseQuery(query.query).text as string, folderIds };
-    }
-    searchSrv.search(q).then(results => {
+    const parsedQuery = getParsedQuery(query, queryParsing);
+
+    searchSrv.search(parsedQuery).then(results => {
       // Remove header for folder search
       if (query.folderIds.length === 1 && results.length) {
         results[0].hideHeader = true;
@@ -46,12 +35,7 @@ export const useSearch: UseSearch = (query, reducer, params) => {
     });
   };
 
-  // Need to dispatch the start action on tags change outside debounce, to avoid showing old results
-  useEffect(() => {
-    dispatch({ type: SEARCH_START });
-  }, [query.tag]);
-
-  useDebounce(search, 300, [query, folderUid]);
+  useDebounce(search, 300, [query, folderUid, queryParsing]);
 
   const onToggleSection = (section: DashboardSection) => {
     if (hasId(section.title) && !section.items.length) {

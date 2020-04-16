@@ -74,33 +74,31 @@ const getSectionStyles = stylesFactory((theme: GrafanaTheme) => {
 });
 
 interface SectionHeaderProps {
-  onToggleChecked?: OnToggleChecked;
   editable?: boolean;
   onSectionClick: (section: DashboardSection) => void;
+  onToggleChecked?: OnToggleChecked;
   section: DashboardSection;
 }
 
-const SectionHeader: FC<SectionHeaderProps> = ({ section, onSectionClick, editable = false, onToggleChecked }) => {
+const SectionHeader: FC<SectionHeaderProps> = ({ section, onSectionClick, onToggleChecked, editable = false }) => {
   const theme = useTheme();
   const styles = getSectionHeaderStyles(theme, section.selected);
 
-  const expandSection = () => {
+  const onSectionExpand = () => {
     onSectionClick(section);
   };
 
+  const onSectionChecked = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (onToggleChecked) {
+      onToggleChecked(section);
+    }
+  };
+
   return !section.hideHeader ? (
-    <div className={styles.wrapper} onClick={expandSection}>
-      <SearchCheckbox
-        editable={editable}
-        checked={section.checked}
-        onClick={(e: React.MouseEvent) => {
-          e.preventDefault();
-          e.stopPropagation();
-          if (onToggleChecked) {
-            onToggleChecked(section);
-          }
-        }}
-      />
+    <div className={styles.wrapper} onClick={onSectionExpand}>
+      <SearchCheckbox editable={editable} checked={section.checked} onClick={onSectionChecked} />
       <Icon className={styles.icon} name={section.icon as IconName} />
 
       <span className={styles.text}>{section.title}</span>

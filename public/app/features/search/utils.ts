@@ -1,6 +1,7 @@
-import { DashboardSection, DashboardSectionItem, SearchAction, UidsToDelete } from './types';
+import { DashboardQuery, DashboardSection, DashboardSectionItem, SearchAction, UidsToDelete } from './types';
 import { NO_ID_SECTIONS } from './constants';
 import { parse, SearchParserResult } from 'search-query-parser';
+import { getDashboardSrv } from '../dashboard/services/DashboardSrv';
 
 /**
  * Check if folder has id. Only Recent and Starred folders are the ones without
@@ -156,4 +157,26 @@ export const getCheckedUids = (sections: DashboardSection[]): UidsToDelete => {
       return { ...result, dashboards: getCheckedDashboardsUids(sections) };
     }
   }, emptyResults) as UidsToDelete;
+};
+
+/**
+ * When search is done within a dashboard folder, add folder id to the search query
+ * to narrow down the results to the folder
+ * @param query
+ * @param queryParsing
+ */
+export const getParsedQuery = (query: DashboardQuery, queryParsing = false) => {
+  if (!queryParsing) {
+    return query;
+  }
+
+  let folderIds: number[] = [];
+
+  if (parseQuery(query.query).folder === 'current') {
+    const { folderId } = getDashboardSrv().getCurrent().meta;
+    if (folderId) {
+      folderIds = [folderId];
+    }
+  }
+  return { ...query, query: parseQuery(query.query).text as string, folderIds };
 };

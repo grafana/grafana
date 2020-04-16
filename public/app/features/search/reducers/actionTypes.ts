@@ -1,5 +1,4 @@
 export const FETCH_RESULTS = 'FETCH_RESULTS';
-export const SEARCH_START = 'SEARCH_START';
 export const TOGGLE_SECTION = 'TOGGLE_SECTION';
 export const FETCH_ITEMS = 'FETCH_ITEMS';
 export const MOVE_SELECTION_UP = 'MOVE_SELECTION_UP';
