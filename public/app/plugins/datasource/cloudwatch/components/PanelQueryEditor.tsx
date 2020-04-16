@@ -15,7 +15,7 @@ interface State {
 }
 
 export class PanelQueryEditor extends PureComponent<Props, State> {
-  state: State = { queryMode: (this.props.query.mode as ExploreMode) ?? ExploreMode.Metrics };
+  state: State = { queryMode: (this.props.query.queryMode as ExploreMode) ?? ExploreMode.Metrics };
 
   onQueryModeChange(mode: ExploreMode) {
     this.setState({

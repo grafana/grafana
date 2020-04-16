@@ -1,7 +1,7 @@
 import { DataQuery, SelectableValue, DataSourceJsonData } from '@grafana/data';
 
 export interface CloudWatchMetricsQuery extends DataQuery {
-  mode: 'Metrics';
+  queryMode: 'Metrics';
 
   id: string;
   region: string;
@@ -33,7 +33,7 @@ export enum CloudWatchLogsQueryStatus {
 }
 
 export interface CloudWatchLogsQuery extends DataQuery {
-  mode: 'Logs';
+  queryMode: 'Logs';
 
   id: string;
   region: string;

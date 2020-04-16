@@ -178,6 +178,10 @@ export function guessFieldTypeFromNameAndValue(name: string, v: any): FieldType 
  * TODO: better Date/Time support!  Look for standard date strings?
  */
 export function guessFieldTypeFromValue(v: any): FieldType {
+  if (v instanceof Date || isDateTime(v)) {
+    return FieldType.time;
+  }
+
   if (isNumber(v)) {
     return FieldType.number;
   }
@@ -196,10 +200,6 @@ export function guessFieldTypeFromValue(v: any): FieldType {
 
   if (isBoolean(v)) {
     return FieldType.boolean;
-  }
-
-  if (v instanceof Date || isDateTime(v)) {
-    return FieldType.time;
   }
 
   return FieldType.other;
@@ -236,8 +236,8 @@ export function guessFieldTypeForField(field: Field): FieldType | undefined {
  * @param guessDefined Whether to guess types of fields with already defined types
  */
 export const guessFieldTypes = (series: DataFrame, guessDefined = false): DataFrame => {
-  for (let i = 0; i < series.fields.length; i++) {
-    if (!series.fields[i].type || guessDefined) {
+  for (const field of series.fields) {
+    if (!field.type || field.type === FieldType.other || guessDefined) {
       // Something is missing a type, return a modified copy
       return {
         ...series,

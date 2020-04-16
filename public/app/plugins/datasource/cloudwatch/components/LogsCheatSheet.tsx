@@ -133,6 +133,6 @@ export default class LogsCheatSheet extends PureComponent<ExploreStartPageProps,
   render() {
     const { exploreMode } = this.props;
 
-    return exploreMode === ExploreMode.Logs ? this.renderLogsCheatSheet() : <></>;
+    return exploreMode === ExploreMode.Logs && this.renderLogsCheatSheet();
   }
 }

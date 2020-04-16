@@ -11,6 +11,7 @@ import {
   BracesPlugin,
   Select,
   MultiSelect,
+  Token,
 } from '@grafana/ui';
 
 // Utils & Services
@@ -19,12 +20,15 @@ import { Plugin, Node } from 'slate';
 import syntax from '../syntax';
 
 // Types
-import { ExploreQueryFieldProps, AbsoluteTimeRange, SelectableValue } from '@grafana/data';
+import { ExploreQueryFieldProps, AbsoluteTimeRange, SelectableValue, ExploreMode } from '@grafana/data';
 import { CloudWatchQuery, CloudWatchLogsQuery } from '../types';
 import { CloudWatchDatasource } from '../datasource';
 import Prism, { Grammar } from 'prismjs';
 import { CloudWatchLanguageProvider } from '../language_provider';
 import { css } from 'emotion';
+import { ExploreId } from 'app/types';
+import { dispatch } from 'app/store/store';
+import { changeModeAction } from 'app/features/explore/state/actionTypes';
 
 export interface CloudWatchLogsQueryFieldProps extends ExploreQueryFieldProps<CloudWatchDatasource, CloudWatchQuery> {
   absoluteRange: AbsoluteTimeRange;
@@ -32,6 +36,7 @@ export interface CloudWatchLogsQueryFieldProps extends ExploreQueryFieldProps<Cl
   ExtraFieldElement?: ReactNode;
   syntaxLoaded: boolean;
   syntax: Grammar;
+  exploreId: ExploreId;
 }
 
 const containerClass = css`
@@ -49,6 +54,13 @@ interface State {
   loadingLogGroups: boolean;
   regions: Array<SelectableValue<string>>;
   selectedRegion: SelectableValue<string>;
+  hint: {
+    message: string;
+    fix: {
+      label: string;
+      action: () => void;
+    };
+  };
 }
 
 export class CloudWatchLogsQueryField extends React.PureComponent<CloudWatchLogsQueryFieldProps, State> {
@@ -68,6 +80,7 @@ export class CloudWatchLogsQueryField extends React.PureComponent<CloudWatchLogs
         }
       : { label: 'default', value: 'default', text: 'default' },
     loadingLogGroups: false,
+    hint: undefined,
   };
 
   plugins: Plugin[];
@@ -141,6 +154,8 @@ export class CloudWatchLogsQueryField extends React.PureComponent<CloudWatchLogs
         onRunQuery();
       }
     }
+
+    query.expression;
   };
 
   // loadAsyncOptions = async () => {
@@ -206,7 +221,7 @@ export class CloudWatchLogsQueryField extends React.PureComponent<CloudWatchLogs
   };
 
   onTypeahead = async (typeahead: TypeaheadInput): Promise<TypeaheadOutput> => {
-    const { datasource } = this.props;
+    const { datasource, exploreMode } = this.props;
     const { selectedLogGroups } = this.state;
 
     if (!datasource.languageProvider) {
@@ -223,13 +238,35 @@ export class CloudWatchLogsQueryField extends React.PureComponent<CloudWatchLogs
     );
 
     //console.log('handleTypeahead', wrapperClasses, text, prefix, nextChar, labelKey, result.context);
+    const tokens = editor.value.data.get('tokens');
+    const queryUsesStatsCommand = tokens.find(
+      (token: Token) => token.types.includes('query-command') && token.content.toLowerCase() === 'stats'
+    );
 
+    console.log(queryUsesStatsCommand, exploreMode);
+    if (queryUsesStatsCommand && exploreMode === ExploreMode.Logs) {
+      console.log('setting state');
+      this.setState({
+        hint: {
+          message: 'You are trying to run a stats query in Logs mode. ',
+          fix: {
+            label: 'Switch to Metrics mode.',
+            action: this.switchToMetrics,
+          },
+        },
+      });
+    }
     return result;
+  };
+
+  switchToMetrics = () => {
+    const { exploreId } = this.props;
+    dispatch(changeModeAction({ exploreId, mode: ExploreMode.Metrics }));
   };
 
   render() {
     const { ExtraFieldElement, data, query, syntaxLoaded, datasource } = this.props;
-    const { selectedLogGroups, availableLogGroups, regions, selectedRegion, loadingLogGroups } = this.state;
+    const { selectedLogGroups, availableLogGroups, regions, selectedRegion, loadingLogGroups, hint } = this.state;
 
     const showError = data && data.error && data.error.refId === query.refId;
     const cleanText = datasource.languageProvider ? datasource.languageProvider.cleanText : undefined;
@@ -260,6 +297,7 @@ export class CloudWatchLogsQueryField extends React.PureComponent<CloudWatchLogs
                 onChange={v => this.setSelectedRegion(v)}
                 width={9}
                 placeholder="Choose Region"
+                maxMenuHeight={500}
               />
             }
           />
@@ -304,12 +342,16 @@ export class CloudWatchLogsQueryField extends React.PureComponent<CloudWatchLogs
           </div>
           {ExtraFieldElement}
         </div>
-        {/* <div className="query-row-break">
-          <div>
-            Bytes Scanned: {queryStats['BytesScanned']} Records Matched: {queryStats['RecordsMatched']} Records Scanned:{' '}
-            {queryStats['RecordsScanned']}
+        {hint && (
+          <div className="query-row-break">
+            <div className="text-warning">
+              {hint.message}
+              <a className="text-link muted" onClick={hint.fix.action}>
+                {hint.fix.label}
+              </a>
+            </div>
           </div>
-        </div> */}
+        )}
         {showError ? (
           <div className="query-row-break">
             <div className="prom-query-field-info text-error">{data.error.message}</div>

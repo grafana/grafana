@@ -74,7 +74,7 @@ export class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery, CloudWa
   datasourceName: string;
   debouncedAlert: (datasourceName: string, region: string) => void;
   debouncedCustomAlert: (title: string, message: string) => void;
-  logQueries: Set<string>;
+  logQueries: Set<{ id: string; region: string }>;
   languageProvider: CloudWatchLanguageProvider;
 
   /** @ngInject */
@@ -91,7 +91,7 @@ export class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery, CloudWa
     this.standardStatistics = ['Average', 'Maximum', 'Minimum', 'Sum', 'SampleCount'];
     this.debouncedAlert = memoizedDebounce(displayAlert, AppNotificationTimeout.Error);
     this.debouncedCustomAlert = memoizedDebounce(displayCustomError, AppNotificationTimeout.Error);
-    this.logQueries = new Set<string>();
+    this.logQueries = new Set<{ id: string; region: string }>();
 
     this.languageProvider = new CloudWatchLanguageProvider(this);
   }
@@ -101,7 +101,7 @@ export class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery, CloudWa
 
     const firstTarget = options.targets[0];
 
-    if (firstTarget.mode === 'Logs') {
+    if (firstTarget.queryMode === 'Logs') {
       const queryParams = options.targets.map((target: CloudWatchLogsQuery) => ({
         queryString: target.expression,
         refId: target.refId,
@@ -112,13 +112,11 @@ export class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery, CloudWa
       return this.makeLogActionRequest('StartQuery', queryParams, options.scopedVars).pipe(
         mergeMap(dataFrames =>
           this.logsQuery(
-            dataFrames.map(dataFrame => {
-              return {
-                queryId: dataFrame.fields[0].values.get(0),
-                region: dataFrame.meta.custom['Region'] ?? 'default',
-                refId: dataFrame.refId,
-              };
-            })
+            dataFrames.map(dataFrame => ({
+              queryId: dataFrame.fields[0].values.get(0),
+              region: dataFrame.meta.custom['Region'] ?? 'default',
+              refId: dataFrame.refId,
+            }))
           )
         )
       );
@@ -128,7 +126,7 @@ export class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery, CloudWa
       .filter(
         item =>
           (item.id !== '' || item.hide !== true) &&
-          item.mode !== 'Logs' &&
+          item.queryMode !== 'Logs' &&
           ((!!item.region && !!item.namespace && !!item.metricName && !_.isEmpty(item.statistics)) ||
             item.expression?.length > 0)
       )
@@ -182,7 +180,7 @@ export class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery, CloudWa
 
   logsQuery(queryParams: Array<{ queryId: string; limit?: number; region: string }>): Observable<DataQueryResponse> {
     this.logQueries.clear();
-    queryParams.forEach(param => this.logQueries.add(param.queryId));
+    queryParams.forEach(param => this.logQueries.add({ id: param.queryId, region: param.region }));
 
     return withTeardown(
       this.makeLogActionRequest('GetQueryResults', queryParams).pipe(
@@ -202,7 +200,7 @@ export class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery, CloudWa
                 CloudWatchLogsQueryStatus.Failed,
               ].includes(dataframe.meta.custom['Status'])
             ) {
-              this.logQueries.delete(queryParams[i].queryId);
+              this.logQueries.delete({ id: queryParams[i].queryId, region: queryParams[i].region });
             }
           });
         }),
@@ -228,7 +226,9 @@ export class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery, CloudWa
     if (this.logQueries.size > 0) {
       this.makeLogActionRequest(
         'StopQuery',
-        [...this.logQueries.values()].map(queryId => ({ queryId }))
+        [...this.logQueries.values()].map(logQuery => ({ queryId: logQuery.id, region: logQuery.region })),
+        null,
+        false
       ).pipe(finalize(() => this.logQueries.clear()));
     }
   }
@@ -465,25 +465,35 @@ export class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery, CloudWa
     });
   }
 
-  makeLogActionRequest(subtype: LogAction, queryParams: any[], scopedVars?: any): Observable<DataFrame[]> {
+  makeLogActionRequest(
+    subtype: LogAction,
+    queryParams: any[],
+    scopedVars?: any,
+    makeReplacements = true
+  ): Observable<DataFrame[]> {
     const range = this.timeSrv.timeRange();
 
-    return from(
-      this.awsRequest(TSDB_QUERY_ENDPOINT, {
-        from: range.from.valueOf().toString(),
-        to: range.to.valueOf().toString(),
-        queries: queryParams.map((param: any) => ({
-          refId: 'A',
-          intervalMs: 1, // dummy
-          maxDataPoints: 1, // dummy
-          datasourceId: this.id,
-          type: 'logAction',
-          subtype: subtype,
-          region: this.replace(this.getActualRegion(this.defaultRegion), scopedVars, true, 'region'),
-          ...param,
-        })),
-      })
-    ).pipe(
+    const requestParams = {
+      from: range.from.valueOf().toString(),
+      to: range.to.valueOf().toString(),
+      queries: queryParams.map((param: any) => ({
+        refId: 'A',
+        intervalMs: 1, // dummy
+        maxDataPoints: 1, // dummy
+        datasourceId: this.id,
+        type: 'logAction',
+        subtype: subtype,
+        ...param,
+      })),
+    };
+
+    if (makeReplacements) {
+      requestParams.queries.forEach(
+        query => (query.region = this.replace(this.getActualRegion(this.defaultRegion), scopedVars, true, 'region'))
+      );
+    }
+
+    return from(this.awsRequest(TSDB_QUERY_ENDPOINT, requestParams)).pipe(
       map(response => resultsToDataFrames(response)),
       catchError(err => {
         if (err.data?.error) {
@@ -800,11 +810,17 @@ function withTeardown<T = any>(observable: Observable<T>, onUnsubscribe: () => v
 }
 
 function correctFrameTypes(frame: DataFrame): DataFrame {
-  const correctedFrame = guessFieldTypes(frame, true);
-  const timeField = correctedFrame.fields.find(field => field.name === '@timestamp');
-  if (timeField) {
-    timeField.type = FieldType.time;
-  }
+  frame.fields.forEach(field => {
+    if (field.type === FieldType.string) {
+      field.type = FieldType.other;
+    }
+  });
+
+  const correctedFrame = guessFieldTypes(frame);
+  // const timeField = correctedFrame.fields.find(field => field.name === '@timestamp');
+  // if (timeField) {
+  //   timeField.type = FieldType.time;
+  // }
 
   return correctedFrame;
 }

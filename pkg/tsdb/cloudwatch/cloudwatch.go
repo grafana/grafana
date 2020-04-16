@@ -37,6 +37,8 @@ type DatasourceInfo struct {
 	SecretKey string
 }
 
+const CLOUDWATCH_TS_FORMAT = "2006-01-02 15:04:05.000"
+
 func (e *CloudWatchExecutor) getLogsClient(region string) (*cloudwatchlogs.CloudWatchLogs, error) {
 	e.mux.Lock()
 	defer e.mux.Unlock()
@@ -214,9 +216,8 @@ func queryResultsToTimeseries(results *cloudwatchlogs.GetQueryResultsOutput) (ts
 		}
 	}
 
-	timestampFormat := "2006-01-02 15:04:05.000"
 	for _, row := range results.Results {
-		timePoint, err := time.Parse(timestampFormat, *row[timeColIndex].Value)
+		timePoint, err := time.Parse(CLOUDWATCH_TS_FORMAT, *row[timeColIndex].Value)
 
 		if err != nil {
 			return nil, err
