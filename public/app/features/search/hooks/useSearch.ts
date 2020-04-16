@@ -1,8 +1,9 @@
+import { useEffect } from 'react';
 import { useDebounce } from 'react-use';
 import { SearchSrv } from 'app/core/services/search_srv';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { getDashboardSrv } from '../../dashboard/services/DashboardSrv';
-import { FETCH_RESULTS, FETCH_ITEMS, TOGGLE_SECTION } from '../reducers/actionTypes';
+import { FETCH_RESULTS, FETCH_ITEMS, TOGGLE_SECTION, SEARCH_START } from '../reducers/actionTypes';
 import { DashboardSection, UseSearch } from '../types';
 import { parseQuery, hasId } from '../utils';
 
@@ -44,6 +45,11 @@ export const useSearch: UseSearch = (query, reducer, params) => {
       }
     });
   };
+
+  // Need to dispatch the start action on tags change outside debounce, to avoid showing old results
+  useEffect(() => {
+    dispatch({ type: SEARCH_START });
+  }, [query.tag]);
 
   useDebounce(search, 300, [query, folderUid]);
 

@@ -99,28 +99,28 @@ export const ManageDashboards: FC<Props> = ({ folderId, folderUid }) => {
       )}
 
       <div className="search-results">
-        <SearchResultsFilter
-          allChecked={allChecked}
-          canDelete={canDelete}
-          canMove={canMove}
-          deleteItem={onItemDelete}
-          moveTo={onMoveTo}
-          onToggleAllChecked={onToggleAllChecked}
-          onStarredFilterChange={onStarredFilterChange}
-          onTagFilterChange={onTagFilterChange}
-          selectedStarredFilter={query.starred}
-          selectedTagFilter={query.tag}
-        />
-        <div className="search-results-container">
-          <SearchResults
-            loading={loading}
-            results={results}
-            editable
-            onTagSelected={onTagAdd}
-            onToggleSection={onToggleSection}
-            onToggleChecked={onToggleChecked}
+        {results?.length > 0 && (
+          <SearchResultsFilter
+            allChecked={allChecked}
+            canDelete={canDelete}
+            canMove={canMove}
+            deleteItem={onItemDelete}
+            moveTo={onMoveTo}
+            onToggleAllChecked={onToggleAllChecked}
+            onStarredFilterChange={onStarredFilterChange}
+            onTagFilterChange={onTagFilterChange}
+            selectedStarredFilter={query.starred}
+            selectedTagFilter={query.tag}
           />
-        </div>
+        )}
+        <SearchResults
+          loading={loading}
+          results={results}
+          editable
+          onTagSelected={onTagAdd}
+          onToggleSection={onToggleSection}
+          onToggleChecked={onToggleChecked}
+        />
       </div>
       <ConfirmDeleteModal
         onDeleteItems={onDeleteItems}

@@ -49,15 +49,13 @@ export const DashboardSearch: FC<Props> = ({ onCloseSearch, payload = {} }) => {
       <div className="search-dropdown">
         <div className="search-dropdown__col_1">
           <CustomScrollbar>
-            <div className="search-results-container">
-              <SearchResults
-                results={results}
-                loading={loading}
-                onTagSelected={onTagAdd}
-                editable={false}
-                onToggleSection={onToggleSection}
-              />
-            </div>
+            <SearchResults
+              results={results}
+              loading={loading}
+              onTagSelected={onTagAdd}
+              editable={false}
+              onToggleSection={onToggleSection}
+            />
           </CustomScrollbar>
         </div>
         <div className="search-dropdown__col_2">
