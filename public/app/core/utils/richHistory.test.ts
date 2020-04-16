@@ -179,7 +179,6 @@ describe('createQueryHeading', () => {
 describe('createDataQuery', () => {
   it('should correctly create data query from rich history query', () => {
     const dataQuery = createDataQuery(mock.history[0], mock.queries[0], 0);
-    console.log(dataQuery);
     expect(dataQuery).toEqual({ datasource: 'datasource history name', expr: 'query3', refId: 'A' });
   });
 });
