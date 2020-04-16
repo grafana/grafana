@@ -41,19 +41,6 @@ RUN if [ `arch` = "x86_64" ]; then \
       rm -f /etc/ld.so.cache; \
     fi
 
-# PhantomJS
-RUN if [ `arch` = "x86_64" ]; then \
-      apk add --no-cache --virtual phantomjs-utils curl && \
-      cd /tmp && \
-      curl -Ls https://github.com/dustinblackman/phantomized/releases/download/2.1.1/dockerized-phantomjs.tar.gz | tar xz && \
-      cp -R lib lib64 / && \
-      cp -R usr/lib/x86_64-linux-gnu /usr/lib && \
-      cp -R usr/share/fonts /usr/share && \
-      cp -R etc/fonts /etc && \
-      rm -rf /tmp/* && \
-      apk del --no-cache phantomjs-utils; \
-    fi
-
 COPY --from=0 /tmp/grafana "$GF_PATHS_HOME"
 
 RUN mkdir -p "$GF_PATHS_HOME/.aws" && \

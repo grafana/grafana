@@ -48,7 +48,7 @@ IconButton.displayName = 'IconButton';
 function getHoverColor(theme: GrafanaTheme, surface: SurfaceType): string {
   switch (surface) {
     case 'body':
-      return theme.isLight ? theme.palette.gray95 : theme.palette.gray10;
+      return theme.isLight ? theme.palette.gray95 : theme.palette.gray15;
     case 'panel':
       return theme.isLight ? theme.palette.gray6 : theme.palette.gray15;
     case 'header':

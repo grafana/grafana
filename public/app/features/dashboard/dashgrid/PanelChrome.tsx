@@ -255,7 +255,7 @@ export class PanelChrome extends PureComponent<Props, State> {
     const { theme } = config;
 
     // This is only done to increase a counter that is used by backend
-    // image rendering (phantomjs/headless chrome) to know when to capture image
+    // image rendering to know when to capture image
     const loading = data.state;
     if (loading === LoadingState.Done) {
       profiler.renderingCompleted();

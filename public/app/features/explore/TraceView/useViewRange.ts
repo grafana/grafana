@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import { ViewRangeTimeUpdate, ViewRange } from '@jaegertracing/jaeger-ui-components';
 
 /**
@@ -12,16 +12,16 @@ export function useViewRange() {
     },
   });
 
-  function updateNextViewRangeTime(update: ViewRangeTimeUpdate) {
+  const updateNextViewRangeTime = useCallback(function updateNextViewRangeTime(update: ViewRangeTimeUpdate) {
     setViewRange(
       (prevRange): ViewRange => {
         const time = { ...prevRange.time, ...update };
         return { ...prevRange, time };
       }
     );
-  }
+  }, []);
 
-  function updateViewRangeTime(start: number, end: number) {
+  const updateViewRangeTime = useCallback(function updateViewRangeTime(start: number, end: number) {
     const current: [number, number] = [start, end];
     const time = { current };
     setViewRange(
@@ -29,7 +29,7 @@ export function useViewRange() {
         return { ...prevRange, time };
       }
     );
-  }
+  }, []);
 
   return { viewRange, updateViewRangeTime, updateNextViewRangeTime };
 }

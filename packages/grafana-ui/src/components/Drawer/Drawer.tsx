@@ -9,7 +9,7 @@ import { stylesFactory, useTheme } from '../../themes';
 export interface Props {
   children: ReactNode;
   /** Title shown at the top of the drawer */
-  title?: (() => JSX.Element) | string;
+  title?: JSX.Element | string;
   /** Should the Drawer be closable by clicking on the mask */
   closeOnMaskClick?: boolean;
   /** Render the drawer inside a container on the page */
@@ -98,7 +98,7 @@ export const Drawer: FC<Props> = ({
           </div>
         </div>
       )}
-      {typeof title === 'function' && title()}
+      {typeof title !== 'string' && title}
       <div className={drawerStyles.content}>
         {!scrollableContent ? children : <CustomScrollbar>{children}</CustomScrollbar>}
       </div>

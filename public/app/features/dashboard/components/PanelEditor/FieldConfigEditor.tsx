@@ -8,7 +8,7 @@ import {
   PanelPlugin,
   SelectableValue,
 } from '@grafana/data';
-import { Forms, fieldMatchersUI, ValuePicker, useTheme } from '@grafana/ui';
+import { fieldMatchersUI, ValuePicker, useTheme, Label, Field } from '@grafana/ui';
 import { getDataLinksVariableSuggestions } from '../../../panel/panellinks/link_srv';
 import { OverrideEditor } from './OverrideEditor';
 import { css } from 'emotion';
@@ -156,13 +156,13 @@ export const DefaultFieldConfigEditor: React.FC<Props> = ({ data, onChange, conf
         : (defaults as any)[item.path];
 
       const label = (
-        <Forms.Label description={item.description} category={item.category?.slice(1)}>
+        <Label description={item.description} category={item.category?.slice(1)}>
           {item.name}
-        </Forms.Label>
+        </Label>
       );
 
       return (
-        <Forms.Field label={label} key={`${item.id}/${item.isCustom}`}>
+        <Field label={label} key={`${item.id}/${item.isCustom}`}>
           <item.editor
             item={item}
             value={value}
@@ -172,7 +172,7 @@ export const DefaultFieldConfigEditor: React.FC<Props> = ({ data, onChange, conf
               getSuggestions: (scope?: VariableSuggestionsScope) => getDataLinksVariableSuggestions(data, scope),
             }}
           />
-        </Forms.Field>
+        </Field>
       );
     },
     [config]

@@ -135,6 +135,10 @@ $input-border: 1px solid $input-border-color;
     border: $panel-border;
   }
 
+  &--justify-left {
+    justify-content: left;
+  }
+
   &--btn {
     border: none;
     border-radius: $border-radius;
@@ -142,10 +146,6 @@ $input-border: 1px solid $input-border-color;
     &:hover {
       background: $list-item-hover-bg;
       color: $link-color;
-    }
-
-    .fa-caret-down {
-      padding-left: 4px;
     }
   }
 
@@ -386,7 +386,7 @@ $input-border: 1px solid $input-border-color;
   &--right-absolute {
     position: absolute;
     right: $spacer;
-    top: 10px;
+    top: 6px;
   }
 
   &--right-normal {

@@ -9,7 +9,12 @@ rm /bin/cp
 mv /usr/local/bin/cp /bin/cp
 
 sed -i -e 's/v[[:digit:]]\..*\//edge\//g' /etc/apk/repositories
-apk add nodejs npm yarn build-base openssh
+apk add nodejs npm yarn build-base openssh 
+
+#
+# Only relevant for testing, but cypress does not work with musl/alpine.
+#
+# apk add xvfb glib nss nspr gdk-pixbuf "gtk+3.0" pango atk cairo dbus-libs libxcomposite libxrender libxi libxtst libxrandr libxscrnsaver alsa-lib at-spi2-atk at-spi2-core cups-libs gcompat libc6-compat
 
 # Install Go
 filename="go1.14.linux-amd64.tar.gz"
