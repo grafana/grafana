@@ -3,8 +3,8 @@ import { connect } from 'react-redux';
 import { hot } from 'react-hot-loader';
 import { css, cx } from 'emotion';
 import { stylesFactory, useTheme, TextArea, Button, IconButton } from '@grafana/ui';
-
 import { GrafanaTheme, AppEvents, DataSourceApi } from '@grafana/data';
+import { getDataSourceSrv } from '@grafana/runtime';
 import { RichHistoryQuery, ExploreId } from 'app/types/explore';
 import { copyStringToClipboard, createUrlFromRichHistory, createDataQuery } from 'app/core/utils/richHistory';
 import appEvents from 'app/core/app_events';
@@ -41,7 +41,6 @@ const getStyles = stylesFactory((theme: GrafanaTheme, isRemoved: boolean) => {
       display: flex;
       flex-direction: column;
       border: 1px solid ${theme.colors.formInputBorder};
-      box-shadow: 0 1px 4px ${theme.colors.dropdownShadow};
       margin: ${theme.spacing.sm} 0;
       background-color: ${cardColor};
       border-radius: ${theme.border.radius.sm};
@@ -153,13 +152,18 @@ export function RichHistoryCard(props: Props) {
   const styles = getStyles(theme, isRemoved);
 
   const onRunQuery = async () => {
-    const dataQueries = query.queries.map((q, i) => createDataQuery(query, q, i));
+    let ds = datasourceInstance;
+    /**
+     * If running the query from different datasource,
+     * create DataQuery for that specific datasource and update datasource in Explore
+     **/
     if (query.datasourceName !== datasourceInstance?.name) {
+      ds = await getDataSourceSrv().get(query.datasourceName);
       await changeDatasource(exploreId, query.datasourceName);
-      setQueries(exploreId, dataQueries);
-    } else {
-      setQueries(exploreId, dataQueries);
     }
+
+    const dataQueries = query.queries.map((q, i) => createDataQuery(query, q, i, ds.getQueryFromDisplayText));
+    setQueries(exploreId, dataQueries);
   };
 
   const onCopyQuery = () => {
@@ -168,8 +172,18 @@ export function RichHistoryCard(props: Props) {
     appEvents.emit(AppEvents.alertSuccess, ['Query copied to clipboard']);
   };
 
-  const onCreateLink = () => {
-    const url = createUrlFromRichHistory(query);
+  const onCreateLink = async () => {
+    let ds = datasourceInstance;
+
+    /**
+     * If creating link for query with different datasource than currently used,
+     * get that datasource and use its getQueryFromDisplayText method (if it has it)
+     **/
+    if (query.datasourceName !== datasourceInstance?.name) {
+      ds = await getDataSourceSrv().get(query.datasourceName);
+    }
+
+    const url = createUrlFromRichHistory(query, ds?.getQueryFromDisplayText);
     copyStringToClipboard(url);
     appEvents.emit(AppEvents.alertSuccess, ['Link copied to clipboard']);
   };

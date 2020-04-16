@@ -36,8 +36,7 @@ export function addToRichHistory(
 ): any {
   const ts = Date.now();
   /* Save only queries, that are not falsy (e.g. empty strings, null) */
-  const queriesToSave = queries.filter(expr => Boolean(expr));
-
+  const queriesToSave = queries.filter(query => Boolean(query) && query !== '{}');
   const retentionPeriod = store.getObject(RICH_HISTORY_SETTING_KEYS.retentionPeriod, 7);
   const retentionPeriodLastTs = createRetentionPeriodBoundary(retentionPeriod, false);
 
@@ -153,15 +152,27 @@ export const copyStringToClipboard = (string: string) => {
   document.body.removeChild(el);
 };
 
-export const createUrlFromRichHistory = (query: RichHistoryQuery) => {
-  const queries = query.queries.map(query => ({ expr: query }));
+export const createUrlFromRichHistory = (query: RichHistoryQuery, getQueryFromDisplayText?: (q: string) => {}) => {
+  const queries = query.queries.map(q => {
+    if (getQueryFromDisplayText) {
+      return getQueryFromDisplayText(q);
+    }
+    return JSON.parse(q);
+  });
   const exploreState: ExploreUrlState = {
     /* Default range, as we are not saving timerange in rich history */
     range: { from: 'now-1h', to: 'now' },
     datasource: query.datasourceName,
     queries,
-    /* Default mode. In the future, we can also save the query mode */
-    mode: query.datasourceId === 'loki' ? ExploreMode.Logs : ExploreMode.Metrics,
+    /* Default mode is metrics. Exceptions are Loki (logs) and Jaeger (tracing) data sources.
+     * In the future, we can remove this as we are working on metrics & logs logic.
+     **/
+    mode:
+      query.datasourceId === 'loki'
+        ? ExploreMode.Logs
+        : query.datasourceId === 'jaeger'
+        ? ExploreMode.Tracing
+        : ExploreMode.Metrics,
     ui: {
       showingGraph: true,
       showingLogs: true,
@@ -216,7 +227,8 @@ export function createDateStringFromTs(ts: number) {
 }
 
 export function getQueryDisplayText(query: DataQuery): string {
-  return JSON.stringify(query);
+  const strippedQuery = _.omit(query, ['key', 'refId']);
+  return JSON.stringify(strippedQuery);
 }
 
 export function createQueryHeading(query: RichHistoryQuery, sortOrder: SortOrder) {
@@ -238,14 +250,21 @@ export function isParsable(string: string) {
   return true;
 }
 
-export function createDataQuery(query: RichHistoryQuery, queryString: string, index: number) {
+export function createDataQuery(
+  query: RichHistoryQuery,
+  queryString: string,
+  index: number,
+  getQueryFromString?: (queryString: string) => {}
+) {
   let dataQuery;
   const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-  isParsable(queryString)
-    ? (dataQuery = JSON.parse(queryString))
-    : (dataQuery = { expr: queryString, refId: letters[index], datasource: query.datasourceName });
+  if (getQueryFromString) {
+    dataQuery = getQueryFromString(queryString);
+  } else {
+    dataQuery = JSON.parse(queryString);
+  }
 
-  return dataQuery;
+  return { ...dataQuery, refId: letters[index], datasource: query.datasourceName };
 }
 
 export function mapQueriesToHeadings(query: RichHistoryQuery[], sortOrder: SortOrder) {
