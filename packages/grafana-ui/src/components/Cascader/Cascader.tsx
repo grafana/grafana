@@ -3,7 +3,6 @@ import { Icon } from '../Icon/Icon';
 import RCCascader from 'rc-cascader';
 
 import { Select } from '../Select/Select';
-import { FormInputSize } from '../Forms/types';
 import { Input } from '../Input/Input';
 import { SelectableValue } from '@grafana/data';
 import { css } from 'emotion';
@@ -17,7 +16,6 @@ interface CascaderProps {
   onSelect(val: string): void;
   /** Sets the width to a multiple of 8px. Should only be used with inline forms. Setting width of the container is preferred in other cases.*/
   width?: number;
-  size?: FormInputSize;
   initialValue?: string;
   allowCustomValue?: boolean;
   /** A function for formatting the message for custom value creation. Only applies when allowCustomValue is set to true*/
@@ -176,7 +174,7 @@ export class Cascader extends React.PureComponent<CascaderProps, CascaderState> 
   };
 
   render() {
-    const { size, allowCustomValue, placeholder, width } = this.props;
+    const { allowCustomValue, placeholder, width } = this.props;
     const { focusCascade, isSearching, searchableOptions, rcValue, activeLabel } = this.state;
 
     return (
@@ -189,7 +187,6 @@ export class Cascader extends React.PureComponent<CascaderProps, CascaderState> 
             onChange={this.onSelect}
             onBlur={this.onBlur}
             options={searchableOptions}
-            size={size}
             onCreateOption={this.onCreateOption}
             formatCreateLabel={this.props.formatCreateLabel}
             width={width}
@@ -210,7 +207,6 @@ export class Cascader extends React.PureComponent<CascaderProps, CascaderState> 
             <div className={disableDivFocus}>
               <Input
                 width={width}
-                size={size}
                 placeholder={placeholder}
                 onBlur={this.onBlurCascade}
                 value={activeLabel}

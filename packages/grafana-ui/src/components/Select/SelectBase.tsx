@@ -266,7 +266,7 @@ export function SelectBase<T>({
           }),
           container: () => ({
             position: 'relative',
-            width: width ? `${8 * width}px` : inputSizesPixels(size),
+            width: width ? `${8 * width}px` : '100%',
           }),
         }}
         className={cx('select-container')}

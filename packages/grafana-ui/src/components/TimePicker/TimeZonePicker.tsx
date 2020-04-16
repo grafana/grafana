@@ -5,12 +5,12 @@ import { FormInputSize } from '../Forms/types';
 
 interface Props {
   value: string;
-  size?: FormInputSize;
+  width?: number;
 
   onChange: (newValue: string) => void;
 }
 
-export const TimeZonePicker: FC<Props> = ({ onChange, value, size = 'md' }) => {
+export const TimeZonePicker: FC<Props> = ({ onChange, value, width }) => {
   const timeZoneGroups = getTimeZoneGroups();
 
   const groupOptions = timeZoneGroups.map(group => {
@@ -41,7 +41,7 @@ export const TimeZonePicker: FC<Props> = ({ onChange, value, size = 'md' }) => {
       options={groupOptions}
       initialValue={selectedValue?.value}
       onSelect={(newValue: string) => onChange(newValue)}
-      size={size}
+      width={width}
       placeholder="Select timezone"
     />
   );

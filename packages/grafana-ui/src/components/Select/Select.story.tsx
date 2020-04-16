@@ -88,7 +88,6 @@ export const basic = () => {
         onChange={v => {
           setValue(v);
         }}
-        size="md"
         {...getDynamicProps()}
       />
     </>
@@ -162,7 +161,6 @@ export const multiPlainValue = () => {
         onChange={v => {
           setValue(v.map((v: any) => v.value));
         }}
-        size="md"
         {...getDynamicProps()}
       />
     </>
@@ -180,7 +178,6 @@ export const multiSelect = () => {
         onChange={v => {
           setValue(v);
         }}
-        size="md"
         {...getDynamicProps()}
       />
     </>
@@ -198,7 +195,6 @@ export const multiSelectAsync = () => {
       onChange={v => {
         setValue(v);
       }}
-      size="md"
       allowCustomValue
       {...getDynamicProps()}
     />
@@ -215,7 +211,6 @@ export const buttonSelect = () => {
       onChange={v => {
         setValue(v);
       }}
-      size="md"
       allowCustomValue
       icon={icon}
       {...getDynamicProps()}
@@ -234,7 +229,6 @@ export const basicSelectAsync = () => {
       onChange={v => {
         setValue(v);
       }}
-      size="md"
       {...getDynamicProps()}
     />
   );
@@ -250,7 +244,6 @@ export const customizedControl = () => {
       onChange={v => {
         setValue(v);
       }}
-      size="md"
       renderControl={React.forwardRef(({ isOpen, value, ...otherProps }, ref) => {
         return (
           <Button {...otherProps} ref={ref}>
@@ -269,14 +262,13 @@ export const autoMenuPlacement = () => {
 
   return (
     <>
-      <div style={{ height: '95vh', display: 'flex', alignItems: 'flex-end' }}>
+      <div style={{ width: '100%', height: '95vh', display: 'flex', alignItems: 'flex-end' }}>
         <Select
           options={generateOptions()}
           value={value}
           onChange={v => {
             setValue(v);
           }}
-          size="md"
           {...getDynamicProps()}
         />
       </div>

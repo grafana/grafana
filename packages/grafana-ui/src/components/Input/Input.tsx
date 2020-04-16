@@ -1,11 +1,10 @@
 import React, { HTMLProps, ReactNode } from 'react';
 import { GrafanaTheme } from '@grafana/data';
 import { css, cx } from 'emotion';
-import { getFocusStyle, inputSizes, sharedInputStyle } from '../Forms/commonStyles';
+import { getFocusStyle, sharedInputStyle } from '../Forms/commonStyles';
 import { stylesFactory, useTheme } from '../../themes';
 import { Icon } from '../Icon/Icon';
 import { useClientRect } from '../../utils/useClientRect';
-import { FormInputSize } from '../Forms/types';
 
 export interface Props extends Omit<HTMLProps<HTMLInputElement>, 'prefix' | 'size'> {
   /** Sets the width to a multiple of 8px. Should only be used with inline forms. Setting width of the container is preferred in other cases.*/
@@ -22,7 +21,6 @@ export interface Props extends Omit<HTMLProps<HTMLInputElement>, 'prefix' | 'siz
   addonBefore?: ReactNode;
   /** Add a component as an addon after the input */
   addonAfter?: ReactNode;
-  size?: FormInputSize;
 }
 
 interface StyleDeps {
@@ -59,7 +57,7 @@ export const getInputStyles = stylesFactory(({ theme, invalid = false, width }: 
       css`
         label: input-wrapper;
         display: flex;
-        width: ${width ? `${8 * width}px` : 'auto'};
+        width: ${width ? `${8 * width}px` : '100%'};
         height: ${height};
         border-radius: ${borderRadius};
         &:hover {
@@ -216,18 +214,7 @@ export const getInputStyles = stylesFactory(({ theme, invalid = false, width }: 
 });
 
 export const Input = React.forwardRef<HTMLInputElement, Props>((props, ref) => {
-  const {
-    className,
-    addonAfter,
-    addonBefore,
-    prefix,
-    suffix,
-    invalid,
-    loading,
-    width = 0,
-    size = 'auto',
-    ...restProps
-  } = props;
+  const { className, addonAfter, addonBefore, prefix, suffix, invalid, loading, width = 0, ...restProps } = props;
   /**
    * Prefix & suffix are positioned absolutely within inputWrapper. We use client rects below to apply correct padding to the input
    * when prefix/suffix is larger than default (28px = 16px(icon) + 12px(left/right paddings)).
@@ -240,7 +227,7 @@ export const Input = React.forwardRef<HTMLInputElement, Props>((props, ref) => {
   const styles = getInputStyles({ theme, invalid: !!invalid, width });
 
   return (
-    <div className={cx(styles.wrapper, !(width || size === 'auto') && inputSizes()[size], className)}>
+    <div className={cx(styles.wrapper, className)}>
       {!!addonBefore && <div className={styles.addon}>{addonBefore}</div>}
 
       <div className={styles.inputWrapper}>
