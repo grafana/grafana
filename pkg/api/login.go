@@ -251,3 +251,12 @@ func (hs *HTTPServer) trySetEncryptedCookie(ctx *models.ReqContext, cookieName s
 
 	return nil
 }
+
+func (hs *HTTPServer) RedirectWithError(ctx *models.ReqContext, err error, v ...interface{}) {
+	ctx.Logger.Error(err.Error(), v...)
+	if err := hs.trySetEncryptedCookie(ctx, LoginErrorCookieName, err.Error(), 60); err != nil {
+		hs.log.Error("Failed to set encrypted cookie", "err", err)
+	}
+
+	ctx.Redirect(setting.AppSubUrl + "/login")
+}

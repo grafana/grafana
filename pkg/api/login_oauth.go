@@ -56,7 +56,7 @@ func (hs *HTTPServer) OAuthLogin(ctx *models.ReqContext) {
 	if errorParam != "" {
 		errorDesc := ctx.Query("error_description")
 		oauthLogger.Error("failed to login ", "error", errorParam, "errorDesc", errorDesc)
-		hs.redirectWithError(ctx, login.ErrProviderDeniedRequest, "error", errorParam, "errorDesc", errorDesc)
+		hs.RedirectWithError(ctx, login.ErrProviderDeniedRequest, "error", errorParam, "errorDesc", errorDesc)
 		return
 	}
 
@@ -151,7 +151,7 @@ func (hs *HTTPServer) OAuthLogin(ctx *models.ReqContext) {
 	userInfo, err := connect.UserInfo(client, token)
 	if err != nil {
 		if sErr, ok := err.(*social.Error); ok {
-			hs.redirectWithError(ctx, sErr)
+			hs.RedirectWithError(ctx, sErr)
 		} else {
 			ctx.Handle(500, fmt.Sprintf("login.OAuthLogin(get info from %s)", name), err)
 		}
@@ -162,13 +162,13 @@ func (hs *HTTPServer) OAuthLogin(ctx *models.ReqContext) {
 
 	// validate that we got at least an email address
 	if userInfo.Email == "" {
-		hs.redirectWithError(ctx, login.ErrNoEmail)
+		hs.RedirectWithError(ctx, login.ErrNoEmail)
 		return
 	}
 
 	// validate that the email is allowed to login to grafana
 	if !connect.IsEmailAllowed(userInfo.Email) {
-		hs.redirectWithError(ctx, login.ErrEmailNotAllowed)
+		hs.RedirectWithError(ctx, login.ErrEmailNotAllowed)
 		return
 	}
 
@@ -205,7 +205,7 @@ func (hs *HTTPServer) OAuthLogin(ctx *models.ReqContext) {
 
 	err = bus.Dispatch(cmd)
 	if err != nil {
-		hs.redirectWithError(ctx, err)
+		hs.RedirectWithError(ctx, err)
 		return
 	}
 
@@ -213,14 +213,14 @@ func (hs *HTTPServer) OAuthLogin(ctx *models.ReqContext) {
 	// just show incorrect user credentials error (see #17947)
 	if cmd.Result.IsDisabled {
 		oauthLogger.Warn("User is disabled", "user", cmd.Result.Login)
-		hs.redirectWithError(ctx, login.ErrInvalidCredentials)
+		hs.RedirectWithError(ctx, login.ErrInvalidCredentials)
 		return
 	}
 
 	// login
 	err = hs.loginUserWithUser(cmd.Result, ctx)
 	if err != nil {
-		hs.redirectWithError(ctx, err)
+		hs.RedirectWithError(ctx, err)
 		return
 	}
 
@@ -241,13 +241,4 @@ func (hs *HTTPServer) OAuthLogin(ctx *models.ReqContext) {
 func hashStatecode(code, seed string) string {
 	hashBytes := sha256.Sum256([]byte(code + setting.SecretKey + seed))
 	return hex.EncodeToString(hashBytes[:])
-}
-
-func (hs *HTTPServer) redirectWithError(ctx *models.ReqContext, err error, v ...interface{}) {
-	ctx.Logger.Error(err.Error(), v...)
-	if err := hs.trySetEncryptedCookie(ctx, LoginErrorCookieName, err.Error(), 60); err != nil {
-		oauthLogger.Error("Failed to set encrypted cookie", "err", err)
-	}
-
-	ctx.Redirect(setting.AppSubUrl + "/login")
 }
