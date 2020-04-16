@@ -1,8 +1,9 @@
 import React, { FC, useState } from 'react';
-import { contextSrv } from 'app/core/services/context_srv';
 import { css } from 'emotion';
 import { Icon, TagList, HorizontalGroup, stylesFactory, useTheme } from '@grafana/ui';
 import { GrafanaTheme } from '@grafana/data';
+import { contextSrv } from 'app/core/services/context_srv';
+import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
 import { ConfirmDeleteModal } from './ConfirmDeleteModal';
 import { MoveToFolderModal } from './MoveToFolderModal';
 import { useSearchQuery } from '../hooks/useSearchQuery';
@@ -59,6 +60,21 @@ export const ManageDashboards: FC<Props> = ({ folderId, folderUid }) => {
   const onItemDelete = () => {
     setIsDeleteModalOpen(true);
   };
+
+  if (canSave && folderId && !hasFilters && results.length === 0) {
+    return (
+      <EmptyListCTA
+        title="This folder doesn't have any dashboards yet"
+        buttonIcon="plus"
+        buttonTitle="Create Dashboard"
+        buttonLink={`dashboard/new?folderId=${folderId}`}
+        proTip="Add/move dashboards to your folder at ->"
+        proTipLink="dashboards"
+        proTipLinkTitle="Manage dashboards"
+        proTipTarget=""
+      />
+    );
+  }
 
   return (
     <div className="dashboard-list">
