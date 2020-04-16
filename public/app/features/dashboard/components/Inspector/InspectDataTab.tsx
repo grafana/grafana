@@ -5,7 +5,6 @@ import {
   toCSV,
   SelectableValue,
   DataTransformerID,
-  standardTransformers,
   transformDataFrame,
 } from '@grafana/data';
 import { Button, Select, Icon, Table, Field } from '@grafana/ui';
@@ -23,7 +22,7 @@ interface Props {
 interface State {
   transformId: DataTransformerID;
   dataFrameIndex: number;
-  transformationOptions: Array<SelectableValue<DataTransformerID>>;
+  transformationOptions: Array<SelectableValue<string>>;
 }
 
 export class InspectDataTab extends PureComponent<Props, State> {
