@@ -25,7 +25,7 @@ type DashboardProvisionerFactory func(string) (DashboardProvisioner, error)
 type Provisioner struct {
 	log         log.Logger
 	fileReaders []*FileReader
-	configs     []*DashboardsAsConfig
+	configs     []*config
 }
 
 // New returns a new DashboardProvisioner
@@ -94,13 +94,13 @@ func (provider *Provisioner) GetProvisionerResolvedPath(name string) string {
 func (provider *Provisioner) GetAllowUIUpdatesFromConfig(name string) bool {
 	for _, config := range provider.configs {
 		if config.Name == name {
-			return config.AllowUiUpdates
+			return config.AllowUIUpdates
 		}
 	}
 	return false
 }
 
-func getFileReaders(configs []*DashboardsAsConfig, logger log.Logger) ([]*FileReader, error) {
+func getFileReaders(configs []*config, logger log.Logger) ([]*FileReader, error) {
 	var readers []*FileReader
 
 	for _, config := range configs {
