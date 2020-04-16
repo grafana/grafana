@@ -16,9 +16,7 @@ import {
   SecretFormField,
   SeriesColorPickerPopoverWithTheme,
   UnitPicker,
-  Button,
   LinkButton,
-  Input,
   Icon,
   HorizontalGroup,
 } from '@grafana/ui';
