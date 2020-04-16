@@ -172,7 +172,6 @@
     "ngtemplate-loader": "2.0.1",
     "node-sass": "4.13.1",
     "optimize-css-assets-webpack-plugin": "5.0.3",
-    "phantomjs-prebuilt": "2.1.16",
     "pixelmatch": "5.1.0",
     "pngjs": "3.4.0",
     "postcss-browser-reporter": "0.6.0",
