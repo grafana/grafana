@@ -112,6 +112,10 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
     return query.expr;
   }
 
+  getQueryFromDisplayText(query: string) {
+    return { expr: query };
+  }
+
   _addTracingHeaders(httpOptions: PromQueryRequest, options: DataQueryRequest<PromQuery>) {
     httpOptions.headers = {};
     const proxyMode = !this.url.match(/^http/);

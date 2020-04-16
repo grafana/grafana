@@ -383,6 +383,10 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
     return query.expr;
   }
 
+  getQueryFromDisplayText(query: string) {
+    return { expr: query };
+  }
+
   async importQueries(queries: LokiQuery[], originMeta: PluginMeta): Promise<LokiQuery[]> {
     return this.languageProvider.importQueries(queries, originMeta.id);
   }

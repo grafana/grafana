@@ -83,6 +83,14 @@ export class JaegerDatasource extends DataSourceApi<JaegerQuery> {
     };
   }
 
+  getQueryDisplayText(query: JaegerQuery) {
+    return query.query;
+  }
+
+  getQueryFromDisplayText(query: string) {
+    return { query };
+  }
+
   private _request(apiUrl: string, data?: any, options?: DatasourceRequestOptions): Observable<Record<string, any>> {
     // Hack for proxying metadata requests
     const baseUrl = `/api/datasources/proxy/${this.instanceSettings.id}`;
