@@ -194,7 +194,8 @@ $input-border: 1px solid $input-border-color;
   @at-root textarea#{&} {
     overflow: auto;
     white-space: pre-wrap;
-    height: auto;
+    padding: 6px $space-sm;
+    min-height: $input-height;
   }
 
   // Unstyle the caret on `<select>`s in IE10+.
