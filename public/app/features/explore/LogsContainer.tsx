@@ -59,6 +59,7 @@ interface LogsContainerProps {
   absoluteRange: AbsoluteTimeRange;
   isPaused: boolean;
   splitOpen: typeof splitOpen;
+  showMoreLogs: () => void;
 }
 
 export class LogsContainer extends PureComponent<LogsContainerProps> {
@@ -132,6 +133,7 @@ export class LogsContainer extends PureComponent<LogsContainerProps> {
       width,
       isLive,
       exploreId,
+      showMoreLogs,
     } = this.props;
 
     return (
@@ -177,6 +179,9 @@ export class LogsContainer extends PureComponent<LogsContainerProps> {
               getRowContext={this.getLogRowContext}
               getFieldLinks={this.getFieldLinks}
             />
+            <button className="gf-form-label gf-form-label--btn" onClick={showMoreLogs}>
+              Show more logs
+            </button>
           </Collapse>
         </LogsCrossFadeTransition>
       </>
