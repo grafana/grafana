@@ -10,7 +10,7 @@ import memoizeOne from 'memoize-one';
 import store from 'app/core/store';
 
 // Components
-import { ErrorBoundaryAlert, stylesFactory } from '@grafana/ui';
+import { ErrorBoundaryAlert, stylesFactory, withTheme } from '@grafana/ui';
 import LogsContainer from './LogsContainer';
 import QueryRows from './QueryRows';
 import TableContainer from './TableContainer';
@@ -39,6 +39,7 @@ import {
   TimeZone,
   LoadingState,
   ExploreMode,
+  GrafanaTheme,
 } from '@grafana/data';
 
 import { ExploreId, ExploreItemState, ExploreUIState, ExploreUpdateState, ExploreUrlState } from 'app/types/explore';
@@ -61,8 +62,9 @@ import { scanStopAction } from './state/actionTypes';
 import { ExploreGraphPanel } from './ExploreGraphPanel';
 import { TraceView } from './TraceView/TraceView';
 import { SecondaryActions } from './SecondaryActions';
+import { compose } from 'redux';
 
-const getStyles = stylesFactory(() => {
+const getStyles = stylesFactory((theme: GrafanaTheme) => {
   return {
     logsMain: css`
       label: logsMain;
@@ -71,7 +73,14 @@ const getStyles = stylesFactory(() => {
       margin-top: 21px;
     `,
     button: css`
+      label: button;
       margin: 1em 4px 0 0;
+    `,
+    queryContainer: css`
+      label: queryContainer;
+      // Need to override normal css class and don't want to count on ordering of the classes in html.
+      height: auto !important;
+      padding: ${theme.panelPadding}px;
     `,
   };
 });
@@ -112,6 +121,7 @@ export interface ExploreProps {
   queryResponse: PanelData;
   originPanelId: number;
   addQueryRow: typeof addQueryRow;
+  theme: GrafanaTheme;
 }
 
 interface ExploreState {
@@ -291,10 +301,11 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
       queryResponse,
       syncedTimes,
       isLive,
+      theme,
     } = this.props;
     const { showRichHistory } = this.state;
     const exploreClass = split ? 'explore explore-split' : 'explore';
-    const styles = getStyles();
+    const styles = getStyles(theme);
     const StartPage = datasourceInstance?.components?.ExploreStartPage;
     const showStartPage = !queryResponse || queryResponse.state === LoadingState.NotStarted;
 
@@ -308,18 +319,16 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
         {datasourceMissing ? this.renderEmptyState() : null}
         {datasourceInstance && (
           <div className="explore-container">
-            <div className="panel-container">
-              <div className="panel-content">
-                <QueryRows exploreEvents={this.exploreEvents} exploreId={exploreId} queryKeys={queryKeys} />
-                <SecondaryActions
-                  addQueryRowButtonDisabled={isLive}
-                  // We cannot show multiple traces at the same time right now so we do not show add query button.
-                  addQueryRowButtonHidden={mode === ExploreMode.Tracing}
-                  richHistoryButtonActive={showRichHistory}
-                  onClickAddQueryRowButton={this.onClickAddQueryRowButton}
-                  onClickRichHistoryButton={this.toggleShowRichHistory}
-                />
-              </div>
+            <div className={cx('panel-container', styles.queryContainer)}>
+              <QueryRows exploreEvents={this.exploreEvents} exploreId={exploreId} queryKeys={queryKeys} />
+              <SecondaryActions
+                addQueryRowButtonDisabled={isLive}
+                // We cannot show multiple traces at the same time right now so we do not show add query button.
+                addQueryRowButtonHidden={mode === ExploreMode.Tracing}
+                richHistoryButtonActive={showRichHistory}
+                onClickAddQueryRowButton={this.onClickAddQueryRowButton}
+                onClickRichHistoryButton={this.toggleShowRichHistory}
+              />
             </div>
             <ErrorContainer queryError={queryError} />
             <AutoSizer onResize={this.onResize} disableHeight>
@@ -491,7 +500,8 @@ const mapDispatchToProps: Partial<ExploreProps> = {
   addQueryRow,
 };
 
-export default hot(module)(
-  // @ts-ignore
-  connect(mapStateToProps, mapDispatchToProps)(Explore)
-) as React.ComponentType<{ exploreId: ExploreId }>;
+export default compose(
+  hot(module),
+  connect(mapStateToProps, mapDispatchToProps),
+  withTheme
+)(Explore) as React.ComponentType<{ exploreId: ExploreId }>;
