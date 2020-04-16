@@ -86,9 +86,10 @@ export function RichHistoryStarredTab(props: Props) {
   const listOfDatasourceFilters = datasourceFilters?.map(d => d.value);
 
   const starredQueries = queries.filter(q => q.starred === true);
-  const starredQueriesFilteredByDatasource = datasourceFilters
-    ? starredQueries?.filter(q => listOfDatasourceFilters?.includes(q.datasourceName))
-    : starredQueries;
+  const starredQueriesFilteredByDatasource =
+    listOfDatasourceFilters?.length > 0
+      ? starredQueries?.filter(q => listOfDatasourceFilters?.includes(q.datasourceName))
+      : starredQueries;
 
   const sortedStarredQueries = sortQueries(starredQueriesFilteredByDatasource, sortOrder);
 

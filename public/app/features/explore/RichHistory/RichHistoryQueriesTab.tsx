@@ -140,9 +140,10 @@ export function RichHistoryQueriesTab(props: Props) {
   const listOfDatasources = createDatasourcesList(datasourcesRetrievedFromQueryHistory);
 
   const listOfDatasourceFilters = datasourceFilters?.map(d => d.value);
-  const filteredQueriesByDatasource = datasourceFilters
-    ? queries?.filter(q => listOfDatasourceFilters?.includes(q.datasourceName))
-    : queries;
+  const filteredQueriesByDatasource =
+    listOfDatasourceFilters?.length > 0
+      ? queries?.filter(q => listOfDatasourceFilters?.includes(q.datasourceName))
+      : queries;
 
   const sortedQueries = sortQueries(filteredQueriesByDatasource, sortOrder);
   const queriesWithinSelectedTimeline = sortedQueries?.filter(
