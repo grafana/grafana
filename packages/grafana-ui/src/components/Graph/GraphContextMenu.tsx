@@ -4,14 +4,12 @@ import { ThemeContext } from '../../themes';
 import { SeriesIcon } from '../Legend/SeriesIcon';
 import { GraphDimensions } from './GraphTooltip/types';
 import {
-  DateTimeInput,
   FlotDataPoint,
   getValueFromDimension,
   getDisplayProcessor,
   formattedValueToString,
   Dimensions,
-  MS_DATE_TIME_FORMAT,
-  DEFAULT_DATE_TIME_FORMAT,
+  DateTimeFormatter,
 } from '@grafana/data';
 import { css } from 'emotion';
 
@@ -19,14 +17,14 @@ export type ContextDimensions<T extends Dimensions = any> = { [key in keyof T]: 
 
 export type GraphContextMenuProps = ContextMenuProps & {
   getContextMenuSource: () => FlotDataPoint | null;
-  formatSourceDate: (date: DateTimeInput, format?: string) => string;
+  dateTimeFormatter: DateTimeFormatter;
   dimensions?: GraphDimensions;
   contextDimensions?: ContextDimensions;
 };
 
 export const GraphContextMenu: React.FC<GraphContextMenuProps> = ({
   getContextMenuSource,
-  formatSourceDate,
+  dateTimeFormatter,
   items,
   dimensions,
   contextDimensions,
@@ -60,7 +58,6 @@ export const GraphContextMenu: React.FC<GraphContextMenuProps> = ({
       value = display(valueFromDimensions);
     }
 
-    const timeFormat = source.series.hasMsResolution ? MS_DATE_TIME_FORMAT : DEFAULT_DATE_TIME_FORMAT;
     return (
       <div
         className={css`
@@ -69,7 +66,7 @@ export const GraphContextMenu: React.FC<GraphContextMenuProps> = ({
           z-index: ${theme.zIndex.tooltip};
         `}
       >
-        <strong>{formatSourceDate(source.datapoint[0], timeFormat)}</strong>
+        <strong>{dateTimeFormatter.formatDefault(source.datapoint[0], source.series.hasMsResolution)}</strong>
         <div>
           <SeriesIcon color={source.series.color} />
           <span

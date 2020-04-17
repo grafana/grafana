@@ -1,18 +1,19 @@
 /* eslint-disable id-blacklist, no-restricted-imports, @typescript-eslint/ban-types */
-import { TimeZone } from '../types';
+import { TimeZone, DefaultTimeZone } from '../types';
 import moment, { MomentInput, Moment } from 'moment-timezone';
 import { DateTimeInput } from './moment_wrapper';
-import { DEFAULT_DATE_TIME_FORMAT } from './formats';
+import { DEFAULT_DATE_TIME_FORMAT, MS_DATE_TIME_FORMAT } from './formats';
 
-export type TimeZoneResolver = () => TimeZone;
+export type TimeZoneResolver = () => TimeZone | undefined;
 
 export interface DateTimeFormatter {
   format(dateInUtc: DateTimeInput, format?: string): string;
   formatISO(dateInUtc: DateTimeInput): string;
+  formatDefault(dateInUtc: DateTimeInput, includeMS: boolean): string;
   formatDistanceToNow(dateInUtc: DateTimeInput): string;
 }
 
-let defaultTimeZoneResolver = () => '';
+let defaultTimeZoneResolver: TimeZoneResolver = () => DefaultTimeZone;
 
 export const setTimeZoneResolver = (resolver: TimeZoneResolver) => {
   defaultTimeZoneResolver = resolver ?? defaultTimeZoneResolver;
@@ -28,6 +29,11 @@ class DateTimeFormatterWithTimeZone implements DateTimeFormatter {
     return this.toTz(dateInUtc as MomentInput).format(format);
   }
 
+  formatDefault(dateInUtc: DateTimeInput, includeMS: boolean): string {
+    const format = includeMS ? MS_DATE_TIME_FORMAT : DEFAULT_DATE_TIME_FORMAT;
+    return this.toTz(dateInUtc as MomentInput).format(format);
+  }
+
   formatISO(dateInUtc: DateTimeInput): string {
     return this.toTz(dateInUtc as MomentInput).format();
   }
@@ -37,13 +43,12 @@ class DateTimeFormatterWithTimeZone implements DateTimeFormatter {
   }
 
   private toTz(dateInUtc: MomentInput): Moment {
-    const timeZone = this.getTimeZone() ?? defaultTimeZoneResolver();
+    const timeZone = this.getTimeZone() ?? defaultTimeZoneResolver() ?? DefaultTimeZone;
 
     switch (timeZone) {
       case 'utc':
         return moment.utc(dateInUtc);
       case '':
-      case undefined:
       case 'browser':
         return moment.utc(dateInUtc).local();
       default:

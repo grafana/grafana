@@ -12,14 +12,7 @@ import { axesEditorComponent } from './axes_editor';
 import config from 'app/core/config';
 import TimeSeries from 'app/core/time_series2';
 import { getProcessedDataFrames } from 'app/features/dashboard/state/runRequest';
-import {
-  getColorFromHexRgbOrName,
-  PanelEvents,
-  DataFrame,
-  DataLink,
-  DateTimeInput,
-  VariableSuggestion,
-} from '@grafana/data';
+import { getColorFromHexRgbOrName, PanelEvents, DataFrame, DataLink, VariableSuggestion } from '@grafana/data';
 
 import { GraphContextMenuCtrl } from './GraphContextMenuCtrl';
 import { getDataLinksVariableSuggestions } from 'app/features/panel/panellinks/link_srv';
@@ -342,9 +335,7 @@ class GraphCtrl extends MetricsPanelCtrl {
     this.contextMenuCtrl.toggleMenu();
   };
 
-  formatDate = (date: DateTimeInput, format?: string) => {
-    return this.dashboard.formatDate.apply(this.dashboard, [date, format]);
-  };
+  getDateTimeFormatter = () => this.dashboard.getDateTimeFormatter();
 
   getDataFrameByRefId = (refId: string) => {
     return this.dataList.filter(dataFrame => dataFrame.refId === refId)[0];

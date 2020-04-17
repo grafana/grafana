@@ -9,8 +9,7 @@ import {
   TimeZone,
   DefaultTimeZone,
   createDimension,
-  DateTimeInput,
-  dateTime,
+  createDateTimeFormatter,
 } from '@grafana/data';
 import _ from 'lodash';
 import { FlotPosition, FlotItem } from './types';
@@ -234,10 +233,6 @@ export class Graph extends PureComponent<GraphProps, GraphState> {
       ),
     };
 
-    const formatDate = (date: DateTimeInput, format?: string) => {
-      return dateTime(date)?.format(format);
-    };
-
     const closeContext = () => this.setState({ isContextVisible: false });
 
     const getContextMenuSource = () => {
@@ -251,12 +246,14 @@ export class Graph extends PureComponent<GraphProps, GraphState> {
       };
     };
 
+    const dateTimeFormatter = createDateTimeFormatter(() => this.props.timeZone);
+
     const contextContentProps: GraphContextMenuProps = {
       x: contextPos.pageX,
       y: contextPos.pageY,
       onClose: closeContext,
       getContextMenuSource: getContextMenuSource,
-      formatSourceDate: formatDate,
+      dateTimeFormatter,
       dimensions,
       contextDimensions,
     };
