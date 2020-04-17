@@ -1,4 +1,4 @@
-import React, { FC, useState } from 'react';
+import React, { FC, useState, memo } from 'react';
 import { css } from 'emotion';
 import { Icon, TagList, HorizontalGroup, stylesFactory, useTheme } from '@grafana/ui';
 import { GrafanaTheme } from '@grafana/data';
@@ -20,7 +20,7 @@ export interface Props {
 
 const { isEditor } = contextSrv;
 
-export const ManageDashboards: FC<Props> = ({ folderId, folderUid }) => {
+export const ManageDashboards: FC<Props> = memo(({ folderId, folderUid }) => {
   const theme = useTheme();
   const styles = getStyles(theme);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -152,7 +152,7 @@ export const ManageDashboards: FC<Props> = ({ folderId, folderUid }) => {
       />
     </div>
   );
-};
+});
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
   return {
