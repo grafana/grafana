@@ -133,7 +133,7 @@ export function sharedSingleStatMigrationHandler(panel: PanelModel<SingleStatBas
 
   const { fieldOptions } = options;
 
-  if (previousVersion < 6.6) {
+  if (previousVersion < 6.6 && fieldOptions) {
     // discard the old `override` options and enter an empty array
     if (fieldOptions && fieldOptions.override) {
       const { override, ...rest } = options.fieldOptions;

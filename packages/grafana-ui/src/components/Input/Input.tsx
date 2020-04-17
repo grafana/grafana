@@ -58,7 +58,7 @@ export const getInputStyles = stylesFactory(({ theme, invalid = false, width }: 
         label: input-wrapper;
         display: flex;
         width: ${width ? `${8 * width}px` : '100%'};
-        height: ${height};
+        height: ${height}px;
         border-radius: ${borderRadius};
         &:hover {
           > .prefix,
