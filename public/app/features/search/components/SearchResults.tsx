@@ -1,77 +1,55 @@
-import React, { FC, Dispatch } from 'react';
+import React, { FC } from 'react';
 import { css, cx } from 'emotion';
 import { GrafanaTheme } from '@grafana/data';
-import { Icon, stylesFactory, useTheme, IconName, IconButton } from '@grafana/ui';
-import PageLoader from 'app/core/components/PageLoader/PageLoader';
+import { Icon, stylesFactory, useTheme, IconName, IconButton, Spinner } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
 import { CoreEvents } from 'app/types';
-import { DashboardSection, ItemClickWithEvent, SearchAction } from '../types';
+import { DashboardSection, OnToggleChecked } from '../types';
 import { SearchItem } from './SearchItem';
 import { SearchCheckbox } from './SearchCheckbox';
 
 export interface Props {
-  dispatch?: Dispatch<SearchAction>;
   editable?: boolean;
   loading?: boolean;
-  onFolderExpanding?: () => void;
-  onSelectionChanged?: () => void;
   onTagSelected: (name: string) => any;
-  onToggleSection?: any;
-  onToggleSelection?: ItemClickWithEvent;
+  onToggleChecked?: OnToggleChecked;
+  onToggleSection: (section: DashboardSection) => void;
   results: DashboardSection[] | undefined;
 }
 
 export const SearchResults: FC<Props> = ({
   editable,
   loading,
-  onFolderExpanding,
-  onSelectionChanged,
   onTagSelected,
+  onToggleChecked,
   onToggleSection,
-  onToggleSelection,
   results,
 }) => {
   const theme = useTheme();
   const styles = getSectionStyles(theme);
 
-  const toggleFolderExpand = (section: DashboardSection) => {
-    if (onToggleSection) {
-      onToggleSection(section);
-    } else {
-      if (section.toggle) {
-        if (!section.expanded && onFolderExpanding) {
-          onFolderExpanding();
-        }
-
-        section.toggle(section).then(() => {
-          if (onSelectionChanged) {
-            onSelectionChanged();
-          }
-        });
-      }
-    }
-  };
-
   if (loading) {
-    return <PageLoader />;
+    return <Spinner className={styles.spinner} />;
   } else if (!results || !results.length) {
     return <h6>No dashboards matching your query were found.</h6>;
   }
 
   return (
-    <ul className={styles.wrapper}>
-      {results.map(section => (
-        <li aria-label="Search section" className={styles.section} key={section.title}>
-          <SectionHeader onSectionClick={toggleFolderExpand} {...{ onToggleSelection, editable, section }} />
-          <ul aria-label="Search items" className={styles.wrapper}>
-            {section.expanded &&
-              section.items.map(item => (
-                <SearchItem key={item.id} {...{ item, editable, onToggleSelection, onTagSelected }} />
-              ))}
-          </ul>
-        </li>
-      ))}
-    </ul>
+    <div className="search-results-container">
+      <ul className={styles.wrapper}>
+        {results.map(section => (
+          <li aria-label="Search section" className={styles.section} key={section.title}>
+            <SectionHeader onSectionClick={onToggleSection} {...{ onToggleChecked, editable, section }} />
+            <ul aria-label="Search items" className={styles.wrapper}>
+              {section.expanded &&
+                section.items.map(item => (
+                  <SearchItem key={item.id} {...{ item, editable, onToggleChecked, onTagSelected }} />
+                ))}
+            </ul>
+          </li>
+        ))}
+      </ul>
+    </div>
   );
 };
 
@@ -86,36 +64,41 @@ const getSectionStyles = stylesFactory((theme: GrafanaTheme) => {
       padding: 0px 4px 4px 4px;
       margin-bottom: 3px;
     `,
+    spinner: css`
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100px;
+    `,
   };
 });
 
 interface SectionHeaderProps {
-  section: DashboardSection;
-  onSectionClick: (section: DashboardSection) => void;
-  onToggleSelection?: ItemClickWithEvent;
   editable?: boolean;
+  onSectionClick: (section: DashboardSection) => void;
+  onToggleChecked?: OnToggleChecked;
+  section: DashboardSection;
 }
 
-const SectionHeader: FC<SectionHeaderProps> = ({
-  section,
-  onSectionClick,
-  onToggleSelection = () => {},
-  editable = false,
-}) => {
+const SectionHeader: FC<SectionHeaderProps> = ({ section, onSectionClick, onToggleChecked, editable = false }) => {
   const theme = useTheme();
   const styles = getSectionHeaderStyles(theme, section.selected);
 
-  const expandSection = () => {
+  const onSectionExpand = () => {
     onSectionClick(section);
   };
 
+  const onSectionChecked = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (onToggleChecked) {
+      onToggleChecked(section);
+    }
+  };
+
   return !section.hideHeader ? (
-    <div className={styles.wrapper} onClick={expandSection}>
-      <SearchCheckbox
-        editable={editable}
-        checked={section.checked}
-        onClick={(e: MouseEvent) => onToggleSelection(section, e)}
-      />
+    <div className={styles.wrapper} onClick={onSectionExpand}>
+      <SearchCheckbox editable={editable} checked={section.checked} onClick={onSectionChecked} />
       <Icon className={styles.icon} name={section.icon as IconName} />
 
       <span className={styles.text}>{section.title}</span>
