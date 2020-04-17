@@ -1,4 +1,4 @@
-import React, { FC, memo, useMemo } from 'react';
+import React, { FC, memo, useMemo, useCallback } from 'react';
 import { DataFrame, Field } from '@grafana/data';
 import { Cell, Column, HeaderGroup, useAbsoluteLayout, useResizeColumns, useSortBy, useTable } from 'react-table';
 import { FixedSizeList } from 'react-window';
@@ -33,11 +33,16 @@ export const Table: FC<Props> = memo(
     const memoizedColumns = useMemo(() => getColumns(data, width, columnMinWidth), [data, width, columnMinWidth]);
     const memoizedData = useMemo(() => getTableRows(data), [data]);
 
+    const stateReducer = useCallback((newState: any, action: any, prevState: any) => {
+      console.log('table action', action);
+    }, []);
+
     const options: any = useMemo(
       () => ({
         columns: memoizedColumns,
         data: memoizedData,
         disableResizing: !resizable,
+        stateReducer: stateReducer,
       }),
       [memoizedColumns, memoizedData, resizable]
     );
@@ -107,7 +112,6 @@ Table.displayName = 'Table';
 
 function renderHeaderCell(column: any, tableStyles: TableStyles, field?: Field) {
   const headerProps = column.getHeaderProps();
-  console.log('headerProps', headerProps);
 
   if (column.canResize) {
     headerProps.style.userSelect = column.isResizing ? 'none' : 'auto'; // disables selecting text while resizing
