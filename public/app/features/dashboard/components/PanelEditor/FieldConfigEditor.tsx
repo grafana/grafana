@@ -90,7 +90,6 @@ export const OverrideFieldConfigEditor: React.FC<Props> = props => {
         <ValuePicker
           icon="plus"
           label="Add override"
-          size="md"
           options={fieldMatchersUI
             .list()
             .map<SelectableValue<string>>(i => ({ label: i.name, value: i.id, description: i.description }))}

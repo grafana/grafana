@@ -10,7 +10,6 @@ import { default as AsyncCreatable } from '@torkelo/react-select/async-creatable
 
 import { Icon } from '../Icon/Icon';
 import { css, cx } from 'emotion';
-import { inputSizesPixels } from '../Forms/commonStyles';
 import resetSelectStyles from './resetSelectStyles';
 import { SelectMenu, SelectMenuOptions } from './SelectMenu';
 import { IndicatorsContainer } from './IndicatorsContainer';
@@ -99,7 +98,6 @@ export function SelectBase<T>({
   placeholder = 'Choose',
   prefix,
   renderControl,
-  size = 'auto',
   tabSelectsValue = true,
   value,
   width,

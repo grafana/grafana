@@ -107,7 +107,6 @@ export const basicSelectPlainValue = () => {
         onChange={v => {
           setValue(v.value);
         }}
-        size="md"
         {...getDynamicProps()}
       />
     </>
@@ -140,7 +139,6 @@ export const SelectWithOptionDescriptions = () => {
         onChange={v => {
           setValue(v.value);
         }}
-        size="md"
         {...getDynamicProps()}
       />
     </>
@@ -288,7 +286,6 @@ export const customValueCreation = () => {
         onChange={v => {
           setValue(v);
         }}
-        size="md"
         allowCustomValue
         onCreateOption={v => {
           const customValue: SelectableValue<string> = { value: kebabCase(v), label: v };

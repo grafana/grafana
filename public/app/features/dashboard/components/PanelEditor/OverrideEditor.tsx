@@ -161,7 +161,6 @@ export const OverrideEditor: React.FC<OverrideEditorProps> = ({
             <ValuePicker
               label="Add override property"
               variant="secondary"
-              size="md"
               icon="plus"
               options={configPropertiesOptions}
               onChange={o => {
