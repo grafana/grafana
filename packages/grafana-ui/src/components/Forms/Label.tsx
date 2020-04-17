@@ -56,9 +56,9 @@ export const getLabelStyles = stylesFactory((theme: GrafanaTheme) => {
 export const Label: React.FC<LabelProps> = ({ children, description, className, category, ...labelProps }) => {
   const theme = useTheme();
   const styles = getLabelStyles(theme);
-  const categories = category?.map(c => {
+  const categories = category?.map((c, i) => {
     return (
-      <span className={styles.categories}>
+      <span className={styles.categories} key={`${c}/${i}`}>
         <span>{c}</span>
         <Icon name="angle-right" className={styles.chevron} />
       </span>
