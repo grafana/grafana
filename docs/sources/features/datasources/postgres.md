@@ -408,6 +408,7 @@ datasources:
   - name: Postgres
     type: postgres
     url: localhost:5432
+    access: proxy
     database: grafana
     user: grafana
     secureJsonData:
