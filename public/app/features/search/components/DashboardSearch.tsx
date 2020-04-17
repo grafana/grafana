@@ -1,6 +1,6 @@
 import React, { FC } from 'react';
 import { css } from 'emotion';
-import { Icon, useTheme, CustomScrollbar, stylesFactory } from '@grafana/ui';
+import { Icon, useTheme, CustomScrollbar, stylesFactory, Button } from '@grafana/ui';
 import { GrafanaTheme } from '@grafana/data';
 import { SearchSrv } from 'app/core/services/search_srv';
 import { TagFilter } from 'app/core/components/TagFilter/TagFilter';
@@ -96,9 +96,9 @@ export const DashboardSearch: FC<Props> = ({ onCloseSearch, payload = {} }) => {
             </div>
           )}
         </div>
-        <div className={styles.closeBtn} onClick={onCloseSearch}>
-          Close search <Icon name="times" className={styles.close} />
-        </div>
+        <Button icon="times" className={styles.closeBtn} onClick={onCloseSearch} variant="secondary">
+          Close
+        </Button>
       </div>
     </div>
   );
@@ -107,17 +107,9 @@ export const DashboardSearch: FC<Props> = ({ onCloseSearch, payload = {} }) => {
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
   return {
     closeBtn: css`
-      top: 20px;
+      top: 10px;
       right: 8px;
       position: absolute;
-      font-size: ${theme.typography.size.xs};
-      color: ${theme.colors.link};
-      display: flex;
-      align-items: center;
-      cursor: pointer;
-      &:hover {
-        color: ${theme.colors.linkHover};
-      }
     `,
     icon: css`
       margin-right: ${theme.spacing.sm};
