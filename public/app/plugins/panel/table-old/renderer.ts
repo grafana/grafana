@@ -119,6 +119,9 @@ export class TableRenderer {
           v = parseInt(v, 10);
         }
 
+        if (!column.style.dateFormat) {
+          return this.dateTimeFormatter.formatISO(v);
+        }
         return this.dateTimeFormatter.format(v, column.style.dateFormat);
       };
     }

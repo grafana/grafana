@@ -1,32 +1,38 @@
-import { TimeZone } from '../types';
 /* eslint-disable id-blacklist, no-restricted-imports, @typescript-eslint/ban-types */
+import { TimeZone } from '../types';
 import moment, { MomentInput, Moment } from 'moment-timezone';
 import { DateTimeInput } from './moment_wrapper';
-import { DEFAULT_DATE_TIME_FORMAT, MS_DATE_TIME_FORMAT } from './formats';
+import { DEFAULT_DATE_TIME_FORMAT } from './formats';
 
-type TimeZoneResolver = () => TimeZone;
+export type TimeZoneResolver = () => TimeZone;
 
 export interface DateTimeFormatter {
   format(dateInUtc: DateTimeInput, format?: string): string;
-  defaultWithMs(dateInUtc: DateTimeInput): string;
-  timeAgo(dateInUtc: DateTimeInput): string;
+  formatISO(dateInUtc: DateTimeInput): string;
+  formatDistanceToNow(dateInUtc: DateTimeInput): string;
 }
 
-export const getDateTimeFormatter = (getTimeZone: TimeZoneResolver): DateTimeFormatter =>
-  new DateTimeWithTimeZone(getTimeZone);
+let defaultTimeZoneResolver = () => '';
 
-class DateTimeWithTimeZone implements DateTimeFormatter {
+export const setTimeZoneResolver = (resolver: TimeZoneResolver) => {
+  defaultTimeZoneResolver = resolver ?? defaultTimeZoneResolver;
+};
+
+export const createDateTimeFormatter = (getTimeZone: TimeZoneResolver = defaultTimeZoneResolver): DateTimeFormatter =>
+  new DateTimeFormatterWithTimeZone(getTimeZone);
+
+class DateTimeFormatterWithTimeZone implements DateTimeFormatter {
   constructor(private getTimeZone: TimeZoneResolver) {}
 
   format(dateInUtc: DateTimeInput, format: string = DEFAULT_DATE_TIME_FORMAT): string {
     return this.toTz(dateInUtc as MomentInput).format(format);
   }
 
-  defaultWithMs(dateInUtc: DateTimeInput): string {
-    return this.toTz(dateInUtc as MomentInput).format(MS_DATE_TIME_FORMAT);
+  formatISO(dateInUtc: DateTimeInput): string {
+    return this.toTz(dateInUtc as MomentInput).format();
   }
 
-  timeAgo(dateInUtc: DateTimeInput): string {
+  formatDistanceToNow(dateInUtc: DateTimeInput): string {
     return this.toTz(dateInUtc as MomentInput).fromNow();
   }
 
@@ -34,9 +40,10 @@ class DateTimeWithTimeZone implements DateTimeFormatter {
     const timeZone = this.getTimeZone();
 
     switch (timeZone) {
-      case 'utc':
-        return moment.utc(dateInUtc);
       case '':
+      case 'utc':
+      case undefined:
+        return moment.utc(dateInUtc);
       case 'browser':
         return moment.utc(dateInUtc).local();
       default:

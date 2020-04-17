@@ -16,7 +16,7 @@ import {
   PanelEvents,
   TimeRange,
   TimeZone,
-  getDateTimeFormatter,
+  createDateTimeFormatter,
   DateTimeFormatter,
 } from '@grafana/data';
 import { UrlQueryValue } from '@grafana/runtime';
@@ -60,7 +60,7 @@ export class DashboardModel {
   panels: PanelModel[];
   panelInEdit?: PanelModel;
   panelInView: PanelModel;
-  dateTimeFormatter: DateTimeFormatter;
+  private dateTimeFormatter: DateTimeFormatter;
 
   // ------------------
   // not persisted
@@ -81,6 +81,7 @@ export class DashboardModel {
     panelInEdit: true,
     panelInView: true,
     getVariablesFromState: true,
+    dateTimeFormatter: true,
   };
 
   constructor(data: any, meta?: DashboardMeta, private getVariablesFromState: GetVariables = getVariables) {
@@ -98,7 +99,7 @@ export class DashboardModel {
     this.tags = data.tags || [];
     this.style = data.style || 'dark';
     this.timezone = data.timezone || '';
-    this.dateTimeFormatter = getDateTimeFormatter(this.getTimezone);
+    this.dateTimeFormatter = createDateTimeFormatter(this.getTimezone);
     this.editable = data.editable !== false;
     this.graphTooltip = data.graphTooltip || 0;
     this.time = data.time || { from: 'now-6h', to: 'now' };
@@ -800,6 +801,10 @@ export class DashboardModel {
     return this.dateTimeFormatter.format(date, format);
   }
 
+  getDateTimeFormatter(): DateTimeFormatter {
+    return this.dateTimeFormatter;
+  }
+
   destroy() {
     this.events.removeAllListeners();
     for (const panel of this.panels) {
@@ -912,7 +917,7 @@ export class DashboardModel {
   }
 
   getRelativeTime(date: DateTimeInput) {
-    return this.dateTimeFormatter.timeAgo(date);
+    return this.dateTimeFormatter.formatDistanceToNow(date);
   }
 
   isSnapshot() {
@@ -920,7 +925,7 @@ export class DashboardModel {
   }
 
   getTimezone(): TimeZone {
-    return (this.timezone ? this.timezone : contextSrv.user.timezone) as TimeZone;
+    return (this.timezone ? this.timezone : contextSrv?.user?.timezone) as TimeZone;
   }
 
   private updateSchema(old: any) {

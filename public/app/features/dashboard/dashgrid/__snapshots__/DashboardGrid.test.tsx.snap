@@ -66,6 +66,9 @@ exports[`DashboardGrid Can render dashboard grid Should render 1`] = `
             ],
           },
           "autoUpdate": undefined,
+          "dateTimeFormatter": DateTimeFormatterWithTimeZone {
+            "getTimeZone": [Function],
+          },
           "description": undefined,
           "editable": true,
           "events": Emitter {
@@ -308,6 +311,9 @@ exports[`DashboardGrid Can render dashboard grid Should render 1`] = `
             ],
           },
           "autoUpdate": undefined,
+          "dateTimeFormatter": DateTimeFormatterWithTimeZone {
+            "getTimeZone": [Function],
+          },
           "description": undefined,
           "editable": true,
           "events": Emitter {
@@ -550,6 +556,9 @@ exports[`DashboardGrid Can render dashboard grid Should render 1`] = `
             ],
           },
           "autoUpdate": undefined,
+          "dateTimeFormatter": DateTimeFormatterWithTimeZone {
+            "getTimeZone": [Function],
+          },
           "description": undefined,
           "editable": true,
           "events": Emitter {
@@ -792,6 +801,9 @@ exports[`DashboardGrid Can render dashboard grid Should render 1`] = `
             ],
           },
           "autoUpdate": undefined,
+          "dateTimeFormatter": DateTimeFormatterWithTimeZone {
+            "getTimeZone": [Function],
+          },
           "description": undefined,
           "editable": true,
           "events": Emitter {
