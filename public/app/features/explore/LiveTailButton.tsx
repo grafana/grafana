@@ -137,7 +137,7 @@ export function LiveTailButton(props: LiveTailButtonProps) {
       <CSSTransition
         mountOnEnter={true}
         unmountOnExit={true}
-        timeout={500}
+        timeout={100}
         in={isLive}
         classNames={{
           enter: styles.stopButtonEnter,
@@ -151,7 +151,7 @@ export function LiveTailButton(props: LiveTailButtonProps) {
             className={`btn navbar-button navbar-button--attached explore-active-button ${styles.isLive}`}
             onClick={stop}
           >
-            <Icon className="icon-brand-gradient" name="square-shape" />
+            <Icon className="icon-brand-gradient" name="square-shape" size="lg" type="mono" />
           </button>
         </div>
       </CSSTransition>

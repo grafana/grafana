@@ -1,7 +1,7 @@
 import React from 'react';
 import { config } from 'app/core/config';
 import { css } from 'emotion';
-import { TabsBar, Tab, stylesFactory, TabContent, IconName } from '@grafana/ui';
+import { IconName, stylesFactory, Tab, TabContent, TabsBar } from '@grafana/ui';
 import { DataTransformerConfig, LoadingState, PanelData } from '@grafana/data';
 import { PanelEditorTab, PanelEditorTabId } from './types';
 import { DashboardModel } from '../../state';

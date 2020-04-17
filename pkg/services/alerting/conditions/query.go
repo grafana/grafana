@@ -127,7 +127,7 @@ func (c *QueryCondition) executeQuery(context *alerting.EvalContext, timeRange *
 		}
 
 		type queryDto struct {
-			RefId         string           `json:"refId"`
+			RefID         string           `json:"refId"`
 			Model         *simplejson.Json `json:"model"`
 			Datasource    *simplejson.Json `json:"datasource"`
 			MaxDataPoints int64            `json:"maxDataPoints"`
@@ -137,7 +137,7 @@ func (c *QueryCondition) executeQuery(context *alerting.EvalContext, timeRange *
 		queries := []*queryDto{}
 		for _, q := range req.Queries {
 			queries = append(queries, &queryDto{
-				RefId: q.RefId,
+				RefID: q.RefId,
 				Model: q.Model,
 				Datasource: simplejson.NewFromAny(map[string]interface{}{
 					"id":   q.DataSource.Id,
