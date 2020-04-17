@@ -14,7 +14,9 @@ weight = 1
 
 Grafana includes built-in support for Prometheus. This topic explains options, variables, querying, and other options specific to the Prometheus data source. Refer to [Add a data source]({{< relref "add-a-data-source.md" >}}) for instructions on how to add a data source to Grafana.
 
-## Data source options
+## Prometheus settings
+
+You can access Prometheus settings by ((ADD INFO, EDIT OTHER DATA SOURCE INTROS))
 
 | Name                      | Description                                                                                                                           |
 | ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |

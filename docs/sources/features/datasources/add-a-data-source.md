@@ -24,6 +24,6 @@ Before you create your first dashboard, you need to add your data source. Follow
 
     {{< docs-imagebox img="/img/docs/v52/datasource-settings.png" max-width="700px" class="docs-image--no-shadow">}}
 
-1. In the **Type**, select the type of data source. See [Supported data sources]({{< relref "../../features/datasources/#supported-data-sources/" >}}) for more information and how to configure your data source.
+1. In the **Type**, select the type of data source. See [Supported data sources]({{< relref "../../features/datasources/#supported-data-sources/" >}}) for more information and how to configure your data source settings.
 
 1. Click **Save & Test**.
