@@ -40,7 +40,7 @@ Currently only Organization Admins can create reports.
 1. Enter scheduling information. Options vary depending on the frequency you select.
    * Weekly/Daily/Hourly - Schedules the report to be sent at the desired interval.
    * Never - Never sends the report. This is handy while setting up and testing reports. It also gives an option to pause sending a report without deleting it.
-2. **Save** the report.
+1. **Save** the report.
 
 {{< docs-imagebox img="/img/docs/enterprise/reports_create_new.png" max-width="500px" class="docs-image--no-shadow" >}}
 
