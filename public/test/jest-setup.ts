@@ -22,6 +22,13 @@ angular.module('grafana.routes', ['ngRoute']);
 
 jest.mock('app/core/core', () => ({}));
 jest.mock('app/features/plugins/plugin_loader', () => ({}));
+jest.doMock('moment-timezone', () => {
+  // will make the default moment to format to UTC instead of local
+  // during jest runtime.
+  const original = jest.requireActual('moment-timezone');
+  original.prototype.local = original.prototype.utc;
+  return original;
+});
 
 configure({ adapter: new Adapter() });
 

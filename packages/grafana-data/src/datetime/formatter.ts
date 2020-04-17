@@ -37,13 +37,13 @@ class DateTimeFormatterWithTimeZone implements DateTimeFormatter {
   }
 
   private toTz(dateInUtc: MomentInput): Moment {
-    const timeZone = this.getTimeZone();
+    const timeZone = this.getTimeZone() ?? defaultTimeZoneResolver();
 
     switch (timeZone) {
-      case '':
       case 'utc':
-      case undefined:
         return moment.utc(dateInUtc);
+      case '':
+      case undefined:
       case 'browser':
         return moment.utc(dateInUtc).local();
       default:
