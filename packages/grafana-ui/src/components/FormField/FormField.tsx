@@ -7,7 +7,8 @@ export interface Props extends InputHTMLAttributes<HTMLInputElement> {
   label: string;
   tooltip?: PopoverContent;
   labelWidth?: number;
-  inputWidth?: number;
+  // If null no width will be specified not even default one
+  inputWidth?: number | null;
   inputEl?: React.ReactNode;
 }
 

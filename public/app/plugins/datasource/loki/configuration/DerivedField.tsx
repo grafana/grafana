@@ -166,6 +166,11 @@ const DataSourceSection = (props: DataSourceSectionProps) => {
 
   let selectedDatasource = datasourceUid && datasources.find(d => d.value === datasourceUid);
   return (
-    <DataSourcePicker onChange={ds => onChange(ds.value)} datasources={datasources} current={selectedDatasource} />
+    <DataSourcePicker
+      // Uid and value should be always set in the db and so in the items.
+      onChange={ds => onChange(ds.value!)}
+      datasources={datasources}
+      current={selectedDatasource || undefined}
+    />
   );
 };
