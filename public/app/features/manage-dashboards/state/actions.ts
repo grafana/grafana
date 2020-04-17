@@ -97,7 +97,7 @@ export function saveDashboard(importDashboardForm: ImportDashboardDTO): ThunkRes
       dashboard: { ...dashboard, title: importDashboardForm.title, uid: importDashboardForm.uid },
       overwrite: true,
       inputs: inputsToPersist,
-      folderId: importDashboardForm.folderId.id,
+      folderId: importDashboardForm.folder.id,
     });
     const dashboardUrl = locationUtil.stripBaseFromUrl(result.importedUrl);
     dispatch(updateLocation({ path: dashboardUrl }));

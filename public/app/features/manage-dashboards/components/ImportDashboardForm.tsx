@@ -49,14 +49,14 @@ export const ImportDashboardForm: FC<Props> = ({
           type="text"
           ref={register({
             required: 'Name is required',
-            validate: async (v: string) => await validateTitle(v, getValues().folderId.id),
+            validate: async (v: string) => await validateTitle(v, getValues().folder.id),
           })}
         />
       </Forms.Field>
       <Forms.Field label="Folder">
         <Forms.InputControl
           as={FolderPicker}
-          name="folderId"
+          name="folder"
           useNewForms
           initialFolderId={initialFolderId}
           control={control}

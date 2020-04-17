@@ -14,7 +14,7 @@ interface ConnectedProps {
   inputs: DashboardInputs;
   source: DashboardSource;
   meta?: any;
-  folderId: { id: number; title?: string };
+  folder: { id: number; title?: string };
 }
 
 interface DispatchProps {
@@ -46,7 +46,7 @@ class ImportDashboardOverviewUnConnected extends PureComponent<Props, State> {
   };
 
   render() {
-    const { dashboard, inputs, meta, source, folderId } = this.props;
+    const { dashboard, inputs, meta, source, folder } = this.props;
     const { uidReset } = this.state;
 
     return (
@@ -81,7 +81,7 @@ class ImportDashboardOverviewUnConnected extends PureComponent<Props, State> {
         )}
         <Forms.Form
           onSubmit={this.onSubmit}
-          defaultValues={{ ...dashboard, constants: [], dataSources: [], folderId }}
+          defaultValues={{ ...dashboard, constants: [], dataSources: [], folder: folder }}
           validateOnMount
           validateFieldsOnMount={['title', 'uid']}
           validateOn="onChange"
@@ -97,7 +97,7 @@ class ImportDashboardOverviewUnConnected extends PureComponent<Props, State> {
               onCancel={this.onCancel}
               onUidReset={this.onUidReset}
               onSubmit={this.onSubmit}
-              initialFolderId={folderId.id}
+              initialFolderId={folder.id}
             />
           )}
         </Forms.Form>
@@ -111,7 +111,7 @@ const mapStateToProps: MapStateToProps<ConnectedProps, OwnProps, StoreState> = (
   meta: state.importDashboard.meta,
   source: state.importDashboard.source,
   inputs: state.importDashboard.inputs,
-  folderId: state.location.routeParams.folderId ? { id: Number(state.location.routeParams.folderId) } : { id: 0 },
+  folder: state.location.routeParams.folderId ? { id: Number(state.location.routeParams.folderId) } : { id: 0 },
 });
 
 const mapDispatchToProps: MapDispatchToProps<DispatchProps, OwnProps> = {
