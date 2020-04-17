@@ -276,7 +276,7 @@ export function SelectBase<T>({
             position: 'relative',
             width: inputSizesPixels(size),
             // This puts the menu above Inputs (z-index: 1)
-            zIndex: 10,
+            zIndex: theme.zIndex.dropdown,
           }),
         }}
         className={cx('select-container', widthClass)}
