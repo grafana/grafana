@@ -1,13 +1,12 @@
 import { ThresholdsConfig } from './thresholds';
 import { ValueMapping } from './valueMapping';
 import { QueryResultBase, Labels, NullValueMode } from './data';
-import { DisplayProcessor } from './displayValue';
-import { DataLink, LinkModelSupplier } from './dataLink';
+import { DisplayProcessor, DisplayValue } from './displayValue';
+import { DataLink, LinkModel } from './dataLink';
 import { Vector } from './vector';
 import { FieldCalcs } from '../transformations/fieldReducer';
 import { FieldColor } from './fieldColor';
 import { ScopedVars } from './ScopedVars';
-import { FieldDisplay } from '../field';
 
 export enum FieldType {
   time = 'time', // or date
@@ -62,7 +61,7 @@ export interface ValueLinkConfig {
   /**
    * Result of field reduction
    */
-  calculatedValue?: FieldDisplay;
+  calculatedValue?: DisplayValue;
   /**
    * Index of the value row within Field. Should be provided only when value is not a result of a reduction
    */
@@ -103,7 +102,7 @@ export interface Field<T = any, V = Vector<T>> {
   /**
    * Get value data links with variables interpolated
    */
-  getDataLinksSupplier?: (config: ValueLinkConfig) => LinkModelSupplier<Field>;
+  getLinks?: (config: ValueLinkConfig) => Array<LinkModel<Field>>;
 }
 
 export interface DataFrame extends QueryResultBase {

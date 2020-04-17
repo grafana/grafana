@@ -44,19 +44,10 @@ export class StatPanel extends PureComponent<PanelProps<StatPanelOptions>> {
         sparkline.highlightIndex = sparkline.data.length - 1;
       }
     }
-    const linksSupplier = value.view?.dataFrame.fields[value.colIndex].getDataLinksSupplier;
+    const getLinks = value.view?.dataFrame.fields[value.colIndex].getLinks;
 
     return (
-      <DataLinksContextMenu
-        links={
-          linksSupplier
-            ? linksSupplier({
-                calculatedValue: value,
-                valueRowIndex: value.rowIndex,
-              })
-            : null
-        }
-      >
+      <DataLinksContextMenu links={() => getLinks({ calculatedValue: value.display, valueRowIndex: value.rowIndex })}>
         {({ openMenu, targetClassName }) => {
           return (
             <BigValue

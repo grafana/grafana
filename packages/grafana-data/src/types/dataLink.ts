@@ -37,7 +37,7 @@ export type LinkTarget = '_blank' | '_self';
 /**
  * Processed Link Model.  The values are ready to use
  */
-export interface LinkModel<T> {
+export interface LinkModel<T = any> {
   href: string;
   title: string;
   target: LinkTarget;

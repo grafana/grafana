@@ -17,16 +17,14 @@ export class GaugePanel extends PureComponent<PanelProps<GaugeOptions>> {
     const { value, width, height } = valueProps;
     const { field, display } = value;
 
-    const linksSupplier = value.view?.dataFrame.fields[value.colIndex].getDataLinksSupplier;
+    const getLinks = value.view?.dataFrame.fields[value.colIndex].getLinks;
     return (
       <DataLinksContextMenu
-        links={
-          linksSupplier
-            ? linksSupplier({
-                calculatedValue: value,
-                valueRowIndex: value.rowIndex,
-              })
-            : null
+        links={() =>
+          getLinks({
+            calculatedValue: value.display,
+            valueRowIndex: value.rowIndex,
+          })
         }
       >
         {({ openMenu, targetClassName }) => {

@@ -2,7 +2,7 @@ import { locationUtil } from './location';
 
 describe('locationUtil', () => {
   beforeAll(() => {
-    locationUtil.initialise({
+    locationUtil.initialize({
       getConfig: () => {
         return { appSubUrl: '/subUrl' } as any;
       },

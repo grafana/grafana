@@ -12,12 +12,10 @@ export const DefaultCell: FC<TableCellProps> = props => {
 
   const displayValue = field.display(cell.value);
 
-  if (field.getDataLinksSupplier) {
-    link = field
-      .getDataLinksSupplier({
-        valueRowIndex: row.index,
-      })
-      .getLinks()[0];
+  if (field.getLinks) {
+    link = field.getLinks({
+      valueRowIndex: row.index,
+    })[0];
   }
   const value = formattedValueToString(displayValue);
 
