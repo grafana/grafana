@@ -56,9 +56,6 @@ interface DispatchProps {
 
 type Props = OwnProps & ConnectedProps & DispatchProps;
 
-// TODO[NewPanelEdit]: Remove when we switch to new panel editor
-export const NewPanelEditorContext = React.createContext(false);
-
 export class PanelEditorUnconnected extends PureComponent<Props> {
   querySubscription: Unsubscribable;
 
@@ -121,11 +118,6 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
 
   onDragStarted = () => {
     document.body.style.cursor = 'row-resize';
-  };
-
-  onPanelTitleChange = (title: string) => {
-    this.props.panel.title = title;
-    this.forceUpdate();
   };
 
   onDiplayModeChange = (mode: DisplayMode) => {
@@ -299,14 +291,12 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
     }
 
     return (
-      <NewPanelEditorContext.Provider value={true}>
-        <div className={styles.wrapper}>
-          {this.editorToolbar(styles)}
-          <div className={styles.verticalSplitPanesWrapper}>
-            {uiState.isPanelOptionsVisible ? this.renderWithOptionsPane(styles) : this.renderHorizontalSplit(styles)}
-          </div>
+      <div className={styles.wrapper}>
+        {this.editorToolbar(styles)}
+        <div className={styles.verticalSplitPanesWrapper}>
+          {uiState.isPanelOptionsVisible ? this.renderWithOptionsPane(styles) : this.renderHorizontalSplit(styles)}
         </div>
-      </NewPanelEditorContext.Provider>
+      </div>
     );
   }
 }
