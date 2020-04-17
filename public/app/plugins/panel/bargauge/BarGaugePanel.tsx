@@ -20,17 +20,8 @@ export class BarGaugePanel extends PureComponent<PanelProps<BarGaugeOptions>> {
     const { value, alignmentFactors, orientation, width, height } = valueProps;
     const { field, display, view, colIndex } = value;
 
-    const getLinks = value.view?.dataFrame.fields[value.colIndex].getLinks;
-
     return (
-      <DataLinksContextMenu
-        links={() =>
-          getLinks({
-            calculatedValue: value.display,
-            valueRowIndex: value.rowIndex,
-          })
-        }
-      >
+      <DataLinksContextMenu links={value.getLinks}>
         {({ openMenu, targetClassName }) => {
           return (
             <BarGauge

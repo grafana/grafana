@@ -44,10 +44,9 @@ export class StatPanel extends PureComponent<PanelProps<StatPanelOptions>> {
         sparkline.highlightIndex = sparkline.data.length - 1;
       }
     }
-    const getLinks = value.view?.dataFrame.fields[value.colIndex].getLinks;
 
     return (
-      <DataLinksContextMenu links={() => getLinks({ calculatedValue: value.display, valueRowIndex: value.rowIndex })}>
+      <DataLinksContextMenu links={value.getLinks}>
         {({ openMenu, targetClassName }) => {
           return (
             <BigValue
