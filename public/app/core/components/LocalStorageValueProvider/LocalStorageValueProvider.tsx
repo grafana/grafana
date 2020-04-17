@@ -24,8 +24,12 @@ export class LocalStorageValueProvider<T> extends PureComponent<Props<T>, State<
 
   onSaveToStore = (value: T) => {
     const { storageKey } = this.props;
-    store.setObject(storageKey, value);
-    this.setState({ value });
+    try {
+      store.setObject(storageKey, value);
+      this.setState({ value });
+    } catch (error) {
+      console.error(error);
+    }
   };
 
   render() {

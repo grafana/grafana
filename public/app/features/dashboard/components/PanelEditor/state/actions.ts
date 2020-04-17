@@ -78,6 +78,10 @@ export function updatePanelEditorUIState(uiState: Partial<PanelEditorUIState>): 
   return (dispatch, getStore) => {
     const nextState = { ...getStore().panelEditorNew.ui, ...uiState };
     dispatch(setPanelEditorUIState(nextState));
-    store.setObject(PANEL_EDITOR_UI_STATE_STORAGE_KEY, nextState);
+    try {
+      store.setObject(PANEL_EDITOR_UI_STATE_STORAGE_KEY, nextState);
+    } catch (error) {
+      console.error(error);
+    }
   };
 }
