@@ -1,13 +1,13 @@
 import React, { PureComponent } from 'react';
 import {
-  DataFrame,
   applyFieldOverrides,
-  toCSV,
-  SelectableValue,
+  DataFrame,
   DataTransformerID,
+  SelectableValue,
+  toCSV,
   transformDataFrame,
 } from '@grafana/data';
-import { Button, Select, Icon, Table, Field } from '@grafana/ui';
+import { Button, Field, Icon, Select, Table } from '@grafana/ui';
 import { getPanelInspectorStyles } from './styles';
 import { config } from 'app/core/config';
 import AutoSizer from 'react-virtualized-auto-sizer';
@@ -51,7 +51,7 @@ export class InspectDataTab extends PureComponent<Props, State> {
   };
 
   onTransformationChange = (value: SelectableValue<DataTransformerID>) => {
-    this.setState({ transformId: value.value });
+    this.setState({ transformId: value.value, dataFrameIndex: 0 });
   };
 
   getTransformedData(): DataFrame[] {
