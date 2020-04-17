@@ -12,16 +12,7 @@ weight = 1
 
 # Using Prometheus in Grafana
 
-Grafana includes built-in support for Prometheus.
-
-## Adding the data source
-
-1. Open the side menu by clicking the Grafana icon in the top header.
-2. In the side menu under the `Dashboards` link you should find a link named `Data Sources`.
-3. Click the `+ Add data source` button in the top header.
-4. Select `Prometheus` from the _Type_ dropdown.
-
-> NOTE: If you're not seeing the `Data Sources` link in your side menu it means that your current user does not have the `Admin` role for the current organization.
+Grafana includes built-in support for Prometheus. This topic explains options, variables, querying, and other options specific to the Prometheus data source. Refer to [Add a data source]({{< relref "add-a-data-source.md" >}}) for instructions on how to add a data source to Grafana.
 
 ## Data source options
 
