@@ -167,11 +167,11 @@ allowed_organizations =
 
 To ease configuration of a proper JMESPath expression, you can test/evaluate expressions with custom payloads at http://jmespath.org/.
 
-### Role mapping
+### Role and Organization mapping
 
 **Basic example:**
 
-In the following example user will get `Editor` as role when authenticating. The value of the property `role` will be the resulting role if the role is a proper Grafana role, i.e. `Viewer`, `Editor` or `Admin`.
+In the following example user will get `Editor` as role in OrgID `2` when authenticating. The value of the property `role` will be the resulting role if the role is a proper Grafana role, i.e. `Viewer`, `Editor` or `Admin`.
 
 Payload:
 ```json
@@ -185,11 +185,12 @@ Payload:
 Config:
 ```bash
 role_attribute_path = role
+orgs_attribute_path = 2
 ```
 
 **Advanced example:**
 
-In the following example user will get `Admin` as role when authenticating since it has a group `admin`. If a user has a group `editor` it will get `Editor` as role, otherwise `Viewer`.
+In the following example user will get `Admin` as role in Orgs `1` and `2` when authenticating since it has a group `admin`. If a user has a group `editor` it will get `Editor` as role for Org `1`, otherwise `Viewer` in Org `2`.
 
 Payload:
 ```json
@@ -210,4 +211,5 @@ Payload:
 Config:
 ```bash
 role_attribute_path = contains(info.groups[*], 'admin') && 'Admin' || contains(info.groups[*], 'editor') && 'Editor' || 'Viewer'
+orgs_attribute_path = contains(info.groups[*], 'admin') && 1,2 || contains(info.groups[*], 'editor') && 1 || 2
 ```
