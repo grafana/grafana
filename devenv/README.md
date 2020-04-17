@@ -40,3 +40,6 @@ make devenv sources=postgres,openldap,grafana postgres_version=9.2 grafana_versi
 ```
 
 Note: The grafana block is pre-configured with the dev-datasources and dashboards.
+
+When using jaeger block it will run both jaeger and loki that is sending traces to it so there is no need to run loki
+ separately. It will also log loki logs back to itself with docker logging driver which you need to install first see https://github.com/grafana/loki/tree/master/cmd/docker-driver#plugin-installation.
