@@ -65,7 +65,7 @@ export class TablePanel extends Component<Props> {
 
     if (count > 1) {
       const inputHeight = config.theme.spacing.formInputHeight;
-      const padding = 8;
+      const padding = 8 * 2;
       const index = frameIndex > 0 && frameIndex < count ? frameIndex : 0;
       const names = data.series.map((frame, index) => {
         return {
@@ -77,12 +77,14 @@ export class TablePanel extends Component<Props> {
       return (
         <div className={tableStyles.wrapper}>
           {this.renderTable(data.series[index], width, height - inputHeight - padding)}
-          <Select options={names} value={names[index]} onChange={this.onChangeTableSelection} />
+          <div className={tableStyles.selectWrapper}>
+            <Select options={names} value={names[index]} onChange={this.onChangeTableSelection} />
+          </div>
         </div>
       );
     }
 
-    return this.renderTable(data.series[0], width, height);
+    return this.renderTable(data.series[0], width, height - 12);
   }
 }
 
@@ -92,5 +94,8 @@ const tableStyles = {
     flex-direction: column;
     justify-content: space-between;
     height: 100%;
+  `,
+  selectWrapper: css`
+    padding: 8px;
   `,
 };

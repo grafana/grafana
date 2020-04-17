@@ -6,6 +6,7 @@ import { tablePanelChangedHandler, tableMigrationHandler } from './migrations';
 export const plugin = new PanelPlugin<Options, CustomFieldConfig>(TablePanel)
   .setPanelChangeHandler(tablePanelChangedHandler)
   .setMigrationHandler(tableMigrationHandler)
+  .setNoPadding()
   .useFieldConfig({
     useCustomConfig: builder => {
       builder
@@ -50,17 +51,10 @@ export const plugin = new PanelPlugin<Options, CustomFieldConfig>(TablePanel)
     },
   })
   .setPanelOptions(builder => {
-    builder
-      .addBooleanSwitch({
-        path: 'showHeader',
-        name: 'Show header',
-        description: "To display table's header or not to display",
-        defaultValue: true,
-      })
-      .addBooleanSwitch({
-        path: 'resizable',
-        name: 'Resizable',
-        description: 'Toggles if table columns are resizable or not',
-        defaultValue: false,
-      });
+    builder.addBooleanSwitch({
+      path: 'showHeader',
+      name: 'Show header',
+      description: "To display table's header or not to display",
+      defaultValue: true,
+    });
   });

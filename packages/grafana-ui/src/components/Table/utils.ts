@@ -67,6 +67,7 @@ export function getColumns(data: DataFrame, availableWidth: number, columnMinWid
       Header: field.name,
       accessor: field.name,
       width: fieldTableOptions.width,
+      minWidth: 50,
     });
   }
 

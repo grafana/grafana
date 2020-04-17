@@ -20,8 +20,8 @@ export interface TableStyles {
 export const getTableStyles = stylesFactory(
   (theme: GrafanaTheme): TableStyles => {
     const { palette, colors } = theme;
-    const headerBg = theme.colors.panelBorder;
-    const headerBorderColor = theme.isLight ? palette.gray70 : palette.gray05;
+    const headerBg = theme.colors.bg2;
+    const headerBorderColor = theme.colors.border2;
     const resizerColor = theme.isLight ? palette.blue77 : palette.blue95;
     const padding = 6;
     const lineHeight = theme.typography.lineHeight.md;
@@ -42,6 +42,7 @@ export const getTableStyles = stylesFactory(
       `,
       thead: css`
         label: thead;
+        height: ${cellHeight}px;
         overflow-y: auto;
         overflow-x: hidden;
         background: ${headerBg};

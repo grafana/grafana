@@ -1,6 +1,6 @@
 import React, { FC, memo, useMemo } from 'react';
 import { DataFrame, Field } from '@grafana/data';
-import { Cell, Column, HeaderGroup, useBlockLayout, useResizeColumns, useSortBy, useTable } from 'react-table';
+import { Cell, Column, HeaderGroup, useAbsoluteLayout, useResizeColumns, useSortBy, useTable } from 'react-table';
 import { FixedSizeList } from 'react-window';
 import useMeasure from 'react-use/lib/useMeasure';
 import { getColumns, getTableRows, getTextAlign } from './utils';
@@ -33,34 +33,20 @@ export const Table: FC<Props> = memo(
     const memoizedColumns = useMemo(() => getColumns(data, width, columnMinWidth), [data, width, columnMinWidth]);
     const memoizedData = useMemo(() => getTableRows(data), [data]);
 
-    const defaultColumn = React.useMemo(
-      () => ({
-        minWidth: memoizedColumns.reduce((minWidth, column) => {
-          if (column.width) {
-            const width = typeof column.width === 'string' ? parseInt(column.width, 10) : column.width;
-            return Math.min(minWidth, width);
-          }
-          return minWidth;
-        }, columnMinWidth),
-      }),
-      [columnMinWidth, memoizedColumns]
-    );
-
     const options: any = useMemo(
       () => ({
         columns: memoizedColumns,
         data: memoizedData,
         disableResizing: !resizable,
-        defaultColumn,
       }),
-      [memoizedColumns, memoizedData, resizable, defaultColumn]
+      [memoizedColumns, memoizedData, resizable]
     );
 
     const { getTableProps, headerGroups, rows, prepareRow, totalColumnsWidth } = useTable(
       options,
-      useBlockLayout,
-      useResizeColumns,
-      useSortBy
+      useSortBy,
+      useAbsoluteLayout,
+      useResizeColumns
     );
 
     const RenderRow = React.useCallback(
@@ -121,10 +107,13 @@ Table.displayName = 'Table';
 
 function renderHeaderCell(column: any, tableStyles: TableStyles, field?: Field) {
   const headerProps = column.getHeaderProps();
+  console.log('headerProps', headerProps);
+
   if (column.canResize) {
     headerProps.style.userSelect = column.isResizing ? 'none' : 'auto'; // disables selecting text while resizing
   }
 
+  headerProps.style.position = 'absolute';
   headerProps.style.textAlign = getTextAlign(field);
 
   return (
