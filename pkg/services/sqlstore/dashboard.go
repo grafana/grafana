@@ -1,6 +1,7 @@
 package sqlstore
 
 import (
+	"github.com/grafana/grafana/pkg/services/sqlstore/permissions"
 	"github.com/grafana/grafana/pkg/services/sqlstore/searchstore"
 	"github.com/prometheus/client_golang/prometheus"
 	"reflect"
@@ -222,13 +223,13 @@ func findDashboards(query *search.FindPersistedDashboardsQuery) ([]DashboardSear
 
 	sb2filters := []interface{}{
 		query.SortBy,
-		/*permissions.DashboardPermissionFilter{
+		permissions.DashboardPermissionFilter{
 			OrgRole:         query.SignedInUser.OrgRole,
 			OrgId:           query.SignedInUser.OrgId,
 			Dialect:         dialect,
 			UserId:          query.SignedInUser.UserId,
 			PermissionLevel: query.Permission,
-		},*/
+		},
 	}
 
 	if len(query.Tags) > 0 {
