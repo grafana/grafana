@@ -376,6 +376,10 @@ export class DashboardModel {
   }
 
   getPanelById(id: number): PanelModel {
+    if (this.panelInEdit && this.panelInEdit.id === id) {
+      return this.panelInEdit;
+    }
+
     for (const panel of this.panels) {
       if (panel.id === id) {
         return panel;

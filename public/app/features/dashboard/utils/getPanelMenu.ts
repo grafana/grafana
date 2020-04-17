@@ -2,7 +2,7 @@ import { updateLocation } from 'app/core/actions';
 import { store } from 'app/store/store';
 import { getDataSourceSrv, getLocationSrv, AngularComponent } from '@grafana/runtime';
 import { PanelMenuItem } from '@grafana/data';
-import { copyPanel, duplicatePanel, editPanelJson, removePanel, sharePanel } from 'app/features/dashboard/utils/panel';
+import { copyPanel, duplicatePanel, removePanel, sharePanel } from 'app/features/dashboard/utils/panel';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { contextSrv } from '../../../core/services/context_srv';
@@ -45,12 +45,14 @@ export function getPanelMenu(
     sharePanel(dashboard, panel);
   };
 
-  const onInspectPanel = (event: React.MouseEvent<any>) => {
+  const onInspectPanel = (tab?: string) => {
     event.preventDefault();
+
     getLocationSrv().update({
       partial: true,
       query: {
         inspect: panel.id,
+        inspectTab: tab,
       },
     });
   };
@@ -67,11 +69,6 @@ export function getPanelMenu(
   const onCopyPanel = (event: React.MouseEvent<any>) => {
     event.preventDefault();
     copyPanel(panel);
-  };
-
-  const onEditPanelJson = (event: React.MouseEvent<any>) => {
-    event.preventDefault();
-    editPanelJson(dashboard, panel);
   };
 
   const onRemovePanel = (event: React.MouseEvent<any>) => {
@@ -119,11 +116,35 @@ export function getPanelMenu(
     });
   }
 
+  const inspectMenu: PanelMenuItem[] = [];
+
+  // Only show these inspect actions for data plugins
+  if (panel.plugin && !panel.plugin.meta.skipDataQuery) {
+    inspectMenu.push({
+      text: 'Data',
+      onClick: (e: React.MouseEvent<any>) => onInspectPanel('data'),
+    });
+
+    if (dashboard.meta.canEdit) {
+      inspectMenu.push({
+        text: 'Query',
+        onClick: (e: React.MouseEvent<any>) => onInspectPanel('query'),
+      });
+    }
+  }
+
+  inspectMenu.push({
+    text: 'Panel JSON',
+    onClick: (e: React.MouseEvent<any>) => onInspectPanel('json'),
+  });
+
   menu.push({
+    type: 'submenu',
     text: 'Inspect',
     iconClassName: 'info-circle',
-    onClick: onInspectPanel,
-    shortcut: 'p i',
+    onClick: (e: React.MouseEvent<any>) => onInspectPanel(),
+    shortcut: 'i',
+    subMenu: inspectMenu,
   });
 
   const subMenu: PanelMenuItem[] = [];
@@ -140,11 +161,6 @@ export function getPanelMenu(
       onClick: onCopyPanel,
     });
   }
-
-  subMenu.push({
-    text: 'Panel JSON',
-    onClick: onEditPanelJson,
-  });
 
   // add old angular panel options
   if (angularComponent) {

@@ -60,7 +60,16 @@ func (lw logWrapper) With(args ...interface{}) hclog.Logger {
 	return logWrapper{Logger: lw.Logger.New(args...)}
 }
 func (lw logWrapper) Named(name string) hclog.Logger {
-	return logWrapper{Logger: lw.Logger.New()}
+	if name == "stdio" {
+		// discard logs from stdio hashicorp/go-plugin gRPC service since
+		// it's not enabled/in use per default.
+		// discard debug log of "waiting for stdio data".
+		// discard warn log of "received EOF, stopping recv loop".
+		return hclog.NewNullLogger()
+	}
+	return logWrapper{
+		Logger: lw.Logger.New(),
+	}
 }
 
 func (lw logWrapper) ResetNamed(name string) hclog.Logger {

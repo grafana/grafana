@@ -10,6 +10,7 @@ export default {
   title: 'Layout/Groups',
   component: Layout,
   decorators: [withStoryContainer, withCenteredStory, withHorizontallyCenteredStory],
+  subcomponents: { HorizontalGroup, VerticalGroup },
   parameters: {
     docs: {
       page: mdx,

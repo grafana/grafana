@@ -39,8 +39,9 @@ export const getModalStyles = stylesFactory((theme: GrafanaTheme) => {
     `,
     modalHeaderTitle: css`
       font-size: ${theme.typography.heading.h3};
-      padding-top: ${theme.spacing.sm};
       margin: 0 ${theme.spacing.md};
+      display: flex;
+      align-items: center;
     `,
     modalHeaderIcon: css`
       margin-right: ${theme.spacing.md};
