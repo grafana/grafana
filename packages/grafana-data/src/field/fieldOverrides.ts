@@ -191,11 +191,9 @@ export function applyFieldOverrides(options: ApplyFieldOverrideOptions): DataFra
       });
 
       // Attach data links supplier
-      // if (f.config.links && f.config.links.length > 0) {
       f.getLinks = getLinksSupplier(frame, f, fieldScopedVars, context.replaceVariables, {
         theme: options.theme,
       });
-      // }
 
       return f;
     });
