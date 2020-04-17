@@ -29,7 +29,7 @@ export class Store {
     return ret;
   }
 
-  /* Returns true when successfully stored, thorws error if not successfully stored */
+  /* Returns true when successfully stored, throws error if not successfully stored */
   setObject(key: string, value: any) {
     let json;
     try {
