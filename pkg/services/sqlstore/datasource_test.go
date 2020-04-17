@@ -18,7 +18,7 @@ func TestDataAccess(t *testing.T) {
 
 	defaultUpdateDatasourceCommad := models.UpdateDataSourceCommand{
 		OrgId:  10,
-		Name:   "nisse",
+		Name:   "nisse_updated",
 		Type:   models.DS_GRAPHITE,
 		Access: models.DS_ACCESS_DIRECT,
 		Url:    "http://test",
