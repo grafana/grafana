@@ -4,8 +4,7 @@ import { css } from 'emotion';
 import { Button } from '../../Button/Button';
 import cloneDeep from 'lodash/cloneDeep';
 import { Modal } from '../../Modal/Modal';
-import { FullWidthButtonContainer } from '../../Button/FullWidthButtonContainer';
-import { selectThemeVariant, stylesFactory, useTheme } from '../../../themes';
+import { stylesFactory, useTheme } from '../../../themes';
 import { DataLinksListItem } from './DataLinksListItem';
 import { DataLinkEditorModalContent } from './DataLinkEditorModalContent';
 
@@ -99,42 +98,17 @@ export const DataLinksInlineEditor: React.FC<DataLinksInlineEditorProps> = ({ li
         </Modal>
       )}
 
-      <FullWidthButtonContainer>
-        <Button size="sm" icon="plus" onClick={onDataLinkAdd} variant="secondary">
-          Add link
-        </Button>
-      </FullWidthButtonContainer>
+      <Button size="sm" icon="plus" onClick={onDataLinkAdd} variant="secondary">
+        Add data link
+      </Button>
     </>
   );
 };
 
 const getDataLinksInlineEditorStyles = stylesFactory((theme: GrafanaTheme) => {
-  const borderColor = selectThemeVariant(
-    {
-      light: theme.palette.gray85,
-      dark: theme.palette.dark9,
-    },
-    theme.type
-  );
-
-  const shadow = selectThemeVariant(
-    {
-      light: theme.palette.gray85,
-      dark: theme.palette.black,
-    },
-    theme.type
-  );
-
   return {
     wrapper: css`
-      border: 1px dashed ${borderColor};
       margin-bottom: ${theme.spacing.md};
-      transition: box-shadow 0.5s cubic-bezier(0.19, 1, 0.22, 1);
-      box-shadow: none;
-
-      &:hover {
-        box-shadow: 0 0 10px ${shadow};
-      }
     `,
   };
 });
