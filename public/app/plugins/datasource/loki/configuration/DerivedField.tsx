@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { css } from 'emotion';
 import { Button, FormField, DataLinkInput, stylesFactory, LegacyForms } from '@grafana/ui';
 const { Switch } = LegacyForms;
@@ -9,6 +9,7 @@ import { DerivedFieldConfig } from '../types';
 import DataSourcePicker from 'app/core/components/Select/DataSourcePicker';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { config } from 'app/core/config';
+import { usePrevious } from 'react-use';
 
 const getStyles = stylesFactory(() => ({
   row: css`
@@ -33,7 +34,18 @@ type Props = {
 export const DerivedField = (props: Props) => {
   const { value, onChange, onDelete, suggestions, className } = props;
   const styles = getStyles();
-  const [hasIntenalLink, setHasInternalLink] = useState(!!value.datasourceUid);
+  const [showInternalLink, setShowInternalLink] = useState(!!value.datasourceUid);
+  const previousUid = usePrevious(value.datasourceUid);
+
+  // Force internal link visibility change if uid changed outside of this component.
+  useEffect(() => {
+    if (!previousUid && value.datasourceUid && !showInternalLink) {
+      setShowInternalLink(true);
+    }
+    if (previousUid && !value.datasourceUid && showInternalLink) {
+      setShowInternalLink(false);
+    }
+  }, [previousUid, value.datasourceUid, showInternalLink]);
 
   const handleChange = (field: keyof typeof value) => (event: React.ChangeEvent<HTMLInputElement>) => {
     onChange({
@@ -81,11 +93,11 @@ export const DerivedField = (props: Props) => {
       </div>
 
       <FormField
-        label={hasIntenalLink ? 'Query' : 'URL'}
+        label={showInternalLink ? 'Query' : 'URL'}
         labelWidth={5}
         inputEl={
           <DataLinkInput
-            placeholder={hasIntenalLink ? '${__value.raw}' : 'http://example.com/${__value.raw}'}
+            placeholder={showInternalLink ? '${__value.raw}' : 'http://example.com/${__value.raw}'}
             value={value.url || ''}
             onChange={newValue =>
               onChange({
@@ -105,19 +117,19 @@ export const DerivedField = (props: Props) => {
         <div className={styles.row}>
           <Switch
             label="Internal link"
-            checked={hasIntenalLink}
+            checked={showInternalLink}
             onChange={() => {
-              if (hasIntenalLink) {
+              if (showInternalLink) {
                 onChange({
                   ...value,
                   datasourceUid: undefined,
                 });
               }
-              setHasInternalLink(!hasIntenalLink);
+              setShowInternalLink(!showInternalLink);
             }}
           />
 
-          {hasIntenalLink && (
+          {showInternalLink && (
             <DataSourceSection
               onChange={datasourceUid => {
                 onChange({
