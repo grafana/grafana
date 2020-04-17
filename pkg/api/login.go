@@ -29,7 +29,7 @@ var getViewIndex = func() string {
 	return ViewIndex
 }
 
-func (hs *HTTPServer) validateRedirectTo(redirectTo string) error {
+func (hs *HTTPServer) ValidateRedirectTo(redirectTo string) error {
 	to, err := url.Parse(redirectTo)
 	if err != nil {
 		return login.ErrInvalidRedirectTo
@@ -45,7 +45,7 @@ func (hs *HTTPServer) validateRedirectTo(redirectTo string) error {
 	return nil
 }
 
-func (hs *HTTPServer) cookieOptionsFromCfg() middleware.CookieOptions {
+func (hs *HTTPServer) CookieOptionsFromCfg() middleware.CookieOptions {
 	path := "/"
 	if len(hs.Cfg.AppSubUrl) > 0 {
 		path = hs.Cfg.AppSubUrl
@@ -78,7 +78,7 @@ func (hs *HTTPServer) LoginView(c *models.ReqContext) {
 		//therefore the loginError should be passed to the view data
 		//and the view should return immediately before attempting
 		//to login again via OAuth and enter to a redirect loop
-		middleware.DeleteCookie(c.Resp, LoginErrorCookieName, hs.cookieOptionsFromCfg)
+		middleware.DeleteCookie(c.Resp, LoginErrorCookieName, hs.CookieOptionsFromCfg)
 		viewData.Settings["loginError"] = loginError
 		c.HTML(200, getViewIndex(), viewData)
 		return
@@ -100,13 +100,13 @@ func (hs *HTTPServer) LoginView(c *models.ReqContext) {
 		}
 
 		if redirectTo, _ := url.QueryUnescape(c.GetCookie("redirect_to")); len(redirectTo) > 0 {
-			if err := hs.validateRedirectTo(redirectTo); err != nil {
+			if err := hs.ValidateRedirectTo(redirectTo); err != nil {
 				// the user is already logged so instead of rendering the login page with error
 				// it should be redirected to the home page.
 				log.Debug("Ignored invalid redirect_to cookie value: %v", redirectTo)
 				redirectTo = hs.Cfg.AppSubUrl + "/"
 			}
-			middleware.DeleteCookie(c.Resp, "redirect_to", hs.cookieOptionsFromCfg)
+			middleware.DeleteCookie(c.Resp, "redirect_to", hs.CookieOptionsFromCfg)
 			c.Redirect(redirectTo)
 			return
 		}
@@ -184,12 +184,12 @@ func (hs *HTTPServer) LoginPost(c *models.ReqContext, cmd dtos.LoginCommand) Res
 	}
 
 	if redirectTo, _ := url.QueryUnescape(c.GetCookie("redirect_to")); len(redirectTo) > 0 {
-		if err := hs.validateRedirectTo(redirectTo); err == nil {
+		if err := hs.ValidateRedirectTo(redirectTo); err == nil {
 			result["redirectUrl"] = redirectTo
 		} else {
 			log.Info("Ignored invalid redirect_to cookie value: %v", redirectTo)
 		}
-		middleware.DeleteCookie(c.Resp, "redirect_to", hs.cookieOptionsFromCfg)
+		middleware.DeleteCookie(c.Resp, "redirect_to", hs.CookieOptionsFromCfg)
 	}
 
 	metrics.MApiLoginPost.Inc()
@@ -247,7 +247,25 @@ func (hs *HTTPServer) trySetEncryptedCookie(ctx *models.ReqContext, cookieName s
 		return err
 	}
 
-	middleware.WriteCookie(ctx.Resp, cookieName, hex.EncodeToString(encryptedError), 60, hs.cookieOptionsFromCfg)
+	middleware.WriteCookie(ctx.Resp, cookieName, hex.EncodeToString(encryptedError), 60, hs.CookieOptionsFromCfg)
 
 	return nil
+}
+
+func (hs *HTTPServer) redirectWithError(ctx *models.ReqContext, err error, v ...interface{}) {
+	ctx.Logger.Error(err.Error(), v...)
+	if err := hs.trySetEncryptedCookie(ctx, LoginErrorCookieName, err.Error(), 60); err != nil {
+		hs.log.Error("Failed to set encrypted cookie", "err", err)
+	}
+
+	ctx.Redirect(setting.AppSubUrl + "/login")
+}
+
+func (hs *HTTPServer) RedirectResponseWithError(ctx *models.ReqContext, err error, v ...interface{}) *RedirectResponse {
+	ctx.Logger.Error(err.Error(), v...)
+	if err := hs.trySetEncryptedCookie(ctx, LoginErrorCookieName, err.Error(), 60); err != nil {
+		hs.log.Error("Failed to set encrypted cookie", "err", err)
+	}
+
+	return Redirect(setting.AppSubUrl + "/login")
 }

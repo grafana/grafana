@@ -197,17 +197,6 @@ export const TabsBarContent: React.FC<{
           <div className="flex-grow-1" />
         </>
       )}
-
-      {/* 
-      <div className={styles.tabsButton}>
-        <DashNavButton
-          icon="search"
-          iconSize="md"
-          tooltip="Search all options"
-          classSuffix="search-options"
-          onClick={() => setSearchMode(true)}
-        />
-      </div> */}
       <div className={styles.tabsButton}>
         <DashNavButton
           icon="angle-right"

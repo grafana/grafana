@@ -49,8 +49,8 @@ export const ArrayOptions = () => {
 };
 
 export default {
-  title: 'Panel/Segment/SegmentAsync',
-  component: ArrayOptions,
+  title: 'Data Source/Segment/SegmentAsync',
+  component: SegmentAsync,
 };
 
 export const ArrayOptionsWithPrimitiveValue = () => {

@@ -143,8 +143,11 @@ export { HorizontalGroup, VerticalGroup, Container } from './Layout/Layout';
 export { RadioButtonGroup } from './Forms/RadioButtonGroup/RadioButtonGroup';
 
 export { Input } from './Input/Input';
-export { Switch } from './Forms/Switch';
+export { FormInputSize } from './Forms/types';
+
+export { Switch } from './Switch/Switch';
 export { Checkbox } from './Forms/Checkbox';
+
 export { TextArea } from './TextArea/TextArea';
 
 // Legacy forms
@@ -158,7 +161,7 @@ import { ButtonSelect } from './Forms/Legacy/Select/ButtonSelect';
 //Input
 import { Input, LegacyInputStatus } from './Forms/Legacy/Input/Input';
 
-import { Switch } from './Switch/Switch';
+import { Switch } from './Forms/Legacy/Switch/Switch';
 
 const LegacyForms = {
   Select,

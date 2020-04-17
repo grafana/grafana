@@ -184,7 +184,7 @@ class LiveLogs extends PureComponent<Props, State> {
             {isPaused ? 'Resume' : 'Pause'}
           </button>
           <button onClick={this.props.stopLive} className={cx('btn btn-inverse', styles.button)}>
-            <Icon name="square-shape" />
+            <Icon name="square-shape" size="lg" type="mono" />
             &nbsp; Exit live mode
           </button>
           {isPaused || (
