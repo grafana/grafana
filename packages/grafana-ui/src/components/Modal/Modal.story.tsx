@@ -5,6 +5,7 @@ import { text, boolean } from '@storybook/addon-knobs';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { UseState } from '../../utils/storybook/UseState';
 import { Modal } from './Modal';
+import { Icon } from '../Icon/Icon';
 import { ModalTabsHeader } from './ModalTabsHeader';
 import { TabContent } from '../Tabs/TabContent';
 
@@ -26,7 +27,7 @@ amet.`
   };
 };
 
-const ModalStories = storiesOf('General/Modal', module);
+const ModalStories = storiesOf('Overlays/Modal', module);
 ModalStories.addDecorator(withCenteredStory);
 
 ModalStories.add('default', () => {
@@ -35,7 +36,7 @@ ModalStories.add('default', () => {
     <Modal
       title={
         <div className="modal-header-title">
-          <i className="fa fa-exclamation-triangle" />
+          <Icon name="exclamation-triangle" size="lg" />
           <span className="p-l-1">My Modal</span>
         </div>
       }

@@ -20,7 +20,7 @@ We recommend using [Homebrew](https://brew.sh/) for installing any missing depen
 ```
 brew install git
 brew install go
-brew install node
+brew install node@12
 
 npm install -g yarn
 ```

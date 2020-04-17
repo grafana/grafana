@@ -2,6 +2,7 @@
 import React, { PureComponent } from 'react';
 
 import { PanelProps } from '@grafana/data';
+import { Icon, IconName } from '@grafana/ui';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { contextSrv } from 'app/core/core';
@@ -10,7 +11,7 @@ import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 interface Step {
   title: string;
   cta?: string;
-  icon: string;
+  icon: IconName;
   href: string;
   target?: string;
   note?: string;
@@ -36,7 +37,7 @@ export class GettingStarted extends PureComponent<PanelProps, State> {
     this.steps = [
       {
         title: 'Install Grafana',
-        icon: 'icon-gf icon-gf-check',
+        icon: 'check',
         href: 'http://docs.grafana.org/',
         target: '_blank',
         note: 'Review the installation docs',
@@ -45,7 +46,7 @@ export class GettingStarted extends PureComponent<PanelProps, State> {
       {
         title: 'Create a data source',
         cta: 'Add data source',
-        icon: 'gicon gicon-datasources',
+        icon: 'database',
         href: 'datasources/new?gettingstarted',
         check: () => {
           return new Promise(resolve => {
@@ -62,7 +63,7 @@ export class GettingStarted extends PureComponent<PanelProps, State> {
       {
         title: 'Build a dashboard',
         cta: 'New dashboard',
-        icon: 'gicon gicon-dashboard',
+        icon: 'apps',
         href: 'dashboard/new?gettingstarted',
         check: () => {
           return backendSrv.search({ limit: 1 }).then(result => {
@@ -73,7 +74,7 @@ export class GettingStarted extends PureComponent<PanelProps, State> {
       {
         title: 'Invite your team',
         cta: 'Add Users',
-        icon: 'gicon gicon-team',
+        icon: 'users-alt',
         href: 'org/users?gettingstarted',
         check: () => {
           return backendSrv.get('/api/org/users/lookup').then((res: any) => {
@@ -85,7 +86,7 @@ export class GettingStarted extends PureComponent<PanelProps, State> {
       {
         title: 'Install apps & plugins',
         cta: 'Explore plugin repository',
-        icon: 'gicon gicon-plugins',
+        icon: 'plug',
         href: 'https://grafana.com/plugins?utm_source=grafana_getting_started',
         check: () => {
           return backendSrv.get('/api/plugins', { embedded: 0, core: 0 }).then((plugins: any[]) => {
@@ -144,7 +145,7 @@ export class GettingStarted extends PureComponent<PanelProps, State> {
     return (
       <div className="progress-tracker-container">
         <button className="progress-tracker-close-btn" onClick={this.dismiss}>
-          <i className="fa fa-remove" />
+          <Icon name="times" />
         </button>
         <div className="progress-tracker">
           {this.steps.map((step, index) => {
@@ -152,7 +153,7 @@ export class GettingStarted extends PureComponent<PanelProps, State> {
               <div key={index} className={step.done ? 'progress-step completed' : 'progress-step active'}>
                 <a className="progress-link" href={step.href} target={step.target} title={step.note}>
                   <span className="progress-marker">
-                    <i className={step.icon} />
+                    <Icon name={step.icon} size="xxl" />
                   </span>
                   <span className="progress-text">{step.title}</span>
                 </a>

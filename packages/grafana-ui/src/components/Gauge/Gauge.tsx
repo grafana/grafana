@@ -102,8 +102,8 @@ export class Gauge extends PureComponent<Props> {
 
     const backgroundColor = selectThemeVariant(
       {
-        dark: theme.colors.dark8,
-        light: theme.colors.gray6,
+        dark: theme.palette.dark8,
+        light: theme.palette.gray6,
       },
       theme.type
     );

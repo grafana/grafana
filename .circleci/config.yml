@@ -35,10 +35,10 @@ executors:
       - image: cimg/go:1.14
   grafana-build:
     docker:
-      - image: grafana/build-container:1.2.13
+      - image: grafana/build-container:1.2.15
   grafana-publish:
     docker:
-      - image: grafana/grafana-ci-deploy:1.2.4
+      - image: grafana/grafana-ci-deploy:1.2.5
   windows-installer:
     docker:
       - image: grafana/wix-toolset-ci:v3
@@ -50,7 +50,7 @@ commands:
       - run:
           name: "Install Grafana build pipeline tool"
           command: |
-            VERSION=0.2.8
+            VERSION=0.2.10
             curl -fLO https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v${VERSION}/grabpl
             chmod +x grabpl
             mv grabpl /tmp
@@ -731,7 +731,11 @@ jobs:
             golangci-lint run -v -j 4 --config scripts/go/configs/ci/.golangci.yml -E unconvert -E unused \
               -E varcheck -E goconst -E errcheck -E staticcheck ./pkg/...
             ./scripts/go/bin/revive -formatter stylish -config ./scripts/go/configs/revive.toml ./pkg/...
-            ./scripts/go/bin/revive -formatter stylish ./pkg/services/alerting/...
+            ./scripts/go/bin/revive -formatter stylish -config ./scripts/go/configs/revive-strict.toml \
+              ./pkg/services/alerting/... \
+              ./pkg/services/provisioning/datasources/... \
+              ./pkg/services/provisioning/dashboards/...
+
             ./scripts/go/bin/gosec -quiet -exclude=G104,G107,G108,G201,G202,G204,G301,G304,G401,G402,G501 \
               -conf=./scripts/go/configs/gosec.json ./pkg/...
 
@@ -789,8 +793,7 @@ jobs:
           when: on_success
 
   build-docs-website:
-    docker:
-      - image: grafana/build-container:1.2.13
+    executor: grafana-build
     working_directory: /docs
     steps:
       - checkout
@@ -864,7 +867,7 @@ jobs:
           command: "./scripts/ci-job-succeeded.sh"
           when: on_success
 
-  scan-docker-master:
+  scan-docker-images:
     docker:
       - image: circleci/buildpack-deps:stretch
     steps:
@@ -887,11 +890,29 @@ jobs:
           name: Clear trivy cache
           command: trivy --clear-cache
       - run:
-          name: Scan the latest grafana master alpine image with trivy
+          name: Scan grafana/grafana:master
           command: trivy --exit-code 1 grafana/grafana:master
       - run:
-          name: Scan the latest grafana master ubuntu image with trivy
+          name: Scan grafana/grafana:master-ubuntu
           command: trivy --exit-code 1 grafana/grafana:master-ubuntu
+      - run:
+          name: Scan grafana/grafana-enterprise:master
+          command: trivy --exit-code 1 grafana/grafana-enterprise:master
+      - run:
+          name: Scan grafana/grafana-enterprise:master-ubuntu
+          command: trivy --exit-code 1 grafana/grafana-enterprise:master-ubuntu
+      - run:
+          name: Scan grafana/grafana:latest
+          command: trivy --exit-code 1 grafana/grafana:latest
+      - run:
+          name: Scan grafana/grafana:latest-ubuntu
+          command: trivy --exit-code 1 grafana/grafana:latest-ubuntu
+      - run:
+          name: Scan grafana/grafana-enterprise:latest
+          command: trivy --exit-code 1 grafana/grafana-enterprise:latest
+      - run:
+          name: Scan grafana/grafana-enterprise:latest-ubuntu
+          command: trivy --exit-code 1 grafana/grafana-enterprise:latest-ubuntu
       - save_cache:
           key: vulnerability-db
           paths:
@@ -1227,4 +1248,4 @@ workflows:
           cron: "0 0 * * *"
           filters: *filter-only-master
     jobs:
-      - scan-docker-master
+      - scan-docker-images

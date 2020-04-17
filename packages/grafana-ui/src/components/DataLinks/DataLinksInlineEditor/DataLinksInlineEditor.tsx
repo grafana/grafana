@@ -100,7 +100,7 @@ export const DataLinksInlineEditor: React.FC<DataLinksInlineEditorProps> = ({ li
       )}
 
       <FullWidthButtonContainer>
-        <Button size="sm" icon="fa fa-plus" onClick={onDataLinkAdd} variant="secondary">
+        <Button size="sm" icon="plus" onClick={onDataLinkAdd} variant="secondary">
           Add link
         </Button>
       </FullWidthButtonContainer>
@@ -111,16 +111,16 @@ export const DataLinksInlineEditor: React.FC<DataLinksInlineEditorProps> = ({ li
 const getDataLinksInlineEditorStyles = stylesFactory((theme: GrafanaTheme) => {
   const borderColor = selectThemeVariant(
     {
-      light: theme.colors.gray85,
-      dark: theme.colors.dark9,
+      light: theme.palette.gray85,
+      dark: theme.palette.dark9,
     },
     theme.type
   );
 
   const shadow = selectThemeVariant(
     {
-      light: theme.colors.gray85,
-      dark: theme.colors.black,
+      light: theme.palette.gray85,
+      dark: theme.palette.black,
     },
     theme.type
   );

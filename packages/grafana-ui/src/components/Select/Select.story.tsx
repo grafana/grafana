@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Select, AsyncSelect, MultiSelect, AsyncMultiSelect } from './Select';
 import { withCenteredStory, withHorizontallyCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { SelectableValue } from '@grafana/data';
-import { getAvailableIcons, IconType } from '../Icon/types';
+import { getAvailableIcons, IconName } from '../../types';
 import { select, boolean } from '@storybook/addon-knobs';
 import { Icon } from '../Icon/Icon';
 import { Button } from '../Button';
@@ -10,11 +10,18 @@ import { ButtonSelect } from './ButtonSelect';
 import { getIconKnob } from '../../utils/storybook/knobs';
 import kebabCase from 'lodash/kebabCase';
 import { generateOptions } from './mockOptions';
+import mdx from './Select.mdx';
 
 export default {
   title: 'Forms/Select',
   component: Select,
   decorators: [withCenteredStory, withHorizontallyCenteredStory],
+  subcomponents: { AsyncSelect, MultiSelect, AsyncMultiSelect },
+  parameters: {
+    docs: {
+      page: mdx,
+    },
+  },
 };
 
 const loadAsyncOptions = () => {
@@ -46,7 +53,7 @@ const getKnobs = () => {
 
   let prefixEl: any = prefix;
   if (prefix && prefix.match(/icon-/g)) {
-    prefixEl = <Icon name={prefix.replace(/icon-/g, '') as IconType} />;
+    prefixEl = <Icon name={prefix.replace(/icon-/g, '') as IconName} />;
   }
 
   return {

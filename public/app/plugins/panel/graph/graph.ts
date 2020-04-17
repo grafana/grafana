@@ -200,7 +200,7 @@ class GraphElement {
           items: [
             {
               label: 'Add annotation',
-              icon: 'gicon gicon-annotation',
+              icon: 'comment-alt',
               onClick: () => this.eventManager.updateTime({ from: flotPosition.x, to: null }),
             },
           ],
@@ -218,7 +218,7 @@ class GraphElement {
               label: link.title,
               url: link.href,
               target: link.target,
-              icon: `fa ${link.target === '_self' ? 'fa-link' : 'fa-external-link'}`,
+              icon: `${link.target === '_self' ? 'link' : 'external-link-alt'}`,
               onClick: link.onClick,
             };
           }),
@@ -249,7 +249,7 @@ class GraphElement {
       return;
     } else {
       this.tooltip.clear(this.plot);
-      let linksSupplier: LinkModelSupplier<FieldDisplay>;
+      let linksSupplier: LinkModelSupplier<FieldDisplay> | undefined;
 
       if (item) {
         // pickup y-axis index to know which field's config to apply
@@ -258,7 +258,7 @@ class GraphElement {
         const field = dataFrame.fields[item.series.fieldIndex];
         const dataIndex = this.getDataIndexWithNullValuesCorrection(item, dataFrame);
 
-        let links = this.panel.options.dataLinks || [];
+        let links: any[] = this.panel.options.dataLinks || [];
         if (field.config.links && field.config.links.length) {
           // Append the configured links to the panel datalinks
           links = [...links, ...field.config.links];

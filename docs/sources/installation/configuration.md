@@ -851,7 +851,7 @@ for the full list. Environment variables will override any settings provided her
 
 ### address
 
-The host:port destination for reporting spans. (ex: `localhost:6381`)
+The host:port destination for reporting spans. (ex: `localhost:6831`)
 
 Can be set with the environment variables `JAEGER_AGENT_HOST` and `JAEGER_AGENT_PORT`.
 

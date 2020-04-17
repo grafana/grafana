@@ -132,7 +132,7 @@ function renderHeaderCell(column: any, tableStyles: TableStyles, field?: Field) 
       {column.canSort && (
         <div {...column.getSortByToggleProps()}>
           {column.render('Header')}
-          {column.isSorted && (column.isSortedDesc ? <Icon name="caret-down" /> : <Icon name="caret-up" />)}
+          {column.isSorted && (column.isSortedDesc ? <Icon name="angle-down" /> : <Icon name="angle-up" />)}
         </div>
       )}
       {!column.canSort && <div>{column.render('Header')}</div>}

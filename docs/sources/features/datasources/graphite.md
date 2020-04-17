@@ -47,7 +47,7 @@ All requests will be made from the browser directly to the data source and may b
 
 ### Navigate metric segments
 
-Click the ``Select metric`` link to start navigating the metric space. One you start you can continue using the mouse
+Click the ``Select metric`` link to start navigating the metric space. Once you start you can continue using the mouse
 or keyboard arrow keys. You can select a wildcard and still continue.
 
 {{< docs-imagebox img="/img/docs/v45/graphite_query1_still.png"
@@ -162,7 +162,7 @@ Check out the [Advanced Formatting Options section in the Variables]({{< relref 
 
 ## Annotations
 
-[Annotations]({{< relref "../../reference/annotations.md" >}}) allows you to overlay rich event information on top of graphs. You add annotation
+[Annotations]({{< relref "../../reference/annotations.md" >}}) allow you to overlay rich event information on top of graphs. You add annotation
 queries via the Dashboard menu / Annotations view.
 
 Graphite supports two ways to query annotations. A regular metric query, for this you use the `Graphite query` textbox. A Graphite events query, use the `Graphite event tags` textbox,

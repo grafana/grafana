@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import React, { FC, memo } from 'react';
 import { cx, css } from 'emotion';
 import { OnTagClick, Tag } from './Tag';
 
@@ -9,7 +9,7 @@ export interface Props {
   className?: string;
 }
 
-export const TagList: FC<Props> = ({ tags, onClick, className }) => {
+export const TagList: FC<Props> = memo(({ tags, onClick, className }) => {
   const styles = getStyles();
 
   return (
@@ -19,7 +19,7 @@ export const TagList: FC<Props> = ({ tags, onClick, className }) => {
       ))}
     </span>
   );
-};
+});
 
 const getStyles = () => {
   return {

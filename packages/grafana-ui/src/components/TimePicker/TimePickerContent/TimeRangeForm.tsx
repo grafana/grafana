@@ -3,7 +3,7 @@ import { TIME_FORMAT, TimeZone, isDateTime, TimeRange, DateTime, dateMath } from
 import { stringToDateTimeType, isValidTimeString } from '../time';
 import { mapStringsToTimeRange } from './mapper';
 import { TimePickerCalendar } from './TimePickerCalendar';
-import Forms from '../../Forms';
+import { Field } from '../../Forms/Field';
 import { Input } from '../../Input/Input';
 import { Button } from '../../Button';
 
@@ -62,11 +62,11 @@ export const TimeRangeForm: React.FC<Props> = props => {
     [timeZone]
   );
 
-  const icon = isFullscreen ? null : <Button icon="fa fa-calendar" variant="secondary" onClick={onOpen} />;
+  const icon = isFullscreen ? null : <Button icon="calendar-alt" variant="secondary" onClick={onOpen} />;
 
   return (
     <>
-      <Forms.Field label="From" invalid={from.invalid} error={errorMessage}>
+      <Field label="From" invalid={from.invalid} error={errorMessage}>
         <Input
           onClick={event => event.stopPropagation()}
           onFocus={onFocus}
@@ -74,8 +74,8 @@ export const TimeRangeForm: React.FC<Props> = props => {
           addonAfter={icon}
           value={from.value}
         />
-      </Forms.Field>
-      <Forms.Field label="To" invalid={to.invalid} error={errorMessage}>
+      </Field>
+      <Field label="To" invalid={to.invalid} error={errorMessage}>
         <Input
           onClick={event => event.stopPropagation()}
           onFocus={onFocus}
@@ -83,7 +83,7 @@ export const TimeRangeForm: React.FC<Props> = props => {
           addonAfter={icon}
           value={to.value}
         />
-      </Forms.Field>
+      </Field>
       <Button onClick={onApply}>Apply time range</Button>
 
       <TimePickerCalendar

@@ -1,12 +1,7 @@
-import {
-  FieldType,
-  FieldConfigEditorProps,
-  FieldConfigPropertyItem,
-  PanelOptionsEditorConfig,
-  PanelOptionsEditorItem,
-  FieldConfigEditorConfig,
-} from '../types';
+import { FieldConfigEditorProps, FieldConfigPropertyItem, FieldConfigEditorConfig } from '../types/fieldOverrides';
 import { OptionsUIRegistryBuilder } from '../types/OptionsUIRegistryBuilder';
+import { FieldType } from '../types/dataFrame';
+import { PanelOptionsEditorConfig, PanelOptionsEditorItem } from '../types/panel';
 import {
   numberOverrideProcessor,
   selectOverrideProcessor,

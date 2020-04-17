@@ -1,5 +1,6 @@
 import React, { FormEvent } from 'react';
-import { Tab, TabsBar } from '@grafana/ui';
+import { css } from 'emotion';
+import { Tab, TabsBar, Icon, IconName } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
 import { NavModel, NavModelItem, NavModelBreadcrumb } from '@grafana/data';
 import { CoreEvents } from 'app/types';
@@ -65,7 +66,7 @@ const Navigation = ({ main }: { main: NavModelItem }) => {
                 label={child.text}
                 active={child.active}
                 key={`${child.url}-${index}`}
-                icon={child.icon}
+                icon={child.icon as IconName}
                 onChangeTab={() => goToUrl(index)}
               />
             )
@@ -113,10 +114,19 @@ export default class PageHeader extends React.Component<Props, any> {
   }
 
   renderHeaderTitle(main: NavModelItem) {
+    const iconClassName =
+      main.icon === 'grafana'
+        ? css`
+            margin-top: 12px;
+          `
+        : css`
+            margin-top: 14px;
+          `;
+
     return (
       <div className="page-header__inner">
         <span className="page-header__logo">
-          {main.icon && <i className={`page-header__icon ${main.icon}`} />}
+          {main.icon && <Icon name={main.icon as IconName} size="xxxl" className={iconClassName} />}
           {main.img && <img className="page-header__img" src={main.img} />}
         </span>
 

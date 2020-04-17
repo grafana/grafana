@@ -47,19 +47,20 @@ export const DynamicConfigValueEditor: React.FC<DynamicConfigValueEditorProps> =
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
   const borderColor = selectThemeVariant(
     {
-      light: theme.colors.gray85,
-      dark: theme.colors.dark9,
+      light: theme.palette.gray85,
+      dark: theme.palette.dark9,
     },
     theme.type
   );
 
   const highlightColor = selectThemeVariant(
     {
-      light: theme.colors.blueLight,
-      dark: theme.colors.blueShade,
+      light: theme.palette.blue95,
+      dark: theme.palette.blue77,
     },
     theme.type
   );
+
   return {
     wrapper: css`
       border-top: 1px dashed ${borderColor};
