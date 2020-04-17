@@ -119,7 +119,7 @@ class UnThemedRichHistory extends PureComponent<RichHistoryProps, RichHistorySta
     } catch (error) {
       console.error(error);
     }
-    /* Set data source filters to state even though they were not succesfully saved in
+    /* Set data source filters to state even though they were not successfully saved in
      * localStorage to allow interaction and filtering.
      **/
     this.setState({ datasourceFilters: value });
