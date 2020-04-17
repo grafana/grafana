@@ -13,7 +13,8 @@ weight = 5
 
 # Using AWS CloudWatch in Grafana
 
-Grafana ships with built in support for CloudWatch. You just have to add it as a data source and you will be ready to build dashboards for your CloudWatch metrics.
+Grafana ships with built in support for CloudWatch. You just have to add it as a data source and you will be ready to
+ build dashboards or use explore with CloudWatch metrics and CloudWatch logs.
 
 ## Adding the data source
 
@@ -112,6 +113,11 @@ aws_secret_access_key = dasdasdsadasdasdasdsa
 region = us-west-2
 ```
 
+## Using the Query Editor
+CloudWatch datasource can query data from both CloudWatch metrics and CloudWatch logs APIs and each has it's own specialised query editor. You select which API you want to query with QueryMode switch on top of the editor.
+ 
+ TODO: img
+
 ## Using the Metric Query Editor
 
 To create a valid query, you need to specify the namespace, metric name and at least one statistic. If `Match Exact` is enabled, you also need to specify all the dimensions of the metric you’re querying, so that the [metric schema](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/search-expression-syntax.html) matches exactly. If `Match Exact` is off, you can specify any number of dimensions by which you’d like to filter. Up to 100 metrics matching your filter criteria will be returned.
@@ -164,6 +170,29 @@ Left clicking a time series in the panel shows a context menu with a link to `Vi
 
 This feature is not available for metrics that are based on metric math expressions.
 
+## Using the Logs Query Editor
+
+> Only available in Grafana v7.0+.
+
+To query CloudWatch logs you have select region and up to 20 log streams which you want to query. Use the main input area to write your query in [CloudWatch Logs Query Language](https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/CWL_QuerySyntax.html)
+
+You can also write queries returning time series data by using [`stats` command](https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/CWL_Insights-Visualizing-Log-Data.html). When using `stats` queries in Explore, you have to make sure you are in Logs Explore mode.
+
+TODO: image Explore switcher
+
+To the right of the query input field is CloudWatch Insights link that will open CloudWatch Insights console with your query so you can continue exploration there if needed.
+
+TODO: image highlight link
+
+### Using template variable
+TODO:
+
+### Deep linking from Grafana panels to the CloudWatch console
+TODO: just copy the section from metrics query editor or just reference that?
+
+### Alerting
+TODO: Not sure if this should be special for logs but feels like something people may not realise you can do with logs queries.
+
 ## Curated Dashboards
 
 > Only available in Grafana v6.5+.
@@ -177,6 +206,9 @@ The updated CloudWatch data source ships with pre-configured dashboards for five
 - Amazon Relational Database Service `Amazon RDS`.
 
 To import the pre-configured dashboards, go to the configuration page of your CloudWatch data source and click on the `Dashboards` tab. Click `Import` for the dashboard you would like to use. To customize the dashboard, we recommend saving the dashboard under a different name, because otherwise the dashboard will be overwritten when a new version of the dashboard is released.
+
+
+TODO: will need to be update when we have the dashboards for logs.
 
 {{< docs-imagebox img="/img/docs/v65/cloudwatch-dashboard-import.png" caption="CloudWatch dashboard import" >}}
 
@@ -297,6 +329,7 @@ resource_arns(us-east-1, ec2:instance, {"Environment":${env:json}})
 
 ## Pricing
 
+TODO: need to update used APIs and whether links to pricing needs to be updated.
 The Amazon CloudWatch data source for Grafana uses the `ListMetrics` and `GetMetricData` CloudWatch API calls to list and retrieve metrics. Please see the [CloudWatch pricing page](https://aws.amazon.com/cloudwatch/pricing/) for pricing information about these API calls.
 
 Every time you pick a dimension in the query editor Grafana will issue a ListMetrics request.
@@ -305,6 +338,8 @@ Whenever you make a change to the queries in the query editor, one new request t
 Please note that for Grafana version 6.5 or higher, all API requests to GetMetricStatistics have been replaced with calls to GetMetricData. This change enables better support for CloudWatch metric math and enables the automatic generation of search expressions when using wildcards or disabling the `Match Exact` option. While GetMetricStatistics qualified for the CloudWatch API free tier, this is not the case for GetMetricData calls. For more information, please refer to the [CloudWatch pricing page](https://aws.amazon.com/cloudwatch/pricing/).
 
 ## Service Quotas
+
+TODO: New service quotas with logs api?
 
 AWS defines quotas, or limits, for resources, actions, and items in your AWS account. Depending on the number of queries in your dashboard and the amount of users accessing the dashboard, you may reach the limit for the allowed number of CloudWatch GetMetricData requests per second. Note that quotas are defined per account and per region. If you're using multiple regions or have set up more than one CloudWatch data source to query against multiple accounts, you need to request a quota increase for each account and each region in which you hit the limit.
 
