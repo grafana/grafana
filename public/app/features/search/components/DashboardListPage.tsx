@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import React, { FC, memo } from 'react';
 import { useAsync } from 'react-use';
 import { connect, MapStateToProps } from 'react-redux';
 import { NavModel } from '@grafana/data';
@@ -16,7 +16,7 @@ interface Props {
   uid?: string;
 }
 
-export const DashboardList: FC<Props> = ({ navModel, uid }) => {
+export const DashboardListPage: FC<Props> = memo(({ navModel, uid }) => {
   const { loading, value } = useAsync(() => {
     if (uid) {
       return backendSrv.getFolderByUid(uid).then((folder: any) => {
@@ -40,11 +40,11 @@ export const DashboardList: FC<Props> = ({ navModel, uid }) => {
       </Page.Contents>
     </Page>
   );
-};
+});
 
 const mapStateToProps: MapStateToProps<Props, {}, StoreState> = state => ({
   navModel: getNavModel(state.navIndex, 'manage-dashboards'),
   uid: getRouteParams(state.location).uid as string | undefined,
 });
 
-export default connect(mapStateToProps)(DashboardList);
+export default connect(mapStateToProps)(DashboardListPage);

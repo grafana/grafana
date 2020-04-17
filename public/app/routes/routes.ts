@@ -159,7 +159,7 @@ export function setupAngularRoutes($routeProvider: route.IRouteProvider, $locati
       resolve: {
         component: () =>
           SafeDynamicImport(
-            import(/* webpackChunkName: "DashboardList"*/ 'app/features/search/components/DashboardList')
+            import(/* webpackChunkName: "DashboardListPage"*/ 'app/features/search/components/DashboardListPage')
           ),
       },
     })
@@ -195,7 +195,7 @@ export function setupAngularRoutes($routeProvider: route.IRouteProvider, $locati
       resolve: {
         component: () =>
           SafeDynamicImport(
-            import(/* webpackChunkName: "DashboardList"*/ 'app/features/search/components/DashboardList')
+            import(/* webpackChunkName: "DashboardListPage"*/ 'app/features/search/components/DashboardListPage')
           ),
       },
     })
@@ -204,7 +204,7 @@ export function setupAngularRoutes($routeProvider: route.IRouteProvider, $locati
       resolve: {
         component: () =>
           SafeDynamicImport(
-            import(/* webpackChunkName: "DashboardList"*/ 'app/features/search/components/DashboardList')
+            import(/* webpackChunkName: "DashboardListPage"*/ 'app/features/search/components/DashboardListPage')
           ),
       },
     })
