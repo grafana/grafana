@@ -31,7 +31,7 @@ export const OptionsPaneContent: React.FC<{
 }) => {
   const theme = useTheme();
   const styles = getStyles(theme);
-  const [activeTab, setActiveTab] = useState('overrides');
+  const [activeTab, setActiveTab] = useState('options');
   const [isSearching, setSearchMode] = useState(false);
 
   const renderFieldOptions = useCallback(
