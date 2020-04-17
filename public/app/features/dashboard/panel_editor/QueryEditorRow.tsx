@@ -335,13 +335,6 @@ export function filterPanelDataToQuery(data: PanelData, refId: string): PanelDat
 
   // No matching series
   if (!series.length) {
-    // If there was an error with no data, pass it to the QueryEditors
-    if (data.error && !data.series.length) {
-      return {
-        ...data,
-        state: LoadingState.Error,
-      };
-    }
     return undefined;
   }
 
