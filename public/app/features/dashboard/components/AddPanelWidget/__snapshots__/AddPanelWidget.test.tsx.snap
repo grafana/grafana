@@ -26,14 +26,15 @@ exports[`Render should render component 1`] = `
       >
         New Panel
       </span>
-      <button
+      <div
+        className="flex-grow-1"
+      />
+      <IconButton
         className="add-panel-widget__close"
+        name="times"
         onClick={[Function]}
-      >
-        <Icon
-          name="times"
-        />
-      </button>
+        surface="header"
+      />
     </div>
     <div
       className="add-panel-widget__btn-container"
@@ -52,7 +53,7 @@ exports[`Render should render component 1`] = `
               className="add-panel-widget__icon"
             >
               <Icon
-                name="search"
+                name="database"
                 size="xl"
               />
             </div>

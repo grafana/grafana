@@ -15,7 +15,6 @@ import {
   LogRowModel,
   LogsDedupStrategy,
   LogsModel,
-  PanelModel,
   RawTimeRange,
   TimeFragment,
   TimeRange,
@@ -33,6 +32,7 @@ import { ExploreUrlState, QueryOptions, QueryTransaction } from 'app/types/explo
 import { config } from '../config';
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { DataSourceSrv } from '@grafana/runtime';
+import { PanelModel } from 'app/features/dashboard/state';
 
 export const DEFAULT_RANGE = {
   from: 'now-1h',
@@ -105,7 +105,7 @@ export async function getExploreUrl(args: GetExploreUrlArguments): Promise<strin
       };
     }
 
-    const exploreState = JSON.stringify({ ...state, originPanelId: panel.id });
+    const exploreState = JSON.stringify({ ...state, originPanelId: panel.getSavedId() });
     url = renderUrl('/explore', { left: exploreState });
   }
   return url;
@@ -507,7 +507,7 @@ export enum SortOrder {
 export const refreshIntervalToSortOrder = (refreshInterval?: string) =>
   RefreshPicker.isLive(refreshInterval) ? SortOrder.Ascending : SortOrder.Descending;
 
-export const sortLogsResult = (logsResult: LogsModel, sortOrder: SortOrder): LogsModel => {
+export const sortLogsResult = (logsResult: LogsModel | null, sortOrder: SortOrder): LogsModel => {
   const rows = logsResult ? logsResult.rows : [];
   sortOrder === SortOrder.Ascending ? rows.sort(sortInAscendingOrder) : rows.sort(sortInDescendingOrder);
   const result: LogsModel = logsResult ? { ...logsResult, rows } : { hasUniqueLabels: false, rows };

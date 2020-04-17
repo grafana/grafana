@@ -16,8 +16,62 @@ import { deprecationWarning } from '../utils';
 import { FieldConfigOptionsRegistry, standardFieldConfigEditorRegistry } from '../field';
 
 export interface SetFieldConfigOptionsArgs<TFieldConfigOptions = any> {
+  /**
+   * Array of standard field config properties
+   *
+   * @example
+   * ```typescript
+   * {
+   *   standardOptions: [FieldConfigProperty.Min, FieldConfigProperty.Max, FieldConfigProperty.Unit]
+   * }
+   * ```
+   */
   standardOptions?: FieldConfigProperty[];
+
+  /**
+   * Object specyfing standard option properties default values
+   *
+   * @example
+   * ```typescript
+   * {
+   *   standardOptionsDefaults: {
+   *     [FieldConfigProperty.Min]: 20,
+   *     [FieldConfigProperty.Max]: 100
+   *   }
+   * }
+   * ```
+   */
   standardOptionsDefaults?: Partial<Record<FieldConfigProperty, any>>;
+
+  /**
+   * Function that allows custom field config properties definition.
+   *
+   * @param builder
+   *
+   * @example
+   * ```typescript
+   * useCustomConfig: builder => {
+   *   builder
+   *    .addNumberInput({
+   *      id: 'shapeBorderWidth',
+   *      name: 'Border width',
+   *      description: 'Border width of the shape',
+   *      settings: {
+   *        min: 1,
+   *        max: 5,
+   *      },
+   *    })
+   *    .addSelect({
+   *      id: 'displayMode',
+   *      name: 'Display mode',
+   *      description: 'How the shape shout be rendered'
+   *      settings: {
+   *      options: [{value: 'fill', label: 'Fill' }, {value: 'transparent', label: 'Transparent }]
+   *    },
+   *  })
+   * }
+   * ```
+   */
   useCustomConfig?: (builder: FieldConfigEditorBuilder<TFieldConfigOptions>) => void;
 }
 
@@ -38,7 +92,7 @@ export class PanelPlugin<TOptions = any, TFieldConfigOptions extends object = an
   private _optionEditors?: PanelOptionEditorsRegistry;
   private registerOptionEditors?: (builder: PanelOptionsEditorBuilder<TOptions>) => void;
 
-  panel: ComponentType<PanelProps<TOptions>>;
+  panel: ComponentType<PanelProps<TOptions>> | null;
   editor?: ComponentClass<PanelEditorProps<TOptions>>;
   onPanelMigration?: PanelMigrationHandler<TOptions>;
   onPanelTypeChanged?: PanelTypeChangedHandler<TOptions>;
@@ -49,7 +103,7 @@ export class PanelPlugin<TOptions = any, TFieldConfigOptions extends object = an
    */
   angularPanelCtrl?: any;
 
-  constructor(panel: ComponentType<PanelProps<TOptions>>) {
+  constructor(panel: ComponentType<PanelProps<TOptions>> | null) {
     super();
     this.panel = panel;
   }
@@ -219,7 +273,7 @@ export class PanelPlugin<TOptions = any, TFieldConfigOptions extends object = an
    * export const plugin = new PanelPlugin<ShapePanelOptions>(ShapePanel)
    *  .useFieldConfig({
    *    useCustomConfig: builder => {
-          builder
+   *      builder
    *       .addNumberInput({
    *         id: 'shapeBorderWidth',
    *         name: 'Border width',
@@ -256,6 +310,7 @@ export class PanelPlugin<TOptions = any, TFieldConfigOptions extends object = an
 
         for (const customProp of builder.getRegistry().list()) {
           customProp.isCustom = true;
+          customProp.category = ['Custom field options'].concat(customProp.category || []);
           // need to do something to make the custom items not conflict with standard ones
           // problem is id (registry index) is used as property path
           // so sort of need a property path on the FieldPropertyEditorItem

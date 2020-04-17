@@ -1,11 +1,10 @@
 import { ComponentSize } from './size';
 export type IconType = 'mono' | 'default';
-export type IconSize = ComponentSize | 'xl' | 'xxl';
+export type IconSize = ComponentSize | 'xl' | 'xxl' | 'xxxl';
 
 export type IconName =
-  | 'fa fa-fw fa-unlock'
-  | 'fa fa-envelope'
   | 'fa fa-spinner'
+  | 'grafana'
   | 'question-circle'
   | 'angle-up'
   | 'history'
@@ -14,17 +13,24 @@ export type IconName =
   | 'angle-left'
   | 'angle-right'
   | 'pen'
-  | 'plane'
+  | 'envelope'
+  | 'percentage'
+  | 'rocket'
   | 'power'
   | 'trash-alt'
+  | 'slack'
+  | 'download-alt'
+  | 'mobile-android'
   | 'plus-square'
   | 'folder-plus'
   | 'folder-open'
   | 'file-copy-alt'
+  | 'file-alt'
   | 'exchange-alt'
   | 'import'
   | 'exclamation-triangle'
   | 'times'
+  | 'signin'
   | 'cloud-upload'
   | 'step-backward'
   | 'square-shape'
@@ -32,14 +38,18 @@ export type IconName =
   | 'tag-alt'
   | 'forward'
   | 'check'
-  | 'add-panel'
+  | 'check-circle'
   | 'copy'
   | 'lock'
+  | 'unlock'
   | 'panel-add'
   | 'arrow-random'
   | 'arrow-down'
+  | 'arrows-h'
   | 'comment-alt'
+  | 'code-branch'
   | 'arrow-right'
+  | 'circle'
   | 'arrow-up'
   | 'arrow-from-right'
   | 'keyboard'
@@ -48,12 +58,12 @@ export type IconName =
   | 'search-minus'
   | 'clock-nine'
   | 'sync'
-  | 'signin'
+  | 'sign-in-alt'
+  | 'cllud-download'
   | 'cog'
   | 'bars'
   | 'save'
   | 'apps'
-  | 'folder-plus'
   | 'link'
   | 'upload'
   | 'columns'
@@ -84,10 +94,8 @@ export type IconName =
   | 'star'
   | 'list-ul'
   | 'edit'
-  | 'shield'
   | 'eye'
   | 'eye-slash'
-  | 'filter'
   | 'monitor'
   | 'plus-circle'
   | 'arrow-left'
@@ -96,67 +104,91 @@ export type IconName =
   | 'minus'
   | 'signal'
   | 'search-plus'
-  | 'search-minus'
+  | 'minus-circle'
   | 'table'
   | 'plus'
   | 'heart'
+  | 'heart-break'
+  | 'ellipsis-v'
   | 'favorite';
 
 export const getAvailableIcons = (): IconName[] => [
+  'fa fa-spinner',
+  'grafana',
   'question-circle',
-  'plane',
-  'plus',
-  'plus-circle',
   'angle-up',
-  'shield',
+  'history',
   'angle-down',
+  'filter',
   'angle-left',
   'angle-right',
-  'calendar-alt',
-  'tag-alt',
-  'calculator-alt',
   'pen',
-  'repeat',
-  'external-link-alt',
+  'envelope',
+  'percentage',
+  'rocket',
   'power',
-  'play',
-  'pause',
   'trash-alt',
+  'slack',
+  'download-alt',
+  'mobile-android',
+  'plus-square',
+  'folder-plus',
+  'folder-open',
+  'file-copy-alt',
+  'file-alt',
+  'exchange-alt',
+  'import',
   'exclamation-triangle',
   'times',
+  'signin',
+  'cloud-upload',
   'step-backward',
   'square-shape',
   'share-alt',
-  'camera',
+  'tag-alt',
   'forward',
   'check',
-  'add-panel',
+  'check-circle',
   'copy',
   'lock',
+  'unlock',
   'panel-add',
   'arrow-random',
+  'arrow-down',
+  'arrows-h',
+  'comment-alt',
+  'code-branch',
+  'arrow-right',
+  'circle',
+  'arrow-up',
   'arrow-from-right',
-  'arrow-left',
   'keyboard',
   'search',
   'chart-line',
   'search-minus',
   'clock-nine',
   'sync',
-  'signin',
+  'sign-in-alt',
+  'cllud-download',
   'cog',
   'bars',
   'save',
   'apps',
-  'folder-plus',
   'link',
   'upload',
+  'columns',
   'home-alt',
+  'channel-add',
+  'calendar-alt',
+  'play',
+  'pause',
+  'calculator-alt',
   'compass',
   'sliders-v-alt',
   'bell',
   'database',
   'user',
+  'camera',
   'plug',
   'shield',
   'key-skeleton-alt',
@@ -164,28 +196,29 @@ export const getAvailableIcons = (): IconName[] => [
   'graph-bar',
   'book',
   'bolt',
-  'cloud-upload',
   'comments-alt',
-  'list-ul',
   'document-info',
   'info-circle',
   'bug',
   'cube',
-  'history',
   'star',
+  'list-ul',
   'edit',
-  'columns',
   'eye',
-  'channel-add',
+  'eye-slash',
   'monitor',
+  'plus-circle',
+  'arrow-left',
+  'repeat',
+  'external-link-alt',
+  'minus',
+  'signal',
+  'search-plus',
+  'minus-circle',
+  'table',
+  'plus',
+  'heart',
+  'heart-break',
+  'ellipsis-v',
   'favorite',
-  'folder-plus',
-  'plus-square',
-  'import',
-  'folder-open',
-  'file-copy-alt',
-  'arrow-down',
-  'filter',
-  'arrow-up',
-  'exchange-alt',
 ];

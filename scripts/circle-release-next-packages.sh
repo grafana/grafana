@@ -70,7 +70,7 @@ else
     if [ "${CIRCLE_BRANCH}" == "master" ]; then
       exit_if_fail ./scripts/ci-metrics-publisher.sh "grafana.ci-buildtimes.$CIRCLE_JOB.$PACKAGE=$runtime"
     fi
-  
+
     exit_status=$?
     if [ $exit_status -eq 0 ]; then
       unpublish_previous_canary "$PACKAGE"

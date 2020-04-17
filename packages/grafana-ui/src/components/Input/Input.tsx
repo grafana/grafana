@@ -11,9 +11,9 @@ export interface Props extends Omit<HTMLProps<HTMLInputElement>, 'prefix' | 'siz
   /** Show an invalid state around the input */
   invalid?: boolean;
   /** Show an icon as a prefix in the input */
-  prefix?: JSX.Element | string | null;
+  prefix?: ReactNode;
   /** Show an icon as a suffix in the input */
-  suffix?: JSX.Element | string | null;
+  suffix?: ReactNode;
   /** Show a loading indicator as a suffix in the input */
   loading?: boolean;
   /** Add a component as an addon before the input  */
@@ -29,7 +29,7 @@ interface StyleDeps {
 }
 
 export const getInputStyles = stylesFactory(({ theme, invalid = false }: StyleDeps) => {
-  const colors = theme.colors;
+  const { palette, colors } = theme;
   const borderRadius = theme.border.radius.sm;
   const height = theme.spacing.formInputHeight;
 
@@ -47,6 +47,7 @@ export const getInputStyles = stylesFactory(({ theme, invalid = false }: StyleDe
     height: 100%;
     /* Min width specified for prefix/suffix classes used outside React component*/
     min-width: ${prefixSuffixStaticWidth};
+    color: ${theme.colors.textWeak};
   `;
 
   return {
@@ -56,13 +57,13 @@ export const getInputStyles = stylesFactory(({ theme, invalid = false }: StyleDe
         label: input-wrapper;
         display: flex;
         width: 100%;
-        height: ${height};
+        height: ${height}px;
         border-radius: ${borderRadius};
         &:hover {
           > .prefix,
           .suffix,
           .input {
-            border-color: ${invalid ? colors.redBase : colors.formInputBorder};
+            border-color: ${invalid ? palette.redBase : colors.formInputBorder};
           }
 
           // only show number buttons on hover
@@ -196,6 +197,7 @@ export const getInputStyles = stylesFactory(({ theme, invalid = false }: StyleDe
         label: input-suffix;
         padding-right: ${theme.spacing.sm};
         padding-left: ${theme.spacing.xs};
+        margin-bottom: -2px;
         border-left: none;
         border-top-left-radius: 0;
         border-bottom-left-radius: 0;

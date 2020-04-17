@@ -36,8 +36,8 @@ export class AnnotationsSrv {
       .then(results => {
         // combine the annotations and flatten results
         let annotations: AnnotationEvent[] = flattenDeep(results[0]);
-        // when in edit mode we need to use editSourceId
-        let panelFilterId = options.panel.editSourceId ?? options.panel.id;
+        // when in edit mode we need to use this function to get the saved id
+        let panelFilterId = options.panel.getSavedId();
 
         // filter out annotations that do not belong to requesting panel
         annotations = annotations.filter(item => {

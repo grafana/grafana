@@ -1,12 +1,12 @@
 $input-border: 1px solid $input-border-color;
 
 .gf-form {
-  margin-bottom: $space-xxs;
   display: flex;
   flex-direction: row;
   align-items: flex-start;
   text-align: left;
   position: relative;
+  margin-bottom: $space-xs;
 
   &--offset-1 {
     margin-left: $spacer;
@@ -40,7 +40,7 @@ $input-border: 1px solid $input-border-color;
 
   .gf-form-input-icon {
     position: absolute;
-    top: 10px;
+    top: 8px;
     font-size: $font-size-lg;
     left: 10px;
     color: $input-color-placeholder;
@@ -83,12 +83,12 @@ $input-border: 1px solid $input-border-color;
   flex-wrap: wrap;
   align-content: flex-start;
 
-  .gf-form + .gf-form {
-    margin-left: $space-xs;
-  }
-
   &--nowrap {
     flex-wrap: nowrap;
+  }
+
+  .select-container {
+    margin-right: $space-xs;
   }
 }
 
@@ -107,13 +107,12 @@ $input-border: 1px solid $input-border-color;
   flex-shrink: 0;
   font-weight: $font-weight-semi-bold;
   font-size: $font-size-sm;
-
   background-color: $input-label-bg;
   height: $input-height;
-
-  border: $border-width solid $input-label-border-color;
-  border-right: none;
-  border-radius: $label-border-radius;
+  margin-right: $space-xs;
+  border-radius: $input-border-radius;
+  justify-content: space-between;
+  border: none;
 
   &--grow {
     flex-grow: 1;
@@ -134,20 +133,19 @@ $input-border: 1px solid $input-border-color;
     color: $variable;
     background: $panel-bg;
     border: $panel-border;
-    border-right: none;
+  }
+
+  &--justify-left {
+    justify-content: left;
   }
 
   &--btn {
-    border-right: $border-width solid $input-label-border-color;
+    border: none;
     border-radius: $border-radius;
 
     &:hover {
       background: $list-item-hover-bg;
       color: $link-color;
-    }
-
-    .fa-caret-down {
-      padding-left: 4px;
     }
   }
 
@@ -167,7 +165,7 @@ $input-border: 1px solid $input-border-color;
   margin-right: $space-xs;
   border: $border-width solid transparent;
   border-left: none;
-  @include border-radius($label-border-radius-sm);
+  @include border-radius($input-border-radius);
 }
 
 .gf-form-textarea {
@@ -187,7 +185,7 @@ $input-border: 1px solid $input-border-color;
   background-clip: padding-box;
   border: $input-border;
   border-radius: $input-border-radius;
-  @include box-shadow($input-box-shadow);
+  margin-right: $space-xs;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -196,7 +194,8 @@ $input-border: 1px solid $input-border-color;
   @at-root textarea#{&} {
     overflow: auto;
     white-space: pre-wrap;
-    height: auto;
+    padding: 6px $space-sm;
+    min-height: $input-height;
   }
 
   // Unstyle the caret on `<select>`s in IE10+.
@@ -274,6 +273,7 @@ $input-border: 1px solid $input-border-color;
 .gf-form-select-wrapper {
   position: relative;
   background-color: $input-bg;
+  margin-right: $space-xs;
 
   .gf-form-select-icon {
     position: absolute;
@@ -387,7 +387,7 @@ $input-border: 1px solid $input-border-color;
   &--right-absolute {
     position: absolute;
     right: $spacer;
-    top: 10px;
+    top: 6px;
   }
 
   &--right-normal {

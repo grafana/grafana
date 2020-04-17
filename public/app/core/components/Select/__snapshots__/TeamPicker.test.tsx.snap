@@ -83,9 +83,27 @@ exports[`TeamPicker renders correctly 1`] = `
         <div
           className="gf-form-select-box__indicators css-q46mcr-IndicatorsContainer"
         >
-          <span
-            className="gf-form-select-box__select-arrow "
-          />
+          <div
+            className="css-1cvxpvr"
+          >
+            <svg
+              className="css-sr6nr"
+              fill="currentColor"
+              height={16}
+              style={
+                Object {
+                  "marginTop": "7px",
+                }
+              }
+              viewBox="0 0 24 24"
+              width={16}
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M17,9.17a1,1,0,0,0-1.41,0L12,12.71,8.46,9.17a1,1,0,0,0-1.41,0,1,1,0,0,0,0,1.42l4.24,4.24a1,1,0,0,0,1.42,0L17,10.59A1,1,0,0,0,17,9.17Z"
+              />
+            </svg>
+          </div>
         </div>
       </div>
     </div>

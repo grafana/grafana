@@ -111,9 +111,10 @@ export const seriesToColumnsTransformer: DataTransformerInfo<SeriesToColumnsOpti
 
 const getColumnName = (frames: DataFrame[], frameIndex: number, fieldIndex: number, isKeyField = false) => {
   const frame = frames[frameIndex];
+  const field = frame.fields[fieldIndex];
   const frameName = frame.name || `${frameIndex}`;
-  const fieldName = frame.fields[fieldIndex].name;
-  const seriesName = isKeyField ? fieldName : `${fieldName} {${frameName}}`;
+  const fieldName = field.name;
+  const seriesName = isKeyField ? fieldName : fieldName === frameName ? fieldName : `${fieldName} {${frameName}}`;
 
   return seriesName;
 };

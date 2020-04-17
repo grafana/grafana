@@ -200,7 +200,7 @@ export class ThresholdsEditor extends PureComponent<Props, State> {
           return (
             <div className={styles.wrapper}>
               <FullWidthButtonContainer className={styles.addButton}>
-                <Button size="sm" icon="plus-circle" onClick={() => this.onAddThreshold()} variant="secondary">
+                <Button size="sm" icon="plus" onClick={() => this.onAddThreshold()} variant="secondary">
                   Add threshold
                 </Button>
               </FullWidthButtonContainer>
@@ -217,7 +217,7 @@ export class ThresholdsEditor extends PureComponent<Props, State> {
                   })}
               </div>
 
-              <Field label="Threshold mode">
+              <Field label="Threshold mode" description="Percentage means thresholds relative to min & max">
                 <FullWidthButtonContainer>
                   <RadioButtonGroup size="sm" options={modes} onChange={this.onModeChanged} value={thresholds.mode} />
                 </FullWidthButtonContainer>

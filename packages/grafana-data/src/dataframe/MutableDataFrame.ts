@@ -6,7 +6,7 @@ import isString from 'lodash/isString';
 import { makeFieldParser } from '../utils/fieldParser';
 import { MutableVector, Vector } from '../types/vector';
 import { ArrayVector } from '../vector/ArrayVector';
-import { vectorToArray } from '../vector/vectorToArray';
+import { FunctionalVector } from '../vector/FunctionalVector';
 
 export type MutableField<T = any> = Field<T, MutableVector<T>>;
 
@@ -14,7 +14,7 @@ type MutableVectorCreator = (buffer?: any[]) => MutableVector;
 
 export const MISSING_VALUE: any = null;
 
-export class MutableDataFrame<T = any> implements DataFrame, MutableVector<T> {
+export class MutableDataFrame<T = any> extends FunctionalVector<T> implements DataFrame, MutableVector<T> {
   name?: string;
   refId?: string;
   meta?: QueryResultMeta;
@@ -26,6 +26,8 @@ export class MutableDataFrame<T = any> implements DataFrame, MutableVector<T> {
   private creator: MutableVectorCreator;
 
   constructor(source?: DataFrame | DataFrameDTO, creator?: MutableVectorCreator) {
+    super();
+
     // This creates the underlying storage buffers
     this.creator = creator
       ? creator
@@ -265,10 +267,6 @@ export class MutableDataFrame<T = any> implements DataFrame, MutableVector<T> {
       v[field.name] = field.values.get(idx);
     }
     return v as T;
-  }
-
-  toArray(): T[] {
-    return vectorToArray(this);
   }
 
   /**

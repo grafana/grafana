@@ -2,7 +2,7 @@ import React from 'react';
 import classNames from 'classnames';
 import { css } from 'emotion';
 
-import { Tooltip, useTheme, stylesFactory } from '@grafana/ui';
+import { Tooltip, useTheme, stylesFactory, Icon } from '@grafana/ui';
 import { GrafanaTheme } from '@grafana/data';
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
@@ -47,7 +47,7 @@ export function TimeSyncButton(props: TimeSyncButtonProps) {
         aria-label={isSynced ? 'Synced times' : 'Unsynced times'}
         onClick={() => onClick()}
       >
-        <i className={classNames('fa fa-link', styles.topPadding, isSynced && 'icon-brand-gradient')} />
+        <Icon name="link" className={classNames(styles.topPadding, isSynced && 'icon-brand-gradient')} size="lg" />
       </button>
     </Tooltip>
   );
