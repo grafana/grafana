@@ -1,7 +1,7 @@
 import React, { CSSProperties, FC, ReactNode, useState } from 'react';
 import { GrafanaTheme } from '@grafana/data';
 import RcDrawer from 'rc-drawer';
-import { css } from 'emotion';
+import { css, cx } from 'emotion';
 import CustomScrollbar from '../CustomScrollbar/CustomScrollbar';
 import { IconButton } from '../IconButton/IconButton';
 import { stylesFactory, useTheme } from '../../themes';
@@ -36,23 +36,24 @@ const getStyles = stylesFactory((theme: GrafanaTheme, scollableContent: boolean)
         flex-direction: column;
         overflow: hidden;
       }
+      z-index: 1050;
     `,
     header: css`
       background-color: ${theme.colors.bg2};
       z-index: 1;
       flex-grow: 0;
-      padding-top: ${theme.spacing.sm};
+      padding-top: ${theme.spacing.xs};
     `,
     actions: css`
-      position: absolute;
       display: flex;
       align-items: baseline;
-      justify-content: space-between;
-      right: ${theme.spacing.sm};
+      justify-content: flex-end;
     `,
     titleWrapper: css`
-      margin-bottom: ${theme.spacing.lg};
-      padding: ${theme.spacing.sm} ${theme.spacing.sm} 0 ${theme.spacing.lg};
+      padding: 0 ${theme.spacing.sm} 0 ${theme.spacing.lg};
+    `,
+    titleSpacing: css`
+      margin-bottom: ${theme.spacing.md};
     `,
     content: css`
       padding: ${theme.spacing.md};
@@ -105,8 +106,8 @@ export const Drawer: FC<Props> = ({
             <IconButton name="times" size="xl" onClick={onClose} surface="header" />
           </div>
           <div className={drawerStyles.titleWrapper}>
-            <h3>{title}</h3>
-            {typeof subtitle === 'string' && <div className="muted">{subtitle}</div>}
+            <h3 className={drawerStyles.titleSpacing}>{title}</h3>
+            {typeof subtitle === 'string' && <div className={cx(drawerStyles.titleSpacing, 'muted')}>{subtitle}</div>}
             {typeof subtitle !== 'string' && subtitle}
           </div>
         </div>
