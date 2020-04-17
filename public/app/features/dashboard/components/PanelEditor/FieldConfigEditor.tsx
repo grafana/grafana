@@ -13,6 +13,7 @@ import { getDataLinksVariableSuggestions } from '../../../panel/panellinks/link_
 import { OverrideEditor } from './OverrideEditor';
 import groupBy from 'lodash/groupBy';
 import { OptionsGroup } from './OptionsGroup';
+import { Counter } from '@grafana/ui/src/components/Tabs/Counter';
 
 interface Props {
   plugin: PanelPlugin;
@@ -180,8 +181,19 @@ export const DefaultFieldConfigEditor: React.FC<Props> = ({ data, onChange, conf
   return (
     <>
       {Object.keys(groupedConfigs).map((k, i) => {
+        const groupItemsCounter = countGroupItems(groupedConfigs[k], config);
+
         return (
-          <OptionsGroup title={k} key={`${k}/${i}`}>
+          <OptionsGroup
+            renderTitle={isExpanded => {
+              return (
+                <>
+                  {k} {!isExpanded && groupItemsCounter && <Counter value={groupItemsCounter} />}
+                </>
+              );
+            }}
+            key={`${k}/${i}`}
+          >
             <>
               {groupedConfigs[k].map(c => {
                 return renderEditor(c);
@@ -192,4 +204,21 @@ export const DefaultFieldConfigEditor: React.FC<Props> = ({ data, onChange, conf
       })}
     </>
   );
+};
+
+const countGroupItems = (group: FieldConfigPropertyItem[], config: FieldConfigSource) => {
+  let counter = 0;
+
+  for (const item of group) {
+    const value = item.isCustom
+      ? config.defaults.custom
+        ? config.defaults.custom[item.path]
+        : undefined
+      : (config.defaults as any)[item.path];
+    if (item.getItemsCount && item.getItemsCount(value) > 0) {
+      counter = counter + item.getItemsCount(value);
+    }
+  }
+
+  return counter === 0 ? undefined : counter;
 };
