@@ -60,6 +60,7 @@ github.com/aws/aws-sdk-go/private/protocol/rest
 github.com/aws/aws-sdk-go/private/protocol/restxml
 github.com/aws/aws-sdk-go/private/protocol/xml/xmlutil
 github.com/aws/aws-sdk-go/service/cloudwatch
+github.com/aws/aws-sdk-go/service/cloudwatch/cloudwatchiface
 github.com/aws/aws-sdk-go/service/ec2
 github.com/aws/aws-sdk-go/service/ec2/ec2iface
 github.com/aws/aws-sdk-go/service/resourcegroupstaggingapi
