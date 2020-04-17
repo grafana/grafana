@@ -218,17 +218,17 @@ func syncUser(ctx *models.ReqContext, token *oauth2.Token, userInfo *social.Basi
 		rt := models.RoleType(userInfo.Role)
 		if rt.IsValid() {
 			// The user will be assigned a role in either the auto-assigned organization or in the default one
-			var orgID int64
-			if setting.AutoAssignOrg && setting.AutoAssignOrgId > 0 {
-				orgID = int64(setting.AutoAssignOrgId)
-				logger.Debug("The user has a role assignment and organization membership is auto-assigned",
-					"role", userInfo.Role, "orgId", orgID)
+			if userInfo.Orgs != nil {
+				for _, orgID := range userInfo.Orgs {
+					extUser.OrgRoles[orgID] = rt
+				}
+			} else if setting.AutoAssignOrg && setting.AutoAssignOrgId > 0 {
+				orgID := int64(setting.AutoAssignOrgId)
+				extUser.OrgRoles[orgID] = rt
 			} else {
-				orgID = int64(1)
-				logger.Debug("The user has a role assignment and organization membership is not auto-assigned",
-					"role", userInfo.Role, "orgId", orgID)
+				orgID := int64(1)
+				extUser.OrgRoles[orgID] = rt
 			}
-			extUser.OrgRoles[orgID] = rt
 		}
 	}
 

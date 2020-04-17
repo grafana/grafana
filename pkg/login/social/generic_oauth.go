@@ -8,6 +8,8 @@ import (
 	"net/http"
 	"net/mail"
 	"regexp"
+	"strconv"
+	"strings"
 
 	"github.com/grafana/grafana/pkg/util/errutil"
 
@@ -22,6 +24,7 @@ type SocialGenericOAuth struct {
 	emailAttributeName   string
 	emailAttributePath   string
 	roleAttributePath    string
+	orgsAttributePath    string
 	teamIds              []int
 }
 
@@ -137,6 +140,23 @@ func (s *SocialGenericOAuth) fillUserInfo(userInfo *BasicUserInfo, data *UserInf
 			userInfo.Role = role
 		}
 	}
+	if userInfo.Orgs == nil {
+		orgs, err := s.extractOrgs(data)
+		if err != nil {
+			s.log.Error("Failed to extract orgs", "error", err)
+		} else {
+			var orgIDs []int64
+			for _, org := range strings.Split(orgs, ",") {
+				orgID, err := strconv.ParseInt(org, 10, 64)
+				if err != nil {
+					s.log.Error(fmt.Sprintf("Failed to convert org %s to integer", org), "error", err)
+					continue
+				}
+				orgIDs = append(orgIDs, orgID)
+			}
+			userInfo.Orgs = orgIDs
+		}
+	}
 	if userInfo.Name == "" {
 		userInfo.Name = s.extractName(data)
 	}
@@ -237,6 +257,19 @@ func (s *SocialGenericOAuth) extractRole(data *UserInfoJson) (string, error) {
 		return "", err
 	}
 	return role, nil
+}
+
+func (s *SocialGenericOAuth) extractOrgs(data *UserInfoJson) (string, error) {
+	if s.orgsAttributePath == "" {
+		return "", nil
+	}
+
+	orgs, err := s.searchJSONForAttr(s.orgsAttributePath, data.rawJSON)
+	if err != nil {
+		return "", err
+	}
+
+	return orgs, nil
 }
 
 func (s *SocialGenericOAuth) extractLogin(data *UserInfoJson) string {
