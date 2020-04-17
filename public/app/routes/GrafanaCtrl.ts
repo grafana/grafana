@@ -297,15 +297,6 @@ export function grafanaAppDirective(
           }, 100);
         }
 
-        // hide search
-        if (body.find('.search-container').length > 0) {
-          if (target.parents('.search-results-container, .search-field-wrapper').length === 0) {
-            scope.$apply(() => {
-              scope.appEvent(CoreEvents.hideDashSearch);
-            });
-          }
-        }
-
         // hide popovers
         const popover = elem.find('.popover');
         if (popover.length > 0 && target.parents('.graph-legend').length === 0) {
