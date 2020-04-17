@@ -17,6 +17,8 @@ import {
   RawTimeRange,
   TimeRange,
   ExploreMode,
+  dateTime,
+  dateMath,
 } from '@grafana/data';
 // Services & Utils
 import store from 'app/core/store';
@@ -92,7 +94,7 @@ import { getTimeZone } from 'app/features/profile/state/selectors';
 import { getShiftedTimeRange } from 'app/core/utils/timePicker';
 import { updateLocation } from '../../../core/actions';
 import { getTimeSrv, TimeSrv } from '../../dashboard/services/TimeSrv';
-import { preProcessPanelData, runRequest } from '../../dashboard/state/runRequest';
+import { preProcessAppendPanelData, preProcessPanelData, runRequest } from '../../dashboard/state/runRequest';
 import { PanelModel } from 'app/features/dashboard/state';
 import { getExploreDatasources } from './selectors';
 
@@ -511,6 +513,119 @@ export const runQueries = (exploreId: ExploreId): ThunkResult<void> => {
 
         firstResponse = false;
 
+        dispatch(queryStreamUpdatedAction({ exploreId, response: data }));
+
+        // Keep scanning for results if this was the last scanning transaction
+        if (getState().explore[exploreId].scanning) {
+          if (data.state === LoadingState.Done && data.series.length === 0) {
+            const range = getShiftedTimeRange(-1, getState().explore[exploreId].range);
+            dispatch(updateTime({ exploreId, absoluteRange: range }));
+            dispatch(runQueries(exploreId));
+          } else {
+            // We can stop scanning if we have a result
+            dispatch(scanStopAction({ exploreId }));
+          }
+        }
+      });
+
+    dispatch(queryStoreSubscriptionAction({ exploreId, querySubscription: newQuerySub }));
+  };
+};
+
+/**
+ * Sub-action to run append queries
+ */
+export const runAppendQueries = (exploreId: ExploreId): ThunkResult<void> => {
+  return (dispatch, getState) => {
+    dispatch(updateTime({ exploreId }));
+
+    const exploreItemState = getState().explore[exploreId];
+    const {
+      datasourceInstance,
+      queries,
+      containerWidth,
+      isLive: live,
+      range,
+      scanning,
+      queryResponse,
+      querySubscription,
+      mode,
+      showingGraph,
+      showingTable,
+    } = exploreItemState;
+
+    const lastResponseEndTimestamp = isDateTime(
+      queryResponse.series[queryResponse.series.length - 1].fields[0].values.get(
+        queryResponse.series[0].fields[0].values.length - 1
+      )
+    )
+      ? dateTime(
+          queryResponse.series[queryResponse.series.length - 1].fields[0].values.get(
+            queryResponse.series[0].fields[0].values.length - 1
+          )
+        )
+      : queryResponse.series[queryResponse.series.length - 1].fields[0].values.get(
+          queryResponse.series[0].fields[0].values.length - 1
+        );
+
+    const newRaw: RawTimeRange = {
+      from: isDateTime(range.raw.from) ? dateTime(range.raw.from) : range.raw.from,
+      to: lastResponseEndTimestamp,
+    };
+
+    const newTimeRange: TimeRange = {
+      from: dateMath.parse(newRaw.from, false, undefined),
+      to: dateMath.parse(newRaw.to, true, undefined),
+      raw: newRaw,
+    };
+
+    if (!hasNonEmptyQuery(queries)) {
+      dispatch(clearQueriesAction({ exploreId }));
+      dispatch(stateSave()); // Remember to save to state and update location
+      return;
+    }
+
+    // Some datasource's query builders allow per-query interval limits,
+    // but we're using the datasource interval limit for now
+    const minInterval = datasourceInstance.interval;
+
+    stopQueryState(querySubscription);
+
+    const datasourceId = datasourceInstance.meta.id;
+
+    const queryOptions: QueryOptions = {
+      minInterval,
+      // maxDataPoints is used in:
+      // Loki - used for logs streaming for buffer size, with undefined it falls back to datasource config if it supports that.
+      // Elastic - limits the number of datapoints for the counts query and for logs it has hardcoded limit.
+      // Influx - used to correctly display logs in graph
+      maxDataPoints: mode === ExploreMode.Logs && datasourceId === 'loki' ? undefined : containerWidth,
+      liveStreaming: live,
+      showingGraph,
+      showingTable,
+      mode,
+    };
+
+    const transaction = buildQueryTransaction(queries, queryOptions, newTimeRange, scanning);
+
+    let firstResponse = true;
+    dispatch(changeLoadingStateAction({ exploreId, loadingState: LoadingState.Loading }));
+
+    const newQuerySub = runRequest(datasourceInstance, transaction.request)
+      .pipe(
+        // Simple throttle for live tailing, in case of > 1000 rows per interval we spend about 200ms on processing and
+        // rendering. In case this is optimized this can be tweaked, but also it should be only as fast as user
+        // actually can see what is happening.
+        live ? throttleTime(500) : identity,
+        map((data: PanelData) => preProcessAppendPanelData(data, queryResponse))
+      )
+      .subscribe((data: PanelData) => {
+        if (!data.error && firstResponse) {
+          // We save queries to the URL here so that only successfully run queries change the URL.
+          dispatch(stateSave());
+        }
+
+        firstResponse = false;
         dispatch(queryStreamUpdatedAction({ exploreId, response: data }));
 
         // Keep scanning for results if this was the last scanning transaction
