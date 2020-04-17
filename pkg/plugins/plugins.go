@@ -153,19 +153,14 @@ func (pm *PluginManager) Run(ctx context.Context) error {
 }
 
 func (pm *PluginManager) checkPluginPaths() error {
-	for _, section := range setting.Raw.Sections() {
-		if !strings.HasPrefix(section.Name(), "plugin.") {
-			continue
-		}
-
-		path := section.Key("path").String()
-		if path == "" {
+	for pluginID, settings := range pm.Cfg.PluginSettings {
+		path, exists := settings["path"]
+		if !exists || path == "" {
 			continue
 		}
 
 		if err := pm.scan(path); err != nil {
-			return errutil.Wrapf(err, "Failed to scan directory configured for plugin '%s': '%s'",
-				section.Name(), path)
+			return errutil.Wrapf(err, "Failed to scan directory configured for plugin '%s': '%s'", pluginID, path)
 		}
 	}
 

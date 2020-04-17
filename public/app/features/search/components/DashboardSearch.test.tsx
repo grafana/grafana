@@ -44,7 +44,10 @@ describe('DashboardSearch', () => {
     });
 
     await act(() => {
-      wrapper.find({ placeholder: 'Search dashboards by name' }).prop('onChange')({ currentTarget: { value: 'Test' } });
+      wrapper
+        .find({ placeholder: 'Search dashboards by name' })
+        .hostNodes()
+        .prop('onChange')({ currentTarget: { value: 'Test' } });
       jest.runAllTimers();
     });
 

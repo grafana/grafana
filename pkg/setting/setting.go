@@ -239,7 +239,6 @@ type Cfg struct {
 
 	// Rendering
 	ImagesDir             string
-	PhantomDir            string
 	RendererUrl           string
 	RendererCallbackUrl   string
 	RendererLimit         int
@@ -259,6 +258,7 @@ type Cfg struct {
 	MetricsEndpointDisableTotalStats bool
 	PluginsEnableAlpha               bool
 	PluginsAppsSkipVerifyTLS         bool
+	PluginSettings                   PluginSettings
 	DisableSanitizeHtml              bool
 	EnterpriseLicensePath            string
 
@@ -939,7 +939,6 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 		}
 	}
 	cfg.ImagesDir = filepath.Join(cfg.DataPath, "png")
-	cfg.PhantomDir = filepath.Join(HomePath, "tools/phantomjs")
 	cfg.TempDataLifetime = iniFile.Section("paths").Key("temp_data_lifetime").MustDuration(time.Second * 3600 * 24)
 	cfg.MetricsEndpointEnabled = iniFile.Section("metrics").Key("enabled").MustBool(true)
 	cfg.MetricsEndpointBasicAuthUsername, err = valueAsString(iniFile.Section("metrics"), "basic_auth_username", "")
@@ -987,6 +986,7 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	pluginsSection := iniFile.Section("plugins")
 	cfg.PluginsEnableAlpha = pluginsSection.Key("enable_alpha").MustBool(false)
 	cfg.PluginsAppsSkipVerifyTLS = pluginsSection.Key("app_tls_skip_verify_insecure").MustBool(false)
+	cfg.PluginSettings = extractPluginSettings(iniFile.Sections())
 
 	// Read and populate feature toggles list
 	featureTogglesSection := iniFile.Section("feature_toggles")

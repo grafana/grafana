@@ -40,7 +40,7 @@ export const savePackage = useSpinner<{
 
 const preparePackage = async (pkg: any) => {
   pkg.bin = {
-    'grafana-toolkit': './bin/grafana-toolkit.dist.js',
+    'grafana-toolkit': './bin/grafana-toolkit.js',
   };
 
   await savePackage({
@@ -53,7 +53,8 @@ const copyFiles = () => {
   const files = [
     'README.md',
     'CHANGELOG.md',
-    'bin/grafana-toolkit.dist.js',
+    'config/circleci/config.yml',
+    'bin/grafana-toolkit.js',
     'src/config/prettier.plugin.config.json',
     'src/config/prettier.plugin.rc.js',
     'src/config/tsconfig.plugin.json',
@@ -66,6 +67,10 @@ const copyFiles = () => {
   return useSpinner<void>(`Moving ${files.join(', ')} files`, async () => {
     const promises = files.map(file => {
       return new Promise((resolve, reject) => {
+        const basedir = path.dirname(`${distDir}/${file}`);
+        if (!fs.existsSync(basedir)) {
+          fs.mkdirSync(basedir, { recursive: true });
+        }
         fs.copyFile(`${cwd}/${file}`, `${distDir}/${file}`, err => {
           if (err) {
             reject(err);

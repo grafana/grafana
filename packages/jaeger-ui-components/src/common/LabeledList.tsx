@@ -16,10 +16,10 @@ import * as React from 'react';
 import { css } from 'emotion';
 import cx from 'classnames';
 
-import { createStyle } from '../Theme';
+import { createStyle, isLight, Theme, useTheme } from '../Theme';
 import { UIDivider } from '../uiElementsContext';
 
-const getStyles = createStyle(() => {
+const getStyles = createStyle((theme: Theme) => {
   return {
     LabeledList: css`
       label: LabeledList;
@@ -33,7 +33,7 @@ const getStyles = createStyle(() => {
     `,
     LabeledListLabel: css`
       label: LabeledListLabel;
-      color: #999;
+      color: ${isLight(theme) ? '#999' : '#666'};
       margin-right: 0.25rem;
     `,
   };
@@ -47,7 +47,7 @@ type LabeledListProps = {
 
 export default function LabeledList(props: LabeledListProps) {
   const { className, dividerClassName, items } = props;
-  const styles = getStyles();
+  const styles = getStyles(useTheme());
   return (
     <ul className={cx(styles.LabeledList, className)}>
       {items.map(({ key, label, value }, i) => {

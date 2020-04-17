@@ -13,6 +13,7 @@ exports[`TimePicker renders buttons correctly 1`] = `
     >
       <Icon
         name="angle-left"
+        size="lg"
       />
     </button>
     <div>
@@ -39,7 +40,7 @@ exports[`TimePicker renders buttons correctly 1`] = `
           onClick={[Function]}
         >
           <Icon
-            className="css-znfyx6"
+            className="css-yawc0"
             name="clock-nine"
             size="lg"
           />
@@ -198,7 +199,7 @@ exports[`TimePicker renders buttons correctly 1`] = `
                   "formButtonHeight": 32,
                   "formFieldsetMargin": "16px",
                   "formInputAffixPaddingHorizontal": "4px",
-                  "formInputHeight": "32px",
+                  "formInputHeight": 32,
                   "formInputMargin": "16px",
                   "formInputPaddingHorizontal": "8px",
                   "formLabelMargin": "0 0 4px 0",
@@ -208,6 +209,7 @@ exports[`TimePicker renders buttons correctly 1`] = `
                   "formValidationMessageMargin": "4px 0 0 0",
                   "formValidationMessagePadding": "4px 8px",
                   "gutter": "30px",
+                  "inlineFormMargin": "4px",
                   "insetSquishMd": "4px 8px",
                   "lg": "24px",
                   "md": "16px",
@@ -327,6 +329,7 @@ exports[`TimePicker renders content correctly after beeing open 1`] = `
     >
       <Icon
         name="angle-left"
+        size="lg"
       />
     </button>
     <div>
@@ -353,7 +356,7 @@ exports[`TimePicker renders content correctly after beeing open 1`] = `
           onClick={[Function]}
         >
           <Icon
-            className="css-znfyx6"
+            className="css-yawc0"
             name="clock-nine"
             size="lg"
           />
@@ -512,7 +515,7 @@ exports[`TimePicker renders content correctly after beeing open 1`] = `
                   "formButtonHeight": 32,
                   "formFieldsetMargin": "16px",
                   "formInputAffixPaddingHorizontal": "4px",
-                  "formInputHeight": "32px",
+                  "formInputHeight": 32,
                   "formInputMargin": "16px",
                   "formInputPaddingHorizontal": "8px",
                   "formLabelMargin": "0 0 4px 0",
@@ -522,6 +525,7 @@ exports[`TimePicker renders content correctly after beeing open 1`] = `
                   "formValidationMessageMargin": "4px 0 0 0",
                   "formValidationMessagePadding": "4px 8px",
                   "gutter": "30px",
+                  "inlineFormMargin": "4px",
                   "insetSquishMd": "4px 8px",
                   "lg": "24px",
                   "md": "16px",
