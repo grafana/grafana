@@ -5,6 +5,7 @@ export { standardTransformers } from './transformers';
 export * from './fieldReducer';
 export { FilterFieldsByNameTransformerOptions } from './transformers/filterByName';
 export { FilterFramesByRefIdTransformerOptions } from './transformers/filterByRefId';
+export { SeriesToColumnsOptions } from './transformers/seriesToColumns';
 export { ReduceTransformerOptions } from './transformers/reduce';
 export { OrganizeFieldsTransformerOptions } from './transformers/organize';
 export { createOrderFieldsComparer } from './transformers/order';
