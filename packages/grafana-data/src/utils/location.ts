@@ -46,7 +46,7 @@ export const locationUtil = {
    * @param getTimeRangeForUrl
    * @internal
    */
-  initialise: ({ getConfig, buildParamsFromVariables, getTimeRangeForUrl }: LocationUtilDependencies) => {
+  initialize: ({ getConfig, buildParamsFromVariables, getTimeRangeForUrl }: LocationUtilDependencies) => {
     grafanaConfig = getConfig;
     getTimeRangeUrlParams = getTimeRangeForUrl;
     getVariablesUrlParams = buildParamsFromVariables;

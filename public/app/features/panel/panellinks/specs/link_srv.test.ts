@@ -238,7 +238,7 @@ describe('linkSrv', () => {
     `(
       "when link '$url' and config.appSubUrl set to '$appSubUrl' then result should be '$expected'",
       ({ url, appSubUrl, expected }) => {
-        locationUtil.initialise({
+        locationUtil.initialize({
           getConfig: () => {
             return { appSubUrl } as any;
           },

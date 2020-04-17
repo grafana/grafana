@@ -58,7 +58,7 @@ export class GrafanaCtrl {
     setKeybindingSrv(keybindingSrv);
     setDashboardSrv(dashboardSrv);
 
-    locationUtil.initialise({
+    locationUtil.initialize({
       getConfig: () => config,
       getTimeRangeForUrl: getTimeSrv().timeRangeForUrl,
       // @ts-ignore

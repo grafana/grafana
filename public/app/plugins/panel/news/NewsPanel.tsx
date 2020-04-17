@@ -81,7 +81,7 @@ export class NewsPanel extends PureComponent<Props, State> {
                 <div className={styles.title}>{item.title}</div>
                 <div className={styles.date}>{dateTime(item.date).format('MMM DD')} </div>
               </a>
-              <div className={styles.content} dangerouslySetInnerHTML={{ __html: sanitize(item.content) }} />
+              <div className={styles.content} dangerouslySetInnerHTML={{ __html: textUtil.sanitize(item.content) }} />
             </div>
           );
         })}
