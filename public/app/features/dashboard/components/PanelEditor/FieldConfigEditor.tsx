@@ -8,10 +8,9 @@ import {
   PanelPlugin,
   SelectableValue,
 } from '@grafana/data';
-import { fieldMatchersUI, ValuePicker, useTheme, Label, Field } from '@grafana/ui';
+import { fieldMatchersUI, ValuePicker, Label, Field, Container } from '@grafana/ui';
 import { getDataLinksVariableSuggestions } from '../../../panel/panellinks/link_srv';
 import { OverrideEditor } from './OverrideEditor';
-import { css } from 'emotion';
 import groupBy from 'lodash/groupBy';
 import { OptionsGroup } from './OptionsGroup';
 
@@ -27,8 +26,6 @@ interface Props {
  * Expects the container div to have size set and will fill it 100%
  */
 export const OverrideFieldConfigEditor: React.FC<Props> = props => {
-  const theme = useTheme();
-
   const onOverrideChange = (index: number, override: any) => {
     const { config } = props;
     let overrides = cloneDeep(config.overrides);
@@ -73,6 +70,7 @@ export const OverrideFieldConfigEditor: React.FC<Props> = props => {
           // TODO:  apply matcher to retrieve fields
           return (
             <OverrideEditor
+              name={`Override ${i + 1}`}
               key={`${o.matcher.id}/${i}`}
               data={data}
               override={o}
@@ -88,24 +86,23 @@ export const OverrideFieldConfigEditor: React.FC<Props> = props => {
 
   const renderAddOverride = () => {
     return (
-      <ValuePicker
-        icon="plus"
-        label="Add override"
-        variant="secondary"
-        options={fieldMatchersUI
-          .list()
-          .map<SelectableValue<string>>(i => ({ label: i.name, value: i.id, description: i.description }))}
-        onChange={value => onOverrideAdd(value)}
-      />
+      <Container padding="md">
+        <ValuePicker
+          icon="plus"
+          label="Add override"
+          size="md"
+          options={fieldMatchersUI
+            .list()
+            .map<SelectableValue<string>>(i => ({ label: i.name, value: i.id, description: i.description }))}
+          onChange={value => onOverrideAdd(value)}
+          isFullWidth={false}
+        />
+      </Container>
     );
   };
 
   return (
-    <div
-      className={css`
-        padding: ${theme.spacing.md};
-      `}
-    >
+    <div>
       {renderOverrides()}
       {renderAddOverride()}
     </div>
