@@ -18,8 +18,9 @@ exports[`Render should disable access key id field 1`] = `
       >
         <Component
           className="width-14"
+          tooltip="Which AWS credentials chain to use. AWS SDK Default is the recommended option for EKS, ECS or if you've attached an IAM role to your EC2 instance."
         >
-          Auth Provider
+          Authentication Provider
         </Component>
         <Select
           allowCustomValue={false}
@@ -47,16 +48,20 @@ exports[`Render should disable access key id field 1`] = `
           options={
             Array [
               Object {
+                "label": "AWS SDK Default",
+                "value": "sdk",
+              },
+              Object {
+                "label": "Assume Role",
+                "value": "arn",
+              },
+              Object {
                 "label": "Access & secret key",
                 "value": "keys",
               },
               Object {
                 "label": "Credentials file",
                 "value": "credentials",
-              },
-              Object {
-                "label": "ARN",
-                "value": "arn",
               },
             ]
           }
@@ -198,8 +203,9 @@ exports[`Render should render component 1`] = `
       >
         <Component
           className="width-14"
+          tooltip="Which AWS credentials chain to use. AWS SDK Default is the recommended option for EKS, ECS or if you've attached an IAM role to your EC2 instance."
         >
-          Auth Provider
+          Authentication Provider
         </Component>
         <Select
           allowCustomValue={false}
@@ -227,16 +233,20 @@ exports[`Render should render component 1`] = `
           options={
             Array [
               Object {
+                "label": "AWS SDK Default",
+                "value": "sdk",
+              },
+              Object {
+                "label": "Assume Role",
+                "value": "arn",
+              },
+              Object {
                 "label": "Access & secret key",
                 "value": "keys",
               },
               Object {
                 "label": "Credentials file",
                 "value": "credentials",
-              },
-              Object {
-                "label": "ARN",
-                "value": "arn",
               },
             ]
           }
@@ -360,7 +370,7 @@ exports[`Render should render component 1`] = `
 </Fragment>
 `;
 
-exports[`Render should should show access key and secret access key fields 1`] = `
+exports[`Render should show access key and secret access key fields 1`] = `
 <Fragment>
   <h3
     className="page-heading"
@@ -378,8 +388,9 @@ exports[`Render should should show access key and secret access key fields 1`] =
       >
         <Component
           className="width-14"
+          tooltip="Which AWS credentials chain to use. AWS SDK Default is the recommended option for EKS, ECS or if you've attached an IAM role to your EC2 instance."
         >
-          Auth Provider
+          Authentication Provider
         </Component>
         <Select
           allowCustomValue={false}
@@ -407,16 +418,20 @@ exports[`Render should should show access key and secret access key fields 1`] =
           options={
             Array [
               Object {
+                "label": "AWS SDK Default",
+                "value": "sdk",
+              },
+              Object {
+                "label": "Assume Role",
+                "value": "arn",
+              },
+              Object {
                 "label": "Access & secret key",
                 "value": "keys",
               },
               Object {
                 "label": "Credentials file",
                 "value": "credentials",
-              },
-              Object {
-                "label": "ARN",
-                "value": "arn",
               },
             ]
           }
@@ -540,7 +555,7 @@ exports[`Render should should show access key and secret access key fields 1`] =
 </Fragment>
 `;
 
-exports[`Render should should show arn role field 1`] = `
+exports[`Render should show arn role field 1`] = `
 <Fragment>
   <h3
     className="page-heading"
@@ -558,8 +573,9 @@ exports[`Render should should show arn role field 1`] = `
       >
         <Component
           className="width-14"
+          tooltip="Which AWS credentials chain to use. AWS SDK Default is the recommended option for EKS, ECS or if you've attached an IAM role to your EC2 instance."
         >
-          Auth Provider
+          Authentication Provider
         </Component>
         <Select
           allowCustomValue={false}
@@ -587,16 +603,20 @@ exports[`Render should should show arn role field 1`] = `
           options={
             Array [
               Object {
+                "label": "AWS SDK Default",
+                "value": "sdk",
+              },
+              Object {
+                "label": "Assume Role",
+                "value": "arn",
+              },
+              Object {
                 "label": "Access & secret key",
                 "value": "keys",
               },
               Object {
                 "label": "Credentials file",
                 "value": "credentials",
-              },
-              Object {
-                "label": "ARN",
-                "value": "arn",
               },
             ]
           }
@@ -720,7 +740,7 @@ exports[`Render should should show arn role field 1`] = `
 </Fragment>
 `;
 
-exports[`Render should should show credentials profile name field 1`] = `
+exports[`Render should show credentials profile name field 1`] = `
 <Fragment>
   <h3
     className="page-heading"
@@ -738,8 +758,9 @@ exports[`Render should should show credentials profile name field 1`] = `
       >
         <Component
           className="width-14"
+          tooltip="Which AWS credentials chain to use. AWS SDK Default is the recommended option for EKS, ECS or if you've attached an IAM role to your EC2 instance."
         >
-          Auth Provider
+          Authentication Provider
         </Component>
         <Select
           allowCustomValue={false}
@@ -767,16 +788,20 @@ exports[`Render should should show credentials profile name field 1`] = `
           options={
             Array [
               Object {
+                "label": "AWS SDK Default",
+                "value": "sdk",
+              },
+              Object {
+                "label": "Assume Role",
+                "value": "arn",
+              },
+              Object {
                 "label": "Access & secret key",
                 "value": "keys",
               },
               Object {
                 "label": "Credentials file",
                 "value": "credentials",
-              },
-              Object {
-                "label": "ARN",
-                "value": "arn",
               },
             ]
           }

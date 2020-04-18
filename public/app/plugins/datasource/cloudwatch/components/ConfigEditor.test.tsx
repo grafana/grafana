@@ -77,7 +77,7 @@ describe('Render', () => {
     expect(wrapper).toMatchSnapshot();
   });
 
-  it('should should show credentials profile name field', () => {
+  it('should show credentials profile name field', () => {
     const wrapper = setup({
       jsonData: {
         authType: 'credentials',
@@ -86,7 +86,7 @@ describe('Render', () => {
     expect(wrapper).toMatchSnapshot();
   });
 
-  it('should should show access key and secret access key fields', () => {
+  it('should show access key and secret access key fields', () => {
     const wrapper = setup({
       jsonData: {
         authType: 'keys',
@@ -95,7 +95,7 @@ describe('Render', () => {
     expect(wrapper).toMatchSnapshot();
   });
 
-  it('should should show arn role field', () => {
+  it('should show arn role field', () => {
     const wrapper = setup({
       jsonData: {
         authType: 'arn',
