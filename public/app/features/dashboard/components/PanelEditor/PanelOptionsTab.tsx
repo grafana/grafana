@@ -7,6 +7,7 @@ import { getPanelLinksVariableSuggestions } from '../../../panel/panellinks/link
 import { getVariables } from '../../../variables/state/selectors';
 import { PanelOptionsEditor } from './PanelOptionsEditor';
 import { AngularPanelOptions } from '../../panel_editor/AngularPanelOptions';
+import { Counter } from '@grafana/ui/src/components/Tabs/Counter';
 
 interface Props {
   panel: PanelModel;
@@ -29,6 +30,7 @@ export const PanelOptionsTab: FC<Props> = ({
 }) => {
   const elements: JSX.Element[] = [];
   const linkVariablesSuggestions = useMemo(() => getPanelLinksVariableSuggestions(), []);
+  const panelLinksCount = panel && panel.links ? panel.links.length : undefined;
 
   const variableOptions = getVariableOptions();
   const directionOptions = [
@@ -89,7 +91,15 @@ export const PanelOptionsTab: FC<Props> = ({
   }
 
   elements.push(
-    <OptionsGroup title="Panel links" key="panel links" defaultToClosed={true}>
+    <OptionsGroup
+      renderTitle={isExpanded => (
+        <>
+          Panel links {!isExpanded && panelLinksCount && panelLinksCount !== 0 && <Counter value={panelLinksCount} />}
+        </>
+      )}
+      key="panel links"
+      defaultToClosed={true}
+    >
       <DataLinksInlineEditor
         links={panel.links}
         onChange={links => onPanelConfigChange('links', links)}

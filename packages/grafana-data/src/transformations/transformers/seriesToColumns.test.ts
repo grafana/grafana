@@ -2,6 +2,7 @@ import {
   ArrayVector,
   DataTransformerConfig,
   DataTransformerID,
+  Field,
   FieldType,
   toDataFrame,
   transformDataFrame,
@@ -177,5 +178,59 @@ describe('SeriesToColumns Transformer', () => {
         labels: { origin: 'odd' },
       },
     ]);
+  });
+
+  describe('Field names', () => {
+    const seriesWithSameFieldAndDataFrameName = toDataFrame({
+      name: 'temperature',
+      fields: [
+        { name: 'time', type: FieldType.time, values: [1000, 2000, 3000, 4000] },
+        { name: 'temperature', type: FieldType.number, values: [1, 3, 5, 7] },
+      ],
+    });
+
+    const seriesB = toDataFrame({
+      name: 'B',
+      fields: [
+        { name: 'time', type: FieldType.time, values: [1000, 2000, 3000, 4000] },
+        { name: 'temperature', type: FieldType.number, values: [2, 4, 6, 8] },
+      ],
+    });
+
+    it('when dataframe and field share the same name then use the field name', () => {
+      const cfg: DataTransformerConfig<SeriesToColumnsOptions> = {
+        id: DataTransformerID.seriesToColumns,
+        options: {
+          byField: 'time',
+        },
+      };
+
+      const filtered = transformDataFrame([cfg], [seriesWithSameFieldAndDataFrameName, seriesB])[0];
+      const expected: Field[] = [
+        {
+          name: 'time',
+          type: FieldType.time,
+          values: new ArrayVector([1000, 2000, 3000, 4000]),
+          config: {},
+          labels: { origin: 'temperature,B' },
+        },
+        {
+          name: 'temperature',
+          type: FieldType.number,
+          values: new ArrayVector([1, 3, 5, 7]),
+          config: {},
+          labels: { origin: 'temperature' },
+        },
+        {
+          name: 'temperature {B}',
+          type: FieldType.number,
+          values: new ArrayVector([2, 4, 6, 8]),
+          config: {},
+          labels: { origin: 'B' },
+        },
+      ];
+
+      expect(filtered.fields).toEqual(expected);
+    });
   });
 });

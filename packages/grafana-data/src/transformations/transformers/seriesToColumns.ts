@@ -5,14 +5,16 @@ import { filterFieldsByNameTransformer } from './filterByName';
 import { ArrayVector } from '../../vector';
 
 export interface SeriesToColumnsOptions {
-  byField: string;
+  byField?: string;
 }
 
 export const seriesToColumnsTransformer: DataTransformerInfo<SeriesToColumnsOptions> = {
   id: DataTransformerID.seriesToColumns,
-  name: 'Series as Columns',
+  name: 'Series as columns',
   description: 'Groups series by field and returns values as columns',
-  defaultOptions: {},
+  defaultOptions: {
+    byField: 'Time',
+  },
   transformer: options => (data: DataFrame[]) => {
     const regex = `/^(${options.byField})$/`;
     // not sure if I should use filterFieldsByNameTransformer to get the key field
@@ -111,9 +113,10 @@ export const seriesToColumnsTransformer: DataTransformerInfo<SeriesToColumnsOpti
 
 const getColumnName = (frames: DataFrame[], frameIndex: number, fieldIndex: number, isKeyField = false) => {
   const frame = frames[frameIndex];
+  const field = frame.fields[fieldIndex];
   const frameName = frame.name || `${frameIndex}`;
-  const fieldName = frame.fields[fieldIndex].name;
-  const seriesName = isKeyField ? fieldName : `${fieldName} {${frameName}}`;
+  const fieldName = field.name;
+  const seriesName = isKeyField ? fieldName : fieldName === frameName ? fieldName : `${fieldName} {${frameName}}`;
 
   return seriesName;
 };

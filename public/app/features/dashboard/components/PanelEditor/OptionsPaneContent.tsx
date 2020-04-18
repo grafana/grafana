@@ -8,7 +8,7 @@ import { css } from 'emotion';
 import { PanelOptionsTab } from './PanelOptionsTab';
 import { DashNavButton } from 'app/features/dashboard/components/DashNav/DashNavButton';
 
-export const OptionsPaneContent: React.FC<{
+interface Props {
   plugin: PanelPlugin;
   panel: PanelModel;
   data: PanelData;
@@ -18,7 +18,9 @@ export const OptionsPaneContent: React.FC<{
   onFieldConfigsChange: (config: FieldConfigSource) => void;
   onPanelOptionsChanged: (options: any) => void;
   onPanelConfigChange: (configKey: string, value: any) => void;
-}> = ({
+}
+
+export const OptionsPaneContent: React.FC<Props> = ({
   plugin,
   panel,
   data,
@@ -28,7 +30,7 @@ export const OptionsPaneContent: React.FC<{
   onPanelConfigChange,
   onClose,
   dashboard,
-}) => {
+}: Props) => {
   const theme = useTheme();
   const styles = getStyles(theme);
   const [activeTab, setActiveTab] = useState('options');
@@ -91,6 +93,7 @@ export const OptionsPaneContent: React.FC<{
               onClose={onClose}
               setSearchMode={setSearchMode}
               setActiveTab={setActiveTab}
+              panel={panel}
             />
           </TabsBar>
           <TabContent className={styles.tabContent}>
@@ -128,7 +131,11 @@ export const TabsBarContent: React.FC<{
   onClose: () => void;
   setSearchMode: (mode: boolean) => void;
   setActiveTab: (tab: string) => void;
-}> = ({ width, showFields, isSearching, activeTab, onClose, setSearchMode, setActiveTab, styles }) => {
+  panel: PanelModel;
+}> = ({ width, showFields, isSearching, activeTab, onClose, setSearchMode, setActiveTab, styles, panel }) => {
+  const overridesCount =
+    panel.getFieldConfig().overrides.length === 0 ? undefined : panel.getFieldConfig().overrides.length;
+
   if (isSearching) {
     const defaultStyles = {
       transition: 'width 50ms ease-in-out',
@@ -190,6 +197,7 @@ export const TabsBarContent: React.FC<{
             <Tab
               key={item.value}
               label={item.label}
+              counter={item.value === 'overrides' ? overridesCount : undefined}
               active={active.value === item.value}
               onChangeTab={() => setActiveTab(item.value)}
             />
@@ -197,17 +205,6 @@ export const TabsBarContent: React.FC<{
           <div className="flex-grow-1" />
         </>
       )}
-
-      {/* 
-      <div className={styles.tabsButton}>
-        <DashNavButton
-          icon="search"
-          iconSize="md"
-          tooltip="Search all options"
-          classSuffix="search-options"
-          onClick={() => setSearchMode(true)}
-        />
-      </div> */}
       <div className={styles.tabsButton}>
         <DashNavButton
           icon="angle-right"

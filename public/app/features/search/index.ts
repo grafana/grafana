@@ -4,4 +4,7 @@ export { SearchItem } from './components/SearchItem';
 export { SearchCheckbox } from './components/SearchCheckbox';
 export { SearchWrapper } from './components/SearchWrapper';
 export { SearchResultsFilter } from './components/SearchResultsFilter';
+export { ManageDashboards } from './components/ManageDashboards';
+export { ConfirmDeleteModal } from './components/ConfirmDeleteModal';
+export { MoveToFolderModal } from './components/MoveToFolderModal';
 export * from './types';
