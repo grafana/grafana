@@ -22,8 +22,8 @@ import (
 var (
 	// In order to properly cache sessions per-datasource we need to
 	// keep a state for each datasource.
-	executors     = make(map[int64]*CloudWatchExecutor)
-	executor_lock = sync.Mutex{}
+	executors    = make(map[int64]*CloudWatchExecutor)
+	executorLock = sync.Mutex{}
 )
 
 type CloudWatchExecutor struct {
@@ -33,7 +33,7 @@ type CloudWatchExecutor struct {
 	sessions *sessionCache
 
 	// We cache custom metrics and dimensions on a per-datasource per-version basis
-	// These are of type (profile -> region -> namespace
+	// These are of type (profile -> region -> namespace)
 	customMetricsMetricsMap    map[string]map[string]map[string]*CustomMetricsCache
 	metricsCacheLock           sync.Mutex
 	customMetricsDimensionsMap map[string]map[string]map[string]*CustomMetricsCache
@@ -41,8 +41,8 @@ type CloudWatchExecutor struct {
 }
 
 func getExecutor(dsInfo *models.DataSource) *CloudWatchExecutor {
-	executor_lock.Lock()
-	defer executor_lock.Unlock()
+	executorLock.Lock()
+	defer executorLock.Unlock()
 
 	// If the version has been updated we want to break the cache
 	if exec := executors[dsInfo.Id]; exec != nil && exec.DataSource.Version >= dsInfo.Version {

@@ -239,7 +239,7 @@ export class ConfigEditor extends PureComponent<Props, State> {
               <div className="gf-form">
                 <FormLabel
                   className="width-14"
-                  tooltip="ARN of Role to Assume. The AWS SDK Default credentials-chain will be used to assume it."
+                  tooltip="ARN of role to assume. The AWS SDK Default credentials-chain will be used to assume it."
                 >
                   Assume Role ARN
                 </FormLabel>

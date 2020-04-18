@@ -32,7 +32,7 @@ func (s *sessionCache) newAwsSession(dsInfo *DatasourceInfo) (*session.Session, 
 	case "arn":
 		stsSess, err := session.NewSession(regionConfiguration)
 		if err != nil {
-			return nil, fmt.Errorf("creating session for AssumeRoleProvider: %w", err)
+			return nil, fmt.Errorf("creating session for AssumeRoleProvider failed: %w", err)
 		}
 
 		provider := &stscreds.AssumeRoleProvider{
@@ -86,7 +86,7 @@ func (s *sessionCache) Get(dsInfo *DatasourceInfo) (*session.Session, error) {
 
 	sess, err := s.newAwsSession(dsInfo)
 	if err != nil {
-		return nil, fmt.Errorf("creating new session for region %q: %w", region, err)
+		return nil, fmt.Errorf("creating new session for region %q failed: %w", region, err)
 	}
 	s.awsRegionSessions[region] = sess
 
