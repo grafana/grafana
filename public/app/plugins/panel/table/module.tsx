@@ -19,6 +19,7 @@ export const plugin = new PanelPlugin<Options, CustomFieldConfig>(TablePanel)
             min: 20,
             max: 300,
           },
+          shouldApply: () => true,
         })
         .addRadio({
           path: 'align',

@@ -1,6 +1,16 @@
 import React, { FC, memo, useMemo, useCallback } from 'react';
 import { DataFrame, Field } from '@grafana/data';
-import { Cell, Column, HeaderGroup, useAbsoluteLayout, useResizeColumns, useSortBy, useTable } from 'react-table';
+import {
+  Cell,
+  Column,
+  HeaderGroup,
+  useAbsoluteLayout,
+  useResizeColumns,
+  useSortBy,
+  useTable,
+  UseResizeColumnsState,
+  UseSortByState,
+} from 'react-table';
 import { FixedSizeList } from 'react-window';
 import { getColumns, getTableRows, getTextAlign } from './utils';
 import { useTheme } from '../../themes';
@@ -24,10 +34,17 @@ export interface Props {
   onColumnResize?: ColumnResizeActionCallback;
 }
 
+interface ReactTableInternalState extends UseResizeColumnsState<{}>, UseSortByState<{}> {}
+
 function useTableStateReducer(props: Props) {
   return useCallback(
-    (newState: any, action: any, prevState: any) => {
-      console.log('table action', action);
+    (newState: ReactTableInternalState, action: any) => {
+      if (action.type === 'columnDoneResizing' && props.onColumnResize) {
+        const info = (newState.columnResizing.headerIdWidths as any)[0];
+        const name = info[0];
+        const width = Math.round(newState.columnResizing.columnWidths[name] as number);
+        props.onColumnResize(name, width);
+      }
     },
     [props.onColumnResize]
   );

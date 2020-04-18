@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 
 import { Table, Select } from '@grafana/ui';
-import { Field, FieldMatcherID, PanelProps, DataFrame, SelectableValue } from '@grafana/data';
+import { FieldMatcherID, PanelProps, DataFrame, SelectableValue } from '@grafana/data';
 import { Options } from './types';
 import { css } from 'emotion';
 import { config } from 'app/core/config';
@@ -13,21 +13,33 @@ export class TablePanel extends Component<Props> {
     super(props);
   }
 
-  onColumnResize = (field: Field, width: number) => {
-    const current = this.props.fieldConfig;
-    const matcherId = FieldMatcherID.byName;
-    const prop = 'width';
-    const overrides = current.overrides.filter(
-      o => o.matcher.id !== matcherId || o.matcher.options !== field.name || o.properties[0].id !== prop
-    );
+  onColumnResize = (name: string, width: number) => {
+    const { fieldConfig } = this.props;
+    const { overrides } = fieldConfig;
 
-    overrides.push({
-      matcher: { id: matcherId, options: field.name },
-      properties: [{ id: prop, value: width }],
-    });
+    const matcherId = FieldMatcherID.byName;
+    const propId = 'custom.width';
+
+    // look for existing override
+    const override = overrides.find(o => o.matcher.id === matcherId && o.matcher.options === name);
+
+    if (override) {
+      // look for existing property
+      const property = override.properties.find(prop => prop.id === propId);
+      if (property) {
+        property.value = width;
+      } else {
+        override.properties.push({ id: propId, value: width });
+      }
+    } else {
+      overrides.push({
+        matcher: { id: matcherId, options: name },
+        properties: [{ id: propId, value: width }],
+      });
+    }
 
     this.props.onFieldConfigChange({
-      ...current,
+      ...fieldConfig,
       overrides,
     });
   };
@@ -43,10 +55,18 @@ export class TablePanel extends Component<Props> {
   };
 
   renderTable(frame: DataFrame, width: number, height: number) {
-    const {
-      options: { showHeader, resizable },
-    } = this.props;
-    return <Table height={height} width={width} data={frame} noHeader={!showHeader} resizable={resizable} />;
+    const { options } = this.props;
+
+    return (
+      <Table
+        height={height}
+        width={width}
+        data={frame}
+        noHeader={!options.showHeader}
+        resizable={true}
+        onColumnResize={this.onColumnResize}
+      />
+    );
   }
 
   render() {
