@@ -74,12 +74,15 @@ describe('toDataFrame', () => {
     expect(again).toBe(input);
   });
 
-  it('ArrayDataFrame toDataFrame', () => {
+  it('Make sure ArrayDataFrame is used as a DataFrame without modification', () => {
     const orig = [
       { a: 1, b: 2 },
       { a: 3, b: 4 },
     ];
-    const frame = toDataFrame(new ArrayDataFrame(orig));
+    const array = new ArrayDataFrame(orig);
+    const frame = toDataFrame(array);
+    expect(frame).toEqual(array);
+    expect(frame instanceof ArrayDataFrame).toEqual(true);
     expect(frame.length).toEqual(orig.length);
     expect(frame.fields.map(f => f.name)).toEqual(['a', 'b']);
   });
