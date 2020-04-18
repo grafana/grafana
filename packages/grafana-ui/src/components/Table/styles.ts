@@ -21,8 +21,8 @@ export const getTableStyles = stylesFactory(
   (theme: GrafanaTheme): TableStyles => {
     const { palette, colors } = theme;
     const headerBg = theme.colors.bg2;
-    const headerBorderColor = theme.colors.border2;
-    const resizerColor = theme.isLight ? palette.blue77 : palette.blue95;
+    const borderColor = theme.colors.border1;
+    const resizerColor = theme.isLight ? palette.blue95 : palette.blue77;
     const padding = 6;
     const lineHeight = theme.typography.lineHeight.md;
     const bodyFontSize = 14;
@@ -53,7 +53,7 @@ export const getTableStyles = stylesFactory(
         cursor: pointer;
         white-space: nowrap;
         color: ${colors.textBlue};
-        border-right: 1px solid ${headerBorderColor};
+        border-right: 1px solid ${theme.colors.panelBg};
 
         &:last-child {
           border-right: none;
@@ -61,10 +61,10 @@ export const getTableStyles = stylesFactory(
       `,
       row: css`
         label: row;
-        border-bottom: 1px solid ${headerBg};
+        border-bottom: 1px solid ${borderColor};
       `,
       tableCellWrapper: css`
-        border-right: 1px solid ${headerBg};
+        border-right: 1px solid ${borderColor};
 
         &:last-child {
           border-right: none;
@@ -80,13 +80,14 @@ export const getTableStyles = stylesFactory(
         label: resizeHandle;
         cursor: col-resize !important;
         display: inline-block;
-        border-right: 2px solid ${resizerColor};
+        background: ${resizerColor};
         opacity: 0;
         transition: opacity 0.2s ease-in-out;
-        width: 10px;
+        width: 8px;
         height: 100%;
         position: absolute;
-        right: 0;
+        right: -4px;
+        border-radius: 3px;
         top: 0;
         z-index: ${theme.zIndex.dropdown};
         touch-action: none;

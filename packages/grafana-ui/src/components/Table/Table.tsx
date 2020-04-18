@@ -2,7 +2,6 @@ import React, { FC, memo, useMemo, useCallback } from 'react';
 import { DataFrame, Field } from '@grafana/data';
 import { Cell, Column, HeaderGroup, useAbsoluteLayout, useResizeColumns, useSortBy, useTable } from 'react-table';
 import { FixedSizeList } from 'react-window';
-import useMeasure from 'react-use/lib/useMeasure';
 import { getColumns, getTableRows, getTextAlign } from './utils';
 import { useTheme } from '../../themes';
 import { ColumnResizeActionCallback, TableFilterActionCallback } from './types';
@@ -25,88 +24,94 @@ export interface Props {
   onColumnResize?: ColumnResizeActionCallback;
 }
 
-export const Table: FC<Props> = memo(
-  ({ data, height, onCellClick, width, columnMinWidth = COLUMN_MIN_WIDTH, noHeader, resizable = false }) => {
-    const theme = useTheme();
-    const [ref, headerRowMeasurements] = useMeasure();
-    const tableStyles = getTableStyles(theme);
-    const memoizedColumns = useMemo(() => getColumns(data, width, columnMinWidth), [data, width, columnMinWidth]);
-    const memoizedData = useMemo(() => getTableRows(data), [data]);
-
-    const stateReducer = useCallback((newState: any, action: any, prevState: any) => {
+function useTableStateReducer(props: Props) {
+  return useCallback(
+    (newState: any, action: any, prevState: any) => {
       console.log('table action', action);
-    }, []);
+    },
+    [props.onColumnResize]
+  );
+}
 
-    const options: any = useMemo(
-      () => ({
-        columns: memoizedColumns,
-        data: memoizedData,
-        disableResizing: !resizable,
-        stateReducer: stateReducer,
-      }),
-      [memoizedColumns, memoizedData, resizable]
-    );
+export const Table: FC<Props> = memo((props: Props) => {
+  const { data, height, onCellClick, width, columnMinWidth = COLUMN_MIN_WIDTH, noHeader, resizable = false } = props;
+  const theme = useTheme();
+  const tableStyles = getTableStyles(theme);
+  const memoizedColumns = useMemo(() => getColumns(data, width, columnMinWidth), [data, width, columnMinWidth]);
+  const memoizedData = useMemo(() => getTableRows(data), [data]);
+  const stateReducer = useTableStateReducer(props);
 
-    const { getTableProps, headerGroups, rows, prepareRow, totalColumnsWidth } = useTable(
-      options,
-      useSortBy,
-      useAbsoluteLayout,
-      useResizeColumns
-    );
+  const options: any = useMemo(
+    () => ({
+      columns: memoizedColumns,
+      data: memoizedData,
+      disableResizing: !resizable,
+      stateReducer: stateReducer,
+    }),
+    [memoizedColumns, memoizedData, stateReducer, resizable]
+  );
 
-    const RenderRow = React.useCallback(
-      ({ index, style }) => {
-        const row = rows[index];
-        prepareRow(row);
-        return (
-          <div {...row.getRowProps({ style })} className={tableStyles.row}>
-            {row.cells.map((cell: Cell, index: number) => (
-              <TableCell
-                key={index}
-                field={data.fields[index]}
-                tableStyles={tableStyles}
-                cell={cell}
-                onCellClick={onCellClick}
-              />
-            ))}
-          </div>
-        );
-      },
-      [prepareRow, rows]
-    );
+  const { getTableProps, headerGroups, rows, prepareRow, totalColumnsWidth } = useTable(
+    options,
+    useSortBy,
+    useAbsoluteLayout,
+    useResizeColumns
+  );
 
-    return (
-      <div {...getTableProps()} className={tableStyles.table}>
-        <CustomScrollbar hideVerticalTrack={true}>
-          <div style={{ width: `${totalColumnsWidth}px` }}>
-            {!noHeader && (
-              <div>
-                {headerGroups.map((headerGroup: HeaderGroup) => {
-                  return (
-                    <div className={tableStyles.thead} {...headerGroup.getHeaderGroupProps()} ref={ref}>
-                      {headerGroup.headers.map((column: Column, index: number) =>
-                        renderHeaderCell(column, tableStyles, data.fields[index])
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-            <FixedSizeList
-              height={height - headerRowMeasurements.height}
-              itemCount={rows.length}
-              itemSize={tableStyles.rowHeight}
-              width={'100%'}
-              style={{ overflow: 'hidden auto' }}
-            >
-              {RenderRow}
-            </FixedSizeList>
-          </div>
-        </CustomScrollbar>
-      </div>
-    );
-  }
-);
+  const RenderRow = React.useCallback(
+    ({ index, style }) => {
+      const row = rows[index];
+      prepareRow(row);
+      return (
+        <div {...row.getRowProps({ style })} className={tableStyles.row}>
+          {row.cells.map((cell: Cell, index: number) => (
+            <TableCell
+              key={index}
+              field={data.fields[index]}
+              tableStyles={tableStyles}
+              cell={cell}
+              onCellClick={onCellClick}
+            />
+          ))}
+        </div>
+      );
+    },
+    [prepareRow, rows]
+  );
+
+  const headerHeight = noHeader ? 0 : tableStyles.cellHeight;
+
+  return (
+    <div {...getTableProps()} className={tableStyles.table}>
+      <CustomScrollbar hideVerticalTrack={true}>
+        <div style={{ width: `${totalColumnsWidth}px` }}>
+          {!noHeader && (
+            <div>
+              {headerGroups.map((headerGroup: HeaderGroup) => {
+                return (
+                  <div className={tableStyles.thead} {...headerGroup.getHeaderGroupProps()}>
+                    {headerGroup.headers.map((column: Column, index: number) =>
+                      renderHeaderCell(column, tableStyles, data.fields[index])
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
+          <FixedSizeList
+            height={height - headerHeight}
+            itemCount={rows.length}
+            itemSize={tableStyles.rowHeight}
+            width={'100%'}
+            style={{ overflow: 'hidden auto' }}
+          >
+            {RenderRow}
+          </FixedSizeList>
+        </div>
+      </CustomScrollbar>
+    </div>
+  );
+});
 
 Table.displayName = 'Table';
 
