@@ -6,6 +6,7 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/cloudwatch"
+	"github.com/aws/aws-sdk-go/service/cloudwatch/cloudwatchiface"
 	"github.com/aws/aws-sdk-go/service/ec2"
 	"github.com/aws/aws-sdk-go/service/ec2/ec2iface"
 	"github.com/aws/aws-sdk-go/service/resourcegroupstaggingapi"
@@ -18,6 +19,11 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+type mockedCloudWatch struct {
+	cloudwatchiface.CloudWatchAPI
+	Resp cloudwatch.ListMetricsOutput
+}
+
 type mockedEc2 struct {
 	ec2iface.EC2API
 	Resp        ec2.DescribeInstancesOutput
@@ -27,6 +33,11 @@ type mockedEc2 struct {
 type mockedRGTA struct {
 	resourcegroupstaggingapiiface.ResourceGroupsTaggingAPIAPI
 	Resp resourcegroupstaggingapi.GetResourcesOutput
+}
+
+func (m mockedCloudWatch) ListMetricsPages(in *cloudwatch.ListMetricsInput, fn func(*cloudwatch.ListMetricsOutput, bool) bool) error {
+	fn(&m.Resp, true)
+	return nil
 }
 
 func (m mockedEc2) DescribeInstancesPages(in *ec2.DescribeInstancesInput, fn func(*ec2.DescribeInstancesOutput, bool) bool) error {
@@ -43,29 +54,38 @@ func (m mockedRGTA) GetResourcesPages(in *resourcegroupstaggingapi.GetResourcesI
 }
 
 func TestCloudWatchMetrics(t *testing.T) {
+	jsonData := simplejson.New()
+	jsonData.Set("defaultRegion", "default")
+	ds := &models.DataSource{
+		Id:             1,
+		Database:       "default",
+		JsonData:       jsonData,
+		SecureJsonData: securejsondata.SecureJsonData{},
+	}
 
 	Convey("When calling getMetricsForCustomMetrics", t, func() {
-		dsInfo := &DatasourceInfo{
-			Region:        "us-east-1",
-			Namespace:     "Foo",
-			Profile:       "default",
-			AssumeRoleArn: "",
-		}
-		f := func(dsInfo *DatasourceInfo) (cloudwatch.ListMetricsOutput, error) {
-			return cloudwatch.ListMetricsOutput{
-				Metrics: []*cloudwatch.Metric{
-					{
-						MetricName: aws.String("Test_MetricName"),
-						Dimensions: []*cloudwatch.Dimension{
+		executor := &CloudWatchExecutor{
+			DataSource:                 ds,
+			customMetricsMetricsMap:    make(map[string]map[string]map[string]*CustomMetricsCache),
+			customMetricsDimensionsMap: make(map[string]map[string]map[string]*CustomMetricsCache),
+			clients: &mockClients{
+				cloudWatch: mockedCloudWatch{
+					Resp: cloudwatch.ListMetricsOutput{
+						Metrics: []*cloudwatch.Metric{
 							{
-								Name: aws.String("Test_DimensionName"),
+								MetricName: aws.String("Test_MetricName"),
+								Dimensions: []*cloudwatch.Dimension{
+									{
+										Name: aws.String("Test_DimensionName"),
+									},
+								},
 							},
 						},
 					},
 				},
-			}, nil
+			},
 		}
-		metrics, _ := getMetricsForCustomMetrics(dsInfo, f)
+		metrics, _ := executor.getMetricsForCustomMetrics("us-east-1")
 
 		Convey("Should contain Test_MetricName", func() {
 			So(metrics, ShouldContain, "Test_MetricName")
@@ -73,27 +93,28 @@ func TestCloudWatchMetrics(t *testing.T) {
 	})
 
 	Convey("When calling getDimensionsForCustomMetrics", t, func() {
-		dsInfo := &DatasourceInfo{
-			Region:        "us-east-1",
-			Namespace:     "Foo",
-			Profile:       "default",
-			AssumeRoleArn: "",
-		}
-		f := func(dsInfo *DatasourceInfo) (cloudwatch.ListMetricsOutput, error) {
-			return cloudwatch.ListMetricsOutput{
-				Metrics: []*cloudwatch.Metric{
-					{
-						MetricName: aws.String("Test_MetricName"),
-						Dimensions: []*cloudwatch.Dimension{
+		executor := &CloudWatchExecutor{
+			DataSource:                 ds,
+			customMetricsMetricsMap:    make(map[string]map[string]map[string]*CustomMetricsCache),
+			customMetricsDimensionsMap: make(map[string]map[string]map[string]*CustomMetricsCache),
+			clients: &mockClients{
+				cloudWatch: mockedCloudWatch{
+					Resp: cloudwatch.ListMetricsOutput{
+						Metrics: []*cloudwatch.Metric{
 							{
-								Name: aws.String("Test_DimensionName"),
+								MetricName: aws.String("Test_MetricName"),
+								Dimensions: []*cloudwatch.Dimension{
+									{
+										Name: aws.String("Test_DimensionName"),
+									},
+								},
 							},
 						},
 					},
 				},
-			}, nil
+			},
 		}
-		dimensionKeys, _ := getDimensionsForCustomMetrics(dsInfo, f)
+		dimensionKeys, _ := executor.getDimensionsForCustomMetrics("us-east-1")
 
 		Convey("Should contain Test_DimensionName", func() {
 			So(dimensionKeys, ShouldContain, "Test_DimensionName")
@@ -102,13 +123,18 @@ func TestCloudWatchMetrics(t *testing.T) {
 
 	Convey("When calling handleGetRegions", t, func() {
 		executor := &CloudWatchExecutor{
-			ec2Svc: mockedEc2{RespRegions: ec2.DescribeRegionsOutput{
-				Regions: []*ec2.Region{
-					{
-						RegionName: aws.String("ap-northeast-2"),
+			DataSource:                 ds,
+			customMetricsMetricsMap:    make(map[string]map[string]map[string]*CustomMetricsCache),
+			customMetricsDimensionsMap: make(map[string]map[string]map[string]*CustomMetricsCache),
+			clients: &mockClients{
+				ec2: mockedEc2{RespRegions: ec2.DescribeRegionsOutput{
+					Regions: []*ec2.Region{
+						{
+							RegionName: aws.String("ap-northeast-2"),
+						},
 					},
 				},
-			}},
+				}},
 		}
 		jsonData := simplejson.New()
 		jsonData.Set("defaultRegion", "default")
@@ -128,23 +154,28 @@ func TestCloudWatchMetrics(t *testing.T) {
 
 	Convey("When calling handleGetEc2InstanceAttribute", t, func() {
 		executor := &CloudWatchExecutor{
-			ec2Svc: mockedEc2{Resp: ec2.DescribeInstancesOutput{
-				Reservations: []*ec2.Reservation{
-					{
-						Instances: []*ec2.Instance{
-							{
-								InstanceId: aws.String("i-12345678"),
-								Tags: []*ec2.Tag{
-									{
-										Key:   aws.String("Environment"),
-										Value: aws.String("production"),
+			DataSource:                 ds,
+			customMetricsMetricsMap:    make(map[string]map[string]map[string]*CustomMetricsCache),
+			customMetricsDimensionsMap: make(map[string]map[string]map[string]*CustomMetricsCache),
+			clients: &mockClients{
+				ec2: mockedEc2{Resp: ec2.DescribeInstancesOutput{
+					Reservations: []*ec2.Reservation{
+						{
+							Instances: []*ec2.Instance{
+								{
+									InstanceId: aws.String("i-12345678"),
+									Tags: []*ec2.Tag{
+										{
+											Key:   aws.String("Environment"),
+											Value: aws.String("production"),
+										},
 									},
 								},
 							},
 						},
 					},
 				},
-			}},
+				}},
 		}
 
 		json := simplejson.New()
@@ -163,46 +194,51 @@ func TestCloudWatchMetrics(t *testing.T) {
 	Convey("When calling handleGetEbsVolumeIds", t, func() {
 
 		executor := &CloudWatchExecutor{
-			ec2Svc: mockedEc2{Resp: ec2.DescribeInstancesOutput{
-				Reservations: []*ec2.Reservation{
-					{
-						Instances: []*ec2.Instance{
-							{
-								InstanceId: aws.String("i-1"),
-								BlockDeviceMappings: []*ec2.InstanceBlockDeviceMapping{
-									{Ebs: &ec2.EbsInstanceBlockDevice{VolumeId: aws.String("vol-1-1")}},
-									{Ebs: &ec2.EbsInstanceBlockDevice{VolumeId: aws.String("vol-1-2")}},
+			DataSource:                 ds,
+			customMetricsMetricsMap:    make(map[string]map[string]map[string]*CustomMetricsCache),
+			customMetricsDimensionsMap: make(map[string]map[string]map[string]*CustomMetricsCache),
+			clients: &mockClients{
+				ec2: mockedEc2{Resp: ec2.DescribeInstancesOutput{
+					Reservations: []*ec2.Reservation{
+						{
+							Instances: []*ec2.Instance{
+								{
+									InstanceId: aws.String("i-1"),
+									BlockDeviceMappings: []*ec2.InstanceBlockDeviceMapping{
+										{Ebs: &ec2.EbsInstanceBlockDevice{VolumeId: aws.String("vol-1-1")}},
+										{Ebs: &ec2.EbsInstanceBlockDevice{VolumeId: aws.String("vol-1-2")}},
+									},
 								},
-							},
-							{
-								InstanceId: aws.String("i-2"),
-								BlockDeviceMappings: []*ec2.InstanceBlockDeviceMapping{
-									{Ebs: &ec2.EbsInstanceBlockDevice{VolumeId: aws.String("vol-2-1")}},
-									{Ebs: &ec2.EbsInstanceBlockDevice{VolumeId: aws.String("vol-2-2")}},
+								{
+									InstanceId: aws.String("i-2"),
+									BlockDeviceMappings: []*ec2.InstanceBlockDeviceMapping{
+										{Ebs: &ec2.EbsInstanceBlockDevice{VolumeId: aws.String("vol-2-1")}},
+										{Ebs: &ec2.EbsInstanceBlockDevice{VolumeId: aws.String("vol-2-2")}},
+									},
 								},
 							},
 						},
-					},
-					{
-						Instances: []*ec2.Instance{
-							{
-								InstanceId: aws.String("i-3"),
-								BlockDeviceMappings: []*ec2.InstanceBlockDeviceMapping{
-									{Ebs: &ec2.EbsInstanceBlockDevice{VolumeId: aws.String("vol-3-1")}},
-									{Ebs: &ec2.EbsInstanceBlockDevice{VolumeId: aws.String("vol-3-2")}},
+						{
+							Instances: []*ec2.Instance{
+								{
+									InstanceId: aws.String("i-3"),
+									BlockDeviceMappings: []*ec2.InstanceBlockDeviceMapping{
+										{Ebs: &ec2.EbsInstanceBlockDevice{VolumeId: aws.String("vol-3-1")}},
+										{Ebs: &ec2.EbsInstanceBlockDevice{VolumeId: aws.String("vol-3-2")}},
+									},
 								},
-							},
-							{
-								InstanceId: aws.String("i-4"),
-								BlockDeviceMappings: []*ec2.InstanceBlockDeviceMapping{
-									{Ebs: &ec2.EbsInstanceBlockDevice{VolumeId: aws.String("vol-4-1")}},
-									{Ebs: &ec2.EbsInstanceBlockDevice{VolumeId: aws.String("vol-4-2")}},
+								{
+									InstanceId: aws.String("i-4"),
+									BlockDeviceMappings: []*ec2.InstanceBlockDeviceMapping{
+										{Ebs: &ec2.EbsInstanceBlockDevice{VolumeId: aws.String("vol-4-1")}},
+										{Ebs: &ec2.EbsInstanceBlockDevice{VolumeId: aws.String("vol-4-2")}},
+									},
 								},
 							},
 						},
 					},
 				},
-			}},
+				}},
 		}
 
 		json := simplejson.New()
@@ -225,24 +261,29 @@ func TestCloudWatchMetrics(t *testing.T) {
 
 	Convey("When calling handleGetResourceArns", t, func() {
 		executor := &CloudWatchExecutor{
-			rgtaSvc: mockedRGTA{
-				Resp: resourcegroupstaggingapi.GetResourcesOutput{
-					ResourceTagMappingList: []*resourcegroupstaggingapi.ResourceTagMapping{
-						{
-							ResourceARN: aws.String("arn:aws:ec2:us-east-1:123456789012:instance/i-12345678901234567"),
-							Tags: []*resourcegroupstaggingapi.Tag{
-								{
-									Key:   aws.String("Environment"),
-									Value: aws.String("production"),
+			DataSource:                 ds,
+			customMetricsMetricsMap:    make(map[string]map[string]map[string]*CustomMetricsCache),
+			customMetricsDimensionsMap: make(map[string]map[string]map[string]*CustomMetricsCache),
+			clients: &mockClients{
+				rgta: mockedRGTA{
+					Resp: resourcegroupstaggingapi.GetResourcesOutput{
+						ResourceTagMappingList: []*resourcegroupstaggingapi.ResourceTagMapping{
+							{
+								ResourceARN: aws.String("arn:aws:ec2:us-east-1:123456789012:instance/i-12345678901234567"),
+								Tags: []*resourcegroupstaggingapi.Tag{
+									{
+										Key:   aws.String("Environment"),
+										Value: aws.String("production"),
+									},
 								},
 							},
-						},
-						{
-							ResourceARN: aws.String("arn:aws:ec2:us-east-1:123456789012:instance/i-76543210987654321"),
-							Tags: []*resourcegroupstaggingapi.Tag{
-								{
-									Key:   aws.String("Environment"),
-									Value: aws.String("production"),
+							{
+								ResourceARN: aws.String("arn:aws:ec2:us-east-1:123456789012:instance/i-76543210987654321"),
+								Tags: []*resourcegroupstaggingapi.Tag{
+									{
+										Key:   aws.String("Environment"),
+										Value: aws.String("production"),
+									},
 								},
 							},
 						},
