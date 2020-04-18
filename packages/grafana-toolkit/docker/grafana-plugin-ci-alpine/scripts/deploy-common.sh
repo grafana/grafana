@@ -36,3 +36,17 @@ untar_file () {
 
     tar -C "$dest" -xf "$src" && /bin/rm -rf "$src"
 }
+
+##
+# WIP: Just started this and not finished.
+# The intent it to download a release from a git repo,
+# compile, and install
+get_latest_release () {
+	tarsrc=$(curl -sL "https://api.github.com/repos/$1/$2/releases/latest" | jq ".tarball_url" | tr -d '"')
+	wget -O /tmp/autoretrieved.tar.gz "$tarsrc"
+	origdir=$PWD
+	reponame=$(tar zxvf autoretrieved.tar.gz | tail -1 | awk -F / '{print $1}')
+	cd "/tmp/$reponame"
+	#perform compile
+	cd $origdir
+}
