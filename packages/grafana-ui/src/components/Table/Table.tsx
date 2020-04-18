@@ -51,7 +51,7 @@ function useTableStateReducer(props: Props) {
 }
 
 export const Table: FC<Props> = memo((props: Props) => {
-  const { data, height, onCellClick, width, columnMinWidth = COLUMN_MIN_WIDTH, noHeader, resizable = false } = props;
+  const { data, height, onCellClick, width, columnMinWidth = COLUMN_MIN_WIDTH, noHeader, resizable = true } = props;
   const theme = useTheme();
   const tableStyles = getTableStyles(theme);
   const memoizedColumns = useMemo(() => getColumns(data, width, columnMinWidth), [data, width, columnMinWidth]);

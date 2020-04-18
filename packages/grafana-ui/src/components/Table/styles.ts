@@ -1,6 +1,6 @@
 import { css } from 'emotion';
 import { GrafanaTheme } from '@grafana/data';
-import { stylesFactory } from '../../themes';
+import { stylesFactory, styleMixins } from '../../themes';
 
 export interface TableStyles {
   cellHeight: number;
@@ -27,6 +27,7 @@ export const getTableStyles = stylesFactory(
     const lineHeight = theme.typography.lineHeight.md;
     const bodyFontSize = 14;
     const cellHeight = padding * 2 + bodyFontSize * lineHeight;
+    const rowHoverBg = styleMixins.hoverColor(theme.colors.bg1, theme);
 
     return {
       theme,
@@ -62,6 +63,10 @@ export const getTableStyles = stylesFactory(
       row: css`
         label: row;
         border-bottom: 1px solid ${borderColor};
+
+        &:hover {
+          background-color: ${rowHoverBg};
+        }
       `,
       tableCellWrapper: css`
         border-right: 1px solid ${borderColor};

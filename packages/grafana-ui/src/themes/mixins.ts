@@ -12,8 +12,14 @@ export function cardChrome(theme: GrafanaTheme): string {
     `;
 }
 
-export function hoverColor(color: string, theme: GrafanaTheme) {
-  return theme.isDark ? tinycolor(color).brighten(2) : tinycolor(color).darken(2);
+export function hoverColor(color: string, theme: GrafanaTheme): string {
+  return theme.isDark
+    ? tinycolor(color)
+        .brighten(2)
+        .toString()
+    : tinycolor(color)
+        .darken(2)
+        .toString();
 }
 
 export function listItem(theme: GrafanaTheme): string {
