@@ -102,8 +102,14 @@ func NewRendererPluginDescriptor(pluginID, executablePath string, startFns Plugi
 				pluginID: &rendererV1.RendererPluginImpl{},
 			},
 			grpcplugin.ProtocolVersion: {
+				"renderer": &pluginextensionv2.RendererGRPCPlugin{},
+				// needs to include all supported plugins here since
+				// hashicorp/go-plugin returns error when for example
+				// calling rpcClient.Dispense("resource").
 				"diagnostics": &grpcplugin.DiagnosticsGRPCPlugin{},
-				"renderer":    &pluginextensionv2.RendererGRPCPlugin{},
+				"resource":    &grpcplugin.ResourceGRPCPlugin{},
+				"data":        &grpcplugin.DataGRPCPlugin{},
+				"transform":   &grpcplugin.TransformGRPCPlugin{},
 			},
 		},
 		startFns: startFns,
