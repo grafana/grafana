@@ -143,6 +143,7 @@ export const getStandardFieldConfigs = () => {
     },
     shouldApply: field => field.type === FieldType.number,
     category: ['Color & thresholds'],
+    getItemsCount: value => (value ? value.steps.length : 0),
   };
 
   const mappings: FieldConfigPropertyItem<any, ValueMapping[], ValueMappingFieldConfigSettings> = {
@@ -158,6 +159,7 @@ export const getStandardFieldConfigs = () => {
     defaultValue: [],
     shouldApply: field => field.type === FieldType.number,
     category: ['Value mappings'],
+    getItemsCount: (value?) => (value ? value.length : 0),
   };
 
   const noValue: FieldConfigPropertyItem<any, string, StringFieldConfigSettings> = {
@@ -191,6 +193,7 @@ export const getStandardFieldConfigs = () => {
     },
     shouldApply: () => true,
     category: ['Data links'],
+    getItemsCount: value => (value ? value.length : 0),
   };
 
   const color: FieldConfigPropertyItem<any, string, StringFieldConfigSettings> = {
