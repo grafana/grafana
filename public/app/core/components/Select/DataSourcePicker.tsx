@@ -2,9 +2,8 @@
 import React, { PureComponent } from 'react';
 
 // Components
-import { LegacyForms } from '@grafana/ui';
+import { Select } from '@grafana/ui';
 import { SelectableValue, DataSourceSelectItem } from '@grafana/data';
-const { Select } = LegacyForms;
 
 export interface Props {
   onChange: (ds: DataSourceSelectItem) => void;
@@ -79,7 +78,7 @@ export class DataSourcePicker extends PureComponent<Props> {
           openMenuOnFocus={openMenuOnFocus}
           maxMenuHeight={500}
           placeholder={placeholder}
-          noOptionsMessage={() => 'No datasources found'}
+          noOptionsMessage="No datasources found"
           value={value}
         />
       </div>

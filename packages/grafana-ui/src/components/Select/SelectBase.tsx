@@ -265,13 +265,13 @@ export function SelectBase<T>({
         styles={{
           ...resetSelectStyles(),
           //These are required for the menu positioning to function
-          menu: ({ top, bottom, width, position }: any) => ({
+          menu: ({ top, bottom, position }: any) => ({
             top,
             bottom,
-            width,
             position,
             marginBottom: !!bottom ? '10px' : '0',
             zIndex: 9999,
+            'min-width': '100%',
           }),
           container: () => ({
             position: 'relative',
