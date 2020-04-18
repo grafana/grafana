@@ -4,7 +4,6 @@ import {
   dataLinksOverrideProcessor,
   FieldConfigPropertyItem,
   FieldType,
-  identityOverrideProcessor,
   NumberFieldConfigSettings,
   numberOverrideProcessor,
   standardEditorsRegistry,
@@ -107,7 +106,6 @@ export const getStandardFieldConfigs = () => {
     id: 'decimals',
     path: 'decimals',
     name: 'Decimals',
-    description: '',
 
     editor: standardEditorsRegistry.get('number').editor as any,
     override: standardEditorsRegistry.get('number').editor as any,
@@ -128,7 +126,6 @@ export const getStandardFieldConfigs = () => {
     id: 'thresholds',
     path: 'thresholds',
     name: 'Thresholds',
-    description: '',
 
     editor: standardEditorsRegistry.get('thresholds').editor as any,
     override: standardEditorsRegistry.get('thresholds').editor as any,
@@ -142,7 +139,7 @@ export const getStandardFieldConfigs = () => {
       ],
     },
     shouldApply: field => field.type === FieldType.number,
-    category: ['Color & thresholds'],
+    category: ['Thresholds'],
     getItemsCount: value => (value ? value.steps.length : 0),
   };
 
@@ -150,7 +147,6 @@ export const getStandardFieldConfigs = () => {
     id: 'mappings',
     path: 'mappings',
     name: 'Value mappings',
-    description: '',
 
     editor: standardEditorsRegistry.get('mappings').editor as any,
     override: standardEditorsRegistry.get('mappings').editor as any,
@@ -183,8 +179,7 @@ export const getStandardFieldConfigs = () => {
   const links: FieldConfigPropertyItem<any, DataLink[], StringFieldConfigSettings> = {
     id: 'links',
     path: 'links',
-    name: 'DataLinks',
-    description: 'Manage date links',
+    name: 'Data links',
     editor: standardEditorsRegistry.get('links').editor as any,
     override: standardEditorsRegistry.get('links').editor as any,
     process: dataLinksOverrideProcessor,
@@ -196,22 +191,22 @@ export const getStandardFieldConfigs = () => {
     getItemsCount: value => (value ? value.length : 0),
   };
 
-  const color: FieldConfigPropertyItem<any, string, StringFieldConfigSettings> = {
-    id: 'color',
-    path: 'color',
-    name: 'Color',
-    description: 'Customise color',
-    editor: standardEditorsRegistry.get('color').editor as any,
-    override: standardEditorsRegistry.get('color').editor as any,
-    process: identityOverrideProcessor,
-    settings: {
-      placeholder: '-',
-    },
-    shouldApply: () => true,
-    category: ['Color & thresholds'],
-  };
+  // const color: FieldConfigPropertyItem<any, string, StringFieldConfigSettings> = {
+  //   id: 'color',
+  //   path: 'color',
+  //   name: 'Color',
+  //   description: 'Customise color',
+  //   editor: standardEditorsRegistry.get('color').editor as any,
+  //   override: standardEditorsRegistry.get('color').editor as any,
+  //   process: identityOverrideProcessor,
+  //   settings: {
+  //     placeholder: '-',
+  //   },
+  //   shouldApply: () => true,
+  //   category: ['Color & thresholds'],
+  // };
 
-  return [unit, min, max, decimals, title, noValue, color, thresholds, mappings, links];
+  return [unit, min, max, decimals, title, noValue, thresholds, mappings, links];
 };
 
 /**

@@ -92,6 +92,7 @@ export const OverrideFieldConfigEditor: React.FC<Props> = props => {
           icon="plus"
           label="Add override"
           size="md"
+          variant="secondary"
           options={fieldMatchersUI
             .list()
             .map<SelectableValue<string>>(i => ({ label: i.name, value: i.id, description: i.description }))}
@@ -142,10 +143,11 @@ export const DefaultFieldConfigEditor: React.FC<Props> = ({ data, onChange, conf
   );
 
   const renderEditor = useCallback(
-    (item: FieldConfigPropertyItem) => {
+    (item: FieldConfigPropertyItem, categoryItemCount: number) => {
       if (item.isCustom && item.showIf && !item.showIf(config.defaults.custom)) {
         return null;
       }
+
       const defaults = config.defaults;
       const value = item.isCustom
         ? defaults.custom
@@ -153,11 +155,14 @@ export const DefaultFieldConfigEditor: React.FC<Props> = ({ data, onChange, conf
           : undefined
         : (defaults as any)[item.path];
 
-      const label = (
-        <Label description={item.description} category={item.category?.slice(1)}>
-          {item.name}
-        </Label>
-      );
+      const label =
+        categoryItemCount > 1 ? (
+          <Label description={item.description} category={item.category?.slice(1)}>
+            {item.name}
+          </Label>
+        ) : (
+          undefined
+        );
 
       return (
         <Field label={label} key={`${item.id}/${item.isCustom}`}>
@@ -194,11 +199,9 @@ export const DefaultFieldConfigEditor: React.FC<Props> = ({ data, onChange, conf
             }}
             key={`${k}/${i}`}
           >
-            <>
-              {groupedConfigs[k].map(c => {
-                return renderEditor(c);
-              })}
-            </>
+            {groupedConfigs[k].map(c => {
+              return renderEditor(c, groupedConfigs[k].length);
+            })}
           </OptionsGroup>
         );
       })}
