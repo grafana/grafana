@@ -8,7 +8,7 @@ import { css } from 'emotion';
 import { PanelOptionsTab } from './PanelOptionsTab';
 import { DashNavButton } from 'app/features/dashboard/components/DashNav/DashNavButton';
 
-export const OptionsPaneContent: React.FC<{
+interface Props {
   plugin: PanelPlugin;
   panel: PanelModel;
   data: PanelData;
@@ -18,7 +18,9 @@ export const OptionsPaneContent: React.FC<{
   onFieldConfigsChange: (config: FieldConfigSource) => void;
   onPanelOptionsChanged: (options: any) => void;
   onPanelConfigChange: (configKey: string, value: any) => void;
-}> = ({
+}
+
+export const OptionsPaneContent: React.FC<Props> = ({
   plugin,
   panel,
   data,
@@ -28,7 +30,7 @@ export const OptionsPaneContent: React.FC<{
   onPanelConfigChange,
   onClose,
   dashboard,
-}) => {
+}: Props) => {
   const theme = useTheme();
   const styles = getStyles(theme);
   const [activeTab, setActiveTab] = useState('options');
