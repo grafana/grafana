@@ -1,7 +1,9 @@
 import { DataQueryRequest, DataQuery, CoreApp } from '@grafana/data';
 import { dateTime } from '@grafana/data';
 
-export function getQueryOptions<TQuery extends DataQuery>(options: Partial<DataQueryRequest<TQuery>>): DataQueryRequest<TQuery> {
+export function getQueryOptions<TQuery extends DataQuery>(
+  options: Partial<DataQueryRequest<TQuery>>
+): DataQueryRequest<TQuery> {
   const raw = { from: 'now', to: 'now-1h' };
   const range = { from: dateTime(), to: dateTime(), raw: raw };
 
