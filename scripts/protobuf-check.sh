@@ -6,8 +6,7 @@ PROTOC_GEN_GO_HELP_URL="https://github.com/golang/protobuf/tree/v1.3.4#installat
 
 EXIT_CODE=0
 
-which protoc >/dev/null
-if [ $? -ne 0 ]; then
+if ! [ -x "$(command -v protoc)" ]; then
 	echo "Protocol Buffers not found."
 	echo "Please install Protocol Buffers and ensure 'protoc' is available in your PATH."
 	echo "See ${PROTOC_HELP_URL} for more."
@@ -15,8 +14,7 @@ if [ $? -ne 0 ]; then
 	EXIT_CODE=1
 fi
 
-which protoc-gen-go >/dev/null
-if [ $? -ne 0 ]; then
+if ! [ -x "$(command -v protoc-gen-go)" ]; then
 	echo "Protocol Buffers Go plugin not found."
 	echo "Please install the plugin and ensure 'protoc-gen-go' is available in your PATH."
 	echo "See ${PROTOC_GEN_GO_HELP_URL} for more."
