@@ -64,7 +64,7 @@ export function getColumns(data: DataFrame, availableWidth: number, columnMinWid
     columns.push({
       Cell,
       id: field.name,
-      Header: field.name,
+      Header: field.config.title ?? field.name,
       accessor: field.name,
       width: fieldTableOptions.width,
       minWidth: 50,
