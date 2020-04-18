@@ -8,7 +8,6 @@ import mdx from './Table.mdx';
 import {
   applyFieldOverrides,
   DataFrame,
-  FieldMatcherID,
   FieldType,
   GrafanaTheme,
   MutableDataFrame,
