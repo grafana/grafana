@@ -14,20 +14,14 @@ import config from 'app/core/config';
 // Types
 import { PanelModel } from '../state/PanelModel';
 import { DashboardModel } from '../state/DashboardModel';
-import {
-  LoadingState,
-  DefaultTimeRange,
-  DataSourceSelectItem,
-  DataQuery,
-  PanelData,
-  GrafanaTheme,
-} from '@grafana/data';
+import { LoadingState, DefaultTimeRange, DataSourceSelectItem, DataQuery, PanelData } from '@grafana/data';
 import { PluginHelp } from 'app/core/components/PluginHelp/PluginHelp';
 import { addQuery } from 'app/core/utils/query';
 import { Unsubscribable } from 'rxjs';
 import { isSharedDashboardQuery, DashboardQueryEditor } from 'app/plugins/datasource/dashboard';
 import { expressionDatasource, ExpressionDatasourceID } from 'app/features/expressions/ExpressionDatasource';
 import { css } from 'emotion';
+import { QueryOperationRow } from 'app/core/components/QueryOperationRow/QueryOperationRow';
 
 interface Props {
   panel: PanelModel;
@@ -166,21 +160,24 @@ export class QueriesTab extends PureComponent<Props, State> {
   };
 
   renderTopSection(styles: QueriesTabStyls) {
+    const { panel } = this.props;
     const { currentDS } = this.state;
 
     return (
-      <div className={styles.topSection}>
-        <Field label="Data source" className={styles.topSectionItem}>
-          <DataSourcePicker datasources={this.datasources} onChange={this.onChangeDataSource} current={currentDS} />
-        </Field>
-        <Field label="Max data points" className={styles.topSectionItem}>
-          <Input type="text" className="width-6" />
-        </Field>
-        <Field label="Min interval" className={styles.topSectionItem}>
-          <Input type="text" className="width-6" />
-        </Field>
-        <div className="flex-grow-1" />
-      </div>
+      <QueryOperationRow
+        title="Data source"
+        headerElement={
+          <>
+            <div className={styles.dsPicker}>
+              <DataSourcePicker datasources={this.datasources} onChange={this.onChangeDataSource} current={currentDS} />
+            </div>
+          </>
+        }
+      >
+        <div className={styles.topSection}>
+          <QueryOptions panel={panel} datasource={currentDS} />
+        </div>
+      </QueryOperationRow>
     );
   }
 
@@ -221,7 +218,7 @@ export class QueriesTab extends PureComponent<Props, State> {
     this.setState({ scrollTop: target.scrollTop });
   };
 
-  renderQueryBody = () => {
+  renderQueryBody() {
     const { panel, dashboard } = this.props;
     const { currentDS, data } = this.state;
 
@@ -230,22 +227,17 @@ export class QueriesTab extends PureComponent<Props, State> {
     }
 
     return (
-      <>
-        <QueryEditorRows
-          queries={panel.targets}
-          datasource={currentDS}
-          onChangeQueries={this.onUpdateQueries}
-          onScrollBottom={this.onScrollBottom}
-          panel={panel}
-          dashboard={dashboard}
-          data={data}
-        />
-        <PanelOptionsGroup>
-          <QueryOptions panel={panel} datasource={currentDS} />
-        </PanelOptionsGroup>
-      </>
+      <QueryEditorRows
+        queries={panel.targets}
+        datasource={currentDS}
+        onChangeQueries={this.onUpdateQueries}
+        onScrollBottom={this.onScrollBottom}
+        panel={panel}
+        dashboard={dashboard}
+        data={data}
+      />
     );
-  };
+  }
 
   renderAddQueryRow(styles: QueriesTabStyls) {
     const { currentDS, isAddingMixed } = this.state;
@@ -297,6 +289,10 @@ const getStyles = stylesFactory(() => {
     topSection: css`
       display: flex;
       padding: 0;
+    `,
+    dsPicker: css`
+      flex-grow: 1;
+      margin-left: ${theme.spacing.md};
     `,
     topSectionItem: css`
       margin-right: ${theme.spacing.md};
