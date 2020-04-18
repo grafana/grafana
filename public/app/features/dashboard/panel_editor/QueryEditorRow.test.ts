@@ -43,4 +43,17 @@ describe('filterPanelDataToQuery', () => {
     expect(panelData?.series[0].refId).toBe('B');
     expect(panelData?.error!.refId).toBe('B');
   });
+
+  it('should include errors when missing data', () => {
+    const withError = ({
+      series: [],
+      error: {
+        message: 'Error!!',
+      },
+    } as unknown) as PanelData;
+
+    const panelData = filterPanelDataToQuery(withError, 'B');
+    expect(panelData.state).toBe(LoadingState.Error);
+    expect(panelData.error).toBe(withError.error);
+  });
 });
