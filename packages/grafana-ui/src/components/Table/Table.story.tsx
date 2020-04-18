@@ -128,8 +128,8 @@ export const BarGaugeCell = () => {
       custom: {
         width: 200,
         displayMode: 'gradient-gauge',
-        thresholds: defaultThresholds,
       },
+      thresholds: defaultThresholds,
     },
   });
 
@@ -144,12 +144,12 @@ export const ColoredCells = () => {
   const theme = useTheme();
   const width = number('width', 750, {}, 'Props');
   const data = buildData(theme, {
-    Value: {
+    Progress: {
       custom: {
         width: 80,
         displayMode: 'color-background',
-        thresholds: defaultThresholds,
       },
+      thresholds: defaultThresholds,
     },
   });
 

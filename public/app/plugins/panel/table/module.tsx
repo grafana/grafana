@@ -13,7 +13,6 @@ export const plugin = new PanelPlugin<Options, CustomFieldConfig>(TablePanel)
         .addNumberInput({
           path: 'width',
           name: 'Column width',
-          description: 'column width (for table)',
           settings: {
             placeholder: 'auto',
             min: 20,
@@ -24,7 +23,6 @@ export const plugin = new PanelPlugin<Options, CustomFieldConfig>(TablePanel)
         .addRadio({
           path: 'align',
           name: 'Column alignment',
-          description: 'column alignment (for table)',
           settings: {
             options: [
               { label: 'auto', value: null },
