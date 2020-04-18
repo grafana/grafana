@@ -89,7 +89,7 @@ func getMetricException(err awserr.Error) metricException {
 	code := err.Code()
 
 	switch code {
-	case "RequestError",
+	case request.ErrCodeRequestError,
 		request.ErrCodeSerialization,
 		request.CanceledErrorCode:
 		return sdkException{

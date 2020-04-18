@@ -27,7 +27,7 @@ func (m *Message) rawMessage() (rawMessage, error) {
 
 	if len(m.Headers) > 0 {
 		var headers bytes.Buffer
-		if err := encodeHeaders(&headers, m.Headers); err != nil {
+		if err := EncodeHeaders(&headers, m.Headers); err != nil {
 			return rawMessage{}, err
 		}
 		raw.Headers = headers.Bytes()

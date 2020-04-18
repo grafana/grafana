@@ -2,9 +2,7 @@ package eventstreamapi
 
 import (
 	"fmt"
-	"io"
 
-	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/private/protocol"
 	"github.com/aws/aws-sdk-go/private/protocol/eventstream"
 )
@@ -15,27 +13,8 @@ type Unmarshaler interface {
 	UnmarshalEvent(protocol.PayloadUnmarshaler, eventstream.Message) error
 }
 
-// EventStream headers with specific meaning to async API functionality.
-const (
-	MessageTypeHeader    = `:message-type` // Identifies type of message.
-	EventMessageType     = `event`
-	ErrorMessageType     = `error`
-	ExceptionMessageType = `exception`
-
-	// Message Events
-	EventTypeHeader = `:event-type` // Identifies message event type e.g. "Stats".
-
-	// Message Error
-	ErrorCodeHeader    = `:error-code`
-	ErrorMessageHeader = `:error-message`
-
-	// Message Exception
-	ExceptionTypeHeader = `:exception-type`
-)
-
 // EventReader provides reading from the EventStream of an reader.
 type EventReader struct {
-	reader  io.ReadCloser
 	decoder *eventstream.Decoder
 
 	unmarshalerForEventType func(string) (Unmarshaler, error)
@@ -47,24 +26,15 @@ type EventReader struct {
 // NewEventReader returns a EventReader built from the reader and unmarshaler
 // provided.  Use ReadStream method to start reading from the EventStream.
 func NewEventReader(
-	reader io.ReadCloser,
+	decoder *eventstream.Decoder,
 	payloadUnmarshaler protocol.PayloadUnmarshaler,
 	unmarshalerForEventType func(string) (Unmarshaler, error),
 ) *EventReader {
 	return &EventReader{
-		reader:                  reader,
-		decoder:                 eventstream.NewDecoder(reader),
+		decoder:                 decoder,
 		payloadUnmarshaler:      payloadUnmarshaler,
 		unmarshalerForEventType: unmarshalerForEventType,
 		payloadBuf:              make([]byte, 10*1024),
-	}
-}
-
-// UseLogger instructs the EventReader to use the logger and log level
-// specified.
-func (r *EventReader) UseLogger(logger aws.Logger, logLevel aws.LogLevelType) {
-	if logger != nil && logLevel.Matches(aws.LogDebugWithEventStreamBody) {
-		r.decoder.UseLogger(logger)
 	}
 }
 
@@ -95,8 +65,7 @@ func (r *EventReader) ReadEvent() (event interface{}, err error) {
 	case EventMessageType:
 		return r.unmarshalEventMessage(msg)
 	case ExceptionMessageType:
-		err = r.unmarshalEventException(msg)
-		return nil, err
+		return nil, r.unmarshalEventException(msg)
 	case ErrorMessageType:
 		return nil, r.unmarshalErrorMessage(msg)
 	default:
@@ -172,11 +141,6 @@ func (r *EventReader) unmarshalErrorMessage(msg eventstream.Message) (err error)
 	}
 
 	return msgErr
-}
-
-// Close closes the EventReader's EventStream reader.
-func (r *EventReader) Close() error {
-	return r.reader.Close()
 }
 
 // GetHeaderString returns the value of the header as a string. If the header

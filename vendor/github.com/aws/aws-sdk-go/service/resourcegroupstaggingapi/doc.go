@@ -101,11 +101,15 @@
 //
 //    * AWS Config
 //
+//    * AWS Data Exchange
+//
 //    * AWS Data Pipeline
 //
 //    * AWS Database Migration Service
 //
 //    * AWS DataSync
+//
+//    * AWS Device Farm
 //
 //    * AWS Direct Connect
 //
@@ -120,6 +124,8 @@
 //    * Amazon ECR
 //
 //    * Amazon ECS
+//
+//    * Amazon EKS
 //
 //    * AWS Elastic Beanstalk
 //
@@ -160,6 +166,8 @@
 //    * AWS IoT Events
 //
 //    * AWS IoT Greengrass
+//
+//    * AWS IoT 1-Click
 //
 //    * AWS Key Management Service
 //
@@ -214,6 +222,8 @@
 //    * Amazon Simple Notification Service (SNS)
 //
 //    * Amazon Simple Queue Service (SQS)
+//
+//    * Amazon Simple Workflow Service
 //
 //    * AWS Step Functions
 //

@@ -68,8 +68,8 @@ func (c *ResourceGroupsTaggingAPI) DescribeReportCreationRequest(input *Describe
 // See the AWS API reference guide for AWS Resource Groups Tagging API's
 // API operation DescribeReportCreation for usage and error information.
 //
-// Returned Error Codes:
-//   * ErrCodeConstraintViolationException "ConstraintViolationException"
+// Returned Error Types:
+//   * ConstraintViolationException
 //   The request was denied because performing this operation violates a constraint.
 //
 //   Some of the reasons in the following list might not apply to this specific
@@ -86,11 +86,11 @@ func (c *ResourceGroupsTaggingAPI) DescribeReportCreationRequest(input *Describe
 //      * You must have a tag policy attached to the organization root, an OU,
 //      or an account.
 //
-//   * ErrCodeInternalServiceException "InternalServiceException"
+//   * InternalServiceException
 //   The request processing failed because of an unknown error, exception, or
 //   failure. You can retry the request.
 //
-//   * ErrCodeInvalidParameterException "InvalidParameterException"
+//   * InvalidParameterException
 //   This error indicates one of the following:
 //
 //      * A parameter is missing.
@@ -106,7 +106,7 @@ func (c *ResourceGroupsTaggingAPI) DescribeReportCreationRequest(input *Describe
 //      (http://docs.aws.amazon.com/organizations/latest/userguide/orgs_manage_policies_tag-policies-prereqs.html#bucket-policies-org-report)
 //      in the AWS Organizations User Guide.
 //
-//   * ErrCodeThrottledException "ThrottledException"
+//   * ThrottledException
 //   The request was denied to limit the frequency of submitted requests.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/resourcegroupstaggingapi-2017-01-26/DescribeReportCreation
@@ -197,8 +197,8 @@ func (c *ResourceGroupsTaggingAPI) GetComplianceSummaryRequest(input *GetComplia
 // See the AWS API reference guide for AWS Resource Groups Tagging API's
 // API operation GetComplianceSummary for usage and error information.
 //
-// Returned Error Codes:
-//   * ErrCodeConstraintViolationException "ConstraintViolationException"
+// Returned Error Types:
+//   * ConstraintViolationException
 //   The request was denied because performing this operation violates a constraint.
 //
 //   Some of the reasons in the following list might not apply to this specific
@@ -215,11 +215,11 @@ func (c *ResourceGroupsTaggingAPI) GetComplianceSummaryRequest(input *GetComplia
 //      * You must have a tag policy attached to the organization root, an OU,
 //      or an account.
 //
-//   * ErrCodeInternalServiceException "InternalServiceException"
+//   * InternalServiceException
 //   The request processing failed because of an unknown error, exception, or
 //   failure. You can retry the request.
 //
-//   * ErrCodeInvalidParameterException "InvalidParameterException"
+//   * InvalidParameterException
 //   This error indicates one of the following:
 //
 //      * A parameter is missing.
@@ -235,7 +235,7 @@ func (c *ResourceGroupsTaggingAPI) GetComplianceSummaryRequest(input *GetComplia
 //      (http://docs.aws.amazon.com/organizations/latest/userguide/orgs_manage_policies_tag-policies-prereqs.html#bucket-policies-org-report)
 //      in the AWS Organizations User Guide.
 //
-//   * ErrCodeThrottledException "ThrottledException"
+//   * ThrottledException
 //   The request was denied to limit the frequency of submitted requests.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/resourcegroupstaggingapi-2017-01-26/GetComplianceSummary
@@ -388,8 +388,8 @@ func (c *ResourceGroupsTaggingAPI) GetResourcesRequest(input *GetResourcesInput)
 // See the AWS API reference guide for AWS Resource Groups Tagging API's
 // API operation GetResources for usage and error information.
 //
-// Returned Error Codes:
-//   * ErrCodeInvalidParameterException "InvalidParameterException"
+// Returned Error Types:
+//   * InvalidParameterException
 //   This error indicates one of the following:
 //
 //      * A parameter is missing.
@@ -405,14 +405,14 @@ func (c *ResourceGroupsTaggingAPI) GetResourcesRequest(input *GetResourcesInput)
 //      (http://docs.aws.amazon.com/organizations/latest/userguide/orgs_manage_policies_tag-policies-prereqs.html#bucket-policies-org-report)
 //      in the AWS Organizations User Guide.
 //
-//   * ErrCodeThrottledException "ThrottledException"
+//   * ThrottledException
 //   The request was denied to limit the frequency of submitted requests.
 //
-//   * ErrCodeInternalServiceException "InternalServiceException"
+//   * InternalServiceException
 //   The request processing failed because of an unknown error, exception, or
 //   failure. You can retry the request.
 //
-//   * ErrCodePaginationTokenExpiredException "PaginationTokenExpiredException"
+//   * PaginationTokenExpiredException
 //   A PaginationToken is valid for a maximum of 15 minutes. Your request was
 //   denied because the specified PaginationToken has expired.
 //
@@ -549,8 +549,8 @@ func (c *ResourceGroupsTaggingAPI) GetTagKeysRequest(input *GetTagKeysInput) (re
 // See the AWS API reference guide for AWS Resource Groups Tagging API's
 // API operation GetTagKeys for usage and error information.
 //
-// Returned Error Codes:
-//   * ErrCodeInvalidParameterException "InvalidParameterException"
+// Returned Error Types:
+//   * InvalidParameterException
 //   This error indicates one of the following:
 //
 //      * A parameter is missing.
@@ -566,14 +566,14 @@ func (c *ResourceGroupsTaggingAPI) GetTagKeysRequest(input *GetTagKeysInput) (re
 //      (http://docs.aws.amazon.com/organizations/latest/userguide/orgs_manage_policies_tag-policies-prereqs.html#bucket-policies-org-report)
 //      in the AWS Organizations User Guide.
 //
-//   * ErrCodeThrottledException "ThrottledException"
+//   * ThrottledException
 //   The request was denied to limit the frequency of submitted requests.
 //
-//   * ErrCodeInternalServiceException "InternalServiceException"
+//   * InternalServiceException
 //   The request processing failed because of an unknown error, exception, or
 //   failure. You can retry the request.
 //
-//   * ErrCodePaginationTokenExpiredException "PaginationTokenExpiredException"
+//   * PaginationTokenExpiredException
 //   A PaginationToken is valid for a maximum of 15 minutes. Your request was
 //   denied because the specified PaginationToken has expired.
 //
@@ -711,8 +711,8 @@ func (c *ResourceGroupsTaggingAPI) GetTagValuesRequest(input *GetTagValuesInput)
 // See the AWS API reference guide for AWS Resource Groups Tagging API's
 // API operation GetTagValues for usage and error information.
 //
-// Returned Error Codes:
-//   * ErrCodeInvalidParameterException "InvalidParameterException"
+// Returned Error Types:
+//   * InvalidParameterException
 //   This error indicates one of the following:
 //
 //      * A parameter is missing.
@@ -728,14 +728,14 @@ func (c *ResourceGroupsTaggingAPI) GetTagValuesRequest(input *GetTagValuesInput)
 //      (http://docs.aws.amazon.com/organizations/latest/userguide/orgs_manage_policies_tag-policies-prereqs.html#bucket-policies-org-report)
 //      in the AWS Organizations User Guide.
 //
-//   * ErrCodeThrottledException "ThrottledException"
+//   * ThrottledException
 //   The request was denied to limit the frequency of submitted requests.
 //
-//   * ErrCodeInternalServiceException "InternalServiceException"
+//   * InternalServiceException
 //   The request processing failed because of an unknown error, exception, or
 //   failure. You can retry the request.
 //
-//   * ErrCodePaginationTokenExpiredException "PaginationTokenExpiredException"
+//   * PaginationTokenExpiredException
 //   A PaginationToken is valid for a maximum of 15 minutes. Your request was
 //   denied because the specified PaginationToken has expired.
 //
@@ -876,12 +876,12 @@ func (c *ResourceGroupsTaggingAPI) StartReportCreationRequest(input *StartReport
 // See the AWS API reference guide for AWS Resource Groups Tagging API's
 // API operation StartReportCreation for usage and error information.
 //
-// Returned Error Codes:
-//   * ErrCodeConcurrentModificationException "ConcurrentModificationException"
+// Returned Error Types:
+//   * ConcurrentModificationException
 //   The target of the operation is currently being modified by a different request.
 //   Try again later.
 //
-//   * ErrCodeConstraintViolationException "ConstraintViolationException"
+//   * ConstraintViolationException
 //   The request was denied because performing this operation violates a constraint.
 //
 //   Some of the reasons in the following list might not apply to this specific
@@ -898,11 +898,11 @@ func (c *ResourceGroupsTaggingAPI) StartReportCreationRequest(input *StartReport
 //      * You must have a tag policy attached to the organization root, an OU,
 //      or an account.
 //
-//   * ErrCodeInternalServiceException "InternalServiceException"
+//   * InternalServiceException
 //   The request processing failed because of an unknown error, exception, or
 //   failure. You can retry the request.
 //
-//   * ErrCodeInvalidParameterException "InvalidParameterException"
+//   * InvalidParameterException
 //   This error indicates one of the following:
 //
 //      * A parameter is missing.
@@ -918,7 +918,7 @@ func (c *ResourceGroupsTaggingAPI) StartReportCreationRequest(input *StartReport
 //      (http://docs.aws.amazon.com/organizations/latest/userguide/orgs_manage_policies_tag-policies-prereqs.html#bucket-policies-org-report)
 //      in the AWS Organizations User Guide.
 //
-//   * ErrCodeThrottledException "ThrottledException"
+//   * ThrottledException
 //   The request was denied to limit the frequency of submitted requests.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/resourcegroupstaggingapi-2017-01-26/StartReportCreation
@@ -1010,8 +1010,8 @@ func (c *ResourceGroupsTaggingAPI) TagResourcesRequest(input *TagResourcesInput)
 // See the AWS API reference guide for AWS Resource Groups Tagging API's
 // API operation TagResources for usage and error information.
 //
-// Returned Error Codes:
-//   * ErrCodeInvalidParameterException "InvalidParameterException"
+// Returned Error Types:
+//   * InvalidParameterException
 //   This error indicates one of the following:
 //
 //      * A parameter is missing.
@@ -1027,10 +1027,10 @@ func (c *ResourceGroupsTaggingAPI) TagResourcesRequest(input *TagResourcesInput)
 //      (http://docs.aws.amazon.com/organizations/latest/userguide/orgs_manage_policies_tag-policies-prereqs.html#bucket-policies-org-report)
 //      in the AWS Organizations User Guide.
 //
-//   * ErrCodeThrottledException "ThrottledException"
+//   * ThrottledException
 //   The request was denied to limit the frequency of submitted requests.
 //
-//   * ErrCodeInternalServiceException "InternalServiceException"
+//   * InternalServiceException
 //   The request processing failed because of an unknown error, exception, or
 //   failure. You can retry the request.
 //
@@ -1119,8 +1119,8 @@ func (c *ResourceGroupsTaggingAPI) UntagResourcesRequest(input *UntagResourcesIn
 // See the AWS API reference guide for AWS Resource Groups Tagging API's
 // API operation UntagResources for usage and error information.
 //
-// Returned Error Codes:
-//   * ErrCodeInvalidParameterException "InvalidParameterException"
+// Returned Error Types:
+//   * InvalidParameterException
 //   This error indicates one of the following:
 //
 //      * A parameter is missing.
@@ -1136,10 +1136,10 @@ func (c *ResourceGroupsTaggingAPI) UntagResourcesRequest(input *UntagResourcesIn
 //      (http://docs.aws.amazon.com/organizations/latest/userguide/orgs_manage_policies_tag-policies-prereqs.html#bucket-policies-org-report)
 //      in the AWS Organizations User Guide.
 //
-//   * ErrCodeThrottledException "ThrottledException"
+//   * ThrottledException
 //   The request was denied to limit the frequency of submitted requests.
 //
-//   * ErrCodeInternalServiceException "InternalServiceException"
+//   * InternalServiceException
 //   The request processing failed because of an unknown error, exception, or
 //   failure. You can retry the request.
 //
@@ -1173,10 +1173,11 @@ type ComplianceDetails struct {
 	// Whether a resource is compliant with the effective tag policy.
 	ComplianceStatus *bool `type:"boolean"`
 
-	// The tag value is noncompliant with the effective tag policy.
+	// These are keys defined in the effective policy that are on the resource with
+	// either incorrect case treatment or noncompliant values.
 	KeysWithNoncompliantValues []*string `type:"list"`
 
-	// The tag key is noncompliant with the effective tag policy.
+	// These tag keys on the resource are noncompliant with the effective tag policy.
 	NoncompliantKeys []*string `type:"list"`
 }
 
@@ -1206,6 +1207,133 @@ func (s *ComplianceDetails) SetKeysWithNoncompliantValues(v []*string) *Complian
 func (s *ComplianceDetails) SetNoncompliantKeys(v []*string) *ComplianceDetails {
 	s.NoncompliantKeys = v
 	return s
+}
+
+// The target of the operation is currently being modified by a different request.
+// Try again later.
+type ConcurrentModificationException struct {
+	_            struct{} `type:"structure"`
+	respMetadata protocol.ResponseMetadata
+
+	Message_ *string `locationName:"Message" type:"string"`
+}
+
+// String returns the string representation
+func (s ConcurrentModificationException) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s ConcurrentModificationException) GoString() string {
+	return s.String()
+}
+
+func newErrorConcurrentModificationException(v protocol.ResponseMetadata) error {
+	return &ConcurrentModificationException{
+		respMetadata: v,
+	}
+}
+
+// Code returns the exception type name.
+func (s ConcurrentModificationException) Code() string {
+	return "ConcurrentModificationException"
+}
+
+// Message returns the exception's message.
+func (s ConcurrentModificationException) Message() string {
+	if s.Message_ != nil {
+		return *s.Message_
+	}
+	return ""
+}
+
+// OrigErr always returns nil, satisfies awserr.Error interface.
+func (s ConcurrentModificationException) OrigErr() error {
+	return nil
+}
+
+func (s ConcurrentModificationException) Error() string {
+	return fmt.Sprintf("%s: %s", s.Code(), s.Message())
+}
+
+// Status code returns the HTTP status code for the request's response error.
+func (s ConcurrentModificationException) StatusCode() int {
+	return s.respMetadata.StatusCode
+}
+
+// RequestID returns the service's response RequestID for request.
+func (s ConcurrentModificationException) RequestID() string {
+	return s.respMetadata.RequestID
+}
+
+// The request was denied because performing this operation violates a constraint.
+//
+// Some of the reasons in the following list might not apply to this specific
+// operation.
+//
+//    * You must meet the prerequisites for using tag policies. For information,
+//    see Prerequisites and Permissions for Using Tag Policies (http://docs.aws.amazon.com/organizations/latest/userguide/orgs_manage_policies_tag-policies-prereqs.html)
+//    in the AWS Organizations User Guide.
+//
+//    * You must enable the tag policies service principal (tagpolicies.tag.amazonaws.com)
+//    to integrate with AWS Organizations For information, see EnableAWSServiceAccess
+//    (http://docs.aws.amazon.com/organizations/latest/APIReference/API_EnableAWSServiceAccess.html).
+//
+//    * You must have a tag policy attached to the organization root, an OU,
+//    or an account.
+type ConstraintViolationException struct {
+	_            struct{} `type:"structure"`
+	respMetadata protocol.ResponseMetadata
+
+	Message_ *string `locationName:"Message" type:"string"`
+}
+
+// String returns the string representation
+func (s ConstraintViolationException) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s ConstraintViolationException) GoString() string {
+	return s.String()
+}
+
+func newErrorConstraintViolationException(v protocol.ResponseMetadata) error {
+	return &ConstraintViolationException{
+		respMetadata: v,
+	}
+}
+
+// Code returns the exception type name.
+func (s ConstraintViolationException) Code() string {
+	return "ConstraintViolationException"
+}
+
+// Message returns the exception's message.
+func (s ConstraintViolationException) Message() string {
+	if s.Message_ != nil {
+		return *s.Message_
+	}
+	return ""
+}
+
+// OrigErr always returns nil, satisfies awserr.Error interface.
+func (s ConstraintViolationException) OrigErr() error {
+	return nil
+}
+
+func (s ConstraintViolationException) Error() string {
+	return fmt.Sprintf("%s: %s", s.Code(), s.Message())
+}
+
+// Status code returns the HTTP status code for the request's response error.
+func (s ConstraintViolationException) StatusCode() int {
+	return s.respMetadata.StatusCode
+}
+
+// RequestID returns the service's response RequestID for request.
+func (s ConstraintViolationException) RequestID() string {
+	return s.respMetadata.RequestID
 }
 
 type DescribeReportCreationInput struct {
@@ -1274,7 +1402,30 @@ func (s *DescribeReportCreationOutput) SetStatus(v string) *DescribeReportCreati
 	return s
 }
 
-// Details of the common errors that all actions return.
+// Information about the errors that are returned for each failed resource.
+// This information can include InternalServiceException and InvalidParameterException
+// errors. It can also include any valid error code returned by the AWS service
+// that hosts the resource that the ARN key represents.
+//
+// The following are common error codes that you might receive from other AWS
+// services:
+//
+//    * InternalServiceException – This can mean that the Resource Groups
+//    Tagging API didn't receive a response from another AWS service. It can
+//    also mean the the resource type in the request is not supported by the
+//    Resource Groups Tagging API. In these cases, it's safe to retry the request
+//    and then call GetResources (http://docs.aws.amazon.com/resourcegroupstagging/latest/APIReference/API_GetResources.html)
+//    to verify the changes.
+//
+//    * AccessDeniedException – This can mean that you need permission to
+//    calling tagging operations in the AWS service that contains the resource.
+//    For example, to use the Resource Groups Tagging API to tag a CloudWatch
+//    alarm resource, you need permission to call TagResources (http://docs.aws.amazon.com/resourcegroupstagging/latest/APIReference/API_TagResources.html)
+//    and TagResource (http://docs.aws.amazon.com/AmazonCloudWatch/latest/APIReference/API_TagResource.html)
+//    in the CloudWatch API.
+//
+// For more information on errors that are generated from other AWS services,
+// see the documentation for that service.
 type FailureInfo struct {
 	_ struct{} `type:"structure"`
 
@@ -1831,6 +1982,189 @@ func (s *GetTagValuesOutput) SetTagValues(v []*string) *GetTagValuesOutput {
 	return s
 }
 
+// The request processing failed because of an unknown error, exception, or
+// failure. You can retry the request.
+type InternalServiceException struct {
+	_            struct{} `type:"structure"`
+	respMetadata protocol.ResponseMetadata
+
+	Message_ *string `locationName:"Message" type:"string"`
+}
+
+// String returns the string representation
+func (s InternalServiceException) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s InternalServiceException) GoString() string {
+	return s.String()
+}
+
+func newErrorInternalServiceException(v protocol.ResponseMetadata) error {
+	return &InternalServiceException{
+		respMetadata: v,
+	}
+}
+
+// Code returns the exception type name.
+func (s InternalServiceException) Code() string {
+	return "InternalServiceException"
+}
+
+// Message returns the exception's message.
+func (s InternalServiceException) Message() string {
+	if s.Message_ != nil {
+		return *s.Message_
+	}
+	return ""
+}
+
+// OrigErr always returns nil, satisfies awserr.Error interface.
+func (s InternalServiceException) OrigErr() error {
+	return nil
+}
+
+func (s InternalServiceException) Error() string {
+	return fmt.Sprintf("%s: %s", s.Code(), s.Message())
+}
+
+// Status code returns the HTTP status code for the request's response error.
+func (s InternalServiceException) StatusCode() int {
+	return s.respMetadata.StatusCode
+}
+
+// RequestID returns the service's response RequestID for request.
+func (s InternalServiceException) RequestID() string {
+	return s.respMetadata.RequestID
+}
+
+// This error indicates one of the following:
+//
+//    * A parameter is missing.
+//
+//    * A malformed string was supplied for the request parameter.
+//
+//    * An out-of-range value was supplied for the request parameter.
+//
+//    * The target ID is invalid, unsupported, or doesn't exist.
+//
+//    * You can't access the Amazon S3 bucket for report storage. For more information,
+//    see Additional Requirements for Organization-wide Tag Compliance Reports
+//    (http://docs.aws.amazon.com/organizations/latest/userguide/orgs_manage_policies_tag-policies-prereqs.html#bucket-policies-org-report)
+//    in the AWS Organizations User Guide.
+type InvalidParameterException struct {
+	_            struct{} `type:"structure"`
+	respMetadata protocol.ResponseMetadata
+
+	Message_ *string `locationName:"Message" type:"string"`
+}
+
+// String returns the string representation
+func (s InvalidParameterException) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s InvalidParameterException) GoString() string {
+	return s.String()
+}
+
+func newErrorInvalidParameterException(v protocol.ResponseMetadata) error {
+	return &InvalidParameterException{
+		respMetadata: v,
+	}
+}
+
+// Code returns the exception type name.
+func (s InvalidParameterException) Code() string {
+	return "InvalidParameterException"
+}
+
+// Message returns the exception's message.
+func (s InvalidParameterException) Message() string {
+	if s.Message_ != nil {
+		return *s.Message_
+	}
+	return ""
+}
+
+// OrigErr always returns nil, satisfies awserr.Error interface.
+func (s InvalidParameterException) OrigErr() error {
+	return nil
+}
+
+func (s InvalidParameterException) Error() string {
+	return fmt.Sprintf("%s: %s", s.Code(), s.Message())
+}
+
+// Status code returns the HTTP status code for the request's response error.
+func (s InvalidParameterException) StatusCode() int {
+	return s.respMetadata.StatusCode
+}
+
+// RequestID returns the service's response RequestID for request.
+func (s InvalidParameterException) RequestID() string {
+	return s.respMetadata.RequestID
+}
+
+// A PaginationToken is valid for a maximum of 15 minutes. Your request was
+// denied because the specified PaginationToken has expired.
+type PaginationTokenExpiredException struct {
+	_            struct{} `type:"structure"`
+	respMetadata protocol.ResponseMetadata
+
+	Message_ *string `locationName:"Message" type:"string"`
+}
+
+// String returns the string representation
+func (s PaginationTokenExpiredException) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s PaginationTokenExpiredException) GoString() string {
+	return s.String()
+}
+
+func newErrorPaginationTokenExpiredException(v protocol.ResponseMetadata) error {
+	return &PaginationTokenExpiredException{
+		respMetadata: v,
+	}
+}
+
+// Code returns the exception type name.
+func (s PaginationTokenExpiredException) Code() string {
+	return "PaginationTokenExpiredException"
+}
+
+// Message returns the exception's message.
+func (s PaginationTokenExpiredException) Message() string {
+	if s.Message_ != nil {
+		return *s.Message_
+	}
+	return ""
+}
+
+// OrigErr always returns nil, satisfies awserr.Error interface.
+func (s PaginationTokenExpiredException) OrigErr() error {
+	return nil
+}
+
+func (s PaginationTokenExpiredException) Error() string {
+	return fmt.Sprintf("%s: %s", s.Code(), s.Message())
+}
+
+// Status code returns the HTTP status code for the request's response error.
+func (s PaginationTokenExpiredException) StatusCode() int {
+	return s.respMetadata.StatusCode
+}
+
+// RequestID returns the service's response RequestID for request.
+func (s PaginationTokenExpiredException) RequestID() string {
+	return s.respMetadata.RequestID
+}
+
 // A list of resource ARNs and the tags (keys and values) that are associated
 // with each.
 type ResourceTagMapping struct {
@@ -2163,8 +2497,10 @@ func (s *TagResourcesInput) SetTags(v map[string]*string) *TagResourcesInput {
 type TagResourcesOutput struct {
 	_ struct{} `type:"structure"`
 
-	// Details of resources that could not be tagged. An error code, status code,
-	// and error message are returned for each failed item.
+	// A map containing a key-value pair for each failed item that couldn't be tagged.
+	// The key is the ARN of the failed resource. The value is a FailureInfo object
+	// that contains an error code, a status code, and an error message. If there
+	// are no errors, the FailedResourcesMap is empty.
 	FailedResourcesMap map[string]*FailureInfo `type:"map"`
 }
 
@@ -2182,6 +2518,62 @@ func (s TagResourcesOutput) GoString() string {
 func (s *TagResourcesOutput) SetFailedResourcesMap(v map[string]*FailureInfo) *TagResourcesOutput {
 	s.FailedResourcesMap = v
 	return s
+}
+
+// The request was denied to limit the frequency of submitted requests.
+type ThrottledException struct {
+	_            struct{} `type:"structure"`
+	respMetadata protocol.ResponseMetadata
+
+	Message_ *string `locationName:"Message" type:"string"`
+}
+
+// String returns the string representation
+func (s ThrottledException) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s ThrottledException) GoString() string {
+	return s.String()
+}
+
+func newErrorThrottledException(v protocol.ResponseMetadata) error {
+	return &ThrottledException{
+		respMetadata: v,
+	}
+}
+
+// Code returns the exception type name.
+func (s ThrottledException) Code() string {
+	return "ThrottledException"
+}
+
+// Message returns the exception's message.
+func (s ThrottledException) Message() string {
+	if s.Message_ != nil {
+		return *s.Message_
+	}
+	return ""
+}
+
+// OrigErr always returns nil, satisfies awserr.Error interface.
+func (s ThrottledException) OrigErr() error {
+	return nil
+}
+
+func (s ThrottledException) Error() string {
+	return fmt.Sprintf("%s: %s", s.Code(), s.Message())
+}
+
+// Status code returns the HTTP status code for the request's response error.
+func (s ThrottledException) StatusCode() int {
+	return s.respMetadata.StatusCode
+}
+
+// RequestID returns the service's response RequestID for request.
+func (s ThrottledException) RequestID() string {
+	return s.respMetadata.RequestID
 }
 
 type UntagResourcesInput struct {

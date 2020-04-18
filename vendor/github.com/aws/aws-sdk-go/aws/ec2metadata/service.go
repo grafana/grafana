@@ -80,8 +80,10 @@ func NewClient(cfg aws.Config, handlers request.Handlers, endpoint, signingRegio
 			// use a shorter timeout than default because the metadata
 			// service is local if it is running, and to fail faster
 			// if not running on an ec2 instance.
-			Timeout: 5 * time.Second,
+			Timeout: 1 * time.Second,
 		}
+		// max number of retries on the client operation
+		cfg.MaxRetries = aws.Int(2)
 	}
 
 	svc := &EC2Metadata{

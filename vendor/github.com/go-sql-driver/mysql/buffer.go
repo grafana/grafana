@@ -15,47 +15,69 @@ import (
 )
 
 const defaultBufSize = 4096
+const maxCachedBufSize = 256 * 1024
 
 // A buffer which is used for both reading and writing.
 // This is possible since communication on each connection is synchronous.
 // In other words, we can't write and read simultaneously on the same connection.
 // The buffer is similar to bufio.Reader / Writer but zero-copy-ish
 // Also highly optimized for this particular use case.
+// This buffer is backed by two byte slices in a double-buffering scheme
 type buffer struct {
-	buf     []byte
+	buf     []byte // buf is a byte buffer who's length and capacity are equal.
 	nc      net.Conn
 	idx     int
 	length  int
 	timeout time.Duration
+	dbuf    [2][]byte // dbuf is an array with the two byte slices that back this buffer
+	flipcnt uint      // flipccnt is the current buffer counter for double-buffering
 }
 
+// newBuffer allocates and returns a new buffer.
 func newBuffer(nc net.Conn) buffer {
-	var b [defaultBufSize]byte
+	fg := make([]byte, defaultBufSize)
 	return buffer{
-		buf: b[:],
-		nc:  nc,
+		buf:  fg,
+		nc:   nc,
+		dbuf: [2][]byte{fg, nil},
 	}
+}
+
+// flip replaces the active buffer with the background buffer
+// this is a delayed flip that simply increases the buffer counter;
+// the actual flip will be performed the next time we call `buffer.fill`
+func (b *buffer) flip() {
+	b.flipcnt += 1
 }
 
 // fill reads into the buffer until at least _need_ bytes are in it
 func (b *buffer) fill(need int) error {
 	n := b.length
+	// fill data into its double-buffering target: if we've called
+	// flip on this buffer, we'll be copying to the background buffer,
+	// and then filling it with network data; otherwise we'll just move
+	// the contents of the current buffer to the front before filling it
+	dest := b.dbuf[b.flipcnt&1]
 
-	// move existing data to the beginning
-	if n > 0 && b.idx > 0 {
-		copy(b.buf[0:n], b.buf[b.idx:])
-	}
-
-	// grow buffer if necessary
-	// TODO: let the buffer shrink again at some point
-	//       Maybe keep the org buf slice and swap back?
-	if need > len(b.buf) {
+	// grow buffer if necessary to fit the whole packet.
+	if need > len(dest) {
 		// Round up to the next multiple of the default size
-		newBuf := make([]byte, ((need/defaultBufSize)+1)*defaultBufSize)
-		copy(newBuf, b.buf)
-		b.buf = newBuf
+		dest = make([]byte, ((need/defaultBufSize)+1)*defaultBufSize)
+
+		// if the allocated buffer is not too large, move it to backing storage
+		// to prevent extra allocations on applications that perform large reads
+		if len(dest) <= maxCachedBufSize {
+			b.dbuf[b.flipcnt&1] = dest
+		}
 	}
 
+	// if we're filling the fg buffer, move the existing data to the start of it.
+	// if we're filling the bg buffer, copy over the data
+	if n > 0 {
+		copy(dest[:n], b.buf[b.idx:])
+	}
+
+	b.buf = dest
 	b.idx = 0
 
 	for {
@@ -105,43 +127,56 @@ func (b *buffer) readNext(need int) ([]byte, error) {
 	return b.buf[offset:b.idx], nil
 }
 
-// returns a buffer with the requested size.
+// takeBuffer returns a buffer with the requested size.
 // If possible, a slice from the existing buffer is returned.
 // Otherwise a bigger buffer is made.
 // Only one buffer (total) can be used at a time.
-func (b *buffer) takeBuffer(length int) []byte {
+func (b *buffer) takeBuffer(length int) ([]byte, error) {
 	if b.length > 0 {
-		return nil
+		return nil, ErrBusyBuffer
 	}
 
 	// test (cheap) general case first
-	if length <= defaultBufSize || length <= cap(b.buf) {
-		return b.buf[:length]
+	if length <= cap(b.buf) {
+		return b.buf[:length], nil
 	}
 
 	if length < maxPacketSize {
 		b.buf = make([]byte, length)
-		return b.buf
+		return b.buf, nil
 	}
-	return make([]byte, length)
+
+	// buffer is larger than we want to store.
+	return make([]byte, length), nil
 }
 
-// shortcut which can be used if the requested buffer is guaranteed to be
-// smaller than defaultBufSize
+// takeSmallBuffer is shortcut which can be used if length is
+// known to be smaller than defaultBufSize.
 // Only one buffer (total) can be used at a time.
-func (b *buffer) takeSmallBuffer(length int) []byte {
+func (b *buffer) takeSmallBuffer(length int) ([]byte, error) {
 	if b.length > 0 {
-		return nil
+		return nil, ErrBusyBuffer
 	}
-	return b.buf[:length]
+	return b.buf[:length], nil
 }
 
 // takeCompleteBuffer returns the complete existing buffer.
 // This can be used if the necessary buffer size is unknown.
+// cap and len of the returned buffer will be equal.
 // Only one buffer (total) can be used at a time.
-func (b *buffer) takeCompleteBuffer() []byte {
+func (b *buffer) takeCompleteBuffer() ([]byte, error) {
 	if b.length > 0 {
-		return nil
+		return nil, ErrBusyBuffer
 	}
-	return b.buf
+	return b.buf, nil
+}
+
+// store stores buf, an updated buffer, if its suitable to do so.
+func (b *buffer) store(buf []byte) error {
+	if b.length > 0 {
+		return ErrBusyBuffer
+	} else if cap(buf) <= maxPacketSize && cap(buf) > cap(b.buf) {
+		b.buf = buf[:cap(buf)]
+	}
+	return nil
 }

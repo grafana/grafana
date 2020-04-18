@@ -21,9 +21,23 @@ type Decoder struct {
 
 // NewDecoder initializes and returns a Decoder for decoding event
 // stream messages from the reader provided.
-func NewDecoder(r io.Reader) *Decoder {
-	return &Decoder{
+func NewDecoder(r io.Reader, opts ...func(*Decoder)) *Decoder {
+	d := &Decoder{
 		r: r,
+	}
+
+	for _, opt := range opts {
+		opt(d)
+	}
+
+	return d
+}
+
+// DecodeWithLogger adds a logger to be used by the decoder when decoding
+// stream events.
+func DecodeWithLogger(logger aws.Logger) func(*Decoder) {
+	return func(d *Decoder) {
+		d.logger = logger
 	}
 }
 
@@ -40,6 +54,15 @@ func (d *Decoder) Decode(payloadBuf []byte) (m Message, err error) {
 		}()
 	}
 
+	m, err = Decode(reader, payloadBuf)
+
+	return m, err
+}
+
+// Decode attempts to decode a single message from the event stream reader.
+// Will return the event stream message, or error if Decode fails to read
+// the message from the reader.
+func Decode(reader io.Reader, payloadBuf []byte) (m Message, err error) {
 	crc := crc32.New(crc32IEEETable)
 	hashReader := io.TeeReader(reader, crc)
 
@@ -70,12 +93,6 @@ func (d *Decoder) Decode(payloadBuf []byte) (m Message, err error) {
 	}
 
 	return m, nil
-}
-
-// UseLogger specifies the Logger that that the decoder should use to log the
-// message decode to.
-func (d *Decoder) UseLogger(logger aws.Logger) {
-	d.logger = logger
 }
 
 func logMessageDecode(logger aws.Logger, msgBuf *bytes.Buffer, msg Message, decodeErr error) {

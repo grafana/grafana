@@ -50,10 +50,11 @@ package credentials
 
 import (
 	"fmt"
-	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws/awserr"
+	"github.com/aws/aws-sdk-go/internal/sync/singleflight"
 )
 
 // AnonymousCredentials is an empty Credential object that can be used as
@@ -197,20 +198,19 @@ func (e *Expiry) ExpiresAt() time.Time {
 // first instance of the credentials Value. All calls to Get() after that
 // will return the cached credentials Value until IsExpired() returns true.
 type Credentials struct {
-	creds        Value
-	forceRefresh bool
-
-	m sync.RWMutex
+	creds atomic.Value
+	sf    singleflight.Group
 
 	provider Provider
 }
 
 // NewCredentials returns a pointer to a new Credentials with the provider set.
 func NewCredentials(provider Provider) *Credentials {
-	return &Credentials{
-		provider:     provider,
-		forceRefresh: true,
+	c := &Credentials{
+		provider: provider,
 	}
+	c.creds.Store(Value{})
+	return c
 }
 
 // Get returns the credentials value, or error if the credentials Value failed
@@ -223,30 +223,24 @@ func NewCredentials(provider Provider) *Credentials {
 // If Credentials.Expire() was called the credentials Value will be force
 // expired, and the next call to Get() will cause them to be refreshed.
 func (c *Credentials) Get() (Value, error) {
-	// Check the cached credentials first with just the read lock.
-	c.m.RLock()
-	if !c.isExpired() {
-		creds := c.creds
-		c.m.RUnlock()
-		return creds, nil
+	if creds := c.creds.Load(); !c.isExpired(creds) {
+		return creds.(Value), nil
 	}
-	c.m.RUnlock()
 
-	// Credentials are expired need to retrieve the credentials taking the full
-	// lock.
-	c.m.Lock()
-	defer c.m.Unlock()
-
-	if c.isExpired() {
-		creds, err := c.provider.Retrieve()
-		if err != nil {
-			return Value{}, err
+	creds, err, _ := c.sf.Do("", func() (interface{}, error) {
+		if creds := c.creds.Load(); !c.isExpired(creds) {
+			return creds.(Value), nil
 		}
-		c.creds = creds
-		c.forceRefresh = false
-	}
 
-	return c.creds, nil
+		creds, err := c.provider.Retrieve()
+		if err == nil {
+			c.creds.Store(creds)
+		}
+
+		return creds, err
+	})
+
+	return creds.(Value), err
 }
 
 // Expire expires the credentials and forces them to be retrieved on the
@@ -255,10 +249,7 @@ func (c *Credentials) Get() (Value, error) {
 // This will override the Provider's expired state, and force Credentials
 // to call the Provider's Retrieve().
 func (c *Credentials) Expire() {
-	c.m.Lock()
-	defer c.m.Unlock()
-
-	c.forceRefresh = true
+	c.creds.Store(Value{})
 }
 
 // IsExpired returns if the credentials are no longer valid, and need
@@ -267,31 +258,25 @@ func (c *Credentials) Expire() {
 // If the Credentials were forced to be expired with Expire() this will
 // reflect that override.
 func (c *Credentials) IsExpired() bool {
-	c.m.RLock()
-	defer c.m.RUnlock()
-
-	return c.isExpired()
+	return c.isExpired(c.creds.Load())
 }
 
 // isExpired helper method wrapping the definition of expired credentials.
-func (c *Credentials) isExpired() bool {
-	return c.forceRefresh || c.provider.IsExpired()
+func (c *Credentials) isExpired(creds interface{}) bool {
+	return creds == nil || creds.(Value) == Value{} || c.provider.IsExpired()
 }
 
 // ExpiresAt provides access to the functionality of the Expirer interface of
 // the underlying Provider, if it supports that interface.  Otherwise, it returns
 // an error.
 func (c *Credentials) ExpiresAt() (time.Time, error) {
-	c.m.RLock()
-	defer c.m.RUnlock()
-
 	expirer, ok := c.provider.(Expirer)
 	if !ok {
 		return time.Time{}, awserr.New("ProviderNotExpirer",
-			fmt.Sprintf("provider %s does not support ExpiresAt()", c.creds.ProviderName),
+			fmt.Sprintf("provider %s does not support ExpiresAt()", c.creds.Load().(Value).ProviderName),
 			nil)
 	}
-	if c.forceRefresh {
+	if c.creds.Load().(Value) == (Value{}) {
 		// set expiration time to the distant past
 		return time.Time{}, nil
 	}

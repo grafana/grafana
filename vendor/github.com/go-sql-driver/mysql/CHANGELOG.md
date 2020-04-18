@@ -1,3 +1,31 @@
+## Version 1.5 (2020-01-07)
+
+Changes:
+
+  - Dropped support Go 1.9 and lower (#823, #829, #886, #1016, #1017)
+  - Improve buffer handling (#890)
+  - Document potentially insecure TLS configs (#901)
+  - Use a double-buffering scheme to prevent data races (#943)
+  - Pass uint64 values without converting them to string (#838, #955)
+  - Update collations and make utf8mb4 default (#877, #1054)
+  - Make NullTime compatible with sql.NullTime in Go 1.13+ (#995)
+  - Removed CloudSQL support (#993, #1007)
+  - Add Go Module support (#1003)
+
+New Features:
+
+  - Implement support of optional TLS (#900)
+  - Check connection liveness (#934, #964, #997, #1048, #1051, #1052)
+  - Implement Connector Interface (#941, #958, #1020, #1035)
+
+Bugfixes:
+
+  - Mark connections as bad on error during ping (#875)
+  - Mark connections as bad on error during dial (#867)
+  - Fix connection leak caused by rapid context cancellation (#1024)
+  - Mark connections as bad on error during Conn.Prepare (#1030)
+
+
 ## Version 1.4.1 (2018-11-14)
 
 Bugfixes:

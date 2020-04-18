@@ -3147,6 +3147,10 @@ type AnomalyDetector struct {
 
 	// The statistic associated with the anomaly detection model.
 	Stat *string `type:"string"`
+
+	// The current status of the anomaly detector's training. The possible values
+	// are TRAINED | PENDING_TRAINING | TRAINED_INSUFFICIENT_DATA
+	StateValue *string `type:"string" enum:"AnomalyDetectorStateValue"`
 }
 
 // String returns the string representation
@@ -3186,6 +3190,12 @@ func (s *AnomalyDetector) SetNamespace(v string) *AnomalyDetector {
 // SetStat sets the Stat field's value.
 func (s *AnomalyDetector) SetStat(v string) *AnomalyDetector {
 	s.Stat = &v
+	return s
+}
+
+// SetStateValue sets the StateValue field's value.
+func (s *AnomalyDetector) SetStateValue(v string) *AnomalyDetector {
+	s.StateValue = &v
 	return s
 }
 
@@ -8214,6 +8224,17 @@ func (s UntagResourceOutput) String() string {
 func (s UntagResourceOutput) GoString() string {
 	return s.String()
 }
+
+const (
+	// AnomalyDetectorStateValuePendingTraining is a AnomalyDetectorStateValue enum value
+	AnomalyDetectorStateValuePendingTraining = "PENDING_TRAINING"
+
+	// AnomalyDetectorStateValueTrainedInsufficientData is a AnomalyDetectorStateValue enum value
+	AnomalyDetectorStateValueTrainedInsufficientData = "TRAINED_INSUFFICIENT_DATA"
+
+	// AnomalyDetectorStateValueTrained is a AnomalyDetectorStateValue enum value
+	AnomalyDetectorStateValueTrained = "TRAINED"
+)
 
 const (
 	// ComparisonOperatorGreaterThanOrEqualToThreshold is a ComparisonOperator enum value
