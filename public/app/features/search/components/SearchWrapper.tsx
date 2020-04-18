@@ -1,4 +1,5 @@
 import React, { FC, useState, useEffect, memo } from 'react';
+import { MapDispatchToProps, MapStateToProps } from 'react-redux';
 import { appEvents } from 'app/core/core';
 import { getLocationQuery } from 'app/core/selectors/location';
 import { updateLocation } from 'app/core/reducers/location';
@@ -7,12 +8,17 @@ import { CoreEvents, StoreState } from 'app/types';
 import { OpenSearchParams } from '../types';
 import { DashboardSearch } from './DashboardSearch';
 
-interface Props {
+interface OwnProps {
   search?: any;
   queryText?: string;
   filter?: string;
+}
+
+interface DispatchProps {
   updateLocation: typeof updateLocation;
 }
+
+export type Props = OwnProps & DispatchProps;
 
 export const SearchWrapper: FC<Props> = memo(({ search, updateLocation }) => {
   const [payload, setPayload] = useState({});
@@ -22,7 +28,7 @@ export const SearchWrapper: FC<Props> = memo(({ search, updateLocation }) => {
     if (search === 'open') {
       updateLocation({
         query: {
-          search: 'closed',
+          search: null,
         },
         partial: true,
       });
@@ -59,11 +65,11 @@ export const SearchWrapper: FC<Props> = memo(({ search, updateLocation }) => {
   return isOpen ? <DashboardSearch onCloseSearch={closeSearch} payload={payload} /> : null;
 });
 
-const mapStateToProps = (state: StoreState) => {
+const mapStateToProps: MapStateToProps<{}, OwnProps, StoreState> = (state: StoreState) => {
   return { search: getLocationQuery(state.location).search };
 };
 
-const mapDispatchToProps = {
+const mapDispatchToProps: MapDispatchToProps<DispatchProps, OwnProps> = {
   updateLocation,
 };
 
