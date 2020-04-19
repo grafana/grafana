@@ -21,7 +21,7 @@ describe('reduceByRow transformer', () => {
     mockTransformationsRegistry([reduceByRowTransformer]);
   });
 
-  it('returns original series if no options provided', () => {
+  it('will filter and alias', () => {
     const cfg = {
       id: DataTransformerID.reduceByRow,
       options: {
@@ -52,7 +52,7 @@ describe('reduceByRow transformer', () => {
     `);
   });
 
-  it('returns original series if no options provided', () => {
+  it('will replace other fields', () => {
     const cfg = {
       id: DataTransformerID.reduceByRow,
       options: {
@@ -70,6 +70,30 @@ describe('reduceByRow transformer', () => {
         },
         Object {
           "Mean": 150,
+        },
+      ]
+    `);
+  });
+
+  it('will filter by name', () => {
+    const cfg = {
+      id: DataTransformerID.reduceByRow,
+      options: {
+        reducer: ReducerID.mean,
+        replaceFields: true,
+        include: 'B',
+      },
+    };
+
+    const filtered = transformDataFrame([cfg], [seriesToTestWith])[0];
+    const rows = new DataFrameView(filtered).toArray();
+    expect(rows).toMatchInlineSnapshot(`
+      Array [
+        Object {
+          "Mean": 1,
+        },
+        Object {
+          "Mean": 100,
         },
       ]
     `);

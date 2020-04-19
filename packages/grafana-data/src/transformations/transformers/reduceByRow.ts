@@ -1,4 +1,4 @@
-import { DataFrame, DataTransformerInfo, MatcherConfig, Vector, FieldType, Field, NullValueMode } from '../../types';
+import { DataFrame, DataTransformerInfo, Vector, FieldType, Field, NullValueMode } from '../../types';
 import { DataTransformerID } from './ids';
 import { ReducerID, fieldReducers } from '../fieldReducer';
 import { getFieldMatcher } from '../matchers';
@@ -7,28 +7,31 @@ import { vectorToArray } from '../../vector/vectorToArray';
 import { ArrayVector } from '../../vector';
 import { doStandardCalcs } from '../fieldReducer';
 
-export interface ReduceByRowOptions {
+export interface ReduceByRowTransformerOptions {
   reducer: ReducerID;
-  fields?: MatcherConfig; // Assume all fields
+  include?: string; // Assume all fields
   alias?: string; // The output field name
   replaceFields?: boolean;
   nullValueMode?: NullValueMode;
 }
 
-export const reduceByRowTransformer: DataTransformerInfo<ReduceByRowOptions> = {
+export const reduceByRowTransformer: DataTransformerInfo<ReduceByRowTransformerOptions> = {
   id: DataTransformerID.reduceByRow,
   name: 'Reduce By Row',
   description: 'Run a calculation on the row',
   defaultOptions: {
     reducer: ReducerID.sum,
-    appendField: false,
   },
   transformer: options => (data: DataFrame[]) => {
-    const matcher = getFieldMatcher(
-      options.fields ?? {
-        id: FieldMatcherID.numeric,
-      }
-    );
+    let matcher = getFieldMatcher({
+      id: FieldMatcherID.numeric,
+    });
+    if (options.include && options.include.length) {
+      matcher = getFieldMatcher({
+        id: FieldMatcherID.byName,
+        options: options.include,
+      });
+    }
 
     const info = fieldReducers.get(options.reducer);
     if (!info) {
@@ -41,14 +44,14 @@ export const reduceByRowTransformer: DataTransformerInfo<ReduceByRowOptions> = {
     return data.map(frame => {
       // Find the columns that should be examined
       const columns: Vector[] = [];
-      frame.fields.forEach((field, index) => {
+      frame.fields.forEach(field => {
         if (matcher(field)) {
           columns.push(field.values);
         }
       });
 
       // Prepare a "fake" field for the row
-      const iter = new RowVector(frame, columns);
+      const iter = new RowVector(columns);
       const row: Field = {
         name: 'temp',
         values: iter,
@@ -58,8 +61,7 @@ export const reduceByRowTransformer: DataTransformerInfo<ReduceByRowOptions> = {
       const vals: number[] = [];
       for (let i = 0; i < frame.length; i++) {
         iter.rowIndex = i;
-        row.calcs = undefined;
-
+        row.calcs = undefined; // bust the cache (just in case)
         const val = reducer(row, ignoreNulls, nullAsZero)[options.reducer];
         vals.push(val);
       }
@@ -80,12 +82,12 @@ export const reduceByRowTransformer: DataTransformerInfo<ReduceByRowOptions> = {
 };
 
 class RowVector implements Vector<number> {
-  constructor(private frame: DataFrame, private columns: Vector[]) {}
+  constructor(private columns: Vector[]) {}
 
   rowIndex = 0;
 
   get length(): number {
-    return this.frame.length;
+    return this.columns.length;
   }
 
   get(index: number): number {
