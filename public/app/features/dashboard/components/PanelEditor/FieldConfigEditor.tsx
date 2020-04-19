@@ -1,19 +1,18 @@
 import React, { useCallback } from 'react';
 import cloneDeep from 'lodash/cloneDeep';
 import {
-  FieldConfigSource,
   DataFrame,
   FieldConfigPropertyItem,
-  VariableSuggestionsScope,
+  FieldConfigSource,
   PanelPlugin,
   SelectableValue,
+  VariableSuggestionsScope,
 } from '@grafana/data';
-import { fieldMatchersUI, ValuePicker, Label, Field, Container } from '@grafana/ui';
+import { Container, Counter, Field, fieldMatchersUI, Label, ValuePicker } from '@grafana/ui';
 import { getDataLinksVariableSuggestions } from '../../../panel/panellinks/link_srv';
 import { OverrideEditor } from './OverrideEditor';
 import groupBy from 'lodash/groupBy';
 import { OptionsGroup } from './OptionsGroup';
-import { Counter } from '@grafana/ui/src/components/Tabs/Counter';
 
 interface Props {
   plugin: PanelPlugin;
