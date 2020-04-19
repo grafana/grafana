@@ -17,7 +17,6 @@ import { Icon } from '../Icon/Icon';
 import { Label } from '../Forms/Label';
 import { StatsPicker } from '../StatsPicker/StatsPicker';
 import { Switch } from '../Switch/Switch';
-import Forms from '../Forms';
 import { Input } from '../Input/Input';
 
 interface ReduceByRowTransformerEditorProps extends TransformerUIProps<ReduceByRowTransformerOptions> {}
