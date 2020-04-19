@@ -134,7 +134,7 @@ func addDataSourceMigration(mg *Migrator) {
 	const setEmptyJSONWhereNullJSON = `UPDATE data_source SET json_data = '{}' WHERE json_data is null`
 	mg.AddMigration("Update json_data with nulls", NewRawSqlMigration(setEmptyJSONWhereNullJSON))
 
-	// add column Uid column for linking
+	// add column uid for linking
 	mg.AddMigration("Add uid column", NewAddColumnMigration(tableV2, &Column{
 		Name: "uid", Type: DB_NVarchar, Length: 40, Nullable: false, Default: "0",
 	}))

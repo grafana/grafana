@@ -106,7 +106,7 @@ func AddDataSource(cmd *models.AddDataSourceCommand) error {
 		if cmd.Uid == "" {
 			uid, err := generateNewDatasourceUid(sess, cmd.OrgId)
 			if err != nil {
-				return errutil.Wrapf(err, "Failed to generate Uid for Datasource %s", cmd.Name)
+				return errutil.Wrapf(err, "Failed to generate UID for Datasource %q", cmd.Name)
 			}
 			cmd.Uid = uid
 		}
@@ -135,7 +135,7 @@ func AddDataSource(cmd *models.AddDataSourceCommand) error {
 		}
 
 		if _, err := sess.Insert(ds); err != nil {
-			if dialect.IsUniqueConstraintViolation(err) && strings.Contains(dialect.ErrorMessage(err), "uid") {
+			if dialect.IsUniqueConstraintViolation(err) && strings.Contains(strings.ToLower(dialect.ErrorMessage(err)), "uid") {
 				return models.ErrDataSourceUidExists
 			}
 			return err
