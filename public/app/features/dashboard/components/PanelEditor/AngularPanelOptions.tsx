@@ -90,11 +90,11 @@ export class AngularPanelOptionsUnconnected extends PureComponent<Props> {
 
       template += `
       <div class="panel-options-group" ng-cloak>        
-        <div class="panel-options-group__header" ng-click="toggleOptionGroup(${i})">
+        <div class="panel-options-group__header" ng-click="toggleOptionGroup(${i})" aria-label="${tab.title} section">
           <div class="panel-options-group__icon">
             <icon name="ctrl.editorTabs[${i}].isOpen ? 'angle-down' : 'angle-right'"></icon>
           </div>
-          <div class="panel-options-group__title">{{ctrl.editorTabs[${i}].title}}</div>
+          <div class="panel-options-group__title">${tab.title}</div>
         </div>
         <div class="panel-options-group__body" ng-if="ctrl.editorTabs[${i}].isOpen">
           <panel-editor-tab editor-tab="ctrl.editorTabs[${i}]" ctrl="ctrl"></panel-editor-tab>
