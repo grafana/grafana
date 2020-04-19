@@ -55,7 +55,7 @@ export const Table: FC<Props> = memo((props: Props) => {
   const theme = useTheme();
   const tableStyles = getTableStyles(theme);
   const memoizedColumns = useMemo(() => getColumns(data, width, columnMinWidth), [data, width, columnMinWidth]);
-  const memoizedData = useMemo(() => getTableRows(data), [data]);
+  const memoizedData = data.fields[0].values.toArray();
   const stateReducer = useTableStateReducer(props);
 
   const options: any = useMemo(

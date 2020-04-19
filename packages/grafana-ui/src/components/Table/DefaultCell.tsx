@@ -9,6 +9,7 @@ export const DefaultCell: FC<TableCellProps> = props => {
     return null;
   }
 
-  const displayValue = field.display(cell.value);
+  console.log(cell);
+  const displayValue = field.display(field.values.get(cell.row.index));
   return <div className={tableStyles.tableCell}>{formattedValueToString(displayValue)}</div>;
 };
