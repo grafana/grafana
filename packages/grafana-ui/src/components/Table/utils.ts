@@ -3,25 +3,10 @@ import { DataFrame, Field, FieldType } from '@grafana/data';
 import { Column } from 'react-table';
 import { DefaultCell } from './DefaultCell';
 import { BarGaugeCell } from './BarGaugeCell';
-import { TableCellDisplayMode, TableCellProps, TableFieldOptions, TableRow } from './types';
+import { TableCellDisplayMode, TableCellProps, TableFieldOptions } from './types';
 import { css, cx } from 'emotion';
 import { withTableStyles } from './withTableStyles';
 import tinycolor from 'tinycolor2';
-
-export function getTableRows(data: DataFrame): TableRow[] {
-  const tableData = [];
-
-  for (let i = 0; i < data.length; i++) {
-    const row: { [key: string]: string | number } = {};
-    for (let j = 0; j < data.fields.length; j++) {
-      const prop = data.fields[j].name;
-      row[prop] = data.fields[j].values.get(i);
-    }
-    tableData.push(row);
-  }
-
-  return tableData;
-}
 
 export function getTextAlign(field?: Field): TextAlignProperty {
   if (!field) {

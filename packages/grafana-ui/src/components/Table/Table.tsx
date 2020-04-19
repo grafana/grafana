@@ -12,7 +12,7 @@ import {
   UseSortByState,
 } from 'react-table';
 import { FixedSizeList } from 'react-window';
-import { getColumns, getTableRows, getTextAlign } from './utils';
+import { getColumns, getTextAlign } from './utils';
 import { useTheme } from '../../themes';
 import { ColumnResizeActionCallback, TableFilterActionCallback } from './types';
 import { getTableStyles, TableStyles } from './styles';
@@ -45,6 +45,7 @@ function useTableStateReducer(props: Props) {
         const width = Math.round(newState.columnResizing.columnWidths[name] as number);
         props.onColumnResize(name, width);
       }
+      console.log(action);
     },
     [props.onColumnResize]
   );
@@ -54,8 +55,17 @@ export const Table: FC<Props> = memo((props: Props) => {
   const { data, height, onCellClick, width, columnMinWidth = COLUMN_MIN_WIDTH, noHeader, resizable = true } = props;
   const theme = useTheme();
   const tableStyles = getTableStyles(theme);
+
+  // React table data array. This data acts just like a dummy array to let react-table know how many rows exist
+  // The cells use the field to look up values
+  const memoizedData = useMemo(() => {
+    return data.fields.length > 0 ? data.fields[0].values.toArray() : [];
+  }, [data]);
+
+  // React-table column definitions
   const memoizedColumns = useMemo(() => getColumns(data, width, columnMinWidth), [data, width, columnMinWidth]);
-  const memoizedData = data.fields[0].values.toArray();
+
+  // Internal react table state reducer
   const stateReducer = useTableStateReducer(props);
 
   const options: any = useMemo(
