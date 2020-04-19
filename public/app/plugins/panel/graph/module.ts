@@ -171,7 +171,8 @@ class GraphCtrl extends MetricsPanelCtrl {
     this.addEditorTab('Display', 'public/app/plugins/panel/graph/tab_display.html');
     this.addEditorTab('Axes', axesEditorComponent);
     this.addEditorTab('Legend', 'public/app/plugins/panel/graph/tab_legend.html');
-    this.addEditorTab('Thresholds & Time Regions', 'public/app/plugins/panel/graph/tab_thresholds_time_regions.html');
+    this.addEditorTab('Thresholds', 'public/app/plugins/panel/graph/tab_thresholds.html');
+    this.addEditorTab('Time regions', 'public/app/plugins/panel/graph/time_regions.html');
     this.addEditorTab('Data links', 'public/app/plugins/panel/graph/tab_drilldown_links.html');
     this.subTabIndex = 0;
     this.hiddenSeriesTainted = false;
