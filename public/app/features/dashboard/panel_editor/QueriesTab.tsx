@@ -4,7 +4,17 @@ import _ from 'lodash';
 // Components
 import { DataSourcePicker } from 'app/core/components/Select/DataSourcePicker';
 import { QueryOptions } from './QueryOptions';
-import { PanelOptionsGroup, CustomScrollbar, Container, stylesFactory, Button, Field, Input } from '@grafana/ui';
+import {
+  PanelOptionsGroup,
+  CustomScrollbar,
+  Container,
+  stylesFactory,
+  Button,
+  Field,
+  Input,
+  Icon,
+  IconButton,
+} from '@grafana/ui';
 import { getLocationSrv } from '@grafana/runtime';
 import { QueryEditorRows } from './QueryEditorRows';
 // Services
@@ -164,21 +174,37 @@ export class QueriesTab extends PureComponent<Props, State> {
     const { currentDS } = this.state;
 
     return (
-      <QueryOperationRow
-        title="Data source"
-        headerElement={
-          <>
-            <div className={styles.dsPicker}>
-              <DataSourcePicker datasources={this.datasources} onChange={this.onChangeDataSource} current={currentDS} />
+      <>
+        <div className="gf-form-inline">
+          <div className="gf-form gf-form--grow">
+            <div className="gf-form-label">
+              <Icon name="angle-down" />
             </div>
-          </>
-        }
-      >
-        <div className={styles.topSection}>
-          <QueryOptions panel={panel} datasource={currentDS} />
+            <div className="gf-form-label">Data source</div>
+            <DataSourcePicker datasources={this.datasources} onChange={this.onChangeDataSource} current={currentDS} />
+            <div className="gf-form-label gf-form-label--grow">
+              <IconButton name="question-circle" size="lg" />
+            </div>
+            <Button variant="secondary">Query inspector</Button>
+          </div>
         </div>
-      </QueryOperationRow>
+      </>
     );
+    // <QueryOperationRow
+    //     title="Data source"
+    //     headerElement={
+    //       <>
+    // <Icon name="angle-down" />
+    //         <div className={styles.dsPicker}>
+    //           <DataSourcePicker datasources={this.datasources} onChange={this.onChangeDataSource} current={currentDS} />
+    //         </div>
+    //       </>
+    //     }
+    //   >
+    //     <div className={styles.topSection}>
+    //       <QueryOptions panel={panel} datasource={currentDS} />
+    //     </div>
+    //   </QueryOperationRow>
   }
 
   renderMixedPicker = () => {
@@ -218,7 +244,7 @@ export class QueriesTab extends PureComponent<Props, State> {
     this.setState({ scrollTop: target.scrollTop });
   };
 
-  renderQueryBody() {
+  renderQueries() {
     const { panel, dashboard } = this.props;
     const { currentDS, data } = this.state;
 
@@ -272,11 +298,11 @@ export class QueriesTab extends PureComponent<Props, State> {
         scrollTop={scrollTop}
         setScrollTop={this.setScrollTop}
       >
-        <Container padding="md">
+        <div className={styles.innerWrapper}>
           {this.renderTopSection(styles)}
-          {this.renderQueryBody()}
+          <div className={styles.queriesWrapper}>{this.renderQueries()}</div>
           {this.renderAddQueryRow(styles)}
-        </Container>
+        </div>
       </CustomScrollbar>
     );
   }
@@ -286,6 +312,12 @@ const getStyles = stylesFactory(() => {
   const { theme } = config;
 
   return {
+    innerWrapper: css`
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      padding: ${theme.spacing.md};
+    `,
     topSection: css`
       display: flex;
       padding: 0;
@@ -297,9 +329,10 @@ const getStyles = stylesFactory(() => {
     topSectionItem: css`
       margin-right: ${theme.spacing.md};
     `,
-    addQueryRow: css`
+    queriesWrapper: css`
       padding: 16px 0;
     `,
+    addQueryRow: css``,
   };
 });
 

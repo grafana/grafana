@@ -78,6 +78,9 @@ const getQueryOperationRowStyles = stylesFactory((theme: GrafanaTheme) => {
   return {
     wrapper: css`
       margin-bottom: ${theme.spacing.formSpacingBase * 2}px;
+      &:last-child {
+        margin-bottom: 0;
+      }
     `,
     header: css`
       padding: 0 ${theme.spacing.sm};
@@ -91,6 +94,9 @@ const getQueryOperationRowStyles = stylesFactory((theme: GrafanaTheme) => {
     `,
     collapseIcon: css`
       color: ${theme.colors.textWeak};
+      &:hover {
+        color: ${theme.colors.text};
+      }
     `,
     titleWrapper: css`
       display: flex;
