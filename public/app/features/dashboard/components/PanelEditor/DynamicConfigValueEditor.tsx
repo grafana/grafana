@@ -66,7 +66,7 @@ export const DynamicConfigValueEditor: React.FC<DynamicConfigValueEditorProps> =
   } else {
     editor = (
       <div>
-        <Field label={renderLabel()} description={item.description}>
+        <Field label={renderLabel()()} description={item.description}>
           <item.override
             value={property.value}
             onChange={value => {

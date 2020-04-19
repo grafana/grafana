@@ -11,6 +11,7 @@ import { PanelPlugin, PanelPluginMeta } from '@grafana/data';
 import { PanelCtrl } from 'app/plugins/sdk';
 import { changePanelPlugin } from '../../state/actions';
 import { StoreState } from 'app/types';
+import { getSectionOpenState, saveSectionOpenState } from './state/utils';
 
 interface OwnProps {
   panel: PanelModel;
@@ -84,13 +85,16 @@ export class AngularPanelOptionsUnconnected extends PureComponent<Props> {
 
     let template = '';
     for (let i = 0; i < panelCtrl.editorTabs.length; i++) {
+      const tab = panelCtrl.editorTabs[i];
+      tab.isOpen = getSectionOpenState(tab.title, i === 0);
+
       template += `
       <div class="panel-options-group" ng-cloak>        
         <div class="panel-options-group__header" ng-click="toggleOptionGroup(${i})">
           <div class="panel-options-group__icon"><icon name="'angle-down'"></icon></div>
           <div class="panel-options-group__title">{{ctrl.editorTabs[${i}].title}}</div>
         </div>
-        <div class="panel-options-group__body" ng-if="!ctrl.editorTabs[${i}].isCollapsed">
+        <div class="panel-options-group__body" ng-if="ctrl.editorTabs[${i}].isOpen">
           <panel-editor-tab editor-tab="ctrl.editorTabs[${i}]" ctrl="ctrl"></panel-editor-tab>
         </div>
       </div>
@@ -102,7 +106,8 @@ export class AngularPanelOptionsUnconnected extends PureComponent<Props> {
       ctrl: panelCtrl,
       toggleOptionGroup: (index: number) => {
         const tab = panelCtrl.editorTabs[index];
-        tab.isCollapsed = !tab.isCollapsed;
+        tab.isOpen = !tab.isOpen;
+        saveSectionOpenState(tab.title, tab.isOpen as boolean);
       },
     };
 
