@@ -56,7 +56,6 @@ export interface Props {
   notifyApp: typeof notifyApp;
   updateLocation: typeof updateLocation;
   inspectTab?: InspectTab;
-  isNewEditorOpen?: boolean;
 }
 
 export interface State {
@@ -253,16 +252,7 @@ export class DashboardPage extends PureComponent<Props, State> {
   }
 
   render() {
-    const {
-      dashboard,
-      editview,
-      $injector,
-      isInitSlow,
-      initError,
-      inspectTab,
-      isNewEditorOpen,
-      updateLocation,
-    } = this.props;
+    const { dashboard, editview, $injector, isInitSlow, initError, inspectTab, updateLocation } = this.props;
 
     const { editPanel, viewPanel, scrollTop, updateScrollTop } = this.state;
     const { featureToggles } = getConfig();
@@ -303,7 +293,6 @@ export class DashboardPage extends PureComponent<Props, State> {
                 dashboard={dashboard}
                 viewPanel={viewPanel}
                 editPanel={editPanel}
-                isNewEditorOpen={isNewEditorOpen}
                 scrollTop={approximateScrollTop}
               />
             </div>
@@ -333,7 +322,6 @@ export const mapStateToProps = (state: StoreState) => ({
   initError: state.dashboard.initError,
   dashboard: state.dashboard.getModel() as DashboardModel,
   inspectTab: state.location.query.inspectTab,
-  isNewEditorOpen: state.panelEditorNew.isOpen,
 });
 
 const mapDispatchToProps = {

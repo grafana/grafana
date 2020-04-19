@@ -6,8 +6,8 @@ import { OptionsGroup } from './OptionsGroup';
 import { getPanelLinksVariableSuggestions } from '../../../panel/panellinks/link_srv';
 import { getVariables } from '../../../variables/state/selectors';
 import { PanelOptionsEditor } from './PanelOptionsEditor';
-import { AngularPanelOptions } from '../../panel_editor/AngularPanelOptions';
 import { Counter } from '@grafana/ui/src/components/Tabs/Counter';
+import { AngularPanelOptions } from './AngularPanelOptions';
 
 interface Props {
   panel: PanelModel;

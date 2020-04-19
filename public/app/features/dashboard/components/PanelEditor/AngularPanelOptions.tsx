@@ -84,16 +84,13 @@ export class AngularPanelOptionsUnconnected extends PureComponent<Props> {
 
     let template = '';
     for (let i = 0; i < panelCtrl.editorTabs.length; i++) {
-      template +=
-        `
-      <div class="panel-options-group" ng-cloak>` +
-        (i > 0
-          ? `<div class="panel-options-group__header">
-           <span class="panel-options-group__title">{{ctrl.editorTabs[${i}].title}}
-           </span>
-         </div>`
-          : '') +
-        `<div class="panel-options-group__body">
+      template += `
+      <div class="panel-options-group" ng-cloak>        
+        <div class="panel-options-group__header">
+          <span class="panel-options-group__title">{{ctrl.editorTabs[${i}].title}}
+          </span>
+        </div>
+        <div class="panel-options-group__body">
           <panel-editor-tab editor-tab="ctrl.editorTabs[${i}]" ctrl="ctrl"></panel-editor-tab>
         </div>
       </div>
