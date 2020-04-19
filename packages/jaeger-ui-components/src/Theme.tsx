@@ -80,8 +80,9 @@ export const defaultTheme: Theme = {
   servicesColorPalette: COLORS_HEX,
 };
 
-export function isLight(theme: Theme) {
-  return theme.type === ThemeType.Light;
+export function isLight(theme?: Theme | ThemeOptions) {
+  // Light theme is default type not set which only happens if called for ThemeOptions.
+  return theme?.type ? theme.type === ThemeType.Light : true;
 }
 
 const ThemeContext = React.createContext<ThemeOptions | undefined>(undefined);
@@ -103,7 +104,7 @@ export function ThemeConsumer(props: ThemeConsumerProps) {
   );
 }
 
-const memoizedThemeMerge = memoizeOne(value => {
+const memoizedThemeMerge = memoizeOne((value?: ThemeOptions) => {
   const darkOverrides: Partial<Theme> = {};
   if (!isLight(value)) {
     darkOverrides.servicesColorPalette = COLORS_HEX_DARK;
