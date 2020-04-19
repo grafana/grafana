@@ -24,7 +24,13 @@ export interface TableRow {
 }
 
 export type TableFilterActionCallback = (key: string, value: string) => void;
-export type ColumnResizeActionCallback = (name: string, width: number) => void;
+export type TableColumnResizeActionCallback = (fieldIndex: number, width: number) => void;
+export type TableSortByActionCallback = (state: TableSortByFieldState[]) => void;
+
+export interface TableSortByFieldState {
+  fieldIndex: number;
+  desc?: boolean;
+}
 
 export interface TableCellProps extends CellProps<any> {
   tableStyles: TableStyles;

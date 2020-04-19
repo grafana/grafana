@@ -13,15 +13,26 @@ export class TablePanel extends Component<Props> {
     super(props);
   }
 
-  onColumnResize = (name: string, width: number) => {
-    const { fieldConfig } = this.props;
+  onColumnResize = (fieldIndex: number, width: number) => {
+    const { fieldConfig, data } = this.props;
     const { overrides } = fieldConfig;
+    const frame = data.series[this.getCurrentFrameIndex()];
 
+    if (!frame) {
+      return;
+    }
+
+    const field = frame.fields[fieldIndex];
+    if (!field) {
+      return;
+    }
+
+    const fieldName = field.name;
     const matcherId = FieldMatcherID.byName;
     const propId = 'custom.width';
 
     // look for existing override
-    const override = overrides.find(o => o.matcher.id === matcherId && o.matcher.options === name);
+    const override = overrides.find(o => o.matcher.id === matcherId && o.matcher.options === fieldName);
 
     if (override) {
       // look for existing property
@@ -33,7 +44,7 @@ export class TablePanel extends Component<Props> {
       }
     } else {
       overrides.push({
-        matcher: { id: matcherId, options: name },
+        matcher: { id: matcherId, options: fieldName },
         properties: [{ id: propId, value: width }],
       });
     }
@@ -69,13 +80,14 @@ export class TablePanel extends Component<Props> {
     );
   }
 
+  getCurrentFrameIndex() {
+    const { data, options } = this.props;
+    const count = data.series?.length;
+    return options.frameIndex > 0 && options.frameIndex < count ? options.frameIndex : 0;
+  }
+
   render() {
-    const {
-      data,
-      height,
-      width,
-      options: { frameIndex },
-    } = this.props;
+    const { data, height, width } = this.props;
 
     const count = data.series?.length;
 
@@ -86,7 +98,7 @@ export class TablePanel extends Component<Props> {
     if (count > 1) {
       const inputHeight = config.theme.spacing.formInputHeight;
       const padding = 8 * 2;
-      const index = frameIndex > 0 && frameIndex < count ? frameIndex : 0;
+      const currentIndex = this.getCurrentFrameIndex();
       const names = data.series.map((frame, index) => {
         return {
           label: `${frame.name ?? 'Series'}`,
@@ -96,9 +108,9 @@ export class TablePanel extends Component<Props> {
 
       return (
         <div className={tableStyles.wrapper}>
-          {this.renderTable(data.series[index], width, height - inputHeight - padding)}
+          {this.renderTable(data.series[currentIndex], width, height - inputHeight - padding)}
           <div className={tableStyles.selectWrapper}>
-            <Select options={names} value={names[index]} onChange={this.onChangeTableSelection} />
+            <Select options={names} value={names[currentIndex]} onChange={this.onChangeTableSelection} />
           </div>
         </div>
       );

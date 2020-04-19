@@ -12,9 +12,9 @@ import {
   UseSortByState,
 } from 'react-table';
 import { FixedSizeList } from 'react-window';
-import { getColumns, getTableRows, getTextAlign } from './utils';
+import { getColumns, getTextAlign } from './utils';
 import { useTheme } from '../../themes';
-import { ColumnResizeActionCallback, TableFilterActionCallback } from './types';
+import { TableColumnResizeActionCallback, TableFilterActionCallback, TableSortByActionCallback } from './types';
 import { getTableStyles, TableStyles } from './styles';
 import { TableCell } from './TableCell';
 import { Icon } from '../Icon/Icon';
@@ -31,7 +31,8 @@ export interface Props {
   noHeader?: boolean;
   resizable?: boolean;
   onCellClick?: TableFilterActionCallback;
-  onColumnResize?: ColumnResizeActionCallback;
+  onColumnResize?: TableColumnResizeActionCallback;
+  onSortBy?: TableSortByActionCallback;
 }
 
 interface ReactTableInternalState extends UseResizeColumnsState<{}>, UseSortByState<{}> {}
@@ -39,12 +40,25 @@ interface ReactTableInternalState extends UseResizeColumnsState<{}>, UseSortBySt
 function useTableStateReducer(props: Props) {
   return useCallback(
     (newState: ReactTableInternalState, action: any) => {
-      if (action.type === 'columnDoneResizing' && props.onColumnResize) {
-        const info = (newState.columnResizing.headerIdWidths as any)[0];
-        const name = info[0];
-        const width = Math.round(newState.columnResizing.columnWidths[name] as number);
-        props.onColumnResize(name, width);
+      console.log(action, newState);
+
+      switch (action.type) {
+        case 'columnDoneResizing':
+          if (props.onColumnResize) {
+            const info = (newState.columnResizing.headerIdWidths as any)[0];
+            const columnIdString = info[0];
+            const fieldIndex = parseInt(columnIdString, 10);
+            const width = Math.round(newState.columnResizing.columnWidths[columnIdString] as number);
+            props.onColumnResize(fieldIndex, width);
+          }
+        case 'toggleSortBy':
+          if (props.onSortBy) {
+            // todo call callback and persist
+          }
+          break;
       }
+
+      return newState;
     },
     [props.onColumnResize]
   );
@@ -54,8 +68,17 @@ export const Table: FC<Props> = memo((props: Props) => {
   const { data, height, onCellClick, width, columnMinWidth = COLUMN_MIN_WIDTH, noHeader, resizable = true } = props;
   const theme = useTheme();
   const tableStyles = getTableStyles(theme);
+
+  // React table data array. This data acts just like a dummy array to let react-table know how many rows exist
+  // The cells use the field to look up values
+  const memoizedData = useMemo(() => {
+    return data.fields.length > 0 ? data.fields[0].values.toArray() : [];
+  }, [data]);
+
+  // React-table column definitions
   const memoizedColumns = useMemo(() => getColumns(data, width, columnMinWidth), [data, width, columnMinWidth]);
-  const memoizedData = useMemo(() => getTableRows(data), [data]);
+
+  // Internal react table state reducer
   const stateReducer = useTableStateReducer(props);
 
   const options: any = useMemo(
@@ -64,6 +87,10 @@ export const Table: FC<Props> = memo((props: Props) => {
       data: memoizedData,
       disableResizing: !resizable,
       stateReducer: stateReducer,
+      // this is how you set initial sort by state
+      // initialState: {
+      //   sortBy: [{ id: '2', desc: true }],
+      // },
     }),
     [memoizedColumns, memoizedData, stateReducer, resizable]
   );
