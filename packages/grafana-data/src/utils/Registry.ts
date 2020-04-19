@@ -54,9 +54,11 @@ export class Registry<T extends RegistryItem> {
       this.sort();
       this.initialized = true;
     }
+
     if (id) {
       return this.byId.get(id);
     }
+
     return undefined;
   }
 
@@ -125,6 +127,13 @@ export class Registry<T extends RegistryItem> {
       this.getIfExists('xxx'); // will trigger init
     }
     return this.ordered; // copy of everythign just in case
+  }
+
+  isEmpty(): boolean {
+    if (!this.initialized) {
+      this.getIfExists('xxx'); // will trigger init
+    }
+    return this.ordered.length === 0;
   }
 
   register(ext: T) {

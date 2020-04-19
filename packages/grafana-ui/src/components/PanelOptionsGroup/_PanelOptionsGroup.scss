@@ -1,23 +1,25 @@
 .panel-options-group {
-  margin-bottom: 10px;
-  border: $panel-options-group-border;
-  border-radius: $border-radius;
-  background: $page-bg;
+  border-bottom: $panel-border;
 }
 
 .panel-options-group__header {
-  padding: 4px 8px;
-  background: $panel-options-group-header-bg;
+  padding: 8px 16px 8px 8px;
   position: relative;
-  border-radius: $border-radius $border-radius 0 0;
   display: flex;
   align-items: center;
+  cursor: pointer;
+  font-weight: 500;
 
-  .btn {
-    position: absolute;
-    right: 0;
-    top: 0;
+  &:hover {
+    .panel-options-group__icon {
+      color: $text-color;
+    }
   }
+}
+
+.panel-options-group__icon {
+  color: $text-color-weak;
+  margin-right: 8px;
 }
 
 .panel-options-group__add-btn {
@@ -53,15 +55,9 @@
 }
 
 .panel-options-group__title {
-  font-size: 16px;
   position: relative;
-  top: 1px;
 }
 
 .panel-options-group__body {
-  padding: 20px;
-
-  &--queries {
-    min-height: 200px;
-  }
+  padding: 8px 16px 16px 32px;
 }

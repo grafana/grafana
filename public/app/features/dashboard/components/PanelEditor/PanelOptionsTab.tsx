@@ -30,7 +30,7 @@ export const PanelOptionsTab: FC<Props> = ({
 }) => {
   const elements: JSX.Element[] = [];
   const linkVariablesSuggestions = useMemo(() => getPanelLinksVariableSuggestions(), []);
-  const panelLinksCount = panel && panel.links ? panel.links.length : undefined;
+  const panelLinksCount = panel && panel.links ? panel.links.length : 0;
 
   const variableOptions = getVariableOptions();
   const directionOptions = [
@@ -93,9 +93,7 @@ export const PanelOptionsTab: FC<Props> = ({
   elements.push(
     <OptionsGroup
       renderTitle={isExpanded => (
-        <>
-          Panel links {!isExpanded && panelLinksCount && panelLinksCount !== 0 && <Counter value={panelLinksCount} />}
-        </>
+        <>Panel links {!isExpanded && panelLinksCount > 0 && <Counter value={panelLinksCount} />}</>
       )}
       key="panel links"
       defaultToClosed={true}
