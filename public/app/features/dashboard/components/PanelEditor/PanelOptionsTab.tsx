@@ -1,12 +1,11 @@
 import React, { FC, useMemo } from 'react';
-import { PanelModel, DashboardModel } from '../../state';
-import { SelectableValue, PanelPlugin, FieldConfigSource, PanelData } from '@grafana/data';
-import { Switch, Select, DataLinksInlineEditor, Input, TextArea, RadioButtonGroup, Field } from '@grafana/ui';
+import { DashboardModel, PanelModel } from '../../state';
+import { FieldConfigSource, PanelData, PanelPlugin, SelectableValue } from '@grafana/data';
+import { Counter, DataLinksInlineEditor, Field, Input, RadioButtonGroup, Select, Switch, TextArea } from '@grafana/ui';
 import { OptionsGroup } from './OptionsGroup';
 import { getPanelLinksVariableSuggestions } from '../../../panel/panellinks/link_srv';
 import { getVariables } from '../../../variables/state/selectors';
 import { PanelOptionsEditor } from './PanelOptionsEditor';
-import { Counter } from '@grafana/ui/src/components/Tabs/Counter';
 import { AngularPanelOptions } from './AngularPanelOptions';
 
 interface Props {
