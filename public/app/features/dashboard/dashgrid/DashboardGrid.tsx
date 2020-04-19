@@ -97,6 +97,7 @@ export interface Props {
   editPanel: PanelModel | null;
   viewPanel: PanelModel | null;
   scrollTop: number;
+  isPanelEditorOpen?: boolean;
 }
 
 export class DashboardGrid extends PureComponent<Props> {
