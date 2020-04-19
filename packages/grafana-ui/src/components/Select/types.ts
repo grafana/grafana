@@ -9,6 +9,7 @@ export interface SelectCommonProps<T> {
   autoFocus?: boolean;
   backspaceRemovesValue?: boolean;
   className?: string;
+  closeMenuOnSelect?: boolean;
   /** Used for custom components. For more information, see `react-select` */
   components?: any;
   defaultValue?: any;
@@ -24,7 +25,9 @@ export interface SelectCommonProps<T> {
   isOpen?: boolean;
   /** Disables the possibility to type into the input*/
   isSearchable?: boolean;
+  showAllSelectedWhenOpen?: boolean;
   maxMenuHeight?: number;
+  maxVisibleValues?: undefined | number;
   menuPlacement?: 'auto' | 'bottom' | 'top';
   menuPosition?: 'fixed' | 'absolute';
   /** The message to display when no options could be found */
