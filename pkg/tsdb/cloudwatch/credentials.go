@@ -44,12 +44,22 @@ func GetCredentials(dsInfo *DatasourceInfo) (*credentials.Credentials, error) {
 	accessKeyId := ""
 	secretAccessKey := ""
 	sessionToken := ""
+	var params *sts.AssumeRoleInput = nil
 	var expiration *time.Time = nil
 	if dsInfo.AuthType == "arn" {
-		params := &sts.AssumeRoleInput{
-			RoleArn:         aws.String(dsInfo.AssumeRoleArn),
-			RoleSessionName: aws.String("GrafanaSession"),
-			DurationSeconds: aws.Int64(900),
+		if dsInfo.ExternalId == "" {
+			params = &sts.AssumeRoleInput{
+				RoleArn:         aws.String(dsInfo.AssumeRoleArn),
+				RoleSessionName: aws.String("GrafanaSession"),
+				DurationSeconds: aws.Int64(900),
+			}
+		} else {
+			params = &sts.AssumeRoleInput{
+				RoleArn:         aws.String(dsInfo.AssumeRoleArn),
+				ExternalId:      aws.String(dsInfo.ExternalId),
+				RoleSessionName: aws.String("GrafanaSession"),
+				DurationSeconds: aws.Int64(900),
+			}
 		}
 
 		stsSess, err := session.NewSession()
@@ -161,6 +171,7 @@ func (e *CloudWatchExecutor) getDsInfo(region string) *DatasourceInfo {
 
 	authType := e.DataSource.JsonData.Get("authType").MustString()
 	assumeRoleArn := e.DataSource.JsonData.Get("assumeRoleArn").MustString()
+	externalId := e.DataSource.JsonData.Get("externalId").MustString()
 	decrypted := e.DataSource.DecryptedValues()
 	accessKey := decrypted["accessKey"]
 	secretKey := decrypted["secretKey"]
@@ -170,6 +181,7 @@ func (e *CloudWatchExecutor) getDsInfo(region string) *DatasourceInfo {
 		Profile:       e.DataSource.Database,
 		AuthType:      authType,
 		AssumeRoleArn: assumeRoleArn,
+		ExternalId:    externalId,
 		AccessKey:     accessKey,
 		SecretKey:     secretKey,
 	}

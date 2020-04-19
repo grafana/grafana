@@ -24,6 +24,7 @@ export type SelectableStrings = Array<SelectableValue<string>>;
 export interface CloudWatchJsonData extends DataSourceJsonData {
   timeField?: string;
   assumeRoleArn?: string;
+  externalId?: string;
   database?: string;
   customMetricsNamespaces?: string;
 }

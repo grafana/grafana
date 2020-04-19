@@ -134,6 +134,7 @@ export class ConfigEditor extends PureComponent<Props, State> {
                 onChange={option => {
                   if (options.jsonData.authType === 'arn' && option.value !== 'arn') {
                     delete this.props.options.jsonData.assumeRoleArn;
+                    delete this.props.options.jsonData.externalId;
                   }
                   onUpdateDatasourceJsonDataOptionSelect(this.props, 'authType')(option);
                 }}
@@ -240,6 +241,22 @@ export class ConfigEditor extends PureComponent<Props, State> {
                     placeholder="arn:aws:iam:*"
                     value={options.jsonData.assumeRoleArn || ''}
                     onChange={onUpdateDatasourceJsonDataOption(this.props, 'assumeRoleArn')}
+                  />
+                </div>
+              </div>
+              <div className="gf-form">
+                <FormLabel
+                  className="width-14"
+                  tooltip="A unique identifier that might be required when you assume a role in another account"
+                >
+                  External ID
+                </FormLabel>
+                <div className="width-30">
+                  <Input
+                    className="width-30"
+                    placeholder="External ID"
+                    value={options.jsonData.externalId || ''}
+                    onChange={onUpdateDatasourceJsonDataOption(this.props, 'externalId')}
                   />
                 </div>
               </div>

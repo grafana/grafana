@@ -42,6 +42,7 @@ const setup = (propOverrides?: object) => {
       },
       jsonData: {
         assumeRoleArn: '',
+        externalId: '',
         database: '',
         customMetricsNamespaces: '',
         authType: 'keys',

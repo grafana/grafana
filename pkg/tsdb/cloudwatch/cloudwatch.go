@@ -22,6 +22,7 @@ type DatasourceInfo struct {
 	Region        string
 	AuthType      string
 	AssumeRoleArn string
+	ExternalId    string
 	Namespace     string
 
 	AccessKey string
