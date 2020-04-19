@@ -44,7 +44,7 @@ describe('panelEditor actions', () => {
       };
 
       const dispatchedActions = await thunkTester({
-        panelEditorNew: state,
+        panelEditor: state,
         dashboard: {
           getModel: () => dashboard,
         },
@@ -78,7 +78,7 @@ describe('panelEditor actions', () => {
       };
 
       const dispatchedActions = await thunkTester({
-        panelEditorNew: state,
+        panelEditor: state,
         dashboard: {
           getModel: () => dashboard,
         },
@@ -112,7 +112,7 @@ describe('panelEditor actions', () => {
       };
 
       const dispatchedActions = await thunkTester({
-        panelEditorNew: state,
+        panelEditor: state,
         dashboard: {
           getModel: () => dashboard,
         },
