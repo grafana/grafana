@@ -4,7 +4,7 @@ import { FieldType } from '../../types/dataFrame';
 import { ReducerID } from '../fieldReducer';
 import { mockTransformationsRegistry } from '../../utils/tests/mockTransformationsRegistry';
 import { transformDataFrame } from '../transformDataFrame';
-import { reduceByRowTransformer } from './reduceByRow';
+import { calculateFieldTransformer } from './calculateField';
 import { DataFrameView } from '../../dataframe';
 
 const seriesToTestWith = toDataFrame({
@@ -16,14 +16,14 @@ const seriesToTestWith = toDataFrame({
   ],
 });
 
-describe('reduceByRow transformer', () => {
+describe('calculateField transformer', () => {
   beforeAll(() => {
-    mockTransformationsRegistry([reduceByRowTransformer]);
+    mockTransformationsRegistry([calculateFieldTransformer]);
   });
 
   it('will filter and alias', () => {
     const cfg = {
-      id: DataTransformerID.reduceByRow,
+      id: DataTransformerID.calculateField,
       options: {
         // defautls to sum
         alias: 'The Total',
@@ -54,7 +54,7 @@ describe('reduceByRow transformer', () => {
 
   it('will replace other fields', () => {
     const cfg = {
-      id: DataTransformerID.reduceByRow,
+      id: DataTransformerID.calculateField,
       options: {
         reducer: ReducerID.mean,
         replaceFields: true,
@@ -77,7 +77,7 @@ describe('reduceByRow transformer', () => {
 
   it('will filter by name', () => {
     const cfg = {
-      id: DataTransformerID.reduceByRow,
+      id: DataTransformerID.calculateField,
       options: {
         reducer: ReducerID.mean,
         replaceFields: true,

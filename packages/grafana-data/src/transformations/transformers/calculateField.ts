@@ -7,7 +7,7 @@ import { vectorToArray } from '../../vector/vectorToArray';
 import { ArrayVector } from '../../vector';
 import { doStandardCalcs } from '../fieldReducer';
 
-export interface ReduceByRowTransformerOptions {
+export interface CalculateFieldTransformerOptions {
   reducer: ReducerID;
   include?: string; // Assume all fields
   alias?: string; // The output field name
@@ -15,10 +15,10 @@ export interface ReduceByRowTransformerOptions {
   nullValueMode?: NullValueMode;
 }
 
-export const reduceByRowTransformer: DataTransformerInfo<ReduceByRowTransformerOptions> = {
-  id: DataTransformerID.reduceByRow,
-  name: 'Reduce By Row',
-  description: 'Run a calculation on the row',
+export const calculateFieldTransformer: DataTransformerInfo<CalculateFieldTransformerOptions> = {
+  id: DataTransformerID.calculateField,
+  name: 'Calculate Field',
+  description: 'Calculate a new field based on values in the same row',
   defaultOptions: {
     reducer: ReducerID.sum,
   },

@@ -1,7 +1,7 @@
 import React, { useContext, ChangeEvent } from 'react';
 import {
   DataTransformerID,
-  ReduceByRowTransformerOptions,
+  CalculateFieldTransformerOptions,
   KeyValue,
   standardTransformers,
   TransformerRegistyItem,
@@ -19,19 +19,19 @@ import { StatsPicker } from '../StatsPicker/StatsPicker';
 import { Switch } from '../Switch/Switch';
 import { Input } from '../Input/Input';
 
-interface ReduceByRowTransformerEditorProps extends TransformerUIProps<ReduceByRowTransformerOptions> {}
+interface CalculateFieldTransformerEditorProps extends TransformerUIProps<CalculateFieldTransformerOptions> {}
 
-interface ReduceByRowTransformerEditorState {
+interface CalculateFieldTransformerEditorState {
   include: string;
   names: string[];
   selected: string[];
 }
 
-export class ReduceByRowTransformerEditor extends React.PureComponent<
-  ReduceByRowTransformerEditorProps,
-  ReduceByRowTransformerEditorState
+export class CalculateFieldTransformerEditor extends React.PureComponent<
+  CalculateFieldTransformerEditorProps,
+  CalculateFieldTransformerEditorState
 > {
-  constructor(props: ReduceByRowTransformerEditorProps) {
+  constructor(props: CalculateFieldTransformerEditorProps) {
     super(props);
     this.state = {
       include: props.options.include || '',
@@ -149,12 +149,7 @@ export class ReduceByRowTransformerEditor extends React.PureComponent<
           }}
         />
         <Label>Calculation</Label>
-        <StatsPicker
-          placeholder="Choose Stat"
-          stats={[options.reducer]}
-          onChange={this.onStatsChange}
-          defaultStat={ReducerID.sum}
-        />
+        <StatsPicker stats={[options.reducer]} onChange={this.onStatsChange} defaultStat={ReducerID.sum} />
         <Label>Alias</Label>
         <Input value={options.alias} placeholder={reducer.name} onChange={this.onAliasChanged} />
 
@@ -199,10 +194,10 @@ const FilterPill: React.FC<FilterPillProps> = ({ label, selected, onClick }) => 
   );
 };
 
-export const reduceByRowTransformRegistryItem: TransformerRegistyItem<ReduceByRowTransformerOptions> = {
-  id: DataTransformerID.reduceByRow,
-  editor: ReduceByRowTransformerEditor,
-  transformation: standardTransformers.reduceByRowTransformer,
-  name: 'Reduce by Row',
-  description: 'Create a new colum from the other columns',
+export const calculateFieldTransformRegistryItem: TransformerRegistyItem<CalculateFieldTransformerOptions> = {
+  id: DataTransformerID.calculateField,
+  editor: CalculateFieldTransformerEditor,
+  transformation: standardTransformers.calculateFieldTransformer,
+  name: 'Calculate Field',
+  description: 'Calculate a new field based on values in the same row',
 };
