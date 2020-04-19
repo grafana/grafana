@@ -17,52 +17,40 @@ interface DataLinksInlineEditorProps {
 
 export const DataLinksInlineEditor: React.FC<DataLinksInlineEditorProps> = ({ links, onChange, suggestions, data }) => {
   const theme = useTheme();
-  const [editIndex, setEditIndex] = useState();
-  const isEditing = editIndex !== null && editIndex !== undefined;
+  const [editIndex, setEditIndex] = useState<number | null>(null);
   const styles = getDataLinksInlineEditorStyles(theme);
+  const linksSafe: DataLink[] = links ?? [];
+  const isEditing = editIndex !== null && linksSafe[editIndex] !== undefined;
 
   const onDataLinkChange = (index: number, link: DataLink) => {
-    if (!links) {
-      return;
-    }
-    const update = cloneDeep(links);
+    const update = cloneDeep(linksSafe);
     update[index] = link;
     onChange(update);
   };
 
   const onDataLinkAdd = () => {
-    let update = cloneDeep(links);
-    if (update) {
-      update.push({
-        title: '',
-        url: '',
-      });
-    } else {
-      update = [
-        {
-          title: '',
-          url: '',
-        },
-      ];
-    }
+    let update = cloneDeep(linksSafe);
+
+    update.push({
+      title: '',
+      url: '',
+    });
+
     setEditIndex(update.length - 1);
     onChange(update);
   };
 
   const onDataLinkRemove = (index: number) => {
-    if (!links) {
-      return;
-    }
-    const update = cloneDeep(links);
+    const update = cloneDeep(linksSafe);
     update.splice(index, 1);
     onChange(update);
   };
 
   return (
     <>
-      {links && links.length > 0 && (
+      {linksSafe.length > 0 && (
         <div className={styles.wrapper}>
-          {links.map((l, i) => {
+          {linksSafe.map((l, i) => {
             return (
               <DataLinksListItem
                 key={`${l.title}/${i}`}
@@ -79,17 +67,17 @@ export const DataLinksInlineEditor: React.FC<DataLinksInlineEditorProps> = ({ li
         </div>
       )}
 
-      {isEditing && (
+      {isEditing && editIndex !== null && (
         <Modal
-          title="Edit data link"
-          isOpen={isEditing}
+          title="Edit link"
+          isOpen={true}
           onDismiss={() => {
             setEditIndex(null);
           }}
         >
           <DataLinkEditorModalContent
             index={editIndex}
-            link={links![editIndex]}
+            link={linksSafe[editIndex]}
             data={data}
             onChange={onDataLinkChange}
             onClose={() => setEditIndex(null)}
@@ -99,7 +87,7 @@ export const DataLinksInlineEditor: React.FC<DataLinksInlineEditorProps> = ({ li
       )}
 
       <Button size="sm" icon="plus" onClick={onDataLinkAdd} variant="secondary">
-        Add data link
+        Add link
       </Button>
     </>
   );

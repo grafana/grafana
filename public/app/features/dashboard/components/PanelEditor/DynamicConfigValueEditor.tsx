@@ -1,8 +1,9 @@
 import { DynamicConfigValue, FieldConfigOptionsRegistry, FieldOverrideContext, GrafanaTheme } from '@grafana/data';
 import React from 'react';
-import { Field, HorizontalGroup, IconButton, IconName, Label, stylesFactory, useTheme } from '@grafana/ui';
+import { Field, HorizontalGroup, IconButton, Label, stylesFactory, useTheme } from '@grafana/ui';
 import { css, cx } from 'emotion';
 import { OptionsGroup } from './OptionsGroup';
+import { Counter } from '@grafana/ui/src/components/Tabs/Counter';
 interface DynamicConfigValueEditorProps {
   property: DynamicConfigValue;
   registry: FieldConfigOptionsRegistry;
@@ -28,11 +29,15 @@ export const DynamicConfigValueEditor: React.FC<DynamicConfigValueEditorProps> =
     return null;
   }
   let editor;
-  const renderLabel = (iconName: IconName, includeDescription = true) => () => (
+
+  const renderLabel = (includeDescription = true, includeCounter = false) => (isExpanded = false) => (
     <HorizontalGroup justify="space-between">
-      <Label description={includeDescription ? item.description : undefined}>{item.name}</Label>
+      <Label description={includeDescription ? item.description : undefined}>
+        {item.name}
+        {!isExpanded && includeCounter && item.getItemsCount && <Counter value={item.getItemsCount(property.value)} />}
+      </Label>
       <div>
-        <IconButton name={iconName} onClick={onRemove} />
+        <IconButton name="times" onClick={onRemove} />
       </div>
     </HorizontalGroup>
   );
@@ -40,7 +45,7 @@ export const DynamicConfigValueEditor: React.FC<DynamicConfigValueEditorProps> =
   if (isCollapsible) {
     editor = (
       <OptionsGroup
-        renderTitle={renderLabel('trash-alt', false)}
+        renderTitle={renderLabel(false, true)}
         className={css`
           padding-left: 0;
           padding-right: 0;
@@ -61,7 +66,7 @@ export const DynamicConfigValueEditor: React.FC<DynamicConfigValueEditorProps> =
   } else {
     editor = (
       <div>
-        <Field label={renderLabel('times')()} description={item.description}>
+        <Field label={renderLabel()} description={item.description}>
           <item.override
             value={property.value}
             onChange={value => {

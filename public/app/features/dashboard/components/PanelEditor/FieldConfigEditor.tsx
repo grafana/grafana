@@ -13,6 +13,7 @@ import { getDataLinksVariableSuggestions } from '../../../panel/panellinks/link_
 import { OverrideEditor } from './OverrideEditor';
 import groupBy from 'lodash/groupBy';
 import { OptionsGroup } from './OptionsGroup';
+import { Counter } from '@grafana/ui/src/components/Tabs/Counter';
 
 interface Props {
   plugin: PanelPlugin;
@@ -91,6 +92,7 @@ export const OverrideFieldConfigEditor: React.FC<Props> = props => {
           icon="plus"
           label="Add override"
           size="md"
+          variant="secondary"
           options={fieldMatchersUI
             .list()
             .map<SelectableValue<string>>(i => ({ label: i.name, value: i.id, description: i.description }))}
@@ -141,10 +143,11 @@ export const DefaultFieldConfigEditor: React.FC<Props> = ({ data, onChange, conf
   );
 
   const renderEditor = useCallback(
-    (item: FieldConfigPropertyItem) => {
+    (item: FieldConfigPropertyItem, categoryItemCount: number) => {
       if (item.isCustom && item.showIf && !item.showIf(config.defaults.custom)) {
         return null;
       }
+
       const defaults = config.defaults;
       const value = item.isCustom
         ? defaults.custom
@@ -152,11 +155,14 @@ export const DefaultFieldConfigEditor: React.FC<Props> = ({ data, onChange, conf
           : undefined
         : (defaults as any)[item.path];
 
-      const label = (
-        <Label description={item.description} category={item.category?.slice(1)}>
-          {item.name}
-        </Label>
-      );
+      const label =
+        categoryItemCount > 1 ? (
+          <Label description={item.description} category={item.category?.slice(1)}>
+            {item.name}
+          </Label>
+        ) : (
+          undefined
+        );
 
       return (
         <Field label={label} key={`${item.id}/${item.isCustom}`}>
@@ -180,16 +186,42 @@ export const DefaultFieldConfigEditor: React.FC<Props> = ({ data, onChange, conf
   return (
     <>
       {Object.keys(groupedConfigs).map((k, i) => {
+        const groupItemsCounter = countGroupItems(groupedConfigs[k], config);
+
         return (
-          <OptionsGroup title={k} key={`${k}/${i}`}>
-            <>
-              {groupedConfigs[k].map(c => {
-                return renderEditor(c);
-              })}
-            </>
+          <OptionsGroup
+            renderTitle={isExpanded => {
+              return (
+                <>
+                  {k} {!isExpanded && groupItemsCounter && <Counter value={groupItemsCounter} />}
+                </>
+              );
+            }}
+            key={`${k}/${i}`}
+          >
+            {groupedConfigs[k].map(c => {
+              return renderEditor(c, groupedConfigs[k].length);
+            })}
           </OptionsGroup>
         );
       })}
     </>
   );
+};
+
+const countGroupItems = (group: FieldConfigPropertyItem[], config: FieldConfigSource) => {
+  let counter = 0;
+
+  for (const item of group) {
+    const value = item.isCustom
+      ? config.defaults.custom
+        ? config.defaults.custom[item.path]
+        : undefined
+      : (config.defaults as any)[item.path];
+    if (item.getItemsCount && item.getItemsCount(value) > 0) {
+      counter = counter + item.getItemsCount(value);
+    }
+  }
+
+  return counter === 0 ? undefined : counter;
 };
