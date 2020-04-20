@@ -1,15 +1,11 @@
 // Libraries
 import React, { PureComponent } from 'react';
 import { debounce } from 'lodash';
-import { renderMarkdown } from '@grafana/data';
-
+import { PanelProps, renderMarkdown, textUtil } from '@grafana/data';
 // Utils
-import { sanitize } from 'app/core/utils/text';
 import config from 'app/core/config';
-
 // Types
 import { TextOptions } from './types';
-import { PanelProps } from '@grafana/data';
 
 interface Props extends PanelProps<TextOptions> {}
 interface State {
@@ -43,7 +39,7 @@ export class TextPanel extends PureComponent<Props, State> {
 
     html = replaceVariables(html, {}, 'html');
 
-    return config.disableSanitizeHtml ? html : sanitize(html);
+    return config.disableSanitizeHtml ? html : textUtil.sanitize(html);
   }
 
   prepareText(content: string): string {

@@ -336,17 +336,17 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
 }
 
 const mapStateToProps: MapStateToProps<ConnectedProps, OwnProps, StoreState> = (state, props) => {
-  const panel = state.panelEditorNew.getPanel();
+  const panel = state.panelEditor.getPanel();
   const { plugin } = getPanelStateById(state.dashboard, panel.id);
 
   return {
     location: state.location,
     plugin: plugin,
-    panel: state.panelEditorNew.getPanel(),
-    data: state.panelEditorNew.getData(),
-    initDone: state.panelEditorNew.initDone,
+    panel: state.panelEditor.getPanel(),
+    data: state.panelEditor.getData(),
+    initDone: state.panelEditor.initDone,
     tabs: getPanelEditorTabs(state.location, plugin),
-    uiState: state.panelEditorNew.ui,
+    uiState: state.panelEditor.ui,
     variables: getVariables(state),
   };
 };

@@ -2,7 +2,6 @@ package migrator
 
 import (
 	"fmt"
-
 	"github.com/mattn/go-sqlite3"
 	"xorm.io/xorm"
 )
@@ -93,6 +92,13 @@ func (db *Sqlite3) isThisError(err error, errcode int) bool {
 	}
 
 	return false
+}
+
+func (db *Sqlite3) ErrorMessage(err error) string {
+	if driverErr, ok := err.(sqlite3.Error); ok {
+		return driverErr.Error()
+	}
+	return ""
 }
 
 func (db *Sqlite3) IsUniqueConstraintViolation(err error) bool {

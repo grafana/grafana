@@ -203,7 +203,7 @@ const assertAdding3dependantQueryVariablesScenario = (queryVariables: QueryVaria
     e2e.pages.SaveDashboardModal.save().click();
     e2e.flows.assertSuccessNotification();
 
-    e2e.pages.Components.BackButton.backArrow().click();
+    e2e.components.BackButton.backArrow().click();
 
     assertVariableLabelsAndComponents(asserts);
 
@@ -258,7 +258,7 @@ const assertDuplicateItem = (queryVariables: QueryVariableData[]) => {
   e2e.pages.SaveDashboardModal.save().click();
   e2e.flows.assertSuccessNotification();
 
-  e2e.pages.Components.BackButton.backArrow().click();
+  e2e.components.BackButton.backArrow().click();
 
   e2e.pages.Dashboard.SubMenu.submenuItemLabels(newItem.label).should('be.visible');
   e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownValueLinkTexts(newItem.selectedOption)
@@ -294,7 +294,7 @@ const assertDeleteItem = (queryVariables: QueryVariableData[]) => {
   e2e.pages.SaveDashboardModal.save().click();
   e2e.flows.assertSuccessNotification();
 
-  e2e.pages.Components.BackButton.backArrow().click();
+  e2e.components.BackButton.backArrow().click();
 
   e2e.pages.Dashboard.SubMenu.submenuItemLabels(itemToDelete.label).should('not.exist');
 
@@ -341,7 +341,7 @@ const assertUpdateItem = (data: QueryVariableData[]) => {
   e2e.pages.Dashboard.Settings.Variables.Edit.General.generalHideSelect().select('');
   e2e.pages.Dashboard.Settings.Variables.Edit.ConstantVariable.constantOptionsQueryInput().type(updatedItem.query);
 
-  e2e.pages.Components.BackButton.backArrow().click();
+  e2e.components.BackButton.backArrow().click();
 
   e2e()
     .window()
@@ -397,7 +397,7 @@ const assertMoveDownItem = (data: QueryVariableData[]) => {
       });
   });
 
-  e2e.pages.Components.BackButton.backArrow().click();
+  e2e.components.BackButton.backArrow().click();
 
   assertVariableLabelsAndComponents(queryVariables);
 
@@ -542,7 +542,7 @@ const assertMoveUpItem = (data: QueryVariableData[]) => {
       });
   });
 
-  e2e.pages.Components.BackButton.backArrow().click();
+  e2e.components.BackButton.backArrow().click();
 
   assertVariableLabelsAndComponents(queryVariables);
 
