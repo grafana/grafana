@@ -14,7 +14,7 @@ You can use links to navigate between commonly used dashboards. Links let you cr
 
 Grafana supports three types of links: Dashboard Links, Panel Links, and Data Links. They are all available from your dashboard.
 
-{{< docs-imagebox img="/static/assets/img/blog/dashboard_links.png" max-width="800px" caption="Links Supported in Grafana" >}}
+{{< docs-imagebox img="/assets/img/blog/dashboard_links.png" max-width="800px" caption="Links Supported in Grafana" >}}
 
 ## Which link should you use?
 

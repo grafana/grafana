@@ -1,31 +1,18 @@
-import React, { FC, useReducer, useState } from 'react';
-import { useDebounce } from 'react-use';
+import React, { FC } from 'react';
 import { css } from 'emotion';
-import { Icon, IconButton, useTheme, CustomScrollbar, stylesFactory } from '@grafana/ui';
-import { getLocationSrv } from '@grafana/runtime';
+import { Icon, useTheme, CustomScrollbar, stylesFactory, Button } from '@grafana/ui';
 import { GrafanaTheme } from '@grafana/data';
 import { SearchSrv } from 'app/core/services/search_srv';
-import { backendSrv } from 'app/core/services/backend_srv';
-import { SearchQuery } from 'app/core/components/search/search';
 import { TagFilter } from 'app/core/components/TagFilter/TagFilter';
 import { contextSrv } from 'app/core/services/context_srv';
-import { DashboardSearchItemType, DashboardSection, OpenSearchParams } from '../types';
-import { findSelected, hasId, parseQuery } from '../utils';
-import { searchReducer, initialState } from '../reducers/dashboardSearch';
-import { getDashboardSrv } from '../../dashboard/services/DashboardSrv';
-import {
-  FETCH_ITEMS,
-  FETCH_RESULTS,
-  TOGGLE_SECTION,
-  MOVE_SELECTION_DOWN,
-  MOVE_SELECTION_UP,
-} from '../reducers/actionTypes';
+import { OpenSearchParams } from '../types';
+import { useSearchQuery } from '../hooks/useSearchQuery';
+import { useDashboardSearch } from '../hooks/useDashboardSearch';
 import { SearchField } from './SearchField';
 import { SearchResults } from './SearchResults';
 
 const searchSrv = new SearchSrv();
 
-const defaultQuery: SearchQuery = { query: '', parsedQuery: { text: '' }, tags: [], starred: false };
 const { isEditor, hasEditPermissionInFolders } = contextSrv;
 const canEdit = isEditor || hasEditPermissionInFolders;
 
@@ -35,69 +22,10 @@ export interface Props {
 }
 
 export const DashboardSearch: FC<Props> = ({ onCloseSearch, payload = {} }) => {
-  const [query, setQuery] = useState({ ...defaultQuery, ...payload, parsedQuery: parseQuery(payload.query) });
-  const [{ results, loading }, dispatch] = useReducer(searchReducer, initialState);
+  const { query, onQueryChange, onClearFilters, onTagFilterChange, onTagAdd } = useSearchQuery(payload);
+  const { results, loading, onToggleSection, onKeyDown } = useDashboardSearch(query, onCloseSearch);
   const theme = useTheme();
   const styles = getStyles(theme);
-
-  const search = () => {
-    let folderIds: number[] = [];
-    if (query.parsedQuery.folder === 'current') {
-      const { folderId } = getDashboardSrv().getCurrent().meta;
-      if (folderId) {
-        folderIds.push(folderId);
-      }
-    }
-    searchSrv.search({ ...query, tag: query.tags, query: query.parsedQuery.text, folderIds }).then(results => {
-      dispatch({ type: FETCH_RESULTS, payload: results });
-    });
-  };
-
-  useDebounce(search, 300, [query]);
-
-  const onToggleSection = (section: DashboardSection) => {
-    if (hasId(section.title) && !section.items.length) {
-      backendSrv.search({ ...defaultQuery, folderIds: [section.id] }).then(items => {
-        dispatch({ type: FETCH_ITEMS, payload: { section, items } });
-        dispatch({ type: TOGGLE_SECTION, payload: section });
-      });
-    } else {
-      dispatch({ type: TOGGLE_SECTION, payload: section });
-    }
-  };
-
-  const onQueryChange = (searchQuery: string) => {
-    setQuery(q => ({
-      ...q,
-      parsedQuery: parseQuery(searchQuery),
-      query: searchQuery,
-    }));
-  };
-
-  const onKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
-    switch (event.key) {
-      case 'Escape':
-        onCloseSearch();
-        break;
-      case 'ArrowUp':
-        dispatch({ type: MOVE_SELECTION_UP });
-        break;
-      case 'ArrowDown':
-        dispatch({ type: MOVE_SELECTION_DOWN });
-        break;
-      case 'Enter':
-        const selectedItem = findSelected(results);
-        if (selectedItem) {
-          if (selectedItem.type === DashboardSearchItemType.DashFolder) {
-            onToggleSection(selectedItem as DashboardSection);
-          } else {
-            getLocationSrv().update({ path: selectedItem.url });
-            // Delay closing to prevent current page flicker
-            setTimeout(onCloseSearch, 0);
-          }
-        }
-    }
-  };
 
   // The main search input has own keydown handler, also TagFilter uses input, so
   // clicking Esc when tagFilter is active shouldn't close the whole search overlay
@@ -108,36 +36,26 @@ export const DashboardSearch: FC<Props> = ({ onCloseSearch, payload = {} }) => {
     }
   };
 
-  const onTagFiltersChanged = (tags: string[]) => {
-    setQuery(q => ({ ...q, tags }));
-  };
-
-  const onTagSelected = (tag: string) => {
-    if (tag && !query.tags.includes(tag)) {
-      setQuery(q => ({ ...q, tags: [...q.tags, tag] }));
-    }
-  };
-
-  const onClearSearchFilters = () => {
-    setQuery(q => ({ ...q, tags: [] }));
-  };
-
   return (
     <div tabIndex={0} className="search-container" onKeyDown={onClose}>
-      <SearchField query={query} onChange={onQueryChange} onKeyDown={onKeyDown} autoFocus={true} />
+      <SearchField
+        query={query}
+        onChange={onQueryChange}
+        onKeyDown={onKeyDown}
+        autoFocus
+        clearable
+        className={styles.searchField}
+      />
       <div className="search-dropdown">
         <div className="search-dropdown__col_1">
           <CustomScrollbar>
-            <div className="search-results-container">
-              <SearchResults
-                results={results}
-                loading={loading}
-                onTagSelected={onTagSelected}
-                dispatch={dispatch}
-                editable={false}
-                onToggleSection={onToggleSection}
-              />
-            </div>
+            <SearchResults
+              results={results}
+              loading={loading}
+              onTagSelected={onTagAdd}
+              editable={false}
+              onToggleSection={onToggleSection}
+            />
           </CustomScrollbar>
         </div>
         <div className="search-dropdown__col_2">
@@ -145,14 +63,14 @@ export const DashboardSearch: FC<Props> = ({ onCloseSearch, payload = {} }) => {
             <div className="search-filter-box__header">
               <Icon name="filter" className={styles.filter} size="sm" />
               Filter by:
-              {query.tags.length > 0 && (
-                <a className="pointer pull-right small" onClick={onClearSearchFilters}>
+              {query.tag.length > 0 && (
+                <a className="pointer pull-right small" onClick={onClearFilters}>
                   <Icon name="times" size="sm" /> Clear
                 </a>
               )}
             </div>
 
-            <TagFilter tags={query.tags} tagOptions={searchSrv.getDashboardTags} onChange={onTagFiltersChanged} />
+            <TagFilter tags={query.tag} tagOptions={searchSrv.getDashboardTags} onChange={onTagFilterChange} />
           </div>
 
           {canEdit && (
@@ -178,7 +96,9 @@ export const DashboardSearch: FC<Props> = ({ onCloseSearch, payload = {} }) => {
             </div>
           )}
         </div>
-        <IconButton onClick={onCloseSearch} className={styles.closeBtn} name="times" />
+        <Button icon="times" className={styles.closeBtn} onClick={onCloseSearch} variant="secondary">
+          Close
+        </Button>
       </div>
     </div>
   );
@@ -187,15 +107,9 @@ export const DashboardSearch: FC<Props> = ({ onCloseSearch, payload = {} }) => {
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
   return {
     closeBtn: css`
-      top: 21px;
+      top: 10px;
       right: 8px;
       position: absolute;
-
-      @media only screen and (max-width: ${theme.breakpoints.md}) {
-        position: absolute;
-        right: 15px;
-        top: 60px;
-      }
     `,
     icon: css`
       margin-right: ${theme.spacing.sm};
@@ -203,6 +117,13 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
     `,
     filter: css`
       margin-right: ${theme.spacing.xs};
+    `,
+    close: css`
+      margin-left: ${theme.spacing.xs};
+      margin-bottom: 1px;
+    `,
+    searchField: css`
+      padding-left: ${theme.spacing.md};
     `,
   };
 });

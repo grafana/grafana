@@ -1,12 +1,12 @@
 import React, { FC, useMemo } from 'react';
-import { PanelModel, DashboardModel } from '../../state';
-import { SelectableValue, PanelPlugin, FieldConfigSource, PanelData } from '@grafana/data';
-import { Forms, Switch, Select, DataLinksInlineEditor, Input, TextArea } from '@grafana/ui';
+import { DashboardModel, PanelModel } from '../../state';
+import { FieldConfigSource, PanelData, PanelPlugin, SelectableValue } from '@grafana/data';
+import { Counter, DataLinksInlineEditor, Field, Input, RadioButtonGroup, Select, Switch, TextArea } from '@grafana/ui';
 import { OptionsGroup } from './OptionsGroup';
 import { getPanelLinksVariableSuggestions } from '../../../panel/panellinks/link_srv';
 import { getVariables } from '../../../variables/state/selectors';
 import { PanelOptionsEditor } from './PanelOptionsEditor';
-import { AngularPanelOptions } from '../../panel_editor/AngularPanelOptions';
+import { AngularPanelOptions } from './AngularPanelOptions';
 
 interface Props {
   panel: PanelModel;
@@ -29,6 +29,7 @@ export const PanelOptionsTab: FC<Props> = ({
 }) => {
   const elements: JSX.Element[] = [];
   const linkVariablesSuggestions = useMemo(() => getPanelLinksVariableSuggestions(), []);
+  const panelLinksCount = panel && panel.links ? panel.links.length : 0;
 
   const variableOptions = getVariableOptions();
   const directionOptions = [
@@ -41,18 +42,18 @@ export const PanelOptionsTab: FC<Props> = ({
   // Fist common panel settings Title, description
   elements.push(
     <OptionsGroup title="Basic" key="basic settings">
-      <Forms.Field label="Panel title">
+      <Field label="Panel title">
         <Input defaultValue={panel.title} onBlur={e => onPanelConfigChange('title', e.currentTarget.value)} />
-      </Forms.Field>
-      <Forms.Field label="Description" description="Panel description supports markdown and links.">
+      </Field>
+      <Field label="Description" description="Panel description supports markdown and links.">
         <TextArea
           defaultValue={panel.description}
           onBlur={e => onPanelConfigChange('description', e.currentTarget.value)}
         />
-      </Forms.Field>
-      <Forms.Field label="Transparent" description="Display panel without a background.">
+      </Field>
+      <Field label="Transparent" description="Display panel without a background.">
         <Switch value={panel.transparent} onChange={e => onPanelConfigChange('transparent', e.currentTarget.checked)} />
-      </Forms.Field>
+      </Field>
     </OptionsGroup>
   );
 
@@ -89,7 +90,13 @@ export const PanelOptionsTab: FC<Props> = ({
   }
 
   elements.push(
-    <OptionsGroup title="Panel links" key="panel links" defaultToClosed={true}>
+    <OptionsGroup
+      renderTitle={isExpanded => (
+        <>Panel links {!isExpanded && panelLinksCount > 0 && <Counter value={panelLinksCount} />}</>
+      )}
+      key="panel links"
+      defaultToClosed={true}
+    >
       <DataLinksInlineEditor
         links={panel.links}
         onChange={links => onPanelConfigChange('links', links)}
@@ -101,7 +108,7 @@ export const PanelOptionsTab: FC<Props> = ({
 
   elements.push(
     <OptionsGroup title="Panel repeats" key="panel repeats" defaultToClosed={true}>
-      <Forms.Field
+      <Field
         label="Repeat by variable"
         description="Repeat this panel for each value in the selected variable.
           This is not visible while in edit mode. You need to go back to dashboard and then update the variable or
@@ -112,25 +119,25 @@ export const PanelOptionsTab: FC<Props> = ({
           onChange={value => onPanelConfigChange('repeat', value.value)}
           options={variableOptions}
         />
-      </Forms.Field>
+      </Field>
       {panel.repeat && (
-        <Forms.Field label="Repeat direction">
-          <Forms.RadioButtonGroup
+        <Field label="Repeat direction">
+          <RadioButtonGroup
             options={directionOptions}
             value={panel.repeatDirection || 'h'}
             onChange={value => onPanelConfigChange('repeatDirection', value)}
           />
-        </Forms.Field>
+        </Field>
       )}
 
       {panel.repeat && panel.repeatDirection === 'h' && (
-        <Forms.Field label="Max per row">
+        <Field label="Max per row">
           <Select
             options={maxPerRowOptions}
             value={panel.maxPerRow}
             onChange={value => onPanelConfigChange('maxPerRow', value.value)}
           />
-        </Forms.Field>
+        </Field>
       )}
     </OptionsGroup>
   );

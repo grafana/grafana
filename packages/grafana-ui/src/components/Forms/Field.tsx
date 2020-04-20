@@ -9,7 +9,7 @@ export interface FieldProps {
   /** Form input element, i.e Input or Switch */
   children: React.ReactElement;
   /** Label for the field */
-  label?: string | JSX.Element;
+  label?: React.ReactNode;
   /** Description of the field */
   description?: string;
   /** Indicates if field is in invalid state */

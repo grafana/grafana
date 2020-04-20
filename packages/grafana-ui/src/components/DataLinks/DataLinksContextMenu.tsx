@@ -1,12 +1,12 @@
 import React from 'react';
 import { WithContextMenu } from '../ContextMenu/WithContextMenu';
-import { LinkModelSupplier } from '@grafana/data';
+import { LinkModel } from '@grafana/data';
 import { linkModelToContextMenuItems } from '../../utils/dataLinks';
 import { css } from 'emotion';
 
 interface DataLinksContextMenuProps {
   children: (props: { openMenu?: React.MouseEventHandler<HTMLElement>; targetClassName?: string }) => JSX.Element;
-  links?: LinkModelSupplier<any>;
+  links?: () => LinkModel[];
 }
 
 export const DataLinksContextMenu: React.FC<DataLinksContextMenuProps> = ({ children, links }) => {

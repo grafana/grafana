@@ -51,7 +51,7 @@ export function QueryRowActions(props: Props) {
           onClick={onClickToggleDisabled}
           title={isDisabled ? 'Enable query' : 'Disable query'}
         >
-          <Icon name={isDisabled ? 'eye' : 'eye-slash'} />
+          <Icon name={isDisabled ? 'eye-slash' : 'eye'} />
         </button>
       </div>
       <div className="gf-form">

@@ -89,7 +89,7 @@ const theme: GrafanaThemeCommons = {
     formSpacingBase: SPACING_BASE,
     formMargin: `${SPACING_BASE * 4}px`,
     formFieldsetMargin: `${SPACING_BASE * 2}px`,
-    formInputHeight: `${SPACING_BASE * 4}px`,
+    formInputHeight: SPACING_BASE * 4,
     formButtonHeight: SPACING_BASE * 4,
     formInputPaddingHorizontal: `${SPACING_BASE}px`,
 
@@ -102,6 +102,7 @@ const theme: GrafanaThemeCommons = {
     formLabelMargin: `0 0 ${SPACING_BASE / 2 + 'px'} 0`,
     formValidationMessagePadding: '4px 8px',
     formValidationMessageMargin: '4px 0 0 0',
+    inlineFormMargin: '4px',
   },
   border: {
     radius: {

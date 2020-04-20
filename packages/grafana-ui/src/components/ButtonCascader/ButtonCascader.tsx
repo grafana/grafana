@@ -27,7 +27,7 @@ const getStyles = stylesFactory(() => {
       z-index: 100;
     `,
     icon: css`
-      margin-left: 4px;
+      margin: 1px 0 0 4px;
     `,
   };
 });

@@ -15,15 +15,17 @@ e2e.scenario({
     e2e.pages.Dashboard.Toolbar.toolbarItems('Add panel').click();
     e2e.pages.AddDashboard.ctaButtons('Add Query').click();
 
-    e2e.pages.Dashboard.Panels.DataSource.TestData.QueryTab.scenarioSelect().select('CSV Metric Values');
+    e2e.components.DataSource.TestData.QueryTab.scenarioSelect().select('CSV Metric Values');
 
-    e2e.pages.Dashboard.Panels.Visualization.Graph.VisualizationTab.xAxisSection()
-      .contains('Show')
-      .click();
+    // Make sure the graph renders via checking legend
+    e2e.components.Panels.Visualization.Graph.Legend.legendItemAlias('A-series').should('be.visible');
 
-    e2e.pages.Components.BackButton.backArrow().click();
+    // Expand options section
+    e2e.components.Panels.Visualization.Graph.VisualizationTab.legendSection().click();
 
-    // e2e.pages.Dashboard.Panels.Panel.title('Panel Title').click();
-    // e2e.pages.Dashboard.Panels.Panel.headerItems('Inspect').click();
+    // Disable legend
+    e2e.components.Panels.Visualization.Graph.Legend.showLegendSwitch().click();
+
+    e2e.components.Panels.Visualization.Graph.Legend.legendItemAlias('A-series').should('not.exist');
   },
 });

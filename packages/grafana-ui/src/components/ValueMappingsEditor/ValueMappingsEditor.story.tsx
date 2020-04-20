@@ -3,7 +3,7 @@ import { storiesOf } from '@storybook/react';
 import { action } from '@storybook/addon-actions';
 import { ValueMappingsEditor } from './ValueMappingsEditor';
 
-const ValueMappingsEditorStories = storiesOf('Panel/ValueMappingsEditor', module);
+const ValueMappingsEditorStories = storiesOf('Pickers and Editors/ValueMappingsEditor', module);
 
 ValueMappingsEditorStories.add('default', () => {
   return <ValueMappingsEditor valueMappings={[]} onChange={action('Mapping changed')} />;
