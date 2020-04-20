@@ -3,6 +3,7 @@ import { vectorToArray } from './vectorToArray';
 
 /**
  * RowVector makes the row values look like a vector
+ * @internal
  */
 export class RowVector implements Vector {
   constructor(private columns: Vector[]) {}
