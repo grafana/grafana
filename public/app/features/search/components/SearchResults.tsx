@@ -6,6 +6,7 @@ import { stylesFactory, useTheme, Spinner } from '@grafana/ui';
 import { DashboardSection, OnToggleChecked } from '../types';
 import { getItemsHeight } from '../utils';
 import { ITEM_HEIGHT } from '../constants';
+import { useListHeight } from '../hooks/useListHeight';
 import { SearchItem } from './SearchItem';
 import { SectionHeader } from './SectionHeader';
 
@@ -29,6 +30,7 @@ export const SearchResults: FC<Props> = ({
   const theme = useTheme();
   const styles = getSectionStyles(theme);
   const ref = useRef(null);
+  const listHeight = useListHeight(ref);
 
   if (loading) {
     return <Spinner className={styles.spinner} />;
@@ -40,7 +42,7 @@ export const SearchResults: FC<Props> = ({
     <div className="search-results-container" ref={ref}>
       <ul className={styles.wrapper}>
         {results.map(section => {
-          let height = getItemsHeight(section, ref.current?.offsetTop);
+          let height = getItemsHeight(section, listHeight);
           return (
             <li aria-label="Search section" className={styles.section} key={section.title}>
               <SectionHeader onSectionClick={onToggleSection} {...{ onToggleChecked, editable, section }} />

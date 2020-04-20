@@ -184,19 +184,17 @@ export const getParsedQuery = (query: DashboardQuery, queryParsing = false) => {
 /**
  * Get height of dynamic list of search results
  * @param section
- * @param offsetTop
- * @param offsetBottom
- * @param extraPadding
+ * @param listHeight
+ * @param extraPadding - use as padding for the whole list
  */
 
-export const getItemsHeight = (section: any, offsetTop: number | undefined, offsetBottom = 150, extraPadding = 12) => {
+export const getItemsHeight = (section: any, listHeight: number, extraPadding = 12) => {
   const { items } = section;
   if (!items.length || !section.expanded) {
     return 0;
   }
 
-  const listHeight = window.innerHeight - offsetTop - offsetBottom;
-  if (items.length * ITEM_HEIGHT > listHeight) {
+  if (items.length * ITEM_HEIGHT > listHeight && listHeight !== 0) {
     return listHeight;
   }
   return items.length * ITEM_HEIGHT + extraPadding;
