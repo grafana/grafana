@@ -9,9 +9,8 @@ import {
   GrafanaTheme,
   TimeZone,
 } from '../types';
-import { Registry } from '../utils/Registry';
 import { InterpolateFunction } from './panel';
-import { StandardEditorProps } from '../field';
+import { StandardEditorProps, FieldConfigOptionsRegistry } from '../field';
 import { OptionsEditorItem } from './OptionsUIRegistryBuilder';
 
 export interface DynamicConfigValue {
@@ -122,7 +121,7 @@ export interface ApplyFieldOverrideOptions {
   theme: GrafanaTheme;
   timeZone?: TimeZone;
   autoMinMax?: boolean;
-  fieldConfigRegistry?: Registry<FieldConfigPropertyItem>;
+  fieldConfigRegistry?: FieldConfigOptionsRegistry;
 }
 
 export enum FieldConfigProperty {
