@@ -67,7 +67,7 @@ export const Tab: FC<TabProps> = ({ label, active, icon, onChangeTab, counter })
     <li className={cx(tabsStyles.tabItem, active && tabsStyles.activeStyle)} onClick={onChangeTab}>
       {icon && <Icon name={icon} />}
       {label}
-      {!!counter && <Counter value={counter} />}
+      {typeof counter === 'number' && <Counter value={counter} />}
     </li>
   );
 };

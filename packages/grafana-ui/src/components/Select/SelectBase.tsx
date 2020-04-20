@@ -99,6 +99,7 @@ export function SelectBase<T>({
   prefix,
   renderControl,
   tabSelectsValue = true,
+  className,
   value,
   width,
 }: SelectBaseProps<T>) {
@@ -267,7 +268,7 @@ export function SelectBase<T>({
             width: width ? `${8 * width}px` : '100%',
           }),
         }}
-        className={cx('select-container')}
+        className={cx('select-container', className)}
         {...commonSelectProps}
         {...creatableProps}
         {...asyncSelectProps}
