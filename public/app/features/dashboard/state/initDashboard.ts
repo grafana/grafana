@@ -9,7 +9,6 @@ import { VariableSrv } from 'app/features/templating/variable_srv';
 import { KeybindingSrv } from 'app/core/services/keybindingSrv';
 // Actions
 import { notifyApp, updateLocation } from 'app/core/actions';
-import locationUtil from 'app/core/utils/location_util';
 import {
   clearDashboardQueriesToUpdateOnLoad,
   dashboardInitCompleted,
@@ -21,7 +20,7 @@ import {
 // Types
 import { DashboardDTO, DashboardRouteInfo, StoreState, ThunkDispatch, ThunkResult } from 'app/types';
 import { DashboardModel } from './DashboardModel';
-import { DataQuery } from '@grafana/data';
+import { DataQuery, locationUtil } from '@grafana/data';
 import { getConfig } from '../../../core/config';
 import { initDashboardTemplating, processVariables, completeDashboardTemplating } from '../../variables/state/actions';
 import { emitDashboardViewEvent } from './analyticsProcessor';

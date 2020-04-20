@@ -1,7 +1,7 @@
 import React, { PureComponent } from 'react';
 import { Unsubscribable } from 'rxjs';
 import { connect, MapStateToProps } from 'react-redux';
-import { InspectHeader } from './InspectHeader';
+import { InspectSubtitle } from './InspectSubtitle';
 import { InspectJSONTab } from './InspectJSONTab';
 import { QueryInspector } from './QueryInspector';
 
@@ -53,8 +53,6 @@ interface State {
   last: PanelData;
   // Data from the last response
   data: DataFrame[];
-  // The selected data frame
-  selectedDataFrame: number;
   // The Selected Tab
   currentTab: InspectTab;
   // If the datasource supports custom metadata
@@ -73,7 +71,6 @@ export class PanelInspectorUnconnected extends PureComponent<Props, State> {
       isLoading: true,
       last: {} as PanelData,
       data: [],
-      selectedDataFrame: 0,
       currentTab: props.defaultTab ?? InspectTab.Data,
       drawerWidth: '50%',
     };
@@ -165,10 +162,6 @@ export class PanelInspectorUnconnected extends PureComponent<Props, State> {
     this.setState({ currentTab: item.value || InspectTab.Data });
   };
 
-  onSelectedFrameChanged = (item: SelectableValue<number>) => {
-    this.setState({ selectedDataFrame: item.value || 0 });
-  };
-
   renderMetadataInspector() {
     const { metaDS, data } = this.state;
     if (!metaDS || !metaDS.components?.MetadataInspector) {
@@ -178,16 +171,8 @@ export class PanelInspectorUnconnected extends PureComponent<Props, State> {
   }
 
   renderDataTab() {
-    const { last, isLoading, selectedDataFrame } = this.state;
-
-    return (
-      <InspectDataTab
-        data={last.series}
-        isLoading={isLoading}
-        dataFrameIndex={selectedDataFrame}
-        onSelectedFrameChanged={this.onSelectedFrameChanged}
-      />
-    );
+    const { last, isLoading } = this.state;
+    return <InspectDataTab data={last.series} isLoading={isLoading} />;
   }
 
   renderErrorTab(error?: DataQueryError) {
@@ -268,22 +253,10 @@ export class PanelInspectorUnconnected extends PureComponent<Props, State> {
     );
   }
 
-  drawerHeader(tabs: Array<{ label: string; value: InspectTab }>, activeTab: InspectTab) {
-    const { panel } = this.props;
+  drawerSubtitle(tabs: Array<{ label: string; value: InspectTab }>, activeTab: InspectTab) {
     const { last } = this.state;
 
-    return (
-      <InspectHeader
-        tabs={tabs}
-        tab={activeTab}
-        panelData={last}
-        onSelectTab={this.onSelectTab}
-        onClose={this.onClose}
-        panel={panel}
-        onToggleExpand={this.onToggleExpand}
-        isExpanded={this.state.drawerWidth === '100%'}
-      />
-    );
+    return <InspectSubtitle tabs={tabs} tab={activeTab} panelData={last} onSelectTab={this.onSelectTab} />;
   }
 
   getTabs() {
@@ -333,7 +306,13 @@ export class PanelInspectorUnconnected extends PureComponent<Props, State> {
     }
 
     return (
-      <Drawer title={this.drawerHeader(tabs, activeTab)} width={drawerWidth} onClose={this.onClose}>
+      <Drawer
+        title={panel.title || 'Panel inspect'}
+        subtitle={this.drawerSubtitle(tabs, activeTab)}
+        width={drawerWidth}
+        onClose={this.onClose}
+        expandable
+      >
         {activeTab === InspectTab.Data && this.renderDataTab()}
         <CustomScrollbar autoHeightMin="100%">
           <TabContent className={styles.tabContent}>

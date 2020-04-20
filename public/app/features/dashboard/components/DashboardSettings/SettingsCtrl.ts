@@ -10,9 +10,8 @@ import { backendSrv } from 'app/core/services/backend_srv';
 import { DashboardSrv } from '../../services/DashboardSrv';
 import { CoreEvents } from 'app/types';
 import { GrafanaRootScope } from 'app/routes/GrafanaCtrl';
-import { AppEvents } from '@grafana/data';
+import { AppEvents, locationUtil } from '@grafana/data';
 import { promiseToDigest } from '../../../../core/utils/promiseToDigest';
-import locationUtil from 'app/core/utils/location_util';
 
 export class SettingsCtrl {
   dashboard: DashboardModel;
