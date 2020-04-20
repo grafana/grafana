@@ -21,7 +21,7 @@ const OrganizeFieldsTransformerEditor: React.FC<OrganizeFieldsTransformerEditorP
   const { options, input, onChange } = props;
   const { indexByName, excludeByName, renameByName } = options;
 
-  const fieldNames = useMemo(() => fieldNamesFromInput(input), [input]);
+  const fieldNames = useMemo(() => getAllFieldNamesFromDataFrames(input), [input]);
   const orderedFieldNames = useMemo(() => orderFieldNamesByIndex(fieldNames, indexByName), [fieldNames, indexByName]);
 
   const onToggleVisibility = useCallback(
@@ -185,7 +185,7 @@ const orderFieldNamesByIndex = (fieldNames: string[], indexByName: Record<string
   return fieldNames.sort(comparer);
 };
 
-const fieldNamesFromInput = (input: DataFrame[]): string[] => {
+export const getAllFieldNamesFromDataFrames = (input: DataFrame[]): string[] => {
   if (!Array.isArray(input)) {
     return [] as string[];
   }

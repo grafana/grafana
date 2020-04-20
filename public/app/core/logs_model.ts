@@ -25,9 +25,10 @@ import {
   getFlotPairs,
   TimeZone,
   getDisplayProcessor,
+  textUtil,
 } from '@grafana/data';
 import { getThemeColor } from 'app/core/utils/colors';
-import { hasAnsiCodes } from 'app/core/utils/text';
+
 import { sortInAscendingOrder, deduplicateLogRowsById } from 'app/core/utils/explore';
 import { getGraphSeriesModel } from 'app/plugins/panel/graph2/getGraphSeriesModel';
 
@@ -313,7 +314,7 @@ export function logSeriesToLogsModel(logSeries: DataFrame[]): LogsModel | undefi
       // This should be string but sometimes isn't (eg elastic) because the dataFrame is not strongly typed.
       const message: string = typeof messageValue === 'string' ? messageValue : JSON.stringify(messageValue);
 
-      const hasAnsi = hasAnsiCodes(message);
+      const hasAnsi = textUtil.hasAnsiCodes(message);
       const searchWords = series.meta && series.meta.searchWords ? series.meta.searchWords : [];
 
       let logLevel = LogLevel.unknown;

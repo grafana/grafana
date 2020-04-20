@@ -20,9 +20,10 @@ const data = {
 const setup = (propOverrides?: Partial<Props>, renderMethod = shallow) => {
   const props: Props = {
     item: data,
-    onToggleSelection: jest.fn(),
     onTagSelected: jest.fn(),
     editable: false,
+    //@ts-ignore
+    onToggleAllChecked: jest.fn(),
   };
 
   Object.assign(props, propOverrides);

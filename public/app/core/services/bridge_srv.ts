@@ -1,12 +1,11 @@
 import coreModule from 'app/core/core_module';
 import appEvents from 'app/core/app_events';
 import { store } from 'app/store/store';
-import locationUtil from 'app/core/utils/location_util';
 import { updateLocation } from 'app/core/actions';
-import { ITimeoutService, ILocationService, IWindowService } from 'angular';
+import { ILocationService, ITimeoutService, IWindowService } from 'angular';
 import { CoreEvents } from 'app/types';
 import { GrafanaRootScope } from 'app/routes/GrafanaCtrl';
-import { UrlQueryMap } from '@grafana/runtime';
+import { locationUtil, UrlQueryMap } from '@grafana/data';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { VariableSrv } from 'app/features/templating/all';
 
