@@ -1,7 +1,7 @@
 import React, { PureComponent } from 'react';
 import { Unsubscribable } from 'rxjs';
 import { connect, MapStateToProps } from 'react-redux';
-import { InspectHeader } from './InspectHeader';
+import { InspectSubtitle } from './InspectSubtitle';
 import { InspectJSONTab } from './InspectJSONTab';
 import { QueryInspector } from './QueryInspector';
 
@@ -253,10 +253,10 @@ export class PanelInspectorUnconnected extends PureComponent<Props, State> {
     );
   }
 
-  drawerHeader(tabs: Array<{ label: string; value: InspectTab }>, activeTab: InspectTab) {
+  drawerSubtitle(tabs: Array<{ label: string; value: InspectTab }>, activeTab: InspectTab) {
     const { last } = this.state;
 
-    return <InspectHeader tabs={tabs} tab={activeTab} panelData={last} onSelectTab={this.onSelectTab} />;
+    return <InspectSubtitle tabs={tabs} tab={activeTab} panelData={last} onSelectTab={this.onSelectTab} />;
   }
 
   getTabs() {
@@ -308,7 +308,7 @@ export class PanelInspectorUnconnected extends PureComponent<Props, State> {
     return (
       <Drawer
         title={panel.title || 'Panel inspect'}
-        subtitle={this.drawerHeader(tabs, activeTab)}
+        subtitle={this.drawerSubtitle(tabs, activeTab)}
         width={drawerWidth}
         onClose={this.onClose}
         expandable

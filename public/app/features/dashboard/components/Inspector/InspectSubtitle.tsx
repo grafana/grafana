@@ -11,7 +11,7 @@ interface Props {
   onSelectTab: (tab: SelectableValue<InspectTab>) => void;
 }
 
-export const InspectHeader: FC<Props> = ({ tab, tabs, onSelectTab, panelData }) => {
+export const InspectSubtitle: FC<Props> = ({ tab, tabs, onSelectTab, panelData }) => {
   const theme = useTheme();
   const styles = getStyles(theme);
 
