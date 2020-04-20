@@ -189,7 +189,7 @@ datasources:
     jsonData:
       maxLines: 1000
       derivedFields:
-        # Field with internal link pointing to datasource in grafana
+        # Field with internal link pointing to datasource in Grafana
         - datasourceUid: my_jaeger_uid
           matcherRegex: "traceID=(\\w+)"
           name: TraceID
