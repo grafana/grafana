@@ -152,8 +152,7 @@
       },
       "headers": [
         { "name": "x-ms-app", "content": "Grafana" },
-        { "name": "Cache-Control", "content": "public, max-age=60" },
-        { "name": "Accept-Encoding", "content": "gzip" }
+        { "name": "Cache-Control", "content": "public, max-age=60" }
       ]
     },
     {
