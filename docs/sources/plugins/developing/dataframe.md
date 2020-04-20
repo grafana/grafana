@@ -5,6 +5,7 @@ type = "docs"
 name = "Dataframes"
 parent = "developing"
 weight = 9
+draft = true
 +++
 
 ## Introduction to dataframes
