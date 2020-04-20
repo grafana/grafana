@@ -64,6 +64,8 @@ const getStyles = stylesFactory((theme: GrafanaTheme, isExpanded: boolean, isNes
         font-weight: ${theme.typography.weight.semibold};
 
         &:hover {
+          color: ${theme.colors.text};
+
           .editor-options-group-toggle {
             color: ${theme.colors.text};
           }

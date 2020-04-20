@@ -10,8 +10,7 @@ import {
 import { AngularComponent } from '@grafana/runtime';
 import { EDIT_PANEL_ID } from 'app/core/constants';
 import { processAclItems } from 'app/core/utils/acl';
-import { panelEditorReducer } from '../panel_editor/state/reducers';
-import { panelEditorReducerNew } from '../components/PanelEditor/state/reducers';
+import { panelEditorReducer } from '../components/PanelEditor/state/reducers';
 import { DashboardModel } from './DashboardModel';
 import { PanelModel } from './PanelModel';
 import { PanelPlugin } from '@grafana/data';
@@ -131,5 +130,4 @@ export const dashboardReducer = dashbardSlice.reducer;
 export default {
   dashboard: dashboardReducer,
   panelEditor: panelEditorReducer,
-  panelEditorNew: panelEditorReducerNew,
 };
