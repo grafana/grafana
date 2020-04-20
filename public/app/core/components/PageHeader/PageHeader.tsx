@@ -10,7 +10,7 @@ export interface Props {
 }
 
 const SelectNav = ({ main, customCss }: { main: NavModelItem; customCss: string }) => {
-  const defaultSelectedItem = main.children.find(navItem => {
+  const defaultSelectedItem = main.children?.find(navItem => {
     return navItem.active === true;
   });
 
@@ -22,15 +22,18 @@ const SelectNav = ({ main, customCss }: { main: NavModelItem; customCss: string 
 
   return (
     <div className={`gf-form-select-wrapper width-20 ${customCss}`}>
-      <label className={`gf-form-select-icon ${defaultSelectedItem.icon}`} htmlFor="page-header-select-nav" />
+      <label
+        className={`gf-form-select-icon ${defaultSelectedItem ? defaultSelectedItem?.icon : ''}`}
+        htmlFor="page-header-select-nav"
+      />
       {/* Label to make it clickable */}
       <select
         className="gf-select-nav gf-form-input"
-        value={defaultSelectedItem.url}
+        value={defaultSelectedItem?.url ?? ''}
         onChange={gotoUrl}
         id="page-header-select-nav"
       >
-        {main.children.map((navItem: NavModelItem) => {
+        {main.children?.map((navItem: NavModelItem) => {
           if (navItem.hideFromTabs) {
             // TODO: Rename hideFromTabs => hideFromNav
             return null;
@@ -48,7 +51,7 @@ const SelectNav = ({ main, customCss }: { main: NavModelItem; customCss: string 
 
 const Navigation = ({ main }: { main: NavModelItem }) => {
   const goToUrl = (index: number) => {
-    main.children.forEach((child, i) => {
+    main.children?.forEach((child, i) => {
       if (i === index) {
         appEvents.emit(CoreEvents.locationChange, { href: child.url });
       }
@@ -59,7 +62,7 @@ const Navigation = ({ main }: { main: NavModelItem }) => {
     <nav>
       <SelectNav customCss="page-header__select-nav" main={main} />
       <TabsBar className="page-header__tabs" hideBorder={true}>
-        {main.children.map((child, index) => {
+        {main.children?.map((child, index) => {
           return (
             !child.hideFromTabs && (
               <Tab
@@ -131,7 +134,7 @@ export default class PageHeader extends React.Component<Props, any> {
         </span>
 
         <div className="page-header__info-block">
-          {this.renderTitle(main.text, main.breadcrumbs)}
+          {this.renderTitle(main.text, main.breadcrumbs ?? [])}
           {main.subTitle && <div className="page-header__sub-title">{main.subTitle}</div>}
         </div>
       </div>
