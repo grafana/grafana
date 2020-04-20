@@ -53,25 +53,19 @@ func (n *notificationService) SendIfNeeded(evalCtx *EvalContext) error {
 	}
 
 	if notifierStates.ShouldUploadImage() {
-		if n.renderService.IsAvailable() {
-			// Create a copy of EvalContext and give it a new, shorter, timeout context to upload the image
-			uploadEvalCtx := *evalCtx
-			timeout := setting.AlertingNotificationTimeout / 2
-			var uploadCtxCancel func()
-			uploadEvalCtx.Ctx, uploadCtxCancel = context.WithTimeout(evalCtx.Ctx, timeout)
+		// Create a copy of EvalContext and give it a new, shorter, timeout context to upload the image
+		uploadEvalCtx := *evalCtx
+		timeout := setting.AlertingNotificationTimeout / 2
+		var uploadCtxCancel func()
+		uploadEvalCtx.Ctx, uploadCtxCancel = context.WithTimeout(evalCtx.Ctx, timeout)
 
-			// Try to upload the image without consuming all the time allocated for EvalContext
-			if err = n.renderAndUploadImage(&uploadEvalCtx, timeout); err != nil {
-				n.log.Error("Failed to render and upload alert panel image.", "ruleId", uploadEvalCtx.Rule.ID, "error", err)
-			}
-			uploadCtxCancel()
-			evalCtx.ImageOnDiskPath = uploadEvalCtx.ImageOnDiskPath
-			evalCtx.ImagePublicURL = uploadEvalCtx.ImagePublicURL
-		} else {
-			n.log.Warn("Could not render image for alert notification, no image renderer found/installed. " +
-				"For image rendering support please install the grafana-image-renderer plugin. " +
-				"Read more at https://grafana.com/docs/grafana/latest/administration/image_rendering/")
+		// Try to upload the image without consuming all the time allocated for EvalContext
+		if err = n.renderAndUploadImage(&uploadEvalCtx, timeout); err != nil {
+			n.log.Error("Failed to render and upload alert panel image.", "ruleId", uploadEvalCtx.Rule.ID, "error", err)
 		}
+		uploadCtxCancel()
+		evalCtx.ImageOnDiskPath = uploadEvalCtx.ImageOnDiskPath
+		evalCtx.ImagePublicURL = uploadEvalCtx.ImagePublicURL
 	}
 
 	return n.sendNotifications(evalCtx, notifierStates)
@@ -147,41 +141,50 @@ func (n *notificationService) renderAndUploadImage(evalCtx *EvalContext, timeout
 		return err
 	}
 
-	renderOpts := rendering.Opts{
-		Width:           1000,
-		Height:          500,
-		Timeout:         timeout,
-		OrgId:           evalCtx.Rule.OrgID,
-		OrgRole:         models.ROLE_ADMIN,
-		ConcurrentLimit: setting.AlertingRenderLimit,
+	if n.renderService.IsAvailable() {
+		renderOpts := rendering.Opts{
+			Width:           1000,
+			Height:          500,
+			Timeout:         timeout,
+			OrgId:           evalCtx.Rule.OrgID,
+			OrgRole:         models.ROLE_ADMIN,
+			ConcurrentLimit: setting.AlertingRenderLimit,
+		}
+
+		ref, err := evalCtx.GetDashboardUID()
+		if err != nil {
+			return err
+		}
+
+		renderOpts.Path = fmt.Sprintf("d-solo/%s/%s?orgId=%d&panelId=%d", ref.Uid, ref.Slug, evalCtx.Rule.OrgID, evalCtx.Rule.PanelID)
+
+		n.log.Debug("Rendering alert panel image", "ruleId", evalCtx.Rule.ID, "urlPath", renderOpts.Path)
+		start := time.Now()
+		result, err := n.renderService.Render(evalCtx.Ctx, renderOpts)
+		if err != nil {
+			return err
+		}
+		took := time.Since(start)
+
+		n.log.Debug("Rendered alert panel image", "ruleId", evalCtx.Rule.ID, "path", result.FilePath, "took", took)
+
+		evalCtx.ImageOnDiskPath = result.FilePath
+	} else {
+		n.log.Warn("Could not render image for alert notification, no image renderer found/installed. " +
+			"For image rendering support please install the grafana-image-renderer plugin. " +
+			"Read more at https://grafana.com/docs/grafana/latest/administration/image_rendering/")
+		result := n.renderService.RenderUnavailableImage()
+		evalCtx.ImageOnDiskPath = result.FilePath
 	}
 
-	ref, err := evalCtx.GetDashboardUID()
-	if err != nil {
-		return err
-	}
-
-	renderOpts.Path = fmt.Sprintf("d-solo/%s/%s?orgId=%d&panelId=%d", ref.Uid, ref.Slug, evalCtx.Rule.OrgID, evalCtx.Rule.PanelID)
-
-	n.log.Debug("Rendering alert panel image", "ruleId", evalCtx.Rule.ID, "urlPath", renderOpts.Path)
-	start := time.Now()
-	result, err := n.renderService.Render(evalCtx.Ctx, renderOpts)
-	if err != nil {
-		return err
-	}
-	took := time.Since(start)
-
-	n.log.Debug("Rendered alert panel image", "ruleId", evalCtx.Rule.ID, "path", result.FilePath, "took", took)
-
-	evalCtx.ImageOnDiskPath = result.FilePath
 	n.log.Debug("Uploading alert panel image to external image store", "ruleId", evalCtx.Rule.ID, "path", evalCtx.ImageOnDiskPath)
 
-	start = time.Now()
+	start := time.Now()
 	evalCtx.ImagePublicURL, err = uploader.Upload(evalCtx.Ctx, evalCtx.ImageOnDiskPath)
 	if err != nil {
 		return err
 	}
-	took = time.Since(start)
+	took := time.Since(start)
 
 	if evalCtx.ImagePublicURL != "" {
 		n.log.Debug("Uploaded alert panel image to external image store", "ruleId", evalCtx.Rule.ID, "url", evalCtx.ImagePublicURL, "took", took)

@@ -39,13 +39,14 @@ func TestNotificationService(t *testing.T) {
 		require.Truef(t, evalCtx.Ctx.Value(notificationSent{}).(bool), "expected notification to be sent, but wasn't")
 	})
 
-	notificationServiceScenario(t, "Given alert rule with upload image enabled but no renderer available should not render and upload image, but send notification", evalCtx, true, func(scenarioCtx *scenarioContext) {
+	notificationServiceScenario(t, "Given alert rule with upload image enabled but no renderer available should upload unavailable image and send notification", evalCtx, true, func(scenarioCtx *scenarioContext) {
 		scenarioCtx.rendererAvailable = false
 		err := scenarioCtx.notificationService.SendIfNeeded(evalCtx)
 		require.NoError(t, err)
 
 		require.Equalf(t, 0, scenarioCtx.renderCount, "expected render to not be called, but it was")
-		require.Equalf(t, 0, scenarioCtx.imageUploadCount, "expected image to not be uploaded, but it was")
+		require.Equalf(t, 1, scenarioCtx.unavailableRenderCount, "expected unavailable render count to be called, but it wasn't")
+		require.Equalf(t, 1, scenarioCtx.imageUploadCount, "expected image to be uploaded, but it wasn't")
 		require.Truef(t, evalCtx.Ctx.Value(notificationSent{}).(bool), "expected notification to be sent, but wasn't")
 	})
 
@@ -118,13 +119,14 @@ func TestNotificationService(t *testing.T) {
 }
 
 type scenarioContext struct {
-	evalCtx             *EvalContext
-	notificationService *notificationService
-	imageUploadCount    int
-	renderCount         int
-	uploadProvider      func(ctx context.Context, path string) (string, error)
-	renderProvider      func(ctx context.Context, opts rendering.Opts) (*rendering.RenderResult, error)
-	rendererAvailable   bool
+	evalCtx                *EvalContext
+	notificationService    *notificationService
+	imageUploadCount       int
+	renderCount            int
+	uploadProvider         func(ctx context.Context, path string) (string, error)
+	renderProvider         func(ctx context.Context, opts rendering.Opts) (*rendering.RenderResult, error)
+	rendererAvailable      bool
+	unavailableRenderCount int
 }
 
 type scenarioFunc func(c *scenarioContext)
@@ -208,6 +210,11 @@ func notificationServiceScenario(t *testing.T, name string, evalCtx *EvalContext
 			return &rendering.RenderResult{FilePath: "image.png"}, nil
 		}
 
+		renderUnavailableImageProvider := func() *rendering.RenderResult {
+			scenarioCtx.unavailableRenderCount++
+			return &rendering.RenderResult{FilePath: "image.png"}
+		}
+
 		scenarioCtx.rendererAvailable = true
 
 		renderService := &testRenderService{
@@ -223,6 +230,7 @@ func notificationServiceScenario(t *testing.T, name string, evalCtx *EvalContext
 
 				return renderProvider(ctx, opts)
 			},
+			renderUnavailableImageProvider: renderUnavailableImageProvider,
 		}
 
 		scenarioCtx.notificationService = newNotificationService(renderService)
@@ -302,9 +310,10 @@ func (n *testNotifier) GetFrequency() time.Duration {
 var _ Notifier = &testNotifier{}
 
 type testRenderService struct {
-	isAvailableProvider      func() bool
-	renderProvider           func(ctx context.Context, opts rendering.Opts) (*rendering.RenderResult, error)
-	renderErrorImageProvider func(error error) (*rendering.RenderResult, error)
+	isAvailableProvider            func() bool
+	renderProvider                 func(ctx context.Context, opts rendering.Opts) (*rendering.RenderResult, error)
+	renderErrorImageProvider       func(error error) (*rendering.RenderResult, error)
+	renderUnavailableImageProvider func() *rendering.RenderResult
 }
 
 func (s *testRenderService) IsAvailable() bool {
@@ -329,6 +338,14 @@ func (s *testRenderService) RenderErrorImage(err error) (*rendering.RenderResult
 	}
 
 	return &rendering.RenderResult{FilePath: "image.png"}, nil
+}
+
+func (s *testRenderService) RenderUnavailableImage() *rendering.RenderResult {
+	if s.renderUnavailableImageProvider != nil {
+		return s.renderUnavailableImageProvider()
+	}
+
+	return &rendering.RenderResult{FilePath: "image.png"}
 }
 
 func (s *testRenderService) GetRenderUser(key string) (*rendering.RenderUser, bool) {
