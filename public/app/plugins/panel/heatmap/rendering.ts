@@ -155,13 +155,8 @@ export class HeatmapRenderer {
 
     const ticks = this.chartWidth / DEFAULT_X_TICK_SIZE_PX;
     const grafanaTimeFormatter = ticksUtils.grafanaTimeFormat(ticks, this.timeRange.from, this.timeRange.to);
-    let timeFormat;
-    const dashboardTimeZone = this.ctrl.dashboard.getTimezone();
-    if (dashboardTimeZone === 'utc') {
-      timeFormat = d3.utcFormat(grafanaTimeFormatter);
-    } else {
-      timeFormat = d3.timeFormat(grafanaTimeFormatter);
-    }
+    const formatter = this.ctrl.dashboard.getDateTimeFormatter();
+    const timeFormat = (date: Date) => formatter.format(date, grafanaTimeFormatter);
 
     const xAxis = d3
       .axisBottom(this.xScale)

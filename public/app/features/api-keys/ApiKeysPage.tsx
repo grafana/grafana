@@ -15,7 +15,7 @@ import appEvents from 'app/core/app_events';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
 import { DeleteButton, EventsWithValidation, FormLabel, LegacyForms, ValidationEvents, IconButton } from '@grafana/ui';
 const { Input, Switch } = LegacyForms;
-import { dateTime, isDateTime, NavModel } from '@grafana/data';
+import { NavModel, createDateTimeFormatter } from '@grafana/data';
 import { FilterInput } from 'app/core/components/FilterInput/FilterInput';
 import { store } from 'app/store/store';
 import kbn from 'app/core/utils/kbn';
@@ -167,11 +167,9 @@ export class ApiKeysPage extends PureComponent<Props, any> {
     if (!date) {
       return 'No expiration date';
     }
-    date = isDateTime(date) ? date : dateTime(date);
-    format = format || 'YYYY-MM-DD HH:mm:ss';
-    const timezone = getTimeZone(store.getState().user);
-
-    return timezone === 'utc' ? date.utc().format(format) : date.format(format);
+    const timeZone = getTimeZone(store.getState().user);
+    const formatter = createDateTimeFormatter(() => timeZone);
+    return formatter.format(date, format);
   }
 
   renderAddApiKeyForm() {
