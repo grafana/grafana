@@ -4,8 +4,8 @@ import { FilterInput } from '../FilterInput/FilterInput';
 
 export interface Props {
   searchQuery: string;
-  layoutMode?: LayoutMode;
-  onSetLayoutMode?: (mode: LayoutMode) => {};
+  layoutMode: LayoutMode;
+  onSetLayoutMode: (mode: LayoutMode) => {};
   setSearchQuery: (value: string) => {};
   linkButton: { href: string; title: string };
   target?: string;
