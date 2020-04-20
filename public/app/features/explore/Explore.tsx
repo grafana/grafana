@@ -43,7 +43,14 @@ import {
   GrafanaTheme,
 } from '@grafana/data';
 
-import { ExploreId, ExploreItemState, ExploreUIState, ExploreUpdateState, ExploreUrlState } from 'app/types/explore';
+import {
+  ExploreId,
+  ExploreItemState,
+  ExploreUIState,
+  ExploreUpdateState,
+  ExploreUrlState,
+  QueryDirection,
+} from 'app/types/explore';
 import { StoreState } from 'app/types';
 import {
   DEFAULT_RANGE,
@@ -286,9 +293,14 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
     );
   };
 
-  showMoreLogs = () => {
+  showMoreNewerLogs = () => {
     const { exploreId } = this.props;
-    this.props.runAppendQueries(exploreId);
+    this.props.runAppendQueries(exploreId, QueryDirection.forward);
+  };
+
+  showMoreOlderLogs = () => {
+    const { exploreId } = this.props;
+    this.props.runAppendQueries(exploreId, QueryDirection.backward);
   };
 
   render() {
@@ -387,7 +399,8 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
                               onClickFilterOutLabel={this.onClickFilterOutLabel}
                               onStartScanning={this.onStartScanning}
                               onStopScanning={this.onStopScanning}
-                              showMoreLogs={this.showMoreLogs}
+                              showMoreNewerLogs={this.showMoreNewerLogs}
+                              showMoreOlderLogs={this.showMoreOlderLogs}
                             />
                           )}
                           {mode === ExploreMode.Tracing &&
