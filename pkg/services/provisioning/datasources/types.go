@@ -43,7 +43,7 @@ type upsertDataSourceFromConfig struct {
 	JSONData          map[string]interface{}
 	SecureJSONData    map[string]string
 	Editable          bool
-	Uid               string
+	UID               string
 }
 
 type configsV0 struct {
@@ -109,7 +109,6 @@ type upsertDataSourceFromConfigV1 struct {
 	JSONData          values.JSONValue      `json:"jsonData" yaml:"jsonData"`
 	SecureJSONData    values.StringMapValue `json:"secureJsonData" yaml:"secureJsonData"`
 	Editable          values.BoolValue      `json:"editable" yaml:"editable"`
-	Uid               values.StringValue    `json:"uid" yaml:"uid"`
 }
 
 func (cfg *configsV1) mapToDatasourceFromConfig(apiVersion int64) *configs {
@@ -140,7 +139,6 @@ func (cfg *configsV1) mapToDatasourceFromConfig(apiVersion int64) *configs {
 			SecureJSONData:    ds.SecureJSONData.Value(),
 			Editable:          ds.Editable.Value(),
 			Version:           ds.Version.Value(),
-			Uid:               ds.Uid.Value(),
 		})
 
 		// Using Raw value for the warnings here so that even if it uses env interpolation and the env var is empty
@@ -237,7 +235,6 @@ func createInsertCommand(ds *upsertDataSourceFromConfig) *models.AddDataSourceCo
 		JsonData:          jsonData,
 		SecureJsonData:    ds.SecureJSONData,
 		ReadOnly:          !ds.Editable,
-		Uid:               ds.Uid,
 	}
 }
 
@@ -250,8 +247,8 @@ func createUpdateCommand(ds *upsertDataSourceFromConfig, id int64) *models.Updat
 	}
 
 	return &models.UpdateDataSourceCommand{
-		Id:                id,
-		Uid:               ds.Uid,
+		Id: id,
+
 		OrgId:             ds.OrgID,
 		Name:              ds.Name,
 		Type:              ds.Type,

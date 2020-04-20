@@ -114,7 +114,14 @@ class UnThemedRichHistory extends PureComponent<RichHistoryProps, RichHistorySta
   };
 
   onSelectDatasourceFilters = (value: SelectableValue[] | null) => {
-    store.setObject(RICH_HISTORY_SETTING_KEYS.datasourceFilters, value);
+    try {
+      store.setObject(RICH_HISTORY_SETTING_KEYS.datasourceFilters, value);
+    } catch (error) {
+      console.error(error);
+    }
+    /* Set data source filters to state even though they were not successfully saved in
+     * localStorage to allow interaction and filtering.
+     **/
     this.setState({ datasourceFilters: value });
   };
 
@@ -125,7 +132,7 @@ class UnThemedRichHistory extends PureComponent<RichHistoryProps, RichHistorySta
   onChangeSortOrder = (sortOrder: SortOrder) => this.setState({ sortOrder });
 
   /* If user selects activeDatasourceOnly === true, set datasource filter to currently active datasource.
-   *  Filtering based on datasource won't be available. Otherwise set to null, as filtering will be
+   * Filtering based on datasource won't be available. Otherwise set to null, as filtering will be
    * available for user.
    */
   updateFilters() {
