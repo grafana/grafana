@@ -13,7 +13,14 @@ import { stylesFactory } from '../../themes/stylesFactory';
 import { withTheme, useTheme } from '../../themes/ThemeContext';
 
 // Types
-import { isDateTime, DateTime, rangeUtil, GrafanaTheme, TIME_FORMAT } from '@grafana/data';
+import {
+  isDateTime,
+  DateTime,
+  rangeUtil,
+  GrafanaTheme,
+  TIME_FORMAT,
+  dateTimeFormatZoneAbbrevation,
+} from '@grafana/data';
 import { TimeRange, TimeOption, TimeZone, dateMath } from '@grafana/data';
 import { Themeable } from '../../types';
 
@@ -226,7 +233,7 @@ const TimePickerButtonLabel = memo<Props>(props => {
   return (
     <span className={styles.container}>
       <span>{formattedRange(props.value, isUTC)}</span>
-      {isUTC && <span className={styles.utc}>UTC</span>}
+      <span className={styles.utc}>{dateTimeFormatZoneAbbrevation(Date.now(), { timeZone: props.timeZone })}</span>
     </span>
   );
 });

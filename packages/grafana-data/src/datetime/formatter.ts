@@ -1,6 +1,6 @@
 /* eslint-disable id-blacklist, no-restricted-imports, @typescript-eslint/ban-types */
 import { TimeZone, DefaultTimeZone } from '../types';
-import moment, { MomentInput, Moment } from 'moment-timezone';
+import moment, { MomentInput, Moment, utc } from 'moment-timezone';
 import { DateTimeInput } from './moment_wrapper';
 import { DEFAULT_DATE_TIME_FORMAT, MS_DATE_TIME_FORMAT } from './formats';
 
@@ -36,6 +36,9 @@ export const dateTimeFormatISO: DateTimeFormatter = (dateInUtc: DateTimeInput, o
 
 export const dateTimeFormatTimeAgo: DateTimeFormatter = (dateInUtc: DateTimeInput, options?: DateTimeOptions) =>
   toTz(dateInUtc, getTimeZone(options)).fromNow();
+
+export const dateTimeFormatZoneAbbrevation: DateTimeFormatter = (dateInUtc: DateTimeInput, options?: DateTimeOptions) =>
+  toTz(dateInUtc, getTimeZone(options)).format('z');
 
 const getFormat = <T extends DateTimeOptionsWithFormat>(options?: T): string => {
   if (options?.defaultWithMS) {
