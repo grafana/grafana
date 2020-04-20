@@ -46,6 +46,9 @@ describe('getLogLevelFromKey()', () => {
   it('returns correct log level when level is capitalized', () => {
     expect(getLogLevelFromKey('INFO')).toBe(LogLevel.info);
   });
+  it('returns unknown log level when level is integer', () => {
+    expect(getLogLevelFromKey(1)).toBe(LogLevel.unknown);
+  });
 });
 
 describe('calculateLogsLabelStats()', () => {
