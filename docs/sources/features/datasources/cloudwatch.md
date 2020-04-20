@@ -114,7 +114,7 @@ region = us-west-2
 ```
 
 ## Using the Query Editor
-CloudWatch datasource can query data from both CloudWatch metrics and CloudWatch logs APIs and each has it's own specialised query editor. You select which API you want to query with QueryMode switch on top of the editor.
+CloudWatch datasource can query data from both CloudWatch metrics and CloudWatch logs APIs and each has its own specialized query editor. You select which API you want to query with using the query mode switch on top of the editor.
  
  TODO: img
 
