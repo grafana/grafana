@@ -44,7 +44,6 @@ func GetCredentials(dsInfo *DatasourceInfo) (*credentials.Credentials, error) {
 	accessKeyId := ""
 	secretAccessKey := ""
 	sessionToken := ""
-	var params *sts.AssumeRoleInput = nil
 	var expiration *time.Time = nil
 	if dsInfo.AuthType == "arn" {
 		if dsInfo.ExternalId == "" {
