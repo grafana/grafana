@@ -39,6 +39,7 @@ import {
   FieldType,
   DataFrame,
   getTimeField,
+  dateTimeFormat,
 } from '@grafana/data';
 import { GraphContextMenuCtrl } from './GraphContextMenuCtrl';
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
@@ -643,7 +644,8 @@ class GraphElement {
       max: max,
       label: 'Datetime',
       ticks: ticks,
-      timeformat: this.time_format(ticks, min, max),
+      timeformat: this.time_format(ticks, min, max, true),
+      timeFormatter: this.timeFormatter.bind(this),
     };
   }
 
@@ -901,7 +903,7 @@ class GraphElement {
     };
   }
 
-  time_format(ticks: number, min: number | null, max: number | null) {
+  time_format(ticks: number, min: number | null, max: number | null, moment = false) {
     if (min && max && ticks) {
       const range = max - min;
       const secPerTick = range / ticks / 1000;
@@ -911,21 +913,26 @@ class GraphElement {
       const oneYear = 31536000000;
 
       if (secPerTick <= 45) {
-        return '%H:%M:%S';
+        return moment ? 'HH:mm:ss' : '%H:%M:%S';
       }
       if (secPerTick <= 7200 || range <= oneDay) {
-        return '%H:%M';
+        return moment ? 'HH:mm' : '%H:%M';
       }
       if (secPerTick <= 80000) {
-        return '%m/%d %H:%M';
+        return moment ? 'MM/DD HH:mm' : '%m/%d %H:%M';
       }
       if (secPerTick <= 2419200 || range <= oneYear) {
-        return '%m/%d';
+        return moment ? 'MM/DD' : '%m/%d';
       }
-      return '%Y-%m';
+      return moment ? 'YYYY-MM' : '%Y-%m';
     }
 
-    return '%H:%M';
+    return moment ? 'HH:mm' : '%H:%M';
+  }
+
+  timeFormatter(epoch: number, format: string) {
+    const timeZone = this.dashboard.getTimezone();
+    return dateTimeFormat(epoch, { format, timeZone });
   }
 }
 
