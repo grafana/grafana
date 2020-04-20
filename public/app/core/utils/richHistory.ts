@@ -2,8 +2,7 @@
 import _ from 'lodash';
 
 // Services & Utils
-import { DataQuery, ExploreMode, dateTime } from '@grafana/data';
-import { renderUrl } from 'app/core/utils/url';
+import { DataQuery, ExploreMode, dateTime, urlUtil } from '@grafana/data';
 import store from 'app/core/store';
 import { serializeStateToUrlParam, SortOrder } from './explore';
 import { getExploreDatasources } from '../../features/explore/state/selectors';
@@ -172,7 +171,7 @@ export const createUrlFromRichHistory = (query: RichHistoryQuery) => {
 
   const serializedState = serializeStateToUrlParam(exploreState, true);
   const baseUrl = /.*(?=\/explore)/.exec(`${window.location.href}`)[0];
-  const url = renderUrl(`${baseUrl}/explore`, { left: serializedState });
+  const url = urlUtil.renderUrl(`${baseUrl}/explore`, { left: serializedState });
   return url;
 };
 

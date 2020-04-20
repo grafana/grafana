@@ -31,3 +31,4 @@ export { AppEvent, AppEvents };
 
 import * as PanelEvents from './panelEvents';
 export { PanelEvents };
+export { GrafanaConfig, BuildInfo, FeatureToggles, LicenseInfo } from './config';
