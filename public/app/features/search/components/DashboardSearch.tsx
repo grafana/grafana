@@ -1,6 +1,6 @@
 import React, { FC } from 'react';
-import { css } from 'emotion';
-import { Icon, useTheme, CustomScrollbar, stylesFactory, Button } from '@grafana/ui';
+import { css, cx } from 'emotion';
+import { Icon, useTheme, stylesFactory, Button } from '@grafana/ui';
 import { GrafanaTheme } from '@grafana/data';
 import { SearchSrv } from 'app/core/services/search_srv';
 import { TagFilter } from 'app/core/components/TagFilter/TagFilter';
@@ -47,16 +47,14 @@ export const DashboardSearch: FC<Props> = ({ onCloseSearch, payload = {} }) => {
         className={styles.searchField}
       />
       <div className="search-dropdown">
-        <div className="search-dropdown__col_1">
-          <CustomScrollbar>
-            <SearchResults
-              results={results}
-              loading={loading}
-              onTagSelected={onTagAdd}
-              editable={false}
-              onToggleSection={onToggleSection}
-            />
-          </CustomScrollbar>
+        <div className={cx('search-dropdown__col_1', styles.resultsWrapper)}>
+          <SearchResults
+            results={results}
+            loading={loading}
+            onTagSelected={onTagAdd}
+            editable={false}
+            onToggleSection={onToggleSection}
+          />
         </div>
         <div className="search-dropdown__col_2">
           <div className="search-filter-box">
@@ -124,6 +122,10 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
     `,
     searchField: css`
       padding-left: ${theme.spacing.md};
+    `,
+    resultsWrapper: css`
+      padding: 0;
+      overflow-y: auto;
     `,
   };
 });
