@@ -2,23 +2,23 @@ import _ from 'lodash';
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import templateSrv, { TemplateSrv } from 'app/features/templating/template_srv';
 import coreModule from 'app/core/core_module';
-import { appendQueryToUrl, toUrlParams } from 'app/core/utils/url';
-import { sanitizeUrl } from 'app/core/utils/text';
 import { getConfig } from 'app/core/config';
-import locationUtil from 'app/core/utils/location_util';
-import { DataLinkBuiltInVars } from '@grafana/ui';
 import {
   DataFrame,
   DataLink,
+  DataLinkBuiltInVars,
   deprecationWarning,
   Field,
   FieldType,
   KeyValue,
   LinkModel,
+  locationUtil,
   ScopedVars,
   VariableOrigin,
   VariableSuggestion,
   VariableSuggestionsScope,
+  urlUtil,
+  textUtil,
 } from '@grafana/data';
 
 const timeRangeVars = [
@@ -255,8 +255,8 @@ export class LinkSrv implements LinkService {
       this.templateSrv.fillVariableValuesForUrl(params);
     }
 
-    url = appendQueryToUrl(url, toUrlParams(params));
-    return getConfig().disableSanitizeHtml ? url : sanitizeUrl(url);
+    url = urlUtil.appendQueryToUrl(url, urlUtil.toUrlParams(params));
+    return getConfig().disableSanitizeHtml ? url : textUtil.sanitizeUrl(url);
   }
 
   getAnchorInfo(link: any) {
@@ -271,7 +271,7 @@ export class LinkSrv implements LinkService {
    */
   getDataLinkUIModel = <T>(link: DataLink, scopedVars: ScopedVars, origin: T): LinkModel<T> => {
     const params: KeyValue = {};
-    const timeRangeUrl = toUrlParams(this.timeSrv.timeRangeForUrl());
+    const timeRangeUrl = urlUtil.toUrlParams(this.timeSrv.timeRangeForUrl());
 
     let href = link.url;
 
@@ -304,7 +304,7 @@ export class LinkSrv implements LinkService {
 
     this.templateSrv.fillVariableValuesForUrl(params, scopedVars);
 
-    const variablesQuery = toUrlParams(params);
+    const variablesQuery = urlUtil.toUrlParams(params);
 
     info.href = this.templateSrv.replace(info.href, {
       ...scopedVars,
@@ -318,7 +318,7 @@ export class LinkSrv implements LinkService {
       },
     });
 
-    info.href = getConfig().disableSanitizeHtml ? info.href : sanitizeUrl(info.href);
+    info.href = getConfig().disableSanitizeHtml ? info.href : textUtil.sanitizeUrl(info.href);
 
     return info;
   };
