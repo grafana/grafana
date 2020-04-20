@@ -53,6 +53,7 @@ export { TableInputCSV } from './TableInputCSV/TableInputCSV';
 export { TabsBar } from './Tabs/TabsBar';
 export { Tab } from './Tabs/Tab';
 export { TabContent } from './Tabs/TabContent';
+export { Counter } from './Tabs/Counter';
 
 // Visualizations
 export {
