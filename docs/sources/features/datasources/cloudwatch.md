@@ -33,7 +33,7 @@ Grafana ships with built in support for CloudWatch. You just have to add it as a
 | _Auth Provider_            | Specify the provider to get credentials.                                                                |
 | _Credentials_ profile name | Specify the name of the profile to use (if you use `~/.aws/credentials` file), leave blank for default. |
 | _Assume Role Arn_          | Specify the ARN of the role to assume                                                                   |
-| _External ID_              | Specify the External id if you assume a role in another account having external ID.                     |
+| _External ID_              | If assuming a role in another account, specify its ID.                     |
 
 ## Authentication
 
