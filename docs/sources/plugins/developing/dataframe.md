@@ -48,7 +48,7 @@ One restriction on dataframes is that all Fields in the frame must be of the sam
 
 ### When is a dataframe a time series or a table
 
-Any valid dataframe can be a table. If you have row oriented data, the rows need to be converted to the dataframe's column oriented structure.
+Any valid dataframe can be a table. If you have row-oriented data, the rows need to be converted to the dataframe's column-oriented structure.
 
 Because each Field in a dataframe has a type, we can use the types of the Fields (the schema of the dataframe) to determine if it dataframe, or a collection of dataframes, can be time series. In the simplest case, if a Frame has a Time Field and Number Field then it can be a time series (the frame should be sorted by time ascending).
 
