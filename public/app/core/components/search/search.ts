@@ -111,7 +111,7 @@ export class SearchCtrl {
     this.results = [];
     this.query = {
       query: payload.query ? `${payload.query} ` : '',
-      parsedQuery: this.queryParser.parse(payload.query),
+      parsedQuery: this.queryParser.parse(payload.query ?? ''),
       tags: [],
       starred: false,
     };
