@@ -14,7 +14,7 @@ Dataframes are a new concept in Grafana 7.0 and they replace the Time Series and
 
 A dataframe is a [Columnar oriented](https://en.wikipedia.org/wiki/Column-oriented_DBMS) table structure, meaning it stores data by column and not by row.
 
-**Simplified dataframe model**:
+**Simplified dataframe model:**
 
 ```ts
 interface DataFrame {
