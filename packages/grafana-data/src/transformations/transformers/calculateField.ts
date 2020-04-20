@@ -17,8 +17,8 @@ export interface CalculateFieldTransformerOptions {
 
 export const calculateFieldTransformer: DataTransformerInfo<CalculateFieldTransformerOptions> = {
   id: DataTransformerID.calculateField,
-  name: 'Calculate Field',
-  description: 'Calculate a new field based on values in the same row',
+  name: 'Add field from calculation',
+  description: 'Use the row values to calculate a new field',
   defaultOptions: {
     reducer: ReducerID.sum,
   },

@@ -198,6 +198,6 @@ export const calculateFieldTransformRegistryItem: TransformerRegistyItem<Calcula
   id: DataTransformerID.calculateField,
   editor: CalculateFieldTransformerEditor,
   transformation: standardTransformers.calculateFieldTransformer,
-  name: 'Calculate Field',
-  description: 'Calculate a new field based on values in the same row',
+  name: 'Add field from calculation',
+  description: 'Use the row values to calculate a new field',
 };
