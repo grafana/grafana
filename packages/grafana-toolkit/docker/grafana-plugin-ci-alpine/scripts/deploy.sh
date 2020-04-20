@@ -9,7 +9,12 @@ rm /bin/cp
 mv /usr/local/bin/cp /bin/cp
 
 sed -i -e 's/v[[:digit:]]\..*\//edge\//g' /etc/apk/repositories
-apk add nodejs npm yarn build-base openssh
+apk add nodejs npm yarn build-base openssh 
+
+#
+# Only relevant for testing, but cypress does not work with musl/alpine.
+#
+# apk add xvfb glib nss nspr gdk-pixbuf "gtk+3.0" pango atk cairo dbus-libs libxcomposite libxrender libxi libxtst libxrandr libxscrnsaver alsa-lib at-spi2-atk at-spi2-core cups-libs gcompat libc6-compat
 
 # Install Go
 filename="go1.14.linux-amd64.tar.gz"
@@ -42,6 +47,19 @@ mkdir -pv /tmp/mage $HOME/go/bin
 git clone https://github.com/magefile/mage.git /tmp/mage
 cd /tmp/mage && go run bootstrap.go
 mv $HOME/go/bin/mage /usr/local/bin
+
+wget -O - -q https://raw.githubusercontent.com/securego/gosec/master/install.sh | sh -s -- -b /usr/local/bin v2.2.0
+
+source "/etc/profile"
+sh -l -c "go get -u github.com/mgechev/revive"
+for file in $(ls $HOME/go/bin); do
+	mv -v $HOME/go/bin/$file /usr/local/bin/$file
+done
+
+ls -l /usr/local/bin
+revive --help
+file /usr/local/bin/revive
+
 # Cleanup after yourself
 /bin/rm -rf /tmp/mage 
 /bin/rm -rf $HOME/go

@@ -220,18 +220,8 @@
   color: $purple;
 }
 
-.graph-series-override {
-  input {
-    float: left;
-    margin-right: 10px;
-  }
-  .graph-series-override-option {
-    float: left;
-    padding: 2px 6px;
-  }
-  .graph-series-override-selector {
-    float: left;
-  }
+.graph-series-override__properties {
+  margin-left: $space-md;
 }
 
 .graph-tooltip {

@@ -10,7 +10,6 @@ import { Gauge, DataLinksContextMenu, VizRepeater, VizRepeaterRenderValueProps }
 // Types
 import { GaugeOptions } from './types';
 import { FieldDisplay, getFieldDisplayValues, VizOrientation, PanelProps } from '@grafana/data';
-import { getFieldLinksSupplier } from 'app/features/panel/panellinks/linkSuppliers';
 
 export class GaugePanel extends PureComponent<PanelProps<GaugeOptions>> {
   renderValue = (valueProps: VizRepeaterRenderValueProps<FieldDisplay>): JSX.Element => {
@@ -19,7 +18,7 @@ export class GaugePanel extends PureComponent<PanelProps<GaugeOptions>> {
     const { field, display } = value;
 
     return (
-      <DataLinksContextMenu links={getFieldLinksSupplier(value)}>
+      <DataLinksContextMenu links={value.getLinks}>
         {({ openMenu, targetClassName }) => {
           return (
             <Gauge

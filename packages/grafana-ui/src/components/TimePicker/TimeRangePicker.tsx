@@ -67,6 +67,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       margin-left: ${theme.spacing.xs};
     `,
     clockIcon: css`
+      margin-left: ${theme.spacing.xs};
       margin-right: ${theme.spacing.xs};
     `,
     noRightBorderStyle: css`
@@ -155,7 +156,7 @@ export class UnthemedTimeRangePicker extends PureComponent<Props, State> {
         <div className={styles.buttons}>
           {hasAbsolute && (
             <button className="btn navbar-button navbar-button--tight" onClick={onMoveBackward}>
-              <Icon name="angle-left" />
+              <Icon name="angle-left" size="lg" />
             </button>
           )}
           <div>

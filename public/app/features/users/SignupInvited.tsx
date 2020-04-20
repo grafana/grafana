@@ -1,14 +1,15 @@
 import React, { FC, useState } from 'react';
 import { hot } from 'react-hot-loader';
-import { connect, MapStateToProps, MapDispatchToProps } from 'react-redux';
+import { connect, MapDispatchToProps, MapStateToProps } from 'react-redux';
 import { StoreState } from 'app/types';
 import { updateLocation } from 'app/core/actions';
-import { UrlQueryValue, getBackendSrv } from '@grafana/runtime';
-import { Button, Input, Form, Field } from '@grafana/ui';
+import { getBackendSrv } from '@grafana/runtime';
+import { Button, Field, Form, Input } from '@grafana/ui';
 import { useAsync } from 'react-use';
 import Page from 'app/core/components/Page/Page';
 import { contextSrv } from 'app/core/core';
 import { getConfig } from 'app/core/config';
+import { UrlQueryValue } from '@grafana/data';
 
 interface ConnectedProps {
   code?: UrlQueryValue;

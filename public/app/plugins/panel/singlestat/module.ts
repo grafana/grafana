@@ -4,7 +4,6 @@ import $ from 'jquery';
 import 'vendor/flot/jquery.flot';
 import 'vendor/flot/jquery.flot.gauge';
 import 'app/features/panel/panellinks/link_srv';
-import locationUtil from 'app/core/utils/location_util';
 
 import {
   DataFrame,
@@ -23,6 +22,7 @@ import {
   getColorFromHexRgbOrName,
   PanelEvents,
   formattedValueToString,
+  locationUtil,
 } from '@grafana/data';
 
 import { convertOldAngularValueMapping } from '@grafana/ui';

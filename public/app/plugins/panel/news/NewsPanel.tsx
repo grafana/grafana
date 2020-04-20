@@ -1,19 +1,18 @@
 // Libraries
 import React, { PureComponent } from 'react';
-import { css } from 'emotion';
 
 // Utils & Services
-import { GrafanaTheme } from '@grafana/data';
-import { stylesFactory, CustomScrollbar } from '@grafana/ui';
+import { CustomScrollbar, stylesFactory } from '@grafana/ui';
+
 import config from 'app/core/config';
 import { feedToDataFrame } from './utils';
-import { sanitize } from 'app/core/utils/text';
 import { loadRSSFeed } from './rss';
 
 // Types
-import { PanelProps, DataFrameView, dateTime } from '@grafana/data';
+import { PanelProps, DataFrameView, dateTime, GrafanaTheme, textUtil } from '@grafana/data';
 import { NewsOptions, NewsItem } from './types';
 import { DEFAULT_FEED_URL, PROXY_PREFIX } from './constants';
+import { css } from 'emotion';
 
 interface Props extends PanelProps<NewsOptions> {}
 
@@ -74,21 +73,19 @@ export class NewsPanel extends PureComponent<Props, State> {
     }
 
     return (
-      <div className={styles.container}>
-        <CustomScrollbar>
-          {news.map((item, index) => {
-            return (
-              <div key={index} className={styles.item}>
-                <a href={item.link} target="_blank">
-                  <div className={styles.title}>{item.title}</div>
-                  <div className={styles.date}>{dateTime(item.date).format('MMM DD')} </div>
-                </a>
-                <div className={styles.content} dangerouslySetInnerHTML={{ __html: sanitize(item.content) }} />
-              </div>
-            );
-          })}
-        </CustomScrollbar>
-      </div>
+      <CustomScrollbar autoHeightMin="100%" autoHeightMax="100%">
+        {news.map((item, index) => {
+          return (
+            <div key={index} className={styles.item}>
+              <a href={item.link} target="_blank">
+                <div className={styles.title}>{item.title}</div>
+                <div className={styles.date}>{dateTime(item.date).format('MMM DD')} </div>
+              </a>
+              <div className={styles.content} dangerouslySetInnerHTML={{ __html: textUtil.sanitize(item.content) }} />
+            </div>
+          );
+        })}
+      </CustomScrollbar>
     );
   }
 }

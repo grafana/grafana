@@ -65,6 +65,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => ({
   headerButtons: css`
     label: collapse__header-buttons;
     margin-right: ${theme.spacing.sm};
+    margin-top: ${theme.spacing.xxs};
     font-size: ${theme.typography.size.lg};
     line-height: ${theme.typography.heading.h6};
     display: inherit;
