@@ -117,7 +117,7 @@ func (rs *RenderingService) Render(ctx context.Context, opts Opts) (*RenderResul
 	}
 
 	if rs.renderAction == nil {
-		return nil, fmt.Errorf("No renderer found")
+		return nil, fmt.Errorf("no renderer found")
 	}
 
 	rs.log.Info("Rendering", "path", opts.Path)
