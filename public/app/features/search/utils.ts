@@ -1,5 +1,5 @@
 import { DashboardQuery, DashboardSection, DashboardSectionItem, SearchAction, UidsToDelete } from './types';
-import { NO_ID_SECTIONS } from './constants';
+import { ITEM_HEIGHT, NO_ID_SECTIONS } from './constants';
 import { parse, SearchParserResult } from 'search-query-parser';
 import { getDashboardSrv } from '../dashboard/services/DashboardSrv';
 
@@ -179,4 +179,25 @@ export const getParsedQuery = (query: DashboardQuery, queryParsing = false) => {
     }
   }
   return { ...query, query: parseQuery(query.query).text as string, folderIds };
+};
+
+/**
+ * Get height of dynamic list of search results
+ * @param section
+ * @param offsetTop
+ * @param offsetBottom
+ * @param extraPadding
+ */
+
+export const getItemsHeight = (section: any, offsetTop: number | undefined, offsetBottom = 150, extraPadding = 12) => {
+  const { items } = section;
+  if (!items.length || !section.expanded) {
+    return 0;
+  }
+
+  const listHeight = window.innerHeight - offsetTop - offsetBottom;
+  if (items.length * ITEM_HEIGHT > listHeight) {
+    return listHeight;
+  }
+  return items.length * ITEM_HEIGHT + extraPadding;
 };

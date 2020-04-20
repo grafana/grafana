@@ -1,10 +1,13 @@
-import React, { FC } from 'react';
+import React, { FC, useRef } from 'react';
 import { css, cx } from 'emotion';
+import { FixedSizeList } from 'react-window';
 import { GrafanaTheme } from '@grafana/data';
 import { Icon, stylesFactory, useTheme, IconName, IconButton, Spinner } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
 import { CoreEvents } from 'app/types';
 import { DashboardSection, OnToggleChecked } from '../types';
+import { getItemsHeight } from '../utils';
+import { ITEM_HEIGHT } from '../constants';
 import { SearchItem } from './SearchItem';
 import { SearchCheckbox } from './SearchCheckbox';
 
@@ -27,6 +30,7 @@ export const SearchResults: FC<Props> = ({
 }) => {
   const theme = useTheme();
   const styles = getSectionStyles(theme);
+  const ref = useRef(null);
 
   if (loading) {
     return <Spinner className={styles.spinner} />;
@@ -35,19 +39,32 @@ export const SearchResults: FC<Props> = ({
   }
 
   return (
-    <div className="search-results-container">
+    <div className="search-results-container" ref={ref}>
       <ul className={styles.wrapper}>
-        {results.map(section => (
-          <li aria-label="Search section" className={styles.section} key={section.title}>
-            <SectionHeader onSectionClick={onToggleSection} {...{ onToggleChecked, editable, section }} />
-            <ul aria-label="Search items" className={styles.wrapper}>
-              {section.expanded &&
-                section.items.map(item => (
-                  <SearchItem key={item.id} {...{ item, editable, onToggleChecked, onTagSelected }} />
-                ))}
-            </ul>
-          </li>
-        ))}
+        {results.map(section => {
+          let height = getItemsHeight(section, ref.current?.offsetTop);
+          return (
+            <li aria-label="Search section" className={styles.section} key={section.title}>
+              <SectionHeader onSectionClick={onToggleSection} {...{ onToggleChecked, editable, section }} />
+              {section.expanded && section.items.length && (
+                <ul aria-label="Search items" className={styles.wrapper}>
+                  <FixedSizeList itemSize={ITEM_HEIGHT} height={height} itemCount={section.items.length} width="100%">
+                    {({ index, style }) => {
+                      const item = section.items[index];
+                      return (
+                        <SearchItem
+                          style={style}
+                          key={item.id}
+                          {...{ item, editable, onToggleChecked, onTagSelected }}
+                        />
+                      );
+                    }}
+                  </FixedSizeList>
+                </ul>
+              )}
+            </li>
+          );
+        })}
       </ul>
     </div>
   );
