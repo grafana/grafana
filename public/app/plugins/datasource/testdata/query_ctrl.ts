@@ -115,6 +115,12 @@ export class TestDataQueryCtrl extends QueryCtrl {
       delete this.target.csvWave;
     }
 
+    if (this.target.scenarioId === 'grafana_api') {
+      this.target.stringInput = 'datasources';
+    } else {
+      delete this.target.stringInput;
+    }
+
     this.refresh();
   }
 
