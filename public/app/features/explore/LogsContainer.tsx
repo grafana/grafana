@@ -59,7 +59,9 @@ interface LogsContainerProps {
   absoluteRange: AbsoluteTimeRange;
   isPaused: boolean;
   splitOpen: typeof splitOpen;
-  showMoreLogs: () => void;
+  showMoreNewerLogs: () => void;
+  showMoreOlderLogs: () => void;
+  displayMoreLogsBtn: boolean;
 }
 
 export class LogsContainer extends PureComponent<LogsContainerProps> {
@@ -133,7 +135,9 @@ export class LogsContainer extends PureComponent<LogsContainerProps> {
       width,
       isLive,
       exploreId,
-      showMoreLogs,
+      showMoreNewerLogs,
+      showMoreOlderLogs,
+      displayMoreLogsBtn,
     } = this.props;
 
     return (
@@ -156,6 +160,10 @@ export class LogsContainer extends PureComponent<LogsContainerProps> {
         </LogsCrossFadeTransition>
         <LogsCrossFadeTransition visible={!isLive}>
           <Collapse label="Logs" loading={loading} isOpen>
+            {dedupedRows?.length > 0 &&
+              `Showing logs between ${dedupedRows[dedupedRows.length - 1]?.timeLocal} and ${
+                dedupedRows[0]?.timeLocal
+              } (${dedupedRows[dedupedRows.length - 1]?.timeFromNow} to ${dedupedRows[0]?.timeFromNow})`}
             <Logs
               dedupStrategy={this.props.dedupStrategy || LogsDedupStrategy.none}
               logRows={logRows}
@@ -178,10 +186,10 @@ export class LogsContainer extends PureComponent<LogsContainerProps> {
               width={width}
               getRowContext={this.getLogRowContext}
               getFieldLinks={this.getFieldLinks}
+              displayMoreLogsBtn={displayMoreLogsBtn}
+              showMoreNewerLogs={showMoreNewerLogs}
+              showMoreOlderLogs={showMoreOlderLogs}
             />
-            <button className="gf-form-label gf-form-label--btn" onClick={showMoreLogs}>
-              Show more logs
-            </button>
           </Collapse>
         </LogsCrossFadeTransition>
       </>
@@ -204,6 +212,7 @@ function mapStateToProps(state: StoreState, { exploreId }: { exploreId: string }
     range,
     absoluteRange,
     dedupStrategy,
+    queries,
   } = item;
   const dedupedRows = deduplicatedRowsSelector(item);
   const timeZone = getTimeZone(state.user);
@@ -223,6 +232,9 @@ function mapStateToProps(state: StoreState, { exploreId }: { exploreId: string }
     isPaused,
     range,
     absoluteRange,
+    displayMoreLogsBtn: queries.filter(elem => !elem.hide).length === 1,
+    // currently we allow to display more logs when only one query is active
+    // due to timestamp selection issues that are going to be addressed later
   };
 }
 

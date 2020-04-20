@@ -62,6 +62,9 @@ interface Props {
   onToggleLogLevel: (hiddenLogLevels: LogLevel[]) => void;
   getRowContext?: (row: LogRowModel, options?: any) => Promise<any>;
   getFieldLinks: (field: Field, rowIndex: number) => Array<LinkModel<Field>>;
+  displayMoreLogsBtn: boolean;
+  showMoreNewerLogs: () => void;
+  showMoreOlderLogs: () => void;
 }
 
 interface State {
@@ -154,6 +157,9 @@ export class Logs extends PureComponent<Props, State> {
       absoluteRange,
       onChangeTime,
       getFieldLinks,
+      displayMoreLogsBtn,
+      showMoreNewerLogs,
+      showMoreOlderLogs,
     } = this.props;
 
     if (!logRows) {
@@ -230,7 +236,11 @@ export class Logs extends PureComponent<Props, State> {
             })}
           />
         )}
-
+        {!loading && hasData && !scanning && displayMoreLogsBtn && (
+          <button className="gf-form-label gf-form-label--btn" onClick={showMoreNewerLogs}>
+            Show more logs
+          </button>
+        )}
         <LogRows
           logRows={logRows}
           deduplicatedRows={dedupedRows}
@@ -246,6 +256,11 @@ export class Logs extends PureComponent<Props, State> {
           timeZone={timeZone}
           getFieldLinks={getFieldLinks}
         />
+        {!loading && hasData && !scanning && displayMoreLogsBtn && (
+          <button className="gf-form-label gf-form-label--btn" onClick={showMoreOlderLogs}>
+            Show more logs
+          </button>
+        )}
 
         {!loading && !hasData && !scanning && (
           <div className="logs-panel-nodata">
