@@ -86,7 +86,7 @@ describe('DashboardSearch', () => {
     let wrapper = await setup();
     wrapper.update();
     expect(wrapper.find({ 'aria-label': 'Search section' })).toHaveLength(2);
-    expect(wrapper.find({ 'aria-label': 'Search items' }).children()).toHaveLength(2);
+    expect(wrapper.find({ 'aria-label': 'Search items' }).children()).toHaveLength(1);
   });
 
   it('should call search with selected tags', async () => {

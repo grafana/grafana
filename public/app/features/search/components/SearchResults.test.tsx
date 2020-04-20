@@ -33,7 +33,7 @@ describe('SearchResults', () => {
 
   it('should render section items for expanded section', () => {
     const { wrapper } = setup();
-    expect(wrapper.find({ 'aria-label': 'Search items' }).children()).toHaveLength(2);
+    expect(wrapper.find({ 'aria-label': 'Search items' }).children()).toHaveLength(1);
   });
 
   it('should not render checkboxes for non-editable results', () => {
