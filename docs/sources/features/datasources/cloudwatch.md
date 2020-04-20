@@ -176,7 +176,7 @@ This feature is not available for metrics that are based on metric math expressi
 
 To query CloudWatch logs you have to select the region and up to 20 log groups which you want to query. Use the main input area to write your query in [CloudWatch Logs Query Language](https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/CWL_QuerySyntax.html)
 
-You can also write queries returning time series data by using [`stats` command](https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/CWL_Insights-Visualizing-Log-Data.html). When using `stats` queries in Explore, you have to make sure you are in Logs Explore mode.
+You can also write queries returning time series data by using the [`stats` command](https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/CWL_Insights-Visualizing-Log-Data.html). When making `stats` queries in Explore, you have to make sure you are in Metrics Explore mode.
 
 TODO: image Explore switcher
 
