@@ -38,7 +38,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
   return {
     tabsBar: css`
       padding-left: ${theme.spacing.md};
-      margin: ${theme.spacing.lg} 0 -${theme.spacing.lg} 0;
+      margin: ${theme.spacing.lg} -${theme.spacing.sm} -${theme.spacing.lg} -${theme.spacing.lg};
     `,
   };
 });
