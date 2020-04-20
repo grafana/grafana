@@ -16,7 +16,7 @@ export const InspectSubtitle: FC<Props> = ({ tab, tabs, onSelectTab, panelData }
   const styles = getStyles(theme);
 
   return (
-    <div>
+    <>
       <div className="muted">{formatStats(panelData)}</div>
       <TabsBar className={styles.tabsBar}>
         {tabs.map((t, index) => {
@@ -30,7 +30,7 @@ export const InspectSubtitle: FC<Props> = ({ tab, tabs, onSelectTab, panelData }
           );
         })}
       </TabsBar>
-    </div>
+    </>
   );
 };
 
