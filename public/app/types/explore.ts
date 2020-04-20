@@ -245,3 +245,8 @@ export type RichHistoryQuery = {
   sessionName: string;
   timeRange?: string;
 };
+
+export enum QueryDirection {
+  backward = 'backward',
+  forward = 'forward',
+}
