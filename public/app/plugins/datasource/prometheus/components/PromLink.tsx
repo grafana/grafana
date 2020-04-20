@@ -4,7 +4,6 @@ import React, { Component } from 'react';
 import { PrometheusDatasource } from '../datasource';
 import { PromQuery } from '../types';
 import { DataQueryRequest, PanelData } from '@grafana/data';
-import { Icon } from '@grafana/ui';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 
 interface Props {
