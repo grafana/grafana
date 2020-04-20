@@ -30,7 +30,7 @@ func (b *Builder) ToSql(limit, page int64) (string, []interface{}) {
 	`)
 
 	b.sql.WriteString(`
-		LEFT OUTER JOIN folder ON folder.id = dashboard.folder_id
+		LEFT OUTER JOIN dashboard AS folder ON folder.id = dashboard.folder_id
 		LEFT OUTER JOIN dashboard_tag ON dashboard.id = dashboard_tag.dashboard_id`)
 
 	return b.sql.String(), b.params
