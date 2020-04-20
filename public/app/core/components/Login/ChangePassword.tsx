@@ -97,7 +97,7 @@ export class ChangePassword extends PureComponent<Props, State> {
               placeholder="New password"
               onChange={this.onNewPasswordChange}
               ref={input => {
-                this.userInput = input;
+                this.userInput = input as HTMLInputElement;
               }}
             />
           </div>
