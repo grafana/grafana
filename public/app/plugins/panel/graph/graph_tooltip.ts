@@ -190,7 +190,7 @@ export default function GraphTooltip(this: any, elem: any, dashboard: any, scope
     plot.unhighlight();
   };
 
-  this.show = (pos: any, item: any) => {
+  this.show = (pos: { x: number; y: number; panelRelY?: number; pageY: number; pageX: number }, item: any) => {
     const plot = elem.data().plot;
     const plotData = plot.getData();
     const xAxes = plot.getXAxes();
@@ -215,6 +215,7 @@ export default function GraphTooltip(this: any, elem: any, dashboard: any, scope
         self.clear(plot);
         return;
       }
+
       plot.setCrosshair(pos);
       allSeriesMode = true;
 

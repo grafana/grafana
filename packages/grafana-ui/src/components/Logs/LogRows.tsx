@@ -28,6 +28,8 @@ export interface Props extends Themeable {
   onClickFilterOutLabel?: (key: string, value: string) => void;
   getRowContext?: (row: LogRowModel, options?: any) => Promise<any>;
   getFieldLinks?: (field: Field, rowIndex: number) => Array<LinkModel<Field>>;
+  onRowMouseEnter?: (row: LogRowModel) => void;
+  onRowMouseLeave?: (row: LogRowModel) => void;
 }
 
 interface State {
@@ -86,6 +88,8 @@ class UnThemedLogRows extends PureComponent<Props, State> {
       allowDetails,
       previewLimit,
       getFieldLinks,
+      onRowMouseEnter,
+      onRowMouseLeave,
     } = this.props;
     const { renderAll } = this.state;
     const { logsRowsTable, logsRowsHorizontalScroll } = getLogRowStyles(theme);
@@ -128,6 +132,8 @@ class UnThemedLogRows extends PureComponent<Props, State> {
                   onClickFilterLabel={onClickFilterLabel}
                   onClickFilterOutLabel={onClickFilterOutLabel}
                   getFieldLinks={getFieldLinks}
+                  onMouseEnter={onRowMouseEnter}
+                  onMouseLeave={onRowMouseLeave}
                 />
               ))}
             {hasData &&
@@ -147,6 +153,8 @@ class UnThemedLogRows extends PureComponent<Props, State> {
                   onClickFilterLabel={onClickFilterLabel}
                   onClickFilterOutLabel={onClickFilterOutLabel}
                   getFieldLinks={getFieldLinks}
+                  onMouseEnter={onRowMouseEnter}
+                  onMouseLeave={onRowMouseLeave}
                 />
               ))}
             {hasData && !renderAll && (

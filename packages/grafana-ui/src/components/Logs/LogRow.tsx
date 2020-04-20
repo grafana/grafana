@@ -35,6 +35,8 @@ interface Props extends Themeable {
   onContextClick?: () => void;
   getRowContext: (row: LogRowModel, options?: any) => Promise<DataQueryResponse>;
   getFieldLinks?: (field: Field, rowIndex: number) => Array<LinkModel<Field>>;
+  onMouseEnter?: (row: LogRowModel) => void;
+  onMouseLeave?: (row: LogRowModel) => void;
 }
 
 interface State {
@@ -90,6 +92,20 @@ class UnThemedLogRow extends PureComponent<Props, State> {
     });
   };
 
+  onMouseEnter = () => {
+    this.addHoverBackground();
+    if (this.props.onMouseEnter) {
+      this.props.onMouseEnter(this.props.row);
+    }
+  };
+
+  onMouseLeave = () => {
+    this.clearHoverBackground();
+    if (this.props.onMouseLeave) {
+      this.props.onMouseLeave(this.props.row);
+    }
+  };
+
   clearHoverBackground = () => {
     this.setState({
       hasHoverBackground: false,
@@ -138,8 +154,8 @@ class UnThemedLogRow extends PureComponent<Props, State> {
       <>
         <tr
           className={hoverBackground}
-          onMouseEnter={this.addHoverBackground}
-          onMouseLeave={this.clearHoverBackground}
+          onMouseEnter={this.onMouseEnter}
+          onMouseLeave={this.onMouseLeave}
           onClick={this.toggleDetails}
         >
           {showDuplicates && (
