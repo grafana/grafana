@@ -128,7 +128,7 @@ export type DerivedFieldConfig = {
   matcherRegex: string;
   name: string;
   url?: string;
-  datasourceName?: string;
+  datasourceUid?: string;
 };
 
 export interface TransformerOptions {

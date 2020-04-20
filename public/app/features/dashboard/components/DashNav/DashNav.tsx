@@ -47,13 +47,17 @@ class DashNav extends PureComponent<Props> {
     this.playlistSrv = this.props.$injector.get('playlistSrv');
   }
 
-  onDahboardNameClick = () => {
-    appEvents.emit(CoreEvents.showDashSearch);
+  onDashboardNameClick = () => {
+    this.props.updateLocation({
+      query: { search: 'open' },
+      partial: true,
+    });
   };
 
   onFolderNameClick = () => {
-    appEvents.emit(CoreEvents.showDashSearch, {
-      query: 'folder:current',
+    this.props.updateLocation({
+      query: { search: 'open', folder: 'current' },
+      partial: true,
     });
   };
 
@@ -126,7 +130,7 @@ class DashNav extends PureComponent<Props> {
                 <Icon name="angle-right" className={iconClassName} />
               </>
             )}
-            <a onClick={this.onDahboardNameClick}>
+            <a onClick={this.onDashboardNameClick}>
               {dashboard.title} <Icon name="angle-down" className={iconClassName} />
             </a>
           </div>

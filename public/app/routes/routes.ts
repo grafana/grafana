@@ -156,6 +156,7 @@ export function setupAngularRoutes($routeProvider: route.IRouteProvider, $locati
     })
     .when('/dashboards', {
       template: '<react-container />',
+      reloadOnSearch: false,
       resolve: {
         component: () =>
           SafeDynamicImport(
@@ -192,6 +193,7 @@ export function setupAngularRoutes($routeProvider: route.IRouteProvider, $locati
     })
     .when('/dashboards/f/:uid/:slug', {
       template: '<react-container />',
+      reloadOnSearch: false,
       resolve: {
         component: () =>
           SafeDynamicImport(
@@ -201,6 +203,7 @@ export function setupAngularRoutes($routeProvider: route.IRouteProvider, $locati
     })
     .when('/dashboards/f/:uid', {
       template: '<react-container />',
+      reloadOnSearch: false,
       resolve: {
         component: () =>
           SafeDynamicImport(

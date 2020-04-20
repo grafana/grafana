@@ -505,6 +505,7 @@ export interface DataSourceSettings<T extends DataSourceJsonData = DataSourceJso
  */
 export interface DataSourceInstanceSettings<T extends DataSourceJsonData = DataSourceJsonData> {
   id: number;
+  uid: string;
   type: string;
   name: string;
   meta: DataSourcePluginMeta;

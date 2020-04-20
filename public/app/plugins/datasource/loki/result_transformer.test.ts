@@ -1,6 +1,7 @@
-import { CircularDataFrame, FieldType, MutableDataFrame } from '@grafana/data';
+import { CircularDataFrame, FieldCache, FieldType, MutableDataFrame } from '@grafana/data';
 import { LokiLegacyStreamResult, LokiStreamResult, LokiTailResponse } from './types';
 import * as ResultTransformer from './result_transformer';
+import { enhanceDataFrame } from './result_transformer';
 
 const legacyStreamResult: LokiLegacyStreamResult[] = [
   {
@@ -178,5 +179,31 @@ describe('loki result transformer', () => {
         id: '19e8e093d70122b3b53cb6e24efd6e2d',
       });
     });
+  });
+});
+
+describe('enhanceDataFrame', () => {
+  it('', () => {
+    const df = new MutableDataFrame({ fields: [{ name: 'line', values: ['nothing', 'trace1=1234', 'trace2=foo'] }] });
+    enhanceDataFrame(df, {
+      derivedFields: [
+        {
+          matcherRegex: 'trace1=(\\w+)',
+          name: 'trace1',
+          url: 'http://localhost/${__value.raw}',
+        },
+        {
+          matcherRegex: 'trace2=(\\w+)',
+          name: 'trace2',
+          datasourceUid: 'uid',
+        },
+      ],
+    });
+    expect(df.fields.length).toBe(3);
+    const fc = new FieldCache(df);
+    expect(fc.getFieldByName('trace1').values.toArray()).toEqual([null, '1234', null]);
+    expect(fc.getFieldByName('trace1').config.links[0]).toEqual({ url: 'http://localhost/${__value.raw}', title: '' });
+    expect(fc.getFieldByName('trace2').values.toArray()).toEqual([null, null, 'foo']);
+    expect(fc.getFieldByName('trace2').config.links[0]).toEqual({ title: '', meta: { datasourceUid: 'uid' } });
   });
 });
