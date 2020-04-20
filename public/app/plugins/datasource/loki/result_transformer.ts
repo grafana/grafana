@@ -13,6 +13,7 @@ import {
   FieldConfig,
   DataFrameView,
   dateTime,
+  DataLink,
 } from '@grafana/data';
 import templateSrv from 'app/features/templating/template_srv';
 import TableModel from 'app/core/table_model';
@@ -33,6 +34,7 @@ import {
 
 import { formatQuery, getHighlighterExpressionsFromQuery } from './query_utils';
 import { of } from 'rxjs';
+import { getDataSourceSrv } from '@grafana/runtime';
 
 /**
  * Transforms LokiLogStream structure into a dataFrame. Used when doing standard queries and older version of Loki.
@@ -395,17 +397,21 @@ export const enhanceDataFrame = (dataFrame: DataFrame, config: LokiOptions | nul
   const fields = derivedFields.reduce((acc, field) => {
     const config: FieldConfig = {};
     if (field.url || field.datasourceUid) {
-      config.links = [
-        {
-          url: field.url,
-          title: '',
-          meta: field.datasourceUid
-            ? {
-                datasourceUid: field.datasourceUid,
-              }
-            : undefined,
-        },
-      ];
+      const link: Partial<DataLink> = {
+        url: field.url,
+      };
+      if (field.datasourceUid) {
+        const dsSettings = getDataSourceSrv().getDataSourceSettingsByUid(field.datasourceUid);
+        link.title = dsSettings?.name || 'Unknown datasource';
+        link.meta = {
+          datasourceUid: field.datasourceUid,
+        };
+      } else {
+        const url = new URL(field.url);
+        link.title = url.hostname;
+      }
+
+      config.links = [link as DataLink];
     }
     const dataFrameField = {
       name: field.name,

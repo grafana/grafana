@@ -1,4 +1,4 @@
-import { ScopedVars, DataSourceApi } from '@grafana/data';
+import { ScopedVars, DataSourceApi, DataSourceInstanceSettings } from '@grafana/data';
 
 /**
  * This is the entry point for communicating with a datasource that is added as
@@ -14,6 +14,8 @@ export interface DataSourceSrv {
    * @param scopedVars - variables used to interpolate a templated passed as name.
    */
   get(name?: string, scopedVars?: ScopedVars): Promise<DataSourceApi>;
+
+  getDataSourceSettingsByUid(uid: string): DataSourceInstanceSettings | undefined;
 }
 
 let singletonInstance: DataSourceSrv;
