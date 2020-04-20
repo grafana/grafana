@@ -1,6 +1,8 @@
 package search
 
 import (
+	"github.com/grafana/grafana/pkg/services/sqlstore/searchstore"
+	"github.com/grafana/grafana/pkg/setting"
 	"sort"
 
 	"github.com/grafana/grafana/pkg/bus"
@@ -24,6 +26,7 @@ type Query struct {
 	DashboardIds []int64
 	FolderIds    []int64
 	Permission   models.PermissionType
+	Sort         string
 
 	Result HitList
 }
@@ -41,37 +44,63 @@ type FindPersistedDashboardsQuery struct {
 	Page         int64
 	Permission   models.PermissionType
 
+	FeatureSearch2 bool
+	SortBy         searchstore.FilterOrderBy
+
 	Result HitList
 }
 
 type SearchService struct {
-	Bus bus.Bus `inject:""`
+	Bus bus.Bus      `inject:""`
+	Cfg *setting.Cfg `inject:""`
+
+	sortOptions map[string]SortOption
 }
 
 func (s *SearchService) Init() error {
 	s.Bus.AddHandler(s.searchHandler)
+	s.sortOptions = map[string]SortOption{
+		sortAlphaAsc.Name:  sortAlphaAsc,
+		sortAlphaDesc.Name: sortAlphaDesc,
+	}
+
 	return nil
 }
 
 func (s *SearchService) searchHandler(query *Query) error {
+	sortOpt, exists := s.sortOptions[query.Sort]
+	if !exists {
+		sortOpt = sortAlphaAsc
+	}
+
+	search2 := false
+	if s.Cfg != nil {
+		search2 = s.Cfg.FeatureToggles["search2"]
+	}
+
 	dashboardQuery := FindPersistedDashboardsQuery{
-		Title:        query.Title,
-		SignedInUser: query.SignedInUser,
-		IsStarred:    query.IsStarred,
-		DashboardIds: query.DashboardIds,
-		Type:         query.Type,
-		FolderIds:    query.FolderIds,
-		Tags:         query.Tags,
-		Limit:        query.Limit,
-		Page:         query.Page,
-		Permission:   query.Permission,
+		Title:          query.Title,
+		SignedInUser:   query.SignedInUser,
+		IsStarred:      query.IsStarred,
+		DashboardIds:   query.DashboardIds,
+		Type:           query.Type,
+		FolderIds:      query.FolderIds,
+		Tags:           query.Tags,
+		Limit:          query.Limit,
+		Page:           query.Page,
+		Permission:     query.Permission,
+		FeatureSearch2: search2,
+		SortBy:         sortOpt.Filter,
 	}
 
 	if err := bus.Dispatch(&dashboardQuery); err != nil {
 		return err
 	}
 
-	hits := sortedHits(dashboardQuery.Result)
+	hits := dashboardQuery.Result
+	if query.Sort == "" {
+		hits = sortedHits(hits)
+	}
 
 	if err := setStarredDashboards(query.SignedInUser.UserId, hits); err != nil {
 		return err
