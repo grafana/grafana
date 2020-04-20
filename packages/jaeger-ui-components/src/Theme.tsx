@@ -82,7 +82,7 @@ export const defaultTheme: Theme = {
 
 export function isLight(theme?: Theme | ThemeOptions) {
   // Light theme is default type not set which only happens if called for ThemeOptions.
-  return theme && theme.type ? theme.type === ThemeType.Light : true;
+  return theme && theme.type ? theme.type === ThemeType.Light : false;
 }
 
 const ThemeContext = React.createContext<ThemeOptions | undefined>(undefined);
