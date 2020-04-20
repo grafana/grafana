@@ -1,45 +1,23 @@
 import React, { FC } from 'react';
 import { css } from 'emotion';
-import { stylesFactory, Tab, TabsBar, useTheme, IconButton } from '@grafana/ui';
+import { stylesFactory, Tab, TabsBar, useTheme } from '@grafana/ui';
 import { GrafanaTheme, SelectableValue, PanelData, getValueFormat, formattedValueToString } from '@grafana/data';
 import { InspectTab } from './PanelInspector';
-import { PanelModel } from '../../state';
 
 interface Props {
   tab: InspectTab;
   tabs: Array<{ label: string; value: InspectTab }>;
   panelData: PanelData;
-  panel: PanelModel;
-  isExpanded: boolean;
   onSelectTab: (tab: SelectableValue<InspectTab>) => void;
-  onClose: () => void;
-  onToggleExpand: () => void;
 }
 
-export const InspectHeader: FC<Props> = ({
-  tab,
-  tabs,
-  onSelectTab,
-  onClose,
-  onToggleExpand,
-  panel,
-  panelData,
-  isExpanded,
-}) => {
+export const InspectHeader: FC<Props> = ({ tab, tabs, onSelectTab, panelData }) => {
   const theme = useTheme();
   const styles = getStyles(theme);
 
   return (
-    <div className={styles.header}>
-      <div className={styles.actions}>
-        {!isExpanded && <IconButton name="angle-left" size="xl" onClick={onToggleExpand} surface="header" />}
-        {isExpanded && <IconButton name="angle-right" size="xl" onClick={onToggleExpand} surface="header" />}
-        <IconButton name="times" size="xl" onClick={onClose} surface="header" />
-      </div>
-      <div className={styles.titleWrapper}>
-        <h3>{panel.title || 'Panel inspect'}</h3>
-        <div className="muted">{formatStats(panelData)}</div>
-      </div>
+    <div>
+      <div className="muted">{formatStats(panelData)}</div>
       <TabsBar className={styles.tabsBar}>
         {tabs.map((t, index) => {
           return (
@@ -57,28 +35,10 @@ export const InspectHeader: FC<Props> = ({
 };
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
-  const headerBackground = theme.colors.bg2;
-
   return {
-    header: css`
-      background-color: ${headerBackground};
-      z-index: 1;
-      flex-grow: 0;
-      padding-top: ${theme.spacing.sm};
-    `,
-    actions: css`
-      position: absolute;
-      display: flex;
-      align-items: baseline;
-      justify-content: space-between;
-      right: ${theme.spacing.sm};
-    `,
     tabsBar: css`
       padding-left: ${theme.spacing.md};
-    `,
-    titleWrapper: css`
-      margin-bottom: ${theme.spacing.lg};
-      padding: ${theme.spacing.sm} ${theme.spacing.sm} 0 ${theme.spacing.lg};
+      margin: ${theme.spacing.lg} 0 -${theme.spacing.lg} 0;
     `,
   };
 });

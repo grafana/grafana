@@ -1,7 +1,7 @@
 import React, { CSSProperties, FC, ReactNode, useState } from 'react';
 import { GrafanaTheme } from '@grafana/data';
 import RcDrawer from 'rc-drawer';
-import { css, cx } from 'emotion';
+import { css } from 'emotion';
 import CustomScrollbar from '../CustomScrollbar/CustomScrollbar';
 import { IconButton } from '../IconButton/IconButton';
 import { stylesFactory, useTheme } from '../../themes';
@@ -50,6 +50,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme, scollableContent: boolean)
       justify-content: flex-end;
     `,
     titleWrapper: css`
+      margin-bottom: ${theme.spacing.lg};
       padding: 0 ${theme.spacing.sm} 0 ${theme.spacing.lg};
     `,
     titleSpacing: css`
@@ -78,6 +79,7 @@ export const Drawer: FC<Props> = ({
   const theme = useTheme();
   const drawerStyles = getStyles(theme, scrollableContent);
   const [currentWidth, setCurrentWidth] = useState(width);
+  const isExpanded = currentWidth === '100%';
 
   return (
     <RcDrawer
@@ -95,19 +97,17 @@ export const Drawer: FC<Props> = ({
       {typeof title === 'string' && (
         <div className={drawerStyles.header}>
           <div className={drawerStyles.actions}>
-            {expandable && (
-              <IconButton
-                name={currentWidth === '100%' ? 'angle-right' : 'angle-left'}
-                size="xl"
-                onClick={() => setCurrentWidth(prevWidth => (prevWidth === '100%' ? width : '100%'))}
-                surface="header"
-              />
+            {expandable && !isExpanded && (
+              <IconButton name="angle-left" size="xl" onClick={() => setCurrentWidth('100%')} surface="header" />
+            )}
+            {expandable && isExpanded && (
+              <IconButton name="angle-right" size="xl" onClick={() => setCurrentWidth(width)} surface="header" />
             )}
             <IconButton name="times" size="xl" onClick={onClose} surface="header" />
           </div>
           <div className={drawerStyles.titleWrapper}>
-            <h3 className={drawerStyles.titleSpacing}>{title}</h3>
-            {typeof subtitle === 'string' && <div className={cx(drawerStyles.titleSpacing, 'muted')}>{subtitle}</div>}
+            <h3>{title}</h3>
+            {typeof subtitle === 'string' && <div className="muted">{subtitle}</div>}
             {typeof subtitle !== 'string' && subtitle}
           </div>
         </div>
