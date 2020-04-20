@@ -18,6 +18,7 @@ import {
   TimeRange,
   ExploreMode,
   dateMath,
+  dateTime,
 } from '@grafana/data';
 // Services & Utils
 import store from 'app/core/store';
@@ -451,14 +452,14 @@ export const runQueries = (exploreId: ExploreId): ThunkResult<void> => {
 
     // Some datasource's query builders allow per-query interval limits,
     // but we're using the datasource interval limit for now
-    const minInterval = datasourceInstance.interval;
+    const minInterval = datasourceInstance?.interval;
 
     stopQueryState(querySubscription);
 
-    const datasourceId = datasourceInstance.meta.id;
+    const datasourceId = datasourceInstance?.meta?.id;
 
     const queryOptions: QueryOptions = {
-      minInterval,
+      minInterval: minInterval ?? '1s',
       // maxDataPoints is used in:
       // Loki - used for logs streaming for buffer size, with undefined it falls back to datasource config if it supports that.
       // Elastic - limits the number of datapoints for the counts query and for logs it has hardcoded limit.
@@ -472,7 +473,7 @@ export const runQueries = (exploreId: ExploreId): ThunkResult<void> => {
 
     const datasourceName = exploreItemState.requestedDatasourceName;
 
-    const transaction = buildQueryTransaction(queries, queryOptions, range, scanning);
+    const transaction = buildQueryTransaction(queries, queryOptions, range, !!scanning);
 
     let firstResponse = true;
     dispatch(changeLoadingStateAction({ exploreId, loadingState: LoadingState.Loading }));
@@ -574,8 +575,8 @@ export const runAppendQueries = (exploreId: ExploreId, direction: QueryDirection
     };
 
     const newTimeRange: TimeRange = {
-      from: dateMath.parse(newRaw.from, false, undefined),
-      to: dateMath.parse(newRaw.to, true, undefined),
+      from: dateMath.parse(newRaw.from, false, undefined) ?? dateTime(),
+      to: dateMath.parse(newRaw.to, true, undefined) ?? dateTime(),
       raw: newRaw,
     };
 
@@ -587,14 +588,14 @@ export const runAppendQueries = (exploreId: ExploreId, direction: QueryDirection
 
     // Some datasource's query builders allow per-query interval limits,
     // but we're using the datasource interval limit for now
-    const minInterval = datasourceInstance.interval;
+    const minInterval = datasourceInstance?.interval;
 
     stopQueryState(querySubscription);
 
-    const datasourceId = datasourceInstance.meta.id;
+    const datasourceId = datasourceInstance?.meta?.id;
 
     const queryOptions: QueryOptions = {
-      minInterval,
+      minInterval: minInterval ?? '1s',
       // maxDataPoints is used in:
       // Loki - used for logs streaming for buffer size, with undefined it falls back to datasource config if it supports that.
       // Elastic - limits the number of datapoints for the counts query and for logs it has hardcoded limit.
@@ -606,7 +607,7 @@ export const runAppendQueries = (exploreId: ExploreId, direction: QueryDirection
       mode,
     };
 
-    const transaction = buildQueryTransaction(queries, queryOptions, newTimeRange, scanning);
+    const transaction = buildQueryTransaction(queries, queryOptions, newTimeRange, !!scanning);
 
     let firstResponse = true;
     dispatch(changeLoadingStateAction({ exploreId, loadingState: LoadingState.Loading }));
@@ -702,7 +703,7 @@ export const stateSave = (): ThunkResult<void> => {
     const replace = left && left.urlReplaced === false;
     const urlStates: { [index: string]: string } = { orgId };
     const leftUrlState: ExploreUrlState = {
-      datasource: left.datasourceInstance.name,
+      datasource: left?.datasourceInstance?.name ?? '',
       queries: left.queries.map(clearQueryKeys),
       range: toRawTimeRange(left.range),
       mode: left.mode,
@@ -716,7 +717,7 @@ export const stateSave = (): ThunkResult<void> => {
     urlStates.left = serializeStateToUrlParam(leftUrlState, true);
     if (split) {
       const rightUrlState: ExploreUrlState = {
-        datasource: right.datasourceInstance.name,
+        datasource: right?.datasourceInstance?.name ?? '',
         queries: right.queries.map(clearQueryKeys),
         range: toRawTimeRange(right.range),
         mode: right.mode,
