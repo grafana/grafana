@@ -10,6 +10,7 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
+	"github.com/grafana/grafana/pkg/components/null"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/tsdb"
@@ -77,17 +78,92 @@ func TestParsingAzureLogAnalyticsResponses(t *testing.T) {
 	tests := []struct {
 		name     string
 		testFile string
-		query    *AzureLogAnalyticsQuery
+		query    string
 		series   tsdb.TimeSeriesSlice
 		meta     string
 		Err      require.ErrorAssertionFunc
 	}{
 		{
-			name:     "Query with macros should be interpolated",
-			testFile: "./test-data/loganalytics/1-log-analytics-response-metrics.json",
-			query:    &AzureLogAnalyticsQuery{},
-			series:   tsdb.TimeSeriesSlice{},
-			meta:     `{"columns":["TimeGenerated","Computer","avg_CounterValue"]}`,
+			name:     "Response with single series should be parsed into the Grafana time series format",
+			testFile: "./test-data/loganalytics/1-log-analytics-response-metrics-single-series.json",
+			query:    "test query",
+			series: tsdb.TimeSeriesSlice{
+				&tsdb.TimeSeries{
+					Name: "grafana-vm",
+					Points: tsdb.TimeSeriesPoints{
+						{null.FloatFrom(1.1), null.FloatFrom(1587323766000)},
+						{null.FloatFrom(2.2), null.FloatFrom(1587323776000)},
+						{null.FloatFrom(3.3), null.FloatFrom(1587323786000)},
+					},
+				},
+			},
+			meta: `{"columns":["TimeGenerated","Computer","avg_CounterValue"],"query":"test query"}`,
+			Err:  require.NoError,
+		},
+		{
+			name:     "Response with multiple series should be parsed into the Grafana time series format",
+			testFile: "./test-data/loganalytics/2-log-analytics-response-metrics-multiple-series.json",
+			query:    "test query",
+			series: tsdb.TimeSeriesSlice{
+				&tsdb.TimeSeries{
+					Name: "Processor",
+					Points: tsdb.TimeSeriesPoints{
+						{null.FloatFrom(0.75), null.FloatFrom(1587418800000)},
+						{null.FloatFrom(1.0055555555555555), null.FloatFrom(1587419100000)},
+						{null.FloatFrom(0.7407407407407407), null.FloatFrom(1587419400000)},
+					},
+				},
+				&tsdb.TimeSeries{
+					Name: "Logical Disk",
+					Points: tsdb.TimeSeriesPoints{
+						{null.FloatFrom(16090.551851851851), null.FloatFrom(1587418800000)},
+						{null.FloatFrom(16090.537037037036), null.FloatFrom(1587419100000)},
+						{null.FloatFrom(16090.586419753086), null.FloatFrom(1587419400000)},
+					},
+				},
+				&tsdb.TimeSeries{
+					Name: "Memory",
+					Points: tsdb.TimeSeriesPoints{
+						{null.FloatFrom(702.0666666666667), null.FloatFrom(1587418800000)},
+						{null.FloatFrom(700.5888888888888), null.FloatFrom(1587419100000)},
+						{null.FloatFrom(703.1111111111111), null.FloatFrom(1587419400000)},
+					},
+				},
+			},
+			meta: `{"columns":["TimeGenerated","ObjectName","avg_CounterValue"],"query":"test query"}`,
+			Err:  require.NoError,
+		},
+		{
+			name:     "Response with no metric name column should use the value column name as the series name",
+			testFile: "./test-data/loganalytics/3-log-analytics-response-metrics-no-metric-column.json",
+			query:    "test query",
+			series: tsdb.TimeSeriesSlice{
+				&tsdb.TimeSeries{
+					Name: "avg_CounterValue",
+					Points: tsdb.TimeSeriesPoints{
+						{null.FloatFrom(1), null.FloatFrom(1587323766000)},
+						{null.FloatFrom(2), null.FloatFrom(1587323776000)},
+						{null.FloatFrom(3), null.FloatFrom(1587323786000)},
+					},
+				},
+			},
+			meta: `{"columns":["TimeGenerated","avg_CounterValue"],"query":"test query"}`,
+			Err:  require.NoError,
+		},
+		{
+			name:     "Response with no time column should return no data",
+			testFile: "./test-data/loganalytics/4-log-analytics-response-metrics-no-time-column.json",
+			query:    "test query",
+			series:   nil,
+			meta:     `{"columns":["Computer","avg_CounterValue"],"query":"test query"}`,
+			Err:      require.NoError,
+		},
+		{
+			name:     "Response with no value column should return no data",
+			testFile: "./test-data/loganalytics/5-log-analytics-response-metrics-no-value-column.json",
+			query:    "test query",
+			series:   nil,
+			meta:     `{"columns":["TimeGenerated","Computer"],"query":"test query"}`,
 			Err:      require.NoError,
 		},
 	}

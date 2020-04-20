@@ -52,13 +52,7 @@ func (e *AzureLogAnalyticsDatasource) executeTimeSeriesQuery(ctx context.Context
 	}
 
 	for _, query := range queries {
-		queryRes, resp, err := e.executeQuery(ctx, query, originalQueries, timeRange)
-		if err != nil {
-			return nil, err
-		}
-		azlog.Debug("AzureLogsAnalytics", "Response", resp)
-
-		queryRes.Series, queryRes.Meta, err = e.parseResponse(resp, query)
+		queryRes, err := e.executeQuery(ctx, query, originalQueries, timeRange)
 		if err != nil {
 			queryRes.Error = err
 		}
@@ -98,13 +92,13 @@ func (e *AzureLogAnalyticsDatasource) buildQueries(queries []*tsdb.Query, timeRa
 	return azureLogAnalyticsQueries, nil
 }
 
-func (e *AzureLogAnalyticsDatasource) executeQuery(ctx context.Context, query *AzureLogAnalyticsQuery, queries []*tsdb.Query, timeRange *tsdb.TimeRange) (*tsdb.QueryResult, AzureLogAnalyticsResponse, error) {
+func (e *AzureLogAnalyticsDatasource) executeQuery(ctx context.Context, query *AzureLogAnalyticsQuery, queries []*tsdb.Query, timeRange *tsdb.TimeRange) (*tsdb.QueryResult, error) {
 	queryResult := &tsdb.QueryResult{Meta: simplejson.New(), RefId: query.RefID}
 
 	req, err := e.createRequest(ctx, e.dsInfo)
 	if err != nil {
 		queryResult.Error = err
-		return queryResult, AzureLogAnalyticsResponse{}, nil
+		return queryResult, nil
 	}
 
 	req.URL.Path = path.Join(req.URL.Path, query.URL)
@@ -124,23 +118,30 @@ func (e *AzureLogAnalyticsDatasource) executeQuery(ctx context.Context, query *A
 		opentracing.HTTPHeaders,
 		opentracing.HTTPHeadersCarrier(req.Header)); err != nil {
 		queryResult.Error = err
-		return queryResult, AzureLogAnalyticsResponse{}, nil
+		return queryResult, nil
 	}
 
 	azlog.Debug("AzureLogAnalytics", "Request ApiURL", req.URL.String())
 	res, err := ctxhttp.Do(ctx, e.httpClient, req)
 	if err != nil {
 		queryResult.Error = err
-		return queryResult, AzureLogAnalyticsResponse{}, nil
+		return queryResult, nil
 	}
 
 	data, err := e.unmarshalResponse(res)
 	if err != nil {
 		queryResult.Error = err
-		return queryResult, AzureLogAnalyticsResponse{}, nil
+		return queryResult, nil
 	}
 
-	return queryResult, data, nil
+	azlog.Debug("AzureLogsAnalytics", "Response", queryResult)
+
+	queryResult.Series, queryResult.Meta, err = e.parseResponse(data, query.Params.Get("query"))
+	if err != nil {
+		return nil, err
+	}
+
+	return queryResult, nil
 }
 
 func (e *AzureLogAnalyticsDatasource) createRequest(ctx context.Context, dsInfo *models.DataSource) (*http.Request, error) {
@@ -177,9 +178,8 @@ func (e *AzureLogAnalyticsDatasource) createRequest(ctx context.Context, dsInfo 
 
 func (e *AzureLogAnalyticsDatasource) unmarshalResponse(res *http.Response) (AzureLogAnalyticsResponse, error) {
 	body, err := ioutil.ReadAll(res.Body)
-	azlog.Info("test", "body", string(body))
-
 	defer res.Body.Close()
+
 	if err != nil {
 		return AzureLogAnalyticsResponse{}, err
 	}
@@ -199,12 +199,15 @@ func (e *AzureLogAnalyticsDatasource) unmarshalResponse(res *http.Response) (Azu
 	return data, nil
 }
 
-func (e *AzureLogAnalyticsDatasource) parseResponse(data AzureLogAnalyticsResponse, query *AzureLogAnalyticsQuery) (tsdb.TimeSeriesSlice, *simplejson.Json, error) {
+func (e *AzureLogAnalyticsDatasource) parseResponse(data AzureLogAnalyticsResponse, query string) (tsdb.TimeSeriesSlice, *simplejson.Json, error) {
 	type Metadata struct {
 		Columns []string `json:"columns"`
+		Query   string   `json:"query"`
 	}
 
-	meta := Metadata{}
+	meta := Metadata{
+		Query: query,
+	}
 
 	for _, t := range data.Tables {
 		if t.Name == "PrimaryResult" {
@@ -237,8 +240,19 @@ func (e *AzureLogAnalyticsDatasource) parseResponse(data AzureLogAnalyticsRespon
 			}
 
 			slice := tsdb.TimeSeriesSlice{}
-			series := &tsdb.TimeSeries{}
-			points := make(tsdb.TimeSeriesPoints, 0)
+			buckets := map[string]*tsdb.TimeSeriesPoints{}
+
+			getSeriesBucket := func(metricName string) *tsdb.TimeSeriesPoints {
+				if points, ok := buckets[metricName]; ok {
+					return points
+				}
+
+				series := tsdb.NewTimeSeries(metricName, []tsdb.TimePoint{})
+				slice = append(slice, series)
+				buckets[metricName] = &series.Points
+
+				return &series.Points
+			}
 
 			for _, r := range t.Rows {
 				timeStr, ok := r[timeIndex].(string)
@@ -255,14 +269,23 @@ func (e *AzureLogAnalyticsDatasource) parseResponse(data AzureLogAnalyticsRespon
 					return nil, simplejson.NewFromAny(meta), err
 				}
 
-				points = append(points, tsdb.NewTimePoint(null.FloatFrom(value), float64(timeValue.Unix()*1000)))
+				var metricName string
+				if metricIndex == -1 {
+					metricName = t.Columns[valueIndex].Name
+				} else {
+					metricName, ok = r[metricIndex].(string)
+					if !ok {
+						return nil, simplejson.NewFromAny(meta), err
+					}
+				}
+
+				points := getSeriesBucket(metricName)
+				*points = append(*points, tsdb.NewTimePoint(null.FloatFrom(value), float64(timeValue.Unix()*1000)))
 			}
-			series.Points = points
-			slice = append(slice, series)
 
 			return slice, simplejson.NewFromAny(meta), nil
 		}
 	}
 
-	return nil, nil, nil
+	return nil, nil, errors.New("could not find table")
 }
