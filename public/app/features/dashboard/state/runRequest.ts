@@ -228,16 +228,6 @@ export function preProcessPanelData(data: PanelData, lastResult: PanelData): Pan
   };
 }
 
-/**
- * This function combines multiple series with the same refId.
- * Mainly used when running append queries.
- */
-function combineSeries(series: DataFrame[]): DataFrame[] {
-  // TODO: combine multiple series into one
-  // right now returns unchanged series
-  return series;
-}
-
 export function preProcessAppendPanelData(
   data: PanelData,
   lastResult: PanelData,
@@ -258,7 +248,7 @@ export function preProcessAppendPanelData(
   const STARTTIME = performance.now();
   const dataFrames =
     direction === QueryDirection.backward ? [...lastResult.series, ...series] : [...series, ...lastResult.series];
-  const processedDataFrames = combineSeries(getProcessedDataFrames(dataFrames));
+  const processedDataFrames = getProcessedDataFrames(dataFrames);
   const STOPTIME = performance.now();
 
   return {
