@@ -17,8 +17,7 @@ import { updateLocation } from 'app/core/actions';
 import { connect } from 'react-redux';
 import { hot } from 'react-hot-loader';
 import { appEvents } from 'app/core/core';
-import { AppEvents } from '@grafana/data';
-import { assureBaseUrl } from 'app/core/utils/location_util';
+import { AppEvents, locationUtil } from '@grafana/data';
 
 const roles = [
   { label: 'Viewer', value: OrgRole.Viewer },
@@ -77,7 +76,7 @@ export const UserInviteForm: FC<Props> = ({ updateLocation }) => {
             </Field>
             <HorizontalGroup>
               <Button type="submit">Submit</Button>
-              <LinkButton href={assureBaseUrl(getConfig().appSubUrl + '/org/users')} variant="secondary">
+              <LinkButton href={locationUtil.assureBaseUrl(getConfig().appSubUrl + '/org/users')} variant="secondary">
                 Back
               </LinkButton>
             </HorizontalGroup>

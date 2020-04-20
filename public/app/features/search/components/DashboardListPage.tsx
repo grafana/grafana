@@ -1,13 +1,12 @@
 import React, { FC, memo } from 'react';
 import { useAsync } from 'react-use';
 import { connect, MapStateToProps } from 'react-redux';
-import { NavModel } from '@grafana/data';
+import { NavModel, locationUtil } from '@grafana/data';
 import { getLocationSrv } from '@grafana/runtime';
 import { StoreState } from 'app/types';
 import { getNavModel } from 'app/core/selectors/navModel';
 import { getRouteParams } from 'app/core/selectors/location';
 import Page from 'app/core/components/Page/Page';
-import locationUtil from 'app/core/utils/location_util';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { ManageDashboards } from './ManageDashboards';
 

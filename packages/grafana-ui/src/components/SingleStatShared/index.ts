@@ -1,8 +1,6 @@
-export { FieldDisplayEditor } from './FieldDisplayEditor';
-
 export {
   SingleStatBaseOptions,
-  sharedSingleStatPanelChangedHandler,
   sharedSingleStatMigrationHandler,
   convertOldAngularValueMapping,
+  sharedSingleStatPanelChangedHandler,
 } from './SingleStatBaseOptions';
