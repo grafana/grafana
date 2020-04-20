@@ -114,7 +114,7 @@ export default class LokiLanguageProvider extends LanguageProvider {
   };
 
   getLabelKeys(): string[] {
-    return this.labelKeys;
+    return this.labelKeys ?? [];
   }
 
   /**
@@ -129,7 +129,7 @@ export default class LokiLanguageProvider extends LanguageProvider {
     const { wrapperClasses, value, prefix, text } = input;
 
     // Local text properties
-    const empty = value.document.text.length === 0;
+    const empty = value?.document?.text?.length === 0;
     const selectedLines = value.document.getTextsAtRange(value.selection);
     const currentLine = selectedLines.size === 1 ? selectedLines.first().getText() : null;
 
@@ -235,8 +235,8 @@ export default class LokiLanguageProvider extends LanguageProvider {
   ): Promise<TypeaheadOutput> {
     let context = 'context-labels';
     const suggestions: CompletionItemGroup[] = [];
-    const line = value.anchorBlock.getText();
-    const cursorOffset = value.selection.anchor.offset;
+    const line = value?.anchorBlock.getText();
+    const cursorOffset = value?.selection.anchor.offset;
     const isValueStart = text.match(/^(=|=~|!=|!~)/);
 
     // Get normalized selector
@@ -387,7 +387,7 @@ export default class LokiLanguageProvider extends LanguageProvider {
       const rangeParams = absoluteRange ? rangeToParams(absoluteRange) : {};
       const res = await this.request(url, rangeParams);
       this.labelKeys = res.slice().sort();
-      this.logLabelOptions = this.labelKeys.map((key: string) => ({ label: key, value: key, isLeaf: false }));
+      this.logLabelOptions = this.labelKeys?.map((key: string) => ({ label: key, value: key, isLeaf: false }));
     } catch (e) {
       console.error(e);
     }
@@ -473,6 +473,6 @@ export default class LokiLanguageProvider extends LanguageProvider {
         console.error(e);
       }
     }
-    return value;
+    return value ?? [];
   }
 }
