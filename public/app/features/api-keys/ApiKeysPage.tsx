@@ -13,7 +13,14 @@ import ApiKeysAddedModal from './ApiKeysAddedModal';
 import config from 'app/core/config';
 import appEvents from 'app/core/app_events';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
-import { DeleteButton, EventsWithValidation, FormLabel, LegacyForms, ValidationEvents, IconButton } from '@grafana/ui';
+import {
+  DeleteButton,
+  EventsWithValidation,
+  InlineFormLabel,
+  LegacyForms,
+  ValidationEvents,
+  IconButton,
+} from '@grafana/ui';
 const { Input, Switch } = LegacyForms;
 import { dateTime, isDateTime, NavModel } from '@grafana/data';
 import { FilterInput } from 'app/core/components/FilterInput/FilterInput';
@@ -215,7 +222,7 @@ export class ApiKeysPage extends PureComponent<Props, any> {
                 </span>
               </div>
               <div className="gf-form max-width-21">
-                <FormLabel tooltip={tooltipText}>Time to live</FormLabel>
+                <InlineFormLabel tooltip={tooltipText}>Time to live</InlineFormLabel>
                 <Input
                   type="text"
                   className="gf-form-input"

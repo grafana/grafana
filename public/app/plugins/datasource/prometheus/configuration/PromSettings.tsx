@@ -1,5 +1,5 @@
 import React, { SyntheticEvent } from 'react';
-import { EventsWithValidation, FormLabel, regexValidation, LegacyForms } from '@grafana/ui';
+import { EventsWithValidation, InlineFormLabel, regexValidation, LegacyForms } from '@grafana/ui';
 const { Select, Input, FormField } = LegacyForms;
 import { DataSourceSettings, SelectableValue } from '@grafana/data';
 import { PromOptions } from '../types';
@@ -59,12 +59,12 @@ export const PromSettings = (props: Props) => {
           </div>
         </div>
         <div className="gf-form">
-          <FormLabel
+          <InlineFormLabel
             width={13}
             tooltip="Specify the HTTP Method to query Prometheus. (POST is only available in Prometheus >= v2.1.0)"
           >
             HTTP Method
-          </FormLabel>
+          </InlineFormLabel>
           <Select
             options={httpOptions}
             value={httpOptions.find(o => o.value === value.jsonData.httpMethod)}
