@@ -8,6 +8,7 @@ export enum DataTransformerID {
   rename = 'rename', // rename field based on user configuration
 
   seriesToColumns = 'seriesToColumns', // former table transform timeseries_to_columns
+  labelsAsColumns = 'labelsAsColumns', // former table transform table
   filterFields = 'filterFields', // Pick some fields (keep all frames)
   filterFieldsByName = 'filterFieldsByName', // Pick fields with name matching regex (keep all frames)
   filterFrames = 'filterFrames', // Pick some frames (keep all fields)

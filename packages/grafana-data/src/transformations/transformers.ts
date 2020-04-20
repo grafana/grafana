@@ -8,6 +8,7 @@ import { orderFieldsTransformer } from './transformers/order';
 import { organizeFieldsTransformer } from './transformers/organize';
 import { seriesToColumnsTransformer } from './transformers/seriesToColumns';
 import { renameFieldsTransformer } from './transformers/rename';
+import { labelsAsColumnsTransformer } from './transformers/labelsAsColumns';
 
 export const standardTransformers = {
   noopTransformer,
@@ -21,4 +22,5 @@ export const standardTransformers = {
   reduceTransformer,
   seriesToColumnsTransformer,
   renameFieldsTransformer,
+  labelsAsColumnsTransformer,
 };
