@@ -49,10 +49,10 @@ func (rs *RenderingService) renderViaPluginV1(ctx context.Context, renderKey str
 		return nil, err
 	}
 	if rsp.Error != "" {
-		return nil, fmt.Errorf("Rendering failed: %v", rsp.Error)
+		return nil, fmt.Errorf("rendering failed: %v", rsp.Error)
 	}
 
-	return &RenderResult{FilePath: pngPath}, err
+	return &RenderResult{FilePath: pngPath}, nil
 }
 
 func (rs *RenderingService) renderViaPluginV2(ctx context.Context, renderKey string, opts Opts) (*RenderResult, error) {
@@ -81,7 +81,7 @@ func (rs *RenderingService) renderViaPluginV2(ctx context.Context, renderKey str
 		Domain:            rs.domain,
 		Headers:           headers,
 	}
-	rs.log.Debug("calling renderer plugin", "req", req)
+	rs.log.Debug("Calling renderer plugin", "req", req)
 
 	rsp, err := rs.pluginInfo.GrpcPluginV2.Render(ctx, req)
 	if err != nil {
