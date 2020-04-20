@@ -3,11 +3,11 @@ import React, { PureComponent } from 'react';
 
 // Components
 import { LegacyForms, FormLabel, PanelOptionsGroup } from '@grafana/ui';
-const { Select } = LegacyForms;
+const { Select, FormField } = LegacyForms;
 
 // Types
 import { PanelEditorProps } from '@grafana/data';
-import { FormField, PieChartType } from '@grafana/ui';
+import { PieChartType } from '@grafana/ui';
 import { PieChartOptions } from './types';
 
 const labelWidth = 8;

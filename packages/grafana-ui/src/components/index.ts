@@ -14,8 +14,6 @@ export { ButtonCascader } from './ButtonCascader/ButtonCascader';
 
 // Forms
 export { FormLabel } from './FormLabel/FormLabel';
-export { FormField } from './FormField/FormField';
-export { SecretFormField } from './SecretFormField/SecretFormField';
 
 export { LoadingPlaceholder } from './LoadingPlaceholder/LoadingPlaceholder';
 export { ColorPicker, SeriesColorPicker } from './ColorPicker/ColorPicker';
@@ -161,10 +159,13 @@ import { ButtonSelect } from './Forms/Legacy/Select/ButtonSelect';
 
 //Input
 import { Input, LegacyInputStatus } from './Forms/Legacy/Input/Input';
+import { FormField } from './FormField/FormField';
+export { SecretFormField } from './SecretFormField/SecretFormField';
 
 import { Switch } from './Forms/Legacy/Switch/Switch';
 
 const LegacyForms = {
+  FormField,
   Select,
   AsyncSelect,
   IndicatorsContainer,
