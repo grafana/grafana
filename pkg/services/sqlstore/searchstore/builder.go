@@ -8,7 +8,7 @@ import (
 )
 
 // Builder defaults to returning a SQL to get a list of all dashboards
-// in default order but can be modified by applying filters.
+// in default order, but can be modified by applying filters.
 type Builder struct {
 	// List of FilterWhere/FilterGroupBy/FilterOrderBy/FilterLeftJoin
 	// to modify the query.
