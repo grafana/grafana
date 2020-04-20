@@ -115,7 +115,7 @@ export class EditorTabBody extends PureComponent<Props, State> {
             <div className="toolbar__heading">{heading}</div>
             {renderToolbar && renderToolbar()}
           </div>
-          {toolbarItems.map(item => this.renderButton(item))}
+          {toolbarItems?.map(item => this.renderButton(item))}
         </div>
         <div className="panel-editor__scroll">
           <CustomScrollbar autoHide={false} scrollTop={scrollTop} setScrollTop={setScrollTop} updateAfterMountMs={300}>
