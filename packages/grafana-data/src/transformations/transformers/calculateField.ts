@@ -3,7 +3,7 @@ import { DataTransformerID } from './ids';
 import { ReducerID, fieldReducers } from '../fieldReducer';
 import { getFieldMatcher } from '../matchers';
 import { FieldMatcherID } from '../matchers/ids';
-import { vectorToArray } from '../../vector/vectorToArray';
+import { RowVector } from '../../vector/RowVector';
 import { ArrayVector } from '../../vector';
 import { doStandardCalcs } from '../fieldReducer';
 
@@ -80,25 +80,3 @@ export const calculateFieldTransformer: DataTransformerInfo<CalculateFieldTransf
     });
   },
 };
-
-class RowVector implements Vector<number> {
-  constructor(private columns: Vector[]) {}
-
-  rowIndex = 0;
-
-  get length(): number {
-    return this.columns.length;
-  }
-
-  get(index: number): number {
-    return this.columns[index].get(this.rowIndex);
-  }
-
-  toArray(): number[] {
-    return vectorToArray(this);
-  }
-
-  toJSON(): number[] {
-    return vectorToArray(this);
-  }
-}
