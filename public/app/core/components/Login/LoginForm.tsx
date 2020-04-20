@@ -67,7 +67,7 @@ export class LoginForm extends PureComponent<Props, State> {
         <div className="login-form">
           <input
             ref={input => {
-              this.userInput = input;
+              this.userInput = input as HTMLInputElement;
             }}
             type="text"
             name="user"
