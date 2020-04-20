@@ -537,7 +537,7 @@ export const processQueryResponse = (
   const logsResult = processor.getLogsResult();
 
   // Send legacy data to Angular editors
-  if (state.datasourceInstance.components.QueryCtrl) {
+  if (state?.datasourceInstance?.components?.QueryCtrl) {
     const legacy = series.map(v => toLegacyResponseData(v));
 
     state.eventBridge.emit(PanelEvents.dataReceived, legacy);
@@ -669,7 +669,7 @@ export const exploreReducer = (state = initialExploreState, action: AnyAction): 
     stopQueryState(leftState.querySubscription);
     stopQueryState(rightState.querySubscription);
 
-    if (payload.force || !Number.isInteger(state.left.originPanelId)) {
+    if (payload.force || !Number.isInteger(state?.left?.originPanelId ?? -1)) {
       return initialExploreState;
     }
 
