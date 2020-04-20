@@ -1,6 +1,6 @@
 /* eslint-disable id-blacklist, no-restricted-imports, @typescript-eslint/ban-types */
 import { TimeZone, DefaultTimeZone } from '../types';
-import moment, { MomentInput, Moment, utc } from 'moment-timezone';
+import moment, { MomentInput, Moment } from 'moment-timezone';
 import { DateTimeInput } from './moment_wrapper';
 import { DEFAULT_DATE_TIME_FORMAT, MS_DATE_TIME_FORMAT } from './formats';
 
