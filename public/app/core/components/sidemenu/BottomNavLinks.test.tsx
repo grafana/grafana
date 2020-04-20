@@ -23,8 +23,6 @@ const setup = (propOverrides?: object) => {
         orgId: 1,
         login: 'hello',
         orgName: 'Grafana',
-//        name: 'Hello World',
-//        email: 'hello@world.universe',
         timezone: 'UTC',
         helpFlags1: 1,
         lightTheme: false,
