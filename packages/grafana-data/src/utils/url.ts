@@ -2,16 +2,28 @@
  * @preserve jquery-param (c) 2015 KNOWLEDGECODE | MIT
  */
 
-import { UrlQueryMap } from '@grafana/runtime';
+/**
+ * Type to represent the value of a single query variable.
+ *
+ * @public
+ */
+export type UrlQueryValue = string | number | boolean | string[] | number[] | boolean[] | undefined | null;
 
-export function renderUrl(path: string, query: UrlQueryMap | undefined): string {
+/**
+ * Type to represent the values parsed from the query string.
+ *
+ * @public
+ */
+export type UrlQueryMap = Record<string, UrlQueryValue>;
+
+function renderUrl(path: string, query: UrlQueryMap | undefined): string {
   if (query && Object.keys(query).length > 0) {
     path += '?' + toUrlParams(query);
   }
   return path;
 }
 
-export function encodeURIComponentAsAngularJS(val: string, pctEncodeSpaces?: boolean) {
+function encodeURIComponentAsAngularJS(val: string, pctEncodeSpaces?: boolean) {
   return encodeURIComponent(val)
     .replace(/%40/gi, '@')
     .replace(/%3A/gi, ':')
@@ -21,7 +33,7 @@ export function encodeURIComponentAsAngularJS(val: string, pctEncodeSpaces?: boo
     .replace(/%20/g, pctEncodeSpaces ? '%20' : '+');
 }
 
-export function toUrlParams(a: any) {
+function toUrlParams(a: any) {
   const s: any[] = [];
   const rbracket = /\[\]$/;
 
@@ -72,7 +84,7 @@ export function toUrlParams(a: any) {
   return buildParams('', a).join('&');
 }
 
-export function appendQueryToUrl(url: string, stringToAppend: string) {
+function appendQueryToUrl(url: string, stringToAppend: string) {
   if (stringToAppend !== undefined && stringToAppend !== null && stringToAppend !== '') {
     const pos = url.indexOf('?');
     if (pos !== -1) {
@@ -91,7 +103,7 @@ export function appendQueryToUrl(url: string, stringToAppend: string) {
 /**
  * Return search part (as object) of current url
  */
-export function getUrlSearchParams() {
+function getUrlSearchParams() {
   const search = window.location.search.substring(1);
   const searchParamsSegments = search.split('&');
   const params: any = {};
@@ -110,3 +122,10 @@ export function getUrlSearchParams() {
   }
   return params;
 }
+
+export const urlUtil = {
+  renderUrl,
+  toUrlParams,
+  appendQueryToUrl,
+  getUrlSearchParams,
+};

@@ -21,8 +21,8 @@ import {
   TimeZone,
   toUtc,
   ExploreMode,
+  urlUtil,
 } from '@grafana/data';
-import { renderUrl } from 'app/core/utils/url';
 import store from 'app/core/store';
 import kbn from 'app/core/utils/kbn';
 import { getNextRefIdChar } from './query';
@@ -106,7 +106,7 @@ export async function getExploreUrl(args: GetExploreUrlArguments): Promise<strin
     }
 
     const exploreState = JSON.stringify({ ...state, originPanelId: panel.getSavedId() });
-    url = renderUrl('/explore', { left: exploreState });
+    url = urlUtil.renderUrl('/explore', { left: exploreState });
   }
   return url;
 }

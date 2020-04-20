@@ -1,13 +1,12 @@
 import React, { FC, useMemo } from 'react';
-import { PanelModel, DashboardModel } from '../../state';
-import { SelectableValue, PanelPlugin, FieldConfigSource, PanelData } from '@grafana/data';
-import { Switch, Select, DataLinksInlineEditor, Input, TextArea, RadioButtonGroup, Field } from '@grafana/ui';
+import { DashboardModel, PanelModel } from '../../state';
+import { FieldConfigSource, PanelData, PanelPlugin, SelectableValue } from '@grafana/data';
+import { Counter, DataLinksInlineEditor, Field, Input, RadioButtonGroup, Select, Switch, TextArea } from '@grafana/ui';
 import { OptionsGroup } from './OptionsGroup';
 import { getPanelLinksVariableSuggestions } from '../../../panel/panellinks/link_srv';
 import { getVariables } from '../../../variables/state/selectors';
 import { PanelOptionsEditor } from './PanelOptionsEditor';
-import { AngularPanelOptions } from '../../panel_editor/AngularPanelOptions';
-import { Counter } from '@grafana/ui/src/components/Tabs/Counter';
+import { AngularPanelOptions } from './AngularPanelOptions';
 
 interface Props {
   panel: PanelModel;
@@ -30,7 +29,7 @@ export const PanelOptionsTab: FC<Props> = ({
 }) => {
   const elements: JSX.Element[] = [];
   const linkVariablesSuggestions = useMemo(() => getPanelLinksVariableSuggestions(), []);
-  const panelLinksCount = panel && panel.links ? panel.links.length : undefined;
+  const panelLinksCount = panel && panel.links ? panel.links.length : 0;
 
   const variableOptions = getVariableOptions();
   const directionOptions = [
@@ -93,9 +92,7 @@ export const PanelOptionsTab: FC<Props> = ({
   elements.push(
     <OptionsGroup
       renderTitle={isExpanded => (
-        <>
-          Panel links {!isExpanded && panelLinksCount && panelLinksCount !== 0 && <Counter value={panelLinksCount} />}
-        </>
+        <>Panel links {!isExpanded && panelLinksCount > 0 && <Counter value={panelLinksCount} />}</>
       )}
       key="panel links"
       defaultToClosed={true}

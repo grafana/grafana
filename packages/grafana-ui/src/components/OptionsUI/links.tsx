@@ -1,5 +1,10 @@
 import React from 'react';
-import { FieldConfigEditorProps, DataLink, DataLinksFieldConfigSettings } from '@grafana/data';
+import {
+  DataLink,
+  DataLinksFieldConfigSettings,
+  FieldConfigEditorProps,
+  VariableSuggestionsScope,
+} from '@grafana/data';
 import { DataLinksInlineEditor } from '../DataLinks/DataLinksInlineEditor/DataLinksInlineEditor';
 
 export const DataLinksValueEditor: React.FC<FieldConfigEditorProps<DataLink[], DataLinksFieldConfigSettings>> = ({
@@ -12,7 +17,7 @@ export const DataLinksValueEditor: React.FC<FieldConfigEditorProps<DataLink[], D
       links={value}
       onChange={onChange}
       data={context.data}
-      suggestions={context.getSuggestions ? context.getSuggestions() : []}
+      suggestions={context.getSuggestions ? context.getSuggestions(VariableSuggestionsScope.Values) : []}
     />
   );
 };

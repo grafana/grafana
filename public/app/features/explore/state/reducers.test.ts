@@ -2,11 +2,12 @@ import {
   DataQuery,
   DataSourceApi,
   dateTime,
+  ExploreMode,
   LoadingState,
   LogsDedupStrategy,
-  toDataFrame,
-  ExploreMode,
   RawTimeRange,
+  toDataFrame,
+  UrlQueryMap,
 } from '@grafana/data';
 
 import {
@@ -33,7 +34,6 @@ import {
 } from './actionTypes';
 import { serializeStateToUrlParam } from 'app/core/utils/explore';
 import { updateLocation } from '../../../core/actions';
-import { UrlQueryMap } from '@grafana/runtime';
 
 describe('Explore item reducer', () => {
   describe('scanning', () => {
