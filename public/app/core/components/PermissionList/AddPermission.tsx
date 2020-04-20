@@ -64,7 +64,7 @@ class AddPermissions extends Component<Props, NewDashboardAclItem> {
   };
 
   onPermissionChanged = (permission: SelectableValue<PermissionLevel>) => {
-    this.setState({ permission: permission.value });
+    this.setState({ permission: permission.value ?? PermissionLevel.View });
   };
 
   onSubmit = async (evt: React.SyntheticEvent) => {
