@@ -16,9 +16,9 @@ import { DashboardModel } from '../dashboard/state/DashboardModel';
 import { PanelModel } from '../dashboard/state/PanelModel';
 import { TestRuleResult } from './TestRuleResult';
 import { AppNotificationSeverity, StoreState } from 'app/types';
-import { PanelEditorTabIds, getPanelEditorTab } from '../dashboard/panel_editor/state/reducers';
-import { changePanelEditorTab } from '../dashboard/panel_editor/state/actions';
 import { CoreEvents } from 'app/types';
+import { updateLocation } from 'app/core/actions';
+import { PanelEditorTabId } from '../dashboard/components/PanelEditor/types';
 
 interface OwnProps {
   dashboard: DashboardModel;
@@ -30,7 +30,7 @@ interface ConnectedProps {
 }
 
 interface DispatchProps {
-  changePanelEditorTab: typeof changePanelEditorTab;
+  updateLocation: typeof updateLocation;
 }
 
 export type Props = OwnProps & ConnectedProps & DispatchProps;
@@ -161,8 +161,8 @@ class UnConnectedAlertTab extends PureComponent<Props, State> {
   };
 
   switchToQueryTab = () => {
-    const { changePanelEditorTab } = this.props;
-    changePanelEditorTab(getPanelEditorTab(PanelEditorTabIds.Queries));
+    const { updateLocation } = this.props;
+    updateLocation({ query: { tab: PanelEditorTabId.Query }, partial: true });
   };
 
   renderValidationMessage = () => {
@@ -228,6 +228,6 @@ const mapStateToProps: MapStateToProps<ConnectedProps, OwnProps, StoreState> = (
   };
 };
 
-const mapDispatchToProps: MapDispatchToProps<DispatchProps, OwnProps> = { changePanelEditorTab };
+const mapDispatchToProps: MapDispatchToProps<DispatchProps, OwnProps> = { updateLocation };
 
 export const AlertTab = connect(mapStateToProps, mapDispatchToProps)(UnConnectedAlertTab);
