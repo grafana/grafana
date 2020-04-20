@@ -200,7 +200,7 @@ class GraphElement {
           items: [
             {
               label: 'Add annotation',
-              icon: 'gicon gicon-annotation',
+              icon: 'comment-alt',
               onClick: () => this.eventManager.updateTime({ from: flotPosition.x, to: null }),
             },
           ],
@@ -218,7 +218,7 @@ class GraphElement {
               label: link.title,
               url: link.href,
               target: link.target,
-              icon: `fa ${link.target === '_self' ? 'fa-link' : 'fa-external-link'}`,
+              icon: `${link.target === '_self' ? 'link' : 'external-link-alt'}`,
               onClick: link.onClick,
             };
           }),

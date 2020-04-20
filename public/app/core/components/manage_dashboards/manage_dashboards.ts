@@ -1,6 +1,7 @@
 import { IScope } from 'angular';
 import _ from 'lodash';
 import { SelectableValue } from '@grafana/data';
+//@ts-ignore
 import coreModule from 'app/core/core_module';
 import appEvents from 'app/core/app_events';
 import { SearchSrv } from 'app/core/services/search_srv';
@@ -204,7 +205,7 @@ export class ManageDashboardsCtrl {
       title: 'Delete',
       text: text,
       text2: text2,
-      icon: 'fa-trash',
+      icon: 'trash-alt',
       yesText: 'Delete',
       onConfirm: () => {
         this.deleteFoldersAndDashboards(data.folderUids, data.dashboardUids);
@@ -337,26 +338,6 @@ export class ManageDashboardsCtrl {
 
     return url;
   }
-
-  // TODO handle this inside SearchResults component
-  toggleSelection = (item: any, evt: any) => {
-    if (evt) {
-      evt.stopPropagation();
-      evt.preventDefault();
-    }
-
-    item.checked = !item.checked;
-
-    if (item.items) {
-      _.each(item.items, i => {
-        i.checked = item.checked;
-      });
-    }
-
-    if (this.selectionChanged) {
-      this.selectionChanged();
-    }
-  };
 }
 
 export function manageDashboardsDirective() {
@@ -373,4 +354,4 @@ export function manageDashboardsDirective() {
   };
 }
 
-coreModule.directive('manageDashboards', manageDashboardsDirective);
+//coreModule.directive('manageDashboards', manageDashboardsDirective);

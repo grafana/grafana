@@ -15,9 +15,9 @@ import { ColorPicker } from '../ColorPicker/ColorPicker';
 import { stylesFactory } from '../../themes';
 import { Icon } from '../Icon/Icon';
 import { RadioButtonGroup } from '../Forms/RadioButtonGroup/RadioButtonGroup';
-import { Field } from '../Forms/Field';
 import { Button } from '../Button';
 import { FullWidthButtonContainer } from '../Button/FullWidthButtonContainer';
+import { Label } from '../Forms/Label';
 
 const modes: Array<SelectableValue<ThresholdsMode>> = [
   { value: ThresholdsMode.Absolute, label: 'Absolute', description: 'Pick thresholds based on the absolute values' },
@@ -200,7 +200,7 @@ export class ThresholdsEditor extends PureComponent<Props, State> {
           return (
             <div className={styles.wrapper}>
               <FullWidthButtonContainer className={styles.addButton}>
-                <Button size="sm" icon="plus-circle" onClick={() => this.onAddThreshold()} variant="secondary">
+                <Button size="sm" icon="plus" onClick={() => this.onAddThreshold()} variant="secondary">
                   Add threshold
                 </Button>
               </FullWidthButtonContainer>
@@ -217,11 +217,12 @@ export class ThresholdsEditor extends PureComponent<Props, State> {
                   })}
               </div>
 
-              <Field label="Threshold mode" description="Percentage means thresholds relative to min & max">
+              <div>
+                <Label description="Percentage means thresholds relative to min & max">Thresholds mode</Label>
                 <FullWidthButtonContainer>
                   <RadioButtonGroup size="sm" options={modes} onChange={this.onModeChanged} value={thresholds.mode} />
                 </FullWidthButtonContainer>
-              </Field>
+              </div>
             </div>
           );
         }}
@@ -278,7 +279,7 @@ const getStyles = stylesFactory(
       wrapper: css`
         display: flex;
         flex-direction: column;
-        margin-bottom: -${theme.spacing.formSpacingBase * 2}px;
+        // margin-bottom: -${theme.spacing.formSpacingBase * 2}px;
       `,
       thresholds: css`
         display: flex;

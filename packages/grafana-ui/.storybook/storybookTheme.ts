@@ -9,12 +9,12 @@ const createTheme = (theme: GrafanaTheme) => {
   return create({
     base: theme.name.includes('Light') ? 'light' : 'dark',
 
-    colorPrimary: theme.colors.brandPrimary,
-    colorSecondary: theme.colors.brandPrimary,
+    colorPrimary: theme.palette.brandPrimary,
+    colorSecondary: theme.palette.brandPrimary,
 
     // UI
-    appBg: theme.colors.pageBg,
-    appContentBg: theme.colors.pageBg,
+    appBg: theme.colors.bodyBg,
+    appContentBg: theme.colors.bodyBg,
     appBorderColor: theme.colors.pageHeaderBorder,
     appBorderRadius: 4,
 
@@ -28,8 +28,8 @@ const createTheme = (theme: GrafanaTheme) => {
 
     // Toolbar default and active colors
     barTextColor: theme.colors.formInputBorderActive,
-    barSelectedColor: theme.colors.brandPrimary,
-    barBg: theme.colors.pageBg,
+    barSelectedColor: theme.palette.brandPrimary,
+    barBg: theme.colors.pageHeaderBg,
 
     // Form colors
     inputBg: theme.colors.formInputBg,

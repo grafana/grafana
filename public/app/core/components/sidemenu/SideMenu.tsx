@@ -20,7 +20,7 @@ export class SideMenu extends PureComponent {
         <Branding.MenuLogo />
       </a>,
       <div className="sidemenu__logo_small_breakpoint" onClick={this.toggleSideMenuSmallBreakpoint} key="hamburger">
-        <Icon name="bars" />
+        <Icon name="bars" size="xl" />
         <span className="sidemenu__close">
           <Icon name="times" />
           &nbsp;Close

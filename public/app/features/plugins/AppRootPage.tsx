@@ -2,15 +2,13 @@
 import React, { Component } from 'react';
 import { hot } from 'react-hot-loader';
 import { connect } from 'react-redux';
-
 // Types
 import { StoreState } from 'app/types';
-import { UrlQueryMap } from '@grafana/runtime';
+import { AppEvents, AppPlugin, AppPluginMeta, NavModel, PluginType, UrlQueryMap } from '@grafana/data';
 
 import Page from 'app/core/components/Page/Page';
 import { getPluginSettings } from './PluginSettingsCache';
 import { importAppPlugin } from './plugin_loader';
-import { AppPlugin, AppPluginMeta, PluginType, NavModel, AppEvents } from '@grafana/data';
 import { getLoadingNav } from './PluginPage';
 import { getNotFoundNav, getWarningNav } from 'app/core/nav_model_srv';
 import { appEvents } from 'app/core/core';

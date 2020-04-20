@@ -30,8 +30,15 @@ describe('getPanelMenu', () => {
         Object {
           "iconClassName": "info-circle",
           "onClick": [Function],
-          "shortcut": "p i",
+          "shortcut": "i",
+          "subMenu": Array [
+            Object {
+              "onClick": [Function],
+              "text": "Panel JSON",
+            },
+          ],
           "text": "Inspect",
+          "type": "submenu",
         },
         Object {
           "iconClassName": "cube",
@@ -45,10 +52,6 @@ describe('getPanelMenu', () => {
             Object {
               "onClick": [Function],
               "text": "Copy",
-            },
-            Object {
-              "onClick": [Function],
-              "text": "Panel JSON",
             },
           ],
           "text": "More...",

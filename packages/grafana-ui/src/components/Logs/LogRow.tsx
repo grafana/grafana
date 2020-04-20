@@ -1,6 +1,6 @@
 import React, { PureComponent } from 'react';
 import { Field, LinkModel, LogRowModel, TimeZone, DataQueryResponse, GrafanaTheme } from '@grafana/data';
-import { Icon } from '@grafana/ui';
+import { Icon } from '../Icon/Icon';
 import { cx, css } from 'emotion';
 
 import {
@@ -44,7 +44,7 @@ interface State {
 }
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
-  const bgColor = selectThemeVariant({ light: theme.colors.gray7, dark: theme.colors.dark2 }, theme.type);
+  const bgColor = selectThemeVariant({ light: theme.palette.gray7, dark: theme.palette.dark2 }, theme.type);
   return {
     topVerticalAlign: css`
       label: topVerticalAlign;

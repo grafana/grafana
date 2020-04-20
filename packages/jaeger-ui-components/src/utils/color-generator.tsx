@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+import { isLight, Theme } from '../Theme';
+
 const COLORS_HEX = [
   '#17B8BE',
   '#F8DCA1',
@@ -35,6 +37,27 @@ const COLORS_HEX = [
   '#776E57',
 ];
 
+const COLORS_HEX_DARK = [
+  '#17B8BE',
+  '#F8DCA1',
+  '#B7885E',
+  '#FFCB99',
+  '#F89570',
+  '#829AE3',
+  '#E79FD5',
+  '#1E96BE',
+  '#89DAC1',
+  '#B3AD9E',
+  '#12939A',
+  '#DDB27C',
+  '#88572C',
+  '#FF9833',
+  '#EF5D28',
+  '#DA70BF',
+  '#4DC19C',
+  '#776E57',
+];
+
 // TS needs the precise return type
 function strToRgb(s: string): [number, number, number] {
   if (s.length !== 7) {
@@ -46,13 +69,13 @@ function strToRgb(s: string): [number, number, number] {
   return [parseInt(r, 16), parseInt(g, 16), parseInt(b, 16)];
 }
 
-export class ColorGenerator {
+class ColorGenerator {
   colorsHex: string[];
   colorsRgb: Array<[number, number, number]>;
   cache: Map<string, number>;
   currentIdx: number;
 
-  constructor(colorsHex: string[] = COLORS_HEX) {
+  constructor(colorsHex: string[]) {
     this.colorsHex = colorsHex;
     this.colorsRgb = colorsHex.map(strToRgb);
     this.cache = new Map();
@@ -95,4 +118,18 @@ export class ColorGenerator {
   }
 }
 
-export default new ColorGenerator();
+let darkGenerator = new ColorGenerator(COLORS_HEX_DARK);
+let lightGenerator = new ColorGenerator(COLORS_HEX);
+
+export function clear() {
+  darkGenerator = new ColorGenerator(COLORS_HEX_DARK);
+  lightGenerator = new ColorGenerator(COLORS_HEX);
+}
+
+export function getColorByKey(key: string, theme: Theme) {
+  return (isLight(theme) ? lightGenerator : darkGenerator).getColorByKey(key);
+}
+
+export function getRgbColorByKey(key: string, theme: Theme): [number, number, number] {
+  return (isLight(theme) ? lightGenerator : darkGenerator).getRgbColorByKey(key);
+}

@@ -10,7 +10,7 @@ import { stylesFactory, withTheme } from '@grafana/ui';
 //Types
 import { RichHistoryQuery, ExploreId } from 'app/types/explore';
 import { SelectableValue, GrafanaTheme } from '@grafana/data';
-import { TabsBar, Tab, TabContent, Themeable, CustomScrollbar, IconName, Icon } from '@grafana/ui';
+import { TabsBar, Tab, TabContent, Themeable, CustomScrollbar, IconName, IconButton } from '@grafana/ui';
 
 //Components
 import { RichHistorySettings } from './RichHistorySettings';
@@ -50,8 +50,8 @@ interface RichHistoryState {
 }
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
-  const borderColor = theme.isLight ? theme.colors.gray5 : theme.colors.dark6;
-  const tabContentBg = theme.colors.pageBg;
+  const borderColor = theme.isLight ? theme.palette.gray5 : theme.palette.dark6;
+  const tabContentBg = theme.colors.bodyBg;
   return {
     container: css`
       height: 100%;
@@ -114,7 +114,14 @@ class UnThemedRichHistory extends PureComponent<RichHistoryProps, RichHistorySta
   };
 
   onSelectDatasourceFilters = (value: SelectableValue[] | null) => {
-    store.setObject(RICH_HISTORY_SETTING_KEYS.datasourceFilters, value);
+    try {
+      store.setObject(RICH_HISTORY_SETTING_KEYS.datasourceFilters, value);
+    } catch (error) {
+      console.error(error);
+    }
+    /* Set data source filters to state even though they were not successfully saved in
+     * localStorage to allow interaction and filtering.
+     **/
     this.setState({ datasourceFilters: value });
   };
 
@@ -125,7 +132,7 @@ class UnThemedRichHistory extends PureComponent<RichHistoryProps, RichHistorySta
   onChangeSortOrder = (sortOrder: SortOrder) => this.setState({ sortOrder });
 
   /* If user selects activeDatasourceOnly === true, set datasource filter to currently active datasource.
-   *  Filtering based on datasource won't be available. Otherwise set to null, as filtering will be
+   * Filtering based on datasource won't be available. Otherwise set to null, as filtering will be
    * available for user.
    */
   updateFilters() {
@@ -219,9 +226,7 @@ class UnThemedRichHistory extends PureComponent<RichHistoryProps, RichHistorySta
               icon={t.icon as IconName}
             />
           ))}
-          <div className={styles.close} onClick={onClose}>
-            <Icon name="times" title="Close query history" />
-          </div>
+          <IconButton className={styles.close} onClick={onClose} name="times" title="Close query history" />
         </TabsBar>
         <CustomScrollbar
           className={css`

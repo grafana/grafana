@@ -17,7 +17,7 @@
 .page-explore,
 .page-dashboard {
   .main-view {
-    background: $body-bg;
+    background: $dashboard-bg;
   }
 }
 
@@ -83,13 +83,6 @@
       width: 100%;
       align-self: flex-end;
     }
-  }
-}
-
-// fix for phantomjs
-.body--phantomjs {
-  .scroll-canvas {
-    overflow: hidden;
   }
 }
 

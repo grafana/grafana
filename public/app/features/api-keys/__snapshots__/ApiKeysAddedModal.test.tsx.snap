@@ -12,6 +12,7 @@ exports[`Render should render component 1`] = `
     >
       <Icon
         name="key-skeleton-alt"
+        size="lg"
       />
       <span
         className="p-l-1"

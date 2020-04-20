@@ -15,15 +15,14 @@ import {
   LogRowModel,
   LogsDedupStrategy,
   LogsModel,
-  PanelModel,
   RawTimeRange,
   TimeFragment,
   TimeRange,
   TimeZone,
   toUtc,
   ExploreMode,
+  urlUtil,
 } from '@grafana/data';
-import { renderUrl } from 'app/core/utils/url';
 import store from 'app/core/store';
 import kbn from 'app/core/utils/kbn';
 import { getNextRefIdChar } from './query';
@@ -33,6 +32,7 @@ import { ExploreUrlState, QueryOptions, QueryTransaction } from 'app/types/explo
 import { config } from '../config';
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { DataSourceSrv } from '@grafana/runtime';
+import { PanelModel } from 'app/features/dashboard/state';
 
 export const DEFAULT_RANGE = {
   from: 'now-1h',
@@ -105,8 +105,8 @@ export async function getExploreUrl(args: GetExploreUrlArguments): Promise<strin
       };
     }
 
-    const exploreState = JSON.stringify({ ...state, originPanelId: panel.id });
-    url = renderUrl('/explore', { left: exploreState });
+    const exploreState = JSON.stringify({ ...state, originPanelId: panel.getSavedId() });
+    url = urlUtil.renderUrl('/explore', { left: exploreState });
   }
   return url;
 }
@@ -345,18 +345,24 @@ export function updateHistory<T extends DataQuery = any>(
   queries: T[]
 ): Array<HistoryItem<T>> {
   const ts = Date.now();
+  let updatedHistory = history;
   queries.forEach(query => {
-    history = [{ query, ts }, ...history];
+    updatedHistory = [{ query, ts }, ...updatedHistory];
   });
 
-  if (history.length > MAX_HISTORY_ITEMS) {
-    history = history.slice(0, MAX_HISTORY_ITEMS);
+  if (updatedHistory.length > MAX_HISTORY_ITEMS) {
+    updatedHistory = updatedHistory.slice(0, MAX_HISTORY_ITEMS);
   }
 
   // Combine all queries of a datasource type into one history
   const historyKey = `grafana.explore.history.${datasourceId}`;
-  store.setObject(historyKey, history);
-  return history;
+  try {
+    store.setObject(historyKey, updatedHistory);
+    return updatedHistory;
+  } catch (error) {
+    console.error(error);
+    return history;
+  }
 }
 
 export function clearHistory(datasourceId: string) {

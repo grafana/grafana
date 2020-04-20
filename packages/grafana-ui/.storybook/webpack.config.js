@@ -38,7 +38,7 @@ module.exports = ({ config, mode }) => {
     use: [
       {
         loader: 'style-loader',
-        options: { injectType: 'lazyStyleTag' }
+        options: { injectType: 'lazyStyleTag' },
       },
       {
         loader: 'css-loader',
@@ -86,9 +86,10 @@ module.exports = ({ config, mode }) => {
       }),
       new OptimizeCSSAssetsPlugin({}),
     ],
-  },
+  };
 
   config.resolve.extensions.push('.ts', '.tsx', '.mdx');
+
   config.stats = {
     warningsFilter: /export .* was not found in/,
   };

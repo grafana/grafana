@@ -1,6 +1,6 @@
 import React, { PureComponent } from 'react';
 import { FieldConfigSource, GrafanaTheme, PanelData, PanelPlugin } from '@grafana/data';
-import { Button, stylesFactory, Icon, Forms } from '@grafana/ui';
+import { Button, stylesFactory, Icon, RadioButtonGroup } from '@grafana/ui';
 import { css, cx } from 'emotion';
 import config from 'app/core/config';
 import AutoSizer from 'react-virtualized-auto-sizer';
@@ -17,8 +17,7 @@ import { Unsubscribable } from 'rxjs';
 import { DisplayMode, displayModes, PanelEditorTab } from './types';
 import { PanelEditorTabs } from './PanelEditorTabs';
 import { DashNavTimeControls } from '../DashNav/DashNavTimeControls';
-import { BackButton } from 'app/core/components/BackButton/BackButton';
-import { LocationState } from 'app/types';
+import { LocationState, CoreEvents } from 'app/types';
 import { calculatePanelSize } from './utils';
 import { initPanelEditor, panelEditorCleanUp, updatePanelEditorUIState } from './state/actions';
 import { PanelEditorUIState, setDiscardChanges } from './state/reducers';
@@ -29,6 +28,9 @@ import { DashNavButton } from 'app/features/dashboard/components/DashNav/DashNav
 import { VariableModel } from 'app/features/templating/types';
 import { getVariables } from 'app/features/variables/state/selectors';
 import { SubMenuItems } from 'app/features/dashboard/components/SubMenu/SubMenuItems';
+import { BackButton } from 'app/core/components/BackButton/BackButton';
+import { appEvents } from 'app/core/core';
+import { SaveDashboardModalProxy } from '../SaveDashboard/SaveDashboardModalProxy';
 
 interface OwnProps {
   dashboard: DashboardModel;
@@ -56,9 +58,6 @@ interface DispatchProps {
 
 type Props = OwnProps & ConnectedProps & DispatchProps;
 
-// TODO[NewPanelEdit]: Remove when we switch to new panel editor
-export const NewPanelEditorContext = React.createContext(false);
-
 export class PanelEditorUnconnected extends PureComponent<Props> {
   querySubscription: Unsubscribable;
 
@@ -82,6 +81,17 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
     this.props.updateLocation({
       query: { editPanel: null, tab: null },
       partial: true,
+    });
+  };
+
+  onOpenDashboardSettings = () => {
+    this.props.updateLocation({ query: { editview: 'settings' }, partial: true });
+  };
+
+  onSaveDashboard = () => {
+    appEvents.emit(CoreEvents.showModalReact, {
+      component: SaveDashboardModalProxy,
+      props: { dashboard: this.props.dashboard },
     });
   };
 
@@ -110,8 +120,14 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
     this.forceUpdate();
   };
 
-  onDragFinished = (pane: Pane, size: number) => {
+  onDragFinished = (pane: Pane, size?: number) => {
     document.body.style.cursor = 'auto';
+
+    // When the drag handle is just clicked size is undefined
+    if (!size) {
+      return;
+    }
+
     const targetPane = pane === Pane.Top ? 'topPaneSize' : 'rightPaneSize';
     const { updatePanelEditorUIState } = this.props;
     updatePanelEditorUIState({
@@ -121,11 +137,6 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
 
   onDragStarted = () => {
     document.body.style.cursor = 'row-resize';
-  };
-
-  onPanelTitleChange = (title: string) => {
-    this.props.panel.title = title;
-    this.forceUpdate();
   };
 
   onDiplayModeChange = (mode: DisplayMode) => {
@@ -169,9 +180,8 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
                       <DashboardPanel
                         dashboard={dashboard}
                         panel={panel}
-                        isEditing={false}
-                        isInEditMode
-                        isFullscreen={false}
+                        isEditing={true}
+                        isViewing={false}
                         isInView={true}
                       />
                     </div>
@@ -210,7 +220,7 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
         {this.renderTemplateVariables(styles)}
         <div className="flex-grow-1" />
         <div className={styles.toolbarItem}>
-          <Forms.RadioButtonGroup value={uiState.mode} options={displayModes} onChange={this.onDiplayModeChange} />
+          <RadioButtonGroup value={uiState.mode} options={displayModes} onChange={this.onDiplayModeChange} />
         </div>
         <div className={styles.toolbarItem}>
           <DashNavTimeControls dashboard={dashboard} location={location} updateLocation={updateLocation} />
@@ -232,17 +242,32 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
     return (
       <div className={styles.editorToolbar}>
         <div className={styles.toolbarLeft}>
-          <BackButton onClick={this.onPanelExit} />
+          <BackButton onClick={this.onPanelExit} surface="panel" />
           <span className={styles.editorTitle}>{dashboard.title} / Edit Panel</span>
         </div>
         <div className={styles.toolbarLeft}>
           <div className={styles.toolbarItem}>
-            <Button onClick={this.onDiscard} variant="secondary">
-              Discard changes
+            <Button
+              icon="cog"
+              onClick={this.onOpenDashboardSettings}
+              variant="secondary"
+              title="Open dashboad settings"
+            />
+          </div>
+          <div className={styles.toolbarItem}>
+            <Button onClick={this.onDiscard} variant="secondary" title="Undo all changes">
+              Discard
             </Button>
           </div>
           <div className={styles.toolbarItem}>
-            <Button onClick={this.onPanelExit}>Apply</Button>
+            <Button onClick={this.onSaveDashboard} variant="secondary" title="Apply changes and save dashboard">
+              Save
+            </Button>
+          </div>
+          <div className={styles.toolbarItem}>
+            <Button onClick={this.onPanelExit} title="Apply changes and go back to dashboard">
+              Apply
+            </Button>
           </div>
         </div>
       </div>
@@ -300,30 +325,28 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
     }
 
     return (
-      <NewPanelEditorContext.Provider value={true}>
-        <div className={styles.wrapper}>
-          {this.editorToolbar(styles)}
-          <div className={styles.verticalSplitPanesWrapper}>
-            {uiState.isPanelOptionsVisible ? this.renderWithOptionsPane(styles) : this.renderHorizontalSplit(styles)}
-          </div>
+      <div className={styles.wrapper}>
+        {this.editorToolbar(styles)}
+        <div className={styles.verticalSplitPanesWrapper}>
+          {uiState.isPanelOptionsVisible ? this.renderWithOptionsPane(styles) : this.renderHorizontalSplit(styles)}
         </div>
-      </NewPanelEditorContext.Provider>
+      </div>
     );
   }
 }
 
 const mapStateToProps: MapStateToProps<ConnectedProps, OwnProps, StoreState> = (state, props) => {
-  const panel = state.panelEditorNew.getPanel();
+  const panel = state.panelEditor.getPanel();
   const { plugin } = getPanelStateById(state.dashboard, panel.id);
 
   return {
     location: state.location,
     plugin: plugin,
-    panel: state.panelEditorNew.getPanel(),
-    data: state.panelEditorNew.getData(),
-    initDone: state.panelEditorNew.initDone,
+    panel: state.panelEditor.getPanel(),
+    data: state.panelEditor.getData(),
+    initDone: state.panelEditor.initDone,
     tabs: getPanelEditorTabs(state.location, plugin),
-    uiState: state.panelEditorNew.ui,
+    uiState: state.panelEditor.ui,
     variables: getVariables(state),
   };
 };
@@ -346,9 +369,9 @@ enum Pane {
 /*
  * Styles
  */
-const getStyles = stylesFactory((theme: GrafanaTheme, props: Props) => {
+export const getStyles = stylesFactory((theme: GrafanaTheme, props: Props) => {
   const { uiState } = props;
-  const handleColor = theme.colors.blueLight;
+  const handleColor = theme.palette.blue95;
   const paneSpaceing = theme.spacing.md;
 
   const resizer = css`
@@ -372,12 +395,12 @@ const getStyles = stylesFactory((theme: GrafanaTheme, props: Props) => {
       width: 100%;
       height: 100%;
       position: fixed;
-      z-index: ${theme.zIndex.modal};
+      z-index: ${theme.zIndex.sidemenu};
       top: 0;
       left: 0;
       right: 0;
       bottom: 0;
-      background: ${theme.colors.bodyBg};
+      background: ${theme.colors.dashboardBg};
       display: flex;
       flex-direction: column;
     `,
@@ -410,6 +433,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme, props: Props) => {
         cursor: col-resize;
         width: ${paneSpaceing};
         border-right-width: 1px;
+        margin-top: 18px;
       `
     ),
     resizerH: cx(
@@ -418,9 +442,10 @@ const getStyles = stylesFactory((theme: GrafanaTheme, props: Props) => {
         height: ${paneSpaceing};
         cursor: row-resize;
         position: relative;
-        top: 49px;
+        top: 0px;
         z-index: 1;
         border-top-width: 1px;
+        margin-left: ${paneSpaceing};
       `
     ),
     tabsWrapper: css`
