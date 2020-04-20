@@ -2,6 +2,7 @@ import { PanelPlugin } from '@grafana/data';
 import { TablePanel } from './TablePanel';
 import { CustomFieldConfig, Options } from './types';
 import { tablePanelChangedHandler, tableMigrationHandler } from './migrations';
+import { TableCellDisplayMode } from '@grafana/ui/src/components/Table/types';
 
 export const plugin = new PanelPlugin<Options, CustomFieldConfig>(TablePanel)
   .setPanelChangeHandler(tablePanelChangedHandler)
@@ -39,11 +40,12 @@ export const plugin = new PanelPlugin<Options, CustomFieldConfig>(TablePanel)
           description: 'Color text, background, show as gauge, etc',
           settings: {
             options: [
-              { value: 'auto', label: 'Auto' },
-              { value: 'color-text', label: 'Color text' },
-              { value: 'color-background', label: 'Color background' },
-              { value: 'gradient-gauge', label: 'Gradient gauge' },
-              { value: 'lcd-gauge', label: 'LCD gauge' },
+              { value: TableCellDisplayMode.Auto, label: 'Auto' },
+              { value: TableCellDisplayMode.ColorText, label: 'Color text' },
+              { value: TableCellDisplayMode.ColorBackground, label: 'Color background' },
+              { value: TableCellDisplayMode.GradientGauge, label: 'Gradient gauge' },
+              { value: TableCellDisplayMode.LcdGauge, label: 'LCD gauge' },
+              { value: TableCellDisplayMode.JSONView, label: 'JSON View' },
             ],
           },
         });

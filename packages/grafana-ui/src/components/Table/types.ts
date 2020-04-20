@@ -15,6 +15,7 @@ export enum TableCellDisplayMode {
   ColorBackground = 'color-background',
   GradientGauge = 'gradient-gauge',
   LcdGauge = 'lcd-gauge',
+  JSONView = 'json-view',
 }
 
 export type FieldTextAlignment = 'auto' | 'left' | 'right' | 'center';

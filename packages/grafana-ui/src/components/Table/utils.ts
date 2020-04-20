@@ -7,6 +7,7 @@ import { TableCellDisplayMode, TableCellProps, TableFieldOptions, TableRow } fro
 import { css, cx } from 'emotion';
 import { withTableStyles } from './withTableStyles';
 import tinycolor from 'tinycolor2';
+import { JSONViewCell } from './JSONViewCell';
 
 export function getTableRows(data: DataFrame): TableRow[] {
   const tableData = [];
@@ -59,7 +60,7 @@ export function getColumns(data: DataFrame, availableWidth: number, columnMinWid
       fieldCountWithoutWidth -= 1;
     }
 
-    const Cell = getCellComponent(fieldTableOptions.displayMode);
+    const Cell = getCellComponent(fieldTableOptions.displayMode, field);
 
     columns.push({
       Cell,
@@ -81,8 +82,14 @@ export function getColumns(data: DataFrame, availableWidth: number, columnMinWid
   return columns;
 }
 
-function getCellComponent(displayMode: TableCellDisplayMode) {
+function getCellComponent(displayMode: TableCellDisplayMode, field: Field) {
   switch (displayMode) {
+    case TableCellDisplayMode.Auto:
+      if (field.type === FieldType.other) {
+        return JSONViewCell;
+      }
+      return DefaultCell;
+
     case TableCellDisplayMode.ColorText:
       return withTableStyles(DefaultCell, getTextColorStyle);
     case TableCellDisplayMode.ColorBackground:
@@ -90,6 +97,8 @@ function getCellComponent(displayMode: TableCellDisplayMode) {
     case TableCellDisplayMode.LcdGauge:
     case TableCellDisplayMode.GradientGauge:
       return BarGaugeCell;
+    case TableCellDisplayMode.JSONView:
+      return JSONViewCell;
     default:
       return DefaultCell;
   }
