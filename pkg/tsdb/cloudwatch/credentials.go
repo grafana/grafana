@@ -46,14 +46,14 @@ func GetCredentials(dsInfo *DatasourceInfo) (*credentials.Credentials, error) {
 	sessionToken := ""
 	var expiration *time.Time = nil
 	if dsInfo.AuthType == "arn" {
-			params := &sts.AssumeRoleInput{
-				RoleArn:         aws.String(dsInfo.AssumeRoleArn),
-				RoleSessionName: aws.String("GrafanaSession"),
-				DurationSeconds: aws.Int64(900),
-			}
-            if dsInfo.ExternalId != "" {
-                    params.ExternalId = aws.String(dsInfo.ExternalId)
-            }
+		params := &sts.AssumeRoleInput{
+			RoleArn:         aws.String(dsInfo.AssumeRoleArn),
+			RoleSessionName: aws.String("GrafanaSession"),
+			DurationSeconds: aws.Int64(900),
+		}
+
+		if dsInfo.ExternalId != "" {
+			params.ExternalId = aws.String(dsInfo.ExternalId)
 		}
 
 		stsSess, err := session.NewSession()
