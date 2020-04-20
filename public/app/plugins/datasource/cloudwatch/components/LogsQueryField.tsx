@@ -54,6 +54,7 @@ interface State {
   loadingLogGroups: boolean;
   regions: Array<SelectableValue<string>>;
   selectedRegion: SelectableValue<string>;
+  invalidLogGroups: boolean;
   hint: {
     message: string;
     fix: {
@@ -72,6 +73,7 @@ export class CloudWatchLogsQueryField extends React.PureComponent<CloudWatchLogs
       })) ?? [],
     availableLogGroups: [],
     regions: [],
+    invalidLogGroups: false,
     selectedRegion: (this.props.query as CloudWatchLogsQuery).region
       ? {
           label: (this.props.query as CloudWatchLogsQuery).region,
@@ -264,9 +266,35 @@ export class CloudWatchLogsQueryField extends React.PureComponent<CloudWatchLogs
     dispatch(changeModeAction({ exploreId, mode: ExploreMode.Metrics }));
   };
 
+  onQueryFieldClick = () => {
+    const { selectedLogGroups, loadingLogGroups } = this.state;
+
+    const queryFieldDisabled = loadingLogGroups || selectedLogGroups.length === 0;
+
+    if (queryFieldDisabled) {
+      this.setState({
+        invalidLogGroups: true,
+      });
+    }
+  };
+
+  onOpenLogGroupMenu = () => {
+    this.setState({
+      invalidLogGroups: false,
+    });
+  };
+
   render() {
     const { ExtraFieldElement, data, query, syntaxLoaded, datasource } = this.props;
-    const { selectedLogGroups, availableLogGroups, regions, selectedRegion, loadingLogGroups, hint } = this.state;
+    const {
+      selectedLogGroups,
+      availableLogGroups,
+      regions,
+      selectedRegion,
+      loadingLogGroups,
+      hint,
+      invalidLogGroups,
+    } = this.state;
 
     const showError = data && data.error && data.error.refId === query.refId;
     const cleanText = datasource.languageProvider ? datasource.languageProvider.cleanText : undefined;
@@ -316,10 +344,12 @@ export class CloudWatchLogsQueryField extends React.PureComponent<CloudWatchLogs
                 className={containerClass}
                 closeMenuOnSelect={false}
                 isClearable={true}
+                invalid={invalidLogGroups}
                 isOptionDisabled={() => selectedLogGroups.length >= MAX_LOG_GROUPS}
                 placeholder="Choose Log Groups"
                 noOptionsMessage="No log groups available"
                 isLoading={loadingLogGroups}
+                onOpenMenu={this.onOpenLogGroupMenu}
               />
             }
           />
@@ -331,6 +361,7 @@ export class CloudWatchLogsQueryField extends React.PureComponent<CloudWatchLogs
               query={query.expression}
               onChange={this.onChangeQuery}
               onBlur={this.props.onBlur}
+              onClick={this.onQueryFieldClick}
               onRunQuery={this.props.onRunQuery}
               onTypeahead={this.onTypeahead}
               cleanText={cleanText}

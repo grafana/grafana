@@ -87,9 +87,9 @@ func init() {
 	aliasFormat = regexp.MustCompile(`\{\{\s*(.+?)\s*\}\}`)
 }
 
-func (e *CloudWatchExecutor) AlertQuery(logsClient *cloudwatchlogs.CloudWatchLogs, ctx context.Context, queryContext *tsdb.TsdbQuery) (*cloudwatchlogs.GetQueryResultsOutput, error) {
-	const MaxAttempts = 5
-	const PollPeriod = 500 * time.Millisecond
+func (e *CloudWatchExecutor) alertQuery(ctx context.Context, logsClient *cloudwatchlogs.CloudWatchLogs, queryContext *tsdb.TsdbQuery) (*cloudwatchlogs.GetQueryResultsOutput, error) {
+	const maxAttempts = 5
+	const pollPeriod = 500 * time.Millisecond
 
 	queryParams := queryContext.Queries[0].Model
 	startQueryOutput, err := e.executeStartQuery(ctx, logsClient, queryParams, queryContext.TimeRange)
@@ -103,14 +103,14 @@ func (e *CloudWatchExecutor) AlertQuery(logsClient *cloudwatchlogs.CloudWatchLog
 		"queryId": *startQueryOutput.QueryId,
 	})
 
-	ticker := time.NewTicker(PollPeriod)
+	ticker := time.NewTicker(pollPeriod)
 	defer ticker.Stop()
 
 	attemptCount := 0
 	for range ticker.C {
 		if res, err := e.executeGetQueryResults(ctx, logsClient, requestParams); err != nil {
 			return nil, err
-		} else if isTerminated(*res.Status) || attemptCount > MaxAttempts {
+		} else if isTerminated(*res.Status) || attemptCount > maxAttempts {
 			return res, err
 		}
 
@@ -175,7 +175,7 @@ func (e *CloudWatchExecutor) executeLogAlertQuery(ctx context.Context, queryCont
 	queryParams.Set("queryId", *result.QueryId)
 
 	// Get Query Results
-	resp, err := e.AlertQuery(logsClient, ctx, queryContext)
+	resp, err := e.alertQuery(ctx, logsClient, queryContext)
 	if err != nil {
 		return nil, err
 	}
@@ -224,7 +224,10 @@ func queryResultsToTimeseries(results *cloudwatchlogs.GetQueryResultsOutput) (ts
 		}
 
 		for i, j := range numericFieldIndices {
-			numPoint, _ := strconv.ParseFloat(*row[j].Value, 64)
+			numPoint, err := strconv.ParseFloat(*row[j].Value, 64)
+			if err != nil {
+				return nil, err
+			}
 			timeSeriesSlice[i].Points = append(timeSeriesSlice[i].Points,
 				tsdb.NewTimePoint(null.FloatFrom(numPoint), float64(timePoint.Unix()*1000)),
 			)

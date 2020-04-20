@@ -19,6 +19,7 @@ export interface SelectCommonProps<T> {
   getOptionLabel?: (item: SelectableValue<T>) => string;
   getOptionValue?: (item: SelectableValue<T>) => string;
   inputValue?: string;
+  invalid?: boolean;
   isClearable?: boolean;
   isLoading?: boolean;
   isMulti?: boolean;

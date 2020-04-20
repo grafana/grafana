@@ -47,6 +47,7 @@ export const CloudWatchLogsQueryEditor = memo(function CloudWatchLogsQueryEditor
       exploreMode={exploreMode}
       datasource={datasource}
       query={query}
+      onBlur={() => {}}
       onChange={(val: CloudWatchLogsQuery) => onChange({ ...val, queryMode: 'Logs' })}
       onRunQuery={onRunQuery}
       history={[]}

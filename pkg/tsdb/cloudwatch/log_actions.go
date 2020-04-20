@@ -73,14 +73,12 @@ func (e *CloudWatchExecutor) executeLogAction(ctx context.Context, queryContext 
 
 	defaultRegion := e.DataSource.JsonData.Get("defaultRegion").MustString()
 	region := parameters.Get("region").MustString(defaultRegion)
-	logsClient, er := e.getLogsClient(region)
-
-	if er != nil {
-		return nil, er
+	logsClient, err := e.getLogsClient(region)
+	if err != nil {
+		return nil, err
 	}
 
 	var data *data.Frame = nil
-	var err error = nil
 
 	switch subType {
 	case "DescribeLogGroups":
@@ -97,7 +95,7 @@ func (e *CloudWatchExecutor) executeLogAction(ctx context.Context, queryContext 
 		data, err = e.handleGetLogEvents(ctx, logsClient, parameters)
 	}
 
-	if data == nil {
+	if err != nil {
 		return nil, err
 	}
 
@@ -132,7 +130,7 @@ func (e *CloudWatchExecutor) handleGetLogEvents(ctx context.Context, logsClient 
 
 	logEvents, err := logsClient.GetLogEventsWithContext(ctx, queryRequest)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf(err.(awserr.Error).Message())
 	}
 
 	messages := make([]*string, 0)
@@ -172,7 +170,7 @@ func (e *CloudWatchExecutor) handleDescribeLogGroups(ctx context.Context, logsCl
 	}
 
 	if err != nil || response == nil {
-		return nil, err.(awserr.Error)
+		return nil, fmt.Errorf(err.(awserr.Error).Message())
 	}
 
 	logGroupNames := make([]*string, 0)
@@ -252,7 +250,6 @@ func (e *CloudWatchExecutor) executeStopQuery(ctx context.Context, logsClient cl
 
 func (e *CloudWatchExecutor) handleStopQuery(ctx context.Context, logsClient cloudwatchlogsiface.CloudWatchLogsAPI, parameters *simplejson.Json) (*data.Frame, error) {
 	response, err := e.executeStopQuery(ctx, logsClient, parameters)
-
 	if err != nil {
 		return nil, fmt.Errorf(err.(awserr.Error).Message())
 	}
