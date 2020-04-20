@@ -7,7 +7,7 @@ import PluginList from './PluginList';
 import { loadPlugins } from './state/actions';
 import { getNavModel } from 'app/core/selectors/navModel';
 import { getLayoutMode, getPlugins, getPluginsSearchQuery } from './state/selectors';
-import { LayoutMode } from 'app/core/components/LayoutSelector/LayoutSelector';
+import { LayoutMode, LayoutModes } from 'app/core/components/LayoutSelector/LayoutSelector';
 import { NavModel, PluginMeta } from '@grafana/data';
 import { StoreState } from 'app/types';
 import { setPluginsLayoutMode, setPluginsSearchQuery } from './state/reducers';
@@ -54,7 +54,7 @@ export class PluginListPage extends PureComponent<Props> {
           <>
             <OrgActionBar
               searchQuery={searchQuery}
-              layoutMode={layoutMode}
+              layoutMode={layoutMode ?? LayoutModes.Grid}
               onSetLayoutMode={mode => setPluginsLayoutMode(mode)}
               setSearchQuery={query => setPluginsSearchQuery(query)}
               linkButton={linkButton}
