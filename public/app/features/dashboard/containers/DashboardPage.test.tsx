@@ -245,7 +245,7 @@ describe('DashboardPage', () => {
           editPanel: '1',
         },
       },
-      panelEditorNew: {},
+      panelEditor: {},
       dashboard: {
         getModel: () => ({} as DashboardModel),
       },
@@ -262,7 +262,7 @@ describe('DashboardPage', () => {
           viewPanel: '2',
         },
       },
-      panelEditorNew: {},
+      panelEditor: {},
       dashboard: {
         getModel: () => ({} as DashboardModel),
       },
