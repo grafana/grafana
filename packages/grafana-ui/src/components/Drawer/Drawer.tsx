@@ -9,9 +9,9 @@ import { stylesFactory, useTheme } from '../../themes';
 export interface Props {
   children: ReactNode;
   /** Title shown at the top of the drawer */
-  title?: JSX.Element | string;
+  title?: ReactNode;
   /** Subtitle shown below the title */
-  subtitle?: JSX.Element | string;
+  subtitle?: ReactNode;
   /** Should the Drawer be closable by clicking on the mask */
   closeOnMaskClick?: boolean;
   /** Render the drawer inside a container on the page */
@@ -77,8 +77,8 @@ export const Drawer: FC<Props> = ({
 }) => {
   const theme = useTheme();
   const drawerStyles = getStyles(theme, scrollableContent);
-  const [currentWidth, setCurrentWidth] = useState(width);
-  const isExpanded = currentWidth === '100%';
+  const [isExpanded, setIsExpanded] = useState(false);
+  const currentWidth = isExpanded ? '100%' : width;
 
   return (
     <RcDrawer
@@ -97,10 +97,10 @@ export const Drawer: FC<Props> = ({
         <div className={drawerStyles.header}>
           <div className={drawerStyles.actions}>
             {expandable && !isExpanded && (
-              <IconButton name="angle-left" size="xl" onClick={() => setCurrentWidth('100%')} surface="header" />
+              <IconButton name="angle-left" size="xl" onClick={() => setIsExpanded(true)} surface="header" />
             )}
             {expandable && isExpanded && (
-              <IconButton name="angle-right" size="xl" onClick={() => setCurrentWidth(width)} surface="header" />
+              <IconButton name="angle-right" size="xl" onClick={() => setIsExpanded(false)} surface="header" />
             )}
             <IconButton name="times" size="xl" onClick={onClose} surface="header" />
           </div>
