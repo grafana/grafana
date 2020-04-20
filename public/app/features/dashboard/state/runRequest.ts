@@ -20,6 +20,7 @@ import {
 } from '@grafana/data';
 import { emitDataRequestEvent } from './analyticsProcessor';
 import { ExpressionDatasourceID, expressionDatasource } from 'app/features/expressions/ExpressionDatasource';
+import { QueryDirection } from 'app/types';
 
 type MapOfResponsePackets = { [str: string]: DataQueryResponse };
 
@@ -237,7 +238,11 @@ function combineSeries(series: DataFrame[]): DataFrame[] {
   return series;
 }
 
-export function preProcessAppendPanelData(data: PanelData, lastResult: PanelData): PanelData {
+export function preProcessAppendPanelData(
+  data: PanelData,
+  lastResult: PanelData,
+  direction: QueryDirection
+): PanelData {
   const { series } = data;
 
   //  for loading states with no data, use last result
@@ -251,7 +256,9 @@ export function preProcessAppendPanelData(data: PanelData, lastResult: PanelData
 
   // Make sure the data frames are properly formatted
   const STARTTIME = performance.now();
-  const processedDataFrames = combineSeries(getProcessedDataFrames([...lastResult.series, ...series]));
+  const dataFrames =
+    direction === QueryDirection.backward ? [...lastResult.series, ...series] : [...series, ...lastResult.series];
+  const processedDataFrames = combineSeries(getProcessedDataFrames(dataFrames));
   const STOPTIME = performance.now();
 
   return {
