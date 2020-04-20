@@ -17,7 +17,7 @@ export const JSONViewCell: FC<TableCellProps> = props => {
   `;
 
   const displayValue = JSON.stringify(cell.value);
-  const content = <JSONTooltip {...props} />;
+  const content = <JSONTooltip value={cell.value} />;
   return (
     <div className={cx(txt, tableStyles.tableCell)}>
       <Tooltip placement="auto" content={content} theme={'info'}>
@@ -27,15 +27,17 @@ export const JSONViewCell: FC<TableCellProps> = props => {
   );
 };
 
-const JSONTooltip: FC<TableCellProps> = props => {
-  const { cell } = props;
+interface PopupProps {
+  value: any;
+}
 
+const JSONTooltip: FC<PopupProps> = props => {
   const clazz = css`
     padding: 10px;
   `;
   return (
-    <div>
-      <JSONFormatter json={cell.value} open={4} />
+    <div className={clazz}>
+      <JSONFormatter json={props.value} open={4} />
     </div>
   );
 };
