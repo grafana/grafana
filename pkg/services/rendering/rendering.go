@@ -181,8 +181,13 @@ func (rs *RenderingService) getURL(path string) string {
 		protocol = "https"
 	}
 
+	subPath := ""
+	if rs.Cfg.ServeFromSubPath {
+		subPath = rs.Cfg.AppSubUrl
+	}
+
 	// &render=1 signals to the legacy redirect layer to
-	return fmt.Sprintf("%s://%s:%s/%s&render=1", protocol, rs.domain, setting.HttpPort, path)
+	return fmt.Sprintf("%s://%s:%s%s/%s&render=1", protocol, rs.domain, setting.HttpPort, subPath, path)
 }
 
 func (rs *RenderingService) generateAndStoreRenderKey(orgId, userId int64, orgRole models.RoleType) (string, error) {
