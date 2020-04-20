@@ -3,25 +3,10 @@ import { DataFrame, Field, FieldType } from '@grafana/data';
 import { Column } from 'react-table';
 import { DefaultCell } from './DefaultCell';
 import { BarGaugeCell } from './BarGaugeCell';
-import { TableCellDisplayMode, TableCellProps, TableFieldOptions, TableRow } from './types';
+import { TableCellDisplayMode, TableCellProps, TableFieldOptions } from './types';
 import { css, cx } from 'emotion';
 import { withTableStyles } from './withTableStyles';
 import tinycolor from 'tinycolor2';
-
-export function getTableRows(data: DataFrame): TableRow[] {
-  const tableData = [];
-
-  for (let i = 0; i < data.length; i++) {
-    const row: { [key: string]: string | number } = {};
-    for (let j = 0; j < data.fields.length; j++) {
-      const prop = data.fields[j].name;
-      row[prop] = data.fields[j].values.get(i);
-    }
-    tableData.push(row);
-  }
-
-  return tableData;
-}
 
 export function getTextAlign(field?: Field): TextAlignProperty {
   if (!field) {
@@ -52,8 +37,10 @@ export function getColumns(data: DataFrame, availableWidth: number, columnMinWid
   const columns: Column[] = [];
   let fieldCountWithoutWidth = data.fields.length;
 
-  for (const field of data.fields) {
+  for (let fieldIndex = 0; fieldIndex < data.fields.length; fieldIndex++) {
+    const field = data.fields[fieldIndex];
     const fieldTableOptions = (field.config.custom || {}) as TableFieldOptions;
+
     if (fieldTableOptions.width) {
       availableWidth -= fieldTableOptions.width;
       fieldCountWithoutWidth -= 1;
@@ -63,10 +50,13 @@ export function getColumns(data: DataFrame, availableWidth: number, columnMinWid
 
     columns.push({
       Cell,
-      id: field.name,
+      id: fieldIndex.toString(),
       Header: field.config.title ?? field.name,
-      accessor: field.name,
+      accessor: (row: any, i: number) => {
+        return field.values.get(i);
+      },
       width: fieldTableOptions.width,
+      minWidth: 50,
     });
   }
 

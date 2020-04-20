@@ -6,23 +6,23 @@ import { tablePanelChangedHandler, tableMigrationHandler } from './migrations';
 export const plugin = new PanelPlugin<Options, CustomFieldConfig>(TablePanel)
   .setPanelChangeHandler(tablePanelChangedHandler)
   .setMigrationHandler(tableMigrationHandler)
+  .setNoPadding()
   .useFieldConfig({
     useCustomConfig: builder => {
       builder
         .addNumberInput({
           path: 'width',
           name: 'Column width',
-          description: 'column width (for table)',
           settings: {
             placeholder: 'auto',
             min: 20,
             max: 300,
           },
+          shouldApply: () => true,
         })
         .addRadio({
           path: 'align',
           name: 'Column alignment',
-          description: 'column alignment (for table)',
           settings: {
             options: [
               { label: 'auto', value: null },
@@ -50,17 +50,10 @@ export const plugin = new PanelPlugin<Options, CustomFieldConfig>(TablePanel)
     },
   })
   .setPanelOptions(builder => {
-    builder
-      .addBooleanSwitch({
-        path: 'showHeader',
-        name: 'Show header',
-        description: "To display table's header or not to display",
-        defaultValue: true,
-      })
-      .addBooleanSwitch({
-        path: 'resizable',
-        name: 'Resizable',
-        description: 'Toggles if table columns are resizable or not',
-        defaultValue: false,
-      });
+    builder.addBooleanSwitch({
+      path: 'showHeader',
+      name: 'Show header',
+      description: "To display table's header or not to display",
+      defaultValue: true,
+    });
   });
