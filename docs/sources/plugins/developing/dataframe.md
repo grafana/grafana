@@ -54,7 +54,7 @@ Because each Field in a dataframe has a type, we can use the types of the Fields
 
 #### Time series with unshared time values
 
-An array of frames is how a collection of time series that do not share a time index would be represented. For example two time series (differentiated by their labels):
+An array of frames is how a collection of time series that do not share a time index would be represented. For example, two time series (differentiated by their labels):
 
 ```text
 Name: cpu
