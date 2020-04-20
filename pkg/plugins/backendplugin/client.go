@@ -64,6 +64,17 @@ type PluginDescriptor struct {
 	startFns         PluginStartFuncs
 }
 
+// getV2PluginSet returns list of plugins supported on v2.
+func getV2PluginSet() goplugin.PluginSet {
+	return goplugin.PluginSet{
+		"diagnostics": &grpcplugin.DiagnosticsGRPCPlugin{},
+		"resource":    &grpcplugin.ResourceGRPCPlugin{},
+		"data":        &grpcplugin.DataGRPCPlugin{},
+		"transform":   &grpcplugin.TransformGRPCPlugin{},
+		"renderer":    &pluginextensionv2.RendererGRPCPlugin{},
+	}
+}
+
 // NewBackendPluginDescriptor creates a new backend plugin descriptor
 // used for registering a backend datasource plugin.
 func NewBackendPluginDescriptor(pluginID, executablePath string, startFns PluginStartFuncs) PluginDescriptor {
@@ -75,16 +86,7 @@ func NewBackendPluginDescriptor(pluginID, executablePath string, startFns Plugin
 			DefaultProtocolVersion: {
 				pluginID: &datasourceV1.DatasourcePluginImpl{},
 			},
-			grpcplugin.ProtocolVersion: {
-				"diagnostics": &grpcplugin.DiagnosticsGRPCPlugin{},
-				"resource":    &grpcplugin.ResourceGRPCPlugin{},
-				"data":        &grpcplugin.DataGRPCPlugin{},
-				"transform":   &grpcplugin.TransformGRPCPlugin{},
-				// needs to be here since hashicorp/go-plugin returns error
-				// when calling rpcClient.Dispense("renderer") for an existing
-				// plugin compiled against SDK.
-				"renderer": &pluginextensionv2.RendererGRPCPlugin{},
-			},
+			grpcplugin.ProtocolVersion: getV2PluginSet(),
 		},
 		startFns: startFns,
 	}
@@ -101,16 +103,7 @@ func NewRendererPluginDescriptor(pluginID, executablePath string, startFns Plugi
 			DefaultProtocolVersion: {
 				pluginID: &rendererV1.RendererPluginImpl{},
 			},
-			grpcplugin.ProtocolVersion: {
-				"renderer": &pluginextensionv2.RendererGRPCPlugin{},
-				// needs to include all supported plugins here since
-				// hashicorp/go-plugin returns error when for example
-				// calling rpcClient.Dispense("resource").
-				"diagnostics": &grpcplugin.DiagnosticsGRPCPlugin{},
-				"resource":    &grpcplugin.ResourceGRPCPlugin{},
-				"data":        &grpcplugin.DataGRPCPlugin{},
-				"transform":   &grpcplugin.TransformGRPCPlugin{},
-			},
+			grpcplugin.ProtocolVersion: getV2PluginSet(),
 		},
 		startFns: startFns,
 	}
