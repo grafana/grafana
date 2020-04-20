@@ -36,7 +36,6 @@ const getStyles = stylesFactory((theme: GrafanaTheme, scollableContent: boolean)
         flex-direction: column;
         overflow: hidden;
       }
-      z-index: 1050;
     `,
     header: css`
       background-color: ${theme.colors.bg2};
