@@ -109,10 +109,10 @@ func (rs *RenderingService) RenderErrorImage(err error) (*RenderResult, error) {
 }
 
 func (rs *RenderingService) RenderUnavailableImage() *RenderResult {
-	imgUrl := "public/img/rendering_plugin_not_installed.png"
+	imgPath := "public/img/rendering_plugin_not_installed.png"
 
 	return &RenderResult{
-		FilePath: filepath.Join(setting.HomePath, imgUrl),
+		FilePath: filepath.Join(setting.HomePath, imgPath),
 	}
 }
 

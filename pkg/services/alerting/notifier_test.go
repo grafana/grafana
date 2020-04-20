@@ -45,7 +45,7 @@ func TestNotificationService(t *testing.T) {
 		require.NoError(t, err)
 
 		require.Equalf(t, 0, scenarioCtx.renderCount, "expected render to not be called, but it was")
-		require.Equalf(t, 1, scenarioCtx.unavailableRenderCount, "expected unavailable render count to be called, but it wasn't")
+		require.Equalf(t, 1, scenarioCtx.unavailableRenderCount, "expected unavailable render to be called, but it wasn't")
 		require.Equalf(t, 1, scenarioCtx.imageUploadCount, "expected image to be uploaded, but it wasn't")
 		require.Truef(t, evalCtx.Ctx.Value(notificationSent{}).(bool), "expected notification to be sent, but wasn't")
 	})
