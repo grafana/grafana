@@ -234,7 +234,7 @@ func validateDatasource(dsCfg *configs) {
 func validateDatasourceV1(dsCfg *configs) {
 	validateDatasource(dsCfg)
 	ds := dsCfg.Datasources[0]
-	So(ds.Uid, ShouldEqual, "test_uid")
+	So(ds.UID, ShouldEqual, "test_uid")
 }
 
 type fakeRepository struct {
