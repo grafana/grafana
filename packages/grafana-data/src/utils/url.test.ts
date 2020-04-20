@@ -1,8 +1,8 @@
-import { toUrlParams } from '../utils/url';
+import { urlUtil } from './url';
 
 describe('toUrlParams', () => {
   it('should encode object properties as url parameters', () => {
-    const url = toUrlParams({
+    const url = urlUtil.toUrlParams({
       server: 'backend-01',
       hasSpace: 'has space',
       many: ['1', '2', '3'],
@@ -17,7 +17,7 @@ describe('toUrlParams', () => {
 
 describe('toUrlParams', () => {
   it('should encode the same way as angularjs', () => {
-    const url = toUrlParams({
+    const url = urlUtil.toUrlParams({
       server: ':@',
     });
     expect(url).toBe('server=:@');

@@ -1,8 +1,22 @@
-import { DisplayValue, DataFrame, formattedValueToString, getDisplayProcessor } from '@grafana/data';
-import { config } from '@grafana/runtime';
 import toNumber from 'lodash/toNumber';
+import { DataFrame, DisplayValue, GrafanaTheme } from '../types';
+import { getDisplayProcessor } from './displayProcessor';
+import { formattedValueToString } from '../valueFormats';
 
-export function getFieldDisplayValuesProxy(frame: DataFrame, rowIndex: number): Record<string, DisplayValue> {
+/**
+ *
+ * @param frame
+ * @param rowIndex
+ * @param options
+ * @internal
+ */
+export function getFieldDisplayValuesProxy(
+  frame: DataFrame,
+  rowIndex: number,
+  options: {
+    theme: GrafanaTheme;
+  }
+): Record<string, DisplayValue> {
   return new Proxy({} as Record<string, DisplayValue>, {
     get: (obj: any, key: string) => {
       // 1. Match the name
@@ -23,7 +37,7 @@ export function getFieldDisplayValuesProxy(frame: DataFrame, rowIndex: number): 
         // Lazy load the display processor
         field.display = getDisplayProcessor({
           field,
-          theme: config.theme,
+          theme: options.theme,
         });
       }
       const raw = field.values.get(rowIndex);

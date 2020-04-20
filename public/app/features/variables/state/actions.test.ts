@@ -1,5 +1,5 @@
 import { AnyAction } from 'redux';
-import { UrlQueryMap } from '@grafana/runtime';
+import { UrlQueryMap } from '@grafana/data';
 
 import { getTemplatingAndLocationRootReducer, getTemplatingRootReducer } from './helpers';
 import { variableAdapters } from '../adapters';
@@ -10,20 +10,20 @@ import { createConstantVariableAdapter } from '../constant/adapter';
 import { reduxTester } from '../../../../test/core/redux/reduxTester';
 import { TemplatingState } from 'app/features/variables/state/reducers';
 import {
+  changeVariableMultiValue,
   initDashboardTemplating,
   processVariables,
   setOptionFromUrl,
   validateVariableSelectionState,
-  changeVariableMultiValue,
 } from './actions';
 import {
   addInitLock,
   addVariable,
+  changeVariableProp,
   removeInitLock,
   removeVariable,
   resolveInitLock,
   setCurrentVariableValue,
-  changeVariableProp,
 } from './sharedReducer';
 import { NEW_VARIABLE_ID, toVariableIdentifier, toVariablePayload } from './types';
 import {
