@@ -311,6 +311,7 @@ export class PanelInspectorUnconnected extends PureComponent<Props, State> {
         subtitle={this.drawerHeader(tabs, activeTab)}
         width={drawerWidth}
         onClose={this.onClose}
+        expandable
       >
         {activeTab === InspectTab.Data && this.renderDataTab()}
         <CustomScrollbar autoHeightMin="100%">
