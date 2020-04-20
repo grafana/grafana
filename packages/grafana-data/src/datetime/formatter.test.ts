@@ -2,10 +2,19 @@ import { dateTimeFormat } from './formatter';
 
 describe('dateTimeFormat', () => {
   describe('when no time zone have been set', () => {
-    // by default jest is running with local set to utc.
-    // see setup-jest.ts for more information.
-    it('should format with default formatting in correct time zone', () => {
-      expect(dateTimeFormat(1587126975779)).toBe('2020-04-17 12:36:15');
+    const browserTime = dateTimeFormat(1587126975779, { timeZone: 'browser' });
+
+    it('should format with default formatting in browser/local time zone', () => {
+      expect(dateTimeFormat(1587126975779)).toBe(browserTime);
+    });
+  });
+
+  describe('when invalid time zone have been set', () => {
+    const browserTime = dateTimeFormat(1587126975779, { timeZone: 'browser' });
+    const options = { timeZone: 'asdf123' };
+
+    it('should format with default formatting in browser/local time zone', () => {
+      expect(dateTimeFormat(1587126975779, options)).toBe(browserTime);
     });
   });
 

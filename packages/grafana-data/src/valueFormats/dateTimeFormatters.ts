@@ -3,7 +3,7 @@ import { toDuration as duration, toUtc, dateTime } from '../datetime/moment_wrap
 import { toFixed, toFixedScaled, FormattedValue, ValueFormatter } from './valueFormats';
 import { DecimalCount } from '../types/displayValue';
 import { TimeZone } from '../types';
-import { dateTimeFormat } from '../datetime';
+import { dateTimeFormat, dateTimeFormatDistanceToNow } from '../datetime';
 
 interface IntervalsInSeconds {
   [interval: string]: number;
@@ -347,5 +347,5 @@ export function dateTimeFromNow(
   scaledDecimals: DecimalCount,
   timeZone?: TimeZone
 ): FormattedValue {
-  return { text: dateTimeFormat(value, { timeZone }) };
+  return { text: dateTimeFormatDistanceToNow(value, { timeZone }) };
 }

@@ -20,9 +20,6 @@ exports[`DashboardPage Dashboard init completed  Should render dashboard grid 1`
           ],
         },
         "autoUpdate": undefined,
-        "dateTimeFormatter": DateTimeFormatterWithTimeZone {
-          "getTimeZone": [Function],
-        },
         "description": undefined,
         "editable": true,
         "events": Emitter {
@@ -136,9 +133,6 @@ exports[`DashboardPage Dashboard init completed  Should render dashboard grid 1`
                 ],
               },
               "autoUpdate": undefined,
-              "dateTimeFormatter": DateTimeFormatterWithTimeZone {
-                "getTimeZone": [Function],
-              },
               "description": undefined,
               "editable": true,
               "events": Emitter {
@@ -233,9 +227,6 @@ exports[`DashboardPage Dashboard init completed  Should render dashboard grid 1`
                 ],
               },
               "autoUpdate": undefined,
-              "dateTimeFormatter": DateTimeFormatterWithTimeZone {
-                "getTimeZone": [Function],
-              },
               "description": undefined,
               "editable": true,
               "events": Emitter {
@@ -361,9 +352,6 @@ exports[`DashboardPage When dashboard has editview url state should render setti
           ],
         },
         "autoUpdate": undefined,
-        "dateTimeFormatter": DateTimeFormatterWithTimeZone {
-          "getTimeZone": [Function],
-        },
         "description": undefined,
         "editable": true,
         "events": Emitter {
@@ -477,9 +465,6 @@ exports[`DashboardPage When dashboard has editview url state should render setti
                 ],
               },
               "autoUpdate": undefined,
-              "dateTimeFormatter": DateTimeFormatterWithTimeZone {
-                "getTimeZone": [Function],
-              },
               "description": undefined,
               "editable": true,
               "events": Emitter {
@@ -574,9 +559,6 @@ exports[`DashboardPage When dashboard has editview url state should render setti
                 ],
               },
               "autoUpdate": undefined,
-              "dateTimeFormatter": DateTimeFormatterWithTimeZone {
-                "getTimeZone": [Function],
-              },
               "description": undefined,
               "editable": true,
               "events": Emitter {
@@ -677,9 +659,6 @@ exports[`DashboardPage When dashboard has editview url state should render setti
           ],
         },
         "autoUpdate": undefined,
-        "dateTimeFormatter": DateTimeFormatterWithTimeZone {
-          "getTimeZone": [Function],
-        },
         "description": undefined,
         "editable": true,
         "events": Emitter {
