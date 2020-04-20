@@ -122,13 +122,13 @@ const theme: GrafanaThemeCommons = {
   panelPadding: 8,
   panelHeaderHeight: 28,
   zIndex: {
-    dropdown: '1000',
-    navbarFixed: '1020',
-    sidemenu: '1025',
-    tooltip: '1030',
-    modalBackdrop: '1040',
-    modal: '1050',
-    typeahead: '1060',
+    navbarFixed: '1000',
+    sidemenu: '1020',
+    dropdown: '1030',
+    typeahead: '1030',
+    tooltip: '1040',
+    modalBackdrop: '1050',
+    modal: '1060',
   },
 };
 
