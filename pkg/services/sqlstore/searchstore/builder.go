@@ -7,7 +7,11 @@ import (
 	"strings"
 )
 
+// Builder defaults to returning a SQL to get a list of all dashboards
+// in default order but can be modified by applying filters.
 type Builder struct {
+	// List of FilterWhere/FilterGroupBy/FilterOrderBy/FilterLeftJoin
+	// to modify the query.
 	Filters []interface{}
 	Dialect migrator.Dialect
 
@@ -15,7 +19,7 @@ type Builder struct {
 	sql    bytes.Buffer
 }
 
-// ToSql builds the sql and returns it as a string, together with the params.
+// ToSql builds the sql and returns it as a string, together with the SQL parameters.
 func (b *Builder) ToSql(limit, page int64) (string, []interface{}) {
 	b.params = make([]interface{}, 0)
 	b.sql = bytes.Buffer{}

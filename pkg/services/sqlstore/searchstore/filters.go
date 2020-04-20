@@ -15,6 +15,7 @@ type FilterWhere interface {
 
 // FilterGroupBy should be used after performing an outer join on the
 // search result to ensure there is only one of each ID in the results.
+// The id column must be present in the result.
 type FilterGroupBy interface {
 	GroupBy() (string, []interface{})
 }
