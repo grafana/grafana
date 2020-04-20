@@ -26,10 +26,10 @@ export class LocalStorageValueProvider<T> extends PureComponent<Props<T>, State<
     const { storageKey } = this.props;
     try {
       store.setObject(storageKey, value);
-      this.setState({ value });
     } catch (error) {
       console.error(error);
     }
+    this.setState({ value });
   };
 
   render() {
