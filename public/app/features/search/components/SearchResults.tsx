@@ -47,20 +47,22 @@ export const SearchResults: FC<Props> = ({
             <li aria-label="Search section" className={styles.section} key={section.title}>
               <SectionHeader onSectionClick={onToggleSection} {...{ onToggleChecked, editable, section }} />
               {section.expanded && section.items.length && (
-                <ul aria-label="Search items" className={styles.wrapper}>
-                  <FixedSizeList itemSize={ITEM_HEIGHT} height={height} itemCount={section.items.length} width="100%">
-                    {({ index, style }) => {
-                      const item = section.items[index];
-                      return (
-                        <SearchItem
-                          style={style}
-                          key={item.id}
-                          {...{ item, editable, onToggleChecked, onTagSelected }}
-                        />
-                      );
-                    }}
-                  </FixedSizeList>
-                </ul>
+                <FixedSizeList
+                  aria-label="Search items"
+                  className={styles.wrapper}
+                  innerElementType="ul"
+                  itemSize={ITEM_HEIGHT}
+                  height={height}
+                  itemCount={section.items.length}
+                  width="100%"
+                >
+                  {({ index, style }) => {
+                    const item = section.items[index];
+                    return (
+                      <SearchItem style={style} key={item.id} {...{ item, editable, onToggleChecked, onTagSelected }} />
+                    );
+                  }}
+                </FixedSizeList>
               )}
             </li>
           );

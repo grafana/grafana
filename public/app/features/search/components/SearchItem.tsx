@@ -83,7 +83,6 @@ const getResultsItemStyles = stylesFactory((theme: GrafanaTheme) => ({
     ${styleMixins.listItem(theme)};
     display: flex;
     align-items: center;
-    margin: ${theme.spacing.xxs};
     padding: 0 ${theme.spacing.sm};
     min-height: 37px;
 
