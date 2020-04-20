@@ -64,6 +64,7 @@ const buildCjsPackage = ({ env }) => {
             'useBlockLayout',
             'Cell',
             'useResizeColumns',
+            'useAbsoluteLayout',
           ],
           '../../node_modules/react-is/index.js': ['isValidElementType', 'isContextConsumer'],
         },
