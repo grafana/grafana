@@ -19,7 +19,7 @@ type Builder struct {
 	sql    bytes.Buffer
 }
 
-// ToSql builds the sql and returns it as a string, together with the SQL parameters.
+// ToSql builds the SQL query and returns it as a string, together with the SQL parameters.
 func (b *Builder) ToSql(limit, page int64) (string, []interface{}) {
 	b.params = make([]interface{}, 0)
 	b.sql = bytes.Buffer{}
