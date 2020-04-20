@@ -330,7 +330,7 @@ func (hs *HTTPServer) registerRoutes() {
 		})
 
 		// Search
-		apiRoute.Get("/search/sorting", Wrap(ListSortOptions))
+		apiRoute.Get("/search/sorting", Wrap(hs.ListSortOptions))
 		apiRoute.Get("/search/", Wrap(Search))
 
 		// metrics

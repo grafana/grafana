@@ -27,18 +27,15 @@ type SortOption struct {
 	Filter      searchstore.FilterOrderBy
 }
 
-var sortOptions = map[string]SortOption{
-	sortAlphaAsc.Name:  sortAlphaAsc,
-	sortAlphaDesc.Name: sortAlphaDesc,
+// RegisterSortOption allows for hooking in more search options from
+// other services.
+func (s *SearchService) RegisterSortOption(option SortOption) {
+	s.sortOptions[option.Name] = option
 }
 
-func RegisterSortOption(option SortOption) {
-	sortOptions[option.Name] = option
-}
-
-func SortOptions() []SortOption {
-	opts := make([]SortOption, 0, len(sortOptions))
-	for _, o := range sortOptions {
+func (s *SearchService) SortOptions() []SortOption {
+	opts := make([]SortOption, 0, len(s.sortOptions))
+	for _, o := range s.sortOptions {
 		opts = append(opts, o)
 	}
 	sort.Slice(opts, func(i, j int) bool {

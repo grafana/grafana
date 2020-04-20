@@ -69,8 +69,8 @@ func Search(c *models.ReqContext) Response {
 	return JSON(200, searchQuery.Result)
 }
 
-func ListSortOptions(c *models.ReqContext) Response {
-	opts := search.SortOptions()
+func (hs *HTTPServer) ListSortOptions(c *models.ReqContext) Response {
+	opts := hs.SearchService.SortOptions()
 
 	res := []util.DynMap{}
 	for _, o := range opts {

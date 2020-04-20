@@ -53,15 +53,22 @@ type FindPersistedDashboardsQuery struct {
 type SearchService struct {
 	Bus bus.Bus      `inject:""`
 	Cfg *setting.Cfg `inject:""`
+
+	sortOptions map[string]SortOption
 }
 
 func (s *SearchService) Init() error {
 	s.Bus.AddHandler(s.searchHandler)
+	s.sortOptions = map[string]SortOption{
+		sortAlphaAsc.Name:  sortAlphaAsc,
+		sortAlphaDesc.Name: sortAlphaDesc,
+	}
+
 	return nil
 }
 
 func (s *SearchService) searchHandler(query *Query) error {
-	sortOpt, exists := sortOptions[query.Sort]
+	sortOpt, exists := s.sortOptions[query.Sort]
 	if !exists {
 		sortOpt = sortAlphaAsc
 	}
