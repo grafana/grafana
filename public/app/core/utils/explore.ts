@@ -22,6 +22,7 @@ import {
   toUtc,
   ExploreMode,
   urlUtil,
+  DateTime,
 } from '@grafana/data';
 import store from 'app/core/store';
 import kbn from 'app/core/utils/kbn';
@@ -284,12 +285,12 @@ export function generateKey(index = 0): string {
 }
 
 export function generateEmptyQuery(queries: DataQuery[], index = 0): DataQuery {
-  return { refId: getNextRefIdChar(queries), key: generateKey(index) };
+  return { refId: getNextRefIdChar(queries) ?? '', key: generateKey(index) };
 }
 
 export const generateNewKeyAndAddRefIdIfMissing = (target: DataQuery, queries: DataQuery[], index = 0): DataQuery => {
   const key = generateKey(index);
-  const refId = target.refId || getNextRefIdChar(queries);
+  const refId = (target.refId || getNextRefIdChar(queries)) ?? '';
 
   return { ...target, refId, key };
 };
@@ -305,7 +306,7 @@ export function ensureQueries(queries?: DataQuery[]): DataQuery[] {
       const key = generateKey(index);
       let refId = query.refId;
       if (!refId) {
-        refId = getNextRefIdChar(allQueries);
+        refId = getNextRefIdChar(allQueries) ?? '';
       }
 
       allQueries.push({
@@ -316,7 +317,7 @@ export function ensureQueries(queries?: DataQuery[]): DataQuery[] {
     }
     return allQueries;
   }
-  return [{ ...generateEmptyQuery(queries) }];
+  return [{ ...generateEmptyQuery(queries ?? []) }] as DataQuery[];
 }
 
 /**
@@ -375,8 +376,8 @@ export const getQueryKeys = (queries: DataQuery[], datasourceInstance: DataSourc
 
 export const getTimeRange = (timeZone: TimeZone, rawRange: RawTimeRange): TimeRange => {
   return {
-    from: dateMath.parse(rawRange.from, false, timeZone as any),
-    to: dateMath.parse(rawRange.to, true, timeZone as any),
+    from: dateMath.parse(rawRange.from, false, timeZone as any) as DateTime,
+    to: dateMath.parse(rawRange.to, true, timeZone as any) as DateTime,
     raw: rawRange,
   };
 };
@@ -415,9 +416,9 @@ export const getTimeRangeFromUrl = (range: RawTimeRange, timeZone: TimeZone): Ti
   };
 
   return {
-    from: dateMath.parse(raw.from, false, timeZone as any),
-    to: dateMath.parse(raw.to, true, timeZone as any),
-    raw,
+    from: dateMath.parse(raw.from, false, timeZone as any) as DateTime,
+    to: dateMath.parse(raw.to, true, timeZone as any) as DateTime,
+    raw: raw as RawTimeRange,
   };
 };
 
