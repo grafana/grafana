@@ -83,7 +83,8 @@ export class KeybindingSrv {
   }
 
   openSearch() {
-    appEvents.emit(CoreEvents.showDashSearch);
+    const search = _.extend(this.$location.search(), { search: 'open' });
+    this.$location.search(search);
   }
 
   openAlerting() {
