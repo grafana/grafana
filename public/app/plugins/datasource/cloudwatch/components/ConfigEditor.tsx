@@ -247,7 +247,7 @@ export class ConfigEditor extends PureComponent<Props, State> {
               <div className="gf-form">
                 <FormLabel
                   className="width-14"
-                  tooltip="A unique identifier that might be required when you assume a role in another account"
+                  tooltip="A unique identifier that might be required when assuming a role in another account"
                 >
                   External ID
                 </FormLabel>
