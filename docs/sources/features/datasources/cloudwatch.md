@@ -180,7 +180,7 @@ You can also write queries returning time series data by using the [`stats` comm
 
 TODO: image Explore switcher
 
-To the right of the query input field is CloudWatch Insights link that will open CloudWatch Insights console with your query so you can continue exploration there if needed.
+To the right of the query input field is a CloudWatch Insights link that will open the CloudWatch Insights console with your query so you can continue exploration there if needed.
 
 TODO: image highlight link
 
