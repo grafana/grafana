@@ -1,4 +1,4 @@
-import React, { useState, FC } from 'react';
+import React, { useState, FC, useEffect } from 'react';
 import { css, cx } from 'emotion';
 import { GrafanaTheme } from '@grafana/data';
 import { useTheme, Icon, stylesFactory } from '@grafana/ui';
@@ -9,6 +9,7 @@ interface Props {
   defaultToClosed?: boolean;
   className?: string;
   nested?: boolean;
+  onToggle?: (isExpanded: boolean) => void;
 }
 
 export const OptionsGroup: FC<Props> = ({
@@ -18,10 +19,16 @@ export const OptionsGroup: FC<Props> = ({
   renderTitle,
   className,
   nested = false,
+  onToggle,
 }) => {
   const [isExpanded, toggleExpand] = useState(defaultToClosed ? false : true);
   const theme = useTheme();
   const styles = getStyles(theme, isExpanded, nested);
+  useEffect(() => {
+    if (onToggle) {
+      onToggle(isExpanded);
+    }
+  }, [isExpanded]);
 
   return (
     <div className={cx(styles.box, className, 'options-group')}>
