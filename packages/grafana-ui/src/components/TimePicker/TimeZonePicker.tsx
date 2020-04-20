@@ -1,7 +1,6 @@
 import React, { FC } from 'react';
 import { getTimeZoneGroups } from '@grafana/data';
 import { Cascader } from '../index';
-import { FormInputSize } from '../Forms/types';
 
 interface Props {
   value: string;
