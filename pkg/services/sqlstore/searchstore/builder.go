@@ -25,13 +25,13 @@ func (b *Builder) ToSql(limit, page int64) (string, []interface{}) {
 	b.sql.WriteString("( ")
 	b.applyFilters()
 
-	b.sql.WriteString(b.Dialect.LimitOffset(limit, (page-1)*limit) + `) as ids
-		INNER JOIN dashboard on ids.id = dashboard.id
+	b.sql.WriteString(b.Dialect.LimitOffset(limit, (page-1)*limit) + `) AS ids
+		INNER JOIN dashboard ON ids.id = dashboard.id
 	`)
 
 	b.sql.WriteString(`
-		LEFT OUTER JOIN dashboard folder on folder.id = dashboard.folder_id
-		LEFT OUTER JOIN dashboard_tag on dashboard.id = dashboard_tag.dashboard_id`)
+		LEFT OUTER JOIN folder ON folder.id = dashboard.folder_id
+		LEFT OUTER JOIN dashboard_tag ON dashboard.id = dashboard_tag.dashboard_id`)
 
 	return b.sql.String(), b.params
 }
@@ -46,9 +46,9 @@ func (b *Builder) buildSelect() {
 			dashboard_tag.term,
 			dashboard.is_folder,
 			dashboard.folder_id,
-			folder.uid as folder_uid,
-			folder.slug as folder_slug,
-			folder.title as folder_title
+			folder.uid AS folder_uid,
+			folder.slug AS folder_slug,
+			folder.title AS folder_title
 		FROM `)
 }
 
