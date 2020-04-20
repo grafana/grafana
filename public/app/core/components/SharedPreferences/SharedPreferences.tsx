@@ -121,7 +121,7 @@ export class SharedPreferences extends PureComponent<Props, State> {
             isSearchable={false}
             value={themes.find(item => item.value === theme)}
             options={themes}
-            onChange={theme => this.onThemeChanged(theme.value)}
+            onChange={theme => this.onThemeChanged(theme.value ?? '')}
             width={20}
           />
         </div>
@@ -147,7 +147,7 @@ export class SharedPreferences extends PureComponent<Props, State> {
           <Select
             isSearchable={false}
             value={timezones.find(item => item.value === timezone)}
-            onChange={timezone => this.onTimeZoneChanged(timezone.value)}
+            onChange={timezone => this.onTimeZoneChanged(timezone.value ?? '')}
             options={timezones}
             width={20}
           />
