@@ -18,7 +18,7 @@ import {
   TimeZone,
   UrlQueryValue,
   dateTimeFormat,
-  dateTimeFormatDistanceToNow,
+  dateTimeFormatTimeAgo,
 } from '@grafana/data';
 import { CoreEvents, DashboardMeta, KIOSK_MODE_TV } from 'app/types';
 import { getConfig } from '../../../core/config';
@@ -927,7 +927,7 @@ export class DashboardModel {
   }
 
   getRelativeTime(date: DateTimeInput) {
-    return dateTimeFormatDistanceToNow(date, {
+    return dateTimeFormatTimeAgo(date, {
       timeZone: this.getTimezone(),
     });
   }

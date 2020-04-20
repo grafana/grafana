@@ -34,7 +34,7 @@ export const dateTimeFormat: DateTimeFormatter<DateTimeOptionsWithFormat> = (
 export const dateTimeFormatISO: DateTimeFormatter = (dateInUtc: DateTimeInput, options?: DateTimeOptions) =>
   toTz(dateInUtc, getTimeZone(options)).format();
 
-export const dateTimeFormatDistanceToNow: DateTimeFormatter = (dateInUtc: DateTimeInput, options?: DateTimeOptions) =>
+export const dateTimeFormatTimeAgo: DateTimeFormatter = (dateInUtc: DateTimeInput, options?: DateTimeOptions) =>
   toTz(dateInUtc, getTimeZone(options)).fromNow();
 
 const getFormat = <T extends DateTimeOptionsWithFormat>(options?: T): string => {
