@@ -195,7 +195,7 @@ exports[`TimePicker renders buttons correctly 1`] = `
                   "listItem": "-1px -1px 0 0 hsla(0, 0%, 100%, 0.1), 1px 1px 0 0 rgba(0, 0, 0, 0.3)",
                 },
                 "spacing": Object {
-                  "d": "14px",
+                  "d": "16px",
                   "formButtonHeight": 32,
                   "formFieldsetMargin": "16px",
                   "formInputAffixPaddingHorizontal": "4px",
@@ -511,7 +511,7 @@ exports[`TimePicker renders content correctly after beeing open 1`] = `
                   "listItem": "-1px -1px 0 0 hsla(0, 0%, 100%, 0.1), 1px 1px 0 0 rgba(0, 0, 0, 0.3)",
                 },
                 "spacing": Object {
-                  "d": "14px",
+                  "d": "16px",
                   "formButtonHeight": 32,
                   "formFieldsetMargin": "16px",
                   "formInputAffixPaddingHorizontal": "4px",
