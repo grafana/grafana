@@ -9,7 +9,8 @@ import {
   getDisplayProcessor,
   formattedValueToString,
   Dimensions,
-  DateTimeFormatter,
+  dateTimeFormat,
+  TimeZone,
 } from '@grafana/data';
 import { css } from 'emotion';
 
@@ -17,14 +18,14 @@ export type ContextDimensions<T extends Dimensions = any> = { [key in keyof T]: 
 
 export type GraphContextMenuProps = ContextMenuProps & {
   getContextMenuSource: () => FlotDataPoint | null;
-  dateTimeFormatter: DateTimeFormatter;
+  timeZone?: TimeZone;
   dimensions?: GraphDimensions;
   contextDimensions?: ContextDimensions;
 };
 
 export const GraphContextMenu: React.FC<GraphContextMenuProps> = ({
   getContextMenuSource,
-  dateTimeFormatter,
+  timeZone,
   items,
   dimensions,
   contextDimensions,
@@ -58,6 +59,11 @@ export const GraphContextMenu: React.FC<GraphContextMenuProps> = ({
       value = display(valueFromDimensions);
     }
 
+    const formattedValue = dateTimeFormat(source.datapoint[0], {
+      defaultWithMS: source.series.hasMsResolution,
+      timeZone,
+    });
+
     return (
       <div
         className={css`
@@ -66,7 +72,7 @@ export const GraphContextMenu: React.FC<GraphContextMenuProps> = ({
           z-index: ${theme.zIndex.tooltip};
         `}
       >
-        <strong>{dateTimeFormatter.formatDefault(source.datapoint[0], source.series.hasMsResolution)}</strong>
+        <strong>{formattedValue}</strong>
         <div>
           <SeriesIcon color={source.series.color} />
           <span

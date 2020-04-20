@@ -1,10 +1,10 @@
 import _ from 'lodash';
 import TableModel from 'app/core/table_model';
 import { TableRenderer } from '../renderer';
-import { getColorDefinitionByName, ScopedVars, createDateTimeFormatter } from '@grafana/data';
+import { getColorDefinitionByName, ScopedVars, TimeZone } from '@grafana/data';
 import { ColumnRender } from '../types';
 
-const utcFormatter = createDateTimeFormatter(() => 'utc');
+const utc: TimeZone = 'utc';
 
 const sanitize = (value: any): string => {
   return 'sanitized';
@@ -212,7 +212,7 @@ describe('when rendering table', () => {
     };
 
     //@ts-ignore
-    const renderer = new TableRenderer(panel, table, utcFormatter, sanitize, templateSrv);
+    const renderer = new TableRenderer(panel, table, utc, sanitize, templateSrv);
 
     it('time column should be formatted', () => {
       const html = renderer.renderCell(0, 0, 1388556366666);
@@ -468,7 +468,7 @@ describe('when rendering table with different patterns', () => {
       };
 
       //@ts-ignore
-      const renderer = new TableRenderer(panel, table, utcFormatter, sanitize, templateSrv);
+      const renderer = new TableRenderer(panel, table, utc, sanitize, templateSrv);
       const html = renderer.renderCell(1, 0, 1230);
 
       expect(html).toBe(expected);
@@ -538,7 +538,7 @@ describe('when rendering cells with different alignment options', () => {
       };
 
       //@ts-ignore
-      const renderer = new TableRenderer(panel, table, utcFormatter, sanitize, templateSrv);
+      const renderer = new TableRenderer(panel, table, utc, sanitize, templateSrv);
       const html = renderer.renderCell(1, 0, 42);
 
       expect(html).toBe(expected);

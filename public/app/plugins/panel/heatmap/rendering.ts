@@ -13,6 +13,7 @@ import {
   getColorFromHexRgbOrName,
   getValueFormat,
   formattedValueToString,
+  dateTimeFormat,
 } from '@grafana/data';
 import { CoreEvents } from 'app/types';
 
@@ -154,14 +155,14 @@ export class HeatmapRenderer {
       .range([0, this.chartWidth]);
 
     const ticks = this.chartWidth / DEFAULT_X_TICK_SIZE_PX;
-    const grafanaTimeFormatter = ticksUtils.grafanaTimeFormat(ticks, this.timeRange.from, this.timeRange.to);
-    const formatter = this.ctrl.dashboard.getDateTimeFormatter();
-    const timeFormat = (date: Date) => formatter.format(date, grafanaTimeFormatter);
+    const format = ticksUtils.grafanaTimeFormat(ticks, this.timeRange.from, this.timeRange.to);
+    const timeZone = this.ctrl.dashboard.getTimezone();
+    const formatter = (date: Date) => dateTimeFormat(date, { format, timeZone });
 
     const xAxis = d3
       .axisBottom(this.xScale)
       .ticks(ticks)
-      .tickFormat(timeFormat)
+      .tickFormat(formatter)
       .tickPadding(X_AXIS_TICK_PADDING)
       .tickSize(this.chartHeight);
 

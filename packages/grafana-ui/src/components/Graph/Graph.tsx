@@ -3,14 +3,7 @@ import $ from 'jquery';
 import React, { PureComponent } from 'react';
 import uniqBy from 'lodash/uniqBy';
 // Types
-import {
-  TimeRange,
-  GraphSeriesXY,
-  TimeZone,
-  DefaultTimeZone,
-  createDimension,
-  createDateTimeFormatter,
-} from '@grafana/data';
+import { TimeRange, GraphSeriesXY, TimeZone, DefaultTimeZone, createDimension } from '@grafana/data';
 import _ from 'lodash';
 import { FlotPosition, FlotItem } from './types';
 import { TooltipProps, TooltipContentProps, ActiveDimensions, Tooltip } from '../Chart/Tooltip';
@@ -246,14 +239,12 @@ export class Graph extends PureComponent<GraphProps, GraphState> {
       };
     };
 
-    const dateTimeFormatter = createDateTimeFormatter(() => this.props.timeZone);
-
     const contextContentProps: GraphContextMenuProps = {
       x: contextPos.pageX,
       y: contextPos.pageY,
       onClose: closeContext,
       getContextMenuSource: getContextMenuSource,
-      dateTimeFormatter,
+      timeZone: this.props.timeZone,
       dimensions,
       contextDimensions,
     };

@@ -337,7 +337,7 @@ class GraphCtrl extends MetricsPanelCtrl {
     this.contextMenuCtrl.toggleMenu();
   };
 
-  getDateTimeFormatter = () => this.dashboard.getDateTimeFormatter();
+  getTimeZone = () => this.dashboard.getTimezone();
 
   getDataFrameByRefId = (refId: string) => {
     return this.dataList.filter(dataFrame => dataFrame.refId === refId)[0];

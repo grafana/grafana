@@ -10,7 +10,9 @@ import {
   stringToJsRegex,
   textUtil,
   unEscapeStringFromRegex,
-  DateTimeFormatter,
+  TimeZone,
+  dateTimeFormatISO,
+  dateTimeFormat,
 } from '@grafana/data';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { ColumnRender, TableRenderModel, ColumnStyle } from './types';
@@ -23,7 +25,7 @@ export class TableRenderer {
   constructor(
     private panel: { styles: ColumnStyle[]; pageSize: number },
     private table: TableRenderModel,
-    private dateTimeFormatter: DateTimeFormatter,
+    private timeZone: TimeZone,
     private sanitize: (v: any) => any,
     private templateSrv: TemplateSrv,
     private theme?: GrafanaThemeType
@@ -120,9 +122,15 @@ export class TableRenderer {
         }
 
         if (!column.style.dateFormat) {
-          return this.dateTimeFormatter.formatISO(v);
+          return dateTimeFormatISO(v, {
+            timeZone: this.timeZone,
+          });
         }
-        return this.dateTimeFormatter.format(v, column.style.dateFormat);
+
+        return dateTimeFormat(v, {
+          format: column.style.dateFormat,
+          timeZone: this.timeZone,
+        });
       };
     }
 
