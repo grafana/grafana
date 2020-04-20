@@ -50,17 +50,21 @@ export function ThemeConsumer(props: ThemeConsumerProps) {
   return (
     <ThemeContext.Consumer>
       {(value: ThemeOptions | undefined) => {
-        const mergedTheme: Theme = value
-          ? {
-              ...defaultTheme,
-              ...value,
-            }
-          : defaultTheme;
-        return props.children(mergedTheme);
+        const theme = memoizedThemeMerge(value);
+        return props.children(theme);
       }}
     </ThemeContext.Consumer>
   );
 }
+
+const memoizedThemeMerge = memoizeOne(value => {
+  return value
+    ? {
+        ...defaultTheme,
+        ...value,
+      }
+    : defaultTheme;
+});
 
 type WrappedWithThemeComponent<Props> = React.ComponentType<Omit<Props, 'theme'>> & {
   wrapped: React.ComponentType<Props>;

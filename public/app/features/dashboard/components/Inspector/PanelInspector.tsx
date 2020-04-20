@@ -1,99 +1,119 @@
 import React, { PureComponent } from 'react';
-import AutoSizer from 'react-virtualized-auto-sizer';
-import { saveAs } from 'file-saver';
-import { css } from 'emotion';
-
+import { Unsubscribable } from 'rxjs';
+import { connect, MapStateToProps } from 'react-redux';
 import { InspectHeader } from './InspectHeader';
+import { InspectJSONTab } from './InspectJSONTab';
+import { QueryInspector } from './QueryInspector';
 
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
-import {
-  JSONFormatter,
-  Drawer,
-  LegacyForms,
-  Table,
-  TabContent,
-  stylesFactory,
-  CustomScrollbar,
-  Button,
-} from '@grafana/ui';
-const { Select } = LegacyForms;
+import { JSONFormatter, Drawer, TabContent, CustomScrollbar } from '@grafana/ui';
 import { getLocationSrv, getDataSourceSrv } from '@grafana/runtime';
 import {
   DataFrame,
   DataSourceApi,
   SelectableValue,
-  applyFieldOverrides,
-  toCSV,
+  getDisplayProcessor,
   DataQueryError,
   PanelData,
-  getValueFormat,
+  FieldType,
   formattedValueToString,
   QueryResultMetaStat,
+  LoadingState,
+  PanelPlugin,
 } from '@grafana/data';
 import { config } from 'app/core/config';
+import { getPanelInspectorStyles } from './styles';
+import { StoreState } from 'app/types';
+import { InspectDataTab } from './InspectDataTab';
 
-interface Props {
+interface OwnProps {
   dashboard: DashboardModel;
   panel: PanelModel;
-  selectedTab: InspectTab;
+  defaultTab: InspectTab;
 }
+
+export interface ConnectedProps {
+  plugin?: PanelPlugin | null;
+}
+
+export type Props = OwnProps & ConnectedProps;
 
 export enum InspectTab {
   Data = 'data',
-  Request = 'request',
-  Issue = 'issue',
   Meta = 'meta', // When result metadata exists
   Error = 'error',
   Stats = 'stats',
-  PanelJson = 'paneljson',
+  JSON = 'json',
+  Query = 'query',
 }
 
 interface State {
+  isLoading: boolean;
   // The last raw response
   last: PanelData;
-
   // Data from the last response
   data: DataFrame[];
-
-  // The selected data frame
-  selected: number;
-
   // The Selected Tab
-  tab: InspectTab;
-
+  currentTab: InspectTab;
   // If the datasource supports custom metadata
   metaDS?: DataSourceApi;
-
+  // drawer width
   drawerWidth: string;
 }
 
-export class PanelInspector extends PureComponent<Props, State> {
+export class PanelInspectorUnconnected extends PureComponent<Props, State> {
+  querySubscription?: Unsubscribable;
+
   constructor(props: Props) {
     super(props);
+
     this.state = {
+      isLoading: true,
       last: {} as PanelData,
       data: [],
-      selected: 0,
-      tab: props.selectedTab || InspectTab.Data,
+      currentTab: props.defaultTab ?? InspectTab.Data,
       drawerWidth: '50%',
     };
   }
 
-  async componentDidMount() {
-    const { panel } = this.props;
+  componentDidMount() {
+    const { plugin } = this.props;
 
-    if (!panel) {
-      this.onDismiss(); // Try to close the component
-      return;
+    if (plugin) {
+      this.init();
     }
+  }
 
-    const lastResult = panel.getQueryRunner().getLastResult();
-
-    if (!lastResult) {
-      this.onDismiss(); // Usually opened from refresh?
-      return;
+  componentDidUpdate(prevProps: Props) {
+    if (prevProps.plugin !== this.props.plugin) {
+      this.init();
     }
+  }
 
+  /**
+   * This init process where we do not have a plugin to start with is to handle full page reloads with inspect url parameter
+   * When this inspect drawer loads the plugin is not yet loaded.
+   */
+  init() {
+    const { plugin, panel } = this.props;
+
+    if (plugin && !plugin.meta.skipDataQuery) {
+      this.querySubscription = panel
+        .getQueryRunner()
+        .getData()
+        .subscribe({
+          next: data => this.onUpdateData(data),
+        });
+    }
+  }
+
+  componentWillUnmount() {
+    if (this.querySubscription) {
+      this.querySubscription.unsubscribe();
+    }
+  }
+
+  async onUpdateData(lastResult: PanelData) {
     let metaDS: DataSourceApi;
     const data = lastResult.series;
     const error = lastResult.error;
@@ -117,16 +137,17 @@ export class PanelInspector extends PureComponent<Props, State> {
 
     // Set last result, but no metadata inspector
     this.setState(prevState => ({
+      isLoading: lastResult.state === LoadingState.Loading,
       last: lastResult,
       data,
       metaDS,
-      tab: error ? InspectTab.Error : prevState.tab,
+      currentTab: error ? InspectTab.Error : prevState.currentTab,
     }));
   }
 
-  onDismiss = () => {
+  onClose = () => {
     getLocationSrv().update({
-      query: { inspect: null, tab: null },
+      query: { inspect: null, inspectTab: null },
       partial: true,
     });
   };
@@ -138,21 +159,7 @@ export class PanelInspector extends PureComponent<Props, State> {
   };
 
   onSelectTab = (item: SelectableValue<InspectTab>) => {
-    this.setState({ tab: item.value || InspectTab.Data });
-  };
-
-  onSelectedFrameChanged = (item: SelectableValue<number>) => {
-    this.setState({ selected: item.value || 0 });
-  };
-
-  exportCsv = (dataFrame: DataFrame) => {
-    const dataFrameCsv = toCSV([dataFrame]);
-
-    const blob = new Blob([dataFrameCsv], {
-      type: 'application/csv;charset=utf-8',
-    });
-
-    saveAs(blob, dataFrame.name + '-' + new Date().getUTCDate() + '.csv');
+    this.setState({ currentTab: item.value || InspectTab.Data });
   };
 
   renderMetadataInspector() {
@@ -164,64 +171,8 @@ export class PanelInspector extends PureComponent<Props, State> {
   }
 
   renderDataTab() {
-    const { data, selected } = this.state;
-    const styles = getStyles();
-
-    if (!data || !data.length) {
-      return <div>No Data</div>;
-    }
-
-    const choices = data.map((frame, index) => {
-      return {
-        value: index,
-        label: `${frame.name} (${index})`,
-      };
-    });
-
-    const processed = applyFieldOverrides({
-      data,
-      theme: config.theme,
-      fieldConfig: { defaults: {}, overrides: [] },
-      replaceVariables: (value: string) => {
-        return value;
-      },
-    });
-
-    return (
-      <div className={styles.dataTabContent}>
-        <div className={styles.toolbar}>
-          {choices.length > 1 && (
-            <div className={styles.dataFrameSelect}>
-              <Select
-                options={choices}
-                value={choices.find(t => t.value === selected)}
-                onChange={this.onSelectedFrameChanged}
-              />
-            </div>
-          )}
-          <div className={styles.downloadCsv}>
-            <Button variant="primary" onClick={() => this.exportCsv(processed[selected])}>
-              Download CSV
-            </Button>
-          </div>
-        </div>
-        <div style={{ flexGrow: 1 }}>
-          <AutoSizer>
-            {({ width, height }) => {
-              if (width === 0) {
-                return null;
-              }
-
-              return (
-                <div style={{ width, height }}>
-                  <Table width={width} height={height} data={processed[selected]} />
-                </div>
-              );
-            }}
-          </AutoSizer>
-        </div>
-      </div>
-    );
+    const { last, isLoading } = this.state;
+    return <InspectDataTab data={last.series} isLoading={isLoading} />;
   }
 
   renderErrorTab(error?: DataQueryError) {
@@ -237,18 +188,6 @@ export class PanelInspector extends PureComponent<Props, State> {
       );
     }
     return <div>{error.message}</div>;
-  }
-
-  renderRequestTab() {
-    return (
-      <CustomScrollbar>
-        <JSONFormatter json={this.state.last} open={2} />
-      </CustomScrollbar>
-    );
-  }
-
-  renderJsonModelTab() {
-    return <JSONFormatter json={this.props.panel.getSaveModel()} open={2} />;
   }
 
   renderStatsTab() {
@@ -285,12 +224,16 @@ export class PanelInspector extends PureComponent<Props, State> {
     return (
       <>
         {this.renderStatsTable('Stats', stats)}
-        {dataStats.length && this.renderStatsTable('Data source stats', dataStats)}
+        {this.renderStatsTable('Data source stats', dataStats)}
       </>
     );
   }
 
   renderStatsTable(name: string, stats: QueryResultMetaStat[]) {
+    if (!stats || !stats.length) {
+      return null;
+    }
+
     return (
       <div style={{ paddingBottom: '16px' }}>
         <div className="section-heading">{name}</div>
@@ -300,7 +243,7 @@ export class PanelInspector extends PureComponent<Props, State> {
               return (
                 <tr key={`${stat.title}-${index}`}>
                   <td>{stat.title}</td>
-                  <td style={{ textAlign: 'right' }}>{formatStat(stat.value, stat.unit)}</td>
+                  <td style={{ textAlign: 'right' }}>{formatStat(stat)}</td>
                 </tr>
               );
             })}
@@ -310,93 +253,109 @@ export class PanelInspector extends PureComponent<Props, State> {
     );
   }
 
-  drawerHeader = () => {
-    const { tab, last } = this.state;
+  drawerHeader(tabs: Array<{ label: string; value: InspectTab }>, activeTab: InspectTab) {
+    const { panel } = this.props;
+    const { last } = this.state;
+
+    return (
+      <InspectHeader
+        tabs={tabs}
+        tab={activeTab}
+        panelData={last}
+        onSelectTab={this.onSelectTab}
+        onClose={this.onClose}
+        panel={panel}
+        onToggleExpand={this.onToggleExpand}
+        isExpanded={this.state.drawerWidth === '100%'}
+      />
+    );
+  }
+
+  getTabs() {
+    const { dashboard, plugin } = this.props;
+    const { last } = this.state;
     const error = last?.error;
     const tabs = [];
 
-    if (last && last?.series?.length > 0) {
+    if (plugin && !plugin.meta.skipDataQuery) {
       tabs.push({ label: 'Data', value: InspectTab.Data });
+      tabs.push({ label: 'Stats', value: InspectTab.Stats });
     }
-
-    tabs.push({ label: 'Stats', value: InspectTab.Stats });
-    tabs.push({ label: 'Request', value: InspectTab.Request });
-    tabs.push({ label: 'Panel JSON', value: InspectTab.PanelJson });
 
     if (this.state.metaDS) {
       tabs.push({ label: 'Meta Data', value: InspectTab.Meta });
     }
 
+    tabs.push({ label: 'JSON', value: InspectTab.JSON });
+
     if (error && error.message) {
       tabs.push({ label: 'Error', value: InspectTab.Error });
     }
 
-    return (
-      <InspectHeader
-        tabs={tabs}
-        tab={tab}
-        panelData={last}
-        onSelectTab={this.onSelectTab}
-        onClose={this.onDismiss}
-        panel={this.props.panel}
-        onToggleExpand={this.onToggleExpand}
-        isExpanded={this.state.drawerWidth === '100%'}
-      />
-    );
-  };
+    if (dashboard.meta.canEdit) {
+      tabs.push({ label: 'Query', value: InspectTab.Query });
+    }
+    return tabs;
+  }
 
   render() {
-    const { last, tab, drawerWidth } = this.state;
-    const styles = getStyles();
+    const { panel, dashboard, plugin } = this.props;
+    const { currentTab } = this.state;
+
+    if (!plugin) {
+      return null;
+    }
+
+    const { last, drawerWidth } = this.state;
+    const styles = getPanelInspectorStyles();
     const error = last?.error;
+    const tabs = this.getTabs();
+
+    // Validate that the active tab is actually valid and allowed
+    let activeTab = currentTab;
+    if (!tabs.find(item => item.value === currentTab)) {
+      activeTab = InspectTab.JSON;
+    }
 
     return (
-      <Drawer title={this.drawerHeader} width={drawerWidth} onClose={this.onDismiss}>
-        <TabContent className={styles.tabContent}>
-          {tab === InspectTab.Data && this.renderDataTab()}
-          <CustomScrollbar autoHeightMin="100%">
-            {tab === InspectTab.Meta && this.renderMetadataInspector()}
-            {tab === InspectTab.Request && this.renderRequestTab()}
-            {tab === InspectTab.Error && this.renderErrorTab(error)}
-            {tab === InspectTab.Stats && this.renderStatsTab()}
-            {tab === InspectTab.PanelJson && this.renderJsonModelTab()}
-          </CustomScrollbar>
-        </TabContent>
+      <Drawer title={this.drawerHeader(tabs, activeTab)} width={drawerWidth} onClose={this.onClose}>
+        {activeTab === InspectTab.Data && this.renderDataTab()}
+        <CustomScrollbar autoHeightMin="100%">
+          <TabContent className={styles.tabContent}>
+            {activeTab === InspectTab.Meta && this.renderMetadataInspector()}
+            {activeTab === InspectTab.JSON && (
+              <InspectJSONTab panel={panel} dashboard={dashboard} data={last} onClose={this.onClose} />
+            )}
+            {activeTab === InspectTab.Error && this.renderErrorTab(error)}
+            {activeTab === InspectTab.Stats && this.renderStatsTab()}
+            {activeTab === InspectTab.Query && <QueryInspector panel={panel} />}
+          </TabContent>
+        </CustomScrollbar>
       </Drawer>
     );
   }
 }
 
-function formatStat(value: any, unit?: string): string {
-  if (unit) {
-    return formattedValueToString(getValueFormat(unit)(value));
-  } else {
-    return value;
-  }
+function formatStat(stat: QueryResultMetaStat): string {
+  const display = getDisplayProcessor({
+    field: {
+      type: FieldType.number,
+      config: stat,
+    },
+    theme: config.theme,
+  });
+  return formattedValueToString(display(stat.value));
 }
 
-const getStyles = stylesFactory(() => {
+const mapStateToProps: MapStateToProps<ConnectedProps, OwnProps, StoreState> = (state, props) => {
+  const panelState = state.dashboard.panels[props.panel.id];
+  if (!panelState) {
+    return { plugin: null };
+  }
+
   return {
-    toolbar: css`
-      display: flex;
-      margin: 8px 0;
-      justify-content: flex-end;
-      align-items: center;
-    `,
-    dataFrameSelect: css`
-      flex-grow: 2;
-    `,
-    downloadCsv: css`
-      margin-left: 16px;
-    `,
-    tabContent: css`
-      height: calc(100% - 32px);
-    `,
-    dataTabContent: css`
-      display: flex;
-      flex-direction: column;
-      height: 100%;
-      width: 100%;
-    `,
+    plugin: panelState.plugin,
   };
-});
+};
+
+export const PanelInspector = connect(mapStateToProps)(PanelInspectorUnconnected);

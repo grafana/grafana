@@ -2,7 +2,6 @@ import './dashboard_loaders';
 import './ReactContainer';
 import { applyRouteRegistrationHandlers } from './registry';
 // Pages
-import FolderDashboardsCtrl from 'app/features/folders/FolderDashboardsCtrl';
 import LdapPage from 'app/features/admin/ldap/LdapPage';
 import UserAdminPage from 'app/features/admin/UserAdminPage';
 import SignupPage from 'app/features/profile/SignupPage';
@@ -156,9 +155,13 @@ export function setupAngularRoutes($routeProvider: route.IRouteProvider, $locati
       },
     })
     .when('/dashboards', {
-      templateUrl: 'public/app/features/manage-dashboards/partials/dashboard_list.html',
-      controller: 'DashboardListCtrl',
-      controllerAs: 'ctrl',
+      template: '<react-container />',
+      resolve: {
+        component: () =>
+          SafeDynamicImport(
+            import(/* webpackChunkName: "DashboardListPage"*/ 'app/features/search/components/DashboardListPage')
+          ),
+      },
     })
     .when('/dashboards/folder/new', {
       template: '<react-container />',
@@ -188,14 +191,22 @@ export function setupAngularRoutes($routeProvider: route.IRouteProvider, $locati
       },
     })
     .when('/dashboards/f/:uid/:slug', {
-      templateUrl: 'public/app/features/folders/partials/folder_dashboards.html',
-      controller: FolderDashboardsCtrl,
-      controllerAs: 'ctrl',
+      template: '<react-container />',
+      resolve: {
+        component: () =>
+          SafeDynamicImport(
+            import(/* webpackChunkName: "DashboardListPage"*/ 'app/features/search/components/DashboardListPage')
+          ),
+      },
     })
     .when('/dashboards/f/:uid', {
-      templateUrl: 'public/app/features/folders/partials/folder_dashboards.html',
-      controller: FolderDashboardsCtrl,
-      controllerAs: 'ctrl',
+      template: '<react-container />',
+      resolve: {
+        component: () =>
+          SafeDynamicImport(
+            import(/* webpackChunkName: "DashboardListPage"*/ 'app/features/search/components/DashboardListPage')
+          ),
+      },
     })
     .when('/explore', {
       template: '<react-container />',

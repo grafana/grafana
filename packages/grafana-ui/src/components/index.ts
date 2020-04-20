@@ -53,6 +53,7 @@ export { TableInputCSV } from './TableInputCSV/TableInputCSV';
 export { TabsBar } from './Tabs/TabsBar';
 export { Tab } from './Tabs/Tab';
 export { TabContent } from './Tabs/TabContent';
+export { Counter } from './Tabs/Counter';
 
 // Visualizations
 export {
@@ -143,6 +144,7 @@ export { HorizontalGroup, VerticalGroup, Container } from './Layout/Layout';
 export { RadioButtonGroup } from './Forms/RadioButtonGroup/RadioButtonGroup';
 
 export { Input } from './Input/Input';
+export { FormInputSize } from './Forms/types';
 
 export { Switch } from './Switch/Switch';
 export { Checkbox } from './Forms/Checkbox';
