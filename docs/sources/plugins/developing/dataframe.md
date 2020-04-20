@@ -10,7 +10,7 @@ draft = true
 
 ## Introduction to dataframes
 
-Dataframes are a new concept in Grafana 7.0 and they replace the Time Series and Table types in Grafana. Dataframes are a more generic structure that can hold different shapes of time series, tables, and other types.
+Dataframes were introduced in Grafana 7.0. They replace the Time Series and Table types in Grafana. Dataframes are a more generic structure that can hold different shapes of time series, tables, and other types.
 
 A dataframe is a [Columnar oriented](https://en.wikipedia.org/wiki/Column-oriented_DBMS) table structure, meaning it stores data by column and not by row.
 
