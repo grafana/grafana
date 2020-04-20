@@ -74,12 +74,6 @@ export function getColumns(data: DataFrame, availableWidth: number, columnMinWid
 
 function getCellComponent(displayMode: TableCellDisplayMode, field: Field) {
   switch (displayMode) {
-    case TableCellDisplayMode.Auto:
-      if (field.type === FieldType.other) {
-        return JSONViewCell;
-      }
-      return DefaultCell;
-
     case TableCellDisplayMode.ColorText:
       return withTableStyles(DefaultCell, getTextColorStyle);
     case TableCellDisplayMode.ColorBackground:
@@ -89,9 +83,13 @@ function getCellComponent(displayMode: TableCellDisplayMode, field: Field) {
       return BarGaugeCell;
     case TableCellDisplayMode.JSONView:
       return JSONViewCell;
-    default:
-      return DefaultCell;
   }
+
+  // Default or Auto
+  if (field.type === FieldType.other) {
+    return JSONViewCell;
+  }
+  return DefaultCell;
 }
 
 function getTextColorStyle(props: TableCellProps) {
