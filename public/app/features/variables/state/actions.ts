@@ -1,5 +1,5 @@
 import castArray from 'lodash/castArray';
-import { UrlQueryMap, UrlQueryValue, getBackendSrv } from '@grafana/runtime';
+import { UrlQueryMap, UrlQueryValue } from '@grafana/runtime';
 import { AppEvents, TimeRange } from '@grafana/data';
 import angular from 'angular';
 
@@ -11,7 +11,7 @@ import {
   VariableWithOptions,
   VariableWithMultiSupport,
 } from '../../templating/types';
-import { User, StoreState, ThunkResult } from '../../../types';
+import { StoreState, ThunkResult } from '../../../types';
 import { getVariable, getVariables } from './selectors';
 import { variableAdapters } from '../adapters';
 import { Graph } from '../../../core/utils/dag';
@@ -103,22 +103,17 @@ export const completeDashboardTemplating = (dashboard: DashboardModel): ThunkRes
         },
       },
     });
-
-    getBackendSrv()
-      .get('/api/users/' + contextSrv.user.id)
-      .then((user: User) => {
-        templateSrv.setGlobalVariable('__user', {
-          value: {
-            name: user.name,
-            login: user.login,
-            email: user.email,
-            id: contextSrv.user.id,
-            toString: function() {
-              return this.id;
-            },
-          },
-        });
-      });
+    templateSrv.setGlobalVariable('__user', {
+      value: {
+        name: contextSrv.user.name,
+        login: contextSrv.user.login,
+        email: contextSrv.user.email,
+        id: contextSrv.user.id,
+        toString: function() {
+          return this.id;
+        },
+      },
+    });
   };
 };
 
