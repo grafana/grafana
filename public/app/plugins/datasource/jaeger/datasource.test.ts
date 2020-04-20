@@ -57,6 +57,7 @@ async function withMockedBackendSrv(srv: BackendSrv, fn: () => Promise<void>) {
 
 const defaultSettings: DataSourceInstanceSettings = {
   id: 0,
+  uid: '0',
   type: 'tracing',
   name: 'jaeger',
   meta: {

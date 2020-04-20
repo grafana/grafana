@@ -5,7 +5,6 @@ import { GrafanaTheme } from '@grafana/data';
 import { SearchSrv } from 'app/core/services/search_srv';
 import { TagFilter } from 'app/core/components/TagFilter/TagFilter';
 import { contextSrv } from 'app/core/services/context_srv';
-import { OpenSearchParams } from '../types';
 import { useSearchQuery } from '../hooks/useSearchQuery';
 import { useDashboardSearch } from '../hooks/useDashboardSearch';
 import { SearchField } from './SearchField';
@@ -18,10 +17,11 @@ const canEdit = isEditor || hasEditPermissionInFolders;
 
 export interface Props {
   onCloseSearch: () => void;
-  payload?: OpenSearchParams;
+  folder?: string;
 }
 
-export const DashboardSearch: FC<Props> = ({ onCloseSearch, payload = {} }) => {
+export const DashboardSearch: FC<Props> = ({ onCloseSearch, folder }) => {
+  const payload = folder ? { query: `folder:${folder}` } : {};
   const { query, onQueryChange, onClearFilters, onTagFilterChange, onTagAdd } = useSearchQuery(payload);
   const { results, loading, onToggleSection, onKeyDown } = useDashboardSearch(query, onCloseSearch);
   const theme = useTheme();

@@ -345,18 +345,24 @@ export function updateHistory<T extends DataQuery = any>(
   queries: T[]
 ): Array<HistoryItem<T>> {
   const ts = Date.now();
+  let updatedHistory = history;
   queries.forEach(query => {
-    history = [{ query, ts }, ...history];
+    updatedHistory = [{ query, ts }, ...updatedHistory];
   });
 
-  if (history.length > MAX_HISTORY_ITEMS) {
-    history = history.slice(0, MAX_HISTORY_ITEMS);
+  if (updatedHistory.length > MAX_HISTORY_ITEMS) {
+    updatedHistory = updatedHistory.slice(0, MAX_HISTORY_ITEMS);
   }
 
   // Combine all queries of a datasource type into one history
   const historyKey = `grafana.explore.history.${datasourceId}`;
-  store.setObject(historyKey, history);
-  return history;
+  try {
+    store.setObject(historyKey, updatedHistory);
+    return updatedHistory;
+  } catch (error) {
+    console.error(error);
+    return history;
+  }
 }
 
 export function clearHistory(datasourceId: string) {
