@@ -106,7 +106,7 @@ func AddDataSource(cmd *models.AddDataSourceCommand) error {
 		if cmd.Uid == "" {
 			uid, err := generateNewDatasourceUid(sess, cmd.OrgId)
 			if err != nil {
-				return errutil.Wrapf(err, "Failed to generate UID for Datasource %q", cmd.Name)
+				return errutil.Wrapf(err, "Failed to generate UID for datasource %q", cmd.Name)
 			}
 			cmd.Uid = uid
 		}
