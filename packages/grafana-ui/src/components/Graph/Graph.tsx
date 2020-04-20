@@ -18,6 +18,9 @@ import { TooltipProps, TooltipContentProps, ActiveDimensions, Tooltip } from '..
 import { GraphTooltip } from './GraphTooltip/GraphTooltip';
 import { GraphContextMenu, GraphContextMenuProps, ContextDimensions } from './GraphContextMenu';
 import { GraphDimensions } from './GraphTooltip/types';
+import * as CoreEvents from '../../../../../public/app/types/events';
+import { GraphHoverPayload } from '../../../../../public/app/types/events';
+import appEvents from '../../../../../public/app/core/app_events';
 
 export interface GraphProps {
   children?: JSX.Element | JSX.Element[];
@@ -74,11 +77,41 @@ export class Graph extends PureComponent<GraphProps, GraphState> {
       this.$element.bind('plothover', this.onPlotHover);
       this.$element.bind('plotclick', this.onPlotClick);
     }
+
+    // Listen on events from other graphs. Allows for shared cursor in graphs.
+    appEvents.on(CoreEvents.graphHover, this.onGraphHover);
+    appEvents.on(CoreEvents.graphHoverClear, this.onGraphHoverClear);
   }
 
   componentWillUnmount() {
     this.$element.unbind('plotselected', this.onPlotSelected);
+    appEvents.off(CoreEvents.graphHover, this.onGraphHover);
+    appEvents.off(CoreEvents.graphHoverClear, this.onGraphHoverClear);
   }
+
+  onGraphHover = (evt: GraphHoverPayload) => {
+    // ignore other graph hover events if shared tooltip is disabled
+    // if (!this.dashboard.sharedTooltipModeEnabled()) {
+    //   return;
+    // }
+
+    // ignore if we are the emitter
+    // if (!this.plot || evt.panel.id === this.panel.id || this.ctrl.otherPanelInFullscreenMode()) {
+    //   return;
+    // }
+
+    console.log('onGraphHover', evt.pos);
+    this.setState({
+      isTooltipVisible: true,
+      pos: evt.pos,
+    });
+  };
+
+  onGraphHoverClear = () => {
+    this.setState({
+      isTooltipVisible: false,
+    });
+  };
 
   onPlotSelected = (event: JQueryEventObject, ranges: { xaxis: { from: number; to: number } }) => {
     const { onHorizontalRegionSelected } = this.props;
@@ -88,6 +121,7 @@ export class Graph extends PureComponent<GraphProps, GraphState> {
   };
 
   onPlotHover = (event: JQueryEventObject, pos: FlotPosition, item?: FlotItem<GraphSeriesXY>) => {
+    appEvents.emit(CoreEvents.graphHover, { pos, panel: { id: 1234 } });
     this.setState({
       isTooltipVisible: true,
       activeItem: item,
@@ -379,6 +413,7 @@ export class Graph extends PureComponent<GraphProps, GraphState> {
           ref={e => (this.element = e)}
           style={{ height, width }}
           onMouseLeave={() => {
+            appEvents.emit(CoreEvents.graphHoverClear, { panel: { id: 1234 } });
             this.setState({ isTooltipVisible: false });
           }}
         />
