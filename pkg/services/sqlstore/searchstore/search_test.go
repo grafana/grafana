@@ -202,7 +202,7 @@ func createDashboards(startID, endID int, orgID int64) error {
 	return nil
 }
 
-// lexiCounter counts in a lexiographically sortable order.
+// lexiCounter counts in a lexicographically sortable order.
 func lexiCounter(n int) string {
 	alphabet := "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 	value := string(alphabet[n%26])
