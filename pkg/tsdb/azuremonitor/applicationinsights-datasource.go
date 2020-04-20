@@ -5,6 +5,13 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io/ioutil"
+	"net/http"
+	"net/url"
+	"path"
+	"strings"
+	"time"
+
 	"github.com/grafana/grafana/pkg/api/pluginproxy"
 	"github.com/grafana/grafana/pkg/components/null"
 	"github.com/grafana/grafana/pkg/components/simplejson"
@@ -14,12 +21,6 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb"
 	"github.com/opentracing/opentracing-go"
 	"golang.org/x/net/context/ctxhttp"
-	"io/ioutil"
-	"net/http"
-	"net/url"
-	"path"
-	"strings"
-	"time"
 )
 
 // ApplicationInsightsDatasource calls the application insights query API's

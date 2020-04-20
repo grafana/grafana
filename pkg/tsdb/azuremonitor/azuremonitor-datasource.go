@@ -82,7 +82,6 @@ func (e *AzureMonitorDatasource) buildQueries(queries []*tsdb.Query, timeRange *
 		var target string
 
 		azureMonitorTarget := query.Model.Get("azureMonitor").MustMap()
-		azlog.Debug("AzureMonitor", "target", azureMonitorTarget)
 
 		urlComponents := map[string]string{}
 		urlComponents["subscription"] = fmt.Sprintf("%v", query.Model.Get("subscription").MustString())
@@ -178,6 +177,7 @@ func (e *AzureMonitorDatasource) executeQuery(ctx context.Context, query *AzureM
 	}
 
 	azlog.Debug("AzureMonitor", "Request ApiURL", req.URL.String())
+	azlog.Debug("AzureMonitor", "Target", query.Target)
 	res, err := ctxhttp.Do(ctx, e.httpClient, req)
 	if err != nil {
 		queryResult.Error = err
