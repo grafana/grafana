@@ -10,31 +10,38 @@ describe('getPanelMenu', () => {
     expect(menuItems).toMatchInlineSnapshot(`
       Array [
         Object {
-          "iconClassName": "gicon gicon-viewer",
+          "iconClassName": "eye",
           "onClick": [Function],
           "shortcut": "v",
           "text": "View",
         },
         Object {
-          "iconClassName": "gicon gicon-editor",
+          "iconClassName": "edit",
           "onClick": [Function],
           "shortcut": "e",
           "text": "Edit",
         },
         Object {
-          "iconClassName": "fa fa-fw fa-share",
+          "iconClassName": "share-alt",
           "onClick": [Function],
           "shortcut": "p s",
           "text": "Share",
         },
         Object {
-          "iconClassName": "fa fa-fw fa-info-circle",
+          "iconClassName": "info-circle",
           "onClick": [Function],
-          "shortcut": "p i",
+          "shortcut": "i",
+          "subMenu": Array [
+            Object {
+              "onClick": [Function],
+              "text": "Panel JSON",
+            },
+          ],
           "text": "Inspect",
+          "type": "submenu",
         },
         Object {
-          "iconClassName": "fa fa-fw fa-cube",
+          "iconClassName": "cube",
           "onClick": [Function],
           "subMenu": Array [
             Object {
@@ -46,10 +53,6 @@ describe('getPanelMenu', () => {
               "onClick": [Function],
               "text": "Copy",
             },
-            Object {
-              "onClick": [Function],
-              "text": "Panel JSON",
-            },
           ],
           "text": "More...",
           "type": "submenu",
@@ -58,7 +61,7 @@ describe('getPanelMenu', () => {
           "type": "divider",
         },
         Object {
-          "iconClassName": "fa fa-fw fa-trash",
+          "iconClassName": "trash-alt",
           "onClick": [Function],
           "shortcut": "p r",
           "text": "Remove",

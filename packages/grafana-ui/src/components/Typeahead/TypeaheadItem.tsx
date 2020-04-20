@@ -38,13 +38,13 @@ const getStyles = (theme: GrafanaTheme) => ({
 
   typeaheadItemSelected: css`
     label: type-ahead-item-selected;
-    background-color: ${selectThemeVariant({ light: theme.colors.gray6, dark: theme.colors.dark9 }, theme.type)};
+    background-color: ${selectThemeVariant({ light: theme.palette.gray6, dark: theme.palette.dark9 }, theme.type)};
   `,
 
   typeaheadItemMatch: css`
     label: type-ahead-item-match;
-    color: ${theme.colors.yellow};
-    border-bottom: 1px solid ${theme.colors.yellow};
+    color: ${theme.palette.yellow};
+    border-bottom: 1px solid ${theme.palette.yellow};
     padding: inherit;
     background: inherit;
   `,

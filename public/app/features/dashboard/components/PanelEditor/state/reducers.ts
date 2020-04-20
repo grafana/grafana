@@ -73,6 +73,7 @@ const pluginsSlice = createSlice({
       state.querySubscription = action.payload.querySubscription;
       state.initDone = true;
       state.isOpen = true;
+      state.shouldDiscardChanges = false;
     },
     setEditorPanelData: (state, action: PayloadAction<PanelData>) => {
       state.getData = () => action.payload;

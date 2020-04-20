@@ -166,11 +166,6 @@ export function grafanaAppDirective(
         elem.toggleClass('view-mode--playlist', false);
       });
 
-      // check if we are in server side render
-      if (config.phantomJSRenderer && document.cookie.indexOf('renderKey') !== -1) {
-        body.addClass('body--phantomjs');
-      }
-
       // tooltip removal fix
       // manage page classes
       let pageClass: string;
@@ -293,15 +288,6 @@ export function grafanaAppDirective(
           setTimeout(() => {
             clickAutoHideParent.append(clickAutoHide);
           }, 100);
-        }
-
-        // hide search
-        if (body.find('.search-container').length > 0) {
-          if (target.parents('.search-results-container, .search-field-wrapper').length === 0) {
-            scope.$apply(() => {
-              scope.appEvent(CoreEvents.hideDashSearch);
-            });
-          }
         }
 
         // hide popovers

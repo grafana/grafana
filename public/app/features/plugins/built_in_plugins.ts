@@ -27,8 +27,6 @@ const mssqlPlugin = async () =>
   await import(/* webpackChunkName: "mssqlPlugin" */ 'app/plugins/datasource/mssql/module');
 const testDataDSPlugin = async () =>
   await import(/* webpackChunkName: "testDataDSPlugin" */ 'app/plugins/datasource/testdata/module');
-const inputDatasourcePlugin = async () =>
-  await import(/* webpackChunkName: "inputDatasourcePlugin" */ 'app/plugins/datasource/input/module');
 const stackdriverPlugin = async () =>
   await import(/* webpackChunkName: "stackdriverPlugin" */ 'app/plugins/datasource/stackdriver/module');
 const azureMonitorPlugin = async () =>
@@ -46,7 +44,7 @@ import * as alertListPanel from 'app/plugins/panel/alertlist/module';
 import * as annoListPanel from 'app/plugins/panel/annolist/module';
 import * as heatmapPanel from 'app/plugins/panel/heatmap/module';
 import * as tablePanel from 'app/plugins/panel/table/module';
-import * as table2Panel from 'app/plugins/panel/table2/module';
+import * as oldTablePanel from 'app/plugins/panel/table-old/module';
 import * as singlestatPanel from 'app/plugins/panel/singlestat/module';
 import * as singlestatPanel2 from 'app/plugins/panel/stat/module';
 import * as gettingStartedPanel from 'app/plugins/panel/gettingstarted/module';
@@ -73,7 +71,6 @@ const builtInPlugins: any = {
   'app/plugins/datasource/mssql/module': mssqlPlugin,
   'app/plugins/datasource/prometheus/module': prometheusPlugin,
   'app/plugins/datasource/testdata/module': testDataDSPlugin,
-  'app/plugins/datasource/input/module': inputDatasourcePlugin,
   'app/plugins/datasource/stackdriver/module': stackdriverPlugin,
   'app/plugins/datasource/grafana-azure-monitor-datasource/module': azureMonitorPlugin,
 
@@ -87,7 +84,7 @@ const builtInPlugins: any = {
   'app/plugins/panel/annolist/module': annoListPanel,
   'app/plugins/panel/heatmap/module': heatmapPanel,
   'app/plugins/panel/table/module': tablePanel,
-  'app/plugins/panel/table2/module': table2Panel,
+  'app/plugins/panel/table-old/module': oldTablePanel,
   'app/plugins/panel/news/module': newsPanel,
   'app/plugins/panel/singlestat/module': singlestatPanel,
   'app/plugins/panel/stat/module': singlestatPanel2,

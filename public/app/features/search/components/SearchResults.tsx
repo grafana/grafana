@@ -1,65 +1,55 @@
 import React, { FC } from 'react';
 import { css, cx } from 'emotion';
 import { GrafanaTheme } from '@grafana/data';
-import { Icon, stylesFactory, useTheme } from '@grafana/ui';
-import { IconType } from '@grafana/ui/src/components/Icon/types';
-import { DashboardSection, ItemClickWithEvent } from '../types';
+import { Icon, stylesFactory, useTheme, IconName, IconButton, Spinner } from '@grafana/ui';
+import appEvents from 'app/core/app_events';
+import { CoreEvents } from 'app/types';
+import { DashboardSection, OnToggleChecked } from '../types';
 import { SearchItem } from './SearchItem';
 import { SearchCheckbox } from './SearchCheckbox';
 
 export interface Props {
-  results: DashboardSection[] | undefined;
-  onSelectionChanged: () => void;
+  editable?: boolean;
+  loading?: boolean;
   onTagSelected: (name: string) => any;
-  onFolderExpanding: () => void;
-  onToggleSelection: ItemClickWithEvent;
-  editable: boolean;
+  onToggleChecked?: OnToggleChecked;
+  onToggleSection: (section: DashboardSection) => void;
+  results: DashboardSection[] | undefined;
 }
 
 export const SearchResults: FC<Props> = ({
-  results,
-  onSelectionChanged,
-  onTagSelected,
-  onFolderExpanding,
-  onToggleSelection,
   editable,
+  loading,
+  onTagSelected,
+  onToggleChecked,
+  onToggleSection,
+  results,
 }) => {
   const theme = useTheme();
   const styles = getSectionStyles(theme);
 
-  const toggleFolderExpand = (section: DashboardSection) => {
-    if (section.toggle) {
-      if (!section.expanded && onFolderExpanding) {
-        onFolderExpanding();
-      }
-
-      section.toggle(section).then(() => {
-        if (onSelectionChanged) {
-          onSelectionChanged();
-        }
-      });
-    }
-  };
-
-  // TODO display 'No results' messages after manage dashboards is refactored
-  if (!results) {
-    return null;
+  if (loading) {
+    return <Spinner className={styles.spinner} />;
+  } else if (!results || !results.length) {
+    return <h6>No dashboards matching your query were found.</h6>;
   }
 
   return (
-    <ul className={styles.wrapper}>
-      {results.map(section => (
-        <li aria-label="Search section" className={styles.section} key={section.title}>
-          <SectionHeader onSectionClick={toggleFolderExpand} {...{ onToggleSelection, editable, section }} />
-          <ul aria-label="Search items" className={styles.wrapper}>
-            {section.expanded &&
-              section.items.map(item => (
-                <SearchItem key={item.id} {...{ item, editable, onToggleSelection, onTagSelected }} />
-              ))}
-          </ul>
-        </li>
-      ))}
-    </ul>
+    <div className="search-results-container">
+      <ul className={styles.wrapper}>
+        {results.map(section => (
+          <li aria-label="Search section" className={styles.section} key={section.title}>
+            <SectionHeader onSectionClick={onToggleSection} {...{ onToggleChecked, editable, section }} />
+            <ul aria-label="Search items" className={styles.wrapper}>
+              {section.expanded &&
+                section.items.map(item => (
+                  <SearchItem key={item.id} {...{ item, editable, onToggleChecked, onTagSelected }} />
+                ))}
+            </ul>
+          </li>
+        ))}
+      </ul>
+    </div>
   );
 };
 
@@ -70,44 +60,58 @@ const getSectionStyles = stylesFactory((theme: GrafanaTheme) => {
     `,
     section: css`
       background: ${theme.colors.panelBg};
-      border-bottom: solid 1px ${theme.isLight ? theme.colors.gray95 : theme.colors.gray25};
+      border-bottom: solid 1px ${theme.isLight ? theme.palette.gray95 : theme.palette.gray25};
       padding: 0px 4px 4px 4px;
       margin-bottom: 3px;
+    `,
+    spinner: css`
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100px;
     `,
   };
 });
 
 interface SectionHeaderProps {
-  section: DashboardSection;
+  editable?: boolean;
   onSectionClick: (section: DashboardSection) => void;
-  onToggleSelection: ItemClickWithEvent;
-  editable: boolean;
+  onToggleChecked?: OnToggleChecked;
+  section: DashboardSection;
 }
 
-const SectionHeader: FC<SectionHeaderProps> = ({ section, onSectionClick, onToggleSelection, editable }) => {
+const SectionHeader: FC<SectionHeaderProps> = ({ section, onSectionClick, onToggleChecked, editable = false }) => {
   const theme = useTheme();
   const styles = getSectionHeaderStyles(theme, section.selected);
 
-  const expandSection = () => {
+  const onSectionExpand = () => {
     onSectionClick(section);
   };
 
+  const onSectionChecked = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (onToggleChecked) {
+      onToggleChecked(section);
+    }
+  };
+
   return !section.hideHeader ? (
-    <div className={styles.wrapper} onClick={expandSection}>
-      <SearchCheckbox
-        editable={editable}
-        checked={section.checked}
-        onClick={(e: MouseEvent) => onToggleSelection(section, e)}
-      />
-      <Icon className={styles.icon} name={section.icon as IconType} />
+    <div className={styles.wrapper} onClick={onSectionExpand}>
+      <SearchCheckbox editable={editable} checked={section.checked} onClick={onSectionChecked} />
+      <Icon className={styles.icon} name={section.icon as IconName} />
 
       <span className={styles.text}>{section.title}</span>
       {section.url && (
-        <a href={section.url} className={styles.link}>
-          <Icon name="cog" />
+        <a
+          href={section.url}
+          className={styles.link}
+          onClick={() => appEvents.emit(CoreEvents.hideDashSearch, { target: 'search-item' })}
+        >
+          <IconButton name="cog" className={styles.button} />
         </a>
       )}
-      <Icon name={section.expanded ? 'angle-down' : 'angle-right'} className={styles.toggle} />
+      <Icon name={section.expanded ? 'angle-down' : 'angle-right'} />
     </div>
   ) : (
     <div className={styles.wrapper} />
@@ -140,7 +144,6 @@ const getSectionHeaderStyles = stylesFactory((theme: GrafanaTheme, selected = fa
       { selected }
     ),
     icon: css`
-      padding: 5px 0;
       width: 43px;
     `,
     text: css`
@@ -153,8 +156,8 @@ const getSectionHeaderStyles = stylesFactory((theme: GrafanaTheme, selected = fa
       opacity: 0;
       transition: opacity 150ms ease-in-out;
     `,
-    toggle: css`
-      padding: 5px;
+    button: css`
+      margin-top: 3px;
     `,
   };
 });

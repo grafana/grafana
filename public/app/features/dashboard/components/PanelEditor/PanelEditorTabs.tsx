@@ -1,7 +1,7 @@
-import React from 'react';
+import React, { useCallback } from 'react';
 import { config } from 'app/core/config';
 import { css } from 'emotion';
-import { TabsBar, Tab, stylesFactory, TabContent, TransformationsEditor } from '@grafana/ui';
+import { IconName, stylesFactory, Tab, TabContent, TabsBar } from '@grafana/ui';
 import { DataTransformerConfig, LoadingState, PanelData } from '@grafana/data';
 import { PanelEditorTab, PanelEditorTabId } from './types';
 import { DashboardModel } from '../../state';
@@ -9,6 +9,7 @@ import { QueriesTab } from '../../panel_editor/QueriesTab';
 import { PanelModel } from '../../state/PanelModel';
 import { AlertTab } from 'app/features/alerting/AlertTab';
 import { VisualizationTab } from './VisualizationTab';
+import { TransformationsEditor } from '../TransformationsEditor/TransformationsEditor';
 
 interface PanelEditorTabsProps {
   panel: PanelModel;
@@ -21,6 +22,22 @@ interface PanelEditorTabsProps {
 export const PanelEditorTabs: React.FC<PanelEditorTabsProps> = ({ panel, dashboard, tabs, data, onChangeTab }) => {
   const styles = getPanelEditorTabsStyles();
   const activeTab = tabs.find(item => item.active);
+  const getCounter = useCallback(
+    (tab: PanelEditorTab) => {
+      switch (tab.id) {
+        case PanelEditorTabId.Query:
+          return panel.targets.length;
+        case PanelEditorTabId.Alert:
+          return panel.alert ? 1 : 0;
+        case PanelEditorTabId.Transform:
+          const transformations = panel.getTransformations() ?? [];
+          return transformations.length;
+      }
+
+      return null;
+    },
+    [panel]
+  );
 
   if (tabs.length === 0) {
     return null;
@@ -40,7 +57,8 @@ export const PanelEditorTabs: React.FC<PanelEditorTabsProps> = ({ panel, dashboa
               label={tab.text}
               active={tab.active}
               onChangeTab={() => onChangeTab(tab)}
-              icon={tab.icon}
+              icon={tab.icon as IconName}
+              counter={getCounter(tab)}
             />
           );
         })}

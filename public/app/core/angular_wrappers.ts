@@ -16,6 +16,7 @@ import {
   SecretFormField,
   SeriesColorPickerPopoverWithTheme,
   UnitPicker,
+  Icon,
 } from '@grafana/ui';
 import { FunctionEditor } from 'app/plugins/datasource/graphite/FunctionEditor';
 import ReactProfileWrapper from 'app/features/profile/ReactProfileWrapper';
@@ -28,10 +29,17 @@ import {
   SaveDashboardButtonConnected,
 } from '../features/dashboard/components/SaveDashboard/SaveDashboardButton';
 import { VariableEditorContainer } from '../features/variables/editor/VariableEditorContainer';
-import { SearchField, SearchResults, SearchResultsFilter } from '../features/search';
+import { SearchField, SearchResults, SearchWrapper, SearchResultsFilter } from '../features/search';
 
 export function registerAngularDirectives() {
   react2AngularDirective('footer', Footer, []);
+  react2AngularDirective('icon', Icon, [
+    'color',
+    'name',
+    'size',
+    'type',
+    ['onClick', { watchDepth: 'reference', wrapApply: true }],
+  ]);
   react2AngularDirective('helpModal', HelpModal, []);
   react2AngularDirective('sidemenu', SideMenu, []);
   react2AngularDirective('functionEditor', FunctionEditor, ['func', 'onRemove', 'onMoveLeft', 'onMoveRight']);
@@ -79,6 +87,7 @@ export function registerAngularDirectives() {
     ['onStarredFilterChange', { watchDepth: 'reference' }],
     ['onTagFilterChange', { watchDepth: 'reference' }],
   ]);
+  react2AngularDirective('searchWrapper', SearchWrapper, []);
   react2AngularDirective('tagFilter', TagFilter, [
     'tags',
     ['onChange', { watchDepth: 'reference' }],

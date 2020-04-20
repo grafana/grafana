@@ -2,13 +2,14 @@ import React from 'react';
 import { Portal } from '../Portal/Portal';
 import { cx } from 'emotion';
 import { withTheme } from '../../themes';
-import { IconType } from '../Icon/types';
+import { IconName } from '../../types';
 import { Themeable } from '../../types';
 import { getModalStyles } from './getModalStyles';
 import { ModalHeader } from './ModalHeader';
+import { IconButton } from '../IconButton/IconButton';
 
 interface Props extends Themeable {
-  icon?: IconType;
+  icon?: IconName;
   title: string | JSX.Element;
   className?: string;
 
@@ -49,9 +50,9 @@ export class UnthemedModal extends React.PureComponent<Props> {
         <div className={cx(styles.modal, className)}>
           <div className={styles.modalHeader}>
             {typeof title === 'string' ? this.renderDefaultHeader(title) : title}
-            <a className={styles.modalHeaderClose} onClick={this.onDismiss}>
-              <i className="fa fa-remove" />
-            </a>
+            <div className={styles.modalHeaderClose}>
+              <IconButton surface="header" name="times" size="lg" onClick={this.onDismiss} />
+            </div>
           </div>
           <div className={styles.modalContent}>{this.props.children}</div>
         </div>

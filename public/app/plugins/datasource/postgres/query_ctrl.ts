@@ -197,7 +197,7 @@ export class PostgresQueryCtrl extends QueryCtrl {
       appEvents.emit(CoreEvents.showConfirmModal, {
         title: 'Warning',
         text2: 'Switching to query builder may overwrite your raw SQL.',
-        icon: 'fa-exclamation',
+        icon: 'exclamation-triangle',
         yesText: 'Switch',
         onConfirm: () => {
           this.target.rawQuery = !this.target.rawQuery;

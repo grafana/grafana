@@ -11,5 +11,3 @@ message ConnInfo {
 service GRPCBroker {
     rpc StartStream(stream ConnInfo) returns (stream ConnInfo);
 }
-
-

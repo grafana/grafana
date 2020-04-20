@@ -26,7 +26,7 @@ export const linkModelToContextMenuItems: (links: LinkModelSupplier<any>) => Con
       // TODO: rename to href
       url: link.href,
       target: link.target,
-      icon: `fa ${link.target === '_self' ? 'fa-link' : 'fa-external-link'}`,
+      icon: `${link.target === '_self' ? 'link' : 'external-link-alt'}`,
       onClick: link.onClick,
     };
   });

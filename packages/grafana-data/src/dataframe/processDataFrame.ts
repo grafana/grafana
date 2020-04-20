@@ -160,6 +160,19 @@ function convertJSONDocumentDataToDataFrame(timeSeries: TimeSeries): DataFrame {
 const NUMBER = /^\s*(-?(\d*\.?\d+|\d+\.?\d*)(e[-+]?\d+)?|NAN)\s*$/i;
 
 /**
+ * Given a name and value, this will pick a reasonable field type
+ */
+export function guessFieldTypeFromNameAndValue(name: string, v: any): FieldType {
+  if (name) {
+    name = name.toLowerCase();
+    if (name === 'date' || name === 'time') {
+      return FieldType.time;
+    }
+  }
+  return guessFieldTypeFromValue(v);
+}
+
+/**
  * Given a value this will guess the best column type
  *
  * TODO: better Date/Time support!  Look for standard date strings?
@@ -248,9 +261,9 @@ export const isTableData = (data: any): data is DataFrame => data && data.hasOwn
 export const isDataFrame = (data: any): data is DataFrame => data && data.hasOwnProperty('fields');
 
 export const toDataFrame = (data: any): DataFrame => {
-  if (data.hasOwnProperty('fields')) {
+  if ('fields' in data) {
     // DataFrameDTO does not have length
-    if (data.hasOwnProperty('length')) {
+    if ('length' in data) {
       return data as DataFrame;
     }
 

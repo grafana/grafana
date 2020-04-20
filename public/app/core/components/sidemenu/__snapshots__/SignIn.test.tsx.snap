@@ -12,8 +12,8 @@ exports[`Render should render component 1`] = `
     <span
       className="icon-circle sidemenu-icon"
     >
-      <i
-        className="fa fa-fw fa-sign-in"
+      <Icon
+        name="sign-in-alt"
       />
     </span>
   </a>

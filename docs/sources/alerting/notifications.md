@@ -208,7 +208,7 @@ Threema | `threema` | yes, external only | no
 VictorOps | `victorops` | yes, external only | no
 Webhook | `webhook` | yes, external only | yes
 
-# Enable images in notifications {#external-image-store}
+## Enable images in notifications {#external-image-store}
 
 Grafana can render the panel associated with the alert rule as a PNG image and include that in the notification. Read more about the requirements and how to configure
 [image rendering]({{< relref "../administration/image_rendering/" >}}).
@@ -220,7 +220,7 @@ Be aware that some notifiers requires public access to the image to be able to i
 
 Notification services which need public image access are marked as 'external only'.
 
-# Use alert rule tags in notifications {#alert-rule-tags}
+## Use alert rule tags in notifications {#alert-rule-tags}
 
 > Only available in Grafana v6.3+.
 
@@ -230,7 +230,7 @@ It currently supports only the Prometheus Alertmanager notifier.
 
  This is an optional feature. You can get notifications without using alert rule tags.
 
-# Configure the link back to Grafana from alert notifications
+## Configure the link back to Grafana from alert notifications
 
 All alert notifications contain a link back to the triggered alert in the Grafana instance.
 This URL is based on the [domain]({{< relref "../installation/configuration/#domain" >}}) setting in Grafana.

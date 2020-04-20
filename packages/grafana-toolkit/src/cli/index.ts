@@ -15,9 +15,12 @@ import { searchTestDataSetupTask } from './tasks/searchTestDataSetup';
 import { closeMilestoneTask } from './tasks/closeMilestone';
 import { pluginDevTask } from './tasks/plugin.dev';
 import { githubPublishTask } from './tasks/plugin.utils';
+import { pluginUpdateTask } from './tasks/plugin.update';
 import { ciBuildPluginTask, ciBuildPluginDocsTask, ciPackagePluginTask, ciPluginReportTask } from './tasks/plugin.ci';
 import { buildPackageTask } from './tasks/package.build';
 import { pluginCreateTask } from './tasks/plugin.create';
+import { bundleManagedTask } from './tasks/plugin/bundle.managed';
+import { componentCreateTask } from './tasks/component.create';
 
 export const run = (includeInternalScripts = false) => {
   if (includeInternalScripts) {
@@ -113,6 +116,16 @@ export const run = (includeInternalScripts = false) => {
           milestone: cmd.milestone,
         });
       });
+
+    // React generator
+    program
+      .command('component:create')
+      .description(
+        'Scaffold React components. Optionally add test, story and .mdx files. The components are created in the same dir the script is run from.'
+      )
+      .action(async () => {
+        await execTask(componentCreateTask)({});
+      });
   }
 
   program
@@ -196,6 +209,13 @@ export const run = (includeInternalScripts = false) => {
     });
 
   program
+    .command('plugin:bundle-managed')
+    .description('Builds managed plugins')
+    .action(async cmd => {
+      await execTask(bundleManagedTask)({});
+    });
+
+  program
     .command('plugin:github-publish')
     .option('--dryrun', 'Do a dry run only', false)
     .option('--verbose', 'Print verbose', false)
@@ -207,6 +227,13 @@ export const run = (includeInternalScripts = false) => {
         verbose: cmd.verbose,
         commitHash: cmd.commitHash,
       });
+    });
+
+  program
+    .command('plugin:update-circleci')
+    .description('Update plugin')
+    .action(async cmd => {
+      await execTask(pluginUpdateTask)({});
     });
 
   // Test the manifest creation

@@ -9,15 +9,14 @@ import {
   GrafanaTheme,
   TimeZone,
 } from '../types';
-import { Registry } from '../utils';
+import { Registry } from '../utils/Registry';
 import { InterpolateFunction } from './panel';
 import { StandardEditorProps } from '../field';
 import { OptionsEditorItem } from './OptionsUIRegistryBuilder';
 
 export interface DynamicConfigValue {
-  prop: string;
+  id: string;
   value?: any;
-  custom?: boolean;
 }
 
 export interface ConfigOverrideRule {
@@ -43,30 +42,71 @@ export interface FieldOverrideContext {
 
 export interface FieldConfigEditorProps<TValue, TSettings>
   extends Omit<StandardEditorProps<TValue, TSettings>, 'item'> {
-  item: FieldPropertyEditorItem<TValue, TSettings>; // The property info
+  item: FieldConfigPropertyItem<TValue, TSettings>; // The property info
   value: TValue;
   context: FieldOverrideContext;
   onChange: (value?: TValue) => void;
 }
 
 export interface FieldOverrideEditorProps<TValue, TSettings> extends Omit<StandardEditorProps<TValue>, 'item'> {
-  item: FieldPropertyEditorItem<TValue, TSettings>;
+  item: FieldConfigPropertyItem<TValue, TSettings>;
   context: FieldOverrideContext;
 }
 
 export interface FieldConfigEditorConfig<TOptions, TSettings = any, TValue = any> {
-  id: (keyof TOptions & string) | string;
+  /**
+   * Path of the field config property to control.
+   *
+   * @example
+   * Given field config object of a type:
+   * ```ts
+   * interface CustomFieldConfig {
+   *   a: {
+   *     b: string;
+   *   }
+   * }
+   * ```
+   *
+   * path can be either 'a' or 'a.b'.
+   */
+  path: (keyof TOptions & string) | string;
+  /**
+   * Name of the field config property. Will be displayed in the UI as form element label.
+   */
   name: string;
-  description: string;
+  /**
+   * Description of the field config property. Will be displayed in the UI as form element description.
+   */
+  description?: string;
+  /**
+   * Array of strings representing category of the field config property. First element in the array will make option render as collapsible section.
+   */
+  category?: string[];
+  /**
+   * Custom settings of the editor.
+   */
   settings?: TSettings;
+  /**
+   * Funciton that allows specifying whether or not this field config shuld apply to a given field.
+   * @param field
+   */
   shouldApply?: (field: Field) => boolean;
   defaultValue?: TValue;
+  /**
+   * Function that enables configuration of when field config property editor should be shown based on current panel field config.
+   *
+   * @param currentConfig Current field config values
+   */
+  showIf?: (currentConfig: TOptions) => boolean;
 }
 
-export interface FieldPropertyEditorItem<TOptions = any, TValue = any, TSettings extends {} = any>
+export interface FieldConfigPropertyItem<TOptions = any, TValue = any, TSettings extends {} = any>
   extends OptionsEditorItem<TOptions, TSettings, FieldConfigEditorProps<TValue, TSettings>, TValue> {
   // An editor that can be filled in with context info (template variables etc)
   override: ComponentType<FieldOverrideEditorProps<TValue, TSettings>>;
+
+  /** true for plugin field config properties */
+  isCustom?: boolean;
 
   // Convert the override value to a well typed value
   process: (value: any, context: FieldOverrideContext, settings?: TSettings) => TValue | undefined | null;
@@ -75,17 +115,14 @@ export interface FieldPropertyEditorItem<TOptions = any, TValue = any, TSettings
   shouldApply: (field: Field) => boolean;
 }
 
-export type FieldConfigEditorRegistry = Registry<FieldPropertyEditorItem>;
-
 export interface ApplyFieldOverrideOptions {
   data?: DataFrame[];
-  fieldOptions: FieldConfigSource;
+  fieldConfig: FieldConfigSource;
   replaceVariables: InterpolateFunction;
   theme: GrafanaTheme;
   timeZone?: TimeZone;
   autoMinMax?: boolean;
-  standard?: FieldConfigEditorRegistry;
-  custom?: FieldConfigEditorRegistry;
+  fieldConfigRegistry?: Registry<FieldConfigPropertyItem>;
 }
 
 export enum FieldConfigProperty {

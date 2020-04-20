@@ -66,11 +66,11 @@ export const DerivedFields = (props: Props) => {
           })}
         <div>
           <Button
-            variant="primary"
+            variant="secondary"
             className={css`
               margin-right: 10px;
             `}
-            icon="fa fa-plus"
+            icon="plus"
             onClick={event => {
               event.preventDefault();
               const newDerivedFields = [...(value || []), { name: '', matcherRegex: '' }];

@@ -1,7 +1,6 @@
 import React from 'react';
 import { MappingType, ValueMapping } from '@grafana/data';
 import { Button } from '../Button/Button';
-import { FullWidthButtonContainer } from '../Button/FullWidthButtonContainer';
 import { MappingRow } from './MappingRow';
 
 export interface Props {
@@ -65,17 +64,15 @@ export const ValueMappingsEditor: React.FC<Props> = ({ valueMappings, onChange, 
             ))}
         </>
       )}
-      <FullWidthButtonContainer>
-        <Button
-          size="sm"
-          icon="fa fa-plus"
-          onClick={onAdd}
-          aria-label="ValueMappingsEditor add mapping button"
-          variant="secondary"
-        >
-          Add mapping
-        </Button>
-      </FullWidthButtonContainer>
+      <Button
+        size="sm"
+        icon="plus"
+        onClick={onAdd}
+        aria-label="ValueMappingsEditor add mapping button"
+        variant="secondary"
+      >
+        Add value mapping
+      </Button>
     </>
   );
 };

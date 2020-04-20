@@ -4,12 +4,12 @@ const template = `
 <div class="modal-body">
   <div class="modal-header">
     <h2 class="modal-header-title">
-      <i class="fa fa-exclamation"></i>
+      <icon name="'exclamation-triangle'" size="'lg'"></icon>
       <span class="p-l-1">Unsaved changes</span>
     </h2>
 
     <a class="modal-header-close" ng-click="ctrl.dismiss();">
-      <i class="fa fa-remove"></i>
+      <icon name="'times'"></icon>
     </a>
   </div>
 

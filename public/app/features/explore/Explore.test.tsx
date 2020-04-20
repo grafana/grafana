@@ -16,10 +16,9 @@ import AutoSizer from 'react-virtualized-auto-sizer';
 import { Explore, ExploreProps } from './Explore';
 import { scanStopAction } from './state/actionTypes';
 import { toggleGraph } from './state/actions';
-import { Provider } from 'react-redux';
-import { configureStore } from 'app/store/configureStore';
 import { SecondaryActions } from './SecondaryActions';
-import { TraceView } from './TraceView';
+import { TraceView } from './TraceView/TraceView';
+import { getTheme } from '@grafana/ui';
 
 const dummyProps: ExploreProps = {
   changeSize: jest.fn(),
@@ -119,20 +118,7 @@ const dummyProps: ExploreProps = {
   },
   originPanelId: 1,
   addQueryRow: jest.fn(),
-};
-
-const setup = (renderMethod: any, propOverrides?: Partial<ExploreProps>) => {
-  const store = configureStore();
-  return renderMethod(
-    <Provider store={store}>
-      <Explore
-        {...{
-          ...dummyProps,
-          ...propOverrides,
-        }}
-      />
-    </Provider>
-  );
+  theme: getTheme(),
 };
 
 const setupErrors = (hasRefId?: boolean) => {
@@ -148,7 +134,7 @@ const setupErrors = (hasRefId?: boolean) => {
 
 describe('Explore', () => {
   it('should render component', () => {
-    const wrapper = setup(shallow);
+    const wrapper = shallow(<Explore {...dummyProps} />);
     expect(wrapper).toMatchSnapshot();
   });
 

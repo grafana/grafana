@@ -8,11 +8,6 @@
   height: 100%;
   position: relative;
 
-  &--edit {
-    height: 40%;
-    margin: 0 $dashboard-padding;
-  }
-
   &--view {
     flex: 1 1 0;
     height: 90%;
@@ -70,7 +65,7 @@
 }
 
 .panel-editor__content {
-  padding: 15px;
+  padding: 16px;
 }
 
 .panel-in-fullscreen {

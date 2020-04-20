@@ -82,7 +82,7 @@ export const GraphWithLegend: React.FunctionComponent<GraphWithLegendProps> = (p
       : acc.concat([
           {
             label: s.label,
-            color: s.color,
+            color: s.color || '',
             isVisible: s.isVisible,
             yAxis: s.yAxis.index,
             displayValues: s.info || [],

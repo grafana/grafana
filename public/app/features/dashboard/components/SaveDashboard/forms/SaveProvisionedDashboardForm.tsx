@@ -77,9 +77,10 @@ export const SaveProvisionedDashboardForm: React.FC<SaveDashboardFormProps> = ({
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
   return {
     json: css`
-      background: ${theme.isLight ? theme.colors.gray7 : theme.colors.black};
+      background: ${theme.isLight ? theme.palette.gray7 : theme.palette.black};
       padding: ${theme.spacing.sm} 0 ${theme.spacing.sm} ${theme.spacing.md};
       height: 400px;
+      width: 100%;
     `,
   };
 });
