@@ -17,7 +17,6 @@ import {
   RawTimeRange,
   TimeRange,
   ExploreMode,
-  dateTime,
   dateMath,
 } from '@grafana/data';
 // Services & Utils
@@ -52,7 +51,7 @@ import {
 // Types
 import { ExploreItemState, ExploreUrlState, ThunkResult } from 'app/types';
 
-import { ExploreId, ExploreUIState, QueryOptions } from 'app/types/explore';
+import { ExploreId, ExploreUIState, QueryOptions, QueryDirection } from 'app/types/explore';
 import {
   addQueryRowAction,
   changeModeAction,
@@ -97,6 +96,7 @@ import { getTimeSrv, TimeSrv } from '../../dashboard/services/TimeSrv';
 import { preProcessAppendPanelData, preProcessPanelData, runRequest } from '../../dashboard/state/runRequest';
 import { PanelModel } from 'app/features/dashboard/state';
 import { getExploreDatasources } from './selectors';
+import { processDateTime } from '../utils/dateTimeProcessor';
 
 /**
  * Updates UI state and save it to the URL
@@ -535,7 +535,7 @@ export const runQueries = (exploreId: ExploreId): ThunkResult<void> => {
 /**
  * Sub-action to run append queries
  */
-export const runAppendQueries = (exploreId: ExploreId): ThunkResult<void> => {
+export const runAppendQueries = (exploreId: ExploreId, direction: QueryDirection): ThunkResult<void> => {
   return (dispatch, getState) => {
     dispatch(updateTime({ exploreId }));
 
@@ -554,23 +554,23 @@ export const runAppendQueries = (exploreId: ExploreId): ThunkResult<void> => {
       showingTable,
     } = exploreItemState;
 
-    const lastResponseEndTimestamp = isDateTime(
-      queryResponse.series[queryResponse.series.length - 1].fields[0].values.get(
-        queryResponse.series[0].fields[0].values.length - 1
-      )
-    )
-      ? dateTime(
-          queryResponse.series[queryResponse.series.length - 1].fields[0].values.get(
-            queryResponse.series[0].fields[0].values.length - 1
-          )
-        )
-      : queryResponse.series[queryResponse.series.length - 1].fields[0].values.get(
-          queryResponse.series[0].fields[0].values.length - 1
-        );
+    const newestResponseEndTimestamp = queryResponse.series[0].fields[0].values.get(
+      Math.floor((queryResponse.series[0].fields[0].values.length - 1) / 2)
+    );
+
+    const oldestResponseEndTimestamp = queryResponse.series[queryResponse.series.length - 1].fields[0].values.get(
+      Math.floor((queryResponse.series[0].fields[0].values.length - 1) / 2)
+    );
 
     const newRaw: RawTimeRange = {
-      from: isDateTime(range.raw.from) ? dateTime(range.raw.from) : range.raw.from,
-      to: lastResponseEndTimestamp,
+      from:
+        direction === QueryDirection.forward
+          ? processDateTime(newestResponseEndTimestamp)
+          : processDateTime(range.raw.from),
+      to:
+        direction === QueryDirection.backward
+          ? processDateTime(oldestResponseEndTimestamp)
+          : processDateTime(range.raw.to),
     };
 
     const newTimeRange: TimeRange = {
@@ -617,7 +617,7 @@ export const runAppendQueries = (exploreId: ExploreId): ThunkResult<void> => {
         // rendering. In case this is optimized this can be tweaked, but also it should be only as fast as user
         // actually can see what is happening.
         live ? throttleTime(500) : identity,
-        map((data: PanelData) => preProcessAppendPanelData(data, queryResponse))
+        map((data: PanelData) => preProcessAppendPanelData(data, queryResponse, direction))
       )
       .subscribe((data: PanelData) => {
         if (!data.error && firstResponse) {
@@ -626,7 +626,12 @@ export const runAppendQueries = (exploreId: ExploreId): ThunkResult<void> => {
         }
 
         firstResponse = false;
-        dispatch(queryStreamUpdatedAction({ exploreId, response: data }));
+        const dataAfterDrop = {
+          ...data,
+          series:
+            direction === QueryDirection.backward ? data.series.slice(1) : data.series.slice(0, data.series.length - 1),
+        };
+        dispatch(queryStreamUpdatedAction({ exploreId, response: dataAfterDrop }));
 
         // Keep scanning for results if this was the last scanning transaction
         if (getState().explore[exploreId].scanning) {
