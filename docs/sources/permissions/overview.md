@@ -24,7 +24,7 @@ Grafana users have permissions that are determined by their:
 
 A *user* is a named account in Grafana. A user can belong to one or more organizations and can be assigned different levels of privileges through roles.
 
-Grafana supports a wide variety of internal and external ways for users to authenticate themselves. These include from its own integrated database, from an external SQL server, or from an external LDAP server.
+Grafana supports a wide variety of internal and external ways for users to authenticate themselves. These include from its own integrated database, an external SQL server, or external LDAP server.
 
 ## Grafana Admin
 
