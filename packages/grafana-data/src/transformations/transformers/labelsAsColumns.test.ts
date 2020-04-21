@@ -190,4 +190,38 @@ describe('Labels as Columns', () => {
 
     expect(result[0].fields).toEqual(expected);
   });
+
+  it('data frames with same timestamp and different labels', () => {
+    const cfg: DataTransformerConfig<LabelsAsColumnsOptions> = {
+      id: DataTransformerID.labelsAsColumns,
+      options: {},
+    };
+
+    const oneValueDifferentLabelsA = toDataFrame({
+      name: 'A',
+      fields: [
+        { name: 'time', type: FieldType.time, values: [1000] },
+        { name: 'temp', type: FieldType.number, values: [1], labels: { location: 'inside', feelsLike: 'ok' } },
+      ],
+    });
+
+    const oneValueDifferentLabelsB = toDataFrame({
+      name: 'B',
+      fields: [
+        { name: 'time', type: FieldType.time, values: [1000] },
+        { name: 'temp', type: FieldType.number, values: [-1], labels: { location: 'outside', sky: 'cloudy' } },
+      ],
+    });
+
+    const result = transformDataFrame([cfg], [oneValueDifferentLabelsA, oneValueDifferentLabelsB]);
+    const expected: Field[] = [
+      { name: 'time', type: FieldType.time, values: new ArrayVector([1000, 1000]), config: {} },
+      { name: 'location', type: FieldType.string, values: new ArrayVector(['inside', 'outside']), config: {} },
+      { name: 'feelsLike', type: FieldType.string, values: new ArrayVector(['ok', null]), config: {} },
+      { name: 'sky', type: FieldType.string, values: new ArrayVector([null, 'cloudy']), config: {} },
+      { name: 'temp', type: FieldType.number, values: new ArrayVector([1, -1]), config: {} },
+    ];
+
+    expect(result[0].fields).toEqual(expected);
+  });
 });
