@@ -29,4 +29,5 @@ import { ExploreMode } from '@grafana/data';
 |  --- | --- | --- |
 |  Logs | <code>&quot;Logs&quot;</code> |  |
 |  Metrics | <code>&quot;Metrics&quot;</code> |  |
+|  Tracing | <code>&quot;Tracing&quot;</code> |  |
 

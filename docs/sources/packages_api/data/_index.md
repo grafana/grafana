@@ -27,9 +27,12 @@ A library containing most of the core functionality and data types used in Grafa
 |  [DataSourceApi](./datasourceapi/) | The main data source abstraction interface, represents an instance of a data source<!-- -->Although this is a class, datasource implementations do not \*yet\* need to extend it. As such, we can not yet add functions with default implementations. |
 |  [DataSourcePlugin](./datasourceplugin/) |  |
 |  [FieldCache](./fieldcache/) |  |
+|  [FieldConfigEditorBuilder](./fieldconfigeditorbuilder/) | Fluent API for declarative creation of field config option editors |
+|  [FieldConfigOptionsRegistry](./fieldconfigoptionsregistry/) |  |
 |  [GrafanaPlugin](./grafanaplugin/) |  |
 |  [LanguageProvider](./languageprovider/) |  |
 |  [MutableDataFrame](./mutabledataframe/) |  |
+|  [PanelOptionsEditorBuilder](./paneloptionseditorbuilder/) | Fluent API for declarative creation of panel options |
 |  [PanelPlugin](./panelplugin/) |  |
 |  [Registry](./registry/) |  |
 |  [ScaledVector](./scaledvector/) |  |
@@ -46,11 +49,12 @@ A library containing most of the core functionality and data types used in Grafa
 |  [DataTransformerID](./datatransformerid/) |  |
 |  [ExploreMode](./exploremode/) |  |
 |  [FieldColorMode](./fieldcolormode/) |  |
+|  [FieldConfigProperty](./fieldconfigproperty/) |  |
 |  [FieldMatcherID](./fieldmatcherid/) |  |
 |  [FieldType](./fieldtype/) |  |
 |  [FrameMatcherID](./framematcherid/) | Field name matchers |
 |  [GrafanaThemeType](./grafanathemetype/) |  |
-|  [LoadingState](./loadingstate/) |  |
+|  [LoadingState](./loadingstate/) | Represent panel data loading state. |
 |  [LogLevel](./loglevel/) | Mapping of log level abbreviation to canonical log level. Supported levels are reduce to limit color variation. |
 |  [LogsDedupDescription](./logsdedupdescription/) |  |
 |  [LogsDedupStrategy](./logsdedupstrategy/) |  |
@@ -63,7 +67,7 @@ A library containing most of the core functionality and data types used in Grafa
 |  [PluginState](./pluginstate/) |  |
 |  [PluginType](./plugintype/) |  |
 |  [ReducerID](./reducerid/) |  |
-|  [ThresholdsMode](./thresholdsmode/) |  |
+|  [ThresholdsMode](./thresholdsmode/) | Display mode |
 |  [VariableOrigin](./variableorigin/) |  |
 |  [VariableSuggestionsScope](./variablesuggestionsscope/) |  |
 |  [VizOrientation](./vizorientation/) |  |
@@ -79,6 +83,7 @@ A library containing most of the core functionality and data types used in Grafa
 |  [calculateFieldStats(rows, extractor)](./calculatefieldstats/) |  |
 |  [calculateLogsLabelStats(rows, label)](./calculatelogslabelstats/) |  |
 |  [calculateStats(values)](./calculatestats/) |  |
+|  [doStandardCalcs(field, ignoreNulls, nullAsZero)](./dostandardcalcs/) |  |
 |  [eventFactory(name)](./eventfactory/) |  |
 |  [findCommonLabels(labelsSets)](./findcommonlabels/) | Returns a map labels that are common to the given label sets. |
 |  [findHighlightChunksInText({ searchWords, textToHighlight, })](./findhighlightchunksintext/) | Adapt findMatchesInText for react-highlight-words findChunks handler. See https://github.com/bvaughn/react-highlight-words\#props |
@@ -104,6 +109,7 @@ A library containing most of the core functionality and data types used in Grafa
 |  [getValueFormatterIndex()](./getvalueformatterindex/) |  |
 |  [grafanaDataFrameToArrowTable(data)](./grafanadataframetoarrowtable/) |  |
 |  [guessFieldTypeForField(field)](./guessfieldtypeforfield/) | Looks at the data to guess the column type. This ignores any existing setting |
+|  [guessFieldTypeFromNameAndValue(name, v)](./guessfieldtypefromnameandvalue/) | Given a name and value, this will pick a reasonable field type |
 |  [guessFieldTypeFromValue(v)](./guessfieldtypefromvalue/) | Given a value this will guess the best column type<!-- -->TODO: better Date/Time support! Look for standard date strings? |
 |  [locale(value, decimals)](./locale/) |  |
 |  [parseFlags(text)](./parseflags/) | Converts any mode modifiers in the text to the Javascript equivalent flag |
@@ -131,8 +137,8 @@ A library containing most of the core functionality and data types used in Grafa
 |  [toNumberString(value)](./tonumberstring/) |  |
 |  [transformDataFrame(options, data)](./transformdataframe/) | Apply configured transformations to the input data |
 |  [updateDatasourcePluginOption(props, key, val)](./updatedatasourcepluginoption/) |  |
-|  [updateDatasourcePluginResetOption(props, key)](./updatedatasourcepluginresetoption/) |  |
 |  [validateFieldConfig(config)](./validatefieldconfig/) | This checks that all options on FieldConfig make sense. It mutates any value that needs fixed. In particular this makes sure that the first threshold value is -Infinity (not valid in JSON) |
+|  [vectorator(vector)](./vectorator/) | Use functional programming with your vector |
 
 ## Interfaces
 
@@ -143,23 +149,30 @@ A library containing most of the core functionality and data types used in Grafa
 |  [AnnotationEvent](./annotationevent/) |  |
 |  [AnnotationQueryRequest](./annotationqueryrequest/) | Options passed to the datasource.annotationQuery method. See docs/plugins/developing/datasource.md |
 |  [AppEvent](./appevent/) |  |
+|  [ApplyFieldOverrideOptions](./applyfieldoverrideoptions/) |  |
 |  [AppPluginMeta](./apppluginmeta/) |  |
 |  [AppRootProps](./approotprops/) |  |
 |  [ArrowDataFrame](./arrowdataframe/) |  |
+|  [BuildInfo](./buildinfo/) | Describes the build information that will be available via the Grafana cofiguration. |
+|  [CalculateFieldTransformerOptions](./calculatefieldtransformeroptions/) |  |
+|  [ColorFieldConfigSettings](./colorfieldconfigsettings/) |  |
 |  [Column](./column/) |  |
 |  [ConfigOverrideRule](./configoverriderule/) |  |
 |  [CreatePlotOverlay](./createplotoverlay/) |  |
 |  [CSVConfig](./csvconfig/) |  |
 |  [CSVOptions](./csvoptions/) |  |
 |  [CSVParseCallbacks](./csvparsecallbacks/) |  |
+|  [DataConfigSource](./dataconfigsource/) | Describes and API for exposing panel specific data configurations. |
 |  [DataFrame](./dataframe/) |  |
 |  [DataFrameDTO](./dataframedto/) | Like a DataFrame, but fields may be a FieldDTO |
 |  [DataLink](./datalink/) | Link configuration. The values may contain variables that need to be processed before running |
 |  [DataLinkClickEvent](./datalinkclickevent/) | Callback info for DataLink click events |
-|  [DataQuery](./dataquery/) |  |
+|  [DataLinksFieldConfigSettings](./datalinksfieldconfigsettings/) |  |
+|  [DataQuery](./dataquery/) | These are the common properties avaliable to all queries in all datasources Specific implementations will extend this interface adding the required properties for the given context |
 |  [DataQueryError](./dataqueryerror/) |  |
 |  [DataQueryRequest](./dataqueryrequest/) |  |
 |  [DataQueryResponse](./dataqueryresponse/) |  |
+|  [DataQueryTimings](./dataquerytimings/) |  |
 |  [DataSourceConstructor](./datasourceconstructor/) |  |
 |  [DataSourceInstanceSettings](./datasourceinstancesettings/) | Frontend settings model that is passed to Datasource constructor. This differs a bit from the model above as this data model is available to every user who has access to a data source (Viewers+). This is loaded in bootData (on page load), or from: /api/frontend/settings |
 |  [DataSourceJsonData](./datasourcejsondata/) |  |
@@ -181,19 +194,20 @@ A library containing most of the core functionality and data types used in Grafa
 |  [DynamicConfigValue](./dynamicconfigvalue/) |  |
 |  [ExploreQueryFieldProps](./explorequeryfieldprops/) |  |
 |  [ExploreStartPageProps](./explorestartpageprops/) |  |
+|  [FeatureToggles](./featuretoggles/) | Describes available feature toggles in Grafana. These can be configured via the <code>conf/custom.ini</code> to enable features under development or not yet available in stable version. |
 |  [Field](./field/) |  |
 |  [FieldCalcs](./fieldcalcs/) |  |
 |  [FieldColor](./fieldcolor/) |  |
 |  [FieldConfig](./fieldconfig/) | Every property is optional<!-- -->Plugins may extend this with additional properties. Something like series overrides |
+|  [FieldConfigEditorConfig](./fieldconfigeditorconfig/) |  |
 |  [FieldConfigEditorProps](./fieldconfigeditorprops/) |  |
+|  [FieldConfigPropertyItem](./fieldconfigpropertyitem/) |  |
 |  [FieldConfigSource](./fieldconfigsource/) |  |
 |  [FieldDisplay](./fielddisplay/) |  |
-|  [FieldDisplayOptions](./fielddisplayoptions/) |  |
 |  [FieldDTO](./fielddto/) | Like a field, but properties are optional and values may be a simple array |
 |  [FieldMatcherInfo](./fieldmatcherinfo/) |  |
 |  [FieldOverrideContext](./fieldoverridecontext/) |  |
 |  [FieldOverrideEditorProps](./fieldoverrideeditorprops/) |  |
-|  [FieldPropertyEditorItem](./fieldpropertyeditoritem/) |  |
 |  [FieldReducerInfo](./fieldreducerinfo/) |  |
 |  [FieldWithIndex](./fieldwithindex/) |  |
 |  [FilterFieldsByNameTransformerOptions](./filterfieldsbynametransformeroptions/) |  |
@@ -202,12 +216,14 @@ A library containing most of the core functionality and data types used in Grafa
 |  [FormattedValue](./formattedvalue/) |  |
 |  [FrameMatcherInfo](./framematcherinfo/) |  |
 |  [GetFieldDisplayValuesOptions](./getfielddisplayvaluesoptions/) |  |
+|  [GrafanaConfig](./grafanaconfig/) | Describes all the different Grafana configuration values available for an instance. |
 |  [GrafanaTheme](./grafanatheme/) |  |
 |  [GrafanaThemeCommons](./grafanathemecommons/) |  |
 |  [GraphSeriesXY](./graphseriesxy/) | View model projection of a series |
 |  [HistoryItem](./historyitem/) |  |
 |  [IntervalValues](./intervalvalues/) |  |
 |  [Labels](./labels/) |  |
+|  [LicenseInfo](./licenseinfo/) | Describes the license information about the current running instance of Grafana. |
 |  [LinkModel](./linkmodel/) | Processed Link Model. The values are ready to use |
 |  [LinkModelSupplier](./linkmodelsupplier/) | Provides a way to produce links on demand<!-- -->TODO: ScopedVars in in GrafanaUI package! |
 |  [LogLabelStatsModel](./loglabelstatsmodel/) |  |
@@ -220,13 +236,18 @@ A library containing most of the core functionality and data types used in Grafa
 |  [MetadataInspectorProps](./metadatainspectorprops/) |  |
 |  [MetricFindValue](./metricfindvalue/) |  |
 |  [MutableVector](./mutablevector/) | Vector with standard manipulation functions |
-|  [NavModel](./navmodel/) |  |
+|  [NavModel](./navmodel/) | Interface used to describe different kinds of page titles and page navigation. Navmodels are usually generated in the backend and stored in Redux. |
 |  [NavModelBreadcrumb](./navmodelbreadcrumb/) |  |
 |  [NavModelItem](./navmodelitem/) |  |
+|  [NumberFieldConfigSettings](./numberfieldconfigsettings/) |  |
+|  [OrganizeFieldsTransformerOptions](./organizefieldstransformeroptions/) |  |
 |  [PanelData](./paneldata/) |  |
 |  [PanelEditorProps](./paneleditorprops/) |  |
 |  [PanelMenuItem](./panelmenuitem/) |  |
 |  [PanelModel](./panelmodel/) |  |
+|  [PanelOptionsEditorConfig](./paneloptionseditorconfig/) |  |
+|  [PanelOptionsEditorItem](./paneloptionseditoritem/) |  |
+|  [PanelOptionsEditorProps](./paneloptionseditorprops/) |  |
 |  [PanelPluginMeta](./panelpluginmeta/) |  |
 |  [PanelProps](./panelprops/) |  |
 |  [PluginBuildInfo](./pluginbuildinfo/) |  |
@@ -242,9 +263,12 @@ A library containing most of the core functionality and data types used in Grafa
 |  [QueryHint](./queryhint/) |  |
 |  [QueryResultBase](./queryresultbase/) |  |
 |  [QueryResultMeta](./queryresultmeta/) |  |
+|  [QueryResultMetaNotice](./queryresultmetanotice/) | QueryResultMetaNotice is a structure that provides user notices for query result data |
+|  [QueryResultMetaStat](./queryresultmetastat/) |  |
 |  [RangeMap](./rangemap/) |  |
 |  [RawTimeRange](./rawtimerange/) |  |
 |  [ReadWriteVector](./readwritevector/) | Apache arrow vectors are Read/Write |
+|  [ReduceDataOptions](./reducedataoptions/) | Options for how to turn DataFrames into an array of display values |
 |  [ReduceTransformerOptions](./reducetransformeroptions/) |  |
 |  [RegistryItem](./registryitem/) |  |
 |  [RegistryItemWithOptions](./registryitemwithoptions/) |  |
@@ -253,18 +277,30 @@ A library containing most of the core functionality and data types used in Grafa
 |  [ScopedVars](./scopedvars/) |  |
 |  [ScreenshotInfo](./screenshotinfo/) |  |
 |  [SelectableValue](./selectablevalue/) | Used in select elements |
+|  [SelectFieldConfigSettings](./selectfieldconfigsettings/) |  |
+|  [SeriesToColumnsOptions](./seriestocolumnsoptions/) |  |
+|  [StandardEditorProps](./standardeditorprops/) |  |
+|  [StandardEditorsRegistryItem](./standardeditorsregistryitem/) |  |
+|  [StringFieldConfigSettings](./stringfieldconfigsettings/) |  |
 |  [TableData](./tabledata/) |  |
 |  [TextMatch](./textmatch/) |  |
 |  [Threshold](./threshold/) |  |
-|  [ThresholdsConfig](./thresholdsconfig/) |  |
+|  [ThresholdsConfig](./thresholdsconfig/) | Config that is passed to the ThresholdsEditor |
+|  [ThresholdsFieldConfigSettings](./thresholdsfieldconfigsettings/) |  |
 |  [TimeOption](./timeoption/) |  |
 |  [TimeOptions](./timeoptions/) |  |
 |  [TimeRange](./timerange/) |  |
 |  [TimeSeries](./timeseries/) |  |
+|  [TransformerRegistyItem](./transformerregistyitem/) |  |
+|  [TransformerUIProps](./transformeruiprops/) |  |
+|  [UnitFieldConfigSettings](./unitfieldconfigsettings/) |  |
 |  [UserOrgDTO](./userorgdto/) |  |
 |  [ValueFormat](./valueformat/) |  |
 |  [ValueFormatCategory](./valueformatcategory/) |  |
+|  [ValueLinkConfig](./valuelinkconfig/) |  |
 |  [ValueMap](./valuemap/) |  |
+|  [ValueMappingFieldConfigSettings](./valuemappingfieldconfigsettings/) |  |
+|  [VariableModel](./variablemodel/) |  |
 |  [VariableSuggestion](./variablesuggestion/) |  |
 |  [Vector](./vector/) |  |
 |  [YAxis](./yaxis/) |  |
@@ -282,7 +318,11 @@ A library containing most of the core functionality and data types used in Grafa
 
 |  Variable | Description |
 |  --- | --- |
+|  [booleanOverrideProcessor](./booleanoverrideprocessor/) |  |
 |  [createDimension](./createdimension/) |  |
+|  [createOrderFieldsComparer](./createorderfieldscomparer/) |  |
+|  [DataLinkBuiltInVars](./datalinkbuiltinvars/) |  |
+|  [dataLinksOverrideProcessor](./datalinksoverrideprocessor/) |  |
 |  [dateTime](./datetime/) |  |
 |  [dateTimeAsMoment](./datetimeasmoment/) |  |
 |  [dateTimeForTimeZone](./datetimefortimezone/) |  |
@@ -315,31 +355,46 @@ A library containing most of the core functionality and data types used in Grafa
 |  [getValueFromDimension](./getvaluefromdimension/) |  |
 |  [guessFieldTypes](./guessfieldtypes/) |  |
 |  [hasMsResolution](./hasmsresolution/) | Checks if series time field has ms resolution |
+|  [identityOverrideProcessor](./identityoverrideprocessor/) |  |
 |  [isDataFrame](./isdataframe/) |  |
 |  [isDateTime](./isdatetime/) |  |
 |  [ISO\_8601](./iso_8601/) |  |
 |  [isTableData](./istabledata/) |  |
+|  [locationUtil](./locationutil/) |  |
 |  [LogsParsers](./logsparsers/) |  |
 |  [MISSING\_VALUE](./missing_value/) |  |
 |  [MS\_DATE\_TIME\_FORMAT](./ms_date_time_format/) |  |
+|  [numberOverrideProcessor](./numberoverrideprocessor/) |  |
 |  [objRemoveUndefined](./objremoveundefined/) |  |
 |  [onUpdateDatasourceJsonDataOption](./onupdatedatasourcejsondataoption/) |  |
+|  [onUpdateDatasourceJsonDataOptionChecked](./onupdatedatasourcejsondataoptionchecked/) |  |
 |  [onUpdateDatasourceJsonDataOptionSelect](./onupdatedatasourcejsondataoptionselect/) |  |
 |  [onUpdateDatasourceOption](./onupdatedatasourceoption/) |  |
 |  [onUpdateDatasourceResetOption](./onupdatedatasourceresetoption/) |  |
 |  [onUpdateDatasourceSecureJsonDataOption](./onupdatedatasourcesecurejsondataoption/) |  |
 |  [onUpdateDatasourceSecureJsonDataOptionSelect](./onupdatedatasourcesecurejsondataoptionselect/) |  |
+|  [selectOverrideProcessor](./selectoverrideprocessor/) |  |
 |  [setLocale](./setlocale/) |  |
+|  [standardEditorsRegistry](./standardeditorsregistry/) |  |
 |  [standardFieldConfigEditorRegistry](./standardfieldconfigeditorregistry/) |  |
+|  [standardTransformers](./standardtransformers/) |  |
+|  [standardTransformersRegistry](./standardtransformersregistry/) | Registry of transformation options that can be driven by stored configuration files. |
+|  [stringOverrideProcessor](./stringoverrideprocessor/) |  |
+|  [textUtil](./textutil/) |  |
+|  [thresholdsOverrideProcessor](./thresholdsoverrideprocessor/) |  |
 |  [TIME\_FORMAT](./time_format/) |  |
 |  [toDataFrame](./todataframe/) |  |
 |  [toDuration](./toduration/) |  |
 |  [toLegacyResponseData](./tolegacyresponsedata/) |  |
+|  [toPascalCase](./topascalcase/) |  |
 |  [toUtc](./toutc/) |  |
-|  [transformersRegistry](./transformersregistry/) |  |
 |  [unEscapeStringFromRegex](./unescapestringfromregex/) |  |
+|  [unitOverrideProcessor](./unitoverrideprocessor/) |  |
 |  [updateDatasourcePluginJsonDataOption](./updatedatasourcepluginjsondataoption/) |  |
+|  [updateDatasourcePluginResetOption](./updatedatasourcepluginresetoption/) |  |
 |  [updateDatasourcePluginSecureJsonDataOption](./updatedatasourcepluginsecurejsondataoption/) |  |
+|  [urlUtil](./urlutil/) |  |
+|  [valueMappingsOverrideProcessor](./valuemappingsoverrideprocessor/) |  |
 |  [VAR\_CALC](./var_calc/) |  |
 |  [VAR\_CELL\_PREFIX](./var_cell_prefix/) |  |
 |  [VAR\_FIELD\_NAME](./var_field_name/) |  |
@@ -354,14 +409,13 @@ A library containing most of the core functionality and data types used in Grafa
 |  [DataQueryResponseData](./dataqueryresponsedata/) |  |
 |  [DataSourceOptionsType](./datasourceoptionstype/) |  |
 |  [DataSourceQueryType](./datasourcequerytype/) |  |
-|  [DataTransformer](./datatransformer/) | Immutable data transformation |
+|  [DataTransformer](./datatransformer/) | Function that transform data frames (AKA transformer) |
 |  [DateTimeInput](./datetimeinput/) |  |
 |  [DecimalCount](./decimalcount/) |  |
 |  [Dimensions](./dimensions/) |  |
 |  [DisplayProcessor](./displayprocessor/) |  |
 |  [DurationInput](./durationinput/) |  |
 |  [DurationUnit](./durationunit/) |  |
-|  [FieldConfigEditorRegistry](./fieldconfigeditorregistry/) |  |
 |  [FieldMatcher](./fieldmatcher/) |  |
 |  [FormatInput](./formatinput/) |  |
 |  [FrameMatcher](./framematcher/) |  |
@@ -372,9 +426,10 @@ A library containing most of the core functionality and data types used in Grafa
 |  [LinkTarget](./linktarget/) |  |
 |  [MutableField](./mutablefield/) |  |
 |  [NavIndex](./navindex/) |  |
-|  [Omit](./omit/) |  |
+|  [Omit\_2](./omit_2/) |  |
 |  [PanelMigrationHandler](./panelmigrationhandler/) | Called when a panel is first loaded with current panel model |
-|  [PanelTypeChangedHandler](./paneltypechangedhandler/) | Called before a panel is initialized |
+|  [PanelOptionEditorsRegistry](./paneloptioneditorsregistry/) |  |
+|  [PanelTypeChangedHandler](./paneltypechangedhandler/) | Called before a panel is initialized. Allows panel inspection for any updates before changing the panel type. |
 |  [ScaleCalculator](./scalecalculator/) |  |
 |  [Subtract](./subtract/) |  |
 |  [TimeFragment](./timefragment/) |  |
@@ -383,6 +438,10 @@ A library containing most of the core functionality and data types used in Grafa
 |  [TimeZone](./timezone/) |  |
 |  [TimeZoneBrowser](./timezonebrowser/) |  |
 |  [TimeZoneUtc](./timezoneutc/) |  |
+|  [UrlQueryMap](./urlquerymap/) | Type to represent the values parsed from the query string. |
+|  [UrlQueryValue](./urlqueryvalue/) | Type to represent the value of a single query variable. |
+|  [ValueConverter](./valueconverter/) |  |
 |  [ValueFormatter](./valueformatter/) |  |
 |  [ValueMapping](./valuemapping/) |  |
+|  [VariableType](./variabletype/) |  |
 
