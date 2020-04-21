@@ -13,6 +13,8 @@ import (
 
 // AlertStateCritical - Victorops uses "CRITICAL" string to indicate "Alerting" state
 const AlertStateCritical = "CRITICAL"
+
+// AlertStateWarning - Using "WARNING" to indicate no_data state in VictorOps
 const AlertStateWarning = "WARNING"
 const alertStateRecovery = "RECOVERY"
 
