@@ -52,6 +52,7 @@ export type IconName =
   | 'circle'
   | 'arrow-up'
   | 'arrow-from-right'
+  | 'arrow-from-left'
   | 'keyboard'
   | 'search'
   | 'chart-line'
@@ -162,6 +163,7 @@ export const getAvailableIcons = (): IconName[] => [
   'circle',
   'arrow-up',
   'arrow-from-right',
+  'arrow-from-left',
   'keyboard',
   'search',
   'chart-line',

@@ -700,7 +700,7 @@ function getColorForValue(data: any, value: number) {
 
 //------------------------------------------------
 // Private utility functions
-// Something like this should be avaliable in a
+// Something like this should be available in a
 //  DataFrame[] abstraction helper
 //------------------------------------------------
 

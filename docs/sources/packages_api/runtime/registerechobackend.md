@@ -12,6 +12,8 @@ draft = true
 
 ### registerEchoBackend variable
 
+Used to register echo backends that will receive Grafana echo events during application runtime.
+
 <b>Signature</b>
 
 ```typescript

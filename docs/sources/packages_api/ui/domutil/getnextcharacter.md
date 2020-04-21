@@ -15,7 +15,7 @@ draft = true
 <b>Signature</b>
 
 ```typescript
-function getNextCharacter(global?: any): any;
+export declare function getNextCharacter(global?: any): any;
 ```
 <b>Import</b>
 
