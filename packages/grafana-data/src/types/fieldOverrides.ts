@@ -86,7 +86,7 @@ export interface FieldConfigEditorConfig<TOptions, TSettings = any, TValue = any
    */
   settings?: TSettings;
   /**
-   * Funciton that allows specifying whether or not this field config shuld apply to a given field.
+   * Function that allows specifying whether or not this field config should apply to a given field.
    * @param field
    */
   shouldApply?: (field: Field) => boolean;

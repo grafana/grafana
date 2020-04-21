@@ -15,9 +15,7 @@ draft = true
 <b>Signature</b>
 
 ```typescript
-LinkButton: React.ForwardRefExoticComponent<CommonProps & React.AnchorHTMLAttributes<HTMLAnchorElement> & {
-    disabled?: boolean | undefined;
-} & React.RefAttributes<HTMLAnchorElement>>
+LinkButton: React.ForwardRefExoticComponent<CommonProps & React.AnchorHTMLAttributes<HTMLAnchorElement> & React.RefAttributes<HTMLAnchorElement>>
 ```
 <b>Import</b>
 
