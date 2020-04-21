@@ -20,6 +20,7 @@ const setup = (propOverrides?: Partial<Props>, renderMethod = shallow) => {
     onToggleAllChecked: noop,
     selectedStarredFilter: false,
     selectedTagFilter: ['tag'],
+    onSortChange: noop,
   };
 
   Object.assign(props, propOverrides);
