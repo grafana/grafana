@@ -188,6 +188,21 @@
 		</div>
 	</div>
 
+	
+	<div class="gf-form-inline" ng-if="ctrl.scenario.id === 'grafana_api'">
+		<div class="gf-form gf-form">
+			<label class="gf-form-label query-keyword width-7">Endpoint</label>
+			<div class="gf-form-select-wrapper">
+				<select
+				  ng-model="ctrl.target.stringInput"
+				  class="gf-form-input"
+				  ng-options="type for type in ['datasources', 'search', 'annotations']"
+				  ng-change="ctrl.refresh()" />
+				</select>
+			</div>
+		</div>
+	</div>
+
 	<!-- Predictable Pulse Scenario Options Form -->
 	<div class="gf-form-inline" ng-if="ctrl.scenario.id === 'predictable_pulse'">
 		<div class="gf-form">

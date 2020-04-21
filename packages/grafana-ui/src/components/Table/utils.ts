@@ -7,6 +7,7 @@ import { TableCellDisplayMode, TableCellProps, TableFieldOptions } from './types
 import { css, cx } from 'emotion';
 import { withTableStyles } from './withTableStyles';
 import tinycolor from 'tinycolor2';
+import { JSONViewCell } from './JSONViewCell';
 
 export function getTextAlign(field?: Field): TextAlignProperty {
   if (!field) {
@@ -46,7 +47,7 @@ export function getColumns(data: DataFrame, availableWidth: number, columnMinWid
       fieldCountWithoutWidth -= 1;
     }
 
-    const Cell = getCellComponent(fieldTableOptions.displayMode);
+    const Cell = getCellComponent(fieldTableOptions.displayMode, field);
 
     columns.push({
       Cell,
@@ -71,7 +72,7 @@ export function getColumns(data: DataFrame, availableWidth: number, columnMinWid
   return columns;
 }
 
-function getCellComponent(displayMode: TableCellDisplayMode) {
+function getCellComponent(displayMode: TableCellDisplayMode, field: Field) {
   switch (displayMode) {
     case TableCellDisplayMode.ColorText:
       return withTableStyles(DefaultCell, getTextColorStyle);
@@ -80,9 +81,15 @@ function getCellComponent(displayMode: TableCellDisplayMode) {
     case TableCellDisplayMode.LcdGauge:
     case TableCellDisplayMode.GradientGauge:
       return BarGaugeCell;
-    default:
-      return DefaultCell;
+    case TableCellDisplayMode.JSONView:
+      return JSONViewCell;
   }
+
+  // Default or Auto
+  if (field.type === FieldType.other) {
+    return JSONViewCell;
+  }
+  return DefaultCell;
 }
 
 function getTextColorStyle(props: TableCellProps) {

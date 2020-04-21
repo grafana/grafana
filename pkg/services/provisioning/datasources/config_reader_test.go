@@ -161,7 +161,7 @@ func TestDatasourceAsConfig(t *testing.T) {
 
 			So(dsCfg.APIVersion, ShouldEqual, 1)
 
-			validateDatasource(dsCfg)
+			validateDatasourceV1(dsCfg)
 			validateDeleteDatasources(dsCfg)
 
 			dsCount := 0
@@ -229,6 +229,12 @@ func validateDatasource(dsCfg *configs) {
 	So(ds.SecureJSONData["tlsCACert"], ShouldEqual, "MjNOcW9RdkbUDHZmpco2HCYzVq9dE+i6Yi+gmUJotq5CDA==")
 	So(ds.SecureJSONData["tlsClientCert"], ShouldEqual, "ckN0dGlyMXN503YNfjTcf9CV+GGQneN+xmAclQ==")
 	So(ds.SecureJSONData["tlsClientKey"], ShouldEqual, "ZkN4aG1aNkja/gKAB1wlnKFIsy2SRDq4slrM0A==")
+}
+
+func validateDatasourceV1(dsCfg *configs) {
+	validateDatasource(dsCfg)
+	ds := dsCfg.Datasources[0]
+	So(ds.UID, ShouldEqual, "test_uid")
 }
 
 type fakeRepository struct {
