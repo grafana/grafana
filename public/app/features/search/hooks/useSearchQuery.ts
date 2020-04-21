@@ -12,6 +12,7 @@ import {
   TOGGLE_STARRED,
 } from '../reducers/actionTypes';
 import { DashboardQuery } from '../types';
+import { hasFilters } from '../utils';
 
 export const useSearchQuery = (queryParams: Partial<DashboardQuery>) => {
   const initialState = { ...defaultQuery, ...queryParams };
@@ -49,11 +50,9 @@ export const useSearchQuery = (queryParams: Partial<DashboardQuery>) => {
     dispatch({ type: TOGGLE_SORT, payload: sort });
   };
 
-  const hasFilters = query.query.length > 0 || query.tag.length > 0 || query.starred;
-
   return {
     query,
-    hasFilters,
+    hasFilters: hasFilters(query),
     onQueryChange,
     onRemoveStarred,
     onTagRemove,

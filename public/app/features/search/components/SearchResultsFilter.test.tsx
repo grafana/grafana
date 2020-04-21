@@ -18,8 +18,8 @@ const setup = (propOverrides?: Partial<Props>, renderMethod = shallow) => {
     onStarredFilterChange: noop,
     onTagFilterChange: noop,
     onToggleAllChecked: noop,
-    selectedStarredFilter: false,
-    selectedTagFilter: ['tag'],
+    //@ts-ignore
+    query: { starred: false, sort: null, tag: ['tag'] },
     onSortChange: noop,
   };
 

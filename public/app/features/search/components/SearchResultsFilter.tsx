@@ -5,6 +5,7 @@ import { GrafanaTheme, SelectableValue } from '@grafana/data';
 import { TagFilter } from 'app/core/components/TagFilter/TagFilter';
 import { SearchSrv } from 'app/core/services/search_srv';
 import { SortPicker } from 'app/core/components/TagFilter/SortPicker';
+import { DashboardQuery } from '../types';
 
 type onSelectChange = (value: SelectableValue) => void;
 
@@ -17,8 +18,7 @@ export interface Props {
   onStarredFilterChange: onSelectChange;
   onTagFilterChange: onSelectChange;
   onToggleAllChecked: () => void;
-  selectedStarredFilter: boolean;
-  selectedTagFilter: string[];
+  query: DashboardQuery;
   onSortChange: onSelectChange;
 }
 
@@ -38,8 +38,7 @@ export const SearchResultsFilter: FC<Props> = ({
   onToggleAllChecked,
   onStarredFilterChange,
   onTagFilterChange,
-  selectedStarredFilter = false,
-  selectedTagFilter,
+  query,
   onSortChange,
 }) => {
   const showActions = canDelete || canMove;
@@ -63,7 +62,7 @@ export const SearchResultsFilter: FC<Props> = ({
           <Select
             size="sm"
             placeholder="Filter by starred"
-            key={starredFilterOptions?.find(f => f.value === selectedStarredFilter)?.label}
+            key={starredFilterOptions?.find(f => f.value === query.starred)?.label}
             options={starredFilterOptions}
             onChange={onStarredFilterChange}
           />
@@ -71,13 +70,13 @@ export const SearchResultsFilter: FC<Props> = ({
           <TagFilter
             size="sm"
             placeholder="Filter by tag"
-            tags={selectedTagFilter}
+            tags={query.tag}
             tagOptions={searchSrv.getDashboardTags}
             onChange={onTagFilterChange}
             hideValues
           />
 
-          <SortPicker onChange={onSortChange} />
+          <SortPicker onChange={onSortChange} value={query.sort} />
         </HorizontalGroup>
       )}
     </div>
