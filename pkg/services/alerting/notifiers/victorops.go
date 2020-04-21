@@ -13,7 +13,7 @@ import (
 
 // AlertStateCritical - Victorops uses "CRITICAL" string to indicate "Alerting" state
 const AlertStateCritical = "CRITICAL"
-
+const AlertStateWarning = "WARNING"
 const alertStateRecovery = "RECOVERY"
 
 func init() {
@@ -86,6 +86,9 @@ func (vn *VictoropsNotifier) Notify(evalContext *alerting.EvalContext) error {
 	messageType := evalContext.Rule.State
 	if evalContext.Rule.State == models.AlertStateAlerting { // translate 'Alerting' to 'CRITICAL' (Victorops analog)
 		messageType = AlertStateCritical
+	}
+	if evalContext.Rule.State == models.AlertStateNoData { // translate 'NODATA' to 'WARNING'
+		messageType = AlertStateWarning
 	}
 
 	if evalContext.Rule.State == models.AlertStateOK {
