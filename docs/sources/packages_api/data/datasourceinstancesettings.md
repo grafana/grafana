@@ -34,6 +34,7 @@ import { DataSourceInstanceSettings } from '@grafana/data';
 |  [name](#name-property) | <code>string</code> |  |
 |  [password](#password-property) | <code>string</code> |  |
 |  [type](#type-property) | <code>string</code> |  |
+|  [uid](#uid-property) | <code>string</code> |  |
 |  [url](#url-property) | <code>string</code> |  |
 |  [username](#username-property) | <code>string</code> |  |
 |  [withCredentials](#withcredentials-property) | <code>boolean</code> |  |
@@ -102,6 +103,14 @@ password?: string;
 
 ```typescript
 type: string;
+```
+
+### uid property
+
+<b>Signature</b>
+
+```typescript
+uid: string;
 ```
 
 ### url property

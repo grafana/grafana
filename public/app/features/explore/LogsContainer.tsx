@@ -101,11 +101,11 @@ export class LogsContainer extends PureComponent<LogsContainerProps> {
   getFieldLinks = (field: Field, rowIndex: number) => {
     const data = getLinksFromLogsField(field, rowIndex);
     return data.map(d => {
-      if (d.link.meta?.datasourceName) {
+      if (d.link.meta?.datasourceUid) {
         return {
           ...d.linkModel,
           onClick: () => {
-            this.props.splitOpen(d.link.meta.datasourceName, field.values.get(rowIndex));
+            this.props.splitOpen({ dataSourceUid: d.link.meta.datasourceUid, query: field.values.get(rowIndex) });
           },
         };
       }

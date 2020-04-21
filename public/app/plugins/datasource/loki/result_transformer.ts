@@ -56,7 +56,7 @@ export function legacyLogStreamToDataFrame(
     const ts = entry.ts || entry.timestamp;
     // iso string with nano precision, will be truncated but is parse-able
     times.add(ts);
-    // So this matches new format, we are loosing precision here, which sucks but no easy way to keep it and this
+    // So this matches new format, we are losing precision here, which sucks but no easy way to keep it and this
     // is for old pre 1.0.0 version Loki so probably does not affect that much.
     timesNs.add(dateTime(ts).valueOf() + '000000');
     lines.add(entry.line);
@@ -381,7 +381,6 @@ export function lokiLegacyStreamsToDataframes(
 
 /**
  * Adds new fields and DataLinks to DataFrame based on DataSource instance config.
- * @param dataFrame
  */
 export const enhanceDataFrame = (dataFrame: DataFrame, config: LokiOptions | null): void => {
   if (!config) {
@@ -395,14 +394,14 @@ export const enhanceDataFrame = (dataFrame: DataFrame, config: LokiOptions | nul
 
   const fields = derivedFields.reduce((acc, field) => {
     const config: FieldConfig = {};
-    if (field.url || field.datasourceName) {
+    if (field.url || field.datasourceUid) {
       config.links = [
         {
           url: field.url,
           title: '',
-          meta: field.datasourceName
+          meta: field.datasourceUid
             ? {
-                datasourceName: field.datasourceName,
+                datasourceUid: field.datasourceUid,
               }
             : undefined,
         },

@@ -13,11 +13,12 @@ import {
   DataLinksEditor,
   DataSourceHttpSettings,
   GraphContextMenu,
-  SecretFormField,
   SeriesColorPickerPopoverWithTheme,
   UnitPicker,
   Icon,
+  LegacyForms,
 } from '@grafana/ui';
+const { SecretFormField } = LegacyForms;
 import { FunctionEditor } from 'app/plugins/datasource/graphite/FunctionEditor';
 import ReactProfileWrapper from 'app/features/profile/ReactProfileWrapper';
 import { LokiAnnotationsQueryEditor } from '../plugins/datasource/loki/components/AnnotationsQueryEditor';

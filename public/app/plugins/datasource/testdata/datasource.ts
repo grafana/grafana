@@ -7,6 +7,8 @@ import {
   MetricFindValue,
   TableData,
   TimeSeries,
+  LoadingState,
+  ArrayDataFrame,
 } from '@grafana/data';
 import { Scenario, TestDataQuery } from './types';
 import { getBackendSrv } from '@grafana/runtime';
@@ -34,6 +36,8 @@ export class TestDataDataSource extends DataSourceApi<TestDataQuery> {
       }
       if (target.scenarioId === 'streaming_client') {
         streams.push(runStream(target, options));
+      } else if (target.scenarioId === 'grafana_api') {
+        streams.push(runGrafanaAPI(target, options));
       } else {
         queries.push({
           ...target,
@@ -144,4 +148,19 @@ export class TestDataDataSource extends DataSourceApi<TestDataQuery> {
       }, 100);
     });
   }
+}
+
+function runGrafanaAPI(target: TestDataQuery, req: DataQueryRequest<TestDataQuery>): Observable<DataQueryResponse> {
+  const url = `/api/${target.stringInput}`;
+  return from(
+    getBackendSrv()
+      .get(url)
+      .then(res => {
+        const frame = new ArrayDataFrame(res);
+        return {
+          state: LoadingState.Done,
+          data: [frame],
+        };
+      })
+  );
 }

@@ -25,9 +25,11 @@ import { PanelProps } from '@grafana/data';
 |  Property | Type | Description |
 |  --- | --- | --- |
 |  [data](#data-property) | <code>PanelData</code> |  |
+|  [fieldConfig](#fieldconfig-property) | <code>FieldConfigSource</code> | Panel fields configuration |
 |  [height](#height-property) | <code>number</code> |  |
 |  [id](#id-property) | <code>number</code> |  |
 |  [onChangeTimeRange](#onchangetimerange-property) | <code>(timeRange: AbsoluteTimeRange) =&gt; void</code> |  |
+|  [onFieldConfigChange](#onfieldconfigchange-property) | <code>(config: FieldConfigSource) =&gt; void</code> | Enables panel field config manipulation |
 |  [onOptionsChange](#onoptionschange-property) | <code>(options: T) =&gt; void</code> |  |
 |  [options](#options-property) | <code>T</code> |  |
 |  [renderCounter](#rendercounter-property) | <code>number</code> |  |
@@ -43,6 +45,16 @@ import { PanelProps } from '@grafana/data';
 
 ```typescript
 data: PanelData;
+```
+
+### fieldConfig property
+
+Panel fields configuration
+
+<b>Signature</b>
+
+```typescript
+fieldConfig: FieldConfigSource;
 ```
 
 ### height property
@@ -67,6 +79,16 @@ id: number;
 
 ```typescript
 onChangeTimeRange: (timeRange: AbsoluteTimeRange) => void;
+```
+
+### onFieldConfigChange property
+
+Enables panel field config manipulation
+
+<b>Signature</b>
+
+```typescript
+onFieldConfigChange: (config: FieldConfigSource) => void;
 ```
 
 ### onOptionsChange property

@@ -15,7 +15,7 @@ Processed Link Model. The values are ready to use
 <b>Signature</b>
 
 ```typescript
-export interface LinkModel<T> 
+export interface LinkModel<T = any> 
 ```
 <b>Import</b>
 

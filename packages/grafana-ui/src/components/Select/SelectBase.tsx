@@ -1,5 +1,4 @@
 import React, { useCallback } from 'react';
-import { deprecationWarning } from '@grafana/data';
 // @ts-ignore
 import { default as ReactSelect } from '@torkelo/react-select';
 // @ts-ignore
@@ -11,7 +10,6 @@ import { default as AsyncCreatable } from '@torkelo/react-select/async-creatable
 
 import { Icon } from '../Icon/Icon';
 import { css, cx } from 'emotion';
-import { inputSizesPixels } from '../Forms/commonStyles';
 import resetSelectStyles from './resetSelectStyles';
 import { SelectMenu, SelectMenuOptions } from './SelectMenu';
 import { IndicatorsContainer } from './IndicatorsContainer';
@@ -100,7 +98,6 @@ export function SelectBase<T>({
   placeholder = 'Choose',
   prefix,
   renderControl,
-  size = 'auto',
   tabSelectsValue = true,
   className,
   value,
@@ -177,13 +174,6 @@ export function SelectBase<T>({
     tabSelectsValue,
     value: isMulti ? selectedValue : selectedValue[0],
   };
-
-  // width property is deprecated in favor of size or className
-  let widthClass = '';
-  if (width) {
-    deprecationWarning('Select', 'width property', 'size or className');
-    widthClass = 'width-' + width;
-  }
 
   if (allowCustomValue) {
     ReactSelectComponent = Creatable;
@@ -275,10 +265,10 @@ export function SelectBase<T>({
           }),
           container: () => ({
             position: 'relative',
-            width: inputSizesPixels(size),
+            width: width ? `${8 * width}px` : '100%',
           }),
         }}
-        className={cx('select-container', widthClass, className)}
+        className={cx('select-container', className)}
         {...commonSelectProps}
         {...creatableProps}
         {...asyncSelectProps}

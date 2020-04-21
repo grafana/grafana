@@ -12,6 +12,8 @@ draft = true
 
 ### EchoEventType enum
 
+Supported echo event types that can be sent via the [EchoSrv](./runtime/echosrv.md)<!-- -->.
+
 <b>Signature</b>
 
 ```typescript

@@ -15,7 +15,7 @@ draft = true
 <b>Signature</b>
 
 ```typescript
-export declare function ValuePicker<T>({ label, icon, options, onChange, variant }: ValuePickerProps<T>): JSX.Element;
+export declare function ValuePicker<T>({ label, icon, options, onChange, variant, size, isFullWidth, }: ValuePickerProps<T>): JSX.Element;
 ```
 <b>Import</b>
 
@@ -26,7 +26,7 @@ import { ValuePicker } from '@grafana/ui';
 
 |  Parameter | Type | Description |
 |  --- | --- | --- |
-|  { label, icon, options, onChange, variant } | <code>ValuePickerProps&lt;T&gt;</code> |  |
+|  { label, icon, options, onChange, variant, size, isFullWidth, } | <code>ValuePickerProps&lt;T&gt;</code> |  |
 
 <b>Returns:</b>
 

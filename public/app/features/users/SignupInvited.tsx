@@ -75,7 +75,6 @@ const SingupInvitedPageUnconnected: FC<DispatchProps & ConnectedProps> = ({ code
             <>
               <Field invalid={!!errors.email} error={!!errors.email && errors.email.message} label="Email">
                 <Input
-                  size="md"
                   placeholder="email@example.com"
                   name="email"
                   ref={register({
@@ -88,19 +87,13 @@ const SingupInvitedPageUnconnected: FC<DispatchProps & ConnectedProps> = ({ code
                 />
               </Field>
               <Field invalid={!!errors.name} error={!!errors.name && errors.name.message} label="Name">
-                <Input size="md" placeholder="Name (optional)" name="name" ref={register} />
+                <Input placeholder="Name (optional)" name="name" ref={register} />
               </Field>
               <Field invalid={!!errors.username} error={!!errors.username && errors.username.message} label="Username">
-                <Input
-                  size="md"
-                  placeholder="Username"
-                  name="username"
-                  ref={register({ required: 'Username is required' })}
-                />
+                <Input placeholder="Username" name="username" ref={register({ required: 'Username is required' })} />
               </Field>
               <Field invalid={!!errors.password} error={!!errors.password && errors.password.message} label="Password">
                 <Input
-                  size="md"
                   type="password"
                   placeholder="Password"
                   name="password"

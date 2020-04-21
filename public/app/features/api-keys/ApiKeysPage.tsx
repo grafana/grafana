@@ -13,7 +13,14 @@ import ApiKeysAddedModal from './ApiKeysAddedModal';
 import config from 'app/core/config';
 import appEvents from 'app/core/app_events';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
-import { DeleteButton, EventsWithValidation, FormLabel, LegacyForms, ValidationEvents, IconButton } from '@grafana/ui';
+import {
+  DeleteButton,
+  EventsWithValidation,
+  InlineFormLabel,
+  LegacyForms,
+  ValidationEvents,
+  IconButton,
+} from '@grafana/ui';
 const { Input, Switch } = LegacyForms;
 import { NavModel, dateTimeFormat } from '@grafana/data';
 import { FilterInput } from 'app/core/components/FilterInput/FilterInput';
@@ -177,9 +184,7 @@ export class ApiKeysPage extends PureComponent<Props, any> {
     return (
       <SlideDown in={isAdding}>
         <div className="cta-form">
-          <button className="cta-form__close btn btn-transparent" onClick={this.onToggleAdding}>
-            <IconButton name="times" />
-          </button>
+          <IconButton name="times" className="cta-form__close btn btn-transparent" onClick={this.onToggleAdding} />
           <h5>Add API Key</h5>
           <form className="gf-form-group" onSubmit={this.onAddApiKey}>
             <div className="gf-form-inline">
@@ -212,7 +217,7 @@ export class ApiKeysPage extends PureComponent<Props, any> {
                 </span>
               </div>
               <div className="gf-form max-width-21">
-                <FormLabel tooltip={tooltipText}>Time to live</FormLabel>
+                <InlineFormLabel tooltip={tooltipText}>Time to live</InlineFormLabel>
                 <Input
                   type="text"
                   className="gf-form-input"
