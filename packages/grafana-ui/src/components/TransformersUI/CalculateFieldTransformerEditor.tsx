@@ -1,23 +1,20 @@
-import React, { useContext, ChangeEvent } from 'react';
+import React, { ChangeEvent } from 'react';
 import {
-  DataTransformerID,
   CalculateFieldTransformerOptions,
+  DataTransformerID,
+  fieldReducers,
+  FieldType,
   KeyValue,
+  ReducerID,
   standardTransformers,
   TransformerRegistyItem,
   TransformerUIProps,
-  FieldType,
-  ReducerID,
-  fieldReducers,
 } from '@grafana/data';
-import { ThemeContext } from '../../themes/ThemeContext';
-import { css } from 'emotion';
-import { InlineList } from '../List/InlineList';
-import { Icon } from '../Icon/Icon';
-import { Label } from '../Forms/Label';
 import { StatsPicker } from '../StatsPicker/StatsPicker';
-import { Switch } from '../Switch/Switch';
+import { Switch } from '../Forms/Legacy/Switch/Switch';
 import { Input } from '../Input/Input';
+import { FilterPill } from '../FilterPill/FilterPill';
+import { HorizontalGroup } from '../Layout/Layout';
 
 interface CalculateFieldTransformerEditorProps extends TransformerUIProps<CalculateFieldTransformerOptions> {}
 
@@ -98,7 +95,7 @@ export class CalculateFieldTransformerEditor extends React.PureComponent<
     });
   };
 
-  onToggleReplaceFields = (evt: ChangeEvent<HTMLInputElement>) => {
+  onToggleReplaceFields = () => {
     const { options } = this.props;
     this.props.onChange({
       ...options,
@@ -125,74 +122,54 @@ export class CalculateFieldTransformerEditor extends React.PureComponent<
     const { options } = this.props;
     const { names, selected } = this.state;
     const reducer = fieldReducers.get(options.reducer);
+
     return (
       <div>
-        <Label>Numeric Fields</Label>
-        <InlineList
-          items={names}
-          renderItem={(o, i) => {
-            return (
-              <span
-                className={css`
-                  margin-right: ${i === names.length - 1 ? '0' : '10px'};
-                `}
-              >
-                <FilterPill
-                  onClick={() => {
-                    this.onFieldToggle(o);
-                  }}
-                  label={o}
-                  selected={selected.indexOf(o) > -1}
-                />
-              </span>
-            );
-          }}
-        />
-        <Label>Calculation</Label>
-        <StatsPicker stats={[options.reducer]} onChange={this.onStatsChange} defaultStat={ReducerID.sum} />
-        <Label>Alias</Label>
-        <Input value={options.alias} placeholder={reducer.name} onChange={this.onAliasChanged} />
-
-        <Label>Replace all fields</Label>
-        <Switch checked={options.replaceFields} onChange={this.onToggleReplaceFields} />
-
-        {/*  nullValueMode?: NullValueMode; */}
+        <div className="gf-form-inline">
+          <div className="gf-form gf-form--grow">
+            <div className="gf-form-label width-8">Field name</div>
+            <HorizontalGroup>
+              {names.map((o, i) => {
+                return (
+                  <FilterPill
+                    key={`${o}/${i}`}
+                    onClick={() => {
+                      this.onFieldToggle(o);
+                    }}
+                    label={o}
+                    selected={selected.indexOf(o) > -1}
+                  />
+                );
+              })}
+            </HorizontalGroup>
+          </div>
+        </div>
+        <div className="gf-form-inline">
+          <div className="gf-form gf-form--grow">
+            <div className="gf-form-label width-8">Calculation</div>
+            <StatsPicker stats={[options.reducer]} onChange={this.onStatsChange} defaultStat={ReducerID.sum} />
+          </div>
+        </div>
+        <div className="gf-form-inline">
+          <div className="gf-form gf-form--grow">
+            <div className="gf-form-label width-8">Alias</div>
+            <Input value={options.alias} placeholder={reducer.name} onChange={this.onAliasChanged} />
+          </div>
+        </div>
+        <div className="gf-form-inline">
+          <div className="gf-form gf-form--grow">
+            <Switch
+              label="Replace all fields"
+              labelClass="width-8"
+              checked={!!options.replaceFields}
+              onChange={this.onToggleReplaceFields}
+            />
+          </div>
+        </div>
       </div>
     );
   }
 }
-
-interface FilterPillProps {
-  selected: boolean;
-  label: string;
-  onClick: React.MouseEventHandler<HTMLElement>;
-}
-const FilterPill: React.FC<FilterPillProps> = ({ label, selected, onClick }) => {
-  const theme = useContext(ThemeContext);
-  return (
-    <div
-      className={css`
-        padding: ${theme.spacing.xxs} ${theme.spacing.sm};
-        color: white;
-        background: ${selected ? theme.palette.blue95 : theme.palette.blue77};
-        border-radius: 16px;
-        display: inline-block;
-        cursor: pointer;
-      `}
-      onClick={onClick}
-    >
-      {selected && (
-        <Icon
-          className={css`
-            margin-right: 4px;
-          `}
-          name="check"
-        />
-      )}
-      {label}
-    </div>
-  );
-};
 
 export const calculateFieldTransformRegistryItem: TransformerRegistyItem<CalculateFieldTransformerOptions> = {
   id: DataTransformerID.calculateField,

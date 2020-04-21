@@ -40,8 +40,6 @@ interface ReactTableInternalState extends UseResizeColumnsState<{}>, UseSortBySt
 function useTableStateReducer(props: Props) {
   return useCallback(
     (newState: ReactTableInternalState, action: any) => {
-      console.log(action, newState);
-
       switch (action.type) {
         case 'columnDoneResizing':
           if (props.onColumnResize) {
