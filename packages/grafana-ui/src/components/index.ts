@@ -160,11 +160,12 @@ import { ButtonSelect } from './Forms/Legacy/Select/ButtonSelect';
 //Input
 import { Input, LegacyInputStatus } from './Forms/Legacy/Input/Input';
 import { FormField } from './FormField/FormField';
-export { SecretFormField } from './SecretFormField/SecretFormField';
+import { SecretFormField } from './SecretFormField/SecretFormField';
 
 import { Switch } from './Forms/Legacy/Switch/Switch';
 
 const LegacyForms = {
+  SecretFormField,
   FormField,
   Select,
   AsyncSelect,
