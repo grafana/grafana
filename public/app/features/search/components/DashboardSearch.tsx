@@ -1,9 +1,10 @@
-import React, { FC } from 'react';
+import React, { FC, useState } from 'react';
 import { css } from 'emotion';
-import { useTheme, CustomScrollbar, stylesFactory, Button } from '@grafana/ui';
+import { useTheme, CustomScrollbar, stylesFactory, Button, RadioButtonGroup, HorizontalGroup } from '@grafana/ui';
 import { GrafanaTheme } from '@grafana/data';
 import { SearchSrv } from 'app/core/services/search_srv';
 import { TagFilter } from 'app/core/components/TagFilter/TagFilter';
+import { SortPicker } from 'app/core/components/TagFilter/SortPicker';
 import { useSearchQuery } from '../hooks/useSearchQuery';
 import { useDashboardSearch } from '../hooks/useDashboardSearch';
 import { SearchField } from './SearchField';
@@ -16,10 +17,16 @@ export interface Props {
   folder?: string;
 }
 
+const layoutOptions = [
+  { label: 'Folders', value: 'folders' },
+  { label: 'List', value: 'list' },
+];
+
 export const DashboardSearch: FC<Props> = ({ onCloseSearch, folder }) => {
   const payload = folder ? { query: `folder:${folder}` } : {};
-  const { query, onQueryChange, onTagFilterChange, onTagAdd } = useSearchQuery(payload);
+  const { query, onQueryChange, onTagFilterChange, onTagAdd, onSortChange } = useSearchQuery(payload);
   const { results, loading, onToggleSection, onKeyDown } = useDashboardSearch(query, onCloseSearch);
+  const [layout, setLayout] = useState(layoutOptions[0].value);
   const theme = useTheme();
   const styles = getStyles(theme);
 
@@ -44,7 +51,13 @@ export const DashboardSearch: FC<Props> = ({ onCloseSearch, folder }) => {
       />
       <div className={styles.search}>
         <div className={styles.actionRow}>
-          <TagFilter tags={query.tag} tagOptions={searchSrv.getDashboardTags} onChange={onTagFilterChange} />
+          <HorizontalGroup spacing="md">
+            <RadioButtonGroup options={layoutOptions} onChange={(value: string) => setLayout(value)} value={layout} />
+            <SortPicker onChange={onSortChange} />
+          </HorizontalGroup>
+          <HorizontalGroup>
+            <TagFilter tags={query.tag} tagOptions={searchSrv.getDashboardTags} onChange={onTagFilterChange} />
+          </HorizontalGroup>
         </div>
         <CustomScrollbar>
           <SearchResults
@@ -84,11 +97,16 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
     searchField: css`
       padding-left: ${theme.spacing.md};
     `,
-    actionRow: css``,
+    actionRow: css`
+      display: flex;
+      justify-content: space-between;
+      padding: ${theme.spacing.md} 0;
+    `,
     search: css`
       display: flex;
       flex-direction: column;
       padding: ${theme.spacing.xl};
+      height: 100%;
     `,
   };
 });

@@ -1,10 +1,10 @@
 import React, { FC } from 'react';
 import { css } from 'emotion';
-import { Button, Select, Checkbox, stylesFactory, useTheme, HorizontalGroup, AsyncSelect } from '@grafana/ui';
+import { Button, Select, Checkbox, stylesFactory, useTheme, HorizontalGroup } from '@grafana/ui';
 import { GrafanaTheme, SelectableValue } from '@grafana/data';
 import { TagFilter } from 'app/core/components/TagFilter/TagFilter';
 import { SearchSrv } from 'app/core/services/search_srv';
-import { DEFAULT_SORT } from '../constants';
+import { SortPicker } from 'app/core/components/TagFilter/SortPicker';
 
 type onSelectChange = (value: SelectableValue) => void;
 
@@ -46,12 +46,6 @@ export const SearchResultsFilter: FC<Props> = ({
   const theme = useTheme();
   const styles = getStyles(theme);
 
-  const getSortOptions = () => {
-    return searchSrv.getSortOptions().then(({ sortOptions }) => {
-      return sortOptions.map((opt: any) => ({ label: opt.displayName, value: opt.name }));
-    });
-  };
-
   return (
     <div className={styles.wrapper}>
       <Checkbox value={allChecked} onChange={onToggleAllChecked} />
@@ -83,13 +77,7 @@ export const SearchResultsFilter: FC<Props> = ({
             hideValues
           />
 
-          <AsyncSelect
-            size="sm"
-            onChange={onSortChange}
-            loadOptions={getSortOptions}
-            defaultOptions
-            placeholder={`Sort (Default ${DEFAULT_SORT.label})`}
-          />
+          <SortPicker onChange={onSortChange} />
         </HorizontalGroup>
       )}
     </div>
