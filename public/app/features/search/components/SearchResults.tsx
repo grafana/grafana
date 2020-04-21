@@ -15,7 +15,7 @@ export interface Props {
   onToggleChecked?: OnToggleChecked;
   onToggleSection: (section: DashboardSection) => void;
   results: DashboardSection[] | undefined;
-  layout: string;
+  layout?: string;
 }
 
 export const SearchResults: FC<Props> = ({
@@ -30,6 +30,16 @@ export const SearchResults: FC<Props> = ({
   const theme = useTheme();
   const styles = getSectionStyles(theme);
 
+  const renderItems = (section: DashboardSection) => {
+    if (!section.expanded) {
+      return null;
+    }
+
+    return section.items.map(item => (
+      <SearchItem key={item.id} {...{ item, editable, onToggleChecked, onTagSelected }} />
+    ));
+  };
+
   if (loading) {
     return <Spinner className={styles.spinner} />;
   } else if (!results || !results.length) {
@@ -40,21 +50,15 @@ export const SearchResults: FC<Props> = ({
     <div className="search-results-container">
       <ul className={styles.wrapper}>
         {results.map(section =>
-          layout === SearchLayout.Folders ? (
+          layout !== SearchLayout.List ? (
             <li aria-label="Search section" className={styles.section} key={section.title}>
               <SectionHeader onSectionClick={onToggleSection} {...{ onToggleChecked, editable, section, layout }} />
               <ul aria-label="Search items" className={styles.wrapper}>
-                {section.expanded &&
-                  section.items.map(item => (
-                    <SearchItem key={item.id} {...{ item, editable, onToggleChecked, onTagSelected }} />
-                  ))}
+                {renderItems(section)}
               </ul>
             </li>
           ) : (
-            section.expanded &&
-            section.items.map(item => (
-              <SearchItem key={item.id} {...{ item, editable, onToggleChecked, onTagSelected }} />
-            ))
+            renderItems(section)
           )
         )}
       </ul>

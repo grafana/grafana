@@ -1,7 +1,8 @@
+import { useEffect } from 'react';
 import { useDebounce } from 'react-use';
 import { SearchSrv } from 'app/core/services/search_srv';
 import { backendSrv } from 'app/core/services/backend_srv';
-import { FETCH_RESULTS, FETCH_ITEMS, TOGGLE_SECTION } from '../reducers/actionTypes';
+import { FETCH_RESULTS, FETCH_ITEMS, TOGGLE_SECTION, SEARCH_START } from '../reducers/actionTypes';
 import { DashboardSection, UseSearch } from '../types';
 import { hasId, getParsedQuery } from '../utils';
 
@@ -20,8 +21,8 @@ export const useSearch: UseSearch = (query, reducer, params) => {
   const [state, dispatch] = reducer;
 
   const search = () => {
+    dispatch({ type: SEARCH_START });
     const parsedQuery = getParsedQuery(query, queryParsing);
-
     searchSrv.search(parsedQuery).then(results => {
       // Remove header for folder search
       if (query.folderIds.length === 1 && results.length) {
@@ -34,6 +35,11 @@ export const useSearch: UseSearch = (query, reducer, params) => {
       }
     });
   };
+
+  // Set loading state before debounced search
+  useEffect(() => {
+    dispatch({ type: SEARCH_START });
+  }, [query.tag, query.sort, query.starred]);
 
   useDebounce(search, 300, [query, folderUid, queryParsing]);
 
