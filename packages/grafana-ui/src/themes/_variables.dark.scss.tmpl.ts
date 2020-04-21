@@ -135,7 +135,7 @@ $divider-border-color: $gray-1;
 $tight-form-func-bg: $dark-9;
 $tight-form-func-highlight-bg: $dark-10;
 
-$modal-backdrop-bg: #343b40;
+$modal-backdrop-bg: ${theme.colors.bg1};
 $code-tag-bg: $dark-1;
 $code-tag-border: $dark-9;
 
