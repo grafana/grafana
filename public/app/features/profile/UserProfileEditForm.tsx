@@ -1,5 +1,5 @@
 import React, { PureComponent, ChangeEvent, MouseEvent } from 'react';
-import { Button, FormLabel, LegacyForms, Tooltip, Icon } from '@grafana/ui';
+import { Button, InlineFormLabel, LegacyForms, Tooltip, Icon } from '@grafana/ui';
 const { Input } = LegacyForms;
 import { User } from 'app/types';
 import config from 'app/core/config';
@@ -59,11 +59,11 @@ export class UserProfileEditForm extends PureComponent<Props, State> {
         <h3 className="page-sub-heading">Edit Profile</h3>
         <form name="userForm" className="gf-form-group">
           <div className="gf-form max-width-30">
-            <FormLabel className="width-8">Name</FormLabel>
+            <InlineFormLabel className="width-8">Name</InlineFormLabel>
             <Input className="gf-form-input max-width-22" type="text" onChange={this.onNameChange} value={name} />
           </div>
           <div className="gf-form max-width-30">
-            <FormLabel className="width-8">Email</FormLabel>
+            <InlineFormLabel className="width-8">Email</InlineFormLabel>
             <Input
               className="gf-form-input max-width-22"
               type="text"
@@ -78,7 +78,7 @@ export class UserProfileEditForm extends PureComponent<Props, State> {
             )}
           </div>
           <div className="gf-form max-width-30">
-            <FormLabel className="width-8">Username</FormLabel>
+            <InlineFormLabel className="width-8">Username</InlineFormLabel>
             <Input
               className="gf-form-input max-width-22"
               type="text"
