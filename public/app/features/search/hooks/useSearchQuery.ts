@@ -8,6 +8,7 @@ import {
   REMOVE_STARRED,
   REMOVE_TAG,
   SET_TAGS,
+  TOGGLE_SORT,
   TOGGLE_STARRED,
 } from '../reducers/actionTypes';
 import { DashboardQuery } from '../types';
@@ -44,6 +45,10 @@ export const useSearchQuery = (queryParams: Partial<DashboardQuery>) => {
     dispatch({ type: TOGGLE_STARRED, payload: filter.value });
   };
 
+  const onSortChange = (sort: SelectableValue) => {
+    dispatch({ type: TOGGLE_SORT, payload: sort.value });
+  };
+
   const hasFilters = query.query.length > 0 || query.tag.length > 0 || query.starred;
 
   return {
@@ -56,5 +61,6 @@ export const useSearchQuery = (queryParams: Partial<DashboardQuery>) => {
     onTagFilterChange,
     onStarredFilterChange,
     onTagAdd,
+    onSortChange,
   };
 };

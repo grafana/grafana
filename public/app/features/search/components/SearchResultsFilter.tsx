@@ -1,9 +1,10 @@
 import React, { FC } from 'react';
 import { css } from 'emotion';
-import { Button, Select, Checkbox, stylesFactory, useTheme, HorizontalGroup } from '@grafana/ui';
+import { Button, Select, Checkbox, stylesFactory, useTheme, HorizontalGroup, AsyncSelect } from '@grafana/ui';
 import { GrafanaTheme, SelectableValue } from '@grafana/data';
 import { TagFilter } from 'app/core/components/TagFilter/TagFilter';
 import { SearchSrv } from 'app/core/services/search_srv';
+import { DEFAULT_SORT } from '../constants';
 
 type onSelectChange = (value: SelectableValue) => void;
 
@@ -18,6 +19,7 @@ export interface Props {
   onToggleAllChecked: () => void;
   selectedStarredFilter: boolean;
   selectedTagFilter: string[];
+  onSortChange: onSelectChange;
 }
 
 const starredFilterOptions = [
@@ -38,10 +40,17 @@ export const SearchResultsFilter: FC<Props> = ({
   onTagFilterChange,
   selectedStarredFilter = false,
   selectedTagFilter,
+  onSortChange,
 }) => {
   const showActions = canDelete || canMove;
   const theme = useTheme();
   const styles = getStyles(theme);
+
+  const getSortOptions = () => {
+    return searchSrv.getSortOptions().then(({ sortOptions }) => {
+      return sortOptions.map((opt: any) => ({ label: opt.displayName, value: opt.name }));
+    });
+  };
 
   return (
     <div className={styles.wrapper}>
@@ -72,6 +81,14 @@ export const SearchResultsFilter: FC<Props> = ({
             tagOptions={searchSrv.getDashboardTags}
             onChange={onTagFilterChange}
             hideValues
+          />
+
+          <AsyncSelect
+            size="sm"
+            onChange={onSortChange}
+            loadOptions={getSortOptions}
+            defaultOptions
+            placeholder={`Sort (Default ${DEFAULT_SORT.label})`}
           />
         </HorizontalGroup>
       )}

@@ -36,6 +36,7 @@ export const ManageDashboards: FC<Props> = memo(({ folderId, folderUid }) => {
     onTagFilterChange,
     onStarredFilterChange,
     onTagAdd,
+    onSortChange,
   } = useSearchQuery(queryParams);
 
   const {
@@ -124,6 +125,7 @@ export const ManageDashboards: FC<Props> = memo(({ folderId, folderUid }) => {
             moveTo={onMoveTo}
             onToggleAllChecked={onToggleAllChecked}
             onStarredFilterChange={onStarredFilterChange}
+            onSortChange={onSortChange}
             onTagFilterChange={onTagFilterChange}
             selectedStarredFilter={query.starred}
             selectedTagFilter={query.tag}

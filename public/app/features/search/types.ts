@@ -66,6 +66,7 @@ export interface DashboardQuery {
   skipRecent: boolean;
   skipStarred: boolean;
   folderIds: number[];
+  sort: string;
 }
 
 export type SearchReducer<S> = [S, Dispatch<SearchAction>];
