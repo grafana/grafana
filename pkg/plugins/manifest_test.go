@@ -39,8 +39,10 @@ NR7DnB0CCQHO+4FlSPtXFTzNepoc+CytQyDAeOLMLmf2Tqhk2YShk+G/YlVX
 =hBea
 -----END PGP SIGNATURE-----`
 
+	mv := newManifestVerifier(nil)
+
 	t.Run("valid manifest", func(t *testing.T) {
-		manifest, err := readPluginManifest([]byte(txt))
+		manifest, err := mv.readPluginManifest([]byte(txt))
 
 		assert.Nil(t, err)
 		assert.NotNil(t, manifest)
@@ -49,7 +51,7 @@ NR7DnB0CCQHO+4FlSPtXFTzNepoc+CytQyDAeOLMLmf2Tqhk2YShk+G/YlVX
 
 	t.Run("invalid manifest", func(t *testing.T) {
 		modified := strings.ReplaceAll(txt, "README.md", "xxxxxxxxxx")
-		manifest, err := readPluginManifest([]byte(modified))
+		manifest, err := mv.readPluginManifest([]byte(modified))
 		assert.NotNil(t, err)
 		assert.Nil(t, manifest)
 	})

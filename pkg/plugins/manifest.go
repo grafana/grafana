@@ -10,6 +10,7 @@ import (
 	"os"
 	"path"
 
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/util/errutil"
 
 	"golang.org/x/crypto/openpgp"
@@ -18,7 +19,7 @@ import (
 
 // Soon we can fetch keys from:
 //  https://grafana.com/api/plugins/ci/keys
-var publicKeyText = `-----BEGIN PGP PUBLIC KEY BLOCK-----
+var defaultPublicKey = `-----BEGIN PGP PUBLIC KEY BLOCK-----
 Version: OpenPGP.js v4.10.1
 Comment: https://openpgpjs.org
 
@@ -42,6 +43,13 @@ N1c5v9v/4h6qeA==
 -----END PGP PUBLIC KEY BLOCK-----
 `
 
+var publicKeys = []publicKey{
+	{
+		KeyID:     "7e4d0c6a708866e7",
+		PublicKey: defaultPublicKey,
+	},
+}
+
 // pluginManifest holds details for the file manifest
 type pluginManifest struct {
 	Plugin  string            `json:"plugin"`
@@ -51,9 +59,34 @@ type pluginManifest struct {
 	Files   map[string]string `json:"files"`
 }
 
+type publicKey struct {
+	KeyID     string `json:"keyId"`
+	Since     int64  `json:"since"`
+	RevokedAt int64  `json:"revoked_at"`
+	PublicKey string `json:"public"`
+}
+
+func (pmv *manifestVerifier) getPublicKey(keyID string) (string, error) {
+	for _, v := range publicKeys {
+		if v.KeyID == keyID {
+			return v.PublicKey, nil
+		}
+	}
+
+	return "", errors.New("Could not find public Key")
+}
+
+type manifestVerifier struct {
+	sqlstore *sqlstore.SqlStore
+}
+
+func newManifestVerifier(sqlstore *sqlstore.SqlStore) *manifestVerifier {
+	return &manifestVerifier{sqlstore: sqlstore}
+}
+
 // readPluginManifest attempts to read and verify the plugin manifest
 // if any error occurs or the manifest is not valid, this will return an error
-func readPluginManifest(body []byte) (*pluginManifest, error) {
+func (pmv *manifestVerifier) readPluginManifest(body []byte) (*pluginManifest, error) {
 	block, _ := clearsign.Decode(body)
 	if block == nil {
 		return nil, errors.New("unable to decode manifest")
@@ -66,14 +99,18 @@ func readPluginManifest(body []byte) (*pluginManifest, error) {
 		return nil, errutil.Wrap("Error parsing manifest JSON", err)
 	}
 
+	publicKeyText, err := pmv.getPublicKey(manifest.KeyID)
+	if err != nil {
+		return nil, err
+	}
+
 	keyring, err := openpgp.ReadArmoredKeyRing(bytes.NewBufferString(publicKeyText))
 	if err != nil {
 		return nil, errutil.Wrap("failed to parse public key", err)
 	}
 
-	if _, err := openpgp.CheckDetachedSignature(keyring,
-		bytes.NewBuffer(block.Bytes),
-		block.ArmoredSignature.Body); err != nil {
+	_, err = openpgp.CheckDetachedSignature(keyring, bytes.NewBuffer(block.Bytes), block.ArmoredSignature.Body)
+	if err != nil {
 		return nil, errutil.Wrap("failed to check signature", err)
 	}
 
@@ -81,7 +118,7 @@ func readPluginManifest(body []byte) (*pluginManifest, error) {
 }
 
 // GetPluginSignatureState returns the signature state for a plugin
-func GetPluginSignatureState(plugin *PluginBase) PluginSignature {
+func (pmv *manifestVerifier) verifyPluginSignature(plugin *PluginBase) PluginSignature {
 	manifestPath := path.Join(plugin.PluginDir, "MANIFEST.txt")
 
 	byteValue, err := ioutil.ReadFile(manifestPath)
@@ -89,7 +126,7 @@ func GetPluginSignatureState(plugin *PluginBase) PluginSignature {
 		return PluginSignatureUnsigned
 	}
 
-	manifest, err := readPluginManifest(byteValue)
+	manifest, err := pmv.readPluginManifest(byteValue)
 	if err != nil {
 		return PluginSignatureInvalid
 	}
@@ -112,6 +149,7 @@ func GetPluginSignatureState(plugin *PluginBase) PluginSignature {
 		if _, err := io.Copy(h, f); err != nil {
 			return PluginSignatureModified
 		}
+
 		sum := string(h.Sum(nil))
 		if sum != hash {
 			return PluginSignatureModified

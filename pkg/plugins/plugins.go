@@ -17,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/registry"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/util/errutil"
@@ -48,6 +49,7 @@ type PluginScanner struct {
 type PluginManager struct {
 	BackendPluginManager backendplugin.Manager `inject:""`
 	Cfg                  *setting.Cfg          `inject:""`
+	SQLStore             *sqlstore.SqlStore    `inject:""`
 	log                  log.Logger
 }
 
@@ -121,11 +123,13 @@ func (pm *PluginManager) Init() error {
 		app.initApp()
 	}
 
+	manifestVerifier := newManifestVerifier(pm.SQLStore)
 	for _, p := range Plugins {
 		if p.IsCorePlugin {
 			p.Signature = PluginSignatureInternal
 		} else {
-			p.Signature = GetPluginSignatureState(p)
+			//p.Signature = verifyPluginSignature(pm.SQLStore, p)
+			p.Signature = manifestVerifier.verifyPluginSignature(p)
 			metrics.SetPluginBuildInformation(p.Id, p.Type, p.Info.Version)
 		}
 	}
