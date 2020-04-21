@@ -7,9 +7,13 @@ import { useEffect, useState, MutableRefObject } from 'react';
  * @param offsetBottom - used for adding bottom padding or showing extra elements
  * after the list
  */
-export const useListHeight = (ref: MutableRefObject<HTMLDivElement | null>, offsetBottom = 150) => {
+export const useListHeight = (ref: MutableRefObject<HTMLDivElement | null>, offsetBottom = 200) => {
+  if (!ref) {
+    return 0;
+  }
+
   function getHeight() {
-    const offsetTop = ref.current?.offsetTop;
+    const offsetTop = ref?.current?.offsetTop;
     if (!offsetTop) {
       return 0;
     }

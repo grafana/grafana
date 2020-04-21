@@ -1,4 +1,4 @@
-import React, { FC, useRef } from 'react';
+import React, { FC, MutableRefObject } from 'react';
 import { css } from 'emotion';
 import { FixedSizeList } from 'react-window';
 import { GrafanaTheme } from '@grafana/data';
@@ -17,6 +17,7 @@ export interface Props {
   onToggleChecked?: OnToggleChecked;
   onToggleSection: (section: DashboardSection) => void;
   results: DashboardSection[] | undefined;
+  wrapperRef?: MutableRefObject<HTMLDivElement | null>;
 }
 
 export const SearchResults: FC<Props> = ({
@@ -26,11 +27,11 @@ export const SearchResults: FC<Props> = ({
   onToggleChecked,
   onToggleSection,
   results,
+  wrapperRef,
 }) => {
   const theme = useTheme();
   const styles = getSectionStyles(theme);
-  const ref = useRef(null);
-  const listHeight = useListHeight(ref);
+  const listHeight = useListHeight(wrapperRef);
 
   if (loading) {
     return <Spinner className={styles.spinner} />;
@@ -39,7 +40,7 @@ export const SearchResults: FC<Props> = ({
   }
 
   return (
-    <div className="search-results-container" ref={ref}>
+    <div className="search-results-container">
       <ul className={styles.wrapper}>
         {results.map(section => {
           let height = getItemsHeight(section, listHeight);

@@ -1,6 +1,6 @@
-import React, { FC } from 'react';
-import { css, cx } from 'emotion';
-import { Icon, useTheme, stylesFactory, Button } from '@grafana/ui';
+import React, { FC, memo, useRef } from 'react';
+import { css } from 'emotion';
+import { Icon, useTheme, stylesFactory, Button, CustomScrollbar } from '@grafana/ui';
 import { GrafanaTheme } from '@grafana/data';
 import { SearchSrv } from 'app/core/services/search_srv';
 import { TagFilter } from 'app/core/components/TagFilter/TagFilter';
@@ -20,12 +20,13 @@ export interface Props {
   folder?: string;
 }
 
-export const DashboardSearch: FC<Props> = ({ onCloseSearch, folder }) => {
+export const DashboardSearch: FC<Props> = memo(({ onCloseSearch, folder }) => {
   const payload = folder ? { query: `folder:${folder}` } : {};
   const { query, onQueryChange, onClearFilters, onTagFilterChange, onTagAdd } = useSearchQuery(payload);
   const { results, loading, onToggleSection, onKeyDown } = useDashboardSearch(query, onCloseSearch);
   const theme = useTheme();
   const styles = getStyles(theme);
+  const wrapperRef = useRef(null);
 
   // The main search input has own keydown handler, also TagFilter uses input, so
   // clicking Esc when tagFilter is active shouldn't close the whole search overlay
@@ -47,14 +48,17 @@ export const DashboardSearch: FC<Props> = ({ onCloseSearch, folder }) => {
         className={styles.searchField}
       />
       <div className="search-dropdown">
-        <div className={cx('search-dropdown__col_1', styles.resultsWrapper)}>
-          <SearchResults
-            results={results}
-            loading={loading}
-            onTagSelected={onTagAdd}
-            editable={false}
-            onToggleSection={onToggleSection}
-          />
+        <div className="search-dropdown__col_1" ref={wrapperRef}>
+          <CustomScrollbar>
+            <SearchResults
+              results={results}
+              loading={loading}
+              onTagSelected={onTagAdd}
+              editable={false}
+              onToggleSection={onToggleSection}
+              wrapperRef={wrapperRef}
+            />
+          </CustomScrollbar>
         </div>
         <div className="search-dropdown__col_2">
           <div className="search-filter-box">
@@ -100,7 +104,7 @@ export const DashboardSearch: FC<Props> = ({ onCloseSearch, folder }) => {
       </div>
     </div>
   );
-};
+});
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
   return {

@@ -1,4 +1,4 @@
-import React, { FC, useState, memo } from 'react';
+import React, { FC, useState, memo, useRef } from 'react';
 import { css } from 'emotion';
 import { Icon, TagList, HorizontalGroup, stylesFactory, useTheme } from '@grafana/ui';
 import { GrafanaTheme } from '@grafana/data';
@@ -23,6 +23,7 @@ const { isEditor } = contextSrv;
 export const ManageDashboards: FC<Props> = memo(({ folderId, folderUid }) => {
   const theme = useTheme();
   const styles = getStyles(theme);
+  const wrapperRef = useRef(null);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isMoveModalOpen, setIsMoveModalOpen] = useState(false);
   const queryParams = { skipRecent: true, skipStarred: true, folderIds: folderId ? [folderId] : [] };
@@ -129,14 +130,17 @@ export const ManageDashboards: FC<Props> = memo(({ folderId, folderUid }) => {
             selectedTagFilter={query.tag}
           />
         )}
-        <SearchResults
-          loading={loading}
-          results={results}
-          editable
-          onTagSelected={onTagAdd}
-          onToggleSection={onToggleSection}
-          onToggleChecked={onToggleChecked}
-        />
+        <div ref={wrapperRef}>
+          <SearchResults
+            loading={loading}
+            results={results}
+            editable
+            onTagSelected={onTagAdd}
+            onToggleSection={onToggleSection}
+            onToggleChecked={onToggleChecked}
+            wrapperRef={wrapperRef}
+          />
+        </div>
       </div>
       <ConfirmDeleteModal
         onDeleteItems={onDeleteItems}
