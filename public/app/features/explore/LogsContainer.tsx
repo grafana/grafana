@@ -4,23 +4,26 @@ import { connect } from 'react-redux';
 import { Collapse } from '@grafana/ui';
 
 import {
-  DataSourceApi,
-  RawTimeRange,
-  LogLevel,
-  TimeZone,
   AbsoluteTimeRange,
+  DataSourceApi,
+  DateTimeDuration,
+  ExploreMode,
+  Field,
+  GraphSeriesXY,
+  locationUtil,
+  LogLevel,
   LogRowModel,
   LogsDedupStrategy,
-  TimeRange,
   LogsMetaItem,
-  GraphSeriesXY,
-  Field,
+  RawTimeRange,
+  TimeRange,
+  TimeZone,
 } from '@grafana/data';
 
 import { ExploreId, ExploreItemState } from 'app/types/explore';
 import { StoreState } from 'app/types';
 
-import { changeDedupStrategy, updateTimeRange, splitOpen } from './state/actions';
+import { changeDedupStrategy, splitOpen, updateTimeRange } from './state/actions';
 import { toggleLogLevelAction } from 'app/features/explore/state/actionTypes';
 import { deduplicatedRowsSelector } from 'app/features/explore/state/selectors';
 import { getTimeZone } from '../profile/state/selectors';
@@ -29,6 +32,8 @@ import { Logs } from './Logs';
 import { LogsCrossFadeTransition } from './utils/LogsCrossFadeTransition';
 import { LiveTailControls } from './useLiveTailControls';
 import { getLinksFromLogsField } from '../panel/panellinks/linkSuppliers';
+import { serializeStateToUrlParam } from '../../core/utils/explore';
+import { getDataSourceSrv } from '@grafana/runtime';
 
 interface LogsContainerProps {
   datasourceInstance?: DataSourceApi;
@@ -105,12 +110,45 @@ export class LogsContainer extends PureComponent<LogsContainerProps> {
         return {
           ...d.linkModel,
           onClick: () => {
-            this.props.splitOpen({ dataSourceUid: d.link.meta.datasourceUid, query: field.values.get(rowIndex) });
+            this.props.splitOpen({
+              dataSourceUid: d.link.meta.datasourceUid,
+              // TODO: fix the ambiguity here
+              // This looks weird but in case meta.datasourceUid is set we save the query in url which will get
+              // interpolated into href
+              query: d.linkModel.href,
+            });
           },
+          // We need to create real href here as the linkModel.href actually contains query. As in this case this is
+          // meant to be internal link (opens split view by default) the href will also points to explore but this
+          // way you can open it in new tab.
+          href: this.generateInternalHref(d.link.meta.datasourceUid, d.linkModel.href, this.props.range),
         };
       }
       return d.linkModel;
     });
+  };
+
+  /**
+   * Generates href for internal derived field link.
+   */
+  generateInternalHref = (datasourceUid: string, query: string, range: TimeRange) => {
+    return locationUtil.assureBaseUrl(
+      `/explore?left=${serializeStateToUrlParam({
+        range: range.raw,
+        datasource: getDataSourceSrv().getDataSourceSettingsByUid(datasourceUid).name,
+        // Again hardcoded for Jaeger query structure
+        // TODO: fix
+        queries: [{ query }],
+        // This should get overwritten if datasource does not support that mode and we do not know what mode is
+        // preferred anyway.
+        mode: ExploreMode.Metrics,
+        ui: {
+          showingGraph: true,
+          showingTable: true,
+          showingLogs: true,
+        },
+      })}`
+    );
   };
 
   render() {
