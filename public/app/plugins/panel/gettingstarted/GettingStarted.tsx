@@ -52,14 +52,15 @@ export class GettingStarted extends PureComponent<PanelProps, State> {
     }
 
     const styles = getStyles();
+    const step = this.state.steps[1];
 
     return (
       <div className={styles.container}>
         <div className={styles.content}>
           <div className={styles.header}>
             <div className={styles.heading}>
-              <h1>{this.state.steps[0].heading}</h1>
-              <p>{this.state.steps[0].subheading}</p>
+              <h1>{step.heading}</h1>
+              <p>{step.subheading}</p>
             </div>
             <div className={styles.help}>
               <h3>Need help?</h3>
@@ -83,7 +84,7 @@ export class GettingStarted extends PureComponent<PanelProps, State> {
               </div>
             </div>
           </div>
-          <Step step={this.state.steps[0]} />
+          <Step step={step} />
         </div>
         <div className={styles.dismiss}>
           <Button variant="secondary" onClick={this.dismiss}>
@@ -111,7 +112,7 @@ const getStyles = stylesFactory(() => {
     content: css`
       margin-left: 350px;
       margin-top: 32px;
-      margin-bottom: 24px;
+      margin-bottom: 16px;
     `,
     header: css`
       margin-bottom: 24px;
@@ -120,6 +121,7 @@ const getStyles = stylesFactory(() => {
     `,
     heading: css`
       margin-right: 200px;
+      max-width: 40%;
     `,
     help: css`
       width: 330px;

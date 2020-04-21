@@ -1,6 +1,6 @@
 import { IconName } from '@grafana/ui';
 
-export type CardType = 'tutorial' | 'docs';
+export type CardType = 'tutorial' | 'docs' | 'other';
 
 export interface Card {
   title: string;

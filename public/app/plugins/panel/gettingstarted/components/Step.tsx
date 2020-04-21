@@ -34,7 +34,6 @@ export const Step: FC<Props> = ({ step }) => {
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
   return {
     setup: css`
-      margin-bottom: 16px;
       display: flex;
     `,
     info: css`

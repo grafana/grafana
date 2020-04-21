@@ -10,6 +10,10 @@ export const cardStyle = (theme: GrafanaTheme, complete: boolean) => `
       border-bottom-right-radius: ${theme.border.radius.md};
 `;
 
+export const iconStyle = (theme: GrafanaTheme, complete: boolean) => css`
+  color: ${complete ? theme.palette.blue95 : theme.colors.textWeak};
+`;
+
 export const cardContent = css`
   padding: 24px 16px;
 `;

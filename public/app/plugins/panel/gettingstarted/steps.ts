@@ -11,11 +11,12 @@ export const getSteps = (): SetupStep[] => [
     cards: [
       {
         type: 'tutorial',
-        heading: 'Tutorial Data source and dashboards',
+        heading: 'Data source and dashboards',
         title: 'Grafana fundamentals',
         info:
           'Set up and understand Grafana if you have no prior experience. This tutorial guides you through the entire process and covers the “Data source” and “Dashboards” steps to the right.',
         href: 'datasources/new?gettingstarted',
+        icon: 'grafana',
         check: () => {
           return new Promise(resolve => {
             resolve(
@@ -60,9 +61,12 @@ export const getSteps = (): SetupStep[] => [
     info: ' Manage your users and teams and add plugins. These steps are optional',
     cards: [
       {
-        title: 'Invite your team',
-        icon: 'gicon gicon-team',
+        type: 'tutorial',
+        heading: 'Users',
+        title: 'Create users and teams',
+        info: 'Learn to organize your users in teams and manage resource access and roles.',
         href: 'org/users?gettingstarted',
+        icon: 'users-alt',
         check: () => {
           return backendSrv.get('/api/org/users/lookup').then((res: any) => {
             /* return res.length > 1; */
@@ -71,9 +75,11 @@ export const getSteps = (): SetupStep[] => [
         },
       },
       {
-        title: 'Install apps & plugins',
-        icon: 'gicon gicon-plugins',
+        type: 'docs',
+        heading: 'plugins',
+        title: 'Find and install plugins',
         href: 'https://grafana.com/plugins?utm_source=grafana_getting_started',
+        icon: 'plug',
         check: () => {
           return backendSrv.get('/api/plugins', { embedded: 0, core: 0 }).then((plugins: any[]) => {
             return plugins.length > 0;
