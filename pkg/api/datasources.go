@@ -128,7 +128,7 @@ func AddDataSource(c *models.ReqContext, cmd models.AddDataSourceCommand) Respon
 	cmd.OrgId = c.OrgId
 
 	if err := bus.Dispatch(&cmd); err != nil {
-		if err == models.ErrDataSourceNameExists {
+		if err == models.ErrDataSourceNameExists || err == models.ErrDataSourceUidExists {
 			return Error(409, err.Error(), err)
 		}
 

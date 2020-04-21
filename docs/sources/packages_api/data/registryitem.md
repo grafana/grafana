@@ -43,7 +43,7 @@ aliasIds?: string[];
 <b>Signature</b>
 
 ```typescript
-description: string;
+description?: string;
 ```
 
 ### excludeFromPicker property

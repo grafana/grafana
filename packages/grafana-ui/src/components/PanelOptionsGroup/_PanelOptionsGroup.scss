@@ -1,67 +1,34 @@
 .panel-options-group {
-  margin-bottom: 10px;
-  border: $panel-options-group-border;
-  border-radius: $border-radius;
-  background: $page-bg;
+  border-bottom: $panel-border;
 }
 
 .panel-options-group__header {
-  padding: 4px 8px;
-  background: $panel-options-group-header-bg;
+  padding: 8px 16px 8px 8px;
   position: relative;
-  border-radius: $border-radius $border-radius 0 0;
   display: flex;
   align-items: center;
-
-  .btn {
-    position: absolute;
-    right: 0;
-    top: 0;
-  }
-}
-
-.panel-options-group__add-btn {
-  background: none;
-  border: none;
-  display: flex;
-  align-items: center;
-  padding: 0;
+  cursor: pointer;
+  font-weight: 500;
+  color: $text-color-semi-weak;
 
   &:hover {
-    .panel-options-group__add-circle {
-      background-color: $btn-primary-bg;
-      color: $white;
+    color: $text-color;
+
+    .panel-options-group__icon {
+      color: $text-color;
     }
   }
 }
 
-.panel-options-group__add-circle {
-  @include gradientBar($btn-success-bg, $btn-success-bg-hl, #fff);
-
-  border-radius: 50px;
-  width: 20px;
-  height: 20px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-right: 6px;
-
-  i {
-    position: relative;
-    top: 1px;
-  }
+.panel-options-group__icon {
+  color: $text-color-weak;
+  margin-right: 8px;
 }
 
 .panel-options-group__title {
-  font-size: 16px;
   position: relative;
-  top: 1px;
 }
 
 .panel-options-group__body {
-  padding: 20px;
-
-  &--queries {
-    min-height: 200px;
-  }
+  padding: 8px 16px 16px 32px;
 }

@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 ##
 # gget
 # A script to get and install grafana versions

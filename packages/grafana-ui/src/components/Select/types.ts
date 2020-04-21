@@ -1,6 +1,5 @@
 import { SelectableValue } from '@grafana/data';
 import React from 'react';
-import { FormInputSize } from '../Forms/types';
 
 export type SelectValue<T> = T | SelectableValue<T> | T[] | Array<SelectableValue<T>>;
 
@@ -45,9 +44,9 @@ export interface SelectCommonProps<T> {
   prefix?: JSX.Element | string | null;
   /** Use a custom element to control Select. A proper ref to the renderControl is needed if 'portal' isn't set to null*/
   renderControl?: ControlComponent<T>;
-  size?: FormInputSize;
   tabSelectsValue?: boolean;
   value?: SelectValue<T>;
+  /** Sets the width to a multiple of 8px. Should only be used with inline forms. Setting width of the container is preferred in other cases.*/
   width?: number;
 }
 

@@ -1,5 +1,5 @@
 import React, { PureComponent } from 'react';
-import { FormLabel, LegacyForms, Button } from '@grafana/ui';
+import { InlineFormLabel, LegacyForms, Button } from '@grafana/ui';
 const { Select, Input } = LegacyForms;
 import {
   DataSourcePluginOptionsEditorProps,
@@ -125,7 +125,7 @@ export class ConfigEditor extends PureComponent<Props, State> {
         <div className="gf-form-group">
           <div className="gf-form-inline">
             <div className="gf-form">
-              <FormLabel className="width-14">Auth Provider</FormLabel>
+              <InlineFormLabel className="width-14">Auth Provider</InlineFormLabel>
               <Select
                 className="width-30"
                 value={authProviderOptions.find(authProvider => authProvider.value === options.jsonData.authType)}
@@ -143,12 +143,12 @@ export class ConfigEditor extends PureComponent<Props, State> {
           {options.jsonData.authType === 'credentials' && (
             <div className="gf-form-inline">
               <div className="gf-form">
-                <FormLabel
+                <InlineFormLabel
                   className="width-14"
                   tooltip="Credentials profile name, as specified in ~/.aws/credentials, leave blank for default."
                 >
                   Credentials Profile Name
-                </FormLabel>
+                </InlineFormLabel>
                 <div className="width-30">
                   <Input
                     className="width-30"
@@ -165,7 +165,7 @@ export class ConfigEditor extends PureComponent<Props, State> {
               {options.secureJsonFields.accessKey ? (
                 <div className="gf-form-inline">
                   <div className="gf-form">
-                    <FormLabel className="width-14">Access Key ID</FormLabel>
+                    <InlineFormLabel className="width-14">Access Key ID</InlineFormLabel>
                     <Input className="width-25" placeholder="Configured" disabled={true} />
                   </div>
                   <div className="gf-form">
@@ -183,7 +183,7 @@ export class ConfigEditor extends PureComponent<Props, State> {
               ) : (
                 <div className="gf-form-inline">
                   <div className="gf-form">
-                    <FormLabel className="width-14">Access Key ID</FormLabel>
+                    <InlineFormLabel className="width-14">Access Key ID</InlineFormLabel>
                     <div className="width-30">
                       <Input
                         className="width-30"
@@ -197,7 +197,7 @@ export class ConfigEditor extends PureComponent<Props, State> {
               {options.secureJsonFields.secretKey ? (
                 <div className="gf-form-inline">
                   <div className="gf-form">
-                    <FormLabel className="width-14">Secret Access Key</FormLabel>
+                    <InlineFormLabel className="width-14">Secret Access Key</InlineFormLabel>
                     <Input className="width-25" placeholder="Configured" disabled={true} />
                   </div>
                   <div className="gf-form">
@@ -215,7 +215,7 @@ export class ConfigEditor extends PureComponent<Props, State> {
               ) : (
                 <div className="gf-form-inline">
                   <div className="gf-form">
-                    <FormLabel className="width-14">Secret Access Key</FormLabel>
+                    <InlineFormLabel className="width-14">Secret Access Key</InlineFormLabel>
                     <div className="width-30">
                       <Input
                         className="width-30"
@@ -231,9 +231,9 @@ export class ConfigEditor extends PureComponent<Props, State> {
           {options.jsonData.authType === 'arn' && (
             <div className="gf-form-inline">
               <div className="gf-form">
-                <FormLabel className="width-14" tooltip="ARN of Assume Role">
+                <InlineFormLabel className="width-14" tooltip="ARN of Assume Role">
                   Assume Role ARN
-                </FormLabel>
+                </InlineFormLabel>
                 <div className="width-30">
                   <Input
                     className="width-30"
@@ -247,12 +247,12 @@ export class ConfigEditor extends PureComponent<Props, State> {
           )}
           <div className="gf-form-inline">
             <div className="gf-form">
-              <FormLabel
+              <InlineFormLabel
                 className="width-14"
                 tooltip="Specify the region, such as for US West (Oregon) use ` us-west-2 ` as the region."
               >
                 Default Region
-              </FormLabel>
+              </InlineFormLabel>
               <Select
                 className="width-30"
                 value={regions.find(region => region.value === options.jsonData.defaultRegion)}
@@ -264,9 +264,9 @@ export class ConfigEditor extends PureComponent<Props, State> {
           </div>
           <div className="gf-form-inline">
             <div className="gf-form">
-              <FormLabel className="width-14" tooltip="Namespaces of Custom Metrics.">
+              <InlineFormLabel className="width-14" tooltip="Namespaces of Custom Metrics.">
                 Custom Metrics
-              </FormLabel>
+              </InlineFormLabel>
               <Input
                 className="width-30"
                 placeholder="Namespace1,Namespace2"

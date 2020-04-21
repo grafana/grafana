@@ -15,18 +15,23 @@ export const ReduceTransformerEditor: React.FC<TransformerUIProps<ReduceTransfor
   onChange,
 }) => {
   return (
-    <StatsPicker
-      width={25}
-      placeholder="Choose Stat"
-      allowMultiple
-      stats={options.reducers || []}
-      onChange={stats => {
-        onChange({
-          ...options,
-          reducers: stats as ReducerID[],
-        });
-      }}
-    />
+    <div className="gf-form-inline">
+      <div className="gf-form gf-form--grow">
+        <div className="gf-form-label width-8">Calculations</div>
+        <StatsPicker
+          className="flex-grow-1"
+          placeholder="Choose Stat"
+          allowMultiple
+          stats={options.reducers || []}
+          onChange={stats => {
+            onChange({
+              ...options,
+              reducers: stats as ReducerID[],
+            });
+          }}
+        />
+      </div>
+    </div>
   );
 };
 
@@ -34,6 +39,6 @@ export const reduceTransformRegistryItem: TransformerRegistyItem<ReduceTransform
   id: DataTransformerID.reduce,
   editor: ReduceTransformerEditor,
   transformation: standardTransformers.reduceTransformer,
-  name: 'Reduce',
-  description: 'Return a DataFrame with the reduction results',
+  name: standardTransformers.reduceTransformer.name,
+  description: standardTransformers.reduceTransformer.description,
 };

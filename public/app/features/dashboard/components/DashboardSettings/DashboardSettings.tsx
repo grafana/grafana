@@ -48,7 +48,7 @@ export class DashboardSettings extends PureComponent<Props> {
 
     return (
       <div className="dashboard-settings">
-        <div className="navbar navbar--shadow">
+        <div className="navbar navbar--edit">
           <div className="navbar-edit">
             <BackButton surface="body" onClick={this.onClose} />
           </div>

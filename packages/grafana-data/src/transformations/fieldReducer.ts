@@ -227,7 +227,7 @@ export const fieldReducers = new Registry<FieldReducerInfo>(() => [
   },
 ]);
 
-function doStandardCalcs(field: Field, ignoreNulls: boolean, nullAsZero: boolean): FieldCalcs {
+export function doStandardCalcs(field: Field, ignoreNulls: boolean, nullAsZero: boolean): FieldCalcs {
   const calcs = {
     sum: 0,
     max: -Number.MAX_VALUE,

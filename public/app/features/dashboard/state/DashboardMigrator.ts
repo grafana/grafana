@@ -2,12 +2,11 @@
 import _ from 'lodash';
 // Utils
 import getFactors from 'app/core/utils/factors';
-import { appendQueryToUrl } from 'app/core/utils/url';
 import kbn from 'app/core/utils/kbn';
 // Types
 import { PanelModel } from './PanelModel';
 import { DashboardModel } from './DashboardModel';
-import { DataLink } from '@grafana/data';
+import { DataLink, urlUtil, DataLinkBuiltInVars } from '@grafana/data';
 // Constants
 import {
   DEFAULT_PANEL_SPAN,
@@ -17,7 +16,6 @@ import {
   GRID_COLUMN_COUNT,
   MIN_PANEL_HEIGHT,
 } from 'app/core/constants';
-import { DataLinkBuiltInVars } from '@grafana/ui';
 import { isMulti } from 'app/features/variables/guard';
 import { alignCurrentWithMulti } from 'app/features/variables/shared/multiOptions';
 
@@ -737,15 +735,15 @@ function upgradePanelLink(link: any): DataLink {
   }
 
   if (link.keepTime) {
-    url = appendQueryToUrl(url, `$${DataLinkBuiltInVars.keepTime}`);
+    url = urlUtil.appendQueryToUrl(url, `$${DataLinkBuiltInVars.keepTime}`);
   }
 
   if (link.includeVars) {
-    url = appendQueryToUrl(url, `$${DataLinkBuiltInVars.includeVars}`);
+    url = urlUtil.appendQueryToUrl(url, `$${DataLinkBuiltInVars.includeVars}`);
   }
 
   if (link.params) {
-    url = appendQueryToUrl(url, link.params);
+    url = urlUtil.appendQueryToUrl(url, link.params);
   }
 
   return {
