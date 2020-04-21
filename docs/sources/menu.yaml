@@ -118,8 +118,10 @@
     children:
     - link: /features/dashboard/dashboards/
       name: Overview
-    - link: /dashboard/templating/
+    - link: /features/dashboard/templating/
       name: Templates and variables
+    - link: /features/dashboard/advanced-variable-format-options/
+      name: Advanced variable format options
     - link: /reference/annotations/
       name: Annotations
     - link: /reference/dashboard_folders/
