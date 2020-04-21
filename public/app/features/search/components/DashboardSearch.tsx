@@ -58,9 +58,9 @@ export const DashboardSearch: FC<Props> = ({ onCloseSearch, folder }) => {
             <RadioButtonGroup options={layoutOptions} onChange={onLayoutChange} value={layout} />
             <SortPicker onChange={onSortChange} value={query.sort} />
           </HorizontalGroup>
-          <HorizontalGroup>
+          <div className={styles.tagContainer}>
             <TagFilter tags={query.tag} tagOptions={searchSrv.getDashboardTags} onChange={onTagFilterChange} />
-          </HorizontalGroup>
+          </div>
         </div>
         <CustomScrollbar>
           <SearchResults
@@ -111,6 +111,10 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       flex-direction: column;
       padding: ${theme.spacing.xl};
       height: 100%;
+    `,
+    tagContainer: css`
+      min-width: 200px;
+      margin-left: ${theme.spacing.md};
     `,
   };
 });

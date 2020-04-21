@@ -8,7 +8,7 @@ const searchSrv = new SearchSrv();
 
 export interface Props {
   onChange: (sortValue: SelectableValue) => void;
-  value?: SelectableValue[];
+  value?: SelectableValue;
   placeholder?: string;
 }
 

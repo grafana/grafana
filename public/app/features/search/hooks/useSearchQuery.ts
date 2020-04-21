@@ -46,7 +46,7 @@ export const useSearchQuery = (queryParams: Partial<DashboardQuery>) => {
   };
 
   const onSortChange = (sort: SelectableValue) => {
-    dispatch({ type: TOGGLE_SORT, payload: sort?.value });
+    dispatch({ type: TOGGLE_SORT, payload: sort });
   };
 
   const hasFilters = query.query.length > 0 || query.tag.length > 0 || query.starred;

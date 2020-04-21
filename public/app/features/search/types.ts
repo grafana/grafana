@@ -1,5 +1,6 @@
 import { Dispatch } from 'react';
 import { Action } from 'redux';
+import { SelectableValue } from '@grafana/data';
 import { FolderInfo } from '../../types';
 
 export enum DashboardSearchItemType {
@@ -66,7 +67,7 @@ export interface DashboardQuery {
   skipRecent: boolean;
   skipStarred: boolean;
   folderIds: number[];
-  sort: string | null;
+  sort: SelectableValue | null;
 }
 
 export type SearchReducer<S> = [S, Dispatch<SearchAction>];

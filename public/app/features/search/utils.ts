@@ -166,8 +166,9 @@ export const getCheckedUids = (sections: DashboardSection[]): UidsToDelete => {
  * @param queryParsing
  */
 export const getParsedQuery = (query: DashboardQuery, queryParsing = false) => {
+  const parsedQuery = { ...query, sort: query.sort?.value };
   if (!queryParsing) {
-    return query;
+    return parsedQuery;
   }
 
   let folderIds: number[] = [];
@@ -178,7 +179,7 @@ export const getParsedQuery = (query: DashboardQuery, queryParsing = false) => {
       folderIds = [folderId];
     }
   }
-  return { ...query, query: parseQuery(query.query).text as string, folderIds };
+  return { ...parsedQuery, query: parseQuery(query.query).text as string, folderIds };
 };
 
 export const hasFilters = (query: DashboardQuery) => {
