@@ -40,21 +40,8 @@ export const dateTimeFormatTimeAgo: DateTimeFormatter = (dateInUtc: DateTimeInpu
 export const dateTimeFormatWithAbbrevation: DateTimeFormatter = (dateInUtc: DateTimeInput, options?: DateTimeOptions) =>
   toTz(dateInUtc, getTimeZone(options)).format(`${DEFAULT_DATE_TIME_FORMAT} z`);
 
-export const timeZoneAbbrevation: DateTimeFormatter = (dateInUtc: DateTimeInput, options?: DateTimeOptions) => {
-  const timeZone = getTimeZone(options);
-  const zone = moment.tz.zone(timeZone);
-
-  if (zone && zone.name) {
-    return toTz(dateInUtc, zone.name).format('z');
-  }
-
-  switch (timeZone) {
-    case 'utc':
-      return 'UTC';
-    default:
-      return '';
-  }
-};
+export const timeZoneAbbrevation: DateTimeFormatter = (dateInUtc: DateTimeInput, options?: DateTimeOptions) =>
+  toTz(dateInUtc, getTimeZone(options)).format('z');
 
 const getFormat = <T extends DateTimeOptionsWithFormat>(options?: T): string => {
   if (options?.defaultWithMS) {
