@@ -3,9 +3,42 @@ package plugins
 import (
 	"strings"
 	"testing"
+	"time"
+
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 
 	"github.com/stretchr/testify/assert"
 )
+
+func TestDatabaseAccessForManifestKeys(t *testing.T) {
+	testDB := sqlstore.InitTestDB(t)
+	mv := newManifestVerifier(testDB)
+
+	nowEpoch := time.Now().Unix()
+	testKeys := []ManifestKeys{
+		{KeyID: "keyid1", PublicKey: "publicKey1", UpdatedAt: nowEpoch, Since: nowEpoch},
+		{KeyID: "keyid2", PublicKey: "publicKey2", UpdatedAt: nowEpoch, Since: nowEpoch},
+	}
+
+	t.Run("can write keys to database", func(t *testing.T) {
+		session := mv.sqlstore.NewSession()
+		defer session.Close()
+		affected, err := session.Insert(testKeys)
+		assert.Nil(t, err)
+		assert.Equal(t, affected, int64(len(testKeys)))
+	})
+
+	t.Run("can query keys from database", func(t *testing.T) {
+		keys, err := mv.getPublicKey("keyid1")
+		assert.Nil(t, err)
+		assert.Equal(t, keys, testKeys[0].PublicKey)
+	})
+
+	t.Run("should return error if key doesn't exist", func(t *testing.T) {
+		_, err := mv.getPublicKey("missing keyId")
+		assert.NotNil(t, err)
+	})
+}
 
 func TestManifestParsing(t *testing.T) {
 	txt := `-----BEGIN PGP SIGNED MESSAGE-----
@@ -39,7 +72,8 @@ NR7DnB0CCQHO+4FlSPtXFTzNepoc+CytQyDAeOLMLmf2Tqhk2YShk+G/YlVX
 =hBea
 -----END PGP SIGNATURE-----`
 
-	mv := newManifestVerifier(nil)
+	testDB := sqlstore.InitTestDB(t)
+	mv := newManifestVerifier(testDB)
 
 	t.Run("valid manifest", func(t *testing.T) {
 		manifest, err := mv.readPluginManifest([]byte(txt))
