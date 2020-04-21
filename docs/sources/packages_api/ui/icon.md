@@ -15,7 +15,7 @@ draft = true
 <b>Signature</b>
 
 ```typescript
-Icon: React.FC<IconProps>
+Icon: React.ForwardRefExoticComponent<IconProps & React.RefAttributes<HTMLDivElement>>
 ```
 <b>Import</b>
 

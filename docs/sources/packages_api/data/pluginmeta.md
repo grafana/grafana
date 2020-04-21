@@ -28,6 +28,7 @@ import { PluginMeta } from '@grafana/data';
 |  [defaultNavUrl](#defaultnavurl-property) | <code>string</code> |  |
 |  [dependencies](#dependencies-property) | <code>PluginDependencies</code> |  |
 |  [enabled](#enabled-property) | <code>boolean</code> |  |
+|  [enterprise](#enterprise-property) | <code>boolean</code> |  |
 |  [hasUpdate](#hasupdate-property) | <code>boolean</code> |  |
 |  [id](#id-property) | <code>string</code> |  |
 |  [includes](#includes-property) | <code>PluginInclude[]</code> |  |
@@ -71,6 +72,14 @@ dependencies?: PluginDependencies;
 
 ```typescript
 enabled?: boolean;
+```
+
+### enterprise property
+
+<b>Signature</b>
+
+```typescript
+enterprise?: boolean;
 ```
 
 ### hasUpdate property

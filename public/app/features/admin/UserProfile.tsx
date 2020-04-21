@@ -267,7 +267,6 @@ export class UserProfileRow extends PureComponent<UserProfileRowProps, UserProfi
         <td className="width-25" colSpan={2}>
           {this.state.editing ? (
             <Input
-              size="md"
               type={inputType}
               defaultValue={value}
               onBlur={this.onInputBlur}

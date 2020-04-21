@@ -3,7 +3,7 @@ import React, { ChangeEvent, FocusEvent, PureComponent } from 'react';
 import { DataSourceVariableModel, VariableWithMultiSupport } from '../../templating/types';
 import { OnPropChangeArguments, VariableEditorProps } from '../editor/types';
 import { SelectionOptionsEditor } from '../editor/SelectionOptionsEditor';
-import { FormLabel } from '@grafana/ui';
+import { InlineFormLabel } from '@grafana/ui';
 import { VariableEditorState } from '../editor/reducer';
 import { DataSourceVariableEditorState } from './reducer';
 import { initDataSourceVariableEditor } from './actions';
@@ -87,7 +87,7 @@ export class DataSourceVariableEditorUnConnected extends PureComponent<Props> {
           </div>
 
           <div className="gf-form">
-            <FormLabel
+            <InlineFormLabel
               width={12}
               tooltip={
                 <div>
@@ -100,7 +100,7 @@ export class DataSourceVariableEditorUnConnected extends PureComponent<Props> {
               }
             >
               Instance name filter
-            </FormLabel>
+            </InlineFormLabel>
             <input
               type="text"
               className="gf-form-input max-width-18"
