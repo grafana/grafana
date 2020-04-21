@@ -32,7 +32,7 @@ import { EchoMeta } from '@grafana/runtime';
 |  [ts](#ts-property) | <code>number</code> | A millisecond epoch |
 |  [url](#url-property) | <code>string</code> |  |
 |  [userAgent](#useragent-property) | <code>string</code> |  |
-|  [userId](#userid-property) | <code>number</code> | The current users uniqe identifier. |
+|  [userId](#userid-property) | <code>number</code> | The current users unique identifier. |
 |  [userLogin](#userlogin-property) | <code>string</code> | The current users username used to login into Grafana e.g. email. |
 |  [userSignedIn](#usersignedin-property) | <code>boolean</code> | True when user is logged in into Grafana. |
 |  [windowSize](#windowsize-property) | <code>SizeMeta</code> |  |
@@ -93,7 +93,7 @@ userAgent: string;
 
 ### userId property
 
-The current users uniqe identifier.
+The current users unique identifier.
 
 <b>Signature</b>
 

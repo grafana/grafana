@@ -10,7 +10,7 @@ draft = true
 
 ## BuildInfo interface
 
-Describes the build information that will be available via the Grafana cofiguration.
+Describes the build information that will be available via the Grafana configuration.
 
 <b>Signature</b>
 

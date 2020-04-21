@@ -153,7 +153,7 @@ A library containing most of the core functionality and data types used in Grafa
 |  [AppPluginMeta](./apppluginmeta/) |  |
 |  [AppRootProps](./approotprops/) |  |
 |  [ArrowDataFrame](./arrowdataframe/) |  |
-|  [BuildInfo](./buildinfo/) | Describes the build information that will be available via the Grafana cofiguration. |
+|  [BuildInfo](./buildinfo/) | Describes the build information that will be available via the Grafana configuration. |
 |  [CalculateFieldTransformerOptions](./calculatefieldtransformeroptions/) |  |
 |  [ColorFieldConfigSettings](./colorfieldconfigsettings/) |  |
 |  [Column](./column/) |  |
@@ -168,7 +168,7 @@ A library containing most of the core functionality and data types used in Grafa
 |  [DataLink](./datalink/) | Link configuration. The values may contain variables that need to be processed before running |
 |  [DataLinkClickEvent](./datalinkclickevent/) | Callback info for DataLink click events |
 |  [DataLinksFieldConfigSettings](./datalinksfieldconfigsettings/) |  |
-|  [DataQuery](./dataquery/) | These are the common properties avaliable to all queries in all datasources Specific implementations will extend this interface adding the required properties for the given context |
+|  [DataQuery](./dataquery/) | These are the common properties available to all queries in all datasources Specific implementations will extend this interface adding the required properties for the given context |
 |  [DataQueryError](./dataqueryerror/) |  |
 |  [DataQueryRequest](./dataqueryrequest/) |  |
 |  [DataQueryResponse](./dataqueryresponse/) |  |

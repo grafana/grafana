@@ -12,7 +12,7 @@ draft = true
 
 Used to communicate via http(s) to a remote backend such as the Grafana backend, a datasource etc. The BackendSrv is using the [Fetch API](https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API) under the hood to handle all the communication.
 
-The request function can be used to perform a remote call by specifing a [BackendSrvRequest](./runtime/backendsrvrequest.md)<!-- -->. To make the BackendSrv a bit easier to use we have added a couple of shorthand functions that will use default values executing the request.
+The request function can be used to perform a remote call by specifying a [BackendSrvRequest](./runtime/backendsrvrequest.md)<!-- -->. To make the BackendSrv a bit easier to use we have added a couple of shorthand functions that will use default values executing the request.
 
 <b>Signature</b>
 

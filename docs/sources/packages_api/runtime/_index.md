@@ -41,9 +41,9 @@ A library containing services, configurations etc. used to interact with the Gra
 
 |  Interface | Description |
 |  --- | --- |
-|  [AngularComponent](./angularcomponent/) | Used to enable rendering of Angular components within a React component without loosing proper typings. |
+|  [AngularComponent](./angularcomponent/) | Used to enable rendering of Angular components within a React component without losing proper typings. |
 |  [AngularLoader](./angularloader/) | Used to load an Angular component from the context of a React component. Please see the [AngularComponent](./runtime/angularcomponent.md) for a proper example. |
-|  [BackendSrv](./backendsrv/) | Used to communicate via http(s) to a remote backend such as the Grafana backend, a datasource etc. The BackendSrv is using the [Fetch API](https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API) under the hood to handle all the communication.<!-- -->The request function can be used to perform a remote call by specifing a [BackendSrvRequest](./runtime/backendsrvrequest.md)<!-- -->. To make the BackendSrv a bit easier to use we have added a couple of shorthand functions that will use default values executing the request. |
+|  [BackendSrv](./backendsrv/) | Used to communicate via http(s) to a remote backend such as the Grafana backend, a datasource etc. The BackendSrv is using the [Fetch API](https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API) under the hood to handle all the communication.<!-- -->The request function can be used to perform a remote call by specifying a [BackendSrvRequest](./runtime/backendsrvrequest.md)<!-- -->. To make the BackendSrv a bit easier to use we have added a couple of shorthand functions that will use default values executing the request. |
 |  [DashboardInfo](./dashboardinfo/) | Describes the basic dashboard information that can be passed as the meta analytics payload. |
 |  [DashboardViewEventPayload](./dashboardvieweventpayload/) | Describes the payload of a dashboard view event. |
 |  [DataRequestEventPayload](./datarequesteventpayload/) | Describes the payload of a data request event. |
@@ -59,7 +59,7 @@ A library containing services, configurations etc. used to interact with the Gra
 |  [MetaAnalyticsEvent](./metaanalyticsevent/) | Describes meta analytics event with predefined [EchoEventType.MetaAnalytics](./runtime/echoeventtype/metaanalytics.md) type. |
 |  [PluginCssOptions](./plugincssoptions/) | Option to specify a plugin css that should be applied for the dark and the light theme. |
 |  [SizeMeta](./sizemeta/) | Describes a size with width/height |
-|  [TemplateSrv](./templatesrv/) | Via the TemplateSrv consumers get access to all the available template variables that can be used within the current active dashboard.<!-- -->For a mor in-depth description visit: https://grafana.com/docs/grafana/latest/reference/templating |
+|  [TemplateSrv](./templatesrv/) | Via the TemplateSrv consumers get access to all the available template variables that can be used within the current active dashboard.<!-- -->For a more in-depth description visit: https://grafana.com/docs/grafana/latest/reference/templating |
 
 ## Variables
 

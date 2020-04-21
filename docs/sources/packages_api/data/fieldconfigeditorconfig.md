@@ -30,7 +30,7 @@ import { FieldConfigEditorConfig } from '@grafana/data';
 |  [name](#name-property) | <code>string</code> | Name of the field config property. Will be displayed in the UI as form element label. |
 |  [path](#path-property) | <code>(keyof TOptions &amp; string) &#124; string</code> | Path of the field config property to control. |
 |  [settings](#settings-property) | <code>TSettings</code> | Custom settings of the editor. |
-|  [shouldApply](#shouldapply-property) | <code>(field: Field) =&gt; boolean</code> | Funciton that allows specifying whether or not this field config shuld apply to a given field. |
+|  [shouldApply](#shouldapply-property) | <code>(field: Field) =&gt; boolean</code> | Function that allows specifying whether or not this field config should apply to a given field. |
 |  [showIf](#showif-property) | <code>(currentConfig: TOptions) =&gt; boolean</code> | Function that enables configuration of when field config property editor should be shown based on current panel field config. |
 
 ### category property
@@ -107,7 +107,7 @@ settings?: TSettings;
 
 ### shouldApply property
 
-Funciton that allows specifying whether or not this field config shuld apply to a given field.
+Function that allows specifying whether or not this field config should apply to a given field.
 
 <b>Signature</b>
 
