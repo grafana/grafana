@@ -13,19 +13,11 @@ func TestGetUrl(t *testing.T) {
 		Cfg: setting.NewCfg(),
 	}
 
-	t.Run("When renderer url configured", func(t *testing.T) {
+	t.Run("When renderer and callback url configured should return callback url plus path", func(t *testing.T) {
 		rs.Cfg.RendererUrl = "http://localhost:8081/render"
-
-		t.Run("Should return path", func(t *testing.T) {
-			url := rs.getURL(path)
-			require.Equal(t, path+"&render=1", url)
-		})
-
-		t.Run("And callback url configured should return callback url plus path", func(t *testing.T) {
-			rs.Cfg.RendererCallbackUrl = "http://grafana:3000/"
-			url := rs.getURL(path)
-			require.Equal(t, rs.Cfg.RendererCallbackUrl+path+"&render=1", url)
-		})
+		rs.Cfg.RendererCallbackUrl = "http://public-grafana.com/"
+		url := rs.getURL(path)
+		require.Equal(t, rs.Cfg.RendererCallbackUrl+path+"&render=1", url)
 	})
 
 	t.Run("When renderer url not configured", func(t *testing.T) {
