@@ -12,6 +12,8 @@ draft = true
 
 ### ThresholdsMode enum
 
+Display mode
+
 <b>Signature</b>
 
 ```typescript
@@ -28,5 +30,5 @@ import { ThresholdsMode } from '@grafana/data';
 |  Member | Value | Description |
 |  --- | --- | --- |
 |  Absolute | <code>&quot;absolute&quot;</code> |  |
-|  Percentage | <code>&quot;percentage&quot;</code> |  |
+|  Percentage | <code>&quot;percentage&quot;</code> | between 0 and 1 (based on min/max) |
 

@@ -180,9 +180,7 @@ export class ApiKeysPage extends PureComponent<Props, any> {
     return (
       <SlideDown in={isAdding}>
         <div className="cta-form">
-          <button className="cta-form__close btn btn-transparent" onClick={this.onToggleAdding}>
-            <IconButton name="times" />
-          </button>
+          <IconButton name="times" className="cta-form__close btn btn-transparent" onClick={this.onToggleAdding} />
           <h5>Add API Key</h5>
           <form className="gf-form-group" onSubmit={this.onAddApiKey}>
             <div className="gf-form-inline">

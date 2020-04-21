@@ -11,6 +11,7 @@ interface SearchFieldProps extends Omit<React.InputHTMLAttributes<HTMLInputEleme
   onChange: (query: string) => void;
   onKeyDown?: (e: React.KeyboardEvent<HTMLInputElement>) => void;
   clearable?: boolean;
+  width?: number;
 }
 
 const getSearchFieldStyles = (theme: GrafanaTheme) => ({

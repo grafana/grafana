@@ -85,7 +85,6 @@ class DashboardImportUnConnected extends PureComponent<Props> {
             {({ register, errors }) => (
               <Field invalid={!!errors.gcomDashboard} error={errors.gcomDashboard && errors.gcomDashboard.message}>
                 <Input
-                  size="md"
                   name="gcomDashboard"
                   placeholder="Grafana.com dashboard url or id"
                   type="text"

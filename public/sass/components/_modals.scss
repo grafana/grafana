@@ -40,11 +40,13 @@
   background: $page-header-bg;
   box-shadow: $page-header-shadow;
   border-bottom: 1px solid $page-header-border-color;
-  @include clearfix();
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
 }
 
 .modal-header-title {
-  font-size: $font-size-h3;
+  font-size: $font-size-lg;
   float: left;
   padding-top: $space-sm;
   margin: 0 $space-md;

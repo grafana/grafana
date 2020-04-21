@@ -12,6 +12,8 @@ draft = true
 
 ### loadPluginCss() function
 
+Use this to load css for a Grafana plugin by specifying a [PluginCssOptions](./runtime/plugincssoptions.md) containing styling for the dark and the light theme.
+
 <b>Signature</b>
 
 ```typescript
@@ -26,7 +28,7 @@ import { loadPluginCss } from '@grafana/runtime';
 
 |  Parameter | Type | Description |
 |  --- | --- | --- |
-|  options | <code>PluginCssOptions</code> |  |
+|  options | <code>PluginCssOptions</code> | plugin styling for light and dark theme. |
 
 <b>Returns:</b>
 

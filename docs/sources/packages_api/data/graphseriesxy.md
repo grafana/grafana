@@ -42,7 +42,7 @@ import { GraphSeriesXY } from '@grafana/data';
 <b>Signature</b>
 
 ```typescript
-color: string;
+color?: string;
 ```
 
 ### data property
