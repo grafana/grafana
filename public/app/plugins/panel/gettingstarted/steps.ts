@@ -1,7 +1,8 @@
 import { getDatasourceSrv } from '../../../features/plugins/datasource_srv';
 import { backendSrv } from '../../../core/services/backend_srv';
+import { SetupStep } from './types';
 
-export const getSteps = () => [
+export const getSteps = (): SetupStep[] => [
   {
     heading: 'Welcome to Grafana',
     subheading: 'The steps below will guide you to quickly finish setting up your Grafana installation.',
@@ -9,9 +10,11 @@ export const getSteps = () => [
     info: 'The steps below will guide you to quickly finish setting up your Grafana installation.',
     cards: [
       {
-        title: 'Create a data source',
-        cta: 'Add data source',
-        icon: 'gicon gicon-datasources',
+        type: 'tutorial',
+        heading: 'Tutorial Data source and dashboards',
+        title: 'Grafana fundamentals',
+        info:
+          'Set up and understand Grafana if you have no prior experience. This tutorial guides you through the entire process and covers the “Data source” and “Dashboards” steps to the right.',
         href: 'datasources/new?gettingstarted',
         check: () => {
           return new Promise(resolve => {
@@ -26,14 +29,25 @@ export const getSteps = () => [
         },
       },
       {
-        title: 'Build a dashboard',
-        cta: 'New dashboard',
-        icon: 'gicon gicon-dashboard',
+        type: 'docs',
+        title: 'Add your first data source',
+        icon: 'database',
         href: 'dashboard/new?gettingstarted',
+        done: true,
         check: () => {
           return backendSrv.search({ limit: 1 }).then(result => {
             return result.length > 0;
           });
+        },
+      },
+      {
+        type: 'docs',
+        heading: 'dashboards',
+        title: 'Create your first dashboard',
+        icon: 'apps',
+        href: 'something',
+        check: () => {
+          return true;
         },
       },
     ],
@@ -47,7 +61,6 @@ export const getSteps = () => [
     cards: [
       {
         title: 'Invite your team',
-        cta: 'Add Users',
         icon: 'gicon gicon-team',
         href: 'org/users?gettingstarted',
         check: () => {
@@ -59,7 +72,6 @@ export const getSteps = () => [
       },
       {
         title: 'Install apps & plugins',
-        cta: 'Explore plugin repository',
         icon: 'gicon gicon-plugins',
         href: 'https://grafana.com/plugins?utm_source=grafana_getting_started',
         check: () => {

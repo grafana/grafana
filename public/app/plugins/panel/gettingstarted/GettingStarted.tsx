@@ -3,23 +3,13 @@ import React, { PureComponent } from 'react';
 
 import { PanelProps } from '@grafana/data';
 import { Button, stylesFactory } from '@grafana/ui';
+import { config } from '@grafana/runtime';
 import { css } from 'emotion';
 import { contextSrv } from 'app/core/core';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { Step } from './components/Step';
 import { getSteps } from './steps';
-
-interface Stepz {
-  title: string;
-  cta?: string;
-  icon: string;
-  href: string;
-  target?: string;
-  note?: string;
-  check: () => Promise<boolean>;
-  done?: boolean;
-}
 
 interface State {
   checksDone: boolean;
@@ -93,7 +83,6 @@ export class GettingStarted extends PureComponent<PanelProps, State> {
               </div>
             </div>
           </div>
-
           <Step step={this.state.steps[0]} />
         </div>
         <div className={styles.dismiss}>
@@ -107,20 +96,25 @@ export class GettingStarted extends PureComponent<PanelProps, State> {
 }
 
 const getStyles = stylesFactory(() => {
+  const { theme } = config;
   return {
     container: css`
       display: flex;
       flex-direction: column;
       height: 100%;
-      background: url('public/img/getting_started_background.png') no-repeat;
+      background: url(${theme.isDark
+          ? 'public/img/getting_started_background_dark.png'
+          : 'public/img/getting_started_background_light.png'})
+        no-repeat;
       background-size: cover;
     `,
     content: css`
-      margin-left: 410px;
-      margin-top: 50px;
+      margin-left: 350px;
+      margin-top: 32px;
+      margin-bottom: 24px;
     `,
     header: css`
-      margin-bottom: 85px;
+      margin-bottom: 24px;
       display: flex;
       flex-direction: row;
     `,
@@ -130,7 +124,7 @@ const getStyles = stylesFactory(() => {
     help: css`
       width: 330px;
       padding-left: 16px;
-      border-left: 3px solid pink;
+      border-left: 3px solid ${theme.palette.blue95};
     `,
     helpOptions: css`
       display: flex;
