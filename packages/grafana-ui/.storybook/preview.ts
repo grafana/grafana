@@ -38,7 +38,7 @@ addParameters({
     light: GrafanaLight,
   },
   options: {
-    theme: GrafanaLight,
+    theme: GrafanaDark,
     showPanel: true,
     showRoots: true,
     panelPosition: 'bottom',

@@ -15,6 +15,7 @@ export enum TableCellDisplayMode {
   ColorBackground = 'color-background',
   GradientGauge = 'gradient-gauge',
   LcdGauge = 'lcd-gauge',
+  JSONView = 'json-view',
 }
 
 export type FieldTextAlignment = 'auto' | 'left' | 'right' | 'center';
@@ -24,7 +25,13 @@ export interface TableRow {
 }
 
 export type TableFilterActionCallback = (key: string, value: string) => void;
-export type ColumnResizeActionCallback = (field: Field, width: number) => void;
+export type TableColumnResizeActionCallback = (fieldIndex: number, width: number) => void;
+export type TableSortByActionCallback = (state: TableSortByFieldState[]) => void;
+
+export interface TableSortByFieldState {
+  fieldIndex: number;
+  desc?: boolean;
+}
 
 export interface TableCellProps extends CellProps<any> {
   tableStyles: TableStyles;

@@ -25,7 +25,7 @@ export interface PanelEditorUIState {
   mode: DisplayMode;
 }
 
-export interface PanelEditorStateNew {
+export interface PanelEditorState {
   /* These are functions as they are mutaded later on and redux toolkit will Object.freeze state so
    * we need to store these using functions instead */
   getSourcePanel: () => PanelModel;
@@ -38,7 +38,7 @@ export interface PanelEditorStateNew {
   ui: PanelEditorUIState;
 }
 
-export const initialState = (): PanelEditorStateNew => {
+export const initialState = (): PanelEditorState => {
   return {
     getPanel: () => new PanelModel({}),
     getSourcePanel: () => new PanelModel({}),
@@ -64,7 +64,7 @@ interface InitEditorPayload {
 }
 
 const pluginsSlice = createSlice({
-  name: 'panelEditorNew',
+  name: 'panelEditor',
   initialState: initialState(),
   reducers: {
     updateEditorInitState: (state, action: PayloadAction<InitEditorPayload>) => {
@@ -99,4 +99,4 @@ export const {
   setPanelEditorUIState,
 } = pluginsSlice.actions;
 
-export const panelEditorReducerNew = pluginsSlice.reducer;
+export const panelEditorReducer = pluginsSlice.reducer;

@@ -20,7 +20,7 @@ When enabled, Grafana exposes a number of metrics, including:
 
 * Active Grafana instances
 * Number of dashboards, users, and playlists
-* http status codes
+* HTTP status codes
 * Requests by routing group
 * Grafana active alerts
 * Grafana performance

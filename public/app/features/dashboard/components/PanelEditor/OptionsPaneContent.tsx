@@ -86,7 +86,7 @@ export const OptionsPaneContent: React.FC<Props> = ({
           <TabsBar className={styles.tabsBar}>
             <TabsBarContent
               width={width}
-              showFields={!plugin.meta.skipDataQuery}
+              plugin={plugin}
               isSearching={isSearching}
               styles={styles}
               activeTab={activeTab}
@@ -124,7 +124,7 @@ export const OptionsPaneContent: React.FC<Props> = ({
 
 export const TabsBarContent: React.FC<{
   width: number;
-  showFields: boolean;
+  plugin: PanelPlugin;
   isSearching: boolean;
   activeTab: string;
   styles: OptionsPaneStyles;
@@ -132,7 +132,7 @@ export const TabsBarContent: React.FC<{
   setSearchMode: (mode: boolean) => void;
   setActiveTab: (tab: string) => void;
   panel: PanelModel;
-}> = ({ width, showFields, isSearching, activeTab, onClose, setSearchMode, setActiveTab, styles, panel }) => {
+}> = ({ width, plugin, isSearching, activeTab, onClose, setSearchMode, setActiveTab, styles, panel }) => {
   const overridesCount =
     panel.getFieldConfig().overrides.length === 0 ? undefined : panel.getFieldConfig().overrides.length;
 
@@ -174,7 +174,9 @@ export const TabsBarContent: React.FC<{
   // Show the appropriate tabs
   let tabs = tabSelections;
   let active = tabs.find(v => v.value === activeTab);
-  if (!showFields) {
+
+  // If no field configs hide Fields & Override tab
+  if (plugin.fieldConfigRegistry.isEmpty()) {
     active = tabSelections[0];
     tabs = [active];
   }

@@ -34,7 +34,7 @@ export class TestDataQueryCtrl extends QueryCtrl {
   digest: (promise: Promise<any>) => Promise<any>;
 
   showLabels = false;
-  selectors: typeof e2e.pages.Dashboard.Panels.DataSource.TestData.QueryTab.selectors;
+  selectors: typeof e2e.components.DataSource.TestData.QueryTab.selectors;
 
   /** @ngInject */
   constructor($scope: IScope, $injector: any) {
@@ -45,7 +45,7 @@ export class TestDataQueryCtrl extends QueryCtrl {
     this.newPointTime = dateTime();
     this.selectedPoint = { text: 'Select point', value: null };
     this.showLabels = showLabelsFor.includes(this.target.scenarioId);
-    this.selectors = e2e.pages.Dashboard.Panels.DataSource.TestData.QueryTab.selectors;
+    this.selectors = e2e.components.DataSource.TestData.QueryTab.selectors;
   }
 
   getPoints() {
@@ -113,6 +113,12 @@ export class TestDataQueryCtrl extends QueryCtrl {
       this.target.csvWave = _.defaults(this.target.csvWave || {}, defaultCSVWave);
     } else {
       delete this.target.csvWave;
+    }
+
+    if (this.target.scenarioId === 'grafana_api') {
+      this.target.stringInput = 'datasources';
+    } else {
+      delete this.target.stringInput;
     }
 
     this.refresh();

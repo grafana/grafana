@@ -83,6 +83,7 @@ $dashboard-bg: ${theme.colors.dashboardBg};
 
 $text-color: ${theme.colors.text};
 $text-color-strong: ${theme.colors.textStrong};
+$text-color-semi-weak: ${theme.colors.textSemiWeak};
 $text-color-weak: ${theme.colors.textWeak};
 $text-color-faint: ${theme.colors.textFaint};
 $text-color-emphasis: ${theme.colors.textStrong};
