@@ -12,6 +12,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/components/securejsondata"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/stretchr/testify/require"
 
 	"golang.org/x/oauth2"
 	macaron "gopkg.in/macaron.v1"
@@ -543,6 +544,23 @@ func TestDSRouteRule(t *testing.T) {
 			})
 		})
 	})
+}
+
+func TestNewDataSourceProxy_InvalidURL(t *testing.T) {
+	ctx := models.ReqContext{
+		Context: &macaron.Context{
+			Req: macaron.Request{},
+		},
+		SignedInUser: &models.SignedInUser{OrgRole: models.ROLE_EDITOR},
+	}
+	ds := models.DataSource{
+		Type: "test",
+		Url:  "://host/root",
+	}
+	cfg := setting.Cfg{}
+	plugin := plugins.DataSourcePlugin{}
+	_, err := NewDataSourceProxy(&ds, &plugin, &ctx, "api/method", &cfg)
+	require.Error(t, err)
 }
 
 type CloseNotifierResponseRecorder struct {
