@@ -257,13 +257,13 @@ exports[`TimePicker renders buttons correctly 1`] = `
                   },
                 },
                 "zIndex": Object {
-                  "dropdown": "1000",
-                  "modal": "1050",
-                  "modalBackdrop": "1040",
-                  "navbarFixed": "1020",
-                  "sidemenu": "1025",
-                  "tooltip": "1030",
-                  "typeahead": "1060",
+                  "dropdown": "1030",
+                  "modal": "1060",
+                  "modalBackdrop": "1050",
+                  "navbarFixed": "1000",
+                  "sidemenu": "1020",
+                  "tooltip": "1040",
+                  "typeahead": "1030",
                 },
               }
             }
@@ -573,13 +573,13 @@ exports[`TimePicker renders content correctly after beeing open 1`] = `
                   },
                 },
                 "zIndex": Object {
-                  "dropdown": "1000",
-                  "modal": "1050",
-                  "modalBackdrop": "1040",
-                  "navbarFixed": "1020",
-                  "sidemenu": "1025",
-                  "tooltip": "1030",
-                  "typeahead": "1060",
+                  "dropdown": "1030",
+                  "modal": "1060",
+                  "modalBackdrop": "1050",
+                  "navbarFixed": "1000",
+                  "sidemenu": "1020",
+                  "tooltip": "1040",
+                  "typeahead": "1030",
                 },
               }
             }
