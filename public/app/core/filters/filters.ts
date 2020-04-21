@@ -29,6 +29,7 @@ coreModule.filter('stringify', () => {
   };
 });
 
+// TODO MA: need to see what kind of input date we have here.
 coreModule.filter('moment', () => {
   return (date: string, mode: string) => {
     switch (mode) {
