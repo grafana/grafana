@@ -85,8 +85,8 @@ Content-Type: application/json
 
 Returns all org users within the current organization, but with less detailed information.
 Accessible to users with org admin role, admin in any folder or admin of any team.
-Mainly used by Grafana UI for providing list of users when adding team members and
-when editing folder/dashboard permissions.
+Mainly used by Grafana UI for providing list of users when adding team members and 
+editing folder/dashboard permissions.
 
 **Example Request**:
 
