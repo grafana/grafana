@@ -51,7 +51,6 @@ import { QueryField } from '@grafana/ui';
 |  [componentDidUpdate(prevProps, prevState)](#componentdidupdate-method) |  |  |
 |  [componentWillUnmount()](#componentwillunmount-method) |  |  |
 |  [render()](#render-method) |  |  |
-|  [UNSAFE\_componentWillReceiveProps(nextProps)](#unsafe_componentwillreceiveprops-method) |  |  |
 
 ### constructor(props, context)
 
@@ -203,21 +202,4 @@ render(): JSX.Element;
 <b>Returns:</b>
 
 `JSX.Element`
-
-### UNSAFE\_componentWillReceiveProps method
-
-<b>Signature</b>
-
-```typescript
-UNSAFE_componentWillReceiveProps(nextProps: QueryFieldProps): void;
-```
-<b>Parameters</b>
-
-|  Parameter | Type | Description |
-|  --- | --- | --- |
-|  nextProps | <code>QueryFieldProps</code> |  |
-
-<b>Returns:</b>
-
-`void`
 

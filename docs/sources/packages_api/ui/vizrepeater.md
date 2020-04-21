@@ -39,6 +39,7 @@ import { VizRepeater } from '@grafana/ui';
 |  [componentDidUpdate(prevProps)](#componentdidupdate-method) |  |  |
 |  [getOrientation()](#getorientation-method) |  |  |
 |  [render()](#render-method) |  |  |
+|  [renderGrid()](#rendergrid-method) |  |  |
 
 ### constructor(props)
 
@@ -97,6 +98,17 @@ getOrientation(): VizOrientation;
 
 ```typescript
 render(): JSX.Element;
+```
+<b>Returns:</b>
+
+`JSX.Element`
+
+### renderGrid method
+
+<b>Signature</b>
+
+```typescript
+renderGrid(): JSX.Element;
 ```
 <b>Returns:</b>
 

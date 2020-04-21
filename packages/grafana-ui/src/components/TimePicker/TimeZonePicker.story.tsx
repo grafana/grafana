@@ -25,7 +25,6 @@ TimeZonePickerStories.add('default', () => {
               action('on selected')(newValue);
               updateValue({ value: newValue });
             }}
-            size="sm"
           />
         );
       }}
