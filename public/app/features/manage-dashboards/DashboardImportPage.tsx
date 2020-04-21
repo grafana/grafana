@@ -1,13 +1,14 @@
 import React, { FormEvent, PureComponent } from 'react';
-import { connect, MapDispatchToProps, MapStateToProps } from 'react-redux';
+import { MapDispatchToProps, MapStateToProps } from 'react-redux';
 import { css } from 'emotion';
 import { AppEvents, NavModel } from '@grafana/data';
 import { Button, stylesFactory, Input, TextArea, Field, Form, Legend } from '@grafana/ui';
 import Page from 'app/core/components/Page/Page';
+import { connectWithCleanUp } from 'app/core/components/connectWithCleanUp';
 import { ImportDashboardOverview } from './components/ImportDashboardOverview';
 import { DashboardFileUpload } from './components/DashboardFileUpload';
 import { validateDashboardJson, validateGcomDashboard } from './utils/validation';
-import { fetchGcomDashboard, importDashboardJson, resetDashboard } from './state/actions';
+import { fetchGcomDashboard, importDashboardJson } from './state/actions';
 import appEvents from 'app/core/app_events';
 import { getNavModel } from 'app/core/selectors/navModel';
 import { StoreState } from 'app/types';
@@ -22,16 +23,11 @@ interface ConnectedProps {
 interface DispatchProps {
   fetchGcomDashboard: typeof fetchGcomDashboard;
   importDashboardJson: typeof importDashboardJson;
-  resetDashboard: typeof resetDashboard;
 }
 
 type Props = OwnProps & ConnectedProps & DispatchProps;
 
 class DashboardImportUnConnected extends PureComponent<Props> {
-  componentWillUnmount() {
-    this.props.resetDashboard();
-  }
-
   onFileUpload = (event: FormEvent<HTMLInputElement>) => {
     const { importDashboardJson } = this.props;
     const file = event.currentTarget.files && event.currentTarget.files.length > 0 && event.currentTarget.files[0];
@@ -145,10 +141,13 @@ const mapStateToProps: MapStateToProps<ConnectedProps, OwnProps, StoreState> = (
 const mapDispatchToProps: MapDispatchToProps<DispatchProps, Props> = {
   fetchGcomDashboard,
   importDashboardJson,
-  resetDashboard,
 };
 
-export const DashboardImportPage = connect(mapStateToProps, mapDispatchToProps)(DashboardImportUnConnected);
+export const DashboardImportPage = connectWithCleanUp(
+  mapStateToProps,
+  mapDispatchToProps,
+  state => state.importDashboard
+)(DashboardImportUnConnected);
 export default DashboardImportPage;
 DashboardImportPage.displayName = 'DashboardImport';
 

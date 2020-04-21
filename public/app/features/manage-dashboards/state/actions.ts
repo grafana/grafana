@@ -60,7 +60,7 @@ function processInputs(dashboardJson: any): ThunkResult<void> {
   };
 }
 
-export function resetDashboard(): ThunkResult<void> {
+export function clearLoadedDashboard(): ThunkResult<void> {
   return dispatch => {
     dispatch(clearDashboard());
   };

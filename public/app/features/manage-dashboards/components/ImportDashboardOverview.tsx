@@ -3,7 +3,7 @@ import { dateTime } from '@grafana/data';
 import { Forms, Form } from '@grafana/ui';
 import { connect, MapDispatchToProps, MapStateToProps } from 'react-redux';
 import { ImportDashboardForm } from './ImportDashboardForm';
-import { resetDashboard, saveDashboard } from '../state/actions';
+import { clearLoadedDashboard, saveDashboard } from '../state/actions';
 import { DashboardInputs, DashboardSource, ImportDashboardDTO } from '../state/reducers';
 import { StoreState } from 'app/types';
 
@@ -18,7 +18,7 @@ interface ConnectedProps {
 }
 
 interface DispatchProps {
-  resetDashboard: typeof resetDashboard;
+  clearLoadedDashboard: typeof clearLoadedDashboard;
   saveDashboard: typeof saveDashboard;
 }
 
@@ -38,7 +38,7 @@ class ImportDashboardOverviewUnConnected extends PureComponent<Props, State> {
   };
 
   onCancel = () => {
-    this.props.resetDashboard();
+    this.props.clearLoadedDashboard();
   };
 
   onUidReset = () => {
@@ -115,7 +115,7 @@ const mapStateToProps: MapStateToProps<ConnectedProps, OwnProps, StoreState> = (
 });
 
 const mapDispatchToProps: MapDispatchToProps<DispatchProps, OwnProps> = {
-  resetDashboard,
+  clearLoadedDashboard,
   saveDashboard,
 };
 
