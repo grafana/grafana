@@ -174,12 +174,7 @@ const AddPanelWidgetCreate: React.FC<AddPanelWidgetCreateProps> = ({ onCreate })
   const styles = getAddPanelWidgetCreateStyles(theme);
   return (
     <div className={styles.wrapper}>
-      <Button
-        icon="pen"
-        size="md"
-        onClick={onCreate}
-        aria-label={e2e.pages.AddDashboard.selectors.ctaButtons('Edit new panel')}
-      >
+      <Button icon="pen" size="md" onClick={onCreate} aria-label={e2e.pages.AddDashboard.selectors.editNewPanel}>
         Edit new panel
       </Button>
     </div>
