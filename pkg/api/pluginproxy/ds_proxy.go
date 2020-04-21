@@ -70,8 +70,12 @@ func (lw *logWrapper) Write(p []byte) (n int, err error) {
 }
 
 // NewDataSourceProxy creates a new Datasource proxy
-func NewDataSourceProxy(ds *models.DataSource, plugin *plugins.DataSourcePlugin, ctx *models.ReqContext, proxyPath string, cfg *setting.Cfg) *DataSourceProxy {
-	targetURL, _ := url.Parse(ds.Url)
+func NewDataSourceProxy(ds *models.DataSource, plugin *plugins.DataSourcePlugin, ctx *models.ReqContext,
+	proxyPath string, cfg *setting.Cfg) (*DataSourceProxy, error) {
+	targetURL, err := url.Parse(ds.Url)
+	if err != nil {
+		return nil, err
+	}
 
 	return &DataSourceProxy{
 		ds:        ds,
@@ -80,7 +84,7 @@ func NewDataSourceProxy(ds *models.DataSource, plugin *plugins.DataSourcePlugin,
 		proxyPath: proxyPath,
 		targetUrl: targetURL,
 		cfg:       cfg,
-	}
+	}, nil
 }
 
 func newHTTPClient() httpClient {
