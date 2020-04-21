@@ -8,40 +8,27 @@ parent = "dashboard_features"
 weight = 1
 +++
 
+DFP questions: Where do you enter these bits of code?
+Why would I want to change it from the default?
+
 # Advanced variable format options
 
-The formatting of the variable interpolation depends on the data source, but there are some situations where you might want to change the default formatting. For example, the default for the MySql data source is to join multiple values as comma-separated with quotes: `'server01','server02'`. In some cases you might want to have a comma-separated string without quotes: `server01,server02`. This is now possible with the advanced formatting options.
+The formatting of the variable interpolation depends on the data source, but there are some situations where you might want to change the default formatting. 
+
+For example, the default for the MySql data source is to join multiple values as comma-separated with quotes: `'server01','server02'`. In some cases, you might want to have a comma-separated string without quotes: `server01,server02`. You can make that happen with advanced variable formatting options listed below.
+
+## General syntax
 
 Syntax: `${var_name:option}`
 
-#### Glob
-Formats multi-value variable into a glob (for Graphite queries).
+Test the formatting options on the [Grafana Play site](https://play.grafana.org/d/cJtIfcWiz/template-variable-formatting-options?orgId=1).
 
-```bash
-servers = ['test1', 'test2']
-String to interpolate: '${servers:glob}'
-Interpolation result: '{test1,test2}'
-```
+If any invalid formatting option is specified, then `glob` is the default/fallback option.
 
-### Regex
-Formats multi-value variable into a regex string.
+An alternative syntax (that might be deprecated in the future) is `[[var_name:option]]`.
 
-```bash
-servers = ['test1.', 'test2']
-String to interpolate: '${servers:regex}'
-Interpolation result: '(test1\.|test2)'
-```
+## CSV
 
-### Pipe
-Formats multi-value variable into a pipe-separated string.
-
-```bash
-servers = ['test1.', 'test2']
-String to interpolate: '${servers:pipe}'
-Interpolation result: 'test1.|test2'
-```
-
-### CSV
 Formats multi-value variable as a comma-separated string.
 
 ```bash
@@ -50,16 +37,8 @@ String to interpolate: '${servers:csv}'
 Interpolation result: 'test1,test2'
 ```
 
-### JSON
-Formats multi-value variable as a comma-separated string.
+## Distributed - OpenTSDB
 
-```bash
-servers = ['test1', 'test2']
-String to interpolate: '${servers:json}'
-Interpolation result: '["test1", "test2"]'
-```
-
-### Distributed
 Formats multi-value variable in custom format for OpenTSDB.
 
 ```bash
@@ -68,34 +47,8 @@ String to interpolate: '${servers:distributed}'
 Interpolation result: 'test1,servers=test2'
 ```
 
-### Lucene
-Formats multi-value variable in lucene format for Elasticsearch.
+## Doublequote
 
-```bash
-servers = ['test1', 'test2']
-String to interpolate: '${servers:lucene}'
-Interpolation result: '("test1" OR "test2")'
-```
-
-### Percentencode
-Formats single and multi valued variables for use in URL parameters.
-
-```bash
-servers = ['foo()bar BAZ', 'test2']
-String to interpolate: '${servers:percentencode}'
-Interpolation result: 'foo%28%29bar%20BAZ%2Ctest2'
-```
-
-### Singlequote
-Formats single- and multi-valued variables into a comma-separated string, escapes `'` in each value by `\'` and quotes each value with `'`.
-
-```bash
-servers = ['test1', 'test2']
-String to interpolate: '${servers:singlequote}'
-Interpolation result: "'test1','test2'"
-```
-
-### Doublequote
 Formats single- and multi-valued variables into a comma-separated string, escapes `"` in each value by `\"` and quotes each value with `"`.
 
 ```bash
@@ -104,7 +57,78 @@ String to interpolate: '${servers:doublequote}'
 Interpolation result: '"test1","test2"'
 ```
 
-### Sqlstring
+## Glob - Graphite
+
+Formats multi-value variable into a glob (for Graphite queries).
+
+```bash
+servers = ['test1', 'test2']
+String to interpolate: '${servers:glob}'
+Interpolation result: '{test1,test2}'
+```
+
+## JSON
+
+Formats multi-value variable as a comma-separated string.
+
+```bash
+servers = ['test1', 'test2']
+String to interpolate: '${servers:json}'
+Interpolation result: '["test1", "test2"]'
+```
+
+## Lucene - Elasticsearch
+
+Formats multi-value variable in Lucene format for Elasticsearch.
+
+```bash
+servers = ['test1', 'test2']
+String to interpolate: '${servers:lucene}'
+Interpolation result: '("test1" OR "test2")'
+```
+
+## Percentencode
+
+Formats single and multi valued variables for use in URL parameters.
+
+```bash
+servers = ['foo()bar BAZ', 'test2']
+String to interpolate: '${servers:percentencode}'
+Interpolation result: 'foo%28%29bar%20BAZ%2Ctest2'
+```
+
+## Pipe
+
+Formats multi-value variable into a pipe-separated string.
+
+```bash
+servers = ['test1.', 'test2']
+String to interpolate: '${servers:pipe}'
+Interpolation result: 'test1.|test2'
+```
+
+## Regex
+
+Formats multi-value variable into a regex string.
+
+```bash
+servers = ['test1.', 'test2']
+String to interpolate: '${servers:regex}'
+Interpolation result: '(test1\.|test2)'
+```
+
+## Singlequote
+
+Formats single- and multi-valued variables into a comma-separated string, escapes `'` in each value by `\'` and quotes each value with `'`.
+
+```bash
+servers = ['test1', 'test2']
+String to interpolate: '${servers:singlequote}'
+Interpolation result: "'test1','test2'"
+```
+
+## Sqlstring
+
 Formats single- and multi-valued variables into a comma-separated string, escapes `'` in each value by `''` and quotes each value with `'`.
 
 ```bash
@@ -112,9 +136,3 @@ servers = ["test'1", "test2"]
 String to interpolate: '${servers:sqlstring}'
 Interpolation result: "'test''1','test2'"
 ```
-
-Test the formatting options on the [Grafana Play site](https://play.grafana.org/d/cJtIfcWiz/template-variable-formatting-options?orgId=1).
-
-If any invalid formatting option is specified, then `glob` is the default/fallback option.
-
-An alternative syntax (that might be deprecated in the future) is `[[var_name:option]]`.

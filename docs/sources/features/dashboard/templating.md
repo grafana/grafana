@@ -38,7 +38,7 @@ interpolation the variable value might be **escaped** in order to conform to the
 For example, a variable used in a regex expression in an InfluxDB or Prometheus query will be regex escaped. Read the data source specific
 documentation article for details on value escaping during interpolation.
 
-
+For advanced syntax to override data source default formatting, refer to [Advanced variable format options]({{< relref "advanced-variable-format-options.md" >}}).
 
 
 ### Variable options
