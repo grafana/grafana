@@ -144,7 +144,7 @@ static information about the datasource
 <b>Signature</b>
 
 ```typescript
-meta?: DataSourcePluginMeta;
+meta: DataSourcePluginMeta;
 ```
 
 ### name property

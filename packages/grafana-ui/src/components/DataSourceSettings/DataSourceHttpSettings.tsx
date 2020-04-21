@@ -140,7 +140,7 @@ export const DataSourceHttpSettings: React.FC<HttpSettingsProps> = props => {
                     onClick={() => setIsAccessHelpVisible(isVisible => !isVisible)}
                   >
                     Help&nbsp;
-                    <Icon name={isAccessHelpVisible ? 'angle-down' : 'angle-right'} />
+                    <Icon name={isAccessHelpVisible ? 'angle-down' : 'angle-right'} style={{ marginBottom: 0 }} />
                   </label>
                 </div>
               </div>

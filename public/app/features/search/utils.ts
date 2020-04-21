@@ -1,6 +1,7 @@
-import { DashboardSection, DashboardSectionItem } from './types';
+import { DashboardQuery, DashboardSection, DashboardSectionItem, SearchAction, UidsToDelete } from './types';
 import { NO_ID_SECTIONS } from './constants';
 import { parse, SearchParserResult } from 'search-query-parser';
+import { getDashboardSrv } from '../dashboard/services/DashboardSrv';
 
 /**
  * Check if folder has id. Only Recent and Starred folders are the ones without
@@ -83,8 +84,7 @@ export const findSelected = (sections: any): DashboardSection | DashboardSection
   return null;
 };
 
-// TODO check if there are any use cases where query isn't a string
-export const parseQuery = (query: any) => {
+export const parseQuery = (query: string) => {
   const parsedQuery = parse(query, {
     keywords: ['folder'],
   });
@@ -96,4 +96,87 @@ export const parseQuery = (query: any) => {
   }
 
   return parsedQuery;
+};
+
+/**
+ * Merge multiple reducers into one, keeping the state structure flat (no nested
+ * separate state for each reducer). If there are multiple state slices with the same
+ * key, the latest reducer's state is applied.
+ * Compared to Redux's combineReducers this allows multiple reducers to operate
+ * on the same state or different slices of the same state. Useful when multiple
+ * components have the same structure but different or extra logic when modifying it.
+ * If reducers have the same action types, the action types from the rightmost reducer
+ * take precedence
+ * @param reducers
+ */
+export const mergeReducers = (reducers: any[]) => (prevState: any, action: SearchAction) => {
+  return reducers.reduce((nextState, reducer) => ({ ...nextState, ...reducer(nextState, action) }), prevState);
+};
+
+/**
+ * Collect all the checked dashboards
+ * @param sections
+ */
+export const getCheckedDashboards = (sections: DashboardSection[]): DashboardSectionItem[] => {
+  if (!sections.length) {
+    return [];
+  }
+
+  return sections.reduce((uids, section) => {
+    return [...uids, ...section.items.filter(item => item.checked)];
+  }, []);
+};
+
+/**
+ * Collect uids of all the checked dashboards
+ * @param sections
+ */
+export const getCheckedDashboardsUids = (sections: DashboardSection[]) => {
+  if (!sections.length) {
+    return [];
+  }
+
+  return getCheckedDashboards(sections).map(item => item.uid);
+};
+
+/**
+ * Collect uids of all checked folders and dashboards. Used for delete operation, among others
+ * @param sections
+ */
+export const getCheckedUids = (sections: DashboardSection[]): UidsToDelete => {
+  const emptyResults: UidsToDelete = { folders: [], dashboards: [] };
+
+  if (!sections.length) {
+    return emptyResults;
+  }
+
+  return sections.reduce((result, section) => {
+    if (section?.id !== 0 && section.checked) {
+      return { ...result, folders: [...result.folders, section.uid] };
+    } else {
+      return { ...result, dashboards: getCheckedDashboardsUids(sections) };
+    }
+  }, emptyResults) as UidsToDelete;
+};
+
+/**
+ * When search is done within a dashboard folder, add folder id to the search query
+ * to narrow down the results to the folder
+ * @param query
+ * @param queryParsing
+ */
+export const getParsedQuery = (query: DashboardQuery, queryParsing = false) => {
+  if (!queryParsing) {
+    return query;
+  }
+
+  let folderIds: number[] = [];
+
+  if (parseQuery(query.query).folder === 'current') {
+    const { folderId } = getDashboardSrv().getCurrent().meta;
+    if (folderId) {
+      folderIds = [folderId];
+    }
+  }
+  return { ...query, query: parseQuery(query.query).text as string, folderIds };
 };

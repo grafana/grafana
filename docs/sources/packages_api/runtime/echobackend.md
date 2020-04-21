@@ -10,6 +10,8 @@ draft = true
 
 ## EchoBackend interface
 
+Describes echo backends that can be registered to receive of events.
+
 <b>Signature</b>
 
 ```typescript

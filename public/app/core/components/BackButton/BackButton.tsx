@@ -14,7 +14,7 @@ export const BackButton: React.FC<Props> = ({ surface, onClick }) => {
       tooltipPlacement="bottom"
       size="xxl"
       surface={surface}
-      aria-label={e2e.pages.Components.BackButton.selectors.backArrow}
+      aria-label={e2e.components.BackButton.selectors.backArrow}
       onClick={onClick}
     />
   );

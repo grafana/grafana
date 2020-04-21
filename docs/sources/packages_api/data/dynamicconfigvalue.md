@@ -24,24 +24,15 @@ import { DynamicConfigValue } from '@grafana/data';
 
 |  Property | Type | Description |
 |  --- | --- | --- |
-|  [custom](#custom-property) | <code>boolean</code> |  |
-|  [prop](#prop-property) | <code>string</code> |  |
+|  [id](#id-property) | <code>string</code> |  |
 |  [value](#value-property) | <code>any</code> |  |
 
-### custom property
+### id property
 
 <b>Signature</b>
 
 ```typescript
-custom?: boolean;
-```
-
-### prop property
-
-<b>Signature</b>
-
-```typescript
-prop: string;
+id: string;
 ```
 
 ### value property

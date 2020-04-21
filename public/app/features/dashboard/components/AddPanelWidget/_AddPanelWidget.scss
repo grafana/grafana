@@ -9,7 +9,7 @@
 .add-panel-widget__header {
   top: 0;
   position: absolute;
-  padding: 0 15px;
+  padding: 0 8px;
   display: flex;
   align-items: center;
   width: 100%;
@@ -52,13 +52,6 @@
     position: relative;
     left: 5px;
   }
-}
-
-.add-panel-widget__close {
-  margin: 7px -10px 0 auto;
-  background-color: transparent;
-  border: 0;
-  font-size: 16px;
 }
 
 .add-panel-widget__create {

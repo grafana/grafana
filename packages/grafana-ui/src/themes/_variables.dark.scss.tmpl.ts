@@ -87,8 +87,9 @@ $body-bg: ${theme.colors.bodyBg};
 $page-bg: ${theme.colors.bodyBg};
 $dashboard-bg: ${theme.colors.dashboardBg};
 
-$text-color: ${theme.colors.text};
 $text-color-strong: ${theme.colors.textStrong};
+$text-color: ${theme.colors.text};
+$text-color-semi-weak: ${theme.colors.textSemiWeak};
 $text-color-weak: ${theme.colors.textWeak};
 $text-color-faint: ${theme.colors.textFaint};
 $text-color-emphasis: ${theme.colors.textStrong};
@@ -134,7 +135,7 @@ $divider-border-color: $gray-1;
 $tight-form-func-bg: $dark-9;
 $tight-form-func-highlight-bg: $dark-10;
 
-$modal-backdrop-bg: #343b40;
+$modal-backdrop-bg: ${theme.colors.bg1};
 $code-tag-bg: $dark-1;
 $code-tag-border: $dark-9;
 

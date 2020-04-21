@@ -8,7 +8,7 @@ export class AxesEditorCtrl {
   xAxisModes: any;
   xAxisStatOptions: any;
   xNameSegment: any;
-  selectors: typeof e2e.pages.Dashboard.Panels.Visualization.Graph.VisualizationTab.selectors;
+  selectors: typeof e2e.components.Panels.Visualization.Graph.VisualizationTab.selectors;
 
   /** @ngInject */
   constructor(private $scope: any) {
@@ -45,7 +45,7 @@ export class AxesEditorCtrl {
         this.panel.xaxis.name = 'specify field';
       }
     }
-    this.selectors = e2e.pages.Dashboard.Panels.Visualization.Graph.VisualizationTab.selectors;
+    this.selectors = e2e.components.Panels.Visualization.Graph.VisualizationTab.selectors;
   }
 
   setUnitFormat(axis: { format: any }) {

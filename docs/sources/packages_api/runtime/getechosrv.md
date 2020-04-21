@@ -12,6 +12,8 @@ draft = true
 
 ### getEchoSrv() function
 
+Used to retrieve the [EchoSrv](./runtime/echosrv.md) that can be used to report events to registered echo backends.
+
 <b>Signature</b>
 
 ```typescript

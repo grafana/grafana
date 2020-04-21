@@ -24,10 +24,19 @@ import { PanelModel } from '@grafana/data';
 
 |  Property | Type | Description |
 |  --- | --- | --- |
+|  [fieldConfig](#fieldconfig-property) | <code>FieldConfigSource</code> |  |
 |  [id](#id-property) | <code>number</code> |  |
 |  [options](#options-property) | <code>TOptions</code> |  |
 |  [pluginVersion](#pluginversion-property) | <code>string</code> |  |
 |  [scopedVars](#scopedvars-property) | <code>ScopedVars</code> |  |
+
+### fieldConfig property
+
+<b>Signature</b>
+
+```typescript
+fieldConfig: FieldConfigSource;
+```
 
 ### id property
 

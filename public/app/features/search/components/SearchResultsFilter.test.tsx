@@ -15,12 +15,11 @@ const setup = (propOverrides?: Partial<Props>, renderMethod = shallow) => {
     canMove: false,
     deleteItem: noop,
     moveTo: noop,
-    onSelectAllChanged: noop,
     onStarredFilterChange: noop,
     onTagFilterChange: noop,
-    selectedStarredFilter: 'starred',
-    selectedTagFilter: 'tag',
-    tagFilterOptions: [],
+    onToggleAllChecked: noop,
+    selectedStarredFilter: false,
+    selectedTagFilter: ['tag'],
   };
 
   Object.assign(props, propOverrides);
@@ -79,19 +78,12 @@ describe('SearchResultsFilter', () => {
       { value: 'tag2', label: 'Tag 2' },
     ];
     //@ts-ignore
-    const { wrapper } = setup({ onTagFilterChange: mockFilterByTags, tagFilterOptions: tags }, mount);
+    const { wrapper } = setup({ onTagFilterChange: mockFilterByTags }, mount);
     wrapper
       .find({ placeholder: 'Filter by tag' })
       .at(0)
       .prop('onChange')(tags[0]);
     expect(mockFilterByTags).toHaveBeenCalledTimes(1);
     expect(mockFilterByTags).toHaveBeenCalledWith(tags[0]);
-  });
-
-  it('should call "onSelectAllChanged" when checkbox is changed', () => {
-    const mockSelectAll = jest.fn();
-    const { wrapper } = setup({ onSelectAllChanged: mockSelectAll });
-    wrapper.find('Checkbox').simulate('change');
-    expect(mockSelectAll).toHaveBeenCalledTimes(1);
   });
 });

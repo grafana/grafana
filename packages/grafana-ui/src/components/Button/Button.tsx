@@ -67,13 +67,14 @@ const getPropertiesForVariant = (theme: GrafanaTheme, variant: ButtonVariant) =>
 export interface StyleProps {
   theme: GrafanaTheme;
   size: ComponentSize;
-  icon?: IconName;
   variant: ButtonVariant;
-  textAndIcon?: boolean;
+  hasIcon: boolean;
+  hasText: boolean;
 }
 
-export const getButtonStyles = stylesFactory(({ theme, size, variant, icon }: StyleProps) => {
-  const { padding, fontSize, height } = getPropertiesForButtonSize(theme, size, icon);
+export const getButtonStyles = stylesFactory((props: StyleProps) => {
+  const { theme, variant } = props;
+  const { padding, fontSize, height } = getPropertiesForButtonSize(props);
   const { background, borderColor, variantStyles } = getPropertiesForVariant(theme, variant);
 
   return {
@@ -105,9 +106,6 @@ export const getButtonStyles = stylesFactory(({ theme, size, variant, icon }: St
         ${variantStyles}
       `
     ),
-    buttonWithIcon: css`
-      padding-left: ${theme.spacing.sm};
-    `,
     // used for buttons with icon only
     iconButton: css`
       padding-right: 0;
@@ -139,7 +137,8 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       theme,
       size: otherProps.size || 'md',
       variant: variant || 'primary',
-      icon,
+      hasText: children !== undefined,
+      hasIcon: icon !== undefined,
     });
 
     return (
@@ -162,7 +161,8 @@ export const LinkButton = React.forwardRef<HTMLAnchorElement, ButtonLinkProps>(
       theme,
       size: otherProps.size || 'md',
       variant: variant || 'primary',
-      icon,
+      hasText: children !== undefined,
+      hasIcon: icon !== undefined,
     });
 
     return (

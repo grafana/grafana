@@ -164,9 +164,13 @@ export class AddPanelWidgetUnconnected extends React.Component<Props, State> {
           <div className="add-panel-widget__header grid-drag-handle">
             <Icon name="panel-add" type="mono" size="xl" style={{ margin: '4px', marginRight: '8px' }} />
             <span className="add-panel-widget__title">New Panel</span>
-            <button className="add-panel-widget__close" onClick={this.handleCloseAddPanel}>
-              <IconButton name="times" />
-            </button>
+            <div className="flex-grow-1"></div>
+            <IconButton
+              name="times"
+              onClick={this.handleCloseAddPanel}
+              surface="header"
+              className="add-panel-widget__close"
+            />
           </div>
           <div className="add-panel-widget__btn-container">
             <div className="add-panel-widget__create">
