@@ -42,6 +42,16 @@ Currently only Organization Admins can create reports.
 
 {{< docs-imagebox img="/img/docs/enterprise/reports_create_new.png" max-width="500px" class="docs-image--no-shadow" >}}
 
+## Send test mail
+A test mail can be sent by pressing the Send test mail button. This will bring up a modal window where an email address or
+a list of email addresses can be entered. If the mail should use the mail addresses from the report instead,
+check the Use emails from report checkbox. 
+
+*Note that it is the last saved version of the report that will be sent and changes made to the report after saving will not be
+reflected in the sent report.*
+
+{{< docs-imagebox img="/img/docs/enterprise/reports_send_test_mail.png" max-width="500px" class="docs-image--no-shadow" >}}
+
 ## Rendering configuration
 
 When Grafana generates a report, it will render each panel separately and then put them together in a PDF file. You can configure the per-panel rendering request timeout and the maximum number of concurrent calls to the rendering service. These options are available in the [configuration]({{< relref "../installation/configuration.md">}}) file.
