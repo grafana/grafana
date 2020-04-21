@@ -35,6 +35,5 @@ type Service interface {
 	IsAvailable() bool
 	Render(ctx context.Context, opts Opts) (*RenderResult, error)
 	RenderErrorImage(error error) (*RenderResult, error)
-	RenderUnavailableImage() *RenderResult
 	GetRenderUser(key string) (*RenderUser, bool)
 }
