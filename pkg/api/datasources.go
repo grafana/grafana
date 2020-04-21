@@ -2,6 +2,7 @@ package api
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/url"
 	"sort"
 
@@ -126,13 +127,23 @@ func DeleteDataSourceByName(c *models.ReqContext) Response {
 	return Success("Data source deleted")
 }
 
+func validateParams(params models.DataSourceParams) Response {
+	u := params.GetURL()
+	if u != "" {
+		_, err := url.Parse(u)
+		if err != nil {
+			return Error(400, fmt.Sprintf("Validation error, invalid URL: %q", u), errutil.Wrapf(err,
+				"invalid data source URL %q", u))
+		}
+	}
+
+	return nil
+}
+
 func AddDataSource(c *models.ReqContext, cmd models.AddDataSourceCommand) Response {
 	cmd.OrgId = c.OrgId
-	if cmd.Url != "" {
-		_, err := url.Parse(cmd.Url)
-		if err != nil {
-			return Error(400, "Validation error", errutil.Wrapf(err, "invalid data source URL %q", cmd.Url))
-		}
+	if resp := validateParams(cmd); resp != nil {
+		return resp
 	}
 
 	if err := bus.Dispatch(&cmd); err != nil {
@@ -155,11 +166,8 @@ func AddDataSource(c *models.ReqContext, cmd models.AddDataSourceCommand) Respon
 func UpdateDataSource(c *models.ReqContext, cmd models.UpdateDataSourceCommand) Response {
 	cmd.OrgId = c.OrgId
 	cmd.Id = c.ParamsInt64(":id")
-	if cmd.Url != "" {
-		_, err := url.Parse(cmd.Url)
-		if err != nil {
-			return Error(400, "Validation error", errutil.Wrapf(err, "invalid data source URL %q", cmd.Url))
-		}
+	if resp := validateParams(cmd); resp != nil {
+		return resp
 	}
 
 	err := fillWithSecureJSONData(&cmd)

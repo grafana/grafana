@@ -155,6 +155,11 @@ type AddDataSourceCommand struct {
 	Result *DataSource
 }
 
+// GetURL gets command's URL.
+func (cmd AddDataSourceCommand) GetURL() string {
+	return cmd.Url
+}
+
 // Also acts as api DTO
 type UpdateDataSourceCommand struct {
 	Name              string            `json:"name" binding:"Required"`
@@ -179,6 +184,15 @@ type UpdateDataSourceCommand struct {
 	ReadOnly bool  `json:"-"`
 
 	Result *DataSource
+}
+
+// GetURL gets command's URL.
+func (cmd UpdateDataSourceCommand) GetURL() string {
+	return cmd.Url
+}
+
+type DataSourceParams interface {
+	GetURL() string
 }
 
 type DeleteDataSourceByIdCommand struct {
