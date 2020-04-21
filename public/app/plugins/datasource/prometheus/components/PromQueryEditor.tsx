@@ -163,7 +163,13 @@ export class PromQueryEditor extends PureComponent<Props, State> {
 
           <div className="gf-form">
             <div className="gf-form-label width-7">Format</div>
-            <Select isSearchable={false} options={FORMAT_OPTIONS} onChange={this.onFormatChange} value={formatOption} />
+            <Select
+              width={16}
+              isSearchable={false}
+              options={FORMAT_OPTIONS}
+              onChange={this.onFormatChange}
+              value={formatOption}
+            />
             <Switch label="Instant" checked={instant} onChange={this.onInstantChange} />
 
             <FormLabel width={10} tooltip="Link to Graph in Prometheus">

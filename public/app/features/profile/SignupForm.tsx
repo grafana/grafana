@@ -66,20 +66,19 @@ export const SignupForm: FC<Props> = props => {
           <>
             {verifyEmailEnabled && (
               <Field label="Email verification code (sent to your email)">
-                <Input name="code" size="md" ref={register} placeholder="Code" />
+                <Input name="code" ref={register} placeholder="Code" />
               </Field>
             )}
             {!autoAssignOrg && (
               <Field label="Org. name">
-                <Input size="md" name="orgName" placeholder="Org. name" ref={register} />
+                <Input name="orgName" placeholder="Org. name" ref={register} />
               </Field>
             )}
             <Field label="Your name">
-              <Input size="md" name="name" placeholder="(optional)" ref={register} />
+              <Input name="name" placeholder="(optional)" ref={register} />
             </Field>
             <Field label="Email" invalid={!!errors.email} error={!!errors.email && errors.email.message}>
               <Input
-                size="md"
                 name="email"
                 type="email"
                 placeholder="Email"
@@ -94,7 +93,6 @@ export const SignupForm: FC<Props> = props => {
             </Field>
             <Field label="Password" invalid={!!errors.password} error={!!errors.password && errors.password.message}>
               <Input
-                size="md"
                 name="password"
                 type="password"
                 placeholder="Password"
