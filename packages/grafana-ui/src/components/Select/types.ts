@@ -27,7 +27,7 @@ export interface SelectCommonProps<T> {
   isSearchable?: boolean;
   showAllSelectedWhenOpen?: boolean;
   maxMenuHeight?: number;
-  maxVisibleValues?: undefined | number;
+  maxVisibleValues?: number;
   menuPlacement?: 'auto' | 'bottom' | 'top';
   menuPosition?: 'fixed' | 'absolute';
   /** The message to display when no options could be found */
