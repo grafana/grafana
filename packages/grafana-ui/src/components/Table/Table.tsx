@@ -72,7 +72,18 @@ export const Table: FC<Props> = memo((props: Props) => {
   // React table data array. This data acts just like a dummy array to let react-table know how many rows exist
   // The cells use the field to look up values
   const memoizedData = useMemo(() => {
-    return data.fields.length > 0 ? data.fields[0].values.toArray() : [];
+    if (!data.fields.length) {
+      return [];
+    }
+
+    // Check if an array buffer already exists
+    const buffer = (data.fields[0].values as any).buffer;
+    if (Array.isArray(buffer) && buffer.length === data.length) {
+      return buffer;
+    }
+
+    // For arrow tables, the `toArray` implementation is expensive and akward *especially* for timestamps
+    return Array(data.length).fill(0);
   }, [data]);
 
   // React-table column definitions
