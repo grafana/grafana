@@ -3,7 +3,7 @@ import { DashboardModel } from '../state/DashboardModel';
 import { PanelModel } from '../state/PanelModel';
 import { GRID_CELL_HEIGHT, GRID_CELL_VMARGIN } from 'app/core/constants';
 import { expect } from 'test/lib/common';
-import { DataLinkBuiltInVars } from '@grafana/ui';
+import { DataLinkBuiltInVars } from '@grafana/data';
 
 jest.mock('app/core/services/context_srv', () => ({}));
 
@@ -111,6 +111,10 @@ describe('DashboardModel', () => {
       expect(table.styles[1].thresholds[1]).toBe('300');
     });
 
+    it('table type should be deprecated', () => {
+      expect(table.type).toBe('table-old');
+    });
+
     it('graph grid to yaxes options', () => {
       expect(graph.yaxes[0].min).toBe(1);
       expect(graph.yaxes[0].max).toBe(10);
@@ -128,7 +132,7 @@ describe('DashboardModel', () => {
     });
 
     it('dashboard schema version should be set to latest', () => {
-      expect(model.schemaVersion).toBe(23);
+      expect(model.schemaVersion).toBe(24);
     });
 
     it('graph thresholds should be migrated', () => {

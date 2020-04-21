@@ -17,7 +17,7 @@ draft = true
 ```typescript
 ColorPicker: React.FunctionComponent<Pick<import("./ColorPickerPopover").Props<import("./ColorPickerPopover").CustomPickersDescriptor> & {
     children?: ColorPickerTriggerRenderer | undefined;
-}, "onChange" | "color" | "children" | "onColorChange" | "enableNamedColors" | "customPickers" | "updatePopperPosition">>
+}, "onChange" | "color" | "children" | "customPickers" | "onColorChange" | "enableNamedColors" | "updatePopperPosition">>
 ```
 <b>Import</b>
 

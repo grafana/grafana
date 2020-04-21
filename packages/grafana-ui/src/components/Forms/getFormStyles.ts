@@ -6,7 +6,7 @@ import { getFieldValidationMessageStyles } from './FieldValidationMessage';
 import { getButtonStyles, ButtonVariant } from '../Button';
 import { ComponentSize } from '../../types/size';
 import { getInputStyles } from '../Input/Input';
-import { getSwitchStyles } from './Switch';
+import { getSwitchStyles } from '../Switch/Switch';
 import { getCheckboxStyles } from './Checkbox';
 
 export const getFormStyles = stylesFactory(
@@ -19,6 +19,8 @@ export const getFormStyles = stylesFactory(
         theme,
         variant: options.variant,
         size: options.size,
+        hasIcon: false,
+        hasText: true,
       }),
       input: getInputStyles({ theme, invalid: options.invalid }),
       switch: getSwitchStyles(theme),

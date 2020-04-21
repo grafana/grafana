@@ -39,26 +39,27 @@ export const Pages = {
         },
       },
     },
-    Panels: {
-      Panel,
-      EditPanel,
-      DataSource: {
-        TestData,
-      },
-      Visualization: {
-        Graph,
-      },
-    },
   },
   Dashboards,
   SaveDashboardAsModal,
   SaveDashboardModal,
   SharePanelModal,
-  Components: {
-    BackButton: pageFactory({
-      selectors: {
-        backArrow: 'Go Back button',
-      },
-    }),
+};
+
+export const Components = {
+  DataSource: {
+    TestData,
   },
+  Panels: {
+    Panel,
+    EditPanel,
+    Visualization: {
+      Graph,
+    },
+  },
+  BackButton: pageFactory({
+    selectors: {
+      backArrow: 'Go Back button',
+    },
+  }),
 };

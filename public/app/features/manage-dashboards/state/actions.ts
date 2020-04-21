@@ -1,4 +1,4 @@
-import { AppEvents, DataSourceInstanceSettings, DataSourceSelectItem } from '@grafana/data';
+import { AppEvents, DataSourceInstanceSettings, DataSourceSelectItem, locationUtil } from '@grafana/data';
 import { getBackendSrv } from '@grafana/runtime';
 import config from 'app/core/config';
 import {
@@ -9,7 +9,6 @@ import {
   InputType,
   ImportDashboardDTO,
 } from './reducers';
-import locationUtil from 'app/core/utils/location_util';
 import { updateLocation } from 'app/core/actions';
 import { ThunkResult } from 'app/types';
 import { appEvents } from '../../../core/core';

@@ -5,7 +5,7 @@ type Calls struct {
 	ProvisionNotifications              []interface{}
 	ProvisionDashboards                 []interface{}
 	GetDashboardProvisionerResolvedPath []interface{}
-	GetAllowUiUpdatesFromConfig         []interface{}
+	GetAllowUIUpdatesFromConfig         []interface{}
 }
 
 type ProvisioningServiceMock struct {
@@ -14,7 +14,7 @@ type ProvisioningServiceMock struct {
 	ProvisionNotificationsFunc              func() error
 	ProvisionDashboardsFunc                 func() error
 	GetDashboardProvisionerResolvedPathFunc func(name string) string
-	GetAllowUiUpdatesFromConfigFunc         func(name string) bool
+	GetAllowUIUpdatesFromConfigFunc         func(name string) bool
 }
 
 func NewProvisioningServiceMock() *ProvisioningServiceMock {
@@ -55,10 +55,10 @@ func (mock *ProvisioningServiceMock) GetDashboardProvisionerResolvedPath(name st
 	return ""
 }
 
-func (mock *ProvisioningServiceMock) GetAllowUiUpdatesFromConfig(name string) bool {
-	mock.Calls.GetAllowUiUpdatesFromConfig = append(mock.Calls.GetAllowUiUpdatesFromConfig, name)
-	if mock.GetAllowUiUpdatesFromConfigFunc != nil {
-		return mock.GetAllowUiUpdatesFromConfigFunc(name)
+func (mock *ProvisioningServiceMock) GetAllowUIUpdatesFromConfig(name string) bool {
+	mock.Calls.GetAllowUIUpdatesFromConfig = append(mock.Calls.GetAllowUIUpdatesFromConfig, name)
+	if mock.GetAllowUIUpdatesFromConfigFunc != nil {
+		return mock.GetAllowUIUpdatesFromConfigFunc(name)
 	}
 	return false
 }

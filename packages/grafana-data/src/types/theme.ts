@@ -67,7 +67,7 @@ export interface GrafanaThemeCommons {
     formSpacingBase: number;
     formMargin: string;
     formFieldsetMargin: string;
-    formInputHeight: string;
+    formInputHeight: number;
     formButtonHeight: number;
     formInputPaddingHorizontal: string;
     // Used for icons do define spacing between icon and input field
@@ -78,6 +78,7 @@ export interface GrafanaThemeCommons {
     formLabelMargin: string;
     formValidationMessagePadding: string;
     formValidationMessageMargin: string;
+    inlineFormMargin: string;
   };
   border: {
     radius: {

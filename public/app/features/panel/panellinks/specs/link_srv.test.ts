@@ -1,9 +1,11 @@
 import { LinkSrv } from '../link_srv';
-import { DataLinkBuiltInVars } from '@grafana/ui';
+import { DataLinkBuiltInVars, locationUtil, VariableModel } from '@grafana/data';
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { advanceTo } from 'jest-date-mock';
 import { updateConfig } from '../../../../core/config';
+import { variableAdapters } from '../../../variables/adapters';
+import { createQueryVariableAdapter } from '../../../variables/query/adapter';
 
 jest.mock('app/core/core', () => ({
   appEvents: {
@@ -46,28 +48,47 @@ describe('linkSrv', () => {
     timeSrv.setTime({ from: 'now-1h', to: 'now' });
     _dashboard.refresh = false;
 
-    const _templateSrv = new TemplateSrv();
-    _templateSrv.init([
+    const variablesMock = [
       {
         type: 'query',
         name: 'test1',
+        label: 'Test1',
+        hide: false,
         current: { value: 'val1' },
+        skipUrlSync: false,
         getValueForUrl: function() {
-          return this.current.value;
+          return 'val1';
         },
-      },
+      } as VariableModel,
       {
         type: 'query',
         name: 'test2',
+        label: 'Test2',
+        hide: false,
         current: { value: 'val2' },
+        skipUrlSync: false,
         getValueForUrl: function() {
-          return this.current.value;
+          return 'val2';
         },
+      } as VariableModel,
+    ];
+    const _templateSrv = new TemplateSrv({
+      // @ts-ignore
+      getVariables: () => {
+        return variablesMock;
       },
-    ]);
+      // @ts-ignore
+      getVariableWithName: (name: string) => {
+        return variablesMock.filter(v => v.name === name)[0];
+      },
+    });
 
     linkSrv = new LinkSrv(_templateSrv, timeSrv);
   }
+
+  beforeAll(() => {
+    variableAdapters.register(createQueryVariableAdapter());
+  });
 
   beforeEach(() => {
     initLinkSrv();
@@ -217,8 +238,14 @@ describe('linkSrv', () => {
     `(
       "when link '$url' and config.appSubUrl set to '$appSubUrl' then result should be '$expected'",
       ({ url, appSubUrl, expected }) => {
-        updateConfig({
-          appSubUrl,
+        locationUtil.initialize({
+          getConfig: () => {
+            return { appSubUrl } as any;
+          },
+          // @ts-ignore
+          buildParamsFromVariables: () => {},
+          // @ts-ignore
+          getTimeRangeForUrl: () => {},
         });
 
         const link = linkSrv.getDataLinkUIModel(

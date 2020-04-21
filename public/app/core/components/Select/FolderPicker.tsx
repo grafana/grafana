@@ -43,7 +43,7 @@ export class FolderPicker extends PureComponent<Props, State> {
     enableReset: false,
     initialTitle: '',
     enableCreateNew: false,
-    useInNextGenForms: false,
+    useNewForms: false,
   };
 
   componentDidMount = async () => {

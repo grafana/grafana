@@ -1,7 +1,7 @@
 import React, { PureComponent, ChangeEvent } from 'react';
 import { SelectableValue } from '@grafana/data';
 import { AzureCredentialsForm } from './AzureCredentialsForm';
-import { FormLabel, LegacyForms, Button } from '@grafana/ui';
+import { InlineFormLabel, LegacyForms, Button } from '@grafana/ui';
 const { Select, Switch } = LegacyForms;
 import { AzureDataSourceSettings } from '../types';
 
@@ -169,12 +169,12 @@ export class AnalyticsConfig extends PureComponent<Props, State> {
         <div className="gf-form-group">
           <div className="gf-form-inline">
             <div className="gf-form">
-              <FormLabel
+              <InlineFormLabel
                 className="width-12"
                 tooltip="Choose the default/preferred Workspace for Azure Log Analytics queries."
               >
                 Default Workspace
-              </FormLabel>
+              </InlineFormLabel>
               <div className="width-25">
                 <Select
                   value={workspaces.find(workspace => workspace.value === jsonData.logAnalyticsDefaultWorkspace)}

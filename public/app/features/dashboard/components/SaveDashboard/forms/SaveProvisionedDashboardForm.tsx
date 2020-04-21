@@ -80,6 +80,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       background: ${theme.isLight ? theme.palette.gray7 : theme.palette.black};
       padding: ${theme.spacing.sm} 0 ${theme.spacing.sm} ${theme.spacing.md};
       height: 400px;
+      width: 100%;
     `,
   };
 });
