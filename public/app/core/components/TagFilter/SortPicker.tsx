@@ -18,11 +18,12 @@ export const SortPicker: FC<Props> = ({ onChange, value, placeholder }) => {
       return sortOptions.map((opt: any) => ({ label: opt.displayName, value: opt.name }));
     });
   };
+
   return (
     <AsyncSelect
       size="sm"
       onChange={onChange}
-      value={value}
+      value={[value]}
       loadOptions={getSortOptions}
       defaultOptions
       placeholder={placeholder ?? `Sort (Default ${DEFAULT_SORT.label})`}

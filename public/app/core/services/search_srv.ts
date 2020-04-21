@@ -7,6 +7,7 @@ import { contextSrv } from 'app/core/services/context_srv';
 import { backendSrv } from './backend_srv';
 import { Section } from '../components/manage_dashboards/manage_dashboards';
 import { DashboardSearchHit, DashboardSearchHitType } from 'app/types/search';
+import { hasFilters } from '../../features/search/utils';
 
 interface Sections {
   [key: string]: Partial<Section>;
@@ -97,22 +98,18 @@ export class SearchSrv {
     const sections: any = {};
     const promises = [];
     const query = _.clone(options);
-    const hasFilters =
-      options.query ||
-      (options.tag && options.tag.length > 0) ||
-      options.starred ||
-      (options.folderIds && options.folderIds.length > 0);
+    const filters = hasFilters(options);
 
-    if (!options.skipRecent && !hasFilters) {
+    if (!options.skipRecent && !filters) {
       promises.push(this.getRecentDashboards(sections));
     }
 
-    if (!options.skipStarred && !hasFilters) {
+    if (!options.skipStarred && !filters) {
       promises.push(this.getStarred(sections));
     }
 
     query.folderIds = query.folderIds || [];
-    if (!hasFilters) {
+    if (!filters) {
       query.folderIds = [0];
     }
 

@@ -9,7 +9,6 @@ import {
   TOGGLE_STARRED,
   TOGGLE_SORT,
 } from './actionTypes';
-import { DEFAULT_SORT } from '../constants';
 
 export const defaultQuery: DashboardQuery = {
   query: '',
@@ -18,7 +17,7 @@ export const defaultQuery: DashboardQuery = {
   skipRecent: false,
   skipStarred: false,
   folderIds: [],
-  sort: DEFAULT_SORT.value,
+  sort: null,
 };
 
 export const queryReducer = (state: DashboardQuery, action: SearchAction) => {
@@ -38,7 +37,7 @@ export const queryReducer = (state: DashboardQuery, action: SearchAction) => {
     case REMOVE_STARRED:
       return { ...state, starred: false };
     case CLEAR_FILTERS:
-      return { ...state, query: '', tag: [], starred: false };
+      return { ...state, query: '', tag: [], starred: false, sort: null };
     case TOGGLE_SORT:
       return { ...state, sort: action.payload };
     default:

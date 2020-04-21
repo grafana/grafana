@@ -1,6 +1,6 @@
+import { parse, SearchParserResult } from 'search-query-parser';
 import { DashboardQuery, DashboardSection, DashboardSectionItem, SearchAction, UidsToDelete } from './types';
 import { NO_ID_SECTIONS } from './constants';
-import { parse, SearchParserResult } from 'search-query-parser';
 import { getDashboardSrv } from '../dashboard/services/DashboardSrv';
 
 /**
@@ -179,4 +179,11 @@ export const getParsedQuery = (query: DashboardQuery, queryParsing = false) => {
     }
   }
   return { ...query, query: parseQuery(query.query).text as string, folderIds };
+};
+
+export const hasFilters = (query: DashboardQuery) => {
+  if (!query) {
+    return false;
+  }
+  return Boolean(query.query || query.tag?.length > 0 || query.starred || query.folderIds?.length > 0 || query.sort);
 };

@@ -1,4 +1,4 @@
-import React, { FC, useState } from 'react';
+import React, { FC } from 'react';
 import { css } from 'emotion';
 import { useTheme, CustomScrollbar, stylesFactory, Button, RadioButtonGroup, HorizontalGroup } from '@grafana/ui';
 import { GrafanaTheme } from '@grafana/data';
@@ -7,6 +7,7 @@ import { TagFilter } from 'app/core/components/TagFilter/TagFilter';
 import { SortPicker } from 'app/core/components/TagFilter/SortPicker';
 import { useSearchQuery } from '../hooks/useSearchQuery';
 import { useDashboardSearch } from '../hooks/useDashboardSearch';
+import { useSearchLayout } from '../hooks/useSearchLayout';
 import { SearchField } from './SearchField';
 import { SearchResults } from './SearchResults';
 
@@ -17,16 +18,11 @@ export interface Props {
   folder?: string;
 }
 
-const layoutOptions = [
-  { label: 'Folders', value: 'folders' },
-  { label: 'List', value: 'list' },
-];
-
 export const DashboardSearch: FC<Props> = ({ onCloseSearch, folder }) => {
   const payload = folder ? { query: `folder:${folder}` } : {};
   const { query, onQueryChange, onTagFilterChange, onTagAdd, onSortChange } = useSearchQuery(payload);
   const { results, loading, onToggleSection, onKeyDown } = useDashboardSearch(query, onCloseSearch);
-  const [layout, setLayout] = useState(layoutOptions[0].value);
+  const { layout, setLayout, layoutOptions } = useSearchLayout(query);
   const theme = useTheme();
   const styles = getStyles(theme);
 
@@ -36,6 +32,13 @@ export const DashboardSearch: FC<Props> = ({ onCloseSearch, folder }) => {
     const target = e.target as HTMLElement;
     if ((target.tagName as any) !== 'INPUT' && ['Escape', 'ArrowLeft'].includes(e.key)) {
       onCloseSearch();
+    }
+  };
+
+  const onLayoutChange = (layout: string) => {
+    setLayout(layout);
+    if (query.sort) {
+      onSortChange(null);
     }
   };
 
@@ -52,8 +55,8 @@ export const DashboardSearch: FC<Props> = ({ onCloseSearch, folder }) => {
       <div className={styles.search}>
         <div className={styles.actionRow}>
           <HorizontalGroup spacing="md">
-            <RadioButtonGroup options={layoutOptions} onChange={(value: string) => setLayout(value)} value={layout} />
-            <SortPicker onChange={onSortChange} />
+            <RadioButtonGroup options={layoutOptions} onChange={onLayoutChange} value={layout} />
+            <SortPicker onChange={onSortChange} value={query.sort} />
           </HorizontalGroup>
           <HorizontalGroup>
             <TagFilter tags={query.tag} tagOptions={searchSrv.getDashboardTags} onChange={onTagFilterChange} />
@@ -66,6 +69,7 @@ export const DashboardSearch: FC<Props> = ({ onCloseSearch, folder }) => {
             onTagSelected={onTagAdd}
             editable={false}
             onToggleSection={onToggleSection}
+            layout={layout}
           />
         </CustomScrollbar>
       </div>
