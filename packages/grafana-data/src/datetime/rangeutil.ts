@@ -1,10 +1,11 @@
 import each from 'lodash/each';
 import groupBy from 'lodash/groupBy';
 
-import { RawTimeRange } from '../types/time';
+import { RawTimeRange, TimeRange, TimeZone } from '../types/time';
 
 import * as dateMath from './datemath';
 import { isDateTime, DateTime } from './moment_wrapper';
+import { timeZoneAbbrevation } from './formatter';
 
 const spans: { [key: string]: { display: string; section?: number } } = {
   s: { display: 'second' },
@@ -179,4 +180,12 @@ export const isValidTimeSpan = (value: string) => {
 
   const info = describeTextRange(value);
   return info.invalid !== true;
+};
+
+export const describeTimeRangeAbbrevation = (range: TimeRange, timeZone?: TimeZone) => {
+  if (isDateTime(range.from)) {
+    return timeZoneAbbrevation(range.from, { timeZone });
+  }
+  const parsed = dateMath.parse(range.from, true);
+  return parsed ? timeZoneAbbrevation(parsed, { timeZone }) : '';
 };

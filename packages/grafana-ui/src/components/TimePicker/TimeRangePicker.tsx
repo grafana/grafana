@@ -13,14 +13,7 @@ import { stylesFactory } from '../../themes/stylesFactory';
 import { withTheme, useTheme } from '../../themes/ThemeContext';
 
 // Types
-import {
-  isDateTime,
-  DateTime,
-  rangeUtil,
-  GrafanaTheme,
-  TIME_FORMAT,
-  dateTimeFormatZoneAbbrevation,
-} from '@grafana/data';
+import { isDateTime, DateTime, rangeUtil, GrafanaTheme, dateTimeFormatWithAbbrevation } from '@grafana/data';
 import { TimeRange, TimeOption, TimeZone, dateMath } from '@grafana/data';
 import { Themeable } from '../../types';
 
@@ -167,7 +160,7 @@ export class UnthemedTimeRangePicker extends PureComponent<Props, State> {
             </button>
           )}
           <div>
-            <Tooltip content={<TimePickerTooltip timeRange={value} />} placement="bottom">
+            <Tooltip content={<TimePickerTooltip timeRange={value} timeZone={timeZone} />} placement="bottom">
               <button aria-label="TimePicker Open Button" className={timePickerButtonClass} onClick={this.onOpen}>
                 <Icon name="clock-nine" className={cx(styles.clockIcon, timePickerIconClass)} size="lg" />
                 <TimePickerButtonLabel {...this.props} />
@@ -213,11 +206,11 @@ const ZoomOutTooltip = () => (
   </>
 );
 
-const TimePickerTooltip = ({ timeRange }: { timeRange: TimeRange }) => (
+const TimePickerTooltip = ({ timeRange, timeZone }: { timeRange: TimeRange; timeZone?: TimeZone }) => (
   <>
-    {timeRange.from.format(TIME_FORMAT)}
+    {dateTimeFormatWithAbbrevation(timeRange.from, { timeZone })}
     <div className="text-center">to</div>
-    {timeRange.to.format(TIME_FORMAT)}
+    {dateTimeFormatWithAbbrevation(timeRange.to, { timeZone })}
   </>
 );
 
@@ -233,7 +226,7 @@ const TimePickerButtonLabel = memo<Props>(props => {
   return (
     <span className={styles.container}>
       <span>{formattedRange(props.value, isUTC)}</span>
-      <span className={styles.utc}>{dateTimeFormatZoneAbbrevation(Date.now(), { timeZone: props.timeZone })}</span>
+      <span className={styles.utc}>{rangeUtil.describeTimeRangeAbbrevation(props.value, props.timeZone)}</span>
     </span>
   );
 });
