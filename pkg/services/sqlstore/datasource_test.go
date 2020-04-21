@@ -9,19 +9,23 @@ import (
 
 func TestDataAccess(t *testing.T) {
 	defaultAddDatasourceCommand := models.AddDataSourceCommand{
+		DataSourceParams: models.DataSourceParams{
+			Url: "http://test",
+		},
 		OrgId:  10,
 		Name:   "nisse",
 		Type:   models.DS_GRAPHITE,
 		Access: models.DS_ACCESS_DIRECT,
-		Url:    "http://test",
 	}
 
 	defaultUpdateDatasourceCommand := models.UpdateDataSourceCommand{
+		DataSourceParams: models.DataSourceParams{
+			Url: "http://test",
+		},
 		OrgId:  10,
 		Name:   "nisse_updated",
 		Type:   models.DS_GRAPHITE,
 		Access: models.DS_ACCESS_DIRECT,
-		Url:    "http://test",
 	}
 
 	initDatasource := func() *models.DataSource {
@@ -42,11 +46,13 @@ func TestDataAccess(t *testing.T) {
 			InitTestDB(t)
 
 			err := AddDataSource(&models.AddDataSourceCommand{
+				DataSourceParams: models.DataSourceParams{
+					Url: "http://test",
+				},
 				OrgId:    10,
 				Name:     "laban",
 				Type:     models.DS_GRAPHITE,
 				Access:   models.DS_ACCESS_DIRECT,
-				Url:      "http://test",
 				Database: "site",
 				ReadOnly: true,
 			})
@@ -116,12 +122,14 @@ func TestDataAccess(t *testing.T) {
 			ds := initDatasource()
 
 			cmd := models.UpdateDataSourceCommand{
+				DataSourceParams: models.DataSourceParams{
+					Url: "http://test",
+				},
 				Id:      ds.Id,
 				OrgId:   10,
 				Name:    "nisse",
 				Type:    models.DS_GRAPHITE,
 				Access:  models.DS_ACCESS_PROXY,
-				Url:     "http://test",
 				Version: ds.Version,
 			}
 			// Make a copy as UpdateDataSource modifies it
@@ -139,12 +147,14 @@ func TestDataAccess(t *testing.T) {
 			ds := initDatasource()
 
 			cmd := &models.UpdateDataSourceCommand{
+				DataSourceParams: models.DataSourceParams{
+					Url: "http://test",
+				},
 				Id:     ds.Id,
 				OrgId:  10,
 				Name:   "nisse",
 				Type:   models.DS_GRAPHITE,
 				Access: models.DS_ACCESS_PROXY,
-				Url:    "http://test",
 			}
 
 			err := UpdateDataSource(cmd)
@@ -156,12 +166,14 @@ func TestDataAccess(t *testing.T) {
 			ds := initDatasource()
 
 			cmd := &models.UpdateDataSourceCommand{
+				DataSourceParams: models.DataSourceParams{
+					Url: "http://test",
+				},
 				Id:      ds.Id,
 				OrgId:   10,
 				Name:    "nisse",
 				Type:    models.DS_GRAPHITE,
 				Access:  models.DS_ACCESS_PROXY,
-				Url:     "http://test",
 				Version: 90000,
 			}
 

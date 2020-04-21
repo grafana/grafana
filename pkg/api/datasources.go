@@ -128,7 +128,7 @@ func DeleteDataSourceByName(c *models.ReqContext) Response {
 }
 
 func validateParams(params models.DataSourceParams) Response {
-	u := params.GetURL()
+	u := params.Url
 	if u != "" {
 		_, err := url.Parse(u)
 		if err != nil {
@@ -142,7 +142,7 @@ func validateParams(params models.DataSourceParams) Response {
 
 func AddDataSource(c *models.ReqContext, cmd models.AddDataSourceCommand) Response {
 	cmd.OrgId = c.OrgId
-	if resp := validateParams(cmd); resp != nil {
+	if resp := validateParams(cmd.DataSourceParams); resp != nil {
 		return resp
 	}
 
@@ -166,7 +166,7 @@ func AddDataSource(c *models.ReqContext, cmd models.AddDataSourceCommand) Respon
 func UpdateDataSource(c *models.ReqContext, cmd models.UpdateDataSourceCommand) Response {
 	cmd.OrgId = c.OrgId
 	cmd.Id = c.ParamsInt64(":id")
-	if resp := validateParams(cmd); resp != nil {
+	if resp := validateParams(cmd.DataSourceParams); resp != nil {
 		return resp
 	}
 
