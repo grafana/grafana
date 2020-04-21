@@ -72,8 +72,6 @@ const prepareRelease = useSpinner<any>('Preparing release', async ({ dryrun, ver
     ['/bin/rm', ['-rf', 'dist'], { dryrun }],
     ['mv', ['-v', distContentDir, 'dist']],
     ['git', ['add', '--force', 'dist'], { dryrun }],
-    ['/bin/rm', ['-rf', 'src'], { enterprise: true }],
-    ['git', ['rm', '-rf', 'src'], { enterprise: true }],
     [
       'git',
       ['commit', '-m', `automated release ${pluginJson.info.version} [skip ci]`],
@@ -102,6 +100,7 @@ const prepareRelease = useSpinner<any>('Preparing release', async ({ dryrun, ver
           line[1].push('--dry-run');
         }
 
+        // Exit if the plugin is NOT an enterprise plugin
         if (pluginJson.enterprise && !opts['enterprise']) {
           continue;
         }
