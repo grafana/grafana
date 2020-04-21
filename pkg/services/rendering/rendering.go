@@ -3,6 +3,7 @@ package rendering
 import (
 	"context"
 	"fmt"
+	"math"
 	"net/url"
 	"os"
 	"path/filepath"
@@ -131,6 +132,9 @@ func (rs *RenderingService) Render(ctx context.Context, opts Opts) (*RenderResul
 	}
 
 	rs.log.Info("Rendering", "path", opts.Path)
+	if math.IsInf(opts.DeviceScaleFactor, 0) || math.IsNaN(opts.DeviceScaleFactor) || opts.DeviceScaleFactor <= 0 {
+		opts.DeviceScaleFactor = 1
+	}
 	renderKey, err := rs.generateAndStoreRenderKey(opts.OrgId, opts.UserId, opts.OrgRole)
 	if err != nil {
 		return nil, err

@@ -11,7 +11,7 @@ weight = 5
 # Data Sources
 
 Data source plugins enable people to develop plugins for any database that
-communicates over http. Its up to the plugin to transform the data into
+communicates over HTTP. Its up to the plugin to transform the data into
 time series data so that any grafana panel can then show it.
 
 ## Data source development
