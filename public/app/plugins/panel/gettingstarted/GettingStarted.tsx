@@ -2,14 +2,15 @@
 import React, { PureComponent } from 'react';
 
 import { PanelProps } from '@grafana/data';
-import { Button, stylesFactory } from '@grafana/ui';
+import { Button, getButtonStyles, Icon, stylesFactory } from '@grafana/ui';
 import { config } from '@grafana/runtime';
-import { css } from 'emotion';
+import { css, cx } from 'emotion';
 import { contextSrv } from 'app/core/core';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { Step } from './components/Step';
 import { getSteps } from './steps';
+import { Help } from './components/Help';
 
 interface State {
   checksDone: boolean;
@@ -29,6 +30,18 @@ export class GettingStarted extends PureComponent<PanelProps, State> {
     });
   }
 
+  onForwardClick = () => {
+    this.setState(prevState => ({
+      currentStep: prevState.currentStep + 1,
+    }));
+  };
+
+  onPreviousClick = () => {
+    this.setState(prevState => ({
+      currentStep: prevState.currentStep - 1,
+    }));
+  };
+
   dismiss = () => {
     const { id } = this.props;
     const dashboard = getDashboardSrv().getCurrent();
@@ -46,45 +59,36 @@ export class GettingStarted extends PureComponent<PanelProps, State> {
   };
 
   render() {
-    const { checksDone } = this.state;
+    const { checksDone, currentStep, steps } = this.state;
     if (!checksDone) {
       return <div>checking...</div>;
     }
 
     const styles = getStyles();
-    const step = this.state.steps[1];
-
+    const step = steps[currentStep];
     return (
       <div className={styles.container}>
-        <div className={styles.content}>
-          <div className={styles.header}>
-            <div className={styles.heading}>
-              <h1>{step.heading}</h1>
-              <p>{step.subheading}</p>
+        <div>
+          {currentStep === steps.length - 1 && (
+            <div className={cx(styles.backForwardButtons, styles.previous)} onClick={this.onPreviousClick}>
+              <Icon size="xl" name="angle-left" />
             </div>
-            <div className={styles.help}>
-              <h3>Need help?</h3>
-              <div className={styles.helpOptions}>
-                {['Documentation', 'Tutorials', 'Community', 'Public Slack'].map((item: string, index: number) => {
-                  return (
-                    <a href="" key={`${item}-${index}`} className={styles.helpOption}>
-                      <Button
-                        variant="primary"
-                        size="md"
-                        className={css`
-                          width: 150px;
-                          justify-content: center;
-                        `}
-                      >
-                        {item}
-                      </Button>
-                    </a>
-                  );
-                })}
+          )}
+          <div className={styles.content}>
+            <div className={styles.header}>
+              <div className={styles.heading}>
+                <h1>{step.heading}</h1>
+                <p>{step.subheading}</p>
               </div>
+              <Help />
             </div>
+            <Step step={step} />
           </div>
-          <Step step={step} />
+          {currentStep < steps.length - 1 && (
+            <div className={cx(styles.backForwardButtons, styles.forward)} onClick={this.onForwardClick}>
+              <Icon size="xl" name="angle-right" />
+            </div>
+          )}
         </div>
         <div className={styles.dismiss}>
           <Button variant="secondary" onClick={this.dismiss}>
@@ -121,20 +125,27 @@ const getStyles = stylesFactory(() => {
     `,
     heading: css`
       margin-right: 200px;
-      max-width: 40%;
+      width: 40%;
     `,
-    help: css`
-      width: 330px;
-      padding-left: 16px;
-      border-left: 3px solid ${theme.palette.blue95};
+    backForwardButtons: cx(
+      getButtonStyles({ theme, size: 'md', variant: 'secondary' }).button,
+      css`
+        position: absolute;
+        right: 50px;
+        bottom: 150px;
+        height: 50px;
+        display: flex;
+        width: 20px;
+        height: 50px;
+        align-items: center;
+        justify-content: center;
+      `
+    ),
+    previous: css`
+      left: 30px;
     `,
-    helpOptions: css`
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: space-between;
-    `,
-    helpOption: css`
-      margin-top: 8px;
+    forward: css`
+      right: 30px;
     `,
     dismiss: css`
       display: flex;
