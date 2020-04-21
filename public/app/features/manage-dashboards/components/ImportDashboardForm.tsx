@@ -1,7 +1,6 @@
 import React, { FC, useEffect, useState } from 'react';
 import {
   Button,
-  Forms,
   FormAPI,
   FormsOnSubmit,
   HorizontalGroup,
@@ -9,6 +8,7 @@ import {
   Input,
   Field,
   InputControl,
+  Legend,
 } from '@grafana/ui';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
 import DataSourcePicker from 'app/core/components/Select/DataSourcePicker';
@@ -51,11 +51,10 @@ export const ImportDashboardForm: FC<Props> = ({
 
   return (
     <>
-      <Forms.Legend>Options</Forms.Legend>
+      <Legend>Options</Legend>
       <Field label="Name" invalid={!!errors.title} error={errors.title && errors.title.message}>
         <Input
           name="title"
-          size="md"
           type="text"
           ref={register({
             required: 'Name is required',
@@ -83,18 +82,13 @@ export const ImportDashboardForm: FC<Props> = ({
         <>
           {!uidReset ? (
             <Input
-              size="md"
               name="uid"
               disabled
               ref={register({ validate: async (v: string) => await validateUid(v) })}
               addonAfter={!uidReset && <Button onClick={onUidReset}>Change uid</Button>}
             />
           ) : (
-            <Input
-              size="md"
-              name="uid"
-              ref={register({ required: true, validate: async (v: string) => await validateUid(v) })}
-            />
+            <Input name="uid" ref={register({ required: true, validate: async (v: string) => await validateUid(v) })} />
           )}
         </>
       </Field>
@@ -129,12 +123,7 @@ export const ImportDashboardForm: FC<Props> = ({
               invalid={errors.constants && !!errors.constants[index]}
               key={constantIndex}
             >
-              <Input
-                ref={register({ required: true })}
-                name={`${constantIndex}`}
-                size="md"
-                defaultValue={input.value}
-              />
+              <Input ref={register({ required: true })} name={`${constantIndex}`} defaultValue={input.value} />
             </Field>
           );
         })}

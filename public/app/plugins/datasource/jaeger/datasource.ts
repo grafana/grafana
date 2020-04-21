@@ -26,7 +26,7 @@ export class JaegerDatasource extends DataSourceApi<JaegerQuery> {
     super(instanceSettings);
   }
 
-  async metadataRequest(url: string, params?: Record<string, any>) {
+  async metadataRequest(url: string, params?: Record<string, any>): Promise<any> {
     const res = await this._request(url, params, { silent: true }).toPromise();
     return res.data.data;
   }

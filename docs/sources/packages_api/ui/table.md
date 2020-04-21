@@ -15,7 +15,7 @@ draft = true
 <b>Signature</b>
 
 ```typescript
-Table: ({ data, height, onCellClick, width }: Props) => JSX.Element
+Table: FC<Props>
 ```
 <b>Import</b>
 

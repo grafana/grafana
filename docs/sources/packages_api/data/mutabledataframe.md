@@ -13,7 +13,7 @@ draft = true
 <b>Signature</b>
 
 ```typescript
-export declare class MutableDataFrame<T = any> implements DataFrame, MutableVector<T> 
+export declare class MutableDataFrame<T = any> extends FunctionalVector<T> implements DataFrame, MutableVector<T> 
 ```
 <b>Import</b>
 
@@ -48,7 +48,6 @@ import { MutableDataFrame } from '@grafana/data';
 |  [get(idx)](#get-method) |  | Get an object with a property for each field in the DataFrame |
 |  [reverse()](#reverse-method) |  | Reverse all values |
 |  [set(index, value, addMissingFields)](#set-method) |  |  |
-|  [toArray()](#toarray-method) |  |  |
 |  [toJSON()](#tojson-method) |  | The simplified JSON values used in JSON.stringify() |
 |  [validate()](#validate-method) |  |  |
 
@@ -241,17 +240,6 @@ set(index: number, value: T, addMissingFields?: boolean): void;
 <b>Returns:</b>
 
 `void`
-
-### toArray method
-
-<b>Signature</b>
-
-```typescript
-toArray(): T[];
-```
-<b>Returns:</b>
-
-`T[]`
 
 ### toJSON method
 

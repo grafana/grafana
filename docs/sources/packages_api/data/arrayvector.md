@@ -13,7 +13,7 @@ draft = true
 <b>Signature</b>
 
 ```typescript
-export declare class ArrayVector<T = any> implements MutableVector<T> 
+export declare class ArrayVector<T = any> extends FunctionalVector<T> implements MutableVector<T> 
 ```
 <b>Import</b>
 
