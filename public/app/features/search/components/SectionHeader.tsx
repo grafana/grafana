@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import React, { FC, useCallback } from 'react';
 import { css, cx } from 'emotion';
 import { GrafanaTheme } from '@grafana/data';
 import { Icon, IconButton, IconName, stylesFactory, useTheme } from '@grafana/ui';
@@ -27,13 +27,16 @@ export const SectionHeader: FC<SectionHeaderProps> = ({
     onSectionClick(section);
   };
 
-  const onSectionChecked = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (onToggleChecked) {
-      onToggleChecked(section);
-    }
-  };
+  const onSectionChecked = useCallback(
+    (e: React.MouseEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      if (onToggleChecked) {
+        onToggleChecked(section);
+      }
+    },
+    [section]
+  );
 
   return !section.hideHeader ? (
     <div className={styles.wrapper} onClick={onSectionExpand}>
