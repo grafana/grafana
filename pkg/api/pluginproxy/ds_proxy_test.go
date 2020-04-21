@@ -7,11 +7,13 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"net/url"
+	"strings"
 	"testing"
 	"time"
 
 	"github.com/grafana/grafana/pkg/components/securejsondata"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"golang.org/x/oauth2"
@@ -561,6 +563,7 @@ func TestNewDataSourceProxy_InvalidURL(t *testing.T) {
 	plugin := plugins.DataSourcePlugin{}
 	_, err := NewDataSourceProxy(&ds, &plugin, &ctx, "api/method", &cfg)
 	require.Error(t, err)
+	assert.True(t, strings.HasPrefix(err.Error(), `Validation of URL "://host/root" failed`))
 }
 
 type CloseNotifierResponseRecorder struct {

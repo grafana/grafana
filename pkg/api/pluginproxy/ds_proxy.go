@@ -31,6 +31,20 @@ var (
 	client = newHTTPClient()
 )
 
+type URLValidationError struct {
+	error
+
+	url string
+}
+
+func (e URLValidationError) Error() string {
+	return fmt.Sprintf("Validation of URL %q failed: %s", e.url, e.error.Error())
+}
+
+func (e URLValidationError) Unwrap() error {
+	return e.error
+}
+
 type DataSourceProxy struct {
 	ds        *models.DataSource
 	ctx       *models.ReqContext
@@ -74,7 +88,7 @@ func NewDataSourceProxy(ds *models.DataSource, plugin *plugins.DataSourcePlugin,
 	proxyPath string, cfg *setting.Cfg) (*DataSourceProxy, error) {
 	targetURL, err := url.Parse(ds.Url)
 	if err != nil {
-		return nil, err
+		return nil, URLValidationError{error: err, url: ds.Url}
 	}
 
 	return &DataSourceProxy{
