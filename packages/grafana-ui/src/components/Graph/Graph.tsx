@@ -62,6 +62,8 @@ export class Graph extends PureComponent<GraphProps, GraphState> {
 
   element: HTMLElement | null = null;
   $element: any;
+  // Flot instance
+  plot: any;
 
   componentDidUpdate(prevProps: GraphProps, prevState: GraphState) {
     if (prevProps !== this.props) {
@@ -101,16 +103,11 @@ export class Graph extends PureComponent<GraphProps, GraphState> {
     // }
 
     console.log('onGraphHover', evt.pos);
-    this.setState({
-      isTooltipVisible: true,
-      pos: evt.pos,
-    });
+    this.plot?.setCrosshair(evt.pos);
   };
 
   onGraphHoverClear = () => {
-    this.setState({
-      isTooltipVisible: false,
-    });
+    this.plot?.clearCrosshair();
   };
 
   onPlotSelected = (event: JQueryEventObject, ranges: { xaxis: { from: number; to: number } }) => {
@@ -390,7 +387,7 @@ export class Graph extends PureComponent<GraphProps, GraphState> {
     };
 
     try {
-      $.plot(
+      this.plot = $.plot(
         this.element,
         series.filter(s => s.isVisible),
         flotOptions
