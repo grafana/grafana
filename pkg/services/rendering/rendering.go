@@ -3,6 +3,7 @@ package rendering
 import (
 	"context"
 	"fmt"
+	"math"
 	"net/url"
 	"os"
 	"path/filepath"
@@ -115,23 +116,27 @@ func (rs *RenderingService) Render(ctx context.Context, opts Opts) (*RenderResul
 		}, nil
 	}
 
-	if rs.renderAction != nil {
-		rs.log.Info("Rendering", "path", opts.Path)
-		renderKey, err := rs.generateAndStoreRenderKey(opts.OrgId, opts.UserId, opts.OrgRole)
-		if err != nil {
-			return nil, err
-		}
-
-		defer rs.deleteRenderKey(renderKey)
-
-		defer func() {
-			rs.inProgressCount--
-		}()
-
-		rs.inProgressCount++
-		return rs.renderAction(ctx, renderKey, opts)
+	if rs.renderAction == nil {
+		return nil, fmt.Errorf("no renderer found")
 	}
-	return nil, fmt.Errorf("No renderer found")
+
+	rs.log.Info("Rendering", "path", opts.Path)
+	if math.IsInf(opts.DeviceScaleFactor, 0) || math.IsNaN(opts.DeviceScaleFactor) || opts.DeviceScaleFactor <= 0 {
+		opts.DeviceScaleFactor = 1
+	}
+	renderKey, err := rs.generateAndStoreRenderKey(opts.OrgId, opts.UserId, opts.OrgRole)
+	if err != nil {
+		return nil, err
+	}
+
+	defer rs.deleteRenderKey(renderKey)
+
+	defer func() {
+		rs.inProgressCount--
+	}()
+
+	rs.inProgressCount++
+	return rs.renderAction(ctx, renderKey, opts)
 }
 
 func (rs *RenderingService) GetRenderUser(key string) (*RenderUser, bool) {
