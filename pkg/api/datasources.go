@@ -2,6 +2,7 @@ package api
 
 import (
 	"encoding/json"
+	"net/url"
 	"sort"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
@@ -10,6 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/util"
+	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
 func GetDataSources(c *models.ReqContext) Response {
@@ -126,6 +128,12 @@ func DeleteDataSourceByName(c *models.ReqContext) Response {
 
 func AddDataSource(c *models.ReqContext, cmd models.AddDataSourceCommand) Response {
 	cmd.OrgId = c.OrgId
+	if cmd.Url != "" {
+		_, err := url.Parse(cmd.Url)
+		if err != nil {
+			return Error(400, "Validation error", errutil.Wrapf(err, "invalid data source URL %q", cmd.Url))
+		}
+	}
 
 	if err := bus.Dispatch(&cmd); err != nil {
 		if err == models.ErrDataSourceNameExists || err == models.ErrDataSourceUidExists {
@@ -147,6 +155,12 @@ func AddDataSource(c *models.ReqContext, cmd models.AddDataSourceCommand) Respon
 func UpdateDataSource(c *models.ReqContext, cmd models.UpdateDataSourceCommand) Response {
 	cmd.OrgId = c.OrgId
 	cmd.Id = c.ParamsInt64(":id")
+	if cmd.Url != "" {
+		_, err := url.Parse(cmd.Url)
+		if err != nil {
+			return Error(400, "Validation error", errutil.Wrapf(err, "invalid data source URL %q", cmd.Url))
+		}
+	}
 
 	err := fillWithSecureJSONData(&cmd)
 	if err != nil {
