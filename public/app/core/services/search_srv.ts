@@ -210,6 +210,10 @@ export class SearchSrv {
   getDashboardTags() {
     return backendSrv.get('/api/dashboards/tags');
   }
+
+  getSortOptions() {
+    return backendSrv.get('/api/search/sorting');
+  }
 }
 
 coreModule.service('searchSrv', SearchSrv);
