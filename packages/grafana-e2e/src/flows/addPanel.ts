@@ -19,7 +19,7 @@ export const addPanel = (config?: Partial<AddPanelConfig>) => {
   getScenarioContext().then(({ lastAddedDashboardUid }) => {
     e2e.flows.openDashboard(lastAddedDashboardUid);
     e2e.pages.Dashboard.Toolbar.toolbarItems('Add panel').click();
-    e2e.pages.AddDashboard.editNewPanel().click();
+    e2e.pages.AddDashboard.addNewPanel().click();
     e2e()
       .get('.ds-picker')
       .click()

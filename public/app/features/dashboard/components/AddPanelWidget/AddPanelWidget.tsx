@@ -32,10 +32,6 @@ export interface DispatchProps {
 
 export type Props = OwnProps & DispatchProps;
 
-export interface State {
-  copiedPanelPlugins: any[];
-}
-
 const getCopiedPanelPlugins = () => {
   const panels = _.chain(config.panels)
     .filter({ hideFromList: false })
@@ -60,7 +56,6 @@ const getCopiedPanelPlugins = () => {
 };
 
 export const AddPanelWidgetUnconnected: React.FC<Props> = ({ panel, dashboard, updateLocation, addPanel }) => {
-  const copiedPanelPlugins = useMemo(() => getCopiedPanelPlugins(), []);
   const theme = useTheme();
 
   const onCancelAddPanel = (evt: any) => {
@@ -131,17 +126,12 @@ export const AddPanelWidgetUnconnected: React.FC<Props> = ({ panel, dashboard, u
     <div className={cx('panel-container', styles.wrapper)}>
       <AddPanelWidgetHandle onCancel={onCancelAddPanel} />
       <div className={styles.actionsWrapper}>
-        <AddPanelWidgetCreate onCreate={onCreateNewPanel} />
+        <AddPanelWidgetCreate onCreate={onCreateNewPanel} onPasteCopiedPanel={onPasteCopiedPanel} />
         <div>
           <HorizontalGroup justify="center">
             <Button onClick={onCreateNewRow} variant="secondary" size="sm">
               Convert to row
             </Button>
-            {copiedPanelPlugins.length === 1 && (
-              <Button onClick={() => onPasteCopiedPanel(copiedPanelPlugins[0])} variant="secondary" size="sm">
-                Paste copied panel
-              </Button>
-            )}
           </HorizontalGroup>
         </div>
       </div>
@@ -161,22 +151,32 @@ const AddPanelWidgetHandle: React.FC<AddPanelWidgetHandleProps> = ({ onCancel })
   const styles = getAddPanelWigetHandleStyles(theme);
   return (
     <div className={cx(styles.handle, 'grid-drag-handle')}>
-      <IconButton name="trash-alt" onClick={onCancel} surface="header" className="add-panel-widget__close" />
+      <IconButton name="times" onClick={onCancel} surface="header" className="add-panel-widget__close" />
     </div>
   );
 };
 
 interface AddPanelWidgetCreateProps {
   onCreate: () => void;
+  onPasteCopiedPanel: (panelPluginInfo: PanelPluginInfo) => void;
 }
-const AddPanelWidgetCreate: React.FC<AddPanelWidgetCreateProps> = ({ onCreate }) => {
+
+const AddPanelWidgetCreate: React.FC<AddPanelWidgetCreateProps> = ({ onCreate, onPasteCopiedPanel }) => {
+  const copiedPanelPlugins = useMemo(() => getCopiedPanelPlugins(), []);
   const theme = useTheme();
   const styles = getAddPanelWidgetCreateStyles(theme);
   return (
     <div className={styles.wrapper}>
-      <Button icon="pen" size="md" onClick={onCreate} aria-label={e2e.pages.AddDashboard.selectors.editNewPanel}>
-        Edit new panel
-      </Button>
+      <HorizontalGroup>
+        <Button icon="plus" size="md" onClick={onCreate} aria-label={e2e.pages.AddDashboard.selectors.addNewPanel}>
+          Add new panel
+        </Button>
+        {copiedPanelPlugins.length === 1 && (
+          <Button variant="secondary" size="md" onClick={() => onPasteCopiedPanel(copiedPanelPlugins[0])}>
+            Paste copied panel
+          </Button>
+        )}
+      </HorizontalGroup>
     </div>
   );
 };
@@ -214,7 +214,7 @@ const getAddPanelWigetHandleStyles = stylesFactory((theme: GrafanaTheme) => {
       cursor: grab;
       top: 0;
       left: 0;
-      height: 28px;
+      height: 26px;
       padding: 0 ${theme.spacing.xs};
       width: 100%;
       display: flex;
