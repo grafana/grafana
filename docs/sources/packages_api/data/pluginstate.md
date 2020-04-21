@@ -29,4 +29,5 @@ import { PluginState } from '@grafana/data';
 |  --- | --- | --- |
 |  alpha | <code>&quot;alpha&quot;</code> |  |
 |  beta | <code>&quot;beta&quot;</code> |  |
+|  deprecated | <code>&quot;deprecated&quot;</code> |  |
 

@@ -17,7 +17,7 @@ Returns tag badge background and border colors based on hashed tag name.
 <b>Signature</b>
 
 ```typescript
-export declare function getTagColorsFromName(name: string): {
+export declare function getTagColorsFromName(name?: string): {
     color: string;
     borderColor: string;
 };
@@ -31,7 +31,7 @@ import { getTagColorsFromName } from '@grafana/ui';
 
 |  Parameter | Type | Description |
 |  --- | --- | --- |
-|  name | <code>string</code> |  |
+|  name | <code>string</code> | tag name |
 
 <b>Returns:</b>
 
