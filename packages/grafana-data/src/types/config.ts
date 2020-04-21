@@ -3,7 +3,7 @@ import { PanelPluginMeta } from './panel';
 import { GrafanaTheme } from './theme';
 
 /**
- * Describes the build information that will be available via the Grafana cofiguration.
+ * Describes the build information that will be available via the Grafana configuration.
  *
  * @public
  */
