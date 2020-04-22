@@ -281,7 +281,9 @@ export class UnConnectedExploreToolbar extends PureComponent<Props> {
                 <ResponsiveButton
                   splitted={splitted}
                   title="Split"
-                  onClick={split}
+                  /* This way ResponsiveButton doesn't add event as a parameter when invoking split function
+                   * which breaks splitting functionality */
+                  onClick={() => split()}
                   icon="columns"
                   iconClassName="icon-margin-right"
                   disabled={isLive}
