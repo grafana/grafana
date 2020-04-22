@@ -178,6 +178,10 @@ func (t ConvertToProtobuf) CallResourceRequest(req *CallResourceRequest) *plugin
 		Url:           req.URL,
 		Body:          req.Body,
 	}
+	if req.Headers == nil {
+		return protoReq
+	}
+	protoReq.Headers = make(map[string]*pluginv2.StringList, len(protoReq.Headers))
 	for k, values := range req.Headers {
 		protoReq.Headers[k] = &pluginv2.StringList{Values: values}
 	}
