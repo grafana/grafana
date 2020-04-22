@@ -29,6 +29,7 @@ import { Logs } from './Logs';
 import { LogsCrossFadeTransition } from './utils/LogsCrossFadeTransition';
 import { LiveTailControls } from './useLiveTailControls';
 import { getLinksFromLogsField } from '../panel/panellinks/linkSuppliers';
+import { getDataSourceSrv } from '@grafana/runtime';
 
 interface LogsContainerProps {
   datasourceInstance?: DataSourceApi;
@@ -104,9 +105,35 @@ export class LogsContainer extends PureComponent<LogsContainerProps> {
       if (d.link.meta?.datasourceUid) {
         return {
           ...d.linkModel,
+          title:
+            d.linkModel.title ||
+            getDataSourceSrv().getDataSourceSettingsByUid(d.link.meta.datasourceUid)?.name ||
+            'Unknown datasource',
           onClick: () => {
             this.props.splitOpen({ dataSourceUid: d.link.meta.datasourceUid, query: field.values.get(rowIndex) });
           },
+        };
+      }
+
+      if (!d.linkModel.title) {
+        let href = d.linkModel.href;
+        // The URL constructor needs the url to have protocol
+        if (href.indexOf('://') < 0) {
+          // Doesn't really matter what protocol we use.
+          href = `http://${href}`;
+        }
+        let title;
+        try {
+          const parsedUrl = new URL(href);
+          title = parsedUrl.hostname;
+        } catch (_e) {
+          // Should be good enough fallback, user probably did not input valid url.
+          title = href;
+        }
+
+        return {
+          ...d.linkModel,
+          title,
         };
       }
       return d.linkModel;

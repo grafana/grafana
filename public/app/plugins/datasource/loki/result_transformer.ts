@@ -14,6 +14,7 @@ import {
   DataFrameView,
   dateTime,
   DataLink,
+  Field,
 } from '@grafana/data';
 import templateSrv from 'app/features/templating/template_srv';
 import TableModel from 'app/core/table_model';
@@ -30,11 +31,11 @@ import {
   LokiTailResponse,
   LokiQuery,
   LokiOptions,
+  DerivedFieldConfig,
 } from './types';
 
 import { formatQuery, getHighlighterExpressionsFromQuery } from './query_utils';
 import { of } from 'rxjs';
-import { getDataSourceSrv } from '@grafana/runtime';
 
 /**
  * Transforms LokiLogStream structure into a dataFrame. Used when doing standard queries and older version of Loki.
@@ -393,47 +394,49 @@ export const enhanceDataFrame = (dataFrame: DataFrame, config: LokiOptions | nul
   if (!derivedFields.length) {
     return;
   }
-
-  const fields = derivedFields.reduce((acc, field) => {
-    const config: FieldConfig = {};
-    if (field.url || field.datasourceUid) {
-      const link: Partial<DataLink> = {
-        url: field.url,
-      };
-      if (field.datasourceUid) {
-        const dsSettings = getDataSourceSrv().getDataSourceSettingsByUid(field.datasourceUid);
-        link.title = dsSettings?.name || 'Unknown datasource';
-        link.meta = {
-          datasourceUid: field.datasourceUid,
-        };
-      } else {
-        const url = new URL(field.url);
-        link.title = url.hostname;
-      }
-
-      config.links = [link as DataLink];
-    }
-    const dataFrameField = {
-      name: field.name,
-      type: FieldType.string,
-      config,
-      values: new ArrayVector<string>([]),
-    };
-
-    acc[field.name] = dataFrameField;
-    return acc;
-  }, {} as Record<string, any>);
+  const newFields = derivedFields.map(fieldFromDerivedFieldConfig);
+  const newFieldsMap = _.keyBy(newFields, 'name');
 
   const view = new DataFrameView(dataFrame);
   view.forEach((row: { line: string }) => {
     for (const field of derivedFields) {
       const logMatch = row.line.match(field.matcherRegex);
-      fields[field.name].values.add(logMatch && logMatch[1]);
+      newFieldsMap[field.name].values.add(logMatch && logMatch[1]);
     }
   });
 
-  dataFrame.fields = [...dataFrame.fields, ...Object.values(fields)];
+  dataFrame.fields = [...dataFrame.fields, ...newFields];
 };
+
+/**
+ * Transform defivedField config into dataframe field with config that contains link.
+ */
+function fieldFromDerivedFieldConfig(derivedFieldConfig: DerivedFieldConfig): Field<any, ArrayVector> {
+  const config: FieldConfig = {};
+  if (derivedFieldConfig.url || derivedFieldConfig.datasourceUid) {
+    const link: Partial<DataLink> = {
+      // We do not know what title to give here so we count on presentation layer to create a title from metadata.
+      title: '',
+      url: derivedFieldConfig.url,
+    };
+
+    // Having field.datasourceUid means it is an internal link.
+    if (derivedFieldConfig.datasourceUid) {
+      link.meta = {
+        datasourceUid: derivedFieldConfig.datasourceUid,
+      };
+    }
+
+    config.links = [link as DataLink];
+  }
+  return {
+    name: derivedFieldConfig.name,
+    type: FieldType.string,
+    config,
+    // We are adding values later on
+    values: new ArrayVector<string>([]),
+  };
+}
 
 export function rangeQueryResponseToTimeSeries(
   response: LokiResponse,
