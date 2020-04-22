@@ -24,19 +24,19 @@ func TestDatabaseAccessForManifestKeys(t *testing.T) {
 		session := mv.sqlstore.NewSession()
 		defer session.Close()
 		affected, err := session.Insert(testKeys)
-		assert.Nil(t, err)
-		assert.Equal(t, affected, int64(len(testKeys)))
+		require.NoError(t, err)
+		assert.Equal(t, int64(len(testKeys)), affected)
 	})
 
 	t.Run("can query keys from database", func(t *testing.T) {
-		keys, err := mv.getPublicKey("keyid1")
-		assert.Nil(t, err)
-		assert.Equal(t, keys, testKeys[0].PublicKey)
+		key, err := mv.getPublicKey("keyid1")
+		require.NoError(t, err)
+		assert.Equal(t, testKeys[0].PublicKey, key)
 	})
 
 	t.Run("should return error if key doesn't exist", func(t *testing.T) {
 		_, err := mv.getPublicKey("missing keyId")
-		assert.NotNil(t, err)
+		assert.Error(t, err)
 	})
 }
 

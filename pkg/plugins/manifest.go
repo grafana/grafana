@@ -49,7 +49,7 @@ func newManifestVerifier(sqlstore *sqlstore.SqlStore) *manifestVerifier {
 }
 
 // getPublicKey loads public keys from the database.
-// Soon we can updated keys from https://grafana.com/api/plugins/ci/keys
+// Soon we can update keys from https://grafana.com/api/plugins/ci/keys
 func (pmv *manifestVerifier) getPublicKey(keyID string) (string, error) {
 	pmv.lock.Lock()
 	defer pmv.lock.Unlock()
@@ -76,7 +76,7 @@ func (pmv *manifestVerifier) getPublicKey(keyID string) (string, error) {
 		return key.PublicKey, nil
 	}
 
-	return "", errors.New("Could not find public Key")
+	return "", errors.New("could not find public key")
 }
 
 // readPluginManifest attempts to read and verify the plugin manifest
@@ -112,7 +112,7 @@ func (pmv *manifestVerifier) readPluginManifest(body []byte) (*pluginManifest, e
 	return manifest, nil
 }
 
-// GetPluginSignatureState returns the signature state for a plugin
+// verifyPluginSignature verifies a plugin's signature.
 func (pmv *manifestVerifier) verifyPluginSignature(plugin *PluginBase) PluginSignature {
 	manifestPath := path.Join(plugin.PluginDir, "MANIFEST.txt")
 
