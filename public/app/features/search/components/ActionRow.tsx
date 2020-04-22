@@ -44,7 +44,7 @@ export const ActionRow: FC<Props> = ({
         <RadioButtonGroup options={layoutOptions} onChange={onLayoutChange} value={layout} />
         <SortPicker onChange={onSortChange} value={query.sort} />
       </HorizontalGroup>
-      <div className={styles.tagContainer}>
+      <HorizontalGroup spacing="md">
         {showStarredFilter && (
           <Select
             width={20}
@@ -62,7 +62,7 @@ export const ActionRow: FC<Props> = ({
           onChange={onTagFilterChange}
           hideValues
         />
-      </div>
+      </HorizontalGroup>
     </div>
   );
 };
@@ -75,11 +75,6 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       align-items: center;
       padding: ${theme.spacing.md} 0;
       width: 100%;
-    `,
-    tagContainer: css`
-      display: flex;
-      min-width: 200px;
-      margin-left: ${theme.spacing.md};
     `,
   };
 });

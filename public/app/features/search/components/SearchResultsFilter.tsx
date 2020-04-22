@@ -70,17 +70,18 @@ export const SearchResultsFilter: FC<Props> = ({
 };
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
+  const { sm, md } = theme.spacing;
   return {
     wrapper: css`
       height: 35px;
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: ${theme.spacing.sm};
+      margin-bottom: ${sm};
 
-      label {
+      > label {
         height: 20px;
-        margin-left: 8px;
+        margin: 0 ${md} 0 ${sm};
       }
     `,
   };
