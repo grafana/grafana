@@ -45,6 +45,7 @@ export const DynamicConfigValueEditor: React.FC<DynamicConfigValueEditorProps> =
   if (isCollapsible) {
     editor = (
       <OptionsGroup
+        id={item.name}
         renderTitle={renderLabel(false, true)}
         className={css`
           padding-left: 0;
