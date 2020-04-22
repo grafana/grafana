@@ -137,10 +137,21 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
   }
 }
 
+const getLinkStyles = stylesFactory(() => {
+  return {
+    tag: css`
+      margin-left: 6px;
+      font-size: 11px;
+      padding: 2px 6px;
+    `,
+  };
+});
+
 type FieldLinkProps = {
   link: LinkModel<Field>;
 };
 function FieldLink({ link }: FieldLinkProps) {
+  const styles = getLinkStyles();
   return (
     <a
       href={link.href}
@@ -156,29 +167,9 @@ function FieldLink({ link }: FieldLinkProps) {
           : undefined
       }
     >
-      <Tag name={link.title} style={{ fontSize: 10 }} />
+      <Tag name={link.title} className={styles.tag} colorIndex={6} />
     </a>
   );
-  // return (
-  //   <LinkButton
-  //     variant="secondary"
-  //     size={'sm'}
-  //     href={link.href}
-  //     target={'_blank'}
-  //     onClick={
-  //       link.onClick
-  //         ? event => {
-  //             if (!(event.ctrlKey || event.metaKey || event.shiftKey) && link.onClick) {
-  //               event.preventDefault();
-  //               link.onClick(event);
-  //             }
-  //           }
-  //         : undefined
-  //     }
-  //   >
-  //     {link.title}
-  //   </LinkButton>
-  // );
 }
 
 export const LogDetailsRow = withTheme(UnThemedLogDetailsRow);
