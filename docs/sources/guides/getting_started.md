@@ -31,7 +31,7 @@ This step varies according to your computer operating system. Refer to the instr
 
 1. Click **New dashboard**.
 1. Click **Add Query**. Grafana creates a basic graph panel with the Random Walk scenario.
-1. Save your dashboard. Click the **Save dashboard** icon in the top corner of the screen.
+1. Save your dashboard. Click the **Save dashboard** icon at the top corner of the screen.
 
  Congratulations, you have gotten started with Grafana! You have a dashboard and are displaying results. Feel free to experiment with what you have built, continue on to add another data source, or explore [Next steps](#next-steps).
 
