@@ -31,7 +31,7 @@ export const SearchResults: FC<Props> = ({
   const styles = getSectionStyles(theme);
 
   const renderItems = (section: DashboardSection) => {
-    if (!section.expanded) {
+    if (!section.expanded && layout !== SearchLayout.List) {
       return null;
     }
 

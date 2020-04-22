@@ -46,7 +46,7 @@ export const useSearch: UseSearch = (query, reducer, params) => {
   // TODO as possible improvement, show spinner after expanding section while items are fetching
   const onToggleSection = (section: DashboardSection) => {
     if (hasId(section.title) && !section.items.length) {
-      backendSrv.search({ ...query, folderIds: [section.id] }).then(items => {
+      backendSrv.search({ folderIds: [section.id] }).then(items => {
         dispatch({ type: FETCH_ITEMS, payload: { section, items } });
         dispatch({ type: TOGGLE_SECTION, payload: section });
       });
