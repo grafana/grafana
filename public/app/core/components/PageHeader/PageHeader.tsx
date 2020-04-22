@@ -10,6 +10,11 @@ export interface Props {
 }
 
 const SelectNav = ({ main, customCss }: { main: NavModelItem; customCss: string }) => {
+  const { children } = main;
+  if (!children?.length) {
+    return null;
+  }
+
   const defaultSelectedItem = main.children?.find(navItem => {
     return navItem.active === true;
   });
@@ -33,7 +38,7 @@ const SelectNav = ({ main, customCss }: { main: NavModelItem; customCss: string 
         onChange={gotoUrl}
         id="page-header-select-nav"
       >
-        {main.children?.map((navItem: NavModelItem) => {
+        {children?.map((navItem: NavModelItem) => {
           if (navItem.hideFromTabs) {
             // TODO: Rename hideFromTabs => hideFromNav
             return null;
@@ -50,8 +55,14 @@ const SelectNav = ({ main, customCss }: { main: NavModelItem; customCss: string 
 };
 
 const Navigation = ({ main }: { main: NavModelItem }) => {
+  const { children } = main;
+
+  if (!children?.length) {
+    return null;
+  }
+
   const goToUrl = (index: number) => {
-    main.children?.forEach((child, i) => {
+    children?.forEach((child, i) => {
       if (i === index) {
         appEvents.emit(CoreEvents.locationChange, { href: child.url });
       }
@@ -62,7 +73,7 @@ const Navigation = ({ main }: { main: NavModelItem }) => {
     <nav>
       <SelectNav customCss="page-header__select-nav" main={main} />
       <TabsBar className="page-header__tabs" hideBorder={true}>
-        {main.children?.map((child, index) => {
+        {children?.map((child, index) => {
           return (
             !child.hideFromTabs && (
               <Tab
@@ -155,7 +166,7 @@ export default class PageHeader extends React.Component<Props, any> {
         <div className="page-container">
           <div className="page-header">
             {this.renderHeaderTitle(main)}
-            {main.children && <Navigation main={main} />}
+            {main.children?.length && <Navigation main={main} />}
           </div>
         </div>
       </div>
