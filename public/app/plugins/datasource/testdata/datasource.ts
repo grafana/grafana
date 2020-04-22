@@ -11,7 +11,7 @@ import {
   ArrayDataFrame,
   base64StringToArrowTable,
   arrowTableToDataFrame,
-  DataFrameView,
+  DataFrame,
 } from '@grafana/data';
 import { Scenario, TestDataQuery } from './types';
 import { getBackendSrv } from '@grafana/runtime';
@@ -156,7 +156,7 @@ export class TestDataDataSource extends DataSourceApi<TestDataQuery> {
 }
 
 function runArrowFile(target: TestDataQuery, req: DataQueryRequest<TestDataQuery>): Observable<DataQueryResponse> {
-  let data: DataFrameView[] = [];
+  let data: DataFrame[] = [];
   if (target.stringInput && target.stringInput.length > 10) {
     const table = base64StringToArrowTable(target.stringInput);
     data = [arrowTableToDataFrame(table)];
