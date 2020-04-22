@@ -316,7 +316,7 @@ describe('DataFrame utility functions', () => {
   });
   it('Should find time range', () => {
     const range = getDataTimeRange([frame]);
-    expect(range.from).toEqual(2);
-    expect(range.to).toEqual(9);
+    expect(range!.from).toEqual(2);
+    expect(range!.to).toEqual(9);
   });
 });
