@@ -38,13 +38,6 @@ type ManifestKeys struct {
 	UpdatedAt int64
 }
 
-type manifestKeysJSON struct {
-	KeyID     string `json:"keyId"`
-	Since     int64  `json:"since"`
-	RevokedAt int64  `json:"revoked_at"`
-	PublicKey string `json:"public"`
-}
-
 type manifestVerifier struct {
 	sqlstore   *sqlstore.SqlStore
 	lock       sync.Mutex
