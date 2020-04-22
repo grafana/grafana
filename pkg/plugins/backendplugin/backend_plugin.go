@@ -4,10 +4,10 @@ import (
 	"context"
 	"errors"
 	"net/http"
-	"time"
 
 	datasourceV1 "github.com/grafana/grafana-plugin-model/go/datasource"
 	rendererV1 "github.com/grafana/grafana-plugin-model/go/renderer"
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/genproto/pluginv2"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/pluginextensionv2"
@@ -175,50 +175,22 @@ func (p *BackendPlugin) CollectMetrics(ctx context.Context) (*pluginv2.CollectMe
 	return res, nil
 }
 
-func (p *BackendPlugin) checkHealth(ctx context.Context, config *PluginConfig) (*pluginv2.CheckHealthResponse, error) {
+var toProto = backend.ToProto()
+var fromProto = backend.FromProto()
+
+func (p *BackendPlugin) checkHealth(ctx context.Context, pCtx *backend.PluginContext) (*pluginv2.CheckHealthResponse, error) {
 	if p.diagnostics == nil || p.client == nil || p.client.Exited() {
 		return &pluginv2.CheckHealthResponse{
 			Status: pluginv2.CheckHealthResponse_UNKNOWN,
 		}, nil
 	}
 
-	jsonDataBytes, err := config.JSONData.ToDB()
-	if err != nil {
-		return nil, err
-	}
-
-	pconfig := &pluginv2.PluginConfig{
-		OrgId:                   config.OrgID,
-		PluginId:                config.PluginID,
-		JsonData:                jsonDataBytes,
-		DecryptedSecureJsonData: config.DecryptedSecureJSONData,
-		LastUpdatedMS:           config.Updated.UnixNano() / int64(time.Millisecond),
-	}
-
-	if config.DataSourceConfig != nil {
-		datasourceJSONData, err := config.DataSourceConfig.JSONData.ToDB()
-		if err != nil {
-			return nil, err
-		}
-
-		pconfig.DatasourceConfig = &pluginv2.DataSourceConfig{
-			Id:                      config.DataSourceConfig.ID,
-			Name:                    config.DataSourceConfig.Name,
-			Url:                     config.DataSourceConfig.URL,
-			User:                    config.DataSourceConfig.User,
-			Database:                config.DataSourceConfig.Database,
-			BasicAuthEnabled:        config.DataSourceConfig.BasicAuthEnabled,
-			BasicAuthUser:           config.DataSourceConfig.BasicAuthUser,
-			JsonData:                datasourceJSONData,
-			DecryptedSecureJsonData: config.DataSourceConfig.DecryptedSecureJSONData,
-			LastUpdatedMS:           config.DataSourceConfig.Updated.Unix() / int64(time.Millisecond),
-		}
-	}
+	protoContext := toProto.PluginContext(*pCtx)
 
 	var res *pluginv2.CheckHealthResponse
-	err = InstrumentPluginRequest(p.id, "checkhealth", func() error {
+	err := InstrumentPluginRequest(p.id, "checkhealth", func() error {
 		var innerErr error
-		res, innerErr = p.diagnostics.CheckHealth(ctx, &pluginv2.CheckHealthRequest{Config: pconfig})
+		res, innerErr = p.diagnostics.CheckHealth(ctx, &pluginv2.CheckHealthRequest{PluginContext: protoContext})
 		return innerErr
 	})
 
@@ -237,66 +209,14 @@ func (p *BackendPlugin) checkHealth(ctx context.Context, config *PluginConfig) (
 	return res, nil
 }
 
-func (p *BackendPlugin) callResource(ctx context.Context, req CallResourceRequest) (callResourceResultStream, error) {
+func (p *BackendPlugin) callResource(ctx context.Context, req *backend.CallResourceRequest) (callResourceResultStream, error) {
 	p.logger.Debug("Calling resource", "path", req.Path, "method", req.Method)
 
 	if p.resource == nil || p.client == nil || p.client.Exited() {
 		return nil, errors.New("plugin not running, cannot call resource")
 	}
 
-	reqHeaders := map[string]*pluginv2.StringList{}
-	for k, v := range req.Headers {
-		reqHeaders[k] = &pluginv2.StringList{Values: v}
-	}
-
-	jsonDataBytes, err := req.Config.JSONData.ToDB()
-	if err != nil {
-		return nil, err
-	}
-
-	protoReq := &pluginv2.CallResourceRequest{
-		Config: &pluginv2.PluginConfig{
-			OrgId:                   req.Config.OrgID,
-			PluginId:                req.Config.PluginID,
-			JsonData:                jsonDataBytes,
-			DecryptedSecureJsonData: req.Config.DecryptedSecureJSONData,
-			LastUpdatedMS:           req.Config.Updated.UnixNano() / int64(time.Millisecond),
-		},
-		Path:    req.Path,
-		Method:  req.Method,
-		Url:     req.URL,
-		Headers: reqHeaders,
-		Body:    req.Body,
-	}
-
-	if req.User != nil {
-		protoReq.User = &pluginv2.User{
-			Name:  req.User.Name,
-			Login: req.User.Login,
-			Email: req.User.Email,
-			Role:  string(req.User.OrgRole),
-		}
-	}
-
-	if req.Config.DataSourceConfig != nil {
-		datasourceJSONData, err := req.Config.DataSourceConfig.JSONData.ToDB()
-		if err != nil {
-			return nil, err
-		}
-
-		protoReq.Config.DatasourceConfig = &pluginv2.DataSourceConfig{
-			Id:                      req.Config.DataSourceConfig.ID,
-			Name:                    req.Config.DataSourceConfig.Name,
-			Url:                     req.Config.DataSourceConfig.URL,
-			Database:                req.Config.DataSourceConfig.Database,
-			User:                    req.Config.DataSourceConfig.User,
-			BasicAuthEnabled:        req.Config.DataSourceConfig.BasicAuthEnabled,
-			BasicAuthUser:           req.Config.DataSourceConfig.BasicAuthUser,
-			JsonData:                datasourceJSONData,
-			DecryptedSecureJsonData: req.Config.DataSourceConfig.DecryptedSecureJSONData,
-			LastUpdatedMS:           req.Config.DataSourceConfig.Updated.UnixNano() / int64(time.Millisecond),
-		}
-	}
+	protoReq := toProto.CallResourceRequest(req)
 
 	protoStream, err := p.resource.CallResource(ctx, protoReq)
 	if err != nil {

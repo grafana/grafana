@@ -8,6 +8,7 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/genproto/pluginv2"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
@@ -32,11 +33,11 @@ func (tw *DatasourcePluginWrapperV2) Query(ctx context.Context, ds *models.DataS
 	}
 
 	pbQuery := &pluginv2.QueryDataRequest{
-		Config: &pluginv2.PluginConfig{
-			OrgId:         ds.OrgId,
-			PluginId:      tw.pluginId,
-			LastUpdatedMS: ds.Updated.UnixNano() / int64(time.Millisecond),
-			DatasourceConfig: &pluginv2.DataSourceConfig{
+		PluginContext: &pluginv2.PluginContext{
+			OrgId:    ds.OrgId,
+			PluginId: tw.pluginId,
+			User:     backend.ToProto().User(backendplugin.BackendUserFromSignedInUser(query.User)),
+			DataSourceInstanceSettings: &pluginv2.DataSourceInstanceSettings{
 				Id:                      ds.Id,
 				Name:                    ds.Name,
 				Url:                     ds.Url,
@@ -46,18 +47,10 @@ func (tw *DatasourcePluginWrapperV2) Query(ctx context.Context, ds *models.DataS
 				BasicAuthUser:           ds.BasicAuthUser,
 				JsonData:                jsonDataBytes,
 				DecryptedSecureJsonData: ds.DecryptedValues(),
+				LastUpdatedMS:           ds.Updated.UnixNano() / int64(time.Millisecond),
 			},
 		},
 		Queries: []*pluginv2.DataQuery{},
-	}
-
-	if query.User != nil {
-		pbQuery.User = &pluginv2.User{
-			Name:  query.User.Name,
-			Login: query.User.Login,
-			Email: query.User.Email,
-			Role:  string(query.User.OrgRole),
-		}
 	}
 
 	for _, q := range query.Queries {

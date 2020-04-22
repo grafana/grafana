@@ -8,6 +8,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util/errutil"
@@ -187,7 +188,7 @@ func (m *manager) CollectMetrics(ctx context.Context, pluginID string) (*Collect
 }
 
 // CheckHealth checks the health of a registered backend plugin.
-func (m *manager) CheckHealth(ctx context.Context, pluginConfig *PluginConfig) (*CheckHealthResult, error) {
+func (m *manager) CheckHealth(ctx context.Context, pluginConfig *backend.PluginContext) (*CheckHealthResult, error) {
 	m.pluginsMu.RLock()
 	p, registered := m.plugins[pluginConfig.PluginID]
 	m.pluginsMu.RUnlock()
@@ -209,10 +210,22 @@ func (m *manager) CheckHealth(ctx context.Context, pluginConfig *PluginConfig) (
 	return checkHealthResultFromProto(res), nil
 }
 
+func BackendUserFromSignedInUser(su *models.SignedInUser) *backend.User {
+	if su == nil {
+		return nil
+	}
+	return &backend.User{
+		Login: su.Login,
+		Name:  su.Name,
+		Email: su.Name,
+		Role:  string(su.OrgRole),
+	}
+}
+
 // CallResource calls a plugin resource.
-func (m *manager) CallResource(config PluginConfig, reqCtx *models.ReqContext, path string) {
+func (m *manager) CallResource(pCtx backend.PluginContext, reqCtx *models.ReqContext, path string) {
 	m.pluginsMu.RLock()
-	p, registered := m.plugins[config.PluginID]
+	p, registered := m.plugins[pCtx.PluginID]
 	m.pluginsMu.RUnlock()
 
 	if !registered {
@@ -222,11 +235,13 @@ func (m *manager) CallResource(config PluginConfig, reqCtx *models.ReqContext, p
 
 	clonedReq := reqCtx.Req.Clone(reqCtx.Req.Context())
 	keepCookieNames := []string{}
-	if config.JSONData != nil {
-		if keepCookies := config.JSONData.Get("keepCookies"); keepCookies != nil {
-			keepCookieNames = keepCookies.MustStringArray()
-		}
-	}
+	/// TODO! THIS SEEMS IMPORTANT BUT I DO NOT GET IT
+
+	// if pCtx.JSONData != nil {
+	// 	if keepCookies := config.JSONData.Get("keepCookies"); keepCookies != nil {
+	// 		keepCookieNames = keepCookies.MustStringArray()
+	// 	}
+	// }
 
 	proxyutil.ClearCookieHeader(clonedReq, keepCookieNames)
 	proxyutil.PrepareProxyRequest(clonedReq)
@@ -237,14 +252,15 @@ func (m *manager) CallResource(config PluginConfig, reqCtx *models.ReqContext, p
 		return
 	}
 
-	req := CallResourceRequest{
-		Config:  config,
-		Path:    path,
-		Method:  clonedReq.Method,
-		URL:     clonedReq.URL.String(),
-		Headers: clonedReq.Header,
-		Body:    body,
-		User:    reqCtx.SignedInUser,
+	pCtx.User = BackendUserFromSignedInUser(reqCtx.SignedInUser)
+
+	req := &backend.CallResourceRequest{
+		PluginContext: pCtx,
+		Path:          path,
+		Method:        clonedReq.Method,
+		URL:           clonedReq.URL.String(),
+		Headers:       clonedReq.Header,
+		Body:          body,
 	}
 
 	err = InstrumentPluginRequest(p.id, "resource", func() error {
