@@ -4,7 +4,7 @@ import { HorizontalGroup, RadioButtonGroup, Select, stylesFactory, useTheme } fr
 import { GrafanaTheme, SelectableValue } from '@grafana/data';
 import { SortPicker } from 'app/core/components/Select/SortPicker';
 import { TagFilter } from 'app/core/components/TagFilter/TagFilter';
-import { SearchSrv } from '../../../core/services/search_srv';
+import { SearchSrv } from 'app/core/services/search_srv';
 import { layoutOptions } from '../hooks/useSearchLayout';
 import { DashboardQuery } from '../types';
 
