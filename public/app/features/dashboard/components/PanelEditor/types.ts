@@ -23,3 +23,7 @@ export const displayModes = [
   { value: DisplayMode.Fit, label: 'Fit', description: 'Fit in the space keeping ratio' },
   { value: DisplayMode.Exact, label: 'Exact', description: 'Same size as the dashboard' },
 ];
+
+export type OptionGroupStorageItem = { defaultToClosed: boolean };
+export const defaultStorageItem: OptionGroupStorageItem = { defaultToClosed: false };
+export type StoreOptionGroupCallback = (value: OptionGroupStorageItem) => void;

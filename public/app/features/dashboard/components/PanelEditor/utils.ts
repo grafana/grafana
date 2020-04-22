@@ -1,7 +1,8 @@
 import { CSSProperties } from 'react';
 import { PanelModel } from '../../state/PanelModel';
-import { DisplayMode } from './types';
+import { DisplayMode, StoreOptionGroupCallback } from './types';
 import { GRID_CELL_HEIGHT, GRID_CELL_VMARGIN, GRID_COLUMN_COUNT } from 'app/core/constants';
+import { PANEL_EDITOR_UI_STATE_STORAGE_KEY } from './state/reducers';
 
 export function calculatePanelSize(mode: DisplayMode, width: number, height: number, panel: PanelModel): CSSProperties {
   if (mode === DisplayMode.Fill) {
@@ -22,5 +23,19 @@ export function calculatePanelSize(mode: DisplayMode, width: number, height: num
   return {
     width: pWidth * scale,
     height: pHeight * scale,
+  };
+}
+
+export function getOptionGroupStorageKey(id: string): string {
+  return `${PANEL_EDITOR_UI_STATE_STORAGE_KEY}.optionGroup[${id}]`;
+}
+
+export function storeOptionGroupExpanded(isExpanded: boolean, onSaveToStore: StoreOptionGroupCallback) {
+  onSaveToStore({ defaultToClosed: !isExpanded });
+}
+
+export function onOptionGroupToggle(onSaveToStore: StoreOptionGroupCallback) {
+  return function(isExpanded: boolean): void {
+    storeOptionGroupExpanded(isExpanded, onSaveToStore);
   };
 }

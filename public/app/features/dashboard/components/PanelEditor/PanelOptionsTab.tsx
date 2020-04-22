@@ -8,6 +8,9 @@ import { getVariables } from '../../../variables/state/selectors';
 import { PanelOptionsEditor } from './PanelOptionsEditor';
 import { AngularPanelOptions } from './AngularPanelOptions';
 import { VisualizationTab } from './VisualizationTab';
+import { LocalStorageValueProvider } from '../../../../core/components/LocalStorageValueProvider';
+import { getOptionGroupStorageKey, onOptionGroupToggle, storeOptionGroupExpanded } from './utils';
+import { defaultStorageItem, OptionGroupStorageItem, StoreOptionGroupCallback } from './types';
 
 interface Props {
   panel: PanelModel;
@@ -41,47 +44,87 @@ export const PanelOptionsTab: FC<Props> = ({
 
   const maxPerRowOptions = [2, 3, 4, 6, 8, 12].map(value => ({ label: value.toString(), value }));
 
-  const focusVisPickerInput = (isExpanded: boolean) => {
+  const focusVisPickerInput = (onSaveToStore: StoreOptionGroupCallback) => (isExpanded: boolean) => {
     if (isExpanded && visTabInputRef.current) {
       visTabInputRef.current.focus();
     }
+    storeOptionGroupExpanded(isExpanded, onSaveToStore);
   };
   // Fist common panel settings Title, description
   elements.push(
-    <OptionsGroup title="Panel settings" key="Panel settings">
-      <Field label="Panel title">
-        <Input defaultValue={panel.title} onBlur={e => onPanelConfigChange('title', e.currentTarget.value)} />
-      </Field>
-      <Field label="Description" description="Panel description supports markdown and links.">
-        <TextArea
-          defaultValue={panel.description}
-          onBlur={e => onPanelConfigChange('description', e.currentTarget.value)}
-        />
-      </Field>
-      <Field label="Transparent" description="Display panel without a background.">
-        <Switch value={panel.transparent} onChange={e => onPanelConfigChange('transparent', e.currentTarget.checked)} />
-      </Field>
-    </OptionsGroup>
+    <LocalStorageValueProvider<OptionGroupStorageItem>
+      storageKey={getOptionGroupStorageKey('Panel settings')}
+      defaultValue={defaultStorageItem}
+      key="Panel settings"
+    >
+      {(values, onSaveToStore) => (
+        <OptionsGroup
+          title="Panel settings"
+          defaultToClosed={values.defaultToClosed}
+          onToggle={onOptionGroupToggle(onSaveToStore)}
+        >
+          <Field label="Panel title">
+            <Input defaultValue={panel.title} onBlur={e => onPanelConfigChange('title', e.currentTarget.value)} />
+          </Field>
+          <Field label="Description" description="Panel description supports markdown and links.">
+            <TextArea
+              defaultValue={panel.description}
+              onBlur={e => onPanelConfigChange('description', e.currentTarget.value)}
+            />
+          </Field>
+          <Field label="Transparent" description="Display panel without a background.">
+            <Switch
+              value={panel.transparent}
+              onChange={e => onPanelConfigChange('transparent', e.currentTarget.checked)}
+            />
+          </Field>
+        </OptionsGroup>
+      )}
+    </LocalStorageValueProvider>
   );
 
   elements.push(
-    <OptionsGroup title="Panel type" key="Panel type" defaultToClosed onToggle={focusVisPickerInput}>
-      <VisualizationTab panel={panel} ref={visTabInputRef} />
-    </OptionsGroup>
+    <LocalStorageValueProvider<OptionGroupStorageItem>
+      storageKey={getOptionGroupStorageKey('Panel type')}
+      defaultValue={{ defaultToClosed: true }}
+      key="Panel type"
+    >
+      {(values, onSaveToStore) => (
+        <OptionsGroup
+          title="Panel type"
+          defaultToClosed={values.defaultToClosed}
+          onToggle={focusVisPickerInput(onSaveToStore)}
+        >
+          <VisualizationTab panel={panel} ref={visTabInputRef} />
+        </OptionsGroup>
+      )}
+    </LocalStorageValueProvider>
   );
 
   // Old legacy react editor
   if (plugin.editor && panel && !plugin.optionEditors) {
     elements.push(
-      <OptionsGroup title="Display" key="legacy react editor">
-        <plugin.editor
-          data={data}
-          options={panel.getOptions()}
-          onOptionsChange={onPanelOptionsChanged}
-          fieldConfig={panel.getFieldConfig()}
-          onFieldConfigChange={onFieldConfigsChange}
-        />
-      </OptionsGroup>
+      <LocalStorageValueProvider<OptionGroupStorageItem>
+        storageKey={getOptionGroupStorageKey('legacy react editor')}
+        defaultValue={{ defaultToClosed: true }}
+        key="legacy react editor"
+      >
+        {(values, onSaveToStore) => (
+          <OptionsGroup
+            title="Display"
+            defaultToClosed={values.defaultToClosed}
+            onToggle={onOptionGroupToggle(onSaveToStore)}
+          >
+            <plugin.editor
+              data={data}
+              options={panel.getOptions()}
+              onOptionsChange={onPanelOptionsChanged}
+              fieldConfig={panel.getFieldConfig()}
+              onFieldConfigChange={onFieldConfigsChange}
+            />
+          </OptionsGroup>
+        )}
+      </LocalStorageValueProvider>
     );
   }
 
@@ -103,56 +146,76 @@ export const PanelOptionsTab: FC<Props> = ({
   }
 
   elements.push(
-    <OptionsGroup
-      renderTitle={isExpanded => (
-        <>Panel links {!isExpanded && panelLinksCount > 0 && <Counter value={panelLinksCount} />}</>
-      )}
+    <LocalStorageValueProvider<OptionGroupStorageItem>
+      storageKey={getOptionGroupStorageKey('panel links')}
+      defaultValue={{ defaultToClosed: true }}
       key="panel links"
-      defaultToClosed={true}
     >
-      <DataLinksInlineEditor
-        links={panel.links}
-        onChange={links => onPanelConfigChange('links', links)}
-        suggestions={linkVariablesSuggestions}
-        data={[]}
-      />
-    </OptionsGroup>
+      {(values, onSaveToStore) => (
+        <OptionsGroup
+          renderTitle={isExpanded => (
+            <>Panel links {!isExpanded && panelLinksCount > 0 && <Counter value={panelLinksCount} />}</>
+          )}
+          defaultToClosed={values.defaultToClosed}
+          onToggle={onOptionGroupToggle(onSaveToStore)}
+        >
+          <DataLinksInlineEditor
+            links={panel.links}
+            onChange={links => onPanelConfigChange('links', links)}
+            suggestions={linkVariablesSuggestions}
+            data={[]}
+          />
+        </OptionsGroup>
+      )}
+    </LocalStorageValueProvider>
   );
 
   elements.push(
-    <OptionsGroup title="Panel repeats" key="panel repeats" defaultToClosed={true}>
-      <Field
-        label="Repeat by variable"
-        description="Repeat this panel for each value in the selected variable.
+    <LocalStorageValueProvider<OptionGroupStorageItem>
+      storageKey={getOptionGroupStorageKey('panel repeats')}
+      defaultValue={{ defaultToClosed: true }}
+      key="panel repeats"
+    >
+      {(values, onSaveToStore) => (
+        <OptionsGroup
+          title="Panel repeats"
+          defaultToClosed={values.defaultToClosed}
+          onToggle={onOptionGroupToggle(onSaveToStore)}
+        >
+          <Field
+            label="Repeat by variable"
+            description="Repeat this panel for each value in the selected variable.
           This is not visible while in edit mode. You need to go back to dashboard and then update the variable or
           reload the dashboard."
-      >
-        <Select
-          value={panel.repeat}
-          onChange={value => onPanelConfigChange('repeat', value.value)}
-          options={variableOptions}
-        />
-      </Field>
-      {panel.repeat && (
-        <Field label="Repeat direction">
-          <RadioButtonGroup
-            options={directionOptions}
-            value={panel.repeatDirection || 'h'}
-            onChange={value => onPanelConfigChange('repeatDirection', value)}
-          />
-        </Field>
-      )}
+          >
+            <Select
+              value={panel.repeat}
+              onChange={value => onPanelConfigChange('repeat', value.value)}
+              options={variableOptions}
+            />
+          </Field>
+          {panel.repeat && (
+            <Field label="Repeat direction">
+              <RadioButtonGroup
+                options={directionOptions}
+                value={panel.repeatDirection || 'h'}
+                onChange={value => onPanelConfigChange('repeatDirection', value)}
+              />
+            </Field>
+          )}
 
-      {panel.repeat && panel.repeatDirection === 'h' && (
-        <Field label="Max per row">
-          <Select
-            options={maxPerRowOptions}
-            value={panel.maxPerRow}
-            onChange={value => onPanelConfigChange('maxPerRow', value.value)}
-          />
-        </Field>
+          {panel.repeat && panel.repeatDirection === 'h' && (
+            <Field label="Max per row">
+              <Select
+                options={maxPerRowOptions}
+                value={panel.maxPerRow}
+                onChange={value => onPanelConfigChange('maxPerRow', value.value)}
+              />
+            </Field>
+          )}
+        </OptionsGroup>
       )}
-    </OptionsGroup>
+    </LocalStorageValueProvider>
   );
 
   return <>{elements}</>;
