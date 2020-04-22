@@ -2,9 +2,9 @@ import React, { FC } from 'react';
 import { css } from 'emotion';
 import { Button, Select, Checkbox, stylesFactory, useTheme, HorizontalGroup } from '@grafana/ui';
 import { GrafanaTheme, SelectableValue } from '@grafana/data';
-import { TagFilter } from 'app/core/components/TagFilter/TagFilter';
 import { SearchSrv } from 'app/core/services/search_srv';
-import { SortPicker } from 'app/core/components/TagFilter/SortPicker';
+import { TagFilter } from 'app/core/components/TagFilter/TagFilter';
+import { SortPicker } from 'app/core/components/Select/SortPicker';
 import { DashboardQuery } from '../types';
 
 type onSelectChange = (value: SelectableValue) => void;

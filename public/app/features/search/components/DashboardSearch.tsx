@@ -4,7 +4,7 @@ import { useTheme, CustomScrollbar, stylesFactory, Button, RadioButtonGroup, Hor
 import { GrafanaTheme } from '@grafana/data';
 import { SearchSrv } from 'app/core/services/search_srv';
 import { TagFilter } from 'app/core/components/TagFilter/TagFilter';
-import { SortPicker } from 'app/core/components/TagFilter/SortPicker';
+import { SortPicker } from 'app/core/components/Select/SortPicker';
 import { useSearchQuery } from '../hooks/useSearchQuery';
 import { useDashboardSearch } from '../hooks/useDashboardSearch';
 import { useSearchLayout } from '../hooks/useSearchLayout';
