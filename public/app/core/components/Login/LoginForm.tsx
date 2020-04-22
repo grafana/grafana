@@ -66,8 +66,8 @@ export class LoginForm extends PureComponent<Props, State> {
       <form name="loginForm" className="login-form-group gf-form-group">
         <div className="login-form">
           <input
-            ref={input => {
-              this.userInput = input as HTMLInputElement;
+            ref={(input: HTMLInputElement) => {
+              this.userInput = input;
             }}
             type="text"
             name="user"
