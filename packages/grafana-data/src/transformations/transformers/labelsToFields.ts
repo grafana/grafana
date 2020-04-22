@@ -5,14 +5,14 @@ import { ArrayVector } from '../../vector';
 import { filterFieldsTransformer } from './filter';
 import { FieldMatcherID } from '..';
 
-export interface LabelsAsColumnsOptions {}
+export interface LabelsToFieldsOptions {}
 type MapItem = { type: FieldType; values: Record<string, any>; isValue: boolean };
 type SeriesMapItem = Record<string, MapItem>;
 type Map = Record<string, SeriesMapItem>;
 
-export const labelsAsColumnsTransformer: DataTransformerInfo<LabelsAsColumnsOptions> = {
-  id: DataTransformerID.labelsAsColumns,
-  name: 'Labels as columns',
+export const labelsToFieldsTransformer: DataTransformerInfo<LabelsToFieldsOptions> = {
+  id: DataTransformerID.labelsToFields,
+  name: 'Labels to fields',
   description: 'Groups series by time and return labels as columns',
   defaultOptions: {},
   transformer: options => (data: DataFrame[]) => {

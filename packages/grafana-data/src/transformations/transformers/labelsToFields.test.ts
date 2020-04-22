@@ -1,5 +1,5 @@
 import { mockTransformationsRegistry } from '../../utils/tests/mockTransformationsRegistry';
-import { LabelsAsColumnsOptions, labelsAsColumnsTransformer } from './labelsAsColumns';
+import { LabelsToFieldsOptions, labelsToFieldsTransformer } from './labelsToFields';
 import { DataTransformerConfig, Field, FieldType } from '../../types';
 import { DataTransformerID } from './ids';
 import { toDataFrame } from '../../dataframe';
@@ -8,12 +8,12 @@ import { ArrayVector } from '../../vector';
 
 describe('Labels as Columns', () => {
   beforeAll(() => {
-    mockTransformationsRegistry([labelsAsColumnsTransformer]);
+    mockTransformationsRegistry([labelsToFieldsTransformer]);
   });
 
   it('data frame with 1 value and 1 label', () => {
-    const cfg: DataTransformerConfig<LabelsAsColumnsOptions> = {
-      id: DataTransformerID.labelsAsColumns,
+    const cfg: DataTransformerConfig<LabelsToFieldsOptions> = {
+      id: DataTransformerID.labelsToFields,
       options: {},
     };
 
@@ -44,8 +44,8 @@ describe('Labels as Columns', () => {
   });
 
   it('data frame with 2 values and 1 label', () => {
-    const cfg: DataTransformerConfig<LabelsAsColumnsOptions> = {
-      id: DataTransformerID.labelsAsColumns,
+    const cfg: DataTransformerConfig<LabelsToFieldsOptions> = {
+      id: DataTransformerID.labelsToFields,
       options: {},
     };
 
@@ -79,8 +79,8 @@ describe('Labels as Columns', () => {
   });
 
   it('data frame with 1 value and 2 labels', () => {
-    const cfg: DataTransformerConfig<LabelsAsColumnsOptions> = {
-      id: DataTransformerID.labelsAsColumns,
+    const cfg: DataTransformerConfig<LabelsToFieldsOptions> = {
+      id: DataTransformerID.labelsToFields,
       options: {},
     };
 
@@ -112,8 +112,8 @@ describe('Labels as Columns', () => {
   });
 
   it('data frame with 2 values and 2 labels', () => {
-    const cfg: DataTransformerConfig<LabelsAsColumnsOptions> = {
-      id: DataTransformerID.labelsAsColumns,
+    const cfg: DataTransformerConfig<LabelsToFieldsOptions> = {
+      id: DataTransformerID.labelsToFields,
       options: {},
     };
 
@@ -158,8 +158,8 @@ describe('Labels as Columns', () => {
   });
 
   it('data frames with different labels', () => {
-    const cfg: DataTransformerConfig<LabelsAsColumnsOptions> = {
-      id: DataTransformerID.labelsAsColumns,
+    const cfg: DataTransformerConfig<LabelsToFieldsOptions> = {
+      id: DataTransformerID.labelsToFields,
       options: {},
     };
 
@@ -192,8 +192,8 @@ describe('Labels as Columns', () => {
   });
 
   it('data frames with same timestamp and different labels', () => {
-    const cfg: DataTransformerConfig<LabelsAsColumnsOptions> = {
-      id: DataTransformerID.labelsAsColumns,
+    const cfg: DataTransformerConfig<LabelsToFieldsOptions> = {
+      id: DataTransformerID.labelsToFields,
       options: {},
     };
 

@@ -1,19 +1,19 @@
 import React from 'react';
 import { DataTransformerID, standardTransformers, TransformerRegistyItem, TransformerUIProps } from '@grafana/data';
-import { LabelsAsColumnsOptions } from '@grafana/data/src/transformations/transformers/labelsAsColumns';
+import { LabelsToFieldsOptions } from '@grafana/data/src/transformations/transformers/labelsToFields';
 
-export const LabelsAsFieldsTransformerEditor: React.FC<TransformerUIProps<LabelsAsColumnsOptions>> = ({
+export const LabelsAsFieldsTransformerEditor: React.FC<TransformerUIProps<LabelsToFieldsOptions>> = ({
   input,
   options,
   onChange,
 }) => {
-  return <div />;
+  return null;
 };
 
-export const labelsAsFieldsTransformerRegistryItem: TransformerRegistyItem<LabelsAsColumnsOptions> = {
-  id: DataTransformerID.labelsAsColumns,
+export const labelsAsFieldsTransformerRegistryItem: TransformerRegistyItem<LabelsToFieldsOptions> = {
+  id: DataTransformerID.labelsToFields,
   editor: LabelsAsFieldsTransformerEditor,
-  transformation: standardTransformers.labelsAsColumnsTransformer,
+  transformation: standardTransformers.labelsToFieldsTransformer,
   name: 'Labels as fields',
   description: 'Groups series by time and return labels as fields',
 };
