@@ -66,6 +66,13 @@ export const ManageDashboards: FC<Props> = memo(({ folderId, folderUid }) => {
     setIsDeleteModalOpen(true);
   };
 
+  const onLayoutChange = (layout: string) => {
+    setLayout(layout);
+    if (query.sort) {
+      onSortChange(null);
+    }
+  };
+
   if (canSave && folderId && !hasFilters && results.length === 0) {
     return (
       <EmptyListCTA
@@ -147,8 +154,8 @@ export const ManageDashboards: FC<Props> = memo(({ folderId, folderUid }) => {
             onSortChange={onSortChange}
             onTagFilterChange={onTagFilterChange}
             query={query}
-            layout={layout}
-            onLayoutChange={setLayout}
+            layout={!folderUid && layout}
+            onLayoutChange={onLayoutChange}
           />
         )}
         <SearchResults

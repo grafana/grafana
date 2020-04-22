@@ -186,5 +186,5 @@ export const hasFilters = (query: DashboardQuery) => {
   if (!query) {
     return false;
   }
-  return Boolean(query.query || query.tag?.length > 0 || query.starred || query.folderIds?.length > 0 || query.sort);
+  return Boolean(query.query || query.tag?.length > 0 || query.starred || query.sort);
 };

@@ -98,7 +98,7 @@ export class SearchSrv {
     const sections: any = {};
     const promises = [];
     const query = _.clone(options);
-    const filters = hasFilters(options);
+    const filters = hasFilters(options) || query.folderIds?.length > 0;
 
     if (!options.skipRecent && !filters) {
       promises.push(this.getRecentDashboards(sections));
