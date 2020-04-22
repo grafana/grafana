@@ -7,6 +7,7 @@ import { DefaultFieldConfigEditor, OverrideFieldConfigEditor } from './FieldConf
 import { css } from 'emotion';
 import { PanelOptionsTab } from './PanelOptionsTab';
 import { DashNavButton } from 'app/features/dashboard/components/DashNav/DashNavButton';
+import { usePanelLatestData } from './usePanelLatestData';
 
 interface Props {
   plugin: PanelPlugin;
@@ -35,12 +36,13 @@ export const OptionsPaneContent: React.FC<Props> = ({
   const styles = getStyles(theme);
   const [activeTab, setActiveTab] = useState('options');
   const [isSearching, setSearchMode] = useState(false);
+  const currentData = usePanelLatestData(panel);
 
   const renderFieldOptions = useCallback(
     (plugin: PanelPlugin) => {
       const fieldConfig = panel.getFieldConfig();
 
-      if (!fieldConfig) {
+      if (!fieldConfig || !currentData) {
         return null;
       }
 
@@ -49,18 +51,18 @@ export const OptionsPaneContent: React.FC<Props> = ({
           config={fieldConfig}
           plugin={plugin}
           onChange={onFieldConfigsChange}
-          data={data.series}
+          data={currentData}
         />
       );
     },
-    [data, plugin, panel, onFieldConfigsChange]
+    [currentData, plugin, panel, onFieldConfigsChange]
   );
 
   const renderFieldOverrideOptions = useCallback(
     (plugin: PanelPlugin) => {
       const fieldConfig = panel.getFieldConfig();
 
-      if (!fieldConfig) {
+      if (!fieldConfig || !currentData) {
         return null;
       }
 
@@ -69,11 +71,11 @@ export const OptionsPaneContent: React.FC<Props> = ({
           config={fieldConfig}
           plugin={plugin}
           onChange={onFieldConfigsChange}
-          data={data.series}
+          data={currentData}
         />
       );
     },
-    [data, plugin, panel, onFieldConfigsChange]
+    [currentData, plugin, panel, onFieldConfigsChange]
   );
 
   // When the panel has no query only show the main tab
