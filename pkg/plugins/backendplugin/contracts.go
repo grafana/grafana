@@ -72,38 +72,6 @@ type CollectMetricsResult struct {
 	PrometheusMetrics []byte
 }
 
-// type DataSourceConfig struct {
-// 	ID                      int64
-// 	Name                    string
-// 	URL                     string
-// 	User                    string
-// 	Database                string
-// 	BasicAuthEnabled        bool
-// 	BasicAuthUser           string
-// 	JSONData                *simplejson.Json
-// 	DecryptedSecureJSONData map[string]string
-// 	Updated                 time.Time
-// }
-
-// type PluginConfig struct {
-// 	OrgID                   int64
-// 	PluginID                string
-// 	JSONData                *simplejson.Json
-// 	DecryptedSecureJSONData map[string]string
-// 	Updated                 time.Time
-// 	DataSourceConfig        *DataSourceConfig
-// }
-
-// type CallResourceRequest struct {
-// 	Config  PluginConfig
-// 	Path    string
-// 	Method  string
-// 	URL     string
-// 	Headers map[string][]string
-// 	Body    []byte
-// 	User    *models.SignedInUser
-// }
-
 // CallResourceResult call resource result.
 type CallResourceResult struct {
 	Status  int

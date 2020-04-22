@@ -302,21 +302,11 @@ func (hs *HTTPServer) CallDatasourceResource(c *models.ReqContext) {
 		c.JsonApiErr(500, "Unable to convert request json to bytes", err)
 		return
 	}
+	dsInstanceSettings, err := wrapper.ModelToInstanceSettings(ds)
 	pCtx := backend.PluginContext{
-		OrgID:    c.OrgId,
-		PluginID: plugin.Id,
-		DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{
-			ID:                      ds.Id,
-			Name:                    ds.Name,
-			URL:                     ds.Url,
-			Database:                ds.Database,
-			User:                    ds.User,
-			BasicAuthEnabled:        ds.BasicAuth,
-			BasicAuthUser:           ds.BasicAuthUser,
-			JSONData:                dsJsonBytes,
-			DecryptedSecureJSONData: ds.DecryptedValues(),
-			Updated:                 ds.Updated,
-		},
+		OrgID:                      c.OrgId,
+		PluginID:                   plugin.Id,
+		DataSourceInstanceSettings: dsInstanceSettings,
 	}
 	hs.BackendPluginManager.CallResource(pCtx, c, c.Params("*"))
 }
@@ -382,22 +372,6 @@ func (hs *HTTPServer) CheckDatasourceHealth(c *models.ReqContext) {
 		PluginID:                   plugin.Id,
 		DataSourceInstanceSettings: dsInstanceSettings,
 	}
-	// config := &backendplugin.PluginConfig{
-	// 	OrgID:    c.OrgId,
-	// 	PluginID: plugin.Id,
-	// 	DataSourceConfig: &backendplugin.DataSourceConfig{
-	// 		ID:                      ds.Id,
-	// 		Name:                    ds.Name,
-	// 		URL:                     ds.Url,
-	// 		Database:                ds.Database,
-	// 		User:                    ds.User,
-	// 		BasicAuthEnabled:        ds.BasicAuth,
-	// 		BasicAuthUser:           ds.BasicAuthUser,
-	// 		JSONData:                ds.JsonData,
-	// 		DecryptedSecureJSONData: ds.DecryptedValues(),
-	// 		Updated:                 ds.Updated,
-	// 	},
-	// }
 
 	resp, err := hs.BackendPluginManager.CheckHealth(c.Req.Context(), pCtx)
 	if err != nil {
