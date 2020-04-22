@@ -87,7 +87,9 @@ export const getButtonStyles = stylesFactory((props: StyleProps) => {
         font-family: ${theme.typography.fontFamily.sansSerif};
         font-size: ${fontSize};
         padding: ${padding};
-        height: ${height};
+        height: ${height}px;
+        // Deduct border from line-height for perfect vertical centering on windows and linux
+        line-height: ${height - 2}px;
         vertical-align: middle;
         cursor: pointer;
         border: 1px solid ${borderColor};
