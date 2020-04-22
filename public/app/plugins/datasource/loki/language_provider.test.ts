@@ -158,7 +158,7 @@ describe('Request URL', () => {
 
     const instance = new LanguageProvider(datasourceWithLabels, { initialRange: rangeMock });
     await instance.refreshLogLabels(rangeMock, true);
-    const expectedUrl = '/api/prom/label';
+    const expectedUrl = '/loki/api/v1/label';
     expect(datasourceSpy).toHaveBeenCalledWith(expectedUrl, rangeToParams(rangeMock));
   });
 });

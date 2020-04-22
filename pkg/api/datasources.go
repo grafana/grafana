@@ -2,6 +2,8 @@ package api
 
 import (
 	"encoding/json"
+	"fmt"
+	"net/url"
 	"sort"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
@@ -10,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/util"
+	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
 func GetDataSources(c *models.ReqContext) Response {
@@ -124,8 +127,23 @@ func DeleteDataSourceByName(c *models.ReqContext) Response {
 	return Success("Data source deleted")
 }
 
+func validateURL(u string) Response {
+	if u != "" {
+		_, err := url.Parse(u)
+		if err != nil {
+			return Error(400, fmt.Sprintf("Validation error, invalid URL: %q", u), errutil.Wrapf(err,
+				"invalid data source URL %q", u))
+		}
+	}
+
+	return nil
+}
+
 func AddDataSource(c *models.ReqContext, cmd models.AddDataSourceCommand) Response {
 	cmd.OrgId = c.OrgId
+	if resp := validateURL(cmd.Url); resp != nil {
+		return resp
+	}
 
 	if err := bus.Dispatch(&cmd); err != nil {
 		if err == models.ErrDataSourceNameExists || err == models.ErrDataSourceUidExists {
@@ -147,6 +165,9 @@ func AddDataSource(c *models.ReqContext, cmd models.AddDataSourceCommand) Respon
 func UpdateDataSource(c *models.ReqContext, cmd models.UpdateDataSourceCommand) Response {
 	cmd.OrgId = c.OrgId
 	cmd.Id = c.ParamsInt64(":id")
+	if resp := validateURL(cmd.Url); resp != nil {
+		return resp
+	}
 
 	err := fillWithSecureJSONData(&cmd)
 	if err != nil {
@@ -386,15 +407,14 @@ func (hs *HTTPServer) CheckDatasourceHealth(c *models.ReqContext) {
 		return
 	}
 
-	var jsonDetails map[string]interface{}
 	payload := map[string]interface{}{
 		"status":  resp.Status.String(),
 		"message": resp.Message,
-		"details": jsonDetails,
 	}
 
 	// Unmarshal JSONDetails if it's not empty.
 	if len(resp.JSONDetails) > 0 {
+		var jsonDetails map[string]interface{}
 		err = json.Unmarshal(resp.JSONDetails, &jsonDetails)
 		if err != nil {
 			c.JsonApiErr(500, "Failed to unmarshal detailed response from backend plugin", err)
