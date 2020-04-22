@@ -6,7 +6,6 @@ import { ThemeContext, stylesFactory } from '../../themes/index';
 import { DataLinkInput } from './DataLinkInput';
 import { Field } from '../Forms/Field';
 import { Input } from '../Input/Input';
-import { Button } from '../Button';
 
 interface DataLinkEditorProps {
   index: number;
@@ -14,8 +13,6 @@ interface DataLinkEditorProps {
   value: DataLink;
   suggestions: VariableSuggestion[];
   onChange: (index: number, link: DataLink, callback?: () => void) => void;
-  onRemove?: (link: DataLink) => void;
-  disableRemove?: boolean;
 }
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => ({
@@ -30,7 +27,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => ({
 }));
 
 export const DataLinkEditor: React.FC<DataLinkEditorProps> = React.memo(
-  ({ index, value, onChange, onRemove, suggestions, isLast, disableRemove = false }) => {
+  ({ index, value, onChange, suggestions, isLast }) => {
     const theme = useContext(ThemeContext);
     const styles = getStyles(theme);
 
@@ -41,10 +38,6 @@ export const DataLinkEditor: React.FC<DataLinkEditorProps> = React.memo(
       onChange(index, { ...value, title: event.target.value });
     };
 
-    const onRemoveClick = () => {
-      onRemove && onRemove(value);
-    };
-
     const onOpenInNewTabChanged = () => {
       onChange(index, { ...value, targetBlank: !value.targetBlank });
     };
@@ -52,14 +45,7 @@ export const DataLinkEditor: React.FC<DataLinkEditorProps> = React.memo(
     return (
       <div className={styles.listItem}>
         <Field label="Title">
-          <Input
-            addonAfter={
-              !disableRemove && <Button variant="secondary" icon="times" onClick={onRemoveClick} title="Remove link" />
-            }
-            value={value.title}
-            onChange={onTitleChange}
-            placeholder="Show details"
-          />
+          <Input value={value.title} onChange={onTitleChange} placeholder="Show details" />
         </Field>
 
         <Field label="Open in new tab">
