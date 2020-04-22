@@ -4,7 +4,6 @@ import React from 'react';
 import { components } from '@torkelo/react-select';
 import { AsyncSelect } from '@grafana/ui';
 import { resetSelectStyles, Icon } from '@grafana/ui';
-import { FormInputSize } from '@grafana/ui/src/components/Forms/types';
 import { escapeStringForRegex } from '@grafana/data';
 // Components
 import { TagOption } from './TagOption';
@@ -19,7 +18,7 @@ export interface Props {
   tags: string[];
   tagOptions: () => Promise<TermCount[]>;
   onChange: (tags: string[]) => void;
-  size?: FormInputSize;
+  width?: number;
   placeholder?: string;
   /** Do not show selected values inside Select. Useful when the values need to be shown in some other components */
   hideValues?: boolean;
@@ -27,7 +26,7 @@ export interface Props {
 
 export class TagFilter extends React.Component<Props, any> {
   static defaultProps = {
-    size: 'auto',
+    width: 25,
     placeholder: 'Tags',
   };
 
@@ -53,7 +52,7 @@ export class TagFilter extends React.Component<Props, any> {
 
   render() {
     const tags = this.props.tags.map(tag => ({ value: tag, label: tag, count: 0 }));
-    const { size, placeholder, hideValues } = this.props;
+    const { width, placeholder, hideValues } = this.props;
 
     const selectOptions = {
       defaultOptions: true,
@@ -65,7 +64,7 @@ export class TagFilter extends React.Component<Props, any> {
       noOptionsMessage: 'No tags found',
       onChange: this.onChange,
       placeholder,
-      size,
+      width,
       styles: resetSelectStyles(),
       value: tags,
       filterOption: (option: any, searchQuery: string) => {

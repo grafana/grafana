@@ -21,7 +21,7 @@ export const SortPicker: FC<Props> = ({ onChange, value, placeholder }) => {
 
   return (
     <AsyncSelect
-      size="sm"
+      width={25}
       onChange={onChange}
       value={[value]}
       loadOptions={getSortOptions}
