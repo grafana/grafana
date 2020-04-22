@@ -297,12 +297,12 @@ func (hs *HTTPServer) CallDatasourceResource(c *models.ReqContext) {
 		c.JsonApiErr(500, "Unable to find datasource plugin", err)
 		return
 	}
-	dsJsonBytes, err := ds.JsonData.Bytes()
-	if err != nil {
-		c.JsonApiErr(500, "Unable to convert request json to bytes", err)
-		return
-	}
+
 	dsInstanceSettings, err := wrapper.ModelToInstanceSettings(ds)
+	if err != nil {
+		c.JsonApiErr(500, "Unable to process datasource instance model", err)
+	}
+
 	pCtx := backend.PluginContext{
 		OrgID:                      c.OrgId,
 		PluginID:                   plugin.Id,
