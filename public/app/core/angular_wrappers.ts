@@ -10,13 +10,13 @@ import { MetricSelect } from './components/Select/MetricSelect';
 import AppNotificationList from './components/AppNotifications/AppNotificationList';
 import {
   ColorPicker,
-  DataLinksEditor,
   DataSourceHttpSettings,
   GraphContextMenu,
   SeriesColorPickerPopoverWithTheme,
   UnitPicker,
   Icon,
   LegacyForms,
+  DataLinksInlineEditor,
 } from '@grafana/ui';
 const { SecretFormField } = LegacyForms;
 import { FunctionEditor } from 'app/plugins/datasource/graphite/FunctionEditor';
@@ -156,8 +156,9 @@ export function registerAngularDirectives() {
 
   // We keep the drilldown terminology here because of as using data-* directive
   // being in conflict with HTML data attributes
-  react2AngularDirective('drilldownLinksEditor', DataLinksEditor, [
+  react2AngularDirective('drilldownLinksEditor', DataLinksInlineEditor, [
     'value',
+    'links',
     'suggestions',
     ['onChange', { watchDepth: 'reference', wrapApply: true }],
   ]);
