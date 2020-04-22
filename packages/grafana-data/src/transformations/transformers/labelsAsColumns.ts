@@ -28,6 +28,7 @@ export const labelsAsColumnsTransformer: DataTransformerInfo<LabelsAsColumnsOpti
 
     const columnsMap = createColumnsMap(framesWithTimeField, framesWithoutTimeField);
     const processed = createFields(columnsMap);
+    const values: Record<string, any[]> = {};
 
     const timeColumnItem = columnsMap[processed.fields[0].name];
     const seriesIndexStrings = Object.keys(timeColumnItem);
@@ -36,10 +37,25 @@ export const labelsAsColumnsTransformer: DataTransformerInfo<LabelsAsColumnsOpti
       const timeValueStrings = Object.keys(seriesItem.values);
 
       for (const timeValueString of timeValueStrings) {
-        for (const field of processed.fields) {
+        if (!values[timeValueString]) {
+          values[timeValueString] = [];
+        }
+        let row = new Array(processed.fields.length);
+        for (let index = 0; index < processed.fields.length; index++) {
+          const field = processed.fields[index];
           const valueItem = columnsMap[field.name][seriesIndexString];
           const value = valueItem ? valueItem.values[timeValueString] ?? null : null;
-          field.values.add(value);
+          row[index] = value;
+        }
+        values[timeValueString].push(row);
+      }
+    }
+
+    const timestamps = Object.values(values);
+    for (const timestamp of timestamps) {
+      for (const row of timestamp) {
+        for (let fieldIndex = 0; fieldIndex < processed.fields.length; fieldIndex++) {
+          processed.fields[fieldIndex].values.add(row[fieldIndex]);
         }
       }
     }

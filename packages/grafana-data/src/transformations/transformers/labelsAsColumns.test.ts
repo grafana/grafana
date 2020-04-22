@@ -200,26 +200,31 @@ describe('Labels as Columns', () => {
     const oneValueDifferentLabelsA = toDataFrame({
       name: 'A',
       fields: [
-        { name: 'time', type: FieldType.time, values: [1000] },
-        { name: 'temp', type: FieldType.number, values: [1], labels: { location: 'inside', feelsLike: 'ok' } },
+        { name: 'time', type: FieldType.time, values: [1000, 2000] },
+        { name: 'temp', type: FieldType.number, values: [1, 2], labels: { location: 'inside', feelsLike: 'ok' } },
       ],
     });
 
     const oneValueDifferentLabelsB = toDataFrame({
       name: 'B',
       fields: [
-        { name: 'time', type: FieldType.time, values: [1000] },
-        { name: 'temp', type: FieldType.number, values: [-1], labels: { location: 'outside', sky: 'cloudy' } },
+        { name: 'time', type: FieldType.time, values: [1000, 2000] },
+        { name: 'temp', type: FieldType.number, values: [-1, -2], labels: { location: 'outside', sky: 'cloudy' } },
       ],
     });
 
     const result = transformDataFrame([cfg], [oneValueDifferentLabelsA, oneValueDifferentLabelsB]);
     const expected: Field[] = [
-      { name: 'time', type: FieldType.time, values: new ArrayVector([1000, 1000]), config: {} },
-      { name: 'location', type: FieldType.string, values: new ArrayVector(['inside', 'outside']), config: {} },
-      { name: 'feelsLike', type: FieldType.string, values: new ArrayVector(['ok', null]), config: {} },
-      { name: 'sky', type: FieldType.string, values: new ArrayVector([null, 'cloudy']), config: {} },
-      { name: 'temp', type: FieldType.number, values: new ArrayVector([1, -1]), config: {} },
+      { name: 'time', type: FieldType.time, values: new ArrayVector([1000, 1000, 2000, 2000]), config: {} },
+      {
+        name: 'location',
+        type: FieldType.string,
+        values: new ArrayVector(['inside', 'outside', 'inside', 'outside']),
+        config: {},
+      },
+      { name: 'feelsLike', type: FieldType.string, values: new ArrayVector(['ok', null, 'ok', null]), config: {} },
+      { name: 'sky', type: FieldType.string, values: new ArrayVector([null, 'cloudy', null, 'cloudy']), config: {} },
+      { name: 'temp', type: FieldType.number, values: new ArrayVector([1, -1, 2, -2]), config: {} },
     ];
 
     expect(result[0].fields).toEqual(expected);
