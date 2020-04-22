@@ -6,6 +6,7 @@ import {
   sortDataFrame,
   toDataFrame,
   toLegacyResponseData,
+  getDataTimeRange,
 } from './processDataFrame';
 import { DataFrameDTO, FieldType, TableData, TimeSeries } from '../types/index';
 import { dateTime } from '../datetime/moment_wrapper';
@@ -302,5 +303,20 @@ describe('sorted DataFrame', () => {
     expect(sorted.length).toEqual(3);
     expect(sorted.fields[0].values.toArray()).toEqual([3, 2, 1]);
     expect(sorted.fields[1].values.toArray()).toEqual(['c', 'b', 'a']);
+  });
+});
+
+describe('DataFrame utility functions', () => {
+  const frame = toDataFrame({
+    fields: [
+      { name: 'fist', type: FieldType.time, values: [2, 3, 5] },
+      { name: 'second', type: FieldType.time, values: [7, 8, 9] },
+      { name: 'third', type: FieldType.number, values: [2000, 3000, 1000] },
+    ],
+  });
+  it('Should find time range', () => {
+    const range = getDataTimeRange([frame]);
+    expect(range.from).toEqual(2);
+    expect(range.to).toEqual(9);
   });
 });

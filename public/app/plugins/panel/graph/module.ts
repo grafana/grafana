@@ -19,7 +19,9 @@ import {
   DataLink,
   DateTimeInput,
   VariableSuggestion,
+  getDataTimeRange,
 } from '@grafana/data';
+import { getLocationSrv } from '@grafana/runtime';
 
 import { GraphContextMenuCtrl } from './GraphContextMenuCtrl';
 import { getDataLinksVariableSuggestions } from 'app/features/panel/panellinks/link_srv';
@@ -27,6 +29,7 @@ import { getDataLinksVariableSuggestions } from 'app/features/panel/panellinks/l
 import { auto } from 'angular';
 import { AnnotationsSrv } from 'app/features/annotations/all';
 import { CoreEvents } from 'app/types';
+import { DataWarning } from './types';
 
 class GraphCtrl extends MetricsPanelCtrl {
   static template = template;
@@ -40,7 +43,7 @@ class GraphCtrl extends MetricsPanelCtrl {
   alertState: any;
 
   annotationsPromise: any;
-  dataWarning: any;
+  dataWarning?: DataWarning;
   colors: any = [];
   subTabIndex: number;
   processor: DataProcessor;
@@ -242,6 +245,19 @@ class GraphCtrl extends MetricsPanelCtrl {
             title: 'Data outside time range',
             tip: 'Can be caused by timezone mismatch or missing time filter in query',
           };
+          const range = getDataTimeRange(data);
+          if (range) {
+            this.dataWarning.actionText = 'Zoom to fit data';
+            this.dataWarning.action = () => {
+              getLocationSrv().update({
+                partial: true,
+                query: {
+                  from: range.from,
+                  to: range.to,
+                },
+              });
+            };
+          }
           break;
         }
       }
