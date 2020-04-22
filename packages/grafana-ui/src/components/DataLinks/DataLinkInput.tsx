@@ -3,13 +3,13 @@ import usePrevious from 'react-use/lib/usePrevious';
 import { DataLinkSuggestions } from './DataLinkSuggestions';
 import { ThemeContext, makeValue } from '../../index';
 import { SelectionReference } from './SelectionReference';
-import { Portal } from '../index';
+import { Portal, getFormStyles } from '../index';
 
 import { Editor } from '@grafana/slate-react';
 import { Value } from 'slate';
 import Plain from 'slate-plain-serializer';
 import { Popper as ReactPopper } from 'react-popper';
-import { css } from 'emotion';
+import { css, cx } from 'emotion';
 
 import { SlatePrism } from '../../slate-plugins';
 import { SCHEMA } from '../../utils/slate';
@@ -33,12 +33,22 @@ const plugins = [
 ];
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => ({
+  input: getFormStyles(theme, { variant: 'primary', size: 'md', invalid: false }).input.input,
   editor: css`
     .token.builtInVariable {
       color: ${theme.palette.queryGreen};
     }
     .token.variable {
       color: ${theme.colors.textBlue};
+    }
+  `,
+  // Wrapper with child selector needed.
+  // When classnames are appplied to the same element as the wrapper, it causes the suggestions to stop working
+  wrapperOverrides: css`
+    > .slate-query-field__wrapper {
+      padding: 0;
+      background-color: transparent;
+      border: none;
     }
   `,
 }));
@@ -119,44 +129,52 @@ export const DataLinkInput: React.FC<DataLinkInputProps> = memo(
     };
 
     return (
-      <div className="slate-query-field__wrapper">
-        <div className="slate-query-field">
-          {showingSuggestions && (
-            <Portal>
-              <ReactPopper
-                referenceElement={selectionRef}
-                placement="top-end"
-                modifiers={{
-                  preventOverflow: { enabled: true, boundariesElement: 'window' },
-                  arrow: { enabled: false },
-                  offset: { offset: 250 }, // width of the suggestions menu
-                }}
-              >
-                {({ ref, style, placement }) => {
-                  return (
-                    <div ref={ref} style={style} data-placement={placement}>
-                      <DataLinkSuggestions
-                        suggestions={stateRef.current.suggestions}
-                        onSuggestionSelect={onVariableSelect}
-                        onClose={() => setShowingSuggestions(false)}
-                        activeIndex={suggestionsIndex}
-                      />
-                    </div>
-                  );
-                }}
-              </ReactPopper>
-            </Portal>
-          )}
-          <Editor
-            schema={SCHEMA}
-            ref={editorRef}
-            placeholder={placeholder}
-            value={stateRef.current.linkUrl}
-            onChange={onUrlChange}
-            onKeyDown={(event, _editor, next) => onKeyDown(event as KeyboardEvent, next)}
-            plugins={plugins}
-            className={styles.editor}
-          />
+      <div className={styles.wrapperOverrides}>
+        <div className="slate-query-field__wrapper">
+          <div className="slate-query-field">
+            {showingSuggestions && (
+              <Portal>
+                <ReactPopper
+                  referenceElement={selectionRef}
+                  placement="top-end"
+                  modifiers={{
+                    preventOverflow: { enabled: true, boundariesElement: 'window' },
+                    arrow: { enabled: false },
+                    offset: { offset: 250 }, // width of the suggestions menu
+                  }}
+                >
+                  {({ ref, style, placement }) => {
+                    return (
+                      <div ref={ref} style={style} data-placement={placement}>
+                        <DataLinkSuggestions
+                          suggestions={stateRef.current.suggestions}
+                          onSuggestionSelect={onVariableSelect}
+                          onClose={() => setShowingSuggestions(false)}
+                          activeIndex={suggestionsIndex}
+                        />
+                      </div>
+                    );
+                  }}
+                </ReactPopper>
+              </Portal>
+            )}
+            <Editor
+              schema={SCHEMA}
+              ref={editorRef}
+              placeholder={placeholder}
+              value={stateRef.current.linkUrl}
+              onChange={onUrlChange}
+              onKeyDown={(event, _editor, next) => onKeyDown(event as KeyboardEvent, next)}
+              plugins={plugins}
+              className={cx(
+                styles.editor,
+                styles.input,
+                css`
+                  padding: 3px 8px;
+                `
+              )}
+            />
+          </div>
         </div>
       </div>
     );

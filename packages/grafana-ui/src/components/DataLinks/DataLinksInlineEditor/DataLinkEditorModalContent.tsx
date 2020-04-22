@@ -31,7 +31,7 @@ export const DataLinkEditorModalContent: FC<DataLinkEditorModalContentProps> = (
         onChange={(index, link) => {
           setDirtyLink(link);
         }}
-        onRemove={() => {}}
+        disableRemove
       />
       <HorizontalGroup>
         <Button

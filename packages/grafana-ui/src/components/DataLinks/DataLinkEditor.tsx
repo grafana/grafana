@@ -1,11 +1,12 @@
 import React, { ChangeEvent, useContext } from 'react';
 import { DataLink, VariableSuggestion, GrafanaTheme } from '@grafana/data';
-import { FormField } from '../FormField/FormField';
-import { Switch } from '../Forms/Legacy/Switch/Switch';
+import { Switch } from '../Switch/Switch';
 import { css } from 'emotion';
 import { ThemeContext, stylesFactory } from '../../themes/index';
 import { DataLinkInput } from './DataLinkInput';
-import { Icon } from '../Icon/Icon';
+import { Field } from '../Forms/Field';
+import { Input } from '../Input/Input';
+import { Button } from '../Button';
 
 interface DataLinkEditorProps {
   index: number;
@@ -13,7 +14,8 @@ interface DataLinkEditorProps {
   value: DataLink;
   suggestions: VariableSuggestion[];
   onChange: (index: number, link: DataLink, callback?: () => void) => void;
-  onRemove: (link: DataLink) => void;
+  onRemove?: (link: DataLink) => void;
+  disableRemove?: boolean;
 }
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => ({
@@ -28,7 +30,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => ({
 }));
 
 export const DataLinkEditor: React.FC<DataLinkEditorProps> = React.memo(
-  ({ index, value, onChange, onRemove, suggestions, isLast }) => {
+  ({ index, value, onChange, onRemove, suggestions, isLast, disableRemove = false }) => {
     const theme = useContext(ThemeContext);
     const styles = getStyles(theme);
 
@@ -40,7 +42,7 @@ export const DataLinkEditor: React.FC<DataLinkEditorProps> = React.memo(
     };
 
     const onRemoveClick = () => {
-      onRemove(value);
+      onRemove && onRemove(value);
     };
 
     const onOpenInNewTabChanged = () => {
@@ -49,29 +51,24 @@ export const DataLinkEditor: React.FC<DataLinkEditorProps> = React.memo(
 
     return (
       <div className={styles.listItem}>
-        <div className="gf-form gf-form--inline">
-          <FormField
-            className="gf-form--grow"
-            label="Title"
+        <Field label="Title">
+          <Input
+            addonAfter={
+              !disableRemove && <Button variant="secondary" icon="times" onClick={onRemoveClick} title="Remove link" />
+            }
             value={value.title}
             onChange={onTitleChange}
-            inputWidth={0}
-            labelWidth={5}
             placeholder="Show details"
           />
-          <Switch label="Open in new tab" checked={value.targetBlank || false} onChange={onOpenInNewTabChanged} />
-          <button className="gf-form-label gf-form-label--btn" onClick={onRemoveClick} title="Remove link">
-            <Icon name="times" />
-          </button>
-        </div>
-        <FormField
-          label="URL"
-          labelWidth={5}
-          inputEl={<DataLinkInput value={value.url} onChange={onUrlChange} suggestions={suggestions} />}
-          className={css`
-            width: 100%;
-          `}
-        />
+        </Field>
+
+        <Field label="Open in new tab">
+          <Switch checked={value.targetBlank || false} onChange={onOpenInNewTabChanged} />
+        </Field>
+
+        <Field label="URL">
+          <DataLinkInput value={value.url} onChange={onUrlChange} suggestions={suggestions} />
+        </Field>
         {isLast && (
           <div className={styles.infoText}>
             With data links you can reference data variables like series name, labels and values. Type CMD+Space,
