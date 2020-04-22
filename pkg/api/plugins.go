@@ -15,6 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
 // ErrPluginNotFound is returned when an requested plugin is not installed.
@@ -27,30 +28,33 @@ func (hs *HTTPServer) getPluginContext(pluginID string, user *models.SignedInUse
 		return pc, ErrPluginNotFound
 	}
 
-	// var jsonData *simplejson.Json
-	// var decryptedSecureJSONData map[string]string
-	// var updated time.Time
+	var jsonData json.RawMessage
+	var decryptedSecureJSONData map[string]string
+	var updated time.Time
 
 	ps, err := hs.getCachedPluginSettings(pluginID, user)
-	_, _ = ps, err
-	// if err != nil {
-	// 	if err != models.ErrPluginSettingNotFound {
-	// 		return nil, errutil.Wrap("Failed to get plugin settings", err)
-	// 	}
-	// 	jsonData = simplejson.New()
-	// 	decryptedSecureJSONData = make(map[string]string)
-	// } else {
-	// 	decryptedSecureJSONData = ps.DecryptedValues()
-	// 	updated = ps.Updated
-	// }
+	if err != nil {
+		if err != models.ErrPluginSettingNotFound {
+			return pc, errutil.Wrap("Failed to get plugin settings", err)
+		}
+		jsonData, err = json.Marshal(ps.JsonData)
+		if err != nil {
+			return pc, errutil.Wrap("Failed to unmarhsal plugin json data", err)
+		}
+		decryptedSecureJSONData = make(map[string]string)
+	} else {
+		decryptedSecureJSONData = ps.DecryptedValues()
+		updated = ps.Updated
+	}
 
 	return backend.PluginContext{
 		OrgID:    user.OrgId,
 		PluginID: plugin.Id,
-		// TODO: Which thing?
-		// JSONData:                jsonData,
-		// DecryptedSecureJSONData: decryptedSecureJSONData,
-		// Updated:                 updated,
+		AppInstanceSettings: &backend.AppInstanceSettings{
+			JSONData:                jsonData,
+			DecryptedSecureJSONData: decryptedSecureJSONData,
+			Updated:                 updated,
+		},
 	}, nil
 }
 
@@ -357,11 +361,6 @@ func (hs *HTTPServer) CallResource(c *models.ReqContext) {
 		c.JsonApiErr(500, "Failed to get plugin settings", err)
 		return
 	}
-	// pCtx := &backend.PluginContext{
-	// 	OrgID:    c.OrgId,
-	// 	PluginID: pluginID,
-	// 	// TODO: App instance settings?
-	// }
 	hs.BackendPluginManager.CallResource(pCtx, c, c.Params("*"))
 }
 

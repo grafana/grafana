@@ -2,6 +2,7 @@ package backendplugin
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -222,6 +223,10 @@ func BackendUserFromSignedInUser(su *models.SignedInUser) *backend.User {
 	}
 }
 
+type keepCookiesJSONModel struct {
+	KeepCookies []string `json:"keepCookies"`
+}
+
 // CallResource calls a plugin resource.
 func (m *manager) CallResource(pCtx backend.PluginContext, reqCtx *models.ReqContext, path string) {
 	m.pluginsMu.RLock()
@@ -234,16 +239,15 @@ func (m *manager) CallResource(pCtx backend.PluginContext, reqCtx *models.ReqCon
 	}
 
 	clonedReq := reqCtx.Req.Clone(reqCtx.Req.Context())
-	keepCookieNames := []string{}
-	/// TODO! THIS SEEMS IMPORTANT BUT I DO NOT GET IT
+	keepCookieModel := keepCookiesJSONModel{}
+	if dis := pCtx.DataSourceInstanceSettings; dis != nil {
+		err := json.Unmarshal(dis.JSONData, &keepCookieModel)
+		if err != nil {
+			p.logger.Error("Failed to to unpack JSONData in datasource instance settings", "error", err)
+		}
+	}
 
-	// if pCtx.JSONData != nil {
-	// 	if keepCookies := config.JSONData.Get("keepCookies"); keepCookies != nil {
-	// 		keepCookieNames = keepCookies.MustStringArray()
-	// 	}
-	// }
-
-	proxyutil.ClearCookieHeader(clonedReq, keepCookieNames)
+	proxyutil.ClearCookieHeader(clonedReq, keepCookieModel.KeepCookies)
 	proxyutil.PrepareProxyRequest(clonedReq)
 
 	body, err := reqCtx.Req.Body().Bytes()
