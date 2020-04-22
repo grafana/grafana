@@ -88,10 +88,9 @@ N1c5v9v/4h6qeA==
 
 	mg.AddMigration(
 		"insert public key into manifest)keys table",
-		NewRawSqlMigration(
-			fmt.Sprintf(`INSERT into manifest_keys (key_id, public_key, since, updated_at) VALUES ("%s", "%s", %d, %d)`,
-				defaultKeyID,
-				defaultPublicKey,
-				time.Now().Unix(),
-				time.Now().Unix())))
+		NewRawSqlMigration(fmt.Sprintf(`INSERT into manifest_keys (key_id, public_key, since, updated_at) VALUES ('%s', '%s', %d, %d)`,
+			defaultKeyID,
+			defaultPublicKey,
+			time.Now().Unix(),
+			time.Now().Unix())))
 }
