@@ -67,7 +67,7 @@ export function addToRichHistory(
       { queries: newQueriesToSave, ts, datasourceId, datasourceName, starred, comment, sessionName },
       ...queriesToKeep,
     ];
-    
+
     try {
       store.setObject(RICH_HISTORY_KEY, updatedHistory);
       return updatedHistory;
