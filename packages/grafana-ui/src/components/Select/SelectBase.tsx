@@ -321,6 +321,9 @@ export function SelectBase<T>({
         }}
         styles={{
           ...resetSelectStyles(),
+          menuPortal: () => ({
+            zIndex: theme.zIndex.dropdown,
+          }),
           //These are required for the menu positioning to function
           menu: ({ top, bottom, width, position }: any) => ({
             top,
@@ -328,12 +331,10 @@ export function SelectBase<T>({
             width,
             position,
             marginBottom: !!bottom ? '10px' : '0',
-            zIndex: 9999,
+            zIndex: theme.zIndex.dropdown,
           }),
           container: () => ({
             position: 'relative',
-            // This puts the menu above Inputs (z-index: 1)
-            zIndex: theme.zIndex.dropdown,
             width: width ? `${8 * width}px` : '100%',
           }),
         }}
