@@ -14,7 +14,7 @@ import (
 // AlertStateCritical - Victorops uses "CRITICAL" string to indicate "Alerting" state
 const AlertStateCritical = "CRITICAL"
 
-// AlertStateWarning - Using "WARNING" to indicate no_data state in VictorOps
+// AlertStateWarning - VictorOps "WARNING" message type
 const AlertStateWarning = "WARNING"
 const alertStateRecovery = "RECOVERY"
 
@@ -29,6 +29,13 @@ func init() {
       <div class="gf-form">
         <span class="gf-form-label width-6">Url</span>
         <input type="text" required class="gf-form-input max-width-30" ng-model="ctrl.model.settings.url" placeholder="VictorOps url"></input>
+      </div>
+      <div class="gf-form">
+        <span class="gf-form-label width-10">No Data Alert Type</span>
+        <div class="gf-form-select-wrapper width-14">
+          <select class="gf-form-input" ng-model="ctrl.model.settings.noDataAlertType" ng-options="t for t in ['CRITICAL', 'WARNING']" ng-init="ctrl.model.settings.noDataAlertType=ctrl.model.settings.noDataAlertType || '` + AlertStateWarning + `'">
+          </select>
+        </div>
       </div>
       <div class="gf-form">
         <gf-form-switch
@@ -51,12 +58,14 @@ func NewVictoropsNotifier(model *models.AlertNotification) (alerting.Notifier, e
 	if url == "" {
 		return nil, alerting.ValidationError{Reason: "Could not find victorops url property in settings"}
 	}
+	noDataAlertType := model.Settings.Get("noDataAlertType").MustString(AlertStateWarning)
 
 	return &VictoropsNotifier{
-		NotifierBase: NewNotifierBase(model),
-		URL:          url,
-		AutoResolve:  autoResolve,
-		log:          log.New("alerting.notifier.victorops"),
+		NotifierBase:    NewNotifierBase(model),
+		URL:             url,
+		NoDataAlertType: noDataAlertType,
+		AutoResolve:     autoResolve,
+		log:             log.New("alerting.notifier.victorops"),
 	}, nil
 }
 
@@ -65,9 +74,10 @@ func NewVictoropsNotifier(model *models.AlertNotification) (alerting.Notifier, e
 // Victorops specifications (http://victorops.force.com/knowledgebase/articles/Integration/Alert-Ingestion-API-Documentation/)
 type VictoropsNotifier struct {
 	NotifierBase
-	URL         string
-	AutoResolve bool
-	log         log.Logger
+	URL             string
+	NoDataAlertType string
+	AutoResolve     bool
+	log             log.Logger
 }
 
 // Notify sends notification to Victorops via POST to URL endpoint
@@ -85,12 +95,10 @@ func (vn *VictoropsNotifier) Notify(evalContext *alerting.EvalContext) error {
 		return nil
 	}
 
-	messageType := evalContext.Rule.State
-	if evalContext.Rule.State == models.AlertStateAlerting { // translate 'Alerting' to 'CRITICAL' (Victorops analog)
-		messageType = AlertStateCritical
-	}
-	if evalContext.Rule.State == models.AlertStateNoData { // translate 'NODATA' to 'WARNING'
-		messageType = AlertStateWarning
+	messageType := AlertStateCritical // Default to alerting and change based on state checks (Ensures string type)
+
+	if evalContext.Rule.State == models.AlertStateNoData { // translate 'NODATA' to set alert
+		messageType = vn.NoDataAlertType
 	}
 
 	if evalContext.Rule.State == models.AlertStateOK {
