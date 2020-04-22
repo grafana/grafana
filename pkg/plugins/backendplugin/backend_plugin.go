@@ -178,14 +178,14 @@ func (p *BackendPlugin) CollectMetrics(ctx context.Context) (*pluginv2.CollectMe
 var toProto = backend.ToProto()
 var fromProto = backend.FromProto()
 
-func (p *BackendPlugin) checkHealth(ctx context.Context, pCtx *backend.PluginContext) (*pluginv2.CheckHealthResponse, error) {
+func (p *BackendPlugin) checkHealth(ctx context.Context, pCtx backend.PluginContext) (*pluginv2.CheckHealthResponse, error) {
 	if p.diagnostics == nil || p.client == nil || p.client.Exited() {
 		return &pluginv2.CheckHealthResponse{
 			Status: pluginv2.CheckHealthResponse_UNKNOWN,
 		}, nil
 	}
 
-	protoContext := toProto.PluginContext(*pCtx)
+	protoContext := toProto.PluginContext(pCtx)
 
 	var res *pluginv2.CheckHealthResponse
 	err := InstrumentPluginRequest(p.id, "checkhealth", func() error {

@@ -7,8 +7,7 @@ import (
 	"sort"
 	"time"
 
-	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/util/errutil"
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/bus"
@@ -21,35 +20,37 @@ import (
 // ErrPluginNotFound is returned when an requested plugin is not installed.
 var ErrPluginNotFound error = errors.New("plugin not found, no installed plugin with that id")
 
-func (hs *HTTPServer) getPluginConfig(pluginID string, user *models.SignedInUser) (backendplugin.PluginConfig, error) {
-	pluginConfig := backendplugin.PluginConfig{}
+func (hs *HTTPServer) getPluginContext(pluginID string, user *models.SignedInUser) (backend.PluginContext, error) {
+	pc := backend.PluginContext{}
 	plugin, exists := plugins.Plugins[pluginID]
 	if !exists {
-		return pluginConfig, ErrPluginNotFound
+		return pc, ErrPluginNotFound
 	}
 
-	var jsonData *simplejson.Json
-	var decryptedSecureJSONData map[string]string
-	var updated time.Time
+	// var jsonData *simplejson.Json
+	// var decryptedSecureJSONData map[string]string
+	// var updated time.Time
 
 	ps, err := hs.getCachedPluginSettings(pluginID, user)
-	if err != nil {
-		if err != models.ErrPluginSettingNotFound {
-			return pluginConfig, errutil.Wrap("Failed to get plugin settings", err)
-		}
-		jsonData = simplejson.New()
-		decryptedSecureJSONData = make(map[string]string)
-	} else {
-		decryptedSecureJSONData = ps.DecryptedValues()
-		updated = ps.Updated
-	}
+	_, _ = ps, err
+	// if err != nil {
+	// 	if err != models.ErrPluginSettingNotFound {
+	// 		return nil, errutil.Wrap("Failed to get plugin settings", err)
+	// 	}
+	// 	jsonData = simplejson.New()
+	// 	decryptedSecureJSONData = make(map[string]string)
+	// } else {
+	// 	decryptedSecureJSONData = ps.DecryptedValues()
+	// 	updated = ps.Updated
+	// }
 
-	return backendplugin.PluginConfig{
-		OrgID:                   user.OrgId,
-		PluginID:                plugin.Id,
-		JSONData:                jsonData,
-		DecryptedSecureJSONData: decryptedSecureJSONData,
-		Updated:                 updated,
+	return backend.PluginContext{
+		OrgID:    user.OrgId,
+		PluginID: plugin.Id,
+		// TODO: Which thing?
+		// JSONData:                jsonData,
+		// DecryptedSecureJSONData: decryptedSecureJSONData,
+		// Updated:                 updated,
 	}, nil
 }
 
@@ -289,7 +290,7 @@ func (hs *HTTPServer) CollectPluginMetrics(c *models.ReqContext) Response {
 func (hs *HTTPServer) CheckHealth(c *models.ReqContext) Response {
 	pluginID := c.Params("pluginId")
 
-	config, err := hs.getPluginConfig(pluginID, c.SignedInUser)
+	pCtx, err := hs.getPluginContext(pluginID, c.SignedInUser)
 	if err != nil {
 		if err == ErrPluginNotFound {
 			return Error(404, "Plugin not found, no installed plugin with that id", nil)
@@ -298,7 +299,7 @@ func (hs *HTTPServer) CheckHealth(c *models.ReqContext) Response {
 		return Error(500, "Failed to get plugin settings", err)
 	}
 
-	resp, err := hs.BackendPluginManager.CheckHealth(c.Req.Context(), &config)
+	resp, err := hs.BackendPluginManager.CheckHealth(c.Req.Context(), pCtx)
 	if err != nil {
 		if err == backendplugin.ErrPluginNotRegistered {
 			return Error(404, "Plugin not found", err)
@@ -346,7 +347,7 @@ func (hs *HTTPServer) CheckHealth(c *models.ReqContext) Response {
 func (hs *HTTPServer) CallResource(c *models.ReqContext) {
 	pluginID := c.Params("pluginId")
 
-	config, err := hs.getPluginConfig(pluginID, c.SignedInUser)
+	pCtx, err := hs.getPluginContext(pluginID, c.SignedInUser)
 	if err != nil {
 		if err == ErrPluginNotFound {
 			c.JsonApiErr(404, "Plugin not found, no installed plugin with that id", nil)
@@ -356,8 +357,12 @@ func (hs *HTTPServer) CallResource(c *models.ReqContext) {
 		c.JsonApiErr(500, "Failed to get plugin settings", err)
 		return
 	}
-
-	hs.BackendPluginManager.CallResource(config, c, c.Params("*"))
+	// pCtx := &backend.PluginContext{
+	// 	OrgID:    c.OrgId,
+	// 	PluginID: pluginID,
+	// 	// TODO: App instance settings?
+	// }
+	hs.BackendPluginManager.CallResource(pCtx, c, c.Params("*"))
 }
 
 func (hs *HTTPServer) getCachedPluginSettings(pluginID string, user *models.SignedInUser) (*models.PluginSetting, error) {

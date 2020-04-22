@@ -46,9 +46,9 @@ type Manager interface {
 	// CollectMetrics collects metrics from a registered backend plugin.
 	CollectMetrics(ctx context.Context, pluginID string) (*CollectMetricsResult, error)
 	// CheckHealth checks the health of a registered backend plugin.
-	CheckHealth(ctx context.Context, pluginConfig *PluginConfig) (*CheckHealthResult, error)
+	CheckHealth(ctx context.Context, pCtx backend.PluginContext) (*CheckHealthResult, error)
 	// CallResource calls a plugin resource.
-	CallResource(pluginConfig PluginConfig, ctx *models.ReqContext, path string)
+	CallResource(pluginConfig backend.PluginContext, ctx *models.ReqContext, path string)
 }
 
 type manager struct {
@@ -188,7 +188,7 @@ func (m *manager) CollectMetrics(ctx context.Context, pluginID string) (*Collect
 }
 
 // CheckHealth checks the health of a registered backend plugin.
-func (m *manager) CheckHealth(ctx context.Context, pluginConfig *backend.PluginContext) (*CheckHealthResult, error) {
+func (m *manager) CheckHealth(ctx context.Context, pluginConfig backend.PluginContext) (*CheckHealthResult, error) {
 	m.pluginsMu.RLock()
 	p, registered := m.plugins[pluginConfig.PluginID]
 	m.pluginsMu.RUnlock()
