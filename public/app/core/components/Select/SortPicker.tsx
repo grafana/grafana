@@ -12,13 +12,13 @@ export interface Props {
   placeholder?: string;
 }
 
-export const SortPicker: FC<Props> = ({ onChange, value, placeholder }) => {
-  const getSortOptions = () => {
-    return searchSrv.getSortOptions().then(({ sortOptions }) => {
-      return sortOptions.map((opt: any) => ({ label: opt.displayName, value: opt.name }));
-    });
-  };
+const getSortOptions = () => {
+  return searchSrv.getSortOptions().then(({ sortOptions }) => {
+    return sortOptions.map((opt: any) => ({ label: opt.displayName, value: opt.name }));
+  });
+};
 
+export const SortPicker: FC<Props> = ({ onChange, value, placeholder }) => {
   return (
     <AsyncSelect
       width={25}
