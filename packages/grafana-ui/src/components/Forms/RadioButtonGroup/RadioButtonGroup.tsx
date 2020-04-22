@@ -39,6 +39,7 @@ interface RadioButtonGroupProps<T> {
   options: Array<SelectableValue<T>>;
   onChange?: (value?: T) => void;
   size?: RadioButtonSize;
+  fullWidth?: boolean;
 }
 
 export function RadioButtonGroup<T>({
@@ -48,6 +49,7 @@ export function RadioButtonGroup<T>({
   disabled,
   disabledOptions,
   size = 'md',
+  fullWidth = false,
 }: RadioButtonGroupProps<T>) {
   const handleOnChange = useCallback(
     (option: SelectableValue<T>) => {
@@ -59,7 +61,8 @@ export function RadioButtonGroup<T>({
     },
     [onChange]
   );
-  const groupName = useRef(uniqueId('radiogroup-'));
+  const id = uniqueId('radiogroup-');
+  const groupName = useRef(id);
   const styles = getRadioButtonGroupStyles();
 
   return (
@@ -73,8 +76,9 @@ export function RadioButtonGroup<T>({
             active={value === o.value}
             key={o.label}
             onChange={handleOnChange(o)}
-            id={`option-${o.value}`}
+            id={`option-${o.value}-${id}`}
             name={groupName.current}
+            fullWidth={fullWidth}
           >
             {o.label}
           </RadioButton>

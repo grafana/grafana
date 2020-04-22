@@ -3,9 +3,11 @@ package rendering
 import (
 	"context"
 	"fmt"
+	"math"
 	"net/url"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/grafana/grafana/pkg/infra/remotecache"
@@ -22,8 +24,6 @@ func init() {
 	remotecache.Register(&RenderUser{})
 	registry.RegisterService(&RenderingService{})
 }
-
-var IsPhantomJSEnabled = false
 
 const renderKeyPrefix = "render-%s"
 
@@ -76,28 +76,29 @@ func (rs *RenderingService) Run(ctx context.Context) error {
 		return nil
 	}
 
-	if plugins.Renderer == nil {
-		rs.log = rs.log.New("renderer", "phantomJS")
-		rs.log.Info("Backend rendering via phantomJS")
-		rs.log.Warn("phantomJS is deprecated and will be removed in a future release. " +
-			"You should consider migrating from phantomJS to grafana-image-renderer plugin. " +
-			"Read more at https://grafana.com/docs/grafana/latest/administration/image_rendering/")
-		rs.renderAction = rs.renderViaPhantomJS
-		IsPhantomJSEnabled = true
+	if plugins.Renderer != nil {
+		rs.log = rs.log.New("renderer", "plugin")
+		rs.pluginInfo = plugins.Renderer
+
+		if err := rs.startPlugin(ctx); err != nil {
+			return err
+		}
+
+		rs.renderAction = rs.renderViaPlugin
 		<-ctx.Done()
 		return nil
 	}
 
-	rs.log = rs.log.New("renderer", "plugin")
-	rs.pluginInfo = plugins.Renderer
+	rs.log.Debug("No image renderer found/installed. " +
+		"For image rendering support please install the grafana-image-renderer plugin. " +
+		"Read more at https://grafana.com/docs/grafana/latest/administration/image_rendering/")
 
-	if err := rs.startPlugin(ctx); err != nil {
-		return err
-	}
-
-	rs.renderAction = rs.renderViaPlugin
 	<-ctx.Done()
 	return nil
+}
+
+func (rs *RenderingService) IsAvailable() bool {
+	return rs.renderAction != nil
 }
 
 func (rs *RenderingService) RenderErrorImage(err error) (*RenderResult, error) {
@@ -115,23 +116,27 @@ func (rs *RenderingService) Render(ctx context.Context, opts Opts) (*RenderResul
 		}, nil
 	}
 
-	if rs.renderAction != nil {
-		rs.log.Info("Rendering", "path", opts.Path)
-		renderKey, err := rs.generateAndStoreRenderKey(opts.OrgId, opts.UserId, opts.OrgRole)
-		if err != nil {
-			return nil, err
-		}
-
-		defer rs.deleteRenderKey(renderKey)
-
-		defer func() {
-			rs.inProgressCount--
-		}()
-
-		rs.inProgressCount++
-		return rs.renderAction(ctx, renderKey, opts)
+	if rs.renderAction == nil {
+		return nil, fmt.Errorf("no renderer found")
 	}
-	return nil, fmt.Errorf("No renderer found")
+
+	rs.log.Info("Rendering", "path", opts.Path)
+	if math.IsInf(opts.DeviceScaleFactor, 0) || math.IsNaN(opts.DeviceScaleFactor) || opts.DeviceScaleFactor <= 0 {
+		opts.DeviceScaleFactor = 1
+	}
+	renderKey, err := rs.generateAndStoreRenderKey(opts.OrgId, opts.UserId, opts.OrgRole)
+	if err != nil {
+		return nil, err
+	}
+
+	defer rs.deleteRenderKey(renderKey)
+
+	defer func() {
+		rs.inProgressCount--
+	}()
+
+	rs.inProgressCount++
+	return rs.renderAction(ctx, renderKey, opts)
 }
 
 func (rs *RenderingService) GetRenderUser(key string) (*RenderUser, bool) {
@@ -181,8 +186,13 @@ func (rs *RenderingService) getURL(path string) string {
 		protocol = "https"
 	}
 
+	subPath := ""
+	if rs.Cfg.ServeFromSubPath {
+		subPath = rs.Cfg.AppSubUrl
+	}
+
 	// &render=1 signals to the legacy redirect layer to
-	return fmt.Sprintf("%s://%s:%s/%s&render=1", protocol, rs.domain, setting.HttpPort, path)
+	return fmt.Sprintf("%s://%s:%s%s/%s&render=1", protocol, rs.domain, setting.HttpPort, subPath, path)
 }
 
 func (rs *RenderingService) generateAndStoreRenderKey(orgId, userId int64, orgRole models.RoleType) (string, error) {
@@ -208,4 +218,15 @@ func (rs *RenderingService) deleteRenderKey(key string) {
 	if err != nil {
 		rs.log.Error("Failed to delete render key", "error", err)
 	}
+}
+
+func isoTimeOffsetToPosixTz(isoOffset string) string {
+	// invert offset
+	if strings.HasPrefix(isoOffset, "UTC+") {
+		return strings.Replace(isoOffset, "UTC+", "UTC-", 1)
+	}
+	if strings.HasPrefix(isoOffset, "UTC-") {
+		return strings.Replace(isoOffset, "UTC-", "UTC+", 1)
+	}
+	return isoOffset
 }

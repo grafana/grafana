@@ -3,7 +3,9 @@ import { TIME_FORMAT, TimeZone, isDateTime, TimeRange, DateTime, dateMath } from
 import { stringToDateTimeType, isValidTimeString } from '../time';
 import { mapStringsToTimeRange } from './mapper';
 import { TimePickerCalendar } from './TimePickerCalendar';
-import Forms from '../../Forms';
+import { Field } from '../../Forms/Field';
+import { Input } from '../../Input/Input';
+import { Button } from '../../Button';
 
 interface Props {
   isFullscreen: boolean;
@@ -60,29 +62,29 @@ export const TimeRangeForm: React.FC<Props> = props => {
     [timeZone]
   );
 
-  const icon = isFullscreen ? null : <Forms.Button icon="fa fa-calendar" variant="secondary" onClick={onOpen} />;
+  const icon = isFullscreen ? null : <Button icon="calendar-alt" variant="secondary" onClick={onOpen} />;
 
   return (
     <>
-      <Forms.Field label="From" invalid={from.invalid} error={errorMessage}>
-        <Forms.Input
+      <Field label="From" invalid={from.invalid} error={errorMessage}>
+        <Input
           onClick={event => event.stopPropagation()}
           onFocus={onFocus}
           onChange={event => setFrom(eventToState(event, false, timeZone))}
           addonAfter={icon}
           value={from.value}
         />
-      </Forms.Field>
-      <Forms.Field label="To" invalid={to.invalid} error={errorMessage}>
-        <Forms.Input
+      </Field>
+      <Field label="To" invalid={to.invalid} error={errorMessage}>
+        <Input
           onClick={event => event.stopPropagation()}
           onFocus={onFocus}
           onChange={event => setTo(eventToState(event, true, timeZone))}
           addonAfter={icon}
           value={to.value}
         />
-      </Forms.Field>
-      <Forms.Button onClick={onApply}>Apply time range</Forms.Button>
+      </Field>
+      <Button onClick={onApply}>Apply time range</Button>
 
       <TimePickerCalendar
         isFullscreen={isFullscreen}

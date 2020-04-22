@@ -1,9 +1,9 @@
 import React, { PureComponent } from 'react';
 import { connect } from 'react-redux';
-import classNames from 'classnames';
 import { setUsersSearchQuery } from './state/reducers';
 import { getInviteesCount, getUsersSearchQuery } from './state/selectors';
 import { FilterInput } from 'app/core/components/FilterInput/FilterInput';
+import { RadioButtonGroup, LinkButton } from '@grafana/ui';
 
 export interface Props {
   searchQuery: string;
@@ -28,18 +28,10 @@ export class UsersActionBar extends PureComponent<Props> {
       onShowInvites,
       showInvites,
     } = this.props;
-
-    const pendingInvitesButtonStyle = classNames({
-      btn: true,
-      'toggle-btn': true,
-      active: showInvites,
-    });
-
-    const usersButtonStyle = classNames({
-      btn: true,
-      'toggle-btn': true,
-      active: !showInvites,
-    });
+    const options = [
+      { label: 'Users', value: 'users' },
+      { label: `Pending Invites (${pendingInvitesCount})`, value: 'invites' },
+    ];
 
     return (
       <div className="page-action-bar">
@@ -49,28 +41,19 @@ export class UsersActionBar extends PureComponent<Props> {
             inputClassName="gf-form-input width-20"
             value={searchQuery}
             onChange={setUsersSearchQuery}
-            placeholder="Filter by email, login or name"
+            placeholder="Search user by login,email or name"
           />
           {pendingInvitesCount > 0 && (
             <div style={{ marginLeft: '1rem' }}>
-              <button className={usersButtonStyle} key="users" onClick={onShowInvites}>
-                Users
-              </button>
-              <button className={pendingInvitesButtonStyle} onClick={onShowInvites} key="pending-invites">
-                Pending Invites ({pendingInvitesCount})
-              </button>
+              <RadioButtonGroup value={showInvites ? 'invites' : 'users'} options={options} onChange={onShowInvites} />
             </div>
           )}
           <div className="page-action-bar__spacer" />
-          {canInvite && (
-            <a className="btn btn-primary" href="org/users/invite">
-              <span>Invite</span>
-            </a>
-          )}
+          {canInvite && <LinkButton href="org/users/invite">Invite</LinkButton>}
           {externalUserMngLinkUrl && (
-            <a className="btn btn-primary" href={externalUserMngLinkUrl} target="_blank" rel="noopener">
+            <LinkButton href={externalUserMngLinkUrl} target="_blank" rel="noopener">
               {externalUserMngLinkName}
-            </a>
+            </LinkButton>
           )}
         </div>
       </div>

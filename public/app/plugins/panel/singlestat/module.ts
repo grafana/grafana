@@ -4,7 +4,6 @@ import $ from 'jquery';
 import 'vendor/flot/jquery.flot';
 import 'vendor/flot/jquery.flot.gauge';
 import 'app/features/panel/panellinks/link_srv';
-import locationUtil from 'app/core/utils/location_util';
 
 import {
   DataFrame,
@@ -23,6 +22,7 @@ import {
   getColorFromHexRgbOrName,
   PanelEvents,
   formattedValueToString,
+  locationUtil,
 } from '@grafana/data';
 
 import { convertOldAngularValueMapping } from '@grafana/ui';
@@ -658,7 +658,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
           window.location.href = linkInfo.href;
         } else {
           $timeout(() => {
-            $location.url(locationUtil.stripBaseFromUrl(linkInfo.href));
+            $location.url(locationUtil.stripBaseFromUrl(linkInfo!.href));
           });
         }
 
@@ -700,7 +700,7 @@ function getColorForValue(data: any, value: number) {
 
 //------------------------------------------------
 // Private utility functions
-// Something like this should be avaliable in a
+// Something like this should be available in a
 //  DataFrame[] abstraction helper
 //------------------------------------------------
 

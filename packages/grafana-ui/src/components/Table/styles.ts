@@ -1,6 +1,6 @@
 import { css } from 'emotion';
 import { GrafanaTheme } from '@grafana/data';
-import { stylesFactory, selectThemeVariant as stv } from '../../themes';
+import { stylesFactory, styleMixins } from '../../themes';
 
 export interface TableStyles {
   cellHeight: number;
@@ -11,18 +11,23 @@ export interface TableStyles {
   thead: string;
   headerCell: string;
   tableCell: string;
+  tableCellWrapper: string;
   row: string;
   theme: GrafanaTheme;
+  resizeHandle: string;
 }
 
 export const getTableStyles = stylesFactory(
   (theme: GrafanaTheme): TableStyles => {
-    const colors = theme.colors;
-    const headerBg = stv({ light: colors.gray6, dark: colors.dark7 }, theme.type);
+    const { palette, colors } = theme;
+    const headerBg = theme.colors.bg2;
+    const borderColor = theme.colors.border1;
+    const resizerColor = theme.isLight ? palette.blue95 : palette.blue77;
     const padding = 6;
     const lineHeight = theme.typography.lineHeight.md;
     const bodyFontSize = 14;
     const cellHeight = padding * 2 + bodyFontSize * lineHeight;
+    const rowHoverBg = styleMixins.hoverColor(theme.colors.bg1, theme);
 
     return {
       theme,
@@ -38,25 +43,63 @@ export const getTableStyles = stylesFactory(
       `,
       thead: css`
         label: thead;
+        height: ${cellHeight}px;
         overflow-y: auto;
         overflow-x: hidden;
         background: ${headerBg};
+        position: relative;
       `,
       headerCell: css`
         padding: ${padding}px 10px;
         cursor: pointer;
         white-space: nowrap;
-        color: ${colors.blue};
+        color: ${colors.textBlue};
+        border-right: 1px solid ${theme.colors.panelBg};
+
+        &:last-child {
+          border-right: none;
+        }
       `,
       row: css`
         label: row;
-        border-bottom: 2px solid ${colors.bodyBg};
+        border-bottom: 1px solid ${borderColor};
+
+        &:hover {
+          background-color: ${rowHoverBg};
+        }
+      `,
+      tableCellWrapper: css`
+        border-right: 1px solid ${borderColor};
+
+        &:last-child {
+          border-right: none;
+        }
       `,
       tableCell: css`
         padding: ${padding}px 10px;
         text-overflow: ellipsis;
         white-space: nowrap;
         overflow: hidden;
+      `,
+      resizeHandle: css`
+        label: resizeHandle;
+        cursor: col-resize !important;
+        display: inline-block;
+        background: ${resizerColor};
+        opacity: 0;
+        transition: opacity 0.2s ease-in-out;
+        width: 8px;
+        height: 100%;
+        position: absolute;
+        right: -4px;
+        border-radius: 3px;
+        top: 0;
+        z-index: ${theme.zIndex.dropdown};
+        touch-action: none;
+
+        &:hover {
+          opacity: 1;
+        }
       `,
     };
   }

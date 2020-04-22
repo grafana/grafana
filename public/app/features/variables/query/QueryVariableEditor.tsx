@@ -1,6 +1,7 @@
 import React, { ChangeEvent, PureComponent } from 'react';
 import { e2e } from '@grafana/e2e';
-import { FormLabel, Switch } from '@grafana/ui';
+import { InlineFormLabel, LegacyForms } from '@grafana/ui';
+const { Switch } = LegacyForms;
 
 import templateSrv from '../../templating/template_srv';
 import { SelectionOptionsEditor } from '../editor/SelectionOptionsEditor';
@@ -13,6 +14,7 @@ import { MapDispatchToProps, MapStateToProps } from 'react-redux';
 import { StoreState } from '../../../types';
 import { connectWithStore } from '../../../core/utils/connectWithReduxStore';
 import { toVariableIdentifier } from '../state/types';
+import { changeVariableMultiValue } from '../state/actions';
 
 export interface OwnProps extends VariableEditorProps<QueryVariableModel> {}
 
@@ -24,6 +26,7 @@ interface DispatchProps {
   initQueryVariableEditor: typeof initQueryVariableEditor;
   changeQueryVariableDataSource: typeof changeQueryVariableDataSource;
   changeQueryVariableQuery: typeof changeQueryVariableQuery;
+  changeVariableMultiValue: typeof changeVariableMultiValue;
 }
 
 type Props = OwnProps & ConnectedProps & DispatchProps;
@@ -142,9 +145,9 @@ export class QueryVariableEditorUnConnected extends PureComponent<Props, State> 
             </div>
 
             <div className="gf-form max-width-22">
-              <FormLabel width={10} tooltip={'When to update the values of this variable.'}>
+              <InlineFormLabel width={10} tooltip={'When to update the values of this variable.'}>
                 Refresh
-              </FormLabel>
+              </InlineFormLabel>
               <div className="gf-form-select-wrapper width-15">
                 <select
                   className="gf-form-input"
@@ -178,12 +181,12 @@ export class QueryVariableEditorUnConnected extends PureComponent<Props, State> 
           )}
 
           <div className="gf-form">
-            <FormLabel
+            <InlineFormLabel
               width={10}
               tooltip={'Optional, if you want to extract part of a series name or metric node segment.'}
             >
               Regex
-            </FormLabel>
+            </InlineFormLabel>
             <input
               type="text"
               className="gf-form-input"
@@ -195,9 +198,9 @@ export class QueryVariableEditorUnConnected extends PureComponent<Props, State> 
             />
           </div>
           <div className="gf-form max-width-21">
-            <FormLabel width={10} tooltip={'How to sort the values of this variable.'}>
+            <InlineFormLabel width={10} tooltip={'How to sort the values of this variable.'}>
               Sort
-            </FormLabel>
+            </InlineFormLabel>
             <div className="gf-form-select-wrapper max-width-14">
               <select
                 className="gf-form-input"
@@ -237,7 +240,11 @@ export class QueryVariableEditorUnConnected extends PureComponent<Props, State> 
           </div>
         </div>
 
-        <SelectionOptionsEditor variable={this.props.variable} onPropChange={this.onSelectionOptionsChange} />
+        <SelectionOptionsEditor
+          variable={this.props.variable}
+          onPropChange={this.onSelectionOptionsChange}
+          onMultiChanged={this.props.changeVariableMultiValue}
+        />
 
         <div className="gf-form-group">
           <h5>Value groups/tags (Experimental feature)</h5>
@@ -300,6 +307,7 @@ const mapDispatchToProps: MapDispatchToProps<DispatchProps, OwnProps> = {
   initQueryVariableEditor,
   changeQueryVariableDataSource,
   changeQueryVariableQuery,
+  changeVariableMultiValue,
 };
 
 export const QueryVariableEditor = connectWithStore(

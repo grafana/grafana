@@ -5,8 +5,9 @@ import React, { PureComponent, ChangeEvent, FocusEvent, ReactText } from 'react'
 import { rangeUtil, DataSourceSelectItem } from '@grafana/data';
 
 // Components
-import { EventsWithValidation, Input, InputStatus, Switch, ValidationEvents, FormLabel } from '@grafana/ui';
+import { EventsWithValidation, LegacyInputStatus, LegacyForms, ValidationEvents, InlineFormLabel } from '@grafana/ui';
 import { DataSourceOption } from './DataSourceOption';
+const { Input, Switch } = LegacyForms;
 
 // Types
 import { PanelModel } from '../state';
@@ -109,21 +110,21 @@ export class QueryOptions extends PureComponent<Props, State> {
     });
   };
 
-  onOverrideTime = (event: FocusEvent<HTMLInputElement>, status: InputStatus) => {
+  onOverrideTime = (event: FocusEvent<HTMLInputElement>, status: LegacyInputStatus) => {
     const { value } = event.target;
     const { panel } = this.props;
     const emptyToNullValue = emptyToNull(value);
-    if (status === InputStatus.Valid && panel.timeFrom !== emptyToNullValue) {
+    if (status === LegacyInputStatus.Valid && panel.timeFrom !== emptyToNullValue) {
       panel.timeFrom = emptyToNullValue;
       panel.refresh();
     }
   };
 
-  onTimeShift = (event: FocusEvent<HTMLInputElement>, status: InputStatus) => {
+  onTimeShift = (event: FocusEvent<HTMLInputElement>, status: LegacyInputStatus) => {
     const { value } = event.target;
     const { panel } = this.props;
     const emptyToNullValue = emptyToNull(value);
-    if (status === InputStatus.Valid && panel.timeShift !== emptyToNullValue) {
+    if (status === LegacyInputStatus.Valid && panel.timeShift !== emptyToNullValue) {
       panel.timeShift = emptyToNullValue;
       panel.refresh();
     }
@@ -187,7 +188,7 @@ export class QueryOptions extends PureComponent<Props, State> {
         {this.renderOptions()}
 
         <div className="gf-form">
-          <FormLabel>Relative time</FormLabel>
+          <InlineFormLabel>Relative time</InlineFormLabel>
           <Input
             type="text"
             className="width-6"

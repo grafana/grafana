@@ -2,11 +2,12 @@ import React, { MouseEvent, PureComponent } from 'react';
 import { NEW_VARIABLE_ID, toVariableIdentifier, toVariablePayload, VariableIdentifier } from '../state/types';
 import { StoreState } from '../../../types';
 import { e2e } from '@grafana/e2e';
+import { Icon } from '@grafana/ui';
 import { VariableEditorList } from './VariableEditorList';
 import { VariableEditorEditor } from './VariableEditorEditor';
 import { MapDispatchToProps, MapStateToProps } from 'react-redux';
 import { connectWithStore } from '../../../core/utils/connectWithReduxStore';
-import { getVariableClones } from '../state/selectors';
+import { getVariables } from '../state/selectors';
 import { VariableModel } from '../../templating/types';
 import { switchToEditMode, switchToListMode, switchToNewMode } from './actions';
 import { changeVariableOrder, duplicateVariable, removeVariable } from '../state/sharedReducer';
@@ -74,8 +75,8 @@ class VariableEditorContainerUnconnected extends PureComponent<Props> {
             </a>
             {this.props.idInEditor === NEW_VARIABLE_ID && (
               <span>
-                <i
-                  className="fa fa-fw fa-chevron-right"
+                <Icon
+                  name="angle-right"
                   aria-label={e2e.pages.Dashboard.Settings.Variables.Edit.General.selectors.modeLabelNew}
                 />
                 New
@@ -83,8 +84,8 @@ class VariableEditorContainerUnconnected extends PureComponent<Props> {
             )}
             {this.props.idInEditor && this.props.idInEditor !== NEW_VARIABLE_ID && (
               <span>
-                <i
-                  className="fa fa-fw fa-chevron-right"
+                <Icon
+                  name="angle-right"
                   aria-label={e2e.pages.Dashboard.Settings.Variables.Edit.General.selectors.modeLabelEdit}
                 />
                 Edit
@@ -122,7 +123,7 @@ class VariableEditorContainerUnconnected extends PureComponent<Props> {
 }
 
 const mapStateToProps: MapStateToProps<ConnectedProps, OwnProps, StoreState> = state => ({
-  variables: getVariableClones(state, true),
+  variables: getVariables(state, true),
   idInEditor: state.templating.editor.id,
 });
 

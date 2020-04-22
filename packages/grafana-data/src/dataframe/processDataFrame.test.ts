@@ -10,6 +10,7 @@ import {
 import { DataFrameDTO, FieldType, TableData, TimeSeries } from '../types/index';
 import { dateTime } from '../datetime/moment_wrapper';
 import { MutableDataFrame } from './MutableDataFrame';
+import { ArrayDataFrame } from './ArrayDataFrame';
 
 describe('toDataFrame', () => {
   it('converts timeseries to series', () => {
@@ -21,16 +22,17 @@ describe('toDataFrame', () => {
       ],
     };
     let series = toDataFrame(input1);
-    expect(series.fields[0].name).toBe(input1.target);
+    expect(series.fields[1].name).toBe(input1.target);
 
     const v0 = series.fields[0].values;
     const v1 = series.fields[1].values;
     expect(v0.length).toEqual(2);
+    expect(v0.get(0)).toEqual(1);
+    expect(v0.get(1)).toEqual(2);
+
     expect(v1.length).toEqual(2);
-    expect(v0.get(0)).toEqual(100);
-    expect(v0.get(1)).toEqual(200);
-    expect(v1.get(0)).toEqual(1);
-    expect(v1.get(1)).toEqual(2);
+    expect(v1.get(0)).toEqual(100);
+    expect(v1.get(1)).toEqual(200);
 
     // Should fill a default name if target is empty
     const input2 = {
@@ -42,7 +44,7 @@ describe('toDataFrame', () => {
       ],
     };
     series = toDataFrame(input2);
-    expect(series.fields[0].name).toEqual('Value');
+    expect(series.fields[1].name).toEqual('Value');
   });
 
   it('assumes TimeSeries values are numbers', () => {
@@ -54,7 +56,8 @@ describe('toDataFrame', () => {
       ],
     };
     const data = toDataFrame(input1);
-    expect(data.fields[0].type).toBe(FieldType.number);
+    expect(data.fields[0].type).toBe(FieldType.time);
+    expect(data.fields[1].type).toBe(FieldType.number);
   });
 
   it('keeps dataFrame unchanged', () => {
@@ -69,6 +72,19 @@ describe('toDataFrame', () => {
     // If the object is alreay a DataFrame, it should not change
     const again = toDataFrame(input);
     expect(again).toBe(input);
+  });
+
+  it('Make sure ArrayDataFrame is used as a DataFrame without modification', () => {
+    const orig = [
+      { a: 1, b: 2 },
+      { a: 3, b: 4 },
+    ];
+    const array = new ArrayDataFrame(orig);
+    const frame = toDataFrame(array);
+    expect(frame).toEqual(array);
+    expect(frame instanceof ArrayDataFrame).toEqual(true);
+    expect(frame.length).toEqual(orig.length);
+    expect(frame.fields.map(f => f.name)).toEqual(['a', 'b']);
   });
 
   it('throws when table rows is not array', () => {

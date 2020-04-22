@@ -7,14 +7,15 @@ import {
   DataQueryRequest,
   DataQueryResponse,
   DataQuery,
+  FieldType,
 } from '@grafana/data';
 import { getBackendSrv } from '@grafana/runtime';
+import { Observable, from, of } from 'rxjs';
+import { map } from 'rxjs/operators';
 
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { DatasourceRequestOptions } from 'app/core/services/backend_srv';
-import { serializeParams } from '../../../core/utils/fetch';
-
-import { Observable, from, of } from 'rxjs';
+import { serializeParams } from 'app/core/utils/fetch';
 
 export type JaegerQuery = {
   query: string;
@@ -25,7 +26,64 @@ export class JaegerDatasource extends DataSourceApi<JaegerQuery> {
     super(instanceSettings);
   }
 
-  _request(apiUrl: string, data?: any, options?: DatasourceRequestOptions): Observable<Record<string, any>> {
+  async metadataRequest(url: string, params?: Record<string, any>): Promise<any> {
+    const res = await this._request(url, params, { silent: true }).toPromise();
+    return res.data.data;
+  }
+
+  query(options: DataQueryRequest<JaegerQuery>): Observable<DataQueryResponse> {
+    // At this moment we expect only one target. In case we somehow change the UI to be able to show multiple
+    // traces at one we need to change this.
+    const id = options.targets[0]?.query;
+    if (id) {
+      // TODO: this api is internal, used in jaeger ui. Officially they have gRPC api that should be used.
+      return this._request(`/api/traces/${id}`).pipe(
+        map(response => {
+          return {
+            data: [
+              new MutableDataFrame({
+                fields: [
+                  {
+                    name: 'trace',
+                    type: FieldType.trace,
+                    values: response?.data?.data || [],
+                  },
+                ],
+              }),
+            ],
+          };
+        })
+      );
+    } else {
+      return of({
+        data: [
+          new MutableDataFrame({
+            fields: [
+              {
+                name: 'trace',
+                type: FieldType.trace,
+                values: [],
+              },
+            ],
+          }),
+        ],
+      });
+    }
+  }
+
+  async testDatasource(): Promise<any> {
+    return true;
+  }
+
+  getTimeRange(): { start: number; end: number } {
+    const range = getTimeSrv().timeRange();
+    return {
+      start: getTime(range.from, false),
+      end: getTime(range.to, true),
+    };
+  }
+
+  private _request(apiUrl: string, data?: any, options?: DatasourceRequestOptions): Observable<Record<string, any>> {
     // Hack for proxying metadata requests
     const baseUrl = `/api/datasources/proxy/${this.instanceSettings.id}`;
     const params = data ? serializeParams(data) : '';
@@ -37,49 +95,11 @@ export class JaegerDatasource extends DataSourceApi<JaegerQuery> {
 
     return from(getBackendSrv().datasourceRequest(req));
   }
+}
 
-  async metadataRequest(url: string, params?: Record<string, any>) {
-    const res = await this._request(url, params, { silent: true }).toPromise();
-    return res.data.data;
+function getTime(date: string | DateTime, roundUp: boolean) {
+  if (typeof date === 'string') {
+    date = dateMath.parse(date, roundUp);
   }
-
-  query(options: DataQueryRequest<JaegerQuery>): Observable<DataQueryResponse> {
-    //http://localhost:16686/search?end=1573338717880000&limit=20&lookback=6h&maxDuration&minDuration&service=app&start=1573317117880000
-    const url =
-      options.targets.length && options.targets[0].query
-        ? `${this.instanceSettings.url}/trace/${options.targets[0].query}?uiEmbed=v0`
-        : '';
-
-    return of({
-      data: [
-        new MutableDataFrame({
-          fields: [
-            {
-              name: 'url',
-              values: [url],
-            },
-          ],
-        }),
-      ],
-    });
-  }
-
-  async testDatasource(): Promise<any> {
-    return true;
-  }
-
-  getTime(date: string | DateTime, roundUp: boolean) {
-    if (typeof date === 'string') {
-      date = dateMath.parse(date, roundUp);
-    }
-    return date.valueOf() * 1000;
-  }
-
-  getTimeRange(): { start: number; end: number } {
-    const range = getTimeSrv().timeRange();
-    return {
-      start: this.getTime(range.from, false),
-      end: this.getTime(range.to, true),
-    };
-  }
+  return date.valueOf() * 1000;
 }

@@ -1,11 +1,13 @@
-import { ComponentClass, ComponentType } from 'react';
 import { DataQueryError, DataQueryRequest, DataQueryTimings } from './datasource';
-import { GrafanaPlugin, PluginMeta } from './plugin';
+import { PluginMeta } from './plugin';
 import { ScopedVars } from './ScopedVars';
 import { LoadingState } from './data';
 import { DataFrame } from './dataFrame';
 import { AbsoluteTimeRange, TimeRange, TimeZone } from './time';
-import { FieldConfigEditorRegistry, FieldConfigSource } from './fieldOverrides';
+import { FieldConfigSource } from './fieldOverrides';
+import { Registry } from '../utils';
+import { StandardEditorProps } from '../field';
+import { OptionsEditorItem } from './OptionsUIRegistryBuilder';
 
 export type InterpolateFunction = (value: string, scopedVars?: ScopedVars, format?: string | Function) => string;
 
@@ -109,85 +111,53 @@ export type PanelTypeChangedHandler<TOptions = any> = (
   prevOptions: any
 ) => Partial<TOptions>;
 
-export class PanelPlugin<TOptions = any> extends GrafanaPlugin<PanelPluginMeta> {
-  panel: ComponentType<PanelProps<TOptions>>;
-  editor?: ComponentClass<PanelEditorProps<TOptions>>;
-  customFieldConfigs?: FieldConfigEditorRegistry;
-  defaults?: TOptions;
-  fieldConfigDefaults?: FieldConfigSource = {
-    defaults: {},
-    overrides: [],
-  };
-  onPanelMigration?: PanelMigrationHandler<TOptions>;
-  onPanelTypeChanged?: PanelTypeChangedHandler<TOptions>;
-  noPadding?: boolean;
+export type PanelOptionEditorsRegistry = Registry<PanelOptionsEditorItem>;
 
+export interface PanelOptionsEditorProps<TValue> extends StandardEditorProps<TValue> {}
+
+export interface PanelOptionsEditorItem<TOptions = any, TValue = any, TSettings = any>
+  extends OptionsEditorItem<TOptions, TSettings, PanelOptionsEditorProps<TValue>, TValue> {}
+
+export interface PanelOptionsEditorConfig<TOptions, TSettings = any, TValue = any> {
   /**
-   * Legacy angular ctrl.  If this exists it will be used instead of the panel
-   */
-  angularPanelCtrl?: any;
-
-  constructor(panel: ComponentType<PanelProps<TOptions>>) {
-    super();
-    this.panel = panel;
-  }
-
-  setEditor(editor: ComponentClass<PanelEditorProps<TOptions>>) {
-    this.editor = editor;
-    return this;
-  }
-
-  setDefaults(defaults: TOptions) {
-    this.defaults = defaults;
-    return this;
-  }
-
-  setNoPadding() {
-    this.noPadding = true;
-    return this;
-  }
-
-  /**
-   * This function is called before the panel first loads if
-   * the current version is different than the version that was saved.
+   * Path of the option property to control.
    *
-   * This is a good place to support any changes to the options model
-   */
-  setMigrationHandler(handler: PanelMigrationHandler) {
-    this.onPanelMigration = handler;
-    return this;
-  }
-
-  /**
-   * This function is called when the visualization was changed. This
-   * passes in the panel model for previous visualisation options inspection
-   * and panel model updates.
+   * @example
+   * Given options object of a type:
+   * ```ts
+   * interface Options {
+   *   a: {
+   *     b: string;
+   *   }
+   * }
+   * ```
    *
-   * This is useful for supporting PanelModel API updates when changing
-   * between Angular and React panels.
+   * path can be either 'a' or 'a.b'.
    */
-  setPanelChangeHandler(handler: PanelTypeChangedHandler) {
-    this.onPanelTypeChanged = handler;
-    return this;
-  }
-
-  setCustomFieldConfigs(registry: FieldConfigEditorRegistry) {
-    this.customFieldConfigs = registry;
-    return this;
-  }
-
+  path: (keyof TOptions & string) | string;
   /**
-   * Enables configuration of panel's default field config
+   * Name of the option. Will be displayed in the UI as form element label.
    */
-  setFieldConfigDefaults(defaultConfig: Partial<FieldConfigSource>) {
-    this.fieldConfigDefaults = {
-      defaults: {},
-      overrides: [],
-      ...defaultConfig,
-    };
-
-    return this;
-  }
+  name: string;
+  /**
+   * Description of the option. Will be displayed in the UI as form element description.
+   */
+  description?: string;
+  /**al
+   * Custom settings of the editor.
+   */
+  settings?: TSettings;
+  /**
+   * Array of strings representing category of the option. First element in the array will make option render as collapsible section.
+   */
+  category?: string[];
+  defaultValue?: TValue;
+  /**
+   * Function that enables configuration of when option editor should be shown based on current panel option properties.
+   *
+   * @param currentConfig Current panel options
+   */
+  showIf?: (currentConfig: TOptions) => boolean;
 }
 
 export interface PanelMenuItem {

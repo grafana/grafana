@@ -9,7 +9,6 @@ import { VariableSrv } from 'app/features/templating/variable_srv';
 import { KeybindingSrv } from 'app/core/services/keybindingSrv';
 // Actions
 import { notifyApp, updateLocation } from 'app/core/actions';
-import locationUtil from 'app/core/utils/location_util';
 import {
   clearDashboardQueriesToUpdateOnLoad,
   dashboardInitCompleted,
@@ -21,10 +20,9 @@ import {
 // Types
 import { DashboardDTO, DashboardRouteInfo, StoreState, ThunkDispatch, ThunkResult } from 'app/types';
 import { DashboardModel } from './DashboardModel';
-import { DataQuery } from '@grafana/data';
+import { DataQuery, locationUtil } from '@grafana/data';
 import { getConfig } from '../../../core/config';
-import { initDashboardTemplating, processVariables } from '../../variables/state/actions';
-import { variableAdapters } from '../../variables/adapters';
+import { initDashboardTemplating, processVariables, completeDashboardTemplating } from '../../variables/state/actions';
 import { emitDashboardViewEvent } from './analyticsProcessor';
 
 export interface InitDashboardArgs {
@@ -186,12 +184,9 @@ export function initDashboard(args: InitDashboardArgs): ThunkResult<void> {
         await variableSrv.init(dashboard);
       }
       if (getConfig().featureToggles.newVariables) {
-        const list =
-          dashboard.variables.list.length > 0
-            ? dashboard.variables.list
-            : dashboard.templating.list.filter(v => variableAdapters.getIfExists(v.type));
-        await dispatch(initDashboardTemplating(list));
+        dispatch(initDashboardTemplating(dashboard.templating.list));
         await dispatch(processVariables());
+        dispatch(completeDashboardTemplating(dashboard));
       }
     } catch (err) {
       dispatch(notifyApp(createErrorNotification('Templating init failed', err)));

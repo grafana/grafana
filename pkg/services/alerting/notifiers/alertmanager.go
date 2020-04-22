@@ -20,9 +20,18 @@ func init() {
 		Factory:     NewAlertmanagerNotifier,
 		OptionsTemplate: `
       <h3 class="page-heading">Alertmanager settings</h3>
-      <div class="gf-form">
-        <span class="gf-form-label width-10">Url</span>
-        <input type="text" required class="gf-form-input max-width-26" ng-model="ctrl.model.settings.url" placeholder="http://localhost:9093"></input>
+		<div class="gf-form">
+        	<span class="gf-form-label width-10">Url</span>
+        	<input type="text" required class="gf-form-input max-width-26" ng-model="ctrl.model.settings.url" placeholder="http://localhost:9093"></input>
+		</div>
+		<div class="gf-form">
+        	<span class="gf-form-label width-10">Basic Auth User</span>
+        	<input type="text" class="gf-form-input max-width-26" ng-model="ctrl.model.settings.basicAuthUser" placeholder=""></input>
+		</div>
+		<div class="gf-form">
+        	<span class="gf-form-label width-10">Basic Auth Password</span>
+        	<input type="text" class="gf-form-input max-width-26" ng-model="ctrl.model.settings.basicAuthPassword" placeholder=""></input>
+		</div>
       </div>
     `,
 	})
@@ -34,19 +43,25 @@ func NewAlertmanagerNotifier(model *models.AlertNotification) (alerting.Notifier
 	if url == "" {
 		return nil, alerting.ValidationError{Reason: "Could not find url property in settings"}
 	}
+	basicAuthUser := model.Settings.Get("basicAuthUser").MustString()
+	basicAuthPassword := model.Settings.Get("basicAuthPassword").MustString()
 
 	return &AlertmanagerNotifier{
-		NotifierBase: NewNotifierBase(model),
-		URL:          url,
-		log:          log.New("alerting.notifier.prometheus-alertmanager"),
+		NotifierBase:      NewNotifierBase(model),
+		URL:               url,
+		BasicAuthUser:     basicAuthUser,
+		BasicAuthPassword: basicAuthPassword,
+		log:               log.New("alerting.notifier.prometheus-alertmanager"),
 	}, nil
 }
 
 // AlertmanagerNotifier sends alert notifications to the alert manager
 type AlertmanagerNotifier struct {
 	NotifierBase
-	URL string
-	log log.Logger
+	URL               string
+	BasicAuthUser     string
+	BasicAuthPassword string
+	log               log.Logger
 }
 
 // ShouldNotify returns true if the notifiers should be used depending on state
@@ -140,6 +155,8 @@ func (am *AlertmanagerNotifier) Notify(evalContext *alerting.EvalContext) error 
 
 	cmd := &models.SendWebhookSync{
 		Url:        am.URL + "/api/v1/alerts",
+		User:       am.BasicAuthUser,
+		Password:   am.BasicAuthPassword,
 		HttpMethod: "POST",
 		Body:       string(body),
 	}

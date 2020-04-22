@@ -1,8 +1,8 @@
 import { ThresholdsConfig } from './thresholds';
 import { ValueMapping } from './valueMapping';
 import { QueryResultBase, Labels, NullValueMode } from './data';
-import { DisplayProcessor } from './displayValue';
-import { DataLink } from './dataLink';
+import { DisplayProcessor, DisplayValue } from './displayValue';
+import { DataLink, LinkModel } from './dataLink';
 import { Vector } from './vector';
 import { FieldCalcs } from '../transformations/fieldReducer';
 import { FieldColor } from './fieldColor';
@@ -13,6 +13,8 @@ export enum FieldType {
   number = 'number',
   string = 'string',
   boolean = 'boolean',
+  // Used to detect that the value is some kind of trace data to help with the visualisation and processing.
+  trace = 'trace',
   other = 'other', // Object, Array, etc
 }
 
@@ -21,7 +23,7 @@ export enum FieldType {
  *
  * Plugins may extend this with additional properties. Something like series overrides
  */
-export interface FieldConfig {
+export interface FieldConfig<TOptions extends object = any> {
   title?: string; // The display value for this field.  This supports template variables blank is auto
   filterable?: boolean;
 
@@ -50,9 +52,20 @@ export interface FieldConfig {
   noValue?: string;
 
   // Panel Specific Values
-  custom?: Record<string, any>;
+  custom?: TOptions;
 
   scopedVars?: ScopedVars;
+}
+
+export interface ValueLinkConfig {
+  /**
+   * Result of field reduction
+   */
+  calculatedValue?: DisplayValue;
+  /**
+   * Index of the value row within Field. Should be provided only when value is not a result of a reduction
+   */
+  valueRowIndex?: number;
 }
 
 export interface Field<T = any, V = Vector<T>> {
@@ -85,6 +98,11 @@ export interface Field<T = any, V = Vector<T>> {
    * Convert a value for display
    */
   display?: DisplayProcessor;
+
+  /**
+   * Get value data links with variables interpolated
+   */
+  getLinks?: (config: ValueLinkConfig) => Array<LinkModel<Field>>;
 }
 
 export interface DataFrame extends QueryResultBase {

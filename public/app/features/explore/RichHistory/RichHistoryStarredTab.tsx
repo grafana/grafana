@@ -15,7 +15,8 @@ import { sortQueries, createDatasourcesList } from '../../../core/utils/richHist
 // Components
 import RichHistoryCard from './RichHistoryCard';
 import { sortOrderOptions } from './RichHistory';
-import { Select } from '@grafana/ui';
+import { LegacyForms } from '@grafana/ui';
+const { Select } = LegacyForms;
 
 export interface Props {
   queries: RichHistoryQuery[];
@@ -28,7 +29,7 @@ export interface Props {
 }
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
-  const bgColor = theme.isLight ? theme.colors.gray5 : theme.colors.dark4;
+  const bgColor = theme.isLight ? theme.palette.gray5 : theme.palette.dark4;
   return {
     container: css`
       display: flex;

@@ -1,5 +1,6 @@
 import React, { FC, ChangeEvent } from 'react';
-import { FormLabel, Input } from '@grafana/ui';
+import { InlineFormLabel, LegacyForms } from '@grafana/ui';
+const { Input } = LegacyForms;
 
 interface Props {
   label: string;
@@ -14,7 +15,7 @@ interface Props {
 export const DataSourceOption: FC<Props> = ({ label, placeholder, name, value, onBlur, onChange, tooltipInfo }) => {
   return (
     <div className="gf-form gf-form--flex-end">
-      <FormLabel tooltip={tooltipInfo}>{label}</FormLabel>
+      <InlineFormLabel tooltip={tooltipInfo}>{label}</InlineFormLabel>
       <Input
         type="text"
         className="gf-form-input width-6"

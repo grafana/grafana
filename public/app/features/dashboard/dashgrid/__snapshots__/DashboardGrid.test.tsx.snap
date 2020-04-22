@@ -4,7 +4,6 @@ exports[`DashboardGrid Can render dashboard grid Should render 1`] = `
 <SizeMe(GridWrapper)
   className="layout"
   isDraggable={true}
-  isFullscreen={false}
   isResizable={true}
   layout={
     Array [
@@ -43,6 +42,7 @@ exports[`DashboardGrid Can render dashboard grid Should render 1`] = `
   onResize={[Function]}
   onResizeStop={[Function]}
   onWidthChange={[Function]}
+  viewPanel={null}
 >
   <div
     className=""
@@ -96,16 +96,12 @@ exports[`DashboardGrid Can render dashboard grid Should render 1`] = `
                   "fn": [Function],
                   "once": false,
                 },
-                "view-mode-changed": EE {
-                  "context": [Circular],
-                  "fn": [Function],
-                  "once": false,
-                },
               },
-              "_eventsCount": 6,
+              "_eventsCount": 5,
             },
           },
           "getVariables": [Function],
+          "getVariablesFromState": [Function],
           "gnetId": null,
           "graphTooltip": 0,
           "id": null,
@@ -116,8 +112,6 @@ exports[`DashboardGrid Can render dashboard grid Should render 1`] = `
             "canSave": true,
             "canShare": true,
             "canStar": true,
-            "fullscreen": false,
-            "isEditing": false,
             "showSettings": true,
           },
           "originalTemplating": Array [],
@@ -241,7 +235,7 @@ exports[`DashboardGrid Can render dashboard grid Should render 1`] = `
           ],
           "refresh": undefined,
           "revision": undefined,
-          "schemaVersion": 22,
+          "schemaVersion": 24,
           "snapshot": undefined,
           "style": "dark",
           "tags": Array [],
@@ -256,9 +250,6 @@ exports[`DashboardGrid Can render dashboard grid Should render 1`] = `
           "timezone": "",
           "title": "My dashboard",
           "uid": null,
-          "variables": Object {
-            "list": Array [],
-          },
           "version": 0,
         }
       }
@@ -347,16 +338,12 @@ exports[`DashboardGrid Can render dashboard grid Should render 1`] = `
                   "fn": [Function],
                   "once": false,
                 },
-                "view-mode-changed": EE {
-                  "context": [Circular],
-                  "fn": [Function],
-                  "once": false,
-                },
               },
-              "_eventsCount": 6,
+              "_eventsCount": 5,
             },
           },
           "getVariables": [Function],
+          "getVariablesFromState": [Function],
           "gnetId": null,
           "graphTooltip": 0,
           "id": null,
@@ -367,8 +354,6 @@ exports[`DashboardGrid Can render dashboard grid Should render 1`] = `
             "canSave": true,
             "canShare": true,
             "canStar": true,
-            "fullscreen": false,
-            "isEditing": false,
             "showSettings": true,
           },
           "originalTemplating": Array [],
@@ -492,7 +477,7 @@ exports[`DashboardGrid Can render dashboard grid Should render 1`] = `
           ],
           "refresh": undefined,
           "revision": undefined,
-          "schemaVersion": 22,
+          "schemaVersion": 24,
           "snapshot": undefined,
           "style": "dark",
           "tags": Array [],
@@ -507,9 +492,6 @@ exports[`DashboardGrid Can render dashboard grid Should render 1`] = `
           "timezone": "",
           "title": "My dashboard",
           "uid": null,
-          "variables": Object {
-            "list": Array [],
-          },
           "version": 0,
         }
       }
@@ -598,16 +580,12 @@ exports[`DashboardGrid Can render dashboard grid Should render 1`] = `
                   "fn": [Function],
                   "once": false,
                 },
-                "view-mode-changed": EE {
-                  "context": [Circular],
-                  "fn": [Function],
-                  "once": false,
-                },
               },
-              "_eventsCount": 6,
+              "_eventsCount": 5,
             },
           },
           "getVariables": [Function],
+          "getVariablesFromState": [Function],
           "gnetId": null,
           "graphTooltip": 0,
           "id": null,
@@ -618,8 +596,6 @@ exports[`DashboardGrid Can render dashboard grid Should render 1`] = `
             "canSave": true,
             "canShare": true,
             "canStar": true,
-            "fullscreen": false,
-            "isEditing": false,
             "showSettings": true,
           },
           "originalTemplating": Array [],
@@ -743,7 +719,7 @@ exports[`DashboardGrid Can render dashboard grid Should render 1`] = `
           ],
           "refresh": undefined,
           "revision": undefined,
-          "schemaVersion": 22,
+          "schemaVersion": 24,
           "snapshot": undefined,
           "style": "dark",
           "tags": Array [],
@@ -758,9 +734,6 @@ exports[`DashboardGrid Can render dashboard grid Should render 1`] = `
           "timezone": "",
           "title": "My dashboard",
           "uid": null,
-          "variables": Object {
-            "list": Array [],
-          },
           "version": 0,
         }
       }
@@ -849,16 +822,12 @@ exports[`DashboardGrid Can render dashboard grid Should render 1`] = `
                   "fn": [Function],
                   "once": false,
                 },
-                "view-mode-changed": EE {
-                  "context": [Circular],
-                  "fn": [Function],
-                  "once": false,
-                },
               },
-              "_eventsCount": 6,
+              "_eventsCount": 5,
             },
           },
           "getVariables": [Function],
+          "getVariablesFromState": [Function],
           "gnetId": null,
           "graphTooltip": 0,
           "id": null,
@@ -869,8 +838,6 @@ exports[`DashboardGrid Can render dashboard grid Should render 1`] = `
             "canSave": true,
             "canShare": true,
             "canStar": true,
-            "fullscreen": false,
-            "isEditing": false,
             "showSettings": true,
           },
           "originalTemplating": Array [],
@@ -994,7 +961,7 @@ exports[`DashboardGrid Can render dashboard grid Should render 1`] = `
           ],
           "refresh": undefined,
           "revision": undefined,
-          "schemaVersion": 22,
+          "schemaVersion": 24,
           "snapshot": undefined,
           "style": "dark",
           "tags": Array [],
@@ -1009,9 +976,6 @@ exports[`DashboardGrid Can render dashboard grid Should render 1`] = `
           "timezone": "",
           "title": "My dashboard",
           "uid": null,
-          "variables": Object {
-            "list": Array [],
-          },
           "version": 0,
         }
       }

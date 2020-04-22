@@ -1,6 +1,7 @@
 package api
 
 import (
+	"encoding/json"
 	"errors"
 	"net/http"
 	"sort"
@@ -100,6 +101,7 @@ func (hs *HTTPServer) GetPluginList(c *models.ReqContext) Response {
 			HasUpdate:     pluginDef.GrafanaNetHasUpdate,
 			DefaultNavUrl: pluginDef.DefaultNavUrl,
 			State:         pluginDef.State,
+			Signature:     pluginDef.Signature,
 		}
 
 		if pluginSetting, exists := pluginSettingsMap[pluginDef.Id]; exists {
@@ -151,6 +153,7 @@ func GetPluginSettingByID(c *models.ReqContext) Response {
 		LatestVersion: def.GrafanaNetVersion,
 		HasUpdate:     def.GrafanaNetHasUpdate,
 		State:         def.State,
+		Signature:     def.Signature,
 	}
 
 	query := models.GetPluginSettingByIdQuery{PluginId: pluginID, OrgId: c.OrgId}
@@ -315,9 +318,19 @@ func (hs *HTTPServer) CheckHealth(c *models.ReqContext) Response {
 	}
 
 	payload := map[string]interface{}{
-		"status":      resp.Status.String(),
-		"message":     resp.Message,
-		"jsonDetails": resp.JSONDetails,
+		"status":  resp.Status.String(),
+		"message": resp.Message,
+	}
+
+	// Unmarshal JSONDetails if it's not empty.
+	if len(resp.JSONDetails) > 0 {
+		var jsonDetails map[string]interface{}
+		err = json.Unmarshal(resp.JSONDetails, &jsonDetails)
+		if err != nil {
+			return Error(500, "Failed to unmarshal detailed response from backend plugin", err)
+		}
+
+		payload["details"] = jsonDetails
 	}
 
 	if resp.Status != backendplugin.HealthStatusOk {

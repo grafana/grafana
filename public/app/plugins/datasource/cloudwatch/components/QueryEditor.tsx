@@ -1,6 +1,7 @@
 import React, { PureComponent, ChangeEvent } from 'react';
 import { ExploreQueryFieldProps } from '@grafana/data';
-import { Input, ValidationEvents, EventsWithValidation, Switch } from '@grafana/ui';
+import { LegacyForms, ValidationEvents, EventsWithValidation, Icon } from '@grafana/ui';
+const { Input, Switch } = LegacyForms;
 import isEmpty from 'lodash/isEmpty';
 import { CloudWatchQuery } from '../types';
 import CloudWatchDatasource from '../datasource';
@@ -138,8 +139,7 @@ export class QueryEditor extends PureComponent<Props, State> {
                   })
                 }
               >
-                <i className={`fa fa-caret-${showMeta ? 'down' : 'right'}`} /> {showMeta ? 'Hide' : 'Show'} Query
-                Preview
+                <Icon name={showMeta ? 'angle-down' : 'angle-right'} /> {showMeta ? 'Hide' : 'Show'} Query Preview
               </a>
             </label>
           </div>

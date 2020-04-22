@@ -37,7 +37,7 @@ export interface GridPos {
 
 const notPersistedProperties: { [str: string]: boolean } = {
   events: true,
-  fullscreen: true,
+  isViewing: true,
   isEditing: true,
   isInView: true,
   hasRefreshed: true,
@@ -45,6 +45,7 @@ const notPersistedProperties: { [str: string]: boolean } = {
   plugin: true,
   queryRunner: true,
   replaceVariables: true,
+  editSourceId: true,
 };
 
 // For angular panels we need to clean up properties when changing type
@@ -96,6 +97,7 @@ const defaults: any = {
 export class PanelModel implements DataConfigSource {
   /* persisted id, used in URL to identify a panel */
   id: number;
+  editSourceId: number;
   gridPos: GridPos;
   type: string;
   title: string;
@@ -132,7 +134,7 @@ export class PanelModel implements DataConfigSource {
   transparent: boolean;
 
   // non persisted
-  fullscreen: boolean;
+  isViewing: boolean;
   isEditing: boolean;
   isInView: boolean;
   hasRefreshed: boolean;
@@ -213,10 +215,8 @@ export class PanelModel implements DataConfigSource {
     return model;
   }
 
-  setViewMode(fullscreen: boolean, isEditing: boolean) {
-    this.fullscreen = fullscreen;
-    this.isEditing = isEditing;
-    this.events.emit(PanelEvents.viewModeChanged);
+  setIsViewing(isViewing: boolean) {
+    this.isViewing = isViewing;
   }
 
   updateGridPos(newPos: GridPos) {
@@ -389,8 +389,10 @@ export class PanelModel implements DataConfigSource {
 
     // Temporary id for the clone, restored later in redux action when changes are saved
     sourceModel.id = EDIT_PANEL_ID;
+    sourceModel.editSourceId = this.id;
 
     const clone = new PanelModel(sourceModel);
+    clone.isEditing = true;
     const sourceQueryRunner = this.getQueryRunner();
 
     // pipe last result to new clone query runner
@@ -412,9 +414,9 @@ export class PanelModel implements DataConfigSource {
     }
 
     return {
-      fieldOptions: this.fieldConfig,
+      fieldConfig: this.fieldConfig,
       replaceVariables: this.replaceVariables,
-      custom: this.plugin.customFieldConfigs,
+      fieldConfigRegistry: this.plugin.fieldConfigRegistry,
       theme: config.theme,
     };
   }
@@ -445,6 +447,7 @@ export class PanelModel implements DataConfigSource {
 
   setTransformations(transformations: DataTransformerConfig[]) {
     this.transformations = transformations;
+    this.resendLastResult();
   }
 
   replaceVariables(value: string, extraVars?: ScopedVars, format?: string) {
@@ -461,6 +464,14 @@ export class PanelModel implements DataConfigSource {
     }
 
     this.getQueryRunner().resendLastResult();
+  }
+
+  /*
+   * Panel have a different id while in edit mode (to more easily be able to discard changes)
+   * Use this to always get the underlying source id
+   * */
+  getSavedId(): number {
+    return this.editSourceId ?? this.id;
   }
 }
 

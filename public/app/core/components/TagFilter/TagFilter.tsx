@@ -2,13 +2,13 @@
 import React from 'react';
 // @ts-ignore
 import { components } from '@torkelo/react-select';
-// @ts-ignore
-import AsyncSelect from '@torkelo/react-select/async';
+import { AsyncSelect } from '@grafana/ui';
+import { resetSelectStyles, Icon } from '@grafana/ui';
+import { FormInputSize } from '@grafana/ui/src/components/Forms/types';
 import { escapeStringForRegex } from '@grafana/data';
 // Components
 import { TagOption } from './TagOption';
 import { TagBadge } from './TagBadge';
-import { IndicatorsContainer, NoOptionsMessage, resetSelectStyles } from '@grafana/ui';
 
 export interface TermCount {
   term: string;
@@ -19,10 +19,17 @@ export interface Props {
   tags: string[];
   tagOptions: () => Promise<TermCount[]>;
   onChange: (tags: string[]) => void;
+  size?: FormInputSize;
+  placeholder?: string;
+  /** Do not show selected values inside Select. Useful when the values need to be shown in some other components */
+  hideValues?: boolean;
 }
 
 export class TagFilter extends React.Component<Props, any> {
-  inlineTags: boolean;
+  static defaultProps = {
+    size: 'auto',
+    placeholder: 'Tags',
+  };
 
   constructor(props: Props) {
     super(props);
@@ -46,29 +53,27 @@ export class TagFilter extends React.Component<Props, any> {
 
   render() {
     const tags = this.props.tags.map(tag => ({ value: tag, label: tag, count: 0 }));
+    const { size, placeholder, hideValues } = this.props;
 
     const selectOptions = {
-      classNamePrefix: 'gf-form-select-box',
-      isMulti: true,
       defaultOptions: true,
-      loadOptions: this.onLoadOptions,
-      onChange: this.onChange,
-      className: 'gf-form-input gf-form-input--form-dropdown',
-      placeholder: 'Tags',
-      loadingMessage: () => 'Loading...',
-      noOptionsMessage: () => 'No tags found',
-      getOptionValue: (i: any) => i.value,
       getOptionLabel: (i: any) => i.label,
-      value: tags,
+      getOptionValue: (i: any) => i.value,
+      isMulti: true,
+      loadOptions: this.onLoadOptions,
+      loadingMessage: 'Loading...',
+      noOptionsMessage: 'No tags found',
+      onChange: this.onChange,
+      placeholder,
+      size,
       styles: resetSelectStyles(),
+      value: tags,
       filterOption: (option: any, searchQuery: string) => {
         const regex = RegExp(escapeStringForRegex(searchQuery), 'i');
         return regex.test(option.value);
       },
       components: {
         Option: TagOption,
-        IndicatorsContainer,
-        NoOptionsMessage,
         MultiValueLabel: (): any => {
           return null; // We want the whole tag to be clickable so we use MultiValueRemove instead
         },
@@ -81,15 +86,13 @@ export class TagFilter extends React.Component<Props, any> {
             </components.MultiValueRemove>
           );
         },
+        MultiValueContainer: hideValues ? (): any => null : components.MultiValueContainer,
       },
     };
 
     return (
-      <div className="gf-form gf-form--has-input-icon gf-form--grow">
-        <div className="tag-filter">
-          <AsyncSelect {...selectOptions} />
-        </div>
-        <i className="gf-form-input-icon fa fa-tag" />
+      <div className="tag-filter">
+        <AsyncSelect {...selectOptions} prefix={<Icon name="tag-alt" />} />
       </div>
     );
   }

@@ -16,15 +16,15 @@
 		<div class="gf-form">
       <label class="gf-form-label query-keyword" ng-click="ctrl.showHelp = !ctrl.showHelp">
         Show Help
-        <i class="fa fa-caret-down" ng-show="ctrl.showHelp"></i>
-        <i class="fa fa-caret-right" ng-hide="ctrl.showHelp"></i>
+        <icon name="'angle-down'" ng-show="ctrl.showHelp" style="margin-top: 3px;"></icon>
+        <icon name="'angle-right'" ng-hide="ctrl.showHelp" style="margin-top: 3px;"></icon>
       </label>
 		</div>
 		<div class="gf-form" ng-show="ctrl.lastQueryMeta">
       <label class="gf-form-label query-keyword" ng-click="ctrl.showLastQuerySQL = !ctrl.showLastQuerySQL">
         Generated SQL
-        <i class="fa fa-caret-down" ng-show="ctrl.showLastQuerySQL"></i>
-        <i class="fa fa-caret-right" ng-hide="ctrl.showLastQuerySQL"></i>
+        <icon name="'angle-down'" ng-show="ctrl.showLastQuerySQL" style="margin-top: 3px;"></icon>
+        <icon name="'angle-right'" ng-hide="ctrl.showLastQuerySQL" style="margin-top: 3px;"></icon>
       </label>
 		</div>
 		<div class="gf-form gf-form--grow">

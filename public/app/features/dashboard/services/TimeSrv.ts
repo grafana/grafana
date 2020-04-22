@@ -102,10 +102,15 @@ export class TimeSrv {
       return value;
     }
     if (value.length === 8) {
-      return toUtc(value, 'YYYYMMDD');
-    }
-    if (value.length === 15) {
-      return toUtc(value, 'YYYYMMDDTHHmmss');
+      const utcValue = toUtc(value, 'YYYYMMDD');
+      if (utcValue.isValid()) {
+        return utcValue;
+      }
+    } else if (value.length === 15) {
+      const utcValue = toUtc(value, 'YYYYMMDDTHHmmss');
+      if (utcValue.isValid()) {
+        return utcValue;
+      }
     }
 
     if (!isNaN(value)) {
@@ -259,7 +264,7 @@ export class TimeSrv {
     this.$timeout(this.refreshDashboard.bind(this), 0);
   }
 
-  timeRangeForUrl() {
+  timeRangeForUrl = () => {
     const range = this.timeRange().raw;
 
     if (isDateTime(range.from)) {
@@ -270,7 +275,7 @@ export class TimeSrv {
     }
 
     return range;
-  }
+  };
 
   timeRange(): TimeRange {
     // make copies if they are moment  (do not want to return out internal moment, because they are mutable!)

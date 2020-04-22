@@ -14,6 +14,7 @@ import (
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/health"
 	"google.golang.org/grpc/health/grpc_health_v1"
+	"google.golang.org/grpc/reflection"
 )
 
 // GRPCServiceName is the name of the service that the health check should
@@ -51,9 +52,10 @@ type GRPCServer struct {
 	Stdout io.Reader
 	Stderr io.Reader
 
-	config GRPCServerConfig
-	server *grpc.Server
-	broker *GRPCBroker
+	config      GRPCServerConfig
+	server      *grpc.Server
+	broker      *GRPCBroker
+	stdioServer *grpcStdioServer
 
 	logger hclog.Logger
 }
@@ -73,6 +75,9 @@ func (s *GRPCServer) Init() error {
 		GRPCServiceName, grpc_health_v1.HealthCheckResponse_SERVING)
 	grpc_health_v1.RegisterHealthServer(s.server, healthCheck)
 
+	// Register the reflection service
+	reflection.Register(s.server)
+
 	// Register the broker service
 	brokerServer := newGRPCBrokerServer()
 	plugin.RegisterGRPCBrokerServer(s.server, brokerServer)
@@ -80,10 +85,12 @@ func (s *GRPCServer) Init() error {
 	go s.broker.Run()
 
 	// Register the controller
-	controllerServer := &grpcControllerServer{
-		server: s,
-	}
+	controllerServer := &grpcControllerServer{server: s}
 	plugin.RegisterGRPCControllerServer(s.server, controllerServer)
+
+	// Register the stdio service
+	s.stdioServer = newGRPCStdioServer(s.logger, s.Stdout, s.Stderr)
+	plugin.RegisterGRPCStdioServer(s.server, s.stdioServer)
 
 	// Register all our plugins onto the gRPC server.
 	for k, raw := range s.Plugins {

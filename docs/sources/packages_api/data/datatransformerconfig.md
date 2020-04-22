@@ -24,10 +24,12 @@ import { DataTransformerConfig } from '@grafana/data';
 
 |  Property | Type | Description |
 |  --- | --- | --- |
-|  [id](#id-property) | <code>string</code> |  |
-|  [options](#options-property) | <code>TOptions</code> |  |
+|  [id](#id-property) | <code>string</code> | Unique identifier of transformer |
+|  [options](#options-property) | <code>TOptions</code> | Options to be passed to the transformer |
 
 ### id property
+
+Unique identifier of transformer
 
 <b>Signature</b>
 
@@ -36,6 +38,8 @@ id: string;
 ```
 
 ### options property
+
+Options to be passed to the transformer
 
 <b>Signature</b>
 

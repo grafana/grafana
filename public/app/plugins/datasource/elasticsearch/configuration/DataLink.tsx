@@ -1,7 +1,8 @@
 import React from 'react';
 import { css } from 'emotion';
 import { VariableSuggestion } from '@grafana/data';
-import { Button, FormField, DataLinkInput, stylesFactory } from '@grafana/ui';
+import { Button, LegacyForms, DataLinkInput, stylesFactory } from '@grafana/ui';
+const { FormField } = LegacyForms;
 import { DataLinkConfig } from '../types';
 
 const getStyles = stylesFactory(() => ({
@@ -49,9 +50,9 @@ export const DataLink = (props: Props) => {
           onChange={handleChange('field')}
         />
         <Button
-          variant={'inverse'}
+          variant={'destructive'}
           title="Remove field"
-          icon={'fa fa-times'}
+          icon="times"
           onClick={event => {
             event.preventDefault();
             onDelete();

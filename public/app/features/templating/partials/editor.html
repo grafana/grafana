@@ -3,10 +3,10 @@
     <h3 class="dashboard-settings__header">
       <a ng-click="setMode('list')" aria-label="{{::selectors.headerLink}}">Variables</a>
       <span ng-show="mode === 'new'"
-        ><i class="fa fa-fw fa-chevron-right" aria-label="{{::selectors.modeLabelNew}}"></i> New</span
+        ><icon name="'angle-right'" aria-label="{{::selectors.modeLabelNew}}"></icon> New</span
       >
       <span ng-show="mode === 'edit'"
-        ><i class="fa fa-fw fa-chevron-right" aria-label="{{::selectors.modeLabelEdit}}"></i> Edit</span
+        ><icon name="'angle-right'" aria-label="{{::selectors.modeLabelEdit}}"></icon> Edit</span
       >
     </h3>
 
@@ -46,7 +46,7 @@
         </thead>
         <tbody>
           <tr ng-repeat="variable in variables">
-            <td style="width: 1%">
+            <td style="width: 1%;">
               <span
                 ng-click="edit(variable)"
                 class="pointer template-variable"
@@ -63,23 +63,23 @@
             >
               {{ variable.definition ? variable.definition : variable.query }}
             </td>
-            <td style="width: 1%">
-              <i
+            <td style="width: 1%;">
+              <icon
                 ng-click="_.move(variables,$index,$index-1)"
                 ng-hide="$first"
-                class="pointer fa fa-arrow-up"
+                name="'arrow-up'"
                 aria-label="{{::selectors.tableRowArrowUpButtons(variable.name)}}"
-              ></i>
+              ></icon>
             </td>
-            <td style="width: 1%">
-              <i
+            <td style="width: 1%;">
+              <icon
                 ng-click="_.move(variables,$index,$index+1)"
                 ng-hide="$last"
-                class="pointer fa fa-arrow-down"
+                name="'arrow-down'"
                 aria-label="{{::selectors.tableRowArrowDownButtons(variable.name)}}"
-              ></i>
+              ></icon>
             </td>
-            <td style="width: 1%">
+            <td style="width: 1%;">
               <a
                 ng-click="duplicate(variable)"
                 class="btn btn-inverse btn-small"
@@ -88,13 +88,13 @@
                 Duplicate
               </a>
             </td>
-            <td style="width: 1%">
+            <td style="width: 1%;">
               <a
                 ng-click="removeVariable(variable)"
                 class="btn btn-danger btn-small"
                 aria-label="{{::selectors.tableRowRemoveButtons(variable.name)}}"
               >
-                <i class="fa fa-remove"></i>
+                <icon name="'times'" style="margin-bottom: 0;"></icon>
               </a>
             </td>
           </tr>

@@ -1,5 +1,6 @@
 import React, { FC } from 'react';
-import { FormLabel, Input, Switch } from '@grafana/ui';
+import { InlineFormLabel, LegacyForms } from '@grafana/ui';
+const { Input, Switch } = LegacyForms;
 import { e2e } from '@grafana/e2e';
 
 export interface Props {
@@ -14,14 +15,14 @@ const BasicSettings: FC<Props> = ({ dataSourceName, isDefault, onDefaultChange, 
     <div className="gf-form-group" aria-label="Datasource settings page basic settings">
       <div className="gf-form-inline">
         <div className="gf-form max-width-30" style={{ marginRight: '3px' }}>
-          <FormLabel
+          <InlineFormLabel
             tooltip={
               'The name is used when you select the data source in panels. The Default data source is ' +
               'preselected in new panels.'
             }
           >
             Name
-          </FormLabel>
+          </InlineFormLabel>
           <Input
             className="gf-form-input max-width-23"
             type="text"

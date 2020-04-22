@@ -1,45 +1,59 @@
-import React, { FC, useCallback } from 'react';
+import React, { FC, useCallback, useRef, useEffect } from 'react';
 import { css, cx } from 'emotion';
 import { GrafanaTheme } from '@grafana/data';
 import { e2e } from '@grafana/e2e';
 import { Icon, useTheme, TagList, styleMixins, stylesFactory } from '@grafana/ui';
-import appEvents from 'app/core/app_events';
-import { CoreEvents } from 'app/types';
-import { DashboardSectionItem, ItemClickWithEvent } from '../types';
+import { updateLocation } from 'app/core/reducers/location';
+import { DashboardSectionItem, OnToggleChecked } from '../types';
 import { SearchCheckbox } from './SearchCheckbox';
 
 export interface Props {
   item: DashboardSectionItem;
   editable?: boolean;
-  onToggleSelection: ItemClickWithEvent;
   onTagSelected: (name: string) => any;
+  onToggleChecked?: OnToggleChecked;
 }
 
 const { selectors } = e2e.pages.Dashboards;
 
-export const SearchItem: FC<Props> = ({ item, editable, onToggleSelection, onTagSelected }) => {
+export const SearchItem: FC<Props> = ({ item, editable, onToggleChecked, onTagSelected }) => {
   const theme = useTheme();
   const styles = getResultsItemStyles(theme);
+  const inputEl = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    const preventDef = (event: MouseEvent) => {
+      // manually prevent default on TagList click, as doing it via normal onClick doesn't work inside angular
+      event.preventDefault();
+    };
+    if (inputEl.current) {
+      inputEl.current.addEventListener('click', preventDef);
+    }
+    return () => {
+      inputEl.current!.removeEventListener('click', preventDef);
+    };
+  }, []);
 
   const onItemClick = () => {
     //Check if one string can be found in the other
     if (window.location.pathname.includes(item.url) || item.url.includes(window.location.pathname)) {
-      appEvents.emit(CoreEvents.hideDashSearch);
+      updateLocation({
+        query: { search: null },
+        partial: true,
+      });
     }
   };
 
-  const navigate = () => {
-    window.location.pathname = item.url;
-  };
-
-  const tagSelected = (tag: string, event: React.MouseEvent<HTMLElement>) => {
-    event.stopPropagation();
+  const tagSelected = useCallback((tag: string, event: React.MouseEvent<HTMLElement>) => {
     onTagSelected(tag);
-  };
+  }, []);
 
   const toggleItem = useCallback(
-    (event: React.MouseEvent<HTMLElement>) => {
-      onToggleSelection(item, event);
+    (event: React.MouseEvent) => {
+      event.preventDefault();
+      if (onToggleChecked) {
+        onToggleChecked(item);
+      }
     },
     [item]
   );
@@ -48,15 +62,18 @@ export const SearchItem: FC<Props> = ({ item, editable, onToggleSelection, onTag
     <li
       aria-label={selectors.dashboards(item.title)}
       className={cx(styles.wrapper, { [styles.selected]: item.selected })}
-      onClick={navigate}
     >
       <SearchCheckbox editable={editable} checked={item.checked} onClick={toggleItem} />
-      <Icon className={styles.icon} name="th-large" />
-      <div className={styles.body} onClick={onItemClick}>
-        <span>{item.title}</span>
-        <span className={styles.folderTitle}>{item.folderTitle}</span>
-      </div>
-      <TagList tags={item.tags} onClick={tagSelected} className={styles.tags} />
+      <a href={item.url} className={styles.link}>
+        <Icon className={styles.icon} name="apps" size="lg" />
+        <div className={styles.body} onClick={onItemClick}>
+          <span>{item.title}</span>
+          <span className={styles.folderTitle}>{item.folderTitle}</span>
+        </div>
+        <span ref={inputEl}>
+          <TagList tags={item.tags} onClick={tagSelected} className={styles.tags} />
+        </span>
+      </a>
     </li>
   );
 };
@@ -93,15 +110,17 @@ const getResultsItemStyles = stylesFactory((theme: GrafanaTheme) => ({
     top: -1px;
   `,
   icon: css`
-    font-size: ${theme.typography.size.lg};
-    width: auto;
-    height: auto;
-    padding: 1px 2px 0 10px;
+    margin-left: 10px;
   `,
   tags: css`
     justify-content: flex-end;
     @media only screen and (max-width: ${theme.breakpoints.md}) {
       display: none;
     }
+  `,
+  link: css`
+    display: flex;
+    align-items: center;
+    width: 100%;
   `,
 }));

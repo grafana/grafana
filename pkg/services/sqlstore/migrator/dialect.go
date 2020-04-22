@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/go-xorm/xorm"
+	"xorm.io/xorm"
 )
 
 type Dialect interface {
@@ -48,6 +48,7 @@ type Dialect interface {
 	NoOpSql() string
 
 	IsUniqueConstraintViolation(err error) bool
+	ErrorMessage(err error) string
 	IsDeadlock(err error) bool
 }
 

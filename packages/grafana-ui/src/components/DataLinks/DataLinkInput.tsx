@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useContext, useRef, RefObject, memo, useEffect } from 'react';
 import usePrevious from 'react-use/lib/usePrevious';
 import { DataLinkSuggestions } from './DataLinkSuggestions';
-import { ThemeContext, DataLinkBuiltInVars, makeValue } from '../../index';
+import { ThemeContext, makeValue } from '../../index';
 import { SelectionReference } from './SelectionReference';
 import { Portal } from '../index';
 
@@ -9,12 +9,12 @@ import { Editor } from '@grafana/slate-react';
 import { Value } from 'slate';
 import Plain from 'slate-plain-serializer';
 import { Popper as ReactPopper } from 'react-popper';
-import { css, cx } from 'emotion';
+import { css } from 'emotion';
 
 import { SlatePrism } from '../../slate-plugins';
 import { SCHEMA } from '../../utils/slate';
 import { stylesFactory } from '../../themes';
-import { GrafanaTheme, VariableSuggestion, VariableOrigin } from '@grafana/data';
+import { GrafanaTheme, VariableSuggestion, VariableOrigin, DataLinkBuiltInVars } from '@grafana/data';
 
 const modulo = (a: number, n: number) => a - n * Math.floor(a / n);
 
@@ -35,10 +35,10 @@ const plugins = [
 const getStyles = stylesFactory((theme: GrafanaTheme) => ({
   editor: css`
     .token.builtInVariable {
-      color: ${theme.colors.queryGreen};
+      color: ${theme.palette.queryGreen};
     }
     .token.variable {
-      color: ${theme.colors.queryKeyword};
+      color: ${theme.colors.textBlue};
     }
   `,
 }));
@@ -119,15 +119,7 @@ export const DataLinkInput: React.FC<DataLinkInputProps> = memo(
     };
 
     return (
-      <div
-        className={cx(
-          'gf-form-input',
-          css`
-            position: relative;
-            height: auto;
-          `
-        )}
-      >
+      <div className="slate-query-field__wrapper">
         <div className="slate-query-field">
           {showingSuggestions && (
             <Portal>

@@ -1,7 +1,7 @@
 import React, { PureComponent } from 'react';
 import { connect, MapStateToProps, MapDispatchToProps } from 'react-redux';
 import { css } from 'emotion';
-import { Alert, Button } from '@grafana/ui';
+import { Alert, Button, IconName } from '@grafana/ui';
 
 import { AngularComponent, getAngularLoader, getDataSourceSrv } from '@grafana/runtime';
 import appEvents from 'app/core/app_events';
@@ -16,9 +16,9 @@ import { DashboardModel } from '../dashboard/state/DashboardModel';
 import { PanelModel } from '../dashboard/state/PanelModel';
 import { TestRuleResult } from './TestRuleResult';
 import { AppNotificationSeverity, StoreState } from 'app/types';
-import { PanelEditorTabIds, getPanelEditorTab } from '../dashboard/panel_editor/state/reducers';
-import { changePanelEditorTab } from '../dashboard/panel_editor/state/actions';
 import { CoreEvents } from 'app/types';
+import { updateLocation } from 'app/core/actions';
+import { PanelEditorTabId } from '../dashboard/components/PanelEditor/types';
 
 interface OwnProps {
   dashboard: DashboardModel;
@@ -30,7 +30,7 @@ interface ConnectedProps {
 }
 
 interface DispatchProps {
-  changePanelEditorTab: typeof changePanelEditorTab;
+  updateLocation: typeof updateLocation;
 }
 
 export type Props = OwnProps & ConnectedProps & DispatchProps;
@@ -104,13 +104,15 @@ class UnConnectedAlertTab extends PureComponent<Props, State> {
   }
 
   stateHistory = (): EditorToolbarView => {
+    const { panel, dashboard } = this.props;
+
     return {
       title: 'State history',
       render: () => {
         return (
           <StateHistory
-            dashboard={this.props.dashboard}
-            panelId={this.props.panel.id}
+            dashboard={dashboard}
+            panelId={panel.editSourceId ?? panel.id}
             onRefresh={this.panelCtrl.refresh}
           />
         );
@@ -128,7 +130,7 @@ class UnConnectedAlertTab extends PureComponent<Props, State> {
           title: 'Delete Alert',
           text: 'Are you sure you want to delete this alert rule?',
           text2: 'You need to save dashboard for the delete to take effect',
-          icon: 'fa-trash',
+          icon: 'trash-alt',
           yesText: 'Delete',
           onConfirm: () => {
             delete panel.alert;
@@ -143,8 +145,8 @@ class UnConnectedAlertTab extends PureComponent<Props, State> {
   };
 
   renderTestRuleResult = () => {
-    const { panel, dashboard } = this.props;
-    return <TestRuleResult panelId={panel.id} dashboard={dashboard} />;
+    const { dashboard, panel } = this.props;
+    return <TestRuleResult panel={panel} dashboard={dashboard} />;
   };
 
   testRule = (): EditorToolbarView => ({
@@ -159,8 +161,8 @@ class UnConnectedAlertTab extends PureComponent<Props, State> {
   };
 
   switchToQueryTab = () => {
-    const { changePanelEditorTab } = this.props;
-    changePanelEditorTab(getPanelEditorTab(PanelEditorTabIds.Queries));
+    const { updateLocation } = this.props;
+    updateLocation({ query: { tab: PanelEditorTabId.Query }, partial: true });
   };
 
   renderValidationMessage = () => {
@@ -176,7 +178,7 @@ class UnConnectedAlertTab extends PureComponent<Props, State> {
         <h2>{validatonMessage}</h2>
         <br />
         <div className="gf-form-group">
-          <Button size={'md'} variant={'secondary'} icon="fa fa-arrow-left" onClick={this.switchToQueryTab}>
+          <Button size={'md'} variant={'secondary'} icon="arrow-left" onClick={this.switchToQueryTab}>
             Go back to Queries
           </Button>
         </div>
@@ -197,7 +199,7 @@ class UnConnectedAlertTab extends PureComponent<Props, State> {
 
     const model = {
       title: 'Panel has no alert rule defined',
-      buttonIcon: 'gicon gicon-alert',
+      buttonIcon: 'bell' as IconName,
       onClick: this.onAddAlert,
       buttonTitle: 'Create Alert',
     };
@@ -226,6 +228,6 @@ const mapStateToProps: MapStateToProps<ConnectedProps, OwnProps, StoreState> = (
   };
 };
 
-const mapDispatchToProps: MapDispatchToProps<DispatchProps, OwnProps> = { changePanelEditorTab };
+const mapDispatchToProps: MapDispatchToProps<DispatchProps, OwnProps> = { updateLocation };
 
 export const AlertTab = connect(mapStateToProps, mapDispatchToProps)(UnConnectedAlertTab);

@@ -6,15 +6,15 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/grafana/grafana-plugin-sdk-go/genproto/pluginv2"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
-
 	datasourceV1 "github.com/grafana/grafana-plugin-model/go/datasource"
 	rendererV1 "github.com/grafana/grafana-plugin-model/go/renderer"
+	"github.com/grafana/grafana-plugin-sdk-go/genproto/pluginv2"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/plugins/backendplugin/pluginextensionv2"
 	"github.com/grafana/grafana/pkg/util/errutil"
 	plugin "github.com/hashicorp/go-plugin"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 // BackendPlugin a registered backend plugin.
@@ -61,6 +61,11 @@ func (p *BackendPlugin) start(ctx context.Context) error {
 			return err
 		}
 
+		rawRenderer, err := rpcClient.Dispense("renderer")
+		if err != nil {
+			return err
+		}
+
 		if rawDiagnostics != nil {
 			if plugin, ok := rawDiagnostics.(DiagnosticsPlugin); ok {
 				p.diagnostics = plugin
@@ -84,6 +89,12 @@ func (p *BackendPlugin) start(ctx context.Context) error {
 		if rawTransform != nil {
 			if plugin, ok := rawTransform.(TransformPlugin); ok {
 				client.TransformPlugin = plugin
+			}
+		}
+
+		if rawRenderer != nil {
+			if plugin, ok := rawRenderer.(pluginextensionv2.RendererPlugin); ok {
+				client.RendererPlugin = plugin
 			}
 		}
 	} else {
@@ -141,7 +152,14 @@ func (p *BackendPlugin) CollectMetrics(ctx context.Context) (*pluginv2.CollectMe
 		}, nil
 	}
 
-	res, err := p.diagnostics.CollectMetrics(ctx, &pluginv2.CollectMetricsRequest{})
+	var res *pluginv2.CollectMetricsResponse
+	err := InstrumentPluginRequest(p.id, "metrics", func() error {
+		var innerErr error
+		res, innerErr = p.diagnostics.CollectMetrics(ctx, &pluginv2.CollectMetricsRequest{})
+
+		return innerErr
+	})
+
 	if err != nil {
 		if st, ok := status.FromError(err); ok {
 			if st.Code() == codes.Unimplemented {
@@ -197,7 +215,13 @@ func (p *BackendPlugin) checkHealth(ctx context.Context, config *PluginConfig) (
 		}
 	}
 
-	res, err := p.diagnostics.CheckHealth(ctx, &pluginv2.CheckHealthRequest{Config: pconfig})
+	var res *pluginv2.CheckHealthResponse
+	err = InstrumentPluginRequest(p.id, "checkhealth", func() error {
+		var innerErr error
+		res, innerErr = p.diagnostics.CheckHealth(ctx, &pluginv2.CheckHealthRequest{Config: pconfig})
+		return innerErr
+	})
+
 	if err != nil {
 		if st, ok := status.FromError(err); ok {
 			if st.Code() == codes.Unimplemented {

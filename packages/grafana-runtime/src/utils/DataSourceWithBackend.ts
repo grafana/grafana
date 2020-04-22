@@ -10,21 +10,37 @@ import { Observable, from } from 'rxjs';
 import { config } from '..';
 import { getBackendSrv } from '../services';
 
-// Ideally internal (exported for consistency)
 const ExpressionDatasourceID = '__expr__';
 
+/**
+ * Describes the current healt status of a data source plugin.
+ *
+ * @public
+ */
 export enum HealthStatus {
   Unknown = 'UNKNOWN',
   OK = 'OK',
   Error = 'ERROR',
 }
 
+/**
+ * Describes the payload returned when checking the health of a data source
+ * plugin.
+ *
+ * @public
+ */
 export interface HealthCheckResult {
   status: HealthStatus;
   message: string;
   details?: Record<string, any>;
 }
 
+/**
+ * Extend this class to implement a data source plugin that is depending on the Grafana
+ * backend API.
+ *
+ * @public
+ */
 export class DataSourceWithBackend<
   TQuery extends DataQuery = DataQuery,
   TOptions extends DataSourceJsonData = DataSourceJsonData
@@ -86,6 +102,8 @@ export class DataSourceWithBackend<
 
   /**
    * Override to apply template variables
+   *
+   * @virtual
    */
   applyTemplateVariables(query: DataQuery) {
     return query;
@@ -104,14 +122,14 @@ export class DataSourceWithBackend<
   /**
    * Make a GET request to the datasource resource path
    */
-  async getResource(path: string, params?: any): Promise<Record<string, any>> {
+  async getResource(path: string, params?: any): Promise<any> {
     return getBackendSrv().get(`/api/datasources/${this.id}/resources/${path}`, params);
   }
 
   /**
    * Send a POST request to the datasource resource path
    */
-  async postResource(path: string, body?: any): Promise<Record<string, any>> {
+  async postResource(path: string, body?: any): Promise<any> {
     return getBackendSrv().post(`/api/datasources/${this.id}/resources/${path}`, { ...body });
   }
 

@@ -31,6 +31,20 @@ var (
 	client = newHTTPClient()
 )
 
+type URLValidationError struct {
+	error
+
+	url string
+}
+
+func (e URLValidationError) Error() string {
+	return fmt.Sprintf("Validation of URL %q failed: %s", e.url, e.error.Error())
+}
+
+func (e URLValidationError) Unwrap() error {
+	return e.error
+}
+
 type DataSourceProxy struct {
 	ds        *models.DataSource
 	ctx       *models.ReqContext
@@ -70,8 +84,12 @@ func (lw *logWrapper) Write(p []byte) (n int, err error) {
 }
 
 // NewDataSourceProxy creates a new Datasource proxy
-func NewDataSourceProxy(ds *models.DataSource, plugin *plugins.DataSourcePlugin, ctx *models.ReqContext, proxyPath string, cfg *setting.Cfg) *DataSourceProxy {
-	targetURL, _ := url.Parse(ds.Url)
+func NewDataSourceProxy(ds *models.DataSource, plugin *plugins.DataSourcePlugin, ctx *models.ReqContext,
+	proxyPath string, cfg *setting.Cfg) (*DataSourceProxy, error) {
+	targetURL, err := url.Parse(ds.Url)
+	if err != nil {
+		return nil, URLValidationError{error: err, url: ds.Url}
+	}
 
 	return &DataSourceProxy{
 		ds:        ds,
@@ -80,7 +98,7 @@ func NewDataSourceProxy(ds *models.DataSource, plugin *plugins.DataSourcePlugin,
 		proxyPath: proxyPath,
 		targetUrl: targetURL,
 		cfg:       cfg,
-	}
+	}, nil
 }
 
 func newHTTPClient() httpClient {
@@ -302,7 +320,7 @@ func checkWhiteList(c *models.ReqContext, host string) bool {
 func addOAuthPassThruAuth(c *models.ReqContext, req *http.Request) {
 	authInfoQuery := &models.GetAuthInfoQuery{UserId: c.UserId}
 	if err := bus.Dispatch(authInfoQuery); err != nil {
-		logger.Error("Error feching oauth information for user", "error", err)
+		logger.Error("Error fetching oauth information for user", "error", err)
 		return
 	}
 

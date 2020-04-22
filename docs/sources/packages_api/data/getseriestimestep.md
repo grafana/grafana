@@ -17,7 +17,7 @@ Returns minimal time step from series time field
 <b>Signature</b>
 
 ```typescript
-getSeriesTimeStep: (timeField: Field<any, import("..").Vector<any>>) => number | undefined
+getSeriesTimeStep: (timeField: Field<any, import("..").Vector<any>>) => number
 ```
 <b>Import</b>
 

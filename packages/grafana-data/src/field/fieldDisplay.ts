@@ -11,7 +11,7 @@ import {
   FieldConfigSource,
   FieldType,
   InterpolateFunction,
-  ValueMapping,
+  LinkModel,
 } from '../types';
 import { DataFrameView } from '../dataframe/DataFrameView';
 import { GraphSeriesValue } from '../types/graph';
@@ -20,15 +20,16 @@ import { reduceField, ReducerID } from '../transformations/fieldReducer';
 import { ScopedVars } from '../types/ScopedVars';
 import { getTimeField } from '../dataframe/processDataFrame';
 
-// export interface FieldDisplayOptions extends FieldConfigSource {
-export interface FieldDisplayOptions {
-  values?: boolean; // If true show each row value
-  limit?: number; // if showing all values limit
-  calcs: string[]; // when !values, pick one value for the whole field
-  override?: any;
-  defaults?: {
-    mappings: ValueMapping[];
-  };
+/**
+ * Options for how to turn DataFrames into an array of display values
+ */
+export interface ReduceDataOptions {
+  /* If true show each row value */
+  values?: boolean;
+  /** if showing all values limit */
+  limit?: number;
+  /** When !values, pick one value for the whole field */
+  calcs: string[];
 }
 
 // TODO: use built in variables, same as for data links?
@@ -77,11 +78,12 @@ export interface FieldDisplay {
   view?: DataFrameView;
   colIndex?: number; // The field column index
   rowIndex?: number; // only filled in when the value is from a row (ie, not a reduction)
+  getLinks?: () => LinkModel[];
 }
 
 export interface GetFieldDisplayValuesOptions {
   data?: DataFrame[];
-  fieldOptions: FieldDisplayOptions;
+  reduceOptions: ReduceDataOptions;
   fieldConfig: FieldConfigSource;
   replaceVariables: InterpolateFunction;
   sparkline?: boolean; // Calculate the sparkline
@@ -92,8 +94,8 @@ export interface GetFieldDisplayValuesOptions {
 export const DEFAULT_FIELD_DISPLAY_VALUES_LIMIT = 25;
 
 export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): FieldDisplay[] => {
-  const { replaceVariables, fieldOptions, fieldConfig } = options;
-  const calcs = fieldOptions.calcs.length ? fieldOptions.calcs : [ReducerID.last];
+  const { replaceVariables, reduceOptions, fieldConfig } = options;
+  const calcs = reduceOptions.calcs.length ? reduceOptions.calcs : [ReducerID.last];
 
   const values: FieldDisplay[] = [];
 
@@ -101,7 +103,7 @@ export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): Fi
     // Field overrides are applied already
     const data = options.data;
     let hitLimit = false;
-    const limit = fieldOptions.limit ? fieldOptions.limit : DEFAULT_FIELD_DISPLAY_VALUES_LIMIT;
+    const limit = reduceOptions.limit ? reduceOptions.limit : DEFAULT_FIELD_DISPLAY_VALUES_LIMIT;
     const defaultTitle = getTitleTemplate(fieldConfig.defaults.title, calcs, data);
     const scopedVars: ScopedVars = {};
 
@@ -113,7 +115,7 @@ export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): Fi
 
       for (let i = 0; i < series.fields.length && !hitLimit; i++) {
         const field = series.fields[i];
-
+        const fieldLinksSupplier = field.getLinks;
         // Show all number fields
         if (field.type !== FieldType.number) {
           continue;
@@ -129,7 +131,7 @@ export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): Fi
 
         const title = config.title ? config.title : defaultTitle;
         // Show all rows
-        if (fieldOptions.values) {
+        if (reduceOptions.values) {
           const usesCellValues = title.indexOf(VAR_CELL_PREFIX) >= 0;
 
           for (let j = 0; j < field.values.length; j++) {
@@ -157,6 +159,12 @@ export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): Fi
               view,
               colIndex: i,
               rowIndex: j,
+              getLinks: fieldLinksSupplier
+                ? () =>
+                    fieldLinksSupplier({
+                      valueRowIndex: j,
+                    })
+                : () => [],
             });
 
             if (values.length >= limit) {
@@ -193,6 +201,12 @@ export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): Fi
               sparkline,
               view,
               colIndex: i,
+              getLinks: fieldLinksSupplier
+                ? () =>
+                    fieldLinksSupplier({
+                      calculatedValue: displayValue,
+                    })
+                : () => [],
             });
           }
         }

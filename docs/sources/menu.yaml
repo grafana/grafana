@@ -56,6 +56,8 @@
       name: GitHub
     - link: /auth/gitlab/
       name: GitLab
+    - link: /auth/okta/
+      name: Okta
     - link: /auth/saml/
       name: SAML
     - link: /auth/team-sync/
@@ -265,15 +267,6 @@
     link: /enterprise/license-expiration/
   - name: Export dashboard as PDF
     link: /enterprise/export-pdf/
-- name: Tutorials
-  link: /tutorials/
-  children:
-  - name: Run Grafana behind a reverse proxy
-    link: /installation/behind_proxy/
-  - name: Run Grafana with IIS Reverse Proxy on Windows
-    link: /tutorials/iis/
-  - name: Integrate Hubot and Grafana
-    link: /tutorials/hubot_howto/
 - name: Plugins
   link: /plugins/
   children:

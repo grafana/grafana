@@ -7,11 +7,11 @@ exports[`Render should render component 1`] = `
   <div
     className="gf-form gf-form--grow"
   >
-    <ForwardRef
+    <Component
       inputClassName="gf-form-input width-20"
       labelClassName="gf-form--has-input-icon"
       onChange={[MockFunction]}
-      placeholder="Filter by email, login or name"
+      placeholder="Search user by login,email or name"
       value=""
     />
     <div
@@ -28,11 +28,11 @@ exports[`Render should render pending invites button 1`] = `
   <div
     className="gf-form gf-form--grow"
   >
-    <ForwardRef
+    <Component
       inputClassName="gf-form-input width-20"
       labelClassName="gf-form--has-input-icon"
       onChange={[MockFunction]}
-      placeholder="Filter by email, login or name"
+      placeholder="Search user by login,email or name"
       value=""
     />
     <div
@@ -42,22 +42,22 @@ exports[`Render should render pending invites button 1`] = `
         }
       }
     >
-      <button
-        className="btn toggle-btn active"
-        key="users"
-        onClick={[MockFunction]}
-      >
-        Users
-      </button>
-      <button
-        className="btn toggle-btn"
-        key="pending-invites"
-        onClick={[MockFunction]}
-      >
-        Pending Invites (
-        5
-        )
-      </button>
+      <RadioButtonGroup
+        onChange={[MockFunction]}
+        options={
+          Array [
+            Object {
+              "label": "Users",
+              "value": "users",
+            },
+            Object {
+              "label": "Pending Invites (5)",
+              "value": "invites",
+            },
+          ]
+        }
+        value="users"
+      />
     </div>
     <div
       className="page-action-bar__spacer"
@@ -73,18 +73,17 @@ exports[`Render should show external user management button 1`] = `
   <div
     className="gf-form gf-form--grow"
   >
-    <ForwardRef
+    <Component
       inputClassName="gf-form-input width-20"
       labelClassName="gf-form--has-input-icon"
       onChange={[MockFunction]}
-      placeholder="Filter by email, login or name"
+      placeholder="Search user by login,email or name"
       value=""
     />
     <div
       className="page-action-bar__spacer"
     />
-    <a
-      className="btn btn-primary"
+    <LinkButton
       href="some/url"
       rel="noopener"
       target="_blank"
@@ -100,24 +99,21 @@ exports[`Render should show invite button 1`] = `
   <div
     className="gf-form gf-form--grow"
   >
-    <ForwardRef
+    <Component
       inputClassName="gf-form-input width-20"
       labelClassName="gf-form--has-input-icon"
       onChange={[MockFunction]}
-      placeholder="Filter by email, login or name"
+      placeholder="Search user by login,email or name"
       value=""
     />
     <div
       className="page-action-bar__spacer"
     />
-    <a
-      className="btn btn-primary"
+    <LinkButton
       href="org/users/invite"
     >
-      <span>
-        Invite
-      </span>
-    </a>
+      Invite
+    </LinkButton>
   </div>
 </div>
 `;

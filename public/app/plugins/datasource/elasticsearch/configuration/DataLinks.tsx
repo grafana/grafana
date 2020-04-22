@@ -1,7 +1,7 @@
 import React from 'react';
 import { css } from 'emotion';
-import { Button, DataLinkBuiltInVars, stylesFactory, useTheme } from '@grafana/ui';
-import { GrafanaTheme, VariableOrigin } from '@grafana/data';
+import { Button, stylesFactory, useTheme } from '@grafana/ui';
+import { GrafanaTheme, VariableOrigin, DataLinkBuiltInVars } from '@grafana/data';
 import { DataLinkConfig } from '../types';
 import { DataLink } from './DataLink';
 
@@ -63,11 +63,11 @@ export const DataLinks = (props: Props) => {
           })}
         <div>
           <Button
-            variant={'inverse'}
+            variant={'secondary'}
             className={css`
               margin-right: 10px;
             `}
-            icon="fa fa-plus"
+            icon="plus"
             onClick={event => {
               event.preventDefault();
               const newDataLinks = [...(value || []), { field: '', url: '' }];

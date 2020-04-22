@@ -350,6 +350,22 @@ WHERE
   $__unixEpochFilter(epoch_time)
 ```
 
+**Example region query using time and timeend columns with epoch values:**
+
+> Only available in Grafana v6.6+.
+
+```sql
+SELECT
+  epoch_time as time,
+  epoch_timeend as timeend,
+  metric1 as text,
+  CONCAT(tag1, ',', tag2) as tags
+FROM
+  public.test_data
+WHERE
+  $__unixEpochFilter(epoch_time)
+```
+
 **Example query using time column of native SQL date/time data type:**
 
 ```sql
@@ -366,7 +382,7 @@ WHERE
 Name | Description
 ------------ | -------------
 time | The name of the date/time field. Could be a column with a native SQL date/time data type or epoch value.
-timeend | Optional name of the end date/time field. Could be a column with a native SQL date/time data type or epoch value.
+timeend | Optional name of the end date/time field. Could be a column with a native SQL date/time data type or epoch value. (Grafana v6.6+)
 text | Event description field.
 tags | Optional field name to use for event tags as a comma separated string.
 

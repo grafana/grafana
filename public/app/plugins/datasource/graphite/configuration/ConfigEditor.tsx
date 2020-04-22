@@ -1,5 +1,6 @@
 import React, { PureComponent } from 'react';
-import { DataSourceHttpSettings, FormLabel, Select, Switch } from '@grafana/ui';
+import { DataSourceHttpSettings, InlineFormLabel, LegacyForms } from '@grafana/ui';
+const { Select, Switch } = LegacyForms;
 import {
   DataSourcePluginOptionsEditorProps,
   onUpdateDatasourceJsonDataOptionSelect,
@@ -56,9 +57,9 @@ export class ConfigEditor extends PureComponent<Props> {
         <div className="gf-form-group">
           <div className="gf-form-inline">
             <div className="gf-form">
-              <FormLabel tooltip="This option controls what functions are available in the Graphite query editor.">
+              <InlineFormLabel tooltip="This option controls what functions are available in the Graphite query editor.">
                 Version
-              </FormLabel>
+              </InlineFormLabel>
               <Select
                 value={currentVersion}
                 options={graphiteVersions}
@@ -69,7 +70,7 @@ export class ConfigEditor extends PureComponent<Props> {
           </div>
           <div className="gf-form-inline">
             <div className="gf-form">
-              <FormLabel tooltip={this.renderTypeHelp}>Type</FormLabel>
+              <InlineFormLabel tooltip={this.renderTypeHelp}>Type</InlineFormLabel>
               <Select
                 options={graphiteTypes}
                 value={graphiteTypes.find(type => type.value === options.jsonData.graphiteType)}

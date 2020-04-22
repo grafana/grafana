@@ -10,7 +10,7 @@ import memoizeOne from 'memoize-one';
 import store from 'app/core/store';
 
 // Components
-import { ErrorBoundaryAlert, stylesFactory } from '@grafana/ui';
+import { ErrorBoundaryAlert, stylesFactory, withTheme } from '@grafana/ui';
 import LogsContainer from './LogsContainer';
 import QueryRows from './QueryRows';
 import TableContainer from './TableContainer';
@@ -39,6 +39,7 @@ import {
   TimeZone,
   LoadingState,
   ExploreMode,
+  GrafanaTheme,
 } from '@grafana/data';
 
 import { ExploreId, ExploreItemState, ExploreUIState, ExploreUpdateState, ExploreUrlState } from 'app/types/explore';
@@ -59,28 +60,27 @@ import { getTimeZone } from '../profile/state/selectors';
 import { ErrorContainer } from './ErrorContainer';
 import { scanStopAction } from './state/actionTypes';
 import { ExploreGraphPanel } from './ExploreGraphPanel';
+import { TraceView } from './TraceView/TraceView';
+import { SecondaryActions } from './SecondaryActions';
+import { compose } from 'redux';
 
-const getStyles = stylesFactory(() => {
+const getStyles = stylesFactory((theme: GrafanaTheme) => {
   return {
     logsMain: css`
       label: logsMain;
       // Is needed for some transition animations to work.
       position: relative;
+      margin-top: 21px;
     `,
     button: css`
+      label: button;
       margin: 1em 4px 0 0;
     `,
-    // Utility class for iframe parents so that we can show iframe content with reasonable height instead of squished
-    // or some random explicit height.
-    fullHeight: css`
-      label: fullHeight;
-      height: 100%;
-    `,
-    iframe: css`
-      label: iframe;
-      border: none;
-      width: 100%;
-      height: 100%;
+    queryContainer: css`
+      label: queryContainer;
+      // Need to override normal css class and don't want to count on ordering of the classes in html.
+      height: auto !important;
+      padding: ${theme.panelPadding}px;
     `,
   };
 });
@@ -121,6 +121,7 @@ export interface ExploreProps {
   queryResponse: PanelData;
   originPanelId: number;
   addQueryRow: typeof addQueryRow;
+  theme: GrafanaTheme;
 }
 
 interface ExploreState {
@@ -300,10 +301,11 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
       queryResponse,
       syncedTimes,
       isLive,
+      theme,
     } = this.props;
     const { showRichHistory } = this.state;
     const exploreClass = split ? 'explore explore-split' : 'explore';
-    const styles = getStyles();
+    const styles = getStyles(theme);
     const StartPage = datasourceInstance?.components?.ExploreStartPage;
     const showStartPage = !queryResponse || queryResponse.state === LoadingState.NotStarted;
 
@@ -317,37 +319,26 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
         {datasourceMissing ? this.renderEmptyState() : null}
         {datasourceInstance && (
           <div className="explore-container">
-            <QueryRows exploreEvents={this.exploreEvents} exploreId={exploreId} queryKeys={queryKeys} />
-            <div className="gf-form">
-              <button
-                aria-label="Add row button"
-                className={`gf-form-label gf-form-label--btn ${styles.button}`}
-                onClick={this.onClickAddQueryRowButton}
-                disabled={isLive}
-              >
-                <i className={'fa fa-fw fa-plus icon-margin-right'} />
-                <span className="btn-title">{'\xA0' + 'Add query'}</span>
-              </button>
-              <button
-                aria-label="Rich history button"
-                className={cx(`gf-form-label gf-form-label--btn ${styles.button}`, {
-                  ['explore-active-button']: showRichHistory,
-                })}
-                onClick={this.toggleShowRichHistory}
-              >
-                <i className={'fa fa-fw fa-history icon-margin-right '} />
-                <span className="btn-title">{'\xA0' + 'Query history'}</span>
-              </button>
+            <div className={cx('panel-container', styles.queryContainer)}>
+              <QueryRows exploreEvents={this.exploreEvents} exploreId={exploreId} queryKeys={queryKeys} />
+              <SecondaryActions
+                addQueryRowButtonDisabled={isLive}
+                // We cannot show multiple traces at the same time right now so we do not show add query button.
+                addQueryRowButtonHidden={mode === ExploreMode.Tracing}
+                richHistoryButtonActive={showRichHistory}
+                onClickAddQueryRowButton={this.onClickAddQueryRowButton}
+                onClickRichHistoryButton={this.toggleShowRichHistory}
+              />
             </div>
             <ErrorContainer queryError={queryError} />
-            <AutoSizer className={styles.fullHeight} onResize={this.onResize} disableHeight>
+            <AutoSizer onResize={this.onResize} disableHeight>
               {({ width }) => {
                 if (width === 0) {
                   return null;
                 }
 
                 return (
-                  <main className={cx('m-t-2', styles.logsMain, styles.fullHeight)} style={{ width }}>
+                  <main className={cx(styles.logsMain)} style={{ width }}>
                     <ErrorBoundaryAlert>
                       {showStartPage && StartPage && (
                         <div className={'grafana-info-box grafana-info-box--max-lg'}>
@@ -391,18 +382,12 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
                               onStopScanning={this.onStopScanning}
                             />
                           )}
-                          {mode === ExploreMode.Tracing && (
-                            <div className={styles.fullHeight}>
-                              {queryResponse &&
-                                !!queryResponse.series.length &&
-                                queryResponse.series[0].fields[0].values.get(0) && (
-                                  <iframe
-                                    className={styles.iframe}
-                                    src={queryResponse.series[0].fields[0].values.get(0)}
-                                  />
-                                )}
-                            </div>
-                          )}
+                          {mode === ExploreMode.Tracing &&
+                            // We expect only one trace at the moment to be in the dataframe
+                            // If there is not data (like 404) we show a separate error so no need to show anything here
+                            queryResponse.series[0] && (
+                              <TraceView trace={queryResponse.series[0].fields[0].values.get(0) as any} />
+                            )}
                         </>
                       )}
                       {showRichHistory && (
@@ -515,7 +500,8 @@ const mapDispatchToProps: Partial<ExploreProps> = {
   addQueryRow,
 };
 
-export default hot(module)(
-  // @ts-ignore
-  connect(mapStateToProps, mapDispatchToProps)(Explore)
-) as React.ComponentType<{ exploreId: ExploreId }>;
+export default compose(
+  hot(module),
+  connect(mapStateToProps, mapDispatchToProps),
+  withTheme
+)(Explore) as React.ComponentType<{ exploreId: ExploreId }>;
