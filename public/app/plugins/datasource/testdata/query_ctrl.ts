@@ -88,8 +88,6 @@ export class TestDataQueryCtrl extends QueryCtrl {
 
   scenarioChanged() {
     this.scenario = _.find(this.scenarioList, { id: this.target.scenarioId });
-    this.target.stringInput = this.scenario.stringInput;
-    this.showLabels = showLabelsFor.includes(this.target.scenarioId);
 
     if (this.target.scenarioId === 'manual_entry') {
       this.target.points = this.target.points || [];
@@ -120,6 +118,9 @@ export class TestDataQueryCtrl extends QueryCtrl {
     } else {
       delete this.target.stringInput;
     }
+
+    this.target.stringInput = this.scenario.stringInput ?? undefined;
+    this.showLabels = showLabelsFor.includes(this.target.scenarioId);
 
     this.refresh();
   }
