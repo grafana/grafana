@@ -219,11 +219,6 @@ export abstract class DataSourceApi<
   getQueryDisplayText?(query: TQuery): string;
 
   /**
-   * Convert a simple text string to query
-   */
-  getQueryFromDisplayText?(query: string): any;
-
-  /**
    * Retrieve context for a given log row
    */
   getLogRowContext?: <TContextQueryOptions extends {}>(
