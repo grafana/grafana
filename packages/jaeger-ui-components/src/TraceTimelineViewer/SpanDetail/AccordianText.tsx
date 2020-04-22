@@ -20,10 +20,10 @@ import IoIosArrowRight from 'react-icons/lib/io/ios-arrow-right';
 import TextList from './TextList';
 import { TNil } from '../../types';
 import { getStyles as getAccordianKeyValuesStyles } from './AccordianKeyValues';
-import { createStyle } from '../../Theme';
+import { autoColor, createStyle, Theme, useTheme } from '../../Theme';
 import { uAlignIcon } from '../../uberUtilityStyles';
 
-const getStyles = createStyle(() => {
+const getStyles = createStyle((theme: Theme) => {
   return {
     header: css`
       cursor: pointer;
@@ -32,7 +32,7 @@ const getStyles = createStyle(() => {
       text-overflow: ellipsis;
       white-space: nowrap;
       &:hover {
-        background: #e8e8e8;
+        background: ${autoColor(theme, '#e8e8e8')};
       }
     `,
   };
@@ -52,7 +52,7 @@ type AccordianTextProps = {
 export default function AccordianText(props: AccordianTextProps) {
   const { className, data, headerClassName, interactive, isOpen, label, onToggle } = props;
   const isEmpty = !Array.isArray(data) || !data.length;
-  const accordianKeyValuesStyles = getAccordianKeyValuesStyles();
+  const accordianKeyValuesStyles = getAccordianKeyValuesStyles(useTheme());
   const iconCls = cx(uAlignIcon, { [accordianKeyValuesStyles.emptyIcon]: isEmpty });
   let arrow: React.ReactNode | null = null;
   let headerProps: {} | null = null;
@@ -64,7 +64,7 @@ export default function AccordianText(props: AccordianTextProps) {
       role: 'switch',
     };
   }
-  const styles = getStyles();
+  const styles = getStyles(useTheme());
   return (
     <div className={className || ''}>
       <div className={cx(styles.header, headerClassName)} {...headerProps} data-test-id="AccordianText--header">

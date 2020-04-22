@@ -62,7 +62,7 @@ constructor(s?: string);
 
 |  Parameter | Type | Description |
 |  --- | --- | --- |
-|  s | <code>string</code> |  |
+|  s | <code>string</code> | a string containing ANSI escape codes. |
 
 ### asChromeConsoleLogArguments property
 
@@ -204,7 +204,7 @@ static strip(s: string): string;
 
 |  Parameter | Type | Description |
 |  --- | --- | --- |
-|  s | <code>string</code> |  |
+|  s | <code>string</code> | a string containing ANSI escape codes.  {<!-- -->string<!-- -->} clean string. |
 
 <b>Returns:</b>
 

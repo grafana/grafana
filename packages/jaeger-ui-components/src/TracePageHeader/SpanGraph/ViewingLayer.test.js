@@ -20,6 +20,7 @@ import Scrubber from './Scrubber';
 import ViewingLayer, { dragTypes, getStyles } from './ViewingLayer';
 import { EUpdateTypes } from '../../utils/DraggableManager';
 import { polyfill as polyfillAnimationFrame } from '../../utils/test/requestAnimationFrame';
+import { defaultTheme } from '../../Theme';
 
 function getViewRange(viewStart, viewEnd) {
   return {
@@ -43,13 +44,19 @@ describe('<SpanGraph>', () => {
       updateViewRangeTime: jest.fn(),
       viewRange: getViewRange(0, 1),
     };
-    wrapper = shallow(<ViewingLayer {...props} />);
+    wrapper = shallow(<ViewingLayer {...props} />)
+      .dive()
+      .dive()
+      .dive();
   });
 
   describe('_getDraggingBounds()', () => {
     beforeEach(() => {
       props = { ...props, viewRange: getViewRange(0.1, 0.9) };
-      wrapper = shallow(<ViewingLayer {...props} />);
+      wrapper = shallow(<ViewingLayer {...props} />)
+        .dive()
+        .dive()
+        .dive();
       wrapper.instance()._setRoot({
         getBoundingClientRect() {
           return { left: 10, width: 100 };
@@ -122,7 +129,10 @@ describe('<SpanGraph>', () => {
           const anchor = 0.1;
           const time = { ...props.viewRange.time, reframe: { anchor } };
           props = { ...props, viewRange: { time } };
-          wrapper = shallow(<ViewingLayer {...props} />);
+          wrapper = shallow(<ViewingLayer {...props} />)
+            .dive()
+            .dive()
+            .dive();
           wrapper.instance()._handleReframeDragUpdate({ value });
           const calls = props.updateNextViewRangeTime.mock.calls;
           expect(calls).toEqual([[{ reframe: { anchor, shift: value } }]]);
@@ -149,7 +159,10 @@ describe('<SpanGraph>', () => {
           const anchor = 0.6;
           const time = { ...props.viewRange.time, reframe: { anchor } };
           props = { ...props, viewRange: { time } };
-          wrapper = shallow(<ViewingLayer {...props} />);
+          wrapper = shallow(<ViewingLayer {...props} />)
+            .dive()
+            .dive()
+            .dive();
           wrapper.instance()._handleReframeDragEnd({ manager, value });
 
           expect(manager.resetBounds.mock.calls).toEqual([[]]);
@@ -162,7 +175,10 @@ describe('<SpanGraph>', () => {
           const anchor = 0.4;
           const time = { ...props.viewRange.time, reframe: { anchor } };
           props = { ...props, viewRange: { time } };
-          wrapper = shallow(<ViewingLayer {...props} />);
+          wrapper = shallow(<ViewingLayer {...props} />)
+            .dive()
+            .dive()
+            .dive();
           wrapper.instance()._handleReframeDragEnd({ manager, value });
 
           expect(manager.resetBounds.mock.calls).toEqual([[]]);
@@ -258,28 +274,28 @@ describe('<SpanGraph>', () => {
 
     describe('.ViewingLayer--resetZoom', () => {
       it('should not render .ViewingLayer--resetZoom if props.viewRange.time.current = [0,1]', () => {
-        expect(wrapper.find(`.${getStyles().ViewingLayerResetZoom}`).length).toBe(0);
+        expect(wrapper.find(`.${getStyles(defaultTheme).ViewingLayerResetZoom}`).length).toBe(0);
         wrapper.setProps({ viewRange: { time: { current: [0, 1] } } });
-        expect(wrapper.find(`.${getStyles().ViewingLayerResetZoom}`).length).toBe(0);
+        expect(wrapper.find(`.${getStyles(defaultTheme).ViewingLayerResetZoom}`).length).toBe(0);
       });
 
       it('should render ViewingLayer--resetZoom if props.viewRange.time.current[0] !== 0', () => {
         // If the test fails on the following expect statement, this may be a false negative
-        expect(wrapper.find(`.${getStyles().ViewingLayerResetZoom}`).length).toBe(0);
+        expect(wrapper.find(`.${getStyles(defaultTheme).ViewingLayerResetZoom}`).length).toBe(0);
         wrapper.setProps({ viewRange: { time: { current: [0.1, 1] } } });
-        expect(wrapper.find(`.${getStyles().ViewingLayerResetZoom}`).length).toBe(1);
+        expect(wrapper.find(`.${getStyles(defaultTheme).ViewingLayerResetZoom}`).length).toBe(1);
       });
 
       it('should render ViewingLayer--resetZoom if props.viewRange.time.current[1] !== 1', () => {
         // If the test fails on the following expect statement, this may be a false negative
-        expect(wrapper.find(`.${getStyles().ViewingLayerResetZoom}`).length).toBe(0);
+        expect(wrapper.find(`.${getStyles(defaultTheme).ViewingLayerResetZoom}`).length).toBe(0);
         wrapper.setProps({ viewRange: { time: { current: [0, 0.9] } } });
-        expect(wrapper.find(`.${getStyles().ViewingLayerResetZoom}`).length).toBe(1);
+        expect(wrapper.find(`.${getStyles(defaultTheme).ViewingLayerResetZoom}`).length).toBe(1);
       });
 
       it('should call props.updateViewRangeTime when clicked', () => {
         wrapper.setProps({ viewRange: { time: { current: [0.1, 0.9] } } });
-        const resetZoomButton = wrapper.find(`.${getStyles().ViewingLayerResetZoom}`);
+        const resetZoomButton = wrapper.find(`.${getStyles(defaultTheme).ViewingLayerResetZoom}`);
         // If the test fails on the following expect statement, this may be a false negative caused
         // by a regression to rendering.
         expect(resetZoomButton.length).toBe(1);
@@ -296,9 +312,12 @@ describe('<SpanGraph>', () => {
 
   it('renders a filtering box if leftBound exists', () => {
     const _props = { ...props, viewRange: getViewRange(0.2, 1) };
-    wrapper = shallow(<ViewingLayer {..._props} />);
+    wrapper = shallow(<ViewingLayer {..._props} />)
+      .dive()
+      .dive()
+      .dive();
 
-    const leftBox = wrapper.find(`.${getStyles().ViewingLayerInactive}`);
+    const leftBox = wrapper.find(`.${getStyles(defaultTheme).ViewingLayerInactive}`);
     expect(leftBox.length).toBe(1);
     const width = Number(leftBox.prop('width').slice(0, -1));
     const x = leftBox.prop('x');
@@ -308,9 +327,12 @@ describe('<SpanGraph>', () => {
 
   it('renders a filtering box if rightBound exists', () => {
     const _props = { ...props, viewRange: getViewRange(0, 0.8) };
-    wrapper = shallow(<ViewingLayer {..._props} />);
+    wrapper = shallow(<ViewingLayer {..._props} />)
+      .dive()
+      .dive()
+      .dive();
 
-    const rightBox = wrapper.find(`.${getStyles().ViewingLayerInactive}`);
+    const rightBox = wrapper.find(`.${getStyles(defaultTheme).ViewingLayerInactive}`);
     expect(rightBox.length).toBe(1);
     const width = Number(rightBox.prop('width').slice(0, -1));
     const x = Number(rightBox.prop('x').slice(0, -1));

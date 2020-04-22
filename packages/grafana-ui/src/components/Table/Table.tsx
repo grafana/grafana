@@ -1,11 +1,20 @@
-import React, { FC, memo, useMemo } from 'react';
+import React, { FC, memo, useMemo, useCallback } from 'react';
 import { DataFrame, Field } from '@grafana/data';
-import { Cell, Column, HeaderGroup, useBlockLayout, useResizeColumns, useSortBy, useTable } from 'react-table';
+import {
+  Cell,
+  Column,
+  HeaderGroup,
+  useAbsoluteLayout,
+  useResizeColumns,
+  useSortBy,
+  useTable,
+  UseResizeColumnsState,
+  UseSortByState,
+} from 'react-table';
 import { FixedSizeList } from 'react-window';
-import useMeasure from 'react-use/lib/useMeasure';
-import { getColumns, getTableRows, getTextAlign } from './utils';
+import { getColumns, getTextAlign } from './utils';
 import { useTheme } from '../../themes';
-import { ColumnResizeActionCallback, TableFilterActionCallback } from './types';
+import { TableColumnResizeActionCallback, TableFilterActionCallback, TableSortByActionCallback } from './types';
 import { getTableStyles, TableStyles } from './styles';
 import { TableCell } from './TableCell';
 import { Icon } from '../Icon/Icon';
@@ -22,109 +31,153 @@ export interface Props {
   noHeader?: boolean;
   resizable?: boolean;
   onCellClick?: TableFilterActionCallback;
-  onColumnResize?: ColumnResizeActionCallback;
+  onColumnResize?: TableColumnResizeActionCallback;
+  onSortBy?: TableSortByActionCallback;
 }
 
-export const Table: FC<Props> = memo(
-  ({ data, height, onCellClick, width, columnMinWidth = COLUMN_MIN_WIDTH, noHeader, resizable = false }) => {
-    const theme = useTheme();
-    const [ref, headerRowMeasurements] = useMeasure();
-    const tableStyles = getTableStyles(theme);
-    const memoizedColumns = useMemo(() => getColumns(data, width, columnMinWidth), [data, width, columnMinWidth]);
-    const memoizedData = useMemo(() => getTableRows(data), [data]);
+interface ReactTableInternalState extends UseResizeColumnsState<{}>, UseSortByState<{}> {}
 
-    const defaultColumn = React.useMemo(
-      () => ({
-        minWidth: memoizedColumns.reduce((minWidth, column) => {
-          if (column.width) {
-            const width = typeof column.width === 'string' ? parseInt(column.width, 10) : column.width;
-            return Math.min(minWidth, width);
+function useTableStateReducer(props: Props) {
+  return useCallback(
+    (newState: ReactTableInternalState, action: any) => {
+      console.log(action, newState);
+
+      switch (action.type) {
+        case 'columnDoneResizing':
+          if (props.onColumnResize) {
+            const info = (newState.columnResizing.headerIdWidths as any)[0];
+            const columnIdString = info[0];
+            const fieldIndex = parseInt(columnIdString, 10);
+            const width = Math.round(newState.columnResizing.columnWidths[columnIdString] as number);
+            props.onColumnResize(fieldIndex, width);
           }
-          return minWidth;
-        }, columnMinWidth),
-      }),
-      [columnMinWidth, memoizedColumns]
-    );
+        case 'toggleSortBy':
+          if (props.onSortBy) {
+            // todo call callback and persist
+          }
+          break;
+      }
 
-    const options: any = useMemo(
-      () => ({
-        columns: memoizedColumns,
-        data: memoizedData,
-        disableResizing: !resizable,
-        defaultColumn,
-      }),
-      [memoizedColumns, memoizedData, resizable, defaultColumn]
-    );
+      return newState;
+    },
+    [props.onColumnResize]
+  );
+}
 
-    const { getTableProps, headerGroups, rows, prepareRow, totalColumnsWidth } = useTable(
-      options,
-      useBlockLayout,
-      useResizeColumns,
-      useSortBy
-    );
+export const Table: FC<Props> = memo((props: Props) => {
+  const { data, height, onCellClick, width, columnMinWidth = COLUMN_MIN_WIDTH, noHeader, resizable = true } = props;
+  const theme = useTheme();
+  const tableStyles = getTableStyles(theme);
 
-    const RenderRow = React.useCallback(
-      ({ index, style }) => {
-        const row = rows[index];
-        prepareRow(row);
-        return (
-          <div {...row.getRowProps({ style })} className={tableStyles.row}>
-            {row.cells.map((cell: Cell, index: number) => (
-              <TableCell
-                key={index}
-                field={data.fields[index]}
-                tableStyles={tableStyles}
-                cell={cell}
-                onCellClick={onCellClick}
-              />
-            ))}
-          </div>
-        );
-      },
-      [prepareRow, rows]
-    );
+  // React table data array. This data acts just like a dummy array to let react-table know how many rows exist
+  // The cells use the field to look up values
+  const memoizedData = useMemo(() => {
+    if (!data.fields.length) {
+      return [];
+    }
 
-    return (
-      <div {...getTableProps()} className={tableStyles.table}>
-        <CustomScrollbar hideVerticalTrack={true}>
-          <div style={{ width: `${totalColumnsWidth}px` }}>
-            {!noHeader && (
-              <div>
-                {headerGroups.map((headerGroup: HeaderGroup) => {
-                  return (
-                    <div className={tableStyles.thead} {...headerGroup.getHeaderGroupProps()} ref={ref}>
-                      {headerGroup.headers.map((column: Column, index: number) =>
-                        renderHeaderCell(column, tableStyles, data.fields[index])
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-            <FixedSizeList
-              height={height - headerRowMeasurements.height}
-              itemCount={rows.length}
-              itemSize={tableStyles.rowHeight}
-              width={'100%'}
-              style={{ overflow: 'hidden auto' }}
-            >
-              {RenderRow}
-            </FixedSizeList>
-          </div>
-        </CustomScrollbar>
-      </div>
-    );
-  }
-);
+    // Check if an array buffer already exists
+    const buffer = (data.fields[0].values as any).buffer;
+    if (Array.isArray(buffer) && buffer.length === data.length) {
+      return buffer;
+    }
+
+    // For arrow tables, the `toArray` implementation is expensive and akward *especially* for timestamps
+    return Array(data.length).fill(0);
+  }, [data]);
+
+  // React-table column definitions
+  const memoizedColumns = useMemo(() => getColumns(data, width, columnMinWidth), [data, width, columnMinWidth]);
+
+  // Internal react table state reducer
+  const stateReducer = useTableStateReducer(props);
+
+  const options: any = useMemo(
+    () => ({
+      columns: memoizedColumns,
+      data: memoizedData,
+      disableResizing: !resizable,
+      stateReducer: stateReducer,
+      // this is how you set initial sort by state
+      // initialState: {
+      //   sortBy: [{ id: '2', desc: true }],
+      // },
+    }),
+    [memoizedColumns, memoizedData, stateReducer, resizable]
+  );
+
+  const { getTableProps, headerGroups, rows, prepareRow, totalColumnsWidth } = useTable(
+    options,
+    useSortBy,
+    useAbsoluteLayout,
+    useResizeColumns
+  );
+
+  const RenderRow = React.useCallback(
+    ({ index, style }) => {
+      const row = rows[index];
+      prepareRow(row);
+      return (
+        <div {...row.getRowProps({ style })} className={tableStyles.row}>
+          {row.cells.map((cell: Cell, index: number) => (
+            <TableCell
+              key={index}
+              field={data.fields[index]}
+              tableStyles={tableStyles}
+              cell={cell}
+              onCellClick={onCellClick}
+            />
+          ))}
+        </div>
+      );
+    },
+    [prepareRow, rows]
+  );
+
+  const headerHeight = noHeader ? 0 : tableStyles.cellHeight;
+
+  return (
+    <div {...getTableProps()} className={tableStyles.table}>
+      <CustomScrollbar hideVerticalTrack={true}>
+        <div style={{ width: `${totalColumnsWidth}px` }}>
+          {!noHeader && (
+            <div>
+              {headerGroups.map((headerGroup: HeaderGroup) => {
+                return (
+                  <div className={tableStyles.thead} {...headerGroup.getHeaderGroupProps()}>
+                    {headerGroup.headers.map((column: Column, index: number) =>
+                      renderHeaderCell(column, tableStyles, data.fields[index])
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
+          <FixedSizeList
+            height={height - headerHeight}
+            itemCount={rows.length}
+            itemSize={tableStyles.rowHeight}
+            width={'100%'}
+            style={{ overflow: 'hidden auto' }}
+          >
+            {RenderRow}
+          </FixedSizeList>
+        </div>
+      </CustomScrollbar>
+    </div>
+  );
+});
 
 Table.displayName = 'Table';
 
 function renderHeaderCell(column: any, tableStyles: TableStyles, field?: Field) {
   const headerProps = column.getHeaderProps();
+
   if (column.canResize) {
     headerProps.style.userSelect = column.isResizing ? 'none' : 'auto'; // disables selecting text while resizing
   }
 
+  headerProps.style.position = 'absolute';
   headerProps.style.textAlign = getTextAlign(field);
 
   return (

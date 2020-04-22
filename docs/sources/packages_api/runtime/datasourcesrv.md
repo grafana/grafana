@@ -10,6 +10,8 @@ draft = true
 
 ## DataSourceSrv interface
 
+This is the entry point for communicating with a datasource that is added as a plugin (both external and internal). Via this service you will get access to the [DataSourceApi](./data/datasourceapi.md) that have a rich API for communicating with the datasource.
+
 <b>Signature</b>
 
 ```typescript
@@ -37,8 +39,8 @@ get(name?: string, scopedVars?: ScopedVars): Promise<DataSourceApi>;
 
 |  Parameter | Type | Description |
 |  --- | --- | --- |
-|  name | <code>string</code> |  |
-|  scopedVars | <code>ScopedVars</code> |  |
+|  name | <code>string</code> | name of the datasource plugin you want to use. |
+|  scopedVars | <code>ScopedVars</code> | variables used to interpolate a templated passed as name. |
 
 <b>Returns:</b>
 

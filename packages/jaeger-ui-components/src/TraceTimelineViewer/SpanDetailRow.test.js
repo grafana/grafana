@@ -48,7 +48,7 @@ describe('<SpanDetailRow>', () => {
     props.logsToggle.mockReset();
     props.processToggle.mockReset();
     props.tagsToggle.mockReset();
-    wrapper = shallow(<SpanDetailRow {...props} />);
+    wrapper = shallow(<SpanDetailRow {...props} />).dive().dive().dive();
   });
 
   it('renders without exploding', () => {

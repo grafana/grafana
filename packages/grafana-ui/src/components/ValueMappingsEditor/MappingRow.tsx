@@ -1,12 +1,9 @@
 import React, { ChangeEvent } from 'react';
 import { HorizontalGroup } from '../Layout/Layout';
-import { Select } from '../index';
-import Forms from '../Forms';
+import { FullWidthButtonContainer, IconButton, Label, RadioButtonGroup } from '../index';
+import { Field } from '../Forms/Field';
 import { Input } from '../Input/Input';
-import { MappingType, RangeMap, ValueMap, ValueMapping } from '@grafana/data';
-import * as styleMixins from '../../themes/mixins';
-import { useTheme } from '../../themes';
-import { FieldConfigItemHeaderTitle } from '../FieldConfigs/FieldConfigItemHeaderTitle';
+import { MappingType, RangeMap, SelectableValue, ValueMap, ValueMapping } from '@grafana/data';
 
 export interface Props {
   valueMapping: ValueMapping;
@@ -14,13 +11,12 @@ export interface Props {
   removeValueMapping: () => void;
 }
 
-const MAPPING_OPTIONS = [
+const MAPPING_OPTIONS: Array<SelectableValue<MappingType>> = [
   { value: MappingType.ValueToText, label: 'Value' },
   { value: MappingType.RangeToText, label: 'Range' },
 ];
 
 export const MappingRow: React.FC<Props> = ({ valueMapping, updateValueMapping, removeValueMapping }) => {
-  const theme = useTheme();
   const { type } = valueMapping;
 
   const onMappingValueChange = (event: ChangeEvent<HTMLInputElement>) => {
@@ -48,50 +44,54 @@ export const MappingRow: React.FC<Props> = ({ valueMapping, updateValueMapping, 
       return (
         <>
           <HorizontalGroup>
-            <Forms.Field label="From">
+            <Field label="From">
               <Input type="number" defaultValue={(valueMapping as RangeMap).from!} onBlur={onMappingFromChange} />
-            </Forms.Field>
-            <Forms.Field label="To">
+            </Field>
+            <Field label="To">
               <Input type="number" defaultValue={(valueMapping as RangeMap).to} onBlur={onMappingToChange} />
-            </Forms.Field>
+            </Field>
           </HorizontalGroup>
 
-          <Forms.Field label="Text">
+          <Field label="Text">
             <Input defaultValue={valueMapping.text} onBlur={onMappingTextChange} />
-          </Forms.Field>
+          </Field>
         </>
       );
     }
 
     return (
       <>
-        <Forms.Field label="Value">
+        <Field label="Value">
           <Input type="number" defaultValue={(valueMapping as ValueMap).value} onBlur={onMappingValueChange} />
-        </Forms.Field>
+        </Field>
 
-        <Forms.Field label="Text">
+        <Field label="Text">
           <Input defaultValue={valueMapping.text} onBlur={onMappingTextChange} />
-        </Forms.Field>
+        </Field>
       </>
     );
   };
 
-  const styles = styleMixins.panelEditorNestedListStyles(theme);
-
+  const label = (
+    <HorizontalGroup justify="space-between" align="center">
+      <Label>Mapping type</Label>
+      <IconButton name="times" onClick={removeValueMapping} aria-label="ValueMappingsEditor remove button" />
+    </HorizontalGroup>
+  );
   return (
-    <div className={styles.wrapper}>
-      <FieldConfigItemHeaderTitle title="Mapping type" onRemove={removeValueMapping}>
-        <div className={styles.itemContent}>
-          <Select
-            placeholder="Choose type"
-            isSearchable={false}
+    <div>
+      <Field label={label}>
+        <FullWidthButtonContainer>
+          <RadioButtonGroup
             options={MAPPING_OPTIONS}
-            value={MAPPING_OPTIONS.find(o => o.value === type)}
-            onChange={type => onMappingTypeChange(type.value!)}
+            value={type}
+            onChange={type => {
+              onMappingTypeChange(type!);
+            }}
           />
-        </div>
-      </FieldConfigItemHeaderTitle>
-      <div className={styles.content}>{renderRow()}</div>
+        </FullWidthButtonContainer>
+      </Field>
+      {renderRow()}
     </div>
   );
 };

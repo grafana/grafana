@@ -15,7 +15,7 @@ Payloads
 <b>Signature</b>
 
 ```typescript
-interface PanelChangeViewPayload 
+export interface PanelChangeViewPayload 
 ```
 <b>Import</b>
 

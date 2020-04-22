@@ -3,7 +3,6 @@ import _ from 'lodash';
 import coreModule from 'app/core/core_module';
 import appEvents from 'app/core/app_events';
 import { getExploreUrl } from 'app/core/utils/explore';
-import locationUtil from 'app/core/utils/location_util';
 import { store } from 'app/store/store';
 import { AppEventEmitter, CoreEvents } from 'app/types';
 
@@ -12,10 +11,10 @@ import 'mousetrap-global-bind';
 import { ContextSrv } from './context_srv';
 import { ILocationService, IRootScopeService, ITimeoutService } from 'angular';
 import { GrafanaRootScope } from 'app/routes/GrafanaCtrl';
-import { getLocationSrv } from '@grafana/runtime';
 import { DashboardModel } from '../../features/dashboard/state';
 import { ShareModal } from 'app/features/dashboard/components/ShareModal';
 import { SaveDashboardModalProxy } from '../../features/dashboard/components/SaveDashboard/SaveDashboardModalProxy';
+import { locationUtil } from '@grafana/data';
 
 export class KeybindingSrv {
   helpModal: boolean;
@@ -84,7 +83,8 @@ export class KeybindingSrv {
   }
 
   openSearch() {
-    appEvents.emit(CoreEvents.showDashSearch);
+    const search = _.extend(this.$location.search(), { search: 'open' });
+    this.$location.search(search);
   }
 
   openAlerting() {
@@ -121,6 +121,13 @@ export class KeybindingSrv {
     const search = this.$location.search();
     if (search.editview) {
       delete search.editview;
+      this.$location.search(search);
+      return;
+    }
+
+    if (search.inspect) {
+      delete search.inspect;
+      delete search.inspectTab;
       this.$location.search(search);
       return;
     }
@@ -226,6 +233,13 @@ export class KeybindingSrv {
       }
     });
 
+    this.bind('i', () => {
+      if (dashboard.meta.focusPanelId) {
+        const search = _.extend(this.$location.search(), { inspect: dashboard.meta.focusPanelId });
+        this.$location.search(search);
+      }
+    });
+
     // jump to explore if permissions allow
     if (this.contextSrv.hasAccessToExplore()) {
       this.bind('x', async () => {
@@ -276,13 +290,6 @@ export class KeybindingSrv {
             panel: panelInfo?.panel,
           },
         });
-      }
-    });
-
-    // inspect panel
-    this.bind('p i', () => {
-      if (dashboard.meta.focusPanelId) {
-        getLocationSrv().update({ partial: true, query: { inspect: dashboard.meta.focusPanelId } });
       }
     });
 

@@ -128,7 +128,7 @@ const getStyles = stylesFactory(() => {
       width: 40%;
     `,
     backForwardButtons: cx(
-      getButtonStyles({ theme, size: 'md', variant: 'secondary' }).button,
+      getButtonStyles({ theme, size: 'md', variant: 'secondary', hasIcon: false, hasText: false }).button,
       css`
         position: absolute;
         right: 50px;

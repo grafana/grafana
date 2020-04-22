@@ -26,6 +26,7 @@ require (
 	github.com/go-sql-driver/mysql v1.4.1
 	github.com/go-stack/stack v1.8.0
 	github.com/gobwas/glob v0.2.3
+	github.com/golang/protobuf v1.3.4
 	github.com/google/go-cmp v0.3.1
 	github.com/gorilla/websocket v1.4.1
 	github.com/gosimple/slug v1.4.2
@@ -69,7 +70,7 @@ require (
 	github.com/yudai/golcs v0.0.0-20170316035057-ecda9a501e82 // indirect
 	github.com/yudai/pp v2.0.1+incompatible // indirect
 	go.uber.org/atomic v1.5.1 // indirect
-	golang.org/x/crypto v0.0.0-20191011191535-87dc89f01550
+	golang.org/x/crypto v0.0.0-20200406173513-056763e48d71
 	golang.org/x/lint v0.0.0-20191125180803-fdd1cda4f05f // indirect
 	golang.org/x/net v0.0.0-20190923162816-aa69164e4478
 	golang.org/x/oauth2 v0.0.0-20190604053449-0f29369cfe45

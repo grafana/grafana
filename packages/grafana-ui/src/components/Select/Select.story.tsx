@@ -3,19 +3,28 @@ import { Select, AsyncSelect, MultiSelect, AsyncMultiSelect } from './Select';
 import { withCenteredStory, withHorizontallyCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { SelectableValue } from '@grafana/data';
 import { getAvailableIcons, IconName } from '../../types';
-import { select, boolean } from '@storybook/addon-knobs';
+import { select, boolean, number } from '@storybook/addon-knobs';
 import { Icon } from '../Icon/Icon';
 import { Button } from '../Button';
 import { ButtonSelect } from './ButtonSelect';
 import { getIconKnob } from '../../utils/storybook/knobs';
 import kebabCase from 'lodash/kebabCase';
 import { generateOptions } from './mockOptions';
+import mdx from './Select.mdx';
 
 export default {
   title: 'Forms/Select',
   component: Select,
   decorators: [withCenteredStory, withHorizontallyCenteredStory],
+  subcomponents: { AsyncSelect, MultiSelect, AsyncMultiSelect },
+  parameters: {
+    docs: {
+      page: mdx,
+    },
+  },
 };
+
+const BEHAVIOUR_GROUP = 'Behaviour props';
 
 const loadAsyncOptions = () => {
   return new Promise<Array<SelectableValue<string>>>(resolve => {
@@ -26,7 +35,6 @@ const loadAsyncOptions = () => {
 };
 
 const getKnobs = () => {
-  const BEHAVIOUR_GROUP = 'Behaviour props';
   const disabled = boolean('Disabled', false, BEHAVIOUR_GROUP);
   const invalid = boolean('Invalid', false, BEHAVIOUR_GROUP);
   const loading = boolean('Loading', false, BEHAVIOUR_GROUP);
@@ -43,6 +51,7 @@ const getKnobs = () => {
   const VISUAL_GROUP = 'Visual options';
   // ---
   const prefix = select('Prefix', prefixSuffixOpts, null, VISUAL_GROUP);
+  const width = number('Width', 0, undefined, VISUAL_GROUP);
 
   let prefixEl: any = prefix;
   if (prefix && prefix.match(/icon-/g)) {
@@ -50,6 +59,7 @@ const getKnobs = () => {
   }
 
   return {
+    width,
     disabled,
     invalid,
     loading,
@@ -57,9 +67,22 @@ const getKnobs = () => {
   };
 };
 
+const getMultiSelectKnobs = () => {
+  const isClearable = boolean('Clearable', false, BEHAVIOUR_GROUP);
+  const closeMenuOnSelect = boolean('Close on Select', false, BEHAVIOUR_GROUP);
+  const maxVisibleValues = number('Max. visible values', 5, undefined, BEHAVIOUR_GROUP);
+
+  return {
+    isClearable,
+    closeMenuOnSelect,
+    maxVisibleValues,
+  };
+};
+
 const getDynamicProps = () => {
   const knobs = getKnobs();
   return {
+    width: knobs.width,
     disabled: knobs.disabled,
     isLoading: knobs.loading,
     invalid: knobs.invalid,
@@ -78,7 +101,6 @@ export const basic = () => {
         onChange={v => {
           setValue(v);
         }}
-        size="md"
         {...getDynamicProps()}
       />
     </>
@@ -98,7 +120,6 @@ export const basicSelectPlainValue = () => {
         onChange={v => {
           setValue(v.value);
         }}
-        size="md"
         {...getDynamicProps()}
       />
     </>
@@ -131,7 +152,6 @@ export const SelectWithOptionDescriptions = () => {
         onChange={v => {
           setValue(v.value);
         }}
-        size="md"
         {...getDynamicProps()}
       />
     </>
@@ -152,7 +172,6 @@ export const multiPlainValue = () => {
         onChange={v => {
           setValue(v.map((v: any) => v.value));
         }}
-        size="md"
         {...getDynamicProps()}
       />
     </>
@@ -170,8 +189,8 @@ export const multiSelect = () => {
         onChange={v => {
           setValue(v);
         }}
-        size="md"
         {...getDynamicProps()}
+        {...getMultiSelectKnobs()}
       />
     </>
   );
@@ -188,7 +207,6 @@ export const multiSelectAsync = () => {
       onChange={v => {
         setValue(v);
       }}
-      size="md"
       allowCustomValue
       {...getDynamicProps()}
     />
@@ -205,7 +223,6 @@ export const buttonSelect = () => {
       onChange={v => {
         setValue(v);
       }}
-      size="md"
       allowCustomValue
       icon={icon}
       {...getDynamicProps()}
@@ -224,7 +241,6 @@ export const basicSelectAsync = () => {
       onChange={v => {
         setValue(v);
       }}
-      size="md"
       {...getDynamicProps()}
     />
   );
@@ -240,7 +256,6 @@ export const customizedControl = () => {
       onChange={v => {
         setValue(v);
       }}
-      size="md"
       renderControl={React.forwardRef(({ isOpen, value, ...otherProps }, ref) => {
         return (
           <Button {...otherProps} ref={ref}>
@@ -259,14 +274,13 @@ export const autoMenuPlacement = () => {
 
   return (
     <>
-      <div style={{ height: '95vh', display: 'flex', alignItems: 'flex-end' }}>
+      <div style={{ width: '100%', height: '95vh', display: 'flex', alignItems: 'flex-end' }}>
         <Select
           options={generateOptions()}
           value={value}
           onChange={v => {
             setValue(v);
           }}
-          size="md"
           {...getDynamicProps()}
         />
       </div>
@@ -286,7 +300,6 @@ export const customValueCreation = () => {
         onChange={v => {
           setValue(v);
         }}
-        size="md"
         allowCustomValue
         onCreateOption={v => {
           const customValue: SelectableValue<string> = { value: kebabCase(v), label: v };

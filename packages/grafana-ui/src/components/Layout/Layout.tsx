@@ -17,6 +17,7 @@ export interface LayoutProps {
   spacing?: Spacing;
   justify?: Justify;
   align?: Align;
+  width?: string;
 }
 
 export interface ContainerProps {
@@ -30,25 +31,36 @@ export const Layout: React.FC<LayoutProps> = ({
   spacing = 'sm',
   justify = 'flex-start',
   align = 'normal',
+  width = 'auto',
 }) => {
   const theme = useTheme();
   const styles = getStyles(theme, orientation, spacing, justify, align);
   return (
-    <div className={styles.layout}>
+    <div className={styles.layout} style={{ width }}>
       {React.Children.map(children, (child, index) => {
-        return <div className={styles.buttonWrapper}>{child}</div>;
+        return (
+          <div className={styles.childWrapper} key={index}>
+            {child}
+          </div>
+        );
       })}
     </div>
   );
 };
 
-export const HorizontalGroup: React.FC<Omit<LayoutProps, 'orientation'>> = ({ children, spacing, justify, align }) => (
-  <Layout spacing={spacing} justify={justify} orientation={Orientation.Horizontal} align={align}>
+export const HorizontalGroup: React.FC<Omit<LayoutProps, 'orientation'>> = ({
+  children,
+  spacing,
+  justify,
+  align = 'center',
+  width,
+}) => (
+  <Layout spacing={spacing} justify={justify} orientation={Orientation.Horizontal} align={align} width={width}>
     {children}
   </Layout>
 );
-export const VerticalGroup: React.FC<Omit<LayoutProps, 'orientation'>> = ({ children, spacing, justify }) => (
-  <Layout spacing={spacing} justify={justify} orientation={Orientation.Vertical}>
+export const VerticalGroup: React.FC<Omit<LayoutProps, 'orientation'>> = ({ children, spacing, justify, width }) => (
+  <Layout spacing={spacing} justify={justify} orientation={Orientation.Vertical} width={width}>
     {children}
   </Layout>
 );
@@ -68,10 +80,14 @@ const getStyles = stylesFactory(
         justify-content: ${justify};
         align-items: ${align};
         height: 100%;
+        max-width: 100%;
       `,
-      buttonWrapper: css`
+      childWrapper: css`
         margin-bottom: ${orientation === Orientation.Horizontal ? 0 : theme.spacing[spacing]};
         margin-right: ${orientation === Orientation.Horizontal ? theme.spacing[spacing] : 0};
+        display: flex;
+        align-items: ${align};
+        height: 100%;
 
         &:last-child {
           margin-bottom: 0;

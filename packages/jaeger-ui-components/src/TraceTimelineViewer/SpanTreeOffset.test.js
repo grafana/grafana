@@ -19,6 +19,7 @@ import IoIosArrowDown from 'react-icons/lib/io/ios-arrow-down';
 
 import SpanTreeOffset, { getStyles } from './SpanTreeOffset';
 import spanAncestorIdsSpy from '../utils/span-ancestor-ids';
+import {defaultTheme} from "../Theme";
 
 jest.mock('../utils/span-ancestor-ids');
 
@@ -42,13 +43,13 @@ describe('SpanTreeOffset', () => {
         spanID: ownSpanID,
       },
     };
-    wrapper = shallow(<SpanTreeOffset {...props} />);
+    wrapper = shallow(<SpanTreeOffset {...props} />).dive().dive().dive();
   });
 
   describe('.SpanTreeOffset--indentGuide', () => {
     it('renders only one .SpanTreeOffset--indentGuide for entire trace if span has no ancestors', () => {
       spanAncestorIdsSpy.mockReturnValue([]);
-      wrapper = shallow(<SpanTreeOffset {...props} />);
+      wrapper = shallow(<SpanTreeOffset {...props} />).dive().dive().dive();
       const indentGuides = wrapper.find('[data-test-id="SpanTreeOffset--indentGuide"]');
       expect(indentGuides.length).toBe(1);
       expect(indentGuides.prop('data-ancestor-id')).toBe(specialRootID);
@@ -64,8 +65,8 @@ describe('SpanTreeOffset', () => {
 
     it('adds .is-active to correct indentGuide', () => {
       props.hoverIndentGuideIds = new Set([parentSpanID]);
-      wrapper = shallow(<SpanTreeOffset {...props} />);
-      const styles = getStyles();
+      wrapper = shallow(<SpanTreeOffset {...props} />).dive().dive().dive();
+      const styles = getStyles(defaultTheme);
       const activeIndentGuide = wrapper.find(`.${styles.indentGuideActive}`);
       expect(activeIndentGuide.length).toBe(1);
       expect(activeIndentGuide.prop('data-ancestor-id')).toBe(parentSpanID);

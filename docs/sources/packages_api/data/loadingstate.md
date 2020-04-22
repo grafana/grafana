@@ -12,6 +12,8 @@ draft = true
 
 ### LoadingState enum
 
+Represent panel data loading state.
+
 <b>Signature</b>
 
 ```typescript
