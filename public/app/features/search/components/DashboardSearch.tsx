@@ -1,17 +1,13 @@
 import React, { FC } from 'react';
 import { css } from 'emotion';
-import { useTheme, CustomScrollbar, stylesFactory, Button, RadioButtonGroup, HorizontalGroup } from '@grafana/ui';
+import { useTheme, CustomScrollbar, stylesFactory, Button } from '@grafana/ui';
 import { GrafanaTheme } from '@grafana/data';
-import { SearchSrv } from 'app/core/services/search_srv';
-import { TagFilter } from 'app/core/components/TagFilter/TagFilter';
-import { SortPicker } from 'app/core/components/Select/SortPicker';
 import { useSearchQuery } from '../hooks/useSearchQuery';
 import { useDashboardSearch } from '../hooks/useDashboardSearch';
-import { useSearchLayout, layoutOptions } from '../hooks/useSearchLayout';
+import { useSearchLayout } from '../hooks/useSearchLayout';
 import { SearchField } from './SearchField';
 import { SearchResults } from './SearchResults';
-
-const searchSrv = new SearchSrv();
+import { ActionRow } from './ActionRow';
 
 export interface Props {
   onCloseSearch: () => void;
@@ -53,15 +49,15 @@ export const DashboardSearch: FC<Props> = ({ onCloseSearch, folder }) => {
         className={styles.searchField}
       />
       <div className={styles.search}>
-        <div className={styles.actionRow}>
-          <HorizontalGroup spacing="md">
-            <RadioButtonGroup options={layoutOptions} onChange={onLayoutChange} value={layout} />
-            <SortPicker onChange={onSortChange} value={query.sort} />
-          </HorizontalGroup>
-          <div className={styles.tagContainer}>
-            <TagFilter tags={query.tag} tagOptions={searchSrv.getDashboardTags} onChange={onTagFilterChange} />
-          </div>
-        </div>
+        <ActionRow
+          {...{
+            layout,
+            onLayoutChange,
+            onSortChange,
+            onTagFilterChange,
+            query,
+          }}
+        />
         <CustomScrollbar>
           <SearchResults
             results={results}
@@ -87,34 +83,14 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       right: 8px;
       position: absolute;
     `,
-    icon: css`
-      margin-right: ${theme.spacing.sm};
-      color: ${theme.palette.blue95};
-    `,
-    filter: css`
-      margin-right: ${theme.spacing.xs};
-    `,
-    close: css`
-      margin-left: ${theme.spacing.xs};
-      margin-bottom: 1px;
-    `,
     searchField: css`
       padding-left: ${theme.spacing.md};
-    `,
-    actionRow: css`
-      display: flex;
-      justify-content: space-between;
-      padding: ${theme.spacing.md} 0;
     `,
     search: css`
       display: flex;
       flex-direction: column;
       padding: ${theme.spacing.xl};
       height: 100%;
-    `,
-    tagContainer: css`
-      min-width: 200px;
-      margin-left: ${theme.spacing.md};
     `,
   };
 });

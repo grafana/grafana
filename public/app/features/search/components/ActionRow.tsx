@@ -1,9 +1,9 @@
 import React, { Dispatch, FC, SetStateAction } from 'react';
-import { HorizontalGroup, RadioButtonGroup, Select, stylesFactory, useTheme } from '@grafana/ui';
-import { SortPicker } from '../../../core/components/Select/SortPicker';
-import { TagFilter } from '../../../core/components/TagFilter/TagFilter';
-import { GrafanaTheme, SelectableValue } from '@grafana/data';
 import { css } from 'emotion';
+import { HorizontalGroup, RadioButtonGroup, Select, stylesFactory, useTheme } from '@grafana/ui';
+import { GrafanaTheme, SelectableValue } from '@grafana/data';
+import { SortPicker } from 'app/core/components/Select/SortPicker';
+import { TagFilter } from 'app/core/components/TagFilter/TagFilter';
 import { SearchSrv } from '../../../core/services/search_srv';
 import { layoutOptions } from '../hooks/useSearchLayout';
 import { DashboardQuery } from '../types';
