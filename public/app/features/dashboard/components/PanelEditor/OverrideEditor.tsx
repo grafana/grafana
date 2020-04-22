@@ -121,7 +121,7 @@ export const OverrideEditor: React.FC<OverrideEditorProps> = ({
   };
 
   return (
-    <OptionsGroup renderTitle={renderOverrideTitle}>
+    <OptionsGroup renderTitle={renderOverrideTitle} id={name} key={name}>
       <Field label={matcherLabel} description={matcherUi.description}>
         <matcherUi.component
           matcher={matcherUi.matcher}

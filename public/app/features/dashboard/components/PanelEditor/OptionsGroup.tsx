@@ -1,10 +1,81 @@
-import React, { FC, useEffect, useState } from 'react';
+import React, { FC, memo, useCallback, useEffect, useState } from 'react';
 import { css, cx } from 'emotion';
 import { GrafanaTheme } from '@grafana/data';
 import { Icon, stylesFactory, useTheme } from '@grafana/ui';
-import { OptionsGroupProps } from './types';
+import { PANEL_EDITOR_UI_STATE_STORAGE_KEY } from './state/reducers';
+import { useLocalStorage } from 'react-use';
+
+export interface OptionsGroupProps {
+  id: string;
+  title?: React.ReactNode;
+  renderTitle?: (isExpanded: boolean) => React.ReactNode;
+  defaultToClosed?: boolean;
+  className?: string;
+  nested?: boolean;
+  persistMe?: boolean;
+  onToggle?: (isExpanded: boolean) => void;
+}
 
 export const OptionsGroup: FC<OptionsGroupProps> = ({
+  id,
+  title,
+  children,
+  defaultToClosed,
+  renderTitle,
+  className,
+  nested = false,
+  persistMe = true,
+  onToggle,
+}) => {
+  if (persistMe) {
+    return (
+      <CollapsibleSectionWithPersistence
+        id={id}
+        defaultToClosed={defaultToClosed}
+        className={className}
+        nested={nested}
+        renderTitle={renderTitle}
+        persistMe={persistMe}
+        title={title}
+        onToggle={onToggle}
+      >
+        {children}
+      </CollapsibleSectionWithPersistence>
+    );
+  }
+
+  return (
+    <CollapsibleSection
+      defaultToClosed={defaultToClosed}
+      className={className}
+      nested={nested}
+      renderTitle={renderTitle}
+      title={title}
+      onToggle={onToggle}
+    >
+      {children}
+    </CollapsibleSection>
+  );
+};
+
+const CollapsibleSectionWithPersistence: FC<OptionsGroupProps> = memo(props => {
+  const [value, setValue] = useLocalStorage(getOptionGroupStorageKey(props.id), {
+    defaultToClosed: props.defaultToClosed,
+  });
+  const onToggle = useCallback(
+    (isExpanded: boolean) => {
+      setValue({ defaultToClosed: !isExpanded });
+      if (props.onToggle) {
+        props.onToggle(isExpanded);
+      }
+    },
+    [setValue, props.onToggle]
+  );
+
+  return <CollapsibleSection {...props} defaultToClosed={value.defaultToClosed} onToggle={onToggle} />;
+});
+
+const CollapsibleSection: FC<Omit<OptionsGroupProps, 'id' | 'persistMe'>> = ({
   title,
   children,
   defaultToClosed,
@@ -98,3 +169,5 @@ const getStyles = stylesFactory((theme: GrafanaTheme, isExpanded: boolean, isNes
     ),
   };
 });
+
+const getOptionGroupStorageKey = (id: string): string => `${PANEL_EDITOR_UI_STATE_STORAGE_KEY}.optionGroup[${id}]`;

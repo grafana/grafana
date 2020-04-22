@@ -7,7 +7,7 @@ import { getVariables } from '../../../variables/state/selectors';
 import { PanelOptionsEditor } from './PanelOptionsEditor';
 import { AngularPanelOptions } from './AngularPanelOptions';
 import { VisualizationTab } from './VisualizationTab';
-import { OptionsGroupWithPersistence } from './OptionsGroupWithPersistence';
+import { OptionsGroup } from './OptionsGroup';
 
 interface Props {
   panel: PanelModel;
@@ -48,7 +48,7 @@ export const PanelOptionsTab: FC<Props> = ({
   };
   // Fist common panel settings Title, description
   elements.push(
-    <OptionsGroupWithPersistence title="Panel settings" id="Panel settings" key="Panel settings">
+    <OptionsGroup title="Panel settings" id="Panel settings" key="Panel settings">
       <Field label="Panel title">
         <Input defaultValue={panel.title} onBlur={e => onPanelConfigChange('title', e.currentTarget.value)} />
       </Field>
@@ -61,25 +61,19 @@ export const PanelOptionsTab: FC<Props> = ({
       <Field label="Transparent" description="Display panel without a background.">
         <Switch value={panel.transparent} onChange={e => onPanelConfigChange('transparent', e.currentTarget.checked)} />
       </Field>
-    </OptionsGroupWithPersistence>
+    </OptionsGroup>
   );
 
   elements.push(
-    <OptionsGroupWithPersistence
-      title="Panel type"
-      id="Panel type"
-      key="Panel type"
-      defaultToClosed
-      onToggle={focusVisPickerInput}
-    >
+    <OptionsGroup title="Panel type" id="Panel type" key="Panel type" defaultToClosed onToggle={focusVisPickerInput}>
       <VisualizationTab panel={panel} ref={visTabInputRef} />
-    </OptionsGroupWithPersistence>
+    </OptionsGroup>
   );
 
   // Old legacy react editor
   if (plugin.editor && panel && !plugin.optionEditors) {
     elements.push(
-      <OptionsGroupWithPersistence title="Display" id="legacy react editor" key="legacy react editor">
+      <OptionsGroup title="Display" id="legacy react editor" key="legacy react editor">
         <plugin.editor
           data={data}
           options={panel.getOptions()}
@@ -87,7 +81,7 @@ export const PanelOptionsTab: FC<Props> = ({
           fieldConfig={panel.getFieldConfig()}
           onFieldConfigChange={onFieldConfigsChange}
         />
-      </OptionsGroupWithPersistence>
+      </OptionsGroup>
     );
   }
 
@@ -109,7 +103,7 @@ export const PanelOptionsTab: FC<Props> = ({
   }
 
   elements.push(
-    <OptionsGroupWithPersistence
+    <OptionsGroup
       renderTitle={isExpanded => (
         <>Panel links {!isExpanded && panelLinksCount > 0 && <Counter value={panelLinksCount} />}</>
       )}
@@ -123,11 +117,11 @@ export const PanelOptionsTab: FC<Props> = ({
         suggestions={linkVariablesSuggestions}
         data={[]}
       />
-    </OptionsGroupWithPersistence>
+    </OptionsGroup>
   );
 
   elements.push(
-    <OptionsGroupWithPersistence title="Panel repeats" id="panel repeats" key="panel repeats" defaultToClosed>
+    <OptionsGroup title="Panel repeats" id="panel repeats" key="panel repeats" defaultToClosed>
       <Field
         label="Repeat by variable"
         description="Repeat this panel for each value in the selected variable.
@@ -159,7 +153,7 @@ export const PanelOptionsTab: FC<Props> = ({
           />
         </Field>
       )}
-    </OptionsGroupWithPersistence>
+    </OptionsGroup>
   );
 
   return <>{elements}</>;
