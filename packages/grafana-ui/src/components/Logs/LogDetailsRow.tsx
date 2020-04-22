@@ -126,14 +126,13 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
                       href={link.href}
                       target={'_blank'}
                       onClick={
-                        link.onClick
-                          ? event => {
-                              if (!(event.ctrlKey || event.metaKey || event.shiftKey) && link.onClick) {
-                                event.preventDefault();
-                                link.onClick(event);
-                              }
-                            }
-                          : undefined
+                        link.onClick &&
+                        ((event: any) => {
+                          if (!(event.ctrlKey || event.metaKey || event.shiftKey) && link.onClick) {
+                            event.preventDefault();
+                            link.onClick(event);
+                          }
+                        })
                       }
                     />
                   </>
