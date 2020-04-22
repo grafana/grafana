@@ -1,13 +1,37 @@
 import React from 'react';
-import { GrafanaTheme } from '@grafana/data';
 import { css, cx } from 'emotion';
+import { GrafanaTheme } from '@grafana/data';
 import { stylesFactory, useTheme } from '../../themes';
 
-export interface InfoBoxProps {
+export interface Props {
   header?: string | JSX.Element;
   footer?: string | JSX.Element;
   className?: string;
 }
+
+/**
+ * This is a simple InfoBox component, the api is not considered stable yet and will likely see breaking changes
+ * in future minor releases.
+ * @Alpha
+ */
+export const InfoBox = React.memo(
+  React.forwardRef<HTMLDivElement, React.PropsWithChildren<Props>>(({ header, footer, className, children }, ref) => {
+    const theme = useTheme();
+    const css = getInfoBoxStyles(theme);
+
+    return (
+      <div className={cx([css.wrapper, className])} ref={ref}>
+        {header && (
+          <div className={css.header}>
+            <h5>{header}</h5>
+          </div>
+        )}
+        {children}
+        {footer && <div className={css.footer}>{footer}</div>}
+      </div>
+    );
+  })
+);
 
 const getInfoBoxStyles = stylesFactory((theme: GrafanaTheme) => ({
   wrapper: css`
@@ -52,20 +76,3 @@ const getInfoBoxStyles = stylesFactory((theme: GrafanaTheme) => ({
     margin-top: ${theme.spacing.d};
   `,
 }));
-
-export const InfoBox: React.FunctionComponent<InfoBoxProps> = ({ header, footer, className, children }) => {
-  const theme = useTheme();
-  const css = getInfoBoxStyles(theme);
-
-  return (
-    <div className={cx([css.wrapper, className])}>
-      {header && (
-        <div className={css.header}>
-          <h5>{header}</h5>
-        </div>
-      )}
-      {children}
-      {footer && <div className={css.footer}>{footer}</div>}
-    </div>
-  );
-};
