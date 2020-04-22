@@ -48,7 +48,7 @@ func addAppSettingsMigration(mg *Migrator) {
 		Name: "manifest_keys",
 		Columns: []*Column{
 			{Name: "id", Type: DB_BigInt, IsPrimaryKey: true, IsAutoIncrement: true},
-			{Name: "key_id", Type: DB_BigInt, Nullable: false},
+			{Name: "key_id", Type: DB_NVarchar, Length: 190, Nullable: false},
 			{Name: "public_key", Type: DB_Text, Nullable: false},
 			{Name: "since", Type: DB_BigInt, Nullable: false},
 			{Name: "revoked_at", Type: DB_BigInt, Nullable: true},
@@ -60,6 +60,8 @@ func addAppSettingsMigration(mg *Migrator) {
 	}
 
 	mg.AddMigration("create manifest_keys table", NewAddTableMigration(manifestKeys))
+
+	addTableIndicesMigrations(mg, "v1", manifestKeys)
 
 	var defaultKeyID = `7e4d0c6a708866e7`
 	var defaultPublicKey = `-----BEGIN PGP PUBLIC KEY BLOCK-----
@@ -86,11 +88,11 @@ N1c5v9v/4h6qeA==
 -----END PGP PUBLIC KEY BLOCK-----
 `
 
-	mg.AddMigration(
-		"insert public key into manifest_keys table",
-		NewRawSqlMigration(fmt.Sprintf(`INSERT into manifest_keys (key_id, public_key, since, updated_at) VALUES ('%s', '%s', %d, %d)`,
-			defaultKeyID,
-			defaultPublicKey,
-			time.Now().Unix(),
-			time.Now().Unix())))
+	var insertManifestKey = fmt.Sprintf(`INSERT into manifest_keys (key_id, since, updated_at, public_key) VALUES ('%s', %d, %d, '%s')`,
+		defaultKeyID,
+		time.Now().Unix(),
+		time.Now().Unix(),
+		defaultPublicKey)
+
+	mg.AddMigration("insert public key into manifest_keys table", NewRawSqlMigration(insertManifestKey))
 }
