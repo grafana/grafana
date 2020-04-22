@@ -24,6 +24,7 @@ interface Props {
   onTagFilterChange: onSelectChange;
   query: DashboardQuery;
   showStarredFilter?: boolean;
+  hideSelectedTags?: boolean;
 }
 
 export const ActionRow: FC<Props> = ({
@@ -34,6 +35,7 @@ export const ActionRow: FC<Props> = ({
   onTagFilterChange,
   query,
   showStarredFilter,
+  hideSelectedTags,
 }) => {
   const theme = useTheme();
   const styles = getStyles(theme);
@@ -44,7 +46,7 @@ export const ActionRow: FC<Props> = ({
         <RadioButtonGroup options={layoutOptions} onChange={onLayoutChange} value={layout} />
         <SortPicker onChange={onSortChange} value={query.sort} />
       </HorizontalGroup>
-      <HorizontalGroup spacing="md">
+      <HorizontalGroup spacing="md" width="100%" justify="space-between">
         {showStarredFilter && (
           <Select
             width={20}
@@ -60,7 +62,8 @@ export const ActionRow: FC<Props> = ({
           tags={query.tag}
           tagOptions={searchSrv.getDashboardTags}
           onChange={onTagFilterChange}
-          hideValues
+          hideValues={hideSelectedTags}
+          isClearable={!hideSelectedTags}
         />
       </HorizontalGroup>
     </div>

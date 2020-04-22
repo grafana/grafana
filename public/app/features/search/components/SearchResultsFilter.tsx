@@ -63,6 +63,7 @@ export const SearchResultsFilter: FC<Props> = ({
             query,
           }}
           showStarredFilter
+          hideSelectedTags
         />
       )}
     </div>
