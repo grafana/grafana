@@ -4,8 +4,8 @@ import groupBy from 'lodash/groupBy';
 import { RawTimeRange, TimeRange, TimeZone } from '../types/time';
 
 import * as dateMath from './datemath';
-import { isDateTime, DateTime } from './moment_wrapper';
-import { timeZoneAbbrevation } from './formatter';
+import { isDateTime } from './moment_wrapper';
+import { timeZoneAbbrevation, dateTimeFormat, dateTimeFormatTimeAgo } from './formatter';
 
 const spans: { [key: string]: { display: string; section?: number } } = {
   s: { display: 'second' },
@@ -62,8 +62,6 @@ const rangeOptions = [
   { from: 'now-5y', to: 'now', display: 'Last 5 years', section: 0 },
 ];
 
-const absoluteFormat = 'YYYY-MM-DD HH:mm:ss';
-
 const rangeIndex: any = {};
 each(rangeOptions, (frame: any) => {
   rangeIndex[frame.from + ' to ' + frame.to] = frame;
@@ -83,10 +81,6 @@ export function getRelativeTimesList(timepickerSettings: any, currentDisplay: an
   // });
 
   return groups;
-}
-
-function formatDate(date: DateTime) {
-  return date.format(absoluteFormat);
 }
 
 // handles expressions like
@@ -145,24 +139,27 @@ export function describeTextRange(expr: any) {
  * @param range - a time range (usually specified by the TimePicker)
  * @alpha
  */
-export function describeTimeRange(range: RawTimeRange): string {
+export function describeTimeRange(range: RawTimeRange, timeZone?: TimeZone): string {
   const option = rangeIndex[range.from.toString() + ' to ' + range.to.toString()];
+
   if (option) {
     return option.display;
   }
 
+  const options = { timeZone };
+
   if (isDateTime(range.from) && isDateTime(range.to)) {
-    return formatDate(range.from) + ' to ' + formatDate(range.to);
+    return dateTimeFormat(range.from, options) + ' to ' + dateTimeFormat(range.to, options);
   }
 
   if (isDateTime(range.from)) {
-    const toMoment = dateMath.parse(range.to, true);
-    return toMoment ? formatDate(range.from) + ' to ' + toMoment.fromNow() : '';
+    const parsed = dateMath.parse(range.to, true, 'utc');
+    return parsed ? dateTimeFormat(range.from, options) + ' to ' + dateTimeFormatTimeAgo(parsed, options) : '';
   }
 
   if (isDateTime(range.to)) {
-    const from = dateMath.parse(range.from, false);
-    return from ? from.fromNow() + ' to ' + formatDate(range.to) : '';
+    const parsed = dateMath.parse(range.from, false, 'utc');
+    return parsed ? dateTimeFormatTimeAgo(parsed, options) + ' to ' + dateTimeFormat(range.to, options) : '';
   }
 
   if (range.to.toString() === 'now') {
