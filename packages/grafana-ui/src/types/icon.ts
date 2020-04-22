@@ -111,7 +111,8 @@ export type IconName =
   | 'heart'
   | 'heart-break'
   | 'ellipsis-v'
-  | 'favorite';
+  | 'favorite'
+  | 'close';
 
 export const getAvailableIcons = (): IconName[] => [
   'fa fa-spinner',
