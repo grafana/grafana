@@ -3,10 +3,9 @@ import { css, cx } from 'emotion';
 import { GrafanaTheme } from '@grafana/data';
 import { stylesFactory, useTheme } from '../../themes';
 
-export interface Props {
+export interface Props extends React.HTMLAttributes<HTMLDivElement> {
   header?: string | JSX.Element;
   footer?: string | JSX.Element;
-  className?: string;
 }
 
 /**
@@ -15,12 +14,12 @@ export interface Props {
  * @Alpha
  */
 export const InfoBox = React.memo(
-  React.forwardRef<HTMLDivElement, React.PropsWithChildren<Props>>(({ header, footer, className, children }, ref) => {
+  React.forwardRef<HTMLDivElement, Props>(({ header, footer, className, children, ...otherProps }, ref) => {
     const theme = useTheme();
     const css = getInfoBoxStyles(theme);
 
     return (
-      <div className={cx([css.wrapper, className])} ref={ref}>
+      <div className={cx([css.wrapper, className])} {...otherProps} ref={ref}>
         {header && (
           <div className={css.header}>
             <h5>{header}</h5>
