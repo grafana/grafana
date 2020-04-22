@@ -176,7 +176,6 @@ func (p *BackendPlugin) CollectMetrics(ctx context.Context) (*pluginv2.CollectMe
 }
 
 var toProto = backend.ToProto()
-var fromProto = backend.FromProto()
 
 func (p *BackendPlugin) checkHealth(ctx context.Context, pCtx backend.PluginContext) (*pluginv2.CheckHealthResponse, error) {
 	if p.diagnostics == nil || p.client == nil || p.client.Exited() {
