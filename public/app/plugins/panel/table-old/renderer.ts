@@ -56,7 +56,7 @@ export class TableRenderer {
           column.style = style;
 
           if (style.alias) {
-            column.title = column.text.replace(regex, style.alias);
+            column.title = textUtil.escapeHtml(column.text.replace(regex, style.alias));
           }
 
           break;
