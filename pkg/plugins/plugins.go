@@ -128,7 +128,6 @@ func (pm *PluginManager) Init() error {
 		if p.IsCorePlugin {
 			p.Signature = PluginSignatureInternal
 		} else {
-			//p.Signature = verifyPluginSignature(pm.SQLStore, p)
 			p.Signature = manifestVerifier.verifyPluginSignature(p)
 			metrics.SetPluginBuildInformation(p.Id, p.Type, p.Info.Version)
 		}
