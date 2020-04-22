@@ -93,6 +93,8 @@ datasources:
   access: proxy
   # <int> org id. will default to orgId 1 if not specified
   orgId: 1
+  # <string> custom UID which can be used to reference this datasource in other parts of the configuration, if not specified will be generated automatically
+  uid: my_unique_uid
   # <string> url
   url: http://localhost:8080
   # <string> Deprecated, use secureJsonData.password

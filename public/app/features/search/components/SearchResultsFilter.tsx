@@ -60,7 +60,6 @@ export const SearchResultsFilter: FC<Props> = ({
       ) : (
         <HorizontalGroup spacing="md">
           <Select
-            size="sm"
             placeholder="Filter by starred"
             key={starredFilterOptions?.find(f => f.value === query.starred)?.label}
             options={starredFilterOptions}
@@ -68,7 +67,6 @@ export const SearchResultsFilter: FC<Props> = ({
           />
 
           <TagFilter
-            size="sm"
             placeholder="Filter by tag"
             tags={query.tag}
             tagOptions={searchSrv.getDashboardTags}

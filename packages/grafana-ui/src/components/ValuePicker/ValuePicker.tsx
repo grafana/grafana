@@ -25,7 +25,7 @@ export function ValuePicker<T>({
   options,
   onChange,
   variant,
-  size,
+  size = 'sm',
   isFullWidth = true,
 }: ValuePickerProps<T>) {
   const [isPicking, setIsPicking] = useState(false);

@@ -16,8 +16,8 @@
     "jest-ci": "mkdir -p reports/junit && export JEST_JUNIT_OUTPUT_DIR=reports/junit && jest --ci --reporters=default --reporters=jest-junit --maxWorkers 2",
     "lint": "eslint public/app e2e/suite1 public/test --ext=.js,.ts,.tsx",
     "lint:fix": "yarn lint --fix",
-    "packages:build": "lerna run clean && lerna run build",
-    "packages:docsExtract": "rm -rf ./scripts/docs && lerna run docsExtract",
+    "packages:build": "lerna run clean && lerna run build --ignore @grafana-plugins/input-datasource",
+    "packages:docsExtract": "rm -rf ./reports/docs && lerna run docsExtract",
     "packages:docsToMarkdown": "api-documenter markdown --input-folder ./reports/docs/ --output-folder ./docs/sources/packages_api/ --hugo --draft",
     "packages:lint": "lerna run lint",
     "packages:prepare": "lerna version --no-push --no-git-tag-version --force-publish --exact",
@@ -56,9 +56,6 @@
       "gofmt -w -s",
       "git add"
     ]
-  },
-  "prettier": {
-    "trailingComma": "es5"
   },
   "devDependencies": {
     "@babel/core": "7.8.4",
@@ -207,6 +204,7 @@
     "@grafana/slate-react": "0.22.9-grafana",
     "@reduxjs/toolkit": "1.3.4",
     "@torkelo/react-select": "3.0.8",
+    "@types/braintree__sanitize-url": "4.0.0",
     "@types/md5": "^2.1.33",
     "@types/react-loadable": "5.5.2",
     "@types/react-virtualized-auto-sizer": "1.0.0",

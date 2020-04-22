@@ -63,10 +63,10 @@ export const UserInviteForm: FC<Props> = ({ updateLocation }) => {
               error={!!errors.loginOrEmail && 'Email or Username is required'}
               label="Email or Username"
             >
-              <Input size="md" name="loginOrEmail" placeholder="email@example.com" ref={register({ required: true })} />
+              <Input name="loginOrEmail" placeholder="email@example.com" ref={register({ required: true })} />
             </Field>
             <Field invalid={!!errors.name} label="Name">
-              <Input size="md" name="name" placeholder="(optional)" ref={register} />
+              <Input name="name" placeholder="(optional)" ref={register} />
             </Field>
             <Field invalid={!!errors.role} label="Role">
               <InputControl as={RadioButtonGroup} control={control} options={roles} name="role" />
