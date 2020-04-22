@@ -11,11 +11,11 @@
       <input type="text" class="gf-form-input" placeholder="{{ctrl.scenario.stringInput}}" ng-model="ctrl.target.stringInput" ng-change="ctrl.refresh()" ng-model-onblur>
 		</div>
 		<div class="gf-form">
-			<label class="gf-form-label query-keyword">Alias</label>
+			<label class="gf-form-label query-keyword width-7">Alias</label>
 			<input type="text" class="gf-form-input width-14" placeholder="optional" ng-model="ctrl.target.alias" ng-change="ctrl.refresh()" ng-model-onblur>
 		</div>
 		<div ng-if="ctrl.showLabels" class="gf-form gf-form--grow">
-			<label class="gf-form-label query-keyword">
+			<label class="gf-form-label query-keyword width-7">
 				Labels
 				<info-popover mode="right-normal">
 					Set labels using a key=value syntax:<br/>
@@ -62,7 +62,7 @@
     <div class="gf-form">
 			<label class="gf-form-label query-keyword width-7">Start value</label>
 			<input type="number"
-				class="gf-form-input width-6"
+				class="gf-form-input width-14"
 				placeholder="auto"
 				ng-model="ctrl.target.startValue"
 				step="1"
@@ -185,6 +185,21 @@
 		</div>
 		<div class="gf-form">
 			<gf-form-switch class="gf-form" label="Level" label-class="query-keyword width-5" checked="ctrl.target.levelColumn" switch-class="max-width-6" on-change="ctrl.refresh()"></gf-form-switch>
+		</div>
+	</div>
+
+	
+	<div class="gf-form-inline" ng-if="ctrl.scenario.id === 'grafana_api'">
+		<div class="gf-form gf-form">
+			<label class="gf-form-label query-keyword width-7">Endpoint</label>
+			<div class="gf-form-select-wrapper">
+				<select
+				  ng-model="ctrl.target.stringInput"
+				  class="gf-form-input"
+				  ng-options="type for type in ['datasources', 'search', 'annotations']"
+				  ng-change="ctrl.refresh()" />
+				</select>
+			</div>
 		</div>
 	</div>
 

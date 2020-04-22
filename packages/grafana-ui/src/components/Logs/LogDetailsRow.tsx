@@ -10,7 +10,7 @@ import { stylesFactory } from '../../themes/stylesFactory';
 //Components
 import { LogLabelStats } from './LogLabelStats';
 import { LinkButton } from '../Button/Button';
-import { Icon } from '../Icon/Icon';
+import { IconButton } from '../IconButton/IconButton';
 
 export interface Props extends Themeable {
   parsedValue: string;
@@ -95,16 +95,16 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
       <tr className={cx(style.logDetailsValue, { [styles.noHoverBackground]: showFieldsStats })}>
         {/* Action buttons - show stats/filter results */}
         <td className={style.logsDetailsIcon} colSpan={isLabel ? undefined : 3}>
-          <Icon name="signal" title={'Ad-hoc statistics'} onClick={this.showStats} />
+          <IconButton name="signal" title={'Ad-hoc statistics'} onClick={this.showStats} />
         </td>
 
         {isLabel && (
           <>
             <td className={style.logsDetailsIcon}>
-              <Icon name="search-minus" title="Filter for value" onClick={this.filterLabel} />
+              <IconButton name="search-minus" title="Filter for value" onClick={this.filterLabel} />
             </td>
             <td className={style.logsDetailsIcon}>
-              <Icon name="search-plus" title="Filter out value" onClick={this.filterOutLabel} />
+              <IconButton name="search-plus" title="Filter out value" onClick={this.filterOutLabel} />
             </td>
           </>
         )}

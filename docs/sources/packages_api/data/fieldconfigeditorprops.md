@@ -13,7 +13,7 @@ draft = true
 <b>Signature</b>
 
 ```typescript
-export interface FieldConfigEditorProps<TValue, TSettings> 
+export interface FieldConfigEditorProps<TValue, TSettings> extends Omit<StandardEditorProps<TValue, TSettings>, 'item'> 
 ```
 <b>Import</b>
 
@@ -25,7 +25,7 @@ import { FieldConfigEditorProps } from '@grafana/data';
 |  Property | Type | Description |
 |  --- | --- | --- |
 |  [context](#context-property) | <code>FieldOverrideContext</code> |  |
-|  [item](#item-property) | <code>FieldPropertyEditorItem&lt;TValue, TSettings&gt;</code> |  |
+|  [item](#item-property) | <code>FieldConfigPropertyItem&lt;TValue, TSettings&gt;</code> |  |
 |  [onChange](#onchange-property) | <code>(value?: TValue) =&gt; void</code> |  |
 |  [value](#value-property) | <code>TValue</code> |  |
 
@@ -42,7 +42,7 @@ context: FieldOverrideContext;
 <b>Signature</b>
 
 ```typescript
-item: FieldPropertyEditorItem<TValue, TSettings>;
+item: FieldConfigPropertyItem<TValue, TSettings>;
 ```
 
 ### onChange property

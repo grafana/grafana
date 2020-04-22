@@ -25,6 +25,8 @@ import { PanelEditorProps } from '@grafana/data';
 |  Property | Type | Description |
 |  --- | --- | --- |
 |  [data](#data-property) | <code>PanelData</code> |  |
+|  [fieldConfig](#fieldconfig-property) | <code>FieldConfigSource</code> | Panel fields configuration - temporart solution TODO\[FieldConfig\]: Remove when we switch old editor to new |
+|  [onFieldConfigChange](#onfieldconfigchange-property) | <code>(config: FieldConfigSource) =&gt; void</code> | Enables panel field config manipulation TODO\[FieldConfig\]: Remove when we switch old editor to new |
 |  [onOptionsChange](#onoptionschange-property) | <code>(options: T, callback?: () =&gt; void) =&gt; void</code> |  |
 |  [options](#options-property) | <code>T</code> |  |
 
@@ -34,6 +36,26 @@ import { PanelEditorProps } from '@grafana/data';
 
 ```typescript
 data: PanelData;
+```
+
+### fieldConfig property
+
+Panel fields configuration - temporart solution TODO\[FieldConfig\]: Remove when we switch old editor to new
+
+<b>Signature</b>
+
+```typescript
+fieldConfig: FieldConfigSource;
+```
+
+### onFieldConfigChange property
+
+Enables panel field config manipulation TODO\[FieldConfig\]: Remove when we switch old editor to new
+
+<b>Signature</b>
+
+```typescript
+onFieldConfigChange: (config: FieldConfigSource) => void;
 ```
 
 ### onOptionsChange property

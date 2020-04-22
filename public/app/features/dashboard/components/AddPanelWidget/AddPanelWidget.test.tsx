@@ -8,6 +8,7 @@ const setup = (propOverrides?: object) => {
     dashboard: {} as DashboardModel,
     panel: {} as PanelModel,
     addPanel: jest.fn() as any,
+    updateLocation: jest.fn() as any,
   };
 
   Object.assign(props, propOverrides);

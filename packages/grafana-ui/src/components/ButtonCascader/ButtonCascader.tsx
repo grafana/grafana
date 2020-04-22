@@ -6,7 +6,8 @@ import { css, cx } from 'emotion';
 import RCCascader from 'rc-cascader';
 import { CascaderOption } from '../Cascader/Cascader';
 import { onChangeCascader, onLoadDataCascader } from '../Cascader/optionMappings';
-import { stylesFactory } from '../../themes';
+import { stylesFactory, useTheme } from '../../themes';
+import { GrafanaTheme } from '@grafana/data';
 
 export interface ButtonCascaderProps {
   options: CascaderOption[];
@@ -20,21 +21,22 @@ export interface ButtonCascaderProps {
   className?: string;
 }
 
-const getStyles = stylesFactory(() => {
+const getStyles = stylesFactory((theme: GrafanaTheme) => {
   return {
     popup: css`
       label: popup;
-      z-index: 100;
+      z-index: ${theme.zIndex.dropdown};
     `,
     icon: css`
-      margin-left: 4px;
+      margin: 1px 0 0 4px;
     `,
   };
 });
 
 export const ButtonCascader: React.FC<ButtonCascaderProps> = props => {
   const { onChange, className, loadData, ...rest } = props;
-  const styles = getStyles();
+  const theme = useTheme();
+  const styles = getStyles(theme);
 
   return (
     <RCCascader

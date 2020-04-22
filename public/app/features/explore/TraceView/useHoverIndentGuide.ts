@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 
 /**
  * This is used internally to handle hover state of indent guide. As indent guides are separate
@@ -10,21 +10,21 @@ import { useState } from 'react';
 export function useHoverIndentGuide() {
   const [hoverIndentGuideIds, setHoverIndentGuideIds] = useState(new Set<string>());
 
-  function addHoverIndentGuideId(spanID: string) {
+  const addHoverIndentGuideId = useCallback(function addHoverIndentGuideId(spanID: string) {
     setHoverIndentGuideIds(prevState => {
       const newHoverIndentGuideIds = new Set(prevState);
       newHoverIndentGuideIds.add(spanID);
       return newHoverIndentGuideIds;
     });
-  }
+  }, []);
 
-  function removeHoverIndentGuideId(spanID: string) {
+  const removeHoverIndentGuideId = useCallback(function removeHoverIndentGuideId(spanID: string) {
     setHoverIndentGuideIds(prevState => {
       const newHoverIndentGuideIds = new Set(prevState);
       newHoverIndentGuideIds.delete(spanID);
       return newHoverIndentGuideIds;
     });
-  }
+  }, []);
 
   return { hoverIndentGuideIds, addHoverIndentGuideId, removeHoverIndentGuideId };
 }

@@ -10,6 +10,8 @@ draft = true
 
 ## AngularLoader interface
 
+Used to load an Angular component from the context of a React component. Please see the [AngularComponent](./runtime/angularcomponent.md) for a proper example.
+
 <b>Signature</b>
 
 ```typescript
@@ -37,9 +39,9 @@ load(elem: any, scopeProps: any, template: string): AngularComponent;
 
 |  Parameter | Type | Description |
 |  --- | --- | --- |
-|  elem | <code>any</code> |  |
-|  scopeProps | <code>any</code> |  |
-|  template | <code>string</code> |  |
+|  elem | <code>any</code> | the element that the Angular component will be loaded into. |
+|  scopeProps | <code>any</code> | values that will be accessed via the Angular scope. |
+|  template | <code>string</code> | template used by the Angular component. |
 
 <b>Returns:</b>
 

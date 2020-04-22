@@ -13,14 +13,14 @@ export function buildNavModel(team: Team): NavModelItem {
     children: [
       {
         active: false,
-        icon: 'gicon gicon-team',
+        icon: 'users-alt',
         id: `team-members-${team.id}`,
         text: 'Members',
         url: `org/teams/edit/${team.id}/members`,
       },
       {
         active: false,
-        icon: 'fa fa-fw fa-sliders',
+        icon: 'sliders-v-alt',
         id: `team-settings-${team.id}`,
         text: 'Settings',
         url: `org/teams/edit/${team.id}/settings`,
@@ -31,7 +31,7 @@ export function buildNavModel(team: Team): NavModelItem {
   if (config.licenseInfo.hasLicense) {
     navModel.children.push({
       active: false,
-      icon: 'fa fa-fw fa-refresh',
+      icon: 'sync',
       id: `team-groupsync-${team.id}`,
       text: 'External group sync',
       url: `org/teams/edit/${team.id}/groupsync`,

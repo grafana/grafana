@@ -15,7 +15,7 @@ draft = true
 <b>Signature</b>
 
 ```typescript
-function getPreviousCousin(node: any, selector: string): any;
+export declare function getPreviousCousin(node: any, selector: string): any;
 ```
 <b>Import</b>
 

@@ -20,15 +20,15 @@ export const QueryOperationAction: React.FC<QueryOperationActionProps> = ({ icon
     }
   };
   return (
-    <div title={title}>
-      <IconButton
-        name={icon}
-        className={styles.icon}
-        disabled={!!disabled}
-        onClick={onClick}
-        aria-label={`${title} query operation action`}
-      />
-    </div>
+    <IconButton
+      name={icon}
+      title={title}
+      className={styles.icon}
+      disabled={!!disabled}
+      onClick={onClick}
+      surface="header"
+      aria-label={`${title} query operation action`}
+    />
   );
 };
 

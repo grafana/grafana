@@ -12,28 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-const COLORS_HEX = [
-  '#17B8BE',
-  '#F8DCA1',
-  '#B7885E',
-  '#FFCB99',
-  '#F89570',
-  '#829AE3',
-  '#E79FD5',
-  '#1E96BE',
-  '#89DAC1',
-  '#B3AD9E',
-  '#12939A',
-  '#DDB27C',
-  '#88572C',
-  '#FF9833',
-  '#EF5D28',
-  '#162A65',
-  '#DA70BF',
-  '#125C77',
-  '#4DC19C',
-  '#776E57',
-];
+import { Theme } from '../Theme';
+import memoizeOne from 'memoize-one';
 
 // TS needs the precise return type
 function strToRgb(s: string): [number, number, number] {
@@ -46,13 +26,13 @@ function strToRgb(s: string): [number, number, number] {
   return [parseInt(r, 16), parseInt(g, 16), parseInt(b, 16)];
 }
 
-export class ColorGenerator {
+class ColorGenerator {
   colorsHex: string[];
   colorsRgb: Array<[number, number, number]>;
   cache: Map<string, number>;
   currentIdx: number;
 
-  constructor(colorsHex: string[] = COLORS_HEX) {
+  constructor(colorsHex: string[]) {
     this.colorsHex = colorsHex;
     this.colorsRgb = colorsHex.map(strToRgb);
     this.cache = new Map();
@@ -95,4 +75,18 @@ export class ColorGenerator {
   }
 }
 
-export default new ColorGenerator();
+const getGenerator = memoizeOne((colors: string[]) => {
+  return new ColorGenerator(colors);
+});
+
+export function clear() {
+  getGenerator([]);
+}
+
+export function getColorByKey(key: string, theme: Theme) {
+  return getGenerator(theme.servicesColorPalette).getColorByKey(key);
+}
+
+export function getRgbColorByKey(key: string, theme: Theme): [number, number, number] {
+  return getGenerator(theme.servicesColorPalette).getRgbColorByKey(key);
+}

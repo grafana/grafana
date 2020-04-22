@@ -13,7 +13,7 @@ const getColorPickerKnobs = () => {
   };
 };
 
-const ColorPickerStories = storiesOf('General/ColorPicker/Pickers', module);
+const ColorPickerStories = storiesOf('Pickers and Editors/ColorPicker/Pickers', module);
 
 ColorPickerStories.addDecorator(withCenteredStory);
 

@@ -3,15 +3,14 @@ import angular, { auto, ILocationService, IPromise, IQService } from 'angular';
 import _ from 'lodash';
 // Utils & Services
 import coreModule from 'app/core/core_module';
-import { variableTypes } from './types';
+import { VariableActions, variableTypes } from './types';
 import { Graph } from 'app/core/utils/dag';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 // Types
-import { AppEvents, TimeRange } from '@grafana/data';
+import { AppEvents, TimeRange, UrlQueryMap } from '@grafana/data';
 import { CoreEvents } from 'app/types';
-import { UrlQueryMap } from '@grafana/runtime';
 import { appEvents, contextSrv } from 'app/core/core';
 
 export class VariableSrv {
@@ -344,9 +343,9 @@ export class VariableSrv {
     }
   }
 
-  isVariableUrlValueDifferentFromCurrent(variable: any, urlValue: any) {
+  isVariableUrlValueDifferentFromCurrent(variable: VariableActions, urlValue: any) {
     // lodash _.isEqual handles array of value equality checks as well
-    return !_.isEqual(variable.current.value, urlValue);
+    return !_.isEqual(variable.getValueForUrl(), urlValue);
   }
 
   updateUrlParamsWithCurrentVariables() {

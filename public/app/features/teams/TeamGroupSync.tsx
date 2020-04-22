@@ -87,7 +87,7 @@ export class TeamGroupSync extends PureComponent<Props, State> {
           <div className="page-action-bar__spacer" />
           {groups.length > 0 && (
             <button className="btn btn-primary pull-right" onClick={this.onToggleAdding}>
-              <Icon name="plus-circle" /> Add group
+              <Icon name="plus" /> Add group
             </button>
           )}
         </div>

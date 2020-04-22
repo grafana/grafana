@@ -1,0 +1,131 @@
+import { Props, Preview } from "@storybook/addon-docs/blocks";
+import { Select, AsyncSelect, MultiSelect, AsyncMultiSelect } from "./Select";
+import { generateOptions } from "./mockOptions";
+
+# Select variants
+
+Select is an input with the ability to search and create new values. It should be used when you have a list of options. If the data has a tree structure, consider using `Cascader` instead.
+Select has some features:
+
+- Search a list of values
+- Select multiple values
+- Select from async data
+- Create custom values that aren't in the list
+
+## Select
+
+Select is the base for every component on this page. The approaches mentioned here are also applicable to `AsyncSelect`, `MultiSelect`, `AsyncMultiSelect`.
+
+### Options format
+
+There are four properties for each option:
+
+- `label` - Text that is visible in the menu.
+- `value` - Could be anything, but is usually a string. Used to identify what is **actually** selected.
+- `description` - Longer description that describes the choice. Use this sparingly.
+- `imgUrl` - URL to an image. Use this when an image or icon provides more context for the option.
+
+```jsx
+const options = [
+  { label: "Basic option", value: 0 },
+  { label: "Option with description", value: 1, description: "this is a description" },
+  {
+    label: "Option with description and image",
+    value: 2,
+    description: "This is a very elaborate description, describing all the wonders in the world.",
+    imgUrl: "https://placekitten.com/40/40",
+  },
+];
+```
+
+### Creatable option
+
+Creatable option is used when you want to be able to add a custom value to the list of options. `allowCustomValue` needs to be true and you must handle the value creation with `onCreateOption`.
+
+```jsx
+import { Select } from "@grafana/ui";
+
+const SelectComponent = () => {
+  const [value, setValue] = useState<SelectableValue<number>>();
+
+  return (
+    <Select
+      options={option}
+      value={value}
+      allowCustomValue
+      onCreateOption={customValue => {
+        setValue(customValue);
+      }}
+    />
+  );
+};
+```
+
+## AsyncSelect
+
+Like regular Select, but handles fetching options asynchronously. Use the `loadOptions` prop for the async function that loads the options. If `defaultOptions` is set to `true`, `loadOptions` will be called when the component is mounted.
+
+```jsx
+
+import { AsyncSelect } from '@grafana/ui';
+
+const basicSelectAsync = () => {
+  const [value, setValue] = useState<SelectableValue<string>>();
+
+  return (
+    <AsyncSelect
+      loadOptions={loadAsyncOptions}
+      defaultOptions
+      value={value}
+      onChange={v => {
+        setValue(v);
+      }}
+    />
+  );
+};
+
+```
+
+Where the async function could look like this:
+
+```tsx
+const loadAsyncOptions = () => {
+  return new Promise()<Array<SelectableValue<string>>>(resolve => {
+    setTimeout(() => {
+      resolve(options);
+    }, 2000);
+  });
+};
+```
+
+## MultiSelect
+
+Possible to Select multiple values at the same time.
+
+```tsx
+import { MultiSelect } from "@grafana/ui";
+
+const multiSelect = () => {
+  const [value, setValue] = useState<Array<SelectableValue<string>>>([]);
+
+  return (
+    <>
+      <MultiSelect
+        options={options}
+        value={value}
+        onChange={v => {
+          setValue(v);
+        }}
+      />
+    </>
+  );
+};
+```
+
+## AsyncMultiSelect
+
+Like MultiSelect but handles data asynchronously with the `loadOptions` prop.
+
+## Props
+
+<Props of={Select} />

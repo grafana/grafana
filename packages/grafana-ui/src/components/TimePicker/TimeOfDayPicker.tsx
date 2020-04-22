@@ -73,7 +73,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
         background-color: ${bgColor};
         border-radius: ${borderRadius};
         border-color: ${borderColor};
-        height: ${theme.spacing.formInputHeight};
+        height: ${theme.spacing.formInputHeight}px;
 
         &:focus {
           ${getFocusCss(theme)}

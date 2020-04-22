@@ -15,7 +15,6 @@ $theme-name: dark;
 
 // New Colors
 // -------------------------
-$blue-faint: #041126;
 $blue-light: #5794f2;
 $blue-base: #3274d9;
 $blue-shade: #1f60c4;
@@ -31,7 +30,7 @@ $gray85: #c7d0d9;
 $gray70: #9fa7b3;
 $gray60: #7b8087;
 $gray33: #464c54;
-$gray25: #343b40;
+$gray25: #2c3235;
 $gray15: #202226;
 $gray10: #141619;
 $gray05: #0b0c0e;
@@ -62,12 +61,12 @@ $white: #ffffff;
 
 // Accent colors
 // -------------------------
-$blue: #33b5e5;
+$blue: #33a2e5;
 $red: $red-base;
 $yellow: #ecbb13;
 $orange: #eb7b18;
 $purple: #9933cc;
-$variable: #339ae5;
+$variable: #33a2e5;
 
 $brand-primary: #eb7b18;
 $brand-success: #299c46;
@@ -91,12 +90,13 @@ $body-bg: #141619;
 $page-bg: #141619;
 $dashboard-bg: #0b0c0e;
 
+$text-color-strong: #f7f8fa;
 $text-color: #c7d0d9;
-$text-color-strong: #ffffff;
-$text-color-weak: #8e8e8e;
-$text-color-faint: #222426;
-$text-color-emphasis: #ececec;
-$text-blue: #339ae5;
+$text-color-semi-weak: #9fa7b3;
+$text-color-weak: #7b8087;
+$text-color-faint: #464c54;
+$text-color-emphasis: #f7f8fa;
+$text-blue: #33a2e5;
 
 $text-shadow-faint: 1px 1px 4px rgb(45, 45, 45);
 $textShadow: none;
@@ -110,7 +110,7 @@ $brand-gradient-vertical: linear-gradient(#f05a28 30%, #fbca0a 99%);
 $link-color: #d8d9da;
 $link-color-disabled: #8e8e8e;
 $link-hover-color: #ffffff;
-$external-link-color: #33b5e5;
+$external-link-color: #33a2e5;
 
 // Typography
 // -------------------------
@@ -138,7 +138,7 @@ $divider-border-color: $gray-1;
 $tight-form-func-bg: $dark-9;
 $tight-form-func-highlight-bg: $dark-10;
 
-$modal-backdrop-bg: #343b40;
+$modal-backdrop-bg: #141619;
 $code-tag-bg: $dark-1;
 $code-tag-border: $dark-9;
 
@@ -205,11 +205,11 @@ $input-bg: $input-black;
 $input-bg-disabled: $dark-6;
 
 $input-color: #c7d0d9;
-$input-border-color: #343b40;
+$input-border-color: #2c3235;
 $input-box-shadow: none;
 $input-border-focus: #5794f2;
 $input-box-shadow-focus: $blue-light !default;
-$input-color-placeholder: #555555;
+$input-color-placeholder: #464c54;
 $input-label-bg: #202226;
 $input-color-select-arrow: $white;
 
@@ -226,7 +226,7 @@ $typeahead-selected-color: $yellow;
 $dropdownBackground: $panel-bg;
 $dropdownBorder: #202226;
 $dropdownDividerTop: transparent;
-$dropdownDividerBottom: #343b40;
+$dropdownDividerBottom: #2c3235;
 
 $dropdownLinkColor: $link-color;
 $dropdownLinkColorHover: $white;
@@ -382,8 +382,8 @@ $panel-editor-viz-item-bg-hover: darken($blue-base, 46%);
 $panel-options-group-border: none;
 $panel-options-group-header-bg: #202226;
 
-$panel-grid-placeholder-bg: $blue-faint;
-$panel-grid-placeholder-shadow: 0 0 4px $blue-shade;
+$panel-grid-placeholder-bg: darken(#1f60c4, 30%);
+$panel-grid-placeholder-shadow: 0 0 4px #3274d9;
 
 // logs
 $logs-color-unkown: $gray-2;

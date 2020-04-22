@@ -4,12 +4,14 @@ import { GrafanaTheme } from '@grafana/data';
 import { Icon } from '../Icon/Icon';
 import { IconName } from '../../types';
 import { stylesFactory, useTheme } from '../../themes';
+import { Counter } from './Counter';
 
 export interface TabProps {
   label: string;
   active?: boolean;
   icon?: IconName;
   onChangeTab: () => void;
+  counter?: number;
 }
 
 const getTabStyles = stylesFactory((theme: GrafanaTheme) => {
@@ -42,7 +44,6 @@ const getTabStyles = stylesFactory((theme: GrafanaTheme) => {
       background: ${colors.bodyBg};
       color: ${colors.link};
       overflow: hidden;
-      cursor: not-allowed;
 
       &::before {
         display: block;
@@ -58,7 +59,7 @@ const getTabStyles = stylesFactory((theme: GrafanaTheme) => {
   };
 });
 
-export const Tab: FC<TabProps> = ({ label, active, icon, onChangeTab }) => {
+export const Tab: FC<TabProps> = ({ label, active, icon, onChangeTab, counter }) => {
   const theme = useTheme();
   const tabsStyles = getTabStyles(theme);
 
@@ -66,6 +67,7 @@ export const Tab: FC<TabProps> = ({ label, active, icon, onChangeTab }) => {
     <li className={cx(tabsStyles.tabItem, active && tabsStyles.activeStyle)} onClick={onChangeTab}>
       {icon && <Icon name={icon} />}
       {label}
+      {typeof counter === 'number' && <Counter value={counter} />}
     </li>
   );
 };
