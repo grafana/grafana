@@ -27,6 +27,7 @@ RUN yarn install --pure-lockfile --no-progress
 
 COPY Gruntfile.js tsconfig.json .eslintrc .editorconfig .browserslistrc .prettierrc.js ./
 COPY public public
+COPY tools tools
 COPY scripts scripts
 COPY emails emails
 
