@@ -145,9 +145,9 @@ export class VizRepeater<V, D = {}> extends PureComponent<Props<V, D>, State<V>>
     let vizHeight = height;
     let vizWidth = width;
 
-    let autoOrientation = this.getOrientation();
+    let resolvedOrientation = this.getOrientation();
 
-    switch (autoOrientation) {
+    switch (resolvedOrientation) {
       case VizOrientation.Horizontal:
         repeaterStyle.flexDirection = 'column';
         itemStyles.marginBottom = `${itemSpacing}px`;
@@ -177,7 +177,7 @@ export class VizRepeater<V, D = {}> extends PureComponent<Props<V, D>, State<V>>
                 width: vizWidth,
                 height: vizHeight,
                 alignmentFactors,
-                orientation: autoOrientation,
+                orientation: resolvedOrientation,
               })}
             </div>
           );
