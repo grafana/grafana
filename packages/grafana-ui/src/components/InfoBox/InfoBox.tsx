@@ -14,7 +14,7 @@ const getInfoBoxStyles = stylesFactory((theme: GrafanaTheme) => ({
     position: relative;
     padding: ${theme.spacing.lg};
     background-color: ${theme.colors.bg2};
-    border-top: 3px solid ${theme.colors.textBlue};
+    border-top: 3px solid ${theme.palette.blue80};
     margin-bottom: ${theme.spacing.md};
     margin-right: ${theme.spacing.xs};
     box-shadow: ${theme.shadows.listItem};
