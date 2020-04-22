@@ -97,6 +97,7 @@ export { DataLinksInlineEditor } from './DataLinks/DataLinksInlineEditor/DataLin
 export { DataLinkInput } from './DataLinks/DataLinkInput';
 export { DataLinksContextMenu } from './DataLinks/DataLinksContextMenu';
 export { SeriesIcon } from './Legend/SeriesIcon';
+export { InfoBox } from './InfoBox/InfoBox';
 
 export { JSONFormatter } from './JSONFormatter/JSONFormatter';
 export { JsonExplorer } from './JSONFormatter/json_explorer/json_explorer';
