@@ -48,13 +48,14 @@ export const DataLinkEditor: React.FC<DataLinkEditorProps> = React.memo(
           <Input value={value.title} onChange={onTitleChange} placeholder="Show details" />
         </Field>
 
+        <Field label="URL">
+          <DataLinkInput value={value.url} onChange={onUrlChange} suggestions={suggestions} />
+        </Field>
+
         <Field label="Open in new tab">
           <Switch checked={value.targetBlank || false} onChange={onOpenInNewTabChanged} />
         </Field>
 
-        <Field label="URL">
-          <DataLinkInput value={value.url} onChange={onUrlChange} suggestions={suggestions} />
-        </Field>
         {isLast && (
           <div className={styles.infoText}>
             With data links you can reference data variables like series name, labels and values. Type CMD+Space,
