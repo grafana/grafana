@@ -228,40 +228,7 @@ class GraphCtrl extends MetricsPanelCtrl {
 
     this.linkVariableSuggestions = getDataLinksVariableSuggestions(data);
 
-    this.dataWarning = null;
-    const datapointsCount = this.seriesList.reduce((prev, series) => {
-      return prev + series.datapoints.length;
-    }, 0);
-
-    if (datapointsCount === 0) {
-      this.dataWarning = {
-        title: 'No data',
-        tip: 'No data returned from query',
-      };
-    } else {
-      for (const series of this.seriesList) {
-        if (series.isOutsideRange) {
-          this.dataWarning = {
-            title: 'Data outside time range',
-            tip: 'Can be caused by timezone mismatch or missing time filter in query',
-          };
-          const range = getDataTimeRange(data);
-          if (range) {
-            this.dataWarning.actionText = 'zoom to data';
-            this.dataWarning.action = () => {
-              getLocationSrv().update({
-                partial: true,
-                query: {
-                  from: range.from,
-                  to: range.to,
-                },
-              });
-            };
-          }
-          break;
-        }
-      }
-    }
+    this.dataWarning = this.getDataWarning();
 
     this.annotationsPromise.then(
       (result: { alertState: any; annotations: any }) => {
@@ -282,6 +249,50 @@ class GraphCtrl extends MetricsPanelCtrl {
         this.render(this.seriesList);
       }
     );
+  }
+
+  getDataWarning(): DataWarning {
+    const datapointsCount = this.seriesList.reduce((prev, series) => {
+      return prev + series.datapoints.length;
+    }, 0);
+
+    if (datapointsCount === 0) {
+      return {
+        title: 'No data',
+        tip: 'No data returned from query',
+      };
+    }
+
+    // Look for data points outside time range
+    for (const series of this.seriesList) {
+      if (!series.isOutsideRange) {
+        continue;
+      }
+
+      const dataWarning: DataWarning = {
+        title: 'Data outside time range',
+        tip: 'Can be caused by timezone mismatch or missing time filter in query',
+      };
+
+      const range = getDataTimeRange(this.dataList);
+
+      if (range) {
+        dataWarning.actionText = 'Zoom to data';
+        dataWarning.action = () => {
+          getLocationSrv().update({
+            partial: true,
+            query: {
+              from: range.from,
+              to: range.to,
+            },
+          });
+        };
+      }
+
+      return dataWarning;
+    }
+
+    return null;
   }
 
   onRender() {
