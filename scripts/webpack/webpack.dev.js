@@ -94,9 +94,7 @@ module.exports = (env = {}) =>
     },
 
     plugins: [
-      new CleanWebpackPlugin({
-        cleanStaleWebpackAssets: false,
-      }),
+      new CleanWebpackPlugin(),
       env.noTsCheck
         ? new webpack.DefinePlugin({}) // bogus plugin to satisfy webpack API
         : new ForkTsCheckerWebpackPlugin({

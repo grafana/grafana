@@ -15,7 +15,7 @@ draft = true
 <b>Signature</b>
 
 ```typescript
-function cardChrome(theme: GrafanaTheme): string;
+export declare function cardChrome(theme: GrafanaTheme): string;
 ```
 <b>Import</b>
 

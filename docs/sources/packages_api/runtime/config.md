@@ -12,6 +12,8 @@ draft = true
 
 ### config variable
 
+Use this to access the [GrafanaBootConfig](./runtime/grafanabootconfig.md) for the current running Grafana instance.
+
 <b>Signature</b>
 
 ```typescript

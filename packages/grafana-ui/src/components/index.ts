@@ -12,11 +12,6 @@ export { ClipboardButton } from './ClipboardButton/ClipboardButton';
 export { Cascader, CascaderOption } from './Cascader/Cascader';
 export { ButtonCascader } from './ButtonCascader/ButtonCascader';
 
-// Forms
-export { FormLabel } from './FormLabel/FormLabel';
-export { FormField } from './FormField/FormField';
-export { SecretFormField } from './SecretFormField/SecretFormField';
-
 export { LoadingPlaceholder } from './LoadingPlaceholder/LoadingPlaceholder';
 export { ColorPicker, SeriesColorPicker } from './ColorPicker/ColorPicker';
 export { SeriesColorPickerPopover, SeriesColorPickerPopoverWithTheme } from './ColorPicker/SeriesColorPickerPopover';
@@ -154,6 +149,9 @@ export { TextArea } from './TextArea/TextArea';
 
 // Legacy forms
 
+// Export this until we've figured out a good approach to inline form styles.
+export { FormLabel as InlineFormLabel } from './FormLabel/FormLabel';
+
 // Select
 import { Select, AsyncSelect } from './Forms/Legacy/Select/Select';
 import { IndicatorsContainer } from './Forms/Legacy/Select/IndicatorsContainer';
@@ -162,10 +160,14 @@ import { ButtonSelect } from './Forms/Legacy/Select/ButtonSelect';
 
 //Input
 import { Input, LegacyInputStatus } from './Forms/Legacy/Input/Input';
+import { FormField } from './FormField/FormField';
+import { SecretFormField } from './SecretFormField/SecretFormField';
 
 import { Switch } from './Forms/Legacy/Switch/Switch';
 
 const LegacyForms = {
+  SecretFormField,
+  FormField,
   Select,
   AsyncSelect,
   IndicatorsContainer,

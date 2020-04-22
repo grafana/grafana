@@ -1,6 +1,7 @@
 package api
 
 import (
+	"encoding/json"
 	"errors"
 	"net/http"
 	"sort"
@@ -317,9 +318,19 @@ func (hs *HTTPServer) CheckHealth(c *models.ReqContext) Response {
 	}
 
 	payload := map[string]interface{}{
-		"status":      resp.Status.String(),
-		"message":     resp.Message,
-		"jsonDetails": resp.JSONDetails,
+		"status":  resp.Status.String(),
+		"message": resp.Message,
+	}
+
+	// Unmarshal JSONDetails if it's not empty.
+	if len(resp.JSONDetails) > 0 {
+		var jsonDetails map[string]interface{}
+		err = json.Unmarshal(resp.JSONDetails, &jsonDetails)
+		if err != nil {
+			return Error(500, "Failed to unmarshal detailed response from backend plugin", err)
+		}
+
+		payload["details"] = jsonDetails
 	}
 
 	if resp.Status != backendplugin.HealthStatusOk {

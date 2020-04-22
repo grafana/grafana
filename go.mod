@@ -26,6 +26,7 @@ require (
 	github.com/go-sql-driver/mysql v1.4.1
 	github.com/go-stack/stack v1.8.0
 	github.com/gobwas/glob v0.2.3
+	github.com/golang/protobuf v1.3.4
 	github.com/google/go-cmp v0.3.1
 	github.com/gorilla/websocket v1.4.1
 	github.com/gosimple/slug v1.4.2
