@@ -13,7 +13,7 @@ import { stylesFactory } from '../../themes/stylesFactory';
 import { withTheme, useTheme } from '../../themes/ThemeContext';
 
 // Types
-import { isDateTime, DateTime, rangeUtil, GrafanaTheme, dateTimeFormatWithAbbrevation } from '@grafana/data';
+import { isDateTime, rangeUtil, GrafanaTheme, dateTimeFormatWithAbbrevation } from '@grafana/data';
 import { TimeRange, TimeOption, TimeZone, dateMath } from '@grafana/data';
 import { Themeable } from '../../types';
 
@@ -214,36 +214,28 @@ const TimePickerTooltip = ({ timeRange, timeZone }: { timeRange: TimeRange; time
   </>
 );
 
-const TimePickerButtonLabel = memo<Props>(props => {
+const TimePickerButtonLabel = memo<Props>(({ hideText, value, timeZone }) => {
   const theme = useTheme();
   const styles = getLabelStyles(theme);
-  const isUTC = props.timeZone === 'utc';
 
-  if (props.hideText) {
+  if (hideText) {
     return null;
   }
 
   return (
     <span className={styles.container}>
-      <span>{formattedRange(props.value, isUTC)}</span>
-      <span className={styles.utc}>{rangeUtil.describeTimeRangeAbbrevation(props.value, props.timeZone)}</span>
+      <span>{formattedRange(value, timeZone)}</span>
+      <span className={styles.utc}>{rangeUtil.describeTimeRangeAbbrevation(value, timeZone)}</span>
     </span>
   );
 });
 
-const formattedRange = (value: TimeRange, isUTC: boolean) => {
+const formattedRange = (value: TimeRange, timeZone?: TimeZone) => {
   const adjustedTimeRange = {
-    to: dateMath.isMathString(value.raw.to) ? value.raw.to : adjustedTime(value.to, isUTC),
-    from: dateMath.isMathString(value.raw.from) ? value.raw.from : adjustedTime(value.from, isUTC),
+    to: dateMath.isMathString(value.raw.to) ? value.raw.to : value.to,
+    from: dateMath.isMathString(value.raw.from) ? value.raw.from : value.from,
   };
-  return rangeUtil.describeTimeRange(adjustedTimeRange);
-};
-
-const adjustedTime = (time: DateTime, isUTC: boolean) => {
-  if (isUTC) {
-    return time.utc() || null;
-  }
-  return time.local() || null;
+  return rangeUtil.describeTimeRange(adjustedTimeRange, timeZone);
 };
 
 export const TimeRangePicker = withTheme(UnthemedTimeRangePicker);
