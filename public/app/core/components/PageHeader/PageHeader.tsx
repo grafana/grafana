@@ -11,7 +11,7 @@ export interface Props {
 
 const SelectNav = ({ main, customCss }: { main: NavModelItem; customCss: string }) => {
   const { children } = main;
-  if (!children?.length) {
+  if (!children || children.length === 0) {
     return null;
   }
 
@@ -57,7 +57,7 @@ const SelectNav = ({ main, customCss }: { main: NavModelItem; customCss: string 
 const Navigation = ({ main }: { main: NavModelItem }) => {
   const { children } = main;
 
-  if (!children?.length) {
+  if (!children || children.length === 0) {
     return null;
   }
 
@@ -166,7 +166,7 @@ export default class PageHeader extends React.Component<Props, any> {
         <div className="page-container">
           <div className="page-header">
             {this.renderHeaderTitle(main)}
-            {main.children?.length && <Navigation main={main} />}
+            {main.children && main.children.length && <Navigation main={main} />}
           </div>
         </div>
       </div>
