@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { HTMLProps } from 'react';
 import { css } from 'emotion';
 import { GrafanaTheme } from '@grafana/data';
 import { stylesFactory, useTheme } from '../../themes';
@@ -11,7 +11,7 @@ type Spacing = 'xs' | 'sm' | 'md' | 'lg';
 type Justify = 'flex-start' | 'flex-end' | 'space-between' | 'center';
 type Align = 'normal' | 'flex-start' | 'flex-end' | 'center';
 
-export interface LayoutProps {
+export interface LayoutProps extends Omit<HTMLProps<HTMLDivElement>, 'align' | 'children'> {
   children: React.ReactNode[] | React.ReactNode;
   orientation?: Orientation;
   spacing?: Spacing;
@@ -32,11 +32,13 @@ export const Layout: React.FC<LayoutProps> = ({
   justify = 'flex-start',
   align = 'normal',
   width = 'auto',
+  className,
+  ...rest
 }) => {
   const theme = useTheme();
   const styles = getStyles(theme, orientation, spacing, justify, align);
   return (
-    <div className={styles.layout} style={{ width }}>
+    <div className={styles.layout} style={{ width }} {...rest}>
       {React.Children.map(children, (child, index) => {
         return (
           <div className={styles.childWrapper} key={index}>
