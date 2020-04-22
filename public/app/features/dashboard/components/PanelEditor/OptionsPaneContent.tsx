@@ -1,17 +1,17 @@
 import React, { useCallback, useState, CSSProperties } from 'react';
 import Transition from 'react-transition-group/Transition';
-import { FieldConfigSource, GrafanaTheme, PanelData, PanelPlugin, SelectableValue } from '@grafana/data';
+import { FieldConfigSource, GrafanaTheme, PanelPlugin, SelectableValue } from '@grafana/data';
 import { DashboardModel, PanelModel } from '../../state';
 import { CustomScrollbar, stylesFactory, Tab, TabContent, TabsBar, Select, useTheme, Icon, Input } from '@grafana/ui';
 import { DefaultFieldConfigEditor, OverrideFieldConfigEditor } from './FieldConfigEditor';
 import { css } from 'emotion';
 import { PanelOptionsTab } from './PanelOptionsTab';
 import { DashNavButton } from 'app/features/dashboard/components/DashNav/DashNavButton';
+import { usePanelLatestData } from './usePanelLatestData';
 
 interface Props {
   plugin: PanelPlugin;
   panel: PanelModel;
-  data: PanelData;
   width: number;
   dashboard: DashboardModel;
   onClose: () => void;
@@ -23,7 +23,6 @@ interface Props {
 export const OptionsPaneContent: React.FC<Props> = ({
   plugin,
   panel,
-  data,
   width,
   onFieldConfigsChange,
   onPanelOptionsChanged,
@@ -35,12 +34,13 @@ export const OptionsPaneContent: React.FC<Props> = ({
   const styles = getStyles(theme);
   const [activeTab, setActiveTab] = useState('options');
   const [isSearching, setSearchMode] = useState(false);
+  const [currentData, hasSeries] = usePanelLatestData(panel);
 
   const renderFieldOptions = useCallback(
     (plugin: PanelPlugin) => {
       const fieldConfig = panel.getFieldConfig();
 
-      if (!fieldConfig) {
+      if (!fieldConfig || !hasSeries) {
         return null;
       }
 
@@ -49,18 +49,18 @@ export const OptionsPaneContent: React.FC<Props> = ({
           config={fieldConfig}
           plugin={plugin}
           onChange={onFieldConfigsChange}
-          data={data.series}
+          data={currentData.series}
         />
       );
     },
-    [data, plugin, panel, onFieldConfigsChange]
+    [currentData, plugin, panel, onFieldConfigsChange]
   );
 
   const renderFieldOverrideOptions = useCallback(
     (plugin: PanelPlugin) => {
       const fieldConfig = panel.getFieldConfig();
 
-      if (!fieldConfig) {
+      if (!fieldConfig || !hasSeries) {
         return null;
       }
 
@@ -69,11 +69,11 @@ export const OptionsPaneContent: React.FC<Props> = ({
           config={fieldConfig}
           plugin={plugin}
           onChange={onFieldConfigsChange}
-          data={data.series}
+          data={currentData.series}
         />
       );
     },
-    [data, plugin, panel, onFieldConfigsChange]
+    [currentData, plugin, panel, onFieldConfigsChange]
   );
 
   // When the panel has no query only show the main tab
@@ -103,7 +103,7 @@ export const OptionsPaneContent: React.FC<Props> = ({
                   panel={panel}
                   plugin={plugin}
                   dashboard={dashboard}
-                  data={data}
+                  data={currentData}
                   onPanelConfigChange={onPanelConfigChange}
                   onFieldConfigsChange={onFieldConfigsChange}
                   onPanelOptionsChanged={onPanelOptionsChanged}
