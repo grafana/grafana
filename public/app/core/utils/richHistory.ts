@@ -258,6 +258,16 @@ export function isParsable(string: string) {
   return true;
 }
 
+export function createDataQuery(query: RichHistoryQuery, queryString: string, index: number) {
+  const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+  let dataQuery;
+  isParsable(queryString)
+    ? (dataQuery = { ...JSON.parse(queryString), datasource: query.datasourceName })
+    : (dataQuery = { expr: queryString, refId: letters[index], datasource: query.datasourceName });
+
+  return dataQuery;
+}
+
 export function mapQueriesToHeadings(query: RichHistoryQuery[], sortOrder: SortOrder) {
   let mappedQueriesToHeadings: any = {};
 

@@ -11,6 +11,7 @@ import {
   createUrlFromRichHistory,
   getQueryDisplayText,
   isParsable,
+  createDataQuery,
 } from 'app/core/utils/richHistory';
 import appEvents from 'app/core/app_events';
 import { StoreState } from 'app/types';
@@ -169,11 +170,13 @@ export function RichHistoryCard(props: Props) {
   };
 
   const onRunQuery = async () => {
-    const parsedQueries = query.queries.map(q => JSON.parse(q));
+    const parsedQueries = query.queries.map((q, i) => createDataQuery(query, q, i));
     if (query.datasourceName !== datasourceInstance?.name) {
       await changeDatasource(exploreId, query.datasourceName);
+      console.log(parsedQueries);
       setQueries(exploreId, parsedQueries);
     } else {
+      console.log(parsedQueries);
       setQueries(exploreId, parsedQueries);
     }
   };
@@ -275,7 +278,7 @@ export function RichHistoryCard(props: Props) {
             const queryText = createQueryText(q);
             return (
               <div aria-label="Query text" key={`${q}-${i}`} className={styles.queryRow}>
-                {queryText}
+                {queryText.length > 1 && queryText}
               </div>
             );
           })}
