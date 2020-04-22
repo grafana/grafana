@@ -2,8 +2,8 @@ import { useEffect, useState } from 'react';
 import { SearchLayout } from '../types';
 
 export const layoutOptions = [
-  { label: 'Folders', value: SearchLayout.Folders },
-  { label: 'List', value: SearchLayout.List },
+  { label: 'Folders', value: SearchLayout.Folders, icon: 'folder' },
+  { label: 'List', value: SearchLayout.List, icon: 'list-ul' },
 ];
 
 export const useSearchLayout = (query: any) => {

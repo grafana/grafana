@@ -42,11 +42,11 @@ export const ActionRow: FC<Props> = ({
 
   return (
     <div className={styles.actionRow}>
-      <HorizontalGroup spacing="md">
+      <HorizontalGroup spacing="md" width="100%">
         <RadioButtonGroup options={layoutOptions} onChange={onLayoutChange} value={layout} />
         <SortPicker onChange={onSortChange} value={query.sort} />
       </HorizontalGroup>
-      <HorizontalGroup spacing="md" width="100%" justify="space-between">
+      <HorizontalGroup spacing="md" justify="space-between">
         {showStarredFilter && (
           <Select
             width={20}

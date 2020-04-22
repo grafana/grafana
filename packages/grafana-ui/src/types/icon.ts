@@ -24,6 +24,7 @@ export type IconName =
   | 'plus-square'
   | 'folder-plus'
   | 'folder-open'
+  | 'folder'
   | 'file-copy-alt'
   | 'file-alt'
   | 'exchange-alt'
@@ -136,6 +137,7 @@ export const getAvailableIcons = (): IconName[] => [
   'plus-square',
   'folder-plus',
   'folder-open',
+  'folder',
   'file-copy-alt',
   'file-alt',
   'exchange-alt',
