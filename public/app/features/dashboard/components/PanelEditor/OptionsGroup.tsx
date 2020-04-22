@@ -1,18 +1,10 @@
-import React, { useState, FC, useEffect } from 'react';
+import React, { FC, useEffect, useState } from 'react';
 import { css, cx } from 'emotion';
 import { GrafanaTheme } from '@grafana/data';
-import { useTheme, Icon, stylesFactory } from '@grafana/ui';
+import { Icon, stylesFactory, useTheme } from '@grafana/ui';
+import { OptionsGroupProps } from './types';
 
-interface Props {
-  title?: React.ReactNode;
-  renderTitle?: (isExpanded: boolean) => React.ReactNode;
-  defaultToClosed?: boolean;
-  className?: string;
-  nested?: boolean;
-  onToggle?: (isExpanded: boolean) => void;
-}
-
-export const OptionsGroup: FC<Props> = ({
+export const OptionsGroup: FC<OptionsGroupProps> = ({
   title,
   children,
   defaultToClosed,
