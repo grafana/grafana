@@ -7,7 +7,7 @@ import { TagFilter } from 'app/core/components/TagFilter/TagFilter';
 import { SortPicker } from 'app/core/components/Select/SortPicker';
 import { useSearchQuery } from '../hooks/useSearchQuery';
 import { useDashboardSearch } from '../hooks/useDashboardSearch';
-import { useSearchLayout } from '../hooks/useSearchLayout';
+import { useSearchLayout, layoutOptions } from '../hooks/useSearchLayout';
 import { SearchField } from './SearchField';
 import { SearchResults } from './SearchResults';
 
@@ -22,7 +22,7 @@ export const DashboardSearch: FC<Props> = ({ onCloseSearch, folder }) => {
   const payload = folder ? { query: `folder:${folder}` } : {};
   const { query, onQueryChange, onTagFilterChange, onTagAdd, onSortChange } = useSearchQuery(payload);
   const { results, loading, onToggleSection, onKeyDown } = useDashboardSearch(query, onCloseSearch);
-  const { layout, setLayout, layoutOptions } = useSearchLayout(query);
+  const { layout, setLayout } = useSearchLayout(query);
   const theme = useTheme();
   const styles = getStyles(theme);
 

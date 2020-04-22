@@ -147,6 +147,8 @@ export const ManageDashboards: FC<Props> = memo(({ folderId, folderUid }) => {
             onSortChange={onSortChange}
             onTagFilterChange={onTagFilterChange}
             query={query}
+            layout={layout}
+            onLayoutChange={setLayout}
           />
         )}
         <SearchResults

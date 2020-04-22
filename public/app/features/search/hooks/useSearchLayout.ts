@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { SearchLayout } from '../types';
 
-const layoutOptions = [
+export const layoutOptions = [
   { label: 'Folders', value: SearchLayout.Folders },
   { label: 'List', value: SearchLayout.List },
 ];
@@ -16,5 +16,5 @@ export const useSearchLayout = (query: any) => {
     }
   }, [query]);
 
-  return { layout, setLayout, layoutOptions };
+  return { layout, setLayout };
 };
