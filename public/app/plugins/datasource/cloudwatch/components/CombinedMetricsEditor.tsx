@@ -9,19 +9,7 @@ import { cx, css } from 'emotion';
 
 export type Props = ExploreQueryFieldProps<CloudWatchDatasource, CloudWatchQuery>;
 
-interface State {
-  apiMode: 'logs' | 'metrics';
-}
-
-export class CombinedMetricsEditor extends PureComponent<Props, State> {
-  state: State = { apiMode: 'metrics' };
-
-  onAPIModeChange(newMode: 'metrics' | 'logs') {
-    this.setState({
-      apiMode: newMode,
-    });
-  }
-
+export class CombinedMetricsEditor extends PureComponent<Props> {
   renderMetricsEditor() {
     return <MetricsQueryEditor {...this.props} />;
   }
@@ -31,7 +19,9 @@ export class CombinedMetricsEditor extends PureComponent<Props, State> {
   }
 
   render() {
-    const { apiMode } = this.state;
+    const { query } = this.props;
+
+    const apiMode = query.apiMode ?? query.queryMode ?? 'Metrics';
 
     return (
       <>
@@ -44,14 +34,14 @@ export class CombinedMetricsEditor extends PureComponent<Props, State> {
         >
           <RadioButtonGroup
             options={[
-              { label: 'Metrics API', value: 'metrics' },
-              { label: 'Logs API', value: 'logs' },
+              { label: 'Metrics API', value: 'Metrics' },
+              { label: 'Logs API', value: 'Logs' },
             ]}
             value={apiMode}
-            onChange={(v: 'metrics' | 'logs') => this.onAPIModeChange(v!)}
+            onChange={(v: 'Metrics' | 'Logs') => this.props.onChange({ ...query, apiMode: v })}
           />
         </div>
-        {apiMode === 'metrics' ? this.renderMetricsEditor() : this.renderLogsEditor()}
+        {apiMode === 'Metrics' ? this.renderMetricsEditor() : this.renderLogsEditor()}
       </>
     );
   }

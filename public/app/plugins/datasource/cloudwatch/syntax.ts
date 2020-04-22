@@ -303,6 +303,8 @@ export const NON_AGGREGATION_FUNCS_STATS = [
   },
 ];
 
+export const STATS_FUNCS = [...AGGREGATION_FUNCTIONS_STATS, ...NON_AGGREGATION_FUNCS_STATS];
+
 export const KEYWORDS = ['as', 'like', 'by', 'in', 'desc', 'asc'];
 export const FUNCTIONS = [
   ...NUMERIC_OPERATORS,
@@ -310,6 +312,7 @@ export const FUNCTIONS = [
   ...STRING_FUNCTIONS,
   ...DATETIME_FUNCTIONS,
   ...IP_FUNCTIONS,
+  ...STATS_FUNCS,
 ];
 
 const tokenizer: Grammar = {
@@ -332,7 +335,7 @@ const tokenizer: Grammar = {
     greedy: true,
   },
   'query-command': {
-    pattern: new RegExp(`\\b(?:${QUERY_COMMANDS.map(command => command.label).join('|')})\s*`, 'i'),
+    pattern: new RegExp(`\\b(?:${QUERY_COMMANDS.map(command => command.label).join('|')})\\b`, 'i'),
     alias: 'function',
   },
   function: {

@@ -28,7 +28,7 @@ export class ResultProcessor {
       return null;
     }
 
-    const onlyTimeSeries = this.dataFrames.filter(isTimeSeries);
+    const onlyTimeSeries = this.dataFrames.filter(frame => isTimeSeries(frame, this.state.datasourceInstance?.meta.id));
 
     if (onlyTimeSeries.length === 0) {
       return null;
@@ -112,8 +112,23 @@ export class ResultProcessor {
   }
 }
 
-export function isTimeSeries(frame: DataFrame): boolean {
-  console.log(frame);
+export function isTimeSeries(frame: DataFrame, datasource?: string): boolean {
+  // TEMP: Temporary hack. Remove when logs/metrics unification is done
+  if (datasource && datasource === 'cloudwatch') {
+    return isTimeSeriesCloudWatch(frame);
+  }
+
+  if (frame.fields.length === 2) {
+    if (frame.fields[0].type === FieldType.time) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+// TEMP: Temporary hack. Remove when logs/metrics unification is done
+export function isTimeSeriesCloudWatch(frame: DataFrame): boolean {
   return (
     frame.fields.some(field => field.type === FieldType.time) &&
     frame.fields.some(field => field.type === FieldType.number)

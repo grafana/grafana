@@ -215,9 +215,6 @@ func (c *QueryCondition) executeQuery(context *alerting.EvalContext, timeRange *
 }
 
 func (c *QueryCondition) getRequestForAlertRule(datasource *models.DataSource, timeRange *tsdb.TimeRange, debug bool) *tsdb.TsdbQuery {
-	// Let datasource know that this query is triggered by an alert
-	c.Query.Model.Set("fromAlert", true)
-
 	req := &tsdb.TsdbQuery{
 		TimeRange: timeRange,
 		Queries: []*tsdb.Query{
@@ -226,6 +223,9 @@ func (c *QueryCondition) getRequestForAlertRule(datasource *models.DataSource, t
 				Model:      c.Query.Model,
 				DataSource: datasource,
 			},
+		},
+		Headers: map[string]string{
+			"FromAlert": "true",
 		},
 		Debug: debug,
 	}

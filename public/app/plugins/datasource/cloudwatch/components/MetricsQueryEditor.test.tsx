@@ -7,7 +7,6 @@ import { TemplateSrv } from 'app/features/templating/template_srv';
 import { CustomVariable } from 'app/features/templating/all';
 import { MetricsQueryEditor, Props, normalizeQuery } from './MetricsQueryEditor';
 import { CloudWatchDatasource } from '../datasource';
-import { CloudWatchMetricsQuery } from '../types';
 
 const setup = () => {
   const instanceSettings = {
@@ -39,6 +38,7 @@ const setup = () => {
   const props: Props = {
     query: {
       queryMode: 'Metrics',
+      apiMode: 'Metrics',
       refId: '',
       id: '',
       region: 'us-east-1',
@@ -85,30 +85,6 @@ describe('QueryEditor', () => {
             .first()
             .text()
         ).toEqual('default');
-      });
-    });
-
-    it('should init props correctly', async () => {
-      await act(async () => {
-        const props = setup();
-        const metricsQuery = props.query as CloudWatchMetricsQuery;
-
-        metricsQuery.namespace = null;
-        metricsQuery.metricName = null;
-        metricsQuery.expression = null;
-        metricsQuery.dimensions = null;
-        metricsQuery.region = null;
-        metricsQuery.statistics = null;
-        const wrapper = mount(<MetricsQueryEditor {...props} />);
-        const {
-          query: { namespace, region, metricName, dimensions, statistics, expression },
-        } = wrapper.props();
-        expect(namespace).toEqual('');
-        expect(metricName).toEqual('');
-        expect(expression).toEqual('');
-        expect(region).toEqual('default');
-        expect(statistics).toEqual(['Average']);
-        expect(dimensions).toEqual({});
       });
     });
 

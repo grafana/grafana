@@ -3,6 +3,8 @@ import { DataQuery, SelectableValue, DataSourceJsonData } from '@grafana/data';
 export interface CloudWatchMetricsQuery extends DataQuery {
   queryMode: 'Metrics';
 
+  apiMode: 'Logs' | 'Metrics'; // TEMP: Remove when logs/metrics unification is done
+
   id: string;
   region: string;
   namespace: string;
@@ -35,6 +37,7 @@ export enum CloudWatchLogsQueryStatus {
 export interface CloudWatchLogsQuery extends DataQuery {
   queryMode: 'Logs';
 
+  apiMode: 'Logs' | 'Metrics'; // TEMP: Remove when logs/metrics unification is done
   id: string;
   region: string;
   namespace: string;

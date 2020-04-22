@@ -1,4 +1,4 @@
-# cloud.google.com/go v0.38.0
+# cloud.google.com/go v0.37.4
 cloud.google.com/go/civil
 cloud.google.com/go/compute/metadata
 # github.com/BurntSushi/toml v0.3.1
@@ -429,8 +429,6 @@ golang.org/x/tools/go/internal/gcimporter
 ## explicit
 golang.org/x/xerrors
 golang.org/x/xerrors/internal
-# google.golang.org/api v0.14.0
-## explicit
 # google.golang.org/appengine v1.6.1
 google.golang.org/appengine
 google.golang.org/appengine/internal

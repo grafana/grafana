@@ -70,7 +70,7 @@ export class CloudWatchLanguageProvider extends LanguageProvider {
   }
 
   // Strip syntax chars
-  cleanText = (s: string) => s.trim();
+  cleanText = (s: string) => s.replace(/[()]/g, '').trim();
 
   getSyntax(): Grammar {
     return syntax;
@@ -130,6 +130,37 @@ export class CloudWatchLanguageProvider extends LanguageProvider {
     )[0];
     const isFirstToken = curToken.prev === null || curToken.prev === undefined;
     const prevToken = prevNonWhitespaceToken(curToken);
+    const funcsWithFieldArgs = [
+      'avg',
+      'count',
+      'count_distinct',
+      'earliest',
+      'latest',
+      'sortsFirst',
+      'sortsLast',
+      'max',
+      'min',
+      'pct',
+      'stddev',
+      'ispresent',
+      'fromMillis',
+      'toMillis',
+      'isempty',
+      'isblank',
+      'isValidIp',
+      'isValidIpV4',
+      'isValidIpV6',
+      'isIpInSubnet',
+      'isIpv4InSubnet',
+      'isIpv6InSubnet',
+    ].map(funcName => funcName.toLowerCase());
+
+    if (curToken.content === '(' && prevToken != null) {
+      if (funcsWithFieldArgs.includes(prevToken.content.toLowerCase()) && prevToken.types.includes('function')) {
+        const suggs = await this.getFieldCompletionItems(context.logGroupNames);
+        return suggs;
+      }
+    }
 
     // if (prevToken === null) {
     //   return {

@@ -3,12 +3,12 @@ import React, { memo } from 'react';
 
 // Types
 import { AbsoluteTimeRange, QueryEditorProps } from '@grafana/data';
+import { FormLabel } from '@grafana/ui/src/components/FormLabel/FormLabel';
 import { CloudWatchDatasource } from '../datasource';
 import { CloudWatchLogsQuery, CloudWatchQuery } from '../types';
 import { CloudWatchLogsQueryField } from './LogsQueryField';
 import { useCloudWatchSyntax } from '../useCloudwatchSyntax';
 import { CloudWatchLanguageProvider } from '../language_provider';
-import { FormLabel } from '@grafana/ui';
 import CloudWatchLink from './CloudWatchLink';
 import { css } from 'emotion';
 

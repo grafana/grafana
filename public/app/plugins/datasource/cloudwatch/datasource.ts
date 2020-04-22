@@ -64,7 +64,8 @@ const displayCustomError = (title: string, message: string) =>
   store.dispatch(notifyApp(createErrorNotification(title, message)));
 
 // TODO: Temporary times here, could just change to some fixed number.
-const POLLING_TIMES = [100, 200, 500, 1000, 5000, 15000, 30000, 60000];
+const MAX_ATTEMPTS = 8;
+const POLLING_TIMES = [100, 200, 500, 1000];
 
 export class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery, CloudWatchJsonData> {
   type: any;
@@ -187,9 +188,11 @@ export class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery, CloudWa
         expand((dataFrames, i) => {
           return dataFrames.every(
             dataFrame => dataFrame.meta.custom['Status'] === CloudWatchLogsQueryStatus.Complete
-          ) || i >= POLLING_TIMES.length
+          ) || i >= MAX_ATTEMPTS
             ? empty()
-            : this.makeLogActionRequest('GetQueryResults', queryParams).pipe(delay(POLLING_TIMES[i]));
+            : this.makeLogActionRequest('GetQueryResults', queryParams).pipe(
+                delay(POLLING_TIMES[Math.min(i, POLLING_TIMES.length - 1)])
+              );
         }),
         tap(dataFrames => {
           dataFrames.forEach((dataframe, i) => {

@@ -11,7 +11,6 @@ import (
 	"github.com/aws/aws-sdk-go/service/cloudwatchlogs/cloudwatchlogsiface"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/tsdb"
 	"golang.org/x/sync/errgroup"
 )
@@ -24,19 +23,8 @@ func (e *CloudWatchExecutor) executeLogActions(ctx context.Context, queryContext
 		query := query
 
 		eg.Go(func() error {
-			defer func() {
-				if err := recover(); err != nil {
-					plog.Error("Execute Get Metric Data Query Panic", "error", err, "stack", log.Stack(1))
-					if theErr, ok := err.(error); ok {
-						resultChan <- &tsdb.QueryResult{
-							Error: theErr,
-						}
-					}
-				}
-			}()
-
 			dataframe, err := e.executeLogAction(ectx, queryContext, query)
-			if dataframe == nil {
+			if err != nil {
 				return err
 			}
 

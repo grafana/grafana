@@ -52,7 +52,6 @@ export interface SelectCommonProps<T> {
   value?: SelectValue<T>;
   /** Sets the width to a multiple of 8px. Should only be used with inline forms. Setting width of the container is preferred in other cases.*/
   width?: number;
-  closeMenuOnSelect?: boolean;
   isOptionDisabled?: () => boolean;
 }
 

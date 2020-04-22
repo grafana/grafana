@@ -23,7 +23,6 @@ import { useTheme } from '../../themes';
 import { getSelectStyles } from './getSelectStyles';
 import { cleanValue } from './utils';
 import { SelectBaseProps, SelectValue } from './types';
-import { deprecationWarning } from '@grafana/data';
 
 interface ExtraValuesIndicatorProps {
   maxVisibleValues?: number | undefined;
@@ -209,13 +208,6 @@ export function SelectBase<T>({
     tabSelectsValue,
     value: isMulti ? selectedValue : selectedValue[0],
   };
-
-  // width property is deprecated in favor of size or className
-  let widthClass = className ?? '';
-  if (width && !className) {
-    deprecationWarning('Select', 'width property', 'size or className');
-    widthClass = 'width-' + width;
-  }
 
   if (allowCustomValue) {
     ReactSelectComponent = Creatable;

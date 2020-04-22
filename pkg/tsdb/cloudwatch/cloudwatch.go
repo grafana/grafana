@@ -2,6 +2,7 @@ package cloudwatch
 
 import (
 	"context"
+	"fmt"
 	"regexp"
 	"strconv"
 	"sync"
@@ -10,7 +11,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/cloudwatchlogs"
 	"github.com/aws/aws-sdk-go/service/ec2/ec2iface"
 	"github.com/aws/aws-sdk-go/service/resourcegroupstaggingapi/resourcegroupstaggingapiiface"
-	"github.com/grafana/grafana/pkg/components/null"
+	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
@@ -88,8 +89,8 @@ func init() {
 }
 
 func (e *CloudWatchExecutor) alertQuery(ctx context.Context, logsClient *cloudwatchlogs.CloudWatchLogs, queryContext *tsdb.TsdbQuery) (*cloudwatchlogs.GetQueryResultsOutput, error) {
-	const maxAttempts = 5
-	const pollPeriod = 500 * time.Millisecond
+	const maxAttempts = 8
+	const pollPeriod = 1000 * time.Millisecond
 
 	queryParams := queryContext.Queries[0].Model
 	startQueryOutput, err := e.executeStartQuery(ctx, logsClient, queryParams, queryContext.TimeRange)
@@ -106,12 +107,14 @@ func (e *CloudWatchExecutor) alertQuery(ctx context.Context, logsClient *cloudwa
 	ticker := time.NewTicker(pollPeriod)
 	defer ticker.Stop()
 
-	attemptCount := 0
+	attemptCount := 1
 	for range ticker.C {
 		if res, err := e.executeGetQueryResults(ctx, logsClient, requestParams); err != nil {
 			return nil, err
-		} else if isTerminated(*res.Status) || attemptCount > maxAttempts {
+		} else if isTerminated(*res.Status) {
 			return res, err
+		} else if attemptCount >= maxAttempts {
+			return res, fmt.Errorf("fetching of query results exceeded max number of attempts")
 		}
 
 		attemptCount++
@@ -124,11 +127,17 @@ func (e *CloudWatchExecutor) Query(ctx context.Context, dsInfo *models.DataSourc
 	var result *tsdb.Response
 	e.DataSource = dsInfo
 
+	/*
+		Unlike many other data sources,	with Cloudwatch Logs query requests don't receive the results as the response to the query, but rather
+		an ID is first returned. Following this, a client is expected to send requests along with the ID until the status of the query is complete,
+		receiving (possibly partial) results each time. For queries made via dashboards and Explore, the logic of making these repeated queries is handled on
+		the frontend, but because alerts are executed on the backend the logic needs to be reimplemented here.
+	*/
 	queryParams := queryContext.Queries[0].Model
-	isLogAlertQuery := queryParams.Get("fromAlert").MustBool(false) && queryParams.Get("mode").MustString("") == "Logs"
+	_, fromAlert := queryContext.Headers["FromAlert"]
+	isLogAlertQuery := fromAlert && queryParams.Get("mode").MustString("") == "Logs"
 
 	if isLogAlertQuery {
-		// plog.Info("Executing log alert query...")
 		return e.executeLogAlertQuery(ctx, queryContext)
 	}
 
@@ -175,12 +184,17 @@ func (e *CloudWatchExecutor) executeLogAlertQuery(ctx context.Context, queryCont
 	queryParams.Set("queryId", *result.QueryId)
 
 	// Get Query Results
-	resp, err := e.alertQuery(ctx, logsClient, queryContext)
+	getQueryResultsOutput, err := e.alertQuery(ctx, logsClient, queryContext)
 	if err != nil {
 		return nil, err
 	}
 
-	timeSeriesSlice, err := queryResultsToTimeseries(resp)
+	dataframe, err := queryResultsToDataframe(getQueryResultsOutput)
+	if err != nil {
+		return nil, err
+	}
+
+	dataframeEnc, err := dataframe.MarshalArrow()
 	if err != nil {
 		return nil, err
 	}
@@ -190,51 +204,61 @@ func (e *CloudWatchExecutor) executeLogAlertQuery(ctx context.Context, queryCont
 	}
 
 	response.Results["A"] = &tsdb.QueryResult{
-		RefId:  "A",
-		Series: timeSeriesSlice,
+		RefId:      "A",
+		Dataframes: [][]byte{dataframeEnc},
 	}
 
 	return response, nil
 }
 
-func queryResultsToTimeseries(results *cloudwatchlogs.GetQueryResultsOutput) (tsdb.TimeSeriesSlice, error) {
-	timeColIndex := 0
-	numericFieldIndices := make([]int, 0)
-	for i, col := range results.Results[0] {
-		if *col.Field == "@timestamp" {
-			timeColIndex = i
-		} else if _, err := strconv.ParseFloat(*col.Value, 64); err == nil {
-			numericFieldIndices = append(numericFieldIndices, i)
-		}
-	}
-
-	timeSeriesSlice := make(tsdb.TimeSeriesSlice, len(numericFieldIndices))
-
-	for i := 0; i < len(numericFieldIndices); i++ {
-		timeSeriesSlice[i] = &tsdb.TimeSeries{
-			Points: make([]tsdb.TimePoint, 0),
-		}
-	}
-
-	for _, row := range results.Results {
-		timePoint, err := time.Parse(CLOUDWATCH_TS_FORMAT, *row[timeColIndex].Value)
-
-		if err != nil {
-			return nil, err
-		}
-
-		for i, j := range numericFieldIndices {
-			numPoint, err := strconv.ParseFloat(*row[j].Value, 64)
-			if err != nil {
-				return nil, err
+func queryResultsToDataframe(results *cloudwatchlogs.GetQueryResultsOutput) (*data.Frame, error) {
+	rowCount := len(results.Results)
+	fieldValues := make(map[string]interface{})
+	for i, row := range results.Results {
+		for _, resultField := range row {
+			// Strip @ptr field from results as it's not needed
+			if *resultField.Field == "@ptr" {
+				continue
 			}
-			timeSeriesSlice[i].Points = append(timeSeriesSlice[i].Points,
-				tsdb.NewTimePoint(null.FloatFrom(numPoint), float64(timePoint.Unix()*1000)),
-			)
+
+			if _, exists := fieldValues[*resultField.Field]; !exists {
+				if _, err := time.Parse(CLOUDWATCH_TS_FORMAT, *resultField.Value); err == nil {
+					fieldValues[*resultField.Field] = make([]*time.Time, rowCount)
+				} else if _, err := strconv.ParseFloat(*resultField.Value, 64); err == nil {
+					fieldValues[*resultField.Field] = make([]*float64, rowCount)
+				} else {
+					continue
+				}
+			}
+
+			if timeField, ok := fieldValues[*resultField.Field].([]*time.Time); ok {
+				parsedTime, err := time.Parse(CLOUDWATCH_TS_FORMAT, *resultField.Value)
+				if err != nil {
+					return nil, err
+				}
+
+				timeField[i] = &parsedTime
+			} else if numericField, ok := fieldValues[*resultField.Field].([]*float64); ok {
+				parsedFloat, err := strconv.ParseFloat(*resultField.Value, 64)
+				if err != nil {
+					return nil, err
+				}
+				numericField[i] = &parsedFloat
+			}
 		}
 	}
 
-	return timeSeriesSlice, nil
+	newFields := make([]*data.Field, 0)
+	for fieldName, vals := range fieldValues {
+		newFields = append(newFields, data.NewField(fieldName, nil, vals))
+
+		if fieldName == "@timestamp" {
+			newFields[len(newFields)-1].SetConfig(&data.FieldConfig{Title: "Time"})
+		}
+	}
+
+	frame := data.NewFrame("CloudWatchLogsResponse", newFields...)
+	return frame, nil
 }
 
 func isTerminated(queryStatus string) bool {

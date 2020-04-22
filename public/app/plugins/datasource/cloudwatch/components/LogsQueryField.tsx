@@ -5,7 +5,7 @@ import intersection from 'lodash/intersection';
 import {
   QueryField,
   SlatePrism,
-  FormField,
+  LegacyForms,
   TypeaheadInput,
   TypeaheadOutput,
   BracesPlugin,
@@ -156,8 +156,6 @@ export class CloudWatchLogsQueryField extends React.PureComponent<CloudWatchLogs
         onRunQuery();
       }
     }
-
-    query.expression;
   };
 
   // loadAsyncOptions = async () => {
@@ -245,9 +243,8 @@ export class CloudWatchLogsQueryField extends React.PureComponent<CloudWatchLogs
       (token: Token) => token.types.includes('query-command') && token.content.toLowerCase() === 'stats'
     );
 
-    console.log(queryUsesStatsCommand, exploreMode);
+    // TEMP: Remove when logs/metrics unification is complete
     if (queryUsesStatsCommand && exploreMode === ExploreMode.Logs) {
-      console.log('setting state');
       this.setState({
         hint: {
           message: 'You are trying to run a stats query in Logs mode. ',
@@ -262,7 +259,16 @@ export class CloudWatchLogsQueryField extends React.PureComponent<CloudWatchLogs
   };
 
   switchToMetrics = () => {
-    const { exploreId } = this.props;
+    const { query, onChange, exploreId } = this.props;
+
+    if (onChange) {
+      const nextQuery: CloudWatchLogsQuery = {
+        ...(query as CloudWatchLogsQuery),
+        apiMode: 'Logs',
+      };
+      onChange(nextQuery);
+    }
+
     dispatch(changeModeAction({ exploreId, mode: ExploreMode.Metrics }));
   };
 
@@ -315,7 +321,7 @@ export class CloudWatchLogsQueryField extends React.PureComponent<CloudWatchLogs
     return (
       <>
         <div className={`gf-form gf-form--grow flex-grow-1 ${rowGap}`}>
-          <FormField
+          <LegacyForms.FormField
             label="Region"
             labelWidth={4}
             inputEl={
@@ -325,12 +331,13 @@ export class CloudWatchLogsQueryField extends React.PureComponent<CloudWatchLogs
                 onChange={v => this.setSelectedRegion(v)}
                 width={9}
                 placeholder="Choose Region"
+                menuPlacement="bottom"
                 maxMenuHeight={500}
               />
             }
           />
 
-          <FormField
+          <LegacyForms.FormField
             label="Log Groups"
             labelWidth={6}
             className="flex-grow-1"
@@ -347,6 +354,8 @@ export class CloudWatchLogsQueryField extends React.PureComponent<CloudWatchLogs
                 invalid={invalidLogGroups}
                 isOptionDisabled={() => selectedLogGroups.length >= MAX_LOG_GROUPS}
                 placeholder="Choose Log Groups"
+                maxVisibleValues={4}
+                menuPlacement="bottom"
                 noOptionsMessage="No log groups available"
                 isLoading={loadingLogGroups}
                 onOpenMenu={this.onOpenLogGroupMenu}

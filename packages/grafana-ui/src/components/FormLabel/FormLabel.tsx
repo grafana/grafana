@@ -10,7 +10,7 @@ interface Props {
   isFocused?: boolean;
   isInvalid?: boolean;
   tooltip?: PopoverContent;
-  width?: number | string;
+  width?: number | 'auto';
 }
 
 export const FormLabel: FunctionComponent<Props> = ({
