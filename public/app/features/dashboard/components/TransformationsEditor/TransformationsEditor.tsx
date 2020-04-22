@@ -52,6 +52,7 @@ export class TransformationsEditor extends React.PureComponent<Props> {
 
     return (
       <ValuePicker
+        size="md"
         variant="secondary"
         label="Add transformation"
         options={availableTransformers}
