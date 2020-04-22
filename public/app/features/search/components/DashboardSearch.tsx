@@ -91,6 +91,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       flex-direction: column;
       padding: ${theme.spacing.xl};
       height: 100%;
+      max-width: 1400px;
     `,
   };
 });
