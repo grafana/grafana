@@ -2,7 +2,7 @@
 import _ from 'lodash';
 
 // Services & Utils
-import { DataQuery, ExploreMode, dateTime, AppEvents, urlUtil } from '@grafana/data';
+import { DataQuery, ExploreMode, AppEvents, urlUtil, dateTimeFormat } from '@grafana/data';
 import appEvents from 'app/core/app_events';
 import store from 'app/core/store';
 import { serializeStateToUrlParam, SortOrder } from './explore';
@@ -226,7 +226,9 @@ export const createRetentionPeriodBoundary = (days: number, isLastTs: boolean) =
 };
 
 export function createDateStringFromTs(ts: number) {
-  return dateTime(ts).format('MMMM D');
+  return dateTimeFormat(ts, {
+    format: 'MMMM D',
+  });
 }
 
 export function getQueryDisplayText(query: DataQuery): string {

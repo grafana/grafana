@@ -9,7 +9,7 @@ import { feedToDataFrame } from './utils';
 import { loadRSSFeed } from './rss';
 
 // Types
-import { PanelProps, DataFrameView, dateTime, GrafanaTheme, textUtil } from '@grafana/data';
+import { PanelProps, DataFrameView, dateTimeFormat, GrafanaTheme, textUtil } from '@grafana/data';
 import { NewsOptions, NewsItem } from './types';
 import { DEFAULT_FEED_URL, PROXY_PREFIX } from './constants';
 import { css } from 'emotion';
@@ -79,7 +79,7 @@ export class NewsPanel extends PureComponent<Props, State> {
             <div key={index} className={styles.item}>
               <a href={item.link} target="_blank">
                 <div className={styles.title}>{item.title}</div>
-                <div className={styles.date}>{dateTime(item.date).format('MMM DD')} </div>
+                <div className={styles.date}>{dateTimeFormat(item.date, { format: 'MMM DD' })} </div>
               </a>
               <div className={styles.content} dangerouslySetInnerHTML={{ __html: textUtil.sanitize(item.content) }} />
             </div>

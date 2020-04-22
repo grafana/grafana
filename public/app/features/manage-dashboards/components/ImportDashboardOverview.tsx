@@ -1,5 +1,5 @@
 import React, { PureComponent } from 'react';
-import { dateTime } from '@grafana/data';
+import { dateTimeFormat } from '@grafana/data';
 import { Forms, Form } from '@grafana/ui';
 import { connect, MapDispatchToProps, MapStateToProps } from 'react-redux';
 import { ImportDashboardForm } from './ImportDashboardForm';
@@ -73,7 +73,7 @@ class ImportDashboardOverviewUnConnected extends PureComponent<Props, State> {
                 </tr>
                 <tr>
                   <td>Updated on</td>
-                  <td>{dateTime(meta.updatedAt).format('YYYY-MM-DD HH:mm:ss')}</td>
+                  <td>{dateTimeFormat(meta.updatedAt)}</td>
                 </tr>
               </tbody>
             </table>

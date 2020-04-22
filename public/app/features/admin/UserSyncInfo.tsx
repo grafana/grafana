@@ -1,5 +1,5 @@
 import React, { PureComponent } from 'react';
-import { dateTime } from '@grafana/data';
+import { dateTimeFormat } from '@grafana/data';
 import { LdapUserSyncInfo } from 'app/types';
 import { Icon } from '@grafana/ui';
 
@@ -13,7 +13,7 @@ interface State {
   isSyncing: boolean;
 }
 
-const syncTimeFormat = 'dddd YYYY-MM-DD HH:mm zz';
+const format = 'dddd YYYY-MM-DD HH:mm zz';
 
 export class UserSyncInfo extends PureComponent<Props, State> {
   state = {
@@ -35,9 +35,9 @@ export class UserSyncInfo extends PureComponent<Props, State> {
   render() {
     const { syncInfo, disableSync } = this.props;
     const { isSyncing } = this.state;
-    const nextSyncTime = syncInfo.nextSync ? dateTime(syncInfo.nextSync).format(syncTimeFormat) : '';
+    const nextSyncTime = syncInfo.nextSync ? dateTimeFormat(syncInfo.nextSync, { format }) : '';
     const prevSyncSuccessful = syncInfo && syncInfo.prevSync;
-    const prevSyncTime = prevSyncSuccessful ? dateTime(syncInfo.prevSync).format(syncTimeFormat) : '';
+    const prevSyncTime = prevSyncSuccessful ? dateTimeFormat(syncInfo.prevSync, { format }) : '';
     const isDisabled = isSyncing || disableSync;
 
     return (

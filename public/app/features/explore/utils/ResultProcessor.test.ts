@@ -1,16 +1,6 @@
-jest.mock('@grafana/data/src/datetime/moment_wrapper', () => ({
-  dateTime: (ts: any) => {
-    return {
-      valueOf: () => ts,
-      fromNow: () => 'fromNow() jest mocked',
-      format: (fmt: string) => 'format() jest mocked',
-    };
-  },
-  toUtc: (ts: any) => {
-    return {
-      format: (fmt: string) => 'format() jest mocked',
-    };
-  },
+jest.mock('@grafana/data/src/datetime/formatter', () => ({
+  dateTimeFormat: () => 'format() jest mocked',
+  dateTimeFormatTimeAgo: (ts: any) => 'fromNow() jest mocked',
 }));
 
 import { ResultProcessor } from './ResultProcessor';
