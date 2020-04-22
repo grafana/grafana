@@ -9,9 +9,8 @@ import { RichHistoryQuery, ExploreId } from 'app/types/explore';
 import {
   copyStringToClipboard,
   createUrlFromRichHistory,
-  getQueryDisplayText,
-  isParsable,
   createDataQuery,
+  createQueryText,
 } from 'app/core/utils/richHistory';
 import appEvents from 'app/core/app_events';
 import { StoreState } from 'app/types';
@@ -161,40 +160,24 @@ export function RichHistoryCard(props: Props) {
   const theme = useTheme();
   const styles = getStyles(theme, isRemoved);
 
-  /* query DatasourceInstance is necessary because we use getQueryDisplayText method
-   * to format query text
-   */
   const getQueryDsInstance = async () => {
     const ds = await getDataSourceSrv().get(query.datasourceName);
     setQueryDsInstance(ds);
   };
 
   const onRunQuery = async () => {
-    const parsedQueries = query.queries.map((q, i) => createDataQuery(query, q, i));
+    const queriesToRun = query.queries.map((q, i) => createDataQuery(query, q, i));
     if (query.datasourceName !== datasourceInstance?.name) {
       await changeDatasource(exploreId, query.datasourceName);
-      console.log(parsedQueries);
-      setQueries(exploreId, parsedQueries);
+      setQueries(exploreId, queriesToRun);
     } else {
-      console.log(parsedQueries);
-      setQueries(exploreId, parsedQueries);
+      setQueries(exploreId, queriesToRun);
     }
-  };
-
-  const createQueryText = (q: string) => {
-    if (isParsable(q)) {
-      const parsedQuery = JSON.parse(q);
-      if (queryDsInstance?.getQueryDisplayText) {
-        return queryDsInstance.getQueryDisplayText(parsedQuery);
-      }
-      return getQueryDisplayText(parsedQuery);
-    }
-    return q;
   };
 
   const onCopyQuery = () => {
-    const queries = query.queries.map(q => createQueryText(q)).join('\n');
-    copyStringToClipboard(queries);
+    const queriesToCopy = query.queries.map(q => createQueryText(q, queryDsInstance)).join('\n');
+    copyStringToClipboard(queriesToCopy);
     appEvents.emit(AppEvents.alertSuccess, ['Query copied to clipboard']);
   };
 
@@ -275,10 +258,10 @@ export function RichHistoryCard(props: Props) {
       <div className={cx(styles.cardRow)}>
         <div className={styles.queryContainer}>
           {query.queries.map((q, i) => {
-            const queryText = createQueryText(q);
+            const queryText = createQueryText(q, queryDsInstance);
             return (
               <div aria-label="Query text" key={`${q}-${i}`} className={styles.queryRow}>
-                {queryText.length > 1 && queryText}
+                {queryText.length > 0 && queryText}
               </div>
             );
           })}

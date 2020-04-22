@@ -2,7 +2,7 @@ import React from 'react';
 import { shallow } from 'enzyme';
 import { RichHistoryCard, Props } from './RichHistoryCard';
 import { ExploreId } from '../../../types/explore';
-import { DataSourceApi } from '@grafana/data';
+import { DataSourceApi, DataQuery } from '@grafana/data';
 
 const setup = (propOverrides?: Partial<Props>) => {
   const props: Props = {
@@ -12,7 +12,11 @@ const setup = (propOverrides?: Partial<Props>) => {
       datasourceId: 'datasource 1',
       starred: false,
       comment: '',
-      queries: ['query1', 'query2', 'query3'],
+      queries: [
+        { expr: 'query1', refId: 'A' } as DataQuery,
+        { expr: 'query2', refId: 'B' } as DataQuery,
+        { expr: 'query3', refId: 'C' } as DataQuery,
+      ],
       sessionName: '',
     },
     dsImg: '/app/img',
@@ -36,7 +40,11 @@ const starredQueryWithComment = {
   datasourceId: 'datasource 1',
   starred: true,
   comment: 'test comment',
-  queries: ['query1', 'query2', 'query3'],
+  queries: [
+    { query: 'query1', refId: 'A' },
+    { query: 'query2', refId: 'B' },
+    { query: 'query3', refId: 'C' },
+  ],
   sessionName: '',
 };
 
@@ -49,19 +57,19 @@ describe('RichHistoryCard', () => {
         .find({ 'aria-label': 'Query text' })
         .at(0)
         .text()
-    ).toEqual('query1');
+    ).toEqual('{"expr":"query1"}');
     expect(
       wrapper
         .find({ 'aria-label': 'Query text' })
         .at(1)
         .text()
-    ).toEqual('query2');
+    ).toEqual('{"expr":"query2"}');
     expect(
       wrapper
         .find({ 'aria-label': 'Query text' })
         .at(2)
         .text()
-    ).toEqual('query3');
+    ).toEqual('{"expr":"query3"}');
   });
   it('should render data source icon', () => {
     const wrapper = setup();
