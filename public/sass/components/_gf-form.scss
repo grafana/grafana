@@ -196,6 +196,7 @@ $input-border: 1px solid $input-border-color;
     white-space: pre-wrap;
     padding: 6px $space-sm;
     min-height: $input-height;
+    height: auto;
   }
 
   // Unstyle the caret on `<select>`s in IE10+.

@@ -32,7 +32,7 @@ export const removePanel = (dashboard: DashboardModel, panel: PanelModel, ask: b
       title: 'Remove Panel',
       text: 'Are you sure you want to remove this panel?',
       text2: text2,
-      icon: 'fa-trash',
+      icon: 'trash-alt',
       confirmText: confirmText,
       yesText: 'Remove',
       onConfirm: () => removePanel(dashboard, panel, false),

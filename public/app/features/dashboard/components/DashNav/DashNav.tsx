@@ -1,5 +1,5 @@
 // Libaries
-import React, { PureComponent, FC } from 'react';
+import React, { FC, PureComponent } from 'react';
 import { connect } from 'react-redux';
 import { css } from 'emotion';
 // Utils & Services
@@ -8,7 +8,8 @@ import { PlaylistSrv } from 'app/features/playlist/playlist_srv';
 // Components
 import { DashNavButton } from './DashNavButton';
 import { DashNavTimeControls } from './DashNavTimeControls';
-import { ModalsController, Icon } from '@grafana/ui';
+import { Icon, ModalsController } from '@grafana/ui';
+import { textUtil } from '@grafana/data';
 import { BackButton } from 'app/core/components/BackButton/BackButton';
 // State
 import { updateLocation } from 'app/core/actions';
@@ -17,7 +18,6 @@ import { DashboardModel } from '../../state';
 import { CoreEvents, StoreState } from 'app/types';
 import { ShareModal } from 'app/features/dashboard/components/ShareModal';
 import { SaveDashboardModalProxy } from 'app/features/dashboard/components/SaveDashboard/SaveDashboardModalProxy';
-import { sanitizeUrl } from 'app/core/utils/text';
 
 export interface OwnProps {
   dashboard: DashboardModel;
@@ -47,13 +47,17 @@ class DashNav extends PureComponent<Props> {
     this.playlistSrv = this.props.$injector.get('playlistSrv');
   }
 
-  onDahboardNameClick = () => {
-    appEvents.emit(CoreEvents.showDashSearch);
+  onDashboardNameClick = () => {
+    this.props.updateLocation({
+      query: { search: 'open' },
+      partial: true,
+    });
   };
 
   onFolderNameClick = () => {
-    appEvents.emit(CoreEvents.showDashSearch, {
-      query: 'folder:current',
+    this.props.updateLocation({
+      query: { search: 'open', folder: 'current' },
+      partial: true,
     });
   };
 
@@ -126,7 +130,7 @@ class DashNav extends PureComponent<Props> {
                 <Icon name="angle-right" className={iconClassName} />
               </>
             )}
-            <a onClick={this.onDahboardNameClick}>
+            <a onClick={this.onDashboardNameClick}>
               {dashboard.title} <Icon name="angle-down" className={iconClassName} />
             </a>
           </div>
@@ -244,8 +248,8 @@ class DashNav extends PureComponent<Props> {
             <DashNavButton
               tooltip="Open original dashboard"
               classSuffix="snapshot-origin"
+              href={textUtil.sanitizeUrl(snapshotUrl)}
               icon="link"
-              href={sanitizeUrl(snapshotUrl)}
             />
           )}
 

@@ -2,8 +2,8 @@
 import _ from 'lodash';
 
 // Services & Utils
-import { DataQuery, DataSourceApi, ExploreMode, dateTime } from '@grafana/data';
-import { renderUrl } from 'app/core/utils/url';
+import { DataQuery, DataSourceApi, ExploreMode, dateTime, AppEvents, urlUtil } from '@grafana/data';
+import appEvents from 'app/core/app_events';
 import store from 'app/core/store';
 import { serializeStateToUrlParam, SortOrder } from './explore';
 import { getExploreDatasources } from '../../features/explore/state/selectors';
@@ -67,14 +67,12 @@ export function addToRichHistory(
       { queries: newQueriesToSave, ts, datasourceId, datasourceName, starred, comment, sessionName },
       ...queriesToKeep,
     ];
-
-    /* Combine all queries of a datasource type into one rich history */
-    const isSaved = store.setObject(RICH_HISTORY_KEY, updatedHistory);
-
-    /* If updatedHistory is succesfully saved, return it. Otherwise return not updated richHistory.  */
-    if (isSaved) {
+    
+    try {
+      store.setObject(RICH_HISTORY_KEY, updatedHistory);
       return updatedHistory;
-    } else {
+    } catch (error) {
+      appEvents.emit(AppEvents.alertError, [error]);
       return richHistory;
     }
   }
@@ -91,7 +89,7 @@ export function deleteAllFromRichHistory() {
 }
 
 export function updateStarredInRichHistory(richHistory: RichHistoryQuery[], ts: number) {
-  const updatedQueries = richHistory.map(query => {
+  const updatedHistory = richHistory.map(query => {
     /* Timestamps are currently unique - we can use them to identify specific queries */
     if (query.ts === ts) {
       const isStarred = query.starred;
@@ -101,8 +99,13 @@ export function updateStarredInRichHistory(richHistory: RichHistoryQuery[], ts: 
     return query;
   });
 
-  store.setObject(RICH_HISTORY_KEY, updatedQueries);
-  return updatedQueries;
+  try {
+    store.setObject(RICH_HISTORY_KEY, updatedHistory);
+    return updatedHistory;
+  } catch (error) {
+    appEvents.emit(AppEvents.alertError, [error]);
+    return richHistory;
+  }
 }
 
 export function updateCommentInRichHistory(
@@ -110,7 +113,7 @@ export function updateCommentInRichHistory(
   ts: number,
   newComment: string | undefined
 ) {
-  const updatedQueries = richHistory.map(query => {
+  const updatedHistory = richHistory.map(query => {
     if (query.ts === ts) {
       const updatedQuery = Object.assign({}, query, { comment: newComment });
       return updatedQuery;
@@ -118,14 +121,24 @@ export function updateCommentInRichHistory(
     return query;
   });
 
-  store.setObject(RICH_HISTORY_KEY, updatedQueries);
-  return updatedQueries;
+  try {
+    store.setObject(RICH_HISTORY_KEY, updatedHistory);
+    return updatedHistory;
+  } catch (error) {
+    appEvents.emit(AppEvents.alertError, [error]);
+    return richHistory;
+  }
 }
 
 export function deleteQueryInRichHistory(richHistory: RichHistoryQuery[], ts: number) {
-  const updatedQueries = richHistory.filter(query => query.ts !== ts);
-  store.setObject(RICH_HISTORY_KEY, updatedQueries);
-  return updatedQueries;
+  const updatedHistory = richHistory.filter(query => query.ts !== ts);
+  try {
+    store.setObject(RICH_HISTORY_KEY, updatedHistory);
+    return updatedHistory;
+  } catch (error) {
+    appEvents.emit(AppEvents.alertError, [error]);
+    return richHistory;
+  }
 }
 
 export const sortQueries = (array: RichHistoryQuery[], sortOrder: SortOrder) => {
@@ -185,7 +198,7 @@ export const createUrlFromRichHistory = (query: RichHistoryQuery) => {
 
   const serializedState = serializeStateToUrlParam(exploreState, true);
   const baseUrl = /.*(?=\/explore)/.exec(`${window.location.href}`)[0];
-  const url = renderUrl(`${baseUrl}/explore`, { left: serializedState });
+  const url = urlUtil.renderUrl(`${baseUrl}/explore`, { left: serializedState });
   return url;
 };
 

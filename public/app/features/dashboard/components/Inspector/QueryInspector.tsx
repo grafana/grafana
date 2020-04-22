@@ -223,6 +223,7 @@ export class QueryInspector extends PureComponent<Props, State> {
               </Button>
             </CopyToClipboard>
           )}
+          <div className="flex-grow-1" />
         </div>
         <div className={styles.contentQueryInspector}>
           {isLoading && <LoadingPlaceholder text="Loading query inspector..." />}

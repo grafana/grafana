@@ -34,7 +34,6 @@ import { Cascader } from '@grafana/ui';
 |  [onBlur](#onblur-property) |  | <code>() =&gt; void</code> |  |
 |  [onBlurCascade](#onblurcascade-property) |  | <code>() =&gt; void</code> |  |
 |  [onChange](#onchange-property) |  | <code>(value: string[], selectedOptions: CascaderOption[]) =&gt; void</code> |  |
-|  [onClick](#onclick-property) |  | <code>() =&gt; void</code> |  |
 |  [onCreateOption](#oncreateoption-property) |  | <code>(value: string) =&gt; void</code> |  |
 |  [onInputKeyDown](#oninputkeydown-property) |  | <code>(e: React.KeyboardEvent&lt;HTMLInputElement&gt;) =&gt; void</code> |  |
 |  [onSelect](#onselect-property) |  | <code>(obj: SelectableValue&lt;string[]&gt;) =&gt; void</code> |  |
@@ -91,14 +90,6 @@ onBlurCascade: () => void;
 
 ```typescript
 onChange: (value: string[], selectedOptions: CascaderOption[]) => void;
-```
-
-### onClick property
-
-<b>Signature</b>
-
-```typescript
-onClick: () => void;
 ```
 
 ### onCreateOption property
