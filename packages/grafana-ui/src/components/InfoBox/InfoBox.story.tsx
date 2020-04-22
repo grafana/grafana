@@ -1,9 +1,15 @@
 import React from 'react';
-import { storiesOf } from '@storybook/react';
 import { number } from '@storybook/addon-knobs';
 import { InfoBox } from './InfoBox';
 
-const InfoBoxStories = storiesOf('General/InfoBox', module);
+export default {
+  title: 'General/InfoBox',
+  component: InfoBox,
+  decorators: [],
+  parameters: {
+    docs: {},
+  },
+};
 
 const getKnobs = () => {
   const CONTAINER_GROUP = 'Container options';
@@ -23,7 +29,7 @@ const getKnobs = () => {
   return { containerWidth };
 };
 
-InfoBoxStories.add('default', () => {
+export const basic = () => {
   const { containerWidth } = getKnobs();
 
   return (
@@ -50,4 +56,4 @@ InfoBoxStories.add('default', () => {
       </InfoBox>
     </div>
   );
-});
+};
