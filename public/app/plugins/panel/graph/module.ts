@@ -247,7 +247,7 @@ class GraphCtrl extends MetricsPanelCtrl {
           };
           const range = getDataTimeRange(data);
           if (range) {
-            this.dataWarning.actionText = 'Zoom to data time range';
+            this.dataWarning.actionText = 'zoom to data';
             this.dataWarning.action = () => {
               getLocationSrv().update({
                 partial: true,
