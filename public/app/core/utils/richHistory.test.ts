@@ -5,13 +5,12 @@ import {
   mapNumbertoTimeInSlider,
   createDateStringFromTs,
   createQueryHeading,
-  createDataQuery,
   deleteAllFromRichHistory,
   deleteQueryInRichHistory,
 } from './richHistory';
 import store from 'app/core/store';
 import { SortOrder } from './explore';
-import { dateTime } from '@grafana/data';
+import { dateTime, DataQuery } from '@grafana/data';
 
 const mock: any = {
   history: [
@@ -19,7 +18,7 @@ const mock: any = {
       comment: '',
       datasourceId: 'datasource historyId',
       datasourceName: 'datasource history name',
-      queries: ['query1', 'query2'],
+      queries: ['{"expr": "query1"}', '{"expr": "query2"}'],
       sessionName: '',
       starred: true,
       ts: 1,
@@ -28,7 +27,7 @@ const mock: any = {
   comment: '',
   datasourceId: 'datasourceId',
   datasourceName: 'datasourceName',
-  queries: ['{"expr": "query3"}'],
+  queries: [{ expr: 'query3', refId: 'B' }],
   sessionName: '',
   starred: false,
 };
@@ -46,7 +45,7 @@ describe('addToRichHistory', () => {
       comment: mock.comment,
       datasourceId: mock.datasourceId,
       datasourceName: mock.datasourceName,
-      queries: mock.queries,
+      queries: mock.queries.map((q: DataQuery) => JSON.stringify(q)),
       sessionName: mock.sessionName,
       starred: mock.starred,
       ts: 2,
@@ -90,7 +89,7 @@ describe('addToRichHistory', () => {
       mock.history,
       mock.history[0].datasourceId,
       mock.history[0].datasourceName,
-      mock.history[0].queries,
+      [{ expr: 'query1', refId: 'A' } as DataQuery, { expr: 'query2', refId: 'B' } as DataQuery],
       mock.starred,
       mock.comment,
       mock.sessionName
@@ -104,7 +103,7 @@ describe('addToRichHistory', () => {
       mock.history,
       mock.history[0].datasourceId,
       mock.history[0].datasourceName,
-      mock.history[0].queries,
+      [{ expr: 'query1', refId: 'A' } as DataQuery, { expr: 'query2', refId: 'B' } as DataQuery],
       mock.starred,
       mock.comment,
       mock.sessionName
@@ -173,12 +172,5 @@ describe('createQueryHeading', () => {
   it('should correctly create heading for queries when sort order is datasourceAZ ', () => {
     const heading = createQueryHeading(mock.history[0], SortOrder.DatasourceAZ);
     expect(heading).toEqual(mock.history[0].datasourceName);
-  });
-});
-
-describe('createDataQuery', () => {
-  it('should correctly create data query from rich history query', () => {
-    const dataQuery = createDataQuery(mock.history[0], mock.queries[0], 0);
-    expect(dataQuery).toEqual({ datasource: 'datasource history name', expr: 'query3', refId: 'A' });
   });
 });
