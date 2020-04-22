@@ -18,41 +18,6 @@ import (
 	"golang.org/x/crypto/openpgp/clearsign"
 )
 
-// Soon we can fetch keys from:
-//  https://grafana.com/api/plugins/ci/keys
-// var defaultPublicKey = `-----BEGIN PGP PUBLIC KEY BLOCK-----
-// Version: OpenPGP.js v4.10.1
-// Comment: https://openpgpjs.org
-
-// xpMEXpTXXxMFK4EEACMEIwQBiOUQhvGbDLvndE0fEXaR0908wXzPGFpf0P0Z
-// HJ06tsq+0higIYHp7WTNJVEZtcwoYLcPRGaa9OQqbUU63BEyZdgAkPTz3RFd
-// 5+TkDWZizDcaVFhzbDd500yTwexrpIrdInwC/jrgs7Zy/15h8KA59XXUkdmT
-// YB6TR+OA9RKME+dCJozNGUdyYWZhbmEgPGVuZ0BncmFmYW5hLmNvbT7CvAQQ
-// EwoAIAUCXpTXXwYLCQcIAwIEFQgKAgQWAgEAAhkBAhsDAh4BAAoJEH5NDGpw
-// iGbnaWoCCQGQ3SQnCkRWrG6XrMkXOKfDTX2ow9fuoErN46BeKmLM4f1EkDZQ
-// Tpq3SE8+My8B5BIH3SOcBeKzi3S57JHGBdFA+wIJAYWMrJNIvw8GeXne+oUo
-// NzzACdvfqXAZEp/HFMQhCKfEoWGJE8d2YmwY2+3GufVRTI5lQnZOHLE8L/Vc
-// 1S5MXESjzpcEXpTXXxIFK4EEACMEIwQBtHX/SD5Qm3v4V92qpaIZQgtTX0sT
-// cFPjYWAHqsQ1iENrYN/vg1wU3ADlYATvydOQYvkTyT/tbDvx2Fse8PL84MQA
-// YKKQ6AJ3gLVvmeouZdU03YoV4MYaT8KbnJUkZQZkqdz2riOlySNI9CG3oYmv
-// omjUAtzgAgnCcurfGLZkkMxlmY8DAQoJwqQEGBMKAAkFAl6U118CGwwACgkQ
-// fk0ManCIZuc0jAIJAVw2xdLr4ZQqPUhubrUyFcqlWoW8dQoQagwO8s8ubmby
-// KuLA9FWJkfuuRQr+O9gHkDVCez3aism7zmJBqIOi38aNAgjJ3bo6leSS2jR/
-// x5NqiKVi83tiXDPncDQYPymOnMhW0l7CVA7wj75HrFvvlRI/4MArlbsZ2tBn
-// N1c5v9v/4h6qeA==
-// =DNbR
-// -----END PGP PUBLIC KEY BLOCK-----
-// `
-
-// var publicKeys = []ManifestKeys{
-// 	{
-// 		KeyID:     "7e4d0c6a708866e7",
-// 		PublicKey: defaultPublicKey,
-// 		UpdatedAt: time.Now().Unix(),
-// 		Since:     time.Now().Unix(),
-// 	},
-// }
-
 // pluginManifest holds details for the file manifest
 type pluginManifest struct {
 	Plugin  string            `json:"plugin"`
@@ -62,6 +27,8 @@ type pluginManifest struct {
 	Files   map[string]string `json:"files"`
 }
 
+// ManifestKeys is the database representation of public keys
+// used to verify plugin manifests.
 type ManifestKeys struct {
 	ID        int64  `xorm:"id autoincr"`
 	KeyID     string `xorm:"key_id"`
@@ -88,6 +55,8 @@ func newManifestVerifier(sqlstore *sqlstore.SqlStore) *manifestVerifier {
 	return &manifestVerifier{sqlstore: sqlstore}
 }
 
+// getPublicKey loads public keys from the database.
+// Soon we can updated keys from https://grafana.com/api/plugins/ci/keys
 func (pmv *manifestVerifier) getPublicKey(keyID string) (string, error) {
 	pmv.lock.Lock()
 	defer pmv.lock.Unlock()
