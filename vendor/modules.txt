@@ -176,7 +176,7 @@ github.com/gosimple/slug
 ## explicit
 github.com/grafana/grafana-plugin-model/go/datasource
 github.com/grafana/grafana-plugin-model/go/renderer
-# github.com/grafana/grafana-plugin-sdk-go v0.42.0 => /home/kbrandt/go/github.com/grafana/grafana-plugin-sdk-go
+# github.com/grafana/grafana-plugin-sdk-go v0.53.1-0.20200422182341-0b84b094c676
 ## explicit
 github.com/grafana/grafana-plugin-sdk-go/backend
 github.com/grafana/grafana-plugin-sdk-go/backend/grpcplugin
@@ -530,4 +530,3 @@ xorm.io/core
 # xorm.io/xorm v0.8.1
 ## explicit
 xorm.io/xorm
-# github.com/grafana/grafana-plugin-sdk-go => /home/kbrandt/go/github.com/grafana/grafana-plugin-sdk-go
