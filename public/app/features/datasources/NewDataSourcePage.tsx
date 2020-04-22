@@ -2,7 +2,7 @@ import React, { FC, PureComponent } from 'react';
 import classNames from 'classnames';
 import { connect } from 'react-redux';
 import { hot } from 'react-hot-loader';
-import { DataSourcePluginMeta, NavModel, SigningStatus } from '@grafana/data';
+import { DataSourcePluginMeta, NavModel } from '@grafana/data';
 import { List, LinkButton, Button } from '@grafana/ui';
 import { e2e } from '@grafana/e2e';
 
@@ -12,6 +12,7 @@ import { addDataSource, loadDataSourcePlugins } from './state/actions';
 import { getDataSourcePlugins } from './state/selectors';
 import { FilterInput } from 'app/core/components/FilterInput/FilterInput';
 import { setDataSourceTypeSearchQuery } from './state/reducers';
+import { PluginSignatureBadge } from '../plugins/PluginSignatureBadge';
 
 export interface Props {
   navModel: NavModel;
@@ -134,7 +135,7 @@ const DataSourceTypeCard: FC<DataSourceTypeCardProps> = props => {
       <div className="add-data-source-item-text-wrapper">
         <span className="add-data-source-item-text">{plugin.name}</span>
         {plugin.info.description && <span className="add-data-source-item-desc">{plugin.info.description}</span>}
-        {!isPhantom && plugin.signature !== SigningStatus.internal && <SigningStatusInfo {...props} />}
+        {!isPhantom && <PluginSignatureBadge status={plugin.signature} />}
       </div>
       <div className="add-data-source-item-actions">
         {learnMoreLink && (
@@ -152,17 +153,6 @@ const DataSourceTypeCard: FC<DataSourceTypeCardProps> = props => {
         {!isPhantom && <Button>Select</Button>}
       </div>
     </div>
-  );
-};
-
-const SigningStatusInfo: FC<DataSourceTypeCardProps> = props => {
-  const { plugin } = props;
-  // TODO: make this look nicer... and should eventually be able to reuse it in the datasource page
-  return (
-    <>
-      <span className="add-data-source-item-tag">{plugin.signature}</span>
-      <span className="add-data-source-item-tag">{plugin.info.version}</span>
-    </>
   );
 };
 

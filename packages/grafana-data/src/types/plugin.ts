@@ -14,7 +14,7 @@ export enum PluginType {
   renderer = 'renderer',
 }
 
-export enum SigningStatus {
+export enum PluginSignatureStatus {
   internal = 'internal', // core plugin, no signature
   valid = 'valid', // signed and accurate MANIFEST
   invalid = 'invalid', // invalid signature
@@ -46,7 +46,7 @@ export interface PluginMeta<T extends KeyValue = {}> {
   enterprise?: boolean;
   latestVersion?: string;
   pinned?: boolean;
-  signature?: SigningStatus;
+  signature?: PluginSignatureStatus;
 }
 
 interface PluginDependencyInfo {
