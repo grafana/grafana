@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from 'react';
 import { PanelModel } from '../../state';
 import { Unsubscribable } from 'rxjs';
 
-export const usePanelLatestData = (panel: PanelModel) => {
+export const usePanelLatestData = (panel: PanelModel): [PanelData | null, boolean] => {
   const querySubscription = useRef<Unsubscribable>(null);
   const [latestData, setLatestData] = useState<PanelData>(null);
 
@@ -23,5 +23,9 @@ export const usePanelLatestData = (panel: PanelModel) => {
     };
   }, [panel]);
 
-  return latestData?.series;
+  return [
+    latestData,
+    // TODO: make this more clever, use PanelData.state
+    !!(latestData && latestData.series),
+  ];
 };
