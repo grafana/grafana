@@ -22,6 +22,7 @@ import (
 	flatbuffers "github.com/google/flatbuffers/go"
 )
 
+/// Opaque binary data
 type Binary struct {
 	_tab flatbuffers.Table
 }

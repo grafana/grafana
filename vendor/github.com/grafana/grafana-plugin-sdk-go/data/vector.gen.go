@@ -19,6 +19,10 @@ func (v *uint8Vector) Set(idx int, i interface{}) {
 	(*v)[idx] = i.(uint8)
 }
 
+func (v *uint8Vector) SetConcreteAt(idx int, i interface{}) {
+	v.Set(idx, i)
+}
+
 func (v *uint8Vector) Append(i interface{}) {
 	(*v) = append((*v), i.(uint8))
 }
@@ -64,6 +68,10 @@ func newUint16Vector(n int) *uint16Vector {
 
 func (v *uint16Vector) Set(idx int, i interface{}) {
 	(*v)[idx] = i.(uint16)
+}
+
+func (v *uint16Vector) SetConcreteAt(idx int, i interface{}) {
+	v.Set(idx, i)
 }
 
 func (v *uint16Vector) Append(i interface{}) {
@@ -113,6 +121,10 @@ func (v *uint32Vector) Set(idx int, i interface{}) {
 	(*v)[idx] = i.(uint32)
 }
 
+func (v *uint32Vector) SetConcreteAt(idx int, i interface{}) {
+	v.Set(idx, i)
+}
+
 func (v *uint32Vector) Append(i interface{}) {
 	(*v) = append((*v), i.(uint32))
 }
@@ -158,6 +170,10 @@ func newUint64Vector(n int) *uint64Vector {
 
 func (v *uint64Vector) Set(idx int, i interface{}) {
 	(*v)[idx] = i.(uint64)
+}
+
+func (v *uint64Vector) SetConcreteAt(idx int, i interface{}) {
+	v.Set(idx, i)
 }
 
 func (v *uint64Vector) Append(i interface{}) {
@@ -207,6 +223,10 @@ func (v *int8Vector) Set(idx int, i interface{}) {
 	(*v)[idx] = i.(int8)
 }
 
+func (v *int8Vector) SetConcreteAt(idx int, i interface{}) {
+	v.Set(idx, i)
+}
+
 func (v *int8Vector) Append(i interface{}) {
 	(*v) = append((*v), i.(int8))
 }
@@ -252,6 +272,10 @@ func newInt16Vector(n int) *int16Vector {
 
 func (v *int16Vector) Set(idx int, i interface{}) {
 	(*v)[idx] = i.(int16)
+}
+
+func (v *int16Vector) SetConcreteAt(idx int, i interface{}) {
+	v.Set(idx, i)
 }
 
 func (v *int16Vector) Append(i interface{}) {
@@ -301,6 +325,10 @@ func (v *int32Vector) Set(idx int, i interface{}) {
 	(*v)[idx] = i.(int32)
 }
 
+func (v *int32Vector) SetConcreteAt(idx int, i interface{}) {
+	v.Set(idx, i)
+}
+
 func (v *int32Vector) Append(i interface{}) {
 	(*v) = append((*v), i.(int32))
 }
@@ -346,6 +374,10 @@ func newInt64Vector(n int) *int64Vector {
 
 func (v *int64Vector) Set(idx int, i interface{}) {
 	(*v)[idx] = i.(int64)
+}
+
+func (v *int64Vector) SetConcreteAt(idx int, i interface{}) {
+	v.Set(idx, i)
 }
 
 func (v *int64Vector) Append(i interface{}) {
@@ -395,6 +427,10 @@ func (v *float32Vector) Set(idx int, i interface{}) {
 	(*v)[idx] = i.(float32)
 }
 
+func (v *float32Vector) SetConcreteAt(idx int, i interface{}) {
+	v.Set(idx, i)
+}
+
 func (v *float32Vector) Append(i interface{}) {
 	(*v) = append((*v), i.(float32))
 }
@@ -440,6 +476,10 @@ func newFloat64Vector(n int) *float64Vector {
 
 func (v *float64Vector) Set(idx int, i interface{}) {
 	(*v)[idx] = i.(float64)
+}
+
+func (v *float64Vector) SetConcreteAt(idx int, i interface{}) {
+	v.Set(idx, i)
 }
 
 func (v *float64Vector) Append(i interface{}) {
@@ -489,6 +529,10 @@ func (v *stringVector) Set(idx int, i interface{}) {
 	(*v)[idx] = i.(string)
 }
 
+func (v *stringVector) SetConcreteAt(idx int, i interface{}) {
+	v.Set(idx, i)
+}
+
 func (v *stringVector) Append(i interface{}) {
 	(*v) = append((*v), i.(string))
 }
@@ -536,6 +580,10 @@ func (v *boolVector) Set(idx int, i interface{}) {
 	(*v)[idx] = i.(bool)
 }
 
+func (v *boolVector) SetConcreteAt(idx int, i interface{}) {
+	v.Set(idx, i)
+}
+
 func (v *boolVector) Append(i interface{}) {
 	(*v) = append((*v), i.(bool))
 }
@@ -581,6 +629,10 @@ func newTimeTimeVector(n int) *timeTimeVector {
 
 func (v *timeTimeVector) Set(idx int, i interface{}) {
 	(*v)[idx] = i.(time.Time)
+}
+
+func (v *timeTimeVector) SetConcreteAt(idx int, i interface{}) {
+	v.Set(idx, i)
 }
 
 func (v *timeTimeVector) Append(i interface{}) {

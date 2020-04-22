@@ -39,8 +39,6 @@ type Frame struct {
 
 	// Meta is metadata about the Frame, and includes space for custom metadata.
 	Meta *FrameMeta
-
-	Warnings []Warning // TODO: Remove, will be replaced with FrameMeta.Notices.
 }
 
 // Frames is a slice of Frame pointers.
@@ -65,11 +63,6 @@ func (f *Frame) RowCopy(rowIdx int) []interface{} {
 		vals[i] = f.CopyAt(i, rowIdx)
 	}
 	return vals
-}
-
-// AppendWarning adds warnings to the data frame.
-func (f *Frame) AppendWarning(message string, details string) {
-	f.Warnings = append(f.Warnings, Warning{Message: message, Details: details})
 }
 
 // AppendRowSafe adds a new row to the Frame by appending to each each element of vals to
@@ -202,11 +195,20 @@ func (f *Frame) CopyAt(fieldIdx int, rowIdx int) interface{} {
 	return f.Fields[fieldIdx].vector.CopyAt(rowIdx)
 }
 
-// Set set the val to the specified fieldIdx and rowIdx.
+// Set sets the val at the specified fieldIdx and rowIdx.
 // It will panic if either the fieldIdx or rowIdx are out of range or
 // if the underlying type of val does not match the element type of the Field.
 func (f *Frame) Set(fieldIdx int, rowIdx int, val interface{}) {
 	f.Fields[fieldIdx].vector.Set(rowIdx, val)
+}
+
+// SetConcreteAt sets the val at the specified fieldIdx and rowIdx.
+// val must be a non-pointer type or a panic will occur.
+// If the underlying FieldType is nullable it will set val as a pointer to val. If the FieldType
+// is not nullable, then this method behaves the same as the Set method.
+// It will panic if the underlying type of val does not match the element concrete type of the Field.
+func (f *Frame) SetConcreteAt(fieldIdx int, rowIdx int, val interface{}) {
+	f.Fields[fieldIdx].vector.SetConcreteAt(rowIdx, val)
 }
 
 // Extend extends all the Fields by length by i.

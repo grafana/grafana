@@ -16,7 +16,16 @@ func newNullableUint8Vector(n int) *nullableUint8Vector {
 }
 
 func (v *nullableUint8Vector) Set(idx int, i interface{}) {
+	if i == nil {
+		(*v)[idx] = nil
+		return
+	}
 	(*v)[idx] = i.(*uint8)
+}
+
+func (v *nullableUint8Vector) SetConcreteAt(idx int, i interface{}) {
+	val := i.(uint8)
+	(*v)[idx] = &val
 }
 
 func (v *nullableUint8Vector) Append(i interface{}) {
@@ -77,7 +86,16 @@ func newNullableUint16Vector(n int) *nullableUint16Vector {
 }
 
 func (v *nullableUint16Vector) Set(idx int, i interface{}) {
+	if i == nil {
+		(*v)[idx] = nil
+		return
+	}
 	(*v)[idx] = i.(*uint16)
+}
+
+func (v *nullableUint16Vector) SetConcreteAt(idx int, i interface{}) {
+	val := i.(uint16)
+	(*v)[idx] = &val
 }
 
 func (v *nullableUint16Vector) Append(i interface{}) {
@@ -138,7 +156,16 @@ func newNullableUint32Vector(n int) *nullableUint32Vector {
 }
 
 func (v *nullableUint32Vector) Set(idx int, i interface{}) {
+	if i == nil {
+		(*v)[idx] = nil
+		return
+	}
 	(*v)[idx] = i.(*uint32)
+}
+
+func (v *nullableUint32Vector) SetConcreteAt(idx int, i interface{}) {
+	val := i.(uint32)
+	(*v)[idx] = &val
 }
 
 func (v *nullableUint32Vector) Append(i interface{}) {
@@ -199,7 +226,16 @@ func newNullableUint64Vector(n int) *nullableUint64Vector {
 }
 
 func (v *nullableUint64Vector) Set(idx int, i interface{}) {
+	if i == nil {
+		(*v)[idx] = nil
+		return
+	}
 	(*v)[idx] = i.(*uint64)
+}
+
+func (v *nullableUint64Vector) SetConcreteAt(idx int, i interface{}) {
+	val := i.(uint64)
+	(*v)[idx] = &val
 }
 
 func (v *nullableUint64Vector) Append(i interface{}) {
@@ -260,7 +296,16 @@ func newNullableInt8Vector(n int) *nullableInt8Vector {
 }
 
 func (v *nullableInt8Vector) Set(idx int, i interface{}) {
+	if i == nil {
+		(*v)[idx] = nil
+		return
+	}
 	(*v)[idx] = i.(*int8)
+}
+
+func (v *nullableInt8Vector) SetConcreteAt(idx int, i interface{}) {
+	val := i.(int8)
+	(*v)[idx] = &val
 }
 
 func (v *nullableInt8Vector) Append(i interface{}) {
@@ -321,7 +366,16 @@ func newNullableInt16Vector(n int) *nullableInt16Vector {
 }
 
 func (v *nullableInt16Vector) Set(idx int, i interface{}) {
+	if i == nil {
+		(*v)[idx] = nil
+		return
+	}
 	(*v)[idx] = i.(*int16)
+}
+
+func (v *nullableInt16Vector) SetConcreteAt(idx int, i interface{}) {
+	val := i.(int16)
+	(*v)[idx] = &val
 }
 
 func (v *nullableInt16Vector) Append(i interface{}) {
@@ -382,7 +436,16 @@ func newNullableInt32Vector(n int) *nullableInt32Vector {
 }
 
 func (v *nullableInt32Vector) Set(idx int, i interface{}) {
+	if i == nil {
+		(*v)[idx] = nil
+		return
+	}
 	(*v)[idx] = i.(*int32)
+}
+
+func (v *nullableInt32Vector) SetConcreteAt(idx int, i interface{}) {
+	val := i.(int32)
+	(*v)[idx] = &val
 }
 
 func (v *nullableInt32Vector) Append(i interface{}) {
@@ -443,7 +506,16 @@ func newNullableInt64Vector(n int) *nullableInt64Vector {
 }
 
 func (v *nullableInt64Vector) Set(idx int, i interface{}) {
+	if i == nil {
+		(*v)[idx] = nil
+		return
+	}
 	(*v)[idx] = i.(*int64)
+}
+
+func (v *nullableInt64Vector) SetConcreteAt(idx int, i interface{}) {
+	val := i.(int64)
+	(*v)[idx] = &val
 }
 
 func (v *nullableInt64Vector) Append(i interface{}) {
@@ -504,7 +576,16 @@ func newNullableFloat32Vector(n int) *nullableFloat32Vector {
 }
 
 func (v *nullableFloat32Vector) Set(idx int, i interface{}) {
+	if i == nil {
+		(*v)[idx] = nil
+		return
+	}
 	(*v)[idx] = i.(*float32)
+}
+
+func (v *nullableFloat32Vector) SetConcreteAt(idx int, i interface{}) {
+	val := i.(float32)
+	(*v)[idx] = &val
 }
 
 func (v *nullableFloat32Vector) Append(i interface{}) {
@@ -565,7 +646,16 @@ func newNullableFloat64Vector(n int) *nullableFloat64Vector {
 }
 
 func (v *nullableFloat64Vector) Set(idx int, i interface{}) {
+	if i == nil {
+		(*v)[idx] = nil
+		return
+	}
 	(*v)[idx] = i.(*float64)
+}
+
+func (v *nullableFloat64Vector) SetConcreteAt(idx int, i interface{}) {
+	val := i.(float64)
+	(*v)[idx] = &val
 }
 
 func (v *nullableFloat64Vector) Append(i interface{}) {
@@ -626,7 +716,16 @@ func newNullableStringVector(n int) *nullableStringVector {
 }
 
 func (v *nullableStringVector) Set(idx int, i interface{}) {
+	if i == nil {
+		(*v)[idx] = nil
+		return
+	}
 	(*v)[idx] = i.(*string)
+}
+
+func (v *nullableStringVector) SetConcreteAt(idx int, i interface{}) {
+	val := i.(string)
+	(*v)[idx] = &val
 }
 
 func (v *nullableStringVector) Append(i interface{}) {
@@ -687,7 +786,16 @@ func newNullableBoolVector(n int) *nullableBoolVector {
 }
 
 func (v *nullableBoolVector) Set(idx int, i interface{}) {
+	if i == nil {
+		(*v)[idx] = nil
+		return
+	}
 	(*v)[idx] = i.(*bool)
+}
+
+func (v *nullableBoolVector) SetConcreteAt(idx int, i interface{}) {
+	val := i.(bool)
+	(*v)[idx] = &val
 }
 
 func (v *nullableBoolVector) Append(i interface{}) {
@@ -748,7 +856,16 @@ func newNullableTimeTimeVector(n int) *nullableTimeTimeVector {
 }
 
 func (v *nullableTimeTimeVector) Set(idx int, i interface{}) {
+	if i == nil {
+		(*v)[idx] = nil
+		return
+	}
 	(*v)[idx] = i.(*time.Time)
+}
+
+func (v *nullableTimeTimeVector) SetConcreteAt(idx int, i interface{}) {
+	val := i.(time.Time)
+	(*v)[idx] = &val
 }
 
 func (v *nullableTimeTimeVector) Append(i interface{}) {

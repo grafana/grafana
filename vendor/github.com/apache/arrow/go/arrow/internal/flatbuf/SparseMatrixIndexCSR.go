@@ -43,6 +43,21 @@ func (rcv *SparseMatrixIndexCSR) Table() flatbuffers.Table {
 	return rcv._tab
 }
 
+/// The type of values in indptrBuffer
+func (rcv *SparseMatrixIndexCSR) IndptrType(obj *Int) *Int {
+	o := flatbuffers.UOffsetT(rcv._tab.Offset(4))
+	if o != 0 {
+		x := rcv._tab.Indirect(o + rcv._tab.Pos)
+		if obj == nil {
+			obj = new(Int)
+		}
+		obj.Init(rcv._tab.Bytes, x)
+		return obj
+	}
+	return nil
+}
+
+/// The type of values in indptrBuffer
 /// indptrBuffer stores the location and size of indptr array that
 /// represents the range of the rows.
 /// The i-th row spans from indptr[i] to indptr[i+1] in the data.
@@ -66,7 +81,7 @@ func (rcv *SparseMatrixIndexCSR) Table() flatbuffers.Table {
 ///
 ///   indptr(X) = [0, 2, 3, 5, 5, 8, 10].
 func (rcv *SparseMatrixIndexCSR) IndptrBuffer(obj *Buffer) *Buffer {
-	o := flatbuffers.UOffsetT(rcv._tab.Offset(4))
+	o := flatbuffers.UOffsetT(rcv._tab.Offset(6))
 	if o != 0 {
 		x := o + rcv._tab.Pos
 		if obj == nil {
@@ -100,6 +115,21 @@ func (rcv *SparseMatrixIndexCSR) IndptrBuffer(obj *Buffer) *Buffer {
 /// And the indptr of X is:
 ///
 ///   indptr(X) = [0, 2, 3, 5, 5, 8, 10].
+/// The type of values in indicesBuffer
+func (rcv *SparseMatrixIndexCSR) IndicesType(obj *Int) *Int {
+	o := flatbuffers.UOffsetT(rcv._tab.Offset(8))
+	if o != 0 {
+		x := rcv._tab.Indirect(o + rcv._tab.Pos)
+		if obj == nil {
+			obj = new(Int)
+		}
+		obj.Init(rcv._tab.Bytes, x)
+		return obj
+	}
+	return nil
+}
+
+/// The type of values in indicesBuffer
 /// indicesBuffer stores the location and size of the array that
 /// contains the column indices of the corresponding non-zero values.
 /// The type of index value is long.
@@ -110,7 +140,7 @@ func (rcv *SparseMatrixIndexCSR) IndptrBuffer(obj *Buffer) *Buffer {
 ///
 /// Note that the indices are sorted in lexicographical order for each row.
 func (rcv *SparseMatrixIndexCSR) IndicesBuffer(obj *Buffer) *Buffer {
-	o := flatbuffers.UOffsetT(rcv._tab.Offset(6))
+	o := flatbuffers.UOffsetT(rcv._tab.Offset(10))
 	if o != 0 {
 		x := o + rcv._tab.Pos
 		if obj == nil {
@@ -132,13 +162,19 @@ func (rcv *SparseMatrixIndexCSR) IndicesBuffer(obj *Buffer) *Buffer {
 ///
 /// Note that the indices are sorted in lexicographical order for each row.
 func SparseMatrixIndexCSRStart(builder *flatbuffers.Builder) {
-	builder.StartObject(2)
+	builder.StartObject(4)
+}
+func SparseMatrixIndexCSRAddIndptrType(builder *flatbuffers.Builder, indptrType flatbuffers.UOffsetT) {
+	builder.PrependUOffsetTSlot(0, flatbuffers.UOffsetT(indptrType), 0)
 }
 func SparseMatrixIndexCSRAddIndptrBuffer(builder *flatbuffers.Builder, indptrBuffer flatbuffers.UOffsetT) {
-	builder.PrependStructSlot(0, flatbuffers.UOffsetT(indptrBuffer), 0)
+	builder.PrependStructSlot(1, flatbuffers.UOffsetT(indptrBuffer), 0)
+}
+func SparseMatrixIndexCSRAddIndicesType(builder *flatbuffers.Builder, indicesType flatbuffers.UOffsetT) {
+	builder.PrependUOffsetTSlot(2, flatbuffers.UOffsetT(indicesType), 0)
 }
 func SparseMatrixIndexCSRAddIndicesBuffer(builder *flatbuffers.Builder, indicesBuffer flatbuffers.UOffsetT) {
-	builder.PrependStructSlot(1, flatbuffers.UOffsetT(indicesBuffer), 0)
+	builder.PrependStructSlot(3, flatbuffers.UOffsetT(indicesBuffer), 0)
 }
 func SparseMatrixIndexCSREnd(builder *flatbuffers.Builder) flatbuffers.UOffsetT {
 	return builder.EndObject()

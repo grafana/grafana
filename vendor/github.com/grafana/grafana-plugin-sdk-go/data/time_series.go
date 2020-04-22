@@ -30,6 +30,24 @@ const (
 	TimeSeriesTypeWide
 )
 
+// FillMode is an integer type denoting how missing values should be filled.
+type FillMode int
+
+const (
+	// FillModePrevious fills with the last seen value unless that does not exist, in which case it fills with null.
+	FillModePrevious FillMode = iota
+	// FillModeNull fills with null
+	FillModeNull
+	// FillModeValue fills with a specific value
+	FillModeValue
+)
+
+// FillMissing is a struct containing the fill mode and the fill value if fill mode is FillModeValue
+type FillMissing struct {
+	Mode  FillMode
+	Value float64
+}
+
 func (t TimeSeriesType) String() string {
 	switch t {
 	case TimeSeriesTypeLong:
@@ -82,6 +100,89 @@ func (f *Frame) TimeSeriesSchema() (tsSchema TimeSeriesSchema) {
 	return
 }
 
+// float64ToType converts a float64 value to the specified field type.
+// This is useful if fill missing is enabled and fill missing mode is FillMissingValue,
+// for converting the fill missing value (float64) to the field type.
+func float64ToType(val float64, ftype FieldType) (interface{}, error) {
+	switch ftype {
+	case FieldTypeInt8:
+		return int8(val), nil
+	case FieldTypeNullableInt8:
+		c := int8(val)
+		return &c, nil
+	case FieldTypeInt16:
+		return int16(val), nil
+	case FieldTypeNullableInt16:
+		c := int16(val)
+		return &c, nil
+	case FieldTypeInt32:
+		return int32(val), nil
+	case FieldTypeNullableInt32:
+		c := int32(val)
+		return &c, nil
+	case FieldTypeInt64:
+		return int64(val), nil
+	case FieldTypeNullableInt64:
+		c := int64(val)
+		return &c, nil
+	case FieldTypeUint8:
+		return uint8(val), nil
+	case FieldTypeNullableUint8:
+		c := uint8(val)
+		return &c, nil
+	case FieldTypeUint16:
+		return uint16(val), nil
+	case FieldTypeNullableUint16:
+		c := uint16(val)
+		return &c, nil
+	case FieldTypeUint32:
+		return uint32(val), nil
+	case FieldTypeNullableUint32:
+		c := uint32(val)
+		return &c, nil
+	case FieldTypeUint64:
+		return uint64(val), nil
+	case FieldTypeNullableUint64:
+		c := uint64(val)
+		return &c, nil
+	case FieldTypeFloat32:
+		return float32(val), nil
+	case FieldTypeNullableFloat32:
+		c := float32(val)
+		return &c, nil
+	case FieldTypeFloat64:
+		return val, nil
+	case FieldTypeNullableFloat64:
+		return &val, nil
+	}
+	// if field type is FieldTypeString, FieldTypeNullableString, FieldTypeBool, FieldTypeNullableBool, FieldTypeTime, FieldTypeNullableTime
+	return val, fmt.Errorf("no numeric value")
+}
+
+func getMissing(fillMissing *FillMissing, field *Field, idx int) (interface{}, error) {
+	if fillMissing == nil {
+		return nil, fmt.Errorf("fill missing is disabled")
+	}
+	var fillVal interface{}
+	switch fillMissing.Mode {
+	case FillModeNull:
+	//	fillVal = nil
+	case FillModeValue:
+		convertedVal, err := float64ToType(fillMissing.Value, field.Type())
+		if err != nil {
+			return nil, err
+		}
+		fillVal = convertedVal
+	case FillModePrevious:
+		// if there is no previous value
+		// the value will be null
+		if idx >= 1 {
+			fillVal = field.At(idx - 1)
+		}
+	}
+	return fillVal, nil
+}
+
 // LongToWide converts a Long formated time series Frame to a Wide format (see TimeSeriesType for descriptions).
 // The first Field of type time.Time or *time.Time will be the time index for the series,
 // and will be the first field of the outputted longFrame.
@@ -99,7 +200,7 @@ func (f *Frame) TimeSeriesSchema() (tsSchema TimeSeriesSchema) {
 //
 // With a conversion of Long to Wide, and then back to Long via WideToLong(), the outputted Long Frame
 // may not match the original inputted Long frame.
-func LongToWide(longFrame *Frame) (*Frame, error) {
+func LongToWide(longFrame *Frame, fillMissing *FillMissing) (*Frame, error) {
 	tsSchema := longFrame.TimeSeriesSchema()
 	if tsSchema.Type != TimeSeriesTypeLong {
 		return nil, fmt.Errorf("can not convert to wide series, expected long format series input but got %s series", tsSchema.Type)
@@ -143,11 +244,18 @@ func LongToWide(longFrame *Frame) (*Frame, error) {
 		if currentTime.After(lastTime) { // time advance means new row in wideFrame
 			wideFrameRowCounter++
 			lastTime = currentTime
-			for _, field := range wideFrame.Fields {
+			for wideFrameIdx, field := range wideFrame.Fields {
 				// extend all wideFrame Field Vectors for new row. If no value found, it will have zero value
 				field.Extend(1)
+				if wideFrameIdx == 0 {
+					wideFrame.Set(wideFrameIdx, wideFrameRowCounter, currentTime)
+					continue
+				}
+				fillVal, err := getMissing(fillMissing, field, wideFrameRowCounter)
+				if err == nil {
+					wideFrame.Set(wideFrameIdx, wideFrameRowCounter, fillVal)
+				}
 			}
-			wideFrame.Set(0, wideFrameRowCounter, currentTime)
 		}
 
 		if currentTime.Before(lastTime) {
@@ -181,14 +289,31 @@ func LongToWide(longFrame *Frame) (*Frame, error) {
 				longField := longFrame.Fields[tsSchema.ValueIndices[offset]]
 
 				newWideField := NewFieldFromFieldType(longField.Type(), wideFrameRowCounter+1)
+				if fillMissing != nil && fillMissing.Mode != FillModeValue {
+					// if fillMissing mode is null or previous
+					// the new wide field should be nullable
+					// because some cells can be null
+					newWideField = NewFieldFromFieldType(longField.Type().NullableType(), wideFrameRowCounter+1)
+				}
 				newWideField.Name, newWideField.Labels = longField.Name, labels
 				wideFrame.Fields = append(wideFrame.Fields, newWideField)
+
+				fillVal, err := getMissing(fillMissing, newWideField, wideFrameRowCounter)
+				if err == nil {
+					for i := 0; i < wideFrameRowCounter; i++ {
+						wideFrame.Set(currentFieldLen+offset, i, fillVal)
+					}
+				}
 
 				valueFactorToWideFieldIdx[longFieldIdx][factorKey] = currentFieldLen + offset
 			}
 		}
 		for _, longFieldIdx := range tsSchema.ValueIndices {
 			wideFieldIdx := valueFactorToWideFieldIdx[longFieldIdx][factorKey]
+			if wideFrame.Fields[wideFieldIdx].Nullable() && !longFrame.Fields[longFieldIdx].Nullable() {
+				wideFrame.SetConcreteAt(wideFieldIdx, wideFrameRowCounter, longFrame.CopyAt(longFieldIdx, longRowIdx))
+				continue
+			}
 			wideFrame.Set(wideFieldIdx, wideFrameRowCounter, longFrame.CopyAt(longFieldIdx, longRowIdx))
 		}
 	}

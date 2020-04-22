@@ -8,13 +8,13 @@ github.com/BurntSushi/toml
 # github.com/VividCortex/mysqlerr v0.0.0-20170204212430-6c6b55f8796f
 ## explicit
 github.com/VividCortex/mysqlerr
-# github.com/apache/arrow/go/arrow v0.0.0-20191025121910-b789226ccb21
+# github.com/apache/arrow/go/arrow v0.0.0-20200403134915-89ce1cadb678
 github.com/apache/arrow/go/arrow
 github.com/apache/arrow/go/arrow/array
 github.com/apache/arrow/go/arrow/arrio
+github.com/apache/arrow/go/arrow/bitutil
 github.com/apache/arrow/go/arrow/decimal128
 github.com/apache/arrow/go/arrow/float16
-github.com/apache/arrow/go/arrow/internal/bitutil
 github.com/apache/arrow/go/arrow/internal/cpu
 github.com/apache/arrow/go/arrow/internal/debug
 github.com/apache/arrow/go/arrow/internal/flatbuf
@@ -176,11 +176,17 @@ github.com/gosimple/slug
 ## explicit
 github.com/grafana/grafana-plugin-model/go/datasource
 github.com/grafana/grafana-plugin-model/go/renderer
-# github.com/grafana/grafana-plugin-sdk-go v0.42.0
+# github.com/grafana/grafana-plugin-sdk-go v0.53.1-0.20200421210058-9734df82f6e9 => /home/kbrandt/go/github.com/grafana/grafana-plugin-sdk-go
 ## explicit
+github.com/grafana/grafana-plugin-sdk-go/backend
 github.com/grafana/grafana-plugin-sdk-go/backend/grpcplugin
+github.com/grafana/grafana-plugin-sdk-go/backend/log
 github.com/grafana/grafana-plugin-sdk-go/data
 github.com/grafana/grafana-plugin-sdk-go/genproto/pluginv2
+# github.com/grpc-ecosystem/go-grpc-middleware v1.2.0
+github.com/grpc-ecosystem/go-grpc-middleware
+# github.com/grpc-ecosystem/go-grpc-prometheus v1.2.0
+github.com/grpc-ecosystem/go-grpc-prometheus
 # github.com/hashicorp/go-hclog v0.0.0-20180709165350-ff2cf002a8dd
 ## explicit
 github.com/hashicorp/go-hclog
@@ -421,7 +427,7 @@ golang.org/x/text/unicode/norm
 golang.org/x/tools/go/ast/astutil
 golang.org/x/tools/go/gcexportdata
 golang.org/x/tools/go/internal/gcimporter
-# golang.org/x/xerrors v0.0.0-20191011141410-1b5146add898
+# golang.org/x/xerrors v0.0.0-20191204190536-9bdfabe68543
 ## explicit
 golang.org/x/xerrors
 golang.org/x/xerrors/internal
@@ -524,3 +530,4 @@ xorm.io/core
 # xorm.io/xorm v0.8.1
 ## explicit
 xorm.io/xorm
+# github.com/grafana/grafana-plugin-sdk-go => /home/kbrandt/go/github.com/grafana/grafana-plugin-sdk-go

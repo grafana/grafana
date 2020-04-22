@@ -16,6 +16,7 @@ type vector interface {
 	PointerAt(i int) interface{}
 	CopyAt(i int) interface{}
 	ConcreteAt(i int) (val interface{}, ok bool)
+	SetConcreteAt(i int, val interface{})
 }
 
 func newVector(t interface{}, n int) (v vector) {
@@ -369,7 +370,7 @@ func (p FieldType) String() string {
 
 }
 
-// NewFieldFromFieldType creates a new Field of the given pType of length n.
+// NewFieldFromFieldType creates a new Field of the given FieldType of length n.
 func NewFieldFromFieldType(p FieldType, n int) *Field {
 	f := &Field{}
 	switch p {
@@ -442,9 +443,59 @@ func NewFieldFromFieldType(p FieldType, n int) *Field {
 	case FieldTypeNullableTime:
 		f.vector = newNullableTimeTimeVector(n)
 	default:
-		panic(fmt.Sprint("unsupported vector ptype"))
+		panic("unsupported FieldType")
 	}
 	return f
+}
+
+// NullableType converts the FieldType to the corresponding nullable type.
+func (p FieldType) NullableType() FieldType {
+	switch p {
+	// ints
+	case FieldTypeInt8, FieldTypeNullableInt8:
+		return FieldTypeNullableInt8
+
+	case FieldTypeInt16, FieldTypeNullableInt16:
+		return FieldTypeNullableInt16
+
+	case FieldTypeInt32, FieldTypeNullableInt32:
+		return FieldTypeNullableInt32
+
+	case FieldTypeInt64, FieldTypeNullableInt64:
+		return FieldTypeNullableInt64
+
+	// uints
+	case FieldTypeUint8, FieldTypeNullableUint8:
+		return FieldTypeNullableUint8
+
+	case FieldTypeUint16, FieldTypeNullableUint16:
+		return FieldTypeNullableUint16
+
+	case FieldTypeUint32, FieldTypeNullableUint32:
+		return FieldTypeNullableUint32
+
+	case FieldTypeUint64, FieldTypeNullableUint64:
+		return FieldTypeNullableUint64
+
+	// floats
+	case FieldTypeFloat32, FieldTypeNullableFloat32:
+		return FieldTypeNullableFloat32
+
+	case FieldTypeFloat64, FieldTypeNullableFloat64:
+		return FieldTypeNullableFloat64
+
+	// other
+	case FieldTypeString, FieldTypeNullableString:
+		return FieldTypeNullableString
+
+	case FieldTypeBool, FieldTypeNullableBool:
+		return FieldTypeNullableBool
+
+	case FieldTypeTime, FieldTypeNullableTime:
+		return FieldTypeNullableTime
+	default:
+		panic(fmt.Sprintf("unsupported vector ptype: %+v", p))
+	}
 }
 
 // ItemTypeString returns the string representation of the type of element within in the vector

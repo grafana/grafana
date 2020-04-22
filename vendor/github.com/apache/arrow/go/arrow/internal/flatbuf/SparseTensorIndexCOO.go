@@ -24,7 +24,34 @@ import (
 
 /// ----------------------------------------------------------------------
 /// EXPERIMENTAL: Data structures for sparse tensors
-/// Coodinate format of sparse tensor index.
+/// Coodinate (COO) format of sparse tensor index.
+///
+/// COO's index list are represented as a NxM matrix,
+/// where N is the number of non-zero values,
+/// and M is the number of dimensions of a sparse tensor.
+///
+/// indicesBuffer stores the location and size of the data of this indices
+/// matrix.  The value type and the stride of the indices matrix is
+/// specified in indicesType and indicesStrides fields.
+///
+/// For example, let X be a 2x3x4x5 tensor, and it has the following
+/// 6 non-zero values:
+///
+///   X[0, 1, 2, 0] := 1
+///   X[1, 1, 2, 3] := 2
+///   X[0, 2, 1, 0] := 3
+///   X[0, 1, 3, 0] := 4
+///   X[0, 1, 2, 1] := 5
+///   X[1, 2, 0, 4] := 6
+///
+/// In COO format, the index matrix of X is the following 4x6 matrix:
+///
+///   [[0, 0, 0, 0, 1, 1],
+///    [1, 1, 1, 2, 1, 2],
+///    [2, 2, 3, 1, 2, 0],
+///    [0, 1, 0, 0, 3, 4]]
+///
+/// Note that the indices are sorted in lexicographical order.
 type SparseTensorIndexCOO struct {
 	_tab flatbuffers.Table
 }
@@ -45,31 +72,52 @@ func (rcv *SparseTensorIndexCOO) Table() flatbuffers.Table {
 	return rcv._tab
 }
 
-/// COO's index list are represented as a NxM matrix,
-/// where N is the number of non-zero values,
-/// and M is the number of dimensions of a sparse tensor.
-/// indicesBuffer stores the location and size of this index matrix.
-/// The type of index value is long, so the stride for the index matrix is unnecessary.
-///
-/// For example, let X be a 2x3x4x5 tensor, and it has the following 6 non-zero values:
-///
-///   X[0, 1, 2, 0] := 1
-///   X[1, 1, 2, 3] := 2
-///   X[0, 2, 1, 0] := 3
-///   X[0, 1, 3, 0] := 4
-///   X[0, 1, 2, 1] := 5
-///   X[1, 2, 0, 4] := 6
-///
-/// In COO format, the index matrix of X is the following 4x6 matrix:
-///
-///   [[0, 0, 0, 0, 1, 1],
-///    [1, 1, 1, 2, 1, 2],
-///    [2, 2, 3, 1, 2, 0],
-///    [0, 1, 0, 0, 3, 4]]
-///
-/// Note that the indices are sorted in lexicographical order.
-func (rcv *SparseTensorIndexCOO) IndicesBuffer(obj *Buffer) *Buffer {
+/// The type of values in indicesBuffer
+func (rcv *SparseTensorIndexCOO) IndicesType(obj *Int) *Int {
 	o := flatbuffers.UOffsetT(rcv._tab.Offset(4))
+	if o != 0 {
+		x := rcv._tab.Indirect(o + rcv._tab.Pos)
+		if obj == nil {
+			obj = new(Int)
+		}
+		obj.Init(rcv._tab.Bytes, x)
+		return obj
+	}
+	return nil
+}
+
+/// The type of values in indicesBuffer
+/// Non-negative byte offsets to advance one value cell along each dimension
+func (rcv *SparseTensorIndexCOO) IndicesStrides(j int) int64 {
+	o := flatbuffers.UOffsetT(rcv._tab.Offset(6))
+	if o != 0 {
+		a := rcv._tab.Vector(o)
+		return rcv._tab.GetInt64(a + flatbuffers.UOffsetT(j*8))
+	}
+	return 0
+}
+
+func (rcv *SparseTensorIndexCOO) IndicesStridesLength() int {
+	o := flatbuffers.UOffsetT(rcv._tab.Offset(6))
+	if o != 0 {
+		return rcv._tab.VectorLen(o)
+	}
+	return 0
+}
+
+/// Non-negative byte offsets to advance one value cell along each dimension
+func (rcv *SparseTensorIndexCOO) MutateIndicesStrides(j int, n int64) bool {
+	o := flatbuffers.UOffsetT(rcv._tab.Offset(6))
+	if o != 0 {
+		a := rcv._tab.Vector(o)
+		return rcv._tab.MutateInt64(a+flatbuffers.UOffsetT(j*8), n)
+	}
+	return false
+}
+
+/// The location and size of the indices matrix's data
+func (rcv *SparseTensorIndexCOO) IndicesBuffer(obj *Buffer) *Buffer {
+	o := flatbuffers.UOffsetT(rcv._tab.Offset(8))
 	if o != 0 {
 		x := o + rcv._tab.Pos
 		if obj == nil {
@@ -81,34 +129,21 @@ func (rcv *SparseTensorIndexCOO) IndicesBuffer(obj *Buffer) *Buffer {
 	return nil
 }
 
-/// COO's index list are represented as a NxM matrix,
-/// where N is the number of non-zero values,
-/// and M is the number of dimensions of a sparse tensor.
-/// indicesBuffer stores the location and size of this index matrix.
-/// The type of index value is long, so the stride for the index matrix is unnecessary.
-///
-/// For example, let X be a 2x3x4x5 tensor, and it has the following 6 non-zero values:
-///
-///   X[0, 1, 2, 0] := 1
-///   X[1, 1, 2, 3] := 2
-///   X[0, 2, 1, 0] := 3
-///   X[0, 1, 3, 0] := 4
-///   X[0, 1, 2, 1] := 5
-///   X[1, 2, 0, 4] := 6
-///
-/// In COO format, the index matrix of X is the following 4x6 matrix:
-///
-///   [[0, 0, 0, 0, 1, 1],
-///    [1, 1, 1, 2, 1, 2],
-///    [2, 2, 3, 1, 2, 0],
-///    [0, 1, 0, 0, 3, 4]]
-///
-/// Note that the indices are sorted in lexicographical order.
+/// The location and size of the indices matrix's data
 func SparseTensorIndexCOOStart(builder *flatbuffers.Builder) {
-	builder.StartObject(1)
+	builder.StartObject(3)
+}
+func SparseTensorIndexCOOAddIndicesType(builder *flatbuffers.Builder, indicesType flatbuffers.UOffsetT) {
+	builder.PrependUOffsetTSlot(0, flatbuffers.UOffsetT(indicesType), 0)
+}
+func SparseTensorIndexCOOAddIndicesStrides(builder *flatbuffers.Builder, indicesStrides flatbuffers.UOffsetT) {
+	builder.PrependUOffsetTSlot(1, flatbuffers.UOffsetT(indicesStrides), 0)
+}
+func SparseTensorIndexCOOStartIndicesStridesVector(builder *flatbuffers.Builder, numElems int) flatbuffers.UOffsetT {
+	return builder.StartVector(8, numElems, 8)
 }
 func SparseTensorIndexCOOAddIndicesBuffer(builder *flatbuffers.Builder, indicesBuffer flatbuffers.UOffsetT) {
-	builder.PrependStructSlot(0, flatbuffers.UOffsetT(indicesBuffer), 0)
+	builder.PrependStructSlot(2, flatbuffers.UOffsetT(indicesBuffer), 0)
 }
 func SparseTensorIndexCOOEnd(builder *flatbuffers.Builder) flatbuffers.UOffsetT {
 	return builder.EndObject()

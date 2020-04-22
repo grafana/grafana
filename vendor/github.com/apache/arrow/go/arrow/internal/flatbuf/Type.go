@@ -42,6 +42,9 @@ const (
 	TypeFixedSizeList Type = 16
 	TypeMap Type = 17
 	TypeDuration Type = 18
+	TypeLargeBinary Type = 19
+	TypeLargeUtf8 Type = 20
+	TypeLargeList Type = 21
 )
 
 var EnumNamesType = map[Type]string{
@@ -64,5 +67,8 @@ var EnumNamesType = map[Type]string{
 	TypeFixedSizeList:"FixedSizeList",
 	TypeMap:"Map",
 	TypeDuration:"Duration",
+	TypeLargeBinary:"LargeBinary",
+	TypeLargeUtf8:"LargeUtf8",
+	TypeLargeList:"LargeList",
 }
 

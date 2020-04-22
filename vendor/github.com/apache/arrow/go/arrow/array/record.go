@@ -187,7 +187,7 @@ func (rec *simpleRecord) validate() error {
 				arr.Len(), rec.rows,
 			)
 		}
-		if !arrow.TypeEquals(f.Type, arr.DataType()) {
+		if !arrow.TypeEqual(f.Type, arr.DataType()) {
 			return fmt.Errorf("arrow/array: column %q type mismatch: got=%v, want=%v",
 				f.Name,
 				arr.DataType(), f.Type,

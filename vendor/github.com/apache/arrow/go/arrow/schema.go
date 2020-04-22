@@ -108,18 +108,17 @@ func (md Metadata) clone() Metadata {
 // a record batch.
 type Schema struct {
 	fields []Field
-	index  map[string]int
+	index  map[string][]int
 	meta   Metadata
 }
 
 // NewSchema returns a new Schema value from the slice of fields and metadata.
 //
-// NewSchema panics if there are duplicated fields.
 // NewSchema panics if there is a field with an invalid DataType.
 func NewSchema(fields []Field, metadata *Metadata) *Schema {
 	sc := &Schema{
 		fields: make([]Field, 0, len(fields)),
-		index:  make(map[string]int, len(fields)),
+		index:  make(map[string][]int, len(fields)),
 	}
 	if metadata != nil {
 		sc.meta = metadata.clone()
@@ -129,10 +128,7 @@ func NewSchema(fields []Field, metadata *Metadata) *Schema {
 			panic("arrow: field with nil DataType")
 		}
 		sc.fields = append(sc.fields, field)
-		if _, dup := sc.index[field.Name]; dup {
-			panic(fmt.Errorf("arrow: duplicate field with name %q", field.Name))
-		}
-		sc.index[field.Name] = i
+		sc.index[field.Name] = append(sc.index[field.Name], i)
 	}
 	return sc
 }
@@ -141,28 +137,25 @@ func (sc *Schema) Metadata() Metadata { return sc.meta }
 func (sc *Schema) Fields() []Field    { return sc.fields }
 func (sc *Schema) Field(i int) Field  { return sc.fields[i] }
 
-func (sc *Schema) FieldByName(n string) (Field, bool) {
-	i, ok := sc.index[n]
+func (sc *Schema) FieldsByName(n string) ([]Field, bool) {
+	indices, ok := sc.index[n]
 	if !ok {
-		return Field{}, ok
+		return nil, ok
 	}
-	return sc.fields[i], ok
-}
-
-// FieldIndex returns the index of the named field or -1.
-func (sc *Schema) FieldIndex(n string) int {
-	i, ok := sc.index[n]
-	if !ok {
-		return -1
+	fields := make([]Field, 0, len(indices))
+	for _, v := range indices {
+		fields = append(fields, sc.fields[v])
 	}
-	return i
+	return fields, ok
 }
 
-func (sc *Schema) HasField(n string) bool {
-	return sc.FieldIndex(n) >= 0
+// FieldIndices returns the indices of the named field or nil.
+func (sc *Schema) FieldIndices(n string) []int {
+	return sc.index[n]
 }
 
-func (sc *Schema) HasMetadata() bool { return len(sc.meta.keys) > 0 }
+func (sc *Schema) HasField(n string) bool { return len(sc.FieldIndices(n)) > 0 }
+func (sc *Schema) HasMetadata() bool      { return len(sc.meta.keys) > 0 }
 
 // Equal returns whether two schema are equal.
 // Equal does not compare the metadata.

@@ -19,7 +19,7 @@ package ipc // import "github.com/apache/arrow/go/arrow/ipc"
 import (
 	"github.com/apache/arrow/go/arrow"
 	"github.com/apache/arrow/go/arrow/array"
-	"github.com/pkg/errors"
+	"golang.org/x/xerrors"
 )
 
 type dictMap map[int64]array.Interface
@@ -77,7 +77,7 @@ func (memo dictMemo) HasID(id int64) bool {
 
 func (memo *dictMemo) Add(id int64, v array.Interface) {
 	if _, dup := memo.id2dict[id]; dup {
-		panic(errors.Errorf("arrow/ipc: duplicate id=%d", id))
+		panic(xerrors.Errorf("arrow/ipc: duplicate id=%d", id))
 	}
 	v.Retain()
 	memo.id2dict[id] = v

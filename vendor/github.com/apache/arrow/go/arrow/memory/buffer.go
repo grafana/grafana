@@ -22,6 +22,7 @@ import (
 	"github.com/apache/arrow/go/arrow/internal/debug"
 )
 
+// Buffer is a wrapper type for a buffer of bytes.
 type Buffer struct {
 	refCount int64
 	buf      []byte
@@ -35,7 +36,7 @@ func NewBufferBytes(data []byte) *Buffer {
 	return &Buffer{refCount: 0, buf: data, length: len(data)}
 }
 
-// NewBuffer creates a mutable, resizable buffer with an Allocator for managing memory.
+// NewResizableBuffer creates a mutable, resizable buffer with an Allocator for managing memory.
 func NewResizableBuffer(mem Allocator) *Buffer {
 	return &Buffer{refCount: 1, mutable: true, mem: mem}
 }
@@ -60,15 +61,28 @@ func (b *Buffer) Release() {
 	}
 }
 
+// Reset resets the buffer for reuse.
+func (b *Buffer) Reset(buf []byte) {
+	b.buf = buf
+	b.length = len(buf)
+}
+
 // Buf returns the slice of memory allocated by the Buffer, which is adjusted by calling Reserve.
 func (b *Buffer) Buf() []byte { return b.buf }
 
 // Bytes returns a slice of size Len, which is adjusted by calling Resize.
 func (b *Buffer) Bytes() []byte { return b.buf[:b.length] }
-func (b *Buffer) Mutable() bool { return b.mutable }
-func (b *Buffer) Len() int      { return b.length }
-func (b *Buffer) Cap() int      { return len(b.buf) }
 
+// Mutable returns a bool indicating whether the buffer is mutable or not.
+func (b *Buffer) Mutable() bool { return b.mutable }
+
+// Len returns the length of the buffer.
+func (b *Buffer) Len() int { return b.length }
+
+// Cap returns the capacity of the buffer.
+func (b *Buffer) Cap() int { return len(b.buf) }
+
+// Reserve reserves the provided amount of capacity for the buffer.
 func (b *Buffer) Reserve(capacity int) {
 	if capacity > len(b.buf) {
 		newCap := roundUpToMultipleOf64(capacity)
@@ -80,10 +94,13 @@ func (b *Buffer) Reserve(capacity int) {
 	}
 }
 
+// Resize resizes the buffer to the target size.
 func (b *Buffer) Resize(newSize int) {
 	b.resize(newSize, true)
 }
 
+// ResizeNoShrink resizes the buffer to the target size, but will not
+// shrink it.
 func (b *Buffer) ResizeNoShrink(newSize int) {
 	b.resize(newSize, false)
 }

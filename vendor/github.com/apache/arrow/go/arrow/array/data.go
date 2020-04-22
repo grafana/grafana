@@ -24,7 +24,7 @@ import (
 	"github.com/apache/arrow/go/arrow/memory"
 )
 
-// A type which represents the memory and metadata for an Arrow array.
+// Data represents the memory and metadata of an Arrow array.
 type Data struct {
 	refCount  int64
 	dtype     arrow.DataType
@@ -35,6 +35,7 @@ type Data struct {
 	childData []*Data          // TODO(sgc): managed by ListArray, StructArray and UnionArray types
 }
 
+// NewData creates a new Data.
 func NewData(dtype arrow.DataType, length int, buffers []*memory.Buffer, childData []*Data, nulls, offset int) *Data {
 	for _, b := range buffers {
 		if b != nil {
@@ -57,6 +58,42 @@ func NewData(dtype arrow.DataType, length int, buffers []*memory.Buffer, childDa
 		buffers:   buffers,
 		childData: childData,
 	}
+}
+
+// Reset sets the Data for re-use.
+func (d *Data) Reset(dtype arrow.DataType, length int, buffers []*memory.Buffer, childData []*Data, nulls, offset int) {
+	// Retain new buffers before releasing existing buffers in-case they're the same ones to prevent accidental premature
+	// release.
+	for _, b := range buffers {
+		if b != nil {
+			b.Retain()
+		}
+	}
+	for _, b := range d.buffers {
+		if b != nil {
+			b.Release()
+		}
+	}
+	d.buffers = buffers
+
+	// Retain new children data before releasing existing children data in-case they're the same ones to prevent accidental
+	// premature release.
+	for _, d := range childData {
+		if d != nil {
+			d.Retain()
+		}
+	}
+	for _, d := range d.childData {
+		if d != nil {
+			d.Release()
+		}
+	}
+	d.childData = childData
+
+	d.dtype = dtype
+	d.length = length
+	d.nulls = nulls
+	d.offset = offset
 }
 
 // Retain increases the reference count by 1.
@@ -85,10 +122,19 @@ func (d *Data) Release() {
 	}
 }
 
-func (d *Data) DataType() arrow.DataType  { return d.dtype }
-func (d *Data) NullN() int                { return d.nulls }
-func (d *Data) Len() int                  { return d.length }
-func (d *Data) Offset() int               { return d.offset }
+// DataType returns the DataType of the data.
+func (d *Data) DataType() arrow.DataType { return d.dtype }
+
+// NullN returns the number of nulls.
+func (d *Data) NullN() int { return d.nulls }
+
+// Len returns the length.
+func (d *Data) Len() int { return d.length }
+
+// Offset returns the offset.
+func (d *Data) Offset() int { return d.offset }
+
+// Buffers returns the buffers.
 func (d *Data) Buffers() []*memory.Buffer { return d.buffers }
 
 // NewSliceData returns a new slice that shares backing data with the input.

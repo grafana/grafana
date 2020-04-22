@@ -22,10 +22,10 @@ import (
 	"sync/atomic"
 
 	"github.com/apache/arrow/go/arrow"
-	"github.com/apache/arrow/go/arrow/internal/bitutil"
+	"github.com/apache/arrow/go/arrow/bitutil"
 	"github.com/apache/arrow/go/arrow/internal/debug"
 	"github.com/apache/arrow/go/arrow/memory"
-	"github.com/pkg/errors"
+	"golang.org/x/xerrors"
 )
 
 func NewIntervalData(data *Data) Interface {
@@ -35,7 +35,7 @@ func NewIntervalData(data *Data) Interface {
 	case *arrow.DayTimeIntervalType:
 		return NewDayTimeIntervalData(data)
 	default:
-		panic(errors.Errorf("arrow/array: unknown interval data type %T", data.dtype))
+		panic(xerrors.Errorf("arrow/array: unknown interval data type %T", data.dtype))
 	}
 }
 

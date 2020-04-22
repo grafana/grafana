@@ -26,7 +26,7 @@ import (
 	"github.com/apache/arrow/go/arrow/internal/debug"
 	"github.com/apache/arrow/go/arrow/internal/flatbuf"
 	"github.com/apache/arrow/go/arrow/memory"
-	"github.com/pkg/errors"
+	"golang.org/x/xerrors"
 )
 
 // Reader reads records from an io.Reader.
@@ -64,7 +64,7 @@ func NewReader(r io.Reader, opts ...Option) (*Reader, error) {
 
 	err := rr.readSchema(cfg.schema)
 	if err != nil {
-		return nil, errors.Wrap(err, "arrow/ipc: could not read schema from stream")
+		return nil, xerrors.Errorf("arrow/ipc: could not read schema from stream: %w", err)
 	}
 
 	return rr, nil
@@ -79,11 +79,11 @@ func (r *Reader) Schema() *arrow.Schema { return r.schema }
 func (r *Reader) readSchema(schema *arrow.Schema) error {
 	msg, err := r.r.Message()
 	if err != nil {
-		return errors.Wrap(err, "arrow/ipc: could not read message schema")
+		return xerrors.Errorf("arrow/ipc: could not read message schema: %w", err)
 	}
 
 	if msg.Type() != MessageSchema {
-		return errors.Errorf("arrow/ipc: invalid message type (got=%v, want=%v)", msg.Type(), MessageSchema)
+		return xerrors.Errorf("arrow/ipc: invalid message type (got=%v, want=%v)", msg.Type(), MessageSchema)
 	}
 
 	// FIXME(sbinet) refactor msg-header handling.
@@ -92,7 +92,7 @@ func (r *Reader) readSchema(schema *arrow.Schema) error {
 
 	r.types, err = dictTypesFromFB(&schemaFB)
 	if err != nil {
-		return errors.Wrap(err, "arrow/ipc: could read dictionary types from message schema")
+		return xerrors.Errorf("arrow/ipc: could read dictionary types from message schema: %w", err)
 	}
 
 	// TODO(sbinet): in the future, we may want to reconcile IDs in the stream with
@@ -103,7 +103,7 @@ func (r *Reader) readSchema(schema *arrow.Schema) error {
 
 	r.schema, err = schemaFromFB(&schemaFB, &r.memo)
 	if err != nil {
-		return errors.Wrap(err, "arrow/ipc: could not decode schema from message schema")
+		return xerrors.Errorf("arrow/ipc: could not decode schema from message schema: %w", err)
 	}
 
 	// check the provided schema match the one read from stream.
@@ -164,7 +164,7 @@ func (r *Reader) next() bool {
 	}
 
 	if got, want := msg.Type(), MessageRecordBatch; got != want {
-		r.err = errors.Errorf("arrow/ipc: invalid message type (got=%v, want=%v", got, want)
+		r.err = xerrors.Errorf("arrow/ipc: invalid message type (got=%v, want=%v", got, want)
 		return false
 	}
 

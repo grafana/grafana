@@ -55,7 +55,7 @@ func NewColumn(field arrow.Field, chunks *Chunked) *Column {
 	}
 	col.data.Retain()
 
-	if !arrow.TypeEquals(col.data.DataType(), col.field.Type) {
+	if !arrow.TypeEqual(col.data.DataType(), col.field.Type) {
 		col.data.Release()
 		panic("arrow/array: inconsistent data type")
 	}
@@ -117,7 +117,7 @@ func NewChunked(dtype arrow.DataType, chunks []Interface) *Chunked {
 		dtype:    dtype,
 	}
 	for i, chunk := range chunks {
-		if !arrow.TypeEquals(chunk.DataType(), dtype) {
+		if !arrow.TypeEqual(chunk.DataType(), dtype) {
 			panic("arrow/array: mismatch data type")
 		}
 		chunk.Retain()

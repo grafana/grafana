@@ -24,21 +24,21 @@ type typeEqualsConfig struct {
 	metadata bool
 }
 
-// TypeEqualsOption is a functional option type used for configuring type
+// TypeEqualOption is a functional option type used for configuring type
 // equality checks.
-type TypeEqualsOption func(*typeEqualsConfig)
+type TypeEqualOption func(*typeEqualsConfig)
 
-// CheckMetadata is an option for TypeEquals that allows checking for metadata
+// CheckMetadata is an option for TypeEqual that allows checking for metadata
 // equality besides type equality. It only makes sense for STRUCT type.
-func CheckMetadata() TypeEqualsOption {
+func CheckMetadata() TypeEqualOption {
 	return func(cfg *typeEqualsConfig) {
 		cfg.metadata = true
 	}
 }
 
-// TypeEquals checks if two DataType are the same, optionally checking metadata
+// TypeEqual checks if two DataType are the same, optionally checking metadata
 // equality for STRUCT types.
-func TypeEquals(left, right DataType, opts ...TypeEqualsOption) bool {
+func TypeEqual(left, right DataType, opts ...TypeEqualOption) bool {
 	var cfg typeEqualsConfig
 	for _, opt := range opts {
 		opt(&cfg)
@@ -71,7 +71,7 @@ func TypeEquals(left, right DataType, opts ...TypeEqualsOption) bool {
 			return false
 		case leftField.Nullable != rightField.Nullable:
 			return false
-		case !TypeEquals(leftField.Type, rightField.Type, opts...):
+		case !TypeEqual(leftField.Type, rightField.Type, opts...):
 			return false
 		}
 	}

@@ -31,6 +31,7 @@ type {{.Name}} struct {
 	values []{{or .QualifiedType .Type}}
 }
 
+// New{{.Name}}Data creates a new {{.Name}}.
 func New{{.Name}}Data(data *Data) *{{.Name}} {
 	a := &{{.Name}}{}
 	a.refCount = 1
@@ -38,9 +39,18 @@ func New{{.Name}}Data(data *Data) *{{.Name}} {
 	return a
 }
 
+// Reset resets the array for re-use.
+func (a *{{.Name}}) Reset(data *Data) {
+	a.setData(data)
+}
+
+// Value returns the value at the specified index.
 func (a *{{.Name}}) Value(i int)      {{or .QualifiedType .Type}} { return a.values[i] }
+
+// Values returns the values.
 func (a *{{.Name}}) {{.Name}}Values() []{{or .QualifiedType .Type}} { return a.values }
 
+// String returns a string representation of the array.
 func (a *{{.Name}}) String() string {
 	o := new(strings.Builder)
 	o.WriteString("[")

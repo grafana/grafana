@@ -52,11 +52,15 @@
   {
     "Name": "Date32",
     "Type": "date32",
+    "QualifiedType": "arrow.Date32",
+    "InternalType": "int32",
     "Size": 32
   },
   {
     "Name": "Date64",
     "Type": "date64",
+    "QualifiedType": "arrow.Date64",
+    "InternalType": "int64",
     "Size": 64
   }
 ]

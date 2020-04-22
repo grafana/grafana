@@ -17,7 +17,7 @@
 package memory
 
 var (
-	memset func(b []byte, c byte)
+	memset func(b []byte, c byte) = memory_memset_go
 )
 
 // Set assigns the value c to every element of the slice buf.

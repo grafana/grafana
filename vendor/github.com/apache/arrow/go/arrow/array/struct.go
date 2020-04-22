@@ -17,12 +17,13 @@
 package array
 
 import (
+	"bytes"
 	"fmt"
 	"strings"
 	"sync/atomic"
 
 	"github.com/apache/arrow/go/arrow"
-	"github.com/apache/arrow/go/arrow/internal/bitutil"
+	"github.com/apache/arrow/go/arrow/bitutil"
 	"github.com/apache/arrow/go/arrow/internal/debug"
 	"github.com/apache/arrow/go/arrow/memory"
 )
@@ -47,9 +48,17 @@ func (a *Struct) Field(i int) Interface { return a.fields[i] }
 func (a *Struct) String() string {
 	o := new(strings.Builder)
 	o.WriteString("{")
+
+	structBitmap := a.NullBitmapBytes()
 	for i, v := range a.fields {
 		if i > 0 {
 			o.WriteString(" ")
+		}
+		if !bytes.Equal(structBitmap, v.NullBitmapBytes()) {
+			masked := a.newStructFieldWithParentValidityMask(i)
+			fmt.Fprintf(o, "%v", masked)
+			masked.Release()
+			continue
 		}
 		fmt.Fprintf(o, "%v", v)
 	}
@@ -57,11 +66,42 @@ func (a *Struct) String() string {
 	return o.String()
 }
 
+// newStructFieldWithParentValidityMask returns the Interface at fieldIndex
+// with a nullBitmapBytes adjusted according on the parent struct nullBitmapBytes.
+// From the docs:
+//   "When reading the struct array the parent validity bitmap takes priority."
+func (a *Struct) newStructFieldWithParentValidityMask(fieldIndex int) Interface {
+	field := a.Field(fieldIndex)
+	nullBitmapBytes := field.NullBitmapBytes()
+	maskedNullBitmapBytes := make([]byte, len(nullBitmapBytes))
+	copy(maskedNullBitmapBytes, nullBitmapBytes)
+	for i := 0; i < field.Len(); i++ {
+		if !a.IsValid(i) {
+			bitutil.ClearBit(maskedNullBitmapBytes, i)
+		}
+	}
+	data := NewSliceData(field.Data(), 0, int64(field.Len()))
+	defer data.Release()
+	bufs := make([]*memory.Buffer, len(data.buffers))
+	copy(bufs, data.buffers)
+	bufs[0].Release()
+	bufs[0] = memory.NewBufferBytes(maskedNullBitmapBytes)
+	data.buffers = bufs
+	maskedField := MakeFromData(data)
+	return maskedField
+}
+
 func (a *Struct) setData(data *Data) {
 	a.array.setData(data)
 	a.fields = make([]Interface, len(data.childData))
 	for i, child := range data.childData {
-		a.fields[i] = MakeFromData(child)
+		if data.offset != 0 || child.length != data.length {
+			sub := NewSliceData(child, int64(data.offset), int64(data.offset+data.length))
+			a.fields[i] = MakeFromData(sub)
+			sub.Release()
+		} else {
+			a.fields[i] = MakeFromData(child)
+		}
 	}
 }
 
@@ -159,20 +199,27 @@ func (b *StructBuilder) unsafeAppendBoolToBitmap(isValid bool) {
 
 func (b *StructBuilder) init(capacity int) {
 	b.builder.init(capacity)
-	for _, f := range b.fields {
-		f.init(capacity)
-	}
 }
 
 // Reserve ensures there is enough space for appending n elements
 // by checking the capacity and calling Resize if necessary.
 func (b *StructBuilder) Reserve(n int) {
-	b.builder.reserve(n, b.Resize)
+	b.builder.reserve(n, b.resizeHelper)
+	for _, f := range b.fields {
+		f.Reserve(n)
+	}
 }
 
 // Resize adjusts the space allocated by b to n elements. If n is greater than b.Cap(),
 // additional memory will be allocated. If n is smaller, the allocated memory may reduced.
 func (b *StructBuilder) Resize(n int) {
+	b.resizeHelper(n)
+	for _, f := range b.fields {
+		f.Resize(n)
+	}
+}
+
+func (b *StructBuilder) resizeHelper(n int) {
 	if n < minBuilderCapacity {
 		n = minBuilderCapacity
 	}
@@ -181,9 +228,6 @@ func (b *StructBuilder) Resize(n int) {
 		b.init(n)
 	} else {
 		b.builder.resize(n, b.builder.init)
-		for _, f := range b.fields {
-			f.resize(n, f.init)
-		}
 	}
 }
 

@@ -10,7 +10,16 @@ func newNullablegenVector(n int) *nullablegenVector {
 }
 
 func (v *nullablegenVector) Set(idx int, i interface{}) {
+	if i == nil {
+		(*v)[idx] = nil
+		return
+	}
 	(*v)[idx] = i.(*gen)
+}
+
+func (v *nullablegenVector) SetConcreteAt(idx int, i interface{}) {
+	val := i.(gen)
+	(*v)[idx] = &val
 }
 
 func (v *nullablegenVector) Append(i interface{}) {

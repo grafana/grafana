@@ -22,7 +22,7 @@ import (
 	"sync/atomic"
 
 	"github.com/apache/arrow/go/arrow"
-	"github.com/apache/arrow/go/arrow/internal/bitutil"
+	"github.com/apache/arrow/go/arrow/bitutil"
 	"github.com/apache/arrow/go/arrow/internal/debug"
 	"github.com/apache/arrow/go/arrow/memory"
 )
@@ -192,12 +192,18 @@ func (b *ListBuilder) init(capacity int) {
 // Reserve ensures there is enough space for appending n elements
 // by checking the capacity and calling Resize if necessary.
 func (b *ListBuilder) Reserve(n int) {
-	b.builder.reserve(n, b.Resize)
+	b.builder.reserve(n, b.resizeHelper)
+	b.offsets.Reserve(n)
 }
 
 // Resize adjusts the space allocated by b to n elements. If n is greater than b.Cap(),
 // additional memory will be allocated. If n is smaller, the allocated memory may reduced.
 func (b *ListBuilder) Resize(n int) {
+	b.resizeHelper(n)
+	b.offsets.Resize(n)
+}
+
+func (b *ListBuilder) resizeHelper(n int) {
 	if n < minBuilderCapacity {
 		n = minBuilderCapacity
 	}
@@ -206,7 +212,6 @@ func (b *ListBuilder) Resize(n int) {
 		b.init(n)
 	} else {
 		b.builder.resize(n, b.builder.init)
-		b.offsets.resize(n+1, b.offsets.init)
 	}
 }
 

@@ -30,7 +30,7 @@ const (
 	stringArrayMaximumCapacity = math.MaxInt32
 )
 
-// A type which represents an immutable sequence of variable-length UTF-8 strings.
+// String represents an immutable sequence of variable-length UTF-8 strings.
 type String struct {
 	array
 	offsets []int32
@@ -45,11 +45,18 @@ func NewStringData(data *Data) *String {
 	return a
 }
 
+// Reset resets the String with a different set of Data.
+func (a *String) Reset(data *Data) {
+	a.setData(data)
+}
+
 // Value returns the slice at index i. This value should not be mutated.
 func (a *String) Value(i int) string {
 	i = i + a.array.data.offset
 	return a.values[a.offsets[i]:a.offsets[i+1]]
 }
+
+// ValueOffset returns the offset of the value at index i.
 func (a *String) ValueOffset(i int) int { return int(a.offsets[i]) }
 
 func (a *String) String() string {
@@ -104,6 +111,7 @@ type StringBuilder struct {
 	builder *BinaryBuilder
 }
 
+// NewStringBuilder creates a new StringBuilder.
 func NewStringBuilder(mem memory.Allocator) *StringBuilder {
 	b := &StringBuilder{
 		builder: NewBinaryBuilder(mem, arrow.BinaryTypes.String),
@@ -134,10 +142,12 @@ func (b *StringBuilder) Cap() int { return b.builder.Cap() }
 // NullN returns the number of null values in the array builder.
 func (b *StringBuilder) NullN() int { return b.builder.NullN() }
 
+// Append appends a string to the builder.
 func (b *StringBuilder) Append(v string) {
 	b.builder.Append([]byte(v))
 }
 
+// AppendNull appends a null to the builder.
 func (b *StringBuilder) AppendNull() {
 	b.builder.AppendNull()
 }
@@ -149,6 +159,7 @@ func (b *StringBuilder) AppendValues(v []string, valid []bool) {
 	b.builder.AppendStringValues(v, valid)
 }
 
+// Value returns the string at index i.
 func (b *StringBuilder) Value(i int) string {
 	return string(b.builder.Value(i))
 }
