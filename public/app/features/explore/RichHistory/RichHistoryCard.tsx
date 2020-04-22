@@ -1,12 +1,17 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { connect } from 'react-redux';
 import { hot } from 'react-hot-loader';
 import { css, cx } from 'emotion';
 import { stylesFactory, useTheme, TextArea, Button, IconButton } from '@grafana/ui';
-import { GrafanaTheme, AppEvents, DataSourceApi } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
+import { GrafanaTheme, AppEvents, DataSourceApi } from '@grafana/data';
 import { RichHistoryQuery, ExploreId } from 'app/types/explore';
-import { copyStringToClipboard, createUrlFromRichHistory, createDataQuery } from 'app/core/utils/richHistory';
+import {
+  copyStringToClipboard,
+  createUrlFromRichHistory,
+  getQueryDisplayText,
+  isParsable,
+} from 'app/core/utils/richHistory';
 import appEvents from 'app/core/app_events';
 import { StoreState } from 'app/types';
 
@@ -146,44 +151,52 @@ export function RichHistoryCard(props: Props) {
   } = props;
   const [activeUpdateComment, setActiveUpdateComment] = useState(false);
   const [comment, setComment] = useState<string | undefined>(query.comment);
+  const [queryDsInstance, setQueryDsInstance] = useState<DataSourceApi | undefined>(undefined);
 
-  const toggleActiveUpdateComment = () => setActiveUpdateComment(!activeUpdateComment);
+  useEffect(() => {
+    getQueryDsInstance();
+  });
+
   const theme = useTheme();
   const styles = getStyles(theme, isRemoved);
 
-  const onRunQuery = async () => {
-    let ds = datasourceInstance;
-    /**
-     * If running the query from different datasource,
-     * create DataQuery for that specific datasource and update datasource in Explore
-     **/
-    if (query.datasourceName !== datasourceInstance?.name) {
-      ds = await getDataSourceSrv().get(query.datasourceName);
-      await changeDatasource(exploreId, query.datasourceName);
-    }
+  /* query DatasourceInstance is necessary because we use getQueryDisplayText method
+   * to format query text
+   */
+  const getQueryDsInstance = async () => {
+    const ds = await getDataSourceSrv().get(query.datasourceName);
+    setQueryDsInstance(ds);
+  };
 
-    const dataQueries = query.queries.map((q, i) => createDataQuery(query, q, i, ds.getQueryFromDisplayText));
-    setQueries(exploreId, dataQueries);
+  const onRunQuery = async () => {
+    const parsedQueries = query.queries.map(q => JSON.parse(q));
+    if (query.datasourceName !== datasourceInstance?.name) {
+      await changeDatasource(exploreId, query.datasourceName);
+      setQueries(exploreId, parsedQueries);
+    } else {
+      setQueries(exploreId, parsedQueries);
+    }
+  };
+
+  const createQueryText = (q: string) => {
+    if (isParsable(q)) {
+      const parsedQuery = JSON.parse(q);
+      if (queryDsInstance?.getQueryDisplayText) {
+        return queryDsInstance.getQueryDisplayText(parsedQuery);
+      }
+      return getQueryDisplayText(parsedQuery);
+    }
+    return q;
   };
 
   const onCopyQuery = () => {
-    const queries = query.queries.join('\n\n');
+    const queries = query.queries.map(q => createQueryText(q)).join('\n');
     copyStringToClipboard(queries);
     appEvents.emit(AppEvents.alertSuccess, ['Query copied to clipboard']);
   };
 
   const onCreateLink = async () => {
-    let ds = datasourceInstance;
-
-    /**
-     * If creating link for query with different datasource than currently used,
-     * get that datasource and use its getQueryFromDisplayText method (if it has it)
-     **/
-    if (query.datasourceName !== datasourceInstance?.name) {
-      ds = await getDataSourceSrv().get(query.datasourceName);
-    }
-
-    const url = createUrlFromRichHistory(query, ds?.getQueryFromDisplayText);
+    const url = createUrlFromRichHistory(query);
     copyStringToClipboard(url);
     appEvents.emit(AppEvents.alertSuccess, ['Link copied to clipboard']);
   };
@@ -196,6 +209,8 @@ export function RichHistoryCard(props: Props) {
   const onStarrQuery = () => {
     updateRichHistory(query.ts, 'starred');
   };
+
+  const toggleActiveUpdateComment = () => setActiveUpdateComment(!activeUpdateComment);
 
   const onUpdateComment = () => {
     updateRichHistory(query.ts, 'comment', comment);
@@ -257,9 +272,10 @@ export function RichHistoryCard(props: Props) {
       <div className={cx(styles.cardRow)}>
         <div className={styles.queryContainer}>
           {query.queries.map((q, i) => {
+            const queryText = createQueryText(q);
             return (
               <div aria-label="Query text" key={`${q}-${i}`} className={styles.queryRow}>
-                {q}
+                {queryText}
               </div>
             );
           })}
