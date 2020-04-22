@@ -131,17 +131,12 @@ func IsKnownDataSourcePlugin(dsType string) bool {
 // ----------------------
 // COMMANDS
 
-type DataSourceParams struct {
-	Url string `json:"url"`
-}
-
 // Also acts as api DTO
 type AddDataSourceCommand struct {
-	DataSourceParams
-
 	Name              string            `json:"name" binding:"Required"`
 	Type              string            `json:"type" binding:"Required"`
 	Access            DsAccess          `json:"access" binding:"Required"`
+	Url               string            `json:"url"`
 	Password          string            `json:"password"`
 	Database          string            `json:"database"`
 	User              string            `json:"user"`
@@ -162,11 +157,10 @@ type AddDataSourceCommand struct {
 
 // Also acts as api DTO
 type UpdateDataSourceCommand struct {
-	DataSourceParams
-
 	Name              string            `json:"name" binding:"Required"`
 	Type              string            `json:"type" binding:"Required"`
 	Access            DsAccess          `json:"access" binding:"Required"`
+	Url               string            `json:"url"`
 	Password          string            `json:"password"`
 	User              string            `json:"user"`
 	Database          string            `json:"database"`

@@ -221,13 +221,11 @@ func createInsertCommand(ds *upsertDataSourceFromConfig) *models.AddDataSourceCo
 	}
 
 	return &models.AddDataSourceCommand{
-		DataSourceParams: models.DataSourceParams{
-			Url: ds.URL,
-		},
 		OrgId:             ds.OrgID,
 		Name:              ds.Name,
 		Type:              ds.Type,
 		Access:            models.DsAccess(ds.Access),
+		Url:               ds.URL,
 		Password:          ds.Password,
 		User:              ds.User,
 		Database:          ds.Database,
@@ -252,15 +250,13 @@ func createUpdateCommand(ds *upsertDataSourceFromConfig, id int64) *models.Updat
 	}
 
 	return &models.UpdateDataSourceCommand{
-		DataSourceParams: models.DataSourceParams{
-			Url: ds.URL,
-		},
 		Id:                id,
 		Uid:               ds.UID,
 		OrgId:             ds.OrgID,
 		Name:              ds.Name,
 		Type:              ds.Type,
 		Access:            models.DsAccess(ds.Access),
+		Url:               ds.URL,
 		Password:          ds.Password,
 		User:              ds.User,
 		Database:          ds.Database,
