@@ -1,5 +1,5 @@
 import React, { FC } from 'react';
-import { AsyncSelect } from '@grafana/ui';
+import { AsyncSelect, Icon } from '@grafana/ui';
 import { SelectableValue } from '@grafana/data';
 import { DEFAULT_SORT } from 'app/features/search/constants';
 import { SearchSrv } from '../../services/search_srv';
@@ -27,6 +27,7 @@ export const SortPicker: FC<Props> = ({ onChange, value, placeholder }) => {
       loadOptions={getSortOptions}
       defaultOptions
       placeholder={placeholder ?? `Sort (Default ${DEFAULT_SORT.label})`}
+      prefix={<Icon name="sort-amount-down" />}
     />
   );
 };
