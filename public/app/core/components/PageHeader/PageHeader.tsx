@@ -15,7 +15,7 @@ const SelectNav = ({ main, customCss }: { main: NavModelItem; customCss: string 
     return null;
   }
 
-  const defaultSelectedItem = main.children?.find(navItem => {
+  const defaultSelectedItem = children.find(navItem => {
     return navItem.active === true;
   });
 
@@ -38,7 +38,7 @@ const SelectNav = ({ main, customCss }: { main: NavModelItem; customCss: string 
         onChange={gotoUrl}
         id="page-header-select-nav"
       >
-        {children?.map((navItem: NavModelItem) => {
+        {children.map((navItem: NavModelItem) => {
           if (navItem.hideFromTabs) {
             // TODO: Rename hideFromTabs => hideFromNav
             return null;
@@ -62,7 +62,7 @@ const Navigation = ({ main }: { main: NavModelItem }) => {
   }
 
   const goToUrl = (index: number) => {
-    children?.forEach((child, i) => {
+    children.forEach((child, i) => {
       if (i === index) {
         appEvents.emit(CoreEvents.locationChange, { href: child.url });
       }
@@ -73,7 +73,7 @@ const Navigation = ({ main }: { main: NavModelItem }) => {
     <nav>
       <SelectNav customCss="page-header__select-nav" main={main} />
       <TabsBar className="page-header__tabs" hideBorder={true}>
-        {children?.map((child, index) => {
+        {children.map((child, index) => {
           return (
             !child.hideFromTabs && (
               <Tab
