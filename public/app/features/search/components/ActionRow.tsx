@@ -67,6 +67,8 @@ export const ActionRow: FC<Props> = ({
   );
 };
 
+ActionRow.displayName = 'ActionRow';
+
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
   return {
     actionRow: css`

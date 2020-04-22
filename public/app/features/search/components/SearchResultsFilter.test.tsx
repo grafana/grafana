@@ -37,8 +37,9 @@ const setup = (propOverrides?: Partial<Props>, renderMethod = shallow) => {
 describe('SearchResultsFilter', () => {
   it('should render "filter by starred" and "filter by tag" filters by default', () => {
     const { wrapper } = setup();
-    expect(wrapper.find({ placeholder: 'Filter by starred' })).toHaveLength(1);
-    expect(wrapper.find({ placeholder: 'Filter by tag' })).toHaveLength(1);
+    const ActionRow = wrapper.find('ActionRow').shallow();
+    expect(ActionRow.find({ placeholder: 'Filter by starred' })).toHaveLength(1);
+    expect(ActionRow.find({ placeholder: 'Filter by tag' })).toHaveLength(1);
     expect(findBtnByText(wrapper, 'Move')).toHaveLength(0);
     expect(findBtnByText(wrapper, 'Delete')).toHaveLength(0);
   });
