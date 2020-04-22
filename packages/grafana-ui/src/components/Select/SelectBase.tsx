@@ -332,8 +332,6 @@ export function SelectBase<T>({
           }),
           container: () => ({
             position: 'relative',
-            // This puts the menu above Inputs (z-index: 1)
-            zIndex: theme.zIndex.dropdown,
             width: width ? `${8 * width}px` : '100%',
           }),
         }}
