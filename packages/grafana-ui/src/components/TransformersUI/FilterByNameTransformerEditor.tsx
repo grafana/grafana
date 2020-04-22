@@ -65,7 +65,6 @@ export class FilterByNameTransformerEditor extends React.PureComponent<
     let regexOption;
 
     if (configuredOptions.length) {
-      const options: FieldNameInfo[] = [];
       let selected: FieldNameInfo[] = [];
 
       for (const o of configuredOptions) {
@@ -122,10 +121,11 @@ export class FilterByNameTransformerEditor extends React.PureComponent<
           <div className="gf-form-label width-8">Field name</div>
           <HorizontalGroup spacing="xs">
             <Input
-              placeholder="Regular expression"
+              placeholder="Regular expression pattern"
               value={this.state.regex || ''}
               onChange={e => this.setState({ regex: e.currentTarget.value })}
               onBlur={this.onInputBlur}
+              width={25}
             />
             {options.map((o, i) => {
               const label = `${o.name}${o.count > 1 ? ' (' + o.count + ')' : ''}`;
