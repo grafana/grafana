@@ -129,6 +129,7 @@ export class FilterByNameTransformerEditor extends React.PureComponent<
             />
             {options.map((o, i) => {
               const label = `${o.name}${o.count > 1 ? ' (' + o.count + ')' : ''}`;
+              const isSelected = selected.indexOf(o.name) > -1;
               return (
                 <FilterPill
                   key={`${o.name}/${i}`}
@@ -136,7 +137,7 @@ export class FilterByNameTransformerEditor extends React.PureComponent<
                     this.onFieldToggle(o.name);
                   }}
                   label={label}
-                  selected={selected.indexOf(o.name) > -1}
+                  selected={isSelected}
                 />
               );
             })}

@@ -104,6 +104,7 @@ export class FilterByRefIdTransformerEditor extends React.PureComponent<
           <HorizontalGroup spacing="xs">
             {options.map((o, i) => {
               const label = `${o.refId}${o.count > 1 ? ' (' + o.count + ')' : ''}`;
+              const isSelected = selected.indexOf(o.refId) > -1;
               return (
                 <FilterPill
                   key={`${o.refId}/${i}`}
@@ -111,7 +112,7 @@ export class FilterByRefIdTransformerEditor extends React.PureComponent<
                     this.onFieldToggle(o.refId);
                   }}
                   label={label}
-                  selected={selected.indexOf(o.refId) > -1}
+                  selected={isSelected}
                 />
               );
             })}
