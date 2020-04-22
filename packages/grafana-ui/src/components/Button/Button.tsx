@@ -153,7 +153,7 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
 
 Button.displayName = 'Button';
 
-type ButtonLinkProps = CommonProps & AnchorHTMLAttributes<HTMLAnchorElement>;
+type ButtonLinkProps = CommonProps & ButtonHTMLAttributes<HTMLButtonElement> & AnchorHTMLAttributes<HTMLAnchorElement>;
 export const LinkButton = React.forwardRef<HTMLAnchorElement, ButtonLinkProps>(
   ({ variant, icon, children, className, ...otherProps }, ref) => {
     const theme = useContext(ThemeContext);

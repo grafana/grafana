@@ -24,6 +24,8 @@ export default {
   },
 };
 
+const BEHAVIOUR_GROUP = 'Behaviour props';
+
 const loadAsyncOptions = () => {
   return new Promise<Array<SelectableValue<string>>>(resolve => {
     setTimeout(() => {
@@ -33,7 +35,6 @@ const loadAsyncOptions = () => {
 };
 
 const getKnobs = () => {
-  const BEHAVIOUR_GROUP = 'Behaviour props';
   const disabled = boolean('Disabled', false, BEHAVIOUR_GROUP);
   const invalid = boolean('Invalid', false, BEHAVIOUR_GROUP);
   const loading = boolean('Loading', false, BEHAVIOUR_GROUP);
@@ -63,6 +64,18 @@ const getKnobs = () => {
     invalid,
     loading,
     prefixEl,
+  };
+};
+
+const getMultiSelectKnobs = () => {
+  const isClearable = boolean('Clearable', false, BEHAVIOUR_GROUP);
+  const closeMenuOnSelect = boolean('Close on Select', false, BEHAVIOUR_GROUP);
+  const maxVisibleValues = number('Max. visible values', 5, undefined, BEHAVIOUR_GROUP);
+
+  return {
+    isClearable,
+    closeMenuOnSelect,
+    maxVisibleValues,
   };
 };
 
@@ -177,6 +190,7 @@ export const multiSelect = () => {
           setValue(v);
         }}
         {...getDynamicProps()}
+        {...getMultiSelectKnobs()}
       />
     </>
   );
