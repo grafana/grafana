@@ -39,7 +39,7 @@ func (hs *HTTPServer) getPluginContext(pluginID string, user *models.SignedInUse
 		}
 		jsonData, err = json.Marshal(ps.JsonData)
 		if err != nil {
-			return pc, errutil.Wrap("Failed to unmarhsal plugin json data", err)
+			return pc, errutil.Wrap("Failed to unmarshal plugin json data", err)
 		}
 		decryptedSecureJSONData = make(map[string]string)
 	} else {
