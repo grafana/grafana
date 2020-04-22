@@ -40,7 +40,7 @@ const getFilterPillStyles = stylesFactory((theme: GrafanaTheme, isSelected: bool
       background: ${theme.colors.bg2};
       border-radius: ${theme.border.radius.sm};
       display: inline-block;
-      padding: ${theme.spacing.xs} ${theme.spacing.md} ${theme.spacing.xs} ${theme.spacing.xs};
+      padding: 0 ${theme.spacing.md} 0 ${theme.spacing.xs};
       font-weight: ${theme.typography.weight.semibold};
       font-size: ${theme.typography.size.sm};
       color: ${theme.colors.text};
