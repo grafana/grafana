@@ -1,4 +1,4 @@
-import React, { FC, useState } from 'react';
+import React, { FC, useState, memo } from 'react';
 import { css } from 'emotion';
 import { Icon, TagList, HorizontalGroup, stylesFactory, useTheme } from '@grafana/ui';
 import { GrafanaTheme } from '@grafana/data';
@@ -12,6 +12,8 @@ import { SearchResultsFilter } from './SearchResultsFilter';
 import { SearchResults } from './SearchResults';
 import { DashboardActions } from './DashboardActions';
 import { SearchField } from './SearchField';
+import { useSearchLayout } from '../hooks/useSearchLayout';
+import { SearchLayout } from '../types';
 
 export interface Props {
   folderId?: number;
@@ -20,7 +22,7 @@ export interface Props {
 
 const { isEditor } = contextSrv;
 
-export const ManageDashboards: FC<Props> = ({ folderId, folderUid }) => {
+export const ManageDashboards: FC<Props> = memo(({ folderId, folderUid }) => {
   const theme = useTheme();
   const styles = getStyles(theme);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -36,6 +38,7 @@ export const ManageDashboards: FC<Props> = ({ folderId, folderUid }) => {
     onTagFilterChange,
     onStarredFilterChange,
     onTagAdd,
+    onSortChange,
   } = useSearchQuery(queryParams);
 
   const {
@@ -53,12 +56,21 @@ export const ManageDashboards: FC<Props> = ({ folderId, folderUid }) => {
     onMoveItems,
   } = useManageDashboards(query, { hasEditPermissionInFolders: contextSrv.hasEditPermissionInFolders }, folderUid);
 
+  const { layout, setLayout } = useSearchLayout(query);
+
   const onMoveTo = () => {
     setIsMoveModalOpen(true);
   };
 
   const onItemDelete = () => {
     setIsDeleteModalOpen(true);
+  };
+
+  const onLayoutChange = (layout: string) => {
+    setLayout(layout);
+    if (query.sort) {
+      onSortChange(null);
+    }
   };
 
   if (canSave && folderId && !hasFilters && results.length === 0) {
@@ -102,9 +114,24 @@ export const ManageDashboards: FC<Props> = ({ folderId, folderUid }) => {
                 </label>
               </div>
             )}
+            {query.sort && (
+              <div className="gf-form">
+                <label className="gf-form-label">
+                  <a className="pointer" onClick={() => onSortChange(null)}>
+                    Sort: {query.sort.label}
+                  </a>
+                </label>
+              </div>
+            )}
             <div className="gf-form">
               <label className="gf-form-label">
-                <a className="pointer" onClick={onClearFilters}>
+                <a
+                  className="pointer"
+                  onClick={() => {
+                    onClearFilters();
+                    setLayout(SearchLayout.Folders);
+                  }}
+                >
                   <Icon name="times" />
                   &nbsp;Clear
                 </a>
@@ -124,9 +151,12 @@ export const ManageDashboards: FC<Props> = ({ folderId, folderUid }) => {
             moveTo={onMoveTo}
             onToggleAllChecked={onToggleAllChecked}
             onStarredFilterChange={onStarredFilterChange}
+            onSortChange={onSortChange}
             onTagFilterChange={onTagFilterChange}
-            selectedStarredFilter={query.starred}
-            selectedTagFilter={query.tag}
+            query={query}
+            layout={layout}
+            hideLayout={!!folderUid}
+            onLayoutChange={onLayoutChange}
           />
         )}
         <SearchResults
@@ -136,6 +166,7 @@ export const ManageDashboards: FC<Props> = ({ folderId, folderUid }) => {
           onTagSelected={onTagAdd}
           onToggleSection={onToggleSection}
           onToggleChecked={onToggleChecked}
+          layout={layout}
         />
       </div>
       <ConfirmDeleteModal
@@ -152,7 +183,7 @@ export const ManageDashboards: FC<Props> = ({ folderId, folderUid }) => {
       />
     </div>
   );
-};
+});
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
   return {

@@ -17,7 +17,7 @@ Returns a map of labels that are in `labels`<!-- -->, but not in `commonLabels`<
 <b>Signature</b>
 
 ```typescript
-export declare function findUniqueLabels(labels: Labels, commonLabels: Labels): Labels;
+export declare function findUniqueLabels(labels: Labels | undefined, commonLabels: Labels): Labels;
 ```
 <b>Import</b>
 
@@ -28,7 +28,7 @@ import { findUniqueLabels } from '@grafana/data';
 
 |  Parameter | Type | Description |
 |  --- | --- | --- |
-|  labels | <code>Labels</code> |  |
+|  labels | <code>Labels &#124; undefined</code> |  |
 |  commonLabels | <code>Labels</code> |  |
 
 <b>Returns:</b>

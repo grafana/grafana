@@ -261,9 +261,9 @@ export const isTableData = (data: any): data is DataFrame => data && data.hasOwn
 export const isDataFrame = (data: any): data is DataFrame => data && data.hasOwnProperty('fields');
 
 export const toDataFrame = (data: any): DataFrame => {
-  if (data.hasOwnProperty('fields')) {
+  if ('fields' in data) {
     // DataFrameDTO does not have length
-    if (data.hasOwnProperty('length')) {
+    if ('length' in data) {
       return data as DataFrame;
     }
 

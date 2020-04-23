@@ -5,7 +5,7 @@ import React, { PureComponent, ChangeEvent, FocusEvent, ReactText } from 'react'
 import { rangeUtil, DataSourceSelectItem } from '@grafana/data';
 
 // Components
-import { EventsWithValidation, LegacyInputStatus, LegacyForms, ValidationEvents, FormLabel } from '@grafana/ui';
+import { EventsWithValidation, LegacyInputStatus, LegacyForms, ValidationEvents, InlineFormLabel } from '@grafana/ui';
 import { DataSourceOption } from './DataSourceOption';
 const { Input, Switch } = LegacyForms;
 
@@ -188,7 +188,7 @@ export class QueryOptions extends PureComponent<Props, State> {
         {this.renderOptions()}
 
         <div className="gf-form">
-          <FormLabel>Relative time</FormLabel>
+          <InlineFormLabel>Relative time</InlineFormLabel>
           <Input
             type="text"
             className="width-6"

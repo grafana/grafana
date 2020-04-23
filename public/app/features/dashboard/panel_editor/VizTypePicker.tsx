@@ -85,24 +85,18 @@ export const VizTypePicker: React.FC<Props> = ({ searchQuery, onTypeChange, curr
   const renderList = filteredPluginList.concat(pluginsList.filter(p => filteredPluginList.indexOf(p) === -1));
 
   return (
-    <div className={styles.wrapper}>
-      <div className={styles.grid}>
-        {hasResults ? (
-          renderList.map((plugin, index) => renderVizPlugin(plugin, index))
-        ) : (
-          <EmptySearchResult>Could not find anything matching your query</EmptySearchResult>
-        )}
-      </div>
+    <div className={styles.grid}>
+      {hasResults ? (
+        renderList.map((plugin, index) => renderVizPlugin(plugin, index))
+      ) : (
+        <EmptySearchResult>Could not find anything matching your query</EmptySearchResult>
+      )}
     </div>
   );
 };
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
   return {
-    wrapper: css`
-      // this needed here to make the box shadow not be clicked by the parent scroll container
-      padding-top: ${theme.spacing.md};
-    `,
     grid: css`
       max-width: 100%;
       display: grid;

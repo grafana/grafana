@@ -25,7 +25,7 @@ import { StatsPicker } from '@grafana/ui';
 |  Property | Modifiers | Type | Description |
 |  --- | --- | --- | --- |
 |  [checkInput](#checkinput-property) |  | <code>() =&gt; void</code> |  |
-|  [defaultProps](#defaultprops-property) | <code>static</code> | <code>{</code><br/><code>        width: number;</code><br/><code>        allowMultiple: boolean;</code><br/><code>    }</code> |  |
+|  [defaultProps](#defaultprops-property) | <code>static</code> | <code>Partial&lt;Props&gt;</code> |  |
 |  [onSelectionChange](#onselectionchange-property) |  | <code>(item: SelectableValue&lt;string&gt;) =&gt; void</code> |  |
 
 <b>Methods</b>
@@ -49,10 +49,7 @@ checkInput: () => void;
 <b>Signature</b>
 
 ```typescript
-static defaultProps: {
-        width: number;
-        allowMultiple: boolean;
-    };
+static defaultProps: Partial<Props>;
 ```
 
 ### onSelectionChange property

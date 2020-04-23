@@ -1,34 +1,49 @@
-import React, { FC, useState, useEffect } from 'react';
-import { appEvents } from 'app/core/core';
-import { CoreEvents } from 'app/types';
+import React, { FC, memo } from 'react';
+import { MapDispatchToProps, MapStateToProps } from 'react-redux';
+import { getLocationQuery } from 'app/core/selectors/location';
+import { updateLocation } from 'app/core/reducers/location';
+import { connectWithStore } from 'app/core/utils/connectWithReduxStore';
+import { StoreState } from 'app/types';
 import { DashboardSearch } from './DashboardSearch';
-import { OpenSearchParams } from '../types';
 
-export const SearchWrapper: FC = () => {
-  const [isOpen, setIsOpen] = useState(false);
-  const [payload, setPayload] = useState({});
+interface OwnProps {
+  search?: string | null;
+  folder?: string;
+  queryText?: string;
+  filter?: string;
+}
 
-  useEffect(() => {
-    const openSearch = (payload: OpenSearchParams) => {
-      setIsOpen(true);
-      setPayload(payload);
-    };
+interface DispatchProps {
+  updateLocation: typeof updateLocation;
+}
 
-    const closeOnItemClick = (payload: any) => {
-      // Detect if the event was emitted by clicking on search item
-      if (payload?.target === 'search-item' && isOpen) {
-        setIsOpen(false);
-      }
-    };
+export type Props = OwnProps & DispatchProps;
 
-    appEvents.on(CoreEvents.showDashSearch, openSearch);
-    appEvents.on(CoreEvents.hideDashSearch, closeOnItemClick);
+export const SearchWrapper: FC<Props> = memo(({ search, folder, updateLocation }) => {
+  const isOpen = search === 'open';
 
-    return () => {
-      appEvents.off(CoreEvents.showDashSearch, openSearch);
-      appEvents.off(CoreEvents.hideDashSearch, closeOnItemClick);
-    };
-  }, [isOpen]);
+  const closeSearch = () => {
+    if (search === 'open') {
+      updateLocation({
+        query: {
+          search: null,
+          folder: null,
+        },
+        partial: true,
+      });
+    }
+  };
 
-  return isOpen ? <DashboardSearch onCloseSearch={() => setIsOpen(false)} payload={payload} /> : null;
+  return isOpen ? <DashboardSearch onCloseSearch={closeSearch} folder={folder} /> : null;
+});
+
+const mapStateToProps: MapStateToProps<{}, OwnProps, StoreState> = (state: StoreState) => {
+  const { search, folder } = getLocationQuery(state.location);
+  return { search, folder };
 };
+
+const mapDispatchToProps: MapDispatchToProps<DispatchProps, OwnProps> = {
+  updateLocation,
+};
+
+export default connectWithStore(SearchWrapper, mapStateToProps, mapDispatchToProps);

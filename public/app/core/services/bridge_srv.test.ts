@@ -1,4 +1,4 @@
-import { UrlQueryMap } from '@grafana/runtime';
+import { UrlQueryMap } from '@grafana/data';
 import { findTemplateVarChanges } from './bridge_srv';
 
 describe('when checking template variables', () => {
