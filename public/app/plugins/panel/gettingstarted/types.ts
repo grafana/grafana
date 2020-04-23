@@ -12,6 +12,7 @@ export interface Card {
   info?: string;
   check: () => Promise<boolean>;
   done?: boolean;
+  key?: string;
 }
 
 export interface SetupStep {
