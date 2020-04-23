@@ -1,9 +1,10 @@
 import React, { PureComponent } from 'react';
-import { Select, Input } from '@grafana/ui';
+import { Select, Input, Tooltip, LegacyForms } from '@grafana/ui';
 import { DashboardModel } from '../../state/DashboardModel';
-import { getTimeZoneGroups, TimeZone } from '@grafana/data';
+import { getTimeZoneGroups, TimeZone, rangeUtil, SelectableValue } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import kbn from 'app/core/utils/kbn';
+import isEmpty from 'lodash/isEmpty';
 
 const grafanaTimeZones = [
   { value: '', label: 'Default' },
@@ -18,17 +19,23 @@ const timeZones = getTimeZoneGroups().reduce((tzs, group) => {
 }, grafanaTimeZones);
 
 interface Props {
-  dashboard: DashboardModel;
+  getDashboard: () => DashboardModel;
+  onTimeZoneChange: (timeZone: TimeZone) => void;
+  onRefreshIntervalChange: (interval: string[]) => void;
+  onNowDelayChange: (nowDelay: string) => void;
+  onHideTimePickerChange: (hide: boolean) => void;
 }
 
-export class TimePickerSettings extends PureComponent<Props> {
-  constructor(props: Props) {
-    super(props);
+interface State {
+  isNowDelayValid: boolean;
+}
 
-    const { dashboard } = props;
-    const { timepicker } = dashboard;
+export class TimePickerSettings extends PureComponent<Props, State> {
+  state: State = { isNowDelayValid: true };
 
-    timepicker.refresh_intervals = timepicker.refresh_intervals || [
+  componentDidMount() {
+    const { timepicker } = this.props.getDashboard();
+    let intervals: string[] = timepicker.refresh_intervals ?? [
       '5s',
       '10s',
       '30s',
@@ -42,24 +49,59 @@ export class TimePickerSettings extends PureComponent<Props> {
     ];
 
     if (config.minRefreshInterval) {
-      timepicker.refresh_intervals = this.filterRefreshRates(timepicker.refresh_intervals);
+      intervals = intervals.filter(rate => {
+        return kbn.interval_to_ms(rate) > kbn.interval_to_ms(config.minRefreshInterval);
+      });
     }
+
+    this.props.onRefreshIntervalChange(intervals);
   }
 
-  onTimeZoneChanged = (timeZone: TimeZone) => {
-    this.props.dashboard.timezone = timeZone;
-  };
-
   getRefreshIntervals = () => {
-    return this.props.dashboard.timezone.refresh_intervals;
+    const dashboard = this.props.getDashboard();
+    if (!Array.isArray(dashboard.timepicker.refresh_intervals)) {
+      return '';
+    }
+    return dashboard.timepicker.refresh_intervals.join(',');
   };
 
   onRefreshIntervalChange = (event: React.FormEvent<HTMLInputElement>) => {
-    this.props.dashboard.timezone.refresh_intervals = event.currentTarget.value;
+    if (!event.currentTarget.value) {
+      return;
+    }
+    const intervals = event.currentTarget.value.split(',');
+    this.props.onRefreshIntervalChange(intervals);
+    this.forceUpdate();
+  };
+
+  onNowDelayChange = (event: React.FormEvent<HTMLInputElement>) => {
+    const value = event.currentTarget.value;
+
+    if (isEmpty(value)) {
+      this.setState({ isNowDelayValid: true });
+      return this.props.onNowDelayChange(value);
+    }
+
+    if (rangeUtil.isValidTimeSpan(value)) {
+      this.setState({ isNowDelayValid: true });
+      return this.props.onNowDelayChange(value);
+    }
+
+    this.setState({ isNowDelayValid: false });
+  };
+
+  onHideTimePickerChange = () => {
+    const dashboard = this.props.getDashboard();
+    this.props.onHideTimePickerChange(!dashboard.timepicker.hidden);
+  };
+
+  onTimeZoneChange = (timeZone: SelectableValue<string>) => {
+    this.props.onTimeZoneChange(timeZone.value);
+    this.forceUpdate();
   };
 
   render() {
-    const { dashboard } = this.props;
+    const dashboard = this.props.getDashboard();
     const value = timeZones.find(item => item.value === dashboard.timezone);
 
     return (
@@ -67,42 +109,39 @@ export class TimePickerSettings extends PureComponent<Props> {
         <h5 className="section-heading">Time Options</h5>
         <div className="gf-form-group">
           <div className="gf-form">
-            <label className="gf-form-label width-10">Timezone</label>
+            <label className="gf-form-label width-7">Timezone</label>
+            <Select isSearchable={true} value={value} onChange={this.onTimeZoneChange} options={timeZones} width={40} />
+          </div>
 
-            <Select
-              isSearchable={true}
-              value={value}
-              onChange={timezone => this.onTimeZoneChanged(timezone.value)}
-              options={timeZones}
-              width={20}
+          <div className="gf-form">
+            <span className="gf-form-label width-7">Auto-refresh</span>
+            <Input width={60} value={this.getRefreshIntervals()} onChange={this.onRefreshIntervalChange} />
+          </div>
+          <div className="gf-form">
+            <span className="gf-form-label width-7">Now delay now-</span>
+            <Tooltip
+              placement="right"
+              content={'Enter 1m to ignore the last minute (because it can contain incomplete metrics)'}
+            >
+              <Input
+                width={60}
+                invalid={!this.state.isNowDelayValid}
+                placeholder="0m"
+                onChange={this.onNowDelayChange}
+              />
+            </Tooltip>
+          </div>
+
+          <div className="gf-form">
+            <LegacyForms.Switch
+              labelClass="width-7"
+              label="Hide time picker"
+              checked={dashboard.timepicker.hidden ?? false}
+              onChange={this.onHideTimePickerChange}
             />
           </div>
-
-          <div className="gf-form">
-            <span className="gf-form-label width-10">Auto-refresh</span>
-            <Input value={this.getRefreshIntervals()} onChange={this.onRefreshIntervalChange} />
-            {/* <input type="text" className="gf-form-input max-width-25" ng-model="ctrl.panel.refresh_intervals" array-join> */}
-          </div>
-          <div className="gf-form">
-            <span className="gf-form-label width-10">Now delay now-</span>
-            <Input placeholder="0m" />
-            {/* <input type="text" className="gf-form-input max-width-25" ng-model="ctrl.panel.nowDelay"
-                    placeholder="0m"
-                    valid-time-span
-                    bs-tooltip="'Enter 1m to ignore the last minute (because it can contain incomplete metrics)'"
-                        data-placement="right"> */}
-          </div>
-
-          {/* <gf-form-switch className="gf-form" label="Hide time picker" checked="ctrl.panel.hidden" label-className="width-10">
-            </gf-form-switch> */}
         </div>
       </div>
     );
-  }
-
-  private filterRefreshRates(refreshRates: string[]) {
-    return refreshRates.filter(rate => {
-      return kbn.interval_to_ms(rate) > kbn.interval_to_ms(config.minRefreshInterval);
-    });
   }
 }

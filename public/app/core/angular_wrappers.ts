@@ -202,6 +202,10 @@ export function registerAngularDirectives() {
   ]);
   react2AngularDirective('variableEditorContainer', VariableEditorContainer, []);
   react2AngularDirective('timePickerSettings', TimePickerSettings, [
-    ['dashboard', { watchDepth: 'reference', wrapApply: true }],
+    ['getDashboard', { watchDepth: 'reference', wrapApply: true }],
+    ['onTimeZoneChange', { watchDepth: 'reference', wrapApply: true }],
+    ['onRefreshIntervalChange', { watchDepth: 'reference', wrapApply: true }],
+    ['onNowDelayChange', { watchDepth: 'reference', wrapApply: true }],
+    ['onHideTimePickerChange', { watchDepth: 'reference', wrapApply: true }],
   ]);
 }
