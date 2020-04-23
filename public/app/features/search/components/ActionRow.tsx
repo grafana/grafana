@@ -25,17 +25,19 @@ interface Props {
   query: DashboardQuery;
   showStarredFilter?: boolean;
   hideSelectedTags?: boolean;
+  hideLayout?: boolean;
 }
 
 export const ActionRow: FC<Props> = ({
   layout,
   onLayoutChange,
   onSortChange,
-  onStarredFilterChange,
+  onStarredFilterChange = () => {},
   onTagFilterChange,
   query,
   showStarredFilter,
   hideSelectedTags,
+  hideLayout,
 }) => {
   const theme = useTheme();
   const styles = getStyles(theme);
@@ -43,7 +45,7 @@ export const ActionRow: FC<Props> = ({
   return (
     <div className={styles.actionRow}>
       <HorizontalGroup spacing="md" width="100%">
-        {layout ? <RadioButtonGroup options={layoutOptions} onChange={onLayoutChange} value={layout} /> : null}
+        {!hideLayout ? <RadioButtonGroup options={layoutOptions} onChange={onLayoutChange} value={layout} /> : null}
         <SortPicker onChange={onSortChange} value={query.sort} />
       </HorizontalGroup>
       <HorizontalGroup spacing="md" justify="space-between">
