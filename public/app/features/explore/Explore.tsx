@@ -122,6 +122,7 @@ export interface ExploreProps {
   originPanelId: number;
   addQueryRow: typeof addQueryRow;
   theme: GrafanaTheme;
+  prevShowMoreLogsTimeRanges: TimeRange[];
 }
 
 interface ExploreState {
@@ -433,6 +434,7 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps): Partia
     showingTable,
     absoluteRange,
     queryResponse,
+    prevShowMoreLogsTimeRanges,
   } = item;
 
   const { datasource, queries, range: urlRange, mode: urlMode, ui, originPanelId } = (urlState ||
@@ -484,6 +486,7 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps): Partia
     originPanelId,
     syncedTimes,
     timeZone,
+    prevShowMoreLogsTimeRanges,
   };
 }
 
