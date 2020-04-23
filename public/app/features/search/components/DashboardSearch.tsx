@@ -67,6 +67,7 @@ export const DashboardSearch: FC<Props> = memo(({ onCloseSearch, folder }) => {
             editable={false}
             onToggleSection={onToggleSection}
             layout={layout}
+            wrapperRef={wrapperRef}
           />
         </CustomScrollbar>
       </div>

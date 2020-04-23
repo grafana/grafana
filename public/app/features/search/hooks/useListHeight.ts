@@ -1,22 +1,14 @@
-import { useEffect, useState, MutableRefObject } from 'react';
+import { useEffect, useState } from 'react';
 
 /**
  * Dynamically calculate height of ref element relative to the visible part of the screen.
  * The height is updated on resize.
- * @param ref
+ * @param offsetTop
  * @param offsetBottom - used for adding bottom padding or showing extra elements
  * after the list
  */
-export const useListHeight = (ref?: MutableRefObject<HTMLDivElement | null>, offsetBottom = 200) => {
-  if (!ref) {
-    return 0;
-  }
-
+export const useListHeight = (offsetTop = 0, offsetBottom = 150) => {
   function getHeight() {
-    const offsetTop = ref?.current?.offsetTop;
-    if (!offsetTop) {
-      return 0;
-    }
     return window.innerHeight - offsetTop - offsetBottom;
   }
 
@@ -32,7 +24,7 @@ export const useListHeight = (ref?: MutableRefObject<HTMLDivElement | null>, off
 
   useEffect(() => {
     handleResize();
-  }, [ref.current]);
+  }, [offsetTop]);
 
   return height;
 };

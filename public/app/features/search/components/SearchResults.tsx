@@ -33,7 +33,7 @@ export const SearchResults: FC<Props> = ({
 }) => {
   const theme = useTheme();
   const styles = getSectionStyles(theme);
-  const listHeight = useListHeight(wrapperRef);
+  const listHeight = useListHeight(wrapperRef?.current?.offsetTop);
   const itemProps = { editable, onToggleChecked, onTagSelected };
 
   const renderFolders = () => {
