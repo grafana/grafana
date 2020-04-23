@@ -1,4 +1,4 @@
-import { DataFrame, DataTransformerInfo, FieldType } from '../../types';
+import { DataFrame, DataTransformerInfo, FieldType, Field } from '../../types';
 import { DataTransformerID } from './ids';
 import { MutableDataFrame } from '../../dataframe';
 import { ArrayVector } from '../../vector';
@@ -21,7 +21,8 @@ export const labelsToFieldsTransformer: DataTransformerInfo<LabelsToFieldsOption
       return data;
     }
 
-    const framesWithoutTimeField = filterFieldsTransformer.transformer({ exclude: { id: FieldMatcherID.time } })(data);
+    // get frames with only value fields
+    const framesWithoutTimeField = getFramesWithOnlyValueFields(data);
     if (!framesWithoutTimeField.length || !framesWithoutTimeField[0].fields.length) {
       return data;
     }
@@ -63,6 +64,46 @@ export const labelsToFieldsTransformer: DataTransformerInfo<LabelsToFieldsOption
     return [processed];
   },
 };
+
+function getFramesWithOnlyValueFields(data: DataFrame[]): DataFrame[] {
+  const processed: DataFrame[] = [];
+
+  for (const series of data) {
+    const fields: Field[] = [];
+
+    for (let i = 0; i < series.fields.length; i++) {
+      const field = series.fields[i];
+      if (field.type !== FieldType.number) {
+        continue;
+      }
+
+      // When we transform a time series to DataFrame we put series name in field name.
+      // This casues problems for this transformer that want all time series values in a Value column
+      // So here we change field names that have same name as DataFrame to just Value
+      if (field.name === series.name) {
+        fields.push({
+          ...field,
+          name: 'Value',
+        });
+      } else {
+        fields.push(field);
+      }
+    }
+
+    if (!fields.length) {
+      continue;
+    }
+
+    const copy = {
+      ...series, // all the other properties
+      fields, // but a different set of fields
+    };
+
+    processed.push(copy);
+  }
+
+  return processed;
+}
 
 function addOrAppendMapItem(args: { map: Map; series: number; column: string; type: FieldType; isValue?: boolean }) {
   const { map, column, type, series, isValue = false } = args;
