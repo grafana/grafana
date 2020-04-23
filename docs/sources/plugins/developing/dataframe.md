@@ -80,7 +80,7 @@ Dimensions: 2 Fields by 2 Rows
 +---------------------+-----------------+
 ```
 
-The name of the time Field does not matter, nor does its order in the frame (unless there are multiple time columns, in which case the first is used).
+The name of the time Field doesn't matter, nor does its order in the frame (unless there are multiple time columns, in which case the first is used).
 
 #### Time series with shared time values
 
