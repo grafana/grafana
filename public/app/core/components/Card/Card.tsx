@@ -5,13 +5,23 @@ export interface CardProps {
   logoUrl?: string;
   title: string;
   description?: string;
+  labels?: React.ReactNode;
   actions?: React.ReactNode;
   onClick?: () => void;
   ariaLabel?: string;
   className?: string;
 }
 
-export const Card: React.FC<CardProps> = ({ logoUrl, title, description, actions, onClick, ariaLabel, className }) => {
+export const Card: React.FC<CardProps> = ({
+  logoUrl,
+  title,
+  description,
+  labels,
+  actions,
+  onClick,
+  ariaLabel,
+  className,
+}) => {
   const mainClassName = cx('add-data-source-item', className);
 
   return (
@@ -20,6 +30,7 @@ export const Card: React.FC<CardProps> = ({ logoUrl, title, description, actions
       <div className="add-data-source-item-text-wrapper">
         <span className="add-data-source-item-text">{title}</span>
         {description && <span className="add-data-source-item-desc">{description}</span>}
+        {labels && <div>{labels}</div>}
       </div>
       {actions && <div className="add-data-source-item-actions">{actions}</div>}
     </div>
