@@ -24,7 +24,7 @@ import ReactDOM from 'react-dom';
 import { GraphLegendProps, Legend } from './Legend/Legend';
 
 import { GraphCtrl } from './module';
-import { ContextMenuGroup, ContextMenuItem } from '@grafana/ui';
+import { ContextMenuGroup, ContextMenuItem, graphTimeFormatter, graphTimeFormat } from '@grafana/ui';
 import { provideTheme, getCurrentTheme } from 'app/core/utils/ConfigProvider';
 import {
   toUtc,
@@ -39,7 +39,6 @@ import {
   FieldType,
   DataFrame,
   getTimeField,
-  dateTimeFormat,
 } from '@grafana/data';
 import { GraphContextMenuCtrl } from './GraphContextMenuCtrl';
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
@@ -644,8 +643,8 @@ class GraphElement {
       max: max,
       label: 'Datetime',
       ticks: ticks,
-      timeformat: this.time_format(ticks, min, max, true),
-      timeFormatter: this.timeFormatter.bind(this),
+      timeformat: graphTimeFormat(ticks, min, max),
+      timeFormatter: graphTimeFormatter(this.dashboard.timezone),
     };
   }
 
@@ -901,38 +900,6 @@ class GraphElement {
       }
       return formattedValueToString(formatter(val, axis.tickDecimals, axis.scaledDecimals));
     };
-  }
-
-  time_format(ticks: number, min: number | null, max: number | null, moment = false) {
-    if (min && max && ticks) {
-      const range = max - min;
-      const secPerTick = range / ticks / 1000;
-      // Need have 10 millisecond margin on the day range
-      // As sometimes last 24 hour dashboard evaluates to more than 86400000
-      const oneDay = 86400010;
-      const oneYear = 31536000000;
-
-      if (secPerTick <= 45) {
-        return moment ? 'HH:mm:ss' : '%H:%M:%S';
-      }
-      if (secPerTick <= 7200 || range <= oneDay) {
-        return moment ? 'HH:mm' : '%H:%M';
-      }
-      if (secPerTick <= 80000) {
-        return moment ? 'MM/DD HH:mm' : '%m/%d %H:%M';
-      }
-      if (secPerTick <= 2419200 || range <= oneYear) {
-        return moment ? 'MM/DD' : '%m/%d';
-      }
-      return moment ? 'YYYY-MM' : '%Y-%m';
-    }
-
-    return moment ? 'HH:mm' : '%H:%M';
-  }
-
-  timeFormatter(epoch: number, format: string) {
-    const timeZone = this.dashboard.getTimezone();
-    return dateTimeFormat(epoch, { format, timeZone });
   }
 }
 

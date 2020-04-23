@@ -1,5 +1,5 @@
 import React, { FormEvent, useState, useCallback } from 'react';
-import { TIME_FORMAT, TimeZone, isDateTime, TimeRange, DateTime, dateMath } from '@grafana/data';
+import { TimeZone, isDateTime, TimeRange, DateTime, dateMath, dateTimeFormat } from '@grafana/data';
 import { stringToDateTimeType, isValidTimeString } from '../time';
 import { mapStringsToTimeRange } from './mapper';
 import { TimePickerCalendar } from './TimePickerCalendar';
@@ -109,9 +109,9 @@ function valueToState(raw: DateTime | string, roundup?: boolean, timeZone?: Time
   return { value, invalid };
 }
 
-function valueAsString(value: DateTime | string): string {
+function valueAsString(value: DateTime | string, timeZone?: TimeZone): string {
   if (isDateTime(value)) {
-    return value.format(TIME_FORMAT);
+    return dateTimeFormat(value, { timeZone });
   }
   return value;
 }

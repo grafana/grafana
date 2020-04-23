@@ -6,3 +6,4 @@ export * from './timezones';
 export * from './formats';
 export * from './formatter';
 export { dateMath, rangeUtil };
+export { DateTimeOptions, setTimeZoneResolver, TimeZoneResolver } from './common';

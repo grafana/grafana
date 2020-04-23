@@ -3,13 +3,14 @@ import $ from 'jquery';
 import React, { PureComponent } from 'react';
 import uniqBy from 'lodash/uniqBy';
 // Types
-import { TimeRange, GraphSeriesXY, TimeZone, DefaultTimeZone, createDimension } from '@grafana/data';
+import { TimeRange, GraphSeriesXY, TimeZone, createDimension } from '@grafana/data';
 import _ from 'lodash';
 import { FlotPosition, FlotItem } from './types';
 import { TooltipProps, TooltipContentProps, ActiveDimensions, Tooltip } from '../Chart/Tooltip';
 import { GraphTooltip } from './GraphTooltip/GraphTooltip';
 import { GraphContextMenu, GraphContextMenuProps, ContextDimensions } from './GraphContextMenu';
 import { GraphDimensions } from './GraphTooltip/types';
+import { graphTimeFormat, graphTimeFormatter } from './utils';
 
 export interface GraphProps {
   children?: JSX.Element | JSX.Element[];
@@ -118,7 +119,7 @@ export class Graph extends PureComponent<GraphProps, GraphState> {
   }
 
   renderTooltip = () => {
-    const { children, series } = this.props;
+    const { children, series, timeZone } = this.props;
     const { pos, activeItem, isTooltipVisible } = this.state;
     let tooltipElement: React.ReactElement<TooltipProps> | null = null;
 
@@ -183,6 +184,7 @@ export class Graph extends PureComponent<GraphProps, GraphState> {
       activeDimensions,
       pos,
       mode: tooltipElementProps.mode || 'single',
+      timeZone,
     };
 
     const tooltipContent = React.createElement(tooltipContentRenderer, { ...tooltipContentProps });
@@ -318,8 +320,8 @@ export class Graph extends PureComponent<GraphProps, GraphState> {
         max: max,
         label: 'Datetime',
         ticks: ticks,
-        timeformat: timeFormat(ticks, min, max),
-        timezone: timeZone ?? DefaultTimeZone,
+        timeformat: graphTimeFormat(ticks, min, max),
+        timeFormatter: graphTimeFormatter(timeZone),
       },
       yaxes,
       grid: {
@@ -376,32 +378,6 @@ export class Graph extends PureComponent<GraphProps, GraphState> {
       </div>
     );
   }
-}
-
-// Copied from graph.ts
-function timeFormat(ticks: number, min: number, max: number): string {
-  if (min && max && ticks) {
-    const range = max - min;
-    const secPerTick = range / ticks / 1000;
-    const oneDay = 86400000;
-    const oneYear = 31536000000;
-
-    if (secPerTick <= 45) {
-      return '%H:%M:%S';
-    }
-    if (secPerTick <= 7200 || range <= oneDay) {
-      return '%H:%M';
-    }
-    if (secPerTick <= 80000) {
-      return '%m/%d %H:%M';
-    }
-    if (secPerTick <= 2419200 || range <= oneYear) {
-      return '%m/%d';
-    }
-    return '%Y-%m';
-  }
-
-  return '%H:%M';
 }
 
 export default Graph;

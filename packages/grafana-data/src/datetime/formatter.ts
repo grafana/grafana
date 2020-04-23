@@ -1,20 +1,9 @@
 /* eslint-disable id-blacklist, no-restricted-imports, @typescript-eslint/ban-types */
-import { TimeZone, DefaultTimeZone } from '../types';
 import moment, { MomentInput, Moment } from 'moment-timezone';
+import { TimeZone } from '../types';
 import { DateTimeInput } from './moment_wrapper';
 import { DEFAULT_DATE_TIME_FORMAT, MS_DATE_TIME_FORMAT } from './formats';
-
-export type TimeZoneResolver = () => TimeZone | undefined;
-
-let defaultTimeZoneResolver: TimeZoneResolver = () => DefaultTimeZone;
-
-export const setTimeZoneResolver = (resolver: TimeZoneResolver) => {
-  defaultTimeZoneResolver = resolver ?? defaultTimeZoneResolver;
-};
-
-export interface DateTimeOptions {
-  timeZone?: TimeZone;
-}
+import { DateTimeOptions, getTimeZone } from './common';
 
 export interface DateTimeOptionsWithFormat extends DateTimeOptions {
   format?: string;
@@ -48,10 +37,6 @@ const getFormat = <T extends DateTimeOptionsWithFormat>(options?: T): string => 
     return options?.format ?? MS_DATE_TIME_FORMAT;
   }
   return options?.format ?? DEFAULT_DATE_TIME_FORMAT;
-};
-
-const getTimeZone = <T extends DateTimeOptions>(options?: T): TimeZone => {
-  return options?.timeZone ?? defaultTimeZoneResolver() ?? DefaultTimeZone;
 };
 
 const toTz = (dateInUtc: DateTimeInput, timeZone: TimeZone): Moment => {

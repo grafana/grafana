@@ -1,4 +1,11 @@
-import { GraphSeriesValue, Field, formattedValueToString, getDisplayProcessor } from '@grafana/data';
+import {
+  GraphSeriesValue,
+  Field,
+  formattedValueToString,
+  getDisplayProcessor,
+  TimeZone,
+  dateTimeFormat,
+} from '@grafana/data';
 
 /**
  * Returns index of the closest datapoint BEFORE hover position
@@ -92,4 +99,34 @@ export const getMultiSeriesGraphHoverInfo = (
     results,
     time: minTime,
   };
+};
+
+export const graphTimeFormatter = (timeZone?: TimeZone) => (epoch: number, format: string) =>
+  dateTimeFormat(epoch, { format, timeZone });
+
+export const graphTimeFormat = (ticks: number, min: number, max: number): string => {
+  if (min && max && ticks) {
+    const range = max - min;
+    const secPerTick = range / ticks / 1000;
+    // Need have 10 millisecond margin on the day range
+    // As sometimes last 24 hour dashboard evaluates to more than 86400000
+    const oneDay = 86400010;
+    const oneYear = 31536000000;
+
+    if (secPerTick <= 45) {
+      return 'HH:mm:ss';
+    }
+    if (secPerTick <= 7200 || range <= oneDay) {
+      return 'HH:mm';
+    }
+    if (secPerTick <= 80000) {
+      return 'MM/DD HH:mm';
+    }
+    if (secPerTick <= 2419200 || range <= oneYear) {
+      return 'MM/DD';
+    }
+    return 'YYYY-MM';
+  }
+
+  return 'HH:mm';
 };
