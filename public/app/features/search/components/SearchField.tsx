@@ -71,13 +71,7 @@ export const SearchField: FC<SearchFieldProps> = ({ query, onChange, size, clear
         spellCheck={false}
         className={styles.input}
         prefix={<Icon name="search" />}
-        suffix={
-          clearable && (
-            <span className={styles.clearButton} onClick={() => onChange('')}>
-              Clear
-            </span>
-          )
-        }
+        suffix={clearable && <Icon name="times" className={styles.clearButton} onClick={() => onChange('')} />}
         {...inputProps}
       />
 

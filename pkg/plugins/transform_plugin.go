@@ -77,7 +77,9 @@ type TransformWrapper struct {
 
 func (tw *TransformWrapper) Transform(ctx context.Context, query *tsdb.TsdbQuery) (*tsdb.Response, error) {
 	pbQuery := &pluginv2.QueryDataRequest{
-		Config:  &pluginv2.PluginConfig{},
+		PluginContext: &pluginv2.PluginContext{
+			// TODO: Things probably
+		},
 		Queries: []*pluginv2.DataQuery{},
 	}
 
@@ -134,12 +136,12 @@ func (s *transformCallback) QueryData(ctx context.Context, req *pluginv2.QueryDa
 
 	datasourceID := int64(0)
 
-	if req.Config.DatasourceConfig != nil {
-		datasourceID = req.Config.DatasourceConfig.Id
+	if req.PluginContext.DataSourceInstanceSettings != nil {
+		datasourceID = req.PluginContext.DataSourceInstanceSettings.Id
 	}
 
 	getDsInfo := &models.GetDataSourceByIdQuery{
-		OrgId: req.Config.OrgId,
+		OrgId: req.PluginContext.OrgId,
 		Id:    datasourceID,
 	}
 
