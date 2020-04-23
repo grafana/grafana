@@ -16,7 +16,7 @@ export interface Props {
   onTagSelected: (name: string) => any;
   onToggleChecked?: OnToggleChecked;
   onToggleSection: (section: DashboardSection) => void;
-  results: DashboardSection[] | undefined;
+  results: DashboardSection[];
   layout?: string;
   wrapperRef?: MutableRefObject<HTMLDivElement | null>;
 }

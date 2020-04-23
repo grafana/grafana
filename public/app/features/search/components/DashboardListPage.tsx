@@ -18,10 +18,10 @@ interface Props {
 
 export const DashboardListPage: FC<Props> = memo(({ navModel, uid, url }) => {
   const { loading, value } = useAsync(() => {
-    if (!uid && url.startsWith('/dashboards')) {
+    if (!uid || !url.startsWith('/dashboards')) {
       return Promise.resolve({ pageNavModel: navModel });
     }
-    return loadFolderPage(uid, 'manage-folder-dashboards').then(({ folder, model }) => {
+    return loadFolderPage(uid!, 'manage-folder-dashboards').then(({ folder, model }) => {
       const path = locationUtil.stripBaseFromUrl(folder.url);
 
       if (path !== location.pathname) {
