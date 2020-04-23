@@ -14,7 +14,7 @@ import {
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { ColumnRender, TableRenderModel, ColumnStyle } from './types';
 import { ColumnOptionsCtrl } from './column_options';
-import { sanitizeUrl } from 'app/core/utils/text';
+import { sanitizeUrl, escapeHtml } from 'app/core/utils/text';
 
 export class TableRenderer {
   formatters: any[];
@@ -56,7 +56,7 @@ export class TableRenderer {
           column.style = style;
 
           if (style.alias) {
-            column.title = column.text.replace(regex, style.alias);
+            column.title = escapeHtml(column.text.replace(regex, style.alias));
           }
 
           break;
@@ -300,7 +300,7 @@ export class TableRenderer {
       const cellLink = this.templateSrv.replace(column.style.linkUrl, scopedVars, encodeURIComponent);
       const sanitizedCellLink = sanitizeUrl(cellLink);
 
-      const cellLinkTooltip = this.templateSrv.replace(column.style.linkTooltip, scopedVars);
+      const cellLinkTooltip = escapeHtml(this.templateSrv.replace(column.style.linkTooltip, scopedVars));
       const cellTarget = column.style.linkTargetBlank ? '_blank' : '';
 
       cellClasses.push('table-panel-cell-link');

@@ -2,7 +2,7 @@
   "author": "Grafana Labs",
   "license": "Apache-2.0",
   "name": "@grafana/runtime",
-  "version": "6.7.2",
+  "version": "6.7.3",
   "description": "Grafana Runtime Library",
   "keywords": [
     "grafana",
@@ -23,8 +23,8 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@grafana/data": "6.7.2",
-    "@grafana/ui": "6.7.2",
+    "@grafana/data": "6.7.3",
+    "@grafana/ui": "6.7.3",
     "systemjs": "0.20.19",
     "systemjs-plugin-css": "0.1.37"
   },

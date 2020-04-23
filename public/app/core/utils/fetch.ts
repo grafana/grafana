@@ -7,6 +7,15 @@ export const parseInitFromOptions = (options: BackendSrvRequest): RequestInit =>
   const isAppJson = isContentTypeApplicationJson(headers);
   const body = parseBody(options, isAppJson);
 
+  if (options?.withCredentials) {
+    return {
+      method,
+      headers,
+      body,
+      credentials: 'include',
+    };
+  }
+
   return {
     method,
     headers,
