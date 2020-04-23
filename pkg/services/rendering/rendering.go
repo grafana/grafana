@@ -147,9 +147,11 @@ func (rs *RenderingService) render(ctx context.Context, opts Opts) (*RenderResul
 
 	defer func() {
 		rs.inProgressCount--
+		metrics.MRenderingQueue.Set(float64(rs.inProgressCount))
 	}()
 
 	rs.inProgressCount++
+	metrics.MRenderingQueue.Set(float64(rs.inProgressCount))
 	return rs.renderAction(ctx, renderKey, opts)
 }
 

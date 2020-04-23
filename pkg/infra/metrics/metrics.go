@@ -102,8 +102,11 @@ var (
 	// MRenderingRequestCompleted is a metric counter for how many panels have been successfully rendered
 	MRenderingRequestCompleted prometheus.Counter
 
-	// MRenderingRequestCompleted is a metric counter for how many panels have been rendered with error
+	// MRenderingRequestFailed is a metric counter for how many panels have been rendered with error
 	MRenderingRequestFailed prometheus.Counter
+
+	// MRenderingQueue is a metric gauge for panel rendering queue size
+	MRenderingQueue prometheus.Gauge
 )
 
 // Timers
@@ -371,6 +374,12 @@ func init() {
 		Namespace:  ExporterName,
 	})
 
+	MRenderingQueue = prometheus.NewGauge(prometheus.GaugeOpts{
+		Name:      "rendering_queue_size",
+		Help:      "size of rendering queue",
+		Namespace: ExporterName,
+	})
+
 	MDataSourceProxyReqTimer = prometheus.NewSummary(prometheus.SummaryOpts{
 		Name:       "api_dataproxy_request_all_milliseconds",
 		Help:       "summary for dataproxy request duration",
@@ -520,6 +529,7 @@ func initMetricVars() {
 		MRenderingRequestCompleted,
 		MRenderingRequestFailed,
 		MRenderingExecutionTime,
+		MRenderingQueue,
 		MAlertingActiveAlerts,
 		MStatTotalDashboards,
 		MStatTotalUsers,
