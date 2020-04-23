@@ -145,6 +145,9 @@ func (e *AzureLogAnalyticsDatasource) executeQuery(ctx context.Context, query *A
 
 	if query.ResultFormat == "table" {
 		queryResult.Tables, queryResult.Meta, err = e.parseToTables(data, query.Params.Get("query"))
+		if err != nil {
+			return nil, err
+		}
 	} else {
 		queryResult.Series, queryResult.Meta, err = e.parseToTimeSeries(data, query.Params.Get("query"))
 		if err != nil {
@@ -156,20 +159,6 @@ func (e *AzureLogAnalyticsDatasource) executeQuery(ctx context.Context, query *A
 }
 
 func (e *AzureLogAnalyticsDatasource) createRequest(ctx context.Context, dsInfo *models.DataSource) (*http.Request, error) {
-	// find plugin
-	plugin, ok := plugins.DataSources[dsInfo.Type]
-	if !ok {
-		return nil, errors.New("Unable to find datasource plugin Azure Monitor")
-	}
-
-	var logAnalyticsRoute *plugins.AppPluginRoute
-	for _, route := range plugin.Routes {
-		if route.Path == "loganalyticsazure" {
-			logAnalyticsRoute = route
-			break
-		}
-	}
-
 	u, _ := url.Parse(dsInfo.Url)
 	u.Path = path.Join(u.Path, "render")
 
@@ -182,9 +171,32 @@ func (e *AzureLogAnalyticsDatasource) createRequest(ctx context.Context, dsInfo 
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("User-Agent", fmt.Sprintf("Grafana/%s", setting.BuildVersion))
 
+	logAnalyticsRoute, err := getPluginRoute(dsInfo)
+	if err != nil {
+		return nil, err
+	}
 	pluginproxy.ApplyRoute(ctx, req, "loganalyticsazure", logAnalyticsRoute, dsInfo)
 
 	return req, nil
+}
+
+func getPluginRoute(dsInfo *models.DataSource) (*plugins.AppPluginRoute, error) {
+	// find plugin
+	plugin, ok := plugins.DataSources[dsInfo.Type]
+	if !ok {
+		return nil, errors.New("Unable to find datasource plugin Azure Monitor")
+	}
+
+	var logAnalyticsRoute *plugins.AppPluginRoute
+
+	for _, route := range plugin.Routes {
+		if route.Path == "loganalyticsazure" {
+			logAnalyticsRoute = route
+			break
+		}
+	}
+
+	return logAnalyticsRoute, nil
 }
 
 func (e *AzureLogAnalyticsDatasource) unmarshalResponse(res *http.Response) (AzureLogAnalyticsResponse, error) {
