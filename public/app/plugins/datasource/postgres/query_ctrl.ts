@@ -54,7 +54,7 @@ export class PostgresQueryCtrl extends QueryCtrl {
     super($scope, $injector);
     this.target = this.target;
     this.queryModel = new PostgresQuery(this.target, templateSrv, this.panel.scopedVars);
-    this.metaBuilder = new PostgresMetaQuery(this.target, this.queryModel);
+    this.metaBuilder = new PostgresMetaQuery(this.target, this.queryModel, this.datasource.jsonData);
     this.updateProjection();
 
     this.formats = [

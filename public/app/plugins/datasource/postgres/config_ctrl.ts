@@ -20,6 +20,7 @@ export class PostgresConfigCtrl {
     this.datasourceSrv = datasourceSrv;
     this.current.jsonData.sslmode = this.current.jsonData.sslmode || 'verify-full';
     this.current.jsonData.postgresVersion = this.current.jsonData.postgresVersion || 903;
+    this.current.jsonData.metaValueColumnsQuery = this.current.jsonData.metaValueColumnsQuery || null;
     this.showTimescaleDBHelp = false;
     this.autoDetectFeatures();
     this.onPasswordReset = createResetHandler(this, PasswordFieldEnum.Password);

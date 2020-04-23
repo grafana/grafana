@@ -155,3 +155,32 @@
 		</p>
 	</div>
 </div>
+
+<div class="gf-form-group">
+		<h3 class="page-heading">Advanced Query Builder Settings</h3>
+		<div class="gf-form">
+			<span class="gf-form-label width-10">
+				Extra Value Columns
+				<info-popover mode="left-normal" position="top center">
+					Add columns to the query builder's built-in selection.<br/>
+					This lets you format non-standard data types for SELECT
+					in the Postgres query builder.<br/>
+					Rows from this query get UNION'd with the basic Postgres data types.<br/><br/>
+					You must select 1 column of type TEXT, no trailing semicolon.<br/><br/>
+					$__table_constraint gets replaced with the currently selected table like: TABLE_NAME = 'current_table'
+				</info-popover>
+			</span>
+			<textarea type="text" class="gf-form-input" ng-model='ctrl.current.jsonData.metaValueColumnsQuery'
+			placeholder="SELECT
+UNNEST( ARRAY[
+	concat('(', column_name, ').min'),
+	concat('(', column_name, ').max'),
+	concat('(', column_name, ').samplesum'),
+	concat('(', column_name, ').samplecount')
+] )
+FROM information_schema.columns
+WHERE
+	udt_name = 'custom_user_datatype'
+	AND $__table_constraint"></textarea>
+		</div>
+</div>

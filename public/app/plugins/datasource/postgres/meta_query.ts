@@ -1,7 +1,11 @@
 import QueryModel from './postgres_query';
 
 export class PostgresMetaQuery {
-  constructor(private target: { table: string; timeColumn: string }, private queryModel: QueryModel) {}
+  constructor(
+    private target: { table: string; timeColumn: string },
+    private queryModel: QueryModel,
+    private jsonData: { metaValueColumnsQuery: string }
+  ) {}
 
   getOperators(datatype: string) {
     switch (datatype) {
@@ -113,7 +117,7 @@ table_schema IN (
   }
 
   buildColumnQuery(type?: string) {
-    let query = 'SELECT quote_ident(column_name) FROM information_schema.columns WHERE ';
+    let query = 'SELECT quote_ident(column_name) AS column_name FROM information_schema.columns WHERE ';
     query += this.buildTableConstraint(this.target.table);
 
     switch (type) {
@@ -129,6 +133,16 @@ table_schema IN (
       case 'value': {
         query += " AND data_type IN ('bigint','integer','double precision','real')";
         query += ' AND column_name <> ' + this.quoteIdentAsLiteral(this.target.timeColumn);
+
+        // Apply any extra value columbns from the datasource configuration here
+        if (this.jsonData.metaValueColumnsQuery) {
+          let queryWithTableVars: string = this.jsonData.metaValueColumnsQuery.replace(
+            '$__table_constraint',
+            this.buildTableConstraint(this.target.table)
+          );
+          query += ' UNION ALL ';
+          query += queryWithTableVars;
+        }
         break;
       }
       case 'group': {
