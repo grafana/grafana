@@ -1,5 +1,6 @@
 import React, { PureComponent } from 'react';
 import { FilterInput } from '../FilterInput/FilterInput';
+import { LinkButton } from '@grafana/ui';
 
 export interface Props {
   searchQuery: string;
@@ -29,9 +30,7 @@ export default class OrgActionBar extends PureComponent<Props> {
           />
         </div>
         <div className="page-action-bar__spacer" />
-        <a className="btn btn-primary" {...linkProps}>
-          {linkButton.title}
-        </a>
+        <LinkButton {...linkProps}>{linkButton.title}</LinkButton>
       </div>
     );
   }
