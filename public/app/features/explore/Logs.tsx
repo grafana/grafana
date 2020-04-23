@@ -54,6 +54,7 @@ interface Props {
   scanning?: boolean;
   scanRange?: RawTimeRange;
   dedupStrategy: LogsDedupStrategy;
+  showContextToggle?: (row?: LogRowModel) => boolean;
   onChangeTime: (range: AbsoluteTimeRange) => void;
   onClickFilterLabel?: (key: string, value: string) => void;
   onClickFilterOutLabel?: (key: string, value: string) => void;
@@ -150,6 +151,7 @@ export class Logs extends PureComponent<Props, State> {
       timeZone,
       scanning,
       scanRange,
+      showContextToggle,
       width,
       dedupedRows,
       absoluteRange,
@@ -241,6 +243,7 @@ export class Logs extends PureComponent<Props, State> {
           rowLimit={logRows ? logRows.length : undefined}
           onClickFilterLabel={onClickFilterLabel}
           onClickFilterOutLabel={onClickFilterOutLabel}
+          showContextToggle={showContextToggle}
           showLabels={showLabels}
           showTime={showTime}
           wrapLogMessage={wrapLogMessage}

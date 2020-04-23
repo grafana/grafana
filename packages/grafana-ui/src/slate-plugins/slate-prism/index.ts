@@ -36,11 +36,13 @@ export function SlatePrism(optsParam: OptionsFormat = {}): Plugin {
         // Grammar not loaded
         return [];
       }
+
       // Tokenize the whole block text
       const texts = block.getTexts();
       const blockText = texts.map(text => text && text.getText()).join('\n');
       const tokens = Prism.tokenize(blockText, grammar);
       const flattened = flattenTokens(tokens);
+
       // @ts-ignore
       editor.setData({ tokens: flattened });
       return decorateNode(opts, tokens, block);
@@ -220,11 +222,12 @@ export function flattenTokens(token: string | Prism.Token | Array<string | Prism
     return [];
   }
 
-  tokens[0].prev = null;
-  tokens[0].next = tokens.length >= 2 ? tokens[1] : null;
-  tokens[0].offsets = {
+  const firstToken = tokens[0];
+  firstToken.prev = null;
+  firstToken.next = tokens.length >= 2 ? tokens[1] : null;
+  firstToken.offsets = {
     start: 0,
-    end: tokens[0].content.length,
+    end: firstToken.content.length,
   };
 
   for (let i = 1; i < tokens.length - 1; i++) {
@@ -237,15 +240,13 @@ export function flattenTokens(token: string | Prism.Token | Array<string | Prism
     };
   }
 
-  tokens[tokens.length - 1].prev = tokens.length >= 2 ? tokens[tokens.length - 2] : null;
-  tokens[tokens.length - 1].next = null;
-
-  tokens[tokens.length - 1].offsets = {
+  const lastToken = tokens[tokens.length - 1];
+  lastToken.prev = tokens.length >= 2 ? tokens[tokens.length - 2] : null;
+  lastToken.next = null;
+  lastToken.offsets = {
     start: tokens.length >= 2 ? tokens[tokens.length - 2].offsets!.end : 0,
     end:
-      tokens.length >= 2
-        ? tokens[tokens.length - 2].offsets!.end + tokens[tokens.length - 1].content.length
-        : tokens[tokens.length - 1].content.length,
+      tokens.length >= 2 ? tokens[tokens.length - 2].offsets!.end + lastToken.content.length : lastToken.content.length,
   };
 
   return tokens;

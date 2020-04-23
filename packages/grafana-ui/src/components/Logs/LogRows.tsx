@@ -18,6 +18,7 @@ export interface Props extends Themeable {
   deduplicatedRows?: LogRowModel[];
   dedupStrategy: LogsDedupStrategy;
   highlighterExpressions?: string[];
+  showContextToggle?: (row?: LogRowModel) => boolean;
   showLabels: boolean;
   showTime: boolean;
   wrapLogMessage: boolean;
@@ -73,6 +74,7 @@ class UnThemedLogRows extends PureComponent<Props, State> {
   render() {
     const {
       dedupStrategy,
+      showContextToggle,
       showLabels,
       showTime,
       wrapLogMessage,
@@ -120,6 +122,7 @@ class UnThemedLogRows extends PureComponent<Props, State> {
                   getRowContext={getRowContext}
                   highlighterExpressions={highlighterExpressions}
                   row={row}
+                  showContextToggle={showContextToggle}
                   showDuplicates={showDuplicates}
                   showLabels={showLabels}
                   showTime={showTime}
@@ -139,6 +142,7 @@ class UnThemedLogRows extends PureComponent<Props, State> {
                   getRows={getRows}
                   getRowContext={getRowContext}
                   row={row}
+                  showContextToggle={showContextToggle}
                   showDuplicates={showDuplicates}
                   showLabels={showLabels}
                   showTime={showTime}

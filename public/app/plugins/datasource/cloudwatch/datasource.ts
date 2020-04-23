@@ -750,6 +750,10 @@ export class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery, CloudWa
     return region;
   }
 
+  showContextToggle() {
+    return true;
+  }
+
   convertToCloudWatchTime(date: any, roundUp: any) {
     if (_.isString(date)) {
       date = dateMath.parse(date, roundUp);

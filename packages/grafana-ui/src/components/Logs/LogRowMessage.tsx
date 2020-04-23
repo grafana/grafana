@@ -20,11 +20,11 @@ import { LogMessageAnsi } from './LogMessageAnsi';
 interface Props extends Themeable {
   row: LogRowModel;
   hasMoreContextRows?: HasMoreContextRows;
-  showContext: boolean;
+  contextIsOpen: boolean;
   wrapLogMessage: boolean;
   errors?: LogRowContextQueryErrors;
   context?: LogRowContextRows;
-  showContextToggle?: boolean;
+  showContextToggle?: (row?: LogRowModel) => boolean;
   highlighterExpressions?: string[];
   getRows: () => LogRowModel[];
   onToggleContext: () => void;
@@ -75,7 +75,7 @@ class UnThemedLogRowMessage extends PureComponent<Props> {
       hasMoreContextRows,
       updateLimit,
       context,
-      showContext,
+      contextIsOpen,
       showContextToggle,
       wrapLogMessage,
       onToggleContext,
@@ -99,7 +99,7 @@ class UnThemedLogRowMessage extends PureComponent<Props> {
     return (
       <td className={style.logsRowMessage}>
         <div className={cx(styles.positionRelative, { [styles.horizontalScroll]: !wrapLogMessage })}>
-          {showContext && context && (
+          {contextIsOpen && context && (
             <LogRowContext
               row={row}
               context={context}
@@ -113,7 +113,7 @@ class UnThemedLogRowMessage extends PureComponent<Props> {
               }}
             />
           )}
-          <span className={cx(styles.positionRelative, { [styles.rowWithContext]: showContext })}>
+          <span className={cx(styles.positionRelative, { [styles.rowWithContext]: contextIsOpen })}>
             {needsHighlighter ? (
               <Highlighter
                 style={whiteSpacePreWrap}
@@ -128,9 +128,9 @@ class UnThemedLogRowMessage extends PureComponent<Props> {
               entry
             )}
           </span>
-          {((row.searchWords && row.searchWords.length > 0) || showContextToggle) && (
+          {showContextToggle?.(row) && (
             <span onClick={this.onContextToggle} className={cx(style.context)}>
-              {showContext ? 'Hide' : 'Show'} context
+              {contextIsOpen ? 'Hide' : 'Show'} context
             </span>
           )}
         </div>

@@ -36,6 +36,7 @@ interface Props extends Themeable {
   onContextClick?: () => void;
   getRowContext: (row: LogRowModel, options?: RowContextOptions) => Promise<DataQueryResponse>;
   getFieldLinks?: (field: Field, rowIndex: number) => Array<LinkModel<Field>>;
+  showContextToggle?: (row?: LogRowModel) => boolean;
 }
 
 interface State {
@@ -123,6 +124,7 @@ class UnThemedLogRow extends PureComponent<Props, State> {
       row,
       showDuplicates,
       timeZone,
+      showContextToggle,
       showLabels,
       showTime,
       wrapLogMessage,
@@ -177,8 +179,8 @@ class UnThemedLogRow extends PureComponent<Props, State> {
             hasMoreContextRows={hasMoreContextRows}
             updateLimit={updateLimit}
             context={context}
-            showContext={showContext}
-            showContextToggle={true}
+            contextIsOpen={showContext}
+            showContextToggle={showContextToggle}
             wrapLogMessage={wrapLogMessage}
             onToggleContext={this.toggleContext}
           />
