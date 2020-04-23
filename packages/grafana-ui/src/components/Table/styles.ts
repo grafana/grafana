@@ -12,6 +12,7 @@ export interface TableStyles {
   headerCell: string;
   tableCell: string;
   tableCellWrapper: string;
+  tableCellLink: string;
   row: string;
   theme: GrafanaTheme;
   resizeHandle: string;
@@ -74,6 +75,9 @@ export const getTableStyles = stylesFactory(
         &:last-child {
           border-right: none;
         }
+      `,
+      tableCellLink: css`
+        text-decoration: underline;
       `,
       tableCell: css`
         padding: ${padding}px 10px;

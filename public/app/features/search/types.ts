@@ -1,5 +1,6 @@
 import { Dispatch } from 'react';
 import { Action } from 'redux';
+import { SelectableValue } from '@grafana/data';
 import { FolderInfo } from '../../types';
 
 export enum DashboardSearchItemType {
@@ -66,6 +67,7 @@ export interface DashboardQuery {
   skipRecent: boolean;
   skipStarred: boolean;
   folderIds: number[];
+  sort: SelectableValue | null;
 }
 
 export type SearchReducer<S> = [S, Dispatch<SearchAction>];
@@ -84,3 +86,8 @@ export type UseSearch = <S>(
 export type OnToggleChecked = (item: DashboardSectionItem | DashboardSection) => void;
 export type OnDeleteItems = (folders: string[], dashboards: string[]) => void;
 export type OnMoveItems = (selectedDashboards: DashboardSectionItem[], folder: FolderInfo | null) => void;
+
+export enum SearchLayout {
+  List = 'list',
+  Folders = 'folders',
+}
