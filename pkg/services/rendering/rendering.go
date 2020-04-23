@@ -22,7 +22,11 @@ import (
 
 func init() {
 	remotecache.Register(&RenderUser{})
-	registry.RegisterService(&RenderingService{})
+	registry.Register(&registry.Descriptor{
+		Name:         "RenderingService",
+		Instance:     &RenderingService{},
+		InitPriority: registry.High,
+	})
 }
 
 const renderKeyPrefix = "render-%s"
@@ -68,7 +72,7 @@ func (rs *RenderingService) Init() error {
 }
 
 func (rs *RenderingService) Run(ctx context.Context) error {
-	if rs.Cfg.RendererUrl != "" {
+	if rs.remoteRenderingConfigured() {
 		rs.log = rs.log.New("renderer", "http")
 		rs.log.Info("Backend rendering via external http server")
 		rs.renderAction = rs.renderViaHttp
@@ -76,7 +80,7 @@ func (rs *RenderingService) Run(ctx context.Context) error {
 		return nil
 	}
 
-	if plugins.Renderer != nil {
+	if rs.renderingPluginInstalled() {
 		rs.log = rs.log.New("renderer", "plugin")
 		rs.pluginInfo = plugins.Renderer
 
@@ -97,8 +101,16 @@ func (rs *RenderingService) Run(ctx context.Context) error {
 	return nil
 }
 
+func (rs *RenderingService) renderingPluginInstalled() bool {
+	return plugins.Renderer != nil
+}
+
+func (rs *RenderingService) remoteRenderingConfigured() bool {
+	return rs.Cfg.RendererUrl != ""
+}
+
 func (rs *RenderingService) IsAvailable() bool {
-	return rs.renderAction != nil
+	return rs.remoteRenderingConfigured() || rs.renderingPluginInstalled()
 }
 
 func (rs *RenderingService) RenderErrorImage(err error) (*RenderResult, error) {
