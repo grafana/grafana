@@ -11,7 +11,7 @@ type Spacing = 'none' | 'xs' | 'sm' | 'md' | 'lg';
 type Justify = 'flex-start' | 'flex-end' | 'space-between' | 'center';
 type Align = 'normal' | 'flex-start' | 'flex-end' | 'center';
 
-export interface LayoutProps extends Omit<HTMLProps<HTMLDivElement>, 'align' | 'children'> {
+export interface LayoutProps extends Omit<HTMLProps<HTMLDivElement>, 'align' | 'children' | 'wrap'> {
   children: React.ReactNode[] | React.ReactNode;
   orientation?: Orientation;
   spacing?: Spacing;
@@ -112,7 +112,6 @@ const getStyles = stylesFactory(
         margin-right: ${orientation === Orientation.Horizontal ? finalSpacing : 0};
         display: flex;
         align-items: ${align};
-        // height: 100%;
 
         &:last-child {
           margin-bottom: 0;
