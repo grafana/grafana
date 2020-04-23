@@ -16,7 +16,7 @@
 * **DashboardListPanel**: Fixed problem with empty panel after going into edit mode (General folder filter being automatically added) . [#23426](https://github.com/grafana/grafana/pull/23426), [@torkelo](https://github.com/torkelo)
 * **Data source**: Handle datasource withCredentials option properly. [#23380](https://github.com/grafana/grafana/pull/23380), [@hvtuananh](https://github.com/hvtuananh)
 * **Security**: Fix annotation popup XSS vulnerability [#23813](https://github.com/grafana/grafana/pull/23813), [@torkelo](https://github.com/torkelo). Big thanks to Juha Laaksonen for reporting this issue.
-* **Security**: Fix XSS vulnerability in table panel. Big thanks to Rotem Reiss for reporting this issue.
+* **Security**: Fix XSS vulnerability in table panel [#23816](https://github.com/grafana/grafana/pull/23816), [@torkelo](https://github.com/torkelo). Big thanks to Rotem Reiss for reporting this issue.
 * **Server**: Exit Grafana with status code 0 if no error. [#23312](https://github.com/grafana/grafana/pull/23312), [@aknuds1](https://github.com/aknuds1)
 * **TablePanel**: Fix XSS issue in header column rename (backport). [#23814](https://github.com/grafana/grafana/pull/23814), [@torkelo](https://github.com/torkelo)
 * **Variables**: Fixes error when setting adhoc variable values. [#23580](https://github.com/grafana/grafana/pull/23580), [@hugohaggmark](https://github.com/hugohaggmark)
