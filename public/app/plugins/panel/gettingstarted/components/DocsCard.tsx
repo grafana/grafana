@@ -12,8 +12,9 @@ interface Props {
 export const DocsCard: FC<Props> = ({ card }) => {
   const theme = useTheme();
   const styles = getStyles(theme, card.done);
+
   return (
-    <div className={styles.card}>
+    <a href={card.href} className={styles.card} target="_blank">
       <div className={cardContent}>
         <div className={styles.heading}>{card.done ? 'complete' : card.heading}</div>
         <h4 className={styles.title}>{card.title}</h4>
@@ -24,7 +25,7 @@ export const DocsCard: FC<Props> = ({ card }) => {
       <div className={styles.url}>
         Learn how in the docs <Icon name="external-link-alt" />
       </div>
-    </div>
+    </a>
   );
 };
 

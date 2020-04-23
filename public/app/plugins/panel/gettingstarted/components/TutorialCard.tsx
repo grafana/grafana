@@ -14,7 +14,7 @@ export const TutorialCard: FC<Props> = ({ card }) => {
   const styles = getStyles(theme, card.done);
 
   return (
-    <div className={styles.card}>
+    <a href={card.href} className={styles.card} target="_blank">
       <div className={cardContent}>
         <div className={styles.type}>{card.type}</div>
         <div className={styles.heading}>{card.done ? 'complete' : card.heading}</div>
@@ -22,7 +22,7 @@ export const TutorialCard: FC<Props> = ({ card }) => {
         <div className={styles.info}>{card.info}</div>
         <Icon className={iconStyle(theme, card.done)} name={card.icon} size="xxl" />
       </div>
-    </div>
+    </a>
   );
 };
 

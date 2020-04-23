@@ -16,7 +16,7 @@ export const getSteps = (): SetupStep[] => [
         title: 'Grafana fundamentals',
         info:
           'Set up and understand Grafana if you have no prior experience. This tutorial guides you through the entire process and covers the “Data source” and “Dashboards” steps to the right.',
-        href: 'datasources/new?gettingstarted',
+        href: 'https://grafana.com/tutorials/grafana-fundamentals/#0',
         icon: 'grafana',
         check: () => Promise.resolve(false),
       },
@@ -24,7 +24,7 @@ export const getSteps = (): SetupStep[] => [
         type: 'docs',
         title: 'Add your first data source',
         icon: 'database',
-        href: 'dashboard/new?gettingstarted',
+        href: 'https://grafana.com/docs/grafana/latest/features/datasources/add-a-data-source/',
         check: () => {
           return new Promise(resolve => {
             resolve(
@@ -42,7 +42,7 @@ export const getSteps = (): SetupStep[] => [
         heading: 'dashboards',
         title: 'Create your first dashboard',
         icon: 'apps',
-        href: 'something',
+        href: 'https://grafana.com/docs/grafana/latest/guides/getting_started/#create-a-dashboard',
         check: async () => {
           const result = await getBackendSrv().search({ limit: 1 });
           return result.length > 0;
@@ -63,7 +63,7 @@ export const getSteps = (): SetupStep[] => [
         heading: 'Users',
         title: 'Create users and teams',
         info: 'Learn to organize your users in teams and manage resource access and roles.',
-        href: 'org/users?gettingstarted',
+        href: 'https://grafana.com/tutorials/create-users-and-teams/#0',
         icon: 'users-alt',
         check: () => Promise.resolve(false),
       },
@@ -71,7 +71,7 @@ export const getSteps = (): SetupStep[] => [
         type: 'docs',
         heading: 'plugins',
         title: 'Find and install plugins',
-        href: 'https://grafana.com/plugins?utm_source=grafana_getting_started',
+        href: 'https://grafana.com/docs/grafana/latest/plugins/installation/',
         icon: 'plug',
         check: async () => {
           const plugins = await getBackendSrv().get('/api/plugins', { embedded: 0, core: 0 });

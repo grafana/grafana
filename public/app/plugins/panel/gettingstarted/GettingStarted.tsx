@@ -88,7 +88,7 @@ export class GettingStarted extends PureComponent<PanelProps, State> {
     }
     const styles = getStyles();
     const step = steps[currentStep];
-    console.log(currentStep);
+
     return (
       <div className={styles.container}>
         <div>
