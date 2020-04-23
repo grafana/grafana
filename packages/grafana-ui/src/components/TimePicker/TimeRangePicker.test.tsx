@@ -1,5 +1,5 @@
 import React from 'react';
-import { shallow } from 'enzyme';
+import { mount } from 'enzyme';
 import { UnthemedTimeRangePicker } from './TimeRangePicker';
 import { dateTime, TimeRange } from '@grafana/data';
 import dark from '../../themes/dark';
@@ -15,7 +15,7 @@ const value: TimeRange = {
 
 describe('TimePicker', () => {
   it('renders buttons correctly', () => {
-    const wrapper = shallow(
+    const wrapper = mount(
       <UnthemedTimeRangePicker
         onChange={value => {}}
         value={value}
@@ -25,22 +25,6 @@ describe('TimePicker', () => {
         theme={dark}
       />
     );
-    expect(wrapper).toMatchSnapshot();
-  });
-
-  it('renders content correctly after beeing open', () => {
-    const wrapper = shallow(
-      <UnthemedTimeRangePicker
-        onChange={value => {}}
-        value={value}
-        onMoveBackward={() => {}}
-        onMoveForward={() => {}}
-        onZoom={() => {}}
-        theme={dark}
-      />
-    );
-
-    wrapper.find('button[aria-label="TimePicker Open Button"]').simulate('click', new Event('click'));
-    expect(wrapper).toMatchSnapshot();
+    expect(wrapper.exists('.navbar-button')).toBe(true);
   });
 });

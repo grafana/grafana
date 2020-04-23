@@ -4,23 +4,23 @@ import { connect } from 'react-redux';
 import { Collapse } from '@grafana/ui';
 
 import {
-  DataSourceApi,
-  RawTimeRange,
-  LogLevel,
-  TimeZone,
   AbsoluteTimeRange,
+  DataSourceApi,
+  Field,
+  GraphSeriesXY,
+  LogLevel,
   LogRowModel,
   LogsDedupStrategy,
-  TimeRange,
   LogsMetaItem,
-  GraphSeriesXY,
-  Field,
+  RawTimeRange,
+  TimeRange,
+  TimeZone,
 } from '@grafana/data';
 
 import { ExploreId, ExploreItemState } from 'app/types/explore';
 import { StoreState } from 'app/types';
 
-import { changeDedupStrategy, updateTimeRange, splitOpen } from './state/actions';
+import { changeDedupStrategy, splitOpen, updateTimeRange } from './state/actions';
 import { toggleLogLevelAction } from 'app/features/explore/state/actionTypes';
 import { deduplicatedRowsSelector } from 'app/features/explore/state/selectors';
 import { getTimeZone } from '../profile/state/selectors';
@@ -28,8 +28,7 @@ import { LiveLogsWithTheme } from './LiveLogs';
 import { Logs } from './Logs';
 import { LogsCrossFadeTransition } from './utils/LogsCrossFadeTransition';
 import { LiveTailControls } from './useLiveTailControls';
-import { getLinksFromLogsField } from '../panel/panellinks/linkSuppliers';
-import { getDataSourceSrv } from '@grafana/runtime';
+import { getFieldLinksForExplore } from './utils/links';
 
 interface LogsContainerProps {
   datasourceInstance?: DataSourceApi;
@@ -90,54 +89,8 @@ export class LogsContainer extends PureComponent<LogsContainerProps> {
     return [];
   };
 
-  /**
-   * Get links from the filed of a dataframe that was given to as and in addition check if there is associated
-   * metadata with datasource in which case we will add onClick to open the link in new split window. This assumes
-   * that we just supply datasource name and field value and Explore split window will know how to render that
-   * appropriately. This is for example used for transition from log with traceId to trace datasource to show that
-   * trace.
-   * @param field
-   * @param rowIndex
-   */
   getFieldLinks = (field: Field, rowIndex: number) => {
-    const data = getLinksFromLogsField(field, rowIndex);
-    return data.map(d => {
-      if (d.link.meta?.datasourceUid) {
-        return {
-          ...d.linkModel,
-          title:
-            d.linkModel.title ||
-            getDataSourceSrv().getDataSourceSettingsByUid(d.link.meta.datasourceUid)?.name ||
-            'Unknown datasource',
-          onClick: () => {
-            this.props.splitOpen({ dataSourceUid: d.link.meta.datasourceUid, query: field.values.get(rowIndex) });
-          },
-        };
-      }
-
-      if (!d.linkModel.title) {
-        let href = d.linkModel.href;
-        // The URL constructor needs the url to have protocol
-        if (href.indexOf('://') < 0) {
-          // Doesn't really matter what protocol we use.
-          href = `http://${href}`;
-        }
-        let title;
-        try {
-          const parsedUrl = new URL(href);
-          title = parsedUrl.hostname;
-        } catch (_e) {
-          // Should be good enough fallback, user probably did not input valid url.
-          title = href;
-        }
-
-        return {
-          ...d.linkModel,
-          title,
-        };
-      }
-      return d.linkModel;
-    });
+    return getFieldLinksForExplore(field, rowIndex, this.props.splitOpen, this.props.range);
   };
 
   render() {

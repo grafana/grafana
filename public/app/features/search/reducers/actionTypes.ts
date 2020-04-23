@@ -3,6 +3,7 @@ export const TOGGLE_SECTION = 'TOGGLE_SECTION';
 export const FETCH_ITEMS = 'FETCH_ITEMS';
 export const MOVE_SELECTION_UP = 'MOVE_SELECTION_UP';
 export const MOVE_SELECTION_DOWN = 'MOVE_SELECTION_DOWN';
+export const SEARCH_START = 'SEARCH_START';
 
 // Manage dashboards
 export const TOGGLE_CAN_SAVE = 'TOGGLE_CAN_SAVE';
@@ -20,3 +21,4 @@ export const REMOVE_TAG = 'REMOVE_TAG';
 export const CLEAR_FILTERS = 'CLEAR_FILTERS';
 export const SET_TAGS = 'SET_TAGS';
 export const ADD_TAG = 'ADD_TAG';
+export const TOGGLE_SORT = 'TOGGLE_SORT';

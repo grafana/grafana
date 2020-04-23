@@ -15,6 +15,9 @@ export interface DataSourceSrv {
    */
   get(name?: string, scopedVars?: ScopedVars): Promise<DataSourceApi>;
 
+  /**
+   * Returns metadata based on UID.
+   */
   getDataSourceSettingsByUid(uid: string): DataSourceInstanceSettings | undefined;
 }
 
