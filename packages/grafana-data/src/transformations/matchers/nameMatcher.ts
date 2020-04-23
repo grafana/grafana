@@ -11,7 +11,12 @@ const fieldNameMacher: FieldMatcherInfo<string> = {
   defaultOptions: '/.*/',
 
   get: (pattern: string) => {
-    const regex = stringToJsRegex(pattern);
+    let regex = new RegExp('');
+    try {
+      regex = stringToJsRegex(pattern);
+    } catch (e) {
+      console.error(e);
+    }
     return (field: Field) => {
       return regex.test(field.name);
     };
