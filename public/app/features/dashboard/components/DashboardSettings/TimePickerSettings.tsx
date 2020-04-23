@@ -93,6 +93,7 @@ export class TimePickerSettings extends PureComponent<Props, State> {
   onHideTimePickerChange = () => {
     const dashboard = this.props.getDashboard();
     this.props.onHideTimePickerChange(!dashboard.timepicker.hidden);
+    this.forceUpdate();
   };
 
   onTimeZoneChange = (timeZone: SelectableValue<string>) => {
