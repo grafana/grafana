@@ -12,6 +12,10 @@ export const getPanelEditorTabs = memoizeOne((location: LocationState, plugin?: 
 
   let defaultTab = PanelEditorTabId.Visualize;
 
+  if (plugin.meta.skipDataQuery) {
+    return [];
+  }
+
   if (!plugin.meta.skipDataQuery) {
     defaultTab = PanelEditorTabId.Query;
 
