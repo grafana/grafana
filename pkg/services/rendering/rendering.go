@@ -118,7 +118,7 @@ func (rs *RenderingService) Render(ctx context.Context, opts Opts) (*RenderResul
 	} else {
 		metrics.MRenderingRequestCompleted.Inc()
 	}
-	elapsedTime := time.Now().Sub(startTime).Nanoseconds() / int64(time.Millisecond)
+	elapsedTime := time.Since(startTime).Nanoseconds() / int64(time.Millisecond)
 	metrics.MRenderingExecutionTime.Observe(float64(elapsedTime))
 	return result, err
 }
