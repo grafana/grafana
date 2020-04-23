@@ -128,7 +128,7 @@ export class CalculateFieldTransformerEditor extends React.PureComponent<
         <div className="gf-form-inline">
           <div className="gf-form gf-form--grow">
             <div className="gf-form-label width-8">Field name</div>
-            <HorizontalGroup spacing="xs">
+            <HorizontalGroup spacing="xs" align="flex-start" wrap>
               {names.map((o, i) => {
                 return (
                   <FilterPill
