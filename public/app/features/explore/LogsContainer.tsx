@@ -18,9 +18,9 @@ import {
 } from '@grafana/data';
 
 import { ExploreId, ExploreItemState } from 'app/types/explore';
-import { StoreState } from 'app/types';
+import { StoreState, QueryDirection } from 'app/types';
 
-import { changeDedupStrategy, updateTimeRange, splitOpen } from './state/actions';
+import { changeDedupStrategy, updateTimeRange, splitOpen, runAppendQueries } from './state/actions';
 import { toggleLogLevelAction } from 'app/features/explore/state/actionTypes';
 import { deduplicatedRowsSelector } from 'app/features/explore/state/selectors';
 import { getTimeZone } from '../profile/state/selectors';
@@ -59,6 +59,8 @@ interface LogsContainerProps {
   absoluteRange: AbsoluteTimeRange;
   isPaused: boolean;
   splitOpen: typeof splitOpen;
+  displayMoreLogsBtn: boolean;
+  runAppendQueries: typeof runAppendQueries;
 }
 
 export class LogsContainer extends PureComponent<LogsContainerProps> {
@@ -113,6 +115,16 @@ export class LogsContainer extends PureComponent<LogsContainerProps> {
     });
   };
 
+  showMoreNewerLogs = () => {
+    const { exploreId, runAppendQueries } = this.props;
+    runAppendQueries(exploreId, QueryDirection.forward);
+  };
+
+  showMoreOlderLogs = () => {
+    const { exploreId, runAppendQueries } = this.props;
+    runAppendQueries(exploreId, QueryDirection.backward);
+  };
+
   render() {
     const {
       loading,
@@ -132,6 +144,7 @@ export class LogsContainer extends PureComponent<LogsContainerProps> {
       width,
       isLive,
       exploreId,
+      displayMoreLogsBtn,
     } = this.props;
 
     return (
@@ -176,6 +189,9 @@ export class LogsContainer extends PureComponent<LogsContainerProps> {
               width={width}
               getRowContext={this.getLogRowContext}
               getFieldLinks={this.getFieldLinks}
+              displayMoreLogsBtn={displayMoreLogsBtn}
+              showMoreNewerLogs={this.showMoreNewerLogs}
+              showMoreOlderLogs={this.showMoreOlderLogs}
             />
           </Collapse>
         </LogsCrossFadeTransition>
@@ -199,6 +215,7 @@ function mapStateToProps(state: StoreState, { exploreId }: { exploreId: string }
     range,
     absoluteRange,
     dedupStrategy,
+    queries,
   } = item;
   const dedupedRows = deduplicatedRowsSelector(item);
   const timeZone = getTimeZone(state.user);
@@ -218,6 +235,7 @@ function mapStateToProps(state: StoreState, { exploreId }: { exploreId: string }
     isPaused,
     range,
     absoluteRange,
+    displayMoreLogsBtn: queries.filter(elem => !elem.hide).length === 1,
   };
 }
 
@@ -226,6 +244,7 @@ const mapDispatchToProps = {
   toggleLogLevelAction,
   updateTimeRange,
   splitOpen,
+  runAppendQueries,
 };
 
 export default hot(module)(connect(mapStateToProps, mapDispatchToProps)(LogsContainer));
