@@ -40,7 +40,7 @@ func ApplyRoute(ctx context.Context, req *http.Request, proxyPath string, route 
 	req.URL.Path = util.JoinURLFragments(routeURL.Path, proxyPath)
 
 	if err := addQueryString(req, route, data); err != nil {
-		logger.Error("Failed to render plugin url query string", "error", err)
+		logger.Error("Failed to render plugin URL query string", "error", err)
 	}
 
 	if err := addHeaders(&req.Header, route, data); err != nil {

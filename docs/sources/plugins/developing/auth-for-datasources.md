@@ -18,7 +18,7 @@ The proxy supports:
 
 ## How the proxy works
 
-The user saves the API key/password on the plugin config page and it is encrypted (using the `secureJsonData` feature) and saved in the Grafana database. When a request from the data source is made, the Grafana Proxy will:
+The user saves the API key/password on the plugin config page and it is encrypted (using the `secureJsonData` feature) and saved in the Grafana database. When a request from the data source is made, the Grafana proxy will:
 
 1. Intercept the original request sent from the data source plugin.
 1. Load the `secureJsonData` data from the database and decrypt the API key or password on the Grafana backend.
@@ -69,8 +69,8 @@ When you build your URL to the third-party API in your data source class, the UR
   }]
   ```
 
-- then the Grafana proxy will transform the url from the original request into `https://management.azure.com/foo/bar`
-- finally, it will add CORS headers and forward the request to the new url. This example does not do any authentication.
+- then the Grafana proxy will transform the URL from the original request into `https://management.azure.com/foo/bar`
+- finally, it will add CORS headers and forward the request to the new URL. This example does not do any authentication.
 
 The `method` parameter is optional. It can be set to a specific HTTP verb to provide more fine-grained control. For example you might have two plugin routes, one for GET requests and one for POST requests.
 
@@ -98,9 +98,9 @@ Given that:
 - `JsonData.dynamicUrl` has the value `http://example.com/api`
 - `SecureJsonData.apiKey` has the value `secretKey`
 
-a call to the url: `custom/api/v5/some/path`
+a call to the URL: `custom/api/v5/some/path`
 
-will be proxied to the following url: `http://example.com/api/some/path?apiKey=secretKey`
+will be proxied to the following URL: `http://example.com/api/some/path?apiKey=secretKey`
 
 An app using this feature can be found [here](https://github.com/grafana/kentik-app).
 
