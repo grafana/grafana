@@ -114,7 +114,7 @@ export class GettingStarted extends PureComponent<PanelProps, State> {
           )}
         </div>
         <div className={styles.dismiss}>
-          <Button variant="secondary" onClick={this.dismiss}>
+          <Button size="sm" variant="secondary" onClick={this.dismiss}>
             Remove this panel
           </Button>
         </div>
@@ -139,7 +139,7 @@ const getStyles = stylesFactory(() => {
     content: css`
       margin-left: 350px;
       margin-top: 32px;
-      margin-bottom: 16px;
+      margin-bottom: 24px;
     `,
     header: css`
       margin-bottom: 24px;
@@ -173,7 +173,7 @@ const getStyles = stylesFactory(() => {
     dismiss: css`
       display: flex;
       justify-content: center;
-      margin-bottom: 16px;
+      margin-bottom: 8px;
     `,
   };
 });
