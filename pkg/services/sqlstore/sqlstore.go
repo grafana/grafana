@@ -101,11 +101,37 @@ func (ss *SqlStore) Init() error {
 	ss.addUserQueryAndCommandHandlers()
 	ss.addAlertNotificationUidByIdHandler()
 
+	err = ss.logWarningAboutOrgs()
+	if err != nil {
+		return err
+	}
+
 	if ss.skipEnsureDefaultOrgAndUser {
 		return nil
 	}
 
 	return ss.ensureMainOrgAndAdminUser()
+}
+
+func (ss *SqlStore) logWarningAboutOrgs() error {
+	type targetCount struct {
+		Count int64
+	}
+
+	return ss.WithDbSession(context.Background(), func(session *DBSession) error {
+		resp := make([]*targetCount, 0)
+		if err := session.SQL("select count(id) as Count from org").Find(&resp); err != nil {
+			return err
+		}
+
+		if resp[0].Count > 1 {
+			ss.log.Warn(`Important message:`)
+			ss.log.Warn(`Orgs might not be the future for you!`)
+			ss.log.Warn(``)
+		}
+
+		return nil
+	})
 }
 
 func (ss *SqlStore) ensureMainOrgAndAdminUser() error {
