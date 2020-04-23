@@ -293,4 +293,3 @@ jobs:
           name: "Publish Release on GitHub"
           command: |
             ./node_modules/.bin/grafana-toolkit plugin:github-publish
-
