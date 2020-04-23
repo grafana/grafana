@@ -185,6 +185,15 @@ export interface ResetExplorePayload {
   force?: boolean;
 }
 
+export interface AddPrevShowMoreLogsTimeRangesPayload {
+  exploreId: ExploreId;
+  prevShowMoreLogsTimeRange: TimeRange;
+}
+
+export interface PopPrevShowMoreLogsTimeRangesPayload {
+  exploreId: ExploreId;
+}
+
 /**
  * Adds a query row after the row with the given index.
  */
@@ -342,3 +351,10 @@ export const changeRangeAction = createAction<ChangeRangePayload>('explore/chang
 export const changeLoadingStateAction = createAction<ChangeLoadingStatePayload>('changeLoadingState');
 
 export const setPausedStateAction = createAction<SetPausedStatePayload>('explore/setPausedState');
+
+export const addPrevShowMoreLogsTimeRangesAction = createAction<AddPrevShowMoreLogsTimeRangesPayload>(
+  'explore/addPrevShowMoreLogsTimeRanges'
+);
+export const popPrevShowMoreLogsTimeRangesAction = createAction<PopPrevShowMoreLogsTimeRangesPayload>(
+  'explore/popPrevShowMoreLogsTimeRanges'
+);

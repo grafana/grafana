@@ -66,6 +66,8 @@ import {
   updateDatasourceInstanceAction,
   updateUIStateAction,
   cancelQueriesAction,
+  addPrevShowMoreLogsTimeRangesAction,
+  popPrevShowMoreLogsTimeRangesAction,
 } from './actionTypes';
 import { ResultProcessor } from '../utils/ResultProcessor';
 import { updateLocation } from '../../../core/actions';
@@ -119,6 +121,7 @@ export const makeExploreItemState = (): ExploreItemState => ({
   isPaused: false,
   urlReplaced: false,
   queryResponse: createEmptyQueryResponse(),
+  prevShowMoreLogsTimeRanges: [],
 });
 
 export const createEmptyQueryResponse = (): PanelData => ({
@@ -499,6 +502,23 @@ export const itemReducer = (state: ExploreItemState = makeExploreItemState(), ac
 
   if (queryStreamUpdatedAction.match(action)) {
     return processQueryResponse(state, action);
+  }
+
+  if (addPrevShowMoreLogsTimeRangesAction.match(action)) {
+    const { prevShowMoreLogsTimeRange } = action.payload;
+    return {
+      ...state,
+      prevShowMoreLogsTimeRanges: [...state.prevShowMoreLogsTimeRanges, prevShowMoreLogsTimeRange],
+    };
+  }
+
+  if (popPrevShowMoreLogsTimeRangesAction.match(action)) {
+    const timeRanges = [...state.prevShowMoreLogsTimeRanges];
+    timeRanges.pop();
+    return {
+      ...state,
+      prevShowMoreLogsTimeRanges: [...timeRanges],
+    };
   }
 
   return state;
