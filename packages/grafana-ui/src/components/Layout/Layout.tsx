@@ -39,13 +39,15 @@ export const Layout: React.FC<LayoutProps> = ({
   const styles = getStyles(theme, orientation, spacing, justify, align);
   return (
     <div className={cx(styles.layout, className)} style={{ width }} {...rest}>
-      {React.Children.map(children, (child, index) => {
-        return (
-          <div className={styles.childWrapper} key={index}>
-            {child}
-          </div>
-        );
-      })}
+      {React.Children.toArray(children)
+        .filter(Boolean)
+        .map((child, index) => {
+          return (
+            <div className={styles.childWrapper} key={index}>
+              {child}
+            </div>
+          );
+        })}
     </div>
   );
 };
