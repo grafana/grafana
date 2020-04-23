@@ -300,7 +300,7 @@ export class TableRenderer {
       const cellLink = this.templateSrv.replace(column.style.linkUrl, scopedVars, encodeURIComponent);
       const sanitizedCellLink = textUtil.sanitizeUrl(cellLink);
 
-      const cellLinkTooltip = escapeHtml(this.templateSrv.replace(column.style.linkTooltip, scopedVars));
+      const cellLinkTooltip = textUtil.escapeHtml(this.templateSrv.replace(column.style.linkTooltip, scopedVars));
       const cellTarget = column.style.linkTargetBlank ? '_blank' : '';
 
       cellClasses.push('table-panel-cell-link');
