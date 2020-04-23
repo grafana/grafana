@@ -1,10 +1,9 @@
 import _ from 'lodash';
 import angular, { ILocationService, IScope } from 'angular';
 
-import locationUtil from 'app/core/utils/location_util';
 import { DashboardModel } from '../../state/DashboardModel';
 import { CalculateDiffOptions, HistoryListOpts, HistorySrv, RevisionsModel } from './HistorySrv';
-import { AppEvents, dateTime, DateTimeInput, toUtc } from '@grafana/data';
+import { AppEvents, dateTime, DateTimeInput, locationUtil, toUtc } from '@grafana/data';
 import { GrafanaRootScope } from 'app/routes/GrafanaCtrl';
 import { CoreEvents } from 'app/types';
 import { promiseToDigest } from '../../../../core/utils/promiseToDigest';

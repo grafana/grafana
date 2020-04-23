@@ -264,7 +264,7 @@ export class TimeSrv {
     this.$timeout(this.refreshDashboard.bind(this), 0);
   }
 
-  timeRangeForUrl() {
+  timeRangeForUrl = () => {
     const range = this.timeRange().raw;
 
     if (isDateTime(range.from)) {
@@ -275,7 +275,7 @@ export class TimeSrv {
     }
 
     return range;
-  }
+  };
 
   timeRange(): TimeRange {
     // make copies if they are moment  (do not want to return out internal moment, because they are mutable!)

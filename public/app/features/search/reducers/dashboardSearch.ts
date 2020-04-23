@@ -1,21 +1,33 @@
 import { DashboardSection, SearchAction } from '../types';
 import { getFlattenedSections, getLookupField, markSelected } from '../utils';
-import { FETCH_ITEMS, FETCH_RESULTS, TOGGLE_SECTION, MOVE_SELECTION_DOWN, MOVE_SELECTION_UP } from './actionTypes';
+import {
+  FETCH_ITEMS,
+  FETCH_RESULTS,
+  TOGGLE_SECTION,
+  MOVE_SELECTION_DOWN,
+  MOVE_SELECTION_UP,
+  SEARCH_START,
+} from './actionTypes';
 
-interface State {
+export interface DashboardsSearchState {
   results: DashboardSection[];
   loading: boolean;
   selectedIndex: number;
 }
 
-export const initialState: State = {
+export const dashboardsSearchState: DashboardsSearchState = {
   results: [],
   loading: true,
   selectedIndex: 0,
 };
 
-export const searchReducer = (state: any, action: SearchAction) => {
+export const searchReducer = (state: DashboardsSearchState, action: SearchAction) => {
   switch (action.type) {
+    case SEARCH_START:
+      if (!state.loading) {
+        return { ...state, loading: true };
+      }
+      return state;
     case FETCH_RESULTS: {
       const results = action.payload;
       // Highlight the first item ('Starred' folder)

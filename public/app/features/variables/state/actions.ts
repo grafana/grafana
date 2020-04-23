@@ -1,6 +1,5 @@
 import castArray from 'lodash/castArray';
-import { UrlQueryMap, UrlQueryValue } from '@grafana/runtime';
-import { AppEvents, TimeRange } from '@grafana/data';
+import { AppEvents, TimeRange, UrlQueryMap, UrlQueryValue } from '@grafana/data';
 import angular from 'angular';
 
 import {
@@ -8,8 +7,8 @@ import {
   VariableModel,
   VariableOption,
   VariableRefresh,
-  VariableWithOptions,
   VariableWithMultiSupport,
+  VariableWithOptions,
 } from '../../templating/types';
 import { StoreState, ThunkResult } from '../../../types';
 import { getVariable, getVariables } from './selectors';
@@ -19,10 +18,10 @@ import { updateLocation } from 'app/core/actions';
 import {
   addInitLock,
   addVariable,
+  changeVariableProp,
   removeInitLock,
   resolveInitLock,
   setCurrentVariableValue,
-  changeVariableProp,
 } from './sharedReducer';
 import { toVariableIdentifier, toVariablePayload, VariableIdentifier } from './types';
 import { appEvents } from 'app/core/core';

@@ -17,7 +17,7 @@ Delays creating links until we need to open the ContextMenu
 <b>Signature</b>
 
 ```typescript
-linkModelToContextMenuItems: (links: LinkModelSupplier<any>) => ContextMenuItem[]
+linkModelToContextMenuItems: (links: () => LinkModel[]) => ContextMenuItem[]
 ```
 <b>Import</b>
 

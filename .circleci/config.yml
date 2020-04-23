@@ -204,7 +204,12 @@ jobs:
       - run:
           name: Install ShellCheck
           command: |
-            sudo apt-get update && sudo apt-get install -y shellcheck
+            VERSION=0.7.1
+            CHKSUM=beca3d7819a6bdcfbd044576df4fc284053b48f468b2f03428fe66f4ceb2c05d9b5411357fa15003cb0311406c255084cf7283a3b8fce644c340c2f6aa910b9f
+            curl -fLO http://storage.googleapis.com/grafana-downloads/ci-dependencies/shellcheck-v${VERSION}.linux.x86_64.tar.xz
+            echo $CHKSUM shellcheck-v${VERSION}.linux.x86_64.tar.xz | sha512sum --check --strict --status
+            tar xf shellcheck-v${VERSION}.linux.x86_64.tar.xz
+            sudo mv shellcheck-v${VERSION}/shellcheck /usr/local/bin/
       - run:
           name: ShellCheck
           command: |
@@ -731,9 +736,11 @@ jobs:
             golangci-lint run -v -j 4 --config scripts/go/configs/ci/.golangci.yml -E unconvert -E unused \
               -E varcheck -E goconst -E errcheck -E staticcheck ./pkg/...
             ./scripts/go/bin/revive -formatter stylish -config ./scripts/go/configs/revive.toml ./pkg/...
-            ./scripts/go/bin/revive ./pkg/services/alerting/...
-            ./scripts/go/bin/revive -formatter stylish ./pkg/services/provisioning/datasources/...
-            ./scripts/go/bin/revive -formatter stylish ./pkg/services/provisioning/dashboards/...
+            ./scripts/go/bin/revive -formatter stylish -config ./scripts/go/configs/revive-strict.toml \
+              ./pkg/services/alerting/... \
+              ./pkg/services/provisioning/datasources/... \
+              ./pkg/services/provisioning/dashboards/...
+
             ./scripts/go/bin/gosec -quiet -exclude=G104,G107,G108,G201,G202,G204,G301,G304,G401,G402,G501 \
               -conf=./scripts/go/configs/gosec.json ./pkg/...
 

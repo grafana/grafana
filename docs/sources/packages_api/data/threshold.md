@@ -25,7 +25,7 @@ import { Threshold } from '@grafana/data';
 |  Property | Type | Description |
 |  --- | --- | --- |
 |  [color](#color-property) | <code>string</code> |  |
-|  [state](#state-property) | <code>string</code> |  |
+|  [state](#state-property) | <code>string</code> | Warning, Error, LowLow, Low, OK, High, HighHigh etc |
 |  [value](#value-property) | <code>number</code> |  |
 
 ### color property
@@ -37,6 +37,8 @@ color: string;
 ```
 
 ### state property
+
+Warning, Error, LowLow, Low, OK, High, HighHigh etc
 
 <b>Signature</b>
 

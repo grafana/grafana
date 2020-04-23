@@ -75,7 +75,7 @@ const theme: GrafanaThemeCommons = {
   },
   spacing: {
     insetSquishMd: '4px 8px',
-    d: '14px',
+    d: '16px',
     xxs: '2px',
     xs: '4px',
     sm: '8px',
@@ -89,7 +89,7 @@ const theme: GrafanaThemeCommons = {
     formSpacingBase: SPACING_BASE,
     formMargin: `${SPACING_BASE * 4}px`,
     formFieldsetMargin: `${SPACING_BASE * 2}px`,
-    formInputHeight: `${SPACING_BASE * 4}px`,
+    formInputHeight: SPACING_BASE * 4,
     formButtonHeight: SPACING_BASE * 4,
     formInputPaddingHorizontal: `${SPACING_BASE}px`,
 
@@ -115,20 +115,20 @@ const theme: GrafanaThemeCommons = {
     },
   },
   height: {
-    sm: '24px',
-    md: '32px',
-    lg: '48px',
+    sm: 24,
+    md: 32,
+    lg: 48,
   },
   panelPadding: 8,
   panelHeaderHeight: 28,
   zIndex: {
-    dropdown: '1000',
-    navbarFixed: '1020',
-    sidemenu: '1025',
-    tooltip: '1030',
-    modalBackdrop: '1040',
-    modal: '1050',
-    typeahead: '1060',
+    navbarFixed: '1000',
+    sidemenu: '1020',
+    dropdown: '1030',
+    typeahead: '1030',
+    tooltip: '1040',
+    modalBackdrop: '1050',
+    modal: '1060',
   },
 };
 

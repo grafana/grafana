@@ -15,12 +15,12 @@ const setup = (propOverrides?: Partial<Props>, renderMethod = shallow) => {
     canMove: false,
     deleteItem: noop,
     moveTo: noop,
-    onSelectAllChanged: noop,
     onStarredFilterChange: noop,
     onTagFilterChange: noop,
-    selectedStarredFilter: 'starred',
-    selectedTagFilter: 'tag',
-    tagFilterOptions: [],
+    onToggleAllChecked: noop,
+    //@ts-ignore
+    query: { starred: false, sort: null, tag: ['tag'] },
+    onSortChange: noop,
   };
 
   Object.assign(props, propOverrides);
@@ -37,8 +37,9 @@ const setup = (propOverrides?: Partial<Props>, renderMethod = shallow) => {
 describe('SearchResultsFilter', () => {
   it('should render "filter by starred" and "filter by tag" filters by default', () => {
     const { wrapper } = setup();
-    expect(wrapper.find({ placeholder: 'Filter by starred' })).toHaveLength(1);
-    expect(wrapper.find({ placeholder: 'Filter by tag' })).toHaveLength(1);
+    const ActionRow = wrapper.find('ActionRow').shallow();
+    expect(ActionRow.find({ placeholder: 'Filter by starred' })).toHaveLength(1);
+    expect(ActionRow.find({ placeholder: 'Filter by tag' })).toHaveLength(1);
     expect(findBtnByText(wrapper, 'Move')).toHaveLength(0);
     expect(findBtnByText(wrapper, 'Delete')).toHaveLength(0);
   });
@@ -79,19 +80,12 @@ describe('SearchResultsFilter', () => {
       { value: 'tag2', label: 'Tag 2' },
     ];
     //@ts-ignore
-    const { wrapper } = setup({ onTagFilterChange: mockFilterByTags, tagFilterOptions: tags }, mount);
+    const { wrapper } = setup({ onTagFilterChange: mockFilterByTags }, mount);
     wrapper
       .find({ placeholder: 'Filter by tag' })
       .at(0)
       .prop('onChange')(tags[0]);
     expect(mockFilterByTags).toHaveBeenCalledTimes(1);
     expect(mockFilterByTags).toHaveBeenCalledWith(tags[0]);
-  });
-
-  it('should call "onSelectAllChanged" when checkbox is changed', () => {
-    const mockSelectAll = jest.fn();
-    const { wrapper } = setup({ onSelectAllChanged: mockSelectAll });
-    wrapper.find('Checkbox').simulate('change');
-    expect(mockSelectAll).toHaveBeenCalledTimes(1);
   });
 });
