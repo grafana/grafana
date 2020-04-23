@@ -1,14 +1,5 @@
 import React from 'react';
-import {
-  Container,
-  CustomScrollbar,
-  InfoBox,
-  ValuePicker,
-  Button,
-  useTheme,
-  VerticalGroup,
-  stylesFactory,
-} from '@grafana/ui';
+import { Container, CustomScrollbar, ValuePicker, Button, useTheme, VerticalGroup, stylesFactory } from '@grafana/ui';
 import {
   DataFrame,
   DataTransformerConfig,
@@ -120,33 +111,39 @@ export class TransformationsEditor extends React.PureComponent<Props> {
     );
   };
 
+  renderNoAddedTransformsState() {
+    return (
+      <>
+        <p className="muted">
+          Transformations allow you to combine, re-order, hide and rename specific parts the the data set before being
+          visualized. <br />
+          Choose one of the transformations below to start with:
+        </p>
+
+        <VerticalGroup>
+          {standardTransformersRegistry.list().map(t => {
+            return (
+              <TransformationCard
+                title={t.name}
+                description={t.description}
+                actions={<Button>Select</Button>}
+                onClick={() => {
+                  this.onTransformationAdd({ value: t.id });
+                }}
+              />
+            );
+          })}
+        </VerticalGroup>
+      </>
+    );
+  }
+
   render() {
     const hasTransformationsConfigured = this.props.transformations.length > 0;
     return (
       <CustomScrollbar autoHeightMin="100%">
         <Container padding="md">
-          {!hasTransformationsConfigured && (
-            <InfoBox>
-              <p>
-                Transformations allow you to combine, re-order, hide and rename specific parts the the data set before
-                being visualized. Choose one of the transformations below to start with:
-              </p>
-              <VerticalGroup>
-                {standardTransformersRegistry.list().map(t => {
-                  return (
-                    <TransformationCard
-                      title={t.name}
-                      description={t.description}
-                      actions={<Button>Select</Button>}
-                      onClick={() => {
-                        this.onTransformationAdd({ value: t.id });
-                      }}
-                    />
-                  );
-                })}
-              </VerticalGroup>
-            </InfoBox>
-          )}
+          {!hasTransformationsConfigured && this.renderNoAddedTransformsState()}
           {hasTransformationsConfigured && this.renderTransformationEditors()}
           {hasTransformationsConfigured && this.renderTransformationSelector()}
         </Container>
@@ -166,8 +163,13 @@ const getTransformationCardStyles = stylesFactory((theme: GrafanaTheme) => {
     card: css`
       background: ${theme.colors.bg2};
       width: 100%;
+      border: none;
+      padding: ${theme.spacing.sm};
+
       &:hover {
         background: ${theme.colors.bg3};
+        box-shadow: none;
+        border: none;
       }
     `,
   };
