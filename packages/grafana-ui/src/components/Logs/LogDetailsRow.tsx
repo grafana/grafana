@@ -9,8 +9,8 @@ import { stylesFactory } from '../../themes/stylesFactory';
 
 //Components
 import { LogLabelStats } from './LogLabelStats';
-import { LinkButton } from '../Button/Button';
 import { IconButton } from '../IconButton/IconButton';
+import { Tag } from '..';
 
 export interface Props extends Themeable {
   parsedValue: string;
@@ -116,27 +116,10 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
           {links &&
             links.map(link => {
               return (
-                <span key={link.href}>
-                  <>
-                    &nbsp;
-                    <LinkButton
-                      variant="link"
-                      size={'sm'}
-                      icon={link.onClick ? 'list-ul' : 'external-link-alt'}
-                      href={link.href}
-                      target={'_blank'}
-                      onClick={
-                        link.onClick &&
-                        ((event: any) => {
-                          if (!(event.ctrlKey || event.metaKey || event.shiftKey) && link.onClick) {
-                            event.preventDefault();
-                            link.onClick(event);
-                          }
-                        })
-                      }
-                    />
-                  </>
-                </span>
+                <>
+                  &nbsp;
+                  <FieldLink link={link} />
+                </>
               );
             })}
           {showFieldsStats && (
@@ -152,6 +135,41 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
       </tr>
     );
   }
+}
+
+const getLinkStyles = stylesFactory(() => {
+  return {
+    tag: css`
+      margin-left: 6px;
+      font-size: 11px;
+      padding: 2px 6px;
+    `,
+  };
+});
+
+type FieldLinkProps = {
+  link: LinkModel<Field>;
+};
+function FieldLink({ link }: FieldLinkProps) {
+  const styles = getLinkStyles();
+  return (
+    <a
+      href={link.href}
+      target={'_blank'}
+      onClick={
+        link.onClick
+          ? event => {
+              if (!(event.ctrlKey || event.metaKey || event.shiftKey) && link.onClick) {
+                event.preventDefault();
+                link.onClick(event);
+              }
+            }
+          : undefined
+      }
+    >
+      <Tag name={link.title} className={styles.tag} colorIndex={6} />
+    </a>
+  );
 }
 
 export const LogDetailsRow = withTheme(UnThemedLogDetailsRow);
