@@ -384,15 +384,3 @@ func (hs *HTTPServer) getCachedPluginSettings(pluginID string, user *models.Sign
 	hs.CacheService.Set(cacheKey, query.Result, time.Second*5)
 	return query.Result, nil
 }
-
-func backendUserFromSignedInUser(su *models.SignedInUser) *backend.User {
-	if su == nil {
-		return nil
-	}
-	return &backend.User{
-		Login: su.Login,
-		Name:  su.Name,
-		Email: su.Name,
-		Role:  string(su.OrgRole),
-	}
-}
