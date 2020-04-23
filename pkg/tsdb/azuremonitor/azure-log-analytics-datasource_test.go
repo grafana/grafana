@@ -52,10 +52,11 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 			},
 			azureLogAnalyticsQueries: []*AzureLogAnalyticsQuery{
 				{
-					RefID:  "A",
-					URL:    "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee/query",
-					Params: url.Values{"query": {"query=Perf | where ['TimeGenerated'] >= datetime('2018-03-15T13:00:00Z') and ['TimeGenerated'] <= datetime('2018-03-15T13:34:00Z') | where ['Computer'] in ('comp1','comp2') | summarize avg(CounterValue) by bin(TimeGenerated, 34000ms), Computer"}},
-					Target: "query=query%3DPerf+%7C+where+%5B%27TimeGenerated%27%5D+%3E%3D+datetime%28%272018-03-15T13%3A00%3A00Z%27%29+and+%5B%27TimeGenerated%27%5D+%3C%3D+datetime%28%272018-03-15T13%3A34%3A00Z%27%29+%7C+where+%5B%27Computer%27%5D+in+%28%27comp1%27%2C%27comp2%27%29+%7C+summarize+avg%28CounterValue%29+by+bin%28TimeGenerated%2C+34000ms%29%2C+Computer",
+					RefID:        "A",
+					ResultFormat: "time_series",
+					URL:          "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee/query",
+					Params:       url.Values{"query": {"query=Perf | where ['TimeGenerated'] >= datetime('2018-03-15T13:00:00Z') and ['TimeGenerated'] <= datetime('2018-03-15T13:34:00Z') | where ['Computer'] in ('comp1','comp2') | summarize avg(CounterValue) by bin(TimeGenerated, 34000ms), Computer"}},
+					Target:       "query=query%3DPerf+%7C+where+%5B%27TimeGenerated%27%5D+%3E%3D+datetime%28%272018-03-15T13%3A00%3A00Z%27%29+and+%5B%27TimeGenerated%27%5D+%3C%3D+datetime%28%272018-03-15T13%3A34%3A00Z%27%29+%7C+where+%5B%27Computer%27%5D+in+%28%27comp1%27%2C%27comp2%27%29+%7C+summarize+avg%28CounterValue%29+by+bin%28TimeGenerated%2C+34000ms%29%2C+Computer",
 				},
 			},
 			Err: require.NoError,
@@ -97,7 +98,7 @@ func TestParsingAzureLogAnalyticsResponses(t *testing.T) {
 					},
 				},
 			},
-			meta: `{"columns":["TimeGenerated","Computer","avg_CounterValue"],"query":"test query"}`,
+			meta: `{"columns":[{"name":"TimeGenerated","type":"datetime"},{"name":"Computer","type":"string"},{"name":"avg_CounterValue","type":"real"}],"query":"test query"}`,
 			Err:  require.NoError,
 		},
 		{
@@ -130,7 +131,7 @@ func TestParsingAzureLogAnalyticsResponses(t *testing.T) {
 					},
 				},
 			},
-			meta: `{"columns":["TimeGenerated","ObjectName","avg_CounterValue"],"query":"test query"}`,
+			meta: `{"columns":[{"name":"TimeGenerated","type":"datetime"},{"name":"ObjectName","type":"string"},{"name":"avg_CounterValue","type":"real"}],"query":"test query"}`,
 			Err:  require.NoError,
 		},
 		{
@@ -147,7 +148,7 @@ func TestParsingAzureLogAnalyticsResponses(t *testing.T) {
 					},
 				},
 			},
-			meta: `{"columns":["TimeGenerated","avg_CounterValue"],"query":"test query"}`,
+			meta: `{"columns":[{"name":"TimeGenerated","type":"datetime"},{"name":"avg_CounterValue","type":"int"}],"query":"test query"}`,
 			Err:  require.NoError,
 		},
 		{
@@ -155,7 +156,7 @@ func TestParsingAzureLogAnalyticsResponses(t *testing.T) {
 			testFile: "./test-data/loganalytics/4-log-analytics-response-metrics-no-time-column.json",
 			query:    "test query",
 			series:   nil,
-			meta:     `{"columns":["Computer","avg_CounterValue"],"query":"test query"}`,
+			meta:     `{"columns":[{"name":"Computer","type":"string"},{"name":"avg_CounterValue","type":"real"}],"query":"test query"}`,
 			Err:      require.NoError,
 		},
 		{
@@ -163,7 +164,7 @@ func TestParsingAzureLogAnalyticsResponses(t *testing.T) {
 			testFile: "./test-data/loganalytics/5-log-analytics-response-metrics-no-value-column.json",
 			query:    "test query",
 			series:   nil,
-			meta:     `{"columns":["TimeGenerated","Computer"],"query":"test query"}`,
+			meta:     `{"columns":[{"name":"TimeGenerated","type":"datetime"},{"name":"Computer","type":"string"}],"query":"test query"}`,
 			Err:      require.NoError,
 		},
 	}
@@ -171,8 +172,109 @@ func TestParsingAzureLogAnalyticsResponses(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			data, _ := loadLogAnalyticsTestFile(tt.testFile)
-			series, meta, err := datasource.parseResponse(data, tt.query)
+
+			series, meta, err := datasource.parseToTimeSeries(data, tt.query)
 			tt.Err(t, err)
+
+			if diff := cmp.Diff(tt.series, series, cmpopts.EquateNaNs()); diff != "" {
+				t.Errorf("Result mismatch (-want +got):\n%s", diff)
+			}
+
+			json, _ := json.Marshal(meta)
+			cols := string(json)
+
+			if diff := cmp.Diff(tt.meta, cols, cmpopts.EquateNaNs()); diff != "" {
+				t.Errorf("Result mismatch (-want +got):\n%s", diff)
+			}
+		})
+	}
+}
+
+func TestParsingAzureLogAnalyticsTableResponses(t *testing.T) {
+	datasource := &AzureLogAnalyticsDatasource{}
+	tests := []struct {
+		name     string
+		testFile string
+		query    string
+		tables   []*tsdb.Table
+		meta     string
+		Err      require.ErrorAssertionFunc
+	}{
+		{
+			name:     "Table data should be parsed into the table format Response",
+			testFile: "./test-data/loganalytics/6-log-analytics-response-table.json",
+			query:    "test query",
+			tables: []*tsdb.Table{
+				{
+					Columns: []tsdb.TableColumn{
+						{Text: "TenantId"},
+						{Text: "Computer"},
+						{Text: "ObjectName"},
+						{Text: "CounterName"},
+						{Text: "InstanceName"},
+						{Text: "Min"},
+						{Text: "Max"},
+						{Text: "SampleCount"},
+						{Text: "CounterValue"},
+						{Text: "TimeGenerated"},
+					},
+					Rows: []tsdb.RowValues{
+						{
+							string("a2c1b44e-3e57-4410-b027-6cc0ae6dee67"),
+							string("grafana-vm"),
+							string("Memory"),
+							string("Available MBytes Memory"),
+							string("Memory"),
+							nil,
+							nil,
+							nil,
+							float64(2040),
+							string("2020-04-23T11:46:03.857Z"),
+						},
+						{
+							string("a2c1b44e-3e57-4410-b027-6cc0ae6dee67"),
+							string("grafana-vm"),
+							string("Memory"),
+							string("Available MBytes Memory"),
+							string("Memory"),
+							nil,
+							nil,
+							nil,
+							float64(2066),
+							string("2020-04-23T11:46:13.857Z"),
+						},
+						{
+							string("a2c1b44e-3e57-4410-b027-6cc0ae6dee67"),
+							string("grafana-vm"),
+							string("Memory"),
+							string("Available MBytes Memory"),
+							string("Memory"),
+							nil,
+							nil,
+							nil,
+							float64(2066),
+							string("2020-04-23T11:46:23.857Z"),
+						},
+					},
+				},
+			},
+			meta: `{"columns":[{"name":"TenantId","type":"string"},{"name":"Computer","type":"string"},{"name":"ObjectName","type":"string"},{"name":"CounterName","type":"string"},` +
+				`{"name":"InstanceName","type":"string"},{"name":"Min","type":"real"},{"name":"Max","type":"real"},{"name":"SampleCount","type":"int"},{"name":"CounterValue","type":"real"},` +
+				`{"name":"TimeGenerated","type":"datetime"}],"query":"test query"}`,
+			Err: require.NoError,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			data, _ := loadLogAnalyticsTestFile(tt.testFile)
+
+			tables, meta, err := datasource.parseToTables(data, tt.query)
+			tt.Err(t, err)
+
+			if diff := cmp.Diff(tt.tables, tables, cmpopts.EquateNaNs()); diff != "" {
+				t.Errorf("Result mismatch (-want +got):\n%s", diff)
+			}
 
 			json, _ := json.Marshal(meta)
 			cols := string(json)
@@ -181,9 +283,6 @@ func TestParsingAzureLogAnalyticsResponses(t *testing.T) {
 				t.Errorf("Result mismatch (-want +got):\n%s", diff)
 			}
 
-			if diff := cmp.Diff(tt.series, series, cmpopts.EquateNaNs()); diff != "" {
-				t.Errorf("Result mismatch (-want +got):\n%s", diff)
-			}
 		})
 	}
 }

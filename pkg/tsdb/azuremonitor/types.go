@@ -65,12 +65,25 @@ type ApplicationInsightsQueryResponse struct {
 
 // AzureLogAnalyticsResponse is the json response object from the Azure Log Analytics API.
 type AzureLogAnalyticsResponse struct {
-	Tables []struct {
-		Name    string `json:"name"`
-		Columns []struct {
-			Name string `json:"name"`
-			Type string `json:"type"`
-		} `json:"columns"`
-		Rows [][]interface{} `json:"rows"`
-	} `json:"tables"`
+	Tables []AzureLogAnalyticsTable `json:"tables"`
+}
+
+//AzureLogAnalyticsTable is the table format for Log Analytics responses
+type AzureLogAnalyticsTable struct {
+	Name    string `json:"name"`
+	Columns []struct {
+		Name string `json:"name"`
+		Type string `json:"type"`
+	} `json:"columns"`
+	Rows [][]interface{} `json:"rows"`
+}
+
+type metadata struct {
+	Columns []column `json:"columns"`
+	Query   string   `json:"query"`
+}
+
+type column struct {
+	Name string `json:"name"`
+	Type string `json:"type"`
 }

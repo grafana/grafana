@@ -31,10 +31,11 @@ type AzureLogAnalyticsDatasource struct {
 // AzureLogAnalyticsQuery is the query request that is built from the saved values for
 // from the UI
 type AzureLogAnalyticsQuery struct {
-	RefID  string
-	URL    string
-	Params url.Values
-	Target string
+	RefID        string
+	ResultFormat string
+	URL          string
+	Params       url.Values
+	Target       string
 }
 
 // executeTimeSeriesQuery does the following:
@@ -69,6 +70,11 @@ func (e *AzureLogAnalyticsDatasource) buildQueries(queries []*tsdb.Query, timeRa
 		azureLogAnalyticsTarget := query.Model.Get("azureLogAnalytics").MustMap()
 		azlog.Debug("AzureLogAnalytics", "target", azureLogAnalyticsTarget)
 
+		resultFormat := fmt.Sprintf("%v", azureLogAnalyticsTarget["resultFormat"])
+		if resultFormat == "" {
+			resultFormat = "time_series"
+		}
+
 		urlComponents := map[string]string{}
 		urlComponents["subscription"] = fmt.Sprintf("%v", query.Model.Get("subscription").MustString())
 		urlComponents["workspace"] = fmt.Sprintf("%v", azureLogAnalyticsTarget["workspace"])
@@ -82,10 +88,11 @@ func (e *AzureLogAnalyticsDatasource) buildQueries(queries []*tsdb.Query, timeRa
 		params.Add("query", rawQuery)
 
 		azureLogAnalyticsQueries = append(azureLogAnalyticsQueries, &AzureLogAnalyticsQuery{
-			RefID:  query.RefId,
-			URL:    apiURL,
-			Params: params,
-			Target: params.Encode(),
+			RefID:        query.RefId,
+			ResultFormat: resultFormat,
+			URL:          apiURL,
+			Params:       params,
+			Target:       params.Encode(),
 		})
 	}
 
@@ -136,9 +143,13 @@ func (e *AzureLogAnalyticsDatasource) executeQuery(ctx context.Context, query *A
 
 	azlog.Debug("AzureLogsAnalytics", "Response", queryResult)
 
-	queryResult.Series, queryResult.Meta, err = e.parseResponse(data, query.Params.Get("query"))
-	if err != nil {
-		return nil, err
+	if query.ResultFormat == "table" {
+		queryResult.Tables, queryResult.Meta, err = e.parseToTables(data, query.Params.Get("query"))
+	} else {
+		queryResult.Series, queryResult.Meta, err = e.parseToTimeSeries(data, query.Params.Get("query"))
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	return queryResult, nil
@@ -199,22 +210,51 @@ func (e *AzureLogAnalyticsDatasource) unmarshalResponse(res *http.Response) (Azu
 	return data, nil
 }
 
-func (e *AzureLogAnalyticsDatasource) parseResponse(data AzureLogAnalyticsResponse, query string) (tsdb.TimeSeriesSlice, *simplejson.Json, error) {
-	type Metadata struct {
-		Columns []string `json:"columns"`
-		Query   string   `json:"query"`
+func (e *AzureLogAnalyticsDatasource) parseToTables(data AzureLogAnalyticsResponse, query string) ([]*tsdb.Table, *simplejson.Json, error) {
+	meta := metadata{
+		Query: query,
 	}
 
-	meta := Metadata{
+	tables := make([]*tsdb.Table, 0)
+	for _, t := range data.Tables {
+		if t.Name == "PrimaryResult" {
+			table := tsdb.Table{
+				Columns: make([]tsdb.TableColumn, 0),
+				Rows:    make([]tsdb.RowValues, 0),
+			}
+
+			meta.Columns = make([]column, 0)
+			for _, v := range t.Columns {
+				meta.Columns = append(meta.Columns, column{Name: v.Name, Type: v.Type})
+				table.Columns = append(table.Columns, tsdb.TableColumn{Text: v.Name})
+			}
+
+			for _, r := range t.Rows {
+				values := make([]interface{}, len(table.Columns))
+				for i := 0; i < len(table.Columns); i++ {
+					values[i] = r[i]
+				}
+				table.Rows = append(table.Rows, values)
+			}
+			tables = append(tables, &table)
+			return tables, simplejson.NewFromAny(meta), nil
+		}
+	}
+
+	return nil, nil, errors.New("no data as no PrimaryResult table was returned in the response")
+}
+
+func (e *AzureLogAnalyticsDatasource) parseToTimeSeries(data AzureLogAnalyticsResponse, query string) (tsdb.TimeSeriesSlice, *simplejson.Json, error) {
+	meta := metadata{
 		Query: query,
 	}
 
 	for _, t := range data.Tables {
 		if t.Name == "PrimaryResult" {
 			timeIndex, metricIndex, valueIndex := -1, -1, -1
-			meta.Columns = make([]string, 0)
+			meta.Columns = make([]column, 0)
 			for i, v := range t.Columns {
-				meta.Columns = append(meta.Columns, v.Name)
+				meta.Columns = append(meta.Columns, column{Name: v.Name, Type: v.Type})
 
 				if timeIndex == -1 && v.Type == "datetime" {
 					timeIndex = i
@@ -287,5 +327,5 @@ func (e *AzureLogAnalyticsDatasource) parseResponse(data AzureLogAnalyticsRespon
 		}
 	}
 
-	return nil, nil, errors.New("could not find table")
+	return nil, nil, errors.New("no data as no PrimaryResult table was returned in the response")
 }
