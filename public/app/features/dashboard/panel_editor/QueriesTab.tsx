@@ -188,6 +188,7 @@ export class QueriesTab extends PureComponent<Props, State> {
             <Button variant="secondary">Query inspector</Button>
           </div>
         </div>
+        <QueryOptions panel={panel} datasource={currentDS} />
       </>
     );
     // <QueryOperationRow
