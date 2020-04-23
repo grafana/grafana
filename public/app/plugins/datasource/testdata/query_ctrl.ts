@@ -1,10 +1,11 @@
 import _ from 'lodash';
+import { IScope } from 'angular';
+import { getBackendSrv } from '@grafana/runtime';
 import { dateMath, dateTime } from '@grafana/data';
 import { e2e } from '@grafana/e2e';
 
 import { QueryCtrl } from 'app/plugins/sdk';
 import { defaultQuery } from './runStreams';
-import { getBackendSrv } from '@grafana/runtime';
 import { promiseToDigest } from 'app/core/utils/promiseToDigest';
 
 export const defaultPulse: any = {
@@ -36,7 +37,7 @@ export class TestDataQueryCtrl extends QueryCtrl {
   selectors: typeof e2e.components.DataSource.TestData.QueryTab.selectors;
 
   /** @ngInject */
-  constructor($scope: any, $injector: any) {
+  constructor($scope: IScope, $injector: any) {
     super($scope, $injector);
 
     this.target.scenarioId = this.target.scenarioId || 'random_walk';
