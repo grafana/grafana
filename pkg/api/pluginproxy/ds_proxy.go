@@ -19,7 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	glog "github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/login/social"
-	m "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
@@ -31,9 +31,23 @@ var (
 	client = newHTTPClient()
 )
 
+type URLValidationError struct {
+	error
+
+	url string
+}
+
+func (e URLValidationError) Error() string {
+	return fmt.Sprintf("Validation of URL %q failed: %s", e.url, e.error.Error())
+}
+
+func (e URLValidationError) Unwrap() error {
+	return e.error
+}
+
 type DataSourceProxy struct {
-	ds        *m.DataSource
-	ctx       *m.ReqContext
+	ds        *models.DataSource
+	ctx       *models.ReqContext
 	targetUrl *url.URL
 	proxyPath string
 	route     *plugins.AppPluginRoute
@@ -70,8 +84,12 @@ func (lw *logWrapper) Write(p []byte) (n int, err error) {
 }
 
 // NewDataSourceProxy creates a new Datasource proxy
-func NewDataSourceProxy(ds *m.DataSource, plugin *plugins.DataSourcePlugin, ctx *m.ReqContext, proxyPath string, cfg *setting.Cfg) *DataSourceProxy {
-	targetURL, _ := url.Parse(ds.Url)
+func NewDataSourceProxy(ds *models.DataSource, plugin *plugins.DataSourcePlugin, ctx *models.ReqContext,
+	proxyPath string, cfg *setting.Cfg) (*DataSourceProxy, error) {
+	targetURL, err := url.Parse(ds.Url)
+	if err != nil {
+		return nil, URLValidationError{error: err, url: ds.Url}
+	}
 
 	return &DataSourceProxy{
 		ds:        ds,
@@ -80,7 +98,7 @@ func NewDataSourceProxy(ds *m.DataSource, plugin *plugins.DataSourcePlugin, ctx 
 		proxyPath: proxyPath,
 		targetUrl: targetURL,
 		cfg:       cfg,
-	}
+	}, nil
 }
 
 func newHTTPClient() httpClient {
@@ -154,12 +172,12 @@ func (proxy *DataSourceProxy) getDirector() func(req *http.Request) {
 
 		reqQueryVals := req.URL.Query()
 
-		if proxy.ds.Type == m.DS_INFLUXDB_08 {
+		if proxy.ds.Type == models.DS_INFLUXDB_08 {
 			req.URL.Path = util.JoinURLFragments(proxy.targetUrl.Path, "db/"+proxy.ds.Database+"/"+proxy.proxyPath)
 			reqQueryVals.Add("u", proxy.ds.User)
 			reqQueryVals.Add("p", proxy.ds.DecryptedPassword())
 			req.URL.RawQuery = reqQueryVals.Encode()
-		} else if proxy.ds.Type == m.DS_INFLUXDB {
+		} else if proxy.ds.Type == models.DS_INFLUXDB {
 			req.URL.Path = util.JoinURLFragments(proxy.targetUrl.Path, proxy.proxyPath)
 			req.URL.RawQuery = reqQueryVals.Encode()
 			if !proxy.ds.BasicAuth {
@@ -216,7 +234,7 @@ func (proxy *DataSourceProxy) validateRequest() error {
 		return errors.New("Target url is not a valid target")
 	}
 
-	if proxy.ds.Type == m.DS_PROMETHEUS {
+	if proxy.ds.Type == models.DS_PROMETHEUS {
 		if proxy.ctx.Req.Request.Method == "DELETE" {
 			return errors.New("Deletes not allowed on proxied Prometheus datasource")
 		}
@@ -228,7 +246,7 @@ func (proxy *DataSourceProxy) validateRequest() error {
 		}
 	}
 
-	if proxy.ds.Type == m.DS_ES {
+	if proxy.ds.Type == models.DS_ES {
 		if proxy.ctx.Req.Request.Method == "DELETE" {
 			return errors.New("Deletes not allowed on proxied Elasticsearch datasource")
 		}
@@ -288,7 +306,7 @@ func (proxy *DataSourceProxy) logRequest() {
 		"body", body)
 }
 
-func checkWhiteList(c *m.ReqContext, host string) bool {
+func checkWhiteList(c *models.ReqContext, host string) bool {
 	if host != "" && len(setting.DataProxyWhiteList) > 0 {
 		if _, exists := setting.DataProxyWhiteList[host]; !exists {
 			c.JsonApiErr(403, "Data proxy hostname and ip are not included in whitelist", nil)
@@ -299,10 +317,10 @@ func checkWhiteList(c *m.ReqContext, host string) bool {
 	return true
 }
 
-func addOAuthPassThruAuth(c *m.ReqContext, req *http.Request) {
-	authInfoQuery := &m.GetAuthInfoQuery{UserId: c.UserId}
+func addOAuthPassThruAuth(c *models.ReqContext, req *http.Request) {
+	authInfoQuery := &models.GetAuthInfoQuery{UserId: c.UserId}
 	if err := bus.Dispatch(authInfoQuery); err != nil {
-		logger.Error("Error feching oauth information for user", "error", err)
+		logger.Error("Error fetching oauth information for user", "error", err)
 		return
 	}
 
@@ -327,7 +345,7 @@ func addOAuthPassThruAuth(c *m.ReqContext, req *http.Request) {
 
 	// If the tokens are not the same, update the entry in the DB
 	if token.AccessToken != authInfoQuery.Result.OAuthAccessToken {
-		updateAuthCommand := &m.UpdateAuthInfoCommand{
+		updateAuthCommand := &models.UpdateAuthInfoCommand{
 			UserId:     authInfoQuery.Result.UserId,
 			AuthModule: authInfoQuery.Result.AuthModule,
 			AuthId:     authInfoQuery.Result.AuthId,

@@ -1,7 +1,7 @@
 import { getDisplayProcessor } from './displayProcessor';
 import { DisplayProcessor, DisplayValue } from '../types/displayValue';
-import { ValueMapping, MappingType } from '../types/valueMapping';
-import { FieldType, Threshold, GrafanaTheme, Field, FieldConfig, ThresholdsMode } from '../types';
+import { MappingType, ValueMapping } from '../types/valueMapping';
+import { Field, FieldConfig, FieldType, GrafanaTheme, Threshold, ThresholdsMode } from '../types';
 import { getScaleCalculator, sortThresholds } from './scale';
 import { ArrayVector } from '../vector';
 import { validateFieldConfig } from './fieldOverrides';
@@ -204,6 +204,18 @@ describe('Format value', () => {
 
     expect(instance(value).text).toEqual('');
     expect(instance(value).numeric).toEqual(1);
+  });
+
+  it('With null value and thresholds should use base color', () => {
+    const instance = getDisplayProcessorFromConfig({
+      thresholds: {
+        mode: ThresholdsMode.Absolute,
+        steps: [{ value: -Infinity, color: '#AAA' }],
+      },
+    });
+    const disp = instance(null);
+    expect(disp.text).toEqual('');
+    expect(disp.color).toEqual('#AAA');
   });
 
   //

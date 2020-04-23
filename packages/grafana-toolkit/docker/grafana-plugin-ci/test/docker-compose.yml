@@ -1,0 +1,10 @@
+version: '3'
+services:
+  citest:
+    image: "circleci/node:12-browsers"
+    user: root
+    volumes:
+      - ../scripts:/home/circleci/scripts
+      - ../install:/home/circleci/install
+      - ${HOME}/.ssh:/root/.ssh
+      - ../../..:/home/circleci/grafana-toolkit

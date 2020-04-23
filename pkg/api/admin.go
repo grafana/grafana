@@ -5,11 +5,11 @@ import (
 	"strings"
 
 	"github.com/grafana/grafana/pkg/bus"
-	m "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-func AdminGetSettings(c *m.ReqContext) {
+func AdminGetSettings(c *models.ReqContext) {
 	settings := make(map[string]interface{})
 
 	for _, section := range setting.Raw.Sections() {
@@ -38,9 +38,9 @@ func AdminGetSettings(c *m.ReqContext) {
 	c.JSON(200, settings)
 }
 
-func AdminGetStats(c *m.ReqContext) {
+func AdminGetStats(c *models.ReqContext) {
 
-	statsQuery := m.GetAdminStatsQuery{}
+	statsQuery := models.GetAdminStatsQuery{}
 
 	if err := bus.Dispatch(&statsQuery); err != nil {
 		c.JsonApiErr(500, "Failed to get admin stats from database", err)

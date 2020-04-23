@@ -56,17 +56,50 @@ exports[`LokiExploreQueryEditor should render component 1`] = `
       "languageProvider": LokiLanguageProvider {
         "cleanText": [Function],
         "datasource": [Circular],
+        "fetchSeriesLabels": [Function],
         "getBeginningCompletionItems": [Function],
         "getTermCompletionItems": [Function],
-        "labelKeys": Object {},
-        "labelValues": Object {},
+        "labelKeys": Array [],
+        "labelsCache": LRUCache {
+          Symbol(max): 10,
+          Symbol(lengthCalculator): [Function],
+          Symbol(allowStale): false,
+          Symbol(maxAge): 0,
+          Symbol(dispose): undefined,
+          Symbol(noDisposeOnSet): false,
+          Symbol(updateAgeOnGet): false,
+          Symbol(cache): Map {},
+          Symbol(lruList): Yallist {
+            "head": null,
+            "length": 0,
+            "tail": null,
+          },
+          Symbol(length): 0,
+        },
         "request": [Function],
+        "seriesCache": LRUCache {
+          Symbol(max): 10,
+          Symbol(lengthCalculator): [Function],
+          Symbol(allowStale): false,
+          Symbol(maxAge): 0,
+          Symbol(dispose): undefined,
+          Symbol(noDisposeOnSet): false,
+          Symbol(updateAgeOnGet): false,
+          Symbol(cache): Map {},
+          Symbol(lruList): Yallist {
+            "head": null,
+            "length": 0,
+            "tail": null,
+          },
+          Symbol(length): 0,
+        },
         "start": [Function],
       },
       "metadataRequest": [Function],
     }
   }
   history={Array []}
+  onBlur={[Function]}
   onChange={[MockFunction]}
   onRunQuery={[MockFunction]}
   query={

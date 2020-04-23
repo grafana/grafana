@@ -67,8 +67,7 @@ export interface GrafanaThemeCommons {
     formSpacingBase: number;
     formMargin: string;
     formFieldsetMargin: string;
-    formLegendMargin: string;
-    formInputHeight: string;
+    formInputHeight: number;
     formButtonHeight: number;
     formInputPaddingHorizontal: string;
     // Used for icons do define spacing between icon and input field
@@ -79,6 +78,7 @@ export interface GrafanaThemeCommons {
     formLabelMargin: string;
     formValidationMessagePadding: string;
     formValidationMessageMargin: string;
+    inlineFormMargin: string;
   };
   border: {
     radius: {
@@ -91,9 +91,9 @@ export interface GrafanaThemeCommons {
     };
   };
   height: {
-    sm: string;
-    md: string;
-    lg: string;
+    sm: number;
+    md: number;
+    lg: number;
   };
   panelPadding: number;
   panelHeaderHeight: number;
@@ -112,13 +112,7 @@ export interface GrafanaTheme extends GrafanaThemeCommons {
   type: GrafanaThemeType;
   isDark: boolean;
   isLight: boolean;
-  background: {
-    dropdown: string;
-    scrollbar: string;
-    scrollbar2: string;
-    pageHeader: string;
-  };
-  colors: {
+  palette: {
     black: string;
     white: string;
     dark1: string;
@@ -144,6 +138,7 @@ export interface GrafanaTheme extends GrafanaThemeCommons {
     gray95: string;
     gray85: string;
     gray70: string;
+    gray60: string;
     gray33: string;
     gray25: string;
     gray15: string;
@@ -153,20 +148,13 @@ export interface GrafanaTheme extends GrafanaThemeCommons {
     // New blues palette used by next-gen form elements
     blue95: string;
     blue85: string;
+    blue80: string;
     blue77: string;
 
     // New reds palette used by next-gen form elements
     red88: string;
 
-    grayBlue: string;
-    inputBlack: string;
-
     // Accent colors
-    blue: string;
-    blueBase: string;
-    blueShade: string;
-    blueLight: string;
-    blueFaint: string;
     redBase: string;
     redShade: string;
     greenBase: string;
@@ -174,13 +162,11 @@ export interface GrafanaTheme extends GrafanaThemeCommons {
     red: string;
     yellow: string;
     purple: string;
-    variable: string;
     orange: string;
     orangeDark: string;
     queryRed: string;
     queryGreen: string;
     queryPurple: string;
-    queryKeyword: string;
     queryOrange: string;
     brandPrimary: string;
     brandSuccess: string;
@@ -191,6 +177,28 @@ export interface GrafanaTheme extends GrafanaThemeCommons {
     online: string;
     warn: string;
     critical: string;
+  };
+  colors: {
+    bg1: string;
+    bg2: string;
+    bg3: string;
+    border1: string;
+    border2: string;
+    border3: string;
+
+    bgBlue1: string;
+    bgBlue2: string;
+
+    dashboardBg: string;
+    bodyBg: string;
+    panelBg: string;
+    panelBorder: string;
+    pageHeaderBg: string;
+    pageHeaderBorder: string;
+
+    dropdownBg: string;
+    dropdownShadow: string;
+    dropdownOptionHoverBg: string;
 
     // Link colors
     link: string;
@@ -199,27 +207,17 @@ export interface GrafanaTheme extends GrafanaThemeCommons {
     linkExternal: string;
 
     // Text colors
-    body: string;
-    text: string;
     textStrong: string;
+    textHeading: string;
+    text: string;
+    textSemiWeak: string;
     textWeak: string;
     textFaint: string;
-    textEmphasis: string;
-
-    // panel
-    panelBg: string;
-
-    // TODO: move to background section
-    bodyBg: string;
-    pageBg: string;
-    headingColor: string;
-
-    pageHeaderBorder: string;
+    textBlue: string;
 
     // Next-gen forms functional colors
     formLabel: string;
     formDescription: string;
-    formLegend: string;
     formInputBg: string;
     formInputBgDisabled: string;
     formInputBorder: string;
@@ -229,8 +227,7 @@ export interface GrafanaTheme extends GrafanaThemeCommons {
     formFocusOutline: string;
     formInputText: string;
     formInputDisabledText: string;
-    formInputTextStrong: string;
-    formInputTextWhite: string;
+    formInputPlaceholderText: string;
     formValidationMessageText: string;
     formValidationMessageBg: string;
     formSwitchBg: string;
@@ -244,7 +241,7 @@ export interface GrafanaTheme extends GrafanaThemeCommons {
     formCheckboxBgCheckedHover: string;
     formCheckboxCheckmark: string;
   };
-  shadow: {
-    pageHeader: string;
+  shadows: {
+    listItem: string;
   };
 }

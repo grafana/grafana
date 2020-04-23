@@ -1,11 +1,11 @@
 import config from 'app/core/config';
 import 'app/features/plugins/datasource_srv';
 import { DatasourceSrv } from 'app/features/plugins/datasource_srv';
-import { PluginMeta, DataSourcePluginMeta } from '@grafana/data';
+import { DataSourcePluginMeta, PluginMeta } from '@grafana/data';
 
 // Datasource variable $datasource with current value 'BBB'
 const templateSrv: any = {
-  variables: [
+  getVariables: () => [
     {
       type: 'datasource',
       name: 'datasource',
@@ -24,6 +24,7 @@ describe('datasource_srv', () => {
       config.datasources = {
         buildInDs: {
           id: 1,
+          uid: '1',
           type: 'b',
           name: 'buildIn',
           meta: { builtIn: true } as DataSourcePluginMeta,
@@ -31,6 +32,7 @@ describe('datasource_srv', () => {
         },
         nonBuildIn: {
           id: 2,
+          uid: '2',
           type: 'e',
           name: 'external1',
           meta: { builtIn: false } as DataSourcePluginMeta,
@@ -38,6 +40,7 @@ describe('datasource_srv', () => {
         },
         nonExplore: {
           id: 3,
+          uid: '3',
           type: 'e2',
           name: 'external2',
           meta: {} as PluginMeta,

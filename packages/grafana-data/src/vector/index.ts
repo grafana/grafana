@@ -4,3 +4,5 @@ export * from './CircularVector';
 export * from './ConstantVector';
 export * from './ScaledVector';
 export * from './SortedVector';
+
+export { vectorator } from './FunctionalVector';

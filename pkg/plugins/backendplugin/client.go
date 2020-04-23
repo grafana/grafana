@@ -1,16 +1,13 @@
 package backendplugin
 
 import (
-	"context"
 	"os/exec"
-
-	"github.com/grafana/grafana-plugin-sdk-go/backend/plugin"
-
-	"github.com/grafana/grafana/pkg/infra/log"
 
 	datasourceV1 "github.com/grafana/grafana-plugin-model/go/datasource"
 	rendererV1 "github.com/grafana/grafana-plugin-model/go/renderer"
-	"github.com/grafana/grafana-plugin-sdk-go/genproto/pluginv2"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/grpcplugin"
+	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/plugins/backendplugin/pluginextensionv2"
 	goplugin "github.com/hashicorp/go-plugin"
 )
 
@@ -29,13 +26,16 @@ var handshake = goplugin.HandshakeConfig{
 	ProtocolVersion: DefaultProtocolVersion,
 
 	// The magic cookie values should NEVER be changed.
-	MagicCookieKey:   plugin.MagicCookieKey,
-	MagicCookieValue: plugin.MagicCookieValue,
+	MagicCookieKey:   grpcplugin.MagicCookieKey,
+	MagicCookieValue: grpcplugin.MagicCookieValue,
 }
 
-func newClientConfig(executablePath string, logger log.Logger, versionedPlugins map[int]goplugin.PluginSet) *goplugin.ClientConfig {
+func newClientConfig(executablePath string, env []string, logger log.Logger, versionedPlugins map[int]goplugin.PluginSet) *goplugin.ClientConfig {
+	cmd := exec.Command(executablePath)
+	cmd.Env = env
+
 	return &goplugin.ClientConfig{
-		Cmd:              exec.Command(executablePath),
+		Cmd:              cmd,
 		HandshakeConfig:  handshake,
 		VersionedPlugins: versionedPlugins,
 		Logger:           logWrapper{Logger: logger},
@@ -64,6 +64,17 @@ type PluginDescriptor struct {
 	startFns         PluginStartFuncs
 }
 
+// getV2PluginSet returns list of plugins supported on v2.
+func getV2PluginSet() goplugin.PluginSet {
+	return goplugin.PluginSet{
+		"diagnostics": &grpcplugin.DiagnosticsGRPCPlugin{},
+		"resource":    &grpcplugin.ResourceGRPCPlugin{},
+		"data":        &grpcplugin.DataGRPCPlugin{},
+		"transform":   &grpcplugin.TransformGRPCPlugin{},
+		"renderer":    &pluginextensionv2.RendererGRPCPlugin{},
+	}
+}
+
 // NewBackendPluginDescriptor creates a new backend plugin descriptor
 // used for registering a backend datasource plugin.
 func NewBackendPluginDescriptor(pluginID, executablePath string, startFns PluginStartFuncs) PluginDescriptor {
@@ -75,11 +86,7 @@ func NewBackendPluginDescriptor(pluginID, executablePath string, startFns Plugin
 			DefaultProtocolVersion: {
 				pluginID: &datasourceV1.DatasourcePluginImpl{},
 			},
-			plugin.ProtocolVersion: {
-				"diagnostics": &plugin.DiagnosticsGRPCPlugin{},
-				"backend":     &plugin.CoreGRPCPlugin{},
-				"transform":   &plugin.TransformGRPCPlugin{},
-			},
+			grpcplugin.ProtocolVersion: getV2PluginSet(),
 		},
 		startFns: startFns,
 	}
@@ -96,27 +103,26 @@ func NewRendererPluginDescriptor(pluginID, executablePath string, startFns Plugi
 			DefaultProtocolVersion: {
 				pluginID: &rendererV1.RendererPluginImpl{},
 			},
+			grpcplugin.ProtocolVersion: getV2PluginSet(),
 		},
 		startFns: startFns,
 	}
 }
 
 type DiagnosticsPlugin interface {
-	CollectMetrics(ctx context.Context, req *pluginv2.CollectMetrics_Request) (*pluginv2.CollectMetrics_Response, error)
-	CheckHealth(ctx context.Context, req *pluginv2.CheckHealth_Request) (*pluginv2.CheckHealth_Response, error)
+	grpcplugin.DiagnosticsClient
 }
 
-type DatasourcePlugin interface {
-	DataQuery(ctx context.Context, req *pluginv2.DataQueryRequest) (*pluginv2.DataQueryResponse, error)
+type ResourcePlugin interface {
+	grpcplugin.ResourceClient
 }
 
-type CorePlugin interface {
-	CallResource(ctx context.Context, req *pluginv2.CallResource_Request) (*pluginv2.CallResource_Response, error)
-	DatasourcePlugin
+type DataPlugin interface {
+	grpcplugin.DataClient
 }
 
 type TransformPlugin interface {
-	DataQuery(ctx context.Context, req *pluginv2.DataQueryRequest, callback plugin.TransformCallBack) (*pluginv2.DataQueryResponse, error)
+	grpcplugin.TransformClient
 }
 
 // LegacyClient client for communicating with a plugin using the old plugin protocol.
@@ -127,6 +133,8 @@ type LegacyClient struct {
 
 // Client client for communicating with a plugin using the current plugin protocol.
 type Client struct {
-	DatasourcePlugin DatasourcePlugin
-	TransformPlugin  TransformPlugin
+	ResourcePlugin  ResourcePlugin
+	DataPlugin      DataPlugin
+	TransformPlugin TransformPlugin
+	RendererPlugin  pluginextensionv2.RendererPlugin
 }

@@ -24,7 +24,7 @@ import { LogDetailsRow } from './LogDetailsRow';
 type FieldDef = {
   key: string;
   value: string;
-  links?: string[];
+  links?: Array<LinkModel<Field>>;
   fieldIndex?: number;
 };
 
@@ -41,7 +41,7 @@ export interface Props extends Themeable {
 }
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
-  const bgColor = selectThemeVariant({ light: theme.colors.gray7, dark: theme.colors.dark2 }, theme.type);
+  const bgColor = selectThemeVariant({ light: theme.palette.gray7, dark: theme.palette.dark2 }, theme.type);
   return {
     hoverBackground: css`
       label: hoverBackground;
@@ -99,7 +99,7 @@ class UnThemedLogDetails extends PureComponent<Props> {
           return {
             key: field.name,
             value: field.values.get(row.rowIndex).toString(),
-            links: links.map(link => link.href),
+            links: links,
             fieldIndex: field.index,
           };
         })

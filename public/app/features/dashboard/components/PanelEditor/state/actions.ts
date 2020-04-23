@@ -14,10 +14,10 @@ import store from '../../../../../core/store';
 
 export function initPanelEditor(sourcePanel: PanelModel, dashboard: DashboardModel): ThunkResult<void> {
   return dispatch => {
-    const panel = dashboard.initPanelEditor(sourcePanel);
+    const panel = dashboard.initEditPanel(sourcePanel);
 
     const queryRunner = panel.getQueryRunner();
-    const querySubscription = queryRunner.getData().subscribe({
+    const querySubscription = queryRunner.getData(false).subscribe({
       next: (data: PanelData) => dispatch(setEditorPanelData(data)),
     });
 
@@ -34,7 +34,7 @@ export function initPanelEditor(sourcePanel: PanelModel, dashboard: DashboardMod
 export function panelEditorCleanUp(): ThunkResult<void> {
   return (dispatch, getStore) => {
     const dashboard = getStore().dashboard.getModel();
-    const { getPanel, getSourcePanel, querySubscription, shouldDiscardChanges } = getStore().panelEditorNew;
+    const { getPanel, getSourcePanel, querySubscription, shouldDiscardChanges } = getStore().panelEditor;
 
     if (!shouldDiscardChanges) {
       const panel = getPanel();
@@ -48,18 +48,26 @@ export function panelEditorCleanUp(): ThunkResult<void> {
       sourcePanel.restoreModel(modifiedSaveModel);
 
       if (panelTypeChanged) {
-        dispatch(panelModelAndPluginReady({ panelId: sourcePanel.id, plugin: panel.plugin }));
+        dispatch(panelModelAndPluginReady({ panelId: sourcePanel.id, plugin: panel.plugin! }));
       }
 
       // Resend last query result on source panel query runner
       // But do this after the panel edit editor exit process has completed
       setTimeout(() => {
-        sourcePanel.getQueryRunner().pipeDataToSubject(panel.getQueryRunner().getLastResult());
+        const lastResult = panel.getQueryRunner().getLastResult();
+        if (lastResult) {
+          sourcePanel.getQueryRunner().pipeDataToSubject(lastResult);
+        }
       }, 20);
     }
 
-    dashboard.exitPanelEditor();
-    querySubscription.unsubscribe();
+    if (dashboard) {
+      dashboard.exitPanelEditor();
+    }
+
+    if (querySubscription) {
+      querySubscription.unsubscribe();
+    }
 
     dispatch(cleanUpEditPanel());
     dispatch(closeCompleted());
@@ -68,8 +76,12 @@ export function panelEditorCleanUp(): ThunkResult<void> {
 
 export function updatePanelEditorUIState(uiState: Partial<PanelEditorUIState>): ThunkResult<void> {
   return (dispatch, getStore) => {
-    const nextState = { ...getStore().panelEditorNew.ui, ...uiState };
+    const nextState = { ...getStore().panelEditor.ui, ...uiState };
     dispatch(setPanelEditorUIState(nextState));
-    store.setObject(PANEL_EDITOR_UI_STATE_STORAGE_KEY, nextState);
+    try {
+      store.setObject(PANEL_EDITOR_UI_STATE_STORAGE_KEY, nextState);
+    } catch (error) {
+      console.error(error);
+    }
   };
 }

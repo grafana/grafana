@@ -1,23 +1,26 @@
 import React, { FC } from 'react';
 import { css, cx } from 'emotion';
 import { GrafanaTheme } from '@grafana/data';
-import { selectThemeVariant, stylesFactory, useTheme } from '../../themes';
+import { Icon } from '../Icon/Icon';
+import { IconName } from '../../types';
+import { stylesFactory, useTheme } from '../../themes';
+import { Counter } from './Counter';
 
 export interface TabProps {
   label: string;
   active?: boolean;
-  icon?: string;
+  icon?: IconName;
   onChangeTab: () => void;
+  counter?: number;
 }
 
 const getTabStyles = stylesFactory((theme: GrafanaTheme) => {
   const colors = theme.colors;
-  const tabBorderColor = selectThemeVariant({ dark: colors.dark9, light: colors.gray5 }, theme.type);
 
   return {
     tabItem: css`
       list-style: none;
-      padding: 10px 15px 9px;
+      padding: 11px 15px 9px;
       margin-right: ${theme.spacing.md};
       position: relative;
       display: block;
@@ -27,13 +30,8 @@ const getTabStyles = stylesFactory((theme: GrafanaTheme) => {
       color: ${colors.text};
       cursor: pointer;
 
-      i {
+      svg {
         margin-right: ${theme.spacing.sm};
-      }
-
-      .gicon {
-        position: relative;
-        top: -2px;
       }
 
       &:hover,
@@ -42,11 +40,10 @@ const getTabStyles = stylesFactory((theme: GrafanaTheme) => {
       }
     `,
     activeStyle: css`
-      border-color: ${colors.orange} ${tabBorderColor} transparent;
-      background: ${colors.pageBg};
+      border-color: ${theme.palette.orange} ${colors.pageHeaderBorder} transparent;
+      background: ${colors.bodyBg};
       color: ${colors.link};
       overflow: hidden;
-      cursor: not-allowed;
 
       &::before {
         display: block;
@@ -62,14 +59,15 @@ const getTabStyles = stylesFactory((theme: GrafanaTheme) => {
   };
 });
 
-export const Tab: FC<TabProps> = ({ label, active, icon, onChangeTab }) => {
+export const Tab: FC<TabProps> = ({ label, active, icon, onChangeTab, counter }) => {
   const theme = useTheme();
   const tabsStyles = getTabStyles(theme);
 
   return (
     <li className={cx(tabsStyles.tabItem, active && tabsStyles.activeStyle)} onClick={onChangeTab}>
-      {icon && <i className={icon} />}
+      {icon && <Icon name={icon} />}
       {label}
+      {typeof counter === 'number' && <Counter value={counter} />}
     </li>
   );
 };

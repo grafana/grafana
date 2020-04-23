@@ -7,7 +7,7 @@ clone_folder: c:\gopath\src\github.com\grafana\grafana
 environment:
   nodejs_version: "12"
   GOPATH: C:\gopath
-  GOVERSION: 1.13.4
+  GOVERSION: 1.14.1
 
 install:
   - rmdir c:\go /s /q

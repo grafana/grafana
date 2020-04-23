@@ -1,9 +1,11 @@
 import React, { ChangeEvent, useContext } from 'react';
 import { DataLink, VariableSuggestion, GrafanaTheme } from '@grafana/data';
-import { FormField, Switch } from '../index';
+import { FormField } from '../FormField/FormField';
+import { Switch } from '../Forms/Legacy/Switch/Switch';
 import { css } from 'emotion';
 import { ThemeContext, stylesFactory } from '../../themes/index';
 import { DataLinkInput } from './DataLinkInput';
+import { Icon } from '../Icon/Icon';
 
 interface DataLinkEditorProps {
   index: number;
@@ -59,7 +61,7 @@ export const DataLinkEditor: React.FC<DataLinkEditorProps> = React.memo(
           />
           <Switch label="Open in new tab" checked={value.targetBlank || false} onChange={onOpenInNewTabChanged} />
           <button className="gf-form-label gf-form-label--btn" onClick={onRemoveClick} title="Remove link">
-            <i className="fa fa-times" />
+            <Icon name="times" />
           </button>
         </div>
         <FormField

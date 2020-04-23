@@ -6,7 +6,7 @@ import { Tab } from './Tab';
 import { TabContent } from './TabContent';
 
 export default {
-  title: 'General/Tabs/TabsExample',
+  title: 'Layout/Tabs',
   decorators: [withCenteredStory],
 };
 
@@ -30,6 +30,7 @@ export const Simple = () => {
                     label={tab.label}
                     active={tab.active}
                     onChangeTab={() => updateState(state.map((tab, idx) => ({ ...tab, active: idx === index })))}
+                    counter={(index + 1) * 1000}
                   />
                 );
               })}

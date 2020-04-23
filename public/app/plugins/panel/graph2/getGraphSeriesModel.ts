@@ -9,7 +9,6 @@ import {
   GraphSeriesXY,
   getTimeField,
   DataFrame,
-  FieldDisplayOptions,
   getSeriesTimeStep,
   TimeZone,
   hasMsResolution,
@@ -17,10 +16,10 @@ import {
   DEFAULT_DATE_TIME_FORMAT,
   FieldColor,
   FieldColorMode,
+  FieldConfigSource,
 } from '@grafana/data';
 
-import { SeriesOptions, GraphOptions } from './types';
-import { GraphLegendEditorLegendOptions } from './GraphLegendEditor';
+import { SeriesOptions, GraphOptions, GraphLegendEditorLegendOptions } from './types';
 
 export const getGraphSeriesModel = (
   dataFrames: DataFrame[],
@@ -28,7 +27,7 @@ export const getGraphSeriesModel = (
   seriesOptions: SeriesOptions,
   graphOptions: GraphOptions,
   legendOptions: GraphLegendEditorLegendOptions,
-  fieldOptions?: FieldDisplayOptions
+  fieldOptions?: FieldConfigSource
 ) => {
   const graphs: GraphSeriesXY[] = [];
 
@@ -63,8 +62,8 @@ export const getGraphSeriesModel = (
       });
 
       if (points.length > 0) {
-        const seriesStats = reduceField({ field, reducers: legendOptions.stats });
-        let statsDisplayValues: DisplayValue[];
+        const seriesStats = reduceField({ field, reducers: legendOptions.stats || [] });
+        let statsDisplayValues: DisplayValue[] = [];
 
         if (legendOptions.stats) {
           statsDisplayValues = legendOptions.stats.map<DisplayValue>(stat => {

@@ -14,12 +14,14 @@ export interface Props {
   /** Set current positions of handle(s). If only 1 value supplied, only 1 handle displayed. */
   value?: number[];
   reverse?: boolean;
+  tooltipAlwaysVisible?: boolean;
   formatTooltipResult?: (value: number) => number | string;
   onChange?: (values: number[]) => void;
+  onAfterChange?: (values: number[]) => void;
 }
 
 const getStyles = stylesFactory((theme: GrafanaTheme, isHorizontal: boolean) => {
-  const trackColor = theme.isLight ? theme.colors.gray5 : theme.colors.dark6;
+  const trackColor = theme.isLight ? theme.palette.gray5 : theme.palette.dark6;
   const container = isHorizontal
     ? css`
         width: 100%;
@@ -37,28 +39,28 @@ const getStyles = stylesFactory((theme: GrafanaTheme, isHorizontal: boolean) => 
         margin-top: -10px;
       }
       .rc-slider-handle {
-        border: solid 2px ${theme.colors.blue77};
-        background-color: ${theme.colors.blue77};
+        border: solid 2px ${theme.palette.blue77};
+        background-color: ${theme.palette.blue77};
       }
       .rc-slider-handle:hover {
-        border-color: ${theme.colors.blue77};
+        border-color: ${theme.palette.blue77};
       }
       .rc-slider-handle:focus {
-        border-color: ${theme.colors.blue77};
+        border-color: ${theme.palette.blue77};
         box-shadow: none;
       }
       .rc-slider-handle:active {
-        border-color: ${theme.colors.blue77};
+        border-color: ${theme.palette.blue77};
         box-shadow: none;
       }
       .rc-slider-handle-click-focused:focus {
-        border-color: ${theme.colors.blue77};
+        border-color: ${theme.palette.blue77};
       }
       .rc-slider-dot-active {
-        border-color: ${theme.colors.blue77};
+        border-color: ${theme.palette.blue77};
       }
       .rc-slider-track {
-        background-color: ${theme.colors.blue77};
+        background-color: ${theme.palette.blue77};
       }
       .rc-slider-rail {
         background-color: ${trackColor};
@@ -98,10 +100,12 @@ export const Slider: FunctionComponent<Props> = ({
   min,
   max,
   onChange,
+  onAfterChange,
   orientation = 'horizontal',
   reverse,
   formatTooltipResult,
   value,
+  tooltipAlwaysVisible = true,
 }) => {
   const isHorizontal = orientation === 'horizontal';
   const theme = useTheme();
@@ -112,12 +116,16 @@ export const Slider: FunctionComponent<Props> = ({
       {/** Slider tooltip's parent component is body and therefore we need Global component to do css overrides for it. */}
       <Global styles={styles.tooltip} />
       <RangeWithTooltip
-        tipProps={{ visible: true, placement: isHorizontal ? 'top' : 'right' }}
+        tipProps={{
+          visible: tooltipAlwaysVisible,
+          placement: isHorizontal ? 'top' : 'right',
+        }}
         min={min}
         max={max}
         defaultValue={value || [min, max]}
         tipFormatter={(value: number) => (formatTooltipResult ? formatTooltipResult(value) : value)}
         onChange={onChange}
+        onAfterChange={onAfterChange}
         vertical={!isHorizontal}
         reverse={reverse}
       />

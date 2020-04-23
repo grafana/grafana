@@ -477,8 +477,15 @@ func (server *Server) userBind(path, password string) error {
 func (server *Server) requestMemberOf(entry *ldap.Entry) ([]string, error) {
 	var memberOf []string
 	var config = server.Config
+	var searchBaseDNs []string
 
-	for _, groupSearchBase := range config.GroupSearchBaseDNs {
+	if len(config.GroupSearchBaseDNs) > 0 {
+		searchBaseDNs = config.GroupSearchBaseDNs
+	} else {
+		searchBaseDNs = config.SearchBaseDNs
+	}
+
+	for _, groupSearchBase := range searchBaseDNs {
 		var filterReplace string
 		if config.GroupSearchFilterUserAttribute == "" {
 			filterReplace = getAttribute(config.Attr.Username, entry)

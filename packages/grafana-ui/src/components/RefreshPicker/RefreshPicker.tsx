@@ -3,7 +3,8 @@ import classNames from 'classnames';
 import { SelectableValue } from '@grafana/data';
 import { css } from 'emotion';
 import { Tooltip } from '../Tooltip/Tooltip';
-import { ButtonSelect } from '../Select/ButtonSelect';
+import { Icon } from '../Icon/Icon';
+import { ButtonSelect } from '../Forms/Legacy/Select/ButtonSelect';
 import memoizeOne from 'memoize-one';
 import { GrafanaTheme } from '@grafana/data';
 import { withTheme } from '../../themes';
@@ -15,7 +16,7 @@ const getStyles = memoizeOne((theme: GrafanaTheme) => {
     selectButton: css`
       label: selectButton;
       .select-button-value {
-        color: ${theme.colors.orange};
+        color: ${theme.palette.orange};
       }
     `,
   };
@@ -87,7 +88,7 @@ export class RefreshPickerBase extends PureComponent<Props> {
                 className="btn btn--radius-right-0 navbar-button navbar-button--border-right-0"
                 onClick={onRefresh!}
               >
-                <i className="fa fa-refresh" />
+                <Icon name="sync" size="lg" />
               </button>
             </Tooltip>
           )}

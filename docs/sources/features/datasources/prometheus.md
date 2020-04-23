@@ -142,7 +142,9 @@ The step option is useful to limit the number of events returned from your query
 
 ## Getting Grafana metrics into Prometheus
 
-Since 4.6.0 Grafana exposes metrics for Prometheus on the `/metrics` endpoint. We also bundle a dashboard within Grafana so you can get started viewing your metrics faster. You can import the bundled dashboard by going to the data source edit page and click the dashboard tab. There you can find a dashboard for Grafana and one for Prometheus. Import and start viewing all the metrics!
+Grafana exposes metrics for Prometheus on the `/metrics` endpoint. We also bundle a dashboard within Grafana so you can get started viewing your metrics faster. You can import the bundled dashboard by going to the data source edit page and click the dashboard tab. There you can find a dashboard for Grafana and one for Prometheus. Import and start viewing all the metrics!
+
+For detailed instructions, refer to [Internal Grafana metrics]({{< relref "../../administration/metrics.md">}}).
 
 ## Configure the data source with provisioning
 

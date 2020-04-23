@@ -1,10 +1,11 @@
+export { ClipboardButton } from '../ClipboardButton/ClipboardButton';
 import React from 'react';
 import { storiesOf } from '@storybook/react';
 import { text, boolean, select } from '@storybook/addon-knobs';
 import { ConfirmButton } from './ConfirmButton';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { action } from '@storybook/addon-actions';
-import { Button } from '../Button/Button';
+import { Button } from '../Button';
 
 const getKnobs = () => {
   return {
@@ -16,25 +17,26 @@ const getKnobs = () => {
       {
         primary: 'primary',
         secondary: 'secondary',
-        danger: 'danger',
-        inverse: 'inverse',
-        transparent: 'transparent',
+        destructive: 'destructive',
+        link: 'link',
       },
       'primary'
     ),
     disabled: boolean('Disabled', false),
+    closeOnConfirm: boolean('Close on confirm', true),
   };
 };
 
-storiesOf('General/ConfirmButton', module)
+storiesOf('Forms/ConfirmButton', module)
   .addDecorator(withCenteredStory)
   .add('default', () => {
-    const { size, buttonText, confirmText, confirmVariant, disabled } = getKnobs();
+    const { size, buttonText, confirmText, confirmVariant, disabled, closeOnConfirm } = getKnobs();
     return (
       <>
         <div className="gf-form-group">
           <div className="gf-form">
             <ConfirmButton
+              closeOnConfirm={closeOnConfirm}
               size={size}
               confirmText={confirmText}
               disabled={disabled}
@@ -51,12 +53,13 @@ storiesOf('General/ConfirmButton', module)
     );
   })
   .add('with custom button', () => {
-    const { buttonText, confirmText, confirmVariant, disabled, size } = getKnobs();
+    const { buttonText, confirmText, confirmVariant, disabled, size, closeOnConfirm } = getKnobs();
     return (
       <>
         <div className="gf-form-group">
           <div className="gf-form">
             <ConfirmButton
+              closeOnConfirm={closeOnConfirm}
               size={size}
               confirmText={confirmText}
               disabled={disabled}
@@ -65,7 +68,7 @@ storiesOf('General/ConfirmButton', module)
                 action('Saved')('save!');
               }}
             >
-              <Button size={size} variant="secondary" icon="fa fa-pencil">
+              <Button size={size} variant="secondary" icon="pen">
                 {buttonText}
               </Button>
             </ConfirmButton>

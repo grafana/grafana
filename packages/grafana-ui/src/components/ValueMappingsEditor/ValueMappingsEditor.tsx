@@ -1,108 +1,78 @@
-import React, { PureComponent } from 'react';
-
-import MappingRow from './MappingRow';
+import React from 'react';
 import { MappingType, ValueMapping } from '@grafana/data';
 import { Button } from '../Button/Button';
-import { PanelOptionsGroup } from '../PanelOptionsGroup/PanelOptionsGroup';
+import { MappingRow } from './MappingRow';
 
 export interface Props {
   valueMappings?: ValueMapping[];
   onChange: (valueMappings: ValueMapping[]) => void;
 }
 
-interface State {
-  valueMappings: ValueMapping[];
-  nextIdToAdd: number;
-}
-
-export class ValueMappingsEditor extends PureComponent<Props, State> {
-  constructor(props: Props) {
-    super(props);
-
-    const mappings = props.valueMappings || [];
-
-    this.state = {
-      valueMappings: mappings,
-      nextIdToAdd: mappings.length > 0 ? this.getMaxIdFromValueMappings(mappings) : 1,
+export const ValueMappingsEditor: React.FC<Props> = ({ valueMappings, onChange, children }) => {
+  const onAdd = () => {
+    let update = valueMappings;
+    const defaultMapping = {
+      type: MappingType.ValueToText,
+      from: '',
+      to: '',
+      operator: '',
+      text: '',
     };
-  }
+    const id = update && update.length > 0 ? Math.max(...update.map(v => v.id)) + 1 : 0;
 
-  getMaxIdFromValueMappings(mappings: ValueMapping[]) {
-    return (
-      Math.max.apply(
-        null,
-        mappings.map(mapping => mapping.id).map(m => m)
-      ) + 1
-    );
-  }
-
-  onAddMapping = () =>
-    this.setState(prevState => ({
-      valueMappings: [
-        ...prevState.valueMappings,
+    if (update) {
+      update.push({
+        id,
+        ...defaultMapping,
+      });
+    } else {
+      update = [
         {
-          id: prevState.nextIdToAdd,
-          operator: '',
-          value: '',
-          text: '',
-          type: MappingType.ValueToText,
-          from: '',
-          to: '',
+          id,
+          ...defaultMapping,
         },
-      ],
-      nextIdToAdd: prevState.nextIdToAdd + 1,
-    }));
+      ];
+    }
 
-  onRemoveMapping = (id: number) => {
-    this.setState(
-      prevState => ({
-        valueMappings: prevState.valueMappings.filter(m => {
-          return m.id !== id;
-        }),
-      }),
-      () => {
-        this.props.onChange(this.state.valueMappings);
-      }
-    );
+    onChange(update);
   };
 
-  updateGauge = (mapping: ValueMapping) => {
-    this.setState(
-      prevState => ({
-        valueMappings: prevState.valueMappings.map(m => {
-          if (m.id === mapping.id) {
-            return { ...mapping };
-          }
-
-          return m;
-        }),
-      }),
-      () => {
-        this.props.onChange(this.state.valueMappings);
-      }
-    );
+  const onRemove = (index: number) => {
+    const update = valueMappings;
+    update!.splice(index, 1);
+    onChange(update!);
   };
 
-  render() {
-    const { valueMappings } = this.state;
+  const onMappingChange = (index: number, value: ValueMapping) => {
+    const update = valueMappings;
+    update![index] = value;
+    onChange(update!);
+  };
 
-    return (
-      <PanelOptionsGroup title="Value mappings">
-        <div>
+  return (
+    <>
+      {valueMappings && valueMappings.length > 0 && (
+        <>
           {valueMappings.length > 0 &&
             valueMappings.map((valueMapping, index) => (
               <MappingRow
                 key={`${valueMapping.text}-${index}`}
                 valueMapping={valueMapping}
-                updateValueMapping={this.updateGauge}
-                removeValueMapping={() => this.onRemoveMapping(valueMapping.id)}
+                updateValueMapping={value => onMappingChange(index, value)}
+                removeValueMapping={() => onRemove(index)}
               />
             ))}
-          <Button variant="inverse" icon="fa fa-plus" onClick={this.onAddMapping}>
-            Add mapping
-          </Button>
-        </div>
-      </PanelOptionsGroup>
-    );
-  }
-}
+        </>
+      )}
+      <Button
+        size="sm"
+        icon="plus"
+        onClick={onAdd}
+        aria-label="ValueMappingsEditor add mapping button"
+        variant="secondary"
+      >
+        Add value mapping
+      </Button>
+    </>
+  );
+};

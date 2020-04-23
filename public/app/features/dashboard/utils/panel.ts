@@ -3,7 +3,7 @@ import store from 'app/core/store';
 
 // Models
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
-import { PanelModel, panelRemoved, panelAdded } from 'app/features/dashboard/state/PanelModel';
+import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { TimeRange, AppEvents } from '@grafana/data';
 
 // Utils
@@ -20,7 +20,7 @@ import templateSrv from 'app/features/templating/template_srv';
 import { LS_PANEL_COPY_KEY, PANEL_BORDER } from 'app/core/constants';
 import { CoreEvents } from 'app/types';
 
-import { ShareModal } from 'app/features/dashboard/components/ShareModal/ShareModal';
+import { ShareModal } from 'app/features/dashboard/components/ShareModal';
 
 export const removePanel = (dashboard: DashboardModel, panel: PanelModel, ask: boolean) => {
   // confirm deletion
@@ -32,7 +32,7 @@ export const removePanel = (dashboard: DashboardModel, panel: PanelModel, ask: b
       title: 'Remove Panel',
       text: 'Are you sure you want to remove this panel?',
       text2: text2,
-      icon: 'fa-trash',
+      icon: 'trash-alt',
       confirmText: confirmText,
       yesText: 'Remove',
       onConfirm: () => removePanel(dashboard, panel, false),
@@ -49,38 +49,6 @@ export const duplicatePanel = (dashboard: DashboardModel, panel: PanelModel) => 
 export const copyPanel = (panel: PanelModel) => {
   store.set(LS_PANEL_COPY_KEY, JSON.stringify(panel.getSaveModel()));
   appEvents.emit(AppEvents.alertSuccess, ['Panel copied. Open Add Panel to paste']);
-};
-
-const replacePanel = (dashboard: DashboardModel, newPanel: PanelModel, oldPanel: PanelModel) => {
-  const index = dashboard.panels.findIndex(panel => {
-    return panel.id === oldPanel.id;
-  });
-
-  const deletedPanel = dashboard.panels.splice(index, 1)[0];
-  dashboard.events.emit(panelRemoved, deletedPanel);
-
-  newPanel = new PanelModel(newPanel);
-  newPanel.id = oldPanel.id;
-
-  dashboard.panels.splice(index, 0, newPanel);
-  dashboard.sortPanelsByGridPos();
-  dashboard.events.emit(panelAdded, newPanel);
-};
-
-export const editPanelJson = (dashboard: DashboardModel, panel: PanelModel) => {
-  const model = {
-    object: panel.getSaveModel(),
-    updateHandler: (newPanel: PanelModel, oldPanel: PanelModel) => {
-      replacePanel(dashboard, newPanel, oldPanel);
-    },
-    canUpdate: dashboard.meta.canEdit,
-    enableCopy: true,
-  };
-
-  appEvents.emit(CoreEvents.showModal, {
-    src: 'public/app/partials/edit_json.html',
-    model: model,
-  });
 };
 
 export const sharePanel = (dashboard: DashboardModel, panel: PanelModel) => {

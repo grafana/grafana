@@ -2,7 +2,8 @@ import React, { PureComponent } from 'react';
 import { hot } from 'react-hot-loader';
 import { connect } from 'react-redux';
 import { NavModel } from '@grafana/data';
-import { Input } from '@grafana/ui';
+import { LegacyForms } from '@grafana/ui';
+const { Input } = LegacyForms;
 import Page from 'app/core/components/Page/Page';
 import appEvents from 'app/core/app_events';
 import { getNavModel } from 'app/core/selectors/navModel';
@@ -56,7 +57,7 @@ export class FolderSettingsPage extends PureComponent<Props, State> {
     appEvents.emit(CoreEvents.showConfirmModal, {
       title: 'Delete',
       text: `Do you want to delete this folder and all its dashboards?`,
-      icon: 'fa-trash',
+      icon: 'trash-alt',
       yesText: 'Delete',
       onConfirm: () => {
         this.props.deleteFolder(this.props.folder.uid);

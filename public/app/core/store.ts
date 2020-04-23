@@ -29,21 +29,19 @@ export class Store {
     return ret;
   }
 
-  // Returns true when successfully stored
-  setObject(key: string, value: any): boolean {
+  /* Returns true when successfully stored, throws error if not successfully stored */
+  setObject(key: string, value: any) {
     let json;
     try {
       json = JSON.stringify(value);
     } catch (error) {
-      console.error(`Could not stringify object: ${key}. [${error}]`);
-      return false;
+      throw new Error(`Could not stringify object: ${key}. [${error}]`);
     }
     try {
       this.set(key, json);
     } catch (error) {
       // Likely hitting storage quota
-      console.error(`Could not save item in localStorage: ${key}. [${error}]`);
-      return false;
+      throw new Error(`Could not save item in localStorage: ${key}. [${error}]`);
     }
     return true;
   }

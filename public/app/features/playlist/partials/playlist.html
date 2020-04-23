@@ -1,104 +1,124 @@
 <page-header model="ctrl.navModel"></page-header>
 
 <div class="page-container page-body" ng-form="ctrl.playlistEditForm">
+  <h3 class="page-sub-heading" ng-hide="ctrl.isNew">Edit Playlist</h3>
+  <h3 class="page-sub-heading" ng-show="ctrl.isNew">New Playlist</h3>
 
-	<h3 class="page-sub-heading" ng-hide="ctrl.isNew">Edit Playlist</h3>
-	<h3 class="page-sub-heading" ng-show="ctrl.isNew">New Playlist</h3>
+  <p class="playlist-description">
+    A playlist rotates through a pre-selected list of Dashboards. A Playlist can be a great way to build situational
+    awareness, or just show off your metrics to your team or visitors.
+  </p>
 
-	<p class="playlist-description">A playlist rotates through a pre-selected list of Dashboards. A Playlist can be a great way to build situational awareness, or just show off your metrics to your team or visitors.</p>
+  <div class="gf-form-group">
+    <div class="gf-form">
+      <span class="gf-form-label width-7">Name</span>
+      <input type="text" required ng-model="ctrl.playlist.name" class="gf-form-input max-width-21" />
+    </div>
+    <div class="gf-form">
+      <span class="gf-form-label width-7">Interval</span>
+      <input
+        type="text"
+        required
+        ng-model="ctrl.playlist.interval"
+        placeholder="5m"
+        class="gf-form-input max-width-21"
+      />
+    </div>
+  </div>
 
-	<div class="gf-form-group">
-		<div class="gf-form">
-			<span class="gf-form-label width-7">Name</span>
-			<input type="text" required ng-model="ctrl.playlist.name" class="gf-form-input max-width-21">
-		</div>
-		<div class="gf-form">
-			<span class="gf-form-label width-7">Interval</span>
-			<input type="text" required ng-model="ctrl.playlist.interval" placeholder="5m" class="gf-form-input max-width-21">
-		</div>
-	</div>
+  <div class="gf-form-group">
+    <h3 class="page-headering">Dashboards</h3>
 
-	<div class="gf-form-group">
-		<h3 class="page-headering">Dashboards</h3>
+    <table class="filter-table playlist-available-list">
+      <tr ng-repeat="playlistItem in ctrl.playlistItems">
+        <td ng-if="playlistItem.type === 'dashboard_by_id'">
+          <icon name="'apps'"></icon>&nbsp;&nbsp;{{playlistItem.title}}
+        </td>
+        <td ng-if="playlistItem.type === 'dashboard_by_tag'">
+          <a class="search-result-tag label label-tag" tag-color-from-name="playlistItem.title">
+            <icon name="'tag-alt'"></icon>
+            <span>{{playlistItem.title}}</span>
+          </a>
+        </td>
 
-		<table class="filter-table playlist-available-list">
-			<tr ng-repeat="playlistItem in ctrl.playlistItems">
-				<td ng-if="playlistItem.type === 'dashboard_by_id'">
-					<i class="gicon gicon-dashboard"></i>&nbsp;&nbsp;{{playlistItem.title}}
-				</td>
-				<td ng-if="playlistItem.type === 'dashboard_by_tag'">
-					<a class="search-result-tag label label-tag" tag-color-from-name="playlistItem.title">
-						<i class="fa fa-tag"></i>
-						<span>{{playlistItem.title}}</span>
-					</a>
-				</td>
+        <td class="selected-playlistitem-settings">
+          <button class="btn btn-inverse btn-small" ng-hide="$first" ng-click="ctrl.movePlaylistItemUp(playlistItem)">
+            <icon name="'arrow-up'"></icon>
+          </button>
+          <button class="btn btn-inverse btn-small" ng-hide="$last" ng-click="ctrl.movePlaylistItemDown(playlistItem)">
+            <icon name="'arrow-down'"></icon>
+          </button>
+          <button class="btn btn-inverse btn-small" ng-click="ctrl.removePlaylistItem(playlistItem)">
+            <icon name="'times'"></icon>
+          </button>
+        </td>
+      </tr>
+      <tr ng-if="ctrl.playlistItems.length === 0">
+        <td><em>Playlist is empty, add dashboards below.</em></td>
+      </tr>
+    </table>
+  </div>
 
-				<td class="selected-playlistitem-settings">
-					<button class="btn btn-inverse btn-small" ng-hide="$first" ng-click="ctrl.movePlaylistItemUp(playlistItem)">
-						<i class="fa fa-arrow-up"></i>
-					</button>
-					<button class="btn btn-inverse btn-small" ng-hide="$last" ng-click="ctrl.movePlaylistItemDown(playlistItem)">
-						<i class="fa fa-arrow-down"></i>
-					</button>
-					<button class="btn btn-inverse btn-small" ng-click="ctrl.removePlaylistItem(playlistItem)">
-						<i class="fa fa-remove"></i>
-					</button>
-				</td>
-			</tr>
-			<tr ng-if="ctrl.playlistItems.length === 0">
-				<td><em>Playlist is empty, add dashboards below.</em></td>
-			</tr>
-		</table>
-	</div>
+  <div class="gf-form-group">
+    <h3 class="page-headering">Add dashboards</h3>
+    <playlist-search class="playlist-search-container" search-started="ctrl.searchStarted(promise)"></playlist-search>
 
-	<div class="gf-form-group">
-		<h3 class="page-headering">Add dashboards</h3>
-		<playlist-search class="playlist-search-container" search-started="ctrl.searchStarted(promise)"></playlist-search>
+    <div ng-if="ctrl.filteredDashboards.length > 0">
+      <table class="filter-table playlist-available-list">
+        <tr ng-repeat="playlistItem in ctrl.filteredDashboards">
+          <td>
+            <icon name="'apps'"></icon>
+            &nbsp;&nbsp;{{playlistItem.title}}
+            <icon name="'favorite'" type="'mono'" ng-show="playlistItem.isStarred"></icon>
+          </td>
+          <td class="add-dashboard">
+            <button class="btn btn-inverse btn-small pull-right" ng-click="ctrl.addPlaylistItem(playlistItem)">
+              <icon name="'plus'"></icon>
+              Add to playlist
+            </button>
+          </td>
+        </tr>
+      </table>
+    </div>
+    <div class="playlist-search-results-container" ng-if="ctrl.filteredTags.length > 0;">
+      <table class="filter-table playlist-available-list">
+        <tr ng-repeat="tag in ctrl.filteredTags">
+          <td>
+            <a class="search-result-tag label label-tag" tag-color-from-name="tag.term">
+              <icon name="'tag-alt'"></icon>
+              <span>{{tag.term}} &nbsp;({{tag.count}})</span>
+            </a>
+          </td>
+          <td class="add-dashboard">
+            <button class="btn btn-inverse btn-small pull-right" ng-click="ctrl.addTagPlaylistItem(tag)">
+              <icon name="'plus'"></icon>
+              Add to playlist
+            </button>
+          </td>
+        </tr>
+      </table>
+    </div>
+  </div>
 
-		<div ng-if="ctrl.filteredDashboards.length > 0">
-			<table class="filter-table playlist-available-list">
-				<tr ng-repeat="playlistItem in ctrl.filteredDashboards">
-					<td>
-						<i class="gicon gicon-dashboard"></i>
-						&nbsp;&nbsp;{{playlistItem.title}}
-						<i class="fa fa-star" ng-show="playlistItem.isStarred"></i>
-					</td>
-					<td class="add-dashboard">
-						<button class="btn btn-inverse btn-small pull-right" ng-click="ctrl.addPlaylistItem(playlistItem)">
-							<i class="fa fa-plus"></i>
-							Add to playlist
-						</button>
-					</td>
-				</tr>
-			</table>
-		</div>
-		<div class="playlist-search-results-container" ng-if="ctrl.filteredTags.length > 0;">
-			<table class="filter-table playlist-available-list">
-				<tr ng-repeat="tag in ctrl.filteredTags">
-					<td>
-						<a class="search-result-tag label label-tag" tag-color-from-name="tag.term">
-							<i class="fa fa-tag"></i>
-							<span>{{tag.term}} &nbsp;({{tag.count}})</span>
-						</a>
-					</td>
-					<td class="add-dashboard">
-						<button class="btn btn-inverse btn-small pull-right" ng-click="ctrl.addTagPlaylistItem(tag)">
-							<i class="fa fa-plus"></i>
-							Add to playlist
-						</button>
-					</td>
-				</tr>
-			</table>
-		</div>
-	</div>
+  <div class="clearfix"></div>
 
-	<div class="clearfix"></div>
-
-	<div class="gf-form-button-row">
-		<a class="btn btn-primary" ng-show="ctrl.isNew" ng-disabled="ctrl.playlistEditForm.$invalid || ctrl.isPlaylistEmpty()" ng-click="ctrl.savePlaylist(ctrl.playlist, ctrl.playlistItems)">Create</a>
-		<a class="btn btn-primary" ng-show="!ctrl.isNew" ng-disabled="ctrl.playlistEditForm.$invalid || ctrl.isPlaylistEmpty()" ng-click="ctrl.savePlaylist(ctrl.playlist, ctrl.playlistItems)">Save</a>
-		<a class="btn-text" ng-click="ctrl.backToList()">Cancel</a>
-	</div>
+  <div class="gf-form-button-row">
+    <a
+      class="btn btn-primary"
+      ng-show="ctrl.isNew"
+      ng-disabled="ctrl.playlistEditForm.$invalid || ctrl.isPlaylistEmpty()"
+      ng-click="ctrl.savePlaylist(ctrl.playlist, ctrl.playlistItems)"
+      >Create</a
+    >
+    <a
+      class="btn btn-primary"
+      ng-show="!ctrl.isNew"
+      ng-disabled="ctrl.playlistEditForm.$invalid || ctrl.isPlaylistEmpty()"
+      ng-click="ctrl.savePlaylist(ctrl.playlist, ctrl.playlistItems)"
+      >Save</a
+    >
+    <a class="btn-text" ng-click="ctrl.backToList()">Cancel</a>
+  </div>
 </div>
 
 <footer />

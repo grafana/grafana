@@ -11,8 +11,6 @@ weight = 7
 
 # Using PostgreSQL in Grafana
 
-> NOTE: In **9.5.18, 9.4.23, 9.6.14, 10.9, 11.4, 12-beta2** versions of PostgreSQL has a [bug](https://www.postgresql.org/message-id/flat/28827.1561082086%40sss.pgh.pa.us#df2287bd7481153984bef6bab40af0db) which prevents execution of multiple column modifications via `ALTER TABLE` statement. Because Grafana uses it during initial database set up and since PostgreSQL has [fixed](https://github.com/postgres/postgres/commit/f946a409143d01951411382fbc3c91c7eb640094) this issue, Grafana **does not support these versions**
-
 Grafana ships with a built-in PostgreSQL data source plugin that allows you to query and visualize data from a PostgreSQL compatible database.
 
 ## Adding the data source
@@ -354,6 +352,22 @@ WHERE
   $__unixEpochFilter(epoch_time)
 ```
 
+**Example region query using time and timeend columns with epoch values:**
+
+> Only available in Grafana v6.6+.
+
+```sql
+SELECT
+  epoch_time as time,
+  epoch_time_end as timeend,
+  metric1 as text,
+  concat_ws(', ', metric1::text, metric2::text) as tags
+FROM
+  public.test_data
+WHERE
+  $__unixEpochFilter(epoch_time)
+```
+
 **Example query using time column of native SQL date/time data type:**
 
 ```sql
@@ -370,7 +384,7 @@ WHERE
 Name | Description
 ------------ | -------------
 time | The name of the date/time field. Could be a column with a native SQL date/time data type or epoch value.
-timeend | Optional name of the time end field, needs to be date/time data type. If set, then annotations are marked as regions between time and time-end.
+timeend | Optional name of the time end field, needs to be date/time data type. If set, then annotations are marked as regions between time and time-end. (Grafana v6.6+)
 text | Event description field.
 tags | Optional field name to use for event tags as a comma separated string.
 

@@ -239,7 +239,6 @@ type Cfg struct {
 
 	// Rendering
 	ImagesDir             string
-	PhantomDir            string
 	RendererUrl           string
 	RendererCallbackUrl   string
 	RendererLimit         int
@@ -259,6 +258,7 @@ type Cfg struct {
 	MetricsEndpointDisableTotalStats bool
 	PluginsEnableAlpha               bool
 	PluginsAppsSkipVerifyTLS         bool
+	PluginSettings                   PluginSettings
 	DisableSanitizeHtml              bool
 	EnterpriseLicensePath            string
 
@@ -267,6 +267,9 @@ type Cfg struct {
 	LoginMaxInactiveLifetimeDays int
 	LoginMaxLifetimeDays         int
 	TokenRotationIntervalMinutes int
+
+	// OAuth
+	OAuthCookieMaxAge int
 
 	// SAML Auth
 	SAMLEnabled bool
@@ -281,6 +284,7 @@ type Cfg struct {
 
 	ApiKeyMaxSecondsToLive int64
 
+	// Use to enable new features which may still be in alpha/beta stage.
 	FeatureToggles map[string]bool
 }
 
@@ -507,7 +511,7 @@ func (cfg *Cfg) loadConfiguration(args *CommandLineArgs) (*ini.File, error) {
 	// load defaults
 	parsedFile, err := ini.Load(defaultConfigFile)
 	if err != nil {
-		fmt.Println(fmt.Sprintf("Failed to parse defaults.ini, %v", err))
+		fmt.Printf("Failed to parse defaults.ini, %v\n", err)
 		os.Exit(1)
 		return nil, err
 	}
@@ -633,11 +637,11 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 		return err
 	}
 	PluginsPath = makeAbsolute(plugins, HomePath)
-	Provisioning, err := valueAsString(iniFile.Section("paths"), "provisioning", "")
+	provisioning, err := valueAsString(iniFile.Section("paths"), "provisioning", "")
 	if err != nil {
 		return err
 	}
-	cfg.ProvisioningPath = makeAbsolute(Provisioning, HomePath)
+	cfg.ProvisioningPath = makeAbsolute(provisioning, HomePath)
 	server := iniFile.Section("server")
 	AppUrl, AppSubUrl, err = parseAppUrlAndSubUrl(server)
 	if err != nil {
@@ -847,6 +851,7 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	DisableLoginForm = auth.Key("disable_login_form").MustBool(false)
 	DisableSignoutMenu = auth.Key("disable_signout_menu").MustBool(false)
 	OAuthAutoLogin = auth.Key("oauth_auto_login").MustBool(false)
+	cfg.OAuthCookieMaxAge = auth.Key("oauth_state_cookie_max_age").MustInt(60)
 	SignoutRedirectUrl, err = valueAsString(auth, "signout_redirect_url", "")
 	if err != nil {
 		return err
@@ -934,7 +939,6 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 		}
 	}
 	cfg.ImagesDir = filepath.Join(cfg.DataPath, "png")
-	cfg.PhantomDir = filepath.Join(HomePath, "tools/phantomjs")
 	cfg.TempDataLifetime = iniFile.Section("paths").Key("temp_data_lifetime").MustDuration(time.Second * 3600 * 24)
 	cfg.MetricsEndpointEnabled = iniFile.Section("metrics").Key("enabled").MustBool(true)
 	cfg.MetricsEndpointBasicAuthUsername, err = valueAsString(iniFile.Section("metrics"), "basic_auth_username", "")
@@ -982,6 +986,7 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	pluginsSection := iniFile.Section("plugins")
 	cfg.PluginsEnableAlpha = pluginsSection.Key("enable_alpha").MustBool(false)
 	cfg.PluginsAppsSkipVerifyTLS = pluginsSection.Key("app_tls_skip_verify_insecure").MustBool(false)
+	cfg.PluginSettings = extractPluginSettings(iniFile.Sections())
 
 	// Read and populate feature toggles list
 	featureTogglesSection := iniFile.Section("feature_toggles")

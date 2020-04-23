@@ -105,25 +105,25 @@ interface AxisSide {
   min: number;
 }
 
-function checkCorrectAxis(axis: any[]) {
+function checkCorrectAxis(axis: any[]): boolean {
   return axis.length === 2 && checkCorrectAxes(axis[0]) && checkCorrectAxes(axis[1]);
 }
 
-function checkCorrectAxes(axes: any) {
+function checkCorrectAxes(axes: any): boolean {
   return 'min' in axes && 'max' in axes;
 }
 
-function checkOneSide(yLeft: AxisSide, yRight: AxisSide) {
+function checkOneSide(yLeft: AxisSide, yRight: AxisSide): boolean {
   // on the one hand with respect to zero
   return (yLeft.min >= 0 && yRight.min >= 0) || (yLeft.max <= 0 && yRight.max <= 0);
 }
 
-function checkTwoCross(yLeft: AxisSide, yRight: AxisSide) {
+function checkTwoCross(yLeft: AxisSide, yRight: AxisSide): boolean {
   // both across zero
   return yLeft.min <= 0 && yLeft.max >= 0 && yRight.min <= 0 && yRight.max >= 0;
 }
 
-function checkOppositeSides(yLeft: AxisSide, yRight: AxisSide) {
+function checkOppositeSides(yLeft: AxisSide, yRight: AxisSide): boolean {
   // on the opposite sides with respect to zero
   return (yLeft.min >= 0 && yRight.max <= 0) || (yLeft.max <= 0 && yRight.min >= 0);
 }
@@ -141,13 +141,13 @@ function getRate(yLeft: AxisSide, yRight: AxisSide): number {
     const absLeftMax = Math.abs(yLeft.max);
     const absRightMin = Math.abs(yRight.min);
     const absRightMax = Math.abs(yRight.max);
-    const upLeft = _.max([absLeftMin, absLeftMax]);
-    const downLeft = _.min([absLeftMin, absLeftMax]);
-    const upRight = _.max([absRightMin, absRightMax]);
-    const downRight = _.min([absRightMin, absRightMax]);
+    const upLeft = Math.max(absLeftMin, absLeftMax);
+    const downLeft = Math.min(absLeftMin, absLeftMax);
+    const upRight = Math.max(absRightMin, absRightMax);
+    const downRight = Math.min(absRightMin, absRightMax);
 
-    const rateLeft = downLeft ? upLeft / downLeft : upLeft;
-    const rateRight = downRight ? upRight / downRight : upRight;
+    const rateLeft = downLeft !== 0 ? upLeft / downLeft : upLeft;
+    const rateRight = downRight !== 0 ? upRight / downRight : upRight;
 
     return rateLeft > rateRight ? rateLeft : rateRight;
   }

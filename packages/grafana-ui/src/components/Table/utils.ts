@@ -3,25 +3,17 @@ import { DataFrame, Field, FieldType } from '@grafana/data';
 import { Column } from 'react-table';
 import { DefaultCell } from './DefaultCell';
 import { BarGaugeCell } from './BarGaugeCell';
-import { BackgroundColoredCell } from './BackgroundColorCell';
-import { TableRow, TableFieldOptions, TableCellDisplayMode } from './types';
+import { TableCellDisplayMode, TableCellProps, TableFieldOptions } from './types';
+import { css, cx } from 'emotion';
+import { withTableStyles } from './withTableStyles';
+import tinycolor from 'tinycolor2';
+import { JSONViewCell } from './JSONViewCell';
 
-export function getTableRows(data: DataFrame): TableRow[] {
-  const tableData = [];
-
-  for (let i = 0; i < data.length; i++) {
-    const row: { [key: string]: string | number } = {};
-    for (let j = 0; j < data.fields.length; j++) {
-      const prop = data.fields[j].name;
-      row[prop] = data.fields[j].values.get(i);
-    }
-    tableData.push(row);
+export function getTextAlign(field?: Field): TextAlignProperty {
+  if (!field) {
+    return 'left';
   }
 
-  return tableData;
-}
-
-export function getTextAlign(field: Field): TextAlignProperty {
   if (field.config.custom) {
     const custom = field.config.custom as TableFieldOptions;
 
@@ -46,20 +38,26 @@ export function getColumns(data: DataFrame, availableWidth: number, columnMinWid
   const columns: Column[] = [];
   let fieldCountWithoutWidth = data.fields.length;
 
-  for (const field of data.fields) {
+  for (let fieldIndex = 0; fieldIndex < data.fields.length; fieldIndex++) {
+    const field = data.fields[fieldIndex];
     const fieldTableOptions = (field.config.custom || {}) as TableFieldOptions;
+
     if (fieldTableOptions.width) {
       availableWidth -= fieldTableOptions.width;
       fieldCountWithoutWidth -= 1;
     }
 
-    const Cell = getCellComponent(fieldTableOptions.displayMode);
+    const Cell = getCellComponent(fieldTableOptions.displayMode, field);
 
     columns.push({
       Cell,
-      Header: field.name,
-      accessor: field.name,
+      id: fieldIndex.toString(),
+      Header: field.config.title ?? field.name,
+      accessor: (row: any, i: number) => {
+        return field.values.get(i);
+      },
       width: fieldTableOptions.width,
+      minWidth: 50,
     });
   }
 
@@ -74,14 +72,74 @@ export function getColumns(data: DataFrame, availableWidth: number, columnMinWid
   return columns;
 }
 
-function getCellComponent(displayMode: TableCellDisplayMode) {
+function getCellComponent(displayMode: TableCellDisplayMode, field: Field) {
   switch (displayMode) {
+    case TableCellDisplayMode.ColorText:
+      return withTableStyles(DefaultCell, getTextColorStyle);
     case TableCellDisplayMode.ColorBackground:
-      return BackgroundColoredCell;
+      return withTableStyles(DefaultCell, getBackgroundColorStyle);
     case TableCellDisplayMode.LcdGauge:
     case TableCellDisplayMode.GradientGauge:
       return BarGaugeCell;
-    default:
-      return DefaultCell;
+    case TableCellDisplayMode.JSONView:
+      return JSONViewCell;
   }
+
+  // Default or Auto
+  if (field.type === FieldType.other) {
+    return JSONViewCell;
+  }
+  return DefaultCell;
+}
+
+function getTextColorStyle(props: TableCellProps) {
+  const { field, cell, tableStyles } = props;
+
+  if (!field.display) {
+    return tableStyles;
+  }
+
+  const displayValue = field.display(cell.value);
+  if (!displayValue.color) {
+    return tableStyles;
+  }
+
+  const extendedStyle = css`
+    color: ${displayValue.color};
+  `;
+
+  return {
+    ...tableStyles,
+    tableCell: cx(tableStyles.tableCell, extendedStyle),
+  };
+}
+
+function getBackgroundColorStyle(props: TableCellProps) {
+  const { field, cell, tableStyles } = props;
+  if (!field.display) {
+    return tableStyles;
+  }
+
+  const displayValue = field.display(cell.value);
+  if (!displayValue.color) {
+    return tableStyles;
+  }
+
+  const themeFactor = tableStyles.theme.isDark ? 1 : -0.7;
+  const bgColor2 = tinycolor(displayValue.color)
+    .darken(10 * themeFactor)
+    .spin(5)
+    .toRgbString();
+
+  const extendedStyle = css`
+    background: linear-gradient(120deg, ${bgColor2}, ${displayValue.color});
+    color: white;
+    height: ${tableStyles.cellHeight}px;
+    padding: ${tableStyles.cellPadding}px;
+  `;
+
+  return {
+    ...tableStyles,
+    tableCell: cx(tableStyles.tableCell, extendedStyle),
+  };
 }

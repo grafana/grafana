@@ -1,8 +1,7 @@
 import React from 'react';
-import { mount, shallow } from 'enzyme';
+import { shallow } from 'enzyme';
 import { act } from 'react-dom/test-utils';
 import PromExploreQueryEditor from './PromExploreQueryEditor';
-import { PromExploreExtraField } from './PromExploreExtraField';
 import { PrometheusDatasource } from '../datasource';
 import { PromQuery } from '../types';
 import { LoadingState, PanelData, toUtc } from '@grafana/data';
@@ -79,9 +78,10 @@ describe('PromExploreQueryEditor', () => {
   });
 
   it('should render PromQueryField with ExtraFieldElement', async () => {
+    // @ts-ignore strict null errpr TS2345: Argument of type '() => Promise<void>' is not assignable to parameter of type '() => void | undefined'.
     await act(async () => {
-      const wrapper = setup(mount);
-      expect(wrapper.find(PromExploreExtraField).length).toBe(1);
+      const wrapper = setup(shallow);
+      expect(wrapper.html()).toContain('aria-label="Prometheus extra field"');
     });
   });
 });

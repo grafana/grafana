@@ -1,6 +1,7 @@
 import React, { PureComponent } from 'react';
 
-import { FormLabel, Select } from '@grafana/ui';
+import { InlineFormLabel, LegacyForms } from '@grafana/ui';
+const { Select } = LegacyForms;
 
 import { DashboardSearchHit, DashboardSearchHitType } from 'app/types';
 import { backendSrv } from 'app/core/services/backend_srv';
@@ -125,12 +126,12 @@ export class SharedPreferences extends PureComponent<Props, State> {
           />
         </div>
         <div className="gf-form">
-          <FormLabel
+          <InlineFormLabel
             width={11}
             tooltip="Not finding dashboard you want? Star it first, then it should appear in this select box."
           >
             Home Dashboard
-          </FormLabel>
+          </InlineFormLabel>
           <Select
             value={dashboards.find(dashboard => dashboard.id === homeDashboardId)}
             getOptionValue={i => i.id}

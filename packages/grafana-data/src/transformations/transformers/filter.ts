@@ -2,7 +2,6 @@ import { noopTransformer } from './noop';
 import { DataFrame, Field } from '../../types/dataFrame';
 import { DataTransformerID } from './ids';
 import { DataTransformerInfo, MatcherConfig } from '../../types/transformations';
-import { FieldMatcherID } from '../matchers/ids';
 import { getFieldMatcher, getFrameMatchers } from '../matchers';
 
 export interface FilterOptions {
@@ -14,9 +13,7 @@ export const filterFieldsTransformer: DataTransformerInfo<FilterOptions> = {
   id: DataTransformerID.filterFields,
   name: 'Filter Fields',
   description: 'select a subset of fields',
-  defaultOptions: {
-    include: { id: FieldMatcherID.numeric },
-  },
+  defaultOptions: {},
 
   /**
    * Return a modified copy of the series.  If the transform is not or should not

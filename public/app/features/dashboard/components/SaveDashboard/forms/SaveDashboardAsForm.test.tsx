@@ -16,6 +16,9 @@ jest.mock('app/core/services/context_srv', () => ({
 
 jest.mock('app/features/plugins/datasource_srv', () => ({}));
 jest.mock('app/features/expressions/ExpressionDatasource', () => ({}));
+jest.mock('app/features/manage-dashboards/services/ValidationSrv', () => ({
+  validateNewDashboardName: () => true,
+}));
 
 const prepareDashboardMock = (panel: any) => {
   const json = {
@@ -43,6 +46,7 @@ const renderAndSubmitForm = async (dashboard: any, submitSpy: any) => {
     />
   );
 
+  // @ts-ignore strict null error below
   await act(async () => {
     const button = container.find('button[aria-label="Save dashboard button"]');
     button.simulate('submit');

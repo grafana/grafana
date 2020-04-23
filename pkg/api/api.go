@@ -258,6 +258,7 @@ func (hs *HTTPServer) registerRoutes() {
 		apiRoute.Group("/plugins", func(pluginRoute routing.RouteRegister) {
 			pluginRoute.Get("/:pluginId/dashboards/", Wrap(GetPluginDashboards))
 			pluginRoute.Post("/:pluginId/settings", bind(models.UpdatePluginSettingCmd{}), Wrap(UpdatePluginSetting))
+			pluginRoute.Get("/:pluginId/metrics", Wrap(hs.CollectPluginMetrics))
 		}, reqOrgAdmin)
 
 		apiRoute.Get("/frontend/settings/", hs.GetFrontendSettings)
@@ -265,6 +266,7 @@ func (hs *HTTPServer) registerRoutes() {
 		apiRoute.Any("/datasources/proxy/:id", reqSignedIn, hs.ProxyDataSourceRequest)
 		apiRoute.Any("/datasources/:id/resources", hs.CallDatasourceResource)
 		apiRoute.Any("/datasources/:id/resources/*", hs.CallDatasourceResource)
+		apiRoute.Any("/datasources/:id/health", hs.CheckDatasourceHealth)
 
 		// Folders
 		apiRoute.Group("/folders", func(folderRoute routing.RouteRegister) {
@@ -328,6 +330,7 @@ func (hs *HTTPServer) registerRoutes() {
 		})
 
 		// Search
+		apiRoute.Get("/search/sorting", Wrap(hs.ListSortOptions))
 		apiRoute.Get("/search/", Wrap(Search))
 
 		// metrics

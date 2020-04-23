@@ -1,31 +1,36 @@
 // Libaries
-import React, { PureComponent } from 'react';
+import React, { FC, PureComponent } from 'react';
 import { connect } from 'react-redux';
-import { e2e } from '@grafana/e2e';
+import { css } from 'emotion';
 // Utils & Services
 import { appEvents } from 'app/core/app_events';
 import { PlaylistSrv } from 'app/features/playlist/playlist_srv';
 // Components
 import { DashNavButton } from './DashNavButton';
 import { DashNavTimeControls } from './DashNavTimeControls';
-import { ModalsController } from '@grafana/ui';
+import { Icon, ModalsController } from '@grafana/ui';
+import { textUtil } from '@grafana/data';
 import { BackButton } from 'app/core/components/BackButton/BackButton';
 // State
 import { updateLocation } from 'app/core/actions';
 // Types
 import { DashboardModel } from '../../state';
 import { CoreEvents, StoreState } from 'app/types';
-import { ShareModal } from '../ShareModal/ShareModal';
+import { ShareModal } from 'app/features/dashboard/components/ShareModal';
 import { SaveDashboardModalProxy } from 'app/features/dashboard/components/SaveDashboard/SaveDashboardModalProxy';
 
 export interface OwnProps {
   dashboard: DashboardModel;
-  editview: string;
-  isEditing: boolean;
   isFullscreen: boolean;
   $injector: any;
   updateLocation: typeof updateLocation;
   onAddPanel: () => void;
+}
+
+const customNavbarContent: Array<FC<Partial<OwnProps>>> = [];
+
+export function addNavbarContent(content: FC<Partial<OwnProps>>) {
+  customNavbarContent.push(content);
 }
 
 export interface StateProps {
@@ -34,7 +39,7 @@ export interface StateProps {
 
 type Props = StateProps & OwnProps;
 
-export class DashNav extends PureComponent<Props> {
+class DashNav extends PureComponent<Props> {
   playlistSrv: PlaylistSrv;
 
   constructor(props: Props) {
@@ -42,28 +47,25 @@ export class DashNav extends PureComponent<Props> {
     this.playlistSrv = this.props.$injector.get('playlistSrv');
   }
 
-  onDahboardNameClick = () => {
-    appEvents.emit(CoreEvents.showDashSearch);
+  onDashboardNameClick = () => {
+    this.props.updateLocation({
+      query: { search: 'open' },
+      partial: true,
+    });
   };
 
   onFolderNameClick = () => {
-    appEvents.emit(CoreEvents.showDashSearch, {
-      query: 'folder:current',
+    this.props.updateLocation({
+      query: { search: 'open', folder: 'current' },
+      partial: true,
     });
   };
 
   onClose = () => {
-    if (this.props.editview) {
-      this.props.updateLocation({
-        query: { editview: null },
-        partial: true,
-      });
-    } else {
-      this.props.updateLocation({
-        query: { panelId: null, edit: null, fullscreen: null, tab: null },
-        partial: true,
-      });
-    }
+    this.props.updateLocation({
+      query: { edit: null, viewPanel: null },
+      partial: true,
+    });
   };
 
   onToggleTVMode = () => {
@@ -101,7 +103,16 @@ export class DashNav extends PureComponent<Props> {
   };
 
   renderDashboardTitleSearchButton() {
-    const { dashboard } = this.props;
+    const { dashboard, isFullscreen } = this.props;
+    /* Hard-coded value so we don't have to wrap whole component in withTheme because of 1 variable */
+    const iconClassName = css`
+      margin-right: 4px;
+      margin-bottom: -1px;
+    `;
+    const mainIconClassName = css`
+      margin-right: 4px;
+      margin-bottom: 3px;
+    `;
 
     const folderTitle = dashboard.meta.folderTitle;
     const haveFolder = dashboard.meta.folderId > 0;
@@ -110,50 +121,42 @@ export class DashNav extends PureComponent<Props> {
       <>
         <div>
           <div className="navbar-page-btn">
-            {!this.isInFullscreenOrSettings && <i className="gicon gicon-dashboard" />}
+            {!isFullscreen && <Icon name="apps" size="lg" className={mainIconClassName} />}
             {haveFolder && (
               <>
                 <a className="navbar-page-btn__folder" onClick={this.onFolderNameClick}>
                   {folderTitle}
                 </a>
-                <i className="fa fa-chevron-right navbar-page-btn__folder-icon" />
+                <Icon name="angle-right" className={iconClassName} />
               </>
             )}
-            <a onClick={this.onDahboardNameClick}>
-              {dashboard.title} <i className="fa fa-caret-down navbar-page-btn__search" />
+            <a onClick={this.onDashboardNameClick}>
+              {dashboard.title} <Icon name="angle-down" className={iconClassName} />
             </a>
           </div>
         </div>
-        {this.isSettings && <span className="navbar-settings-title">&nbsp;/ Settings</span>}
         <div className="navbar__spacer" />
       </>
     );
   }
 
-  get isInFullscreenOrSettings() {
-    return this.props.editview || this.props.isFullscreen;
-  }
-
-  get isSettings() {
-    return this.props.editview;
-  }
-
   renderBackButton() {
     return (
       <div className="navbar-edit">
-        <BackButton onClick={this.onClose} aria-label={e2e.pages.Dashboard.Toolbar.selectors.backArrow} />
+        <BackButton surface="body" onClick={this.onClose} />
       </div>
     );
   }
 
   render() {
-    const { dashboard, onAddPanel, location } = this.props;
+    const { dashboard, onAddPanel, location, isFullscreen } = this.props;
     const { canStar, canSave, canShare, showSettings, isStarred } = dashboard.meta;
     const { snapshot } = dashboard;
     const snapshotUrl = snapshot && snapshot.originalUrl;
+
     return (
       <div className="navbar">
-        {this.isInFullscreenOrSettings && this.renderBackButton()}
+        {isFullscreen && this.renderBackButton()}
         {this.renderDashboardTitleSearchButton()}
 
         {this.playlistSrv.isPlaying && (
@@ -161,31 +164,37 @@ export class DashNav extends PureComponent<Props> {
             <DashNavButton
               tooltip="Go to previous dashboard"
               classSuffix="tight"
-              icon="fa fa-step-backward"
+              icon="step-backward"
               onClick={this.onPlaylistPrev}
             />
             <DashNavButton
               tooltip="Stop playlist"
               classSuffix="tight"
-              icon="fa fa-stop"
+              icon="square-shape"
               onClick={this.onPlaylistStop}
             />
             <DashNavButton
               tooltip="Go to next dashboard"
               classSuffix="tight"
-              icon="fa fa-forward"
+              icon="forward"
               onClick={this.onPlaylistNext}
             />
           </div>
         )}
 
+        {customNavbarContent.map((Component, index) => (
+          <Component {...this.props} key={`navbar-custom-content-${index}`} />
+        ))}
+
         <div className="navbar-buttons navbar-buttons--actions">
           {canSave && (
             <DashNavButton
+              classSuffix="save"
               tooltip="Add panel"
-              classSuffix="add-panel"
-              icon="gicon gicon-add-panel"
+              icon="panel-add"
               onClick={onAddPanel}
+              iconType="mono"
+              iconSize="xl"
             />
           )}
 
@@ -193,7 +202,8 @@ export class DashNav extends PureComponent<Props> {
             <DashNavButton
               tooltip="Mark as favorite"
               classSuffix="star"
-              icon={`${isStarred ? 'fa fa-star' : 'fa fa-star-o'}`}
+              icon={isStarred ? 'favorite' : 'star'}
+              iconType={isStarred ? 'mono' : 'default'}
               onClick={this.onStarDashboard}
             />
           )}
@@ -204,7 +214,7 @@ export class DashNav extends PureComponent<Props> {
                 <DashNavButton
                   tooltip="Share dashboard"
                   classSuffix="share"
-                  icon="fa fa-share-square-o"
+                  icon="share-alt"
                   onClick={() => {
                     showModal(ShareModal, {
                       dashboard,
@@ -222,7 +232,7 @@ export class DashNav extends PureComponent<Props> {
                 <DashNavButton
                   tooltip="Save dashboard"
                   classSuffix="save"
-                  icon="fa fa-save"
+                  icon="save"
                   onClick={() => {
                     showModal(SaveDashboardModalProxy, {
                       dashboard,
@@ -238,8 +248,8 @@ export class DashNav extends PureComponent<Props> {
             <DashNavButton
               tooltip="Open original dashboard"
               classSuffix="snapshot-origin"
-              icon="gicon gicon-link"
-              href={snapshotUrl}
+              href={textUtil.sanitizeUrl(snapshotUrl)}
+              icon="link"
             />
           )}
 
@@ -247,19 +257,14 @@ export class DashNav extends PureComponent<Props> {
             <DashNavButton
               tooltip="Dashboard settings"
               classSuffix="settings"
-              icon="gicon gicon-cog"
+              icon="cog"
               onClick={this.onOpenSettings}
             />
           )}
         </div>
 
         <div className="navbar-buttons navbar-buttons--tv">
-          <DashNavButton
-            tooltip="Cycle view mode"
-            classSuffix="tv"
-            icon="fa fa-desktop"
-            onClick={this.onToggleTVMode}
-          />
+          <DashNavButton tooltip="Cycle view mode" classSuffix="tv" icon="monitor" onClick={this.onToggleTVMode} />
         </div>
 
         {!dashboard.timepicker.hidden && (

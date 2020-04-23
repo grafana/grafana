@@ -11,7 +11,7 @@ weight = 1
 
 # Data sources
 
-Grafana can visualize, explore, and alert on data from many different databases and cloud services. Each database or service type is accessed from a *data source*. 
+Grafana can visualize, explore, and alert on data from many different databases and cloud services. Each database or service type is accessed from a *data source*. Before you can create visualizations in Grafana, you must [add a data source]({{< relref "add-a-data-source.md" >}}).
 
 Each data source has a specific query editor that is customized for the features and capabilities that the particular data source exposes. The query language and capabilities of each data source are obviously very different. You can combine data from multiple data sources into a single dashboard, but each panel is connected to a specific data source that belongs to a particular organization.
 

@@ -1,5 +1,6 @@
 import React, { PureComponent, CSSProperties } from 'react';
 import { VizOrientation } from '@grafana/data';
+import { calculateGridDimensions } from '../../utils/squares';
 
 interface Props<V, D> {
   /**
@@ -13,7 +14,7 @@ interface Props<V, D> {
   /**
    * Render a single value
    */
-  renderValue: (value: V, width: number, height: number, dims: D) => JSX.Element;
+  renderValue: (props: VizRepeaterRenderValueProps<V, D>) => JSX.Element;
   height: number;
   width: number;
   source: any; // If this changes, new values will be requested
@@ -21,6 +22,16 @@ interface Props<V, D> {
   renderCounter: number; // force update of values & render
   orientation: VizOrientation;
   itemSpacing?: number;
+  /** When orientation is set to auto layout items in a grid */
+  autoGrid?: boolean;
+}
+
+export interface VizRepeaterRenderValueProps<V, D = {}> {
+  value: V;
+  width: number;
+  height: number;
+  orientation: VizOrientation;
+  alignmentFactors: D;
 }
 
 interface DefaultProps {
@@ -35,7 +46,7 @@ interface State<V> {
 
 export class VizRepeater<V, D = {}> extends PureComponent<Props<V, D>, State<V>> {
   static defaultProps: DefaultProps = {
-    itemSpacing: 10,
+    itemSpacing: 8,
   };
 
   constructor(props: Props<V, D>) {
@@ -67,10 +78,61 @@ export class VizRepeater<V, D = {}> extends PureComponent<Props<V, D>, State<V>>
     return orientation;
   }
 
-  render() {
-    const { renderValue, height, width, itemSpacing, getAlignmentFactors } = this.props as PropsWithDefaults<V, D>;
+  renderGrid() {
+    const { renderValue, height, width, itemSpacing, getAlignmentFactors, orientation } = this
+      .props as PropsWithDefaults<V, D>;
+
     const { values } = this.state;
-    const orientation = this.getOrientation();
+    const grid = calculateGridDimensions(width, height, itemSpacing, values.length);
+    const alignmentFactors = getAlignmentFactors ? getAlignmentFactors(values, grid.width, grid.height) : ({} as D);
+
+    let xGrid = 0;
+    let yGrid = 0;
+    let items: JSX.Element[] = [];
+
+    for (let i = 0; i < values.length; i++) {
+      const value = values[i];
+      const isLastRow = yGrid === grid.yCount - 1;
+
+      const itemWidth = isLastRow ? grid.widthOnLastRow : grid.width;
+      const itemHeight = grid.height;
+
+      const xPos = xGrid * itemWidth + itemSpacing * xGrid;
+      const yPos = yGrid * itemHeight + itemSpacing * yGrid;
+
+      const itemStyles: CSSProperties = {
+        position: 'absolute',
+        left: xPos,
+        top: yPos,
+        width: `${itemWidth}px`,
+        height: `${itemHeight}px`,
+      };
+
+      items.push(
+        <div key={i} style={itemStyles}>
+          {renderValue({ value, width: itemWidth, height: itemHeight, alignmentFactors, orientation })}
+        </div>
+      );
+
+      xGrid++;
+
+      if (xGrid === grid.xCount) {
+        xGrid = 0;
+        yGrid++;
+      }
+    }
+
+    return <div style={{ position: 'relative' }}>{items}</div>;
+  }
+
+  render() {
+    const { renderValue, height, width, itemSpacing, getAlignmentFactors, autoGrid, orientation } = this
+      .props as PropsWithDefaults<V, D>;
+    const { values } = this.state;
+
+    if (autoGrid && orientation === VizOrientation.Auto) {
+      return this.renderGrid();
+    }
 
     const itemStyles: React.CSSProperties = {
       display: 'flex',
@@ -83,29 +145,40 @@ export class VizRepeater<V, D = {}> extends PureComponent<Props<V, D>, State<V>>
     let vizHeight = height;
     let vizWidth = width;
 
-    if (orientation === VizOrientation.Horizontal) {
-      repeaterStyle.flexDirection = 'column';
-      itemStyles.marginBottom = `${itemSpacing}px`;
-      vizWidth = width;
-      vizHeight = height / values.length - itemSpacing + itemSpacing / values.length;
-    } else {
-      repeaterStyle.flexDirection = 'row';
-      repeaterStyle.justifyContent = 'space-between';
-      itemStyles.marginRight = `${itemSpacing}px`;
-      vizHeight = height;
-      vizWidth = width / values.length - itemSpacing + itemSpacing / values.length;
+    let resolvedOrientation = this.getOrientation();
+
+    switch (resolvedOrientation) {
+      case VizOrientation.Horizontal:
+        repeaterStyle.flexDirection = 'column';
+        itemStyles.marginBottom = `${itemSpacing}px`;
+        vizWidth = width;
+        vizHeight = height / values.length - itemSpacing + itemSpacing / values.length;
+        break;
+      case VizOrientation.Vertical:
+        repeaterStyle.flexDirection = 'row';
+        repeaterStyle.justifyContent = 'space-between';
+        itemStyles.marginRight = `${itemSpacing}px`;
+        vizHeight = height;
+        vizWidth = width / values.length - itemSpacing + itemSpacing / values.length;
     }
 
     itemStyles.width = `${vizWidth}px`;
     itemStyles.height = `${vizHeight}px`;
 
-    const dims = getAlignmentFactors ? getAlignmentFactors(values, vizWidth, vizHeight) : ({} as D);
+    const alignmentFactors = getAlignmentFactors ? getAlignmentFactors(values, vizWidth, vizHeight) : ({} as D);
+
     return (
       <div style={repeaterStyle}>
         {values.map((value, index) => {
           return (
             <div key={index} style={getItemStylesForIndex(itemStyles, index, values.length)}>
-              {renderValue(value, vizWidth, vizHeight, dims)}
+              {renderValue({
+                value,
+                width: vizWidth,
+                height: vizHeight,
+                alignmentFactors,
+                orientation: resolvedOrientation,
+              })}
             </div>
           );
         })}

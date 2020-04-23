@@ -6,6 +6,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana/pkg/setting"
+
 	. "github.com/smartystreets/goconvey/convey"
 
 	"github.com/grafana/grafana/pkg/models"
@@ -60,6 +62,56 @@ func TestUserDataAccess(t *testing.T) {
 				So(query.Result.Rands, ShouldHaveLength, 10)
 				So(query.Result.Salt, ShouldHaveLength, 10)
 				So(query.Result.IsDisabled, ShouldBeTrue)
+			})
+		})
+
+		Convey("Given an organization", func() {
+			autoAssignOrg := setting.AutoAssignOrg
+			setting.AutoAssignOrg = true
+			defer func() {
+				setting.AutoAssignOrg = autoAssignOrg
+			}()
+
+			orgCmd := &models.CreateOrgCommand{Name: "Some Test Org"}
+			err := CreateOrg(orgCmd)
+			So(err, ShouldBeNil)
+
+			Convey("Creates user assigned to other organization", func() {
+				cmd := &models.CreateUserCommand{
+					Email: "usertest@test.com",
+					Name:  "user name",
+					Login: "user_test_login",
+					OrgId: orgCmd.Result.Id,
+				}
+
+				err := CreateUser(context.Background(), cmd)
+				So(err, ShouldBeNil)
+
+				Convey("Loading a user", func() {
+					query := models.GetUserByIdQuery{Id: cmd.Result.Id}
+					err := GetUserById(&query)
+					So(err, ShouldBeNil)
+
+					So(query.Result.Email, ShouldEqual, "usertest@test.com")
+					So(query.Result.Password, ShouldEqual, "")
+					So(query.Result.Rands, ShouldHaveLength, 10)
+					So(query.Result.Salt, ShouldHaveLength, 10)
+					So(query.Result.IsDisabled, ShouldBeFalse)
+					So(query.Result.OrgId, ShouldEqual, orgCmd.Result.Id)
+				})
+			})
+
+			Convey("Don't create user assigned to unknown organization", func() {
+				const nonExistingOrgID = 10000
+				cmd := &models.CreateUserCommand{
+					Email: "usertest@test.com",
+					Name:  "user name",
+					Login: "user_test_login",
+					OrgId: nonExistingOrgID,
+				}
+
+				err := CreateUser(context.Background(), cmd)
+				So(err, ShouldEqual, models.ErrOrgNotFound)
 			})
 		})
 
@@ -455,8 +507,8 @@ func TestUserDataAccess(t *testing.T) {
 			var err error
 			createUserCmd := &models.CreateUserCommand{
 				Email:   fmt.Sprint("admin", "@test.com"),
-				Name:    fmt.Sprint("admin"),
-				Login:   fmt.Sprint("admin"),
+				Name:    "admin",
+				Login:   "admin",
 				IsAdmin: true,
 			}
 			err = CreateUser(context.Background(), createUserCmd)

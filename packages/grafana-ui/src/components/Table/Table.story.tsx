@@ -1,4 +1,5 @@
 import React from 'react';
+import { merge } from 'lodash';
 import { Table } from './Table';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { number } from '@storybook/addon-knobs';
@@ -6,14 +7,13 @@ import { useTheme } from '../../themes';
 import mdx from './Table.mdx';
 import {
   applyFieldOverrides,
-  ConfigOverrideRule,
   DataFrame,
-  FieldMatcherID,
   FieldType,
   GrafanaTheme,
   MutableDataFrame,
   ThresholdsConfig,
   ThresholdsMode,
+  FieldConfig,
 } from '@grafana/data';
 
 export default {
@@ -27,7 +27,7 @@ export default {
   },
 };
 
-function buildData(theme: GrafanaTheme, overrides: ConfigOverrideRule[]): DataFrame {
+function buildData(theme: GrafanaTheme, config: Record<string, FieldConfig>): DataFrame {
   const data = new MutableDataFrame({
     fields: [
       { name: 'Time', type: FieldType.time, values: [] }, // The time field
@@ -39,6 +39,7 @@ function buildData(theme: GrafanaTheme, overrides: ConfigOverrideRule[]): DataFr
           decimals: 0,
           custom: {
             align: 'center',
+            width: 80,
           },
         },
       },
@@ -57,13 +58,19 @@ function buildData(theme: GrafanaTheme, overrides: ConfigOverrideRule[]): DataFr
         values: [],
         config: {
           unit: 'percent',
+          min: 0,
+          max: 100,
           custom: {
-            width: 100,
+            width: 150,
           },
         },
       },
     ],
   });
+
+  for (const field of data.fields) {
+    field.config = merge(field.config, config[field.name]);
+  }
 
   for (let i = 0; i < 1000; i++) {
     data.appendRow([
@@ -77,48 +84,14 @@ function buildData(theme: GrafanaTheme, overrides: ConfigOverrideRule[]): DataFr
 
   return applyFieldOverrides({
     data: [data],
-    fieldOptions: {
-      overrides,
+    fieldConfig: {
+      overrides: [],
       defaults: {},
     },
     theme,
     replaceVariables: (value: string) => value,
   })[0];
 }
-
-export const Simple = () => {
-  const theme = useTheme();
-  const width = number('width', 700, {}, 'Props');
-  const data = buildData(theme, []);
-
-  return (
-    <div className="panel-container" style={{ width: 'auto' }}>
-      <Table data={data} height={500} width={width} />
-    </div>
-  );
-};
-
-export const BarGaugeCell = () => {
-  const theme = useTheme();
-  const width = number('width', 700, {}, 'Props');
-  const data = buildData(theme, [
-    {
-      matcher: { id: FieldMatcherID.byName, options: 'Progress' },
-      properties: [
-        { prop: 'width', value: '200', custom: true },
-        { prop: 'displayMode', value: 'gradient-gauge', custom: true },
-        { prop: 'min', value: '0' },
-        { prop: 'max', value: '100' },
-      ],
-    },
-  ]);
-
-  return (
-    <div className="panel-container" style={{ width: 'auto' }}>
-      <Table data={data} height={500} width={width} />
-    </div>
-  );
-};
 
 const defaultThresholds: ThresholdsConfig = {
   steps: [
@@ -134,21 +107,50 @@ const defaultThresholds: ThresholdsConfig = {
   mode: ThresholdsMode.Absolute,
 };
 
+export const Simple = () => {
+  const theme = useTheme();
+  const width = number('width', 700, {}, 'Props');
+  const data = buildData(theme, {});
+
+  return (
+    <div className="panel-container" style={{ width: 'auto' }}>
+      <Table data={data} height={500} width={width} />
+    </div>
+  );
+};
+
+export const BarGaugeCell = () => {
+  const theme = useTheme();
+  const width = number('width', 700, {}, 'Props');
+  const data = buildData(theme, {
+    Progress: {
+      custom: {
+        width: 200,
+        displayMode: 'gradient-gauge',
+      },
+      thresholds: defaultThresholds,
+    },
+  });
+
+  return (
+    <div className="panel-container" style={{ width: 'auto' }}>
+      <Table data={data} height={500} width={width} />
+    </div>
+  );
+};
+
 export const ColoredCells = () => {
   const theme = useTheme();
   const width = number('width', 750, {}, 'Props');
-  const data = buildData(theme, [
-    {
-      matcher: { id: FieldMatcherID.byName, options: 'Progress' },
-      properties: [
-        { prop: 'width', value: '80', custom: true },
-        { prop: 'displayMode', value: 'color-background', custom: true },
-        { prop: 'min', value: '0' },
-        { prop: 'max', value: '100' },
-        { prop: 'thresholds', value: defaultThresholds },
-      ],
+  const data = buildData(theme, {
+    Progress: {
+      custom: {
+        width: 80,
+        displayMode: 'color-background',
+      },
+      thresholds: defaultThresholds,
     },
-  ]);
+  });
 
   return (
     <div className="panel-container" style={{ width: 'auto' }}>

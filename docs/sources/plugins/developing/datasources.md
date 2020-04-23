@@ -11,14 +11,18 @@ weight = 5
 # Data Sources
 
 Data source plugins enable people to develop plugins for any database that
-communicates over http. Its up to the plugin to transform the data into
+communicates over HTTP. Its up to the plugin to transform the data into
 time series data so that any grafana panel can then show it.
 
 ## Data source development
 
 > Our goal is not to have a very extensive documentation but rather have actual
-> code that people can look at. An example implementation of a data source can be
-> found in this [example data source repo](https://github.com/grafana/simple-json-datasource)
+> code that people can look at. Example implementations of a data source can be
+> found in these repos:
+
+> - [simple-json-datasource](https://github.com/grafana/simple-json-datasource)
+> - [simple-datasource](https://github.com/grafana/simple-datasource)
+> - [simple-json-backend-datasource](https://github.com/grafana/simple-json-backend-datasource)
 
 To interact with the rest of grafana the plugins module file can export 4 different components.
 
@@ -168,7 +172,6 @@ Expected result from datasource.annotationQuery:
   }
 ]
 ```
-
 
 ## QueryCtrl
 

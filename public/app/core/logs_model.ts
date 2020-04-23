@@ -25,9 +25,10 @@ import {
   getFlotPairs,
   TimeZone,
   getDisplayProcessor,
+  textUtil,
 } from '@grafana/data';
 import { getThemeColor } from 'app/core/utils/colors';
-import { hasAnsiCodes } from 'app/core/utils/text';
+
 import { sortInAscendingOrder, deduplicateLogRowsById } from 'app/core/utils/explore';
 import { getGraphSeriesModel } from 'app/plugins/panel/graph2/getGraphSeriesModel';
 
@@ -136,29 +137,29 @@ export function makeSeriesForLogs(rows: LogRowModel[], intervalMs: number, timeZ
   }
 
   return seriesList.map((series, i) => {
-    series.datapoints.sort((a: number[], b: number[]) => {
-      return a[1] - b[1];
-    });
+    series.datapoints.sort((a: number[], b: number[]) => a[1] - b[1]);
 
     // EEEP: converts GraphSeriesXY to DataFrame and back again!
     const data = toDataFrame(series);
-    const points = getFlotPairs({
-      xField: data.fields[1],
-      yField: data.fields[0],
-      nullValueMode: NullValueMode.Null,
-    });
+    const fieldCache = new FieldCache(data);
 
-    const timeField = data.fields[1];
+    const timeField = fieldCache.getFirstFieldOfType(FieldType.time);
     timeField.display = getDisplayProcessor({
       field: timeField,
       timeZone,
     });
 
-    const valueField = data.fields[0];
+    const valueField = fieldCache.getFirstFieldOfType(FieldType.number);
     valueField.config = {
       ...valueField.config,
       color: series.color,
     };
+
+    const points = getFlotPairs({
+      xField: timeField,
+      yField: valueField,
+      nullValueMode: NullValueMode.Null,
+    });
 
     const graphSeries: GraphSeriesXY = {
       color: series.color,
@@ -192,14 +193,19 @@ function isLogsData(series: DataFrame) {
  * @param dataFrame
  * @param intervalMs In case there are no metrics series, we use this for computing it from log rows.
  */
-export function dataFrameToLogsModel(dataFrame: DataFrame[], intervalMs: number, timeZone: TimeZone): LogsModel {
+export function dataFrameToLogsModel(
+  dataFrame: DataFrame[],
+  intervalMs: number | undefined,
+  timeZone: TimeZone
+): LogsModel {
   const { logSeries, metricSeries } = separateLogsAndMetrics(dataFrame);
   const logsModel = logSeriesToLogsModel(logSeries);
 
   if (logsModel) {
     if (metricSeries.length === 0) {
       // Create metrics from logs
-      logsModel.series = makeSeriesForLogs(logsModel.rows, intervalMs, timeZone);
+      // If interval is not defined or 0 we cannot really compute the series
+      logsModel.series = intervalMs ? makeSeriesForLogs(logsModel.rows, intervalMs, timeZone) : [];
     } else {
       // We got metrics in the dataFrame so process those
       logsModel.series = getGraphSeriesModel(
@@ -270,7 +276,7 @@ export function logSeriesToLogsModel(logSeries: DataFrame[]): LogsModel | undefi
     // Assume the first string field in the dataFrame is the message. This was right so far but probably needs some
     // more explicit checks.
     const stringField = fieldCache.getFirstFieldOfType(FieldType.string);
-    if (stringField.labels) {
+    if (stringField?.labels) {
       allLabels.push(stringField.labels);
     }
     return {
@@ -279,7 +285,7 @@ export function logSeriesToLogsModel(logSeries: DataFrame[]): LogsModel | undefi
       stringField,
       logLevelField: fieldCache.getFieldByName('level'),
       idField: getIdField(fieldCache),
-    };
+    } as LogFields;
   });
 
   const commonLabels = allLabels.length > 0 ? findCommonLabels(allLabels) : {};
@@ -308,7 +314,7 @@ export function logSeriesToLogsModel(logSeries: DataFrame[]): LogsModel | undefi
       // This should be string but sometimes isn't (eg elastic) because the dataFrame is not strongly typed.
       const message: string = typeof messageValue === 'string' ? messageValue : JSON.stringify(messageValue);
 
-      const hasAnsi = hasAnsiCodes(message);
+      const hasAnsi = textUtil.hasAnsiCodes(message);
       const searchWords = series.meta && series.meta.searchWords ? series.meta.searchWords : [];
 
       let logLevel = LogLevel.unknown;
@@ -334,7 +340,7 @@ export function logSeriesToLogsModel(logSeries: DataFrame[]): LogsModel | undefi
         searchWords,
         entry: hasAnsi ? ansicolor.strip(message) : message,
         raw: message,
-        labels: stringField.labels,
+        labels: stringField.labels || {},
         uid: idField ? idField.values.get(j) : j.toString(),
       });
     }

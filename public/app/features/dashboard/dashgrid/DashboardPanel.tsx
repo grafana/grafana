@@ -6,12 +6,11 @@ import { connect, MapStateToProps, MapDispatchToProps } from 'react-redux';
 
 // Components
 import { PanelChrome } from './PanelChrome';
-import { PanelEditor } from '../panel_editor/PanelEditor';
-import { PanelResizer } from './PanelResizer';
 import { PanelChromeAngular } from './PanelChromeAngular';
 
 // Actions
 import { initDashboardPanel } from '../state/actions';
+import { updateLocation } from 'app/core/reducers/location';
 
 // Types
 import { PanelModel, DashboardModel } from '../state';
@@ -22,17 +21,17 @@ export interface OwnProps {
   panel: PanelModel;
   dashboard: DashboardModel;
   isEditing: boolean;
-  isInEditMode?: boolean;
-  isFullscreen: boolean;
+  isViewing: boolean;
   isInView: boolean;
 }
 
 export interface ConnectedProps {
-  plugin?: PanelPlugin;
+  plugin?: PanelPlugin | null;
 }
 
 export interface DispatchProps {
   initDashboardPanel: typeof initDashboardPanel;
+  updateLocation: typeof updateLocation;
 }
 
 export type Props = OwnProps & ConnectedProps & DispatchProps;
@@ -72,7 +71,7 @@ export class DashboardPanelUnconnected extends PureComponent<Props, State> {
   };
 
   renderPanel(plugin: PanelPlugin) {
-    const { dashboard, panel, isFullscreen, isInView, isInEditMode } = this.props;
+    const { dashboard, panel, isViewing, isInView, isEditing, updateLocation } = this.props;
 
     return (
       <AutoSizer>
@@ -87,7 +86,8 @@ export class DashboardPanelUnconnected extends PureComponent<Props, State> {
                 plugin={plugin}
                 panel={panel}
                 dashboard={dashboard}
-                isFullscreen={isFullscreen}
+                isViewing={isViewing}
+                isEditing={isEditing}
                 isInView={isInView}
                 width={width}
                 height={height}
@@ -100,11 +100,12 @@ export class DashboardPanelUnconnected extends PureComponent<Props, State> {
               plugin={plugin}
               panel={panel}
               dashboard={dashboard}
-              isFullscreen={isFullscreen}
+              isViewing={isViewing}
+              isEditing={isEditing}
               isInView={isInView}
-              isInEditMode={isInEditMode}
               width={width}
               height={height}
+              updateLocation={updateLocation}
             />
           );
         }}
@@ -113,7 +114,7 @@ export class DashboardPanelUnconnected extends PureComponent<Props, State> {
   }
 
   render() {
-    const { panel, dashboard, isFullscreen, isEditing, plugin } = this.props;
+    const { isViewing, plugin } = this.props;
     const { isLazy } = this.state;
 
     // if we have not loaded plugin exports yet, wait
@@ -126,34 +127,14 @@ export class DashboardPanelUnconnected extends PureComponent<Props, State> {
       return null;
     }
 
-    const editorContainerClasses = classNames({
-      'panel-editor-container': isEditing,
-      'panel-height-helper': !isEditing,
-    });
-
     const panelWrapperClass = classNames({
       'panel-wrapper': true,
-      'panel-wrapper--edit': isEditing,
-      'panel-wrapper--view': isFullscreen && !isEditing,
+      'panel-wrapper--view': isViewing,
     });
 
     return (
-      <div className={editorContainerClasses}>
-        <PanelResizer
-          isEditing={isEditing}
-          panel={panel}
-          render={styles => (
-            <div
-              className={panelWrapperClass}
-              onMouseEnter={this.onMouseEnter}
-              onMouseLeave={this.onMouseLeave}
-              style={styles}
-            >
-              {this.renderPanel(plugin)}
-            </div>
-          )}
-        />
-        {panel.isEditing && <PanelEditor panel={panel} plugin={plugin} dashboard={dashboard} />}
+      <div className={panelWrapperClass} onMouseEnter={this.onMouseEnter} onMouseLeave={this.onMouseLeave}>
+        {this.renderPanel(plugin)}
       </div>
     );
   }
@@ -170,6 +151,6 @@ const mapStateToProps: MapStateToProps<ConnectedProps, OwnProps, StoreState> = (
   };
 };
 
-const mapDispatchToProps: MapDispatchToProps<DispatchProps, OwnProps> = { initDashboardPanel };
+const mapDispatchToProps: MapDispatchToProps<DispatchProps, OwnProps> = { initDashboardPanel, updateLocation };
 
 export const DashboardPanel = connect(mapStateToProps, mapDispatchToProps)(DashboardPanelUnconnected);

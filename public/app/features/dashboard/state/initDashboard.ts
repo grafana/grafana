@@ -7,24 +7,23 @@ import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { AnnotationsSrv } from 'app/features/annotations/annotations_srv';
 import { VariableSrv } from 'app/features/templating/variable_srv';
 import { KeybindingSrv } from 'app/core/services/keybindingSrv';
-
 // Actions
-import { updateLocation } from 'app/core/actions';
-import { notifyApp } from 'app/core/actions';
-import locationUtil from 'app/core/utils/location_util';
+import { notifyApp, updateLocation } from 'app/core/actions';
 import {
-  dashboardInitFetching,
+  clearDashboardQueriesToUpdateOnLoad,
   dashboardInitCompleted,
   dashboardInitFailed,
-  dashboardInitSlow,
+  dashboardInitFetching,
   dashboardInitServices,
-  clearDashboardQueriesToUpdateOnLoad,
+  dashboardInitSlow,
 } from './reducers';
-
 // Types
-import { DashboardRouteInfo, StoreState, ThunkDispatch, ThunkResult, DashboardDTO } from 'app/types';
+import { DashboardDTO, DashboardRouteInfo, StoreState, ThunkDispatch, ThunkResult } from 'app/types';
 import { DashboardModel } from './DashboardModel';
-import { DataQuery } from '@grafana/data';
+import { DataQuery, locationUtil } from '@grafana/data';
+import { getConfig } from '../../../core/config';
+import { initDashboardTemplating, processVariables, completeDashboardTemplating } from '../../variables/state/actions';
+import { emitDashboardViewEvent } from './analyticsProcessor';
 
 export interface InitDashboardArgs {
   $injector: any;
@@ -181,7 +180,14 @@ export function initDashboard(args: InitDashboardArgs): ThunkResult<void> {
     // template values service needs to initialize completely before
     // the rest of the dashboard can load
     try {
-      await variableSrv.init(dashboard);
+      if (!getConfig().featureToggles.newVariables) {
+        await variableSrv.init(dashboard);
+      }
+      if (getConfig().featureToggles.newVariables) {
+        dispatch(initDashboardTemplating(dashboard.templating.list));
+        await dispatch(processVariables());
+        dispatch(completeDashboardTemplating(dashboard));
+      }
     } catch (err) {
       dispatch(notifyApp(createErrorNotification('Templating init failed', err)));
       console.log(err);
@@ -212,6 +218,11 @@ export function initDashboard(args: InitDashboardArgs): ThunkResult<void> {
 
     // legacy srv state
     dashboardSrv.setCurrent(dashboard);
+
+    // send open dashboard event
+    if (args.routeInfo !== DashboardRouteInfo.New) {
+      emitDashboardViewEvent(dashboard);
+    }
 
     // yay we are done
     dispatch(dashboardInitCompleted(dashboard));

@@ -1,14 +1,21 @@
 import React from 'react';
 import { withCenteredStory, withHorizontallyCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { VerticalGroup, HorizontalGroup, Layout } from './Layout';
-import { Button } from '../Forms/Button';
+import { Button } from '../Button';
 import { withStoryContainer } from '../../utils/storybook/withStoryContainer';
 import { select } from '@storybook/addon-knobs';
+import mdx from './Layout.mdx';
 
 export default {
   title: 'Layout/Groups',
   component: Layout,
   decorators: [withStoryContainer, withCenteredStory, withHorizontallyCenteredStory],
+  subcomponents: { HorizontalGroup, VerticalGroup },
+  parameters: {
+    docs: {
+      page: mdx,
+    },
+  },
 };
 
 const justifyVariants = ['flex-start', 'flex-end', 'space-between'];

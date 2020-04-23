@@ -1,4 +1,5 @@
 import {
+  DataQueryError,
   DataQueryRequest,
   DataQueryResponse,
   DataSourceApi,
@@ -6,7 +7,8 @@ import {
   MetricFindValue,
   TableData,
   TimeSeries,
-  DataQueryError,
+  LoadingState,
+  ArrayDataFrame,
 } from '@grafana/data';
 import { Scenario, TestDataQuery } from './types';
 import { getBackendSrv } from '@grafana/runtime';
@@ -14,7 +16,7 @@ import { queryMetricTree } from './metricTree';
 import { from, merge, Observable } from 'rxjs';
 import { runStream } from './runStreams';
 import templateSrv from 'app/features/templating/template_srv';
-import { getSearchFilterScopedVar } from '../../../features/templating/variable';
+import { getSearchFilterScopedVar } from '../../../features/templating/utils';
 
 type TestData = TimeSeries | TableData;
 
@@ -34,6 +36,8 @@ export class TestDataDataSource extends DataSourceApi<TestDataQuery> {
       }
       if (target.scenarioId === 'streaming_client') {
         streams.push(runStream(target, options));
+      } else if (target.scenarioId === 'grafana_api') {
+        streams.push(runGrafanaAPI(target, options));
       } else {
         queries.push({
           ...target,
@@ -144,4 +148,19 @@ export class TestDataDataSource extends DataSourceApi<TestDataQuery> {
       }, 100);
     });
   }
+}
+
+function runGrafanaAPI(target: TestDataQuery, req: DataQueryRequest<TestDataQuery>): Observable<DataQueryResponse> {
+  const url = `/api/${target.stringInput}`;
+  return from(
+    getBackendSrv()
+      .get(url)
+      .then(res => {
+        const frame = new ArrayDataFrame(res);
+        return {
+          state: LoadingState.Done,
+          data: [frame],
+        };
+      })
+  );
 }

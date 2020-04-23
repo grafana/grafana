@@ -3,6 +3,7 @@ import { css } from 'emotion';
 import uniqueId from 'lodash/uniqueId';
 import { SelectableValue } from '@grafana/data';
 import { RadioButtonSize, RadioButton } from './RadioButton';
+import { Icon } from '../../Icon/Icon';
 
 const getRadioButtonGroupStyles = () => {
   return {
@@ -29,6 +30,9 @@ const getRadioButtonGroupStyles = () => {
         }
       }
     `,
+    icon: css`
+      margin-right: 6px;
+    `,
   };
 };
 
@@ -39,6 +43,7 @@ interface RadioButtonGroupProps<T> {
   options: Array<SelectableValue<T>>;
   onChange?: (value?: T) => void;
   size?: RadioButtonSize;
+  fullWidth?: boolean;
 }
 
 export function RadioButtonGroup<T>({
@@ -48,6 +53,7 @@ export function RadioButtonGroup<T>({
   disabled,
   disabledOptions,
   size = 'md',
+  fullWidth = false,
 }: RadioButtonGroupProps<T>) {
   const handleOnChange = useCallback(
     (option: SelectableValue<T>) => {
@@ -59,7 +65,8 @@ export function RadioButtonGroup<T>({
     },
     [onChange]
   );
-  const groupName = useRef(uniqueId('radiogroup-'));
+  const id = uniqueId('radiogroup-');
+  const groupName = useRef(id);
   const styles = getRadioButtonGroupStyles();
 
   return (
@@ -71,11 +78,13 @@ export function RadioButtonGroup<T>({
             size={size}
             disabled={isItemDisabled || disabled}
             active={value === o.value}
-            key={o.label}
+            key={`o.label-${i}`}
             onChange={handleOnChange(o)}
-            id={`option-${i}`}
+            id={`option-${o.value}-${id}`}
             name={groupName.current}
+            fullWidth={fullWidth}
           >
+            {o.icon && <Icon name={o.icon} className={styles.icon} />}
             {o.label}
           </RadioButton>
         );

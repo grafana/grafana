@@ -3,36 +3,59 @@ import {
   ConfigOverrideRule,
   DataFrame,
   DynamicConfigValue,
-  FieldConfigEditorRegistry,
-  standardFieldConfigEditorRegistry,
-  VariableSuggestionsScope,
-  SelectableValue,
+  FieldConfigOptionsRegistry,
+  FieldConfigProperty,
   GrafanaTheme,
+  VariableSuggestionsScope,
 } from '@grafana/data';
-import { fieldMatchersUI, stylesFactory, useTheme, ValuePicker, selectThemeVariant } from '@grafana/ui';
+import {
+  Field,
+  fieldMatchersUI,
+  HorizontalGroup,
+  Icon,
+  IconButton,
+  Label,
+  stylesFactory,
+  useTheme,
+  ValuePicker,
+} from '@grafana/ui';
 import { DynamicConfigValueEditor } from './DynamicConfigValueEditor';
-import { OverrideHeader } from './OverrideHeader';
+
 import { getDataLinksVariableSuggestions } from '../../../panel/panellinks/link_srv';
 import { css } from 'emotion';
+import { OptionsGroup } from './OptionsGroup';
 
 interface OverrideEditorProps {
+  name: string;
   data: DataFrame[];
   override: ConfigOverrideRule;
   onChange: (config: ConfigOverrideRule) => void;
   onRemove: () => void;
-  customPropertiesRegistry?: FieldConfigEditorRegistry;
-  configPropertiesOptions: Array<SelectableValue<string>>;
+  registry: FieldConfigOptionsRegistry;
 }
 
+const COLLECTION_STANDARD_PROPERTIES = [
+  FieldConfigProperty.Thresholds,
+  FieldConfigProperty.Links,
+  FieldConfigProperty.Mappings,
+];
+
 export const OverrideEditor: React.FC<OverrideEditorProps> = ({
+  name,
   data,
   override,
   onChange,
   onRemove,
-  customPropertiesRegistry,
-  configPropertiesOptions,
+  registry,
 }) => {
   const theme = useTheme();
+  const matcherUi = fieldMatchersUI.get(override.matcher.id);
+  const styles = getStyles(theme);
+  const matcherLabel = (
+    <Label category={['Matcher']} description={matcherUi.description}>
+      {matcherUi.name}
+    </Label>
+  );
   const onMatcherConfigChange = useCallback(
     (matcherConfig: any) => {
       override.matcher.options = matcherConfig;
@@ -58,10 +81,9 @@ export const OverrideEditor: React.FC<OverrideEditorProps> = ({
   );
 
   const onDynamicConfigValueAdd = useCallback(
-    (prop: string, custom?: boolean) => {
+    (id: string) => {
       const propertyConfig: DynamicConfigValue = {
-        prop,
-        custom,
+        id,
       };
       if (override.properties) {
         override.properties.push(propertyConfig);
@@ -73,105 +95,98 @@ export const OverrideEditor: React.FC<OverrideEditorProps> = ({
     [override, onChange]
   );
 
-  const matcherUi = fieldMatchersUI.get(override.matcher.id);
-  const styles = getStyles(theme);
-  return (
-    <div className={styles.wrapper}>
-      <div className={styles.headerWrapper}>
-        <OverrideHeader onRemove={onRemove} title={matcherUi.name} description={matcherUi.description} />
-        <div className={styles.matcherUi}>
-          <matcherUi.component
-            matcher={matcherUi.matcher}
-            data={data}
-            options={override.matcher.options}
-            onChange={option => onMatcherConfigChange(option)}
-          />
-        </div>
+  let configPropertiesOptions = registry.list().map(item => {
+    return {
+      label: item.name,
+      value: item.id,
+      description: item.description,
+    };
+  });
+
+  const renderOverrideTitle = (isExpanded: boolean) => {
+    return (
+      <div>
+        <HorizontalGroup justify="space-between">
+          <div>{name}</div>
+          <IconButton name="trash-alt" onClick={onRemove} />
+        </HorizontalGroup>
+        {!isExpanded && (
+          <div className={styles.overrideDetails}>
+            Matcher <Icon name="angle-right" /> {matcherUi.name} <br />
+            {override.properties.length === 0 ? 'No' : override.properties.length} properties overriden
+          </div>
+        )}
       </div>
+    );
+  };
+
+  return (
+    <OptionsGroup renderTitle={renderOverrideTitle} id={name} key={name}>
+      <Field label={matcherLabel} description={matcherUi.description}>
+        <matcherUi.component
+          matcher={matcherUi.matcher}
+          data={data}
+          options={override.matcher.options}
+          onChange={option => onMatcherConfigChange(option)}
+        />
+      </Field>
+
       <div>
         {override.properties.map((p, j) => {
-          const reg = p.custom ? customPropertiesRegistry : standardFieldConfigEditorRegistry;
-          const item = reg?.getIfExists(p.prop);
+          const item = registry.getIfExists(p.id);
 
           if (!item) {
-            return <div>Unknown property: {p.prop}</div>;
+            return <div>Unknown property: {p.id}</div>;
           }
+          const isCollapsible =
+            Array.isArray(p.value) || COLLECTION_STANDARD_PROPERTIES.includes(p.id as FieldConfigProperty);
 
           return (
-            <div key={`${p.prop}/${j}`}>
-              <DynamicConfigValueEditor
-                onChange={value => onDynamicConfigValueChange(j, value)}
-                onRemove={() => onDynamicConfigValueRemove(j)}
-                property={p}
-                editorsRegistry={reg}
-                context={{
-                  data,
-                  getSuggestions: (scope?: VariableSuggestionsScope) => getDataLinksVariableSuggestions(data, scope),
-                }}
-              />
-            </div>
+            <DynamicConfigValueEditor
+              key={`${p.id}/${j}`}
+              isCollapsible={isCollapsible}
+              onChange={value => onDynamicConfigValueChange(j, value)}
+              onRemove={() => onDynamicConfigValueRemove(j)}
+              property={p}
+              registry={registry}
+              context={{
+                data,
+                getSuggestions: (scope?: VariableSuggestionsScope) => getDataLinksVariableSuggestions(data, scope),
+              }}
+            />
           );
         })}
-        <div className={styles.propertyPickerWrapper}>
-          <ValuePicker
-            label="Set config property"
-            icon="plus"
-            options={configPropertiesOptions}
-            variant={'link'}
-            onChange={o => {
-              onDynamicConfigValueAdd(o.value, o.custom);
-            }}
-          />
-        </div>
+        {override.matcher.options && (
+          <div className={styles.propertyPickerWrapper}>
+            <ValuePicker
+              label="Add override property"
+              variant="secondary"
+              icon="plus"
+              options={configPropertiesOptions}
+              onChange={o => {
+                onDynamicConfigValueAdd(o.value);
+              }}
+              isFullWidth={false}
+            />
+          </div>
+        )}
       </div>
-    </div>
+    </OptionsGroup>
   );
 };
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
-  const borderColor = selectThemeVariant(
-    {
-      light: theme.colors.gray85,
-      dark: theme.colors.dark9,
-    },
-    theme.type
-  );
-
-  const headerBg = selectThemeVariant(
-    {
-      light: theme.colors.white,
-      dark: theme.colors.dark1,
-    },
-    theme.type
-  );
-
-  const shadow = selectThemeVariant(
-    {
-      light: theme.colors.gray85,
-      dark: theme.colors.black,
-    },
-    theme.type
-  );
-
   return {
-    wrapper: css`
-      border: 1px dashed ${borderColor};
-      margin-bottom: ${theme.spacing.md};
-      transition: box-shadow 0.5s cubic-bezier(0.19, 1, 0.22, 1);
-      box-shadow: none;
-      &:hover {
-        box-shadow: 0 0 10px ${shadow};
-      }
-    `,
-    headerWrapper: css`
-      background: ${headerBg};
-      padding: ${theme.spacing.xs} 0;
-    `,
     matcherUi: css`
       padding: ${theme.spacing.sm};
     `,
     propertyPickerWrapper: css`
-      border-top: 1px solid ${borderColor};
+      margin-top: ${theme.spacing.formSpacingBase * 2}px;
+    `,
+    overrideDetails: css`
+      font-size: ${theme.typography.size.sm};
+      color: ${theme.colors.textWeak};
+      font-weight: ${theme.typography.weight.regular};
     `,
   };
 });

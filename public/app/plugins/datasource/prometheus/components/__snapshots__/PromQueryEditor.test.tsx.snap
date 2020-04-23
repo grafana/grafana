@@ -77,27 +77,8 @@ exports[`Render PromQueryEditor with basic options should render 1`] = `
         Resolution
       </div>
       <Select
-        allowCustomValue={false}
-        autoFocus={false}
-        backspaceRemovesValue={true}
-        className=""
-        components={
-          Object {
-            "Group": [Function],
-            "IndicatorsContainer": [Function],
-            "MenuList": [Function],
-            "Option": [Function],
-            "SingleValue": [Function],
-          }
-        }
-        isClearable={false}
-        isDisabled={false}
-        isLoading={false}
-        isMulti={false}
         isSearchable={false}
-        maxMenuHeight={300}
         onChange={[Function]}
-        openMenuOnFocus={false}
         options={
           Array [
             Object {
@@ -126,7 +107,6 @@ exports[`Render PromQueryEditor with basic options should render 1`] = `
             },
           ]
         }
-        tabSelectsValue={true}
         value={
           Object {
             "label": "1/1",
@@ -139,32 +119,13 @@ exports[`Render PromQueryEditor with basic options should render 1`] = `
       className="gf-form"
     >
       <div
-        className="gf-form-label"
+        className="gf-form-label width-7"
       >
         Format
       </div>
       <Select
-        allowCustomValue={false}
-        autoFocus={false}
-        backspaceRemovesValue={true}
-        className=""
-        components={
-          Object {
-            "Group": [Function],
-            "IndicatorsContainer": [Function],
-            "MenuList": [Function],
-            "Option": [Function],
-            "SingleValue": [Function],
-          }
-        }
-        isClearable={false}
-        isDisabled={false}
-        isLoading={false}
-        isMulti={false}
         isSearchable={false}
-        maxMenuHeight={300}
         onChange={[Function]}
-        openMenuOnFocus={false}
         options={
           Array [
             Object {
@@ -181,13 +142,13 @@ exports[`Render PromQueryEditor with basic options should render 1`] = `
             },
           ]
         }
-        tabSelectsValue={true}
         value={
           Object {
             "label": "Time series",
             "value": "time_series",
           }
         }
+        width={16}
       />
       <Switch
         checked={false}

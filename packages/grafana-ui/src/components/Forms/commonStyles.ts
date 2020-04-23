@@ -1,11 +1,11 @@
 import { css } from 'emotion';
 import { GrafanaTheme } from '@grafana/data';
-import { ButtonSize } from '../Button/types';
+import { StyleProps } from '../Button';
 
 export const getFocusCss = (theme: GrafanaTheme) => `
   outline: 2px dotted transparent;
   outline-offset: 2px;
-  box-shadow: 0 0 0 2px ${theme.colors.pageBg}, 0 0 0px 4px ${theme.colors.formFocusOutline};
+  box-shadow: 0 0 0 2px ${theme.colors.bodyBg}, 0 0 0px 4px ${theme.colors.formFocusOutline};
   transition: all 0.2s cubic-bezier(0.19, 1, 0.22, 1);
 `;
 
@@ -17,7 +17,7 @@ export const getFocusStyle = (theme: GrafanaTheme) => css`
 
 export const sharedInputStyle = (theme: GrafanaTheme, invalid = false) => {
   const colors = theme.colors;
-  const borderColor = invalid ? colors.redBase : colors.formInputBorder;
+  const borderColor = invalid ? theme.palette.redBase : colors.formInputBorder;
 
   return css`
     background-color: ${colors.formInputBg};
@@ -35,7 +35,7 @@ export const sharedInputStyle = (theme: GrafanaTheme, invalid = false) => {
 
     &:-webkit-autofill:focus {
       /* Welcome to 2005. This is a HACK to get rid od Chromes default autofill styling */
-      box-shadow: 0 0 0 2px ${theme.colors.pageBg}, 0 0 0px 4px ${theme.colors.formFocusOutline},
+      box-shadow: 0 0 0 2px ${theme.colors.bodyBg}, 0 0 0px 4px ${theme.colors.formFocusOutline},
         inset 0 0 0 1px rgba(255, 255, 255, 0), inset 0 0 0 100px ${colors.formInputBg}!important;
     }
 
@@ -50,6 +50,11 @@ export const sharedInputStyle = (theme: GrafanaTheme, invalid = false) => {
     &:disabled {
       background-color: ${colors.formInputBgDisabled};
       color: ${colors.formInputDisabledText};
+    }
+
+    &::placeholder {
+      color: ${colors.formInputPlaceholderText};
+      opacity: 1;
     }
   `;
 };
@@ -85,34 +90,30 @@ export const inputSizesPixels = (size: string) => {
   }
 };
 
-export const getPropertiesForButtonSize = (theme: GrafanaTheme, size: ButtonSize) => {
+export const getPropertiesForButtonSize = (props: StyleProps) => {
+  const { hasText, hasIcon, size } = props;
+  const { spacing, typography, height } = props.theme;
+
   switch (size) {
     case 'sm':
       return {
-        padding: `0 ${theme.spacing.sm}`,
-        fontSize: theme.typography.size.sm,
-        height: theme.height.sm,
-      };
-
-    case 'md':
-      return {
-        padding: `0 ${theme.spacing.md}`,
-        fontSize: theme.typography.size.md,
-        height: `${theme.spacing.formButtonHeight}px`,
+        padding: `0 ${spacing.sm}`,
+        fontSize: typography.size.sm,
+        height: height.sm,
       };
 
     case 'lg':
       return {
-        padding: `0 ${theme.spacing.lg}`,
-        fontSize: theme.typography.size.lg,
-        height: theme.height.lg,
+        padding: `0 ${hasText ? spacing.lg : spacing.md} 0 ${hasIcon ? spacing.md : spacing.lg}`,
+        fontSize: typography.size.lg,
+        height: height.lg,
       };
-
+    case 'md':
     default:
       return {
-        padding: `0 ${theme.spacing.md}`,
-        fontSize: theme.typography.size.base,
-        height: theme.height.md,
+        padding: `0 ${hasText ? spacing.md : spacing.sm} 0 ${hasIcon ? spacing.sm : spacing.md}`,
+        fontSize: typography.size.md,
+        height: height.md,
       };
   }
 };

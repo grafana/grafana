@@ -1,7 +1,8 @@
 import React, { PureComponent } from 'react';
 import classNames from 'classnames';
 import { TimeSeries } from 'app/core/core';
-import { SeriesColorPicker } from '@grafana/ui';
+import { SeriesColorPicker, Icon } from '@grafana/ui';
+import { e2e } from '@grafana/e2e';
 
 export const LEGEND_STATS = ['min', 'max', 'avg', 'current', 'total'];
 
@@ -137,7 +138,13 @@ class LegendSeriesLabel extends PureComponent<LegendSeriesLabelProps & LegendSer
         onColorChange={onColorChange}
         onToggleAxis={onToggleAxis}
       />,
-      <a className="graph-legend-alias pointer" title={label} key="label" onClick={e => this.props.onLabelClick(e)}>
+      <a
+        className="graph-legend-alias pointer"
+        title={label}
+        key="label"
+        onClick={e => this.props.onLabelClick(e)}
+        aria-label={e2e.components.Panels.Visualization.Graph.Legend.selectors.legendItemAlias(label)}
+      >
         {label}
       </a>,
     ];
@@ -156,7 +163,7 @@ interface LegendSeriesIconState {
 }
 
 function SeriesIcon({ color }: { color: string }) {
-  return <i className="fa fa-minus pointer" style={{ color }} />;
+  return <Icon name="minus" style={{ color }} />;
 }
 
 class LegendSeriesIcon extends PureComponent<LegendSeriesIconProps, LegendSeriesIconState> {

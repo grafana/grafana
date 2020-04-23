@@ -1,14 +1,14 @@
 // Libraries
 import React from 'react';
+import { css } from 'emotion';
 // @ts-ignore
 import { components } from '@torkelo/react-select';
-// @ts-ignore
-import AsyncSelect from '@torkelo/react-select/async';
+import { AsyncSelect, stylesFactory } from '@grafana/ui';
+import { resetSelectStyles, Icon } from '@grafana/ui';
 import { escapeStringForRegex } from '@grafana/data';
 // Components
 import { TagOption } from './TagOption';
 import { TagBadge } from './TagBadge';
-import { IndicatorsContainer, NoOptionsMessage, resetSelectStyles } from '@grafana/ui';
 
 export interface TermCount {
   term: string;
@@ -16,13 +16,25 @@ export interface TermCount {
 }
 
 export interface Props {
-  tags: string[];
-  tagOptions: () => Promise<TermCount[]>;
+  /** Do not show selected values inside Select. Useful when the values need to be shown in some other components */
+  hideValues?: boolean;
+  isClearable?: boolean;
   onChange: (tags: string[]) => void;
+  placeholder?: string;
+  tagOptions: () => Promise<TermCount[]>;
+  tags: string[];
+  width?: number;
 }
 
+const filterOption = (option: any, searchQuery: string) => {
+  const regex = RegExp(escapeStringForRegex(searchQuery), 'i');
+  return regex.test(option.value);
+};
+
 export class TagFilter extends React.Component<Props, any> {
-  inlineTags: boolean;
+  static defaultProps = {
+    placeholder: 'Tags',
+  };
 
   constructor(props: Props) {
     super(props);
@@ -39,34 +51,34 @@ export class TagFilter extends React.Component<Props, any> {
   };
 
   onChange = (newTags: any[]) => {
-    this.props.onChange(newTags.map(tag => tag.value));
+    // On remove with 1 item returns null, so we need to make sure it's an empty array in that case
+    // https://github.com/JedWatson/react-select/issues/3632
+    this.props.onChange((newTags || []).map(tag => tag.value));
   };
 
   render() {
+    const styles = getStyles();
+
     const tags = this.props.tags.map(tag => ({ value: tag, label: tag, count: 0 }));
+    const { width, placeholder, hideValues, isClearable } = this.props;
 
     const selectOptions = {
-      classNamePrefix: 'gf-form-select-box',
-      isMulti: true,
       defaultOptions: true,
-      loadOptions: this.onLoadOptions,
-      onChange: this.onChange,
-      className: 'gf-form-input gf-form-input--form-dropdown',
-      placeholder: 'Tags',
-      loadingMessage: () => 'Loading...',
-      noOptionsMessage: () => 'No tags found',
-      getOptionValue: (i: any) => i.value,
+      filterOption,
       getOptionLabel: (i: any) => i.label,
-      value: tags,
+      getOptionValue: (i: any) => i.value,
+      isClearable,
+      isMulti: true,
+      loadOptions: this.onLoadOptions,
+      loadingMessage: 'Loading...',
+      noOptionsMessage: 'No tags found',
+      onChange: this.onChange,
+      placeholder,
       styles: resetSelectStyles(),
-      filterOption: (option: any, searchQuery: string) => {
-        const regex = RegExp(escapeStringForRegex(searchQuery), 'i');
-        return regex.test(option.value);
-      },
+      value: tags,
+      width,
       components: {
         Option: TagOption,
-        IndicatorsContainer,
-        NoOptionsMessage,
         MultiValueLabel: (): any => {
           return null; // We want the whole tag to be clickable so we use MultiValueRemove instead
         },
@@ -79,16 +91,34 @@ export class TagFilter extends React.Component<Props, any> {
             </components.MultiValueRemove>
           );
         },
+        MultiValueContainer: hideValues ? (): any => null : components.MultiValueContainer,
       },
     };
 
     return (
-      <div className="gf-form gf-form--has-input-icon gf-form--grow">
-        <div className="tag-filter">
-          <AsyncSelect {...selectOptions} />
-        </div>
-        <i className="gf-form-input-icon fa fa-tag" />
+      <div className={styles.tagFilter}>
+        <AsyncSelect {...selectOptions} prefix={<Icon name="tag-alt" />} />
       </div>
     );
   }
 }
+
+const getStyles = stylesFactory(() => {
+  return {
+    tagFilter: css`
+      min-width: 180px;
+      line-height: 22px;
+      flex-grow: 1;
+
+      .label-tag {
+        margin-left: 6px;
+        font-size: 11px;
+        cursor: pointer;
+
+        .fa.fa-remove {
+          margin-right: 3px;
+        }
+      }
+    `,
+  };
+});

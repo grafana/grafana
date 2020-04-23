@@ -1,9 +1,8 @@
 import React, { FC, PureComponent } from 'react';
-import classNames from 'classnames';
 import { connect } from 'react-redux';
 import { hot } from 'react-hot-loader';
 import { DataSourcePluginMeta, NavModel } from '@grafana/data';
-import { List } from '@grafana/ui';
+import { List, LinkButton, Button } from '@grafana/ui';
 import { e2e } from '@grafana/e2e';
 
 import Page from 'app/core/components/Page/Page';
@@ -12,6 +11,8 @@ import { addDataSource, loadDataSourcePlugins } from './state/actions';
 import { getDataSourcePlugins } from './state/selectors';
 import { FilterInput } from 'app/core/components/FilterInput/FilterInput';
 import { setDataSourceTypeSearchQuery } from './state/reducers';
+import { PluginSignatureBadge } from '../plugins/PluginSignatureBadge';
+import { Card } from 'app/core/components/Card/Card';
 
 export interface Props {
   navModel: NavModel;
@@ -25,11 +26,8 @@ export interface Props {
 }
 
 class NewDataSourcePage extends PureComponent<Props> {
-  searchInput: HTMLElement;
-
   componentDidMount() {
     this.props.loadDataSourcePlugins();
-    this.searchInput.focus();
   }
 
   onDataSourceTypeClicked = (plugin: DataSourcePluginMeta) => {
@@ -76,14 +74,14 @@ class NewDataSourcePage extends PureComponent<Props> {
           </div>
         ))}
         <div className="add-data-source-more">
-          <a
-            className="btn btn-inverse"
+          <LinkButton
+            variant="secondary"
             href="https://grafana.com/plugins?type=datasource&utm_source=grafana_add_ds"
             target="_blank"
             rel="noopener"
           >
             Find more data source plugins on grafana.com
-          </a>
+          </LinkButton>
         </div>
       </>
     );
@@ -96,20 +94,9 @@ class NewDataSourcePage extends PureComponent<Props> {
       <Page navModel={navModel}>
         <Page.Contents isLoading={isLoading}>
           <div className="page-action-bar">
-            <div className="gf-form gf-form--grow">
-              <FilterInput
-                ref={elem => (this.searchInput = elem)}
-                labelClassName="gf-form--has-input-icon"
-                inputClassName="gf-form-input width-30"
-                value={searchQuery}
-                onChange={this.onSearchQueryChange}
-                placeholder="Filter by name or type"
-              />
-            </div>
+            <FilterInput value={searchQuery} onChange={this.onSearchQueryChange} placeholder="Filter by name or type" />
             <div className="page-action-bar__spacer" />
-            <a className="btn btn-secondary" href="datasources">
-              Cancel
-            </a>
+            <LinkButton href="datasources">Cancel</LinkButton>
           </div>
           <div>
             {searchQuery && this.renderPlugins(plugins)}
@@ -134,13 +121,31 @@ const DataSourceTypeCard: FC<DataSourceTypeCardProps> = props => {
 
   // find first plugin info link
   const learnMoreLink = plugin.info.links && plugin.info.links.length > 0 ? plugin.info.links[0] : null;
-  const mainClassName = classNames('add-data-source-item', {
-    'add-data-source-item--phantom': isPhantom,
-  });
 
   return (
-    <div
-      className={mainClassName}
+    <Card
+      title={plugin.name}
+      description={plugin.info.description}
+      ariaLabel={e2e.pages.AddDataSource.selectors.dataSourcePlugins(plugin.name)}
+      logoUrl={plugin.info.logos.small}
+      actions={
+        <>
+          {learnMoreLink && (
+            <LinkButton
+              variant="secondary"
+              href={`${learnMoreLink.url}?utm_source=grafana_add_ds`}
+              target="_blank"
+              rel="noopener"
+              onClick={onLearnMoreClick}
+              icon="external-link-alt"
+            >
+              {learnMoreLink.name}
+            </LinkButton>
+          )}
+          {!isPhantom && <Button>Select</Button>}
+        </>
+      }
+      className={isPhantom && 'add-data-source-item--phantom'}
       onClick={onClick}
       aria-label={e2e.pages.AddDataSource.selectors.dataSourcePlugins(plugin.name)}
     >
@@ -148,22 +153,28 @@ const DataSourceTypeCard: FC<DataSourceTypeCardProps> = props => {
       <div className="add-data-source-item-text-wrapper">
         <span className="add-data-source-item-text">{plugin.name}</span>
         {plugin.info.description && <span className="add-data-source-item-desc">{plugin.info.description}</span>}
+        {!isPhantom && (
+          <div>
+            <PluginSignatureBadge status={plugin.signature} />
+          </div>
+        )}
       </div>
       <div className="add-data-source-item-actions">
         {learnMoreLink && (
-          <a
-            className="btn btn-inverse"
+          <LinkButton
+            variant="secondary"
             href={`${learnMoreLink.url}?utm_source=grafana_add_ds`}
             target="_blank"
             rel="noopener"
             onClick={onLearnMoreClick}
+            icon="external-link-alt"
           >
-            {learnMoreLink.name} <i className="fa fa-external-link add-datasource-item-actions__btn-icon" />
-          </a>
+            {learnMoreLink.name}
+          </LinkButton>
         )}
-        {!isPhantom && <button className="btn btn-primary">Select</button>}
+        {!isPhantom && <Button>Select</Button>}
       </div>
-    </div>
+    </Card>
   );
 };
 

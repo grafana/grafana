@@ -1,6 +1,7 @@
 import _ from 'lodash';
 import coreModule from '../../core_module';
 import { ISCEService } from 'angular';
+import { promiseToDigest } from 'app/core/utils/promiseToDigest';
 
 function typeaheadMatcher(this: any, item: string) {
   let str = this.query;
@@ -101,8 +102,7 @@ export class FormDropdownCtrl {
   }
 
   getOptionsInternal(query: string) {
-    const result = this.getOptions({ $query: query });
-    return Promise.resolve(result);
+    return promiseToDigest(this.$scope)(Promise.resolve(this.getOptions({ $query: query })));
   }
 
   isPromiseLike(obj: any) {

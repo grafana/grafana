@@ -1,5 +1,6 @@
 import React, { useMemo } from 'react';
-import { Forms, Button, HorizontalGroup } from '@grafana/ui';
+
+import { Button, HorizontalGroup, TextArea, Form, Checkbox } from '@grafana/ui';
 import { e2e } from '@grafana/e2e';
 import { SaveDashboardFormProps } from '../types';
 
@@ -14,7 +15,7 @@ export const SaveDashboardForm: React.FC<SaveDashboardFormProps> = ({ dashboard,
   const hasVariableChanged = useMemo(() => dashboard.hasVariableValuesChanged(), [dashboard]);
 
   return (
-    <Forms.Form
+    <Form
       onSubmit={async (data: SaveDashboardFormDTO) => {
         const result = await onSubmit(dashboard.getSaveModelClone(data), data, dashboard);
         if (result.status === 'success') {
@@ -30,38 +31,38 @@ export const SaveDashboardForm: React.FC<SaveDashboardFormProps> = ({ dashboard,
     >
       {({ register, errors }) => (
         <>
-          <Forms.Field label="Changes description">
-            <Forms.TextArea name="message" ref={register} placeholder="Add a note to describe your changes..." />
-          </Forms.Field>
-          {hasTimeChanged && (
-            <Forms.Field label="Save current time range" description="Dashboard time range has changed">
-              <Forms.Switch
+          <div className="gf-form-group">
+            {hasTimeChanged && (
+              <Checkbox
+                label="Save current time range as dashboard default"
                 name="saveTimerange"
                 ref={register}
                 aria-label={e2e.pages.SaveDashboardModal.selectors.saveTimerange}
               />
-            </Forms.Field>
-          )}
-          {hasVariableChanged && (
-            <Forms.Field label="Save current variables" description="Dashboard variables have changed">
-              <Forms.Switch
+            )}
+            {hasVariableChanged && (
+              <Checkbox
+                label="Save current variable values as dashboard default"
                 name="saveVariables"
                 ref={register}
                 aria-label={e2e.pages.SaveDashboardModal.selectors.saveVariables}
               />
-            </Forms.Field>
-          )}
+            )}
+            {(hasVariableChanged || hasTimeChanged) && <div className="gf-form-group" />}
+
+            <TextArea name="message" ref={register} placeholder="Add a note to describe your changes..." autoFocus />
+          </div>
 
           <HorizontalGroup>
             <Button type="submit" aria-label={e2e.pages.SaveDashboardModal.selectors.save}>
               Save
             </Button>
-            <Forms.Button variant="secondary" onClick={onCancel}>
+            <Button variant="secondary" onClick={onCancel}>
               Cancel
-            </Forms.Button>
+            </Button>
           </HorizontalGroup>
         </>
       )}
-    </Forms.Form>
+    </Form>
   );
 };

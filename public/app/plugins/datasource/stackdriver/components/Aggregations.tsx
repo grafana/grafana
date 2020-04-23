@@ -2,13 +2,12 @@ import React from 'react';
 import _ from 'lodash';
 
 import { SelectableValue } from '@grafana/data';
-import { Segment } from '@grafana/ui';
+import { Segment, Icon } from '@grafana/ui';
 import { getAggregationOptionsByMetric } from '../functions';
 import { ValueTypes, MetricKind } from '../constants';
-import { MetricDescriptor } from '../types';
 
 export interface Props {
-  onChange: (metricDescriptor: MetricDescriptor[]) => void;
+  onChange: (metricDescriptor: string) => void;
   metricDescriptor: {
     valueType: string;
     metricKind: string;
@@ -86,13 +85,13 @@ export class Aggregations extends React.Component<Props, State> {
             <label className="gf-form-label gf-form-label--grow">
               <a onClick={this.onToggleDisplayAdvanced}>
                 <>
-                  <i className={`fa fa-caret-${displayAdvancedOptions ? 'down' : 'right'}`} /> Advanced Options
+                  <Icon name={displayAdvancedOptions ? 'angle-down' : 'angle-right'} /> Advanced Options
                 </>
               </a>
             </label>
           </div>
         </div>
-        {this.props.children(this.state.displayAdvancedOptions)}
+        {this.props.children && this.props.children(this.state.displayAdvancedOptions)}
       </>
     );
   }

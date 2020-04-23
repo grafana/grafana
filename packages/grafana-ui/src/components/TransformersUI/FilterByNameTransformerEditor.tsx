@@ -1,16 +1,26 @@
-import React, { useContext } from 'react';
-import { FilterFieldsByNameTransformerOptions, DataTransformerID, transformersRegistry, KeyValue } from '@grafana/data';
-import { TransformerUIProps, TransformerUIRegistyItem } from './types';
-import { ThemeContext } from '../../themes/ThemeContext';
-import { css, cx } from 'emotion';
-import { InlineList } from '../List/InlineList';
+import React from 'react';
+import {
+  DataTransformerID,
+  FilterFieldsByNameTransformerOptions,
+  KeyValue,
+  standardTransformers,
+  TransformerRegistyItem,
+  TransformerUIProps,
+} from '@grafana/data';
+import { HorizontalGroup } from '../Layout/Layout';
+import { Input } from '../Input/Input';
+import { FilterPill } from '../FilterPill/FilterPill';
+import { Field } from '../Forms/Field';
+import { css } from 'emotion';
 
 interface FilterByNameTransformerEditorProps extends TransformerUIProps<FilterFieldsByNameTransformerOptions> {}
 
 interface FilterByNameTransformerEditorState {
-  include: string;
+  include: string[];
   options: FieldNameInfo[];
   selected: string[];
+  regex?: string;
+  isRegexValid?: boolean;
 }
 
 interface FieldNameInfo {
@@ -24,9 +34,10 @@ export class FilterByNameTransformerEditor extends React.PureComponent<
   constructor(props: FilterByNameTransformerEditorProps) {
     super(props);
     this.state = {
-      include: props.options.include || '',
+      include: props.options.include || [],
       options: [],
       selected: [],
+      isRegexValid: true,
     };
   }
 
@@ -36,10 +47,11 @@ export class FilterByNameTransformerEditor extends React.PureComponent<
 
   private initOptions() {
     const { input, options } = this.props;
-    const configuredOptions = options.include ? options.include.split('|') : [];
+    const configuredOptions = options.include ? options.include : [];
 
     const allNames: FieldNameInfo[] = [];
     const byName: KeyValue<FieldNameInfo> = {};
+
     for (const frame of input) {
       for (const field of frame.fields) {
         let v = byName[field.name];
@@ -54,22 +66,28 @@ export class FilterByNameTransformerEditor extends React.PureComponent<
       }
     }
 
+    let regexOption;
+
     if (configuredOptions.length) {
-      const options: FieldNameInfo[] = [];
-      const selected: FieldNameInfo[] = [];
-      for (const v of allNames) {
-        if (configuredOptions.includes(v.name)) {
-          selected.push(v);
+      let selected: FieldNameInfo[] = [];
+
+      for (const o of configuredOptions) {
+        const selectedFields = allNames.filter(n => n.name === o);
+        if (selectedFields.length > 0) {
+          selected = selected.concat(selectedFields);
+        } else {
+          // there can be only one regex in the options
+          regexOption = o;
         }
-        options.push(v);
       }
 
       this.setState({
-        options,
+        options: allNames,
         selected: selected.map(s => s.name),
+        regex: regexOption,
       });
     } else {
-      this.setState({ options: allNames, selected: [] });
+      this.setState({ options: allNames, selected: allNames.map(n => n.name) });
     }
   }
 
@@ -83,81 +101,94 @@ export class FilterByNameTransformerEditor extends React.PureComponent<
   };
 
   onChange = (selected: string[]) => {
-    this.setState({ selected });
-    this.props.onChange({
-      ...this.props.options,
-      include: selected.join('|'),
+    const { regex, isRegexValid } = this.state;
+    let include = selected;
+
+    if (regex && isRegexValid) {
+      include = include.concat([regex]);
+    }
+
+    this.setState({ selected }, () => {
+      this.props.onChange({
+        ...this.props.options,
+        include,
+      });
+    });
+  };
+
+  onInputBlur = (e: React.FocusEvent<HTMLInputElement>) => {
+    const { selected, regex } = this.state;
+    let isRegexValid = true;
+    try {
+      if (regex) {
+        new RegExp(regex);
+      }
+    } catch (e) {
+      isRegexValid = false;
+    }
+    if (isRegexValid) {
+      this.props.onChange({
+        ...this.props.options,
+        include: regex ? [...selected, regex] : selected,
+      });
+    } else {
+      this.props.onChange({
+        ...this.props.options,
+        include: selected,
+      });
+    }
+    this.setState({
+      isRegexValid,
     });
   };
 
   render() {
-    const { options, selected } = this.state;
+    const { options, selected, isRegexValid } = this.state;
     return (
-      <>
-        <InlineList
-          items={options}
-          renderItem={(o, i) => {
-            const label = `${o.name}${o.count > 1 ? ' (' + o.count + ')' : ''}`;
-            return (
-              <span
-                className={css`
-                  margin-right: ${i === options.length - 1 ? '0' : '10px'};
-                `}
-              >
+      <div className="gf-form-inline">
+        <div className="gf-form gf-form--grow">
+          <div className="gf-form-label width-8">Field name</div>
+          <HorizontalGroup spacing="xs" align="flex-start" wrap>
+            <Field
+              invalid={!isRegexValid}
+              error={!isRegexValid ? 'Invalid pattern' : undefined}
+              className={css`
+                margin-bottom: 0;
+              `}
+            >
+              <Input
+                placeholder="Regular expression pattern"
+                value={this.state.regex || ''}
+                onChange={e => this.setState({ regex: e.currentTarget.value })}
+                onBlur={this.onInputBlur}
+                width={25}
+              />
+            </Field>
+            {options.map((o, i) => {
+              const label = `${o.name}${o.count > 1 ? ' (' + o.count + ')' : ''}`;
+              const isSelected = selected.indexOf(o.name) > -1;
+              return (
                 <FilterPill
+                  key={`${o.name}/${i}`}
                   onClick={() => {
                     this.onFieldToggle(o.name);
                   }}
                   label={label}
-                  selected={selected.indexOf(o.name) > -1}
+                  selected={isSelected}
                 />
-              </span>
-            );
-          }}
-        />
-      </>
+              );
+            })}
+          </HorizontalGroup>
+        </div>
+      </div>
     );
   }
 }
 
-interface FilterPillProps {
-  selected: boolean;
-  label: string;
-  onClick: React.MouseEventHandler<HTMLElement>;
-}
-const FilterPill: React.FC<FilterPillProps> = ({ label, selected, onClick }) => {
-  const theme = useContext(ThemeContext);
-  return (
-    <div
-      className={css`
-        padding: ${theme.spacing.xxs} ${theme.spacing.sm};
-        color: white;
-        background: ${selected ? theme.colors.blueLight : theme.colors.blueShade};
-        border-radius: 16px;
-        display: inline-block;
-        cursor: pointer;
-      `}
-      onClick={onClick}
-    >
-      {selected && (
-        <i
-          className={cx(
-            'fa fa-check',
-            css`
-              margin-right: 4px;
-            `
-          )}
-        />
-      )}
-      {label}
-    </div>
-  );
-};
-
-export const filterFieldsByNameTransformRegistryItem: TransformerUIRegistyItem<FilterFieldsByNameTransformerOptions> = {
+export const filterFieldsByNameTransformRegistryItem: TransformerRegistyItem<FilterFieldsByNameTransformerOptions> = {
   id: DataTransformerID.filterFieldsByName,
-  component: FilterByNameTransformerEditor,
-  transformer: transformersRegistry.get(DataTransformerID.filterFieldsByName),
+  editor: FilterByNameTransformerEditor,
+  transformation: standardTransformers.filterFieldsByNameTransformer,
   name: 'Filter by name',
-  description: 'UI for filter by name transformation',
+  description: 'Filter fields by name',
 };
