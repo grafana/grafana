@@ -30,22 +30,7 @@ interface DisplayModel {
   tooltip: string;
 }
 
-let i = 0;
-
 function getSignatureDisplayModel(signature: PluginSignatureStatus): DisplayModel {
-  if (i === 5) {
-    signature = PluginSignatureStatus.valid;
-  }
-
-  if (i === 7) {
-    signature = PluginSignatureStatus.modified;
-  }
-
-  if (i === 10) {
-    signature = PluginSignatureStatus.invalid;
-  }
-  i++;
-
   switch (signature) {
     case PluginSignatureStatus.internal:
       return { text: 'Core', icon: 'cube', color: 'blue', tooltip: 'Core plugin that is bundled with Grafana' };
@@ -67,26 +52,34 @@ function getSignatureDisplayModel(signature: PluginSignatureStatus): DisplayMode
       };
   }
 
-  return { text: 'Unsigned', icon: 'exclamation-triangle', color: 'red', tooltip: 'External unsigned plugin' };
+  return { text: 'Unsigned', icon: 'exclamation-triangle', color: 'red', tooltip: 'Unsigned external plugin' };
 }
 
 const getStyles = stylesFactory((theme: GrafanaTheme, model: DisplayModel) => {
-  let mainColor = getColorFromHexRgbOrName(model.color);
+  let sourceColor = getColorFromHexRgbOrName(model.color);
+  let borderColor = '';
   let bgColor = '';
+  let textColor = '';
 
   if (theme.isDark) {
-    bgColor = tinycolor(mainColor)
-      .darken(30)
+    bgColor = tinycolor(sourceColor)
+      .darken(38)
       .toString();
-    mainColor = tinycolor(mainColor)
-      .darken(15)
+    borderColor = tinycolor(sourceColor)
+      .darken(25)
+      .toString();
+    textColor = tinycolor(sourceColor)
+      .lighten(45)
       .toString();
   } else {
-    bgColor = tinycolor(mainColor)
+    bgColor = tinycolor(sourceColor)
       .lighten(30)
       .toString();
-    mainColor = tinycolor(mainColor)
-      .lighten(10)
+    borderColor = tinycolor(sourceColor)
+      .lighten(15)
+      .toString();
+    textColor = tinycolor(sourceColor)
+      .darken(40)
       .toString();
   }
 
@@ -98,7 +91,8 @@ const getStyles = stylesFactory((theme: GrafanaTheme, model: DisplayModel) => {
       border-radius: 3px;
       margin-top: 6px;
       background: ${bgColor};
-      border: 1px solid ${mainColor};
+      border: 1px solid ${borderColor};
+      color: ${textColor};
 
       > span {
         position: relative;
