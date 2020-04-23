@@ -3,6 +3,7 @@ import { css } from 'emotion';
 import uniqueId from 'lodash/uniqueId';
 import { SelectableValue } from '@grafana/data';
 import { RadioButtonSize, RadioButton } from './RadioButton';
+import { Icon } from '../../Icon/Icon';
 
 const getRadioButtonGroupStyles = () => {
   return {
@@ -67,19 +68,20 @@ export function RadioButtonGroup<T>({
 
   return (
     <div className={styles.radioGroup}>
-      {options.map(o => {
+      {options.map((o, i) => {
         const isItemDisabled = disabledOptions && o.value && disabledOptions.includes(o.value);
         return (
           <RadioButton
             size={size}
             disabled={isItemDisabled || disabled}
             active={value === o.value}
-            key={o.label}
+            key={`o.label-${i}`}
             onChange={handleOnChange(o)}
             id={`option-${o.value}-${id}`}
             name={groupName.current}
             fullWidth={fullWidth}
           >
+            {o.icon && <Icon name={o.icon} />}
             {o.label}
           </RadioButton>
         );

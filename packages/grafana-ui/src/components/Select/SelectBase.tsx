@@ -1,5 +1,4 @@
 import React, { useCallback } from 'react';
-import { deprecationWarning } from '@grafana/data';
 // @ts-ignore
 import { default as ReactSelect } from '@torkelo/react-select';
 // @ts-ignore
@@ -11,7 +10,6 @@ import { default as AsyncCreatable } from '@torkelo/react-select/async-creatable
 
 import { Icon } from '../Icon/Icon';
 import { css, cx } from 'emotion';
-import { inputSizesPixels } from '../Forms/commonStyles';
 import resetSelectStyles from './resetSelectStyles';
 import { SelectMenu, SelectMenuOptions } from './SelectMenu';
 import { IndicatorsContainer } from './IndicatorsContainer';
@@ -25,6 +23,31 @@ import { useTheme } from '../../themes';
 import { getSelectStyles } from './getSelectStyles';
 import { cleanValue } from './utils';
 import { SelectBaseProps, SelectValue } from './types';
+
+interface ExtraValuesIndicatorProps {
+  maxVisibleValues?: number | undefined;
+  selectedValuesCount: number;
+  menuIsOpen: boolean;
+  showAllSelectedWhenOpen: boolean;
+}
+
+const renderExtraValuesIndicator = (props: ExtraValuesIndicatorProps) => {
+  const { maxVisibleValues, selectedValuesCount, menuIsOpen, showAllSelectedWhenOpen } = props;
+
+  if (
+    maxVisibleValues !== undefined &&
+    selectedValuesCount > maxVisibleValues &&
+    !(showAllSelectedWhenOpen && menuIsOpen)
+  ) {
+    return (
+      <span key="excess-values" id="excess-values">
+        (+{selectedValuesCount - maxVisibleValues})
+      </span>
+    );
+  }
+
+  return null;
+};
 
 const CustomControl = (props: any) => {
   const {
@@ -68,6 +91,7 @@ export function SelectBase<T>({
   allowCustomValue = false,
   autoFocus = false,
   backspaceRemovesValue = true,
+  closeMenuOnSelect = true,
   components,
   defaultOptions,
   defaultValue,
@@ -85,6 +109,7 @@ export function SelectBase<T>({
   loadOptions,
   loadingMessage = 'Loading options...',
   maxMenuHeight = 300,
+  maxVisibleValues,
   menuPosition,
   menuPlacement = 'auto',
   noOptionsMessage = 'No options found',
@@ -100,8 +125,9 @@ export function SelectBase<T>({
   placeholder = 'Choose',
   prefix,
   renderControl,
-  size = 'auto',
+  showAllSelectedWhenOpen = true,
   tabSelectsValue = true,
+  className,
   value,
   width,
 }: SelectBaseProps<T>) {
@@ -144,6 +170,7 @@ export function SelectBase<T>({
     autoFocus,
     backspaceRemovesValue,
     captureMenuScroll: false,
+    closeMenuOnSelect,
     defaultValue,
     // Also passing disabled, as this is the new Select API, and I want to use this prop instead of react-select's one
     disabled,
@@ -158,6 +185,7 @@ export function SelectBase<T>({
     isMulti,
     isSearchable,
     maxMenuHeight,
+    maxVisibleValues,
     menuIsOpen: isOpen,
     menuPlacement,
     menuPosition,
@@ -173,16 +201,10 @@ export function SelectBase<T>({
     placeholder,
     prefix,
     renderControl,
+    showAllSelectedWhenOpen,
     tabSelectsValue,
     value: isMulti ? selectedValue : selectedValue[0],
   };
-
-  // width property is deprecated in favor of size or className
-  let widthClass = '';
-  if (width) {
-    deprecationWarning('Select', 'width property', 'size or className');
-    widthClass = 'width-' + width;
-  }
 
   if (allowCustomValue) {
     ReactSelectComponent = Creatable;
@@ -205,7 +227,22 @@ export function SelectBase<T>({
         components={{
           MenuList: SelectMenu,
           Group: SelectOptionGroup,
-          ValueContainer: ValueContainer,
+          ValueContainer: (props: any) => {
+            const { menuIsOpen } = props.selectProps;
+            if (
+              Array.isArray(props.children) &&
+              Array.isArray(props.children[0]) &&
+              maxVisibleValues !== undefined &&
+              !(showAllSelectedWhenOpen && menuIsOpen)
+            ) {
+              const [valueChildren, ...otherChildren] = props.children;
+              const truncatedValues = valueChildren.slice(0, maxVisibleValues);
+
+              return <ValueContainer {...props} children={[truncatedValues, ...otherChildren]} />;
+            }
+
+            return <ValueContainer {...props} />;
+          },
           Placeholder: (props: any) => (
             <div
               {...props.innerProps}
@@ -225,7 +262,28 @@ export function SelectBase<T>({
               {props.children}
             </div>
           ),
-          IndicatorsContainer: IndicatorsContainer,
+          IndicatorsContainer: (props: any) => {
+            const { selectProps } = props;
+            const { value, showAllSelectedWhenOpen, maxVisibleValues, menuIsOpen } = selectProps;
+
+            if (maxVisibleValues !== undefined) {
+              const selectedValuesCount = value.length;
+              const indicatorChildren = [...props.children];
+              indicatorChildren.splice(
+                -1,
+                0,
+                renderExtraValuesIndicator({
+                  maxVisibleValues,
+                  selectedValuesCount,
+                  showAllSelectedWhenOpen,
+                  menuIsOpen,
+                })
+              );
+              return <IndicatorsContainer {...props} children={indicatorChildren} />;
+            }
+
+            return <IndicatorsContainer {...props} />;
+          },
           IndicatorSeparator: () => <></>,
           Control: CustomControl,
           Option: SelectMenuOptions,
@@ -263,6 +321,9 @@ export function SelectBase<T>({
         }}
         styles={{
           ...resetSelectStyles(),
+          menuPortal: () => ({
+            zIndex: theme.zIndex.dropdown,
+          }),
           //These are required for the menu positioning to function
           menu: ({ top, bottom, width, position }: any) => ({
             top,
@@ -270,14 +331,14 @@ export function SelectBase<T>({
             width,
             position,
             marginBottom: !!bottom ? '10px' : '0',
-            zIndex: 9999,
+            zIndex: theme.zIndex.dropdown,
           }),
           container: () => ({
             position: 'relative',
-            width: inputSizesPixels(size),
+            width: width ? `${8 * width}px` : '100%',
           }),
         }}
-        className={cx('select-container', widthClass)}
+        className={className}
         {...commonSelectProps}
         {...creatableProps}
         {...asyncSelectProps}

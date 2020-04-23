@@ -179,4 +179,4 @@ We recommend that you use a linter for your JavaScript. For ES6, the standard li
       }
     }
     ```
-5. If using Lodash, then be consequent and prefer that to the native ES6 array functions.
+5. If using Lodash, then be consistent and prefer that to the native ES6 array functions.

@@ -1,4 +1,4 @@
-import React, { useContext } from 'react';
+import React from 'react';
 import {
   DataTransformerID,
   FilterFramesByRefIdTransformerOptions,
@@ -7,10 +7,8 @@ import {
   TransformerRegistyItem,
   TransformerUIProps,
 } from '@grafana/data';
-import { ThemeContext } from '../../themes/ThemeContext';
-import { css } from 'emotion';
-import { InlineList } from '../List/InlineList';
-import { Icon } from '../Icon/Icon';
+import { HorizontalGroup } from '../Layout/Layout';
+import { FilterPill } from '../FilterPill/FilterPill';
 
 interface FilterByRefIdTransformerEditorProps extends TransformerUIProps<FilterFramesByRefIdTransformerOptions> {}
 
@@ -100,64 +98,30 @@ export class FilterByRefIdTransformerEditor extends React.PureComponent<
   render() {
     const { options, selected } = this.state;
     return (
-      <>
-        <InlineList
-          items={options}
-          renderItem={(o, i) => {
-            const label = `${o.refId}${o.count > 1 ? ' (' + o.count + ')' : ''}`;
-            return (
-              <span
-                className={css`
-                  margin-right: ${i === options.length - 1 ? '0' : '10px'};
-                `}
-              >
+      <div className="gf-form-inline">
+        <div className="gf-form gf-form--grow">
+          <div className="gf-form-label width-8">Series refId</div>
+          <HorizontalGroup spacing="xs">
+            {options.map((o, i) => {
+              const label = `${o.refId}${o.count > 1 ? ' (' + o.count + ')' : ''}`;
+              const isSelected = selected.indexOf(o.refId) > -1;
+              return (
                 <FilterPill
+                  key={`${o.refId}/${i}`}
                   onClick={() => {
                     this.onFieldToggle(o.refId);
                   }}
                   label={label}
-                  selected={selected.indexOf(o.refId) > -1}
+                  selected={isSelected}
                 />
-              </span>
-            );
-          }}
-        />
-      </>
+              );
+            })}
+          </HorizontalGroup>
+        </div>
+      </div>
     );
   }
 }
-
-interface FilterPillProps {
-  selected: boolean;
-  label: string;
-  onClick: React.MouseEventHandler<HTMLElement>;
-}
-const FilterPill: React.FC<FilterPillProps> = ({ label, selected, onClick }) => {
-  const theme = useContext(ThemeContext);
-  return (
-    <div
-      className={css`
-        padding: ${theme.spacing.xxs} ${theme.spacing.sm};
-        color: white;
-        background: ${selected ? theme.palette.blue95 : theme.palette.blue77};
-        border-radius: 16px;
-        display: inline-block;
-        cursor: pointer;
-      `}
-      onClick={onClick}
-    >
-      {selected && (
-        <Icon
-          className={css`
-            margin-right: 4px;
-          `}
-          name="check"
-        />
-      )}
-      {label}
-    </div>
-  );
-};
 
 export const filterFramesByRefIdTransformRegistryItem: TransformerRegistyItem<FilterFramesByRefIdTransformerOptions> = {
   id: DataTransformerID.filterByRefId,

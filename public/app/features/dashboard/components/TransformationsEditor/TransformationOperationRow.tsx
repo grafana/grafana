@@ -23,7 +23,7 @@ export const TransformationOperationRow: React.FC<TransformationOperationRowProp
 
   const renderActions = ({ isOpen }: { isOpen: boolean }) => {
     return (
-      <HorizontalGroup>
+      <HorizontalGroup align="center">
         <QueryOperationAction
           disabled={!isOpen}
           icon="bug"
@@ -31,6 +31,7 @@ export const TransformationOperationRow: React.FC<TransformationOperationRowProp
             setShowDebug(!showDebug);
           }}
         />
+
         <QueryOperationAction icon="trash-alt" onClick={onRemove} />
       </HorizontalGroup>
     );

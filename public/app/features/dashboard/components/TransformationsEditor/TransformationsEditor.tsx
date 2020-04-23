@@ -52,10 +52,10 @@ export class TransformationsEditor extends React.PureComponent<Props> {
 
     return (
       <ValuePicker
-        size="md"
         variant="secondary"
         label="Add transformation"
         options={availableTransformers}
+        size="lg"
         onChange={this.onTransformationAdd}
         isFullWidth={false}
       />
@@ -112,7 +112,7 @@ export class TransformationsEditor extends React.PureComponent<Props> {
     return (
       <CustomScrollbar autoHeightMin="100%">
         <Container padding="md">
-          <p className="muted text-center" style={{ padding: '8px' }}>
+          <p className="muted">
             Transformations allow you to combine, re-order, hide and rename specific parts the the data set before being
             visualized.
           </p>

@@ -1,4 +1,4 @@
-import { AppEvents, DataSourceInstanceSettings, DataSourceSelectItem } from '@grafana/data';
+import { AppEvents, DataSourceInstanceSettings, DataSourceSelectItem, locationUtil } from '@grafana/data';
 import { getBackendSrv } from '@grafana/runtime';
 import config from 'app/core/config';
 import {
@@ -9,7 +9,6 @@ import {
   InputType,
   ImportDashboardDTO,
 } from './reducers';
-import locationUtil from 'app/core/utils/location_util';
 import { updateLocation } from 'app/core/actions';
 import { ThunkResult } from 'app/types';
 import { appEvents } from '../../../core/core';
@@ -61,7 +60,7 @@ function processInputs(dashboardJson: any): ThunkResult<void> {
   };
 }
 
-export function resetDashboard(): ThunkResult<void> {
+export function clearLoadedDashboard(): ThunkResult<void> {
   return dispatch => {
     dispatch(clearDashboard());
   };
@@ -97,7 +96,7 @@ export function saveDashboard(importDashboardForm: ImportDashboardDTO): ThunkRes
       dashboard: { ...dashboard, title: importDashboardForm.title, uid: importDashboardForm.uid },
       overwrite: true,
       inputs: inputsToPersist,
-      folderId: importDashboardForm.folderId,
+      folderId: importDashboardForm.folder.id,
     });
     const dashboardUrl = locationUtil.stripBaseFromUrl(result.importedUrl);
     dispatch(updateLocation({ path: dashboardUrl }));

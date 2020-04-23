@@ -4,9 +4,9 @@
 // toBe, toEqual and so forth. That's why this file is not type checked and will be so until we
 // can solve the above mentioned issue with Cypress/Jest.
 import { e2eScenario, ScenarioArguments } from './support/scenario';
+import { Pages } from './pages';
 import { Components } from './components';
 import { Flows } from './flows';
-import { Pages } from './pages';
 import { getScenarioContext, setScenarioContext } from './support/scenarioContext';
 
 export type SelectorFunction = (text?: string) => Cypress.Chainable<JQuery<HTMLElement>>;
@@ -18,9 +18,9 @@ const e2eObject = {
   blobToBase64String: (blob: any) => Cypress.Blob.blobToBase64String(blob),
   imgSrcToBlob: (url: string) => Cypress.Blob.imgSrcToBlob(url),
   scenario: (args: ScenarioArguments) => e2eScenario(args),
+  pages: Pages,
   components: Components,
   flows: Flows,
-  pages: Pages,
   getScenarioContext,
   setScenarioContext,
 };

@@ -15,7 +15,7 @@ draft = true
 <b>Signature</b>
 
 ```typescript
-export declare function getLogLevelFromKey(key: string): LogLevel;
+export declare function getLogLevelFromKey(key: string | number): LogLevel;
 ```
 <b>Import</b>
 
@@ -26,7 +26,7 @@ import { getLogLevelFromKey } from '@grafana/data';
 
 |  Parameter | Type | Description |
 |  --- | --- | --- |
-|  key | <code>string</code> |  |
+|  key | <code>string &#124; number</code> |  |
 
 <b>Returns:</b>
 

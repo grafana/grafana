@@ -58,7 +58,7 @@
 				min="1"
 				step="1"
 				ng-change="ctrl.refresh()"
-				aria-label="{{::selectors.seriesCount}}"
+				aria-label="{{::ctrl.selectors.seriesCount}}"
 			/>
 		</div>
     <div class="gf-form">
@@ -69,7 +69,7 @@
 				ng-model="ctrl.target.startValue"
 				step="1"
 				ng-change="ctrl.refresh()"
-				aria-label="{{::selectors.startValue}}"
+				aria-label="{{::ctrl.selectors.startValue}}"
 			/>
 		</div>
 		<div class="gf-form">
@@ -81,7 +81,7 @@
 				min="0.5"
 				step="0.1"
 				ng-change="ctrl.refresh()"
-				aria-label="{{::selectors.spread}}"
+				aria-label="{{::ctrl.selectors.spread}}"
 			/>
 		</div>
 		<div class="gf-form">
@@ -93,7 +93,7 @@
 				min="0"
 				step="0.1"
 				ng-change="ctrl.refresh()"
-				aria-label="{{::selectors.noise}}"
+				aria-label="{{::ctrl.selectors.noise}}"
 			/>
 		</div>
     <div class="gf-form">
@@ -103,8 +103,8 @@
 				placeholder="none"
 				ng-model="ctrl.target.min"
 				step="0.1"
-				ng-change="ctrl.refresh()" 
-				aria-label="{{::selectors.min}}"
+				ng-change="ctrl.refresh()"
+				aria-label="{{::ctrl.selectors.min}}"
 			/>
 		</div>
     <div class="gf-form">
@@ -115,7 +115,7 @@
 				ng-model="ctrl.target.max"
 				step="0.1"
 				ng-change="ctrl.refresh()"
-				aria-label="{{::selectors.max}}"
+				aria-label="{{::ctrl.selectors.max}}"
 			/>
 		</div>
   </div>
@@ -198,6 +198,21 @@
 		</div>
 		<div class="gf-form">
 			<gf-form-switch class="gf-form" label="Level" label-class="query-keyword width-5" checked="ctrl.target.levelColumn" switch-class="max-width-6" on-change="ctrl.refresh()"></gf-form-switch>
+		</div>
+	</div>
+
+
+	<div class="gf-form-inline" ng-if="ctrl.scenario.id === 'grafana_api'">
+		<div class="gf-form gf-form">
+			<label class="gf-form-label query-keyword width-7">Endpoint</label>
+			<div class="gf-form-select-wrapper">
+				<select
+				  ng-model="ctrl.target.stringInput"
+				  class="gf-form-input"
+				  ng-options="type for type in ['datasources', 'search', 'annotations']"
+				  ng-change="ctrl.refresh()" />
+				</select>
+			</div>
 		</div>
 	</div>
 

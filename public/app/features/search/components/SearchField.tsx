@@ -1,15 +1,17 @@
-import React, { useContext } from 'react';
+import React, { FC, useContext } from 'react';
 import { css, cx } from 'emotion';
-import { ThemeContext, Icon } from '@grafana/ui';
+import { ThemeContext, Icon, Input } from '@grafana/ui';
 import { GrafanaTheme } from '@grafana/data';
-import { SearchQuery } from 'app/core/components/search/search';
+import { DashboardQuery } from '../types';
 
 type Omit<T, K extends keyof T> = Pick<T, Exclude<keyof T, K>>;
 
 interface SearchFieldProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'onChange'> {
-  query: SearchQuery;
+  query: DashboardQuery;
   onChange: (query: string) => void;
-  onKeyDown: (e: React.KeyboardEvent<HTMLInputElement>) => void;
+  onKeyDown?: (e: React.KeyboardEvent<HTMLInputElement>) => void;
+  clearable?: boolean;
+  width?: number;
 }
 
 const getSearchFieldStyles = (theme: GrafanaTheme) => ({
@@ -23,9 +25,8 @@ const getSearchFieldStyles = (theme: GrafanaTheme) => ({
     align-items: center;
   `,
   input: css`
-    max-width: 653px;
-    padding: 0 ${theme.spacing.md};
-    height: 51px;
+    max-width: 683px;
+    margin-right: 90px;
     box-sizing: border-box;
     outline: none;
     background-color: ${theme.colors.panelBg};
@@ -41,36 +42,46 @@ const getSearchFieldStyles = (theme: GrafanaTheme) => ({
       padding: 0 ${theme.spacing.md};
     `
   ),
+  clearButton: css`
+    font-size: ${theme.typography.size.sm};
+    color: ${theme.colors.textWeak};
+    text-decoration: underline;
+
+    &:hover {
+      cursor: pointer;
+      color: ${theme.colors.textStrong};
+    }
+  `,
 });
 
-export const SearchField: React.FunctionComponent<SearchFieldProps> = ({ query, onChange, ...inputProps }) => {
+export const SearchField: FC<SearchFieldProps> = ({ query, onChange, size, clearable, className, ...inputProps }) => {
   const theme = useContext(ThemeContext);
   const styles = getSearchFieldStyles(theme);
 
   return (
-    <>
-      {/* search-field-wrapper class name left on purpose until we migrate entire search to React */}
-      {/* based on it GrafanaCtrl (L256) decides whether or not hide search */}
-      <div className={`${styles.wrapper} search-field-wrapper`}>
-        <div className={styles.icon}>
-          <Icon name="search" size="lg" />
-        </div>
+    <div className={cx(styles.wrapper, className)}>
+      <Input
+        type="text"
+        placeholder="Search dashboards by name"
+        value={query.query}
+        onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
+          onChange(event.currentTarget.value);
+        }}
+        tabIndex={1}
+        spellCheck={false}
+        className={styles.input}
+        prefix={<Icon name="search" />}
+        suffix={
+          clearable && (
+            <span className={styles.clearButton} onClick={() => onChange('')}>
+              Clear
+            </span>
+          )
+        }
+        {...inputProps}
+      />
 
-        <input
-          type="text"
-          placeholder="Search dashboards by name"
-          value={query.query}
-          onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
-            onChange(event.currentTarget.value);
-          }}
-          tabIndex={1}
-          spellCheck={false}
-          {...inputProps}
-          className={styles.input}
-        />
-
-        <div className={styles.spacer} />
-      </div>
-    </>
+      <div className={styles.spacer} />
+    </div>
   );
 };

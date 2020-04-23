@@ -24,12 +24,8 @@ const assertDefaultsForNewVariable = () => {
   e2e()
     .window()
     .then((win: any) => {
-      let chainer = 'not.exist';
-      let value: string = undefined;
-      if (win.grafanaBootData.settings.featureToggles.newVariables) {
-        chainer = 'have.text';
-        value = '';
-      }
+      const chainer = 'have.text';
+      const value = '';
 
       e2e.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsDataSourceSelect().within(select => {
         e2e()
@@ -85,10 +81,8 @@ const createQueryVariable = ({ name, label, dataSourceName, query }: CreateQuery
   e2e()
     .window()
     .then((win: any) => {
-      let text = `string:${dataSourceName}`;
-      if (win.grafanaBootData.settings.featureToggles.newVariables) {
-        text = `${dataSourceName}`;
-      }
+      const text = `${dataSourceName}`;
+
       e2e.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsDataSourceSelect()
         .select(text)
         .blur();
@@ -209,7 +203,7 @@ const assertAdding3dependantQueryVariablesScenario = (queryVariables: QueryVaria
     e2e.pages.SaveDashboardModal.save().click();
     e2e.flows.assertSuccessNotification();
 
-    e2e.pages.Components.BackButton.backArrow().click();
+    e2e.components.BackButton.backArrow().click();
 
     assertVariableLabelsAndComponents(asserts);
 
@@ -264,7 +258,7 @@ const assertDuplicateItem = (queryVariables: QueryVariableData[]) => {
   e2e.pages.SaveDashboardModal.save().click();
   e2e.flows.assertSuccessNotification();
 
-  e2e.pages.Components.BackButton.backArrow().click();
+  e2e.components.BackButton.backArrow().click();
 
   e2e.pages.Dashboard.SubMenu.submenuItemLabels(newItem.label).should('be.visible');
   e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownValueLinkTexts(newItem.selectedOption)
@@ -300,7 +294,7 @@ const assertDeleteItem = (queryVariables: QueryVariableData[]) => {
   e2e.pages.SaveDashboardModal.save().click();
   e2e.flows.assertSuccessNotification();
 
-  e2e.pages.Components.BackButton.backArrow().click();
+  e2e.components.BackButton.backArrow().click();
 
   e2e.pages.Dashboard.SubMenu.submenuItemLabels(itemToDelete.label).should('not.exist');
 
@@ -347,16 +341,12 @@ const assertUpdateItem = (data: QueryVariableData[]) => {
   e2e.pages.Dashboard.Settings.Variables.Edit.General.generalHideSelect().select('');
   e2e.pages.Dashboard.Settings.Variables.Edit.ConstantVariable.constantOptionsQueryInput().type(updatedItem.query);
 
-  e2e.pages.Components.BackButton.backArrow().click();
+  e2e.components.BackButton.backArrow().click();
 
   e2e()
     .window()
     .then((win: any) => {
-      if (win.grafanaBootData.settings.featureToggles.newVariables) {
-        queryVariables[1].selectedOption = 'A constant';
-      } else {
-        queryVariables[1].selectedOption = 'undefined';
-      }
+      queryVariables[1].selectedOption = 'A constant';
       assertVariableLabelAndComponent(queryVariables[1]);
     });
 
@@ -407,7 +397,7 @@ const assertMoveDownItem = (data: QueryVariableData[]) => {
       });
   });
 
-  e2e.pages.Components.BackButton.backArrow().click();
+  e2e.components.BackButton.backArrow().click();
 
   assertVariableLabelsAndComponents(queryVariables);
 
@@ -552,7 +542,7 @@ const assertMoveUpItem = (data: QueryVariableData[]) => {
       });
   });
 
-  e2e.pages.Components.BackButton.backArrow().click();
+  e2e.components.BackButton.backArrow().click();
 
   assertVariableLabelsAndComponents(queryVariables);
 
@@ -567,7 +557,7 @@ e2e.scenario({
   itName: 'Query Variables CRUD',
   addScenarioDataSource: true,
   addScenarioDashBoard: true,
-  skipScenario: false,
+  skipScenario: true,
   scenario: () => {
     // @todo remove `@ts-ignore` when possible
     // @ts-ignore
@@ -627,11 +617,5 @@ e2e.scenario({
 
     // assert that move up works
     assertMoveUpItem(queryVariables);
-
-    e2e()
-      .window()
-      .then((win: any) => {
-        logSection('This scenario ran with these featureToggles', win.grafanaBootData.settings.featureToggles);
-      });
   },
 });

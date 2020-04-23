@@ -15,7 +15,7 @@ draft = true
 <b>Signature</b>
 
 ```typescript
-function listItem(theme: GrafanaTheme): string;
+export declare function listItem(theme: GrafanaTheme): string;
 ```
 <b>Import</b>
 
