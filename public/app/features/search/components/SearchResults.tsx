@@ -37,21 +37,26 @@ export const SearchResults: FC<Props> = ({
   const itemProps = { editable, onToggleChecked, onTagSelected };
 
   const renderFolders = () => {
-    return results.map(section => {
-      return (
-        <li aria-label="Search section" className={styles.section} key={section.title}>
-          <SectionHeader onSectionClick={onToggleSection} {...{ onToggleChecked, editable, section }} />
-          <ul>
-            {section.expanded && section.items.map(item => <SearchItem key={item.id} {...itemProps} item={item} />)}
-          </ul>
-        </li>
-      );
-    });
+    return (
+      <ul className={styles.wrapper}>
+        {results.map(section => {
+          return (
+            <li aria-label="Search section" className={styles.section} key={section.title}>
+              <SectionHeader onSectionClick={onToggleSection} {...{ onToggleChecked, editable, section }} />
+              <ul aria-label="Search items">
+                {section.expanded && section.items.map(item => <SearchItem key={item.id} {...itemProps} item={item} />)}
+              </ul>
+            </li>
+          );
+        })}
+      </ul>
+    );
   };
 
   const items = getVisibleItems(results);
   const count = items.length;
   const height = getItemsHeight(count, listHeight);
+
   const renderDashboards = () => {
     return (
       <FixedSizeList
@@ -78,7 +83,7 @@ export const SearchResults: FC<Props> = ({
   }
   return (
     <div className="search-results-container">
-      <ul className={styles.wrapper}>{layout !== SearchLayout.List ? renderFolders() : renderDashboards()}</ul>
+      {layout !== SearchLayout.List ? renderFolders() : renderDashboards()}
     </div>
   );
 };
