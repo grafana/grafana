@@ -59,9 +59,9 @@ export class AlertRuleList extends PureComponent<Props, any> {
     return 'all';
   }
 
-  onStateFilterChanged = (value: SelectableValue) => {
+  onStateFilterChanged = (option: SelectableValue) => {
     this.props.updateLocation({
-      query: { state: value.value },
+      query: { state: option.value },
     });
   };
 
