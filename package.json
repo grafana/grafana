@@ -3,7 +3,7 @@
   "license": "Apache-2.0",
   "private": true,
   "name": "grafana",
-  "version": "6.7.2",
+  "version": "6.7.3",
   "repository": "github:grafana/grafana",
   "devDependencies": {
     "@babel/core": "7.8.4",
