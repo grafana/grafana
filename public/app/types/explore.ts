@@ -183,6 +183,11 @@ export interface ExploreItemState {
   queryResponse: PanelData;
 
   /**
+   * Stores previous time ranges from ShowMoreLogs
+   */
+  prevShowMoreLogsTimeRanges: TimeRange[];
+
+  /**
    * Panel Id that is set if we come to explore from a penel. Used so we can get back to it and optionally modify the
    * query of that panel.
    */
@@ -245,3 +250,8 @@ export type RichHistoryQuery = {
   sessionName: string;
   timeRange?: string;
 };
+
+export enum QueryDirection {
+  backward = 'BACKWARD',
+  forward = 'FORWARD',
+}
