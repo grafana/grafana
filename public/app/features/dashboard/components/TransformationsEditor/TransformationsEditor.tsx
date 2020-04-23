@@ -163,8 +163,13 @@ const getTransformationCardStyles = stylesFactory((theme: GrafanaTheme) => {
     card: css`
       background: ${theme.colors.bg2};
       width: 100%;
+      border: none;
+      padding: ${theme.spacing.sm};
+
       &:hover {
         background: ${theme.colors.bg3};
+        box-shadow: none;
+        border: none;
       }
     `,
   };
