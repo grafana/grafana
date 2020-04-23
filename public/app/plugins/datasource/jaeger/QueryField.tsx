@@ -14,6 +14,7 @@ interface State {
 }
 
 function getLabelFromTrace(trace: any): string {
+  // TODO: seems like the spans are not ordered so this may not be actually a root span
   const firstSpan = trace.spans && trace.spans[0];
   if (firstSpan) {
     return `${firstSpan.operationName} [${firstSpan.duration} ms]`;
@@ -33,6 +34,7 @@ export class JaegerQueryField extends React.PureComponent<Props, State> {
 
   componentDidMount() {
     this._isMounted = true;
+    // We should probably call this periodically to get new services after mount.
     this.getServices();
   }
 
