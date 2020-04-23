@@ -1,5 +1,4 @@
 import React, { FC, PureComponent } from 'react';
-import classNames from 'classnames';
 import { connect } from 'react-redux';
 import { hot } from 'react-hot-loader';
 import { DataSourcePluginMeta, NavModel } from '@grafana/data';
@@ -13,6 +12,7 @@ import { getDataSourcePlugins } from './state/selectors';
 import { FilterInput } from 'app/core/components/FilterInput/FilterInput';
 import { setDataSourceTypeSearchQuery } from './state/reducers';
 import { PluginSignatureBadge } from '../plugins/PluginSignatureBadge';
+import { Card } from 'app/core/components/Card/Card';
 
 export interface Props {
   navModel: NavModel;
@@ -121,13 +121,31 @@ const DataSourceTypeCard: FC<DataSourceTypeCardProps> = props => {
 
   // find first plugin info link
   const learnMoreLink = plugin.info.links && plugin.info.links.length > 0 ? plugin.info.links[0] : null;
-  const mainClassName = classNames('add-data-source-item', {
-    'add-data-source-item--phantom': isPhantom,
-  });
 
   return (
-    <div
-      className={mainClassName}
+    <Card
+      title={plugin.name}
+      description={plugin.info.description}
+      ariaLabel={e2e.pages.AddDataSource.selectors.dataSourcePlugins(plugin.name)}
+      logoUrl={plugin.info.logos.small}
+      actions={
+        <>
+          {learnMoreLink && (
+            <LinkButton
+              variant="secondary"
+              href={`${learnMoreLink.url}?utm_source=grafana_add_ds`}
+              target="_blank"
+              rel="noopener"
+              onClick={onLearnMoreClick}
+              icon="external-link-alt"
+            >
+              {learnMoreLink.name}
+            </LinkButton>
+          )}
+          {!isPhantom && <Button>Select</Button>}
+        </>
+      }
+      className={isPhantom && 'add-data-source-item--phantom'}
       onClick={onClick}
       aria-label={e2e.pages.AddDataSource.selectors.dataSourcePlugins(plugin.name)}
     >
@@ -156,7 +174,7 @@ const DataSourceTypeCard: FC<DataSourceTypeCardProps> = props => {
         )}
         {!isPhantom && <Button>Select</Button>}
       </div>
-    </div>
+    </Card>
   );
 };
 

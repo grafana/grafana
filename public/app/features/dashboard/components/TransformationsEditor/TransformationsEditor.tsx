@@ -1,13 +1,16 @@
 import React from 'react';
-import { Container, CustomScrollbar, ValuePicker } from '@grafana/ui';
+import { Container, CustomScrollbar, ValuePicker, Button, useTheme, VerticalGroup, stylesFactory } from '@grafana/ui';
 import {
   DataFrame,
   DataTransformerConfig,
+  GrafanaTheme,
   SelectableValue,
   standardTransformersRegistry,
   transformDataFrame,
 } from '@grafana/data';
 import { TransformationOperationRow } from './TransformationOperationRow';
+import { Card, CardProps } from '../../../../core/components/Card/Card';
+import { css } from 'emotion';
 
 interface Props {
   onChange: (transformations: DataTransformerConfig[]) => void;
@@ -52,10 +55,10 @@ export class TransformationsEditor extends React.PureComponent<Props> {
 
     return (
       <ValuePicker
+        size="md"
         variant="secondary"
         label="Add transformation"
         options={availableTransformers}
-        size="lg"
         onChange={this.onTransformationAdd}
         isFullWidth={false}
       />
@@ -108,18 +111,61 @@ export class TransformationsEditor extends React.PureComponent<Props> {
     );
   };
 
+  renderNoAddedTransformsState() {
+    return (
+      <>
+        <p className="muted">
+          Transformations allow you to combine, re-order, hide and rename specific parts the the data set before being
+          visualized. <br />
+          Choose one of the transformations below to start with:
+        </p>
+
+        <VerticalGroup>
+          {standardTransformersRegistry.list().map(t => {
+            return (
+              <TransformationCard
+                title={t.name}
+                description={t.description}
+                actions={<Button>Select</Button>}
+                onClick={() => {
+                  this.onTransformationAdd({ value: t.id });
+                }}
+              />
+            );
+          })}
+        </VerticalGroup>
+      </>
+    );
+  }
+
   render() {
+    const hasTransformationsConfigured = this.props.transformations.length > 0;
     return (
       <CustomScrollbar autoHeightMin="100%">
         <Container padding="md">
-          <p className="muted">
-            Transformations allow you to combine, re-order, hide and rename specific parts the the data set before being
-            visualized.
-          </p>
-          {this.renderTransformationEditors()}
-          {this.renderTransformationSelector()}
+          {!hasTransformationsConfigured && this.renderNoAddedTransformsState()}
+          {hasTransformationsConfigured && this.renderTransformationEditors()}
+          {hasTransformationsConfigured && this.renderTransformationSelector()}
         </Container>
       </CustomScrollbar>
     );
   }
 }
+
+const TransformationCard: React.FC<CardProps> = props => {
+  const theme = useTheme();
+  const styles = getTransformationCardStyles(theme);
+  return <Card {...props} className={styles.card} />;
+};
+
+const getTransformationCardStyles = stylesFactory((theme: GrafanaTheme) => {
+  return {
+    card: css`
+      background: ${theme.colors.bg2};
+      width: 100%;
+      &:hover {
+        background: ${theme.colors.bg3};
+      }
+    `,
+  };
+});

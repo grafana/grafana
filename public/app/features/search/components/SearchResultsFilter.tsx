@@ -12,14 +12,15 @@ export interface Props {
   canDelete?: boolean;
   canMove?: boolean;
   deleteItem: () => void;
+  hideLayout?: boolean;
+  layout: string;
   moveTo: () => void;
+  onLayoutChange: Dispatch<SetStateAction<string>>;
+  onSortChange: onSelectChange;
   onStarredFilterChange: onSelectChange;
   onTagFilterChange: onSelectChange;
   onToggleAllChecked: () => void;
   query: DashboardQuery;
-  onSortChange: onSelectChange;
-  onLayoutChange: Dispatch<SetStateAction<string>>;
-  layout: string;
 }
 
 export const SearchResultsFilter: FC<Props> = ({
@@ -27,14 +28,15 @@ export const SearchResultsFilter: FC<Props> = ({
   canDelete,
   canMove,
   deleteItem,
+  hideLayout,
+  layout,
   moveTo,
-  onToggleAllChecked,
+  onLayoutChange,
+  onSortChange,
   onStarredFilterChange,
   onTagFilterChange,
+  onToggleAllChecked,
   query,
-  onSortChange,
-  layout,
-  onLayoutChange,
 }) => {
   const showActions = canDelete || canMove;
   const theme = useTheme();
@@ -56,6 +58,7 @@ export const SearchResultsFilter: FC<Props> = ({
         <ActionRow
           {...{
             layout,
+            hideLayout,
             onLayoutChange,
             onSortChange,
             onStarredFilterChange,
