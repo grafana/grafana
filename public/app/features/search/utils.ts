@@ -29,6 +29,18 @@ export const getFlattenedSections = (sections: DashboardSection[]): string[] => 
 };
 
 /**
+ * Get all items for currently expanded sections
+ * @param sections
+ */
+export const getVisibleItems = (sections: DashboardSection[]) => {
+  return sections.flatMap(section => {
+    if (section.expanded) {
+      return section.items;
+    }
+    return [];
+  });
+};
+/**
  * Since Recent and Starred folders don't have id, title field is used as id
  * @param title - title field of the section
  */
@@ -191,19 +203,14 @@ export const hasFilters = (query: DashboardQuery) => {
 
 /**
  * Get height of dynamic list of search results
- * @param section
+ * @param count - total number of items
  * @param listHeight
  */
 
-export const getItemsHeight = (section: any, listHeight: number) => {
-  const { items } = section;
-  const count = items.length;
-  if (!count || !section.expanded) {
-    return 0;
-  }
-
-  if (count * ITEM_HEIGHT > listHeight && listHeight !== 0) {
+export const getItemsHeight = (count: number, listHeight: number) => {
+  const totalHeight = count * ITEM_HEIGHT;
+  if (totalHeight > listHeight && listHeight !== 0) {
     return listHeight;
   }
-  return count * ITEM_HEIGHT;
+  return totalHeight;
 };

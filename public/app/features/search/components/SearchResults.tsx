@@ -4,7 +4,7 @@ import { FixedSizeList } from 'react-window';
 import { GrafanaTheme } from '@grafana/data';
 import { stylesFactory, useTheme, Spinner } from '@grafana/ui';
 import { DashboardSection, OnToggleChecked, SearchLayout } from '../types';
-import { getItemsHeight } from '../utils';
+import { getItemsHeight, getVisibleItems } from '../utils';
 import { ITEM_HEIGHT } from '../constants';
 import { useListHeight } from '../hooks/useListHeight';
 import { SearchItem } from './SearchItem';
@@ -34,22 +34,25 @@ export const SearchResults: FC<Props> = ({
   const theme = useTheme();
   const styles = getSectionStyles(theme);
   const listHeight = useListHeight(wrapperRef);
-  const renderItems = (section: DashboardSection) => {
-    if (!section.expanded && layout !== SearchLayout.List) {
-      return null;
-    }
+  const itemProps = { editable, onToggleChecked, onTagSelected };
 
-    return section.items.map(item => (
-      <SearchItem key={item.id} {...{ item, editable, onToggleChecked, onTagSelected }} />
-    ));
+  const renderFolders = () => {
+    return results.map(section => {
+      return (
+        <li aria-label="Search section" className={styles.section} key={section.title}>
+          <SectionHeader onSectionClick={onToggleSection} {...{ onToggleChecked, editable, section }} />
+          <ul>
+            {section.expanded && section.items.map(item => <SearchItem key={item.id} {...itemProps} item={item} />)}
+          </ul>
+        </li>
+      );
+    });
   };
 
-  const renderList = (section: DashboardSection) => {
-    if (!section.expanded || !section.items.length) {
-      return null;
-    }
-
-    const height = getItemsHeight(section, listHeight);
+  const items = getVisibleItems(results);
+  const count = items.length;
+  const height = getItemsHeight(count, listHeight);
+  const renderDashboards = () => {
     return (
       <FixedSizeList
         aria-label="Search items"
@@ -57,36 +60,25 @@ export const SearchResults: FC<Props> = ({
         innerElementType="ul"
         itemSize={ITEM_HEIGHT}
         height={height}
-        itemCount={section.items.length}
+        itemCount={items.length}
         width="100%"
       >
         {({ index, style }) => {
-          const item = section.items[index];
-          return <SearchItem style={style} key={item.id} {...{ item, editable, onToggleChecked, onTagSelected }} />;
+          const item = items[index];
+          return <SearchItem key={item.id} {...itemProps} item={item} style={style} />;
         }}
       </FixedSizeList>
     );
   };
+
   if (loading) {
     return <Spinner className={styles.spinner} />;
   } else if (!results || !results.length) {
     return <h6>No dashboards matching your query were found.</h6>;
   }
-
   return (
     <div className="search-results-container">
-      <ul className={styles.wrapper}>
-        {results.map(section => {
-          return layout !== SearchLayout.List ? (
-            <li aria-label="Search section" className={styles.section} key={section.title}>
-              <SectionHeader onSectionClick={onToggleSection} {...{ onToggleChecked, editable, section }} />
-              <ul>{renderItems(section)}</ul>
-            </li>
-          ) : (
-            renderList(section)
-          );
-        })}
-      </ul>
+      <ul className={styles.wrapper}>{layout !== SearchLayout.List ? renderFolders() : renderDashboards()}</ul>
     </div>
   );
 };
