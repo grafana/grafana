@@ -8,6 +8,7 @@ interface Props {
 }
 
 export const AdminOrgsTable: FC<Props> = ({ orgs, onDelete }) => {
+  console.log(orgs);
   const [deleteOrg, setDeleteOrg] = useState<Organization>();
   return (
     <table className="filter-table form-inline filter-table--hover">
@@ -33,17 +34,25 @@ export const AdminOrgsTable: FC<Props> = ({ orgs, onDelete }) => {
           </tr>
         ))}
       </tbody>
-      <ConfirmModal
-        isOpen={!!deleteOrg}
-        title="Delete organization"
-        body={`Are you sure you want to delete ${deleteOrg.name}`}
-        confirmText="Delete"
-        onDismiss={() => setDeleteOrg(null)}
-        onConfirm={() => {
-          onDelete(deleteOrg.id);
-          setDeleteOrg(null);
-        }}
-      />
+      {deleteOrg && (
+        <ConfirmModal
+          isOpen
+          icon="trash-alt"
+          title="Delete"
+          body={
+            <div>
+              Are you sure you want to delete `${deleteOrg.name}`?
+              <br /> <small>All dashboards for this organization will be removed!</small>
+            </div>
+          }
+          confirmText="Delete"
+          onDismiss={() => setDeleteOrg(null)}
+          onConfirm={() => {
+            onDelete(deleteOrg.id);
+            setDeleteOrg(null);
+          }}
+        />
+      )}
     </table>
   );
 };

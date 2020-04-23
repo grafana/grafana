@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import React, { FC, useEffect } from 'react';
 import { getNavModel } from 'app/core/selectors/navModel';
 import Page from 'app/core/components/Page/Page';
 import { useSelector } from 'react-redux';
@@ -6,7 +6,7 @@ import { StoreState } from 'app/types/store';
 import { LinkButton } from '@grafana/ui';
 import { getBackendSrv } from '@grafana/runtime';
 import { AdminOrgsTable } from './AdminOrgsTable';
-import { useAsyncFn } from 'react-use';
+import useAsyncFn from 'react-use/lib/useAsyncFn';
 
 const deleteOrg = async (orgId: number) => {
   return await getBackendSrv().delete('/api/orgs/' + orgId);
@@ -19,9 +19,11 @@ const getOrgs = async () => {
 export const AdminListOrgsPages: FC = () => {
   const navIndex = useSelector((state: StoreState) => state.navIndex);
   const navModel = getNavModel(navIndex, 'global-orgs');
-  const [state, fetchOrgs] = useAsyncFn(getOrgs, []);
+  const [state, fetchOrgs] = useAsyncFn(async () => await getOrgs(), []);
   console.log(state);
-  fetchOrgs();
+  useEffect(() => {
+    fetchOrgs();
+  }, []);
 
   return (
     <Page navModel={navModel}>
