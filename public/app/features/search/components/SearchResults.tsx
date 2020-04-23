@@ -34,7 +34,6 @@ export const SearchResults: FC<Props> = ({
   const theme = useTheme();
   const styles = getSectionStyles(theme);
   const listHeight = useListHeight(wrapperRef);
-
   const renderItems = (section: DashboardSection) => {
     if (!section.expanded && layout !== SearchLayout.List) {
       return null;
@@ -45,6 +44,29 @@ export const SearchResults: FC<Props> = ({
     ));
   };
 
+  const renderList = (section: DashboardSection) => {
+    if (!section.expanded || !section.items.length) {
+      return null;
+    }
+
+    const height = getItemsHeight(section, listHeight);
+    return (
+      <FixedSizeList
+        aria-label="Search items"
+        className={styles.wrapper}
+        innerElementType="ul"
+        itemSize={ITEM_HEIGHT}
+        height={height}
+        itemCount={section.items.length}
+        width="100%"
+      >
+        {({ index, style }) => {
+          const item = section.items[index];
+          return <SearchItem style={style} key={item.id} {...{ item, editable, onToggleChecked, onTagSelected }} />;
+        }}
+      </FixedSizeList>
+    );
+  };
   if (loading) {
     return <Spinner className={styles.spinner} />;
   } else if (!results || !results.length) {
@@ -55,29 +77,13 @@ export const SearchResults: FC<Props> = ({
     <div className="search-results-container">
       <ul className={styles.wrapper}>
         {results.map(section => {
-          let height = getItemsHeight(section, listHeight);
-          return (
+          return layout !== SearchLayout.List ? (
             <li aria-label="Search section" className={styles.section} key={section.title}>
               <SectionHeader onSectionClick={onToggleSection} {...{ onToggleChecked, editable, section }} />
-              {section.expanded && section.items.length && (
-                <FixedSizeList
-                  aria-label="Search items"
-                  className={styles.wrapper}
-                  innerElementType="ul"
-                  itemSize={ITEM_HEIGHT}
-                  height={height}
-                  itemCount={section.items.length}
-                  width="100%"
-                >
-                  {({ index, style }) => {
-                    const item = section.items[index];
-                    return (
-                      <SearchItem style={style} key={item.id} {...{ item, editable, onToggleChecked, onTagSelected }} />
-                    );
-                  }}
-                </FixedSizeList>
-              )}
+              <ul>{renderItems(section)}</ul>
             </li>
+          ) : (
+            renderList(section)
           );
         })}
       </ul>

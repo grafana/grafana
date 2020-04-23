@@ -197,12 +197,13 @@ export const hasFilters = (query: DashboardQuery) => {
 
 export const getItemsHeight = (section: any, listHeight: number) => {
   const { items } = section;
-  if (!items.length || !section.expanded) {
+  const count = items.length;
+  if (!count || !section.expanded) {
     return 0;
   }
 
-  if (items.length * ITEM_HEIGHT > listHeight && listHeight !== 0) {
+  if (count * ITEM_HEIGHT > listHeight && listHeight !== 0) {
     return listHeight;
   }
-  return items.length * ITEM_HEIGHT;
+  return count * ITEM_HEIGHT;
 };
