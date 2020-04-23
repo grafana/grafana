@@ -95,9 +95,5 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       height: 100%;
       max-width: 1400px;
     `,
-    resultsWrapper: css`
-      padding: 0;
-      overflow-y: auto;
-    `,
   };
 });
