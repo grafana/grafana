@@ -72,7 +72,7 @@ func (rs *RenderingService) Init() error {
 }
 
 func (rs *RenderingService) Run(ctx context.Context) error {
-	if rs.remoteRenderingConfigured() {
+	if rs.remoteAvailable() {
 		rs.log = rs.log.New("renderer", "http")
 		rs.log.Info("Backend rendering via external http server")
 		rs.renderAction = rs.renderViaHttp
@@ -80,7 +80,7 @@ func (rs *RenderingService) Run(ctx context.Context) error {
 		return nil
 	}
 
-	if rs.renderingPluginInstalled() {
+	if rs.pluginAvailable() {
 		rs.log = rs.log.New("renderer", "plugin")
 		rs.pluginInfo = plugins.Renderer
 
@@ -101,16 +101,16 @@ func (rs *RenderingService) Run(ctx context.Context) error {
 	return nil
 }
 
-func (rs *RenderingService) renderingPluginInstalled() bool {
+func (rs *RenderingService) pluginAvailable() bool {
 	return plugins.Renderer != nil
 }
 
-func (rs *RenderingService) remoteRenderingConfigured() bool {
+func (rs *RenderingService) remoteAvailable() bool {
 	return rs.Cfg.RendererUrl != ""
 }
 
 func (rs *RenderingService) IsAvailable() bool {
-	return rs.remoteRenderingConfigured() || rs.renderingPluginInstalled()
+	return rs.remoteAvailable() || rs.pluginAvailable()
 }
 
 func (rs *RenderingService) RenderErrorImage(err error) (*RenderResult, error) {
