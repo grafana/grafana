@@ -203,7 +203,7 @@ export function getProcessedDataFrames(results?: DataQueryResponseData[]): DataF
   return dataFrames;
 }
 
-export function preProcessPanelData(data: PanelData, lastResult: PanelData): PanelData {
+function processPanelData(data: PanelData, lastResult: PanelData, append?: boolean): PanelData {
   const { series } = data;
 
   //  for loading states with no data, use last result
@@ -217,7 +217,8 @@ export function preProcessPanelData(data: PanelData, lastResult: PanelData): Pan
 
   // Make sure the data frames are properly formatted
   const STARTTIME = performance.now();
-  const processedDataFrames = getProcessedDataFrames(series);
+  const dataFrames: DataFrame[] = append ? [...lastResult.series, ...series] : series;
+  const processedDataFrames: DataFrame[] = getProcessedDataFrames(dataFrames);
   const STOPTIME = performance.now();
 
   return {
@@ -225,4 +226,12 @@ export function preProcessPanelData(data: PanelData, lastResult: PanelData): Pan
     series: processedDataFrames,
     timings: { dataProcessingTime: STOPTIME - STARTTIME },
   };
+}
+
+export function preProcessPanelData(data: PanelData, lastResult: PanelData): PanelData {
+  return processPanelData(data, lastResult, false);
+}
+
+export function preProcessAppendPanelData(data: PanelData, lastResult: PanelData): PanelData {
+  return processPanelData(data, lastResult, true);
 }
