@@ -275,7 +275,7 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
   }
 
   renderOptionsPane() {
-    const { plugin, dashboard, data, panel, uiState } = this.props;
+    const { plugin, dashboard, panel, uiState } = this.props;
 
     if (!plugin) {
       return <div />;
@@ -285,7 +285,6 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
       <OptionsPaneContent
         plugin={plugin}
         dashboard={dashboard}
-        data={data}
         panel={panel}
         width={uiState.rightPaneSize as number}
         onClose={this.onTogglePanelOptions}

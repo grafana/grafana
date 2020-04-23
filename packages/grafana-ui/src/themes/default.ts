@@ -115,9 +115,9 @@ const theme: GrafanaThemeCommons = {
     },
   },
   height: {
-    sm: '24px',
-    md: '32px',
-    lg: '48px',
+    sm: 24,
+    md: 32,
+    lg: 48,
   },
   panelPadding: 8,
   panelHeaderHeight: 28,
