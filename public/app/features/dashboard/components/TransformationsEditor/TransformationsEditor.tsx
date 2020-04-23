@@ -132,9 +132,10 @@ export class TransformationsEditor extends React.PureComponent<Props> {
                 being visualized. Choose one of the transformations below to start with:
               </p>
               <VerticalGroup>
-                {standardTransformersRegistry.list().map(t => {
+                {standardTransformersRegistry.list().map((t, i) => {
                   return (
                     <TransformationCard
+                      key={`${t.name}/${i}`}
                       title={t.name}
                       description={t.description}
                       actions={<Button>Select</Button>}
