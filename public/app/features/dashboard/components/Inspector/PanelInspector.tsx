@@ -223,7 +223,7 @@ export class PanelInspectorUnconnected extends PureComponent<Props, State> {
     }
 
     return (
-      <div aria-label={e2e.components.PanelInspectStats.selectors.content}>
+      <div aria-label={e2e.components.PanelInspector.Stats.selectors.content}>
         {this.renderStatsTable('Stats', stats)}
         {this.renderStatsTable('Data source stats', dataStats)}
       </div>

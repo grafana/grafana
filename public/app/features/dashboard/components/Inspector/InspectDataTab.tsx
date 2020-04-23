@@ -109,7 +109,7 @@ export class InspectDataTab extends PureComponent<Props, State> {
     });
 
     return (
-      <div className={styles.dataTabContent} aria-label={e2e.components.PanelInspectData.selectors.content}>
+      <div className={styles.dataTabContent} aria-label={e2e.components.PanelInspector.Data.selectors.content}>
         <div className={styles.toolbar}>
           <Field label="Transformer" className="flex-grow-1">
             <Select options={transformationOptions} value={transformId} onChange={this.onTransformationChange} />

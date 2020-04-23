@@ -142,7 +142,7 @@ export class InspectJSONTab extends PureComponent<Props, State> {
 
     return (
       <>
-        <div className={styles.toolbar} aria-label={e2e.components.PanelInspectJSON.selectors.content}>
+        <div className={styles.toolbar} aria-label={e2e.components.PanelInspector.Json.selectors.content}>
           <Field label="Select source" className="flex-grow-1">
             <Select options={options} value={selected} onChange={this.onSelectChanged} />
           </Field>

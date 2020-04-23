@@ -26,26 +26,28 @@ export const Components = {
       },
     }),
   },
-  PanelInspectData: componentFactory({
-    selectors: {
-      content: 'Panel inspector Data content',
-    },
-  }),
-  PanelInspectStats: componentFactory({
-    selectors: {
-      content: 'Panel inspector Stats content',
-    },
-  }),
-  PanelInspectJSON: componentFactory({
-    selectors: {
-      content: 'Panel inspector JSON content',
-    },
-  }),
-  PanelInspectQuery: componentFactory({
-    selectors: {
-      content: 'Panel inspector Query content',
-    },
-  }),
+  PanelInspector: {
+    Data: componentFactory({
+      selectors: {
+        content: 'Panel inspector Data content',
+      },
+    }),
+    Stats: componentFactory({
+      selectors: {
+        content: 'Panel inspector Stats content',
+      },
+    }),
+    Json: componentFactory({
+      selectors: {
+        content: 'Panel inspector Json content',
+      },
+    }),
+    Query: componentFactory({
+      selectors: {
+        content: 'Panel inspector Query content',
+      },
+    }),
+  },
   Tab: componentFactory({
     selectors: {
       title: (title: string) => `Tab ${title}`,

@@ -1,27 +1,19 @@
 import { e2e } from '@grafana/e2e';
 
+const PANEL_UNDER_TEST = '2 yaxis and axis labels';
+
 e2e.scenario({
   describeName: 'Inspect drawer tests',
   itName: 'Testes various Inpect Drawer scenarios',
   addScenarioDataSource: false,
-  addScenarioDashBoard: true,
+  addScenarioDashBoard: false,
   skipScenario: false,
   scenario: () => {
     const viewPortWidth = e2e.config().viewportWidth;
-    // @todo remove `@ts-ignore` when possible
-    // @ts-ignore
-    e2e.getScenarioContext().then(({ lastAddedDashboardUid }) => {
-      e2e.flows.openDashboard(lastAddedDashboardUid);
-    });
-    e2e.pages.Dashboard.Toolbar.toolbarItems('Add panel').click();
-    e2e.pages.AddDashboard.addNewPanel().click();
-
-    e2e.components.DataSource.TestData.QueryTab.scenarioSelect().select('CSV Metric Values');
-
-    e2e.components.BackButton.backArrow().click();
+    e2e.flows.openDashboard('5SdHCadmz');
 
     // testing opening inspect drawer directly by clicking on Inspect in header menu
-    e2e.flows.openPanelMenuItem(e2e.flows.PanelMenuItems.Inspect);
+    e2e.flows.openPanelMenuItem(e2e.flows.PanelMenuItems.Inspect, PANEL_UNDER_TEST);
 
     expectDrawerTabsAndContent();
 
@@ -33,13 +25,13 @@ e2e.scenario({
     expectSubMenuScenario('Query');
     expectSubMenuScenario('Panel JSON', 'JSON');
 
-    e2e.flows.openPanelMenuItem(e2e.flows.PanelMenuItems.Edit);
+    e2e.flows.openPanelMenuItem(e2e.flows.PanelMenuItems.Edit, PANEL_UNDER_TEST);
 
     e2e.components.QueryEditorToolbarItem.button('Query inspector')
       .should('be.visible')
       .click();
 
-    e2e.components.Drawer.General.title('Panel Title')
+    e2e.components.Drawer.General.title(PANEL_UNDER_TEST)
       .should('be.visible')
       .within(() => {
         e2e.components.Tab.title('Query').should('be.visible');
@@ -47,12 +39,12 @@ e2e.scenario({
         e2e.components.Tab.active().should('have.text', 'Query');
       });
 
-    e2e.components.PanelInspectQuery.content().should('be.visible');
+    e2e.components.PanelInspector.Query.content().should('be.visible');
   },
 });
 
 const expectDrawerTabsAndContent = () => {
-  e2e.components.Drawer.General.title('Panel Title')
+  e2e.components.Drawer.General.title(PANEL_UNDER_TEST)
     .should('be.visible')
     .within(() => {
       e2e.components.Tab.title('Data').should('be.visible');
@@ -60,42 +52,42 @@ const expectDrawerTabsAndContent = () => {
       e2e.components.Tab.active().within((li: JQuery<HTMLLIElement>) => {
         expect(li.text()).equals('Data');
       });
-      e2e.components.PanelInspectData.content().should('be.visible');
-      e2e.components.PanelInspectStats.content().should('not.be.visible');
-      e2e.components.PanelInspectJSON.content().should('not.be.visible');
-      e2e.components.PanelInspectQuery.content().should('not.be.visible');
+      e2e.components.PanelInspector.Data.content().should('be.visible');
+      e2e.components.PanelInspector.Stats.content().should('not.be.visible');
+      e2e.components.PanelInspector.Json.content().should('not.be.visible');
+      e2e.components.PanelInspector.Query.content().should('not.be.visible');
 
       // other tabs should also be visible, click on each to see if we get any console errors
       e2e.components.Tab.title('Stats')
         .should('be.visible')
         .click();
-      e2e.components.PanelInspectStats.content().should('be.visible');
-      e2e.components.PanelInspectData.content().should('not.be.visible');
-      e2e.components.PanelInspectJSON.content().should('not.be.visible');
-      e2e.components.PanelInspectQuery.content().should('not.be.visible');
+      e2e.components.PanelInspector.Stats.content().should('be.visible');
+      e2e.components.PanelInspector.Data.content().should('not.be.visible');
+      e2e.components.PanelInspector.Json.content().should('not.be.visible');
+      e2e.components.PanelInspector.Query.content().should('not.be.visible');
 
       e2e.components.Tab.title('JSON')
         .should('be.visible')
         .click();
-      e2e.components.PanelInspectJSON.content().should('be.visible');
-      e2e.components.PanelInspectData.content().should('not.be.visible');
-      e2e.components.PanelInspectStats.content().should('not.be.visible');
-      e2e.components.PanelInspectQuery.content().should('not.be.visible');
+      e2e.components.PanelInspector.Json.content().should('be.visible');
+      e2e.components.PanelInspector.Data.content().should('not.be.visible');
+      e2e.components.PanelInspector.Stats.content().should('not.be.visible');
+      e2e.components.PanelInspector.Query.content().should('not.be.visible');
 
       e2e.components.Tab.title('Query')
         .should('be.visible')
         .click();
-      e2e.components.PanelInspectQuery.content().should('be.visible');
-      e2e.components.PanelInspectData.content().should('not.be.visible');
-      e2e.components.PanelInspectStats.content().should('not.be.visible');
-      e2e.components.PanelInspectJSON.content().should('not.be.visible');
+      e2e.components.PanelInspector.Query.content().should('be.visible');
+      e2e.components.PanelInspector.Data.content().should('not.be.visible');
+      e2e.components.PanelInspector.Stats.content().should('not.be.visible');
+      e2e.components.PanelInspector.Json.content().should('not.be.visible');
     });
 };
 
 const expectDrawerClose = () => {
   // close using close button
   e2e.components.Drawer.General.close().click();
-  e2e.components.Drawer.General.title('Panel Title').should('not.be.visible');
+  e2e.components.Drawer.General.title(PANEL_UNDER_TEST).should('not.be.visible');
 };
 
 const expectDrawerExpandAndContract = (viewPortWidth: number) => {
@@ -125,7 +117,8 @@ const expectDrawerExpandAndContract = (viewPortWidth: number) => {
 const expectSubMenuScenario = (subMenu: string, tabTitle?: string) => {
   tabTitle = tabTitle ?? subMenu;
   // testing opening inspect drawer from sub menus under Inspect in header menu
-  e2e.components.Panels.Panel.title('Panel Title')
+  e2e.components.Panels.Panel.title(PANEL_UNDER_TEST)
+    .scrollIntoView()
     .should('be.visible')
     .click();
 

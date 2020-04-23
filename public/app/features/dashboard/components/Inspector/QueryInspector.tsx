@@ -189,7 +189,7 @@ export class QueryInspector extends PureComponent<Props, State> {
 
     return (
       <>
-        <div aria-label={e2e.components.PanelInspectQuery.selectors.content}>
+        <div aria-label={e2e.components.PanelInspector.Query.selectors.content}>
           <h3 className="section-heading">Query inspector</h3>
           <p className="small muted">
             Query inspector allows you to view raw request and response. To collect this data Grafana needs to issue a
