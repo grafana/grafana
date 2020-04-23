@@ -18,6 +18,7 @@ import {
 import { LegacyForms, LogLabels, ToggleButtonGroup, ToggleButton, LogRows } from '@grafana/ui';
 const { Switch } = LegacyForms;
 import store from 'app/core/store';
+import { WideButton } from './WideButton';
 
 import { ExploreGraphPanel } from './ExploreGraphPanel';
 import { MetaInfoText } from './MetaInfoText';
@@ -62,6 +63,9 @@ interface Props {
   onToggleLogLevel: (hiddenLogLevels: LogLevel[]) => void;
   getRowContext?: (row: LogRowModel, options?: any) => Promise<any>;
   getFieldLinks: (field: Field, rowIndex: number) => Array<LinkModel<Field>>;
+  showMoreNewerLogs: () => void;
+  showMoreOlderLogs: () => void;
+  displayMoreLogsBtn: boolean;
 }
 
 interface State {
@@ -154,6 +158,9 @@ export class Logs extends PureComponent<Props, State> {
       absoluteRange,
       onChangeTime,
       getFieldLinks,
+      showMoreNewerLogs,
+      showMoreOlderLogs,
+      displayMoreLogsBtn,
     } = this.props;
 
     if (!logRows) {
@@ -220,6 +227,19 @@ export class Logs extends PureComponent<Props, State> {
           </div>
         </div>
 
+        {dedupedRows?.length > 0 && (
+          <MetaInfoText
+            metaItems={[
+              {
+                label: 'Showing logs between',
+                value: `${dedupedRows[dedupedRows.length - 1]?.timeLocal} and ${dedupedRows[0]?.timeLocal} (${
+                  dedupedRows[dedupedRows.length - 1]?.timeFromNow
+                } to ${dedupedRows[0]?.timeFromNow})`,
+              },
+            ]}
+          />
+        )}
+
         {hasData && meta && (
           <MetaInfoText
             metaItems={meta.map(item => {
@@ -229,6 +249,10 @@ export class Logs extends PureComponent<Props, State> {
               };
             })}
           />
+        )}
+
+        {!loading && hasData && !scanning && displayMoreLogsBtn && (
+          <WideButton btnLabel={'Show more newer logs'} onBtnClick={showMoreNewerLogs} />
         )}
 
         <LogRows
@@ -246,6 +270,10 @@ export class Logs extends PureComponent<Props, State> {
           timeZone={timeZone}
           getFieldLinks={getFieldLinks}
         />
+
+        {!loading && hasData && !scanning && displayMoreLogsBtn && (
+          <WideButton btnLabel={'Show more older logs'} onBtnClick={showMoreOlderLogs} />
+        )}
 
         {!loading && !hasData && !scanning && (
           <div className="logs-panel-nodata">
