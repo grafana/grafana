@@ -12,6 +12,8 @@ import { SearchResultsFilter } from './SearchResultsFilter';
 import { SearchResults } from './SearchResults';
 import { DashboardActions } from './DashboardActions';
 import { SearchField } from './SearchField';
+import { useSearchLayout } from '../hooks/useSearchLayout';
+import { SearchLayout } from '../types';
 
 export interface Props {
   folderId?: number;
@@ -37,6 +39,7 @@ export const ManageDashboards: FC<Props> = memo(({ folderId, folderUid }) => {
     onTagFilterChange,
     onStarredFilterChange,
     onTagAdd,
+    onSortChange,
   } = useSearchQuery(queryParams);
 
   const {
@@ -54,12 +57,21 @@ export const ManageDashboards: FC<Props> = memo(({ folderId, folderUid }) => {
     onMoveItems,
   } = useManageDashboards(query, { hasEditPermissionInFolders: contextSrv.hasEditPermissionInFolders }, folderUid);
 
+  const { layout, setLayout } = useSearchLayout(query);
+
   const onMoveTo = () => {
     setIsMoveModalOpen(true);
   };
 
   const onItemDelete = () => {
     setIsDeleteModalOpen(true);
+  };
+
+  const onLayoutChange = (layout: string) => {
+    setLayout(layout);
+    if (query.sort) {
+      onSortChange(null);
+    }
   };
 
   if (canSave && folderId && !hasFilters && results.length === 0) {
@@ -103,9 +115,24 @@ export const ManageDashboards: FC<Props> = memo(({ folderId, folderUid }) => {
                 </label>
               </div>
             )}
+            {query.sort && (
+              <div className="gf-form">
+                <label className="gf-form-label">
+                  <a className="pointer" onClick={() => onSortChange(null)}>
+                    Sort: {query.sort.label}
+                  </a>
+                </label>
+              </div>
+            )}
             <div className="gf-form">
               <label className="gf-form-label">
-                <a className="pointer" onClick={onClearFilters}>
+                <a
+                  className="pointer"
+                  onClick={() => {
+                    onClearFilters();
+                    setLayout(SearchLayout.Folders);
+                  }}
+                >
                   <Icon name="times" />
                   &nbsp;Clear
                 </a>
@@ -125,9 +152,11 @@ export const ManageDashboards: FC<Props> = memo(({ folderId, folderUid }) => {
             moveTo={onMoveTo}
             onToggleAllChecked={onToggleAllChecked}
             onStarredFilterChange={onStarredFilterChange}
+            onSortChange={onSortChange}
             onTagFilterChange={onTagFilterChange}
-            selectedStarredFilter={query.starred}
-            selectedTagFilter={query.tag}
+            query={query}
+            layout={!folderUid && layout}
+            onLayoutChange={onLayoutChange}
           />
         )}
         <div ref={wrapperRef}>
@@ -138,6 +167,7 @@ export const ManageDashboards: FC<Props> = memo(({ folderId, folderUid }) => {
             onTagSelected={onTagAdd}
             onToggleSection={onToggleSection}
             onToggleChecked={onToggleChecked}
+            layout={layout}
             wrapperRef={wrapperRef}
           />
         </div>

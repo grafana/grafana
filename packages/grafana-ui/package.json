@@ -20,7 +20,7 @@
     "build": "grafana-toolkit package:build --scope=ui",
     "bundle": "rollup -c rollup.config.ts",
     "clean": "rimraf ./dist ./compiled",
-    "docsExtract": "api-extractor run 2>&1 | tee ../../reports/docs/$(basename $(pwd)).log",
+    "docsExtract": "mkdir -p ../../reports/docs && api-extractor run 2>&1 | tee ../../reports/docs/$(basename $(pwd)).log",
     "lint": "eslint .storybook/ src/ --ext=.js,.ts,.tsx",
     "storybook": "start-storybook -p 9001 -c .storybook -s .storybook/static",
     "storybook:build": "build-storybook -o ./dist/storybook -c .storybook -s .storybook/static",

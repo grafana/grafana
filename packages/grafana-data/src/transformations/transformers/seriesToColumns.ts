@@ -16,16 +16,20 @@ export const seriesToColumnsTransformer: DataTransformerInfo<SeriesToColumnsOpti
     byField: 'Time',
   },
   transformer: options => (data: DataFrame[]) => {
-    const regex = `/^(${options.byField})$/`;
+    const optionsArray = options.byField ? [options.byField] : [];
     // not sure if I should use filterFieldsByNameTransformer to get the key field
-    const keyDataFrames = filterFieldsByNameTransformer.transformer({ include: regex })(data);
+    const keyDataFrames = filterFieldsByNameTransformer.transformer({
+      include: optionsArray,
+    })(data);
     if (!keyDataFrames.length) {
       // for now we only parse data frames with 2 fields
       return data;
     }
 
     // not sure if I should use filterFieldsByNameTransformer to get the other fields
-    const otherDataFrames = filterFieldsByNameTransformer.transformer({ exclude: regex })(data);
+    const otherDataFrames = filterFieldsByNameTransformer.transformer({
+      exclude: optionsArray,
+    })(data);
     if (!otherDataFrames.length) {
       // for now we only parse data frames with 2 fields
       return data;

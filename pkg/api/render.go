@@ -40,18 +40,32 @@ func (hs *HTTPServer) RenderToPng(c *models.ReqContext) {
 		return
 	}
 
+	scale, err := strconv.ParseFloat(queryReader.Get("scale", "1"), 64)
+	if err != nil {
+		c.Handle(400, "Render parameters error", fmt.Errorf("Cannot parse scale as float: %s", err))
+		return
+	}
+
+	headers := http.Header{}
+	acceptLanguageHeader := c.Req.Header.Values("Accept-Language")
+	if len(acceptLanguageHeader) > 0 {
+		headers["Accept-Language"] = acceptLanguageHeader
+	}
+
 	maxConcurrentLimitForApiCalls := 30
 	result, err := hs.RenderService.Render(c.Req.Context(), rendering.Opts{
-		Width:           width,
-		Height:          height,
-		Timeout:         time.Duration(timeout) * time.Second,
-		OrgId:           c.OrgId,
-		UserId:          c.UserId,
-		OrgRole:         c.OrgRole,
-		Path:            c.Params("*") + queryParams,
-		Timezone:        queryReader.Get("tz", ""),
-		Encoding:        queryReader.Get("encoding", ""),
-		ConcurrentLimit: maxConcurrentLimitForApiCalls,
+		Width:             width,
+		Height:            height,
+		Timeout:           time.Duration(timeout) * time.Second,
+		OrgId:             c.OrgId,
+		UserId:            c.UserId,
+		OrgRole:           c.OrgRole,
+		Path:              c.Params("*") + queryParams,
+		Timezone:          queryReader.Get("tz", ""),
+		Encoding:          queryReader.Get("encoding", ""),
+		ConcurrentLimit:   maxConcurrentLimitForApiCalls,
+		DeviceScaleFactor: scale,
+		Headers:           headers,
 	})
 
 	if err != nil && err == rendering.ErrTimeout {

@@ -3,7 +3,7 @@ import { dateTime } from '@grafana/data';
 import { Forms, Form } from '@grafana/ui';
 import { connect, MapDispatchToProps, MapStateToProps } from 'react-redux';
 import { ImportDashboardForm } from './ImportDashboardForm';
-import { resetDashboard, saveDashboard } from '../state/actions';
+import { clearLoadedDashboard, saveDashboard } from '../state/actions';
 import { DashboardInputs, DashboardSource, ImportDashboardDTO } from '../state/reducers';
 import { StoreState } from 'app/types';
 
@@ -14,11 +14,11 @@ interface ConnectedProps {
   inputs: DashboardInputs;
   source: DashboardSource;
   meta?: any;
-  folderId: number;
+  folder: { id: number; title?: string };
 }
 
 interface DispatchProps {
-  resetDashboard: typeof resetDashboard;
+  clearLoadedDashboard: typeof clearLoadedDashboard;
   saveDashboard: typeof saveDashboard;
 }
 
@@ -38,7 +38,7 @@ class ImportDashboardOverviewUnConnected extends PureComponent<Props, State> {
   };
 
   onCancel = () => {
-    this.props.resetDashboard();
+    this.props.clearLoadedDashboard();
   };
 
   onUidReset = () => {
@@ -46,7 +46,7 @@ class ImportDashboardOverviewUnConnected extends PureComponent<Props, State> {
   };
 
   render() {
-    const { dashboard, inputs, meta, source, folderId } = this.props;
+    const { dashboard, inputs, meta, source, folder } = this.props;
     const { uidReset } = this.state;
 
     return (
@@ -81,7 +81,7 @@ class ImportDashboardOverviewUnConnected extends PureComponent<Props, State> {
         )}
         <Form
           onSubmit={this.onSubmit}
-          defaultValues={{ ...dashboard, constants: [], dataSources: [], folderId }}
+          defaultValues={{ ...dashboard, constants: [], dataSources: [], folder: folder }}
           validateOnMount
           validateFieldsOnMount={['title', 'uid']}
           validateOn="onChange"
@@ -97,7 +97,7 @@ class ImportDashboardOverviewUnConnected extends PureComponent<Props, State> {
               onCancel={this.onCancel}
               onUidReset={this.onUidReset}
               onSubmit={this.onSubmit}
-              initialFolderId={folderId}
+              initialFolderId={folder.id}
             />
           )}
         </Form>
@@ -111,11 +111,11 @@ const mapStateToProps: MapStateToProps<ConnectedProps, OwnProps, StoreState> = (
   meta: state.importDashboard.meta,
   source: state.importDashboard.source,
   inputs: state.importDashboard.inputs,
-  folderId: state.location.routeParams.folderId ? Number(state.location.routeParams.folderId) : 0,
+  folder: state.location.routeParams.folderId ? { id: Number(state.location.routeParams.folderId) } : { id: 0 },
 });
 
 const mapDispatchToProps: MapDispatchToProps<DispatchProps, OwnProps> = {
-  resetDashboard,
+  clearLoadedDashboard,
   saveDashboard,
 };
 

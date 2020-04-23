@@ -7,7 +7,7 @@ import { StoreState } from 'app/types';
 import { getNavModel } from 'app/core/selectors/navModel';
 import { getRouteParams, getUrl } from 'app/core/selectors/location';
 import Page from 'app/core/components/Page/Page';
-import { backendSrv } from 'app/core/services/backend_srv';
+import { loadFolderPage } from '../loaders';
 import { ManageDashboards } from './ManageDashboards';
 
 interface Props {
@@ -18,26 +18,24 @@ interface Props {
 
 export const DashboardListPage: FC<Props> = memo(({ navModel, uid, url }) => {
   const { loading, value } = useAsync(() => {
-    // Do not make api call on route change
-    if (uid && url.startsWith('/dashboards')) {
-      return backendSrv.getFolderByUid(uid).then((folder: any) => {
-        const url = locationUtil.stripBaseFromUrl(folder.url);
-
-        if (url !== location.pathname) {
-          getLocationSrv().update({ path: url });
-        }
-
-        return folder.id;
-      });
-    } else {
-      return Promise.resolve(undefined);
+    if (!uid && url.startsWith('/dashboards')) {
+      return Promise.resolve({ pageNavModel: navModel });
     }
+    return loadFolderPage(uid, 'manage-folder-dashboards').then(({ folder, model }) => {
+      const path = locationUtil.stripBaseFromUrl(folder.url);
+
+      if (path !== location.pathname) {
+        getLocationSrv().update({ path });
+      }
+
+      return { id: folder.id, pageNavModel: { ...navModel, ...model } };
+    });
   }, [uid]);
 
   return (
-    <Page navModel={navModel}>
+    <Page navModel={value?.pageNavModel}>
       <Page.Contents isLoading={loading}>
-        <ManageDashboards folderUid={uid} folderId={value} />
+        <ManageDashboards folderUid={uid} folderId={value?.id} />
       </Page.Contents>
     </Page>
   );

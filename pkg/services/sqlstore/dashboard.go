@@ -247,7 +247,7 @@ func findDashboards(query *search.FindPersistedDashboardsQuery) ([]DashboardSear
 
 	if len(query.Title) > 0 {
 		sb.WithTitle(query.Title)
-		sb2filters = append(sb2filters, searchstore.TitleFilter{Title: query.Title})
+		sb2filters = append(sb2filters, searchstore.TitleFilter{Dialect: dialect, Title: query.Title})
 	}
 
 	if len(query.Type) > 0 {

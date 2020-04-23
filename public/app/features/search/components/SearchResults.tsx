@@ -3,7 +3,7 @@ import { css } from 'emotion';
 import { FixedSizeList } from 'react-window';
 import { GrafanaTheme } from '@grafana/data';
 import { stylesFactory, useTheme, Spinner } from '@grafana/ui';
-import { DashboardSection, OnToggleChecked } from '../types';
+import { DashboardSection, OnToggleChecked, SearchLayout } from '../types';
 import { getItemsHeight } from '../utils';
 import { ITEM_HEIGHT } from '../constants';
 import { useListHeight } from '../hooks/useListHeight';
@@ -17,6 +17,7 @@ export interface Props {
   onToggleChecked?: OnToggleChecked;
   onToggleSection: (section: DashboardSection) => void;
   results: DashboardSection[] | undefined;
+  layout?: string;
   wrapperRef?: MutableRefObject<HTMLDivElement | null>;
 }
 
@@ -28,10 +29,21 @@ export const SearchResults: FC<Props> = ({
   onToggleSection,
   results,
   wrapperRef,
+  layout,
 }) => {
   const theme = useTheme();
   const styles = getSectionStyles(theme);
   const listHeight = useListHeight(wrapperRef);
+
+  const renderItems = (section: DashboardSection) => {
+    if (!section.expanded && layout !== SearchLayout.List) {
+      return null;
+    }
+
+    return section.items.map(item => (
+      <SearchItem key={item.id} {...{ item, editable, onToggleChecked, onTagSelected }} />
+    ));
+  };
 
   if (loading) {
     return <Spinner className={styles.spinner} />;

@@ -12,7 +12,7 @@ draft = true
 
 ### DataTransformer type
 
-Immutable data transformation
+Function that transform data frames (AKA transformer)
 
 <b>Signature</b>
 

@@ -18,7 +18,7 @@
     "build": "grafana-toolkit package:build --scope=data",
     "bundle": "rollup -c rollup.config.ts",
     "clean": "rimraf ./dist ./compiled",
-    "docsExtract": "api-extractor run 2>&1 | tee ../../reports/docs/$(basename $(pwd)).log",
+    "docsExtract": "mkdir -p ../../reports/docs && api-extractor run 2>&1 | tee ../../reports/docs/$(basename $(pwd)).log",
     "lint": "eslint src/ --ext=.js,.ts,.tsx",
     "typecheck": "tsc --noEmit"
   },
@@ -42,6 +42,7 @@
     "@types/react": "16.8.16",
     "@types/sinon": "^7.5.2",
     "@types/rollup-plugin-visualizer": "2.6.0",
+    "@types/braintree__sanitize-url": "4.0.0",
     "pretty-format": "25.1.0",
     "rollup": "2.0.6",
     "rollup-plugin-sourcemaps": "0.5.0",
