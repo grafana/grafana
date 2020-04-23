@@ -60,7 +60,7 @@ func TestDSRouteRule(t *testing.T) {
 					{
 						Path: "api/common",
 						URL:  "{{.JsonData.dynamicUrl}}",
-						URLParams: []plugins.AppPluginRouteURLParams{
+						URLParams: []plugins.AppPluginRouteURLParam{
 							{Name: "{{.JsonData.queryParam}}", Content: "{{.SecureJsonData.key}}"},
 						},
 						Headers: []plugins.AppPluginRouteHeader{
