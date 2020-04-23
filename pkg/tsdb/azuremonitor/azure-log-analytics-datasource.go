@@ -171,32 +171,42 @@ func (e *AzureLogAnalyticsDatasource) createRequest(ctx context.Context, dsInfo 
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("User-Agent", fmt.Sprintf("Grafana/%s", setting.BuildVersion))
 
-	logAnalyticsRoute, err := getPluginRoute(dsInfo)
-	if err != nil {
-		return nil, err
-	}
-	pluginproxy.ApplyRoute(ctx, req, "loganalyticsazure", logAnalyticsRoute, dsInfo)
-
-	return req, nil
-}
-
-func getPluginRoute(dsInfo *models.DataSource) (*plugins.AppPluginRoute, error) {
 	// find plugin
 	plugin, ok := plugins.DataSources[dsInfo.Type]
 	if !ok {
 		return nil, errors.New("Unable to find datasource plugin Azure Monitor")
 	}
+	cloudName := dsInfo.JsonData.Get("cloudName").MustString("azuremonitor")
+
+	logAnalyticsRoute, proxypass, err := e.getPluginRoute(plugin, cloudName)
+	if err != nil {
+		return nil, err
+	}
+	pluginproxy.ApplyRoute(ctx, req, proxypass, logAnalyticsRoute, dsInfo)
+
+	return req, nil
+}
+
+func (e *AzureLogAnalyticsDatasource) getPluginRoute(plugin *plugins.DataSourcePlugin, cloudName string) (*plugins.AppPluginRoute, string, error) {
+	pluginRouteName := "loganalyticsazure"
+
+	switch cloudName {
+	case "chinaazuremonitor":
+		pluginRouteName = "chinaloganalyticsazure"
+	case "govazuremonitor":
+		pluginRouteName = "govloganalyticsazure"
+	}
 
 	var logAnalyticsRoute *plugins.AppPluginRoute
 
 	for _, route := range plugin.Routes {
-		if route.Path == "loganalyticsazure" {
+		if route.Path == pluginRouteName {
 			logAnalyticsRoute = route
 			break
 		}
 	}
 
-	return logAnalyticsRoute, nil
+	return logAnalyticsRoute, pluginRouteName, nil
 }
 
 func (e *AzureLogAnalyticsDatasource) unmarshalResponse(res *http.Response) (AzureLogAnalyticsResponse, error) {

@@ -25,10 +25,11 @@ export default class AzureLogAnalyticsDatasource {
 
     switch (this.instanceSettings.jsonData.cloudName) {
       case 'govazuremonitor': // Azure US Government
+        this.baseUrl = '/govloganalyticsazure';
         break;
       case 'germanyazuremonitor': // Azure Germany
         break;
-      case 'chinaazuremonitor': // Azue China
+      case 'chinaazuremonitor': // Azure China
         this.baseUrl = '/chinaloganalyticsazure';
         break;
       default:
@@ -60,10 +61,11 @@ export default class AzureLogAnalyticsDatasource {
 
       switch (this.instanceSettings.jsonData.cloudName) {
         case 'govazuremonitor': // Azure US Government
+          this.azureMonitorUrl = `/govworkspacesloganalytics/subscriptions`;
           break;
         case 'germanyazuremonitor': // Azure Germany
           break;
-        case 'chinaazuremonitor': // Azue China
+        case 'chinaazuremonitor': // Azure China
           this.azureMonitorUrl = `/chinaworkspacesloganalytics/subscriptions`;
           break;
         default:
