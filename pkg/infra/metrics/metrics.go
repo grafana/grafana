@@ -98,6 +98,12 @@ var (
 
 	// LDAPUsersSyncExecutionTime is a metric summary for LDAP users sync execution duration
 	LDAPUsersSyncExecutionTime prometheus.Summary
+
+	// MRenderingRequestCompleted is a metric counter for how many panels have been successfully rendered
+	MRenderingRequestCompleted prometheus.Counter
+
+	// MRenderingRequestCompleted is a metric counter for how many panels have been rendered with error
+	MRenderingRequestFailed prometheus.Counter
 )
 
 // Timers
@@ -107,6 +113,9 @@ var (
 
 	// MAlertingExecutionTime is a metric summary of alert exeuction duration
 	MAlertingExecutionTime prometheus.Summary
+
+	// MRenderingExecutionTime is a metric summary for panel rendering duration
+	MRenderingExecutionTime prometheus.Summary
 )
 
 // StatTotals
@@ -343,6 +352,25 @@ func init() {
 		Namespace:  ExporterName,
 	})
 
+	MRenderingRequestCompleted = newCounterStartingAtZero(prometheus.CounterOpts{
+		Name:      "rendering_request_completed_total",
+		Help:      "counter for successfully rendered panels",
+		Namespace: ExporterName,
+	})
+
+	MRenderingRequestFailed = newCounterStartingAtZero(prometheus.CounterOpts{
+		Name:      "rendering_request_failed_total",
+		Help:      "counter for panels rendered with error",
+		Namespace: ExporterName,
+	})
+
+	MRenderingExecutionTime = prometheus.NewSummary(prometheus.SummaryOpts{
+		Name:       "rendering_execution_time_milliseconds",
+		Help:       "summary of panel rendering exeuction duration",
+		Objectives: objectiveMap,
+		Namespace:  ExporterName,
+	})
+
 	MDataSourceProxyReqTimer = prometheus.NewSummary(prometheus.SummaryOpts{
 		Name:       "api_dataproxy_request_all_milliseconds",
 		Help:       "summary for dataproxy request duration",
@@ -489,6 +517,9 @@ func initMetricVars() {
 		MAwsCloudWatchGetMetricData,
 		MDBDataSourceQueryByID,
 		LDAPUsersSyncExecutionTime,
+		MRenderingRequestCompleted,
+		MRenderingRequestFailed,
+		MRenderingExecutionTime,
 		MAlertingActiveAlerts,
 		MStatTotalDashboards,
 		MStatTotalUsers,

@@ -10,6 +10,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
 
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -110,6 +111,19 @@ func (rs *RenderingService) RenderErrorImage(err error) (*RenderResult, error) {
 }
 
 func (rs *RenderingService) Render(ctx context.Context, opts Opts) (*RenderResult, error) {
+	startTime := time.Now()
+	result, err := rs.render(ctx, opts)
+	if err != nil {
+		metrics.MRenderingRequestFailed.Inc()
+	} else {
+		metrics.MRenderingRequestCompleted.Inc()
+	}
+	elapsedTime := time.Now().Sub(startTime).Nanoseconds() / int64(time.Millisecond)
+	metrics.MRenderingExecutionTime.Observe(float64(elapsedTime))
+	return result, err
+}
+
+func (rs *RenderingService) render(ctx context.Context, opts Opts) (*RenderResult, error) {
 	if rs.inProgressCount > opts.ConcurrentLimit {
 		return &RenderResult{
 			FilePath: filepath.Join(setting.HomePath, "public/img/rendering_limit.png"),
