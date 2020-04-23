@@ -1,5 +1,5 @@
 import { getDatasourceSrv } from '../../../features/plugins/datasource_srv';
-import { backendSrv } from '../../../core/services/backend_srv';
+import { getBackendSrv } from '../../../core/services/backend_srv';
 import { SetupStep } from './types';
 
 export const getSteps = (): SetupStep[] => [
@@ -8,6 +8,7 @@ export const getSteps = (): SetupStep[] => [
     subheading: 'The steps below will guide you to quickly finish setting up your Grafana installation.',
     title: 'Basic',
     info: 'The steps below will guide you to quickly finish setting up your Grafana installation.',
+    done: false,
     cards: [
       {
         type: 'tutorial',
@@ -17,6 +18,13 @@ export const getSteps = (): SetupStep[] => [
           'Set up and understand Grafana if you have no prior experience. This tutorial guides you through the entire process and covers the “Data source” and “Dashboards” steps to the right.',
         href: 'datasources/new?gettingstarted',
         icon: 'grafana',
+        check: () => Promise.resolve(false),
+      },
+      {
+        type: 'docs',
+        title: 'Add your first data source',
+        icon: 'database',
+        href: 'dashboard/new?gettingstarted',
         check: () => {
           return new Promise(resolve => {
             resolve(
@@ -31,24 +39,13 @@ export const getSteps = (): SetupStep[] => [
       },
       {
         type: 'docs',
-        title: 'Add your first data source',
-        icon: 'database',
-        href: 'dashboard/new?gettingstarted',
-        done: true,
-        check: () => {
-          return backendSrv.search({ limit: 1 }).then(result => {
-            return result.length > 0;
-          });
-        },
-      },
-      {
-        type: 'docs',
         heading: 'dashboards',
         title: 'Create your first dashboard',
         icon: 'apps',
         href: 'something',
-        check: () => {
-          return true;
+        check: async () => {
+          const result = await getBackendSrv().search({ limit: 1 });
+          return result.length > 0;
         },
       },
     ],
@@ -59,6 +56,7 @@ export const getSteps = (): SetupStep[] => [
       'All necessary steps to use Grafana are done. Now tackle advanced steps or make the best use of this home dashboard – it is, after all, a fully customizable dashboard – and remove this panel.',
     title: 'Advanced',
     info: ' Manage your users and teams and add plugins. These steps are optional',
+    done: false,
     cards: [
       {
         type: 'tutorial',
@@ -67,12 +65,7 @@ export const getSteps = (): SetupStep[] => [
         info: 'Learn to organize your users in teams and manage resource access and roles.',
         href: 'org/users?gettingstarted',
         icon: 'users-alt',
-        check: () => {
-          return backendSrv.get('/api/org/users/lookup').then((res: any) => {
-            /* return res.length > 1; */
-            return false;
-          });
-        },
+        check: () => Promise.resolve(false),
       },
       {
         type: 'docs',
@@ -80,10 +73,9 @@ export const getSteps = (): SetupStep[] => [
         title: 'Find and install plugins',
         href: 'https://grafana.com/plugins?utm_source=grafana_getting_started',
         icon: 'plug',
-        check: () => {
-          return backendSrv.get('/api/plugins', { embedded: 0, core: 0 }).then((plugins: any[]) => {
-            return plugins.length > 0;
-          });
+        check: async () => {
+          const plugins = await getBackendSrv().get('/api/plugins', { embedded: 0, core: 0 });
+          return Promise.resolve(plugins.length > 0);
         },
       },
     ],

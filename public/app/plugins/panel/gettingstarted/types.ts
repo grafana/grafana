@@ -20,4 +20,5 @@ export interface SetupStep {
   title: string;
   info: string;
   cards: Card[];
+  done: boolean;
 }

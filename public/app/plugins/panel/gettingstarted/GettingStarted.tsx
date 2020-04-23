@@ -9,12 +9,14 @@ import { contextSrv } from 'app/core/core';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { Step } from './components/Step';
-import { getSteps } from './steps';
 import { Help } from './components/Help';
+import { getSteps } from './steps';
+import { Card, SetupStep } from './types';
 
 interface State {
   checksDone: boolean;
   currentStep: number;
+  steps: SetupStep[];
 }
 
 export class GettingStarted extends PureComponent<PanelProps, State> {
@@ -24,8 +26,28 @@ export class GettingStarted extends PureComponent<PanelProps, State> {
     steps: getSteps(),
   };
 
-  componentDidMount() {
+  async componentDidMount() {
+    const { steps } = this.state;
+
+    const checkedStepsPromises: Array<Promise<SetupStep>> = steps.map(async (step: SetupStep) => {
+      const checkedCardsPromises: Array<Promise<Card>> = step.cards.map((card: Card) => {
+        return card.check().then(passed => {
+          return { ...card, done: passed };
+        });
+      });
+      const checkedCards = await Promise.all(checkedCardsPromises);
+      return {
+        ...step,
+        done: checkedCards.every(c => c.done),
+        cards: checkedCards,
+      };
+    });
+
+    const checkedSteps = await Promise.all(checkedStepsPromises);
+
     this.setState({
+      currentStep: !checkedSteps[0].done ? 0 : 1,
+      steps: checkedSteps,
       checksDone: true,
     });
   }
@@ -60,6 +82,7 @@ export class GettingStarted extends PureComponent<PanelProps, State> {
 
   render() {
     const { checksDone, currentStep, steps } = this.state;
+
     if (!checksDone) {
       return <div>checking...</div>;
     }
