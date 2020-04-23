@@ -44,6 +44,7 @@ export { ModalsProvider, ModalRoot, ModalsController } from './Modal/ModalsConte
 export { SetInterval } from './SetInterval/SetInterval';
 
 export { Table } from './Table/Table';
+export { TableCellDisplayMode } from './Table/types';
 export { TableInputCSV } from './TableInputCSV/TableInputCSV';
 export { TabsBar } from './Tabs/TabsBar';
 export { Tab } from './Tabs/Tab';
