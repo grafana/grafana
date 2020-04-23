@@ -2,7 +2,7 @@
 import React, { PureComponent } from 'react';
 
 import { PanelProps } from '@grafana/data';
-import { Button, getButtonStyles, Icon, stylesFactory } from '@grafana/ui';
+import { Button, stylesFactory } from '@grafana/ui';
 import { config } from '@grafana/runtime';
 import { css, cx } from 'emotion';
 import { contextSrv } from 'app/core/core';
@@ -86,15 +86,15 @@ export class GettingStarted extends PureComponent<PanelProps, State> {
     if (!checksDone) {
       return <div>checking...</div>;
     }
-
     const styles = getStyles();
     const step = steps[currentStep];
+    console.log(currentStep);
     return (
       <div className={styles.container}>
         <div>
           {currentStep === steps.length - 1 && (
             <div className={cx(styles.backForwardButtons, styles.previous)} onClick={this.onPreviousClick}>
-              <Icon size="xl" name="angle-left" />
+              <Button icon="angle-left" variant="secondary" />
             </div>
           )}
           <div className={styles.content}>
@@ -109,7 +109,7 @@ export class GettingStarted extends PureComponent<PanelProps, State> {
           </div>
           {currentStep < steps.length - 1 && (
             <div className={cx(styles.backForwardButtons, styles.forward)} onClick={this.onForwardClick}>
-              <Icon size="xl" name="angle-right" />
+              <Button icon="angle-right" variant="secondary" />
             </div>
           )}
         </div>
@@ -150,20 +150,12 @@ const getStyles = stylesFactory(() => {
       margin-right: 200px;
       width: 40%;
     `,
-    backForwardButtons: cx(
-      getButtonStyles({ theme, size: 'md', variant: 'secondary', hasIcon: false, hasText: false }).button,
-      css`
-        position: absolute;
-        right: 50px;
-        bottom: 150px;
-        height: 50px;
-        display: flex;
-        width: 20px;
-        height: 50px;
-        align-items: center;
-        justify-content: center;
-      `
-    ),
+    backForwardButtons: css`
+      position: absolute;
+      right: 50px;
+      bottom: 150px;
+      height: 50px;
+    `,
     previous: css`
       left: 30px;
     `,
