@@ -344,9 +344,6 @@ export function setupAngularRoutes($routeProvider: route.IRouteProvider, $locati
       },
     })
     .when('/admin/orgs', {
-      // templateUrl: 'public/app/features/admin/partials/orgs.html',
-      // controller: 'AdminListOrgsCtrl',
-      // controllerAs: 'ctrl',
       template: '<react-container />',
       resolve: {
         component: () =>
