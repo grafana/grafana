@@ -4,7 +4,7 @@ import { GrafanaTheme } from '@grafana/data';
 import { Icon, stylesFactory, useTheme, IconName, IconButton, Spinner } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
 import { CoreEvents } from 'app/types';
-import { DashboardSection, OnToggleChecked } from '../types';
+import { DashboardSection, OnToggleChecked, SearchLayout } from '../types';
 import { SearchItem } from './SearchItem';
 import { SearchCheckbox } from './SearchCheckbox';
 
@@ -15,6 +15,7 @@ export interface Props {
   onToggleChecked?: OnToggleChecked;
   onToggleSection: (section: DashboardSection) => void;
   results: DashboardSection[] | undefined;
+  layout?: string;
 }
 
 export const SearchResults: FC<Props> = ({
@@ -24,9 +25,20 @@ export const SearchResults: FC<Props> = ({
   onToggleChecked,
   onToggleSection,
   results,
+  layout,
 }) => {
   const theme = useTheme();
   const styles = getSectionStyles(theme);
+
+  const renderItems = (section: DashboardSection) => {
+    if (!section.expanded && layout !== SearchLayout.List) {
+      return null;
+    }
+
+    return section.items.map(item => (
+      <SearchItem key={item.id} {...{ item, editable, onToggleChecked, onTagSelected }} />
+    ));
+  };
 
   if (loading) {
     return <Spinner className={styles.spinner} />;
@@ -37,17 +49,18 @@ export const SearchResults: FC<Props> = ({
   return (
     <div className="search-results-container">
       <ul className={styles.wrapper}>
-        {results.map(section => (
-          <li aria-label="Search section" className={styles.section} key={section.title}>
-            <SectionHeader onSectionClick={onToggleSection} {...{ onToggleChecked, editable, section }} />
-            <ul aria-label="Search items" className={styles.wrapper}>
-              {section.expanded &&
-                section.items.map(item => (
-                  <SearchItem key={item.id} {...{ item, editable, onToggleChecked, onTagSelected }} />
-                ))}
-            </ul>
-          </li>
-        ))}
+        {results.map(section =>
+          layout !== SearchLayout.List ? (
+            <li aria-label="Search section" className={styles.section} key={section.title}>
+              <SectionHeader onSectionClick={onToggleSection} {...{ onToggleChecked, editable, section, layout }} />
+              <ul aria-label="Search items" className={styles.wrapper}>
+                {renderItems(section)}
+              </ul>
+            </li>
+          ) : (
+            renderItems(section)
+          )
+        )}
       </ul>
     </div>
   );

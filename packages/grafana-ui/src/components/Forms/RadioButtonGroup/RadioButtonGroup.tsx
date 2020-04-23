@@ -30,6 +30,9 @@ const getRadioButtonGroupStyles = () => {
         }
       }
     `,
+    icon: css`
+      margin-right: 6px;
+    `,
   };
 };
 
@@ -81,7 +84,7 @@ export function RadioButtonGroup<T>({
             name={groupName.current}
             fullWidth={fullWidth}
           >
-            {o.icon && <Icon name={o.icon} />}
+            {o.icon && <Icon name={o.icon} className={styles.icon} />}
             {o.label}
           </RadioButton>
         );
