@@ -304,6 +304,7 @@ func (hs *HTTPServer) CallDatasourceResource(c *models.ReqContext) {
 	}
 
 	pCtx := backend.PluginContext{
+		User:                       wrapper.BackendUserFromSignedInUser(c.SignedInUser),
 		OrgID:                      c.OrgId,
 		PluginID:                   plugin.Id,
 		DataSourceInstanceSettings: dsInstanceSettings,
@@ -368,6 +369,7 @@ func (hs *HTTPServer) CheckDatasourceHealth(c *models.ReqContext) {
 		c.JsonApiErr(500, "Unable to get datasource model", err)
 	}
 	pCtx := backend.PluginContext{
+		User:                       wrapper.BackendUserFromSignedInUser(c.SignedInUser),
 		OrgID:                      c.OrgId,
 		PluginID:                   plugin.Id,
 		DataSourceInstanceSettings: dsInstanceSettings,

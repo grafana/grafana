@@ -211,18 +211,6 @@ func (m *manager) CheckHealth(ctx context.Context, pluginConfig backend.PluginCo
 	return checkHealthResultFromProto(res), nil
 }
 
-func BackendUserFromSignedInUser(su *models.SignedInUser) *backend.User {
-	if su == nil {
-		return nil
-	}
-	return &backend.User{
-		Login: su.Login,
-		Name:  su.Name,
-		Email: su.Name,
-		Role:  string(su.OrgRole),
-	}
-}
-
 type keepCookiesJSONModel struct {
 	KeepCookies []string `json:"keepCookies"`
 }
@@ -255,8 +243,6 @@ func (m *manager) CallResource(pCtx backend.PluginContext, reqCtx *models.ReqCon
 		reqCtx.JsonApiErr(500, "Failed to read request body", err)
 		return
 	}
-
-	pCtx.User = BackendUserFromSignedInUser(reqCtx.SignedInUser)
 
 	req := &backend.CallResourceRequest{
 		PluginContext: pCtx,

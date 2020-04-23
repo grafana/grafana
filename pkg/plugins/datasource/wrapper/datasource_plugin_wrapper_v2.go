@@ -55,7 +55,7 @@ func (tw *DatasourcePluginWrapperV2) Query(ctx context.Context, ds *models.DataS
 		PluginContext: &pluginv2.PluginContext{
 			OrgId:                      ds.OrgId,
 			PluginId:                   tw.pluginId,
-			User:                       backend.ToProto().User(backendplugin.BackendUserFromSignedInUser(query.User)),
+			User:                       backend.ToProto().User(BackendUserFromSignedInUser(query.User)),
 			DataSourceInstanceSettings: backend.ToProto().DataSourceInstanceSettings(instanceSettings),
 		},
 		Queries: []*pluginv2.DataQuery{},
@@ -110,4 +110,18 @@ func (tw *DatasourcePluginWrapperV2) Query(ctx context.Context, ds *models.DataS
 	}
 
 	return tR, nil
+}
+
+// BackendUserFromSignedInUser converts Grafana's SignedInUser model
+// to the backend plugin's model.
+func BackendUserFromSignedInUser(su *models.SignedInUser) *backend.User {
+	if su == nil {
+		return nil
+	}
+	return &backend.User{
+		Login: su.Login,
+		Name:  su.Name,
+		Email: su.Name,
+		Role:  string(su.OrgRole),
+	}
 }

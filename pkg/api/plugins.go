@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
+	"github.com/grafana/grafana/pkg/plugins/datasource/wrapper"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util/errutil"
 )
@@ -50,6 +51,7 @@ func (hs *HTTPServer) getPluginContext(pluginID string, user *models.SignedInUse
 	return backend.PluginContext{
 		OrgID:    user.OrgId,
 		PluginID: plugin.Id,
+		User:     wrapper.BackendUserFromSignedInUser(user),
 		AppInstanceSettings: &backend.AppInstanceSettings{
 			JSONData:                jsonData,
 			DecryptedSecureJSONData: decryptedSecureJSONData,
@@ -381,4 +383,16 @@ func (hs *HTTPServer) getCachedPluginSettings(pluginID string, user *models.Sign
 
 	hs.CacheService.Set(cacheKey, query.Result, time.Second*5)
 	return query.Result, nil
+}
+
+func backendUserFromSignedInUser(su *models.SignedInUser) *backend.User {
+	if su == nil {
+		return nil
+	}
+	return &backend.User{
+		Login: su.Login,
+		Name:  su.Name,
+		Email: su.Name,
+		Role:  string(su.OrgRole),
+	}
 }
