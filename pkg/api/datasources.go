@@ -6,11 +6,13 @@ import (
 	"net/url"
 	"sort"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
+	"github.com/grafana/grafana/pkg/plugins/datasource/wrapper"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/util/errutil"
 )
@@ -296,23 +298,18 @@ func (hs *HTTPServer) CallDatasourceResource(c *models.ReqContext) {
 		return
 	}
 
-	config := backendplugin.PluginConfig{
-		OrgID:    c.OrgId,
-		PluginID: plugin.Id,
-		DataSourceConfig: &backendplugin.DataSourceConfig{
-			ID:                      ds.Id,
-			Name:                    ds.Name,
-			URL:                     ds.Url,
-			Database:                ds.Database,
-			User:                    ds.User,
-			BasicAuthEnabled:        ds.BasicAuth,
-			BasicAuthUser:           ds.BasicAuthUser,
-			JSONData:                ds.JsonData,
-			DecryptedSecureJSONData: ds.DecryptedValues(),
-			Updated:                 ds.Updated,
-		},
+	dsInstanceSettings, err := wrapper.ModelToInstanceSettings(ds)
+	if err != nil {
+		c.JsonApiErr(500, "Unable to process datasource instance model", err)
 	}
-	hs.BackendPluginManager.CallResource(config, c, c.Params("*"))
+
+	pCtx := backend.PluginContext{
+		User:                       wrapper.BackendUserFromSignedInUser(c.SignedInUser),
+		OrgID:                      c.OrgId,
+		PluginID:                   plugin.Id,
+		DataSourceInstanceSettings: dsInstanceSettings,
+	}
+	hs.BackendPluginManager.CallResource(pCtx, c, c.Params("*"))
 }
 
 func convertModelToDtos(ds *models.DataSource) dtos.DataSource {
@@ -367,24 +364,18 @@ func (hs *HTTPServer) CheckDatasourceHealth(c *models.ReqContext) {
 		return
 	}
 
-	config := &backendplugin.PluginConfig{
-		OrgID:    c.OrgId,
-		PluginID: plugin.Id,
-		DataSourceConfig: &backendplugin.DataSourceConfig{
-			ID:                      ds.Id,
-			Name:                    ds.Name,
-			URL:                     ds.Url,
-			Database:                ds.Database,
-			User:                    ds.User,
-			BasicAuthEnabled:        ds.BasicAuth,
-			BasicAuthUser:           ds.BasicAuthUser,
-			JSONData:                ds.JsonData,
-			DecryptedSecureJSONData: ds.DecryptedValues(),
-			Updated:                 ds.Updated,
-		},
+	dsInstanceSettings, err := wrapper.ModelToInstanceSettings(ds)
+	if err != nil {
+		c.JsonApiErr(500, "Unable to get datasource model", err)
+	}
+	pCtx := backend.PluginContext{
+		User:                       wrapper.BackendUserFromSignedInUser(c.SignedInUser),
+		OrgID:                      c.OrgId,
+		PluginID:                   plugin.Id,
+		DataSourceInstanceSettings: dsInstanceSettings,
 	}
 
-	resp, err := hs.BackendPluginManager.CheckHealth(c.Req.Context(), config)
+	resp, err := hs.BackendPluginManager.CheckHealth(c.Req.Context(), pCtx)
 	if err != nil {
 		if err == backendplugin.ErrPluginNotRegistered {
 			c.JsonApiErr(404, "Plugin not found", err)
