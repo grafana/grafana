@@ -105,7 +105,7 @@ Dimensions: 3 Fields by 2 Rows
 
 A common CSV or SQL format is the [long (a.k.a tall/narrow) Format](https://en.wikipedia.org/wiki/Wide_and_narrow_data) of time series data.
 
-This format is supported and is detected when there are also string columns in the dataframe. There can be multiple number and multiple string columns, and the series will be grouped.
+This format is supported and is detected when there are string columns in the dataframe. There can be multiple number and multiple string columns, and the series will be grouped.
 
 For example a Long format Series:
 
@@ -149,8 +149,8 @@ The dataframe structure is inspired by and uses the [Apache Arrow Project](https
 
 ### Javascript
 
-The javascript implementation of dataframes is in the [`/src/dataframe` folder](https://github.com/grafana/grafana/tree/master/packages/grafana-data/src/dataframe) and [`/src/types/dataframe.ts`](https://github.com/grafana/grafana/blob/master/packages/grafana-data/src/types/dataFrame.ts) of the [`@grafana/data` package](https://github.com/grafana/grafana/tree/master/packages/grafana-data).
+The Javascript implementation of dataframes is in the [`/src/dataframe` folder](https://github.com/grafana/grafana/tree/master/packages/grafana-data/src/dataframe) and [`/src/types/dataframe.ts`](https://github.com/grafana/grafana/blob/master/packages/grafana-data/src/types/dataFrame.ts) of the [`@grafana/data` package](https://github.com/grafana/grafana/tree/master/packages/grafana-data).
 
 ### Go
 
-Documentation for the Go implementation of dataframes can be found in the [github.com/grafana/grafana-plugin-sdk-go/data package](https://pkg.go.dev/github.com/grafana/grafana-plugin-sdk-go/data?tab=doc).
+For documentation on the Go implementation of dataframes, refer to the [github.com/grafana/grafana-plugin-sdk-go/data package](https://pkg.go.dev/github.com/grafana/grafana-plugin-sdk-go/data?tab=doc).
