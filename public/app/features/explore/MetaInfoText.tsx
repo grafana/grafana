@@ -23,6 +23,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => ({
   `,
   metaValue: css`
     font-family: ${theme.typography.fontFamily.monospace};
+    font-size: ${theme.typography.size.sm};
   `,
 }));
 
