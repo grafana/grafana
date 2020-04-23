@@ -10,6 +10,7 @@ export interface TableStyles {
   table: string;
   thead: string;
   headerCell: string;
+  headerCellLabel: string;
   tableCell: string;
   tableCellWrapper: string;
   row: string;
@@ -52,13 +53,17 @@ export const getTableStyles = stylesFactory(
       headerCell: css`
         padding: ${padding}px 10px;
         cursor: pointer;
-        white-space: nowrap;
         color: ${colors.textBlue};
         border-right: 1px solid ${theme.colors.panelBg};
 
         &:last-child {
           border-right: none;
         }
+      `,
+      headerCellLabel: css`
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
       `,
       row: css`
         label: row;
