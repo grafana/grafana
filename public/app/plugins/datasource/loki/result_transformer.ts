@@ -1,8 +1,8 @@
 import _ from 'lodash';
 import md5 from 'md5';
+import { of } from 'rxjs';
 
 import {
-  parseLabels,
   FieldType,
   TimeSeries,
   Labels,
@@ -12,59 +12,23 @@ import {
   findUniqueLabels,
   FieldConfig,
   DataFrameView,
-  dateTime,
 } from '@grafana/data';
+
 import templateSrv from 'app/features/templating/template_srv';
 import TableModel from 'app/core/table_model';
+import { formatQuery, getHighlighterExpressionsFromQuery } from './query_utils';
 import {
-  LokiLegacyStreamResult,
   LokiRangeQueryRequest,
   LokiResponse,
   LokiMatrixResult,
   LokiVectorResult,
   TransformerOptions,
-  LokiLegacyStreamResponse,
   LokiResultType,
   LokiStreamResult,
   LokiTailResponse,
   LokiQuery,
   LokiOptions,
 } from './types';
-
-import { formatQuery, getHighlighterExpressionsFromQuery } from './query_utils';
-import { of } from 'rxjs';
-
-/**
- * Transforms LokiLogStream structure into a dataFrame. Used when doing standard queries and older version of Loki.
- */
-export function legacyLogStreamToDataFrame(
-  stream: LokiLegacyStreamResult,
-  reverse?: boolean,
-  refId?: string
-): DataFrame {
-  let labels: Labels = stream.parsedLabels;
-  if (!labels && stream.labels) {
-    labels = parseLabels(stream.labels);
-  }
-
-  const times = new ArrayVector<string>([]);
-  const timesNs = new ArrayVector<string>([]);
-  const lines = new ArrayVector<string>([]);
-  const uids = new ArrayVector<string>([]);
-
-  for (const entry of stream.entries) {
-    const ts = entry.ts || entry.timestamp;
-    // iso string with nano precision, will be truncated but is parse-able
-    times.add(ts);
-    // So this matches new format, we are loosing precision here, which sucks but no easy way to keep it and this
-    // is for old pre 1.0.0 version Loki so probably does not affect that much.
-    timesNs.add(dateTime(ts).valueOf() + '000000');
-    lines.add(entry.line);
-    uids.add(createUid(ts, stream.labels, entry.line));
-  }
-
-  return constructDataFrame(times, timesNs, lines, uids, labels, reverse, refId);
-}
 
 /**
  * Transforms LokiStreamResult structure into a dataFrame. Used when doing standard queries and newer version of Loki.
@@ -131,40 +95,6 @@ function constructDataFrame(
  * @param response
  * @param data Needs to have ts, line, labels, id as fields
  */
-export function appendLegacyResponseToBufferedData(response: LokiLegacyStreamResponse, data: MutableDataFrame) {
-  // Should we do anything with: response.dropped_entries?
-
-  const streams: LokiLegacyStreamResult[] = response.streams;
-  if (!streams || !streams.length) {
-    return;
-  }
-
-  let baseLabels: Labels = {};
-  for (const f of data.fields) {
-    if (f.type === FieldType.string) {
-      if (f.labels) {
-        baseLabels = f.labels;
-      }
-      break;
-    }
-  }
-
-  for (const stream of streams) {
-    // Find unique labels
-    const labels = parseLabels(stream.labels);
-    const unique = findUniqueLabels(labels, baseLabels);
-
-    // Add each line
-    for (const entry of stream.entries) {
-      const ts = entry.ts || entry.timestamp;
-      data.values.ts.add(ts);
-      data.values.line.add(entry.line);
-      data.values.labels.add(unique);
-      data.values.id.add(createUid(ts, stream.labels, entry.line));
-    }
-  }
-}
-
 export function appendResponseToBufferedData(response: LokiTailResponse, data: MutableDataFrame) {
   // Should we do anything with: response.dropped_entries?
 
@@ -347,38 +277,6 @@ export function lokiStreamsToDataframes(
   return series;
 }
 
-export function lokiLegacyStreamsToDataframes(
-  data: LokiLegacyStreamResult | LokiLegacyStreamResponse,
-  target: { refId: string; query?: string; regexp?: string },
-  limit: number,
-  config: LokiOptions,
-  reverse = false
-): DataFrame[] {
-  if (Object.keys(data).length === 0) {
-    return [];
-  }
-
-  if (isLokiLogsStream(data)) {
-    return [legacyLogStreamToDataFrame(data, false, target.refId)];
-  }
-
-  const series: DataFrame[] = data.streams.map(stream => {
-    const dataFrame = legacyLogStreamToDataFrame(stream, reverse);
-    enhanceDataFrame(dataFrame, config);
-
-    return {
-      ...dataFrame,
-      refId: target.refId,
-      meta: {
-        searchWords: getHighlighterExpressionsFromQuery(formatQuery(target.query, target.regexp)),
-        limit,
-      },
-    };
-  });
-
-  return series;
-}
-
 /**
  * Adds new fields and DataLinks to DataFrame based on DataSource instance config.
  */
@@ -492,10 +390,4 @@ export function processRangeQueryResponse(
     default:
       throw new Error(`Unknown result type "${(response.data as any).resultType}".`);
   }
-}
-
-export function isLokiLogsStream(
-  data: LokiLegacyStreamResult | LokiLegacyStreamResponse
-): data is LokiLegacyStreamResult {
-  return !data.hasOwnProperty('streams');
 }

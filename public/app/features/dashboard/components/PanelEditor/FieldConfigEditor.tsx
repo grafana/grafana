@@ -90,7 +90,6 @@ export const OverrideFieldConfigEditor: React.FC<Props> = props => {
         <ValuePicker
           icon="plus"
           label="Add override"
-          size="md"
           variant="secondary"
           options={fieldMatchersUI
             .list()
@@ -196,6 +195,7 @@ export const DefaultFieldConfigEditor: React.FC<Props> = ({ data, onChange, conf
                 </>
               );
             }}
+            id={`${k}/${i}`}
             key={`${k}/${i}`}
           >
             {groupedConfigs[k].map(c => {

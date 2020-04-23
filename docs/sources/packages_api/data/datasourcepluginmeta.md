@@ -35,6 +35,7 @@ import { DataSourcePluginMeta } from '@grafana/data';
 |  [queryOptions](#queryoptions-property) | <code>PluginMetaQueryOptions</code> |  |
 |  [sort](#sort-property) | <code>number</code> |  |
 |  [streaming](#streaming-property) | <code>boolean</code> |  |
+|  [tracing](#tracing-property) | <code>boolean</code> |  |
 
 ### alerting property
 
@@ -122,4 +123,12 @@ sort?: number;
 
 ```typescript
 streaming?: boolean;
+```
+
+### tracing property
+
+<b>Signature</b>
+
+```typescript
+tracing?: boolean;
 ```

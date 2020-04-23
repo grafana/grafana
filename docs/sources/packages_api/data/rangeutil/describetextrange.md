@@ -15,7 +15,7 @@ draft = true
 <b>Signature</b>
 
 ```typescript
-function describeTextRange(expr: any): any;
+export declare function describeTextRange(expr: any): any;
 ```
 <b>Import</b>
 

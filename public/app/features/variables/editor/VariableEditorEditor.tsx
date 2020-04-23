@@ -1,7 +1,7 @@
 import React, { ChangeEvent, FormEvent, PureComponent } from 'react';
 import isEqual from 'lodash/isEqual';
 import { AppEvents, VariableType } from '@grafana/data';
-import { FormLabel } from '@grafana/ui';
+import { InlineFormLabel } from '@grafana/ui';
 import { e2e } from '@grafana/e2e';
 import { variableAdapters } from '../adapters';
 import { NEW_VARIABLE_ID, toVariablePayload, VariableIdentifier } from '../state/types';
@@ -133,9 +133,9 @@ export class VariableEditorEditorUnConnected extends PureComponent<Props> {
                 />
               </div>
               <div className="gf-form max-width-19">
-                <FormLabel width={6} tooltip={variableAdapters.get(this.props.variable.type).description}>
+                <InlineFormLabel width={6} tooltip={variableAdapters.get(this.props.variable.type).description}>
                   Type
-                </FormLabel>
+                </InlineFormLabel>
                 <div className="gf-form-select-wrapper max-width-17">
                   <select
                     className="gf-form-input"

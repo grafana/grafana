@@ -1,4 +1,4 @@
-import React, { FC, useCallback, useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import { css } from 'emotion';
 import { GrafanaTheme, PanelPlugin, PanelPluginMeta } from '@grafana/data';
 import { CustomScrollbar, useTheme, stylesFactory, Icon, Input } from '@grafana/ui';
@@ -23,70 +23,71 @@ interface DispatchProps {
 
 type Props = OwnProps & ConnectedProps & DispatchProps;
 
-export const VisualizationTabUnconnected: FC<Props> = ({ panel, plugin, changePanelPlugin }) => {
-  const [searchQuery, setSearchQuery] = useState('');
-  const theme = useTheme();
-  const styles = getStyles(theme);
+export const VisualizationTabUnconnected = React.forwardRef<HTMLInputElement, Props>(
+  ({ panel, plugin, changePanelPlugin }, ref) => {
+    const [searchQuery, setSearchQuery] = useState('');
+    const theme = useTheme();
+    const styles = getStyles(theme);
 
-  if (!plugin) {
-    return null;
-  }
+    if (!plugin) {
+      return null;
+    }
 
-  const onPluginTypeChange = (meta: PanelPluginMeta) => {
-    changePanelPlugin(panel, meta.id);
-  };
+    const onPluginTypeChange = (meta: PanelPluginMeta) => {
+      changePanelPlugin(panel, meta.id);
+    };
 
-  const onKeyPress = useCallback(
-    (e: React.KeyboardEvent<HTMLInputElement>) => {
-      if (e.key === 'Enter') {
-        const query = e.currentTarget.value;
-        const plugins = getAllPanelPluginMeta();
-        const match = filterPluginList(plugins, query, plugin.meta);
-        if (match && match.length) {
-          onPluginTypeChange(match[0]);
+    const onKeyPress = useCallback(
+      (e: React.KeyboardEvent<HTMLInputElement>) => {
+        if (e.key === 'Enter') {
+          const query = e.currentTarget.value;
+          const plugins = getAllPanelPluginMeta();
+          const match = filterPluginList(plugins, query, plugin.meta);
+          if (match && match.length) {
+            onPluginTypeChange(match[0]);
+          }
         }
-      }
-    },
-    [onPluginTypeChange]
-  );
+      },
+      [onPluginTypeChange]
+    );
 
-  const suffix =
-    searchQuery !== '' ? (
-      <span className={styles.searchClear} onClick={() => setSearchQuery('')}>
-        <Icon name="times" />
-        Clear filter
-      </span>
-    ) : null;
+    const suffix =
+      searchQuery !== '' ? (
+        <span className={styles.searchClear} onClick={() => setSearchQuery('')}>
+          <Icon name="times" />
+          Clear filter
+        </span>
+      ) : null;
 
-  return (
-    <div className={styles.wrapper}>
-      <div className={styles.search}>
-        <Field label="Filters">
-          <Input
-            value={searchQuery}
-            onChange={e => setSearchQuery(e.currentTarget.value)}
-            onKeyPress={onKeyPress}
-            prefix={<Icon name="filter" className={styles.icon} />}
-            suffix={suffix}
-            placeholder="Filter visualisations"
-            autoFocus
-          />
-        </Field>
+    return (
+      <div className={styles.wrapper}>
+        <div className={styles.search}>
+          <Field>
+            <Input
+              value={searchQuery}
+              onChange={e => setSearchQuery(e.currentTarget.value)}
+              onKeyPress={onKeyPress}
+              prefix={<Icon name="filter" className={styles.icon} />}
+              suffix={suffix}
+              placeholder="Filter visualisations"
+              ref={ref}
+            />
+          </Field>
+        </div>
+        <div className={styles.visList}>
+          <CustomScrollbar>
+            <VizTypePicker
+              current={plugin.meta}
+              onTypeChange={onPluginTypeChange}
+              searchQuery={searchQuery}
+              onClose={() => {}}
+            />
+          </CustomScrollbar>
+        </div>
       </div>
-      <div className={styles.visList}>
-        <CustomScrollbar>
-          <VizTypePicker
-            current={plugin.meta}
-            onTypeChange={onPluginTypeChange}
-            searchQuery={searchQuery}
-            onClose={() => {}}
-          />
-        </CustomScrollbar>
-      </div>
-    </div>
-  );
-};
-
+    );
+  }
+);
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
   return {
     icon: css`
@@ -97,7 +98,6 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       flex-direction: column;
       flex-grow: 1;
       max-height: 100%;
-      padding: ${theme.spacing.md};
     `,
     search: css`
       flex-grow: 0;
@@ -123,4 +123,6 @@ const mapStateToProps: MapStateToProps<ConnectedProps, OwnProps, StoreState> = (
 
 const mapDispatchToProps: MapDispatchToProps<DispatchProps, OwnProps> = { changePanelPlugin };
 
-export const VisualizationTab = connect(mapStateToProps, mapDispatchToProps)(VisualizationTabUnconnected);
+export const VisualizationTab = connect(mapStateToProps, mapDispatchToProps, undefined, { forwardRef: true })(
+  VisualizationTabUnconnected
+);

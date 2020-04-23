@@ -24,16 +24,8 @@ import { SingleStatBaseOptions } from '@grafana/ui';
 
 |  Property | Type | Description |
 |  --- | --- | --- |
-|  [fieldOptions](#fieldoptions-property) | <code>FieldDisplayOptions</code> |  |
 |  [orientation](#orientation-property) | <code>VizOrientation</code> |  |
-
-### fieldOptions property
-
-<b>Signature</b>
-
-```typescript
-fieldOptions: FieldDisplayOptions;
-```
+|  [reduceOptions](#reduceoptions-property) | <code>ReduceDataOptions</code> |  |
 
 ### orientation property
 
@@ -41,4 +33,12 @@ fieldOptions: FieldDisplayOptions;
 
 ```typescript
 orientation: VizOrientation;
+```
+
+### reduceOptions property
+
+<b>Signature</b>
+
+```typescript
+reduceOptions: ReduceDataOptions;
 ```

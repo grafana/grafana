@@ -23,7 +23,7 @@
     "build": "grafana-toolkit package:build --scope=e2e",
     "bundle": "rollup -c rollup.config.ts",
     "clean": "rimraf ./dist ./compiled",
-    "docsExtract": "api-extractor run 2>&1 | tee ../../reports/docs/$(basename $(pwd)).log",
+    "docsExtract": "mkdir -p ../../reports/docs && api-extractor run 2>&1 | tee ../../reports/docs/$(basename $(pwd)).log",
     "lint": "eslint cypress/ src/ --ext=.js,.ts,.tsx",
     "open": "cypress open",
     "start": "cypress run",

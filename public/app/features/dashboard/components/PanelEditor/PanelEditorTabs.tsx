@@ -8,7 +8,6 @@ import { DashboardModel } from '../../state';
 import { QueriesTab } from '../../panel_editor/QueriesTab';
 import { PanelModel } from '../../state/PanelModel';
 import { AlertTab } from 'app/features/alerting/AlertTab';
-import { VisualizationTab } from './VisualizationTab';
 import { TransformationsEditor } from '../TransformationsEditor/TransformationsEditor';
 
 interface PanelEditorTabsProps {
@@ -66,7 +65,6 @@ export const PanelEditorTabs: React.FC<PanelEditorTabsProps> = ({ panel, dashboa
       <TabContent className={styles.tabContent}>
         {activeTab.id === PanelEditorTabId.Query && <QueriesTab panel={panel} dashboard={dashboard} />}
         {activeTab.id === PanelEditorTabId.Alert && <AlertTab panel={panel} dashboard={dashboard} />}
-        {activeTab.id === PanelEditorTabId.Visualize && <VisualizationTab panel={panel} />}
         {activeTab.id === PanelEditorTabId.Transform && data.state !== LoadingState.NotStarted && (
           <TransformationsEditor
             transformations={panel.transformations || []}

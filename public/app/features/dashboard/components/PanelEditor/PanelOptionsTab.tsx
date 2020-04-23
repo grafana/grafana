@@ -1,12 +1,13 @@
-import React, { FC, useMemo } from 'react';
+import React, { FC, useMemo, useRef } from 'react';
 import { DashboardModel, PanelModel } from '../../state';
 import { FieldConfigSource, PanelData, PanelPlugin, SelectableValue } from '@grafana/data';
 import { Counter, DataLinksInlineEditor, Field, Input, RadioButtonGroup, Select, Switch, TextArea } from '@grafana/ui';
-import { OptionsGroup } from './OptionsGroup';
 import { getPanelLinksVariableSuggestions } from '../../../panel/panellinks/link_srv';
 import { getVariables } from '../../../variables/state/selectors';
 import { PanelOptionsEditor } from './PanelOptionsEditor';
 import { AngularPanelOptions } from './AngularPanelOptions';
+import { VisualizationTab } from './VisualizationTab';
+import { OptionsGroup } from './OptionsGroup';
 
 interface Props {
   panel: PanelModel;
@@ -27,8 +28,9 @@ export const PanelOptionsTab: FC<Props> = ({
   onPanelOptionsChanged,
   onFieldConfigsChange,
 }) => {
-  const elements: JSX.Element[] = [];
+  const visTabInputRef = useRef<HTMLInputElement>();
   const linkVariablesSuggestions = useMemo(() => getPanelLinksVariableSuggestions(), []);
+  const elements: JSX.Element[] = [];
   const panelLinksCount = panel && panel.links ? panel.links.length : 0;
 
   const variableOptions = getVariableOptions();
@@ -39,9 +41,14 @@ export const PanelOptionsTab: FC<Props> = ({
 
   const maxPerRowOptions = [2, 3, 4, 6, 8, 12].map(value => ({ label: value.toString(), value }));
 
+  const focusVisPickerInput = (isExpanded: boolean) => {
+    if (isExpanded && visTabInputRef.current) {
+      visTabInputRef.current.focus();
+    }
+  };
   // Fist common panel settings Title, description
   elements.push(
-    <OptionsGroup title="Basic" key="basic settings">
+    <OptionsGroup title="Panel settings" id="Panel settings" key="Panel settings">
       <Field label="Panel title">
         <Input defaultValue={panel.title} onBlur={e => onPanelConfigChange('title', e.currentTarget.value)} />
       </Field>
@@ -57,10 +64,16 @@ export const PanelOptionsTab: FC<Props> = ({
     </OptionsGroup>
   );
 
+  elements.push(
+    <OptionsGroup title="Panel type" id="Panel type" key="Panel type" defaultToClosed onToggle={focusVisPickerInput}>
+      <VisualizationTab panel={panel} ref={visTabInputRef} />
+    </OptionsGroup>
+  );
+
   // Old legacy react editor
   if (plugin.editor && panel && !plugin.optionEditors) {
     elements.push(
-      <OptionsGroup title="Display" key="legacy react editor">
+      <OptionsGroup title="Display" id="legacy react editor" key="legacy react editor">
         <plugin.editor
           data={data}
           options={panel.getOptions()}
@@ -94,8 +107,9 @@ export const PanelOptionsTab: FC<Props> = ({
       renderTitle={isExpanded => (
         <>Panel links {!isExpanded && panelLinksCount > 0 && <Counter value={panelLinksCount} />}</>
       )}
+      id="panel links"
       key="panel links"
-      defaultToClosed={true}
+      defaultToClosed
     >
       <DataLinksInlineEditor
         links={panel.links}
@@ -107,7 +121,7 @@ export const PanelOptionsTab: FC<Props> = ({
   );
 
   elements.push(
-    <OptionsGroup title="Panel repeats" key="panel repeats" defaultToClosed={true}>
+    <OptionsGroup title="Panel repeats" id="panel repeats" key="panel repeats" defaultToClosed>
       <Field
         label="Repeat by variable"
         description="Repeat this panel for each value in the selected variable.

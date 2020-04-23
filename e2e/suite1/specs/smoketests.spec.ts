@@ -13,7 +13,7 @@ e2e.scenario({
       e2e.flows.openDashboard(lastAddedDashboardUid);
     });
     e2e.pages.Dashboard.Toolbar.toolbarItems('Add panel').click();
-    e2e.pages.AddDashboard.ctaButtons('Add Query').click();
+    e2e.pages.AddDashboard.addNewPanel().click();
 
     e2e.components.DataSource.TestData.QueryTab.scenarioSelect().select('CSV Metric Values');
 
