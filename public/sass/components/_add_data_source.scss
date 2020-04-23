@@ -24,7 +24,6 @@
   display: flex;
   align-items: center;
   cursor: pointer;
-  box-shadow: $card-shadow;
   background: $panel-editor-viz-item-bg;
   border: 1px solid transparent;
   border-radius: 3px;
@@ -63,11 +62,6 @@
   margin-left: $space-sm;
   width: 55px;
   max-height: 55px;
-}
-
-.add-data-source-item-tag {
-  border: 1px solid red;
-  display: inline-block;
 }
 
 .add-data-source-item-actions {

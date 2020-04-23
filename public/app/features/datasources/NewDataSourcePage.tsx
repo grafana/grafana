@@ -135,7 +135,11 @@ const DataSourceTypeCard: FC<DataSourceTypeCardProps> = props => {
       <div className="add-data-source-item-text-wrapper">
         <span className="add-data-source-item-text">{plugin.name}</span>
         {plugin.info.description && <span className="add-data-source-item-desc">{plugin.info.description}</span>}
-        {!isPhantom && <PluginSignatureBadge status={plugin.signature} />}
+        {!isPhantom && (
+          <div>
+            <PluginSignatureBadge status={plugin.signature} />
+          </div>
+        )}
       </div>
       <div className="add-data-source-item-actions">
         {learnMoreLink && (
