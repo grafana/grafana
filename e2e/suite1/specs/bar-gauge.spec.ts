@@ -5,7 +5,7 @@ e2e.scenario({
   itName: 'Bar Guage rendering e2e tests',
   addScenarioDataSource: false,
   addScenarioDashBoard: false,
-  skipScenario: true,
+  skipScenario: false,
   scenario: () => {
     // open Panel Tests - Bar Gauge
     e2e.flows.openDashboard('O6f11TZWk');
