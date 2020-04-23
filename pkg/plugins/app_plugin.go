@@ -23,8 +23,8 @@ type AppPlugin struct {
 	Pinned            bool             `json:"-"`
 }
 
-// AppPluginRoute describes a plugin routes that is defined in
-// in the plugin.json file for a plugin
+// AppPluginRoute describes a plugin route that is defined in
+// the plugin.json file for a plugin.
 type AppPluginRoute struct {
 	Path         string                    `json:"path"`
 	Method       string                    `json:"method"`
