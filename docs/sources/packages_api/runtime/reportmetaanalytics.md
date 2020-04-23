@@ -12,6 +12,8 @@ draft = true
 
 ### reportMetaAnalytics variable
 
+Helper function to report meta analytics to the [EchoSrv](./runtime/echosrv.md)<!-- -->.
+
 <b>Signature</b>
 
 ```typescript

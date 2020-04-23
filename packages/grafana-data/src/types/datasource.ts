@@ -371,7 +371,7 @@ export interface DataQueryResponse {
 }
 
 /**
- * These are the common properties avaliable to all queries in all datasources
+ * These are the common properties available to all queries in all datasources
  * Specific implementations will extend this interface adding the required properties
  * for the given context
  */
@@ -505,6 +505,7 @@ export interface DataSourceSettings<T extends DataSourceJsonData = DataSourceJso
  */
 export interface DataSourceInstanceSettings<T extends DataSourceJsonData = DataSourceJsonData> {
   id: number;
+  uid: string;
   type: string;
   name: string;
   meta: DataSourcePluginMeta;

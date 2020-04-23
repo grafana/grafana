@@ -1,9 +1,9 @@
 import { DynamicConfigValue, FieldConfigOptionsRegistry, FieldOverrideContext, GrafanaTheme } from '@grafana/data';
 import React from 'react';
-import { Field, HorizontalGroup, IconButton, Label, stylesFactory, useTheme } from '@grafana/ui';
+import { Counter, Field, HorizontalGroup, IconButton, Label, stylesFactory, useTheme } from '@grafana/ui';
 import { css, cx } from 'emotion';
 import { OptionsGroup } from './OptionsGroup';
-import { Counter } from '@grafana/ui/src/components/Tabs/Counter';
+
 interface DynamicConfigValueEditorProps {
   property: DynamicConfigValue;
   registry: FieldConfigOptionsRegistry;
@@ -66,7 +66,7 @@ export const DynamicConfigValueEditor: React.FC<DynamicConfigValueEditorProps> =
   } else {
     editor = (
       <div>
-        <Field label={renderLabel()} description={item.description}>
+        <Field label={renderLabel()()} description={item.description}>
           <item.override
             value={property.value}
             onChange={value => {

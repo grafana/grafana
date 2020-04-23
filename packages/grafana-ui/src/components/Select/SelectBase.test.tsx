@@ -2,6 +2,7 @@ import React from 'react';
 import { mount, ReactWrapper } from 'enzyme';
 import { SelectBase } from './SelectBase';
 import { SelectableValue } from '@grafana/data';
+import { MultiValueContainer } from './MultiValue';
 
 const onChangeHandler = () => jest.fn();
 const findMenuElement = (container: ReactWrapper) => container.find({ 'aria-label': 'Select options menu' });
@@ -50,6 +51,107 @@ describe('SelectBase', () => {
         input.simulate('keydown', { key });
         const menu = findMenuElement(container);
         expect(menu).toHaveLength(1);
+      });
+    });
+  });
+
+  describe('when maxVisibleValues prop', () => {
+    let excessiveOptions: Array<SelectableValue<number>> = [];
+    beforeAll(() => {
+      excessiveOptions = [
+        {
+          label: 'Option 1',
+          value: 1,
+        },
+        {
+          label: 'Option 2',
+          value: 2,
+        },
+        {
+          label: 'Option 3',
+          value: 3,
+        },
+        {
+          label: 'Option 4',
+          value: 4,
+        },
+        {
+          label: 'Option 5',
+          value: 5,
+        },
+      ];
+    });
+
+    describe('is provided', () => {
+      it('should only display maxVisibleValues options, and additional number of values should be displayed as indicator', () => {
+        const container = mount(
+          <SelectBase
+            onChange={onChangeHandler}
+            isMulti={true}
+            maxVisibleValues={3}
+            options={excessiveOptions}
+            value={excessiveOptions}
+            isOpen={false}
+          />
+        );
+
+        expect(container.find(MultiValueContainer)).toHaveLength(3);
+        expect(container.find('#excess-values').text()).toBe('(+2)');
+      });
+
+      describe('and showAllSelectedWhenOpen prop is true', () => {
+        it('should show all selected options when menu is open', () => {
+          const container = mount(
+            <SelectBase
+              onChange={onChangeHandler}
+              isMulti={true}
+              maxVisibleValues={3}
+              options={excessiveOptions}
+              value={excessiveOptions}
+              showAllSelectedWhenOpen={true}
+              isOpen={true}
+            />
+          );
+
+          expect(container.find(MultiValueContainer)).toHaveLength(5);
+          expect(container.find('#excess-values')).toHaveLength(0);
+        });
+      });
+
+      describe('and showAllSelectedWhenOpen prop is false', () => {
+        it('should not show all selected options when menu is open', () => {
+          const container = mount(
+            <SelectBase
+              onChange={onChangeHandler}
+              isMulti={true}
+              maxVisibleValues={3}
+              value={excessiveOptions}
+              options={excessiveOptions}
+              showAllSelectedWhenOpen={false}
+              isOpen={true}
+            />
+          );
+
+          expect(container.find('#excess-values').text()).toBe('(+2)');
+          expect(container.find(MultiValueContainer)).toHaveLength(3);
+        });
+      });
+    });
+
+    describe('is not provided', () => {
+      it('should always show all selected options', () => {
+        const container = mount(
+          <SelectBase
+            onChange={onChangeHandler}
+            isMulti={true}
+            options={excessiveOptions}
+            value={excessiveOptions}
+            isOpen={false}
+          />
+        );
+
+        expect(container.find(MultiValueContainer)).toHaveLength(5);
+        expect(container.find('#excess-values')).toHaveLength(0);
       });
     });
   });

@@ -15,8 +15,7 @@ import { AppNotificationsState } from './appNotifications';
 import { PluginsState } from './plugins';
 import { ApplicationState } from './application';
 import { LdapState } from './ldap';
-import { PanelEditorState } from '../features/dashboard/panel_editor/state/reducers';
-import { PanelEditorStateNew } from '../features/dashboard/components/PanelEditor/state/reducers';
+import { PanelEditorState } from '../features/dashboard/components/PanelEditor/state/reducers';
 import { ApiKeysState } from './apiKeys';
 import { TemplatingState } from '../features/variables/state/reducers';
 import { ImportDashboardState } from '../features/manage-dashboards/state/reducers';
@@ -30,7 +29,6 @@ export interface StoreState {
   folder: FolderState;
   dashboard: DashboardState;
   panelEditor: PanelEditorState;
-  panelEditorNew: PanelEditorStateNew;
   dataSources: DataSourcesState;
   dataSourceSettings: DataSourceSettingsState;
   explore: ExploreState;

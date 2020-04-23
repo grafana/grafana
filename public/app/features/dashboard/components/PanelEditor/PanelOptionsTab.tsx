@@ -1,13 +1,13 @@
-import React, { FC, useMemo } from 'react';
-import { PanelModel, DashboardModel } from '../../state';
-import { SelectableValue, PanelPlugin, FieldConfigSource, PanelData } from '@grafana/data';
-import { Switch, Select, DataLinksInlineEditor, Input, TextArea, RadioButtonGroup, Field } from '@grafana/ui';
+import React, { FC, useMemo, useRef } from 'react';
+import { DashboardModel, PanelModel } from '../../state';
+import { FieldConfigSource, PanelData, PanelPlugin, SelectableValue } from '@grafana/data';
+import { Counter, DataLinksInlineEditor, Field, Input, RadioButtonGroup, Select, Switch, TextArea } from '@grafana/ui';
 import { OptionsGroup } from './OptionsGroup';
 import { getPanelLinksVariableSuggestions } from '../../../panel/panellinks/link_srv';
 import { getVariables } from '../../../variables/state/selectors';
 import { PanelOptionsEditor } from './PanelOptionsEditor';
-import { AngularPanelOptions } from '../../panel_editor/AngularPanelOptions';
-import { Counter } from '@grafana/ui/src/components/Tabs/Counter';
+import { AngularPanelOptions } from './AngularPanelOptions';
+import { VisualizationTab } from './VisualizationTab';
 
 interface Props {
   panel: PanelModel;
@@ -28,9 +28,10 @@ export const PanelOptionsTab: FC<Props> = ({
   onPanelOptionsChanged,
   onFieldConfigsChange,
 }) => {
-  const elements: JSX.Element[] = [];
+  const visTabInputRef = useRef<HTMLInputElement>();
   const linkVariablesSuggestions = useMemo(() => getPanelLinksVariableSuggestions(), []);
-  const panelLinksCount = panel && panel.links ? panel.links.length : undefined;
+  const elements: JSX.Element[] = [];
+  const panelLinksCount = panel && panel.links ? panel.links.length : 0;
 
   const variableOptions = getVariableOptions();
   const directionOptions = [
@@ -40,9 +41,14 @@ export const PanelOptionsTab: FC<Props> = ({
 
   const maxPerRowOptions = [2, 3, 4, 6, 8, 12].map(value => ({ label: value.toString(), value }));
 
+  const focusVisPickerInput = (isExpanded: boolean) => {
+    if (isExpanded && visTabInputRef.current) {
+      visTabInputRef.current.focus();
+    }
+  };
   // Fist common panel settings Title, description
   elements.push(
-    <OptionsGroup title="Basic" key="basic settings">
+    <OptionsGroup title="Panel settings" key="Panel settings">
       <Field label="Panel title">
         <Input defaultValue={panel.title} onBlur={e => onPanelConfigChange('title', e.currentTarget.value)} />
       </Field>
@@ -55,6 +61,12 @@ export const PanelOptionsTab: FC<Props> = ({
       <Field label="Transparent" description="Display panel without a background.">
         <Switch value={panel.transparent} onChange={e => onPanelConfigChange('transparent', e.currentTarget.checked)} />
       </Field>
+    </OptionsGroup>
+  );
+
+  elements.push(
+    <OptionsGroup title="Panel type" key="Panel type" defaultToClosed onToggle={focusVisPickerInput}>
+      <VisualizationTab panel={panel} ref={visTabInputRef} />
     </OptionsGroup>
   );
 
@@ -93,9 +105,7 @@ export const PanelOptionsTab: FC<Props> = ({
   elements.push(
     <OptionsGroup
       renderTitle={isExpanded => (
-        <>
-          Panel links {!isExpanded && panelLinksCount && panelLinksCount !== 0 && <Counter value={panelLinksCount} />}
-        </>
+        <>Panel links {!isExpanded && panelLinksCount > 0 && <Counter value={panelLinksCount} />}</>
       )}
       key="panel links"
       defaultToClosed={true}

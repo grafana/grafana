@@ -34,7 +34,7 @@ export class TestDataQueryCtrl extends QueryCtrl {
   digest: (promise: Promise<any>) => Promise<any>;
 
   showLabels = false;
-  selectors: typeof e2e.pages.Dashboard.Panels.DataSource.TestData.QueryTab.selectors;
+  selectors: typeof e2e.components.DataSource.TestData.QueryTab.selectors;
 
   /** @ngInject */
   constructor($scope: IScope, $injector: any) {
@@ -45,7 +45,7 @@ export class TestDataQueryCtrl extends QueryCtrl {
     this.newPointTime = dateTime();
     this.selectedPoint = { text: 'Select point', value: null };
     this.showLabels = showLabelsFor.includes(this.target.scenarioId);
-    this.selectors = e2e.pages.Dashboard.Panels.DataSource.TestData.QueryTab.selectors;
+    this.selectors = e2e.components.DataSource.TestData.QueryTab.selectors;
   }
 
   getPoints() {
@@ -88,8 +88,6 @@ export class TestDataQueryCtrl extends QueryCtrl {
 
   scenarioChanged() {
     this.scenario = _.find(this.scenarioList, { id: this.target.scenarioId });
-    this.target.stringInput = this.scenario.stringInput;
-    this.showLabels = showLabelsFor.includes(this.target.scenarioId);
 
     if (this.target.scenarioId === 'manual_entry') {
       this.target.points = this.target.points || [];
@@ -114,6 +112,15 @@ export class TestDataQueryCtrl extends QueryCtrl {
     } else {
       delete this.target.csvWave;
     }
+
+    if (this.target.scenarioId === 'grafana_api') {
+      this.target.stringInput = 'datasources';
+    } else {
+      delete this.target.stringInput;
+    }
+
+    this.target.stringInput = this.scenario.stringInput ?? undefined;
+    this.showLabels = showLabelsFor.includes(this.target.scenarioId);
 
     this.refresh();
   }

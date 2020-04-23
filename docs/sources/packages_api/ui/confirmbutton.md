@@ -15,7 +15,7 @@ draft = true
 <b>Signature</b>
 
 ```typescript
-ConfirmButton: React.FunctionComponent<Pick<Props, "size" | "className" | "disabled" | "onClick" | "confirmText" | "confirmVariant" | "onConfirm" | "onCancel">>
+ConfirmButton: React.FunctionComponent<Pick<Props, "size" | "className" | "onClick" | "disabled" | "confirmText" | "confirmVariant" | "closeOnConfirm" | "onConfirm" | "onCancel">>
 ```
 <b>Import</b>
 
