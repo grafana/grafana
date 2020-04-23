@@ -204,7 +204,12 @@ jobs:
       - run:
           name: Install ShellCheck
           command: |
-            sudo apt-get update && sudo apt-get install -y shellcheck
+            VERSION=0.7.1
+            CHKSUM=beca3d7819a6bdcfbd044576df4fc284053b48f468b2f03428fe66f4ceb2c05d9b5411357fa15003cb0311406c255084cf7283a3b8fce644c340c2f6aa910b9f
+            curl -fLO http://storage.googleapis.com/grafana-build-pipeline/dependencies/shellcheck-v${VERSION}.linux.x86_64.tar.xz
+            echo $CHKSUM shellcheck-v${VERSION}.linux.x86_64.tar.xz | sha512sum --check --strict --status
+            tar xf shellcheck-v${VERSION}.linux.x86_64.tar.xz
+            sudo mv shellcheck-v${VERSION}/shellcheck /usr/local/bin/
       - run:
           name: ShellCheck
           command: |
