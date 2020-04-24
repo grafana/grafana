@@ -18,10 +18,10 @@ export const Components = {
   Drawer: {
     General: componentFactory({
       selectors: {
-        title: (title: string) => `Panel inspector title ${title}`,
-        expand: 'Panel inspector expand',
-        contract: 'Panel inspector contract',
-        close: 'Panel inspector close',
+        title: (title: string) => `Drawer title ${title}`,
+        expand: 'Drawer expand',
+        contract: 'Drawer contract',
+        close: 'Drawer close',
         rcContentWrapper: () => '.drawer-content-wrapper',
       },
     }),
