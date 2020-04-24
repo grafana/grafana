@@ -95,6 +95,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       margin: 0 auto;
       padding: ${theme.spacing.md};
       position: relative;
+      height: 100%;
 
       @media only screen and (min-width: ${theme.breakpoints.md}) {
         padding: 32px;
