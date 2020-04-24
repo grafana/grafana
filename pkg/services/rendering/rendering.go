@@ -12,6 +12,8 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
@@ -114,7 +116,10 @@ func (rs *RenderingService) Render(ctx context.Context, opts Opts) (*RenderResul
 	startTime := time.Now()
 	result, err := rs.render(ctx, opts)
 	elapsedTime := time.Since(startTime).Milliseconds()
-	if err != nil {
+	if status.Code(err) == codes.DeadlineExceeded {
+		metrics.MRenderingRequestTotal.WithLabelValues("cancelled").Inc()
+		metrics.MRenderingSummary.WithLabelValues("cancelled").Observe(float64(elapsedTime))
+	} else if err != nil {
 		metrics.MRenderingRequestTotal.WithLabelValues("failure").Inc()
 		metrics.MRenderingSummary.WithLabelValues("failure").Observe(float64(elapsedTime))
 	} else {
