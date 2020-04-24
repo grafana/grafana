@@ -1,7 +1,7 @@
 import { identity } from 'lodash';
 import { keyBy } from 'lodash';
 import { ZipkinAnnotation, ZipkinSpan } from '../types';
-import { Log, Process, SpanData, TraceData } from '@jaegertracing/jaeger-ui-components';
+import { KeyValuePair, Log, Process, SpanData, TraceData } from '@jaegertracing/jaeger-ui-components';
 
 /**
  * Transforms response to format similar to Jaegers as we use Jaeger ui on the frontend.
@@ -32,7 +32,7 @@ function transformSpan(span: ZipkinSpan): SpanData {
       return {
         key,
         type: key === 'error' ? 'bool' : 'string',
-        value: key === 'error' ? true : span.tags[key],
+        value: key === 'error' ? true : span.tags![key],
       };
     }),
     references: span.parentId
@@ -92,7 +92,7 @@ function gatherProcesses(zSpans: ZipkinSpan[]): Record<string, Process> {
             value: span.localEndpoint.port,
           }
         : undefined,
-    ].filter(identity),
+    ].filter(identity) as KeyValuePair[],
   }));
   return keyBy(processes, 'serviceName');
 }

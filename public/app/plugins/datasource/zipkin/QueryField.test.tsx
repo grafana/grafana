@@ -47,12 +47,12 @@ describe('useLoadOptions', () => {
   it('loads spans and traces', async () => {
     const ds = {
       async metadataRequest(url: string, params?: Record<string, any>): Promise<any> {
-        if (url === '/api/v2/spans' && params.serviceName === 'service1') {
+        if (url === '/api/v2/spans' && params?.serviceName === 'service1') {
           return Promise.resolve(['span1', 'span2']);
         }
 
         console.log({ url });
-        if (url === '/api/v2/traces' && params.serviceName === 'service1' && params.spanName === 'span1') {
+        if (url === '/api/v2/traces' && params?.serviceName === 'service1' && params?.spanName === 'span1') {
           return Promise.resolve([[{ name: 'trace1', duration: 10_000, traceId: 'traceId1' }]]);
         }
       },

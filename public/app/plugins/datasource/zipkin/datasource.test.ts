@@ -40,5 +40,5 @@ const defaultSettings: DataSourceInstanceSettings = {
   type: 'tracing',
   name: 'zipkin',
   meta: {} as any,
-  jsonData: null,
+  jsonData: {},
 };
