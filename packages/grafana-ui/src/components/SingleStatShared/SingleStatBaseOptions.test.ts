@@ -156,31 +156,6 @@ describe('sharedSingleStatMigrationHandler', () => {
     `);
   });
 
-  it('change from angular singlestat to gauge', () => {
-    const old: any = {
-      angular: {
-        format: 'ms',
-        decimals: 7,
-        gauge: {
-          maxValue: 150,
-          minValue: -10,
-          show: true,
-          thresholdLabels: true,
-          thresholdMarkers: true,
-        },
-      },
-    };
-
-    const panel = {} as PanelModel;
-    const newOptions = sharedSingleStatPanelChangedHandler(panel, 'singlestat', old);
-    expect(panel.fieldConfig.defaults.unit).toBe('ms');
-    expect(panel.fieldConfig.defaults.min).toBe(-10);
-    expect(panel.fieldConfig.defaults.max).toBe(150);
-    expect(panel.fieldConfig.defaults.decimals).toBe(7);
-    expect(newOptions.showThresholdMarkers).toBe(true);
-    expect(newOptions.showThresholdLabels).toBe(true);
-  });
-
   it('change from angular singlestat with no enabled gauge', () => {
     const old: any = {
       angular: {
