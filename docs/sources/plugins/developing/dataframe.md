@@ -1,20 +1,20 @@
 +++
-title = "Introduction Dataframes"
+title = "Introduction Data frames"
 type = "docs"
 [menu.docs]
-name = "Dataframes"
+name = "Data frames"
 parent = "developing"
 weight = 9
 draft = true
 +++
 
-## Introduction to dataframes
+## Introduction to data frames
 
-Dataframes were introduced in Grafana 7.0. They replace the Time Series and Table types in Grafana. Dataframes are a more generic structure that can hold different shapes of time series, tables, and other types.
+Data frames were introduced in Grafana 7.0. They replace the Time Series and Table types in Grafana. Data frames are a more generic structure that can hold different shapes of time series, tables, and other types.
 
-A dataframe is a [Columnar oriented](https://en.wikipedia.org/wiki/Column-oriented_DBMS) table structure, meaning it stores data by column and not by row.
+A data frame is a [Columnar oriented](https://en.wikipedia.org/wiki/Column-oriented_DBMS) table structure, meaning it stores data by column and not by row.
 
-**Simplified dataframe model:**
+**Simplified data frame model:**
 
 ```ts
 interface DataFrame {
@@ -42,15 +42,15 @@ interface Field {
 }
 ```
 
-With dataframes, each column is represented by a **Field**. So the essence of a dataframe is an field array with additional properties on both the dataframe and its fields.
+With data frames, each column is represented by a **Field**. So the essence of a data frame is an field array with additional properties on both the data frame and its fields.
 
-One restriction on dataframes is that all fields in the frame must be of the same length to be a valid dataframe.
+One restriction on data frames is that all fields in the frame must be of the same length to be a valid data frame.
 
-### When is a dataframe a time series or a table
+### When is a data frame a time series or a table
 
-Any valid dataframe can be a table. If you have row-oriented data, the rows need to be converted to the dataframe's column-oriented structure.
+Any valid data frame can be a table. If you have row-oriented data, the rows need to be converted to the data frame's column-oriented structure.
 
-Because each field in a dataframe has a type, we can use the types of the fields (the schema of the dataframe) to determine if it dataframe, or a collection of dataframes, can be time series. In the simplest case, if a Frame has a Time field and Number field then it can be a time series (the frame should be sorted by time ascending).
+Because each field in a data frame has a type, we can use the types of the fields (the schema of the data frame) to determine if it data frame, or a collection of data frames, can be time series. In the simplest case, if a Frame has a Time field and Number field then it can be a time series (the frame should be sorted by time ascending).
 
 #### Time series with unshared time values
 
@@ -105,7 +105,7 @@ Dimensions: 3 fields by 2 rows
 
 A common CSV or SQL format is the [long (a.k.a tall/narrow) Format](https://en.wikipedia.org/wiki/Wide_and_narrow_data) of time series data.
 
-This format is supported and is detected when there are string columns in the dataframe. There can be multiple number and multiple string columns, and the series will be grouped.
+This format is supported and is detected when there are string columns in the data frame. There can be multiple number and multiple string columns, and the series will be grouped.
 
 For example a Long format Series:
 
@@ -141,16 +141,16 @@ Dimensions: 5 fields by 2 rows
 
 ## Technical references
 
-This section contains links to technical reference and implementations of dataframes.
+This section contains links to technical reference and implementations of data frames.
 
 ### Apache Arrow
 
-The dataframe structure is inspired by and uses the [Apache Arrow Project](https://arrow.apache.org/). Javascript Dataframes use Arrow Tables as the underlying structure, and the backend Go code serializes its Frames in Arrow Tables for transmission.
+The dataframe structure is inspired by and uses the [Apache Arrow Project](https://arrow.apache.org/). Javascript Data frames use Arrow Tables as the underlying structure, and the backend Go code serializes its Frames in Arrow Tables for transmission.
 
 ### Javascript
 
-The Javascript implementation of dataframes is in the [`/src/dataframe` folder](https://github.com/grafana/grafana/tree/master/packages/grafana-data/src/dataframe) and [`/src/types/dataframe.ts`](https://github.com/grafana/grafana/blob/master/packages/grafana-data/src/types/dataFrame.ts) of the [`@grafana/data` package](https://github.com/grafana/grafana/tree/master/packages/grafana-data).
+The Javascript implementation of data frames is in the [`/src/dataframe` folder](https://github.com/grafana/grafana/tree/master/packages/grafana-data/src/dataframe) and [`/src/types/dataframe.ts`](https://github.com/grafana/grafana/blob/master/packages/grafana-data/src/types/dataFrame.ts) of the [`@grafana/data` package](https://github.com/grafana/grafana/tree/master/packages/grafana-data).
 
 ### Go
 
-For documentation on the Go implementation of dataframes, refer to the [github.com/grafana/grafana-plugin-sdk-go/data package](https://pkg.go.dev/github.com/grafana/grafana-plugin-sdk-go/data?tab=doc).
+For documentation on the Go implementation of data frames, refer to the [github.com/grafana/grafana-plugin-sdk-go/data package](https://pkg.go.dev/github.com/grafana/grafana-plugin-sdk-go/data?tab=doc).
