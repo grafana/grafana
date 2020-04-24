@@ -26,7 +26,6 @@ const NotificationsListPage: FC = () => {
     });
   }, []);
 
-  console.log(notifications);
   return (
     <Page navModel={navModel}>
       <Page.Contents>
