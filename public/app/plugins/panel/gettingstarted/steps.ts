@@ -1,7 +1,7 @@
-import { getDatasourceSrv } from '../../../features/plugins/datasource_srv';
-import { getBackendSrv } from '../../../core/services/backend_srv';
+import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
+import { getBackendSrv } from 'app/core/services/backend_srv';
+import store from 'app/core/store';
 import { SetupStep } from './types';
-import store from '../../../core/store';
 
 const step1TutorialTitle = 'Grafana fundamentals';
 const step2TutorialTitle = 'Create users and teams';
@@ -33,10 +33,12 @@ export const getSteps = (): SetupStep[] => [
         icon: 'grafana',
         check: () => Promise.resolve(store.get(step1Key)),
         key: step1Key,
+        done: false,
       },
       {
         type: 'docs',
         title: 'Add your first data source',
+        heading: 'data sources',
         icon: 'database',
         href: 'https://grafana.com/docs/grafana/latest/features/datasources/add-a-data-source/',
         check: () => {
@@ -50,6 +52,7 @@ export const getSteps = (): SetupStep[] => [
             );
           });
         },
+        done: false,
       },
       {
         type: 'docs',
@@ -61,6 +64,7 @@ export const getSteps = (): SetupStep[] => [
           const result = await getBackendSrv().search({ limit: 1 });
           return result.length > 0;
         },
+        done: false,
       },
     ],
   },
@@ -81,6 +85,7 @@ export const getSteps = (): SetupStep[] => [
         icon: 'users-alt',
         key: step2Key,
         check: () => Promise.resolve(store.get(step2Key)),
+        done: false,
       },
       {
         type: 'docs',
@@ -92,6 +97,7 @@ export const getSteps = (): SetupStep[] => [
           const plugins = await getBackendSrv().get('/api/plugins', { embedded: 0, core: 0 });
           return Promise.resolve(plugins.length > 0);
         },
+        done: false,
       },
     ],
   },

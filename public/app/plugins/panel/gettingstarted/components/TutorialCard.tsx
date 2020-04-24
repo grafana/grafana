@@ -2,9 +2,9 @@ import React, { FC, MouseEvent } from 'react';
 import { GrafanaTheme } from '@grafana/data';
 import { Icon, stylesFactory, useTheme } from '@grafana/ui';
 import { css } from 'emotion';
-import { Card } from '../types';
+import store from 'app/core/store';
 import { cardContent, cardStyle, iconStyle } from './sharedStyles';
-import store from '../../../../core/store';
+import { Card } from '../types';
 
 interface Props {
   card: Card;

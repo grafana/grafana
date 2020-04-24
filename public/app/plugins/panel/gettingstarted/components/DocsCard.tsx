@@ -34,7 +34,6 @@ const getStyles = stylesFactory((theme: GrafanaTheme, complete: boolean) => {
     card: css`
       ${cardStyle(theme, complete)}
       width: 230px;
-      position: relative;
     `,
     heading: css`
       text-transform: uppercase;

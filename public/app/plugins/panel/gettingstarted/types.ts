@@ -5,13 +5,13 @@ export type CardType = 'tutorial' | 'docs' | 'other';
 export interface Card {
   title: string;
   type: CardType;
-  heading?: string;
-  icon?: IconName;
+  icon: IconName;
   href: string;
-  target?: string;
-  info?: string;
   check: () => Promise<boolean>;
-  done?: boolean;
+  done: boolean;
+  heading: string;
+  info?: string;
+  // For local storage
   key?: string;
 }
 
