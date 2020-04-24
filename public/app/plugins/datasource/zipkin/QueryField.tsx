@@ -27,7 +27,6 @@ export const QueryField = ({ query, onChange, onRunQuery, datasource }: Props) =
   );
 
   let cascaderOptions = useMapToCascaderOptions(serviceOptions, allOptions);
-  console.log({ cascaderOptions });
 
   return (
     <>
@@ -58,7 +57,8 @@ export const QueryField = ({ query, onChange, onRunQuery, datasource }: Props) =
   );
 };
 
-function useServices(datasource: ZipkinDatasource) {
+// Exported for tests
+export function useServices(datasource: ZipkinDatasource): AsyncState<CascaderOption[]> {
   const url = `${apiPrefix}/services`;
 
   const [servicesOptions, fetch] = useAsyncFn(async (): Promise<CascaderOption[]> => {
@@ -94,18 +94,19 @@ type OptionsState = {
   };
 };
 
-function useLoadOptions(datasource: ZipkinDatasource) {
+// Exported for tests
+export function useLoadOptions(datasource: ZipkinDatasource) {
   const isMounted = useMountedState();
   const [allOptions, setAllOptions] = useState({} as OptionsState);
 
   const [, fetchSpans] = useAsyncFn(
     async function findSpans(service: string): Promise<void> {
-      const url = `${apiPrefix}/spans?serviceName=${service}`;
+      const url = `${apiPrefix}/spans`;
       try {
         // The response of this should have been full ZipkinSpan objects based on API docs but is just list
         // of span names.
         // TODO: check if this is some issue of version used or something else
-        const response: string[] = await datasource.metadataRequest(url);
+        const response: string[] = await datasource.metadataRequest(url, { serviceName: service });
         if (isMounted()) {
           setAllOptions(state => {
             const spanOptions = fromPairs(response.map((span: string) => [span, undefined]));

@@ -1,11 +1,12 @@
 import { identity } from 'lodash';
 import { keyBy } from 'lodash';
 import { ZipkinAnnotation, ZipkinSpan } from '../types';
+import { Log, Process, SpanData, TraceData } from '@jaegertracing/jaeger-ui-components';
 
 /**
  * Transforms response to format similar to Jaegers as we use Jaeger ui on the frontend.
  */
-export function transformResponse(zSpans: ZipkinSpan[]): any {
+export function transformResponse(zSpans: ZipkinSpan[]): TraceData & { spans: SpanData[] } {
   return {
     processes: gatherProcesses(zSpans),
     traceID: zSpans[0].traceId,
@@ -14,8 +15,8 @@ export function transformResponse(zSpans: ZipkinSpan[]): any {
   };
 }
 
-function transformSpan(span: ZipkinSpan): any {
-  const jaegerSpan = {
+function transformSpan(span: ZipkinSpan): SpanData {
+  const jaegerSpan: SpanData = {
     duration: span.duration,
     // TODO: not sure what this is
     flags: 1,
@@ -62,7 +63,7 @@ function transformSpan(span: ZipkinSpan): any {
  * Maps annotations as a Jaeger log as that seems to be the closest thing.
  * See https://zipkin.io/zipkin-api/#/default/get_trace__traceId_
  */
-function transformAnnotation(annotation: ZipkinAnnotation): any {
+function transformAnnotation(annotation: ZipkinAnnotation): Log {
   return {
     timestamp: annotation.timestamp,
     fields: [
@@ -75,7 +76,7 @@ function transformAnnotation(annotation: ZipkinAnnotation): any {
   };
 }
 
-function gatherProcesses(zSpans: ZipkinSpan[]): { [name: string]: { tags: any[] } } {
+function gatherProcesses(zSpans: ZipkinSpan[]): Record<string, Process> {
   const processes = zSpans.map(span => ({
     serviceName: span.localEndpoint.serviceName,
     tags: [

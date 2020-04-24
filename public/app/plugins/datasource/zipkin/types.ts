@@ -1,6 +1,6 @@
 export type ZipkinSpan = {
   traceId: string;
-  parentId: string;
+  parentId?: string;
   name: string;
   id: string;
   timestamp: number;
@@ -8,11 +8,11 @@ export type ZipkinSpan = {
   localEndpoint: {
     serviceName: string;
     ipv4: string;
-    port: number;
+    port?: number;
   };
-  annotations: ZipkinAnnotation[];
+  annotations?: ZipkinAnnotation[];
   tags?: { [key: string]: string };
-  kind: string;
+  kind?: 'CLIENT' | 'SERVER' | 'PRODUCER' | 'CONSUMER';
 };
 
 export type ZipkinAnnotation = {
