@@ -18,6 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb"
+	"github.com/grafana/grafana/pkg/util/errutil"
 	"github.com/opentracing/opentracing-go"
 	"golang.org/x/net/context/ctxhttp"
 )
@@ -164,8 +165,8 @@ func (e *AzureLogAnalyticsDatasource) createRequest(ctx context.Context, dsInfo 
 
 	req, err := http.NewRequest(http.MethodGet, u.String(), nil)
 	if err != nil {
-		azlog.Error("Failed to create request", "error", err)
-		return nil, fmt.Errorf("Failed to create request. error: %v", err)
+		azlog.Debug("Failed to create request", "error", err)
+		return nil, errutil.Wrap("Failed to create request", err)
 	}
 
 	req.Header.Set("Content-Type", "application/json")
