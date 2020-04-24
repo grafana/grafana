@@ -34,6 +34,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       margin-right: -${theme.spacing.md};
       margin-left: -${theme.spacing.md};
       box-shadow: 0 0 4px ${shadowColor};
+      z-index: ${theme.zIndex.sidemenu};
     `,
     drawerActive: css`
       opacity: 1;

@@ -149,16 +149,16 @@ export function RichHistoryCard(props: Props) {
   const [queryDsInstance, setQueryDsInstance] = useState<DataSourceApi | undefined>(undefined);
 
   useEffect(() => {
+    const getQueryDsInstance = async () => {
+      const ds = await getDataSourceSrv().get(query.datasourceName);
+      setQueryDsInstance(ds);
+    };
+
     getQueryDsInstance();
   }, [query.datasourceName]);
 
   const theme = useTheme();
   const styles = getStyles(theme, isRemoved);
-
-  const getQueryDsInstance = async () => {
-    const ds = await getDataSourceSrv().get(query.datasourceName);
-    setQueryDsInstance(ds);
-  };
 
   const onRunQuery = async () => {
     const queriesToRun = query.queries;
