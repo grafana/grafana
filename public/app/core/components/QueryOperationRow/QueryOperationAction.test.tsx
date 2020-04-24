@@ -4,12 +4,12 @@ import { shallow } from 'enzyme';
 
 describe('QueryOperationAction', () => {
   it('renders', () => {
-    expect(() => shallow(<QueryOperationAction icon="add-panel" onClick={() => {}} />)).not.toThrow();
+    expect(() => shallow(<QueryOperationAction icon="panel-add" onClick={() => {}} />)).not.toThrow();
   });
   describe('when disabled', () => {
     it('does not call onClick handler', () => {
       const clickSpy = jest.fn();
-      const wrapper = shallow(<QueryOperationAction icon="add-panel" onClick={clickSpy} title="Test action" />);
+      const wrapper = shallow(<QueryOperationAction icon="panel-add" onClick={clickSpy} title="Test action" />);
       const actionEl = wrapper.find({ 'aria-label': 'Test action query operation action' });
 
       expect(actionEl).toHaveLength(1);

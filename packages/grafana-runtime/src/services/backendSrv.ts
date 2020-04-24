@@ -43,7 +43,7 @@ export type BackendSrvRequest = {
  * a datasource etc. The BackendSrv is using the {@link https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API | Fetch API}
  * under the hood to handle all the communication.
  *
- * The request function can be used to perform a remote call by specifing a {@link BackendSrvRequest}.
+ * The request function can be used to perform a remote call by specifying a {@link BackendSrvRequest}.
  * To make the BackendSrv a bit easier to use we have added a couple of shorthand functions that will
  * use default values executing the request.
  *

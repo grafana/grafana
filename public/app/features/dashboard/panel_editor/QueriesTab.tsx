@@ -1,6 +1,5 @@
 // Libraries
 import React, { PureComponent } from 'react';
-import _ from 'lodash';
 // Components
 import { EditorTabBody, EditorToolbarView } from './EditorTabBody';
 import { DataSourcePicker } from 'app/core/components/Select/DataSourcePicker';
@@ -15,12 +14,13 @@ import config from 'app/core/config';
 // Types
 import { PanelModel } from '../state/PanelModel';
 import { DashboardModel } from '../state/DashboardModel';
-import { LoadingState, DefaultTimeRange, DataSourceSelectItem, DataQuery, PanelData } from '@grafana/data';
+import { DataQuery, DataSourceSelectItem, DefaultTimeRange, LoadingState, PanelData } from '@grafana/data';
 import { PluginHelp } from 'app/core/components/PluginHelp/PluginHelp';
 import { addQuery } from 'app/core/utils/query';
 import { Unsubscribable } from 'rxjs';
-import { isSharedDashboardQuery, DashboardQueryEditor } from 'app/plugins/datasource/dashboard';
+import { DashboardQueryEditor, isSharedDashboardQuery } from 'app/plugins/datasource/dashboard';
 import { expressionDatasource, ExpressionDatasourceID } from 'app/features/expressions/ExpressionDatasource';
+import { e2e } from '@grafana/e2e';
 
 interface Props {
   panel: PanelModel;
@@ -227,7 +227,7 @@ export class QueriesTab extends PureComponent<Props, State> {
     }
 
     return (
-      <>
+      <div aria-label={e2e.components.QueryTab.selectors.content}>
         <QueryEditorRows
           queries={panel.targets}
           datasource={currentDS}
@@ -240,7 +240,7 @@ export class QueriesTab extends PureComponent<Props, State> {
         <PanelOptionsGroup>
           <QueryOptions panel={panel} datasource={currentDS} />
         </PanelOptionsGroup>
-      </>
+      </div>
     );
   };
 

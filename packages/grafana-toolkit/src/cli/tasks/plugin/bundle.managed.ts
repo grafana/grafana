@@ -21,7 +21,7 @@ const bundleManagedPluginsRunner: TaskRunner<BundeManagedOptions> = async () => 
             process.chdir(`${MANAGED_PLUGINS_PATH}/${scope}/${plugin}`);
             try {
               console.log(`[${scope}]: ${plugin} building...`);
-              await execa('yarn', ['dev']);
+              await execa('yarn', ['build']);
               console.log(`[${scope}]: ${plugin} bundled`);
             } catch (e) {
               console.log(e.stdout);

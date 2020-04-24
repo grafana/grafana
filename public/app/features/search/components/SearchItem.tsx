@@ -1,23 +1,23 @@
-import React, { FC, useCallback, useRef, useEffect } from 'react';
+import React, { FC, useCallback, useRef, useEffect, CSSProperties } from 'react';
 import { css, cx } from 'emotion';
 import { GrafanaTheme } from '@grafana/data';
 import { e2e } from '@grafana/e2e';
 import { Icon, useTheme, TagList, styleMixins, stylesFactory } from '@grafana/ui';
-import appEvents from 'app/core/app_events';
-import { CoreEvents } from 'app/types';
-import { DashboardSectionItem, ItemClickWithEvent } from '../types';
+import { updateLocation } from 'app/core/reducers/location';
+import { DashboardSectionItem, OnToggleChecked } from '../types';
 import { SearchCheckbox } from './SearchCheckbox';
 
 export interface Props {
   item: DashboardSectionItem;
   editable?: boolean;
-  onToggleSelection?: ItemClickWithEvent;
   onTagSelected: (name: string) => any;
+  onToggleChecked?: OnToggleChecked;
+  style?: CSSProperties;
 }
 
 const { selectors } = e2e.pages.Dashboards;
 
-export const SearchItem: FC<Props> = ({ item, editable, onToggleSelection = () => {}, onTagSelected }) => {
+export const SearchItem: FC<Props> = ({ item, editable, onToggleChecked, onTagSelected, style }) => {
   const theme = useTheme();
   const styles = getResultsItemStyles(theme);
   const inputEl = useRef<HTMLInputElement>(null);
@@ -38,7 +38,10 @@ export const SearchItem: FC<Props> = ({ item, editable, onToggleSelection = () =
   const onItemClick = () => {
     //Check if one string can be found in the other
     if (window.location.pathname.includes(item.url) || item.url.includes(window.location.pathname)) {
-      appEvents.emit(CoreEvents.hideDashSearch, { target: 'search-item' });
+      updateLocation({
+        query: { search: null },
+        partial: true,
+      });
     }
   };
 
@@ -47,14 +50,18 @@ export const SearchItem: FC<Props> = ({ item, editable, onToggleSelection = () =
   }, []);
 
   const toggleItem = useCallback(
-    (event: React.MouseEvent<HTMLElement>) => {
-      onToggleSelection(item, event);
+    (event: React.MouseEvent) => {
+      event.preventDefault();
+      if (onToggleChecked) {
+        onToggleChecked(item);
+      }
     },
     [item]
   );
 
   return (
     <li
+      style={style}
       aria-label={selectors.dashboards(item.title)}
       className={cx(styles.wrapper, { [styles.selected]: item.selected })}
     >
@@ -78,7 +85,6 @@ const getResultsItemStyles = stylesFactory((theme: GrafanaTheme) => ({
     ${styleMixins.listItem(theme)};
     display: flex;
     align-items: center;
-    margin: ${theme.spacing.xxs};
     padding: 0 ${theme.spacing.sm};
     min-height: 37px;
 

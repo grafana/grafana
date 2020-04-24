@@ -80,8 +80,8 @@ const getQueryOperationRowStyles = stylesFactory((theme: GrafanaTheme) => {
       padding: 0 ${theme.spacing.sm};
       border-radius: ${theme.border.radius.sm};
       background: ${theme.colors.bg2};
-      height: ${theme.spacing.formInputHeight};
-      line-height: ${theme.spacing.formInputHeight};
+      height: ${theme.spacing.formInputHeight}px;
+      line-height: ${theme.spacing.formInputHeight}px;
       display: flex;
       align-items: center;
       justify-content: space-between;

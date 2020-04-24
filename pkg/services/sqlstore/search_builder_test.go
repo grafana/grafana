@@ -1,6 +1,7 @@
 package sqlstore
 
 import (
+	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"testing"
 
 	"github.com/grafana/grafana/pkg/models"
@@ -9,6 +10,9 @@ import (
 
 func TestSearchBuilder(t *testing.T) {
 	Convey("Testing building a search", t, func() {
+		if dialect == nil {
+			dialect = &migrator.Sqlite3{}
+		}
 		signedInUser := &models.SignedInUser{
 			OrgId:  1,
 			UserId: 1,

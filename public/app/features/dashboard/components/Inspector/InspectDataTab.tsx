@@ -1,21 +1,40 @@
 import React, { PureComponent } from 'react';
-import { DataFrame, applyFieldOverrides, toCSV, SelectableValue } from '@grafana/data';
-import { Button, Select, Icon, Table } from '@grafana/ui';
+import {
+  applyFieldOverrides,
+  DataFrame,
+  DataTransformerID,
+  SelectableValue,
+  toCSV,
+  transformDataFrame,
+} from '@grafana/data';
+import { Button, Field, Icon, Select, Table } from '@grafana/ui';
 import { getPanelInspectorStyles } from './styles';
 import { config } from 'app/core/config';
 import AutoSizer from 'react-virtualized-auto-sizer';
 import { saveAs } from 'file-saver';
+import { cx } from 'emotion';
+import { e2e } from '@grafana/e2e';
 
 interface Props {
   data: DataFrame[];
-  dataFrameIndex: number;
   isLoading: boolean;
-  onSelectedFrameChanged: (item: SelectableValue<number>) => void;
 }
 
-export class InspectDataTab extends PureComponent<Props> {
+interface State {
+  transformId: DataTransformerID;
+  dataFrameIndex: number;
+  transformationOptions: Array<SelectableValue<string>>;
+}
+
+export class InspectDataTab extends PureComponent<Props, State> {
   constructor(props: Props) {
     super(props);
+
+    this.state = {
+      dataFrameIndex: 0,
+      transformId: DataTransformerID.noop,
+      transformationOptions: buildTransformationOptions(),
+    };
   }
 
   exportCsv = (dataFrame: DataFrame) => {
@@ -28,8 +47,44 @@ export class InspectDataTab extends PureComponent<Props> {
     saveAs(blob, dataFrame.name + '-' + new Date().getUTCDate() + '.csv');
   };
 
+  onSelectedFrameChanged = (item: SelectableValue<number>) => {
+    this.setState({ dataFrameIndex: item.value || 0 });
+  };
+
+  onTransformationChange = (value: SelectableValue<DataTransformerID>) => {
+    this.setState({ transformId: value.value, dataFrameIndex: 0 });
+  };
+
+  getTransformedData(): DataFrame[] {
+    const { transformId, transformationOptions } = this.state;
+    const { data } = this.props;
+
+    if (!data) {
+      return [];
+    }
+
+    const currentTransform = transformationOptions.find(item => item.value === transformId);
+
+    if (currentTransform && currentTransform.transformer.id !== DataTransformerID.noop) {
+      return transformDataFrame([currentTransform.transformer], data);
+    }
+    return data;
+  }
+
+  getProcessedData(): DataFrame[] {
+    return applyFieldOverrides({
+      data: this.getTransformedData(),
+      theme: config.theme,
+      fieldConfig: { defaults: {}, overrides: [] },
+      replaceVariables: (value: string) => {
+        return value;
+      },
+    });
+  }
+
   render() {
-    const { data, dataFrameIndex, isLoading, onSelectedFrameChanged } = this.props;
+    const { isLoading } = this.props;
+    const { dataFrameIndex, transformId, transformationOptions } = this.state;
     const styles = getPanelInspectorStyles();
 
     if (isLoading) {
@@ -40,36 +95,32 @@ export class InspectDataTab extends PureComponent<Props> {
       );
     }
 
-    if (!data || !data.length) {
+    const dataFrames = this.getProcessedData();
+
+    if (!dataFrames || !dataFrames.length) {
       return <div>No Data</div>;
     }
 
-    const choices = data.map((frame, index) => {
+    const choices = dataFrames.map((frame, index) => {
       return {
         value: index,
         label: `${frame.name} (${index})`,
       };
     });
 
-    const processed = applyFieldOverrides({
-      data,
-      theme: config.theme,
-      fieldConfig: { defaults: {}, overrides: [] },
-      replaceVariables: (value: string) => {
-        return value;
-      },
-    });
-
     return (
-      <div className={styles.dataTabContent}>
+      <div className={styles.dataTabContent} aria-label={e2e.components.PanelInspector.Data.selectors.content}>
         <div className={styles.toolbar}>
+          <Field label="Transformer" className="flex-grow-1">
+            <Select options={transformationOptions} value={transformId} onChange={this.onTransformationChange} />
+          </Field>
           {choices.length > 1 && (
-            <div className={styles.dataFrameSelect}>
-              <Select options={choices} value={dataFrameIndex} onChange={onSelectedFrameChanged} />
-            </div>
+            <Field label="Select result" className={cx(styles.toolbarItem, 'flex-grow-1')}>
+              <Select options={choices} value={dataFrameIndex} onChange={this.onSelectedFrameChanged} />
+            </Field>
           )}
           <div className={styles.downloadCsv}>
-            <Button variant="primary" onClick={() => this.exportCsv(processed[dataFrameIndex])}>
+            <Button variant="primary" onClick={() => this.exportCsv(dataFrames[dataFrameIndex])}>
               Download CSV
             </Button>
           </div>
@@ -83,7 +134,7 @@ export class InspectDataTab extends PureComponent<Props> {
 
               return (
                 <div style={{ width, height }}>
-                  <Table width={width} height={height} data={processed[dataFrameIndex]} />
+                  <Table width={width} height={height} data={dataFrames[dataFrameIndex]} />
                 </div>
               );
             }}
@@ -92,4 +143,26 @@ export class InspectDataTab extends PureComponent<Props> {
       </div>
     );
   }
+}
+
+function buildTransformationOptions() {
+  const transformations: Array<SelectableValue<string>> = [
+    {
+      value: 'Do nothing',
+      label: 'None',
+      transformer: {
+        id: DataTransformerID.noop,
+      },
+    },
+    {
+      value: 'join by time',
+      label: 'Join by time',
+      transformer: {
+        id: DataTransformerID.seriesToColumns,
+        options: { byField: 'Time' },
+      },
+    },
+  ];
+
+  return transformations;
 }

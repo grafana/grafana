@@ -1,6 +1,6 @@
 import React from 'react';
-import { EventsWithValidation, FormField, regexValidation, LegacyForms } from '@grafana/ui';
-const { Select, Input } = LegacyForms;
+import { EventsWithValidation, regexValidation, LegacyForms } from '@grafana/ui';
+const { Select, Input, FormField } = LegacyForms;
 import { ElasticsearchOptions } from '../types';
 import { DataSourceSettings, SelectableValue } from '@grafana/data';
 

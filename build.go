@@ -40,7 +40,6 @@ var (
 	linuxPackageVersion   string = "v1"
 	linuxPackageIteration string = ""
 	race                  bool
-	phjsToRelease         string
 	workingDir            string
 	includeBuildId        bool     = true
 	buildId               string   = "0"
@@ -52,7 +51,6 @@ var (
 	skipRpmGen            bool     = false
 	skipDebGen            bool     = false
 	printGenVersion       bool     = false
-	modVendor             bool     = true
 )
 
 func main() {
@@ -69,9 +67,7 @@ func main() {
 	flag.StringVar(&libc, "libc", "", "LIBC")
 	flag.BoolVar(&cgo, "cgo-enabled", cgo, "Enable cgo")
 	flag.StringVar(&pkgArch, "pkg-arch", "", "PKG ARCH")
-	flag.StringVar(&phjsToRelease, "phjs", "", "PhantomJS binary")
 	flag.BoolVar(&race, "race", race, "Use race detector")
-	flag.BoolVar(&modVendor, "modVendor", modVendor, "Go modules use vendor folder")
 	flag.BoolVar(&includeBuildId, "includeBuildId", includeBuildId, "IncludeBuildId in package name")
 	flag.BoolVar(&enterprise, "enterprise", enterprise, "Build enterprise version of Grafana")
 	flag.StringVar(&buildIdRaw, "buildId", "0", "Build ID from CI system")
@@ -389,7 +385,6 @@ func createPackage(options linuxPackageOptions) {
 	if enterprise {
 		description += " Enterprise"
 	}
-	args = append(args, "--vendor", description)
 
 	if !enterprise {
 		args = append(args, "--license", "\"Apache 2.0\"")
@@ -459,9 +454,6 @@ func gruntBuildArg(task string) []string {
 	if libc != "" {
 		args = append(args, fmt.Sprintf("--libc=%s", libc))
 	}
-	if phjsToRelease != "" {
-		args = append(args, fmt.Sprintf("--phjsToRelease=%v", phjsToRelease))
-	}
 	if enterprise {
 		args = append(args, "--enterprise")
 	}
@@ -508,9 +500,6 @@ func build(binaryName, pkg string, tags []string) {
 	}
 	if race {
 		args = append(args, "-race")
-	}
-	if modVendor {
-		args = append(args, "-mod=vendor")
 	}
 
 	args = append(args, "-o", binary)
