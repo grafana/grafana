@@ -36,4 +36,4 @@ scrape_configs:
 
   - job_name: 'prometheus-random-data'
     static_configs:
-      - targets: ['prometheus-random-data:8081']
+      - targets: ['prometheus-random-data:8080']
