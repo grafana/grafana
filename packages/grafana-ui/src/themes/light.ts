@@ -130,7 +130,7 @@ const lightTheme: GrafanaTheme = {
     textHeading: basicColors.gray25,
   },
   shadows: {
-    listItem: '-1px -1px 0 0 hsla(0, 0%, 100%, 0.1), 1px 1px 0 0 rgba(0, 0, 0, 0.1)',
+    listItem: 'none',
   },
 };
 

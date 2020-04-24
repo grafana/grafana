@@ -1,12 +1,14 @@
-import React, { FC } from 'react';
+import React, { FC, MutableRefObject } from 'react';
 import { css, cx } from 'emotion';
+import { FixedSizeList } from 'react-window';
+import AutoSizer from 'react-virtualized-auto-sizer';
 import { GrafanaTheme } from '@grafana/data';
-import { Icon, stylesFactory, useTheme, IconName, IconButton, Spinner } from '@grafana/ui';
-import appEvents from 'app/core/app_events';
-import { CoreEvents } from 'app/types';
-import { DashboardSection, OnToggleChecked } from '../types';
+import { stylesFactory, useTheme, Spinner } from '@grafana/ui';
+import { DashboardSection, OnToggleChecked, SearchLayout } from '../types';
+import { getVisibleItems } from '../utils';
+import { ITEM_HEIGHT } from '../constants';
 import { SearchItem } from './SearchItem';
-import { SearchCheckbox } from './SearchCheckbox';
+import { SectionHeader } from './SectionHeader';
 
 export interface Props {
   editable?: boolean;
@@ -14,7 +16,9 @@ export interface Props {
   onTagSelected: (name: string) => any;
   onToggleChecked?: OnToggleChecked;
   onToggleSection: (section: DashboardSection) => void;
-  results: DashboardSection[] | undefined;
+  results: DashboardSection[];
+  layout?: string;
+  wrapperRef?: MutableRefObject<HTMLDivElement | null>;
 }
 
 export const SearchResults: FC<Props> = ({
@@ -24,36 +28,69 @@ export const SearchResults: FC<Props> = ({
   onToggleChecked,
   onToggleSection,
   results,
+  wrapperRef,
+  layout,
 }) => {
   const theme = useTheme();
   const styles = getSectionStyles(theme);
+  const itemProps = { editable, onToggleChecked, onTagSelected };
+
+  const renderFolders = () => {
+    return (
+      <ul className={styles.wrapper}>
+        {results.map(section => {
+          return (
+            <li aria-label="Search section" className={styles.section} key={section.title}>
+              <SectionHeader onSectionClick={onToggleSection} {...{ onToggleChecked, editable, section }} />
+              <ul aria-label="Search items">
+                {section.expanded && section.items.map(item => <SearchItem key={item.id} {...itemProps} item={item} />)}
+              </ul>
+            </li>
+          );
+        })}
+      </ul>
+    );
+  };
+
+  const items = getVisibleItems(results);
+
+  const renderDashboards = () => {
+    return (
+      <AutoSizer disableWidth>
+        {({ height }) => (
+          <FixedSizeList
+            aria-label="Search items"
+            className={styles.wrapper}
+            innerElementType="ul"
+            itemSize={ITEM_HEIGHT}
+            height={height}
+            itemCount={items.length}
+            width="100%"
+          >
+            {({ index, style }) => {
+              const item = items[index];
+              return <SearchItem key={item.id} {...itemProps} item={item} style={style} />;
+            }}
+          </FixedSizeList>
+        )}
+      </AutoSizer>
+    );
+  };
 
   if (loading) {
     return <Spinner className={styles.spinner} />;
   } else if (!results || !results.length) {
     return <h6>No dashboards matching your query were found.</h6>;
   }
-
   return (
-    <div className="search-results-container">
-      <ul className={styles.wrapper}>
-        {results.map(section => (
-          <li aria-label="Search section" className={styles.section} key={section.title}>
-            <SectionHeader onSectionClick={onToggleSection} {...{ onToggleChecked, editable, section }} />
-            <ul aria-label="Search items" className={styles.wrapper}>
-              {section.expanded &&
-                section.items.map(item => (
-                  <SearchItem key={item.id} {...{ item, editable, onToggleChecked, onTagSelected }} />
-                ))}
-            </ul>
-          </li>
-        ))}
-      </ul>
+    <div className={cx('results-container', styles.resultsContainer)}>
+      {layout !== SearchLayout.List ? renderFolders() : renderDashboards()}
     </div>
   );
 };
 
 const getSectionStyles = stylesFactory((theme: GrafanaTheme) => {
+  const { xs, sm, md } = theme.spacing;
   return {
     wrapper: css`
       list-style: none;
@@ -61,7 +98,7 @@ const getSectionStyles = stylesFactory((theme: GrafanaTheme) => {
     section: css`
       background: ${theme.colors.panelBg};
       border-bottom: solid 1px ${theme.isLight ? theme.palette.gray95 : theme.palette.gray25};
-      padding: 0px 4px 4px 4px;
+      padding: 0px ${xs} ${xs};
       margin-bottom: 3px;
     `,
     spinner: css`
@@ -70,94 +107,15 @@ const getSectionStyles = stylesFactory((theme: GrafanaTheme) => {
       align-items: center;
       min-height: 100px;
     `,
-  };
-});
-
-interface SectionHeaderProps {
-  editable?: boolean;
-  onSectionClick: (section: DashboardSection) => void;
-  onToggleChecked?: OnToggleChecked;
-  section: DashboardSection;
-}
-
-const SectionHeader: FC<SectionHeaderProps> = ({ section, onSectionClick, onToggleChecked, editable = false }) => {
-  const theme = useTheme();
-  const styles = getSectionHeaderStyles(theme, section.selected);
-
-  const onSectionExpand = () => {
-    onSectionClick(section);
-  };
-
-  const onSectionChecked = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (onToggleChecked) {
-      onToggleChecked(section);
-    }
-  };
-
-  return !section.hideHeader ? (
-    <div className={styles.wrapper} onClick={onSectionExpand}>
-      <SearchCheckbox editable={editable} checked={section.checked} onClick={onSectionChecked} />
-      <Icon className={styles.icon} name={section.icon as IconName} />
-
-      <span className={styles.text}>{section.title}</span>
-      {section.url && (
-        <a
-          href={section.url}
-          className={styles.link}
-          onClick={() => appEvents.emit(CoreEvents.hideDashSearch, { target: 'search-item' })}
-        >
-          <IconButton name="cog" className={styles.button} />
-        </a>
-      )}
-      <Icon name={section.expanded ? 'angle-down' : 'angle-right'} />
-    </div>
-  ) : (
-    <div className={styles.wrapper} />
-  );
-};
-
-const getSectionHeaderStyles = stylesFactory((theme: GrafanaTheme, selected = false) => {
-  const { sm, xs } = theme.spacing;
-  return {
-    wrapper: cx(
-      css`
-        display: flex;
-        align-items: center;
-        font-size: ${theme.typography.size.base};
-        padding: ${sm} ${xs} ${xs};
-        color: ${theme.colors.textWeak};
-
-        &:hover,
-        &.selected {
-          color: ${theme.colors.text};
-        }
-
-        &:hover {
-          a {
-            opacity: 1;
-          }
-        }
-      `,
-      'pointer',
-      { selected }
-    ),
-    icon: css`
-      width: 43px;
-    `,
-    text: css`
-      flex-grow: 1;
-      line-height: 24px;
-    `,
-    link: css`
-      padding: 2px 10px 0;
-      color: ${theme.colors.textWeak};
-      opacity: 0;
-      transition: opacity 150ms ease-in-out;
-    `,
-    button: css`
-      margin-top: 3px;
+    resultsContainer: css`
+      padding: ${sm};
+      position: relative;
+      flex-grow: 10;
+      margin-bottom: ${md};
+      background: ${theme.palette.gray10};
+      border: 1px solid ${theme.palette.gray15};
+      border-radius: 3px;
+      height: 100%;
     `,
   };
 });

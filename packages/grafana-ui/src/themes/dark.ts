@@ -129,7 +129,7 @@ const darkTheme: GrafanaTheme = {
     linkExternal: basicColors.blue85,
   },
   shadows: {
-    listItem: '-1px -1px 0 0 hsla(0, 0%, 100%, 0.1), 1px 1px 0 0 rgba(0, 0, 0, 0.3)',
+    listItem: 'none',
   },
 };
 
