@@ -35,8 +35,8 @@ export function addToRichHistory(
   sessionName: string
 ): any {
   const ts = Date.now();
-  /* Save only queries, that are not falsy (e.g. empty strings, empty object, null, ...) */
-  const newQueriesToSave: DataQuery[] = queries && queries.filter(query => Boolean(query) && notEmptyQuery(query));
+  /* Save only queries, that are not falsy (e.g. empty object, null, ...) */
+  const newQueriesToSave: DataQuery[] = queries && queries.filter(query => notEmptyQuery(query));
   const retentionPeriod: number = store.getObject(RICH_HISTORY_SETTING_KEYS.retentionPeriod, 7);
   const retentionPeriodLastTs = createRetentionPeriodBoundary(retentionPeriod, false);
 
@@ -53,10 +53,7 @@ export function addToRichHistory(
     const lastQueriesToCompare =
       queriesToKeep.length > 0 &&
       queriesToKeep[0].queries.map(q => {
-        if (typeof q === 'object') {
-          return _.omit(q, ['key', 'refId']);
-        }
-        return null;
+        return _.omit(q, ['key', 'refId']);
       });
 
     if (_.isEqual(newQueriesToCompare, lastQueriesToCompare)) {
@@ -81,7 +78,10 @@ export function addToRichHistory(
 }
 
 export function getRichHistory(): RichHistoryQuery[] {
-  return store.getObject(RICH_HISTORY_KEY, []);
+  const richHistory: RichHistoryQuery[] = store.getObject(RICH_HISTORY_KEY, []);
+  const transformedRichHistory = createDataQueriesRichHistory(richHistory);
+  console.log(transformedRichHistory);
+  return transformedRichHistory;
 }
 
 export function deleteAllFromRichHistory() {
@@ -260,36 +260,15 @@ export function createQueryHeading(query: RichHistoryQuery, sortOrder: SortOrder
   return heading;
 }
 
-export function isParsable(string: string) {
-  try {
-    JSON.parse(string);
-  } catch (e) {
-    return false;
-  }
-  return true;
-}
-
-export function createDataQuery(query: RichHistoryQuery, individualQuery: DataQuery, index: number) {
-  const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-  let dataQuery;
-  typeof individualQuery === 'object'
-    ? (dataQuery = { ...individualQuery })
-    : (dataQuery = { expr: individualQuery, refId: letters[index] });
-
-  return dataQuery;
-}
-
 export function createQueryText(query: DataQuery, queryDsInstance: DataSourceApi) {
   /* query DatasourceInstance is necessary because we use its getQueryDisplayText method
    * to format query text
    */
-  if (typeof query === 'object') {
-    if (queryDsInstance?.getQueryDisplayText) {
-      return queryDsInstance.getQueryDisplayText(query);
-    }
-    return getQueryDisplayText(query);
+  if (queryDsInstance?.getQueryDisplayText) {
+    return queryDsInstance.getQueryDisplayText(query);
   }
-  return query;
+
+  return getQueryDisplayText(query);
 }
 
 export function mapQueriesToHeadings(query: RichHistoryQuery[], sortOrder: SortOrder) {
@@ -347,4 +326,33 @@ export function notEmptyQuery(query: DataQuery) {
   }
 
   return false;
+}
+
+/* These functions are created to migrate string queries (from 6.7 release) to DataQueries. They can be removed after 7.1 release. */
+function createDataQueriesRichHistory(richHistory: RichHistoryQuery[]) {
+  const transformedRichHistory = richHistory.map(query => {
+    const transformedQueries: DataQuery[] = query.queries.map((q, index) => createDataQuery(query, q, index));
+    return { ...query, queries: transformedQueries };
+  });
+
+  return transformedRichHistory;
+}
+
+function createDataQuery(query: RichHistoryQuery, individualQuery: DataQuery | string, index: number) {
+  const letters = 'ABCDEFGHIJKLMNOPQRSTUVXYZ';
+  if (typeof individualQuery === 'object') {
+    return individualQuery;
+  } else if (isParsable(individualQuery)) {
+    return JSON.parse(individualQuery);
+  }
+  return { expr: individualQuery, refId: letters[index] };
+}
+
+function isParsable(string: string) {
+  try {
+    JSON.parse(string);
+  } catch (e) {
+    return false;
+  }
+  return true;
 }

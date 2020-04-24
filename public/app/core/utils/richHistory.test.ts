@@ -5,7 +5,6 @@ import {
   mapNumbertoTimeInSlider,
   createDateStringFromTs,
   createQueryHeading,
-  createDataQuery,
   deleteAllFromRichHistory,
   deleteQueryInRichHistory,
 } from './richHistory';
@@ -179,24 +178,5 @@ describe('createQueryHeading', () => {
   it('should correctly create heading for queries when sort order is datasourceAZ ', () => {
     const heading = createQueryHeading(mock.storedHistory[0], SortOrder.DatasourceAZ);
     expect(heading).toEqual(mock.storedHistory[0].datasourceName);
-  });
-});
-
-describe('createDataQuery', () => {
-  it('should correctly create data query from rich history query', () => {
-    const dataQuery = createDataQuery(
-      {
-        ts: 1,
-        datasourceName: mock.testDatasourceName,
-        datasourceId: mock.testDatasourceId,
-        starred: true,
-        comment: '',
-        queries: [{ expr: 'query3', refId: 'B' } as DataQuery],
-        sessionName: '',
-      },
-      { expr: 'query3', refId: 'B' } as DataQuery,
-      0
-    );
-    expect(dataQuery).toEqual({ expr: 'query3', refId: 'B' });
   });
 });

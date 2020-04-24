@@ -6,12 +6,7 @@ import { stylesFactory, useTheme, TextArea, Button, IconButton } from '@grafana/
 import { getDataSourceSrv } from '@grafana/runtime';
 import { GrafanaTheme, AppEvents, DataSourceApi } from '@grafana/data';
 import { RichHistoryQuery, ExploreId } from 'app/types/explore';
-import {
-  copyStringToClipboard,
-  createUrlFromRichHistory,
-  createDataQuery,
-  createQueryText,
-} from 'app/core/utils/richHistory';
+import { copyStringToClipboard, createUrlFromRichHistory, createQueryText } from 'app/core/utils/richHistory';
 import appEvents from 'app/core/app_events';
 import { StoreState } from 'app/types';
 
@@ -155,7 +150,7 @@ export function RichHistoryCard(props: Props) {
 
   useEffect(() => {
     getQueryDsInstance();
-  });
+  }, []);
 
   const theme = useTheme();
   const styles = getStyles(theme, isRemoved);
@@ -166,7 +161,7 @@ export function RichHistoryCard(props: Props) {
   };
 
   const onRunQuery = async () => {
-    const queriesToRun = query.queries.map((q, i) => createDataQuery(query, q, i));
+    const queriesToRun = query.queries;
     if (query.datasourceName !== datasourceInstance?.name) {
       await changeDatasource(exploreId, query.datasourceName);
       setQueries(exploreId, queriesToRun);
@@ -181,7 +176,7 @@ export function RichHistoryCard(props: Props) {
     appEvents.emit(AppEvents.alertSuccess, ['Query copied to clipboard']);
   };
 
-  const onCreateLink = async () => {
+  const onCreateLink = () => {
     const url = createUrlFromRichHistory(query);
     copyStringToClipboard(url);
     appEvents.emit(AppEvents.alertSuccess, ['Link copied to clipboard']);
@@ -261,7 +256,7 @@ export function RichHistoryCard(props: Props) {
             const queryText = createQueryText(q, queryDsInstance);
             return (
               <div aria-label="Query text" key={`${q}-${i}`} className={styles.queryRow}>
-                {queryText.length > 0 && queryText}
+                {queryText}
               </div>
             );
           })}
