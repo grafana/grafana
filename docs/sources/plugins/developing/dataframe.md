@@ -42,15 +42,15 @@ interface Field {
 }
 ```
 
-With dataframes, each column is represented by a **Field**. So the essence of a dataframe is an Field array with additional properties on both the dataframe and its Fields.
+With dataframes, each column is represented by a **Field**. So the essence of a dataframe is an field array with additional properties on both the dataframe and its fields.
 
-One restriction on dataframes is that all Fields in the frame must be of the same length to be a valid dataframe.
+One restriction on dataframes is that all fields in the frame must be of the same length to be a valid dataframe.
 
 ### When is a dataframe a time series or a table
 
 Any valid dataframe can be a table. If you have row-oriented data, the rows need to be converted to the dataframe's column-oriented structure.
 
-Because each Field in a dataframe has a type, we can use the types of the Fields (the schema of the dataframe) to determine if it dataframe, or a collection of dataframes, can be time series. In the simplest case, if a Frame has a Time Field and Number Field then it can be a time series (the frame should be sorted by time ascending).
+Because each field in a dataframe has a type, we can use the types of the fields (the schema of the dataframe) to determine if it dataframe, or a collection of dataframes, can be time series. In the simplest case, if a Frame has a Time field and Number field then it can be a time series (the frame should be sorted by time ascending).
 
 #### Time series with unshared time values
 
@@ -58,7 +58,7 @@ A collection of time series that don't share a time index would be represented a
 
 ```text
 Name: cpu
-Dimensions: 2 Fields by 2 Rows
+Dimensions: 2 fields by 2 rows
 +---------------------+-----------------+
 | Name: time          | Name: cpu       |
 | Labels:             | Labels: host=a  |
@@ -69,7 +69,7 @@ Dimensions: 2 Fields by 2 Rows
 +---------------------+-----------------+
 
 Name: cpu
-Dimensions: 2 Fields by 2 Rows
+Dimensions: 2 fields by 2 rows
 +---------------------+-----------------+
 | Name: time          | Name: cpu       |
 | Labels:             | Labels: host=b  |
@@ -80,7 +80,7 @@ Dimensions: 2 Fields by 2 Rows
 +---------------------+-----------------+
 ```
 
-The name of the time Field doesn't matter, nor does its order in the frame (unless there are multiple time columns, in which case the first is used).
+The name of the time field doesn't matter, nor does its order in the frame (unless there are multiple time columns, in which case the first is used).
 
 #### Time series with shared time values
 
@@ -88,7 +88,7 @@ If all the series share the same time values, then a "wide" format can be used:
 
 ```text
 Name: Wide
-Dimensions: 3 Fields by 2 Rows
+Dimensions: 3 fields by 2 rows
 +---------------------+-----------------+-----------------+
 | Name: time          | Name: cpu       | Name: cpu       |
 | Labels:             | Labels: host=a  | Labels: host=b  |
@@ -111,7 +111,7 @@ For example a Long format Series:
 
 ```text
 Name: Long
-Dimensions: 4 Fields by 4 Rows
+Dimensions: 4 fields by 4 rows
 +---------------------+-----------------+-----------------+----------------+
 | Name: time          | Name: aMetric   | Name: bMetric   | Name: host     |
 | Labels:             | Labels:         | Labels:         | Labels:        |
@@ -128,7 +128,7 @@ Would look like the following in "Wide" format:
 
 ```text
 Name: Wide
-Dimensions: 5 Fields by 2 Rows
+Dimensions: 5 fields by 2 rows
 +---------------------+------------------+------------------+------------------+------------------+
 | Name: time          | Name: aMetric    | Name: bMetric    | Name: aMetric    | Name: bMetric    |
 | Labels:             | Labels: host=foo | Labels: host=foo | Labels: host=bar | Labels: host=bar |
