@@ -231,7 +231,11 @@ func findDashboards(query *search.FindPersistedDashboardsQuery) ([]DashboardSear
 		},
 	}
 
-	filters = append(filters, searchstore.OrgFilter{OrgId: query.OrgId})
+	if query.OrgId != 0 {
+		filters = append(filters, searchstore.OrgFilter{OrgId: query.OrgId})
+	} else if query.SignedInUser.OrgId != 0 {
+		filters = append(filters, searchstore.OrgFilter{OrgId: query.SignedInUser.OrgId})
+	}
 
 	if len(query.Tags) > 0 {
 		filters = append(filters, searchstore.TagsFilter{Tags: query.Tags})
