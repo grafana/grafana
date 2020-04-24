@@ -3,9 +3,9 @@ import _ from 'lodash';
 import impressionSrv from 'app/core/services/impression_srv';
 import store from 'app/core/store';
 import { contextSrv } from 'app/core/services/context_srv';
+import { hasFilters } from 'app/features/search/utils';
+import { DashboardSection, DashboardSearchItemType, DashboardSearchHit } from 'app/features/search/types';
 import { backendSrv } from './backend_srv';
-import { hasFilters } from '../../features/search/utils';
-import { DashboardSection, DashboardSearchItemType, DashboardSearchHit } from '../../features/search/types';
 
 interface Sections {
   [key: string]: Partial<DashboardSection>;
