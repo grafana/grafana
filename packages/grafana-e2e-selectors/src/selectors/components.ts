@@ -1,4 +1,5 @@
 import { selectorFactory } from '../types';
+import { Pages } from './pages';
 
 export const Components = {
   DataSource: {
@@ -40,6 +41,21 @@ export const Components = {
       rcContentWrapper: () => '.drawer-content-wrapper',
     }),
   },
+  PanelEditor: {
+    General: selectorFactory({
+      content: 'Panel editor content',
+    }),
+    OptionsPane: selectorFactory({
+      content: 'Panel editor option pane content',
+      close: Pages.Dashboard.Toolbar.toolbarItems('Close options pane'),
+      open: Pages.Dashboard.Toolbar.toolbarItems('Open options pane'),
+      select: 'Panel editor option pane select',
+    }),
+    // not sure about the naming *DataPane*
+    DataPane: selectorFactory({
+      content: 'Panel editor data pane content',
+    }),
+  },
   PanelInspector: {
     Data: selectorFactory({
       content: 'Panel inspector Data content',
@@ -58,10 +74,35 @@ export const Components = {
     title: (title: string) => `Tab ${title}`,
     active: () => '[class*="-activeTabStyle"]',
   }),
+  QueryTab: selectorFactory({
+    content: 'Query editor tab content',
+  }),
+  AlertTab: selectorFactory({
+    content: 'Alert editor tab content',
+  }),
+  TransformTab: selectorFactory({
+    content: 'Transform editor tab content',
+  }),
   QueryEditorToolbarItem: selectorFactory({
     button: (title: string) => `QueryEditor toolbar item button ${title}`,
   }),
   BackButton: selectorFactory({
     backArrow: 'Go Back button',
+  }),
+  OptionsGroup: selectorFactory({
+    toggle: (title: string) => `Options group ${title}`,
+  }),
+  PluginVisualization: selectorFactory({
+    item: (title: string) => `Plugin visualization item ${title}`,
+    current: () => '[class*="-currentVisualizationItem"]',
+  }),
+  Select: selectorFactory({
+    option: 'Select option',
+  }),
+  FieldConfigEditor: selectorFactory({
+    content: 'Field config editor content',
+  }),
+  OverridesConfigEditor: selectorFactory({
+    content: 'Field overrides editor content',
   }),
 };

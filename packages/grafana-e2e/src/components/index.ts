@@ -2,7 +2,6 @@ import { TestData } from '../pages/testdata';
 import { Panel } from '../pages/panel';
 import { Graph } from '../pages/graph';
 import { componentFactory } from '../support';
-import { Dashboard } from '../pages/dashboard';
 import { selectors } from '@grafana/e2e-selectors';
 
 export const Components = {
@@ -22,23 +21,14 @@ export const Components = {
   },
   PanelEditor: {
     General: componentFactory({
-      selectors: {
-        content: 'Panel editor content',
-      },
+      selectors: selectors.components.PanelEditor.General,
     }),
     OptionsPane: componentFactory({
-      selectors: {
-        content: 'Panel editor option pane content',
-        close: Dashboard.selectors.toolbarItems('Close options pane'),
-        open: Dashboard.selectors.toolbarItems('Open options pane'),
-        select: 'Panel editor option pane select',
-      },
+      selectors: selectors.components.PanelEditor.OptionsPane,
     }),
     // not sure about the naming *DataPane*
     DataPane: componentFactory({
-      selectors: {
-        content: 'Panel editor data pane content',
-      },
+      selectors: selectors.components.PanelEditor.DataPane,
     }),
   },
   PanelInspector: {
@@ -59,19 +49,13 @@ export const Components = {
     selectors: selectors.components.Tab,
   }),
   QueryTab: componentFactory({
-    selectors: {
-      content: 'Query editor tab content',
-    },
+    selectors: selectors.components.QueryTab,
   }),
   AlertTab: componentFactory({
-    selectors: {
-      content: 'Alert editor tab content',
-    },
+    selectors: selectors.components.AlertTab,
   }),
   TransformTab: componentFactory({
-    selectors: {
-      content: 'Transform editor tab content',
-    },
+    selectors: selectors.components.TransformTab,
   }),
   QueryEditorToolbarItem: componentFactory({
     selectors: selectors.components.QueryEditorToolbarItem,
@@ -80,29 +64,18 @@ export const Components = {
     selectors: selectors.components.BackButton,
   }),
   OptionsGroup: componentFactory({
-    selectors: {
-      toggle: (title: string) => `Options group ${title}`,
-    },
+    selectors: selectors.components.OptionsGroup,
   }),
   PluginVisualization: componentFactory({
-    selectors: {
-      item: (title: string) => `Plugin visualization item ${title}`,
-      current: () => '[class*="-currentVisualizationItem"]',
-    },
+    selectors: selectors.components.PluginVisualization,
   }),
   Select: componentFactory({
-    selectors: {
-      option: 'Select option',
-    },
+    selectors: selectors.components.Select,
   }),
   FieldConfigEditor: componentFactory({
-    selectors: {
-      content: 'Field config editor content',
-    },
+    selectors: selectors.components.FieldConfigEditor,
   }),
   OverridesConfigEditor: componentFactory({
-    selectors: {
-      content: 'Field overrides editor content',
-    },
+    selectors: selectors.components.OverridesConfigEditor,
   }),
 };

@@ -20,7 +20,7 @@ import { addQuery } from 'app/core/utils/query';
 import { Unsubscribable } from 'rxjs';
 import { DashboardQueryEditor, isSharedDashboardQuery } from 'app/plugins/datasource/dashboard';
 import { expressionDatasource, ExpressionDatasourceID } from 'app/features/expressions/ExpressionDatasource';
-import { e2e } from '@grafana/e2e';
+import { selectors } from '@grafana/e2e-selectors';
 
 interface Props {
   panel: PanelModel;
@@ -227,7 +227,7 @@ export class QueriesTab extends PureComponent<Props, State> {
     }
 
     return (
-      <div aria-label={e2e.components.QueryTab.selectors.content}>
+      <div aria-label={selectors.components.QueryTab.content}>
         <QueryEditorRows
           queries={panel.targets}
           datasource={currentDS}

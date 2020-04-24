@@ -1,8 +1,8 @@
 import React from 'react';
 import { GrafanaTheme, PanelPluginMeta } from '@grafana/data';
 import { stylesFactory, useTheme } from '@grafana/ui';
+import { selectors } from '@grafana/e2e-selectors';
 import { css, cx } from 'emotion';
-import { e2e } from '@grafana/e2e';
 
 interface Props {
   isCurrent: boolean;
@@ -25,7 +25,7 @@ const VizTypePickerPlugin: React.FC<Props> = ({ isCurrent, plugin, onClick, disa
       className={cssClass}
       onClick={disabled ? () => {} : onClick}
       title={plugin.name}
-      aria-label={e2e.components.PluginVisualization.selectors.item(plugin.name)}
+      aria-label={selectors.components.PluginVisualization.item(plugin.name)}
     >
       <div className={styles.name}>{plugin.name}</div>
       <img className={styles.img} src={plugin.info.logos.small} />
