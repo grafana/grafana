@@ -18,7 +18,7 @@ const getNotifications = async () => {
 const NotificationsListPage: FC = () => {
   const navModel = useNavModel('channels');
 
-  const [notifications, setNotifications] = useState<AlertNotification[]>();
+  const [notifications, setNotifications] = useState<AlertNotification[]>([]);
   const [state, fetchNotifications] = useAsyncFn(getNotifications);
   useEffect(() => {
     fetchNotifications().then(res => {
@@ -30,7 +30,7 @@ const NotificationsListPage: FC = () => {
     <Page navModel={navModel}>
       <Page.Contents>
         {state.error && <p>{state.error}</p>}
-        {!!notifications?.length && (
+        {!!notifications.length && (
           <>
             <div className="page-action-bar">
               <div className="page-action-bar__spacer" />
@@ -83,7 +83,7 @@ const NotificationsListPage: FC = () => {
           </>
         )}
 
-        {!(notifications?.length || state.loading) && (
+        {!(notifications.length || state.loading) && (
           <EmptyListCTA
             title="There are no notification channels defined yet"
             buttonIcon="channel-add"

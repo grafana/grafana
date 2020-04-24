@@ -12,7 +12,6 @@ import { ILocationProvider, route } from 'angular';
 // Types
 import { DashboardRouteInfo } from 'app/types';
 import { SafeDynamicImport } from '../core/components/DynamicImports/SafeDynamicImport';
-import NotificationsListPage from 'app/features/alerting/NotificationsListPage';
 
 /** @ngInject */
 export function setupAngularRoutes($routeProvider: route.IRouteProvider, $locationProvider: ILocationProvider) {
@@ -439,7 +438,10 @@ export function setupAngularRoutes($routeProvider: route.IRouteProvider, $locati
     .when('/alerting/notifications', {
       template: '<react-container />',
       resolve: {
-        component: () => NotificationsListPage,
+        component: () =>
+          SafeDynamicImport(
+            import(/* webpackChunkName: "NotificationsListPage" */ 'app/features/alerting/NotificationsListPage')
+          ),
       },
     })
     .when('/alerting/notification/new', {
