@@ -29,6 +29,18 @@ export const getFlattenedSections = (sections: DashboardSection[]): string[] => 
 };
 
 /**
+ * Get all items for currently expanded sections
+ * @param sections
+ */
+export const getVisibleItems = (sections: DashboardSection[]) => {
+  return sections.flatMap(section => {
+    if (section.expanded) {
+      return section.items;
+    }
+    return [];
+  });
+};
+/**
  * Since Recent and Starred folders don't have id, title field is used as id
  * @param title - title field of the section
  */
