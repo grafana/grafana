@@ -126,6 +126,7 @@ function createColumnsMap(framesWithTimeField: DataFrame[], framesWithoutTimeFie
     const timeFrame = framesWithTimeField[frameIndex];
     const otherFrame = framesWithoutTimeField[frameIndex];
     const timeField = timeFrame.fields[0];
+
     addOrAppendMapItem({ map, column: timeField.name, series: frameIndex, type: timeField.type });
 
     for (let valueIndex = 0; valueIndex < timeFrame.length; valueIndex++) {

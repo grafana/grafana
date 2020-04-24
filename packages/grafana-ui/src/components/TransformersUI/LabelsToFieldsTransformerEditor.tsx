@@ -10,10 +10,10 @@ export const LabelsAsFieldsTransformerEditor: React.FC<TransformerUIProps<Labels
   return null;
 };
 
-export const labelsAsFieldsTransformerRegistryItem: TransformerRegistyItem<LabelsToFieldsOptions> = {
+export const labelsToFieldsTransformerRegistryItem: TransformerRegistyItem<LabelsToFieldsOptions> = {
   id: DataTransformerID.labelsToFields,
   editor: LabelsAsFieldsTransformerEditor,
   transformation: standardTransformers.labelsToFieldsTransformer,
-  name: 'Labels as fields',
-  description: 'Groups series by time and return labels as fields',
+  name: 'Labels to fields',
+  description: 'Groups series by time and return labels or tags as fields',
 };
