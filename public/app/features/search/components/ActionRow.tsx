@@ -44,7 +44,7 @@ export const ActionRow: FC<Props> = ({
 
   return (
     <div className={styles.actionRow}>
-      <HorizontalGroup spacing="md" width="100%">
+      <HorizontalGroup spacing="md">
         {!hideLayout ? <RadioButtonGroup options={layoutOptions} onChange={onLayoutChange} value={layout} /> : null}
         <SortPicker onChange={onSortChange} value={query.sort} />
       </HorizontalGroup>

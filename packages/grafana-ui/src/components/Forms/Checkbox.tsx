@@ -50,7 +50,7 @@ export const getCheckboxStyles = stylesFactory((theme: GrafanaTheme) => {
        * */
       &:checked + span {
         background: blue;
-        background: ${theme.colors.formCheckboxBgChecked};
+        background: ${theme.colors.formInputBg};
         border: none;
         &:hover {
           background: ${theme.colors.formCheckboxBgCheckedHover};
@@ -74,7 +74,7 @@ export const getCheckboxStyles = stylesFactory((theme: GrafanaTheme) => {
       height: ${checkboxSize};
       border-radius: ${theme.border.radius.sm};
       margin-right: ${theme.spacing.formSpacingBase}px;
-      background: ${theme.colors.formCheckboxBg};
+      background: ${theme.colors.formInputBg};
       border: 1px solid ${theme.colors.formInputBorder};
       position: absolute;
       top: 1px;
