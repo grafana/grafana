@@ -2,6 +2,7 @@
 
 exports[`Explore should render component 1`] = `
 <div
+  aria-label="Explore"
   className="explore"
 >
   <Connect(UnConnectedExploreToolbar)

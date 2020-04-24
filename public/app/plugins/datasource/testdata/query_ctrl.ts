@@ -1,12 +1,12 @@
 import _ from 'lodash';
+import { IScope } from 'angular';
+import { getBackendSrv } from '@grafana/runtime';
 import { dateMath, toUtc } from '@grafana/data';
 import { e2e } from '@grafana/e2e';
 
 import { QueryCtrl } from 'app/plugins/sdk';
 import { defaultQuery } from './runStreams';
-import { getBackendSrv } from '@grafana/runtime';
 import { promiseToDigest } from 'app/core/utils/promiseToDigest';
-import { IScope } from 'angular';
 
 export const defaultPulse: any = {
   timeStep: 60,

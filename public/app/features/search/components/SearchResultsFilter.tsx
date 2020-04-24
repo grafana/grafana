@@ -1,9 +1,9 @@
-import React, { FC } from 'react';
+import React, { Dispatch, FC, SetStateAction } from 'react';
 import { css } from 'emotion';
-import { Button, Select, Checkbox, stylesFactory, useTheme, HorizontalGroup } from '@grafana/ui';
+import { Button, Checkbox, stylesFactory, useTheme, HorizontalGroup } from '@grafana/ui';
 import { GrafanaTheme, SelectableValue } from '@grafana/data';
-import { TagFilter } from 'app/core/components/TagFilter/TagFilter';
-import { SearchSrv } from 'app/core/services/search_srv';
+import { DashboardQuery } from '../types';
+import { ActionRow } from './ActionRow';
 
 type onSelectChange = (value: SelectableValue) => void;
 
@@ -12,32 +12,31 @@ export interface Props {
   canDelete?: boolean;
   canMove?: boolean;
   deleteItem: () => void;
+  hideLayout?: boolean;
+  layout: string;
   moveTo: () => void;
+  onLayoutChange: Dispatch<SetStateAction<string>>;
+  onSortChange: onSelectChange;
   onStarredFilterChange: onSelectChange;
   onTagFilterChange: onSelectChange;
   onToggleAllChecked: () => void;
-  selectedStarredFilter: boolean;
-  selectedTagFilter: string[];
+  query: DashboardQuery;
 }
-
-const starredFilterOptions = [
-  { label: 'Yes', value: true },
-  { label: 'No', value: false },
-];
-
-const searchSrv = new SearchSrv();
 
 export const SearchResultsFilter: FC<Props> = ({
   allChecked,
   canDelete,
   canMove,
   deleteItem,
+  hideLayout,
+  layout,
   moveTo,
-  onToggleAllChecked,
+  onLayoutChange,
+  onSortChange,
   onStarredFilterChange,
   onTagFilterChange,
-  selectedStarredFilter = false,
-  selectedTagFilter,
+  onToggleAllChecked,
+  query,
 }) => {
   const showActions = canDelete || canMove;
   const theme = useTheme();
@@ -56,39 +55,37 @@ export const SearchResultsFilter: FC<Props> = ({
           </Button>
         </HorizontalGroup>
       ) : (
-        <HorizontalGroup spacing="md">
-          <Select
-            placeholder="Filter by starred"
-            key={starredFilterOptions?.find(f => f.value === selectedStarredFilter)?.label}
-            options={starredFilterOptions}
-            onChange={onStarredFilterChange}
-          />
-
-          <TagFilter
-            placeholder="Filter by tag"
-            tags={selectedTagFilter}
-            tagOptions={searchSrv.getDashboardTags}
-            onChange={onTagFilterChange}
-            hideValues
-          />
-        </HorizontalGroup>
+        <ActionRow
+          {...{
+            layout,
+            hideLayout,
+            onLayoutChange,
+            onSortChange,
+            onStarredFilterChange,
+            onTagFilterChange,
+            query,
+          }}
+          showStarredFilter
+          hideSelectedTags
+        />
       )}
     </div>
   );
 };
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
+  const { sm, md } = theme.spacing;
   return {
     wrapper: css`
       height: 35px;
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: ${theme.spacing.sm};
+      margin-bottom: ${sm};
 
-      label {
+      > label {
         height: 20px;
-        margin-left: 8px;
+        margin: 0 ${md} 0 ${sm};
       }
     `,
   };

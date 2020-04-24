@@ -39,7 +39,6 @@ export interface FeatureToggles {
    */
   meta: boolean;
   newVariables: boolean;
-  tracingIntegration: boolean;
 }
 
 /**

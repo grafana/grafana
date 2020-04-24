@@ -4,15 +4,13 @@
 // toBe, toEqual and so forth. That's why this file is not type checked and will be so until we
 // can solve the above mentioned issue with Cypress/Jest.
 import { e2eScenario, ScenarioArguments } from './support/scenario';
-import { Pages, Components } from './pages';
+import { Pages } from './pages';
+import { Components } from './components';
 import { Flows } from './flows';
 import { getScenarioContext, setScenarioContext } from './support/scenarioContext';
 
 export type SelectorFunction = (text?: string) => Cypress.Chainable<JQuery<HTMLElement>>;
-export type SelectorObject<S> = {
-  visit: (args?: string) => Cypress.Chainable<Window>;
-  selectors: S;
-};
+export type VisitFunction = (args?: string) => Cypress.Chainable<Window>;
 
 const e2eObject = {
   env: (args: string) => Cypress.env(args),

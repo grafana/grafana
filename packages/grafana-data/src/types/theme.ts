@@ -91,9 +91,9 @@ export interface GrafanaThemeCommons {
     };
   };
   height: {
-    sm: string;
-    md: string;
-    lg: string;
+    sm: number;
+    md: number;
+    lg: number;
   };
   panelPadding: number;
   panelHeaderHeight: number;

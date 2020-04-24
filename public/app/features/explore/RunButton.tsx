@@ -3,6 +3,7 @@ import { RefreshPicker } from '@grafana/ui';
 import memoizeOne from 'memoize-one';
 import { css } from 'emotion';
 import classNames from 'classnames';
+import { e2e } from '@grafana/e2e';
 
 import { ResponsiveButton } from './ResponsiveButton';
 
@@ -42,6 +43,7 @@ export function RunButton(props: Props) {
       })}
       icon={loading ? 'fa fa-spinner' : 'sync'}
       iconClassName={loading && ' fa-spin run-icon'}
+      aria-label={e2e.pages.Explore.General.selectors.runButton}
     />
   );
 

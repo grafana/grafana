@@ -314,14 +314,18 @@ export class DashboardModel {
   panelInitialized(panel: PanelModel) {
     panel.initialized();
 
-    // refresh new panels unless we are in fullscreen / edit mode
-    if (!this.otherPanelInFullscreen(panel)) {
-      panel.refresh();
-    }
-
-    // refresh if panel is in edit mode and there is no last result
-    if (this.panelInEdit === panel && !this.panelInEdit.getQueryRunner().getLastResult()) {
-      panel.refresh();
+    if (this.panelInEdit === panel) {
+      if (this.panelInEdit.getQueryRunner().getLastResult()) {
+        return;
+      } else {
+        // refresh if panel is in edit mode and there is no last result
+        panel.refresh();
+      }
+    } else {
+      // refresh new panels unless we are in fullscreen / edit mode
+      if (!this.otherPanelInFullscreen(panel)) {
+        panel.refresh();
+      }
     }
   }
 

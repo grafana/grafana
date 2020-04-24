@@ -10,6 +10,8 @@ import {
 import { HorizontalGroup } from '../Layout/Layout';
 import { Input } from '../Input/Input';
 import { FilterPill } from '../FilterPill/FilterPill';
+import { Field } from '../Forms/Field';
+import { css } from 'emotion';
 
 interface FilterByNameTransformerEditorProps extends TransformerUIProps<FilterFieldsByNameTransformerOptions> {}
 
@@ -18,6 +20,7 @@ interface FilterByNameTransformerEditorState {
   options: FieldNameInfo[];
   selected: string[];
   regex?: string;
+  isRegexValid?: boolean;
 }
 
 interface FieldNameInfo {
@@ -34,6 +37,7 @@ export class FilterByNameTransformerEditor extends React.PureComponent<
       include: props.options.include || [],
       options: [],
       selected: [],
+      isRegexValid: true,
     };
   }
 
@@ -97,36 +101,69 @@ export class FilterByNameTransformerEditor extends React.PureComponent<
   };
 
   onChange = (selected: string[]) => {
+    const { regex, isRegexValid } = this.state;
+    let include = selected;
+
+    if (regex && isRegexValid) {
+      include = include.concat([regex]);
+    }
+
     this.setState({ selected }, () => {
       this.props.onChange({
         ...this.props.options,
-        include: this.state.regex ? [...selected, this.state.regex] : selected,
+        include,
       });
     });
   };
 
   onInputBlur = (e: React.FocusEvent<HTMLInputElement>) => {
     const { selected, regex } = this.state;
-    this.props.onChange({
-      ...this.props.options,
-      include: regex ? [...selected, regex] : selected,
+    let isRegexValid = true;
+    try {
+      if (regex) {
+        new RegExp(regex);
+      }
+    } catch (e) {
+      isRegexValid = false;
+    }
+    if (isRegexValid) {
+      this.props.onChange({
+        ...this.props.options,
+        include: regex ? [...selected, regex] : selected,
+      });
+    } else {
+      this.props.onChange({
+        ...this.props.options,
+        include: selected,
+      });
+    }
+    this.setState({
+      isRegexValid,
     });
   };
 
   render() {
-    const { options, selected } = this.state;
+    const { options, selected, isRegexValid } = this.state;
     return (
       <div className="gf-form-inline">
         <div className="gf-form gf-form--grow">
           <div className="gf-form-label width-8">Field name</div>
-          <HorizontalGroup spacing="xs">
-            <Input
-              placeholder="Regular expression pattern"
-              value={this.state.regex || ''}
-              onChange={e => this.setState({ regex: e.currentTarget.value })}
-              onBlur={this.onInputBlur}
-              width={25}
-            />
+          <HorizontalGroup spacing="xs" align="flex-start" wrap>
+            <Field
+              invalid={!isRegexValid}
+              error={!isRegexValid ? 'Invalid pattern' : undefined}
+              className={css`
+                margin-bottom: 0;
+              `}
+            >
+              <Input
+                placeholder="Regular expression pattern"
+                value={this.state.regex || ''}
+                onChange={e => this.setState({ regex: e.currentTarget.value })}
+                onBlur={this.onInputBlur}
+                width={25}
+              />
+            </Field>
             {options.map((o, i) => {
               const label = `${o.name}${o.count > 1 ? ' (' + o.count + ')' : ''}`;
               const isSelected = selected.indexOf(o.name) > -1;
