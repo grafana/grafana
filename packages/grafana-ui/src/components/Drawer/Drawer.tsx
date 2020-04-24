@@ -5,6 +5,7 @@ import { css } from 'emotion';
 import CustomScrollbar from '../CustomScrollbar/CustomScrollbar';
 import { IconButton } from '../IconButton/IconButton';
 import { stylesFactory, useTheme } from '../../themes';
+import { e2e } from '@grafana/e2e';
 
 export interface Props {
   children: ReactNode;
@@ -36,6 +37,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme, scollableContent: boolean)
         flex-direction: column;
         overflow: hidden;
       }
+      z-index: ${theme.zIndex.dropdown};
     `,
     header: css`
       background-color: ${theme.colors.bg2};
@@ -92,17 +94,40 @@ export const Drawer: FC<Props> = ({
       getContainer={inline ? false : 'body'}
       style={{ position: `${inline && 'absolute'}` } as CSSProperties}
       className={drawerStyles.drawer}
+      aria-label={
+        typeof title === 'string'
+          ? e2e.components.Drawer.General.selectors.title(title)
+          : e2e.components.Drawer.General.selectors.title('no title')
+      }
     >
       {typeof title === 'string' && (
         <div className={drawerStyles.header}>
           <div className={drawerStyles.actions}>
             {expandable && !isExpanded && (
-              <IconButton name="angle-left" size="xl" onClick={() => setIsExpanded(true)} surface="header" />
+              <IconButton
+                name="angle-left"
+                size="xl"
+                onClick={() => setIsExpanded(true)}
+                surface="header"
+                aria-label={e2e.components.Drawer.General.selectors.expand}
+              />
             )}
             {expandable && isExpanded && (
-              <IconButton name="angle-right" size="xl" onClick={() => setIsExpanded(false)} surface="header" />
+              <IconButton
+                name="angle-right"
+                size="xl"
+                onClick={() => setIsExpanded(false)}
+                surface="header"
+                aria-label={e2e.components.Drawer.General.selectors.contract}
+              />
             )}
-            <IconButton name="times" size="xl" onClick={onClose} surface="header" />
+            <IconButton
+              name="times"
+              size="xl"
+              onClick={onClose}
+              surface="header"
+              aria-label={e2e.components.Drawer.General.selectors.close}
+            />
           </div>
           <div className={drawerStyles.titleWrapper}>
             <h3>{title}</h3>

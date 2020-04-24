@@ -4,6 +4,7 @@ import { getBackendSrv } from '@grafana/runtime';
 import { AppEvents } from '@grafana/data';
 import { IScope } from 'angular';
 import { promiseToDigest } from '../../core/utils/promiseToDigest';
+import config from 'app/core/config';
 
 export class AlertNotificationEditCtrl {
   theForm: any;
@@ -27,6 +28,7 @@ export class AlertNotificationEditCtrl {
     isDefault: false,
   };
   getFrequencySuggestion: any;
+  rendererAvailable: boolean;
 
   /** @ngInject */
   constructor(
@@ -42,6 +44,9 @@ export class AlertNotificationEditCtrl {
     this.getFrequencySuggestion = () => {
       return ['1m', '5m', '10m', '15m', '30m', '1h'];
     };
+
+    this.defaults.settings.uploadImage = config.rendererAvailable;
+    this.rendererAvailable = config.rendererAvailable;
 
     promiseToDigest(this.$scope)(
       getBackendSrv()

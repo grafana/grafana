@@ -22,7 +22,11 @@ import (
 
 func init() {
 	remotecache.Register(&RenderUser{})
-	registry.RegisterService(&RenderingService{})
+	registry.Register(&registry.Descriptor{
+		Name:         "RenderingService",
+		Instance:     &RenderingService{},
+		InitPriority: registry.High,
+	})
 }
 
 const renderKeyPrefix = "render-%s"
@@ -68,7 +72,7 @@ func (rs *RenderingService) Init() error {
 }
 
 func (rs *RenderingService) Run(ctx context.Context) error {
-	if rs.Cfg.RendererUrl != "" {
+	if rs.remoteAvailable() {
 		rs.log = rs.log.New("renderer", "http")
 		rs.log.Info("Backend rendering via external http server")
 		rs.renderAction = rs.renderViaHttp
@@ -76,7 +80,7 @@ func (rs *RenderingService) Run(ctx context.Context) error {
 		return nil
 	}
 
-	if plugins.Renderer != nil {
+	if rs.pluginAvailable() {
 		rs.log = rs.log.New("renderer", "plugin")
 		rs.pluginInfo = plugins.Renderer
 
@@ -97,8 +101,16 @@ func (rs *RenderingService) Run(ctx context.Context) error {
 	return nil
 }
 
+func (rs *RenderingService) pluginAvailable() bool {
+	return plugins.Renderer != nil
+}
+
+func (rs *RenderingService) remoteAvailable() bool {
+	return rs.Cfg.RendererUrl != ""
+}
+
 func (rs *RenderingService) IsAvailable() bool {
-	return rs.renderAction != nil
+	return rs.remoteAvailable() || rs.pluginAvailable()
 }
 
 func (rs *RenderingService) RenderErrorImage(err error) (*RenderResult, error) {
@@ -197,8 +209,13 @@ func (rs *RenderingService) getURL(path string) string {
 		protocol = "https"
 	}
 
+	subPath := ""
+	if rs.Cfg.ServeFromSubPath {
+		subPath = rs.Cfg.AppSubUrl
+	}
+
 	// &render=1 signals to the legacy redirect layer to
-	return fmt.Sprintf("%s://%s:%s/%s&render=1", protocol, rs.domain, setting.HttpPort, path)
+	return fmt.Sprintf("%s://%s:%s%s/%s&render=1", protocol, rs.domain, setting.HttpPort, subPath, path)
 }
 
 func (rs *RenderingService) generateAndStoreRenderKey(orgId, userId int64, orgRole models.RoleType) (string, error) {

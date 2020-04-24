@@ -23,7 +23,6 @@ import { infoPopover } from './components/info_popover';
 import { arrayJoin } from './directives/array_join';
 import { liveSrv } from './live/live_srv';
 import { Emitter } from './utils/emitter';
-import { layoutSelector } from './components/layout_selector/layout_selector';
 import { switchDirective } from './components/switch';
 import { dashboardSelector } from './components/dashboard_selector';
 import { queryPartEditorDirective } from './components/query_part/query_part_editor';
@@ -54,7 +53,6 @@ export {
   coreModule,
   searchDirective,
   liveSrv,
-  layoutSelector,
   switchDirective,
   infoPopover,
   Emitter,
