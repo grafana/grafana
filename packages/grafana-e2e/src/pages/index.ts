@@ -8,14 +8,10 @@ import { Dashboard } from './dashboard';
 import { SaveDashboardAsModal } from './saveDashboardAsModal';
 import { Dashboards } from './dashboards';
 import { DashboardSettings } from './dashboardSettings';
-import { EditPanel } from './editPanel';
-import { TestData } from './testdata';
-import { Graph } from './graph';
+import { Explore } from './explore';
 import { SaveDashboardModal } from './saveDashboardModal';
-import { Panel } from './panel';
 import { SharePanelModal } from './sharePanelModal';
 import { ConstantVariable, QueryVariable, VariableGeneral, Variables, VariablesSubMenu } from './variables';
-import { pageFactory } from '../support';
 
 export const Pages = {
   Login,
@@ -44,22 +40,8 @@ export const Pages = {
   SaveDashboardAsModal,
   SaveDashboardModal,
   SharePanelModal,
-};
-
-export const Components = {
-  DataSource: {
-    TestData,
+  Explore: {
+    visit: () => Explore.visit(),
+    General: Explore,
   },
-  Panels: {
-    Panel,
-    EditPanel,
-    Visualization: {
-      Graph,
-    },
-  },
-  BackButton: pageFactory({
-    selectors: {
-      backArrow: 'Go Back button',
-    },
-  }),
 };
