@@ -36,7 +36,7 @@ export const SectionHeader: FC<SectionHeaderProps> = ({
     [section]
   );
 
-  return !section.hideHeader ? (
+  return (
     <div className={styles.wrapper} onClick={onSectionExpand}>
       <SearchCheckbox editable={editable} checked={section.checked} onClick={onSectionChecked} />
       <Icon className={styles.icon} name={section.icon as IconName} />
@@ -49,8 +49,6 @@ export const SectionHeader: FC<SectionHeaderProps> = ({
       )}
       <Icon name={section.expanded ? 'angle-down' : 'angle-right'} />
     </div>
-  ) : (
-    <div className={styles.wrapper} />
   );
 };
 
