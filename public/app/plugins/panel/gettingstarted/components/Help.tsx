@@ -35,7 +35,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
   return {
     help: css`
       width: 330px;
-      padding-left: 16px;
+      padding-left: ${theme.spacing.md};
       border-left: 3px solid ${theme.palette.blue95};
     `,
     helpOptions: css`
@@ -44,7 +44,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       justify-content: space-between;
     `,
     helpOption: css`
-      margin-top: 8px;
+      margin-top: ${theme.spacing.sm};
     `,
   };
 });

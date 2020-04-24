@@ -11,7 +11,7 @@ export const cardStyle = stylesFactory((theme: GrafanaTheme, complete: boolean) 
 
   return `
       background-color: ${theme.colors.bg1};
-      margin-right: 16px;
+      margin-right: ${theme.spacing.md};
       border: 1px solid ${theme.colors.border1};
       border-bottom-left-radius: ${theme.border.radius.md};
       border-bottom-right-radius: ${theme.border.radius.md};

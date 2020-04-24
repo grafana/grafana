@@ -139,10 +139,10 @@ const getStyles = stylesFactory(() => {
     content: css`
       margin-left: 350px;
       margin-top: 32px;
-      margin-bottom: 24px;
+      margin-bottom: ${theme.spacing.lg};
     `,
     header: css`
-      margin-bottom: 24px;
+      margin-bottom: ${theme.spacing.lg};
       display: flex;
       flex-direction: row;
     `,

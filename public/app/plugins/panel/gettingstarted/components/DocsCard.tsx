@@ -38,7 +38,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme, complete: boolean) => {
     heading: css`
       text-transform: uppercase;
       color: ${complete ? theme.palette.blue95 : '#FFB357'};
-      margin-bottom: 16px;
+      margin-bottom: ${theme.spacing.md};
     `,
     title: css`
       margin-bottom: 48px;

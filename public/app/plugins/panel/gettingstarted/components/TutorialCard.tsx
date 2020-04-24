@@ -54,10 +54,10 @@ const getStyles = stylesFactory((theme: GrafanaTheme, complete: boolean) => {
     heading: css`
       text-transform: uppercase;
       color: ${textColor};
-      margin-bottom: 8px;
+      margin-bottom: ${theme.spacing.sm};
     `,
     info: css`
-      margin-bottom: 16px;
+      margin-bottom: ${theme.spacing.md};
     `,
     status: css`
       display: flex;
