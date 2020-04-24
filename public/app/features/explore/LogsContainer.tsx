@@ -61,6 +61,7 @@ interface LogsContainerProps {
   splitOpen: typeof splitOpen;
   displayMoreLogsBtn: boolean;
   runAppendQueries: typeof runAppendQueries;
+  hasNewerLogsRanges: boolean;
 }
 
 export class LogsContainer extends PureComponent<LogsContainerProps> {
@@ -145,6 +146,8 @@ export class LogsContainer extends PureComponent<LogsContainerProps> {
       isLive,
       exploreId,
       displayMoreLogsBtn,
+      datasourceInstance,
+      hasNewerLogsRanges,
     } = this.props;
 
     return (
@@ -189,9 +192,11 @@ export class LogsContainer extends PureComponent<LogsContainerProps> {
               width={width}
               getRowContext={this.getLogRowContext}
               getFieldLinks={this.getFieldLinks}
+              datasourceInstance={datasourceInstance}
               displayMoreLogsBtn={displayMoreLogsBtn}
               showMoreNewerLogs={this.showMoreNewerLogs}
               showMoreOlderLogs={this.showMoreOlderLogs}
+              hasNewerLogsRanges={hasNewerLogsRanges}
             />
           </Collapse>
         </LogsCrossFadeTransition>
@@ -216,6 +221,7 @@ function mapStateToProps(state: StoreState, { exploreId }: { exploreId: string }
     absoluteRange,
     dedupStrategy,
     queries,
+    prevShowMoreLogsTimeRanges,
   } = item;
   const dedupedRows = deduplicatedRowsSelector(item);
   const timeZone = getTimeZone(state.user);
@@ -236,6 +242,7 @@ function mapStateToProps(state: StoreState, { exploreId }: { exploreId: string }
     range,
     absoluteRange,
     displayMoreLogsBtn: queries.filter(elem => !elem.hide).length === 1,
+    hasNewerLogsRanges: prevShowMoreLogsTimeRanges.length > 0,
   };
 }
 
