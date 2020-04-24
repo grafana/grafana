@@ -99,10 +99,10 @@ var (
 	// LDAPUsersSyncExecutionTime is a metric summary for LDAP users sync execution duration
 	LDAPUsersSyncExecutionTime prometheus.Summary
 
-	// MRenderingRequestCompleted is a metric counter for how many panels have been rendered
+	// MRenderingRequestTotal is a metric counter for image rendering requests
 	MRenderingRequestTotal *prometheus.CounterVec
 
-	// MRenderingQueue is a metric gauge for panel rendering queue size
+	// MRenderingQueue is a metric gauge for image rendering queue size
 	MRenderingQueue prometheus.Gauge
 )
 
@@ -114,7 +114,7 @@ var (
 	// MAlertingExecutionTime is a metric summary of alert exeuction duration
 	MAlertingExecutionTime prometheus.Summary
 
-	// MRenderingSummary is a metric summary for panel rendering duration
+	// MRenderingSummary is a metric summary for image rendering request duration
 	MRenderingSummary *prometheus.SummaryVec
 )
 
@@ -355,7 +355,7 @@ func init() {
 	MRenderingRequestTotal = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
 			Name:      "rendering_request_total",
-			Help:      "counter for rendered panels",
+			Help:      "counter for image rendering requests",
 			Namespace: ExporterName,
 		},
 		[]string{"status"},
@@ -364,7 +364,7 @@ func init() {
 	MRenderingSummary = prometheus.NewSummaryVec(
 		prometheus.SummaryOpts{
 			Name:       "rendering_request_duration_milliseconds",
-			Help:       "summary of panel rendering execution duration",
+			Help:       "summary of image rendering request duration",
 			Objectives: objectiveMap,
 			Namespace:  ExporterName,
 		},
@@ -373,7 +373,7 @@ func init() {
 
 	MRenderingQueue = prometheus.NewGauge(prometheus.GaugeOpts{
 		Name:      "rendering_queue_size",
-		Help:      "size of rendering queue",
+		Help:      "size of image rendering queue",
 		Namespace: ExporterName,
 	})
 

@@ -115,8 +115,8 @@ func (rs *RenderingService) Render(ctx context.Context, opts Opts) (*RenderResul
 	result, err := rs.render(ctx, opts)
 	elapsedTime := time.Since(startTime).Milliseconds()
 	if err != nil {
-		metrics.MRenderingRequestTotal.WithLabelValues("error").Inc()
-		metrics.MRenderingSummary.WithLabelValues("error").Observe(float64(elapsedTime))
+		metrics.MRenderingRequestTotal.WithLabelValues("failure").Inc()
+		metrics.MRenderingSummary.WithLabelValues("failure").Observe(float64(elapsedTime))
 	} else {
 		metrics.MRenderingRequestTotal.WithLabelValues("success").Inc()
 		metrics.MRenderingSummary.WithLabelValues("success").Observe(float64(elapsedTime))
