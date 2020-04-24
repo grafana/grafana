@@ -2,7 +2,6 @@ package migrator
 
 import (
 	"fmt"
-	"regexp"
 	"strings"
 
 	"xorm.io/xorm"
@@ -45,7 +44,6 @@ type Table struct {
 const (
 	IndexType = iota + 1
 	UniqueIndex
-	FunctionalIndex
 )
 
 type Index struct {
@@ -56,7 +54,7 @@ type Index struct {
 
 func (index *Index) XName(tableName string) string {
 	if index.Name == "" {
-		index.Name = index.derivedName()
+		index.Name = strings.Join(index.Cols, "_")
 	}
 
 	if !strings.HasPrefix(index.Name, "UQE_") &&
@@ -67,19 +65,6 @@ func (index *Index) XName(tableName string) string {
 		return fmt.Sprintf("IDX_%v_%v", tableName, index.Name)
 	}
 	return index.Name
-}
-
-var nonAlphaNums = regexp.MustCompile("[^A-Za-z0-9]+")
-
-func (index Index) derivedName() string {
-	parts := index.Cols
-	if index.Type == FunctionalIndex {
-		parts = make([]string, len(index.Cols))
-		for i, col := range index.Cols {
-			parts[i] = nonAlphaNums.ReplaceAllString(col, "_")
-		}
-	}
-	return strings.TrimRight(strings.Join(parts, "_"), "_")
 }
 
 var (

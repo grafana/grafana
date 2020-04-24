@@ -2,9 +2,8 @@ package searchstore
 
 import (
 	"fmt"
-	"strings"
-
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
+	"strings"
 )
 
 // FilterWhere limits the set of dashboard IDs to the dashboards for
@@ -123,12 +122,11 @@ type TitleSorter struct {
 }
 
 func (s TitleSorter) OrderBy() string {
-	dir := "ASC"
 	if s.Descending {
-		dir = "DESC"
+		return "dashboard.title DESC"
 	}
 
-	return "lower(dashboard.title) " + dir
+	return "dashboard.title ASC"
 }
 
 func sqlIDin(column string, ids []int64) (string, []interface{}) {
