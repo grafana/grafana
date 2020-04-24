@@ -24,12 +24,6 @@ These can be especially useful for administrators who want to allow Grafana view
 
 Variables and templates also allow you to single-source dashboards. If you have multiple identical data sources or servers, you can make one dashboard and use variables to change what you are viewing. This simplifies maintenance and upkeep enormously.
 
-## Examples of templates and variables
-
-- [Graphite Templated Dashboard](https://play.grafana.org/dashboard/db/graphite-templated-nested)
-- [Elasticsearch Templated Dashboard](https://play.grafana.org/dashboard/db/elasticsearch-templated)
-- [InfluxDB Templated Dashboard](https://play.grafana.org/dashboard/db/influxdb-templated)
-
 ## Templates
 
 A _template_ is any query that contains a variable.
@@ -59,6 +53,24 @@ For example, a variable used in a regex expression in an InfluxDB or Prometheus 
 documentation topic for details on value escaping during interpolation.
 
 For advanced syntax to override data source default formatting, refer to [Advanced variable format options]({{< relref "advanced-variable-format-options.md" >}}).
+
+## Examples of templates and variables
+
+To see variable and template examples, go to any of the dashboards listed below.
+
+- [Elasticsearch Templated dashboard](https://play.grafana.org/dashboard/db/elasticsearch-templated)
+- [Graphite Templated Nested dashboard](https://play.grafana.org/dashboard/db/graphite-templated-nested)
+- [InfluxDB Templated dashboard](https://play.grafana.org/dashboard/db/influxdb-templated)
+
+Variables are listed in dropdown lists across the top of the screen. Select different variables to see how the visualizations change. 
+
+To see variable settings, navigate to **Dashboard Settings > Variables**. Click a variable in the list to see its settings.
+
+Templates are in the query portion of panels. Queries with text that starts with `$` are templates. Not all panels will have template queries.
+
+
+DFP NOTE: Link to Add topics in the types.
+
 
 ## Variable types
 
