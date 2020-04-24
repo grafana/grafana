@@ -344,9 +344,14 @@ export function setupAngularRoutes($routeProvider: route.IRouteProvider, $locati
       },
     })
     .when('/admin/orgs', {
-      templateUrl: 'public/app/features/admin/partials/orgs.html',
-      controller: 'AdminListOrgsCtrl',
-      controllerAs: 'ctrl',
+      // templateUrl: 'public/app/features/admin/partials/orgs.html',
+      // controller: 'AdminListOrgsCtrl',
+      // controllerAs: 'ctrl',
+      template: '<react-container />',
+      resolve: {
+        component: () =>
+          SafeDynamicImport(import(/* webpackChunkName: "AdminListOrgsPage" */ 'app/features/admin/AdminListOrgsPage')),
+      },
     })
     .when('/admin/orgs/edit/:id', {
       templateUrl: 'public/app/features/admin/partials/edit_org.html',
