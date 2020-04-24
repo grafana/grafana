@@ -1,12 +1,12 @@
 import React, { FC, MutableRefObject } from 'react';
-import { css } from 'emotion';
+import { css, cx } from 'emotion';
 import { FixedSizeList } from 'react-window';
+import AutoSizer from 'react-virtualized-auto-sizer';
 import { GrafanaTheme } from '@grafana/data';
 import { stylesFactory, useTheme, Spinner } from '@grafana/ui';
 import { DashboardSection, OnToggleChecked, SearchLayout } from '../types';
-import { getItemsHeight, getVisibleItems } from '../utils';
+import { getVisibleItems } from '../utils';
 import { ITEM_HEIGHT } from '../constants';
-import { useListHeight } from '../hooks/useListHeight';
 import { SearchItem } from './SearchItem';
 import { SectionHeader } from './SectionHeader';
 
@@ -33,7 +33,6 @@ export const SearchResults: FC<Props> = ({
 }) => {
   const theme = useTheme();
   const styles = getSectionStyles(theme);
-  const listHeight = useListHeight(wrapperRef?.current?.offsetTop);
   const itemProps = { editable, onToggleChecked, onTagSelected };
 
   const renderFolders = () => {
@@ -54,25 +53,27 @@ export const SearchResults: FC<Props> = ({
   };
 
   const items = getVisibleItems(results);
-  const count = items.length;
-  const height = getItemsHeight(count, listHeight);
 
   const renderDashboards = () => {
     return (
-      <FixedSizeList
-        aria-label="Search items"
-        className={styles.wrapper}
-        innerElementType="ul"
-        itemSize={ITEM_HEIGHT}
-        height={height}
-        itemCount={items.length}
-        width="100%"
-      >
-        {({ index, style }) => {
-          const item = items[index];
-          return <SearchItem key={item.id} {...itemProps} item={item} style={style} />;
-        }}
-      </FixedSizeList>
+      <AutoSizer disableWidth>
+        {({ height }) => (
+          <FixedSizeList
+            aria-label="Search items"
+            className={styles.wrapper}
+            innerElementType="ul"
+            itemSize={ITEM_HEIGHT}
+            height={height}
+            itemCount={items.length}
+            width="100%"
+          >
+            {({ index, style }) => {
+              const item = items[index];
+              return <SearchItem key={item.id} {...itemProps} item={item} style={style} />;
+            }}
+          </FixedSizeList>
+        )}
+      </AutoSizer>
     );
   };
 
@@ -82,13 +83,14 @@ export const SearchResults: FC<Props> = ({
     return <h6>No dashboards matching your query were found.</h6>;
   }
   return (
-    <div className="search-results-container">
+    <div className={cx('results-container', styles.resultsContainer)}>
       {layout !== SearchLayout.List ? renderFolders() : renderDashboards()}
     </div>
   );
 };
 
 const getSectionStyles = stylesFactory((theme: GrafanaTheme) => {
+  const { xs, sm, md } = theme.spacing;
   return {
     wrapper: css`
       list-style: none;
@@ -96,7 +98,7 @@ const getSectionStyles = stylesFactory((theme: GrafanaTheme) => {
     section: css`
       background: ${theme.colors.panelBg};
       border-bottom: solid 1px ${theme.isLight ? theme.palette.gray95 : theme.palette.gray25};
-      padding: 0px 4px 4px 4px;
+      padding: 0px ${xs} ${xs};
       margin-bottom: 3px;
     `,
     spinner: css`
@@ -104,6 +106,16 @@ const getSectionStyles = stylesFactory((theme: GrafanaTheme) => {
       justify-content: center;
       align-items: center;
       min-height: 100px;
+    `,
+    resultsContainer: css`
+      padding: ${sm};
+      position: relative;
+      flex-grow: 10;
+      margin-bottom: ${md};
+      background: ${theme.palette.gray10};
+      border: 1px solid ${theme.palette.gray15};
+      border-radius: 3px;
+      height: 100%;
     `,
   };
 });

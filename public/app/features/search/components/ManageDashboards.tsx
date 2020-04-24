@@ -1,4 +1,4 @@
-import React, { FC, useState, memo, useRef } from 'react';
+import React, { FC, useState, memo } from 'react';
 import { css } from 'emotion';
 import { Icon, TagList, HorizontalGroup, stylesFactory, useTheme } from '@grafana/ui';
 import { GrafanaTheme } from '@grafana/data';
@@ -25,7 +25,6 @@ const { isEditor } = contextSrv;
 export const ManageDashboards: FC<Props> = memo(({ folderId, folderUid }) => {
   const theme = useTheme();
   const styles = getStyles(theme);
-  const wrapperRef = useRef(null);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isMoveModalOpen, setIsMoveModalOpen] = useState(false);
   const queryParams = { skipRecent: true, skipStarred: true, folderIds: folderId ? [folderId] : [] };
@@ -90,59 +89,61 @@ export const ManageDashboards: FC<Props> = memo(({ folderId, folderUid }) => {
   }
 
   return (
-    <div className="dashboard-list">
-      <HorizontalGroup justify="space-between">
-        <SearchField query={query} onChange={onQueryChange} className={styles.searchField} />
-        <DashboardActions isEditor={isEditor} canEdit={hasEditPermissionInFolders || canSave} folderId={folderId} />
-      </HorizontalGroup>
-
-      {hasFilters && (
-        <HorizontalGroup>
-          <div className="gf-form-inline">
-            {query.tag.length > 0 && (
-              <div className="gf-form">
-                <label className="gf-form-label width-4">Tags</label>
-                <TagList tags={query.tag} onClick={onTagRemove} />
-              </div>
-            )}
-            {query.starred && (
-              <div className="gf-form">
-                <label className="gf-form-label">
-                  <a className="pointer" onClick={onRemoveStarred}>
-                    <Icon name="check" />
-                    Starred
-                  </a>
-                </label>
-              </div>
-            )}
-            {query.sort && (
-              <div className="gf-form">
-                <label className="gf-form-label">
-                  <a className="pointer" onClick={() => onSortChange(null)}>
-                    Sort: {query.sort.label}
-                  </a>
-                </label>
-              </div>
-            )}
-            <div className="gf-form">
-              <label className="gf-form-label">
-                <a
-                  className="pointer"
-                  onClick={() => {
-                    onClearFilters();
-                    setLayout(SearchLayout.Folders);
-                  }}
-                >
-                  <Icon name="times" />
-                  &nbsp;Clear
-                </a>
-              </label>
-            </div>
-          </div>
+    <div className={styles.container}>
+      <div>
+        <HorizontalGroup justify="space-between">
+          <SearchField query={query} onChange={onQueryChange} className={styles.searchField} />
+          <DashboardActions isEditor={isEditor} canEdit={hasEditPermissionInFolders || canSave} folderId={folderId} />
         </HorizontalGroup>
-      )}
 
-      <div className="search-results">
+        {hasFilters && (
+          <HorizontalGroup>
+            <div className="gf-form-inline">
+              {query.tag.length > 0 && (
+                <div className="gf-form">
+                  <label className="gf-form-label width-4">Tags</label>
+                  <TagList tags={query.tag} onClick={onTagRemove} />
+                </div>
+              )}
+              {query.starred && (
+                <div className="gf-form">
+                  <label className="gf-form-label">
+                    <a className="pointer" onClick={onRemoveStarred}>
+                      <Icon name="check" />
+                      Starred
+                    </a>
+                  </label>
+                </div>
+              )}
+              {query.sort && (
+                <div className="gf-form">
+                  <label className="gf-form-label">
+                    <a className="pointer" onClick={() => onSortChange(null)}>
+                      Sort: {query.sort.label}
+                    </a>
+                  </label>
+                </div>
+              )}
+              <div className="gf-form">
+                <label className="gf-form-label">
+                  <a
+                    className="pointer"
+                    onClick={() => {
+                      onClearFilters();
+                      setLayout(SearchLayout.Folders);
+                    }}
+                  >
+                    <Icon name="times" />
+                    &nbsp;Clear
+                  </a>
+                </label>
+              </div>
+            </div>
+          </HorizontalGroup>
+        )}
+      </div>
+
+      <div className={styles.results}>
         {results?.length > 0 && (
           <SearchResultsFilter
             allChecked={allChecked}
@@ -160,18 +161,15 @@ export const ManageDashboards: FC<Props> = memo(({ folderId, folderUid }) => {
             onLayoutChange={onLayoutChange}
           />
         )}
-        <div ref={wrapperRef}>
-          <SearchResults
-            loading={loading}
-            results={results}
-            editable
-            onTagSelected={onTagAdd}
-            onToggleSection={onToggleSection}
-            onToggleChecked={onToggleChecked}
-            layout={layout}
-            wrapperRef={wrapperRef}
-          />
-        </div>
+        <SearchResults
+          loading={loading}
+          results={results}
+          editable
+          onTagSelected={onTagAdd}
+          onToggleSection={onToggleSection}
+          onToggleChecked={onToggleChecked}
+          layout={layout}
+        />
       </div>
       <ConfirmDeleteModal
         onDeleteItems={onDeleteItems}
@@ -191,6 +189,13 @@ export const ManageDashboards: FC<Props> = memo(({ folderId, folderUid }) => {
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
   return {
+    container: css`
+      height: 100%;
+
+      .results-container {
+        padding: 5px 0 0;
+      }
+    `,
     searchField: css`
       height: auto;
       border-bottom: none;
@@ -199,6 +204,13 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       input {
         width: 400px;
       }
+    `,
+    results: css`
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+      height: 100%;
+      margin-top: ${theme.spacing.xl};
     `,
   };
 });

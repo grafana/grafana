@@ -1,6 +1,6 @@
 import { parse, SearchParserResult } from 'search-query-parser';
 import { DashboardQuery, DashboardSection, DashboardSectionItem, SearchAction, UidsToDelete } from './types';
-import { ITEM_HEIGHT, NO_ID_SECTIONS } from './constants';
+import { NO_ID_SECTIONS } from './constants';
 import { getDashboardSrv } from '../dashboard/services/DashboardSrv';
 
 /**
@@ -199,18 +199,4 @@ export const hasFilters = (query: DashboardQuery) => {
     return false;
   }
   return Boolean(query.query || query.tag?.length > 0 || query.starred || query.sort);
-};
-
-/**
- * Get height of dynamic list of search results
- * @param count - total number of items
- * @param listHeight
- */
-
-export const getItemsHeight = (count: number, listHeight: number) => {
-  const totalHeight = count * ITEM_HEIGHT;
-  if (totalHeight > listHeight && listHeight !== 0) {
-    return listHeight;
-  }
-  return totalHeight;
 };

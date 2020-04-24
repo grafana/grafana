@@ -1,4 +1,4 @@
-import React, { FC, memo, useRef } from 'react';
+import React, { FC, memo } from 'react';
 import { css } from 'emotion';
 import { useTheme, CustomScrollbar, stylesFactory, Button } from '@grafana/ui';
 import { GrafanaTheme } from '@grafana/data';
@@ -21,7 +21,6 @@ export const DashboardSearch: FC<Props> = memo(({ onCloseSearch, folder }) => {
   const { layout, setLayout } = useSearchLayout(query);
   const theme = useTheme();
   const styles = getStyles(theme);
-  const wrapperRef = useRef(null);
 
   // The main search input has own keydown handler, also TagFilter uses input, so
   // clicking Esc when tagFilter is active shouldn't close the whole search overlay
@@ -49,7 +48,7 @@ export const DashboardSearch: FC<Props> = memo(({ onCloseSearch, folder }) => {
         clearable
         className={styles.searchField}
       />
-      <div className={styles.search} ref={wrapperRef}>
+      <div className={styles.search}>
         <ActionRow
           {...{
             layout,
@@ -67,7 +66,6 @@ export const DashboardSearch: FC<Props> = memo(({ onCloseSearch, folder }) => {
             editable={false}
             onToggleSection={onToggleSection}
             layout={layout}
-            wrapperRef={wrapperRef}
           />
         </CustomScrollbar>
       </div>
