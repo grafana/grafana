@@ -186,7 +186,7 @@ Example Result: `gce_instance - compute.googleapis.com/instance/cpu/usage_time`
 
 ### SLO (Service Level Objective) queries
 
-> To be released in Grafana v7.0.0
+> Only available in Grafana v7.0+
 
 {{< docs-imagebox img="/img/docs/v70/slo-query-builder.png" max-width= "400px" class="docs-image--right" >}}
 
