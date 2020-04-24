@@ -39,6 +39,7 @@ const customRightActions: DashNavButtonModel[] = [];
 export function addCustomLeftAction(content: DashNavButtonModel) {
   customLeftActions.push(content);
 }
+
 export function addCustomRightAction(content: DashNavButtonModel) {
   customRightActions.push(content);
 }
@@ -112,6 +113,14 @@ class DashNav extends PureComponent<Props> {
     this.forceUpdate();
   };
 
+  addCustomContent(actions: DashNavButtonModel[], buttons: ReactNode[]) {
+    actions.map((action, index) => {
+      const Component = action.component;
+      const element = <Component {...this.props} key={`button-custom-${index}`} />;
+      typeof action.index === 'number' ? buttons.splice(action.index, 0) : buttons.push(element);
+    });
+  }
+
   renderLeftActionsButton() {
     const { dashboard } = this.props;
     const { canStar, canShare, isStarred } = dashboard.meta;
@@ -154,18 +163,12 @@ class DashNav extends PureComponent<Props> {
       );
     }
 
-    customLeftActions.map((action, index) => {
-      const Component = action.component;
-      const element = <Component {...this.props} key={`button-custom-left-${index}`} />;
-      typeof action.index === 'number' ? buttons.splice(action.index, 0) : buttons.push(element);
-    });
-
+    this.addCustomContent(customLeftActions, buttons);
     return buttons;
   }
 
   renderDashboardTitleSearchButton() {
     const { dashboard, isFullscreen } = this.props;
-
     /* Hard-coded value so we don't have to wrap whole component in withTheme because of 1 variable */
     const iconClassName = css`
       margin-right: 4px;
@@ -273,12 +276,7 @@ class DashNav extends PureComponent<Props> {
       );
     }
 
-    customRightActions.map((action, index) => {
-      const Component = action.component;
-      const element = <Component {...this.props} key={`button-custom-right-${index}`} />;
-      typeof action.index === 'number' ? buttons.splice(action.index, 0) : buttons.push(element);
-    });
-
+    this.addCustomContent(customRightActions, buttons);
     return buttons;
   }
 
