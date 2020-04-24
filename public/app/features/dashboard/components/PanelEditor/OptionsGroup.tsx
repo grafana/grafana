@@ -4,6 +4,7 @@ import { GrafanaTheme } from '@grafana/data';
 import { Icon, stylesFactory, useTheme } from '@grafana/ui';
 import { PANEL_EDITOR_UI_STATE_STORAGE_KEY } from './state/reducers';
 import { useLocalStorage } from 'react-use';
+import { e2e } from '@grafana/e2e';
 
 export interface OptionsGroupProps {
   id: string;
@@ -46,6 +47,7 @@ export const OptionsGroup: FC<OptionsGroupProps> = ({
 
   return (
     <CollapsibleSection
+      id={id}
       defaultToClosed={defaultToClosed}
       className={className}
       nested={nested}
@@ -75,7 +77,8 @@ const CollapsibleSectionWithPersistence: FC<OptionsGroupProps> = memo(props => {
   return <CollapsibleSection {...props} defaultToClosed={value.defaultToClosed} onToggle={onToggle} />;
 });
 
-const CollapsibleSection: FC<Omit<OptionsGroupProps, 'id' | 'persistMe'>> = ({
+const CollapsibleSection: FC<Omit<OptionsGroupProps, 'persistMe'>> = ({
+  id,
   title,
   children,
   defaultToClosed,
@@ -95,7 +98,11 @@ const CollapsibleSection: FC<Omit<OptionsGroupProps, 'id' | 'persistMe'>> = ({
 
   return (
     <div className={cx(styles.box, className, 'options-group')}>
-      <div className={styles.header} onClick={() => toggleExpand(!isExpanded)}>
+      <div
+        className={styles.header}
+        onClick={() => toggleExpand(!isExpanded)}
+        aria-label={e2e.components.OptionsGroup.selectors.toggle(id)}
+      >
         <div className={cx(styles.toggle, 'editor-options-group-toggle')}>
           <Icon name={isExpanded ? 'angle-down' : 'angle-right'} />
         </div>
