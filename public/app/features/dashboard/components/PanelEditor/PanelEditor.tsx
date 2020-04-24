@@ -1,6 +1,6 @@
 import React, { PureComponent } from 'react';
 import { FieldConfigSource, GrafanaTheme, PanelData, PanelPlugin } from '@grafana/data';
-import { Button, stylesFactory, Icon, RadioButtonGroup } from '@grafana/ui';
+import { Button, Icon, RadioButtonGroup, stylesFactory } from '@grafana/ui';
 import { css, cx } from 'emotion';
 import config from 'app/core/config';
 import AutoSizer from 'react-virtualized-auto-sizer';
@@ -17,7 +17,7 @@ import { Unsubscribable } from 'rxjs';
 import { DisplayMode, displayModes, PanelEditorTab } from './types';
 import { PanelEditorTabs } from './PanelEditorTabs';
 import { DashNavTimeControls } from '../DashNav/DashNavTimeControls';
-import { LocationState, CoreEvents } from 'app/types';
+import { CoreEvents, LocationState } from 'app/types';
 import { calculatePanelSize } from './utils';
 import { initPanelEditor, panelEditorCleanUp, updatePanelEditorUIState } from './state/actions';
 import { PanelEditorUIState, setDiscardChanges } from './state/reducers';
@@ -31,6 +31,7 @@ import { SubMenuItems } from 'app/features/dashboard/components/SubMenu/SubMenuI
 import { BackButton } from 'app/core/components/BackButton/BackButton';
 import { appEvents } from 'app/core/core';
 import { SaveDashboardModalProxy } from '../SaveDashboard/SaveDashboardModalProxy';
+import { e2e } from '@grafana/e2e';
 
 interface OwnProps {
   dashboard: DashboardModel;
@@ -196,7 +197,7 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
         onDragFinished={size => this.onDragFinished(Pane.Top, size)}
       >
         {this.renderPanel(styles)}
-        <div className={styles.tabsWrapper}>
+        <div className={styles.tabsWrapper} aria-label={e2e.components.PanelEditor.DataPane.selectors.content}>
           <PanelEditorTabs panel={panel} dashboard={dashboard} tabs={tabs} onChangeTab={this.onChangeTab} data={data} />
         </div>
       </SplitPane>
@@ -331,7 +332,7 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
     }
 
     return (
-      <div className={styles.wrapper}>
+      <div className={styles.wrapper} aria-label={e2e.components.PanelEditor.General.selectors.content}>
         {this.editorToolbar(styles)}
         <div className={styles.verticalSplitPanesWrapper}>
           {uiState.isPanelOptionsVisible ? this.renderWithOptionsPane(styles) : this.renderHorizontalSplit(styles)}
