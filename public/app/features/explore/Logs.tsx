@@ -14,6 +14,7 @@ import {
   GraphSeriesXY,
   LinkModel,
   Field,
+  DataSourceApi,
 } from '@grafana/data';
 import { LegacyForms, LogLabels, ToggleButtonGroup, ToggleButton, LogRows } from '@grafana/ui';
 const { Switch } = LegacyForms;
@@ -66,6 +67,8 @@ interface Props {
   showMoreNewerLogs: () => void;
   showMoreOlderLogs: () => void;
   displayMoreLogsBtn: boolean;
+  datasourceInstance?: DataSourceApi;
+  hasNewerLogsRanges: boolean;
 }
 
 interface State {
@@ -161,6 +164,8 @@ export class Logs extends PureComponent<Props, State> {
       showMoreNewerLogs,
       showMoreOlderLogs,
       displayMoreLogsBtn,
+      datasourceInstance,
+      hasNewerLogsRanges,
     } = this.props;
 
     if (!logRows) {
@@ -185,6 +190,8 @@ export class Logs extends PureComponent<Props, State> {
 
     const scanText = scanRange ? `Scanning ${rangeUtil.describeTimeRange(scanRange)}` : 'Scanning...';
     const series = logsSeries ? logsSeries : [];
+
+    const isLoki = datasourceInstance?.meta.id === 'loki';
 
     return (
       <div className="logs-panel">
@@ -251,7 +258,7 @@ export class Logs extends PureComponent<Props, State> {
           />
         )}
 
-        {!loading && hasData && !scanning && displayMoreLogsBtn && (
+        {isLoki && hasNewerLogsRanges && !loading && hasData && !scanning && displayMoreLogsBtn && (
           <WideButton btnLabel={'Show more newer logs'} onBtnClick={showMoreNewerLogs} />
         )}
 
@@ -271,7 +278,7 @@ export class Logs extends PureComponent<Props, State> {
           getFieldLinks={getFieldLinks}
         />
 
-        {!loading && hasData && !scanning && displayMoreLogsBtn && (
+        {isLoki && !loading && hasData && !scanning && displayMoreLogsBtn && (
           <WideButton btnLabel={'Show more older logs'} onBtnClick={showMoreOlderLogs} />
         )}
 
