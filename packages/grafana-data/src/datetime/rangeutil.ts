@@ -6,6 +6,7 @@ import { RawTimeRange, TimeRange, TimeZone } from '../types/time';
 import * as dateMath from './datemath';
 import { isDateTime } from './moment_wrapper';
 import { timeZoneAbbrevation, dateTimeFormat, dateTimeFormatTimeAgo } from './formatter';
+import { dateTimeParse } from './parser';
 
 const spans: { [key: string]: { display: string; section?: number } } = {
   s: { display: 'second' },
@@ -185,4 +186,10 @@ export const describeTimeRangeAbbrevation = (range: TimeRange, timeZone?: TimeZo
   }
   const parsed = dateMath.parse(range.from, true);
   return parsed ? timeZoneAbbrevation(parsed, { timeZone }) : '';
+};
+
+export const convertRawToRange = (raw: RawTimeRange): TimeRange => {
+  const from = dateTimeParse(raw.from, { roundUp: false });
+  const to = dateTimeParse(raw.to, { roundUp: true });
+  return { from, to, raw };
 };

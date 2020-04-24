@@ -1,7 +1,14 @@
 import React, { FormEvent, useState, useCallback } from 'react';
-import { TimeZone, isDateTime, TimeRange, DateTime, dateMath, dateTimeFormat } from '@grafana/data';
-import { stringToDateTimeType, isValidTimeString } from '../time';
-import { mapStringsToTimeRange } from './mapper';
+import {
+  TimeZone,
+  isDateTime,
+  TimeRange,
+  DateTime,
+  dateMath,
+  dateTimeFormat,
+  dateTimeParse,
+  rangeUtil,
+} from '@grafana/data';
 import { TimePickerCalendar } from './TimePickerCalendar';
 import { Field } from '../../Forms/Field';
 import { Input } from '../../Input/Input';
@@ -51,11 +58,17 @@ export const TimeRangeForm: React.FC<Props> = props => {
     if (to.invalid || from.invalid) {
       return;
     }
-    props.onApply(mapStringsToTimeRange(from.value, to.value, roundup, timeZone));
+
+    const timeRange = rangeUtil.convertRawToRange({
+      from: dateTimeParse(from.value, { timeZone }),
+      to: dateTimeParse(to.value, { timeZone }),
+    });
+
+    props.onApply(timeRange);
   }, [from, to, roundup, timeZone]);
 
   const onChange = useCallback(
-    (from: string, to: string) => {
+    (from: DateTime, to: DateTime) => {
       setFrom(valueToState(from, false, timeZone));
       setTo(valueToState(to, true, timeZone));
     },
@@ -89,8 +102,8 @@ export const TimeRangeForm: React.FC<Props> = props => {
       <TimePickerCalendar
         isFullscreen={isFullscreen}
         isOpen={isOpen}
-        from={from.value}
-        to={to.value}
+        from={dateTimeParse(from.value, { timeZone })}
+        to={dateTimeParse(to.value, { timeZone })}
         onApply={onApply}
         onClose={() => setOpen(false)}
         onChange={onChange}
@@ -116,11 +129,15 @@ function valueAsString(value: DateTime | string, timeZone?: TimeZone): string {
   return value;
 }
 
-function isValid(value: string, roundup?: boolean, timeZone?: TimeZone): boolean {
-  if (dateMath.isMathString(value)) {
-    return isValidTimeString(value);
+function isValid(value: string, roundUp?: boolean, timeZone?: TimeZone): boolean {
+  if (isDateTime(value)) {
+    return value.isValid();
   }
 
-  const parsed = stringToDateTimeType(value, roundup, timeZone);
+  if (dateMath.isMathString(value)) {
+    return dateMath.isValid(value);
+  }
+
+  const parsed = dateTimeParse(value, { roundUp, timeZone });
   return parsed.isValid();
 }

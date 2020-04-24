@@ -1,8 +1,7 @@
-import React, { memo, useState, useEffect } from 'react';
+import React, { memo, useState, useEffect, useCallback } from 'react';
 import { css } from 'emotion';
 import Calendar from 'react-calendar/dist/entry.nostyle';
-import { GrafanaTheme, dateTime, TIME_FORMAT } from '@grafana/data';
-import { stringToDateTimeType } from '../time';
+import { GrafanaTheme, DateTime, toUtc } from '@grafana/data';
 import { useTheme, stylesFactory } from '../../../themes';
 import { TimePickerTitle } from './TimePickerTitle';
 import { Button } from '../../Button';
@@ -192,11 +191,11 @@ const getHeaderStyles = stylesFactory((theme: GrafanaTheme) => {
 
 interface Props {
   isOpen: boolean;
-  from: string;
-  to: string;
+  from: DateTime;
+  to: DateTime;
   onClose: () => void;
   onApply: () => void;
-  onChange: (from: string, to: string) => void;
+  onChange: (from: DateTime, to: DateTime) => void;
   isFullscreen: boolean;
 }
 
@@ -250,6 +249,7 @@ const Header = memo<Props>(({ onClose }) => {
 const Body = memo<Props>(({ onChange, from, to }) => {
   const [value, setValue] = useState<Date[]>();
   const theme = useTheme();
+  const onCalendarChange = useOnCalendarChange(onChange);
   const styles = getBodyStyles(theme);
 
   useEffect(() => {
@@ -266,7 +266,7 @@ const Body = memo<Props>(({ onChange, from, to }) => {
       value={value}
       nextLabel={<Icon name="angle-right" />}
       prevLabel={<Icon name="angle-left" />}
-      onChange={value => valueToInput(value, onChange)}
+      onChange={onCalendarChange}
       locale="en"
     />
   );
@@ -288,11 +288,9 @@ const Footer = memo<Props>(({ onClose, onApply }) => {
   );
 });
 
-function inputToValue(from: string, to: string): Date[] {
-  const fromAsDateTime = stringToDateTimeType(from);
-  const toAsDateTime = stringToDateTimeType(to);
-  const fromAsDate = fromAsDateTime.isValid() ? fromAsDateTime.toDate() : new Date();
-  const toAsDate = toAsDateTime.isValid() ? toAsDateTime.toDate() : new Date();
+function inputToValue(from: DateTime, to: DateTime): Date[] {
+  const fromAsDate = from.toDate();
+  const toAsDate = to.toDate();
 
   if (fromAsDate > toAsDate) {
     return [toAsDate, fromAsDate];
@@ -300,10 +298,15 @@ function inputToValue(from: string, to: string): Date[] {
   return [fromAsDate, toAsDate];
 }
 
-function valueToInput(value: Date | Date[], onChange: (from: string, to: string) => void): void {
-  const [from, to] = value;
-  const fromAsString = dateTime(from).format(TIME_FORMAT);
-  const toAsString = dateTime(to).format(TIME_FORMAT);
-
-  return onChange(fromAsString, toAsString);
+function useOnCalendarChange(onChange: (from: DateTime, to: DateTime) => void) {
+  return useCallback(
+    (value: Date | Date[]) => {
+      if (!Array.isArray(value)) {
+        return console.error('onCalendarChange: should be run in selectRange={true}');
+      }
+      const [from, to] = value;
+      onChange(toUtc(from), toUtc(to));
+    },
+    [onChange]
+  );
 }

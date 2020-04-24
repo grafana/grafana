@@ -15,21 +15,19 @@ export type DateTimeFormatter<T extends DateTimeOptions = DateTimeOptions> = (
   options?: T
 ) => string;
 
-export const dateTimeFormat: DateTimeFormatter<DateTimeOptionsWithFormat> = (
-  dateInUtc: DateTimeInput,
-  options?: DateTimeOptionsWithFormat
-) => toTz(dateInUtc, getTimeZone(options)).format(getFormat(options));
+export const dateTimeFormat: DateTimeFormatter<DateTimeOptionsWithFormat> = (dateInUtc, options?) =>
+  toTz(dateInUtc, getTimeZone(options)).format(getFormat(options));
 
-export const dateTimeFormatISO: DateTimeFormatter = (dateInUtc: DateTimeInput, options?: DateTimeOptions) =>
+export const dateTimeFormatISO: DateTimeFormatter = (dateInUtc, options?) =>
   toTz(dateInUtc, getTimeZone(options)).format();
 
-export const dateTimeFormatTimeAgo: DateTimeFormatter = (dateInUtc: DateTimeInput, options?: DateTimeOptions) =>
+export const dateTimeFormatTimeAgo: DateTimeFormatter = (dateInUtc, options?) =>
   toTz(dateInUtc, getTimeZone(options)).fromNow();
 
-export const dateTimeFormatWithAbbrevation: DateTimeFormatter = (dateInUtc: DateTimeInput, options?: DateTimeOptions) =>
+export const dateTimeFormatWithAbbrevation: DateTimeFormatter = (dateInUtc, options?) =>
   toTz(dateInUtc, getTimeZone(options)).format(`${DEFAULT_DATE_TIME_FORMAT} z`);
 
-export const timeZoneAbbrevation: DateTimeFormatter = (dateInUtc: DateTimeInput, options?: DateTimeOptions) =>
+export const timeZoneAbbrevation: DateTimeFormatter = (dateInUtc, options?) =>
   toTz(dateInUtc, getTimeZone(options)).format('z');
 
 const getFormat = <T extends DateTimeOptionsWithFormat>(options?: T): string => {
