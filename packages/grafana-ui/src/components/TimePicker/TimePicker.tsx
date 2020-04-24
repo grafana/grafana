@@ -59,7 +59,7 @@ export const defaultSelectOptions: TimeOption[] = [
   { from: 'now-6h', to: 'now', display: 'Last 6 hours', section: 3 },
   { from: 'now-24h', to: 'now', display: 'Last 24 hours', section: 3 },
   { from: 'now-7d', to: 'now', display: 'Last 7 days', section: 3 },
-  { from: 'now-30d', to: 'now', display: 'Last 30 days', section: 3 },
+  { from: 'now-14d', to: 'now', display: 'Last 14 days', section: 3 },
 ];
 
 const defaultZoomOutTooltip = () => {
