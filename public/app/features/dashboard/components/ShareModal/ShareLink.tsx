@@ -1,13 +1,12 @@
 import React, { PureComponent } from 'react';
 import { e2e } from '@grafana/e2e';
-import { LegacyForms, ClipboardButton, Icon } from '@grafana/ui';
+import { LegacyForms, ClipboardButton, Icon, InfoBox } from '@grafana/ui';
 const { Select, Switch } = LegacyForms;
 import { SelectableValue, PanelModel, AppEvents } from '@grafana/data';
 import { DashboardModel } from 'app/features/dashboard/state';
 import { buildImageUrl, buildShareUrl } from './utils';
 import { appEvents } from 'app/core/core';
 import config from 'app/core/config';
-import { NoRenderingInfoBox } from './NoRenderingInfoBox';
 
 const themeOptions: Array<SelectableValue<string>> = [
   { label: 'current', value: 'current' },
@@ -136,7 +135,22 @@ export class ShareLink extends PureComponent<Props, State> {
                 </a>
               </div>
             )}
-            {panel && !config.rendererAvailable && <NoRenderingInfoBox />}
+            {panel && !config.rendererAvailable && (
+              <InfoBox>
+                <p>
+                  <>To be able to render an image of the panel, you must install the </>
+                  <a
+                    href="https://grafana.com/grafana/plugins/grafana-image-renderer"
+                    target="_blank"
+                    rel="noopener"
+                    className="external-link"
+                  >
+                    Grafana Image Renderer plugin
+                  </a>
+                  . Please contact your Grafana administrator to install the plugin.
+                </p>
+              </InfoBox>
+            )}
           </div>
         </div>
       </div>
