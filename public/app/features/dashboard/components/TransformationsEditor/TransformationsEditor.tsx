@@ -125,6 +125,7 @@ export class TransformationsEditor extends React.PureComponent<Props> {
           {standardTransformersRegistry.list().map(t => {
             return (
               <TransformationCard
+                key={t.name}
                 title={t.name}
                 description={t.description}
                 actions={<Button>Select</Button>}
