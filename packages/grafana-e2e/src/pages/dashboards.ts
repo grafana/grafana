@@ -1,8 +1,8 @@
+import { selectors } from '@grafana/e2e-selectors';
+
 import { pageFactory } from '../support';
 
 export const Dashboards = pageFactory({
   url: '/dashboards',
-  selectors: {
-    dashboards: (title: string) => `Dashboard search item ${title}`,
-  },
+  selectors: selectors.pages.Dashboards,
 });

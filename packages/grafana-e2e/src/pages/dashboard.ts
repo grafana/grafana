@@ -1,9 +1,8 @@
+import { selectors } from '@grafana/e2e-selectors';
+
 import { pageFactory } from '../support';
 
 export const Dashboard = pageFactory({
   url: (uid: string) => `/d/${uid}`,
-  selectors: {
-    toolbarItems: (button: string) => `Dashboard navigation bar button ${button}`,
-    navBar: () => '.navbar',
-  },
+  selectors: selectors.pages.Dashboard.Toolbar,
 });

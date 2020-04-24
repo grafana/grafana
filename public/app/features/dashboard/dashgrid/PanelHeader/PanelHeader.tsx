@@ -1,10 +1,10 @@
 import React, { Component } from 'react';
 import classNames from 'classnames';
 import { isEqual } from 'lodash';
-import { DataLink, ScopedVars, PanelMenuItem, PanelData, LoadingState, QueryResultMetaNotice } from '@grafana/data';
+import { DataLink, LoadingState, PanelData, PanelMenuItem, QueryResultMetaNotice, ScopedVars } from '@grafana/data';
 import { AngularComponent } from '@grafana/runtime';
-import { ClickOutsideWrapper, Tooltip, Icon } from '@grafana/ui';
-import { e2e } from '@grafana/e2e';
+import { ClickOutsideWrapper, Icon, Tooltip } from '@grafana/ui';
+import { selectors } from '@grafana/e2e-selectors';
 
 import PanelHeaderCorner from './PanelHeaderCorner';
 import { PanelHeaderMenu } from './PanelHeaderMenu';
@@ -159,7 +159,7 @@ export class PanelHeader extends Component<Props, State> {
             className="panel-title-container"
             onClick={this.onMenuToggle}
             onMouseDown={this.onMouseDown}
-            aria-label={e2e.components.Panels.Panel.selectors.title(title)}
+            aria-label={selectors.components.Panels.Panel.title(title)}
           >
             <div className="panel-title">
               {Object.values(notices).map(this.renderNotice)}

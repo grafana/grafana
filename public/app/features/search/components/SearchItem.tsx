@@ -1,8 +1,8 @@
-import React, { FC, useCallback, useRef, useEffect, CSSProperties } from 'react';
+import React, { CSSProperties, FC, useCallback, useEffect, useRef } from 'react';
 import { css, cx } from 'emotion';
 import { GrafanaTheme } from '@grafana/data';
-import { e2e } from '@grafana/e2e';
-import { Icon, useTheme, TagList, styleMixins, stylesFactory } from '@grafana/ui';
+import { Icon, styleMixins, stylesFactory, TagList, useTheme } from '@grafana/ui';
+import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
 import { updateLocation } from 'app/core/reducers/location';
 import { DashboardSectionItem, OnToggleChecked } from '../types';
 import { SearchCheckbox } from './SearchCheckbox';
@@ -15,7 +15,7 @@ export interface Props {
   style?: CSSProperties;
 }
 
-const { selectors } = e2e.pages.Dashboards;
+const selectors = e2eSelectors.pages.Dashboards;
 
 export const SearchItem: FC<Props> = ({ item, editable, onToggleChecked, onTagSelected, style }) => {
   const theme = useTheme();

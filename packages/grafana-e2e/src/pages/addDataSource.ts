@@ -1,8 +1,8 @@
+import { selectors } from '@grafana/e2e-selectors';
+
 import { pageFactory } from '../support';
 
 export const AddDataSource = pageFactory({
   url: '/datasources/new',
-  selectors: {
-    dataSourcePlugins: (pluginName: string) => `Data source plugin item ${pluginName}`,
-  },
+  selectors: selectors.pages.AddDataSource,
 });

@@ -1,9 +1,8 @@
-// Libraries
 import React, { PureComponent } from 'react';
-// Components
 import { CustomScrollbar, Icon, IconName, PanelOptionsGroup } from '@grafana/ui';
+import { selectors } from '@grafana/e2e-selectors';
+
 import { FadeIn } from 'app/core/components/Animations/FadeIn';
-import { e2e } from '@grafana/e2e';
 
 interface Props {
   children: JSX.Element;
@@ -93,7 +92,7 @@ export class EditorTabBody extends PureComponent<Props, State> {
           className="btn navbar-button"
           onClick={onClick}
           disabled={view.disabled}
-          aria-label={e2e.components.QueryEditorToolbarItem.selectors.button(view.title)}
+          aria-label={selectors.components.QueryEditorToolbarItem.button(view.title)}
         >
           {view.icon && <Icon name={view.icon as IconName} />} {view.title}
         </button>

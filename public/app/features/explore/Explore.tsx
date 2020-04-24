@@ -5,10 +5,8 @@ import { css, cx } from 'emotion';
 import { connect } from 'react-redux';
 import AutoSizer from 'react-virtualized-auto-sizer';
 import memoizeOne from 'memoize-one';
-
 // Services & Utils
 import store from 'app/core/store';
-
 // Components
 import { ErrorBoundaryAlert, stylesFactory, withTheme } from '@grafana/ui';
 import LogsContainer from './LogsContainer';
@@ -17,6 +15,7 @@ import TableContainer from './TableContainer';
 import RichHistoryContainer from './RichHistory/RichHistoryContainer';
 // Actions
 import {
+  addQueryRow,
   changeSize,
   initializeExplore,
   modifyQueries,
@@ -24,7 +23,6 @@ import {
   scanStart,
   setQueries,
   toggleGraph,
-  addQueryRow,
   updateTimeRange,
 } from './state/actions';
 // Types
@@ -32,14 +30,14 @@ import {
   AbsoluteTimeRange,
   DataQuery,
   DataSourceApi,
+  ExploreMode,
+  GrafanaTheme,
   GraphSeriesXY,
+  LoadingState,
   PanelData,
   RawTimeRange,
   TimeRange,
   TimeZone,
-  LoadingState,
-  ExploreMode,
-  GrafanaTheme,
 } from '@grafana/data';
 
 import { ExploreId, ExploreItemState, ExploreUIState, ExploreUpdateState, ExploreUrlState } from 'app/types/explore';
@@ -48,10 +46,10 @@ import {
   DEFAULT_RANGE,
   DEFAULT_UI_STATE,
   ensureQueries,
-  getTimeRangeFromUrl,
-  getTimeRange,
-  lastUsedDatasourceKeyForOrgId,
   getFirstNonQueryRowSpecificError,
+  getTimeRange,
+  getTimeRangeFromUrl,
+  lastUsedDatasourceKeyForOrgId,
 } from 'app/core/utils/explore';
 import { Emitter } from 'app/core/utils/emitter';
 import { ExploreToolbar } from './ExploreToolbar';
@@ -63,7 +61,7 @@ import { ExploreGraphPanel } from './ExploreGraphPanel';
 import { TraceView } from './TraceView/TraceView';
 import { SecondaryActions } from './SecondaryActions';
 import { compose } from 'redux';
-import { e2e } from '@grafana/e2e';
+import { selectors } from '@grafana/e2e-selectors';
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
   return {
@@ -315,7 +313,7 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
     const queryError = getFirstNonQueryRowSpecificError(queryErrors);
 
     return (
-      <div className={exploreClass} ref={this.getRef} aria-label={e2e.pages.Explore.General.selectors.container}>
+      <div className={exploreClass} ref={this.getRef} aria-label={selectors.pages.Explore.General.container}>
         <ExploreToolbar exploreId={exploreId} onChangeTime={this.onChangeTime} />
         {datasourceMissing ? this.renderEmptyState() : null}
         {datasourceInstance && (

@@ -1,11 +1,7 @@
 import { pageFactory } from '../support';
+import { selectors } from '@grafana/e2e-selectors';
 
 export const DashboardSettings = pageFactory({
   url: '',
-  selectors: {
-    deleteDashBoard: 'Dashboard settings page delete dashboard button',
-    sectionItems: (item: string) => `Dashboard settings section item ${item}`,
-    saveDashBoard: 'Dashboard settings aside actions Save button',
-    saveAsDashBoard: 'Dashboard settings aside actions Save As button',
-  },
+  selectors: selectors.pages.Dashboard.Settings.General,
 });

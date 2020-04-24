@@ -1,8 +1,8 @@
+import { selectors } from '@grafana/e2e-selectors';
+
 import { pageFactory } from '../support';
 
 export const SharePanelModal = pageFactory({
   url: '',
-  selectors: {
-    linkToRenderedImage: 'Link to rendered image',
-  },
+  selectors: selectors.pages.SharePanelModal,
 });

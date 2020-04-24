@@ -3,6 +3,7 @@ import React, { useMemo } from 'react';
 import _ from 'lodash';
 import { LocationUpdate } from '@grafana/runtime';
 import { Button, HorizontalGroup, IconButton, stylesFactory, useTheme } from '@grafana/ui';
+import { selectors } from '@grafana/e2e-selectors';
 import { connect, MapDispatchToProps } from 'react-redux';
 // Utils
 import config from 'app/core/config';
@@ -13,7 +14,6 @@ import { addPanel } from 'app/features/dashboard/state/reducers';
 // Types
 import { DashboardModel, PanelModel } from '../../state';
 import { LS_PANEL_COPY_KEY } from 'app/core/constants';
-import { e2e } from '@grafana/e2e';
 import { css, cx, keyframes } from 'emotion';
 import { GrafanaTheme } from '@grafana/data';
 import tinycolor from 'tinycolor2';
@@ -168,7 +168,7 @@ const AddPanelWidgetCreate: React.FC<AddPanelWidgetCreateProps> = ({ onCreate, o
   return (
     <div className={styles.wrapper}>
       <HorizontalGroup>
-        <Button icon="plus" size="md" onClick={onCreate} aria-label={e2e.pages.AddDashboard.selectors.addNewPanel}>
+        <Button icon="plus" size="md" onClick={onCreate} aria-label={selectors.pages.AddDashboard.addNewPanel}>
           Add new panel
         </Button>
         {copiedPanelPlugins.length === 1 && (

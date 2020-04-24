@@ -1,9 +1,8 @@
+import { selectors } from '@grafana/e2e-selectors';
+
 import { pageFactory } from '../support';
 
 export const SaveDashboardAsModal = pageFactory({
   url: '',
-  selectors: {
-    newName: 'Save dashboard title field',
-    save: 'Save dashboard button',
-  },
+  selectors: selectors.pages.SaveDashboardAsModal,
 });

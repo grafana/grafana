@@ -1,6 +1,6 @@
 import _ from 'lodash';
 import { ILocationService, IScope } from 'angular';
-import { e2e } from '@grafana/e2e';
+import { selectors } from '@grafana/e2e-selectors';
 
 import coreModule from '../../core_module';
 import appEvents from 'app/core/app_events';
@@ -13,11 +13,11 @@ export class SearchResultsCtrl {
   onTagSelected: any;
   onFolderExpanding: any;
   editable: boolean;
-  selectors: typeof e2e.pages.Dashboards.selectors;
+  selectors: typeof selectors.pages.Dashboards;
 
   /** @ngInject */
   constructor(private $location: ILocationService, private $scope: IScope) {
-    this.selectors = e2e.pages.Dashboards.selectors;
+    this.selectors = selectors.pages.Dashboards;
   }
 
   toggleFolderExpand(section: any) {

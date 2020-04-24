@@ -1,8 +1,7 @@
 import { pageFactory } from '../support';
+import { selectors } from '@grafana/e2e-selectors';
 
 export const DataSources = pageFactory({
   url: '/datasources',
-  selectors: {
-    dataSources: (dataSourceName: string) => `Data source list item ${dataSourceName}`,
-  },
+  selectors: selectors.pages.DataSources,
 });

@@ -1,8 +1,8 @@
 import React, { PureComponent } from 'react';
 import classNames from 'classnames';
 import { TimeSeries } from 'app/core/core';
-import { SeriesColorPicker, Icon } from '@grafana/ui';
-import { e2e } from '@grafana/e2e';
+import { Icon, SeriesColorPicker } from '@grafana/ui';
+import { selectors } from '@grafana/e2e-selectors';
 
 export const LEGEND_STATS = ['min', 'max', 'avg', 'current', 'total'];
 
@@ -143,7 +143,7 @@ class LegendSeriesLabel extends PureComponent<LegendSeriesLabelProps & LegendSer
         title={label}
         key="label"
         onClick={e => this.props.onLabelClick(e)}
-        aria-label={e2e.components.Panels.Visualization.Graph.Legend.selectors.legendItemAlias(label)}
+        aria-label={selectors.components.Panels.Visualization.Graph.Legend.legendItemAlias(label)}
       >
         {label}
       </a>,

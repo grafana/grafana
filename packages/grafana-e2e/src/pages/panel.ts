@@ -1,9 +1,7 @@
+import { selectors } from '@grafana/e2e-selectors';
 import { pageFactory } from '../support';
 
 export const Panel = pageFactory({
   url: '',
-  selectors: {
-    title: (title: string) => `Panel header title item ${title}`,
-    headerItems: (item: string) => `Panel header item ${item}`,
-  },
+  selectors: selectors.components.Panels.Panel,
 });

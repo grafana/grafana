@@ -1,12 +1,13 @@
 import React, { PureComponent } from 'react';
-import { e2e } from '@grafana/e2e';
-import { LegacyForms, ClipboardButton, Icon } from '@grafana/ui';
-const { Select, Switch } = LegacyForms;
-import { SelectableValue, PanelModel, AppEvents } from '@grafana/data';
+import { ClipboardButton, Icon, LegacyForms } from '@grafana/ui';
+import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
+import { AppEvents, PanelModel, SelectableValue } from '@grafana/data';
 import { DashboardModel } from 'app/features/dashboard/state';
 import { buildImageUrl, buildShareUrl } from './utils';
 import { appEvents } from 'app/core/core';
 import config from 'app/core/config';
+
+const { Select, Switch } = LegacyForms;
 
 const themeOptions: Array<SelectableValue<string>> = [
   { label: 'current', value: 'current' },
@@ -86,7 +87,7 @@ export class ShareLink extends PureComponent<Props, State> {
   render() {
     const { panel } = this.props;
     const { useCurrentTimeRange, includeTemplateVars, selectedTheme, shareUrl, imageUrl } = this.state;
-    const selectors = e2e.pages.SharePanelModal.selectors;
+    const selectors = e2eSelectors.pages.SharePanelModal;
 
     return (
       <div className="share-modal-body">

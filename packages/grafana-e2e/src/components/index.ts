@@ -1,8 +1,8 @@
 import { TestData } from '../pages/testdata';
 import { Panel } from '../pages/panel';
-import { EditPanel } from '../pages/editPanel';
 import { Graph } from '../pages/graph';
 import { componentFactory } from '../support';
+import { selectors } from '@grafana/e2e-selectors';
 
 export const Components = {
   DataSource: {
@@ -10,58 +10,36 @@ export const Components = {
   },
   Panels: {
     Panel,
-    EditPanel,
     Visualization: {
       Graph,
     },
   },
   Drawer: {
     General: componentFactory({
-      selectors: {
-        title: (title: string) => `Drawer title ${title}`,
-        expand: 'Drawer expand',
-        contract: 'Drawer contract',
-        close: 'Drawer close',
-        rcContentWrapper: () => '.drawer-content-wrapper',
-      },
+      selectors: selectors.components.Drawer.General,
     }),
   },
   PanelInspector: {
     Data: componentFactory({
-      selectors: {
-        content: 'Panel inspector Data content',
-      },
+      selectors: selectors.components.PanelInspector.Data,
     }),
     Stats: componentFactory({
-      selectors: {
-        content: 'Panel inspector Stats content',
-      },
+      selectors: selectors.components.PanelInspector.Stats,
     }),
     Json: componentFactory({
-      selectors: {
-        content: 'Panel inspector Json content',
-      },
+      selectors: selectors.components.PanelInspector.Json,
     }),
     Query: componentFactory({
-      selectors: {
-        content: 'Panel inspector Query content',
-      },
+      selectors: selectors.components.PanelInspector.Query,
     }),
   },
   Tab: componentFactory({
-    selectors: {
-      title: (title: string) => `Tab ${title}`,
-      active: () => '[class*="-activeTabStyle"]',
-    },
+    selectors: selectors.components.Tab,
   }),
   QueryEditorToolbarItem: componentFactory({
-    selectors: {
-      button: (title: string) => `QueryEditor toolbar item button ${title}`,
-    },
+    selectors: selectors.components.QueryEditorToolbarItem,
   }),
   BackButton: componentFactory({
-    selectors: {
-      backArrow: 'Go Back button',
-    },
+    selectors: selectors.components.BackButton,
   }),
 };

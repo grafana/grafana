@@ -18,20 +18,10 @@ export const e2eScenario = ({
   addScenarioDataSource = false,
   addScenarioDashBoard = false,
 }: ScenarioArguments) => {
-  // when we started to use import { e2e } from '@grafana/e2e'; in grafana/ui components
-  // then type checking @grafana/run-time started to fail with
-  // Cannot find name 'describe'. Do you need to install type definitions for a test runner? Try `npm i @types/jest` or `npm i @types/mocha`.
-  // Haven't investigated deeper why this happens yet so adding ts-ignore as temporary solution
-  // @todo remove `@ts-ignore` when possible
-  // @ts-ignore
   describe(describeName, () => {
     if (skipScenario) {
-      // @todo remove `@ts-ignore` when possible
-      // @ts-ignore
       it.skip(itName, () => scenario());
     } else {
-      // @todo remove `@ts-ignore` when possible
-      // @ts-ignore
       beforeEach(() => {
         Flows.login('admin', 'admin');
         if (addScenarioDataSource) {
@@ -42,8 +32,6 @@ export const e2eScenario = ({
         }
       });
 
-      // @todo remove `@ts-ignore` when possible
-      // @ts-ignore
       afterEach(() => {
         // @todo remove `@ts-ignore` when possible
         // @ts-ignore
@@ -58,8 +46,6 @@ export const e2eScenario = ({
         });
       });
 
-      // @todo remove `@ts-ignore` when possible
-      // @ts-ignore
       it(itName, () => scenario());
     }
   });

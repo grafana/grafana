@@ -1,11 +1,8 @@
+import { selectors } from '@grafana/e2e-selectors';
+
 import { pageFactory } from '../../support';
 
 export const VisualizationTab = pageFactory({
   url: '',
-  selectors: {
-    xAxisSection: 'X-Axis section',
-    axesSection: 'Axes section',
-    legendSection: 'Legend section',
-    displaySection: 'Display section',
-  },
+  selectors: selectors.components.Panels.Visualization.Graph.VisualizationTab,
 });
