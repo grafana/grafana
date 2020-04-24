@@ -3,8 +3,6 @@ import { css, cx } from 'emotion';
 import { GrafanaTheme } from '@grafana/data';
 import { Icon, IconButton, IconName, stylesFactory, useTheme } from '@grafana/ui';
 import { DashboardSection, OnToggleChecked } from '../types';
-import appEvents from 'app/core/app_events';
-import { CoreEvents } from 'app/types';
 import { SearchCheckbox } from './SearchCheckbox';
 
 interface SectionHeaderProps {
@@ -45,11 +43,7 @@ export const SectionHeader: FC<SectionHeaderProps> = ({
 
       <span className={styles.text}>{section.title}</span>
       {section.url && (
-        <a
-          href={section.url}
-          className={styles.link}
-          onClick={() => appEvents.emit(CoreEvents.hideDashSearch, { target: 'search-item' })}
-        >
+        <a href={section.url} className={styles.link}>
           <IconButton name="cog" className={styles.button} />
         </a>
       )}
