@@ -10,7 +10,7 @@ weight = 200
 
 # Global variables
 
-Grafana has global built-in variables that can be used in expressions in the query editor.
+Grafana has global built-in variables that can be used in expressions in the query editor. This topic lists them in alphabetical order and defines them.
 
 ## $__dashboard
 > Only available in Grafana v6.7+
