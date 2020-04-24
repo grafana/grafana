@@ -138,7 +138,7 @@ export class ShareLink extends PureComponent<Props, State> {
             {panel && !config.rendererAvailable && (
               <InfoBox>
                 <p>
-                  <>To be able to render an image of the panel, you must install the </>
+                  <>To render a panel image, you must install the </>
                   <a
                     href="https://grafana.com/grafana/plugins/grafana-image-renderer"
                     target="_blank"
