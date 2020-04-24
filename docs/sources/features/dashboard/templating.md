@@ -14,37 +14,57 @@ weight = 1
 A variable is a placeholder for a value. You can use variables in metric queries and in panel titles. So when you change
 the value, using the dropdown at the top of the dashboard, your panel's metric queries will change to reflect the new value.
 
-Variables allows for more interactive and dynamic dashboards. Instead of hard-coding things like server, application
-and sensor name in your metric queries you can use variables in their place. Variables are shown as dropdown select boxes at the top of
+Variables allows you to create more interactive and dynamic dashboards. Instead of hard-coding things like server, application,
+and sensor names in your metric queries, you can use variables in their place. Variables are displayed as dropdown lists at the top of
 the dashboard. These dropdowns make it easy to change the data being displayed in your dashboard.
 
 {{< docs-imagebox img="/img/docs/v50/variables_dashboard.png" >}}
 
+These can be especially useful for administrators who want to allow Grafana viewers to quickly adjust visualizations but do not want to give them full editing permissions. Grafana Viewers can use variables.
 
+Variables and templates also allow you to single-source dashboards. If you have multiple identical data sources or servers, you can make one dashboard and use variables to change what you are viewing. This simplifies maintenance and upkeep enormously.
 
+## Templates
 
-### Replace a variable with a value
+A _template_ is any query that contains a variable.
+
+For example, if you were administering a dashboard to monitor several servers, you _could_ make a dashboard for each server. Or you could create one dashboard and use panels with template queries like this one:
+
+```
+wmi_system_threads{instance=~"$server"}
+```
+
+## Variable syntax
 
 Panel titles and metric queries can refer to variables using two different syntaxes:
 
-- `$varname`  Example: apps.frontend.$server.requests.count
-- `[[varname]]` Example: apps.frontend.[[server]].requests.count
+- `$varname`
+  This syntax is easy to read, but it does not allow you to use a variable in the middle of a word.
+  **Example:** apps.frontend.$server.requests.count
+- `[[varname]]` 
+  **Note:** This syntax might be deprecated in the future.
+  Example: apps.frontend.[[server]].requests.count
 
-Why two ways? The first syntax is easier to read and write but does not allow you to use a variable in the middle of word. Use
-the second syntax in expressions like  `my.server[[serverNumber]].count`.
-
-Before queries are sent to your data source the query is **interpolated**, meaning the variable is replaced with its current value. During
-interpolation the variable value might be **escaped** in order to conform to the syntax of the query language and where it is used.
+Before queries are sent to your data source the query is _interpolated_, meaning the variable is replaced with its current value. During
+interpolation the variable value might be _escaped_ in order to conform to the syntax of the query language and where it is used.
 For example, a variable used in a regex expression in an InfluxDB or Prometheus query will be regex escaped. Read the data source specific
-documentation article for details on value escaping during interpolation.
+documentation topic for details on value escaping during interpolation.
 
 For advanced syntax to override data source default formatting, refer to [Advanced variable format options]({{< relref "advanced-variable-format-options.md" >}}).
 
+## Variable types
 
-### Variable options
+Type | Description
+------- | --------
+*Query* | This variable type allows you to write a data source query that usually returns a list of metric names, tag values or keys. For example, a query that returns a list of server names, sensor ids or data centers.
+*Interval* | This variable can represent time spans. Instead of hard-coding a group by time or date histogram interval, use a variable of this type.
+*Data source* | This type allows you to quickly change the data source for an entire Dashboard. Useful if you have multiple instances of a data source in for example different environments.
+*Custom* | Define the variable options manually using a comma separated list.
+*Constant* | Define a hidden constant. Useful for metric path prefixes for dashboards you want to share. During dashboard export, constant variables will be made into an import option.
+*Ad hoc filters* | Very special kind of variable that only works with some data sources, InfluxDB and Elasticsearch currently. It allows you to add key/value filters that will automatically be added to all metric queries that use the specified data source.
+*Text box* | This variable type will display as a free text input field with an optional default value.
 
-A variable is presented as a dropdown select box at the top of the dashboard. It has a current value and a set of **options**. The **options**
-is the set of values you can choose from.
+
 
 ## Adding a variable
 
@@ -62,17 +82,7 @@ Option | Description
 *Type* | Defines the variable type.
 
 
-### Variable types
 
-Type | Description
-------- | --------
-*Query* | This variable type allows you to write a data source query that usually returns a list of metric names, tag values or keys. For example, a query that returns a list of server names, sensor ids or data centers.
-*Interval* | This variable can represent time spans. Instead of hard-coding a group by time or date histogram interval, use a variable of this type.
-*Data source* | This type allows you to quickly change the data source for an entire Dashboard. Useful if you have multiple instances of a data source in for example different environments.
-*Custom* | Define the variable options manually using a comma separated list.
-*Constant* | Define a hidden constant. Useful for metric path prefixes for dashboards you want to share. During dashboard export, constant variables will be made into an import option.
-*Ad hoc filters* | Very special kind of variable that only works with some data sources, InfluxDB and Elasticsearch currently. It allows you to add key/value filters that will automatically be added to all metric queries that use the specified data source.
-*Text box* | This variable type will display as a free text input field with an optional default value.
 
 ### Query options
 
