@@ -121,6 +121,14 @@ func (rs *RenderingService) RenderErrorImage(err error) (*RenderResult, error) {
 	}, nil
 }
 
+func (rs *RenderingService) renderUnavailableImage() *RenderResult {
+	imgPath := "public/img/rendering_plugin_not_installed.png"
+
+	return &RenderResult{
+		FilePath: filepath.Join(setting.HomePath, imgPath),
+	}
+}
+
 func (rs *RenderingService) Render(ctx context.Context, opts Opts) (*RenderResult, error) {
 	if rs.inProgressCount > opts.ConcurrentLimit {
 		return &RenderResult{
@@ -128,8 +136,11 @@ func (rs *RenderingService) Render(ctx context.Context, opts Opts) (*RenderResul
 		}, nil
 	}
 
-	if rs.renderAction == nil {
-		return nil, fmt.Errorf("no renderer found")
+	if !rs.IsAvailable() {
+		rs.log.Warn("Could not render image, no image renderer found/installed. " +
+			"For image rendering support please install the grafana-image-renderer plugin. " +
+			"Read more at https://grafana.com/docs/grafana/latest/administration/image_rendering/")
+		return rs.renderUnavailableImage(), nil
 	}
 
 	rs.log.Info("Rendering", "path", opts.Path)
