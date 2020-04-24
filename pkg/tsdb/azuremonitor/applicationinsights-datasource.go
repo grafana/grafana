@@ -19,6 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb"
+	"github.com/grafana/grafana/pkg/util/errutil"
 	"github.com/opentracing/opentracing-go"
 	"golang.org/x/net/context/ctxhttp"
 )
@@ -210,7 +211,7 @@ func (e *ApplicationInsightsDatasource) executeQuery(ctx context.Context, query 
 	}
 
 	if res.StatusCode/100 != 2 {
-		azlog.Error("Request failed", "status", res.Status, "body", string(body))
+		azlog.Debug("Request failed", "status", res.Status, "body", string(body))
 		return nil, fmt.Errorf(string(body))
 	}
 
@@ -246,16 +247,16 @@ func (e *ApplicationInsightsDatasource) createRequest(ctx context.Context, dsInf
 		}
 	}
 
-	appInsightsAppId := dsInfo.JsonData.Get("appInsightsAppId").MustString()
-	proxyPass := fmt.Sprintf("appinsights/v1/apps/%s", appInsightsAppId)
+	appInsightsAppID := dsInfo.JsonData.Get("appInsightsAppId").MustString()
+	proxyPass := fmt.Sprintf("appinsights/v1/apps/%s", appInsightsAppID)
 
 	u, _ := url.Parse(dsInfo.Url)
-	u.Path = path.Join(u.Path, fmt.Sprintf("/v1/apps/%s", appInsightsAppId))
+	u.Path = path.Join(u.Path, fmt.Sprintf("/v1/apps/%s", appInsightsAppID))
 
 	req, err := http.NewRequest(http.MethodGet, u.String(), nil)
 	if err != nil {
-		azlog.Error("Failed to create request", "error", err)
-		return nil, fmt.Errorf("Failed to create request. error: %v", err)
+		azlog.Debug("Failed to create request", "error", err)
+		return nil, errutil.Wrap("Failed to create request", err)
 	}
 
 	req.Header.Set("User-Agent", fmt.Sprintf("Grafana/%s", setting.BuildVersion))
@@ -269,7 +270,7 @@ func (e *ApplicationInsightsDatasource) parseTimeSeriesFromQuery(body []byte, qu
 	var data ApplicationInsightsQueryResponse
 	err := json.Unmarshal(body, &data)
 	if err != nil {
-		azlog.Error("Failed to unmarshal Application Insights response", "error", err, "body", string(body))
+		azlog.Debug("Failed to unmarshal Application Insights response", "error", err, "body", string(body))
 		return nil, nil, err
 	}
 

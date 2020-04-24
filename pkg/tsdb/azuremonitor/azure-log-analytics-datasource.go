@@ -219,14 +219,14 @@ func (e *AzureLogAnalyticsDatasource) unmarshalResponse(res *http.Response) (Azu
 	}
 
 	if res.StatusCode/100 != 2 {
-		azlog.Error("Request failed", "status", res.Status, "body", string(body))
+		azlog.Debug("Request failed", "status", res.Status, "body", string(body))
 		return AzureLogAnalyticsResponse{}, fmt.Errorf(string(body))
 	}
 
 	var data AzureLogAnalyticsResponse
 	err = json.Unmarshal(body, &data)
 	if err != nil {
-		azlog.Error("Failed to unmarshal Azure Log Analytics response", "error", err, "status", res.Status, "body", string(body))
+		azlog.Debug("Failed to unmarshal Azure Log Analytics response", "error", err, "status", res.Status, "body", string(body))
 		return AzureLogAnalyticsResponse{}, err
 	}
 
