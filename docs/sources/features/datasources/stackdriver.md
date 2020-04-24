@@ -186,6 +186,8 @@ Example Result: `gce_instance - compute.googleapis.com/instance/cpu/usage_time`
 
 ### SLO (Service Level Objective) queries
 
+> To be released in Grafana v7.0.0
+
 {{< docs-imagebox img="/img/docs/v70/slo-query-builder.png" max-width= "400px" class="docs-image--right" >}}
 
 The SLO query builder in the Stackdriver data source allows you to display SLO data in time series format. To get an understanding of the basic concepts in service monitoring, please refer to Google Stackdriver's [official docs](https://cloud.google.com/monitoring/service-monitoring).
