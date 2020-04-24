@@ -441,9 +441,6 @@ export function setupAngularRoutes($routeProvider: route.IRouteProvider, $locati
       resolve: {
         component: () => NotificationsListPage,
       },
-      // templateUrl: 'public/app/features/alerting/partials/notifications_list.html',
-      // controller: 'AlertNotificationsListCtrl',
-      // controllerAs: 'ctrl',
     })
     .when('/alerting/notification/new', {
       templateUrl: 'public/app/features/alerting/partials/notification_edit.html',
