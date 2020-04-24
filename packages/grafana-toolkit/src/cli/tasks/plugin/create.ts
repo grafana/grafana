@@ -1,14 +1,13 @@
+import chalk from 'chalk';
 import commandExists from 'command-exists';
-import { readFileSync, promises as fs } from 'fs';
+import { promises as fs, readFileSync } from 'fs';
 import { prompt } from 'inquirer';
 import kebabCase from 'lodash/kebabCase';
 import path from 'path';
 import gitPromise from 'simple-git/promise';
-
-import { useSpinner } from '../../utils/useSpinner';
+import { promptConfirm, promptInput } from '../../utils/prompt';
 import { rmdir } from '../../utils/rmdir';
-import { promptInput, promptConfirm } from '../../utils/prompt';
-import chalk from 'chalk';
+import { useSpinner } from '../../utils/useSpinner';
 
 const simpleGit = gitPromise(process.cwd());
 
@@ -21,12 +20,13 @@ interface PluginDetails {
   keywords: string;
 }
 
-type PluginType = 'angular-panel' | 'react-panel' | 'datasource-plugin';
+type PluginType = 'angular-panel' | 'react-panel' | 'datasource-plugin' | 'backend-datasource-plugin';
 
 const RepositoriesPaths = {
   'angular-panel': 'https://github.com/grafana/simple-angular-panel.git',
   'react-panel': 'https://github.com/grafana/simple-react-panel.git',
   'datasource-plugin': 'https://github.com/grafana/simple-datasource.git',
+  'backend-datasource-plugin': 'https://github.com/grafana/simple-datasource-backend.git',
 };
 
 export const getGitUsername = async () => {
@@ -64,6 +64,7 @@ export const promptPluginType = async () =>
         { name: 'Angular panel', value: 'angular-panel' },
         { name: 'React panel', value: 'react-panel' },
         { name: 'Datasource plugin', value: 'datasource-plugin' },
+        { name: 'Backend datasource plugin', value: 'backend-datasource-plugin' },
       ],
     },
   ]);
@@ -100,9 +101,9 @@ export const fetchTemplate = useSpinner<{ type: PluginType; dest: string }>(
   }
 );
 
-export const prepareJsonFiles = useSpinner<{ pluginDetails: PluginDetails; pluginPath: string }>(
+export const prepareJsonFiles = useSpinner<{ type: PluginType; pluginDetails: PluginDetails; pluginPath: string }>(
   'Saving package.json and plugin.json files',
-  async ({ pluginDetails, pluginPath }) => {
+  async ({ type, pluginDetails, pluginPath }) => {
     const packageJsonPath = path.resolve(pluginPath, 'package.json');
     const pluginJsonPath = path.resolve(pluginPath, 'src/plugin.json');
     const packageJson: any = JSON.parse(readFileSync(packageJsonPath, 'utf8'));
@@ -115,6 +116,12 @@ export const prepareJsonFiles = useSpinner<{ pluginDetails: PluginDetails; plugi
 
     pluginJson.name = pluginDetails.name;
     pluginJson.id = pluginId;
+
+    if (type === 'backend-datasource-plugin') {
+      pluginJson.backend = true;
+      pluginJson.executable = 'gpx_' + pluginDetails.name;
+    }
+
     pluginJson.info = {
       ...pluginJson.info,
       description: pluginDetails.description,
