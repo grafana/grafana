@@ -17,7 +17,6 @@ export interface DashboardSection {
   url: string;
   icon?: string;
   score?: number;
-  hideHeader?: boolean;
   checked?: boolean;
   items?: DashboardSectionItem[];
   toggle?: (section: DashboardSection) => Promise<DashboardSection>;
