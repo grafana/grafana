@@ -27,7 +27,7 @@ const getSearchFieldStyles = (theme: GrafanaTheme) => ({
     background-color: transparent;
     background: transparent;
     border-bottom: 2px solid ${theme.colors.border1};
-    font-size: 24px;
+    font-size: 20px;
     line-height: 38px;
     width: 100%;
   `,

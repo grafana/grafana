@@ -38,17 +38,12 @@ export const DashboardSearch: FC<Props> = memo(({ onCloseSearch, folder }) => {
   return (
     <div tabIndex={0} className={styles.overlay}>
       <div className={styles.container}>
-        <div className={styles.closeBtn}>
-          <IconButton name="times" surface="panel" onClick={onClose} size="xxl" tooltip="Close search" />
+        <div className={styles.searchField}>
+          <SearchField query={query} onChange={onQueryChange} onKeyDown={onKeyDown} autoFocus clearable />
+          <div className={styles.closeBtn}>
+            <IconButton name="times" surface="panel" onClick={onClose} size="xxl" tooltip="Close search" />
+          </div>
         </div>
-        <SearchField
-          query={query}
-          onChange={onQueryChange}
-          onKeyDown={onKeyDown}
-          autoFocus
-          clearable
-          className={styles.searchField}
-        />
         <div className={styles.search}>
           <ActionRow
             {...{
@@ -82,19 +77,20 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       top: 0;
       right: 0;
       bottom: 0;
-      z-index: ${theme.zIndex.navbarFixed + 1};
+      z-index: ${theme.zIndex.sidemenu};
       position: fixed;
       background: ${theme.colors.dashboardBg};
 
       @media only screen and (min-width: ${theme.breakpoints.md}) {
         left: 60px;
+        z-index: ${theme.zIndex.navbarFixed + 1};
       }
     `,
     container: css`
       max-width: 1400px;
       margin: 0 auto;
       padding: ${theme.spacing.md};
-      position: relative;
+
       height: 100%;
 
       @media only screen and (min-width: ${theme.breakpoints.md}) {
@@ -102,12 +98,14 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       }
     `,
     closeBtn: css`
-      right: 20px;
-      top: 32px;
+      right: -5px;
+      top: 5px;
       z-index: 1;
       position: absolute;
     `,
-    searchField: css``,
+    searchField: css`
+      position: relative;
+    `,
     search: css`
       display: flex;
       flex-direction: column;
