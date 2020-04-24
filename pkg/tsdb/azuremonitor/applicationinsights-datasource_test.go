@@ -159,7 +159,7 @@ func TestApplicationInsightsDatasource(t *testing.T) {
 
 		Convey("Parse Application Insights query API response in the time series format", func() {
 			Convey("no segments", func() {
-				data, err := ioutil.ReadFile("./test-data/applicationinsights/1-application-insights-response-raw-query.json")
+				data, err := ioutil.ReadFile("testdata/applicationinsights/1-application-insights-response-raw-query.json")
 				So(err, ShouldBeNil)
 
 				query := &ApplicationInsightsQuery{
@@ -182,7 +182,7 @@ func TestApplicationInsightsDatasource(t *testing.T) {
 			})
 
 			Convey("with segments", func() {
-				data, err := ioutil.ReadFile("./test-data/applicationinsights/2-application-insights-response-raw-query-segmented.json")
+				data, err := ioutil.ReadFile("testdata/applicationinsights/2-application-insights-response-raw-query-segmented.json")
 				So(err, ShouldBeNil)
 
 				query := &ApplicationInsightsQuery{
@@ -212,7 +212,7 @@ func TestApplicationInsightsDatasource(t *testing.T) {
 				So(series[1].Points[1][1].Float64, ShouldEqual, int64(1568426523000))
 
 				Convey("with alias", func() {
-					data, err := ioutil.ReadFile("./test-data/applicationinsights/2-application-insights-response-raw-query-segmented.json")
+					data, err := ioutil.ReadFile("testdata/applicationinsights/2-application-insights-response-raw-query-segmented.json")
 					So(err, ShouldBeNil)
 
 					query := &ApplicationInsightsQuery{
@@ -235,7 +235,7 @@ func TestApplicationInsightsDatasource(t *testing.T) {
 
 		Convey("Parse Application Insights metrics API", func() {
 			Convey("single value", func() {
-				data, err := ioutil.ReadFile("./test-data/applicationinsights/3-application-insights-response-metrics-single-value.json")
+				data, err := ioutil.ReadFile("testdata/applicationinsights/3-application-insights-response-metrics-single-value.json")
 				So(err, ShouldBeNil)
 				query := &ApplicationInsightsQuery{
 					IsRaw: false,
@@ -252,7 +252,7 @@ func TestApplicationInsightsDatasource(t *testing.T) {
 			})
 
 			Convey("1H separation", func() {
-				data, err := ioutil.ReadFile("./test-data/applicationinsights/4-application-insights-response-metrics-no-segment.json")
+				data, err := ioutil.ReadFile("testdata/applicationinsights/4-application-insights-response-metrics-no-segment.json")
 				So(err, ShouldBeNil)
 				query := &ApplicationInsightsQuery{
 					IsRaw: false,
@@ -270,7 +270,7 @@ func TestApplicationInsightsDatasource(t *testing.T) {
 				So(series[0].Points[1][1].Float64, ShouldEqual, int64(1568343723000))
 
 				Convey("with segmentation", func() {
-					data, err := ioutil.ReadFile("./test-data/applicationinsights/4-application-insights-response-metrics-segmented.json")
+					data, err := ioutil.ReadFile("testdata/applicationinsights/4-application-insights-response-metrics-segmented.json")
 					So(err, ShouldBeNil)
 					query := &ApplicationInsightsQuery{
 						IsRaw: false,
@@ -296,7 +296,7 @@ func TestApplicationInsightsDatasource(t *testing.T) {
 					So(series[1].Points[1][1].Float64, ShouldEqual, int64(1568343723000))
 
 					Convey("with alias", func() {
-						data, err := ioutil.ReadFile("./test-data/applicationinsights/4-application-insights-response-metrics-segmented.json")
+						data, err := ioutil.ReadFile("testdata/applicationinsights/4-application-insights-response-metrics-segmented.json")
 						So(err, ShouldBeNil)
 						query := &ApplicationInsightsQuery{
 							IsRaw: false,

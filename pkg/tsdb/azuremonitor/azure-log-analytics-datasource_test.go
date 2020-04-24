@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/url"
+	"path/filepath"
 	"testing"
 	"time"
 
@@ -87,7 +88,7 @@ func TestParsingAzureLogAnalyticsResponses(t *testing.T) {
 	}{
 		{
 			name:     "Response with single series should be parsed into the Grafana time series format",
-			testFile: "./test-data/loganalytics/1-log-analytics-response-metrics-single-series.json",
+			testFile: "loganalytics/1-log-analytics-response-metrics-single-series.json",
 			query:    "test query",
 			series: tsdb.TimeSeriesSlice{
 				&tsdb.TimeSeries{
@@ -104,7 +105,7 @@ func TestParsingAzureLogAnalyticsResponses(t *testing.T) {
 		},
 		{
 			name:     "Response with multiple series should be parsed into the Grafana time series format",
-			testFile: "./test-data/loganalytics/2-log-analytics-response-metrics-multiple-series.json",
+			testFile: "loganalytics/2-log-analytics-response-metrics-multiple-series.json",
 			query:    "test query",
 			series: tsdb.TimeSeriesSlice{
 				&tsdb.TimeSeries{
@@ -137,7 +138,7 @@ func TestParsingAzureLogAnalyticsResponses(t *testing.T) {
 		},
 		{
 			name:     "Response with no metric name column should use the value column name as the series name",
-			testFile: "./test-data/loganalytics/3-log-analytics-response-metrics-no-metric-column.json",
+			testFile: "loganalytics/3-log-analytics-response-metrics-no-metric-column.json",
 			query:    "test query",
 			series: tsdb.TimeSeriesSlice{
 				&tsdb.TimeSeries{
@@ -154,7 +155,7 @@ func TestParsingAzureLogAnalyticsResponses(t *testing.T) {
 		},
 		{
 			name:     "Response with no time column should return no data",
-			testFile: "./test-data/loganalytics/4-log-analytics-response-metrics-no-time-column.json",
+			testFile: "loganalytics/4-log-analytics-response-metrics-no-time-column.json",
 			query:    "test query",
 			series:   nil,
 			meta:     `{"columns":[{"name":"Computer","type":"string"},{"name":"avg_CounterValue","type":"real"}],"query":"test query"}`,
@@ -162,7 +163,7 @@ func TestParsingAzureLogAnalyticsResponses(t *testing.T) {
 		},
 		{
 			name:     "Response with no value column should return no data",
-			testFile: "./test-data/loganalytics/5-log-analytics-response-metrics-no-value-column.json",
+			testFile: "loganalytics/5-log-analytics-response-metrics-no-value-column.json",
 			query:    "test query",
 			series:   nil,
 			meta:     `{"columns":[{"name":"TimeGenerated","type":"datetime"},{"name":"Computer","type":"string"}],"query":"test query"}`,
@@ -203,7 +204,7 @@ func TestParsingAzureLogAnalyticsTableResponses(t *testing.T) {
 	}{
 		{
 			name:     "Table data should be parsed into the table format Response",
-			testFile: "./test-data/loganalytics/6-log-analytics-response-table.json",
+			testFile: "loganalytics/6-log-analytics-response-table.json",
 			query:    "test query",
 			tables: []*tsdb.Table{
 				{
@@ -366,9 +367,10 @@ func TestPluginRoutes(t *testing.T) {
 
 }
 
-func loadLogAnalyticsTestFile(path string) (AzureLogAnalyticsResponse, error) {
+func loadLogAnalyticsTestFile(name string) (AzureLogAnalyticsResponse, error) {
 	var data AzureLogAnalyticsResponse
 
+	path := filepath.Join("testdata", name)
 	jsonBody, err := ioutil.ReadFile(path)
 	if err != nil {
 		return data, err
