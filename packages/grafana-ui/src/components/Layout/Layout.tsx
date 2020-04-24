@@ -1,5 +1,5 @@
 import React, { HTMLProps } from 'react';
-import { css, cx } from 'emotion';
+import { css } from 'emotion';
 import { GrafanaTheme } from '@grafana/data';
 import { stylesFactory, useTheme } from '../../themes';
 
@@ -34,13 +34,12 @@ export const Layout: React.FC<LayoutProps> = ({
   align = 'normal',
   wrap = false,
   width = 'auto',
-  className,
   ...rest
 }) => {
   const theme = useTheme();
   const styles = getStyles(theme, orientation, spacing, justify, align, wrap);
   return (
-    <div className={cx(styles.layout, className)} style={{ width }} {...rest}>
+    <div className={styles.layout} style={{ width }} {...rest}>
       {React.Children.toArray(children)
         .filter(Boolean)
         .map((child, index) => {
