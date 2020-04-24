@@ -136,9 +136,9 @@ $code-tag-bg: $gray-6;
 $code-tag-border: $gray-4;
 
 // cards
-$card-background: linear-gradient(135deg, $gray-6, $gray-7);
-$card-background-hover: linear-gradient(135deg, $gray-6, $gray-5);
-$card-shadow: -1px -1px 0 0 hsla(0, 0%, 100%, 0.1), 1px 1px 0 0 rgba(0, 0, 0, 0.1);
+$card-background: #f1f5f9;
+$card-background-hover: #eaf0f6;
+$card-shadow: none;
 
 // Lists
 $list-item-bg: $gray-7;
