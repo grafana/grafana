@@ -34,7 +34,7 @@ const createAwaitableMock = () => {
   return mock;
 };
 
-function streamMockData(mockData: any[] | {}, workerOptions: Parameters<typeof streamJSONResponse>[0]): AwaitableMock {
+function streamMockData(mockData: any[] | {}, workerOptions: Parameters<typeof streamJSONResponse>[0]) {
   oboe.mockImplementationOnce(() => {
     return new MockOboe(mockData);
   });

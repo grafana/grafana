@@ -22,7 +22,13 @@ export interface StreamJSONResponseWorker extends Worker {
   postMessage(message: StreamJSONResponsePayload['data'], options?: PostMessageOptions): void;
 }
 
-export function streamJSONResponse(data: StreamJSONResponsePayload['data'], callback: (arg: any) => void) {
+type ArrayChunk = any[];
+type ObjectChunk = { [key: string]: any };
+
+export function streamJSONResponse(
+  data: StreamJSONResponsePayload['data'],
+  callback: (arg: ArrayChunk | ObjectChunk | typeof JSON_STREAM_DONE) => void
+) {
   // Node.js doesn't support instantiation via web worker, so checking for whether this
   // instance is already fetching wouldn't work during tests.
   if (isFetching && !(process.env.NODE_ENV === 'test')) {
@@ -39,7 +45,7 @@ export function streamJSONResponse(data: StreamJSONResponsePayload['data'], call
     path = 'data.*',
     withCredentials = false,
   } = data;
-  let nodes: any = hasObjectResponse ? {} : [];
+  let nodes: ArrayChunk | ObjectChunk = hasObjectResponse ? {} : [];
   let totalNodeCount = 0;
 
   // Important to use oboe 2.1.4!! 2.1.5 can't be used in web workers!
@@ -48,7 +54,7 @@ export function streamJSONResponse(data: StreamJSONResponsePayload['data'], call
       totalNodeCount++;
 
       if (hasObjectResponse) {
-        nodes[_path[_path.length - 1]] = node;
+        (nodes as ObjectChunk)[_path[_path.length - 1]] = node;
       } else {
         nodes.push(node);
       }
