@@ -24,8 +24,8 @@ export enum Tabs {
 }
 
 export const sortOrderOptions = [
-  { label: 'Time ascending', value: SortOrder.Ascending },
-  { label: 'Time descending', value: SortOrder.Descending },
+  { label: 'Newest first', value: SortOrder.Descending },
+  { label: 'Oldest first', value: SortOrder.Ascending },
   { label: 'Data source A-Z', value: SortOrder.DatasourceAZ },
   { label: 'Data source Z-A', value: SortOrder.DatasourceZA },
 ];
@@ -50,15 +50,13 @@ interface RichHistoryState {
 }
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
-  const borderColor = theme.isLight ? theme.palette.gray5 : theme.palette.dark6;
-  const tabContentBg = theme.colors.bodyBg;
   return {
     container: css`
       height: 100%;
     `,
     tabContent: css`
       padding: ${theme.spacing.md};
-      background-color: ${tabContentBg};
+      background-color: ${theme.colors.bodyBg};
     `,
     close: css`
       position: absolute;
@@ -69,10 +67,14 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
     `,
     tabs: css`
       padding-top: ${theme.spacing.sm};
-      border-color: ${borderColor};
+      border-color: ${theme.colors.formInputBorder};
       ul {
         margin-left: ${theme.spacing.md};
       }
+    `,
+    scrollbar: css`
+      min-height: 100% !important;
+      background-color: ${theme.colors.panelBg};
     `,
   };
 });
@@ -228,11 +230,7 @@ class UnThemedRichHistory extends PureComponent<RichHistoryProps, RichHistorySta
           ))}
           <IconButton className={styles.close} onClick={onClose} name="times" title="Close query history" />
         </TabsBar>
-        <CustomScrollbar
-          className={css`
-            min-height: 100% !important;
-          `}
-        >
+        <CustomScrollbar className={styles.scrollbar}>
           <TabContent className={styles.tabContent}>{tabs.find(t => t.value === activeTab)?.content}</TabContent>
         </CustomScrollbar>
       </div>
