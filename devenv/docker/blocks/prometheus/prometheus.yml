@@ -32,7 +32,7 @@ scrape_configs:
 
   - job_name: 'grafana'
     static_configs:
-      - targets: ['grafana:3001']
+      - targets: ['grafana:3000']
 
   - job_name: 'prometheus-random-data'
     static_configs:
