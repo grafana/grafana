@@ -55,7 +55,8 @@ export const getMultiSeriesGraphHoverInfo = (
   yAxisDimensions: Field[],
   xAxisDimensions: Field[],
   /** Well, time basically */
-  xAxisPosition: number
+  xAxisPosition: number,
+  timeZone?: TimeZone
 ): {
   results: MultiSeriesHoverInfo[];
   time?: GraphSeriesValue;
@@ -82,7 +83,7 @@ export const getMultiSeriesGraphHoverInfo = (
       minTime = time.display ? formattedValueToString(time.display(pointTime)) : pointTime;
     }
 
-    const display = field.display ?? getDisplayProcessor({ field });
+    const display = field.display ?? getDisplayProcessor({ field, timeZone });
     const disp = display(field.values.get(hoverIndex));
 
     results.push({

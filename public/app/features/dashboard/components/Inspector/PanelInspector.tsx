@@ -20,6 +20,7 @@ import {
   PanelPlugin,
   QueryResultMetaStat,
   SelectableValue,
+  TimeZone,
 } from '@grafana/data';
 import { config } from 'app/core/config';
 import { getPanelInspectorStyles } from './styles';
@@ -235,6 +236,8 @@ export class PanelInspectorUnconnected extends PureComponent<Props, State> {
       return null;
     }
 
+    const { dashboard } = this.props;
+
     return (
       <div style={{ paddingBottom: '16px' }}>
         <div className="section-heading">{name}</div>
@@ -244,7 +247,7 @@ export class PanelInspectorUnconnected extends PureComponent<Props, State> {
               return (
                 <tr key={`${stat.title}-${index}`}>
                   <td>{stat.title}</td>
-                  <td style={{ textAlign: 'right' }}>{formatStat(stat)}</td>
+                  <td style={{ textAlign: 'right' }}>{formatStat(stat, dashboard.getTimezone())}</td>
                 </tr>
               );
             })}
@@ -331,13 +334,14 @@ export class PanelInspectorUnconnected extends PureComponent<Props, State> {
   }
 }
 
-function formatStat(stat: QueryResultMetaStat): string {
+function formatStat(stat: QueryResultMetaStat, timeZone?: TimeZone): string {
   const display = getDisplayProcessor({
     field: {
       type: FieldType.number,
       config: stat,
     },
     theme: config.theme,
+    timeZone,
   });
   return formattedValueToString(display(stat.value));
 }

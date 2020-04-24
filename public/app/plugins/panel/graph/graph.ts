@@ -270,6 +270,7 @@ class GraphElement {
         const fieldDisplay = getDisplayProcessor({
           field: { config: fieldConfig, type: FieldType.number },
           theme: getCurrentTheme(),
+          timeZone: this.dashboard.getTimezone(),
         })(field.values.get(dataIndex));
         linksSupplier = links.length
           ? getFieldLinksSupplier({

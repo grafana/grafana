@@ -92,6 +92,7 @@ export class ResultProcessor {
       field.display = getDisplayProcessor({
         field,
         theme: config.theme,
+        timeZone: this.timeZone,
       });
     }
 

@@ -55,7 +55,12 @@ export const GraphContextMenu: React.FC<GraphContextMenuProps> = ({
         contextDimensions.yAxis[0],
         contextDimensions.yAxis[1]
       );
-      const display = source.series.valueField.display ?? getDisplayProcessor({ field: source.series.valueField });
+      const display =
+        source.series.valueField.display ??
+        getDisplayProcessor({
+          field: source.series.valueField,
+          timeZone,
+        });
       value = display(valueFromDimensions);
     }
 
