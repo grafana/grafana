@@ -113,13 +113,14 @@ func (rs *RenderingService) RenderErrorImage(err error) (*RenderResult, error) {
 func (rs *RenderingService) Render(ctx context.Context, opts Opts) (*RenderResult, error) {
 	startTime := time.Now()
 	result, err := rs.render(ctx, opts)
+	elapsedTime := time.Since(startTime).Milliseconds()
 	if err != nil {
-		metrics.MRenderingRequestFailed.Inc()
+		metrics.MRenderingRequestTotal.WithLabelValues("error").Inc()
+		metrics.MRenderingSummary.WithLabelValues("error").Observe(float64(elapsedTime))
 	} else {
-		metrics.MRenderingRequestCompleted.Inc()
+		metrics.MRenderingRequestTotal.WithLabelValues("success").Inc()
+		metrics.MRenderingSummary.WithLabelValues("success").Observe(float64(elapsedTime))
 	}
-	elapsedTime := time.Since(startTime).Nanoseconds() / int64(time.Millisecond)
-	metrics.MRenderingExecutionTime.Observe(float64(elapsedTime))
 	return result, err
 }
 

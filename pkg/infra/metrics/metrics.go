@@ -99,11 +99,8 @@ var (
 	// LDAPUsersSyncExecutionTime is a metric summary for LDAP users sync execution duration
 	LDAPUsersSyncExecutionTime prometheus.Summary
 
-	// MRenderingRequestCompleted is a metric counter for how many panels have been successfully rendered
-	MRenderingRequestCompleted prometheus.Counter
-
-	// MRenderingRequestFailed is a metric counter for how many panels have been rendered with error
-	MRenderingRequestFailed prometheus.Counter
+	// MRenderingRequestCompleted is a metric counter for how many panels have been rendered
+	MRenderingRequestTotal *prometheus.CounterVec
 
 	// MRenderingQueue is a metric gauge for panel rendering queue size
 	MRenderingQueue prometheus.Gauge
@@ -117,8 +114,8 @@ var (
 	// MAlertingExecutionTime is a metric summary of alert exeuction duration
 	MAlertingExecutionTime prometheus.Summary
 
-	// MRenderingExecutionTime is a metric summary for panel rendering duration
-	MRenderingExecutionTime prometheus.Summary
+	// MRenderingSummary is a metric summary for panel rendering duration
+	MRenderingSummary *prometheus.SummaryVec
 )
 
 // StatTotals
@@ -355,24 +352,24 @@ func init() {
 		Namespace:  ExporterName,
 	})
 
-	MRenderingRequestCompleted = newCounterStartingAtZero(prometheus.CounterOpts{
-		Name:      "rendering_request_completed_total",
-		Help:      "counter for successfully rendered panels",
-		Namespace: ExporterName,
-	})
+	MRenderingRequestTotal = prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Name:      "rendering_request_total",
+			Help:      "counter for rendered panels",
+			Namespace: ExporterName,
+		},
+		[]string{"status"},
+	)
 
-	MRenderingRequestFailed = newCounterStartingAtZero(prometheus.CounterOpts{
-		Name:      "rendering_request_failed_total",
-		Help:      "counter for panels rendered with error",
-		Namespace: ExporterName,
-	})
-
-	MRenderingExecutionTime = prometheus.NewSummary(prometheus.SummaryOpts{
-		Name:       "rendering_execution_time_milliseconds",
-		Help:       "summary of panel rendering exeuction duration",
-		Objectives: objectiveMap,
-		Namespace:  ExporterName,
-	})
+	MRenderingSummary = prometheus.NewSummaryVec(
+		prometheus.SummaryOpts{
+			Name:       "rendering_request_duration_milliseconds",
+			Help:       "summary of panel rendering execution duration",
+			Objectives: objectiveMap,
+			Namespace:  ExporterName,
+		},
+		[]string{"status"},
+	)
 
 	MRenderingQueue = prometheus.NewGauge(prometheus.GaugeOpts{
 		Name:      "rendering_queue_size",
@@ -526,9 +523,8 @@ func initMetricVars() {
 		MAwsCloudWatchGetMetricData,
 		MDBDataSourceQueryByID,
 		LDAPUsersSyncExecutionTime,
-		MRenderingRequestCompleted,
-		MRenderingRequestFailed,
-		MRenderingExecutionTime,
+		MRenderingRequestTotal,
+		MRenderingSummary,
 		MRenderingQueue,
 		MAlertingActiveAlerts,
 		MStatTotalDashboards,
