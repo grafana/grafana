@@ -192,10 +192,6 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
   return {
     container: css`
       height: 100%;
-
-      .results-container {
-        padding: 5px 0 0;
-      }
     `,
     searchField: css`
       height: auto;
