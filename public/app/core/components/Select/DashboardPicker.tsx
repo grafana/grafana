@@ -4,7 +4,8 @@ import { useAsyncFn } from 'react-use';
 import { SelectableValue } from '@grafana/data';
 import { AsyncSelect } from '@grafana/ui';
 import { backendSrv } from 'app/core/services/backend_srv';
-import { DashboardSearchHit, DashboardDTO } from 'app/types';
+import { DashboardSearchHit } from 'app/features/search/types';
+import { DashboardDTO } from 'app/types';
 
 export interface Props {
   onSelected: (dashboard: DashboardDTO) => void;

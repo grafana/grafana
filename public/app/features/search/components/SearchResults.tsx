@@ -1,4 +1,4 @@
-import React, { FC, MutableRefObject } from 'react';
+import React, { FC } from 'react';
 import { css, cx } from 'emotion';
 import { FixedSizeList } from 'react-window';
 import AutoSizer from 'react-virtualized-auto-sizer';
@@ -18,7 +18,6 @@ export interface Props {
   onToggleSection: (section: DashboardSection) => void;
   results: DashboardSection[];
   layout?: string;
-  wrapperRef?: MutableRefObject<HTMLDivElement | null>;
 }
 
 export const SearchResults: FC<Props> = ({
@@ -28,7 +27,6 @@ export const SearchResults: FC<Props> = ({
   onToggleChecked,
   onToggleSection,
   results,
-  wrapperRef,
   layout,
 }) => {
   const theme = useTheme();
