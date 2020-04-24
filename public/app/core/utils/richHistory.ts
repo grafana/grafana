@@ -79,7 +79,7 @@ export function addToRichHistory(
 
 export function getRichHistory(): RichHistoryQuery[] {
   const richHistory: RichHistoryQuery[] = store.getObject(RICH_HISTORY_KEY, []);
-  const transformedRichHistory = createDataQueriesRichHistory(richHistory);
+  const transformedRichHistory = migrateRichHistory(richHistory);
   return transformedRichHistory;
 }
 
@@ -328,7 +328,7 @@ export function notEmptyQuery(query: DataQuery) {
 }
 
 /* These functions are created to migrate string queries (from 6.7 release) to DataQueries. They can be removed after 7.1 release. */
-function createDataQueriesRichHistory(richHistory: RichHistoryQuery[]) {
+function migrateRichHistory(richHistory: RichHistoryQuery[]) {
   const transformedRichHistory = richHistory.map(query => {
     const transformedQueries: DataQuery[] = query.queries.map((q, index) => createDataQuery(query, q, index));
     return { ...query, queries: transformedQueries };

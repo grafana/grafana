@@ -150,7 +150,7 @@ export function RichHistoryCard(props: Props) {
 
   useEffect(() => {
     getQueryDsInstance();
-  }, []);
+  }, [query.datasourceName]);
 
   const theme = useTheme();
   const styles = getStyles(theme, isRemoved);
