@@ -151,10 +151,39 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
     updatePanelEditorUIState({ isPanelOptionsVisible: !uiState.isPanelOptionsVisible });
   };
 
+  renderPanel = (styles: EditorStyles) => {
+    const { dashboard, panel, tabs, uiState } = this.props;
+    return (
+      <div className={cx(styles.mainPaneWrapper, tabs.length === 0 && styles.mainPaneWrapperNoTabs)}>
+        {this.renderPanelToolbar(styles)}
+        <div className={styles.panelWrapper}>
+          <AutoSizer>
+            {({ width, height }) => {
+              if (width < 3 || height < 3) {
+                return null;
+              }
+              return (
+                <div className={styles.centeringContainer} style={{ width, height }}>
+                  <div style={calculatePanelSize(uiState.mode, width, height, panel)}>
+                    <DashboardPanel
+                      dashboard={dashboard}
+                      panel={panel}
+                      isEditing={true}
+                      isViewing={false}
+                      isInView={true}
+                    />
+                  </div>
+                </div>
+              );
+            }}
+          </AutoSizer>
+        </div>
+      </div>
+    );
+  };
   renderHorizontalSplit(styles: EditorStyles) {
     const { dashboard, panel, tabs, data, uiState } = this.props;
-
-    return (
+    return tabs.length > 0 ? (
       <SplitPane
         split="horizontal"
         minSize={50}
@@ -166,35 +195,13 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
         onDragStarted={this.onDragStarted}
         onDragFinished={size => this.onDragFinished(Pane.Top, size)}
       >
-        <div className={styles.mainPaneWrapper}>
-          {this.renderPanelToolbar(styles)}
-          <div className={styles.panelWrapper}>
-            <AutoSizer>
-              {({ width, height }) => {
-                if (width < 3 || height < 3) {
-                  return null;
-                }
-                return (
-                  <div className={styles.centeringContainer} style={{ width, height }}>
-                    <div style={calculatePanelSize(uiState.mode, width, height, panel)}>
-                      <DashboardPanel
-                        dashboard={dashboard}
-                        panel={panel}
-                        isEditing={true}
-                        isViewing={false}
-                        isInView={true}
-                      />
-                    </div>
-                  </div>
-                );
-              }}
-            </AutoSizer>
-          </div>
-        </div>
+        {this.renderPanel(styles)}
         <div className={styles.tabsWrapper}>
           <PanelEditorTabs panel={panel} dashboard={dashboard} tabs={tabs} onChangeTab={this.onChangeTab} data={data} />
         </div>
       </SplitPane>
+    ) : (
+      this.renderPanel(styles)
     );
   }
 
@@ -371,7 +378,7 @@ enum Pane {
 export const getStyles = stylesFactory((theme: GrafanaTheme, props: Props) => {
   const { uiState } = props;
   const handleColor = theme.palette.blue95;
-  const paneSpaceing = theme.spacing.md;
+  const paneSpacing = theme.spacing.md;
 
   const resizer = css`
     font-style: italic;
@@ -415,7 +422,10 @@ export const getStyles = stylesFactory((theme: GrafanaTheme, props: Props) => {
       flex-direction: column;
       height: 100%;
       width: 100%;
-      padding-right: ${uiState.isPanelOptionsVisible ? 0 : paneSpaceing};
+      padding-right: ${uiState.isPanelOptionsVisible ? 0 : paneSpacing};
+    `,
+    mainPaneWrapperNoTabs: css`
+      padding-bottom: ${paneSpacing};
     `,
     variablesWrapper: css`
       display: flex;
@@ -424,13 +434,13 @@ export const getStyles = stylesFactory((theme: GrafanaTheme, props: Props) => {
       flex: 1 1 0;
       min-height: 0;
       width: 100%;
-      padding-left: ${paneSpaceing};
+      padding-left: ${paneSpacing};
     `,
     resizerV: cx(
       resizer,
       css`
         cursor: col-resize;
-        width: ${paneSpaceing};
+        width: ${paneSpacing};
         border-right-width: 1px;
         margin-top: 18px;
       `
@@ -438,13 +448,13 @@ export const getStyles = stylesFactory((theme: GrafanaTheme, props: Props) => {
     resizerH: cx(
       resizer,
       css`
-        height: ${paneSpaceing};
+        height: ${paneSpacing};
         cursor: row-resize;
         position: relative;
         top: 0px;
         z-index: 1;
         border-top-width: 1px;
-        margin-left: ${paneSpaceing};
+        margin-left: ${paneSpacing};
       `
     ),
     tabsWrapper: css`
@@ -460,7 +470,7 @@ export const getStyles = stylesFactory((theme: GrafanaTheme, props: Props) => {
     `,
     panelToolbar: css`
       display: flex;
-      padding: ${paneSpaceing} 0 ${paneSpaceing} ${paneSpaceing};
+      padding: ${paneSpacing} 0 ${paneSpacing} ${paneSpacing};
       justify-content: space-between;
       flex-wrap: wrap;
     `,

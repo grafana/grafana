@@ -181,7 +181,7 @@ function renderHeaderCell(column: any, tableStyles: TableStyles, field?: Field) 
   return (
     <div className={tableStyles.headerCell} {...headerProps}>
       {column.canSort && (
-        <div {...column.getSortByToggleProps()}>
+        <div {...column.getSortByToggleProps()} className={tableStyles.headerCellLabel} title={column.render('Header')}>
           {column.render('Header')}
           {column.isSorted && (column.isSortedDesc ? <Icon name="angle-down" /> : <Icon name="angle-up" />)}
         </div>

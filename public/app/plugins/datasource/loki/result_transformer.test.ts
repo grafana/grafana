@@ -104,7 +104,7 @@ describe('loki result transformer', () => {
 });
 
 describe('enhanceDataFrame', () => {
-  it('', () => {
+  it('adds links to fields', () => {
     const df = new MutableDataFrame({ fields: [{ name: 'line', values: ['nothing', 'trace1=1234', 'trace2=foo'] }] });
     enhanceDataFrame(df, {
       derivedFields: [
@@ -123,8 +123,15 @@ describe('enhanceDataFrame', () => {
     expect(df.fields.length).toBe(3);
     const fc = new FieldCache(df);
     expect(fc.getFieldByName('trace1').values.toArray()).toEqual([null, '1234', null]);
-    expect(fc.getFieldByName('trace1').config.links[0]).toEqual({ url: 'http://localhost/${__value.raw}', title: '' });
+    expect(fc.getFieldByName('trace1').config.links[0]).toEqual({
+      url: 'http://localhost/${__value.raw}',
+      title: '',
+    });
+
     expect(fc.getFieldByName('trace2').values.toArray()).toEqual([null, null, 'foo']);
-    expect(fc.getFieldByName('trace2').config.links[0]).toEqual({ title: '', meta: { datasourceUid: 'uid' } });
+    expect(fc.getFieldByName('trace2').config.links[0]).toEqual({
+      title: '',
+      meta: { datasourceUid: 'uid' },
+    });
   });
 });

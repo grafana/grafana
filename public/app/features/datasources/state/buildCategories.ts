@@ -1,12 +1,11 @@
 import { DataSourcePluginMeta, PluginType } from '@grafana/data';
 import { DataSourcePluginCategory } from 'app/types';
-import { config } from '@grafana/runtime';
 
 export function buildCategories(plugins: DataSourcePluginMeta[]): DataSourcePluginCategory[] {
   const categories: DataSourcePluginCategory[] = [
     { id: 'tsdb', title: 'Time series databases', plugins: [] },
     { id: 'logging', title: 'Logging & document databases', plugins: [] },
-    config.featureToggles.tracingIntegration ? { id: 'tracing', title: 'Distributed tracing', plugins: [] } : null,
+    { id: 'tracing', title: 'Distributed tracing', plugins: [] },
     { id: 'sql', title: 'SQL', plugins: [] },
     { id: 'cloud', title: 'Cloud', plugins: [] },
     { id: 'enterprise', title: 'Enterprise plugins', plugins: [] },
