@@ -4,7 +4,6 @@ import { useTheme, CustomScrollbar, stylesFactory, Button } from '@grafana/ui';
 import { GrafanaTheme } from '@grafana/data';
 import { useSearchQuery } from '../hooks/useSearchQuery';
 import { useDashboardSearch } from '../hooks/useDashboardSearch';
-import { useSearchLayout } from '../hooks/useSearchLayout';
 import { SearchField } from './SearchField';
 import { SearchResults } from './SearchResults';
 import { ActionRow } from './ActionRow';
@@ -16,9 +15,8 @@ export interface Props {
 
 export const DashboardSearch: FC<Props> = memo(({ onCloseSearch, folder }) => {
   const payload = folder ? { query: `folder:${folder}` } : {};
-  const { query, onQueryChange, onTagFilterChange, onTagAdd, onSortChange } = useSearchQuery(payload);
+  const { query, onQueryChange, onTagFilterChange, onTagAdd, onSortChange, onLayoutChange } = useSearchQuery(payload);
   const { results, loading, onToggleSection, onKeyDown } = useDashboardSearch(query, onCloseSearch);
-  const { layout, setLayout } = useSearchLayout(query);
   const theme = useTheme();
   const styles = getStyles(theme);
 
@@ -28,13 +26,6 @@ export const DashboardSearch: FC<Props> = memo(({ onCloseSearch, folder }) => {
     const target = e.target as HTMLElement;
     if ((target.tagName as any) !== 'INPUT' && ['Escape', 'ArrowLeft'].includes(e.key)) {
       onCloseSearch();
-    }
-  };
-
-  const onLayoutChange = (layout: string) => {
-    setLayout(layout);
-    if (query.sort) {
-      onSortChange(null);
     }
   };
 
@@ -51,7 +42,6 @@ export const DashboardSearch: FC<Props> = memo(({ onCloseSearch, folder }) => {
       <div className={styles.search}>
         <ActionRow
           {...{
-            layout,
             onLayoutChange,
             onSortChange,
             onTagFilterChange,
@@ -65,7 +55,7 @@ export const DashboardSearch: FC<Props> = memo(({ onCloseSearch, folder }) => {
             onTagSelected={onTagAdd}
             editable={false}
             onToggleSection={onToggleSection}
-            layout={layout}
+            layout={query.layout}
           />
         </CustomScrollbar>
       </div>

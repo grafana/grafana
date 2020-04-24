@@ -1,4 +1,4 @@
-import { SearchAction, DashboardQuery } from '../types';
+import { SearchAction, DashboardQuery, SearchLayout } from '../types';
 import {
   ADD_TAG,
   CLEAR_FILTERS,
@@ -8,6 +8,7 @@ import {
   SET_TAGS,
   TOGGLE_STARRED,
   TOGGLE_SORT,
+  LAYOUT_CHANGE,
 } from './actionTypes';
 
 export const defaultQuery: DashboardQuery = {
@@ -18,6 +19,7 @@ export const defaultQuery: DashboardQuery = {
   skipStarred: false,
   folderIds: [],
   sort: null,
+  layout: SearchLayout.Folders,
 };
 
 export const queryReducer = (state: DashboardQuery, action: SearchAction) => {
@@ -40,6 +42,8 @@ export const queryReducer = (state: DashboardQuery, action: SearchAction) => {
       return { ...state, query: '', tag: [], starred: false, sort: null };
     case TOGGLE_SORT:
       return { ...state, sort: action.payload };
+    case LAYOUT_CHANGE:
+      return { ...state, layout: action.payload };
     default:
       return state;
   }

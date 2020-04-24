@@ -4,6 +4,7 @@ import { defaultQuery, queryReducer } from '../reducers/searchQueryReducer';
 import {
   ADD_TAG,
   CLEAR_FILTERS,
+  LAYOUT_CHANGE,
   QUERY_CHANGE,
   REMOVE_STARRED,
   REMOVE_TAG,
@@ -11,7 +12,7 @@ import {
   TOGGLE_SORT,
   TOGGLE_STARRED,
 } from '../reducers/actionTypes';
-import { DashboardQuery } from '../types';
+import { DashboardQuery, SearchLayout } from '../types';
 import { hasFilters } from '../utils';
 
 export const useSearchQuery = (queryParams: Partial<DashboardQuery>) => {
@@ -48,6 +49,13 @@ export const useSearchQuery = (queryParams: Partial<DashboardQuery>) => {
 
   const onSortChange = (sort: SelectableValue | null) => {
     dispatch({ type: TOGGLE_SORT, payload: sort });
+    if (query.layout !== SearchLayout.List) {
+      dispatch({ type: LAYOUT_CHANGE, payload: SearchLayout.List });
+    }
+  };
+
+  const onLayoutChange = (layout: SearchLayout) => {
+    dispatch({ type: LAYOUT_CHANGE, payload: layout });
   };
 
   return {
@@ -61,5 +69,6 @@ export const useSearchQuery = (queryParams: Partial<DashboardQuery>) => {
     onStarredFilterChange,
     onTagAdd,
     onSortChange,
+    onLayoutChange,
   };
 };

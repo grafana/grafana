@@ -68,6 +68,7 @@ export interface DashboardQuery {
   skipStarred: boolean;
   folderIds: number[];
   sort: SelectableValue | null;
+  layout: SearchLayout;
 }
 
 export type SearchReducer<S> = [S, Dispatch<SearchAction>];

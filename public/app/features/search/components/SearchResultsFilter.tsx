@@ -13,7 +13,6 @@ export interface Props {
   canMove?: boolean;
   deleteItem: () => void;
   hideLayout?: boolean;
-  layout: string;
   moveTo: () => void;
   onLayoutChange: Dispatch<SetStateAction<string>>;
   onSortChange: onSelectChange;
@@ -29,7 +28,6 @@ export const SearchResultsFilter: FC<Props> = ({
   canMove,
   deleteItem,
   hideLayout,
-  layout,
   moveTo,
   onLayoutChange,
   onSortChange,
@@ -57,7 +55,6 @@ export const SearchResultsFilter: FC<Props> = ({
       ) : (
         <ActionRow
           {...{
-            layout,
             hideLayout,
             onLayoutChange,
             onSortChange,
