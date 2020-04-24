@@ -34,7 +34,7 @@ const NotificationsListPage: FC = () => {
           <>
             <div className="page-action-bar">
               <div className="page-action-bar__spacer" />
-              <LinkButton icon="channel-add" href="alerting/notifications/new">
+              <LinkButton icon="channel-add" href="alerting/notification/new">
                 New channel
               </LinkButton>
             </div>
