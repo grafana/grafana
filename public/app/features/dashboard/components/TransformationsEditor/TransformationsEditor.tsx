@@ -1,5 +1,5 @@
 import React from 'react';
-import { Container, CustomScrollbar, ValuePicker, Button, useTheme, VerticalGroup, stylesFactory } from '@grafana/ui';
+import { Button, Container, CustomScrollbar, stylesFactory, useTheme, ValuePicker, VerticalGroup } from '@grafana/ui';
 import {
   DataFrame,
   DataTransformerConfig,
@@ -11,6 +11,7 @@ import {
 import { TransformationOperationRow } from './TransformationOperationRow';
 import { Card, CardProps } from '../../../../core/components/Card/Card';
 import { css } from 'emotion';
+import { e2e } from '@grafana/e2e';
 
 interface Props {
   onChange: (transformations: DataTransformerConfig[]) => void;
@@ -143,9 +144,11 @@ export class TransformationsEditor extends React.PureComponent<Props> {
     return (
       <CustomScrollbar autoHeightMin="100%">
         <Container padding="md">
-          {!hasTransformationsConfigured && this.renderNoAddedTransformsState()}
-          {hasTransformationsConfigured && this.renderTransformationEditors()}
-          {hasTransformationsConfigured && this.renderTransformationSelector()}
+          <div aria-label={e2e.components.TransformTab.selectors.content}>
+            {!hasTransformationsConfigured && this.renderNoAddedTransformsState()}
+            {hasTransformationsConfigured && this.renderTransformationEditors()}
+            {hasTransformationsConfigured && this.renderTransformationSelector()}
+          </div>
         </Container>
       </CustomScrollbar>
     );
