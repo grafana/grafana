@@ -7,6 +7,7 @@ import { DashboardModel } from 'app/features/dashboard/state';
 import { buildImageUrl, buildShareUrl } from './utils';
 import { appEvents } from 'app/core/core';
 import config from 'app/core/config';
+import { NoRenderingInfoBox } from './NoRenderingInfoBox';
 
 const themeOptions: Array<SelectableValue<string>> = [
   { label: 'current', value: 'current' },
@@ -135,6 +136,7 @@ export class ShareLink extends PureComponent<Props, State> {
                 </a>
               </div>
             )}
+            {panel && !config.rendererAvailable && <NoRenderingInfoBox />}
           </div>
         </div>
       </div>
