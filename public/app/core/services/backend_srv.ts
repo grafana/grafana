@@ -103,6 +103,34 @@ export class BackendSrv implements BackendService {
     return await this.request({ method: 'PUT', url, data });
   }
 
+  augmentRequestHeaders(headers: BackendSrvRequest['headers']) {
+    let augmentedHeaders: BackendSrvRequest['headers'] = headers;
+    const orgId = this.dependencies.contextSrv.user?.orgId;
+
+    if (orgId) {
+      augmentedHeaders = augmentedHeaders || {};
+      augmentedHeaders['X-Grafana-Org-Id'] = orgId;
+    }
+
+    return augmentedHeaders;
+  }
+
+  augmentDataSourceRequestHeaders(headers: BackendSrvRequest['headers']) {
+    let augmentedHeaders: BackendSrvRequest['headers'] = this.augmentRequestHeaders(headers);
+
+    if (augmentedHeaders?.Authorization) {
+      augmentedHeaders['X-DS-Authorization'] = augmentedHeaders.Authorization;
+      delete augmentedHeaders.Authorization;
+    }
+
+    if (this.noBackendCache) {
+      augmentedHeaders = augmentedHeaders || {};
+      augmentedHeaders['X-Grafana-NoCache'] = 'true';
+    }
+
+    return augmentedHeaders;
+  }
+
   withNoBackendCache(callback: any) {
     this.noBackendCache = true;
     return callback().finally(() => {
@@ -150,7 +178,7 @@ export class BackendSrv implements BackendService {
       this.inFlightRequests.next(options.requestId);
     }
 
-    options = this.parseRequestOptions(options, this.dependencies.contextSrv.user?.orgId);
+    options = this.parseRequestOptions(options);
 
     const fromFetchStream = this.getFromFetchStream(options);
     const failureStream = fromFetchStream.pipe(this.toFailureStream(options));
@@ -191,11 +219,7 @@ export class BackendSrv implements BackendService {
       this.inFlightRequests.next(options.requestId);
     }
 
-    options = this.parseDataSourceRequestOptions(
-      options,
-      this.dependencies.contextSrv.user?.orgId,
-      this.noBackendCache
-    );
+    options = this.parseDataSourceRequestOptions(options);
 
     const fromFetchStream = this.getFromFetchStream(options);
     const failureStream = fromFetchStream.pipe(this.toDataSourceRequestFailureStream(options));
@@ -372,15 +396,12 @@ export class BackendSrv implements BackendService {
     }, []);
   }
 
-  private parseRequestOptions = (options: BackendSrvRequest, orgId?: number): BackendSrvRequest => {
+  private parseRequestOptions = (options: BackendSrvRequest): BackendSrvRequest => {
     options.retry = options.retry ?? 0;
     const requestIsLocal = !options.url.match(/^http/);
 
     if (requestIsLocal) {
-      if (orgId) {
-        options.headers = options.headers ?? {};
-        options.headers['X-Grafana-Org-Id'] = orgId;
-      }
+      options.headers = this.augmentRequestHeaders(options.headers);
 
       if (options.url.startsWith('/')) {
         options.url = options.url.substring(1);
@@ -394,31 +415,14 @@ export class BackendSrv implements BackendService {
     return options;
   };
 
-  private parseDataSourceRequestOptions = (
-    options: BackendSrvRequest,
-    orgId?: number,
-    noBackendCache?: boolean
-  ): BackendSrvRequest => {
+  private parseDataSourceRequestOptions = (options: BackendSrvRequest): BackendSrvRequest => {
     options.retry = options.retry ?? 0;
     const requestIsLocal = !options.url.match(/^http/);
 
     if (requestIsLocal) {
-      if (orgId) {
-        options.headers = options.headers || {};
-        options.headers['X-Grafana-Org-Id'] = orgId;
-      }
-
+      options.headers = this.augmentDataSourceRequestHeaders(options.headers);
       if (options.url.startsWith('/')) {
         options.url = options.url.substring(1);
-      }
-
-      if (options.headers?.Authorization) {
-        options.headers['X-DS-Authorization'] = options.headers.Authorization;
-        delete options.headers.Authorization;
-      }
-
-      if (noBackendCache) {
-        options.headers['X-Grafana-NoCache'] = 'true';
       }
     }
 

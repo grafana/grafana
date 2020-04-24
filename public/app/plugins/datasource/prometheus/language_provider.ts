@@ -13,6 +13,7 @@ import { PromQuery, PromMetricsMetadata } from './types';
 
 import { JSON_STREAM_DONE } from './workers/consts';
 import StreamJSONResponse, { StreamJSONResponseWorker } from './workers/StreamJSONResponse.worker';
+import { getBackendSrv } from '@grafana/runtime';
 
 const DEFAULT_KEYS = ['job', 'instance'];
 const EMPTY_SELECTOR = '{}';
@@ -136,13 +137,18 @@ export default class PromQlLanguageProvider extends LanguageProvider {
         }
       };
 
-      streamWorker.onerror = error => {
+      streamWorker.onerror = () => {
         resolve(nodes);
       };
 
+      const headers = getBackendSrv().augmentDataSourceRequestHeaders(
+        this.datasource.basicAuth && { Authorization: this.datasource.basicAuth }
+      );
+
       streamWorker.postMessage({
         chunkSize: Math.ceil(this.lookupMetricsThreshold / 20),
-        headers: this.datasource.basicAuth ? { Authorization: this.datasource.basicAuth } : { 'X-Grafana-Org-Id': 1 },
+        // headers: this.datasource.basicAuth ? { Authorization: this.datasource.basicAuth } : { 'X-Grafana-Org-Id': 1 },
+        headers,
         limit: this.lookupMetricsThreshold,
         url: this.datasource.url + url,
         withCredentials: this.datasource.basicAuth || this.datasource.withCredentials,

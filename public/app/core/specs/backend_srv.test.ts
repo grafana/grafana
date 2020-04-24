@@ -3,12 +3,12 @@ import { Observable, of } from 'rxjs';
 import { delay } from 'rxjs/operators';
 import { AppEvents } from '@grafana/data';
 
-import { BackendSrv, getBackendSrv } from '../services/backend_srv';
+import { BackendSrv } from '../services/backend_srv';
 import { Emitter } from '../utils/emitter';
 import { ContextSrv, User } from '../services/context_srv';
 import { CoreEvents } from '../../types';
 
-const getTestContext = (overides?: object) => {
+const getTestContext = (overrides?: object) => {
   const defaults = {
     data: { test: 'hello world' },
     ok: true,
@@ -20,7 +20,7 @@ const getTestContext = (overides?: object) => {
     type: 'basic',
     url: 'http://localhost:3000/api/some-mock',
   };
-  const props = { ...defaults, ...overides };
+  const props = { ...defaults, ...overrides };
   const textMock = jest.fn().mockResolvedValue(JSON.stringify(props.data));
   const fromFetchMock = jest.fn().mockImplementation(() => {
     const mockedResponse = {
@@ -64,13 +64,13 @@ const getTestContext = (overides?: object) => {
 
   const expectRequestCallChain = (options: any) => {
     expect(parseRequestOptionsMock).toHaveBeenCalledTimes(1);
-    expect(parseRequestOptionsMock).toHaveBeenCalledWith(options, 1337);
+    expect(parseRequestOptionsMock).toHaveBeenCalledWith(options);
     expectCallChain(options);
   };
 
   const expectDataSourceRequestCallChain = (options: any) => {
     expect(parseDataSourceRequestOptionsMock).toHaveBeenCalledTimes(1);
-    expect(parseDataSourceRequestOptionsMock).toHaveBeenCalledWith(options, 1337, undefined);
+    expect(parseDataSourceRequestOptionsMock).toHaveBeenCalledWith(options);
     expectCallChain(options);
   };
 
@@ -88,6 +88,14 @@ const getTestContext = (overides?: object) => {
   };
 };
 
+function getMinimalTestContext({ noBackendCache, orgId }: { noBackendCache?: any; orgId?: any }) {
+  const srv = new BackendSrv();
+  // @ts-ignore We don't need to supply a complete user object - it's fine.
+  srv['dependencies'].contextSrv = orgId ? { user: { orgId } } : {};
+  srv['noBackendCache'] = noBackendCache;
+  return srv;
+}
+
 describe('backendSrv', () => {
   describe('parseRequestOptions', () => {
     it.each`
@@ -103,7 +111,7 @@ describe('backendSrv', () => {
     `(
       "when called with retry: '$retry', url: '$url' and orgId: '$orgId' then result should be '$expected'",
       ({ retry, url, orgId, expected }) => {
-        expect(getBackendSrv()['parseRequestOptions']({ retry, url }, orgId)).toEqual(expected);
+        expect(getMinimalTestContext({ orgId })['parseRequestOptions']({ retry, url })).toEqual(expected);
       }
     );
   });
@@ -127,7 +135,7 @@ describe('backendSrv', () => {
       "when called with retry: '$retry', url: '$url', headers: '$headers', orgId: '$orgId' and noBackendCache: '$noBackendCache' then result should be '$expected'",
       ({ retry, url, headers, orgId, noBackendCache, expected }) => {
         expect(
-          getBackendSrv()['parseDataSourceRequestOptions']({ retry, url, headers }, orgId, noBackendCache)
+          getMinimalTestContext({ noBackendCache, orgId })['parseDataSourceRequestOptions']({ retry, url, headers })
         ).toEqual(expected);
       }
     );

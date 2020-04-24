@@ -19,7 +19,7 @@ import templateSrv from 'app/features/templating/template_srv';
 import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { CustomVariable } from 'app/features/templating/custom_variable';
 
-const datasourceRequestMock = jest.fn().mockResolvedValue(createDefaultPromResponse());
+export const datasourceRequestMock = jest.fn().mockResolvedValue(createDefaultPromResponse());
 
 jest.mock('./metric_find_query');
 jest.mock('@grafana/runtime', () => ({

@@ -6,8 +6,16 @@ import { HistoryItem } from '@grafana/data';
 import { PromQuery } from './types';
 import StreamJSONResponse from './workers/StreamJSONResponse.worker';
 import { MockWorker } from './workers/mocks/StreamJSONResponse.worker';
+import { BackendSrv } from '@grafana/runtime';
 
 import Mock = jest.Mock;
+
+type MockBackendSrv = { augmentDataSourceRequestHeaders: BackendSrv['augmentDataSourceRequestHeaders'] };
+jest.mock('@grafana/runtime', () => ({
+  getBackendSrv: (): MockBackendSrv => ({
+    augmentDataSourceRequestHeaders: headers => headers,
+  }),
+}));
 
 jest.mock('./workers/StreamJSONResponse.worker');
 function mockStreamJSONResponse(metrics: string[] = [], metadata: any = {}) {

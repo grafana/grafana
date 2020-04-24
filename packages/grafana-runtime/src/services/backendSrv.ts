@@ -39,6 +39,13 @@ export interface BackendSrv {
 
   // DataSource requests add hooks into the query inspector
   datasourceRequest(options: BackendSrvRequest): Promise<any>;
+
+  // Can be used to augment the request headers just like the backend service
+  // would anywhere else in the code base. (Obviously, there should be good
+  // reasons not to use the request API that this service provides.)
+  augmentRequestHeaders(headers: BackendSrvRequest['headers']): any;
+
+  augmentDataSourceRequestHeaders(headers: BackendSrvRequest['headers']): any;
 }
 
 let singletonInstance: BackendSrv;
