@@ -107,17 +107,11 @@ const getStyles = stylesFactory(() => {
   return {
     tagFilter: css`
       min-width: 180px;
-      line-height: 22px;
       flex-grow: 1;
 
       .label-tag {
         margin-left: 6px;
-        font-size: 11px;
         cursor: pointer;
-
-        .fa.fa-remove {
-          margin-right: 3px;
-        }
       }
     `,
   };

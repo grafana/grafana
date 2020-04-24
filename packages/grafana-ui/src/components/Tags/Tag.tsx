@@ -45,11 +45,10 @@ const getTagStyles = (theme: GrafanaTheme, name: string, colorIndex?: number) =>
       line-height: ${theme.typography.lineHeight.xs};
       vertical-align: baseline;
       background-color: ${colors.color};
-      color: ${theme.palette.white};
+      color: ${theme.colors.textStrong};
       white-space: nowrap;
       text-shadow: none;
       padding: 3px 6px;
-      border: 1px solid ${colors.borderColor};
       border-radius: ${theme.border.radius.md};
 
       :hover {
