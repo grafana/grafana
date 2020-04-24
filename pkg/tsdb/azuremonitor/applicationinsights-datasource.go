@@ -212,7 +212,7 @@ func (e *ApplicationInsightsDatasource) executeQuery(ctx context.Context, query 
 
 	if res.StatusCode/100 != 2 {
 		azlog.Debug("Request failed", "status", res.Status, "body", string(body))
-		return nil, fmt.Errorf(string(body))
+		return nil, fmt.Errorf("Request failed status: %v", res.Status)
 	}
 
 	if query.IsRaw {

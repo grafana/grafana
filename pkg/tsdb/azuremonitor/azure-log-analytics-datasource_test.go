@@ -296,7 +296,7 @@ func TestPluginRoutes(t *testing.T) {
 			{
 				Path:   "loganalyticsazure",
 				Method: "GET",
-				Url:    "https://api.loganalytics.io/v1/workspaces",
+				URL:    "https://api.loganalytics.io/v1/workspaces",
 				Headers: []plugins.AppPluginRouteHeader{
 					{Name: "x-ms-app", Content: "Grafana"},
 				},
@@ -304,7 +304,7 @@ func TestPluginRoutes(t *testing.T) {
 			{
 				Path:   "chinaloganalyticsazure",
 				Method: "GET",
-				Url:    "https://api.loganalytics.azure.cn/v1/workspaces",
+				URL:    "https://api.loganalytics.azure.cn/v1/workspaces",
 				Headers: []plugins.AppPluginRouteHeader{
 					{Name: "x-ms-app", Content: "Grafana"},
 				},
@@ -312,7 +312,7 @@ func TestPluginRoutes(t *testing.T) {
 			{
 				Path:   "govloganalyticsazure",
 				Method: "GET",
-				Url:    "https://api.loganalytics.us/v1/workspaces",
+				URL:    "https://api.loganalytics.us/v1/workspaces",
 				Headers: []plugins.AppPluginRouteHeader{
 					{Name: "x-ms-app", Content: "Grafana"},
 				},
@@ -355,7 +355,7 @@ func TestPluginRoutes(t *testing.T) {
 			route, proxypass, err := datasource.getPluginRoute(plugin, tt.cloudName)
 			tt.Err(t, err)
 
-			if diff := cmp.Diff(tt.expectedRouteURL, route.Url, cmpopts.EquateNaNs()); diff != "" {
+			if diff := cmp.Diff(tt.expectedRouteURL, route.URL, cmpopts.EquateNaNs()); diff != "" {
 				t.Errorf("Result mismatch (-want +got):\n%s", diff)
 			}
 

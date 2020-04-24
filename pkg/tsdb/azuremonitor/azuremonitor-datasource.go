@@ -238,7 +238,7 @@ func (e *AzureMonitorDatasource) unmarshalResponse(res *http.Response) (AzureMon
 
 	if res.StatusCode/100 != 2 {
 		azlog.Debug("Request failed", "status", res.Status, "body", string(body))
-		return AzureMonitorResponse{}, fmt.Errorf(string(body))
+		return AzureMonitorResponse{}, fmt.Errorf("Request failed status: %v", res.Status)
 	}
 
 	var data AzureMonitorResponse
