@@ -80,7 +80,6 @@ export function addToRichHistory(
 export function getRichHistory(): RichHistoryQuery[] {
   const richHistory: RichHistoryQuery[] = store.getObject(RICH_HISTORY_KEY, []);
   const transformedRichHistory = createDataQueriesRichHistory(richHistory);
-  console.log(transformedRichHistory);
   return transformedRichHistory;
 }
 
