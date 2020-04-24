@@ -43,7 +43,7 @@ export const getPanelEditorTabs = memoizeOne((location: LocationState, plugin?: 
     });
   }
 
-  const activeTab = tabs.find(item => item.id === (location.query.tab || defaultTab));
+  const activeTab = tabs.find(item => item.id === location.query.tab || defaultTab) ?? tabs[0];
   activeTab.active = true;
 
   return tabs;

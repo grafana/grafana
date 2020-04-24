@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import React, { FC, memo } from 'react';
 import { css } from 'emotion';
 import { useTheme, CustomScrollbar, stylesFactory, Button } from '@grafana/ui';
 import { GrafanaTheme } from '@grafana/data';
@@ -14,7 +14,7 @@ export interface Props {
   folder?: string;
 }
 
-export const DashboardSearch: FC<Props> = ({ onCloseSearch, folder }) => {
+export const DashboardSearch: FC<Props> = memo(({ onCloseSearch, folder }) => {
   const payload = folder ? { query: `folder:${folder}` } : {};
   const { query, onQueryChange, onTagFilterChange, onTagAdd, onSortChange } = useSearchQuery(payload);
   const { results, loading, onToggleSection, onKeyDown } = useDashboardSearch(query, onCloseSearch);
@@ -74,7 +74,7 @@ export const DashboardSearch: FC<Props> = ({ onCloseSearch, folder }) => {
       </Button>
     </div>
   );
-};
+});
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
   return {
