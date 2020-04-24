@@ -4,7 +4,7 @@ import Page from 'app/core/components/Page/Page';
 import { getBackendSrv } from '@grafana/runtime';
 import { useAsyncFn } from 'react-use';
 import { useNavModel } from 'app/core/hooks/useNavModel';
-import { HorizontalGroup, Button } from '@grafana/ui';
+import { HorizontalGroup, Button, LinkButton } from '@grafana/ui';
 import { AlertNotification } from 'app/types/alerting';
 
 const deleteNotification = async (id: number) => {
@@ -31,48 +31,56 @@ const NotificationsListPage: FC = () => {
       <Page.Contents>
         {state.error && <p>{state.error}</p>}
         {!!notifications?.length && (
-          <table className="filter-table filter-table--hover">
-            <thead>
-              <tr>
-                <th style={{ minWidth: '200px' }}>
-                  <strong>Name</strong>
-                </th>
-                <th style={{ minWidth: '100px' }}>Type</th>
-                <th style={{ width: '1%' }}></th>
-              </tr>
-            </thead>
-            <tbody>
-              {notifications.map(notification => (
-                <tr key={notification.id}>
-                  <td className="link-td">
-                    <a href={`alerting/notification/${notification.id}/edit`}>{notification.name}</a>
-                  </td>
-                  <td className="link-td">
-                    <a href={`alerting/notification/${notification.id}/edit`}>{notification.type}</a>
-                  </td>
-                  <td className="text-right">
-                    <HorizontalGroup justify="flex-end">
-                      {notification.isDefault && (
-                        <Button disabled variant="secondary" size="sm">
-                          default
-                        </Button>
-                      )}
-                      <Button
-                        variant="destructive"
-                        icon="times"
-                        size="sm"
-                        onClick={() => {
-                          deleteNotification(notification.id);
-                          setNotifications(notifications.filter(notify => notify.id !== notification.id));
-                          fetchNotifications();
-                        }}
-                      />
-                    </HorizontalGroup>
-                  </td>
+          <>
+            <div className="page-action-bar">
+              <div className="page-action-bar__spacer" />
+              <LinkButton icon="channel-add" href="alerting/notifications/new">
+                New channel
+              </LinkButton>
+            </div>
+            <table className="filter-table filter-table--hover">
+              <thead>
+                <tr>
+                  <th style={{ minWidth: '200px' }}>
+                    <strong>Name</strong>
+                  </th>
+                  <th style={{ minWidth: '100px' }}>Type</th>
+                  <th style={{ width: '1%' }}></th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {notifications.map(notification => (
+                  <tr key={notification.id}>
+                    <td className="link-td">
+                      <a href={`alerting/notification/${notification.id}/edit`}>{notification.name}</a>
+                    </td>
+                    <td className="link-td">
+                      <a href={`alerting/notification/${notification.id}/edit`}>{notification.type}</a>
+                    </td>
+                    <td className="text-right">
+                      <HorizontalGroup justify="flex-end">
+                        {notification.isDefault && (
+                          <Button disabled variant="secondary" size="sm">
+                            default
+                          </Button>
+                        )}
+                        <Button
+                          variant="destructive"
+                          icon="times"
+                          size="sm"
+                          onClick={() => {
+                            deleteNotification(notification.id);
+                            setNotifications(notifications.filter(notify => notify.id !== notification.id));
+                            fetchNotifications();
+                          }}
+                        />
+                      </HorizontalGroup>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </>
         )}
 
         {!(notifications?.length || state.loading) && (
