@@ -1,18 +1,17 @@
 import { prompt } from 'inquirer';
 import path from 'path';
-
-import { Task, TaskRunner } from './task';
 import { promptConfirm } from '../utils/prompt';
 import {
-  getPluginIdFromName,
-  verifyGitExists,
-  promptPluginType,
   fetchTemplate,
-  promptPluginDetails,
   formatPluginDetails,
+  getPluginIdFromName,
   prepareJsonFiles,
+  promptPluginDetails,
+  promptPluginType,
   removeGitFiles,
+  verifyGitExists,
 } from './plugin/create';
+import { Task, TaskRunner } from './task';
 
 interface PluginCreateOptions {
   name?: string;
@@ -38,7 +37,7 @@ const pluginCreateRunner: TaskRunner<PluginCreateOptions> = async ({ name }) => 
   } while ((await prompt<{ confirm: boolean }>(promptConfirm('confirm', 'Is that ok?'))).confirm === false);
 
   // 5. Update json files (package.json, src/plugin.json)
-  await prepareJsonFiles({ pluginDetails, pluginPath: destPath });
+  await prepareJsonFiles({ type: type, pluginDetails, pluginPath: destPath });
 
   // 6. Remove cloned repository .git dir
   await removeGitFiles(destPath);
