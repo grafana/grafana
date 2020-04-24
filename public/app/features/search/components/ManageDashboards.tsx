@@ -1,6 +1,6 @@
-import React, { FC, useState, memo } from 'react';
+import React, { FC, memo, useState } from 'react';
 import { css } from 'emotion';
-import { Icon, TagList, HorizontalGroup, stylesFactory, useTheme } from '@grafana/ui';
+import { HorizontalGroup, Icon, stylesFactory, TagList, useTheme } from '@grafana/ui';
 import { GrafanaTheme } from '@grafana/data';
 import { contextSrv } from 'app/core/services/context_srv';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
@@ -56,7 +56,8 @@ export const ManageDashboards: FC<Props> = memo(({ folderId, folderUid }) => {
     onMoveItems,
   } = useManageDashboards(query, { hasEditPermissionInFolders: contextSrv.hasEditPermissionInFolders }, folderUid);
 
-  const { layout, setLayout } = useSearchLayout(query);
+  const defaultLayout = folderId ? SearchLayout.List : SearchLayout.Folders;
+  const { layout, setLayout } = useSearchLayout(query, defaultLayout);
 
   const onMoveTo = () => {
     setIsMoveModalOpen(true);
