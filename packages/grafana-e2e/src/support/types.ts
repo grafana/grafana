@@ -1,8 +1,9 @@
 import { Selector } from './selector';
 import { fromBaseUrl } from './url';
 import { e2e } from '../index';
-import { SelectorFunction, VisitFunction } from '../noTypeCheck';
 
+export type SelectorFunction = (text?: string) => Cypress.Chainable<JQuery<HTMLElement>>;
+export type VisitFunction = (args?: string) => Cypress.Chainable<Window>;
 export type Selectors = Record<string, string | Function>;
 export type SelectorFunctions<S> = { [P in keyof S]: SelectorFunction };
 

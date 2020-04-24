@@ -33,9 +33,7 @@ export const e2eScenario = ({
       });
 
       afterEach(() => {
-        // @todo remove `@ts-ignore` when possible
-        // @ts-ignore
-        getScenarioContext().then(({ lastAddedDashboardUid, lastAddedDataSource }) => {
+        getScenarioContext().then(({ lastAddedDashboardUid, lastAddedDataSource }: any) => {
           if (lastAddedDataSource) {
             Flows.deleteDataSource(lastAddedDataSource);
           }

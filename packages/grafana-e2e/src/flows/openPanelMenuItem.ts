@@ -1,4 +1,4 @@
-import { e2e } from '../noTypeCheck';
+import { e2e } from '../index';
 
 export enum PanelMenuItems {
   Edit = 'Edit',
