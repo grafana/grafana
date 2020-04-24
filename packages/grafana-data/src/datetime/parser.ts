@@ -1,6 +1,6 @@
 /* eslint-disable id-blacklist, no-restricted-imports, @typescript-eslint/ban-types */
 import moment, { MomentInput } from 'moment-timezone';
-import { DateTimeInput, DateTime, isDateTime, toUtc } from './moment_wrapper';
+import { DateTimeInput, DateTime, isDateTime } from './moment_wrapper';
 import { DateTimeOptions, getTimeZone } from './common';
 import { parse, isValid } from './datemath';
 import { lowerCase } from 'lodash';
@@ -29,11 +29,11 @@ export const dateTimeParse: DateTimeParser<DateTimeOptionsWhenParsing> = (value,
 const parseString = (value: string, options?: DateTimeOptionsWhenParsing): DateTime => {
   if (value.indexOf('now') !== -1) {
     if (!isValid(value)) {
-      return toUtc();
+      return moment() as DateTime;
     }
 
     const parsed = parse(value, options?.roundUp, options?.timeZone);
-    return parsed || toUtc();
+    return parsed || (moment() as DateTime);
   }
 
   return parseOthers(value, options);

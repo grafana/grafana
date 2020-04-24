@@ -1,7 +1,7 @@
 import React, { memo, useState, useEffect, useCallback } from 'react';
 import { css } from 'emotion';
 import Calendar from 'react-calendar/dist/entry.nostyle';
-import { GrafanaTheme, DateTime, toUtc } from '@grafana/data';
+import { GrafanaTheme, DateTime, dateTime } from '@grafana/data';
 import { useTheme, stylesFactory } from '../../../themes';
 import { TimePickerTitle } from './TimePickerTitle';
 import { Button } from '../../Button';
@@ -305,7 +305,7 @@ function useOnCalendarChange(onChange: (from: DateTime, to: DateTime) => void) {
         return console.error('onCalendarChange: should be run in selectRange={true}');
       }
       const [from, to] = value;
-      onChange(toUtc(from), toUtc(to));
+      onChange(dateTime(from), dateTime(to));
     },
     [onChange]
   );

@@ -117,7 +117,7 @@ function eventToState(event: FormEvent<HTMLInputElement>, roundup?: boolean, tim
 }
 
 function valueToState(raw: DateTime | string, roundup?: boolean, timeZone?: TimeZone): InputState {
-  const value = valueAsString(raw);
+  const value = valueAsString(raw, timeZone);
   const invalid = !isValid(value, roundup, timeZone);
   return { value, invalid };
 }
