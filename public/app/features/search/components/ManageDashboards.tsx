@@ -1,6 +1,6 @@
-import React, { FC, useState, memo } from 'react';
+import React, { FC, memo, useState } from 'react';
 import { css } from 'emotion';
-import { Icon, TagList, HorizontalGroup, stylesFactory, useTheme } from '@grafana/ui';
+import { HorizontalGroup, Icon, stylesFactory, TagList, useTheme } from '@grafana/ui';
 import { GrafanaTheme } from '@grafana/data';
 import { contextSrv } from 'app/core/services/context_srv';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
@@ -12,6 +12,8 @@ import { SearchResultsFilter } from './SearchResultsFilter';
 import { SearchResults } from './SearchResults';
 import { DashboardActions } from './DashboardActions';
 import { SearchField } from './SearchField';
+import { useSearchLayout } from '../hooks/useSearchLayout';
+import { SearchLayout } from '../types';
 
 export interface Props {
   folderId?: number;
@@ -36,6 +38,7 @@ export const ManageDashboards: FC<Props> = memo(({ folderId, folderUid }) => {
     onTagFilterChange,
     onStarredFilterChange,
     onTagAdd,
+    onSortChange,
   } = useSearchQuery(queryParams);
 
   const {
@@ -53,12 +56,22 @@ export const ManageDashboards: FC<Props> = memo(({ folderId, folderUid }) => {
     onMoveItems,
   } = useManageDashboards(query, { hasEditPermissionInFolders: contextSrv.hasEditPermissionInFolders }, folderUid);
 
+  const defaultLayout = folderId ? SearchLayout.List : SearchLayout.Folders;
+  const { layout, setLayout } = useSearchLayout(query, defaultLayout);
+
   const onMoveTo = () => {
     setIsMoveModalOpen(true);
   };
 
   const onItemDelete = () => {
     setIsDeleteModalOpen(true);
+  };
+
+  const onLayoutChange = (layout: string) => {
+    setLayout(layout);
+    if (query.sort) {
+      onSortChange(null);
+    }
   };
 
   if (canSave && folderId && !hasFilters && results.length === 0) {
@@ -77,44 +90,61 @@ export const ManageDashboards: FC<Props> = memo(({ folderId, folderUid }) => {
   }
 
   return (
-    <div className="dashboard-list">
-      <HorizontalGroup justify="space-between">
-        <SearchField query={query} onChange={onQueryChange} className={styles.searchField} />
-        <DashboardActions isEditor={isEditor} canEdit={hasEditPermissionInFolders || canSave} folderId={folderId} />
-      </HorizontalGroup>
+    <div className={styles.container}>
+      <div>
+        <HorizontalGroup justify="space-between">
+          <SearchField query={query} onChange={onQueryChange} className={styles.searchField} />
+          <DashboardActions isEditor={isEditor} canEdit={hasEditPermissionInFolders || canSave} folderId={folderId} />
+        </HorizontalGroup>
 
-      {hasFilters && (
-        <HorizontalGroup>
-          <div className="gf-form-inline">
-            {query.tag.length > 0 && (
-              <div className="gf-form">
-                <label className="gf-form-label width-4">Tags</label>
-                <TagList tags={query.tag} onClick={onTagRemove} />
-              </div>
-            )}
-            {query.starred && (
+        {hasFilters && (
+          <HorizontalGroup>
+            <div className="gf-form-inline">
+              {query.tag.length > 0 && (
+                <div className="gf-form">
+                  <label className="gf-form-label width-4">Tags</label>
+                  <TagList tags={query.tag} onClick={onTagRemove} />
+                </div>
+              )}
+              {query.starred && (
+                <div className="gf-form">
+                  <label className="gf-form-label">
+                    <a className="pointer" onClick={onRemoveStarred}>
+                      <Icon name="check" />
+                      Starred
+                    </a>
+                  </label>
+                </div>
+              )}
+              {query.sort && (
+                <div className="gf-form">
+                  <label className="gf-form-label">
+                    <a className="pointer" onClick={() => onSortChange(null)}>
+                      Sort: {query.sort.label}
+                    </a>
+                  </label>
+                </div>
+              )}
               <div className="gf-form">
                 <label className="gf-form-label">
-                  <a className="pointer" onClick={onRemoveStarred}>
-                    <Icon name="check" />
-                    Starred
+                  <a
+                    className="pointer"
+                    onClick={() => {
+                      onClearFilters();
+                      setLayout(SearchLayout.Folders);
+                    }}
+                  >
+                    <Icon name="times" />
+                    &nbsp;Clear
                   </a>
                 </label>
               </div>
-            )}
-            <div className="gf-form">
-              <label className="gf-form-label">
-                <a className="pointer" onClick={onClearFilters}>
-                  <Icon name="times" />
-                  &nbsp;Clear
-                </a>
-              </label>
             </div>
-          </div>
-        </HorizontalGroup>
-      )}
+          </HorizontalGroup>
+        )}
+      </div>
 
-      <div className="search-results">
+      <div className={styles.results}>
         {results?.length > 0 && (
           <SearchResultsFilter
             allChecked={allChecked}
@@ -124,9 +154,12 @@ export const ManageDashboards: FC<Props> = memo(({ folderId, folderUid }) => {
             moveTo={onMoveTo}
             onToggleAllChecked={onToggleAllChecked}
             onStarredFilterChange={onStarredFilterChange}
+            onSortChange={onSortChange}
             onTagFilterChange={onTagFilterChange}
-            selectedStarredFilter={query.starred}
-            selectedTagFilter={query.tag}
+            query={query}
+            layout={layout}
+            hideLayout={!!folderUid}
+            onLayoutChange={onLayoutChange}
           />
         )}
         <SearchResults
@@ -136,6 +169,7 @@ export const ManageDashboards: FC<Props> = memo(({ folderId, folderUid }) => {
           onTagSelected={onTagAdd}
           onToggleSection={onToggleSection}
           onToggleChecked={onToggleChecked}
+          layout={layout}
         />
       </div>
       <ConfirmDeleteModal
@@ -156,6 +190,13 @@ export const ManageDashboards: FC<Props> = memo(({ folderId, folderUid }) => {
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
   return {
+    container: css`
+      height: 100%;
+
+      .results-container {
+        padding: 5px 0 0;
+      }
+    `,
     searchField: css`
       height: auto;
       border-bottom: none;
@@ -164,6 +205,13 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       input {
         width: 400px;
       }
+    `,
+    results: css`
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+      height: 100%;
+      margin-top: ${theme.spacing.xl};
     `,
   };
 });

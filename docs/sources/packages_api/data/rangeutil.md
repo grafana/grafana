@@ -10,13 +10,11 @@ draft = true
 
 ## rangeUtil namespace
 
+> This API is provided as a preview for developers and may change based on feedback that we receive. Do not use this API in a production environment.
+> 
+
 ### rangeUtil namespace
 
-<b>Signature</b>
-
-```typescript
-export declare namespace rangeUtil 
-```
 <b>Import</b>
 
 ```typescript

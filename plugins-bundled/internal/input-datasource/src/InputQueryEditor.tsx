@@ -5,7 +5,7 @@ import React, { PureComponent } from 'react';
 import { InputDatasource, describeDataFrame } from './InputDatasource';
 import { InputQuery, InputOptions } from './types';
 
-import { FormLabel, LegacyForms, TableInputCSV, Icon } from '@grafana/ui';
+import { InlineFormLabel, LegacyForms, TableInputCSV, Icon } from '@grafana/ui';
 const { Select } = LegacyForms;
 import { DataFrame, toCSV, SelectableValue, MutableDataFrame, QueryEditorProps } from '@grafana/data';
 
@@ -69,7 +69,7 @@ export class InputQueryEditor extends PureComponent<Props, State> {
     return (
       <div>
         <div className="gf-form">
-          <FormLabel width={4}>Data</FormLabel>
+          <InlineFormLabel width={4}>Data</InlineFormLabel>
           <Select width={6} options={options} value={selected} onChange={this.onSourceChange} />
 
           <div className="btn btn-link">

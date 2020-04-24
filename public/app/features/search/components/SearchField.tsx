@@ -11,6 +11,7 @@ interface SearchFieldProps extends Omit<React.InputHTMLAttributes<HTMLInputEleme
   onChange: (query: string) => void;
   onKeyDown?: (e: React.KeyboardEvent<HTMLInputElement>) => void;
   clearable?: boolean;
+  width?: number;
 }
 
 const getSearchFieldStyles = (theme: GrafanaTheme) => ({
@@ -70,13 +71,7 @@ export const SearchField: FC<SearchFieldProps> = ({ query, onChange, size, clear
         spellCheck={false}
         className={styles.input}
         prefix={<Icon name="search" />}
-        suffix={
-          clearable && (
-            <span className={styles.clearButton} onClick={() => onChange('')}>
-              Clear
-            </span>
-          )
-        }
+        suffix={clearable && <Icon name="times" className={styles.clearButton} onClick={() => onChange('')} />}
         {...inputProps}
       />
 

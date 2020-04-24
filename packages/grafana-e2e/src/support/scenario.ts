@@ -1,4 +1,5 @@
-import { e2e } from '../index';
+import { Flows } from '../flows';
+import { getScenarioContext } from './scenarioContext';
 
 export interface ScenarioArguments {
   describeName: string;
@@ -17,34 +18,48 @@ export const e2eScenario = ({
   addScenarioDataSource = false,
   addScenarioDashBoard = false,
 }: ScenarioArguments) => {
+  // when we started to use import { e2e } from '@grafana/e2e'; in grafana/ui components
+  // then type checking @grafana/run-time started to fail with
+  // Cannot find name 'describe'. Do you need to install type definitions for a test runner? Try `npm i @types/jest` or `npm i @types/mocha`.
+  // Haven't investigated deeper why this happens yet so adding ts-ignore as temporary solution
+  // @todo remove `@ts-ignore` when possible
+  // @ts-ignore
   describe(describeName, () => {
     if (skipScenario) {
+      // @todo remove `@ts-ignore` when possible
+      // @ts-ignore
       it.skip(itName, () => scenario());
     } else {
+      // @todo remove `@ts-ignore` when possible
+      // @ts-ignore
       beforeEach(() => {
-        e2e.flows.login('admin', 'admin');
+        Flows.login('admin', 'admin');
         if (addScenarioDataSource) {
-          e2e.flows.addDataSource();
+          Flows.addDataSource();
         }
         if (addScenarioDashBoard) {
-          e2e.flows.addDashboard();
+          Flows.addDashboard();
         }
       });
 
+      // @todo remove `@ts-ignore` when possible
+      // @ts-ignore
       afterEach(() => {
         // @todo remove `@ts-ignore` when possible
         // @ts-ignore
-        e2e.getScenarioContext().then(({ lastAddedDashboardUid, lastAddedDataSource }) => {
+        getScenarioContext().then(({ lastAddedDashboardUid, lastAddedDataSource }) => {
           if (lastAddedDataSource) {
-            e2e.flows.deleteDataSource(lastAddedDataSource);
+            Flows.deleteDataSource(lastAddedDataSource);
           }
 
           if (lastAddedDashboardUid) {
-            e2e.flows.deleteDashboard(lastAddedDashboardUid);
+            Flows.deleteDashboard(lastAddedDashboardUid);
           }
         });
       });
 
+      // @todo remove `@ts-ignore` when possible
+      // @ts-ignore
       it(itName, () => scenario());
     }
   });

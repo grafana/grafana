@@ -1,6 +1,6 @@
+import { parse, SearchParserResult } from 'search-query-parser';
 import { DashboardQuery, DashboardSection, DashboardSectionItem, SearchAction, UidsToDelete } from './types';
 import { NO_ID_SECTIONS } from './constants';
-import { parse, SearchParserResult } from 'search-query-parser';
 import { getDashboardSrv } from '../dashboard/services/DashboardSrv';
 
 /**
@@ -28,6 +28,18 @@ export const getFlattenedSections = (sections: DashboardSection[]): string[] => 
   });
 };
 
+/**
+ * Get all items for currently expanded sections
+ * @param sections
+ */
+export const getVisibleItems = (sections: DashboardSection[]) => {
+  return sections.flatMap(section => {
+    if (section.expanded) {
+      return section.items;
+    }
+    return [];
+  });
+};
 /**
  * Since Recent and Starred folders don't have id, title field is used as id
  * @param title - title field of the section
@@ -166,8 +178,9 @@ export const getCheckedUids = (sections: DashboardSection[]): UidsToDelete => {
  * @param queryParsing
  */
 export const getParsedQuery = (query: DashboardQuery, queryParsing = false) => {
+  const parsedQuery = { ...query, sort: query.sort?.value };
   if (!queryParsing) {
-    return query;
+    return parsedQuery;
   }
 
   let folderIds: number[] = [];
@@ -178,5 +191,12 @@ export const getParsedQuery = (query: DashboardQuery, queryParsing = false) => {
       folderIds = [folderId];
     }
   }
-  return { ...query, query: parseQuery(query.query).text as string, folderIds };
+  return { ...parsedQuery, query: parseQuery(query.query).text as string, folderIds };
+};
+
+export const hasFilters = (query: DashboardQuery) => {
+  if (!query) {
+    return false;
+  }
+  return Boolean(query.query || query.tag?.length > 0 || query.starred || query.sort);
 };
