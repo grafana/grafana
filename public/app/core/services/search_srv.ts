@@ -46,7 +46,7 @@ export class SearchSrv {
         .map(orderId => {
           return _.find(result, { id: orderId });
         })
-        .filter(hit => hit && !hit.isStarred);
+        .filter(hit => hit && !hit.isStarred) as DashboardSearchHit[];
     });
   }
 
@@ -154,7 +154,7 @@ export class SearchSrv {
       }
 
       section.expanded = true;
-      section.items.push(hit);
+      section.items && section.items.push(hit);
     }
   }
 

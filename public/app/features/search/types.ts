@@ -18,7 +18,7 @@ export interface DashboardSection {
   icon?: string;
   score?: number;
   checked?: boolean;
-  items?: DashboardSectionItem[];
+  items: DashboardSectionItem[];
   toggle?: (section: DashboardSection) => Promise<DashboardSection>;
   selected?: boolean;
   type: DashboardSearchItemType;
