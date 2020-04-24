@@ -4,8 +4,8 @@ keywords = ["grafana", "templating", "documentation", "guide", "template", "vari
 type = "docs"
 [menu.docs]
 name = "advanced-variable-format-options"
-parent = "dashboard_features"
-weight = 1
+parent = "variables"
+weight = 300
 +++
 
 DFP questions: Where do you enter these bits of code?

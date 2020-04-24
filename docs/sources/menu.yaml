@@ -118,10 +118,6 @@
     children:
     - link: /features/dashboard/dashboards/
       name: Overview
-    - link: /features/dashboard/templating/
-      name: Templates and variables
-    - link: /features/dashboard/advanced-variable-format-options/
-      name: Advanced variable format options
     - link: /reference/annotations/
       name: Annotations
     - link: /reference/dashboard_folders/
@@ -198,6 +194,15 @@
     link: /features/reporting/
   - name: Navigation links
     link: /features/navigation-links/
+- name: Templates and variables
+  link: /variables/
+  children:
+    - link: /variables/templates-and-variables/
+      name: Overview
+    - link: /variables/global-variables/
+      name: Global variables
+    - link: /variables/advanced-variable-format-options/
+      name: Advanced variable format options
 - name: What's new in Grafana
   link: /whatsnew/
   children:

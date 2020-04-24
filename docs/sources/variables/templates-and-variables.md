@@ -2,11 +2,11 @@
 title = "Variables"
 keywords = ["grafana", "templating", "documentation", "guide", "template", "variable"]
 type = "docs"
-aliases = ["/docs/grafana/latest/references/templating", "/hugo/content/docs/grafana/latest/features/dashboard/templating"]
+aliases = ["/docs/grafana/latest/reference/templating", "/hugo/content/docs/grafana/latest/reference/templating"]
 [menu.docs]
-name = "Variables"
-parent = "dashboard_features"
-weight = 1
+name = "Templates and variables"
+parent = "variables"
+weight = 100
 +++
 
 # Templates and variables

@@ -2,11 +2,10 @@
 title = "Global variables"
 keywords = ["grafana", "templating", "documentation", "guide", "template", "variable", "global", "standard"]
 type = "docs"
-aliases =
 [menu.docs]
-name = "Global variables"
-parent = "dashboard_features"
-weight = 1
+name = "global-variables"
+parent = "variables"
+weight = 200
 +++
 
 # Global variables
