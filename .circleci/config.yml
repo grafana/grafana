@@ -188,7 +188,7 @@ jobs:
       - run:
           name: Build internal Grafana plug-ins
           command: |
-            /tmp/grabpl build-plugins --edition << parameters.edition >>
+            /tmp/grabpl build-plugins --jobs 2 --edition << parameters.edition >>
       - run:
           name: Move artifacts
           command: |
@@ -1183,6 +1183,7 @@ workflows:
             - test-frontend
             - codespell
             - shellcheck
+            - build-oss-plugins
       - package-enterprise:
           # No filters, meaning this job runs for all branches
           requires:
@@ -1200,6 +1201,7 @@ workflows:
             - test-frontend
             - codespell
             - shellcheck
+            - build-enterprise-plugins
       - build-oss-windows-installer:
           # No filters, meaning this job runs for all branches
           requires:
