@@ -222,4 +222,9 @@ func addDashboardMigration(mg *Migrator) {
 		Cols: []string{fmt.Sprintf("lower(%s)", mg.Dialect.Quote("title"))},
 		Type: FunctionalIndex,
 	}))
+
+	mg.AddMigration("Add index for dashboard_title", NewAddIndexMigration(dashboardV2, &Index{
+		Cols: []string{"title"},
+		Type: IndexType,
+	}))
 }
