@@ -1,6 +1,8 @@
 package migrations
 
 import (
+	"fmt"
+
 	. "github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 )
 
@@ -214,5 +216,10 @@ func addDashboardMigration(mg *Migrator) {
 
 	mg.AddMigration("Add check_sum column", NewAddColumnMigration(dashboardExtrasTableV2, &Column{
 		Name: "check_sum", Type: DB_NVarchar, Length: 32, Nullable: true,
+	}))
+
+	mg.AddMigration("Add functional index for dashboard_title", NewAddIndexMigration(dashboardV2, &Index{
+		Cols: []string{fmt.Sprintf("lower(%s)", mg.Dialect.Quote("title"))},
+		Type: FunctionalIndex,
 	}))
 }

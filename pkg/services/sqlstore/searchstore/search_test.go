@@ -152,7 +152,7 @@ func TestBuilder_Permissions(t *testing.T) {
 	assert.Len(t, res, 0)
 }
 
-func setupTestEnvironment(t *testing.T) *sqlstore.SqlStore {
+func setupTestEnvironment(t testing.TB) *sqlstore.SqlStore {
 	t.Helper()
 	store := sqlstore.InitTestDB(t)
 	dialect = store.Dialect

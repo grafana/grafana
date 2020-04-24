@@ -153,7 +153,12 @@ func (db *BaseDialect) CreateIndexSql(tableName string, index *Index) string {
 
 	quotedCols := []string{}
 	for _, col := range index.Cols {
-		quotedCols = append(quotedCols, db.dialect.Quote(col))
+		switch index.Type {
+		case FunctionalIndex:
+			quotedCols = append(quotedCols, col)
+		default:
+			quotedCols = append(quotedCols, db.dialect.Quote(col))
+		}
 	}
 
 	return fmt.Sprintf("CREATE%s INDEX %v ON %v (%v);", unique, quote(idxName), quote(tableName), strings.Join(quotedCols, ","))
