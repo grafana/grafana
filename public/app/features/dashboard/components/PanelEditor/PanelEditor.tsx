@@ -221,11 +221,10 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
   }
 
   renderPanelToolbar(styles: EditorStyles) {
-    const { dashboard, location, uiState } = this.props;
-
+    const { dashboard, location, uiState, variables } = this.props;
     return (
       <div className={styles.panelToolbar}>
-        <HorizontalGroup justify="space-between" align={'flex-start'}>
+        <HorizontalGroup justify={variables.length > 0 ? 'space-between' : 'flex-end'} align="flex-start">
           {this.renderTemplateVariables(styles)}
 
           <HorizontalGroup>
