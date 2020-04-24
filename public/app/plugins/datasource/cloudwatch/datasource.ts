@@ -115,7 +115,7 @@ export class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery, CloudWa
           this.logsQuery(
             dataFrames.map(dataFrame => ({
               queryId: dataFrame.fields[0].values.get(0),
-              region: dataFrame.meta.custom['Region'] ?? 'default',
+              region: dataFrame.meta?.custom?.['Region'] ?? 'default',
               refId: dataFrame.refId,
             }))
           )
@@ -187,7 +187,7 @@ export class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery, CloudWa
       this.makeLogActionRequest('GetQueryResults', queryParams).pipe(
         expand((dataFrames, i) => {
           return dataFrames.every(
-            dataFrame => dataFrame.meta.custom['Status'] === CloudWatchLogsQueryStatus.Complete
+            dataFrame => dataFrame.meta?.custom?.['Status'] === CloudWatchLogsQueryStatus.Complete
           ) || i >= MAX_ATTEMPTS
             ? empty()
             : this.makeLogActionRequest('GetQueryResults', queryParams).pipe(
@@ -201,7 +201,7 @@ export class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery, CloudWa
                 CloudWatchLogsQueryStatus.Complete,
                 CloudWatchLogsQueryStatus.Cancelled,
                 CloudWatchLogsQueryStatus.Failed,
-              ].includes(dataframe.meta.custom['Status'])
+              ].includes(dataframe.meta?.custom?.['Status'])
             ) {
               this.logQueries.delete({ id: queryParams[i].queryId, region: queryParams[i].region });
             }
@@ -214,7 +214,7 @@ export class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery, CloudWa
             data: correctedFrames,
             key: 'test-key',
             state: correctedFrames.every(
-              dataFrame => dataFrame.meta.custom['Status'] === CloudWatchLogsQueryStatus.Complete
+              dataFrame => dataFrame.meta?.custom?.['Status'] === CloudWatchLogsQueryStatus.Complete
             )
               ? LoadingState.Done
               : LoadingState.Loading,
@@ -279,8 +279,8 @@ export class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery, CloudWa
     const requestParams: GetLogEventsRequest = {
       limit,
       startFromHead: direction !== 'BACKWARD',
-      logGroupName: parseLogGroupName(logField.values.get(row.rowIndex)),
-      logStreamName: logStreamField.values.get(row.rowIndex),
+      logGroupName: parseLogGroupName(logField!.values.get(row.rowIndex)),
+      logStreamName: logStreamField!.values.get(row.rowIndex),
     };
 
     if (direction === 'BACKWARD') {
@@ -424,7 +424,7 @@ export class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery, CloudWa
           const failedRedIds = Object.keys(err.data.results);
           const regionsAffected = Object.values(request.queries).reduce(
             (res: string[], { refId, region }) =>
-              !failedRedIds.includes(refId) || res.includes(region) ? res : [...res, region],
+              (refId && !failedRedIds.includes(refId)) || res.includes(region) ? res : [...res, region],
             []
           ) as string[];
 
@@ -743,8 +743,8 @@ export class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery, CloudWa
     return this.defaultRegion;
   }
 
-  getActualRegion(region: string) {
-    if (region === 'default' || _.isEmpty(region)) {
+  getActualRegion(region?: string) {
+    if (region === 'default' || region === undefined || region === '') {
       return this.getDefaultRegion();
     }
     return region;

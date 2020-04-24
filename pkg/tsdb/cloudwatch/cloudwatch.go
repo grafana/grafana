@@ -68,7 +68,7 @@ func NewCloudWatchExecutor(datasource *models.DataSource) (tsdb.TsdbQueryEndpoin
 		return nil, err
 	}
 
-	logsClientsByRegion := make(map[string](*cloudwatchlogs.CloudWatchLogs), 0)
+	logsClientsByRegion := make(map[string](*cloudwatchlogs.CloudWatchLogs))
 	logsClientsByRegion[dsInfo.Region] = defaultLogsClient
 	logsClientsByRegion["default"] = defaultLogsClient
 

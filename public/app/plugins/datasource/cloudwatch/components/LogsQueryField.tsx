@@ -16,7 +16,7 @@ import {
 
 // Utils & Services
 // dom also includes Element polyfills
-import { Plugin, Node } from 'slate';
+import { Plugin, Node, Editor } from 'slate';
 import syntax from '../syntax';
 
 // Types
@@ -56,13 +56,15 @@ interface State {
   regions: Array<SelectableValue<string>>;
   selectedRegion: SelectableValue<string>;
   invalidLogGroups: boolean;
-  hint: {
-    message: string;
-    fix: {
-      label: string;
-      action: () => void;
-    };
-  };
+  hint:
+    | {
+        message: string;
+        fix: {
+          label: string;
+          action: () => void;
+        };
+      }
+    | undefined;
 }
 
 export class CloudWatchLogsQueryField extends React.PureComponent<CloudWatchLogsQueryFieldProps, State> {
@@ -182,7 +184,7 @@ export class CloudWatchLogsQueryField extends React.PureComponent<CloudWatchLogs
       loadingLogGroups: true,
     });
 
-    const logGroups = await this.fetchLogGroupOptions(v.value);
+    const logGroups = await this.fetchLogGroupOptions(v.value!);
 
     this.setState(state => ({
       availableLogGroups: logGroups,
@@ -216,10 +218,10 @@ export class CloudWatchLogsQueryField extends React.PureComponent<CloudWatchLogs
 
     const result = await cloudwatchLanguageProvider.provideCompletionItems(
       { text, value, prefix, wrapperClasses, labelKey, editor },
-      { history, absoluteRange, logGroupNames: selectedLogGroups.map(logGroup => logGroup.value) }
+      { history, absoluteRange, logGroupNames: selectedLogGroups.map(logGroup => logGroup.value!) }
     );
 
-    const tokens = editor.value.data.get('tokens');
+    const tokens = editor?.value.data.get('tokens');
     const queryUsesStatsCommand = tokens.find(
       (token: Token) => token.types.includes('query-command') && token.content.toLowerCase() === 'stats'
     );
@@ -253,7 +255,7 @@ export class CloudWatchLogsQueryField extends React.PureComponent<CloudWatchLogs
     dispatch(changeModeAction({ exploreId, mode: ExploreMode.Metrics }));
   };
 
-  onQueryFieldClick = () => {
+  onQueryFieldClick = (_event: Event, _editor: Editor, next: () => any) => {
     const { selectedLogGroups, loadingLogGroups } = this.state;
 
     const queryFieldDisabled = loadingLogGroups || selectedLogGroups.length === 0;
@@ -263,6 +265,8 @@ export class CloudWatchLogsQueryField extends React.PureComponent<CloudWatchLogs
         invalidLogGroups: true,
       });
     }
+
+    next();
   };
 
   onOpenLogGroupMenu = () => {
@@ -364,7 +368,7 @@ export class CloudWatchLogsQueryField extends React.PureComponent<CloudWatchLogs
         )}
         {showError ? (
           <div className="query-row-break">
-            <div className="prom-query-field-info text-error">{data.error.message}</div>
+            <div className="prom-query-field-info text-error">{data?.error?.message}</div>
           </div>
         ) : null}
       </>

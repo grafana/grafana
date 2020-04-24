@@ -17,7 +17,7 @@ interface State {
 }
 
 export default class CloudWatchLink extends Component<Props, State> {
-  state: State = { href: null };
+  state: State = { href: '' };
   async componentDidUpdate(prevProps: Props) {
     if (prevProps.panelData !== this.props.panelData && this.props.panelData.request) {
       const href = this.getExternalLink();
@@ -28,7 +28,7 @@ export default class CloudWatchLink extends Component<Props, State> {
   getExternalLink(): string {
     const { query, panelData, datasource } = this.props;
 
-    const range = panelData.request.range;
+    const range = panelData?.request?.range;
 
     if (!range) {
       return '';

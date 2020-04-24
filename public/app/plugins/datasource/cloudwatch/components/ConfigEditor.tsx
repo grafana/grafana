@@ -36,7 +36,7 @@ export class ConfigEditor extends PureComponent<Props, State> {
     };
   }
 
-  loadRegionsPromise: CancelablePromise<any> = null;
+  loadRegionsPromise: CancelablePromise<any> | null = null;
 
   componentDidMount() {
     this.loadRegionsPromise = makePromiseCancelable(this.loadRegions());
@@ -158,7 +158,7 @@ export class ConfigEditor extends PureComponent<Props, State> {
           )}
           {options.jsonData.authType === 'keys' && (
             <div>
-              {options.secureJsonFields.accessKey ? (
+              {options.secureJsonFields?.accessKey ? (
                 <div className="gf-form-inline">
                   <div className="gf-form">
                     <InlineFormLabel className="width-14">Access Key ID</InlineFormLabel>
@@ -190,7 +190,7 @@ export class ConfigEditor extends PureComponent<Props, State> {
                   </div>
                 </div>
               )}
-              {options.secureJsonFields.secretKey ? (
+              {options.secureJsonFields?.secretKey ? (
                 <div className="gf-form-inline">
                   <div className="gf-form">
                     <InlineFormLabel className="width-14">Secret Access Key</InlineFormLabel>

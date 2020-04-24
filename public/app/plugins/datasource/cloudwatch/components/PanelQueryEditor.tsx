@@ -37,7 +37,7 @@ export class PanelQueryEditor extends PureComponent<Props, State> {
                 { label: 'Metrics', value: ExploreMode.Metrics },
                 { label: 'Logs', value: ExploreMode.Logs },
               ]}
-              onChange={({ value }) => this.onQueryModeChange(value)}
+              onChange={({ value }) => this.onQueryModeChange(value ?? ExploreMode.Metrics)}
             />
           </QueryInlineField>
         )}

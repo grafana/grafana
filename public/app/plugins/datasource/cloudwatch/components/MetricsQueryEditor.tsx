@@ -168,7 +168,7 @@ export class MetricsQueryEditor extends PureComponent<Props, State> {
                 </tr>
               </thead>
               <tbody>
-                {data?.series[0]?.meta?.gmdMeta.map(({ ID, Expression, Period }: any) => (
+                {data?.series?.[0]?.meta?.gmdMeta?.map(({ ID, Expression, Period }: any) => (
                   <tr key={ID}>
                     <td>{ID}</td>
                     <td>{Expression}</td>

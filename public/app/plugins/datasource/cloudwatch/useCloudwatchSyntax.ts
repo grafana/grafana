@@ -38,7 +38,7 @@ const useInitLanguageProvider = (languageProvider: CloudWatchLanguageProvider, a
  */
 const useCloudwatchSyntax = (languageProvider: CloudWatchLanguageProvider, languageProviderInitialized: boolean) => {
   // State
-  const [syntax, setSyntax] = useState<Grammar>(null);
+  const [syntax, setSyntax] = useState<Grammar | null>(null);
 
   // Effects
   useEffect(() => {

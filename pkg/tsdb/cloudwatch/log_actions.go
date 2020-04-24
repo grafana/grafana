@@ -185,7 +185,7 @@ func (e *CloudWatchExecutor) executeStartQuery(ctx context.Context, logsClient c
 	}
 
 	if !startTime.Before(endTime) {
-		return nil, fmt.Errorf("Invalid time range: Start time must be before end time")
+		return nil, fmt.Errorf("invalid time range: Start time must be before end time")
 	}
 
 	startQueryInput := &cloudwatchlogs.StartQueryInput{

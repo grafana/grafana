@@ -93,14 +93,12 @@ export class CloudWatchLanguageProvider extends LanguageProvider {
 
   fetchFields = _.throttle(async (logGroups: string[]) => {
     const results = await Promise.all(
-      logGroups.map(logGroup => {
-        return this.datasource.getLogGroupFields({ logGroupName: logGroup });
-      })
+      logGroups.map(logGroup => this.datasource.getLogGroupFields({ logGroupName: logGroup }))
     );
 
     return [
       ...new Set<string>(
-        results.reduce((acc: string[], cur) => acc.concat(cur.logGroupFields.map(f => f.name)), [])
+        results.reduce((acc: string[], cur) => acc.concat(cur.logGroupFields?.map(f => f.name) as string[]), [])
       ).values(),
     ];
   }, 30 * 1000);
@@ -118,15 +116,15 @@ export class CloudWatchLanguageProvider extends LanguageProvider {
     const { value } = input;
 
     // Get tokens
-    const tokens = value.data.get('tokens');
+    const tokens = value?.data.get('tokens');
 
     if (!tokens || !tokens.length) {
       return { suggestions: [] };
     }
 
     const curToken: Token = tokens.filter(
-      (toke: any) =>
-        toke.offsets.start <= value.selection.start.offset && toke.offsets.end >= value.selection.start.offset
+      (token: any) =>
+        token.offsets.start <= value!.selection?.start?.offset && token.offsets.end >= value!.selection?.start?.offset
     )[0];
     const isFirstToken = curToken.prev === null || curToken.prev === undefined;
     const prevToken = prevNonWhitespaceToken(curToken);
@@ -157,7 +155,7 @@ export class CloudWatchLanguageProvider extends LanguageProvider {
 
     if (curToken.content === '(' && prevToken != null) {
       if (funcsWithFieldArgs.includes(prevToken.content.toLowerCase()) && prevToken.types.includes('function')) {
-        const suggs = await this.getFieldCompletionItems(context.logGroupNames);
+        const suggs = await this.getFieldCompletionItems(context?.logGroupNames ?? []);
         return suggs;
       }
     }
@@ -172,17 +170,17 @@ export class CloudWatchLanguageProvider extends LanguageProvider {
     //   console.log(`Previous token: '${prevToken.content}'`);
     // }
 
-    const isCommandStart = isFirstToken || (!isFirstToken && prevToken.types.includes('command-separator'));
+    const isCommandStart = isFirstToken || (!isFirstToken && prevToken?.types.includes('command-separator'));
     //console.log(`Is command start? ${isCommandStart}`);
     if (isCommandStart) {
       return this.getCommandCompletionItems();
     } else if (!isFirstToken) {
-      if (prevToken.types.includes('keyword')) {
+      if (prevToken?.types.includes('keyword')) {
         return this.handleKeyword(prevToken, context);
       }
 
-      if (prevToken.types.includes('comparison-operator')) {
-        const suggs = await this.getFieldCompletionItems(context.logGroupNames);
+      if (prevToken?.types.includes('comparison-operator')) {
+        const suggs = await this.getFieldCompletionItems(context?.logGroupNames ?? []);
         const boolFuncSuggs = this.getBoolFuncCompletionItems();
         const numFuncSuggs = this.getNumericFuncCompletionItems();
 
@@ -203,9 +201,9 @@ export class CloudWatchLanguageProvider extends LanguageProvider {
     };
   }
 
-  handleKeyword = async (token: Token, context: TypeaheadContext): Promise<TypeaheadOutput | null> => {
+  handleKeyword = async (token: Token, context?: TypeaheadContext): Promise<TypeaheadOutput | null> => {
     if (token.content.toLowerCase() === 'by') {
-      const suggs = await this.getFieldCompletionItems(context.logGroupNames);
+      const suggs = await this.getFieldCompletionItems(context?.logGroupNames ?? []);
       const functionSuggestions = [
         { prefixMatch: true, label: 'Functions', items: STRING_FUNCTIONS.concat(DATETIME_FUNCTIONS, IP_FUNCTIONS) },
       ];
@@ -228,8 +226,8 @@ export class CloudWatchLanguageProvider extends LanguageProvider {
 
     if (queryCommand === 'sort') {
       if (currentTokenIsFirstArg) {
-        return await this.getFieldCompletionItems(context.logGroupNames);
-      } else if (prevToken.types.includes('field-name')) {
+        return await this.getFieldCompletionItems(context.logGroupNames ?? []);
+      } else if (prevToken?.types.includes('field-name')) {
         // suggest sort options
         return {
           suggestions: [
@@ -250,20 +248,20 @@ export class CloudWatchLanguageProvider extends LanguageProvider {
 
     if (queryCommand === 'parse') {
       if (currentTokenIsFirstArg) {
-        return await this.getFieldCompletionItems(context.logGroupNames);
+        return await this.getFieldCompletionItems(context.logGroupNames ?? []);
       }
     }
 
-    let typeaheadOutput: TypeaheadOutput;
+    let typeaheadOutput: TypeaheadOutput | null = null;
     if (
-      (commandToken.next.types.includes('whitespace') && commandToken.next.next === null) ||
+      (commandToken.next?.types.includes('whitespace') && commandToken.next.next === null) ||
       nextNonWhitespaceToken(commandToken) === curToken ||
       (curToken.content === ',' && curToken.types.includes('punctuation')) ||
-      (curToken.prev.content === ',' && curToken.prev.types.includes('punctuation'))
+      (curToken.prev?.content === ',' && curToken.prev.types.includes('punctuation'))
     ) {
       if (['display', 'fields'].includes(queryCommand)) {
         // Current token comes straight after command OR after comma
-        typeaheadOutput = await this.getFieldCompletionItems(context.logGroupNames);
+        typeaheadOutput = await this.getFieldCompletionItems(context.logGroupNames ?? []);
         typeaheadOutput.suggestions.push(...this.getFunctionCompletionItems().suggestions);
 
         return typeaheadOutput;
@@ -271,7 +269,7 @@ export class CloudWatchLanguageProvider extends LanguageProvider {
         typeaheadOutput = this.getStatsAggCompletionItems();
       } else if (queryCommand === 'filter') {
         if (currentTokenIsFirstArg) {
-          const sugg = await this.getFieldCompletionItems(context.logGroupNames);
+          const sugg = await this.getFieldCompletionItems(context.logGroupNames ?? []);
           const boolFuncs = this.getBoolFuncCompletionItems();
           sugg.suggestions.push(...boolFuncs.suggestions);
           return sugg;
@@ -280,14 +278,14 @@ export class CloudWatchLanguageProvider extends LanguageProvider {
 
       if (
         (curToken.content === ',' && curToken.types.includes('punctuation')) ||
-        (commandToken.next.types.includes('whitespace') && commandToken.next.next === null)
+        (commandToken.next?.types.includes('whitespace') && commandToken.next.next === null)
       ) {
-        typeaheadOutput.suggestions.forEach(group => {
+        typeaheadOutput?.suggestions.forEach(group => {
           group.skipFilter = true;
         });
       }
 
-      return typeaheadOutput;
+      return typeaheadOutput!;
     }
 
     return { suggestions: [] };
@@ -301,7 +299,7 @@ export class CloudWatchLanguageProvider extends LanguageProvider {
       const isFirstCommand = thisToken.types.includes('query-command') && thisToken.prev === null;
       if (thisToken.types.includes('command-separator') || isFirstCommand) {
         // next token should be command
-        if (!isFirstCommand && thisToken.next.types.includes('query-command')) {
+        if (!isFirstCommand && thisToken.next?.types.includes('query-command')) {
           return thisToken.next;
         } else {
           return thisToken;

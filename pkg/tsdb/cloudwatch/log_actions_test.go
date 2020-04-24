@@ -109,8 +109,10 @@ func TestExecuteStartQuery(t *testing.T) {
 
 	response, err := executor.executeStartQuery(context.Background(), logsClient, params, timeRange)
 
-	assert.Equal(t, nil, response)
-	assert.Equal(t, fmt.Errorf("Invalid time range: Start time must be before end time"), err)
+	var expectedResponse *cloudwatchlogs.StartQueryOutput = nil
+
+	assert.Equal(t, expectedResponse, response)
+	assert.Equal(t, fmt.Errorf("invalid time range: Start time must be before end time"), err)
 
 }
 
@@ -211,5 +213,6 @@ func TestHandleGetQueryResults(t *testing.T) {
 	}
 
 	assert.Equal(t, nil, err)
-	assert.Equal(t, expectedFrame, frame)
+	assert.ElementsMatch(t, expectedFrame.Fields, frame.Fields)
+	assert.Equal(t, expectedFrame.Meta, frame.Meta)
 }
