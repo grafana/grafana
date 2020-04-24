@@ -1,4 +1,4 @@
-import React, { FC, useCallback, useRef, useEffect } from 'react';
+import React, { FC, useCallback, useRef, useEffect, CSSProperties } from 'react';
 import { css, cx } from 'emotion';
 import { GrafanaTheme } from '@grafana/data';
 import { e2e } from '@grafana/e2e';
@@ -12,11 +12,12 @@ export interface Props {
   editable?: boolean;
   onTagSelected: (name: string) => any;
   onToggleChecked?: OnToggleChecked;
+  style?: CSSProperties;
 }
 
 const { selectors } = e2e.pages.Dashboards;
 
-export const SearchItem: FC<Props> = ({ item, editable, onToggleChecked, onTagSelected }) => {
+export const SearchItem: FC<Props> = ({ item, editable, onToggleChecked, onTagSelected, style }) => {
   const theme = useTheme();
   const styles = getResultsItemStyles(theme);
   const inputEl = useRef<HTMLInputElement>(null);
@@ -60,6 +61,7 @@ export const SearchItem: FC<Props> = ({ item, editable, onToggleChecked, onTagSe
 
   return (
     <li
+      style={style}
       aria-label={selectors.dashboards(item.title)}
       className={cx(styles.wrapper, { [styles.selected]: item.selected })}
     >
@@ -83,7 +85,6 @@ const getResultsItemStyles = stylesFactory((theme: GrafanaTheme) => ({
     ${styleMixins.listItem(theme)};
     display: flex;
     align-items: center;
-    margin: ${theme.spacing.xxs};
     padding: 0 ${theme.spacing.sm};
     min-height: 37px;
 

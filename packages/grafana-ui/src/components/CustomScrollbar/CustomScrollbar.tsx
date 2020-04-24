@@ -124,7 +124,7 @@ export class CustomScrollbar extends Component<Props> {
         autoHideTimeout={autoHideTimeout}
         hideTracksWhenNotNeeded={hideTracksWhenNotNeeded}
         // These autoHeightMin & autoHeightMax options affect firefox and chrome differently.
-        // Before these where set to inhert but that caused problems with cut of legends in firefox
+        // Before these where set to inherit but that caused problems with cut of legends in firefox
         autoHeightMax={autoHeightMax}
         autoHeightMin={autoHeightMin}
         renderTrackHorizontal={this.renderTrackHorizontal}

@@ -25,22 +25,32 @@ describe('getFieldLinksForExplore', () => {
     expect(links[0].title).toBe('external');
   });
 
+  it('returns generates title for external link', () => {
+    const { field, range } = setup({
+      title: '',
+      url: 'http://regionalhost',
+    });
+    const links = getFieldLinksForExplore(field, 0, jest.fn(), range);
+
+    expect(links[0].href).toBe('http://regionalhost');
+    expect(links[0].title).toBe('regionalhost');
+  });
+
   it('returns correct link model for internal link', () => {
     const { field, range } = setup({
-      title: 'test',
+      title: '',
       url: 'query_1',
       meta: {
         datasourceUid: 'uid_1',
       },
     });
     const splitfn = jest.fn();
-
     const links = getFieldLinksForExplore(field, 0, splitfn, range);
 
     expect(links[0].href).toBe(
       '/explore?left={"range":{"from":"now-1h","to":"now"},"datasource":"test_ds","queries":[{"query":"query_1"}],"mode":"Metrics","ui":{"showingGraph":true,"showingTable":true,"showingLogs":true}}'
     );
-    expect(links[0].title).toBe('test');
+    expect(links[0].title).toBe('test_ds');
     links[0].onClick({});
     expect(splitfn).toBeCalledWith({ datasourceUid: 'uid_1', query: 'query_1' });
   });
