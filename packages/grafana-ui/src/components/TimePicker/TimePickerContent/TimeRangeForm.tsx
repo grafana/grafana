@@ -107,6 +107,7 @@ export const TimeRangeForm: React.FC<Props> = props => {
         onApply={onApply}
         onClose={() => setOpen(false)}
         onChange={onChange}
+        timeZone={timeZone}
       />
     </>
   );

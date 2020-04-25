@@ -1,7 +1,7 @@
 import React, { memo, useState, useEffect, useCallback } from 'react';
 import { css } from 'emotion';
 import Calendar from 'react-calendar/dist/entry.nostyle';
-import { GrafanaTheme, DateTime, dateTime } from '@grafana/data';
+import { GrafanaTheme, DateTime, dateTime, TimeZone, dateTimeParse } from '@grafana/data';
 import { useTheme, stylesFactory } from '../../../themes';
 import { TimePickerTitle } from './TimePickerTitle';
 import { Button } from '../../Button';
@@ -197,6 +197,7 @@ interface Props {
   onApply: () => void;
   onChange: (from: DateTime, to: DateTime) => void;
   isFullscreen: boolean;
+  timeZone?: TimeZone;
 }
 
 const stopPropagation = (event: React.MouseEvent<HTMLDivElement>) => event.stopPropagation();
@@ -246,10 +247,10 @@ const Header = memo<Props>(({ onClose }) => {
   );
 });
 
-const Body = memo<Props>(({ onChange, from, to }) => {
+const Body = memo<Props>(({ onChange, from, to, timeZone }) => {
   const [value, setValue] = useState<Date[]>();
   const theme = useTheme();
-  const onCalendarChange = useOnCalendarChange(onChange);
+  const onCalendarChange = useOnCalendarChange(onChange, timeZone);
   const styles = getBodyStyles(theme);
 
   useEffect(() => {
@@ -298,15 +299,22 @@ function inputToValue(from: DateTime, to: DateTime): Date[] {
   return [fromAsDate, toAsDate];
 }
 
-function useOnCalendarChange(onChange: (from: DateTime, to: DateTime) => void) {
+function useOnCalendarChange(onChange: (from: DateTime, to: DateTime) => void, timeZone?: TimeZone) {
   return useCallback(
     (value: Date | Date[]) => {
       if (!Array.isArray(value)) {
         return console.error('onCalendarChange: should be run in selectRange={true}');
       }
-      const [from, to] = value;
-      onChange(dateTime(from), dateTime(to));
+
+      const from = dateTimeParse(dateInfo(value[0]), { timeZone });
+      const to = dateTimeParse(dateInfo(value[1]), { timeZone });
+
+      onChange(from, to);
     },
     [onChange]
   );
+}
+
+function dateInfo(date: Date): number[] {
+  return [date.getFullYear(), date.getMonth(), date.getDate(), date.getHours(), date.getMinutes(), date.getSeconds()];
 }
