@@ -8,7 +8,6 @@ type OAuthInfo struct {
 	EmailAttributeName     string
 	EmailAttributePath     string
 	RoleAttributePath      string
-	OrgsAttributePath      string
 	AllowedDomains         []string
 	HostedDomain           string
 	ApiUrl                 string
@@ -18,6 +17,13 @@ type OAuthInfo struct {
 	TlsClientKey           string
 	TlsClientCa            string
 	TlsSkipVerify          bool
+	GroupMappings          []OAuthGroupMapping
+}
+
+type OAuthGroupMapping struct {
+	RoleAttributePath string
+	Role              string
+	OrgId             int
 }
 
 type OAuther struct {

@@ -184,8 +184,9 @@ Payload:
 
 Config:
 ```bash
+[auth.generic_oauth.group_mapping]
 role_attribute_path = role
-orgs_attribute_path = 2
+org_id = 2
 ```
 
 **Advanced example:**
@@ -210,6 +211,10 @@ Payload:
 
 Config:
 ```bash
-role_attribute_path = contains(info.groups[*], 'admin') && 'Admin' || contains(info.groups[*], 'editor') && 'Editor' || 'Viewer'
-orgs_attribute_path = contains(info.groups[*], 'admin') && 1,2 || contains(info.groups[*], 'editor') && 1 || 2
+[auth.generic_oauth.group_mapping]
+role_attribute_path = contains(info.groups[*], 'admin') && 'Admin' || contains(info.groups[*], 'editor') && 'Editor'
+org_id = 1
+[auth.generic_oauth.group_mapping]
+role_attribute_path = contains(info.groups[*], 'admin') && 'Admin' || 'Viewer'
+org_id = 2
 ```

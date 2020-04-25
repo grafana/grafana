@@ -12,6 +12,7 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/setting"
 	"golang.org/x/oauth2"
 )
 
@@ -325,6 +326,179 @@ func TestUserInfoSearchesForEmailAndRole(t *testing.T) {
 				require.Equal(t, test.ExpectedEmail, actualResult.Email)
 				require.Equal(t, test.ExpectedEmail, actualResult.Login)
 				require.Equal(t, test.ExpectedRole, actualResult.Role)
+			})
+		}
+	})
+}
+
+func TestSearchJSONForGroupMapping(t *testing.T) {
+	t.Run("Given a generic OAuth provider", func(t *testing.T) {
+		provider := SocialGenericOAuth{
+			SocialBase: &SocialBase{
+				log: log.New("generic_oauth_test"),
+			},
+		}
+
+		groupMappings := []setting.OAuthGroupMapping{
+			setting.OAuthGroupMapping{
+				RoleAttributePath: "contains(groups[*], 'admin') && 'Admin' || contains(groups[*], 'editor') && 'Editor'",
+				OrgId:             1,
+			},
+			setting.OAuthGroupMapping{
+				RoleAttributePath: "contains(groups[*], 'admin') && 'Admin' || 'Viewer'",
+				OrgId:             2,
+			},
+		}
+		roleMappings := []setting.OAuthGroupMapping{
+			setting.OAuthGroupMapping{
+				RoleAttributePath: "role",
+				OrgId:             1,
+			},
+			setting.OAuthGroupMapping{
+				RoleAttributePath: "'Viewer'",
+				OrgId:             2,
+			},
+		}
+
+		tests := []struct {
+			Name           string
+			APIURLReponse  interface{}
+			OAuth2Extra    interface{}
+			GroupMappings  []setting.OAuthGroupMapping
+			ExpectedResult []setting.OAuthGroupMapping
+		}{
+			{
+				Name:          "Given an empty user info JSON response and empty JMES path",
+				APIURLReponse: map[string]interface{}{},
+				OAuth2Extra: map[string]interface{}{
+					"id_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiQWRtaW4iLCJlbWFpbCI6ImpvaG4uZG9lQGV4YW1wbGUuY29tIn0.9PtHcCaXxZa2HDlASyKIaFGfOKlw2ILQo32xlvhvhRg",
+				},
+				GroupMappings:  nil,
+				ExpectedResult: nil,
+			},
+			{
+				Name:          "Given an empty user info JSON response and valid JMES path",
+				APIURLReponse: map[string]interface{}{},
+				OAuth2Extra: map[string]interface{}{
+					"id_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiQWRtaW4iLCJlbWFpbCI6ImpvaG4uZG9lQGV4YW1wbGUuY29tIn0.9PtHcCaXxZa2HDlASyKIaFGfOKlw2ILQo32xlvhvhRg",
+				},
+				GroupMappings:  groupMappings,
+				ExpectedResult: nil,
+			},
+			{
+				Name: "Given a simple user info JSON response and simple role mapping",
+				APIURLReponse: map[string]interface{}{
+					"role": "Admin",
+				},
+				OAuth2Extra: map[string]interface{}{
+					"id_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiQWRtaW4iLCJlbWFpbCI6ImpvaG4uZG9lQGV4YW1wbGUuY29tIn0.9PtHcCaXxZa2HDlASyKIaFGfOKlw2ILQo32xlvhvhRg",
+				},
+				GroupMappings: roleMappings,
+				ExpectedResult: []setting.OAuthGroupMapping{
+					setting.OAuthGroupMapping{
+						Role:  "Admin",
+						OrgId: 1,
+					},
+					setting.OAuthGroupMapping{
+						Role:  "Viewer",
+						OrgId: 2,
+					},
+				},
+			},
+			{
+				Name: "Given a simple user info JSON response and valid group mappings for editor",
+				APIURLReponse: map[string]interface{}{
+					"groups": []string{"editor"},
+				},
+				OAuth2Extra: map[string]interface{}{
+					"id_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiQWRtaW4iLCJlbWFpbCI6ImpvaG4uZG9lQGV4YW1wbGUuY29tIn0.9PtHcCaXxZa2HDlASyKIaFGfOKlw2ILQo32xlvhvhRg",
+				},
+				GroupMappings: groupMappings,
+				ExpectedResult: []setting.OAuthGroupMapping{
+					setting.OAuthGroupMapping{
+						Role:  "Editor",
+						OrgId: 1,
+					},
+					setting.OAuthGroupMapping{
+						Role:  "Viewer",
+						OrgId: 2,
+					},
+				},
+			},
+			{
+				Name: "Given a simple user info JSON response and valid group mappings for admin",
+				APIURLReponse: map[string]interface{}{
+					"groups": []string{"admin"},
+				},
+				OAuth2Extra: map[string]interface{}{
+					"id_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiQWRtaW4iLCJlbWFpbCI6ImpvaG4uZG9lQGV4YW1wbGUuY29tIn0.9PtHcCaXxZa2HDlASyKIaFGfOKlw2ILQo32xlvhvhRg",
+				},
+				GroupMappings: groupMappings,
+				ExpectedResult: []setting.OAuthGroupMapping{
+					setting.OAuthGroupMapping{
+						Role:  "Admin",
+						OrgId: 1,
+					},
+					setting.OAuthGroupMapping{
+						Role:  "Admin",
+						OrgId: 2,
+					},
+				},
+			},
+			{
+				Name: "Given a simple user info JSON response and valid group mappings for undefined group",
+				APIURLReponse: map[string]interface{}{
+					"groups": []string{"dne"},
+				},
+				OAuth2Extra: map[string]interface{}{
+					"id_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiQWRtaW4iLCJlbWFpbCI6ImpvaG4uZG9lQGV4YW1wbGUuY29tIn0.9PtHcCaXxZa2HDlASyKIaFGfOKlw2ILQo32xlvhvhRg",
+				},
+				GroupMappings: groupMappings,
+				ExpectedResult: []setting.OAuthGroupMapping{
+					setting.OAuthGroupMapping{
+						Role:  "",
+						OrgId: 1,
+					},
+					setting.OAuthGroupMapping{
+						Role:  "Viewer",
+						OrgId: 2,
+					},
+				},
+			},
+		}
+
+		for _, test := range tests {
+			provider.groupMappings = test.GroupMappings
+			t.Run(test.Name, func(t *testing.T) {
+				response, _ := json.Marshal(test.APIURLReponse)
+				ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+					w.WriteHeader(http.StatusOK)
+					w.Header().Set("Content-Type", "application/json")
+					_, _ = io.WriteString(w, string(response))
+				}))
+				provider.apiUrl = ts.URL
+				staticToken := oauth2.Token{
+					AccessToken:  "",
+					TokenType:    "",
+					RefreshToken: "",
+					Expiry:       time.Now(),
+				}
+
+				token := staticToken.WithExtra(test.OAuth2Extra)
+				actualResult, _ := provider.UserInfo(ts.Client(), token)
+				if test.ExpectedResult == nil && actualResult.GroupMappings != nil {
+					t.Errorf("Expected nil, got %v", actualResult)
+					return
+				}
+				if len(test.ExpectedResult) != len(actualResult.GroupMappings) {
+					t.Errorf("Expected result length is %d, got %d", len(test.ExpectedResult), len(actualResult.GroupMappings))
+					return
+				}
+				for i, result := range actualResult.GroupMappings {
+					require.Equal(t, test.ExpectedResult[i].Role, result.Role)
+					require.Equal(t, test.ExpectedResult[i].OrgId, result.OrgId)
+				}
+				//require.Equal(t, test.ExpectedResult[0].Role, actualResult.GroupMappings[0].Role)
 			})
 		}
 	})
