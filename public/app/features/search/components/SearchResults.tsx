@@ -6,7 +6,7 @@ import { GrafanaTheme } from '@grafana/data';
 import { stylesFactory, useTheme, Spinner } from '@grafana/ui';
 import { DashboardSection, OnToggleChecked, SearchLayout } from '../types';
 import { getVisibleItems } from '../utils';
-import { SEARCH_ITEM_HEIGHT, SEARCH_ITEM_MARGIN } from '../constants';
+import { SEARCH_ITEM_HEIGHT } from '../constants';
 import { SearchItem } from './SearchItem';
 import { SectionHeader } from './SectionHeader';
 
@@ -61,7 +61,7 @@ export const SearchResults: FC<Props> = ({
               aria-label="Search items"
               className={styles.wrapper}
               innerElementType="ul"
-              itemSize={SEARCH_ITEM_HEIGHT + SEARCH_ITEM_MARGIN}
+              itemSize={SEARCH_ITEM_HEIGHT}
               height={height}
               itemCount={items.length}
               width="100%"
@@ -80,7 +80,7 @@ export const SearchResults: FC<Props> = ({
   if (loading) {
     return <Spinner className={styles.spinner} />;
   } else if (!results || !results.length) {
-    return <h6>No dashboards matching your query were found.</h6>;
+    return <div className={styles.noResults}>No dashboards matching your query were found.</div>;
   }
 
   return (
@@ -119,6 +119,11 @@ const getSectionStyles = stylesFactory((theme: GrafanaTheme) => {
       border: 1px solid ${theme.colors.border1};
       border-radius: 3px;
       height: 100%;
+    `,
+    noResults: css`
+      padding: ${md};
+      background: ${theme.colors.bg2};
+      text-style: italic;
     `,
     listModeWrapper: css`
       position: relative;
