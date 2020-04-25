@@ -9,7 +9,6 @@ import {
   DataQueryRequest,
   DataSourceApi,
   dateMath,
-  DefaultTimeZone,
   HistoryItem,
   IntervalValues,
   LogRowModel,
@@ -115,7 +114,8 @@ export function buildQueryTransaction(
   queries: DataQuery[],
   queryOptions: QueryOptions,
   range: TimeRange,
-  scanning: boolean
+  scanning: boolean,
+  timeZone?: TimeZone
 ): QueryTransaction {
   const configuredQueries = queries.map(query => ({ ...query, ...queryOptions }));
   const key = queries.reduce((combinedKey, query) => {
@@ -135,7 +135,7 @@ export function buildQueryTransaction(
     app: CoreApp.Explore,
     dashboardId: 0,
     // TODO probably should be taken from preferences but does not seem to be used anyway.
-    timezone: DefaultTimeZone,
+    timezone: timeZone,
     startTime: Date.now(),
     interval,
     intervalMs,
