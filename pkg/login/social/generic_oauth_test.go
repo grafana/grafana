@@ -342,26 +342,26 @@ func TestSearchJSONForGroupMapping(t *testing.T) {
 		}
 
 		groupMappings := []setting.OAuthGroupMapping{
-			setting.OAuthGroupMapping{
+			{
 				RoleAttributePath: "contains(groups[*], 'admin') && 'Admin'",
 				OrgId:             1,
 				IsGrafanaAdmin:    true,
 			},
-			setting.OAuthGroupMapping{
+			{
 				RoleAttributePath: "contains(groups[*], 'editor') && 'Editor'",
 				OrgId:             1,
 			},
-			setting.OAuthGroupMapping{
+			{
 				RoleAttributePath: "contains(groups[*], 'admin') && 'Admin' || 'Viewer'",
 				OrgId:             2,
 			},
 		}
 		roleMappings := []setting.OAuthGroupMapping{
-			setting.OAuthGroupMapping{
+			{
 				RoleAttributePath: "role",
 				OrgId:             1,
 			},
-			setting.OAuthGroupMapping{
+			{
 				RoleAttributePath: "'Viewer'",
 				OrgId:             2,
 			},
@@ -402,11 +402,11 @@ func TestSearchJSONForGroupMapping(t *testing.T) {
 				},
 				GroupMappings: roleMappings,
 				ExpectedResult: []setting.OAuthGroupMapping{
-					setting.OAuthGroupMapping{
+					{
 						Role:  "Admin",
 						OrgId: 1,
 					},
-					setting.OAuthGroupMapping{
+					{
 						Role:  "Viewer",
 						OrgId: 2,
 					},
@@ -422,11 +422,11 @@ func TestSearchJSONForGroupMapping(t *testing.T) {
 				},
 				GroupMappings: groupMappings,
 				ExpectedResult: []setting.OAuthGroupMapping{
-					setting.OAuthGroupMapping{
+					{
 						Role:  "Editor",
 						OrgId: 1,
 					},
-					setting.OAuthGroupMapping{
+					{
 						Role:  "Viewer",
 						OrgId: 2,
 					},
@@ -442,11 +442,11 @@ func TestSearchJSONForGroupMapping(t *testing.T) {
 				},
 				GroupMappings: groupMappings,
 				ExpectedResult: []setting.OAuthGroupMapping{
-					setting.OAuthGroupMapping{
+					{
 						Role:  "Admin",
 						OrgId: 1,
 					},
-					setting.OAuthGroupMapping{
+					{
 						Role:  "Admin",
 						OrgId: 2,
 					},
@@ -462,7 +462,7 @@ func TestSearchJSONForGroupMapping(t *testing.T) {
 				},
 				GroupMappings: groupMappings,
 				ExpectedResult: []setting.OAuthGroupMapping{
-					setting.OAuthGroupMapping{
+					{
 						Role:  "Viewer",
 						OrgId: 2,
 					},
