@@ -99,7 +99,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
     `,
     closeBtn: css`
       right: -5px;
-      top: 5px;
+      top: 2px;
       z-index: 1;
       position: absolute;
     `,
