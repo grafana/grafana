@@ -33,7 +33,7 @@ export const Layout: React.FC<LayoutProps> = ({
   justify = 'flex-start',
   align = 'normal',
   wrap = false,
-  width = 'auto',
+  width = '100%',
   ...rest
 }) => {
   const theme = useTheme();
