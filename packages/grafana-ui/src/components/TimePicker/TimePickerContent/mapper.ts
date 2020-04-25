@@ -9,8 +9,8 @@ export const mapRangeToTimeOption = (range: TimeRange, timeZone?: TimeZone): Tim
   const to = dateTimeFormat(range.to, { timeZone });
 
   return {
-    from: dateTimeFormatISO(range.from),
-    to: dateTimeFormatISO(range.to),
+    from: dateTimeFormatISO(range.from, { timeZone }),
+    to: dateTimeFormatISO(range.to, { timeZone }),
     section: 3,
     display: `${from} to ${to}`,
   };
