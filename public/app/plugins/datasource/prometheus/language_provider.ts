@@ -295,11 +295,11 @@ export default class PromQlLanguageProvider extends LanguageProvider {
   };
 
   getLabelCompletionItems = async ({
-    text,
-    wrapperClasses,
-    labelKey,
-    value,
-  }: TypeaheadInput): Promise<TypeaheadOutput> => {
+                                     text,
+                                     wrapperClasses,
+                                     labelKey,
+                                     value,
+                                   }: TypeaheadInput): Promise<TypeaheadOutput> => {
     const suggestions: CompletionItemGroup[] = [];
     const line = value.anchorBlock.getText();
     const cursorOffset = value.selection.anchor.offset;
