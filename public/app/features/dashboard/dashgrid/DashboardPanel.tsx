@@ -74,7 +74,7 @@ export class DashboardPanelUnconnected extends PureComponent<Props, State> {
     const { dashboard, panel, isViewing, isInView, isEditing, updateLocation } = this.props;
 
     return (
-      <AutoSizer style={autoSizerStyle}>
+      <AutoSizer>
         {({ width, height }) => {
           if (width === 0) {
             return null;

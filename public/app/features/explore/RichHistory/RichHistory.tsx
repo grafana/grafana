@@ -65,11 +65,6 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       cursor: pointer;
       font-size: ${theme.typography.size.lg};
     `,
-    close: css`
-      position: absolute;
-      right: ${theme.spacing.sm};
-      cursor: pointer;
-    `,
     tabs: css`
       padding-top: ${theme.spacing.sm};
       border-color: ${theme.colors.formInputBorder};
@@ -145,8 +140,8 @@ class UnThemedRichHistory extends PureComponent<RichHistoryProps, RichHistorySta
   updateFilters() {
     this.state.activeDatasourceOnly && this.props.activeDatasourceInstance
       ? this.onSelectDatasourceFilters([
-          { label: this.props.activeDatasourceInstance, value: this.props.activeDatasourceInstance },
-        ])
+        { label: this.props.activeDatasourceInstance, value: this.props.activeDatasourceInstance },
+      ])
       : this.onSelectDatasourceFilters(this.state.datasourceFilters);
   }
 
