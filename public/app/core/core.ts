@@ -18,7 +18,6 @@ import './services/search_srv';
 import './services/ng_react';
 import { colors, JsonExplorer } from '@grafana/ui/';
 
-import { searchDirective } from './components/search/search';
 import { infoPopover } from './components/info_popover';
 import { arrayJoin } from './directives/array_join';
 import { liveSrv } from './live/live_srv';
@@ -42,8 +41,6 @@ import { profiler } from './profiler';
 import { registerAngularDirectives } from './angular_wrappers';
 import { updateLegendValues } from './time_series2';
 import TimeSeries from './time_series2';
-import { searchResultsDirective } from './components/search/search_results';
-import { manageDashboardsDirective } from './components/manage_dashboards/manage_dashboards';
 import { NavModel } from '@grafana/data';
 
 export {
@@ -51,7 +48,6 @@ export {
   registerAngularDirectives,
   arrayJoin,
   coreModule,
-  searchDirective,
   liveSrv,
   switchDirective,
   infoPopover,
@@ -69,8 +65,6 @@ export {
   NavModelSrv,
   NavModel,
   geminiScrollbar,
-  manageDashboardsDirective,
   TimeSeries,
   updateLegendValues,
-  searchResultsDirective,
 };

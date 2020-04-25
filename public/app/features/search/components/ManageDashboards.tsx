@@ -11,9 +11,9 @@ import { useManageDashboards } from '../hooks/useManageDashboards';
 import { SearchResultsFilter } from './SearchResultsFilter';
 import { SearchResults } from './SearchResults';
 import { DashboardActions } from './DashboardActions';
-import { SearchField } from './SearchField';
 import { useSearchLayout } from '../hooks/useSearchLayout';
 import { SearchLayout } from '../types';
+import { FilterInput } from 'app/core/components/FilterInput/FilterInput';
 
 export interface Props {
   folderId?: number;
@@ -93,7 +93,13 @@ export const ManageDashboards: FC<Props> = memo(({ folderId, folderUid }) => {
     <div className={styles.container}>
       <div>
         <HorizontalGroup justify="space-between">
-          <SearchField query={query} onChange={onQueryChange} className={styles.searchField} />
+          <FilterInput
+            labelClassName="gf-form--has-input-icon"
+            inputClassName="gf-form-input width-20"
+            value={query.query}
+            onChange={onQueryChange}
+            placeholder={'Search dashboards by name'}
+          />
           <DashboardActions isEditor={isEditor} canEdit={hasEditPermissionInFolders || canSave} folderId={folderId} />
         </HorizontalGroup>
 
@@ -192,19 +198,6 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
   return {
     container: css`
       height: 100%;
-
-      .results-container {
-        padding: 5px 0 0;
-      }
-    `,
-    searchField: css`
-      height: auto;
-      border-bottom: none;
-      padding: 0;
-      margin: 0;
-      input {
-        width: 400px;
-      }
     `,
     results: css`
       display: flex;

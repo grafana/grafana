@@ -59,19 +59,22 @@ function migrateFromAngularSinglestat(panel: PanelModel<Partial<SingleStatBaseOp
       calcs: [reducer ? reducer.id : ReducerID.mean],
     },
     orientation: VizOrientation.Horizontal,
-  };
+  } as any;
 
   const defaults: FieldConfig = {};
 
   if (prevPanel.format) {
     defaults.unit = prevPanel.format;
   }
+
   if (prevPanel.nullPointMode) {
     defaults.nullValueMode = prevPanel.nullPointMode;
   }
+
   if (prevPanel.nullText) {
     defaults.noValue = prevPanel.nullText;
   }
+
   if (prevPanel.decimals || prevPanel.decimals === 0) {
     defaults.decimals = prevPanel.decimals;
   }
@@ -92,6 +95,7 @@ function migrateFromAngularSinglestat(panel: PanelModel<Partial<SingleStatBaseOp
         thresholds.push({ value: -Infinity, color });
       }
     }
+
     defaults.thresholds = {
       mode: ThresholdsMode.Absolute,
       steps: thresholds,

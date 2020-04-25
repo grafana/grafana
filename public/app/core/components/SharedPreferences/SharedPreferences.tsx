@@ -3,7 +3,7 @@ import React, { PureComponent } from 'react';
 import { InlineFormLabel, LegacyForms } from '@grafana/ui';
 const { Select } = LegacyForms;
 
-import { DashboardSearchHit, DashboardSearchHitType } from 'app/types';
+import { DashboardSearchHit, DashboardSearchItemType } from 'app/features/search/types';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { getTimeZoneGroups } from '@grafana/data';
 
@@ -57,7 +57,7 @@ export class SharedPreferences extends PureComponent<Props, State> {
       id: 0,
       title: 'Default',
       tags: [],
-      type: '' as DashboardSearchHitType,
+      type: '' as DashboardSearchItemType,
       uid: '',
       uri: '',
       url: '',
@@ -67,6 +67,7 @@ export class SharedPreferences extends PureComponent<Props, State> {
       folderUrl: '',
       isStarred: false,
       slug: '',
+      items: [],
     };
 
     if (prefs.homeDashboardId > 0 && !dashboards.find(d => d.id === prefs.homeDashboardId)) {
