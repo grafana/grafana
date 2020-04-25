@@ -140,6 +140,12 @@ export function deleteQueryInRichHistory(richHistory: RichHistoryQuery[], ts: nu
   }
 }
 
+export function deleteQueryInRichHistory(richHistory: RichHistoryQuery[], ts: number) {
+  const updatedQueries = richHistory.filter(query => query.ts !== ts);
+  store.setObject(RICH_HISTORY_KEY, updatedQueries);
+  return updatedQueries;
+}
+
 export const sortQueries = (array: RichHistoryQuery[], sortOrder: SortOrder) => {
   let sortFunc;
 

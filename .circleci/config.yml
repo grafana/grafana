@@ -54,7 +54,6 @@ commands:
             curl -fLO https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v${VERSION}/grabpl
             chmod +x grabpl
             mv grabpl /tmp
-
 jobs:
   build-backend:
     description: "Build a certain variant of Grafana back-end binaries"

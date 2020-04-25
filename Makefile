@@ -19,14 +19,17 @@ deps-go: ## Install backend dependencies.
 
 deps-js: node_modules ## Install frontend dependencies.
 
-deps: deps-js ## Install all dependencies.
+deps-vendor: ## Vendor resets the main module's vendor directory to include all packages
+	@echo "deps go vendor"
+	$(GO) mod vendor
+
+deps: deps-js deps-vendor ## Install all dependencies.
 
 node_modules: package.json yarn.lock ## Install node modules.
 	@echo "install frontend dependencies"
 	yarn install --pure-lockfile --no-progress
 
 ##@ Building
-
 build-go: ## Build all Go binaries.
 	@echo "build go files"
 	$(GO) run build.go build

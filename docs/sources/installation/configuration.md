@@ -840,6 +840,10 @@ Set to true if you want to test alpha plugins that are not yet ready for general
 
 Keys of alpha features to enable, separated by space. Available alpha features are: `transformations`
 
+## [tracing]
+### type
+Either `jaeger` or `zipkin`, it’s your choice (default jaeger).
+
 ## [tracing.jaeger]
 
 Configure Grafana's Jaeger client for distributed tracing.
@@ -898,6 +902,59 @@ Can be set with the environment variable and value `JAEGER_PROPAGATION=b3`.
 Default value is `false`.
 
 Setting this to `true` turns off shared RPC spans. Leaving this available is the most common setting when using Zipkin elsewhere in your infrastructure.
+
+### tracing128bit
+
+Default value is `false`.
+
+Setting this to `true` it will be a 128 bit trace id else a 64 bit trace id
+
+Can't be set with a environment variable.
+
+## [tracing.zipkin]
+
+Configure Grafana's Zipkin client for distributed tracing.
+
+### address
+
+The full url to the zipkin api (ex. http://localhgost:9411/api/v2/spans)
+
+### always_included_tag
+
+Comma-separated list of tags to include in all new spans, such as `tag1:value1,tag2:value2`.
+
+### sampler_type
+
+Default value is `always`.
+
+Specifies the type of sampler: `always`, `never`, `modulo`, `counting` and `boundary`.type
+
+Additionally the jaeger keys mapped:
+* `const`: 
+  * with sample_parm, 0 or false will be `never`
+  * with sample_parm, 1 or true will be `always`
+* `probabilistic` will be mapped to `counting`
+* `rateLimiting` will be mapped to `boundary`
+* `remote` couldn't be mapped, that is jaeger only feature
+
+### sampler_param
+
+Default value is `1`.
+
+This is the sampler configuration parameter. Depending on the value of `sampler_type`, it can be `0`, `1`, or a decimal value in between.
+
+- For `const` sampler, `0` or `1` for always `false`/`true` respectively
+- For `probabilistic` sampler, a probability between `0` and `1.0`
+- For `rateLimiting` sampler, the number of spans per second
+- For `remote` sampler, param is the same as for `probabilistic`
+  and indicates the initial sampling rate before the actual one
+  is received from the mothership
+
+### tracing128bit
+
+Default value is `false`.
+
+Setting this to `true` it will be a 128 bit trace id else a 64 bit trace id
 
 <hr />
 
