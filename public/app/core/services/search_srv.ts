@@ -4,12 +4,8 @@ import impressionSrv from 'app/core/services/impression_srv';
 import store from 'app/core/store';
 import { contextSrv } from 'app/core/services/context_srv';
 import { hasFilters } from 'app/features/search/utils';
-import { DashboardSection, DashboardSearchItemType, DashboardSearchHit } from 'app/features/search/types';
+import { DashboardSection, DashboardSearchItemType, DashboardSearchHit, SearchLayout } from 'app/features/search/types';
 import { backendSrv } from './backend_srv';
-
-interface Sections {
-  [key: string]: Partial<DashboardSection>;
-}
 
 export class SearchSrv {
   recentIsOpen: boolean;
@@ -43,29 +39,28 @@ export class SearchSrv {
 
     return backendSrv.search({ dashboardIds: dashIds }).then(result => {
       return dashIds
-        .map(orderId => {
-          return _.find(result, { id: orderId });
-        })
+        .map(orderId => result.find(result => result.id === orderId))
         .filter(hit => hit && !hit.isStarred) as DashboardSearchHit[];
     });
   }
 
-  private getStarred(sections: DashboardSection) {
+  private getStarred() {
     if (!contextSrv.isSignedIn) {
       return Promise.resolve();
     }
 
     return backendSrv.search({ starred: true, limit: 30 }).then(result => {
-      if (result.length > 0) {
-        (sections as any)['starred'] = {
-          title: 'Starred',
-          icon: 'star',
-          score: -2,
-          expanded: this.starredIsOpen,
-          items: result,
-          type: DashboardSearchItemType.DashFolder,
-        };
+      if (!result?.length) {
+        return Promise.resolve({});
       }
+      return {
+        title: 'Starred',
+        icon: 'star',
+        score: -2,
+        expanded: this.starredIsOpen,
+        items: result,
+        type: DashboardSearchItemType.DashFolder,
+      };
     });
   }
 
@@ -80,7 +75,7 @@ export class SearchSrv {
     }
 
     if (!options.skipStarred && !filters) {
-      promises.push(this.getStarred(sections));
+      promises.push(this.getStarred());
     }
 
     query.folderIds = query.folderIds || [];
@@ -90,72 +85,47 @@ export class SearchSrv {
 
     promises.push(
       backendSrv.search(query).then(results => {
-        return this.handleSearchResult(sections, results);
+        return this.handleSearchResult(results, options.layout === SearchLayout.List);
       })
     );
 
-    return Promise.all(promises).then(() => {
-      return _.sortBy(_.values(sections), 'score');
+    return Promise.all(promises).then(results => {
+      return results.flat();
     });
   }
 
-  private handleSearchResult(sections: Sections, results: DashboardSearchHit[]): any {
+  private handleSearchResult(results: DashboardSearchHit[], flatList = false): any {
     if (results.length === 0) {
-      return sections;
+      return [];
+    }
+    const dbs = results.filter(result => result.type === DashboardSearchItemType.DashDB);
+
+    if (flatList) {
+      return dbs;
     }
 
-    // create folder index
-    for (const hit of results) {
-      if (hit.type === 'dash-folder') {
-        sections[hit.id] = {
-          id: hit.id,
-          uid: hit.uid,
-          title: hit.title,
-          expanded: false,
-          items: [],
-          url: hit.url,
-          icon: 'folder',
-          score: _.keys(sections).length,
-          type: hit.type,
-        };
-      }
+    const folders = results
+      .filter(result => result.type === DashboardSearchItemType.DashFolder)
+      .map(result => ({ ...result, expanded: false, items: [], icon: 'folder' }));
+
+    const sections = folders.map(folder => ({ ...folder, items: dbs.filter(db => db.folderId === folder.id) }));
+
+    const noFolderDbs = results.filter(result => !result.folderId && result.type === DashboardSearchItemType.DashDB);
+    if (noFolderDbs.length) {
+      return [
+        ...sections,
+        {
+          id: 0,
+          title: 'General',
+          items: noFolderDbs,
+          icon: 'folder-open',
+          type: DashboardSearchItemType.DashFolder,
+          expanded: true,
+        },
+      ];
     }
 
-    for (const hit of results) {
-      if (hit.type === 'dash-folder') {
-        continue;
-      }
-
-      let section = sections[hit.folderId || 0];
-      if (!section) {
-        if (hit.folderId) {
-          section = {
-            id: hit.folderId,
-            uid: hit.folderUid,
-            title: hit.folderTitle,
-            url: hit.folderUrl,
-            items: [],
-            icon: 'folder-open',
-            score: _.keys(sections).length,
-            type: DashboardSearchItemType.DashFolder,
-          };
-        } else {
-          section = {
-            id: 0,
-            title: 'General',
-            items: [],
-            icon: 'folder-open',
-            score: _.keys(sections).length,
-            type: DashboardSearchItemType.DashFolder,
-          };
-        }
-        // add section
-        sections[hit.folderId || 0] = section;
-      }
-
-      section.expanded = true;
-      section.items && section.items.push(hit);
-    }
+    return sections;
   }
 
   getDashboardTags() {
