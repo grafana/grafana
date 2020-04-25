@@ -6,7 +6,7 @@ import { GrafanaTheme } from '@grafana/data';
 import { stylesFactory, useTheme, Spinner } from '@grafana/ui';
 import { DashboardSection, OnToggleChecked, SearchLayout } from '../types';
 import { getVisibleItems } from '../utils';
-import { SEARCH_ITEM_HEIGHT } from '../constants';
+import { SEARCH_ITEM_HEIGHT, SEARCH_ITEM_MARGIN } from '../constants';
 import { SearchItem } from './SearchItem';
 import { SectionHeader } from './SectionHeader';
 
@@ -61,14 +61,20 @@ export const SearchResults: FC<Props> = ({
               aria-label="Search items"
               className={styles.wrapper}
               innerElementType="ul"
-              itemSize={SEARCH_ITEM_HEIGHT}
+              itemSize={SEARCH_ITEM_HEIGHT + SEARCH_ITEM_MARGIN}
               height={height}
               itemCount={items.length}
               width="100%"
             >
               {({ index, style }) => {
                 const item = items[index];
-                return <SearchItem key={item.id} {...itemProps} item={item} style={style} />;
+                // The wrapper div is needed as the inner SearchItem has margin-bottom spacing
+                // And without this wrapper there is no room for that margin
+                return (
+                  <div style={style}>
+                    <SearchItem key={item.id} {...itemProps} item={item} />
+                  </div>
+                );
               }}
             </FixedSizeList>
           )}
