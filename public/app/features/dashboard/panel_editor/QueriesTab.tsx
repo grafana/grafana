@@ -179,23 +179,28 @@ export class QueriesTab extends PureComponent<Props, State> {
       <div>
         <div className={styles.dataSourceRow}>
           <div className="gf-form-inline">
+            <div className="gf-form-label">Data source</div>
             <DataSourcePicker datasources={this.datasources} onChange={this.onChangeDataSource} current={currentDS} />
-            <div className="gf-form">
+            <div className="gf-form gf-form--grow">
+              <div className="gf-form-label gf-form-label--grow"></div>
               <div className="gf-form-label">
                 <IconButton name="question-circle" size="lg" />
               </div>
               <div className="gf-form-label">
                 <IconButton name="bug" size="lg" tooltip="Open query inspector" />
               </div>
+              <div className="gf-form-label pointer">
+                <Icon name="angle-right" /> Options
+              </div>
             </div>
           </div>
         </div>
 
-        <QueryOperationRow title="Options">
+        {/* <QueryOperationRow title="Options">
           <div className={styles.topSection}>
             <QueryOptions panel={panel} datasource={currentDS} />
           </div>
-        </QueryOperationRow>
+        </QueryOperationRow> */}
       </div>
     );
   }
