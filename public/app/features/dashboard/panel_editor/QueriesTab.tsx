@@ -1,6 +1,5 @@
 // Libraries
 import React, { PureComponent } from 'react';
-import _ from 'lodash';
 // Components
 import { DataSourcePicker } from 'app/core/components/Select/DataSourcePicker';
 import { QueryOptions } from './QueryOptions';
@@ -14,6 +13,8 @@ import {
   Input,
   Icon,
   IconButton,
+  HorizontalGroup,
+  VerticalGroup,
 } from '@grafana/ui';
 import { getLocationSrv } from '@grafana/runtime';
 import { QueryEditorRows } from './QueryEditorRows';
@@ -24,13 +25,14 @@ import config from 'app/core/config';
 // Types
 import { PanelModel } from '../state/PanelModel';
 import { DashboardModel } from '../state/DashboardModel';
-import { LoadingState, DefaultTimeRange, DataSourceSelectItem, DataQuery, PanelData } from '@grafana/data';
+import { DataQuery, DataSourceSelectItem, DefaultTimeRange, LoadingState, PanelData } from '@grafana/data';
 import { PluginHelp } from 'app/core/components/PluginHelp/PluginHelp';
 import { addQuery } from 'app/core/utils/query';
 import { Unsubscribable } from 'rxjs';
-import { isSharedDashboardQuery, DashboardQueryEditor } from 'app/plugins/datasource/dashboard';
+import { DashboardQueryEditor, isSharedDashboardQuery } from 'app/plugins/datasource/dashboard';
 import { expressionDatasource, ExpressionDatasourceID } from 'app/features/expressions/ExpressionDatasource';
 import { css } from 'emotion';
+import { e2e } from '@grafana/e2e';
 import { QueryOperationRow } from 'app/core/components/QueryOperationRow/QueryOperationRow';
 
 interface Props {
@@ -174,38 +176,28 @@ export class QueriesTab extends PureComponent<Props, State> {
     const { currentDS } = this.state;
 
     return (
-      <>
-        <div className="gf-form-inline">
-          <div className="gf-form gf-form--grow">
-            <div className="gf-form-label">
-              <Icon name="angle-down" />
-            </div>
-            <div className="gf-form-label">Data source</div>
+      <div>
+        <div className={styles.dataSourceRow}>
+          <div className="gf-form-inline">
             <DataSourcePicker datasources={this.datasources} onChange={this.onChangeDataSource} current={currentDS} />
-            <div className="gf-form-label gf-form-label--grow">
-              <IconButton name="question-circle" size="lg" />
+            <div className="gf-form">
+              <div className="gf-form-label">
+                <IconButton name="question-circle" size="lg" />
+              </div>
+              <div className="gf-form-label">
+                <IconButton name="bug" size="lg" tooltip="Open query inspector" />
+              </div>
             </div>
-            <Button variant="secondary">Query inspector</Button>
           </div>
         </div>
-        <QueryOptions panel={panel} datasource={currentDS} />
-      </>
+
+        <QueryOperationRow title="Options">
+          <div className={styles.topSection}>
+            <QueryOptions panel={panel} datasource={currentDS} />
+          </div>
+        </QueryOperationRow>
+      </div>
     );
-    // <QueryOperationRow
-    //     title="Data source"
-    //     headerElement={
-    //       <>
-    // <Icon name="angle-down" />
-    //         <div className={styles.dsPicker}>
-    //           <DataSourcePicker datasources={this.datasources} onChange={this.onChangeDataSource} current={currentDS} />
-    //         </div>
-    //       </>
-    //     }
-    //   >
-    //     <div className={styles.topSection}>
-    //       <QueryOptions panel={panel} datasource={currentDS} />
-    //     </div>
-    //   </QueryOperationRow>
   }
 
   renderMixedPicker = () => {
@@ -254,15 +246,17 @@ export class QueriesTab extends PureComponent<Props, State> {
     }
 
     return (
-      <QueryEditorRows
-        queries={panel.targets}
-        datasource={currentDS}
-        onChangeQueries={this.onUpdateQueries}
-        onScrollBottom={this.onScrollBottom}
-        panel={panel}
-        dashboard={dashboard}
-        data={data}
-      />
+      <div aria-label={e2e.components.QueryTab.selectors.content}>
+        <QueryEditorRows
+          queries={panel.targets}
+          datasource={currentDS}
+          onChangeQueries={this.onUpdateQueries}
+          onScrollBottom={this.onScrollBottom}
+          panel={panel}
+          dashboard={dashboard}
+          data={data}
+        />
+      </div>
     );
   }
 
@@ -271,19 +265,19 @@ export class QueriesTab extends PureComponent<Props, State> {
     const showAddButton = !(isAddingMixed || isSharedDashboardQuery(currentDS.name));
 
     return (
-      <div className={styles.addQueryRow}>
+      <HorizontalGroup spacing="md" align="flex-start">
         {showAddButton && (
           <Button icon="plus" onClick={this.onAddQueryClick} variant="secondary">
-            Add query
+            Query
           </Button>
         )}
         {isAddingMixed && this.renderMixedPicker()}
         {config.featureToggles.expressions && (
           <Button icon="plus" onClick={this.onAddExpressionClick} variant="secondary">
-            Add Expression
+            Expression
           </Button>
         )}
-      </div>
+      </HorizontalGroup>
     );
   }
 
@@ -323,9 +317,8 @@ const getStyles = stylesFactory(() => {
       display: flex;
       padding: 0;
     `,
-    dsPicker: css`
-      flex-grow: 1;
-      margin-left: ${theme.spacing.md};
+    dataSourceRow: css`
+      margin-bottom: ${theme.spacing.md};
     `,
     topSectionItem: css`
       margin-right: ${theme.spacing.md};
@@ -333,7 +326,6 @@ const getStyles = stylesFactory(() => {
     queriesWrapper: css`
       padding: 16px 0;
     `,
-    addQueryRow: css``,
   };
 });
 

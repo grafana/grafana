@@ -2,6 +2,7 @@ import React from 'react';
 import { GrafanaTheme, PanelPluginMeta } from '@grafana/data';
 import { stylesFactory, useTheme } from '@grafana/ui';
 import { css, cx } from 'emotion';
+import { e2e } from '@grafana/e2e';
 
 interface Props {
   isCurrent: boolean;
@@ -20,7 +21,12 @@ const VizTypePickerPlugin: React.FC<Props> = ({ isCurrent, plugin, onClick, disa
   });
 
   return (
-    <div className={cssClass} onClick={disabled ? () => {} : onClick} title={plugin.name}>
+    <div
+      className={cssClass}
+      onClick={disabled ? () => {} : onClick}
+      title={plugin.name}
+      aria-label={e2e.components.PluginVisualization.selectors.item(plugin.name)}
+    >
       <div className={styles.name}>{plugin.name}</div>
       <img className={styles.img} src={plugin.info.logos.small} />
     </div>
@@ -52,6 +58,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       }
     `,
     current: css`
+      label: currentVisualizationItem;
       box-shadow: 0 0 6px ${theme.palette.orange} !important;
       border: 1px solid ${theme.palette.orange} !important;
     `,

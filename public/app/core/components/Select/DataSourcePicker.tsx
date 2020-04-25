@@ -65,23 +65,22 @@ export class DataSourcePicker extends PureComponent<Props> {
     };
 
     return (
-      <div className="gf-form-inline">
-        <Select
-          className="ds-picker"
-          isMulti={false}
-          isClearable={false}
-          backspaceRemovesValue={false}
-          onChange={this.onChange}
-          options={options}
-          autoFocus={autoFocus}
-          onBlur={onBlur}
-          openMenuOnFocus={openMenuOnFocus}
-          maxMenuHeight={500}
-          placeholder={placeholder}
-          noOptionsMessage="No datasources found"
-          value={value}
-        />
-      </div>
+      <Select
+        className="ds-picker select-container"
+        isMulti={false}
+        isClearable={false}
+        backspaceRemovesValue={false}
+        onChange={this.onChange}
+        options={options}
+        autoFocus={autoFocus}
+        onBlur={onBlur}
+        openMenuOnFocus={openMenuOnFocus}
+        maxMenuHeight={500}
+        menuPlacement="bottom"
+        placeholder={placeholder}
+        noOptionsMessage="No datasources found"
+        value={value}
+      />
     );
   }
 }

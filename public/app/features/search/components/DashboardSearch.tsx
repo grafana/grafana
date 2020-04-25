@@ -1,53 +1,59 @@
-import React, { FC } from 'react';
+import React, { FC, memo } from 'react';
 import { css } from 'emotion';
-import { Icon, useTheme, CustomScrollbar, stylesFactory, Button } from '@grafana/ui';
+import { useTheme, CustomScrollbar, stylesFactory, IconButton } from '@grafana/ui';
 import { GrafanaTheme } from '@grafana/data';
-import { SearchSrv } from 'app/core/services/search_srv';
-import { TagFilter } from 'app/core/components/TagFilter/TagFilter';
-import { contextSrv } from 'app/core/services/context_srv';
 import { useSearchQuery } from '../hooks/useSearchQuery';
 import { useDashboardSearch } from '../hooks/useDashboardSearch';
+import { useSearchLayout } from '../hooks/useSearchLayout';
 import { SearchField } from './SearchField';
 import { SearchResults } from './SearchResults';
-
-const searchSrv = new SearchSrv();
-
-const { isEditor, hasEditPermissionInFolders } = contextSrv;
-const canEdit = isEditor || hasEditPermissionInFolders;
+import { ActionRow } from './ActionRow';
 
 export interface Props {
   onCloseSearch: () => void;
   folder?: string;
 }
 
-export const DashboardSearch: FC<Props> = ({ onCloseSearch, folder }) => {
+export const DashboardSearch: FC<Props> = memo(({ onCloseSearch, folder }) => {
   const payload = folder ? { query: `folder:${folder}` } : {};
-  const { query, onQueryChange, onClearFilters, onTagFilterChange, onTagAdd } = useSearchQuery(payload);
+  const { query, onQueryChange, onTagFilterChange, onTagAdd, onSortChange } = useSearchQuery(payload);
   const { results, loading, onToggleSection, onKeyDown } = useDashboardSearch(query, onCloseSearch);
+  const { layout, setLayout } = useSearchLayout(query);
   const theme = useTheme();
   const styles = getStyles(theme);
 
   // The main search input has own keydown handler, also TagFilter uses input, so
   // clicking Esc when tagFilter is active shouldn't close the whole search overlay
-  const onClose = (e: React.KeyboardEvent<HTMLElement>) => {
-    const target = e.target as HTMLElement;
-    if ((target.tagName as any) !== 'INPUT' && ['Escape', 'ArrowLeft'].includes(e.key)) {
-      onCloseSearch();
+  const onClose = () => {
+    onCloseSearch();
+  };
+
+  const onLayoutChange = (layout: string) => {
+    setLayout(layout);
+    if (query.sort) {
+      onSortChange(null);
     }
   };
 
   return (
-    <div tabIndex={0} className="search-container" onKeyDown={onClose}>
-      <SearchField
-        query={query}
-        onChange={onQueryChange}
-        onKeyDown={onKeyDown}
-        autoFocus
-        clearable
-        className={styles.searchField}
-      />
-      <div className="search-dropdown">
-        <div className="search-dropdown__col_1">
+    <div tabIndex={0} className={styles.overlay}>
+      <div className={styles.container}>
+        <div className={styles.searchField}>
+          <SearchField query={query} onChange={onQueryChange} onKeyDown={onKeyDown} autoFocus clearable />
+          <div className={styles.closeBtn}>
+            <IconButton name="times" surface="panel" onClick={onClose} size="xxl" tooltip="Close search" />
+          </div>
+        </div>
+        <div className={styles.search}>
+          <ActionRow
+            {...{
+              layout,
+              onLayoutChange,
+              onSortChange,
+              onTagFilterChange,
+              query,
+            }}
+          />
           <CustomScrollbar>
             <SearchResults
               results={results}
@@ -55,75 +61,55 @@ export const DashboardSearch: FC<Props> = ({ onCloseSearch, folder }) => {
               onTagSelected={onTagAdd}
               editable={false}
               onToggleSection={onToggleSection}
+              layout={layout}
             />
           </CustomScrollbar>
         </div>
-        <div className="search-dropdown__col_2">
-          <div className="search-filter-box">
-            <div className="search-filter-box__header">
-              <Icon name="filter" className={styles.filter} size="sm" />
-              Filter by:
-              {query.tag.length > 0 && (
-                <a className="pointer pull-right small" onClick={onClearFilters}>
-                  <Icon name="times" size="sm" /> Clear
-                </a>
-              )}
-            </div>
-
-            <TagFilter tags={query.tag} tagOptions={searchSrv.getDashboardTags} onChange={onTagFilterChange} />
-          </div>
-
-          {canEdit && (
-            <div className="search-filter-box" onClick={onCloseSearch}>
-              <a href="dashboard/new" className="search-filter-box-link">
-                <Icon name="apps" size="xl" className={styles.icon} /> New dashboard
-              </a>
-              {isEditor && (
-                <a href="dashboards/folder/new" className="search-filter-box-link">
-                  <Icon name="folder-plus" size="xl" className={styles.icon} /> New folder
-                </a>
-              )}
-              <a href="dashboard/import" className="search-filter-box-link">
-                <Icon name="import" size="xl" className={styles.icon} /> Import dashboard
-              </a>
-              <a
-                className="search-filter-box-link"
-                target="_blank"
-                href="https://grafana.com/dashboards?utm_source=grafana_search"
-              >
-                <Icon name="search" size="xl" className={styles.icon} /> Find dashboards on Grafana.com
-              </a>
-            </div>
-          )}
-        </div>
-        <Button icon="times" className={styles.closeBtn} onClick={onCloseSearch} variant="secondary">
-          Close
-        </Button>
       </div>
     </div>
   );
-};
+});
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
   return {
+    overlay: css`
+      left: 0;
+      top: 0;
+      right: 0;
+      bottom: 0;
+      z-index: ${theme.zIndex.sidemenu};
+      position: fixed;
+      background: ${theme.colors.dashboardBg};
+
+      @media only screen and (min-width: ${theme.breakpoints.md}) {
+        left: 60px;
+        z-index: ${theme.zIndex.navbarFixed + 1};
+      }
+    `,
+    container: css`
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: ${theme.spacing.md};
+
+      height: 100%;
+
+      @media only screen and (min-width: ${theme.breakpoints.md}) {
+        padding: 32px;
+      }
+    `,
     closeBtn: css`
-      top: 10px;
-      right: 8px;
+      right: -5px;
+      top: 2px;
+      z-index: 1;
       position: absolute;
     `,
-    icon: css`
-      margin-right: ${theme.spacing.sm};
-      color: ${theme.palette.blue95};
-    `,
-    filter: css`
-      margin-right: ${theme.spacing.xs};
-    `,
-    close: css`
-      margin-left: ${theme.spacing.xs};
-      margin-bottom: 1px;
-    `,
     searchField: css`
-      padding-left: ${theme.spacing.md};
+      position: relative;
+    `,
+    search: css`
+      display: flex;
+      flex-direction: column;
+      height: 100%;
     `,
   };
 });

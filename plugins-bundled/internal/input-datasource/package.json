@@ -19,5 +19,8 @@
     "@grafana/data": "^7.0.0-pre",
     "@grafana/ui": "^7.0.0-pre",
     "@grafana/toolkit": "^7.0.0-pre"
+  },
+  "volta": {
+    "node": "12.16.2"
   }
 }

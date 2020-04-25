@@ -91,6 +91,7 @@ export function SelectBase<T>({
   allowCustomValue = false,
   autoFocus = false,
   backspaceRemovesValue = true,
+  className,
   closeMenuOnSelect = true,
   components,
   defaultOptions,
@@ -110,8 +111,8 @@ export function SelectBase<T>({
   loadingMessage = 'Loading options...',
   maxMenuHeight = 300,
   maxVisibleValues,
-  menuPosition,
   menuPlacement = 'auto',
+  menuPosition,
   noOptionsMessage = 'No options found',
   onBlur,
   onChange,
@@ -127,7 +128,6 @@ export function SelectBase<T>({
   renderControl,
   showAllSelectedWhenOpen = true,
   tabSelectsValue = true,
-  className,
   value,
   width,
 }: SelectBaseProps<T>) {
@@ -321,19 +321,20 @@ export function SelectBase<T>({
         }}
         styles={{
           ...resetSelectStyles(),
+          menuPortal: () => ({
+            zIndex: theme.zIndex.dropdown,
+          }),
           //These are required for the menu positioning to function
           menu: ({ top, bottom, position }: any) => ({
             top,
             bottom,
             position,
             marginBottom: !!bottom ? '10px' : '0',
-            zIndex: 9999,
             'min-width': '100%',
+            zIndex: theme.zIndex.dropdown,
           }),
           container: () => ({
             position: 'relative',
-            // This puts the menu above Inputs (z-index: 1)
-            zIndex: theme.zIndex.dropdown,
             width: width ? `${8 * width}px` : '100%',
           }),
         }}

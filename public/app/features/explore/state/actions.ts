@@ -44,7 +44,6 @@ import {
   updateStarredInRichHistory,
   updateCommentInRichHistory,
   deleteQueryInRichHistory,
-  getQueryDisplayText,
   getRichHistory,
 } from 'app/core/utils/richHistory';
 // Types
@@ -487,17 +486,11 @@ export const runQueries = (exploreId: ExploreId): ThunkResult<void> => {
         if (!data.error && firstResponse) {
           // Side-effect: Saving history in localstorage
           const nextHistory = updateHistory(history, datasourceId, queries);
-          const arrayOfStringifiedQueries = queries.map(query =>
-            datasourceInstance?.getQueryDisplayText
-              ? datasourceInstance.getQueryDisplayText(query)
-              : getQueryDisplayText(query)
-          );
-
           const nextRichHistory = addToRichHistory(
             richHistory || [],
             datasourceId,
             datasourceName,
-            arrayOfStringifiedQueries,
+            queries,
             false,
             '',
             ''
@@ -702,7 +695,7 @@ export function splitClose(itemId: ExploreId): ThunkResult<void> {
  * Otherwise it copies the left state to be the right state. The copy keeps all query modifications but wipes the query
  * results.
  */
-export function splitOpen(options?: { dataSourceUid: string; query: string }): ThunkResult<void> {
+export function splitOpen(options?: { datasourceUid: string; query: string }): ThunkResult<void> {
   return async (dispatch, getState) => {
     // Clone left state to become the right state
     const leftState: ExploreItemState = getState().explore[ExploreId.left];
@@ -727,7 +720,7 @@ export function splitOpen(options?: { dataSourceUid: string; query: string }): T
         } as DataQuery,
       ];
 
-      const dataSourceSettings = getDatasourceSrv().getDataSourceSettingsByUid(options.dataSourceUid);
+      const dataSourceSettings = getDatasourceSrv().getDataSourceSettingsByUid(options.datasourceUid);
       await dispatch(changeDatasource(ExploreId.right, dataSourceSettings.name));
       await dispatch(setQueriesAction({ exploreId: ExploreId.right, queries }));
     }

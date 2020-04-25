@@ -17,7 +17,7 @@ export interface RadioButtonProps {
 }
 
 const getRadioButtonStyles = stylesFactory((theme: GrafanaTheme, size: RadioButtonSize, fullWidth?: boolean) => {
-  const { fontSize, height } = getPropertiesForButtonSize({
+  const { fontSize, height, padding } = getPropertiesForButtonSize({
     theme,
     size,
     hasIcon: false,
@@ -25,7 +25,6 @@ const getRadioButtonStyles = stylesFactory((theme: GrafanaTheme, size: RadioButt
     variant: 'secondary',
   });
 
-  const horizontalPadding = theme.spacing[size] ?? theme.spacing.md;
   const c = theme.palette;
   const textColor = theme.colors.textSemiWeak;
   const textColorHover = theme.colors.text;
@@ -71,10 +70,11 @@ const getRadioButtonStyles = stylesFactory((theme: GrafanaTheme, size: RadioButt
       display: inline-block;
       position: relative;
       font-size: ${fontSize};
-      height: ${height};
-      line-height: ${height};
+      height: ${height}px;
+      // Deduct border from line-height for perfect vertical centering on windows and linux
+      line-height: ${height - 2}px;
       color: ${textColor};
-      padding: 0 ${horizontalPadding};
+      padding: ${padding};
       margin-left: -1px;
       border-radius: ${theme.border.radius.sm};
       border: ${border};

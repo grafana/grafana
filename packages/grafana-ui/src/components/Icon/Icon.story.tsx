@@ -10,7 +10,7 @@ import { useTheme, selectThemeVariant } from '../../themes';
 import mdx from './Icon.mdx';
 
 export default {
-  title: 'General/Icon',
+  title: 'Docs Overview//Icon',
   component: Icon,
   decorators: [withCenteredStory],
   parameters: {
