@@ -341,7 +341,12 @@ func TestSearchJSONForGroupMapping(t *testing.T) {
 
 		groupMappings := []setting.OAuthGroupMapping{
 			setting.OAuthGroupMapping{
-				RoleAttributePath: "contains(groups[*], 'admin') && 'Admin' || contains(groups[*], 'editor') && 'Editor'",
+				RoleAttributePath: "contains(groups[*], 'admin') && 'Admin'",
+				OrgId:             1,
+				IsGrafanaAdmin:    true,
+			},
+			setting.OAuthGroupMapping{
+				RoleAttributePath: "contains(groups[*], 'editor') && 'Editor'",
 				OrgId:             1,
 			},
 			setting.OAuthGroupMapping{
@@ -455,10 +460,6 @@ func TestSearchJSONForGroupMapping(t *testing.T) {
 				},
 				GroupMappings: groupMappings,
 				ExpectedResult: []setting.OAuthGroupMapping{
-					setting.OAuthGroupMapping{
-						Role:  "",
-						OrgId: 1,
-					},
 					setting.OAuthGroupMapping{
 						Role:  "Viewer",
 						OrgId: 2,

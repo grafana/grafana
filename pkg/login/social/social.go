@@ -106,6 +106,7 @@ func NewOAuthService() {
 			groupMapping := setting.OAuthGroupMapping{
 				RoleAttributePath: section.Key("role_attribute_path").String(),
 				OrgId:             section.Key("org_id").MustInt(),
+				IsGrafanaAdmin:    section.Key("grafana_admin").MustBool(false),
 			}
 			info.GroupMappings = append(info.GroupMappings, groupMapping)
 		}

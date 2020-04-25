@@ -208,6 +208,9 @@ func (hs *HTTPServer) OAuthLogin(ctx *models.ReqContext) {
 			}
 			orgID := int64(groupMapping.OrgId)
 			extUser.OrgRoles[orgID] = rt
+			if groupMapping.IsGrafanaAdmin {
+				extUser.IsGrafanaAdmin = &groupMapping.IsGrafanaAdmin
+			}
 		}
 	}
 

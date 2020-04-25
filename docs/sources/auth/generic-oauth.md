@@ -212,7 +212,11 @@ Payload:
 Config:
 ```bash
 [auth.generic_oauth.group_mapping]
-role_attribute_path = contains(info.groups[*], 'admin') && 'Admin' || contains(info.groups[*], 'editor') && 'Editor'
+role_attribute_path = contains(info.groups[*], 'admin') && 'Admin'
+org_id = 1
+grafana_admin = true
+[auth.generic_oauth.group_mapping]
+role_attribute_path = contains(info.groups[*], 'editor') && 'Editor'
 org_id = 1
 [auth.generic_oauth.group_mapping]
 role_attribute_path = contains(info.groups[*], 'admin') && 'Admin' || 'Viewer'
