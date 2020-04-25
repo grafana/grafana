@@ -1,5 +1,6 @@
 import React, { FC } from 'react';
 import { css, cx } from 'emotion';
+import { useTheme } from '@grafana/ui';
 
 export interface BrandComponentProps {
   className?: string;
@@ -20,12 +21,17 @@ export const LoginLogo: FC<BrandComponentProps> = ({ className }) => {
 };
 
 export const LoginBackground: FC<BrandComponentProps> = ({ className, children }) => {
+  const theme = useTheme();
   const background = css`
-    background: url(public/img/heatmap_bg_test.svg);
+    background: url(public/img/login_background_${theme.isDark ? 'dark' : 'light'}.svg);
     background-size: cover;
   `;
 
   return <div className={cx(background, className)}>{children}</div>;
+};
+
+export const LoginContentBox: FC<BrandComponentProps> = ({ className, children }) => {
+  return <div className={cx('login-content', className)}>{children}</div>;
 };
 
 export const MenuLogo: FC<BrandComponentProps> = ({ className }) => {
@@ -39,4 +45,5 @@ export class Branding {
   static LoginBackground = LoginBackground;
   static MenuLogo = MenuLogo;
   static AppTitle = AppTitle;
+  static LoginContentBox = LoginContentBox;
 }

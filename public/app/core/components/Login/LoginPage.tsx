@@ -14,7 +14,7 @@ import { Footer } from 'app/core/components/Footer/Footer';
 export const LoginPage: FC = () => {
   return (
     <Branding.LoginBackground className="login container">
-      <div className="login-content">
+      <Branding.LoginContentBox>
         <div className="login-branding">
           <Branding.LoginLogo className="login-logo" />
         </div>
@@ -62,8 +62,7 @@ export const LoginPage: FC = () => {
         </LoginCtrl>
 
         <div className="clearfix" />
-      </div>
-      <Footer />
+      </Branding.LoginContentBox>
     </Branding.LoginBackground>
   );
 };

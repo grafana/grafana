@@ -105,6 +105,12 @@ select:-webkit-autofill:focus {
   justify-content: center;
   z-index: 1;
   min-height: 320px;
+  border-radius: 3px;
+  background: rgba(6, 42, 88, 0.65);
+}
+
+.theme-light .login-content {
+  background: rgba(221, 224, 228, 0.65);
 }
 
 .login-branding {
@@ -305,7 +311,6 @@ select:-webkit-autofill:focus {
     width: 45%;
     padding: $space-xl;
     flex-grow: 1;
-    border-right: 1px solid $login-border;
   }
 
   .login-button-group {
