@@ -218,17 +218,28 @@ func syncUser(ctx *models.ReqContext, token *oauth2.Token, userInfo *social.Basi
 		rt := models.RoleType(userInfo.Role)
 		if rt.IsValid() {
 			// The user will be assigned a role in either the auto-assigned organization or in the default one
-			if userInfo.Orgs != nil {
-				for _, orgID := range userInfo.Orgs {
-					extUser.OrgRoles[orgID] = rt
-				}
-			} else if setting.AutoAssignOrg && setting.AutoAssignOrgId > 0 {
-				orgID := int64(setting.AutoAssignOrgId)
-				extUser.OrgRoles[orgID] = rt
+			var orgID int64
+			if setting.AutoAssignOrg && setting.AutoAssignOrgId > 0 {
+				orgID = int64(setting.AutoAssignOrgId)
 			} else {
-				orgID := int64(1)
-				extUser.OrgRoles[orgID] = rt
+				orgID = int64(1)
 			}
+			extUser.OrgRoles[orgID] = rt
+		}
+	}
+
+	for _, groupMapping := range userInfo.GroupMappings {
+		rt := models.RoleType(groupMapping.Role)
+		if rt.IsValid() {
+			if groupMapping.OrgId == 0 {
+				if setting.AutoAssignOrg && setting.AutoAssignOrgId > 0 {
+					groupMapping.OrgId = setting.AutoAssignOrgId
+				} else {
+					groupMapping.OrgId = 1
+				}
+			}
+			orgID := int64(groupMapping.OrgId)
+			extUser.OrgRoles[orgID] = rt
 		}
 	}
 

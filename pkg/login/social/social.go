@@ -14,14 +14,14 @@ import (
 )
 
 type BasicUserInfo struct {
-	Id      string
-	Name    string
-	Email   string
-	Login   string
-	Company string
-	Role    string
-	Orgs    []int64
-	Groups  []string
+	Id            string
+	Name          string
+	Email         string
+	Login         string
+	Company       string
+	Role          string
+	GroupMappings []setting.OAuthGroupMapping
+	Groups        []string
 }
 
 type SocialConnector interface {
@@ -89,7 +89,6 @@ func NewOAuthService() {
 			EmailAttributeName: sec.Key("email_attribute_name").String(),
 			EmailAttributePath: sec.Key("email_attribute_path").String(),
 			RoleAttributePath:  sec.Key("role_attribute_path").String(),
-			OrgsAttributePath:  sec.Key("orgs_attribute_path").String(),
 			AllowedDomains:     util.SplitString(sec.Key("allowed_domains").String()),
 			HostedDomain:       sec.Key("hosted_domain").String(),
 			AllowSignup:        sec.Key("allow_sign_up").MustBool(),
@@ -98,6 +97,17 @@ func NewOAuthService() {
 			TlsClientKey:       sec.Key("tls_client_key").String(),
 			TlsClientCa:        sec.Key("tls_client_ca").String(),
 			TlsSkipVerify:      sec.Key("tls_skip_verify_insecure").MustBool(),
+		}
+		for _, section := range setting.Raw.Sections() {
+			groupMappingSecName := "auth." + name + ".group_mapping"
+			if section.Name() != groupMappingSecName {
+				continue
+			}
+			groupMapping := setting.OAuthGroupMapping{
+				RoleAttributePath: section.Key("role_attribute_path").String(),
+				OrgId:             section.Key("org_id").MustInt(),
+			}
+			info.GroupMappings = append(info.GroupMappings, groupMapping)
 		}
 
 		if !info.Enabled {
@@ -176,7 +186,7 @@ func NewOAuthService() {
 				emailAttributeName:   info.EmailAttributeName,
 				emailAttributePath:   info.EmailAttributePath,
 				roleAttributePath:    info.RoleAttributePath,
-				orgsAttributePath:    info.OrgsAttributePath,
+				groupMappings:        info.GroupMappings,
 				teamIds:              sec.Key("team_ids").Ints(","),
 				allowedOrganizations: util.SplitString(sec.Key("allowed_organizations").String()),
 			}
