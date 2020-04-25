@@ -1,6 +1,6 @@
 import React, { FC, memo, useState } from 'react';
 import { css } from 'emotion';
-import { HorizontalGroup, Icon, stylesFactory, TagList, useTheme } from '@grafana/ui';
+import { HorizontalGroup, stylesFactory, useTheme } from '@grafana/ui';
 import { GrafanaTheme } from '@grafana/data';
 import { contextSrv } from 'app/core/services/context_srv';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
@@ -32,9 +32,6 @@ export const ManageDashboards: FC<Props> = memo(({ folderId, folderUid }) => {
     query,
     hasFilters,
     onQueryChange,
-    onRemoveStarred,
-    onTagRemove,
-    onClearFilters,
     onTagFilterChange,
     onStarredFilterChange,
     onTagAdd,
@@ -102,72 +99,24 @@ export const ManageDashboards: FC<Props> = memo(({ folderId, folderUid }) => {
           />
           <DashboardActions isEditor={isEditor} canEdit={hasEditPermissionInFolders || canSave} folderId={folderId} />
         </HorizontalGroup>
-
-        {hasFilters && (
-          <HorizontalGroup>
-            <div className="gf-form-inline">
-              {query.tag.length > 0 && (
-                <div className="gf-form">
-                  <label className="gf-form-label width-4">Tags</label>
-                  <TagList tags={query.tag} onClick={onTagRemove} />
-                </div>
-              )}
-              {query.starred && (
-                <div className="gf-form">
-                  <label className="gf-form-label">
-                    <a className="pointer" onClick={onRemoveStarred}>
-                      <Icon name="check" />
-                      Starred
-                    </a>
-                  </label>
-                </div>
-              )}
-              {query.sort && (
-                <div className="gf-form">
-                  <label className="gf-form-label">
-                    <a className="pointer" onClick={() => onSortChange(null)}>
-                      Sort: {query.sort.label}
-                    </a>
-                  </label>
-                </div>
-              )}
-              <div className="gf-form">
-                <label className="gf-form-label">
-                  <a
-                    className="pointer"
-                    onClick={() => {
-                      onClearFilters();
-                      setLayout(SearchLayout.Folders);
-                    }}
-                  >
-                    <Icon name="times" />
-                    &nbsp;Clear
-                  </a>
-                </label>
-              </div>
-            </div>
-          </HorizontalGroup>
-        )}
       </div>
 
       <div className={styles.results}>
-        {results?.length > 0 && (
-          <SearchResultsFilter
-            allChecked={allChecked}
-            canDelete={canDelete}
-            canMove={canMove}
-            deleteItem={onItemDelete}
-            moveTo={onMoveTo}
-            onToggleAllChecked={onToggleAllChecked}
-            onStarredFilterChange={onStarredFilterChange}
-            onSortChange={onSortChange}
-            onTagFilterChange={onTagFilterChange}
-            query={query}
-            layout={layout}
-            hideLayout={!!folderUid}
-            onLayoutChange={onLayoutChange}
-          />
-        )}
+        <SearchResultsFilter
+          allChecked={allChecked}
+          canDelete={canDelete}
+          canMove={canMove}
+          deleteItem={onItemDelete}
+          moveTo={onMoveTo}
+          onToggleAllChecked={onToggleAllChecked}
+          onStarredFilterChange={onStarredFilterChange}
+          onSortChange={onSortChange}
+          onTagFilterChange={onTagFilterChange}
+          query={query}
+          layout={layout}
+          hideLayout={!!folderUid}
+          onLayoutChange={onLayoutChange}
+        />
         <SearchResults
           loading={loading}
           results={results}
