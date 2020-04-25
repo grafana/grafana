@@ -16,7 +16,9 @@ import (
 	"github.com/aws/aws-sdk-go/aws/request"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/cloudwatch"
+	"github.com/aws/aws-sdk-go/service/cloudwatchlogs"
 	"github.com/aws/aws-sdk-go/service/sts"
+	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -41,7 +43,7 @@ func GetCredentials(dsInfo *DatasourceInfo) (*credentials.Credentials, error) {
 	}
 	credentialCacheLock.RUnlock()
 
-	accessKeyId := ""
+	accessKeyID := ""
 	secretAccessKey := ""
 	sessionToken := ""
 	var expiration *time.Time = nil
@@ -78,7 +80,7 @@ func GetCredentials(dsInfo *DatasourceInfo) (*credentials.Credentials, error) {
 			return nil, err
 		}
 		if resp.Credentials != nil {
-			accessKeyId = *resp.Credentials.AccessKeyId
+			accessKeyID = *resp.Credentials.AccessKeyId
 			secretAccessKey = *resp.Credentials.SecretAccessKey
 			sessionToken = *resp.Credentials.SessionToken
 			expiration = resp.Credentials.Expiration
@@ -96,7 +98,7 @@ func GetCredentials(dsInfo *DatasourceInfo) (*credentials.Credentials, error) {
 	creds := credentials.NewChainCredentials(
 		[]credentials.Provider{
 			&credentials.StaticProvider{Value: credentials.Value{
-				AccessKeyID:     accessKeyId,
+				AccessKeyID:     accessKeyID,
 				SecretAccessKey: secretAccessKey,
 				SessionToken:    sessionToken,
 			}},
@@ -154,20 +156,24 @@ func ec2RoleProvider(sess *session.Session) credentials.Provider {
 }
 
 func (e *CloudWatchExecutor) getDsInfo(region string) *DatasourceInfo {
-	defaultRegion := e.DataSource.JsonData.Get("defaultRegion").MustString()
+	return retrieveDsInfo(e.DataSource, region)
+}
+
+func retrieveDsInfo(datasource *models.DataSource, region string) *DatasourceInfo {
+	defaultRegion := datasource.JsonData.Get("defaultRegion").MustString()
 	if region == "default" {
 		region = defaultRegion
 	}
 
-	authType := e.DataSource.JsonData.Get("authType").MustString()
-	assumeRoleArn := e.DataSource.JsonData.Get("assumeRoleArn").MustString()
-	decrypted := e.DataSource.DecryptedValues()
+	authType := datasource.JsonData.Get("authType").MustString()
+	assumeRoleArn := datasource.JsonData.Get("assumeRoleArn").MustString()
+	decrypted := datasource.DecryptedValues()
 	accessKey := decrypted["accessKey"]
 	secretKey := decrypted["secretKey"]
 
 	datasourceInfo := &DatasourceInfo{
 		Region:        region,
-		Profile:       e.DataSource.Database,
+		Profile:       datasource.Database,
 		AuthType:      authType,
 		AssumeRoleArn: assumeRoleArn,
 		AccessKey:     accessKey,
@@ -177,7 +183,7 @@ func (e *CloudWatchExecutor) getDsInfo(region string) *DatasourceInfo {
 	return datasourceInfo
 }
 
-func (e *CloudWatchExecutor) getAwsConfig(dsInfo *DatasourceInfo) (*aws.Config, error) {
+func getAwsConfig(dsInfo *DatasourceInfo) (*aws.Config, error) {
 	creds, err := GetCredentials(dsInfo)
 	if err != nil {
 		return nil, err
@@ -193,7 +199,7 @@ func (e *CloudWatchExecutor) getAwsConfig(dsInfo *DatasourceInfo) (*aws.Config, 
 
 func (e *CloudWatchExecutor) getClient(region string) (*cloudwatch.CloudWatch, error) {
 	datasourceInfo := e.getDsInfo(region)
-	cfg, err := e.getAwsConfig(datasourceInfo)
+	cfg, err := getAwsConfig(datasourceInfo)
 	if err != nil {
 		return nil, err
 	}
@@ -204,6 +210,26 @@ func (e *CloudWatchExecutor) getClient(region string) (*cloudwatch.CloudWatch, e
 	}
 
 	client := cloudwatch.New(sess, cfg)
+
+	client.Handlers.Send.PushFront(func(r *request.Request) {
+		r.HTTPRequest.Header.Set("User-Agent", fmt.Sprintf("Grafana/%s", setting.BuildVersion))
+	})
+
+	return client, nil
+}
+
+func retrieveLogsClient(datasourceInfo *DatasourceInfo) (*cloudwatchlogs.CloudWatchLogs, error) {
+	cfg, err := getAwsConfig(datasourceInfo)
+	if err != nil {
+		return nil, err
+	}
+
+	sess, err := session.NewSession(cfg)
+	if err != nil {
+		return nil, err
+	}
+
+	client := cloudwatchlogs.New(sess, cfg)
 
 	client.Handlers.Send.PushFront(func(r *request.Request) {
 		r.HTTPRequest.Header.Set("User-Agent", fmt.Sprintf("Grafana/%s", setting.BuildVersion))

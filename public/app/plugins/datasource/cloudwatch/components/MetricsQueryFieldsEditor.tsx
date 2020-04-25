@@ -1,16 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { SelectableValue } from '@grafana/data';
 import { Segment, SegmentAsync } from '@grafana/ui';
-import { CloudWatchQuery, SelectableStrings } from '../types';
-import CloudWatchDatasource from '../datasource';
-import { Stats, Dimensions, QueryInlineField } from './';
+import { CloudWatchQuery, SelectableStrings, CloudWatchMetricsQuery } from '../types';
+import { CloudWatchDatasource } from '../datasource';
+import { Stats, Dimensions, QueryInlineField } from '.';
 
 export type Props = {
   query: CloudWatchQuery;
   datasource: CloudWatchDatasource;
   onRunQuery?: () => void;
   onChange: (value: CloudWatchQuery) => void;
-  hideWilcard?: boolean;
 };
 
 interface State {
@@ -21,13 +20,14 @@ interface State {
   showMeta: boolean;
 }
 
-export function QueryFieldsEditor({
+export function MetricsQueryFieldsEditor({
   query,
   datasource,
   onChange,
   onRunQuery = () => {},
-  hideWilcard = false,
 }: React.PropsWithChildren<Props>) {
+  const metricsQuery = query as CloudWatchMetricsQuery;
+
   const [state, setState] = useState<State>({
     regions: [],
     namespaces: [],
@@ -74,13 +74,13 @@ export function QueryFieldsEditor({
   // Load dimension values based on current selected dimensions.
   // Remove the new dimension key and all dimensions that has a wildcard as selected value
   const loadDimensionValues = (newKey: string) => {
-    const { [newKey]: value, ...dim } = query.dimensions;
+    const { [newKey]: value, ...dim } = metricsQuery.dimensions;
     const newDimensions = Object.entries(dim).reduce(
       (result, [key, value]) => (value === '*' ? result : { ...result, [key]: value }),
       {}
     );
     return datasource
-      .getDimensionValues(query.region, query.namespace, query.metricName, newKey, newDimensions)
+      .getDimensionValues(query.region, query.namespace, metricsQuery.metricName, newKey, newDimensions)
       .then(values => (values.length ? [{ value: '*', text: '*', label: '*' }, ...values] : values))
       .then(appendTemplateVariables);
   };
@@ -112,27 +112,27 @@ export function QueryFieldsEditor({
 
           <QueryInlineField label="Metric Name">
             <SegmentAsync
-              value={query.metricName}
+              value={metricsQuery.metricName}
               placeholder="Select metric name"
               allowCustomValue
               loadOptions={loadMetricNames}
-              onChange={({ value: metricName }) => onQueryChange({ ...query, metricName })}
+              onChange={({ value: metricName }) => onQueryChange({ ...metricsQuery, metricName })}
             />
           </QueryInlineField>
 
           <QueryInlineField label="Stats">
             <Stats
               stats={datasource.standardStatistics.map(toOption)}
-              values={query.statistics}
-              onChange={statistics => onQueryChange({ ...query, statistics })}
+              values={metricsQuery.statistics}
+              onChange={statistics => onQueryChange({ ...metricsQuery, statistics })}
               variableOptionGroup={variableOptionGroup}
             />
           </QueryInlineField>
 
           <QueryInlineField label="Dimensions">
             <Dimensions
-              dimensions={query.dimensions}
-              onChange={dimensions => onQueryChange({ ...query, dimensions })}
+              dimensions={metricsQuery.dimensions}
+              onChange={dimensions => onQueryChange({ ...metricsQuery, dimensions })}
               loadKeys={() => datasource.getDimensionKeys(query.namespace, query.region).then(appendTemplateVariables)}
               loadValues={loadDimensionValues}
             />

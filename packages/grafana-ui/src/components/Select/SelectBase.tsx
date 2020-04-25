@@ -91,6 +91,7 @@ export function SelectBase<T>({
   allowCustomValue = false,
   autoFocus = false,
   backspaceRemovesValue = true,
+  cacheOptions,
   className,
   closeMenuOnSelect = true,
   components,
@@ -106,6 +107,7 @@ export function SelectBase<T>({
   isLoading = false,
   isMulti = false,
   isOpen,
+  isOptionDisabled,
   isSearchable = true,
   loadOptions,
   loadingMessage = 'Loading options...',
@@ -183,6 +185,7 @@ export function SelectBase<T>({
     isDisabled: disabled,
     isLoading,
     isMulti,
+    isOptionDisabled,
     isSearchable,
     maxMenuHeight,
     maxVisibleValues,
@@ -217,6 +220,7 @@ export function SelectBase<T>({
     ReactSelectComponent = allowCustomValue ? AsyncCreatable : ReactAsyncSelect;
     asyncSelectProps = {
       loadOptions,
+      cacheOptions,
       defaultOptions,
     };
   }
@@ -336,6 +340,10 @@ export function SelectBase<T>({
           container: () => ({
             position: 'relative',
             width: width ? `${8 * width}px` : '100%',
+          }),
+          option: (provided: any, state: any) => ({
+            ...provided,
+            opacity: state.isDisabled ? 0.5 : 1,
           }),
         }}
         className={className}
