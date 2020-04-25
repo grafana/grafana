@@ -1,30 +1,31 @@
 import React, { PureComponent } from 'react';
 import { Unsubscribable } from 'rxjs';
 import { connect, MapStateToProps } from 'react-redux';
-import { InspectHeader } from './InspectHeader';
+import { InspectSubtitle } from './InspectSubtitle';
 import { InspectJSONTab } from './InspectJSONTab';
 import { QueryInspector } from './QueryInspector';
 
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
-import { JSONFormatter, Drawer, TabContent, CustomScrollbar } from '@grafana/ui';
-import { getLocationSrv, getDataSourceSrv } from '@grafana/runtime';
+import { CustomScrollbar, Drawer, JSONFormatter, TabContent } from '@grafana/ui';
+import { getDataSourceSrv, getLocationSrv } from '@grafana/runtime';
 import {
   DataFrame,
-  DataSourceApi,
-  SelectableValue,
-  getDisplayProcessor,
   DataQueryError,
-  PanelData,
+  DataSourceApi,
   FieldType,
   formattedValueToString,
-  QueryResultMetaStat,
+  getDisplayProcessor,
   LoadingState,
+  PanelData,
   PanelPlugin,
+  QueryResultMetaStat,
+  SelectableValue,
 } from '@grafana/data';
 import { config } from 'app/core/config';
 import { getPanelInspectorStyles } from './styles';
 import { StoreState } from 'app/types';
 import { InspectDataTab } from './InspectDataTab';
+import { e2e } from '@grafana/e2e';
 
 interface OwnProps {
   dashboard: DashboardModel;
@@ -222,10 +223,10 @@ export class PanelInspectorUnconnected extends PureComponent<Props, State> {
     }
 
     return (
-      <>
+      <div aria-label={e2e.components.PanelInspector.Stats.selectors.content}>
         {this.renderStatsTable('Stats', stats)}
         {this.renderStatsTable('Data source stats', dataStats)}
-      </>
+      </div>
     );
   }
 
@@ -253,22 +254,10 @@ export class PanelInspectorUnconnected extends PureComponent<Props, State> {
     );
   }
 
-  drawerHeader(tabs: Array<{ label: string; value: InspectTab }>, activeTab: InspectTab) {
-    const { panel } = this.props;
+  drawerSubtitle(tabs: Array<{ label: string; value: InspectTab }>, activeTab: InspectTab) {
     const { last } = this.state;
 
-    return (
-      <InspectHeader
-        tabs={tabs}
-        tab={activeTab}
-        panelData={last}
-        onSelectTab={this.onSelectTab}
-        onClose={this.onClose}
-        panel={panel}
-        onToggleExpand={this.onToggleExpand}
-        isExpanded={this.state.drawerWidth === '100%'}
-      />
-    );
+    return <InspectSubtitle tabs={tabs} tab={activeTab} panelData={last} onSelectTab={this.onSelectTab} />;
   }
 
   getTabs() {
@@ -318,7 +307,13 @@ export class PanelInspectorUnconnected extends PureComponent<Props, State> {
     }
 
     return (
-      <Drawer title={this.drawerHeader(tabs, activeTab)} width={drawerWidth} onClose={this.onClose}>
+      <Drawer
+        title={panel.title || 'Panel inspect'}
+        subtitle={this.drawerSubtitle(tabs, activeTab)}
+        width={drawerWidth}
+        onClose={this.onClose}
+        expandable
+      >
         {activeTab === InspectTab.Data && this.renderDataTab()}
         <CustomScrollbar autoHeightMin="100%">
           <TabContent className={styles.tabContent}>

@@ -121,7 +121,7 @@ export const OverrideEditor: React.FC<OverrideEditorProps> = ({
   };
 
   return (
-    <OptionsGroup renderTitle={renderOverrideTitle}>
+    <OptionsGroup renderTitle={renderOverrideTitle} id={name} key={name}>
       <Field label={matcherLabel} description={matcherUi.description}>
         <matcherUi.component
           matcher={matcherUi.matcher}
@@ -161,7 +161,6 @@ export const OverrideEditor: React.FC<OverrideEditorProps> = ({
             <ValuePicker
               label="Add override property"
               variant="secondary"
-              size="md"
               icon="plus"
               options={configPropertiesOptions}
               onChange={o => {

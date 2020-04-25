@@ -3,6 +3,7 @@ package rendering
 import (
 	"context"
 	"fmt"
+	"math"
 	"net/url"
 	"os"
 	"path/filepath"
@@ -21,7 +22,11 @@ import (
 
 func init() {
 	remotecache.Register(&RenderUser{})
-	registry.RegisterService(&RenderingService{})
+	registry.Register(&registry.Descriptor{
+		Name:         "RenderingService",
+		Instance:     &RenderingService{},
+		InitPriority: registry.High,
+	})
 }
 
 const renderKeyPrefix = "render-%s"
@@ -67,7 +72,7 @@ func (rs *RenderingService) Init() error {
 }
 
 func (rs *RenderingService) Run(ctx context.Context) error {
-	if rs.Cfg.RendererUrl != "" {
+	if rs.remoteAvailable() {
 		rs.log = rs.log.New("renderer", "http")
 		rs.log.Info("Backend rendering via external http server")
 		rs.renderAction = rs.renderViaHttp
@@ -75,7 +80,7 @@ func (rs *RenderingService) Run(ctx context.Context) error {
 		return nil
 	}
 
-	if plugins.Renderer != nil {
+	if rs.pluginAvailable() {
 		rs.log = rs.log.New("renderer", "plugin")
 		rs.pluginInfo = plugins.Renderer
 
@@ -96,8 +101,16 @@ func (rs *RenderingService) Run(ctx context.Context) error {
 	return nil
 }
 
+func (rs *RenderingService) pluginAvailable() bool {
+	return plugins.Renderer != nil
+}
+
+func (rs *RenderingService) remoteAvailable() bool {
+	return rs.Cfg.RendererUrl != ""
+}
+
 func (rs *RenderingService) IsAvailable() bool {
-	return rs.renderAction != nil
+	return rs.remoteAvailable() || rs.pluginAvailable()
 }
 
 func (rs *RenderingService) RenderErrorImage(err error) (*RenderResult, error) {
@@ -108,6 +121,14 @@ func (rs *RenderingService) RenderErrorImage(err error) (*RenderResult, error) {
 	}, nil
 }
 
+func (rs *RenderingService) renderUnavailableImage() *RenderResult {
+	imgPath := "public/img/rendering_plugin_not_installed.png"
+
+	return &RenderResult{
+		FilePath: filepath.Join(setting.HomePath, imgPath),
+	}
+}
+
 func (rs *RenderingService) Render(ctx context.Context, opts Opts) (*RenderResult, error) {
 	if rs.inProgressCount > opts.ConcurrentLimit {
 		return &RenderResult{
@@ -115,23 +136,30 @@ func (rs *RenderingService) Render(ctx context.Context, opts Opts) (*RenderResul
 		}, nil
 	}
 
-	if rs.renderAction != nil {
-		rs.log.Info("Rendering", "path", opts.Path)
-		renderKey, err := rs.generateAndStoreRenderKey(opts.OrgId, opts.UserId, opts.OrgRole)
-		if err != nil {
-			return nil, err
-		}
-
-		defer rs.deleteRenderKey(renderKey)
-
-		defer func() {
-			rs.inProgressCount--
-		}()
-
-		rs.inProgressCount++
-		return rs.renderAction(ctx, renderKey, opts)
+	if !rs.IsAvailable() {
+		rs.log.Warn("Could not render image, no image renderer found/installed. " +
+			"For image rendering support please install the grafana-image-renderer plugin. " +
+			"Read more at https://grafana.com/docs/grafana/latest/administration/image_rendering/")
+		return rs.renderUnavailableImage(), nil
 	}
-	return nil, fmt.Errorf("No renderer found")
+
+	rs.log.Info("Rendering", "path", opts.Path)
+	if math.IsInf(opts.DeviceScaleFactor, 0) || math.IsNaN(opts.DeviceScaleFactor) || opts.DeviceScaleFactor <= 0 {
+		opts.DeviceScaleFactor = 1
+	}
+	renderKey, err := rs.generateAndStoreRenderKey(opts.OrgId, opts.UserId, opts.OrgRole)
+	if err != nil {
+		return nil, err
+	}
+
+	defer rs.deleteRenderKey(renderKey)
+
+	defer func() {
+		rs.inProgressCount--
+	}()
+
+	rs.inProgressCount++
+	return rs.renderAction(ctx, renderKey, opts)
 }
 
 func (rs *RenderingService) GetRenderUser(key string) (*RenderUser, bool) {
@@ -181,8 +209,13 @@ func (rs *RenderingService) getURL(path string) string {
 		protocol = "https"
 	}
 
+	subPath := ""
+	if rs.Cfg.ServeFromSubPath {
+		subPath = rs.Cfg.AppSubUrl
+	}
+
 	// &render=1 signals to the legacy redirect layer to
-	return fmt.Sprintf("%s://%s:%s/%s&render=1", protocol, rs.domain, setting.HttpPort, path)
+	return fmt.Sprintf("%s://%s:%s%s/%s&render=1", protocol, rs.domain, setting.HttpPort, subPath, path)
 }
 
 func (rs *RenderingService) generateAndStoreRenderKey(orgId, userId int64, orgRole models.RoleType) (string, error) {

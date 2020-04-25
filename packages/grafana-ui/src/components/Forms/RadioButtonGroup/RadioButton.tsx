@@ -17,19 +17,24 @@ export interface RadioButtonProps {
 }
 
 const getRadioButtonStyles = stylesFactory((theme: GrafanaTheme, size: RadioButtonSize, fullWidth?: boolean) => {
-  const { fontSize, height } = getPropertiesForButtonSize(theme, size);
-  const horizontalPadding = theme.spacing[size] ?? theme.spacing.md;
-  const c = theme.palette;
+  const { fontSize, height, padding } = getPropertiesForButtonSize({
+    theme,
+    size,
+    hasIcon: false,
+    hasText: true,
+    variant: 'secondary',
+  });
 
+  const c = theme.palette;
   const textColor = theme.colors.textSemiWeak;
   const textColorHover = theme.colors.text;
-  const textColorActive = theme.isLight ? c.blue77 : c.blue95;
+  const textColorActive = theme.colors.textBlue;
   const borderColor = theme.colors.border2;
   const borderColorHover = theme.colors.border3;
-  const borderColorActive = theme.isLight ? c.blue77 : c.blue95;
+  const borderColorActive = theme.colors.border2;
   const bg = theme.colors.bodyBg;
   const bgDisabled = theme.isLight ? c.gray95 : c.gray15;
-  const bgActive = theme.isLight ? c.white : c.gray05;
+  const bgActive = theme.colors.bg2;
 
   const border = `1px solid ${borderColor}`;
   const borderActive = `1px solid ${borderColorActive}`;
@@ -65,10 +70,11 @@ const getRadioButtonStyles = stylesFactory((theme: GrafanaTheme, size: RadioButt
       display: inline-block;
       position: relative;
       font-size: ${fontSize};
-      height: ${height};
-      line-height: ${height};
+      height: ${height}px;
+      // Deduct border from line-height for perfect vertical centering on windows and linux
+      line-height: ${height - 2}px;
       color: ${textColor};
-      padding: 0 ${horizontalPadding};
+      padding: ${padding};
       margin-left: -1px;
       border-radius: ${theme.border.radius.sm};
       border: ${border};

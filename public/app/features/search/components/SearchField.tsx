@@ -1,6 +1,6 @@
 import React, { FC, useContext } from 'react';
 import { css, cx } from 'emotion';
-import { ThemeContext, Icon, Input } from '@grafana/ui';
+import { ThemeContext } from '@grafana/ui';
 import { GrafanaTheme } from '@grafana/data';
 import { DashboardQuery } from '../types';
 
@@ -11,26 +11,25 @@ interface SearchFieldProps extends Omit<React.InputHTMLAttributes<HTMLInputEleme
   onChange: (query: string) => void;
   onKeyDown?: (e: React.KeyboardEvent<HTMLInputElement>) => void;
   clearable?: boolean;
+  width?: number;
 }
 
 const getSearchFieldStyles = (theme: GrafanaTheme) => ({
   wrapper: css`
     width: 100%;
-    height: 55px; /* this variable is not part of GrafanaTheme yet*/
     display: flex;
-    background-color: ${theme.colors.panelBg};
-    border-bottom: 1px solid ${theme.colors.panelBorder};
     position: relative;
     align-items: center;
   `,
   input: css`
-    max-width: 683px;
-    margin-right: 90px;
     box-sizing: border-box;
     outline: none;
-    background-color: ${theme.colors.panelBg};
-    background: ${theme.colors.panelBg};
-    flex-grow: 10;
+    background-color: transparent;
+    background: transparent;
+    border-bottom: 2px solid ${theme.colors.border1};
+    font-size: 20px;
+    line-height: 38px;
+    width: 100%;
   `,
   spacer: css`
     flex-grow: 1;
@@ -59,7 +58,7 @@ export const SearchField: FC<SearchFieldProps> = ({ query, onChange, size, clear
 
   return (
     <div className={cx(styles.wrapper, className)}>
-      <Input
+      <input
         type="text"
         placeholder="Search dashboards by name"
         value={query.query}
@@ -69,14 +68,6 @@ export const SearchField: FC<SearchFieldProps> = ({ query, onChange, size, clear
         tabIndex={1}
         spellCheck={false}
         className={styles.input}
-        prefix={<Icon name="search" />}
-        suffix={
-          clearable && (
-            <span className={styles.clearButton} onClick={() => onChange('')}>
-              Clear
-            </span>
-          )
-        }
         {...inputProps}
       />
 

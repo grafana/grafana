@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { renderOrCallToRender, Icon, stylesFactory, useTheme } from '@grafana/ui';
+import { renderOrCallToRender, Icon, stylesFactory, useTheme, HorizontalGroup } from '@grafana/ui';
 import { GrafanaTheme } from '@grafana/data';
 import { css } from 'emotion';
 import { useUpdateEffect } from 'react-use';
@@ -54,17 +54,19 @@ export const QueryOperationRow: React.FC<QueryOperationRowProps> = ({
   return (
     <div className={styles.wrapper}>
       <div className={styles.header}>
-        <div
-          className={styles.titleWrapper}
-          onClick={() => {
-            setIsContentVisible(!isContentVisible);
-          }}
-          aria-label="Query operation row title"
-        >
-          <Icon name={isContentVisible ? 'angle-down' : 'angle-right'} className={styles.collapseIcon} />
-          {title && <span className={styles.title}>{titleElement}</span>}
-        </div>
-        {actions && actionsElement}
+        <HorizontalGroup justify="space-between">
+          <div
+            className={styles.titleWrapper}
+            onClick={() => {
+              setIsContentVisible(!isContentVisible);
+            }}
+            aria-label="Query operation row title"
+          >
+            <Icon name={isContentVisible ? 'angle-down' : 'angle-right'} className={styles.collapseIcon} />
+            {title && <span className={styles.title}>{titleElement}</span>}
+          </div>
+          {actions && actionsElement}
+        </HorizontalGroup>
       </div>
       {isContentVisible && <div className={styles.content}>{children}</div>}
     </div>

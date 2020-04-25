@@ -14,18 +14,17 @@ import appEvents from 'app/core/app_events';
 import { getDataSource, getDataSourceMeta } from '../state/selectors';
 import {
   deleteDataSource,
-  loadDataSource,
-  updateDataSource,
   initDataSourceSettings,
+  loadDataSource,
   testDataSource,
+  updateDataSource,
 } from '../state/actions';
 import { getNavModel } from 'app/core/selectors/navModel';
 import { getRouteParamsId } from 'app/core/selectors/location';
 // Types
 import { CoreEvents, StoreState } from 'app/types/';
-import { UrlQueryMap } from '@grafana/runtime';
+import { DataSourcePluginMeta, DataSourceSettings, NavModel, UrlQueryMap } from '@grafana/data';
 import { Icon } from '@grafana/ui';
-import { DataSourcePluginMeta, DataSourceSettings, NavModel } from '@grafana/data';
 import { getDataSourceLoadingNav } from '../state/navModel';
 import PluginStateinfo from 'app/features/plugins/PluginStateInfo';
 import { dataSourceLoaded, setDataSourceName, setIsDefault } from '../state/reducers';

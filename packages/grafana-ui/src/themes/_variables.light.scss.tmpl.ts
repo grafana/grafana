@@ -2,6 +2,7 @@
 
 import { GrafanaTheme } from '@grafana/data';
 import { renderGeneratedFileBanner } from '../utils/generatedFileBanner';
+import { styleMixins } from '.';
 
 export const lightThemeVarsTemplate = (theme: GrafanaTheme) =>
   `${renderGeneratedFileBanner('grafana-ui/src/themes/light.ts', 'grafana-ui/src/themes/_variable.light.scss.tmpl.ts')}
@@ -83,6 +84,7 @@ $dashboard-bg: ${theme.colors.dashboardBg};
 
 $text-color: ${theme.colors.text};
 $text-color-strong: ${theme.colors.textStrong};
+$text-color-semi-weak: ${theme.colors.textSemiWeak};
 $text-color-weak: ${theme.colors.textWeak};
 $text-color-faint: ${theme.colors.textFaint};
 $text-color-emphasis: ${theme.colors.textStrong};
@@ -127,14 +129,14 @@ $divider-border-color: $gray-2;
 $tight-form-func-bg: $gray-5;
 $tight-form-func-highlight-bg: $gray-6;
 
-$modal-backdrop-bg: $body-bg;
+$modal-backdrop-bg: ${theme.colors.bg1};
 $code-tag-bg: $gray-6;
 $code-tag-border: $gray-4;
 
 // cards
-$card-background: linear-gradient(135deg, $gray-6, $gray-7);
-$card-background-hover: linear-gradient(135deg, $gray-6, $gray-5);
-$card-shadow: -1px -1px 0 0 hsla(0, 0%, 100%, 0.1), 1px 1px 0 0 rgba(0, 0, 0, 0.1);
+$card-background: ${theme.colors.bg2};
+$card-background-hover: ${styleMixins.hoverColor(theme.colors.bg2, theme)};
+$card-shadow: none;
 
 // Lists
 $list-item-bg: $gray-7;

@@ -1,5 +1,10 @@
 version: 2.1
 
+parameters:
+  ssh-fingerprint:
+    type: string
+    default: ${GITHUB_SSH_FINGERPRINT}
+
 aliases:
   # Workflow filters
   - &filter-only-master
@@ -10,23 +15,40 @@ aliases:
       only: /^v[1-9]*[0-9]+\.[1-9]*[0-9]+\.x$/
 
 workflows:
-  version: 2
   plugin_workflow:
     jobs:
-      - compile_dependencies
-      - build_plugin:
-          requires: 
-            - compile_dependencies
-      - package_and_report:
+      - yarn_install
+      - build_docs:
           requires:
-            - build_plugin
-      - test_integration:
+            - yarn_install
+      - build_frontend:
           requires:
-            - package_and_report
+            - yarn_install
+      - build_backend:
+          requires:
+            - yarn_install
+      - package:
+          requires:
+            - build_frontend
+            - build_backend
+            - build_docs
+      - provisioning:
+          requires:
+            - build_frontend
+            - build_backend
+            - build_docs
+      - e2e_canary:
+          requires:
+            - provisioning
+            - package
+      - report:
+          requires:
+            - package
+            - e2e_canary
       - approve_release:
           type: approval
           requires:
-            - test_integration
+            - report
           filters: *filter-only-release
       - publish_github_release:
           requires:
@@ -37,71 +59,111 @@ executors:
   default_exec: # declares a reusable executor
     docker:
       - image: srclosson/grafana-plugin-ci-alpine:latest
+  e2e_exec: 
+    docker:
+      - image: srclosson/grafana-plugin-ci-e2e:latest
 
 jobs:
-  compile_dependencies:
+  yarn_install:
     executor: default_exec
     steps:
       - checkout
       - restore_cache:
+          name: restore node_modules
           keys:
           - build-cache-{{ .Environment.CACHE_VERSION }}-{{ checksum "yarn.lock" }}
       - run:
           name: Install dependencies
           command: |
             mkdir ci
-            [ -L ~/project/node_modules/.bin/grafana-toolkit ] || yarn install --frozen-lockfile
+            [ -f ~/project/node_modules/.bin/grafana-toolkit ] || yarn install --frozen-lockfile
       - save_cache:
+          name: save node_modules
           paths:
             - ~/project/node_modules
           key: build-cache-{{ .Environment.CACHE_VERSION }}-{{ checksum "yarn.lock" }}
-      
-  build_plugin:
+      - save_cache:
+          name: save cypress cache
+          paths:
+            - ~/.cache/Cypress
+          key: cypress-cache-{{ .Environment.CACHE_VERSION }}-{{ checksum "yarn.lock" }}
+
+  build_docs:
     executor: default_exec
     steps:
       - checkout
       - restore_cache:
+          name: restore node_modules
           keys:
           - build-cache-{{ .Environment.CACHE_VERSION }}-{{ checksum "yarn.lock" }}
       - run:
-          name: Build and test frontend and docs
-          command:  |
-            npx grafana-toolkit plugin:ci-docs
-            npx grafana-toolkit plugin:ci-build
-      - run:
-          name: Build and test Backend
+          name: Build docs
           command: |
-            if [ -f "Magefile.go" ]; then
-              mage -v buildAll
-              mage -v lint
-              mage -v coverage
-            fi
-      - run:
-          name: Move results to ci folder
-          command:  |
-            npx grafana-toolkit plugin:ci-build --finish
+            ./node_modules/.bin/grafana-toolkit plugin:ci-docs
+            [ -d "dist" ] || circleci-agent step halt
       - persist_to_workspace:
           root: .
           paths:
-            - ci
+            - dist
 
-  package_and_report:
+  build_frontend:
+    executor: default_exec
+    steps:
+      - checkout
+      - restore_cache:
+          name: restore node_modules
+          keys:
+          - build-cache-{{ .Environment.CACHE_VERSION }}-{{ checksum "yarn.lock" }}
+      - run:
+          name: Build and test frontend
+          command: ./node_modules/.bin/grafana-toolkit plugin:ci-build
+      - persist_to_workspace:
+          root: .
+          paths:
+            - dist
+
+  build_backend:
+    executor: default_exec
+    steps:
+      - checkout
+      - restore_cache:
+          name: restore node_modules
+          keys:
+          - build-cache-{{ .Environment.CACHE_VERSION }}-{{ checksum "yarn.lock" }}
+      - run:
+          name: Exit if no backend
+          command: |
+            [ -f "Magefile.go" ] || circleci-agent step halt
+      - run:
+          name: Build backend
+          command: mage -v buildAll
+      - run:
+          name: Test backend
+          command: |
+            mage -v lint
+            mage -v coverage
+      - persist_to_workspace:
+          root: .
+          paths:
+            - dist
+
+  package:
     executor: default_exec
     steps:
     - checkout
     - restore_cache:
+        name: restore node_modules
         keys:
         - build-cache-{{ .Environment.CACHE_VERSION }}-{{ checksum "yarn.lock" }}
     - attach_workspace:
         at: .
     - run:
+        name: Move results to ci folder
+        command: ./node_modules/.bin/grafana-toolkit plugin:ci-build --finish
+    - run:
         name: Package distribution
         command: |
-          npx grafana-toolkit plugin:ci-package
-    - run:
-        name: Toolkit report
-        command: |
-          npx grafana-toolkit plugin:ci-report
+          ./node_modules/.bin/grafana-toolkit plugin:ci-package
     - persist_to_workspace:
         root: .
         paths:
@@ -112,44 +174,107 @@ jobs:
     - store_artifacts:
         path: ci
 
-  test_integration:
+  provisioning:
+    executor: default_exec
+    steps:
+    - run:
+      name: Continue if this plugin has a provisioning path
+      command: |
+        [ -z "${PROVISIONING_REPO_PATH}" ] && circleci-agent step halt
+    - checkout
+    - add_ssh_keys:
+        fingerprints:
+          - << pipeline.parameters.ssh-fingerprint >>
+    - run:
+        name: Checkout provisioning files
+        command: git clone git@github.com:grafana/plugin-provisioning.git
+    - run:
+        name: Prepare task output dir
+        command: |
+          mkdir ci # Avoid error if not exists
+          mkdir ci/jobs # Avoid error if not exists
+          mkdir ci/jobs/provisioning  
+          mv plugin-provisioning/${PROVISIONING_REPO_PATH}/* ci/jobs/provisioning
+    - persist_to_workspace:
+        root: .
+        paths:
+        - ci/jobs/provisioning
+
+  e2e_canary:
+    executor: e2e_exec
+    steps:
+    - run:
+      name: Continue if this plugin has a provisioning path
+      command: |
+        [ -z "${PROVISIONING_REPO_PATH}" ] && circleci-agent step halt
+    - checkout
+    - attach_workspace:
+        at: .
+    - restore_cache:
+        name: Restore node_modules
+        keys:
+        - build-cache-{{ .Environment.CACHE_VERSION }}-{{ checksum "yarn.lock" }}
+    - restore_cache:
+        name: Restore cypress cache
+        keys:
+        - cypress-cache-{{ .Environment.CACHE_VERSION }}-{{ checksum "yarn.lock" }}
+    - run:
+        name: Exit if no e2e tests configured
+        command: |
+          [ -d cypress ] || circleci-agent step halt
+    - run:
+        name: Setup Grafana (local install)
+        command: |
+          ginstall canary
+          /opt/grafana/bin/grafana-server -config ci/grafana-test-env/custom.ini -homepath /opt/grafana &
+          ## To make sure grafana has started up
+          while ! $(netstat -tulpn | grep 3000 >/dev/null 2>&1); do sleep 1; done 
+          /opt/grafana/bin/grafana-cli --version
+    - run:
+        name: Copy provisioning files
+        command: cp -r ci/jobs/provisioning provisioning/
+    - run:
+        name: Run e2e tests
+        command: |
+          # If the tests fail, but GRAFANACI_STRICT_E2E=0, don't worry about it
+          ./node_modules/.bin/grafana-e2e run \
+          || (
+            [ "$GRAFANACI_STRICT_E2E" -eq 0 ] && echo "Bypassing fail. ci-nostrict enabled"
+          )
+    - run:
+        when: always
+        name: Prepare task output dir
+        command: |
+          # TODO: probably move all of this to `@grafana/toolkit plugin:ci-test`
+          mkdir ci/jobs/e2e_canary
+          # only copy if they exist
+          cp cypress/screenshots/*.* ci/jobs/e2e_canary 2>/dev/null || :
+          cp cypress/videos/*.* ci/jobs/e2e_canary 2>/dev/null || :
+    - persist_to_workspace:
+        root: .
+        paths:
+        - ci/jobs/e2e_canary
+    - store_test_results:
+        path: ci/jobs/e2e_canary
+    - store_artifacts:
+        path: ci/jobs/e2e_canary
+
+  report:
     executor: default_exec
     steps:
     - checkout
     - attach_workspace:
         at: .
     - restore_cache:
+        name: restore node_modules
         keys:
-        - build-cache-{{ .Environment.CACHE_VERSION }}-{{ checksum "yarn.lock" }}
+          - build-cache-{{ .Environment.CACHE_VERSION }}-{{ checksum "yarn.lock" }}
     - run:
-        name: Setup Grafana (local install)
+        name: Toolkit report
         command: |
-          ginstall latest
-          /opt/grafana/bin/grafana-server -config ci/grafana-test-env/custom.ini -homepath /opt/grafana &
-          /opt/grafana/bin/grafana-cli --version
-    - run:
-        name: Run e2e tests
-        command: |
-          [ -d cypress ] && npx grafana-e2e run || echo "skipping e2e"
-    - run:
-        name: Prepare task output dir
-        command: |
-          # TODO: probably move all of this to `@grafana/toolkit plugin:ci-test`
-          mkdir -m 0755 -p ci/jobs/test_integration
-          # only copy if they exist
-          if [ -d cypress ]; then 
-            [ -d cypress/screenshots ] && cp cypress/screenshots/ ci/jobs/test_integration 
-            [ -d cypress/videos ] && cp cypress/videos/ ci/jobs/test_integration
-          fi
-    - persist_to_workspace:
-        root: .
-        paths:
-        - ci/jobs/test_integration
-    - store_test_results:
-        path: ci/jobs/test_integration
+          ./node_modules/.bin/grafana-toolkit plugin:ci-report
     - store_artifacts:
-        path: ci/jobs/test_integration
-
+        path: ci
 
   publish_github_release:
     executor: default_exec
@@ -161,10 +286,10 @@ jobs:
       - attach_workspace:
           at: .
       - restore_cache:
+          name: restore node_modules
           keys:
           - build-cache-{{ .Environment.CACHE_VERSION }}-{{ checksum "yarn.lock" }}
       - run:
           name: "Publish Release on GitHub"
           command: |
-            npx grafana-toolkit plugin:github-publish
-
+            ./node_modules/.bin/grafana-toolkit plugin:github-publish

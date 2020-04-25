@@ -32,7 +32,11 @@ export const createSuccessNotification = (title: string, text = ''): AppNotifica
   id: Date.now(),
 });
 
-export const createErrorNotification = (title: string, text = '', component?: React.ReactElement): AppNotification => {
+export const createErrorNotification = (
+  title: string,
+  text: string | Error = '',
+  component?: React.ReactElement
+): AppNotification => {
   return {
     ...defaultErrorNotification,
     text: getMessageFromError(text),

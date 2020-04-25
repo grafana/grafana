@@ -1,9 +1,9 @@
 import React, { PureComponent } from 'react';
 
-import { FormLabel, LegacyForms } from '@grafana/ui';
+import { InlineFormLabel, LegacyForms } from '@grafana/ui';
 const { Select } = LegacyForms;
 
-import { DashboardSearchHit, DashboardSearchHitType } from 'app/types';
+import { DashboardSearchHit, DashboardSearchItemType } from 'app/features/search/types';
 import { backendSrv } from 'app/core/services/backend_srv';
 
 export interface Props {
@@ -50,7 +50,7 @@ export class SharedPreferences extends PureComponent<Props, State> {
       id: 0,
       title: 'Default',
       tags: [],
-      type: '' as DashboardSearchHitType,
+      type: '' as DashboardSearchItemType,
       uid: '',
       uri: '',
       url: '',
@@ -60,6 +60,7 @@ export class SharedPreferences extends PureComponent<Props, State> {
       folderUrl: '',
       isStarred: false,
       slug: '',
+      items: [],
     };
 
     if (prefs.homeDashboardId > 0 && !dashboards.find(d => d.id === prefs.homeDashboardId)) {
@@ -126,12 +127,12 @@ export class SharedPreferences extends PureComponent<Props, State> {
           />
         </div>
         <div className="gf-form">
-          <FormLabel
+          <InlineFormLabel
             width={11}
             tooltip="Not finding dashboard you want? Star it first, then it should appear in this select box."
           >
             Home Dashboard
-          </FormLabel>
+          </InlineFormLabel>
           <Select
             value={dashboards.find(dashboard => dashboard.id === homeDashboardId)}
             getOptionValue={i => i.id}

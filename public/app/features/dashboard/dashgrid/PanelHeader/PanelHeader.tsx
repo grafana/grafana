@@ -101,7 +101,7 @@ export class PanelHeader extends Component<Props, State> {
     e.stopPropagation();
 
     updateLocation({
-      query: { inspect: panel.id, tab },
+      query: { inspect: panel.id, inspectTab: tab },
       partial: true,
     });
   };
@@ -110,7 +110,7 @@ export class PanelHeader extends Component<Props, State> {
     return (
       <Tooltip content={notice.text} key={notice.severity}>
         {notice.inspect ? (
-          <div className="panel-info-notice" onClick={e => this.openInspect(e, notice.inspect!)}>
+          <div className="panel-info-notice pointer" onClick={e => this.openInspect(e, notice.inspect!)}>
             <Icon name="info-circle" style={{ marginRight: '8px' }} />
           </div>
         ) : (
@@ -159,7 +159,7 @@ export class PanelHeader extends Component<Props, State> {
             className="panel-title-container"
             onClick={this.onMenuToggle}
             onMouseDown={this.onMouseDown}
-            aria-label={e2e.pages.Dashboard.Panels.Panel.selectors.title(title)}
+            aria-label={e2e.components.Panels.Panel.selectors.title(title)}
           >
             <div className="panel-title">
               {Object.values(notices).map(this.renderNotice)}

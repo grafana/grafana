@@ -29,7 +29,7 @@
 .slate-typeahead {
   .typeahead {
     position: relative;
-    z-index: auto;
+    z-index: $zindex-typeahead;
     border-radius: $border-radius;
     border: $panel-border;
     max-height: calc(66vh);

@@ -10,8 +10,17 @@ import sortByKeys from 'app/core/utils/sort_by_keys';
 // Types
 import { GridPos, panelAdded, PanelModel, panelRemoved } from './PanelModel';
 import { DashboardMigrator } from './DashboardMigrator';
-import { AppEvent, dateTime, DateTimeInput, isDateTime, PanelEvents, TimeRange, TimeZone, toUtc } from '@grafana/data';
-import { UrlQueryValue } from '@grafana/runtime';
+import {
+  AppEvent,
+  dateTime,
+  DateTimeInput,
+  isDateTime,
+  PanelEvents,
+  TimeRange,
+  TimeZone,
+  toUtc,
+  UrlQueryValue,
+} from '@grafana/data';
 import { CoreEvents, DashboardMeta, KIOSK_MODE_TV } from 'app/types';
 import { getConfig } from '../../../core/config';
 import { GetVariables, getVariables } from 'app/features/variables/state/selectors';
@@ -180,10 +189,20 @@ export class DashboardModel {
     }
 
     // get panel save models
-    copy.panels = _.chain(this.panels)
+    copy.panels = this.panels
       .filter((panel: PanelModel) => panel.type !== 'add-panel')
-      .map((panel: PanelModel) => panel.getSaveModel())
-      .value();
+      .map((panel: PanelModel) => {
+        // If we save while editing we should include the panel in edit mode instead of the
+        // unmodified source panel
+        if (this.panelInEdit && this.panelInEdit.editSourceId === panel.id) {
+          const saveModel = this.panelInEdit.getSaveModel();
+          // while editing a panel we modify its id, need to restore it here
+          saveModel.id = this.panelInEdit.editSourceId;
+          return saveModel;
+        }
+
+        return panel.getSaveModel();
+      });
 
     //  sort by keys
     copy = sortByKeys(copy);
@@ -296,14 +315,18 @@ export class DashboardModel {
   panelInitialized(panel: PanelModel) {
     panel.initialized();
 
-    // refresh new panels unless we are in fullscreen / edit mode
-    if (!this.otherPanelInFullscreen(panel)) {
-      panel.refresh();
-    }
-
-    // refresh if panel is in edit mode and there is no last result
-    if (this.panelInEdit === panel && !this.panelInEdit.getQueryRunner().getLastResult()) {
-      panel.refresh();
+    if (this.panelInEdit === panel) {
+      if (this.panelInEdit.getQueryRunner().getLastResult()) {
+        return;
+      } else {
+        // refresh if panel is in edit mode and there is no last result
+        panel.refresh();
+      }
+    } else {
+      // refresh new panels unless we are in fullscreen / edit mode
+      if (!this.otherPanelInFullscreen(panel)) {
+        panel.refresh();
+      }
     }
   }
 
