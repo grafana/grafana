@@ -140,8 +140,8 @@ class UnThemedRichHistory extends PureComponent<RichHistoryProps, RichHistorySta
   updateFilters() {
     this.state.activeDatasourceOnly && this.props.activeDatasourceInstance
       ? this.onSelectDatasourceFilters([
-        { label: this.props.activeDatasourceInstance, value: this.props.activeDatasourceInstance },
-      ])
+          { label: this.props.activeDatasourceInstance, value: this.props.activeDatasourceInstance },
+        ])
       : this.onSelectDatasourceFilters(this.state.datasourceFilters);
   }
 
