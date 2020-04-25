@@ -1,10 +1,10 @@
 import '../datasource';
-import CloudWatchDatasource from '../datasource';
+import { CloudWatchDatasource } from '../datasource';
 import * as redux from 'app/store/store';
 import { DataSourceInstanceSettings, dateMath } from '@grafana/data';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { CustomVariable } from 'app/features/templating/all';
-import { CloudWatchQuery } from '../types';
+import { CloudWatchQuery, CloudWatchMetricsQuery } from '../types';
 import { backendSrv } from 'app/core/services/backend_srv'; // will use the version in __mocks__
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { convertToStoreState } from '../../../../../test/helpers/convertToStoreState';
@@ -46,14 +46,13 @@ describe('CloudWatchDatasource', () => {
     jest.clearAllMocks();
   });
 
-  describe('When performing CloudWatch query', () => {
-    let requestParams: { queries: CloudWatchQuery[] };
-
+  describe('When performing CloudWatch metrics query', () => {
     const query = {
       range: defaultTimeRange,
       rangeRaw: { from: 1483228800, to: 1483232400 },
       targets: [
         {
+          type: 'Metrics',
           expression: '',
           refId: 'A',
           region: 'us-east-1',
@@ -72,6 +71,7 @@ describe('CloudWatchDatasource', () => {
       timings: [null],
       results: {
         A: {
+          type: 'Metrics',
           error: '',
           refId: 'A',
           meta: { gmdMeta: [] },
@@ -93,25 +93,27 @@ describe('CloudWatchDatasource', () => {
     };
 
     beforeEach(() => {
-      datasourceRequestMock.mockImplementation(params => {
-        requestParams = params.data;
+      datasourceRequestMock.mockImplementation(() => {
         return Promise.resolve({ data: response });
       });
     });
 
-    it('should generate the correct query', done => {
-      ctx.ds.query(query).then(() => {
-        const params = requestParams.queries[0];
-        expect(params.namespace).toBe(query.targets[0].namespace);
-        expect(params.metricName).toBe(query.targets[0].metricName);
-        expect(params.dimensions['InstanceId']).toStrictEqual(['i-12345678']);
-        expect(params.statistics).toEqual(query.targets[0].statistics);
-        expect(params.period).toBe(query.targets[0].period);
-        done();
-      });
+    it('should generate the correct query', async () => {
+      await ctx.ds.query(query);
+      expect(datasourceRequestMock.mock.calls[0][0].data.queries).toMatchObject(
+        expect.arrayContaining([
+          expect.objectContaining({
+            namespace: query.targets[0].namespace,
+            metricName: query.targets[0].metricName,
+            dimensions: { InstanceId: ['i-12345678'] },
+            statistics: query.targets[0].statistics,
+            period: query.targets[0].period,
+          }),
+        ])
+      );
     });
 
-    it('should generate the correct query with interval variable', done => {
+    it('should generate the correct query with interval variable', async () => {
       templateSrv.init([
         new CustomVariable(
           {
@@ -130,6 +132,7 @@ describe('CloudWatchDatasource', () => {
         rangeRaw: { from: 1483228800, to: 1483232400 },
         targets: [
           {
+            type: 'Metrics',
             refId: 'A',
             region: 'us-east-1',
             namespace: 'AWS/EC2',
@@ -143,11 +146,8 @@ describe('CloudWatchDatasource', () => {
         ],
       };
 
-      ctx.ds.query(query).then(() => {
-        const params = requestParams.queries[0];
-        expect(params.period).toBe('600');
-        done();
-      });
+      await ctx.ds.query(query);
+      expect(datasourceRequestMock.mock.calls[0][0].data.queries[0].period).toEqual('600');
     });
 
     it.each(['pNN.NN', 'p9', 'p99.', 'p99.999'])('should cancel query for invalid extended statistics (%s)', stat => {
@@ -156,6 +156,7 @@ describe('CloudWatchDatasource', () => {
         rangeRaw: { from: 1483228800, to: 1483232400 },
         targets: [
           {
+            type: 'Metrics',
             refId: 'A',
             region: 'us-east-1',
             namespace: 'AWS/EC2',
@@ -181,8 +182,7 @@ describe('CloudWatchDatasource', () => {
 
     describe('a correct cloudwatch url should be built for each time series in the response', () => {
       beforeEach(() => {
-        datasourceRequestMock.mockImplementation(params => {
-          requestParams = params.data;
+        datasourceRequestMock.mockImplementation(() => {
           return Promise.resolve({ data: response });
         });
       });
@@ -238,6 +238,7 @@ describe('CloudWatchDatasource', () => {
 
     describe('and throttling exception is thrown', () => {
       const partialQuery = {
+        type: 'Metrics',
         namespace: 'AWS/EC2',
         metricName: 'CPUUtilization',
         dimensions: {
@@ -376,6 +377,7 @@ describe('CloudWatchDatasource', () => {
         rangeRaw: { from: 1483228800, to: 1483232400 },
         targets: [
           {
+            type: 'Metrics',
             refId: 'A',
             region: 'default',
             namespace: 'AWS/EC2',
@@ -402,6 +404,7 @@ describe('CloudWatchDatasource', () => {
       rangeRaw: { from: 1483228800, to: 1483232400 },
       targets: [
         {
+          type: 'Metrics',
           refId: 'A',
           region: 'us-east-1',
           namespace: 'AWS/ApplicationELB',
@@ -463,7 +466,7 @@ describe('CloudWatchDatasource', () => {
   });
 
   describe('When performing CloudWatch query with template variables', () => {
-    let requestParams: { queries: CloudWatchQuery[] };
+    let requestParams: { queries: CloudWatchMetricsQuery[] };
     beforeEach(() => {
       const variables = [
         new CustomVariable(
@@ -534,6 +537,7 @@ describe('CloudWatchDatasource', () => {
         rangeRaw: { from: 1483228800, to: 1483232400 },
         targets: [
           {
+            type: 'Metrics',
             refId: 'A',
             region: 'us-east-1',
             namespace: 'TestNamespace',
@@ -559,6 +563,7 @@ describe('CloudWatchDatasource', () => {
         rangeRaw: { from: 1483228800, to: 1483232400 },
         targets: [
           {
+            type: 'Metrics',
             refId: 'A',
             region: 'us-east-1',
             namespace: 'TestNamespace',
@@ -592,6 +597,7 @@ describe('CloudWatchDatasource', () => {
         rangeRaw: { from: 1483228800, to: 1483232400 },
         targets: [
           {
+            type: 'Metrics',
             refId: 'A',
             region: 'us-east-1',
             namespace: 'TestNamespace',
@@ -621,6 +627,7 @@ describe('CloudWatchDatasource', () => {
         rangeRaw: { from: 1483228800, to: 1483232400 },
         targets: [
           {
+            type: 'Metrics',
             refId: 'A',
             region: 'us-east-1',
             namespace: 'TestNamespace',
