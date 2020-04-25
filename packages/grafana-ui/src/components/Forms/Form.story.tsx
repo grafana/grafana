@@ -88,10 +88,6 @@ const renderForm = (defaultValues?: Partial<FormDTO>) => (
             <TextArea name="text" placeholder="Long text" ref={register({ required: true })} />
           </Field>
 
-          <Field label="Textarea" invalid={!!errors.text} error="Text is required">
-            <TextArea name="text" placeholder="Long text" size="md" ref={register({ required: true })} />
-          </Field>
-
           <Field label="Checkbox" invalid={!!errors.checkbox} error="We need your consent">
             <Checkbox name="checkbox" label="Do you consent?" ref={register({ required: true })} />
           </Field>
