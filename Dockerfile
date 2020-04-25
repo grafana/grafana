@@ -1,5 +1,5 @@
 # Golang build container
-FROM golang:1.13.1-alpine
+FROM golang:1.13.10-alpine
 
 RUN apk add --no-cache gcc g++
 
@@ -16,7 +16,7 @@ COPY build.go package.json ./
 RUN go run build.go build
 
 # Node build container
-FROM node:10.14.2-alpine
+FROM node:10.20.1-alpine
 
 # PhantomJS
 RUN apk add --no-cache curl &&\
@@ -44,7 +44,7 @@ ENV NODE_ENV production
 RUN ./node_modules/.bin/grunt build
 
 # Final container
-FROM alpine:3.10
+FROM alpine:3.11
 
 LABEL maintainer="Grafana team <hello@grafana.com>"
 
