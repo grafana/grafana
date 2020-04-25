@@ -240,6 +240,9 @@ func syncUser(ctx *models.ReqContext, token *oauth2.Token, userInfo *social.Basi
 			}
 			orgID := int64(groupMapping.OrgId)
 			extUser.OrgRoles[orgID] = rt
+			if groupMapping.IsGrafanaAdmin {
+				extUser.IsGrafanaAdmin = &groupMapping.IsGrafanaAdmin
+			}
 		}
 	}
 

@@ -24,6 +24,7 @@ type OAuthGroupMapping struct {
 	RoleAttributePath string
 	Role              string
 	OrgId             int
+	IsGrafanaAdmin    bool
 }
 
 type OAuther struct {

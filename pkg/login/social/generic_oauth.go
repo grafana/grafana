@@ -261,6 +261,10 @@ func (s *SocialGenericOAuth) extractGroupMappings(data *UserInfoJson) ([]setting
 			s.log.Error("Failed to get role_attribute_path", "error", err)
 			continue
 		}
+		if role == "" {
+			s.log.Debug(fmt.Sprintf("role_attribute_path did not produce a role: %s", mapping.RoleAttributePath))
+			continue
+		}
 		mapping.Role = role
 		groupMappings = append(groupMappings, mapping)
 	}
