@@ -84,14 +84,16 @@ export function getPanelMenu(
 
   const menu: PanelMenuItem[] = [];
 
-  menu.push({
-    text: 'View',
-    iconClassName: 'eye',
-    onClick: onViewPanel,
-    shortcut: 'v',
-  });
+  if (!panel.isEditing) {
+    menu.push({
+      text: 'View',
+      iconClassName: 'eye',
+      onClick: onViewPanel,
+      shortcut: 'v',
+    });
+  }
 
-  if (dashboard.canEditPanel(panel)) {
+  if (dashboard.canEditPanel(panel) && !panel.isEditing) {
     menu.push({
       text: 'Edit',
       iconClassName: 'edit',
@@ -185,15 +187,17 @@ export function getPanelMenu(
     }
   }
 
-  menu.push({
-    type: 'submenu',
-    text: 'More...',
-    iconClassName: 'cube',
-    subMenu: subMenu,
-    onClick: onMore,
-  });
+  if (!panel.isEditing) {
+    menu.push({
+      type: 'submenu',
+      text: 'More...',
+      iconClassName: 'cube',
+      subMenu: subMenu,
+      onClick: onMore,
+    });
+  }
 
-  if (dashboard.canEditPanel(panel)) {
+  if (dashboard.canEditPanel(panel) && !panel.isEditing) {
     menu.push({ type: 'divider' });
 
     menu.push({
