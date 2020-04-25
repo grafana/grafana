@@ -77,11 +77,15 @@ ActionRow.displayName = 'ActionRow';
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
   return {
     actionRow: css`
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: ${theme.spacing.md} 0;
-      width: 100%;
+      display: none;
+
+      @media only screen and (min-width: ${theme.breakpoints.md}) {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: ${theme.spacing.md} 0;
+        width: 100%;
+      }
     `,
   };
 });
