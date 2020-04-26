@@ -7,7 +7,6 @@ import { e2e } from '@grafana/e2e';
 
 interface Props {
   children: JSX.Element;
-  heading: string;
   renderToolbar?: () => JSX.Element;
   toolbarItems?: EditorToolbarView[];
   scrollTop?: number;
@@ -110,16 +109,13 @@ export class EditorTabBody extends PureComponent<Props, State> {
   }
 
   render() {
-    const { children, renderToolbar, heading, toolbarItems, scrollTop, setScrollTop } = this.props;
+    const { children, renderToolbar, toolbarItems, scrollTop, setScrollTop } = this.props;
     const { openView, fadeIn, isOpen } = this.state;
 
     return (
       <>
         <div className="toolbar">
-          <div className="toolbar__left">
-            <div className="toolbar__heading">{heading}</div>
-            {renderToolbar && renderToolbar()}
-          </div>
+          {renderToolbar && renderToolbar()}
           {toolbarItems.map(item => this.renderButton(item))}
         </div>
         <div className="panel-editor__scroll">

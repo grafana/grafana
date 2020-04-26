@@ -205,7 +205,7 @@ class UnConnectedAlertTab extends PureComponent<Props, State> {
     };
 
     return (
-      <EditorTabBody heading="Alert" toolbarItems={toolbarItems}>
+      <EditorTabBody toolbarItems={toolbarItems}>
         <div aria-label={e2e.components.AlertTab.selectors.content}>
           {alert && hasTransformations && (
             <Alert
