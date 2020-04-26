@@ -14,7 +14,7 @@ import {
   stylesFactory,
 } from '@grafana/ui';
 import { DataSourceOption } from './DataSourceOption';
-const { Input, Switch } = LegacyForms;
+const { Switch, Input } = LegacyForms;
 
 // Types
 import { PanelModel } from '../state';
@@ -66,32 +66,6 @@ export class QueryOptions extends PureComponent<Props, State> {
         <>
           If your time series store has a query cache this option can override the default cache timeout. Specify a
           numeric value in seconds.
-        </>
-      ),
-    },
-    maxDataPoints: {
-      label: 'Max data points',
-      placeholder: 'auto',
-      name: 'maxDataPoints',
-      tooltipInfo: (
-        <>
-          The maximum data points the query should return. For graphs this is automatically set to one data point per
-          pixel. For some data sources this can also be capped in the datasource settings page. With streaming data,
-          this value is used for the rolling buffer.
-        </>
-      ),
-    },
-    minInterval: {
-      label: 'Min time interval',
-      placeholder: '0',
-      name: 'minInterval',
-      panelKey: 'interval',
-      tooltipInfo: (
-        <>
-          A lower limit for the auto group by time interval. Recommended to be set to write frequency, for example{' '}
-          <code>1m</code> if your data is written every minute. Access auto interval via variable{' '}
-          <code>$__interval</code> for time range string and <code>$__interval_ms</code> for numeric variable that can
-          be used in math expressions.
         </>
       ),
     },
@@ -193,6 +167,89 @@ export class QueryOptions extends PureComponent<Props, State> {
     });
   };
 
+  renderMaxDataPointsOption() {
+    const { data } = this.props;
+    const { maxDataPoints } = this.state;
+    const realMd = data.request?.maxDataPoints;
+    const tooltip = `The maximum data points per series. Used directly by some data sources and used in calculation of 
+    auto interval. With streaming data this value is used for the rolling buffer.
+    `;
+    const isAuto = maxDataPoints === '';
+
+    return (
+      <div className="gf-form-inline">
+        <div className="gf-form">
+          <InlineFormLabel width={9} tooltip={tooltip}>
+            Max data points
+          </InlineFormLabel>
+          <Input
+            type="text"
+            className="width-6"
+            placeholder={`${realMd}`}
+            name={name}
+            spellCheck={false}
+            onBlur={this.onDataSourceOptionBlur('maxDataPoints')}
+            onChange={this.onDataSourceOptionChange('maxDataPoints')}
+            value={maxDataPoints}
+          />
+          {isAuto && (
+            <>
+              <div className="gf-form-label query-segment-operator">=</div>
+              <div className="gf-form-label">Width of panel</div>
+            </>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  renderIntervalOption() {
+    const { data } = this.props;
+    const { interval } = this.state;
+    const realInterval = data.request?.interval;
+    const tooltip = (
+      <>
+        A lower limit for the interval. Recommended to be set to write frequency, for example <code>1m</code> if your
+        data is written every minute.
+      </>
+    );
+
+    return (
+      <>
+        <div className="gf-form-inline">
+          <div className="gf-form">
+            <InlineFormLabel width={9} tooltip={tooltip}>
+              Min interval
+            </InlineFormLabel>
+            <Input
+              type="text"
+              className="width-6"
+              placeholder={`${realInterval}`}
+              name={name}
+              spellCheck={false}
+              onBlur={this.onDataSourceOptionBlur('interval')}
+              onChange={this.onDataSourceOptionChange('interval')}
+              value={interval}
+            />
+          </div>
+        </div>
+        <div className="gf-form-inline">
+          <div className="gf-form">
+            <InlineFormLabel
+              width={9}
+              tooltip="The evaluated Interval that is sent to data source and is used in $__interval and $__interval_ms"
+            >
+              Interval
+            </InlineFormLabel>
+            <InlineFormLabel width={6}>{realInterval}</InlineFormLabel>
+            <div className="gf-form-label query-segment-operator">=</div>
+            <div className="gf-form-label">Max data points / time range</div>
+          </div>
+        </div>
+      </>
+    );
+  }
+
   onOpenOptions = () => {
     this.setState({ isOpen: true });
   };
@@ -215,8 +272,8 @@ export class QueryOptions extends PureComponent<Props, State> {
     }
 
     let intervalDesc = interval;
-    if (intervalDesc === '' && data.request) {
-      intervalDesc = `auto = ${data.request.interval}`;
+    if (data.request) {
+      intervalDesc = `${data.request.interval}`;
     }
 
     return (
@@ -240,6 +297,8 @@ export class QueryOptions extends PureComponent<Props, State> {
         onOpen={this.onOpenOptions}
         onClose={this.onCloseOptions}
       >
+        {this.renderMaxDataPointsOption()}
+        {this.renderIntervalOption()}
         {this.renderOptions()}
 
         <div className="gf-form">
