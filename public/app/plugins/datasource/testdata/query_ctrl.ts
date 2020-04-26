@@ -1,7 +1,7 @@
 import _ from 'lodash';
 import { IScope } from 'angular';
 import { getBackendSrv } from '@grafana/runtime';
-import { dateMath, toUtc } from '@grafana/data';
+import { dateMath, dateTime } from '@grafana/data';
 import { e2e } from '@grafana/e2e';
 
 import { QueryCtrl } from 'app/plugins/sdk';
@@ -42,7 +42,7 @@ export class TestDataQueryCtrl extends QueryCtrl {
 
     this.target.scenarioId = this.target.scenarioId || 'random_walk';
     this.scenarioList = [];
-    this.newPointTime = toUtc();
+    this.newPointTime = dateTime();
     this.selectedPoint = { text: 'Select point', value: null };
     this.showLabels = showLabelsFor.includes(this.target.scenarioId);
     this.selectors = e2e.components.DataSource.TestData.QueryTab.selectors;
@@ -51,7 +51,7 @@ export class TestDataQueryCtrl extends QueryCtrl {
   getPoints() {
     return _.map(this.target.points, (point, index) => {
       return {
-        text: toUtc(point[1]).format('MMMM Do YYYY, H:mm:ss') + ' : ' + point[0],
+        text: dateTime(point[1]).format('MMMM Do YYYY, H:mm:ss') + ' : ' + point[0],
         value: index,
       };
     });
