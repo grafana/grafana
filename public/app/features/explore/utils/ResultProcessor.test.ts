@@ -1,17 +1,24 @@
-jest.mock('@grafana/data/src/datetime/moment_wrapper', () => ({
-  dateTime: (ts: any) => {
-    return {
-      valueOf: () => ts,
-      fromNow: () => 'fromNow() jest mocked',
-      format: (fmt: string) => 'format() jest mocked',
-    };
-  },
-  toUtc: (ts: any) => {
-    return {
-      format: (fmt: string) => 'format() jest mocked',
-    };
-  },
-}));
+const realMomentWrapper = jest.requireActual('@grafana/data/src/datetime/moment_wrapper');
+
+jest.mock('@grafana/data/src/datetime/moment_wrapper', () => {
+  const momentMock = {
+    dateTime: (ts: any) => {
+      return {
+        valueOf: () => ts,
+        fromNow: () => 'fromNow() jest mocked',
+        format: (fmt: string) => 'format() jest mocked',
+      };
+    },
+    toUtc: null as any,
+    isDateTime: realMomentWrapper.isDateTime,
+  };
+  momentMock.toUtc = (ts: any) => ({
+    format: (fmt: string) => 'format() jest mocked',
+    local: () => momentMock.dateTime(ts),
+  });
+
+  return momentMock;
+});
 
 import { ResultProcessor } from './ResultProcessor';
 import { ExploreItemState } from 'app/types/explore';
@@ -104,26 +111,24 @@ describe('ResultProcessor', () => {
         const valueField = dataFrames[0].fields[1];
         const theResult = resultProcessor.getGraphResult();
 
-        expect(theResult).toEqual([
-          {
-            label: 'A-series',
-            color: '#7EB26D',
-            data: [
-              [100, 4],
-              [200, 5],
-              [300, 6],
-            ],
-            info: [],
-            isVisible: true,
-            yAxis: {
-              index: 1,
-            },
-            seriesIndex: 0,
-            timeField,
-            valueField,
-            timeStep: 100,
+        expect(theResult[0]).toEqual({
+          label: 'A-series',
+          color: '#7EB26D',
+          data: [
+            [100, 4],
+            [200, 5],
+            [300, 6],
+          ],
+          info: [],
+          isVisible: true,
+          yAxis: {
+            index: 1,
           },
-        ]);
+          seriesIndex: 0,
+          timeField,
+          valueField,
+          timeStep: 100,
+        });
       });
     });
 
@@ -131,6 +136,7 @@ describe('ResultProcessor', () => {
       it('then it should return correct table result', () => {
         const { resultProcessor } = testContext();
         let theResult = resultProcessor.getTableResult();
+
         expect(theResult?.fields[0].name).toEqual('value');
         expect(theResult?.fields[1].name).toEqual('time');
         expect(theResult?.fields[2].name).toEqual('message');

@@ -1,4 +1,5 @@
 import { DataFrame, FieldType, Field, Vector } from '../types';
+
 import {
   Table,
   ArrowType,
@@ -162,15 +163,18 @@ export function grafanaDataFrameToArrowTable(data: DataFrame): Table {
 }
 
 export function resultsToDataFrames(rsp: any): DataFrame[] {
-  const frames: DataFrame[] = [];
-  for (const res of Object.values(rsp.results)) {
-    const r = res as any;
-    if (r.dataframes) {
-      for (const b of r.dataframes) {
-        const t = base64StringToArrowTable(b as string);
-        frames.push(arrowTableToDataFrame(t));
-      }
-    }
+  if (rsp === undefined || rsp.results === undefined) {
+    return [];
   }
+
+  const results = rsp.results as Array<{ dataframes: string[] }>;
+  const frames: DataFrame[] = Object.values(results).flatMap(res => {
+    if (!res.dataframes) {
+      return [];
+    }
+
+    return res.dataframes.map((b: string) => arrowTableToDataFrame(base64StringToArrowTable(b)));
+  });
+
   return frames;
 }

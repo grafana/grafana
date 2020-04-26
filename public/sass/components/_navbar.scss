@@ -172,6 +172,10 @@ i.navbar-page-btn__search {
     }
   }
 
+  &--danger {
+    @include buttonBackground($red-base, $red-shade);
+  }
+
   &--tight {
     padding: 0px 4px;
 
@@ -182,6 +186,10 @@ i.navbar-page-btn__search {
 
   &--primary {
     @include buttonBackground($btn-primary-bg, $btn-primary-bg-hl);
+  }
+
+  &--danger {
+    @include buttonBackground($red-base, $red-shade);
   }
 
   &:hover {
