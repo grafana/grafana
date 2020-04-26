@@ -3,7 +3,7 @@ import { GrafanaTheme } from '@grafana/data';
 import { getLabelStyles } from './Label';
 import { useTheme, stylesFactory } from '../../themes';
 import { css, cx } from 'emotion';
-import { getFocusCss } from './commonStyles';
+import { focusCss } from '../../themes/mixins';
 
 export interface CheckboxProps extends Omit<HTMLProps<HTMLInputElement>, 'value'> {
   label?: string;
@@ -41,7 +41,7 @@ export const getCheckboxStyles = stylesFactory((theme: GrafanaTheme) => {
       height: 100%;
       opacity: 0;
       &:focus + span {
-        ${getFocusCss(theme)}
+        ${focusCss(theme)}
       }
 
       /**
