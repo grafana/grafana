@@ -50,7 +50,7 @@ commands:
       - run:
           name: "Install Grafana build pipeline tool"
           command: |
-            VERSION=0.2.10
+            VERSION=0.2.12
             curl -fLO https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v${VERSION}/grabpl
             chmod +x grabpl
             mv grabpl /tmp
@@ -157,6 +157,47 @@ jobs:
           root: .
           paths:
             - << parameters.edition >>/public/*
+      - run:
+          name: CI job failed
+          command: ./scripts/ci-job-failed.sh
+          when: on_fail
+      - run:
+          name: CI job succeeded
+          command: ./scripts/ci-job-succeeded.sh
+          when: on_success
+
+  build-plugins:
+    description: "Build internal Grafana plug-ins"
+    parameters:
+      edition:
+        type: string
+    executor: grafana-build
+    steps:
+      - run:
+          name: Exit if enterprise and forked PR
+          command: |
+            if [[ "<< parameters.edition >>" == "enterprise"  && -n "$CIRCLE_PR_NUMBER" ]]; then
+              echo "Nothing to do for forked PRs, so marking this step successful"
+              circleci step halt
+            fi
+      - checkout
+      - run:
+          name: CI job started
+          command: ./scripts/ci-job-started.sh
+      - install-grabpl
+      - run:
+          name: Build internal Grafana plug-ins
+          command: |
+            /tmp/grabpl build-plugins --jobs 2 --edition << parameters.edition >>
+      - run:
+          name: Move artifacts
+          command: |
+            mkdir -p << parameters.edition >>/plugins-bundled
+            mv plugins-bundled/dist << parameters.edition >>/plugins-bundled/
+      - persist_to_workspace:
+          root: .
+          paths:
+            - << parameters.edition >>/plugins-bundled/dist/*
       - run:
           name: CI job failed
           command: ./scripts/ci-job-failed.sh
@@ -1006,6 +1047,13 @@ workflows:
           requires:
             - test-backend
             - test-frontend
+      - build-plugins:
+          # No filters, meaning this job runs for all branches
+          name: build-oss-plugins
+          edition: oss
+          requires:
+            - test-backend
+            - test-frontend
       - build-backend:
           filters: *filter-master-or-release
           name: build-enterprise-backend-armv6
@@ -1085,6 +1133,13 @@ workflows:
           requires:
             - test-backend
             - test-frontend
+      - build-plugins:
+          # No filters, meaning this job runs for all branches
+          name: build-enterprise-plugins
+          edition: enterprise
+          requires:
+            - test-backend
+            - test-frontend
       - build-release-publisher:
           filters: *filter-master-or-release
       # No filters, meaning this job runs for all branches
@@ -1128,6 +1183,7 @@ workflows:
             - test-frontend
             - codespell
             - shellcheck
+            - build-oss-plugins
       - package-enterprise:
           # No filters, meaning this job runs for all branches
           requires:
@@ -1145,6 +1201,7 @@ workflows:
             - test-frontend
             - codespell
             - shellcheck
+            - build-enterprise-plugins
       - build-oss-windows-installer:
           # No filters, meaning this job runs for all branches
           requires:

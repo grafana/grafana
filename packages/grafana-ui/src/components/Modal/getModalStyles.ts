@@ -3,7 +3,7 @@ import { GrafanaTheme } from '@grafana/data';
 import { stylesFactory } from '../../themes';
 
 export const getModalStyles = stylesFactory((theme: GrafanaTheme) => {
-  const backdropBackground = theme.colors.bg1;
+  const backdropBackground = theme.colors.bg3;
 
   return {
     modal: css`

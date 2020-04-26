@@ -8,6 +8,7 @@ import memoizeOne from 'memoize-one';
 
 // Services & Utils
 import store from 'app/core/store';
+import config from 'app/core/config';
 
 // Components
 import { ErrorBoundaryAlert, stylesFactory, withTheme } from '@grafana/ui';
@@ -63,6 +64,7 @@ import { ExploreGraphPanel } from './ExploreGraphPanel';
 import { TraceView } from './TraceView/TraceView';
 import { SecondaryActions } from './SecondaryActions';
 import { compose } from 'redux';
+import { e2e } from '@grafana/e2e';
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
   return {
@@ -309,12 +311,16 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
     const StartPage = datasourceInstance?.components?.ExploreStartPage;
     const showStartPage = !queryResponse || queryResponse.state === LoadingState.NotStarted;
 
+    // TEMP: Remove for 7.0
+    const cloudwatchLogsDisabled =
+      datasourceInstance?.meta?.id === 'cloudwatch' && !config.featureToggles.cloudwatchLogs;
+
     // gets an error without a refID, so non-query-row-related error, like a connection error
     const queryErrors = queryResponse.error ? [queryResponse.error] : undefined;
     const queryError = getFirstNonQueryRowSpecificError(queryErrors);
 
     return (
-      <div className={exploreClass} ref={this.getRef}>
+      <div className={exploreClass} ref={this.getRef} aria-label={e2e.pages.Explore.General.selectors.container}>
         <ExploreToolbar exploreId={exploreId} onChangeTime={this.onChangeTime} />
         {datasourceMissing ? this.renderEmptyState() : null}
         {datasourceInstance && (
@@ -371,7 +377,7 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
                           {mode === ExploreMode.Metrics && (
                             <TableContainer width={width} exploreId={exploreId} onClickCell={this.onClickFilterLabel} />
                           )}
-                          {mode === ExploreMode.Logs && (
+                          {mode === ExploreMode.Logs && !cloudwatchLogsDisabled && (
                             <LogsContainer
                               width={width}
                               exploreId={exploreId}

@@ -28,7 +28,7 @@ const getStyles = (theme: GrafanaTheme) => ({
     font-size: ${theme.typography.size.sm};
     text-overflow: ellipsis;
     overflow: hidden;
-    z-index: 1;
+    z-index: 11;
     display: block;
     white-space: nowrap;
     cursor: pointer;

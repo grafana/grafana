@@ -15,14 +15,14 @@ export interface DashboardSection {
   title: string;
   expanded?: boolean;
   url: string;
-  icon: string;
-  score: number;
-  hideHeader?: boolean;
+  icon?: string;
+  score?: number;
   checked?: boolean;
   items: DashboardSectionItem[];
   toggle?: (section: DashboardSection) => Promise<DashboardSection>;
   selected?: boolean;
   type: DashboardSearchItemType;
+  slug?: string;
 }
 
 export interface DashboardSectionItem {
@@ -37,10 +37,12 @@ export interface DashboardSectionItem {
   tags: string[];
   title: string;
   type: DashboardSearchItemType;
-  uid: string;
+  uid?: string;
   uri: string;
   url: string;
 }
+
+export interface DashboardSearchHit extends DashboardSectionItem, DashboardSection {}
 
 export interface DashboardTag {
   term: string;

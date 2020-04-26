@@ -1,5 +1,5 @@
 import React, { PureComponent } from 'react';
-import { connect, MapStateToProps, MapDispatchToProps } from 'react-redux';
+import { connect, MapDispatchToProps, MapStateToProps } from 'react-redux';
 import { css } from 'emotion';
 import { Alert, Button, IconName } from '@grafana/ui';
 
@@ -15,10 +15,10 @@ import 'app/features/alerting/AlertTabCtrl';
 import { DashboardModel } from '../dashboard/state/DashboardModel';
 import { PanelModel } from '../dashboard/state/PanelModel';
 import { TestRuleResult } from './TestRuleResult';
-import { AppNotificationSeverity, StoreState } from 'app/types';
-import { CoreEvents } from 'app/types';
+import { AppNotificationSeverity, CoreEvents, StoreState } from 'app/types';
 import { updateLocation } from 'app/core/actions';
 import { PanelEditorTabId } from '../dashboard/components/PanelEditor/types';
+import { e2e } from '@grafana/e2e';
 
 interface OwnProps {
   dashboard: DashboardModel;
@@ -205,8 +205,8 @@ class UnConnectedAlertTab extends PureComponent<Props, State> {
     };
 
     return (
-      <EditorTabBody heading="Alert" toolbarItems={toolbarItems}>
-        <>
+      <EditorTabBody toolbarItems={toolbarItems}>
+        <div aria-label={e2e.components.AlertTab.selectors.content}>
           {alert && hasTransformations && (
             <Alert
               severity={AppNotificationSeverity.Error}
@@ -216,7 +216,7 @@ class UnConnectedAlertTab extends PureComponent<Props, State> {
 
           <div ref={element => (this.element = element)} />
           {!alert && !validatonMessage && <EmptyListCTA {...model} />}
-        </>
+        </div>
       </EditorTabBody>
     );
   }
