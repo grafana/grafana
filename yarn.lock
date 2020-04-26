@@ -20244,15 +20244,17 @@ rc-drawer@3.1.3:
     rc-util "^4.16.1"
     react-lifecycles-compat "^3.0.4"
 
-rc-slider@9.2.3:
-  version "9.2.3"
-  resolved "https://registry.yarnpkg.com/rc-slider/-/rc-slider-9.2.3.tgz#b80f03ada71ef3ec35dfcb67d2e0f87d84ce2781"
-  integrity sha512-mlERrweLA4KNFvO0dkhQv3Du0Emq7DyAFV6N7jgrAwfUZsX4eB1T1iJWYMtsguHXbMyje+PACAqwsrfhZIN0bQ==
+rc-slider@8.7.1:
+  version "8.7.1"
+  resolved "https://registry.yarnpkg.com/rc-slider/-/rc-slider-8.7.1.tgz#9ed07362dc93489a38e654b21b8122ad70fd3c42"
+  integrity sha512-WMT5mRFUEcrLWwTxsyS8jYmlaMsTVCZIGENLikHsNv+tE8ThU2lCoPfi/xFNUfJFNFSBFP3MwPez9ZsJmNp13g==
   dependencies:
     babel-runtime "6.x"
     classnames "^2.2.5"
-    rc-tooltip "^4.0.0"
+    prop-types "^15.5.4"
+    rc-tooltip "^3.7.0"
     rc-util "^4.0.4"
+    react-lifecycles-compat "^3.0.4"
     shallowequal "^1.1.0"
     warning "^4.0.3"
 
@@ -20268,14 +20270,16 @@ rc-time-picker@^3.7.3:
     rc-trigger "^2.2.0"
     react-lifecycles-compat "^3.0.4"
 
-rc-tooltip@^4.0.0:
-  version "4.0.3"
-  resolved "https://registry.yarnpkg.com/rc-tooltip/-/rc-tooltip-4.0.3.tgz#728b760863643ec2e85827a2e7fb28d961b3b759"
-  integrity sha512-HNyBh9/fPdds0DXja8JQX0XTIHmZapB3lLzbdn74aNSxXG1KUkt+GK4X1aOTRY5X9mqm4uUKdeFrn7j273H8gw==
+rc-tooltip@^3.7.0:
+  version "3.7.3"
+  resolved "https://registry.yarnpkg.com/rc-tooltip/-/rc-tooltip-3.7.3.tgz#280aec6afcaa44e8dff0480fbaff9e87fc00aecc"
+  integrity sha512-dE2ibukxxkrde7wH9W8ozHKUO4aQnPZ6qBHtrTH9LoO836PjDdiaWO73fgPB05VfJs9FbZdmGPVEbXCeOP99Ww==
   dependencies:
-    rc-trigger "^4.0.0"
+    babel-runtime "6.x"
+    prop-types "^15.5.8"
+    rc-trigger "^2.2.2"
 
-rc-trigger@^2.2.0:
+rc-trigger@^2.2.0, rc-trigger@^2.2.2:
   version "2.6.5"
   resolved "https://registry.yarnpkg.com/rc-trigger/-/rc-trigger-2.6.5.tgz#140a857cf28bd0fa01b9aecb1e26a50a700e9885"
   integrity sha512-m6Cts9hLeZWsTvWnuMm7oElhf+03GOjOLfTuU0QmdB9ZrW7jR2IpI5rpNM7i9MvAAlMAmTx5Zr7g3uu/aMvZAw==

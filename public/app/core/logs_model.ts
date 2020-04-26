@@ -16,7 +16,6 @@ import {
   LogsMetaKind,
   LogsDedupStrategy,
   GraphSeriesXY,
-  dateTime,
   dateTimeFormat,
   dateTimeFormatTimeAgo,
   NullValueMode,
