@@ -20,7 +20,6 @@ export const AdminListOrgsPages: FC = () => {
   const navIndex = useSelector((state: StoreState) => state.navIndex);
   const navModel = getNavModel(navIndex, 'global-orgs');
   const [state, fetchOrgs] = useAsyncFn(async () => await getOrgs(), []);
-  console.log(state);
   useEffect(() => {
     fetchOrgs();
   }, []);
