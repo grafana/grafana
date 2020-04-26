@@ -491,7 +491,7 @@ We can define a stored procedure that will return all data we need to render 4 s
 In this case the stored procedure accepts two parameters `@from` and `@to` of `int` data types which should be a timerange (from-to) in epoch format
 which will be used to filter the data to return from the stored procedure.
 
-We're mimicking the `$__timeGroup(time, '5m')` in the select and group by expressions and that's why there are a lot of lengthy expressions needed -
+We're mimicking the `$__timeGroup(time, '5m')` in the select and group by expressions, and that's why there are a lot of lengthy expressions needed -
 these could be extracted to MSSQL functions, if wanted.
 
 ```sql
