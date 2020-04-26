@@ -29,6 +29,7 @@ export interface QueryFieldProps {
   onRunQuery?: () => void;
   onBlur?: () => void;
   onChange?: (value: string) => void;
+  onClick?: (event: Event, editor: CoreEditor, next: () => any) => any;
   onTypeahead?: (typeahead: TypeaheadInput) => Promise<TypeaheadOutput>;
   onWillApplySuggestion?: (suggestion: string, state: SuggestionsState) => string;
   placeholder?: string;
@@ -167,6 +168,7 @@ export class QueryField extends React.PureComponent<QueryFieldProps, QueryFieldS
    */
   handleBlur = (event: Event, editor: CoreEditor, next: Function) => {
     const { onBlur } = this.props;
+
     if (onBlur) {
       onBlur();
     } else {
@@ -196,6 +198,7 @@ export class QueryField extends React.PureComponent<QueryFieldProps, QueryFieldS
             autoCorrect={false}
             readOnly={this.props.disabled}
             onBlur={this.handleBlur}
+            onClick={this.props.onClick}
             // onKeyDown={this.onKeyDown}
             onChange={(change: { value: Value }) => {
               this.onChange(change.value, false);

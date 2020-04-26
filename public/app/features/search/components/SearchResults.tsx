@@ -68,7 +68,13 @@ export const SearchResults: FC<Props> = ({
             >
               {({ index, style }) => {
                 const item = items[index];
-                return <SearchItem key={item.id} {...itemProps} item={item} style={style} />;
+                // The wrapper div is needed as the inner SearchItem has margin-bottom spacing
+                // And without this wrapper there is no room for that margin
+                return (
+                  <div style={style}>
+                    <SearchItem key={item.id} {...itemProps} item={item} />
+                  </div>
+                );
               }}
             </FixedSizeList>
           )}
@@ -80,7 +86,7 @@ export const SearchResults: FC<Props> = ({
   if (loading) {
     return <Spinner className={styles.spinner} />;
   } else if (!results || !results.length) {
-    return <h6>No dashboards matching your query were found.</h6>;
+    return <div className={styles.noResults}>No dashboards matching your query were found.</div>;
   }
 
   return (
@@ -119,6 +125,11 @@ const getSectionStyles = stylesFactory((theme: GrafanaTheme) => {
       border: 1px solid ${theme.colors.border1};
       border-radius: 3px;
       height: 100%;
+    `,
+    noResults: css`
+      padding: ${md};
+      background: ${theme.colors.bg2};
+      text-style: italic;
     `,
     listModeWrapper: css`
       position: relative;

@@ -309,7 +309,7 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
     return (
       <SplitPane
         split="vertical"
-        minSize={100}
+        minSize={300}
         primary="second"
         /* Use persisted state for default size */
         defaultSize={uiState.rightPaneSize}

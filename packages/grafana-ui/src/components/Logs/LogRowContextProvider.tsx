@@ -5,6 +5,11 @@ import useAsync from 'react-use/lib/useAsync';
 
 import { DataQueryResponse, DataQueryError } from '@grafana/data';
 
+export interface RowContextOptions {
+  direction?: 'BACKWARD' | 'FORWARD';
+  limit?: number;
+}
+
 export interface LogRowContextRows {
   before?: string[];
   after?: string[];
@@ -26,7 +31,7 @@ interface ResultType {
 
 interface LogRowContextProviderProps {
   row: LogRowModel;
-  getRowContext: (row: LogRowModel, options?: any) => Promise<DataQueryResponse>;
+  getRowContext: (row: LogRowModel, options?: RowContextOptions) => Promise<DataQueryResponse>;
   children: (props: {
     result: LogRowContextRows;
     errors: LogRowContextQueryErrors;
@@ -36,7 +41,7 @@ interface LogRowContextProviderProps {
 }
 
 export const getRowContexts = async (
-  getRowContext: (row: LogRowModel, options?: any) => Promise<DataQueryResponse>,
+  getRowContext: (row: LogRowModel, options?: RowContextOptions) => Promise<DataQueryResponse>,
   row: LogRowModel,
   limit: number
 ) => {

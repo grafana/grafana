@@ -38,6 +38,7 @@ export interface FeatureToggles {
    * Available only in Grafana Enterprise
    */
   meta: boolean;
+  cloudwatchLogs: boolean;
   newVariables: boolean;
 }
 
