@@ -33,7 +33,7 @@ export const AdminListOrgsPages: FC = () => {
             <div className="page-action-bar__spacer"></div>
             <LinkButton href="org/new">New org</LinkButton>
           </div>
-          {state.loading && 'Ftehcing organizations'}
+          {state.loading && 'Fetching organizations'}
           {state.error}
           {state.value && (
             <AdminOrgsTable
