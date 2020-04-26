@@ -5,7 +5,7 @@ const { Select } = LegacyForms;
 
 import { DashboardSearchHit, DashboardSearchItemType } from 'app/features/search/types';
 import { backendSrv } from 'app/core/services/backend_srv';
-import { getTimeZoneGroups } from '@grafana/data';
+import { getTimeZoneGroups, SelectableValue } from '@grafana/data';
 
 export interface Props {
   resourceUri: string;
@@ -98,12 +98,18 @@ export class SharedPreferences extends PureComponent<Props, State> {
     window.location.reload();
   };
 
-  onThemeChanged = (theme: string) => {
-    this.setState({ theme });
+  onThemeChanged = (theme: SelectableValue<string>) => {
+    if (!theme || !theme.value) {
+      return;
+    }
+    this.setState({ theme: theme.value });
   };
 
-  onTimeZoneChanged = (timezone: string) => {
-    this.setState({ timezone });
+  onTimeZoneChanged = (timezone: SelectableValue<string>) => {
+    if (!timezone || !timezone.value) {
+      return;
+    }
+    this.setState({ timezone: timezone.value });
   };
 
   onHomeDashboardChanged = (dashboardId: number) => {
@@ -129,7 +135,7 @@ export class SharedPreferences extends PureComponent<Props, State> {
             isSearchable={false}
             value={themes.find(item => item.value === theme)}
             options={themes}
-            onChange={theme => this.onThemeChanged(theme.value)}
+            onChange={this.onThemeChanged}
             width={20}
           />
         </div>
@@ -155,7 +161,7 @@ export class SharedPreferences extends PureComponent<Props, State> {
           <Select
             isSearchable={true}
             value={timeZones.find(item => item.value === timezone)}
-            onChange={timezone => this.onTimeZoneChanged(timezone.value)}
+            onChange={this.onTimeZoneChanged}
             options={timeZones}
             width={20}
           />

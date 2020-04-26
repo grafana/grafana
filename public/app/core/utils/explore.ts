@@ -21,6 +21,7 @@ import {
   toUtc,
   ExploreMode,
   urlUtil,
+  DefaultTimeZone,
 } from '@grafana/data';
 import store from 'app/core/store';
 import kbn from 'app/core/utils/kbn';
@@ -135,7 +136,7 @@ export function buildQueryTransaction(
     app: CoreApp.Explore,
     dashboardId: 0,
     // TODO probably should be taken from preferences but does not seem to be used anyway.
-    timezone: timeZone,
+    timezone: timeZone || DefaultTimeZone,
     startTime: Date.now(),
     interval,
     intervalMs,

@@ -35,7 +35,8 @@ export class UserSyncInfo extends PureComponent<Props, State> {
   render() {
     const { syncInfo, disableSync } = this.props;
     const { isSyncing } = this.state;
-    const nextSyncTime = syncInfo.nextSync ? dateTimeFormat(syncInfo.nextSync, { format }) : '';
+    const nextSyncSuccessful = syncInfo && syncInfo.nextSync;
+    const nextSyncTime = nextSyncSuccessful ? dateTimeFormat(syncInfo.nextSync, { format }) : '';
     const prevSyncSuccessful = syncInfo && syncInfo.prevSync;
     const prevSyncTime = prevSyncSuccessful ? dateTimeFormat(syncInfo.prevSync, { format }) : '';
     const isDisabled = isSyncing || disableSync;

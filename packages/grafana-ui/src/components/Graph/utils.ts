@@ -105,7 +105,7 @@ export const getMultiSeriesGraphHoverInfo = (
 export const graphTimeFormatter = (timeZone?: TimeZone) => (epoch: number, format: string) =>
   dateTimeFormat(epoch, { format, timeZone });
 
-export const graphTimeFormat = (ticks: number, min: number, max: number): string => {
+export const graphTimeFormat = (ticks: number | null, min: number | null, max: number | null): string => {
   if (min && max && ticks) {
     const range = max - min;
     const secPerTick = range / ticks / 1000;

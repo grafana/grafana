@@ -28,7 +28,7 @@ export class LdapSyncInfo extends PureComponent<Props, State> {
     const { isSyncing } = this.state;
     const nextSyncTime = dateTimeFormat(ldapSyncInfo.nextSync, { format });
     const prevSyncSuccessful = ldapSyncInfo && ldapSyncInfo.prevSync;
-    const prevSyncTime = prevSyncSuccessful ? dateTimeFormat(ldapSyncInfo.prevSync.started, { format }) : '';
+    const prevSyncTime = prevSyncSuccessful ? dateTimeFormat(ldapSyncInfo.prevSync!.started, { format }) : '';
 
     return (
       <>

@@ -21,8 +21,9 @@ export class UserLdapSyncInfo extends PureComponent<Props, State> {
 
   render() {
     const { ldapSyncInfo, user } = this.props;
-    const nextSyncTime = dateTimeFormat(ldapSyncInfo.nextSync, { format });
     const prevSyncSuccessful = ldapSyncInfo && ldapSyncInfo.prevSync;
+    const nextSyncSuccessful = ldapSyncInfo && ldapSyncInfo.nextSync;
+    const nextSyncTime = nextSyncSuccessful ? dateTimeFormat(ldapSyncInfo.nextSync, { format }) : '';
     const prevSyncTime = prevSyncSuccessful ? dateTimeFormat(ldapSyncInfo.prevSync.started, { format }) : '';
     const debugLDAPMappingURL = `${debugLDAPMappingBaseURL}?user=${user && user.login}`;
 
