@@ -22,14 +22,9 @@ const VizTypePickerPlugin: React.FC<Props> = ({ isCurrent, plugin, onClick, disa
   });
 
   return (
-    <div className={styles.wrapper}>
-      <div
-        className={cssClass}
-        onClick={disabled ? () => {} : onClick}
-        title={plugin.name}
-        aria-label={e2e.components.PluginVisualization.selectors.item(plugin.name)}
-      >
-        <div className={styles.bg}></div>
+    <div className={styles.wrapper} aria-label={e2e.components.PluginVisualization.selectors.item(plugin.name)}>
+      <div className={cssClass} onClick={disabled ? () => {} : onClick} title={plugin.name}>
+        <div className={styles.bg} />
         <div className={styles.itemContent}>
           <div className={styles.name} title={plugin.name}>
             {plugin.name}
