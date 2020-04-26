@@ -3,19 +3,7 @@ import React, { PureComponent } from 'react';
 // Components
 import { DataSourcePicker } from 'app/core/components/Select/DataSourcePicker';
 import { QueryOptions } from './QueryOptions';
-import {
-  PanelOptionsGroup,
-  CustomScrollbar,
-  Container,
-  stylesFactory,
-  Button,
-  Field,
-  Input,
-  Icon,
-  IconButton,
-  HorizontalGroup,
-  VerticalGroup,
-} from '@grafana/ui';
+import { CustomScrollbar, stylesFactory, Button, HorizontalGroup, Modal } from '@grafana/ui';
 import { getLocationSrv } from '@grafana/runtime';
 import { QueryEditorRows } from './QueryEditorRows';
 // Services
@@ -34,7 +22,6 @@ import { expressionDatasource, ExpressionDatasourceID } from 'app/features/expre
 import { css } from 'emotion';
 import { e2e } from '@grafana/e2e';
 import { QueryOperationRow } from 'app/core/components/QueryOperationRow/QueryOperationRow';
-import { EditorTabBody, EditorToolbarView } from './EditorTabBody';
 
 interface Props {
   panel: PanelModel;
@@ -49,6 +36,8 @@ interface State {
   isAddingMixed: boolean;
   scrollTop: number;
   data: PanelData;
+  isOptionsOpen: boolean;
+  isHelpOpen: boolean;
 }
 
 export class QueriesTab extends PureComponent<Props, State> {
@@ -62,6 +51,8 @@ export class QueriesTab extends PureComponent<Props, State> {
     helpContent: null,
     isPickerOpen: false,
     isAddingMixed: false,
+    isOptionsOpen: false,
+    isHelpOpen: false,
     scrollTop: 0,
     data: {
       state: LoadingState.NotStarted,
@@ -135,6 +126,7 @@ export class QueriesTab extends PureComponent<Props, State> {
 
   openQueryInspector = () => {
     const { panel } = this.props;
+
     getLocationSrv().update({
       query: { inspect: panel.id, inspectTab: 'query' },
       partial: true,
@@ -142,7 +134,7 @@ export class QueriesTab extends PureComponent<Props, State> {
   };
 
   renderHelp = () => {
-    return <PluginHelp plugin={this.state.currentDS.meta} type="query_help" />;
+    return;
   };
 
   /**
@@ -172,9 +164,55 @@ export class QueriesTab extends PureComponent<Props, State> {
     this.setState({ scrollTop: 1000 });
   };
 
-  renderToolbar = () => {
-    const { currentDS } = this.state;
-    return <DataSourcePicker datasources={this.datasources} onChange={this.onChangeDataSource} current={currentDS} />;
+  renderTopSection(styles: QueriesTabStyls) {
+    const { panel } = this.props;
+    const { currentDS, isOptionsOpen } = this.state;
+
+    return (
+      <div>
+        <div className={styles.dataSourceRow}>
+          <div className={styles.dataSourceRowItem}>
+            <DataSourcePicker datasources={this.datasources} onChange={this.onChangeDataSource} current={currentDS} />
+          </div>
+          <div className={styles.dataSourceRowItem}>
+            <Button variant="secondary" icon="info-circle" title="Open data source help" onClick={this.onOpenHelp} />
+          </div>
+          <div className={styles.dataSourceRowItem}>
+            <Button variant="secondary" onClick={this.openQueryInspector}>
+              Query inspector
+            </Button>
+          </div>
+          <div className={styles.dataSourceRowItemOptions}>
+            <QueryOperationRow
+              title="Options"
+              isOpen={isOptionsOpen}
+              onOpen={this.onOpenOptions}
+              onClose={this.onCloseOptions}
+            >
+              <div className={styles.topSection}>
+                <QueryOptions panel={panel} datasource={currentDS} />
+              </div>
+            </QueryOperationRow>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  onOpenOptions = () => {
+    this.setState({ isOptionsOpen: true });
+  };
+
+  onCloseOptions = () => {
+    this.setState({ isOptionsOpen: false });
+  };
+
+  onOpenHelp = () => {
+    this.setState({ isHelpOpen: true });
+  };
+
+  onCloseHelp = () => {
+    this.setState({ isHelpOpen: false });
   };
 
   renderMixedPicker = () => {
@@ -214,7 +252,7 @@ export class QueriesTab extends PureComponent<Props, State> {
     this.setState({ scrollTop: target.scrollTop });
   };
 
-  renderBody() {
+  renderQueries() {
     const { panel, dashboard } = this.props;
     const { currentDS, data } = this.state;
 
@@ -224,10 +262,6 @@ export class QueriesTab extends PureComponent<Props, State> {
 
     return (
       <div aria-label={e2e.components.QueryTab.selectors.content}>
-        <QueryOperationRow title="Query options">
-          <QueryOptions panel={panel} datasource={currentDS} />
-        </QueryOperationRow>
-
         <QueryEditorRows
           queries={panel.targets}
           datasource={currentDS}
@@ -263,28 +297,29 @@ export class QueriesTab extends PureComponent<Props, State> {
   }
 
   render() {
-    const { scrollTop } = this.state;
-    const queryInspector: EditorToolbarView = {
-      title: 'Query inspector',
-      onClick: this.openQueryInspector,
-    };
-
-    const dsHelp: EditorToolbarView = {
-      heading: 'Help',
-      icon: 'question-circle',
-      render: this.renderHelp,
-    };
+    const { scrollTop, isHelpOpen } = this.state;
+    const styles = getStyles();
 
     return (
-      <EditorTabBody
-        renderToolbar={this.renderToolbar}
-        toolbarItems={[queryInspector, dsHelp]}
-        setScrollTop={this.setScrollTop}
+      <CustomScrollbar
+        autoHeightMin="100%"
+        autoHide={true}
+        updateAfterMountMs={300}
         scrollTop={scrollTop}
+        setScrollTop={this.setScrollTop}
       >
-        {this.renderBody()}
-        {this.renderAddQueryRow()}
-      </EditorTabBody>
+        <div className={styles.innerWrapper}>
+          {this.renderTopSection(styles)}
+          <div className={styles.queriesWrapper}>{this.renderQueries()}</div>
+          {this.renderAddQueryRow(styles)}
+
+          {isHelpOpen && (
+            <Modal title="Data source help" isOpen={true} onDismiss={this.onCloseHelp}>
+              <PluginHelp plugin={this.state.currentDS.meta} type="query_help" />
+            </Modal>
+          )}
+        </div>
+      </CustomScrollbar>
     );
   }
 }
@@ -304,7 +339,14 @@ const getStyles = stylesFactory(() => {
       padding: 0;
     `,
     dataSourceRow: css`
+      display: flex;
       margin-bottom: ${theme.spacing.md};
+    `,
+    dataSourceRowItem: css`
+      margin-right: ${theme.spacing.inlineFormMargin};
+    `,
+    dataSourceRowItemOptions: css`
+      flex-grow: 1;
     `,
     topSectionItem: css`
       margin-right: ${theme.spacing.md};
