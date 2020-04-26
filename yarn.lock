@@ -5625,6 +5625,11 @@
   resolved "https://registry.yarnpkg.com/@types/json-schema/-/json-schema-7.0.4.tgz#38fd73ddfd9b55abb1e1b2ed578cb55bd7b7d339"
   integrity sha512-8+KAKzEvSUdeo+kmqnKrqgeE+LcA0tjYWFY7RPProVYwnqDjukzO+3b6dLD56rYX5TdWejnEOLJYOIeh4CXKuA==
 
+"@types/jsurl@^1.2.28":
+  version "1.2.28"
+  resolved "https://registry.yarnpkg.com/@types/jsurl/-/jsurl-1.2.28.tgz#03430a7cc878d1415c5b3cb03547ff238bc7a75c"
+  integrity sha1-A0MKfMh40UFcWzywNUf/I4vHp1w=
+
 "@types/lodash@4.14.123":
   version "4.14.123"
   resolved "https://registry.yarnpkg.com/@types/lodash/-/lodash-4.14.123.tgz#39be5d211478c8dd3bdae98ee75bb7efe4abfe4d"
@@ -15733,6 +15738,11 @@ jstransformer@1.0.0:
   dependencies:
     is-promise "^2.0.0"
     promise "^7.0.1"
+
+jsurl@^0.1.5:
+  version "0.1.5"
+  resolved "https://registry.yarnpkg.com/jsurl/-/jsurl-0.1.5.tgz#2a5c8741de39cacafc12f448908bf34e960dcee8"
+  integrity sha1-KlyHQd45ysr8EvRIkIvzTpYNzug=
 
 jsx-ast-utils@^2.2.3:
   version "2.2.3"

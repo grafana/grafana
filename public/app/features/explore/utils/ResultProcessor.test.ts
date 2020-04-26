@@ -94,26 +94,24 @@ describe('ResultProcessor', () => {
         const valueField = dataFrames[0].fields[1];
         const theResult = resultProcessor.getGraphResult();
 
-        expect(theResult).toEqual([
-          {
-            label: 'A-series',
-            color: '#7EB26D',
-            data: [
-              [100, 4],
-              [200, 5],
-              [300, 6],
-            ],
-            info: [],
-            isVisible: true,
-            yAxis: {
-              index: 1,
-            },
-            seriesIndex: 0,
-            timeField,
-            valueField,
-            timeStep: 100,
+        expect(theResult[0]).toEqual({
+          label: 'A-series',
+          color: '#7EB26D',
+          data: [
+            [100, 4],
+            [200, 5],
+            [300, 6],
+          ],
+          info: [],
+          isVisible: true,
+          yAxis: {
+            index: 1,
           },
-        ]);
+          seriesIndex: 0,
+          timeField,
+          valueField,
+          timeStep: 100,
+        });
       });
     });
 
@@ -121,6 +119,7 @@ describe('ResultProcessor', () => {
       it('then it should return correct table result', () => {
         const { resultProcessor } = testContext();
         let theResult = resultProcessor.getTableResult();
+
         expect(theResult?.fields[0].name).toEqual('value');
         expect(theResult?.fields[1].name).toEqual('time');
         expect(theResult?.fields[2].name).toEqual('message');

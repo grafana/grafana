@@ -16,6 +16,7 @@ import {
   LogRowContextQueryErrors,
   HasMoreContextRows,
   LogRowContextProvider,
+  RowContextOptions,
 } from './LogRowContextProvider';
 import { Themeable } from '../../types/theme';
 import { withTheme } from '../../themes/index';
@@ -41,8 +42,9 @@ interface Props extends Themeable {
   onClickFilterLabel?: (key: string, value: string) => void;
   onClickFilterOutLabel?: (key: string, value: string) => void;
   onContextClick?: () => void;
-  getRowContext: (row: LogRowModel, options?: any) => Promise<DataQueryResponse>;
+  getRowContext: (row: LogRowModel, options?: RowContextOptions) => Promise<DataQueryResponse>;
   getFieldLinks?: (field: Field, rowIndex: number) => Array<LinkModel<Field>>;
+  showContextToggle?: (row?: LogRowModel) => boolean;
 }
 
 interface State {
@@ -130,6 +132,7 @@ class UnThemedLogRow extends PureComponent<Props, State> {
       row,
       showDuplicates,
       timeZone,
+      showContextToggle,
       showLabels,
       showTime,
       wrapLogMessage,
@@ -174,7 +177,8 @@ class UnThemedLogRow extends PureComponent<Props, State> {
             hasMoreContextRows={hasMoreContextRows}
             updateLimit={updateLimit}
             context={context}
-            showContext={showContext}
+            contextIsOpen={showContext}
+            showContextToggle={showContextToggle}
             wrapLogMessage={wrapLogMessage}
             onToggleContext={this.toggleContext}
           />
