@@ -30,6 +30,10 @@ const getSearchFieldStyles = (theme: GrafanaTheme) => ({
     font-size: 20px;
     line-height: 38px;
     width: 100%;
+
+    &::placeholder {
+      color: ${theme.colors.textWeak};
+    }
   `,
   spacer: css`
     flex-grow: 1;
