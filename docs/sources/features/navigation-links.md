@@ -38,7 +38,7 @@ Once you've added a dashboard link, it appears in the upper right corner of your
 
 ### Add links to dashboards
 
-Add a link to other dashboards at the top of your current dashboard.
+Add links to other dashboards at the top of your current dashboard.
 
 1. While viewing the dashboard you want to link, click the gear at the top of the screen to open **Dashboard settings**.
 1. Click **Links** and then click **Add Dashboard Link** or **New**.
