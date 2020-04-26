@@ -87,6 +87,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       z-index: 1;
     `,
     current: css`
+      label: currentVisualizationItem;
       pointer-events: none;
       > div:first-child {
         ${styleMixins.focusCss(theme)};
