@@ -239,8 +239,9 @@ export function parseUrlState(initial: string | undefined): ExploreUrlState {
   };
   const datasource = parsed[ParseUrlStateIndex.Datasource];
   const parsedSegments = parsed.slice(ParseUrlStateIndex.SegmentsStart);
-  const metricProperties = ['expr', 'target', 'datasource', 'query'];
+  const metricProperties = ['expr', 'expression', 'target', 'datasource', 'query'];
   const queries = parsedSegments.filter(segment => isSegment(segment, ...metricProperties));
+
   const modeObj = parsedSegments.filter(segment => isSegment(segment, 'mode'))[0];
   const mode = modeObj ? modeObj.mode : ExploreMode.Metrics;
 

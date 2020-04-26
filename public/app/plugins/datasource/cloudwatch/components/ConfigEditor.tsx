@@ -11,7 +11,7 @@ import {
 } from '@grafana/data';
 import { SelectableValue } from '@grafana/data';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
-import CloudWatchDatasource from '../datasource';
+import { CloudWatchDatasource } from '../datasource';
 import { CloudWatchJsonData, CloudWatchSecureJsonData } from '../types';
 import { CancelablePromise, makePromiseCancelable } from 'app/core/utils/CancelablePromise';
 
@@ -36,7 +36,7 @@ export class ConfigEditor extends PureComponent<Props, State> {
     };
   }
 
-  loadRegionsPromise: CancelablePromise<any> = null;
+  loadRegionsPromise: CancelablePromise<any> | null = null;
 
   componentDidMount() {
     this.loadRegionsPromise = makePromiseCancelable(this.loadRegions());
@@ -56,9 +56,7 @@ export class ConfigEditor extends PureComponent<Props, State> {
   async loadRegions() {
     await getDatasourceSrv()
       .loadDatasource(this.props.options.name)
-      .then((ds: CloudWatchDatasource) => {
-        return ds.getRegions();
-      })
+      .then((ds: CloudWatchDatasource) => ds.getRegions())
       .then(
         (regions: any) => {
           this.setState({
@@ -100,12 +98,10 @@ export class ConfigEditor extends PureComponent<Props, State> {
           ];
 
           this.setState({
-            regions: regions.map((region: string) => {
-              return {
-                value: region,
-                label: region,
-              };
-            }),
+            regions: regions.map((region: string) => ({
+              value: region,
+              label: region,
+            })),
           });
 
           // expected to fail when creating new datasource
@@ -162,7 +158,7 @@ export class ConfigEditor extends PureComponent<Props, State> {
           )}
           {options.jsonData.authType === 'keys' && (
             <div>
-              {options.secureJsonFields.accessKey ? (
+              {options.secureJsonFields?.accessKey ? (
                 <div className="gf-form-inline">
                   <div className="gf-form">
                     <InlineFormLabel className="width-14">Access Key ID</InlineFormLabel>
@@ -194,7 +190,7 @@ export class ConfigEditor extends PureComponent<Props, State> {
                   </div>
                 </div>
               )}
-              {options.secureJsonFields.secretKey ? (
+              {options.secureJsonFields?.secretKey ? (
                 <div className="gf-form-inline">
                   <div className="gf-form">
                     <InlineFormLabel className="width-14">Secret Access Key</InlineFormLabel>

@@ -5,8 +5,8 @@ import { act } from 'react-dom/test-utils';
 import { DataSourceInstanceSettings } from '@grafana/data';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { CustomVariable } from 'app/features/templating/all';
-import { Props, QueryEditor, normalizeQuery } from './QueryEditor';
-import CloudWatchDatasource from '../datasource';
+import { MetricsQueryEditor, Props, normalizeQuery } from './MetricsQueryEditor';
+import { CloudWatchDatasource } from '../datasource';
 
 const setup = () => {
   const instanceSettings = {
@@ -37,6 +37,8 @@ const setup = () => {
 
   const props: Props = {
     query: {
+      queryMode: 'Metrics',
+      apiMode: 'Metrics',
       refId: '',
       id: '',
       region: 'us-east-1',
@@ -63,7 +65,7 @@ describe('QueryEditor', () => {
     const { act } = renderer;
     await act(async () => {
       const props = setup();
-      const tree = renderer.create(<QueryEditor {...props} />).toJSON();
+      const tree = renderer.create(<MetricsQueryEditor {...props} />).toJSON();
       expect(tree).toMatchSnapshot();
     });
   });
@@ -74,7 +76,7 @@ describe('QueryEditor', () => {
       await act(async () => {
         const props = setup();
         props.query.region = (null as unknown) as string;
-        const wrapper = mount(<QueryEditor {...props} />);
+        const wrapper = mount(<MetricsQueryEditor {...props} />);
         expect(
           wrapper
             .find('.gf-form-inline')
