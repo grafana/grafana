@@ -31,7 +31,7 @@ import {
 } from '../features/dashboard/components/SaveDashboard/SaveDashboardButton';
 import { VariableEditorContainer } from '../features/variables/editor/VariableEditorContainer';
 import { SearchField, SearchResults, SearchWrapper, SearchResultsFilter } from '../features/search';
-import { TimePickerSettings } from 'app/features/dashboard/components/DashboardSettings';
+import { TimePickerSettings } from 'app/features/dashboard/components/DashboardSettings/TimePickerSettings';
 
 export function registerAngularDirectives() {
   react2AngularDirective('footer', Footer, []);
