@@ -6,7 +6,6 @@ import { useUpdateEffect } from 'react-use';
 
 interface QueryOperationRowProps {
   title?: ((props: { isOpen: boolean }) => React.ReactNode) | React.ReactNode;
-  headerElement?: ((props: { isOpen: boolean }) => React.ReactNode) | React.ReactNode;
   actions?:
     | ((props: { isOpen: boolean; openRow: () => void; closeRow: () => void }) => React.ReactNode)
     | React.ReactNode;
@@ -20,7 +19,6 @@ export const QueryOperationRow: React.FC<QueryOperationRowProps> = ({
   children,
   actions,
   title,
-  headerElement,
   onClose,
   onOpen,
   isOpen,
@@ -79,9 +77,6 @@ const getQueryOperationRowStyles = stylesFactory((theme: GrafanaTheme) => {
   return {
     wrapper: css`
       margin-bottom: ${theme.spacing.md};
-      &:last-child {
-        margin-bottom: 0;
-      }
     `,
     header: css`
       padding: 0 ${theme.spacing.sm};

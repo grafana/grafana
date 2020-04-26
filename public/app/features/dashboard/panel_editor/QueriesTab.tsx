@@ -34,6 +34,7 @@ import { expressionDatasource, ExpressionDatasourceID } from 'app/features/expre
 import { css } from 'emotion';
 import { e2e } from '@grafana/e2e';
 import { QueryOperationRow } from 'app/core/components/QueryOperationRow/QueryOperationRow';
+import { EditorTabBody, EditorToolbarView } from './EditorTabBody';
 
 interface Props {
   panel: PanelModel;
@@ -171,39 +172,10 @@ export class QueriesTab extends PureComponent<Props, State> {
     this.setState({ scrollTop: 1000 });
   };
 
-  renderTopSection(styles: QueriesTabStyls) {
-    const { panel } = this.props;
+  renderToolbar = () => {
     const { currentDS } = this.state;
-
-    return (
-      <div>
-        <div className={styles.dataSourceRow}>
-          <div className="gf-form-inline">
-            <div className="gf-form-label">Data source</div>
-            <DataSourcePicker datasources={this.datasources} onChange={this.onChangeDataSource} current={currentDS} />
-            <div className="gf-form gf-form--grow">
-              <div className="gf-form-label gf-form-label--grow"></div>
-              <div className="gf-form-label">
-                <IconButton name="question-circle" size="lg" />
-              </div>
-              <div className="gf-form-label">
-                <IconButton name="bug" size="lg" tooltip="Open query inspector" />
-              </div>
-              <div className="gf-form-label pointer">
-                <Icon name="angle-right" /> Options
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* <QueryOperationRow title="Options">
-          <div className={styles.topSection}>
-            <QueryOptions panel={panel} datasource={currentDS} />
-          </div>
-        </QueryOperationRow> */}
-      </div>
-    );
-  }
+    return <DataSourcePicker datasources={this.datasources} onChange={this.onChangeDataSource} current={currentDS} />;
+  };
 
   renderMixedPicker = () => {
     // We cannot filter on mixed flag as some mixed data sources like external plugin
@@ -242,7 +214,7 @@ export class QueriesTab extends PureComponent<Props, State> {
     this.setState({ scrollTop: target.scrollTop });
   };
 
-  renderQueries() {
+  renderBody() {
     const { panel, dashboard } = this.props;
     const { currentDS, data } = this.state;
 
@@ -252,6 +224,10 @@ export class QueriesTab extends PureComponent<Props, State> {
 
     return (
       <div aria-label={e2e.components.QueryTab.selectors.content}>
+        <QueryOperationRow title="Query options">
+          <QueryOptions panel={panel} datasource={currentDS} />
+        </QueryOperationRow>
+
         <QueryEditorRows
           queries={panel.targets}
           datasource={currentDS}
@@ -288,22 +264,27 @@ export class QueriesTab extends PureComponent<Props, State> {
 
   render() {
     const { scrollTop } = this.state;
-    const styles = getStyles();
+    const queryInspector: EditorToolbarView = {
+      title: 'Query inspector',
+      onClick: this.openQueryInspector,
+    };
+
+    const dsHelp: EditorToolbarView = {
+      heading: 'Help',
+      icon: 'question-circle',
+      render: this.renderHelp,
+    };
 
     return (
-      <CustomScrollbar
-        autoHeightMin="100%"
-        autoHide={true}
-        updateAfterMountMs={300}
-        scrollTop={scrollTop}
+      <EditorTabBody
+        renderToolbar={this.renderToolbar}
+        toolbarItems={[queryInspector, dsHelp]}
         setScrollTop={this.setScrollTop}
+        scrollTop={scrollTop}
       >
-        <div className={styles.innerWrapper}>
-          {this.renderTopSection(styles)}
-          <div className={styles.queriesWrapper}>{this.renderQueries()}</div>
-          {this.renderAddQueryRow(styles)}
-        </div>
-      </CustomScrollbar>
+        {this.renderBody()}
+        {this.renderAddQueryRow()}
+      </EditorTabBody>
     );
   }
 }
