@@ -293,7 +293,7 @@ GROUP BY
 ORDER BY 1
 ```
 
-When above query is used in a graph panel the result will be two series named `Metric A` and `Metric B` with a sum of `valueTwo` plotted over `time`.
+When the above query is used in a graph panel, the result is two series named `Metric A` and `Metric B` with a sum of `valueTwo` plotted over `time`.
 Any series lacking a value in a 3 minute window will have a value of zero which you'll see rendered in the graph to the right.
 
 ## Templating
