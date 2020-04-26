@@ -98,7 +98,7 @@ Examples:
 
 The [same rules that apply for Prometheus Label Selectors](https://prometheus.io/docs/prometheus/latest/querying/basics/#instant-vector-selectors) apply for Loki Log Stream Selectors.
 
-Another way to add a label selector, is in the table section, clicking on the **Filter** button beside a label will add the label to the query expression. This even works for multiple queries and will add the label selector to each query.
+Another way to add a label selector is in the table section. Click **Filter** beside a label to add the label to the query expression. This even works for multiple queries and will add the label selector to each query.
 
 ### Search Expression
 
