@@ -64,7 +64,7 @@ To show a horizontal line across the whole graph, add a series override and sele
 ## Templating
 
 Instead of hard-coding things like server, application and sensor name in your metric queries, you can use variables in their place.
-Variables are shown as dropdown select boxes at the top of the dashboard. These dropdowns makes it easy to change the data
+Variables are shown as dropdown select boxes at the top of the dashboard. These dropdowns make it easy to change the data
 being displayed in your dashboard.
 
 Check out the [Templating]({{< relref "../../reference/templating.md" >}}) documentation for an introduction to the templating feature and the different
