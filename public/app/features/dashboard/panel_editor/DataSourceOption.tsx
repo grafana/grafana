@@ -15,7 +15,7 @@ interface Props {
 export const DataSourceOption: FC<Props> = ({ label, placeholder, name, value, onBlur, onChange, tooltipInfo }) => {
   return (
     <div className="gf-form gf-form--flex-end">
-      <InlineFormLabel width={8} tooltip={tooltipInfo}>
+      <InlineFormLabel width={9} tooltip={tooltipInfo}>
         {label}
       </InlineFormLabel>
       <Input

@@ -66,7 +66,7 @@ export const QueryOperationRow: React.FC<QueryOperationRowProps> = ({
           >
             <Icon name={isContentVisible ? 'angle-down' : 'angle-right'} className={styles.collapseIcon} />
             {title && <span className={styles.title}>{titleElement}</span>}
-            {headerElement && headerElement}
+            {headerElement}
           </div>
           {actions && actionsElement}
         </HorizontalGroup>

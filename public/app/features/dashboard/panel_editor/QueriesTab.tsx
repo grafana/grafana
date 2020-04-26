@@ -163,7 +163,7 @@ export class QueriesTab extends PureComponent<Props, State> {
 
   renderTopSection(styles: QueriesTabStyls) {
     const { panel } = this.props;
-    const { currentDS } = this.state;
+    const { currentDS, data } = this.state;
 
     return (
       <div>
@@ -175,12 +175,16 @@ export class QueriesTab extends PureComponent<Props, State> {
             <Button variant="secondary" icon="info-circle" title="Open data source help" onClick={this.onOpenHelp} />
           </div>
           <div className={styles.dataSourceRowItem}>
-            <Button variant="secondary" onClick={this.openQueryInspector}>
+            <Button
+              variant="secondary"
+              onClick={this.openQueryInspector}
+              aria-label={e2e.components.QueryTab.selectors.queryInspectorButton}
+            >
               Query inspector
             </Button>
           </div>
           <div className={styles.dataSourceRowItemOptions}>
-            <QueryOptions panel={panel} datasource={currentDS} />
+            <QueryOptions panel={panel} datasource={currentDS} data={data} />
           </div>
         </div>
       </div>

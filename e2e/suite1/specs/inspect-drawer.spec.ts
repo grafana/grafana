@@ -27,9 +27,7 @@ e2e.scenario({
 
     e2e.flows.openPanelMenuItem(e2e.flows.PanelMenuItems.Edit, PANEL_UNDER_TEST);
 
-    e2e.components.QueryEditorToolbarItem.button('Query inspector')
-      .should('be.visible')
-      .click();
+    e2e.components.QueryTab.queryInspectorButton.should('be.visible').click();
 
     e2e.components.Drawer.General.title(PANEL_UNDER_TEST)
       .should('be.visible')

@@ -2,7 +2,7 @@
 import React, { PureComponent, ChangeEvent, FocusEvent, ReactText } from 'react';
 
 // Utils
-import { rangeUtil, DataSourceSelectItem } from '@grafana/data';
+import { rangeUtil, DataSourceSelectItem, PanelData } from '@grafana/data';
 
 // Components
 import {
@@ -43,6 +43,7 @@ const emptyToNull = (value: string) => {
 interface Props {
   panel: PanelModel;
   datasource: DataSourceSelectItem;
+  data: PanelData;
 }
 
 interface State {
@@ -201,16 +202,27 @@ export class QueryOptions extends PureComponent<Props, State> {
   };
 
   renderCollapsedText(styles: StylesType): React.ReactNode | undefined {
+    const { data } = this.props;
     const { isOpen, maxDataPoints, interval } = this.state;
 
     if (isOpen) {
       return undefined;
     }
 
+    let mdDesc = maxDataPoints;
+    if (maxDataPoints === '' && data.request) {
+      mdDesc = `auto = ${data.request.maxDataPoints}`;
+    }
+
+    let intervalDesc = interval;
+    if (intervalDesc === '' && data.request) {
+      intervalDesc = `auto = ${data.request.interval}`;
+    }
+
     return (
       <>
-        {maxDataPoints !== '' && <div className={styles.collapsedText}>Max data points = {maxDataPoints}</div>}
-        {interval !== '' && <div className={styles.collapsedText}>Min interval = {interval}</div>}
+        {<div className={styles.collapsedText}>MD = {mdDesc}</div>}
+        {<div className={styles.collapsedText}>Interval = {intervalDesc}</div>}
       </>
     );
   }
@@ -231,7 +243,7 @@ export class QueryOptions extends PureComponent<Props, State> {
         {this.renderOptions()}
 
         <div className="gf-form">
-          <InlineFormLabel width={8}>Relative time</InlineFormLabel>
+          <InlineFormLabel width={9}>Relative time</InlineFormLabel>
           <Input
             type="text"
             className="width-6"
@@ -245,7 +257,7 @@ export class QueryOptions extends PureComponent<Props, State> {
         </div>
 
         <div className="gf-form">
-          <span className="gf-form-label width-8">Time shift</span>
+          <span className="gf-form-label width-9">Time shift</span>
           <Input
             type="text"
             className="width-6"
@@ -261,7 +273,7 @@ export class QueryOptions extends PureComponent<Props, State> {
           <div className="gf-form-inline">
             <Switch
               label="Hide time info"
-              labelClass="width-8"
+              labelClass="width-9"
               checked={hideTimeOverride}
               onChange={this.onToggleTimeOverride}
             />
@@ -277,7 +289,7 @@ const getStyles = stylesFactory(() => {
 
   return {
     collapsedText: css`
-      margin-left: ${theme.spacing.sm};
+      margin-left: ${theme.spacing.md};
       font-size: ${theme.typography.size.sm};
       color: ${theme.colors.textWeak};
     `,
