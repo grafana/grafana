@@ -444,7 +444,7 @@ ORDER BY 1
 
 ## Stored procedure support
 
-Stored procedures have been verified to work. However, please note that we haven't done anything special to support this so there may exist edge cases where it won't work as you would expect.
+Stored procedures have been verified to work. However, please note that we haven't done anything special to support this, so there might be edge cases where it won't work as you would expect.
 Stored procedures should be supported in table, time series and annotation queries as long as you use the same naming of columns and return data in the same format as describe above under respective section.
 
 Please note that any macro function will not work inside a stored procedure.
