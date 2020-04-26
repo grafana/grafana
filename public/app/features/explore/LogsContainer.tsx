@@ -153,6 +153,7 @@ export class LogsContainer extends PureComponent<LogsContainerProps> {
               timeZone={timeZone}
               scanning={scanning}
               scanRange={range.raw}
+              showContextToggle={this.props.datasourceInstance?.showContextToggle}
               width={width}
               getRowContext={this.getLogRowContext}
               getFieldLinks={this.getFieldLinks}

@@ -274,6 +274,8 @@ export abstract class DataSourceApi<
 
   getVersion?(optionalOptions?: any): Promise<string>;
 
+  showContextToggle?(row?: LogRowModel): boolean;
+
   /**
    * Can be optionally implemented to allow datasource to be a source of annotations for dashboard. To be visible
    * in the annotation editor `annotations` capability also needs to be enabled in plugin.json.
@@ -307,6 +309,8 @@ export interface QueryEditorProps<
    * Contains query response filtered by refId of QueryResultBase and possible query error
    */
   data?: PanelData;
+  exploreMode?: ExploreMode;
+  exploreId?: any;
 }
 
 export enum DataSourceStatus {
@@ -329,6 +333,7 @@ export interface ExploreQueryFieldProps<
   onBlur?: () => void;
   absoluteRange?: AbsoluteTimeRange;
   exploreMode?: ExploreMode;
+  exploreId?: any;
 }
 
 export interface ExploreStartPageProps {
