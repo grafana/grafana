@@ -322,7 +322,7 @@ func TestUserDataAccess(t *testing.T) {
 					})
 				})
 
-				Convey("when retreiving signed in user for orgId=0 result should return active org id", func() {
+				Convey("when retrieving signed in user for orgId=0 result should return active org id", func() {
 					ss.CacheService.Flush()
 
 					query := &models.GetSignedInUserQuery{OrgId: users[1].OrgId, UserId: users[1].Id}
