@@ -5,7 +5,7 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-// AttachedFile is struct representating email attached files
+// AttachedFile struct represents email attached files
 type AttachedFile struct {
 	Name    string
 	Content []byte
