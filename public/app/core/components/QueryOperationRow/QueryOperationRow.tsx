@@ -6,6 +6,7 @@ import { useUpdateEffect } from 'react-use';
 
 interface QueryOperationRowProps {
   title?: ((props: { isOpen: boolean }) => React.ReactNode) | React.ReactNode;
+  headerElement?: React.ReactNode;
   actions?:
     | ((props: { isOpen: boolean; openRow: () => void; closeRow: () => void }) => React.ReactNode)
     | React.ReactNode;
@@ -19,6 +20,7 @@ export const QueryOperationRow: React.FC<QueryOperationRowProps> = ({
   children,
   actions,
   title,
+  headerElement,
   onClose,
   onOpen,
   isOpen,
@@ -64,6 +66,7 @@ export const QueryOperationRow: React.FC<QueryOperationRowProps> = ({
           >
             <Icon name={isContentVisible ? 'angle-down' : 'angle-right'} className={styles.collapseIcon} />
             {title && <span className={styles.title}>{titleElement}</span>}
+            {headerElement && headerElement}
           </div>
           {actions && actionsElement}
         </HorizontalGroup>

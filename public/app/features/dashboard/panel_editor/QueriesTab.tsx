@@ -21,7 +21,6 @@ import { DashboardQueryEditor, isSharedDashboardQuery } from 'app/plugins/dataso
 import { expressionDatasource, ExpressionDatasourceID } from 'app/features/expressions/ExpressionDatasource';
 import { css } from 'emotion';
 import { e2e } from '@grafana/e2e';
-import { QueryOperationRow } from 'app/core/components/QueryOperationRow/QueryOperationRow';
 
 interface Props {
   panel: PanelModel;
@@ -36,7 +35,6 @@ interface State {
   isAddingMixed: boolean;
   scrollTop: number;
   data: PanelData;
-  isOptionsOpen: boolean;
   isHelpOpen: boolean;
 }
 
@@ -51,7 +49,6 @@ export class QueriesTab extends PureComponent<Props, State> {
     helpContent: null,
     isPickerOpen: false,
     isAddingMixed: false,
-    isOptionsOpen: false,
     isHelpOpen: false,
     scrollTop: 0,
     data: {
@@ -166,7 +163,7 @@ export class QueriesTab extends PureComponent<Props, State> {
 
   renderTopSection(styles: QueriesTabStyls) {
     const { panel } = this.props;
-    const { currentDS, isOptionsOpen } = this.state;
+    const { currentDS } = this.state;
 
     return (
       <div>
@@ -183,29 +180,12 @@ export class QueriesTab extends PureComponent<Props, State> {
             </Button>
           </div>
           <div className={styles.dataSourceRowItemOptions}>
-            <QueryOperationRow
-              title="Options"
-              isOpen={isOptionsOpen}
-              onOpen={this.onOpenOptions}
-              onClose={this.onCloseOptions}
-            >
-              <div className={styles.topSection}>
-                <QueryOptions panel={panel} datasource={currentDS} />
-              </div>
-            </QueryOperationRow>
+            <QueryOptions panel={panel} datasource={currentDS} />
           </div>
         </div>
       </div>
     );
   }
-
-  onOpenOptions = () => {
-    this.setState({ isOptionsOpen: true });
-  };
-
-  onCloseOptions = () => {
-    this.setState({ isOptionsOpen: false });
-  };
 
   onOpenHelp = () => {
     this.setState({ isHelpOpen: true });
@@ -334,10 +314,6 @@ const getStyles = stylesFactory(() => {
       height: 100%;
       padding: ${theme.spacing.md};
     `,
-    topSection: css`
-      display: flex;
-      padding: 0;
-    `,
     dataSourceRow: css`
       display: flex;
       margin-bottom: ${theme.spacing.md};
@@ -348,11 +324,8 @@ const getStyles = stylesFactory(() => {
     dataSourceRowItemOptions: css`
       flex-grow: 1;
     `,
-    topSectionItem: css`
-      margin-right: ${theme.spacing.md};
-    `,
     queriesWrapper: css`
-      padding: 16px 0;
+      padding-bottom: 16px;
     `,
   };
 });
