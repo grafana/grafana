@@ -48,7 +48,7 @@ You can use this functionality to link your tracing backend directly from your l
 Each derived field consists of:
 
 - **Name:** Shown in the log details as a label.
-- **Regex:** A Regex pattern that runs on the log message and captures part of it as the value of the new field. Can only contain pattern to capture a single group.
+- **Regex:** A Regex pattern that runs on the log message and captures part of it as the value of the new field. Can only contain a single capture group.
 - **URL**: A URL template used to construct a link next to the field value in log details. Use special `${__value.raw}` value in your template to interpolate the real field value into your URL template.
 
 You can use a debug section to see what your fields extract and how the URL is interpolated. Click **Show example log message** to show the text area where you can enter a log message.
