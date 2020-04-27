@@ -95,6 +95,8 @@ export const VizTypePicker: React.FC<Props> = ({ searchQuery, onTypeChange, curr
   );
 };
 
+VizTypePicker.displayName = 'VizTypePicker';
+
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
   return {
     grid: css`

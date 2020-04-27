@@ -205,7 +205,7 @@ class UnConnectedAlertTab extends PureComponent<Props, State> {
     };
 
     return (
-      <EditorTabBody heading="Alert" toolbarItems={toolbarItems}>
+      <EditorTabBody toolbarItems={toolbarItems}>
         <div aria-label={selectors.components.AlertTab.content}>
           {alert && hasTransformations && (
             <Alert

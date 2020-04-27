@@ -3,7 +3,7 @@ import { IconButton } from '@grafana/ui';
 import { selectors } from '@grafana/e2e-selectors';
 
 export interface Props extends ButtonHTMLAttributes<HTMLButtonElement> {
-  surface: 'body' | 'panel';
+  surface: 'dashboard' | 'panel' | 'header';
 }
 
 export const BackButton: React.FC<Props> = ({ surface, onClick }) => {

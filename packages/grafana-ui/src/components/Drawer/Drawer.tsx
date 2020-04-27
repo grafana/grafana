@@ -14,7 +14,7 @@ export interface Props {
   title?: ReactNode;
   /** Subtitle shown below the title */
   subtitle?: ReactNode;
-  /** Should the Drawer be closable by clicking on the mask */
+  /** Should the Drawer be closable by clicking on the mask, defaults to true */
   closeOnMaskClick?: boolean;
   /** Render the drawer inside a container on the page */
   inline?: boolean;
@@ -71,7 +71,7 @@ export const Drawer: FC<Props> = ({
   children,
   inline = false,
   onClose,
-  closeOnMaskClick = false,
+  closeOnMaskClick = true,
   scrollableContent = false,
   title,
   subtitle,

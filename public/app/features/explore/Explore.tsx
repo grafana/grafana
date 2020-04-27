@@ -1,31 +1,12 @@
-// Libraries
 import React from 'react';
 import { hot } from 'react-hot-loader';
 import { css, cx } from 'emotion';
+import { compose } from 'redux';
 import { connect } from 'react-redux';
 import AutoSizer from 'react-virtualized-auto-sizer';
 import memoizeOne from 'memoize-one';
-// Services & Utils
-import store from 'app/core/store';
-// Components
+import { selectors } from '@grafana/e2e-selectors';
 import { ErrorBoundaryAlert, stylesFactory, withTheme } from '@grafana/ui';
-import LogsContainer from './LogsContainer';
-import QueryRows from './QueryRows';
-import TableContainer from './TableContainer';
-import RichHistoryContainer from './RichHistory/RichHistoryContainer';
-// Actions
-import {
-  addQueryRow,
-  changeSize,
-  initializeExplore,
-  modifyQueries,
-  refreshExplore,
-  scanStart,
-  setQueries,
-  toggleGraph,
-  updateTimeRange,
-} from './state/actions';
-// Types
 import {
   AbsoluteTimeRange,
   DataQuery,
@@ -39,6 +20,24 @@ import {
   TimeRange,
   TimeZone,
 } from '@grafana/data';
+
+import store from 'app/core/store';
+import config from 'app/core/config';
+import LogsContainer from './LogsContainer';
+import QueryRows from './QueryRows';
+import TableContainer from './TableContainer';
+import RichHistoryContainer from './RichHistory/RichHistoryContainer';
+import {
+  addQueryRow,
+  changeSize,
+  initializeExplore,
+  modifyQueries,
+  refreshExplore,
+  scanStart,
+  setQueries,
+  toggleGraph,
+  updateTimeRange,
+} from './state/actions';
 
 import { ExploreId, ExploreItemState, ExploreUIState, ExploreUpdateState, ExploreUrlState } from 'app/types/explore';
 import { StoreState } from 'app/types';
@@ -60,8 +59,6 @@ import { scanStopAction } from './state/actionTypes';
 import { ExploreGraphPanel } from './ExploreGraphPanel';
 import { TraceView } from './TraceView/TraceView';
 import { SecondaryActions } from './SecondaryActions';
-import { compose } from 'redux';
-import { selectors } from '@grafana/e2e-selectors';
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
   return {
@@ -308,6 +305,10 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
     const StartPage = datasourceInstance?.components?.ExploreStartPage;
     const showStartPage = !queryResponse || queryResponse.state === LoadingState.NotStarted;
 
+    // TEMP: Remove for 7.0
+    const cloudwatchLogsDisabled =
+      datasourceInstance?.meta?.id === 'cloudwatch' && !config.featureToggles.cloudwatchLogs;
+
     // gets an error without a refID, so non-query-row-related error, like a connection error
     const queryErrors = queryResponse.error ? [queryResponse.error] : undefined;
     const queryError = getFirstNonQueryRowSpecificError(queryErrors);
@@ -370,7 +371,7 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
                           {mode === ExploreMode.Metrics && (
                             <TableContainer width={width} exploreId={exploreId} onClickCell={this.onClickFilterLabel} />
                           )}
-                          {mode === ExploreMode.Logs && (
+                          {mode === ExploreMode.Logs && !cloudwatchLogsDisabled && (
                             <LogsContainer
                               width={width}
                               exploreId={exploreId}

@@ -7,7 +7,7 @@
   "info": {
     "description": "Data source for MySQL databases",
     "author": {
-      "name": "Grafana Project",
+      "name": "Grafana Labs",
       "url": "https://grafana.com"
     },
     "logos": {

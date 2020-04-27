@@ -20,7 +20,12 @@ export const simple = () => {
 
   return (
     <div>
-      {renderScenario('body', theme, ['sm', 'md', 'lg', 'xl', 'xxl'], ['search', 'trash-alt', 'arrow-left', 'times'])}
+      {renderScenario(
+        'dashboard',
+        theme,
+        ['sm', 'md', 'lg', 'xl', 'xxl'],
+        ['search', 'trash-alt', 'arrow-left', 'times']
+      )}
       {renderScenario('panel', theme, ['sm', 'md', 'lg', 'xl', 'xxl'], ['search', 'trash-alt', 'arrow-left', 'times'])}
       {renderScenario('header', theme, ['sm', 'md', 'lg', 'xl', 'xxl'], ['search', 'trash-alt', 'arrow-left', 'times'])}
     </div>
@@ -31,8 +36,8 @@ function renderScenario(surface: string, theme: GrafanaTheme, sizes: IconSize[],
   let bg: string = 'red';
 
   switch (surface) {
-    case 'body':
-      bg = theme.colors.bodyBg;
+    case 'dashboard':
+      bg = theme.colors.dashboardBg;
       break;
     case 'panel':
       bg = theme.colors.bodyBg;

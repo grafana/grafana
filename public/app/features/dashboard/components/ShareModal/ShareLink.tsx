@@ -1,13 +1,12 @@
 import React, { PureComponent } from 'react';
-import { ClipboardButton, Icon, LegacyForms } from '@grafana/ui';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
-import { AppEvents, PanelModel, SelectableValue } from '@grafana/data';
+import { LegacyForms, ClipboardButton, Icon, InfoBox } from '@grafana/ui';
+const { Select, Switch } = LegacyForms;
+import { SelectableValue, PanelModel, AppEvents } from '@grafana/data';
 import { DashboardModel } from 'app/features/dashboard/state';
 import { buildImageUrl, buildShareUrl } from './utils';
 import { appEvents } from 'app/core/core';
 import config from 'app/core/config';
-
-const { Select, Switch } = LegacyForms;
 
 const themeOptions: Array<SelectableValue<string>> = [
   { label: 'current', value: 'current' },
@@ -135,6 +134,22 @@ export class ShareLink extends PureComponent<Props, State> {
                   <Icon name="camera" /> Direct link rendered image
                 </a>
               </div>
+            )}
+            {panel && !config.rendererAvailable && (
+              <InfoBox>
+                <p>
+                  <>To render a panel image, you must install the </>
+                  <a
+                    href="https://grafana.com/grafana/plugins/grafana-image-renderer"
+                    target="_blank"
+                    rel="noopener"
+                    className="external-link"
+                  >
+                    Grafana Image Renderer plugin
+                  </a>
+                  . Please contact your Grafana administrator to install the plugin.
+                </p>
+              </InfoBox>
             )}
           </div>
         </div>

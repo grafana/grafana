@@ -75,6 +75,7 @@ export const Components = {
   },
   QueryTab: {
     content: 'Query editor tab content',
+    queryInspectorButton: 'Query inspector button',
   },
   AlertTab: {
     content: 'Alert editor tab content',

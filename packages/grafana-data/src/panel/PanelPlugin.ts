@@ -168,7 +168,11 @@ export class PanelPlugin<TOptions = any, TFieldConfigOptions extends object = an
     return this._optionEditors;
   }
 
+  /**
+   * @deprecated setEditor is deprecated in favor of setPanelOptions
+   */
   setEditor(editor: ComponentClass<PanelEditorProps<TOptions>>) {
+    deprecationWarning('PanelPlugin', 'setEditor', 'setPanelOptions');
     this.editor = editor;
     return this;
   }
