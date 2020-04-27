@@ -1,6 +1,5 @@
 import AzureMonitorDatasource from '../datasource';
 import FakeSchemaData from './__mocks__/schema';
-import { TableData, DataFrame } from '@grafana/data';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { KustoSchema, AzureLogsVariable } from '../types';
 import { toUtc } from '@grafana/data';
@@ -168,8 +167,6 @@ describe('AzureLogAnalyticsDatasource', () => {
               ],
             },
           ],
-          tables: null as TableData,
-          dataframes: null as DataFrame,
         },
       },
     };

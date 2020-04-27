@@ -37,8 +37,8 @@ export default class AzureLogAnalyticsDatasource {
         this.baseUrl = '/loganalyticsazure';
     }
 
-    this.url = instanceSettings.url;
-    this.defaultOrFirstWorkspace = this.instanceSettings.jsonData.logAnalyticsDefaultWorkspace;
+    this.url = instanceSettings.url || '';
+    this.defaultOrFirstWorkspace = this.instanceSettings.jsonData.logAnalyticsDefaultWorkspace || '';
 
     this.setWorkspaceUrl();
   }
@@ -389,7 +389,7 @@ export default class AzureLogAnalyticsDatasource {
     return undefined;
   }
 
-  isValidConfigField(field: string) {
+  isValidConfigField(field: string | undefined) {
     return field && field.length > 0;
   }
 }
