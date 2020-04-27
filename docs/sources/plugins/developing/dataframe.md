@@ -16,7 +16,7 @@ Data frames were introduced in Grafana 7.0 to replace the Time series and Table 
 
 This document gives an overview of the data frame structure, and of how data is handled within Grafana.
 
-### The dataframe
+### The data frame
 
 A data frame is a columnar-oriented table structure, which means it stores data by column and not by row. To understand what this means, let’s look at the TypeScript definition used by Grafana:
 
