@@ -97,7 +97,7 @@ export class TimePickerSettings extends PureComponent<Props, State> {
   };
 
   onTimeZoneChange = (timeZone: SelectableValue<string>) => {
-    if (!timeZone || !timeZone.value) {
+    if (!timeZone || typeof timeZone.value !== 'string') {
       return;
     }
     this.props.onTimeZoneChange(timeZone.value);
