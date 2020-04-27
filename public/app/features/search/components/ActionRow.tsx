@@ -48,7 +48,11 @@ export const ActionRow: FC<Props> = ({
         </HorizontalGroup>
       </div>
       <HorizontalGroup spacing="md" width="auto">
-        {showStarredFilter && <Checkbox label="Filter by starred" onChange={onStarredFilterChange} />}
+        {showStarredFilter && (
+          <div className={styles.checkboxWrapper}>
+            <Checkbox label="Filter by starred" onChange={onStarredFilterChange} />
+          </div>
+        )}
         <TagFilter isClearable tags={query.tag} tagOptions={searchSrv.getDashboardTags} onChange={onTagFilterChange} />
       </HorizontalGroup>
     </div>
@@ -72,6 +76,11 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
     `,
     rowContainer: css`
       margin-right: ${theme.spacing.md};
+    `,
+    checkboxWrapper: css`
+      label {
+        line-height: 1.2;
+      }
     `,
   };
 });
