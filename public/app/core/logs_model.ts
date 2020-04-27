@@ -16,7 +16,8 @@ import {
   LogsMetaKind,
   LogsDedupStrategy,
   GraphSeriesXY,
-  toUtc,
+  dateTimeFormat,
+  dateTimeFormatTimeAgo,
   NullValueMode,
   toDataFrame,
   FieldCache,
@@ -250,8 +251,6 @@ function separateLogsAndMetrics(dataFrames: DataFrame[]) {
   return { logSeries, metricSeries };
 }
 
-const logTimeFormat = 'YYYY-MM-DD HH:mm:ss';
-
 interface LogFields {
   series: DataFrame;
 
@@ -333,10 +332,10 @@ export function logSeriesToLogsModel(logSeries: DataFrame[]): LogsModel | undefi
         rowIndex: j,
         dataFrame: series,
         logLevel,
-        timeFromNow: time.fromNow(),
+        timeFromNow: dateTimeFormatTimeAgo(ts),
         timeEpochMs: time.valueOf(),
-        timeLocal: time.format(logTimeFormat),
-        timeUtc: toUtc(time.valueOf()).format(logTimeFormat),
+        timeLocal: dateTimeFormat(ts, { timeZone: 'browser' }),
+        timeUtc: dateTimeFormat(ts, { timeZone: 'utc' }),
         uniqueLabels,
         hasAnsi,
         searchWords,

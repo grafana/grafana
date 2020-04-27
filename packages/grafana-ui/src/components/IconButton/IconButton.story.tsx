@@ -7,7 +7,7 @@ import { GrafanaTheme } from '@grafana/data';
 import { IconSize, IconName } from '../../types';
 
 export default {
-  title: 'General/IconButton',
+  title: 'Buttons/IconButton',
   component: IconButton,
   decorators: [withCenteredStory],
   parameters: {
