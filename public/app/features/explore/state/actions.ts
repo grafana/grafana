@@ -496,7 +496,7 @@ const execQueries = (
    */
   const oldestResponseEndTimestamp = toUtc(allResponseTimestamps[0]).subtract('1', 's');
 
-  let appendQueryRaw: RawTimeRange; // updated raw time range for append queries
+  let appendQueryRaw: RawTimeRange | null = null; // updated raw time range for append queries
   if (appendQueries) {
     if (direction === QueryDirection.backward) {
       appendQueryRaw = {
@@ -530,7 +530,7 @@ const execQueries = (
    * if doing backward query (showing older logs), add time range to the stack
    * if doing pseudo-forward query (showing newer logs), pop time range from the stack
    */
-  if (appendQueries && direction === QueryDirection.backward) {
+  if (appendQueries && direction === QueryDirection.backward && appendQueryTimeRange) {
     dispatch(addPrevShowMoreLogsTimeRangesAction({ exploreId, prevShowMoreLogsTimeRange: appendQueryTimeRange }));
   } else if (appendQueries && direction === QueryDirection.forward) {
     dispatch(popPrevShowMoreLogsTimeRangesAction({ exploreId }));
