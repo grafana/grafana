@@ -87,6 +87,16 @@ export class DataSourcePlugin<
     return this;
   }
 
+  setExploreMetricsStartPage(ExploreStartPage: ComponentType<ExploreStartPageProps>) {
+    this.components.ExploreMetricsStartPage = ExploreStartPage;
+    return this;
+  }
+
+  setExploreLogsStartPage(ExploreStartPage: ComponentType<ExploreStartPageProps>) {
+    this.components.ExploreLogsStartPage = ExploreStartPage;
+    return this;
+  }
+
   setVariableQueryEditor(VariableQueryEditor: any) {
     this.components.VariableQueryEditor = VariableQueryEditor;
     return this;
@@ -144,6 +154,8 @@ export interface DataSourcePluginComponents<
   ExploreMetricsQueryField?: ComponentType<ExploreQueryFieldProps<DSType, TQuery, TOptions>>;
   ExploreLogsQueryField?: ComponentType<ExploreQueryFieldProps<DSType, TQuery, TOptions>>;
   ExploreStartPage?: ComponentType<ExploreStartPageProps>;
+  ExploreMetricsStartPage?: ComponentType<ExploreStartPageProps>;
+  ExploreLogsStartPage?: ComponentType<ExploreStartPageProps>;
   ConfigEditor?: ComponentType<DataSourcePluginOptionsEditorProps<TOptions, TSecureOptions>>;
   MetadataInspector?: ComponentType<MetadataInspectorProps<DSType, TQuery, TOptions>>;
 }

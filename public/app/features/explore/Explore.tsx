@@ -19,6 +19,7 @@ import {
   RawTimeRange,
   TimeRange,
   TimeZone,
+  ExploreStartPageProps,
 } from '@grafana/data';
 
 import store from 'app/core/store';
@@ -302,7 +303,16 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
     const { showRichHistory } = this.state;
     const exploreClass = split ? 'explore explore-split' : 'explore';
     const styles = getStyles(theme);
-    const StartPage = datasourceInstance?.components?.ExploreStartPage;
+
+    let StartPage: React.ComponentType<ExploreStartPageProps>;
+    if (mode === ExploreMode.Metrics && datasourceInstance.components?.ExploreMetricsStartPage) {
+      StartPage = datasourceInstance.components.ExploreMetricsStartPage;
+    } else if (mode === ExploreMode.Logs && datasourceInstance.components?.ExploreLogsStartPage) {
+      StartPage = datasourceInstance.components.ExploreLogsStartPage;
+    } else {
+      StartPage = datasourceInstance?.components?.ExploreStartPage;
+    }
+
     const showStartPage = !queryResponse || queryResponse.state === LoadingState.NotStarted;
 
     // TEMP: Remove for 7.0
