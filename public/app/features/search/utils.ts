@@ -136,7 +136,7 @@ export const getCheckedDashboards = (sections: DashboardSection[]): DashboardSec
   }
 
   return sections.reduce((uids, section) => {
-    return [...uids, ...section.items.filter(item => item.checked)];
+    return section.items ? [...uids, ...section.items.filter(item => item.checked)] : uids;
   }, []);
 };
 
