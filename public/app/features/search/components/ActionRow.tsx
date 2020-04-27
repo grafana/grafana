@@ -50,6 +50,7 @@ export const ActionRow: FC<Props> = ({
       <HorizontalGroup spacing="md" width="auto">
         {showStarredFilter && <Checkbox label="Filter by starred" onChange={onStarredFilterChange} />}
         <TagFilter
+          isClearable
           placeholder="Filter by tag"
           tags={query.tag}
           tagOptions={searchSrv.getDashboardTags}
@@ -71,7 +72,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        padding: ${theme.spacing.md} 0;
+        padding: ${theme.spacing.lg} 0;
         width: 100%;
       }
     `,
