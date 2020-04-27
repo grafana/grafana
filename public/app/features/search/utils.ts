@@ -1,4 +1,5 @@
 import { parse, SearchParserResult } from 'search-query-parser';
+import { IconName } from '@grafana/ui';
 import { DashboardQuery, DashboardSection, DashboardSectionItem, SearchAction, UidsToDelete } from './types';
 import { NO_ID_SECTIONS } from './constants';
 import { getDashboardSrv } from '../dashboard/services/DashboardSrv';
@@ -194,9 +195,25 @@ export const getParsedQuery = (query: DashboardQuery, queryParsing = false) => {
   return { ...parsedQuery, query: parseQuery(query.query).text as string, folderIds };
 };
 
+/**
+ * Check if search query has filters enabled. Excludes folderId
+ * @param query
+ */
 export const hasFilters = (query: DashboardQuery) => {
   if (!query) {
     return false;
   }
   return Boolean(query.query || query.tag?.length > 0 || query.starred || query.sort);
+};
+
+/**
+ * Get section icon depending on expanded state. Currently works for folder icons only
+ * @param section
+ */
+export const getSectionIcon = (section: DashboardSection): IconName => {
+  if (!hasId(section.title)) {
+    return section.icon as IconName;
+  }
+
+  return section.expanded ? 'folder-open' : 'folder';
 };

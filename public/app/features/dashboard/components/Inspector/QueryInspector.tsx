@@ -1,12 +1,13 @@
 import React, { PureComponent } from 'react';
+import { Button, JSONFormatter, LoadingPlaceholder } from '@grafana/ui';
+import { selectors } from '@grafana/e2e-selectors';
+import { AppEvents, PanelEvents } from '@grafana/data';
+
 import appEvents from 'app/core/app_events';
 import { CopyToClipboard } from 'app/core/components/CopyToClipboard/CopyToClipboard';
-import { Button, JSONFormatter, LoadingPlaceholder } from '@grafana/ui';
 import { CoreEvents } from 'app/types';
-import { AppEvents, PanelEvents } from '@grafana/data';
 import { PanelModel } from 'app/features/dashboard/state';
 import { getPanelInspectorStyles } from './styles';
-import { e2e } from '@grafana/e2e';
 
 interface DsQuery {
   isLoading: boolean;
@@ -189,7 +190,7 @@ export class QueryInspector extends PureComponent<Props, State> {
 
     return (
       <>
-        <div aria-label={e2e.components.PanelInspector.Query.selectors.content}>
+        <div aria-label={selectors.components.PanelInspector.Query.content}>
           <h3 className="section-heading">Query inspector</h3>
           <p className="small muted">
             Query inspector allows you to view raw request and response. To collect this data Grafana needs to issue a

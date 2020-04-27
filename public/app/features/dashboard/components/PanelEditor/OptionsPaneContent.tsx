@@ -8,7 +8,7 @@ import { css } from 'emotion';
 import { PanelOptionsTab } from './PanelOptionsTab';
 import { DashNavButton } from 'app/features/dashboard/components/DashNav/DashNavButton';
 import { usePanelLatestData } from './usePanelLatestData';
-import { e2e } from '@grafana/e2e';
+import { selectors } from '@grafana/e2e-selectors';
 
 interface Props {
   plugin: PanelPlugin;
@@ -81,7 +81,7 @@ export const OptionsPaneContent: React.FC<Props> = ({
   const showMainTab = activeTab === 'options' || plugin.meta.skipDataQuery;
 
   return (
-    <div className={styles.panelOptionsPane} aria-label={e2e.components.PanelEditor.OptionsPane.selectors.content}>
+    <div className={styles.panelOptionsPane} aria-label={selectors.components.PanelEditor.OptionsPane.content}>
       {plugin && (
         <div className={styles.wrapper}>
           <TabsBar className={styles.tabsBar}>
@@ -185,7 +185,7 @@ export const TabsBarContent: React.FC<{
   return (
     <>
       {width < 352 ? (
-        <div className="flex-grow-1" aria-label={e2e.components.PanelEditor.OptionsPane.selectors.select}>
+        <div className="flex-grow-1" aria-label={selectors.components.PanelEditor.OptionsPane.select}>
           <Select
             options={tabs}
             value={active}

@@ -2,10 +2,11 @@ import React, { CSSProperties, FC, ReactNode, useState } from 'react';
 import { GrafanaTheme } from '@grafana/data';
 import RcDrawer from 'rc-drawer';
 import { css } from 'emotion';
+import { selectors } from '@grafana/e2e-selectors';
+
 import CustomScrollbar from '../CustomScrollbar/CustomScrollbar';
 import { IconButton } from '../IconButton/IconButton';
 import { stylesFactory, useTheme } from '../../themes';
-import { e2e } from '@grafana/e2e';
 
 export interface Props {
   children: ReactNode;
@@ -13,7 +14,7 @@ export interface Props {
   title?: ReactNode;
   /** Subtitle shown below the title */
   subtitle?: ReactNode;
-  /** Should the Drawer be closable by clicking on the mask */
+  /** Should the Drawer be closable by clicking on the mask, defaults to true */
   closeOnMaskClick?: boolean;
   /** Render the drawer inside a container on the page */
   inline?: boolean;
@@ -70,7 +71,7 @@ export const Drawer: FC<Props> = ({
   children,
   inline = false,
   onClose,
-  closeOnMaskClick = false,
+  closeOnMaskClick = true,
   scrollableContent = false,
   title,
   subtitle,
@@ -96,8 +97,8 @@ export const Drawer: FC<Props> = ({
       className={drawerStyles.drawer}
       aria-label={
         typeof title === 'string'
-          ? e2e.components.Drawer.General.selectors.title(title)
-          : e2e.components.Drawer.General.selectors.title('no title')
+          ? selectors.components.Drawer.General.title(title)
+          : selectors.components.Drawer.General.title('no title')
       }
     >
       {typeof title === 'string' && (
@@ -109,7 +110,7 @@ export const Drawer: FC<Props> = ({
                 size="xl"
                 onClick={() => setIsExpanded(true)}
                 surface="header"
-                aria-label={e2e.components.Drawer.General.selectors.expand}
+                aria-label={selectors.components.Drawer.General.expand}
               />
             )}
             {expandable && isExpanded && (
@@ -118,7 +119,7 @@ export const Drawer: FC<Props> = ({
                 size="xl"
                 onClick={() => setIsExpanded(false)}
                 surface="header"
-                aria-label={e2e.components.Drawer.General.selectors.contract}
+                aria-label={selectors.components.Drawer.General.contract}
               />
             )}
             <IconButton
@@ -126,7 +127,7 @@ export const Drawer: FC<Props> = ({
               size="xl"
               onClick={onClose}
               surface="header"
-              aria-label={e2e.components.Drawer.General.selectors.close}
+              aria-label={selectors.components.Drawer.General.close}
             />
           </div>
           <div className={drawerStyles.titleWrapper}>
