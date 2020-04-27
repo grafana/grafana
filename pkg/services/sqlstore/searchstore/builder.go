@@ -3,8 +3,9 @@ package searchstore
 import (
 	"bytes"
 	"fmt"
-	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"strings"
+
+	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 )
 
 // Builder defaults to returning a SQL query to get a list of all dashboards
@@ -27,7 +28,7 @@ func (b *Builder) ToSql(limit, page int64) (string, []interface{}) {
 	b.buildSelect()
 
 	b.sql.WriteString("( ")
-	b.applyFilters()
+	orderQuery := b.applyFilters()
 
 	b.sql.WriteString(b.Dialect.LimitOffset(limit, (page-1)*limit) + `) AS ids
 		INNER JOIN dashboard ON ids.id = dashboard.id
@@ -35,7 +36,9 @@ func (b *Builder) ToSql(limit, page int64) (string, []interface{}) {
 
 	b.sql.WriteString(`
 		LEFT OUTER JOIN dashboard AS folder ON folder.id = dashboard.folder_id
-		LEFT OUTER JOIN dashboard_tag ON dashboard.id = dashboard_tag.dashboard_id`)
+		LEFT OUTER JOIN dashboard_tag ON dashboard.id = dashboard_tag.dashboard_id
+		`)
+	b.sql.WriteString(orderQuery)
 
 	return b.sql.String(), b.params
 }
@@ -56,8 +59,9 @@ func (b *Builder) buildSelect() {
 		FROM `)
 }
 
-func (b *Builder) applyFilters() {
+func (b *Builder) applyFilters() (ordering string) {
 	joins := []string{}
+	orderJoins := []string{}
 
 	wheres := []string{}
 	whereParams := []interface{}{}
@@ -89,6 +93,9 @@ func (b *Builder) applyFilters() {
 		}
 
 		if f, ok := f.(FilterOrderBy); ok {
+			if f, ok := f.(FilterLeftJoin); ok {
+				orderJoins = append(joins, fmt.Sprintf(" LEFT OUTER JOIN %s ", f.LeftJoin()))
+			}
 			orders = append(orders, f.OrderBy())
 		}
 	}
@@ -107,6 +114,12 @@ func (b *Builder) applyFilters() {
 	}
 
 	if len(orders) > 0 {
-		b.sql.WriteString(fmt.Sprintf(" ORDER BY %s", strings.Join(orders, ", ")))
+		orderBy := fmt.Sprintf(" ORDER BY %s", strings.Join(orders, ", "))
+		b.sql.WriteString(orderBy)
+
+		order := strings.Join(orderJoins, "")
+		order += orderBy
+		return order
 	}
+	return " ORDER BY dashboard.id"
 }
