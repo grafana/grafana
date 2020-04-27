@@ -53,7 +53,6 @@ export type IconName =
   | 'circle'
   | 'arrow-up'
   | 'arrow-from-right'
-  | 'arrow-from-left'
   | 'keyboard'
   | 'search'
   | 'chart-line'
@@ -113,6 +112,7 @@ export type IconName =
   | 'heart-break'
   | 'ellipsis-v'
   | 'favorite'
+  | 'line-alt'
   | 'sort-amount-down';
 
 export const getAvailableIcons = (): IconName[] => [
@@ -166,7 +166,6 @@ export const getAvailableIcons = (): IconName[] => [
   'circle',
   'arrow-up',
   'arrow-from-right',
-  'arrow-from-left',
   'keyboard',
   'search',
   'chart-line',
