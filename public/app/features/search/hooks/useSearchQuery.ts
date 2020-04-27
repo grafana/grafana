@@ -45,10 +45,6 @@ export const useSearchQuery = (queryParams: Partial<DashboardQuery>) => {
     dispatch({ type: LAYOUT_CHANGE, payload: layout });
   };
 
-  const onLayoutChange = (layout: SearchLayout) => {
-    dispatch({ type: LAYOUT_CHANGE, payload: layout });
-  };
-
   return {
     query,
     hasFilters: hasFilters(query),
