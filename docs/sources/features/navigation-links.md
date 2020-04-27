@@ -1,5 +1,5 @@
 +++
-title = "Navigation links"
+title = "Add navigation links"
 description = ""
 keywords = ["grafana", "linking", "create links", "link panels", "link dashboards", "navigate"]
 type = "docs"
@@ -8,9 +8,9 @@ parent = "features"
 weight = 9
 +++
 
-# Navigation links 
+# Add navigation links 
 
-You can use links to navigate between commonly used dashboards. Links let you create shortcuts to other dashboards, panels, and even external websites.
+You can use links to navigate between commonly-used dashboards or to connect others to your visualizations. Links let you create shortcuts to other dashboards, panels, and even external websites.
 
 Grafana supports three types of links: Dashboard Links, Panel Links, and Data Links. They are all available from your dashboard.
 
