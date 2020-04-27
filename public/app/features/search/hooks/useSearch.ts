@@ -35,9 +35,9 @@ export const useSearch: UseSearch = (query, reducer, params) => {
   // Set loading state before debounced search
   useEffect(() => {
     dispatch({ type: SEARCH_START });
-  }, [query.tag, query.sort, query.starred]);
+  }, [query.tag, query.sort, query.starred, query.layout]);
 
-  useDebounce(search, 300, [query.query, query.tag, query.sort, query.starred, folderUid, queryParsing]);
+  useDebounce(search, 300, [query, folderUid, queryParsing]);
 
   // TODO as possible improvement, show spinner after expanding section while items are fetching
   const onToggleSection = (section: DashboardSection) => {

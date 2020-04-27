@@ -39,9 +39,6 @@ export const useSearchQuery = (queryParams: Partial<DashboardQuery>) => {
 
   const onSortChange = (sort: SelectableValue | null) => {
     dispatch({ type: TOGGLE_SORT, payload: sort });
-    if (query.layout !== SearchLayout.List) {
-      dispatch({ type: LAYOUT_CHANGE, payload: SearchLayout.List });
-    }
   };
 
   const onLayoutChange = (layout: SearchLayout) => {
