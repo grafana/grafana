@@ -187,6 +187,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
           },
         },
         theme: config.theme,
+        timeZone: this.dashboard.getTimezone(),
       });
       // When we don't have any field
       this.data = {

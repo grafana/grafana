@@ -1,24 +1,7 @@
-const realMomentWrapper = jest.requireActual('@grafana/data/src/datetime/moment_wrapper');
-
-jest.mock('@grafana/data/src/datetime/moment_wrapper', () => {
-  const momentMock = {
-    dateTime: (ts: any) => {
-      return {
-        valueOf: () => ts,
-        fromNow: () => 'fromNow() jest mocked',
-        format: (fmt: string) => 'format() jest mocked',
-      };
-    },
-    toUtc: null as any,
-    isDateTime: realMomentWrapper.isDateTime,
-  };
-  momentMock.toUtc = (ts: any) => ({
-    format: (fmt: string) => 'format() jest mocked',
-    local: () => momentMock.dateTime(ts),
-  });
-
-  return momentMock;
-});
+jest.mock('@grafana/data/src/datetime/formatter', () => ({
+  dateTimeFormat: () => 'format() jest mocked',
+  dateTimeFormatTimeAgo: (ts: any) => 'fromNow() jest mocked',
+}));
 
 import { ResultProcessor } from './ResultProcessor';
 import { ExploreItemState } from 'app/types/explore';

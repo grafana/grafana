@@ -69,7 +69,7 @@ export class StatPanel extends PureComponent<PanelProps<StatPanelOptions>> {
   };
 
   getValues = (): FieldDisplay[] => {
-    const { data, options, replaceVariables, fieldConfig } = this.props;
+    const { data, options, replaceVariables, fieldConfig, timeZone } = this.props;
 
     return getFieldDisplayValues({
       fieldConfig,
@@ -79,6 +79,7 @@ export class StatPanel extends PureComponent<PanelProps<StatPanelOptions>> {
       data: data.series,
       sparkline: options.graphMode !== BigValueGraphMode.None,
       autoMinMax: true,
+      timeZone,
     });
   };
 

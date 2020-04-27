@@ -1,7 +1,7 @@
 import React from 'react';
 import { css } from 'emotion';
 import { Portal } from '../Portal/Portal';
-import { Dimensions } from '@grafana/data';
+import { Dimensions, TimeZone } from '@grafana/data';
 import { FlotPosition } from '../Graph/types';
 import { TooltipContainer } from './TooltipContainer';
 
@@ -21,7 +21,7 @@ export interface TooltipContentProps<T extends Dimensions = any> {
   // TODO: type this better, no good idea how yet
   dimensions: T; // Dimension[]
   activeDimensions?: ActiveDimensions<T>;
-  // timeZone: TimeZone;
+  timeZone?: TimeZone;
   pos: FlotPosition;
   mode: TooltipMode;
 }

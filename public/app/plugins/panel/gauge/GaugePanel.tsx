@@ -39,7 +39,7 @@ export class GaugePanel extends PureComponent<PanelProps<GaugeOptions>> {
   };
 
   getValues = (): FieldDisplay[] => {
-    const { data, options, replaceVariables, fieldConfig } = this.props;
+    const { data, options, replaceVariables, fieldConfig, timeZone } = this.props;
     return getFieldDisplayValues({
       fieldConfig,
       reduceOptions: options.reduceOptions,
@@ -47,6 +47,7 @@ export class GaugePanel extends PureComponent<PanelProps<GaugeOptions>> {
       theme: config.theme,
       data: data.series,
       autoMinMax: true,
+      timeZone,
     });
   };
 

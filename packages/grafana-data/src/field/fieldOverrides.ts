@@ -15,6 +15,7 @@ import {
   InterpolateFunction,
   ValueLinkConfig,
   GrafanaTheme,
+  TimeZone,
 } from '../types';
 import { fieldMatchers, ReducerID, reduceField } from '../transformations';
 import { FieldMatcher } from '../types/transformations';
@@ -193,6 +194,7 @@ export function applyFieldOverrides(options: ApplyFieldOverrideOptions): DataFra
       // Attach data links supplier
       f.getLinks = getLinksSupplier(frame, f, fieldScopedVars, context.replaceVariables, {
         theme: options.theme,
+        timeZone: options.timeZone,
       });
 
       return f;
@@ -335,6 +337,7 @@ const getLinksSupplier = (
   replaceVariables: InterpolateFunction,
   options: {
     theme: GrafanaTheme;
+    timeZone?: TimeZone;
   }
 ) => (config: ValueLinkConfig): Array<LinkModel<Field>> => {
   if (!field.config.links || field.config.links.length === 0) {

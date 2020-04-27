@@ -12,6 +12,7 @@ import {
   FieldType,
   InterpolateFunction,
   LinkModel,
+  TimeZone,
 } from '../types';
 import { DataFrameView } from '../dataframe/DataFrameView';
 import { GraphSeriesValue } from '../types/graph';
@@ -89,12 +90,13 @@ export interface GetFieldDisplayValuesOptions {
   sparkline?: boolean; // Calculate the sparkline
   theme: GrafanaTheme;
   autoMinMax?: boolean;
+  timeZone?: TimeZone;
 }
 
 export const DEFAULT_FIELD_DISPLAY_VALUES_LIMIT = 25;
 
 export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): FieldDisplay[] => {
-  const { replaceVariables, reduceOptions, fieldConfig } = options;
+  const { replaceVariables, reduceOptions, fieldConfig, timeZone } = options;
   const calcs = reduceOptions.calcs.length ? reduceOptions.calcs : [ReducerID.last];
 
   const values: FieldDisplay[] = [];
@@ -127,6 +129,7 @@ export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): Fi
           getDisplayProcessor({
             field,
             theme: options.theme,
+            timeZone,
           });
 
         const title = config.title ? config.title : defaultTitle;
@@ -259,7 +262,7 @@ export function getDisplayValueAlignmentFactors(values: FieldDisplay[]): Display
 
 function createNoValuesFieldDisplay(options: GetFieldDisplayValuesOptions): FieldDisplay {
   const displayName = 'No data';
-  const { fieldConfig } = options;
+  const { fieldConfig, timeZone } = options;
   const { defaults } = fieldConfig;
 
   const displayProcessor = getDisplayProcessor({
@@ -268,6 +271,7 @@ function createNoValuesFieldDisplay(options: GetFieldDisplayValuesOptions): Fiel
       config: defaults,
     },
     theme: options.theme,
+    timeZone,
   });
 
   const display = displayProcessor(null);

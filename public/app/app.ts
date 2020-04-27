@@ -32,6 +32,7 @@ import {
   standardEditorsRegistry,
   standardFieldConfigEditorRegistry,
   standardTransformersRegistry,
+  setTimeZoneResolver,
 } from '@grafana/data';
 import appEvents from 'app/core/app_events';
 import { addClassIfNoOverlayScrollbar } from 'app/core/utils/scrollbar';
@@ -93,6 +94,7 @@ export class GrafanaApp {
     const app = angular.module('grafana', []);
 
     setLocale(config.bootData.user.locale);
+    setTimeZoneResolver(() => config.bootData.user.timeZone);
 
     setMarkdownOptions({ sanitize: !config.disableSanitizeHtml });
 
