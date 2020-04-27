@@ -189,14 +189,15 @@ datasources:
     jsonData:
       maxLines: 1000
       derivedFields:
-        # Field with internal link pointing to datasource in Grafana
+        # Field with internal link pointing to datasource in Grafana.
+        # At this moment only Jaeger and Zipkin datasource is supported as the link target.
         - datasourceUid: my_jaeger_uid
           matcherRegex: "traceID=(\\w+)"
           name: TraceID
           # url will be interpreted as query for the datasource
           url: "$${__value.raw}"
 
-        # Field with external link
+        # Field with external link.
         - matcherRegex: "traceID=(\\w+)"
           name: TraceID
           url: "http://localhost:16686/trace/$${__value.raw}"
