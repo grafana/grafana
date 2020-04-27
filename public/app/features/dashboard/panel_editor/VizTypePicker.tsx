@@ -60,6 +60,10 @@ export const VizTypePicker: React.FC<Props> = ({ searchQuery, onTypeChange, curr
     return getAllPanelPluginMeta();
   }, []);
 
+  const getFilteredPluginList = useCallback((): PanelPluginMeta[] => {
+    return filterPluginList(pluginsList, searchQuery, current);
+  }, [searchQuery]);
+
   const renderVizPlugin = (plugin: PanelPluginMeta, index: number) => {
     const isCurrent = plugin.id === current.id;
     const filteredPluginList = getFilteredPluginList();
@@ -67,7 +71,7 @@ export const VizTypePicker: React.FC<Props> = ({ searchQuery, onTypeChange, curr
     const matchesQuery = filteredPluginList.indexOf(plugin) > -1;
     return (
       <VizTypePickerPlugin
-        disabled={!matchesQuery}
+        disabled={!matchesQuery && !!searchQuery}
         key={plugin.id}
         isCurrent={isCurrent}
         plugin={plugin}
@@ -75,10 +79,6 @@ export const VizTypePicker: React.FC<Props> = ({ searchQuery, onTypeChange, curr
       />
     );
   };
-
-  const getFilteredPluginList = useCallback((): PanelPluginMeta[] => {
-    return filterPluginList(pluginsList, searchQuery, current);
-  }, [searchQuery]);
 
   const filteredPluginList = getFilteredPluginList();
   const hasResults = filteredPluginList.length > 0;
