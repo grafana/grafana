@@ -98,7 +98,7 @@ function describeQueryRunnerScenario(description: string, scenarioFn: ScenarioFn
         timeRange: {
           from: grafanaData.dateTime().subtract(1, 'days'),
           to: grafanaData.dateTime(),
-          raw: { from: '1h', to: 'now' },
+          raw: { from: '1d', to: 'now' },
         },
         panelId: 1,
         queries: [{ refId: 'A', test: 1 }],
@@ -191,6 +191,10 @@ describe('PanelQueryRunner', () => {
 
     it('should pass maxDataPoints if specified', async () => {
       expect(ctx.queryCalledWith?.maxDataPoints).toBe(10);
+    });
+
+    it('should use instead of width to calculate interval', async () => {
+      expect(ctx.queryCalledWith?.interval).toBe('2h');
     });
   });
 
