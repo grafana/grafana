@@ -262,7 +262,7 @@ export class Logs extends PureComponent<Props, State> {
         )}
 
         {isLoki && hasNewerLogsRanges && !loading && hasData && !scanning && displayMoreLogsBtn && (
-          <WideButton btnLabel={'Show more newer logs'} onBtnClick={showMoreNewerLogs} />
+          <WideButton btnLabel={'Show newer logs'} onBtnClick={showMoreNewerLogs} />
         )}
 
         <LogRows
@@ -283,7 +283,7 @@ export class Logs extends PureComponent<Props, State> {
         />
 
         {isLoki && !loading && hasData && !scanning && displayMoreLogsBtn && (
-          <WideButton btnLabel={'Show more older logs'} onBtnClick={showMoreOlderLogs} />
+          <WideButton btnLabel={'Show older logs'} onBtnClick={showMoreOlderLogs} />
         )}
 
         {!loading && !hasData && !scanning && (
