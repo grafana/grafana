@@ -1,6 +1,7 @@
 import React, { PureComponent } from 'react';
-import { getTagColorsFromName, Tooltip, Icon } from '@grafana/ui';
-import { e2e } from '@grafana/e2e';
+import { getTagColorsFromName, Icon, Tooltip } from '@grafana/ui';
+import { selectors } from '@grafana/e2e-selectors';
+
 import { VariableOption, VariableTag } from '../../../templating/types';
 
 export interface Props {
@@ -42,7 +43,7 @@ export class VariableOptions extends PureComponent<Props> {
     return (
       <div
         className={`${multi ? 'variable-value-dropdown multi' : 'variable-value-dropdown single'}`}
-        aria-label={e2e.pages.Dashboard.SubMenu.selectors.submenuItemValueDropDownDropDown}
+        aria-label={selectors.pages.Dashboard.SubMenu.submenuItemValueDropDownDropDown}
       >
         <div className="variable-options-wrapper">
           <div className="variable-options-column">
@@ -95,7 +96,7 @@ export class VariableOptions extends PureComponent<Props> {
     return (
       <a key={`${option.value}`} className={highlightClass} onClick={this.onToggle(option)}>
         <span className="variable-option-icon"></span>
-        <span aria-label={e2e.pages.Dashboard.SubMenu.selectors.submenuItemValueDropDownOptionTexts(`${option.text}`)}>
+        <span aria-label={selectors.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts(`${option.text}`)}>
           {option.text}
         </span>
       </a>

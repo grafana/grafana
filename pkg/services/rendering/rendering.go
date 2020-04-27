@@ -22,7 +22,11 @@ import (
 
 func init() {
 	remotecache.Register(&RenderUser{})
-	registry.RegisterService(&RenderingService{})
+	registry.Register(&registry.Descriptor{
+		Name:         "RenderingService",
+		Instance:     &RenderingService{},
+		InitPriority: registry.High,
+	})
 }
 
 const renderKeyPrefix = "render-%s"
@@ -68,7 +72,7 @@ func (rs *RenderingService) Init() error {
 }
 
 func (rs *RenderingService) Run(ctx context.Context) error {
-	if rs.Cfg.RendererUrl != "" {
+	if rs.remoteAvailable() {
 		rs.log = rs.log.New("renderer", "http")
 		rs.log.Info("Backend rendering via external http server")
 		rs.renderAction = rs.renderViaHttp
@@ -76,7 +80,7 @@ func (rs *RenderingService) Run(ctx context.Context) error {
 		return nil
 	}
 
-	if plugins.Renderer != nil {
+	if rs.pluginAvailable() {
 		rs.log = rs.log.New("renderer", "plugin")
 		rs.pluginInfo = plugins.Renderer
 
@@ -97,8 +101,16 @@ func (rs *RenderingService) Run(ctx context.Context) error {
 	return nil
 }
 
+func (rs *RenderingService) pluginAvailable() bool {
+	return plugins.Renderer != nil
+}
+
+func (rs *RenderingService) remoteAvailable() bool {
+	return rs.Cfg.RendererUrl != ""
+}
+
 func (rs *RenderingService) IsAvailable() bool {
-	return rs.renderAction != nil
+	return rs.remoteAvailable() || rs.pluginAvailable()
 }
 
 func (rs *RenderingService) RenderErrorImage(err error) (*RenderResult, error) {
@@ -109,6 +121,14 @@ func (rs *RenderingService) RenderErrorImage(err error) (*RenderResult, error) {
 	}, nil
 }
 
+func (rs *RenderingService) renderUnavailableImage() *RenderResult {
+	imgPath := "public/img/rendering_plugin_not_installed.png"
+
+	return &RenderResult{
+		FilePath: filepath.Join(setting.HomePath, imgPath),
+	}
+}
+
 func (rs *RenderingService) Render(ctx context.Context, opts Opts) (*RenderResult, error) {
 	if rs.inProgressCount > opts.ConcurrentLimit {
 		return &RenderResult{
@@ -116,8 +136,11 @@ func (rs *RenderingService) Render(ctx context.Context, opts Opts) (*RenderResul
 		}, nil
 	}
 
-	if rs.renderAction == nil {
-		return nil, fmt.Errorf("no renderer found")
+	if !rs.IsAvailable() {
+		rs.log.Warn("Could not render image, no image renderer found/installed. " +
+			"For image rendering support please install the grafana-image-renderer plugin. " +
+			"Read more at https://grafana.com/docs/grafana/latest/administration/image_rendering/")
+		return rs.renderUnavailableImage(), nil
 	}
 
 	rs.log.Info("Rendering", "path", opts.Path)

@@ -7,6 +7,7 @@ import {
   REMOVE_TAG,
   SET_TAGS,
   TOGGLE_STARRED,
+  TOGGLE_SORT,
 } from './actionTypes';
 
 export const defaultQuery: DashboardQuery = {
@@ -16,6 +17,7 @@ export const defaultQuery: DashboardQuery = {
   skipRecent: false,
   skipStarred: false,
   folderIds: [],
+  sort: null,
 };
 
 export const queryReducer = (state: DashboardQuery, action: SearchAction) => {
@@ -35,7 +37,9 @@ export const queryReducer = (state: DashboardQuery, action: SearchAction) => {
     case REMOVE_STARRED:
       return { ...state, starred: false };
     case CLEAR_FILTERS:
-      return { ...state, query: '', tag: [], starred: false };
+      return { ...state, query: '', tag: [], starred: false, sort: null };
+    case TOGGLE_SORT:
+      return { ...state, sort: action.payload };
     default:
       return state;
   }

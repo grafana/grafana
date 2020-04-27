@@ -28,7 +28,7 @@ Any changes you make to a dashboard used in a report are reflected the next time
 
 Currently only Organization Admins can create reports.
 
-1. Click on the reports icon in the side menu. The Reports tab allow you to view, create, and update your reports.
+1. Click on the reports icon in the side menu. The Reports tab allows you to view, create, and update your reports.
 1. Enter report information. All fields are required unless otherwise indicated.
    * **Name -** Name of the report as you want it to appear in the Reports list.
    * **Choose dashboard -** Select the dashboard to generate the report from.

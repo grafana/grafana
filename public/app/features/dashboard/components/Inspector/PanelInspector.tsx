@@ -6,20 +6,21 @@ import { InspectJSONTab } from './InspectJSONTab';
 import { QueryInspector } from './QueryInspector';
 
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
-import { JSONFormatter, Drawer, TabContent, CustomScrollbar } from '@grafana/ui';
-import { getLocationSrv, getDataSourceSrv } from '@grafana/runtime';
+import { CustomScrollbar, Drawer, JSONFormatter, TabContent } from '@grafana/ui';
+import { selectors } from '@grafana/e2e-selectors';
+import { getDataSourceSrv, getLocationSrv } from '@grafana/runtime';
 import {
   DataFrame,
-  DataSourceApi,
-  SelectableValue,
-  getDisplayProcessor,
   DataQueryError,
-  PanelData,
+  DataSourceApi,
   FieldType,
   formattedValueToString,
-  QueryResultMetaStat,
+  getDisplayProcessor,
   LoadingState,
+  PanelData,
   PanelPlugin,
+  QueryResultMetaStat,
+  SelectableValue,
 } from '@grafana/data';
 import { config } from 'app/core/config';
 import { getPanelInspectorStyles } from './styles';
@@ -222,10 +223,10 @@ export class PanelInspectorUnconnected extends PureComponent<Props, State> {
     }
 
     return (
-      <>
+      <div aria-label={selectors.components.PanelInspector.Stats.content}>
         {this.renderStatsTable('Stats', stats)}
         {this.renderStatsTable('Data source stats', dataStats)}
-      </>
+      </div>
     );
   }
 

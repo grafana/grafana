@@ -1,0 +1,9 @@
+{
+  "plugins": [
+    {
+      "name": "gel",
+      "version": "0.2.0",
+      "checksum": "059e06b927ab5ff0d75a1719a0a669ca3502b9a130f54261b196f4b23b775a61"
+    }
+  ]
+}

@@ -1,16 +1,9 @@
 import { useReducer } from 'react';
 import { SelectableValue } from '@grafana/data';
 import { defaultQuery, queryReducer } from '../reducers/searchQueryReducer';
-import {
-  ADD_TAG,
-  CLEAR_FILTERS,
-  QUERY_CHANGE,
-  REMOVE_STARRED,
-  REMOVE_TAG,
-  SET_TAGS,
-  TOGGLE_STARRED,
-} from '../reducers/actionTypes';
+import { ADD_TAG, CLEAR_FILTERS, QUERY_CHANGE, SET_TAGS, TOGGLE_SORT, TOGGLE_STARRED } from '../reducers/actionTypes';
 import { DashboardQuery } from '../types';
+import { hasFilters } from '../utils';
 
 export const useSearchQuery = (queryParams: Partial<DashboardQuery>) => {
   const initialState = { ...defaultQuery, ...queryParams };
@@ -18,14 +11,6 @@ export const useSearchQuery = (queryParams: Partial<DashboardQuery>) => {
 
   const onQueryChange = (query: string) => {
     dispatch({ type: QUERY_CHANGE, payload: query });
-  };
-
-  const onRemoveStarred = () => {
-    dispatch({ type: REMOVE_STARRED });
-  };
-
-  const onTagRemove = (tag: string) => {
-    dispatch({ type: REMOVE_TAG, payload: tag });
   };
 
   const onTagFilterChange = (tags: string[]) => {
@@ -44,17 +29,18 @@ export const useSearchQuery = (queryParams: Partial<DashboardQuery>) => {
     dispatch({ type: TOGGLE_STARRED, payload: filter.value });
   };
 
-  const hasFilters = query.query.length > 0 || query.tag.length > 0 || query.starred;
+  const onSortChange = (sort: SelectableValue | null) => {
+    dispatch({ type: TOGGLE_SORT, payload: sort });
+  };
 
   return {
     query,
-    hasFilters,
+    hasFilters: hasFilters(query),
     onQueryChange,
-    onRemoveStarred,
-    onTagRemove,
     onClearFilters,
     onTagFilterChange,
     onStarredFilterChange,
     onTagAdd,
+    onSortChange,
   };
 };

@@ -242,6 +242,7 @@ export const itemReducer = (state: ExploreItemState = makeExploreItemState(), ac
 
   if (cancelQueriesAction.match(action)) {
     stopQueryState(state.querySubscription);
+
     return {
       ...state,
       loading: false,
