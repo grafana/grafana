@@ -290,5 +290,51 @@ describe('PanelModel', () => {
         expect(panelQueryRunner).toBe(sameQueryRunner);
       });
     });
+
+    describe('restoreModel', () => {
+      it('Should clean state and set properties from model', () => {
+        model.restoreModel({
+          title: 'New title',
+          options: { new: true },
+        });
+        expect(model.title).toBe('New title');
+        expect(model.options.new).toBe(true);
+      });
+
+      it('Should delete properties that are now gone on new model', () => {
+        model.someProperty = 'value';
+        model.restoreModel({
+          title: 'New title',
+          options: {},
+        });
+
+        expect(model.someProperty).toBeUndefined();
+      });
+
+      it('Should preserve must keep properties', () => {
+        model.id = 10;
+        model.gridPos = { x: 0, y: 0, h: 10, w: 10 };
+        model.restoreModel({
+          title: 'New title',
+          options: {},
+        });
+
+        expect(model.id).toBe(10);
+        expect(model.gridPos.h).toBe(10);
+      });
+
+      it('Should remove old angular panel specfic props', () => {
+        model.axes = [{ prop: 1 }];
+        model.thresholds = [];
+
+        model.restoreModel({
+          title: 'New title',
+          options: {},
+        });
+
+        expect(model.axes).toBeUndefined();
+        expect(model.thresholds).toBeUndefined();
+      });
+    });
   });
 });
