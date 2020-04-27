@@ -11,7 +11,6 @@ import { useManageDashboards } from '../hooks/useManageDashboards';
 import { SearchResultsFilter } from './SearchResultsFilter';
 import { SearchResults } from './SearchResults';
 import { DashboardActions } from './DashboardActions';
-import { SearchField } from './SearchField';
 import { SearchLayout } from '../types';
 import { FilterInput } from 'app/core/components/FilterInput/FilterInput';
 
