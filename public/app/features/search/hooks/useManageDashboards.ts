@@ -55,9 +55,10 @@ export const useManageDashboards = (
     dispatch({ type: MOVE_ITEMS, payload: { dashboards: selectedDashboards, folder } });
   };
 
-  const canMove = useMemo(() => results.some((result: DashboardSection) => result.items.some(item => item.checked)), [
-    results,
-  ]);
+  const canMove = useMemo(
+    () => results.some((result: DashboardSection) => result.items && result.items.some(item => item.checked)),
+    [results]
+  );
   const canDelete = useMemo(() => canMove || results.some((result: DashboardSection) => result.checked), [
     canMove,
     results,
