@@ -261,10 +261,10 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
           <HorizontalGroup>
             <HorizontalGroup spacing="sm" align="center">
               <Button
-                icon="cog"
+                icon="sliders-v-alt"
                 onClick={this.onOpenDashboardSettings}
                 variant="secondary"
-                title="Open dashboad settings"
+                title="Open dashboard settings"
               />
               <Button onClick={this.onDiscard} variant="secondary" title="Undo all changes">
                 Discard

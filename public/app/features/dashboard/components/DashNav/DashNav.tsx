@@ -258,7 +258,7 @@ class DashNav extends PureComponent<Props> {
         <DashNavButton
           tooltip="Dashboard settings"
           classSuffix="settings"
-          icon="cog"
+          icon="sliders-v-alt"
           onClick={this.onOpenSettings}
           key="button-settings"
         />
