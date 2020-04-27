@@ -1,5 +1,5 @@
 import { JaegerDatasource, JaegerQuery } from './datasource';
-import { DataQueryRequest, DataSourceInstanceSettings, FieldType, PluginType } from '@grafana/data';
+import { DataQueryRequest, DataSourceInstanceSettings, FieldType, PluginType, dateTime } from '@grafana/data';
 import { BackendSrv, BackendSrvRequest, getBackendSrv, setBackendSrv } from '@grafana/runtime';
 
 describe('JaegerDatasource', () => {
@@ -77,7 +77,12 @@ const defaultQuery: DataQueryRequest<JaegerQuery> = {
   interval: '0',
   panelId: 0,
   scopedVars: {},
-  timezone: '',
+  range: {
+    from: dateTime().subtract(1, 'h'),
+    to: dateTime(),
+    raw: { from: '1h', to: 'now' },
+  },
+  timezone: 'browser',
   app: 'explore',
   startTime: 0,
   targets: [
