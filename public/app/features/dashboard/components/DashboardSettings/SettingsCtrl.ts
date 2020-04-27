@@ -1,7 +1,7 @@
 import $ from 'jquery';
 import _ from 'lodash';
 import angular, { ILocationService, IScope } from 'angular';
-import { e2e } from '@grafana/e2e';
+import { selectors } from '@grafana/e2e-selectors';
 
 import { appEvents, contextSrv, coreModule } from 'app/core/core';
 import { DashboardModel } from '../../state/DashboardModel';
@@ -24,7 +24,7 @@ export class SettingsCtrl {
   canDelete: boolean;
   sections: any[];
   hasUnsavedFolderChange: boolean;
-  selectors: typeof e2e.pages.Dashboard.Settings.General.selectors;
+  selectors: typeof selectors.pages.Dashboard.Settings.General;
   useAngularTemplating: boolean;
 
   /** @ngInject */
@@ -59,7 +59,7 @@ export class SettingsCtrl {
 
     appEvents.on(CoreEvents.dashboardSaved, this.onPostSave.bind(this), $scope);
 
-    this.selectors = e2e.pages.Dashboard.Settings.General.selectors;
+    this.selectors = selectors.pages.Dashboard.Settings.General;
     this.useAngularTemplating = !getConfig().featureToggles.newVariables;
   }
 

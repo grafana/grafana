@@ -7,6 +7,7 @@ import { QueryInspector } from './QueryInspector';
 
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 import { CustomScrollbar, Drawer, JSONFormatter, TabContent } from '@grafana/ui';
+import { selectors } from '@grafana/e2e-selectors';
 import { getDataSourceSrv, getLocationSrv } from '@grafana/runtime';
 import {
   DataFrame,
@@ -26,7 +27,6 @@ import { config } from 'app/core/config';
 import { getPanelInspectorStyles } from './styles';
 import { StoreState } from 'app/types';
 import { InspectDataTab } from './InspectDataTab';
-import { e2e } from '@grafana/e2e';
 
 interface OwnProps {
   dashboard: DashboardModel;
@@ -224,7 +224,7 @@ export class PanelInspectorUnconnected extends PureComponent<Props, State> {
     }
 
     return (
-      <div aria-label={e2e.components.PanelInspector.Stats.selectors.content}>
+      <div aria-label={selectors.components.PanelInspector.Stats.content}>
         {this.renderStatsTable('Stats', stats)}
         {this.renderStatsTable('Data source stats', dataStats)}
       </div>

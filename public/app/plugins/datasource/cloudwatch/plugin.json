@@ -22,7 +22,7 @@
   "info": {
     "description": "Data source for Amazon AWS monitoring service",
     "author": {
-      "name": "Grafana Project",
+      "name": "Grafana Labs",
       "url": "https://grafana.com"
     },
     "logos": {
