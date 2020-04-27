@@ -31,13 +31,13 @@ func (b *Builder) ToSql(limit, page int64) (string, []interface{}) {
 	orderQuery := b.applyFilters()
 
 	b.sql.WriteString(b.Dialect.LimitOffset(limit, (page-1)*limit) + `) AS ids
-		INNER JOIN dashboard ON ids.id = dashboard.id
-	`)
+		INNER JOIN dashboard ON ids.id = dashboard.id`)
+	b.sql.WriteString("\n")
 
-	b.sql.WriteString(`
-		LEFT OUTER JOIN dashboard AS folder ON folder.id = dashboard.folder_id
-		LEFT OUTER JOIN dashboard_tag ON dashboard.id = dashboard_tag.dashboard_id
-		`)
+	b.sql.WriteString(
+		`LEFT OUTER JOIN dashboard AS folder ON folder.id = dashboard.folder_id
+		LEFT OUTER JOIN dashboard_tag ON dashboard.id = dashboard_tag.dashboard_id`)
+	b.sql.WriteString("\n")
 	b.sql.WriteString(orderQuery)
 
 	return b.sql.String(), b.params
