@@ -319,7 +319,7 @@ describe('PanelModel', () => {
       });
 
       it('Should remove old angular panel specfic props', () => {
-        model.axes = [{ prpo: 1 }];
+        model.axes = [{ prop: 1 }];
         model.thresholds = [];
 
         model.restoreModel({
