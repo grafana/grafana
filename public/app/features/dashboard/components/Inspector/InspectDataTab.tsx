@@ -8,12 +8,13 @@ import {
   transformDataFrame,
 } from '@grafana/data';
 import { Button, Field, Icon, Select, Table } from '@grafana/ui';
+import { selectors } from '@grafana/e2e-selectors';
+import AutoSizer from 'react-virtualized-auto-sizer';
+
 import { getPanelInspectorStyles } from './styles';
 import { config } from 'app/core/config';
-import AutoSizer from 'react-virtualized-auto-sizer';
 import { saveAs } from 'file-saver';
 import { cx } from 'emotion';
-import { e2e } from '@grafana/e2e';
 
 interface Props {
   data: DataFrame[];
@@ -109,7 +110,7 @@ export class InspectDataTab extends PureComponent<Props, State> {
     });
 
     return (
-      <div className={styles.dataTabContent} aria-label={e2e.components.PanelInspector.Data.selectors.content}>
+      <div className={styles.dataTabContent} aria-label={selectors.components.PanelInspector.Data.content}>
         <div className={styles.toolbar}>
           <Field label="Transformer" className="flex-grow-1">
             <Select options={transformationOptions} value={transformId} onChange={this.onTransformationChange} />

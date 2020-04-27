@@ -1,7 +1,6 @@
 import React, { ChangeEvent, PureComponent } from 'react';
-import { e2e } from '@grafana/e2e';
 import { InlineFormLabel, LegacyForms } from '@grafana/ui';
-const { Switch } = LegacyForms;
+import { selectors } from '@grafana/e2e-selectors';
 
 import templateSrv from '../../templating/template_srv';
 import { SelectionOptionsEditor } from '../editor/SelectionOptionsEditor';
@@ -15,6 +14,8 @@ import { StoreState } from '../../../types';
 import { connectWithStore } from '../../../core/utils/connectWithReduxStore';
 import { toVariableIdentifier } from '../state/types';
 import { changeVariableMultiValue } from '../state/actions';
+
+const { Switch } = LegacyForms;
 
 export interface OwnProps extends VariableEditorProps<QueryVariableModel> {}
 
@@ -131,7 +132,7 @@ export class QueryVariableEditorUnConnected extends PureComponent<Props, State> 
                   onChange={this.onDataSourceChange}
                   required
                   aria-label={
-                    e2e.pages.Dashboard.Settings.Variables.Edit.QueryVariable.selectors.queryOptionsDataSourceSelect
+                    selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsDataSourceSelect
                   }
                 >
                   {this.props.editor.extended?.dataSources.length &&
@@ -153,9 +154,7 @@ export class QueryVariableEditorUnConnected extends PureComponent<Props, State> 
                   className="gf-form-input"
                   value={this.props.variable.refresh}
                   onChange={this.onRefreshChange}
-                  aria-label={
-                    e2e.pages.Dashboard.Settings.Variables.Edit.QueryVariable.selectors.queryOptionsRefreshSelect
-                  }
+                  aria-label={selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsRefreshSelect}
                 >
                   <option label="Never" value={VariableRefresh.never}>
                     Never
@@ -194,7 +193,7 @@ export class QueryVariableEditorUnConnected extends PureComponent<Props, State> 
               value={this.state.regex ?? this.props.variable.regex}
               onChange={this.onRegExChange}
               onBlur={this.onRegExBlur}
-              aria-label={e2e.pages.Dashboard.Settings.Variables.Edit.QueryVariable.selectors.queryOptionsRegExInput}
+              aria-label={selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsRegExInput}
             />
           </div>
           <div className="gf-form max-width-21">
@@ -206,7 +205,7 @@ export class QueryVariableEditorUnConnected extends PureComponent<Props, State> 
                 className="gf-form-input"
                 value={this.props.variable.sort}
                 onChange={this.onSortChange}
-                aria-label={e2e.pages.Dashboard.Settings.Variables.Edit.QueryVariable.selectors.queryOptionsSortSelect}
+                aria-label={selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsSortSelect}
               >
                 <option label="Disabled" value={VariableSort.disabled}>
                   Disabled
@@ -249,9 +248,7 @@ export class QueryVariableEditorUnConnected extends PureComponent<Props, State> 
         <div className="gf-form-group">
           <h5>Value groups/tags (Experimental feature)</h5>
           <div
-            aria-label={
-              e2e.pages.Dashboard.Settings.Variables.Edit.QueryVariable.selectors.valueGroupsTagsEnabledSwitch
-            }
+            aria-label={selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.valueGroupsTagsEnabledSwitch}
           >
             <Switch
               label="Enabled"
@@ -272,7 +269,7 @@ export class QueryVariableEditorUnConnected extends PureComponent<Props, State> 
                   onChange={this.onTagsQueryChange}
                   onBlur={this.onTagsQueryBlur}
                   aria-label={
-                    e2e.pages.Dashboard.Settings.Variables.Edit.QueryVariable.selectors.valueGroupsTagsTagsQueryInput
+                    selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.valueGroupsTagsTagsQueryInput
                   }
                 />
               </div>
@@ -286,8 +283,7 @@ export class QueryVariableEditorUnConnected extends PureComponent<Props, State> 
                   onChange={this.onTagValuesQueryChange}
                   onBlur={this.onTagValuesQueryBlur}
                   aria-label={
-                    e2e.pages.Dashboard.Settings.Variables.Edit.QueryVariable.selectors
-                      .valueGroupsTagsTagsValuesQueryInput
+                    selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.valueGroupsTagsTagsValuesQueryInput
                   }
                 />
               </div>

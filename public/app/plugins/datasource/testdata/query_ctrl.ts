@@ -2,7 +2,7 @@ import _ from 'lodash';
 import { IScope } from 'angular';
 import { getBackendSrv } from '@grafana/runtime';
 import { dateMath, dateTime } from '@grafana/data';
-import { e2e } from '@grafana/e2e';
+import { selectors } from '@grafana/e2e-selectors';
 
 import { QueryCtrl } from 'app/plugins/sdk';
 import { defaultQuery } from './runStreams';
@@ -34,7 +34,7 @@ export class TestDataQueryCtrl extends QueryCtrl {
   digest: (promise: Promise<any>) => Promise<any>;
 
   showLabels = false;
-  selectors: typeof e2e.components.DataSource.TestData.QueryTab.selectors;
+  selectors: typeof selectors.components.DataSource.TestData.QueryTab;
 
   /** @ngInject */
   constructor($scope: IScope, $injector: any) {
@@ -45,7 +45,7 @@ export class TestDataQueryCtrl extends QueryCtrl {
     this.newPointTime = dateTime();
     this.selectedPoint = { text: 'Select point', value: null };
     this.showLabels = showLabelsFor.includes(this.target.scenarioId);
-    this.selectors = e2e.components.DataSource.TestData.QueryTab.selectors;
+    this.selectors = selectors.components.DataSource.TestData.QueryTab;
   }
 
   getPoints() {

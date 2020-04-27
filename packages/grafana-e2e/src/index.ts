@@ -3,4 +3,24 @@
  *
  * @packageDocumentation
  */
-export { e2e } from './noTypeCheck';
+import { e2eScenario, ScenarioArguments } from './support/scenario';
+import { Flows } from './flows';
+import { getScenarioContext, setScenarioContext } from './support/scenarioContext';
+import { e2eFactory } from './support';
+import { Pages } from '@grafana/e2e-selectors/src/selectors/pages';
+import { Components } from '@grafana/e2e-selectors/src/selectors/components';
+
+const e2eObject = {
+  env: (args: string) => Cypress.env(args),
+  config: () => Cypress.config(),
+  blobToBase64String: (blob: any) => Cypress.Blob.blobToBase64String(blob),
+  imgSrcToBlob: (url: string) => Cypress.Blob.imgSrcToBlob(url),
+  scenario: (args: ScenarioArguments) => e2eScenario(args),
+  pages: e2eFactory({ selectors: Pages }),
+  components: e2eFactory({ selectors: Components }),
+  flows: Flows,
+  getScenarioContext,
+  setScenarioContext,
+};
+
+export const e2e: (() => Cypress.cy) & typeof e2eObject = Object.assign(() => cy, e2eObject);

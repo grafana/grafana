@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -eo pipefail
 
-PACKAGES=(ui toolkit data runtime e2e)
+PACKAGES=(ui toolkit data runtime e2e e2e-selectors)
 
 # shellcheck source=./scripts/helpers/exit-if-fail.sh
 source "$(dirname "$0")/helpers/exit-if-fail.sh"

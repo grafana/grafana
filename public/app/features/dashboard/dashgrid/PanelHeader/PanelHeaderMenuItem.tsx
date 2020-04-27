@@ -2,7 +2,7 @@ import React, { FC } from 'react';
 import { css } from 'emotion';
 import { PanelMenuItem } from '@grafana/data';
 import { Icon, IconName, useTheme } from '@grafana/ui';
-import { e2e } from '@grafana/e2e';
+import { selectors } from '@grafana/e2e-selectors';
 
 interface Props {
   children: any;
@@ -30,7 +30,7 @@ export const PanelHeaderMenuItem: FC<Props & PanelMenuItem> = props => {
     <li className={isSubMenu ? 'dropdown-submenu' : undefined}>
       <a onClick={props.onClick} href={props.href}>
         {props.iconClassName && <Icon name={props.iconClassName as IconName} className={menuIconClassName} />}
-        <span className="dropdown-item-text" aria-label={e2e.components.Panels.Panel.selectors.headerItems(props.text)}>
+        <span className="dropdown-item-text" aria-label={selectors.components.Panels.Panel.headerItems(props.text)}>
           {props.text}
           {isSubMenu && <Icon name="angle-right" className={shortcutIconClassName} />}
         </span>

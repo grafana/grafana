@@ -2,8 +2,9 @@ import React, { PureComponent } from 'react';
 import { connect, MapDispatchToProps, MapStateToProps } from 'react-redux';
 import { css } from 'emotion';
 import { Alert, Button, IconName } from '@grafana/ui';
-
+import { selectors } from '@grafana/e2e-selectors';
 import { AngularComponent, getAngularLoader, getDataSourceSrv } from '@grafana/runtime';
+
 import appEvents from 'app/core/app_events';
 import { getAlertingValidationMessage } from './getAlertingValidationMessage';
 
@@ -18,7 +19,6 @@ import { TestRuleResult } from './TestRuleResult';
 import { AppNotificationSeverity, CoreEvents, StoreState } from 'app/types';
 import { updateLocation } from 'app/core/actions';
 import { PanelEditorTabId } from '../dashboard/components/PanelEditor/types';
-import { e2e } from '@grafana/e2e';
 
 interface OwnProps {
   dashboard: DashboardModel;
@@ -206,7 +206,7 @@ class UnConnectedAlertTab extends PureComponent<Props, State> {
 
     return (
       <EditorTabBody toolbarItems={toolbarItems}>
-        <div aria-label={e2e.components.AlertTab.selectors.content}>
+        <div aria-label={selectors.components.AlertTab.content}>
           {alert && hasTransformations && (
             <Alert
               severity={AppNotificationSeverity.Error}

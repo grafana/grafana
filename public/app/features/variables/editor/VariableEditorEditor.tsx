@@ -2,7 +2,8 @@ import React, { ChangeEvent, FormEvent, PureComponent } from 'react';
 import isEqual from 'lodash/isEqual';
 import { AppEvents, VariableType } from '@grafana/data';
 import { InlineFormLabel } from '@grafana/ui';
-import { e2e } from '@grafana/e2e';
+import { selectors } from '@grafana/e2e-selectors';
+
 import { variableAdapters } from '../adapters';
 import { NEW_VARIABLE_ID, toVariablePayload, VariableIdentifier } from '../state/types';
 import { VariableHide, VariableModel } from '../../templating/types';
@@ -129,7 +130,7 @@ export class VariableEditorEditorUnConnected extends PureComponent<Props> {
                   required
                   value={this.props.editor.name}
                   onChange={this.onNameChange}
-                  aria-label={e2e.pages.Dashboard.Settings.Variables.Edit.General.selectors.generalNameInput}
+                  aria-label={selectors.pages.Dashboard.Settings.Variables.Edit.General.generalNameInput}
                 />
               </div>
               <div className="gf-form max-width-19">
@@ -141,7 +142,7 @@ export class VariableEditorEditorUnConnected extends PureComponent<Props> {
                     className="gf-form-input"
                     value={this.props.variable.type}
                     onChange={this.onTypeChange}
-                    aria-label={e2e.pages.Dashboard.Settings.Variables.Edit.General.selectors.generalTypeSelect}
+                    aria-label={selectors.pages.Dashboard.Settings.Variables.Edit.General.generalTypeSelect}
                   >
                     {variableAdapters.list().map(({ id, name }) => (
                       <option key={id} label={name} value={id}>
@@ -168,7 +169,7 @@ export class VariableEditorEditorUnConnected extends PureComponent<Props> {
                   value={this.props.variable.label ?? ''}
                   onChange={this.onLabelChange}
                   placeholder="optional display name"
-                  aria-label={e2e.pages.Dashboard.Settings.Variables.Edit.General.selectors.generalLabelInput}
+                  aria-label={selectors.pages.Dashboard.Settings.Variables.Edit.General.generalLabelInput}
                 />
               </div>
               <div className="gf-form max-width-19">
@@ -178,7 +179,7 @@ export class VariableEditorEditorUnConnected extends PureComponent<Props> {
                     className="gf-form-input"
                     value={this.props.variable.hide}
                     onChange={this.onHideChange}
-                    aria-label={e2e.pages.Dashboard.Settings.Variables.Edit.General.selectors.generalHideSelect}
+                    aria-label={selectors.pages.Dashboard.Settings.Variables.Edit.General.generalHideSelect}
                   >
                     <option label="" value={VariableHide.dontHide}>
                       {''}
@@ -204,7 +205,7 @@ export class VariableEditorEditorUnConnected extends PureComponent<Props> {
               <button
                 type="submit"
                 className="btn btn-primary"
-                aria-label={e2e.pages.Dashboard.Settings.Variables.Edit.General.selectors.updateButton}
+                aria-label={selectors.pages.Dashboard.Settings.Variables.Edit.General.updateButton}
               >
                 Update
               </button>
@@ -213,7 +214,7 @@ export class VariableEditorEditorUnConnected extends PureComponent<Props> {
               <button
                 type="submit"
                 className="btn btn-primary"
-                aria-label={e2e.pages.Dashboard.Settings.Variables.Edit.General.selectors.addButton}
+                aria-label={selectors.pages.Dashboard.Settings.Variables.Edit.General.addButton}
               >
                 Add
               </button>

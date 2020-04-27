@@ -11,7 +11,7 @@ import {
 import { TransformationOperationRow } from './TransformationOperationRow';
 import { Card, CardProps } from '../../../../core/components/Card/Card';
 import { css } from 'emotion';
-import { e2e } from '@grafana/e2e';
+import { selectors } from '@grafana/e2e-selectors';
 
 interface Props {
   onChange: (transformations: DataTransformerConfig[]) => void;
@@ -145,7 +145,7 @@ export class TransformationsEditor extends React.PureComponent<Props> {
     return (
       <CustomScrollbar autoHeightMin="100%">
         <Container padding="md">
-          <div aria-label={e2e.components.TransformTab.selectors.content}>
+          <div aria-label={selectors.components.TransformTab.content}>
             {!hasTransformationsConfigured && this.renderNoAddedTransformsState()}
             {hasTransformationsConfigured && this.renderTransformationEditors()}
             {hasTransformationsConfigured && this.renderTransformationSelector()}

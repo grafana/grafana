@@ -16,7 +16,7 @@ import { closeMilestoneTask } from './tasks/closeMilestone';
 import { pluginDevTask } from './tasks/plugin.dev';
 import { githubPublishTask } from './tasks/plugin.utils';
 import { pluginUpdateTask } from './tasks/plugin.update';
-import { ciBuildPluginTask, ciBuildPluginDocsTask, ciPackagePluginTask, ciPluginReportTask } from './tasks/plugin.ci';
+import { ciBuildPluginDocsTask, ciBuildPluginTask, ciPackagePluginTask, ciPluginReportTask } from './tasks/plugin.ci';
 import { buildPackageTask } from './tasks/package.build';
 import { pluginCreateTask } from './tasks/plugin.create';
 import { bundleManagedTask } from './tasks/plugin/bundle.managed';
@@ -41,7 +41,7 @@ export const run = (includeInternalScripts = false) => {
 
     program
       .command('package:build')
-      .option('-s, --scope <packages>', 'packages=[data|runtime|ui|toolkit]')
+      .option('-s, --scope <packages>', 'packages=[data|runtime|ui|toolkit|e2e|e2e-selectors]')
       .description('Builds @grafana/* package to packages/grafana-*/dist')
       .action(async cmd => {
         await execTask(buildPackageTask)({

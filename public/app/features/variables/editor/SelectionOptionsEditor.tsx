@@ -1,11 +1,12 @@
 import React, { FunctionComponent, useCallback } from 'react';
 import { LegacyForms } from '@grafana/ui';
-const { Switch } = LegacyForms;
-import { e2e } from '@grafana/e2e';
+import { selectors } from '@grafana/e2e-selectors';
 
 import { VariableWithMultiSupport } from '../../templating/types';
 import { VariableEditorProps } from './types';
-import { VariableIdentifier, toVariableIdentifier } from '../state/types';
+import { toVariableIdentifier, VariableIdentifier } from '../state/types';
+
+const { Switch } = LegacyForms;
 
 export interface SelectionOptionsEditorProps<Model extends VariableWithMultiSupport = VariableWithMultiSupport>
   extends VariableEditorProps<Model> {
@@ -37,7 +38,7 @@ export const SelectionOptionsEditor: FunctionComponent<SelectionOptionsEditorPro
     <div className="section gf-form-group">
       <h5 className="section-heading">Selection Options</h5>
       <div className="section">
-        <div aria-label={e2e.pages.Dashboard.Settings.Variables.Edit.General.selectors.selectionOptionsMultiSwitch}>
+        <div aria-label={selectors.pages.Dashboard.Settings.Variables.Edit.General.selectionOptionsMultiSwitch}>
           <Switch
             label="Multi-value"
             labelClass="width-10"
@@ -46,9 +47,7 @@ export const SelectionOptionsEditor: FunctionComponent<SelectionOptionsEditorPro
             tooltip={'Enables multiple values to be selected at the same time'}
           />
         </div>
-        <div
-          aria-label={e2e.pages.Dashboard.Settings.Variables.Edit.General.selectors.selectionOptionsIncludeAllSwitch}
-        >
+        <div aria-label={selectors.pages.Dashboard.Settings.Variables.Edit.General.selectionOptionsIncludeAllSwitch}>
           <Switch
             label="Include All option"
             labelClass="width-10"
@@ -67,7 +66,7 @@ export const SelectionOptionsEditor: FunctionComponent<SelectionOptionsEditorPro
             value={props.variable.allValue ?? ''}
             onChange={onAllValueChanged}
             placeholder="blank = auto"
-            aria-label={e2e.pages.Dashboard.Settings.Variables.Edit.General.selectors.selectionOptionsCustomAllInput}
+            aria-label={selectors.pages.Dashboard.Settings.Variables.Edit.General.selectionOptionsCustomAllInput}
           />
         </div>
       )}

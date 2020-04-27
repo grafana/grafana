@@ -1,7 +1,8 @@
 import React, { FC } from 'react';
 import { InlineFormLabel, LegacyForms } from '@grafana/ui';
+import { selectors } from '@grafana/e2e-selectors';
+
 const { Input, Switch } = LegacyForms;
-import { e2e } from '@grafana/e2e';
 
 export interface Props {
   dataSourceName: string;
@@ -30,7 +31,7 @@ const BasicSettings: FC<Props> = ({ dataSourceName, isDefault, onDefaultChange, 
             placeholder="Name"
             onChange={event => onNameChange(event.target.value)}
             required
-            aria-label={e2e.pages.DataSource.selectors.name}
+            aria-label={selectors.pages.DataSource.name}
           />
         </div>
         <Switch
