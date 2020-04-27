@@ -54,6 +54,8 @@ export const getTableStyles = stylesFactory(
       headerCell: css`
         padding: ${padding}px 10px;
         cursor: pointer;
+        overflow: hidden;
+        white-space: nowrap;
         color: ${colors.textBlue};
         border-right: 1px solid ${theme.colors.panelBg};
 
