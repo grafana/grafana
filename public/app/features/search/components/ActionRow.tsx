@@ -39,12 +39,14 @@ export const ActionRow: FC<Props> = ({
 
   return (
     <div className={styles.actionRow}>
-      <HorizontalGroup spacing="md" width="auto">
-        {!hideLayout ? (
-          <RadioButtonGroup options={layoutOptions} onChange={onLayoutChange} value={query.layout} />
-        ) : null}
-        <SortPicker onChange={onSortChange} value={query.sort} />
-      </HorizontalGroup>
+      <div className={styles.rowContainer}>
+        <HorizontalGroup spacing="md" width="auto">
+          {!hideLayout ? (
+            <RadioButtonGroup options={layoutOptions} onChange={onLayoutChange} value={query.layout} />
+          ) : null}
+          <SortPicker onChange={onSortChange} value={query.sort} />
+        </HorizontalGroup>
+      </div>
       <HorizontalGroup spacing="md" width="auto">
         {showStarredFilter && <Checkbox label="Filter by starred" onChange={onStarredFilterChange} />}
         <TagFilter
@@ -72,6 +74,9 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
         padding: ${theme.spacing.md} 0;
         width: 100%;
       }
+    `,
+    rowContainer: css`
+      margin-right: ${theme.spacing.md};
     `,
   };
 });
