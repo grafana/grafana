@@ -20,7 +20,6 @@ export const AdminListOrgsPages: FC = () => {
   const navIndex = useSelector((state: StoreState) => state.navIndex);
   const navModel = getNavModel(navIndex, 'global-orgs');
   const [state, fetchOrgs] = useAsyncFn(async () => await getOrgs(), []);
-  console.log(state);
   useEffect(() => {
     fetchOrgs();
   }, []);
@@ -31,9 +30,11 @@ export const AdminListOrgsPages: FC = () => {
         <>
           <div className="page-action-bar">
             <div className="page-action-bar__spacer"></div>
-            <LinkButton href="org/new">New org</LinkButton>
+            <LinkButton icon="plus" href="org/new">
+              New org
+            </LinkButton>
           </div>
-          {state.loading && 'Ftehcing organizations'}
+          {state.loading && 'Fetching organizations'}
           {state.error}
           {state.value && (
             <AdminOrgsTable
