@@ -117,8 +117,8 @@ func (rs *RenderingService) Render(ctx context.Context, opts Opts) (*RenderResul
 	result, err := rs.render(ctx, opts)
 	elapsedTime := time.Since(startTime).Milliseconds()
 	if status.Code(err) == codes.DeadlineExceeded {
-		metrics.MRenderingRequestTotal.WithLabelValues("canceled").Inc()
-		metrics.MRenderingSummary.WithLabelValues("canceled").Observe(float64(elapsedTime))
+		metrics.MRenderingRequestTotal.WithLabelValues("timeout").Inc()
+		metrics.MRenderingSummary.WithLabelValues("timeout").Observe(float64(elapsedTime))
 	} else if err != nil {
 		metrics.MRenderingRequestTotal.WithLabelValues("failure").Inc()
 		metrics.MRenderingSummary.WithLabelValues("failure").Observe(float64(elapsedTime))
