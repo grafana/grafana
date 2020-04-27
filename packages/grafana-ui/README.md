@@ -1,6 +1,6 @@
 # Grafana UI components library
 
-> **@grafana/toolkit is currently in ALPHA**. Core API is unstable and can be a subject of breaking changes!
+> **@grafana/ui is currently in BETA**. Core API is unstable and can be subject to changes!
 
 @grafana/ui is a collection of components used by [Grafana](https://github.com/grafana/grafana)
 
