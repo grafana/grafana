@@ -12,10 +12,10 @@ import {
   DataQueryResponseData,
   DataTransformerConfig,
   eventFactory,
+  FieldConfigSource,
   PanelEvents,
   PanelPlugin,
   ScopedVars,
-  FieldConfigSource,
 } from '@grafana/data';
 import { EDIT_PANEL_ID } from 'app/core/constants';
 
@@ -158,6 +158,35 @@ export class PanelModel implements DataConfigSource {
 
   /** Given a persistened PanelModel restores property values */
   restoreModel(model: any) {
+    // Start with clean-up
+    for (const property of Object.keys(this)) {
+      if (notPersistedProperties[property]) {
+        continue;
+      }
+
+      if (mustKeepProps[property]) {
+        continue;
+      }
+
+      if (model[property]) {
+        continue;
+      }
+
+      if (!this.hasOwnProperty(property)) {
+        continue;
+      }
+
+      if (typeof (this as any)[property] === 'function') {
+        continue;
+      }
+
+      if (typeof (this as any)[property] === 'symbol') {
+        continue;
+      }
+
+      delete (this as any)[property];
+    }
+
     // copy properties from persisted model
     for (const property in model) {
       (this as any)[property] = model[property];
