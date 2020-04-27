@@ -15,7 +15,7 @@ weight = 7
 >
 > Starting from Grafana v5.1 you can name the time column *time* in addition to earlier supported *time_sec*. Usage of *time_sec*  will eventually be deprecated.
 
-Grafana ships with a built-in MySQL data source plugin that allow you to query any visualize
+Grafana ships with a built-in MySQL data source plugin that allows you to query and visualize
 data from a MySQL compatible database.
 
 ## Adding the data source
@@ -152,7 +152,7 @@ Macro example | Description
 
 We plan to add many more macros. If you have suggestions for what macros you would like to see, please [open an issue](https://github.com/grafana/grafana) in our GitHub repo.
 
-The query editor has a link named `Generated SQL` that show up after a query as been executed, while in panel edit mode. Click on it and it will expand and show the raw interpolated SQL string that was executed.
+The query editor has a link named `Generated SQL` that shows up after a query has been executed, while in panel edit mode. Click on it and it will expand and show the raw interpolated SQL string that was executed.
 
 ## Table queries
 
@@ -251,7 +251,7 @@ For example, you can have a variable that contains all values for the `hostname`
 SELECT hostname FROM my_host
 ```
 
-A query can returns multiple columns and Grafana will automatically create a list from them. For example, the query below will return a list with values from `hostname` and `hostname2`.
+A query can return multiple columns and Grafana will automatically create a list from them. For example, the query below will return a list with values from `hostname` and `hostname2`.
 
 ```sql
 SELECT my_host.hostname, my_other_host.hostname2 FROM my_host JOIN my_other_host ON my_host.city = my_other_host.city
@@ -388,7 +388,7 @@ tags | Optional field name to use for event tags as a comma separated string.
 
 ## Alerting
 
-Time series queries should work in alerting conditions. Table formatted queries is not yet supported in alert rule conditions.
+Time series queries should work in alerting conditions. Table formatted queries are not yet supported in alert rule conditions.
 
 ## Configure the data source with provisioning
 
