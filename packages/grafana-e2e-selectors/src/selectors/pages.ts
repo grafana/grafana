@@ -1,37 +1,40 @@
-import { selectorFactory } from '../types';
-
 export const Pages = {
-  Login: selectorFactory({
+  Login: {
+    url: '/login',
     username: 'Username input field',
     password: 'Password input field',
     submit: 'Login button',
     skip: 'Skip change password button',
-  }),
-  DataSource: selectorFactory({
+  },
+  DataSource: {
     name: 'Data source settings page name input field',
     delete: 'Data source settings page Delete button',
     saveAndTest: 'Data source settings page Save and Test button',
     alert: 'Data source settings page Alert',
     alertMessage: 'Data source settings page Alert message',
-  }),
-  DataSources: selectorFactory({
+  },
+  DataSources: {
+    url: '/datasources',
     dataSources: (dataSourceName: string) => `Data source list item ${dataSourceName}`,
-  }),
-  AddDataSource: selectorFactory({
+  },
+  AddDataSource: {
+    url: '/datasources/new',
     dataSourcePlugins: (pluginName: string) => `Data source plugin item ${pluginName}`,
-  }),
-  ConfirmModal: selectorFactory({
+  },
+  ConfirmModal: {
     delete: 'Confirm Modal Danger Button',
-  }),
-  AddDashboard: selectorFactory({
+  },
+  AddDashboard: {
+    url: '/dashboard/new',
     addNewPanel: 'Add new panel',
-  }),
+  },
   Dashboard: {
-    Toolbar: selectorFactory({
+    url: (uid: string) => `/d/${uid}`,
+    Toolbar: {
       toolbarItems: (button: string) => `Dashboard navigation bar button ${button}`,
       navBar: () => '.navbar',
-    }),
-    SubMenu: selectorFactory({
+    },
+    SubMenu: {
       submenuItem: 'Dashboard template variables submenu item',
       submenuItemLabels: (item: string) => `Dashboard template variables submenu Label ${item}`,
       submenuItemValueDropDownValueLinkTexts: (item: string) =>
@@ -39,16 +42,16 @@ export const Pages = {
       submenuItemValueDropDownDropDown: 'Dashboard template variables Variable Value DropDown DropDown',
       submenuItemValueDropDownOptionTexts: (item: string) =>
         `Dashboard template variables Variable Value DropDown option text ${item}`,
-    }),
+    },
     Settings: {
-      General: selectorFactory({
+      General: {
         deleteDashBoard: 'Dashboard settings page delete dashboard button',
         sectionItems: (item: string) => `Dashboard settings section item ${item}`,
         saveDashBoard: 'Dashboard settings aside actions Save button',
         saveAsDashBoard: 'Dashboard settings aside actions Save As button',
-      }),
+      },
       Variables: {
-        List: selectorFactory({
+        List: {
           addVariableCTA: 'Call to action button Add variable',
           newButton: 'Variable editor New variable button',
           table: 'Variable editor Table',
@@ -58,9 +61,9 @@ export const Pages = {
           tableRowArrowDownButtons: (variableName: string) => `Variable editor Table ArrowDown button ${variableName}`,
           tableRowDuplicateButtons: (variableName: string) => `Variable editor Table Duplicate button ${variableName}`,
           tableRowRemoveButtons: (variableName: string) => `Variable editor Table Remove button ${variableName}`,
-        }),
+        },
         Edit: {
-          General: selectorFactory({
+          General: {
             headerLink: 'Variable editor Header link',
             modeLabelNew: 'Variable editor Header mode New',
             modeLabelEdit: 'Variable editor Header mode Edit',
@@ -74,8 +77,8 @@ export const Pages = {
             previewOfValuesOption: 'Variable editor Preview of Values option',
             addButton: 'Variable editor Add button',
             updateButton: 'Variable editor Update button',
-          }),
-          QueryVariable: selectorFactory({
+          },
+          QueryVariable: {
             queryOptionsDataSourceSelect: 'Variable editor Form Query DataSource select',
             queryOptionsRefreshSelect: 'Variable editor Form Query Refresh select',
             queryOptionsRegExInput: 'Variable editor Form Query RegEx field',
@@ -84,33 +87,35 @@ export const Pages = {
             valueGroupsTagsEnabledSwitch: 'Variable editor Form Query UseTags switch',
             valueGroupsTagsTagsQueryInput: 'Variable editor Form Query TagsQuery field',
             valueGroupsTagsTagsValuesQueryInput: 'Variable editor Form Query TagsValuesQuery field',
-          }),
-          ConstantVariable: selectorFactory({
+          },
+          ConstantVariable: {
             constantOptionsQueryInput: 'Variable editor Form Constant Query field',
-          }),
+          },
         },
       },
     },
   },
-  Dashboards: selectorFactory({
+  Dashboards: {
+    url: '/dashboards',
     dashboards: (title: string) => `Dashboard search item ${title}`,
-  }),
-  SaveDashboardAsModal: selectorFactory({
+  },
+  SaveDashboardAsModal: {
     newName: 'Save dashboard title field',
     save: 'Save dashboard button',
-  }),
-  SaveDashboardModal: selectorFactory({
+  },
+  SaveDashboardModal: {
     save: 'Dashboard settings Save Dashboard Modal Save button',
     saveVariables: 'Dashboard settings Save Dashboard Modal Save variables checkbox',
     saveTimerange: 'Dashboard settings Save Dashboard Modal Save timerange checkbox',
-  }),
-  SharePanelModal: selectorFactory({
+  },
+  SharePanelModal: {
     linkToRenderedImage: 'Link to rendered image',
-  }),
+  },
   Explore: {
-    General: selectorFactory({
+    url: '/explore',
+    General: {
       container: 'Explore',
       runButton: 'Run button',
-    }),
+    },
   },
 };

@@ -1,10 +1,9 @@
-import { selectorFactory } from '../types';
 import { Pages } from './pages';
 
 export const Components = {
   DataSource: {
     TestData: {
-      QueryTab: selectorFactory({
+      QueryTab: {
         scenarioSelect: 'Test Data Query scenario select',
         max: 'TestData max',
         min: 'TestData min',
@@ -12,97 +11,97 @@ export const Components = {
         seriesCount: 'TestData series count',
         spread: 'TestData spread',
         startValue: 'TestData start value',
-      }),
+      },
     },
   },
   Panels: {
-    Panel: selectorFactory({
+    Panel: {
       title: (title: string) => `Panel header title item ${title}`,
       headerItems: (item: string) => `Panel header item ${item}`,
-    }),
+    },
     Visualization: {
       Graph: {
-        VisualizationTab: selectorFactory({
+        VisualizationTab: {
           legendSection: 'Legend section',
-        }),
-        Legend: selectorFactory({
+        },
+        Legend: {
           legendItemAlias: (name: string) => `gpl alias ${name}`,
           showLegendSwitch: 'gpl show legend',
-        }),
+        },
       },
     },
   },
   Drawer: {
-    General: selectorFactory({
+    General: {
       title: (title: string) => `Drawer title ${title}`,
       expand: 'Drawer expand',
       contract: 'Drawer contract',
       close: 'Drawer close',
       rcContentWrapper: () => '.drawer-content-wrapper',
-    }),
+    },
   },
   PanelEditor: {
-    General: selectorFactory({
+    General: {
       content: 'Panel editor content',
-    }),
-    OptionsPane: selectorFactory({
+    },
+    OptionsPane: {
       content: 'Panel editor option pane content',
       close: Pages.Dashboard.Toolbar.toolbarItems('Close options pane'),
       open: Pages.Dashboard.Toolbar.toolbarItems('Open options pane'),
       select: 'Panel editor option pane select',
-    }),
+    },
     // not sure about the naming *DataPane*
-    DataPane: selectorFactory({
+    DataPane: {
       content: 'Panel editor data pane content',
-    }),
+    },
   },
   PanelInspector: {
-    Data: selectorFactory({
+    Data: {
       content: 'Panel inspector Data content',
-    }),
-    Stats: selectorFactory({
+    },
+    Stats: {
       content: 'Panel inspector Stats content',
-    }),
-    Json: selectorFactory({
+    },
+    Json: {
       content: 'Panel inspector Json content',
-    }),
-    Query: selectorFactory({
+    },
+    Query: {
       content: 'Panel inspector Query content',
-    }),
+    },
   },
-  Tab: selectorFactory({
+  Tab: {
     title: (title: string) => `Tab ${title}`,
     active: () => '[class*="-activeTabStyle"]',
-  }),
-  QueryTab: selectorFactory({
+  },
+  QueryTab: {
     content: 'Query editor tab content',
-  }),
-  AlertTab: selectorFactory({
+  },
+  AlertTab: {
     content: 'Alert editor tab content',
-  }),
-  TransformTab: selectorFactory({
+  },
+  TransformTab: {
     content: 'Transform editor tab content',
-  }),
-  QueryEditorToolbarItem: selectorFactory({
+  },
+  QueryEditorToolbarItem: {
     button: (title: string) => `QueryEditor toolbar item button ${title}`,
-  }),
-  BackButton: selectorFactory({
+  },
+  BackButton: {
     backArrow: 'Go Back button',
-  }),
-  OptionsGroup: selectorFactory({
+  },
+  OptionsGroup: {
     toggle: (title: string) => `Options group ${title}`,
-  }),
-  PluginVisualization: selectorFactory({
+  },
+  PluginVisualization: {
     item: (title: string) => `Plugin visualization item ${title}`,
     current: () => '[class*="-currentVisualizationItem"]',
-  }),
-  Select: selectorFactory({
+  },
+  Select: {
     option: 'Select option',
-  }),
-  FieldConfigEditor: selectorFactory({
+  },
+  FieldConfigEditor: {
     content: 'Field config editor content',
-  }),
-  OverridesConfigEditor: selectorFactory({
+  },
+  OverridesConfigEditor: {
     content: 'Field overrides editor content',
-  }),
+  },
 };
