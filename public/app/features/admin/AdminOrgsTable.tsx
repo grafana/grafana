@@ -8,7 +8,6 @@ interface Props {
 }
 
 export const AdminOrgsTable: FC<Props> = ({ orgs, onDelete }) => {
-  console.log(orgs);
   const [deleteOrg, setDeleteOrg] = useState<Organization>();
   return (
     <table className="filter-table form-inline filter-table--hover">
