@@ -49,13 +49,7 @@ export const ActionRow: FC<Props> = ({
       </div>
       <HorizontalGroup spacing="md" width="auto">
         {showStarredFilter && <Checkbox label="Filter by starred" onChange={onStarredFilterChange} />}
-        <TagFilter
-          isClearable
-          placeholder="Filter by tag"
-          tags={query.tag}
-          tagOptions={searchSrv.getDashboardTags}
-          onChange={onTagFilterChange}
-        />
+        <TagFilter isClearable tags={query.tag} tagOptions={searchSrv.getDashboardTags} onChange={onTagFilterChange} />
       </HorizontalGroup>
     </div>
   );

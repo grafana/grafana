@@ -30,7 +30,15 @@ const filterOption = (option: any, searchQuery: string) => {
   return regex.test(option.value);
 };
 
-export const TagFilter: FC<Props> = ({ tagOptions, width, placeholder, hideValues, isClearable, onChange, tags }) => {
+export const TagFilter: FC<Props> = ({
+  hideValues,
+  isClearable,
+  onChange,
+  placeholder = 'Filter by tag',
+  tagOptions,
+  tags,
+  width,
+}) => {
   const theme = useTheme();
   const styles = getStyles(theme);
 
