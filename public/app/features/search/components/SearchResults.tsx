@@ -4,8 +4,7 @@ import { FixedSizeList } from 'react-window';
 import AutoSizer from 'react-virtualized-auto-sizer';
 import { GrafanaTheme } from '@grafana/data';
 import { stylesFactory, useTheme, Spinner } from '@grafana/ui';
-import { DashboardSection, OnToggleChecked, SearchLayout } from '../types';
-import { getVisibleItems } from '../utils';
+import { DashboardSection, OnToggleChecked, SearchLayout, DashboardSearchHit } from '../types';
 import { SEARCH_ITEM_HEIGHT, SEARCH_ITEM_MARGIN } from '../constants';
 import { SearchItem } from './SearchItem';
 import { SectionHeader } from './SectionHeader';
@@ -16,7 +15,7 @@ export interface Props {
   onTagSelected: (name: string) => any;
   onToggleChecked?: OnToggleChecked;
   onToggleSection: (section: DashboardSection) => void;
-  results: DashboardSection[];
+  results: DashboardSearchHit[];
   layout?: string;
 }
 
@@ -32,7 +31,6 @@ export const SearchResults: FC<Props> = ({
   const theme = useTheme();
   const styles = getSectionStyles(theme);
   const itemProps = { editable, onToggleChecked, onTagSelected };
-
   const renderFolders = () => {
     return (
       <div className={styles.wrapper}>
@@ -50,8 +48,6 @@ export const SearchResults: FC<Props> = ({
     );
   };
 
-  const items = getVisibleItems(results);
-
   const renderDashboards = () => {
     return (
       <div className={styles.listModeWrapper}>
@@ -63,11 +59,11 @@ export const SearchResults: FC<Props> = ({
               innerElementType="ul"
               itemSize={SEARCH_ITEM_HEIGHT + SEARCH_ITEM_MARGIN}
               height={height}
-              itemCount={items.length}
+              itemCount={results.length}
               width="100%"
             >
               {({ index, style }) => {
-                const item = items[index];
+                const item = results[index];
                 // The wrapper div is needed as the inner SearchItem has margin-bottom spacing
                 // And without this wrapper there is no room for that margin
                 return (
@@ -90,7 +86,9 @@ export const SearchResults: FC<Props> = ({
   }
 
   return (
-    <div className={styles.resultsContainer}>{layout !== SearchLayout.List ? renderFolders() : renderDashboards()}</div>
+    <div className={styles.resultsContainer}>
+      {layout === SearchLayout.Folders ? renderFolders() : renderDashboards()}
+    </div>
   );
 };
 

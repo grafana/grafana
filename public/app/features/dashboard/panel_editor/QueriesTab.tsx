@@ -3,7 +3,7 @@ import React, { PureComponent } from 'react';
 // Components
 import { DataSourcePicker } from 'app/core/components/Select/DataSourcePicker';
 import { QueryOptions } from './QueryOptions';
-import { CustomScrollbar, stylesFactory, Button, HorizontalGroup, Modal } from '@grafana/ui';
+import { Button, CustomScrollbar, HorizontalGroup, Modal, stylesFactory } from '@grafana/ui';
 import { getLocationSrv } from '@grafana/runtime';
 import { QueryEditorRows } from './QueryEditorRows';
 // Services
@@ -20,7 +20,7 @@ import { Unsubscribable } from 'rxjs';
 import { DashboardQueryEditor, isSharedDashboardQuery } from 'app/plugins/datasource/dashboard';
 import { expressionDatasource, ExpressionDatasourceID } from 'app/features/expressions/ExpressionDatasource';
 import { css } from 'emotion';
-import { e2e } from '@grafana/e2e';
+import { selectors } from '@grafana/e2e-selectors';
 
 interface Props {
   panel: PanelModel;
@@ -178,7 +178,7 @@ export class QueriesTab extends PureComponent<Props, State> {
             <Button
               variant="secondary"
               onClick={this.openQueryInspector}
-              aria-label={e2e.components.QueryTab.selectors.queryInspectorButton}
+              aria-label={selectors.components.QueryTab.queryInspectorButton}
             >
               Query inspector
             </Button>
@@ -245,7 +245,7 @@ export class QueriesTab extends PureComponent<Props, State> {
     }
 
     return (
-      <div aria-label={e2e.components.QueryTab.selectors.content}>
+      <div aria-label={selectors.components.QueryTab.content}>
         <QueryEditorRows
           queries={panel.targets}
           datasource={currentDS}
