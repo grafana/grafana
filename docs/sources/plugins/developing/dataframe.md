@@ -111,11 +111,11 @@ Dimensions: 2 fields by 2 rows
 +---------------------+-----------------+
 ```
 
-The wide format can typically be used when multiple time series are collected by the same process. In this case, every measurement are made at the same interval and will therefore share the same time values.
+The wide format can typically be used when multiple time series are collected by the same process. In this case, every measurement is made at the same interval and will therefore share the same time values.
 
 ### Long format
 
-Some data sources return data in a _long_ format (also called _narrow_ format). This is common in, for example, SQL databases.
+Some data sources return data in a _long_ format (also called _narrow_ format). This is common format returned by, for example, SQL databases.
 
 In long format, string values are represented as separate fields rather than as labels. As a result, a data form in long form may have duplicated time values.
 
