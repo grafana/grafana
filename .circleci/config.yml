@@ -840,7 +840,6 @@ jobs:
 
   build-docs-website:
     executor: grafana-build
-    working_directory: /docs
     steps:
       - checkout
       - setup_remote_docker
@@ -855,8 +854,14 @@ jobs:
       - run:
           name: Build Grafana docs website
           command: |
-            cd docs
-            make docs-test
+            IMAGE=grafana/docs-base@sha256:63758b74e3990ab61e274f5e98da092d5c38378829dad0488aa97c59f0144f34
+
+            # In order to copy sources into the remote container, we need to employ a trick of creating a container
+            # with a volume, that we copy the sources into. Then, we launch the build container, with the volume
+            # from the other container
+            docker create -v /hugo/content/docs/grafana --name docs alpine:3.11 /bin/true
+            docker cp ${PWD}/docs/sources docs:/hugo/content/docs/grafana/latest
+            docker run --volumes-from docs grafana/docs-base:${IMAGE} /bin/bash -c 'make prod'
       - run:
           name: CI job failed
           command: "./scripts/ci-job-failed.sh"
