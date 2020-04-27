@@ -8,9 +8,6 @@ parent = "variables"
 weight = 300
 +++
 
-DFP questions: Where do you enter these bits of code?
-Why would I want to change it from the default?
-
 # Advanced variable format options
 
 The formatting of the variable interpolation depends on the data source, but there are some situations where you might want to change the default formatting. 
