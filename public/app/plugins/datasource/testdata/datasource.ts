@@ -163,9 +163,10 @@ function runArrowFile(target: TestDataQuery, req: DataQueryRequest<TestDataQuery
       const table = base64StringToArrowTable(target.stringInput);
       data = [arrowTableToDataFrame(table)];
     } catch (e) {
-      const err = processQueryError(e);
-      err.refId = target.refId;
-      return of({ state: LoadingState.Error, err });
+      console.warn('Error reading saved arrow', e);
+      const error = processQueryError(e);
+      error.refId = target.refId;
+      return of({ state: LoadingState.Error, error, data });
     }
   }
   return of({ state: LoadingState.Done, data });
