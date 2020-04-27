@@ -304,7 +304,7 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
     const exploreClass = split ? 'explore explore-split' : 'explore';
     const styles = getStyles(theme);
 
-    let StartPage: React.ComponentType<ExploreStartPageProps>;
+    let StartPage: React.ComponentType<ExploreStartPageProps> | null;
     if (mode === ExploreMode.Metrics && datasourceInstance.components?.ExploreMetricsStartPage) {
       StartPage = datasourceInstance.components.ExploreMetricsStartPage;
     } else if (mode === ExploreMode.Logs && datasourceInstance.components?.ExploreLogsStartPage) {
