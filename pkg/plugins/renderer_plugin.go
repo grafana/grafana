@@ -13,7 +13,7 @@ import (
 )
 
 type RendererPlugin struct {
-	PluginBase
+	FrontendPluginBase
 
 	Executable           string `json:"executable,omitempty"`
 	GrpcPluginV1         pluginModel.RendererPlugin

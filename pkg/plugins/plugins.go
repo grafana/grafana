@@ -121,6 +121,10 @@ func (pm *PluginManager) Init() error {
 		app.initApp()
 	}
 
+	if Renderer != nil {
+		Renderer.initFrontendPlugin()
+	}
+
 	for _, p := range Plugins {
 		if p.IsCorePlugin {
 			p.Signature = PluginSignatureInternal
