@@ -165,21 +165,21 @@ export function grafanaTimeFormat(ticks: number, min: number, max: number) {
     const oneYear = 31536000000;
 
     if (secPerTick <= 45) {
-      return '%H:%M:%S';
+      return 'HH:mm:ss';
     }
     if (secPerTick <= 7200 || range <= oneDay) {
-      return '%H:%M';
+      return 'HH:mm';
     }
     if (secPerTick <= 80000) {
-      return '%m/%d %H:%M';
+      return 'MM/DD HH:mm';
     }
     if (secPerTick <= 2419200 || range <= oneYear) {
-      return '%m/%d';
+      return 'MM/DD';
     }
-    return '%Y-%m';
+    return 'YYYY-MM';
   }
 
-  return '%H:%M';
+  return 'HH:mm';
 }
 
 /**

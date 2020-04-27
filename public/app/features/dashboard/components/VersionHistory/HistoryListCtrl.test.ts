@@ -47,6 +47,7 @@ describe('HistoryListCtrl', () => {
         id: 2,
         version: 3,
         formatDate: jest.fn(() => 'date'),
+        getRelativeTime: jest.fn(() => 'time ago'),
       };
     });
 
@@ -148,6 +149,7 @@ describe('HistoryListCtrl', () => {
         id: 2,
         version: 3,
         formatDate: jest.fn(() => 'date'),
+        getRelativeTime: jest.fn(() => 'time ago'),
       };
 
       historySrv.calculateDiff = jest.fn(() => Promise.resolve(versionsResponse));
