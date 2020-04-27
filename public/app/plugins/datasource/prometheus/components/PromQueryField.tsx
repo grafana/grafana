@@ -199,8 +199,9 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
   onChangeMetrics = (values: string[], selectedOptions: CascaderOption[]) => {
     let query;
     if (selectedOptions.length === 1) {
-      if (selectedOptions[0].children.length === 0) {
-        query = selectedOptions[0].value;
+      const selectedOption = selectedOptions[0];
+      if (!selectedOption.children || selectedOption.children.length === 0) {
+        query = selectedOption.value;
       } else {
         // Ignore click on group
         return;

@@ -121,7 +121,19 @@ class UnThemedLogDetails extends PureComponent<Props> {
       }
       return acc;
     }, {} as { [key: string]: FieldDef });
-    return Object.values(fieldsMap);
+    const allFields = Object.values(fieldsMap);
+    allFields.sort((fieldA, fieldB) => {
+      if (fieldA.links?.length && !fieldB.links?.length) {
+        return -1;
+      }
+
+      if (!fieldA.links?.length && fieldB.links?.length) {
+        return 1;
+      }
+
+      return fieldA.key > fieldB.key ? 1 : fieldA.key < fieldB.key ? -1 : 0;
+    });
+    return allFields;
   });
 
   getStatsForParsedField = (key: string) => {

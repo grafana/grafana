@@ -7,4 +7,3 @@ export { SearchResultsFilter } from './components/SearchResultsFilter';
 export { ManageDashboards } from './components/ManageDashboards';
 export { ConfirmDeleteModal } from './components/ConfirmDeleteModal';
 export { MoveToFolderModal } from './components/MoveToFolderModal';
-export * from './types';

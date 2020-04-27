@@ -54,6 +54,8 @@ Grafana supports the following databases:
 
 By default, Grafana installs with and uses SQLite, which is an embedded database stored in the Grafana installation location.
 
+> NOTE: PostgreSQL versions 9.5.18, 9.4.23, 9.6.14, 10.9, 11.4, and 12-beta2 are affected by a bug (tracked by the PostgreSQL project as [bug #15865](https://www.postgresql.org/message-id/flat/15865-17940eacc8f8b081%40postgresql.org)) which prevents those versions from being used with Grafana. The bug has been fixed in more recent versions of PostgreSQL.
+
 ## Supported web browsers
 
 Grafana is supported in the current version of the following browsers. Older versions of these browsers might not be supported, so you should always upgrade to the latest version when using Grafana.

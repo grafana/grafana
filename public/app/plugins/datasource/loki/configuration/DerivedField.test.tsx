@@ -3,14 +3,6 @@ import { shallow } from 'enzyme';
 import { DerivedField } from './DerivedField';
 import DataSourcePicker from '../../../../core/components/Select/DataSourcePicker';
 
-jest.mock('app/core/config', () => ({
-  config: {
-    featureToggles: {
-      tracingIntegration: true,
-    },
-  },
-}));
-
 jest.mock('app/features/plugins/datasource_srv', () => ({
   getDatasourceSrv() {
     return {

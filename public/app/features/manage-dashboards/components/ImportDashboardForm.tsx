@@ -58,18 +58,12 @@ export const ImportDashboardForm: FC<Props> = ({
           type="text"
           ref={register({
             required: 'Name is required',
-            validate: async (v: string) => await validateTitle(v, getValues().folderId),
+            validate: async (v: string) => await validateTitle(v, getValues().folder.id),
           })}
         />
       </Field>
       <Field label="Folder">
-        <InputControl
-          as={FolderPicker}
-          name="folderId"
-          useNewForms
-          initialFolderId={initialFolderId}
-          control={control}
-        />
+        <InputControl as={FolderPicker} name="folder" useNewForms initialFolderId={initialFolderId} control={control} />
       </Field>
       <Field
         label="Unique identifier (uid)"

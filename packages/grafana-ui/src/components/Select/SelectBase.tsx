@@ -91,6 +91,8 @@ export function SelectBase<T>({
   allowCustomValue = false,
   autoFocus = false,
   backspaceRemovesValue = true,
+  cacheOptions,
+  className,
   closeMenuOnSelect = true,
   components,
   defaultOptions,
@@ -105,13 +107,14 @@ export function SelectBase<T>({
   isLoading = false,
   isMulti = false,
   isOpen,
+  isOptionDisabled,
   isSearchable = true,
   loadOptions,
   loadingMessage = 'Loading options...',
   maxMenuHeight = 300,
   maxVisibleValues,
-  menuPosition,
   menuPlacement = 'auto',
+  menuPosition,
   noOptionsMessage = 'No options found',
   onBlur,
   onChange,
@@ -127,7 +130,6 @@ export function SelectBase<T>({
   renderControl,
   showAllSelectedWhenOpen = true,
   tabSelectsValue = true,
-  className,
   value,
   width,
 }: SelectBaseProps<T>) {
@@ -183,6 +185,7 @@ export function SelectBase<T>({
     isDisabled: disabled,
     isLoading,
     isMulti,
+    isOptionDisabled,
     isSearchable,
     maxMenuHeight,
     maxVisibleValues,
@@ -217,6 +220,7 @@ export function SelectBase<T>({
     ReactSelectComponent = allowCustomValue ? AsyncCreatable : ReactAsyncSelect;
     asyncSelectProps = {
       loadOptions,
+      cacheOptions,
       defaultOptions,
     };
   }
@@ -321,21 +325,28 @@ export function SelectBase<T>({
         }}
         styles={{
           ...resetSelectStyles(),
+          menuPortal: () => ({
+            zIndex: theme.zIndex.dropdown,
+          }),
           //These are required for the menu positioning to function
-          menu: ({ top, bottom, width, position }: any) => ({
+          menu: ({ top, bottom, position }: any) => ({
             top,
             bottom,
-            width,
             position,
             marginBottom: !!bottom ? '10px' : '0',
-            zIndex: 9999,
+            minWidth: '100%',
+            zIndex: theme.zIndex.dropdown,
           }),
           container: () => ({
             position: 'relative',
             width: width ? `${8 * width}px` : '100%',
           }),
+          option: (provided: any, state: any) => ({
+            ...provided,
+            opacity: state.isDisabled ? 0.5 : 1,
+          }),
         }}
-        className={cx('select-container', className)}
+        className={className}
         {...commonSelectProps}
         {...creatableProps}
         {...asyncSelectProps}

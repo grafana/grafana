@@ -10,7 +10,7 @@ interface Props {
   isFocused?: boolean;
   isInvalid?: boolean;
   tooltip?: PopoverContent;
-  width?: number;
+  width?: number | 'auto';
 }
 
 export const FormLabel: FunctionComponent<Props> = ({
@@ -23,7 +23,7 @@ export const FormLabel: FunctionComponent<Props> = ({
   width,
   ...rest
 }) => {
-  const classes = classNames(`gf-form-label width-${width ? width : '10'}`, className, {
+  const classes = classNames(className, `gf-form-label width-${width ? width : '10'}`, {
     'gf-form-label--is-focused': isFocused,
     'gf-form-label--is-invalid': isInvalid,
   });

@@ -24,6 +24,7 @@ export type IconName =
   | 'plus-square'
   | 'folder-plus'
   | 'folder-open'
+  | 'folder'
   | 'file-copy-alt'
   | 'file-alt'
   | 'exchange-alt'
@@ -52,7 +53,6 @@ export type IconName =
   | 'circle'
   | 'arrow-up'
   | 'arrow-from-right'
-  | 'arrow-from-left'
   | 'keyboard'
   | 'search'
   | 'chart-line'
@@ -60,7 +60,7 @@ export type IconName =
   | 'clock-nine'
   | 'sync'
   | 'sign-in-alt'
-  | 'cllud-download'
+  | 'cloud-download'
   | 'cog'
   | 'bars'
   | 'save'
@@ -111,7 +111,9 @@ export type IconName =
   | 'heart'
   | 'heart-break'
   | 'ellipsis-v'
-  | 'favorite';
+  | 'favorite'
+  | 'line-alt'
+  | 'sort-amount-down';
 
 export const getAvailableIcons = (): IconName[] => [
   'fa fa-spinner',
@@ -135,6 +137,7 @@ export const getAvailableIcons = (): IconName[] => [
   'plus-square',
   'folder-plus',
   'folder-open',
+  'folder',
   'file-copy-alt',
   'file-alt',
   'exchange-alt',
@@ -163,7 +166,6 @@ export const getAvailableIcons = (): IconName[] => [
   'circle',
   'arrow-up',
   'arrow-from-right',
-  'arrow-from-left',
   'keyboard',
   'search',
   'chart-line',
@@ -171,7 +173,7 @@ export const getAvailableIcons = (): IconName[] => [
   'clock-nine',
   'sync',
   'sign-in-alt',
-  'cllud-download',
+  'cloud-download',
   'cog',
   'bars',
   'save',
@@ -223,4 +225,5 @@ export const getAvailableIcons = (): IconName[] => [
   'heart-break',
   'ellipsis-v',
   'favorite',
+  'sort-amount-down',
 ];

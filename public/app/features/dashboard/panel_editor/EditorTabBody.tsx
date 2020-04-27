@@ -1,13 +1,11 @@
-// Libraries
 import React, { PureComponent } from 'react';
+import { CustomScrollbar, Icon, IconName, PanelOptionsGroup } from '@grafana/ui';
+import { selectors } from '@grafana/e2e-selectors';
 
-// Components
-import { CustomScrollbar, PanelOptionsGroup, Icon, IconName } from '@grafana/ui';
 import { FadeIn } from 'app/core/components/Animations/FadeIn';
 
 interface Props {
   children: JSX.Element;
-  heading: string;
   renderToolbar?: () => JSX.Element;
   toolbarItems?: EditorToolbarView[];
   scrollTop?: number;
@@ -89,7 +87,12 @@ export class EditorTabBody extends PureComponent<Props, State> {
 
     return (
       <div className="nav-buttons" key={view.title + view.icon}>
-        <button className="btn navbar-button" onClick={onClick} disabled={view.disabled}>
+        <button
+          className="btn navbar-button"
+          onClick={onClick}
+          disabled={view.disabled}
+          aria-label={selectors.components.QueryEditorToolbarItem.button(view.title)}
+        >
           {view.icon && <Icon name={view.icon as IconName} />} {view.title}
         </button>
       </div>
@@ -105,16 +108,13 @@ export class EditorTabBody extends PureComponent<Props, State> {
   }
 
   render() {
-    const { children, renderToolbar, heading, toolbarItems, scrollTop, setScrollTop } = this.props;
+    const { children, renderToolbar, toolbarItems, scrollTop, setScrollTop } = this.props;
     const { openView, fadeIn, isOpen } = this.state;
 
     return (
       <>
         <div className="toolbar">
-          <div className="toolbar__left">
-            <div className="toolbar__heading">{heading}</div>
-            {renderToolbar && renderToolbar()}
-          </div>
+          {renderToolbar && renderToolbar()}
           {toolbarItems.map(item => this.renderButton(item))}
         </div>
         <div className="panel-editor__scroll">

@@ -139,13 +139,8 @@ class SingleStatCtrl extends MetricsPanelCtrl {
     this.addEditorTab('Value Mappings', 'public/app/plugins/panel/singlestat/mappings.html', 3);
   }
 
-  migrateToGaugePanel(migrate: boolean) {
-    if (migrate) {
-      this.onPluginTypeChange(config.panels['gauge']);
-    } else {
-      this.panel.gauge.show = false;
-      this.render();
-    }
+  migrateToPanel(type: string) {
+    this.onPluginTypeChange(config.panels[type]);
   }
 
   setUnitFormat() {
@@ -192,6 +187,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
           },
         },
         theme: config.theme,
+        timeZone: this.dashboard.getTimezone(),
       });
       // When we don't have any field
       this.data = {

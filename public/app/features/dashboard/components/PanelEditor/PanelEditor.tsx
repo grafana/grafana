@@ -1,6 +1,6 @@
 import React, { PureComponent } from 'react';
 import { FieldConfigSource, GrafanaTheme, PanelData, PanelPlugin } from '@grafana/data';
-import { Button, stylesFactory, Icon, RadioButtonGroup } from '@grafana/ui';
+import { Button, HorizontalGroup, Icon, RadioButtonGroup, stylesFactory } from '@grafana/ui';
 import { css, cx } from 'emotion';
 import config from 'app/core/config';
 import AutoSizer from 'react-virtualized-auto-sizer';
@@ -17,7 +17,7 @@ import { Unsubscribable } from 'rxjs';
 import { DisplayMode, displayModes, PanelEditorTab } from './types';
 import { PanelEditorTabs } from './PanelEditorTabs';
 import { DashNavTimeControls } from '../DashNav/DashNavTimeControls';
-import { LocationState, CoreEvents } from 'app/types';
+import { CoreEvents, LocationState } from 'app/types';
 import { calculatePanelSize } from './utils';
 import { initPanelEditor, panelEditorCleanUp, updatePanelEditorUIState } from './state/actions';
 import { PanelEditorUIState, setDiscardChanges } from './state/reducers';
@@ -31,6 +31,7 @@ import { SubMenuItems } from 'app/features/dashboard/components/SubMenu/SubMenuI
 import { BackButton } from 'app/core/components/BackButton/BackButton';
 import { appEvents } from 'app/core/core';
 import { SaveDashboardModalProxy } from '../SaveDashboard/SaveDashboardModalProxy';
+import { selectors } from '@grafana/e2e-selectors';
 
 interface OwnProps {
   dashboard: DashboardModel;
@@ -151,10 +152,39 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
     updatePanelEditorUIState({ isPanelOptionsVisible: !uiState.isPanelOptionsVisible });
   };
 
+  renderPanel = (styles: EditorStyles) => {
+    const { dashboard, panel, tabs, uiState } = this.props;
+    return (
+      <div className={cx(styles.mainPaneWrapper, tabs.length === 0 && styles.mainPaneWrapperNoTabs)}>
+        {this.renderPanelToolbar(styles)}
+        <div className={styles.panelWrapper}>
+          <AutoSizer>
+            {({ width, height }) => {
+              if (width < 3 || height < 3) {
+                return null;
+              }
+              return (
+                <div className={styles.centeringContainer} style={{ width, height }}>
+                  <div style={calculatePanelSize(uiState.mode, width, height, panel)}>
+                    <DashboardPanel
+                      dashboard={dashboard}
+                      panel={panel}
+                      isEditing={true}
+                      isViewing={false}
+                      isInView={true}
+                    />
+                  </div>
+                </div>
+              );
+            }}
+          </AutoSizer>
+        </div>
+      </div>
+    );
+  };
   renderHorizontalSplit(styles: EditorStyles) {
     const { dashboard, panel, tabs, data, uiState } = this.props;
-
-    return (
+    return tabs.length > 0 ? (
       <SplitPane
         split="horizontal"
         minSize={50}
@@ -166,35 +196,13 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
         onDragStarted={this.onDragStarted}
         onDragFinished={size => this.onDragFinished(Pane.Top, size)}
       >
-        <div className={styles.mainPaneWrapper}>
-          {this.renderPanelToolbar(styles)}
-          <div className={styles.panelWrapper}>
-            <AutoSizer>
-              {({ width, height }) => {
-                if (width < 3 || height < 3) {
-                  return null;
-                }
-                return (
-                  <div className={styles.centeringContainer} style={{ width, height }}>
-                    <div style={calculatePanelSize(uiState.mode, width, height, panel)}>
-                      <DashboardPanel
-                        dashboard={dashboard}
-                        panel={panel}
-                        isEditing={true}
-                        isViewing={false}
-                        isInView={true}
-                      />
-                    </div>
-                  </div>
-                );
-              }}
-            </AutoSizer>
-          </div>
-        </div>
-        <div className={styles.tabsWrapper}>
+        {this.renderPanel(styles)}
+        <div className={styles.tabsWrapper} aria-label={selectors.components.PanelEditor.DataPane.content}>
           <PanelEditorTabs panel={panel} dashboard={dashboard} tabs={tabs} onChangeTab={this.onChangeTab} data={data} />
         </div>
       </SplitPane>
+    ) : (
+      this.renderPanel(styles)
     );
   }
 
@@ -213,25 +221,26 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
   }
 
   renderPanelToolbar(styles: EditorStyles) {
-    const { dashboard, location, uiState } = this.props;
-
+    const { dashboard, location, uiState, variables } = this.props;
     return (
       <div className={styles.panelToolbar}>
-        {this.renderTemplateVariables(styles)}
-        <div className="flex-grow-1" />
-        <div className={styles.toolbarItem}>
-          <RadioButtonGroup value={uiState.mode} options={displayModes} onChange={this.onDiplayModeChange} />
-        </div>
-        <div className={styles.toolbarItem}>
-          <DashNavTimeControls dashboard={dashboard} location={location} updateLocation={updateLocation} />
-        </div>
-        {!uiState.isPanelOptionsVisible && (
-          <div className={styles.toolbarItem}>
-            <DashNavButton onClick={this.onTogglePanelOptions} tooltip="Open options pane" classSuffix="close-options">
-              <Icon name="angle-left" /> <span style={{ paddingLeft: '6px' }}>Show options</span>
-            </DashNavButton>
-          </div>
-        )}
+        <HorizontalGroup justify={variables.length > 0 ? 'space-between' : 'flex-end'} align="flex-start">
+          {this.renderTemplateVariables(styles)}
+
+          <HorizontalGroup>
+            <RadioButtonGroup value={uiState.mode} options={displayModes} onChange={this.onDiplayModeChange} />
+            <DashNavTimeControls dashboard={dashboard} location={location} updateLocation={updateLocation} />
+            {!uiState.isPanelOptionsVisible && (
+              <DashNavButton
+                onClick={this.onTogglePanelOptions}
+                tooltip="Open options pane"
+                classSuffix="close-options"
+              >
+                <Icon name="angle-left" /> <span style={{ paddingLeft: '6px' }}>Show options</span>
+              </DashNavButton>
+            )}
+          </HorizontalGroup>
+        </HorizontalGroup>
       </div>
     );
   }
@@ -241,41 +250,40 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
 
     return (
       <div className={styles.editorToolbar}>
-        <div className={styles.toolbarLeft}>
-          <BackButton onClick={this.onPanelExit} surface="panel" />
-          <span className={styles.editorTitle}>{dashboard.title} / Edit Panel</span>
-        </div>
-        <div className={styles.toolbarLeft}>
-          <div className={styles.toolbarItem}>
-            <Button
-              icon="cog"
-              onClick={this.onOpenDashboardSettings}
-              variant="secondary"
-              title="Open dashboad settings"
-            />
+        <HorizontalGroup justify="space-between" align="center">
+          <div className={styles.toolbarLeft}>
+            <HorizontalGroup spacing="none">
+              <BackButton onClick={this.onPanelExit} surface="panel" />
+              <span className={styles.editorTitle}>{dashboard.title} / Edit Panel</span>
+            </HorizontalGroup>
           </div>
-          <div className={styles.toolbarItem}>
-            <Button onClick={this.onDiscard} variant="secondary" title="Undo all changes">
-              Discard
-            </Button>
-          </div>
-          <div className={styles.toolbarItem}>
-            <Button onClick={this.onSaveDashboard} variant="secondary" title="Apply changes and save dashboard">
-              Save
-            </Button>
-          </div>
-          <div className={styles.toolbarItem}>
-            <Button onClick={this.onPanelExit} title="Apply changes and go back to dashboard">
-              Apply
-            </Button>
-          </div>
-        </div>
+
+          <HorizontalGroup>
+            <HorizontalGroup spacing="sm" align="center">
+              <Button
+                icon="cog"
+                onClick={this.onOpenDashboardSettings}
+                variant="secondary"
+                title="Open dashboad settings"
+              />
+              <Button onClick={this.onDiscard} variant="secondary" title="Undo all changes">
+                Discard
+              </Button>
+              <Button onClick={this.onSaveDashboard} variant="secondary" title="Apply changes and save dashboard">
+                Save
+              </Button>
+              <Button onClick={this.onPanelExit} title="Apply changes and go back to dashboard">
+                Apply
+              </Button>
+            </HorizontalGroup>
+          </HorizontalGroup>
+        </HorizontalGroup>
       </div>
     );
   }
 
   renderOptionsPane() {
-    const { plugin, dashboard, data, panel, uiState } = this.props;
+    const { plugin, dashboard, panel, uiState } = this.props;
 
     if (!plugin) {
       return <div />;
@@ -285,7 +293,6 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
       <OptionsPaneContent
         plugin={plugin}
         dashboard={dashboard}
-        data={data}
         panel={panel}
         width={uiState.rightPaneSize as number}
         onClose={this.onTogglePanelOptions}
@@ -302,7 +309,7 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
     return (
       <SplitPane
         split="vertical"
-        minSize={100}
+        minSize={300}
         primary="second"
         /* Use persisted state for default size */
         defaultSize={uiState.rightPaneSize}
@@ -325,7 +332,7 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
     }
 
     return (
-      <div className={styles.wrapper}>
+      <div className={styles.wrapper} aria-label={selectors.components.PanelEditor.General.content}>
         {this.editorToolbar(styles)}
         <div className={styles.verticalSplitPanesWrapper}>
           {uiState.isPanelOptionsVisible ? this.renderWithOptionsPane(styles) : this.renderHorizontalSplit(styles)}
@@ -372,7 +379,7 @@ enum Pane {
 export const getStyles = stylesFactory((theme: GrafanaTheme, props: Props) => {
   const { uiState } = props;
   const handleColor = theme.palette.blue95;
-  const paneSpaceing = theme.spacing.md;
+  const paneSpacing = theme.spacing.md;
 
   const resizer = css`
     font-style: italic;
@@ -416,22 +423,28 @@ export const getStyles = stylesFactory((theme: GrafanaTheme, props: Props) => {
       flex-direction: column;
       height: 100%;
       width: 100%;
-      padding-right: ${uiState.isPanelOptionsVisible ? 0 : paneSpaceing};
+      padding-right: ${uiState.isPanelOptionsVisible ? 0 : paneSpacing};
+    `,
+    mainPaneWrapperNoTabs: css`
+      padding-bottom: ${paneSpacing};
     `,
     variablesWrapper: css`
+      label: variablesWrapper;
       display: flex;
+      flex-grow: 1;
+      flex-wrap: wrap;
     `,
     panelWrapper: css`
       flex: 1 1 0;
       min-height: 0;
       width: 100%;
-      padding-left: ${paneSpaceing};
+      padding-left: ${paneSpacing};
     `,
     resizerV: cx(
       resizer,
       css`
         cursor: col-resize;
-        width: ${paneSpaceing};
+        width: ${paneSpacing};
         border-right-width: 1px;
         margin-top: 18px;
       `
@@ -439,13 +452,13 @@ export const getStyles = stylesFactory((theme: GrafanaTheme, props: Props) => {
     resizerH: cx(
       resizer,
       css`
-        height: ${paneSpaceing};
+        height: ${paneSpacing};
         cursor: row-resize;
         position: relative;
         top: 0px;
         z-index: 1;
         border-top-width: 1px;
-        margin-left: ${paneSpaceing};
+        margin-left: ${paneSpacing};
       `
     ),
     tabsWrapper: css`
@@ -461,21 +474,12 @@ export const getStyles = stylesFactory((theme: GrafanaTheme, props: Props) => {
     `,
     panelToolbar: css`
       display: flex;
-      padding: ${paneSpaceing} 0 ${paneSpaceing} ${paneSpaceing};
+      padding: ${paneSpacing} 0 ${paneSpacing} ${paneSpacing};
       justify-content: space-between;
       flex-wrap: wrap;
     `,
     toolbarLeft: css`
       padding-left: ${theme.spacing.sm};
-      display: flex;
-      align-items: center;
-    `,
-    toolbarItem: css`
-      margin-right: ${theme.spacing.sm};
-
-      &:last-child {
-        margin-right: 0;
-      }
     `,
     centeringContainer: css`
       display: flex;

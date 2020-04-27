@@ -1,6 +1,6 @@
 import React, { ChangeEvent } from 'react';
 import { HorizontalGroup } from '../Layout/Layout';
-import { FullWidthButtonContainer, IconButton, Label, RadioButtonGroup } from '../index';
+import { IconButton, Label, RadioButtonGroup } from '../index';
 import { Field } from '../Forms/Field';
 import { Input } from '../Input/Input';
 import { MappingType, RangeMap, SelectableValue, ValueMap, ValueMapping } from '@grafana/data';
@@ -81,15 +81,13 @@ export const MappingRow: React.FC<Props> = ({ valueMapping, updateValueMapping, 
   return (
     <div>
       <Field label={label}>
-        <FullWidthButtonContainer>
-          <RadioButtonGroup
-            options={MAPPING_OPTIONS}
-            value={type}
-            onChange={type => {
-              onMappingTypeChange(type!);
-            }}
-          />
-        </FullWidthButtonContainer>
+        <RadioButtonGroup
+          options={MAPPING_OPTIONS}
+          value={type}
+          onChange={type => {
+            onMappingTypeChange(type!);
+          }}
+        />
       </Field>
       {renderRow()}
     </div>

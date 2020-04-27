@@ -14,19 +14,15 @@ exports[`Render should render component 1`] = `
       placeholder="Search by name or type"
       value=""
     />
-    <LayoutSelector
-      onLayoutModeChanged={[Function]}
-    />
   </div>
   <div
     className="page-action-bar__spacer"
   />
-  <a
-    className="btn btn-primary"
+  <LinkButton
     href="some/url"
     target="_blank"
   >
     test
-  </a>
+  </LinkButton>
 </div>
 `;

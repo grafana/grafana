@@ -381,7 +381,7 @@ export default class LokiLanguageProvider extends LanguageProvider {
    * @param absoluteRange Fetches
    */
   async fetchLogLabels(absoluteRange: AbsoluteTimeRange): Promise<any> {
-    const url = '/api/prom/label';
+    const url = '/loki/api/v1/label';
     try {
       this.logLabelFetchTs = Date.now();
       const rangeParams = absoluteRange ? rangeToParams(absoluteRange) : {};
@@ -442,7 +442,7 @@ export default class LokiLanguageProvider extends LanguageProvider {
   }
 
   async fetchLabelValues(key: string, absoluteRange: AbsoluteTimeRange): Promise<string[]> {
-    const url = `/api/prom/label/${key}/values`;
+    const url = `/loki/api/v1/label/${key}/values`;
     let values: string[] = [];
     const rangeParams: { start?: number; end?: number } = absoluteRange ? rangeToParams(absoluteRange) : {};
     const { start, end } = rangeParams;
