@@ -80,7 +80,7 @@ If possible, we recommend you to use the latest service pack available for optim
 
 {{< docs-imagebox img="/img/docs/v51/mssql_query_editor.png" class="docs-image--no-shadow" >}}
 
-You find the MSSQL query editor in the metrics tab in Graph, Singlestat or Table panel's edit mode. You enter edit mode by clicking the
+You will find the MSSQL query editor in the metrics tab in Graph, Singlestat or Table panel's edit mode. You enter edit mode by clicking the
 panel title, then edit. The editor allows you to define a SQL query to select data to be visualized.
 
 1. Select *Format as* `Time series` (for use in Graph or Singlestat panel's among others) or `Table` (for use in Table panel among others).
@@ -293,7 +293,7 @@ GROUP BY
 ORDER BY 1
 ```
 
-When above query are used in a graph panel the result will be two series named `Metric A` and `Metric B` with a sum of `valueTwo` plotted over `time`.
+When the above query is used in a graph panel, the result is two series named `Metric A` and `Metric B` with a sum of `valueTwo` plotted over `time`.
 Any series lacking a value in a 3 minute window will have a value of zero which you'll see rendered in the graph to the right.
 
 ## Templating
@@ -319,7 +319,7 @@ A query can return multiple columns and Grafana will automatically create a list
 SELECT [host].[hostname], [other_host].[hostname2] FROM host JOIN other_host ON [host].[city] = [other_host].[city]
 ```
 
-Another option is a query that can create a key/value variable. The query should return two columns that are named `__text` and `__value`. The `__text` column value should be unique (if it is not unique then the first value is used). The options in the dropdown will have a text and value that allows you to have a friendly name as text and an id as the value. An example query with `hostname` as the text and `id` as the value:
+Another option is a query that can create a key/value variable. The query should return two columns that are named `__text` and `__value`. The `__text` column value should be unique (if it is not unique then the first value is used). The options in the dropdown will have a text and value that allow you to have a friendly name as text and an id as the value. An example query with `hostname` as the text and `id` as the value:
 
 ```sql
 SELECT hostname __text, id __value FROM host
@@ -374,7 +374,7 @@ Read more about variable formatting options in the [Variables]({{< relref "../..
 
 ## Annotations
 
-[Annotations]({{< relref "../../reference/annotations.md" >}}) allows you to overlay rich event information on top of graphs. You add annotation queries via the Dashboard menu / Annotations view.
+[Annotations]({{< relref "../../reference/annotations.md" >}}) allow you to overlay rich event information on top of graphs. You add annotation queries via the Dashboard menu / Annotations view.
 
 **Columns:**
 
@@ -444,7 +444,7 @@ ORDER BY 1
 
 ## Stored procedure support
 
-Stored procedures have been verified to work. However, please note that we haven't done anything special to support this why there may exist edge cases where it won't work as you would expect.
+Stored procedures have been verified to work. However, please note that we haven't done anything special to support this, so there might be edge cases where it won't work as you would expect.
 Stored procedures should be supported in table, time series and annotation queries as long as you use the same naming of columns and return data in the same format as describe above under respective section.
 
 Please note that any macro function will not work inside a stored procedure.
@@ -491,7 +491,7 @@ We can define a stored procedure that will return all data we need to render 4 s
 In this case the stored procedure accepts two parameters `@from` and `@to` of `int` data types which should be a timerange (from-to) in epoch format
 which will be used to filter the data to return from the stored procedure.
 
-We're mimicking the `$__timeGroup(time, '5m')` in the select and group by expressions and that's why there's a lot of lengthy expressions needed -
+We're mimicking the `$__timeGroup(time, '5m')` in the select and group by expressions, and that's why there are a lot of lengthy expressions needed -
 these could be extracted to MSSQL functions, if wanted.
 
 ```sql
