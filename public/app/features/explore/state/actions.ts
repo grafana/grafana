@@ -17,6 +17,8 @@ import {
   RawTimeRange,
   TimeRange,
   ExploreMode,
+  dateMath,
+  toUtc,
 } from '@grafana/data';
 // Services & Utils
 import store from 'app/core/store';
@@ -48,7 +50,7 @@ import {
   getRichHistory,
 } from 'app/core/utils/richHistory';
 // Types
-import { ExploreItemState, ExploreUrlState, ThunkResult } from 'app/types';
+import { ExploreItemState, ExploreUrlState, ThunkResult, QueryDirection } from 'app/types';
 
 import { ExploreId, ExploreUIState, QueryOptions } from 'app/types/explore';
 import {
@@ -87,14 +89,19 @@ import {
   updateUIStateAction,
   changeLoadingStateAction,
   cancelQueriesAction,
+  addPrevShowMoreLogsTimeRangesAction,
+  popPrevShowMoreLogsTimeRangesAction,
 } from './actionTypes';
 import { getTimeZone } from 'app/features/profile/state/selectors';
 import { getShiftedTimeRange } from 'app/core/utils/timePicker';
 import { updateLocation } from '../../../core/actions';
 import { getTimeSrv, TimeSrv } from '../../dashboard/services/TimeSrv';
-import { preProcessPanelData, runRequest } from '../../dashboard/state/runRequest';
+import { preProcessPanelData, preProcessAppendPanelData, runRequest } from '../../dashboard/state/runRequest';
 import { PanelModel } from 'app/features/dashboard/state';
 import { getExploreDatasources } from './selectors';
+import { processDateTime } from '../utils/dateTimeProcessor';
+import LokiDatasource from 'app/plugins/datasource/loki/datasource';
+import { LokiQuery } from 'app/plugins/datasource/loki/types';
 
 /**
  * Updates UI state and save it to the URL
@@ -417,117 +424,216 @@ export function modifyQueries(
   };
 }
 
+const execQueries = (
+  dispatch: any,
+  getState: any,
+  exploreId: ExploreId,
+  appendQueries?: boolean,
+  direction?: QueryDirection
+) => {
+  dispatch(updateTime({ exploreId }));
+
+  const richHistory = getState().explore.richHistory;
+  const exploreItemState = getState().explore[exploreId];
+  const {
+    datasourceInstance,
+    queries,
+    containerWidth,
+    isLive: live,
+    range,
+    scanning,
+    queryResponse,
+    querySubscription,
+    history,
+    mode,
+    showingGraph,
+    showingTable,
+    prevShowMoreLogsTimeRanges,
+  } = exploreItemState;
+
+  const datasourceId = datasourceInstance.meta.id;
+  // Some datasource's query builders allow per-query interval limits,
+  // but we're using the datasource interval limit for now
+  const minInterval = datasourceInstance.interval;
+  const datasourceName = exploreItemState.requestedDatasourceName;
+
+  if (appendQueries && datasourceId !== 'loki') {
+    // currently append queries work only with Loki due to lack of universal line limit settings
+    // does not affect other types of queries
+    return;
+  }
+
+  if (!hasNonEmptyQuery(queries)) {
+    dispatch(clearQueriesAction({ exploreId }));
+    dispatch(stateSave()); // Remember to save to state and update location
+    return;
+  }
+
+  // filtering out hidden queries
+  const nonHiddenQueries: DataQuery[] = queries.filter((query: DataQuery) => !query.hide);
+
+  // maps queries in append queries mode to get only half of results
+  const updatedQueries: LokiQuery[] = appendQueries
+    ? nonHiddenQueries.map((query: LokiQuery) => {
+        const datasource = (datasourceInstance as unknown) as LokiDatasource;
+        const limit = query.maxLines ? query.maxLines : datasource.maxLines;
+        const maxLines = limit ? Math.floor(limit / 2) : 500;
+        return { ...query, maxLines };
+      })
+    : [];
+
+  const allResponseTimestamps: string[] = queryResponse.series
+    .map((elem: any) => {
+      return elem.fields[0].values.toArray();
+    })
+    .flat()
+    .sort((a: string, b: string) => a.localeCompare(b));
+
+  /**
+   * When using appendQueries we have to add 1s offset, with milisecond-level offsets it fetches the same log lines again
+   * can result in skipped log lines when linesLimit or maxLines params are set to the number
+   * smaller than the number of log lines during the given second.
+   */
+  const oldestResponseEndTimestamp = toUtc(allResponseTimestamps[0]).subtract('1', 's');
+
+  let appendQueryRaw: RawTimeRange; // updated raw time range for append queries
+  if (appendQueries) {
+    if (direction === QueryDirection.backward) {
+      appendQueryRaw = {
+        from: processDateTime(range.raw.from),
+        to: processDateTime(oldestResponseEndTimestamp),
+      };
+    } else if (prevShowMoreLogsTimeRanges.length < 2) {
+      appendQueryRaw = {
+        from: processDateTime(range.raw.from),
+        to: processDateTime(range.raw.to),
+      };
+    } else {
+      appendQueryRaw = {
+        from: processDateTime(prevShowMoreLogsTimeRanges[prevShowMoreLogsTimeRanges.length - 2].raw.from),
+        to: processDateTime(prevShowMoreLogsTimeRanges[prevShowMoreLogsTimeRanges.length - 2].raw.to),
+      };
+    }
+  }
+
+  // updated time range for append queries, null for other types of queries
+  const appendQueryTimeRange: TimeRange | null = appendQueries
+    ? {
+        from: dateMath.parse(appendQueryRaw.from, false, undefined),
+        to: dateMath.parse(appendQueryRaw.to, true, undefined),
+        raw: appendQueryRaw,
+      }
+    : null;
+
+  /**
+   * when doing append queries:
+   * if doing backward query (showing older logs), add time range to the stack
+   * if doing pseudo-forward query (showing newer logs), pop time range from the stack
+   */
+  if (appendQueries && direction === QueryDirection.backward) {
+    dispatch(addPrevShowMoreLogsTimeRangesAction({ exploreId, prevShowMoreLogsTimeRange: appendQueryTimeRange }));
+  } else if (appendQueries && direction === QueryDirection.forward) {
+    dispatch(popPrevShowMoreLogsTimeRangesAction({ exploreId }));
+  }
+
+  stopQueryState(querySubscription);
+
+  const queryOptions: QueryOptions = {
+    minInterval,
+    // maxDataPoints is used in:
+    // Loki - used for logs streaming for buffer size, with undefined it falls back to datasource config if it supports that.
+    // Elastic - limits the number of datapoints for the counts query and for logs it has hardcoded limit.
+    // Influx - used to correctly display logs in graph
+    maxDataPoints: mode === ExploreMode.Logs && datasourceId === 'loki' ? undefined : containerWidth,
+    liveStreaming: live,
+    showingGraph,
+    showingTable,
+    mode,
+  };
+
+  /**
+   * uses different queries for append queries (mapped to have lower limits) and other types of queries
+   * also builds a transaction with different time ranges
+   */
+  const transaction = appendQueries
+    ? buildQueryTransaction(updatedQueries, queryOptions, appendQueryTimeRange, scanning)
+    : buildQueryTransaction(nonHiddenQueries, queryOptions, range, scanning);
+
+  let firstResponse = true;
+  dispatch(changeLoadingStateAction({ exploreId, loadingState: LoadingState.Loading }));
+
+  const newQuerySub = runRequest(datasourceInstance, transaction.request)
+    .pipe(
+      // Simple throttle for live tailing, in case of > 1000 rows per interval we spend about 200ms on processing and
+      // rendering. In case this is optimized this can be tweaked, but also it should be only as fast as user
+      // actually can see what is happening.
+      live ? throttleTime(500) : identity,
+      map((data: PanelData) =>
+        appendQueries ? preProcessAppendPanelData(data, queryResponse) : preProcessPanelData(data, queryResponse)
+      )
+    )
+    .subscribe((data: PanelData) => {
+      if (!appendQueries && !data.error && firstResponse) {
+        // Side-effect: Saving history in localstorage, but not when doing append queries
+        const nextHistory = updateHistory(history, datasourceId, queries);
+        const arrayOfStringifiedQueries = queries.map((query: DataQuery) =>
+          datasourceInstance?.getQueryDisplayText
+            ? datasourceInstance.getQueryDisplayText(query)
+            : getQueryDisplayText(query)
+        );
+
+        const nextRichHistory = addToRichHistory(
+          richHistory || [],
+          datasourceId,
+          datasourceName,
+          arrayOfStringifiedQueries,
+          false,
+          '',
+          ''
+        );
+        dispatch(historyUpdatedAction({ exploreId, history: nextHistory }));
+        dispatch(richHistoryUpdatedAction({ richHistory: nextRichHistory }));
+
+        // We save queries to the URL here so that only successfully run queries change the URL.
+        dispatch(stateSave());
+      }
+
+      firstResponse = false;
+
+      dispatch(queryStreamUpdatedAction({ exploreId, response: data }));
+
+      // Keep scanning for results if this was the last scanning transaction
+      if (getState().explore[exploreId].scanning) {
+        if (data.state === LoadingState.Done && data.series.length === 0) {
+          const range = getShiftedTimeRange(
+            -1,
+            appendQueries ? appendQueryTimeRange : getState().explore[exploreId].range
+          );
+          dispatch(updateTime({ exploreId, absoluteRange: range }));
+          dispatch(runQueries(exploreId));
+        } else {
+          // We can stop scanning if we have a result
+          dispatch(scanStopAction({ exploreId }));
+        }
+      }
+    });
+
+  dispatch(queryStoreSubscriptionAction({ exploreId, querySubscription: newQuerySub }));
+};
+
 /**
  * Main action to run queries and dispatches sub-actions based on which result viewers are active
  */
 export const runQueries = (exploreId: ExploreId): ThunkResult<void> => {
-  return (dispatch, getState) => {
-    dispatch(updateTime({ exploreId }));
+  return (dispatch, getState) => execQueries(dispatch, getState, exploreId, false, QueryDirection.backward);
+};
 
-    const richHistory = getState().explore.richHistory;
-    const exploreItemState = getState().explore[exploreId];
-    const {
-      datasourceInstance,
-      queries,
-      containerWidth,
-      isLive: live,
-      range,
-      scanning,
-      queryResponse,
-      querySubscription,
-      history,
-      mode,
-      showingGraph,
-      showingTable,
-    } = exploreItemState;
-
-    if (!hasNonEmptyQuery(queries)) {
-      dispatch(clearQueriesAction({ exploreId }));
-      dispatch(stateSave()); // Remember to save to state and update location
-      return;
-    }
-
-    // Some datasource's query builders allow per-query interval limits,
-    // but we're using the datasource interval limit for now
-    const minInterval = datasourceInstance.interval;
-
-    stopQueryState(querySubscription);
-
-    const datasourceId = datasourceInstance.meta.id;
-
-    const queryOptions: QueryOptions = {
-      minInterval,
-      // maxDataPoints is used in:
-      // Loki - used for logs streaming for buffer size, with undefined it falls back to datasource config if it supports that.
-      // Elastic - limits the number of datapoints for the counts query and for logs it has hardcoded limit.
-      // Influx - used to correctly display logs in graph
-      maxDataPoints: mode === ExploreMode.Logs && datasourceId === 'loki' ? undefined : containerWidth,
-      liveStreaming: live,
-      showingGraph,
-      showingTable,
-      mode,
-    };
-
-    const datasourceName = exploreItemState.requestedDatasourceName;
-
-    const transaction = buildQueryTransaction(queries, queryOptions, range, scanning);
-
-    let firstResponse = true;
-    dispatch(changeLoadingStateAction({ exploreId, loadingState: LoadingState.Loading }));
-
-    const newQuerySub = runRequest(datasourceInstance, transaction.request)
-      .pipe(
-        // Simple throttle for live tailing, in case of > 1000 rows per interval we spend about 200ms on processing and
-        // rendering. In case this is optimized this can be tweaked, but also it should be only as fast as user
-        // actually can see what is happening.
-        live ? throttleTime(500) : identity,
-        map((data: PanelData) => preProcessPanelData(data, queryResponse))
-      )
-      .subscribe((data: PanelData) => {
-        if (!data.error && firstResponse) {
-          // Side-effect: Saving history in localstorage
-          const nextHistory = updateHistory(history, datasourceId, queries);
-          const arrayOfStringifiedQueries = queries.map(query =>
-            datasourceInstance?.getQueryDisplayText
-              ? datasourceInstance.getQueryDisplayText(query)
-              : getQueryDisplayText(query)
-          );
-
-          const nextRichHistory = addToRichHistory(
-            richHistory || [],
-            datasourceId,
-            datasourceName,
-            arrayOfStringifiedQueries,
-            false,
-            '',
-            ''
-          );
-          dispatch(historyUpdatedAction({ exploreId, history: nextHistory }));
-          dispatch(richHistoryUpdatedAction({ richHistory: nextRichHistory }));
-
-          // We save queries to the URL here so that only successfully run queries change the URL.
-          dispatch(stateSave());
-        }
-
-        firstResponse = false;
-
-        dispatch(queryStreamUpdatedAction({ exploreId, response: data }));
-
-        // Keep scanning for results if this was the last scanning transaction
-        if (getState().explore[exploreId].scanning) {
-          if (data.state === LoadingState.Done && data.series.length === 0) {
-            const range = getShiftedTimeRange(-1, getState().explore[exploreId].range);
-            dispatch(updateTime({ exploreId, absoluteRange: range }));
-            dispatch(runQueries(exploreId));
-          } else {
-            // We can stop scanning if we have a result
-            dispatch(scanStopAction({ exploreId }));
-          }
-        }
-      });
-
-    dispatch(queryStoreSubscriptionAction({ exploreId, querySubscription: newQuerySub }));
-  };
+/**
+ * Main action to run append queries.
+ * Currently works only with Loki. Support for other datasources coming soon.
+ */
+export const runAppendQueries = (exploreId: ExploreId, direction: QueryDirection): ThunkResult<void> => {
+  return (dispatch, getState) => execQueries(dispatch, getState, exploreId, true, direction);
 };
 
 export const updateRichHistory = (ts: number, property: string, updatedProperty?: string): ThunkResult<void> => {
