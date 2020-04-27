@@ -14,13 +14,11 @@ import {
   TimeSeriesValue,
   FieldDTO,
   DataFrameDTO,
-  AbsoluteTimeRange,
 } from '../types/index';
 import { isDateTime } from '../datetime/moment_wrapper';
 import { ArrayVector } from '../vector/ArrayVector';
 import { MutableDataFrame } from './MutableDataFrame';
 import { SortedVector } from '../vector/SortedVector';
-import { reduceField, ReducerID } from '../transformations';
 
 function convertTableToDataFrame(table: TableData): DataFrame {
   const fields = table.columns.map(c => {
@@ -264,10 +262,7 @@ export const isTableData = (data: any): data is DataFrame => data && data.hasOwn
 
 export const isDataFrame = (data: any): data is DataFrame => data && data.hasOwnProperty('fields');
 
-/**
- * Inspect an object and return the results as a DataFrame
- */
-export function toDataFrame(data: any): DataFrame {
+export const toDataFrame = (data: any): DataFrame => {
   if ('fields' in data) {
     // DataFrameDTO does not have length
     if ('length' in data) {
@@ -297,7 +292,7 @@ export function toDataFrame(data: any): DataFrame {
 
   console.warn('Can not convert', data);
   throw new Error('Unsupported data format');
-}
+};
 
 export const toLegacyResponseData = (frame: DataFrame): TimeSeries | TableData => {
   const { fields } = frame;
@@ -427,29 +422,6 @@ export function reverseDataFrame(data: DataFrame): DataFrame {
       };
     }),
   };
-}
-
-/**
- * Find the min and max time that covers all data
- */
-export function getDataTimeRange(frames: DataFrame[]): AbsoluteTimeRange | undefined {
-  const range: AbsoluteTimeRange = {
-    from: Number.MAX_SAFE_INTEGER,
-    to: Number.MIN_SAFE_INTEGER,
-  };
-  let found = false;
-  const reducers = [ReducerID.min, ReducerID.max];
-  for (const frame of frames) {
-    for (const field of frame.fields) {
-      if (field.type === FieldType.time) {
-        const calcs = reduceField({ field, reducers });
-        range.from = Math.min(range.from, calcs[ReducerID.min]);
-        range.to = Math.max(range.to, calcs[ReducerID.max]);
-        found = true;
-      }
-    }
-  }
-  return found ? range : undefined;
 }
 
 export const getTimeField = (series: DataFrame): { timeField?: Field; timeIndex?: number } => {

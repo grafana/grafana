@@ -12,14 +12,7 @@ import { axesEditorComponent } from './axes_editor';
 import config from 'app/core/config';
 import TimeSeries from 'app/core/time_series2';
 import { getProcessedDataFrames } from 'app/features/dashboard/state/runRequest';
-import {
-  getColorFromHexRgbOrName,
-  PanelEvents,
-  DataFrame,
-  DataLink,
-  VariableSuggestion,
-  getDataTimeRange,
-} from '@grafana/data';
+import { getColorFromHexRgbOrName, PanelEvents, DataFrame, DataLink, VariableSuggestion } from '@grafana/data';
 
 import { GraphContextMenuCtrl } from './GraphContextMenuCtrl';
 import { getDataLinksVariableSuggestions } from 'app/features/panel/panellinks/link_srv';
@@ -27,7 +20,6 @@ import { getDataLinksVariableSuggestions } from 'app/features/panel/panellinks/l
 import { auto } from 'angular';
 import { AnnotationsSrv } from 'app/features/annotations/all';
 import { CoreEvents } from 'app/types';
-import { DataWarning } from './types';
 
 class GraphCtrl extends MetricsPanelCtrl {
   static template = template;
@@ -41,7 +33,7 @@ class GraphCtrl extends MetricsPanelCtrl {
   alertState: any;
 
   annotationsPromise: any;
-  dataWarning?: DataWarning;
+  dataWarning: any;
   colors: any = [];
   subTabIndex: number;
   processor: DataProcessor;
@@ -226,7 +218,27 @@ class GraphCtrl extends MetricsPanelCtrl {
 
     this.linkVariableSuggestions = getDataLinksVariableSuggestions(data);
 
-    this.dataWarning = this.getDataWarning();
+    this.dataWarning = null;
+    const datapointsCount = this.seriesList.reduce((prev, series) => {
+      return prev + series.datapoints.length;
+    }, 0);
+
+    if (datapointsCount === 0) {
+      this.dataWarning = {
+        title: 'No data',
+        tip: 'No data returned from query',
+      };
+    } else {
+      for (const series of this.seriesList) {
+        if (series.isOutsideRange) {
+          this.dataWarning = {
+            title: 'Data outside time range',
+            tip: 'Can be caused by timezone mismatch or missing time filter in query',
+          };
+          break;
+        }
+      }
+    }
 
     this.annotationsPromise.then(
       (result: { alertState: any; annotations: any }) => {
@@ -247,50 +259,6 @@ class GraphCtrl extends MetricsPanelCtrl {
         this.render(this.seriesList);
       }
     );
-  }
-
-  getDataWarning(): DataWarning {
-    const datapointsCount = this.seriesList.reduce((prev, series) => {
-      return prev + series.datapoints.length;
-    }, 0);
-
-    if (datapointsCount === 0) {
-      return {
-        title: 'No data',
-        tip: 'No data returned from query',
-      };
-    }
-
-    // Look for data points outside time range
-    for (const series of this.seriesList) {
-      if (!series.isOutsideRange) {
-        continue;
-      }
-
-      const dataWarning: DataWarning = {
-        title: 'Data outside time range',
-        tip: 'Can be caused by timezone mismatch or missing time filter in query',
-      };
-
-      const range = getDataTimeRange(this.dataList);
-
-      if (range) {
-        dataWarning.actionText = 'Zoom to data';
-        dataWarning.action = () => {
-          getLocationSrv().update({
-            partial: true,
-            query: {
-              from: range.from,
-              to: range.to,
-            },
-          });
-        };
-      }
-
-      return dataWarning;
-    }
-
-    return null;
   }
 
   onRender() {
