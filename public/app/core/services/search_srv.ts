@@ -78,7 +78,7 @@ export class SearchSrv {
       query.folderIds = [0];
     }
     if (query.layout === SearchLayout.List) {
-      return backendSrv.search({ ...query, type: DashboardSearchItemType.DashDB }).then(results => results);
+      return backendSrv.search({ ...query, type: DashboardSearchItemType.DashDB });
     }
 
     if (!options.skipRecent && !filters) {
