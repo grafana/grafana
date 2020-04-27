@@ -72,7 +72,6 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       padding-bottom: 6px;
       height: 100px;
       width: 100%;
-      max-width: 200px;
       position: relative;
 
       &:hover {
@@ -85,6 +84,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
     itemContent: css`
       position: relative;
       z-index: 1;
+      width: 100%;
     `,
     current: css`
       label: currentVisualizationItem;
@@ -120,6 +120,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       position: absolute;
       bottom: ${theme.spacing.xs};
       right: ${theme.spacing.xs};
+      z-index: 1;
     `,
   };
 });
