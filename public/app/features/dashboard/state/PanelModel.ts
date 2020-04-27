@@ -12,10 +12,10 @@ import {
   DataQueryResponseData,
   DataTransformerConfig,
   eventFactory,
+  FieldConfigSource,
   PanelEvents,
   PanelPlugin,
   ScopedVars,
-  FieldConfigSource,
 } from '@grafana/data';
 import { EDIT_PANEL_ID } from 'app/core/constants';
 
@@ -160,6 +160,44 @@ export class PanelModel implements DataConfigSource {
     // copy properties from persisted model
     for (const property in model) {
       (this as any)[property] = model[property];
+    }
+
+    const notPersistedPropertiesKeys = Object.keys(notPersistedProperties);
+    const mustKeepPropsKeys = Object.keys(mustKeepProps);
+    const defaultsKeys = Object.keys(defaults);
+    const properties = Object.keys(this);
+    for (const property of properties) {
+      if (notPersistedPropertiesKeys.find(prop => property === prop)) {
+        continue;
+      }
+
+      if (mustKeepPropsKeys.find(prop => property === prop)) {
+        continue;
+      }
+
+      if (defaultsKeys.find(prop => property === prop)) {
+        continue;
+      }
+
+      if (model[property]) {
+        continue;
+      }
+
+      if (!this.hasOwnProperty(property)) {
+        (this as any)[property] = undefined;
+      }
+
+      if (this.hasOwnProperty(property)) {
+        if (typeof (this as any)[property] === 'function') {
+          continue;
+        }
+
+        if (typeof (this as any)[property] === 'symbol') {
+          continue;
+        }
+
+        (this as any)[property] = undefined;
+      }
     }
 
     // defaults

@@ -1,13 +1,13 @@
-import { PanelModel, DashboardModel } from '../../../state';
+import { DashboardModel, PanelModel } from '../../../state';
 import { PanelData } from '@grafana/data';
 import { ThunkResult } from 'app/types';
 import {
-  setEditorPanelData,
-  updateEditorInitState,
   closeCompleted,
-  PanelEditorUIState,
-  setPanelEditorUIState,
   PANEL_EDITOR_UI_STATE_STORAGE_KEY,
+  PanelEditorUIState,
+  setEditorPanelData,
+  setPanelEditorUIState,
+  updateEditorInitState,
 } from './reducers';
 import { cleanUpEditPanel, panelModelAndPluginReady } from '../../../state/reducers';
 import store from '../../../../../core/store';
@@ -58,6 +58,7 @@ export function panelEditorCleanUp(): ThunkResult<void> {
         if (lastResult) {
           sourcePanel.getQueryRunner().pipeDataToSubject(lastResult);
         }
+        sourcePanel.refresh();
       }, 20);
     }
 
