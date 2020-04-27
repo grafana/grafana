@@ -450,7 +450,7 @@ const execQueries = (
     prevShowMoreLogsTimeRanges,
   } = exploreItemState;
 
-  const datasourceId = datasourceInstance.meta.id;
+  const datasourceId = datasourceInstance.meta?.id;
   // Some datasource's query builders allow per-query interval limits,
   // but we're using the datasource interval limit for now
   const minInterval = datasourceInstance.interval;
