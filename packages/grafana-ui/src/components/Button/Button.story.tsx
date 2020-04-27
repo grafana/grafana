@@ -7,7 +7,7 @@ import mdx from './Button.mdx';
 import { ComponentSize } from '../../types/size';
 
 export default {
-  title: 'Forms/Button',
+  title: 'Buttons/Button',
   component: Button,
   decorators: [withCenteredStory, withHorizontallyCenteredStory],
   parameters: {

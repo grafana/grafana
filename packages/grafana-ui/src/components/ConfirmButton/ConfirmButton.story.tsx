@@ -27,7 +27,7 @@ const getKnobs = () => {
   };
 };
 
-storiesOf('Forms/ConfirmButton', module)
+storiesOf('Buttons/ConfirmButton', module)
   .addDecorator(withCenteredStory)
   .add('default', () => {
     const { size, buttonText, confirmText, confirmVariant, disabled, closeOnConfirm } = getKnobs();

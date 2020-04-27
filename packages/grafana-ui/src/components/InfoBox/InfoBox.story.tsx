@@ -3,7 +3,7 @@ import { number } from '@storybook/addon-knobs';
 import { InfoBox } from './InfoBox';
 
 export default {
-  title: 'General/InfoBox',
+  title: 'Layout/InfoBox',
   component: InfoBox,
   decorators: [],
   parameters: {
