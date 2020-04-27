@@ -768,7 +768,7 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	// read dashboard settings
 	dashboards := iniFile.Section("dashboards")
 	DashboardVersionsToKeep = dashboards.Key("versions_to_keep").MustInt(20)
-	MinRefreshInterval, err = valueAsString(dashboards, "min_refresh_interval", "")
+	MinRefreshInterval, err = valueAsString(dashboards, "min_refresh_interval", "5s")
 	if err != nil {
 		return err
 	}
