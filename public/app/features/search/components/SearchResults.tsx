@@ -127,7 +127,8 @@ const getSectionStyles = stylesFactory((theme: GrafanaTheme) => {
     noResults: css`
       padding: ${md};
       background: ${theme.colors.bg2};
-      text-style: italic;
+      font-style: italic;
+      margin-top: ${theme.spacing.md};
     `,
     listModeWrapper: css`
       position: relative;

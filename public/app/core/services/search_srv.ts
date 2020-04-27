@@ -74,11 +74,13 @@ export class SearchSrv {
     const filters = hasFilters(options) || query.folderIds?.length > 0;
 
     query.folderIds = query.folderIds || [];
-    if (!filters) {
-      query.folderIds = [0];
-    }
+
     if (query.layout === SearchLayout.List) {
       return backendSrv.search({ ...query, type: DashboardSearchItemType.DashDB });
+    }
+
+    if (!filters) {
+      query.folderIds = [0];
     }
 
     if (!options.skipRecent && !filters) {
