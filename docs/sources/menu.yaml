@@ -199,7 +199,7 @@
     - link: /variables/global-variables/
       name: Global variables
     - link: /variables/advanced-variable-format-options/
-      name: Advanced variable format options
+      name: Advanced variable formats
     - link: /variables/repeat-panels-or-rows/
       name: Repeat panels or rows
 - name: What's new in Grafana
