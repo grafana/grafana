@@ -98,6 +98,12 @@ var (
 
 	// LDAPUsersSyncExecutionTime is a metric summary for LDAP users sync execution duration
 	LDAPUsersSyncExecutionTime prometheus.Summary
+
+	// MRenderingRequestTotal is a metric counter for image rendering requests
+	MRenderingRequestTotal *prometheus.CounterVec
+
+	// MRenderingQueue is a metric gauge for image rendering queue size
+	MRenderingQueue prometheus.Gauge
 )
 
 // Timers
@@ -107,6 +113,9 @@ var (
 
 	// MAlertingExecutionTime is a metric summary of alert exeuction duration
 	MAlertingExecutionTime prometheus.Summary
+
+	// MRenderingSummary is a metric summary for image rendering request duration
+	MRenderingSummary *prometheus.SummaryVec
 )
 
 // StatTotals
@@ -343,6 +352,31 @@ func init() {
 		Namespace:  ExporterName,
 	})
 
+	MRenderingRequestTotal = prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Name:      "rendering_request_total",
+			Help:      "counter for image rendering requests",
+			Namespace: ExporterName,
+		},
+		[]string{"status"},
+	)
+
+	MRenderingSummary = prometheus.NewSummaryVec(
+		prometheus.SummaryOpts{
+			Name:       "rendering_request_duration_milliseconds",
+			Help:       "summary of image rendering request duration",
+			Objectives: objectiveMap,
+			Namespace:  ExporterName,
+		},
+		[]string{"status"},
+	)
+
+	MRenderingQueue = prometheus.NewGauge(prometheus.GaugeOpts{
+		Name:      "rendering_queue_size",
+		Help:      "size of image rendering queue",
+		Namespace: ExporterName,
+	})
+
 	MDataSourceProxyReqTimer = prometheus.NewSummary(prometheus.SummaryOpts{
 		Name:       "api_dataproxy_request_all_milliseconds",
 		Help:       "summary for dataproxy request duration",
@@ -489,6 +523,9 @@ func initMetricVars() {
 		MAwsCloudWatchGetMetricData,
 		MDBDataSourceQueryByID,
 		LDAPUsersSyncExecutionTime,
+		MRenderingRequestTotal,
+		MRenderingSummary,
+		MRenderingQueue,
 		MAlertingActiveAlerts,
 		MStatTotalDashboards,
 		MStatTotalUsers,
