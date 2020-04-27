@@ -109,7 +109,7 @@ const getQueryOperationRowStyles = stylesFactory((theme: GrafanaTheme) => {
     `,
     content: css`
       margin-top: ${theme.spacing.inlineFormMargin};
-      margin-left: ${theme.spacing.xl};
+      margin-left: ${theme.spacing.lg};
     `,
   };
 });
