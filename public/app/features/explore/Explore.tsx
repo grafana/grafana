@@ -76,6 +76,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       label: queryContainer;
       // Need to override normal css class and don't want to count on ordering of the classes in html.
       height: auto !important;
+      flex: unset !important;
       padding: ${theme.panelPadding}px;
     `,
   };
