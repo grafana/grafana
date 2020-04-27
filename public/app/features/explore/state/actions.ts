@@ -573,19 +573,13 @@ const execQueries = (
     )
     .subscribe((data: PanelData) => {
       if (!appendQueries && !data.error && firstResponse) {
-        // Side-effect: Saving history in localstorage, but not when doing append queries
+        // Side-effect: Saving history in localstorage
         const nextHistory = updateHistory(history, datasourceId, queries);
-        const arrayOfStringifiedQueries = queries.map((query: DataQuery) =>
-          datasourceInstance?.getQueryDisplayText
-            ? datasourceInstance.getQueryDisplayText(query)
-            : getQueryDisplayText(query)
-        );
-
         const nextRichHistory = addToRichHistory(
           richHistory || [],
           datasourceId,
           datasourceName,
-          arrayOfStringifiedQueries,
+          queries,
           false,
           '',
           ''
