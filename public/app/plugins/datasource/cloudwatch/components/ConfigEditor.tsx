@@ -241,12 +241,12 @@ export class ConfigEditor extends PureComponent<Props, State> {
                 </div>
               </div>
               <div className="gf-form">
-                <FormLabel
+                <InlineFormLabel
                   className="width-14"
                   tooltip="If you are assuming a role in another account and if role is created with External ID, then specify the External ID."
                 >
                   External ID
-                </FormLabel>
+                </InlineFormLabel>
                 <div className="width-30">
                   <Input
                     className="width-30"
