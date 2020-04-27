@@ -13,7 +13,7 @@ exports[`Render should render component 1`] = `
       className="icon-circle sidemenu-icon"
     >
       <Icon
-        name="arrow-from-left"
+        name="sign-in-alt"
         size="xl"
       />
     </span>

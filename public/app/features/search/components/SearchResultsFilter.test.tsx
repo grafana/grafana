@@ -62,6 +62,7 @@ describe('SearchResultsFilter', () => {
     const option = { value: true, label: 'Yes' };
     //@ts-ignore
     const { wrapper } = setup({ onStarredFilterChange: mockFilterStarred }, mount);
+    //@ts-ignore
     wrapper
       .find('Checkbox')
       .at(1)
