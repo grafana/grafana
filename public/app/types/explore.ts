@@ -183,9 +183,10 @@ export interface ExploreItemState {
   queryResponse: PanelData;
 
   /**
-   * Stores previous time ranges from ShowMoreLogs
+   * Stores previous state time ranges from ShowMoreLogs.
+   * Last element of this array (top element from the stack) is a current time range displayed on the screen.
    */
-  prevShowMoreLogsTimeRanges: TimeRange[];
+  timeRangesStack: TimeRange[];
 
   /**
    * Panel Id that is set if we come to explore from a penel. Used so we can get back to it and optionally modify the

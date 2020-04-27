@@ -185,12 +185,12 @@ export interface ResetExplorePayload {
   force?: boolean;
 }
 
-export interface AddPrevShowMoreLogsTimeRangesPayload {
+export interface PushTimeRangesStackPayload {
   exploreId: ExploreId;
-  prevShowMoreLogsTimeRange: TimeRange;
+  timeRange: TimeRange;
 }
 
-export interface PopPrevShowMoreLogsTimeRangesPayload {
+export interface PopTimeRangesStackPayload {
   exploreId: ExploreId;
 }
 
@@ -352,9 +352,5 @@ export const changeLoadingStateAction = createAction<ChangeLoadingStatePayload>(
 
 export const setPausedStateAction = createAction<SetPausedStatePayload>('explore/setPausedState');
 
-export const addPrevShowMoreLogsTimeRangesAction = createAction<AddPrevShowMoreLogsTimeRangesPayload>(
-  'explore/addPrevShowMoreLogsTimeRanges'
-);
-export const popPrevShowMoreLogsTimeRangesAction = createAction<PopPrevShowMoreLogsTimeRangesPayload>(
-  'explore/popPrevShowMoreLogsTimeRanges'
-);
+export const pushTimeRangesStackAction = createAction<PushTimeRangesStackPayload>('explore/pushTimeRangesStack');
+export const popTimeRangesStackAction = createAction<PopTimeRangesStackPayload>('explore/popTimeRangesStack');

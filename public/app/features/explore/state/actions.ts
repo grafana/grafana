@@ -89,8 +89,8 @@ import {
   updateUIStateAction,
   changeLoadingStateAction,
   cancelQueriesAction,
-  addPrevShowMoreLogsTimeRangesAction,
-  popPrevShowMoreLogsTimeRangesAction,
+  pushTimeRangesStackAction,
+  popTimeRangesStackAction,
 } from './actionTypes';
 import { getTimeZone } from 'app/features/profile/state/selectors';
 import { getShiftedTimeRange } from 'app/core/utils/timePicker';
@@ -448,7 +448,7 @@ const execQueries = (
     mode,
     showingGraph,
     showingTable,
-    prevShowMoreLogsTimeRanges,
+    timeRangesStack,
   } = exploreItemState;
 
   const datasourceId = datasourceInstance.meta?.id;
@@ -490,12 +490,8 @@ const execQueries = (
     .flat()
     .sort((a: string, b: string) => a.localeCompare(b));
 
-  /**
-   * When using appendQueries we have to add 1s offset, with milisecond-level offsets it fetches the same log lines again
-   * can result in skipped log lines when linesLimit or maxLines params are set to the number
-   * smaller than the number of log lines during the given second.
-   */
-  const oldestResponseEndTimestamp = toUtc(allResponseTimestamps[0]).subtract('1', 's');
+  //When using appendQueries we add/subtract 1ns offset so we can request newer/older logs
+  const oldestResponseEndTimestamp = toUtc(allResponseTimestamps[0]).subtract('1', 'ms');
 
   let appendQueryRaw: RawTimeRange | undefined = undefined; // updated raw time range for append queries, undefined for other types of queries
   let appendQueryTimeRange: TimeRange | undefined = undefined; // updated time range for append queries, undefined for other types of queries
@@ -506,15 +502,15 @@ const execQueries = (
         from: processDateTime(range.raw.from),
         to: processDateTime(oldestResponseEndTimestamp),
       };
-    } else if (prevShowMoreLogsTimeRanges.length < 2) {
+    } else if (timeRangesStack.length < 2) {
       appendQueryRaw = {
         from: processDateTime(range.raw.from),
         to: processDateTime(range.raw.to),
       };
     } else {
       appendQueryRaw = {
-        from: processDateTime(prevShowMoreLogsTimeRanges[prevShowMoreLogsTimeRanges.length - 2].raw.from),
-        to: processDateTime(prevShowMoreLogsTimeRanges[prevShowMoreLogsTimeRanges.length - 2].raw.to),
+        from: processDateTime(timeRangesStack[timeRangesStack.length - 2].raw.from),
+        to: processDateTime(timeRangesStack[timeRangesStack.length - 2].raw.to),
       };
     }
 
@@ -531,9 +527,9 @@ const execQueries = (
    * if doing pseudo-forward query (showing newer logs), pop time range from the stack
    */
   if (appendQueries && direction === QueryDirection.backward && appendQueryTimeRange) {
-    dispatch(addPrevShowMoreLogsTimeRangesAction({ exploreId, prevShowMoreLogsTimeRange: appendQueryTimeRange }));
+    dispatch(pushTimeRangesStackAction({ exploreId, timeRange: appendQueryTimeRange }));
   } else if (appendQueries && direction === QueryDirection.forward) {
-    dispatch(popPrevShowMoreLogsTimeRangesAction({ exploreId }));
+    dispatch(popTimeRangesStackAction({ exploreId }));
   }
 
   stopQueryState(querySubscription);

@@ -119,7 +119,7 @@ const dummyProps: ExploreProps = {
   originPanelId: 1,
   addQueryRow: jest.fn(),
   theme: getTheme(),
-  prevShowMoreLogsTimeRanges: [],
+  timeRangesStack: [],
 };
 
 const setupErrors = (hasRefId?: boolean) => {

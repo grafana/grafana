@@ -202,7 +202,7 @@ function mapStateToProps(state: StoreState, { exploreId }: { exploreId: string }
     absoluteRange,
     dedupStrategy,
     queries,
-    prevShowMoreLogsTimeRanges,
+    timeRangesStack,
   } = item;
   const dedupedRows = deduplicatedRowsSelector(item);
   const timeZone = getTimeZone(state.user);
@@ -223,7 +223,7 @@ function mapStateToProps(state: StoreState, { exploreId }: { exploreId: string }
     range,
     absoluteRange,
     displayMoreLogsBtn: queries.filter(elem => !elem.hide).length === 1,
-    hasNewerLogsRanges: prevShowMoreLogsTimeRanges.length > 0,
+    hasNewerLogsRanges: timeRangesStack.length > 0,
   };
 }
 
