@@ -157,13 +157,8 @@ export class PanelModel implements DataConfigSource {
 
   /** Given a persistened PanelModel restores property values */
   restoreModel(model: any) {
-    // copy properties from persisted model
-    for (const property in model) {
-      (this as any)[property] = model[property];
-    }
-
-    const properties = Object.keys(this);
-    for (const property of properties) {
+    // Start with clean-up
+    for (const property of Object.keys(this)) {
       if (notPersistedProperties[property]) {
         continue;
       }
@@ -172,29 +167,28 @@ export class PanelModel implements DataConfigSource {
         continue;
       }
 
-      if (defaults[property]) {
-        continue;
-      }
-
       if (model[property]) {
         continue;
       }
 
       if (!this.hasOwnProperty(property)) {
-        delete (this as any)[property];
+        continue;
       }
 
-      if (this.hasOwnProperty(property)) {
-        if (typeof (this as any)[property] === 'function') {
-          continue;
-        }
-
-        if (typeof (this as any)[property] === 'symbol') {
-          continue;
-        }
-
-        (this as any)[property] = undefined;
+      if (typeof (this as any)[property] === 'function') {
+        continue;
       }
+
+      if (typeof (this as any)[property] === 'symbol') {
+        continue;
+      }
+
+      delete (this as any)[property];
+    }
+
+    // copy properties from persisted model
+    for (const property in model) {
+      (this as any)[property] = model[property];
     }
 
     // defaults
