@@ -117,7 +117,7 @@ class DashNav extends PureComponent<Props> {
     actions.map((action, index) => {
       const Component = action.component;
       const element = <Component {...this.props} key={`button-custom-${index}`} />;
-      typeof action.index === 'number' ? buttons.splice(action.index, 0) : buttons.push(element);
+      typeof action.index === 'number' ? buttons.splice(action.index, 0, element) : buttons.push(element);
     });
   }
 
