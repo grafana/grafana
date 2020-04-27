@@ -1,4 +1,4 @@
-import React, { Dispatch, FC, SetStateAction } from 'react';
+import React, { Dispatch, FC, FormEvent, SetStateAction } from 'react';
 import { css } from 'emotion';
 import { HorizontalGroup, RadioButtonGroup, stylesFactory, useTheme, Checkbox } from '@grafana/ui';
 import { GrafanaTheme, SelectableValue } from '@grafana/data';
@@ -18,7 +18,7 @@ type onSelectChange = (value: SelectableValue) => void;
 interface Props {
   onLayoutChange: Dispatch<SetStateAction<string>>;
   onSortChange: onSelectChange;
-  onStarredFilterChange?: onSelectChange;
+  onStarredFilterChange?: (event: FormEvent<HTMLInputElement>) => void;
   onTagFilterChange: onSelectChange;
   query: DashboardQuery;
   showStarredFilter?: boolean;

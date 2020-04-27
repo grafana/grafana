@@ -1,4 +1,4 @@
-import { useReducer } from 'react';
+import { FormEvent, useReducer } from 'react';
 import { SelectableValue } from '@grafana/data';
 import { defaultQuery, queryReducer } from '../reducers/searchQueryReducer';
 import {
@@ -33,8 +33,8 @@ export const useSearchQuery = (queryParams: Partial<DashboardQuery>) => {
     dispatch({ type: CLEAR_FILTERS });
   };
 
-  const onStarredFilterChange = (filter: SelectableValue) => {
-    dispatch({ type: TOGGLE_STARRED, payload: filter.value });
+  const onStarredFilterChange = (e: FormEvent<HTMLInputElement>) => {
+    dispatch({ type: TOGGLE_STARRED, payload: (e.target as HTMLInputElement).checked });
   };
 
   const onSortChange = (sort: SelectableValue | null) => {
