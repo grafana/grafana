@@ -94,7 +94,7 @@ func (b *Builder) applyFilters() (ordering string) {
 
 		if f, ok := f.(FilterOrderBy); ok {
 			if f, ok := f.(FilterLeftJoin); ok {
-				orderJoins = append(joins, fmt.Sprintf(" LEFT OUTER JOIN %s ", f.LeftJoin()))
+				orderJoins = append(orderJoins, fmt.Sprintf(" LEFT OUTER JOIN %s ", f.LeftJoin()))
 			}
 			orders = append(orders, f.OrderBy())
 		}
