@@ -9,7 +9,7 @@ export const SignIn: FC<any> = ({ url }) => {
     <div className="sidemenu-item">
       <a href={loginUrl} className="sidemenu-link" target="_self">
         <span className="icon-circle sidemenu-icon">
-          <Icon name="arrow-from-left" size="xl" />
+          <Icon name="sign-in-alt" size="xl" />
         </span>
       </a>
       <a href={loginUrl} target="_self">
