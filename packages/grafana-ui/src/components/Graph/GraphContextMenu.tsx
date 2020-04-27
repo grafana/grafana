@@ -4,14 +4,13 @@ import { ThemeContext } from '../../themes';
 import { SeriesIcon } from '../Legend/SeriesIcon';
 import { GraphDimensions } from './GraphTooltip/types';
 import {
-  DateTimeInput,
   FlotDataPoint,
   getValueFromDimension,
   getDisplayProcessor,
   formattedValueToString,
   Dimensions,
-  MS_DATE_TIME_FORMAT,
-  DEFAULT_DATE_TIME_FORMAT,
+  dateTimeFormat,
+  TimeZone,
 } from '@grafana/data';
 import { css } from 'emotion';
 
@@ -19,14 +18,14 @@ export type ContextDimensions<T extends Dimensions = any> = { [key in keyof T]: 
 
 export type GraphContextMenuProps = ContextMenuProps & {
   getContextMenuSource: () => FlotDataPoint | null;
-  formatSourceDate: (date: DateTimeInput, format?: string) => string;
+  timeZone?: TimeZone;
   dimensions?: GraphDimensions;
   contextDimensions?: ContextDimensions;
 };
 
 export const GraphContextMenu: React.FC<GraphContextMenuProps> = ({
   getContextMenuSource,
-  formatSourceDate,
+  timeZone,
   items,
   dimensions,
   contextDimensions,
@@ -56,11 +55,20 @@ export const GraphContextMenu: React.FC<GraphContextMenuProps> = ({
         contextDimensions.yAxis[0],
         contextDimensions.yAxis[1]
       );
-      const display = source.series.valueField.display ?? getDisplayProcessor({ field: source.series.valueField });
+      const display =
+        source.series.valueField.display ??
+        getDisplayProcessor({
+          field: source.series.valueField,
+          timeZone,
+        });
       value = display(valueFromDimensions);
     }
 
-    const timeFormat = source.series.hasMsResolution ? MS_DATE_TIME_FORMAT : DEFAULT_DATE_TIME_FORMAT;
+    const formattedValue = dateTimeFormat(source.datapoint[0], {
+      defaultWithMS: source.series.hasMsResolution,
+      timeZone,
+    });
+
     return (
       <div
         className={css`
@@ -69,7 +77,7 @@ export const GraphContextMenu: React.FC<GraphContextMenuProps> = ({
           z-index: ${theme.zIndex.tooltip};
         `}
       >
-        <strong>{formatSourceDate(source.datapoint[0], timeFormat)}</strong>
+        <strong>{formattedValue}</strong>
         <div>
           <SeriesIcon color={source.series.color} />
           <span

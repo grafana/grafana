@@ -456,6 +456,7 @@ const execQueries = (
   // but we're using the datasource interval limit for now
   const minInterval = datasourceInstance.interval;
   const datasourceName = exploreItemState.requestedDatasourceName;
+  const timeZone = getTimeZone(getState().user);
 
   if (appendQueries && datasourceId !== 'loki') {
     // currently append queries work only with Loki due to lack of universal line limit settings
@@ -555,8 +556,8 @@ const execQueries = (
    * also builds a transaction with different time ranges
    */
   const transaction = appendQueries
-    ? buildQueryTransaction(updatedQueries, queryOptions, appendQueryTimeRange!, scanning)
-    : buildQueryTransaction(nonHiddenQueries, queryOptions, range, scanning);
+    ? buildQueryTransaction(updatedQueries, queryOptions, appendQueryTimeRange!, scanning, timeZone)
+    : buildQueryTransaction(nonHiddenQueries, queryOptions, range, scanning, timeZone);
 
   let firstResponse = true;
   dispatch(changeLoadingStateAction({ exploreId, loadingState: LoadingState.Loading }));

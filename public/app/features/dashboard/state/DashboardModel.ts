@@ -12,14 +12,13 @@ import { GridPos, panelAdded, PanelModel, panelRemoved } from './PanelModel';
 import { DashboardMigrator } from './DashboardMigrator';
 import {
   AppEvent,
-  dateTime,
   DateTimeInput,
-  isDateTime,
   PanelEvents,
   TimeRange,
   TimeZone,
-  toUtc,
   UrlQueryValue,
+  dateTimeFormat,
+  dateTimeFormatTimeAgo,
 } from '@grafana/data';
 import { CoreEvents, DashboardMeta, KIOSK_MODE_TV } from 'app/types';
 import { getConfig } from '../../../core/config';
@@ -814,11 +813,10 @@ export class DashboardModel {
   }
 
   formatDate(date: DateTimeInput, format?: string) {
-    date = isDateTime(date) ? date : dateTime(date);
-    format = format || 'YYYY-MM-DD HH:mm:ss';
-    const timezone = this.getTimezone();
-
-    return timezone === 'browser' ? dateTime(date).format(format) : toUtc(date).format(format);
+    return dateTimeFormat(date, {
+      format,
+      timeZone: this.getTimezone(),
+    });
   }
 
   destroy() {
@@ -933,13 +931,9 @@ export class DashboardModel {
   }
 
   getRelativeTime(date: DateTimeInput) {
-    date = isDateTime(date) ? date : dateTime(date);
-
-    return this.timezone === 'browser' ? dateTime(date).fromNow() : toUtc(date).fromNow();
-  }
-
-  isTimezoneUtc() {
-    return this.getTimezone() === 'utc';
+    return dateTimeFormatTimeAgo(date, {
+      timeZone: this.getTimezone(),
+    });
   }
 
   isSnapshot() {
@@ -947,7 +941,7 @@ export class DashboardModel {
   }
 
   getTimezone(): TimeZone {
-    return (this.timezone ? this.timezone : contextSrv.user.timezone) as TimeZone;
+    return (this.timezone ? this.timezone : contextSrv?.user?.timezone) as TimeZone;
   }
 
   private updateSchema(old: any) {

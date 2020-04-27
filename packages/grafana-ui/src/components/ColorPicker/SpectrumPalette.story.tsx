@@ -5,7 +5,7 @@ import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { UseState } from '../../utils/storybook/UseState';
 import { renderComponentWithTheme } from '../../utils/storybook/withTheme';
 
-const SpectrumPaletteStories = storiesOf('General/ColorPicker/Palettes/SpectrumPalette', module);
+const SpectrumPaletteStories = storiesOf('Pickers and Editors/ColorPicker/Palettes/SpectrumPalette', module);
 
 SpectrumPaletteStories.addDecorator(withCenteredStory);
 

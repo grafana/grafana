@@ -185,7 +185,7 @@ class MetricsPanelCtrl extends PanelCtrl {
       queries: panel.targets,
       panelId: panel.id,
       dashboardId: this.dashboard.id,
-      timezone: this.dashboard.timezone,
+      timezone: this.dashboard.getTimezone(),
       timeInfo: this.timeInfo,
       timeRange: this.range,
       widthPixels: this.width,
