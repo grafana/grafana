@@ -6,7 +6,6 @@ RUN apk add --no-cache gcc g++
 WORKDIR $GOPATH/src/github.com/grafana/grafana
 
 COPY go.mod go.sum ./
-COPY vendor vendor
 
 RUN go mod verify
 
