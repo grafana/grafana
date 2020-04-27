@@ -156,7 +156,7 @@ export interface PanelOptionsEditorConfig<TOptions, TSettings = any, TValue = an
    *
    * @param currentConfig Current panel options
    */
-  showIf?: (currentConfig: TOptions) => boolean;
+  showIf?: (currentConfig: TOptions) => boolean | undefined;
 }
 
 /**

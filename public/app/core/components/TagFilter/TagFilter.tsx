@@ -4,7 +4,7 @@ import { css } from 'emotion';
 // @ts-ignore
 import { components } from '@torkelo/react-select';
 import { AsyncSelect, stylesFactory } from '@grafana/ui';
-import { resetSelectStyles, Icon } from '@grafana/ui';
+import { Icon } from '@grafana/ui';
 import { escapeStringForRegex } from '@grafana/data';
 // Components
 import { TagOption } from './TagOption';
@@ -74,7 +74,6 @@ export class TagFilter extends React.Component<Props, any> {
       noOptionsMessage: 'No tags found',
       onChange: this.onChange,
       placeholder,
-      styles: resetSelectStyles(),
       value: tags,
       width,
       components: {

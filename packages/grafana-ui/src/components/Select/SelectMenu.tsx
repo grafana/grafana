@@ -42,6 +42,7 @@ export const SelectMenuOptions = React.forwardRef<HTMLDivElement, React.PropsWit
     const theme = useTheme();
     const styles = getSelectStyles(theme);
     const { children, innerProps, data, renderOptionLabel, isSelected, isFocused } = props;
+
     return (
       <div
         ref={ref}

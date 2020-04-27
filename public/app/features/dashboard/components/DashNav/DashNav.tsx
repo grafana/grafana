@@ -58,13 +58,6 @@ class DashNav extends PureComponent<Props> {
     this.playlistSrv = this.props.$injector.get('playlistSrv');
   }
 
-  onDashboardNameClick = () => {
-    this.props.updateLocation({
-      query: { search: 'open' },
-      partial: true,
-    });
-  };
-
   onFolderNameClick = () => {
     this.props.updateLocation({
       query: { search: 'open', folder: 'current' },
@@ -169,13 +162,12 @@ class DashNav extends PureComponent<Props> {
 
   renderDashboardTitleSearchButton() {
     const { dashboard, isFullscreen } = this.props;
-    /* Hard-coded value so we don't have to wrap whole component in withTheme because of 1 variable */
-    const iconClassName = css`
-      margin-right: 4px;
-      margin-bottom: -1px;
+
+    const folderSymbol = css`
+      margin-right: 0 4px;
     `;
     const mainIconClassName = css`
-      margin-right: 4px;
+      margin-right: 8px;
       margin-bottom: 3px;
     `;
 
@@ -190,14 +182,11 @@ class DashNav extends PureComponent<Props> {
             {haveFolder && (
               <>
                 <a className="navbar-page-btn__folder" onClick={this.onFolderNameClick}>
-                  {folderTitle}
+                  {folderTitle} <span className={folderSymbol}>/</span>
                 </a>
-                <Icon name="angle-right" className={iconClassName} />
               </>
             )}
-            <a onClick={this.onDashboardNameClick}>
-              {dashboard.title} <Icon name="angle-down" className={iconClassName} />
-            </a>
+            <span>{dashboard.title}</span>
           </div>
         </div>
         <div className="navbar-buttons navbar-buttons--actions">{this.renderLeftActionsButton()}</div>
