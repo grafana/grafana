@@ -37,8 +37,7 @@ export interface QueryRunnerOptions<
   timezone?: string;
   timeRange: TimeRange;
   timeInfo?: string; // String description of time range for display
-  widthPixels: number;
-  maxDataPoints: number | undefined | null;
+  maxDataPoints: number;
   minInterval: string | undefined | null;
   scopedVars?: ScopedVars;
   cacheTimeout?: string;
@@ -112,7 +111,6 @@ export class PanelQueryRunner {
       timeRange,
       timeInfo,
       cacheTimeout,
-      widthPixels,
       maxDataPoints,
       scopedVars,
       minInterval,
@@ -122,8 +120,6 @@ export class PanelQueryRunner {
       this.pipeToSubject(runSharedRequest(options));
       return;
     }
-
-    const evaluatedMaxDataPoints = maxDataPoints || widthPixels;
 
     const request: DataQueryRequest = {
       app: CoreApp.Dashboard,
@@ -136,7 +132,7 @@ export class PanelQueryRunner {
       interval: '',
       intervalMs: 0,
       targets: cloneDeep(queries),
-      maxDataPoints: evaluatedMaxDataPoints,
+      maxDataPoints: maxDataPoints,
       scopedVars: scopedVars || {},
       cacheTimeout,
       startTime: Date.now(),
@@ -157,7 +153,7 @@ export class PanelQueryRunner {
       });
 
       const lowerIntervalLimit = minInterval ? templateSrv.replace(minInterval, request.scopedVars) : ds.interval;
-      const norm = kbn.calculateInterval(timeRange, request.maxDataPoints, lowerIntervalLimit);
+      const norm = kbn.calculateInterval(timeRange, maxDataPoints, lowerIntervalLimit);
 
       // make shallow copy of scoped vars,
       // and add built in variables interval and interval_ms

@@ -31,7 +31,6 @@ interface ScenarioContext {
 
   // Options used in setup
   maxDataPoints?: number | null;
-  widthPixels: number;
   dsInterval?: string;
   minInterval?: string;
   scopedVars: ScopedVars;
@@ -53,7 +52,7 @@ function describeQueryRunnerScenario(description: string, scenarioFn: ScenarioFn
       getTransformations: () => undefined,
     };
     const ctx: ScenarioContext = {
-      widthPixels: 200,
+      maxDataPoints: 200,
       scopedVars: {
         server: { text: 'Server1', value: 'server-1' },
       },
@@ -93,7 +92,6 @@ function describeQueryRunnerScenario(description: string, scenarioFn: ScenarioFn
         datasource,
         scopedVars: ctx.scopedVars,
         minInterval: ctx.minInterval,
-        widthPixels: ctx.widthPixels,
         maxDataPoints: ctx.maxDataPoints,
         timeRange: {
           from: grafanaData.dateTime().subtract(1, 'days'),
@@ -137,10 +135,9 @@ describe('PanelQueryRunner', () => {
     });
   });
 
-  describeQueryRunnerScenario('with no maxDataPoints or minInterval', ctx => {
+  describeQueryRunnerScenario('with maxDataPoints', ctx => {
     ctx.setup(() => {
-      ctx.maxDataPoints = null;
-      ctx.widthPixels = 200;
+      ctx.maxDataPoints = 200;
     });
 
     it('should return data', async () => {
@@ -163,7 +160,7 @@ describe('PanelQueryRunner', () => {
 
   describeQueryRunnerScenario('with no panel min interval but datasource min interval', ctx => {
     ctx.setup(() => {
-      ctx.widthPixels = 20000;
+      ctx.maxDataPoints = 20000;
       ctx.dsInterval = '15s';
     });
 
@@ -174,7 +171,7 @@ describe('PanelQueryRunner', () => {
 
   describeQueryRunnerScenario('with panel min interval and data source min interval', ctx => {
     ctx.setup(() => {
-      ctx.widthPixels = 20000;
+      ctx.maxDataPoints = 20000;
       ctx.dsInterval = '15s';
       ctx.minInterval = '30s';
     });
