@@ -16,10 +16,9 @@ import {
   Field,
   DataSourceApi,
 } from '@grafana/data';
-import { LegacyForms, LogLabels, ToggleButtonGroup, ToggleButton, LogRows } from '@grafana/ui';
+import { LegacyForms, LogLabels, ToggleButtonGroup, ToggleButton, LogRows, WideButton } from '@grafana/ui';
 const { Switch } = LegacyForms;
 import store from 'app/core/store';
-import { WideButton } from './WideButton';
 
 import { ExploreGraphPanel } from './ExploreGraphPanel';
 import { MetaInfoText } from './MetaInfoText';
