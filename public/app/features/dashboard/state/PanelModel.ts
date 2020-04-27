@@ -162,20 +162,17 @@ export class PanelModel implements DataConfigSource {
       (this as any)[property] = model[property];
     }
 
-    const notPersistedPropertiesKeys = Object.keys(notPersistedProperties);
-    const mustKeepPropsKeys = Object.keys(mustKeepProps);
-    const defaultsKeys = Object.keys(defaults);
     const properties = Object.keys(this);
     for (const property of properties) {
-      if (notPersistedPropertiesKeys.find(prop => property === prop)) {
+      if (notPersistedProperties[property]) {
         continue;
       }
 
-      if (mustKeepPropsKeys.find(prop => property === prop)) {
+      if (mustKeepProps[property]) {
         continue;
       }
 
-      if (defaultsKeys.find(prop => property === prop)) {
+      if (defaults[property]) {
         continue;
       }
 
@@ -184,7 +181,7 @@ export class PanelModel implements DataConfigSource {
       }
 
       if (!this.hasOwnProperty(property)) {
-        (this as any)[property] = undefined;
+        delete (this as any)[property];
       }
 
       if (this.hasOwnProperty(property)) {
