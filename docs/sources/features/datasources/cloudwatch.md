@@ -64,6 +64,7 @@ Here is a minimal policy example:
       "Action": [
         "cloudwatch:DescribeAlarmsForMetric",
         "cloudwatch:DescribeAlarmHistory",
+        "cloudwatch:DescribeAlarms",
         "cloudwatch:ListMetrics",
         "cloudwatch:GetMetricStatistics",
         "cloudwatch:GetMetricData"
