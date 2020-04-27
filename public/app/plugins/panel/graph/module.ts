@@ -28,6 +28,7 @@ import { auto } from 'angular';
 import { AnnotationsSrv } from 'app/features/annotations/all';
 import { CoreEvents } from 'app/types';
 import { DataWarning } from './types';
+import { getLocationSrv } from '@grafana/runtime';
 
 class GraphCtrl extends MetricsPanelCtrl {
   static template = template;
