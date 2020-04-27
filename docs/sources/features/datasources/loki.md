@@ -189,7 +189,7 @@ datasources:
     jsonData:
       maxLines: 1000
       derivedFields:
-        # Field with internal link pointing to datasource in Grafana.
+        # Field with internal link pointing to data source in Grafana.
         # Right now, Grafana supports only Jaeger and Zipkin data sources as link targets.
         - datasourceUid: my_jaeger_uid
           matcherRegex: "traceID=(\\w+)"
