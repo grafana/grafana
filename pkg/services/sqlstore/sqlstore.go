@@ -334,7 +334,7 @@ func InitTestDB(t ITestDB) *SqlStore {
 	}
 
 	switch dbType {
-	case "mysql":
+	case "mysql", "mysql2":
 		if _, err := sec.NewKey("connection_string", sqlutil.TestDB_Mysql.ConnStr); err != nil {
 			t.Fatalf("Failed to create key: %s", err)
 		}
