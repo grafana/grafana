@@ -645,7 +645,7 @@ class GraphElement {
       label: 'Datetime',
       ticks: ticks,
       timeformat: graphTimeFormat(ticks, min, max),
-      timeFormatter: graphTimeFormatter(this.dashboard.timezone),
+      timeFormatter: graphTimeFormatter(this.dashboard.getTimezone()),
     };
   }
 
