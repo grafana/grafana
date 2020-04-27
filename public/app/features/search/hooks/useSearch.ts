@@ -35,7 +35,7 @@ export const useSearch: UseSearch = (query, reducer, params) => {
   // Set loading state before debounced search
   useEffect(() => {
     dispatch({ type: SEARCH_START });
-  }, [query.tag, query.sort, query.starred]);
+  }, [query.tag, query.sort, query.starred, query.layout]);
 
   useDebounce(search, 300, [query, folderUid, queryParsing]);
 
