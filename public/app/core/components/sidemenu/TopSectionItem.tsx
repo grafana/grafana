@@ -19,7 +19,7 @@ const TopSectionItem: FC<Props> = props => {
           {link.img && <img src={link.img} />}
         </span>
       </a>
-      <SideMenuDropDown link={link} />
+      <SideMenuDropDown link={link} onHeaderClick={onClick} />
     </div>
   );
 };
