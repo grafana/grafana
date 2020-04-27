@@ -4,6 +4,9 @@ package searchstore_test
 import (
 	"context"
 	"fmt"
+	"testing"
+	"time"
+
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
@@ -12,8 +15,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore/searchstore"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"testing"
-	"time"
 )
 
 var dialect migrator.Dialect
@@ -47,25 +48,23 @@ func TestBuilder_EqualResults_Basic(t *testing.T) {
 		Dialect: dialect,
 	}
 
-	prevBuilder := sqlstore.NewSearchBuilder(user, limit, page, models.PERMISSION_EDIT)
-	prevBuilder.WithDialect(dialect)
-
-	newRes := []sqlstore.DashboardSearchProjection{}
+	res := []sqlstore.DashboardSearchProjection{}
 	err = db.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
 		sql, params := builder.ToSql(limit, page)
-		return sess.SQL(sql, params...).Find(&newRes)
+		return sess.SQL(sql, params...).Find(&res)
 	})
 	require.NoError(t, err)
 
-	oldRes := []sqlstore.DashboardSearchProjection{}
-	err = db.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
-		sql, params := prevBuilder.ToSql()
-		return sess.SQL(sql, params...).Find(&oldRes)
-	})
-	require.NoError(t, err)
-
-	assert.Len(t, newRes, 1)
-	assert.EqualValues(t, oldRes, newRes)
+	assert.Len(t, res, 1)
+	res[0].Uid = ""
+	assert.EqualValues(t, []sqlstore.DashboardSearchProjection{
+		{
+			Id:    1,
+			Title: "A",
+			Slug:  "a",
+			Term:  "templated",
+		},
+	}, res)
 }
 
 func TestBuilder_Pagination(t *testing.T) {
@@ -143,25 +142,14 @@ func TestBuilder_Permissions(t *testing.T) {
 		Dialect: dialect,
 	}
 
-	prevBuilder := sqlstore.NewSearchBuilder(user, limit, page, level)
-	prevBuilder.WithDialect(dialect)
-
-	newRes := []sqlstore.DashboardSearchProjection{}
+	res := []sqlstore.DashboardSearchProjection{}
 	err = db.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
 		sql, params := builder.ToSql(limit, page)
-		return sess.SQL(sql, params...).Find(&newRes)
+		return sess.SQL(sql, params...).Find(&res)
 	})
 	require.NoError(t, err)
 
-	oldRes := []sqlstore.DashboardSearchProjection{}
-	err = db.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
-		sql, params := prevBuilder.ToSql()
-		return sess.SQL(sql, params...).Find(&oldRes)
-	})
-	require.NoError(t, err)
-
-	assert.Len(t, newRes, 0)
-	assert.EqualValues(t, oldRes, newRes)
+	assert.Len(t, res, 0)
 }
 
 func setupTestEnvironment(t *testing.T) *sqlstore.SqlStore {
