@@ -96,6 +96,8 @@ export const TagFilter: FC<Props> = ({ tagOptions, width, placeholder, hideValue
   );
 };
 
+TagFilter.displayName = 'TagFilter';
+
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
   return {
     tagFilter: css`
