@@ -42,14 +42,17 @@ export const DashNavButton: FunctionComponent<Props> = ({
   if (noBorder) {
     return (
       <div className={styles.noBorderContainer}>
-        <IconButton
-          name={icon}
-          size={iconSize}
-          iconType={iconType}
-          tooltip={tooltip}
-          tooltipPlacement="bottom"
-          onClick={onClick}
-        />
+        {icon && (
+          <IconButton
+            name={icon}
+            size={iconSize}
+            iconType={iconType}
+            tooltip={tooltip}
+            tooltipPlacement="bottom"
+            onClick={onClick}
+          />
+        )}
+        {children}
       </div>
     );
   }
@@ -64,8 +67,6 @@ export const DashNavButton: FunctionComponent<Props> = ({
           {icon && <Icon name={icon} type={iconType} size={iconSize || 'lg'} />}
           {children}
         </button>
-      ) : noBorder ? (
-        <IconButton name={icon} />
       ) : (
         <a className={`btn navbar-button navbar-button--${classSuffix}`} href={href}>
           {icon && <Icon name={icon} type={iconType} size="lg" />}
