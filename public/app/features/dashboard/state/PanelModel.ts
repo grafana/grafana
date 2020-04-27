@@ -84,6 +84,7 @@ const mustKeepProps: { [str: string]: boolean } = {
   queryRunner: true,
   transformations: true,
   fieldConfig: true,
+  editSourceId: true,
 };
 
 const defaults: any = {
