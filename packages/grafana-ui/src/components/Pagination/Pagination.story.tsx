@@ -11,7 +11,7 @@ export const WithPages = () => {
 };
 
 export default {
-  title: 'General/Pagination',
+  title: 'Buttons/Pagination',
   component: WithPages,
   decorators: [withCenteredStory],
   parameters: {
