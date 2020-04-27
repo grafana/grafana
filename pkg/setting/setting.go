@@ -238,11 +238,10 @@ type Cfg struct {
 	Smtp SmtpSettings
 
 	// Rendering
-	ImagesDir             string
-	RendererUrl           string
-	RendererCallbackUrl   string
-	RendererLimit         int
-	RendererLimitAlerting int
+	ImagesDir                      string
+	RendererUrl                    string
+	RendererCallbackUrl            string
+	RendererConcurrentRequestLimit int
 
 	// Security
 	DisableInitAdminCreation         bool
@@ -938,6 +937,8 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 			log.Fatal(4, "Invalid callback_url(%s): %s", cfg.RendererCallbackUrl, err)
 		}
 	}
+	cfg.RendererConcurrentRequestLimit = renderSec.Key("concurrent_render_request_limit").MustInt(30)
+
 	cfg.ImagesDir = filepath.Join(cfg.DataPath, "png")
 	cfg.TempDataLifetime = iniFile.Section("paths").Key("temp_data_lifetime").MustDuration(time.Second * 3600 * 24)
 	cfg.MetricsEndpointEnabled = iniFile.Section("metrics").Key("enabled").MustBool(true)

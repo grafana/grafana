@@ -822,6 +822,11 @@ URL to a remote HTTP image renderer service, e.g. http://localhost:8081/render, 
 
 If the remote HTTP image renderer service runs on a different server than the Grafana server you may have to configure this to a URL where Grafana is reachable, e.g. http://grafana.domain/.
 
+### concurrent_render_request_limit
+
+Concurrent render request limit affects when the /render HTTP endpoint is used. Rendering many images at the same time can overload the server
+and this setting can help protect against that by only allowing certain amount of concurrent request.
+
 ## [panels]
 
 ### disable_sanitize_html
