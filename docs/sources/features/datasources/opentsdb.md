@@ -66,10 +66,10 @@ When using OpenTSDB with a template variable of `query` type you can use followi
 Query | Description
 ------------ | -------------
 *metrics(prefix)* | Returns metric names with specific prefix (can be empty)
-*tag_names(cpu)* | Return tag names (i.e. keys) for a specific cpu metric
-*tag_values(cpu, hostname)* | Return tag values for metric cpu and tag key hostname
-*suggest_tagk(prefix)* | Return tag names (i.e. keys) for all metrics with specific prefix (can be empty)
-*suggest_tagv(prefix)* | Return tag values for all metrics with specific prefix (can be empty)
+*tag_names(cpu)* | Returns tag names (i.e. keys) for a specific cpu metric
+*tag_values(cpu, hostname)* | Returns tag values for metric cpu and tag key hostname
+*suggest_tagk(prefix)* | Returns tag names (i.e. keys) for all metrics with specific prefix (can be empty)
+*suggest_tagv(prefix)* | Returns tag values for all metrics with specific prefix (can be empty)
 
 If you do not see template variables being populated in `Preview of values` section, you need to enable
 `tsd.core.meta.enable_realtime_ts` in the OpenTSDB server settings. Also, to populate metadata of

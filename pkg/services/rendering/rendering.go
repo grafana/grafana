@@ -10,6 +10,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
 
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -130,6 +131,23 @@ func (rs *RenderingService) renderUnavailableImage() *RenderResult {
 }
 
 func (rs *RenderingService) Render(ctx context.Context, opts Opts) (*RenderResult, error) {
+	startTime := time.Now()
+	result, err := rs.render(ctx, opts)
+	elapsedTime := time.Since(startTime).Milliseconds()
+	if err == ErrTimeout {
+		metrics.MRenderingRequestTotal.WithLabelValues("timeout").Inc()
+		metrics.MRenderingSummary.WithLabelValues("timeout").Observe(float64(elapsedTime))
+	} else if err != nil {
+		metrics.MRenderingRequestTotal.WithLabelValues("failure").Inc()
+		metrics.MRenderingSummary.WithLabelValues("failure").Observe(float64(elapsedTime))
+	} else {
+		metrics.MRenderingRequestTotal.WithLabelValues("success").Inc()
+		metrics.MRenderingSummary.WithLabelValues("success").Observe(float64(elapsedTime))
+	}
+	return result, err
+}
+
+func (rs *RenderingService) render(ctx context.Context, opts Opts) (*RenderResult, error) {
 	if rs.inProgressCount > opts.ConcurrentLimit {
 		return &RenderResult{
 			FilePath: filepath.Join(setting.HomePath, "public/img/rendering_limit.png"),
@@ -156,9 +174,11 @@ func (rs *RenderingService) Render(ctx context.Context, opts Opts) (*RenderResul
 
 	defer func() {
 		rs.inProgressCount--
+		metrics.MRenderingQueue.Set(float64(rs.inProgressCount))
 	}()
 
 	rs.inProgressCount++
+	metrics.MRenderingQueue.Set(float64(rs.inProgressCount))
 	return rs.renderAction(ctx, renderKey, opts)
 }
 
