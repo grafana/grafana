@@ -201,6 +201,7 @@
 		</div>
 	</div>
 
+
 	<div class="gf-form-inline" ng-if="ctrl.scenario.id === 'grafana_api'">
 		<div class="gf-form gf-form">
 			<label class="gf-form-label query-keyword width-7">Endpoint</label>
@@ -212,19 +213,6 @@
 				  ng-change="ctrl.refresh()" />
 				</select>
 			</div>
-		</div>
-	</div>
-
-	
-	<div class="gf-form-inline" ng-if="ctrl.scenario.id === 'arrow'">
-		<div class="gf-form" style="width: 100%;">
-			<label class="gf-form-label query-keyword width-7">Base64</label>
-			<input type="string"
-				class="gf-form-input"
-				placeholder="copy from query result"
-				ng-model="ctrl.target.stringInput"
-				ng-change="ctrl.refresh()"
-				ng-model-onblur />
 		</div>
 	</div>
 
