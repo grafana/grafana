@@ -13,7 +13,7 @@ weight = 20
 
 The purpose of this data source is to make it easier to create fake data for any panel.
 Using `TestData DB` you can build your own time series and have any panel render it.
-This make is much easier to verify functionally since the data can be shared very easily.
+This makes it much easier to verify functionality since the data can be shared very easily.
 
 ## Enable
 

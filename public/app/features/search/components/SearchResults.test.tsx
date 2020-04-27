@@ -2,6 +2,7 @@ import React from 'react';
 import { shallow, mount } from 'enzyme';
 import { SearchResults, Props } from './SearchResults';
 import { searchResults } from '../testData';
+import { SearchLayout } from '../types';
 
 const setup = (propOverrides?: Partial<Props>, renderMethod = shallow) => {
   const props: Props = {
@@ -12,6 +13,7 @@ const setup = (propOverrides?: Partial<Props>, renderMethod = shallow) => {
     onFolderExpanding: () => {},
     onToggleSelection: () => {},
     editable: false,
+    layout: SearchLayout.Folders,
   };
 
   Object.assign(props, propOverrides);
