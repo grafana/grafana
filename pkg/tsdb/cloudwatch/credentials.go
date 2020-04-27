@@ -171,7 +171,7 @@ func retrieveDsInfo(datasource *models.DataSource, region string) *DatasourceInf
 
 	authType := datasource.JsonData.Get("authType").MustString()
 	assumeRoleArn := datasource.JsonData.Get("assumeRoleArn").MustString()
-  externalId := datasource.JsonData.Get("externalId").MustString()
+	externalId := datasource.JsonData.Get("externalId").MustString()
 	decrypted := datasource.DecryptedValues()
 	accessKey := decrypted["accessKey"]
 	secretKey := decrypted["secretKey"]
