@@ -2,7 +2,8 @@ import React from 'react';
 import { JaegerDatasource, JaegerQuery } from './datasource';
 import { ButtonCascader, CascaderOption } from '@grafana/ui';
 
-import { ExploreQueryFieldProps } from '@grafana/data';
+import { AppEvents, ExploreQueryFieldProps } from '@grafana/data';
+import { appEvents } from '../../../core/core';
 
 const ALL_OPERATIONS_KEY = '__ALL__';
 const NO_TRACES_KEY = '__NO_TRACES__';
@@ -13,6 +14,7 @@ interface State {
 }
 
 function getLabelFromTrace(trace: any): string {
+  // TODO: seems like the spans are not ordered so this may not be actually a root span
   const firstSpan = trace.spans && trace.spans[0];
   if (firstSpan) {
     return `${firstSpan.operationName} [${firstSpan.duration} ms]`;
@@ -21,6 +23,8 @@ function getLabelFromTrace(trace: any): string {
 }
 
 export class JaegerQueryField extends React.PureComponent<Props, State> {
+  private _isMounted: boolean;
+
   constructor(props: Props, context: React.Context<any>) {
     super(props, context);
     this.state = {
@@ -29,16 +33,25 @@ export class JaegerQueryField extends React.PureComponent<Props, State> {
   }
 
   componentDidMount() {
+    this._isMounted = true;
+    // We should probably call this periodically to get new services after mount.
     this.getServices();
+  }
+
+  componentWillUnmount(): void {
+    this._isMounted = false;
   }
 
   async getServices() {
     const url = '/api/services';
     const { datasource } = this.props;
     try {
-      const res = await datasource.metadataRequest(url);
-      if (res) {
-        const services = res as string[];
+      const services: string[] | null = await datasource.metadataRequest(url);
+      if (!this._isMounted) {
+        return;
+      }
+
+      if (services) {
         const serviceOptions: CascaderOption[] = services.sort().map(service => ({
           label: service,
           value: service,
@@ -47,7 +60,7 @@ export class JaegerQueryField extends React.PureComponent<Props, State> {
         this.setState({ serviceOptions });
       }
     } catch (error) {
-      console.error(error);
+      appEvents.emit(AppEvents.alertError, ['Failed to load services from Jaeger', error]);
     }
   }
 
@@ -56,6 +69,10 @@ export class JaegerQueryField extends React.PureComponent<Props, State> {
     if (selectedOptions.length === 1) {
       // Load operations
       const operations: string[] = await this.findOperations(service);
+      if (!this._isMounted) {
+        return;
+      }
+
       const allOperationsOption: CascaderOption = {
         label: '[ALL]',
         value: ALL_OPERATIONS_KEY,
@@ -85,6 +102,10 @@ export class JaegerQueryField extends React.PureComponent<Props, State> {
       const operationValue = selectedOptions[1].value;
       const operation = operationValue === ALL_OPERATIONS_KEY ? '' : operationValue;
       const traces: any[] = await this.findTraces(service, operation);
+      if (!this._isMounted) {
+        return;
+      }
+
       let traceOptions: CascaderOption[] = traces.map(trace => ({
         label: getLabelFromTrace(trace),
         value: trace.traceID,
@@ -128,7 +149,7 @@ export class JaegerQueryField extends React.PureComponent<Props, State> {
     try {
       return await datasource.metadataRequest(url);
     } catch (error) {
-      console.error(error);
+      appEvents.emit(AppEvents.alertError, ['Failed to load operations from Jaeger', error]);
     }
     return [];
   };
@@ -151,7 +172,7 @@ export class JaegerQueryField extends React.PureComponent<Props, State> {
     try {
       return await datasource.metadataRequest(url, traceSearch);
     } catch (error) {
-      console.error(error);
+      appEvents.emit(AppEvents.alertError, ['Failed to load traces from Jaeger', error]);
     }
     return [];
   };
@@ -168,12 +189,13 @@ export class JaegerQueryField extends React.PureComponent<Props, State> {
   render() {
     const { query, onChange } = this.props;
     const { serviceOptions } = this.state;
+    const cascaderOptions = serviceOptions && serviceOptions.length ? serviceOptions : noTracesFoundOptions;
 
     return (
       <>
         <div className="gf-form-inline gf-form-inline--nowrap">
           <div className="gf-form flex-shrink-0">
-            <ButtonCascader options={serviceOptions} onChange={this.onSelectTrace} loadData={this.onLoadOptions}>
+            <ButtonCascader options={cascaderOptions} onChange={this.onSelectTrace} loadData={this.onLoadOptions}>
               Traces
             </ButtonCascader>
           </div>
@@ -198,5 +220,16 @@ export class JaegerQueryField extends React.PureComponent<Props, State> {
     );
   }
 }
+
+const noTracesFoundOptions = [
+  {
+    label: 'No traces found',
+    value: 'no_traces',
+    isLeaf: true,
+
+    // Cannot be disabled because then cascader shows 'loading' for some reason.
+    // disabled: true,
+  },
+];
 
 export default JaegerQueryField;

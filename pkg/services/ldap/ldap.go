@@ -373,13 +373,19 @@ func (server *Server) getSearchRequest(
 
 	filter := fmt.Sprintf("(|%s)", search)
 
-	return &ldap.SearchRequest{
+	searchRequest := &ldap.SearchRequest{
 		BaseDN:       base,
 		Scope:        ldap.ScopeWholeSubtree,
 		DerefAliases: ldap.NeverDerefAliases,
 		Attributes:   attributes,
 		Filter:       filter,
 	}
+
+	server.log.Debug(
+		"LDAP SearchRequest", "searchRequest", fmt.Sprintf("%+v\n", searchRequest),
+	)
+
+	return searchRequest
 }
 
 // buildGrafanaUser extracts info from UserInfo model to ExternalUserInfo

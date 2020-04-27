@@ -59,12 +59,13 @@ fi
 version=$1
 if [ "$version" == "latest" ]; then
   version="$latest"
-  wget -O - "https://dl.grafana.com/oss/release/grafana-${version}.linux-amd64.tar.gz" | tar -C /opt -zxf 
-ln -s /opt/grafana-${version} /opt/grafana 
+  wget -O - "https://dl.grafana.com/oss/release/grafana-${version}.linux-amd64.tar.gz" | tar -C /opt -zxf -
 elif [ "$version" == "canary" ]; then
   version="$canary"
   wget -O - "https://dl.grafana.com/oss/master/grafana-${version}.linux-amd64.tar.gz" | tar -C /opt -zxf -
 fi
+
+/bin/rm -rf /opt/grafana > /dev/null 2>&1 || true
 ln -s /opt/grafana-${version} /opt/grafana
 
 # nohup /opt/grafana/bin/grafana-server -config /opt/grafana/conf/defaults.ini -homepath /opt/grafana >/dev/null 2>&1 &

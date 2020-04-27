@@ -2,7 +2,8 @@
 import React, { PureComponent } from 'react';
 import { hot } from 'react-hot-loader';
 import isString from 'lodash/isString';
-import { e2e } from '@grafana/e2e';
+import { Icon } from '@grafana/ui';
+import { selectors } from '@grafana/e2e-selectors';
 // Components
 import Page from 'app/core/components/Page/Page';
 import { GenericDataSourcePlugin, PluginSettings } from './PluginSettings';
@@ -14,18 +15,16 @@ import appEvents from 'app/core/app_events';
 import { getDataSource, getDataSourceMeta } from '../state/selectors';
 import {
   deleteDataSource,
-  loadDataSource,
-  updateDataSource,
   initDataSourceSettings,
+  loadDataSource,
   testDataSource,
+  updateDataSource,
 } from '../state/actions';
 import { getNavModel } from 'app/core/selectors/navModel';
 import { getRouteParamsId } from 'app/core/selectors/location';
 // Types
 import { CoreEvents, StoreState } from 'app/types/';
-import { UrlQueryMap } from '@grafana/runtime';
-import { Icon } from '@grafana/ui';
-import { DataSourcePluginMeta, DataSourceSettings, NavModel } from '@grafana/data';
+import { DataSourcePluginMeta, DataSourceSettings, NavModel, UrlQueryMap } from '@grafana/data';
 import { getDataSourceLoadingNav } from '../state/navModel';
 import PluginStateinfo from 'app/features/plugins/PluginStateInfo';
 import { dataSourceLoaded, setDataSourceName, setIsDefault } from '../state/reducers';
@@ -205,12 +204,12 @@ export class DataSourceSettingsPage extends PureComponent<Props> {
 
         <div className="gf-form-group">
           {testingStatus && testingStatus.message && (
-            <div className={`alert-${testingStatus.status} alert`} aria-label={e2e.pages.DataSource.selectors.alert}>
+            <div className={`alert-${testingStatus.status} alert`} aria-label={selectors.pages.DataSource.alert}>
               <div className="alert-icon">
                 {testingStatus.status === 'error' ? <Icon name="exclamation-triangle" /> : <Icon name="check" />}
               </div>
               <div className="alert-body">
-                <div className="alert-title" aria-label={e2e.pages.DataSource.selectors.alertMessage}>
+                <div className="alert-title" aria-label={selectors.pages.DataSource.alertMessage}>
                   {testingStatus.message}
                 </div>
               </div>

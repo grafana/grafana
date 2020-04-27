@@ -21,8 +21,8 @@ import {
   TimeZone,
   toUtc,
   ExploreMode,
+  urlUtil,
 } from '@grafana/data';
-import { renderUrl } from 'app/core/utils/url';
 import store from 'app/core/store';
 import kbn from 'app/core/utils/kbn';
 import { getNextRefIdChar } from './query';
@@ -106,7 +106,7 @@ export async function getExploreUrl(args: GetExploreUrlArguments): Promise<strin
     }
 
     const exploreState = JSON.stringify({ ...state, originPanelId: panel.getSavedId() });
-    url = renderUrl('/explore', { left: exploreState });
+    url = urlUtil.renderUrl('/explore', { left: exploreState });
   }
   return url;
 }
@@ -239,8 +239,9 @@ export function parseUrlState(initial: string | undefined): ExploreUrlState {
   };
   const datasource = parsed[ParseUrlStateIndex.Datasource];
   const parsedSegments = parsed.slice(ParseUrlStateIndex.SegmentsStart);
-  const metricProperties = ['expr', 'target', 'datasource', 'query'];
+  const metricProperties = ['expr', 'expression', 'target', 'datasource', 'query'];
   const queries = parsedSegments.filter(segment => isSegment(segment, ...metricProperties));
+
   const modeObj = parsedSegments.filter(segment => isSegment(segment, 'mode'))[0];
   const mode = modeObj ? modeObj.mode : ExploreMode.Metrics;
 
@@ -345,18 +346,24 @@ export function updateHistory<T extends DataQuery = any>(
   queries: T[]
 ): Array<HistoryItem<T>> {
   const ts = Date.now();
+  let updatedHistory = history;
   queries.forEach(query => {
-    history = [{ query, ts }, ...history];
+    updatedHistory = [{ query, ts }, ...updatedHistory];
   });
 
-  if (history.length > MAX_HISTORY_ITEMS) {
-    history = history.slice(0, MAX_HISTORY_ITEMS);
+  if (updatedHistory.length > MAX_HISTORY_ITEMS) {
+    updatedHistory = updatedHistory.slice(0, MAX_HISTORY_ITEMS);
   }
 
   // Combine all queries of a datasource type into one history
   const historyKey = `grafana.explore.history.${datasourceId}`;
-  store.setObject(historyKey, history);
-  return history;
+  try {
+    store.setObject(historyKey, updatedHistory);
+    return updatedHistory;
+  } catch (error) {
+    console.error(error);
+    return history;
+  }
 }
 
 export function clearHistory(datasourceId: string) {

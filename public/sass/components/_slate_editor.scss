@@ -24,12 +24,13 @@
 
 .slate-query-field__wrapper--disabled {
   background-color: inherit;
+  cursor: not-allowed;
 }
 
 .slate-typeahead {
   .typeahead {
     position: relative;
-    z-index: auto;
+    z-index: $zindex-typeahead;
     border-radius: $border-radius;
     border: $panel-border;
     max-height: calc(66vh);
@@ -146,6 +147,7 @@
   .token.bold {
     font-weight: bold;
   }
+
   .token.italic {
     font-style: italic;
   }

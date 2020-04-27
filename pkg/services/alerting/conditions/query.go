@@ -52,7 +52,7 @@ func (c *QueryCondition) Eval(context *alerting.EvalContext) (*alerting.Conditio
 		return nil, err
 	}
 
-	emptySerieCount := 0
+	emptySeriesCount := 0
 	evalMatchCount := 0
 	var matches []*alerting.EvalMatch
 
@@ -61,7 +61,7 @@ func (c *QueryCondition) Eval(context *alerting.EvalContext) (*alerting.Conditio
 		evalMatch := c.Evaluator.Eval(reducedValue)
 
 		if !reducedValue.Valid {
-			emptySerieCount++
+			emptySeriesCount++
 		}
 
 		if context.IsTestRun {
@@ -100,7 +100,7 @@ func (c *QueryCondition) Eval(context *alerting.EvalContext) (*alerting.Conditio
 
 	return &alerting.ConditionResult{
 		Firing:      evalMatchCount > 0,
-		NoDataFound: emptySerieCount == len(seriesList),
+		NoDataFound: emptySeriesCount == len(seriesList),
 		Operator:    c.Operator,
 		EvalMatches: matches,
 	}, nil
@@ -127,7 +127,7 @@ func (c *QueryCondition) executeQuery(context *alerting.EvalContext, timeRange *
 		}
 
 		type queryDto struct {
-			RefId         string           `json:"refId"`
+			RefID         string           `json:"refId"`
 			Model         *simplejson.Json `json:"model"`
 			Datasource    *simplejson.Json `json:"datasource"`
 			MaxDataPoints int64            `json:"maxDataPoints"`
@@ -137,7 +137,7 @@ func (c *QueryCondition) executeQuery(context *alerting.EvalContext, timeRange *
 		queries := []*queryDto{}
 		for _, q := range req.Queries {
 			queries = append(queries, &queryDto{
-				RefId: q.RefId,
+				RefID: q.RefId,
 				Model: q.Model,
 				Datasource: simplejson.NewFromAny(map[string]interface{}{
 					"id":   q.DataSource.Id,
@@ -223,6 +223,9 @@ func (c *QueryCondition) getRequestForAlertRule(datasource *models.DataSource, t
 				Model:      c.Query.Model,
 				DataSource: datasource,
 			},
+		},
+		Headers: map[string]string{
+			"FromAlert": "true",
 		},
 		Debug: debug,
 	}

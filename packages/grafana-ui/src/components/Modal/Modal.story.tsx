@@ -27,7 +27,7 @@ amet.`
   };
 };
 
-const ModalStories = storiesOf('General/Modal', module);
+const ModalStories = storiesOf('Overlays/Modal', module);
 ModalStories.addDecorator(withCenteredStory);
 
 ModalStories.add('default', () => {

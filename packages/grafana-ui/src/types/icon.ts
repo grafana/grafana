@@ -3,8 +3,6 @@ export type IconType = 'mono' | 'default';
 export type IconSize = ComponentSize | 'xl' | 'xxl' | 'xxxl';
 
 export type IconName =
-  | 'fa fa-fw fa-unlock'
-  | 'fa fa-envelope'
   | 'fa fa-spinner'
   | 'grafana'
   | 'question-circle'
@@ -23,10 +21,10 @@ export type IconName =
   | 'slack'
   | 'download-alt'
   | 'mobile-android'
-  | 'slack'
   | 'plus-square'
   | 'folder-plus'
   | 'folder-open'
+  | 'folder'
   | 'file-copy-alt'
   | 'file-alt'
   | 'exchange-alt'
@@ -42,7 +40,6 @@ export type IconName =
   | 'forward'
   | 'check'
   | 'check-circle'
-  | 'add-panel'
   | 'copy'
   | 'lock'
   | 'unlock'
@@ -63,12 +60,11 @@ export type IconName =
   | 'clock-nine'
   | 'sync'
   | 'sign-in-alt'
-  | 'cllud-download'
+  | 'cloud-download'
   | 'cog'
   | 'bars'
   | 'save'
   | 'apps'
-  | 'folder-plus'
   | 'link'
   | 'upload'
   | 'columns'
@@ -99,10 +95,8 @@ export type IconName =
   | 'star'
   | 'list-ul'
   | 'edit'
-  | 'shield'
   | 'eye'
   | 'eye-slash'
-  | 'filter'
   | 'monitor'
   | 'plus-circle'
   | 'arrow-left'
@@ -111,16 +105,18 @@ export type IconName =
   | 'minus'
   | 'signal'
   | 'search-plus'
-  | 'search-minus'
   | 'minus-circle'
   | 'table'
   | 'plus'
   | 'heart'
   | 'heart-break'
   | 'ellipsis-v'
-  | 'favorite';
+  | 'favorite'
+  | 'sort-amount-down';
 
 export const getAvailableIcons = (): IconName[] => [
+  'fa fa-spinner',
+  'grafana',
   'question-circle',
   'angle-up',
   'history',
@@ -137,10 +133,10 @@ export const getAvailableIcons = (): IconName[] => [
   'slack',
   'download-alt',
   'mobile-android',
-  'slack',
   'plus-square',
   'folder-plus',
   'folder-open',
+  'folder',
   'file-copy-alt',
   'file-alt',
   'exchange-alt',
@@ -156,7 +152,6 @@ export const getAvailableIcons = (): IconName[] => [
   'forward',
   'check',
   'check-circle',
-  'add-panel',
   'copy',
   'lock',
   'unlock',
@@ -177,12 +172,11 @@ export const getAvailableIcons = (): IconName[] => [
   'clock-nine',
   'sync',
   'sign-in-alt',
-  'cllud-download',
+  'cloud-download',
   'cog',
   'bars',
   'save',
   'apps',
-  'folder-plus',
   'link',
   'upload',
   'columns',
@@ -213,10 +207,8 @@ export const getAvailableIcons = (): IconName[] => [
   'star',
   'list-ul',
   'edit',
-  'shield',
   'eye',
   'eye-slash',
-  'filter',
   'monitor',
   'plus-circle',
   'arrow-left',
@@ -225,7 +217,6 @@ export const getAvailableIcons = (): IconName[] => [
   'minus',
   'signal',
   'search-plus',
-  'search-minus',
   'minus-circle',
   'table',
   'plus',
@@ -233,4 +224,5 @@ export const getAvailableIcons = (): IconName[] => [
   'heart-break',
   'ellipsis-v',
   'favorite',
+  'sort-amount-down',
 ];

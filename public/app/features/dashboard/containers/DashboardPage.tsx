@@ -56,7 +56,7 @@ export interface Props {
   notifyApp: typeof notifyApp;
   updateLocation: typeof updateLocation;
   inspectTab?: InspectTab;
-  isNewEditorOpen?: boolean;
+  isPanelEditorOpen?: boolean;
 }
 
 export interface State {
@@ -236,6 +236,22 @@ export class DashboardPage extends PureComponent<Props, State> {
     );
   }
 
+  getInspectPanel() {
+    const { dashboard, inspectPanelId } = this.props;
+    if (!dashboard || !inspectPanelId) {
+      return null;
+    }
+
+    const inspectPanel = dashboard.getPanelById(parseInt(inspectPanelId, 10));
+
+    // cannot inspect panels plugin is not already loaded
+    if (!inspectPanel) {
+      return null;
+    }
+
+    return inspectPanel;
+  }
+
   render() {
     const {
       dashboard,
@@ -243,9 +259,8 @@ export class DashboardPage extends PureComponent<Props, State> {
       $injector,
       isInitSlow,
       initError,
-      inspectPanelId,
       inspectTab,
-      isNewEditorOpen,
+      isPanelEditorOpen,
       updateLocation,
     } = this.props;
 
@@ -264,11 +279,9 @@ export class DashboardPage extends PureComponent<Props, State> {
       'dashboard-container--has-submenu': dashboard.meta.submenuEnabled,
     });
 
-    // Find the panel to inspect
-    const inspectPanel = inspectPanelId ? dashboard.getPanelById(parseInt(inspectPanelId, 10)) : null;
-
     // Only trigger render when the scroll has moved by 25
     const approximateScrollTop = Math.round(scrollTop / 25) * 25;
+    const inspectPanel = this.getInspectPanel();
 
     return (
       <div>
@@ -290,14 +303,14 @@ export class DashboardPage extends PureComponent<Props, State> {
                 dashboard={dashboard}
                 viewPanel={viewPanel}
                 editPanel={editPanel}
-                isNewEditorOpen={isNewEditorOpen}
                 scrollTop={approximateScrollTop}
+                isPanelEditorOpen={isPanelEditorOpen}
               />
             </div>
           </CustomScrollbar>
         </div>
 
-        {inspectPanel && <PanelInspector dashboard={dashboard} panel={inspectPanel} selectedTab={inspectTab} />}
+        {inspectPanel && <PanelInspector dashboard={dashboard} panel={inspectPanel} defaultTab={inspectTab} />}
         {editPanel && <PanelEditor dashboard={dashboard} sourcePanel={editPanel} />}
         {editview && <DashboardSettings dashboard={dashboard} updateLocation={updateLocation} />}
       </div>
@@ -319,8 +332,8 @@ export const mapStateToProps = (state: StoreState) => ({
   isInitSlow: state.dashboard.isInitSlow,
   initError: state.dashboard.initError,
   dashboard: state.dashboard.getModel() as DashboardModel,
-  inspectTab: state.location.query.tab,
-  isNewEditorOpen: state.panelEditorNew.isOpen,
+  inspectTab: state.location.query.inspectTab,
+  isPanelEditorOpen: state.panelEditor.isOpen,
 });
 
 const mapDispatchToProps = {

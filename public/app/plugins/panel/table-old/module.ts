@@ -7,7 +7,6 @@ import { tablePanelEditor } from './editor';
 import { columnOptionsTab } from './column_options';
 import { TableRenderer } from './renderer';
 import { isTableData, PanelEvents, PanelPlugin } from '@grafana/data';
-import { TemplateSrv } from 'app/features/templating/template_srv';
 import { dispatch } from 'app/store/store';
 import { ComponentType } from 'react';
 import { PanelProps } from '@grafana/data';
@@ -56,7 +55,6 @@ export class TablePanelCtrl extends MetricsPanelCtrl {
   constructor(
     $scope: any,
     $injector: any,
-    templateSrv: TemplateSrv,
     private annotationsSrv: any,
     private $sanitize: any,
     private variableSrv: any

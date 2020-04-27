@@ -29,14 +29,14 @@ var (
 // insert/update dashboards to the Grafana database using
 // `dashboards.DashboardProvisioningService`
 type FileReader struct {
-	Cfg                          *DashboardsAsConfig
+	Cfg                          *config
 	Path                         string
 	log                          log.Logger
 	dashboardProvisioningService dashboards.DashboardProvisioningService
 }
 
-// NewDashboardFileReader returns a new filereader based on `DashboardsAsConfig`
-func NewDashboardFileReader(cfg *DashboardsAsConfig, log log.Logger) (*FileReader, error) {
+// NewDashboardFileReader returns a new filereader based on `config`
+func NewDashboardFileReader(cfg *config, log log.Logger) (*FileReader, error) {
 	var path string
 	path, ok := cfg.Options["path"].(string)
 	if !ok {
@@ -139,7 +139,7 @@ func (fr *FileReader) handleMissingDashboardFiles(provisionedDashboardRefs map[s
 		// delete dashboard that are missing json file
 		for _, dashboardID := range dashboardToDelete {
 			fr.log.Debug("deleting provisioned dashboard. missing on disk", "id", dashboardID)
-			err := fr.dashboardProvisioningService.DeleteProvisionedDashboard(dashboardID, fr.Cfg.OrgId)
+			err := fr.dashboardProvisioningService.DeleteProvisionedDashboard(dashboardID, fr.Cfg.OrgID)
 			if err != nil {
 				fr.log.Error("failed to delete dashboard", "id", dashboardID, "error", err)
 			}
@@ -212,12 +212,12 @@ func getProvisionedDashboardByPath(service dashboards.DashboardProvisioningServi
 	return byPath, nil
 }
 
-func getOrCreateFolderID(cfg *DashboardsAsConfig, service dashboards.DashboardProvisioningService) (int64, error) {
+func getOrCreateFolderID(cfg *config, service dashboards.DashboardProvisioningService) (int64, error) {
 	if cfg.Folder == "" {
 		return 0, ErrFolderNameMissing
 	}
 
-	cmd := &models.GetDashboardQuery{Slug: models.SlugifyTitle(cfg.Folder), OrgId: cfg.OrgId}
+	cmd := &models.GetDashboardQuery{Slug: models.SlugifyTitle(cfg.Folder), OrgId: cfg.OrgID}
 	err := bus.Dispatch(cmd)
 
 	if err != nil && err != models.ErrDashboardNotFound {
@@ -230,9 +230,9 @@ func getOrCreateFolderID(cfg *DashboardsAsConfig, service dashboards.DashboardPr
 		dash.Dashboard = models.NewDashboardFolder(cfg.Folder)
 		dash.Dashboard.IsFolder = true
 		dash.Overwrite = true
-		dash.OrgId = cfg.OrgId
+		dash.OrgId = cfg.OrgID
 		// set dashboard folderUid if given
-		dash.Dashboard.SetUid(cfg.FolderUid)
+		dash.Dashboard.SetUid(cfg.FolderUID)
 		dbDash, err := service.SaveFolderForProvisionedDashboards(dash)
 		if err != nil {
 			return 0, err
@@ -321,7 +321,7 @@ func (fr *FileReader) readDashboardFromFile(path string, lastModified time.Time,
 		return nil, err
 	}
 
-	dash, err := createDashboardJson(data, lastModified, fr.Cfg, folderID)
+	dash, err := createDashboardJSON(data, lastModified, fr.Cfg, folderID)
 	if err != nil {
 		return nil, err
 	}

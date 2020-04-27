@@ -10,3 +10,4 @@ export * from './Folder';
 export * from './Import';
 export * from './PanelAdd';
 export * from './Circle';
+export * from './SquareShape';

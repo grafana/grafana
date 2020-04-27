@@ -27,12 +27,9 @@ const getStyles = () => {
       display: flex;
       flex: 1 1 auto;
       flex-wrap: wrap;
-      padding: 10px;
     `,
     tag: css`
       margin-left: 6px;
-      font-size: 11px;
-      padding: 2px 6px;
     `,
   };
 };

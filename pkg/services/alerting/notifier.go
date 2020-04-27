@@ -168,6 +168,7 @@ func (n *notificationService) renderAndUploadImage(evalCtx *EvalContext, timeout
 	n.log.Debug("Rendered alert panel image", "ruleId", evalCtx.Rule.ID, "path", result.FilePath, "took", took)
 
 	evalCtx.ImageOnDiskPath = result.FilePath
+
 	n.log.Debug("Uploading alert panel image to external image store", "ruleId", evalCtx.Rule.ID, "path", evalCtx.ImageOnDiskPath)
 
 	start = time.Now()
