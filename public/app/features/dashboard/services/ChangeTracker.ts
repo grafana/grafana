@@ -5,6 +5,8 @@ import { ContextSrv } from 'app/core/services/context_srv';
 import { GrafanaRootScope } from 'app/routes/GrafanaCtrl';
 import { AppEventConsumer, CoreEvents } from 'app/types';
 import { appEvents } from 'app/core/app_events';
+import { UnsavedChangesModal } from '../components/SaveDashboard/UnsavedChangesModal';
+import { getLocationSrv } from '@grafana/runtime';
 
 export class ChangeTracker {
   current: any;
@@ -159,17 +161,23 @@ export class ChangeTracker {
     return currentJson !== originalJson;
   }
 
-  discardChanges() {
+  discardChanges = () => {
     this.original = null;
     this.gotoNext();
-  }
+  };
 
-  open_modal() {
-    this.$rootScope.appEvent(CoreEvents.showModal, {
-      templateHtml: '<unsaved-changes-modal dismiss="dismiss()"></unsaved-changes-modal>',
-      modalClass: 'modal--narrow confirm-modal',
+  open_modal = () => {
+    this.$rootScope.appEvent(CoreEvents.showModalReact, {
+      component: UnsavedChangesModal,
+      props: {
+        dashboard: this.current,
+        onSaveSuccess: this.onSaveSuccess,
+        onDiscard: () => {
+          this.discardChanges();
+        },
+      },
     });
-  }
+  };
 
   onSaveSuccess = () => {
     this.$timeout(() => {
@@ -177,9 +185,11 @@ export class ChangeTracker {
     });
   };
 
-  gotoNext() {
+  gotoNext = () => {
     const baseLen = this.$location.absUrl().length - this.$location.url().length;
     const nextUrl = this.next.substring(baseLen);
-    this.$location.url(nextUrl);
-  }
+    getLocationSrv().update({
+      path: nextUrl,
+    });
+  };
 }

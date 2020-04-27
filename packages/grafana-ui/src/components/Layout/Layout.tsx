@@ -76,9 +76,10 @@ export const VerticalGroup: React.FC<Omit<LayoutProps, 'orientation' | 'wrap'>> 
   children,
   spacing,
   justify,
+  align,
   width,
 }) => (
-  <Layout spacing={spacing} justify={justify} orientation={Orientation.Vertical} width={width}>
+  <Layout spacing={spacing} justify={justify} orientation={Orientation.Vertical} align={align} width={width}>
     {children}
   </Layout>
 );
@@ -92,7 +93,11 @@ export const Container: React.FC<ContainerProps> = ({ children, padding, margin 
 const getStyles = stylesFactory(
   (theme: GrafanaTheme, orientation: Orientation, spacing: Spacing, justify: Justify, align, wrap) => {
     const finalSpacing = spacing !== 'none' ? theme.spacing[spacing] : 0;
-    const marginCompensation = orientation === Orientation.Horizontal && !wrap ? 0 : `-${finalSpacing}`;
+    // compensate for last row margin when wrapped, horizontal layout
+    const marginCompensation =
+      (orientation === Orientation.Horizontal && !wrap) || orientation === Orientation.Vertical
+        ? 0
+        : `-${finalSpacing}`;
 
     return {
       layout: css`
