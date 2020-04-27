@@ -43,15 +43,23 @@ The table below describes all SAML configuration options. Continue reading below
 
 | Setting                                                     | Required | Description                                                                                        | Default       |
 | ----------------------------------------------------------- | -------- | -------------------------------------------------------------------------------------------------- | ------------- |
-| `enabled`                                                   | No       | Whether SAML authentication is allowed                                                             | `false`       |
-| `certificate` or `certificate_path`                         | Yes      | Base64-encoded string or Path for the SP X.509 certificate                                         |               |
-| `private_key` or `private_key_path`                         | Yes      | Base64-encoded string or Path for the SP private key                                               |               |
-| `idp_metadata`, `idp_metadata_path`, or `idp_metadata_url` | Yes      | Base64-encoded string, Path or URL for the IdP SAML metadata XML                                   |               |
-| `max_issue_delay`                                           | No       | Duration, since the IdP issued a response and the SP is allowed to process it                      | `90s`         |
-| `metadata_valid_duration`                                   | No       | Duration, for how long the SP metadata is valid                                                  | `48h`         |
-| `assertion_attribute_name`                                  | No       | Friendly name or name of the attribute within the SAML assertion to use as the user name         | `displayName` |
-| `assertion_attribute_login`                                 | No       | Friendly name or name of the attribute within the SAML assertion to use as the user login handle | `mail`        |
-| `assertion_attribute_email`                                 | No       | Friendly name or name of the attribute within the SAML assertion to use as the user email        | `mail`        |
+| `enabled`                                                   | No  | Whether SAML authentication is allowed                                                             | `false`       |
+| `certificate` or `certificate_path`                         | Yes | Base64-encoded string or Path for the SP X.509 certificate                                         |               |
+| `private_key` or `private_key_path`                         | Yes | Base64-encoded string or Path for the SP private key                                               |               |
+| `idp_metadata`, `idp_metadata_path`, or `idp_metadata_url`  | Yes | Base64-encoded string, Path or URL for the IdP SAML metadata XML                                   |               |
+| `max_issue_delay`                                           | No  | Duration, since the IdP issued a response and the SP is allowed to process it                      | `90s`         |
+| `metadata_valid_duration`                                   | No  | Duration, for how long the SP metadata is valid                                                  | `48h`         |
+| `assertion_attribute_name`                                  | No  | Friendly name or name of the attribute within the SAML assertion to use as the user name         | `displayName` |
+| `assertion_attribute_login`                                 | No  | Friendly name or name of the attribute within the SAML assertion to use as the user login handle | `mail`        |
+| `assertion_attribute_email`                                 | No  | Friendly name or name of the attribute within the SAML assertion to use as the user email        | `mail`        |
+| `assertion_attribute_groups`                                | No  | Friendly name or name of the attribute within the SAML assertion to use as the user's groups     |               |
+| `assertion_attribute_role`                                  | No  | Friendly name or name of the attribute within the SAML assertion to use as the user's roles      |               |
+| `assertion_attribute_org`                                   | No  | Friendly name or name of the attribute within the SAML assertion to use as the user's organization |             |
+| `allowed_organizations`                                     | No  | List of comma- or space-separated organizations. User should be a member of at least one organization to log in. |               |
+| `org_mapping`                                               | No  | List of comma- or space-separated Organization:OrgId mappings                                  |               |
+| `role_values_editor`                                        | No  | List of comma- or space-separated roles which will be mapped into the Editor role               |               |
+| `role_values_admin`                                         | No  | List of comma- or space-separated roles which will be mapped into the Admin role                |               |
+| `role_values_grafana_admin`                                 | No  | List of comma- or space-separated roles which will be mapped into the Grafana Admin (Super Admin) role |               |
 
 ### Enable SAML authentication
 
@@ -108,6 +116,10 @@ For Grafana to map the user information, it looks at the individual attributes w
 Grafana provides configuration options that let you modify which keys to look at for these values. The data we need to create the user in Grafana is Name, Login handle, and email.
 
 An example is `assertion_attribute_name = "givenName"` where Grafana looks within the assertion for an attribute with a friendly name or name of `givenName`. Both, the friendly name (e.g. `givenName`) or the name (e.g. `urn:oid:2.5.4.42`) can be used interchangeably as the value for the configuration option.
+
+### Configure team sync
+
+### Configure role sync
 
 ## Example SAML configuration
 
