@@ -24,6 +24,7 @@ import {
   ScopedVars,
   applyFieldOverrides,
   DataConfigSource,
+  TimeZone,
 } from '@grafana/data';
 
 export interface QueryRunnerOptions<
@@ -56,6 +57,7 @@ export class PanelQueryRunner {
   private subscription?: Unsubscribable;
   private lastResult?: PanelData;
   private dataConfigSource: DataConfigSource;
+  private timeZone?: TimeZone;
 
   constructor(dataConfigSource: DataConfigSource) {
     this.subject = new ReplaySubject(1);
@@ -90,6 +92,7 @@ export class PanelQueryRunner {
           processedData = {
             ...processedData,
             series: applyFieldOverrides({
+              timeZone: this.timeZone,
               autoMinMax: true,
               data: processedData.series,
               ...fieldConfig,
@@ -117,6 +120,8 @@ export class PanelQueryRunner {
       scopedVars,
       minInterval,
     } = options;
+
+    this.timeZone = timezone;
 
     if (isSharedDashboardQuery(datasource)) {
       this.pipeToSubject(runSharedRequest(options));
