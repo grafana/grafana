@@ -214,8 +214,13 @@ describe('PanelModel', () => {
           });
         });
 
+        model.editSourceId = 1001;
         model.changePlugin(newPlugin);
         model.alert = { id: 2 };
+      });
+
+      it('should keep editSourceId', () => {
+        expect(model.editSourceId).toBe(1001);
       });
 
       it('should apply next panel option defaults', () => {
