@@ -17,6 +17,50 @@ import hoistNonReactStatics from 'hoist-non-react-statics';
 import memoizeOne from 'memoize-one';
 import tinycolor from 'tinycolor2';
 
+const COLORS_HEX = [
+  '#17B8BE',
+  '#F8DCA1',
+  '#B7885E',
+  '#FFCB99',
+  '#F89570',
+  '#829AE3',
+  '#E79FD5',
+  '#1E96BE',
+  '#89DAC1',
+  '#B3AD9E',
+  '#12939A',
+  '#DDB27C',
+  '#88572C',
+  '#FF9833',
+  '#EF5D28',
+  '#162A65',
+  '#DA70BF',
+  '#125C77',
+  '#4DC19C',
+  '#776E57',
+];
+
+const COLORS_HEX_DARK = [
+  '#17B8BE',
+  '#F8DCA1',
+  '#B7885E',
+  '#FFCB99',
+  '#F89570',
+  '#829AE3',
+  '#E79FD5',
+  '#1E96BE',
+  '#89DAC1',
+  '#B3AD9E',
+  '#12939A',
+  '#DDB27C',
+  '#88572C',
+  '#FF9833',
+  '#EF5D28',
+  '#DA70BF',
+  '#4DC19C',
+  '#776E57',
+];
+
 export type ThemeOptions = Partial<Theme>;
 
 export enum ThemeType {
@@ -26,16 +70,19 @@ export enum ThemeType {
 
 export type Theme = {
   type: ThemeType;
+  servicesColorPalette: string[];
   borderStyle: string;
 };
 
 export const defaultTheme: Theme = {
   type: ThemeType.Light,
   borderStyle: '1px solid #bbb',
+  servicesColorPalette: COLORS_HEX,
 };
 
-export function isLight(theme: Theme) {
-  return theme.type === ThemeType.Light;
+export function isLight(theme?: Theme | ThemeOptions) {
+  // Light theme is default type not set which only happens if called for ThemeOptions.
+  return theme && theme.type ? theme.type === ThemeType.Light : false;
 }
 
 const ThemeContext = React.createContext<ThemeOptions | undefined>(undefined);
@@ -50,17 +97,26 @@ export function ThemeConsumer(props: ThemeConsumerProps) {
   return (
     <ThemeContext.Consumer>
       {(value: ThemeOptions | undefined) => {
-        const mergedTheme: Theme = value
-          ? {
-              ...defaultTheme,
-              ...value,
-            }
-          : defaultTheme;
-        return props.children(mergedTheme);
+        const theme = memoizedThemeMerge(value);
+        return props.children(theme);
       }}
     </ThemeContext.Consumer>
   );
 }
+
+const memoizedThemeMerge = memoizeOne((value?: ThemeOptions) => {
+  const darkOverrides: Partial<Theme> = {};
+  if (!isLight(value)) {
+    darkOverrides.servicesColorPalette = COLORS_HEX_DARK;
+  }
+  return value
+    ? {
+        ...defaultTheme,
+        ...darkOverrides,
+        ...value,
+      }
+    : defaultTheme;
+});
 
 type WrappedWithThemeComponent<Props> = React.ComponentType<Omit<Props, 'theme'>> & {
   wrapped: React.ComponentType<Props>;

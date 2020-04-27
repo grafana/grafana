@@ -1,75 +1,56 @@
-import React, { FC, useCallback, useRef, useEffect } from 'react';
+import React, { FC, useCallback, CSSProperties } from 'react';
 import { css, cx } from 'emotion';
 import { GrafanaTheme } from '@grafana/data';
-import { e2e } from '@grafana/e2e';
-import { Icon, useTheme, TagList, styleMixins, stylesFactory } from '@grafana/ui';
-import appEvents from 'app/core/app_events';
-import { CoreEvents } from 'app/types';
-import { DashboardSectionItem, ItemClickWithEvent } from '../types';
+import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
+import { useTheme, TagList, styleMixins, stylesFactory } from '@grafana/ui';
+import { DashboardSectionItem, OnToggleChecked } from '../types';
 import { SearchCheckbox } from './SearchCheckbox';
+import { SEARCH_ITEM_HEIGHT, SEARCH_ITEM_MARGIN } from '../constants';
 
 export interface Props {
   item: DashboardSectionItem;
   editable?: boolean;
-  onToggleSelection?: ItemClickWithEvent;
   onTagSelected: (name: string) => any;
+  onToggleChecked?: OnToggleChecked;
+  style?: CSSProperties;
 }
 
-const { selectors } = e2e.pages.Dashboards;
+const selectors = e2eSelectors.pages.Dashboards;
 
-export const SearchItem: FC<Props> = ({ item, editable, onToggleSelection = () => {}, onTagSelected }) => {
+export const SearchItem: FC<Props> = ({ item, editable, onToggleChecked, onTagSelected, style }) => {
   const theme = useTheme();
   const styles = getResultsItemStyles(theme);
-  const inputEl = useRef<HTMLInputElement>(null);
-
-  useEffect(() => {
-    const preventDef = (event: MouseEvent) => {
-      // manually prevent default on TagList click, as doing it via normal onClick doesn't work inside angular
-      event.preventDefault();
-    };
-    if (inputEl.current) {
-      inputEl.current.addEventListener('click', preventDef);
-    }
-    return () => {
-      inputEl.current!.removeEventListener('click', preventDef);
-    };
-  }, []);
-
-  const onItemClick = () => {
-    //Check if one string can be found in the other
-    if (window.location.pathname.includes(item.url) || item.url.includes(window.location.pathname)) {
-      appEvents.emit(CoreEvents.hideDashSearch, { target: 'search-item' });
-    }
-  };
 
   const tagSelected = useCallback((tag: string, event: React.MouseEvent<HTMLElement>) => {
     onTagSelected(tag);
   }, []);
 
   const toggleItem = useCallback(
-    (event: React.MouseEvent<HTMLElement>) => {
-      onToggleSelection(item, event);
+    (event: React.MouseEvent) => {
+      event.preventDefault();
+      if (onToggleChecked) {
+        onToggleChecked(item);
+      }
     },
     [item]
   );
 
   return (
-    <li
+    <div
+      style={style}
       aria-label={selectors.dashboards(item.title)}
       className={cx(styles.wrapper, { [styles.selected]: item.selected })}
     >
       <SearchCheckbox editable={editable} checked={item.checked} onClick={toggleItem} />
+
       <a href={item.url} className={styles.link}>
-        <Icon className={styles.icon} name="apps" size="lg" />
-        <div className={styles.body} onClick={onItemClick}>
+        <div className={styles.body}>
           <span>{item.title}</span>
           <span className={styles.folderTitle}>{item.folderTitle}</span>
         </div>
-        <span ref={inputEl}>
-          <TagList tags={item.tags} onClick={tagSelected} className={styles.tags} />
-        </span>
       </a>
-    </li>
+      <TagList tags={item.tags} onClick={tagSelected} className={styles.tags} />
+    </div>
   );
 };
 
@@ -78,9 +59,9 @@ const getResultsItemStyles = stylesFactory((theme: GrafanaTheme) => ({
     ${styleMixins.listItem(theme)};
     display: flex;
     align-items: center;
-    margin: ${theme.spacing.xxs};
-    padding: 0 ${theme.spacing.sm};
-    min-height: 37px;
+    height: ${SEARCH_ITEM_HEIGHT}px;
+    margin-bottom: ${SEARCH_ITEM_MARGIN}px;
+    padding: 0 ${theme.spacing.md};
 
     :hover {
       cursor: pointer;
@@ -95,7 +76,6 @@ const getResultsItemStyles = stylesFactory((theme: GrafanaTheme) => ({
     justify-content: center;
     flex: 1 1 auto;
     overflow: hidden;
-    padding: 0 10px;
   `,
   folderTitle: css`
     color: ${theme.colors.textWeak};
@@ -108,6 +88,7 @@ const getResultsItemStyles = stylesFactory((theme: GrafanaTheme) => ({
     margin-left: 10px;
   `,
   tags: css`
+    flex-grow: 0;
     justify-content: flex-end;
     @media only screen and (max-width: ${theme.breakpoints.md}) {
       display: none;
@@ -116,6 +97,7 @@ const getResultsItemStyles = stylesFactory((theme: GrafanaTheme) => ({
   link: css`
     display: flex;
     align-items: center;
-    width: 100%;
+    flex-shrink: 0;
+    flex-grow: 1;
   `,
 }));

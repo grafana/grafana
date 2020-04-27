@@ -24,9 +24,11 @@ import { DataTransformerInfo } from '@grafana/data';
 
 |  Property | Type | Description |
 |  --- | --- | --- |
-|  [transformer](#transformer-property) | <code>(options: TOptions) =&gt; DataTransformer</code> |  |
+|  [transformer](#transformer-property) | <code>(options: TOptions) =&gt; DataTransformer</code> | Function that configures transformation and returns a transformer |
 
 ### transformer property
+
+Function that configures transformation and returns a transformer
 
 <b>Signature</b>
 

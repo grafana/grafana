@@ -13,7 +13,7 @@ import { Input } from '../Forms/Legacy/Input/Input';
 import { Icon } from '../Icon/Icon';
 import { FormField } from '../FormField/FormField';
 import { FormLabel } from '../FormLabel/FormLabel';
-import { Switch } from '../Switch/Switch';
+import { Switch } from '../Forms/Legacy/Switch/Switch';
 import { TagsInput } from '../TagsInput/TagsInput';
 
 const ACCESS_OPTIONS: Array<SelectableValue<string>> = [
@@ -140,7 +140,7 @@ export const DataSourceHttpSettings: React.FC<HttpSettingsProps> = props => {
                     onClick={() => setIsAccessHelpVisible(isVisible => !isVisible)}
                   >
                     Help&nbsp;
-                    <Icon name={isAccessHelpVisible ? 'angle-down' : 'angle-right'} />
+                    <Icon name={isAccessHelpVisible ? 'angle-down' : 'angle-right'} style={{ marginBottom: 0 }} />
                   </label>
                 </div>
               </div>

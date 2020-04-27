@@ -3,14 +3,14 @@ import { debounce } from 'lodash';
 import { useAsyncFn } from 'react-use';
 import { SelectableValue } from '@grafana/data';
 import { AsyncSelect } from '@grafana/ui';
-import { FormInputSize } from '@grafana/ui/src/components/Forms/types';
 import { backendSrv } from 'app/core/services/backend_srv';
-import { DashboardSearchHit, DashboardDTO } from 'app/types';
+import { DashboardSearchHit } from 'app/features/search/types';
+import { DashboardDTO } from 'app/types';
 
 export interface Props {
   onSelected: (dashboard: DashboardDTO) => void;
   currentDashboard?: SelectableValue<number>;
-  size?: FormInputSize;
+  width?: number;
   isClearable?: boolean;
   invalid?: boolean;
   disabled?: boolean;
@@ -29,7 +29,7 @@ const getDashboards = (query = '') => {
 export const DashboardPicker: FC<Props> = ({
   onSelected,
   currentDashboard,
-  size = 'md',
+  width,
   isClearable = false,
   invalid,
   disabled,
@@ -43,7 +43,7 @@ export const DashboardPicker: FC<Props> = ({
 
   return (
     <AsyncSelect
-      size={size}
+      width={width}
       isLoading={state.loading}
       isClearable={isClearable}
       defaultOptions={true}

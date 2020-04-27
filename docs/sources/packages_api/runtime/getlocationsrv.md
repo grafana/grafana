@@ -12,6 +12,8 @@ draft = true
 
 ### getLocationSrv() function
 
+Used to retrieve the [LocationSrv](./runtime/locationsrv.md) that can be used to automatically navigate the user to a new place in Grafana.
+
 <b>Signature</b>
 
 ```typescript

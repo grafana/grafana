@@ -1,9 +1,10 @@
 import React, { PureComponent } from 'react';
-import { connect, MapStateToProps, MapDispatchToProps } from 'react-redux';
+import { connect, MapDispatchToProps, MapStateToProps } from 'react-redux';
 import { css } from 'emotion';
 import { Alert, Button, IconName } from '@grafana/ui';
-
+import { selectors } from '@grafana/e2e-selectors';
 import { AngularComponent, getAngularLoader, getDataSourceSrv } from '@grafana/runtime';
+
 import appEvents from 'app/core/app_events';
 import { getAlertingValidationMessage } from './getAlertingValidationMessage';
 
@@ -15,10 +16,9 @@ import 'app/features/alerting/AlertTabCtrl';
 import { DashboardModel } from '../dashboard/state/DashboardModel';
 import { PanelModel } from '../dashboard/state/PanelModel';
 import { TestRuleResult } from './TestRuleResult';
-import { AppNotificationSeverity, StoreState } from 'app/types';
-import { PanelEditorTabIds, getPanelEditorTab } from '../dashboard/panel_editor/state/reducers';
-import { changePanelEditorTab } from '../dashboard/panel_editor/state/actions';
-import { CoreEvents } from 'app/types';
+import { AppNotificationSeverity, CoreEvents, StoreState } from 'app/types';
+import { updateLocation } from 'app/core/actions';
+import { PanelEditorTabId } from '../dashboard/components/PanelEditor/types';
 
 interface OwnProps {
   dashboard: DashboardModel;
@@ -30,7 +30,7 @@ interface ConnectedProps {
 }
 
 interface DispatchProps {
-  changePanelEditorTab: typeof changePanelEditorTab;
+  updateLocation: typeof updateLocation;
 }
 
 export type Props = OwnProps & ConnectedProps & DispatchProps;
@@ -161,8 +161,8 @@ class UnConnectedAlertTab extends PureComponent<Props, State> {
   };
 
   switchToQueryTab = () => {
-    const { changePanelEditorTab } = this.props;
-    changePanelEditorTab(getPanelEditorTab(PanelEditorTabIds.Queries));
+    const { updateLocation } = this.props;
+    updateLocation({ query: { tab: PanelEditorTabId.Query }, partial: true });
   };
 
   renderValidationMessage = () => {
@@ -205,8 +205,8 @@ class UnConnectedAlertTab extends PureComponent<Props, State> {
     };
 
     return (
-      <EditorTabBody heading="Alert" toolbarItems={toolbarItems}>
-        <>
+      <EditorTabBody toolbarItems={toolbarItems}>
+        <div aria-label={selectors.components.AlertTab.content}>
           {alert && hasTransformations && (
             <Alert
               severity={AppNotificationSeverity.Error}
@@ -216,7 +216,7 @@ class UnConnectedAlertTab extends PureComponent<Props, State> {
 
           <div ref={element => (this.element = element)} />
           {!alert && !validatonMessage && <EmptyListCTA {...model} />}
-        </>
+        </div>
       </EditorTabBody>
     );
   }
@@ -228,6 +228,6 @@ const mapStateToProps: MapStateToProps<ConnectedProps, OwnProps, StoreState> = (
   };
 };
 
-const mapDispatchToProps: MapDispatchToProps<DispatchProps, OwnProps> = { changePanelEditorTab };
+const mapDispatchToProps: MapDispatchToProps<DispatchProps, OwnProps> = { updateLocation };
 
 export const AlertTab = connect(mapStateToProps, mapDispatchToProps)(UnConnectedAlertTab);

@@ -1,6 +1,8 @@
 import { TemplateSrv } from '../template_srv';
 import { convertToStoreState } from 'test/helpers/convertToStoreState';
 import { getTemplateSrvDependencies } from '../../../../test/helpers/getTemplateSrvDependencies';
+import { variableAdapters } from '../../variables/adapters';
+import { createQueryVariableAdapter } from '../../variables/query/adapter';
 
 describe('templateSrv', () => {
   let _templateSrv: any;
@@ -467,6 +469,9 @@ describe('templateSrv', () => {
   });
 
   describe('fillVariableValuesForUrl with multi value', () => {
+    beforeAll(() => {
+      variableAdapters.register(createQueryVariableAdapter());
+    });
     beforeEach(() => {
       initTemplateSrv([
         {

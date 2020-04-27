@@ -2,12 +2,16 @@ package backendplugin
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 	"sync"
 	"time"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util/errutil"
 	"github.com/grafana/grafana/pkg/util/proxyutil"
 
@@ -43,20 +47,24 @@ type Manager interface {
 	// CollectMetrics collects metrics from a registered backend plugin.
 	CollectMetrics(ctx context.Context, pluginID string) (*CollectMetricsResult, error)
 	// CheckHealth checks the health of a registered backend plugin.
-	CheckHealth(ctx context.Context, pluginConfig *PluginConfig) (*CheckHealthResult, error)
+	CheckHealth(ctx context.Context, pCtx backend.PluginContext) (*CheckHealthResult, error)
 	// CallResource calls a plugin resource.
-	CallResource(pluginConfig PluginConfig, ctx *models.ReqContext, path string)
+	CallResource(pluginConfig backend.PluginContext, ctx *models.ReqContext, path string)
 }
 
 type manager struct {
-	pluginsMu sync.RWMutex
-	plugins   map[string]*BackendPlugin
-	logger    log.Logger
+	Cfg            *setting.Cfg     `inject:""`
+	License        models.Licensing `inject:""`
+	pluginsMu      sync.RWMutex
+	plugins        map[string]*BackendPlugin
+	logger         log.Logger
+	pluginSettings map[string]pluginSettings
 }
 
 func (m *manager) Init() error {
 	m.plugins = make(map[string]*BackendPlugin)
 	m.logger = log.New("plugins.backend")
+	m.pluginSettings = extractPluginSettings(m.Cfg)
 
 	return nil
 }
@@ -78,13 +86,29 @@ func (m *manager) Register(descriptor PluginDescriptor) error {
 		return errors.New("Backend plugin already registered")
 	}
 
+	pluginSettings := pluginSettings{}
+	if ps, exists := m.pluginSettings[descriptor.pluginID]; exists {
+		pluginSettings = ps
+	}
+
+	hostEnv := []string{
+		fmt.Sprintf("GF_VERSION=%s", setting.BuildVersion),
+		fmt.Sprintf("GF_EDITION=%s", m.License.Edition()),
+	}
+
+	if m.License.HasLicense() {
+		hostEnv = append(hostEnv, fmt.Sprintf("GF_ENTERPRISE_LICENSE_PATH=%s", m.Cfg.EnterpriseLicensePath))
+	}
+
+	env := pluginSettings.ToEnv("GF_PLUGIN", hostEnv)
+
 	pluginLogger := m.logger.New("pluginId", descriptor.pluginID)
 	plugin := &BackendPlugin{
 		id:             descriptor.pluginID,
 		executablePath: descriptor.executablePath,
 		managed:        descriptor.managed,
 		clientFactory: func() *plugin.Client {
-			return plugin.NewClient(newClientConfig(descriptor.executablePath, pluginLogger, descriptor.versionedPlugins))
+			return plugin.NewClient(newClientConfig(descriptor.executablePath, env, pluginLogger, descriptor.versionedPlugins))
 		},
 		startFns: descriptor.startFns,
 		logger:   pluginLogger,
@@ -165,7 +189,7 @@ func (m *manager) CollectMetrics(ctx context.Context, pluginID string) (*Collect
 }
 
 // CheckHealth checks the health of a registered backend plugin.
-func (m *manager) CheckHealth(ctx context.Context, pluginConfig *PluginConfig) (*CheckHealthResult, error) {
+func (m *manager) CheckHealth(ctx context.Context, pluginConfig backend.PluginContext) (*CheckHealthResult, error) {
 	m.pluginsMu.RLock()
 	p, registered := m.plugins[pluginConfig.PluginID]
 	m.pluginsMu.RUnlock()
@@ -187,10 +211,14 @@ func (m *manager) CheckHealth(ctx context.Context, pluginConfig *PluginConfig) (
 	return checkHealthResultFromProto(res), nil
 }
 
+type keepCookiesJSONModel struct {
+	KeepCookies []string `json:"keepCookies"`
+}
+
 // CallResource calls a plugin resource.
-func (m *manager) CallResource(config PluginConfig, reqCtx *models.ReqContext, path string) {
+func (m *manager) CallResource(pCtx backend.PluginContext, reqCtx *models.ReqContext, path string) {
 	m.pluginsMu.RLock()
-	p, registered := m.plugins[config.PluginID]
+	p, registered := m.plugins[pCtx.PluginID]
 	m.pluginsMu.RUnlock()
 
 	if !registered {
@@ -199,14 +227,15 @@ func (m *manager) CallResource(config PluginConfig, reqCtx *models.ReqContext, p
 	}
 
 	clonedReq := reqCtx.Req.Clone(reqCtx.Req.Context())
-	keepCookieNames := []string{}
-	if config.JSONData != nil {
-		if keepCookies := config.JSONData.Get("keepCookies"); keepCookies != nil {
-			keepCookieNames = keepCookies.MustStringArray()
+	keepCookieModel := keepCookiesJSONModel{}
+	if dis := pCtx.DataSourceInstanceSettings; dis != nil {
+		err := json.Unmarshal(dis.JSONData, &keepCookieModel)
+		if err != nil {
+			p.logger.Error("Failed to to unpack JSONData in datasource instance settings", "error", err)
 		}
 	}
 
-	proxyutil.ClearCookieHeader(clonedReq, keepCookieNames)
+	proxyutil.ClearCookieHeader(clonedReq, keepCookieModel.KeepCookies)
 	proxyutil.PrepareProxyRequest(clonedReq)
 
 	body, err := reqCtx.Req.Body().Bytes()
@@ -215,14 +244,13 @@ func (m *manager) CallResource(config PluginConfig, reqCtx *models.ReqContext, p
 		return
 	}
 
-	req := CallResourceRequest{
-		Config:  config,
-		Path:    path,
-		Method:  clonedReq.Method,
-		URL:     clonedReq.URL.String(),
-		Headers: clonedReq.Header,
-		Body:    body,
-		User:    reqCtx.SignedInUser,
+	req := &backend.CallResourceRequest{
+		PluginContext: pCtx,
+		Path:          path,
+		Method:        clonedReq.Method,
+		URL:           clonedReq.URL.String(),
+		Headers:       clonedReq.Header,
+		Body:          body,
 	}
 
 	err = InstrumentPluginRequest(p.id, "resource", func() error {

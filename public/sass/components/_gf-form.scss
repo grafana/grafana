@@ -109,6 +109,7 @@ $input-border: 1px solid $input-border-color;
   font-size: $font-size-sm;
   background-color: $input-label-bg;
   height: $input-height;
+  line-height: $input-height;
   margin-right: $space-xs;
   border-radius: $input-border-radius;
   justify-content: space-between;
@@ -135,6 +136,10 @@ $input-border: 1px solid $input-border-color;
     border: $panel-border;
   }
 
+  &--justify-left {
+    justify-content: left;
+  }
+
   &--btn {
     border: none;
     border-radius: $border-radius;
@@ -142,10 +147,6 @@ $input-border: 1px solid $input-border-color;
     &:hover {
       background: $list-item-hover-bg;
       color: $link-color;
-    }
-
-    .fa-caret-down {
-      padding-left: 4px;
     }
   }
 
@@ -194,6 +195,8 @@ $input-border: 1px solid $input-border-color;
   @at-root textarea#{&} {
     overflow: auto;
     white-space: pre-wrap;
+    padding: 6px $space-sm;
+    min-height: $input-height;
     height: auto;
   }
 
@@ -386,7 +389,7 @@ $input-border: 1px solid $input-border-color;
   &--right-absolute {
     position: absolute;
     right: $spacer;
-    top: 10px;
+    top: 6px;
   }
 
   &--right-normal {

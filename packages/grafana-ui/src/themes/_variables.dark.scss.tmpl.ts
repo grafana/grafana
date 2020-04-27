@@ -2,6 +2,7 @@
 
 import { GrafanaTheme } from '@grafana/data';
 import { renderGeneratedFileBanner } from '../utils/generatedFileBanner';
+import { styleMixins } from '.';
 
 export const darkThemeVarsTemplate = (theme: GrafanaTheme) =>
   `${renderGeneratedFileBanner('grafana-ui/src/themes/dark.ts', 'grafana-ui/src/themes/_variables.dark.scss.tmpl.ts')}
@@ -87,8 +88,9 @@ $body-bg: ${theme.colors.bodyBg};
 $page-bg: ${theme.colors.bodyBg};
 $dashboard-bg: ${theme.colors.dashboardBg};
 
-$text-color: ${theme.colors.text};
 $text-color-strong: ${theme.colors.textStrong};
+$text-color: ${theme.colors.text};
+$text-color-semi-weak: ${theme.colors.textSemiWeak};
 $text-color-weak: ${theme.colors.textWeak};
 $text-color-faint: ${theme.colors.textFaint};
 $text-color-emphasis: ${theme.colors.textStrong};
@@ -134,14 +136,14 @@ $divider-border-color: $gray-1;
 $tight-form-func-bg: $dark-9;
 $tight-form-func-highlight-bg: $dark-10;
 
-$modal-backdrop-bg: #343b40;
+$modal-backdrop-bg: ${theme.colors.bg3};
 $code-tag-bg: $dark-1;
 $code-tag-border: $dark-9;
 
 // cards
-$card-background: linear-gradient(135deg, $dark-4, $dark-3);
-$card-background-hover: linear-gradient(135deg, $dark-5, $dark-6);
-$card-shadow: -1px -1px 0 0 hsla(0, 0%, 100%, 0.1), 1px 1px 0 0 rgba(0, 0, 0, 0.3);
+$card-background: ${theme.colors.bg2};
+$card-background-hover: ${styleMixins.hoverColor(theme.colors.bg2, theme)};
+$card-shadow: none;
 
 // Lists
 $list-item-bg: $card-background;
@@ -352,7 +354,7 @@ $variable-option-bg: $dropdownLinkBackgroundHover;
 $switch-bg: $input-bg;
 $switch-slider-color: $dark-3;
 $switch-slider-off-bg: $gray-1;
-$switch-slider-on-bg: ${theme.palette.blue77};
+$switch-slider-on-bg: ${theme.palette.blue95};
 $switch-slider-shadow: 0 0 3px black;
 
 //Checkbox

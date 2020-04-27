@@ -2,15 +2,25 @@
 import React, { PureComponent, ChangeEvent, FocusEvent, ReactText } from 'react';
 
 // Utils
-import { rangeUtil, DataSourceSelectItem } from '@grafana/data';
+import { rangeUtil, DataSourceSelectItem, PanelData } from '@grafana/data';
 
 // Components
-import { EventsWithValidation, LegacyInputStatus, LegacyForms, ValidationEvents, FormLabel } from '@grafana/ui';
+import {
+  EventsWithValidation,
+  LegacyInputStatus,
+  LegacyForms,
+  ValidationEvents,
+  InlineFormLabel,
+  stylesFactory,
+} from '@grafana/ui';
 import { DataSourceOption } from './DataSourceOption';
 const { Input, Switch } = LegacyForms;
 
 // Types
 import { PanelModel } from '../state';
+import { QueryOperationRow } from 'app/core/components/QueryOperationRow/QueryOperationRow';
+import { config } from 'app/core/config';
+import { css } from 'emotion';
 
 const timeRangeValidationEvents: ValidationEvents = {
   [EventsWithValidation.onBlur]: [
@@ -33,6 +43,7 @@ const emptyToNull = (value: string) => {
 interface Props {
   panel: PanelModel;
   datasource: DataSourceSelectItem;
+  data: PanelData;
 }
 
 interface State {
@@ -42,6 +53,7 @@ interface State {
   maxDataPoints: string | ReactText;
   interval: string;
   hideTimeOverride: boolean;
+  isOpen: boolean;
 }
 
 export class QueryOptions extends PureComponent<Props, State> {
@@ -95,6 +107,7 @@ export class QueryOptions extends PureComponent<Props, State> {
       maxDataPoints: props.panel.maxDataPoints || '',
       interval: props.panel.interval || '',
       hideTimeOverride: props.panel.hideTimeOverride || false,
+      isOpen: false,
     };
   }
 
@@ -180,15 +193,57 @@ export class QueryOptions extends PureComponent<Props, State> {
     });
   };
 
+  onOpenOptions = () => {
+    this.setState({ isOpen: true });
+  };
+
+  onCloseOptions = () => {
+    this.setState({ isOpen: false });
+  };
+
+  renderCollapsedText(styles: StylesType): React.ReactNode | undefined {
+    const { data } = this.props;
+    const { isOpen, maxDataPoints, interval } = this.state;
+
+    if (isOpen) {
+      return undefined;
+    }
+
+    let mdDesc = maxDataPoints;
+    if (maxDataPoints === '' && data.request) {
+      mdDesc = `auto = ${data.request.maxDataPoints}`;
+    }
+
+    let intervalDesc = interval;
+    if (intervalDesc === '' && data.request) {
+      intervalDesc = `auto = ${data.request.interval}`;
+    }
+
+    return (
+      <>
+        {<div className={styles.collapsedText}>MD = {mdDesc}</div>}
+        {<div className={styles.collapsedText}>Interval = {intervalDesc}</div>}
+      </>
+    );
+  }
+
   render() {
     const { hideTimeOverride } = this.state;
-    const { relativeTime, timeShift } = this.state;
+    const { relativeTime, timeShift, isOpen } = this.state;
+    const styles = getStyles();
+
     return (
-      <div className="gf-form-inline">
+      <QueryOperationRow
+        title="Options"
+        headerElement={this.renderCollapsedText(styles)}
+        isOpen={isOpen}
+        onOpen={this.onOpenOptions}
+        onClose={this.onCloseOptions}
+      >
         {this.renderOptions()}
 
         <div className="gf-form">
-          <FormLabel>Relative time</FormLabel>
+          <InlineFormLabel width={9}>Relative time</InlineFormLabel>
           <Input
             type="text"
             className="width-6"
@@ -202,7 +257,7 @@ export class QueryOptions extends PureComponent<Props, State> {
         </div>
 
         <div className="gf-form">
-          <span className="gf-form-label">Time shift</span>
+          <span className="gf-form-label width-9">Time shift</span>
           <Input
             type="text"
             className="width-6"
@@ -216,10 +271,29 @@ export class QueryOptions extends PureComponent<Props, State> {
         </div>
         {(timeShift || relativeTime) && (
           <div className="gf-form-inline">
-            <Switch label="Hide time info" checked={hideTimeOverride} onChange={this.onToggleTimeOverride} />
+            <Switch
+              label="Hide time info"
+              labelClass="width-9"
+              checked={hideTimeOverride}
+              onChange={this.onToggleTimeOverride}
+            />
           </div>
         )}
-      </div>
+      </QueryOperationRow>
     );
   }
 }
+
+const getStyles = stylesFactory(() => {
+  const { theme } = config;
+
+  return {
+    collapsedText: css`
+      margin-left: ${theme.spacing.md};
+      font-size: ${theme.typography.size.sm};
+      color: ${theme.colors.textWeak};
+    `,
+  };
+});
+
+type StylesType = ReturnType<typeof getStyles>;

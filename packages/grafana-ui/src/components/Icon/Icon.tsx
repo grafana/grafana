@@ -10,7 +10,7 @@ import * as MonoIcon from './assets';
 
 const alwaysMonoIcons = ['grafana', 'favorite'];
 
-interface IconProps extends React.HTMLAttributes<HTMLDivElement> {
+export interface IconProps extends React.HTMLAttributes<HTMLDivElement> {
   name: IconName;
   size?: IconSize;
   type?: IconType;

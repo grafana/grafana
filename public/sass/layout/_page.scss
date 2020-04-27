@@ -86,13 +86,6 @@
   }
 }
 
-// fix for phantomjs
-.body--phantomjs {
-  .scroll-canvas {
-    overflow: hidden;
-  }
-}
-
 .page-body {
   padding-top: $spacer * 2;
   padding-bottom: $spacer * 4;

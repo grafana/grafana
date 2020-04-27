@@ -5,7 +5,7 @@ import { debounce } from 'lodash';
 import appEvents from '../../app_events';
 import { getBackendSrv } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
-import { DashboardSearchHit } from '../../../types';
+import { DashboardSearchHit } from 'app/features/search/types';
 
 export interface Props {
   onChange: ($folder: { title: string; id: number }) => void;
@@ -43,7 +43,7 @@ export class FolderPicker extends PureComponent<Props, State> {
     enableReset: false,
     initialTitle: '',
     enableCreateNew: false,
-    useInNextGenForms: false,
+    useNewForms: false,
   };
 
   componentDidMount = async () => {

@@ -1,1 +1,0 @@
-export { MoveToFolderCtrl } from './MoveToFolderCtrl';

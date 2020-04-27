@@ -73,24 +73,20 @@ export class QueryEditorRows extends PureComponent<Props> {
 
   render() {
     const { props } = this;
-    return (
-      <div className="query-editor-rows">
-        {props.queries.map((query, index) => (
-          <QueryEditorRow
-            dataSourceValue={query.datasource || props.datasource.value}
-            key={query.refId}
-            panel={props.panel}
-            dashboard={props.dashboard}
-            data={props.data}
-            query={query}
-            onChange={query => this.onChangeQuery(query, index)}
-            onRemoveQuery={this.onRemoveQuery}
-            onAddQuery={this.onAddQuery}
-            onMoveQuery={this.onMoveQuery}
-            inMixedMode={props.datasource.meta.mixed}
-          />
-        ))}
-      </div>
-    );
+    return props.queries.map((query, index) => (
+      <QueryEditorRow
+        dataSourceValue={query.datasource || props.datasource.value}
+        key={query.refId}
+        panel={props.panel}
+        dashboard={props.dashboard}
+        data={props.data}
+        query={query}
+        onChange={query => this.onChangeQuery(query, index)}
+        onRemoveQuery={this.onRemoveQuery}
+        onAddQuery={this.onAddQuery}
+        onMoveQuery={this.onMoveQuery}
+        inMixedMode={props.datasource.meta.mixed}
+      />
+    ));
   }
 }

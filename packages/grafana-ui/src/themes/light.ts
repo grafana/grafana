@@ -36,7 +36,7 @@ const basicColors = {
 const backgrounds = {
   bg1: basicColors.white,
   bg2: basicColors.gray97,
-  bg3: basicColors.gray95,
+  bg3: basicColors.gray90,
   dashboardBg: basicColors.gray98,
   bgBlue1: basicColors.blue80,
   bgBlue2: basicColors.blue77,
@@ -80,7 +80,6 @@ const form = {
   formSwitchBgActiveHover: basicColors.blue80,
   formSwitchBgDisabled: basicColors.gray4,
   formSwitchDot: basicColors.white,
-  formCheckboxBg: basicColors.white,
   formCheckboxBgChecked: basicColors.blue77,
   formCheckboxBgCheckedHover: basicColors.blue80,
   formCheckboxCheckmark: basicColors.white,
@@ -130,7 +129,7 @@ const lightTheme: GrafanaTheme = {
     textHeading: basicColors.gray25,
   },
   shadows: {
-    listItem: '-1px -1px 0 0 hsla(0, 0%, 100%, 0.1), 1px 1px 0 0 rgba(0, 0, 0, 0.1)',
+    listItem: 'none',
   },
 };
 
