@@ -1,6 +1,6 @@
 import React, { FunctionComponent, useEffect, useState } from 'react';
 import { VariableHide, VariableModel } from '../../../templating/types';
-import { e2e } from '@grafana/e2e';
+import { selectors } from '@grafana/e2e-selectors';
 import { PickerRenderer } from '../../../variables/pickers/PickerRenderer';
 
 interface Props {
@@ -24,7 +24,7 @@ export const SubMenuItems: FunctionComponent<Props> = ({ variables }) => {
           <div
             key={variable.id}
             className="submenu-item gf-form-inline"
-            aria-label={e2e.pages.Dashboard.SubMenu.selectors.submenuItem}
+            aria-label={selectors.pages.Dashboard.SubMenu.submenuItem}
           >
             <PickerRenderer variable={variable} />
           </div>
