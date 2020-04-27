@@ -10,12 +10,12 @@ weight = 400
 
 # Repeat panels or rows
 
-You can use variables to create separate identical panels or rows to display visualizations.
-
-## Repeating panels
+Grafana lets you create dynamic dashboards using _template variables_. Any variables in your queries expands to the current value of the variable before the query is sent to the database. Variables let you reuse a single dashboard for all your services.
 
 Template variables can be very useful to dynamically change your queries across a whole dashboard. If you want
 Grafana to dynamically create new panels or rows based on what values you have selected you can use the *Repeat* feature.
+
+## Repeating panels
 
 If you have a variable with `Multi-value` or `Include all value` options enabled you can choose one panel and have Grafana repeat that panel
 for every selected value. You find the *Repeat* feature under the *General tab* in panel edit mode.
@@ -37,7 +37,7 @@ You can do this by either changing the variable value (that is the basis for the
 
 ## Repeating rows
 
-As seen above with the *Panels* you can also repeat *Rows* if you have variables set with  `Multi-value` or
+As seen above with the panels you can also repeat rows if you have variables set with  `Multi-value` or
 `Include all value` selection option.
 
 To enable this feature you need to first add a new *Row* using the *Add Panel* menu. Then by hovering the row title and
