@@ -172,6 +172,44 @@ const CONSTANT_VALUE = "This string won't change";
 
 _SASS styles are deprecated. Please migrate to Emotion whenever you need to modify SASS styles._
 
+### Typing
+
+In general we let Typescript to infer the types so there is no need to type each variable. There are some exceptions to this:
+
+```typescript
+// Typescript needs to know type of arrays or objects otherwise it would infer it as array of any 
+
+// bad
+const stringArray = [];
+
+// good
+const stringArray: string[] = [];
+```
+
+We specify function return types explicitly in new code. This is to aid readability by being able to tell what function returns just by looking at the signature and also prevents errors when function's return type is broader than author expects. 
+
+> Note: We do not have linting for this enabled because of lots of old code that needs to be fixed first.
+
+```typescript
+// bad
+function transform(value?: string) {
+  if (!value) {
+    return undefined
+  }
+  return applyTransform(value)
+};
+
+// good
+function transform(value?: string): TransformedValue | undefined {
+  if (!value) {
+    return undefined
+  }
+  return applyTransform(value)
+};
+```
+
+
+
 ### File and directory naming conventions
 
 Name files according to the primary export:
