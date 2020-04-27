@@ -19,6 +19,7 @@ import {
   ExploreMode,
   dateMath,
   toUtc,
+  dateTime,
 } from '@grafana/data';
 // Services & Utils
 import store from 'app/core/store';
@@ -495,7 +496,9 @@ const execQueries = (
    */
   const oldestResponseEndTimestamp = toUtc(allResponseTimestamps[0]).subtract('1', 's');
 
-  let appendQueryRaw: RawTimeRange | null = null; // updated raw time range for append queries
+  let appendQueryRaw: RawTimeRange | undefined = undefined; // updated raw time range for append queries, undefined for other types of queries
+  let appendQueryTimeRange: TimeRange | undefined = undefined; // updated time range for append queries, undefined for other types of queries
+
   if (appendQueries) {
     if (direction === QueryDirection.backward) {
       appendQueryRaw = {
@@ -513,16 +516,13 @@ const execQueries = (
         to: processDateTime(prevShowMoreLogsTimeRanges[prevShowMoreLogsTimeRanges.length - 2].raw.to),
       };
     }
-  }
 
-  // updated time range for append queries, null for other types of queries
-  const appendQueryTimeRange: TimeRange | null = appendQueries
-    ? {
-        from: dateMath.parse(appendQueryRaw.from, false, undefined),
-        to: dateMath.parse(appendQueryRaw.to, true, undefined),
-        raw: appendQueryRaw,
-      }
-    : null;
+    appendQueryTimeRange = {
+      from: dateMath.parse(appendQueryRaw.from, false, undefined) ?? dateTime(),
+      to: dateMath.parse(appendQueryRaw.to, true, undefined) ?? dateTime(),
+      raw: appendQueryRaw,
+    };
+  }
 
   /**
    * when doing append queries:
@@ -555,7 +555,7 @@ const execQueries = (
    * also builds a transaction with different time ranges
    */
   const transaction = appendQueries
-    ? buildQueryTransaction(updatedQueries, queryOptions, appendQueryTimeRange, scanning)
+    ? buildQueryTransaction(updatedQueries, queryOptions, appendQueryTimeRange!, scanning)
     : buildQueryTransaction(nonHiddenQueries, queryOptions, range, scanning);
 
   let firstResponse = true;
@@ -681,7 +681,7 @@ export const stateSave = (): ThunkResult<void> => {
     const replace = left && left.urlReplaced === false;
     const urlStates: { [index: string]: string } = { orgId };
     const leftUrlState: ExploreUrlState = {
-      datasource: left.datasourceInstance.name,
+      datasource: left.datasourceInstance?.name ?? '',
       queries: left.queries.map(clearQueryKeys),
       range: toRawTimeRange(left.range),
       mode: left.mode,
@@ -695,7 +695,7 @@ export const stateSave = (): ThunkResult<void> => {
     urlStates.left = serializeStateToUrlParam(leftUrlState, true);
     if (split) {
       const rightUrlState: ExploreUrlState = {
-        datasource: right.datasourceInstance.name,
+        datasource: right.datasourceInstance?.name ?? '',
         queries: right.queries.map(clearQueryKeys),
         range: toRawTimeRange(right.range),
         mode: right.mode,
@@ -827,7 +827,7 @@ export function splitOpen(options?: { datasourceUid: string; query: string }): T
       ];
 
       const dataSourceSettings = getDatasourceSrv().getDataSourceSettingsByUid(options.datasourceUid);
-      await dispatch(changeDatasource(ExploreId.right, dataSourceSettings.name));
+      await dispatch(changeDatasource(ExploreId.right, dataSourceSettings?.name ?? ''));
       await dispatch(setQueriesAction({ exploreId: ExploreId.right, queries }));
     }
 
