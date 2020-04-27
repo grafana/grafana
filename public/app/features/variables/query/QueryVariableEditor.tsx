@@ -1,6 +1,6 @@
 import React, { ChangeEvent, PureComponent } from 'react';
 import { e2e } from '@grafana/e2e';
-import { FormLabel, LegacyForms } from '@grafana/ui';
+import { InlineFormLabel, LegacyForms } from '@grafana/ui';
 const { Switch } = LegacyForms;
 
 import templateSrv from '../../templating/template_srv';
@@ -145,9 +145,9 @@ export class QueryVariableEditorUnConnected extends PureComponent<Props, State> 
             </div>
 
             <div className="gf-form max-width-22">
-              <FormLabel width={10} tooltip={'When to update the values of this variable.'}>
+              <InlineFormLabel width={10} tooltip={'When to update the values of this variable.'}>
                 Refresh
-              </FormLabel>
+              </InlineFormLabel>
               <div className="gf-form-select-wrapper width-15">
                 <select
                   className="gf-form-input"
@@ -181,12 +181,12 @@ export class QueryVariableEditorUnConnected extends PureComponent<Props, State> 
           )}
 
           <div className="gf-form">
-            <FormLabel
+            <InlineFormLabel
               width={10}
               tooltip={'Optional, if you want to extract part of a series name or metric node segment.'}
             >
               Regex
-            </FormLabel>
+            </InlineFormLabel>
             <input
               type="text"
               className="gf-form-input"
@@ -198,9 +198,9 @@ export class QueryVariableEditorUnConnected extends PureComponent<Props, State> 
             />
           </div>
           <div className="gf-form max-width-21">
-            <FormLabel width={10} tooltip={'How to sort the values of this variable.'}>
+            <InlineFormLabel width={10} tooltip={'How to sort the values of this variable.'}>
               Sort
-            </FormLabel>
+            </InlineFormLabel>
             <div className="gf-form-select-wrapper max-width-14">
               <select
                 className="gf-form-input"

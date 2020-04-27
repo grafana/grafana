@@ -27,6 +27,7 @@ import { FieldDisplay } from '@grafana/data';
 |  [colIndex](#colindex-property) | <code>number</code> |  |
 |  [display](#display-property) | <code>DisplayValue</code> |  |
 |  [field](#field-property) | <code>FieldConfig</code> |  |
+|  [getLinks](#getlinks-property) | <code>() =&gt; LinkModel[]</code> |  |
 |  [name](#name-property) | <code>string</code> |  |
 |  [rowIndex](#rowindex-property) | <code>number</code> |  |
 |  [sparkline](#sparkline-property) | <code>GraphSeriesValue[][]</code> |  |
@@ -54,6 +55,14 @@ display: DisplayValue;
 
 ```typescript
 field: FieldConfig;
+```
+
+### getLinks property
+
+<b>Signature</b>
+
+```typescript
+getLinks?: () => LinkModel[];
 ```
 
 ### name property

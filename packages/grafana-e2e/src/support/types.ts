@@ -1,17 +1,21 @@
 import { Selector } from './selector';
 import { fromBaseUrl } from './url';
 import { e2e } from '../index';
-import { SelectorFunction, SelectorObject } from '../noTypeCheck';
+import { SelectorFunction, VisitFunction } from '../noTypeCheck';
 
 export type Selectors = Record<string, string | Function>;
-export type PageObjects<S> = { [P in keyof S]: SelectorFunction };
-export type PageFactory<S> = PageObjects<S> & SelectorObject<S>;
-export interface PageFactoryArgs<S extends Selectors> {
-  url?: string | Function;
+export type SelectorFunctions<S> = { [P in keyof S]: SelectorFunction };
+
+export type Page<S> = SelectorFunctions<S> & {
   selectors: S;
+  visit: VisitFunction;
+};
+export interface PageFactoryArgs<S> {
+  selectors: S;
+  url?: string | Function;
 }
 
-export const pageFactory = <S extends Selectors>({ url, selectors }: PageFactoryArgs<S>): PageFactory<S> => {
+export const pageFactory = <S extends Selectors>({ url, selectors }: PageFactoryArgs<S>): Page<S> => {
   const visit = (args?: string) => {
     if (!url) {
       return e2e().visit('');
@@ -29,7 +33,7 @@ export const pageFactory = <S extends Selectors>({ url, selectors }: PageFactory
     e2e().logToConsole('Visiting', parsedUrl);
     return e2e().visit(parsedUrl);
   };
-  const pageObjects: PageObjects<S> = {} as PageObjects<S>;
+  const pageObjects: SelectorFunctions<S> = {} as SelectorFunctions<S>;
   const keys = Object.keys(selectors);
 
   keys.forEach(key => {
@@ -61,4 +65,12 @@ export const pageFactory = <S extends Selectors>({ url, selectors }: PageFactory
     ...pageObjects,
     selectors,
   };
+};
+
+type Component<S> = Omit<Page<S>, 'visit'>;
+type ComponentFactoryArgs<S> = Omit<PageFactoryArgs<S>, 'url'>;
+
+export const componentFactory = <S extends Selectors>(args: ComponentFactoryArgs<S>): Component<S> => {
+  const { visit, ...rest } = pageFactory(args);
+  return rest;
 };

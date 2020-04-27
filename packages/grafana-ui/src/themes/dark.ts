@@ -81,7 +81,6 @@ const form = {
   formSwitchBgActiveHover: basicColors.blue80,
   formSwitchBgDisabled: basicColors.gray25,
   formSwitchDot: basicColors.gray15,
-  formCheckboxBg: basicColors.dark5,
   formCheckboxBgChecked: basicColors.blue95,
   formCheckboxBgCheckedHover: basicColors.blue80,
   formCheckboxCheckmark: basicColors.gray25,
@@ -129,7 +128,7 @@ const darkTheme: GrafanaTheme = {
     linkExternal: basicColors.blue85,
   },
   shadows: {
-    listItem: '-1px -1px 0 0 hsla(0, 0%, 100%, 0.1), 1px 1px 0 0 rgba(0, 0, 0, 0.3)',
+    listItem: 'none',
   },
 };
 

@@ -4,21 +4,21 @@ import { hot } from 'react-hot-loader';
 import { connect } from 'react-redux';
 import find from 'lodash/find';
 // Types
-import { UrlQueryMap } from '@grafana/runtime';
-import { StoreState, AppNotificationSeverity, CoreEvents } from 'app/types';
-import { Alert, Tooltip } from '@grafana/ui';
 import {
   AppPlugin,
   GrafanaPlugin,
+  NavModel,
+  NavModelItem,
   PluginDependencies,
   PluginInclude,
   PluginIncludeType,
   PluginMeta,
   PluginMetaInfo,
   PluginType,
-  NavModel,
-  NavModelItem,
+  UrlQueryMap,
 } from '@grafana/data';
+import { AppNotificationSeverity, CoreEvents, StoreState } from 'app/types';
+import { Alert, Tooltip } from '@grafana/ui';
 
 import Page from 'app/core/components/Page/Page';
 import { getPluginSettings } from './PluginSettingsCache';

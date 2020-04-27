@@ -2,7 +2,7 @@ import React from 'react';
 import { ThemeColors } from './ThemeColors';
 
 export default {
-  title: 'General/ThemeColors',
+  title: 'Docs Overview/ThemeColors',
   component: ThemeColors,
   decorators: [],
   parameters: {

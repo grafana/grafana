@@ -10,7 +10,7 @@ import { useTheme, selectThemeVariant } from '../../themes';
 import mdx from './Icon.mdx';
 
 export default {
-  title: 'General/Icon',
+  title: 'Docs Overview/Icon',
   component: Icon,
   decorators: [withCenteredStory],
   parameters: {
@@ -60,7 +60,7 @@ const IconWrapper: React.FC<{ name: IconName }> = ({ name }) => {
 
 const icons = getAvailableIcons().sort((a, b) => a.localeCompare(b));
 
-export const simple = () => {
+export const iconsOverview = () => {
   const [filter, setFilter] = useState('');
 
   const searchIcon = (event: ChangeEvent<HTMLInputElement>) => {

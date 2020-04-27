@@ -1,14 +1,14 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { css } from 'emotion';
-import { Button, FormField, DataLinkInput, stylesFactory, LegacyForms } from '@grafana/ui';
-const { Switch } = LegacyForms;
+import { Button, DataLinkInput, stylesFactory, LegacyForms } from '@grafana/ui';
+const { Switch, FormField } = LegacyForms;
 import { VariableSuggestion } from '@grafana/data';
 import { DataSourceSelectItem } from '@grafana/data';
 
 import { DerivedFieldConfig } from '../types';
 import DataSourcePicker from 'app/core/components/Select/DataSourcePicker';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
-import { config } from 'app/core/config';
+import { usePrevious } from 'react-use';
 
 const getStyles = stylesFactory(() => ({
   row: css`
@@ -33,7 +33,18 @@ type Props = {
 export const DerivedField = (props: Props) => {
   const { value, onChange, onDelete, suggestions, className } = props;
   const styles = getStyles();
-  const [hasIntenalLink, setHasInternalLink] = useState(!!value.datasourceName);
+  const [showInternalLink, setShowInternalLink] = useState(!!value.datasourceUid);
+  const previousUid = usePrevious(value.datasourceUid);
+
+  // Force internal link visibility change if uid changed outside of this component.
+  useEffect(() => {
+    if (!previousUid && value.datasourceUid && !showInternalLink) {
+      setShowInternalLink(true);
+    }
+    if (previousUid && !value.datasourceUid && showInternalLink) {
+      setShowInternalLink(false);
+    }
+  }, [previousUid, value.datasourceUid, showInternalLink]);
 
   const handleChange = (field: keyof typeof value) => (event: React.ChangeEvent<HTMLInputElement>) => {
     onChange({
@@ -81,11 +92,11 @@ export const DerivedField = (props: Props) => {
       </div>
 
       <FormField
-        label="URL"
+        label={showInternalLink ? 'Query' : 'URL'}
         labelWidth={5}
         inputEl={
           <DataLinkInput
-            placeholder={'http://example.com/${__value.raw}'}
+            placeholder={showInternalLink ? '${__value.raw}' : 'http://example.com/${__value.raw}'}
             value={value.url || ''}
             onChange={newValue =>
               onChange({
@@ -101,63 +112,62 @@ export const DerivedField = (props: Props) => {
         `}
       />
 
-      {config.featureToggles.tracingIntegration && (
-        <div className={styles.row}>
-          <Switch
-            label="Internal link"
-            checked={hasIntenalLink}
-            onChange={() => {
-              if (hasIntenalLink) {
-                onChange({
-                  ...value,
-                  datasourceName: undefined,
-                });
-              }
-              setHasInternalLink(!hasIntenalLink);
-            }}
-          />
+      <div className={styles.row}>
+        <Switch
+          label="Internal link"
+          checked={showInternalLink}
+          onChange={() => {
+            if (showInternalLink) {
+              onChange({
+                ...value,
+                datasourceUid: undefined,
+              });
+            }
+            setShowInternalLink(!showInternalLink);
+          }}
+        />
 
-          {hasIntenalLink && (
-            <DataSourceSection
-              onChange={datasourceName => {
-                onChange({
-                  ...value,
-                  datasourceName,
-                });
-              }}
-              datasourceName={value.datasourceName}
-            />
-          )}
-        </div>
-      )}
+        {showInternalLink && (
+          <DataSourceSection
+            onChange={datasourceUid => {
+              onChange({
+                ...value,
+                datasourceUid,
+              });
+            }}
+            datasourceUid={value.datasourceUid}
+          />
+        )}
+      </div>
     </div>
   );
 };
 
 type DataSourceSectionProps = {
-  datasourceName?: string;
-  onChange: (name: string) => void;
+  datasourceUid?: string;
+  onChange: (uid: string) => void;
 };
+
 const DataSourceSection = (props: DataSourceSectionProps) => {
-  const { datasourceName, onChange } = props;
+  const { datasourceUid, onChange } = props;
   const datasources: DataSourceSelectItem[] = getDatasourceSrv()
     .getExternal()
     .map(
-      (ds: any) =>
+      ds =>
         ({
-          value: ds.name,
+          value: ds.uid,
           name: ds.name,
           meta: ds.meta,
         } as DataSourceSelectItem)
     );
-  const selectedDatasource = datasourceName && datasources.find(d => d.name === datasourceName);
+
+  let selectedDatasource = datasourceUid && datasources.find(d => d.value === datasourceUid);
   return (
     <DataSourcePicker
-      onChange={newValue => {
-        onChange(newValue.name);
-      }}
+      // Uid and value should be always set in the db and so in the items.
+      onChange={ds => onChange(ds.value!)}
       datasources={datasources}
-      current={selectedDatasource}
+      current={selectedDatasource || undefined}
     />
   );
 };

@@ -10,6 +10,7 @@ import (
 type TsdbQuery struct {
 	TimeRange *TimeRange
 	Queries   []*Query
+	Headers   map[string]string
 	Debug     bool
 	User      *models.SignedInUser
 }

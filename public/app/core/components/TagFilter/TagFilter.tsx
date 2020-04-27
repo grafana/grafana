@@ -1,10 +1,10 @@
 // Libraries
 import React from 'react';
+import { css } from 'emotion';
 // @ts-ignore
 import { components } from '@torkelo/react-select';
-import { AsyncSelect } from '@grafana/ui';
+import { AsyncSelect, stylesFactory } from '@grafana/ui';
 import { resetSelectStyles, Icon } from '@grafana/ui';
-import { FormInputSize } from '@grafana/ui/src/components/Forms/types';
 import { escapeStringForRegex } from '@grafana/data';
 // Components
 import { TagOption } from './TagOption';
@@ -16,18 +16,23 @@ export interface TermCount {
 }
 
 export interface Props {
-  tags: string[];
-  tagOptions: () => Promise<TermCount[]>;
-  onChange: (tags: string[]) => void;
-  size?: FormInputSize;
-  placeholder?: string;
   /** Do not show selected values inside Select. Useful when the values need to be shown in some other components */
   hideValues?: boolean;
+  isClearable?: boolean;
+  onChange: (tags: string[]) => void;
+  placeholder?: string;
+  tagOptions: () => Promise<TermCount[]>;
+  tags: string[];
+  width?: number;
 }
+
+const filterOption = (option: any, searchQuery: string) => {
+  const regex = RegExp(escapeStringForRegex(searchQuery), 'i');
+  return regex.test(option.value);
+};
 
 export class TagFilter extends React.Component<Props, any> {
   static defaultProps = {
-    size: 'auto',
     placeholder: 'Tags',
   };
 
@@ -52,26 +57,26 @@ export class TagFilter extends React.Component<Props, any> {
   };
 
   render() {
+    const styles = getStyles();
+
     const tags = this.props.tags.map(tag => ({ value: tag, label: tag, count: 0 }));
-    const { size, placeholder, hideValues } = this.props;
+    const { width, placeholder, hideValues, isClearable } = this.props;
 
     const selectOptions = {
       defaultOptions: true,
+      filterOption,
       getOptionLabel: (i: any) => i.label,
       getOptionValue: (i: any) => i.value,
+      isClearable,
       isMulti: true,
       loadOptions: this.onLoadOptions,
       loadingMessage: 'Loading...',
       noOptionsMessage: 'No tags found',
       onChange: this.onChange,
       placeholder,
-      size,
       styles: resetSelectStyles(),
       value: tags,
-      filterOption: (option: any, searchQuery: string) => {
-        const regex = RegExp(escapeStringForRegex(searchQuery), 'i');
-        return regex.test(option.value);
-      },
+      width,
       components: {
         Option: TagOption,
         MultiValueLabel: (): any => {
@@ -91,9 +96,23 @@ export class TagFilter extends React.Component<Props, any> {
     };
 
     return (
-      <div className="tag-filter">
+      <div className={styles.tagFilter}>
         <AsyncSelect {...selectOptions} prefix={<Icon name="tag-alt" />} />
       </div>
     );
   }
 }
+
+const getStyles = stylesFactory(() => {
+  return {
+    tagFilter: css`
+      min-width: 180px;
+      flex-grow: 1;
+
+      .label-tag {
+        margin-left: 6px;
+        cursor: pointer;
+      }
+    `,
+  };
+});

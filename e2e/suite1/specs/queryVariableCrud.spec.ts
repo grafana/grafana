@@ -1,5 +1,74 @@
 import { e2e } from '@grafana/e2e';
 
+// This test should really be broken into several smaller tests
+e2e.scenario({
+  describeName: 'Variables',
+  itName: 'Query Variables CRUD',
+  addScenarioDataSource: true,
+  addScenarioDashBoard: true,
+  skipScenario: false,
+  scenario: () => {
+    // @todo remove `@ts-ignore` when possible
+    // @ts-ignore
+    e2e.getScenarioContext().then(({ lastAddedDashboardUid }) => {
+      e2e.flows.openDashboard(lastAddedDashboardUid);
+    });
+    e2e.pages.Dashboard.Toolbar.toolbarItems('Dashboard settings').click();
+    e2e.pages.Dashboard.Settings.General.sectionItems('Variables').click();
+    e2e.pages.Dashboard.Settings.Variables.List.addVariableCTA().click();
+
+    assertDefaultsForNewVariable();
+
+    e2e.pages.Dashboard.Settings.General.sectionItems('General').click();
+    e2e.pages.Dashboard.Settings.General.sectionItems('Variables').click();
+    e2e.pages.Dashboard.Settings.Variables.List.addVariableCTA().click();
+
+    let queryVariables: QueryVariableData[] = [
+      {
+        name: 'query1',
+        query: '*',
+        label: 'query1-label',
+        options: ['All', 'A', 'B', 'C'],
+        selectedOption: 'A',
+      },
+      {
+        name: 'query2',
+        query: '$query1.*',
+        label: 'query2-label',
+        options: ['All', 'AA', 'AB', 'AC'],
+        selectedOption: 'AA',
+      },
+      {
+        name: 'query3',
+        query: '$query1.$query2.*',
+        label: 'query3-label',
+        options: ['All', 'AAA', 'AAB', 'AAC'],
+        selectedOption: 'AAA',
+      },
+    ];
+
+    assertAdding3dependantQueryVariablesScenario(queryVariables);
+
+    // assert select updates
+    assertSelects(queryVariables);
+
+    // assert that duplicate works
+    queryVariables = assertDuplicateItem(queryVariables);
+
+    // assert that delete works
+    queryVariables = assertDeleteItem(queryVariables);
+
+    // assert that update works
+    queryVariables = assertUpdateItem(queryVariables);
+
+    // assert that move down works
+    queryVariables = assertMoveDownItem(queryVariables);
+
+    // assert that move up works
+    assertMoveUpItem(queryVariables);
+  },
+});
+
 const assertDefaultsForNewVariable = () => {
   logSection('Asserting defaults for new variable');
   e2e.pages.Dashboard.Settings.Variables.Edit.General.generalNameInput().within(input => {
@@ -203,7 +272,7 @@ const assertAdding3dependantQueryVariablesScenario = (queryVariables: QueryVaria
     e2e.pages.SaveDashboardModal.save().click();
     e2e.flows.assertSuccessNotification();
 
-    e2e.pages.Components.BackButton.backArrow().click();
+    e2e.components.BackButton.backArrow().click();
 
     assertVariableLabelsAndComponents(asserts);
 
@@ -258,7 +327,7 @@ const assertDuplicateItem = (queryVariables: QueryVariableData[]) => {
   e2e.pages.SaveDashboardModal.save().click();
   e2e.flows.assertSuccessNotification();
 
-  e2e.pages.Components.BackButton.backArrow().click();
+  e2e.components.BackButton.backArrow().click();
 
   e2e.pages.Dashboard.SubMenu.submenuItemLabels(newItem.label).should('be.visible');
   e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownValueLinkTexts(newItem.selectedOption)
@@ -294,7 +363,7 @@ const assertDeleteItem = (queryVariables: QueryVariableData[]) => {
   e2e.pages.SaveDashboardModal.save().click();
   e2e.flows.assertSuccessNotification();
 
-  e2e.pages.Components.BackButton.backArrow().click();
+  e2e.components.BackButton.backArrow().click();
 
   e2e.pages.Dashboard.SubMenu.submenuItemLabels(itemToDelete.label).should('not.exist');
 
@@ -341,7 +410,7 @@ const assertUpdateItem = (data: QueryVariableData[]) => {
   e2e.pages.Dashboard.Settings.Variables.Edit.General.generalHideSelect().select('');
   e2e.pages.Dashboard.Settings.Variables.Edit.ConstantVariable.constantOptionsQueryInput().type(updatedItem.query);
 
-  e2e.pages.Components.BackButton.backArrow().click();
+  e2e.components.BackButton.backArrow().click();
 
   e2e()
     .window()
@@ -397,7 +466,7 @@ const assertMoveDownItem = (data: QueryVariableData[]) => {
       });
   });
 
-  e2e.pages.Components.BackButton.backArrow().click();
+  e2e.components.BackButton.backArrow().click();
 
   assertVariableLabelsAndComponents(queryVariables);
 
@@ -542,7 +611,7 @@ const assertMoveUpItem = (data: QueryVariableData[]) => {
       });
   });
 
-  e2e.pages.Components.BackButton.backArrow().click();
+  e2e.components.BackButton.backArrow().click();
 
   assertVariableLabelsAndComponents(queryVariables);
 
@@ -550,72 +619,3 @@ const assertMoveUpItem = (data: QueryVariableData[]) => {
 
   return queryVariables;
 };
-
-// This test should really be broken into several smaller tests
-e2e.scenario({
-  describeName: 'Variables',
-  itName: 'Query Variables CRUD',
-  addScenarioDataSource: true,
-  addScenarioDashBoard: true,
-  skipScenario: false,
-  scenario: () => {
-    // @todo remove `@ts-ignore` when possible
-    // @ts-ignore
-    e2e.getScenarioContext().then(({ lastAddedDashboardUid }) => {
-      e2e.flows.openDashboard(lastAddedDashboardUid);
-    });
-    e2e.pages.Dashboard.Toolbar.toolbarItems('Dashboard settings').click();
-    e2e.pages.Dashboard.Settings.General.sectionItems('Variables').click();
-    e2e.pages.Dashboard.Settings.Variables.List.addVariableCTA().click();
-
-    assertDefaultsForNewVariable();
-
-    e2e.pages.Dashboard.Settings.General.sectionItems('General').click();
-    e2e.pages.Dashboard.Settings.General.sectionItems('Variables').click();
-    e2e.pages.Dashboard.Settings.Variables.List.addVariableCTA().click();
-
-    let queryVariables: QueryVariableData[] = [
-      {
-        name: 'query1',
-        query: '*',
-        label: 'query1-label',
-        options: ['All', 'A', 'B', 'C'],
-        selectedOption: 'A',
-      },
-      {
-        name: 'query2',
-        query: '$query1.*',
-        label: 'query2-label',
-        options: ['All', 'AA', 'AB', 'AC'],
-        selectedOption: 'AA',
-      },
-      {
-        name: 'query3',
-        query: '$query1.$query2.*',
-        label: 'query3-label',
-        options: ['All', 'AAA', 'AAB', 'AAC'],
-        selectedOption: 'AAA',
-      },
-    ];
-
-    assertAdding3dependantQueryVariablesScenario(queryVariables);
-
-    // assert select updates
-    assertSelects(queryVariables);
-
-    // assert that duplicate works
-    queryVariables = assertDuplicateItem(queryVariables);
-
-    // assert that delete works
-    queryVariables = assertDeleteItem(queryVariables);
-
-    // assert that update works
-    queryVariables = assertUpdateItem(queryVariables);
-
-    // assert that move down works
-    queryVariables = assertMoveDownItem(queryVariables);
-
-    // assert that move up works
-    assertMoveUpItem(queryVariables);
-  },
-});
