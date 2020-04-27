@@ -14,7 +14,7 @@ export interface Props {
 }
 
 export const DashboardSearch: FC<Props> = memo(({ onCloseSearch, folder }) => {
-  const payload = folder ? { query: `folder:${folder}` } : {};
+  const payload = folder ? { query: `folder:${folder} ` } : {};
   const { query, onQueryChange, onTagFilterChange, onTagAdd, onSortChange, onLayoutChange } = useSearchQuery(payload);
   const { results, loading, onToggleSection, onKeyDown } = useDashboardSearch(query, onCloseSearch);
   const theme = useTheme();
