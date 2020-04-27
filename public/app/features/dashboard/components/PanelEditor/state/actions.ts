@@ -58,7 +58,6 @@ export function panelEditorCleanUp(): ThunkResult<void> {
         if (lastResult) {
           sourcePanel.getQueryRunner().pipeDataToSubject(lastResult);
         }
-        sourcePanel.refresh();
       }, 20);
     }
 
