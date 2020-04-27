@@ -39,7 +39,7 @@ export const ActionRow: FC<Props> = ({
 
   return (
     <div className={styles.actionRow}>
-      <HorizontalGroup spacing="md" width="100%">
+      <HorizontalGroup spacing="md" width="auto">
         {!hideLayout ? (
           <RadioButtonGroup options={layoutOptions} onChange={onLayoutChange} value={query.layout} />
         ) : null}
