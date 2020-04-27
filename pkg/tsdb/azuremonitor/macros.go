@@ -11,23 +11,45 @@ import (
 
 const rsIdentifier = `([_a-zA-Z0-9]+)`
 const sExpr = `\$` + rsIdentifier + `(?:\(([^\)]*)\))?`
+const escapeMultiExpr = `\$__escapeMulti\(('.*')\)`
 
 type kqlMacroEngine struct {
 	timeRange *tsdb.TimeRange
 	query     *tsdb.Query
 }
 
-func KqlInterpolate(query *tsdb.Query, timeRange *tsdb.TimeRange, kql string) (string, error) {
+//KqlInterpolate interpolates macros for Kusto Query Language (KQL) queries
+func KqlInterpolate(query *tsdb.Query, timeRange *tsdb.TimeRange, kql string, defaultTimeField ...string) (string, error) {
 	engine := kqlMacroEngine{}
-	return engine.Interpolate(query, timeRange, kql)
+
+	defaultTimeFieldForAllDatasources := "timestamp"
+	if len(defaultTimeField) > 0 {
+		defaultTimeFieldForAllDatasources = defaultTimeField[0]
+	}
+	return engine.Interpolate(query, timeRange, kql, defaultTimeFieldForAllDatasources)
 }
 
-func (m *kqlMacroEngine) Interpolate(query *tsdb.Query, timeRange *tsdb.TimeRange, kql string) (string, error) {
+func (m *kqlMacroEngine) Interpolate(query *tsdb.Query, timeRange *tsdb.TimeRange, kql string, defaultTimeField string) (string, error) {
 	m.timeRange = timeRange
 	m.query = query
 	rExp, _ := regexp.Compile(sExpr)
+	escapeMultiRegex, _ := regexp.Compile(escapeMultiExpr)
+
 	var macroError error
 
+	//First pass for the escapeMulti macro
+	kql = m.ReplaceAllStringSubmatchFunc(escapeMultiRegex, kql, func(groups []string) string {
+		args := []string{}
+
+		if len(groups) > 1 {
+			args = strings.Split(groups[1], "','")
+		}
+
+		expr := strings.Join(args, "', @'")
+		return fmt.Sprintf("@%s", expr)
+	})
+
+	//second pass for all the other macros
 	kql = m.ReplaceAllStringSubmatchFunc(rExp, kql, func(groups []string) string {
 		args := []string{}
 		if len(groups) > 2 {
@@ -37,7 +59,7 @@ func (m *kqlMacroEngine) Interpolate(query *tsdb.Query, timeRange *tsdb.TimeRang
 		for i, arg := range args {
 			args[i] = strings.Trim(arg, " ")
 		}
-		res, err := m.evaluateMacro(groups[1], args)
+		res, err := m.evaluateMacro(groups[1], defaultTimeField, args)
 		if err != nil && macroError == nil {
 			macroError = err
 			return "macro_error()"
@@ -52,10 +74,10 @@ func (m *kqlMacroEngine) Interpolate(query *tsdb.Query, timeRange *tsdb.TimeRang
 	return kql, nil
 }
 
-func (m *kqlMacroEngine) evaluateMacro(name string, args []string) (string, error) {
+func (m *kqlMacroEngine) evaluateMacro(name string, defaultTimeField string, args []string) (string, error) {
 	switch name {
 	case "__timeFilter":
-		timeColumn := "timestamp"
+		timeColumn := defaultTimeField
 		if len(args) > 0 && args[0] != "" {
 			timeColumn = args[0]
 		}
@@ -90,7 +112,8 @@ func (m *kqlMacroEngine) evaluateMacro(name string, args []string) (string, erro
 			return "1 == 1", nil
 		}
 
-		return fmt.Sprintf("['%s'] in ('%s')", args[0], args[1]), nil
+		expression := strings.Join(args[1:], ",")
+		return fmt.Sprintf("['%s'] in (%s)", args[0], expression), nil
 	default:
 		return "", fmt.Errorf("Unknown macro %v", name)
 	}
