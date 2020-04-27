@@ -35,6 +35,6 @@ const Wrapper = () => {
   );
 };
 
-const story = storiesOf('General/ClipboardButton', module);
+const story = storiesOf('Buttons/ClipboardButton', module);
 story.addDecorator(withCenteredStory);
 story.add('copy to clipboard', () => <Wrapper />);

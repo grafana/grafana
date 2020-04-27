@@ -1,11 +1,12 @@
 import React, { FC } from 'react';
 import { css, cx } from 'emotion';
 import { GrafanaTheme } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
+
 import { Icon } from '../Icon/Icon';
 import { IconName } from '../../types';
 import { stylesFactory, useTheme } from '../../themes';
 import { Counter } from './Counter';
-import { e2e } from '@grafana/e2e';
 
 export interface TabProps {
   label: string;
@@ -69,7 +70,7 @@ export const Tab: FC<TabProps> = ({ label, active, icon, onChangeTab, counter })
     <li
       className={cx(tabsStyles.tabItem, active && tabsStyles.activeStyle)}
       onClick={onChangeTab}
-      aria-label={e2e.components.Tab.selectors.title(label)}
+      aria-label={selectors.components.Tab.title(label)}
     >
       {icon && <Icon name={icon} />}
       {label}

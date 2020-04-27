@@ -4,7 +4,7 @@ import { GrafanaTheme } from '@grafana/data';
 import { Icon, stylesFactory, useTheme } from '@grafana/ui';
 import { PANEL_EDITOR_UI_STATE_STORAGE_KEY } from './state/reducers';
 import { useLocalStorage } from 'react-use';
-import { e2e } from '@grafana/e2e';
+import { selectors } from '@grafana/e2e-selectors';
 
 export interface OptionsGroupProps {
   id: string;
@@ -101,7 +101,7 @@ const CollapsibleSection: FC<Omit<OptionsGroupProps, 'persistMe'>> = ({
       <div
         className={styles.header}
         onClick={() => toggleExpand(!isExpanded)}
-        aria-label={e2e.components.OptionsGroup.selectors.toggle(id)}
+        aria-label={selectors.components.OptionsGroup.toggle(id)}
       >
         <div className={cx(styles.toggle, 'editor-options-group-toggle')}>
           <Icon name={isExpanded ? 'angle-down' : 'angle-right'} />

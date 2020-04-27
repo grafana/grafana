@@ -14,15 +14,9 @@ interface SaveDashboardButtonProps {
    */
   getDashboard?: () => DashboardModel;
   onSaveSuccess?: () => void;
-  useNewForms?: boolean;
 }
 
-export const SaveDashboardButton: React.FC<SaveDashboardButtonProps> = ({
-  dashboard,
-  onSaveSuccess,
-  getDashboard,
-  useNewForms,
-}) => {
+export const SaveDashboardButton: React.FC<SaveDashboardButtonProps> = ({ dashboard, onSaveSuccess, getDashboard }) => {
   return (
     <ModalsController>
       {({ showModal, hideModal }) => {

@@ -3,7 +3,7 @@ import React, { PureComponent } from 'react';
 // Components
 import { DataSourcePicker } from 'app/core/components/Select/DataSourcePicker';
 import { QueryOptions } from './QueryOptions';
-import { CustomScrollbar, stylesFactory, Button, HorizontalGroup, Modal } from '@grafana/ui';
+import { Button, CustomScrollbar, HorizontalGroup, Modal, stylesFactory } from '@grafana/ui';
 import { getLocationSrv } from '@grafana/runtime';
 import { QueryEditorRows } from './QueryEditorRows';
 // Services
@@ -20,7 +20,7 @@ import { Unsubscribable } from 'rxjs';
 import { DashboardQueryEditor, isSharedDashboardQuery } from 'app/plugins/datasource/dashboard';
 import { expressionDatasource, ExpressionDatasourceID } from 'app/features/expressions/ExpressionDatasource';
 import { css } from 'emotion';
-import { e2e } from '@grafana/e2e';
+import { selectors } from '@grafana/e2e-selectors';
 
 interface Props {
   panel: PanelModel;
@@ -172,19 +172,24 @@ export class QueriesTab extends PureComponent<Props, State> {
             <DataSourcePicker datasources={this.datasources} onChange={this.onChangeDataSource} current={currentDS} />
           </div>
           <div className={styles.dataSourceRowItem}>
-            <Button variant="secondary" icon="info-circle" title="Open data source help" onClick={this.onOpenHelp} />
+            <Button
+              variant="secondary"
+              icon="question-circle"
+              title="Open data source help"
+              onClick={this.onOpenHelp}
+            />
+          </div>
+          <div className={styles.dataSourceRowItemOptions}>
+            <QueryOptions panel={panel} datasource={currentDS} data={data} />
           </div>
           <div className={styles.dataSourceRowItem}>
             <Button
               variant="secondary"
               onClick={this.openQueryInspector}
-              aria-label={e2e.components.QueryTab.selectors.queryInspectorButton}
+              aria-label={selectors.components.QueryTab.queryInspectorButton}
             >
               Query inspector
             </Button>
-          </div>
-          <div className={styles.dataSourceRowItemOptions}>
-            <QueryOptions panel={panel} datasource={currentDS} data={data} />
           </div>
         </div>
       </div>
@@ -245,7 +250,7 @@ export class QueriesTab extends PureComponent<Props, State> {
     }
 
     return (
-      <div aria-label={e2e.components.QueryTab.selectors.content}>
+      <div aria-label={selectors.components.QueryTab.content}>
         <QueryEditorRows
           queries={panel.targets}
           datasource={currentDS}
@@ -327,6 +332,7 @@ const getStyles = stylesFactory(() => {
     `,
     dataSourceRowItemOptions: css`
       flex-grow: 1;
+      margin-right: ${theme.spacing.inlineFormMargin};
     `,
     queriesWrapper: css`
       padding-bottom: 16px;
