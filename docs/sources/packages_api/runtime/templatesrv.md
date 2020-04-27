@@ -12,7 +12,7 @@ draft = true
 
 Via the TemplateSrv consumers get access to all the available template variables that can be used within the current active dashboard.
 
-For a more in-depth description visit: https://grafana.com/docs/grafana/latest/reference/templating
+For a more in-depth description visit: https://grafana.com/docs/grafana/latest/variables/templates-and-variables
 
 <b>Signature</b>
 
