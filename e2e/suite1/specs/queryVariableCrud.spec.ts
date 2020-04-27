@@ -8,9 +8,7 @@ e2e.scenario({
   addScenarioDashBoard: true,
   skipScenario: false,
   scenario: () => {
-    // @todo remove `@ts-ignore` when possible
-    // @ts-ignore
-    e2e.getScenarioContext().then(({ lastAddedDashboardUid }) => {
+    e2e.getScenarioContext().then(({ lastAddedDashboardUid }: any) => {
       e2e.flows.openDashboard(lastAddedDashboardUid);
     });
     e2e.pages.Dashboard.Toolbar.toolbarItems('Dashboard settings').click();
@@ -253,9 +251,7 @@ const assertAdding3dependantQueryVariablesScenario = (queryVariables: QueryVaria
   for (let queryVariableIndex = 0; queryVariableIndex < queryVariables.length; queryVariableIndex++) {
     const { name, label, query, options, selectedOption } = queryVariables[queryVariableIndex];
     const asserts = queryVariables.slice(0, queryVariableIndex + 1);
-    // @todo remove `@ts-ignore` when possible
-    // @ts-ignore
-    e2e.getScenarioContext().then(({ lastAddedDataSource }) => {
+    e2e.getScenarioContext().then(({ lastAddedDataSource }: any) => {
       createQueryVariable({
         dataSourceName: lastAddedDataSource,
         name,

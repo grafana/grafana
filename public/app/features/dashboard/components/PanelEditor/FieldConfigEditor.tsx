@@ -13,6 +13,7 @@ import { getDataLinksVariableSuggestions } from '../../../panel/panellinks/link_
 import { OverrideEditor } from './OverrideEditor';
 import groupBy from 'lodash/groupBy';
 import { OptionsGroup } from './OptionsGroup';
+import { selectors } from '@grafana/e2e-selectors';
 
 interface Props {
   plugin: PanelPlugin;
@@ -102,7 +103,7 @@ export const OverrideFieldConfigEditor: React.FC<Props> = props => {
   };
 
   return (
-    <div>
+    <div aria-label={selectors.components.OverridesConfigEditor.content}>
       {renderOverrides()}
       {renderAddOverride()}
     </div>
@@ -182,7 +183,7 @@ export const DefaultFieldConfigEditor: React.FC<Props> = ({ data, onChange, conf
   const groupedConfigs = groupBy(plugin.fieldConfigRegistry.list(), i => i.category && i.category[0]);
 
   return (
-    <>
+    <div aria-label={selectors.components.FieldConfigEditor.content}>
       {Object.keys(groupedConfigs).map((k, i) => {
         const groupItemsCounter = countGroupItems(groupedConfigs[k], config);
 
@@ -204,7 +205,7 @@ export const DefaultFieldConfigEditor: React.FC<Props> = ({ data, onChange, conf
           </OptionsGroup>
         );
       })}
-    </>
+    </div>
   );
 };
 

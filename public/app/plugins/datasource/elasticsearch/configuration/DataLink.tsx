@@ -37,7 +37,7 @@ export const DataLink = (props: Props) => {
 
   return (
     <div className={className}>
-      <div className={styles.firstRow}>
+      <div className={styles.firstRow + ' gf-form'}>
         <FormField
           className={styles.nameField}
           labelWidth={6}
@@ -59,27 +59,28 @@ export const DataLink = (props: Props) => {
           }}
         />
       </div>
-
-      <FormField
-        label="URL"
-        labelWidth={6}
-        inputEl={
-          <DataLinkInput
-            placeholder={'http://example.com/${__value.raw}'}
-            value={value.url || ''}
-            onChange={newValue =>
-              onChange({
-                ...value,
-                url: newValue,
-              })
-            }
-            suggestions={suggestions}
-          />
-        }
-        className={css`
-          width: 100%;
-        `}
-      />
+      <div className="gf-form">
+        <FormField
+          label="URL"
+          labelWidth={6}
+          inputEl={
+            <DataLinkInput
+              placeholder={'http://example.com/${__value.raw}'}
+              value={value.url || ''}
+              onChange={newValue =>
+                onChange({
+                  ...value,
+                  url: newValue,
+                })
+              }
+              suggestions={suggestions}
+            />
+          }
+          className={css`
+            width: 100%;
+          `}
+        />
+      </div>
     </div>
   );
 };

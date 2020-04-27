@@ -217,14 +217,16 @@ const handleTypeahead = async (
 
   // Get decorations associated with the current line
   const parentBlock = value.document.getClosestBlock(value.focusBlock.key);
-  const myOffset = value.selection.start.offset - 1;
+  const selectionStartOffset = value.selection.start.offset - 1;
   const decorations = parentBlock && parentBlock.getDecorations(editor as any);
 
   const filteredDecorations = decorations
     ? decorations
         .filter(
           decoration =>
-            decoration!.start.offset <= myOffset && decoration!.end.offset > myOffset && decoration!.type === TOKEN_MARK
+            decoration!.start.offset <= selectionStartOffset &&
+            decoration!.end.offset > selectionStartOffset &&
+            decoration!.type === TOKEN_MARK
         )
         .toArray()
     : [];
@@ -235,7 +237,7 @@ const handleTypeahead = async (
     decorations
       .filter(
         decoration =>
-          decoration!.end.offset <= myOffset &&
+          decoration!.end.offset <= selectionStartOffset &&
           decoration!.type === TOKEN_MARK &&
           decoration!.data.get('className').includes('label-key')
       )
@@ -272,6 +274,7 @@ const handleTypeahead = async (
     value,
     wrapperClasses,
     labelKey: labelKey || undefined,
+    editor,
   });
 
   const filteredSuggestions = suggestions
@@ -280,28 +283,29 @@ const handleTypeahead = async (
         return group;
       }
 
+      let newGroup = { ...group };
       if (prefix) {
         // Filter groups based on prefix
         if (!group.skipFilter) {
-          group.items = group.items.filter(c => (c.filterText || c.label).length >= prefix.length);
+          newGroup.items = newGroup.items.filter(c => (c.filterText || c.label).length >= prefix.length);
           if (group.prefixMatch) {
-            group.items = group.items.filter(c => (c.filterText || c.label).startsWith(prefix));
+            newGroup.items = newGroup.items.filter(c => (c.filterText || c.label).startsWith(prefix));
           } else {
-            group.items = group.items.filter(c => (c.filterText || c.label).includes(prefix));
+            newGroup.items = newGroup.items.filter(c => (c.filterText || c.label).includes(prefix));
           }
         }
 
         // Filter out the already typed value (prefix) unless it inserts custom text
-        group.items = group.items.filter(c => c.insertText || (c.filterText || c.label) !== prefix);
+        newGroup.items = newGroup.items.filter(c => c.insertText || (c.filterText || c.label) !== prefix);
       }
 
       if (!group.skipSort) {
-        group.items = sortBy(group.items, (item: CompletionItem) => item.sortText || item.label);
+        newGroup.items = sortBy(newGroup.items, (item: CompletionItem) => item.sortText || item.label);
       }
 
-      return group;
+      return newGroup;
     })
-    .filter(group => group.items && group.items.length); // Filter out empty groups
+    .filter(gr => gr.items && gr.items.length); // Filter out empty groups
 
   onStateChange({
     groupedItems: filteredSuggestions,

@@ -74,13 +74,7 @@ export const PanelOptionsTab: FC<Props> = ({
   if (plugin.editor && panel && !plugin.optionEditors) {
     elements.push(
       <OptionsGroup title="Display" id="legacy react editor" key="legacy react editor">
-        <plugin.editor
-          data={data}
-          options={panel.getOptions()}
-          onOptionsChange={onPanelOptionsChanged}
-          fieldConfig={panel.getFieldConfig()}
-          onFieldConfigChange={onFieldConfigsChange}
-        />
+        <plugin.editor data={data} options={panel.getOptions()} onOptionsChange={onPanelOptionsChanged} />
       </OptionsGroup>
     );
   }

@@ -76,8 +76,10 @@ describe('DashboardSearch', () => {
 
     wrapper.update();
     expect(
-      wrapper.findWhere((c: any) => c.type() === 'h6' && c.text() === 'No dashboards matching your query were found.')
-    ).toHaveLength(1);
+      wrapper
+        .findWhere((c: any) => c.type() === 'div' && c.text() === 'No dashboards matching your query were found.')
+        .exists()
+    ).toBe(true);
   });
 
   it('should render search results', async () => {

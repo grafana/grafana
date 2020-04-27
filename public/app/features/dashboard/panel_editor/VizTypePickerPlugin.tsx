@@ -1,7 +1,9 @@
 import React from 'react';
 import { GrafanaTheme, PanelPluginMeta } from '@grafana/data';
-import { stylesFactory, useTheme } from '@grafana/ui';
+import { stylesFactory, useTheme, styleMixins } from '@grafana/ui';
 import { css, cx } from 'emotion';
+import { selectors } from '@grafana/e2e-selectors';
+import { PanelPluginBadge } from '../../plugins/PluginSignatureBadge';
 
 interface Props {
   isCurrent: boolean;
@@ -15,27 +17,50 @@ const VizTypePickerPlugin: React.FC<Props> = ({ isCurrent, plugin, onClick, disa
   const styles = getStyles(theme);
   const cssClass = cx({
     [styles.item]: true,
-    [styles.current]: isCurrent,
     [styles.disabled]: disabled,
+    [styles.current]: isCurrent,
   });
 
   return (
-    <div className={cssClass} onClick={disabled ? () => {} : onClick} title={plugin.name}>
-      <div className={styles.name}>{plugin.name}</div>
-      <img className={styles.img} src={plugin.info.logos.small} />
+    <div className={styles.wrapper} aria-label={selectors.components.PluginVisualization.item(plugin.name)}>
+      <div className={cssClass} onClick={disabled ? () => {} : onClick} title={plugin.name}>
+        <div className={styles.bg} />
+        <div className={styles.itemContent}>
+          <div className={styles.name} title={plugin.name}>
+            {plugin.name}
+          </div>
+          <img className={styles.img} src={plugin.info.logos.small} />
+        </div>
+      </div>
+      <div className={styles.badge}>
+        <PanelPluginBadge plugin={plugin} />
+      </div>
     </div>
   );
 };
 
+VizTypePickerPlugin.displayName = 'VizTypePickerPlugin';
+
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
   return {
-    item: css`
+    wrapper: css`
+      position: relative;
+    `,
+    bg: css`
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
       background: ${theme.colors.bg2};
       border: 1px solid ${theme.colors.border2};
       border-radius: 3px;
-      height: 100px;
-      width: 100%;
-      max-width: 200px;
+      transform: scale(1);
+      transform-origin: center;
+      transition: all 0.1s ease-in;
+      z-index: 0;
+    `,
+    item: css`
       flex-shrink: 0;
       flex-direction: column;
       text-align: center;
@@ -45,22 +70,35 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       align-items: center;
       justify-content: center;
       padding-bottom: 6px;
+      height: 100px;
+      width: 100%;
+      max-width: 200px;
+      position: relative;
 
       &:hover {
-        box-shadow: 0 0 4px ${theme.palette.blue95};
-        border: 1px solid ${theme.palette.blue95};
+        > div:first-child {
+          transform: scale(1.05);
+          border-color: ${theme.colors.formFocusOutline};
+        }
       }
     `,
+    itemContent: css`
+      position: relative;
+      z-index: 1;
+    `,
     current: css`
-      box-shadow: 0 0 6px ${theme.palette.orange} !important;
-      border: 1px solid ${theme.palette.orange} !important;
+      label: currentVisualizationItem;
+      pointer-events: none;
+      > div:first-child {
+        ${styleMixins.focusCss(theme)};
+      }
     `,
     disabled: css`
       opacity: 0.2;
       filter: grayscale(1);
       cursor: default;
+      pointer-events: none;
       &:hover {
-        box-shadow: none;
         border: 1px solid ${theme.colors.border2};
       }
     `,
@@ -69,14 +107,19 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       overflow: hidden;
       white-space: nowrap;
       font-size: ${theme.typography.size.sm};
-      display: flex;
-      flex-direction: column;
-      align-self: center;
+      text-align: center;
       height: 23px;
       font-weight: ${theme.typography.weight.semibold};
+      padding: 0 10px;
+      width: 100%;
     `,
     img: css`
       height: 55px;
+    `,
+    badge: css`
+      position: absolute;
+      bottom: ${theme.spacing.xs};
+      right: ${theme.spacing.xs};
     `,
   };
 });

@@ -3,7 +3,7 @@ import React, { FunctionComponent } from 'react';
 import { css } from 'emotion';
 // Components
 import { Tooltip, Icon, IconName, IconType, IconSize, IconButton, useTheme, stylesFactory } from '@grafana/ui';
-import { e2e } from '@grafana/e2e';
+import { selectors } from '@grafana/e2e-selectors';
 import { GrafanaTheme } from '@grafana/data';
 
 interface Props {
@@ -59,7 +59,7 @@ export const DashNavButton: FunctionComponent<Props> = ({
         <button
           className={`btn navbar-button navbar-button--${classSuffix}`}
           onClick={onClick}
-          aria-label={e2e.pages.Dashboard.Toolbar.selectors.toolbarItems(tooltip)}
+          aria-label={selectors.pages.Dashboard.Toolbar.toolbarItems(tooltip)}
         >
           {icon && <Icon name={icon} type={iconType} size={iconSize || 'lg'} />}
           {children}

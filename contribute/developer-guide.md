@@ -105,7 +105,7 @@ To run the tests:
 yarn e2e-tests
 ```
 
-By default, the end-to-end tests assumes Grafana is available on `localhost:3000`. To use a specific URL, set the `BASE_URL` environment variable:
+By default, the end-to-end tests assume Grafana is available on `localhost:3000`. To use a specific URL, set the `BASE_URL` environment variable:
 
 ```
 BASE_URL=http://localhost:3333 yarn e2e-tests

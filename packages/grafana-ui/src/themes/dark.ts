@@ -81,7 +81,6 @@ const form = {
   formSwitchBgActiveHover: basicColors.blue80,
   formSwitchBgDisabled: basicColors.gray25,
   formSwitchDot: basicColors.gray15,
-  formCheckboxBg: basicColors.dark5,
   formCheckboxBgChecked: basicColors.blue95,
   formCheckboxBgCheckedHover: basicColors.blue80,
   formCheckboxCheckmark: basicColors.gray25,
