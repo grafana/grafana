@@ -63,6 +63,7 @@ Here is a minimal policy example:
       "Effect": "Allow",
       "Action": [
         "cloudwatch:DescribeAlarmsForMetric",
+        "cloudwatch:DescribeAlarmHistory",
         "cloudwatch:ListMetrics",
         "cloudwatch:GetMetricStatistics",
         "cloudwatch:GetMetricData"
