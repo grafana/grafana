@@ -45,6 +45,10 @@ export class ZipkinDatasource extends DataSourceApi<ZipkinQuery> {
     return true;
   }
 
+  getQueryDisplayText(query: ZipkinQuery) {
+    return query.query;
+  }
+
   private request<T = any>(apiUrl: string, data?: any, options?: DatasourceRequestOptions): Observable<{ data: T }> {
     // Hack for proxying metadata requests
     const baseUrl = `/api/datasources/proxy/${this.instanceSettings.id}`;

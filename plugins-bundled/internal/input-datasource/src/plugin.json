@@ -9,7 +9,7 @@
   "info": {
     "description": "Data source that supports manual table & CSV input",
     "author": {
-      "name": "Grafana Project",
+      "name": "Grafana Labs",
       "url": "https://grafana.com"
     },
     "logos": {

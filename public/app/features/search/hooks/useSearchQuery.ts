@@ -6,8 +6,6 @@ import {
   CLEAR_FILTERS,
   LAYOUT_CHANGE,
   QUERY_CHANGE,
-  REMOVE_STARRED,
-  REMOVE_TAG,
   SET_TAGS,
   TOGGLE_SORT,
   TOGGLE_STARRED,
@@ -21,14 +19,6 @@ export const useSearchQuery = (queryParams: Partial<DashboardQuery>) => {
 
   const onQueryChange = (query: string) => {
     dispatch({ type: QUERY_CHANGE, payload: query });
-  };
-
-  const onRemoveStarred = () => {
-    dispatch({ type: REMOVE_STARRED });
-  };
-
-  const onTagRemove = (tag: string) => {
-    dispatch({ type: REMOVE_TAG, payload: tag });
   };
 
   const onTagFilterChange = (tags: string[]) => {
@@ -62,8 +52,6 @@ export const useSearchQuery = (queryParams: Partial<DashboardQuery>) => {
     query,
     hasFilters: hasFilters(query),
     onQueryChange,
-    onRemoveStarred,
-    onTagRemove,
     onClearFilters,
     onTagFilterChange,
     onStarredFilterChange,

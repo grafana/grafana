@@ -77,6 +77,7 @@ export const Components = {
   QueryTab: componentFactory({
     selectors: {
       content: 'Query editor tab content',
+      queryInspectorButton: 'Query inspector button',
     },
   }),
   AlertTab: componentFactory({
