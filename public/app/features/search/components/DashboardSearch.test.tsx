@@ -4,6 +4,7 @@ import { act } from 'react-dom/test-utils';
 import { mockSearch } from './mocks';
 import { DashboardSearch } from './DashboardSearch';
 import { searchResults } from '../testData';
+import { SearchLayout } from '../types';
 
 beforeEach(() => {
   jest.useFakeTimers();
@@ -43,6 +44,8 @@ describe('DashboardSearch', () => {
       skipStarred: false,
       starred: false,
       folderIds: [],
+      layout: SearchLayout.Folders,
+      sort: undefined,
     });
   });
 
@@ -68,6 +71,8 @@ describe('DashboardSearch', () => {
       tag: [],
       starred: false,
       folderIds: [],
+      layout: SearchLayout.Folders,
+      sort: undefined,
     });
   });
 
@@ -108,6 +113,8 @@ describe('DashboardSearch', () => {
       tag: ['TestTag'],
       starred: false,
       folderIds: [],
+      layout: SearchLayout.Folders,
+      sort: undefined,
     });
   });
 });

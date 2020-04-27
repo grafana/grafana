@@ -334,7 +334,7 @@ export function SelectBase<T>({
             bottom,
             position,
             marginBottom: !!bottom ? '10px' : '0',
-            'min-width': '100%',
+            minWidth: '100%',
             zIndex: theme.zIndex.dropdown,
           }),
           container: () => ({

@@ -1,4 +1,4 @@
-import { DashboardSection, SearchAction } from '../types';
+import { DashboardSearchHit, DashboardSection, SearchAction } from '../types';
 import { getFlattenedSections, getLookupField, markSelected } from '../utils';
 import {
   FETCH_ITEMS,
@@ -10,7 +10,7 @@ import {
 } from './actionTypes';
 
 export interface DashboardsSearchState {
-  results: DashboardSection[];
+  results: DashboardSearchHit[];
   loading: boolean;
   selectedIndex: number;
 }
@@ -31,7 +31,7 @@ export const searchReducer = (state: DashboardsSearchState, action: SearchAction
     case FETCH_RESULTS: {
       const results = action.payload;
       // Highlight the first item ('Starred' folder)
-      if (results.length) {
+      if (results.length > 0) {
         results[0].selected = true;
       }
       return { ...state, results, loading: false };

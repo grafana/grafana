@@ -4,7 +4,7 @@ import impressionSrv from 'app/core/services/impression_srv';
 import store from 'app/core/store';
 import { contextSrv } from 'app/core/services/context_srv';
 import { hasFilters } from 'app/features/search/utils';
-import { DashboardSection, DashboardSearchItemType, DashboardSearchHit } from 'app/features/search/types';
+import { DashboardSection, DashboardSearchItemType, DashboardSearchHit, SearchLayout } from 'app/features/search/types';
 import { backendSrv } from './backend_srv';
 
 interface Sections {
@@ -43,14 +43,12 @@ export class SearchSrv {
 
     return backendSrv.search({ dashboardIds: dashIds }).then(result => {
       return dashIds
-        .map(orderId => {
-          return _.find(result, { id: orderId });
-        })
+        .map(orderId => result.find(result => result.id === orderId))
         .filter(hit => hit && !hit.isStarred) as DashboardSearchHit[];
     });
   }
 
-  private getStarred(sections: DashboardSection) {
+  private getStarred(sections: DashboardSection): Promise<any> {
     if (!contextSrv.isSignedIn) {
       return Promise.resolve();
     }
@@ -75,17 +73,20 @@ export class SearchSrv {
     const query = _.clone(options);
     const filters = hasFilters(options) || query.folderIds?.length > 0;
 
+    query.folderIds = query.folderIds || [];
+    if (!filters) {
+      query.folderIds = [0];
+    }
+    if (query.layout === SearchLayout.List) {
+      return backendSrv.search({ ...query, type: DashboardSearchItemType.DashDB });
+    }
+
     if (!options.skipRecent && !filters) {
       promises.push(this.getRecentDashboards(sections));
     }
 
     if (!options.skipStarred && !filters) {
       promises.push(this.getStarred(sections));
-    }
-
-    query.folderIds = query.folderIds || [];
-    if (!filters) {
-      query.folderIds = [0];
     }
 
     promises.push(
