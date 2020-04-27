@@ -98,13 +98,13 @@ export interface GrafanaThemeCommons {
   panelPadding: number;
   panelHeaderHeight: number;
   zIndex: {
-    dropdown: string;
-    navbarFixed: string;
-    sidemenu: string;
-    tooltip: string;
-    modalBackdrop: string;
-    modal: string;
-    typeahead: string;
+    dropdown: number;
+    navbarFixed: number;
+    sidemenu: number;
+    tooltip: number;
+    modalBackdrop: number;
+    modal: number;
+    typeahead: number;
   };
 }
 

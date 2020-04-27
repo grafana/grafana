@@ -239,16 +239,14 @@ func (e *ApplicationInsightsDatasource) createRequest(ctx context.Context, dsInf
 		return nil, errors.New("Unable to find datasource plugin Azure Application Insights")
 	}
 
-	var appInsightsRoute *plugins.AppPluginRoute
-	for _, route := range plugin.Routes {
-		if route.Path == "appinsights" {
-			appInsightsRoute = route
-			break
-		}
+	cloudName := dsInfo.JsonData.Get("cloudName").MustString("azuremonitor")
+	appInsightsRoute, pluginRouteName, err := e.getPluginRoute(plugin, cloudName)
+	if err != nil {
+		return nil, err
 	}
 
 	appInsightsAppID := dsInfo.JsonData.Get("appInsightsAppId").MustString()
-	proxyPass := fmt.Sprintf("appinsights/v1/apps/%s", appInsightsAppID)
+	proxyPass := fmt.Sprintf("%s/v1/apps/%s", pluginRouteName, appInsightsAppID)
 
 	u, _ := url.Parse(dsInfo.Url)
 	u.Path = path.Join(u.Path, fmt.Sprintf("/v1/apps/%s", appInsightsAppID))
@@ -264,6 +262,25 @@ func (e *ApplicationInsightsDatasource) createRequest(ctx context.Context, dsInf
 	pluginproxy.ApplyRoute(ctx, req, proxyPass, appInsightsRoute, dsInfo)
 
 	return req, nil
+}
+
+func (e *ApplicationInsightsDatasource) getPluginRoute(plugin *plugins.DataSourcePlugin, cloudName string) (*plugins.AppPluginRoute, string, error) {
+	pluginRouteName := "appinsights"
+
+	if cloudName == "chinaazuremonitor" {
+		pluginRouteName = "chinaappinsights"
+	}
+
+	var pluginRoute *plugins.AppPluginRoute
+
+	for _, route := range plugin.Routes {
+		if route.Path == pluginRouteName {
+			pluginRoute = route
+			break
+		}
+	}
+
+	return pluginRoute, pluginRouteName, nil
 }
 
 func (e *ApplicationInsightsDatasource) parseTimeSeriesFromQuery(body []byte, query *ApplicationInsightsQuery) (tsdb.TimeSeriesSlice, *simplejson.Json, error) {

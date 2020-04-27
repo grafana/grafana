@@ -1,9 +1,9 @@
 import React, { ButtonHTMLAttributes } from 'react';
 import { IconButton } from '@grafana/ui';
-import { e2e } from '@grafana/e2e';
+import { selectors } from '@grafana/e2e-selectors';
 
 export interface Props extends ButtonHTMLAttributes<HTMLButtonElement> {
-  surface: 'body' | 'panel';
+  surface: 'dashboard' | 'panel' | 'header';
 }
 
 export const BackButton: React.FC<Props> = ({ surface, onClick }) => {
@@ -14,7 +14,7 @@ export const BackButton: React.FC<Props> = ({ surface, onClick }) => {
       tooltipPlacement="bottom"
       size="xxl"
       surface={surface}
-      aria-label={e2e.components.BackButton.selectors.backArrow}
+      aria-label={selectors.components.BackButton.backArrow}
       onClick={onClick}
     />
   );
