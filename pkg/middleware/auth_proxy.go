@@ -10,6 +10,18 @@ import (
 
 var header = setting.AuthProxyHeaderName
 
+func logUserIn(auth *authproxy.AuthProxy, username string, logger log.Logger, ignoreCache bool) (int64, *authproxy.Error) {
+	logger.Debug("Trying to log user in", "username", username, "ignoreCache", ignoreCache)
+	// Try to log in user via various providers
+	id, err := auth.Login(logger, ignoreCache)
+	if err != nil {
+		logger.Error("Failed to login", "username", username, "message", err.Error(), "error", err.DetailsError,
+			"ignoreCache", ignoreCache)
+		return 0, err
+	}
+	return id, nil
+}
+
 func initContextWithAuthProxy(store *remotecache.RemoteCache, ctx *models.ReqContext, orgID int64) bool {
 	username := ctx.Req.Header.Get(header)
 	auth := authproxy.New(&authproxy.Options{
@@ -41,31 +53,32 @@ func initContextWithAuthProxy(store *remotecache.RemoteCache, ctx *models.ReqCon
 		return true
 	}
 
-	// Try to log in user from various providers
-	id, err := auth.Login()
+	id, err := logUserIn(auth, username, logger, false)
 	if err != nil {
-		logger.Error(
-			"Failed to login",
-			"username", username,
-			"message", err.Error(),
-			"error", err.DetailsError,
-		)
 		ctx.Handle(407, err.Error(), err.DetailsError)
 		return true
 	}
 
-	// Get full user info
+	logger.Debug("Got user ID, getting full user info", "userID", id)
+
 	user, err := auth.GetSignedUser(id)
 	if err != nil {
-		logger.Error(
-			"Failed to get signed user",
-			"username", username,
-			"message", err.Error(),
-			"error", err.DetailsError,
-		)
-		ctx.Handle(407, err.Error(), err.DetailsError)
-		return true
+		logger.Debug("Failed to get user info given ID, retrying without cache", "userID", id)
+		_ = auth.RemoveUserFromCache(logger)
+		id, err := logUserIn(auth, username, logger, true)
+		if err != nil {
+			ctx.Handle(407, err.Error(), err.DetailsError)
+			return true
+		}
+
+		user, err = auth.GetSignedUser(id)
+		if err != nil {
+			ctx.Handle(407, err.Error(), err.DetailsError)
+			return true
+		}
 	}
+
+	logger.Debug("Successfully got user info", "userID", user.UserId, "username", user.Login)
 
 	// Add user info to context
 	ctx.SignedInUser = user
