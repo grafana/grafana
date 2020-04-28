@@ -147,7 +147,15 @@ Refer to [Organization roles]({{< relref "../permissions/organization_roles.md" 
 
 > Only available in Grafana v7.0+
 
-Organization mapping allows you to assign users to particular organization in Grafana depending on configured `assertion_attribute_org` attribute value obtained from identity provider. Set `assertion_attribute_org` to the attribute name you store organization info in. Then configure `org_mapping` option to map organization from IdP to Grafana organization specified by id. For example, `org_mapping = Engineering:2, Sales:3` assigns users from `Engineering` organization to the Grafana organization with id `2` and users from `Sales` - to the org with id `3`. You can specify multiple organizations both for the IdP and Grafana:
+Organization mapping allows you to assign users to particular organization in Grafana depending on configured `assertion_attribute_org` attribute value obtained from identity provider. Set `assertion_attribute_org` to the attribute name you store organization info in. Then configure `org_mapping` option to map organization from IdP to Grafana organization specified by id. For example, use following config to assign users from `Engineering` organization to the Grafana organization with id `2` and users from `Sales` - to the org with id `3`, based on `Org` assertion attribute value:
+
+```bash
+[auth.saml]
+assertion_attribute_org = Org
+org_mapping = Engineering:2, Sales:3
+```
+
+You can specify multiple organizations both for the IdP and Grafana:
 
 * `org_mapping = Engineering:2, Sales:2` to map users from `Engineering` and `Sales` to `2` in Grafana.
 * `org_mapping = Engineering:2, Engineering:3` to assign `Engineering` to both `2` and `3` in Grafana.
