@@ -8,6 +8,7 @@ import {
   DataFrame,
   getTimeField,
   dateTime,
+  getFieldDisplayTitle,
 } from '@grafana/data';
 import TimeSeries from 'app/core/time_series2';
 import config from 'app/core/config';
@@ -35,19 +36,13 @@ export class DataProcessor {
         continue;
       }
 
-      const seriesName = series.name ? series.name : series.refId;
       for (let j = 0; j < series.fields.length; j++) {
         const field = series.fields[j];
         if (field.type !== FieldType.number) {
           continue;
         }
 
-        let name = field.config && field.config.title ? field.config.title : field.name;
-
-        if (seriesName && dataList.length > 0 && name !== seriesName) {
-          name = seriesName + ' ' + name;
-        }
-
+        const name = getFieldDisplayTitle(field, series, dataList.length);
         const datapoints = [];
         for (let r = 0; r < series.length; r++) {
           datapoints.push([field.values.get(r), dateTime(timeField.values.get(r)).valueOf()]);
