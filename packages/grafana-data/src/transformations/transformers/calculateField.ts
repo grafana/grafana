@@ -63,8 +63,8 @@ export interface CalculateFieldTransformerOptions {
  */
 function isTimeSeris(data: DataFrame[]): boolean {
   for (const frame of data) {
-    const { field } = getTimeField(frame);
-    if (!field) {
+    const { timeField } = getTimeField(frame);
+    if (!timeField) {
       return false;
     }
   }
@@ -104,25 +104,23 @@ export const calculateFieldTransformer: DataTransformerInfo<CalculateFieldTransf
         field.config = options.field;
       }
 
+      let fields: Field[] = [];
+
       // Replace all fields with the single field
       if (options.replaceFields) {
-        const { time } = getTimeField(frame);
-        if (time && options.timeSeries !== false) {
-          return {
-            ...frame,
-            fields: [time, field],
-          };
+        const { timeField } = getTimeField(frame);
+        if (timeField && options.timeSeries !== false) {
+          fields = [timeField, field];
+        } else {
+          fields = [field];
         }
-        // Only the time field
-        return {
-          ...frame,
-          fields: [field],
-        };
+      } else {
+        fields = [...frame.fields, field];
       }
 
       return {
         ...frame,
-        fields: [...frame.fields, field],
+        fields,
       };
     });
   },
