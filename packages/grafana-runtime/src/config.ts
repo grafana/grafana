@@ -52,7 +52,6 @@ export class GrafanaBootConfig implements GrafanaConfig {
     expressions: false,
     newEdit: false,
     meta: false,
-    cloudwatchLogs: false,
     newVariables: true,
   };
   licenseInfo: LicenseInfo = {} as LicenseInfo;
