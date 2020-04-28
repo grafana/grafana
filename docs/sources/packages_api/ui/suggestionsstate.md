@@ -5,7 +5,6 @@
 title = "SuggestionsState"
 keywords = ["grafana","documentation","sdk","@grafana/ui"]
 type = "docs"
-draft = true
 +++
 
 ## SuggestionsState interface

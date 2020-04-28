@@ -5,7 +5,6 @@
 title = "DataFrameView"
 keywords = ["grafana","documentation","sdk","@grafana/data"]
 type = "docs"
-draft = true
 +++
 
 ## DataFrameView class

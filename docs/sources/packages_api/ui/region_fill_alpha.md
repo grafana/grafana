@@ -5,7 +5,6 @@
 title = "REGION_FILL_ALPHA"
 keywords = ["grafana","documentation","sdk","@grafana/ui"]
 type = "docs"
-draft = true
 +++
 
 ## REGION\_FILL\_ALPHA variable

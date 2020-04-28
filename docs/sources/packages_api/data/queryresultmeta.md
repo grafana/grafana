@@ -5,7 +5,6 @@
 title = "QueryResultMeta"
 keywords = ["grafana","documentation","sdk","@grafana/data"]
 type = "docs"
-draft = true
 +++
 
 ## QueryResultMeta interface

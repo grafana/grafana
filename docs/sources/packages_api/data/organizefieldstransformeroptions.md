@@ -5,7 +5,6 @@
 title = "OrganizeFieldsTransformerOptions"
 keywords = ["grafana","documentation","sdk","@grafana/data"]
 type = "docs"
-draft = true
 +++
 
 ## OrganizeFieldsTransformerOptions interface
