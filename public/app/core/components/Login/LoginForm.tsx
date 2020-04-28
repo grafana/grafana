@@ -2,6 +2,7 @@ import React, { ChangeEvent, PureComponent, SyntheticEvent } from 'react';
 import { selectors } from '@grafana/e2e-selectors';
 
 import { FormModel } from './LoginCtrl';
+import { Button } from '@grafana/ui';
 
 interface Props {
   displayForgotPassword: boolean;
@@ -93,15 +94,16 @@ export class LoginForm extends PureComponent<Props, State> {
         </div>
         <div className="login-button-group">
           {!this.props.isLoggingIn ? (
-            <button
+            <Button
+              size="lg"
+              variant="primary"
               type="submit"
               aria-label={selectors.pages.Login.submit}
-              className={`btn btn-large p-x-2 ${this.state.valid ? 'btn-primary' : 'btn-inverse'}`}
               onClick={this.onSubmit}
               disabled={!this.state.valid}
             >
-              Log In
-            </button>
+              Log in
+            </Button>
           ) : (
             <button type="submit" disabled className="btn btn-large p-x-2 btn-inverse btn-loading">
               Logging In<span>.</span>

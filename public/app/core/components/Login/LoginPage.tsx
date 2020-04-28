@@ -19,7 +19,7 @@ export const LoginPage: FC = () => {
 
   return (
     <Branding.LoginBackground className="login container">
-      <Branding.LoginContentBox>
+      <div className={styles.loginContent}>
         <div className={styles.loginLogoWrapper}>
           <Branding.LoginLogo className="login-logo" />
           <div className={styles.titleWrapper}>
@@ -31,7 +31,6 @@ export const LoginPage: FC = () => {
           {({
             loginHint,
             passwordHint,
-            isOauthEnabled,
             ldapEnabled,
             authProxyEnabled,
             disableLoginForm,
@@ -71,12 +70,14 @@ export const LoginPage: FC = () => {
         </LoginCtrl>
 
         <div className="clearfix" />
-      </Branding.LoginContentBox>
+      </div>
     </Branding.LoginBackground>
   );
 };
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
+  let boxBackground = theme.isLight ? 'rgba(6, 42, 88, 0.65)' : 'rgba(18, 28, 41, 0.65)';
+
   return {
     loginLogoWrapper: css`
       display: flex;
@@ -89,8 +90,23 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       text-align: center;
     `,
     mainTitle: css`
-      font-size: ${theme.typography.size.lg};
+      font-size: '32px';
     `,
-    subTitle: css``,
+    subTitle: css`
+      font-size: ${theme.typography.size.md};
+    `,
+    loginContent: css`
+      max-width: 550px;
+      width: 100%;
+      display: flex;
+      align-items: stretch;
+      flex-direction: column;
+      position: relative;
+      justify-content: center;
+      z-index: 1;
+      min-height: 320px;
+      border-radius: 3px;
+      background: ${boxBackground};
+    `,
   };
 });
