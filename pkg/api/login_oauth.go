@@ -239,7 +239,12 @@ func syncUser(ctx *models.ReqContext, token *oauth2.Token, userInfo *social.Basi
 				}
 			}
 			orgID := int64(groupMapping.OrgId)
-			extUser.OrgRoles[orgID] = rt
+			if _, ok := extUser.OrgRoles[orgID]; !ok {
+				oauthLogger.Debug("Assign group mapping", "login", extUser.Login, "orgID", orgID, "role", rt)
+				extUser.OrgRoles[orgID] = rt
+			} else {
+				oauthLogger.Debug("Skipping org map, already mapped", "login", extUser.Login, "orgID", orgID, "role", rt)
+			}
 			if groupMapping.IsGrafanaAdmin {
 				extUser.IsGrafanaAdmin = &groupMapping.IsGrafanaAdmin
 			}
