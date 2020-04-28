@@ -44,7 +44,7 @@
   },
   "grafana": {
     "whatsNewUrl": "https://grafana.com/docs/grafana/latest/guides/whats-new-in-v7-0/",
-    "releaseNotesURL": "https://community.grafana.com/t/release-notes-v7-0-x/29381"
+    "releaseNotesUrl": "https://community.grafana.com/t/release-notes-v7-0-x/29381"
   },
   "husky": {
     "hooks": {
