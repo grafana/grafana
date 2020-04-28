@@ -16,4 +16,4 @@ Grafana 7.0 is coming. This article will soon be filled with highlights on what'
 
 In the meantime if your want to know more about what we have been up to and what is coming sign up to our online GrafanaCon conference.
 
-[{{< figure src="/static/assets/img/blog/GrafanaCONline.jpg" max-width="800px" lightbox="false" caption="GrafanaCONline May 13-29" >}}](https://grafana.com/about/events/grafanacon/2020/?source=blog)
+[{{< figure src="/assets/img/blog/GrafanaCONline.jpg" max-width="800px" lightbox="false" caption="GrafanaCONline May 13-29" >}}](https://grafana.com/about/events/grafanacon/2020/?source=blog)
