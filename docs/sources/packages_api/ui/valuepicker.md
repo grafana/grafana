@@ -5,7 +5,6 @@
 title = "ValuePicker"
 keywords = ["grafana","documentation","sdk","@grafana/ui"]
 type = "docs"
-draft = true
 +++
 
 ## ValuePicker() function

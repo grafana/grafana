@@ -5,7 +5,6 @@
 title = "Cascader"
 keywords = ["grafana","documentation","sdk","@grafana/ui"]
 type = "docs"
-draft = true
 +++
 
 ## Cascader class

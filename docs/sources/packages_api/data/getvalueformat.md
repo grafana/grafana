@@ -5,7 +5,6 @@
 title = "getValueFormat"
 keywords = ["grafana","documentation","sdk","@grafana/data"]
 type = "docs"
-draft = true
 +++
 
 ## getValueFormat() function

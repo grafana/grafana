@@ -5,7 +5,6 @@
 title = "updateDatasourcePluginResetOption"
 keywords = ["grafana","documentation","sdk","@grafana/data"]
 type = "docs"
-draft = true
 +++
 
 ## updateDatasourcePluginResetOption variable

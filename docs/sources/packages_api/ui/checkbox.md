@@ -5,7 +5,6 @@
 title = "Checkbox"
 keywords = ["grafana","documentation","sdk","@grafana/ui"]
 type = "docs"
-draft = true
 +++
 
 ## Checkbox variable
