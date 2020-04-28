@@ -4,16 +4,16 @@ import { ReducerID, fieldReducers } from '../fieldReducer';
 import { getFieldMatcher } from '../matchers';
 import { FieldMatcherID } from '../matchers/ids';
 import { RowVector } from '../../vector/RowVector';
-import { ArrayVector } from '../../vector';
+import { ArrayVector, BinaryOperationVector, ConstantVector } from '../../vector';
 import { doStandardCalcs } from '../fieldReducer';
 import { seriesToColumnsTransformer } from './seriesToColumns';
 import { getTimeField } from '../../dataframe';
 import defaults from 'lodash/defaults';
-import { BinaryOperationID } from '../../utils/binaryOperators';
+import { BinaryOperationID, binaryOperators } from '../../utils/binaryOperators';
 
 export enum CalculateFieldMode {
   ReduceRow = 'reduceRow',
-  BinaryOperaticon = 'binary',
+  BinaryOperation = 'binary',
   Scale = 'scale',
 }
 
@@ -114,7 +114,7 @@ export const calculateFieldTransformer: DataTransformerInfo<CalculateFieldTransf
     let creator: FieldCreator | undefined = undefined;
     if (mode === CalculateFieldMode.ReduceRow) {
       creator = getReduceRowCreator(defaults(options.reduce, defaultReduceOptions));
-    } else if (mode === CalculateFieldMode.BinaryOperaticon) {
+    } else if (mode === CalculateFieldMode.BinaryOperation) {
       creator = getBinaryCreator(defaults(options.binary, defaultBinaryOptions));
     } else if (mode === CalculateFieldMode.Scale) {
       creator = getScaleCreator(defaults(options.scale, defaultScaleOptions));
@@ -213,30 +213,49 @@ function getReduceRowCreator(options: ReduceOptions): FieldCreator {
   };
 }
 
+function findFieldWithName(frame: DataFrame, name: string): Field | undefined {
+  for (const f of frame.fields) {
+    if (f.name === name) {
+      return f;
+    }
+  }
+  return undefined;
+}
+
 function getBinaryCreator(options: BinaryOptions): FieldCreator {
-  // TODO
-  // Left
-  // Right
+  const operator = binaryOperators.getIfExists(options.operator);
+
   return (frame: DataFrame) => {
+    const left = findFieldWithName(frame, options.left);
+    const right = findFieldWithName(frame, options.right);
+    if (!left || !right || !operator) {
+      return (undefined as unknown) as Field;
+    }
+
     return {
-      name: 'math',
+      name: operator.name,
       type: FieldType.number,
       config: {},
-      values: new ArrayVector([]),
+      values: new BinaryOperationVector(left.values, right.values, operator.operation),
     };
   };
 }
 
 function getScaleCreator(options: ScaleOptions): FieldCreator {
-  // TODO
-  // Left
-  // Right
+  const operator = binaryOperators.getIfExists(options.operator);
+
   return (frame: DataFrame) => {
+    const left = findFieldWithName(frame, options.left);
+    if (!left || !operator) {
+      return (undefined as unknown) as Field;
+    }
+
+    const right = new ConstantVector(options.right, left.values.length);
     return {
-      name: 'math',
+      name: operator.name,
       type: FieldType.number,
       config: {},
-      values: new ArrayVector([]),
+      values: new BinaryOperationVector(left.values, right, operator.operation),
     };
   };
 }
