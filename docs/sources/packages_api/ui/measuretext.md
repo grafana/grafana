@@ -5,7 +5,6 @@
 title = "measureText"
 keywords = ["grafana","documentation","sdk","@grafana/ui"]
 type = "docs"
-draft = true
 +++
 
 ## measureText() function

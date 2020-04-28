@@ -5,7 +5,6 @@
 title = "SCHEMA"
 keywords = ["grafana","documentation","sdk","@grafana/ui"]
 type = "docs"
-draft = true
 +++
 
 ## SCHEMA variable

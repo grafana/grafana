@@ -5,7 +5,6 @@
 title = "DataSourceSelectItem"
 keywords = ["grafana","documentation","sdk","@grafana/data"]
 type = "docs"
-draft = true
 +++
 
 ## DataSourceSelectItem interface

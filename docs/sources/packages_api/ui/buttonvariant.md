@@ -5,7 +5,6 @@
 title = "ButtonVariant"
 keywords = ["grafana","documentation","sdk","@grafana/ui"]
 type = "docs"
-draft = true
 +++
 
 ## ButtonVariant type

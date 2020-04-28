@@ -5,7 +5,6 @@
 title = "FormAPI"
 keywords = ["grafana","documentation","sdk","@grafana/ui"]
 type = "docs"
-draft = true
 +++
 
 ## FormAPI type
