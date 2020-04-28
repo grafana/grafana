@@ -12,6 +12,8 @@ import { AnnotationEvent, AppEvents, DataSourceApi, PanelEvents, TimeRange } fro
 import { getBackendSrv, getDataSourceSrv } from '@grafana/runtime';
 import { appEvents } from 'app/core/core';
 import { getTimeSrv } from '../dashboard/services/TimeSrv';
+import { dispatch, getState } from '../../store/store';
+import { setAnnotationsAndAlert } from './state/reducers';
 
 export class AnnotationsSrv {
   globalAnnotationsPromise: any;
@@ -29,6 +31,14 @@ export class AnnotationsSrv {
     this.globalAnnotationsPromise = null;
     this.alertStatesPromise = null;
     this.datasourcePromises = null;
+  }
+
+  getLastAnnotationsResult(panelId: number) {
+    const state = getState().annotations;
+    // clone deep because Angular mutates the annotations
+    const annotations = state[panelId] ? cloneDeep(state[panelId].annotations) : [];
+
+    return Promise.resolve({ annotations });
   }
 
   getAnnotations(options: { dashboard: DashboardModel; panel: PanelModel; range: TimeRange }) {
@@ -53,9 +63,17 @@ export class AnnotationsSrv {
         // look for alert state for this panel
         const alertState: any = results[1].find((res: any) => res.panelId === panelFilterId);
 
+        dispatch(
+          setAnnotationsAndAlert({
+            identifier: { panelId: options?.panel?.id },
+            annotations: cloneDeep(annotations), // clone deep because Angular mutates the annotations
+            alertState,
+          })
+        );
+
         return {
-          annotations: annotations,
-          alertState: alertState,
+          annotations,
+          alertState,
         };
       })
       .catch(err => {

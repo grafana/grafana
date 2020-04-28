@@ -13,9 +13,10 @@ import config from 'app/core/config';
 // Types
 import { DashboardModel, PanelModel } from '../state';
 import { StoreState } from 'app/types';
-import { DefaultTimeRange, LoadingState, PanelData, PanelEvents, PanelPlugin } from '@grafana/data';
+import { AnnotationEvent, DefaultTimeRange, LoadingState, PanelData, PanelEvents, PanelPlugin } from '@grafana/data';
 import { updateLocation } from 'app/core/actions';
 import { PANEL_BORDER } from 'app/core/constants';
+import { getAnnotationsAndAlertState } from '../../annotations/state/reducers';
 
 interface OwnProps {
   panel: PanelModel;
@@ -30,6 +31,8 @@ interface OwnProps {
 
 interface ConnectedProps {
   angularComponent?: AngularComponent | null;
+  annotations: AnnotationEvent[];
+  alertState: any;
 }
 
 interface DispatchProps {
@@ -42,7 +45,6 @@ export type Props = OwnProps & ConnectedProps & DispatchProps;
 export interface State {
   data: PanelData;
   errorMessage?: string;
-  alertState?: string;
 }
 
 interface AngularScopeProps {
@@ -90,20 +92,8 @@ export class PanelChromeAngularUnconnected extends PureComponent<Props, State> {
   }
 
   onPanelRenderEvent = (payload?: any) => {
-    const { alertState } = this.state;
-
-    if (payload && payload.alertState && this.props.panel.alert) {
-      this.setState({ alertState: payload.alertState });
-    } else if (payload && payload.alertState && !this.props.panel.alert) {
-      // when user deletes alert in panel editor the source panel needs to refresh as this is in the mutable state and
-      // will not automatically re render
-      this.setState({ alertState: undefined });
-    } else if (payload && alertState) {
-      this.setState({ alertState: undefined });
-    } else {
-      // only needed for detecting title updates right now fix before 7.0
-      this.forceUpdate();
-    }
+    // only needed for detecting title updates right now fix before 7.0
+    this.forceUpdate();
   };
 
   onPanelDataUpdate(data: PanelData) {
@@ -219,8 +209,8 @@ export class PanelChromeAngularUnconnected extends PureComponent<Props, State> {
   }
 
   render() {
-    const { dashboard, panel, isViewing, isEditing, plugin, angularComponent, updateLocation } = this.props;
-    const { errorMessage, data, alertState } = this.state;
+    const { dashboard, panel, isViewing, isEditing, plugin, angularComponent, updateLocation, alertState } = this.props;
+    const { errorMessage, data } = this.state;
     const { transparent } = panel;
 
     const containerClassNames = classNames({
@@ -263,8 +253,11 @@ export class PanelChromeAngularUnconnected extends PureComponent<Props, State> {
 }
 
 const mapStateToProps: MapStateToProps<ConnectedProps, OwnProps, StoreState> = (state, props) => {
+  const { annotations, alertState } = getAnnotationsAndAlertState(state, props.panel.id);
   return {
     angularComponent: state.dashboard.panels[props.panel.id].angularComponent,
+    annotations,
+    alertState: alertState.state,
   };
 };
 
