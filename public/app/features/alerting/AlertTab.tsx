@@ -242,8 +242,8 @@ class UnConnectedAlertTab extends PureComponent<Props, State> {
               <div ref={element => (this.element = element)} />
               {alert && (
                 <HorizontalGroup>
-                  <Button onClick={() => this.onToggleModal('showStateHistory')}>State history</Button>
-                  <Button onClick={() => this.onToggleModal('showTestRule')}>Test rule</Button>
+                  <Button onClick={() => this.onToggleModal('showStateHistory')} variant="secondary">State history</Button>
+                  <Button onClick={() => this.onToggleModal('showTestRule')} variant="secondary">Test rule</Button>
                   <Button onClick={() => this.onToggleModal('showDeleteConfirmation')} variant="destructive">
                     Delete
                   </Button>
