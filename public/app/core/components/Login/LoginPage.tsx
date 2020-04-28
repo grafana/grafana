@@ -1,5 +1,6 @@
 // Libraries
 import React, { FC } from 'react';
+import { css } from 'emotion';
 import { CSSTransition } from 'react-transition-group';
 
 // Components
@@ -9,14 +10,22 @@ import LoginCtrl from './LoginCtrl';
 import { LoginForm } from './LoginForm';
 import { ChangePassword } from './ChangePassword';
 import { Branding } from 'app/core/components/Branding/Branding';
-import { Footer } from 'app/core/components/Footer/Footer';
+import { stylesFactory, useTheme } from '@grafana/ui';
+import { GrafanaTheme } from '@grafana/data';
 
 export const LoginPage: FC = () => {
+  const theme = useTheme();
+  const styles = getStyles(theme);
+
   return (
     <Branding.LoginBackground className="login container">
       <Branding.LoginContentBox>
-        <div className="login-branding">
+        <div className={styles.loginLogoWrapper}>
           <Branding.LoginLogo className="login-logo" />
+          <div className={styles.titleWrapper}>
+            <h1 className={styles.mainTitle}>{Branding.LoginMainTitle}</h1>
+            <h3 className={styles.subTitle}>{Branding.LoginSubTtitle}</h3>
+          </div>
         </div>
         <LoginCtrl>
           {({
@@ -66,3 +75,22 @@ export const LoginPage: FC = () => {
     </Branding.LoginBackground>
   );
 };
+
+const getStyles = stylesFactory((theme: GrafanaTheme) => {
+  return {
+    loginLogoWrapper: css`
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      padding: ${theme.spacing.lg};
+    `,
+    titleWrapper: css`
+      text-align: center;
+    `,
+    mainTitle: css`
+      font-size: ${theme.typography.size.lg};
+    `,
+    subTitle: css``,
+  };
+});

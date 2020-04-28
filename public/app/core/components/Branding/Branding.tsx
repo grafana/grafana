@@ -15,7 +15,6 @@ export const LoginLogo: FC<BrandComponentProps> = ({ className }) => {
   return (
     <>
       <img className={cx(className, maxSize)} src="public/img/grafana_icon.svg" alt="Grafana" />
-      <div className="logo-wordmark" />
     </>
   );
 };
@@ -46,4 +45,6 @@ export class Branding {
   static MenuLogo = MenuLogo;
   static AppTitle = AppTitle;
   static LoginContentBox = LoginContentBox;
+  static LoginMainTitle = 'Welcome to Grafana';
+  static LoginSubTtitle = 'Your single pane of glass';
 }

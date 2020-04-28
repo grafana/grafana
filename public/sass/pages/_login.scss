@@ -296,11 +296,6 @@ select:-webkit-autofill:focus {
 }
 
 @include media-breakpoint-up(md) {
-  .login-content {
-    flex-direction: row;
-    flex: 1 0 100%;
-  }
-
   .login-divider {
     .login-divider-line {
       width: 110px;
@@ -308,9 +303,7 @@ select:-webkit-autofill:focus {
   }
 
   .login-branding {
-    width: 45%;
     padding: $space-xl;
-    flex-grow: 1;
   }
 
   .login-button-group {
