@@ -205,7 +205,7 @@ class UnConnectedAlertTab extends PureComponent<Props, State> {
         <StateHistory
           dashboard={dashboard}
           panelId={panel.editSourceId ?? panel.id}
-          onRefresh={this.panelCtrl.refresh}
+          onRefresh={() => this.panelCtrl.refresh()}
         />
       </Modal>
     );
