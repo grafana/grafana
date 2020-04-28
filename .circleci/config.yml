@@ -840,7 +840,6 @@ jobs:
 
   build-docs-website:
     executor: grafana-build
-    working_directory: /docs
     steps:
       - checkout
       - setup_remote_docker
@@ -853,22 +852,23 @@ jobs:
             apt-get update
             apt-get install -y docker.io
       - run:
-          name: Build grafana docs website
+          name: Build Grafana docs website
           command: |
-            # https://circleci.com/docs/2.0/building-docker-images/#mounting-folders
-            # create a dummy container which will hold a volume with config
-            docker create -v /hugo/content/docs/grafana --name docs-website alpine:3.4 /bin/true
-            # copy a config file into this volume
-            docker cp ${PWD}/docs/sources docs-website:/hugo/content/docs/grafana/latest
-            # start an application container using this volume
-            docker run --volumes-from docs-website --rm -it grafana/docs-base:latest /bin/bash -c 'npm i && make prod'
+            IMAGE=grafana/docs-base@sha256:63758b74e3990ab61e274f5e98da092d5c38378829dad0488aa97c59f0144f34
+
+            # In order to copy sources into the remote container, we need to employ a trick of creating a container
+            # with a volume, that we copy the sources into. Then, we launch the build container, with the volume
+            # from the other container
+            docker create -v /hugo/content/docs/grafana --name docs alpine:3.11 /bin/true
+            docker cp ${PWD}/docs/sources docs:/hugo/content/docs/grafana/latest
+            docker run --volumes-from docs $IMAGE /bin/bash -c 'make prod'
       - run:
           name: CI job failed
-          command: "docker stop docs-website && docker rm docs-website && ./scripts/ci-job-failed.sh"
+          command: "./scripts/ci-job-failed.sh"
           when: on_fail
       - run:
           name: CI job succeeded
-          command: "docker stop docs-website && docker rm docs-website && ./scripts/ci-job-succeeded.sh"
+          command: "./scripts/ci-job-succeeded.sh"
           when: on_success
 
   deploy-to-kubernetes:
