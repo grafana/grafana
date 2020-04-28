@@ -11,6 +11,7 @@ import { Step } from './components/Step';
 import { Help } from './components/Help';
 import { getSteps } from './steps';
 import { Card, SetupStep } from './types';
+import { Branding } from 'app/core/components/Branding/Branding';
 
 interface State {
   checksDone: boolean;
@@ -85,6 +86,7 @@ export class GettingStarted extends PureComponent<PanelProps, State> {
     if (!checksDone) {
       return <div>checking...</div>;
     }
+
     const styles = getStyles();
     const step = steps[currentStep];
 
@@ -98,8 +100,11 @@ export class GettingStarted extends PureComponent<PanelProps, State> {
         <div className={styles.content}>
           <div className={styles.header}>
             <div className={styles.heading}>
-              <h1>{step.heading}</h1>
-              <p>{step.subheading}</p>
+              <Branding.MenuLogo className={styles.headerLogo} />
+              <div>
+                <h1>{step.heading}</h1>
+                <p>{step.subheading}</p>
+              </div>
             </div>
             <Help />
           </div>
@@ -127,78 +132,45 @@ const getStyles = stylesFactory(() => {
       display: flex;
       flex-direction: column;
       height: 100%;
-      background: url(${theme.isDark
-          ? 'public/img/getting_started_background_dark.svg'
-          : 'public/img/getting_started_background_light.svg'})
-        no-repeat;
+      background: url('public/img/login_background_dark.svg') no-repeat;
       background-size: cover;
-      background-position: 5%;
-
-      @media only screen and (max-width: ${theme.breakpoints.xl}) {
-        background-position: 8%;
-      }
-
-      @media only screen and (max-width: ${theme.breakpoints.md}) {
-        background-position: 60%;
-      }
-
-      @media only screen and (max-width: ${theme.breakpoints.sm}) {
-        background-position: 20%;
-      }
     `,
     content: css`
       label: content;
-      margin-left: 26%;
-      margin-top: ${theme.spacing.xl};
-      margin-bottom: ${theme.spacing.lg};
+      padding: ${theme.spacing.md};
 
-      @media only screen and (max-width: ${theme.breakpoints.xl}) {
-        margin-left: 27%;
-      }
-
-      @media only screen and (max-width: ${theme.breakpoints.lg}) {
-        margin-left: 30%;
-      }
-
-      @media only screen and (max-width: ${theme.breakpoints.md}) {
-        margin: ${theme.spacing.lg} auto;
-      }
-
-      @media only screen and (max-width: ${theme.breakpoints.sm}) {
-        margin: ${theme.spacing.lg};
+      @media only screen and (min-width: ${theme.breakpoints.md}) {
+        padding: ${theme.spacing.lg};
       }
     `,
     header: css`
       label: header;
       margin-bottom: ${theme.spacing.lg};
       display: flex;
-      flex-direction: row;
+      flex-direction: column;
 
-      @media only screen and (max-width: ${theme.breakpoints.lg}) {
-        flex-direction: column;
+      @media only screen and (min-width: ${theme.breakpoints.lg}) {
+        flex-direction: row;
+      }
+    `,
+    headerLogo: css`
+      height: 58px;
+      padding-right: ${theme.spacing.md};
+      display: none;
+
+      @media only screen and (min-width: ${theme.breakpoints.md}) {
+        display: block;
       }
     `,
     heading: css`
       label: heading;
-      margin-right: 20%;
-      width: 40%;
+      margin-right: ${theme.spacing.lg};
+      margin-bottom: ${theme.spacing.lg};
+      flex-grow: 1;
+      display: flex;
 
-      @media only screen and (max-width: ${theme.breakpoints.xl}) {
-        margin-right: 5%;
-      }
-
-      @media only screen and (max-width: ${theme.breakpoints.lg}) {
-        margin-right: 15%;
-      }
-
-      @media only screen and (max-width: ${theme.breakpoints.lg}) {
-        margin-right: 10%;
-        width: 100%;
-      }
-
-      @media only screen and (max-width: ${theme.breakpoints.md}) {
-        width: 100%;
-        margin-right: 0px;
+      @media only screen and (min-width: ${theme.breakpoints.md}) {
+        margin-bottom: 0;
       }
     `,
     backForwardButtons: css`
