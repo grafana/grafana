@@ -20,7 +20,7 @@ export class MetricTankMetaInspector extends PureComponent<Props, State> {
     const buckets = parseSchemaRetentions(meta['schema-retentions']);
     const rollupNotice = getRollupNotice([meta]);
     const runtimeNotice = getRuntimeConsolidationNotice([meta]);
-    const normFunc = (meta['consolidate-normfetch'] || '').replace('Consolidator', '');
+    const normFunc = (meta['consolidator-normfetch'] || '').replace('Consolidator', '');
 
     let totalSeconds = 0;
 
