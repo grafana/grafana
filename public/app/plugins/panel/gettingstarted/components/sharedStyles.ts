@@ -16,6 +16,7 @@ export const cardStyle = stylesFactory((theme: GrafanaTheme, complete: boolean) 
       border-bottom-left-radius: ${theme.border.radius.md};
       border-bottom-right-radius: ${theme.border.radius.md};
       position: relative;
+      max-height: 230px;
 
       &::before {
         display: block;

@@ -1,6 +1,5 @@
 // Libraries
 import React, { PureComponent } from 'react';
-
 import { PanelProps } from '@grafana/data';
 import { Button, stylesFactory } from '@grafana/ui';
 import { config } from '@grafana/runtime';
@@ -81,6 +80,7 @@ export class GettingStarted extends PureComponent<PanelProps, State> {
   };
 
   render() {
+    const { width } = this.props;
     const { checksDone, currentStep, steps } = this.state;
 
     if (!checksDone) {
@@ -91,28 +91,26 @@ export class GettingStarted extends PureComponent<PanelProps, State> {
 
     return (
       <div className={styles.container}>
-        <div>
-          {currentStep === steps.length - 1 && (
-            <div className={cx(styles.backForwardButtons, styles.previous)} onClick={this.onPreviousClick}>
-              <Button icon="angle-left" variant="secondary" />
-            </div>
-          )}
-          <div className={styles.content}>
-            <div className={styles.header}>
-              <div className={styles.heading}>
-                <h1>{step.heading}</h1>
-                <p>{step.subheading}</p>
-              </div>
-              <Help />
-            </div>
-            <Step step={step} />
+        {currentStep === steps.length - 1 && (
+          <div className={cx(styles.backForwardButtons, styles.previous)} onClick={this.onPreviousClick}>
+            <Button icon="angle-left" variant="secondary" />
           </div>
-          {currentStep < steps.length - 1 && (
-            <div className={cx(styles.backForwardButtons, styles.forward)} onClick={this.onForwardClick}>
-              <Button icon="angle-right" variant="secondary" />
+        )}
+        <div className={styles.content}>
+          <div className={styles.header}>
+            <div className={styles.heading}>
+              <h1>{step.heading}</h1>
+              <p>{step.subheading}</p>
             </div>
-          )}
+            <Help panelWidth={width} />
+          </div>
+          <Step step={step} />
         </div>
+        {currentStep < steps.length - 1 && (
+          <div className={cx(styles.backForwardButtons, styles.forward)} onClick={this.onForwardClick}>
+            <Button icon="angle-right" variant="secondary" />
+          </div>
+        )}
         <div className={styles.dismiss}>
           <Button size="sm" variant="secondary" onClick={this.dismiss}>
             Remove this panel
@@ -131,30 +129,87 @@ const getStyles = stylesFactory(() => {
       flex-direction: column;
       height: 100%;
       background: url(${theme.isDark
-          ? 'public/img/getting_started_background_dark.png'
-          : 'public/img/getting_started_background_light.png'})
+          ? 'public/img/getting_started_background_dark.svg'
+          : 'public/img/getting_started_background_light.svg'})
         no-repeat;
       background-size: cover;
+      background-position: 5%;
+
+      @media only screen and (max-width: ${theme.breakpoints.xl}) {
+        background-position: 8%;
+      }
+
+      @media only screen and (max-width: ${theme.breakpoints.md}) {
+        background-position: 60%;
+      }
+
+      @media only screen and (max-width: ${theme.breakpoints.sm}) {
+        background-position: 20%;
+      }
     `,
     content: css`
-      margin-left: 350px;
-      margin-top: 32px;
+      label: content;
+      margin-left: 26%;
+      margin-top: ${theme.spacing.xl};
       margin-bottom: ${theme.spacing.lg};
+
+      @media only screen and (max-width: ${theme.breakpoints.xl}) {
+        margin-left: 27%;
+      }
+
+      @media only screen and (max-width: ${theme.breakpoints.lg}) {
+        margin-left: 30%;
+      }
+
+      @media only screen and (max-width: ${theme.breakpoints.md}) {
+        margin: ${theme.spacing.lg} auto;
+      }
+
+      @media only screen and (max-width: ${theme.breakpoints.sm}) {
+        margin: ${theme.spacing.lg};
+      }
     `,
     header: css`
+      label: header;
       margin-bottom: ${theme.spacing.lg};
       display: flex;
       flex-direction: row;
+
+      @media only screen and (max-width: ${theme.breakpoints.lg}) {
+        flex-direction: column;
+      }
     `,
     heading: css`
-      margin-right: 200px;
+      label: heading;
+      margin-right: 20%;
       width: 40%;
+
+      @media only screen and (max-width: ${theme.breakpoints.xl}) {
+        margin-right: 5%;
+      }
+
+      @media only screen and (max-width: ${theme.breakpoints.lg}) {
+        margin-right: 15%;
+      }
+
+      @media only screen and (max-width: ${theme.breakpoints.lg}) {
+        margin-right: 10%;
+        width: 100%;
+      }
+
+      @media only screen and (max-width: ${theme.breakpoints.md}) {
+        width: 100%;
+        margin-right: 0px;
+      }
     `,
     backForwardButtons: css`
       position: absolute;
-      right: 50px;
       bottom: 150px;
       height: 50px;
+
+      @media only screen and (max-width: ${theme.breakpoints.lg}) {
+        display: none;
+      }
     `,
     previous: css`
       left: 30px;
@@ -165,7 +220,10 @@ const getStyles = stylesFactory(() => {
     dismiss: css`
       display: flex;
       justify-content: center;
-      margin-bottom: 8px;
+      position: absolute;
+      bottom: 16px;
+      right: 50%;
+      left: 50%;
     `,
   };
 });
