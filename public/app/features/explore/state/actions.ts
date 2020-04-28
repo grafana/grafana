@@ -100,8 +100,6 @@ import { preProcessPanelData, preProcessAppendPanelData, runRequest } from '../.
 import { PanelModel } from 'app/features/dashboard/state';
 import { getExploreDatasources } from './selectors';
 import { processDateTime } from '../utils/dateTimeProcessor';
-import LokiDatasource from 'app/plugins/datasource/loki/datasource';
-import { LokiQuery } from 'app/plugins/datasource/loki/types';
 
 /**
  * Updates UI state and save it to the URL
@@ -473,16 +471,6 @@ const execQueries = (
   // filtering out hidden queries
   const nonHiddenQueries: DataQuery[] = queries.filter((query: DataQuery) => !query.hide);
 
-  // maps queries in append queries mode to get only half of results
-  const updatedQueries: LokiQuery[] = appendQueries
-    ? nonHiddenQueries.map((query: LokiQuery) => {
-        const datasource = (datasourceInstance as unknown) as LokiDatasource;
-        const limit = query.maxLines ? query.maxLines : datasource.maxLines;
-        const maxLines = limit ? Math.floor(limit / 2) : 500;
-        return { ...query, maxLines };
-      })
-    : [];
-
   const allResponseTimestamps: string[] = queryResponse.series
     .map((elem: any) => {
       return elem.fields[0].values.toArray();
@@ -490,7 +478,8 @@ const execQueries = (
     .flat()
     .sort((a: string, b: string) => a.localeCompare(b));
 
-  //When using appendQueries we add/subtract 1ns offset so we can request newer/older logs
+  // When using appendQueries we add/subtract 1ns offset so we can request newer/older logs
+  // we use momentjs that doesn't support time units smaller than milliseconds
   const oldestResponseEndTimestamp = toUtc(allResponseTimestamps[0]).subtract('1', 'ms');
 
   let appendQueryRaw: RawTimeRange | undefined = undefined; // updated raw time range for append queries, undefined for other types of queries
@@ -552,7 +541,7 @@ const execQueries = (
    * also builds a transaction with different time ranges
    */
   const transaction = appendQueries
-    ? buildQueryTransaction(updatedQueries, queryOptions, appendQueryTimeRange!, scanning, timeZone)
+    ? buildQueryTransaction(nonHiddenQueries, queryOptions, appendQueryTimeRange!, scanning, timeZone)
     : buildQueryTransaction(nonHiddenQueries, queryOptions, range, scanning, timeZone);
 
   let firstResponse = true;
