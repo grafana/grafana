@@ -1,9 +1,10 @@
 import React, { FC } from 'react';
 import { Icon, IconName } from '@grafana/ui';
+import { sanitize, sanitizeUrl } from '@grafana/data/src/text/sanitize';
 import { DashboardsDropdown } from './DashboardsDropdown';
 import { getLinkSrv } from '../../../panel/panellinks/link_srv';
+
 import { DashboardModel } from '../../state';
-import { sanitize, sanitizeUrl } from '../../../../core/utils/text';
 import { DashboardLink } from '../../state/DashboardModel';
 
 export interface Props {

@@ -1,8 +1,8 @@
 import React, { PureComponent } from 'react';
 import { Icon } from '@grafana/ui';
+import { sanitize, sanitizeUrl } from '@grafana/data/src/text/sanitize';
 import { getBackendSrv } from 'app/core/services/backend_srv';
-import { sanitize, sanitizeUrl } from 'app/core/utils/text';
-import { DashboardSearchHit } from 'app/types';
+import { DashboardSearchHit } from 'app/features/search/types';
 import { getLinkSrv } from '../../../panel/panellinks/link_srv';
 import { DashboardLink } from '../../state/DashboardModel';
 
