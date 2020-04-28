@@ -44,7 +44,6 @@ import {
   updateStarredInRichHistory,
   updateCommentInRichHistory,
   deleteQueryInRichHistory,
-  getQueryDisplayText,
   getRichHistory,
 } from 'app/core/utils/richHistory';
 // Types
@@ -469,8 +468,8 @@ export const runQueries = (exploreId: ExploreId): ThunkResult<void> => {
     };
 
     const datasourceName = exploreItemState.requestedDatasourceName;
-
-    const transaction = buildQueryTransaction(queries, queryOptions, range, scanning);
+    const timeZone = getTimeZone(getState().user);
+    const transaction = buildQueryTransaction(queries, queryOptions, range, scanning, timeZone);
 
     let firstResponse = true;
     dispatch(changeLoadingStateAction({ exploreId, loadingState: LoadingState.Loading }));
@@ -487,17 +486,11 @@ export const runQueries = (exploreId: ExploreId): ThunkResult<void> => {
         if (!data.error && firstResponse) {
           // Side-effect: Saving history in localstorage
           const nextHistory = updateHistory(history, datasourceId, queries);
-          const arrayOfStringifiedQueries = queries.map(query =>
-            datasourceInstance?.getQueryDisplayText
-              ? datasourceInstance.getQueryDisplayText(query)
-              : getQueryDisplayText(query)
-          );
-
           const nextRichHistory = addToRichHistory(
             richHistory || [],
             datasourceId,
             datasourceName,
-            arrayOfStringifiedQueries,
+            queries,
             false,
             '',
             ''

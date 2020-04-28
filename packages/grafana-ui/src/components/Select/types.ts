@@ -19,6 +19,7 @@ export interface SelectCommonProps<T> {
   getOptionLabel?: (item: SelectableValue<T>) => string;
   getOptionValue?: (item: SelectableValue<T>) => string;
   inputValue?: string;
+  invalid?: boolean;
   isClearable?: boolean;
   isLoading?: boolean;
   isMulti?: boolean;
@@ -51,6 +52,7 @@ export interface SelectCommonProps<T> {
   value?: SelectValue<T>;
   /** Sets the width to a multiple of 8px. Should only be used with inline forms. Setting width of the container is preferred in other cases.*/
   width?: number;
+  isOptionDisabled?: () => boolean;
 }
 
 export interface SelectAsyncProps<T> {
@@ -58,6 +60,8 @@ export interface SelectAsyncProps<T> {
   defaultOptions?: boolean | Array<SelectableValue<T>>;
   /** Asynchronously load select options */
   loadOptions?: (query: string) => Promise<Array<SelectableValue<T>>>;
+  /** If cacheOptions is true, then the loaded data will be cached. The cache will remain until cacheOptions changes value. */
+  cacheOptions?: boolean;
   /** Message to display when options are loading */
   loadingMessage?: string;
 }

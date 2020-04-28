@@ -24,10 +24,6 @@ export const useSearch: UseSearch = (query, reducer, params) => {
     dispatch({ type: SEARCH_START });
     const parsedQuery = getParsedQuery(query, queryParsing);
     searchSrv.search(parsedQuery).then(results => {
-      // Remove header for folder search
-      if (query.folderIds.length === 1 && results.length) {
-        results[0].hideHeader = true;
-      }
       dispatch({ type: FETCH_RESULTS, payload: results });
 
       if (searchCallback) {
@@ -39,7 +35,7 @@ export const useSearch: UseSearch = (query, reducer, params) => {
   // Set loading state before debounced search
   useEffect(() => {
     dispatch({ type: SEARCH_START });
-  }, [query.tag, query.sort, query.starred]);
+  }, [query.tag, query.sort, query.starred, query.layout]);
 
   useDebounce(search, 300, [query, folderUid, queryParsing]);
 

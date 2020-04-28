@@ -8,6 +8,7 @@ import { getLogRowStyles } from './getLogRowStyles';
 
 //Components
 import { LogRow } from './LogRow';
+import { RowContextOptions } from './LogRowContextProvider';
 
 export const PREVIEW_LIMIT = 100;
 export const RENDER_LIMIT = 500;
@@ -17,6 +18,7 @@ export interface Props extends Themeable {
   deduplicatedRows?: LogRowModel[];
   dedupStrategy: LogsDedupStrategy;
   highlighterExpressions?: string[];
+  showContextToggle?: (row?: LogRowModel) => boolean;
   showLabels: boolean;
   showTime: boolean;
   wrapLogMessage: boolean;
@@ -26,7 +28,7 @@ export interface Props extends Themeable {
   previewLimit?: number;
   onClickFilterLabel?: (key: string, value: string) => void;
   onClickFilterOutLabel?: (key: string, value: string) => void;
-  getRowContext?: (row: LogRowModel, options?: any) => Promise<any>;
+  getRowContext?: (row: LogRowModel, options?: RowContextOptions) => Promise<any>;
   getFieldLinks?: (field: Field, rowIndex: number) => Array<LinkModel<Field>>;
 }
 
@@ -72,6 +74,7 @@ class UnThemedLogRows extends PureComponent<Props, State> {
   render() {
     const {
       dedupStrategy,
+      showContextToggle,
       showLabels,
       showTime,
       wrapLogMessage,
@@ -119,6 +122,7 @@ class UnThemedLogRows extends PureComponent<Props, State> {
                   getRowContext={getRowContext}
                   highlighterExpressions={highlighterExpressions}
                   row={row}
+                  showContextToggle={showContextToggle}
                   showDuplicates={showDuplicates}
                   showLabels={showLabels}
                   showTime={showTime}
@@ -138,6 +142,7 @@ class UnThemedLogRows extends PureComponent<Props, State> {
                   getRows={getRows}
                   getRowContext={getRowContext}
                   row={row}
+                  showContextToggle={showContextToggle}
                   showDuplicates={showDuplicates}
                   showLabels={showLabels}
                   showTime={showTime}

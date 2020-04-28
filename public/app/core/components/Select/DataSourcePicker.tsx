@@ -2,9 +2,8 @@
 import React, { PureComponent } from 'react';
 
 // Components
-import { LegacyForms } from '@grafana/ui';
+import { Select } from '@grafana/ui';
 import { SelectableValue, DataSourceSelectItem } from '@grafana/data';
-const { Select } = LegacyForms;
 
 export interface Props {
   onChange: (ds: DataSourceSelectItem) => void;
@@ -66,23 +65,22 @@ export class DataSourcePicker extends PureComponent<Props> {
     };
 
     return (
-      <div className="gf-form-inline">
-        <Select
-          className="ds-picker"
-          isMulti={false}
-          isClearable={false}
-          backspaceRemovesValue={false}
-          onChange={this.onChange}
-          options={options}
-          autoFocus={autoFocus}
-          onBlur={onBlur}
-          openMenuOnFocus={openMenuOnFocus}
-          maxMenuHeight={500}
-          placeholder={placeholder}
-          noOptionsMessage={() => 'No datasources found'}
-          value={value}
-        />
-      </div>
+      <Select
+        className="ds-picker select-container"
+        isMulti={false}
+        isClearable={false}
+        backspaceRemovesValue={false}
+        onChange={this.onChange}
+        options={options}
+        autoFocus={autoFocus}
+        onBlur={onBlur}
+        openMenuOnFocus={openMenuOnFocus}
+        maxMenuHeight={500}
+        menuPlacement="bottom"
+        placeholder={placeholder}
+        noOptionsMessage="No datasources found"
+        value={value}
+      />
     );
   }
 }

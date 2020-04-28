@@ -1,9 +1,10 @@
 import React, { FC, useCallback } from 'react';
 import { css, cx } from 'emotion';
 import { GrafanaTheme } from '@grafana/data';
-import { Icon, IconButton, IconName, stylesFactory, useTheme } from '@grafana/ui';
+import { Icon, IconButton, stylesFactory, useTheme } from '@grafana/ui';
 import { DashboardSection, OnToggleChecked } from '../types';
 import { SearchCheckbox } from './SearchCheckbox';
+import { getSectionIcon } from '../utils';
 
 interface SectionHeaderProps {
   editable?: boolean;
@@ -19,7 +20,7 @@ export const SectionHeader: FC<SectionHeaderProps> = ({
   editable = false,
 }) => {
   const theme = useTheme();
-  const styles = getSectionHeaderStyles(theme, section.selected);
+  const styles = getSectionHeaderStyles(theme, section.selected, editable);
 
   const onSectionExpand = () => {
     onSectionClick(section);
@@ -36,10 +37,13 @@ export const SectionHeader: FC<SectionHeaderProps> = ({
     [section]
   );
 
-  return !section.hideHeader ? (
+  return (
     <div className={styles.wrapper} onClick={onSectionExpand}>
       <SearchCheckbox editable={editable} checked={section.checked} onClick={onSectionChecked} />
-      <Icon className={styles.icon} name={section.icon as IconName} />
+
+      <div className={styles.icon}>
+        <Icon name={getSectionIcon(section)} />
+      </div>
 
       <span className={styles.text}>{section.title}</span>
       {section.url && (
@@ -49,20 +53,18 @@ export const SectionHeader: FC<SectionHeaderProps> = ({
       )}
       <Icon name={section.expanded ? 'angle-down' : 'angle-right'} />
     </div>
-  ) : (
-    <div className={styles.wrapper} />
   );
 };
 
-const getSectionHeaderStyles = stylesFactory((theme: GrafanaTheme, selected = false) => {
-  const { sm, xs } = theme.spacing;
+const getSectionHeaderStyles = stylesFactory((theme: GrafanaTheme, selected = false, editable: boolean) => {
+  const { sm } = theme.spacing;
   return {
     wrapper: cx(
       css`
         display: flex;
         align-items: center;
         font-size: ${theme.typography.size.base};
-        padding: ${sm} ${xs} ${xs};
+        padding: 12px;
         color: ${theme.colors.textWeak};
 
         &:hover,
@@ -80,7 +82,7 @@ const getSectionHeaderStyles = stylesFactory((theme: GrafanaTheme, selected = fa
       { selected }
     ),
     icon: css`
-      width: 43px;
+      padding: 0 ${sm} 0 ${editable ? 0 : sm};
     `,
     text: css`
       flex-grow: 1;
