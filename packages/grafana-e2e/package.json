@@ -2,7 +2,7 @@
   "author": "Grafana Labs",
   "license": "Apache-2.0",
   "name": "@grafana/e2e",
-  "version": "7.0.0-pre.0",
+  "version": "7.0.0-beta.1",
   "description": "Grafana End-to-End Test Library",
   "keywords": [
     "cli",
@@ -46,8 +46,8 @@
   },
   "types": "src/index.ts",
   "dependencies": {
+    "@grafana/e2e-selectors": "7.0.0-beta.1",
     "@grafana/tsconfig": "^1.0.0-rc1",
-    "@grafana/e2e-selectors": "7.0.0-pre.0",
     "blink-diff": "1.0.13",
     "commander": "5.0.0",
     "cypress": "3.7.0",

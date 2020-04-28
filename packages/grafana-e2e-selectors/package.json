@@ -2,7 +2,7 @@
   "author": "Grafana Labs",
   "license": "Apache-2.0",
   "name": "@grafana/e2e-selectors",
-  "version": "7.0.0-pre.0",
+  "version": "7.0.0-beta.1",
   "description": "Grafana End-to-End Test Selectors Library",
   "keywords": [
     "cli",
@@ -25,9 +25,9 @@
     "typecheck": "tsc --noEmit"
   },
   "devDependencies": {
-    "@types/node": "13.7.7",
     "@rollup/plugin-commonjs": "11.0.2",
     "@rollup/plugin-node-resolve": "7.1.1",
+    "@types/node": "13.7.7",
     "@types/rollup-plugin-visualizer": "2.6.0",
     "@types/systemjs": "^0.20.6",
     "pretty-format": "25.1.0",

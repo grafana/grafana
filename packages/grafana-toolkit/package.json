@@ -2,7 +2,7 @@
   "author": "Grafana Labs",
   "license": "Apache-2.0",
   "name": "@grafana/toolkit",
-  "version": "7.0.0-pre.0",
+  "version": "7.0.0-beta.1",
   "description": "Grafana Toolkit",
   "keywords": [
     "grafana",
@@ -29,10 +29,10 @@
   "dependencies": {
     "@babel/core": "7.9.0",
     "@babel/preset-env": "7.9.0",
-    "@grafana/data": "7.0.0-pre.0",
+    "@grafana/data": "7.0.0-beta.1",
     "@grafana/eslint-config": "^1.0.0-rc1",
     "@grafana/tsconfig": "^1.0.0-rc1",
-    "@grafana/ui": "7.0.0-pre.0",
+    "@grafana/ui": "7.0.0-beta.1",
     "@types/command-exists": "^1.2.0",
     "@types/execa": "^0.9.0",
     "@types/expect-puppeteer": "3.3.1",

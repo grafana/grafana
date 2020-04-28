@@ -2,7 +2,7 @@
   "author": "Grafana Labs",
   "license": "Apache-2.0",
   "name": "@grafana/ui",
-  "version": "7.0.0-pre.0",
+  "version": "7.0.0-beta.1",
   "description": "Grafana Components Library",
   "keywords": [
     "grafana",
@@ -28,8 +28,8 @@
   },
   "dependencies": {
     "@emotion/core": "^10.0.27",
-    "@grafana/data": "7.0.0-pre.0",
-    "@grafana/e2e-selectors": "7.0.0-pre.0",
+    "@grafana/data": "7.0.0-beta.1",
+    "@grafana/e2e-selectors": "7.0.0-beta.1",
     "@grafana/slate-react": "0.22.9-grafana",
     "@grafana/tsconfig": "^1.0.0-rc1",
     "@iconscout/react-unicons": "^1.0.0",
