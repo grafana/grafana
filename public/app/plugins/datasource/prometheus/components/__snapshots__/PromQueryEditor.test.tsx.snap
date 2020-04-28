@@ -38,15 +38,23 @@ exports[`Render PromQueryEditor with basic options should render 1`] = `
         onChange={[Function]}
         placeholder="legend format"
         type="text"
+        value=""
       />
     </div>
     <div
       className="gf-form"
     >
       <Component
-        tooltip="Leave blank for auto handling based on time range and panel width.
-            Note that the actual dates used in the query will be adjusted
-        to a multiple of the interval step."
+        tooltip={
+          <React.Fragment>
+            An additional lower limit for the step parameter of the Prometheus query and for the
+             
+            <code>
+              $__interval
+            </code>
+             variable. The limit is absolute and not modified by the "Resolution" setting.
+          </React.Fragment>
+        }
         width={7}
       >
         Min step
@@ -55,7 +63,9 @@ exports[`Render PromQueryEditor with basic options should render 1`] = `
         className="gf-form-input width-8"
         onBlur={[Function]}
         onChange={[Function]}
+        placeholder=""
         type="text"
+        value=""
       />
     </div>
     <div
@@ -67,27 +77,8 @@ exports[`Render PromQueryEditor with basic options should render 1`] = `
         Resolution
       </div>
       <Select
-        allowCustomValue={false}
-        autoFocus={false}
-        backspaceRemovesValue={true}
-        className=""
-        components={
-          Object {
-            "Group": [Function],
-            "IndicatorsContainer": [Function],
-            "MenuList": [Function],
-            "Option": [Function],
-            "SingleValue": [Function],
-          }
-        }
-        isClearable={false}
-        isDisabled={false}
-        isLoading={false}
-        isMulti={false}
         isSearchable={false}
-        maxMenuHeight={300}
         onChange={[Function]}
-        openMenuOnFocus={false}
         options={
           Array [
             Object {
@@ -116,7 +107,6 @@ exports[`Render PromQueryEditor with basic options should render 1`] = `
             },
           ]
         }
-        tabSelectsValue={true}
         value={
           Object {
             "label": "1/1",
@@ -129,32 +119,13 @@ exports[`Render PromQueryEditor with basic options should render 1`] = `
       className="gf-form"
     >
       <div
-        className="gf-form-label"
+        className="gf-form-label width-7"
       >
         Format
       </div>
       <Select
-        allowCustomValue={false}
-        autoFocus={false}
-        backspaceRemovesValue={true}
-        className=""
-        components={
-          Object {
-            "Group": [Function],
-            "IndicatorsContainer": [Function],
-            "MenuList": [Function],
-            "Option": [Function],
-            "SingleValue": [Function],
-          }
-        }
-        isClearable={false}
-        isDisabled={false}
-        isLoading={false}
-        isMulti={false}
         isSearchable={false}
-        maxMenuHeight={300}
         onChange={[Function]}
-        openMenuOnFocus={false}
         options={
           Array [
             Object {
@@ -171,13 +142,13 @@ exports[`Render PromQueryEditor with basic options should render 1`] = `
             },
           ]
         }
-        tabSelectsValue={true}
         value={
           Object {
             "label": "Time series",
             "value": "time_series",
           }
         }
+        width={16}
       />
       <Switch
         checked={false}
@@ -198,6 +169,8 @@ exports[`Render PromQueryEditor with basic options should render 1`] = `
           query={
             Object {
               "expr": "",
+              "interval": "",
+              "legendFormat": "",
               "refId": "A",
             }
           }

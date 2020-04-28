@@ -2,9 +2,24 @@ import _ from 'lodash';
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import templateSrv, { TemplateSrv } from 'app/features/templating/template_srv';
 import coreModule from 'app/core/core_module';
-import { appendQueryToUrl, toUrlParams } from 'app/core/utils/url';
-import { VariableSuggestion, VariableOrigin, DataLinkBuiltInVars } from '@grafana/ui';
-import { DataLink, KeyValue, deprecationWarning, LinkModel, DataFrame, ScopedVars } from '@grafana/data';
+import { getConfig } from 'app/core/config';
+import {
+  DataFrame,
+  DataLink,
+  DataLinkBuiltInVars,
+  deprecationWarning,
+  Field,
+  FieldType,
+  KeyValue,
+  LinkModel,
+  locationUtil,
+  ScopedVars,
+  VariableOrigin,
+  VariableSuggestion,
+  VariableSuggestionsScope,
+  urlUtil,
+  textUtil,
+} from '@grafana/data';
 
 const timeRangeVars = [
   {
@@ -62,7 +77,7 @@ const buildLabelPath = (label: string) => {
 };
 
 export const getPanelLinksVariableSuggestions = (): VariableSuggestion[] => [
-  ...templateSrv.variables.map(variable => ({
+  ...templateSrv.getVariables().map(variable => ({
     value: variable.name as string,
     label: variable.name,
     origin: VariableOrigin.Template,
@@ -108,15 +123,101 @@ const getFieldVars = (dataFrames: DataFrame[]) => {
     })),
   ];
 };
-export const getDataLinksVariableSuggestions = (dataFrames: DataFrame[]): VariableSuggestion[] => {
-  const fieldVars = getFieldVars(dataFrames);
+
+const getDataFrameVars = (dataFrames: DataFrame[]) => {
+  let numeric: Field = undefined;
+  let title: Field = undefined;
+  const suggestions: VariableSuggestion[] = [];
+  const keys: KeyValue<true> = {};
+
+  for (const df of dataFrames) {
+    for (const f of df.fields) {
+      if (keys[f.name]) {
+        continue;
+      }
+
+      suggestions.push({
+        value: `__data.fields[${f.name}]`,
+        label: `${f.name}`,
+        documentation: `Formatted value for ${f.name} on the same row`,
+        origin: VariableOrigin.Fields,
+      });
+
+      keys[f.name] = true;
+
+      if (!numeric && f.type === FieldType.number) {
+        numeric = f;
+      }
+
+      if (!title && f.config.title && f.config.title !== f.name) {
+        title = f;
+      }
+    }
+  }
+
+  if (suggestions.length) {
+    suggestions.push({
+      value: `__data.fields[0]`,
+      label: `Select by index`,
+      documentation: `Enter the field order`,
+      origin: VariableOrigin.Fields,
+    });
+  }
+
+  if (numeric) {
+    suggestions.push({
+      value: `__data.fields[${numeric.name}].numeric`,
+      label: `Show numeric value`,
+      documentation: `the numeric field value`,
+      origin: VariableOrigin.Fields,
+    });
+    suggestions.push({
+      value: `__data.fields[${numeric.name}].text`,
+      label: `Show text value`,
+      documentation: `the text value`,
+      origin: VariableOrigin.Fields,
+    });
+  }
+
+  if (title) {
+    suggestions.push({
+      value: `__data.fields[${title.config.title}]`,
+      label: `Select by title`,
+      documentation: `Use the title to pick the field`,
+      origin: VariableOrigin.Fields,
+    });
+  }
+
+  return suggestions;
+};
+
+export const getDataLinksVariableSuggestions = (
+  dataFrames: DataFrame[],
+  scope?: VariableSuggestionsScope
+): VariableSuggestion[] => {
   const valueTimeVar = {
     value: `${DataLinkBuiltInVars.valueTime}`,
     label: 'Time',
     documentation: 'Time value of the clicked datapoint (in ms epoch)',
     origin: VariableOrigin.Value,
   };
-  return [...seriesVars, ...fieldVars, ...valueVars, valueTimeVar, ...getPanelLinksVariableSuggestions()];
+  const includeValueVars = scope === VariableSuggestionsScope.Values;
+
+  return includeValueVars
+    ? [
+        ...seriesVars,
+        ...getFieldVars(dataFrames),
+        ...valueVars,
+        valueTimeVar,
+        ...getDataFrameVars(dataFrames),
+        ...getPanelLinksVariableSuggestions(),
+      ]
+    : [
+        ...seriesVars,
+        ...getFieldVars(dataFrames),
+        ...getDataFrameVars(dataFrames),
+        ...getPanelLinksVariableSuggestions(),
+      ];
 };
 
 export const getCalculationValueDataLinksVariableSuggestions = (dataFrames: DataFrame[]): VariableSuggestion[] => {
@@ -139,7 +240,7 @@ export class LinkSrv implements LinkService {
   constructor(private templateSrv: TemplateSrv, private timeSrv: TimeSrv) {}
 
   getLinkUrl(link: any) {
-    const url = this.templateSrv.replace(link.url || '');
+    let url = locationUtil.assureBaseUrl(this.templateSrv.replace(link.url || ''));
     const params: { [key: string]: any } = {};
 
     if (link.keepTime) {
@@ -152,7 +253,8 @@ export class LinkSrv implements LinkService {
       this.templateSrv.fillVariableValuesForUrl(params);
     }
 
-    return appendQueryToUrl(url, toUrlParams(params));
+    url = urlUtil.appendQueryToUrl(url, urlUtil.toUrlParams(params));
+    return getConfig().disableSanitizeHtml ? url : textUtil.sanitizeUrl(url);
   }
 
   getAnchorInfo(link: any) {
@@ -167,9 +269,10 @@ export class LinkSrv implements LinkService {
    */
   getDataLinkUIModel = <T>(link: DataLink, scopedVars: ScopedVars, origin: T): LinkModel<T> => {
     const params: KeyValue = {};
-    const timeRangeUrl = toUrlParams(this.timeSrv.timeRangeForUrl());
+    const timeRangeUrl = urlUtil.toUrlParams(this.timeSrv.timeRangeForUrl());
 
     let href = link.url;
+
     if (link.onBuildUrl) {
       href = link.onBuildUrl({
         origin,
@@ -178,6 +281,7 @@ export class LinkSrv implements LinkService {
     }
 
     let onClick: (e: any) => void = undefined;
+
     if (link.onClick) {
       onClick = (e: any) => {
         link.onClick({
@@ -189,15 +293,17 @@ export class LinkSrv implements LinkService {
     }
 
     const info: LinkModel<T> = {
-      href: href.replace(/\s|\n/g, ''),
+      href: locationUtil.assureBaseUrl(href.replace(/\n/g, '')),
       title: this.templateSrv.replace(link.title || '', scopedVars),
       target: link.targetBlank ? '_blank' : '_self',
       origin,
       onClick,
     };
+
     this.templateSrv.fillVariableValuesForUrl(params, scopedVars);
 
-    const variablesQuery = toUrlParams(params);
+    const variablesQuery = urlUtil.toUrlParams(params);
+
     info.href = this.templateSrv.replace(info.href, {
       ...scopedVars,
       [DataLinkBuiltInVars.keepTime]: {
@@ -209,6 +315,8 @@ export class LinkSrv implements LinkService {
         value: variablesQuery,
       },
     });
+
+    info.href = getConfig().disableSanitizeHtml ? info.href : textUtil.sanitizeUrl(info.href);
 
     return info;
   };

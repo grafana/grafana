@@ -3,6 +3,7 @@ import appEvents from '../../app_events';
 import TopSection from './TopSection';
 import BottomSection from './BottomSection';
 import { CoreEvents } from 'app/types';
+import { Icon } from '@grafana/ui';
 
 export class SideMenu extends PureComponent {
   toggleSideMenuSmallBreakpoint = () => {
@@ -12,9 +13,9 @@ export class SideMenu extends PureComponent {
   render() {
     return [
       <div className="sidemenu__logo_small_breakpoint" onClick={this.toggleSideMenuSmallBreakpoint} key="hamburger">
-        <i className="fa fa-bars" />
+        <Icon name="bars" size="xl" />
         <span className="sidemenu__close">
-          <i className="fa fa-times" />
+          <Icon name="times" />
           &nbsp;Close
         </span>
       </div>,

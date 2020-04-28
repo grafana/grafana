@@ -1,7 +1,9 @@
-import React, { PureComponent, SyntheticEvent, ChangeEvent } from 'react';
+import React, { ChangeEvent, PureComponent, SyntheticEvent } from 'react';
 import { Tooltip } from '@grafana/ui';
-import appEvents from 'app/core/app_events';
 import { AppEvents } from '@grafana/data';
+
+import appEvents from 'app/core/app_events';
+import { selectors } from '@grafana/e2e-selectors';
 
 interface Props {
   onSubmit: (pw: string) => void;
@@ -115,7 +117,7 @@ export class ChangePassword extends PureComponent<Props, State> {
               placement="bottom"
               content="If you skip you will be prompted to change password next time you login."
             >
-              <a className="btn btn-link" onClick={this.onSkip}>
+              <a className="btn btn-link" onClick={this.onSkip} aria-label={selectors.pages.Login.skip}>
                 Skip
               </a>
             </Tooltip>

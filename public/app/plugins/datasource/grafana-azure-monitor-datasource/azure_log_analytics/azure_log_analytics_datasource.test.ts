@@ -1,13 +1,24 @@
 import AzureMonitorDatasource from '../datasource';
 import FakeSchemaData from './__mocks__/schema';
-
 import { TemplateSrv } from 'app/features/templating/template_srv';
-import { KustoSchema } from '../types';
+import { KustoSchema, AzureLogsVariable } from '../types';
 import { toUtc } from '@grafana/data';
+import { backendSrv } from 'app/core/services/backend_srv'; // will use the version in __mocks__
+
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  getBackendSrv: () => backendSrv,
+}));
 
 describe('AzureLogAnalyticsDatasource', () => {
+  const datasourceRequestMock = jest.spyOn(backendSrv, 'datasourceRequest');
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    datasourceRequestMock.mockImplementation(jest.fn());
+  });
+
   const ctx: any = {
-    backendSrv: {},
     templateSrv: new TemplateSrv(),
   };
 
@@ -17,7 +28,7 @@ describe('AzureLogAnalyticsDatasource', () => {
       url: 'http://azureloganalyticsapi',
     };
 
-    ctx.ds = new AzureMonitorDatasource(ctx.instanceSettings, ctx.backendSrv, ctx.templateSrv);
+    ctx.ds = new AzureMonitorDatasource(ctx.instanceSettings, ctx.templateSrv);
   });
 
   describe('When the config option "Same as Azure Monitor" has been chosen', () => {
@@ -56,9 +67,9 @@ describe('AzureLogAnalyticsDatasource', () => {
       ctx.instanceSettings.jsonData.tenantId = 'xxx';
       ctx.instanceSettings.jsonData.clientId = 'xxx';
       ctx.instanceSettings.jsonData.azureLogAnalyticsSameAs = true;
-      ctx.ds = new AzureMonitorDatasource(ctx.instanceSettings, ctx.backendSrv, ctx.templateSrv);
+      ctx.ds = new AzureMonitorDatasource(ctx.instanceSettings, ctx.templateSrv);
 
-      ctx.backendSrv.datasourceRequest = (options: { url: string }) => {
+      datasourceRequestMock.mockImplementation((options: { url: string }) => {
         if (options.url.indexOf('Microsoft.OperationalInsights/workspaces') > -1) {
           workspacesUrl = options.url;
           return Promise.resolve({ data: workspaceResponse, status: 200 });
@@ -66,14 +77,14 @@ describe('AzureLogAnalyticsDatasource', () => {
           azureLogAnalyticsUrl = options.url;
           return Promise.resolve({ data: tableResponseWithOneColumn, status: 200 });
         }
-      };
+      });
 
       await ctx.ds.metricFindQuery('workspace("aworkspace").AzureActivity  | distinct Category');
     });
 
-    it('should use the sameasloganalyticsazure plugin route', () => {
+    it('should use the loganalyticsazure plugin route', () => {
       expect(workspacesUrl).toContain('azuremonitor');
-      expect(azureLogAnalyticsUrl).toContain('sameasloganalyticsazure');
+      expect(azureLogAnalyticsUrl).toContain('loganalyticsazure');
     });
   });
 
@@ -94,9 +105,7 @@ describe('AzureLogAnalyticsDatasource', () => {
         ctx.instanceSettings.jsonData.logAnalyticsSubscriptionId = 'xxx';
         ctx.instanceSettings.jsonData.logAnalyticsTenantId = 'xxx';
         ctx.instanceSettings.jsonData.logAnalyticsClientId = 'xxx';
-        ctx.backendSrv.datasourceRequest = () => {
-          return Promise.reject(error);
-        };
+        datasourceRequestMock.mockImplementation(() => Promise.reject(error));
       });
 
       it('should return error status and a detailed error message', () => {
@@ -137,111 +146,53 @@ describe('AzureLogAnalyticsDatasource', () => {
     };
 
     const response = {
-      tables: [
-        {
-          name: 'PrimaryResult',
-          columns: [
+      results: {
+        A: {
+          refId: 'A',
+          meta: {
+            columns: ['TimeGenerated', 'Computer', 'avg_CounterValue'],
+            query:
+              'Perf\r\n| where ObjectName == "Memory" and CounterName == "Available MBytes Memory"\n| where TimeGenerated >= datetime(\'2020-04-23T09:15:20Z\') and TimeGenerated <= datetime(\'2020-04-23T09:20:20Z\')\n| where  1 == 1\n| summarize avg(CounterValue) by bin(TimeGenerated, 1m), Computer \n| order by TimeGenerated asc',
+          },
+          series: [
             {
-              name: 'TimeGenerated',
-              type: 'datetime',
+              name: 'grafana-vm',
+              points: [
+                [2017.25, 1587633300000],
+                [2048, 1587633360000],
+                [2048.3333333333335, 1587633420000],
+                [2049, 1587633480000],
+                [2049, 1587633540000],
+                [2049, 1587633600000],
+              ],
             },
-            {
-              name: 'Category',
-              type: 'string',
-            },
-            {
-              name: 'count_',
-              type: 'long',
-            },
-          ],
-          rows: [
-            ['2018-06-02T20:20:00Z', 'Administrative', 2],
-            ['2018-06-02T20:25:00Z', 'Administrative', 22],
-            ['2018-06-02T20:30:00Z', 'Policy', 20],
           ],
         },
-      ],
+      },
     };
 
     describe('in time series format', () => {
       describe('and the data is valid (has time, metric and value columns)', () => {
         beforeEach(() => {
-          ctx.backendSrv.datasourceRequest = (options: { url: string }) => {
-            expect(options.url).toContain('query=AzureActivity');
+          datasourceRequestMock.mockImplementation((options: { url: string }) => {
+            expect(options.url).toContain('/api/tsdb/query');
             return Promise.resolve({ data: response, status: 200 });
-          };
+          });
         });
 
         it('should return a list of datapoints', () => {
           return ctx.ds.query(options).then((results: any) => {
-            expect(results.data.length).toBe(2);
-            expect(results.data[0].datapoints.length).toBe(2);
-            expect(results.data[0].target).toEqual('Administrative');
-            expect(results.data[0].datapoints[0][1]).toEqual(1527970800000);
-            expect(results.data[0].datapoints[0][0]).toEqual(2);
-            expect(results.data[0].datapoints[1][1]).toEqual(1527971100000);
-            expect(results.data[0].datapoints[1][0]).toEqual(22);
+            expect(results.data.length).toBe(1);
+            expect(results.data[0].name).toEqual('grafana-vm');
+            expect(results.data[0].fields.length).toBe(2);
+            expect(results.data[0].fields[0].name).toBe('Time');
+            expect(results.data[0].fields[1].name).toBe('grafana-vm');
+            expect(results.data[0].fields[0].values.toArray().length).toBe(6);
+            expect(results.data[0].fields[0].values.get(0)).toEqual(1587633300000);
+            expect(results.data[0].fields[1].values.get(0)).toEqual(2017.25);
+            expect(results.data[0].fields[0].values.get(1)).toEqual(1587633360000);
+            expect(results.data[0].fields[1].values.get(1)).toEqual(2048);
           });
-        });
-      });
-
-      describe('and the data has no time column)', () => {
-        beforeEach(() => {
-          const invalidResponse = {
-            tables: [
-              {
-                name: 'PrimaryResult',
-                columns: [
-                  {
-                    name: 'Category',
-                    type: 'string',
-                  },
-                  {
-                    name: 'count_',
-                    type: 'long',
-                  },
-                ],
-                rows: [['Administrative', 2]],
-              },
-            ],
-          };
-          ctx.backendSrv.datasourceRequest = (options: { url: string }) => {
-            expect(options.url).toContain('query=AzureActivity');
-            return Promise.resolve({ data: invalidResponse, status: 200 });
-          };
-        });
-
-        it('should throw an exception', () => {
-          ctx.ds.query(options).catch((err: any) => {
-            expect(err.message).toContain('The Time Series format requires a time column.');
-          });
-        });
-      });
-    });
-
-    describe('in tableformat', () => {
-      beforeEach(() => {
-        options.targets[0].azureLogAnalytics.resultFormat = 'table';
-        ctx.backendSrv.datasourceRequest = (options: { url: string }) => {
-          expect(options.url).toContain('query=AzureActivity');
-          return Promise.resolve({ data: response, status: 200 });
-        };
-      });
-
-      it('should return a list of columns and rows', () => {
-        return ctx.ds.query(options).then((results: any) => {
-          expect(results.data[0].type).toBe('table');
-          expect(results.data[0].columns.length).toBe(3);
-          expect(results.data[0].rows.length).toBe(3);
-          expect(results.data[0].columns[0].text).toBe('TimeGenerated');
-          expect(results.data[0].columns[0].type).toBe('datetime');
-          expect(results.data[0].columns[1].text).toBe('Category');
-          expect(results.data[0].columns[1].type).toBe('string');
-          expect(results.data[0].columns[2].text).toBe('count_');
-          expect(results.data[0].columns[2].type).toBe('long');
-          expect(results.data[0].rows[0][0]).toEqual('2018-06-02T20:20:00Z');
-          expect(results.data[0].rows[0][1]).toEqual('Administrative');
-          expect(results.data[0].rows[0][2]).toEqual(2);
         });
       });
     });
@@ -249,10 +200,10 @@ describe('AzureLogAnalyticsDatasource', () => {
 
   describe('When performing getSchema', () => {
     beforeEach(() => {
-      ctx.backendSrv.datasourceRequest = (options: { url: string }) => {
+      datasourceRequestMock.mockImplementation((options: { url: string }) => {
         expect(options.url).toContain('metadata');
         return Promise.resolve({ data: FakeSchemaData.getlogAnalyticsFakeMetadata(), status: 200 });
-      };
+      });
     });
 
     it('should return a schema with a table and rows', () => {
@@ -272,53 +223,129 @@ describe('AzureLogAnalyticsDatasource', () => {
   });
 
   describe('When performing metricFindQuery', () => {
-    const tableResponseWithOneColumn = {
-      tables: [
-        {
-          name: 'PrimaryResult',
-          columns: [
-            {
-              name: 'Category',
-              type: 'string',
-            },
-          ],
-          rows: [['Administrative'], ['Policy']],
-        },
-      ],
-    };
+    let queryResults: AzureLogsVariable[];
 
-    const workspaceResponse = {
+    const workspacesResponse = {
       value: [
         {
-          name: 'aworkspace',
+          name: 'workspace1',
           properties: {
-            source: 'Azure',
-            customerId: 'abc1b44e-3e57-4410-b027-6cc0ae6dee67',
+            customerId: 'eeee4fde-1aaa-4d60-9974-eeee562ffaa1',
+          },
+        },
+        {
+          name: 'workspace2',
+          properties: {
+            customerId: 'eeee4fde-1aaa-4d60-9974-eeee562ffaa2',
           },
         },
       ],
     };
 
-    let queryResults: any[];
+    describe('and is the workspaces() macro', () => {
+      beforeEach(async () => {
+        datasourceRequestMock.mockImplementation((options: { url: string }) => {
+          expect(options.url).toContain('xxx');
+          return Promise.resolve({ data: workspacesResponse, status: 200 });
+        });
 
-    beforeEach(async () => {
-      ctx.backendSrv.datasourceRequest = (options: { url: string }) => {
-        if (options.url.indexOf('Microsoft.OperationalInsights/workspaces') > -1) {
-          return Promise.resolve({ data: workspaceResponse, status: 200 });
-        } else {
-          return Promise.resolve({ data: tableResponseWithOneColumn, status: 200 });
-        }
-      };
+        queryResults = await ctx.ds.metricFindQuery('workspaces()');
+      });
 
-      queryResults = await ctx.ds.metricFindQuery('workspace("aworkspace").AzureActivity  | distinct Category');
+      it('should return a list of workspaces', () => {
+        expect(queryResults.length).toBe(2);
+        expect(queryResults[0].text).toBe('workspace1');
+        expect(queryResults[0].value).toBe('eeee4fde-1aaa-4d60-9974-eeee562ffaa1');
+        expect(queryResults[1].text).toBe('workspace2');
+        expect(queryResults[1].value).toBe('eeee4fde-1aaa-4d60-9974-eeee562ffaa2');
+      });
     });
 
-    it('should return a list of categories in the correct format', () => {
-      expect(queryResults.length).toBe(2);
-      expect(queryResults[0].text).toBe('Administrative');
-      expect(queryResults[0].value).toBe('Administrative');
-      expect(queryResults[1].text).toBe('Policy');
-      expect(queryResults[1].value).toBe('Policy');
+    describe('and is the workspaces() macro with the subscription parameter', () => {
+      beforeEach(async () => {
+        datasourceRequestMock.mockImplementation((options: { url: string }) => {
+          expect(options.url).toContain('11112222-eeee-4949-9b2d-9106972f9123');
+          return Promise.resolve({ data: workspacesResponse, status: 200 });
+        });
+
+        queryResults = await ctx.ds.metricFindQuery('workspaces(11112222-eeee-4949-9b2d-9106972f9123)');
+      });
+
+      it('should return a list of workspaces', () => {
+        expect(queryResults.length).toBe(2);
+        expect(queryResults[0].text).toBe('workspace1');
+        expect(queryResults[0].value).toBe('eeee4fde-1aaa-4d60-9974-eeee562ffaa1');
+        expect(queryResults[1].text).toBe('workspace2');
+        expect(queryResults[1].value).toBe('eeee4fde-1aaa-4d60-9974-eeee562ffaa2');
+      });
+    });
+
+    describe('and is the workspaces() macro with the subscription parameter quoted', () => {
+      beforeEach(async () => {
+        datasourceRequestMock.mockImplementation((options: { url: string }) => {
+          expect(options.url).toContain('11112222-eeee-4949-9b2d-9106972f9123');
+          return Promise.resolve({ data: workspacesResponse, status: 200 });
+        });
+
+        queryResults = await ctx.ds.metricFindQuery('workspaces("11112222-eeee-4949-9b2d-9106972f9123")');
+      });
+
+      it('should return a list of workspaces', () => {
+        expect(queryResults.length).toBe(2);
+        expect(queryResults[0].text).toBe('workspace1');
+        expect(queryResults[0].value).toBe('eeee4fde-1aaa-4d60-9974-eeee562ffaa1');
+        expect(queryResults[1].text).toBe('workspace2');
+        expect(queryResults[1].value).toBe('eeee4fde-1aaa-4d60-9974-eeee562ffaa2');
+      });
+    });
+
+    describe('and is a custom query', () => {
+      const tableResponseWithOneColumn = {
+        tables: [
+          {
+            name: 'PrimaryResult',
+            columns: [
+              {
+                name: 'Category',
+                type: 'string',
+              },
+            ],
+            rows: [['Administrative'], ['Policy']],
+          },
+        ],
+      };
+
+      const workspaceResponse = {
+        value: [
+          {
+            name: 'aworkspace',
+            properties: {
+              source: 'Azure',
+              customerId: 'abc1b44e-3e57-4410-b027-6cc0ae6dee67',
+            },
+          },
+        ],
+      };
+
+      beforeEach(async () => {
+        datasourceRequestMock.mockImplementation((options: { url: string }) => {
+          if (options.url.indexOf('Microsoft.OperationalInsights/workspaces') > -1) {
+            return Promise.resolve({ data: workspaceResponse, status: 200 });
+          } else {
+            return Promise.resolve({ data: tableResponseWithOneColumn, status: 200 });
+          }
+        });
+
+        queryResults = await ctx.ds.metricFindQuery('workspace("aworkspace").AzureActivity  | distinct Category');
+      });
+
+      it('should return a list of categories in the correct format', () => {
+        expect(queryResults.length).toBe(2);
+        expect(queryResults[0].text).toBe('Administrative');
+        expect(queryResults[0].value).toBe('Administrative');
+        expect(queryResults[1].text).toBe('Policy');
+        expect(queryResults[1].value).toBe('Policy');
+      });
     });
   });
 
@@ -364,13 +391,13 @@ describe('AzureLogAnalyticsDatasource', () => {
     let annotationResults: any[];
 
     beforeEach(async () => {
-      ctx.backendSrv.datasourceRequest = (options: { url: string }) => {
+      datasourceRequestMock.mockImplementation((options: { url: string }) => {
         if (options.url.indexOf('Microsoft.OperationalInsights/workspaces') > -1) {
           return Promise.resolve({ data: workspaceResponse, status: 200 });
         } else {
           return Promise.resolve({ data: tableResponse, status: 200 });
         }
-      };
+      });
 
       annotationResults = await ctx.ds.annotationQuery({
         annotation: {

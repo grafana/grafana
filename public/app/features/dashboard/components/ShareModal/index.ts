@@ -1,2 +1,2 @@
-export { ShareModalCtrl } from './ShareModalCtrl';
-export { ShareSnapshotCtrl } from './ShareSnapshotCtrl';
+export { ShareModal, addDashboardShareTab, addPanelShareTab } from './ShareModal';
+export * from './types';

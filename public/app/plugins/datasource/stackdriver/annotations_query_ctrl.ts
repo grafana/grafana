@@ -1,4 +1,5 @@
 import { TemplateSrv } from 'app/features/templating/template_srv';
+import { AnnotationTarget } from './types';
 
 export class StackdriverAnnotationsQueryCtrl {
   static templateUrl = 'partials/annotations.editor.html';
@@ -6,13 +7,12 @@ export class StackdriverAnnotationsQueryCtrl {
   templateSrv: TemplateSrv;
 
   /** @ngInject */
-  constructor(templateSrv: TemplateSrv) {
-    this.templateSrv = templateSrv;
+  constructor() {
     this.annotation.target = this.annotation.target || {};
     this.onQueryChange = this.onQueryChange.bind(this);
   }
 
-  onQueryChange(target: any) {
+  onQueryChange(target: AnnotationTarget) {
     Object.assign(this.annotation.target, target);
   }
 }

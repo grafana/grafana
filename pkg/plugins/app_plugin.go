@@ -6,6 +6,7 @@ import (
 
 	"github.com/gosimple/slug"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -22,17 +23,29 @@ type AppPlugin struct {
 	Pinned            bool             `json:"-"`
 }
 
+// AppPluginRoute describes a plugin route that is defined in
+// the plugin.json file for a plugin.
 type AppPluginRoute struct {
-	Path         string                 `json:"path"`
-	Method       string                 `json:"method"`
-	ReqRole      models.RoleType        `json:"reqRole"`
-	Url          string                 `json:"url"`
-	Headers      []AppPluginRouteHeader `json:"headers"`
-	TokenAuth    *JwtTokenAuth          `json:"tokenAuth"`
-	JwtTokenAuth *JwtTokenAuth          `json:"jwtTokenAuth"`
+	Path         string                   `json:"path"`
+	Method       string                   `json:"method"`
+	ReqRole      models.RoleType          `json:"reqRole"`
+	URL          string                   `json:"url"`
+	URLParams    []AppPluginRouteURLParam `json:"urlParams"`
+	Headers      []AppPluginRouteHeader   `json:"headers"`
+	TokenAuth    *JwtTokenAuth            `json:"tokenAuth"`
+	JwtTokenAuth *JwtTokenAuth            `json:"jwtTokenAuth"`
 }
 
+// AppPluginRouteHeader describes an HTTP header that is forwarded with
+// the proxied request for a plugin route
 type AppPluginRouteHeader struct {
+	Name    string `json:"name"`
+	Content string `json:"content"`
+}
+
+// AppPluginRouteURLParam describes query string parameters for
+// a url in a plugin route
+type AppPluginRouteURLParam struct {
 	Name    string `json:"name"`
 	Content string `json:"content"`
 }
@@ -45,8 +58,8 @@ type JwtTokenAuth struct {
 	Params map[string]string `json:"params"`
 }
 
-func (app *AppPlugin) Load(decoder *json.Decoder, pluginDir string) error {
-	if err := decoder.Decode(&app); err != nil {
+func (app *AppPlugin) Load(decoder *json.Decoder, pluginDir string, backendPluginManager backendplugin.Manager) error {
+	if err := decoder.Decode(app); err != nil {
 		return err
 	}
 

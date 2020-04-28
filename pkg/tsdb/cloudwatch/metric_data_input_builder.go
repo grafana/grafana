@@ -1,28 +1,13 @@
 package cloudwatch
 
 import (
-	"fmt"
+	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/cloudwatch"
-	"github.com/grafana/grafana/pkg/tsdb"
 )
 
-func (e *CloudWatchExecutor) buildMetricDataInput(queryContext *tsdb.TsdbQuery, queries map[string]*cloudWatchQuery) (*cloudwatch.GetMetricDataInput, error) {
-	startTime, err := queryContext.TimeRange.ParseFrom()
-	if err != nil {
-		return nil, err
-	}
-
-	endTime, err := queryContext.TimeRange.ParseTo()
-	if err != nil {
-		return nil, err
-	}
-
-	if !startTime.Before(endTime) {
-		return nil, fmt.Errorf("Invalid time range: Start time must be before end time")
-	}
-
+func (e *CloudWatchExecutor) buildMetricDataInput(startTime time.Time, endTime time.Time, queries map[string]*cloudWatchQuery) (*cloudwatch.GetMetricDataInput, error) {
 	metricDataInput := &cloudwatch.GetMetricDataInput{
 		StartTime: aws.Time(startTime),
 		EndTime:   aws.Time(endTime),

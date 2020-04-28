@@ -41,7 +41,7 @@ exports[`Render should render teams table 1`] = `
       <div
         className="gf-form gf-form--grow"
       >
-        <ForwardRef
+        <Component
           inputClassName="gf-form-input"
           labelClassName="gf-form--has-input-icon gf-form--grow"
           onChange={[Function]}
@@ -52,12 +52,12 @@ exports[`Render should render teams table 1`] = `
       <div
         className="page-action-bar__spacer"
       />
-      <a
-        className="btn btn-primary"
+      <LinkButton
+        className=""
         href="org/teams/new"
       >
-        New team
-      </a>
+        New Team
+      </LinkButton>
     </div>
     <div
       className="admin-list-table"
@@ -132,9 +132,10 @@ exports[`Render should render teams table 1`] = `
             <td
               className="text-right"
             >
-              <DeleteButton
+              <Component
                 disabled={false}
                 onConfirm={[Function]}
+                size="sm"
               />
             </td>
           </tr>
@@ -183,9 +184,10 @@ exports[`Render should render teams table 1`] = `
             <td
               className="text-right"
             >
-              <DeleteButton
+              <Component
                 disabled={false}
                 onConfirm={[Function]}
+                size="sm"
               />
             </td>
           </tr>
@@ -234,9 +236,10 @@ exports[`Render should render teams table 1`] = `
             <td
               className="text-right"
             >
-              <DeleteButton
+              <Component
                 disabled={false}
                 onConfirm={[Function]}
+                size="sm"
               />
             </td>
           </tr>
@@ -285,9 +288,10 @@ exports[`Render should render teams table 1`] = `
             <td
               className="text-right"
             >
-              <DeleteButton
+              <Component
                 disabled={false}
                 onConfirm={[Function]}
+                size="sm"
               />
             </td>
           </tr>
@@ -336,9 +340,10 @@ exports[`Render should render teams table 1`] = `
             <td
               className="text-right"
             >
-              <DeleteButton
+              <Component
                 disabled={false}
                 onConfirm={[Function]}
+                size="sm"
               />
             </td>
           </tr>
@@ -371,7 +376,7 @@ exports[`Render when feature toggle editorsCanAdmin is turned on and signedin us
       <div
         className="gf-form gf-form--grow"
       >
-        <ForwardRef
+        <Component
           inputClassName="gf-form-input"
           labelClassName="gf-form--has-input-icon gf-form--grow"
           onChange={[Function]}
@@ -382,12 +387,12 @@ exports[`Render when feature toggle editorsCanAdmin is turned on and signedin us
       <div
         className="page-action-bar__spacer"
       />
-      <a
-        className="btn btn-primary disabled"
+      <LinkButton
+        className=" disabled"
         href="#"
       >
-        New team
-      </a>
+        New Team
+      </LinkButton>
     </div>
     <div
       className="admin-list-table"
@@ -462,9 +467,10 @@ exports[`Render when feature toggle editorsCanAdmin is turned on and signedin us
             <td
               className="text-right"
             >
-              <DeleteButton
+              <Component
                 disabled={true}
                 onConfirm={[Function]}
+                size="sm"
               />
             </td>
           </tr>
@@ -497,7 +503,7 @@ exports[`Render when feature toggle editorsCanAdmin is turned on and signedin us
       <div
         className="gf-form gf-form--grow"
       >
-        <ForwardRef
+        <Component
           inputClassName="gf-form-input"
           labelClassName="gf-form--has-input-icon gf-form--grow"
           onChange={[Function]}
@@ -508,12 +514,12 @@ exports[`Render when feature toggle editorsCanAdmin is turned on and signedin us
       <div
         className="page-action-bar__spacer"
       />
-      <a
-        className="btn btn-primary"
+      <LinkButton
+        className=""
         href="org/teams/new"
       >
-        New team
-      </a>
+        New Team
+      </LinkButton>
     </div>
     <div
       className="admin-list-table"
@@ -588,9 +594,10 @@ exports[`Render when feature toggle editorsCanAdmin is turned on and signedin us
             <td
               className="text-right"
             >
-              <DeleteButton
+              <Component
                 disabled={true}
                 onConfirm={[Function]}
+                size="sm"
               />
             </td>
           </tr>

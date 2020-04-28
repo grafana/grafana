@@ -8,6 +8,7 @@ import { getLogRowStyles } from './getLogRowStyles';
 
 //Components
 import { LogRow } from './LogRow';
+import { RowContextOptions } from './LogRowContextProvider';
 
 export const PREVIEW_LIMIT = 100;
 export const RENDER_LIMIT = 500;
@@ -17,6 +18,7 @@ export interface Props extends Themeable {
   deduplicatedRows?: LogRowModel[];
   dedupStrategy: LogsDedupStrategy;
   highlighterExpressions?: string[];
+  showContextToggle?: (row?: LogRowModel) => boolean;
   showLabels: boolean;
   showTime: boolean;
   wrapLogMessage: boolean;
@@ -26,7 +28,7 @@ export interface Props extends Themeable {
   previewLimit?: number;
   onClickFilterLabel?: (key: string, value: string) => void;
   onClickFilterOutLabel?: (key: string, value: string) => void;
-  getRowContext?: (row: LogRowModel, options?: any) => Promise<any>;
+  getRowContext?: (row: LogRowModel, options?: RowContextOptions) => Promise<any>;
   getFieldLinks?: (field: Field, rowIndex: number) => Array<LinkModel<Field>>;
 }
 
@@ -72,6 +74,7 @@ class UnThemedLogRows extends PureComponent<Props, State> {
   render() {
     const {
       dedupStrategy,
+      showContextToggle,
       showLabels,
       showTime,
       wrapLogMessage,
@@ -88,7 +91,7 @@ class UnThemedLogRows extends PureComponent<Props, State> {
       getFieldLinks,
     } = this.props;
     const { renderAll } = this.state;
-    const { logsRows, logsRowsHorizontalScroll } = getLogRowStyles(theme);
+    const { logsRowsTable, logsRowsHorizontalScroll } = getLogRowStyles(theme);
     const dedupedRows = deduplicatedRows ? deduplicatedRows : logRows;
     const hasData = logRows && logRows.length > 0;
     const dedupCount = dedupedRows
@@ -108,48 +111,56 @@ class UnThemedLogRows extends PureComponent<Props, State> {
     const getRowContext = this.props.getRowContext ? this.props.getRowContext : () => Promise.resolve([]);
 
     return (
-      <div className={logsRows}>
-        <div className={horizontalScrollWindow}>
-          {hasData &&
-            firstRows.map((row, index) => (
-              <LogRow
-                key={row.uid}
-                getRows={getRows}
-                getRowContext={getRowContext}
-                highlighterExpressions={highlighterExpressions}
-                row={row}
-                showDuplicates={showDuplicates}
-                showLabels={showLabels}
-                showTime={showTime}
-                wrapLogMessage={wrapLogMessage}
-                timeZone={timeZone}
-                allowDetails={allowDetails}
-                onClickFilterLabel={onClickFilterLabel}
-                onClickFilterOutLabel={onClickFilterOutLabel}
-                getFieldLinks={getFieldLinks}
-              />
-            ))}
-          {hasData &&
-            renderAll &&
-            lastRows.map((row, index) => (
-              <LogRow
-                key={row.uid}
-                getRows={getRows}
-                getRowContext={getRowContext}
-                row={row}
-                showDuplicates={showDuplicates}
-                showLabels={showLabels}
-                showTime={showTime}
-                wrapLogMessage={wrapLogMessage}
-                timeZone={timeZone}
-                allowDetails={allowDetails}
-                onClickFilterLabel={onClickFilterLabel}
-                onClickFilterOutLabel={onClickFilterOutLabel}
-                getFieldLinks={getFieldLinks}
-              />
-            ))}
-          {hasData && !renderAll && <span>Rendering {rowCount - previewLimit!} rows...</span>}
-        </div>
+      <div className={horizontalScrollWindow}>
+        <table className={logsRowsTable}>
+          <tbody>
+            {hasData &&
+              firstRows.map((row, index) => (
+                <LogRow
+                  key={row.uid}
+                  getRows={getRows}
+                  getRowContext={getRowContext}
+                  highlighterExpressions={highlighterExpressions}
+                  row={row}
+                  showContextToggle={showContextToggle}
+                  showDuplicates={showDuplicates}
+                  showLabels={showLabels}
+                  showTime={showTime}
+                  wrapLogMessage={wrapLogMessage}
+                  timeZone={timeZone}
+                  allowDetails={allowDetails}
+                  onClickFilterLabel={onClickFilterLabel}
+                  onClickFilterOutLabel={onClickFilterOutLabel}
+                  getFieldLinks={getFieldLinks}
+                />
+              ))}
+            {hasData &&
+              renderAll &&
+              lastRows.map((row, index) => (
+                <LogRow
+                  key={row.uid}
+                  getRows={getRows}
+                  getRowContext={getRowContext}
+                  row={row}
+                  showContextToggle={showContextToggle}
+                  showDuplicates={showDuplicates}
+                  showLabels={showLabels}
+                  showTime={showTime}
+                  wrapLogMessage={wrapLogMessage}
+                  timeZone={timeZone}
+                  allowDetails={allowDetails}
+                  onClickFilterLabel={onClickFilterLabel}
+                  onClickFilterOutLabel={onClickFilterOutLabel}
+                  getFieldLinks={getFieldLinks}
+                />
+              ))}
+            {hasData && !renderAll && (
+              <tr>
+                <td colSpan={5}>Rendering {rowCount - previewLimit!} rows...</td>
+              </tr>
+            )}
+          </tbody>
+        </table>
       </div>
     );
   }

@@ -6,6 +6,12 @@ import { DashboardModel } from '../../dashboard/state/DashboardModel';
 // @ts-ignore
 import $q from 'q';
 
+jest.mock('app/core/core', () => ({
+  contextSrv: {
+    user: { orgId: 1, orgName: 'TestOrg' },
+  },
+}));
+
 describe('VariableSrv init', function(this: any) {
   const templateSrv = {
     init: (vars: any) => {
@@ -13,6 +19,7 @@ describe('VariableSrv init', function(this: any) {
     },
     variableInitialized: () => {},
     updateIndex: () => {},
+    setGlobalVariable: (name: string, variable: any) => {},
     replace: (str: string) =>
       str.replace(this.regex, match => {
         return match;
@@ -74,7 +81,7 @@ describe('VariableSrv init', function(this: any) {
     });
   }
 
-  ['query', 'interval', 'custom', 'datasource'].forEach(type => {
+  ['interval', 'custom', 'datasource'].forEach(type => {
     describeInitScenario('when setting ' + type + ' variable via url', (scenario: any) => {
       scenario.setup(() => {
         scenario.variables = [
@@ -96,6 +103,7 @@ describe('VariableSrv init', function(this: any) {
     });
   });
 
+  // this test will moved to redux tests instead
   describe('given dependent variables', () => {
     const variableList = [
       {
@@ -163,7 +171,7 @@ describe('VariableSrv init', function(this: any) {
       scenario.variables = [
         {
           name: 'apps',
-          type: 'query',
+          type: 'custom',
           multi: true,
           current: { text: 'Val1', value: 'val1' },
           options: [
@@ -199,7 +207,7 @@ describe('VariableSrv init', function(this: any) {
         scenario.variables = [
           {
             name: 'apps',
-            type: 'query',
+            type: 'custom',
             multi: true,
           },
         ];
@@ -221,7 +229,7 @@ describe('VariableSrv init', function(this: any) {
       scenario.variables = [
         {
           name: 'apps',
-          type: 'query',
+          type: 'custom',
           multi: true,
           current: { text: 'Val1', value: 'val1' },
           options: [

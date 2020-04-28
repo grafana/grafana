@@ -1,5 +1,5 @@
 import React, { ChangeEvent, PureComponent, SyntheticEvent } from 'react';
-import { e2e } from '@grafana/e2e';
+import { selectors } from '@grafana/e2e-selectors';
 
 import { FormModel } from './LoginCtrl';
 
@@ -74,7 +74,7 @@ export class LoginForm extends PureComponent<Props, State> {
             className="gf-form-input login-form-input"
             required
             placeholder={this.props.loginHint}
-            aria-label={e2e.pages.Login.selectors.username}
+            aria-label={selectors.pages.Login.username}
             onChange={this.onChangeUsername}
           />
         </div>
@@ -87,7 +87,7 @@ export class LoginForm extends PureComponent<Props, State> {
             ng-model="formModel.password"
             id="inputPassword"
             placeholder={this.props.passwordHint}
-            aria-label={e2e.pages.Login.selectors.password}
+            aria-label={selectors.pages.Login.password}
             onChange={this.onChangePassword}
           />
         </div>
@@ -95,7 +95,7 @@ export class LoginForm extends PureComponent<Props, State> {
           {!this.props.isLoggingIn ? (
             <button
               type="submit"
-              aria-label={e2e.pages.Login.selectors.submit}
+              aria-label={selectors.pages.Login.submit}
               className={`btn btn-large p-x-2 ${this.state.valid ? 'btn-primary' : 'btn-inverse'}`}
               onClick={this.onSubmit}
               disabled={!this.state.valid}
@@ -103,7 +103,7 @@ export class LoginForm extends PureComponent<Props, State> {
               Log In
             </button>
           ) : (
-            <button type="submit" className="btn btn-large p-x-2 btn-inverse btn-loading">
+            <button type="submit" disabled className="btn btn-large p-x-2 btn-inverse btn-loading">
               Logging In<span>.</span>
               <span>.</span>
               <span>.</span>

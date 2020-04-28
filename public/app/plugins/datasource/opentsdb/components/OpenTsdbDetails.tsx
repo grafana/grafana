@@ -1,5 +1,6 @@
-import React from 'react';
-import { FormLabel, Select } from '@grafana/ui';
+import React, { SyntheticEvent } from 'react';
+import { InlineFormLabel, LegacyForms } from '@grafana/ui';
+const { Select, Input } = LegacyForms;
 import { DataSourceSettings, SelectableValue } from '@grafana/data';
 import { OpenTsdbOptions } from '../types';
 
@@ -26,28 +27,36 @@ export const OpenTsdbDetails = (props: Props) => {
     <>
       <h5>OpenTSDB settings</h5>
       <div className="gf-form">
-        <FormLabel width={7}>Version</FormLabel>
+        <InlineFormLabel width={7}>Version</InlineFormLabel>
         <Select
           options={tsdbVersions}
           value={tsdbVersions.find(version => version.value === value.jsonData.tsdbVersion) ?? tsdbVersions[0]}
-          onChange={onChangeHandler('tsdbVersion', value, onChange)}
+          onChange={onSelectChangeHandler('tsdbVersion', value, onChange)}
         />
       </div>
       <div className="gf-form">
-        <FormLabel width={7}>Resolution</FormLabel>
+        <InlineFormLabel width={7}>Resolution</InlineFormLabel>
         <Select
           options={tsdbResolutions}
           value={
             tsdbResolutions.find(resolution => resolution.value === value.jsonData.tsdbResolution) ?? tsdbResolutions[0]
           }
-          onChange={onChangeHandler('tsdbResolution', value, onChange)}
+          onChange={onSelectChangeHandler('tsdbResolution', value, onChange)}
+        />
+      </div>
+      <div className="gf-form">
+        <InlineFormLabel width={7}>Lookup Limit</InlineFormLabel>
+        <Input
+          type="number"
+          value={value.jsonData.lookupLimit ?? 1000}
+          onChange={onInputChangeHandler('lookupLimit', value, onChange)}
         />
       </div>
     </>
   );
 };
 
-const onChangeHandler = (key: keyof OpenTsdbOptions, value: Props['value'], onChange: Props['onChange']) => (
+const onSelectChangeHandler = (key: keyof OpenTsdbOptions, value: Props['value'], onChange: Props['onChange']) => (
   newValue: SelectableValue
 ) => {
   onChange({
@@ -55,6 +64,18 @@ const onChangeHandler = (key: keyof OpenTsdbOptions, value: Props['value'], onCh
     jsonData: {
       ...value.jsonData,
       [key]: newValue.value,
+    },
+  });
+};
+
+const onInputChangeHandler = (key: keyof OpenTsdbOptions, value: Props['value'], onChange: Props['onChange']) => (
+  event: SyntheticEvent<HTMLInputElement>
+) => {
+  onChange({
+    ...value,
+    jsonData: {
+      ...value.jsonData,
+      [key]: event.currentTarget.value,
     },
   });
 };

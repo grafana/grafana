@@ -11,12 +11,13 @@
 .main-view {
   position: relative;
   flex-grow: 1;
-  background: $page-gradient;
+  background: $page-bg;
 }
 
-.panel-in-fullscreen {
+.page-explore,
+.page-dashboard {
   .main-view {
-    background: $edit-gradient;
+    background: $dashboard-bg;
   }
 }
 
@@ -85,15 +86,9 @@
   }
 }
 
-// fix for phantomjs
-.body--phantomjs {
-  .scroll-canvas {
-    overflow: hidden;
-  }
-}
-
 .page-body {
   padding-top: $spacer * 2;
+  padding-bottom: $spacer * 4;
 }
 
 .page-heading {
@@ -147,8 +142,7 @@
 
 .page-sub-heading-icon {
   margin-left: $spacer;
-  vertical-align: 6px;
-  font-size: 13px;
+  margin-top: $space-xs;
 }
 
 .page-sidebar {

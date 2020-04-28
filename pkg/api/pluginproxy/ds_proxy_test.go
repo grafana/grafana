@@ -7,10 +7,14 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"net/url"
+	"strings"
 	"testing"
 	"time"
 
 	"github.com/grafana/grafana/pkg/components/securejsondata"
+	"github.com/grafana/grafana/pkg/models"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"golang.org/x/oauth2"
 	macaron "gopkg.in/macaron.v1"
@@ -18,7 +22,6 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/login/social"
-	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
@@ -33,30 +36,33 @@ func TestDSRouteRule(t *testing.T) {
 				Routes: []*plugins.AppPluginRoute{
 					{
 						Path:    "api/v4/",
-						Url:     "https://www.google.com",
-						ReqRole: m.ROLE_EDITOR,
+						URL:     "https://www.google.com",
+						ReqRole: models.ROLE_EDITOR,
 						Headers: []plugins.AppPluginRouteHeader{
 							{Name: "x-header", Content: "my secret {{.SecureJsonData.key}}"},
 						},
 					},
 					{
 						Path:    "api/admin",
-						Url:     "https://www.google.com",
-						ReqRole: m.ROLE_ADMIN,
+						URL:     "https://www.google.com",
+						ReqRole: models.ROLE_ADMIN,
 						Headers: []plugins.AppPluginRouteHeader{
 							{Name: "x-header", Content: "my secret {{.SecureJsonData.key}}"},
 						},
 					},
 					{
 						Path: "api/anon",
-						Url:  "https://www.google.com",
+						URL:  "https://www.google.com",
 						Headers: []plugins.AppPluginRouteHeader{
 							{Name: "x-header", Content: "my secret {{.SecureJsonData.key}}"},
 						},
 					},
 					{
 						Path: "api/common",
-						Url:  "{{.JsonData.dynamicUrl}}",
+						URL:  "{{.JsonData.dynamicUrl}}",
+						URLParams: []plugins.AppPluginRouteURLParam{
+							{Name: "{{.JsonData.queryParam}}", Content: "{{.SecureJsonData.key}}"},
+						},
 						Headers: []plugins.AppPluginRouteHeader{
 							{Name: "x-header", Content: "my secret {{.SecureJsonData.key}}"},
 						},
@@ -67,10 +73,11 @@ func TestDSRouteRule(t *testing.T) {
 			setting.SecretKey = "password" //nolint:goconst
 			key, _ := util.Encrypt([]byte("123"), "password")
 
-			ds := &m.DataSource{
+			ds := &models.DataSource{
 				JsonData: simplejson.NewFromAny(map[string]interface{}{
 					"clientId":   "asd",
 					"dynamicUrl": "https://dynamic.grafana.com",
+					"queryParam": "apiKey",
 				}),
 				SecureJsonData: map[string][]byte{
 					"key": key,
@@ -78,15 +85,16 @@ func TestDSRouteRule(t *testing.T) {
 			}
 
 			req, _ := http.NewRequest("GET", "http://localhost/asd", nil)
-			ctx := &m.ReqContext{
+			ctx := &models.ReqContext{
 				Context: &macaron.Context{
 					Req: macaron.Request{Request: req},
 				},
-				SignedInUser: &m.SignedInUser{OrgRole: m.ROLE_EDITOR},
+				SignedInUser: &models.SignedInUser{OrgRole: models.ROLE_EDITOR},
 			}
 
 			Convey("When matching route path", func() {
-				proxy := NewDataSourceProxy(ds, plugin, ctx, "api/v4/some/method", &setting.Cfg{})
+				proxy, err := NewDataSourceProxy(ds, plugin, ctx, "api/v4/some/method", &setting.Cfg{})
+				So(err, ShouldBeNil)
 				proxy.route = plugin.Routes[0]
 				ApplyRoute(proxy.ctx.Req.Context(), req, proxy.proxyPath, proxy.route, proxy.ds)
 
@@ -97,33 +105,37 @@ func TestDSRouteRule(t *testing.T) {
 			})
 
 			Convey("When matching route path and has dynamic url", func() {
-				proxy := NewDataSourceProxy(ds, plugin, ctx, "api/common/some/method", &setting.Cfg{})
+				proxy, err := NewDataSourceProxy(ds, plugin, ctx, "api/common/some/method", &setting.Cfg{})
+				So(err, ShouldBeNil)
 				proxy.route = plugin.Routes[3]
 				ApplyRoute(proxy.ctx.Req.Context(), req, proxy.proxyPath, proxy.route, proxy.ds)
 
-				Convey("should add headers and interpolate the url", func() {
-					So(req.URL.String(), ShouldEqual, "https://dynamic.grafana.com/some/method")
+				Convey("should add headers and interpolate the url with query string parameters", func() {
+					So(req.URL.String(), ShouldEqual, "https://dynamic.grafana.com/some/method?apiKey=123")
 					So(req.Header.Get("x-header"), ShouldEqual, "my secret 123")
 				})
 			})
 
 			Convey("Validating request", func() {
 				Convey("plugin route with valid role", func() {
-					proxy := NewDataSourceProxy(ds, plugin, ctx, "api/v4/some/method", &setting.Cfg{})
-					err := proxy.validateRequest()
+					proxy, err := NewDataSourceProxy(ds, plugin, ctx, "api/v4/some/method", &setting.Cfg{})
+					So(err, ShouldBeNil)
+					err = proxy.validateRequest()
 					So(err, ShouldBeNil)
 				})
 
 				Convey("plugin route with admin role and user is editor", func() {
-					proxy := NewDataSourceProxy(ds, plugin, ctx, "api/admin", &setting.Cfg{})
-					err := proxy.validateRequest()
+					proxy, err := NewDataSourceProxy(ds, plugin, ctx, "api/admin", &setting.Cfg{})
+					So(err, ShouldBeNil)
+					err = proxy.validateRequest()
 					So(err, ShouldNotBeNil)
 				})
 
 				Convey("plugin route with admin role and user is admin", func() {
-					ctx.SignedInUser.OrgRole = m.ROLE_ADMIN
-					proxy := NewDataSourceProxy(ds, plugin, ctx, "api/admin", &setting.Cfg{})
-					err := proxy.validateRequest()
+					ctx.SignedInUser.OrgRole = models.ROLE_ADMIN
+					proxy, err := NewDataSourceProxy(ds, plugin, ctx, "api/admin", &setting.Cfg{})
+					So(err, ShouldBeNil)
+					err = proxy.validateRequest()
 					So(err, ShouldBeNil)
 				})
 			})
@@ -134,7 +146,7 @@ func TestDSRouteRule(t *testing.T) {
 				Routes: []*plugins.AppPluginRoute{
 					{
 						Path: "pathwithtoken1",
-						Url:  "https://api.nr1.io/some/path",
+						URL:  "https://api.nr1.io/some/path",
 						TokenAuth: &plugins.JwtTokenAuth{
 							Url: "https://login.server.com/{{.JsonData.tenantId}}/oauth2/token",
 							Params: map[string]string{
@@ -147,7 +159,7 @@ func TestDSRouteRule(t *testing.T) {
 					},
 					{
 						Path: "pathwithtoken2",
-						Url:  "https://api.nr2.io/some/path",
+						URL:  "https://api.nr2.io/some/path",
 						TokenAuth: &plugins.JwtTokenAuth{
 							Url: "https://login.server.com/{{.JsonData.tenantId}}/oauth2/token",
 							Params: map[string]string{
@@ -164,7 +176,7 @@ func TestDSRouteRule(t *testing.T) {
 			setting.SecretKey = "password"
 			key, _ := util.Encrypt([]byte("123"), "password")
 
-			ds := &m.DataSource{
+			ds := &models.DataSource{
 				JsonData: simplejson.NewFromAny(map[string]interface{}{
 					"clientId": "asd",
 					"tenantId": "mytenantId",
@@ -175,11 +187,11 @@ func TestDSRouteRule(t *testing.T) {
 			}
 
 			req, _ := http.NewRequest("GET", "http://localhost/asd", nil)
-			ctx := &m.ReqContext{
+			ctx := &models.ReqContext{
 				Context: &macaron.Context{
 					Req: macaron.Request{Request: req},
 				},
-				SignedInUser: &m.SignedInUser{OrgRole: m.ROLE_EDITOR},
+				SignedInUser: &models.SignedInUser{OrgRole: models.ROLE_EDITOR},
 			}
 
 			Convey("When creating and caching access tokens", func() {
@@ -191,7 +203,8 @@ func TestDSRouteRule(t *testing.T) {
 					So(err, ShouldBeNil)
 
 					client = newFakeHTTPClient(json)
-					proxy1 := NewDataSourceProxy(ds, plugin, ctx, "pathwithtoken1", &setting.Cfg{})
+					proxy1, err := NewDataSourceProxy(ds, plugin, ctx, "pathwithtoken1", &setting.Cfg{})
+					So(err, ShouldBeNil)
 					proxy1.route = plugin.Routes[0]
 					ApplyRoute(proxy1.ctx.Req.Context(), req, proxy1.proxyPath, proxy1.route, proxy1.ds)
 
@@ -205,7 +218,8 @@ func TestDSRouteRule(t *testing.T) {
 
 						req, _ := http.NewRequest("GET", "http://localhost/asd", nil)
 						client = newFakeHTTPClient(json2)
-						proxy2 := NewDataSourceProxy(ds, plugin, ctx, "pathwithtoken2", &setting.Cfg{})
+						proxy2, err := NewDataSourceProxy(ds, plugin, ctx, "pathwithtoken2", &setting.Cfg{})
+						So(err, ShouldBeNil)
 						proxy2.route = plugin.Routes[1]
 						ApplyRoute(proxy2.ctx.Req.Context(), req, proxy2.proxyPath, proxy2.route, proxy2.ds)
 
@@ -220,7 +234,8 @@ func TestDSRouteRule(t *testing.T) {
 							req, _ := http.NewRequest("GET", "http://localhost/asd", nil)
 
 							client = newFakeHTTPClient([]byte{})
-							proxy3 := NewDataSourceProxy(ds, plugin, ctx, "pathwithtoken1", &setting.Cfg{})
+							proxy3, err := NewDataSourceProxy(ds, plugin, ctx, "pathwithtoken1", &setting.Cfg{})
+							So(err, ShouldBeNil)
 							proxy3.route = plugin.Routes[0]
 							ApplyRoute(proxy3.ctx.Req.Context(), req, proxy3.proxyPath, proxy3.route, proxy3.ds)
 
@@ -238,10 +253,11 @@ func TestDSRouteRule(t *testing.T) {
 		Convey("When proxying graphite", func() {
 			setting.BuildVersion = "5.3.0"
 			plugin := &plugins.DataSourcePlugin{}
-			ds := &m.DataSource{Url: "htttp://graphite:8080", Type: m.DS_GRAPHITE}
-			ctx := &m.ReqContext{}
+			ds := &models.DataSource{Url: "htttp://graphite:8080", Type: models.DS_GRAPHITE}
+			ctx := &models.ReqContext{}
 
-			proxy := NewDataSourceProxy(ds, plugin, ctx, "/render", &setting.Cfg{})
+			proxy, err := NewDataSourceProxy(ds, plugin, ctx, "/render", &setting.Cfg{})
+			So(err, ShouldBeNil)
 			req, err := http.NewRequest(http.MethodGet, "http://grafana.com/sub", nil)
 			So(err, ShouldBeNil)
 
@@ -257,16 +273,17 @@ func TestDSRouteRule(t *testing.T) {
 		Convey("When proxying InfluxDB", func() {
 			plugin := &plugins.DataSourcePlugin{}
 
-			ds := &m.DataSource{
-				Type:     m.DS_INFLUXDB_08,
+			ds := &models.DataSource{
+				Type:     models.DS_INFLUXDB_08,
 				Url:      "http://influxdb:8083",
 				Database: "site",
 				User:     "user",
 				Password: "password",
 			}
 
-			ctx := &m.ReqContext{}
-			proxy := NewDataSourceProxy(ds, plugin, ctx, "", &setting.Cfg{})
+			ctx := &models.ReqContext{}
+			proxy, err := NewDataSourceProxy(ds, plugin, ctx, "", &setting.Cfg{})
+			So(err, ShouldBeNil)
 
 			req, err := http.NewRequest(http.MethodGet, "http://grafana.com/sub", nil)
 			So(err, ShouldBeNil)
@@ -283,14 +300,15 @@ func TestDSRouteRule(t *testing.T) {
 
 			json, _ := simplejson.NewJson([]byte(`{"keepCookies": []}`))
 
-			ds := &m.DataSource{
-				Type:     m.DS_GRAPHITE,
+			ds := &models.DataSource{
+				Type:     models.DS_GRAPHITE,
 				Url:      "http://graphite:8086",
 				JsonData: json,
 			}
 
-			ctx := &m.ReqContext{}
-			proxy := NewDataSourceProxy(ds, plugin, ctx, "", &setting.Cfg{})
+			ctx := &models.ReqContext{}
+			proxy, err := NewDataSourceProxy(ds, plugin, ctx, "", &setting.Cfg{})
+			So(err, ShouldBeNil)
 
 			requestURL, _ := url.Parse("http://grafana.com/sub")
 			req := http.Request{URL: requestURL, Header: make(http.Header)}
@@ -309,14 +327,15 @@ func TestDSRouteRule(t *testing.T) {
 
 			json, _ := simplejson.NewJson([]byte(`{"keepCookies": ["JSESSION_ID"]}`))
 
-			ds := &m.DataSource{
-				Type:     m.DS_GRAPHITE,
+			ds := &models.DataSource{
+				Type:     models.DS_GRAPHITE,
 				Url:      "http://graphite:8086",
 				JsonData: json,
 			}
 
-			ctx := &m.ReqContext{}
-			proxy := NewDataSourceProxy(ds, plugin, ctx, "", &setting.Cfg{})
+			ctx := &models.ReqContext{}
+			proxy, err := NewDataSourceProxy(ds, plugin, ctx, "", &setting.Cfg{})
+			So(err, ShouldBeNil)
 
 			requestURL, _ := url.Parse("http://grafana.com/sub")
 			req := http.Request{URL: requestURL, Header: make(http.Header)}
@@ -332,12 +351,13 @@ func TestDSRouteRule(t *testing.T) {
 
 		Convey("When proxying a custom datasource", func() {
 			plugin := &plugins.DataSourcePlugin{}
-			ds := &m.DataSource{
+			ds := &models.DataSource{
 				Type: "custom-datasource",
 				Url:  "http://host/root/",
 			}
-			ctx := &m.ReqContext{}
-			proxy := NewDataSourceProxy(ds, plugin, ctx, "/path/to/folder/", &setting.Cfg{})
+			ctx := &models.ReqContext{}
+			proxy, err := NewDataSourceProxy(ds, plugin, ctx, "/path/to/folder/", &setting.Cfg{})
+			So(err, ShouldBeNil)
 			req, err := http.NewRequest(http.MethodGet, "http://grafana.com/sub", nil)
 			req.Header.Add("Origin", "grafana.com")
 			req.Header.Add("Referer", "grafana.com")
@@ -364,8 +384,8 @@ func TestDSRouteRule(t *testing.T) {
 				},
 			}
 
-			bus.AddHandler("test", func(query *m.GetAuthInfoQuery) error {
-				query.Result = &m.UserAuth{
+			bus.AddHandler("test", func(query *models.GetAuthInfoQuery) error {
+				query.Result = &models.UserAuth{
 					Id:                1,
 					UserId:            1,
 					AuthModule:        "generic_oauth",
@@ -378,7 +398,7 @@ func TestDSRouteRule(t *testing.T) {
 			})
 
 			plugin := &plugins.DataSourcePlugin{}
-			ds := &m.DataSource{
+			ds := &models.DataSource{
 				Type: "custom-datasource",
 				Url:  "http://host/root/",
 				JsonData: simplejson.NewFromAny(map[string]interface{}{
@@ -387,15 +407,15 @@ func TestDSRouteRule(t *testing.T) {
 			}
 
 			req, _ := http.NewRequest("GET", "http://localhost/asd", nil)
-			ctx := &m.ReqContext{
-				SignedInUser: &m.SignedInUser{UserId: 1},
+			ctx := &models.ReqContext{
+				SignedInUser: &models.SignedInUser{UserId: 1},
 				Context: &macaron.Context{
 					Req: macaron.Request{Request: req},
 				},
 			}
-			proxy := NewDataSourceProxy(ds, plugin, ctx, "/path/to/folder/", &setting.Cfg{})
-			req, err := http.NewRequest(http.MethodGet, "http://grafana.com/sub", nil)
-
+			proxy, err := NewDataSourceProxy(ds, plugin, ctx, "/path/to/folder/", &setting.Cfg{})
+			So(err, ShouldBeNil)
+			req, err = http.NewRequest(http.MethodGet, "http://grafana.com/sub", nil)
 			So(err, ShouldBeNil)
 
 			proxy.getDirector()(req)
@@ -407,8 +427,8 @@ func TestDSRouteRule(t *testing.T) {
 
 		Convey("When SendUserHeader config is enabled", func() {
 			req := getDatasourceProxiedRequest(
-				&m.ReqContext{
-					SignedInUser: &m.SignedInUser{
+				&models.ReqContext{
+					SignedInUser: &models.SignedInUser{
 						Login: "test_user",
 					},
 				},
@@ -421,8 +441,8 @@ func TestDSRouteRule(t *testing.T) {
 
 		Convey("When SendUserHeader config is disabled", func() {
 			req := getDatasourceProxiedRequest(
-				&m.ReqContext{
-					SignedInUser: &m.SignedInUser{
+				&models.ReqContext{
+					SignedInUser: &models.SignedInUser{
 						Login: "test_user",
 					},
 				},
@@ -436,8 +456,8 @@ func TestDSRouteRule(t *testing.T) {
 
 		Convey("When SendUserHeader config is enabled but user is anonymous", func() {
 			req := getDatasourceProxiedRequest(
-				&m.ReqContext{
-					SignedInUser: &m.SignedInUser{IsAnonymous: true},
+				&models.ReqContext{
+					SignedInUser: &models.SignedInUser{IsAnonymous: true},
 				},
 				&setting.Cfg{SendUserHeader: true},
 			)
@@ -449,21 +469,21 @@ func TestDSRouteRule(t *testing.T) {
 
 		Convey("When proxying data source proxy should handle authentication", func() {
 			tests := []*Test{
-				createAuthTest(m.DS_INFLUXDB_08, AUTHTYPE_PASSWORD, AUTHCHECK_QUERY, false),
-				createAuthTest(m.DS_INFLUXDB_08, AUTHTYPE_PASSWORD, AUTHCHECK_QUERY, true),
-				createAuthTest(m.DS_INFLUXDB, AUTHTYPE_PASSWORD, AUTHCHECK_HEADER, true),
-				createAuthTest(m.DS_INFLUXDB, AUTHTYPE_PASSWORD, AUTHCHECK_HEADER, false),
-				createAuthTest(m.DS_INFLUXDB, AUTHTYPE_BASIC, AUTHCHECK_HEADER, true),
-				createAuthTest(m.DS_INFLUXDB, AUTHTYPE_BASIC, AUTHCHECK_HEADER, false),
+				createAuthTest(models.DS_INFLUXDB_08, AUTHTYPE_PASSWORD, AUTHCHECK_QUERY, false),
+				createAuthTest(models.DS_INFLUXDB_08, AUTHTYPE_PASSWORD, AUTHCHECK_QUERY, true),
+				createAuthTest(models.DS_INFLUXDB, AUTHTYPE_PASSWORD, AUTHCHECK_HEADER, true),
+				createAuthTest(models.DS_INFLUXDB, AUTHTYPE_PASSWORD, AUTHCHECK_HEADER, false),
+				createAuthTest(models.DS_INFLUXDB, AUTHTYPE_BASIC, AUTHCHECK_HEADER, true),
+				createAuthTest(models.DS_INFLUXDB, AUTHTYPE_BASIC, AUTHCHECK_HEADER, false),
 
 				// These two should be enough for any other datasource at the moment. Proxy has special handling
 				// only for Influx, others have the same path and only BasicAuth. Non BasicAuth datasources
 				// do not go through proxy but through TSDB API which is not tested here.
-				createAuthTest(m.DS_ES, AUTHTYPE_BASIC, AUTHCHECK_HEADER, false),
-				createAuthTest(m.DS_ES, AUTHTYPE_BASIC, AUTHCHECK_HEADER, true),
+				createAuthTest(models.DS_ES, AUTHTYPE_BASIC, AUTHCHECK_HEADER, false),
+				createAuthTest(models.DS_ES, AUTHTYPE_BASIC, AUTHCHECK_HEADER, true),
 			}
 			for _, test := range tests {
-				m.ClearDSDecryptionCache()
+				models.ClearDSDecryptionCache()
 				runDatasourceAuthTest(test)
 			}
 		})
@@ -478,21 +498,21 @@ func TestDSRouteRule(t *testing.T) {
 			defer backend.Close()
 
 			plugin := &plugins.DataSourcePlugin{}
-			ds := &m.DataSource{Url: backend.URL, Type: m.DS_GRAPHITE}
+			ds := &models.DataSource{Url: backend.URL, Type: models.DS_GRAPHITE}
 
 			responseRecorder := &CloseNotifierResponseRecorder{
 				ResponseRecorder: httptest.NewRecorder(),
 			}
 			defer responseRecorder.Close()
 
-			setupCtx := func(fn func(http.ResponseWriter)) *m.ReqContext {
+			setupCtx := func(fn func(http.ResponseWriter)) *models.ReqContext {
 				responseWriter := macaron.NewResponseWriter("GET", responseRecorder)
 				if fn != nil {
 					fn(responseWriter)
 				}
 
-				return &m.ReqContext{
-					SignedInUser: &m.SignedInUser{},
+				return &models.ReqContext{
+					SignedInUser: &models.SignedInUser{},
 					Context: &macaron.Context{
 						Req: macaron.Request{
 							Request: httptest.NewRequest("GET", "/render", nil),
@@ -505,7 +525,8 @@ func TestDSRouteRule(t *testing.T) {
 			Convey("When response header Set-Cookie is not set should remove proxied Set-Cookie header", func() {
 				writeErr = nil
 				ctx := setupCtx(nil)
-				proxy := NewDataSourceProxy(ds, plugin, ctx, "/render", &setting.Cfg{})
+				proxy, err := NewDataSourceProxy(ds, plugin, ctx, "/render", &setting.Cfg{})
+				So(err, ShouldBeNil)
 
 				proxy.HandleRequest()
 
@@ -518,7 +539,8 @@ func TestDSRouteRule(t *testing.T) {
 				ctx := setupCtx(func(w http.ResponseWriter) {
 					w.Header().Set("Set-Cookie", "important_cookie=important_value")
 				})
-				proxy := NewDataSourceProxy(ds, plugin, ctx, "/render", &setting.Cfg{})
+				proxy, err := NewDataSourceProxy(ds, plugin, ctx, "/render", &setting.Cfg{})
+				So(err, ShouldBeNil)
 
 				proxy.HandleRequest()
 
@@ -528,6 +550,24 @@ func TestDSRouteRule(t *testing.T) {
 			})
 		})
 	})
+}
+
+func TestNewDataSourceProxy_InvalidURL(t *testing.T) {
+	ctx := models.ReqContext{
+		Context: &macaron.Context{
+			Req: macaron.Request{},
+		},
+		SignedInUser: &models.SignedInUser{OrgRole: models.ROLE_EDITOR},
+	}
+	ds := models.DataSource{
+		Type: "test",
+		Url:  "://host/root",
+	}
+	cfg := setting.Cfg{}
+	plugin := plugins.DataSourcePlugin{}
+	_, err := NewDataSourceProxy(&ds, &plugin, &ctx, "api/method", &cfg)
+	require.Error(t, err)
+	assert.True(t, strings.HasPrefix(err.Error(), `Validation of URL "://host/root" failed`))
 }
 
 type CloseNotifierResponseRecorder struct {
@@ -545,15 +585,16 @@ func (r *CloseNotifierResponseRecorder) Close() {
 }
 
 // getDatasourceProxiedRequest is a helper for easier setup of tests based on global config and ReqContext.
-func getDatasourceProxiedRequest(ctx *m.ReqContext, cfg *setting.Cfg) *http.Request {
+func getDatasourceProxiedRequest(ctx *models.ReqContext, cfg *setting.Cfg) *http.Request {
 	plugin := &plugins.DataSourcePlugin{}
 
-	ds := &m.DataSource{
+	ds := &models.DataSource{
 		Type: "custom",
 		Url:  "http://host/root/",
 	}
 
-	proxy := NewDataSourceProxy(ds, plugin, ctx, "", cfg)
+	proxy, err := NewDataSourceProxy(ds, plugin, ctx, "", cfg)
+	So(err, ShouldBeNil)
 	req, err := http.NewRequest(http.MethodGet, "http://grafana.com/sub", nil)
 	So(err, ShouldBeNil)
 
@@ -586,7 +627,7 @@ func newFakeHTTPClient(fakeBody []byte) httpClient {
 }
 
 type Test struct {
-	datasource *m.DataSource
+	datasource *models.DataSource
 	checkReq   func(req *http.Request)
 }
 
@@ -605,7 +646,7 @@ func createAuthTest(dsType string, authType string, authCheck string, useSecureJ
 	base64AthHeader := "Basic dXNlcjpwYXNzd29yZA=="
 
 	test := &Test{
-		datasource: &m.DataSource{
+		datasource: &models.DataSource{
 			Type:     dsType,
 			JsonData: simplejson.New(),
 		},
@@ -661,8 +702,9 @@ func createAuthTest(dsType string, authType string, authCheck string, useSecureJ
 
 func runDatasourceAuthTest(test *Test) {
 	plugin := &plugins.DataSourcePlugin{}
-	ctx := &m.ReqContext{}
-	proxy := NewDataSourceProxy(test.datasource, plugin, ctx, "", &setting.Cfg{})
+	ctx := &models.ReqContext{}
+	proxy, err := NewDataSourceProxy(test.datasource, plugin, ctx, "", &setting.Cfg{})
+	So(err, ShouldBeNil)
 
 	req, err := http.NewRequest(http.MethodGet, "http://grafana.com/sub", nil)
 	So(err, ShouldBeNil)

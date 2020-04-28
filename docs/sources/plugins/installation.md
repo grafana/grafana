@@ -1,109 +1,26 @@
 +++
-title = "Installing Plugins"
+title = "Install plugins"
 type = "docs"
 [menu.docs]
 parent = "plugins"
 weight = 1
 +++
 
-# Grafana Plugins
+# Install Grafana plugins
 
-From Grafana 3.0+ not only are data source plugins supported but also panel plugins and apps.
-Having panels as plugins make it easy to create and add any kind of panel, to show your data
-or improve your favorite dashboards. Apps is something new in Grafana that enables
-bundling of data sources, panels, dashboards and Grafana pages into a cohesive experience.
+Grafana supports data source, panel, and app plugins. Having panels as plugins makes it easy to create and add any kind of panel, to show your data, or improve your favorite dashboards. Apps enable the bundling of data sources, panels, dashboards, and Grafana pages into a cohesive experience.
 
-Grafana already have a strong community of contributors and plugin developers.
-By making it easier to develop and install plugins we hope that the community
-can grow even stronger and develop new plugins that we would never think about.
+1. In a web browser, navigate to the official [Grafana Plugins page](https://grafana.com/plugins) and find a plugin that you want to install.
+2. Click the plugin, and then click the **Installation** tab.
 
-To discover plugins, check out the official [Plugin Repository](https://grafana.com/plugins).
+## Install plugin on Hosted Grafana
 
-# Installing Plugins
+On the Installation tab, in the **For** field, click the name of the Hosted Grafana instance that you want to install the plugin on.
 
-The easiest way to install plugins is by using the CLI tool grafana-cli which is bundled with grafana. Before any modification take place after modifying plugins, grafana-server needs to be restarted.
+Grafana handles the plugin installation automatically.
 
-### Grafana Plugin Directory
+## Install plugin on local Grafana
 
-On Linux systems the grafana-cli will assume that the grafana plugin directory is `/var/lib/grafana/plugins`. It's possible to override the directory which grafana-cli will operate on by specifying the --pluginsDir flag. On Windows systems this parameter have to be specified for every call.
+Follow the instructions on the Install tab. You can either install the plugin with a Grafana CLI command or by downloading and uncompress a .zip file into the Grafana plugins directory. We recommend using Grafana CLI in most instances. The .zip option is available if your Grafana server does not have access to the internet.
 
-### Grafana-cli Commands
-
-List available plugins
-```bash
-grafana-cli plugins list-remote
-```
-
-Install the latest version of a plugin
-```bash
-grafana-cli plugins install <plugin-id>
-```
-
-Install a specific version of a plugin
-```bash
-grafana-cli plugins install <plugin-id> <version>
-```
-
-List installed plugins
-```bash
-grafana-cli plugins ls
-```
-
-Update all installed plugins
-```bash
-grafana-cli plugins update-all
-```
-
-Update one plugin
-```bash
-grafana-cli plugins update <plugin-id>
-```
-
-Remove one plugin
-```bash
-grafana-cli plugins remove <plugin-id>
-```
-
-### Installing Plugins Manually
-
-If your Grafana Server does not have access to the Internet, then the plugin will have to downloaded and manually copied to your Grafana Server.
-
-The Download URL from Grafana.com API is in this form:
-
-`https://grafana.com/api/plugins/<plugin id>/versions/<version number>/download`
-
-You can specify a local URL by using the `--pluginUrl` option.
-```bash
-grafana-cli --pluginUrl https://nexus.company.com/grafana/plugins/<plugin-id>-<plugin-version>.zip plugins install <plugin-id>
-```
-
-To manually install a Plugin via the Grafana.com API:
-
-1. Find the plugin you want to download, the plugin id can be found on the Installation Tab on the plugin's page on Grafana.com. In this example, the plugin id is `jdbranham-diagram-panel`:
-
-    {{< imgbox img="/img/docs/installation-tab.png" caption="Installation Tab" >}}
-
-2. Use the Grafana API to find the plugin using this url `https://grafana.com/api/plugins/<plugin id from step 1>`. For example: https://grafana.com/api/plugins/jdbranham-diagram-panel should return:
-    ```bash
-    {
-      "id": 145,
-      "typeId": 3,
-      "typeName": "Panel",
-      "typeCode": "panel",
-      "slug": "jdbranham-diagram-panel",
-      "name": "Diagram",
-      "description": "Diagram panel for grafana",
-    ...
-    ```
-
-3. Find the download link:
-    ```bash
-    {
-       "rel": "download",
-       "href": "/plugins/jdbranham-diagram-panel/versions/1.4.0/download"
-    }
-    ```
-
-4. Download the plugin with `https://grafana.com/api/plugins/<plugin id from step 1>/versions/<current version>/download` (for example: https://grafana.com/api/plugins/jdbranham-diagram-panel/versions/1.4.0/download). Unzip the downloaded file into the Grafana Server's `plugins` directory.
-
-5. Restart the Grafana Server.
+For more information about Grafana CLI plugin commands, refer to [Plugin commands]({{< relref "../administration/cli.md#plugins-commands" >}}).

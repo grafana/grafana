@@ -2,9 +2,9 @@
   position: relative;
   z-index: $zindex-navbar-fixed;
   height: $navbarHeight;
-  padding: 0 20px 0 60px;
+  padding: 0 16px 0 60px;
   display: flex;
-  flex-grow: 1;
+  flex-grow: 0;
   border-bottom: 1px solid transparent;
   transition-duration: 350ms;
   transition-timing-function: ease-in-out;
@@ -14,34 +14,18 @@
     padding-left: $dashboard-padding;
     margin-left: 0;
   }
+
+  &--edit {
+    background: $panel-bg;
+    border-bottom: $panel-border;
+    box-shadow: 0 0 10px $dashboard-bg;
+  }
 }
 
 @mixin navbar-alt-look() {
   background: $page-header-bg;
   box-shadow: $search-shadow;
   border-bottom: $navbarBorder;
-}
-
-.dashboard-page--settings-open {
-  .navbar {
-    @include navbar-alt-look();
-  }
-
-  .navbar-buttons--tv,
-  .navbar-button--add-panel,
-  .navbar-button--star,
-  .navbar-button--save,
-  .navbar-button--share,
-  .navbar-button--settings,
-  .navbar-page-btn .fa-caret-down,
-  .refresh-picker,
-  .time-picker {
-    display: none;
-  }
-
-  .navbar-buttons--close {
-    display: flex;
-  }
 }
 
 .panel-in-fullscreen,
@@ -61,12 +45,11 @@
   text-overflow: ellipsis;
   overflow: hidden;
   white-space: nowrap;
-  display: block;
+  display: flex;
+  align-items: center;
   margin: 0;
-  color: $headings-color;
   font-size: $font-size-lg;
   min-height: $navbarHeight;
-  line-height: $navbarHeight;
 
   .gicon {
     top: -2px;
@@ -81,11 +64,19 @@
       display: inline-block;
     }
   }
+
+  .navbar-page-btn__folder-icon {
+    display: none;
+
+    @include media-breakpoint-up(md) {
+      display: inline-block;
+    }
+  }
 }
 
 .navbar-page-btn__folder {
-  color: $text-color-weak;
   display: none;
+  padding-right: 4px;
 
   @include media-breakpoint-up(lg) {
     display: inline-block;
@@ -176,6 +167,7 @@ i.navbar-page-btn__search {
     .gicon {
       filter: $navbar-btn-gicon-brightness;
     }
+
     &:hover {
       .gicon {
         filter: brightness(0.8);
@@ -183,18 +175,34 @@ i.navbar-page-btn__search {
     }
   }
 
+  &--danger {
+    @include buttonBackground($red-base, $red-shade);
+  }
+
   &--tight {
-    padding: 7px 4px;
+    padding: 0px 4px;
 
     .fa {
       font-size: 14px;
-      position: relative;
-      top: 1px;
     }
   }
 
-  &--secondary {
-    @include buttonBackground($btn-secondary-bg, $btn-secondary-bg-hl);
+  &--primary {
+    @include buttonBackground($btn-primary-bg, $btn-primary-bg-hl);
+  }
+
+  &--danger {
+    @include buttonBackground($red-base, $red-shade);
+  }
+
+  &:hover {
+    svg {
+      color: $text-color;
+    }
+  }
+
+  &--danger {
+    @include buttonBackground($red-base, $red-shade);
   }
 
   @include media-breakpoint-down(lg) {
@@ -209,36 +217,5 @@ i.navbar-page-btn__search {
   display: flex;
   height: $navbarHeight;
   align-items: center;
-  padding-right: 13px;
-}
-
-.navbar-edit__back-btn {
-  background: transparent;
-  border: 2px solid $text-color;
-  border-radius: 50%;
-  width: 34px;
-  height: 34px;
-  transition: transform 0.1s ease 0.1s;
-  color: $text-color;
-
-  i {
-    font-size: $font-size-lg;
-    position: relative;
-    top: 1px;
-    right: 1px;
-  }
-
-  &:hover {
-    color: $text-color-strong;
-    border-color: $text-color-strong;
-  }
-}
-
-.navbar-settings-title {
-  display: block;
-  margin: 0;
-  color: $headings-color;
-  font-size: $font-size-lg;
-  min-height: $navbarHeight;
-  line-height: $navbarHeight;
+  padding-right: 16px;
 }

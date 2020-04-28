@@ -1,6 +1,6 @@
 +++
 title = "Configuration"
-description = "Configuration Docs"
+description = "Configuration documentation"
 keywords = ["grafana", "configuration", "documentation"]
 type = "docs"
 [menu.docs]
@@ -12,37 +12,51 @@ weight = 1
 
 # Configuration
 
-The Grafana back-end has a number of configuration options that can be
-specified in a `.ini` configuration file or specified using environment variables.
+Grafana has a number of configuration options that you can specify in a `.ini` configuration file or specified using environment variables.
 
-> **Note.** Grafana needs to be restarted for any configuration changes to take effect.
-
-## Comments in .ini Files
-
-Semicolons (the `;` char) are the standard way to comment out lines in a `.ini` file.
-
-A common problem is forgetting to uncomment a line in the `custom.ini` (or `grafana.ini`) file which causes the configuration option to be ignored.
+> **Note:** You must restart Grafana for any configuration changes to take effect.
 
 ## Config file locations
+
+*Do not* change `defaults.ini`! Grafana defaults are stored in this file. Depending on your OS, make all configuration changes in either `custom.ini` or `grafana.ini`.
 
 - Default configuration from `$WORKING_DIR/conf/defaults.ini`
 - Custom configuration from `$WORKING_DIR/conf/custom.ini`
 - The custom configuration file path can be overridden using the `--config` parameter
 
-**Note:** If you have installed Grafana using the `deb` or `rpm` packages, then your configuration file is located at `/etc/grafana/grafana.ini` and a separate `custom.ini` is not used. This path is specified in the Grafana init.d script using `--config` file parameter.
+### Linux
+If you installed Grafana using the `deb` or `rpm` packages, then your configuration file is located at `/etc/grafana/grafana.ini` and a separate `custom.ini` is not used. This path is specified in the Grafana init.d script using `--config` file parameter.
 
-**macOS:** By default, the configuration file is located at `/usr/local/etc/grafana/grafana.ini`.
+### Docker
+Refer to [Configure a Grafana Docker image]({{< relref "configure-docker.md" >}}) for information about environmental variables, persistent storage, and building custom Docker images.
 
-## Using environment variables
+### Windows
+`sample.ini` is in the same directory as `defaults.ini` and contains all the settings commented out. Copy `sample.ini` and name it `custom.ini`.
 
-All options in the configuration file (listed below) can be overridden using environment variables using the syntax:
+### MacOS
+By default, the configuration file is located at `/usr/local/etc/grafana/grafana.ini`. To configure Grafana, add a configuration file named `custom.ini` to the `conf` folder to override any of the settings defined in `conf/defaults.ini`.
+
+## Comments in .ini Files
+
+Semicolons (the `;` char) are the standard way to comment out lines in a `.ini` file. If you want to change a setting, you must delete the semicolon (`;`) in front of the setting before it will work.
+
+**Example**
+```
+# The http port  to use
+;http_port = 3000
+```
+
+A common problem is forgetting to uncomment a line in the `custom.ini` (or `grafana.ini`) file which causes the configuration option to be ignored.
+
+## Configure with environment variables
+
+All options in the configuration file can be overridden using environment variables using the syntax:
 
 ```bash
 GF_<SectionName>_<KeyName>
 ```
 
-Where the section name is the text within the brackets. Everything
-should be upper case, `.` should be replaced by `_`. For example, given these configuration settings:
+Where the section name is the text within the brackets. Everything should be uppercase, `.` should be replaced by `_`. For example, if you have these configuration settings:
 
 ```bash
 # default section
@@ -55,20 +69,19 @@ admin_user = admin
 client_secret = 0ldS3cretKey
 ```
 
-Then you can override them using:
+You can override them on Linux machines with:
 
 ```bash
 export GF_DEFAULT_INSTANCE_NAME=my-instance
-export GF_SECURITY_ADMIN_USER=true
+export GF_SECURITY_ADMIN_USER=owner
 export GF_AUTH_GOOGLE_CLIENT_SECRET=newS3cretKey
 ```
 
-<hr />
+> For any changes to `conf/grafana.ini` (or corresponding environment variables) to take effect, you must restart Grafana for the changes to take effect.
 
 ## instance_name
 
-Set the name of the grafana-server instance. Used in logging and internal metrics and in
-clustering info. Defaults to: `${HOSTNAME}`, which will be replaced with
+Set the name of the grafana-server instance. Used in logging, internal metrics, and clustering info. Defaults to: `${HOSTNAME}`, which will be replaced with
 environment variable `HOSTNAME`, if that is empty or does not exist Grafana will try to use
 system calls to get the machine name.
 
@@ -87,7 +100,13 @@ How long temporary images in `data` directory should be kept. Defaults to: `24h`
 
 ### logs
 
-Path to where Grafana will store logs. This path is usually specified via command line in the init.d script or the systemd service file.  It can be overridden in the configuration file or in the default environment variable file.
+Path to where Grafana will store logs. This path is usually specified via command line in the init.d script or the systemd service file. You can override it in the configuration file or in the default environment variable file. However, please note that by overriding this the default log path will be used temporarily until Grafana has fully initialized/started.
+
+Override log path using the command line argument `cfg:default.paths.log`:
+
+```bash
+./grafana-server --config /custom/config.ini --homepath /custom/homepath cfg:default.paths.logs=/custom/path
+```
 
 **macOS:** By default, the log file should be located at `/usr/local/var/log/grafana/grafana.log`.
 
@@ -109,8 +128,7 @@ The IP address to bind to. If empty will bind to all interfaces
 
 ### http_port
 
-The port to bind to, defaults to `3000`. To use port 80 you need to
-either give the Grafana binary permission for example:
+The port to bind to, defaults to `3000`. To use port 80 you need to either give the Grafana binary permission for example:
 
 ```bash
 $ sudo setcap 'cap_net_bind_service=+ep' /usr/sbin/grafana-server
@@ -128,20 +146,18 @@ Another way is put a webserver like Nginx or Apache in front of Grafana and have
 
 `http`,`https`,`h2` or `socket`
 
-> **Note** Grafana versions earlier than 3.0 are vulnerable to [POODLE](https://en.wikipedia.org/wiki/POODLE). So we strongly recommend to upgrade to 3.x or use a reverse proxy for ssl termination.
+> **Note:** Grafana versions earlier than 3.0 are vulnerable to [POODLE](https://en.wikipedia.org/wiki/POODLE). So we strongly recommend to upgrade to 3.x or use a reverse proxy for ssl termination.
 
 ### socket
 Path where the socket should be created when `protocol=socket`. Please make sure that Grafana has appropriate permissions.
 
 ### domain
 
-This setting is only used in as a part of the `root_url` setting (see below). Important if you
-use GitHub or Google OAuth.
+This setting is only used in as a part of the `root_url` setting (see below). Important if you use GitHub or Google OAuth.
 
 ### enforce_domain
 
-Redirect to correct domain if host header does not match domain.
-Prevents DNS rebinding attacks. Default is `false`.
+Redirect to correct domain if host header does not match domain. Prevents DNS rebinding attacks. Default is `false`.
 
 ### root_url
 
@@ -149,15 +165,14 @@ This is the full URL used to access Grafana from a web browser. This is
 important if you use Google or GitHub OAuth authentication (for the
 callback URL to be correct).
 
-> **Note** This setting is also important if you have a reverse proxy
+> **Note:** This setting is also important if you have a reverse proxy
 > in front of Grafana that exposes it through a subpath. In that
 > case add the subpath to the end of this URL setting.
 
 ### serve_from_sub_path
 > Available in 6.3 and above
 
-Serve Grafana from subpath specified in `root_url` setting. By
-default it is set to `false` for compatibility reasons.
+Serve Grafana from subpath specified in `root_url` setting. By default it is set to `false` for compatibility reasons.
 
 By enabling this setting and using a subpath in `root_url` above, e.g.
 `root_url = http://localhost:3000/grafana`, Grafana will be accessible on
@@ -166,7 +181,7 @@ By enabling this setting and using a subpath in `root_url` above, e.g.
 ### static_root_path
 
 The path to the directory where the front end files (HTML, JS, and CSS
-files). Default to `public` which is why the Grafana binary needs to be
+files). Defaults to `public` which is why the Grafana binary needs to be
 executed with working directory set to the installation path.
 
 ### enable_gzip
@@ -334,7 +349,7 @@ Default is `false`.
 
 ### data_source_proxy_whitelist
 
-Define a white list of allowed ips/domains to use in data sources. Format: `ip_or_domain:port` separated by spaces.
+Define a whitelist of allowed IP addresses or domains, with ports, to be used in data source URLs with the Grafana data source proxy. Format: `ip_or_domain:port` separated by spaces. PostgreSQL, MySQL, and MSSQL data sources do not use the proxy and are therefore unaffected by this setting.
 
 ### cookie_secure
 
@@ -342,7 +357,7 @@ Set to `true` if you host Grafana behind HTTPS. Default is `false`.
 
 ### cookie_samesite
 
-Sets the `SameSite` cookie attribute and prevents the browser from sending this cookie along with cross-site requests. The main goal is mitigate the risk of cross-origin information leakage. It also provides some protection against cross-site request forgery attacks (CSRF),  [read more here](https://www.owasp.org/index.php/SameSite). Valid values are `lax`, `strict` and `none`. Default is `lax`.
+Sets the `SameSite` cookie attribute and prevents the browser from sending this cookie along with cross-site requests. The main goal is to mitigate the risk of cross-origin information leakage. This setting also provides some protection against cross-site request forgery attacks (CSRF),  [read more about SameSite here](https://www.owasp.org/index.php/SameSite). Valid values are `lax`, `strict`, `none`, and `disabled`. Default is `lax`. Using value `disabled` does not add any `SameSite` attribute to cookies.
 
 ### allow_embedding
 
@@ -399,7 +414,7 @@ organization to be created for that new user.
 
 Set this value to automatically add new users to the provided org.
 This requires `auto_assign_org` to be set to `true`. Please make sure
-that this organization does already exists.
+that this organization already exists.
 
 ### auto_assign_org_role
 
@@ -433,6 +448,11 @@ Text used as placeholder text on login page for password input.
 
 Grafana provides many ways to authenticate users. The docs for authentication has been split in to many different pages
 below.
+
+### oauth_state_cookie_max_age
+
+How long the OAuth state cookie lives before being deleted. Default is `60` (seconds)
+Administrators can increase it if they experience OAuth login state mismatch errors.
 
 - [Authentication Overview]({{< relref "../auth/overview.md" >}}) (anonymous access options, hide login and more)
 - [Google OAuth]({{< relref "../auth/google.md" >}}) (auth.google)
@@ -486,6 +506,13 @@ Set to false to disable all checks to https://grafana.com for new versions of in
 
 Number dashboard versions to keep (per dashboard). Default: `20`, Minimum: `1`.
 
+### min_refresh_interval
+
+> Only available in Grafana v6.7+.
+
+This will restrict users to set the refresh interval of a dashboard lower than given interval. Per default this is 5 seconds.
+The interval string is a possibly signed sequence of decimal numbers, followed by a unit suffix (ms, s, m, h, d), e.g. `30s` or `1m`.
+
 ## [dashboards.json]
 
 > This have been replaced with dashboards [provisioning]({{< relref "../administration/provisioning" >}}) in 5.0+
@@ -536,13 +563,87 @@ Either "console", "file", "syslog". Default is "console" and "file".
 Use spaces to separate multiple modes, e.g. `console file`
 
 ### level
-Either "debug", "info", "warn", "error", "critical", default is `info`
+
+Either "debug", "info", "warn", "error", "critical", default is `info`.
 
 ### filters
+
 optional settings to set different levels for specific loggers.
-For example `filters = sqlstore:debug`
+For example `filters = sqlstore:debug`.
+
+## [log.console]
+
+Only applicable when "console" used in `[log]` mode.
+
+### level
+
+Either "debug", "info", "warn", "error", "critical", default is inherited from `[log]` level.
+
+### format
+
+Log line format, valid options are text, console and json. Default is `console`.
+
+## [log.file]
+
+Only applicable when "file" used in `[log]` mode.
+
+### level
+
+Either "debug", "info", "warn", "error", "critical", default is inherited from `[log]` level.
+
+### format
+
+Log line format, valid options are text, console and json. Default is `console`.
+
+### log_rotate
+
+Enable automated log rotation, valid options are false or true. Default is `true`.
+When enabled use the `max_lines`, `max_size_shift`, `daily_rotate` and `max_days` below
+to configure the behavior of the log rotation.
+
+### max_lines
+
+Maximum lines per file before rotating it. Default is 1000000.
+
+### max_size_shift
+
+Maximum size of file before rotating it. Default is `28` which means `1 << 28`, `256MB`.
+
+### daily_rotate
+
+Enable daily rotation of files, valid options are false or true. Default is `true`.
+
+### max_days
+
+Maximum number of days to keep log files. Default is `7`.
+
+## [log.syslog]
+
+Only applicable when "syslog" used in `[log]` mode.
+
+### level
+
+Either "debug", "info", "warn", "error", "critical", default is inherited from `[log]` level.
+
+### format
+
+Log line format, valid options are text, console and json. Default is `console`.
+
+### network and address
+
+Syslog network type and address. This can be udp, tcp, or unix. If left blank, the default unix endpoints will be used.
+
+### facility
+
+Syslog facility. Valid options are user, daemon or local0 through local7. Default is empty.
+
+### tag
+
+Syslog tag. By default, the process's `argv[0]` is used.
 
 ## [metrics]
+
+For detailed instructions, refer to [Internal Grafana metrics]({{< relref "../administration/metrics.md" >}}).
 
 ### enabled
 Enable metrics reporting. defaults true. Available via HTTP API `/metrics`.
@@ -591,14 +692,24 @@ You can choose between (s3, webdav, gcs, azure_blob, local). If left empty Grafa
 
 ## [external_image_storage.s3]
 
+### endpoint
+Optional endpoint URL (hostname or fully qualified URI) to override the default generated S3 endpoint. If you want to
+keep the default, just leave this empty. You must still provide a `region` value if you specify an endpoint.
+
+## path_style_access
+Set this to true to force path-style addressing in S3 requests, i.e., `http://s3.amazonaws.com/BUCKET/KEY`, instead
+of the default, which is virtual hosted bucket addressing when possible (`http://BUCKET.s3.amazonaws.com/KEY`).
+
+Note: This option is specific to the Amazon S3 service.
+
 ### bucket
-Bucket name for S3. e.g. grafana.snapshot
+Bucket name for S3. e.g. grafana.snapshot.
 
 ### region
-Region name for S3. e.g. 'us-east-1', 'cn-north-1', etc
+Region name for S3. e.g. 'us-east-1', 'cn-north-1', etc.
 
 ### path
-Optional extra path inside bucket, useful to apply expiration policies
+Optional extra path inside bucket, useful to apply expiration policies.
 
 ### bucket_url
 (for backward compatibility, only works when no bucket or region are configured)
@@ -607,20 +718,20 @@ Bucket URL for S3. AWS region can be specified within URL or defaults to 'us-eas
 - https://grafana.s3-ap-southeast-2.amazonaws.com/
 
 ### access_key
-Access key. e.g. AAAAAAAAAAAAAAAAAAAA
+Access key, e.g. AAAAAAAAAAAAAAAAAAAA.
 
 Access key requires permissions to the S3 bucket for the 's3:PutObject' and 's3:PutObjectAcl' actions.
 
 ### secret_key
-Secret key. e.g. AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+Secret key, e.g. AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA.
 
 ## [external_image_storage.webdav]
 
 ### url
-Url to where Grafana will send PUT request with images
+URL to where Grafana will send PUT request with images
 
 ### public_url
-Optional parameter. Url to send to users in notifications. If the string contains the sequence ${file}, it will be replaced with the uploaded filename. Otherwise, the file name will be appended to the path part of the url, leaving any query string unchanged.
+Optional parameter. URL to send to users in notifications. If the string contains the sequence ${file}, it will be replaced with the uploaded filename. Otherwise, the file name will be appended to the path part of the URL, leaving any query string unchanged.
 
 ### username
 basic auth username
@@ -693,6 +804,12 @@ Default setting for alert notification timeout. Default value is `30`
 
 Default setting for max attempts to sending alert notifications. Default value is `3`
 
+### min_interval_seconds
+
+Default setting for minimum interval between rule evaluations. Default value is `1`
+
+> **Note.** This setting has precedence over each individual rule frequency. Therefore, if a rule frequency is lower than this value, this value will be enforced.
+
 ## [rendering]
 
 Options to configure a remote HTTP image rendering service, e.g. using https://github.com/grafana/grafana-image-renderer.
@@ -704,6 +821,11 @@ URL to a remote HTTP image renderer service, e.g. http://localhost:8081/render, 
 ### callback_url
 
 If the remote HTTP image renderer service runs on a different server than the Grafana server you may have to configure this to a URL where Grafana is reachable, e.g. http://grafana.domain/.
+
+### concurrent_render_request_limit
+
+Concurrent render request limit affects when the /render HTTP endpoint is used. Rendering many images at the same time can overload the server,
+which this setting can help protect against by only allowing a certain amount of concurrent requests.
 
 ## [panels]
 
@@ -722,6 +844,65 @@ Set to true if you want to test alpha plugins that are not yet ready for general
 ### enable
 
 Keys of alpha features to enable, separated by space. Available alpha features are: `transformations`
+
+## [tracing.jaeger]
+
+Configure Grafana's Jaeger client for distributed tracing.
+
+You can also use the standard `JAEGER_*` environment variables to configure
+Jaeger. See the table at the end of https://www.jaegertracing.io/docs/1.16/client-features/
+for the full list. Environment variables will override any settings provided here.
+
+### address
+
+The host:port destination for reporting spans. (ex: `localhost:6831`)
+
+Can be set with the environment variables `JAEGER_AGENT_HOST` and `JAEGER_AGENT_PORT`.
+
+### always_included_tag
+
+Comma-separated list of tags to include in all new spans, such as `tag1:value1,tag2:value2`.
+
+Can be set with the environment variable `JAEGER_TAGS` (use `=` instead of `:` with the environment variable).
+
+### sampler_type
+
+Default value is `const`.
+
+Specifies the type of sampler: `const`, `probabilistic`, `ratelimiting`, or `remote`.
+
+Refer to https://www.jaegertracing.io/docs/1.16/sampling/#client-sampling-configuration for details on the different tracing types.
+
+Can be set with the environment variable `JAEGER_SAMPLER_TYPE`.
+
+### sampler_param
+
+Default value is `1`.
+
+This is the sampler configuration parameter. Depending on the value of `sampler_type`, it can be `0`, `1`, or a decimal value in between.
+
+- For `const` sampler, `0` or `1` for always `false`/`true` respectively
+- For `probabilistic` sampler, a probability between `0` and `1.0`
+- For `rateLimiting` sampler, the number of spans per second
+- For `remote` sampler, param is the same as for `probabilistic`
+  and indicates the initial sampling rate before the actual one
+  is received from the mothership
+
+May be set with the environment variable `JAEGER_SAMPLER_PARAM`.
+
+### zipkin_propagation
+
+Default value is `false`.
+
+Controls whether or not to use Zipkin's span propagation format (with `x-b3-` HTTP headers). By default, Jaeger's format is used.
+
+Can be set with the environment variable and value `JAEGER_PROPAGATION=b3`.
+
+### disable_shared_zipkin_spans
+
+Default value is `false`.
+
+Setting this to `true` turns off shared RPC spans. Leaving this available is the most common setting when using Zipkin elsewhere in your infrastructure.
 
 <hr />
 
@@ -759,4 +940,3 @@ Set to true if you host Grafana behind HTTPS only. Defaults to `false`.
 ### session_life_time
 
 How long sessions lasts in seconds. Defaults to `86400` (24 hours).
-

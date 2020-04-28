@@ -9,7 +9,6 @@ import config from 'app/core/config';
 
 interface Props {
   onDismiss: () => void;
-  isOpen: boolean;
 }
 
 interface State {
@@ -27,9 +26,7 @@ export class OrgSwitcher extends React.PureComponent<Props, State> {
 
   getUserOrgs = async () => {
     const orgs: UserOrgDTO[] = await getBackendSrv().get('/api/user/orgs');
-    this.setState({
-      orgs: orgs.sort((a, b) => a.orgId - b.orgId),
-    });
+    this.setState({ orgs });
   };
 
   setCurrentOrg = async (org: UserOrgDTO) => {
@@ -42,13 +39,13 @@ export class OrgSwitcher extends React.PureComponent<Props, State> {
   }
 
   render() {
-    const { onDismiss, isOpen } = this.props;
+    const { onDismiss } = this.props;
     const { orgs } = this.state;
 
     const currentOrgId = contextSrv.user.orgId;
 
     return (
-      <Modal title="Switch Organization" icon="random" onDismiss={onDismiss} isOpen={isOpen}>
+      <Modal title="Switch Organization" icon="arrow-random" onDismiss={onDismiss} isOpen={true}>
         <table className="filter-table form-inline">
           <thead>
             <tr>
@@ -66,7 +63,7 @@ export class OrgSwitcher extends React.PureComponent<Props, State> {
                   {org.orgId === currentOrgId ? (
                     <Button size="sm">Current</Button>
                   ) : (
-                    <Button variant="inverse" size="sm" onClick={() => this.setCurrentOrg(org)}>
+                    <Button variant="secondary" size="sm" onClick={() => this.setCurrentOrg(org)}>
                       Switch to
                     </Button>
                   )}

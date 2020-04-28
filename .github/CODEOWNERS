@@ -13,3 +13,11 @@
 
 # Documentation owner: Diana Payton
 /docs/ @oddlittlebird
+/contribute/ @oddlittlebird  @marcusolsson
+# @grafana/ui component documentation
+*.mdx @marcusolsson @jessover9000
+
+# Backend code
+*.go @grafana/backend-platform
+go.mod @grafana/backend-platform
+go.sum @grafana/backend-platform

@@ -4,11 +4,35 @@
       {
         "builtIn": 1,
         "datasource": "-- Grafana --",
-        "enable": true,
+        "enable": false,
         "hide": true,
         "iconColor": "rgba(0, 211, 255, 1)",
         "name": "Annotations & Alerts",
         "type": "dashboard"
+      },
+      {
+        "datasource": "gdev-postgres",
+        "enable": false,
+        "hide": false,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "limit": 100,
+        "name": "Single",
+        "rawQuery": "SELECT\n  \"createdAt\" as time,\n  'single' as text,\n hostname as tags\nFROM\n   grafana_metric\nWHERE\n  $__timeFilter(\"createdAt\")\nORDER BY time\nLIMIT 1\n",
+        "showIn": 0,
+        "tags": [],
+        "type": "tags"
+      },
+      {
+        "datasource": "gdev-postgres",
+        "enable": false,
+        "hide": false,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "limit": 100,
+        "name": "Region",
+        "rawQuery": "SELECT\n  \"createdAt\" +  (interval '1 minute') as time,\n  \"createdAt\" +  (6 * interval '1 minute') as timeend,\n  'region' as text,\n hostname as tags\nFROM\n   grafana_metric\nWHERE\n  $__timeFilter(\"createdAt\")\nORDER BY time\nLIMIT 1\n",
+        "showIn": 0,
+        "tags": [],
+        "type": "tags"
       }
     ]
   },
@@ -16,7 +40,7 @@
   "editable": true,
   "gnetId": null,
   "graphTooltip": 0,
-  "iteration": 1532620601931,
+  "iteration": 1576249087264,
   "links": [],
   "panels": [
     {
@@ -28,12 +52,14 @@
       "dashes": false,
       "datasource": "gdev-postgres",
       "fill": 2,
+      "fillGradient": 0,
       "gridPos": {
         "h": 9,
         "w": 12,
         "x": 0,
         "y": 0
       },
+      "hiddenSeries": false,
       "id": 2,
       "legend": {
         "avg": false,
@@ -48,6 +74,9 @@
       "linewidth": 2,
       "links": [],
       "nullPointMode": "null",
+      "options": {
+        "dataLinks": []
+      },
       "percentage": false,
       "pointradius": 5,
       "points": false,
@@ -67,20 +96,59 @@
         {
           "alias": "",
           "format": "time_series",
+          "group": [],
           "hide": false,
+          "metricColumn": "none",
+          "rawQuery": true,
           "rawSql": "SELECT\n  $__timeGroup(\"createdAt\",'$summarize'),\n  avg(value) as \"value\",\n  hostname as \"metric\"\nFROM \n  grafana_metric\nWHERE\n  $__timeFilter(\"createdAt\") AND\n  measurement = 'logins.count' AND\n  hostname IN($host)\nGROUP BY time, metric\nORDER BY time",
           "refId": "A",
-          "target": ""
+          "select": [
+            [
+              {
+                "params": ["value"],
+                "type": "column"
+              }
+            ]
+          ],
+          "target": "",
+          "timeColumn": "time",
+          "where": [
+            {
+              "name": "$__timeFilter",
+              "params": [],
+              "type": "macro"
+            }
+          ]
         },
         {
           "alias": "",
           "format": "time_series",
+          "group": [],
+          "metricColumn": "none",
+          "rawQuery": true,
           "rawSql": "SELECT\n  $__timeGroup(\"createdAt\",'$summarize'),\n  min(value) as \"value\",\n  'total avg' as \"metric\"\nFROM \n  grafana_metric\nWHERE\n  $__timeFilter(\"createdAt\") AND\n  measurement = 'logins.count'\nGROUP BY time\nORDER BY time",
-          "refId": "B"
+          "refId": "B",
+          "select": [
+            [
+              {
+                "params": ["value"],
+                "type": "column"
+              }
+            ]
+          ],
+          "timeColumn": "time",
+          "where": [
+            {
+              "name": "$__timeFilter",
+              "params": [],
+              "type": "macro"
+            }
+          ]
         }
       ],
       "thresholds": [],
       "timeFrom": null,
+      "timeRegions": [],
       "timeShift": null,
       "title": "Average logins / $summarize",
       "tooltip": {
@@ -126,12 +194,14 @@
       "dashes": false,
       "datasource": "gdev-postgres",
       "fill": 2,
+      "fillGradient": 0,
       "gridPos": {
         "h": 18,
         "w": 12,
         "x": 12,
         "y": 0
       },
+      "hiddenSeries": false,
       "id": 4,
       "legend": {
         "avg": false,
@@ -146,6 +216,9 @@
       "linewidth": 2,
       "links": [],
       "nullPointMode": "null",
+      "options": {
+        "dataLinks": []
+      },
       "percentage": false,
       "pointradius": 5,
       "points": false,
@@ -171,6 +244,7 @@
       ],
       "thresholds": [],
       "timeFrom": null,
+      "timeRegions": [],
       "timeShift": null,
       "title": "Average payments started/ended / $summarize",
       "tooltip": {
@@ -216,12 +290,14 @@
       "dashes": false,
       "datasource": "gdev-postgres",
       "fill": 2,
+      "fillGradient": 0,
       "gridPos": {
         "h": 9,
         "w": 12,
         "x": 0,
         "y": 9
       },
+      "hiddenSeries": false,
       "id": 3,
       "legend": {
         "avg": false,
@@ -236,6 +312,9 @@
       "linewidth": 2,
       "links": [],
       "nullPointMode": "null",
+      "options": {
+        "dataLinks": []
+      },
       "percentage": false,
       "pointradius": 5,
       "points": false,
@@ -255,6 +334,7 @@
       ],
       "thresholds": [],
       "timeFrom": null,
+      "timeRegions": [],
       "timeShift": null,
       "title": "Max CPU / $summarize",
       "tooltip": {
@@ -305,6 +385,7 @@
       },
       "id": 6,
       "links": [],
+      "options": {},
       "pageSize": null,
       "scroll": true,
       "showHeader": true,
@@ -345,7 +426,7 @@
       "type": "table"
     }
   ],
-  "schemaVersion": 16,
+  "schemaVersion": 21,
   "style": "dark",
   "tags": ["gdev", "postgres", "datasource-test"],
   "templating": {
@@ -357,6 +438,7 @@
           "value": "America"
         },
         "datasource": "gdev-postgres",
+        "definition": "",
         "hide": 0,
         "includeAll": false,
         "label": "Datacenter",
@@ -377,10 +459,12 @@
       {
         "allValue": null,
         "current": {
+          "selected": false,
           "text": "All",
           "value": "$__all"
         },
         "datasource": "gdev-postgres",
+        "definition": "",
         "hide": 0,
         "includeAll": true,
         "label": "Hostname",
@@ -403,6 +487,7 @@
         "auto_count": 5,
         "auto_min": "10s",
         "current": {
+          "selected": false,
           "text": "1m",
           "value": "1m"
         },
@@ -499,5 +584,5 @@
   "timezone": "",
   "title": "Datasource tests - Postgres",
   "uid": "JYola5qzz",
-  "version": 4
+  "version": 5
 }

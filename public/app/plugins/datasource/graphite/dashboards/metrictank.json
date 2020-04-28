@@ -1,19 +1,12 @@
 {
-  "__inputs": [],
-  "__requires": [
+  "__inputs": [
     {
-      "type": "grafana",
-      "id": "grafana",
-      "name": "Grafana",
-      "version": "5.2.3"
-    },
-    {
-      "type": "panel",
-      "id": "graph",
-      "name": "Graph",
-      "version": "5.0.0"
+      "name": "DS_NAME",
+      "type": "datasource",
+      "pluginId": "graphite"
     }
   ],
+
   "annotations": {
     "list": [
       {
@@ -31,11 +24,7 @@
     ]
   },
   "editable": true,
-  "gnetId": 279,
   "graphTooltip": 1,
-  "id": 21,
-  "iteration": 1547213827205,
-  "links": [],
   "panels": [
     {
       "collapsed": false,
@@ -4788,6 +4777,5 @@
   },
   "timezone": "utc",
   "title": "Metrictank",
-  "uid": "tQW3QShiz",
-  "version": 5
+  "uid": "tQW3QShiz"
 }

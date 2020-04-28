@@ -1,17 +1,18 @@
 import React, { PureComponent } from 'react';
 import { hot } from 'react-hot-loader';
 import Page from 'app/core/components/Page/Page';
-import { DeleteButton } from '@grafana/ui';
+import { DeleteButton, LinkButton } from '@grafana/ui';
 import { NavModel } from '@grafana/data';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
-import { Team, OrgRole, StoreState } from 'app/types';
-import { loadTeams, deleteTeam, setSearchQuery } from './state/actions';
+import { OrgRole, StoreState, Team } from 'app/types';
+import { deleteTeam, loadTeams } from './state/actions';
 import { getSearchQuery, getTeams, getTeamsCount, isPermissionTeamAdmin } from './state/selectors';
 import { getNavModel } from 'app/core/selectors/navModel';
 import { FilterInput } from 'app/core/components/FilterInput/FilterInput';
 import { config } from 'app/core/config';
 import { contextSrv, User } from 'app/core/services/context_srv';
 import { connectWithCleanUp } from '../../core/components/connectWithCleanUp';
+import { setSearchQuery } from './state/reducers';
 
 export interface Props {
   navModel: NavModel;
@@ -66,7 +67,7 @@ export class TeamList extends PureComponent<Props, any> {
           <a href={teamUrl}>{team.memberCount}</a>
         </td>
         <td className="text-right">
-          <DeleteButton onConfirm={() => this.deleteTeam(team)} disabled={!canDelete} />
+          <DeleteButton size="sm" disabled={!canDelete} onConfirm={() => this.deleteTeam(team)} />
         </td>
       </tr>
     );
@@ -76,7 +77,7 @@ export class TeamList extends PureComponent<Props, any> {
     return (
       <EmptyListCTA
         title="You haven't created any teams yet."
-        buttonIcon="gicon gicon-team"
+        buttonIcon="users-alt"
         buttonLink="org/teams/new"
         buttonTitle=" New team"
         proTip="Assign folder and dashboard permissions to teams instead of users to ease administration."
@@ -108,9 +109,9 @@ export class TeamList extends PureComponent<Props, any> {
 
           <div className="page-action-bar__spacer" />
 
-          <a className={`btn btn-primary${disabledClass}`} href={newTeamHref}>
-            New team
-          </a>
+          <LinkButton className={disabledClass} href={newTeamHref}>
+            New Team
+          </LinkButton>
         </div>
 
         <div className="admin-list-table">

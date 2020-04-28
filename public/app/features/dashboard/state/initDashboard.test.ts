@@ -3,11 +3,34 @@ import thunk from 'redux-thunk';
 import { initDashboard, InitDashboardArgs } from './initDashboard';
 import { DashboardRouteInfo } from 'app/types';
 import { getBackendSrv } from 'app/core/services/backend_srv';
-import { dashboardInitFetching, dashboardInitCompleted, dashboardInitServices } from './actions';
-import { resetExploreAction } from 'app/features/explore/state/actionTypes';
+import { dashboardInitCompleted, dashboardInitFetching, dashboardInitServices } from './reducers';
+import { updateLocation } from '../../../core/actions';
+import { setEchoSrv } from '@grafana/runtime';
+import { Echo } from '../../../core/services/echo/Echo';
+import { getConfig } from 'app/core/config';
+import { variableAdapters } from 'app/features/variables/adapters';
+import { createConstantVariableAdapter } from 'app/features/variables/constant/adapter';
+import { addVariable } from 'app/features/variables/state/sharedReducer';
+import { constantBuilder } from 'app/features/variables/shared/testing/builders';
 
 jest.mock('app/core/services/backend_srv');
+jest.mock('app/features/dashboard/services/TimeSrv', () => {
+  const original = jest.requireActual('app/features/dashboard/services/TimeSrv');
+  return {
+    ...original,
+    getTimeSrv: () => ({
+      ...original.getTimeSrv(),
+      timeRange: jest.fn().mockReturnValue(undefined),
+    }),
+  };
+});
+jest.mock('app/core/services/context_srv', () => ({
+  contextSrv: {
+    user: { orgId: 1, orgName: 'TestOrg' },
+  },
+}));
 
+variableAdapters.register(createConstantVariableAdapter());
 const mockStore = configureMockStore([thunk]);
 
 interface ScenarioContext {
@@ -59,6 +82,9 @@ function describeInitScenario(description: string, scenarioFn: ScenarioFn) {
               ],
             },
           ],
+          templating: {
+            list: [constantBuilder().build()],
+          },
         },
       })),
     };
@@ -108,12 +134,16 @@ function describeInitScenario(description: string, scenarioFn: ScenarioFn) {
         location: {
           query: {},
         },
+        dashboard: {},
         user: {},
         explore: {
           left: {
             originPanelId: undefined,
             queries: [],
           },
+        },
+        templating: {
+          variables: {},
         },
       },
       setup: (fn: () => void) => {
@@ -123,6 +153,7 @@ function describeInitScenario(description: string, scenarioFn: ScenarioFn) {
 
     beforeEach(async () => {
       setupFn();
+      setEchoSrv(new Echo());
 
       const store = mockStore(ctx.storeState);
       // @ts-ignore
@@ -150,7 +181,7 @@ describeInitScenario('Initializing new dashboard', ctx => {
   });
 
   it('Should update location with orgId query param', () => {
-    expect(ctx.actions[2].type).toBe('UPDATE_LOCATION');
+    expect(ctx.actions[2].type).toBe(updateLocation.type);
     expect(ctx.actions[2].payload.query.orgId).toBe(12);
   });
 
@@ -162,10 +193,16 @@ describeInitScenario('Initializing new dashboard', ctx => {
   it('Should initialize services', () => {
     expect(ctx.timeSrv.init).toBeCalled();
     expect(ctx.annotationsSrv.init).toBeCalled();
-    expect(ctx.variableSrv.init).toBeCalled();
     expect(ctx.unsavedChangesSrv.init).toBeCalled();
     expect(ctx.keybindingSrv.setupDashboardBindings).toBeCalled();
     expect(ctx.dashboardSrv.setCurrent).toBeCalled();
+  });
+
+  it('Should initialize variableSrv if newVariables is disabled', () => {
+    if (getConfig().featureToggles.newVariables) {
+      return expect.assertions(0);
+    }
+    expect(ctx.variableSrv.init).toBeCalled();
   });
 });
 
@@ -180,7 +217,7 @@ describeInitScenario('Initializing home dashboard', ctx => {
   });
 
   it('Should redirect to custom home dashboard', () => {
-    expect(ctx.actions[1].type).toBe('UPDATE_LOCATION');
+    expect(ctx.actions[1].type).toBe(updateLocation.type);
     expect(ctx.actions[1].payload.path).toBe('/u/123/my-home');
   });
 });
@@ -200,8 +237,6 @@ describeInitScenario('Initializing existing dashboard', ctx => {
     },
   ];
 
-  const expectedQueries = mockQueries.map(query => ({ refId: query.refId, expr: query.expr }));
-
   ctx.setup(() => {
     ctx.storeState.user.orgId = 12;
     ctx.storeState.explore.left.originPanelId = 2;
@@ -217,35 +252,35 @@ describeInitScenario('Initializing existing dashboard', ctx => {
   });
 
   it('Should update location with orgId query param', () => {
-    expect(ctx.actions[2].type).toBe('UPDATE_LOCATION');
+    expect(ctx.actions[2].type).toBe(updateLocation.type);
     expect(ctx.actions[2].payload.query.orgId).toBe(12);
   });
 
-  it('Should send resetExploreAction when coming from explore', () => {
-    expect(ctx.actions[3].type).toBe(resetExploreAction.type);
-    expect(ctx.actions[3].payload.force).toBe(true);
-    expect(ctx.dashboardSrv.setCurrent).lastCalledWith(
-      expect.objectContaining({
-        panels: expect.arrayContaining([
-          expect.objectContaining({
-            targets: expectedQueries,
-          }),
-        ]),
-      })
-    );
-  });
-
   it('Should send action dashboardInitCompleted', () => {
-    expect(ctx.actions[4].type).toBe(dashboardInitCompleted.type);
-    expect(ctx.actions[4].payload.title).toBe('My cool dashboard');
+    const index = getConfig().featureToggles.newVariables ? 4 : 3;
+    expect(ctx.actions[index].type).toBe(dashboardInitCompleted.type);
+    expect(ctx.actions[index].payload.title).toBe('My cool dashboard');
   });
 
   it('Should initialize services', () => {
     expect(ctx.timeSrv.init).toBeCalled();
     expect(ctx.annotationsSrv.init).toBeCalled();
-    expect(ctx.variableSrv.init).toBeCalled();
     expect(ctx.unsavedChangesSrv.init).toBeCalled();
     expect(ctx.keybindingSrv.setupDashboardBindings).toBeCalled();
     expect(ctx.dashboardSrv.setCurrent).toBeCalled();
+  });
+
+  it('Should initialize variableSrv if newVariables is disabled', () => {
+    if (getConfig().featureToggles.newVariables) {
+      return expect.assertions(0);
+    }
+    expect(ctx.variableSrv.init).toBeCalled();
+  });
+
+  it('Should initialize redux variables if newVariables is enabled', () => {
+    if (!getConfig().featureToggles.newVariables) {
+      return expect.assertions(0);
+    }
+    expect(ctx.actions[3].type).toBe(addVariable.type);
   });
 });

@@ -1,44 +1,36 @@
 import merge from 'lodash/merge';
-import { getFieldProperties, getFieldDisplayValues, GetFieldDisplayValuesOptions } from './fieldDisplay';
+import { getFieldDisplayValues, GetFieldDisplayValuesOptions } from './fieldDisplay';
 import { toDataFrame } from '../dataframe/processDataFrame';
 import { ReducerID } from '../transformations/fieldReducer';
-import { Threshold } from '../types/threshold';
+import { ThresholdsMode } from '../types/thresholds';
 import { GrafanaTheme } from '../types/theme';
-import { MappingType } from '../types';
+import { FieldConfig, MappingType } from '../types';
+import { validateFieldConfig } from './fieldOverrides';
+import { standardFieldConfigEditorRegistry } from './standardFieldConfigEditorRegistry';
 
 describe('FieldDisplay', () => {
-  it('Construct simple field properties', () => {
-    const f0 = {
-      min: 0,
-      max: 100,
-    };
-    const f1 = {
-      unit: 'ms',
-      dateFormat: '', // should be ignored
-      max: parseFloat('NOPE'), // should be ignored
-      min: null,
-    };
-    let field = getFieldProperties(f0, f1);
-    expect(field.min).toEqual(0);
-    expect(field.max).toEqual(100);
-    expect(field.unit).toEqual('ms');
+  beforeAll(() => {
+    // Since FieldConfigEditors belong to grafana-ui we need to mock those here
+    // as grafana-ui code cannot be imported in grafana-data.
+    // TODO: figure out a way to share standard editors between data/ui tests
+    const mappings = {
+      id: 'mappings', // Match field properties
+      process: (value: any) => value,
+      shouldApply: () => true,
+    } as any;
 
-    // last one overrieds
-    const f2 = {
-      unit: 'none', // ignore 'none'
-      max: -100, // lower than min! should flip min/max
-    };
-    field = getFieldProperties(f0, f1, f2);
-    expect(field.max).toEqual(0);
-    expect(field.min).toEqual(-100);
-    expect(field.unit).toEqual('ms');
+    standardFieldConfigEditorRegistry.setInit(() => {
+      return [mappings];
+    });
   });
 
   it('show first numeric values', () => {
     const options = createDisplayOptions({
-      fieldOptions: {
+      reduceOptions: {
         calcs: [ReducerID.first],
-        override: {},
+      },
+      fieldConfig: {
+        overrides: [],
         defaults: {
           title: '$__cell_0 * $__field_name * $__series_name',
         },
@@ -50,10 +42,8 @@ describe('FieldDisplay', () => {
 
   it('show last numeric values', () => {
     const options = createDisplayOptions({
-      fieldOptions: {
+      reduceOptions: {
         calcs: [ReducerID.last],
-        override: {},
-        defaults: {},
       },
     });
     const display = getFieldDisplayValues(options);
@@ -62,12 +52,10 @@ describe('FieldDisplay', () => {
 
   it('show all numeric values', () => {
     const options = createDisplayOptions({
-      fieldOptions: {
+      reduceOptions: {
         values: true, //
         limit: 1000,
         calcs: [],
-        override: {},
-        defaults: {},
       },
     });
     const display = getFieldDisplayValues(options);
@@ -76,12 +64,10 @@ describe('FieldDisplay', () => {
 
   it('show 2 numeric values (limit)', () => {
     const options = createDisplayOptions({
-      fieldOptions: {
+      reduceOptions: {
         values: true, //
         limit: 2,
         calcs: [],
-        override: {},
-        defaults: {},
       },
     });
     const display = getFieldDisplayValues(options);
@@ -89,33 +75,37 @@ describe('FieldDisplay', () => {
   });
 
   it('should restore -Infinity value for base threshold', () => {
-    const field = getFieldProperties({
-      thresholds: [
-        ({
-          color: '#73BF69',
-          value: null,
-        } as unknown) as Threshold,
-        {
-          color: '#F2495C',
-          value: 50,
-        },
-      ],
-    });
-    expect(field.thresholds!.length).toEqual(2);
-    expect(field.thresholds![0].value).toBe(-Infinity);
+    const config: FieldConfig = {
+      thresholds: {
+        mode: ThresholdsMode.Absolute,
+        steps: [
+          {
+            color: '#73BF69',
+            value: (null as any) as number, // -Infinity becomes null in JSON
+          },
+          {
+            color: '#F2495C',
+            value: 50,
+          },
+        ],
+      },
+    };
+    validateFieldConfig(config);
+    expect(config.thresholds!.steps.length).toEqual(2);
+    expect(config.thresholds!.steps[0].value).toBe(-Infinity);
   });
 
   it('Should return field thresholds when there is no data', () => {
     const options = createEmptyDisplayOptions({
-      fieldOptions: {
+      fieldConfig: {
         defaults: {
-          thresholds: [{ color: '#F2495C', value: 50 }],
+          thresholds: { steps: [{ color: '#F2495C', value: 50 }] },
         },
       },
     });
 
     const display = getFieldDisplayValues(options);
-    expect(display[0].field.thresholds!.length).toEqual(1);
+    expect(display[0].field.thresholds!.steps!.length).toEqual(1);
     expect(display[0].display.numeric).toEqual(0);
   });
 
@@ -129,8 +119,8 @@ describe('FieldDisplay', () => {
   it('Should return field mapped value when there is no data', () => {
     const mapEmptyToText = '0';
     const options = createEmptyDisplayOptions({
-      fieldOptions: {
-        override: {
+      fieldConfig: {
+        defaults: {
           mappings: [
             {
               id: 1,
@@ -152,8 +142,8 @@ describe('FieldDisplay', () => {
   it('Should always return display numeric 0 when there is no data', () => {
     const mapEmptyToText = '0';
     const options = createEmptyDisplayOptions({
-      fieldOptions: {
-        override: {
+      fieldConfig: {
+        overrides: {
           mappings: [
             {
               id: 1,
@@ -169,6 +159,60 @@ describe('FieldDisplay', () => {
 
     const display = getFieldDisplayValues(options);
     expect(display[0].display.numeric).toEqual(0);
+  });
+
+  describe('Value mapping', () => {
+    it('should apply value mapping', () => {
+      const mappingConfig = [
+        {
+          id: 1,
+          operator: '',
+          text: 'Value mapped to text',
+          type: MappingType.ValueToText,
+          value: '1',
+        },
+      ];
+      const options = createDisplayOptions({
+        reduceOptions: {
+          calcs: [ReducerID.first],
+        },
+      });
+
+      options.data![0].fields[1]!.config = { mappings: mappingConfig };
+      options.data![0].fields[2]!.config = { mappings: mappingConfig };
+
+      const result = getFieldDisplayValues(options);
+      expect(result[0].display.text).toEqual('Value mapped to text');
+    });
+    it('should apply range value mapping', () => {
+      const mappedValue = 'Range mapped to text';
+      const mappingConfig = [
+        {
+          id: 1,
+          operator: '',
+          text: mappedValue,
+          type: MappingType.RangeToText,
+          value: 1,
+          from: '1',
+          to: '3',
+        },
+      ];
+      const options = createDisplayOptions({
+        reduceOptions: {
+          calcs: [ReducerID.first],
+          values: true,
+        },
+      });
+
+      options.data![0].fields[1]!.config = { mappings: mappingConfig };
+      options.data![0].fields[2]!.config = { mappings: mappingConfig };
+
+      const result = getFieldDisplayValues(options);
+
+      expect(result[0].display.text).toEqual(mappedValue);
+      expect(result[2].display.text).toEqual('5');
+      expect(result[3].display.text).toEqual(mappedValue);
+    });
   });
 });
 
@@ -186,7 +230,7 @@ function createEmptyDisplayOptions(extend = {}): GetFieldDisplayValuesOptions {
   });
 }
 
-function createDisplayOptions(extend = {}): GetFieldDisplayValuesOptions {
+function createDisplayOptions(extend: Partial<GetFieldDisplayValuesOptions> = {}): GetFieldDisplayValuesOptions {
   const options: GetFieldDisplayValuesOptions = {
     data: [
       toDataFrame({
@@ -201,9 +245,11 @@ function createDisplayOptions(extend = {}): GetFieldDisplayValuesOptions {
     replaceVariables: (value: string) => {
       return value;
     },
-    fieldOptions: {
+    reduceOptions: {
       calcs: [],
-      override: {},
+    },
+    fieldConfig: {
+      overrides: [],
       defaults: {},
     },
     theme: {} as GrafanaTheme,

@@ -1,0 +1,35 @@
+{
+  "type": "datasource",
+  "name": "Jaeger",
+  "id": "jaeger",
+  "category": "tracing",
+
+  "metrics": false,
+  "alerting": false,
+  "annotations": false,
+  "logs": false,
+  "streaming": false,
+  "tracing": true,
+
+  "info": {
+    "description": "Open source, end-to-end distributed tracing",
+    "author": {
+      "name": "Grafana Labs",
+      "url": "https://grafana.com"
+    },
+    "logos": {
+      "small": "img/jaeger_logo.svg",
+      "large": "img/jaeger_logo.svg"
+    },
+    "links": [
+      {
+        "name": "Learn more",
+        "url": "https://www.jaegertracing.io"
+      },
+      {
+        "name": "GitHub Project",
+        "url": "https://github.com/jaegertracing/jaeger"
+      }
+    ]
+  }
+}

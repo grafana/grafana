@@ -45,7 +45,7 @@ export class TeamPages extends PureComponent<Props, State> {
 
     this.state = {
       isLoading: false,
-      isSyncEnabled: config.buildInfo.isEnterprise,
+      isSyncEnabled: config.licenseInfo.hasLicense,
     };
   }
 

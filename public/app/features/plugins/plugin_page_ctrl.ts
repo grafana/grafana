@@ -6,6 +6,7 @@ import { PluginMeta } from '@grafana/data';
 import { NavModelSrv } from 'app/core/core';
 import { GrafanaRootScope } from 'app/routes/GrafanaCtrl';
 import { AppEvents } from '@grafana/data';
+import { promiseToDigest } from '../../core/utils/promiseToDigest';
 
 export class AppPageCtrl {
   page: any;
@@ -17,14 +18,16 @@ export class AppPageCtrl {
   constructor(private $routeParams: any, private $rootScope: GrafanaRootScope, private navModelSrv: NavModelSrv) {
     this.pluginId = $routeParams.pluginId;
 
-    Promise.resolve(getPluginSettings(this.pluginId))
-      .then(settings => {
-        this.initPage(settings);
-      })
-      .catch(err => {
-        this.$rootScope.appEvent(AppEvents.alertError, ['Unknown Plugin']);
-        this.navModel = this.navModelSrv.getNotFoundNav();
-      });
+    promiseToDigest($rootScope)(
+      Promise.resolve(getPluginSettings(this.pluginId))
+        .then(settings => {
+          this.initPage(settings);
+        })
+        .catch(err => {
+          this.$rootScope.appEvent(AppEvents.alertError, ['Unknown Plugin']);
+          this.navModel = this.navModelSrv.getNotFoundNav();
+        })
+    );
   }
 
   initPage(app: PluginMeta) {

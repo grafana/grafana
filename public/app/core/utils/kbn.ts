@@ -200,9 +200,22 @@ kbn.calculateInterval = (range: TimeRange, resolution: number, lowLimitInterval:
 };
 
 kbn.describe_interval = (str: string) => {
+  // Default to seconds if no unit is provided
+  if (Number(str)) {
+    return {
+      sec: kbn.intervals_in_seconds.s,
+      type: 's',
+      count: parseInt(str, 10),
+    };
+  }
+
   const matches = str.match(kbn.interval_regex);
   if (!matches || !has(kbn.intervals_in_seconds, matches[2])) {
-    throw new Error('Invalid interval string, expecting a number followed by one of "Mwdhmsy"');
+    throw new Error(
+      `Invalid interval string, has to be either unit-less or end with one of the following units: "${Object.keys(
+        kbn.intervals_in_seconds
+      ).join(', ')}"`
+    );
   } else {
     return {
       sec: kbn.intervals_in_seconds[matches[2]],
@@ -312,7 +325,7 @@ if (typeof Proxy !== 'undefined') {
       if (formatter) {
         // Return the results as a simple string
         return (value: number, decimals?: DecimalCount, scaledDecimals?: DecimalCount, isUtc?: boolean) => {
-          return formattedValueToString(formatter(value, decimals, scaledDecimals, isUtc));
+          return formattedValueToString(formatter(value, decimals, scaledDecimals, isUtc ? 'utc' : 'browser'));
         };
       }
 

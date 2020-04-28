@@ -1,7 +1,7 @@
-import { AlertRuleDTO, AlertRule, AlertRulesState } from 'app/types';
-import { Action, ActionTypes } from './actions';
+import { AlertRule, AlertRuleDTO, AlertRulesState } from 'app/types';
 import alertDef from './alertDef';
 import { dateTime } from '@grafana/data';
+import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
 export const initialState: AlertRulesState = { items: [], searchQuery: '', isLoading: false };
 
@@ -28,13 +28,14 @@ function convertToAlertRule(dto: AlertRuleDTO, state: string): AlertRule {
   return rule;
 }
 
-export const alertRulesReducer = (state = initialState, action: Action): AlertRulesState => {
-  switch (action.type) {
-    case ActionTypes.LoadAlertRules: {
+const alertRulesSlice = createSlice({
+  name: 'alertRules',
+  initialState,
+  reducers: {
+    loadAlertRules: state => {
       return { ...state, isLoading: true };
-    }
-
-    case ActionTypes.LoadedAlertRules: {
+    },
+    loadedAlertRules: (state, action: PayloadAction<AlertRuleDTO[]>): AlertRulesState => {
       const alertRules: AlertRuleDTO[] = action.payload;
 
       const alertRulesViewModel: AlertRule[] = alertRules.map(rule => {
@@ -42,14 +43,16 @@ export const alertRulesReducer = (state = initialState, action: Action): AlertRu
       });
 
       return { ...state, items: alertRulesViewModel, isLoading: false };
-    }
-
-    case ActionTypes.SetSearchQuery:
+    },
+    setSearchQuery: (state, action: PayloadAction<string>): AlertRulesState => {
       return { ...state, searchQuery: action.payload };
-  }
+    },
+  },
+});
 
-  return state;
-};
+export const { loadAlertRules, loadedAlertRules, setSearchQuery } = alertRulesSlice.actions;
+
+export const alertRulesReducer = alertRulesSlice.reducer;
 
 export default {
   alertRules: alertRulesReducer,

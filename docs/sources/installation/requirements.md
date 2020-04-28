@@ -27,7 +27,7 @@ The following operating systems are supported for Grafana installation:
 
 While you can install Grafana on other operating systems, we do not recommend doing so and do not provide support for that use case.
 
-Installation of Grafana on other operating systems is possible, but not supported. Please see the [building from source]({{< relref "../project/building_from_source/#building-grafana-from-source" >}}) guide for more information.
+Installation of Grafana on other operating systems is possible, but not supported.
 
 ## Hardware recommendations
 
@@ -53,6 +53,8 @@ Grafana supports the following databases:
 - PostgreSQL
 
 By default, Grafana installs with and uses SQLite, which is an embedded database stored in the Grafana installation location.
+
+> NOTE: PostgreSQL versions 9.5.18, 9.4.23, 9.6.14, 10.9, 11.4, and 12-beta2 are affected by a bug (tracked by the PostgreSQL project as [bug #15865](https://www.postgresql.org/message-id/flat/15865-17940eacc8f8b081%40postgresql.org)) which prevents those versions from being used with Grafana. The bug has been fixed in more recent versions of PostgreSQL.
 
 ## Supported web browsers
 

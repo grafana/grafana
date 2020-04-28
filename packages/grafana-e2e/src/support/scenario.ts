@@ -1,15 +1,10 @@
-import { e2e } from '../index';
-
-export interface ScenarioContext {
-  dataSourceName?: string;
-  dashboardTitle?: string;
-  dashboardUid?: string;
-}
+import { Flows } from '../flows';
+import { getScenarioContext } from './scenarioContext';
 
 export interface ScenarioArguments {
   describeName: string;
   itName: string;
-  scenario: (context: ScenarioContext) => void;
+  scenario: Function;
   skipScenario?: boolean;
   addScenarioDataSource?: boolean;
   addScenarioDashBoard?: boolean;
@@ -25,44 +20,31 @@ export const e2eScenario = ({
 }: ScenarioArguments) => {
   describe(describeName, () => {
     if (skipScenario) {
-      it.skip(itName, () => {
-        // @ts-ignore yarn start in root throws error otherwise
-        expect(false).equals(true);
+      it.skip(itName, () => scenario());
+    } else {
+      beforeEach(() => {
+        Flows.login('admin', 'admin');
+        if (addScenarioDataSource) {
+          Flows.addDataSource();
+        }
+        if (addScenarioDashBoard) {
+          Flows.addDashboard();
+        }
       });
-      return;
+
+      afterEach(() => {
+        getScenarioContext().then(({ lastAddedDashboardUid, lastAddedDataSource }: any) => {
+          if (lastAddedDataSource) {
+            Flows.deleteDataSource(lastAddedDataSource);
+          }
+
+          if (lastAddedDashboardUid) {
+            Flows.deleteDashboard(lastAddedDashboardUid);
+          }
+        });
+      });
+
+      it(itName, () => scenario());
     }
-
-    let scenarioDataSource: string;
-    let scenarioDashBoardTitle: string;
-    let scenarioDashBoardUid: string;
-
-    beforeEach(async () => {
-      e2e.flows.login('admin', 'admin');
-      if (addScenarioDataSource) {
-        scenarioDataSource = e2e.flows.addDataSource('TestData DB');
-      }
-      if (addScenarioDashBoard) {
-        const { dashboardTitle, uid } = await e2e.flows.addDashboard();
-        scenarioDashBoardTitle = dashboardTitle;
-        scenarioDashBoardUid = uid;
-      }
-    });
-
-    afterEach(() => {
-      if (scenarioDataSource) {
-        e2e.flows.deleteDataSource(scenarioDataSource);
-      }
-      if (scenarioDashBoardUid) {
-        e2e.flows.deleteDashboard(scenarioDashBoardUid);
-      }
-    });
-
-    it(itName, () => {
-      scenario({
-        dashboardTitle: scenarioDashBoardTitle,
-        dashboardUid: scenarioDashBoardUid,
-        dataSourceName: scenarioDataSource,
-      });
-    });
   });
 };

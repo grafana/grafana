@@ -2,7 +2,7 @@
 title = "User HTTP API "
 description = "Grafana User HTTP API"
 keywords = ["grafana", "http", "documentation", "api", "user"]
-aliases = ["/http_api/user/"]
+aliases = ["/docs/grafana/latest/http_api/user/"]
 type = "docs"
 [menu.docs]
 name = "Users"
@@ -38,14 +38,22 @@ Content-Type: application/json
     "name": "Admin",
     "login": "admin",
     "email": "admin@mygraf.com",
-    "isAdmin": true
+    "isAdmin": true,
+    "isDisabled": false,
+    "lastSeenAt": "2020-04-10T20:29:27+03:00",
+    "lastSeenAtAge': "2m",
+    "authLabels": ["OAuth"]
   },
   {
     "id": 2,
     "name": "User",
     "login": "user",
     "email": "user@mygraf.com",
-    "isAdmin": false
+    "isAdmin": false,
+    "isDisabled": false,
+    "lastSeenAt": "2020-01-24T12:38:47+02:00",
+    "lastSeenAtAge": "2M",
+    "authLabels": []
   }
 ]
 ```
@@ -63,7 +71,7 @@ Content-Type: application/json
 Authorization: Basic YWRtaW46YWRtaW4=
 ```
 
-Default value for the `perpage` parameter is `1000` and for the `page` parameter is `1`. The `totalCount` field in the response can be used for pagination of the user list E.g. if `totalCount` is equal to 100 users and the `perpage` parameter is set to 10 then there are 10 pages of users. The `query` parameter is optional and it will return results where the query value is contained in one of the `name`, `login` or `email` fields. Query values with spaces need to be url encoded e.g. `query=Jane%20Doe`.
+Default value for the `perpage` parameter is `1000` and for the `page` parameter is `1`. The `totalCount` field in the response can be used for pagination of the user list E.g. if `totalCount` is equal to 100 users and the `perpage` parameter is set to 10 then there are 10 pages of users. The `query` parameter is optional and it will return results where the query value is contained in one of the `name`, `login` or `email` fields. Query values with spaces need to be URL encoded e.g. `query=Jane%20Doe`.
 
 Requires basic authentication and that the authenticated user is a Grafana Admin.
 
@@ -80,14 +88,22 @@ Content-Type: application/json
       "name": "Admin",
       "login": "admin",
       "email": "admin@mygraf.com",
-      "isAdmin": true
+      "isAdmin": true,
+      "isDisabled": false,
+      "lastSeenAt": "2020-04-10T20:29:27+03:00",
+      "lastSeenAtAge': "2m",
+      "authLabels": ["OAuth"]
     },
     {
       "id": 2,
       "name": "User",
       "login": "user",
       "email": "user@mygraf.com",
-      "isAdmin": false
+      "isAdmin": false,
+      "isDisabled": false,
+      "lastSeenAt": "2020-01-24T12:38:47+02:00",
+      "lastSeenAtAge": "2M",
+      "authLabels": []
     }
   ],
   "page": 1,
@@ -127,7 +143,8 @@ Content-Type: application/json
   "isExternal": false,
   "authLabels": [],
   "updatedAt": "2019-09-09T11:31:26+01:00",
-  "createdAt": "2019-09-09T11:31:26+01:00"
+  "createdAt": "2019-09-09T11:31:26+01:00",
+  "avatarUrl": ""
 }
 ```
 
@@ -173,7 +190,8 @@ Content-Type: application/json
   "isExternal": false,
   "authLabels": null,
   "updatedAt": "2019-09-25T14:44:37+01:00",
-  "createdAt": "2019-09-25T14:44:37+01:00"
+  "createdAt": "2019-09-25T14:44:37+01:00",
+  "avatarUrl":""
 }
 ```
 
@@ -294,12 +312,19 @@ HTTP/1.1 200
 Content-Type: application/json
 
 {
+  "id":1,
   "email":"admin@mygraf.com",
   "name":"Admin",
   "login":"admin",
   "theme":"light",
   "orgId":1,
-  "isGrafanaAdmin":true
+  "isGrafanaAdmin":true,
+  "isDisabled":false
+  "isExternal": false,
+  "authLabels": [],
+  "updatedAt": "2019-09-09T11:31:26+01:00",
+  "createdAt": "2019-09-09T11:31:26+01:00",
+  "avatarUrl": ""
 }
 ```
 
@@ -330,6 +355,18 @@ HTTP/1.1 200
 Content-Type: application/json
 
 {"message":"User password changed"}
+```
+
+**Change Password with a Script**
+
+If you need to change a password with a script, here is an example of changing the Admin password using curl with basic auth:
+
+```bash
+curl -X PUT -H "Content-Type: application/json" -d '{
+  "oldPassword": "oldpass",
+  "newPassword": "newpass",
+  "confirmNew": "newpass"
+}' http://admin:oldpass@<your_grafana_host>:3000/api/user/password
 ```
 
 ## Switch user context for a specified user

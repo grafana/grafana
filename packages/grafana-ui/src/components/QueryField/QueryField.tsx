@@ -29,6 +29,7 @@ export interface QueryFieldProps {
   onRunQuery?: () => void;
   onBlur?: () => void;
   onChange?: (value: string) => void;
+  onClick?: (event: Event, editor: CoreEditor, next: () => any) => any;
   onTypeahead?: (typeahead: TypeaheadInput) => Promise<TypeaheadOutput>;
   onWillApplySuggestion?: (suggestion: string, state: SuggestionsState) => string;
   placeholder?: string;
@@ -95,7 +96,13 @@ export class QueryField extends React.PureComponent<QueryFieldProps, QueryFieldS
   }
 
   componentDidUpdate(prevProps: QueryFieldProps, prevState: QueryFieldState) {
-    const { query, syntax } = this.props;
+    const { query, syntax, syntaxLoaded } = this.props;
+
+    if (!prevProps.syntaxLoaded && syntaxLoaded && this.editor) {
+      // Need a bogus edit to re-render the editor after syntax has fully loaded
+      const editor = this.editor.insertText(' ').deleteBackward(1);
+      this.onChange(editor.value, true);
+    }
     const { value } = this.state;
 
     // Handle two way binging between local state and outside prop.
@@ -105,18 +112,6 @@ export class QueryField extends React.PureComponent<QueryFieldProps, QueryFieldS
       if (query !== Plain.serialize(value)) {
         this.setState({ value: makeValue(query || '', syntax) });
       }
-    }
-  }
-
-  UNSAFE_componentWillReceiveProps(nextProps: QueryFieldProps) {
-    if (nextProps.syntaxLoaded && !this.props.syntaxLoaded) {
-      if (!this.editor) {
-        return;
-      }
-
-      // Need a bogus edit to re-render the editor after syntax has fully loaded
-      const editor = this.editor.insertText(' ').deleteBackward(1);
-      this.onChange(editor.value, true);
     }
   }
 
@@ -173,6 +168,7 @@ export class QueryField extends React.PureComponent<QueryFieldProps, QueryFieldS
    */
   handleBlur = (event: Event, editor: CoreEditor, next: Function) => {
     const { onBlur } = this.props;
+
     if (onBlur) {
       onBlur();
     } else {
@@ -202,6 +198,7 @@ export class QueryField extends React.PureComponent<QueryFieldProps, QueryFieldS
             autoCorrect={false}
             readOnly={this.props.disabled}
             onBlur={this.handleBlur}
+            onClick={this.props.onClick}
             // onKeyDown={this.onKeyDown}
             onChange={(change: { value: Value }) => {
               this.onChange(change.value, false);

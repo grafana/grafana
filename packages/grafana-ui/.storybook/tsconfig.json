@@ -1,11 +1,10 @@
 {
-  "extends": "../tsconfig.json",
-  "include": ["../src/**/*.ts", "../src/**/*.tsx"],
-  "exclude": ["../dist", "../node_modules"],
   "compilerOptions": {
-    "noUnusedLocals": false,
-
     "declarationDir": "dist",
+    "noUnusedLocals": false,
     "outDir": "compiled"
-  }
+  },
+  "exclude": ["../dist", "../node_modules"],
+  "extends": "../tsconfig.json",
+  "include": ["../src/**/*.ts", "../src/**/*.tsx", "../../../public/app/types/sanitize-url.d.ts"]
 }

@@ -1,4 +1,3 @@
-import omitBy from 'lodash/omitBy';
 import React, { PureComponent } from 'react';
 import { connect } from 'react-redux';
 import { hot } from 'react-hot-loader';
@@ -6,13 +5,15 @@ import memoizeOne from 'memoize-one';
 import classNames from 'classnames';
 import { css } from 'emotion';
 
-import { ExploreId, ExploreItemState, ExploreMode } from 'app/types/explore';
-import { ToggleButtonGroup, ToggleButton, Tooltip, ButtonSelect, SetInterval } from '@grafana/ui';
-import { RawTimeRange, TimeZone, TimeRange, DataQuery } from '@grafana/data';
+import { ExploreId, ExploreItemState } from 'app/types/explore';
+import { ToggleButtonGroup, ToggleButton, Tooltip, LegacyForms, SetInterval, Icon, IconButton } from '@grafana/ui';
+const { ButtonSelect } = LegacyForms;
+import { RawTimeRange, TimeZone, TimeRange, DataQuery, ExploreMode } from '@grafana/data';
 import { DataSourcePicker } from 'app/core/components/Select/DataSourcePicker';
 import { StoreState } from 'app/types/store';
 import {
   changeDatasource,
+  cancelQueries,
   clearQueries,
   splitClose,
   runQueries,
@@ -20,7 +21,6 @@ import {
   syncTimes,
   changeRefreshInterval,
   changeMode,
-  clearOrigin,
 } from './state/actions';
 import { updateLocation } from 'app/core/actions';
 import { getTimeZone } from '../profile/state/selectors';
@@ -32,6 +32,7 @@ import { ResponsiveButton } from './ResponsiveButton';
 import { RunButton } from './RunButton';
 import { LiveTailControls } from './useLiveTailControls';
 import { getExploreDatasources } from './state/selectors';
+import { setDashboardQueriesToUpdateOnLoad } from '../dashboard/state/reducers';
 
 const getStyles = memoizeOne(() => {
   return {
@@ -72,14 +73,15 @@ interface StateProps {
 interface DispatchProps {
   changeDatasource: typeof changeDatasource;
   clearAll: typeof clearQueries;
+  cancelQueries: typeof cancelQueries;
   runQueries: typeof runQueries;
   closeSplit: typeof splitClose;
   split: typeof splitOpen;
   syncTimes: typeof syncTimes;
   changeRefreshInterval: typeof changeRefreshInterval;
   changeMode: typeof changeMode;
-  clearOrigin: typeof clearOrigin;
   updateLocation: typeof updateLocation;
+  setDashboardQueriesToUpdateOnLoad: typeof setDashboardQueriesToUpdateOnLoad;
 }
 
 type Props = StateProps & DispatchProps & OwnProps;
@@ -93,8 +95,12 @@ export class UnConnectedExploreToolbar extends PureComponent<Props> {
     this.props.clearAll(this.props.exploreId);
   };
 
-  onRunQuery = () => {
-    return this.props.runQueries(this.props.exploreId);
+  onRunQuery = (loading = false) => {
+    if (loading) {
+      return this.props.cancelQueries(this.props.exploreId);
+    } else {
+      return this.props.runQueries(this.props.exploreId);
+    }
   };
 
   onChangeRefreshInterval = (item: string) => {
@@ -113,29 +119,38 @@ export class UnConnectedExploreToolbar extends PureComponent<Props> {
   };
 
   returnToPanel = async ({ withChanges = false } = {}) => {
-    const { originPanelId } = this.props;
+    const { originPanelId, queries } = this.props;
 
     const dashboardSrv = getDashboardSrv();
     const dash = dashboardSrv.getCurrent();
     const titleSlug = kbn.slugifyForUrl(dash.title);
 
-    if (!withChanges) {
-      this.props.clearOrigin();
+    if (withChanges) {
+      this.props.setDashboardQueriesToUpdateOnLoad({
+        panelId: originPanelId,
+        queries: this.cleanQueries(queries),
+      });
     }
 
-    const dashViewOptions = {
-      fullscreen: withChanges || dash.meta.fullscreen,
-      edit: withChanges || dash.meta.isEditing,
-    };
+    const query: any = {};
 
-    this.props.updateLocation({
-      path: `/d/${dash.uid}/:${titleSlug}`,
-      query: {
-        ...omitBy(dashViewOptions, v => !v),
-        panelId: originPanelId,
-      },
-    });
+    if (withChanges || dash.panelInEdit) {
+      query.editPanel = originPanelId;
+    } else if (dash.panelInView) {
+      query.viewPanel = originPanelId;
+    }
+
+    this.props.updateLocation({ path: `/d/${dash.uid}/:${titleSlug}`, query });
   };
+
+  // Remove explore specific parameters from queries
+  private cleanQueries(queries: DataQuery[]) {
+    return queries.map((query: DataQuery & { context?: string }) => {
+      delete query.context;
+      delete query.key;
+      return query;
+    });
+  }
 
   getSelectedDatasource = () => {
     const { datasourceName } = this.props;
@@ -176,6 +191,8 @@ export class UnConnectedExploreToolbar extends PureComponent<Props> {
     const showSmallDataSourcePicker = (splitted ? containerWidth < 700 : containerWidth < 800) || false;
     const showSmallTimePicker = splitted || containerWidth < 1210;
 
+    const showModeToggle = supportedModes.length > 1;
+
     return (
       <div className={splitted ? 'explore-toolbar splitted' : 'explore-toolbar'}>
         <div className="explore-toolbar-item">
@@ -183,15 +200,20 @@ export class UnConnectedExploreToolbar extends PureComponent<Props> {
             <div className="explore-toolbar-header-title">
               {exploreId === 'left' && (
                 <span className="navbar-page-btn">
-                  <i className="gicon gicon-explore" />
+                  <Icon
+                    name="compass"
+                    size="lg"
+                    className={css`
+                      margin-right: 6px;
+                      margin-bottom: 3px;
+                    `}
+                  />
                   Explore
                 </span>
               )}
             </div>
             {splitted && (
-              <a className="explore-toolbar-header-close" onClick={() => closeSplit(exploreId)}>
-                <i className="fa fa-times fa-fw" />
-              </a>
+              <IconButton className="explore-toolbar-header-close" onClick={() => closeSplit(exploreId)} name="times" />
             )}
           </div>
         </div>
@@ -213,7 +235,7 @@ export class UnConnectedExploreToolbar extends PureComponent<Props> {
                     hideTextValue={showSmallDataSourcePicker}
                   />
                 </div>
-                {supportedModes.length > 1 ? (
+                {showModeToggle ? (
                   <div className="query-type-toggle">
                     <ToggleButtonGroup label="" transparent={true}>
                       <ToggleButton
@@ -242,7 +264,7 @@ export class UnConnectedExploreToolbar extends PureComponent<Props> {
               <div className="explore-toolbar-content-item">
                 <Tooltip content={'Return to panel'} placement="bottom">
                   <button className={panelReturnClasses} onClick={() => this.returnToPanel()}>
-                    <i className="fa fa-arrow-left" />
+                    <Icon name="arrow-left" />
                   </button>
                 </Tooltip>
                 {originDashboardIsEditable && (
@@ -261,8 +283,12 @@ export class UnConnectedExploreToolbar extends PureComponent<Props> {
                 <ResponsiveButton
                   splitted={splitted}
                   title="Split"
-                  onClick={split}
-                  iconClassName="fa fa-fw fa-columns icon-margin-right"
+                  /* This way ResponsiveButton doesn't add event as a parameter when invoking split function
+                   * which breaks splitting functionality
+                   */
+                  onClick={() => split()}
+                  icon="columns"
+                  iconClassName="icon-margin-right"
                   disabled={isLive}
                 />
               </div>
@@ -288,7 +314,8 @@ export class UnConnectedExploreToolbar extends PureComponent<Props> {
                   splitted={splitted}
                   title="Clear All"
                   onClick={this.onClearAll}
-                  iconClassName="fa fa-fw fa-trash icon-margin-right"
+                  icon="trash-alt"
+                  iconClassName="icon-margin-right"
                 />
               </div>
             )}
@@ -348,7 +375,7 @@ const mapStateToProps = (state: StoreState, { exploreId }: OwnProps): StateProps
     containerWidth,
   } = exploreItem;
 
-  const hasLiveOption = datasourceInstance?.meta?.streaming && mode === ExploreMode.Logs;
+  const hasLiveOption = !!(datasourceInstance?.meta?.streaming && mode === ExploreMode.Logs);
 
   return {
     datasourceMissing,
@@ -376,12 +403,13 @@ const mapDispatchToProps: DispatchProps = {
   updateLocation,
   changeRefreshInterval,
   clearAll: clearQueries,
+  cancelQueries,
   runQueries,
   closeSplit: splitClose,
   split: splitOpen,
   syncTimes,
   changeMode: changeMode,
-  clearOrigin,
+  setDashboardQueriesToUpdateOnLoad,
 };
 
 export const ExploreToolbar = hot(module)(connect(mapStateToProps, mapDispatchToProps)(UnConnectedExploreToolbar));

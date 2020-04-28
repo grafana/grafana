@@ -1,5 +1,6 @@
 import React, { PureComponent } from 'react';
 import { VariableQueryProps } from 'app/types/plugins';
+import { selectors } from '@grafana/e2e-selectors';
 
 export default class DefaultVariableQueryEditor extends PureComponent<VariableQueryProps, any> {
   constructor(props: VariableQueryProps) {
@@ -37,7 +38,7 @@ export default class DefaultVariableQueryEditor extends PureComponent<VariableQu
           onBlur={this.onBlur}
           placeholder="metric name or tags query"
           required
-          aria-label="Variable editor Form Default Variable Query Editor textarea"
+          aria-label={selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsQueryInput}
         />
       </div>
     );

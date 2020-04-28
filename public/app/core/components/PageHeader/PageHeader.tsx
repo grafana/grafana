@@ -1,5 +1,6 @@
 import React, { FormEvent } from 'react';
-import classNames from 'classnames';
+import { css } from 'emotion';
+import { Tab, TabsBar, Icon, IconName } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
 import { NavModel, NavModelItem, NavModelBreadcrumb } from '@grafana/data';
 import { CoreEvents } from 'app/types';
@@ -45,37 +46,33 @@ const SelectNav = ({ main, customCss }: { main: NavModelItem; customCss: string 
   );
 };
 
-const Tabs = ({ main, customCss }: { main: NavModelItem; customCss: string }) => {
-  return (
-    <ul className={`gf-tabs ${customCss}`}>
-      {main.children.map((tab, idx) => {
-        if (tab.hideFromTabs) {
-          return null;
-        }
-
-        const tabClasses = classNames({
-          'gf-tabs-link': true,
-          active: tab.active,
-        });
-
-        return (
-          <li className="gf-tabs-item" key={tab.url}>
-            <a className={tabClasses} target={tab.target} href={tab.url}>
-              <i className={tab.icon} />
-              {tab.text}
-            </a>
-          </li>
-        );
-      })}
-    </ul>
-  );
-};
-
 const Navigation = ({ main }: { main: NavModelItem }) => {
+  const goToUrl = (index: number) => {
+    main.children.forEach((child, i) => {
+      if (i === index) {
+        appEvents.emit(CoreEvents.locationChange, { href: child.url });
+      }
+    });
+  };
+
   return (
     <nav>
       <SelectNav customCss="page-header__select-nav" main={main} />
-      <Tabs customCss="page-header__tabs" main={main} />
+      <TabsBar className="page-header__tabs" hideBorder={true}>
+        {main.children.map((child, index) => {
+          return (
+            !child.hideFromTabs && (
+              <Tab
+                label={child.text}
+                active={child.active}
+                key={`${child.url}-${index}`}
+                icon={child.icon as IconName}
+                onChangeTab={() => goToUrl(index)}
+              />
+            )
+          );
+        })}
+      </TabsBar>
     </nav>
   );
 };
@@ -117,10 +114,19 @@ export default class PageHeader extends React.Component<Props, any> {
   }
 
   renderHeaderTitle(main: NavModelItem) {
+    const iconClassName =
+      main.icon === 'grafana'
+        ? css`
+            margin-top: 12px;
+          `
+        : css`
+            margin-top: 14px;
+          `;
+
     return (
       <div className="page-header__inner">
         <span className="page-header__logo">
-          {main.icon && <i className={`page-header__icon ${main.icon}`} />}
+          {main.icon && <Icon name={main.icon as IconName} size="xxxl" className={iconClassName} />}
           {main.img && <img className="page-header__img" src={main.img} />}
         </span>
 

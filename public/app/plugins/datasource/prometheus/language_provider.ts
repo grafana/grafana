@@ -1,5 +1,6 @@
 import _ from 'lodash';
 import LRU from 'lru-cache';
+import { Value } from 'slate';
 
 import { dateTime, LanguageProvider, HistoryItem } from '@grafana/data';
 import { CompletionItem, TypeaheadInput, TypeaheadOutput, CompletionItemGroup } from '@grafana/ui';
@@ -8,7 +9,7 @@ import { parseSelector, processLabels, processHistogramLabels } from './language
 import PromqlSyntax, { FUNCTIONS, RATE_RANGES } from './promql';
 
 import { PrometheusDatasource } from './datasource';
-import { PromQuery } from './types';
+import { PromQuery, PromMetricsMetadata } from './types';
 
 const DEFAULT_KEYS = ['job', 'instance'];
 const EMPTY_SELECTOR = '{}';
@@ -41,10 +42,22 @@ export function addHistoryMetadata(item: CompletionItem, history: any[]): Comple
   };
 }
 
+function addMetricsMetadata(metric: string, metadata?: PromMetricsMetadata): CompletionItem {
+  const item: CompletionItem = { label: metric };
+  if (metadata && metadata[metric]) {
+    const { type, help } = metadata[metric][0];
+    item.documentation = `${type.toUpperCase()}: ${help}`;
+  }
+  return item;
+}
+
+const PREFIX_DELIMITER_REGEX = /(="|!="|=~"|!~"|\{|\[|\(|\+|-|\/|\*|%|\^|\band\b|\bor\b|\bunless\b|==|>=|!=|<=|>|<|=|~|,)/;
+
 export default class PromQlLanguageProvider extends LanguageProvider {
   histogramMetrics?: string[];
   timeRange?: { start: number; end: number };
   metrics?: string[];
+  metricsMetadata?: PromMetricsMetadata;
   startTask: Promise<any>;
   datasource: PrometheusDatasource;
   lookupMetricsThreshold: number;
@@ -71,21 +84,21 @@ export default class PromQlLanguageProvider extends LanguageProvider {
     Object.assign(this, initialValues);
   }
 
-  // Strip syntax chars
-  cleanText = (s: string) =>
-    s
-      .replace(/[{}[\]="(),!]/g, '')
-      .replace(/^\s*[~+\-*/^%]/, '')
-      .trim()
-      .split(' ')
-      .pop()
-      .trim();
+  // Strip syntax chars so that typeahead suggestions can work on clean inputs
+  cleanText(s: string) {
+    const parts = s.split(PREFIX_DELIMITER_REGEX);
+    const last = parts.pop();
+    return last
+      .trimLeft()
+      .replace(/"$/, '')
+      .replace(/^"/, '');
+  }
 
   get syntax() {
     return PromqlSyntax;
   }
 
-  request = async (url: string) => {
+  request = async (url: string, defaultValue: any): Promise<any> => {
     try {
       const res = await this.datasource.metadataRequest(url);
       const body = await (res.data || res.json());
@@ -95,12 +108,13 @@ export default class PromQlLanguageProvider extends LanguageProvider {
       console.error(error);
     }
 
-    return [];
+    return defaultValue;
   };
 
   start = async (): Promise<any[]> => {
-    this.metrics = await this.request('/api/v1/label/__name__/values');
+    this.metrics = await this.request('/api/v1/label/__name__/values', []);
     this.lookupsDisabled = this.metrics.length > this.lookupMetricsThreshold;
+    this.metricsMetadata = await this.request('/api/v1/metadata', {});
     this.processHistogramMetrics(this.metrics);
     return [];
   };
@@ -132,7 +146,7 @@ export default class PromQlLanguageProvider extends LanguageProvider {
     // Prevent suggestions in `function(|suffix)`
     const noSuffix = !nextCharacter || nextCharacter === ')';
 
-    // Empty prefix is safe if it does not immediately follow a complete expression and has no text after it
+    // Prefix is safe if it does not immediately follow a complete expression and has no text after it
     const safePrefix = prefix && !text.match(/^[\]})\s]+$/) && noSuffix;
 
     // About to type next operand if preceded by binary operator
@@ -148,7 +162,7 @@ export default class PromQlLanguageProvider extends LanguageProvider {
       return this.getLabelCompletionItems({ prefix, text, value, labelKey, wrapperClasses });
     } else if (wrapperClasses.includes('context-aggregation')) {
       // Suggestions for sum(metric) by (|)
-      return this.getAggregationCompletionItems({ prefix, text, value, labelKey, wrapperClasses });
+      return this.getAggregationCompletionItems(value);
     } else if (empty) {
       // Suggestions for empty query field
       return this.getEmptyCompletionItems(context);
@@ -197,7 +211,7 @@ export default class PromQlLanguageProvider extends LanguageProvider {
   };
 
   getTermCompletionItems = (): TypeaheadOutput => {
-    const { metrics } = this;
+    const { metrics, metricsMetadata } = this;
     const suggestions = [];
 
     suggestions.push({
@@ -209,7 +223,7 @@ export default class PromQlLanguageProvider extends LanguageProvider {
     if (metrics && metrics.length) {
       suggestions.push({
         label: 'Metrics',
-        items: metrics.map(wrapLabel),
+        items: metrics.map(m => addMetricsMetadata(m, metricsMetadata)),
       });
     }
 
@@ -228,7 +242,7 @@ export default class PromQlLanguageProvider extends LanguageProvider {
     };
   }
 
-  getAggregationCompletionItems = async ({ value }: TypeaheadInput): Promise<TypeaheadOutput> => {
+  getAggregationCompletionItems = async (value: Value): Promise<TypeaheadOutput> => {
     const suggestions: CompletionItemGroup[] = [];
 
     // Stitch all query lines together to support multi-line queries
@@ -286,8 +300,22 @@ export default class PromQlLanguageProvider extends LanguageProvider {
     labelKey,
     value,
   }: TypeaheadInput): Promise<TypeaheadOutput> => {
+    const suggestions: CompletionItemGroup[] = [];
     const line = value.anchorBlock.getText();
     const cursorOffset = value.selection.anchor.offset;
+    const suffix = line.substr(cursorOffset);
+    const prefix = line.substr(0, cursorOffset);
+    const isValueStart = text.match(/^(=|=~|!=|!~)/);
+    const isValueEnd = suffix.match(/^"?[,}]/);
+    // detect cursor in front of value, e.g., {key=|"}
+    const isPreValue = prefix.match(/(=|=~|!=|!~)$/) && suffix.match(/^"/);
+
+    // Don't suggestq anything at the beginning or inside a value
+    const isValueEmpty = isValueStart && isValueEnd;
+    const hasValuePrefix = isValueEnd && !isValueStart;
+    if ((!isValueEmpty && !hasValuePrefix) || isPreValue) {
+      return { suggestions };
+    }
 
     // Get normalized selector
     let selector;
@@ -302,7 +330,6 @@ export default class PromQlLanguageProvider extends LanguageProvider {
     const containsMetric = selector.includes('__name__=');
     const existingKeys = parsedSelector ? parsedSelector.labelKeys : [];
 
-    const suggestions: CompletionItemGroup[] = [];
     let labelValues;
     // Query labels for selector
     if (selector) {
@@ -315,7 +342,7 @@ export default class PromQlLanguageProvider extends LanguageProvider {
     }
 
     let context: string;
-    if ((text && text.match(/^!?=~?/)) || wrapperClasses.includes('attr-value')) {
+    if ((text && isValueStart) || wrapperClasses.includes('attr-value')) {
       // Label values
       if (labelKey && labelValues[labelKey]) {
         context = 'context-label-values';
@@ -360,7 +387,7 @@ export default class PromQlLanguageProvider extends LanguageProvider {
   }
 
   fetchLabelValues = async (key: string): Promise<Record<string, string[]>> => {
-    const data = await this.request(`/api/v1/label/${key}/values`);
+    const data = await this.request(`/api/v1/label/${key}/values`, []);
     return { [key]: data };
   };
 
@@ -376,17 +403,23 @@ export default class PromQlLanguageProvider extends LanguageProvider {
    */
   fetchSeriesLabels = async (name: string, withName?: boolean): Promise<Record<string, string[]>> => {
     const tRange = this.datasource.getTimeRange();
-    const url = `/api/v1/series?match[]=${name}&start=${tRange['start']}&end=${tRange['end']}`;
+    const params = new URLSearchParams({
+      'match[]': name,
+      start: tRange['start'].toString(),
+      end: tRange['end'].toString(),
+    });
+    const url = `/api/v1/series?${params.toString()}`;
     // Cache key is a bit different here. We add the `withName` param and also round up to a minute the intervals.
     // The rounding may seem strange but makes relative intervals like now-1h less prone to need separate request every
     // millisecond while still actually getting all the keys for the correct interval. This still can create problems
     // when user does not the newest values for a minute if already cached.
-    const cacheKey = `/api/v1/series?match[]=${name}&start=${this.roundToMinutes(
-      tRange['start']
-    )}&end=${this.roundToMinutes(tRange['end'])}&withName=${!!withName}`;
+    params.set('start', this.roundToMinutes(tRange['start']).toString());
+    params.set('end', this.roundToMinutes(tRange['end']).toString());
+    params.append('withName', withName ? 'true' : 'false');
+    const cacheKey = `/api/v1/series?${params.toString()}`;
     let value = this.labelsCache.get(cacheKey);
     if (!value) {
-      const data = await this.request(url);
+      const data = await this.request(url, []);
       const { values } = processLabels(data, withName);
       value = values;
       this.labelsCache.set(cacheKey, value);

@@ -1,57 +1,33 @@
 import React, { FC, PureComponent } from 'react';
 import { connect } from 'react-redux';
 import { hot } from 'react-hot-loader';
-import { DataSourcePluginMeta, NavModel, PluginType } from '@grafana/data';
-import { List } from '@grafana/ui';
-import { e2e } from '@grafana/e2e';
+import { DataSourcePluginMeta, NavModel } from '@grafana/data';
+import { Button, LinkButton, List } from '@grafana/ui';
+import { selectors } from '@grafana/e2e-selectors';
 
 import Page from 'app/core/components/Page/Page';
-import { StoreState } from 'app/types';
-import { addDataSource, loadDataSourceTypes, setDataSourceTypeSearchQuery } from './state/actions';
-import { getDataSourceTypes } from './state/selectors';
+import { DataSourcePluginCategory, StoreState } from 'app/types';
+import { addDataSource, loadDataSourcePlugins } from './state/actions';
+import { getDataSourcePlugins } from './state/selectors';
 import { FilterInput } from 'app/core/components/FilterInput/FilterInput';
+import { setDataSourceTypeSearchQuery } from './state/reducers';
+import { PluginSignatureBadge } from '../plugins/PluginSignatureBadge';
+import { Card } from 'app/core/components/Card/Card';
 
 export interface Props {
   navModel: NavModel;
-  dataSourceTypes: DataSourcePluginMeta[];
+  plugins: DataSourcePluginMeta[];
+  categories: DataSourcePluginCategory[];
   isLoading: boolean;
   addDataSource: typeof addDataSource;
-  loadDataSourceTypes: typeof loadDataSourceTypes;
+  loadDataSourcePlugins: typeof loadDataSourcePlugins;
   searchQuery: string;
   setDataSourceTypeSearchQuery: typeof setDataSourceTypeSearchQuery;
 }
 
-interface DataSourceCategories {
-  [key: string]: DataSourcePluginMeta[];
-}
-
-interface DataSourceCategoryInfo {
-  id: string;
-  title: string;
-}
-
 class NewDataSourcePage extends PureComponent<Props> {
-  searchInput: HTMLElement;
-  categoryInfoList: DataSourceCategoryInfo[] = [
-    { id: 'tsdb', title: 'Time series databases' },
-    { id: 'logging', title: 'Logging & document databases' },
-    { id: 'sql', title: 'SQL' },
-    { id: 'cloud', title: 'Cloud' },
-    { id: 'other', title: 'Others' },
-  ];
-
-  sortingRules: { [id: string]: number } = {
-    prometheus: 100,
-    graphite: 95,
-    loki: 90,
-    mysql: 80,
-    postgres: 79,
-    gcloud: -1,
-  };
-
   componentDidMount() {
-    this.props.loadDataSourceTypes();
-    this.searchInput.focus();
+    this.props.loadDataSourcePlugins();
   }
 
   onDataSourceTypeClicked = (plugin: DataSourcePluginMeta) => {
@@ -62,28 +38,14 @@ class NewDataSourcePage extends PureComponent<Props> {
     this.props.setDataSourceTypeSearchQuery(value);
   };
 
-  renderTypes(types: DataSourcePluginMeta[]) {
-    if (!types) {
+  renderPlugins(plugins: DataSourcePluginMeta[]) {
+    if (!plugins || !plugins.length) {
       return null;
     }
 
-    // apply custom sort ranking
-    types.sort((a, b) => {
-      const aSort = this.sortingRules[a.id] || 0;
-      const bSort = this.sortingRules[b.id] || 0;
-      if (aSort > bSort) {
-        return -1;
-      }
-      if (aSort < bSort) {
-        return 1;
-      }
-
-      return a.name > b.name ? -1 : 1;
-    });
-
     return (
       <List
-        items={types}
+        items={plugins}
         getItemKey={item => item.id.toString()}
         renderItem={item => (
           <DataSourceTypeCard
@@ -100,70 +62,45 @@ class NewDataSourcePage extends PureComponent<Props> {
     evt.stopPropagation();
   };
 
-  renderGroupedList() {
-    const { dataSourceTypes } = this.props;
-
-    if (dataSourceTypes.length === 0) {
-      return null;
-    }
-
-    const categories = dataSourceTypes.reduce((accumulator, item) => {
-      const category = item.category || 'other';
-      const list = accumulator[category] || [];
-      list.push(item);
-      accumulator[category] = list;
-      return accumulator;
-    }, {} as DataSourceCategories);
-
-    categories['cloud'].push(getGrafanaCloudPhantomPlugin());
+  renderCategories() {
+    const { categories } = this.props;
 
     return (
       <>
-        {this.categoryInfoList.map(category => (
+        {categories.map(category => (
           <div className="add-data-source-category" key={category.id}>
             <div className="add-data-source-category__header">{category.title}</div>
-            {this.renderTypes(categories[category.id])}
+            {this.renderPlugins(category.plugins)}
           </div>
         ))}
         <div className="add-data-source-more">
-          <a
-            className="btn btn-inverse"
-            href="https://grafana.com/plugins?type=datasource&utm_source=new-data-source"
+          <LinkButton
+            variant="secondary"
+            href="https://grafana.com/plugins?type=datasource&utm_source=grafana_add_ds"
             target="_blank"
             rel="noopener"
           >
             Find more data source plugins on grafana.com
-          </a>
+          </LinkButton>
         </div>
       </>
     );
   }
 
   render() {
-    const { navModel, isLoading, searchQuery, dataSourceTypes } = this.props;
+    const { navModel, isLoading, searchQuery, plugins } = this.props;
 
     return (
       <Page navModel={navModel}>
         <Page.Contents isLoading={isLoading}>
           <div className="page-action-bar">
-            <div className="gf-form gf-form--grow">
-              <FilterInput
-                ref={elem => (this.searchInput = elem)}
-                labelClassName="gf-form--has-input-icon"
-                inputClassName="gf-form-input width-30"
-                value={searchQuery}
-                onChange={this.onSearchQueryChange}
-                placeholder="Filter by name or type"
-              />
-            </div>
+            <FilterInput value={searchQuery} onChange={this.onSearchQueryChange} placeholder="Filter by name or type" />
             <div className="page-action-bar__spacer" />
-            <a className="btn btn-secondary" href="datasources">
-              Cancel
-            </a>
+            <LinkButton href="datasources">Cancel</LinkButton>
           </div>
           <div>
-            {searchQuery && this.renderTypes(dataSourceTypes)}
-            {!searchQuery && this.renderGroupedList()}
+            {searchQuery && this.renderPlugins(plugins)}
+            {!searchQuery && this.renderCategories()}
           </div>
         </Page.Contents>
       </Page>
@@ -179,64 +116,48 @@ interface DataSourceTypeCardProps {
 
 const DataSourceTypeCard: FC<DataSourceTypeCardProps> = props => {
   const { plugin, onLearnMoreClick } = props;
-  const canSelect = plugin.id !== 'gcloud';
-  const onClick = canSelect ? props.onClick : () => {};
+  const isPhantom = plugin.module === 'phantom';
+  const onClick = !isPhantom ? props.onClick : () => {};
 
   // find first plugin info link
-  const learnMoreLink = plugin.info.links && plugin.info.links.length > 0 ? plugin.info.links[0].url : null;
+  const learnMoreLink = plugin.info.links && plugin.info.links.length > 0 ? plugin.info.links[0] : null;
 
   return (
-    <div
-      className="add-data-source-item"
+    <Card
+      title={plugin.name}
+      description={plugin.info.description}
+      ariaLabel={selectors.pages.AddDataSource.dataSourcePlugins(plugin.name)}
+      logoUrl={plugin.info.logos.small}
+      actions={
+        <>
+          {learnMoreLink && (
+            <LinkButton
+              variant="secondary"
+              href={`${learnMoreLink.url}?utm_source=grafana_add_ds`}
+              target="_blank"
+              rel="noopener"
+              onClick={onLearnMoreClick}
+              icon="external-link-alt"
+            >
+              {learnMoreLink.name}
+            </LinkButton>
+          )}
+          {!isPhantom && <Button>Select</Button>}
+        </>
+      }
+      labels={
+        !isPhantom && (
+          <div>
+            <PluginSignatureBadge status={plugin.signature} />
+          </div>
+        )
+      }
+      className={isPhantom && 'add-data-source-item--phantom'}
       onClick={onClick}
-      aria-label={e2e.pages.AddDataSource.selectors.dataSourcePlugins(plugin.name)}
-    >
-      <img className="add-data-source-item-logo" src={plugin.info.logos.small} />
-      <div className="add-data-source-item-text-wrapper">
-        <span className="add-data-source-item-text">{plugin.name}</span>
-        {plugin.info.description && <span className="add-data-source-item-desc">{plugin.info.description}</span>}
-      </div>
-      <div className="add-data-source-item-actions">
-        {learnMoreLink && (
-          <a
-            className="btn btn-inverse"
-            href={`${learnMoreLink}?utm_source=grafana_add_ds`}
-            target="_blank"
-            rel="noopener"
-            onClick={onLearnMoreClick}
-          >
-            Learn more <i className="fa fa-external-link add-datasource-item-actions__btn-icon" />
-          </a>
-        )}
-        {canSelect && <button className="btn btn-primary">Select</button>}
-      </div>
-    </div>
+      aria-label={selectors.pages.AddDataSource.dataSourcePlugins(plugin.name)}
+    />
   );
 };
-
-function getGrafanaCloudPhantomPlugin(): DataSourcePluginMeta {
-  return {
-    id: 'gcloud',
-    name: 'Grafana Cloud',
-    type: PluginType.datasource,
-    module: '',
-    baseUrl: '',
-    info: {
-      description: 'Hosted Graphite, Prometheus and Loki',
-      logos: { small: 'public/img/grafana_icon.svg', large: 'asd' },
-      author: { name: 'Grafana Labs' },
-      links: [
-        {
-          url: 'https://grafana.com/products/cloud/',
-          name: 'Learn more',
-        },
-      ],
-      screenshots: [],
-      updated: '2019-05-10',
-      version: '1.0.0',
-    },
-  };
-}
 
 export function getNavModel(): NavModel {
   const main = {
@@ -256,15 +177,16 @@ export function getNavModel(): NavModel {
 function mapStateToProps(state: StoreState) {
   return {
     navModel: getNavModel(),
-    dataSourceTypes: getDataSourceTypes(state.dataSources),
+    plugins: getDataSourcePlugins(state.dataSources),
     searchQuery: state.dataSources.dataSourceTypeSearchQuery,
+    categories: state.dataSources.categories,
     isLoading: state.dataSources.isLoadingDataSources,
   };
 }
 
 const mapDispatchToProps = {
   addDataSource,
-  loadDataSourceTypes,
+  loadDataSourcePlugins,
   setDataSourceTypeSearchQuery,
 };
 

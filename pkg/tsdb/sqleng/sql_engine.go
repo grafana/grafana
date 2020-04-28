@@ -19,10 +19,10 @@ import (
 
 	"github.com/grafana/grafana/pkg/components/null"
 
-	"github.com/go-xorm/core"
-	"github.com/go-xorm/xorm"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
+	"xorm.io/core"
+	"xorm.io/xorm"
 )
 
 // SqlMacroEngine interpolates macros into sql. It takes in the Query to have access to query context and
@@ -55,6 +55,8 @@ var sqlIntervalCalculator = tsdb.NewIntervalCalculator(nil)
 var NewXormEngine = func(driverName string, connectionString string) (*xorm.Engine, error) {
 	return xorm.NewEngine(driverName, connectionString)
 }
+
+const timeEndColumnName = "timeend"
 
 type sqlQueryEndpoint struct {
 	macroEngine            SqlMacroEngine
@@ -218,6 +220,7 @@ func (e *sqlQueryEndpoint) transformToTable(query *tsdb.Query, rows *core.Rows, 
 
 	rowCount := 0
 	timeIndex := -1
+	timeEndIndex := -1
 
 	table := &tsdb.Table{
 		Columns: make([]tsdb.TableColumn, columnCount),
@@ -230,6 +233,11 @@ func (e *sqlQueryEndpoint) transformToTable(query *tsdb.Query, rows *core.Rows, 
 		for _, tc := range e.timeColumnNames {
 			if name == tc {
 				timeIndex = i
+				break
+			}
+
+			if timeIndex >= 0 && name == timeEndColumnName {
+				timeEndIndex = i
 				break
 			}
 		}
@@ -250,10 +258,11 @@ func (e *sqlQueryEndpoint) transformToTable(query *tsdb.Query, rows *core.Rows, 
 			return err
 		}
 
-		// converts column named time to unix timestamp in milliseconds
+		// converts column named time and timeend to unix timestamp in milliseconds
 		// to make native mssql datetime types and epoch dates work in
 		// annotation and table queries.
 		ConvertSqlTimeColumnToEpochMs(values, timeIndex)
+		ConvertSqlTimeColumnToEpochMs(values, timeEndIndex)
 		table.Rows = append(table.Rows, values)
 	}
 

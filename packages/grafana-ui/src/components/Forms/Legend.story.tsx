@@ -10,7 +10,7 @@ const getKnobs = () => {
   };
 };
 
-const story = storiesOf('UI/Forms', module);
+const story = storiesOf('Forms', module);
 
 story.add('Legend', () => {
   const { label } = getKnobs();

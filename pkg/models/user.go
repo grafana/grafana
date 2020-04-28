@@ -58,6 +58,7 @@ type CreateUserCommand struct {
 	Login          string
 	Name           string
 	Company        string
+	OrgId          int64
 	OrgName        string
 	Password       string
 	EmailVerified  bool
@@ -227,6 +228,7 @@ type UserProfileDTO struct {
 	AuthLabels     []string  `json:"authLabels"`
 	UpdatedAt      time.Time `json:"updatedAt"`
 	CreatedAt      time.Time `json:"createdAt"`
+	AvatarUrl      string    `json:"avatarUrl"`
 }
 
 type UserSearchHitDTO struct {

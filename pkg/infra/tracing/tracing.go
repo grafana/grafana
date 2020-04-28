@@ -62,7 +62,7 @@ func (ts *TracingService) parseSettings() {
 	ts.disableSharedZipkinSpans = section.Key("disable_shared_zipkin_spans").MustBool(false)
 }
 
-func (ts *TracingService) initGlobalTracer() error {
+func (ts *TracingService) initJaegerCfg() (jaegercfg.Configuration, error) {
 	cfg := jaegercfg.Configuration{
 		ServiceName: "grafana",
 		Disabled:    !ts.enabled,
@@ -74,6 +74,19 @@ func (ts *TracingService) initGlobalTracer() error {
 			LogSpans:           false,
 			LocalAgentHostPort: ts.address,
 		},
+	}
+
+	_, err := cfg.FromEnv()
+	if err != nil {
+		return cfg, err
+	}
+	return cfg, nil
+}
+
+func (ts *TracingService) initGlobalTracer() error {
+	cfg, err := ts.initJaegerCfg()
+	if err != nil {
+		return err
 	}
 
 	jLogger := &jaegerLogWrapper{logger: log.New("jaeger")}
@@ -102,7 +115,7 @@ func (ts *TracingService) initGlobalTracer() error {
 		return err
 	}
 
-	opentracing.InitGlobalTracer(tracer)
+	opentracing.SetGlobalTracer(tracer)
 
 	ts.closer = closer
 

@@ -1,5 +1,5 @@
 .slate-query-field {
-  font-size: $font-size-root;
+  font-size: $font-size-base;
   font-family: $font-family-monospace;
   height: auto;
   word-break: break-word;
@@ -8,7 +8,7 @@
 .slate-query-field__wrapper {
   position: relative;
   display: inline-block;
-  padding: $input-padding;
+  padding: 6px 8px;
   min-height: $input-height;
   width: 100%;
   cursor: text;
@@ -24,12 +24,13 @@
 
 .slate-query-field__wrapper--disabled {
   background-color: inherit;
+  cursor: not-allowed;
 }
 
 .slate-typeahead {
   .typeahead {
     position: relative;
-    z-index: auto;
+    z-index: $zindex-typeahead;
     border-radius: $border-radius;
     border: $panel-border;
     max-height: calc(66vh);
@@ -130,7 +131,7 @@
   .token.atrule,
   .token.keyword,
   .token.class-name {
-    color: $query-keyword;
+    color: $text-blue;
   }
 
   .token.punctuation,
@@ -146,6 +147,7 @@
   .token.bold {
     font-weight: bold;
   }
+
   .token.italic {
     font-style: italic;
   }

@@ -1,32 +1,6 @@
-import React, { forwardRef } from 'react';
-
-const specialChars = ['(', '[', '{', '}', ']', ')', '|', '*', '+', '-', '.', '?', '<', '>', '#', '&', '^', '$'];
-
-export const escapeStringForRegex = (value: string) => {
-  if (!value) {
-    return value;
-  }
-
-  const newValue = specialChars.reduce(
-    (escaped, currentChar) => escaped.replace(currentChar, '\\' + currentChar),
-    value
-  );
-
-  return newValue;
-};
-
-export const unEscapeStringFromRegex = (value: string) => {
-  if (!value) {
-    return value;
-  }
-
-  const newValue = specialChars.reduce(
-    (escaped, currentChar) => escaped.replace('\\' + currentChar, currentChar),
-    value
-  );
-
-  return newValue;
-};
+import React, { FC } from 'react';
+import { escapeStringForRegex, unEscapeStringFromRegex } from '@grafana/data';
+import { Input, Icon } from '@grafana/ui';
 
 export interface Props {
   value: string | undefined;
@@ -36,16 +10,15 @@ export interface Props {
   onChange: (value: string) => void;
 }
 
-export const FilterInput = forwardRef<HTMLInputElement, Props>((props, ref) => (
-  <label className={props.labelClassName}>
-    <input
-      ref={ref}
-      type="text"
-      className={props.inputClassName}
-      value={unEscapeStringFromRegex(props.value)}
-      onChange={event => props.onChange(escapeStringForRegex(event.target.value))}
-      placeholder={props.placeholder ? props.placeholder : null}
-    />
-    <i className="gf-form-input-icon fa fa-search" />
-  </label>
-));
+export const FilterInput: FC<Props> = props => (
+  <Input
+    // Replaces the usage of ref
+    autoFocus
+    prefix={<Icon name="search" />}
+    width={40}
+    type="text"
+    value={props.value ? unEscapeStringFromRegex(props.value) : ''}
+    onChange={event => props.onChange(escapeStringForRegex(event.currentTarget.value))}
+    placeholder={props.placeholder ?? ''}
+  />
+);

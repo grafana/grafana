@@ -53,6 +53,14 @@ const formatTests: ValueFormatTest[] = [
   { id: 'si:µF', value: 1234000000, decimals: 2, result: '1.23 kF' },
   { id: 'si:µF', value: 1234000000000000, decimals: 2, result: '1.23 GF' },
 
+  // Counts (suffix)
+  { id: 'count:xpm', value: 1234567, decimals: 2, result: '1.23M xpm' },
+  { id: 'count:x/min', value: 1234, decimals: 2, result: '1.23K x/min' },
+
+  // Currency (prefix)
+  { id: 'currency:@', value: 1234567, decimals: 2, result: '@1.23M' },
+  { id: 'currency:@', value: 1234, decimals: 2, result: '@1.23K' },
+
   // Time format
   { id: 'time:YYYY', decimals: 0, value: dateTime(new Date(1999, 6, 2)).valueOf(), result: '1999' },
   { id: 'time:YYYY.MM', decimals: 0, value: dateTime(new Date(2010, 6, 2)).valueOf(), result: '2010.07' },
@@ -121,6 +129,14 @@ describe('valueFormats', () => {
     it('should treat as zero decimals', () => {
       const str = toFixed(186.123, -2);
       expect(str).toBe('186');
+    });
+  });
+
+  describe('Resolve old units', () => {
+    it('resolve farenheit', () => {
+      const fmt0 = getValueFormat('farenheit');
+      const fmt1 = getValueFormat('fahrenheit');
+      expect(fmt0).toEqual(fmt1);
     });
   });
 });

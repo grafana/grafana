@@ -3,7 +3,7 @@ import { DashboardModel } from '../state/DashboardModel';
 import { PanelModel } from '../state/PanelModel';
 import { GRID_CELL_HEIGHT, GRID_CELL_VMARGIN } from 'app/core/constants';
 import { expect } from 'test/lib/common';
-import { DataLinkBuiltInVars } from '@grafana/ui';
+import { DataLinkBuiltInVars } from '@grafana/data';
 
 jest.mock('app/core/services/context_srv', () => ({}));
 
@@ -111,6 +111,10 @@ describe('DashboardModel', () => {
       expect(table.styles[1].thresholds[1]).toBe('300');
     });
 
+    it('table type should be deprecated', () => {
+      expect(table.type).toBe('table-old');
+    });
+
     it('graph grid to yaxes options', () => {
       expect(graph.yaxes[0].min).toBe(1);
       expect(graph.yaxes[0].max).toBe(10);
@@ -128,7 +132,7 @@ describe('DashboardModel', () => {
     });
 
     it('dashboard schema version should be set to latest', () => {
-      expect(model.schemaVersion).toBe(21);
+      expect(model.schemaVersion).toBe(24);
     });
 
     it('graph thresholds should be migrated', () => {
@@ -572,6 +576,53 @@ describe('DashboardModel', () => {
         expect(model.panels[1].options.fieldOptions.defaults.links[0].url).toBe(
           'http://mylink.com?series=${__field.labels}&${__field.labels.x}'
         );
+      });
+    });
+  });
+
+  describe('when migrating variables with multi support', () => {
+    let model: DashboardModel;
+
+    beforeEach(() => {
+      model = new DashboardModel({
+        templating: {
+          list: [
+            {
+              multi: false,
+              current: {
+                value: ['value'],
+                text: ['text'],
+              },
+            },
+            {
+              multi: true,
+              current: {
+                value: ['value'],
+                text: ['text'],
+              },
+            },
+          ],
+        },
+      });
+    });
+
+    it('should have two variables after migration', () => {
+      expect(model.templating.list.length).toBe(2);
+    });
+
+    it('should be migrated if being out of sync', () => {
+      expect(model.templating.list[0].multi).toBe(false);
+      expect(model.templating.list[0].current).toEqual({
+        text: 'text',
+        value: 'value',
+      });
+    });
+
+    it('should not be migrated if being in sync', () => {
+      expect(model.templating.list[1].multi).toBe(true);
+      expect(model.templating.list[1].current).toEqual({
+        text: ['text'],
+        value: ['value'],
       });
     });
   });

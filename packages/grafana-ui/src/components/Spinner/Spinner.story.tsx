@@ -4,7 +4,7 @@ import { storiesOf } from '@storybook/react';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { Spinner } from './Spinner';
 
-const story = storiesOf('UI/Spinner', module);
+const story = storiesOf('Visualizations/Spinner', module);
 story.addDecorator(withCenteredStory);
 story.add('spinner', () => {
   return (

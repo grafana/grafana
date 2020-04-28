@@ -58,7 +58,7 @@ const CLEAR_FLAG = '-';
 const FLAGS_REGEXP = /\(\?([ims-]+)\)/g;
 
 /**
- * Converts any mode modifers in the text to the Javascript equivalent flag
+ * Converts any mode modifiers in the text to the Javascript equivalent flag
  */
 export function parseFlags(text: string): { cleaned: string; flags: string } {
   const flags: Set<string> = new Set(['g']);

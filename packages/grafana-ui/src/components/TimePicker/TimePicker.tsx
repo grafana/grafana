@@ -4,10 +4,10 @@ import { css } from 'emotion';
 import classNames from 'classnames';
 
 // Components
-import { ButtonSelect } from '../Select/ButtonSelect';
+import { ButtonSelect } from '../Forms/Legacy/Select/ButtonSelect';
 import { Tooltip } from '../Tooltip/Tooltip';
-import { TimePickerPopover } from './TimePickerPopover';
-import { ClickOutsideWrapper } from '../ClickOutsideWrapper/ClickOutsideWrapper';
+// import { TimePickerPopover } from './TimePickerPopover';
+// import { ClickOutsideWrapper } from '../ClickOutsideWrapper/ClickOutsideWrapper';
 
 // Utils & Services
 import { isDateTime, DateTime, rangeUtil } from '@grafana/data';
@@ -23,13 +23,13 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
   return {
     timePickerSynced: css`
       label: timePickerSynced;
-      border-color: ${theme.colors.orangeDark};
+      border-color: ${theme.palette.orangeDark};
       background-image: none;
       background-color: transparent;
-      color: ${theme.colors.orangeDark};
+      color: ${theme.palette.orangeDark};
       &:focus,
       :hover {
-        color: ${theme.colors.orangeDark};
+        color: ${theme.palette.orangeDark};
         background-image: none;
         background-color: transparent;
       }
@@ -190,11 +190,11 @@ class UnThemedTimePicker extends PureComponent<Props, State> {
             </button>
           </Tooltip>
 
-          {isCustomOpen && (
-            <ClickOutsideWrapper onClick={this.onCloseCustom}>
-              <TimePickerPopover value={value} timeZone={timeZone} onChange={this.onCustomChange} />
-            </ClickOutsideWrapper>
-          )}
+          {/*{isCustomOpen && (*/}
+          {/*  <ClickOutsideWrapper onClick={this.onCloseCustom}>*/}
+          {/*    <TimePickerPopover value={value} timeZone={timeZone} onChange={this.onCustomChange} />*/}
+          {/*  </ClickOutsideWrapper>*/}
+          {/*)}*/}
         </div>
       </div>
     );

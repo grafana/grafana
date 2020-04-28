@@ -3,29 +3,30 @@ package api
 import (
 	"strconv"
 
+	"github.com/grafana/grafana/pkg/models"
+
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/util"
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
-	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
 // getFrontendSettingsMap returns a json object with all the settings needed for front end initialisation.
-func (hs *HTTPServer) getFrontendSettingsMap(c *m.ReqContext) (map[string]interface{}, error) {
-	orgDataSources := make([]*m.DataSource, 0)
+func (hs *HTTPServer) getFrontendSettingsMap(c *models.ReqContext) (map[string]interface{}, error) {
+	orgDataSources := make([]*models.DataSource, 0)
 
 	if c.OrgId != 0 {
-		query := m.GetDataSourcesQuery{OrgId: c.OrgId}
+		query := models.GetDataSourcesQuery{OrgId: c.OrgId}
 		err := bus.Dispatch(&query)
 
 		if err != nil {
 			return nil, err
 		}
 
-		dsFilterQuery := m.DatasourcesPermissionFilterQuery{
+		dsFilterQuery := models.DatasourcesPermissionFilterQuery{
 			User:        c.SignedInUser,
 			Datasources: query.Result,
 		}
@@ -60,12 +61,13 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *m.ReqContext) (map[string]interf
 	for _, ds := range orgDataSources {
 		url := ds.Url
 
-		if ds.Access == m.DS_ACCESS_PROXY {
+		if ds.Access == models.DS_ACCESS_PROXY {
 			url = "/api/datasources/proxy/" + strconv.FormatInt(ds.Id, 10)
 		}
 
 		var dsMap = map[string]interface{}{
 			"id":   ds.Id,
+			"uid":  ds.Uid,
 			"type": ds.Type,
 			"name": ds.Name,
 			"url":  url,
@@ -94,7 +96,7 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *m.ReqContext) (map[string]interf
 
 		dsMap["jsonData"] = jsonData
 
-		if ds.Access == m.DS_ACCESS_DIRECT {
+		if ds.Access == models.DS_ACCESS_DIRECT {
 			if ds.BasicAuth {
 				dsMap["basicAuth"] = util.GetBasicAuthHeader(ds.BasicAuthUser, ds.DecryptedBasicAuthPassword())
 			}
@@ -102,24 +104,24 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *m.ReqContext) (map[string]interf
 				dsMap["withCredentials"] = ds.WithCredentials
 			}
 
-			if ds.Type == m.DS_INFLUXDB_08 {
+			if ds.Type == models.DS_INFLUXDB_08 {
 				dsMap["username"] = ds.User
 				dsMap["password"] = ds.DecryptedPassword()
 				dsMap["url"] = url + "/db/" + ds.Database
 			}
 
-			if ds.Type == m.DS_INFLUXDB {
+			if ds.Type == models.DS_INFLUXDB {
 				dsMap["username"] = ds.User
 				dsMap["password"] = ds.DecryptedPassword()
 				dsMap["url"] = url
 			}
 		}
 
-		if (ds.Type == m.DS_INFLUXDB) || (ds.Type == m.DS_ES) {
+		if (ds.Type == models.DS_INFLUXDB) || (ds.Type == models.DS_ES) {
 			dsMap["database"] = ds.Database
 		}
 
-		if ds.Type == m.DS_PROMETHEUS {
+		if ds.Type == models.DS_PROMETHEUS {
 			// add unproxied server URL for link to Prometheus web UI
 			jsonData.Set("directUrl", ds.Url)
 		}
@@ -168,6 +170,7 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *m.ReqContext) (map[string]interf
 	jsonObj := map[string]interface{}{
 		"defaultDatasource":          defaultDatasource,
 		"datasources":                datasources,
+		"minRefreshInterval":         setting.MinRefreshInterval,
 		"panels":                     panels,
 		"appSubUrl":                  setting.AppSubUrl,
 		"allowOrgCreate":             (setting.AllowUserOrgCreate && c.IsSignedIn) || c.IsGrafanaAdmin,
@@ -176,6 +179,9 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *m.ReqContext) (map[string]interf
 		"alertingEnabled":            setting.AlertingEnabled,
 		"alertingErrorOrTimeout":     setting.AlertingErrorOrTimeout,
 		"alertingNoDataOrNullValues": setting.AlertingNoDataOrNullValues,
+		"alertingMinInterval":        setting.AlertingMinInterval,
+		"autoAssignOrg":              setting.AutoAssignOrg,
+		"verfiyEmailEnabled":         setting.VerifyEmailEnabled,
 		"exploreEnabled":             setting.ExploreEnabled,
 		"googleAnalyticsId":          setting.GoogleAnalyticsId,
 		"disableLoginForm":           setting.DisableLoginForm,
@@ -193,6 +199,7 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *m.ReqContext) (map[string]interf
 			"version":       setting.BuildVersion,
 			"commit":        setting.BuildCommit,
 			"buildstamp":    setting.BuildStamp,
+			"edition":       hs.License.Edition(),
 			"latestVersion": plugins.GrafanaLatestVersion,
 			"hasUpdate":     plugins.GrafanaHasUpdate,
 			"env":           setting.Env,
@@ -201,8 +208,11 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *m.ReqContext) (map[string]interf
 		"licenseInfo": map[string]interface{}{
 			"hasLicense": hs.License.HasLicense(),
 			"expiry":     hs.License.Expiry(),
+			"stateInfo":  hs.License.StateInfo(),
+			"licenseUrl": hs.License.LicenseURL(c.SignedInUser),
 		},
-		"featureToggles": hs.Cfg.FeatureToggles,
+		"featureToggles":    hs.Cfg.FeatureToggles,
+		"rendererAvailable": hs.RenderService.IsAvailable(),
 	}
 
 	return jsonObj, nil
@@ -213,7 +223,7 @@ func getPanelSort(id string) int {
 	switch id {
 	case "graph":
 		sort = 1
-	case "singlestat":
+	case "stat":
 		sort = 2
 	case "gauge":
 		sort = 3
@@ -221,19 +231,23 @@ func getPanelSort(id string) int {
 		sort = 4
 	case "table":
 		sort = 5
-	case "text":
+	case "singlestat":
 		sort = 6
-	case "heatmap":
+	case "text":
 		sort = 7
-	case "alertlist":
+	case "heatmap":
 		sort = 8
-	case "dashlist":
+	case "alertlist":
 		sort = 9
+	case "dashlist":
+		sort = 10
+	case "news":
+		sort = 10
 	}
 	return sort
 }
 
-func (hs *HTTPServer) GetFrontendSettings(c *m.ReqContext) {
+func (hs *HTTPServer) GetFrontendSettings(c *models.ReqContext) {
 	settings, err := hs.getFrontendSettingsMap(c)
 	if err != nil {
 		c.JsonApiErr(400, "Failed to get frontend settings", err)

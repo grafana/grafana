@@ -1,10 +1,12 @@
 import each from 'lodash/each';
 import groupBy from 'lodash/groupBy';
 
-import { RawTimeRange } from '../types/time';
+import { RawTimeRange, TimeRange, TimeZone } from '../types/time';
 
 import * as dateMath from './datemath';
-import { isDateTime, DateTime } from './moment_wrapper';
+import { isDateTime } from './moment_wrapper';
+import { timeZoneAbbrevation, dateTimeFormat, dateTimeFormatTimeAgo } from './formatter';
+import { dateTimeParse } from './parser';
 
 const spans: { [key: string]: { display: string; section?: number } } = {
   s: { display: 'second' },
@@ -61,8 +63,6 @@ const rangeOptions = [
   { from: 'now-5y', to: 'now', display: 'Last 5 years', section: 0 },
 ];
 
-const absoluteFormat = 'YYYY-MM-DD HH:mm:ss';
-
 const rangeIndex: any = {};
 each(rangeOptions, (frame: any) => {
   rangeIndex[frame.from + ' to ' + frame.to] = frame;
@@ -82,10 +82,6 @@ export function getRelativeTimesList(timepickerSettings: any, currentDisplay: an
   // });
 
   return groups;
-}
-
-function formatDate(date: DateTime) {
-  return date.format(absoluteFormat);
 }
 
 // handles expressions like
@@ -132,24 +128,39 @@ export function describeTextRange(expr: any) {
   return opt;
 }
 
-export function describeTimeRange(range: RawTimeRange): string {
+/**
+ * Use this function to get a properly formatted string representation of a {@link @grafana/data:RawTimeRange | range}.
+ *
+ * @example
+ * ```
+ * // Prints "2":
+ * console.log(add(1,1));
+ * ```
+ * @category TimeUtils
+ * @param range - a time range (usually specified by the TimePicker)
+ * @alpha
+ */
+export function describeTimeRange(range: RawTimeRange, timeZone?: TimeZone): string {
   const option = rangeIndex[range.from.toString() + ' to ' + range.to.toString()];
+
   if (option) {
     return option.display;
   }
 
+  const options = { timeZone };
+
   if (isDateTime(range.from) && isDateTime(range.to)) {
-    return formatDate(range.from) + ' to ' + formatDate(range.to);
+    return dateTimeFormat(range.from, options) + ' to ' + dateTimeFormat(range.to, options);
   }
 
   if (isDateTime(range.from)) {
-    const toMoment = dateMath.parse(range.to, true);
-    return toMoment ? formatDate(range.from) + ' to ' + toMoment.fromNow() : '';
+    const parsed = dateMath.parse(range.to, true, 'utc');
+    return parsed ? dateTimeFormat(range.from, options) + ' to ' + dateTimeFormatTimeAgo(parsed, options) : '';
   }
 
   if (isDateTime(range.to)) {
-    const from = dateMath.parse(range.from, false);
-    return from ? from.fromNow() + ' to ' + formatDate(range.to) : '';
+    const parsed = dateMath.parse(range.from, false, 'utc');
+    return parsed ? dateTimeFormatTimeAgo(parsed, options) + ' to ' + dateTimeFormat(range.to, options) : '';
   }
 
   if (range.to.toString() === 'now') {
@@ -167,4 +178,18 @@ export const isValidTimeSpan = (value: string) => {
 
   const info = describeTextRange(value);
   return info.invalid !== true;
+};
+
+export const describeTimeRangeAbbrevation = (range: TimeRange, timeZone?: TimeZone) => {
+  if (isDateTime(range.from)) {
+    return timeZoneAbbrevation(range.from, { timeZone });
+  }
+  const parsed = dateMath.parse(range.from, true);
+  return parsed ? timeZoneAbbrevation(parsed, { timeZone }) : '';
+};
+
+export const convertRawToRange = (raw: RawTimeRange): TimeRange => {
+  const from = dateTimeParse(raw.from, { roundUp: false });
+  const to = dateTimeParse(raw.to, { roundUp: true });
+  return { from, to, raw };
 };

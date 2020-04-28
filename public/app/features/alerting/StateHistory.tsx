@@ -1,9 +1,10 @@
 import React, { PureComponent } from 'react';
-import alertDef from './state/alertDef';
 import { getBackendSrv } from '@grafana/runtime';
+import { Icon, ConfirmButton, Button } from '@grafana/ui';
+
+import alertDef from './state/alertDef';
 import { DashboardModel } from '../dashboard/state/DashboardModel';
-import appEvents from '../../core/app_events';
-import { CoreEvents } from 'app/types';
+import { css } from 'emotion';
 
 interface Props {
   dashboard: DashboardModel;
@@ -24,9 +25,13 @@ class StateHistory extends PureComponent<Props, State> {
     const { dashboard, panelId } = this.props;
 
     getBackendSrv()
-      .get(`/api/annotations?dashboardId=${dashboard.id}&panelId=${panelId}&limit=50&type=alert`)
-      .then((res: any[]) => {
-        const items = res.map((item: any) => {
+      .get(
+        `/api/annotations?dashboardId=${dashboard.id}&panelId=${panelId}&limit=50&type=alert`,
+        {},
+        `state-history-${dashboard.id}-${panelId}`
+      )
+      .then(data => {
+        const items = data.map((item: any) => {
           return {
             stateModel: alertDef.getStateDisplayModel(item.newState),
             time: dashboard.formatDate(item.time, 'MMM D, YYYY HH:mm:ss'),
@@ -40,28 +45,16 @@ class StateHistory extends PureComponent<Props, State> {
       });
   }
 
-  clearHistory = () => {
-    const { dashboard, onRefresh, panelId } = this.props;
+  clearHistory = async () => {
+    const { dashboard, panelId, onRefresh } = this.props;
 
-    appEvents.emit(CoreEvents.showConfirmModal, {
-      title: 'Delete Alert History',
-      text: 'Are you sure you want to remove all history & annotations for this alert?',
-      icon: 'fa-trash',
-      yesText: 'Yes',
-      onConfirm: () => {
-        getBackendSrv()
-          .post('/api/annotations/mass-delete', {
-            dashboardId: dashboard.id,
-            panelId: panelId,
-          })
-          .then(() => {
-            this.setState({
-              stateHistoryItems: [],
-            });
-            onRefresh();
-          });
-      },
+    await getBackendSrv().post('/api/annotations/mass-delete', {
+      dashboardId: dashboard.id,
+      panelId: panelId,
     });
+
+    this.setState({ stateHistoryItems: [] });
+    onRefresh();
   };
 
   render() {
@@ -72,9 +65,17 @@ class StateHistory extends PureComponent<Props, State> {
         {stateHistoryItems.length > 0 && (
           <div className="p-b-1">
             <span className="muted">Last 50 state changes</span>
-            <button className="btn btn-small btn-danger pull-right" onClick={this.clearHistory}>
-              <i className="fa fa-trash" /> {` Clear history`}
-            </button>
+            <ConfirmButton onConfirm={this.clearHistory} confirmVariant="destructive" confirmText="Clear">
+              <Button
+                className={css`
+                  direction: ltr;
+                `}
+                variant="destructive"
+                icon="trash-alt"
+              >
+                Clear history
+              </Button>
+            </ConfirmButton>
           </div>
         )}
         <ol className="alert-rule-list">
@@ -83,7 +84,7 @@ class StateHistory extends PureComponent<Props, State> {
               return (
                 <li className="alert-rule-item" key={`${item.time}-${index}`}>
                   <div className={`alert-rule-item__icon ${item.stateModel.stateClass}`}>
-                    <i className={item.stateModel.iconClass} />
+                    <Icon name={item.stateModel.iconClass} size="xl" />
                   </div>
                   <div className="alert-rule-item__body">
                     <div className="alert-rule-item__header">

@@ -1,6 +1,33 @@
+import { camelCase } from 'lodash';
+const specialChars = ['(', '[', '{', '}', ']', ')', '|', '*', '+', '-', '.', '?', '<', '>', '#', '&', '^', '$'];
+
+export const escapeStringForRegex = (value: string) => {
+  if (!value) {
+    return value;
+  }
+
+  return specialChars.reduce((escaped, currentChar) => escaped.replace(currentChar, '\\' + currentChar), value);
+};
+
+export const unEscapeStringFromRegex = (value: string) => {
+  if (!value) {
+    return value;
+  }
+
+  return specialChars.reduce((escaped, currentChar) => escaped.replace('\\' + currentChar, currentChar), value);
+};
+
+export function stringStartsAsRegEx(str: string): boolean {
+  if (!str) {
+    return false;
+  }
+
+  return str[0] === '/';
+}
+
 export function stringToJsRegex(str: string): RegExp {
-  if (str[0] !== '/') {
-    return new RegExp('^' + str + '$');
+  if (!stringStartsAsRegEx(str)) {
+    return new RegExp(`^${str}$`);
   }
 
   const match = str.match(new RegExp('^/(.*?)/(g?i?m?y?)$'));
@@ -63,3 +90,8 @@ export function toFloatOrUndefined(value: string): number | undefined {
   const v = parseFloat(value);
   return isNaN(v) ? undefined : v;
 }
+
+export const toPascalCase = (string: string) => {
+  const str = camelCase(string);
+  return str.charAt(0).toUpperCase() + str.substring(1);
+};

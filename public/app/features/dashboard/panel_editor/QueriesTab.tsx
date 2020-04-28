@@ -1,35 +1,26 @@
 // Libraries
 import React, { PureComponent } from 'react';
-import _ from 'lodash';
-import { css } from 'emotion';
 // Components
-import { EditorTabBody, EditorToolbarView } from './EditorTabBody';
 import { DataSourcePicker } from 'app/core/components/Select/DataSourcePicker';
-import { QueryInspector } from './QueryInspector';
 import { QueryOptions } from './QueryOptions';
-import { PanelOptionsGroup, TransformationsEditor, AlphaNotice } from '@grafana/ui';
+import { Button, CustomScrollbar, HorizontalGroup, Modal, stylesFactory } from '@grafana/ui';
+import { getLocationSrv } from '@grafana/runtime';
 import { QueryEditorRows } from './QueryEditorRows';
 // Services
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
-import { getBackendSrv } from 'app/core/services/backend_srv';
+import { backendSrv } from 'app/core/services/backend_srv';
 import config from 'app/core/config';
 // Types
 import { PanelModel } from '../state/PanelModel';
 import { DashboardModel } from '../state/DashboardModel';
-import {
-  LoadingState,
-  DataTransformerConfig,
-  DefaultTimeRange,
-  DataSourceSelectItem,
-  DataQuery,
-  PanelData,
-  PluginState,
-} from '@grafana/data';
+import { DataQuery, DataSourceSelectItem, DefaultTimeRange, LoadingState, PanelData } from '@grafana/data';
 import { PluginHelp } from 'app/core/components/PluginHelp/PluginHelp';
 import { addQuery } from 'app/core/utils/query';
 import { Unsubscribable } from 'rxjs';
-import { isSharedDashboardQuery, DashboardQueryEditor } from 'app/plugins/datasource/dashboard';
+import { DashboardQueryEditor, isSharedDashboardQuery } from 'app/plugins/datasource/dashboard';
 import { expressionDatasource, ExpressionDatasourceID } from 'app/features/expressions/ExpressionDatasource';
+import { css } from 'emotion';
+import { selectors } from '@grafana/e2e-selectors';
 
 interface Props {
   panel: PanelModel;
@@ -44,11 +35,12 @@ interface State {
   isAddingMixed: boolean;
   scrollTop: number;
   data: PanelData;
+  isHelpOpen: boolean;
 }
 
 export class QueriesTab extends PureComponent<Props, State> {
   datasources: DataSourceSelectItem[] = getDatasourceSrv().getMetricSources();
-  backendSrv = getBackendSrv();
+  backendSrv = backendSrv;
   querySubscription: Unsubscribable;
 
   state: State = {
@@ -57,6 +49,7 @@ export class QueriesTab extends PureComponent<Props, State> {
     helpContent: null,
     isPickerOpen: false,
     isAddingMixed: false,
+    isHelpOpen: false,
     scrollTop: 0,
     data: {
       state: LoadingState.NotStarted,
@@ -128,13 +121,17 @@ export class QueriesTab extends PureComponent<Props, State> {
     });
   };
 
-  renderQueryInspector = () => {
+  openQueryInspector = () => {
     const { panel } = this.props;
-    return <QueryInspector panel={panel} />;
+
+    getLocationSrv().update({
+      query: { inspect: panel.id, inspectTab: 'query' },
+      partial: true,
+    });
   };
 
   renderHelp = () => {
-    return <PluginHelp plugin={this.state.currentDS.meta} type="query_help" />;
+    return;
   };
 
   /**
@@ -161,30 +158,50 @@ export class QueriesTab extends PureComponent<Props, State> {
   };
 
   onScrollBottom = () => {
-    this.setState({ scrollTop: this.state.scrollTop + 10000 });
+    this.setState({ scrollTop: 1000 });
   };
 
-  renderToolbar = () => {
-    const { currentDS, isAddingMixed } = this.state;
-    const showAddButton = !(isAddingMixed || isSharedDashboardQuery(currentDS.name));
+  renderTopSection(styles: QueriesTabStyls) {
+    const { panel } = this.props;
+    const { currentDS, data } = this.state;
 
     return (
-      <>
-        <DataSourcePicker datasources={this.datasources} onChange={this.onChangeDataSource} current={currentDS} />
-        <div className="flex-grow-1" />
-        {showAddButton && (
-          <button className="btn navbar-button" onClick={this.onAddQueryClick}>
-            Add Query
-          </button>
-        )}
-        {isAddingMixed && this.renderMixedPicker()}
-        {config.featureToggles.expressions && (
-          <button className="btn navbar-button" onClick={this.onAddExpressionClick}>
-            Add Expression
-          </button>
-        )}
-      </>
+      <div>
+        <div className={styles.dataSourceRow}>
+          <div className={styles.dataSourceRowItem}>
+            <DataSourcePicker datasources={this.datasources} onChange={this.onChangeDataSource} current={currentDS} />
+          </div>
+          <div className={styles.dataSourceRowItem}>
+            <Button
+              variant="secondary"
+              icon="question-circle"
+              title="Open data source help"
+              onClick={this.onOpenHelp}
+            />
+          </div>
+          <div className={styles.dataSourceRowItemOptions}>
+            <QueryOptions panel={panel} datasource={currentDS} data={data} />
+          </div>
+          <div className={styles.dataSourceRowItem}>
+            <Button
+              variant="secondary"
+              onClick={this.openQueryInspector}
+              aria-label={selectors.components.QueryTab.queryInspectorButton}
+            >
+              Query inspector
+            </Button>
+          </div>
+        </div>
+      </div>
     );
+  }
+
+  onOpenHelp = () => {
+    this.setState({ isHelpOpen: true });
+  };
+
+  onCloseHelp = () => {
+    this.setState({ isHelpOpen: false });
   };
 
   renderMixedPicker = () => {
@@ -219,17 +236,12 @@ export class QueriesTab extends PureComponent<Props, State> {
     this.forceUpdate();
   };
 
-  onTransformersChange = (transformers: DataTransformerConfig[]) => {
-    this.props.panel.setTransformations(transformers);
-    this.forceUpdate();
-  };
-
   setScrollTop = (event: React.MouseEvent<HTMLElement>) => {
     const target = event.target as HTMLElement;
     this.setState({ scrollTop: target.scrollTop });
   };
 
-  renderQueryBody = () => {
+  renderQueries() {
     const { panel, dashboard } = this.props;
     const { currentDS, data } = this.state;
 
@@ -238,7 +250,7 @@ export class QueriesTab extends PureComponent<Props, State> {
     }
 
     return (
-      <>
+      <div aria-label={selectors.components.QueryTab.content}>
         <QueryEditorRows
           queries={panel.targets}
           datasource={currentDS}
@@ -248,64 +260,84 @@ export class QueriesTab extends PureComponent<Props, State> {
           dashboard={dashboard}
           data={data}
         />
-        <PanelOptionsGroup>
-          <QueryOptions panel={panel} datasource={currentDS} />
-        </PanelOptionsGroup>
-      </>
+      </div>
     );
-  };
+  }
 
-  render() {
-    const { scrollTop, data } = this.state;
-    const queryInspector: EditorToolbarView = {
-      title: 'Query Inspector',
-      render: this.renderQueryInspector,
-    };
-
-    const dsHelp: EditorToolbarView = {
-      heading: 'Help',
-      icon: 'fa fa-question',
-      render: this.renderHelp,
-    };
-
-    const enableTransformations = config.featureToggles.transformations;
+  renderAddQueryRow(styles: QueriesTabStyls) {
+    const { currentDS, isAddingMixed } = this.state;
+    const showAddButton = !(isAddingMixed || isSharedDashboardQuery(currentDS.name));
 
     return (
-      <EditorTabBody
-        heading="Query"
-        renderToolbar={this.renderToolbar}
-        toolbarItems={[queryInspector, dsHelp]}
-        setScrollTop={this.setScrollTop}
-        scrollTop={scrollTop}
-      >
-        <>
-          {this.renderQueryBody()}
+      <HorizontalGroup spacing="md" align="flex-start">
+        {showAddButton && (
+          <Button icon="plus" onClick={this.onAddQueryClick} variant="secondary">
+            Query
+          </Button>
+        )}
+        {isAddingMixed && this.renderMixedPicker()}
+        {config.featureToggles.expressions && (
+          <Button icon="plus" onClick={this.onAddExpressionClick} variant="secondary">
+            Expression
+          </Button>
+        )}
+      </HorizontalGroup>
+    );
+  }
 
-          {enableTransformations && (
-            <PanelOptionsGroup
-              title={
-                <>
-                  Query results
-                  <AlphaNotice
-                    state={PluginState.alpha}
-                    className={css`
-                      margin-left: 16px;
-                    `}
-                  />
-                </>
-              }
-            >
-              {this.state.data.state !== LoadingState.NotStarted && (
-                <TransformationsEditor
-                  transformations={this.props.panel.transformations || []}
-                  onChange={this.onTransformersChange}
-                  dataFrames={data.series}
-                />
-              )}
-            </PanelOptionsGroup>
+  render() {
+    const { scrollTop, isHelpOpen } = this.state;
+    const styles = getStyles();
+
+    return (
+      <CustomScrollbar
+        autoHeightMin="100%"
+        autoHide={true}
+        updateAfterMountMs={300}
+        scrollTop={scrollTop}
+        setScrollTop={this.setScrollTop}
+      >
+        <div className={styles.innerWrapper}>
+          {this.renderTopSection(styles)}
+          <div className={styles.queriesWrapper}>{this.renderQueries()}</div>
+          {this.renderAddQueryRow(styles)}
+
+          {isHelpOpen && (
+            <Modal title="Data source help" isOpen={true} onDismiss={this.onCloseHelp}>
+              <PluginHelp plugin={this.state.currentDS.meta} type="query_help" />
+            </Modal>
           )}
-        </>
-      </EditorTabBody>
+        </div>
+      </CustomScrollbar>
     );
   }
 }
+
+const getStyles = stylesFactory(() => {
+  const { theme } = config;
+
+  return {
+    innerWrapper: css`
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      padding: ${theme.spacing.md};
+    `,
+    dataSourceRow: css`
+      display: flex;
+      margin-bottom: ${theme.spacing.md};
+    `,
+    dataSourceRowItem: css`
+      margin-right: ${theme.spacing.inlineFormMargin};
+    `,
+    dataSourceRowItemOptions: css`
+      flex-grow: 1;
+      margin-right: ${theme.spacing.inlineFormMargin};
+    `,
+    queriesWrapper: css`
+      padding-bottom: 16px;
+    `,
+  };
+});
+
+type QueriesTabStyls = ReturnType<typeof getStyles>;

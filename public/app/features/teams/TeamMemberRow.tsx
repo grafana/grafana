@@ -1,6 +1,7 @@
 import React, { PureComponent } from 'react';
 import { connect } from 'react-redux';
-import { DeleteButton, Select } from '@grafana/ui';
+import { LegacyForms, DeleteButton } from '@grafana/ui';
+const { Select } = LegacyForms;
 import { SelectableValue } from '@grafana/data';
 
 import { TeamMember, teamsPermissionLevels, TeamPermissionLevel } from 'app/types';
@@ -86,7 +87,7 @@ export class TeamMemberRow extends PureComponent<Props> {
         {this.renderPermissions(member)}
         {syncEnabled && this.renderLabels(member.labels)}
         <td className="text-right">
-          <DeleteButton onConfirm={() => this.onRemoveMember(member)} disabled={!signedInUserIsTeamAdmin} />
+          <DeleteButton size="sm" disabled={!signedInUserIsTeamAdmin} onConfirm={() => this.onRemoveMember(member)} />
         </td>
       </tr>
     );

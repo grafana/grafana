@@ -1,25 +1,21 @@
 // Libraries
 import _ from 'lodash';
 
-// Utils
-import { getColorFromHexRgbOrName } from '../utils/namedColorsPalette';
-
 // Types
-import { FieldConfig, FieldType } from '../types/dataFrame';
-import { GrafanaTheme, GrafanaThemeType } from '../types/theme';
+import { Field, FieldType } from '../types/dataFrame';
+import { GrafanaTheme } from '../types/theme';
 import { DisplayProcessor, DisplayValue, DecimalCount, DecimalInfo } from '../types/displayValue';
 import { getValueFormat } from '../valueFormats/valueFormats';
 import { getMappedValue } from '../utils/valueMappings';
-import { Threshold } from '../types/threshold';
 import { DEFAULT_DATE_TIME_FORMAT } from '../datetime';
-import { KeyValue } from '../types';
+import { KeyValue, TimeZone } from '../types';
+import { getScaleCalculator } from './scale';
 
 interface DisplayProcessorOptions {
-  type?: FieldType;
-  config?: FieldConfig;
+  field: Partial<Field>;
 
   // Context
-  isUtc?: boolean;
+  timeZone?: TimeZone;
   theme?: GrafanaTheme; // Will pick 'dark' if not defined
 }
 
@@ -31,80 +27,82 @@ const timeFormats: KeyValue<boolean> = {
 };
 
 export function getDisplayProcessor(options?: DisplayProcessorOptions): DisplayProcessor {
-  if (options && !_.isEmpty(options)) {
-    const field = options.config ? options.config : {};
+  if (!options || _.isEmpty(options) || !options.field) {
+    return toStringProcessor;
+  }
+  const { field } = options;
+  const config = field.config ?? {};
 
-    if (options.type === FieldType.time) {
-      if (field.unit && timeFormats[field.unit]) {
-        // Currently selected unit is valid for time fields
-      } else if (field.unit && field.unit.startsWith('time:')) {
-        // Also OK
-      } else {
-        field.unit = `time:${DEFAULT_DATE_TIME_FORMAT}`;
+  if (field.type === FieldType.time) {
+    if (config.unit && timeFormats[config.unit]) {
+      // Currently selected unit is valid for time fields
+    } else if (config.unit && config.unit.startsWith('time:')) {
+      // Also OK
+    } else {
+      config.unit = `time:${DEFAULT_DATE_TIME_FORMAT}`;
+    }
+  }
+
+  const formatFunc = getValueFormat(config.unit || 'none');
+  const scaleFunc = getScaleCalculator(field as Field, options.theme);
+
+  return (value: any) => {
+    const { mappings } = config;
+
+    let text = _.toString(value);
+    let numeric = toNumber(value);
+    let prefix: string | undefined = undefined;
+    let suffix: string | undefined = undefined;
+    let shouldFormat = true;
+
+    if (mappings && mappings.length > 0) {
+      const mappedValue = getMappedValue(mappings, value);
+
+      if (mappedValue) {
+        text = mappedValue.text;
+        const v = toNumber(text);
+
+        if (!isNaN(v)) {
+          numeric = v;
+        }
+
+        shouldFormat = false;
       }
     }
 
-    const formatFunc = getValueFormat(field.unit || 'none');
+    if (!isNaN(numeric)) {
+      if (shouldFormat && !_.isBoolean(value)) {
+        const { decimals, scaledDecimals } = getDecimalsForValue(value, config.decimals);
+        const v = formatFunc(numeric, decimals, scaledDecimals, options.timeZone);
+        text = v.text;
+        suffix = v.suffix;
+        prefix = v.prefix;
 
-    return (value: any) => {
-      const { theme } = options;
-      const { mappings, thresholds } = field;
-      let color;
-
-      let text = _.toString(value);
-      let numeric = toNumber(value);
-      let prefix: string | undefined = undefined;
-      let suffix: string | undefined = undefined;
-
-      let shouldFormat = true;
-      if (mappings && mappings.length > 0) {
-        const mappedValue = getMappedValue(mappings, value);
-
-        if (mappedValue) {
-          text = mappedValue.text;
-          const v = toNumber(text);
-
-          if (!isNaN(v)) {
-            numeric = v;
-          }
-
-          shouldFormat = false;
-        }
-      }
-
-      if (!isNaN(numeric)) {
-        if (shouldFormat && !_.isBoolean(value)) {
-          const { decimals, scaledDecimals } = getDecimalsForValue(value, field.decimals);
-          const v = formatFunc(numeric, decimals, scaledDecimals, options.isUtc);
-          text = v.text;
-          suffix = v.suffix;
-          prefix = v.prefix;
-
-          // Check if the formatted text mapped to a different value
-          if (mappings && mappings.length > 0) {
-            const mappedValue = getMappedValue(mappings, text);
-            if (mappedValue) {
-              text = mappedValue.text;
-            }
+        // Check if the formatted text mapped to a different value
+        if (mappings && mappings.length > 0) {
+          const mappedValue = getMappedValue(mappings, text);
+          if (mappedValue) {
+            text = mappedValue.text;
           }
         }
-        if (thresholds && thresholds.length) {
-          color = getColorFromThreshold(numeric, thresholds, theme);
-        }
       }
 
-      if (!text) {
-        if (field && field.noValue) {
-          text = field.noValue;
-        } else {
-          text = ''; // No data?
-        }
+      // Return the value along with scale info
+      if (text) {
+        return { text, numeric, prefix, suffix, ...scaleFunc(numeric) };
       }
-      return { text, numeric, color, prefix, suffix };
-    };
-  }
+    }
 
-  return toStringProcessor;
+    if (!text) {
+      if (config.noValue) {
+        text = config.noValue;
+      } else {
+        text = ''; // No data?
+      }
+    }
+
+    return { text, numeric, prefix, suffix, ...scaleFunc(-Infinity) };
+  };
 }
 
 /** Will return any value as a number or NaN */
@@ -124,45 +122,6 @@ function toNumber(value: any): number {
 function toStringProcessor(value: any): DisplayValue {
   return { text: _.toString(value), numeric: toNumber(value) };
 }
-
-export function getColorFromThreshold(value: number, thresholds: Threshold[], theme?: GrafanaTheme): string {
-  const themeType = theme ? theme.type : GrafanaThemeType.Dark;
-
-  if (thresholds.length === 1) {
-    return getColorFromHexRgbOrName(thresholds[0].color, themeType);
-  }
-
-  const atThreshold = thresholds.filter(threshold => value === threshold.value)[0];
-  if (atThreshold) {
-    return getColorFromHexRgbOrName(atThreshold.color, themeType);
-  }
-
-  const belowThreshold = thresholds.filter(threshold => value > threshold.value);
-
-  if (belowThreshold.length > 0) {
-    const nearestThreshold = belowThreshold.sort((t1, t2) => t2.value - t1.value)[0];
-    return getColorFromHexRgbOrName(nearestThreshold.color, themeType);
-  }
-
-  // Use the first threshold as the default color
-  return getColorFromHexRgbOrName(thresholds[0].color, themeType);
-}
-
-// function getSignificantDigitCount(n: number): number {
-//   // remove decimal and make positive
-//   n = Math.abs(parseInt(String(n).replace('.', ''), 10));
-//   if (n === 0) {
-//     return 0;
-//   }
-//
-//   // kill the 0s at the end of n
-//   while (n !== 0 && n % 10 === 0) {
-//     n /= 10;
-//   }
-//
-//   // get number of digits
-//   return Math.floor(Math.log(n) / Math.LN10) + 1;
-// }
 
 export function getDecimalsForValue(value: number, decimalOverride?: DecimalCount): DecimalInfo {
   if (_.isNumber(decimalOverride)) {

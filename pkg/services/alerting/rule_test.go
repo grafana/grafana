@@ -60,7 +60,7 @@ func TestAlertRuleModel(t *testing.T) {
 		})
 
 		Convey("can construct alert rule model", func() {
-			firstNotification := models.CreateAlertNotificationCommand{OrgId: 1, Name: "1"}
+			firstNotification := models.CreateAlertNotificationCommand{Uid: "notifier1", OrgId: 1, Name: "1"}
 			err := sqlstore.CreateAlertNotificationCommand(&firstNotification)
 			So(err, ShouldBeNil)
 			secondNotification := models.CreateAlertNotificationCommand{Uid: "notifier2", OrgId: 1, Name: "2"}
@@ -105,12 +105,47 @@ func TestAlertRuleModel(t *testing.T) {
 				So(err, ShouldBeNil)
 
 				So(len(alertRule.Conditions), ShouldEqual, 1)
+				So(len(alertRule.Notifications), ShouldEqual, 2)
 
-				Convey("Can read notifications", func() {
-					So(len(alertRule.Notifications), ShouldEqual, 2)
-					So(alertRule.Notifications, ShouldContain, "000000001")
+				Convey("Can read Id and Uid notifications (translate Id to Uid)", func() {
 					So(alertRule.Notifications, ShouldContain, "notifier2")
+					So(alertRule.Notifications, ShouldContain, "notifier1")
 				})
+			})
+		})
+
+		Convey("with non existing notification id", func() {
+			json := `
+				{
+					"name": "name3",
+					"description": "desc3",
+					"handler": 0,
+					"noDataMode": "critical",
+					"enabled": true,
+					"frequency": "60s",
+					"conditions": [{"type": "test", "prop": 123 }],
+					"notifications": [
+						{"id": 999}
+					]
+				}
+				`
+
+			alertJSON, jsonErr := simplejson.NewJson([]byte(json))
+			So(jsonErr, ShouldBeNil)
+
+			alert := &models.Alert{
+				Id:          1,
+				OrgId:       1,
+				DashboardId: 1,
+				PanelId:     1,
+
+				Settings: alertJSON,
+			}
+
+			_, err := NewRuleFromDBAlert(alert)
+			Convey("raises an error", func() {
+				So(err, ShouldNotBeNil)
+				So(err.Error(), ShouldEqual, "Alert validation error: Unable to translate notification id to uid, Alert notification [ Id: 999, OrgId: 1 ] not found AlertId: 1 PanelId: 1 DashboardId: 1")
 			})
 		})
 

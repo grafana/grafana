@@ -1,12 +1,10 @@
-import { BackendSrv } from 'app/core/services/backend_srv';
+import { backendSrv } from 'app/core/services/backend_srv';
 
 export class FolderPageLoader {
-  constructor(private backendSrv: BackendSrv) {}
-
   load(ctrl: any, uid: any, activeChildId: any) {
     ctrl.navModel = {
       main: {
-        icon: 'fa fa-folder-open',
+        icon: 'folder',
         id: 'manage-folder',
         subTitle: 'Manage folder dashboards & permissions',
         url: '',
@@ -15,21 +13,21 @@ export class FolderPageLoader {
         children: [
           {
             active: activeChildId === 'manage-folder-dashboards',
-            icon: 'fa fa-fw fa-th-large',
+            icon: 'apps',
             id: 'manage-folder-dashboards',
             text: 'Dashboards',
             url: 'dashboards',
           },
           {
             active: activeChildId === 'manage-folder-permissions',
-            icon: 'fa fa-fw fa-lock',
+            icon: 'lock',
             id: 'manage-folder-permissions',
             text: 'Permissions',
             url: 'dashboards/permissions',
           },
           {
             active: activeChildId === 'manage-folder-settings',
-            icon: 'gicon gicon-cog',
+            icon: 'cog',
             id: 'manage-folder-settings',
             text: 'Settings',
             url: 'dashboards/settings',
@@ -38,7 +36,7 @@ export class FolderPageLoader {
       },
     };
 
-    return this.backendSrv.getFolderByUid(uid).then((folder: any) => {
+    return backendSrv.getFolderByUid(uid).then((folder: any) => {
       ctrl.folderId = folder.id;
       const folderTitle = folder.title;
       const folderUrl = folder.url;

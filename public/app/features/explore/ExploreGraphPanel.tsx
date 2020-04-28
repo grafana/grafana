@@ -1,6 +1,6 @@
 import React, { PureComponent } from 'react';
 import { css, cx } from 'emotion';
-import { GrafanaTheme, TimeZone, AbsoluteTimeRange, GraphSeriesXY, dateTimeForTimeZone } from '@grafana/data';
+import { GrafanaTheme, TimeZone, AbsoluteTimeRange, GraphSeriesXY, dateTime } from '@grafana/data';
 
 import {
   selectThemeVariant,
@@ -12,6 +12,7 @@ import {
   GraphSeriesToggler,
   GraphSeriesTogglerAPI,
   Chart,
+  Icon,
 } from '@grafana/ui';
 
 const MAX_NUMBER_OF_TIME_SERIES = 20;
@@ -24,11 +25,11 @@ const getStyles = (theme: GrafanaTheme) => ({
     padding: 10px 0;
     border-radius: ${theme.border.radius.md};
     text-align: center;
-    background-color: ${selectThemeVariant({ light: theme.colors.white, dark: theme.colors.dark4 }, theme.type)};
+    background-color: ${selectThemeVariant({ light: theme.palette.white, dark: theme.palette.dark4 }, theme.type)};
   `,
   disclaimerIcon: css`
     label: disclaimer-icon;
-    color: ${theme.colors.yellow};
+    color: ${theme.palette.yellow};
     margin-right: ${theme.spacing.xs};
   `,
   showAllTimeSeries: css`
@@ -105,13 +106,14 @@ class UnThemedExploreGraphPanel extends PureComponent<Props, State> {
     }
 
     const timeRange = {
-      from: dateTimeForTimeZone(timeZone, absoluteRange.from),
-      to: dateTimeForTimeZone(timeZone, absoluteRange.to),
+      from: dateTime(absoluteRange.from),
+      to: dateTime(absoluteRange.to),
       raw: {
-        from: dateTimeForTimeZone(timeZone, absoluteRange.from),
-        to: dateTimeForTimeZone(timeZone, absoluteRange.to),
+        from: dateTime(absoluteRange.from),
+        to: dateTime(absoluteRange.to),
       },
     };
+
     const height = showPanel === false ? 100 : showingGraph && showingTable ? 200 : 400;
     const lineWidth = showLines ? 1 : 5;
     const seriesToShow = showAllTimeSeries ? series : series.slice(0, MAX_NUMBER_OF_TIME_SERIES);
@@ -156,7 +158,7 @@ class UnThemedExploreGraphPanel extends PureComponent<Props, State> {
       <>
         {series && series.length > MAX_NUMBER_OF_TIME_SERIES && !showAllTimeSeries && (
           <div className={cx([style.timeSeriesDisclaimer])}>
-            <i className={cx(['fa fa-fw fa-warning', style.disclaimerIcon])} />
+            <Icon className={style.disclaimerIcon} name="exclamation-triangle" />
             {`Showing only ${MAX_NUMBER_OF_TIME_SERIES} time series. `}
             <span
               className={cx([style.showAllTimeSeries])}

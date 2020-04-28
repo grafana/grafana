@@ -3,7 +3,10 @@ import _ from 'lodash';
 import { DashboardModel } from '../state/DashboardModel';
 import { ContextSrv } from 'app/core/services/context_srv';
 import { GrafanaRootScope } from 'app/routes/GrafanaCtrl';
-import { CoreEvents, AppEventConsumer } from 'app/types';
+import { AppEventConsumer, CoreEvents } from 'app/types';
+import { appEvents } from 'app/core/app_events';
+import { UnsavedChangesModal } from '../components/SaveDashboard/UnsavedChangesModal';
+import { getLocationSrv } from '@grafana/runtime';
 
 export class ChangeTracker {
   current: any;
@@ -32,7 +35,7 @@ export class ChangeTracker {
     this.scope = scope;
 
     // register events
-    scope.onAppEvent(CoreEvents.dashboardSaved, () => {
+    appEvents.on(CoreEvents.dashboardSaved, () => {
       this.original = this.current.getSaveModelClone();
       this.originalPath = $location.path();
     });
@@ -52,6 +55,7 @@ export class ChangeTracker {
       if (this.originalPath === $location.path()) {
         return true;
       }
+
       if (this.ignoreChanges()) {
         return true;
       }
@@ -131,10 +135,10 @@ export class ChangeTracker {
     });
 
     // ignore template variable values
-    _.each(dash.templating.list, value => {
-      value.current = null;
-      value.options = null;
-      value.filters = null;
+    _.each(dash.getVariables(), variable => {
+      variable.current = null;
+      variable.options = null;
+      variable.filters = null;
     });
 
     return dash;
@@ -144,8 +148,8 @@ export class ChangeTracker {
     const current = this.cleanDashboardFromIgnoredChanges(this.current.getSaveModelClone());
     const original = this.cleanDashboardFromIgnoredChanges(this.original);
 
-    const currentTimepicker: any = _.find(current.nav, { type: 'timepicker' });
-    const originalTimepicker: any = _.find(original.nav, { type: 'timepicker' });
+    const currentTimepicker: any = _.find((current as any).nav, { type: 'timepicker' });
+    const originalTimepicker: any = _.find((original as any).nav, { type: 'timepicker' });
 
     if (currentTimepicker && originalTimepicker) {
       currentTimepicker.now = originalTimepicker.now;
@@ -157,33 +161,35 @@ export class ChangeTracker {
     return currentJson !== originalJson;
   }
 
-  discardChanges() {
+  discardChanges = () => {
     this.original = null;
     this.gotoNext();
-  }
+  };
 
-  open_modal() {
-    this.$rootScope.appEvent(CoreEvents.showModal, {
-      templateHtml: '<unsaved-changes-modal dismiss="dismiss()"></unsaved-changes-modal>',
-      modalClass: 'modal--narrow confirm-modal',
+  open_modal = () => {
+    this.$rootScope.appEvent(CoreEvents.showModalReact, {
+      component: UnsavedChangesModal,
+      props: {
+        dashboard: this.current,
+        onSaveSuccess: this.onSaveSuccess,
+        onDiscard: () => {
+          this.discardChanges();
+        },
+      },
     });
-  }
+  };
 
-  saveChanges() {
-    const self = this;
-    const cancel = this.$rootScope.$on('dashboard-saved', () => {
-      cancel();
-      this.$timeout(() => {
-        self.gotoNext();
-      });
+  onSaveSuccess = () => {
+    this.$timeout(() => {
+      this.gotoNext();
     });
+  };
 
-    this.$rootScope.appEvent(CoreEvents.saveDashboard);
-  }
-
-  gotoNext() {
+  gotoNext = () => {
     const baseLen = this.$location.absUrl().length - this.$location.url().length;
     const nextUrl = this.next.substring(baseLen);
-    this.$location.url(nextUrl);
-  }
+    getLocationSrv().update({
+      path: nextUrl,
+    });
+  };
 }

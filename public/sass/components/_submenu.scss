@@ -28,19 +28,22 @@
 
   .fa-caret-down {
     font-size: 75%;
-    position: relative;
-    top: -1px;
-    left: 1px;
+    padding-left: 8px;
+  }
+
+  .gf-form-inline .gf-form {
+    margin-bottom: 0;
   }
 }
 
 .variable-value-link {
   padding-right: 10px;
-  padding: $space-sm;
+  padding: 0 $space-sm;
   background-color: $input-bg;
   border: 1px solid $input-border-color;
   border-radius: $input-border-radius;
-  display: inline-block;
+  display: flex;
+  align-items: center;
   color: $text-color;
   height: $input-height;
 

@@ -18,6 +18,8 @@ var (
 	ErrTooManyLoginAttempts  = errors.New("Too many consecutive incorrect login attempts for user. Login for user temporarily blocked")
 	ErrPasswordEmpty         = errors.New("No password provided")
 	ErrUserDisabled          = errors.New("User is disabled")
+	ErrAbsoluteRedirectTo    = errors.New("Absolute urls are not allowed for redirect_to cookie value")
+	ErrInvalidRedirectTo     = errors.New("Invalid redirect_to cookie value")
 )
 
 var loginLogger = log.New("login")

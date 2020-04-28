@@ -2,7 +2,7 @@
 title = "Admin HTTP API "
 description = "Grafana Admin HTTP API"
 keywords = ["grafana", "http", "documentation", "api", "admin"]
-aliases = ["/http_api/admin/"]
+aliases = ["/docs/grafana/latest/http_api/admin/"]
 type = "docs"
 [menu.docs]
 name = "Admin"
@@ -23,7 +23,7 @@ Only works with Basic Authentication (username and password). See [introduction]
 
 **Example Request**:
 
-```bash
+```http
 GET /api/admin/settings
 Accept: application/json
 Content-Type: application/json
@@ -31,7 +31,7 @@ Content-Type: application/json
 
 **Example Response**:
 
-```bash
+```http
 HTTP/1.1 200
 Content-Type: application/json
 
@@ -181,7 +181,7 @@ Only works with Basic Authentication (username and password). See [introduction]
 
 **Example Request**:
 
-```bash
+```http
 GET /api/admin/stats
 Accept: application/json
 Content-Type: application/json
@@ -189,7 +189,7 @@ Content-Type: application/json
 
 **Example Response**:
 
-```json
+```http
 HTTP/1.1 200
 Content-Type: application/json
 
@@ -214,8 +214,8 @@ Content-Type: application/json
 Create new user. Only works with Basic Authentication (username and password). See [introduction](http://docs.grafana.org/http_api/admin/#admin-api) for an explanation.
 
 **Example Request**:
-```json
 
+```http
 POST /api/admin/users HTTP/1.1
 Accept: application/json
 Content-Type: application/json
@@ -224,13 +224,16 @@ Content-Type: application/json
   "name":"User",
   "email":"user@graf.com",
   "login":"user",
-  "password":"userpassword"
+  "password":"userpassword",
+  "OrgId": 1
 }
 ```
 
+Note that `OrgId` is an optional parameter that can be used to assign a new user to a different organization when [auto_assign_org](https://grafana.com/docs/grafana/latest/installation/configuration/#auto-assign-org) is set to `true`.
+
 **Example Response**:
 
-```json
+```http
 HTTP/1.1 200
 Content-Type: application/json
 
@@ -246,7 +249,7 @@ Change password for a specific user.
 
 **Example Request**:
 
-```json
+```http
 PUT /api/admin/users/2/password HTTP/1.1
 Accept: application/json
 Content-Type: application/json
@@ -256,7 +259,7 @@ Content-Type: application/json
 
 **Example Response**:
 
-```json
+```http
 HTTP/1.1 200
 Content-Type: application/json
 
@@ -271,7 +274,7 @@ Only works with Basic Authentication (username and password). See [introduction]
 
 **Example Request**:
 
-```json
+```http
 PUT /api/admin/users/2/permissions HTTP/1.1
 Accept: application/json
 Content-Type: application/json
@@ -281,7 +284,7 @@ Content-Type: application/json
 
 **Example Response**:
 
-```json
+```http
 HTTP/1.1 200
 Content-Type: application/json
 
@@ -296,7 +299,7 @@ Only works with Basic Authentication (username and password). See [introduction]
 
 **Example Request**:
 
-```json
+```http
 DELETE /api/admin/users/2 HTTP/1.1
 Accept: application/json
 Content-Type: application/json
@@ -304,7 +307,7 @@ Content-Type: application/json
 
 **Example Response**:
 
-```json
+```http
 HTTP/1.1 200
 Content-Type: application/json
 

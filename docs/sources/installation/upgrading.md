@@ -13,7 +13,7 @@ weight = 800
 # Upgrade Grafana
 
 We recommend that you upgrade Grafana often to stay up to date with the latest fixes and enhancements.
-In order make this a reality, Grafana upgrades are backward compatible and the upgrade process is simple and quick.
+In order to make this a reality, Grafana upgrades are backward compatible and the upgrade process is simple and quick.
 
 Upgrading is generally safe (between many minor and one major version) and dashboards and graphs will look the same. There may be minor breaking changes in some edge cases, which are outlined in the [Release Notes](https://community.grafana.com/c/releases) and [Changelog](https://github.com/grafana/grafana/blob/master/CHANGELOG.md)
 
@@ -81,11 +81,12 @@ If you installed Grafana from our APT repository, then Grafana will automaticall
 
 ```bash
 sudo apt-get update
+sudo apt-get upgrade
 ```
 
 #### Upgrade from binary .tar file
 
-If you downloaded the binary `.tar.gz` package, then you can just download and extract the new package and overwrite all your existing files. However, this might overwrite your config changes. 
+If you downloaded the binary `.tar.gz` package, then you can just download and extract the new package and overwrite all your existing files. However, this might overwrite your config changes.
 
 We recommend that you save your custom config changes in a file named `<grafana_install_dir>/conf/custom.ini`.
 This allows you to upgrade Grafana without risking losing your configuration changes.
@@ -105,10 +106,10 @@ sudo yum update grafana
 This just an example, details depend on how you configured your grafana container.
 
 ```bash
-docker pull grafana
+docker pull grafana/grafana
 docker stop my-grafana-container
 docker rm my-grafana-container
-docker run --name=my-grafana-container --restart=always -v /var/lib/grafana:/var/lib/grafana
+docker run -d --name=my-grafana-container --restart=always -v /var/lib/grafana:/var/lib/grafana grafana/grafana
 ```
 
 ### Windows
@@ -222,3 +223,28 @@ Pre Grafana 6.5.0, the CloudWatch datasource used the GetMetricStatistics API fo
 Each request to the GetMetricData API can include 100 queries. This means that each panel in Grafana will only issue one GetMetricData request, regardless of the number of query rows that are present in the panel. Consequently as it is no longer possible to set `HighRes` on a per query level anymore, this switch is now removed from the query editor. High resolution can still be achieved by choosing a smaller minimum period in the query editor.
 
 The handling of multi-valued template variables in dimension values has been changed in Grafana 6.5. When a multi template variable is being used, Grafana will generate a search expression. In the GetMetricData API, expressions are limited to 1024 characters, so it might be the case that this limit is reached when a multi-valued template variable that has a lot of values is being used. If this is the case, we suggest you start using `*` wildcard as dimension value instead of a multi-valued template variable.
+
+## Upgrading to v6.6
+
+The Generic OAuth setting `send_client_credentials_via_post`, used for supporting non-compliant providers, has been removed. From now on, Grafana will automatically detect if credentials should be sent as part of the URL or request body for a specific provider. The result will be remembered and used for additional OAuth requests for that provider.
+
+### Important changes regarding SameSite cookie attribute
+
+Chrome 80 treats cookies as `SameSite=Lax` by default if no `SameSite` attribute is specified, see https://www.chromestatus.com/feature/5088147346030592.
+
+Due to this change in Chrome, the `[security]` setting `cookie_samesite` configured to `none` now renders cookies with `SameSite=None` attribute compared to before where no `SameSite` attribute was added to cookies. To get the old behavior, use value `disabled` instead of `none`, see [cookie_samesite in Configuration]({{< relref "configuration/#cookie-samesite" >}}) for more information.
+
+**Note:** There is currently a bug affecting Mac OSX and iOS that causes `SameSite=None` cookies to be treated as `SameSite=Strict` and therefore not sent with cross-site requests, see https://bugs.webkit.org/show_bug.cgi?id=198181 for details. Until this is fixed, `SameSite=None` might not work properly on Safari.
+
+This version of Chrome also rejects insecure `SameSite=None` cookies. See https://www.chromestatus.com/feature/5633521622188032 for more information. Make sure that you
+change the `[security]` setting `cookie_secure` to `true` and use HTTPS when `cookie_samesite` is configured to `none`, otherwise authentication in Grafana won't work properly.
+
+## Upgrading to v7.0
+
+### PhantomJS removed
+
+PhantomJS was deprecated in [Grafana v6.4](https://grafana.com/docs/grafana/latest/guides/whats-new-in-v6-4/#phantomjs-deprecation) and starting from Grafana v7.0.0, all PhantomJS support has been removed. This means that Grafana no longer ships with a built-in image renderer, and we adwise you to install the [Grafana Image Renderer plugin](https://grafana.com/grafana/plugins/grafana-image-renderer).
+
+### Dashboard minimum refresh interval enforced
+
+A global minimum dashboard refresh interval is now enforced and defaults to 5 seconds. Read more [here]({{< relref "configuration/#min-refresh-interval" >}}) about this setting.

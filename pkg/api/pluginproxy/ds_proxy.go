@@ -5,7 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
-	"net"
+	"log"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
@@ -17,22 +17,37 @@ import (
 	"golang.org/x/oauth2"
 
 	"github.com/grafana/grafana/pkg/bus"
-	"github.com/grafana/grafana/pkg/infra/log"
+	glog "github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/login/social"
-	m "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
+	"github.com/grafana/grafana/pkg/util/proxyutil"
 )
 
 var (
-	logger = log.New("data-proxy-log")
+	logger = glog.New("data-proxy-log")
 	client = newHTTPClient()
 )
 
+type URLValidationError struct {
+	error
+
+	url string
+}
+
+func (e URLValidationError) Error() string {
+	return fmt.Sprintf("Validation of URL %q failed: %s", e.url, e.error.Error())
+}
+
+func (e URLValidationError) Unwrap() error {
+	return e.error
+}
+
 type DataSourceProxy struct {
-	ds        *m.DataSource
-	ctx       *m.ReqContext
+	ds        *models.DataSource
+	ctx       *models.ReqContext
 	targetUrl *url.URL
 	proxyPath string
 	route     *plugins.AppPluginRoute
@@ -40,12 +55,41 @@ type DataSourceProxy struct {
 	cfg       *setting.Cfg
 }
 
+type handleResponseTransport struct {
+	transport http.RoundTripper
+}
+
+func (t *handleResponseTransport) RoundTrip(req *http.Request) (*http.Response, error) {
+	res, err := t.transport.RoundTrip(req)
+	if err != nil {
+		return nil, err
+	}
+	res.Header.Del("Set-Cookie")
+	return res, nil
+}
+
 type httpClient interface {
 	Do(req *http.Request) (*http.Response, error)
 }
 
-func NewDataSourceProxy(ds *m.DataSource, plugin *plugins.DataSourcePlugin, ctx *m.ReqContext, proxyPath string, cfg *setting.Cfg) *DataSourceProxy {
-	targetURL, _ := url.Parse(ds.Url)
+type logWrapper struct {
+	logger glog.Logger
+}
+
+// Write writes log messages as bytes from proxy
+func (lw *logWrapper) Write(p []byte) (n int, err error) {
+	withoutNewline := strings.TrimSuffix(string(p), "\n")
+	lw.logger.Error("Data proxy error", "error", withoutNewline)
+	return len(p), nil
+}
+
+// NewDataSourceProxy creates a new Datasource proxy
+func NewDataSourceProxy(ds *models.DataSource, plugin *plugins.DataSourcePlugin, ctx *models.ReqContext,
+	proxyPath string, cfg *setting.Cfg) (*DataSourceProxy, error) {
+	targetURL, err := url.Parse(ds.Url)
+	if err != nil {
+		return nil, URLValidationError{error: err, url: ds.Url}
+	}
 
 	return &DataSourceProxy{
 		ds:        ds,
@@ -54,7 +98,7 @@ func NewDataSourceProxy(ds *m.DataSource, plugin *plugins.DataSourcePlugin, ctx 
 		proxyPath: proxyPath,
 		targetUrl: targetURL,
 		cfg:       cfg,
-	}
+	}, nil
 }
 
 func newHTTPClient() httpClient {
@@ -70,16 +114,22 @@ func (proxy *DataSourceProxy) HandleRequest() {
 		return
 	}
 
+	proxyErrorLogger := logger.New("userId", proxy.ctx.UserId, "orgId", proxy.ctx.OrgId, "uname", proxy.ctx.Login, "path", proxy.ctx.Req.URL.Path, "remote_addr", proxy.ctx.RemoteAddr(), "referer", proxy.ctx.Req.Referer())
+
 	reverseProxy := &httputil.ReverseProxy{
 		Director:      proxy.getDirector(),
 		FlushInterval: time.Millisecond * 200,
+		ErrorLog:      log.New(&logWrapper{logger: proxyErrorLogger}, "", 0),
 	}
 
-	var err error
-	reverseProxy.Transport, err = proxy.ds.GetHttpTransport()
+	transport, err := proxy.ds.GetHttpTransport()
 	if err != nil {
 		proxy.ctx.JsonApiErr(400, "Unable to load TLS certificate", err)
 		return
+	}
+
+	reverseProxy.Transport = &handleResponseTransport{
+		transport: transport,
 	}
 
 	proxy.logRequest()
@@ -103,14 +153,7 @@ func (proxy *DataSourceProxy) HandleRequest() {
 		logger.Error("Failed to inject span context instance", "err", err)
 	}
 
-	originalSetCookie := proxy.ctx.Resp.Header().Get("Set-Cookie")
-
 	reverseProxy.ServeHTTP(proxy.ctx.Resp, proxy.ctx.Req.Request)
-	proxy.ctx.Resp.Header().Del("Set-Cookie")
-
-	if originalSetCookie != "" {
-		proxy.ctx.Resp.Header().Set("Set-Cookie", originalSetCookie)
-	}
 }
 
 func (proxy *DataSourceProxy) addTraceFromHeaderValue(span opentracing.Span, headerName string, tagName string) {
@@ -129,12 +172,12 @@ func (proxy *DataSourceProxy) getDirector() func(req *http.Request) {
 
 		reqQueryVals := req.URL.Query()
 
-		if proxy.ds.Type == m.DS_INFLUXDB_08 {
+		if proxy.ds.Type == models.DS_INFLUXDB_08 {
 			req.URL.Path = util.JoinURLFragments(proxy.targetUrl.Path, "db/"+proxy.ds.Database+"/"+proxy.proxyPath)
 			reqQueryVals.Add("u", proxy.ds.User)
 			reqQueryVals.Add("p", proxy.ds.DecryptedPassword())
 			req.URL.RawQuery = reqQueryVals.Encode()
-		} else if proxy.ds.Type == m.DS_INFLUXDB {
+		} else if proxy.ds.Type == models.DS_INFLUXDB {
 			req.URL.Path = util.JoinURLFragments(proxy.targetUrl.Path, proxy.proxyPath)
 			req.URL.RawQuery = reqQueryVals.Encode()
 			if !proxy.ds.BasicAuth {
@@ -144,6 +187,7 @@ func (proxy *DataSourceProxy) getDirector() func(req *http.Request) {
 		} else {
 			req.URL.Path = util.JoinURLFragments(proxy.targetUrl.Path, proxy.proxyPath)
 		}
+
 		if proxy.ds.BasicAuth {
 			req.Header.Del("Authorization")
 			req.Header.Add("Authorization", util.GetBasicAuthHeader(proxy.ds.BasicAuthUser, proxy.ds.DecryptedBasicAuthPassword()))
@@ -160,47 +204,21 @@ func (proxy *DataSourceProxy) getDirector() func(req *http.Request) {
 			req.Header.Add("X-Grafana-User", proxy.ctx.SignedInUser.Login)
 		}
 
-		// clear cookie header, except for whitelisted cookies
-		var keptCookies []*http.Cookie
+		keepCookieNames := []string{}
 		if proxy.ds.JsonData != nil {
 			if keepCookies := proxy.ds.JsonData.Get("keepCookies"); keepCookies != nil {
-				keepCookieNames := keepCookies.MustStringArray()
-				for _, c := range req.Cookies() {
-					for _, v := range keepCookieNames {
-						if c.Name == v {
-							keptCookies = append(keptCookies, c)
-						}
-					}
-				}
+				keepCookieNames = keepCookies.MustStringArray()
 			}
 		}
-		req.Header.Del("Cookie")
-		for _, c := range keptCookies {
-			req.AddCookie(c)
-		}
 
-		// clear X-Forwarded Host/Port/Proto headers
-		req.Header.Del("X-Forwarded-Host")
-		req.Header.Del("X-Forwarded-Port")
-		req.Header.Del("X-Forwarded-Proto")
+		proxyutil.ClearCookieHeader(req, keepCookieNames)
+		proxyutil.PrepareProxyRequest(req)
+
 		req.Header.Set("User-Agent", fmt.Sprintf("Grafana/%s", setting.BuildVersion))
 
 		// Clear Origin and Referer to avoir CORS issues
 		req.Header.Del("Origin")
 		req.Header.Del("Referer")
-
-		// set X-Forwarded-For header
-		if req.RemoteAddr != "" {
-			remoteAddr, _, err := net.SplitHostPort(req.RemoteAddr)
-			if err != nil {
-				remoteAddr = req.RemoteAddr
-			}
-			if req.Header.Get("X-Forwarded-For") != "" {
-				req.Header.Set("X-Forwarded-For", req.Header.Get("X-Forwarded-For")+", "+remoteAddr)
-			} else {
-				req.Header.Set("X-Forwarded-For", remoteAddr)
-			}
-		}
 
 		if proxy.route != nil {
 			ApplyRoute(proxy.ctx.Req.Context(), req, proxy.proxyPath, proxy.route, proxy.ds)
@@ -217,7 +235,7 @@ func (proxy *DataSourceProxy) validateRequest() error {
 		return errors.New("Target url is not a valid target")
 	}
 
-	if proxy.ds.Type == m.DS_PROMETHEUS {
+	if proxy.ds.Type == models.DS_PROMETHEUS {
 		if proxy.ctx.Req.Request.Method == "DELETE" {
 			return errors.New("Deletes not allowed on proxied Prometheus datasource")
 		}
@@ -229,7 +247,7 @@ func (proxy *DataSourceProxy) validateRequest() error {
 		}
 	}
 
-	if proxy.ds.Type == m.DS_ES {
+	if proxy.ds.Type == models.DS_ES {
 		if proxy.ctx.Req.Request.Method == "DELETE" {
 			return errors.New("Deletes not allowed on proxied Elasticsearch datasource")
 		}
@@ -289,7 +307,7 @@ func (proxy *DataSourceProxy) logRequest() {
 		"body", body)
 }
 
-func checkWhiteList(c *m.ReqContext, host string) bool {
+func checkWhiteList(c *models.ReqContext, host string) bool {
 	if host != "" && len(setting.DataProxyWhiteList) > 0 {
 		if _, exists := setting.DataProxyWhiteList[host]; !exists {
 			c.JsonApiErr(403, "Data proxy hostname and ip are not included in whitelist", nil)
@@ -300,10 +318,10 @@ func checkWhiteList(c *m.ReqContext, host string) bool {
 	return true
 }
 
-func addOAuthPassThruAuth(c *m.ReqContext, req *http.Request) {
-	authInfoQuery := &m.GetAuthInfoQuery{UserId: c.UserId}
+func addOAuthPassThruAuth(c *models.ReqContext, req *http.Request) {
+	authInfoQuery := &models.GetAuthInfoQuery{UserId: c.UserId}
 	if err := bus.Dispatch(authInfoQuery); err != nil {
-		logger.Error("Error feching oauth information for user", "error", err)
+		logger.Error("Error fetching oauth information for user", "error", err)
 		return
 	}
 
@@ -328,7 +346,7 @@ func addOAuthPassThruAuth(c *m.ReqContext, req *http.Request) {
 
 	// If the tokens are not the same, update the entry in the DB
 	if token.AccessToken != authInfoQuery.Result.OAuthAccessToken {
-		updateAuthCommand := &m.UpdateAuthInfoCommand{
+		updateAuthCommand := &models.UpdateAuthInfoCommand{
 			UserId:     authInfoQuery.Result.UserId,
 			AuthModule: authInfoQuery.Result.AuthModule,
 			AuthId:     authInfoQuery.Result.AuthId,

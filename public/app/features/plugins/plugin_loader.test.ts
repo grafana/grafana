@@ -14,7 +14,9 @@ jest.mock('app/core/core', () => {
 });
 
 import { SystemJS } from '@grafana/runtime';
-import { AppPluginMeta, PluginMetaInfo, PluginType, PluginIncludeType, AppPlugin } from '@grafana/data';
+import { AppPluginMeta, PluginMetaInfo, PluginType, AppPlugin } from '@grafana/data';
+
+// Loaded after the `unmock` abve
 import { importAppPlugin } from './plugin_loader';
 
 class MyCustomApp extends AppPlugin {
@@ -62,49 +64,5 @@ describe('Load App', () => {
     const again = await importAppPlugin(meta);
     expect(again).toBe(app);
     expect(app.calledTwice).toBeTruthy();
-  });
-});
-
-import { ExampleConfigCtrl as ConfigCtrl } from 'app/plugins/app/example-app/legacy/config';
-import { AngularExamplePageCtrl } from 'app/plugins/app/example-app/legacy/angular_example_page';
-
-describe('Load Legacy App', () => {
-  const app = {
-    ConfigCtrl,
-    AngularExamplePageCtrl, // Must match `pages.component` in plugin.json
-  };
-
-  const modulePath = 'my/custom/legacy/plugin/module';
-
-  beforeAll(() => {
-    SystemJS.set(modulePath, SystemJS.newModule(app));
-  });
-
-  afterAll(() => {
-    SystemJS.delete(modulePath);
-  });
-
-  it('should call init and set meta for legacy app', async () => {
-    const meta: AppPluginMeta = {
-      id: 'test-app',
-      module: modulePath,
-      baseUrl: 'xxx',
-      info: {} as PluginMetaInfo,
-      type: PluginType.app,
-      name: 'test',
-      includes: [
-        {
-          type: PluginIncludeType.page,
-          name: 'Example Page',
-          component: 'AngularExamplePageCtrl',
-          role: 'Viewer',
-          addToNav: false,
-        },
-      ],
-    };
-
-    const loaded = await importAppPlugin(meta);
-    expect(loaded).toHaveProperty('angularPages');
-    expect(loaded.angularPages).toHaveProperty('AngularExamplePageCtrl', AngularExamplePageCtrl);
   });
 });

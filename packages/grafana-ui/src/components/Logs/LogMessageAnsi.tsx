@@ -15,7 +15,7 @@ function convertCSSToStyle(css: string): Style {
     const match = line.match(/([^:\s]+)\s*:\s*(.+)/);
 
     if (match && match[1] && match[2]) {
-      const key = match[1].replace(/-(a-z)/g, (_, character) => character.toUpperCase());
+      const key = match[1].replace(/-([a-z])/g, (_, character) => character.toUpperCase());
       // @ts-ignore
       accumulated[key] = match[2];
     }

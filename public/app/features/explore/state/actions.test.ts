@@ -1,6 +1,9 @@
-import { changeDatasource, loadDatasource, navigateToExplore, refreshExplore } from './actions';
+import { PayloadAction } from '@reduxjs/toolkit';
+import { DataQuery, DefaultTimeZone, ExploreMode, LogsDedupStrategy, RawTimeRange, toUtc } from '@grafana/data';
+
 import * as Actions from './actions';
-import { ExploreId, ExploreMode, ExploreUpdateState, ExploreUrlState } from 'app/types';
+import { changeDatasource, loadDatasource, navigateToExplore, refreshExplore, cancelQueries } from './actions';
+import { ExploreId, ExploreUpdateState, ExploreUrlState } from 'app/types';
 import { thunkTester } from 'test/core/thunk/thunkTester';
 import {
   initializeExploreAction,
@@ -8,17 +11,18 @@ import {
   loadDatasourcePendingAction,
   loadDatasourceReadyAction,
   setQueriesAction,
-  updateUIStateAction,
   updateDatasourceInstanceAction,
+  updateUIStateAction,
+  cancelQueriesAction,
+  scanStopAction,
 } from './actionTypes';
 import { Emitter } from 'app/core/core';
-import { ActionOf } from 'app/core/redux/actionCreatorFactory';
 import { makeInitialUpdateState } from './reducers';
-import { DataQuery, DefaultTimeZone, LogsDedupStrategy, RawTimeRange, toUtc } from '@grafana/data';
 import { PanelModel } from 'app/features/dashboard/state';
 import { updateLocation } from '../../../core/actions';
 import { MockDataSourceApi } from '../../../../test/mocks/datasource_srv';
 import * as DatasourceSrv from 'app/features/plugins/datasource_srv';
+import { interval } from 'rxjs';
 
 jest.mock('app/features/plugins/datasource_srv');
 const getDatasourceSrvMock = (DatasourceSrv.getDatasourceSrv as any) as jest.Mock<DatasourceSrv.DatasourceSrv>;
@@ -117,7 +121,7 @@ describe('refreshExplore', () => {
           .givenThunk(refreshExplore)
           .whenThunkIsDispatched(exploreId);
 
-        const initializeExplore = dispatchedActions[1] as ActionOf<InitializeExplorePayload>;
+        const initializeExplore = dispatchedActions[1] as PayloadAction<InitializeExplorePayload>;
         const { type, payload } = initializeExplore;
 
         expect(type).toEqual(initializeExploreAction.type);
@@ -170,6 +174,40 @@ describe('refreshExplore', () => {
 
       expect(dispatchedActions).toEqual([]);
     });
+  });
+});
+
+describe('running queries', () => {
+  it('should cancel running query when cancelQueries is dispatched', async () => {
+    const unsubscribable = interval(1000);
+    unsubscribable.subscribe();
+    const exploreId = ExploreId.left;
+    const initialState = {
+      explore: {
+        [exploreId]: {
+          datasourceInstance: 'test-datasource',
+          initialized: true,
+          loading: true,
+          querySubscription: unsubscribable,
+          queries: ['A'],
+          range: testRange,
+        },
+      },
+
+      user: {
+        orgId: 'A',
+      },
+    };
+
+    const dispatchedActions = await thunkTester(initialState)
+      .givenThunk(cancelQueries)
+      .whenThunkIsDispatched(exploreId);
+
+    expect(dispatchedActions).toEqual([
+      scanStopAction({ exploreId }),
+      cancelQueriesAction({ exploreId }),
+      expect.anything(),
+    ]);
   });
 });
 
@@ -288,7 +326,7 @@ describe('loading datasource', () => {
   });
 });
 
-const getNavigateToExploreContext = async (openInNewWindow: (url: string) => void = undefined) => {
+const getNavigateToExploreContext = async (openInNewWindow?: (url: string) => void) => {
   const url = 'http://www.someurl.com';
   const panel: Partial<PanelModel> = {
     datasource: 'mocked datasource',
@@ -319,7 +357,7 @@ const getNavigateToExploreContext = async (openInNewWindow: (url: string) => voi
 describe('navigateToExplore', () => {
   describe('when navigateToExplore thunk is dispatched', () => {
     describe('and openInNewWindow is undefined', () => {
-      const openInNewWindow: (url: string) => void = undefined;
+      const openInNewWindow: (url: string) => void = (undefined as unknown) as (url: string) => void;
       it('then it should dispatch correct actions', async () => {
         const { dispatchedActions, url } = await getNavigateToExploreContext(openInNewWindow);
 

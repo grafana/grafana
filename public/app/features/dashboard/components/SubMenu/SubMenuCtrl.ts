@@ -1,5 +1,6 @@
 import angular, { ILocationService } from 'angular';
 import _ from 'lodash';
+import { selectors } from '@grafana/e2e-selectors';
 import { VariableSrv } from 'app/features/templating/all';
 import { CoreEvents } from '../../../../types';
 
@@ -8,15 +9,17 @@ export class SubMenuCtrl {
   variables: any;
   dashboard: any;
   submenuEnabled: boolean;
+  selectors: typeof selectors.pages.Dashboard.SubMenu;
 
   /** @ngInject */
   constructor(private variableSrv: VariableSrv, private $location: ILocationService) {
     this.annotations = this.dashboard.templating.list;
     this.variables = this.variableSrv.variables;
-    this.submenuEnabled = false;
+    this.submenuEnabled = this.dashboard.meta.submenuEnabled;
     this.dashboard.events.on(CoreEvents.submenuVisibilityChanged, (enabled: boolean) => {
       this.submenuEnabled = enabled;
     });
+    this.selectors = selectors.pages.Dashboard.SubMenu;
   }
 
   annotationStateChanged() {

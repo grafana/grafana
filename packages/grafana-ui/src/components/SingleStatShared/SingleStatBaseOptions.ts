@@ -11,78 +11,35 @@ import {
   MappingType,
   VizOrientation,
   PanelModel,
-  FieldDisplayOptions,
+  ReduceDataOptions,
+  ThresholdsMode,
+  ThresholdsConfig,
+  validateFieldConfig,
+  FieldColorMode,
 } from '@grafana/data';
 
 export interface SingleStatBaseOptions {
-  fieldOptions: FieldDisplayOptions;
+  reduceOptions: ReduceDataOptions;
   orientation: VizOrientation;
 }
 
-const optionsToKeep = ['fieldOptions', 'orientation'];
+const optionsToKeep = ['reduceOptions', 'orientation'];
 
 export function sharedSingleStatPanelChangedHandler(
-  options: Partial<SingleStatBaseOptions> | any,
+  panel: PanelModel<Partial<SingleStatBaseOptions>> | any,
   prevPluginId: string,
   prevOptions: any
 ) {
+  let options = panel.options;
+
+  panel.fieldConfig = panel.fieldConfig || {
+    defaults: {},
+    overrides: [],
+  };
+
   // Migrating from angular singlestat
   if (prevPluginId === 'singlestat' && prevOptions.angular) {
-    const panel = prevOptions.angular;
-    const reducer = fieldReducers.getIfExists(panel.valueName);
-    const options = {
-      fieldOptions: {
-        defaults: {} as FieldConfig,
-        override: {} as FieldConfig,
-        calcs: [reducer ? reducer.id : ReducerID.mean],
-      },
-      orientation: VizOrientation.Horizontal,
-    };
-
-    const defaults = options.fieldOptions.defaults;
-    if (panel.format) {
-      defaults.unit = panel.format;
-    }
-    if (panel.nullPointMode) {
-      defaults.nullValueMode = panel.nullPointMode;
-    }
-    if (panel.nullText) {
-      defaults.noValue = panel.nullText;
-    }
-    if (panel.decimals || panel.decimals === 0) {
-      defaults.decimals = panel.decimals;
-    }
-
-    // Convert thresholds and color values
-    if (panel.thresholds && panel.colors) {
-      const levels = panel.thresholds.split(',').map((strVale: string) => {
-        return Number(strVale.trim());
-      });
-
-      // One more color than threshold
-      const thresholds: Threshold[] = [];
-      for (const color of panel.colors) {
-        const idx = thresholds.length - 1;
-        if (idx >= 0) {
-          thresholds.push({ value: levels[idx], color });
-        } else {
-          thresholds.push({ value: -Infinity, color });
-        }
-      }
-      defaults.thresholds = thresholds;
-    }
-
-    // Convert value mappings
-    const mappings = convertOldAngularValueMapping(panel);
-    if (mappings && mappings.length) {
-      defaults.mappings = mappings;
-    }
-
-    if (panel.gauge) {
-      defaults.min = panel.gauge.minValue;
-      defaults.max = panel.gauge.maxValue;
-    }
-    return options;
+    return migrateFromAngularSinglestat(panel, prevOptions);
   }
 
   for (const k of optionsToKeep) {
@@ -90,6 +47,74 @@ export function sharedSingleStatPanelChangedHandler(
       options[k] = cloneDeep(prevOptions[k]);
     }
   }
+
+  return options;
+}
+
+function migrateFromAngularSinglestat(panel: PanelModel<Partial<SingleStatBaseOptions>> | any, prevOptions: any) {
+  const prevPanel = prevOptions.angular;
+  const reducer = fieldReducers.getIfExists(prevPanel.valueName);
+  const options = {
+    fieldOptions: {
+      calcs: [reducer ? reducer.id : ReducerID.mean],
+    },
+    orientation: VizOrientation.Horizontal,
+  } as any;
+
+  const defaults: FieldConfig = {};
+
+  if (prevPanel.format) {
+    defaults.unit = prevPanel.format;
+  }
+
+  if (prevPanel.nullPointMode) {
+    defaults.nullValueMode = prevPanel.nullPointMode;
+  }
+
+  if (prevPanel.nullText) {
+    defaults.noValue = prevPanel.nullText;
+  }
+
+  if (prevPanel.decimals || prevPanel.decimals === 0) {
+    defaults.decimals = prevPanel.decimals;
+  }
+
+  // Convert thresholds and color values
+  if (prevPanel.thresholds && prevPanel.colors) {
+    const levels = prevPanel.thresholds.split(',').map((strVale: string) => {
+      return Number(strVale.trim());
+    });
+
+    // One more color than threshold
+    const thresholds: Threshold[] = [];
+    for (const color of prevPanel.colors) {
+      const idx = thresholds.length - 1;
+      if (idx >= 0) {
+        thresholds.push({ value: levels[idx], color });
+      } else {
+        thresholds.push({ value: -Infinity, color });
+      }
+    }
+
+    defaults.thresholds = {
+      mode: ThresholdsMode.Absolute,
+      steps: thresholds,
+    };
+  }
+
+  // Convert value mappings
+  const mappings = convertOldAngularValueMapping(prevPanel);
+  if (mappings && mappings.length) {
+    defaults.mappings = mappings;
+  }
+
+  if (prevPanel.gauge && prevPanel.gauge.show) {
+    defaults.min = prevPanel.gauge.minValue;
+    defaults.max = prevPanel.gauge.maxValue;
+  }
+
+  panel.fieldConfig.defaults = defaults;
+
   return options;
 }
 
@@ -110,6 +135,73 @@ export function sharedSingleStatMigrationHandler(panel: PanelModel<SingleStatBas
     options = moveThresholdsAndMappingsToField(options);
   }
 
+  const { fieldOptions } = options;
+
+  if (previousVersion < 6.6 && fieldOptions) {
+    // discard the old `override` options and enter an empty array
+    if (fieldOptions && fieldOptions.override) {
+      const { override, ...rest } = options.fieldOptions;
+      options = {
+        ...options,
+        fieldOptions: {
+          ...rest,
+          overrides: [],
+        },
+      };
+    }
+
+    // Move thresholds to steps
+    let thresholds = fieldOptions?.defaults?.thresholds;
+    if (thresholds) {
+      delete fieldOptions.defaults.thresholds;
+    } else {
+      thresholds = fieldOptions?.thresholds;
+      delete fieldOptions.thresholds;
+    }
+
+    if (thresholds) {
+      fieldOptions.defaults.thresholds = {
+        mode: ThresholdsMode.Absolute,
+        steps: thresholds,
+      };
+    }
+
+    // Migrate color from simple string to a mode
+    const { defaults } = fieldOptions;
+    if (defaults.color && typeof defaults.color === 'string') {
+      defaults.color = {
+        mode: FieldColorMode.Fixed,
+        fixedColor: defaults.color,
+      };
+    }
+
+    validateFieldConfig(defaults);
+  }
+
+  if (previousVersion < 7.0) {
+    panel.fieldConfig = panel.fieldConfig || { defaults: {}, overrides: [] };
+    panel.fieldConfig = {
+      defaults:
+        fieldOptions && fieldOptions.defaults
+          ? { ...panel.fieldConfig.defaults, ...fieldOptions.defaults }
+          : panel.fieldConfig.defaults,
+      overrides:
+        fieldOptions && fieldOptions.overrides
+          ? [...panel.fieldConfig.overrides, ...fieldOptions.overrides]
+          : panel.fieldConfig.overrides,
+    };
+
+    if (fieldOptions) {
+      options.reduceOptions = {
+        values: fieldOptions.values,
+        limit: fieldOptions.limit,
+        calcs: fieldOptions.calcs,
+      };
+    }
+
+    delete options.fieldOptions;
+  }
+
   return options as SingleStatBaseOptions;
 }
 
@@ -120,7 +212,15 @@ export function moveThresholdsAndMappingsToField(old: any) {
     return old;
   }
 
-  const { mappings, thresholds, ...rest } = old.fieldOptions;
+  const { mappings, ...rest } = old.fieldOptions;
+
+  let thresholds: ThresholdsConfig | undefined = undefined;
+  if (old.thresholds) {
+    thresholds = {
+      mode: ThresholdsMode.Absolute,
+      steps: migrateOldThresholds(old.thresholds)!,
+    };
+  }
 
   return {
     ...old,
@@ -129,7 +229,7 @@ export function moveThresholdsAndMappingsToField(old: any) {
       defaults: {
         ...fieldOptions.defaults,
         mappings,
-        thresholds: migrateOldThresholds(thresholds),
+        thresholds,
       },
     },
   };

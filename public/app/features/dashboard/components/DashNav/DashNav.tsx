@@ -1,28 +1,45 @@
 // Libaries
-import React, { PureComponent } from 'react';
+import React, { PureComponent, FC, ReactNode } from 'react';
 import { connect } from 'react-redux';
-import { e2e } from '@grafana/e2e';
 // Utils & Services
 import { appEvents } from 'app/core/app_events';
 import { PlaylistSrv } from 'app/features/playlist/playlist_srv';
 // Components
 import { DashNavButton } from './DashNavButton';
 import { DashNavTimeControls } from './DashNavTimeControls';
-import { Tooltip } from '@grafana/ui';
+import { ModalsController } from '@grafana/ui';
+import { textUtil } from '@grafana/data';
+import { BackButton } from 'app/core/components/BackButton/BackButton';
 // State
 import { updateLocation } from 'app/core/actions';
 // Types
 import { DashboardModel } from '../../state';
 import { CoreEvents, StoreState } from 'app/types';
+import { SaveDashboardModalProxy } from 'app/features/dashboard/components/SaveDashboard/SaveDashboardModalProxy';
 
 export interface OwnProps {
   dashboard: DashboardModel;
-  editview: string;
-  isEditing: boolean;
   isFullscreen: boolean;
   $injector: any;
   updateLocation: typeof updateLocation;
   onAddPanel: () => void;
+}
+
+interface DashNavButtonModel {
+  show: (props: Props) => boolean;
+  component: FC<Partial<Props>>;
+  index?: number | 'end';
+}
+
+const customLeftActions: DashNavButtonModel[] = [];
+const customRightActions: DashNavButtonModel[] = [];
+
+export function addCustomLeftAction(content: DashNavButtonModel) {
+  customLeftActions.push(content);
+}
+
+export function addCustomRightAction(content: DashNavButtonModel) {
+  customRightActions.push(content);
 }
 
 export interface StateProps {
@@ -31,7 +48,7 @@ export interface StateProps {
 
 type Props = StateProps & OwnProps;
 
-export class DashNav extends PureComponent<Props> {
+class DashNav extends PureComponent<Props> {
   playlistSrv: PlaylistSrv;
 
   constructor(props: Props) {
@@ -39,38 +56,22 @@ export class DashNav extends PureComponent<Props> {
     this.playlistSrv = this.props.$injector.get('playlistSrv');
   }
 
-  onDahboardNameClick = () => {
-    appEvents.emit(CoreEvents.showDashSearch);
-  };
-
   onFolderNameClick = () => {
-    appEvents.emit(CoreEvents.showDashSearch, {
-      query: 'folder:current',
+    this.props.updateLocation({
+      query: { search: 'open', folder: 'current' },
+      partial: true,
     });
   };
 
   onClose = () => {
-    if (this.props.editview) {
-      this.props.updateLocation({
-        query: { editview: null },
-        partial: true,
-      });
-    } else {
-      this.props.updateLocation({
-        query: { panelId: null, edit: null, fullscreen: null, tab: null },
-        partial: true,
-      });
-    }
+    this.props.updateLocation({
+      query: { edit: null, viewPanel: null },
+      partial: true,
+    });
   };
 
   onToggleTVMode = () => {
     appEvents.emit(CoreEvents.toggleKioskMode);
-  };
-
-  onSave = () => {
-    const { $injector } = this.props;
-    const dashboardSrv = $injector.get('dashboardSrv');
-    dashboardSrv.saveDashboard();
   };
 
   onOpenSettings = () => {
@@ -103,17 +104,13 @@ export class DashNav extends PureComponent<Props> {
     this.forceUpdate();
   };
 
-  onOpenShare = () => {
-    const $rootScope = this.props.$injector.get('$rootScope');
-    const modalScope = $rootScope.$new();
-    modalScope.tabIndex = 0;
-    modalScope.dashboard = this.props.dashboard;
-
-    appEvents.emit(CoreEvents.showModal, {
-      src: 'public/app/features/dashboard/components/ShareModal/template.html',
-      scope: modalScope,
+  addCustomContent(actions: DashNavButtonModel[], buttons: ReactNode[]) {
+    actions.map((action, index) => {
+      const Component = action.component;
+      const element = <Component {...this.props} key={`button-custom-${index}`} />;
+      typeof action.index === 'number' ? buttons.splice(action.index, 0, element) : buttons.push(element);
     });
-  };
+  }
 
   renderDashboardTitleSearchButton() {
     return (
@@ -123,35 +120,86 @@ export class DashNav extends PureComponent<Props> {
     );
   }
 
-  get isInFullscreenOrSettings() {
-    return this.props.editview || this.props.isFullscreen;
-  }
-
-  get isSettings() {
-    return this.props.editview;
-  }
-
   renderBackButton() {
     return (
       <div className="navbar-edit">
-        <Tooltip content="Go back (Esc)">
-          <button
-            className="navbar-edit__back-btn"
-            onClick={this.onClose}
-            aria-label={e2e.pages.Dashboard.selectors.backArrow}
-          >
-            <i className="fa fa-arrow-left" />
-          </button>
-        </Tooltip>
+        <BackButton surface="dashboard" onClick={this.onClose} />
       </div>
     );
   }
 
+  renderRightActionsButton() {
+    const { dashboard, onAddPanel } = this.props;
+    const { canSave, showSettings } = dashboard.meta;
+    const { snapshot } = dashboard;
+    const snapshotUrl = snapshot && snapshot.originalUrl;
+
+    const buttons: ReactNode[] = [];
+    if (canSave) {
+      buttons.push(
+        <DashNavButton
+          classSuffix="save"
+          tooltip="Add panel"
+          icon="panel-add"
+          onClick={onAddPanel}
+          iconType="mono"
+          iconSize="xl"
+          key="button-panel-add"
+        />
+      );
+      buttons.push(
+        <ModalsController key="button-save">
+          {({ showModal, hideModal }) => (
+            <DashNavButton
+              tooltip="Save dashboard"
+              classSuffix="save"
+              icon="save"
+              onClick={() => {
+                showModal(SaveDashboardModalProxy, {
+                  dashboard,
+                  onDismiss: hideModal,
+                });
+              }}
+            />
+          )}
+        </ModalsController>
+      );
+    }
+
+    if (snapshotUrl) {
+      buttons.push(
+        <DashNavButton
+          tooltip="Open original dashboard"
+          classSuffix="snapshot-origin"
+          href={textUtil.sanitizeUrl(snapshotUrl)}
+          icon="link"
+          key="button-snapshot"
+        />
+      );
+    }
+
+    if (showSettings) {
+      buttons.push(
+        <DashNavButton
+          tooltip="Dashboard settings"
+          classSuffix="settings"
+          icon="cog"
+          onClick={this.onOpenSettings}
+          key="button-settings"
+        />
+      );
+    }
+
+    this.addCustomContent(customRightActions, buttons);
+    return buttons;
+  }
+
   render() {
-    const { dashboard, location, $injector } = this.props;
+    const { dashboard, location, isFullscreen } = this.props;
+
     return (
       <div className="navbar">
-        {this.isInFullscreenOrSettings && this.renderBackButton()}
+        {isFullscreen && this.renderBackButton()}
         {this.renderDashboardTitleSearchButton()}
 
         {this.playlistSrv.isPlaying && (
@@ -159,32 +207,29 @@ export class DashNav extends PureComponent<Props> {
             <DashNavButton
               tooltip="Go to previous dashboard"
               classSuffix="tight"
-              icon="fa fa-step-backward"
+              icon="step-backward"
               onClick={this.onPlaylistPrev}
             />
             <DashNavButton
               tooltip="Stop playlist"
               classSuffix="tight"
-              icon="fa fa-stop"
+              icon="square-shape"
               onClick={this.onPlaylistStop}
             />
             <DashNavButton
               tooltip="Go to next dashboard"
               classSuffix="tight"
-              icon="fa fa-forward"
+              icon="forward"
               onClick={this.onPlaylistNext}
             />
           </div>
         )}
 
+        <div className="navbar-buttons navbar-buttons--actions">{this.renderRightActionsButton()}</div>
+
         {!dashboard.timepicker.hidden && (
           <div className="navbar-buttons">
-            <DashNavTimeControls
-              $injector={$injector}
-              dashboard={dashboard}
-              location={location}
-              updateLocation={updateLocation}
-            />
+            <DashNavTimeControls dashboard={dashboard} location={location} updateLocation={updateLocation} />
           </div>
         )}
       </div>

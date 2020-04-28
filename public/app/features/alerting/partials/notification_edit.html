@@ -32,6 +32,16 @@
           checked="ctrl.model.settings.uploadImage"
           tooltip="Captures an image and include it in the notification">
       </gf-form-switch>
+      <div class="grafana-info-box m-t-2" ng-show="ctrl.model.settings.uploadImage && !ctrl.rendererAvailable">
+        <h5>No image renderer available/installed</h5>
+        <p>
+          Grafana cannot find an image renderer to capture an image for the notification.
+          Please make sure the <a href="https://grafana.com/grafana/plugins/grafana-image-renderer" target="_blank" rel="noreferrer">Grafana Image Renderer plugin</a> is installed.
+        </p>
+        <p>
+          Please contact your Grafana administrator to install the plugin.
+        </p>
+      </div>
       <gf-form-switch
           class="gf-form"
           label="Disable Resolve Message"
@@ -69,9 +79,11 @@
 
     <div class="gf-form-group gf-form-button-row">
 			<button type="submit" ng-click="ctrl.save()" class="btn btn-primary width-7">Save</button>
-			<button type="submit" ng-click="ctrl.testNotification()" class="btn btn-secondary width-7">Send Test</button>
+			<button type="submit" ng-click="ctrl.testNotification()" class="btn btn-secondary">Send Test</button>
 			<button type="delete" ng-if="!ctrl.isNew" ng-click="ctrl.deleteNotification()" class="btn btn-danger width-7">Delete</button>
 			<a href="alerting/notifications" class="btn btn-inverse">Back</a>
     </div>
   </form>
 </div>
+
+<footer />

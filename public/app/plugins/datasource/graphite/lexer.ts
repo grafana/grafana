@@ -1043,7 +1043,6 @@ export class Lexer {
     }
 
     const readUnicodeEscapeSequence = _.bind(function(this: any) {
-      /*jshint validthis:true */
       index += 1;
 
       if (this.peek(index) !== 'u') {
@@ -1071,7 +1070,6 @@ export class Lexer {
     }, this);
 
     const getIdentifierStart = _.bind(function(this: any) {
-      /*jshint validthis:true */
       const chr = this.peek(index);
       const code = chr.charCodeAt(0);
 
@@ -1102,7 +1100,6 @@ export class Lexer {
     }, this);
 
     const getIdentifierPart = _.bind(function(this: any) {
-      /*jshint validthis:true */
       const chr = this.peek(index);
       const code = chr.charCodeAt(0);
 
@@ -1415,7 +1412,6 @@ export class Lexer {
    *   world";
    */
   scanStringLiteral() {
-    /*jshint loopfunc:true */
     const quote = this.peek();
 
     // String must start with a quote.

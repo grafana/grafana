@@ -7,8 +7,7 @@ import kbn from 'app/core/utils/kbn';
 
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { auto, IPromise } from 'angular';
-import { DataFrame } from '@grafana/data';
-import { PanelEvents } from '@grafana/data';
+import { DataFrame, PanelEvents } from '@grafana/data';
 
 export interface ResultFormat {
   text: string;
@@ -537,9 +536,18 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
       .getWorkspaces(this.target.subscription)
       .then((list: any[]) => {
         this.workspaces = list;
+
         if (list.length > 0 && !this.target.azureLogAnalytics.workspace) {
-          this.target.azureLogAnalytics.workspace = list[0].value;
+          if (this.datasource.azureLogAnalyticsDatasource.defaultOrFirstWorkspace) {
+            this.target.azureLogAnalytics.workspace = this.datasource.azureLogAnalyticsDatasource.defaultOrFirstWorkspace;
+          }
+
+          if (!this.target.azureLogAnalytics.workspace) {
+            this.target.azureLogAnalytics.workspace = list[0].value;
+          }
         }
+
+        return this.workspaces;
       })
       .catch(this.handleQueryCtrlError.bind(this));
   };
@@ -561,7 +569,7 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
   };
 
   get templateVariables() {
-    return this.templateSrv.variables.map(t => '$' + t.name);
+    return this.templateSrv.getVariables().map(t => '$' + t.name);
   }
 
   /* Application Insights Section */

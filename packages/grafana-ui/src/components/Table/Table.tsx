@@ -1,324 +1,193 @@
-// Libraries
-import _ from 'lodash';
-import React, { Component, ReactElement } from 'react';
+import React, { FC, memo, useMemo, useCallback } from 'react';
+import { DataFrame, Field } from '@grafana/data';
 import {
-  SortDirectionType,
-  SortIndicator,
-  MultiGrid,
-  CellMeasurerCache,
-  CellMeasurer,
-  GridCellProps,
-  Index,
-} from 'react-virtualized';
-import { Themeable } from '../../types/theme';
+  Cell,
+  Column,
+  HeaderGroup,
+  useAbsoluteLayout,
+  useResizeColumns,
+  useSortBy,
+  useTable,
+  UseResizeColumnsState,
+  UseSortByState,
+} from 'react-table';
+import { FixedSizeList } from 'react-window';
+import { getColumns, getTextAlign } from './utils';
+import { useTheme } from '../../themes';
+import { TableColumnResizeActionCallback, TableFilterActionCallback, TableSortByActionCallback } from './types';
+import { getTableStyles, TableStyles } from './styles';
+import { TableCell } from './TableCell';
+import { Icon } from '../Icon/Icon';
+import { CustomScrollbar } from '../CustomScrollbar/CustomScrollbar';
 
-import {
-  stringToJsRegex,
-  DataFrame,
-  sortDataFrame,
-  getDataFrameRow,
-  ArrayVector,
-  FieldType,
-  InterpolateFunction,
-} from '@grafana/data';
+const COLUMN_MIN_WIDTH = 150;
 
-import {
-  TableCellBuilder,
-  ColumnStyle,
-  getFieldCellBuilder,
-  TableCellBuilderOptions,
-  simpleCellBuilder,
-} from './TableCellBuilder';
-
-export interface Props extends Themeable {
+export interface Props {
   data: DataFrame;
-
-  minColumnWidth: number;
-  showHeader: boolean;
-  fixedHeader: boolean;
-  fixedColumns: number;
-  rotate: boolean;
-  styles: ColumnStyle[];
-
-  replaceVariables: InterpolateFunction;
   width: number;
   height: number;
-  isUTC?: boolean;
+  /** Minimal column width specified in pixels */
+  columnMinWidth?: number;
+  noHeader?: boolean;
+  resizable?: boolean;
+  onCellClick?: TableFilterActionCallback;
+  onColumnResize?: TableColumnResizeActionCallback;
+  onSortBy?: TableSortByActionCallback;
 }
 
-interface State {
-  sortBy?: number;
-  sortDirection?: SortDirectionType;
-  data: DataFrame;
+interface ReactTableInternalState extends UseResizeColumnsState<{}>, UseSortByState<{}> {}
+
+function useTableStateReducer(props: Props) {
+  return useCallback(
+    (newState: ReactTableInternalState, action: any) => {
+      switch (action.type) {
+        case 'columnDoneResizing':
+          if (props.onColumnResize) {
+            const info = (newState.columnResizing.headerIdWidths as any)[0];
+            const columnIdString = info[0];
+            const fieldIndex = parseInt(columnIdString, 10);
+            const width = Math.round(newState.columnResizing.columnWidths[columnIdString] as number);
+            props.onColumnResize(fieldIndex, width);
+          }
+        case 'toggleSortBy':
+          if (props.onSortBy) {
+            // todo call callback and persist
+          }
+          break;
+      }
+
+      return newState;
+    },
+    [props.onColumnResize]
+  );
 }
 
-interface ColumnRenderInfo {
-  header: string;
-  width: number;
-  builder: TableCellBuilder;
-}
+export const Table: FC<Props> = memo((props: Props) => {
+  const { data, height, onCellClick, width, columnMinWidth = COLUMN_MIN_WIDTH, noHeader, resizable = true } = props;
+  const theme = useTheme();
+  const tableStyles = getTableStyles(theme);
 
-interface DataIndex {
-  column: number;
-  row: number; // -1 is the header!
-}
-
-export class Table extends Component<Props, State> {
-  renderer: ColumnRenderInfo[];
-  measurer: CellMeasurerCache;
-  scrollToTop = false;
-  rotateWidth = 100;
-
-  static defaultProps = {
-    showHeader: true,
-    fixedHeader: true,
-    fixedColumns: 0,
-    rotate: false,
-    minColumnWidth: 150,
-  };
-
-  constructor(props: Props) {
-    super(props);
-
-    this.state = {
-      data: props.data,
-    };
-
-    this.renderer = this.initColumns(props);
-    this.measurer = new CellMeasurerCache({
-      defaultHeight: 30,
-      fixedWidth: true,
-    });
-  }
-
-  componentDidUpdate(prevProps: Props, prevState: State) {
-    const { data, styles, showHeader, rotate } = this.props;
-    const { sortBy, sortDirection } = this.state;
-    const dataChanged = data !== prevProps.data;
-    const configsChanged =
-      showHeader !== prevProps.showHeader ||
-      this.props.rotate !== prevProps.rotate ||
-      this.props.fixedColumns !== prevProps.fixedColumns ||
-      this.props.fixedHeader !== prevProps.fixedHeader;
-
-    // Reset the size cache
-    if (dataChanged || configsChanged) {
-      this.measurer.clearAll();
-    }
-
-    // Update the renderer if options change
-    // We only *need* do to this if the header values changes, but this does every data update
-    if (dataChanged || styles !== prevProps.styles) {
-      this.renderer = this.initColumns(this.props);
-    }
-
-    if (dataChanged || rotate !== prevProps.rotate) {
-      const { width, minColumnWidth } = this.props;
-      this.rotateWidth = Math.max(width / data.length, minColumnWidth);
-    }
-
-    // Update the data when data or sort changes
-    if (dataChanged || sortBy !== prevState.sortBy || sortDirection !== prevState.sortDirection) {
-      this.scrollToTop = true;
-      this.setState({ data: sortDataFrame(data, sortBy, sortDirection === 'DESC') });
-    }
-  }
-
-  /** Given the configuration, setup how each column gets rendered */
-  initColumns(props: Props): ColumnRenderInfo[] {
-    const { styles, data, width, minColumnWidth } = props;
-    if (!data || !data.fields || !data.fields.length || !styles) {
+  // React table data array. This data acts just like a dummy array to let react-table know how many rows exist
+  // The cells use the field to look up values
+  const memoizedData = useMemo(() => {
+    if (!data.fields.length) {
       return [];
     }
 
-    const columnWidth = Math.max(width / data.fields.length, minColumnWidth);
+    // Check if an array buffer already exists
+    const buffer = (data.fields[0].values as any).buffer;
+    if (Array.isArray(buffer) && buffer.length === data.length) {
+      return buffer;
+    }
 
-    return data.fields.map((col, index) => {
-      let title = col.name;
-      let style: ColumnStyle | null = null; // ColumnStyle
+    // For arrow tables, the `toArray` implementation is expensive and akward *especially* for timestamps
+    return Array(data.length).fill(0);
+  }, [data]);
 
-      // Find the style based on the text
-      for (let i = 0; i < styles.length; i++) {
-        const s = styles[i];
-        const regex = stringToJsRegex(s.pattern);
-        if (title.match(regex)) {
-          style = s;
-          if (s.alias) {
-            title = title.replace(regex, s.alias);
-          }
-          break;
-        }
-      }
+  // React-table column definitions
+  const memoizedColumns = useMemo(() => getColumns(data, width, columnMinWidth), [data, width, columnMinWidth]);
 
-      return {
-        header: title,
-        width: columnWidth,
-        builder: getFieldCellBuilder(col, style, this.props),
-      };
-    });
+  // Internal react table state reducer
+  const stateReducer = useTableStateReducer(props);
+
+  const options: any = useMemo(
+    () => ({
+      columns: memoizedColumns,
+      data: memoizedData,
+      disableResizing: !resizable,
+      stateReducer: stateReducer,
+      // this is how you set initial sort by state
+      // initialState: {
+      //   sortBy: [{ id: '2', desc: true }],
+      // },
+    }),
+    [memoizedColumns, memoizedData, stateReducer, resizable]
+  );
+
+  const { getTableProps, headerGroups, rows, prepareRow, totalColumnsWidth } = useTable(
+    options,
+    useSortBy,
+    useAbsoluteLayout,
+    useResizeColumns
+  );
+
+  const RenderRow = React.useCallback(
+    ({ index, style }) => {
+      const row = rows[index];
+      prepareRow(row);
+      return (
+        <div {...row.getRowProps({ style })} className={tableStyles.row}>
+          {row.cells.map((cell: Cell, index: number) => (
+            <TableCell
+              key={index}
+              field={data.fields[index]}
+              tableStyles={tableStyles}
+              cell={cell}
+              onCellClick={onCellClick}
+            />
+          ))}
+        </div>
+      );
+    },
+    [prepareRow, rows]
+  );
+
+  const headerHeight = noHeader ? 0 : tableStyles.cellHeight;
+
+  return (
+    <div {...getTableProps()} className={tableStyles.table}>
+      <CustomScrollbar hideVerticalTrack={true}>
+        <div style={{ width: `${totalColumnsWidth}px` }}>
+          {!noHeader && (
+            <div>
+              {headerGroups.map((headerGroup: HeaderGroup) => {
+                return (
+                  <div className={tableStyles.thead} {...headerGroup.getHeaderGroupProps()}>
+                    {headerGroup.headers.map((column: Column, index: number) =>
+                      renderHeaderCell(column, tableStyles, data.fields[index])
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
+          <FixedSizeList
+            height={height - headerHeight}
+            itemCount={rows.length}
+            itemSize={tableStyles.rowHeight}
+            width={'100%'}
+            style={{ overflow: 'hidden auto' }}
+          >
+            {RenderRow}
+          </FixedSizeList>
+        </div>
+      </CustomScrollbar>
+    </div>
+  );
+});
+
+Table.displayName = 'Table';
+
+function renderHeaderCell(column: any, tableStyles: TableStyles, field?: Field) {
+  const headerProps = column.getHeaderProps();
+
+  if (column.canResize) {
+    headerProps.style.userSelect = column.isResizing ? 'none' : 'auto'; // disables selecting text while resizing
   }
 
-  //----------------------------------------------------------------------
-  //----------------------------------------------------------------------
+  headerProps.style.position = 'absolute';
+  headerProps.style.textAlign = getTextAlign(field);
 
-  doSort = (columnIndex: number) => {
-    let sort: any = this.state.sortBy;
-    let dir = this.state.sortDirection;
-    if (sort !== columnIndex) {
-      dir = 'DESC';
-      sort = columnIndex;
-    } else if (dir === 'DESC') {
-      dir = 'ASC';
-    } else {
-      sort = null;
-    }
-    this.setState({ sortBy: sort, sortDirection: dir });
-  };
-
-  /** Converts the grid coordinates to DataFrame coordinates */
-  getCellRef = (rowIndex: number, columnIndex: number): DataIndex => {
-    const { showHeader, rotate } = this.props;
-    const rowOffset = showHeader ? -1 : 0;
-
-    if (rotate) {
-      return { column: rowIndex, row: columnIndex + rowOffset };
-    } else {
-      return { column: columnIndex, row: rowIndex + rowOffset };
-    }
-  };
-
-  onCellClick = (rowIndex: number, columnIndex: number) => {
-    const { row, column } = this.getCellRef(rowIndex, columnIndex);
-    if (row < 0) {
-      this.doSort(column);
-    } else {
-      const field = this.state.data.fields[columnIndex];
-      const value = field.values.get(rowIndex);
-      console.log('CLICK', value, field.name);
-    }
-  };
-
-  headerBuilder = (cell: TableCellBuilderOptions): ReactElement<'div'> => {
-    const { data, sortBy, sortDirection } = this.state;
-    const { columnIndex, rowIndex, style } = cell.props;
-    const { column } = this.getCellRef(rowIndex, columnIndex);
-
-    let col = data.fields[column];
-    const sorting = sortBy === column;
-    if (!col) {
-      col = {
-        name: '??' + columnIndex + '???',
-        config: {},
-        values: new ArrayVector(),
-        type: FieldType.other,
-      };
-    }
-
-    return (
-      <div className="gf-table-header" style={style} onClick={() => this.onCellClick(rowIndex, columnIndex)}>
-        {col.name}
-        {sorting && <SortIndicator sortDirection={sortDirection} />}
-      </div>
-    );
-  };
-
-  getTableCellBuilder = (column: number): TableCellBuilder => {
-    const render = this.renderer[column];
-    if (render && render.builder) {
-      return render.builder;
-    }
-    return simpleCellBuilder; // the default
-  };
-
-  cellRenderer = (props: GridCellProps): React.ReactNode => {
-    const { rowIndex, columnIndex, key, parent } = props;
-    const { row, column } = this.getCellRef(rowIndex, columnIndex);
-    const { data } = this.state;
-
-    const isHeader = row < 0;
-    const rowData = isHeader ? data.fields : getDataFrameRow(data, row); // TODO! improve
-    const value = rowData ? rowData[column] : '';
-    const builder = isHeader ? this.headerBuilder : this.getTableCellBuilder(column);
-
-    return (
-      <CellMeasurer cache={this.measurer} columnIndex={columnIndex} key={key} parent={parent} rowIndex={rowIndex}>
-        {builder({
-          value,
-          row: rowData,
-          column: data.fields[column],
-          table: this,
-          props,
-        })}
-      </CellMeasurer>
-    );
-  };
-
-  getColumnWidth = (col: Index): number => {
-    if (this.props.rotate) {
-      return this.rotateWidth; // fixed for now
-    }
-    return this.renderer[col.index].width;
-  };
-
-  render() {
-    const { showHeader, fixedHeader, fixedColumns, rotate, width, height } = this.props;
-    const { data } = this.state;
-    if (!data || !data.fields || !data.fields.length) {
-      return <span>Missing Fields</span>; // nothing
-    }
-
-    let columnCount = data.fields.length;
-    let rowCount = data.length + (showHeader ? 1 : 0);
-
-    let fixedColumnCount = Math.min(fixedColumns, columnCount);
-    let fixedRowCount = showHeader && fixedHeader ? 1 : 0;
-
-    if (rotate) {
-      const temp = columnCount;
-      columnCount = rowCount;
-      rowCount = temp;
-
-      fixedRowCount = 0;
-      fixedColumnCount = Math.min(fixedColumns, rowCount) + (showHeader && fixedHeader ? 1 : 0);
-    }
-
-    // Called after sort or the data changes
-    const scroll = this.scrollToTop ? 1 : -1;
-    const scrollToRow = rotate ? -1 : scroll;
-    const scrollToColumn = rotate ? scroll : -1;
-    if (this.scrollToTop) {
-      this.scrollToTop = false;
-    }
-
-    // Force MultiGrid to rerender if these options change
-    // See: https://github.com/bvaughn/react-virtualized#pass-thru-props
-    const refreshKeys = {
-      ...this.state, // Includes data and sort parameters
-      d1: this.props.data,
-      s0: this.props.styles,
-    };
-    return (
-      <MultiGrid
-        {...refreshKeys}
-        scrollToRow={scrollToRow}
-        columnCount={columnCount}
-        scrollToColumn={scrollToColumn}
-        rowCount={rowCount}
-        overscanColumnCount={8}
-        overscanRowCount={8}
-        columnWidth={this.getColumnWidth}
-        deferredMeasurementCache={this.measurer}
-        cellRenderer={this.cellRenderer}
-        rowHeight={this.measurer.rowHeight}
-        width={width}
-        height={height}
-        fixedColumnCount={fixedColumnCount}
-        fixedRowCount={fixedRowCount}
-        classNameTopLeftGrid="gf-table-fixed-column"
-        classNameBottomLeftGrid="gf-table-fixed-column"
-      />
-    );
-  }
+  return (
+    <div className={tableStyles.headerCell} {...headerProps}>
+      {column.canSort && (
+        <div {...column.getSortByToggleProps()} className={tableStyles.headerCellLabel} title={column.render('Header')}>
+          {column.render('Header')}
+          {column.isSorted && (column.isSortedDesc ? <Icon name="angle-down" /> : <Icon name="angle-up" />)}
+        </div>
+      )}
+      {!column.canSort && <div>{column.render('Header')}</div>}
+      {column.canResize && <div {...column.getResizerProps()} className={tableStyles.resizeHandle} />}
+    </div>
+  );
 }
-
-export default Table;

@@ -3,7 +3,7 @@ title = "Using InfluxDB in Grafana"
 description = "Guide for using InfluxDB in Grafana"
 keywords = ["grafana", "influxdb", "guide"]
 type = "docs"
-aliases = ["/datasources/influxdb"]
+aliases = ["/docs/grafana/latest/datasources/influxdb"]
 [menu.docs]
 name = "InfluxDB"
 parent = "datasources"
@@ -140,8 +140,8 @@ To add a filter click the plus icon to the right of the `Measurements/Fields` bu
 
 ## Templating
 
-Instead of hard-coding things like server, application and sensor name in you metric queries you can use variables in their place.
-Variables are shown as dropdown select boxes at the top of the dashboard. These dropdowns makes it easy to change the data
+Instead of hard-coding things like server, application and sensor name in your metric queries you can use variables in their place.
+Variables are shown as dropdown select boxes at the top of the dashboard. These dropdowns make it easy to change the data
 being displayed in your dashboard.
 
 Check out the [Templating]({{< relref "../../reference/templating.md" >}}) documentation for an introduction to the templating feature and the different
@@ -194,7 +194,7 @@ Why two ways? The first syntax is easier to read and write but does not allow yo
 options are enabled, Grafana converts the labels from plain text to a regex compatible string. Which means you have to use `=~` instead of `=`.
 
 Example Dashboard:
-[InfluxDB Templated Dashboard](http://play.grafana.org/dashboard/db/influxdb-templated-queries)
+[InfluxDB Templated Dashboard](https://play.grafana.org/dashboard/db/influxdb-templated)
 
 ### Ad hoc filters variable
 
@@ -215,7 +215,7 @@ For InfluxDB, you need to enter a query like the one in the example above. The `
 
 ## Configure the data source with provisioning
 
-You can now configure data sources using config files with Grafana's provisioning system. You can read more about how it works and all the settings you can set for data sources on the [provisioning docs page](/administration/provisioning/#datasources).
+You can now configure data sources using config files with Grafana's provisioning system. You can read more about how it works and all the settings you can set for data sources on the [provisioning docs page]({{< relref "../../administration/provisioning/#datasources" >}}).
 
 Here are some provisioning examples for this data source.
 

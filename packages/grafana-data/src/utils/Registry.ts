@@ -3,7 +3,7 @@ import { SelectableValue } from '../types/select';
 export interface RegistryItem {
   id: string; // Unique Key -- saved in configs
   name: string; // Display Name, can change without breaking configs
-  description: string;
+  description?: string;
   aliasIds?: string[]; // when the ID changes, we may want backwards compatibility ('current' => 'last')
 
   /**
@@ -33,24 +33,37 @@ interface RegistrySelectInfo {
 export class Registry<T extends RegistryItem> {
   private ordered: T[] = [];
   private byId = new Map<string, T>();
-  private initalized = false;
+  private initialized = false;
 
   constructor(private init?: () => T[]) {}
 
-  getIfExists(id: string | undefined): T | undefined {
-    if (!this.initalized) {
-      if (this.init) {
-        for (const ext of this.init()) {
-          this.register(ext);
-        }
-      }
-      this.sort();
-      this.initalized = true;
+  setInit = (init: () => T[]) => {
+    if (this.initialized) {
+      throw new Error('Registry already initialized');
     }
+    this.init = init;
+  };
+
+  getIfExists(id: string | undefined): T | undefined {
+    if (!this.initialized) {
+      this.initialize();
+    }
+
     if (id) {
       return this.byId.get(id);
     }
+
     return undefined;
+  }
+
+  private initialize() {
+    if (this.init) {
+      for (const ext of this.init()) {
+        this.register(ext);
+      }
+    }
+    this.sort();
+    this.initialized = true;
   }
 
   get(id: string): T {
@@ -62,8 +75,8 @@ export class Registry<T extends RegistryItem> {
   }
 
   selectOptions(current?: string[], filter?: (ext: T) => boolean): RegistrySelectInfo {
-    if (!this.initalized) {
-      this.getIfExists('xxx'); // will trigger init
+    if (!this.initialized) {
+      this.initialize();
     }
 
     const select = {
@@ -104,6 +117,10 @@ export class Registry<T extends RegistryItem> {
    * Return a list of values by ID, or all values if not specified
    */
   list(ids?: any[]): T[] {
+    if (!this.initialized) {
+      this.initialize();
+    }
+
     if (ids) {
       const found: T[] = [];
       for (const id of ids) {
@@ -114,16 +131,23 @@ export class Registry<T extends RegistryItem> {
       }
       return found;
     }
-    if (!this.initalized) {
-      this.getIfExists('xxx'); // will trigger init
+
+    return this.ordered;
+  }
+
+  isEmpty(): boolean {
+    if (!this.initialized) {
+      this.initialize();
     }
-    return [...this.ordered]; // copy of everythign just in case
+
+    return this.ordered.length === 0;
   }
 
   register(ext: T) {
     if (this.byId.has(ext.id)) {
       throw new Error('Duplicate Key:' + ext.id);
     }
+
     this.byId.set(ext.id, ext);
     this.ordered.push(ext);
 
@@ -135,7 +159,7 @@ export class Registry<T extends RegistryItem> {
       }
     }
 
-    if (this.initalized) {
+    if (this.initialized) {
       this.sort();
     }
   }

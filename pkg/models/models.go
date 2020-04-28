@@ -9,4 +9,6 @@ const (
 	GENERIC
 	GRAFANA_COM
 	GITLAB
+	AZUREAD
+	OKTA
 )

@@ -1,6 +1,5 @@
-import { DataSourceSettings, DataSourcePluginMeta } from '@grafana/data';
+import { DataSourcePluginMeta, DataSourceSettings, UrlQueryValue } from '@grafana/data';
 import { DataSourcesState } from '../../../types/datasources';
-import { UrlQueryValue } from '@grafana/runtime';
 
 export const getDataSources = (state: DataSourcesState) => {
   const regex = new RegExp(state.searchQuery, 'i');
@@ -10,10 +9,10 @@ export const getDataSources = (state: DataSourcesState) => {
   });
 };
 
-export const getDataSourceTypes = (state: DataSourcesState) => {
+export const getDataSourcePlugins = (state: DataSourcesState) => {
   const regex = new RegExp(state.dataSourceTypeSearchQuery, 'i');
 
-  return state.dataSourceTypes.filter((type: DataSourcePluginMeta) => {
+  return state.plugins.filter((type: DataSourcePluginMeta) => {
     return regex.test(type.name);
   });
 };

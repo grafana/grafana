@@ -2,11 +2,12 @@ package migrator
 
 import (
 	"fmt"
+	"github.com/lib/pq"
 	"strconv"
 	"strings"
 
-	"github.com/go-xorm/xorm"
-	"github.com/lib/pq"
+	"github.com/grafana/grafana/pkg/util/errutil"
+	"xorm.io/xorm"
 )
 
 type Postgres struct {
@@ -148,10 +149,29 @@ func (db *Postgres) isThisError(err error, errcode string) bool {
 	return false
 }
 
+func (db *Postgres) ErrorMessage(err error) string {
+	if driverErr, ok := err.(*pq.Error); ok {
+		return driverErr.Message
+	}
+	return ""
+}
+
 func (db *Postgres) IsUniqueConstraintViolation(err error) bool {
 	return db.isThisError(err, "23505")
 }
 
 func (db *Postgres) IsDeadlock(err error) bool {
 	return db.isThisError(err, "40P01")
+}
+
+func (db *Postgres) PostInsertId(table string, sess *xorm.Session) error {
+	if table != "org" {
+		return nil
+	}
+
+	// sync primary key sequence of org table
+	if _, err := sess.Exec("SELECT setval('org_id_seq', (SELECT max(id) FROM org));"); err != nil {
+		return errutil.Wrapf(err, "failed to sync primary key for org table")
+	}
+	return nil
 }

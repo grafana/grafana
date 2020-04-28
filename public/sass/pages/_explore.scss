@@ -7,11 +7,7 @@
 }
 
 .icon-brand-gradient {
-  text-shadow: none;
-  background: linear-gradient(180deg, #f05a28 30%, #fbca0a 100%);
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
-  -moz-text-fill-color: transparent;
+  color: linear-gradient(180deg, #f05a28 30%, #fbca0a 100%);
 }
 
 .icon-margin-left {
@@ -22,9 +18,26 @@
   }
 }
 
-.explore-active-button-glow {
+.explore-active-button {
   box-shadow: $btn-active-box-shadow;
+  border: 1px solid $orange-dark;
+  background-image: none;
+  background-color: transparent;
+  color: $orange-dark !important;
+
+  &:focus {
+    background-color: transparent;
+  }
+
+  i {
+    text-shadow: none;
+    background: linear-gradient(180deg, #f05a28 30%, #fbca0a 100%);
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    -moz-text-fill-color: transparent;
+  }
 }
+
 .explore-ds-picker {
   min-width: 200px;
   max-width: 300px;
@@ -229,6 +242,10 @@
   }
 }
 
+.explore-input--ml {
+  margin-left: 4px;
+}
+
 .navbar .elapsed-time {
   position: absolute;
   left: 0;
@@ -271,6 +288,10 @@
 .query-row-field {
   margin-right: 3px;
   flex-grow: 1;
+}
+
+.query-row-break {
+  flex-basis: 100%;
 }
 
 .query-transactions {
@@ -417,7 +438,6 @@
 
 .cheat-sheet-item {
   margin: $space-lg 0;
-  width: 50%;
 }
 
 .cheat-sheet-item__title {

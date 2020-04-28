@@ -26,18 +26,13 @@ var netClient = &http.Client{
 	Transport: netTransport,
 }
 
-func (rs *RenderingService) renderViaHttp(ctx context.Context, opts Opts) (*RenderResult, error) {
+func (rs *RenderingService) renderViaHttp(ctx context.Context, renderKey string, opts Opts) (*RenderResult, error) {
 	filePath, err := rs.getFilePathForNewImage()
 	if err != nil {
 		return nil, err
 	}
 
 	rendererUrl, err := url.Parse(rs.Cfg.RendererUrl)
-	if err != nil {
-		return nil, err
-	}
-
-	renderKey, err := rs.getRenderKey(opts.OrgId, opts.UserId, opts.OrgRole)
 	if err != nil {
 		return nil, err
 	}
@@ -51,6 +46,7 @@ func (rs *RenderingService) renderViaHttp(ctx context.Context, opts Opts) (*Rend
 	queryParams.Add("timezone", isoTimeOffsetToPosixTz(opts.Timezone))
 	queryParams.Add("encoding", opts.Encoding)
 	queryParams.Add("timeout", strconv.Itoa(int(opts.Timeout.Seconds())))
+	queryParams.Add("deviceScaleFactor", fmt.Sprintf("%f", opts.DeviceScaleFactor))
 	rendererUrl.RawQuery = queryParams.Encode()
 
 	req, err := http.NewRequest("GET", rendererUrl.String(), nil)
@@ -60,6 +56,11 @@ func (rs *RenderingService) renderViaHttp(ctx context.Context, opts Opts) (*Rend
 
 	req.Header.Set("User-Agent", fmt.Sprintf("Grafana/%s", setting.BuildVersion))
 
+	for k, v := range opts.Headers {
+		req.Header[k] = v
+	}
+
+	// gives service some additional time to timeout and return possible errors.
 	reqContext, cancel := context.WithTimeout(ctx, opts.Timeout+time.Second*2)
 	defer cancel()
 

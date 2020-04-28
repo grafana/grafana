@@ -7,14 +7,14 @@ import (
 	"net/url"
 	"strings"
 
-	m "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/util"
 	"golang.org/x/oauth2/google"
 )
 
 //ApplyRoute should use the plugin route data to set auth headers and custom headers
-func ApplyRoute(ctx context.Context, req *http.Request, proxyPath string, route *plugins.AppPluginRoute, ds *m.DataSource) {
+func ApplyRoute(ctx context.Context, req *http.Request, proxyPath string, route *plugins.AppPluginRoute, ds *models.DataSource) {
 	proxyPath = strings.TrimPrefix(proxyPath, route.Path)
 
 	data := templateData{
@@ -22,7 +22,7 @@ func ApplyRoute(ctx context.Context, req *http.Request, proxyPath string, route 
 		SecureJsonData: ds.SecureJsonData.Decrypt(),
 	}
 
-	interpolatedURL, err := InterpolateString(route.Url, data)
+	interpolatedURL, err := InterpolateString(route.URL, data)
 	if err != nil {
 		logger.Error("Error interpolating proxy url", "error", err)
 		return
@@ -38,6 +38,10 @@ func ApplyRoute(ctx context.Context, req *http.Request, proxyPath string, route 
 	req.URL.Host = routeURL.Host
 	req.Host = routeURL.Host
 	req.URL.Path = util.JoinURLFragments(routeURL.Path, proxyPath)
+
+	if err := addQueryString(req, route, data); err != nil {
+		logger.Error("Failed to render plugin URL query string", "error", err)
+	}
 
 	if err := addHeaders(&req.Header, route, data); err != nil {
 		logger.Error("Failed to render plugin headers", "error", err)
@@ -77,6 +81,26 @@ func ApplyRoute(ctx context.Context, req *http.Request, proxyPath string, route 
 	}
 
 	logger.Info("Requesting", "url", req.URL.String())
+}
+
+func addQueryString(req *http.Request, route *plugins.AppPluginRoute, data templateData) error {
+	q := req.URL.Query()
+	for _, param := range route.URLParams {
+		interpolatedName, err := InterpolateString(param.Name, data)
+		if err != nil {
+			return err
+		}
+
+		interpolatedContent, err := InterpolateString(param.Content, data)
+		if err != nil {
+			return err
+		}
+
+		q.Add(interpolatedName, interpolatedContent)
+	}
+	req.URL.RawQuery = q.Encode()
+
+	return nil
 }
 
 func addHeaders(reqHeaders *http.Header, route *plugins.AppPluginRoute, data templateData) error {

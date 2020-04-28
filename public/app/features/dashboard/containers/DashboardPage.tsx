@@ -7,15 +7,18 @@ import classNames from 'classnames';
 // Services & Utils
 import { createErrorNotification } from 'app/core/copy/appNotification';
 import { getMessageFromError } from 'app/core/utils/errors';
+import { Branding } from 'app/core/components/Branding/Branding';
+
 // Components
 import { DashboardGrid } from '../dashgrid/DashboardGrid';
 import { DashNav } from '../components/DashNav';
-import { SubMenu } from '../components/SubMenu';
+import { AngularSubMenu } from '../components/SubMenu';
 import { DashboardSettings } from '../components/DashboardSettings';
-import { Alert, CustomScrollbar } from '@grafana/ui';
+import { PanelEditor } from '../components/PanelEditor/PanelEditor';
+import { Alert, CustomScrollbar, Icon } from '@grafana/ui';
 // Redux
 import { initDashboard } from '../state/initDashboard';
-import { cleanUpDashboard } from '../state/actions';
+import { cleanUpDashboard } from '../state/reducers';
 import { notifyApp, updateLocation } from 'app/core/actions';
 // Types
 import {
@@ -25,8 +28,11 @@ import {
   DashboardRouteInfo,
   StoreState,
 } from 'app/types';
+
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
-import { PanelInspector } from '../components/Inspector/PanelInspector';
+import { InspectTab, PanelInspector } from '../components/Inspector/PanelInspector';
+import { getConfig } from '../../../core/config';
+import { SubMenu } from '../components/SubMenu/SubMenu';
 
 export interface Props {
   urlUid?: string;
@@ -39,8 +45,8 @@ export interface Props {
   $scope: any;
   $injector: any;
   routeInfo: DashboardRouteInfo;
-  urlEdit: boolean;
-  urlFullscreen: boolean;
+  urlEditPanelId?: string;
+  urlViewPanelId?: string;
   initPhase: DashboardInitPhase;
   isInitSlow: boolean;
   dashboard: DashboardModel | null;
@@ -49,28 +55,25 @@ export interface Props {
   cleanUpDashboard: typeof cleanUpDashboard;
   notifyApp: typeof notifyApp;
   updateLocation: typeof updateLocation;
+  inspectTab?: InspectTab;
+  isPanelEditorOpen?: boolean;
 }
 
 export interface State {
-  isSettingsOpening: boolean;
-  isEditing: boolean;
-  isFullscreen: boolean;
-  fullscreenPanel: PanelModel | null;
+  editPanel: PanelModel | null;
+  viewPanel: PanelModel | null;
   scrollTop: number;
-  updateScrollTop: number;
+  updateScrollTop?: number;
   rememberScrollTop: number;
   showLoadingState: boolean;
 }
 
 export class DashboardPage extends PureComponent<Props, State> {
   state: State = {
-    isSettingsOpening: false,
-    isEditing: false,
-    isFullscreen: false,
+    editPanel: null,
+    viewPanel: null,
     showLoadingState: false,
-    fullscreenPanel: null,
     scrollTop: 0,
-    updateScrollTop: null,
     rememberScrollTop: 0,
   };
 
@@ -95,7 +98,8 @@ export class DashboardPage extends PureComponent<Props, State> {
   }
 
   componentDidUpdate(prevProps: Props) {
-    const { dashboard, editview, urlEdit, urlFullscreen, urlPanelId, urlUid } = this.props;
+    const { dashboard, urlEditPanelId, urlViewPanelId, urlUid } = this.props;
+    const { editPanel, viewPanel } = this.state;
 
     if (!dashboard) {
       return;
@@ -103,7 +107,7 @@ export class DashboardPage extends PureComponent<Props, State> {
 
     // if we just got dashboard update title
     if (!prevProps.dashboard) {
-      document.title = dashboard.title + ' - Grafana';
+      document.title = dashboard.title + ' - ' + Branding.AppTitle;
     }
 
     // Due to the angular -> react url bridge we can ge an update here with new uid before the container unmounts
@@ -112,88 +116,73 @@ export class DashboardPage extends PureComponent<Props, State> {
       return;
     }
 
-    // handle animation states when opening dashboard settings
-    if (!prevProps.editview && editview) {
-      this.setState({ isSettingsOpening: true });
-      setTimeout(() => {
-        this.setState({ isSettingsOpening: false });
-      }, 10);
-    }
-
-    // Sync url state with model
-    if (urlFullscreen !== dashboard.meta.fullscreen || urlEdit !== dashboard.meta.isEditing) {
-      if (!isNaN(parseInt(urlPanelId, 10))) {
-        this.onEnterFullscreen();
-      } else {
-        this.onLeaveFullscreen();
-      }
-    }
-  }
-
-  onEnterFullscreen() {
-    const { dashboard, urlEdit, urlFullscreen, urlPanelId } = this.props;
-
-    const panelId = parseInt(urlPanelId, 10);
-
-    // need to expand parent row if this panel is inside a row
-    dashboard.expandParentRowFor(panelId);
-
-    const panel = dashboard.getPanelById(panelId);
-
-    if (panel) {
-      dashboard.setViewMode(panel, urlFullscreen, urlEdit);
-      this.setState({
-        isEditing: urlEdit && dashboard.meta.canEdit,
-        isFullscreen: urlFullscreen,
-        fullscreenPanel: panel,
-        rememberScrollTop: this.state.scrollTop,
+    // entering edit mode
+    if (!editPanel && urlEditPanelId) {
+      this.getPanelByIdFromUrlParam(urlEditPanelId, panel => {
+        this.setState({ editPanel: panel });
       });
-      this.setPanelFullscreenClass(urlFullscreen);
-    } else {
-      this.handleFullscreenPanelNotFound(urlPanelId);
+    }
+
+    // leaving edit mode
+    if (editPanel && !urlEditPanelId) {
+      this.setState({ editPanel: null });
+    }
+
+    // entering view mode
+    if (!viewPanel && urlViewPanelId) {
+      this.getPanelByIdFromUrlParam(urlViewPanelId, panel => {
+        this.setPanelFullscreenClass(true);
+        dashboard.initViewPanel(panel);
+        this.setState({
+          viewPanel: panel,
+          rememberScrollTop: this.state.scrollTop,
+        });
+      });
+    }
+
+    // leaving view mode
+    if (viewPanel && !urlViewPanelId) {
+      this.setPanelFullscreenClass(false);
+      dashboard.exitViewPanel(viewPanel);
+      this.setState(
+        { viewPanel: null, updateScrollTop: this.state.rememberScrollTop },
+        this.triggerPanelsRendering.bind(this)
+      );
     }
   }
 
-  onLeaveFullscreen() {
+  getPanelByIdFromUrlParam(urlPanelId: string, callback: (panel: PanelModel) => void) {
     const { dashboard } = this.props;
 
-    if (this.state.fullscreenPanel) {
-      dashboard.setViewMode(this.state.fullscreenPanel, false, false);
+    const panelId = parseInt(urlPanelId!, 10);
+    const panel = dashboard!.getPanelById(panelId);
+
+    if (!panel) {
+      // Panel not found
+      this.props.notifyApp(createErrorNotification(`Panel with id ${urlPanelId} not found`));
+      // Clear url state
+      this.props.updateLocation({
+        query: {
+          edit: null,
+          fullscreen: null,
+          panelId: null,
+        },
+        partial: true,
+      });
+      return;
     }
 
-    this.setState(
-      {
-        isEditing: false,
-        isFullscreen: false,
-        fullscreenPanel: null,
-        updateScrollTop: this.state.rememberScrollTop,
-      },
-      this.triggerPanelsRendering.bind(this)
-    );
-
-    this.setPanelFullscreenClass(false);
+    dashboard!.expandParentRowFor(panelId);
+    callback(panel);
   }
 
   triggerPanelsRendering() {
     try {
-      this.props.dashboard.render();
+      this.props.dashboard!.render();
     } catch (err) {
+      console.error(err);
       this.props.notifyApp(createErrorNotification(`Panel rendering error`, err));
     }
-  }
-
-  handleFullscreenPanelNotFound(urlPanelId: string) {
-    // Panel not found
-    this.props.notifyApp(createErrorNotification(`Panel with id ${urlPanelId} not found`));
-    // Clear url state
-    this.props.updateLocation({
-      query: {
-        edit: null,
-        fullscreen: null,
-        panelId: null,
-      },
-      partial: true,
-    });
   }
 
   setPanelFullscreenClass(isFullscreen: boolean) {
@@ -220,14 +209,14 @@ export class DashboardPage extends PureComponent<Props, State> {
     });
 
     // scroll to top after adding panel
-    this.setState({ scrollTop: 0 });
+    this.setState({ updateScrollTop: 0 });
   };
 
   renderSlowInitState() {
     return (
       <div className="dashboard-loading">
         <div className="dashboard-loading__text">
-          <i className="fa fa-spinner fa-spin" /> {this.props.initPhase}
+          <Icon name="fa fa-spinner" className="fa-spin" /> {this.props.initPhase}
         </div>
       </div>
     );
@@ -247,9 +236,36 @@ export class DashboardPage extends PureComponent<Props, State> {
     );
   }
 
+  getInspectPanel() {
+    const { dashboard, inspectPanelId } = this.props;
+    if (!dashboard || !inspectPanelId) {
+      return null;
+    }
+
+    const inspectPanel = dashboard.getPanelById(parseInt(inspectPanelId, 10));
+
+    // cannot inspect panels plugin is not already loaded
+    if (!inspectPanel) {
+      return null;
+    }
+
+    return inspectPanel;
+  }
+
   render() {
-    const { dashboard, editview, $injector, isInitSlow, initError, inspectPanelId } = this.props;
-    const { isSettingsOpening, isEditing, isFullscreen, scrollTop, updateScrollTop } = this.state;
+    const {
+      dashboard,
+      editview,
+      $injector,
+      isInitSlow,
+      initError,
+      inspectTab,
+      isPanelEditorOpen,
+      updateLocation,
+    } = this.props;
+
+    const { editPanel, viewPanel, scrollTop, updateScrollTop } = this.state;
+    const { featureToggles } = getConfig();
 
     if (!dashboard) {
       if (isInitSlow) {
@@ -258,32 +274,18 @@ export class DashboardPage extends PureComponent<Props, State> {
       return null;
     }
 
-    const classes = classNames({
-      'dashboard-page--settings-opening': isSettingsOpening,
-      'dashboard-page--settings-open': !isSettingsOpening && editview,
-    });
-
     const gridWrapperClasses = classNames({
       'dashboard-container': true,
       'dashboard-container--has-submenu': dashboard.meta.submenuEnabled,
     });
 
-    // Find the panel to inspect
-    const inspectPanel = inspectPanelId ? dashboard.getPanelById(parseInt(inspectPanelId, 10)) : null;
-
     // Only trigger render when the scroll has moved by 25
     const approximateScrollTop = Math.round(scrollTop / 25) * 25;
+    const inspectPanel = this.getInspectPanel();
 
     return (
-      <div className={classes}>
-        <DashNav
-          dashboard={dashboard}
-          isEditing={isEditing}
-          isFullscreen={isFullscreen}
-          editview={editview}
-          $injector={$injector}
-          onAddPanel={this.onAddPanel}
-        />
+      <div>
+        <DashNav dashboard={dashboard} isFullscreen={!!viewPanel} $injector={$injector} onAddPanel={this.onAddPanel} />
         <div className="scroll-canvas scroll-canvas--dashboard">
           <CustomScrollbar
             autoHeightMin="100%"
@@ -292,23 +294,25 @@ export class DashboardPage extends PureComponent<Props, State> {
             updateAfterMountMs={500}
             className="custom-scrollbar--page"
           >
-            {editview && <DashboardSettings dashboard={dashboard} />}
-
             {initError && this.renderInitFailedState()}
 
             <div className={gridWrapperClasses}>
-              <SubMenu dashboard={dashboard} />
+              {!editPanel && !featureToggles.newVariables && <AngularSubMenu dashboard={dashboard} />}
+              {!editPanel && featureToggles.newVariables && <SubMenu dashboard={dashboard} />}
               <DashboardGrid
                 dashboard={dashboard}
-                isEditing={isEditing}
-                isFullscreen={isFullscreen}
+                viewPanel={viewPanel}
+                editPanel={editPanel}
                 scrollTop={approximateScrollTop}
+                isPanelEditorOpen={isPanelEditorOpen}
               />
             </div>
           </CustomScrollbar>
         </div>
 
-        {inspectPanel && <PanelInspector dashboard={dashboard} panel={inspectPanel} />}
+        {inspectPanel && <PanelInspector dashboard={dashboard} panel={inspectPanel} defaultTab={inspectTab} />}
+        {editPanel && <PanelEditor dashboard={dashboard} sourcePanel={editPanel} />}
+        {editview && <DashboardSettings dashboard={dashboard} updateLocation={updateLocation} />}
       </div>
     );
   }
@@ -321,13 +325,15 @@ export const mapStateToProps = (state: StoreState) => ({
   editview: state.location.query.editview,
   urlPanelId: state.location.query.panelId,
   urlFolderId: state.location.query.folderId,
-  urlFullscreen: !!state.location.query.fullscreen,
-  urlEdit: !!state.location.query.edit,
+  urlEditPanelId: state.location.query.editPanel,
+  urlViewPanelId: state.location.query.viewPanel,
   inspectPanelId: state.location.query.inspect,
   initPhase: state.dashboard.initPhase,
   isInitSlow: state.dashboard.isInitSlow,
   initError: state.dashboard.initError,
-  dashboard: state.dashboard.model as DashboardModel,
+  dashboard: state.dashboard.getModel() as DashboardModel,
+  inspectTab: state.location.query.inspectTab,
+  isPanelEditorOpen: state.panelEditor.isOpen,
 });
 
 const mapDispatchToProps = {

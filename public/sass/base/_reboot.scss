@@ -55,7 +55,7 @@ html {
 
 html {
   // Sets a specific default `font-size` for user with `rem` type scales.
-  font-size: $font-size-root;
+  font-size: $font-size-base;
   // As a side-effect of setting the @viewport above,
   // IE11 & Edge make the scrollbar overlap the content and automatically hide itself when not in use.
   // Unfortunately, the auto-showing of the scrollbar is sometimes too sensitive,
@@ -69,12 +69,11 @@ html {
 }
 
 body {
-  // Make the `body` use the `font-size-root`
   font-family: $font-family-sans-serif;
   font-size: $font-size-base;
   line-height: $line-height-base;
   // Go easy on the eyes and use something other than `#000` for text
-  color: $body-color;
+  color: $text-color;
   // By default, `<body>` has no `background-color` so we set one as a best practice.
   background-color: $body-bg;
   height: 100%;

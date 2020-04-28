@@ -1,8 +1,8 @@
 <h3 class="dashboard-settings__header">
   <a ng-click="ctrl.switchMode('list')">Versions</a>
   <span ng-show="ctrl.mode === 'compare'">
-    <i class="fa fa-fw fa-chevron-right"></i> Comparing {{ctrl.baseInfo.version}}
-    <i class="fa fa-arrows-h"></i>
+    <icon name="'angle-right'"></icon> Comparing {{ctrl.baseInfo.version}}
+    <icon name="'arrows-h'"></icon>
     {{ctrl.newInfo.version}}
     <cite class="muted" ng-if="ctrl.isNewLatest">(Latest)</cite>
   </span>
@@ -10,7 +10,7 @@
 
 <div ng-if="ctrl.mode === 'list'">
   <div ng-if="ctrl.loading">
-    <i class="fa fa-spinner fa-spin"></i>
+    <icon name="'fa fa-spinner'" class="fa-spin"></icon>
     <em>Fetching history list&hellip;</em>
   </div>
 
@@ -29,8 +29,17 @@
         </thead>
         <tbody>
           <tr ng-repeat="revision in ctrl.revisions">
-            <td class="filter-table__switch-cell" bs-tooltip="!revision.checked && ctrl.canCompare ? 'You can only compare 2 versions at a time' : ''" data-placement="right">
-              <gf-form-checkbox switch-class="gf-form-switch--table-cell" checked="revision.checked" on-change="ctrl.revisionSelectionChanged()" ng-disabled="!revision.checked && ctrl.canCompare">
+            <td
+              class="filter-table__switch-cell"
+              bs-tooltip="!revision.checked && ctrl.canCompare ? 'You can only compare 2 versions at a time' : ''"
+              data-placement="right"
+            >
+              <gf-form-checkbox
+                switch-class="gf-form-switch--table-cell"
+                checked="revision.checked"
+                on-change="ctrl.revisionSelectionChanged()"
+                ng-disabled="!revision.checked && ctrl.canCompare"
+              >
               </gf-form-checkbox>
             </td>
             <td class="text-center">{{revision.version}}</td>
@@ -38,11 +47,15 @@
             <td>{{revision.createdBy}}</td>
             <td>{{revision.message}}</td>
             <td class="text-right">
-              <a class="btn btn-inverse btn-small" ng-show="revision.version !== ctrl.dashboard.version" ng-click="ctrl.restore(revision.version)">
-                <i class="fa fa-history"></i>&nbsp;&nbsp;Restore
+              <a
+                class="btn btn-inverse btn-small"
+                ng-show="revision.version !== ctrl.dashboard.version"
+                ng-click="ctrl.restore(revision.version)"
+              >
+                <icon name="'history'" size="'xs'" style="margin-bottom: 2px"></icon>&nbsp;&nbsp;Restore
               </a>
-              <a class="btn btn-outline-disabled btn-small" ng-show="revision.version === ctrl.dashboard.version">
-                <i class="fa fa-check"></i>&nbsp;&nbsp;Latest
+              <a class="label label-tag" ng-show="revision.version === ctrl.dashboard.version">
+                Latest
               </a>
             </td>
           </tr>
@@ -50,26 +63,31 @@
       </table>
 
       <div ng-if="ctrl.appending">
-        <i class="fa fa-spinner fa-spin"></i>
+        <icon name="'fa fa-spinner'" class="fa-spin"></icon>
         <em>Fetching more entries&hellip;</em>
       </div>
 
       <div class="gf-form-group">
         <div class="gf-form-button-row">
-          <button  type="button"
-                   class="btn gf-form-button btn-inverse"
-                   ng-if="ctrl.revisions.length >= ctrl.limit"
-                   ng-click="ctrl.addToLog()"
-                   ng-disabled="ctrl.isLastPage()">
+          <button
+            type="button"
+            class="btn gf-form-button btn-inverse"
+            ng-if="ctrl.revisions.length >= ctrl.limit"
+            ng-click="ctrl.addToLog()"
+            ng-disabled="ctrl.isLastPage()"
+          >
             Show more versions
           </button>
-          <button type="button"
-                  class="btn btn-primary"
-                  ng-if="ctrl.revisions.length > 1"
-                  ng-disabled="!ctrl.canCompare"
-                  ng-click="ctrl.getDiff(ctrl.diff)"
-                  bs-tooltip="ctrl.canCompare ? '' : 'Select 2 versions to start comparing'" data-placement="bottom">
-            <i class="fa fa-code-fork" ></i>&nbsp;&nbsp;Compare versions
+          <button
+            type="button"
+            class="btn btn-primary"
+            ng-if="ctrl.revisions.length > 1"
+            ng-disabled="!ctrl.canCompare"
+            ng-click="ctrl.getDiff(ctrl.diff)"
+            bs-tooltip="ctrl.canCompare ? '' : 'Select 2 versions to start comparing'"
+            data-placement="bottom"
+          >
+            <icon name="'code-branch'"></icon>&nbsp;&nbsp;Compare versions
           </button>
         </div>
       </div>
@@ -79,29 +97,31 @@
 
 <div ng-if="ctrl.mode === 'compare'">
   <div ng-if="ctrl.loading">
-    <i class="fa fa-spinner fa-spin"></i>
+    <icon name="'fa fa-spinner'" class="fa-spin"></icon>
     <em>Fetching changes&hellip;</em>
   </div>
 
   <div ng-if="!ctrl.loading">
-    <button  type="button"
-             class="btn btn-danger pull-right"
-             ng-click="ctrl.restore(ctrl.baseInfo.version)"
-             ng-if="ctrl.isNewLatest">
-      <i class="fa fa-history" ></i>&nbsp;&nbsp;Restore to version {{ctrl.baseInfo.version}}
+    <button
+      type="button"
+      class="btn btn-danger pull-right"
+      ng-click="ctrl.restore(ctrl.baseInfo.version)"
+      ng-if="ctrl.isNewLatest"
+    >
+      <icon name="'history'"></icon>&nbsp;&nbsp;Restore to version {{ctrl.baseInfo.version}}
     </button>
     <section>
       <p class="small muted">
-      <strong>Version {{ctrl.newInfo.version}}</strong> updated by
-      <span>{{ctrl.newInfo.createdBy}} </span>
-      <span>{{ctrl.newInfo.ageString}}</span>
-      <span> - {{ctrl.newInfo.message}}</span>
+        <strong>Version {{ctrl.newInfo.version}}</strong> updated by
+        <span>{{ctrl.newInfo.createdBy}} </span>
+        <span>{{ctrl.newInfo.ageString}}</span>
+        <span> - {{ctrl.newInfo.message}}</span>
       </p>
       <p class="small muted">
-      <strong>Version {{ctrl.baseInfo.version}}</strong> updated by
-      <span>{{ctrl.baseInfo.createdBy}} </span>
-      <span>{{ctrl.baseInfo.ageString}}</span>
-      <span> - {{ctrl.baseInfo.message}}</span>
+        <strong>Version {{ctrl.baseInfo.version}}</strong> updated by
+        <span>{{ctrl.baseInfo.createdBy}} </span>
+        <span>{{ctrl.baseInfo.ageString}}</span>
+        <span> - {{ctrl.baseInfo.message}}</span>
       </p>
     </section>
 

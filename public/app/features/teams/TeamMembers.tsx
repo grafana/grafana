@@ -1,16 +1,18 @@
 import React, { PureComponent } from 'react';
 import { connect } from 'react-redux';
+import { Icon } from '@grafana/ui';
 import { SlideDown } from 'app/core/components/Animations/SlideDown';
 import { UserPicker } from 'app/core/components/Select/UserPicker';
 import { TagBadge } from 'app/core/components/TagFilter/TagBadge';
 import { TeamMember, User } from 'app/types';
-import { addTeamMember, setSearchMemberQuery } from './state/actions';
+import { addTeamMember } from './state/actions';
 import { getSearchMemberQuery, isSignedInUserTeamAdmin } from './state/selectors';
 import { FilterInput } from 'app/core/components/FilterInput/FilterInput';
 import { WithFeatureToggle } from 'app/core/components/WithFeatureToggle';
 import { config } from 'app/core/config';
 import { contextSrv, User as SignedInUser } from 'app/core/services/context_srv';
 import TeamMemberRow from './TeamMemberRow';
+import { setSearchMemberQuery } from './state/reducers';
 
 export interface Props {
   members: TeamMember[];
@@ -96,7 +98,7 @@ export class TeamMembers extends PureComponent<Props, State> {
         <SlideDown in={isAdding}>
           <div className="cta-form">
             <button className="cta-form__close btn btn-transparent" onClick={this.onToggleAdding}>
-              <i className="fa fa-close" />
+              <Icon name="times" />
             </button>
             <h5>Add team member</h5>
             <div className="gf-form-inline">

@@ -9,7 +9,7 @@ weight = 8
 
 # Export and Import
 
-Grafana Dashboards can easily be exported and imported, either from the UI or from the HTTP API.
+Grafana Dashboards can easily be exported and imported, either from the UI or from the [HTTP API]({{< relref "../http_api/dashboard.md#create-update-dashboard" >}}).
 
 ## Exporting a dashboard
 
@@ -34,7 +34,7 @@ To import a dashboard open dashboard search and then hit the import button.
 {{< docs-imagebox img="/img/docs/v50/import_step1.png" max-width="700px" >}}
 
 From here you can upload a dashboard json file, paste a [Grafana.com](https://grafana.com) dashboard
-url or paste dashboard json text directly into the text area.
+URL or paste dashboard json text directly into the text area.
 
 {{< docs-imagebox img="/img/docs/v50/import_step2.png"  max-width="700px" >}}
 
@@ -104,7 +104,7 @@ add the inputs and templatize the data source properties like above.
 
 If you want to import a dashboard from Grafana.com into an older version of Grafana then you can either import
 it as usual and then update the data source option in the metrics tab so that the panel is using the correct
-data source. Another alternative is to open the json file in a a text editor and update the data source properties
+data source. Another alternative is to open the json file in a text editor and update the data source properties
 to value that matches a name of your data source.
 
 ## Note

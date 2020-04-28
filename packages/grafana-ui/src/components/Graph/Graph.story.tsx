@@ -1,14 +1,14 @@
 import React from 'react';
 import { Graph } from './Graph';
 import Chart from '../Chart';
-import { dateTime, ArrayVector, FieldType, GraphSeriesXY } from '@grafana/data';
+import { dateTime, ArrayVector, FieldType, GraphSeriesXY, FieldColorMode } from '@grafana/data';
 import { select } from '@storybook/addon-knobs';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { TooltipContentProps } from '../Chart/Tooltip';
 import { JSONFormatter } from '../JSONFormatter/JSONFormatter';
 
 export default {
-  title: 'Visualizations/Graph/Graph',
+  title: 'Visualizations/Graph',
   component: Graph,
   decorators: [withCenteredStory],
 };
@@ -47,7 +47,12 @@ const series: GraphSeriesXY[] = [
       type: FieldType.number,
       name: 'a-series',
       values: new ArrayVector([10, 20, 10]),
-      config: { color: 'red' },
+      config: {
+        color: {
+          mode: FieldColorMode.Fixed,
+          fixedColor: 'red',
+        },
+      },
     },
     timeStep: 3600000,
     yAxis: {
@@ -76,7 +81,12 @@ const series: GraphSeriesXY[] = [
       name:
         "B-series with an ultra wide label that is probably going go make the tooltip overflow window. This situation happens, so let's better make sure it behaves nicely :)",
       values: new ArrayVector([20, 30, 40]),
-      config: { color: 'blue' },
+      config: {
+        color: {
+          mode: FieldColorMode.Fixed,
+          fixedColor: 'blue',
+        },
+      },
     },
     timeStep: 3600000,
     yAxis: {

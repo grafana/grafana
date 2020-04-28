@@ -1,15 +1,16 @@
 import angular from 'angular';
 import config from 'app/core/config';
-import { BackendSrv } from 'app/core/services/backend_srv';
+import { getBackendSrv } from '@grafana/runtime';
+import { promiseToDigest } from 'app/core/utils/promiseToDigest';
 
 export class SelectOrgCtrl {
   /** @ngInject */
-  constructor($scope: any, backendSrv: BackendSrv, contextSrv: any) {
+  constructor($scope: any, contextSrv: any) {
     contextSrv.sidemenu = false;
 
     $scope.navModel = {
       main: {
-        icon: 'gicon gicon-branding',
+        icon: 'grafana',
         subTitle: 'Preferences',
         text: 'Select active organization',
       },
@@ -20,15 +21,21 @@ export class SelectOrgCtrl {
     };
 
     $scope.getUserOrgs = () => {
-      backendSrv.get('/api/user/orgs').then((orgs: any) => {
-        $scope.orgs = orgs;
-      });
+      promiseToDigest($scope)(
+        getBackendSrv()
+          .get('/api/user/orgs')
+          .then((orgs: any) => {
+            $scope.orgs = orgs;
+          })
+      );
     };
 
     $scope.setUsingOrg = (org: any) => {
-      backendSrv.post('/api/user/using/' + org.orgId).then(() => {
-        window.location.href = config.appSubUrl + '/';
-      });
+      getBackendSrv()
+        .post('/api/user/using/' + org.orgId)
+        .then(() => {
+          window.location.href = config.appSubUrl + '/';
+        });
     };
 
     $scope.init();

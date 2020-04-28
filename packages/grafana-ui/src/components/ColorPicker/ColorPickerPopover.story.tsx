@@ -4,7 +4,7 @@ import { ColorPickerPopover } from './ColorPickerPopover';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { SeriesColorPickerPopover } from './SeriesColorPickerPopover';
 import { renderComponentWithTheme } from '../../utils/storybook/withTheme';
-const ColorPickerPopoverStories = storiesOf('UI/ColorPicker/Popovers', module);
+const ColorPickerPopoverStories = storiesOf('Pickers and Editors/ColorPicker/Popovers', module);
 
 ColorPickerPopoverStories.addDecorator(withCenteredStory);
 

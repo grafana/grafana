@@ -71,36 +71,46 @@ external image destination if available or fallback to attaching the image to th
 Be aware that if you use the `local` image storage email servers and clients might not be
 able to access the image.
 
+Setting | Description
+---------- | -----------
+Single email | Send a single email to all recipients. Disabled per default.
+Addresses | Email addresses to recipients. You can enter multiple email addresses using a ";" separator.
+
 ### Slack
 
 {{< imgbox max-width="40%" img="/img/docs/v4/slack_notification.png" caption="Alerting Slack Notification" >}}
 
-To set up slack you need to configure an incoming webhook url at slack. You can follow their guide on how
-to do that [here](https://api.slack.com/incoming-webhooks). If you want to include screenshots of the firing alerts
-in the Slack messages you have to configure either the [external image destination](#external-image-store) in Grafana,
-or a bot integration via Slack Apps. Follow Slack's guide to set up a bot integration and use the token provided
-(https://api.slack.com/bot-users), which starts with "xoxb".
+To set up Slack, you need to configure an incoming Slack webhook URL. You can follow
+[Sending messages using Incoming Webhooks](https://api.slack.com/incoming-webhooks) on how to do that. If you want to include screenshots of the
+firing alerts in the Slack messages you have to configure either the [external image destination](#external-image-store)
+in Grafana or a bot integration via Slack Apps. Follow Slack's guide to set up a bot integration and use the token
+provided (https://api.slack.com/bot-users), which starts with "xoxb".
 
 Setting | Description
 ---------- | -----------
-Url | Slack incoming webhook url.
+Url | Slack incoming webhook URL.
 Username | Set the username for the bot's message.
-Recipient | Allows you to override the Slack recipient.
+Recipient | Allows you to override the Slack recipient. You must either provide a channel Slack ID, a user Slack ID, a username reference (@&lt;user&gt;, all lowercase, no whitespace), or a channel reference (#&lt;channel&gt;, all lowercase, no whitespace).
 Icon emoji | Provide an emoji to use as the icon for the bot's message. Ex :smile:
-Icon URL | Provide a url to an image to use as the icon for the bot's message.
-Mention | make it possible to include a mention in the Slack notification sent by Grafana. Ex @here or @channel
+Icon URL | Provide a URL to an image to use as the icon for the bot's message.
+Mention Users | Optionally mention one or more users in the Slack notification sent by Grafana. You have to refer to users, comma-separated, via their corresponding Slack IDs (which you can find by clicking the overflow button on each user's Slack profile).
+Mention Groups | Optionally mention one or more groups in the Slack notification sent by Grafana. You have to refer to groups, comma-separated, via their corresponding Slack IDs (which you can get from each group's Slack profile URL).
+Mention Channel | Optionally mention either all channel members or just active ones.
 Token | If provided, Grafana will upload the generated image via Slack's file.upload API method, not the external image destination.
 
 If you are using the token for a slack bot, then you have to invite the bot to the channel you want to send notifications and add the channel to the recipient field.
 
 ### PagerDuty
 
-To set up PagerDuty, all you have to do is to provide an API key.
+To set up PagerDuty, all you have to do is to provide an integration key.
 
 Setting | Description
 ---------- | -----------
 Integration Key | Integration key for PagerDuty.
+Severity | Level for dynamic notifications, default is `critical`
 Auto resolve incidents | Resolve incidents in PagerDuty once the alert goes back to ok
+
+**Note:** The tags `Severity`, `Class`, `Group`, and `Component` have special meaning in the [Pagerduty Common Event Format - PD-CEF](https://support.pagerduty.com/docs/pd-cef). If an alert panel defines these tag keys, then they are transposed to the root of the event sent to Pagerduty. This means they will be available within the Pagerduty UI and Filtering tools. A Severity tag set on an alert overrides the global Severity set on the notification channel if it's a valid level.
 
 ### Webhook
 
@@ -111,20 +121,26 @@ Example json body:
 
 ```json
 {
-  "title": "My alert",
-  "ruleId": 1,
-  "ruleName": "Load peaking!",
-  "ruleUrl": "http://url.to.grafana/db/dashboard/my_dashboard?panelId=2",
-  "state": "alerting",
-  "imageUrl": "http://s3.image.url",
-  "message": "Load is peaking. Make sure the traffic is real and spin up more webfronts",
-  "evalMatches": [
+  "dashboardId":1,
+  "evalMatches":[
     {
-      "metric": "requests",
-      "tags": {},
-      "value": 122
+      "value":1,
+      "metric":"Count",
+      "tags":{}
     }
-  ]
+  ],
+  "imageUrl":"https://grafana.com/assets/img/blog/mixed_styles.png",
+  "message":"Notification Message",
+  "orgId":1,
+  "panelId":2,
+  "ruleId":1,
+  "ruleName":"Panel Title alert",
+  "ruleUrl":"http://localhost:3000/d/hZ7BuVbWz/test-dashboard?fullscreen\u0026edit\u0026tab=alert\u0026panelId=2\u0026orgId=1",
+  "state":"alerting",
+  "tags":{
+    "tag name":"tag value"
+  },
+  "title":"[Alerting] Panel Title alert"
 }
 ```
 
@@ -165,6 +181,10 @@ Once these two properties are set, you can send the alerts to Kafka for further 
 
 Notifications can be sent by setting up an incoming webhook in Google Hangouts chat. Configuring such a webhook is described [here](https://developers.google.com/hangouts/chat/how-tos/webhooks).
 
+### Squadcast
+
+Squadcast helps you get alerted via Phone call, SMS, Email and Push notifications and lets you take actions on those alerts. Grafana notifications can be sent to Squadcast via a simple incoming webhook. Refer the official [Squadcast support documentation](https://support.squadcast.com/docs/grafana) for configuring these webhooks.
+
 ### All supported notifiers
 
 Name | Type | Supports images | Support alert rule tags
@@ -178,7 +198,7 @@ Kafka | `kafka` | yes, external only | no
 Line | `line` | yes, external only | no
 Microsoft Teams | `teams` | yes, external only | no
 OpsGenie | `opsgenie` | yes, external only | yes
-Pagerduty | `pagerduty` | yes, external only | no
+Pagerduty | `pagerduty` | yes, external only | yes
 Prometheus Alertmanager | `prometheus-alertmanager` | yes, external only | yes
 Pushover | `pushover` | yes | no
 Sensu | `sensu` | yes, external only | no
@@ -188,9 +208,10 @@ Threema | `threema` | yes, external only | no
 VictorOps | `victorops` | yes, external only | no
 Webhook | `webhook` | yes, external only | yes
 
-# Enable images in notifications {#external-image-store}
+## Enable images in notifications {#external-image-store}
 
-Grafana can render the panel associated with the alert rule as a PNG image and include that in the notification. Read more about the requirements and how to configure image rendering [here]({{< relref "../administration/image_rendering/" >}}).
+Grafana can render the panel associated with the alert rule as a PNG image and include that in the notification. Read more about the requirements and how to configure
+[image rendering]({{< relref "../administration/image_rendering/" >}}).
 
 Most Notification Channels require that this image be publicly accessible (Slack and PagerDuty for example). In order to include images in alert notifications, Grafana can upload the image to an image store. It currently supports
 Amazon S3, Webdav, Google Cloud Storage and Azure Blob Storage. So to set that up you need to configure the [external image uploader]({{< relref "../installation/configuration/#external-image-storage" >}}) in your grafana-server ini config file.
@@ -199,7 +220,7 @@ Be aware that some notifiers requires public access to the image to be able to i
 
 Notification services which need public image access are marked as 'external only'.
 
-# Use alert rule tags in notifications {#alert-rule-tags}
+## Use alert rule tags in notifications {#alert-rule-tags}
 
 > Only available in Grafana v6.3+.
 
@@ -209,7 +230,7 @@ It currently supports only the Prometheus Alertmanager notifier.
 
  This is an optional feature. You can get notifications without using alert rule tags.
 
-# Configure the link back to Grafana from alert notifications
+## Configure the link back to Grafana from alert notifications
 
 All alert notifications contain a link back to the triggered alert in the Grafana instance.
-This url is based on the [domain]({{< relref "../installation/configuration/#domain" >}}) setting in Grafana.
+This URL is based on the [domain]({{< relref "../installation/configuration/#domain" >}}) setting in Grafana.

@@ -2,12 +2,13 @@ import React, { PureComponent } from 'react';
 import classNames from 'classnames';
 import { SelectableValue } from '@grafana/data';
 import { css } from 'emotion';
-import { ButtonSelect } from '../Select/ButtonSelect';
+import { Icon } from '../Icon/Icon';
+import { ButtonSelect } from '../Forms/Legacy/Select/ButtonSelect';
 import memoizeOne from 'memoize-one';
 import { GrafanaTheme } from '@grafana/data';
 import { withTheme } from '../../themes';
 
-const defaultIntervals = ['5m', '15m', '30m', '1h'];
+export const defaultIntervals = ['5m', '15m', '30m', '1h'];
 
 const getStyles = memoizeOne((theme: GrafanaTheme) => {
   return {
@@ -44,9 +45,7 @@ export class RefreshPickerBase extends PureComponent<Props> {
 
   intervalsToOptions = (intervals: string[] | undefined): Array<SelectableValue<string>> => {
     const intervalsOrDefault = intervals || defaultIntervals;
-    const options = intervalsOrDefault
-      .filter(str => str !== '')
-      .map(interval => ({ label: interval, value: interval }));
+    const options = intervalsOrDefault.map(interval => ({ label: interval, value: interval }));
 
     if (this.props.hasLiveOption) {
       options.unshift(RefreshPicker.liveOption);
@@ -87,7 +86,7 @@ export class RefreshPickerBase extends PureComponent<Props> {
               className="btn btn--radius-right-0 navbar-button navbar-button--border-right-0"
               onClick={onRefresh!}
             >
-              <i className="fa fa-refresh" />
+              <Icon name="sync" size="lg" />
             </button>
           )}
           <ButtonSelect

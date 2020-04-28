@@ -1,12 +1,13 @@
 import _ from 'lodash';
-import angular, { ILocationService } from 'angular';
+import angular, { ILocationService, IScope } from 'angular';
 
-import locationUtil from 'app/core/utils/location_util';
 import { DashboardModel } from '../../state/DashboardModel';
-import { HistoryListOpts, RevisionsModel, CalculateDiffOptions, HistorySrv } from './HistorySrv';
-import { dateTime, toUtc, DateTimeInput, AppEvents } from '@grafana/data';
+import { CalculateDiffOptions, HistoryListOpts, HistorySrv, RevisionsModel } from './HistorySrv';
+import { AppEvents, DateTimeInput, locationUtil } from '@grafana/data';
 import { GrafanaRootScope } from 'app/routes/GrafanaCtrl';
 import { CoreEvents } from 'app/types';
+import { promiseToDigest } from '../../../../core/utils/promiseToDigest';
+import { appEvents } from 'app/core/app_events';
 
 export class HistoryListCtrl {
   appending: boolean;
@@ -30,7 +31,7 @@ export class HistoryListCtrl {
     private $rootScope: GrafanaRootScope,
     private $location: ILocationService,
     private historySrv: HistorySrv,
-    public $scope: any
+    public $scope: IScope
   ) {
     this.appending = false;
     this.diff = 'basic';
@@ -41,7 +42,7 @@ export class HistoryListCtrl {
     this.start = 0;
     this.canCompare = false;
 
-    this.$rootScope.onAppEvent(CoreEvents.dashboardSaved, this.onDashboardSaved.bind(this), $scope);
+    appEvents.on(CoreEvents.dashboardSaved, this.onDashboardSaved.bind(this), $scope);
     this.resetFromSource();
   }
 
@@ -75,9 +76,7 @@ export class HistoryListCtrl {
   }
 
   formatBasicDate(date: DateTimeInput) {
-    const now = this.dashboard.timezone === 'browser' ? dateTime() : toUtc();
-    const then = this.dashboard.timezone === 'browser' ? dateTime(date) : toUtc(date);
-    return then.from(now);
+    return this.dashboard.getRelativeTime(date);
   }
 
   getDiff(diff: 'basic' | 'json') {
@@ -108,18 +107,20 @@ export class HistoryListCtrl {
       diffType: diff,
     };
 
-    return this.historySrv
-      .calculateDiff(options)
-      .then((response: any) => {
-        // @ts-ignore
-        this.delta[this.diff] = response;
-      })
-      .catch(() => {
-        this.mode = 'list';
-      })
-      .finally(() => {
-        this.loading = false;
-      });
+    return promiseToDigest(this.$scope)(
+      this.historySrv
+        .calculateDiff(options)
+        .then((response: any) => {
+          // @ts-ignore
+          this.delta[this.diff] = response;
+        })
+        .catch(() => {
+          this.mode = 'list';
+        })
+        .finally(() => {
+          this.loading = false;
+        })
+    );
   }
 
   getLog(append = false) {
@@ -130,25 +131,27 @@ export class HistoryListCtrl {
       start: this.start,
     };
 
-    return this.historySrv
-      .getHistoryList(this.dashboard, options)
-      .then((revisions: any) => {
-        // set formatted dates & default values
-        for (const rev of revisions) {
-          rev.createdDateString = this.formatDate(rev.created);
-          rev.ageString = this.formatBasicDate(rev.created);
-          rev.checked = false;
-        }
+    return promiseToDigest(this.$scope)(
+      this.historySrv
+        .getHistoryList(this.dashboard, options)
+        .then((revisions: any) => {
+          // set formatted dates & default values
+          for (const rev of revisions) {
+            rev.createdDateString = this.formatDate(rev.created);
+            rev.ageString = this.formatBasicDate(rev.created);
+            rev.checked = false;
+          }
 
-        this.revisions = append ? this.revisions.concat(revisions) : revisions;
-      })
-      .catch((err: any) => {
-        this.loading = false;
-      })
-      .finally(() => {
-        this.loading = false;
-        this.appending = false;
-      });
+          this.revisions = append ? this.revisions.concat(revisions) : revisions;
+        })
+        .catch((err: any) => {
+          this.loading = false;
+        })
+        .finally(() => {
+          this.loading = false;
+          this.appending = false;
+        })
+    );
   }
 
   isLastPage() {
@@ -183,17 +186,19 @@ export class HistoryListCtrl {
 
   restoreConfirm(version: number) {
     this.loading = true;
-    return this.historySrv
-      .restoreDashboard(this.dashboard, version)
-      .then((response: any) => {
-        this.$location.url(locationUtil.stripBaseFromUrl(response.url)).replace();
-        this.$route.reload();
-        this.$rootScope.appEvent(AppEvents.alertSuccess, ['Dashboard restored', 'Restored from version ' + version]);
-      })
-      .catch(() => {
-        this.mode = 'list';
-        this.loading = false;
-      });
+    return promiseToDigest(this.$scope)(
+      this.historySrv
+        .restoreDashboard(this.dashboard, version)
+        .then((response: any) => {
+          this.$location.url(locationUtil.stripBaseFromUrl(response.url)).replace();
+          this.$route.reload();
+          this.$rootScope.appEvent(AppEvents.alertSuccess, ['Dashboard restored', 'Restored from version ' + version]);
+        })
+        .catch(() => {
+          this.mode = 'list';
+          this.loading = false;
+        })
+    );
   }
 }
 

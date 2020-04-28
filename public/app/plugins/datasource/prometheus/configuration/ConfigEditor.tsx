@@ -12,6 +12,7 @@ export const ConfigEditor = (props: Props) => {
       <DataSourceHttpSettings
         defaultUrl="http://localhost:9090"
         dataSourceConfig={options}
+        showAccessOptions={true}
         onChange={onOptionsChange}
       />
 

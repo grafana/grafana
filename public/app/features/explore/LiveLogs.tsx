@@ -2,8 +2,8 @@ import React, { PureComponent } from 'react';
 import { css, cx } from 'emotion';
 import tinycolor from 'tinycolor2';
 
-import { Themeable, withTheme, getLogRowStyles } from '@grafana/ui';
-import { GrafanaTheme, LogRowModel, TimeZone } from '@grafana/data';
+import { Themeable, withTheme, getLogRowStyles, Icon } from '@grafana/ui';
+import { GrafanaTheme, LogRowModel, TimeZone, dateTimeFormat } from '@grafana/data';
 
 import ElapsedTime from './ElapsedTime';
 
@@ -23,13 +23,13 @@ const getStyles = (theme: GrafanaTheme) => ({
   logsRowFade: css`
     label: logs-row-fresh;
     color: ${theme.colors.text};
-    background-color: ${tinycolor(theme.colors.blueLight)
+    background-color: ${tinycolor(theme.palette.blue95)
       .setAlpha(0.25)
       .toString()};
     animation: fade 1s ease-out 1s 1 normal forwards;
     @keyframes fade {
       from {
-        background-color: ${tinycolor(theme.colors.blueLight)
+        background-color: ${tinycolor(theme.palette.blue95)
           .setAlpha(0.25)
           .toString()};
       }
@@ -46,6 +46,9 @@ const getStyles = (theme: GrafanaTheme) => ({
   `,
   button: css`
     margin-right: ${theme.spacing.sm};
+  `,
+  fullWidth: css`
+    width: 100%;
   `,
 });
 
@@ -64,7 +67,7 @@ interface State {
 
 class LiveLogs extends PureComponent<Props, State> {
   private liveEndDiv: HTMLDivElement | null = null;
-  private scrollContainerRef = React.createRef<HTMLDivElement>();
+  private scrollContainerRef = React.createRef<HTMLTableSectionElement>();
   private lastScrollPos: number | null = null;
 
   constructor(props: Props) {
@@ -134,52 +137,44 @@ class LiveLogs extends PureComponent<Props, State> {
   render() {
     const { theme, timeZone, onPause, onResume, isPaused } = this.props;
     const styles = getStyles(theme);
-    const showUtc = timeZone === 'utc';
     const { logsRow, logsRowLocalTime, logsRowMessage } = getLogRowStyles(theme);
 
     return (
       <div>
-        <div
-          onScroll={isPaused ? undefined : this.onScroll}
-          className={cx(['logs-rows', styles.logsRowsLive])}
-          ref={this.scrollContainerRef}
-        >
-          {this.rowsToRender().map((row: LogRowModel) => {
-            return (
-              <div className={cx(logsRow, styles.logsRowFade)} key={row.uid}>
-                {showUtc && (
-                  <div className={cx(logsRowLocalTime)} title={`Local: ${row.timeLocal} (${row.timeFromNow})`}>
-                    {row.timeUtc}
-                  </div>
-                )}
-                {!showUtc && (
-                  <div className={cx(logsRowLocalTime)} title={`${row.timeUtc} (${row.timeFromNow})`}>
-                    {row.timeLocal}
-                  </div>
-                )}
-                <div className={cx(logsRowMessage)}>{row.entry}</div>
-              </div>
-            );
-          })}
-          <div
-            ref={element => {
-              this.liveEndDiv = element;
-              // This is triggered on every update so on every new row. It keeps the view scrolled at the bottom by
-              // default.
-              if (this.liveEndDiv && !isPaused) {
-                this.liveEndDiv.scrollIntoView(false);
-              }
-            }}
-          />
-        </div>
+        <table className={styles.fullWidth}>
+          <tbody
+            onScroll={isPaused ? undefined : this.onScroll}
+            className={cx(['logs-rows', styles.logsRowsLive])}
+            ref={this.scrollContainerRef}
+          >
+            {this.rowsToRender().map((row: LogRowModel) => {
+              return (
+                <tr className={cx(logsRow, styles.logsRowFade)} key={row.uid}>
+                  <td className={cx(logsRowLocalTime)}>{dateTimeFormat(row.timeEpochMs, { timeZone })}</td>
+                  <td className={cx(logsRowMessage)}>{row.entry}</td>
+                </tr>
+              );
+            })}
+            <tr
+              ref={element => {
+                this.liveEndDiv = element;
+                // This is triggered on every update so on every new row. It keeps the view scrolled at the bottom by
+                // default.
+                if (this.liveEndDiv && !isPaused) {
+                  this.liveEndDiv.scrollIntoView(false);
+                }
+              }}
+            />
+          </tbody>
+        </table>
         <div className={cx([styles.logsRowsIndicator])}>
           <button onClick={isPaused ? onResume : onPause} className={cx('btn btn-secondary', styles.button)}>
-            <i className={cx('fa', isPaused ? 'fa-play' : 'fa-pause')} />
+            <Icon name={isPaused ? 'play' : 'pause'} />
             &nbsp;
             {isPaused ? 'Resume' : 'Pause'}
           </button>
           <button onClick={this.props.stopLive} className={cx('btn btn-inverse', styles.button)}>
-            <i className={'fa fa-stop'} />
+            <Icon name="square-shape" size="lg" type="mono" />
             &nbsp; Exit live mode
           </button>
           {isPaused || (

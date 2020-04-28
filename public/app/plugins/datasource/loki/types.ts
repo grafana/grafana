@@ -1,15 +1,4 @@
-import { Labels, DataQuery, DataSourceJsonData } from '@grafana/data';
-
-export interface LokiLegacyQueryRequest {
-  query: string;
-  limit?: number;
-  start?: number;
-  end?: number;
-  direction?: 'BACKWARD' | 'FORWARD';
-  regexp?: string;
-
-  refId: string;
-}
+import { DataQuery, DataSourceJsonData } from '@grafana/data';
 
 export interface LokiInstantQueryRequest {
   query: string;
@@ -42,6 +31,7 @@ export interface LokiQuery extends DataQuery {
   reverse?: boolean;
   legendFormat?: string;
   valueWithRefId?: boolean;
+  maxLines?: number;
 }
 
 export interface LokiOptions extends DataSourceJsonData {
@@ -88,18 +78,6 @@ export interface LokiStreamResponse {
   };
 }
 
-export interface LokiLegacyStreamResult {
-  labels: string;
-  entries: LokiLogsStreamEntry[];
-  search?: string;
-  parsedLabels?: Labels;
-  uniqueLabels?: Labels;
-}
-
-export interface LokiLegacyStreamResponse {
-  streams: LokiLegacyStreamResult[];
-}
-
 export interface LokiTailResponse {
   streams: LokiStreamResult[];
   dropped_entries?: Array<{
@@ -108,14 +86,12 @@ export interface LokiTailResponse {
   }>;
 }
 
-export type LokiResult = LokiVectorResult | LokiMatrixResult | LokiStreamResult | LokiLegacyStreamResult;
+export type LokiResult = LokiVectorResult | LokiMatrixResult | LokiStreamResult;
 export type LokiResponse = LokiVectorResponse | LokiMatrixResponse | LokiStreamResponse;
 
 export interface LokiLogsStreamEntry {
   line: string;
   ts: string;
-  // Legacy, was renamed to ts
-  timestamp?: string;
 }
 
 export interface LokiExpression {
@@ -127,6 +103,7 @@ export type DerivedFieldConfig = {
   matcherRegex: string;
   name: string;
   url?: string;
+  datasourceUid?: string;
 };
 
 export interface TransformerOptions {

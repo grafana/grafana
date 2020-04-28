@@ -16,7 +16,7 @@ const getStyles = memoizeOne(() => {
       position: absolute;
       opacity: 0;
       height: auto;
-      width: auto;
+      width: 100%;
     `,
     logsEnterActive: css`
       label: logsEnterActive;
@@ -28,7 +28,7 @@ const getStyles = memoizeOne(() => {
       position: absolute;
       opacity: 1;
       height: auto;
-      width: auto;
+      width: 100%;
     `,
     logsExitActive: css`
       label: logsExitActive;

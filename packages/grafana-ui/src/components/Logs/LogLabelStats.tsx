@@ -15,18 +15,18 @@ const STATS_ROW_LIMIT = 5;
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
   const borderColor = selectThemeVariant(
     {
-      light: theme.colors.gray5,
-      dark: theme.colors.dark9,
+      light: theme.palette.gray5,
+      dark: theme.palette.dark9,
     },
     theme.type
   );
   return {
     logsStats: css`
       label: logs-stats;
-      display: table-cell;
       column-span: 2;
       background: inherit;
       color: ${theme.colors.text};
+      word-break: break-all;
     `,
     logsStatsHeader: css`
       label: logs-stats__header;
@@ -82,7 +82,7 @@ class UnThemedLogLabelStats extends PureComponent<Props> {
     const otherProportion = otherCount / total;
 
     return (
-      <div className={style.logsStats}>
+      <td className={style.logsStats}>
         <div className={style.logsStatsHeader}>
           <div className={style.logsStatsTitle}>
             {label}: {total} of {rowCount} rows have that {isLabel ? 'label' : 'field'}
@@ -97,7 +97,7 @@ class UnThemedLogLabelStats extends PureComponent<Props> {
             <LogLabelStatsRow key="__OTHERS__" count={otherCount} value="Other" proportion={otherProportion} />
           )}
         </div>
-      </div>
+      </td>
     );
   }
 }

@@ -16,7 +16,7 @@
       "large": "img/logo.jpg"
     },
     "links": [
-      { "name": "Project site", "url": "https://github.com/grafana/azure-monitor-datasource" },
+      { "name": "Learn more", "url": "https://github.com/grafana/azure-monitor-datasource" },
       { "name": "Apache License", "url": "https://github.com/grafana/azure-monitor-datasource/blob/master/LICENSE" }
     ],
     "screenshots": [
@@ -99,6 +99,15 @@
       ]
     },
     {
+      "path": "chinaappinsights",
+      "method": "GET",
+      "url": "https://api.applicationinsights.azure.cn",
+      "headers": [
+        { "name": "X-API-Key", "content": "{{.SecureJsonData.appInsightsApiKey}}" },
+        { "name": "x-ms-app", "content": "Grafana" }
+      ]
+    },
+    {
       "path": "workspacesloganalytics",
       "method": "GET",
       "url": "https://management.azure.com",
@@ -109,6 +118,36 @@
           "client_id": "{{.JsonData.logAnalyticsClientId}}",
           "client_secret": "{{.SecureJsonData.logAnalyticsClientSecret}}",
           "resource": "https://management.azure.com/"
+        }
+      },
+      "headers": [{ "name": "x-ms-app", "content": "Grafana" }]
+    },
+    {
+      "path": "chinaworkspacesloganalytics",
+      "method": "GET",
+      "url": "https://management.chinacloudapi.cn",
+      "tokenAuth": {
+        "url": "https://login.chinacloudapi.cn/{{.JsonData.logAnalyticsTenantId}}/oauth2/token",
+        "params": {
+          "grant_type": "client_credentials",
+          "client_id": "{{.JsonData.logAnalyticsClientId}}",
+          "client_secret": "{{.SecureJsonData.logAnalyticsClientSecret}}",
+          "resource": "https://management.chinacloudapi.cn/"
+        }
+      },
+      "headers": [{ "name": "x-ms-app", "content": "Grafana" }]
+    },
+    {
+      "path": "govworkspacesloganalytics",
+      "method": "GET",
+      "url": "https://management.usgovcloudapi.net",
+      "tokenAuth": {
+        "url": "https://login.microsoftonline.us/{{.JsonData.logAnalyticsTenantId}}/oauth2/token",
+        "params": {
+          "grant_type": "client_credentials",
+          "client_id": "{{.JsonData.logAnalyticsClientId}}",
+          "client_secret": "{{.SecureJsonData.logAnalyticsClientSecret}}",
+          "resource": "https://management.usgovcloudapi.net/"
         }
       },
       "headers": [{ "name": "x-ms-app", "content": "Grafana" }]
@@ -128,27 +167,43 @@
       },
       "headers": [
         { "name": "x-ms-app", "content": "Grafana" },
-        { "name": "Cache-Control", "content": "public, max-age=60" },
-        { "name": "Accept-Encoding", "content": "gzip" }
+        { "name": "Cache-Control", "content": "public, max-age=60" }
       ]
     },
     {
-      "path": "sameasloganalyticsazure",
+      "path": "chinaloganalyticsazure",
       "method": "GET",
-      "url": "https://api.loganalytics.io/v1/workspaces",
+      "url": "https://api.loganalytics.azure.cn/v1/workspaces",
       "tokenAuth": {
-        "url": "https://login.microsoftonline.com/{{.JsonData.tenantId}}/oauth2/token",
+        "url": "https://login.chinacloudapi.cn/{{.JsonData.logAnalyticsTenantId}}/oauth2/token",
         "params": {
           "grant_type": "client_credentials",
-          "client_id": "{{.JsonData.clientId}}",
-          "client_secret": "{{.SecureJsonData.clientSecret}}",
-          "resource": "https://api.loganalytics.io"
+          "client_id": "{{.JsonData.logAnalyticsClientId}}",
+          "client_secret": "{{.SecureJsonData.logAnalyticsClientSecret}}",
+          "resource": "https://api.loganalytics.azure.cn"
         }
       },
       "headers": [
         { "name": "x-ms-app", "content": "Grafana" },
-        { "name": "Cache-Control", "content": "public, max-age=60" },
-        { "name": "Accept-Encoding", "content": "gzip" }
+        { "name": "Cache-Control", "content": "public, max-age=60" }
+      ]
+    },
+    {
+      "path": "govloganalyticsazure",
+      "method": "GET",
+      "url": "https://api.loganalytics.us/v1/workspaces",
+      "tokenAuth": {
+        "url": "https://login.microsoftonline.us/{{.JsonData.logAnalyticsTenantId}}/oauth2/token",
+        "params": {
+          "grant_type": "client_credentials",
+          "client_id": "{{.JsonData.logAnalyticsClientId}}",
+          "client_secret": "{{.SecureJsonData.logAnalyticsClientSecret}}",
+          "resource": "https://api.loganalytics.us"
+        }
+      },
+      "headers": [
+        { "name": "x-ms-app", "content": "Grafana" },
+        { "name": "Cache-Control", "content": "public, max-age=60" }
       ]
     }
   ],

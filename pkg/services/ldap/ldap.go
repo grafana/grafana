@@ -373,13 +373,19 @@ func (server *Server) getSearchRequest(
 
 	filter := fmt.Sprintf("(|%s)", search)
 
-	return &ldap.SearchRequest{
+	searchRequest := &ldap.SearchRequest{
 		BaseDN:       base,
 		Scope:        ldap.ScopeWholeSubtree,
 		DerefAliases: ldap.NeverDerefAliases,
 		Attributes:   attributes,
 		Filter:       filter,
 	}
+
+	server.log.Debug(
+		"LDAP SearchRequest", "searchRequest", fmt.Sprintf("%+v\n", searchRequest),
+	)
+
+	return searchRequest
 }
 
 // buildGrafanaUser extracts info from UserInfo model to ExternalUserInfo
@@ -477,8 +483,15 @@ func (server *Server) userBind(path, password string) error {
 func (server *Server) requestMemberOf(entry *ldap.Entry) ([]string, error) {
 	var memberOf []string
 	var config = server.Config
+	var searchBaseDNs []string
 
-	for _, groupSearchBase := range config.GroupSearchBaseDNs {
+	if len(config.GroupSearchBaseDNs) > 0 {
+		searchBaseDNs = config.GroupSearchBaseDNs
+	} else {
+		searchBaseDNs = config.SearchBaseDNs
+	}
+
+	for _, groupSearchBase := range searchBaseDNs {
 		var filterReplace string
 		if config.GroupSearchFilterUserAttribute == "" {
 			filterReplace = getAttribute(config.Attr.Username, entry)

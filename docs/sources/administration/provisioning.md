@@ -3,7 +3,7 @@ title = "Provisioning"
 description = ""
 keywords = ["grafana", "provisioning"]
 type = "docs"
-aliases = ["/installation/provisioning"]
+aliases = ["/docs/grafana/latest/installation/provisioning"]
 [menu.docs]
 parent = "admin"
 weight = 8
@@ -93,6 +93,8 @@ datasources:
   access: proxy
   # <int> org id. will default to orgId 1 if not specified
   orgId: 1
+  # <string> custom UID which can be used to reference this datasource in other parts of the configuration, if not specified will be generated automatically
+  uid: my_unique_uid
   # <string> url
   url: http://localhost:8080
   # <string> Deprecated, use secureJsonData.password
@@ -160,6 +162,9 @@ Since not all datasources have the same configuration settings we only have the 
 | tsdbVersion | string | OpenTSDB | Version |
 | tsdbResolution | string | OpenTSDB | Resolution |
 | sslmode | string | PostgreSQL | SSLmode. 'disable', 'require', 'verify-ca' or 'verify-full' |
+| sslRootCertFile | string | PostgreSQL | SSL server root certificate file, must be readable by the Grafana user |
+| sslCertFile | string | PostgreSQL | SSL client certificate file, must be readable by the Grafana user |
+| sslKeyFile | string | PostgreSQL | SSL client key file, must be readable by *only* the Grafana user |
 | encrypt | string | MSSQL | Connection SSL encryption handling. 'disable', 'false' or 'true' |
 | postgresVersion | number | PostgreSQL | Postgres version as a number (903/904/905/906/1000) meaning v9.3, v9.4, ..., v10 |
 | timescaledb | boolean | PostgreSQL | Enable usage of TimescaleDB extension |
@@ -203,7 +208,7 @@ datasources:
 
 ### Dashboards
 
-It's possible to manage dashboards in Grafana by adding one or more yaml config files in the [`provisioning/dashboards`](/installation/configuration/#provisioning) directory. Each config file can contain a list of `dashboards providers` that will load dashboards into Grafana from the local filesystem.
+It's possible to manage dashboards in Grafana by adding one or more yaml config files in the [`provisioning/dashboards`]({{< relref "../installation/configuration.md" >}}) directory. Each config file can contain a list of `dashboards providers` that will load dashboards into Grafana from the local filesystem.
 
 The dashboard provider config file looks somewhat like this:
 
@@ -240,9 +245,9 @@ When Grafana starts, it will update/insert all dashboards available in the confi
 It's possible to make changes to a provisioned dashboard in the Grafana UI. However, it is not possible to automatically save the changes back to the provisioning source.
 If `allowUiUpdates` is set to `true` and you make changes to a provisioned dashboard, you can `Save` the dashboard then changes will be persisted to the Grafana database.
 
-> **Note.** 
+> **Note:**
 > If a provisioned dashboard is saved from the UI and then later updated from the source, the dashboard stored in the database will always be overwritten. The `version` property in the JSON file will not affect this, even if it is lower than the existing dashboard.
-> 
+>
 > If a provisioned dashboard is saved from the UI and the source is removed, the dashboard stored in the database will be deleted unless the configuration option `disableDeletion` is set to true.
 
 If `allowUiUpdates` is configured to `false`, you are not able to make changes to a provisioned dashboard. When you click `Save`, Grafana brings up a *Cannot save provisioned dashboard* dialog. The screenshot below illustrates this behavior.
@@ -250,12 +255,12 @@ If `allowUiUpdates` is configured to `false`, you are not able to make changes t
 Grafana offers options to export the JSON definition of a dashboard. Either `Copy JSON to Clipboard` or `Save JSON to file` can help you synchronize your dashboard changes back to the provisioning source.
 
 Note: The JSON definition in the input field when using `Copy JSON to Clipboard` or `Save JSON to file` will have the `id` field automatically removed to aid the provisioning workflow.
-                                                                                                                                                                 
+
 {{< docs-imagebox img="/img/docs/v51/provisioning_cannot_save_dashboard.png" max-width="500px" class="docs-image--no-shadow" >}}
 
-### Reusable Dashboard Urls
+### Reusable Dashboard URLs
 
-If the dashboard in the json file contains an [uid](/reference/dashboard/#json-fields), Grafana will force insert/update on that uid. This allows you to migrate dashboards betweens Grafana instances and provisioning Grafana from configuration without breaking the urls given since the new dashboard url uses the uid as identifier.
+If the dashboard in the json file contains an [uid](/reference/dashboard/#json-fields), Grafana will force insert/update on that uid. This allows you to migrate dashboards betweens Grafana instances and provisioning Grafana from configuration without breaking the URLs given since the new dashboard URL uses the uid as identifier.
 When Grafana starts, it will update/insert all dashboards available in the configured folders. If you modify the file, the dashboard will also be updated.
 By default Grafana will delete dashboards in the database if the file is removed. You can disable this behavior using the `disableDeletion` setting.
 
@@ -270,7 +275,7 @@ Alert Notification Channels can be provisioned by adding one or more yaml config
 
 Each config file can contain the following top-level fields:
 - `notifiers`, a list of alert notifications that will be added or updated during start up. If the notification channel already exists, Grafana will update it to match the configuration file.
-- `delete_notifiers`, a list of alert notifications to be deleted before before inserting/updating those in the `notifiers` list.
+- `delete_notifiers`, a list of alert notifications to be deleted before inserting/updating those in the `notifiers` list.
 
 Provisioning looks up alert notifications by uid, and will update any existing notification with the provided uid.
 
@@ -348,10 +353,12 @@ The following sections detail the supported settings for each alert notification
 | url |
 | recipient |
 | username |
-| iconEmoji |
-| iconUrl |
+| icon_emoji |
+| icon_url |
 | uploadImage |
-| mention |
+| mentionUsers |
+| mentionGroups |
+| mentionChannel |
 | token |
 
 #### Alert notification `victorops`
@@ -396,6 +403,8 @@ The following sections detail the supported settings for each alert notification
 | Name |
 | ---- |
 | url |
+| basicAuthUser |
+| basicAuthPassword |
 
 #### Alert notification `teams`
 
@@ -413,6 +422,7 @@ The following sections detail the supported settings for each alert notification
 
 | Name |
 | ---- |
+| singleEmail |
 | addresses |
 
 #### Alert notification `hipchat`
@@ -430,6 +440,7 @@ The following sections detail the supported settings for each alert notification
 | apiKey |
 | apiUrl |
 | autoClose |
+| overridePriority |
 
 #### Alert notification `telegram`
 
@@ -437,6 +448,7 @@ The following sections detail the supported settings for each alert notification
 | ---- |
 | bottoken |
 | chatid |
+| uploadImage |
 
 #### Alert notification `threema`
 
@@ -459,4 +471,3 @@ The following sections detail the supported settings for each alert notification
 | Name |
 | ---- |
 | url |
-

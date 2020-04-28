@@ -1,6 +1,7 @@
 import React, { SyntheticEvent } from 'react';
-import { EventsWithValidation, FormField, FormLabel, Input, regexValidation, Select } from '@grafana/ui';
-import { DataSourceSettings } from '@grafana/data';
+import { EventsWithValidation, InlineFormLabel, regexValidation, LegacyForms } from '@grafana/ui';
+const { Select, Input, FormField } = LegacyForms;
+import { DataSourceSettings, SelectableValue } from '@grafana/data';
 import { PromOptions } from '../types';
 
 const httpOptions = [
@@ -24,25 +25,17 @@ export const PromSettings = (props: Props) => {
             <FormField
               label="Scrape interval"
               labelWidth={13}
-              placeholder="15s"
               inputEl={
                 <Input
                   className="width-6"
                   value={value.jsonData.timeInterval}
                   spellCheck={false}
+                  placeholder="15s"
                   onChange={onChangeHandler('timeInterval', value, onChange)}
-                  validationEvents={{
-                    [EventsWithValidation.onBlur]: [
-                      regexValidation(
-                        /^\d+(ms|[Mwdhmsy])$/,
-                        'Value is not valid, you can use number with time unit specifier: y, M, w, d, h, m, s'
-                      ),
-                    ],
-                  }}
+                  validationEvents={promSettingsValidationEvents}
                 />
               }
-              tooltip="Set this to your global scrape interval defined in your Prometheus config file. This will be used as a lower limit for the
-        Prometheus step query parameter."
+              tooltip="Set this to the typical scrape and evaluation interval configured in Prometheus. Defaults to 15s."
             />
           </div>
         </div>
@@ -58,14 +51,7 @@ export const PromSettings = (props: Props) => {
                   onChange={onChangeHandler('queryTimeout', value, onChange)}
                   spellCheck={false}
                   placeholder="60s"
-                  validationEvents={{
-                    [EventsWithValidation.onBlur]: [
-                      regexValidation(
-                        /^\d+(ms|[Mwdhmsy])$/,
-                        'Value is not valid, you can use number with time unit specifier: y, M, w, d, h, m, s'
-                      ),
-                    ],
-                  }}
+                  validationEvents={promSettingsValidationEvents}
                 />
               }
               tooltip="Set the Prometheus query timeout."
@@ -73,12 +59,12 @@ export const PromSettings = (props: Props) => {
           </div>
         </div>
         <div className="gf-form">
-          <FormLabel
+          <InlineFormLabel
             width={13}
             tooltip="Specify the HTTP Method to query Prometheus. (POST is only available in Prometheus >= v2.1.0)"
           >
             HTTP Method
-          </FormLabel>
+          </InlineFormLabel>
           <Select
             options={httpOptions}
             value={httpOptions.find(o => o.value === value.jsonData.httpMethod)}
@@ -112,14 +98,35 @@ export const PromSettings = (props: Props) => {
   );
 };
 
+export const promSettingsValidationEvents = {
+  [EventsWithValidation.onBlur]: [
+    regexValidation(
+      /^$|^\d+(ms|[Mwdhmsy])$/,
+      'Value is not valid, you can use number with time unit specifier: y, M, w, d, h, m, s'
+    ),
+  ],
+};
+
+export const getValueFromEventItem = (eventItem: SyntheticEvent<HTMLInputElement> | SelectableValue<string>) => {
+  if (!eventItem) {
+    return '';
+  }
+
+  if (eventItem.hasOwnProperty('currentTarget')) {
+    return eventItem.currentTarget.value;
+  }
+
+  return (eventItem as SelectableValue<string>).value;
+};
+
 const onChangeHandler = (key: keyof PromOptions, value: Props['value'], onChange: Props['onChange']) => (
-  event: SyntheticEvent<HTMLInputElement | HTMLSelectElement>
+  eventItem: SyntheticEvent<HTMLInputElement> | SelectableValue<string>
 ) => {
   onChange({
     ...value,
     jsonData: {
       ...value.jsonData,
-      [key]: event.currentTarget.value,
+      [key]: getValueFromEventItem(eventItem),
     },
   });
 };

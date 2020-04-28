@@ -1,14 +1,17 @@
 import { LinkSrv } from '../link_srv';
-import { DataLinkBuiltInVars } from '@grafana/ui';
-import _ from 'lodash';
+import { DataLinkBuiltInVars, locationUtil, VariableModel } from '@grafana/data';
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { advanceTo } from 'jest-date-mock';
+import { updateConfig } from '../../../../core/config';
+import { variableAdapters } from '../../../variables/adapters';
+import { createQueryVariableAdapter } from '../../../variables/query/adapter';
 
-jest.mock('angular', () => {
-  const AngularJSMock = require('test/mocks/angular');
-  return new AngularJSMock();
-});
+jest.mock('app/core/core', () => ({
+  appEvents: {
+    on: () => {},
+  },
+}));
 
 const dataPointMock = {
   seriesName: 'A-series',
@@ -45,28 +48,47 @@ describe('linkSrv', () => {
     timeSrv.setTime({ from: 'now-1h', to: 'now' });
     _dashboard.refresh = false;
 
-    const _templateSrv = new TemplateSrv();
-    _templateSrv.init([
+    const variablesMock = [
       {
         type: 'query',
         name: 'test1',
+        label: 'Test1',
+        hide: false,
         current: { value: 'val1' },
+        skipUrlSync: false,
         getValueForUrl: function() {
-          return this.current.value;
+          return 'val1';
         },
-      },
+      } as VariableModel,
       {
         type: 'query',
         name: 'test2',
+        label: 'Test2',
+        hide: false,
         current: { value: 'val2' },
+        skipUrlSync: false,
         getValueForUrl: function() {
-          return this.current.value;
+          return 'val2';
         },
+      } as VariableModel,
+    ];
+    const _templateSrv = new TemplateSrv({
+      // @ts-ignore
+      getVariables: () => {
+        return variablesMock;
       },
-    ]);
+      // @ts-ignore
+      getVariableWithName: (name: string) => {
+        return variablesMock.filter(v => v.name === name)[0];
+      },
+    });
 
     linkSrv = new LinkSrv(_templateSrv, timeSrv);
   }
+
+  beforeAll(() => {
+    variableAdapters.register(createQueryVariableAdapter());
+  });
 
   beforeEach(() => {
     initLinkSrv();
@@ -136,5 +158,112 @@ describe('linkSrv', () => {
         ).href
       ).toEqual('/d/1?time=1000000001');
     });
+    it('should not trim white space from data links', () => {
+      expect(
+        linkSrv.getDataLinkUIModel(
+          {
+            title: 'White space',
+            url: 'www.google.com?query=some query',
+          },
+          {
+            __value: {
+              value: { time: dataPointMock.datapoint[0] },
+              text: 'Value',
+            },
+          },
+          {}
+        ).href
+      ).toEqual('www.google.com?query=some query');
+    });
+    it('should remove new lines from data link', () => {
+      expect(
+        linkSrv.getDataLinkUIModel(
+          {
+            title: 'New line',
+            url: 'www.google.com?query=some\nquery',
+          },
+          {
+            __value: {
+              value: { time: dataPointMock.datapoint[0] },
+              text: 'Value',
+            },
+          },
+          {}
+        ).href
+      ).toEqual('www.google.com?query=somequery');
+    });
+  });
+
+  describe('sanitization', () => {
+    const url = "javascript:alert('broken!);";
+    it.each`
+      disableSanitizeHtml | expected
+      ${true}             | ${url}
+      ${false}            | ${'about:blank'}
+    `(
+      "when disable disableSanitizeHtml set to '$disableSanitizeHtml' then result should be '$expected'",
+      ({ disableSanitizeHtml, expected }) => {
+        updateConfig({
+          disableSanitizeHtml,
+        });
+
+        const link = linkSrv.getDataLinkUIModel(
+          {
+            title: 'Any title',
+            url,
+          },
+          {
+            __value: {
+              value: { time: dataPointMock.datapoint[0] },
+              text: 'Value',
+            },
+          },
+          {}
+        ).href;
+
+        expect(link).toBe(expected);
+      }
+    );
+  });
+
+  describe('Building links with root_url set', () => {
+    it.each`
+      url                 | appSubUrl     | expected
+      ${'/d/XXX'}         | ${'/grafana'} | ${'/grafana/d/XXX'}
+      ${'/grafana/d/XXX'} | ${'/grafana'} | ${'/grafana/d/XXX'}
+      ${'d/whatever'}     | ${'/grafana'} | ${'d/whatever'}
+      ${'/d/XXX'}         | ${''}         | ${'/d/XXX'}
+      ${'/grafana/d/XXX'} | ${''}         | ${'/grafana/d/XXX'}
+      ${'d/whatever'}     | ${''}         | ${'d/whatever'}
+    `(
+      "when link '$url' and config.appSubUrl set to '$appSubUrl' then result should be '$expected'",
+      ({ url, appSubUrl, expected }) => {
+        locationUtil.initialize({
+          getConfig: () => {
+            return { appSubUrl } as any;
+          },
+          // @ts-ignore
+          buildParamsFromVariables: () => {},
+          // @ts-ignore
+          getTimeRangeForUrl: () => {},
+        });
+
+        const link = linkSrv.getDataLinkUIModel(
+          {
+            title: 'Any title',
+            url,
+          },
+          {
+            __value: {
+              value: { time: dataPointMock.datapoint[0] },
+              text: 'Value',
+            },
+          },
+          {}
+        ).href;
+
+        expect(link).toBe(expected);
+      }
+    );
   });
 });

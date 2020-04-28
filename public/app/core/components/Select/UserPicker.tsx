@@ -3,11 +3,12 @@ import React, { Component } from 'react';
 import _ from 'lodash';
 
 // Components
-import { AsyncSelect } from '@grafana/ui';
+import { LegacyForms } from '@grafana/ui';
+const { AsyncSelect } = LegacyForms;
 
 // Utils & Services
 import { debounce } from 'lodash';
-import { getBackendSrv } from 'app/core/services/backend_srv';
+import { getBackendSrv } from '@grafana/runtime';
 
 // Types
 import { User } from 'app/types';
@@ -36,14 +37,13 @@ export class UserPicker extends Component<Props, State> {
   }
 
   search(query?: string) {
-    const backendSrv = getBackendSrv();
     this.setState({ isLoading: true });
 
     if (_.isNil(query)) {
       query = '';
     }
 
-    return backendSrv
+    return getBackendSrv()
       .get(`/api/org/users/lookup?query=${query}&limit=10`)
       .then((result: any) => {
         return result.map((user: any) => ({

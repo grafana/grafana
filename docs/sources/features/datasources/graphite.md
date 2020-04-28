@@ -3,7 +3,7 @@ title = "Using Graphite in Grafana"
 description = "Guide for using graphite in Grafana"
 keywords = ["grafana", "graphite", "guide"]
 type = "docs"
-aliases = ["/datasources/graphite"]
+aliases = ["/docs/grafana/latest/datasources/graphite"]
 [menu.docs]
 name = "Graphite"
 identifier = "graphite"
@@ -47,7 +47,7 @@ All requests will be made from the browser directly to the data source and may b
 
 ### Navigate metric segments
 
-Click the ``Select metric`` link to start navigating the metric space. One you start you can continue using the mouse
+Click the ``Select metric`` link to start navigating the metric space. Once you start you can continue using the mouse
 or keyboard arrow keys. You can select a wildcard and still continue.
 
 {{< docs-imagebox img="/img/docs/v45/graphite_query1_still.png"
@@ -87,8 +87,8 @@ this consolidation is done using `avg` function. You can control how Graphite co
 
 ## Templating
 
-Instead of hard-coding things like server, application and sensor name in you metric queries you can use variables in their place.
-Variables are shown as dropdown select boxes at the top of the dashboard. These dropdowns makes it easy to change the data
+Instead of hard-coding things like server, application and sensor name in your metric queries you can use variables in their place.
+Variables are shown as dropdown select boxes at the top of the dashboard. These dropdowns make it easy to change the data
 being displayed in your dashboard.
 
 Check out the [Templating]({{< relref "../../reference/templating.md" >}}) documentation for an introduction to the templating feature and the different
@@ -132,7 +132,6 @@ TagValues
 tag_values(server, server=~${__searchFilter:regex})
 ```
 
-
 ### Variable Usage
 
 You can use a variable in a metric node path or as a parameter to a function.
@@ -147,7 +146,7 @@ Why two ways? The first syntax is easier to read and write but does not allow yo
 the second syntax in expressions like  `my.server[[serverNumber]].count`.
 
 Example:
-[Graphite Templated Dashboard](http://play.grafana.org/dashboard/db/graphite-templated-nested)
+[Graphite Templated Dashboard](https://play.grafana.org/dashboard/db/graphite-templated-nested)
 
 ### Variable Usage in Tag Queries
 
@@ -163,11 +162,15 @@ Check out the [Advanced Formatting Options section in the Variables]({{< relref 
 
 ## Annotations
 
-[Annotations]({{< relref "../../reference/annotations.md" >}}) allows you to overlay rich event information on top of graphs. You add annotation
+[Annotations]({{< relref "../../reference/annotations.md" >}}) allow you to overlay rich event information on top of graphs. You add annotation
 queries via the Dashboard menu / Annotations view.
 
 Graphite supports two ways to query annotations. A regular metric query, for this you use the `Graphite query` textbox. A Graphite events query, use the `Graphite event tags` textbox,
 specify a tag or wildcard (leave empty should also work)
+
+## Getting Grafana metrics into Graphite
+
+Grafana exposes metrics for Graphite on the `/metrics` endpoint. For detailed instructions, refer to [Internal Grafana metrics]({{< relref "../../administration/metrics.md">}}).
 
 ## Configure the data source with provisioning
 

@@ -22,11 +22,11 @@ export class DashLinksEditorCtrl {
 
   emptyListCta = {
     title: 'There are no dashboard links added yet',
-    buttonIcon: 'gicon gicon-link',
+    buttonIcon: 'link',
     buttonTitle: 'Add Dashboard Link',
     infoBox: {
       __html: `<p>
-      Dashboard Links allow you to place links to other dashboards and web sites directly in below the dashboard
+      Dashboard Links allow you to place links to other dashboards and web sites directly below the dashboard
       header.
     </p>`,
     },

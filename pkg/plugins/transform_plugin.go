@@ -3,147 +3,84 @@ package plugins
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"path"
-	"time"
+	"strconv"
 
-	"github.com/grafana/grafana-plugin-sdk-go/dataframe"
 	"github.com/grafana/grafana-plugin-sdk-go/genproto/pluginv2"
-	"github.com/grafana/grafana-plugin-sdk-go/transform"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
+	"github.com/grafana/grafana/pkg/plugins/datasource/wrapper"
 	"github.com/grafana/grafana/pkg/tsdb"
-	plugin "github.com/hashicorp/go-plugin"
-	"golang.org/x/xerrors"
+	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
 type TransformPlugin struct {
 	PluginBase
-	// TODO we probably want a Backend Plugin Base? Or some way to dedup proc management code
 
 	Executable string `json:"executable,omitempty"`
 
 	*TransformWrapper
-
-	client *plugin.Client
-	log    log.Logger
 }
 
-func (tp *TransformPlugin) Load(decoder *json.Decoder, pluginDir string) error {
-	if err := decoder.Decode(&tp); err != nil {
+func (p *TransformPlugin) Load(decoder *json.Decoder, pluginDir string, backendPluginManager backendplugin.Manager) error {
+	if err := decoder.Decode(p); err != nil {
 		return err
 	}
 
-	if err := tp.registerPlugin(pluginDir); err != nil {
+	if err := p.registerPlugin(pluginDir); err != nil {
 		return err
 	}
 
-	Transform = tp
-
-	return nil
-}
-
-func (p *TransformPlugin) startBackendPlugin(ctx context.Context, log log.Logger) error {
-	p.log = log.New("plugin-id", p.Id)
-
-	if err := p.spawnSubProcess(); err != nil {
-		return err
-	}
-
-	go func() {
-		if err := p.restartKilledProcess(ctx); err != nil {
-			p.log.Error("Attempting to restart killed process failed", "err", err)
-		}
-	}()
-
-	return nil
-}
-
-func (p *TransformPlugin) spawnSubProcess() error {
 	cmd := ComposePluginStartCommmand(p.Executable)
 	fullpath := path.Join(p.PluginDir, cmd)
-
-	p.client = backendplugin.NewTransformClient(p.Id, fullpath, p.log)
-
-	rpcClient, err := p.client.Client()
-	if err != nil {
-		return err
+	descriptor := backendplugin.NewBackendPluginDescriptor(p.Id, fullpath, backendplugin.PluginStartFuncs{
+		OnStart: p.onPluginStart,
+	})
+	if err := backendPluginManager.Register(descriptor); err != nil {
+		return errutil.Wrapf(err, "Failed to register backend plugin")
 	}
 
-	raw, err := rpcClient.Dispense(p.Id)
-	if err != nil {
-		return err
-	}
-
-	plugin, ok := raw.(transform.TransformPlugin)
-	if !ok {
-		return fmt.Errorf("unexpected type %T, expected *transform.GRPCClient", raw)
-	}
-
-	p.TransformWrapper = NewTransformWrapper(p.log, plugin)
+	Transform = p
 
 	return nil
 }
 
-func (p *TransformPlugin) restartKilledProcess(ctx context.Context) error {
-	ticker := time.NewTicker(time.Second * 1)
+func (p *TransformPlugin) onPluginStart(pluginID string, client *backendplugin.Client, logger log.Logger) error {
+	p.TransformWrapper = NewTransformWrapper(logger, client.TransformPlugin)
 
-	for {
-		select {
-		case <-ctx.Done():
-			if err := ctx.Err(); err != nil && !xerrors.Is(err, context.Canceled) {
-				return err
-			}
-			return nil
-		case <-ticker.C:
-			if !p.client.Exited() {
-				continue
-			}
-
-			if err := p.spawnSubProcess(); err != nil {
-				p.log.Error("Failed to restart plugin", "err", err)
-				continue
-			}
-
-			p.log.Debug("Plugin process restarted")
-		}
+	if client.DataPlugin != nil {
+		tsdb.RegisterTsdbQueryEndpoint(pluginID, func(dsInfo *models.DataSource) (tsdb.TsdbQueryEndpoint, error) {
+			return wrapper.NewDatasourcePluginWrapperV2(logger, p.Id, p.Type, client.DataPlugin), nil
+		})
 	}
-}
 
-func (p *TransformPlugin) Kill() {
-	if p.client != nil {
-		p.log.Debug("Killing subprocess ", "name", p.Name)
-		p.client.Kill()
-	}
+	return nil
 }
 
 // ...
 // Wrapper Code
 // ...
 
-func NewTransformWrapper(log log.Logger, plugin transform.TransformPlugin) *TransformWrapper {
-	return &TransformWrapper{plugin, log, &grafanaAPI{log}}
+func NewTransformWrapper(log log.Logger, plugin backendplugin.TransformPlugin) *TransformWrapper {
+	return &TransformWrapper{plugin, log, &transformCallback{log}}
 }
 
 type TransformWrapper struct {
-	transform.TransformPlugin
-	logger log.Logger
-	api    *grafanaAPI
+	backendplugin.TransformPlugin
+	logger   log.Logger
+	callback *transformCallback
 }
 
 func (tw *TransformWrapper) Transform(ctx context.Context, query *tsdb.TsdbQuery) (*tsdb.Response, error) {
-	pbQuery := &pluginv2.TransformRequest{
-		TimeRange: &pluginv2.TimeRange{
-			FromRaw:     query.TimeRange.From,
-			ToRaw:       query.TimeRange.To,
-			ToEpochMs:   query.TimeRange.GetToAsMsEpoch(),
-			FromEpochMs: query.TimeRange.GetFromAsMsEpoch(),
+	pbQuery := &pluginv2.QueryDataRequest{
+		PluginContext: &pluginv2.PluginContext{
+			// TODO: Things probably
 		},
-		Queries: []*pluginv2.TransformQuery{},
+		Queries: []*pluginv2.DataQuery{},
 	}
 
 	for _, q := range query.Queries {
@@ -151,61 +88,61 @@ func (tw *TransformWrapper) Transform(ctx context.Context, query *tsdb.TsdbQuery
 		if err != nil {
 			return nil, err
 		}
-		pbQuery.Queries = append(pbQuery.Queries, &pluginv2.TransformQuery{
-			ModelJson:     string(modelJSON),
-			IntervalMs:    q.IntervalMs,
+		pbQuery.Queries = append(pbQuery.Queries, &pluginv2.DataQuery{
+			Json:          modelJSON,
+			IntervalMS:    q.IntervalMs,
 			RefId:         q.RefId,
 			MaxDataPoints: q.MaxDataPoints,
+			TimeRange: &pluginv2.TimeRange{
+				ToEpochMS:   query.TimeRange.GetToAsMsEpoch(),
+				FromEpochMS: query.TimeRange.GetFromAsMsEpoch(),
+			},
 		})
 	}
-
-	pbres, err := tw.TransformPlugin.Transform(ctx, pbQuery, tw.api)
-
+	pbRes, err := tw.TransformPlugin.TransformData(ctx, pbQuery, tw.callback)
 	if err != nil {
 		return nil, err
 	}
 
-	res := &tsdb.Response{
-		Results: map[string]*tsdb.QueryResult{},
+	tR := &tsdb.Response{
+		Results: make(map[string]*tsdb.QueryResult, len(pbRes.Responses)),
+	}
+	for refID, res := range pbRes.Responses {
+		tRes := &tsdb.QueryResult{
+			RefId:      refID,
+			Dataframes: res.Frames,
+		}
+		if len(res.JsonMeta) != 0 {
+			tRes.Meta = simplejson.NewFromAny(res.JsonMeta)
+		}
+		if res.Error != "" {
+			tRes.Error = fmt.Errorf(res.Error)
+			tRes.ErrorString = res.Error
+		}
+		tR.Results[refID] = tRes
 	}
 
-	for _, r := range pbres.Results {
-		qr := &tsdb.QueryResult{
-			RefId: r.RefId,
-		}
-
-		if r.Error != "" {
-			qr.Error = errors.New(r.Error)
-			qr.ErrorString = r.Error
-		}
-
-		if r.MetaJson != "" {
-			metaJSON, err := simplejson.NewJson([]byte(r.MetaJson))
-			if err != nil {
-				tw.logger.Error("Error parsing JSON Meta field: " + err.Error())
-			}
-			qr.Meta = metaJSON
-		}
-		qr.Dataframes = r.Dataframes
-
-		res.Results[r.RefId] = qr
-	}
-
-	return res, nil
+	return tR, nil
 }
 
-type grafanaAPI struct {
+type transformCallback struct {
 	logger log.Logger
 }
 
-func (s *grafanaAPI) QueryDatasource(ctx context.Context, req *pluginv2.QueryDatasourceRequest) (*pluginv2.QueryDatasourceResponse, error) {
+func (s *transformCallback) QueryData(ctx context.Context, req *pluginv2.QueryDataRequest) (*pluginv2.QueryDataResponse, error) {
 	if len(req.Queries) == 0 {
 		return nil, fmt.Errorf("zero queries found in datasource request")
 	}
 
+	datasourceID := int64(0)
+
+	if req.PluginContext.DataSourceInstanceSettings != nil {
+		datasourceID = req.PluginContext.DataSourceInstanceSettings.Id
+	}
+
 	getDsInfo := &models.GetDataSourceByIdQuery{
-		Id:    req.DatasourceId,
-		OrgId: req.OrgId,
+		OrgId: req.PluginContext.OrgId,
+		Id:    datasourceID,
 	}
 
 	if err := bus.Dispatch(getDsInfo); err != nil {
@@ -215,20 +152,22 @@ func (s *grafanaAPI) QueryDatasource(ctx context.Context, req *pluginv2.QueryDat
 	// Convert plugin-model (datasource) queries to tsdb queries
 	queries := make([]*tsdb.Query, len(req.Queries))
 	for i, query := range req.Queries {
-		sj, err := simplejson.NewJson([]byte(query.ModelJson))
+		sj, err := simplejson.NewJson(query.Json)
 		if err != nil {
 			return nil, err
 		}
 		queries[i] = &tsdb.Query{
 			RefId:         query.RefId,
-			IntervalMs:    query.IntervalMs,
+			IntervalMs:    query.IntervalMS,
 			MaxDataPoints: query.MaxDataPoints,
 			DataSource:    getDsInfo.Result,
 			Model:         sj,
 		}
 	}
 
-	timeRange := tsdb.NewTimeRange(req.TimeRange.FromRaw, req.TimeRange.ToRaw)
+	// For now take Time Range from first query.
+	timeRange := tsdb.NewTimeRange(strconv.FormatInt(req.Queries[0].TimeRange.FromEpochMS, 10), strconv.FormatInt(req.Queries[0].TimeRange.ToEpochMS, 10))
+
 	tQ := &tsdb.TsdbQuery{
 		TimeRange: timeRange,
 		Queries:   queries,
@@ -241,37 +180,41 @@ func (s *grafanaAPI) QueryDatasource(ctx context.Context, req *pluginv2.QueryDat
 	}
 	// Convert tsdb results (map) to plugin-model/datasource (slice) results.
 	// Only error, tsdb.Series, and encoded Dataframes responses are mapped.
-	results := make([]*pluginv2.DatasourceQueryResult, 0, len(tsdbRes.Results))
+	responses := make(map[string]*pluginv2.DataResponse, len(tsdbRes.Results))
 	for refID, res := range tsdbRes.Results {
-		qr := &pluginv2.DatasourceQueryResult{
-			RefId: refID,
-		}
-
+		pRes := &pluginv2.DataResponse{}
 		if res.Error != nil {
-			qr.Error = res.ErrorString
-			results = append(results, qr)
-			continue
+			pRes.Error = res.Error.Error()
 		}
 
 		if res.Dataframes != nil {
-			qr.Dataframes = append(qr.Dataframes, res.Dataframes...)
-			results = append(results, qr)
+			pRes.Frames = res.Dataframes
+			responses[refID] = pRes
 			continue
 		}
 
-		encodedFrames := make([][]byte, len(res.Series))
-		for sIdx, series := range res.Series {
+		for _, series := range res.Series {
 			frame, err := tsdb.SeriesToFrame(series)
+			frame.RefID = refID
 			if err != nil {
 				return nil, err
 			}
-			encodedFrames[sIdx], err = dataframe.MarshalArrow(frame)
+			encFrame, err := frame.MarshalArrow()
 			if err != nil {
 				return nil, err
 			}
+			pRes.Frames = append(pRes.Frames, encFrame)
 		}
-		qr.Dataframes = encodedFrames
-		results = append(results, qr)
+		if res.Meta != nil {
+			b, err := res.Meta.MarshalJSON()
+			if err != nil {
+				s.logger.Error("failed to marshal json metadata", err)
+			}
+			pRes.JsonMeta = b
+		}
+		responses[refID] = pRes
 	}
-	return &pluginv2.QueryDatasourceResponse{Results: results}, nil
+	return &pluginv2.QueryDataResponse{
+		Responses: responses,
+	}, nil
 }

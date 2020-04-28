@@ -18,6 +18,20 @@ describe('groupMetricsByPrefix()', () => {
     ]);
   });
 
+  it('returns options grouped by prefix with metadata', () => {
+    expect(groupMetricsByPrefix(['foo_metric'], { foo_metric: [{ type: 'TYPE', help: 'my help' }] })).toMatchObject([
+      {
+        value: 'foo',
+        children: [
+          {
+            value: 'foo_metric',
+            title: 'foo_metric\nTYPE\nmy help',
+          },
+        ],
+      },
+    ]);
+  });
+
   it('returns options without prefix as toplevel option', () => {
     expect(groupMetricsByPrefix(['metric'])).toMatchObject([
       {

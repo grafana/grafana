@@ -3,12 +3,14 @@ import $ from 'jquery';
 import React, { PureComponent } from 'react';
 import uniqBy from 'lodash/uniqBy';
 // Types
-import { TimeRange, GraphSeriesXY, TimeZone, DefaultTimeZone, createDimension } from '@grafana/data';
+import { TimeRange, GraphSeriesXY, TimeZone, createDimension } from '@grafana/data';
 import _ from 'lodash';
 import { FlotPosition, FlotItem } from './types';
 import { TooltipProps, TooltipContentProps, ActiveDimensions, Tooltip } from '../Chart/Tooltip';
 import { GraphTooltip } from './GraphTooltip/GraphTooltip';
+import { GraphContextMenu, GraphContextMenuProps, ContextDimensions } from './GraphContextMenu';
 import { GraphDimensions } from './GraphTooltip/types';
+import { graphTimeFormat, graphTimeFormatter } from './utils';
 
 export interface GraphProps {
   children?: JSX.Element | JSX.Element[];
@@ -27,8 +29,11 @@ export interface GraphProps {
 
 interface GraphState {
   pos?: FlotPosition;
+  contextPos?: FlotPosition;
   isTooltipVisible: boolean;
+  isContextVisible: boolean;
   activeItem?: FlotItem<GraphSeriesXY>;
+  contextItem?: FlotItem<GraphSeriesXY>;
 }
 
 export class Graph extends PureComponent<GraphProps, GraphState> {
@@ -42,6 +47,7 @@ export class Graph extends PureComponent<GraphProps, GraphState> {
 
   state: GraphState = {
     isTooltipVisible: false,
+    isContextVisible: false,
   };
 
   element: HTMLElement | null = null;
@@ -59,6 +65,7 @@ export class Graph extends PureComponent<GraphProps, GraphState> {
       this.$element = $(this.element);
       this.$element.bind('plotselected', this.onPlotSelected);
       this.$element.bind('plothover', this.onPlotHover);
+      this.$element.bind('plotclick', this.onPlotClick);
     }
   }
 
@@ -78,6 +85,15 @@ export class Graph extends PureComponent<GraphProps, GraphState> {
       isTooltipVisible: true,
       activeItem: item,
       pos,
+    });
+  };
+
+  onPlotClick = (event: JQueryEventObject, contextPos: FlotPosition, item?: FlotItem<GraphSeriesXY>) => {
+    this.setState({
+      isContextVisible: true,
+      isTooltipVisible: false,
+      contextItem: item,
+      contextPos,
     });
   };
 
@@ -103,7 +119,7 @@ export class Graph extends PureComponent<GraphProps, GraphState> {
   }
 
   renderTooltip = () => {
-    const { children, series } = this.props;
+    const { children, series, timeZone } = this.props;
     const { pos, activeItem, isTooltipVisible } = this.state;
     let tooltipElement: React.ReactElement<TooltipProps> | null = null;
 
@@ -168,6 +184,7 @@ export class Graph extends PureComponent<GraphProps, GraphState> {
       activeDimensions,
       pos,
       mode: tooltipElementProps.mode || 'single',
+      timeZone,
     };
 
     const tooltipContent = React.createElement(tooltipContentRenderer, { ...tooltipContentProps });
@@ -177,6 +194,64 @@ export class Graph extends PureComponent<GraphProps, GraphState> {
       position: { x: pos.pageX, y: pos.pageY },
       offset: { x: 10, y: 10 },
     });
+  };
+
+  renderContextMenu = () => {
+    const { series } = this.props;
+    const { contextPos, contextItem, isContextVisible } = this.state;
+
+    if (!isContextVisible || !contextPos || !contextItem || series.length === 0) {
+      return null;
+    }
+
+    // Indicates column(field) index in y-axis dimension
+    const seriesIndex = contextItem ? contextItem.series.seriesIndex : 0;
+    // Indicates row index in context field values
+    const rowIndex = contextItem ? contextItem.dataIndex : undefined;
+
+    const contextDimensions: ContextDimensions<GraphDimensions> = {
+      // Described x-axis context item
+      xAxis: [seriesIndex, rowIndex],
+      // Describes y-axis context item
+      yAxis: contextItem ? [contextItem.series.seriesIndex, contextItem.dataIndex] : null,
+    };
+
+    const dimensions: GraphDimensions = {
+      // time/value dimension columns are index-aligned - see getGraphSeriesModel
+      xAxis: createDimension(
+        'xAxis',
+        series.map(s => s.timeField)
+      ),
+      yAxis: createDimension(
+        'yAxis',
+        series.map(s => s.valueField)
+      ),
+    };
+
+    const closeContext = () => this.setState({ isContextVisible: false });
+
+    const getContextMenuSource = () => {
+      return {
+        datapoint: contextItem.datapoint,
+        dataIndex: contextItem.dataIndex,
+        series: contextItem.series,
+        seriesIndex: contextItem.series.seriesIndex,
+        pageX: contextPos.pageX,
+        pageY: contextPos.pageY,
+      };
+    };
+
+    const contextContentProps: GraphContextMenuProps = {
+      x: contextPos.pageX,
+      y: contextPos.pageY,
+      onClose: closeContext,
+      getContextMenuSource: getContextMenuSource,
+      timeZone: this.props.timeZone,
+      dimensions,
+      contextDimensions,
+    };
+
+    return <GraphContextMenu {...contextContentProps} />;
   };
 
   getBarWidth = () => {
@@ -219,7 +294,7 @@ export class Graph extends PureComponent<GraphProps, GraphState> {
         stack: isStacked,
         lines: {
           show: showLines,
-          linewidth: lineWidth,
+          lineWidth: lineWidth,
           zero: false,
         },
         points: {
@@ -245,8 +320,8 @@ export class Graph extends PureComponent<GraphProps, GraphState> {
         max: max,
         label: 'Datetime',
         ticks: ticks,
-        timeformat: timeFormat(ticks, min, max),
-        timezone: timeZone ?? DefaultTimeZone,
+        timeformat: graphTimeFormat(ticks, min, max),
+        timeFormatter: graphTimeFormatter(timeZone),
       },
       yaxes,
       grid: {
@@ -285,6 +360,8 @@ export class Graph extends PureComponent<GraphProps, GraphState> {
   render() {
     const { height, width, series } = this.props;
     const noDataToBeDisplayed = series.length === 0;
+    const tooltip = this.renderTooltip();
+    const context = this.renderContextMenu();
     return (
       <div className="graph-panel">
         <div
@@ -295,38 +372,12 @@ export class Graph extends PureComponent<GraphProps, GraphState> {
             this.setState({ isTooltipVisible: false });
           }}
         />
-
         {noDataToBeDisplayed && <div className="datapoints-warning">No data</div>}
-        {this.renderTooltip()}
+        {tooltip}
+        {context}
       </div>
     );
   }
-}
-
-// Copied from graph.ts
-function timeFormat(ticks: number, min: number, max: number): string {
-  if (min && max && ticks) {
-    const range = max - min;
-    const secPerTick = range / ticks / 1000;
-    const oneDay = 86400000;
-    const oneYear = 31536000000;
-
-    if (secPerTick <= 45) {
-      return '%H:%M:%S';
-    }
-    if (secPerTick <= 7200 || range <= oneDay) {
-      return '%H:%M';
-    }
-    if (secPerTick <= 80000) {
-      return '%m/%d %H:%M';
-    }
-    if (secPerTick <= 2419200 || range <= oneYear) {
-      return '%m/%d';
-    }
-    return '%Y-%m';
-  }
-
-  return '%H:%M';
 }
 
 export default Graph;

@@ -23,3 +23,10 @@ if (Cypress.env('SLOWMO')) {
     });
   }
 }
+
+// uncomment below to prevent Cypress from failing tests when unhandled errors are thrown
+// Cypress.on('uncaught:exception', (err, runnable) => {
+//   // returning false here prevents Cypress from
+//   // failing the test
+//   return false;
+// });

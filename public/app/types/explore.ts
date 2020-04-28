@@ -13,15 +13,11 @@ import {
   LogsDedupStrategy,
   AbsoluteTimeRange,
   GraphSeriesXY,
+  DataFrame,
+  ExploreMode,
 } from '@grafana/data';
 
 import { Emitter } from 'app/core/core';
-import TableModel from 'app/core/table_model';
-
-export enum ExploreMode {
-  Metrics = 'Metrics',
-  Logs = 'Logs',
-}
 
 export enum ExploreId {
   left = 'left',
@@ -48,6 +44,10 @@ export interface ExploreState {
    * Explore state of the right area in split view.
    */
   right: ExploreItemState;
+  /**
+   * History of all queries
+   */
+  richHistory: RichHistoryQuery[];
 }
 
 export interface ExploreItemState {
@@ -130,7 +130,7 @@ export interface ExploreItemState {
   /**
    * Table model that combines all query table results into a single table.
    */
-  tableResult?: TableModel;
+  tableResult?: DataFrame;
 
   /**
    * React keys for rendering of QueryRows
@@ -234,3 +234,14 @@ export interface QueryTransaction {
   result?: any; // Table model / Timeseries[] / Logs
   scanning?: boolean;
 }
+
+export type RichHistoryQuery = {
+  ts: number;
+  datasourceName: string;
+  datasourceId: string;
+  starred: boolean;
+  comment: string;
+  queries: DataQuery[];
+  sessionName: string;
+  timeRange?: string;
+};

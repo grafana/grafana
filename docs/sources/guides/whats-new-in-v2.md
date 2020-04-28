@@ -1,11 +1,11 @@
 +++
-title = "What's New in Grafana v2.0"
+title = "What's new in Grafana v2.0"
 description = "Feature and improvement highlights for Grafana v2.0"
-keywords = ["grafana", "new", "documentation", "2.0"]
+keywords = ["grafana", "new", "documentation", "2.0", "release notes"]
 type = "docs"
 +++
 
-# What's New in Grafana v2.0
+# What's new in Grafana v2.0
 
 Grafana 2.0 represents months of work by the Grafana team and the community. We are pleased to be able to
 release the Grafana 2.0 beta. This is a guide that describes some of changes and new features that can
@@ -173,5 +173,3 @@ Grafana now supports server-side PNG rendering. From the Panel share dialog you 
 > **Note** This requires that your Data Source is accessible from your Grafana instance.
 
 ![](/img/docs/v2/share_dialog_image_highlight.jpg)
-
-

@@ -54,6 +54,7 @@
   background: none;
   display: flex;
   align-items: center;
+
   .fa {
     align-self: flex-end;
     font-size: 21px;
@@ -78,6 +79,11 @@
 
 .alert-body {
   flex-grow: 1;
+
+  a {
+    color: $white;
+    text-decoration: underline;
+  }
 }
 
 .alert-icon-on-top {

@@ -1,7 +1,7 @@
 import angular from 'angular';
 import _ from 'lodash';
 import { dateMath, DataQueryRequest, DataSourceApi } from '@grafana/data';
-import { BackendSrv } from 'app/core/services/backend_srv';
+import { getBackendSrv } from '@grafana/runtime';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { OpenTsdbOptions, OpenTsdbQuery } from './types';
 
@@ -13,14 +13,15 @@ export default class OpenTsDatasource extends DataSourceApi<OpenTsdbQuery, OpenT
   basicAuth: any;
   tsdbVersion: any;
   tsdbResolution: any;
+  lookupLimit: any;
   tagKeys: any;
 
   aggregatorsPromise: any;
   filterTypesPromise: any;
 
-  constructor(instanceSettings: any, private backendSrv: BackendSrv, private templateSrv: TemplateSrv) {
+  /** @ngInject */
+  constructor(instanceSettings: any, private templateSrv: TemplateSrv) {
     super(instanceSettings);
-
     this.type = 'opentsdb';
     this.url = instanceSettings.url;
     this.name = instanceSettings.name;
@@ -29,6 +30,7 @@ export default class OpenTsDatasource extends DataSourceApi<OpenTsdbQuery, OpenT
     instanceSettings.jsonData = instanceSettings.jsonData || {};
     this.tsdbVersion = instanceSettings.jsonData.tsdbVersion || 1;
     this.tsdbResolution = instanceSettings.jsonData.tsdbResolution || 1;
+    this.lookupLimit = instanceSettings.jsonData.lookupLimit || 1000;
     this.tagKeys = {};
 
     this.aggregatorsPromise = null;
@@ -36,7 +38,7 @@ export default class OpenTsDatasource extends DataSourceApi<OpenTsdbQuery, OpenT
   }
 
   // Called once per panel (graph)
-  query(options: DataQueryRequest) {
+  query(options: DataQueryRequest<OpenTsdbQuery>) {
     const start = this.convertToTSDBTime(options.rangeRaw.from, false, options.timezone);
     const end = this.convertToTSDBTime(options.rangeRaw.to, true, options.timezone);
     const qs: any[] = [];
@@ -166,7 +168,7 @@ export default class OpenTsDatasource extends DataSourceApi<OpenTsdbQuery, OpenT
     };
 
     this._addCredentialOptions(options);
-    return this.backendSrv.datasourceRequest(options);
+    return getBackendSrv().datasourceRequest(options);
   }
 
   suggestTagKeys(metric: string | number) {
@@ -183,7 +185,7 @@ export default class OpenTsDatasource extends DataSourceApi<OpenTsdbQuery, OpenT
   }
 
   _performSuggestQuery(query: string, type: string) {
-    return this._get('/api/suggest', { type, q: query, max: 1000 }).then((result: any) => {
+    return this._get('/api/suggest', { type, q: query, max: this.lookupLimit }).then((result: any) => {
       return result.data;
     });
   }
@@ -205,7 +207,7 @@ export default class OpenTsDatasource extends DataSourceApi<OpenTsdbQuery, OpenT
 
     const m = metric + '{' + keysQuery + '}';
 
-    return this._get('/api/search/lookup', { m: m, limit: 3000 }).then((result: any) => {
+    return this._get('/api/search/lookup', { m: m, limit: this.lookupLimit }).then((result: any) => {
       result = result.data.results;
       const tagvs: any[] = [];
       _.each(result, r => {
@@ -245,7 +247,7 @@ export default class OpenTsDatasource extends DataSourceApi<OpenTsdbQuery, OpenT
 
     this._addCredentialOptions(options);
 
-    return this.backendSrv.datasourceRequest(options);
+    return getBackendSrv().datasourceRequest(options);
   }
 
   _addCredentialOptions(options: any) {

@@ -1,10 +1,18 @@
 import { PanelQueryRunner } from './PanelQueryRunner';
-import { PanelData, DataQueryRequest, dateTime, ScopedVars } from '@grafana/data';
+// Importing this way to be able to spy on grafana/data
+import * as grafanaData from '@grafana/data';
+import { DataConfigSource, DataQueryRequest, GrafanaTheme, PanelData, ScopedVars } from '@grafana/data';
 import { DashboardModel } from './index';
 import { setEchoSrv } from '@grafana/runtime';
 import { Echo } from '../../../core/services/echo/Echo';
 
 jest.mock('app/core/services/backend_srv');
+jest.mock('app/core/config', () => ({
+  config: { featureToggles: { transformations: true } },
+  getConfig: () => ({
+    featureToggles: {},
+  }),
+}));
 
 const dashboardModel = new DashboardModel({
   panels: [{ id: 1, type: 'graph' }],
@@ -23,7 +31,6 @@ interface ScenarioContext {
 
   // Options used in setup
   maxDataPoints?: number | null;
-  widthPixels: number;
   dsInterval?: string;
   minInterval?: string;
   scopedVars: ScopedVars;
@@ -37,16 +44,19 @@ interface ScenarioContext {
 
 type ScenarioFn = (ctx: ScenarioContext) => void;
 
-function describeQueryRunnerScenario(description: string, scenarioFn: ScenarioFn) {
+function describeQueryRunnerScenario(description: string, scenarioFn: ScenarioFn, panelConfig?: DataConfigSource) {
   describe(description, () => {
     let setupFn = () => {};
-
+    const defaultPanelConfig: DataConfigSource = {
+      getFieldOverrideOptions: () => undefined,
+      getTransformations: () => undefined,
+    };
     const ctx: ScenarioContext = {
-      widthPixels: 200,
+      maxDataPoints: 200,
       scopedVars: {
         server: { text: 'Server1', value: 'server-1' },
       },
-      runner: new PanelQueryRunner(),
+      runner: new PanelQueryRunner(panelConfig || defaultPanelConfig),
       setup: (fn: () => void) => {
         setupFn = fn;
       },
@@ -82,22 +92,21 @@ function describeQueryRunnerScenario(description: string, scenarioFn: ScenarioFn
         datasource,
         scopedVars: ctx.scopedVars,
         minInterval: ctx.minInterval,
-        widthPixels: ctx.widthPixels,
         maxDataPoints: ctx.maxDataPoints,
         timeRange: {
-          from: dateTime().subtract(1, 'days'),
-          to: dateTime(),
-          raw: { from: '1h', to: 'now' },
+          from: grafanaData.dateTime().subtract(1, 'days'),
+          to: grafanaData.dateTime(),
+          raw: { from: '1d', to: 'now' },
         },
         panelId: 1,
         queries: [{ refId: 'A', test: 1 }],
       };
 
-      ctx.runner = new PanelQueryRunner();
+      ctx.runner = new PanelQueryRunner(panelConfig || defaultPanelConfig);
       ctx.runner.getData().subscribe({
         next: (data: PanelData) => {
           ctx.res = data;
-          ctx.events.push(data);
+          ctx.events?.push(data);
         },
       });
 
@@ -112,64 +121,63 @@ function describeQueryRunnerScenario(description: string, scenarioFn: ScenarioFn
 describe('PanelQueryRunner', () => {
   describeQueryRunnerScenario('simple scenario', ctx => {
     it('should set requestId on request', async () => {
-      expect(ctx.queryCalledWith.requestId).toBe('Q100');
+      expect(ctx.queryCalledWith?.requestId).toBe('Q100');
     });
 
     it('should set datasource name on request', async () => {
-      expect(ctx.queryCalledWith.targets[0].datasource).toBe('TestDB');
+      expect(ctx.queryCalledWith?.targets[0].datasource).toBe('TestDB');
     });
 
     it('should pass scopedVars to datasource with interval props', async () => {
-      expect(ctx.queryCalledWith.scopedVars.server.text).toBe('Server1');
-      expect(ctx.queryCalledWith.scopedVars.__interval.text).toBe('5m');
-      expect(ctx.queryCalledWith.scopedVars.__interval_ms.text).toBe('300000');
+      expect(ctx.queryCalledWith?.scopedVars.server.text).toBe('Server1');
+      expect(ctx.queryCalledWith?.scopedVars.__interval.text).toBe('5m');
+      expect(ctx.queryCalledWith?.scopedVars.__interval_ms.text).toBe('300000');
     });
   });
 
-  describeQueryRunnerScenario('with no maxDataPoints or minInterval', ctx => {
+  describeQueryRunnerScenario('with maxDataPoints', ctx => {
     ctx.setup(() => {
-      ctx.maxDataPoints = null;
-      ctx.widthPixels = 200;
+      ctx.maxDataPoints = 200;
     });
 
     it('should return data', async () => {
-      expect(ctx.res.error).toBeUndefined();
-      expect(ctx.res.series.length).toBe(1);
+      expect(ctx.res?.error).toBeUndefined();
+      expect(ctx.res?.series.length).toBe(1);
     });
 
     it('should use widthPixels as maxDataPoints', async () => {
-      expect(ctx.queryCalledWith.maxDataPoints).toBe(200);
+      expect(ctx.queryCalledWith?.maxDataPoints).toBe(200);
     });
 
     it('should calculate interval based on width', async () => {
-      expect(ctx.queryCalledWith.interval).toBe('5m');
+      expect(ctx.queryCalledWith?.interval).toBe('5m');
     });
 
     it('fast query should only publish 1 data events', async () => {
-      expect(ctx.events.length).toBe(1);
+      expect(ctx.events?.length).toBe(1);
     });
   });
 
   describeQueryRunnerScenario('with no panel min interval but datasource min interval', ctx => {
     ctx.setup(() => {
-      ctx.widthPixels = 20000;
+      ctx.maxDataPoints = 20000;
       ctx.dsInterval = '15s';
     });
 
     it('should limit interval to data source min interval', async () => {
-      expect(ctx.queryCalledWith.interval).toBe('15s');
+      expect(ctx.queryCalledWith?.interval).toBe('15s');
     });
   });
 
   describeQueryRunnerScenario('with panel min interval and data source min interval', ctx => {
     ctx.setup(() => {
-      ctx.widthPixels = 20000;
+      ctx.maxDataPoints = 20000;
       ctx.dsInterval = '15s';
       ctx.minInterval = '30s';
     });
 
     it('should limit interval to panel min interval', async () => {
-      expect(ctx.queryCalledWith.interval).toBe('30s');
+      expect(ctx.queryCalledWith?.interval).toBe('30s');
     });
   });
 
@@ -179,7 +187,63 @@ describe('PanelQueryRunner', () => {
     });
 
     it('should pass maxDataPoints if specified', async () => {
-      expect(ctx.queryCalledWith.maxDataPoints).toBe(10);
+      expect(ctx.queryCalledWith?.maxDataPoints).toBe(10);
+    });
+
+    it('should use instead of width to calculate interval', async () => {
+      expect(ctx.queryCalledWith?.interval).toBe('2h');
     });
   });
+
+  describeQueryRunnerScenario(
+    'field overrides',
+    ctx => {
+      it('should apply when field override options are set', async () => {
+        const spy = jest.spyOn(grafanaData, 'applyFieldOverrides');
+
+        ctx.runner.getData().subscribe({
+          next: (data: PanelData) => {
+            return data;
+          },
+        });
+        expect(spy).toBeCalled();
+      });
+    },
+    {
+      getFieldOverrideOptions: () => ({
+        fieldConfig: {
+          defaults: {
+            unit: 'm/s',
+          },
+          // @ts-ignore
+          overrides: [],
+        },
+        replaceVariables: v => v,
+        theme: {} as GrafanaTheme,
+      }),
+      getTransformations: () => undefined,
+    }
+  );
+
+  describeQueryRunnerScenario(
+    'transformations',
+    ctx => {
+      it('should apply when transformations are set', async () => {
+        const spy = jest.spyOn(grafanaData, 'transformDataFrame');
+
+        ctx.runner.getData().subscribe({
+          next: (data: PanelData) => {
+            return data;
+          },
+        });
+
+        expect(spy).toBeCalled();
+      });
+    },
+    {
+      getFieldOverrideOptions: () => undefined,
+      // @ts-ignore
+      getTransformations: () => [{}],
+    }
+  );
 });

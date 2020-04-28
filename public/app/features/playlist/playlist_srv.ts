@@ -2,13 +2,14 @@
 import _ from 'lodash';
 
 // Utils
-import { toUrlParams } from 'app/core/utils/url';
 import coreModule from '../../core/core_module';
 import appEvents from 'app/core/app_events';
-import locationUtil from 'app/core/utils/location_util';
+
 import kbn from 'app/core/utils/kbn';
 import { store } from 'app/store/store';
 import { CoreEvents } from 'app/types';
+import { getBackendSrv } from '@grafana/runtime';
+import { locationUtil, urlUtil } from '@grafana/data';
 
 export const queryParamsToPreserve: { [key: string]: boolean } = {
   kiosk: true,
@@ -28,7 +29,7 @@ export class PlaylistSrv {
   isPlaying: boolean;
 
   /** @ngInject */
-  constructor(private $location: any, private $timeout: any, private backendSrv: any) {}
+  constructor(private $location: any, private $timeout: any) {}
 
   next() {
     this.$timeout.cancel(this.cancelPromise);
@@ -54,7 +55,7 @@ export class PlaylistSrv {
     // this is done inside timeout to make sure digest happens after
     // as this can be called from react
     this.$timeout(() => {
-      this.$location.url(nextDashboardUrl + '?' + toUrlParams(filteredParams));
+      this.$location.url(nextDashboardUrl + '?' + urlUtil.toUrlParams(filteredParams));
     });
 
     this.index++;
@@ -89,13 +90,17 @@ export class PlaylistSrv {
 
     appEvents.emit(CoreEvents.playlistStarted);
 
-    return this.backendSrv.get(`/api/playlists/${playlistId}`).then((playlist: any) => {
-      return this.backendSrv.get(`/api/playlists/${playlistId}/dashboards`).then((dashboards: any) => {
-        this.dashboards = dashboards;
-        this.interval = kbn.interval_to_ms(playlist.interval);
-        this.next();
+    return getBackendSrv()
+      .get(`/api/playlists/${playlistId}`)
+      .then((playlist: any) => {
+        return getBackendSrv()
+          .get(`/api/playlists/${playlistId}/dashboards`)
+          .then((dashboards: any) => {
+            this.dashboards = dashboards;
+            this.interval = kbn.interval_to_ms(playlist.interval);
+            this.next();
+          });
       });
-    });
   }
 
   stop() {

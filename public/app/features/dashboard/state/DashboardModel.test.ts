@@ -1,8 +1,13 @@
 import _ from 'lodash';
 import { DashboardModel } from '../state/DashboardModel';
 import { PanelModel } from '../state/PanelModel';
+import { getDashboardModel } from '../../../../test/helpers/getDashboardModel';
+import { variableAdapters } from '../../variables/adapters';
+import { createAdHocVariableAdapter } from '../../variables/adhoc/adapter';
+import { createQueryVariableAdapter } from '../../variables/query/adapter';
 
 jest.mock('app/core/services/context_srv', () => ({}));
+variableAdapters.setInit(() => [createQueryVariableAdapter(), createAdHocVariableAdapter()]);
 
 describe('DashboardModel', () => {
   describe('when creating new dashboard model defaults only', () => {
@@ -65,6 +70,20 @@ describe('DashboardModel', () => {
       const panels = saveModel.panels;
 
       expect(panels.length).toBe(1);
+    });
+
+    it('should save model in edit mode', () => {
+      const model = new DashboardModel({});
+      model.addPanel({ type: 'graph' });
+
+      const panel = model.initEditPanel(model.panels[0]);
+      panel.title = 'updated';
+
+      const saveModel = model.getSaveModelClone();
+      const savedPanel = saveModel.panels[0];
+
+      expect(savedPanel.title).toBe('updated');
+      expect(savedPanel.id).toBe(model.panels[0].id);
     });
   });
 
@@ -498,7 +517,7 @@ describe('DashboardModel', () => {
     let model: DashboardModel;
 
     beforeEach(() => {
-      model = new DashboardModel({
+      const json = {
         templating: {
           list: [
             {
@@ -512,7 +531,8 @@ describe('DashboardModel', () => {
             },
           ],
         },
-      });
+      };
+      model = getDashboardModel(json);
       expect(model.hasVariableValuesChanged()).toBeFalsy();
     });
 
@@ -562,7 +582,7 @@ describe('DashboardModel', () => {
     let model: DashboardModel;
 
     beforeEach(() => {
-      model = new DashboardModel({
+      const json = {
         templating: {
           list: [
             {
@@ -578,7 +598,8 @@ describe('DashboardModel', () => {
             },
           ],
         },
-      });
+      };
+      model = getDashboardModel(json);
       expect(model.hasVariableValuesChanged()).toBeFalsy();
     });
 
@@ -652,14 +673,14 @@ describe('DashboardModel', () => {
 
     it('toggleLegendsForAll should toggle all legends on on first execution', () => {
       model.toggleLegendsForAll();
-      const legendsOn = model.panels.filter(panel => panel.legend.show === true);
+      const legendsOn = model.panels.filter(panel => panel.legend!.show === true);
       expect(legendsOn.length).toBe(3);
     });
 
     it('toggleLegendsForAll should toggle all legends off on second execution', () => {
       model.toggleLegendsForAll();
       model.toggleLegendsForAll();
-      const legendsOn = model.panels.filter(panel => panel.legend.show === true);
+      const legendsOn = model.panels.filter(panel => panel.legend!.show === true);
       expect(legendsOn.length).toBe(0);
     });
   });

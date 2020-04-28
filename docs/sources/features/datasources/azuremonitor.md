@@ -3,7 +3,7 @@ title = "Using Azure Monitor in Grafana"
 description = "Guide for using Azure Monitor in Grafana"
 keywords = ["grafana", "microsoft", "azure", "monitor", "application", "insights", "log", "analytics", "guide"]
 type = "docs"
-aliases = ["/datasources/azuremonitor"]
+aliases = ["/docs/grafana/latest/datasources/azuremonitor"]
 [menu.docs]
 name = "Azure Monitor"
 parent = "datasources"
@@ -117,7 +117,7 @@ Azure Monitor Examples:
 
 ### Templating with Variables for the Azure Monitor Service
 
-Instead of hard-coding things like server, application and sensor name in you metric queries you can use variables in their place. Variables are shown as dropdown select boxes at the top of the dashboard. These dropdowns makes it easy to change the data being displayed in your dashboard.
+Instead of hard-coding things like server, application and sensor name in your metric queries you can use variables in their place. Variables are shown as dropdown select boxes at the top of the dashboard. These dropdowns make it easy to change the data being displayed in your dashboard.
 
 Note that the Azure Monitor service does not support multiple values yet. If you want to visualize multiple time series (for example, metrics for server1 and server2) then you have to add multiple queries to able to view them on the same graph or in the same table.
 
@@ -274,6 +274,45 @@ There are also some Grafana variables that can be used in Azure Log Analytics qu
 
 - `$__interval` - Grafana calculates the minimum time grain that can be used to group by time in queries. More details on how it works [here]({{< relref "../../reference/templating.md#interval-variables" >}}). It returns a time grain like `5m` or `1h` that can be used in the bin function. E.g. `summarize count() by bin(TimeGenerated, $__interval)`
 
+### Templating with Variables for Azure Log Analytics
+
+Any Log Analytics query that returns a list of values can be used in the `Query` field in the Variable edit view. There is also one Grafana function for Log Analytics that returns a list of workspaces.
+
+Refer to the [Variables]({{< relref "../../reference/templating.md" >}}) documentation for an introduction to the templating feature and the different
+types of template variables.
+
+| Name                                               | Description                                                                                            |
+| -------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
+| _workspaces()_                                     | Returns a list of workspaces for the default subscription.                                             |
+| _workspaces(12345678-aaaa-bbbb-cccc-123456789aaa)_ | Returns a list of workspaces for the specified subscription (the parameter can be quoted or unquoted). |
+
+Example variable queries:
+
+<!-- prettier-ignore-start -->
+| Query                                                                                   | Description                                               |
+| --------------------------------------------------------------------------------------- | --------------------------------------------------------- |
+| _subscriptions()_                                                                       | Returns a list of Azure subscriptions                     |
+| _workspaces()_                                                                          | Returns a list of workspaces for default subscription     |
+| _workspaces("12345678-aaaa-bbbb-cccc-123456789aaa")_                                    | Returns a list of workspaces for a specified subscription |
+| _workspaces("$subscription")_                                                           | With template variable for the subscription parameter     |
+| _workspace("myWorkspace").Heartbeat \| distinct Computer_                               | Returns a list of Virtual Machines                        |
+| _workspace("$workspace").Heartbeat \| distinct Computer_                                | Returns a list of Virtual Machines with template variable |
+| _workspace("$workspace").Perf \| distinct ObjectName_                                   | Returns a list of objects from the Perf table             |
+| _workspace("$workspace").Perf \| where ObjectName == "$object" \| distinct CounterName_ | Returns a list of metric names from the Perf table        |
+
+<!-- prettier-ignore-end -->
+
+Example of a time series query using variables:
+
+```
+Perf
+| where ObjectName == "$object" and CounterName == "$metric"
+| where TimeGenerated >= $__timeFrom() and TimeGenerated <= $__timeTo()
+| where  $__contains(Computer, $computer)
+| summarize avg(CounterValue) by bin(TimeGenerated, $__interval), Computer
+| order by TimeGenerated asc
+```
+
 ### Azure Log Analytics Alerting
 
 Not implemented yet.
@@ -293,3 +332,34 @@ There are some important caveats to remember:
 - Currently, four default dashboard variables are supported: `$__timeFilter()`, `$__from`, `$__to`, and `$__interval`. If you're searching in timestamped data, replace the beginning of your where clause to `where $__timeFilter()`. Dashboard changes by time region are handled as you'd expect, as long as you leave the name of the `timestamp` column alone. Likewise, `$__interval` will automatically change based on the dashboard's time region _and_ the width of the chart being displayed. Use it in bins, so `bin(timestamp,$__interval)` changes into something like `bin(timestamp,1s)`. Use `$__from` and `$__to` if you just want the formatted dates to be inserted.
 
 - Templated dashboard variables are not yet supported! They will come in a future version.
+
+## Configure the data source with provisioning
+
+It's now possible to configure data sources using config files with Grafana's provisioning system. You can read more about how it works and all the settings you can set for data sources on the [provisioning docs page]({{< relref "../../administration/provisioning/#datasources" >}})
+
+Here are some provisioning examples for this data source.
+
+```yaml
+# config file version
+apiVersion: 1
+
+datasources:
+  - name: Azure Monitor
+    type: grafana-azure-monitor-datasource
+    access: proxy
+    jsonData:
+      appInsightsAppId: <app-insights-app-id>
+      clientId: <client-id>
+      cloudName: azuremonitor
+      subscriptionId: <subscription-id>
+      tenantId: <tenant-id>
+      logAnalyticsClientId: <log-analytics-client-id>
+      logAnalyticsDefaultWorkspace: <log-analytics-default-workspace>
+      logAnalyticsSubscriptionId: <log-analytics-subscription-id>
+      logAnalyticsTenantId: <log-analytics-tenant-id>
+    secureJsonData:
+      clientSecret: <client-secret>
+      appInsightsApiKey: <app-insights-api-key>
+      logAnalyticsClientSecret: <log-analytics-client-secret>
+    version: 1
+```

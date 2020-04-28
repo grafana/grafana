@@ -2,7 +2,7 @@
 title = "Singlestat Panel"
 keywords = ["grafana", "dashboard", "documentation", "panels", "singlestat"]
 type = "docs"
-aliases = ["/reference/singlestat/"]
+aliases = ["/docs/grafana/latest/reference/singlestat/"]
 [menu.docs]
 name = "Singlestat"
 parent = "panels"
@@ -33,7 +33,7 @@ The singlestat panel has a normal query editor to allow you define your exact me
    * **diff** - The difference between 'current' (last value) and 'first'.
    * **range** - The difference between 'min' and 'max'. Useful the show the range of change for a gauge.
 2. **Prefix/Postfix**: The Prefix/Postfix fields let you define a custom label to appear *before/after* the value. The `$__name` variable can be used here to use the series name or alias from the metric query.
-3. **Units**: Units are appended to the the Singlestat  within the panel, and will respect the color and threshold settings for the value.
+3. **Units**: Units are appended to the Singlestat  within the panel, and will respect the color and threshold settings for the value.
 4. **Decimals**: The Decimal field allows you to override the automatic decimal precision, and set it explicitly.
 5. **Font Size**: You can use this section to select the font size of the different texts in the Singlestat Panel, i.e. prefix, value and postfix.
 
@@ -66,19 +66,6 @@ Sparklines are a great way of seeing the historical data related to the summary 
 
 > ***Pro-tip:*** Reduce the opacity on  fill colors for nice looking panels.
 
-### Gauge
-
-Gauges gives a clear picture of how high a value is in it's context. It's a great way to see if a value is close to the thresholds. The gauge uses the colors set in the color options.
-
-{{< docs-imagebox img="/img/docs/v45/singlestat-gauge-options.png" max-width="500px" class="docs-image--right docs-image--no-shadow">}}
-
-1. **Show**: The show checkbox will toggle whether the gauge is shown in the panel. When unselected, only the Singlestat value will appear.
-2. **Min/Max**: This sets the start and end point for the gauge.
-3. **Threshold Labels**: Check if you want to show the threshold labels. Thresholds are set in the color options.
-4. **Threshold Markers**: Check if you want to have a second meter showing the thresholds.
-
-<div class="clearfix"></div>
-
 ### Value/Range to text mapping
 
 {{< docs-imagebox img="/img/docs/v45/singlestat-value-mapping.png" class="docs-image--right docs-image--no-shadow">}}
@@ -106,3 +93,9 @@ To fix your singlestat panel:
 
 - Do you have one query?
     - Solution: This likely means your query is returning multiple series. You will want to reduce this down to a single series. This can be accomplished in many ways, depending on your data source. Some common practices include summing the series, averaging or any number of other functions. Consult the documentation for your data source for additional information.
+
+### Gauge
+
+The Gauge feature in this panel is deprecated, please use the new [Gauge panel]({{< relref
+"../../features/panels/gauge.md" >}}) instead.
+

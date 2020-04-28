@@ -2,6 +2,8 @@ import { toDuration as duration, toUtc, dateTime } from '../datetime/moment_wrap
 
 import { toFixed, toFixedScaled, FormattedValue, ValueFormatter } from './valueFormats';
 import { DecimalCount } from '../types/displayValue';
+import { TimeZone } from '../types';
+import { dateTimeFormat, dateTimeFormatTimeAgo } from '../datetime';
 
 interface IntervalsInSeconds {
   [interval: string]: number;
@@ -324,14 +326,15 @@ export function toClockSeconds(size: number, decimals: DecimalCount): FormattedV
 }
 
 export function toDateTimeValueFormatter(pattern: string, todayPattern?: string): ValueFormatter {
-  return (value: number, decimals: DecimalCount, scaledDecimals: DecimalCount, isUtc?: boolean): FormattedValue => {
-    const time = isUtc ? toUtc(value) : dateTime(value);
+  return (value: number, decimals: DecimalCount, scaledDecimals: DecimalCount, timeZone?: TimeZone): FormattedValue => {
     if (todayPattern) {
       if (dateTime().isSame(value, 'day')) {
-        return { text: time.format(todayPattern) };
+        return {
+          text: dateTimeFormat(value, { format: todayPattern, timeZone }),
+        };
       }
     }
-    return { text: time.format(pattern) };
+    return { text: dateTimeFormat(value, { format: pattern, timeZone }) };
   };
 }
 
@@ -342,8 +345,7 @@ export function dateTimeFromNow(
   value: number,
   decimals: DecimalCount,
   scaledDecimals: DecimalCount,
-  isUtc?: boolean
+  timeZone?: TimeZone
 ): FormattedValue {
-  const time = isUtc ? toUtc(value) : dateTime(value);
-  return { text: time.fromNow() };
+  return { text: dateTimeFormatTimeAgo(value, { timeZone }) };
 }
