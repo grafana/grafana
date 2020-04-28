@@ -11,6 +11,8 @@ import {
 } from './reducers';
 import { cleanUpEditPanel, panelModelAndPluginReady } from '../../../state/reducers';
 import store from '../../../../../core/store';
+import { EDIT_PANEL_ID } from '../../../../../core/constants';
+import { clearAlertState } from 'app/features/annotations/state/reducers';
 
 export function initPanelEditor(sourcePanel: PanelModel, dashboard: DashboardModel): ThunkResult<void> {
   return dispatch => {
@@ -46,6 +48,12 @@ export function panelEditorCleanUp(): ThunkResult<void> {
       modifiedSaveModel.id = sourcePanel.id;
 
       sourcePanel.restoreModel(modifiedSaveModel);
+
+      const modifiedAlertState = getStore().annotations[EDIT_PANEL_ID].alertState;
+      const sourceAlertState = getStore().annotations[sourcePanel.id].alertState;
+      if (!modifiedAlertState.state && sourceAlertState.state) {
+        dispatch(clearAlertState({ panelId: sourcePanel.id }));
+      }
 
       if (panelTypeChanged) {
         dispatch(panelModelAndPluginReady({ panelId: sourcePanel.id, plugin: panel.plugin! }));

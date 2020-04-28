@@ -16,6 +16,7 @@ export interface AlertState {
   state: string;
   newDateState: string;
 }
+const initialAlertState = ({ state: undefined } as unknown) as AlertState;
 
 export interface AnnotationsAndAlertState {
   annotations: AnnotationEvent[];
@@ -50,6 +51,15 @@ const annotationsSlice = createSlice({
 
       state[panelId] = { annotations, alertState };
     },
+    clearAlertState: (state, action: PayloadAction<AnnotationsIdentifier>) => {
+      const { panelId } = action.payload;
+
+      if (!state[panelId]) {
+        return;
+      }
+
+      state[panelId].alertState = initialAlertState;
+    },
   },
   extraReducers: builder =>
     builder
@@ -70,14 +80,13 @@ const annotationsSlice = createSlice({
 });
 
 export const getAnnotationsAndAlertState = (state: StoreState, panelId: number): AnnotationsAndAlertState => {
-  const defaultAlertState = ({ state: undefined } as unknown) as AlertState;
   const annotations = state.annotations[panelId] ? state.annotations[panelId].annotations : [];
-  const alertState = state.annotations[panelId] ? state.annotations[panelId].alertState : defaultAlertState;
+  const alertState = state.annotations[panelId] ? state.annotations[panelId].alertState : initialAlertState;
 
-  return { annotations, alertState: alertState ?? defaultAlertState };
+  return { annotations, alertState: alertState ?? initialAlertState };
 };
 
-export const { setAnnotationsAndAlert } = annotationsSlice.actions;
+export const { setAnnotationsAndAlert, clearAlertState } = annotationsSlice.actions;
 
 export const annotationsReducer = annotationsSlice.reducer;
 

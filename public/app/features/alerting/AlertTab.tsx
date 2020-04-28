@@ -19,6 +19,7 @@ import { TestRuleResult } from './TestRuleResult';
 import { AppNotificationSeverity, CoreEvents, StoreState } from 'app/types';
 import { updateLocation } from 'app/core/actions';
 import { PanelEditorTabId } from '../dashboard/components/PanelEditor/types';
+import { clearAlertState } from '../annotations/state/reducers';
 
 interface OwnProps {
   dashboard: DashboardModel;
@@ -31,6 +32,7 @@ interface ConnectedProps {
 
 interface DispatchProps {
   updateLocation: typeof updateLocation;
+  clearAlertState: typeof clearAlertState;
 }
 
 export type Props = OwnProps & ConnectedProps & DispatchProps;
@@ -134,6 +136,7 @@ class UnConnectedAlertTab extends PureComponent<Props, State> {
           yesText: 'Delete',
           onConfirm: () => {
             delete panel.alert;
+            this.props.clearAlertState({ panelId: panel.id });
             panel.thresholds = [];
             this.panelCtrl.alertState = null;
             this.panelCtrl.render();
@@ -228,6 +231,6 @@ const mapStateToProps: MapStateToProps<ConnectedProps, OwnProps, StoreState> = (
   };
 };
 
-const mapDispatchToProps: MapDispatchToProps<DispatchProps, OwnProps> = { updateLocation };
+const mapDispatchToProps: MapDispatchToProps<DispatchProps, OwnProps> = { updateLocation, clearAlertState };
 
 export const AlertTab = connect(mapStateToProps, mapDispatchToProps)(UnConnectedAlertTab);
