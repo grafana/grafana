@@ -152,7 +152,7 @@ class UnConnectedAlertTab extends PureComponent<Props, State> {
     const onDismiss = () => this.onToggleModal('showTestRule');
 
     return (
-      <Modal isOpen={true} icon="play" title="Testing rule" onDismiss={onDismiss} onClickBackdrop={onDismiss}>
+      <Modal isOpen={true} icon="bug" title="Testing rule" onDismiss={onDismiss} onClickBackdrop={onDismiss}>
         <TestRuleResult panel={panel} dashboard={dashboard} />
       </Modal>
     );
