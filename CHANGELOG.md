@@ -13,6 +13,52 @@
 - **Removed PhantomJS**: PhantomJS was deprecated in [Grafana v6.4](https://grafana.com/docs/grafana/latest/guides/whats-new-in-v6-4/#phantomjs-deprecation) and starting from Grafana v7.0.0, all PhantomJS support has been removed. This means that Grafana no longer ships with a built-in image renderer, and we advise you to install the [Grafana Image Renderer plugin](https://grafana.com/grafana/plugins/grafana-image-renderer).
 - **Docker**: Our Ubuntu based images have been upgraded to Ubuntu [20.04 LTS](https://releases.ubuntu.com/20.04/).
 - **Dashboard**: A global minimum dashboard refresh interval is now enforced and defaults to 5 seconds.
+### @grafana/ui forms migration notice
+In Grafana 7 we have migrated from our old form components to `LegacyForms` namespace. The new components were previously available under the `Forms` namespace. 
+
+All the following components were moved to the LegacyForms namespace, and some replaced with the new form components:
+
+- `SecretFormField`
+- `FormField`
+- `Select`
+- `AsyncSelect`
+- `IndicatorsContainer`
+- `NoOptionsMessage`
+- `ButtonSelect`
+- `Input`
+- `Switch`
+
+One exception to this is `FormLabel`, which has been renamed to `InlineFormLabel`.
+
+If you were previously using the legacy form styles and your plugin is breaking, change from this:
+```jsx
+import { Switch } from '@grafana/ui';
+…
+<Switch .../>
+```
+To this:
+```jsx
+import { LegacyForms } from '@grafana/ui';
+…
+<LegacyForms.Switch ... />
+```
+
+If you were previously using the new form styles under the `Forms` namespace, change from this: 
+
+```jsx
+import { Forms } from '@grafana/ui';
+…
+<Forms.Switch ... />
+```
+To this:
+```jsx
+import { Switch} from '@grafana/ui';
+…
+<Switch ... />
+```
+
+To see the new form components visit [our Storybook](https://developers.grafana.com/ui)
+
 
 ### Features / Enhancements
 * **@grafana/ui**: Create Icon component and replace icons. [#23402](https://github.com/grafana/grafana/pull/23402), [@ivanahuckova](https://github.com/ivanahuckova)
