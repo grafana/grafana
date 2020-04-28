@@ -1,6 +1,14 @@
 import _ from 'lodash';
 import { colors } from '@grafana/ui';
-import { getColorFromHexRgbOrName, TimeRange, FieldType, Field, DataFrame, getTimeField } from '@grafana/data';
+import {
+  getColorFromHexRgbOrName,
+  TimeRange,
+  FieldType,
+  Field,
+  DataFrame,
+  getTimeField,
+  dateTime,
+} from '@grafana/data';
 import TimeSeries from 'app/core/time_series2';
 import config from 'app/core/config';
 
@@ -42,7 +50,7 @@ export class DataProcessor {
 
         const datapoints = [];
         for (let r = 0; r < series.length; r++) {
-          datapoints.push([field.values.get(r), timeField.values.get(r)]);
+          datapoints.push([field.values.get(r), dateTime(timeField.values.get(r)).valueOf()]);
         }
         list.push(this.toTimeSeries(field, name, i, j, datapoints, list.length, range));
       }

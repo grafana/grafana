@@ -1,5 +1,5 @@
 import React, { PureComponent } from 'react';
-import { e2e } from '@grafana/e2e';
+import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
 import { LegacyForms, ClipboardButton, Icon, InfoBox } from '@grafana/ui';
 const { Select, Switch } = LegacyForms;
 import { SelectableValue, PanelModel, AppEvents } from '@grafana/data';
@@ -86,7 +86,7 @@ export class ShareLink extends PureComponent<Props, State> {
   render() {
     const { panel } = this.props;
     const { useCurrentTimeRange, includeTemplateVars, selectedTheme, shareUrl, imageUrl } = this.state;
-    const selectors = e2e.pages.SharePanelModal.selectors;
+    const selectors = e2eSelectors.pages.SharePanelModal;
 
     return (
       <div className="share-modal-body">

@@ -31,7 +31,7 @@ import { SubMenuItems } from 'app/features/dashboard/components/SubMenu/SubMenuI
 import { BackButton } from 'app/core/components/BackButton/BackButton';
 import { appEvents } from 'app/core/core';
 import { SaveDashboardModalProxy } from '../SaveDashboard/SaveDashboardModalProxy';
-import { e2e } from '@grafana/e2e';
+import { selectors } from '@grafana/e2e-selectors';
 
 interface OwnProps {
   dashboard: DashboardModel;
@@ -197,7 +197,7 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
         onDragFinished={size => this.onDragFinished(Pane.Top, size)}
       >
         {this.renderPanel(styles)}
-        <div className={styles.tabsWrapper} aria-label={e2e.components.PanelEditor.DataPane.selectors.content}>
+        <div className={styles.tabsWrapper} aria-label={selectors.components.PanelEditor.DataPane.content}>
           <PanelEditorTabs panel={panel} dashboard={dashboard} tabs={tabs} onChangeTab={this.onChangeTab} data={data} />
         </div>
       </SplitPane>
@@ -309,7 +309,7 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
     return (
       <SplitPane
         split="vertical"
-        minSize={100}
+        minSize={300}
         primary="second"
         /* Use persisted state for default size */
         defaultSize={uiState.rightPaneSize}
@@ -332,7 +332,7 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
     }
 
     return (
-      <div className={styles.wrapper} aria-label={e2e.components.PanelEditor.General.selectors.content}>
+      <div className={styles.wrapper} aria-label={selectors.components.PanelEditor.General.content}>
         {this.editorToolbar(styles)}
         <div className={styles.verticalSplitPanesWrapper}>
           {uiState.isPanelOptionsVisible ? this.renderWithOptionsPane(styles) : this.renderHorizontalSplit(styles)}
@@ -349,7 +349,7 @@ const mapStateToProps: MapStateToProps<ConnectedProps, OwnProps, StoreState> = (
   return {
     location: state.location,
     plugin: plugin,
-    panel: state.panelEditor.getPanel(),
+    panel,
     data: state.panelEditor.getData(),
     initDone: state.panelEditor.initDone,
     tabs: getPanelEditorTabs(state.location, plugin),

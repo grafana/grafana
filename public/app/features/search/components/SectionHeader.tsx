@@ -1,9 +1,10 @@
 import React, { FC, useCallback } from 'react';
 import { css, cx } from 'emotion';
 import { GrafanaTheme } from '@grafana/data';
-import { Icon, IconButton, IconName, stylesFactory, useTheme } from '@grafana/ui';
+import { Icon, IconButton, stylesFactory, useTheme } from '@grafana/ui';
 import { DashboardSection, OnToggleChecked } from '../types';
 import { SearchCheckbox } from './SearchCheckbox';
+import { getSectionIcon } from '../utils';
 
 interface SectionHeaderProps {
   editable?: boolean;
@@ -41,7 +42,7 @@ export const SectionHeader: FC<SectionHeaderProps> = ({
       <SearchCheckbox editable={editable} checked={section.checked} onClick={onSectionChecked} />
 
       <div className={styles.icon}>
-        <Icon name={section.icon as IconName} />
+        <Icon name={getSectionIcon(section)} />
       </div>
 
       <span className={styles.text}>{section.title}</span>

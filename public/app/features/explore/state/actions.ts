@@ -468,8 +468,8 @@ export const runQueries = (exploreId: ExploreId): ThunkResult<void> => {
     };
 
     const datasourceName = exploreItemState.requestedDatasourceName;
-
-    const transaction = buildQueryTransaction(queries, queryOptions, range, scanning);
+    const timeZone = getTimeZone(getState().user);
+    const transaction = buildQueryTransaction(queries, queryOptions, range, scanning, timeZone);
 
     let firstResponse = true;
     dispatch(changeLoadingStateAction({ exploreId, loadingState: LoadingState.Loading }));

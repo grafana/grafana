@@ -7,7 +7,7 @@ import { UseState } from '../../utils/storybook/UseState';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { TimeFragment, dateTime } from '@grafana/data';
 
-const TimeRangePickerStories = storiesOf('General/TimeRangePicker', module);
+const TimeRangePickerStories = storiesOf('Pickers and Editors/TimeRangePicker', module);
 
 TimeRangePickerStories.addDecorator(withCenteredStory);
 

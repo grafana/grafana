@@ -469,7 +469,7 @@ func (e *CloudWatchExecutor) handleGetDimensionValues(ctx context.Context, param
 func (e *CloudWatchExecutor) ensureClientSession(region string) error {
 	if e.ec2Svc == nil {
 		dsInfo := e.getDsInfo(region)
-		cfg, err := e.getAwsConfig(dsInfo)
+		cfg, err := getAwsConfig(dsInfo)
 		if err != nil {
 			return fmt.Errorf("Failed to call ec2:getAwsConfig, %v", err)
 		}
@@ -595,7 +595,7 @@ func (e *CloudWatchExecutor) handleGetEc2InstanceAttribute(ctx context.Context, 
 func (e *CloudWatchExecutor) ensureRGTAClientSession(region string) error {
 	if e.rgtaSvc == nil {
 		dsInfo := e.getDsInfo(region)
-		cfg, err := e.getAwsConfig(dsInfo)
+		cfg, err := getAwsConfig(dsInfo)
 		if err != nil {
 			return fmt.Errorf("Failed to call ec2:getAwsConfig, %v", err)
 		}

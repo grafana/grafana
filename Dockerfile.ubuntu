@@ -3,7 +3,6 @@ FROM golang:1.14.1 AS go-builder
 WORKDIR /src/grafana
 
 COPY go.mod go.sum ./
-COPY vendor vendor/
 
 RUN go mod verify
 

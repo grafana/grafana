@@ -38,11 +38,13 @@ export const getGraphSeriesModel = (
         decimals: legendOptions.decimals,
       },
     },
+    timeZone,
   });
 
   let fieldColumnIndex = -1;
   for (const series of dataFrames) {
     const { timeField } = getTimeField(series);
+
     if (!timeField) {
       continue;
     }
@@ -102,7 +104,7 @@ export const getGraphSeriesModel = (
             }
           : { ...field.config, color };
 
-        field.display = getDisplayProcessor({ field });
+        field.display = getDisplayProcessor({ field, timeZone });
 
         // Time step is used to determine bars width when graph is rendered as bar chart
         const timeStep = getSeriesTimeStep(timeField);

@@ -76,7 +76,7 @@
 
 .navbar-page-btn__folder {
   display: none;
-  padding-right: 8px;
+  padding-right: 4px;
 
   @include media-breakpoint-up(lg) {
     display: inline-block;
@@ -172,6 +172,10 @@ i.navbar-page-btn__search {
     }
   }
 
+  &--danger {
+    @include buttonBackground($red-base, $red-shade);
+  }
+
   &--tight {
     padding: 0px 4px;
 
@@ -182,6 +186,10 @@ i.navbar-page-btn__search {
 
   &--primary {
     @include buttonBackground($btn-primary-bg, $btn-primary-bg-hl);
+  }
+
+  &--danger {
+    @include buttonBackground($red-base, $red-shade);
   }
 
   &:hover {
