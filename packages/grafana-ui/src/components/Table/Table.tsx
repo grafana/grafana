@@ -40,8 +40,6 @@ interface ReactTableInternalState extends UseResizeColumnsState<{}>, UseSortBySt
 function useTableStateReducer(props: Props) {
   return useCallback(
     (newState: ReactTableInternalState, action: any) => {
-      console.log(action, newState);
-
       switch (action.type) {
         case 'columnDoneResizing':
           if (props.onColumnResize) {
@@ -72,7 +70,18 @@ export const Table: FC<Props> = memo((props: Props) => {
   // React table data array. This data acts just like a dummy array to let react-table know how many rows exist
   // The cells use the field to look up values
   const memoizedData = useMemo(() => {
-    return data.fields.length > 0 ? data.fields[0].values.toArray() : [];
+    if (!data.fields.length) {
+      return [];
+    }
+
+    // Check if an array buffer already exists
+    const buffer = (data.fields[0].values as any).buffer;
+    if (Array.isArray(buffer) && buffer.length === data.length) {
+      return buffer;
+    }
+
+    // For arrow tables, the `toArray` implementation is expensive and akward *especially* for timestamps
+    return Array(data.length).fill(0);
   }, [data]);
 
   // React-table column definitions
@@ -172,7 +181,7 @@ function renderHeaderCell(column: any, tableStyles: TableStyles, field?: Field) 
   return (
     <div className={tableStyles.headerCell} {...headerProps}>
       {column.canSort && (
-        <div {...column.getSortByToggleProps()}>
+        <div {...column.getSortByToggleProps()} className={tableStyles.headerCellLabel} title={column.render('Header')}>
           {column.render('Header')}
           {column.isSorted && (column.isSortedDesc ? <Icon name="angle-down" /> : <Icon name="angle-up" />)}
         </div>

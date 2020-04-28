@@ -5,7 +5,6 @@
 title = "PanelChangeViewPayload"
 keywords = ["grafana","documentation","sdk","@grafana/data"]
 type = "docs"
-draft = true
 +++
 
 ## PanelEvents.PanelChangeViewPayload interface
@@ -15,7 +14,7 @@ Payloads
 <b>Signature</b>
 
 ```typescript
-interface PanelChangeViewPayload 
+export interface PanelChangeViewPayload 
 ```
 <b>Import</b>
 

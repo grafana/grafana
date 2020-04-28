@@ -5,7 +5,6 @@
 title = "GrafanaBootConfig"
 keywords = ["grafana","documentation","sdk","@grafana/runtime"]
 type = "docs"
-draft = true
 +++
 
 ## GrafanaBootConfig class
@@ -13,7 +12,7 @@ draft = true
 <b>Signature</b>
 
 ```typescript
-export declare class GrafanaBootConfig 
+export declare class GrafanaBootConfig implements GrafanaConfig 
 ```
 <b>Import</b>
 
@@ -55,13 +54,14 @@ import { GrafanaBootConfig } from '@grafana/runtime';
 |  [licenseInfo](#licenseinfo-property) |  | <code>LicenseInfo</code> |  |
 |  [loginError](#loginerror-property) |  | <code>any</code> |  |
 |  [loginHint](#loginhint-property) |  | <code>any</code> |  |
+|  [minRefreshInterval](#minrefreshinterval-property) |  | <code>string</code> |  |
 |  [navTree](#navtree-property) |  | <code>any</code> |  |
 |  [newPanelTitle](#newpaneltitle-property) |  | <code>string</code> |  |
 |  [oauth](#oauth-property) |  | <code>any</code> |  |
 |  [panels](#panels-property) |  | <code>{</code><br/><code>        [key: string]: PanelPluginMeta;</code><br/><code>    }</code> |  |
 |  [passwordHint](#passwordhint-property) |  | <code>any</code> |  |
-|  [phantomJSRenderer](#phantomjsrenderer-property) |  | <code>boolean</code> |  |
 |  [pluginsToPreload](#pluginstopreload-property) |  | <code>string[]</code> |  |
+|  [rendererAvailable](#rendereravailable-property) |  | <code>boolean</code> |  |
 |  [samlEnabled](#samlenabled-property) |  | <code>boolean</code> |  |
 |  [theme](#theme-property) |  | <code>GrafanaTheme</code> |  |
 |  [verifyEmailEnabled](#verifyemailenabled-property) |  | <code>boolean</code> |  |
@@ -285,6 +285,14 @@ loginError: any;
 loginHint: any;
 ```
 
+### minRefreshInterval property
+
+<b>Signature</b>
+
+```typescript
+minRefreshInterval: string;
+```
+
 ### navTree property
 
 <b>Signature</b>
@@ -327,20 +335,20 @@ panels: {
 passwordHint: any;
 ```
 
-### phantomJSRenderer property
-
-<b>Signature</b>
-
-```typescript
-phantomJSRenderer: boolean;
-```
-
 ### pluginsToPreload property
 
 <b>Signature</b>
 
 ```typescript
 pluginsToPreload: string[];
+```
+
+### rendererAvailable property
+
+<b>Signature</b>
+
+```typescript
+rendererAvailable: boolean;
 ```
 
 ### samlEnabled property

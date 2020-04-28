@@ -1,6 +1,7 @@
+import { parse, SearchParserResult } from 'search-query-parser';
+import { IconName } from '@grafana/ui';
 import { DashboardQuery, DashboardSection, DashboardSectionItem, SearchAction, UidsToDelete } from './types';
 import { NO_ID_SECTIONS } from './constants';
-import { parse, SearchParserResult } from 'search-query-parser';
 import { getDashboardSrv } from '../dashboard/services/DashboardSrv';
 
 /**
@@ -28,6 +29,18 @@ export const getFlattenedSections = (sections: DashboardSection[]): string[] => 
   });
 };
 
+/**
+ * Get all items for currently expanded sections
+ * @param sections
+ */
+export const getVisibleItems = (sections: DashboardSection[]) => {
+  return sections.flatMap(section => {
+    if (section.expanded) {
+      return section.items;
+    }
+    return [];
+  });
+};
 /**
  * Since Recent and Starred folders don't have id, title field is used as id
  * @param title - title field of the section
@@ -123,7 +136,7 @@ export const getCheckedDashboards = (sections: DashboardSection[]): DashboardSec
   }
 
   return sections.reduce((uids, section) => {
-    return [...uids, ...section.items.filter(item => item.checked)];
+    return section.items ? [...uids, ...section.items.filter(item => item.checked)] : uids;
   }, []);
 };
 
@@ -166,8 +179,9 @@ export const getCheckedUids = (sections: DashboardSection[]): UidsToDelete => {
  * @param queryParsing
  */
 export const getParsedQuery = (query: DashboardQuery, queryParsing = false) => {
+  const parsedQuery = { ...query, sort: query.sort?.value };
   if (!queryParsing) {
-    return query;
+    return parsedQuery;
   }
 
   let folderIds: number[] = [];
@@ -178,5 +192,28 @@ export const getParsedQuery = (query: DashboardQuery, queryParsing = false) => {
       folderIds = [folderId];
     }
   }
-  return { ...query, query: parseQuery(query.query).text as string, folderIds };
+  return { ...parsedQuery, query: parseQuery(query.query).text as string, folderIds };
+};
+
+/**
+ * Check if search query has filters enabled. Excludes folderId
+ * @param query
+ */
+export const hasFilters = (query: DashboardQuery) => {
+  if (!query) {
+    return false;
+  }
+  return Boolean(query.query || query.tag?.length > 0 || query.starred || query.sort);
+};
+
+/**
+ * Get section icon depending on expanded state. Currently works for folder icons only
+ * @param section
+ */
+export const getSectionIcon = (section: DashboardSection): IconName => {
+  if (!hasId(section.title)) {
+    return section.icon as IconName;
+  }
+
+  return section.expanded ? 'folder-open' : 'folder';
 };

@@ -1,22 +1,33 @@
-// Libraries
 import React from 'react';
 import { hot } from 'react-hot-loader';
 import { css, cx } from 'emotion';
+import { compose } from 'redux';
 import { connect } from 'react-redux';
 import AutoSizer from 'react-virtualized-auto-sizer';
 import memoizeOne from 'memoize-one';
-
-// Services & Utils
-import store from 'app/core/store';
-
-// Components
+import { selectors } from '@grafana/e2e-selectors';
 import { ErrorBoundaryAlert, stylesFactory, withTheme } from '@grafana/ui';
+import {
+  AbsoluteTimeRange,
+  DataQuery,
+  DataSourceApi,
+  ExploreMode,
+  GrafanaTheme,
+  GraphSeriesXY,
+  LoadingState,
+  PanelData,
+  RawTimeRange,
+  TimeRange,
+  TimeZone,
+} from '@grafana/data';
+
+import store from 'app/core/store';
 import LogsContainer from './LogsContainer';
 import QueryRows from './QueryRows';
 import TableContainer from './TableContainer';
 import RichHistoryContainer from './RichHistory/RichHistoryContainer';
-// Actions
 import {
+  addQueryRow,
   changeSize,
   initializeExplore,
   modifyQueries,
@@ -24,23 +35,8 @@ import {
   scanStart,
   setQueries,
   toggleGraph,
-  addQueryRow,
   updateTimeRange,
 } from './state/actions';
-// Types
-import {
-  AbsoluteTimeRange,
-  DataQuery,
-  DataSourceApi,
-  GraphSeriesXY,
-  PanelData,
-  RawTimeRange,
-  TimeRange,
-  TimeZone,
-  LoadingState,
-  ExploreMode,
-  GrafanaTheme,
-} from '@grafana/data';
 
 import { ExploreId, ExploreItemState, ExploreUIState, ExploreUpdateState, ExploreUrlState } from 'app/types/explore';
 import { StoreState } from 'app/types';
@@ -48,10 +44,10 @@ import {
   DEFAULT_RANGE,
   DEFAULT_UI_STATE,
   ensureQueries,
-  getTimeRangeFromUrl,
-  getTimeRange,
-  lastUsedDatasourceKeyForOrgId,
   getFirstNonQueryRowSpecificError,
+  getTimeRange,
+  getTimeRangeFromUrl,
+  lastUsedDatasourceKeyForOrgId,
 } from 'app/core/utils/explore';
 import { Emitter } from 'app/core/utils/emitter';
 import { ExploreToolbar } from './ExploreToolbar';
@@ -62,7 +58,6 @@ import { scanStopAction } from './state/actionTypes';
 import { ExploreGraphPanel } from './ExploreGraphPanel';
 import { TraceView } from './TraceView/TraceView';
 import { SecondaryActions } from './SecondaryActions';
-import { compose } from 'redux';
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
   return {
@@ -80,6 +75,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       label: queryContainer;
       // Need to override normal css class and don't want to count on ordering of the classes in html.
       height: auto !important;
+      flex: unset !important;
       padding: ${theme.panelPadding}px;
     `,
   };
@@ -314,7 +310,7 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
     const queryError = getFirstNonQueryRowSpecificError(queryErrors);
 
     return (
-      <div className={exploreClass} ref={this.getRef}>
+      <div className={exploreClass} ref={this.getRef} aria-label={selectors.pages.Explore.General.container}>
         <ExploreToolbar exploreId={exploreId} onChangeTime={this.onChangeTime} />
         {datasourceMissing ? this.renderEmptyState() : null}
         {datasourceInstance && (

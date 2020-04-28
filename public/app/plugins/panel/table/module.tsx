@@ -2,7 +2,7 @@ import { PanelPlugin } from '@grafana/data';
 import { TablePanel } from './TablePanel';
 import { CustomFieldConfig, Options } from './types';
 import { tablePanelChangedHandler, tableMigrationHandler } from './migrations';
-import { TableCellDisplayMode } from '@grafana/ui/src/components/Table/types';
+import { TableCellDisplayMode } from '@grafana/ui';
 
 export const plugin = new PanelPlugin<Options, CustomFieldConfig>(TablePanel)
   .setPanelChangeHandler(tablePanelChangedHandler)

@@ -10,7 +10,7 @@ import * as MonoIcon from './assets';
 
 const alwaysMonoIcons = ['grafana', 'favorite'];
 
-interface IconProps extends React.HTMLAttributes<HTMLDivElement> {
+export interface IconProps extends React.HTMLAttributes<HTMLDivElement> {
   name: IconName;
   size?: IconSize;
   type?: IconType;
@@ -88,7 +88,7 @@ export const getSvgSize = (size: IconSize) => {
     case 'lg':
       return 18;
     case 'xl':
-      return 28;
+      return 24;
     case 'xxl':
       return 36;
     case 'xxxl':

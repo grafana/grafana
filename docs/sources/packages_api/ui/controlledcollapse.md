@@ -5,7 +5,6 @@
 title = "ControlledCollapse"
 keywords = ["grafana","documentation","sdk","@grafana/ui"]
 type = "docs"
-draft = true
 +++
 
 ## ControlledCollapse variable

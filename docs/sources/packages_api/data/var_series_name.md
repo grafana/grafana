@@ -5,7 +5,6 @@
 title = "VAR_SERIES_NAME"
 keywords = ["grafana","documentation","sdk","@grafana/data"]
 type = "docs"
-draft = true
 +++
 
 ## VAR\_SERIES\_NAME variable

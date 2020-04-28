@@ -5,12 +5,13 @@
 title = "reportMetaAnalytics"
 keywords = ["grafana","documentation","sdk","@grafana/runtime"]
 type = "docs"
-draft = true
 +++
 
 ## reportMetaAnalytics variable
 
 ### reportMetaAnalytics variable
+
+Helper function to report meta analytics to the [EchoSrv](./runtime/echosrv.md)<!-- -->.
 
 <b>Signature</b>
 

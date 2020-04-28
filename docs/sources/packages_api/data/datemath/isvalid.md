@@ -5,7 +5,6 @@
 title = "isValid"
 keywords = ["grafana","documentation","sdk","@grafana/data"]
 type = "docs"
-draft = true
 +++
 
 ## dateMath.isValid() function
@@ -17,7 +16,7 @@ Checks if text is a valid date which in this context means that it is either a M
 <b>Signature</b>
 
 ```typescript
-function isValid(text: string | DateTime): boolean;
+export declare function isValid(text: string | DateTime): boolean;
 ```
 <b>Import</b>
 

@@ -1,5 +1,72 @@
 import { e2e } from '@grafana/e2e';
 
+// This test should really be broken into several smaller tests
+e2e.scenario({
+  describeName: 'Variables',
+  itName: 'Query Variables CRUD',
+  addScenarioDataSource: true,
+  addScenarioDashBoard: true,
+  skipScenario: false,
+  scenario: () => {
+    e2e.getScenarioContext().then(({ lastAddedDashboardUid }: any) => {
+      e2e.flows.openDashboard(lastAddedDashboardUid);
+    });
+    e2e.pages.Dashboard.Toolbar.toolbarItems('Dashboard settings').click();
+    e2e.pages.Dashboard.Settings.General.sectionItems('Variables').click();
+    e2e.pages.Dashboard.Settings.Variables.List.addVariableCTA().click();
+
+    assertDefaultsForNewVariable();
+
+    e2e.pages.Dashboard.Settings.General.sectionItems('General').click();
+    e2e.pages.Dashboard.Settings.General.sectionItems('Variables').click();
+    e2e.pages.Dashboard.Settings.Variables.List.addVariableCTA().click();
+
+    let queryVariables: QueryVariableData[] = [
+      {
+        name: 'query1',
+        query: '*',
+        label: 'query1-label',
+        options: ['All', 'A', 'B', 'C'],
+        selectedOption: 'A',
+      },
+      {
+        name: 'query2',
+        query: '$query1.*',
+        label: 'query2-label',
+        options: ['All', 'AA', 'AB', 'AC'],
+        selectedOption: 'AA',
+      },
+      {
+        name: 'query3',
+        query: '$query1.$query2.*',
+        label: 'query3-label',
+        options: ['All', 'AAA', 'AAB', 'AAC'],
+        selectedOption: 'AAA',
+      },
+    ];
+
+    assertAdding3dependantQueryVariablesScenario(queryVariables);
+
+    // assert select updates
+    assertSelects(queryVariables);
+
+    // assert that duplicate works
+    queryVariables = assertDuplicateItem(queryVariables);
+
+    // assert that delete works
+    queryVariables = assertDeleteItem(queryVariables);
+
+    // assert that update works
+    queryVariables = assertUpdateItem(queryVariables);
+
+    // assert that move down works
+    queryVariables = assertMoveDownItem(queryVariables);
+
+    // assert that move up works
+    assertMoveUpItem(queryVariables);
+  },
+});
+
 const assertDefaultsForNewVariable = () => {
   logSection('Asserting defaults for new variable');
   e2e.pages.Dashboard.Settings.Variables.Edit.General.generalNameInput().within(input => {
@@ -184,9 +251,7 @@ const assertAdding3dependantQueryVariablesScenario = (queryVariables: QueryVaria
   for (let queryVariableIndex = 0; queryVariableIndex < queryVariables.length; queryVariableIndex++) {
     const { name, label, query, options, selectedOption } = queryVariables[queryVariableIndex];
     const asserts = queryVariables.slice(0, queryVariableIndex + 1);
-    // @todo remove `@ts-ignore` when possible
-    // @ts-ignore
-    e2e.getScenarioContext().then(({ lastAddedDataSource }) => {
+    e2e.getScenarioContext().then(({ lastAddedDataSource }: any) => {
       createQueryVariable({
         dataSourceName: lastAddedDataSource,
         name,
@@ -550,72 +615,3 @@ const assertMoveUpItem = (data: QueryVariableData[]) => {
 
   return queryVariables;
 };
-
-// This test should really be broken into several smaller tests
-e2e.scenario({
-  describeName: 'Variables',
-  itName: 'Query Variables CRUD',
-  addScenarioDataSource: true,
-  addScenarioDashBoard: true,
-  skipScenario: false,
-  scenario: () => {
-    // @todo remove `@ts-ignore` when possible
-    // @ts-ignore
-    e2e.getScenarioContext().then(({ lastAddedDashboardUid }) => {
-      e2e.flows.openDashboard(lastAddedDashboardUid);
-    });
-    e2e.pages.Dashboard.Toolbar.toolbarItems('Dashboard settings').click();
-    e2e.pages.Dashboard.Settings.General.sectionItems('Variables').click();
-    e2e.pages.Dashboard.Settings.Variables.List.addVariableCTA().click();
-
-    assertDefaultsForNewVariable();
-
-    e2e.pages.Dashboard.Settings.General.sectionItems('General').click();
-    e2e.pages.Dashboard.Settings.General.sectionItems('Variables').click();
-    e2e.pages.Dashboard.Settings.Variables.List.addVariableCTA().click();
-
-    let queryVariables: QueryVariableData[] = [
-      {
-        name: 'query1',
-        query: '*',
-        label: 'query1-label',
-        options: ['All', 'A', 'B', 'C'],
-        selectedOption: 'A',
-      },
-      {
-        name: 'query2',
-        query: '$query1.*',
-        label: 'query2-label',
-        options: ['All', 'AA', 'AB', 'AC'],
-        selectedOption: 'AA',
-      },
-      {
-        name: 'query3',
-        query: '$query1.$query2.*',
-        label: 'query3-label',
-        options: ['All', 'AAA', 'AAB', 'AAC'],
-        selectedOption: 'AAA',
-      },
-    ];
-
-    assertAdding3dependantQueryVariablesScenario(queryVariables);
-
-    // assert select updates
-    assertSelects(queryVariables);
-
-    // assert that duplicate works
-    queryVariables = assertDuplicateItem(queryVariables);
-
-    // assert that delete works
-    queryVariables = assertDeleteItem(queryVariables);
-
-    // assert that update works
-    queryVariables = assertUpdateItem(queryVariables);
-
-    // assert that move down works
-    queryVariables = assertMoveDownItem(queryVariables);
-
-    // assert that move up works
-    assertMoveUpItem(queryVariables);
-  },
-});

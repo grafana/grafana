@@ -5,7 +5,6 @@
 title = "DataSourceApi"
 keywords = ["grafana","documentation","sdk","@grafana/data"]
 type = "docs"
-draft = true
 +++
 
 ## DataSourceApi class
@@ -59,6 +58,7 @@ import { DataSourceApi } from '@grafana/data';
 |  [metricFindQuery(query, options)](#metricfindquery-method) |  | Variable query action. |
 |  [modifyQuery(query, action)](#modifyquery-method) |  | Used in explore |
 |  [query(request)](#query-method) |  | Query for data, and optionally stream results |
+|  [showContextToggle(row)](#showcontexttoggle-method) |  |  |
 |  [targetContainsTemplate(query)](#targetcontainstemplate-method) |  | Used by alerting to check if query contains template variables |
 |  [testDatasource()](#testdatasource-method) |  | Test &amp; verify datasource settings &amp; connection details |
 
@@ -144,7 +144,7 @@ static information about the datasource
 <b>Signature</b>
 
 ```typescript
-meta?: DataSourcePluginMeta;
+meta: DataSourcePluginMeta;
 ```
 
 ### name property
@@ -386,6 +386,23 @@ abstract query(request: DataQueryRequest<TQuery>): Promise<DataQueryResponse> | 
 <b>Returns:</b>
 
 `Promise<DataQueryResponse> | Observable<DataQueryResponse>`
+
+### showContextToggle method
+
+<b>Signature</b>
+
+```typescript
+showContextToggle?(row?: LogRowModel): boolean;
+```
+<b>Parameters</b>
+
+|  Parameter | Type | Description |
+|  --- | --- | --- |
+|  row | <code>LogRowModel</code> |  |
+
+<b>Returns:</b>
+
+`boolean`
 
 ### targetContainsTemplate method
 

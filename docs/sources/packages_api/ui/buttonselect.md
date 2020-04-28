@@ -5,48 +5,28 @@
 title = "ButtonSelect"
 keywords = ["grafana","documentation","sdk","@grafana/ui"]
 type = "docs"
-draft = true
 +++
 
-## ButtonSelect class
+## ButtonSelect() function
+
+### ButtonSelect() function
 
 <b>Signature</b>
 
 ```typescript
-export declare class ButtonSelect<T> extends PureComponent<Props<T>> 
+export declare function ButtonSelect<T>({ placeholder, icon, variant, size, className, disabled, ...selectProps }: ButtonSelectProps<T>): JSX.Element;
 ```
 <b>Import</b>
 
 ```typescript
 import { ButtonSelect } from '@grafana/ui';
 ```
-<b>Properties</b>
+<b>Parameters</b>
 
-|  Property | Modifiers | Type | Description |
-|  --- | --- | --- | --- |
-|  [onChange](#onchange-property) |  | <code>(item: SelectableValue&lt;T&gt;) =&gt; void</code> |  |
-
-<b>Methods</b>
-
-|  Method | Modifiers | Description |
+|  Parameter | Type | Description |
 |  --- | --- | --- |
-|  [render()](#render-method) |  |  |
+|  { placeholder, icon, variant, size, className, disabled, ...selectProps } | <code>ButtonSelectProps&lt;T&gt;</code> |  |
 
-### onChange property
-
-<b>Signature</b>
-
-```typescript
-onChange: (item: SelectableValue<T>) => void;
-```
-
-### render method
-
-<b>Signature</b>
-
-```typescript
-render(): JSX.Element;
-```
 <b>Returns:</b>
 
 `JSX.Element`

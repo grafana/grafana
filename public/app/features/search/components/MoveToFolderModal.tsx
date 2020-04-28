@@ -23,33 +23,28 @@ export const MoveToFolderModal: FC<Props> = ({ results, onMoveItems, isOpen, onD
   const selectedDashboards = getCheckedDashboards(results);
 
   const moveTo = () => {
-    if (folder) {
+    if (folder && selectedDashboards.length) {
       const folderTitle = folder.title ?? 'General';
 
-      backendSrv
-        .moveDashboards(
-          selectedDashboards.map(d => d.uid),
-          folder
-        )
-        .then((result: any) => {
-          if (result.successCount > 0) {
-            const ending = result.successCount === 1 ? '' : 's';
-            const header = `Dashboard${ending} Moved`;
-            const msg = `${result.successCount} dashboard${ending} moved to ${folderTitle}`;
-            appEvents.emit(AppEvents.alertSuccess, [header, msg]);
-          }
+      backendSrv.moveDashboards(selectedDashboards.map(d => d.uid) as string[], folder).then((result: any) => {
+        if (result.successCount > 0) {
+          const ending = result.successCount === 1 ? '' : 's';
+          const header = `Dashboard${ending} Moved`;
+          const msg = `${result.successCount} dashboard${ending} moved to ${folderTitle}`;
+          appEvents.emit(AppEvents.alertSuccess, [header, msg]);
+        }
 
-          if (result.totalCount === result.alreadyInFolderCount) {
-            appEvents.emit(AppEvents.alertError, ['Error', `Dashboard already belongs to folder ${folderTitle}`]);
-          }
+        if (result.totalCount === result.alreadyInFolderCount) {
+          appEvents.emit(AppEvents.alertError, ['Error', `Dashboard already belongs to folder ${folderTitle}`]);
+        }
 
-          onMoveItems(selectedDashboards, folder);
-          onDismiss();
-        });
+        onMoveItems(selectedDashboards, folder);
+        onDismiss();
+      });
     }
   };
 
-  return (
+  return isOpen ? (
     <Modal
       className={styles.modal}
       title="Choose Dashboard Folder"
@@ -76,7 +71,7 @@ export const MoveToFolderModal: FC<Props> = ({ results, onMoveItems, isOpen, onD
         </HorizontalGroup>
       </>
     </Modal>
-  );
+  ) : null;
 };
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => {

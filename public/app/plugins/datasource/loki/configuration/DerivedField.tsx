@@ -1,14 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import { css } from 'emotion';
-import { Button, FormField, DataLinkInput, stylesFactory, LegacyForms } from '@grafana/ui';
-const { Switch } = LegacyForms;
+import { Button, DataLinkInput, stylesFactory, LegacyForms } from '@grafana/ui';
+const { Switch, FormField } = LegacyForms;
 import { VariableSuggestion } from '@grafana/data';
 import { DataSourceSelectItem } from '@grafana/data';
 
 import { DerivedFieldConfig } from '../types';
 import DataSourcePicker from 'app/core/components/Select/DataSourcePicker';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
-import { config } from 'app/core/config';
 import { usePrevious } from 'react-use';
 
 const getStyles = stylesFactory(() => ({
@@ -113,35 +112,33 @@ export const DerivedField = (props: Props) => {
         `}
       />
 
-      {config.featureToggles.tracingIntegration && (
-        <div className={styles.row}>
-          <Switch
-            label="Internal link"
-            checked={showInternalLink}
-            onChange={() => {
-              if (showInternalLink) {
-                onChange({
-                  ...value,
-                  datasourceUid: undefined,
-                });
-              }
-              setShowInternalLink(!showInternalLink);
-            }}
-          />
+      <div className={styles.row}>
+        <Switch
+          label="Internal link"
+          checked={showInternalLink}
+          onChange={() => {
+            if (showInternalLink) {
+              onChange({
+                ...value,
+                datasourceUid: undefined,
+              });
+            }
+            setShowInternalLink(!showInternalLink);
+          }}
+        />
 
-          {showInternalLink && (
-            <DataSourceSection
-              onChange={datasourceUid => {
-                onChange({
-                  ...value,
-                  datasourceUid,
-                });
-              }}
-              datasourceUid={value.datasourceUid}
-            />
-          )}
-        </div>
-      )}
+        {showInternalLink && (
+          <DataSourceSection
+            onChange={datasourceUid => {
+              onChange({
+                ...value,
+                datasourceUid,
+              });
+            }}
+            datasourceUid={value.datasourceUid}
+          />
+        )}
+      </div>
     </div>
   );
 };

@@ -4,23 +4,23 @@ import { connect } from 'react-redux';
 import { Collapse } from '@grafana/ui';
 
 import {
-  DataSourceApi,
-  RawTimeRange,
-  LogLevel,
-  TimeZone,
   AbsoluteTimeRange,
+  DataSourceApi,
+  Field,
+  GraphSeriesXY,
+  LogLevel,
   LogRowModel,
   LogsDedupStrategy,
-  TimeRange,
   LogsMetaItem,
-  GraphSeriesXY,
-  Field,
+  RawTimeRange,
+  TimeRange,
+  TimeZone,
 } from '@grafana/data';
 
 import { ExploreId, ExploreItemState } from 'app/types/explore';
 import { StoreState } from 'app/types';
 
-import { changeDedupStrategy, updateTimeRange, splitOpen } from './state/actions';
+import { changeDedupStrategy, splitOpen, updateTimeRange } from './state/actions';
 import { toggleLogLevelAction } from 'app/features/explore/state/actionTypes';
 import { deduplicatedRowsSelector } from 'app/features/explore/state/selectors';
 import { getTimeZone } from '../profile/state/selectors';
@@ -28,7 +28,7 @@ import { LiveLogsWithTheme } from './LiveLogs';
 import { Logs } from './Logs';
 import { LogsCrossFadeTransition } from './utils/LogsCrossFadeTransition';
 import { LiveTailControls } from './useLiveTailControls';
-import { getLinksFromLogsField } from '../panel/panellinks/linkSuppliers';
+import { getFieldLinksForExplore } from './utils/links';
 
 interface LogsContainerProps {
   datasourceInstance?: DataSourceApi;
@@ -89,28 +89,8 @@ export class LogsContainer extends PureComponent<LogsContainerProps> {
     return [];
   };
 
-  /**
-   * Get links from the filed of a dataframe that was given to as and in addition check if there is associated
-   * metadata with datasource in which case we will add onClick to open the link in new split window. This assumes
-   * that we just supply datasource name and field value and Explore split window will know how to render that
-   * appropriately. This is for example used for transition from log with traceId to trace datasource to show that
-   * trace.
-   * @param field
-   * @param rowIndex
-   */
   getFieldLinks = (field: Field, rowIndex: number) => {
-    const data = getLinksFromLogsField(field, rowIndex);
-    return data.map(d => {
-      if (d.link.meta?.datasourceUid) {
-        return {
-          ...d.linkModel,
-          onClick: () => {
-            this.props.splitOpen({ dataSourceUid: d.link.meta.datasourceUid, query: field.values.get(rowIndex) });
-          },
-        };
-      }
-      return d.linkModel;
-    });
+    return getFieldLinksForExplore(field, rowIndex, this.props.splitOpen, this.props.range);
   };
 
   render() {
@@ -173,6 +153,7 @@ export class LogsContainer extends PureComponent<LogsContainerProps> {
               timeZone={timeZone}
               scanning={scanning}
               scanRange={range.raw}
+              showContextToggle={this.props.datasourceInstance?.showContextToggle}
               width={width}
               getRowContext={this.getLogRowContext}
               getFieldLinks={this.getFieldLinks}

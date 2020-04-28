@@ -5,19 +5,18 @@
 title = "PanelTypeChangedHandler"
 keywords = ["grafana","documentation","sdk","@grafana/data"]
 type = "docs"
-draft = true
 +++
 
 ## PanelTypeChangedHandler type
 
 ### PanelTypeChangedHandler type
 
-Called before a panel is initialized
+Called before a panel is initialized. Allows panel inspection for any updates before changing the panel type.
 
 <b>Signature</b>
 
 ```typescript
-export declare type PanelTypeChangedHandler<TOptions = any> = (options: Partial<TOptions>, prevPluginId: string, prevOptions: any) => Partial<TOptions>;
+export declare type PanelTypeChangedHandler<TOptions = any> = (panel: PanelModel<TOptions>, prevPluginId: string, prevOptions: any) => Partial<TOptions>;
 ```
 <b>Import</b>
 

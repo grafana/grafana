@@ -53,7 +53,6 @@ export class GrafanaBootConfig implements GrafanaConfig {
     newEdit: false,
     meta: false,
     newVariables: true,
-    tracingIntegration: false,
   };
   licenseInfo: LicenseInfo = {} as LicenseInfo;
   rendererAvailable = false;

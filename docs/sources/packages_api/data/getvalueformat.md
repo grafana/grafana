@@ -5,7 +5,6 @@
 title = "getValueFormat"
 keywords = ["grafana","documentation","sdk","@grafana/data"]
 type = "docs"
-draft = true
 +++
 
 ## getValueFormat() function
@@ -15,7 +14,7 @@ draft = true
 <b>Signature</b>
 
 ```typescript
-export declare function getValueFormat(id: string): ValueFormatter;
+export declare function getValueFormat(id?: string | null): ValueFormatter;
 ```
 <b>Import</b>
 
@@ -26,7 +25,7 @@ import { getValueFormat } from '@grafana/data';
 
 |  Parameter | Type | Description |
 |  --- | --- | --- |
-|  id | <code>string</code> |  |
+|  id | <code>string &#124; null</code> |  |
 
 <b>Returns:</b>
 

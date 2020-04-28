@@ -5,7 +5,6 @@
 title = "LinkButton"
 keywords = ["grafana","documentation","sdk","@grafana/ui"]
 type = "docs"
-draft = true
 +++
 
 ## LinkButton variable
@@ -15,9 +14,7 @@ draft = true
 <b>Signature</b>
 
 ```typescript
-LinkButton: React.ForwardRefExoticComponent<CommonProps & React.AnchorHTMLAttributes<HTMLAnchorElement> & {
-    disabled?: boolean | undefined;
-} & React.RefAttributes<HTMLAnchorElement>>
+LinkButton: React.ForwardRefExoticComponent<CommonProps & React.ButtonHTMLAttributes<HTMLButtonElement> & React.AnchorHTMLAttributes<HTMLAnchorElement> & React.RefAttributes<HTMLAnchorElement>>
 ```
 <b>Import</b>
 

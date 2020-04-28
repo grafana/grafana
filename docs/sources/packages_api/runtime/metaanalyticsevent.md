@@ -5,10 +5,11 @@
 title = "MetaAnalyticsEvent"
 keywords = ["grafana","documentation","sdk","@grafana/runtime"]
 type = "docs"
-draft = true
 +++
 
 ## MetaAnalyticsEvent interface
+
+Describes meta analytics event with predefined [EchoEventType.MetaAnalytics](./runtime/echoeventtype/metaanalytics.md) type.
 
 <b>Signature</b>
 

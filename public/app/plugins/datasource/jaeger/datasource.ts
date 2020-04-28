@@ -26,7 +26,7 @@ export class JaegerDatasource extends DataSourceApi<JaegerQuery> {
     super(instanceSettings);
   }
 
-  async metadataRequest(url: string, params?: Record<string, any>) {
+  async metadataRequest(url: string, params?: Record<string, any>): Promise<any> {
     const res = await this._request(url, params, { silent: true }).toPromise();
     return res.data.data;
   }
@@ -81,6 +81,10 @@ export class JaegerDatasource extends DataSourceApi<JaegerQuery> {
       start: getTime(range.from, false),
       end: getTime(range.to, true),
     };
+  }
+
+  getQueryDisplayText(query: JaegerQuery) {
+    return query.query;
   }
 
   private _request(apiUrl: string, data?: any, options?: DatasourceRequestOptions): Observable<Record<string, any>> {

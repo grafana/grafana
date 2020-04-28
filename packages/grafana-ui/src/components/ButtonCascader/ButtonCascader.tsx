@@ -52,3 +52,5 @@ export const ButtonCascader: React.FC<ButtonCascaderProps> = props => {
     </RCCascader>
   );
 };
+
+ButtonCascader.displayName = 'ButtonCascader';

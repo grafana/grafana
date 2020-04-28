@@ -5,10 +5,11 @@
 title = "AngularComponent"
 keywords = ["grafana","documentation","sdk","@grafana/runtime"]
 type = "docs"
-draft = true
 +++
 
 ## AngularComponent interface
+
+Used to enable rendering of Angular components within a React component without losing proper typings.
 
 <b>Signature</b>
 
@@ -20,15 +21,48 @@ export interface AngularComponent
 ```typescript
 import { AngularComponent } from '@grafana/runtime';
 ```
+
+## Example
+
+
+```typescript
+class Component extends PureComponent<Props> {
+  element: HTMLElement;
+  angularComponent: AngularComponent;
+
+  componentDidMount() {
+    const template = '<angular-component />' // angular template here;
+    const scopeProps = { ctrl: angularController }; // angular scope properties here
+    const loader = getAngularLoader();
+    this.angularComponent = loader.load(this.element, scopeProps, template);
+  }
+
+  componentWillUnmount() {
+    if (this.angularComponent) {
+      this.angularComponent.destroy();
+    }
+  }
+
+  render() {
+    return (
+      <div ref={element => (this.element = element)} />
+    );
+  }
+}
+
+```
+
 <b>Methods</b>
 
 |  Method | Description |
 |  --- | --- |
-|  [destroy()](#destroy-method) |  |
-|  [digest()](#digest-method) |  |
-|  [getScope()](#getscope-method) |  |
+|  [destroy()](#destroy-method) | Should be called when the React component will unmount. |
+|  [digest()](#digest-method) | Can be used to trigger a re-render of the Angular component. |
+|  [getScope()](#getscope-method) | Used to access the Angular scope from the React component. |
 
 ### destroy method
+
+Should be called when the React component will unmount.
 
 <b>Signature</b>
 
@@ -41,6 +75,8 @@ destroy(): void;
 
 ### digest method
 
+Can be used to trigger a re-render of the Angular component.
+
 <b>Signature</b>
 
 ```typescript
@@ -51,6 +87,8 @@ digest(): void;
 `void`
 
 ### getScope method
+
+Used to access the Angular scope from the React component.
 
 <b>Signature</b>
 
