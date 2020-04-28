@@ -154,7 +154,6 @@ select:-webkit-autofill:focus {
 }
 
 .login-inner-box {
-  text-align: center;
   padding: $space-xl;
   display: flex;
   flex-direction: column;
@@ -163,7 +162,7 @@ select:-webkit-autofill:focus {
   flex-grow: 1;
   max-width: 415px;
   width: 100%;
-  transform: tranlate(0px, 0px);
+  transform: translate(0px, 0px);
   transition: 0.25s ease;
 
   &.hidden {
