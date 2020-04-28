@@ -134,7 +134,7 @@ function getMarkdownLineForIssue(item: any) {
   return markdown;
 }
 
-function parseLink(s) {
+function parseLink(s: any) {
   const output: any = {};
   const regex = /<([^>]+)>; rel="([^"]+)"/g;
 
