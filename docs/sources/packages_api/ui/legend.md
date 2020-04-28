@@ -5,7 +5,6 @@
 title = "Legend"
 keywords = ["grafana","documentation","sdk","@grafana/ui"]
 type = "docs"
-draft = true
 +++
 
 ## Legend variable

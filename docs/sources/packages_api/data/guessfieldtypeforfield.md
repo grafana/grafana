@@ -5,7 +5,6 @@
 title = "guessFieldTypeForField"
 keywords = ["grafana","documentation","sdk","@grafana/data"]
 type = "docs"
-draft = true
 +++
 
 ## guessFieldTypeForField() function

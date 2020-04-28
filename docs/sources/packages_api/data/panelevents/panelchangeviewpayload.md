@@ -5,7 +5,6 @@
 title = "PanelChangeViewPayload"
 keywords = ["grafana","documentation","sdk","@grafana/data"]
 type = "docs"
-draft = true
 +++
 
 ## PanelEvents.PanelChangeViewPayload interface

@@ -5,7 +5,6 @@
 title = "NumberFieldConfigSettings"
 keywords = ["grafana","documentation","sdk","@grafana/data"]
 type = "docs"
-draft = true
 +++
 
 ## NumberFieldConfigSettings interface

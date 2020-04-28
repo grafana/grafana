@@ -5,7 +5,6 @@
 title = "ClipboardButton"
 keywords = ["grafana","documentation","sdk","@grafana/ui"]
 type = "docs"
-draft = true
 +++
 
 ## ClipboardButton class

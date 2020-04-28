@@ -5,7 +5,6 @@
 title = "dateTime"
 keywords = ["grafana","documentation","sdk","@grafana/data"]
 type = "docs"
-draft = true
 +++
 
 ## dateTime variable
