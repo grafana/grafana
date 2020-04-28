@@ -43,7 +43,7 @@
     "watch": "yarn start -d watch,start core:start --watchTheme "
   },
   "grafana": {
-    "whatsNewUrl": "https://grafana.com/docs/grafana/latest/guides/whats-new-in-v7-0/",
+    "whatsNewUrl": "https://grafana.com/docs/grafana/latest/guides/whats-new-in-v7/",
     "releaseNotesURL": "https://community.grafana.com/t/release-notes-v7-0-x/29381"
   },
   "husky": {
