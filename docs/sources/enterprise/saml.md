@@ -119,7 +119,15 @@ An example is `assertion_attribute_name = "givenName"` where Grafana looks withi
 
 ### Configure team sync
 
+> Only available in Grafana v7.0+
+
+To be able to use Team Sync feature, set `assertion_attribute_groups` option to the attribute name where you store user groups. Then Grafana will use attribute values extracted from SAML assertion to add user into the groups with the same name configured on the External group sync tab.
+
+[Learn more about Team Sync]({{< relref "../enterprise/team-sync.md" >}})
+
 ### Configure role sync
+
+> Only available in Grafana v7.0+
 
 Role sync allows to map user roles from identity provider to Grafana. To enable role sync, set `assertion_attribute_role` option to the attribute name where the role information will be extracted from. After that, configure desired attribute values for each of Grafana roles: Editor, Admin and Super Admin. If obtained role doesn't match any of configured values, `Viewer` role will be assigned to the user. Example configuration:
 
@@ -133,7 +141,11 @@ role_values_grafana_admin = superadmin
 
 Refer to [Organization roles]({{< relref "../permissions/organization_roles.md" >}}) for more information about roles and permissions in Grafana.
 
+**Important**: when role sync is configured, any changes of user roles and organization membership made in Grafana will be overwritten on next user login. Assign user organizations and roles in the IdP instead.
+
 ### Configure organization mapping
+
+> Only available in Grafana v7.0+
 
 Organization mapping allows you to assign users to particular organization in Grafana depending on configured `assertion_attribute_org` attribute value obtained from identity provider. Set `assertion_attribute_org` to the attribute name you store organization info in. Then configure `org_mapping` option to map organization from IdP to Grafana organization specified by id. For example, `org_mapping = Engineering:2, Sales:3` assigns users from `Engineering` organization to the Grafana organization with id `2` and users from `Sales` - to the org with id `3`. You can specify multiple organizations both for the IdP and Grafana:
 
@@ -141,6 +153,8 @@ Organization mapping allows you to assign users to particular organization in Gr
 * `org_mapping = Engineering:2, Engineering:3` to assign `Engineering` to both `2` and `3` in Grafana.
 
 ### Configure allowed organizations
+
+> Only available in Grafana v7.0+
 
 With `allowed_organizations` option you can specify a list of organizations user must have a membership of to be able to log in into Grafana.
 
@@ -157,6 +171,15 @@ metadata_valid_duration = 48h
 assertion_attribute_name = displayName
 assertion_attribute_login = mail
 assertion_attribute_email = mail
+
+assertion_attribute_groups = Group
+assertion_attribute_role = Role
+assertion_attribute_org = Org
+role_values_editor = editor, developer
+role_values_admin = admin, operator
+role_values_grafana_admin = superadmin
+org_mapping = Engineering:2, Sales:3
+allowed_organizations = Engineering, Sales
 ```
 
 ## Troubleshoot SAML authentication
