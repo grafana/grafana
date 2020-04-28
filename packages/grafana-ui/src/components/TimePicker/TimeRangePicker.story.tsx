@@ -1,5 +1,4 @@
 import React from 'react';
-import { storiesOf } from '@storybook/react';
 import { action } from '@storybook/addon-actions';
 
 import { TimeRangePicker } from './TimeRangePicker';
@@ -7,11 +6,13 @@ import { UseState } from '../../utils/storybook/UseState';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { TimeFragment, dateTime } from '@grafana/data';
 
-const TimeRangePickerStories = storiesOf('Pickers and Editors/TimeRangePicker', module);
+export default {
+  title: 'Pickers and Editors/TimePickers/TimeRangePicker',
+  component: TimeRangePicker,
+  decorators: [withCenteredStory],
+};
 
-TimeRangePickerStories.addDecorator(withCenteredStory);
-
-TimeRangePickerStories.add('default', () => {
+export const basic = () => {
   return (
     <UseState
       initialState={{
@@ -43,4 +44,4 @@ TimeRangePickerStories.add('default', () => {
       }}
     </UseState>
   );
-});
+};
