@@ -33,6 +33,7 @@ The following sections provide general guidelines on topics specific to Grafana 
   - Use: The panel opens. Grafana opens the panel.
 * Do not use an ampersand (&) as an abbreviation for "and." 
   - **Exceptions:** If an ampersand is used in the Grafana UI, then match the UI.
+* Avoid using internal slang and jargon in technical documentation.
 
 ### File naming conventions
 
@@ -112,7 +113,7 @@ Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 
 ### Word usage
 
-Grafana products has some words, abbreviations, and slang particular to this discourse community.
+Grafana products has some words, abbreviations, and terms particular to the Grafana discourse community.
 
 #### checkout, check out
 
@@ -140,6 +141,10 @@ Two words, not one
 * Correct, active voice: Grafana displays your list of active alarms.
 * Correct, but passive voice: Your list of active alarms is displayed.
 * Incorrect: The list of active alarms displays.
+
+#### drawer
+
+Do not use. This is internal jargon that refers to a panel on the bottom of the screen. Refer to the panel or feature by its proper name.
 
 #### intro, introduction
 
