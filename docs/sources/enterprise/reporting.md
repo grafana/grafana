@@ -43,6 +43,9 @@ Currently only Organization Admins can create reports.
 {{< docs-imagebox img="/img/docs/enterprise/reports_create_new.png" max-width="500px" class="docs-image--no-shadow" >}}
 
 ## Send test mail
+
+> Only available in Grafana Enterprise v7.0+.
+
 1. In the report, click **Send test mail**.
 1. In the Email field, enter the email address or addresses that you want to test, separated by semicolon.
 If you want to use email addresses from the report, then select the **Use emails from report** check box.
