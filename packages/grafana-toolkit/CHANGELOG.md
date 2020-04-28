@@ -1,3 +1,8 @@
+# 7.0.0-beta.1 (2020-04-28)
+
+### Features / Enhancements
+* **Grafana Toolkit**: Adds template for backend datasource. [#23864](https://github.com/grafana/grafana/pull/23864), [@bergquist](https://github.com/bergquist)
+
 # 6.6.0 (unreleased)
 
 # 6.6.0-beta1 (2020-01-20)
