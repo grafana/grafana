@@ -18,11 +18,11 @@ Usage Insights allows you to have a better understanding on how your Grafana ins
 
 ## Presence Indicators
 
-Presence indicators are visible to all signed-in users on all dashboards. It shows the most recent users that interact with the dashboard (view it or query data). To see more information, click on the `+X` icon that opens the [Dashboard Usage]({{< relref "#dashboard-usage" >}}) panel. You can see the user's name by hovering the user's icon.
+Presence indicators are visible to all signed-in users on all dashboards. It shows the most recent users who interacted with the dashboard.
 
-{{< docs-imagebox img="/img/docs/enterprise/presence_indicators.png" max-width="700px" class="docs-image--no-shadow" >}}
+To get more information, click on the `+X` icon that opens the [Dashboard Insights]({{< relref "#dashboard-insights" >}}) drawer. You can see the user's name by hovering the user's icon. Users icons come from [Gravatar](https://gravatar.com).
 
-Users icons come from [Gravatar](https://gravatar.com).
+{{< docs-imagebox img="/img/docs/enterprise/presence_indicators.png" max-width="400px" class="docs-image--no-shadow" >}}
 
 You can choose your own definition of "recent" by setting it in the [configuration]({{< relref "../installation/configuration.md">}}) file.
 
@@ -36,16 +36,15 @@ recent_users_age = 24h
 
 You can see dashboard usage information by clicking on the `Dashboard insights` button in the top bar.
 
-{{< docs-imagebox img="./img/dashboard_insights.png" max-width="500px" class="docs-image--no-shadow" >}}
+{{< docs-imagebox img="/img/docs/enterprise/dashboard_insights_stats.png" max-width="400px" class="docs-image--no-shadow" >}}{{< docs-imagebox img="/img/docs/enterprise/dashboard_insights_users.png" max-width="400px" class="docs-image--no-shadow" >}}
 
 It shows two kind of information:
 
-- Stats: shows the daily query count and the errors count for the last 30 days.
-- Users & activity: shows the daily view count for the last 30 days; last activities on the dashboard and recent users (with a limit of 20).
+- **Stats**: shows the daily query count and the errors count for the last 30 days.
+- **Users & activity**: shows the daily view count for the last 30 days; last activities on the dashboard and recent users (with a limit of 20).
 
 ## Improved dashboard search
 
-All these usage data can help you search for unused or broken dashboards.
 On the search view, you can sort dashboard using these insights data. It helps you find unused or broken dashboards or discover most viewed ones.
 
-{{< docs-imagebox img="/img/docs/enterprise/improve_search.png" max-width="500px" class="docs-image--no-shadow" >}}
+{{< docs-imagebox img="/img/docs/enterprise/improved_search.png" max-width="650px" class="docs-image--no-shadow" >}}
