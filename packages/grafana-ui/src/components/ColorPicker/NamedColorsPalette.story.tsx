@@ -1,5 +1,4 @@
 import React from 'react';
-import { storiesOf } from '@storybook/react';
 import { NamedColorsPalette } from './NamedColorsPalette';
 import { getColorName, getColorDefinitionByName } from '@grafana/data';
 import { select } from '@storybook/addon-knobs';

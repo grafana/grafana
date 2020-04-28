@@ -1,4 +1,3 @@
-import { storiesOf } from '@storybook/react';
 import { ColorPickerPopover } from './ColorPickerPopover';
 
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
