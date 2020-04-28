@@ -39,12 +39,68 @@ Currently only Organization Admins can create reports.
 1. Select the layout option for generated report: **Portrait** or **Landscape**.  
 1. Enter scheduling information. Options vary depending on the frequency you select.
 1. **Save** the report.
+1. **Send test report** after saving the report to verify that the report looks like you expect it to.
 
 {{< docs-imagebox img="/img/docs/enterprise/reports_create_new.png" max-width="500px" class="docs-image--no-shadow" >}}
 
+### Scheduling
+
+Scheduled reports can be sent on a weekly, daily, or hourly basis. You may also disable scheduling for when you either want to pause a report or send it via the API.
+
+All scheduling is approximative and indicates when the reporting service will start rendering the dashboard.
+
+#### Hourly
+
+Hourly reports are generated once per hour and takes two arguments:
+
+* **At minute -** The number of minutes after full hour when the report should be generated.
+* **Time zone -** Time zone to determine the offset of the full hour. Does not currently change the time in the rendered report. 
+
+#### Daily
+
+Daily reports are generated once per day and takes two arguments:
+
+* **Time -** Time of day in 24 hours format when the report should be sent.
+* **Time zone-** Time zone for the **Time** argument.
+
+#### Weekly
+
+Weekly reports are generated once per week and takes three arguments:
+
+* **Day -** Weekday which the report should be sent on.
+* **Time -** Time of day in 24 hours format when the report should be sent.
+* **Time zone-** Time zone for the **Time** argument.
+
+#### Never
+
+Reports which are scheduled to never be sent have no arguments and will not be sent to the scheduler. They may be manually generated from the **Send test email** prompt or via the API.
+
+## API
+
+Reports can be generated with the experimental `/api/reports/email` API. To access the API you need to authenticate yourself as an organization admin. For more information about API authentication, refer to [Authentication API]({{ relref "../http_api/auth.md" }}).
+
+The API expects a JSON object with the following arguments:
+
+* **id -** ID of the report to send (same as in the URL when editing a report, not to be confused with the ID of the dashboard). Required.
+* **emails -** Comma-separated list of emails to which to send the report to. Overrides the emails from the report. Required if **useEmailsFromReport** is not present.
+* **useEmailsFromReport -** Send the report to the emails specified in the report. Required if **emails** is not present.
+
+The API queues the report for generation and returns immediately. This means that the response code is only indicative of the queueing, not the generation of the report.
+
+Example for curl:
+
+```
+$ curl -H "Authorization: Bearer <Admin API key>" https://<grafana.example.org>/api/reports/email
+    -d '{"id": "<report id>", "useEmailsFromReport": true}'
+```
+
 ## Rendering configuration
 
-When Grafana generates a report, it will render each panel separately and then put them together in a PDF file. You can configure the per-panel rendering request timeout and the maximum number of concurrent calls to the rendering service. These options are available in the [configuration]({{< relref "../installation/configuration.md">}}) file.
+When generating reports by each panel renders separately before being collected in a PDF. The per panel rendering timeout and number of concurrently rendered panels can be configured.
+
+To modify the panels' clarity you can set a scale factor for the rendered images. A higher scale factor is more legible but will increase the file size.
+
+ These options are available in the [configuration]({{< relref "../installation/configuration.md">}}) file.
 
 ```ini
 [reporting]
@@ -52,6 +108,9 @@ When Grafana generates a report, it will render each panel separately and then p
 rendering_timeout = 10s
 # Set maximum number of concurrent calls to the rendering service
 concurrent_render_limit = 4
+# Set the scale factor for rendering images. 2 is enough for monitor resolutions
+# 4 would be better for printed material. Setting a higher value affects performance and memory
+image_scale_factor = 2
 ```
 
 ## Troubleshoot reporting
