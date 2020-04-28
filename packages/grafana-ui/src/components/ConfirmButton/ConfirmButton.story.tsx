@@ -30,6 +30,7 @@ export default {
   title: 'Buttons/ConfirmButton',
   component: ConfirmButton,
   decorators: [withCenteredStory],
+  subcomponents: { DeleteButton },
 };
 
 export const basic = () => {
