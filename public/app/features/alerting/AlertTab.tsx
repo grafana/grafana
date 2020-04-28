@@ -6,7 +6,6 @@ import { selectors } from '@grafana/e2e-selectors';
 import { AngularComponent, getAngularLoader, getDataSourceSrv } from '@grafana/runtime';
 import { getAlertingValidationMessage } from './getAlertingValidationMessage';
 
-// import { EditorToolbarView } from '../dashboard/panel_editor/EditorTabBody';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
 import StateHistory from './StateHistory';
 import 'app/features/alerting/AlertTabCtrl';
