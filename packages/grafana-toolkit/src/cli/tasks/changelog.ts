@@ -121,7 +121,6 @@ function getMarkdownLineForIssue(item: any) {
   }
 
   if (!item.pull_request) {
-    console.log(item);
     markdown += '* ' + title + '.';
     markdown += ` [#${item.number}](${githubGrafanaUrl}/issues/${item.number})`;
   } else {
