@@ -4,8 +4,7 @@ import { FixedSizeList } from 'react-window';
 import AutoSizer from 'react-virtualized-auto-sizer';
 import { GrafanaTheme } from '@grafana/data';
 import { stylesFactory, useTheme, Spinner } from '@grafana/ui';
-import { DashboardSection, OnToggleChecked, SearchLayout } from '../types';
-import { getVisibleItems } from '../utils';
+import { DashboardSection, OnToggleChecked, SearchLayout, DashboardSearchHit } from '../types';
 import { SEARCH_ITEM_HEIGHT, SEARCH_ITEM_MARGIN } from '../constants';
 import { SearchItem } from './SearchItem';
 import { SectionHeader } from './SectionHeader';
@@ -16,7 +15,7 @@ export interface Props {
   onTagSelected: (name: string) => any;
   onToggleChecked?: OnToggleChecked;
   onToggleSection: (section: DashboardSection) => void;
-  results: DashboardSection[];
+  results: DashboardSearchHit[];
   layout?: string;
 }
 
@@ -32,13 +31,12 @@ export const SearchResults: FC<Props> = ({
   const theme = useTheme();
   const styles = getSectionStyles(theme);
   const itemProps = { editable, onToggleChecked, onTagSelected };
-
   const renderFolders = () => {
     return (
       <div className={styles.wrapper}>
         {results.map(section => {
           return (
-            <div aria-label="Search section" className={styles.section} key={section.title}>
+            <div aria-label="Search section" className={styles.section} key={section.id || section.title}>
               <SectionHeader onSectionClick={onToggleSection} {...{ onToggleChecked, editable, section }} />
               <div aria-label="Search items" className={styles.sectionItems}>
                 {section.expanded && section.items.map(item => <SearchItem key={item.id} {...itemProps} item={item} />)}
@@ -49,8 +47,6 @@ export const SearchResults: FC<Props> = ({
       </div>
     );
   };
-
-  const items = getVisibleItems(results);
 
   const renderDashboards = () => {
     return (
@@ -63,11 +59,11 @@ export const SearchResults: FC<Props> = ({
               innerElementType="ul"
               itemSize={SEARCH_ITEM_HEIGHT + SEARCH_ITEM_MARGIN}
               height={height}
-              itemCount={items.length}
+              itemCount={results.length}
               width="100%"
             >
               {({ index, style }) => {
-                const item = items[index];
+                const item = results[index];
                 // The wrapper div is needed as the inner SearchItem has margin-bottom spacing
                 // And without this wrapper there is no room for that margin
                 return (
@@ -90,7 +86,9 @@ export const SearchResults: FC<Props> = ({
   }
 
   return (
-    <div className={styles.resultsContainer}>{layout !== SearchLayout.List ? renderFolders() : renderDashboards()}</div>
+    <div className={styles.resultsContainer}>
+      {layout === SearchLayout.Folders ? renderFolders() : renderDashboards()}
+    </div>
   );
 };
 
@@ -129,7 +127,8 @@ const getSectionStyles = stylesFactory((theme: GrafanaTheme) => {
     noResults: css`
       padding: ${md};
       background: ${theme.colors.bg2};
-      text-style: italic;
+      font-style: italic;
+      margin-top: ${theme.spacing.md};
     `,
     listModeWrapper: css`
       position: relative;

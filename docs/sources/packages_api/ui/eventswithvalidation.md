@@ -5,7 +5,6 @@
 title = "EventsWithValidation"
 keywords = ["grafana","documentation","sdk","@grafana/ui"]
 type = "docs"
-draft = true
 +++
 
 ## EventsWithValidation enum

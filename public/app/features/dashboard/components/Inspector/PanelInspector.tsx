@@ -7,6 +7,7 @@ import { QueryInspector } from './QueryInspector';
 
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 import { CustomScrollbar, Drawer, JSONFormatter, TabContent } from '@grafana/ui';
+import { selectors } from '@grafana/e2e-selectors';
 import { getDataSourceSrv, getLocationSrv } from '@grafana/runtime';
 import {
   DataFrame,
@@ -20,12 +21,12 @@ import {
   PanelPlugin,
   QueryResultMetaStat,
   SelectableValue,
+  TimeZone,
 } from '@grafana/data';
 import { config } from 'app/core/config';
 import { getPanelInspectorStyles } from './styles';
 import { StoreState } from 'app/types';
 import { InspectDataTab } from './InspectDataTab';
-import { e2e } from '@grafana/e2e';
 
 interface OwnProps {
   dashboard: DashboardModel;
@@ -223,7 +224,7 @@ export class PanelInspectorUnconnected extends PureComponent<Props, State> {
     }
 
     return (
-      <div aria-label={e2e.components.PanelInspector.Stats.selectors.content}>
+      <div aria-label={selectors.components.PanelInspector.Stats.content}>
         {this.renderStatsTable('Stats', stats)}
         {this.renderStatsTable('Data source stats', dataStats)}
       </div>
@@ -235,6 +236,8 @@ export class PanelInspectorUnconnected extends PureComponent<Props, State> {
       return null;
     }
 
+    const { dashboard } = this.props;
+
     return (
       <div style={{ paddingBottom: '16px' }}>
         <div className="section-heading">{name}</div>
@@ -244,7 +247,7 @@ export class PanelInspectorUnconnected extends PureComponent<Props, State> {
               return (
                 <tr key={`${stat.title}-${index}`}>
                   <td>{stat.title}</td>
-                  <td style={{ textAlign: 'right' }}>{formatStat(stat)}</td>
+                  <td style={{ textAlign: 'right' }}>{formatStat(stat, dashboard.getTimezone())}</td>
                 </tr>
               );
             })}
@@ -331,13 +334,14 @@ export class PanelInspectorUnconnected extends PureComponent<Props, State> {
   }
 }
 
-function formatStat(stat: QueryResultMetaStat): string {
+function formatStat(stat: QueryResultMetaStat, timeZone?: TimeZone): string {
   const display = getDisplayProcessor({
     field: {
       type: FieldType.number,
       config: stat,
     },
     theme: config.theme,
+    timeZone,
   });
   return formattedValueToString(display(stat.value));
 }

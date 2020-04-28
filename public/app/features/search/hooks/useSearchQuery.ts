@@ -1,8 +1,16 @@
-import { useReducer } from 'react';
+import { FormEvent, useReducer } from 'react';
 import { SelectableValue } from '@grafana/data';
 import { defaultQuery, queryReducer } from '../reducers/searchQueryReducer';
-import { ADD_TAG, CLEAR_FILTERS, QUERY_CHANGE, SET_TAGS, TOGGLE_SORT, TOGGLE_STARRED } from '../reducers/actionTypes';
-import { DashboardQuery } from '../types';
+import {
+  ADD_TAG,
+  CLEAR_FILTERS,
+  LAYOUT_CHANGE,
+  QUERY_CHANGE,
+  SET_TAGS,
+  TOGGLE_SORT,
+  TOGGLE_STARRED,
+} from '../reducers/actionTypes';
+import { DashboardQuery, SearchLayout } from '../types';
 import { hasFilters } from '../utils';
 
 export const useSearchQuery = (queryParams: Partial<DashboardQuery>) => {
@@ -25,12 +33,16 @@ export const useSearchQuery = (queryParams: Partial<DashboardQuery>) => {
     dispatch({ type: CLEAR_FILTERS });
   };
 
-  const onStarredFilterChange = (filter: SelectableValue) => {
-    dispatch({ type: TOGGLE_STARRED, payload: filter.value });
+  const onStarredFilterChange = (e: FormEvent<HTMLInputElement>) => {
+    dispatch({ type: TOGGLE_STARRED, payload: (e.target as HTMLInputElement).checked });
   };
 
   const onSortChange = (sort: SelectableValue | null) => {
     dispatch({ type: TOGGLE_SORT, payload: sort });
+  };
+
+  const onLayoutChange = (layout: SearchLayout) => {
+    dispatch({ type: LAYOUT_CHANGE, payload: layout });
   };
 
   return {
@@ -42,5 +54,6 @@ export const useSearchQuery = (queryParams: Partial<DashboardQuery>) => {
     onStarredFilterChange,
     onTagAdd,
     onSortChange,
+    onLayoutChange,
   };
 };

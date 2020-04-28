@@ -3,7 +3,7 @@ import { css, cx } from 'emotion';
 import uniqueId from 'lodash/uniqueId';
 import { GrafanaTheme } from '@grafana/data';
 import { stylesFactory, useTheme } from '../../themes';
-import { getFocusCss } from '../Forms/commonStyles';
+import { focusCss } from '../../themes/mixins';
 
 export interface SwitchProps extends Omit<HTMLProps<HTMLInputElement>, 'value'> {
   value?: boolean;
@@ -40,7 +40,7 @@ export const getSwitchStyles = stylesFactory((theme: GrafanaTheme) => {
         }
 
         &:focus + label {
-          ${getFocusCss(theme)};
+          ${focusCss(theme)};
         }
       }
 

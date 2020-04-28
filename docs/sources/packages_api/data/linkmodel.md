@@ -5,7 +5,6 @@
 title = "LinkModel"
 keywords = ["grafana","documentation","sdk","@grafana/data"]
 type = "docs"
-draft = true
 +++
 
 ## LinkModel interface

@@ -3,7 +3,7 @@ import { css, cx } from 'emotion';
 import tinycolor from 'tinycolor2';
 
 import { Themeable, withTheme, getLogRowStyles, Icon } from '@grafana/ui';
-import { GrafanaTheme, LogRowModel, TimeZone } from '@grafana/data';
+import { GrafanaTheme, LogRowModel, TimeZone, dateTimeFormat } from '@grafana/data';
 
 import ElapsedTime from './ElapsedTime';
 
@@ -137,7 +137,6 @@ class LiveLogs extends PureComponent<Props, State> {
   render() {
     const { theme, timeZone, onPause, onResume, isPaused } = this.props;
     const styles = getStyles(theme);
-    const showUtc = timeZone === 'utc';
     const { logsRow, logsRowLocalTime, logsRowMessage } = getLogRowStyles(theme);
 
     return (
@@ -151,16 +150,7 @@ class LiveLogs extends PureComponent<Props, State> {
             {this.rowsToRender().map((row: LogRowModel) => {
               return (
                 <tr className={cx(logsRow, styles.logsRowFade)} key={row.uid}>
-                  {showUtc && (
-                    <td className={cx(logsRowLocalTime)} title={`Local: ${row.timeLocal} (${row.timeFromNow})`}>
-                      {row.timeUtc}
-                    </td>
-                  )}
-                  {!showUtc && (
-                    <td className={cx(logsRowLocalTime)} title={`${row.timeUtc} (${row.timeFromNow})`}>
-                      {row.timeLocal}
-                    </td>
-                  )}
+                  <td className={cx(logsRowLocalTime)}>{dateTimeFormat(row.timeEpochMs, { timeZone })}</td>
                   <td className={cx(logsRowMessage)}>{row.entry}</td>
                 </tr>
               );

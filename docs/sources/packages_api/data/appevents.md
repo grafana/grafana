@@ -5,7 +5,6 @@
 title = "AppEvents"
 keywords = ["grafana","documentation","sdk","@grafana/data"]
 type = "docs"
-draft = true
 +++
 
 ## AppEvents namespace
@@ -39,5 +38,6 @@ import { AppEvents } from '@grafana/data';
 
 |  Type Alias | Description |
 |  --- | --- |
+|  [AlertErrorPayload](./alerterrorpayload/) |  |
 |  [AlertPayload](./alertpayload/) |  |
 

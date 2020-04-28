@@ -35,6 +35,6 @@ const Wrapper = () => {
   return <Input value={value} onChange={e => setValue(e.currentTarget.value)} validationEvents={validations} />;
 };
 
-const story = storiesOf('General/Input', module);
+const story = storiesOf('Forms/Legacy/Input', module);
 story.addDecorator(withCenteredStory);
 story.add('input', () => <Wrapper />);

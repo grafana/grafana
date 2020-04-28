@@ -6,6 +6,7 @@ import { useUpdateEffect } from 'react-use';
 
 interface QueryOperationRowProps {
   title?: ((props: { isOpen: boolean }) => React.ReactNode) | React.ReactNode;
+  headerElement?: React.ReactNode;
   actions?:
     | ((props: { isOpen: boolean; openRow: () => void; closeRow: () => void }) => React.ReactNode)
     | React.ReactNode;
@@ -19,6 +20,7 @@ export const QueryOperationRow: React.FC<QueryOperationRowProps> = ({
   children,
   actions,
   title,
+  headerElement,
   onClose,
   onOpen,
   isOpen,
@@ -64,6 +66,7 @@ export const QueryOperationRow: React.FC<QueryOperationRowProps> = ({
           >
             <Icon name={isContentVisible ? 'angle-down' : 'angle-right'} className={styles.collapseIcon} />
             {title && <span className={styles.title}>{titleElement}</span>}
+            {headerElement}
           </div>
           {actions && actionsElement}
         </HorizontalGroup>
@@ -76,7 +79,7 @@ export const QueryOperationRow: React.FC<QueryOperationRowProps> = ({
 const getQueryOperationRowStyles = stylesFactory((theme: GrafanaTheme) => {
   return {
     wrapper: css`
-      margin-bottom: ${theme.spacing.formSpacingBase * 2}px;
+      margin-bottom: ${theme.spacing.md};
     `,
     header: css`
       padding: 0 ${theme.spacing.sm};
@@ -90,6 +93,9 @@ const getQueryOperationRowStyles = stylesFactory((theme: GrafanaTheme) => {
     `,
     collapseIcon: css`
       color: ${theme.colors.textWeak};
+      &:hover {
+        color: ${theme.colors.text};
+      }
     `,
     titleWrapper: css`
       display: flex;
@@ -103,7 +109,7 @@ const getQueryOperationRowStyles = stylesFactory((theme: GrafanaTheme) => {
     `,
     content: css`
       margin-top: ${theme.spacing.inlineFormMargin};
-      margin-left: ${theme.spacing.xl};
+      margin-left: ${theme.spacing.lg};
     `,
   };
 });

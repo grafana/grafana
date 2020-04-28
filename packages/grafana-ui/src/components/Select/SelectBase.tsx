@@ -329,12 +329,12 @@ export function SelectBase<T>({
             zIndex: theme.zIndex.dropdown,
           }),
           //These are required for the menu positioning to function
-          menu: ({ top, bottom, width, position }: any) => ({
+          menu: ({ top, bottom, position }: any) => ({
             top,
             bottom,
-            width,
             position,
             marginBottom: !!bottom ? '10px' : '0',
+            minWidth: '100%',
             zIndex: theme.zIndex.dropdown,
           }),
           container: () => ({

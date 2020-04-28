@@ -5,7 +5,6 @@
 title = "unitOverrideProcessor"
 keywords = ["grafana","documentation","sdk","@grafana/data"]
 type = "docs"
-draft = true
 +++
 
 ## unitOverrideProcessor variable

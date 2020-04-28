@@ -51,7 +51,7 @@ export function addStandardDataReduceOptions(
       min: 1,
       max: 5000,
     },
-    showIf: options => options.reduceOptions.values,
+    showIf: options => options.reduceOptions.values === true,
   });
 
   builder.addCustomEditor({

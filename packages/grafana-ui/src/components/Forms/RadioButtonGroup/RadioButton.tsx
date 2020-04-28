@@ -2,7 +2,8 @@ import React from 'react';
 import { useTheme, stylesFactory } from '../../../themes';
 import { GrafanaTheme } from '@grafana/data';
 import { css, cx } from 'emotion';
-import { getFocusCss, getPropertiesForButtonSize } from '../commonStyles';
+import { getPropertiesForButtonSize } from '../commonStyles';
+import { focusCss } from '../../../themes/mixins';
 
 export type RadioButtonSize = 'sm' | 'md';
 
@@ -56,7 +57,7 @@ const getRadioButtonStyles = stylesFactory((theme: GrafanaTheme, size: RadioButt
       }
 
       &:focus + label {
-        ${getFocusCss(theme)};
+        ${focusCss(theme)};
         z-index: 3;
       }
 

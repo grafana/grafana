@@ -64,7 +64,7 @@ To show a horizontal line across the whole graph, add a series override and sele
 ## Templating
 
 Instead of hard-coding things like server, application and sensor name in your metric queries, you can use variables in their place.
-Variables are shown as dropdown select boxes at the top of the dashboard. These dropdowns makes it easy to change the data
+Variables are shown as dropdown select boxes at the top of the dashboard. These dropdowns make it easy to change the data
 being displayed in your dashboard.
 
 Check out the [Templating]({{< relref "../../reference/templating.md" >}}) documentation for an introduction to the templating feature and the different
@@ -83,7 +83,7 @@ provides the following functions you can use in the `Query` input field.
 | _metrics(metric)_                | Returns a list of metrics matching the specified `metric` regex.        |
 | _query_\__result(query)_         | Returns a list of Prometheus query result for the `query`.              |
 
-For details of _metric names_, _label names_ and _label values_ are please refer to the [Prometheus documentation](http://prometheus.io/docs/concepts/data_model/#metric-names-and-labels).
+For details of what _metric names_, _label names_ and _label values_ are please refer to the [Prometheus documentation](http://prometheus.io/docs/concepts/data_model/#metric-names-and-labels).
 
 #### Using interval and range variables
 
@@ -96,7 +96,7 @@ Make sure to set the variable's `refresh` trigger to be `On Time Range Change` t
 
 **Example usage:**
 
-Populate a variable with the the busiest 5 request instances based on average QPS over the time range shown in the dashboard:
+Populate a variable with the busiest 5 request instances based on average QPS over the time range shown in the dashboard:
 
 ```
 Query: query_result(topk(5, sum(rate(http_requests_total[$__range])) by (instance)))
@@ -122,7 +122,7 @@ options are enabled, Grafana converts the labels from plain text to a regex comp
 
 ## Annotations
 
-[Annotations]({{< relref "../../reference/annotations.md" >}}) allows you to overlay rich event information on top of graphs. You add annotation
+[Annotations]({{< relref "../../reference/annotations.md" >}}) allow you to overlay rich event information on top of graphs. You add annotation
 queries via the Dashboard menu / Annotations view.
 
 Prometheus supports two ways to query annotations.

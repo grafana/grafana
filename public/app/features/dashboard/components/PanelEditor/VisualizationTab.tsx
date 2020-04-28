@@ -1,7 +1,7 @@
 import React, { useCallback, useState } from 'react';
 import { css } from 'emotion';
 import { GrafanaTheme, PanelPlugin, PanelPluginMeta } from '@grafana/data';
-import { CustomScrollbar, useTheme, stylesFactory, Icon, Input } from '@grafana/ui';
+import { useTheme, stylesFactory, Icon, Input } from '@grafana/ui';
 import { changePanelPlugin } from '../../state/actions';
 import { StoreState } from 'app/types';
 import { PanelModel } from '../../state/PanelModel';
@@ -61,29 +61,24 @@ export const VisualizationTabUnconnected = React.forwardRef<HTMLInputElement, Pr
 
     return (
       <div className={styles.wrapper}>
-        <div className={styles.search}>
-          <Field>
-            <Input
-              value={searchQuery}
-              onChange={e => setSearchQuery(e.currentTarget.value)}
-              onKeyPress={onKeyPress}
-              prefix={<Icon name="filter" className={styles.icon} />}
-              suffix={suffix}
-              placeholder="Filter visualisations"
-              ref={ref}
-            />
-          </Field>
-        </div>
-        <div className={styles.visList}>
-          <CustomScrollbar>
-            <VizTypePicker
-              current={plugin.meta}
-              onTypeChange={onPluginTypeChange}
-              searchQuery={searchQuery}
-              onClose={() => {}}
-            />
-          </CustomScrollbar>
-        </div>
+        <Field>
+          <Input
+            value={searchQuery}
+            onChange={e => setSearchQuery(e.currentTarget.value)}
+            onKeyPress={onKeyPress}
+            prefix={<Icon name="filter" className={styles.icon} />}
+            suffix={suffix}
+            placeholder="Filter visualisations"
+            ref={ref}
+          />
+        </Field>
+
+        <VizTypePicker
+          current={plugin.meta}
+          onTypeChange={onPluginTypeChange}
+          searchQuery={searchQuery}
+          onClose={() => {}}
+        />
       </div>
     );
   }
@@ -96,21 +91,10 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
     wrapper: css`
       display: flex;
       flex-direction: column;
-      flex-grow: 1;
-      max-height: 100%;
-    `,
-    search: css`
-      flex-grow: 0;
-      flex-shrink: 1;
     `,
     searchClear: css`
       color: ${theme.palette.gray60};
       cursor: pointer;
-    `,
-    visList: css`
-      flex-grow: 1;
-      height: 100%;
-      overflow: hidden;
     `,
   };
 });

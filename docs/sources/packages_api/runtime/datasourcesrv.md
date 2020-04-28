@@ -5,7 +5,6 @@
 title = "DataSourceSrv"
 keywords = ["grafana","documentation","sdk","@grafana/runtime"]
 type = "docs"
-draft = true
 +++
 
 ## DataSourceSrv interface
@@ -27,6 +26,7 @@ import { DataSourceSrv } from '@grafana/runtime';
 |  Method | Description |
 |  --- | --- |
 |  [get(name, scopedVars)](#get-method) |  |
+|  [getDataSourceSettingsByUid(uid)](#getdatasourcesettingsbyuid-method) | Returns metadata based on UID. |
 
 ### get method
 
@@ -45,4 +45,23 @@ get(name?: string, scopedVars?: ScopedVars): Promise<DataSourceApi>;
 <b>Returns:</b>
 
 `Promise<DataSourceApi>`
+
+### getDataSourceSettingsByUid method
+
+Returns metadata based on UID.
+
+<b>Signature</b>
+
+```typescript
+getDataSourceSettingsByUid(uid: string): DataSourceInstanceSettings | undefined;
+```
+<b>Parameters</b>
+
+|  Parameter | Type | Description |
+|  --- | --- | --- |
+|  uid | <code>string</code> |  |
+
+<b>Returns:</b>
+
+`DataSourceInstanceSettings | undefined`
 
