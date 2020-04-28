@@ -164,6 +164,14 @@ export class CalculateFieldTransformerEditor extends React.PureComponent<
               checked={!!options.replaceFields}
               onChange={this.onToggleReplaceFields}
             />
+            {!!options.replaceFields && (
+              <Switch
+                label="Keep Time Field"
+                labelClass="width-8"
+                checked={!!options.replaceFields}
+                onChange={this.onToggleReplaceFields}
+              />
+            )}
           </div>
         </div>
       </div>
