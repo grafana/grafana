@@ -105,6 +105,8 @@ const ServiceInfo: React.FC = () => {
         <br />
         Indemnification, working with Grafana Labs on future prioritization, and training from the core Grafana team.
       </div>
+
+      <GetEnterprise />
     </div>
   );
 };
@@ -114,8 +116,6 @@ const FeatureInfo: React.FC = () => {
     <div style={{ paddingRight: '11px' }}>
       <h4>Enhanced Functionality</h4>
       <FeatureListing />
-
-      <GetEnterprise />
     </div>
   );
 };
