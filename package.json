@@ -18,7 +18,7 @@
     "lint:fix": "yarn lint --fix",
     "packages:build": "lerna run clean && lerna run build --ignore @grafana-plugins/input-datasource",
     "packages:docsExtract": "rm -rf ./reports/docs && lerna run docsExtract",
-    "packages:docsToMarkdown": "api-documenter markdown --input-folder ./reports/docs/ --output-folder ./docs/sources/packages_api/ --hugo --draft",
+    "packages:docsToMarkdown": "api-documenter markdown --input-folder ./reports/docs/ --output-folder ./docs/sources/packages_api/ --hugo",
     "packages:lint": "lerna run lint",
     "packages:prepare": "lerna version --no-push --no-git-tag-version --force-publish --exact",
     "packages:publish": "lerna publish from-package --contents dist",

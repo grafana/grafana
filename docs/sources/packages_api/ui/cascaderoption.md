@@ -5,7 +5,6 @@
 title = "CascaderOption"
 keywords = ["grafana","documentation","sdk","@grafana/ui"]
 type = "docs"
-draft = true
 +++
 
 ## CascaderOption interface

@@ -5,7 +5,6 @@
 title = "getDecimalsForValue"
 keywords = ["grafana","documentation","sdk","@grafana/data"]
 type = "docs"
-draft = true
 +++
 
 ## getDecimalsForValue() function

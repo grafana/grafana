@@ -5,7 +5,6 @@
 title = "DataSourceQueryType"
 keywords = ["grafana","documentation","sdk","@grafana/data"]
 type = "docs"
-draft = true
 +++
 
 ## DataSourceQueryType type

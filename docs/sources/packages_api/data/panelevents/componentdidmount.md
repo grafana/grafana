@@ -5,7 +5,6 @@
 title = "componentDidMount"
 keywords = ["grafana","documentation","sdk","@grafana/data"]
 type = "docs"
-draft = true
 +++
 
 ## PanelEvents.componentDidMount variable

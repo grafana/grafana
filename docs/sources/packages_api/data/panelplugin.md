@@ -5,7 +5,6 @@
 title = "PanelPlugin"
 keywords = ["grafana","documentation","sdk","@grafana/data"]
 type = "docs"
-draft = true
 +++
 
 ## PanelPlugin class

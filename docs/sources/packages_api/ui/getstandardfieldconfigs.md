@@ -5,7 +5,6 @@
 title = "getStandardFieldConfigs"
 keywords = ["grafana","documentation","sdk","@grafana/ui"]
 type = "docs"
-draft = true
 +++
 
 ## getStandardFieldConfigs variable

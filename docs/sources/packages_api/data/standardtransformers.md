@@ -5,7 +5,6 @@
 title = "standardTransformers"
 keywords = ["grafana","documentation","sdk","@grafana/data"]
 type = "docs"
-draft = true
 +++
 
 ## standardTransformers variable
@@ -28,6 +27,7 @@ standardTransformers: {
     calculateFieldTransformer: import("..").DataTransformerInfo<import("./transformers/calculateField").CalculateFieldTransformerOptions>;
     seriesToColumnsTransformer: import("..").DataTransformerInfo<import("./transformers/seriesToColumns").SeriesToColumnsOptions>;
     renameFieldsTransformer: import("..").DataTransformerInfo<import("./transformers/rename").RenameFieldsTransformerOptions>;
+    labelsToFieldsTransformer: import("..").DataTransformerInfo<import("./transformers/labelsToFields").LabelsToFieldsOptions>;
 }
 ```
 <b>Import</b>

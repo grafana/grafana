@@ -5,7 +5,6 @@
 title = "AsyncSelect"
 keywords = ["grafana","documentation","sdk","@grafana/ui"]
 type = "docs"
-draft = true
 +++
 
 ## AsyncSelect() function

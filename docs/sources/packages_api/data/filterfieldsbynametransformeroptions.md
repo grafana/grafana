@@ -5,7 +5,6 @@
 title = "FilterFieldsByNameTransformerOptions"
 keywords = ["grafana","documentation","sdk","@grafana/data"]
 type = "docs"
-draft = true
 +++
 
 ## FilterFieldsByNameTransformerOptions interface
@@ -24,15 +23,15 @@ import { FilterFieldsByNameTransformerOptions } from '@grafana/data';
 
 |  Property | Type | Description |
 |  --- | --- | --- |
-|  [exclude](#exclude-property) | <code>string</code> |  |
-|  [include](#include-property) | <code>string</code> |  |
+|  [exclude](#exclude-property) | <code>string[]</code> |  |
+|  [include](#include-property) | <code>string[]</code> |  |
 
 ### exclude property
 
 <b>Signature</b>
 
 ```typescript
-exclude?: string;
+exclude?: string[];
 ```
 
 ### include property
@@ -40,5 +39,5 @@ exclude?: string;
 <b>Signature</b>
 
 ```typescript
-include?: string;
+include?: string[];
 ```

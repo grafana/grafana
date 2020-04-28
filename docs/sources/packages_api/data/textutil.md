@@ -5,7 +5,6 @@
 title = "textUtil"
 keywords = ["grafana","documentation","sdk","@grafana/data"]
 type = "docs"
-draft = true
 +++
 
 ## textUtil variable

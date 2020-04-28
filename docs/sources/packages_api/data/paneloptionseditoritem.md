@@ -5,7 +5,6 @@
 title = "PanelOptionsEditorItem"
 keywords = ["grafana","documentation","sdk","@grafana/data"]
 type = "docs"
-draft = true
 +++
 
 ## PanelOptionsEditorItem interface

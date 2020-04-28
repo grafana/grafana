@@ -5,7 +5,6 @@
 title = "getLogLevelFromKey"
 keywords = ["grafana","documentation","sdk","@grafana/data"]
 type = "docs"
-draft = true
 +++
 
 ## getLogLevelFromKey() function

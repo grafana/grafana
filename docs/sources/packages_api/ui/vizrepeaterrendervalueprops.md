@@ -5,7 +5,6 @@
 title = "VizRepeaterRenderValueProps"
 keywords = ["grafana","documentation","sdk","@grafana/ui"]
 type = "docs"
-draft = true
 +++
 
 ## VizRepeaterRenderValueProps interface

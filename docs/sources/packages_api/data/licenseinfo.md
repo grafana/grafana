@@ -5,7 +5,6 @@
 title = "LicenseInfo"
 keywords = ["grafana","documentation","sdk","@grafana/data"]
 type = "docs"
-draft = true
 +++
 
 ## LicenseInfo interface

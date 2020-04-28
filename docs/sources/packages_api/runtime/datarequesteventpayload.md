@@ -5,7 +5,6 @@
 title = "DataRequestEventPayload"
 keywords = ["grafana","documentation","sdk","@grafana/runtime"]
 type = "docs"
-draft = true
 +++
 
 ## DataRequestEventPayload interface

@@ -5,7 +5,6 @@
 title = "EchoSrv"
 keywords = ["grafana","documentation","sdk","@grafana/runtime"]
 type = "docs"
-draft = true
 +++
 
 ## EchoSrv interface

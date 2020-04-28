@@ -5,7 +5,6 @@
 title = "getTagColorsFromName"
 keywords = ["grafana","documentation","sdk","@grafana/ui"]
 type = "docs"
-draft = true
 +++
 
 ## getTagColorsFromName() function
