@@ -8,18 +8,13 @@ import { ArrayVector } from '../../vector';
 import { doStandardCalcs } from '../fieldReducer';
 import { seriesToColumnsTransformer } from './seriesToColumns';
 import { getTimeField } from '../../dataframe';
+import defaults from 'lodash/defaults';
+import { BinaryOperationID } from '../../utils/binaryOperators';
 
-enum CalculateFieldMode {
+export enum CalculateFieldMode {
   ReduceRow = 'reduceRow',
   BinaryOperaticon = 'binary',
   Scale = 'scale',
-}
-
-enum BinaryOperator {
-  Add = '+',
-  Subtract = '-',
-  Divide = '/',
-  Multiply = '*',
 }
 
 interface ReduceOptions {
@@ -30,22 +25,38 @@ interface ReduceOptions {
 
 interface BinaryOptions {
   left: string;
-  operator: BinaryOperator;
+  operator: BinaryOperationID;
   right: string;
 }
 
 interface ScaleOptions {
   left: string;
-  operator: BinaryOperator;
-  value: number;
+  operator: BinaryOperationID;
+  right: number;
 }
+
+const defaultReduceOptions: ReduceOptions = {
+  reducer: ReducerID.sum,
+};
+
+const defaultBinaryOptions: BinaryOptions = {
+  left: '',
+  operator: BinaryOperationID.Add,
+  right: '',
+};
+
+const defaultScaleOptions: ScaleOptions = {
+  left: '',
+  operator: BinaryOperationID.Multiply,
+  right: 1,
+};
 
 export interface CalculateFieldTransformerOptions {
   // True/False or auto
   timeSeries?: boolean;
-  mode: CalculateFieldMode;
+  mode: CalculateFieldMode; // defaults to 'reduce'
 
-  // One of the following options is supported
+  // Only one should be filled
   reduce?: ReduceOptions;
   binary?: BinaryOptions;
   scale?: ScaleOptions;
@@ -55,20 +66,27 @@ export interface CalculateFieldTransformerOptions {
 
   // Output field properties
   alias?: string; // The output field name
-  field?: FieldConfig;
+  config?: FieldConfig;
 }
 
 /**
  * Return true if every frame has a time column
  */
-function isTimeSeris(data: DataFrame[]): boolean {
+function findTimeSeriesName(data: DataFrame[]): string | undefined {
+  let name: string | undefined = undefined;
   for (const frame of data) {
     const { timeField } = getTimeField(frame);
     if (!timeField) {
-      return false;
+      return undefined; // Not timeseries
+    }
+    if (!name) {
+      name = timeField.name;
+    } else if (name !== timeField.name) {
+      // Second frame has a different time column?!
+      return undefined;
     }
   }
-  return true;
+  return name;
 }
 
 type FieldCreator = (data: DataFrame) => Field;
@@ -78,21 +96,38 @@ export const calculateFieldTransformer: DataTransformerInfo<CalculateFieldTransf
   name: 'Add field from calculation',
   description: 'Use the row values to calculate a new field',
   defaultOptions: {
-    reducer: ReducerID.sum,
+    mode: CalculateFieldMode.ReduceRow,
+    reduce: {
+      reducer: ReducerID.sum,
+    },
   },
   transformer: options => (data: DataFrame[]) => {
     // Assume timeseries should first be joined by time
-    const timeSeries = isTimeSeris(data);
-    if (data.length > 1 && timeSeries && options.timeSeries !== false) {
+    const timeFieldName = findTimeSeriesName(data);
+    if (data.length > 1 && timeFieldName && options.timeSeries !== false) {
       data = seriesToColumnsTransformer.transformer({
-        byField: 'Time',
+        byField: timeFieldName,
       })(data);
     }
 
-    const creator = getReduceRowCreator(options.reduce!);
+    const mode = options.mode ?? CalculateFieldMode.ReduceRow;
+    let creator: FieldCreator | undefined = undefined;
+    if (mode === CalculateFieldMode.ReduceRow) {
+      creator = getReduceRowCreator(defaults(options.reduce, defaultReduceOptions));
+    } else if (mode === CalculateFieldMode.BinaryOperaticon) {
+      creator = getBinaryCreator(defaults(options.binary, defaultBinaryOptions));
+    } else if (mode === CalculateFieldMode.Scale) {
+      creator = getScaleCreator(defaults(options.scale, defaultScaleOptions));
+    }
+
+    // Nothing configured
+    if (!creator) {
+      return data;
+    }
 
     return data.map(frame => {
-      const field = creator(frame);
+      // delegate field creation to the specific function
+      const field = creator!(frame);
       if (!field) {
         return frame;
       }
@@ -100,8 +135,8 @@ export const calculateFieldTransformer: DataTransformerInfo<CalculateFieldTransf
       if (options.alias) {
         field.name = options.alias;
       }
-      if (options.field) {
-        field.config = options.field;
+      if (options.config) {
+        field.config = options.config;
       }
 
       let fields: Field[] = [];
@@ -117,7 +152,6 @@ export const calculateFieldTransformer: DataTransformerInfo<CalculateFieldTransf
       } else {
         fields = [...frame.fields, field];
       }
-
       return {
         ...frame,
         fields,
@@ -179,16 +213,30 @@ function getReduceRowCreator(options: ReduceOptions): FieldCreator {
   };
 }
 
-function valuesFromBinary(options: BinaryOptions, data: DataFrame[]): Vector[] {
-  return data.map(frame => {
-    // Empty array
-    return new ArrayVector([]);
-  });
+function getBinaryCreator(options: BinaryOptions): FieldCreator {
+  // TODO
+  // Left
+  // Right
+  return (frame: DataFrame) => {
+    return {
+      name: 'math',
+      type: FieldType.number,
+      config: {},
+      values: new ArrayVector([]),
+    };
+  };
 }
 
-function valuesFromScale(options: ScaleOptions, data: DataFrame[]): Vector[] {
-  return data.map(frame => {
-    // Empty array
-    return new ArrayVector([]);
-  });
+function getScaleCreator(options: ScaleOptions): FieldCreator {
+  // TODO
+  // Left
+  // Right
+  return (frame: DataFrame) => {
+    return {
+      name: 'math',
+      type: FieldType.number,
+      config: {},
+      values: new ArrayVector([]),
+    };
+  };
 }
