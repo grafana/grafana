@@ -22,17 +22,19 @@ export const DashboardSearch: FC<Props> = memo(({ onCloseSearch, folder }) => {
 
   // The main search input has own keydown handler, also TagFilter uses input, so
   // clicking Esc when tagFilter is active shouldn't close the whole search overlay
-  const onClose = () => {
-    onCloseSearch();
+  const onOverlayKeydown = (event: React.KeyboardEvent<HTMLElement>) => {
+    if (event.key === 'Escape' && (event.target as HTMLElement).tagName !== 'INPUT') {
+      onCloseSearch();
+    }
   };
 
   return (
-    <div tabIndex={0} className={styles.overlay}>
+    <div tabIndex={0} className={styles.overlay} onKeyDown={onOverlayKeydown}>
       <div className={styles.container}>
         <div className={styles.searchField}>
           <SearchField query={query} onChange={onQueryChange} onKeyDown={onKeyDown} autoFocus clearable />
           <div className={styles.closeBtn}>
-            <IconButton name="times" surface="panel" onClick={onClose} size="xxl" tooltip="Close search" />
+            <IconButton name="times" surface="panel" onClick={onCloseSearch} size="xxl" tooltip="Close search" />
           </div>
         </div>
         <div className={styles.search}>
