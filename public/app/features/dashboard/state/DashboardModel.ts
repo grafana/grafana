@@ -60,6 +60,7 @@ export class DashboardModel {
   panels: PanelModel[];
   panelInEdit?: PanelModel;
   panelInView: PanelModel;
+  hideToolbar?: boolean;
 
   // ------------------
   // not persisted
@@ -110,6 +111,7 @@ export class DashboardModel {
     this.links = data.links || [];
     this.gnetId = data.gnetId || null;
     this.panels = _.map(data.panels || [], (panelData: any) => new PanelModel(panelData));
+    this.hideToolbar = data.hideToolbar;
 
     this.resetOriginalVariables(true);
     this.resetOriginalTime();
