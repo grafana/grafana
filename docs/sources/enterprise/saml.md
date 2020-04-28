@@ -141,7 +141,7 @@ role_values_grafana_admin = superadmin
 
 Refer to [Organization roles]({{< relref "../permissions/organization_roles.md" >}}) for more information about roles and permissions in Grafana.
 
-**Important**: when role sync is configured, any changes of user roles and organization membership made in Grafana will be overwritten on next user login. Assign user organizations and roles in the IdP instead.
+**Important**: when role sync is configured, any changes of user roles and organization membership made manually in Grafana will be overwritten on next user login. Assign user organizations and roles in the IdP instead.
 
 ### Configure organization mapping
 
@@ -156,7 +156,7 @@ Organization mapping allows you to assign users to particular organization in Gr
 
 > Only available in Grafana v7.0+
 
-With `allowed_organizations` option you can specify a list of organizations user must have a membership of to be able to log in into Grafana.
+With the `allowed_organizations` option you can specify a list of organizations where the user must be a member of at least one of them to be able to log in to Grafana.
 
 ## Example SAML configuration
 
