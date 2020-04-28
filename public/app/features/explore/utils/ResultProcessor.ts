@@ -48,10 +48,9 @@ export class ResultProcessor {
       return null;
     }
 
-    // For now ignore time series
-    // We can change this later, just need to figure out how to
-    // Ignore time series only for prometheus
-    const onlyTables = this.dataFrames.filter(frame => !isTimeSeries(frame));
+    const onlyTables = this.dataFrames.filter(frame =>
+      shouldShowInTable(frame, this.state.datasourceInstance?.meta.id)
+    );
 
     if (onlyTables.length === 0) {
       return null;
@@ -113,7 +112,7 @@ export class ResultProcessor {
   }
 }
 
-export function isTimeSeries(frame: DataFrame, datasource?: string): boolean {
+function isTimeSeries(frame: DataFrame, datasource?: string): boolean {
   // TEMP: Temporary hack. Remove when logs/metrics unification is done
   if (datasource && datasource === 'cloudwatch') {
     return isTimeSeriesCloudWatch(frame);
@@ -128,8 +127,25 @@ export function isTimeSeries(frame: DataFrame, datasource?: string): boolean {
   return false;
 }
 
+/* In Explore table, we don't want to show time-series.
+ * EXCEPTION: For Prometheus, we want to show time-series when they are result of instant queries.
+ */
+function shouldShowInTable(frame: DataFrame, datasource?: string) {
+  // DataFrames with exactly 2 fields, when first field.type === time are time-series.
+  if (frame.fields.length === 2 && frame.fields[0].type === FieldType.time) {
+    // Hack: Prometheus instant vectors's value has always length === 1.
+    // https://prometheus.io/docs/prometheus/latest/querying/api/#instant-vectors
+    if (datasource && datasource === 'prometheus' && frame.length === 1) {
+      return true;
+    }
+    return false;
+  }
+
+  return true;
+}
+
 // TEMP: Temporary hack. Remove when logs/metrics unification is done
-export function isTimeSeriesCloudWatch(frame: DataFrame): boolean {
+function isTimeSeriesCloudWatch(frame: DataFrame): boolean {
   return (
     frame.fields.some(field => field.type === FieldType.time) &&
     frame.fields.some(field => field.type === FieldType.number)
