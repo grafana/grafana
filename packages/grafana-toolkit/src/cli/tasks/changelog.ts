@@ -140,7 +140,7 @@ function parseLink(s: any) {
 
   let m;
   while ((m = regex.exec(s))) {
-    const [_, v, k] = m;
+    const [, v, k] = m;
     output[k] = v;
   }
 
