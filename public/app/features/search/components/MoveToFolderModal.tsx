@@ -44,7 +44,7 @@ export const MoveToFolderModal: FC<Props> = ({ results, onMoveItems, isOpen, onD
     }
   };
 
-  return (
+  return isOpen ? (
     <Modal
       className={styles.modal}
       title="Choose Dashboard Folder"
@@ -71,7 +71,7 @@ export const MoveToFolderModal: FC<Props> = ({ results, onMoveItems, isOpen, onD
         </HorizontalGroup>
       </>
     </Modal>
-  );
+  ) : null;
 };
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
