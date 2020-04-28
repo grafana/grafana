@@ -17,14 +17,14 @@ type OAuthInfo struct {
 	TlsClientKey           string
 	TlsClientCa            string
 	TlsSkipVerify          bool
-	GroupMappings          []OAuthGroupMapping
+	GroupMappings          []OAuthGroupMapping `ini:",,,nonunique"`
 }
 
 type OAuthGroupMapping struct {
-	RoleAttributePath string
+	RoleAttributePath string `ini:"role_attribute_path"`
 	Role              string
-	OrgId             int
-	IsGrafanaAdmin    bool
+	OrgId             int  `ini:"org_id"`
+	IsGrafanaAdmin    bool `ini:"grafana_admin"`
 }
 
 type OAuther struct {

@@ -465,7 +465,9 @@ func loadSpecifiedConfigFile(configFile string, masterFile *ini.File) error {
 		}
 	}
 
-	userConfig, err := ini.Load(configFile)
+	userConfig, err := ini.LoadSources(ini.LoadOptions{
+		AllowNonUniqueSections: true,
+	}, configFile)
 	if err != nil {
 		return fmt.Errorf("Failed to parse %v, %v", configFile, err)
 	}
@@ -508,7 +510,9 @@ func (cfg *Cfg) loadConfiguration(args *CommandLineArgs) (*ini.File, error) {
 	}
 
 	// load defaults
-	parsedFile, err := ini.Load(defaultConfigFile)
+	parsedFile, err := ini.LoadSources(ini.LoadOptions{
+		AllowNonUniqueSections: true,
+	}, defaultConfigFile)
 	if err != nil {
 		fmt.Printf("Failed to parse defaults.ini, %v\n", err)
 		os.Exit(1)
