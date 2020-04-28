@@ -5,7 +5,6 @@
 title = "dataSnapshotLoad"
 keywords = ["grafana","documentation","sdk","@grafana/data"]
 type = "docs"
-draft = true
 +++
 
 ## PanelEvents.dataSnapshotLoad variable

@@ -5,7 +5,6 @@
 title = "getDataSourceSrv"
 keywords = ["grafana","documentation","sdk","@grafana/runtime"]
 type = "docs"
-draft = true
 +++
 
 ## getDataSourceSrv() function

@@ -141,24 +141,24 @@ Macros can be used within a query to simplify syntax and allow for dynamic parts
 
 Macro example | Description
 ------------ | -------------
-*$__time(dateColumn)* | Will be replaced by an expression to rename the column to `time`. For example, *dateColumn as time*
-*$__timeSec(dateColumn)* | Will be replaced by an expression to rename the column to `time` and converting the value to Unix timestamp. For example, *extract(epoch from dateColumn) as time*
-*$__timeFilter(dateColumn)* | Will be replaced by a time range filter using the specified column name. For example, *dateColumn BETWEEN '2017-04-21T05:01:17Z' AND '2017-04-21T05:06:17Z'*
-*$__timeFrom()* | Will be replaced by the start of the currently active time selection. For example, *'2017-04-21T05:01:17Z'*
-*$__timeTo()* | Will be replaced by the end of the currently active time selection. For example, *'2017-04-21T05:06:17Z'*
-*$__timeGroup(dateColumn,'5m')* | Will be replaced by an expression usable in a GROUP BY clause. For example, *(extract(epoch from dateColumn)/300)::bigint*300*
-*$__timeGroup(dateColumn,'5m', 0)* | Same as above but with a fill parameter so missing points in that series will be added by Grafana and 0 will be used as the value.
-*$__timeGroup(dateColumn,'5m', NULL)* | Same as above but NULL will be used as value for missing points.
-*$__timeGroup(dateColumn,'5m', previous)* | Same as above but the previous value in that series will be used as fill value. If no value has been seen yet, NULL will be used (only available in Grafana 5.3+).
-*$__timeGroupAlias(dateColumn,'5m')* | Will be replaced with an expression identical to $__timeGroup, but with an added column alias (only available in Grafana 5.3+).
-*$__unixEpochFilter(dateColumn)* | Will be replaced by a time range filter using the specified column name with times represented as Unix timestamps. For example, *dateColumn >= 1494410783 AND dateColumn <= 1494497183*
-*$__unixEpochFrom()* | Will be replaced by the start of the currently active time selection as Unix timestamp. For example, *1494410783*
-*$__unixEpochTo()* | Will be replaced by the end of the currently active time selection as Unix timestamp. For example, *1494497183*
-*$__unixEpochNanoFilter(dateColumn)* | Will be replaced by a time range filter using the specified column name with times represented as nanosecond timestamps. For example, *dateColumn >= 1494410783152415214 AND dateColumn <= 1494497183142514872*
-*$__unixEpochNanoFrom()* | Will be replaced by the start of the currently active time selection as nanosecond timestamp. For example, *1494410783152415214*
-*$__unixEpochNanoTo()* | Will be replaced by the end of the currently active time selection as Unix timestamp. For example, *1494497183142514872*
-*$__unixEpochGroup(dateColumn,'5m', [fillmode])* | Same as $__timeGroup, but for times stored as Unix timestamp (only available in Grafana 5.3+).
-*$__unixEpochGroupAlias(dateColumn,'5m', [fillmode])* | Same as above, but also adds a column alias (only available in Grafana 5.3+).
+*`$__time(dateColumn)`* | Will be replaced by an expression to rename the column to `time`. For example, *dateColumn as time*
+*`$__timeSec(dateColumn)`* | Will be replaced by an expression to rename the column to `time` and converting the value to Unix timestamp. For example, *extract(epoch from dateColumn) as time*
+*`$__timeFilter(dateColumn)`* | Will be replaced by a time range filter using the specified column name. For example, *dateColumn BETWEEN '2017-04-21T05:01:17Z' AND '2017-04-21T05:06:17Z'*
+*`$__timeFrom()`* | Will be replaced by the start of the currently active time selection. For example, *'2017-04-21T05:01:17Z'*
+*`$__timeTo()`* | Will be replaced by the end of the currently active time selection. For example, *'2017-04-21T05:06:17Z'*
+*`$__timeGroup(dateColumn,'5m')`* | Will be replaced by an expression usable in a GROUP BY clause. For example, *(extract(epoch from dateColumn)/300)::bigint*300*
+*`$__timeGroup(dateColumn,'5m', 0)`* | Same as above but with a fill parameter so missing points in that series will be added by Grafana and 0 will be used as the value.
+*`$__timeGroup(dateColumn,'5m', NULL)`* | Same as above but NULL will be used as value for missing points.
+*`$__timeGroup(dateColumn,'5m', previous)`* | Same as above but the previous value in that series will be used as fill value. If no value has been seen yet, NULL will be used (only available in Grafana 5.3+).
+*`$__timeGroupAlias(dateColumn,'5m')`* | Will be replaced with an expression identical to $__timeGroup, but with an added column alias (only available in Grafana 5.3+).
+*`$__unixEpochFilter(dateColumn)`* | Will be replaced by a time range filter using the specified column name with times represented as Unix timestamps. For example, *dateColumn >= 1494410783 AND dateColumn <= 1494497183*
+*`$__unixEpochFrom()`* | Will be replaced by the start of the currently active time selection as Unix timestamp. For example, *1494410783*
+*`$__unixEpochTo()`* | Will be replaced by the end of the currently active time selection as Unix timestamp. For example, *1494497183*
+*`$__unixEpochNanoFilter(dateColumn)`* | Will be replaced by a time range filter using the specified column name with times represented as nanosecond timestamps. For example, *dateColumn >= 1494410783152415214 AND dateColumn <= 1494497183142514872*
+*`$__unixEpochNanoFrom()`* | Will be replaced by the start of the currently active time selection as nanosecond timestamp. For example, *1494410783152415214*
+*`$__unixEpochNanoTo()`* | Will be replaced by the end of the currently active time selection as Unix timestamp. For example, *1494497183142514872*
+*`$__unixEpochGroup(dateColumn,'5m', [fillmode])`* | Same as $__timeGroup, but for times stored as Unix timestamp (only available in Grafana 5.3+).
+*`$__unixEpochGroupAlias(dateColumn,'5m', [fillmode])`* | Same as above, but also adds a column alias (only available in Grafana 5.3+).
 
 We plan to add many more macros. If you have suggestions for what macros you would like to see, please [open an issue](https://github.com/grafana/grafana) in our GitHub repo.
 

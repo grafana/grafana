@@ -5,7 +5,6 @@
 title = "VAR_FIELD_NAME"
 keywords = ["grafana","documentation","sdk","@grafana/data"]
 type = "docs"
-draft = true
 +++
 
 ## VAR\_FIELD\_NAME variable

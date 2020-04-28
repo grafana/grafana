@@ -276,6 +276,15 @@ func init() {
 	})
 
 	registerScenario(&Scenario{
+		Id:   "arrow",
+		Name: "Load Apache Arrow Data",
+		Handler: func(query *tsdb.Query, context *tsdb.TsdbQuery) *tsdb.QueryResult {
+			// Real work is in javascript client
+			return tsdb.NewQueryResult()
+		},
+	})
+
+	registerScenario(&Scenario{
 		Id:   "table_static",
 		Name: "Table Static",
 

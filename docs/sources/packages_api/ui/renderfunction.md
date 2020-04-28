@@ -5,7 +5,6 @@
 title = "RenderFunction"
 keywords = ["grafana","documentation","sdk","@grafana/ui"]
 type = "docs"
-draft = true
 +++
 
 ## RenderFunction type

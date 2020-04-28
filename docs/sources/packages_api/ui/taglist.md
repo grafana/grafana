@@ -5,7 +5,6 @@
 title = "TagList"
 keywords = ["grafana","documentation","sdk","@grafana/ui"]
 type = "docs"
-draft = true
 +++
 
 ## TagList variable

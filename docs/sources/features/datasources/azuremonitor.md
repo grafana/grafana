@@ -332,3 +332,34 @@ There are some important caveats to remember:
 - Currently, four default dashboard variables are supported: `$__timeFilter()`, `$__from`, `$__to`, and `$__interval`. If you're searching in timestamped data, replace the beginning of your where clause to `where $__timeFilter()`. Dashboard changes by time region are handled as you'd expect, as long as you leave the name of the `timestamp` column alone. Likewise, `$__interval` will automatically change based on the dashboard's time region _and_ the width of the chart being displayed. Use it in bins, so `bin(timestamp,$__interval)` changes into something like `bin(timestamp,1s)`. Use `$__from` and `$__to` if you just want the formatted dates to be inserted.
 
 - Templated dashboard variables are not yet supported! They will come in a future version.
+
+## Configure the data source with provisioning
+
+It's now possible to configure data sources using config files with Grafana's provisioning system. You can read more about how it works and all the settings you can set for data sources on the [provisioning docs page]({{< relref "../../administration/provisioning/#datasources" >}})
+
+Here are some provisioning examples for this data source.
+
+```yaml
+# config file version
+apiVersion: 1
+
+datasources:
+  - name: Azure Monitor
+    type: grafana-azure-monitor-datasource
+    access: proxy
+    jsonData:
+      appInsightsAppId: <app-insights-app-id>
+      clientId: <client-id>
+      cloudName: azuremonitor
+      subscriptionId: <subscription-id>
+      tenantId: <tenant-id>
+      logAnalyticsClientId: <log-analytics-client-id>
+      logAnalyticsDefaultWorkspace: <log-analytics-default-workspace>
+      logAnalyticsSubscriptionId: <log-analytics-subscription-id>
+      logAnalyticsTenantId: <log-analytics-tenant-id>
+    secureJsonData:
+      clientSecret: <client-secret>
+      appInsightsApiKey: <app-insights-api-key>
+      logAnalyticsClientSecret: <log-analytics-client-secret>
+    version: 1
+```

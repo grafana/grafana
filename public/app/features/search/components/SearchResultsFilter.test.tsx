@@ -83,8 +83,8 @@ describe('SearchResultsFilter', () => {
     wrapper
       .find({ placeholder: 'Filter by tag' })
       .at(0)
-      .prop('onChange')(tags[0]);
+      .prop('onChange')([tags[0]]);
     expect(mockFilterByTags).toHaveBeenCalledTimes(1);
-    expect(mockFilterByTags).toHaveBeenCalledWith(tags[0]);
+    expect(mockFilterByTags).toHaveBeenCalledWith(['tag1']);
   });
 });

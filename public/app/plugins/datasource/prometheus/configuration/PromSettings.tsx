@@ -25,12 +25,12 @@ export const PromSettings = (props: Props) => {
             <FormField
               label="Scrape interval"
               labelWidth={13}
-              placeholder="15s"
               inputEl={
                 <Input
                   className="width-6"
                   value={value.jsonData.timeInterval}
                   spellCheck={false}
+                  placeholder="15s"
                   onChange={onChangeHandler('timeInterval', value, onChange)}
                   validationEvents={promSettingsValidationEvents}
                 />

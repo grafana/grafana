@@ -6,7 +6,6 @@ import { CloudWatchDatasource } from '../datasource';
 import { QueryInlineField } from './';
 import { MetricsQueryEditor } from './MetricsQueryEditor';
 import LogsQueryEditor from './LogsQueryEditor';
-import { config } from '@grafana/runtime';
 
 export type Props = ExploreQueryFieldProps<CloudWatchDatasource, CloudWatchQuery>;
 
@@ -25,22 +24,19 @@ export class PanelQueryEditor extends PureComponent<Props, State> {
 
   render() {
     const { queryMode } = this.state;
-    const cloudwatchLogsDisabled = !config.featureToggles.cloudwatchLogs;
 
     return (
       <>
-        {!cloudwatchLogsDisabled && (
-          <QueryInlineField label="Query Mode">
-            <Segment
-              value={queryMode}
-              options={[
-                { label: 'Metrics', value: ExploreMode.Metrics },
-                { label: 'Logs', value: ExploreMode.Logs },
-              ]}
-              onChange={({ value }) => this.onQueryModeChange(value ?? ExploreMode.Metrics)}
-            />
-          </QueryInlineField>
-        )}
+        <QueryInlineField label="Query Mode">
+          <Segment
+            value={queryMode}
+            options={[
+              { label: 'Metrics', value: ExploreMode.Metrics },
+              { label: 'Logs', value: ExploreMode.Logs },
+            ]}
+            onChange={({ value }) => this.onQueryModeChange(value ?? ExploreMode.Metrics)}
+          />
+        </QueryInlineField>
         {queryMode === ExploreMode.Logs ? <LogsQueryEditor {...this.props} /> : <MetricsQueryEditor {...this.props} />}
       </>
     );

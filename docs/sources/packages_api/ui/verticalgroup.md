@@ -5,7 +5,6 @@
 title = "VerticalGroup"
 keywords = ["grafana","documentation","sdk","@grafana/ui"]
 type = "docs"
-draft = true
 +++
 
 ## VerticalGroup variable
@@ -15,7 +14,7 @@ draft = true
 <b>Signature</b>
 
 ```typescript
-VerticalGroup: React.FC<Omit<LayoutProps, 'orientation'>>
+VerticalGroup: React.FC<Omit<LayoutProps, 'orientation' | 'wrap'>>
 ```
 <b>Import</b>
 
