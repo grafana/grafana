@@ -100,8 +100,11 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
     this.directUrl = instanceSettings.jsonData.directUrl;
     this.resultTransformer = new ResultTransformer(templateSrv);
     this.ruleMappings = {};
-    this.languageProvider = new PrometheusLanguageProvider(this);
     this.customQueryParameters = new URLSearchParams(instanceSettings.jsonData.customQueryParameters);
+
+    if (!instanceSettings.jsonData.disableLanguageProvider) {
+      this.languageProvider = new PrometheusLanguageProvider(this);
+    }
   }
 
   init = () => {

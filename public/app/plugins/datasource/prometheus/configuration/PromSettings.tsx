@@ -1,6 +1,6 @@
 import React, { SyntheticEvent } from 'react';
 import { EventsWithValidation, InlineFormLabel, regexValidation, LegacyForms } from '@grafana/ui';
-const { Select, Input, FormField } = LegacyForms;
+const { Select, Input, FormField, Switch } = LegacyForms;
 import { DataSourceSettings, SelectableValue } from '@grafana/data';
 import { PromOptions } from '../types';
 
@@ -75,11 +75,19 @@ export const PromSettings = (props: Props) => {
       </div>
       <h3 className="page-heading">Misc</h3>
       <div className="gf-form-group">
+        <div className="gf-form">
+          <Switch
+            label="Disable query editor metric/label name lookup"
+            labelClass="width-18"
+            checked={value.jsonData.disableLanguageProvider}
+            onChange={onChangeHandlerSwitch('disableLanguageProvider', value, onChange)}
+          />
+        </div>
         <div className="gf-form-inline">
           <div className="gf-form max-width-30">
             <FormField
               label="Custom query parameters"
-              labelWidth={14}
+              labelWidth={18}
               tooltip="Add Custom parameters to Prometheus or Thanos queries."
               inputEl={
                 <Input
@@ -127,6 +135,18 @@ const onChangeHandler = (key: keyof PromOptions, value: Props['value'], onChange
     jsonData: {
       ...value.jsonData,
       [key]: getValueFromEventItem(eventItem),
+    },
+  });
+};
+
+const onChangeHandlerSwitch = (key: keyof PromOptions, value: Props['value'], onChange: Props['onChange']) => (
+  eventItem: SyntheticEvent<HTMLInputElement>
+) => {
+  onChange({
+    ...value,
+    jsonData: {
+      ...value.jsonData,
+      [key]: eventItem.currentTarget.checked,
     },
   });
 };
