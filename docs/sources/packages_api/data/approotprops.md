@@ -5,7 +5,6 @@
 title = "AppRootProps"
 keywords = ["grafana","documentation","sdk","@grafana/data"]
 type = "docs"
-draft = true
 +++
 
 ## AppRootProps interface

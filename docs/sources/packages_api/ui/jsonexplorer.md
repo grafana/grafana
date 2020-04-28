@@ -5,7 +5,6 @@
 title = "JsonExplorer"
 keywords = ["grafana","documentation","sdk","@grafana/ui"]
 type = "docs"
-draft = true
 +++
 
 ## JsonExplorer class

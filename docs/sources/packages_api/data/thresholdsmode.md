@@ -5,7 +5,6 @@
 title = "ThresholdsMode"
 keywords = ["grafana","documentation","sdk","@grafana/data"]
 type = "docs"
-draft = true
 +++
 
 ## ThresholdsMode enum

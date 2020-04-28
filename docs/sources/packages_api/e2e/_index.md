@@ -5,7 +5,6 @@
 title = "@grafana/e2e"
 keywords = ["grafana","documentation","sdk","@grafana/e2e"]
 type = "docs"
-draft = true
 +++
 
 ## @grafana/e2e package

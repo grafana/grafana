@@ -5,7 +5,6 @@
 title = "registerEchoBackend"
 keywords = ["grafana","documentation","sdk","@grafana/runtime"]
 type = "docs"
-draft = true
 +++
 
 ## registerEchoBackend variable
