@@ -80,7 +80,6 @@ export class GettingStarted extends PureComponent<PanelProps, State> {
   };
 
   render() {
-    const { width } = this.props;
     const { checksDone, currentStep, steps } = this.state;
 
     if (!checksDone) {
@@ -102,7 +101,7 @@ export class GettingStarted extends PureComponent<PanelProps, State> {
               <h1>{step.heading}</h1>
               <p>{step.subheading}</p>
             </div>
-            <Help panelWidth={width} />
+            <Help />
           </div>
           <Step step={step} />
         </div>

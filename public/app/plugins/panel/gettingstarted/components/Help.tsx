@@ -1,20 +1,16 @@
-import React, { FC } from 'react';
+import React from 'react';
 import { css } from 'emotion';
-import { GrafanaTheme, SelectableValue } from '@grafana/data';
+import { GrafanaTheme } from '@grafana/data';
 import { Button, stylesFactory, useTheme } from '@grafana/ui';
 
-const helpOptions: Array<SelectableValue<string>> = [
-  { label: 'Documentation' },
-  { label: 'Tutorials' },
-  { label: 'Community' },
-  { label: 'Public Slack' },
+const helpOptions = [
+  { label: 'Documentation', href: 'https://grafana.com/docs/grafana/latest/' },
+  { label: 'Tutorials', href: 'https://grafana.com/tutorials/' },
+  { label: 'Community', href: 'https://community.grafana.com/' },
+  { label: 'Public Slack', href: '' },
 ];
 
-interface Props {
-  panelWidth: number;
-}
-
-export const Help: FC<Props> = ({ panelWidth }) => {
+export const Help = () => {
   const styles = getStyles(useTheme());
 
   return (
@@ -22,9 +18,9 @@ export const Help: FC<Props> = ({ panelWidth }) => {
       <>
         <h3>Need help?</h3>
         <div className={styles.helpOptions}>
-          {helpOptions.map((item: SelectableValue<string>, index: number) => {
+          {helpOptions.map((item: { label: string; href: string }, index: number) => {
             return (
-              <a href="" key={`${item}-${index}`} className={styles.helpOption}>
+              <a href={item.href} target="_blank" key={`${item}-${index}`} className={styles.helpOption}>
                 <Button
                   variant="primary"
                   size="md"
