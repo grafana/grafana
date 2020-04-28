@@ -144,7 +144,7 @@ Two words, not one
 
 #### drawer
 
-Do not use. This is internal jargon that refers to a panel on the bottom of the screen. Refer to the panel or feature by its proper name.
+Do not use. This is developer jargon that refers to a UI panel. Refer to the panel or feature by its proper name.
 
 #### intro, introduction
 
