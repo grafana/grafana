@@ -349,6 +349,8 @@
   children:
   - name: Developer resources
     link: /developers/developer-resources/
+  - name: Packages reference
+    link: /packages_api/
   - name: Contributor License Agreement (CLA)
     link: /developers/cla/
 - name: Docs Archive

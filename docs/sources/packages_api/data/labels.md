@@ -5,7 +5,6 @@
 title = "Labels"
 keywords = ["grafana","documentation","sdk","@grafana/data"]
 type = "docs"
-draft = true
 +++
 
 ## Labels interface

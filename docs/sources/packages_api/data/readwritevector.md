@@ -5,7 +5,6 @@
 title = "ReadWriteVector"
 keywords = ["grafana","documentation","sdk","@grafana/data"]
 type = "docs"
-draft = true
 +++
 
 ## ReadWriteVector interface

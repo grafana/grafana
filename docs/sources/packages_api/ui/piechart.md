@@ -5,7 +5,6 @@
 title = "PieChart"
 keywords = ["grafana","documentation","sdk","@grafana/ui"]
 type = "docs"
-draft = true
 +++
 
 ## PieChart class

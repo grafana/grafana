@@ -5,7 +5,6 @@
 title = "MetaAnalyticsEventPayload"
 keywords = ["grafana","documentation","sdk","@grafana/runtime"]
 type = "docs"
-draft = true
 +++
 
 ## MetaAnalyticsEventPayload type

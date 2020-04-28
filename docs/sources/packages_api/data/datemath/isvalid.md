@@ -5,7 +5,6 @@
 title = "isValid"
 keywords = ["grafana","documentation","sdk","@grafana/data"]
 type = "docs"
-draft = true
 +++
 
 ## dateMath.isValid() function

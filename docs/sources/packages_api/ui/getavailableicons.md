@@ -5,7 +5,6 @@
 title = "getAvailableIcons"
 keywords = ["grafana","documentation","sdk","@grafana/ui"]
 type = "docs"
-draft = true
 +++
 
 ## getAvailableIcons variable
