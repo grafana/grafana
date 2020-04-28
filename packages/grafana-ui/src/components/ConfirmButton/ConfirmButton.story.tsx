@@ -1,4 +1,3 @@
-export { ClipboardButton } from '../ClipboardButton/ClipboardButton';
 import React from 'react';
 import { text, boolean, select } from '@storybook/addon-knobs';
 import { ConfirmButton } from './ConfirmButton';
