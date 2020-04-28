@@ -46,6 +46,15 @@ const getStyles = stylesFactory((theme: GrafanaTheme, complete: boolean) => {
     card: css`
       ${cardStyle(theme, complete)}
       width: 460px;
+      min-width: 460px;
+
+      @media only screen and (max-width: ${theme.breakpoints.xl}) {
+        min-width: 368px;
+      }
+
+      @media only screen and (max-width: ${theme.breakpoints.lg}) {
+        min-width: 272px;
+      }
     `,
     type: css`
       color: ${textColor};
@@ -54,10 +63,10 @@ const getStyles = stylesFactory((theme: GrafanaTheme, complete: boolean) => {
     heading: css`
       text-transform: uppercase;
       color: ${textColor};
-      margin-bottom: 8px;
+      margin-bottom: ${theme.spacing.sm};
     `,
     info: css`
-      margin-bottom: 16px;
+      margin-bottom: ${theme.spacing.md};
     `,
     status: css`
       display: flex;

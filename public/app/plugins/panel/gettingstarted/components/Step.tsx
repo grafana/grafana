@@ -20,13 +20,15 @@ export const Step: FC<Props> = ({ step }) => {
         <h2 className={styles.title}>{step.title}</h2>
         <p>{step.info}</p>
       </div>
-      {step.cards.map((card: Card, index: number) => {
-        const key = `${card.title}-${index}`;
-        if (card.type === 'tutorial') {
-          return <TutorialCard key={key} card={card} />;
-        }
-        return <DocsCard key={key} card={card} />;
-      })}
+      <div className={styles.cards}>
+        {step.cards.map((card: Card, index: number) => {
+          const key = `${card.title}-${index}`;
+          if (card.type === 'tutorial') {
+            return <TutorialCard key={key} card={card} />;
+          }
+          return <DocsCard key={key} card={card} />;
+        })}
+      </div>
     </div>
   );
 };
@@ -35,6 +37,11 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
   return {
     setup: css`
       display: flex;
+      width: 90%;
+
+      @media only screen and (max-width: ${theme.breakpoints.lg}) {
+        display: none;
+      }
     `,
     info: css`
       width: 172px;
@@ -42,6 +49,12 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
     `,
     title: css`
       color: ${theme.palette.blue95};
+    `,
+    cards: css`
+      overflow-x: scroll;
+      overflow-y: hidden;
+      width: 100%;
+      display: flex;
     `,
   };
 });

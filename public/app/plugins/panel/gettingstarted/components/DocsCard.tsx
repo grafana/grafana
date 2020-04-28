@@ -33,12 +33,17 @@ const getStyles = stylesFactory((theme: GrafanaTheme, complete: boolean) => {
   return {
     card: css`
       ${cardStyle(theme, complete)}
-      width: 230px;
+
+      min-width: 230px;
+
+      @media only screen and (max-width: ${theme.breakpoints.md}) {
+        min-width: 192px;
+      }
     `,
     heading: css`
       text-transform: uppercase;
       color: ${complete ? theme.palette.blue95 : '#FFB357'};
-      margin-bottom: 16px;
+      margin-bottom: ${theme.spacing.md};
     `,
     title: css`
       margin-bottom: 48px;
