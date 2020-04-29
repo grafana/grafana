@@ -6,7 +6,6 @@ import {
   sortDataFrame,
   toDataFrame,
   toLegacyResponseData,
-  getDataTimeRange,
 } from './processDataFrame';
 import { DataFrameDTO, FieldType, TableData, TimeSeries } from '../types/index';
 import { dateTime } from '../datetime/moment_wrapper';
