@@ -14,7 +14,7 @@ notifiers:
   - name: another-not-default-notification
     type: email
     settings:
-      addresses: example@exmaple.com
+      addresses: example@example.com
     org_id: 3
     uid: "notifier2"
     is_default: false
@@ -29,7 +29,7 @@ notifiers:
     org_id: 3
     uid: "notifier4"
     settings:
-      addresses: example@exmaple.com
+      addresses: example@example.com
 delete_notifiers:
   - name: default-slack-notification
     org_id: 2

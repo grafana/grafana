@@ -47,7 +47,7 @@ var (
 )
 
 // This constant corresponds to the default value for ldap_sync_ttl in .ini files
-// it is used for comparision and has to be kept in sync
+// it is used for comparison and has to be kept in sync
 const (
 	AUTH_PROXY_SYNC_TTL = 60
 )
