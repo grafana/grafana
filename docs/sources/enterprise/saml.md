@@ -129,7 +129,15 @@ To be able to use Team Sync feature, set `assertion_attribute_groups` option to 
 
 > Only available in Grafana v7.0+
 
-Role sync allows to map user roles from identity provider to Grafana. To enable role sync, set `assertion_attribute_role` option to the attribute name where the role information will be extracted from. After that, configure desired attribute values for each of Grafana roles: Editor, Admin and Super Admin. If obtained role doesn't match any of configured values, `Viewer` role will be assigned to the user. Example configuration:
+Role sync allows to map user roles from identity provider to Grafana. To enable role sync, configure role attribute and possible values for Editor, Admin and Super Admin roles.
+
+1. In configuration file, set `assertion_attribute_role` option to the attribute name where the role information will be extracted from.
+1. Set `role_values_editor` option to the values mapped to the `Editor` role.
+1. Set `role_values_admin` option to the values mapped to the organization `Admin` role.
+1. Set `role_values_grafana_admin` option to the values mapped to the `Super Admin` role.
+1. If user roles doesn't match any of configured values, `Viewer` role will be assigned.
+
+Example configuration:
 
 ```bash
 [auth.saml]
@@ -147,7 +155,12 @@ Refer to [Organization roles]({{< relref "../permissions/organization_roles.md" 
 
 > Only available in Grafana v7.0+
 
-Organization mapping allows you to assign users to particular organization in Grafana depending on configured `assertion_attribute_org` attribute value obtained from identity provider. Set `assertion_attribute_org` to the attribute name you store organization info in. Then configure `org_mapping` option to map organization from IdP to Grafana organization specified by id. For example, use following config to assign users from `Engineering` organization to the Grafana organization with id `2` and users from `Sales` - to the org with id `3`, based on `Org` assertion attribute value:
+Organization mapping allows you to assign users to particular organization in Grafana depending on attribute value obtained from identity provider. 
+
+1. In configuration file, set `assertion_attribute_org` to the attribute name you store organization info in.
+1. Set `org_mapping` option to the comma-separated list of `Organization:OrgId` pairs to map organization from IdP to Grafana organization specified by id.
+
+For example, use following config to assign users from `Engineering` organization to the Grafana organization with id `2` and users from `Sales` - to the org with id `3`, based on `Org` assertion attribute value:
 
 ```bash
 [auth.saml]
