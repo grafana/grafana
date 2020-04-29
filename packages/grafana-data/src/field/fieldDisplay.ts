@@ -74,7 +74,7 @@ function getTitleTemplate(title: string | undefined, stats: string[], data?: Dat
 }
 
 /**
- * Process the title template
+ * Get the title for display
  */
 export function getFieldDisplayTitle(field: Field, frame: DataFrame, frameCount?: number) {
   let title = field.config?.title;
