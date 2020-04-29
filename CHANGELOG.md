@@ -131,7 +131,6 @@
 * **Rich history**: Fix create url and run query for various datasources. [#23627](https://github.com/grafana/grafana/pull/23627), [@ivanahuckova](https://github.com/ivanahuckova)
 * **Security**: Fix XSS vulnerability in table panel. [#23816](https://github.com/grafana/grafana/pull/23816), [@torkelo](https://github.com/torkelo)
 
->>>>>>> master
 # 6.7.3 (2020-04-23)
 
 ### Bug Fixes

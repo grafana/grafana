@@ -3,7 +3,14 @@ import { action } from '@storybook/addon-actions';
 
 import { TimeOfDayPicker } from './TimeOfDayPicker';
 import { UseState } from '../../utils/storybook/UseState';
+import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { dateTime } from '@grafana/data';
+
+export default {
+  title: 'Pickers and Editors/TimePickers/TimeOfDayPicker',
+  component: TimeOfDayPicker,
+  decorators: [withCenteredStory],
+};
 
 export const basic = () => {
   return (
