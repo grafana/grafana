@@ -2,7 +2,18 @@ import React, { CSSProperties, useCallback, useState } from 'react';
 import Transition from 'react-transition-group/Transition';
 import { FieldConfigSource, GrafanaTheme, PanelPlugin, SelectableValue } from '@grafana/data';
 import { DashboardModel, PanelModel } from '../../state';
-import { CustomScrollbar, Icon, Input, Select, stylesFactory, Tab, TabContent, TabsBar, useTheme } from '@grafana/ui';
+import {
+  CustomScrollbar,
+  Icon,
+  Input,
+  Select,
+  stylesFactory,
+  Tab,
+  TabContent,
+  TabsBar,
+  Tooltip,
+  useTheme,
+} from '@grafana/ui';
 import { DefaultFieldConfigEditor, OverrideFieldConfigEditor } from './FieldConfigEditor';
 import { css } from 'emotion';
 import { PanelOptionsTab } from './PanelOptionsTab';
@@ -197,13 +208,15 @@ export const TabsBarContent: React.FC<{
       ) : (
         <>
           {tabs.map(item => (
-            <Tab
-              key={item.value}
-              label={item.label}
-              counter={item.value === 'overrides' ? overridesCount : undefined}
-              active={active.value === item.value}
-              onChangeTab={() => setActiveTab(item.value)}
-            />
+            <Tooltip content={item.tooltip}>
+              <Tab
+                key={item.value}
+                label={item.label}
+                counter={item.value === 'overrides' ? overridesCount : undefined}
+                active={active.value === item.value}
+                onChangeTab={() => setActiveTab(item.value)}
+              />
+            </Tooltip>
           ))}
           <div className="flex-grow-1" />
         </>
@@ -225,14 +238,17 @@ const tabSelections: Array<SelectableValue<string>> = [
   {
     label: 'Panel',
     value: 'options',
+    tooltip: 'Configure panel display options',
   },
   {
-    label: 'Fields',
+    label: 'Field',
     value: 'defaults',
+    tooltip: 'Configure field options',
   },
   {
     label: 'Overrides',
     value: 'overrides',
+    tooltip: 'Configure field option overrides',
   },
 ];
 
