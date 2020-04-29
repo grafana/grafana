@@ -43,6 +43,19 @@ Currently only Organization Admins can create reports.
 
 {{< docs-imagebox img="/img/docs/enterprise/reports_create_new.png" max-width="500px" class="docs-image--no-shadow" >}}
 
+## Send test mail
+
+> Only available in Grafana Enterprise v7.0+.
+
+1. In the report, click **Send test mail**.
+1. In the Email field, enter the email address or addresses that you want to test, separated by semicolon.
+If you want to use email addresses from the report, then select the **Use emails from report** check box.
+1. Click **Send**.
+
+The last saved version of the report will be sent to selected emails. You can use this to verify emails are working and to make sure the report generates and is displayed as you expect.
+
+{{< docs-imagebox img="/img/docs/enterprise/reports_send_test_mail.png" max-width="500px" class="docs-image--no-shadow" >}}
+
 ### Scheduling
 
 Scheduled reports can be sent on a weekly, daily, or hourly basis. You may also disable scheduling for when you either want to pause a report or send it via the API.
