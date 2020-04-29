@@ -49,7 +49,7 @@ func EncryptDatasourcePaswords(c utils.CommandLine, sqlStore *sqlstore.SqlStore)
 		}
 
 		if passwordsUpdated == 0 && basicAuthUpdated == 0 {
-			logger.Infof("%s All datasources secrets are allready encrypted\n", color.GreenString("✔"))
+			logger.Infof("%s All datasources secrets are already encrypted\n", color.GreenString("✔"))
 		}
 
 		logger.Info("\n")
