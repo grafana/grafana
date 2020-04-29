@@ -18,7 +18,7 @@ Usage insights allows you to have a better understanding on how your Grafana ins
 
 ## Presence indicators
 
-Presence indicators are visible to all signed-in users on all dashboards. It shows avatar of users who interacted with the dashboard recently. You can see the user's name by hovering the user's avatar. Users' avatars come from [Gravatar](https://gravatar.com) based on the user's email.
+Presence indicators are visible to all signed-in users on all dashboards. A presence indicator shows the avatars of users who interacted with the dashboard recently. You can see the user's name by hovering your cursor over the user's avatar. Users' avatars come from [Gravatar](https://gravatar.com) based on the user's email.
 
 When more users are active on a dashboard than can fit in the presence indicators, click on the `+X` icon that opens the [Dashboard Insights]({{< relref "#dashboard-insights" >}}) drawer and see more details about recent user activity. 
 
