@@ -15,24 +15,23 @@ Not just visualizing data from anywhere, in Grafana 7 you can transform it too. 
 
 Data transformations will provide a common set of data operations that were previously duplicated as custom features in many panels or data sources but are now an integral part of the Grafana data processing pipeline and something all data sources and panels can take advantage of.
 
-In Grafana 7.0 we have a shared data model for both time series and table data. We refer to table columns as fields in both the UI and docs. A time series is simply a table
-with two fields (time & value).
+In Grafana 7.0 we have a shared data model for both time series and table data that we call [DataFrame](https://github.com/grafana/grafana/blob/master/docs/sources/plugins/developing/dataframe.md). A DataFrame is like a table with columns but we refer to columns as fields. A time series is simply a DataFrame with two fields (time & value).
 
 **Transformations shipping in 7.0**
 
 - **Reduce**: Reduce many rows / data points to a single value
 - **Filter by name**: Filter fields by name or regex
 - **Filter by refId**: Filter by query letter
-- **Organize fields**: Re-order, rename and hide fields.
-- **Labels for fields**: Transform time series with labels into a table where labels get's converted to fields and the result is joined by time
+- **Organize fields**: Reorder, rename and hide fields.
+- **Labels to fields**: Transform time series with labels into a table where labels get's converted to fields and the result is joined by time
 - **Join by field**: Join many result sets (series) together using for example the time field. Useful for transforming time series into a table with a shared time column and where each series get it's own column.
-- **Add field from calculation**: This is super powerful transformation that allows you perform many different types of math operations and add the result as a new field. Examples:
+- **Add field from calculation**: This is a powerful transformation that allows you perform many different types of math operations and add the result as a new field. Examples:
   - Calculate the difference between two series or fields and add the result to a new field
   - Multiply one field with another another and add the result to a new field
 
 ### New panel edit experiance
 
-In Grafana 7 we have completely updated the UI for editing panels. The first visible change is that we have seperated panel display settings to a right hand side pane that you can collapse or expand depending on what your focus is on. With this change we are also introducing our new unified option model & UI for defining data configuration & display options. This unified data configuration system powers a consistent UI for setting data options across visualizations as well as making all data display settings data driven and overridable.
+In Grafana 7 we have redesigned the UI for editing panels. The first visible change is that we have seperated panel display settings to a right hand side pane that you can collapse or expand depending on what your focus is on. With this change we are also introducing our new unified option model & UI for defining data configuration and display options. This unified data configuration system powers a consistent UI for setting data options across visualizations as well as making all data display settings data driven and overridable.
 
 This new option architecture and UI will make all panels have a consistent set of options and behaviors for attributes like `unit`, `min`, `max`, `thresholds`, `links`, `decimals`. Not only that but all these options will share a consistent UI for specifying override rules and is extensible for custom panel specific options.
 
@@ -40,7 +39,7 @@ We have yet to migrate all core panels to this new architecute so in 7.0 there w
 
 ### New tabel panel
 
-Grafana 7.0 comes with a new table panel (and deprecates the old one). This new table panel supports horizontal scrolling, column resize. And paired with the new `Organize fields` transformation detailed above you can re-order, hide & rename columns. This new panel also supports new cell display modes, like showing a bar gauge inside a cell.
+Grafana 7.0 comes with a new table panel (and deprecates the old one). This new table panel supports horizontal scrolling and column resize. Paired with the new `Organize fields` transformation detailed above you can reorder, hide & rename columns. This new panel also supports new cell display modes, like showing a bar gauge inside a cell.
 
 # 7.0.0-beta1 (2020-04-28)
 
