@@ -40,7 +40,7 @@ We have yet to migrate all core panels to this new architecute so in 7.0 there w
 
 ### New tabel panel
 
-Grafana 7.0 comes with a new table panel (and deprecates the old one). This new table panel supports horizontal scrolling, column resize. And paired with the new `Organize fields` transformation detailed below you can re-order, hide & rename columns. This new panel also supports new cell display modes, like showing a bar gauge inside a cell.
+Grafana 7.0 comes with a new table panel (and deprecates the old one). This new table panel supports horizontal scrolling, column resize. And paired with the new `Organize fields` transformation detailed above you can re-order, hide & rename columns. This new panel also supports new cell display modes, like showing a bar gauge inside a cell.
 
 # 7.0.0-beta1 (2020-04-28)
 
