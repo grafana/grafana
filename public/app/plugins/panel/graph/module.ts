@@ -23,6 +23,7 @@ import { CoreEvents } from 'app/types';
 import { DataWarning } from './types';
 import { getLocationSrv } from '@grafana/runtime';
 import { getDataTimeRange } from './utils';
+import { changePanelPlugin } from 'app/features/dashboard/state/actions';
 
 class GraphCtrl extends MetricsPanelCtrl {
   static template = template;
@@ -250,6 +251,23 @@ class GraphCtrl extends MetricsPanelCtrl {
     }, 0);
 
     if (datapointsCount === 0) {
+      if (this.dataList) {
+        for (const frame of this.dataList) {
+          if (frame.length && frame.fields?.length) {
+            return {
+              title: 'Unable to graph data',
+              tip: 'Data exists, but is not timeseries',
+              actionText: 'Switch to table view',
+              action: () => {
+                console.log('Change from graph to table');
+                // ????? redux thunk?
+                changePanelPlugin(this.panel, 'table');
+              },
+            };
+          }
+        }
+      }
+
       return {
         title: 'No data',
         tip: 'No data returned from query',
