@@ -79,7 +79,7 @@ Reports which are scheduled to never be sent have no arguments and will not be s
 
 ### Layout
 
-> The layout renderers are early versions undergoing heavy development. Customizations and variable sized panel layouts are on the roadmap. [Reach out to us](https://grafana.com/contact?about=grafana-enterprise) if you are interested in  the future of reporting.
+> The layout renderers are early versions undergoing heavy development. Customizations and variable sized panel layouts are on the roadmap. [Reach out to us](https://grafana.com/contact?about=grafana-enterprise) if you are interested in the future of reporting.
 
 Name | Description | Preview
 ---- | ----------- | -------
