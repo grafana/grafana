@@ -113,7 +113,7 @@ $ curl -H "Authorization: Bearer <Admin API key>" https://<grafana.example.org>/
 
 ## Rendering configuration
 
-When generating reports by each panel renders separately before being collected in a PDF. The per panel rendering timeout and number of concurrently rendered panels can be configured.
+When generating reports, each panel renders separately before being collected in a PDF. The per panel rendering timeout and number of concurrently rendered panels can be configured.
 
 To modify the panels' clarity you can set a scale factor for the rendered images. A higher scale factor is more legible but will increase the file size of the generated PDF.
 
