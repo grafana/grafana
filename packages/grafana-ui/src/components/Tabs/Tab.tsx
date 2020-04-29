@@ -17,16 +17,20 @@ export interface TabProps extends HTMLProps<HTMLLIElement> {
 }
 
 export const Tab = React.forwardRef<HTMLLIElement, TabProps>(
-  ({ label, active, icon, onChangeTab, counter, ...otherProps }, ref) => {
+  ({ label, active, icon, onChangeTab, counter, className, ...otherProps }, ref) => {
     const theme = useTheme();
     const tabsStyles = getTabStyles(theme);
 
     return (
       <li
-        className={cx(tabsStyles.tabItem, active && tabsStyles.activeStyle)}
-        onClick={onChangeTab}
-        aria-label={selectors.components.Tab.title(label)}
         {...otherProps}
+        className={cx(tabsStyles.tabItem, active && tabsStyles.activeStyle)}
+        onClick={() => {
+          if (!active) {
+            onChangeTab();
+          }
+        }}
+        aria-label={selectors.components.Tab.title(label)}
         ref={ref}
       >
         {icon && <Icon name={icon} />}
@@ -69,7 +73,6 @@ const getTabStyles = stylesFactory((theme: GrafanaTheme) => {
       color: ${colors.link};
       overflow: hidden;
       cursor: default;
-      pointer-events: none;
 
       &::before {
         display: block;
