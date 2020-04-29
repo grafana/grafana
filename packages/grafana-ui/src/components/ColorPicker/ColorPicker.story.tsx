@@ -25,7 +25,7 @@ export default {
   },
 };
 
-export const simple = () => {
+export const basic = () => {
   const { enableNamedColors } = getColorPickerKnobs();
 
   return (

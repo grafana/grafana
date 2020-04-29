@@ -11,8 +11,6 @@ const BasicGreen = getColorDefinitionByName('green');
 const BasicRed = getColorDefinitionByName('red');
 const LightBlue = getColorDefinitionByName('light-blue');
 
-// const NamedColorsPaletteStories = storiesOf('Pickers and Editors/ColorPicker/Palettes/NamedColorsPalette', module);
-
 export default {
   title: 'Pickers and Editors/ColorPicker/Palettes/NamedColorsPalette',
   component: NamedColorsPalette,
@@ -65,8 +63,3 @@ export const hexValues = () => {
     </UseState>
   );
 };
-
-// NamedColorsPaletteStories.add('Named colors swatch - support for named colors').add(
-//   'Named colors swatch - support for hex values',
-
-// );
