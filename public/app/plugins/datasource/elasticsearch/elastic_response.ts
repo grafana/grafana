@@ -174,6 +174,10 @@ export class ElasticResponse {
             // if more of the same metric type include field field name in property
             if (otherMetrics.length > 1) {
               metricName += ' ' + metric.field;
+              if (metric.type === 'bucket_script') {
+                //Use the formula in the column name
+                metricName = metric.settings.script;
+              }
             }
 
             addMetricValue(values, metricName, bucket[metric.id].value);
