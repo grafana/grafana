@@ -77,7 +77,7 @@ export class DashboardPage extends PureComponent<Props, State> {
     rememberScrollTop: 0,
   };
 
-  async componentDidMount() {
+  componentDidMount() {
     this.props.initDashboard({
       $injector: this.props.$injector,
       $scope: this.props.$scope,
@@ -91,7 +91,7 @@ export class DashboardPage extends PureComponent<Props, State> {
   }
 
   componentWillUnmount() {
-    if (this.props.dashboard) {
+    if (this.props.initPhase === DashboardInitPhase.Completed) {
       this.props.cleanUpDashboard();
       this.setPanelFullscreenClass(false);
     }

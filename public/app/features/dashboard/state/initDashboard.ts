@@ -18,7 +18,14 @@ import {
   dashboardInitSlow,
 } from './reducers';
 // Types
-import { DashboardDTO, DashboardRouteInfo, StoreState, ThunkDispatch, ThunkResult } from 'app/types';
+import {
+  DashboardDTO,
+  DashboardRouteInfo,
+  StoreState,
+  ThunkDispatch,
+  ThunkResult,
+  DashboardInitPhase,
+} from 'app/types';
 import { DashboardModel } from './DashboardModel';
 import { DataQuery, locationUtil } from '@grafana/data';
 import { getConfig } from '../../../core/config';
@@ -123,6 +130,12 @@ async function fetchDashboard(
  */
 export function initDashboard(args: InitDashboardArgs): ThunkResult<void> {
   return async (dispatch, getState) => {
+    const dashboardState = getState().dashboard;
+
+    if (dashboardState.initPhase !== DashboardInitPhase.NotStarted) {
+      return;
+    }
+
     // set fetching state
     dispatch(dashboardInitFetching());
 
