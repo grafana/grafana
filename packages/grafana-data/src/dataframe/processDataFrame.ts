@@ -263,7 +263,7 @@ export const isTableData = (data: any): data is DataFrame => data && data.hasOwn
 export const isDataFrame = (data: any): data is DataFrame => data && data.hasOwnProperty('fields');
 
 /**
- * Inspect an object and return the results as a DataFrame
+ * Inspect any object and return the results as a DataFrame
  */
 export function toDataFrame(data: any): DataFrame {
   if ('fields' in data) {
