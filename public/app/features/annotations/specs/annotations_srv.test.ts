@@ -44,6 +44,7 @@ jest.mock('@grafana/runtime', () => ({
     return datasourceSrv;
   },
   setTemplateSrv: () => {},
+  DataSourceWithBackend: jest.fn(),
 }));
 
 jest.mock('app/core/core', () => ({
