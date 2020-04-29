@@ -138,12 +138,12 @@
           name: Export and import
         - link: /reference/datalinks/
           name: Data links
+        - name: Navigation links
+          link: /features/dashboard/links
         - link: /reference/dashboard_history/
-          name: Dashboard version history
+          name: Version history
         - link: /reference/dashboard/
           name: JSON Model
-        - link: /reference/scripting/
-          name: Scripted dashboards
     - name: Data sources
       link: /features/datasources/
       children:
@@ -194,8 +194,6 @@
       link: /features/shortcuts/
     - name: Reporting
       link: /features/reporting/
-    - name: Navigation links
-      link: /features/navigation-links/
 - name: What's new in Grafana
   link: /whatsnew/
   children:
