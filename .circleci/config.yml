@@ -54,11 +54,7 @@ commands:
       - run:
           name: "Install Grafana build pipeline tool"
           command: |
-<<<<<<< HEAD
-            VERSION=0.2.12
-=======
             VERSION=0.4.2
->>>>>>> master
             curl -fLO https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v${VERSION}/grabpl
             chmod +x grabpl
             mv grabpl /tmp
@@ -1055,11 +1051,7 @@ workflows:
             - test-backend
             - test-frontend
       - build-plugins:
-<<<<<<< HEAD
-          # No filters, meaning this job runs for all branches
-=======
           filters: *filter-all
->>>>>>> master
           name: build-oss-plugins
           edition: oss
           requires:
@@ -1145,11 +1137,7 @@ workflows:
             - test-backend
             - test-frontend
       - build-plugins:
-<<<<<<< HEAD
-          # No filters, meaning this job runs for all branches
-=======
           filters: *filter-all
->>>>>>> master
           name: build-enterprise-plugins
           edition: enterprise
           requires:

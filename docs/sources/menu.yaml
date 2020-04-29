@@ -349,20 +349,11 @@
 - name: Developers
   link: /developers/
   children:
-<<<<<<< HEAD
-  - name: Developer resources
-    link: /developers/developer-resources/
-  - name: Packages reference
-    link: /packages_api/
-  - name: Contributor License Agreement (CLA)
-    link: /developers/cla/
-=======
     - name: Developer resources
       link: /developers/developer-resources/
     - name: Packages reference
       link: /packages_api/
     - name: Contributor License Agreement (CLA)
       link: /developers/cla/
->>>>>>> master
 - name: Docs Archive
   link: /archive/

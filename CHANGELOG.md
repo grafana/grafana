@@ -6,8 +6,6 @@
 - **Docker**: Our Ubuntu based images have been upgraded to Ubuntu [20.04 LTS](https://releases.ubuntu.com/20.04/).
 - **Dashboard**: A global minimum dashboard refresh interval is now enforced and defaults to 5 seconds.
 
-<<<<<<< HEAD
-=======
 # 7.0.0-beta1 (2020-04-28)
 
 ## Breaking changes
