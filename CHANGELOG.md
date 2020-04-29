@@ -6,6 +6,7 @@
 - **Docker**: Our Ubuntu based images have been upgraded to Ubuntu [20.04 LTS](https://releases.ubuntu.com/20.04/).
 - **Dashboard**: A global minimum dashboard refresh interval is now enforced and defaults to 5 seconds.
 - **Interval calculation**: There is now a new option `Max data points` that controls the auto interval `$__interval` calculation. Interval was previously calculated by dividing the panel width by the time range. With the new max data points option it is now easy to set `$__interval` to a dynamic value that is time range agnostic. For example if you set `Max data points` to 10 Grafana will dyanmically set `$__interval` by dividing the current time range by 10.
+- **Datasource/Loki**: Support for [deprecated Loki endpoints](https://github.com/grafana/loki/blob/master/docs/api.md#lokis-http-api) has been removed.
 
 ## 7.0 Feature highlights
 
@@ -50,6 +51,7 @@ Grafana 7.0 comes with a new table panel (and deprecates the old one). This new 
 - **Dashboard**: A global minimum dashboard refresh interval is now enforced and defaults to 5 seconds.
 - **@grafana/ui**: Forms migration notice, see [@grafana/ui changelog](https://github.com/grafana/grafana/blob/master/packages/grafana-ui/CHANGELOG.md)
 - **Interval calculation**: There is now a new option `Max data points` that controls the auto interval `$__interval` calculation. Interval was previously calculated by dividing the panel width by the time range. With the new max data points option it is now easy to set `$__interval` to a dynamic value that is time range agnostic. For example if you set `Max data points` to 10 Grafana will dyanmically set `$__interval` by dividing the current time range by 10.
+- **Datasource/Loki**: Support for [deprecated Loki endpoints](https://github.com/grafana/loki/blob/master/docs/api.md#lokis-http-api) has been removed.
 
 ### Features / Enhancements
 
