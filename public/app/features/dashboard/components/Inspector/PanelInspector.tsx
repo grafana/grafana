@@ -311,7 +311,7 @@ export class PanelInspectorUnconnected extends PureComponent<Props, State> {
 
     return (
       <Drawer
-        title={panel.title || 'Panel inspect'}
+        title={`Inspect: ${panel.title}` || 'Panel inspect'}
         subtitle={this.drawerSubtitle(tabs, activeTab)}
         width={drawerWidth}
         onClose={this.onClose}

@@ -17,6 +17,7 @@ export const getPanelInspectorStyles = stylesFactory(() => {
       flex-grow: 0;
       align-items: center;
       justify-content: flex-end;
+      margin-bottom: ${config.theme.spacing.sm};
     `,
     toolbarItem: css`
       margin-left: ${config.theme.spacing.md};

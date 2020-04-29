@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import React, { HTMLProps } from 'react';
 import { css, cx } from 'emotion';
 import { GrafanaTheme } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -8,13 +8,38 @@ import { IconName } from '../../types';
 import { stylesFactory, useTheme } from '../../themes';
 import { Counter } from './Counter';
 
-export interface TabProps {
+export interface TabProps extends HTMLProps<HTMLLIElement> {
   label: string;
   active?: boolean;
   icon?: IconName;
   onChangeTab: () => void;
   counter?: number;
 }
+
+export const Tab = React.forwardRef<HTMLLIElement, TabProps>(
+  ({ label, active, icon, onChangeTab, counter, className, ...otherProps }, ref) => {
+    const theme = useTheme();
+    const tabsStyles = getTabStyles(theme);
+
+    return (
+      <li
+        {...otherProps}
+        className={cx(tabsStyles.tabItem, active && tabsStyles.activeStyle)}
+        onClick={() => {
+          if (!active) {
+            onChangeTab();
+          }
+        }}
+        aria-label={selectors.components.Tab.title(label)}
+        ref={ref}
+      >
+        {icon && <Icon name={icon} />}
+        {label}
+        {typeof counter === 'number' && <Counter value={counter} />}
+      </li>
+    );
+  }
+);
 
 const getTabStyles = stylesFactory((theme: GrafanaTheme) => {
   const colors = theme.colors;
@@ -47,6 +72,7 @@ const getTabStyles = stylesFactory((theme: GrafanaTheme) => {
       background: ${colors.bodyBg};
       color: ${colors.link};
       overflow: hidden;
+      cursor: default;
 
       &::before {
         display: block;
@@ -61,20 +87,3 @@ const getTabStyles = stylesFactory((theme: GrafanaTheme) => {
     `,
   };
 });
-
-export const Tab: FC<TabProps> = ({ label, active, icon, onChangeTab, counter }) => {
-  const theme = useTheme();
-  const tabsStyles = getTabStyles(theme);
-
-  return (
-    <li
-      className={cx(tabsStyles.tabItem, active && tabsStyles.activeStyle)}
-      onClick={onChangeTab}
-      aria-label={selectors.components.Tab.title(label)}
-    >
-      {icon && <Icon name={icon} />}
-      {label}
-      {typeof counter === 'number' && <Counter value={counter} />}
-    </li>
-  );
-};

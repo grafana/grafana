@@ -203,6 +203,7 @@ export const TabsBarContent: React.FC<{
               counter={item.value === 'overrides' ? overridesCount : undefined}
               active={active.value === item.value}
               onChangeTab={() => setActiveTab(item.value)}
+              title={item.tooltip}
             />
           ))}
           <div className="flex-grow-1" />
@@ -225,14 +226,17 @@ const tabSelections: Array<SelectableValue<string>> = [
   {
     label: 'Panel',
     value: 'options',
+    tooltip: 'Configure panel display options',
   },
   {
-    label: 'Fields',
+    label: 'Field',
     value: 'defaults',
+    tooltip: 'Configure field options',
   },
   {
     label: 'Overrides',
     value: 'overrides',
+    tooltip: 'Configure field option overrides',
   },
 ];
 
