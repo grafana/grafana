@@ -60,7 +60,7 @@ Supported auth providers:
 
 ## Usage Insights
 
-[Usage Insights]({{< relref "usage-insights.md" >}}) allows you to understand how your Grafana instance is used. You can see who is looking at a dashboard, how often this dashboard is seen or encounters errors. You'll also be able to discover what are the least and the most used dashboards.
+[Usage Insights]({{< relref "usage-insights.md" >}}) allow you to understand how your Grafana instance is used. You can see who is looking at a dashboard, how often a dashboard is seen, and which dashboards are prone to errors. You'll also be able to discover what are the least and the most used dashboards.
 
 ## Enterprise plugins
 
