@@ -14,7 +14,6 @@ e2e.scenario({
       .should('be.visible')
       .within(() => {
         e2e.components.Select.input()
-          .wait(2000)
           .should('be.visible')
           .click();
 
