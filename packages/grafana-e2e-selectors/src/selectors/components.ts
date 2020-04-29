@@ -98,11 +98,15 @@ export const Components = {
   },
   Select: {
     option: 'Select option',
+    input: () => 'input[id*="react-select-"]',
   },
   FieldConfigEditor: {
     content: 'Field config editor content',
   },
   OverridesConfigEditor: {
     content: 'Field overrides editor content',
+  },
+  FolderPicker: {
+    container: 'Folder picker select container',
   },
 };

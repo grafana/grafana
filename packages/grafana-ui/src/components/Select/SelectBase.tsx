@@ -231,22 +231,7 @@ export function SelectBase<T>({
         components={{
           MenuList: SelectMenu,
           Group: SelectOptionGroup,
-          ValueContainer: (props: any) => {
-            const { menuIsOpen } = props.selectProps;
-            if (
-              Array.isArray(props.children) &&
-              Array.isArray(props.children[0]) &&
-              maxVisibleValues !== undefined &&
-              !(showAllSelectedWhenOpen && menuIsOpen)
-            ) {
-              const [valueChildren, ...otherChildren] = props.children;
-              const truncatedValues = valueChildren.slice(0, maxVisibleValues);
-
-              return <ValueContainer {...props} children={[truncatedValues, ...otherChildren]} />;
-            }
-
-            return <ValueContainer {...props} />;
-          },
+          ValueContainer,
           Placeholder: (props: any) => (
             <div
               {...props.innerProps}
