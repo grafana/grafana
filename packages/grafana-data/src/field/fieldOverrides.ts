@@ -30,6 +30,7 @@ import { FieldConfigOptionsRegistry } from './FieldConfigOptionsRegistry';
 import { DataLinkBuiltInVars, locationUtil } from '../utils';
 import { formattedValueToString } from '../valueFormats';
 import { getFieldDisplayValuesProxy } from './getFieldDisplayValuesProxy';
+import { formatLabels } from '../utils/labels';
 
 interface OverrideProps {
   match: FieldMatcher;
@@ -106,12 +107,16 @@ export function applyFieldOverrides(options: ApplyFieldOverrideOptions): DataFra
 
     const fields: Field[] = frame.fields.map((field, fieldIndex) => {
       // Config is mutable within this scope
-      let fieldName = field.name;
-      if (!fieldName) {
-        fieldName = `Field[${fieldIndex}]`;
-      }
+
       const fieldScopedVars = { ...scopedVars };
-      fieldScopedVars['__field'] = { text: 'Field', value: { name: fieldName } };
+      fieldScopedVars['__field'] = {
+        text: 'Field',
+        value: {
+          name: field.name ?? `Field[${fieldIndex}]`,
+          labels: formatLabels(field.labels!),
+          label: field.labels,
+        },
+      };
 
       const config: FieldConfig = { ...field.config, scopedVars: fieldScopedVars } || {};
       const context = {

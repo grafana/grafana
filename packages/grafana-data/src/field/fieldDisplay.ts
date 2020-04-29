@@ -68,6 +68,7 @@ function getTitleTemplate(title: string | undefined, stats: string[], data?: Dat
   if (fieldCount > 1 || !parts.length) {
     parts.push('${' + VAR_FIELD_NAME + '}');
   }
+  parts.push('${' + VAR_FIELD_LABELS + '}');
 
   return parts.join(' ');
 }
