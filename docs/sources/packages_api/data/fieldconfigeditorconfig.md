@@ -5,7 +5,6 @@
 title = "FieldConfigEditorConfig"
 keywords = ["grafana","documentation","sdk","@grafana/data"]
 type = "docs"
-draft = true
 +++
 
 ## FieldConfigEditorConfig interface

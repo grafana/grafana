@@ -1,6 +1,6 @@
 import React from 'react';
-import { GrafanaTheme, PanelPluginMeta } from '@grafana/data';
-import { stylesFactory, useTheme, styleMixins } from '@grafana/ui';
+import { GrafanaTheme, PanelPluginMeta, PluginState } from '@grafana/data';
+import { styleMixins, stylesFactory, useTheme } from '@grafana/ui';
 import { css, cx } from 'emotion';
 import { selectors } from '@grafana/e2e-selectors';
 import { PanelPluginBadge } from '../../plugins/PluginSignatureBadge';
@@ -17,7 +17,7 @@ const VizTypePickerPlugin: React.FC<Props> = ({ isCurrent, plugin, onClick, disa
   const styles = getStyles(theme);
   const cssClass = cx({
     [styles.item]: true,
-    [styles.disabled]: disabled,
+    [styles.disabled]: disabled || plugin.state === PluginState.deprecated,
     [styles.current]: isCurrent,
   });
 
@@ -32,7 +32,7 @@ const VizTypePickerPlugin: React.FC<Props> = ({ isCurrent, plugin, onClick, disa
           <img className={styles.img} src={plugin.info.logos.small} />
         </div>
       </div>
-      <div className={styles.badge}>
+      <div className={cx(styles.badge, disabled && styles.disabled)}>
         <PanelPluginBadge plugin={plugin} />
       </div>
     </div>

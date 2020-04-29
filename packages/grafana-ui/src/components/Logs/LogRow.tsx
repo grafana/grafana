@@ -1,5 +1,13 @@
 import React, { PureComponent } from 'react';
-import { Field, LinkModel, LogRowModel, TimeZone, DataQueryResponse, GrafanaTheme } from '@grafana/data';
+import {
+  Field,
+  LinkModel,
+  LogRowModel,
+  TimeZone,
+  DataQueryResponse,
+  GrafanaTheme,
+  dateTimeFormat,
+} from '@grafana/data';
 import { Icon } from '../Icon/Icon';
 import { cx, css } from 'emotion';
 
@@ -134,7 +142,6 @@ class UnThemedLogRow extends PureComponent<Props, State> {
     const { showDetails, showContext, hasHoverBackground } = this.state;
     const style = getLogRowStyles(theme, row.logLevel);
     const styles = getStyles(theme);
-    const showUtc = timeZone === 'utc';
     const hoverBackground = cx(style.logsRow, { [styles.hoverBackground]: hasHoverBackground });
 
     return (
@@ -156,16 +163,7 @@ class UnThemedLogRow extends PureComponent<Props, State> {
               <Icon className={styles.topVerticalAlign} name={showDetails ? 'angle-down' : 'angle-right'} />
             </td>
           )}
-          {showTime && showUtc && (
-            <td className={style.logsRowLocalTime} title={`Local: ${row.timeLocal} (${row.timeFromNow})`}>
-              {row.timeUtc}
-            </td>
-          )}
-          {showTime && !showUtc && (
-            <td className={style.logsRowLocalTime} title={`${row.timeUtc} (${row.timeFromNow})`}>
-              {row.timeLocal}
-            </td>
-          )}
+          {showTime && <td className={style.logsRowLocalTime}>{dateTimeFormat(row.timeEpochMs, { timeZone })}</td>}
           {showLabels && row.uniqueLabels && (
             <td className={style.logsRowLabels}>
               <LogLabels labels={row.uniqueLabels} />

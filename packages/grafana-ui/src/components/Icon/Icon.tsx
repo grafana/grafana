@@ -88,7 +88,7 @@ export const getSvgSize = (size: IconSize) => {
     case 'lg':
       return 18;
     case 'xl':
-      return 28;
+      return 24;
     case 'xxl':
       return 36;
     case 'xxxl':
