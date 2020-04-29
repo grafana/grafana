@@ -87,6 +87,11 @@ export class KeybindingSrv {
     this.$location.search(search);
   }
 
+  closeSearch() {
+    const search = _.extend(this.$location.search(), { search: null });
+    this.$location.search(search);
+  }
+
   openAlerting() {
     this.$location.url('/alerting');
   }
@@ -147,6 +152,10 @@ export class KeybindingSrv {
 
     if (search.kiosk) {
       this.$rootScope.appEvent(CoreEvents.toggleKioskMode, { exit: true });
+    }
+
+    if (search.search) {
+      this.closeSearch();
     }
   }
 
