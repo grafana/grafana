@@ -1,17 +1,11 @@
 import React from 'react';
-import { storiesOf } from '@storybook/react';
 import { action } from '@storybook/addon-actions';
 
 import { TimeOfDayPicker } from './TimeOfDayPicker';
 import { UseState } from '../../utils/storybook/UseState';
-import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { dateTime } from '@grafana/data';
 
-const TimeOfDayPickerStories = storiesOf('Pickers and Editors/TimeOfDayPicker', module);
-
-TimeOfDayPickerStories.addDecorator(withCenteredStory);
-
-TimeOfDayPickerStories.add('default', () => {
+export const basic = () => {
   return (
     <UseState
       initialState={{
@@ -31,9 +25,9 @@ TimeOfDayPickerStories.add('default', () => {
       }}
     </UseState>
   );
-});
+};
 
-TimeOfDayPickerStories.add('only minutes', () => {
+export const onlyMinutes = () => {
   return (
     <UseState initialState={{ value: dateTime(Date.now()) }}>
       {(value, updateValue) => {
@@ -50,4 +44,4 @@ TimeOfDayPickerStories.add('only minutes', () => {
       }}
     </UseState>
   );
-});
+};

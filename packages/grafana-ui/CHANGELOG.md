@@ -1,3 +1,70 @@
+# 7.0.0-beta.1 (2020-04-28)
+
+## Breaking changes
+
+### @grafana/ui forms migration notice
+In Grafana 7 we have migrated from our old form components to `LegacyForms` namespace. The new components were previously available under the `Forms` namespace. 
+
+All the following components were moved to the LegacyForms namespace, and some replaced with the new form components:
+
+- `SecretFormField`
+- `FormField`
+- `Select`
+- `AsyncSelect`
+- `IndicatorsContainer`
+- `NoOptionsMessage`
+- `ButtonSelect`
+- `Input`
+- `Switch`
+
+One exception to this is `FormLabel`, which has been renamed to `InlineFormLabel`.
+
+If you were previously using the legacy form styles and your plugin is breaking, change from this:
+```jsx
+import { Switch } from '@grafana/ui';
+…
+<Switch .../>
+```
+To this:
+```jsx
+import { LegacyForms } from '@grafana/ui';
+…
+<LegacyForms.Switch ... />
+```
+
+If you were previously using the new form styles under the `Forms` namespace, change from this: 
+
+```jsx
+import { Forms } from '@grafana/ui';
+…
+<Forms.Switch ... />
+```
+To this:
+```jsx
+import { Switch} from '@grafana/ui';
+…
+<Switch ... />
+```
+
+To see the new form components visit [our Storybook](https://developers.grafana.com/ui)
+
+### Features / Enhancements
+* **@grafana/ui**: Create Icon component and replace icons. [#23402](https://github.com/grafana/grafana/pull/23402), [@ivanahuckova](https://github.com/ivanahuckova)
+* **@grafana/ui**: Create slider component. [#22275](https://github.com/grafana/grafana/pull/22275), [@ivanahuckova](https://github.com/ivanahuckova)
+* **@grafana/ui**: Remove ColorPallete component. [#23592](https://github.com/grafana/grafana/pull/23592), [@ivanahuckova](https://github.com/ivanahuckova)
+* **Components**: IconButton. [#23510](https://github.com/grafana/grafana/pull/23510), [@torkelo](https://github.com/torkelo)
+* **Docs**: Adding API reference documentation support for the packages libraries. [#21931](https://github.com/grafana/grafana/pull/21931), [@mckn](https://github.com/mckn)
+* **Migration**: Add old Input to legacy namespace. [#23286](https://github.com/grafana/grafana/pull/23286), [@tskarhed](https://github.com/tskarhed)
+* **Migration**: Final components to LegacyForms. [#23707](https://github.com/grafana/grafana/pull/23707), [@tskarhed](https://github.com/tskarhed)
+* **Migration**: Move Switch from Forms namespace. [#23386](https://github.com/grafana/grafana/pull/23386), [@tskarhed](https://github.com/tskarhed)
+* **Migration**: Move last components from Forms namespace. [#23556](https://github.com/grafana/grafana/pull/23556), [@tskarhed](https://github.com/tskarhed)
+* **Migration**: Remove Button from Forms namespace. [#23105](https://github.com/grafana/grafana/pull/23105), [@tskarhed](https://github.com/tskarhed)
+* **Migration**: TextArea from Forms namespace. [#23436](https://github.com/grafana/grafana/pull/23436), [@tskarhed](https://github.com/tskarhed)
+* **grafana/ui**: Add basic horizontal and vertical layout components. [#22303](https://github.com/grafana/grafana/pull/22303), [@dprokop](https://github.com/dprokop)
+
+### Bug Fixes
+* **@grafana/ui**: Fix time range when only partial datetime is provided. [#23122](https://github.com/grafana/grafana/pull/23122), [@ivanahuckova](https://github.com/ivanahuckova)
+
 # 6.6.0-beta.1.0 (2020-01-20)
 
 ### Features / Enhancements
