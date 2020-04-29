@@ -18,9 +18,9 @@ Usage insights allows you to have a better understanding on how your Grafana ins
 
 ## Presence indicators
 
-Presence indicators are visible to all signed-in users on all dashboards. It shows avatar of users who interacted with the dashboard recently. You can see the user's name by hovering the user's avatar. Users' avatars come from [Gravatar](https://gravatar.com) based on the user's email.
+Presence indicators are visible to all signed-in users on all dashboards. A presence indicator shows the avatars of users who interacted with the dashboard recently. You can see the user's name by hovering your cursor over the user's avatar. Users' avatars come from [Gravatar](https://gravatar.com) based on the user's email.
 
-When more users are active on a dashboard than can fit in the presence indicators, click on the `+X` icon that opens the [Dashboard Insights]({{< relref "#dashboard-insights" >}}) drawer and see more details about recent user activity. 
+When more users are active on a dashboard than can fit in the presence indicators section, click on the `+X` icon that opens [Dashboard Insights]({{< relref "#dashboard-insights" >}}) to see more details about recent user activity. 
 
 {{< docs-imagebox img="/img/docs/enterprise/presence_indicators.png" max-width="400px" class="docs-image--no-shadow" >}}
 
@@ -40,8 +40,8 @@ You can see dashboard usage information by clicking on the `Dashboard insights` 
 
 It shows two kind of information:
 
-- **Stats**: shows the daily query count and the errors count for the last 30 days.
-- **Users & activity**: shows the daily view count for the last 30 days; last activities on the dashboard and recent users (with a limit of 20).
+- **Stats:** Shows the daily query count and error count for the last 30 days.
+- **Users & activity:** shows the daily view count for the last 30 days; last activities on the dashboard and recent users (with a limit of 20).
 
 {{< docs-imagebox img="/img/docs/enterprise/dashboard_insights_stats.png" max-width="400px" class="docs-image--no-shadow" >}}{{< docs-imagebox img="/img/docs/enterprise/dashboard_insights_users.png" max-width="400px" class="docs-image--no-shadow" >}}
 
