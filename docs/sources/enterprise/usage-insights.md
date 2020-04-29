@@ -41,7 +41,7 @@ You can see dashboard usage information by clicking on the `Dashboard insights` 
 It shows two kind of information:
 
 - **Stats:** Shows the daily query count and error count for the last 30 days.
-- **Users & activity**: shows the daily view count for the last 30 days; last activities on the dashboard and recent users (with a limit of 20).
+- **Users & activity:** shows the daily view count for the last 30 days; last activities on the dashboard and recent users (with a limit of 20).
 
 ## Improved dashboard search
 
