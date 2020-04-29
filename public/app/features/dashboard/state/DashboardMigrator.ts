@@ -25,12 +25,11 @@ export class DashboardMigrator {
   constructor(dashboardModel: DashboardModel) {
     this.dashboard = dashboardModel;
   }
-
   updateSchema(old: any) {
     let i, j, k, n;
     const oldVersion = this.dashboard.schemaVersion;
     const panelUpgrades = [];
-    this.dashboard.schemaVersion = 24;
+    this.dashboard.schemaVersion = 25;
 
     if (oldVersion === this.dashboard.schemaVersion) {
       return;
@@ -522,6 +521,15 @@ export class DashboardMigrator {
       });
     }
 
+    if (oldVersion < 25) {
+      const dashboard = this.dashboard;
+      if (dashboard.links.length > 0) {
+        this.dashboard.links = dashboard.links.map(link => {
+          return { ...link, icon: this.getUpdatedIcon(link.icon) };
+        });
+      }
+    }
+
     if (panelUpgrades.length === 0) {
       return;
     }
@@ -538,6 +546,33 @@ export class DashboardMigrator {
     }
   }
 
+  getUpdatedIcon = (oldIcon: string) => {
+    switch (oldIcon) {
+      case 'external link':
+        return 'external-link-alt';
+
+      case 'fa-th-large':
+        return 'apps';
+
+      case 'fa-question':
+        return 'question-circle';
+
+      case 'fa-info':
+        return 'info-circle';
+
+      case 'fa-bolt':
+        return 'bolt';
+
+      case 'fa-file-text-o':
+        return 'file-alt';
+
+      case 'fa-cloud':
+        return 'cloud';
+
+      default:
+        return oldIcon;
+    }
+  };
   upgradeToGridLayout(old: any) {
     let yPos = 0;
     const widthFactor = GRID_COLUMN_COUNT / 12;

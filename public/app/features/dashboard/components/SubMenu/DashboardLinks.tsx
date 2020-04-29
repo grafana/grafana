@@ -1,5 +1,5 @@
 import React, { FC } from 'react';
-import { Icon, IconName } from '@grafana/ui';
+import { Icon } from '@grafana/ui';
 import { sanitize, sanitizeUrl } from '@grafana/data/src/text/sanitize';
 import { DashboardsDropdown } from './DashboardsDropdown';
 import { getLinkSrv } from '../../../panel/panellinks/link_srv';
@@ -26,7 +26,7 @@ export const DashboardLinks: FC<Props> = ({ dashboard }) => {
           return (
             <div key={key} className="gf-form">
               <a className="gf-form-label" href={sanitizeUrl(linkInfo.href)} target={link.target}>
-                <Icon name={`${link.icon.replace(' ', '-')}` as IconName} />
+                <Icon name={link.icon} />
                 <span>{sanitize(linkInfo.title)}</span>
               </a>
             </div>
