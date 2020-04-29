@@ -48,9 +48,7 @@ export class ResultProcessor {
       return null;
     }
 
-    const onlyTables = this.dataFrames.filter(frame =>
-      shouldShowInTable(frame, this.state.datasourceInstance?.meta.id)
-    );
+    const onlyTables = this.dataFrames.filter(frame => shouldShowInTable(frame));
 
     if (onlyTables.length === 0) {
       return null;
@@ -127,17 +125,8 @@ function isTimeSeries(frame: DataFrame, datasource?: string): boolean {
   return false;
 }
 
-/* In Explore table, we don't want to show time-series.
- * EXCEPTION: For Prometheus, we want to show time-series when they are result of instant queries.
- */
-function shouldShowInTable(frame: DataFrame, datasource?: string) {
-  // DataFrames with exactly 2 fields, when first field.type === time are time-series.
-  if (frame.fields.length === 2 && frame.fields[0].type === FieldType.time) {
-    // Hack: Prometheus instant vectors's value has always length === 1.
-    // https://prometheus.io/docs/prometheus/latest/querying/api/#instant-vectors
-    if (datasource && datasource === 'prometheus' && frame.length === 1) {
-      return true;
-    }
+function shouldShowInTable(frame: DataFrame) {
+  if (frame.meta?.preferredVisualisationType && frame.meta?.preferredVisualisationType !== 'table') {
     return false;
   }
 
