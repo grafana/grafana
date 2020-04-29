@@ -63,6 +63,10 @@ const getResultsItemStyles = stylesFactory((theme: GrafanaTheme) => ({
     margin-bottom: ${SEARCH_ITEM_MARGIN}px;
     padding: 0 ${theme.spacing.md};
 
+    &:last-child {
+      margin-bottom: ${SEARCH_ITEM_MARGIN * 2}px;
+    }
+
     :hover {
       cursor: pointer;
     }
