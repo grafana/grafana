@@ -1,4 +1,4 @@
-import React, { FC, HTMLProps } from 'react';
+import React, { HTMLProps } from 'react';
 import { css, cx } from 'emotion';
 import { GrafanaTheme } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
