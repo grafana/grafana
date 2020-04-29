@@ -32,9 +32,9 @@ with two fields (time & value).
 
 ### New panel edit experiance
 
-In Grafana 7 we have completely updated the UI for editing panels. The first visible change is that we have seperated panel display settings to a right hand side pane that you can collapse or expand depending on what your focus is on. With this change we also introducing our new unified option model & UI for defining data configuration & display options. This unified data configuration system powers a consistent UI for setting data options across visualizations as well as making all data display settings data driven and overridable.
+In Grafana 7 we have completely updated the UI for editing panels. The first visible change is that we have seperated panel display settings to a right hand side pane that you can collapse or expand depending on what your focus is on. With this change we are also introducing our new unified option model & UI for defining data configuration & display options. This unified data configuration system powers a consistent UI for setting data options across visualizations as well as making all data display settings data driven and overridable.
 
-This new option architecture and UI will make all panels have a consistent set of options and behavior for attributes like `unit`, `min`, `max`, `thresholds`, `links`, `decimals`. Not only that but all these options will share a consistent UI for specifying override rules and is extensible for custom panel specific options.
+This new option architecture and UI will make all panels have a consistent set of options and behaviors for attributes like `unit`, `min`, `max`, `thresholds`, `links`, `decimals`. Not only that but all these options will share a consistent UI for specifying override rules and is extensible for custom panel specific options.
 
 We have yet to migrate all core panels to this new architecute so in 7.0 there will sadly be some big inconsistencies in the UI between panels. Hopefully this will be fixed soon in future releases as we update all the core panels and help the community update the community panel plugins.
 
