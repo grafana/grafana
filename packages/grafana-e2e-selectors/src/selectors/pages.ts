@@ -49,6 +49,7 @@ export const Pages = {
         sectionItems: (item: string) => `Dashboard settings section item ${item}`,
         saveDashBoard: 'Dashboard settings aside actions Save button',
         saveAsDashBoard: 'Dashboard settings aside actions Save As button',
+        title: () => 'h3[class=dashboard-settings__header]',
       },
       Variables: {
         List: {
