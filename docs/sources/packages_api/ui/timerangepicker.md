@@ -5,7 +5,6 @@
 title = "TimeRangePicker"
 keywords = ["grafana","documentation","sdk","@grafana/ui"]
 type = "docs"
-draft = true
 +++
 
 ## TimeRangePicker variable
@@ -15,7 +14,7 @@ draft = true
 <b>Signature</b>
 
 ```typescript
-TimeRangePicker: React.FunctionComponent<Pick<Props, "onChange" | "history" | "value" | "timeZone" | "hideText" | "timeSyncButton" | "isSynced" | "onMoveBackward" | "onMoveForward" | "onZoom">>
+TimeRangePicker: React.FunctionComponent<Pick<Props, "onChange" | "history" | "timeZone" | "value" | "hideText" | "timeSyncButton" | "isSynced" | "onMoveBackward" | "onMoveForward" | "onZoom">>
 ```
 <b>Import</b>
 

@@ -5,7 +5,6 @@
 title = "ConfirmModal"
 keywords = ["grafana","documentation","sdk","@grafana/ui"]
 type = "docs"
-draft = true
 +++
 
 ## ConfirmModal variable
