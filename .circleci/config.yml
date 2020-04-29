@@ -592,7 +592,7 @@ jobs:
           version: 18.09.3
       - install-grabpl
       # XXX: Is this necessary?
-      - run: docker run --privileged linuxkit/binfmt:v0.6
+      - run: docker run --privileged linuxkit/binfmt:v0.7
       - run:
           name: Copy Grafana archives
           command: |
@@ -1012,6 +1012,22 @@ workflows:
             - test-backend
             - test-frontend
       - build-backend:
+          filters: *filter-master-or-release
+          edition: oss
+          variant: s390x
+          name: build-oss-backend-s390x
+          requires:
+            - test-backend
+            - test-frontend
+      - build-backend:
+          filters: *filter-master-or-release
+          edition: oss
+          variant: s390x-musl
+          name: build-oss-backend-s390x-musl
+          requires:
+            - test-backend
+            - test-frontend
+      - build-backend:
           filters: *filter-all
           edition: oss
           variant: osx64
@@ -1098,6 +1114,22 @@ workflows:
             - test-backend
             - test-frontend
       - build-backend:
+          filters: *filter-master-or-release
+          name: build-enterprise-backend-s390x
+          edition: enterprise
+          variant: s390x
+          requires:
+            - test-backend
+            - test-frontend
+      - build-backend:
+          filters: *filter-master-or-release
+          name: build-enterprise-backend-s390x-musl
+          edition: enterprise
+          variant: s390x-musl
+          requires:
+            - test-backend
+            - test-frontend
+      - build-backend:
           filters: *filter-all
           name: build-enterprise-backend-osx64
           edition: enterprise
@@ -1177,6 +1209,8 @@ workflows:
             - build-oss-backend-armv7-musl
             - build-oss-backend-arm64
             - build-oss-backend-arm64-musl
+            - build-oss-backend-s390x
+            - build-oss-backend-s390x-musl
             - build-oss-backend-osx64
             - build-oss-backend-win64
             - build-oss-backend-linux-x64
@@ -1195,6 +1229,8 @@ workflows:
             - build-enterprise-backend-armv7-musl
             - build-enterprise-backend-arm64
             - build-enterprise-backend-arm64-musl
+            - build-enterprise-backend-s390x
+            - build-enterprise-backend-s390x-musl
             - build-enterprise-backend-osx64
             - build-enterprise-backend-win64
             - build-enterprise-backend-linux-x64

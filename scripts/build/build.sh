@@ -13,6 +13,8 @@ CCARMV7=arm-linux-gnueabihf-gcc
 CCARMV7_MUSL=/tmp/arm-linux-musleabihf-cross/bin/arm-linux-musleabihf-gcc
 CCARM64=aarch64-linux-gnu-gcc
 CCARM64_MUSL=/tmp/aarch64-linux-musl-cross/bin/aarch64-linux-musl-gcc
+CCS390x=s390x-linux-gnu-gcc
+CCS390x_MUSL=/tmp/s390x-linux-musl-cross/bin/s390x-linux-musl-gcc
 CCX64=/tmp/x86_64-centos6-linux-gnu/bin/x86_64-centos6-linux-gnu-gcc
 CCX64_MUSL=/tmp/x86_64-linux-musl-cross/bin/x86_64-linux-musl-gcc
 
@@ -87,8 +89,10 @@ function build_backend() {
   go run build.go -goarch armv6 -cc ${CCARMV6} ${OPT} build
   go run build.go -goarch armv7 -cc ${CCARMV7} ${OPT} build
   go run build.go -goarch arm64 -cc ${CCARM64} ${OPT} build
+  go run build.go -goarch s390x -cc ${CCS390x} ${OPT} build
   go run build.go -goarch armv7 -libc musl -cc ${CCARMV7_MUSL} ${OPT} build
   go run build.go -goarch arm64 -libc musl -cc ${CCARM64_MUSL} ${OPT} build
+  go run build.go -goarch s390x -libc musl -cc ${CCS390x_MUSL} ${OPT} build
   build_backend_linux_amd64
 }
 
@@ -119,8 +123,10 @@ function package_all() {
   go run build.go -goos linux -pkg-arch armv6 ${OPT} -skipRpm package-only
   go run build.go -goos linux -pkg-arch armv7 ${OPT} package-only
   go run build.go -goos linux -pkg-arch arm64 ${OPT} package-only
+  go run build.go -goos linux -pkg-arch s390x ${OPT} package-only
   go run build.go -goos linux -pkg-arch armv7 -libc musl -skipRpm -skipDeb ${OPT} package-only
   go run build.go -goos linux -pkg-arch arm64 -libc musl -skipRpm -skipDeb ${OPT} package-only
+  go run build.go -goos linux -pkg-arch s390x -libc musl -skipRpm -skipDeb ${OPT} package-only
   package_linux_amd64
   echo "PACKAGE ALL: finished"
 }

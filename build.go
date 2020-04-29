@@ -179,6 +179,8 @@ func makeLatestDistCopies() {
 		".linux-armv6.tar.gz":      "dist/grafana-latest.linux-armv6.tar.gz",
 		".linux-arm64.tar.gz":      "dist/grafana-latest.linux-arm64.tar.gz",
 		".linux-arm64-musl.tar.gz": "dist/grafana-latest.linux-arm64-musl.tar.gz",
+		".linux-s390x.tar.gz":      "dist/grafana-latest.linux-s390x.tar.gz",
+		".linux-s390x-musl.tar.gz": "dist/grafana-latest.linux-s390x-musl.tar.gz",
 	}
 
 	for _, file := range files {
@@ -256,6 +258,9 @@ func createDebPackages() {
 	if pkgArch == "armv7" || pkgArch == "armv6" {
 		debPkgArch = "armhf"
 	}
+	if pkgArch == "s390x" {
+		debPkgArch = "s390x"
+	}
 
 	createPackage(linuxPackageOptions{
 		packageType:            "deb",
@@ -286,6 +291,8 @@ func createRpmPackages() {
 		rpmPkgArch = "armhfp"
 	case pkgArch == "arm64":
 		rpmPkgArch = "aarch64"
+	case pkgArch == "s390x":
+		rpmPkgArch = "s390x"
 	}
 	createPackage(linuxPackageOptions{
 		packageType:            "rpm",

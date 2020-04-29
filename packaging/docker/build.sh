@@ -56,6 +56,10 @@ docker_build () {
       base_arch="arm64v8/"
       repo_arch="-arm64v8-linux"
       ;;
+    "s390x")
+      base_arch="s390x/"
+      repo_arch="-s390x-linux"
+      ;;
   esac
   if [ $UBUNTU_BASE = "0" ]; then
     libc="-musl"
@@ -91,6 +95,7 @@ docker_tag_all () {
   if [ $BUILD_FAST = "0" ]; then
     docker tag "${_docker_repo}-arm32v7-linux:${_grafana_version}${TAG_SUFFIX}" "${_docker_repo}-arm32v7-linux:${tag}${TAG_SUFFIX}"
     docker tag "${_docker_repo}-arm64v8-linux:${_grafana_version}${TAG_SUFFIX}" "${_docker_repo}-arm64v8-linux:${tag}${TAG_SUFFIX}"
+    docker tag "${_docker_repo}-s390x-linux:${_grafana_version}${TAG_SUFFIX}" "${_docker_repo}-s390x-linux:${tag}${TAG_SUFFIX}"
   fi
 }
 
@@ -98,6 +103,7 @@ docker_build "x64"
 if [ $BUILD_FAST = "0" ]; then
   docker_build "armv7"
   docker_build "arm64"
+  docker_build "s390x"
 fi
 
 # Tag as 'latest' for official release; otherwise tag as grafana/grafana:master

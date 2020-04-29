@@ -41,12 +41,14 @@ docker_push_all () {
   docker push "${repo}:${tag}${TAG_SUFFIX}"
   docker push "${repo}-arm32v7-linux:${tag}${TAG_SUFFIX}"
   docker push "${repo}-arm64v8-linux:${tag}${TAG_SUFFIX}"
+  docker push "${repo}-s390x-linux:${tag}${TAG_SUFFIX}"
 
   # Create and push a multi-arch manifest
   docker manifest create "${repo}:${tag}${TAG_SUFFIX}" \
     "${repo}:${tag}${TAG_SUFFIX}" \
     "${repo}-arm32v7-linux:${tag}${TAG_SUFFIX}" \
-    "${repo}-arm64v8-linux:${tag}${TAG_SUFFIX}"
+    "${repo}-arm64v8-linux:${tag}${TAG_SUFFIX}" \
+    "${repo}-s390x-linux:${tag}${TAG_SUFFIX}"
 
   docker manifest push "${repo}:${tag}${TAG_SUFFIX}"
 }
