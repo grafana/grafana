@@ -1,5 +1,9 @@
 import React from 'react';
 import config from 'app/core/config';
+import { css } from 'emotion';
+import { getStyles } from './loginStyles';
+import { useStyles, useTheme } from '@grafana/ui';
+import { GrafanaTheme } from '@grafana/data';
 
 const loginServices: () => LoginServices = () => {
   const oauthEnabled = !!config.oauth;
@@ -58,18 +62,34 @@ export interface LoginServices {
   [key: string]: LoginService;
 }
 
+const getServiceStyles = (theme: GrafanaTheme) => {
+  return {
+    container: css`
+      width: 100%;
+      text-align: center;
+    `,
+    button: css`
+      color: #d8d9da;
+      margin: 0 0 ${theme.spacing.md};
+      width: 100%;
+    `,
+  };
+};
+
 const LoginDivider = () => {
+  const theme = useTheme();
+  const dividerStyles = getStyles(theme);
   return (
     <>
-      <div className="text-center login-divider">
+      <div className={dividerStyles.divider.base}>
         <div>
-          <div className="login-divider-line" />
+          <div className={dividerStyles.divider.line} />
         </div>
         <div>
-          <span className="login-divider-text">{config.disableLoginForm ? null : <span>or</span>}</span>
+          <span>{!config.disableLoginForm && <span>or</span>}</span>
         </div>
         <div>
-          <div className="login-divider-line" />
+          <div className={dividerStyles.divider.line} />
         </div>
       </div>
       <div className="clearfix" />
@@ -78,6 +98,7 @@ const LoginDivider = () => {
 };
 
 export const LoginServiceButtons = () => {
+  const styles = useStyles(getServiceStyles);
   const keyNames = Object.keys(loginServices());
   const serviceElementsEnabled = keyNames.filter(key => {
     const service: LoginService = loginServices()[key];
@@ -93,7 +114,7 @@ export const LoginServiceButtons = () => {
     return (
       <a
         key={key}
-        className={`btn btn-medium btn-service btn-service--${service.className || key} login-btn`}
+        className={`${styles.button} btn btn-medium btn-service btn-service--${service.className || key}`}
         href={`login/${service.hrefName ? service.hrefName : key}`}
         target="_self"
       >
@@ -107,7 +128,7 @@ export const LoginServiceButtons = () => {
   return (
     <>
       {divider}
-      <div className="login-oauth text-center">{serviceElements}</div>
+      <div className={styles.container}>{serviceElements}</div>
     </>
   );
 };
