@@ -1,5 +1,5 @@
 import React, { FC } from 'react';
-import { Icon, IconName } from '@grafana/ui';
+import { Icon, IconName, Tooltip } from '@grafana/ui';
 import { sanitize, sanitizeUrl } from '@grafana/data/src/text/sanitize';
 import { DashboardsDropdown } from './DashboardsDropdown';
 import { getLinkSrv } from '../../../panel/panellinks/link_srv';
@@ -24,12 +24,16 @@ export const DashboardLinks: FC<Props> = ({ dashboard }) => {
             return <DashboardsDropdown key={key} link={link} linkInfo={linkInfo} dashboardId={dashboard.id} />;
           }
 
+          const linkElement = (
+            <a className="gf-form-label" href={sanitizeUrl(linkInfo.href)} target={link.target}>
+              <Icon name={iconMap[link.icon] as IconName} />
+              <span>{sanitize(linkInfo.title)}</span>
+            </a>
+          );
+
           return (
             <div key={key} className="gf-form">
-              <a className="gf-form-label" href={sanitizeUrl(linkInfo.href)} target={link.target}>
-                <Icon name={iconMap[link.icon] as IconName} />
-                <span>{sanitize(linkInfo.title)}</span>
-              </a>
+              {link.tooltip ? <Tooltip content={link.tooltip}>{linkElement}</Tooltip> : linkElement}
             </div>
           );
         })}
