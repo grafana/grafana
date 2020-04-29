@@ -142,6 +142,14 @@ Grafana 7.0 comes with a new table panel (and deprecates the old one). This new 
 - **delete old dashboard versions in multiple batches**. [#23348](https://github.com/grafana/grafana/pull/23348), [@DanCech](https://github.com/DanCech)
 - **grafana/data**: PanelTypeChangedHandler API update to use PanelModel instead of panel options object [BREAKING]. [#22754](https://github.com/grafana/grafana/pull/22754), [@dprokop](https://github.com/dprokop)
 - **grafana/ui**: Add basic horizontal and vertical layout components. [#22303](https://github.com/grafana/grafana/pull/22303), [@dprokop](https://github.com/dprokop)
+- **Auth** SAML Role and Team Sync (Enterprise)
+- **Presence Indicators**: Display the avatars of active users on dashboards (Enterprise)
+- **Reporting**: makes it possible to disable the scheduler (Enterprise)
+- **Dashboard**: Dashboard usage view (Enterprise)
+- **Reporting** makes it possible to trigger report emails without scheduler (Enterprise)
+- **Search**: sorting based on dashboard views and errors (Enterprise)
+- **Reporting**: improved landscape mode and panel image quality (Enterprise)
+- **Reporting**: adds config setting for image_scale_factor of panel images (Enterprise)
 
 ### Bug Fixes
 
@@ -189,7 +197,7 @@ Grafana 7.0 comes with a new table panel (and deprecates the old one). This new 
 - **Security**: Fix for dashboard snapshot original dashboard link could contain XSS vulnerability in url. [#23254](https://github.com/grafana/grafana/pull/23254), [@torkelo](https://github.com/torkelo). Big thanks to Ahmed A. Sherif for reporting this issue.
 - **Variables**: Fixes issue with too many queries being issued for nested template variables after value change. [#23220](https://github.com/grafana/grafana/pull/23220), [@torkelo](https://github.com/torkelo)
 - **Plugins**: Expose promiseToDigest. [#23249](https://github.com/grafana/grafana/pull/23249), [@torkelo](https://github.com/torkelo)
-- **Reporting (Enterprise)**: Fixes issue updating a report created by someone else
+- **Reporting**: Fixes issue updating a report created by someone else (Enterprise)
 
 # 6.7.1 (2020-03-20)
 
