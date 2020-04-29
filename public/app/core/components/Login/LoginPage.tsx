@@ -1,7 +1,7 @@
 // Libraries
 import React, { FC } from 'react';
-import { css } from 'emotion';
-import { CSSTransition } from 'react-transition-group';
+import { css, cx } from 'emotion';
+import { keyframes } from '@emotion/core';
 
 // Components
 import { UserSignup } from './UserSignup';
@@ -41,30 +41,29 @@ export const LoginPage: FC = () => {
             skipPasswordChange,
             isChangingPassword,
           }) => (
-            <div className="login-outer-box">
-              <div className={`login-inner-box ${isChangingPassword ? 'hidden' : ''}`} id="login-view">
-                {!disableLoginForm ? (
-                  <LoginForm
-                    displayForgotPassword={!(ldapEnabled || authProxyEnabled)}
-                    onSubmit={login}
-                    loginHint={loginHint}
-                    passwordHint={passwordHint}
-                    isLoggingIn={isLoggingIn}
-                  />
-                ) : null}
+            <div className={styles.loginOuterBox}>
+              {!isChangingPassword && (
+                <div className={`${styles.loginInnerBox} ${isChangingPassword ? 'hidden' : ''}`} id="login-view">
+                  {!disableLoginForm && (
+                    <LoginForm
+                      displayForgotPassword={!(ldapEnabled || authProxyEnabled)}
+                      onSubmit={login}
+                      loginHint={loginHint}
+                      passwordHint={passwordHint}
+                      isLoggingIn={isLoggingIn}
+                    />
+                  )}
 
-                <LoginServiceButtons />
-                {!disableUserSignUp ? <UserSignup /> : null}
-              </div>
-              <CSSTransition
-                appear={true}
-                mountOnEnter={true}
-                in={isChangingPassword}
-                timeout={250}
-                classNames="login-inner-box"
-              >
-                <ChangePassword onSubmit={changePassword} onSkip={skipPasswordChange} focus={isChangingPassword} />
-              </CSSTransition>
+                  <LoginServiceButtons />
+                  {!disableUserSignUp && <UserSignup />}
+                </div>
+              )}
+
+              {isChangingPassword && (
+                <div className={cx(styles.loginInnerBox, styles.enterAnimation)}>
+                  <ChangePassword onSubmit={changePassword} onSkip={skipPasswordChange as any} />
+                </div>
+              )}
             </div>
           )}
         </LoginCtrl>
@@ -74,6 +73,15 @@ export const LoginPage: FC = () => {
     </Branding.LoginBackground>
   );
 };
+
+const flyInAnimation = keyframes`
+from{
+  transform: translate(0px, -320px);
+}
+
+to{
+  transform: translate(0px, 0px);
+}`;
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
   let boxBackground = theme.isLight ? 'rgba(6, 42, 88, 0.65)' : 'rgba(18, 28, 41, 0.65)';
@@ -107,6 +115,40 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       min-height: 320px;
       border-radius: 3px;
       background: ${boxBackground};
+    `,
+    loginOuterBox: css`
+      display: flex;
+      overflow-y: hidden;
+      align-items: center;
+      justify-content: center;
+    `,
+    loginInnerBox: css`
+      padding: ${theme.spacing.xl};
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      flex-grow: 1;
+      max-width: 415px;
+      width: 100%;
+      transform: translate(0px, 0px);
+      transition: 0.25s ease;
+
+      &.hidden {
+        display: none;
+      }
+
+      &-enter {
+        transform: translate(0px, 320px);
+        display: flex;
+      }
+
+      &-enter-active {
+        transform: translate(0px, 0px);
+      }
+    `,
+    enterAnimation: css`
+      animation: ${flyInAnimation} ease-out 0.4s;
     `,
   };
 });

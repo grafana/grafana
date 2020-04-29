@@ -21,8 +21,9 @@ interface State {
 }
 
 const forgottenPasswordStyles = css`
-  display: inline-block;
+  display: block;
   margin-top: 20px;
+  text-align: center;
 `;
 
 const wrapperStyles = css`

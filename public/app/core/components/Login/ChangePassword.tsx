@@ -1,11 +1,10 @@
-import React, { FC } from 'react';
-import { Tooltip, Form, Field, Input, HorizontalGroup, Button } from '@grafana/ui';
+import React, { FC, SyntheticEvent } from 'react';
+import { Tooltip, Form, Field, Input, HorizontalGroup, Button, LinkButton } from '@grafana/ui';
 import { selectors } from '@grafana/e2e-selectors';
 
 interface Props {
   onSubmit: (pw: string) => void;
-  onSkip: Function;
-  focus?: boolean;
+  onSkip: (event?: SyntheticEvent) => void;
 }
 
 interface PasswordDTO {
@@ -21,23 +20,22 @@ export const ChangePassword: FC<Props> = ({ onSubmit, onSkip }) => {
     <Form onSubmit={submit}>
       {({ errors, register, getValues }) => (
         <>
-          <Field label="New password">
+          <Field label="New password" invalid={!!errors.newPassword} error={errors?.newPassword?.message}>
             <Input
+              autoFocus
               type="password"
               name="newPassword"
-              invalid={!!errors.newPassword}
               ref={register({
-                required: true,
-                validate: v => v === getValues().confirmNew || 'Passwords must match!',
+                required: 'New password required',
               })}
             />
           </Field>
-          <Field label="Confirmn new password" invalid={!!errors.confirmNew}>
+          <Field label="Confirmn new password" invalid={!!errors.confirmNew} error={errors?.confirmNew?.message}>
             <Input
               type="password"
               name="confirmNew"
               ref={register({
-                required: 'New password is required',
+                required: 'Confirmed password is required',
                 validate: v => v === getValues().newPassword || 'Passwords must match!',
               })}
             />
@@ -47,9 +45,9 @@ export const ChangePassword: FC<Props> = ({ onSubmit, onSkip }) => {
               content="If you skip you will be prompted to change password next time you login."
               placement="bottom"
             >
-              <Button variant="link" aria-label={selectors.pages.Login.skip}>
+              <LinkButton variant="link" onClick={onSkip} aria-label={selectors.pages.Login.skip}>
                 Skip
-              </Button>
+              </LinkButton>
             </Tooltip>
             <Button type="submit">Submit</Button>
           </HorizontalGroup>
