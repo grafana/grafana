@@ -39,22 +39,9 @@ Currently only Organization Admins can create reports.
 1. Select the layout option for generated report: **Portrait** or **Landscape**.  
 1. Enter scheduling information. Options vary depending on the frequency you select.
 1. **Save** the report.
-1. **Send test report** after saving the report to verify that the report looks like you expect it to.
+1. **Send test mail** after saving the report to verify that the report looks like you expect it to.
 
 {{< docs-imagebox img="/img/docs/enterprise/reports_create_new.png" max-width="500px" class="docs-image--no-shadow" >}}
-
-## Send test mail
-
-> Only available in Grafana Enterprise v7.0+.
-
-1. In the report, click **Send test mail**.
-1. In the Email field, enter the email address or addresses that you want to test, separated by semicolon.
-If you want to use email addresses from the report, then select the **Use emails from report** check box.
-1. Click **Send**.
-
-The last saved version of the report will be sent to selected emails. You can use this to verify emails are working and to make sure the report generates and is displayed as you expect.
-
-{{< docs-imagebox img="/img/docs/enterprise/reports_send_test_mail.png" max-width="500px" class="docs-image--no-shadow" >}}
 
 ### Scheduling
 
@@ -86,13 +73,30 @@ Weekly reports are generated once per week and takes three arguments:
 
 #### Never
 
+> Only available in Grafana Enterprise v7.0+.
+
 Reports which are scheduled to never be sent have no arguments and will not be sent to the scheduler. They may be manually generated from the **Send test email** prompt or via the API.
+
+### Send test mail
+
+> Only available in Grafana Enterprise v7.0+.
+
+1. In the report, click **Send test mail**.
+1. In the Email field, enter the email address or addresses that you want to test, separated by semicolon.
+If you want to use email addresses from the report, then select the **Use emails from report** check box.
+1. Click **Send**.
+
+The last saved version of the report will be sent to selected emails. You can use this to verify emails are working and to make sure the report generates and is displayed as you expect.
+
+{{< docs-imagebox img="/img/docs/enterprise/reports_send_test_mail.png" max-width="500px" class="docs-image--no-shadow" >}}
 
 ## API
 
+> Only available in Grafana Enterprise v7.0+.
+
 Reports can be generated with the experimental `/api/reports/email` API. To access the API you need to authenticate yourself as an organization admin. For more information about API authentication, refer to [Authentication API]({{ relref "../http_api/auth.md" }}).
 
-The API expects a JSON object with the following arguments:
+The `/api/reports/email` API expects a JSON object with the following arguments:
 
 * **id -** ID of the report to send (same as in the URL when editing a report, not to be confused with the ID of the dashboard). Required.
 * **emails -** Comma-separated list of emails to which to send the report to. Overrides the emails from the report. Required if **useEmailsFromReport** is not present.
@@ -111,7 +115,7 @@ $ curl -H "Authorization: Bearer <Admin API key>" https://<grafana.example.org>/
 
 When generating reports by each panel renders separately before being collected in a PDF. The per panel rendering timeout and number of concurrently rendered panels can be configured.
 
-To modify the panels' clarity you can set a scale factor for the rendered images. A higher scale factor is more legible but will increase the file size.
+To modify the panels' clarity you can set a scale factor for the rendered images. A higher scale factor is more legible but will increase the file size of the generated PDF.
 
  These options are available in the [configuration]({{< relref "../installation/configuration.md">}}) file.
 
