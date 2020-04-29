@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-set -e
+set -eo pipefail
 
 _basedir=$(dirname "$0")
 cd "$_basedir"
