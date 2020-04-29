@@ -58,9 +58,9 @@ Supported auth providers:
 
 [White labeling]({{< relref "white-labeling.md" >}}) allows you to replace the Grafana brand and logo with your own corporate brand and logo. You can also change footer links to point to your custom resources.
 
-## Usage Insights
+## Usage insights
 
-[Usage Insights]({{< relref "usage-insights.md" >}}) allow you to understand how your Grafana instance is used. You can see who is looking at a dashboard, how often a dashboard is seen, and which dashboards are prone to errors. You'll also be able to discover what are the least and the most used dashboards.
+[Usage insights]({{< relref "usage-insights.md" >}}) allow you to understand how your Grafana instance is used. You can see who is looking at a dashboard, how often a dashboard is seen, and which dashboards are prone to errors. You'll also be able to discover what are the least and the most used dashboards.
 
 ## Enterprise plugins
 

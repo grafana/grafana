@@ -10,13 +10,13 @@ parent = "enterprise"
 weight = 700
 +++
 
-# Usage Insights
+# Usage insights
 
-Usage Insights allows you to have a better understanding on how your Grafana instance is used. The collected data are: dashboard views (aggregated and per user), data source errors, and number of data source queries.
+Usage insights allows you to have a better understanding on how your Grafana instance is used. The collected data are: dashboard views (aggregated and per user), data source errors, and number of data source queries.
 
 > Only available in Grafana Enterprise v7.0+.
 
-## Presence Indicators
+## Presence indicators
 
 Presence indicators are visible to all signed-in users on all dashboards. It shows avatar of users who interacted with the dashboard recently. You can see the user's name by hovering the user's avatar. Users' avatars come from [Gravatar](https://gravatar.com) based on the user's email.
 
@@ -32,7 +32,7 @@ You can choose your own definition of "recent" by setting it in the [configurati
 recent_users_age = 24h
 ```
 
-## Dashboard Insights
+## Dashboard insights
 
 You can see dashboard usage information by clicking on the `Dashboard insights` button in the top bar.
 
