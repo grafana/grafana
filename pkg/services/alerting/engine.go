@@ -44,7 +44,7 @@ func (e *AlertEngine) IsDisabled() bool {
 	return !setting.AlertingEnabled || !setting.ExecuteAlerts
 }
 
-// Init initalizes the AlertingService.
+// Init initializes the AlertingService.
 func (e *AlertEngine) Init() error {
 	e.ticker = NewTicker(time.Now(), time.Second*0, clock.New())
 	e.execQueue = make(chan *Job, 1000)
@@ -209,8 +209,8 @@ func (e *AlertEngine) processJob(attemptID int, attemptChan chan int, cancelChan
 
 		// override the context used for evaluation with a new context for notifications.
 		// This makes it possible for notifiers to execute when datasources
-		// dont respond within the timeout limit. We should rewrite this so notifications
-		// dont reuse the evalContext and get its own context.
+		// don't respond within the timeout limit. We should rewrite this so notifications
+		// don't reuse the evalContext and get its own context.
 		evalContext.Ctx = resultHandleCtx
 		evalContext.Rule.State = evalContext.GetNewState()
 		if err := e.resultHandler.handle(evalContext); err != nil {
