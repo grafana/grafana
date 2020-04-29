@@ -6,3 +6,9 @@
       - "./dashboards.yaml:/etc/grafana/provisioning/dashboards/dashboards.yaml"
       - "./dev-dashboards:/usr/share/grafana/devenv/dev-dashboards"
       - "./datasources_docker.yaml:/etc/grafana/provisioning/datasources/datasources.yaml"
+    environment:
+      GF_RENDERING_SERVER_URL: http://renderer:8081/render
+      GF_RENDERING_CALLBACK_URL: http://grafana:3000/
+
+  renderer:
+    image: grafana/grafana-image-renderer:latest
