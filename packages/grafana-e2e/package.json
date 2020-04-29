@@ -26,7 +26,7 @@
     "docsExtract": "mkdir -p ../../reports/docs && api-extractor run 2>&1 | tee ../../reports/docs/$(basename $(pwd)).log",
     "lint": "eslint cypress/ src/ --ext=.js,.ts,.tsx",
     "open": "cypress open",
-    "start": "cypress run",
+    "start": "cypress run --headless --browser chrome",
     "typecheck": "tsc --noEmit"
   },
   "devDependencies": {
@@ -50,7 +50,7 @@
     "@grafana/tsconfig": "^1.0.0-rc1",
     "blink-diff": "1.0.13",
     "commander": "5.0.0",
-    "cypress": "3.7.0",
+    "cypress": "4.5.0",
     "execa": "4.0.0",
     "ts-loader": "6.2.1",
     "typescript": "3.7.5",
