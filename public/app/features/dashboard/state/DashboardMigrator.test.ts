@@ -132,7 +132,7 @@ describe('DashboardModel', () => {
     });
 
     it('dashboard schema version should be set to latest', () => {
-      expect(model.schemaVersion).toBe(25);
+      expect(model.schemaVersion).toBe(24);
     });
 
     it('graph thresholds should be migrated', () => {
@@ -624,34 +624,6 @@ describe('DashboardModel', () => {
         text: ['text'],
         value: ['value'],
       });
-    });
-  });
-
-  describe('when migrating dashboard link icon', () => {
-    let model: DashboardModel;
-
-    beforeEach(() => {
-      model = new DashboardModel({
-        links: [
-          { icon: 'external link' },
-          { icon: 'fa-th-large' },
-          { icon: 'fa-question' },
-          { icon: 'fa-info' },
-          { icon: 'fa-bolt' },
-          { icon: 'fa-file-text-o' },
-          { icon: 'fa-cloud' },
-        ],
-      });
-    });
-
-    it('should migrate link icons', () => {
-      expect(model.links[0].icon).toEqual('external-link-alt');
-      expect(model.links[1].icon).toEqual('apps');
-      expect(model.links[2].icon).toEqual('question-circle');
-      expect(model.links[3].icon).toEqual('info-circle');
-      expect(model.links[4].icon).toEqual('bolt');
-      expect(model.links[5].icon).toEqual('file-alt');
-      expect(model.links[6].icon).toEqual('cloud');
     });
   });
 });

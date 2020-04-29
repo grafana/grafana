@@ -4,7 +4,7 @@ import { DashboardModel } from 'app/features/dashboard/state';
 import { GrafanaRootScope } from 'app/routes/GrafanaCtrl';
 import { CoreEvents } from 'app/types';
 
-export let iconMap = {
+export let iconMap: { [key: string]: string } = {
   'external link': 'external-link-alt',
   dashboard: 'apps',
   question: 'question-circle',
