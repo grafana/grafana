@@ -126,6 +126,7 @@ func init() {
 		"Rekognition":           {"DetectedFaceCount", "DetectedLabelCount", "ResponseTime", "ServerErrorCount", "SuccessfulRequestCount", "ThrottledCount", "UserErrorCount"},
 		"WAF":                   {"AllowedRequests", "BlockedRequests", "CountedRequests", "DDoSAttackBitsPerSecond", "DDoSAttackPacketsPerSecond", "DDoSAttackRequestsPerSecond", "DDoSDetected", "PassedRequests"},
 		"AWS/Cassandra":         {"AccountMaxReads", "AccountMaxTableLevelReads", "AccountMaxTableLevelWrites", "AccountMaxWrites", "AccountProvisionedReadCapacityUtilization", "AccountProvisionedWriteCapacityUtilization", "ConditionalCheckFailedRequests", "ConsumedReadCapacityUnits", "ConsumedWriteCapacityUnits", "MaxProvisionedTableReadCapacityUtilization", "MaxProvisionedTableWriteCapacityUtilization", "ReturnedItemCount", "ReturnedItemCountBySelect", "SuccessfulRequestCount", "SuccessfulRequestLatency", "SystemErrors", "UserErrors"},
+		"AWS/WAFV2":             {"AllowedRequest", "BlockedRequests", "CountedRequests"},
 	}
 	dimensionsMap = map[string][]string{
 		"AWS/ACMPrivateCA":      {},
@@ -213,6 +214,7 @@ func init() {
 		"Rekognition":           {},
 		"WAF":                   {"Region", "Rule", "RuleGroup", "WebACL"},
 		"AWS/Cassandra":         {"Keyspace", "Operation", "TableName"},
+		"AWS/WAFV2":             {"Region", "Rule", "WebACL"},
 	}
 
 	customMetricsMetricsMap = make(map[string]map[string]map[string]*CustomMetricsCache)
