@@ -77,6 +77,15 @@ Weekly reports are generated once per week and takes three arguments:
 
 Reports which are scheduled to never be sent have no arguments and will not be sent to the scheduler. They may be manually generated from the **Send test email** prompt or via the API.
 
+### Layout
+
+> The layout renderers are early versions undergoing heavy development. Customizations and variable sized panel layouts are on the roadmap. [Reach out to us](https://grafana.com/contact?about=grafana-enterprise) if you are interested in  the future of reporting.
+
+Name | Description | Preview
+---- | ----------- | -------
+Portrait | Portrait generates an A4 page in portrait mode with three panels rendered per page. | {{< docs-imagebox img="/img/docs/enterprise/reports_portrait_preview.png" max-width="500px" max-height="500px" class="docs-image--no-shadow" >}}
+Landscape | (Available from 6.7+) Landscape generates an A4 page in landscape mode with a single panel per page. | {{< docs-imagebox img="/img/docs/enterprise/reports_landscape_preview.png" max-width="500px" class="docs-image--no-shadow" >}}
+
 ### Send test mail
 
 > Only available in Grafana Enterprise v7.0+.
