@@ -2,7 +2,7 @@ import React, { FC } from 'react';
 import { getTimeZoneGroups } from '@grafana/data';
 import { Cascader } from '../index';
 
-interface Props {
+export interface Props {
   value: string;
   width?: number;
 

@@ -3,7 +3,7 @@
   "license": "Apache-2.0",
   "private": true,
   "name": "grafana",
-  "version": "7.0.0-pre",
+  "version": "7.1.0-pre",
   "repository": "github:grafana/grafana",
   "scripts": {
     "api-tests": "jest --notify --watch --config=devenv/e2e-api-tests/jest.js",
@@ -41,6 +41,10 @@
     "typecheck": "tsc --noEmit",
     "plugins:build-bundled": "grafana-toolkit plugin:bundle-managed",
     "watch": "yarn start -d watch,start core:start --watchTheme "
+  },
+  "grafana": {
+    "whatsNewUrl": "https://grafana.com/docs/grafana/latest/guides/whats-new-in-v7-0/",
+    "releaseNotesUrl": "https://community.grafana.com/t/release-notes-v7-0-x/29381"
   },
   "husky": {
     "hooks": {

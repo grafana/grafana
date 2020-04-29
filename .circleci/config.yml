@@ -2,6 +2,10 @@ version: 2.1
 
 aliases:
   # Workflow filters
+  # filter-all triggers for all branches and version tags
+  - &filter-all
+    tags:
+      only: /^v[0-9]+(\.[0-9]+){2}(-.+|[^-.]*)$/
   - &filter-only-release
     branches:
       only: chore/test-release-pipeline
@@ -50,7 +54,7 @@ commands:
       - run:
           name: "Install Grafana build pipeline tool"
           command: |
-            VERSION=0.2.12
+            VERSION=0.4.2
             curl -fLO https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v${VERSION}/grabpl
             chmod +x grabpl
             mv grabpl /tmp
@@ -967,7 +971,6 @@ jobs:
 workflows:
   build-pipeline:
     jobs:
-      # No filters, meaning this job runs for all branches
       - build-backend:
           filters: *filter-master-or-release
           edition: oss
@@ -1009,7 +1012,7 @@ workflows:
             - test-backend
             - test-frontend
       - build-backend:
-          # No filters, meaning this job runs for all branches
+          filters: *filter-all
           edition: oss
           variant: osx64
           name: build-oss-backend-osx64
@@ -1017,7 +1020,7 @@ workflows:
             - test-backend
             - test-frontend
       - build-backend:
-          # No filters, meaning this job runs for all branches
+          filters: *filter-all
           edition: oss
           variant: win64
           name: build-oss-backend-win64
@@ -1025,7 +1028,7 @@ workflows:
             - test-backend
             - test-frontend
       - build-backend:
-          # No filters, meaning this job runs for all branches
+          filters: *filter-all
           edition: oss
           variant: linux-x64
           name: build-oss-backend-linux-x64
@@ -1033,7 +1036,7 @@ workflows:
             - test-backend
             - test-frontend
       - build-backend:
-          # No filters, meaning this job runs for all branches
+          filters: *filter-all
           edition: oss
           variant: linux-x64-musl
           name: build-oss-backend-linux-x64-musl
@@ -1041,14 +1044,14 @@ workflows:
             - test-backend
             - test-frontend
       - build-frontend:
-          # No filters, meaning this job runs for all branches
+          filters: *filter-all
           name: build-oss-frontend
           edition: oss
           requires:
             - test-backend
             - test-frontend
       - build-plugins:
-          # No filters, meaning this job runs for all branches
+          filters: *filter-all
           name: build-oss-plugins
           edition: oss
           requires:
@@ -1095,7 +1098,7 @@ workflows:
             - test-backend
             - test-frontend
       - build-backend:
-          # No filters, meaning this job runs for all branches
+          filters: *filter-all
           name: build-enterprise-backend-osx64
           edition: enterprise
           variant: osx64
@@ -1103,7 +1106,7 @@ workflows:
             - test-backend
             - test-frontend
       - build-backend:
-          # No filters, meaning this job runs for all branches
+          filters: *filter-all
           name: build-enterprise-backend-win64
           edition: enterprise
           variant: win64
@@ -1111,7 +1114,7 @@ workflows:
             - test-backend
             - test-frontend
       - build-backend:
-          # No filters, meaning this job runs for all branches
+          filters: *filter-all
           name: build-enterprise-backend-linux-x64
           edition: enterprise
           variant: linux-x64
@@ -1119,7 +1122,7 @@ workflows:
             - test-backend
             - test-frontend
       - build-backend:
-          # No filters, meaning this job runs for all branches
+          filters: *filter-all
           name: build-enterprise-backend-linux-x64-musl
           edition: enterprise
           variant: linux-x64-musl
@@ -1127,14 +1130,14 @@ workflows:
             - test-backend
             - test-frontend
       - build-frontend:
-          # No filters, meaning this job runs for all branches
+          filters: *filter-all
           name: build-enterprise-frontend
           edition: enterprise
           requires:
             - test-backend
             - test-frontend
       - build-plugins:
-          # No filters, meaning this job runs for all branches
+          filters: *filter-all
           name: build-enterprise-plugins
           edition: enterprise
           requires:
@@ -1142,32 +1145,32 @@ workflows:
             - test-frontend
       - build-release-publisher:
           filters: *filter-master-or-release
-      # No filters, meaning this job runs for all branches
-      - codespell
-      # No filters, meaning this job runs for all branches
-      - lint-go
-      # No filters, meaning this job runs for all branches
-      - shellcheck
-      # No filters, meaning this job runs for all branches
+      - codespell:
+          filters: *filter-all
+      - lint-go:
+          filters: *filter-all
+      - shellcheck:
+          filters: *filter-all
       - test-backend:
+          filters: *filter-all
           requires:
             - lint-go
-      # No filters, meaning this job runs for all branches
-      - test-frontend
-      # No filters, meaning this job runs for all branches
+      - test-frontend:
+          filters: *filter-all
       - mysql-integration-test:
+          filters: *filter-all
           requires:
             - lint-go
             - test-backend
             - test-frontend
       - postgres-integration-test:
-          # No filters, meaning this job runs for all branches
+          filters: *filter-all
           requires:
             - lint-go
             - test-backend
             - test-frontend
       - package-oss:
-          # No filters, meaning this job runs for all branches
+          filters: *filter-all
           requires:
             - build-oss-backend-armv6
             - build-oss-backend-armv7
@@ -1185,7 +1188,7 @@ workflows:
             - shellcheck
             - build-oss-plugins
       - package-enterprise:
-          # No filters, meaning this job runs for all branches
+          filters: *filter-all
           requires:
             - build-enterprise-backend-armv6
             - build-enterprise-backend-armv7
@@ -1203,11 +1206,11 @@ workflows:
             - shellcheck
             - build-enterprise-plugins
       - build-oss-windows-installer:
-          # No filters, meaning this job runs for all branches
+          filters: *filter-all
           requires:
             - package-oss
       - build-enterprise-windows-installer:
-          # No filters, meaning this job runs for all branches
+          filters: *filter-all
           requires:
             - package-enterprise
       - release-next-packages:
@@ -1243,11 +1246,12 @@ workflows:
             - postgres-integration-test
             - build-release-publisher
       - publish-storybook:
+          filters: *filter-all
           requires:
             - test-backend
             - test-frontend
       - build-docker-images:
-          # No filters, meaning this job runs for all branches
+          filters: *filter-all
           name: build-oss-docker-images
           edition: oss
           ubuntu: false
@@ -1258,7 +1262,7 @@ workflows:
             - package-oss
             - build-oss-windows-installer
       - build-docker-images:
-          # No filters, meaning this job runs for all branches
+          filters: *filter-all
           name: build-oss-ubuntu-docker-images
           edition: oss
           ubuntu: true
@@ -1269,7 +1273,7 @@ workflows:
             - package-oss
             - build-oss-windows-installer
       - build-docker-images:
-          # No filters, meaning this job runs for all branches
+          filters: *filter-all
           name: build-enterprise-docker-images
           edition: enterprise
           ubuntu: false
@@ -1280,7 +1284,7 @@ workflows:
             - package-enterprise
             - build-enterprise-windows-installer
       - build-docker-images:
-          # No filters, meaning this job runs for all branches
+          filters: *filter-all
           name: build-enterprise-ubuntu-docker-images
           edition: enterprise
           ubuntu: true
@@ -1291,7 +1295,7 @@ workflows:
             - package-enterprise
             - build-enterprise-windows-installer
       - end-to-end-tests:
-          # No filters, meaning this job runs for all branches
+          filters: *filter-all
           requires:
             - package-oss
       - build-docs-website:
