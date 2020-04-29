@@ -161,7 +161,7 @@ const DataSourceTypeCard: FC<DataSourceTypeCardProps> = props => {
 
 export function getNavModel(): NavModel {
   const main = {
-    icon: 'gicon gicon-add-datasources',
+    icon: 'database',
     id: 'datasource-new',
     text: 'Add data source',
     href: 'datasources/new',
