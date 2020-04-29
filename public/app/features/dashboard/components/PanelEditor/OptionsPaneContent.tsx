@@ -208,7 +208,7 @@ export const TabsBarContent: React.FC<{
       ) : (
         <>
           {tabs.map(item => (
-            <Tooltip content={item.tooltip}>
+            <Tooltip content={item.tooltip} placement="top">
               <Tab
                 key={item.value}
                 label={item.label}
