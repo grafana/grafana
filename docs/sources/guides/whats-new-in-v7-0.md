@@ -22,16 +22,17 @@ The Grafana 7.0 stable will be released on the 18th of May. In the meantime if y
 
 The main highlights are:
 
-- **New Panel Editor:** Redesign based on community feedback
-- **Explore:** New tracing UI and support for visualizing Jaeger and Zipkin traces.
-- **Enterprise:** Usage Analytics and Presence
-- **Transformations:** Transformations and simple Math operations for all data sources.
-- **Field overrides:** Automatically configure panels with data from queries.
-- **Table:** New Table panel.
-- **Plugins:** New plugins platform
-- **Tutorials:** New tutorials section
-- **Cloudwatch:** Cloudwatch Logs
-- **Breaking change:** PhantomJS removed
+- [**New Panel Editor** Redesign based on community feedback.]({{< relref "#new-panel-editor" >}})
+- [**Explore:** New tracing UI and support for visualizing Jaeger and Zipkin traces.]({{< relref "#new-tracing-ui" >}})
+- [**Enterprise** Usage Analytics and Presence.]({{< relref "#grafana-enterprise" >}})
+- [**Transformations** Transformations and simple Math operations for all data sources.]({{< relref "#transformations" >}})
+- [**Field overrides** Automatically configure panels with data from queries.]({{< relref "#field-overrides" >}})
+- [**Table** New Table panel.]({{< relref "#table-panel" >}})
+- [**Plugins** New plugins platform.]({{< relref "#plugins-platform" >}})
+- [**Tutorials** New tutorials section.]({{< relref "#new-tutorials" >}})
+- [**Cloudwatch** Support for Cloudwatch Logs in Explore and the Logs panel.]({{< relref "#cloudwatch-logs" >}})
+- [**Breaking change** PhantomJS removed.]({{< relref "#breaking-change-phantomjs-removed" >}})
+- [**Time zones** Time zone support]({{< relref "#time-zone-support" >}})
 
 ## New panel editor
 
@@ -96,7 +97,7 @@ This new 7.0 feature is for the gauge and stat panels. Before, stat and gauge on
 
 Grafana 7.0 adds logging support to one of our most popular cloud provider data sources. Autocomplete support for Cloudwatch Logs queries is included for improved productivity.
 
-## Plugin platform
+## Plugins platform
 
 ### Support for backend component - can add alerting to external plugins
 
@@ -131,7 +132,9 @@ As a replacement for PhantomJS we’ve developed the [Grafana Image Renderer plu
 
 Read more about [Image Rendering]({{< relref "../administration/image_rendering/" >}}) in the documentation for further instructions.
 
-## Rich History in Explore out of beta
+## Query History in Explore out of beta
+
+The Query history feature lets you view and interact with the queries that you have previously run in Explore. It was released as a beta feature in Grafana 6.7. The feedback has been really positive and it is now out of beta for the 7.0 release.
 
 ## Stackdriver data source supports Service Monitoring
 
@@ -140,6 +143,8 @@ Read more about [Image Rendering]({{< relref "../administration/image_rendering/
 https://grafana.com/docs/grafana/latest/features/datasources/stackdriver/#slo-service-level-objective-queries
 
 ## Time zone support
+
+Adding support for changing the time zone for a dashboard is one of our oldest feature requests and now in Grafana 7.0, it is finally implemented. You now have the ability to override the time zone used to display date and time values in a dashboard. One of the benefits with this is that you can specify the local time zone of the service/system that you are monitoring which can be really helpful when monitoring a system/service that operates across several time zones.
 
 ### Grafana Enterprise
 
