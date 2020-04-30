@@ -25,7 +25,7 @@ export const SaveDashboardErrorProxy: React.FC<SaveDashboardErrorProxyProps> = (
   const { onDashboardSave } = useDashboardSave(dashboard);
 
   useEffect(() => {
-    if (error.data) {
+    if (error.data && (error.data.status === 'version-mismatch' || error.data.status === 'name-exists')) {
       error.isHandled = true;
     }
   }, []);
