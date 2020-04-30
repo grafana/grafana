@@ -285,13 +285,10 @@ func (scanner *PluginScanner) loadPluginJson(pluginJsonFilePath string) error {
 		if sig := GetPluginSignatureState(&pluginCommon); sig != PluginSignatureValid && !allowUnsigned {
 			switch sig {
 			case PluginSignatureUnsigned:
-				scanner.log.Debug("Cannot load plugin since it has no signature", "pluginID", pluginCommon.Id)
 				return fmt.Errorf("plugin %q is unsigned", pluginCommon.Id)
 			case PluginSignatureInvalid:
-				scanner.log.Debug("Cannot load plugin since it has an invalid signature", "pluginID", pluginCommon.Id)
 				return fmt.Errorf("plugin %q has an invalid signature", pluginCommon.Id)
 			case PluginSignatureModified:
-				scanner.log.Debug("Cannot load plugin since its signature is modified", "pluginID", pluginCommon.Id)
 				return fmt.Errorf("plugin %q's signature has been modified", pluginCommon.Id)
 			default:
 				return fmt.Errorf("unrecognized plugin signature state %v", sig)
