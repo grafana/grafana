@@ -1,6 +1,6 @@
 import { Observable } from 'rxjs';
 import { QueryRunnerOptions } from 'app/features/dashboard/state/PanelQueryRunner';
-import { DashboardQuery, SHARED_DASHBODARD_QUERY } from './types';
+import { DashboardQuery, SHARED_DASHBOARD_QUERY } from './types';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { LoadingState, DefaultTimeRange, DataQuery, PanelData, DataSourceApi } from '@grafana/data';
 
@@ -9,11 +9,11 @@ export function isSharedDashboardQuery(datasource: string | DataSourceApi) {
     // default datasource
     return false;
   }
-  if (datasource === SHARED_DASHBODARD_QUERY) {
+  if (datasource === SHARED_DASHBOARD_QUERY) {
     return true;
   }
   const ds = datasource as DataSourceApi;
-  return ds.meta && ds.meta.name === SHARED_DASHBODARD_QUERY;
+  return ds.meta && ds.meta.name === SHARED_DASHBOARD_QUERY;
 }
 
 export function runSharedRequest(options: QueryRunnerOptions): Observable<PanelData> {

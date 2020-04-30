@@ -9,7 +9,7 @@ import config from 'app/core/config';
 import { css } from 'emotion';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { PanelModel } from 'app/features/dashboard/state';
-import { SHARED_DASHBODARD_QUERY } from './types';
+import { SHARED_DASHBOARD_QUERY } from './types';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { filterPanelDataToQuery } from 'app/features/dashboard/panel_editor/QueryEditorRow';
 const { Select } = LegacyForms;
@@ -152,7 +152,7 @@ export class DashboardQueryEditor extends PureComponent<Props, State> {
         continue;
       }
 
-      if (panel.targets && panel.datasource !== SHARED_DASHBODARD_QUERY) {
+      if (panel.targets && panel.datasource !== SHARED_DASHBOARD_QUERY) {
         const item = {
           value: panel.id,
           label: panel.title ? panel.title : 'Panel ' + panel.id,

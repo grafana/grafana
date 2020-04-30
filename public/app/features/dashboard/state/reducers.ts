@@ -25,7 +25,7 @@ export const initialState: DashboardState = {
   initError: null,
 };
 
-const dashbardSlice = createSlice({
+const dashboardSlice = createSlice({
   name: 'dashboard',
   initialState,
   reducers: {
@@ -123,9 +123,9 @@ export const {
   addPanel,
   cleanUpEditPanel,
   setPanelAngularComponent,
-} = dashbardSlice.actions;
+} = dashboardSlice.actions;
 
-export const dashboardReducer = dashbardSlice.reducer;
+export const dashboardReducer = dashboardSlice.reducer;
 
 export default {
   dashboard: dashboardReducer,
