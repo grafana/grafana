@@ -478,7 +478,7 @@ You can test your plugin with the `master` branch version of Grafana.
 
 #### Security vulnerability
 
-The MySQL data source connnection string fix, [#20192](https://github.com/grafana/grafana/pull/20192), that was part of this release
+The MySQL data source connection string fix, [#20192](https://github.com/grafana/grafana/pull/20192), that was part of this release
 also fixed a security vulnerability. Thanks Yuriy Dyachenko for discovering and notifying us about this.
 
 # 6.4.3 (2019-10-16)
