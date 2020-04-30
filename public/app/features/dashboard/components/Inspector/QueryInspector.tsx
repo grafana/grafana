@@ -198,7 +198,11 @@ export class QueryInspector extends PureComponent<Props, State> {
           </p>
         </div>
         <div className={styles.toolbar}>
-          <Button icon="sync" onClick={this.onIssueNewQuery}>
+          <Button
+            icon="sync"
+            onClick={this.onIssueNewQuery}
+            aria-label={selectors.components.PanelInspector.Query.refreshButton}
+          >
             Refresh
           </Button>
 

@@ -67,6 +67,8 @@ export const Components = {
     },
     Query: {
       content: 'Panel inspector Query content',
+      refreshButton: 'Panel inspector Query refresh button',
+      jsonObjectKeys: () => '.json-formatter-key',
     },
   },
   Tab: {
@@ -76,6 +78,14 @@ export const Components = {
   QueryTab: {
     content: 'Query editor tab content',
     queryInspectorButton: 'Query inspector button',
+    addQuery: 'Query editor add query button',
+  },
+  QueryEditorRows: {
+    rows: 'Query editor row',
+  },
+  QueryEditorRow: {
+    actionButton: (title: string) => `${title} query operation action`,
+    title: (refId: string) => `Query editor row title ${refId}`,
   },
   AlertTab: {
     content: 'Alert editor tab content',

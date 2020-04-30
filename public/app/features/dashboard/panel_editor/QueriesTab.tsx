@@ -271,7 +271,12 @@ export class QueriesTab extends PureComponent<Props, State> {
     return (
       <HorizontalGroup spacing="md" align="flex-start">
         {showAddButton && (
-          <Button icon="plus" onClick={this.onAddQueryClick} variant="secondary">
+          <Button
+            icon="plus"
+            onClick={this.onAddQueryClick}
+            variant="secondary"
+            aria-label={selectors.components.QueryTab.addQuery}
+          >
             Query
           </Button>
         )}
