@@ -32,7 +32,7 @@ func (r *RendererPlugin) Load(decoder *json.Decoder, pluginDir string, backendPl
 
 	r.backendPluginManager = backendPluginManager
 
-	cmd := ComposePluginStartCommmand("plugin_start")
+	cmd := ComposePluginStartCommand("plugin_start")
 	fullpath := path.Join(r.PluginDir, cmd)
 	descriptor := backendplugin.NewRendererPluginDescriptor(r.Id, fullpath, backendplugin.PluginStartFuncs{
 		OnLegacyStart: r.onLegacyPluginStart,
