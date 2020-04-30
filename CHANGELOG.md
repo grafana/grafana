@@ -2827,7 +2827,7 @@ slack channel (link to slack channel in readme).
 - [Issue #2490](https://github.com/grafana/grafana/issues/2490). Graphite: Dashboard import was broken in 2.1 and 2.1.1, working now
 - [Issue #2565](https://github.com/grafana/grafana/issues/2565). TimePicker: Fix for when you applied custom time range it did not refreh dashboard
 - [Issue #2563](https://github.com/grafana/grafana/issues/2563). Annotations: Fixed issue when html sanitizer failes for title to annotation body, now fallbacks to html escaping title and text
-- [Issue #2564](https://github.com/grafana/grafana/issues/2564). Templating: Another atempt at fixing #2534 (Init multi value template var used in repeat panel from url)
+- [Issue #2564](https://github.com/grafana/grafana/issues/2564). Templating: Another attempt at fixing #2534 (Init multi value template var used in repeat panel from url)
 - [Issue #2620](https://github.com/grafana/grafana/issues/2620). Graph: multi series tooltip did no highlight correct point when stacking was enabled and series were of different resolution
 - [Issue #2636](https://github.com/grafana/grafana/issues/2636). InfluxDB: Do no show template vars in dropdown for tag keys and group by keys
 - [Issue #2604](https://github.com/grafana/grafana/issues/2604). InfluxDB: More alias options, can now use `$[0-9]` syntax to reference part of a measurement name (separated by dots)
@@ -2856,7 +2856,7 @@ Grunt & Watch tasks:
 **Fixes**
 
 - [Issue #2580](https://github.com/grafana/grafana/issues/2580). Packaging: ldap.toml was not marked as config file and could be overwritten in upgrade
-- [Issue #2564](https://github.com/grafana/grafana/issues/2564). Templating: Another atempt at fixing #2534 (Init multi value template var used in repeat panel from url)
+- [Issue #2564](https://github.com/grafana/grafana/issues/2564). Templating: Another attempt at fixing #2534 (Init multi value template var used in repeat panel from url)
 
 # 2.1.2 (2015-08-20)
 
