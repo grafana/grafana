@@ -1,0 +1,9 @@
+# # config file version
+apiVersion: 1
+
+users:
+  - name: Fake
+    login: fake-user
+    email: example@example.com
+    password: "hello"
+    orgID: 1

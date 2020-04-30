@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/provisioning/dashboards"
 	"github.com/grafana/grafana/pkg/services/provisioning/datasources"
 	"github.com/grafana/grafana/pkg/services/provisioning/notifiers"
+	"github.com/grafana/grafana/pkg/services/provisioning/users"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -19,6 +20,7 @@ type ProvisioningService interface {
 	ProvisionDatasources() error
 	ProvisionNotifications() error
 	ProvisionDashboards() error
+	ProvisionUsers() error
 	GetDashboardProvisionerResolvedPath(name string) string
 	GetAllowUIUpdatesFromConfig(name string) bool
 }
@@ -30,6 +32,7 @@ func init() {
 		},
 		notifiers.Provision,
 		datasources.Provision,
+		users.Provision,
 	))
 }
 
@@ -37,12 +40,14 @@ func NewProvisioningServiceImpl(
 	newDashboardProvisioner dashboards.DashboardProvisionerFactory,
 	provisionNotifiers func(string) error,
 	provisionDatasources func(string) error,
+	provisionUsers func(string) error,
 ) *provisioningServiceImpl {
 	return &provisioningServiceImpl{
 		log:                     log.New("provisioning"),
 		newDashboardProvisioner: newDashboardProvisioner,
 		provisionNotifiers:      provisionNotifiers,
 		provisionDatasources:    provisionDatasources,
+		provisionUsers:          provisionUsers,
 	}
 }
 
@@ -54,6 +59,7 @@ type provisioningServiceImpl struct {
 	dashboardProvisioner    dashboards.DashboardProvisioner
 	provisionNotifiers      func(string) error
 	provisionDatasources    func(string) error
+	provisionUsers          func(string) error
 	mutex                   sync.Mutex
 }
 
@@ -64,6 +70,11 @@ func (ps *provisioningServiceImpl) Init() error {
 	}
 
 	err = ps.ProvisionNotifications()
+	if err != nil {
+		return err
+	}
+
+	err = ps.ProvisionUsers()
 	if err != nil {
 		return err
 	}
@@ -110,6 +121,14 @@ func (ps *provisioningServiceImpl) ProvisionDatasources() error {
 func (ps *provisioningServiceImpl) ProvisionNotifications() error {
 	alertNotificationsPath := path.Join(ps.Cfg.ProvisioningPath, "notifiers")
 	err := ps.provisionNotifiers(alertNotificationsPath)
+	return errutil.Wrap("Alert notification provisioning error", err)
+}
+
+func (ps *provisioningServiceImpl) ProvisionUsers() error {
+	ps.log.Info("Provisioning2 users")
+	usersPath := path.Join(ps.Cfg.ProvisioningPath, "users")
+	ps.log.Info(usersPath)
+	err := ps.provisionUsers(usersPath)
 	return errutil.Wrap("Alert notification provisioning error", err)
 }
 
