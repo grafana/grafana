@@ -17,7 +17,7 @@ import {
   getPullRequestNumber,
   getCircleDownloadBaseURL,
 } from '../../plugins/env';
-import { agregateWorkflowInfo, agregateCoverageInfo, agregateTestInfo } from '../../plugins/workflow';
+import { aggregateWorkflowInfo, aggregateCoverageInfo, aggregateTestInfo } from '../../plugins/workflow';
 import { PluginPackageDetails, PluginBuildReport } from '../../plugins/types';
 import { manifestTask } from './manifest';
 import { execTask } from '../utils/execTask';
@@ -248,9 +248,9 @@ const pluginReportRunner: TaskRunner<PluginCIOptions> = async ({ upload }) => {
   const report: PluginBuildReport = {
     plugin: pluginMeta,
     packages: packageInfo,
-    workflow: agregateWorkflowInfo(),
-    coverage: agregateCoverageInfo(),
-    tests: agregateTestInfo(),
+    workflow: aggregateWorkflowInfo(),
+    coverage: aggregateCoverageInfo(),
+    tests: aggregateTestInfo(),
     artifactsBaseURL: await getCircleDownloadBaseURL(),
     grafanaVersion: getGrafanaVersions(),
     git: await readGitLog(),

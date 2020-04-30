@@ -3,7 +3,7 @@ import fs from 'fs';
 import { JobInfo, WorkflowInfo, CoverageInfo, TestResultsInfo } from './types';
 import { getBuildNumber, getCiFolder } from './env';
 
-export const agregateWorkflowInfo = (): WorkflowInfo => {
+export const aggregateWorkflowInfo = (): WorkflowInfo => {
   const now = Date.now();
   const workflow: WorkflowInfo = {
     jobs: [],
@@ -44,7 +44,7 @@ export const agregateWorkflowInfo = (): WorkflowInfo => {
   return workflow;
 };
 
-export const agregateCoverageInfo = (): CoverageInfo[] => {
+export const aggregateCoverageInfo = (): CoverageInfo[] => {
   const coverage: CoverageInfo[] = [];
   const ciDir = getCiFolder();
   const jobsFolder = path.resolve(ciDir, 'jobs');
@@ -76,7 +76,7 @@ export const agregateCoverageInfo = (): CoverageInfo[] => {
   return coverage;
 };
 
-export const agregateTestInfo = (): TestResultsInfo[] => {
+export const aggregateTestInfo = (): TestResultsInfo[] => {
   const tests: TestResultsInfo[] = [];
   const ciDir = getCiFolder();
   const jobsFolder = path.resolve(ciDir, 'jobs');
