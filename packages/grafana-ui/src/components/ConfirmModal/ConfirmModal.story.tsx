@@ -1,5 +1,4 @@
 import React from 'react';
-import { storiesOf } from '@storybook/react';
 import { text, boolean, select } from '@storybook/addon-knobs';
 import { action } from '@storybook/addon-actions';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
@@ -24,11 +23,13 @@ const defaultActions = {
   },
 };
 
-const ConfirmModalStories = storiesOf('Overlays/ConfirmModal', module);
+export default {
+  title: 'Overlays/ConfirmModal',
+  component: ConfirmModal,
+  decorators: [withCenteredStory],
+};
 
-ConfirmModalStories.addDecorator(withCenteredStory);
-
-ConfirmModalStories.add('default', () => {
+export const basic = () => {
   const { title, body, confirm, icon, visible } = getKnobs();
   const { onConfirm, onDismiss } = defaultActions;
   return (
@@ -42,4 +43,4 @@ ConfirmModalStories.add('default', () => {
       onDismiss={onDismiss}
     />
   );
-});
+};

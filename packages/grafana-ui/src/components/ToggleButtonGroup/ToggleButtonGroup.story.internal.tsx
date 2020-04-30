@@ -1,12 +1,15 @@
 import React from 'react';
-import { storiesOf } from '@storybook/react';
 import { action } from '@storybook/addon-actions';
 
 import { ToggleButton, ToggleButtonGroup } from './ToggleButtonGroup';
 import { UseState } from '../../utils/storybook/UseState';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 
-const ToggleButtonGroupStories = storiesOf('Forms/Legacy/ToggleButtonGroup', module);
+export default {
+  title: 'Forms/Legacy/ToggleButtonGroup',
+  component: ToggleButtonGroup,
+  decorators: [withCenteredStory],
+};
 
 const options = [
   { value: 'first', label: 'First' },
@@ -14,9 +17,7 @@ const options = [
   { value: 'third', label: 'Third' },
 ];
 
-ToggleButtonGroupStories.addDecorator(withCenteredStory);
-
-ToggleButtonGroupStories.add('default', () => {
+export const basic = () => {
   return (
     <UseState
       initialState={{
@@ -46,4 +47,4 @@ ToggleButtonGroupStories.add('default', () => {
       }}
     </UseState>
   );
-});
+};
