@@ -7,11 +7,13 @@ import { UseState } from '../../../../utils/storybook/UseState';
 import { SelectableValue } from '@grafana/data';
 import { ButtonSelect } from './ButtonSelect';
 
-const ButtonSelectStories = storiesOf('Forms/Select/ButtonSelect', module);
+export default {
+  title: 'Forms/Select/ButtonSelect',
+  component: ButtonSelect,
+  decorators: [withCenteredStory, withKnobs],
+};
 
-ButtonSelectStories.addDecorator(withCenteredStory).addDecorator(withKnobs);
-
-ButtonSelectStories.add('default', () => {
+export const basic = () => {
   const intialState: SelectableValue<string> = { label: 'A label', value: 'A value' };
   const value = object<SelectableValue<string>>('Selected Value:', intialState);
   const options = object<Array<SelectableValue<string>>>('Options:', [
@@ -38,4 +40,4 @@ ButtonSelectStories.add('default', () => {
       }}
     </UseState>
   );
-});
+};
