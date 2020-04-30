@@ -24,7 +24,7 @@ export interface ConfigOverrideRule {
 }
 
 export interface FieldConfigSource<TOptions extends object = any> {
-  // Defatuls applied to all numeric fields
+  // Defaults applied to all numeric fields
   defaults: FieldConfig<TOptions>;
 
   // Rules to override individual values

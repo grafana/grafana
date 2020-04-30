@@ -25,7 +25,7 @@ describe('calculateField transformer', () => {
     const cfg = {
       id: DataTransformerID.calculateField,
       options: {
-        // defautls to sum
+        // defaults to sum
         alias: 'The Total',
       },
     };
