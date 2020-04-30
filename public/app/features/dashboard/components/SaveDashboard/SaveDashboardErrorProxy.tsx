@@ -6,7 +6,6 @@ import { DashboardModel } from 'app/features/dashboard/state';
 import { useDashboardSave } from './useDashboardSave';
 import { SaveDashboardModalProps } from './types';
 import { SaveDashboardAsButton } from './SaveDashboardButton';
-import { Simulate } from 'react-dom/test-utils';
 
 interface SaveDashboardErrorProxyProps {
   /** original dashboard */
