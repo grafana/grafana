@@ -92,7 +92,7 @@ The last saved version of the report will be sent to selected emails. You can us
 
 ## Send report via the API
 
-Sending reports programmatically is possible with the [manually send report]({{< relref "http_api.md#manually-send-report" >}}) endpoint in the [Enterprise HTTP APIs]({{< relref "http_api.md" >}}).
+Sending reports programmatically is possible with the [send report]({{< relref "http_api.md#send-report" >}}) endpoint in the [Enterprise HTTP APIs]({{< relref "http_api.md" >}}).
 
 ## Rendering configuration
 
