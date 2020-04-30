@@ -131,11 +131,12 @@ To use SAML Team sync, set `assertion_attribute_groups` to the attribute name wh
 
 Role sync allows you to map user roles from an identity provider to Grafana. To enable role sync, configure role attribute and possible values for [Editor]({{< relref "../permissions/organization_roles.md#editor-role" >}}), [Admin]({{< relref "../permissions/organization_roles.md#admin-role" >}}) and [Grafana Admin]({{< relref "../permissions/overview.md#grafana-admin" >}}) roles.
 
-1. In configuration file, set `assertion_attribute_role` option to the attribute name where the role information will be extracted from.
-1. Set `role_values_editor` option to the values mapped to the `Editor` role.
-1. Set `role_values_admin` option to the values mapped to the organization `Admin` role.
-1. Set `role_values_grafana_admin` option to the values mapped to the `Grafana Admin` role.
-1. If user roles doesn't match any of configured values, `Viewer` role will be assigned.
+1. In the configuration file, set `assertion_attribute_role` option to the attribute name where the role information will be extracted from.
+1. Set the `role_values_editor` option to the values mapped to the `Editor` role.
+1. Set the `role_values_admin` option to the values mapped to the organization `Admin` role.
+1. Set the `role_values_grafana_admin` option to the values mapped to the `Grafana Admin` role.
+
+If a user role doesn't match any of configured values, then the `Viewer` role will be assigned.
 
 Refer to [Organization roles]({{< relref "../permissions/organization_roles.md" >}}) for more information about roles and permissions in Grafana.
 
