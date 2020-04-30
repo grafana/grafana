@@ -37,6 +37,7 @@ func TestPluginManager_Init(t *testing.T) {
 		err := pm.Init()
 		require.NoError(t, err)
 
+		assert.Empty(t, pm.scanningErrors)
 		assert.Greater(t, len(DataSources), 1)
 		assert.Greater(t, len(Panels), 1)
 		assert.Equal(t, "app/plugins/datasource/graphite/module", DataSources["graphite"].Module)
@@ -59,6 +60,24 @@ func TestPluginManager_Init(t *testing.T) {
 		require.NoError(t, err)
 
 		assert.Equal(t, []error{fmt.Errorf(`plugin "test" is unsigned`)}, pm.scanningErrors)
+	})
+
+	t.Run("With external unsigned plugin and configuration disabling signature check of this plugin", func(t *testing.T) {
+		origPluginsPath := setting.PluginsPath
+		t.Cleanup(func() {
+			setting.PluginsPath = origPluginsPath
+		})
+		setting.PluginsPath = "testdata/unsigned"
+
+		pm := &PluginManager{
+			Cfg: &setting.Cfg{
+				PluginsAllowUnsigned: []string{"test"},
+			},
+		}
+		err := pm.Init()
+		require.NoError(t, err)
+
+		assert.Empty(t, pm.scanningErrors)
 	})
 
 	t.Run("With external plugin with invalid signature", func(t *testing.T) {

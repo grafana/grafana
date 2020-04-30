@@ -273,7 +273,14 @@ func (scanner *PluginScanner) loadPluginJson(pluginJsonFilePath string) error {
 	if scanner.requireSigned {
 		plog.Debug("Plugin signature required, validating", "pluginID", pluginCommon.Id,
 			"pluginDir", pluginCommon.PluginDir)
-		if sig := GetPluginSignatureState(&pluginCommon); sig != PluginSignatureValid {
+		allowUnsigned := false
+		for _, plug := range scanner.cfg.PluginsAllowUnsigned {
+			if plug == pluginCommon.Id {
+				allowUnsigned = true
+				break
+			}
+		}
+		if sig := GetPluginSignatureState(&pluginCommon); sig != PluginSignatureValid && !allowUnsigned {
 			switch sig {
 			case PluginSignatureUnsigned:
 				plog.Debug("Cannot load plugin since it has no signature", "pluginID", pluginCommon.Id)
