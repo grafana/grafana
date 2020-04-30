@@ -14,7 +14,7 @@ weight = -17
 
 This topic includes the release notes for the Grafana v7.0, which is currently in beta. For all details, read the full [CHANGELOG.md](https://github.com/grafana/grafana/blob/master/CHANGELOG.md).
 
-This major release of Grafana contains a lot of new features and enhancements including the next step in our Observability story, powerful new features for manipulating, transforming and doing math on data and the first version of Usage Analytics in Grafana Enterprise.
+This major release of Grafana is the next step in our Observability story. It includes powerful new features for manipulating, transforming, and doing math on data. Grafana Enterprise has the first version of Usage analytics, which will help Grafana Admins better manage large, corporate Grafana ecosystems.
 
 The Grafana 7.0 stable will be released on the 18th of May. In the meantime if your want to know more about what we have been up to and what is coming sign up to our online GrafanaCon conference.
 
