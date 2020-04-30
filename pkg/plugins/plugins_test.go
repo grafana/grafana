@@ -1,10 +1,14 @@
 package plugins
 
 import (
+	"context"
 	"fmt"
 	"path/filepath"
 	"testing"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -46,7 +50,7 @@ func TestPluginManager_Init(t *testing.T) {
 		assert.Equal(t, "public/plugins/test-app/img/screenshot2.png", Apps["test-app"].Info.Screenshots[1].Path)
 	})
 
-	t.Run("With external plugin lacking signature", func(t *testing.T) {
+	t.Run("With external back-end plugin lacking signature", func(t *testing.T) {
 		origPluginsPath := setting.PluginsPath
 		t.Cleanup(func() {
 			setting.PluginsPath = origPluginsPath
@@ -62,7 +66,7 @@ func TestPluginManager_Init(t *testing.T) {
 		assert.Equal(t, []error{fmt.Errorf(`plugin "test" is unsigned`)}, pm.scanningErrors)
 	})
 
-	t.Run("With external unsigned plugin and configuration disabling signature check of this plugin", func(t *testing.T) {
+	t.Run("With external unsigned back-end plugin and configuration disabling signature check of this plugin", func(t *testing.T) {
 		origPluginsPath := setting.PluginsPath
 		t.Cleanup(func() {
 			setting.PluginsPath = origPluginsPath
@@ -73,6 +77,7 @@ func TestPluginManager_Init(t *testing.T) {
 			Cfg: &setting.Cfg{
 				PluginsAllowUnsigned: []string{"test"},
 			},
+			BackendPluginManager: fakeBackendPluginManager{},
 		}
 		err := pm.Init()
 		require.NoError(t, err)
@@ -80,7 +85,7 @@ func TestPluginManager_Init(t *testing.T) {
 		assert.Empty(t, pm.scanningErrors)
 	})
 
-	t.Run("With external plugin with invalid signature", func(t *testing.T) {
+	t.Run("With external back-end plugin with invalid signature", func(t *testing.T) {
 		origPluginsPath := setting.PluginsPath
 		t.Cleanup(func() {
 			setting.PluginsPath = origPluginsPath
@@ -115,4 +120,26 @@ func TestPluginManager_IsBackendOnlyPlugin(t *testing.T) {
 			assert.Equal(t, c.isBackendOnly, result)
 		})
 	}
+}
+
+type fakeBackendPluginManager struct {
+}
+
+func (f fakeBackendPluginManager) Register(descriptor backendplugin.PluginDescriptor) error {
+	return nil
+}
+
+func (f fakeBackendPluginManager) StartPlugin(ctx context.Context, pluginID string) error {
+	return nil
+}
+
+func (f fakeBackendPluginManager) CollectMetrics(ctx context.Context, pluginID string) (*backendplugin.CollectMetricsResult, error) {
+	return nil, nil
+}
+
+func (f fakeBackendPluginManager) CheckHealth(ctx context.Context, pCtx backend.PluginContext) (*backendplugin.CheckHealthResult, error) {
+	return nil, nil
+}
+
+func (f fakeBackendPluginManager) CallResource(pluginConfig backend.PluginContext, ctx *models.ReqContext, path string) {
 }

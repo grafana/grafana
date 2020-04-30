@@ -271,7 +271,8 @@ func (scanner *PluginScanner) loadPluginJson(pluginJsonFilePath string) error {
 
 	pluginCommon.PluginDir = filepath.Dir(pluginJsonFilePath)
 
-	if scanner.requireSigned {
+	// For the time being, we choose to only require back-end plugins to be signed
+	if pluginCommon.Backend && scanner.requireSigned {
 		scanner.log.Debug("Plugin signature required, validating", "pluginID", pluginCommon.Id,
 			"pluginDir", pluginCommon.PluginDir)
 		allowUnsigned := false
@@ -322,6 +323,7 @@ func (scanner *PluginScanner) loadPluginJson(pluginJsonFilePath string) error {
 	if _, err := reader.Seek(0, 0); err != nil {
 		return err
 	}
+
 	return loader.Load(jsonParser, currentDir, scanner.backendPluginManager)
 }
 

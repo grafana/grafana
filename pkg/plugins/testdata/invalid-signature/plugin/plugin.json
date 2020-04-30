@@ -2,6 +2,7 @@
   "type": "datasource",
   "name": "Test",
   "id": "test",
+  "backend": true,
   "state": "alpha",
   "info": {
     "description": "Test",
