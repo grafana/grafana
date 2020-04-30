@@ -40,7 +40,7 @@ In Grafana 7.0 we have redesigned the UI for editing panels. The first visible c
 
 ## New tracing UI
 
-With Grafana 7.0 we are adding major support for distributed tracing. This adds an important telemetry mode to complement the existing support for metrics and logs. Traces allow you to follow how single requests travelled through a distributed system. We are starting with an integrated trace viewer and two new built-in data sources: Jaeger and Zipkin.
+This release adds major support for distributed tracing, including a telemetry mode to complement the existing support for metrics and logs. Traces allow you to follow how single requests travel through a distributed system. We are starting with an integrated trace viewer and two new built-in data sources: Jaeger and Zipkin.
 
 You can use the new trace view in Explore either directly and search for a particular trace or you can configure Loki to detect trace IDs in the log lines and link directly to a trace timeline pulled from Jaeger or Zipkin data source.
 
