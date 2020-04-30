@@ -246,7 +246,7 @@ export class HeatmapRenderer {
       .remove();
   }
 
-  // Wide Y values range and anjust to bucket size
+  // Wide Y values range and adjust to bucket size
   wideYAxisRange(min: number, max: number, tickInterval: number) {
     const yWiding = (max * (this.dataRangeWidingFactor - 1) - min * (this.dataRangeWidingFactor - 1)) / 2;
     let yMin, yMax;
