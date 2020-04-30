@@ -51,9 +51,9 @@ interface CalculateFieldTransformerEditorState {
 }
 
 const calculationModes = [
-  { value: CalculateFieldMode.ReduceRow, label: 'Reduce Row' },
-  { value: CalculateFieldMode.BinaryOperation, label: 'Binary Operation' },
-  { value: CalculateFieldMode.Scale, label: 'Scale Field' },
+  { value: CalculateFieldMode.ReduceRow, label: 'Reduce row' },
+  { value: CalculateFieldMode.BinaryOperation, label: 'Binary operation' },
+  { value: CalculateFieldMode.Scale, label: 'Scale field' },
 ];
 
 export class CalculateFieldTransformerEditor extends React.PureComponent<
@@ -267,7 +267,7 @@ export class CalculateFieldTransformerEditor extends React.PureComponent<
         <div className="gf-form gf-form--grow">
           <Select
             options={names}
-            value={calculationModes.find(v => v.value === options?.left)}
+            value={names.find(v => v.value === options?.left)}
             onChange={this.onBinaryLeftChanged}
           />
           <Select
@@ -277,7 +277,7 @@ export class CalculateFieldTransformerEditor extends React.PureComponent<
           />
           <Select
             options={names}
-            value={calculationModes.find(v => v.value === options?.right)}
+            value={names.find(v => v.value === options?.right)}
             onChange={this.onBinaryRightChanged}
           />
         </div>
@@ -337,7 +337,7 @@ export class CalculateFieldTransformerEditor extends React.PureComponent<
         <div className="gf-form gf-form--grow">
           <Select
             options={names}
-            value={calculationModes.find(v => v.value === options?.left)}
+            value={names.find(v => v.value === options?.left)}
             onChange={this.onScaleLeftChanged}
           />
           <Select

@@ -6,6 +6,7 @@ import { mockTransformationsRegistry } from '../../utils/tests/mockTransformatio
 import { transformDataFrame } from '../transformDataFrame';
 import { calculateFieldTransformer, CalculateFieldMode } from './calculateField';
 import { DataFrameView } from '../../dataframe';
+import { BinaryOperationID } from '../../utils';
 
 const seriesA = toDataFrame({
   fields: [
@@ -18,7 +19,8 @@ const seriesBC = toDataFrame({
   fields: [
     { name: 'TheTime', type: FieldType.time, values: [1000, 2000] },
     { name: 'B', type: FieldType.number, values: [2, 200] },
-    { name: 'C', type: FieldType.string, values: ['first', 'second'] },
+    { name: 'C', type: FieldType.number, values: [3, 300] },
+    { name: 'D', type: FieldType.string, values: ['first', 'second'] },
   ],
 });
 
@@ -43,15 +45,17 @@ describe('calculateField transformer w/ timeseries', () => {
         Object {
           "A {0}": 1,
           "B {1}": 2,
-          "C {1}": "first",
-          "The Total": 3,
+          "C {1}": 3,
+          "D {1}": "first",
+          "The Total": 6,
           "TheTime": 1000,
         },
         Object {
           "A {0}": 100,
           "B {1}": 200,
-          "C {1}": "second",
-          "The Total": 300,
+          "C {1}": 300,
+          "D {1}": "second",
+          "The Total": 600,
           "TheTime": 2000,
         },
       ]
@@ -75,11 +79,11 @@ describe('calculateField transformer w/ timeseries', () => {
     expect(rows).toMatchInlineSnapshot(`
       Array [
         Object {
-          "Mean": 1.5,
+          "Mean": 2,
           "TheTime": 1000,
         },
         Object {
-          "Mean": 150,
+          "Mean": 200,
           "TheTime": 2000,
         },
       ]
@@ -99,16 +103,76 @@ describe('calculateField transformer w/ timeseries', () => {
       },
     };
 
-    const filtered = transformDataFrame([cfg], [seriesA, seriesBC])[0];
+    const filtered = transformDataFrame([cfg], [seriesBC])[0];
     const rows = new DataFrameView(filtered).toArray();
     expect(rows).toMatchInlineSnapshot(`
       Array [
         Object {
-          "Mean": null,
+          "Mean": 2,
           "TheTime": 1000,
         },
         Object {
-          "Mean": null,
+          "Mean": 200,
+          "TheTime": 2000,
+        },
+      ]
+    `);
+  });
+
+  it('binary math', () => {
+    const cfg = {
+      id: DataTransformerID.calculateField,
+      options: {
+        mode: CalculateFieldMode.BinaryOperation,
+        binary: {
+          left: 'B',
+          operation: BinaryOperationID.Add,
+          right: 'C',
+        },
+        replaceFields: true,
+      },
+    };
+
+    const filtered = transformDataFrame([cfg], [seriesBC])[0];
+    const rows = new DataFrameView(filtered).toArray();
+    expect(rows).toMatchInlineSnapshot(`
+      Array [
+        Object {
+          "Add": 5,
+          "TheTime": 1000,
+        },
+        Object {
+          "Add": 500,
+          "TheTime": 2000,
+        },
+      ]
+    `);
+  });
+
+  it('scale value', () => {
+    const cfg = {
+      id: DataTransformerID.calculateField,
+      options: {
+        mode: CalculateFieldMode.Scale,
+        scale: {
+          left: 'B',
+          operation: BinaryOperationID.Add,
+          right: 2,
+        },
+        replaceFields: true,
+      },
+    };
+
+    const filtered = transformDataFrame([cfg], [seriesBC])[0];
+    const rows = new DataFrameView(filtered).toArray();
+    expect(rows).toMatchInlineSnapshot(`
+      Array [
+        Object {
+          "Multiply": 4,
+          "TheTime": 1000,
+        },
+        Object {
+          "Multiply": 400,
           "TheTime": 2000,
         },
       ]

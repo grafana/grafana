@@ -70,7 +70,7 @@ export interface CalculateFieldTransformerOptions {
 }
 
 /**
- * Return true if every frame has a time column
+ * Find the name for the time field used in all frames (if one exists)
  */
 function findTimeSeriesName(data: DataFrame[]): string | undefined {
   let name: string | undefined = undefined;
