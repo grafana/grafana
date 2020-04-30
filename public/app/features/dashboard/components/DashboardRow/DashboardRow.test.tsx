@@ -19,7 +19,7 @@ describe('DashboardRow', () => {
     wrapper = shallow(<DashboardRow panel={panel} dashboard={dashboardMock} />);
   });
 
-  it('Should not have collapsed class when collaped is false', () => {
+  it('Should not have collapsed class when collapsed is false', () => {
     expect(wrapper.find('.dashboard-row')).toHaveLength(1);
     expect(wrapper.find('.dashboard-row--collapsed')).toHaveLength(0);
   });
