@@ -47,7 +47,7 @@ Currently only Organization Admins can create reports.
 
 Scheduled reports can be sent on a weekly, daily, or hourly basis. You may also disable scheduling for when you either want to pause a report or send it via the API.
 
-All scheduling is approximative and indicates when the reporting service will start rendering the dashboard.
+All scheduling indicates when the reporting service will start rendering the dashboard. It can take a few minutes to render a dashboard with a lot of panels.
 
 #### Hourly
 
