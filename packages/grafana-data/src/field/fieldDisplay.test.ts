@@ -1,5 +1,5 @@
 import merge from 'lodash/merge';
-import { getFieldDisplayValues, GetFieldDisplayValuesOptions } from './fieldDisplay';
+import { getFieldDisplayValues, GetFieldDisplayValuesOptions, getFieldDisplayTitle } from './fieldDisplay';
 import { toDataFrame } from '../dataframe/processDataFrame';
 import { ReducerID } from '../transformations/fieldReducer';
 import { ThresholdsMode } from '../types/thresholds';
@@ -213,6 +213,33 @@ describe('FieldDisplay', () => {
       expect(result[2].display.text).toEqual('5');
       expect(result[3].display.text).toEqual(mappedValue);
     });
+  });
+});
+
+describe('getFieldDisplayTitle', () => {
+  it('should use field name if no frame name', () => {
+    const data = toDataFrame({
+      fields: [{ name: 'Field 1', values: [] }],
+    });
+
+    expect(getFieldDisplayTitle(data.fields[0], data)).toBe('Field 1');
+  });
+
+  it('should use prefix series name and field name if we have both', () => {
+    const data = toDataFrame({
+      name: 'Series A',
+      fields: [{ name: 'Field 1', values: [] }],
+    });
+
+    expect(getFieldDisplayTitle(data.fields[0], data)).toBe('Series A Field 1');
+  });
+
+  it('should use only labels if field name is Value', () => {
+    const data = toDataFrame({
+      fields: [{ name: 'Value', values: [], labels: { server: 'Server A' } }],
+    });
+
+    expect(getFieldDisplayTitle(data.fields[0], data)).toBe('{server="Server A"}');
   });
 });
 

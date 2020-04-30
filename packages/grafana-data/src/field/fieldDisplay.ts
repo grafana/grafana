@@ -14,6 +14,7 @@ import {
   LinkModel,
   TimeZone,
   Field,
+  TIME_SERIES_FIELD_NAME,
 } from '../types';
 import { DataFrameView } from '../dataframe/DataFrameView';
 import { GraphSeriesValue } from '../types/graph';
@@ -107,15 +108,18 @@ export function getFrameDisplayTitle(frame: DataFrame, index?: number) {
  */
 export function getFieldDisplayTitle(field: Field, frame?: DataFrame) {
   let title = field.config?.title;
+
   if (title) {
     return title; // Title is set and not a template
   }
 
   const id = getFieldId(field);
   const seriesName = frame?.name;
-  if (seriesName && name !== seriesName) {
-    return seriesName + ' ' + name;
+
+  if (seriesName && field.name !== seriesName) {
+    return seriesName + ' ' + field.name;
   }
+
   return id;
 }
 
@@ -125,9 +129,15 @@ export function getFieldDisplayTitle(field: Field, frame?: DataFrame) {
 export function getFieldId(field: Field) {
   let name = field.config?.title ?? field.name;
 
-  if (field.labels) {
-    name += formatLabels(field.labels);
+  // If we have labels and field name is just default time series field name (Value) then return only labels
+  if (field.labels && Object.keys(field.labels).length > 0 && name === TIME_SERIES_FIELD_NAME) {
+    return formatLabels(field.labels);
   }
+
+  if (field.labels) {
+    name += ' ' + formatLabels(field.labels);
+  }
+
   return name;
 }
 

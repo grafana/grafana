@@ -335,6 +335,64 @@ describe('Prometheus Result Transformer', () => {
       ]);
     });
 
+    it('should use __name__ label as series name', () => {
+      const response = {
+        status: 'success',
+        data: {
+          resultType: 'matrix',
+          result: [
+            {
+              metric: { __name__: 'test', job: 'testjob' },
+              values: [
+                [1, '10'],
+                [2, '0'],
+              ],
+            },
+          ],
+        },
+      };
+
+      const options = {
+        format: 'timeseries',
+        step: 1,
+        start: 0,
+        end: 2,
+      };
+
+      const result = ctx.resultTransformer.transform({ data: response }, options);
+      expect(result[0].target).toEqual('test');
+    });
+
+    it('should set frame name to undefined if no __name__ label but there are other labels', () => {
+      const response = {
+        status: 'success',
+        data: {
+          resultType: 'matrix',
+          result: [
+            {
+              metric: { job: 'testjob' },
+              values: [
+                [1, '10'],
+                [2, '0'],
+              ],
+            },
+          ],
+        },
+      };
+
+      const options = {
+        format: 'timeseries',
+        step: 1,
+        query: 'Some query',
+        start: 0,
+        end: 2,
+      };
+
+      const result = ctx.resultTransformer.transform({ data: response }, options);
+      expect(result[0].target).toBeUndefined();
+      expect(result[0].tags.job).toEqual('testjob');
+    });
+
     it('should align null values with step', () => {
       const response = {
         status: 'success',

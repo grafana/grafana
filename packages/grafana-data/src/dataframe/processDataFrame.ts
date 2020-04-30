@@ -14,6 +14,7 @@ import {
   TimeSeriesValue,
   FieldDTO,
   DataFrameDTO,
+  TIME_SERIES_FIELD_NAME,
 } from '../types/index';
 import { isDateTime } from '../datetime/moment_wrapper';
 import { ArrayVector } from '../vector/ArrayVector';
@@ -73,7 +74,7 @@ function convertTimeSeriesToDataFrame(timeSeries: TimeSeries): DataFrame {
       values: new ArrayVector<number>(times),
     },
     {
-      name: timeSeries.target || 'Value',
+      name: timeSeries.target || TIME_SERIES_FIELD_NAME,
       type: FieldType.number,
       config: {
         unit: timeSeries.unit,
@@ -109,7 +110,7 @@ function convertGraphSeriesToDataFrame(graphSeries: GraphSeriesXY): DataFrame {
     name: graphSeries.label,
     fields: [
       {
-        name: graphSeries.label || 'Value',
+        name: graphSeries.label || TIME_SERIES_FIELD_NAME,
         type: FieldType.number,
         config: {},
         values: x,

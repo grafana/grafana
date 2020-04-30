@@ -155,9 +155,12 @@ export class ResultTransformer {
 
     // Move the __name__ field to name
     let { __name__, ...labels } = labelData;
-    if (!__name__) {
+
+    //  if no labels use query as frame name
+    if (Object.keys(labels).length === 0) {
       __name__ = options.query;
     }
+
     return { name: __name__, labels };
   }
 

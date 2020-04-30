@@ -32,21 +32,25 @@ export class DataProcessor {
     for (let i = 0; i < dataList.length; i++) {
       const series = dataList[i];
       const { timeField } = getTimeField(series);
+
       if (!timeField) {
         continue;
       }
 
       for (let j = 0; j < series.fields.length; j++) {
         const field = series.fields[j];
+
         if (field.type !== FieldType.number) {
           continue;
         }
 
         const name = getFieldDisplayTitle(field, series, dataList.length);
         const datapoints = [];
+
         for (let r = 0; r < series.length; r++) {
           datapoints.push([field.values.get(r), dateTime(timeField.values.get(r)).valueOf()]);
         }
+
         list.push(this.toTimeSeries(field, name, i, j, datapoints, list.length, range));
       }
     }
@@ -55,9 +59,11 @@ export class DataProcessor {
     if (this.panel.xaxis.mode === 'histogram' && !this.panel.stack && list.length > 1) {
       const first = list[0];
       first.alias = first.aliasEscaped = 'Count';
+
       for (let i = 1; i < list.length; i++) {
         first.datapoints = first.datapoints.concat(list[i].datapoints);
       }
+
       return [first];
     }
 

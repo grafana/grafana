@@ -131,3 +131,5 @@ export interface DataFrameDTO extends QueryResultBase {
   name?: string;
   fields: Array<FieldDTO | Field>;
 }
+
+export const TIME_SERIES_FIELD_NAME = 'Value';
