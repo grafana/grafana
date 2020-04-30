@@ -319,7 +319,7 @@ export const toggleTableAction = createAction<ToggleTablePayload>('explore/toggl
 export const toggleGraphAction = createAction<ToggleGraphPayload>('explore/toggleGraph');
 
 /**
- * Updates datasource instance before datasouce loading has started
+ * Updates datasource instance before datasource loading has started
  */
 export const updateDatasourceInstanceAction = createAction<UpdateDatasourceInstancePayload>(
   'explore/updateDatasourceInstance'

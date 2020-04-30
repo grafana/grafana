@@ -214,7 +214,7 @@ func TestDataSourceProxyCache(t *testing.T) {
 			}))
 			defer backend.Close()
 
-			// 2. Get HTTP transport from datasoruce which uses the test server as backend
+			// 2. Get HTTP transport from datasource which uses the test server as backend
 			ds.Url = backend.URL
 			transport, err := ds.GetHttpTransport()
 			if err != nil {
