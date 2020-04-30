@@ -51,21 +51,21 @@ All scheduling indicates when the reporting service will start rendering the das
 
 #### Hourly
 
-Hourly reports are generated once per hour and takes two arguments:
+Hourly reports are generated once per hour. All fields are required.
 
 * **At minute -** The number of minutes after full hour when the report should be generated.
 * **Time zone -** Time zone to determine the offset of the full hour. Does not currently change the time in the rendered report. 
 
 #### Daily
 
-Daily reports are generated once per day and takes two arguments:
+Daily reports are generated once per day. All fields are required.
 
 * **Time -** Time of day in 24 hours format when the report should be sent.
 * **Time zone -** Time zone for the **Time** argument.
 
 #### Weekly
 
-Weekly reports are generated once per week and takes three arguments:
+Weekly reports are generated once per week. All fields are required.
 
 * **Day -** Weekday which the report should be sent on.
 * **Time -** Time of day in 24 hours format when the report should be sent.
