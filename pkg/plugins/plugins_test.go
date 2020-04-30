@@ -77,7 +77,7 @@ func TestPluginManager_Init(t *testing.T) {
 			Cfg: &setting.Cfg{
 				PluginsAllowUnsigned: []string{"test"},
 			},
-			BackendPluginManager: fakeBackendPluginManager{},
+			BackendPluginManager: &fakeBackendPluginManager{},
 		}
 		err := pm.Init()
 		require.NoError(t, err)
@@ -108,14 +108,16 @@ func TestPluginManager_Init(t *testing.T) {
 		})
 		setting.PluginsPath = "testdata/behind-feature-flag"
 
+		fm := fakeBackendPluginManager{}
 		pm := &PluginManager{
-			Cfg: &setting.Cfg{},
+			Cfg:                  &setting.Cfg{},
+			BackendPluginManager: &fm,
 		}
 		err := pm.Init()
 		require.NoError(t, err)
 
-		assert.Equal(t, []error{fmt.Errorf(`plugin "gel" is disabled since the expressions feature is not toggled`)},
-			pm.scanningErrors)
+		assert.Empty(t, pm.scanningErrors)
+		assert.Equal(t, 0, fm.registerCount)
 	})
 
 	t.Run("GEL plugin should be loaded when expressions feature is on", func(t *testing.T) {
@@ -131,6 +133,7 @@ func TestPluginManager_Init(t *testing.T) {
 					"expressions": true,
 				},
 			},
+			BackendPluginManager: &fakeBackendPluginManager{},
 		}
 		err := pm.Init()
 		require.NoError(t, err)
@@ -160,23 +163,25 @@ func TestPluginManager_IsBackendOnlyPlugin(t *testing.T) {
 }
 
 type fakeBackendPluginManager struct {
+	registerCount int
 }
 
-func (f fakeBackendPluginManager) Register(descriptor backendplugin.PluginDescriptor) error {
+func (f *fakeBackendPluginManager) Register(descriptor backendplugin.PluginDescriptor) error {
+	f.registerCount++
 	return nil
 }
 
-func (f fakeBackendPluginManager) StartPlugin(ctx context.Context, pluginID string) error {
+func (f *fakeBackendPluginManager) StartPlugin(ctx context.Context, pluginID string) error {
 	return nil
 }
 
-func (f fakeBackendPluginManager) CollectMetrics(ctx context.Context, pluginID string) (*backendplugin.CollectMetricsResult, error) {
+func (f *fakeBackendPluginManager) CollectMetrics(ctx context.Context, pluginID string) (*backendplugin.CollectMetricsResult, error) {
 	return nil, nil
 }
 
-func (f fakeBackendPluginManager) CheckHealth(ctx context.Context, pCtx backend.PluginContext) (*backendplugin.CheckHealthResult, error) {
+func (f *fakeBackendPluginManager) CheckHealth(ctx context.Context, pCtx backend.PluginContext) (*backendplugin.CheckHealthResult, error) {
 	return nil, nil
 }
 
-func (f fakeBackendPluginManager) CallResource(pluginConfig backend.PluginContext, ctx *models.ReqContext, path string) {
+func (f *fakeBackendPluginManager) CallResource(pluginConfig backend.PluginContext, ctx *models.ReqContext, path string) {
 }

@@ -274,7 +274,9 @@ func (scanner *PluginScanner) loadPlugin(pluginJsonFilePath string) error {
 		scanner.log.Debug("Plugin is dependent on a feature flag, checking if enabled", "pluginID", pluginCommon.Id,
 			"featureFlag", "expressions", "enabled", isEnabled)
 		if !isEnabled {
-			return fmt.Errorf("plugin %q is disabled since the expressions feature is not toggled", pluginCommon.Id)
+			scanner.log.Debug("Plugin is disabled since the expressions feature is not toggled",
+				"pluginID", pluginCommon.Id)
+			return nil
 		}
 	}
 

@@ -2,6 +2,7 @@
   "type": "transform",
   "name": "GEL",
   "id": "gel",
+  "backend": true,
   "info": {
     "description": "Test",
     "author": {
