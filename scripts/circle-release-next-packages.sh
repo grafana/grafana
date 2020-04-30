@@ -11,7 +11,7 @@ function parse_git_hash() {
 }
 
 function prepare_version_commit () {
-  echo $'\nCommiting version changes. This commit will not be checked-in!'
+  echo $'\nCommitting version changes. This commit will not be checked-in!'
   git config --global user.email "circleci@grafana.com"
   git config --global user.name "CirceCI"
   git commit -am "Version commit"
