@@ -9,7 +9,7 @@ import { HorizontalGroup } from '..';
 
 const defaultIcon: IconName = 'exclamation-triangle';
 
-interface Props {
+export interface Props {
   isOpen: boolean;
   title: string;
   body: React.ReactNode;
