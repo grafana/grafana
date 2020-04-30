@@ -29,7 +29,7 @@ amet.`
 export default {
   title: 'Overlays/Modal',
   component: Modal,
-  dectorators: [withCenteredStory],
+  decorators: [withCenteredStory],
 };
 
 export const basic = () => {
