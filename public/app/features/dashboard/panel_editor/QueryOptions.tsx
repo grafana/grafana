@@ -300,7 +300,7 @@ export class QueryOptions extends PureComponent<Props, State> {
       >
         {this.renderMaxDataPointsOption()}
         {this.renderIntervalOption()}
-        {this.renderCacheTimeoutOption()}
+        {this.props.datasource.meta.queryOptions.cacheTimeout && this.renderCacheTimeoutOption()}
 
         <div className="gf-form">
           <InlineFormLabel width={9}>Relative time</InlineFormLabel>
