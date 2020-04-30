@@ -154,7 +154,7 @@ This includes problems like:
 - How to identify dashboards that are not being used
 - Who created or last viewed this dashboard?
 
-## Usage Analytics and Presence
+## Usage analytics and presence
 
 In Grafana 7.0 we are introducing a series of features that build on our new usage analytics engine. Features like improved dashboard search to sort dashboards by usage and errors. When a user opens a dashboard, they will see a presence indicator of who else is viewing the same dashboard. And finally open a dashboard usage stats drawer to view recent dashboard usage.
 
