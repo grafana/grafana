@@ -66,7 +66,7 @@ describe('SelectDropdownCtrl', () => {
       expect(ctrl.linkText).toBe('server-1');
     });
 
-    describe('after adititional value is selected', () => {
+    describe('after additional value is selected', () => {
       beforeEach(() => {
         ctrl.selectValue(ctrl.options[2], {});
         ctrl.commitChanges();
