@@ -25,11 +25,12 @@ export class DashboardMigrator {
   constructor(dashboardModel: DashboardModel) {
     this.dashboard = dashboardModel;
   }
+
   updateSchema(old: any) {
     let i, j, k, n;
     const oldVersion = this.dashboard.schemaVersion;
     const panelUpgrades = [];
-    this.dashboard.schemaVersion = 25;
+    this.dashboard.schemaVersion = 24;
 
     if (oldVersion === this.dashboard.schemaVersion) {
       return;
