@@ -52,6 +52,8 @@ Not just visualizing data from anywhere, in Grafana 7.0 you can transform them, 
 
 Transformations and maths across queries. The data you want to visualize can come from many different places and it is usually not in exactly the right form. The new transformations feature allows you to rename fields, join separate time series together and more - data munging. Usually this requires writing code but this new feature lets you do it in the Grafana UI instead. It also lets you do maths across queries. Lots of data sources do not support this natively so being able to do it in Grafana is a killer feature. For users, with large dashboards or with heavy queries, being able to reuse the query result from one panel in another panel can be a huge performance gain.
 
+The [Google Sheets data source](https://grafana.com/grafana/plugins/grafana-googlesheets-datasource) that was published a few weeks ago works really well together with the transformations feature.
+
 **Transformations shipping in 7.0**
 
 - **Reduce:** Reduce many rows / data points to a single value
@@ -99,13 +101,25 @@ Grafana 7.0 adds logging support to one of our most popular cloud provider data 
 
 ## Plugins platform
 
-### Support for backend component - can add alerting to external plugins
+The platform for plugins has been completely re-imagined and provides ready-made components and tooling to help both inexperienced and experienced developers get up and running more quickly. The tooling, documentation and new components will improve plugin quality and reduce long-term maintenance. We are seeing already that a a high quality plugin with the Grafana look and feel can be written in much fewer lines of code than previously.
 
 ### Front end plugins platform
 
-In Grafana 7.0 we are maturing our panel and front-end datasource plugins platform. @grafana/ui, @grafana/data, @grafana/runtime, @grafana/e2e packages (available via NPM) aim to simplify the way plugins are developed. We want to deliver a set of [reliable APIs](https://grafana.com/docs/grafana/latest/packages_api/) and [components library](https://developers.grafana.com/ui) for plugin developers.
+In Grafana 7.0 we are maturing our panel and front-end datasource plugins platform.
 
-With [[@grafana/toolkit](https://www.npmjs.com/package/@grafana/toolkit) we are delivering a simple CLI that helps plugin authors quickly scaffold, develop and test their plugins without worrying about configuration details.
+Plugins can use the same React components that the Grafana team uses to build Grafana. Using these components means the Grafana team will support and improve them continually and make your plugin as polished as the rest of Grafana’s UI. The new [`@grafana/ui` components library](https://developers.grafana.com/ui) is documented with Storybook (visual documentation) and is available on NPM.
+
+The `@grafana/data`, `@grafana/runtime`, `@grafana/e2e packages` (also available via NPM) aim to simplify the way plugins are developed. We want to deliver a set of [reliable APIs](https://grafana.com/docs/grafana/latest/packages_api/) for plugin developers.
+
+With [[@grafana/toolkit](https://www.npmjs.com/package/@grafana/toolkit) we are delivering a simple CLI that helps plugin authors quickly scaffold, develop and test their plugins without worrying about configuration details. A plugin author no longer needs to be a grunt or webpack expert to build their plugin.
+
+### Support for backend plugins
+
+Grafana now officially supports backend plugins and the first type of plugin to be introduced is a backend component for data source plugins. You can optionally add a backend component to your data source plugin and implement the query logic there to automatically enable alerting in Grafana for your plugin. In the 7.0 release, we provide a Go SDK to build plugins and you can generate a plugin scaffold to help you get started using the [`@grafana/toolkit`](https://www.npmjs.com/package/@grafana/toolkit).
+
+Plugins can be monitored with the new metrics and health check capabilities. The new Resources capability means backend components can return non-time series data like json data or static resources like images and opens up Grafana for new use cases.
+
+With this release, we are deprecating the unofficial first version of backend plugins which will be removed in a future release.
 
 ## New tutorials
 
@@ -118,9 +132,7 @@ To help you get started with Grafana, we’ve launched a brand new tutorials pla
 
 ## Rollup indicator for Metrictank queries
 
-Depending on the cardinality of the data and the time range MetricTank may return rolled up data (in our case, configured for hourly). This can be subtle as potentially only 1 or 2 graphs out of nine are rolled up.
-
-https://github.com/grafana/grafana/pull/22738
+Depending on the cardinality of the data and the time range MetricTank may return rolled up (aggregated) data. This can be as subtle as potentially only 1 or 2 graphs out of nine being rolled up. The new rollup indicator is visible in the panel title and you can also inspect extensive metadata and stats about the Metrictank query result and its rollups.
 
 ## Breaking change - PhantomJS removed
 
