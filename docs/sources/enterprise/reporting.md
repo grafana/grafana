@@ -61,7 +61,7 @@ Hourly reports are generated once per hour and takes two arguments:
 Daily reports are generated once per day and takes two arguments:
 
 * **Time -** Time of day in 24 hours format when the report should be sent.
-* **Time zone-** Time zone for the **Time** argument.
+* **Time zone -** Time zone for the **Time** argument.
 
 #### Weekly
 
