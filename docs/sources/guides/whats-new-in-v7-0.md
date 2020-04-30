@@ -46,6 +46,8 @@ You can use the new trace view in Explore either directly and search for a parti
 
 In the future we will add more workflows and integrations so that correlating between metrics, logs and traces is even easier.
 
+{{< docs-imagebox img="/img/docs/v70/tracing_ui.png" max-width="1024px" caption="Tracing UI" >}}
+
 ## Transformations
 
 Not just visualizing data from anywhere, in Grafana 7.0 you can transform them, too. By chaining a simple set of point and click transformations users will be able join, pivot, filter, re-name and calculate to get the results they need. Perfect for operations across queries or data sources missing essential data transformations.
@@ -76,28 +78,29 @@ This feature enables even more powerful visualizations and fine grained control 
 
 ## Panel inspect and export to CSV
 
+{{< docs-imagebox img="/img/docs/v70/panel_edit_export_raw_data.png" max-width="800px" class="docs-image--right" caption="Panel Edit - Export raw data to CSV" >}}
+
 Another new feature of Grafana 7.0 is Panel inspect. Inspect allows you to view the raw data for any Grafana panel as well as export that data to a CSV file. With Panel inspect you will also be able to perform simple raw data transformations like join, view query stats or detailed execution data.
 
-{{< docs-imagebox img="/img/docs/v70/panel_edit_export_raw_data.png" max-width="1024px" caption="Panel Edit - Export raw data to CSV" >}}
-{{< docs-imagebox img="/img/docs/v70/panel_edit_query_inspector.png" max-width="1024px" caption="Panel Edit - Query Inspector" >}}
-{{< docs-imagebox img="/img/docs/v70/panel_edit_raw_json.png" max-width="1024px" caption="Panel Edit - View raw JSON" >}}
-{{< docs-imagebox img="/img/docs/v70/panel_edit_stats.png" max-width="1024px" caption="Panel Edit - Stats" >}}
+<div class="clearfix"></div>
 
 ## Table panel
 
 Grafana 7.0 comes with a new table panel (and deprecates the old one). This new table panel supports horizontal scrolling and column resize. Paired with the new `Organize fields` transformation detailed above you can reorder, hide & rename columns. This new panel also supports new cell display modes, like showing a bar gauge inside a cell.
 
 {{< youtube J29wILRh3QQ >}}
+<br />
 
 ## Auto grid mode for Stat panel and Gauge
 
 This new 7.0 feature is for the gauge and stat panels. Before, stat and gauge only supported horizontal or vertical stacking: The auto layout mode just selected vertical or horizontal stacking based on the panel dimensions (whatever was highest). But in 7.0 the auto layout for these two panels will allow dynamic grid layouts where Grafana will try to optimize the usage of space and lay out each sub-visualization in a grid.
 
 {{< youtube noq1rLGvsrU >}}
+<br />
 
 ## Cloudwatch Logs
 
-Grafana 7.0 adds logging support to one of our most popular cloud provider data sources. Autocomplete support for Cloudwatch Logs queries is included for improved productivity.
+Grafana 7.0 adds logging support to one of our most popular cloud provider data sources. Autocomplete support for Cloudwatch Logs queries is included for improved productivity. There is support for deep linking to the CloudWatch Logs Insights console for log queries, similar to the deep linking feature for Cloudwatch metrics. Since CloudWatch Logs queries can return time series data, for example through the use of the `stats` command, alerting is supported too.
 
 ## Plugins platform
 
@@ -111,7 +114,7 @@ Plugins can use the same React components that the Grafana team uses to build Gr
 
 The `@grafana/data`, `@grafana/runtime`, `@grafana/e2e packages` (also available via NPM) aim to simplify the way plugins are developed. We want to deliver a set of [reliable APIs](https://grafana.com/docs/grafana/latest/packages_api/) for plugin developers.
 
-With [[@grafana/toolkit](https://www.npmjs.com/package/@grafana/toolkit) we are delivering a simple CLI that helps plugin authors quickly scaffold, develop and test their plugins without worrying about configuration details. A plugin author no longer needs to be a grunt or webpack expert to build their plugin.
+With [@grafana/toolkit](https://www.npmjs.com/package/@grafana/toolkit) we are delivering a simple CLI that helps plugin authors quickly scaffold, develop and test their plugins without worrying about configuration details. A plugin author no longer needs to be a grunt or webpack expert to build their plugin.
 
 ### Support for backend plugins
 
@@ -132,7 +135,11 @@ To help you get started with Grafana, we’ve launched a brand new tutorials pla
 
 ## Rollup indicator for Metrictank queries
 
+{{< docs-imagebox img="/img/docs/v70/metrictank_rollup_metadata.png" max-width="800px" class="docs-image--right" caption="Metrictank rollup metadata" >}}
+
 Depending on the cardinality of the data and the time range MetricTank may return rolled up (aggregated) data. This can be as subtle as potentially only 1 or 2 graphs out of nine being rolled up. The new rollup indicator is visible in the panel title and you can also inspect extensive metadata and stats about the Metrictank query result and its rollups.
+
+<div class="clearfix"></div>
 
 ## Breaking change - PhantomJS removed
 
@@ -146,13 +153,13 @@ Read more about [Image Rendering]({{< relref "../administration/image_rendering/
 
 ## Query History in Explore out of beta
 
-The Query history feature lets you view and interact with the queries that you have previously run in Explore. It was released as a beta feature in Grafana 6.7. The feedback has been really positive and it is now out of beta for the 7.0 release.
+The Query history feature lets you view and interact with the queries that you have previously run in Explore. You can add queries to the Explore query editor, write comments, create and share URL links, star your favorite queries, and much more. Starred queries are displayed in Starred tab, so it is easier to reuse queries that you run often without typing them from scratch.
+
+It was released as a beta feature in Grafana 6.7. The feedback has been really positive and it is now out of beta for the 7.0 release. Learn more about query history in [Explore]({{< relref "../features/explore" >}}).
 
 ## Stackdriver data source supports Service Monitoring
 
-[Service monitoring](https://cloud.google.com/service-monitoring) in Google Cloud Platform (GCP) enables you to monitor based on Service Level Objectives (SLOs) for your GCP services. The new SLO query builder in the Stackdriver data source allows you to display SLO data in Grafana.
-
-https://grafana.com/docs/grafana/latest/features/datasources/stackdriver/#slo-service-level-objective-queries
+[Service monitoring](https://cloud.google.com/service-monitoring) in Google Cloud Platform (GCP) enables you to monitor based on Service Level Objectives (SLOs) for your GCP services. The new SLO query builder in the Stackdriver data source allows you to display SLO data in Grafana. Read more about it in the [Stackdriver data source documentation]({{< relref "../features/datasources/stackdriver/#slo-service-level-objective-queries" >}}).
 
 ## Time zone support
 
@@ -171,14 +178,13 @@ This includes problems like:
 - How to identify dashboards that are not being used
 - Who created or last viewed this dashboard?
 
+{{< docs-imagebox img="/img/docs/v70/dashboard_insights_users.png" max-width="1024px" caption="Dashboard Insights Users" >}}
+
 ## Usage analytics and presence
 
 In Grafana 7.0 we are introducing a series of features that build on our new usage analytics engine. Features like improved dashboard search to sort dashboards by usage and errors. When a user opens a dashboard, they will see a presence indicator of who else is viewing the same dashboard. And finally open a dashboard usage stats drawer to view recent dashboard usage.
 
 {{< docs-imagebox img="/img/docs/v70/presence_indicator.jpg" max-width="1024px" caption="Grafana Enterprise - Presence Indicator" >}}
-{{< docs-imagebox img="/img/docs/v70/dashboard_insights_stats.png" max-width="1024px" caption="Dashboard Insights Stats" >}}
-{{< docs-imagebox img="/img/docs/v70/dashboard_insights_users.png" max-width="1024px" caption="Dashboard Insights Users" >}}
-{{< docs-imagebox img="/img/docs/v70/improved_search.png" max-width="1024px" caption="Search" >}}
 
 ## Upgrading
 
