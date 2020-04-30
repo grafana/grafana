@@ -146,7 +146,7 @@ https://grafana.com/docs/grafana/latest/features/datasources/stackdriver/#slo-se
 Grafana Enterprise focuses on solving problems for large companies and Grafana installations. And in Grafana 7.0 we are finally
 solving one of the most common problems of using Grafana at scale.
 
-That is problems like:
+This includes problems like:
 
 - There are too many dashboards, how do I find the right one?
 - How to find popular dashboards
