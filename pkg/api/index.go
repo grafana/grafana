@@ -30,7 +30,7 @@ func (hs *HTTPServer) setIndexViewData(c *models.ReqContext) (*dtos.IndexViewDat
 	}
 	prefs := prefsQuery.Result
 
-	// Read locale from acccept-language
+	// Read locale from accept-language
 	acceptLang := c.Req.Header.Get("Accept-Language")
 	locale := "en-US"
 
