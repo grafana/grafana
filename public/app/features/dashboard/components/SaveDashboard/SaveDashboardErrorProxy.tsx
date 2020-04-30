@@ -6,6 +6,7 @@ import { DashboardModel } from 'app/features/dashboard/state';
 import { useDashboardSave } from './useDashboardSave';
 import { SaveDashboardModalProps } from './types';
 import { SaveDashboardAsButton } from './SaveDashboardButton';
+import { Simulate } from 'react-dom/test-utils';
 
 interface SaveDashboardErrorProxyProps {
   /** original dashboard */
@@ -25,7 +26,7 @@ export const SaveDashboardErrorProxy: React.FC<SaveDashboardErrorProxyProps> = (
   const { onDashboardSave } = useDashboardSave(dashboard);
 
   useEffect(() => {
-    if (error.data && (error.data.status === 'version-mismatch' || error.data.status === 'name-exists')) {
+    if (error.data && isHandledError(error.data.status)) {
       error.isHandled = true;
     }
   }, []);
@@ -104,6 +105,18 @@ const ConfirmPluginDashboardSaveModal: React.FC<SaveDashboardModalProps> = ({ on
       </div>
     </Modal>
   );
+};
+
+const isHandledError = (errorStatus: string) => {
+  switch (errorStatus) {
+    case 'version-mismatch':
+    case 'name-exists':
+    case 'plugin-dashboard':
+      return true;
+
+    default:
+      return false;
+  }
 };
 
 const getConfirmPluginDashboardSaveModalStyles = stylesFactory((theme: GrafanaTheme) => ({
