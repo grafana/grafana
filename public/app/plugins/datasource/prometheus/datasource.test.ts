@@ -228,7 +228,7 @@ describe('PrometheusDatasource', () => {
       };
     });
 
-    it('should convert cumullative histogram to ordinary', () => {
+    it('should convert cumulative histogram to ordinary', () => {
       const resultMock = [
         {
           metric: { __name__: 'metric', job: 'testjob', le: '10' },
