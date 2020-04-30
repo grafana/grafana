@@ -206,7 +206,7 @@ datasources:
     httpHeaderValue2: "Bearer XXXXXXXXX"
 ```
 
-### Dashboards
+## Dashboards
 
 It's possible to manage dashboards in Grafana by adding one or more yaml config files in the [`provisioning/dashboards`]({{< relref "../installation/configuration.md" >}}) directory. Each config file can contain a list of `dashboards providers` that will load dashboards into Grafana from the local filesystem.
 
