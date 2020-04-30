@@ -234,7 +234,7 @@ type testNotifier struct {
 	Name                  string
 	Type                  string
 	UID                   string
-	IsDeault              bool
+	IsDefault             bool
 	UploadImage           bool
 	SendReminder          bool
 	DisableResolveMessage bool
@@ -251,7 +251,7 @@ func newTestNotifier(model *models.AlertNotification) (Notifier, error) {
 	return &testNotifier{
 		UID:                   model.Uid,
 		Name:                  model.Name,
-		IsDeault:              model.IsDefault,
+		IsDefault:             model.IsDefault,
 		Type:                  model.Type,
 		UploadImage:           uploadImage,
 		SendReminder:          model.SendReminder,
@@ -284,7 +284,7 @@ func (n *testNotifier) GetNotifierUID() string {
 }
 
 func (n *testNotifier) GetIsDefault() bool {
-	return n.IsDeault
+	return n.IsDefault
 }
 
 func (n *testNotifier) GetSendReminder() bool {
