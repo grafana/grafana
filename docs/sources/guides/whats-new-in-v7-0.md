@@ -33,7 +33,7 @@ The main highlights are:
 - **Cloudwatch:** Cloudwatch Logs
 - **Breaking change:** PhantomJS removed
 
-## New Panel Editor
+## New panel editor
 
 In Grafana 7.0 we have redesigned the UI for editing panels. The first visible change is that we have separated panel display settings to a right-hand side pane that you can collapse or expand depending on what your focus is on. With this change we are also introducing our new unified option model and UI for defining data configuration and display options. This unified data configuration system powers a consistent UI for setting data options across visualizations and making all data display settings data driven and overridable.
 
