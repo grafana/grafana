@@ -42,7 +42,7 @@ export class ResultTransformer {
 
   transformMetricData(metricData: any, options: any, start: number, end: number) {
     const dps = [];
-    const { name, labels, title } = this.createLabelInfo(metricData.metric, options);
+    const { name, labels } = this.createLabelInfo(metricData.metric, options);
 
     const stepMs = parseFloat(options.step) * 1000;
     let baseTimestamp = start * 1000;
@@ -76,7 +76,6 @@ export class ResultTransformer {
       refId: options.refId,
       target: name,
       tags: labels,
-      title,
     };
   }
 
@@ -140,26 +139,26 @@ export class ResultTransformer {
 
   transformInstantMetricData(md: any, options: any) {
     const dps = [];
-    const { name, labels, title } = this.createLabelInfo(md.metric, options);
+    const { name, labels } = this.createLabelInfo(md.metric, options);
     dps.push([parseFloat(md.value[1]), md.value[0] * 1000]);
-    return { target: name, datapoints: dps, tags: labels, refId: options.refId, title };
+    return { target: name, datapoints: dps, tags: labels, refId: options.refId };
   }
 
-  createLabelInfo(
-    labelData: { [key: string]: string },
-    options: any
-  ): { name: string; labels: Labels; title?: string } {
+  createLabelInfo(labelData: { [key: string]: string }, options: any): { name: string; labels: Labels } {
+    if (options?.legendFormat) {
+      // Alternativly we could put the results in "title"
+      const name = this.renderTemplate(this.templateSrv.replace(options.legendFormat), labelData);
+      if (name) {
+        return { name, labels: labelData };
+      }
+    }
+
+    // Move the __name__ field to name
     let { __name__, ...labels } = labelData;
     if (!__name__) {
       __name__ = options.query;
     }
-
-    if (_.isUndefined(options) || _.isEmpty(options.legendFormat)) {
-      return { name: __name__, labels };
-    }
-
-    const title = this.renderTemplate(this.templateSrv.replace(options.legendFormat), labelData);
-    return { name, labels, title };
+    return { name: __name__, labels };
   }
 
   renderTemplate(aliasPattern: string, aliasData: { [key: string]: string }) {

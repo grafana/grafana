@@ -284,7 +284,7 @@ describe('Prometheus Result Transformer', () => {
       const result = ctx.resultTransformer.transform({ data: response }, options);
       expect(result).toEqual([
         {
-          target: 'test{job="testjob"}',
+          target: 'test',
           query: undefined,
           datapoints: [
             [10, 0],
@@ -323,7 +323,7 @@ describe('Prometheus Result Transformer', () => {
       const result = ctx.resultTransformer.transform({ data: response }, options);
       expect(result).toEqual([
         {
-          target: 'test{job="testjob"}',
+          target: 'test',
           query: undefined,
           datapoints: [
             [null, 0],
@@ -361,7 +361,7 @@ describe('Prometheus Result Transformer', () => {
       const result = ctx.resultTransformer.transform({ data: response }, options);
       expect(result).toEqual([
         {
-          target: 'test{job="testjob"}',
+          target: 'test',
           query: undefined,
           datapoints: [
             [null, 0],

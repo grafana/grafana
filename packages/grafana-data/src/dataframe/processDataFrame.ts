@@ -77,7 +77,6 @@ function convertTimeSeriesToDataFrame(timeSeries: TimeSeries): DataFrame {
       type: FieldType.number,
       config: {
         unit: timeSeries.unit,
-        title: (timeSeries as any).title,
       },
       values: new ArrayVector<TimeSeriesValue>(values),
       labels: timeSeries.tags,
