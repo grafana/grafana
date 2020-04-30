@@ -45,21 +45,23 @@ You can use the new trace view in Explore either directly and search for a parti
 
 In the future we will add more workflows and integrations so that correlating between metrics, logs and traces is even easier.
 
-## Usage Analytics and Presence
-
-In Grafana 7.0 we are introducing a series of features that build on our new usage analytics engine. Features like improved dashboard search to sort dashboards by usage. When a user opens a dashboard, they will see a presence indicator of who else is viewing the same dashboard. And finally open a dashboard usage stats drawer to view recent dashboard usage.
-
-{{< docs-imagebox img="/img/docs/v70/presence_indicator.jpg" max-width="1024px" caption="Grafana Enterprise - Presence Indicator" >}}
-{{< docs-imagebox img="/img/docs/v70/dashboard_insights_stats.png" max-width="1024px" caption="Dashboard Insights Stats" >}}
-{{< docs-imagebox img="/img/docs/v70/dashboard_insights_users.png" max-width="1024px" caption="Dashboard Insights Users" >}}
-{{< docs-imagebox img="/img/docs/v70/improved_search.png" max-width="1024px" caption="Search" >}}
-{{< docs-imagebox img="/img/docs/v70/search_screen.png" max-width="1024px" caption="Search" >}}
-
 ## Transformations
 
 With Grafana 7.0, data transformations are now a core part of the data processing that happens before the visualization step. All users can now do simple transformations no matter what data source or visualization type they use.
 
 Transformations and maths across queries. The data you want to visualize can come from many different places and it is usually not in exactly the right form. The new transformations feature allows you to rename fields, join separate time series together and more - data munging. Usually this requires writing code but this new feature lets you do it in the Grafana UI instead. It also lets you do maths across queries. Lots of data sources do not support this natively so being able to do it in Grafana is a killer feature. For users, with large dashboards or with heavy queries, being able to reuse the query result from one panel in another panel can be a huge performance gain.
+
+**Transformations shipping in 7.0**
+
+- **Reduce**: Reduce many rows / data points to a single value
+- **Filter by name**: Filter fields by name or regex
+- **Filter by refId**: Filter by query letter
+- **Organize fields**: Reorder, rename and hide fields.
+- **Labels to fields**: Transform time series with labels into a table where labels get's converted to fields and the result is joined by time
+- **Join by field**: Join many result sets (series) together using for example the time field. Useful for transforming time series into a table with a shared time column and where each series get it's own column.
+- **Add field from calculation**: This is a powerful transformation that allows you perform many different types of math operations and add the result as a new field. Examples:
+  - Calculate the difference between two series or fields and add the result to a new field
+  - Multiply one field with another another and add the result to a new field
 
 ## Field overrides
 
@@ -80,7 +82,15 @@ Another new feature of Grafana 7.0 is Panel inspect. Inspect allows you to view 
 
 ## Table panel
 
-The new table panel is much more powerful due to the transformations feature and gives you much more power and flexibility to visualize tabular data in Grafana. It also fixes some long-running complaints about usability like setting column width easily and handling column overflows gracefully.
+Grafana 7.0 comes with a new table panel (and deprecates the old one). This new table panel supports horizontal scrolling and column resize. Paired with the new `Organize fields` transformation detailed above you can reorder, hide & rename columns. This new panel also supports new cell display modes, like showing a bar gauge inside a cell.
+
+{{< youtube J29wILRh3QQ >}}
+
+## Auto grid mode for Stat panel and Gauge
+
+This new 7.0 feature is for the gauge and stat panels. Before, stat and gauge only supported horizontal or vertical stacking: The auto layout mode just selected vertical or horizontal stacking based on the panel dimensions (whatever was highest). But in 7.0 the auto layout for these two panels will allow dynamic grid layouts where Grafana will try to optimize the usage of space and lay out each sub-visualization in a grid.
+
+{{< youtube noq1rLGvsrU >}}
 
 ## Cloudwatch Logs
 
@@ -130,6 +140,27 @@ Read more about [Image Rendering]({{< relref "../administration/image_rendering/
 https://grafana.com/docs/grafana/latest/features/datasources/stackdriver/#slo-service-level-objective-queries
 
 ## Time zone support
+
+### Grafana Enterprise
+
+Grafana Enterprise focuses on solving problems for large companies and Grafana installations. And in Grafana 7.0 we are finally
+solving one of the most common problems of using Grafana at scale.
+
+That is problems like:
+
+- There are too many dashboards, how do I find the right one?
+- How to find popular dashboards
+- How to indentify dashboards that are not being used
+- Who created or last viewed this dashboard?
+
+## Usage Analytics and Presence
+
+In Grafana 7.0 we are introducing a series of features that build on our new usage analytics engine. Features like improved dashboard search to sort dashboards by usage. When a user opens a dashboard, they will see a presence indicator of who else is viewing the same dashboard. And finally open a dashboard usage stats drawer to view recent dashboard usage.
+
+{{< docs-imagebox img="/img/docs/v70/presence_indicator.jpg" max-width="1024px" caption="Grafana Enterprise - Presence Indicator" >}}
+{{< docs-imagebox img="/img/docs/v70/dashboard_insights_stats.png" max-width="1024px" caption="Dashboard Insights Stats" >}}
+{{< docs-imagebox img="/img/docs/v70/dashboard_insights_users.png" max-width="1024px" caption="Dashboard Insights Users" >}}
+{{< docs-imagebox img="/img/docs/v70/improved_search.png" max-width="1024px" caption="Search" >}}
 
 ## Upgrading
 
