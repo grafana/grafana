@@ -2,16 +2,14 @@
 import React, { Component } from 'react';
 import { hot } from 'react-hot-loader';
 import { connect } from 'react-redux';
-
 // Components
 import { DashboardPanel } from '../dashgrid/DashboardPanel';
-
 // Redux
 import { initDashboard } from '../state/initDashboard';
-
 // Types
-import { StoreState, DashboardRouteInfo } from 'app/types';
-import { PanelModel, DashboardModel } from 'app/features/dashboard/state';
+import { DashboardRouteInfo, StoreState } from 'app/types';
+import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
+import { dashboardCollection } from '../state/reducers';
 
 interface Props {
   urlPanelId: string;
@@ -95,12 +93,12 @@ export class SoloPanelPage extends Component<Props, State> {
   }
 }
 
-const mapStateToProps = (state: StoreState) => ({
+const mapStateToProps = (state: StoreState, props: Props) => ({
   urlUid: state.location.routeParams.uid,
   urlSlug: state.location.routeParams.slug,
   urlType: state.location.routeParams.type,
   urlPanelId: state.location.query.panelId,
-  dashboard: state.dashboard.getModel() as DashboardModel,
+  dashboard: dashboardCollection.selector(state, props.urlUid).getModel() as DashboardModel,
 });
 
 const mapDispatchToProps = {

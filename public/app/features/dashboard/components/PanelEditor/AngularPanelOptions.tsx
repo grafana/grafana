@@ -1,17 +1,16 @@
 // Libraries
 import React, { PureComponent } from 'react';
-import { connect, MapStateToProps, MapDispatchToProps } from 'react-redux';
-
+import { connect, MapDispatchToProps, MapStateToProps } from 'react-redux';
 // Utils & Services
 import { AngularComponent, getAngularLoader } from '@grafana/runtime';
-
 // Types
-import { PanelModel, DashboardModel } from '../../state';
+import { DashboardModel, PanelModel } from '../../state';
 import { PanelPlugin, PanelPluginMeta } from '@grafana/data';
 import { PanelCtrl } from 'app/plugins/sdk';
 import { changePanelPlugin } from '../../state/actions';
 import { StoreState } from 'app/types';
 import { getSectionOpenState, saveSectionOpenState } from './state/utils';
+import { dashboardCollection } from '../../state/reducers';
 
 interface OwnProps {
   panel: PanelModel;
@@ -61,7 +60,7 @@ export class AngularPanelOptionsUnconnected extends PureComponent<Props> {
   }
 
   loadAngularOptions() {
-    const { panel, angularPanelComponent, changePanelPlugin } = this.props;
+    const { panel, angularPanelComponent, changePanelPlugin, dashboard } = this.props;
 
     if (!this.element || !angularPanelComponent || this.angularOptions) {
       return;
@@ -80,7 +79,7 @@ export class AngularPanelOptionsUnconnected extends PureComponent<Props> {
     const panelCtrl: PanelCtrl = scope.$$childHead.ctrl;
     panelCtrl.initEditMode();
     panelCtrl.onPluginTypeChange = (plugin: PanelPluginMeta) => {
-      changePanelPlugin(panel, plugin.id);
+      changePanelPlugin(dashboard.uid, panel, plugin.id);
     };
 
     let template = '';
@@ -89,7 +88,7 @@ export class AngularPanelOptionsUnconnected extends PureComponent<Props> {
       tab.isOpen = getSectionOpenState(tab.title, i === 0);
 
       template += `
-      <div class="panel-options-group" ng-cloak>        
+      <div class="panel-options-group" ng-cloak>
         <div class="panel-options-group__header" ng-click="toggleOptionGroup(${i})" aria-label="${tab.title} section">
           <div class="panel-options-group__icon">
             <icon name="ctrl.editorTabs[${i}].isOpen ? 'angle-down' : 'angle-right'"></icon>
@@ -123,7 +122,8 @@ export class AngularPanelOptionsUnconnected extends PureComponent<Props> {
 
 const mapStateToProps: MapStateToProps<ConnectedProps, OwnProps, StoreState> = (state, props) => {
   return {
-    angularPanelComponent: state.dashboard.panels[props.panel.id].angularComponent,
+    angularPanelComponent: dashboardCollection.selector(state, props.dashboard.uid).panels[props.panel.id]
+      .angularComponent,
   };
 };
 

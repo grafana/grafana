@@ -1,15 +1,16 @@
 import React, { useCallback, useState } from 'react';
 import { css } from 'emotion';
 import { GrafanaTheme, PanelPlugin, PanelPluginMeta } from '@grafana/data';
-import { useTheme, stylesFactory, Icon, Input } from '@grafana/ui';
+import { Icon, Input, stylesFactory, useTheme } from '@grafana/ui';
 import { changePanelPlugin } from '../../state/actions';
 import { StoreState } from 'app/types';
 import { PanelModel } from '../../state/PanelModel';
-import { connect, MapStateToProps, MapDispatchToProps } from 'react-redux';
-import { VizTypePicker, getAllPanelPluginMeta, filterPluginList } from '../../panel_editor/VizTypePicker';
+import { connect, MapDispatchToProps, MapStateToProps } from 'react-redux';
+import { filterPluginList, getAllPanelPluginMeta, VizTypePicker } from '../../panel_editor/VizTypePicker';
 import { Field } from '@grafana/ui/src/components/Forms/Field';
 
 interface OwnProps {
+  dashboardUid: string;
   panel: PanelModel;
 }
 
@@ -24,7 +25,7 @@ interface DispatchProps {
 type Props = OwnProps & ConnectedProps & DispatchProps;
 
 export const VisualizationTabUnconnected = React.forwardRef<HTMLInputElement, Props>(
-  ({ panel, plugin, changePanelPlugin }, ref) => {
+  ({ panel, plugin, changePanelPlugin, dashboardUid }, ref) => {
     const [searchQuery, setSearchQuery] = useState('');
     const theme = useTheme();
     const styles = getStyles(theme);
@@ -34,7 +35,7 @@ export const VisualizationTabUnconnected = React.forwardRef<HTMLInputElement, Pr
     }
 
     const onPluginTypeChange = (meta: PanelPluginMeta) => {
-      changePanelPlugin(panel, meta.id);
+      changePanelPlugin(dashboardUid, panel, meta.id);
     };
 
     const onKeyPress = useCallback(

@@ -27,6 +27,7 @@ import { config } from 'app/core/config';
 import { getPanelInspectorStyles } from './styles';
 import { StoreState } from 'app/types';
 import { InspectDataTab } from './InspectDataTab';
+import { dashboardCollection } from '../../state/reducers';
 
 interface OwnProps {
   dashboard: DashboardModel;
@@ -347,7 +348,7 @@ function formatStat(stat: QueryResultMetaStat, timeZone?: TimeZone): string {
 }
 
 const mapStateToProps: MapStateToProps<ConnectedProps, OwnProps, StoreState> = (state, props) => {
-  const panelState = state.dashboard.panels[props.panel.id];
+  const panelState = dashboardCollection.selector(state, props.dashboard.uid).panels[props.panel.id];
   if (!panelState) {
     return { plugin: null };
   }

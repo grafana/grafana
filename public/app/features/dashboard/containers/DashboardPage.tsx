@@ -8,7 +8,6 @@ import classNames from 'classnames';
 import { createErrorNotification } from 'app/core/copy/appNotification';
 import { getMessageFromError } from 'app/core/utils/errors';
 import { Branding } from 'app/core/components/Branding/Branding';
-
 // Components
 import { DashboardGrid } from '../dashgrid/DashboardGrid';
 import { DashNav } from '../components/DashNav';
@@ -18,7 +17,7 @@ import { PanelEditor } from '../components/PanelEditor/PanelEditor';
 import { Alert, CustomScrollbar, Icon } from '@grafana/ui';
 // Redux
 import { initDashboard } from '../state/initDashboard';
-import { cleanUpDashboard } from '../state/reducers';
+import { cleanUpDashboard, dashboardCollection } from '../state/reducers';
 import { notifyApp, updateLocation } from 'app/core/actions';
 // Types
 import {
@@ -33,6 +32,8 @@ import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 import { InspectTab, PanelInspector } from '../components/Inspector/PanelInspector';
 import { getConfig } from '../../../core/config';
 import { SubMenu } from '../components/SubMenu/SubMenu';
+import { toCollectionAction } from '../../../core/reducers/createCollection';
+import { bindActionCreators, Dispatch } from 'redux';
 
 export interface Props {
   urlUid?: string;
@@ -53,6 +54,7 @@ export interface Props {
   initError?: DashboardInitError;
   initDashboard: typeof initDashboard;
   cleanUpDashboard: typeof cleanUpDashboard;
+  cleanUpCollectionDashboard: typeof cleanUpDashboard;
   notifyApp: typeof notifyApp;
   updateLocation: typeof updateLocation;
   inspectTab?: InspectTab;
@@ -92,6 +94,7 @@ export class DashboardPage extends PureComponent<Props, State> {
 
   componentWillUnmount() {
     if (this.props.dashboard) {
+      this.props.cleanUpCollectionDashboard();
       this.props.cleanUpDashboard();
       this.setPanelFullscreenClass(false);
     }
@@ -318,29 +321,38 @@ export class DashboardPage extends PureComponent<Props, State> {
   }
 }
 
-export const mapStateToProps = (state: StoreState) => ({
-  urlUid: state.location.routeParams.uid,
-  urlSlug: state.location.routeParams.slug,
-  urlType: state.location.routeParams.type,
-  editview: state.location.query.editview,
-  urlPanelId: state.location.query.panelId,
-  urlFolderId: state.location.query.folderId,
-  urlEditPanelId: state.location.query.editPanel,
-  urlViewPanelId: state.location.query.viewPanel,
-  inspectPanelId: state.location.query.inspect,
-  initPhase: state.dashboard.initPhase,
-  isInitSlow: state.dashboard.isInitSlow,
-  initError: state.dashboard.initError,
-  dashboard: state.dashboard.getModel() as DashboardModel,
-  inspectTab: state.location.query.inspectTab,
-  isPanelEditorOpen: state.panelEditor.isOpen,
-});
-
-const mapDispatchToProps = {
-  initDashboard,
-  cleanUpDashboard,
-  notifyApp,
-  updateLocation,
+export const mapStateToProps = (state: StoreState, props: Props) => {
+  const urlUid: string = state.location.routeParams.uid?.toString();
+  const dashboard = dashboardCollection.selector(state, urlUid);
+  return {
+    urlUid,
+    urlSlug: state.location.routeParams.slug,
+    urlType: state.location.routeParams.type,
+    editview: state.location.query.editview,
+    urlPanelId: state.location.query.panelId,
+    urlFolderId: state.location.query.folderId,
+    urlEditPanelId: state.location.query.editPanel,
+    urlViewPanelId: state.location.query.viewPanel,
+    inspectPanelId: state.location.query.inspect,
+    initPhase: dashboard.initPhase,
+    isInitSlow: dashboard.isInitSlow,
+    initError: dashboard.initError,
+    dashboard: dashboard.getModel() as DashboardModel,
+    inspectTab: state.location.query.inspectTab,
+    isPanelEditorOpen: state.panelEditor.isOpen,
+  };
 };
+
+const mapDispatchToProps = (outerDispatch: Dispatch, ownProps: any) =>
+  bindActionCreators(
+    {
+      initDashboard,
+      cleanUpDashboard,
+      cleanUpCollectionDashboard: () => toCollectionAction(cleanUpDashboard(), ownProps.urlUid),
+      notifyApp,
+      updateLocation,
+    },
+    outerDispatch
+  );
 
 export default hot(module)(connect(mapStateToProps, mapDispatchToProps)(DashboardPage));

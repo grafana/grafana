@@ -2,20 +2,18 @@
 import React, { PureComponent } from 'react';
 import classNames from 'classnames';
 import AutoSizer from 'react-virtualized-auto-sizer';
-import { connect, MapStateToProps, MapDispatchToProps } from 'react-redux';
-
+import { connect, MapDispatchToProps, MapStateToProps } from 'react-redux';
 // Components
 import { PanelChrome } from './PanelChrome';
 import { PanelChromeAngular } from './PanelChromeAngular';
-
 // Actions
 import { initDashboardPanel } from '../state/actions';
 import { updateLocation } from 'app/core/reducers/location';
-
 // Types
-import { PanelModel, DashboardModel } from '../state';
+import { DashboardModel, PanelModel } from '../state';
 import { StoreState } from 'app/types';
 import { PanelPlugin } from '@grafana/data';
+import { dashboardCollection } from '../state/reducers';
 
 export interface OwnProps {
   panel: PanelModel;
@@ -53,7 +51,7 @@ export class DashboardPanelUnconnected extends PureComponent<Props, State> {
   }
 
   componentDidMount() {
-    this.props.initDashboardPanel(this.props.panel);
+    this.props.initDashboardPanel(this.props.dashboard.uid, this.props.panel);
   }
 
   componentDidUpdate() {
@@ -141,7 +139,7 @@ export class DashboardPanelUnconnected extends PureComponent<Props, State> {
 }
 
 const mapStateToProps: MapStateToProps<ConnectedProps, OwnProps, StoreState> = (state, props) => {
-  const panelState = state.dashboard.panels[props.panel.id];
+  const panelState = dashboardCollection.selector(state, props.dashboard.uid).panels[props.panel.id];
   if (!panelState) {
     return { plugin: null };
   }

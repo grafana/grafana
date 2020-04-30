@@ -8,7 +8,7 @@ import { PanelHeader } from './PanelHeader/PanelHeader';
 // Utils & Services
 import { getTimeSrv, TimeSrv } from '../services/TimeSrv';
 import { AngularComponent, getAngularLoader } from '@grafana/runtime';
-import { setPanelAngularComponent } from '../state/reducers';
+import { dashboardCollection, setPanelAngularComponent } from '../state/reducers';
 import config from 'app/core/config';
 // Types
 import { DashboardModel, PanelModel } from '../state';
@@ -16,6 +16,7 @@ import { StoreState } from 'app/types';
 import { DefaultTimeRange, LoadingState, PanelData, PanelEvents, PanelPlugin } from '@grafana/data';
 import { updateLocation } from 'app/core/actions';
 import { PANEL_BORDER } from 'app/core/constants';
+import { toCollectionAction } from '../../../core/reducers/createCollection';
 
 interface OwnProps {
   panel: PanelModel;
@@ -34,6 +35,7 @@ interface ConnectedProps {
 
 interface DispatchProps {
   setPanelAngularComponent: typeof setPanelAngularComponent;
+  setCollectionPanelAngularComponent: typeof setPanelAngularComponent;
   updateLocation: typeof updateLocation;
 }
 
@@ -166,7 +168,7 @@ export class PanelChromeAngularUnconnected extends PureComponent<Props, State> {
   }
 
   loadAngularPanel() {
-    const { panel, dashboard, setPanelAngularComponent } = this.props;
+    const { panel, dashboard, setPanelAngularComponent, setCollectionPanelAngularComponent } = this.props;
 
     // if we have no element or already have loaded the panel return
     if (!this.element) {
@@ -181,6 +183,11 @@ export class PanelChromeAngularUnconnected extends PureComponent<Props, State> {
       dashboard: dashboard,
       size: { width: this.getInnerPanelWidth(), height: this.getInnerPanelHeight() },
     };
+
+    setCollectionPanelAngularComponent({
+      panelId: panel.id,
+      angularComponent: loader.load(this.element, this.scopeProps, template),
+    });
 
     setPanelAngularComponent({
       panelId: panel.id,
@@ -264,10 +271,18 @@ export class PanelChromeAngularUnconnected extends PureComponent<Props, State> {
 
 const mapStateToProps: MapStateToProps<ConnectedProps, OwnProps, StoreState> = (state, props) => {
   return {
-    angularComponent: state.dashboard.panels[props.panel.id].angularComponent,
+    angularComponent: dashboardCollection.selector(state, props.dashboard.uid).panels[props.panel.id].angularComponent,
   };
 };
 
-const mapDispatchToProps: MapDispatchToProps<DispatchProps, OwnProps> = { setPanelAngularComponent, updateLocation };
+// @ts-ignore
+const mapDispatchToProps: MapDispatchToProps<DispatchProps, OwnProps> = (dispatch, ownProps) => {
+  return {
+    setPanelAngularComponent: payload => dispatch(setPanelAngularComponent(payload)),
+    setCollectionPanelAngularComponent: payload =>
+      dispatch(toCollectionAction(setPanelAngularComponent(payload), ownProps.dashboard.uid)),
+    updateLocation: payload => dispatch(updateLocation(payload)),
+  };
+};
 
 export const PanelChromeAngular = connect(mapStateToProps, mapDispatchToProps)(PanelChromeAngularUnconnected);

@@ -11,6 +11,7 @@ import { KeybindingSrv } from 'app/core/services/keybindingSrv';
 import { notifyApp, updateLocation } from 'app/core/actions';
 import {
   clearDashboardQueriesToUpdateOnLoad,
+  dashboardCollection,
   dashboardInitCompleted,
   dashboardInitFailed,
   dashboardInitFetching,
@@ -22,8 +23,9 @@ import { DashboardDTO, DashboardRouteInfo, StoreState, ThunkDispatch, ThunkResul
 import { DashboardModel } from './DashboardModel';
 import { DataQuery, locationUtil } from '@grafana/data';
 import { getConfig } from '../../../core/config';
-import { initDashboardTemplating, processVariables, completeDashboardTemplating } from '../../variables/state/actions';
+import { completeDashboardTemplating, initDashboardTemplating, processVariables } from '../../variables/state/actions';
 import { emitDashboardViewEvent } from './analyticsProcessor';
+import { toCollectionAction } from '../../../core/reducers/createCollection';
 
 export interface InitDashboardArgs {
   $injector: any;
@@ -106,6 +108,9 @@ async function fetchDashboard(
         throw { message: 'Unknown route ' + args.routeInfo };
     }
   } catch (err) {
+    dispatch(
+      toCollectionAction(dashboardInitFailed({ message: 'Failed to fetch dashboard', error: err }), args.urlUid)
+    );
     dispatch(dashboardInitFailed({ message: 'Failed to fetch dashboard', error: err }));
     console.log(err);
     return null;
@@ -124,12 +129,14 @@ async function fetchDashboard(
 export function initDashboard(args: InitDashboardArgs): ThunkResult<void> {
   return async (dispatch, getState) => {
     // set fetching state
+    dispatch(toCollectionAction(dashboardInitFetching(), args.urlUid));
     dispatch(dashboardInitFetching());
 
     // Detect slow loading / initializing and set state flag
     // This is in order to not show loading indication for fast loading dashboards as it creates blinking/flashing
     setTimeout(() => {
       if (getState().dashboard.getModel() === null) {
+        dispatch(toCollectionAction(dashboardInitSlow(), args.urlUid));
         dispatch(dashboardInitSlow());
       }
     }, 500);
@@ -143,6 +150,7 @@ export function initDashboard(args: InitDashboardArgs): ThunkResult<void> {
     }
 
     // set initializing state
+    dispatch(toCollectionAction(dashboardInitServices(), args.urlUid));
     dispatch(dashboardInitServices());
 
     // create model
@@ -150,6 +158,9 @@ export function initDashboard(args: InitDashboardArgs): ThunkResult<void> {
     try {
       dashboard = new DashboardModel(dashDTO.dashboard, dashDTO.meta);
     } catch (err) {
+      dispatch(
+        toCollectionAction(dashboardInitFailed({ message: 'Failed create dashboard model', error: err }), args.urlUid)
+      );
       dispatch(dashboardInitFailed({ message: 'Failed create dashboard model', error: err }));
       console.log(err);
       return;
@@ -157,6 +168,7 @@ export function initDashboard(args: InitDashboardArgs): ThunkResult<void> {
 
     // add missing orgId query param
     const storeState = getState();
+    const dashboardState = dashboardCollection.selector(storeState, args.urlUid);
     if (!storeState.location.query.orgId) {
       dispatch(updateLocation({ query: { orgId: storeState.user.orgId }, partial: true, replace: true }));
     }
@@ -172,8 +184,8 @@ export function initDashboard(args: InitDashboardArgs): ThunkResult<void> {
     timeSrv.init(dashboard);
     annotationsSrv.init(dashboard);
 
-    if (storeState.dashboard.modifiedQueries) {
-      const { panelId, queries } = storeState.dashboard.modifiedQueries;
+    if (dashboardState.modifiedQueries) {
+      const { panelId, queries } = dashboardState.modifiedQueries;
       dashboard.meta.fromExplore = !!(panelId && queries);
     }
 
@@ -211,8 +223,8 @@ export function initDashboard(args: InitDashboardArgs): ThunkResult<void> {
       console.log(err);
     }
 
-    if (storeState.dashboard.modifiedQueries) {
-      const { panelId, queries } = storeState.dashboard.modifiedQueries;
+    if (dashboardState.modifiedQueries) {
+      const { panelId, queries } = dashboardState.modifiedQueries;
       updateQueriesWhenComingFromExplore(dispatch, dashboard, panelId, queries);
     }
 
@@ -225,6 +237,7 @@ export function initDashboard(args: InitDashboardArgs): ThunkResult<void> {
     }
 
     // yay we are done
+    dispatch(toCollectionAction(dashboardInitCompleted(dashboard), args.urlUid));
     dispatch(dashboardInitCompleted(dashboard));
   };
 }
@@ -269,5 +282,6 @@ function updateQueriesWhenComingFromExplore(
   }
 
   // Clear update state now that we're done
+  dispatch(toCollectionAction(clearDashboardQueriesToUpdateOnLoad(), dashboard.uid));
   dispatch(clearDashboardQueriesToUpdateOnLoad());
 }

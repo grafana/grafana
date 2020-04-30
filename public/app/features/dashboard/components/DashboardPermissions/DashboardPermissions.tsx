@@ -1,11 +1,11 @@
 import React, { PureComponent } from 'react';
-import { Tooltip, Icon } from '@grafana/ui';
+import { Icon, Tooltip } from '@grafana/ui';
 import { SlideDown } from 'app/core/components/Animations/SlideDown';
-import { StoreState, FolderInfo } from 'app/types';
-import { DashboardAcl, PermissionLevel, NewDashboardAclItem } from 'app/types/acl';
+import { FolderInfo, StoreState } from 'app/types';
+import { DashboardAcl, NewDashboardAclItem, PermissionLevel } from 'app/types/acl';
 import {
-  getDashboardPermissions,
   addDashboardPermission,
+  getDashboardPermissions,
   removeDashboardPermission,
   updateDashboardPermission,
 } from '../../state/actions';
@@ -13,9 +13,11 @@ import PermissionList from 'app/core/components/PermissionList/PermissionList';
 import AddPermission from 'app/core/components/PermissionList/AddPermission';
 import PermissionsInfo from 'app/core/components/PermissionList/PermissionsInfo';
 import { connectWithStore } from 'app/core/utils/connectWithReduxStore';
+import { dashboardCollection } from '../../state/reducers';
 
 export interface Props {
   dashboardId: number;
+  dashboardUId: string;
   folder?: FolderInfo;
   permissions: DashboardAcl[];
   getDashboardPermissions: typeof getDashboardPermissions;
@@ -38,7 +40,7 @@ export class DashboardPermissions extends PureComponent<Props, State> {
   }
 
   componentDidMount() {
-    this.props.getDashboardPermissions(this.props.dashboardId);
+    this.props.getDashboardPermissions(this.props.dashboardId, this.props.dashboardUId);
   }
 
   onOpenAddPermissions = () => {
@@ -46,15 +48,15 @@ export class DashboardPermissions extends PureComponent<Props, State> {
   };
 
   onRemoveItem = (item: DashboardAcl) => {
-    this.props.removeDashboardPermission(this.props.dashboardId, item);
+    this.props.removeDashboardPermission(this.props.dashboardId, this.props.dashboardUId, item);
   };
 
   onPermissionChanged = (item: DashboardAcl, level: PermissionLevel) => {
-    this.props.updateDashboardPermission(this.props.dashboardId, item, level);
+    this.props.updateDashboardPermission(this.props.dashboardId, this.props.dashboardUId, item, level);
   };
 
   onAddPermission = (newItem: NewDashboardAclItem) => {
-    return this.props.addDashboardPermission(this.props.dashboardId, newItem);
+    return this.props.addDashboardPermission(this.props.dashboardId, this.props.dashboardUId, newItem);
   };
 
   onCancelAddPermission = () => {
@@ -94,8 +96,8 @@ export class DashboardPermissions extends PureComponent<Props, State> {
   }
 }
 
-const mapStateToProps = (state: StoreState) => ({
-  permissions: state.dashboard.permissions,
+const mapStateToProps = (state: StoreState, props: Props) => ({
+  permissions: dashboardCollection.selector(state, props.dashboardUId).permissions,
 });
 
 const mapDispatchToProps = {

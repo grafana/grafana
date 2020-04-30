@@ -11,6 +11,7 @@ import {
 } from './reducers';
 import { cleanUpEditPanel, panelModelAndPluginReady } from '../../../state/reducers';
 import store from '../../../../../core/store';
+import { toCollectionAction } from '../../../../../core/reducers/createCollection';
 
 export function initPanelEditor(sourcePanel: PanelModel, dashboard: DashboardModel): ThunkResult<void> {
   return dispatch => {
@@ -48,6 +49,12 @@ export function panelEditorCleanUp(): ThunkResult<void> {
       sourcePanel.restoreModel(modifiedSaveModel);
 
       if (panelTypeChanged) {
+        dispatch(
+          toCollectionAction(
+            panelModelAndPluginReady({ panelId: sourcePanel.id, plugin: panel.plugin! }),
+            dashboard.uid
+          )
+        );
         dispatch(panelModelAndPluginReady({ panelId: sourcePanel.id, plugin: panel.plugin! }));
       }
 

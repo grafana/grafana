@@ -9,6 +9,7 @@ import {
   DataQuery,
   DataSourceApi,
   dateTimeForTimeZone,
+  ExploreMode,
   isDateTime,
   LoadingState,
   LogsDedupStrategy,
@@ -16,7 +17,6 @@ import {
   QueryFixAction,
   RawTimeRange,
   TimeRange,
-  ExploreMode,
 } from '@grafana/data';
 // Services & Utils
 import store from 'app/core/store';
@@ -41,17 +41,19 @@ import {
 import {
   addToRichHistory,
   deleteAllFromRichHistory,
-  updateStarredInRichHistory,
-  updateCommentInRichHistory,
   deleteQueryInRichHistory,
   getRichHistory,
+  updateCommentInRichHistory,
+  updateStarredInRichHistory,
 } from 'app/core/utils/richHistory';
 // Types
-import { ExploreItemState, ExploreUrlState, ThunkResult } from 'app/types';
+import { ExploreItemState, ExploreUrlState, QueriesToUpdateOnDashboardLoad, ThunkResult } from 'app/types';
 
 import { ExploreId, ExploreUIState, QueryOptions } from 'app/types/explore';
 import {
   addQueryRowAction,
+  cancelQueriesAction,
+  changeLoadingStateAction,
   changeModeAction,
   changeQueryAction,
   changeRangeAction,
@@ -61,7 +63,6 @@ import {
   ChangeSizePayload,
   clearQueriesAction,
   historyUpdatedAction,
-  richHistoryUpdatedAction,
   initializeExploreAction,
   loadDatasourceMissingAction,
   loadDatasourcePendingAction,
@@ -71,6 +72,7 @@ import {
   queriesImportedAction,
   queryStoreSubscriptionAction,
   queryStreamUpdatedAction,
+  richHistoryUpdatedAction,
   scanStartAction,
   scanStopAction,
   setQueriesAction,
@@ -84,8 +86,6 @@ import {
   ToggleTablePayload,
   updateDatasourceInstanceAction,
   updateUIStateAction,
-  changeLoadingStateAction,
-  cancelQueriesAction,
 } from './actionTypes';
 import { getTimeZone } from 'app/features/profile/state/selectors';
 import { getShiftedTimeRange } from 'app/core/utils/timePicker';
@@ -94,6 +94,8 @@ import { getTimeSrv, TimeSrv } from '../../dashboard/services/TimeSrv';
 import { preProcessPanelData, runRequest } from '../../dashboard/state/runRequest';
 import { PanelModel } from 'app/features/dashboard/state';
 import { getExploreDatasources } from './selectors';
+import { toCollectionAction } from '../../../core/reducers/createCollection';
+import { setDashboardQueriesToUpdateOnLoad } from '../../dashboard/state/reducers';
 
 /**
  * Updates UI state and save it to the URL
@@ -165,6 +167,15 @@ export function changeDatasource(exploreId: ExploreId, datasourceName: string): 
 export function changeMode(exploreId: ExploreId, mode: ExploreMode): ThunkResult<void> {
   return dispatch => {
     dispatch(changeModeAction({ exploreId, mode }));
+  };
+}
+
+export function setCollectionDashboardQueriesToUpdateOnLoad(
+  dashboardUid: string,
+  { panelId, queries }: QueriesToUpdateOnDashboardLoad
+): ThunkResult<void> {
+  return dispatch => {
+    dispatch(toCollectionAction(setDashboardQueriesToUpdateOnLoad({ panelId, queries }), dashboardUid));
   };
 }
 

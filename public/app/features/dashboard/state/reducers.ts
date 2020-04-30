@@ -1,9 +1,9 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import {
-  DashboardInitPhase,
-  DashboardState,
   DashboardAclDTO,
   DashboardInitError,
+  DashboardInitPhase,
+  DashboardState,
   PanelState,
   QueriesToUpdateOnDashboardLoad,
 } from 'app/types';
@@ -12,8 +12,8 @@ import { EDIT_PANEL_ID } from 'app/core/constants';
 import { processAclItems } from 'app/core/utils/acl';
 import { panelEditorReducer } from '../components/PanelEditor/state/reducers';
 import { DashboardModel } from './DashboardModel';
-import { PanelModel } from './PanelModel';
 import { PanelPlugin } from '@grafana/data';
+import { createCollection } from '../../../core/reducers/createCollection';
 
 export const initialState: DashboardState = {
   initPhase: DashboardInitPhase.NotStarted,
@@ -25,7 +25,7 @@ export const initialState: DashboardState = {
   initError: null,
 };
 
-const dashbardSlice = createSlice({
+const dashboardSlice = createSlice({
   name: 'dashboard',
   initialState,
   reducers: {
@@ -85,9 +85,6 @@ const dashbardSlice = createSlice({
     setPanelAngularComponent: (state: DashboardState, action: PayloadAction<SetPanelAngularComponentPayload>) => {
       updatePanelState(state, action.payload.panelId, { angularComponent: action.payload.angularComponent });
     },
-    addPanel: (state, action: PayloadAction<PanelModel>) => {
-      state.panels[action.payload.id] = { pluginId: action.payload.type };
-    },
   },
 });
 
@@ -120,14 +117,19 @@ export const {
   setDashboardQueriesToUpdateOnLoad,
   clearDashboardQueriesToUpdateOnLoad,
   panelModelAndPluginReady,
-  addPanel,
   cleanUpEditPanel,
   setPanelAngularComponent,
-} = dashbardSlice.actions;
+} = dashboardSlice.actions;
 
-export const dashboardReducer = dashbardSlice.reducer;
+export const dashboardReducer = dashboardSlice.reducer;
+
+export const dashboardCollection = createCollection({
+  instanceReducer: dashboardSlice.reducer,
+  stateSelector: state => state.hocDashboard,
+});
 
 export default {
   dashboard: dashboardReducer,
+  hocDashboard: dashboardCollection.reducer,
   panelEditor: panelEditorReducer,
 };

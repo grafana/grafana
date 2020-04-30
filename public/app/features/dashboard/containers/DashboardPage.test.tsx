@@ -68,6 +68,7 @@ function dashboardPageScenario(description: string, scenarioFn: (ctx: ScenarioCo
           updateLocation: mockToolkitActionCreator(updateLocation),
           notifyApp: mockToolkitActionCreator(notifyApp),
           cleanUpDashboard: ctx.cleanUpDashboardMock,
+          cleanUpCollectionDashboard: mockToolkitActionCreator(cleanUpDashboard),
           dashboard: null,
         };
 
@@ -238,35 +239,41 @@ describe('DashboardPage', () => {
   });
 
   describe('mapStateToProps with editPanel', () => {
-    const props = mapStateToProps({
-      location: {
-        routeParams: {},
-        query: {
-          editPanel: '1',
+    const props = mapStateToProps(
+      {
+        location: {
+          routeParams: {},
+          query: {
+            editPanel: '1',
+          },
         },
-      },
-      panelEditor: {},
-      dashboard: {
-        getModel: () => ({} as DashboardModel),
-      },
-    } as any);
+        panelEditor: {},
+        dashboard: {
+          getModel: () => ({} as DashboardModel),
+        },
+      } as any,
+      ({} as unknown) as Props
+    );
 
     expect(props.urlEditPanelId).toBe('1');
   });
 
   describe('mapStateToProps with string edit true', () => {
-    const props = mapStateToProps({
-      location: {
-        routeParams: {},
-        query: {
-          viewPanel: '2',
+    const props = mapStateToProps(
+      {
+        location: {
+          routeParams: {},
+          query: {
+            viewPanel: '2',
+          },
         },
-      },
-      panelEditor: {},
-      dashboard: {
-        getModel: () => ({} as DashboardModel),
-      },
-    } as any);
+        panelEditor: {},
+        dashboard: {
+          getModel: () => ({} as DashboardModel),
+        },
+      } as any,
+      ({} as unknown) as Props
+    );
 
     expect(props.urlViewPanelId).toBe('2');
   });

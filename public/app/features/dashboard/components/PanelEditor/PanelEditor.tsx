@@ -32,6 +32,7 @@ import { BackButton } from 'app/core/components/BackButton/BackButton';
 import { appEvents } from 'app/core/core';
 import { SaveDashboardModalProxy } from '../SaveDashboard/SaveDashboardModalProxy';
 import { selectors } from '@grafana/e2e-selectors';
+import { dashboardCollection } from '../../state/reducers';
 
 interface OwnProps {
   dashboard: DashboardModel;
@@ -344,7 +345,7 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
 
 const mapStateToProps: MapStateToProps<ConnectedProps, OwnProps, StoreState> = (state, props) => {
   const panel = state.panelEditor.getPanel();
-  const { plugin } = getPanelStateById(state.dashboard, panel.id);
+  const { plugin } = getPanelStateById(dashboardCollection.selector(state, props.dashboard.uid), panel.id);
 
   return {
     location: state.location,

@@ -6,21 +6,21 @@ import classNames from 'classnames';
 import { css } from 'emotion';
 
 import { ExploreId, ExploreItemState } from 'app/types/explore';
-import { ToggleButtonGroup, ToggleButton, Tooltip, LegacyForms, SetInterval, Icon, IconButton } from '@grafana/ui';
-const { ButtonSelect } = LegacyForms;
-import { RawTimeRange, TimeZone, TimeRange, DataQuery, ExploreMode } from '@grafana/data';
+import { Icon, IconButton, LegacyForms, SetInterval, ToggleButton, ToggleButtonGroup, Tooltip } from '@grafana/ui';
+import { DataQuery, ExploreMode, RawTimeRange, TimeRange, TimeZone } from '@grafana/data';
 import { DataSourcePicker } from 'app/core/components/Select/DataSourcePicker';
 import { StoreState } from 'app/types/store';
 import {
-  changeDatasource,
   cancelQueries,
+  changeDatasource,
+  changeMode,
+  changeRefreshInterval,
   clearQueries,
-  splitClose,
   runQueries,
+  setCollectionDashboardQueriesToUpdateOnLoad,
+  splitClose,
   splitOpen,
   syncTimes,
-  changeRefreshInterval,
-  changeMode,
 } from './state/actions';
 import { updateLocation } from 'app/core/actions';
 import { getTimeZone } from '../profile/state/selectors';
@@ -33,6 +33,8 @@ import { RunButton } from './RunButton';
 import { LiveTailControls } from './useLiveTailControls';
 import { getExploreDatasources } from './state/selectors';
 import { setDashboardQueriesToUpdateOnLoad } from '../dashboard/state/reducers';
+
+const { ButtonSelect } = LegacyForms;
 
 const getStyles = memoizeOne(() => {
   return {
@@ -82,6 +84,7 @@ interface DispatchProps {
   changeMode: typeof changeMode;
   updateLocation: typeof updateLocation;
   setDashboardQueriesToUpdateOnLoad: typeof setDashboardQueriesToUpdateOnLoad;
+  setCollectionDashboardQueriesToUpdateOnLoad: typeof setCollectionDashboardQueriesToUpdateOnLoad;
 }
 
 type Props = StateProps & DispatchProps & OwnProps;
@@ -126,6 +129,10 @@ export class UnConnectedExploreToolbar extends PureComponent<Props> {
     const titleSlug = kbn.slugifyForUrl(dash.title);
 
     if (withChanges) {
+      this.props.setCollectionDashboardQueriesToUpdateOnLoad(dash.uid, {
+        panelId: originPanelId,
+        queries: this.cleanQueries(queries),
+      });
       this.props.setDashboardQueriesToUpdateOnLoad({
         panelId: originPanelId,
         queries: this.cleanQueries(queries),
@@ -410,6 +417,7 @@ const mapDispatchToProps: DispatchProps = {
   syncTimes,
   changeMode: changeMode,
   setDashboardQueriesToUpdateOnLoad,
+  setCollectionDashboardQueriesToUpdateOnLoad,
 };
 
 export const ExploreToolbar = hot(module)(connect(mapStateToProps, mapDispatchToProps)(UnConnectedExploreToolbar));
