@@ -44,7 +44,7 @@ export class DataProcessor {
           continue;
         }
 
-        const name = getFieldDisplayTitle(field, series, dataList.length);
+        const name = getFieldDisplayTitle(field, series, dataList);
         const datapoints = [];
 
         for (let r = 0; r < series.length; r++) {

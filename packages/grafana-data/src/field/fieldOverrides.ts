@@ -103,7 +103,6 @@ export function applyFieldOverrides(options: ApplyFieldOverrideOptions): DataFra
 
     const fields: Field[] = frame.fields.map((field, fieldIndex) => {
       // Config is mutable within this scope
-
       const fieldScopedVars = { ...scopedVars };
       fieldScopedVars['__field'] = {
         text: 'Field',

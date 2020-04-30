@@ -4,7 +4,7 @@ import { toDataFrame } from '../dataframe/processDataFrame';
 import { ReducerID } from '../transformations/fieldReducer';
 import { ThresholdsMode } from '../types/thresholds';
 import { GrafanaTheme } from '../types/theme';
-import { FieldConfig, MappingType } from '../types';
+import { FieldConfig, MappingType, TIME_SERIES_FIELD_NAME } from '../types';
 import { validateFieldConfig } from './fieldOverrides';
 import { standardFieldConfigEditorRegistry } from './standardFieldConfigEditorRegistry';
 
@@ -225,21 +225,65 @@ describe('getFieldDisplayTitle', () => {
     expect(getFieldDisplayTitle(data.fields[0], data)).toBe('Field 1');
   });
 
-  it('should use prefix series name and field name if we have both', () => {
+  it('should use only field name if only one series', () => {
     const data = toDataFrame({
       name: 'Series A',
       fields: [{ name: 'Field 1', values: [] }],
     });
 
-    expect(getFieldDisplayTitle(data.fields[0], data)).toBe('Series A Field 1');
+    expect(getFieldDisplayTitle(data.fields[0], data, [data])).toBe('Field 1');
   });
 
-  it('should use only labels if field name is Value', () => {
+  it('should use frame name and field name if more than one frame', () => {
+    const data = toDataFrame({
+      name: 'Series A',
+      fields: [{ name: 'Field 1', values: [] }],
+    });
+
+    const data2 = toDataFrame({
+      name: 'Series B',
+      fields: [{ name: 'Field 1', values: [] }],
+    });
+
+    expect(getFieldDisplayTitle(data.fields[0], data, [data, data2])).toBe('Series A Field 1');
+  });
+
+  it('should only use label value if only one label', () => {
     const data = toDataFrame({
       fields: [{ name: 'Value', values: [], labels: { server: 'Server A' } }],
     });
 
-    expect(getFieldDisplayTitle(data.fields[0], data)).toBe('{server="Server A"}');
+    expect(getFieldDisplayTitle(data.fields[0], data, [data])).toBe('Server A');
+  });
+
+  it('should use label value only if all series have same name', () => {
+    const data = toDataFrame({
+      name: 'cpu',
+      fields: [{ name: 'Value', values: [], labels: { server: 'Server A' } }],
+    });
+
+    const data2 = toDataFrame({
+      name: 'cpu',
+      fields: [{ name: 'Value', values: [], labels: { server: 'Server A' } }],
+    });
+
+    expect(getFieldDisplayTitle(data.fields[0], data, [data, data2])).toBe('Server A');
+  });
+
+  it('should use label name and value if more than one label', () => {
+    const data = toDataFrame({
+      fields: [{ name: 'Value', values: [], labels: { server: 'Server A', mode: 'B' } }],
+    });
+
+    expect(getFieldDisplayTitle(data.fields[0], data, [data])).toBe('{mode="B", server="Server A"}');
+  });
+
+  it('should use field name even when it is TIME_SERIES_FIELD_NAME if there are no labels', () => {
+    const data = toDataFrame({
+      fields: [{ name: TIME_SERIES_FIELD_NAME, values: [], labels: {} }],
+    });
+
+    expect(getFieldDisplayTitle(data.fields[0], data)).toBe('Value');
   });
 });
 

@@ -48,6 +48,7 @@ function getTitleTemplate(title: string | undefined, stats: string[], data?: Dat
   if (title) {
     return title;
   }
+
   if (!data || !data.length) {
     return 'No Data';
   }
@@ -107,23 +108,84 @@ export function getFrameDisplayTitle(frame: DataFrame, index?: number) {
 }
 
 /**
- * Get an appropriate display title.  If the 'title' is set, use that
+ * Get an appropriate display title. If the 'title' is set, use that
  */
-export function getFieldDisplayTitle(field: Field, frame?: DataFrame) {
+export function getFieldDisplayTitle(field: Field, frame: DataFrame, allFrames?: DataFrame[]) {
   let title = field.config?.title;
 
   if (title) {
     return title; // Title is set and not a template
   }
 
-  const id = getFieldId(field);
-  const seriesName = frame?.name;
+  let parts: string[] = [];
+  let frameNamesDiffer = false;
 
-  if (seriesName && field.name !== seriesName) {
-    return seriesName + ' ' + field.name;
+  if (allFrames && allFrames.length > 1) {
+    for (let i = 1; i < allFrames.length; i++) {
+      const frame = allFrames[i];
+      if (frame.name !== allFrames[i - 1].name) {
+        frameNamesDiffer = true;
+        break;
+      }
+    }
   }
 
-  return id;
+  let frameNameAdded = false;
+  let labelsAdded = false;
+
+  if (frameNamesDiffer && frame.name) {
+    parts.push(frame.name);
+    frameNameAdded = true;
+  }
+
+  if (field.labels) {
+    let singleLabelName = getSingleLabelName(allFrames ?? [frame]);
+
+    if (!singleLabelName) {
+      const allLabels = formatLabels(field.labels);
+      if (allLabels) {
+        parts.push(allLabels);
+        labelsAdded = true;
+      }
+    } else if (field.labels[singleLabelName]) {
+      parts.push(field.labels[singleLabelName]);
+      labelsAdded = true;
+    }
+  }
+
+  // We skip the Value field name if we have a frame name or labels
+  if (field.name !== TIME_SERIES_FIELD_NAME || (!frameNameAdded && !labelsAdded)) {
+    parts.push(field.name);
+  }
+
+  return parts.join(' ');
+}
+/**
+ * Checks all data frames and return name of label if there is only one label name in all frames
+ */
+function getSingleLabelName(frames: DataFrame[]): string | null {
+  let singleName: string | null = null;
+
+  for (let i = 0; i < frames.length; i++) {
+    const frame = frames[i];
+
+    for (const field of frame.fields) {
+      if (!field.labels) {
+        continue;
+      }
+
+      // yes this should be in!
+      for (const labelKey in field.labels) {
+        if (singleName === null) {
+          singleName = labelKey;
+        } else if (labelKey !== singleName) {
+          return null;
+        }
+      }
+    }
+  }
+
+  return singleName;
 }
 
 /**
@@ -181,7 +243,6 @@ export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): Fi
     const data = options.data;
     let hitLimit = false;
     const limit = reduceOptions.limit ? reduceOptions.limit : DEFAULT_FIELD_DISPLAY_VALUES_LIMIT;
-    const defaultTitle = getTitleTemplate(fieldConfig.defaults.title, calcs, data);
     const scopedVars: ScopedVars = {};
 
     for (let s = 0; s < data.length && !hitLimit; s++) {
@@ -209,7 +270,7 @@ export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): Fi
             timeZone,
           });
 
-        const title = config.title ? config.title : defaultTitle;
+        const title = config.title ?? getFieldDisplayTitle(field, series, data);
 
         // Show all rows
         if (reduceOptions.values) {
