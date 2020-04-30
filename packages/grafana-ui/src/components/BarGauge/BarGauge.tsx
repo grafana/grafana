@@ -14,7 +14,7 @@ import {
   FieldColorMode,
 } from '@grafana/data';
 
-// Compontents
+// Components
 import { FormattedValueDisplay } from '../FormattedValueDisplay/FormattedValueDisplay';
 
 // Utils
