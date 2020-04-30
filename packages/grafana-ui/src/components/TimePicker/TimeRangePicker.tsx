@@ -13,7 +13,7 @@ import { stylesFactory } from '../../themes/stylesFactory';
 import { withTheme, useTheme } from '../../themes/ThemeContext';
 
 // Types
-import { isDateTime, rangeUtil, GrafanaTheme, dateTimeFormatWithAbbrevation } from '@grafana/data';
+import { isDateTime, rangeUtil, GrafanaTheme, dateTimeFormatWithAbbreviation } from '@grafana/data';
 import { TimeRange, TimeOption, TimeZone, dateMath } from '@grafana/data';
 import { Themeable } from '../../types';
 
@@ -208,9 +208,9 @@ const ZoomOutTooltip = () => (
 
 const TimePickerTooltip = ({ timeRange, timeZone }: { timeRange: TimeRange; timeZone?: TimeZone }) => (
   <>
-    {dateTimeFormatWithAbbrevation(timeRange.from, { timeZone })}
+    {dateTimeFormatWithAbbreviation(timeRange.from, { timeZone })}
     <div className="text-center">to</div>
-    {dateTimeFormatWithAbbrevation(timeRange.to, { timeZone })}
+    {dateTimeFormatWithAbbreviation(timeRange.to, { timeZone })}
   </>
 );
 
@@ -225,7 +225,7 @@ const TimePickerButtonLabel = memo<Props>(({ hideText, value, timeZone }) => {
   return (
     <span className={styles.container}>
       <span>{formattedRange(value, timeZone)}</span>
-      <span className={styles.utc}>{rangeUtil.describeTimeRangeAbbrevation(value, timeZone)}</span>
+      <span className={styles.utc}>{rangeUtil.describeTimeRangeAbbreviation(value, timeZone)}</span>
     </span>
   );
 });

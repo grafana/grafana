@@ -24,10 +24,10 @@ export const dateTimeFormatISO: DateTimeFormatter = (dateInUtc, options?) =>
 export const dateTimeFormatTimeAgo: DateTimeFormatter = (dateInUtc, options?) =>
   toTz(dateInUtc, getTimeZone(options)).fromNow();
 
-export const dateTimeFormatWithAbbrevation: DateTimeFormatter = (dateInUtc, options?) =>
+export const dateTimeFormatWithAbbreviation: DateTimeFormatter = (dateInUtc, options?) =>
   toTz(dateInUtc, getTimeZone(options)).format(`${DEFAULT_DATE_TIME_FORMAT} z`);
 
-export const timeZoneAbbrevation: DateTimeFormatter = (dateInUtc, options?) =>
+export const timeZoneAbbreviation: DateTimeFormatter = (dateInUtc, options?) =>
   toTz(dateInUtc, getTimeZone(options)).format('z');
 
 const getFormat = <T extends DateTimeOptionsWithFormat>(options?: T): string => {

@@ -5,7 +5,7 @@ import { RawTimeRange, TimeRange, TimeZone } from '../types/time';
 
 import * as dateMath from './datemath';
 import { isDateTime } from './moment_wrapper';
-import { timeZoneAbbrevation, dateTimeFormat, dateTimeFormatTimeAgo } from './formatter';
+import { timeZoneAbbreviation, dateTimeFormat, dateTimeFormatTimeAgo } from './formatter';
 import { dateTimeParse } from './parser';
 
 const spans: { [key: string]: { display: string; section?: number } } = {
@@ -180,12 +180,12 @@ export const isValidTimeSpan = (value: string) => {
   return info.invalid !== true;
 };
 
-export const describeTimeRangeAbbrevation = (range: TimeRange, timeZone?: TimeZone) => {
+export const describeTimeRangeAbbreviation = (range: TimeRange, timeZone?: TimeZone) => {
   if (isDateTime(range.from)) {
-    return timeZoneAbbrevation(range.from, { timeZone });
+    return timeZoneAbbreviation(range.from, { timeZone });
   }
   const parsed = dateMath.parse(range.from, true);
-  return parsed ? timeZoneAbbrevation(parsed, { timeZone }) : '';
+  return parsed ? timeZoneAbbreviation(parsed, { timeZone }) : '';
 };
 
 export const convertRawToRange = (raw: RawTimeRange): TimeRange => {
