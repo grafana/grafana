@@ -147,7 +147,7 @@ describe('PanelModel', () => {
     it('should apply field config defaults', () => {
       // default unit is overriden by model
       expect(model.getFieldOverrideOptions().fieldConfig.defaults.unit).toBe('mpg');
-      // default decimals are aplied
+      // default decimals are applied
       expect(model.getFieldOverrideOptions().fieldConfig.defaults.decimals).toBe(2);
     });
 
