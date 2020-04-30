@@ -14,7 +14,6 @@ import { BinaryOperationID, binaryOperators } from '../../utils/binaryOperators'
 export enum CalculateFieldMode {
   ReduceRow = 'reduceRow',
   BinaryOperation = 'binary',
-  Scale = 'scale',
 }
 
 interface ReduceOptions {
@@ -29,12 +28,6 @@ interface BinaryOptions {
   right: string;
 }
 
-interface ScaleOptions {
-  left: string;
-  operator: BinaryOperationID;
-  right: number;
-}
-
 const defaultReduceOptions: ReduceOptions = {
   reducer: ReducerID.sum,
 };
@@ -45,12 +38,6 @@ const defaultBinaryOptions: BinaryOptions = {
   right: '',
 };
 
-const defaultScaleOptions: ScaleOptions = {
-  left: '',
-  operator: BinaryOperationID.Multiply,
-  right: 1,
-};
-
 export interface CalculateFieldTransformerOptions {
   // True/False or auto
   timeSeries?: boolean;
@@ -59,7 +46,6 @@ export interface CalculateFieldTransformerOptions {
   // Only one should be filled
   reduce?: ReduceOptions;
   binary?: BinaryOptions;
-  scale?: ScaleOptions;
 
   // Remove other fields
   replaceFields?: boolean;
@@ -67,6 +53,24 @@ export interface CalculateFieldTransformerOptions {
   // Output field properties
   alias?: string; // The output field name
   // TODO: config?: FieldConfig; or maybe field overrides? since the UI exists
+}
+
+export function GetResultFieldNameForCalculateFieldTransformerOptions(options: CalculateFieldTransformerOptions) {
+  if (options.alias?.length) {
+    return options.alias;
+  }
+
+  if (options.mode === CalculateFieldMode.BinaryOperation) {
+    const { binary } = options;
+    return `${binary?.left ?? '?'} ${binary?.operator} ${binary?.right ?? '?'}`;
+  }
+  if (options.mode === CalculateFieldMode.ReduceRow) {
+    const r = fieldReducers.getIfExists(options.reduce?.reducer);
+    if (r) {
+      return r.name;
+    }
+  }
+  return 'math';
 }
 
 /**
@@ -89,7 +93,7 @@ function findTimeSeriesName(data: DataFrame[]): string | undefined {
   return name;
 }
 
-type FieldCreator = (data: DataFrame) => Field;
+type ValuesCreator = (data: DataFrame) => Vector;
 
 export const calculateFieldTransformer: DataTransformerInfo<CalculateFieldTransformerOptions> = {
   id: DataTransformerID.calculateField,
@@ -111,13 +115,11 @@ export const calculateFieldTransformer: DataTransformerInfo<CalculateFieldTransf
     }
 
     const mode = options.mode ?? CalculateFieldMode.ReduceRow;
-    let creator: FieldCreator | undefined = undefined;
+    let creator: ValuesCreator | undefined = undefined;
     if (mode === CalculateFieldMode.ReduceRow) {
       creator = getReduceRowCreator(defaults(options.reduce, defaultReduceOptions));
     } else if (mode === CalculateFieldMode.BinaryOperation) {
       creator = getBinaryCreator(defaults(options.binary, defaultBinaryOptions));
-    } else if (mode === CalculateFieldMode.Scale) {
-      creator = getScaleCreator(defaults(options.scale, defaultScaleOptions));
     }
 
     // Nothing configured
@@ -127,15 +129,17 @@ export const calculateFieldTransformer: DataTransformerInfo<CalculateFieldTransf
 
     return data.map(frame => {
       // delegate field creation to the specific function
-      const field = creator!(frame);
-      if (!field) {
+      const values = creator!(frame);
+      if (!values) {
         return frame;
       }
 
-      if (options.alias) {
-        field.name = options.alias;
-      }
-
+      const field = {
+        name: GetResultFieldNameForCalculateFieldTransformerOptions(options),
+        type: FieldType.number,
+        config: {},
+        values,
+      };
       let fields: Field[] = [];
 
       // Replace all fields with the single field
@@ -157,7 +161,7 @@ export const calculateFieldTransformer: DataTransformerInfo<CalculateFieldTransf
   },
 };
 
-function getReduceRowCreator(options: ReduceOptions): FieldCreator {
+function getReduceRowCreator(options: ReduceOptions): ValuesCreator {
   let matcher = getFieldMatcher({
     id: FieldMatcherID.numeric,
   });
@@ -201,58 +205,39 @@ function getReduceRowCreator(options: ReduceOptions): FieldCreator {
       vals.push(val);
     }
 
-    return {
-      name: info.name,
-      type: FieldType.number,
-      config: {},
-      values: new ArrayVector(vals),
-    };
+    return new ArrayVector(vals);
   };
 }
 
-function findFieldWithName(frame: DataFrame, name: string): Field | undefined {
+function findFieldValuesWithNameOrConstant(frame: DataFrame, name: string): Vector | undefined {
+  if (!name) {
+    return undefined;
+  }
+
   for (const f of frame.fields) {
     if (f.name === name) {
-      return f;
+      return f.values;
     }
   }
+
+  const v = parseFloat(name);
+  if (!isNaN(v)) {
+    return new ConstantVector(v, frame.length);
+  }
+
   return undefined;
 }
 
-function getBinaryCreator(options: BinaryOptions): FieldCreator {
+function getBinaryCreator(options: BinaryOptions): ValuesCreator {
   const operator = binaryOperators.getIfExists(options.operator);
 
   return (frame: DataFrame) => {
-    const left = findFieldWithName(frame, options.left);
-    const right = findFieldWithName(frame, options.right);
+    const left = findFieldValuesWithNameOrConstant(frame, options.left);
+    const right = findFieldValuesWithNameOrConstant(frame, options.right);
     if (!left || !right || !operator) {
-      return (undefined as unknown) as Field;
+      return (undefined as unknown) as Vector;
     }
 
-    return {
-      name: operator.name,
-      type: FieldType.number,
-      config: {},
-      values: new BinaryOperationVector(left.values, right.values, operator.operation),
-    };
-  };
-}
-
-function getScaleCreator(options: ScaleOptions): FieldCreator {
-  const operator = binaryOperators.getIfExists(options.operator);
-
-  return (frame: DataFrame) => {
-    const left = findFieldWithName(frame, options.left);
-    if (!left || !operator) {
-      return (undefined as unknown) as Field;
-    }
-
-    const right = new ConstantVector(options.right, left.values.length);
-    return {
-      name: operator.name,
-      type: FieldType.number,
-      config: {},
-      values: new BinaryOperationVector(left.values, right, operator.operation),
-    };
+    return new BinaryOperationVector(left, right, operator.operation);
   };
 }

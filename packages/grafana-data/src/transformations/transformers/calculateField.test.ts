@@ -153,11 +153,11 @@ describe('calculateField transformer w/ timeseries', () => {
     const cfg = {
       id: DataTransformerID.calculateField,
       options: {
-        mode: CalculateFieldMode.Scale,
+        mode: CalculateFieldMode.BinaryOperation,
         scale: {
           left: 'B',
           operation: BinaryOperationID.Add,
-          right: 2,
+          right: '2',
         },
         replaceFields: true,
       },

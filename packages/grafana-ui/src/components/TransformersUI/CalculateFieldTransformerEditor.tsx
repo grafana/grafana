@@ -2,7 +2,6 @@ import React, { ChangeEvent } from 'react';
 import {
   CalculateFieldTransformerOptions,
   DataTransformerID,
-  fieldReducers,
   FieldType,
   KeyValue,
   ReducerID,
@@ -19,7 +18,10 @@ import { Switch } from '../Forms/Legacy/Switch/Switch';
 import { Input } from '../Input/Input';
 import { FilterPill } from '../FilterPill/FilterPill';
 import { HorizontalGroup } from '../Layout/Layout';
-import { CalculateFieldMode } from '@grafana/data/src/transformations/transformers/calculateField';
+import {
+  CalculateFieldMode,
+  GetResultFieldNameForCalculateFieldTransformerOptions,
+} from '@grafana/data/src/transformations/transformers/calculateField';
 import { Select } from '../Select/Select';
 import defaults from 'lodash/defaults';
 
@@ -36,12 +38,6 @@ interface BinaryOptions {
   right: string;
 }
 
-interface ScaleOptions {
-  left: string;
-  operator: BinaryOperationID;
-  right: number;
-}
-
 interface CalculateFieldTransformerEditorProps extends TransformerUIProps<CalculateFieldTransformerOptions> {}
 
 interface CalculateFieldTransformerEditorState {
@@ -51,9 +47,8 @@ interface CalculateFieldTransformerEditorState {
 }
 
 const calculationModes = [
-  { value: CalculateFieldMode.ReduceRow, label: 'Reduce row' },
   { value: CalculateFieldMode.BinaryOperation, label: 'Binary operation' },
-  { value: CalculateFieldMode.Scale, label: 'Scale field' },
+  { value: CalculateFieldMode.ReduceRow, label: 'Reduce row' },
 ];
 
 export class CalculateFieldTransformerEditor extends React.PureComponent<
@@ -122,7 +117,7 @@ export class CalculateFieldTransformerEditor extends React.PureComponent<
 
   onModeChanged = (value: SelectableValue<CalculateFieldMode>) => {
     const { options, onChange } = this.props;
-    const mode = value.value ?? CalculateFieldMode.ReduceRow;
+    const mode = value.value ?? CalculateFieldMode.BinaryOperation;
     onChange({
       ...options,
       mode,
@@ -254,9 +249,21 @@ export class CalculateFieldTransformerEditor extends React.PureComponent<
 
   renderBinaryOperation(options?: BinaryOptions) {
     options = defaults(options, { reducer: ReducerID.sum });
+
+    let foundLeft = !options?.left;
+    let foundRight = !options?.right;
     const names = this.state.names.map(v => {
+      if (v === options?.left) {
+        foundLeft = true;
+      }
+      if (v === options?.right) {
+        foundRight = true;
+      }
       return { label: v, value: v };
     });
+    const leftNames = foundLeft ? names : [...names, { label: options?.left, value: options?.left }];
+    const rightNames = foundRight ? names : [...names, { label: options?.right, value: options?.right }];
+
     const ops = binaryOperators.list().map(v => {
       return { label: v.id, value: v.id };
     });
@@ -266,86 +273,25 @@ export class CalculateFieldTransformerEditor extends React.PureComponent<
         <div className="gf-form-label width-8">Operation</div>
         <div className="gf-form gf-form--grow">
           <Select
-            options={names}
-            value={names.find(v => v.value === options?.left)}
+            allowCustomValue
+            placeholder="Field or number"
+            options={leftNames}
+            value={leftNames.find(v => v.value === options?.left)}
             onChange={this.onBinaryLeftChanged}
           />
           <Select
+            className="width-8"
             options={ops}
             value={ops.find(v => v.value === options?.operator)}
             onChange={this.onBinaryOperationChanged}
           />
           <Select
-            options={names}
-            value={names.find(v => v.value === options?.right)}
+            allowCustomValue
+            placeholder="Field or number"
+            options={rightNames}
+            value={rightNames.find(v => v.value === options?.right)}
             onChange={this.onBinaryRightChanged}
           />
-        </div>
-      </div>
-    );
-  }
-
-  //---------------------------------------------------------
-  // Scale Operator
-  //---------------------------------------------------------
-
-  updateScaleOptions = (v: ScaleOptions) => {
-    const { options, onChange } = this.props;
-    onChange({
-      ...options,
-      mode: CalculateFieldMode.Scale,
-      scale: v,
-    });
-  };
-
-  onScaleLeftChanged = (v: SelectableValue<string>) => {
-    const { scale } = this.props.options;
-    this.updateScaleOptions({
-      ...scale!,
-      left: v.value!,
-    });
-  };
-
-  onScaleValueChanged = (v: ChangeEvent<any>) => {
-    const { scale } = this.props.options;
-    this.updateScaleOptions({
-      ...scale!,
-      right: parseFloat(v.target.value),
-    });
-  };
-
-  onScaleOperationChanged = (v: SelectableValue<string>) => {
-    const { scale } = this.props.options;
-    this.updateScaleOptions({
-      ...scale!,
-      operator: v.value! as BinaryOperationID,
-    });
-  };
-
-  renderScaleOperation(options?: ScaleOptions) {
-    options = defaults(options, { operator: ReducerID.sum });
-    const names = this.state.names.map(v => {
-      return { label: v, value: v };
-    });
-    const ops = binaryOperators.list().map(v => {
-      return { label: v.id, value: v.id };
-    });
-
-    return (
-      <div className="gf-form-inline">
-        <div className="gf-form-label width-8">Operation</div>
-        <div className="gf-form gf-form--grow">
-          <Select
-            options={names}
-            value={names.find(v => v.value === options?.left)}
-            onChange={this.onScaleLeftChanged}
-          />
-          <Select
-            options={ops}
-            value={ops.find(v => v.value === options?.operator)}
-            onChange={this.onScaleOperationChanged}
-          />
-          <Input type="number" value={options.right || 0} onChange={this.onScaleValueChanged} />
         </div>
       </div>
     );
@@ -358,19 +304,7 @@ export class CalculateFieldTransformerEditor extends React.PureComponent<
   render() {
     const { options } = this.props;
 
-    const mode = options.mode ?? CalculateFieldMode.ReduceRow;
-
-    let aliasPlaceholder = '';
-    if (mode === CalculateFieldMode.ReduceRow) {
-      const r = fieldReducers.getIfExists(options.reduce?.reducer);
-      aliasPlaceholder = r ? r?.name : ReducerID.sum;
-    } else if (mode === CalculateFieldMode.BinaryOperation) {
-      const o = binaryOperators.getIfExists(options.binary?.operator);
-      aliasPlaceholder = o ? o.name : '';
-    } else if (mode === CalculateFieldMode.Scale) {
-      const o = binaryOperators.getIfExists(options.scale?.operator);
-      aliasPlaceholder = o ? o.name : '';
-    }
+    const mode = options.mode ?? CalculateFieldMode.BinaryOperation;
 
     return (
       <div>
@@ -384,13 +318,16 @@ export class CalculateFieldTransformerEditor extends React.PureComponent<
             />
           </div>
         </div>
-        {mode === CalculateFieldMode.ReduceRow && this.renderReduceRow(options.reduce)}
         {mode === CalculateFieldMode.BinaryOperation && this.renderBinaryOperation(options.binary)}
-        {mode === CalculateFieldMode.Scale && this.renderScaleOperation(options.scale)}
+        {mode === CalculateFieldMode.ReduceRow && this.renderReduceRow(options.reduce)}
         <div className="gf-form-inline">
           <div className="gf-form gf-form--grow">
             <div className="gf-form-label width-8">Alias</div>
-            <Input value={options.alias} placeholder={aliasPlaceholder} onChange={this.onAliasChanged} />
+            <Input
+              value={options.alias}
+              placeholder={GetResultFieldNameForCalculateFieldTransformerOptions(options)}
+              onChange={this.onAliasChanged}
+            />
           </div>
         </div>
         <div className="gf-form-inline">
