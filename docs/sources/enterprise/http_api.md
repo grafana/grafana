@@ -24,7 +24,7 @@ To access the API you need to authenticate yourself. For more information about 
 
 `POST /api/reports/email`
 
-Manually schedule reports for being generated and sent. This API waits for the report to be generated before returning. You are recommended to set the client's timeout to 60 seconds or more.
+Generate and send a report. This API waits for the report to be generated before returning. You are recommended to set the client's timeout to 60 seconds or more.
 
 This API endpoint is experimental and may be deprecated in a future release. On deprecation, a migration strategy will be provided and the endpoint will remain functional until the next major release of Grafana.
 
