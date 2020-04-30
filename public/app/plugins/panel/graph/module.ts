@@ -24,6 +24,7 @@ import { DataWarning } from './types';
 import { getLocationSrv } from '@grafana/runtime';
 import { getDataTimeRange } from './utils';
 import { changePanelPlugin } from 'app/features/dashboard/state/actions';
+import { dispatch } from 'app/store/store';
 
 class GraphCtrl extends MetricsPanelCtrl {
   static template = template;
@@ -260,8 +261,7 @@ class GraphCtrl extends MetricsPanelCtrl {
               actionText: 'Switch to table view',
               action: () => {
                 console.log('Change from graph to table');
-                // ????? redux thunk?
-                changePanelPlugin(this.panel, 'table');
+                dispatch(changePanelPlugin(this.panel, 'table'));
               },
             };
           }
