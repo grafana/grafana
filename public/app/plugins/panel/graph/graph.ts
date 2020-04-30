@@ -351,8 +351,15 @@ class GraphElement {
         .appendTo(this.elem);
     }
 
-    if (this.ctrl.dataWarning) {
-      $(`<div class="datapoints-warning flot-temp-elem">${this.ctrl.dataWarning.title}</div>`).appendTo(this.elem);
+    const { dataWarning } = this.ctrl;
+    if (dataWarning) {
+      const msg = $(`<div class="datapoints-warning flot-temp-elem">${dataWarning.title}</div>`);
+      if (dataWarning.action) {
+        $(`<button class="btn btn-secondary">${dataWarning.actionText}</button>`)
+          .click(dataWarning.action)
+          .appendTo(msg);
+      }
+      msg.appendTo(this.elem);
     }
 
     this.thresholdManager.draw(plot);
