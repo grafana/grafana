@@ -96,13 +96,8 @@ export function applyFieldOverrides(options: ApplyFieldOverrideOptions): DataFra
   }
 
   return options.data.map((frame, index) => {
-    let name = frame.name;
-    if (!name) {
-      name = `Series[${index}]`;
-    }
-
     const scopedVars: ScopedVars = {
-      __series: { text: 'Series', value: { name } },
+      __series: { text: 'Series', value: { name: frame.name } }, // might be missing
     };
 
     const fields: Field[] = frame.fields.map((field, fieldIndex) => {

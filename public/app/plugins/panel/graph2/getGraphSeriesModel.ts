@@ -17,6 +17,7 @@ import {
   FieldColor,
   FieldColorMode,
   FieldConfigSource,
+  getFieldDisplayTitle,
 } from '@grafana/data';
 
 import { SeriesOptions, GraphOptions, GraphLegendEditorLegendOptions } from './types';
@@ -122,7 +123,7 @@ export const getGraphSeriesModel = (
         });
 
         graphs.push({
-          label: field.name,
+          label: getFieldDisplayTitle(field, series, series.length),
           data: points,
           color: field.config.color?.fixedColor,
           info: statsDisplayValues,

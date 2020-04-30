@@ -1,6 +1,6 @@
 import _ from 'lodash';
 import TableModel from 'app/core/table_model';
-import { TimeSeries, FieldType } from '@grafana/data';
+import { TimeSeries, FieldType, Labels } from '@grafana/data';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 
 export class ResultTransformer {
@@ -42,9 +42,7 @@ export class ResultTransformer {
 
   transformMetricData(metricData: any, options: any, start: number, end: number) {
     const dps = [];
-    let metricLabel = null;
-
-    metricLabel = this.createMetricLabel(metricData.metric, options);
+    const { name, labels, title } = this.createLabelInfo(metricData.metric, options);
 
     const stepMs = parseFloat(options.step) * 1000;
     let baseTimestamp = start * 1000;
@@ -76,8 +74,9 @@ export class ResultTransformer {
       datapoints: dps,
       query: options.query,
       refId: options.refId,
-      target: metricLabel,
-      tags: metricData.metric,
+      target: name,
+      tags: labels,
+      title,
     };
   }
 
@@ -141,23 +140,26 @@ export class ResultTransformer {
 
   transformInstantMetricData(md: any, options: any) {
     const dps = [];
-    let metricLabel = null;
-    metricLabel = this.createMetricLabel(md.metric, options);
+    const { name, labels, title } = this.createLabelInfo(md.metric, options);
     dps.push([parseFloat(md.value[1]), md.value[0] * 1000]);
-    return { target: metricLabel, datapoints: dps, tags: md.metric, refId: options.refId };
+    return { target: name, datapoints: dps, tags: labels, refId: options.refId, title };
   }
 
-  createMetricLabel(labelData: { [key: string]: string }, options: any) {
-    let label = '';
+  createLabelInfo(
+    labelData: { [key: string]: string },
+    options: any
+  ): { name: string; labels: Labels; title?: string } {
+    let { __name__, ...labels } = labelData;
+    if (!__name__) {
+      __name__ = options.query;
+    }
+
     if (_.isUndefined(options) || _.isEmpty(options.legendFormat)) {
-      label = this.getOriginalMetricName(labelData);
-    } else {
-      label = this.renderTemplate(this.templateSrv.replace(options.legendFormat), labelData);
+      return { name: __name__, labels };
     }
-    if (!label || label === '{}') {
-      label = options.query;
-    }
-    return label;
+
+    const title = this.renderTemplate(this.templateSrv.replace(options.legendFormat), labelData);
+    return { name, labels, title };
   }
 
   renderTemplate(aliasPattern: string, aliasData: { [key: string]: string }) {
