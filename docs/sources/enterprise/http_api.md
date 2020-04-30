@@ -18,7 +18,7 @@ To access the API you need to authenticate yourself. For more information about 
 
 ## Reporting API
 
-### Manually send report
+### Send report
 
 > Only available in Grafana Enterprise v7.0+.
 
