@@ -45,6 +45,7 @@ type PluginScanner struct {
 	backendPluginManager backendplugin.Manager
 	cfg                  *setting.Cfg
 	requireSigned        bool
+	log                  log.Logger
 }
 
 type PluginManager struct {
@@ -102,9 +103,9 @@ func (pm *PluginManager) Init() error {
 	}
 	if !exists {
 		if err = os.MkdirAll(setting.PluginsPath, os.ModePerm); err != nil {
-			plog.Error("failed to create external plugins directory", "dir", setting.PluginsPath, "error", err)
+			pm.log.Error("failed to create external plugins directory", "dir", setting.PluginsPath, "error", err)
 		} else {
-			plog.Info("External plugins directory created", "directory", setting.PluginsPath)
+			pm.log.Info("External plugins directory created", "directory", setting.PluginsPath)
 		}
 	} else {
 		pm.log.Info("Scanning external plugins directory")
@@ -188,6 +189,7 @@ func (pm *PluginManager) scan(pluginDir string, requireSigned bool) error {
 		backendPluginManager: pm.BackendPluginManager,
 		cfg:                  pm.Cfg,
 		requireSigned:        requireSigned,
+		log:                  pm.log,
 	}
 
 	if err := util.Walk(pluginDir, true, true, scanner.walker); err != nil {
@@ -241,8 +243,7 @@ func (scanner *PluginScanner) walker(currentPath string, f os.FileInfo, err erro
 	if f.Name() == "plugin.json" {
 		err := scanner.loadPluginJson(currentPath)
 		if err != nil {
-			// XXX: Should we use plog here instead of log?
-			log.Error(3, "Plugins: Failed to load plugin %q,  err: %v", filepath.Dir(currentPath), err)
+			scanner.log.Error("Failed to load plugin", "error", err, "pluginPath", filepath.Dir(currentPath))
 			scanner.errors = append(scanner.errors, err)
 		}
 	}
@@ -271,7 +272,7 @@ func (scanner *PluginScanner) loadPluginJson(pluginJsonFilePath string) error {
 	pluginCommon.PluginDir = filepath.Dir(pluginJsonFilePath)
 
 	if scanner.requireSigned {
-		plog.Debug("Plugin signature required, validating", "pluginID", pluginCommon.Id,
+		scanner.log.Debug("Plugin signature required, validating", "pluginID", pluginCommon.Id,
 			"pluginDir", pluginCommon.PluginDir)
 		allowUnsigned := false
 		for _, plug := range scanner.cfg.PluginsAllowUnsigned {
@@ -283,13 +284,13 @@ func (scanner *PluginScanner) loadPluginJson(pluginJsonFilePath string) error {
 		if sig := GetPluginSignatureState(&pluginCommon); sig != PluginSignatureValid && !allowUnsigned {
 			switch sig {
 			case PluginSignatureUnsigned:
-				plog.Debug("Cannot load plugin since it has no signature", "pluginID", pluginCommon.Id)
+				scanner.log.Debug("Cannot load plugin since it has no signature", "pluginID", pluginCommon.Id)
 				return fmt.Errorf("plugin %q is unsigned", pluginCommon.Id)
 			case PluginSignatureInvalid:
-				plog.Debug("Cannot load plugin since it has an invalid signature", "pluginID", pluginCommon.Id)
+				scanner.log.Debug("Cannot load plugin since it has an invalid signature", "pluginID", pluginCommon.Id)
 				return fmt.Errorf("plugin %q has an invalid signature", pluginCommon.Id)
 			case PluginSignatureModified:
-				plog.Debug("Cannot load plugin since its signature is modified", "pluginID", pluginCommon.Id)
+				scanner.log.Debug("Cannot load plugin since its signature is modified", "pluginID", pluginCommon.Id)
 				return fmt.Errorf("plugin %q's signature has been modified", pluginCommon.Id)
 			default:
 				panic(fmt.Sprintf("Unrecognized plugin signature state %v", sig))
@@ -311,7 +312,7 @@ func (scanner *PluginScanner) loadPluginJson(pluginJsonFilePath string) error {
 			return err
 		}
 		if !exists {
-			plog.Warn("Plugin missing module.js",
+			scanner.log.Warn("Plugin missing module.js",
 				"name", pluginCommon.Name,
 				"warning", "Missing module.js, If you loaded this plugin from git, make sure to compile it.",
 				"path", module)
