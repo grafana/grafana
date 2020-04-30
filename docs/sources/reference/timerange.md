@@ -54,6 +54,12 @@ From Dashboard settings, click the Timepicker tab. From here you can specify the
 
 Grafana offers the ability to override the `now` value on a per dashboard basis. Most commonly, this feature is used to accommodate known delays in data aggregation to avoid null values.
 
+### Time zone options
+Starting in version `7` of Grafana users have the ability to override the time zone used to display date and time values in a dashboard. Apart from the standard [ISO 8601 time zones](https://en.wikipedia.org/wiki/List_of_tz_database_time_zones) users also can select the following options:
+
+1. **Default**: The default selected time zone for the user profile or organization will be used. If no time zone is specified for the user profile or the organization `Local browser time` will be used.
+2. **Local browser time**: The time zone configured for the viewing user browser will be used. This is usually the same time zone as set on the compture.
+
 ## Panel time overrides and timeshift
 
 You can override the relative time range for individual panels, causing them to be different than what is selected in the Dashboard time picker in the upper right. This allows you to show metrics from different time periods or days at the same time.
