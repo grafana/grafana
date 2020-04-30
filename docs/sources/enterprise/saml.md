@@ -119,7 +119,7 @@ An example is `assertion_attribute_name = "givenName"` where Grafana looks withi
 
 ### Configure team sync
 
-> Only available in Grafana v7.0+
+> Team sync support for SAML only available in Grafana v7.0+
 
 To use SAML Team sync, set `assertion_attribute_groups` to the attribute name where you store user groups. Then Grafana will use attribute values extracted from SAML assertion to add user into the groups with the same name configured on the External group sync tab.
 
