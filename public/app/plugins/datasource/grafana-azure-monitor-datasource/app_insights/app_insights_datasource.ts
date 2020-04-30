@@ -32,7 +32,7 @@ export default class AppInsightsDatasource {
       // Azure Germany
       case 'germanyazuremonitor':
         break;
-      // Azue China
+      // Azure China
       case 'chinaazuremonitor':
         this.baseUrl = `/chinaappinsights/${this.version}/apps/${this.applicationId}`;
         break;
