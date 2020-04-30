@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { storiesOf } from '@storybook/react';
 import { oneLineTrim } from 'common-tags';
 import { text, boolean } from '@storybook/addon-knobs';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
@@ -27,10 +26,13 @@ amet.`
   };
 };
 
-const ModalStories = storiesOf('Overlays/Modal', module);
-ModalStories.addDecorator(withCenteredStory);
+export default {
+  title: 'Overlays/Modal',
+  component: Modal,
+  dectorators: [withCenteredStory],
+};
 
-ModalStories.add('default', () => {
+export const basic = () => {
   const { body, visible } = getKnobs();
   return (
     <Modal
@@ -45,7 +47,7 @@ ModalStories.add('default', () => {
       {body}
     </Modal>
   );
-});
+};
 
 const tabs = [
   { label: '1st child', value: 'first', active: true },
@@ -53,7 +55,7 @@ const tabs = [
   { label: '3rd child', value: 'third', active: false },
 ];
 
-ModalStories.add('with tabs', () => {
+export const withTabs = () => {
   const [activeTab, setActiveTab] = useState('first');
   const modalHeader = (
     <ModalTabsHeader
@@ -83,4 +85,4 @@ ModalStories.add('with tabs', () => {
       }}
     </UseState>
   );
-});
+};
