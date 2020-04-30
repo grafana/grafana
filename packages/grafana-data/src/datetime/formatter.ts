@@ -15,6 +15,16 @@ export type DateTimeFormatter<T extends DateTimeOptions = DateTimeOptions> = (
   options?: T
 ) => string;
 
+/**
+ * Helper function to format date and time according to the specified options. It will
+ * use either specified or default time zone when formatting the date/time value.
+ *
+ * The options parameter is optional and default values will be used if left out. For more
+ * details about default values please see {@link DateTimeOptionsWithFormat}.
+ *
+ * @param dateInUtc - date in utc format e.g. string formatted with utc offset, unix epoch in sec.
+ * @param options
+ */
 export const dateTimeFormat: DateTimeFormatter<DateTimeOptionsWithFormat> = (dateInUtc, options?) =>
   toTz(dateInUtc, getTimeZone(options)).format(getFormat(options));
 

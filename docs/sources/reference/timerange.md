@@ -60,7 +60,7 @@ Starting in version `7` of Grafana users have the ability to override the time z
 1. **Default**: The default selected time zone for the user profile or organization will be used. If no time zone is specified for the user profile or the organization `Local browser time` will be used.
 2. **Local browser time**: The time zone configured for the viewing user browser will be used. This is usually the same time zone as set on the compture.
 
-One of the benefits with this feature is that you can specify the local time zone of the service/system that you are monitoring which can be really helpful when monitoring a system/service that operates accross several time zones.
+One of the benefits with this feature is that you can specify the local time zone of the service/system that you are monitoring which can be really helpful when monitoring a system/service that operates across several time zones.
 
 ## Panel time overrides and timeshift
 
