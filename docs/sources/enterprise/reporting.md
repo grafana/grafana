@@ -113,6 +113,14 @@ concurrent_render_limit = 4
 image_scale_factor = 2
 ```
 
+## Report time range
+
+Reports uses the saved time range of the dashboard. Changing the time range of the report is done by saving a modified time range to the dashboard.
+
+The page header of the report displays the time range for the dashboard's data queries. Dashboards set to use the browser's time zone will use the time zone on the Grafana server.
+
+If the time zone is set differently between your Grafana server and its remote image renderer, then the time ranges in the report may be different between the page header and the time axes in the panels. We advise always setting the time zone to UTC for dashboards when using a remote renderer to avoid this. 
+
 ## Troubleshoot reporting
 
 To troubleshoot and get more log information, enable debug logging in the configuration file. Refer to [Configuration]({{< relref "../installation/configuration.md#filters" >}}) for more information.
