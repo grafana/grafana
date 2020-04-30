@@ -55,7 +55,7 @@ const gitUrlParse = (url: string): { owner: string; name: string } => {
     };
   }
 
-  throw `Coult not find a suitable git repository. Received [${url}]`;
+  throw `Could not find a suitable git repository. Received [${url}]`;
 };
 
 const prepareRelease = useSpinner<any>('Preparing release', async ({ dryrun, verbose }) => {
