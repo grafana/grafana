@@ -206,7 +206,7 @@
   link: /whatsnew/
   children:
     - name: Version 7.0
-      link: /guides/whats-new-in-v7/
+      link: /guides/whats-new-in-v7-0/
     - name: Version 6.7
       link: /guides/whats-new-in-v6-7/
     - name: Version 6.6
