@@ -96,7 +96,7 @@ describe('toDataFrame', () => {
     ).toThrowError('Expected table rows to be array, got object.');
   });
 
-  it('Guess Colum Types from value', () => {
+  it('Guess Column Types from value', () => {
     expect(guessFieldTypeFromValue(1)).toBe(FieldType.number);
     expect(guessFieldTypeFromValue(1.234)).toBe(FieldType.number);
     expect(guessFieldTypeFromValue(3.125e7)).toBe(FieldType.number);
@@ -106,7 +106,7 @@ describe('toDataFrame', () => {
     expect(guessFieldTypeFromValue(dateTime())).toBe(FieldType.time);
   });
 
-  it('Guess Colum Types from strings', () => {
+  it('Guess Column Types from strings', () => {
     expect(guessFieldTypeFromValue('1')).toBe(FieldType.number);
     expect(guessFieldTypeFromValue('1.234')).toBe(FieldType.number);
     expect(guessFieldTypeFromValue('NaN')).toBe(FieldType.number);
@@ -117,7 +117,7 @@ describe('toDataFrame', () => {
     expect(guessFieldTypeFromValue('xxxx')).toBe(FieldType.string);
   });
 
-  it('Guess Colum Types from series', () => {
+  it('Guess Column Types from series', () => {
     const series = new MutableDataFrame({
       fields: [
         { name: 'A (number)', values: [123, null] },

@@ -149,7 +149,7 @@ export class CSVReader {
 
       this.state = ParseState.ReadingRows;
 
-      // Make sure colum structure is valid
+      // Make sure column structure is valid
       if (line.length > this.current.fields.length) {
         const { fields } = this.current;
         for (let f = fields.length; f < line.length; f++) {
