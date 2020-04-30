@@ -22,16 +22,16 @@ The Grafana 7.0 stable will be released on the 18th of May. In the meantime if y
 
 The main highlights are:
 
-- **New Panel Editor** Redesign based on community feedback
+- **New Panel Editor:** Redesign based on community feedback
 - **Explore:** New tracing UI and support for visualizing Jaeger and Zipkin traces.
-- **Enterprise** Usage Analytics and Presence
-- **Transformations** Transformations and simple Math operations for all data sources.
-- **Field overrides** Automatically configure panels with data from queries.
-- **Table** New Table panel.
-- **Plugins** New plugins platform
-- **Tutorials** New tutorials section
-- **Cloudwatch** Cloudwatch Logs
-- **Breaking change** PhantomJS removed
+- **Enterprise:** Usage Analytics and Presence
+- **Transformations:** Transformations and simple Math operations for all data sources.
+- **Field overrides:** Automatically configure panels with data from queries.
+- **Table:** New Table panel.
+- **Plugins:** New plugins platform
+- **Tutorials:** New tutorials section
+- **Cloudwatch:** Cloudwatch Logs
+- **Breaking change:** PhantomJS removed
 
 ## New Panel Editor
 
@@ -53,13 +53,13 @@ Transformations and maths across queries. The data you want to visualize can com
 
 **Transformations shipping in 7.0**
 
-- **Reduce**: Reduce many rows / data points to a single value
-- **Filter by name**: Filter fields by name or regex
-- **Filter by refId**: Filter by query letter
-- **Organize fields**: Reorder, rename and hide fields.
-- **Labels to fields**: Transform time series with labels into a table where labels get's converted to fields and the result is joined by time
-- **Join by field**: Join many result sets (series) together using for example the time field. Useful for transforming time series into a table with a shared time column and where each series get it's own column.
-- **Add field from calculation**: This is a powerful transformation that allows you perform many different types of math operations and add the result as a new field. Examples:
+- **Reduce:** Reduce many rows / data points to a single value
+- **Filter by name:** Filter fields by name or regex
+- **Filter by refId:** Filter by query letter
+- **Organize fields:** Reorder, rename and hide fields.
+- **Labels to fields:** Transform time series with labels into a table where labels get's converted to fields and the result is joined by time
+- **Join by field:** Join many result sets (series) together using for example the time field. Useful for transforming time series into a table with a shared time column and where each series get it's own column.
+- **Add field from calculation:** This is a powerful transformation that allows you perform many different types of math operations and add the result as a new field. Examples:
   - Calculate the difference between two series or fields and add the result to a new field
   - Multiply one field with another another and add the result to a new field
 
