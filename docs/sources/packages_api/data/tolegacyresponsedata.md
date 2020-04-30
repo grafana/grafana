@@ -5,7 +5,6 @@
 title = "toLegacyResponseData"
 keywords = ["grafana","documentation","sdk","@grafana/data"]
 type = "docs"
-draft = true
 +++
 
 ## toLegacyResponseData variable

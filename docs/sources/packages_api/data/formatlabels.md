@@ -5,7 +5,6 @@
 title = "formatLabels"
 keywords = ["grafana","documentation","sdk","@grafana/data"]
 type = "docs"
-draft = true
 +++
 
 ## formatLabels() function

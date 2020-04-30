@@ -8,7 +8,7 @@ import { inputSizes } from '../Forms/commonStyles';
 import { FormInputSize } from '../Forms/types';
 import { focusCss } from '../../themes/mixins';
 
-interface Props {
+export interface Props {
   onChange: (value: DateTime) => void;
   value: DateTime;
   showHour?: boolean;

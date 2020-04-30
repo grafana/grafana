@@ -5,7 +5,6 @@
 title = "ErrorWithStack"
 keywords = ["grafana","documentation","sdk","@grafana/ui"]
 type = "docs"
-draft = true
 +++
 
 ## ErrorWithStack variable

@@ -5,7 +5,6 @@
 title = "dataLinksOverrideProcessor"
 keywords = ["grafana","documentation","sdk","@grafana/data"]
 type = "docs"
-draft = true
 +++
 
 ## dataLinksOverrideProcessor variable

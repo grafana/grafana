@@ -8,7 +8,7 @@ import { getModalStyles } from './getModalStyles';
 import { ModalHeader } from './ModalHeader';
 import { IconButton } from '../IconButton/IconButton';
 
-interface Props extends Themeable {
+export interface Props extends Themeable {
   icon?: IconName;
   title: string | JSX.Element;
   className?: string;

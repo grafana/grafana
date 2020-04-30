@@ -5,7 +5,6 @@
 title = "Field"
 keywords = ["grafana","documentation","sdk","@grafana/ui"]
 type = "docs"
-draft = true
 +++
 
 ## Field variable

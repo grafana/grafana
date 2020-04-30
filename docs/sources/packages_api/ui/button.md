@@ -5,7 +5,6 @@
 title = "Button"
 keywords = ["grafana","documentation","sdk","@grafana/ui"]
 type = "docs"
-draft = true
 +++
 
 ## Button variable
