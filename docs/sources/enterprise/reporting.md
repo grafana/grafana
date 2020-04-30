@@ -51,7 +51,7 @@ Currently only Organization Admins can create reports.
 If you want to use email addresses from the report, then select the **Use emails from report** check box.
 1. Click **Send**.
 
-The last saved version of the report will be sent to selected emails. You can use this to verify emails are working and to make sure the report generates and is displayed as you expect.
+The last saved version of the report will be sent to selected emails. You can use this to verify emails are working and to make sure the report is generated and displayed as you expect.
 
 {{< docs-imagebox img="/img/docs/enterprise/reports_send_test_mail.png" max-width="500px" class="docs-image--no-shadow" >}}
 
