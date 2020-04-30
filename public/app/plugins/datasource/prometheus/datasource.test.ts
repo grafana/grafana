@@ -13,6 +13,8 @@ import {
   DataSourceInstanceSettings,
   dateTime,
   LoadingState,
+  toDataFrame,
+  getFieldDisplayTitle,
 } from '@grafana/data';
 import { PromOptions, PromQuery } from './types';
 import templateSrv from 'app/features/templating/template_srv';
@@ -586,8 +588,9 @@ describe('PrometheusDatasource', () => {
       });
 
       it('should return series list', async () => {
+        const frame = toDataFrame(results.data[0]);
         expect(results.data.length).toBe(1);
-        expect(results.data[0].target).toBe('test{job="testjob"}');
+        expect(getFieldDisplayTitle(frame.fields[1])).toBe('test{job="testjob"}');
       });
     });
 
@@ -730,8 +733,9 @@ describe('PrometheusDatasource', () => {
     });
 
     it('should return series list', () => {
+      const frame = toDataFrame(results.data[0]);
       expect(results.data.length).toBe(1);
-      expect(results.data[0].target).toBe('test{job="testjob"}');
+      expect(getFieldDisplayTitle(frame.fields[1])).toBe('test{job="testjob"}');
     });
   });
 

@@ -74,23 +74,47 @@ function getTitleTemplate(title: string | undefined, stats: string[], data?: Dat
 }
 
 /**
- * Get the title for display
+ * Get an appropriate display title
  */
-export function getFieldDisplayTitle(field: Field, frame: DataFrame, frameCount?: number) {
+export function getFrameDisplayTitle(frame: DataFrame, index?: number) {
+  if (frame.name) {
+    return frame.name;
+  }
+
+  // Single field with tags
+  const valuesWithLabels = frame.fields.filter(f => f.labels !== undefined);
+  if (valuesWithLabels.length === 1) {
+    return formatLabels(valuesWithLabels[0].labels!);
+  }
+
+  if (index !== undefined) {
+    const values = frame.fields.filter(f => f.type !== FieldType.time);
+    if (values.length === 1) {
+      return getFieldDisplayTitle(values[0]);
+    }
+  }
+
+  return `Series[${index}]`;
+}
+
+/**
+ * Get an appropriate display title
+ */
+export function getFieldDisplayTitle(field: Field, frame?: DataFrame, frameCount?: number) {
   let title = field.config?.title;
   if (title) {
     return title; // Title is set and not a template
   }
 
-  const seriesName = frame.name ? frame.name : frame.refId;
-  let name = field.config && field.config.title ? field.config.title : field.name;
+  let name = field.config?.title ?? field.name;
 
+  const seriesName = frame?.name;
   if (seriesName && frameCount && frameCount > 0 && name !== seriesName) {
     name = seriesName + ' ' + name;
   }
 
   if (field.labels) {
-    name += ' ' + formatLabels(field.labels);
+    name += formatLabels(field.labels);
   }
   return name;
 }
