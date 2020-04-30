@@ -1,0 +1,13 @@
+{
+  "type": "datasource",
+  "name": "Test",
+  "id": "test",
+  "state": "alpha",
+  "info": {
+    "description": "Test",
+    "author": {
+      "name": "Grafana Labs",
+      "url": "https://grafana.com"
+    }
+  }
+}

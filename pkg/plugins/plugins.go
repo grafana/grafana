@@ -51,6 +51,7 @@ type PluginManager struct {
 	BackendPluginManager backendplugin.Manager `inject:""`
 	Cfg                  *setting.Cfg          `inject:""`
 	log                  log.Logger
+	scanningErrors       []error
 }
 
 func init() {
@@ -82,7 +83,7 @@ func (pm *PluginManager) Init() error {
 		return errutil.Wrapf(err, "failed to scan main plugin directory '%s'", plugDir)
 	}
 
-	pm.log.Info("Scanning bundled plugin directory")
+	pm.log.Info("Scanning bundled plugins directory")
 	plugDir = path.Join(setting.HomePath, "plugins-bundled")
 	exists, err := fs.Exists(plugDir)
 	if err != nil {
@@ -90,7 +91,7 @@ func (pm *PluginManager) Init() error {
 	}
 	if exists {
 		if err := pm.scan(plugDir, false); err != nil {
-			return errutil.Wrapf(err, "failed to scan bundled plugin directory '%s'", plugDir)
+			return errutil.Wrapf(err, "failed to scan bundled plugins directory '%s'", plugDir)
 		}
 	}
 
@@ -101,14 +102,14 @@ func (pm *PluginManager) Init() error {
 	}
 	if !exists {
 		if err = os.MkdirAll(setting.PluginsPath, os.ModePerm); err != nil {
-			plog.Error("failed to create external plugin directory", "dir", setting.PluginsPath, "error", err)
+			plog.Error("failed to create external plugins directory", "dir", setting.PluginsPath, "error", err)
 		} else {
-			plog.Info("External plugin dir created", "directory", setting.PluginsPath)
+			plog.Info("External plugins directory created", "directory", setting.PluginsPath)
 		}
 	} else {
-		pm.log.Info("Scanning external plugin directory")
+		pm.log.Info("Scanning external plugins directory")
 		if err := pm.scan(setting.PluginsPath, true); err != nil {
-			return errutil.Wrapf(err, "failed to scan external plugin directory '%s'",
+			return errutil.Wrapf(err, "failed to scan external plugins directory '%s'",
 				setting.PluginsPath)
 		}
 	}
@@ -206,6 +207,7 @@ func (pm *PluginManager) scan(pluginDir string, requireSigned bool) error {
 
 	if len(scanner.errors) > 0 {
 		pm.log.Warn("Some plugins failed to load", "errors", scanner.errors)
+		pm.scanningErrors = scanner.errors
 	}
 
 	return nil
@@ -266,11 +268,25 @@ func (scanner *PluginScanner) loadPluginJson(pluginJsonFilePath string) error {
 		return errors.New("did not find type or id properties in plugin.json")
 	}
 
+	pluginCommon.PluginDir = filepath.Dir(pluginJsonFilePath)
+
 	if scanner.requireSigned {
-		plog.Debug("Plugin signature required, validating", "pluginID", pluginCommon.Id)
+		plog.Debug("Plugin signature required, validating", "pluginID", pluginCommon.Id,
+			"pluginDir", pluginCommon.PluginDir)
 		if sig := GetPluginSignatureState(&pluginCommon); sig != PluginSignatureValid {
-			plog.Debug("Cannot load plugin since it lacks a valid signature", "pluginID", pluginCommon.Id)
-			return fmt.Errorf("plugin %q lacks a valid signature", pluginCommon.Id)
+			switch sig {
+			case PluginSignatureUnsigned:
+				plog.Debug("Cannot load plugin since it has no signature", "pluginID", pluginCommon.Id)
+				return fmt.Errorf("plugin %q is unsigned", pluginCommon.Id)
+			case PluginSignatureInvalid:
+				plog.Debug("Cannot load plugin since it has an invalid signature", "pluginID", pluginCommon.Id)
+				return fmt.Errorf("plugin %q has an invalid signature", pluginCommon.Id)
+			case PluginSignatureModified:
+				plog.Debug("Cannot load plugin since its signature is modified", "pluginID", pluginCommon.Id)
+				return fmt.Errorf("plugin %q's signature has been modified", pluginCommon.Id)
+			default:
+				panic(fmt.Sprintf("Unrecognized plugin signature state %v", sig))
+			}
 		}
 	}
 

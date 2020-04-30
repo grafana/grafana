@@ -1,0 +1,11 @@
+{
+  "name": "test",
+  "version": "1.0.0",
+  "description": "Unsigned test plugin",
+  "repository": {
+    "type": "git",
+    "url": "http://github.com/grafana/grafana.git"
+  },
+  "author": "Grafana Labs",
+  "license": "Apache-2.0"
+}
