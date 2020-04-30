@@ -165,7 +165,7 @@ It was released as a beta feature in Grafana 6.7. The feedback has been really p
 
 Adding support for changing the time zone for a dashboard is one of our oldest feature requests and now in Grafana 7.0, it is finally implemented. You now have the ability to override the time zone used to display date and time values in a dashboard. One of the benefits with this is that you can specify the local time zone of the service/system that you are monitoring which can be really helpful when monitoring a system/service that operates across several time zones.
 
-### Grafana Enterprise
+## Grafana Enterprise
 
 Grafana Enterprise focuses on solving problems for large companies and Grafana installations. And in Grafana 7.0 we are finally
 solving one of the most common problems of using Grafana at scale.
@@ -180,7 +180,7 @@ This includes problems like:
 
 {{< docs-imagebox img="/img/docs/v70/dashboard_insights_users.png" max-width="1024px" caption="Dashboard Insights Users" >}}
 
-## Usage analytics and presence
+### Usage analytics and presence
 
 In Grafana 7.0 we are introducing a series of features that build on our new usage analytics engine. Features like improved dashboard search to sort dashboards by usage and errors. When a user opens a dashboard, they will see a presence indicator of who else is viewing the same dashboard. And finally open a dashboard usage stats drawer to view recent dashboard usage.
 
