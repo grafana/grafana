@@ -56,7 +56,7 @@ Let's look an example. The table below demonstrates a data frame with two fields
 | 2020-01-02 03:05:00 | 47.0        |
 | 2020-01-02 03:06:00 | 48.0        |
 
-Each field has three values, and each value in a field must share the same type. In this case, all values in the time field are timestamp, and all values in the temperature field are numbers.
+Each field has three values, and each value in a field must share the same type. In this case, all values in the time field are timestamps, and all values in the temperature field are numbers.
 
 One restriction on data frames is that all fields in the frame must be of the same length to be a valid data frame.
 
