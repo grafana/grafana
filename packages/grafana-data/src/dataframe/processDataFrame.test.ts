@@ -69,7 +69,7 @@ describe('toDataFrame', () => {
     });
     expect(input.length).toEqual(2);
 
-    // If the object is alreay a DataFrame, it should not change
+    // If the object is already a DataFrame, it should not change
     const again = toDataFrame(input);
     expect(again).toBe(input);
   });
