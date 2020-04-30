@@ -1,74 +1,149 @@
 import { e2e } from '@grafana/e2e';
+import { describe } from '../../../public/test/lib/common';
+import { Flows } from '@grafana/e2e/src/flows';
 
-// This test should really be broken into several smaller tests
-e2e.scenario({
-  describeName: 'Variables',
-  itName: 'Query Variables CRUD',
-  addScenarioDataSource: true,
-  addScenarioDashBoard: true,
-  skipScenario: false,
-  scenario: () => {
-    e2e.getScenarioContext().then(({ lastAddedDashboardUid }: any) => {
+// skipped scenario helper because of some perf issue upgrading cypress to 4.5.0 and splitted the whole test into smaller
+// several it functions. Very important to keep the order of these it functions because they have dependency in the order
+// https://github.com/cypress-io/cypress/issues/5987
+// https://github.com/cypress-io/cypress/issues/6023#issuecomment-574031655
+describe('Variables', () => {
+  let lastUid = '';
+  let lastData = '';
+  let variables: VariablesData[] = [
+    { name: 'query1', query: '*', label: 'query1-label', options: ['All', 'A', 'B', 'C'], selectedOption: 'A' },
+    {
+      name: 'query2',
+      query: '$query1.*',
+      label: 'query2-label',
+      options: ['All', 'AA', 'AB', 'AC'],
+      selectedOption: 'AA',
+    },
+    {
+      name: 'query3',
+      query: '$query1.$query2.*',
+      label: 'query3-label',
+      options: ['All', 'AAA', 'AAB', 'AAC'],
+      selectedOption: 'AAA',
+    },
+  ];
+
+  beforeEach(() => {
+    Flows.login('admin', 'admin');
+    if (!lastUid || !lastData) {
+      Flows.addDataSource();
+      Flows.addDashboard();
+    } else {
+      e2e.setScenarioContext({ lastAddedDataSource: lastData, lastAddedDashboardUid: lastUid });
+    }
+
+    e2e.getScenarioContext().then(({ lastAddedDashboardUid, lastAddedDataSource }: any) => {
       e2e.flows.openDashboard(lastAddedDashboardUid);
+      lastUid = lastAddedDashboardUid;
+      lastData = lastAddedDataSource;
     });
+  });
+
+  it(`asserts defaults`, () => {
     e2e.pages.Dashboard.Toolbar.toolbarItems('Dashboard settings').click();
     e2e.pages.Dashboard.Settings.General.sectionItems('Variables').click();
     e2e.pages.Dashboard.Settings.Variables.List.addVariableCTA().click();
 
     assertDefaultsForNewVariable();
+  });
 
-    e2e.pages.Dashboard.Settings.General.sectionItems('General').click();
+  variables.forEach((variable, index) => {
+    it(`creates variable ${variable.name}`, () => {
+      e2e.pages.Dashboard.Toolbar.toolbarItems('Dashboard settings').click();
+      e2e.pages.Dashboard.Settings.General.sectionItems('Variables').click();
+
+      if (index === 0) {
+        e2e.pages.Dashboard.Settings.Variables.List.addVariableCTA().click();
+      } else {
+        e2e.pages.Dashboard.Settings.Variables.List.newButton().click();
+      }
+
+      const { name, label, query, options, selectedOption } = variable;
+      e2e.getScenarioContext().then(({ lastAddedDataSource }: any) => {
+        createQueryVariable({
+          dataSourceName: lastAddedDataSource,
+          name,
+          label,
+          query,
+          options,
+          selectedOption,
+        });
+      });
+
+      e2e.pages.Dashboard.Settings.General.saveDashBoard().click();
+      e2e.pages.SaveDashboardModal.save().click();
+      e2e.flows.assertSuccessNotification();
+
+      e2e.components.BackButton.backArrow().click();
+    });
+  });
+
+  it(`asserts submenus`, () => {
+    assertVariableLabelsAndComponents(variables);
+  });
+
+  it(`asserts variable table`, () => {
+    e2e.pages.Dashboard.Toolbar.toolbarItems('Dashboard settings').click();
     e2e.pages.Dashboard.Settings.General.sectionItems('Variables').click();
-    e2e.pages.Dashboard.Settings.Variables.List.addVariableCTA().click();
 
-    let queryVariables: QueryVariableData[] = [
-      {
-        name: 'query1',
-        query: '*',
-        label: 'query1-label',
-        options: ['All', 'A', 'B', 'C'],
-        selectedOption: 'A',
-      },
-      {
-        name: 'query2',
-        query: '$query1.*',
-        label: 'query2-label',
-        options: ['All', 'AA', 'AB', 'AC'],
-        selectedOption: 'AA',
-      },
-      {
-        name: 'query3',
-        query: '$query1.$query2.*',
-        label: 'query3-label',
-        options: ['All', 'AAA', 'AAB', 'AAC'],
-        selectedOption: 'AAA',
-      },
-    ];
+    assertVariableTable(variables);
+  });
 
-    assertAdding3dependantQueryVariablesScenario(queryVariables);
+  it(`asserts variable selects`, () => {
+    assertSelects(variables);
+  });
 
-    // assert select updates
-    assertSelects(queryVariables);
+  it(`asserts duplicate variable`, () => {
+    // mutates variables
+    variables = assertDuplicateItem(variables);
+    e2e.flows.saveDashboard();
+  });
 
-    // assert that duplicate works
-    queryVariables = assertDuplicateItem(queryVariables);
+  it(`asserts delete variable`, () => {
+    // mutates variables
+    variables = assertDeleteItem(variables);
+    e2e.flows.saveDashboard();
+  });
 
-    // assert that delete works
-    queryVariables = assertDeleteItem(queryVariables);
+  it(`asserts update variable`, () => {
+    // mutates variables
+    variables = assertUpdateItem(variables);
+    e2e.components.BackButton.backArrow().click();
+    e2e.flows.saveDashboard();
+  });
 
-    // assert that update works
-    queryVariables = assertUpdateItem(queryVariables);
+  it(`asserts move variable down`, () => {
+    e2e.pages.Dashboard.Toolbar.toolbarItems('Dashboard settings').click();
+    e2e.pages.Dashboard.Settings.General.sectionItems('Variables').click();
 
-    // assert that move down works
-    queryVariables = assertMoveDownItem(queryVariables);
+    // mutates variables
+    variables = assertMoveDownItem(variables);
+    e2e.flows.saveDashboard();
+  });
 
-    // assert that move up works
-    assertMoveUpItem(queryVariables);
-  },
+  it(`asserts move variable up`, () => {
+    // mutates variables
+    assertMoveUpItem(variables);
+  });
 });
 
+interface VariablesData {
+  name: string;
+  query: string;
+  label: string;
+  options: string[];
+  selectedOption: string;
+}
+
+interface CreateQueryVariableArguments extends VariablesData {
+  dataSourceName: string;
+}
+
 const assertDefaultsForNewVariable = () => {
-  logSection('Asserting defaults for new variable');
   e2e.pages.Dashboard.Settings.Variables.Edit.General.generalNameInput().within(input => {
     expect(input.attr('placeholder')).equals('name');
     expect(input.val()).equals('');
@@ -88,18 +163,11 @@ const assertDefaultsForNewVariable = () => {
       .should('have.text', '');
   });
 
-  e2e()
-    .window()
-    .then((win: any) => {
-      const chainer = 'have.text';
-      const value = '';
-
-      e2e.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsDataSourceSelect().within(select => {
-        e2e()
-          .get('option:selected')
-          .should(chainer, value);
-      });
-    });
+  e2e.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsDataSourceSelect().within(select => {
+    e2e()
+      .get('option:selected')
+      .should('have.text', '');
+  });
 
   e2e.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsQueryInput().should('not.exist');
   e2e.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsRefreshSelect().within(select => {
@@ -133,32 +201,16 @@ const assertDefaultsForNewVariable = () => {
   });
   e2e.pages.Dashboard.Settings.Variables.Edit.General.previewOfValuesOption().should('not.exist');
   e2e.pages.Dashboard.Settings.Variables.Edit.General.selectionOptionsCustomAllInput().should('not.exist');
-  logSection('Asserting defaults for new variable, OK!');
 };
 
-interface CreateQueryVariableArguments extends QueryVariableData {
-  dataSourceName: string;
-}
-
 const createQueryVariable = ({ name, label, dataSourceName, query }: CreateQueryVariableArguments) => {
-  logSection('Creating a Query Variable with', { name, label, dataSourceName, query });
   e2e.pages.Dashboard.Settings.Variables.Edit.General.generalNameInput().should('be.visible');
   e2e.pages.Dashboard.Settings.Variables.Edit.General.generalNameInput().type(name);
   e2e.pages.Dashboard.Settings.Variables.Edit.General.generalLabelInput().type(label);
-  e2e()
-    .window()
-    .then((win: any) => {
-      const text = `${dataSourceName}`;
-
-      e2e.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsDataSourceSelect()
-        .select(text)
-        .blur();
-    });
+  e2e.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsDataSourceSelect()
+    .select(`${dataSourceName}`)
+    .blur();
   e2e.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsQueryInput()
-    .within(input => {
-      expect(input.attr('placeholder')).equals('metric name or tags query');
-      expect(input.val()).equals('');
-    })
     .type(query)
     .blur();
   e2e.pages.Dashboard.Settings.Variables.Edit.General.previewOfValuesOption().should('exist');
@@ -181,10 +233,34 @@ const createQueryVariable = ({ name, label, dataSourceName, query }: CreateQuery
     expect(input.val()).equals('');
   });
   e2e.pages.Dashboard.Settings.Variables.Edit.General.addButton().click();
-  logSection('Creating a Query Variable with required, OK!');
 };
 
-const assertVariableTableRow = ({ name, query }: QueryVariableData, index: number, length: number) => {
+const assertVariableLabelAndComponent = ({ label, options, selectedOption }: VariablesData) => {
+  e2e.pages.Dashboard.SubMenu.submenuItemLabels(label).should('be.visible');
+  e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownValueLinkTexts(selectedOption)
+    .should('be.visible')
+    .click();
+  e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownDropDown().should('be.visible');
+  for (let optionIndex = 0; optionIndex < options.length; optionIndex++) {
+    e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts(options[optionIndex]).should('be.visible');
+  }
+};
+
+const assertVariableLabelsAndComponents = (args: VariablesData[]) => {
+  e2e.pages.Dashboard.SubMenu.submenuItem().should('have.length', args.length);
+  for (let index = 0; index < args.length; index++) {
+    e2e.pages.Dashboard.SubMenu.submenuItem()
+      .eq(index)
+      .within(() => {
+        e2e()
+          .get('label')
+          .contains(args[index].name);
+      });
+    assertVariableLabelAndComponent(args[index]);
+  }
+};
+
+const assertVariableTableRow = ({ name, query }: VariablesData, index: number, length: number) => {
   e2e.pages.Dashboard.Settings.Variables.List.tableRowNameFields(name)
     .should('exist')
     .contains(name);
@@ -201,8 +277,7 @@ const assertVariableTableRow = ({ name, query }: QueryVariableData, index: numbe
   e2e.pages.Dashboard.Settings.Variables.List.tableRowRemoveButtons(name).should('exist');
 };
 
-const assertVariableTable = (args: QueryVariableData[]) => {
-  logSection('Asserting variable table with', args);
+const assertVariableTable = (args: VariablesData[]) => {
   e2e.pages.Dashboard.Settings.Variables.List.table()
     .should('be.visible')
     .within(() => {
@@ -214,264 +289,9 @@ const assertVariableTable = (args: QueryVariableData[]) => {
   for (let index = 0; index < args.length; index++) {
     assertVariableTableRow(args[index], index, args.length);
   }
-
-  logSection('Asserting variable table, Ok');
 };
 
-const assertVariableLabelAndComponent = ({ label, options, selectedOption }: QueryVariableData) => {
-  e2e.pages.Dashboard.SubMenu.submenuItemLabels(label).should('be.visible');
-  e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownValueLinkTexts(selectedOption)
-    .should('be.visible')
-    .click();
-  e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownDropDown().should('be.visible');
-  for (let optionIndex = 0; optionIndex < options.length; optionIndex++) {
-    e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts(options[optionIndex]).should('be.visible');
-  }
-};
-
-const assertVariableLabelsAndComponents = (args: QueryVariableData[]) => {
-  logSection('Asserting variable components and labels');
-  e2e.pages.Dashboard.SubMenu.submenuItem().should('have.length', args.length);
-  for (let index = 0; index < args.length; index++) {
-    e2e.pages.Dashboard.SubMenu.submenuItem()
-      .eq(index)
-      .within(() => {
-        e2e()
-          .get('label')
-          .contains(args[index].name);
-      });
-    assertVariableLabelAndComponent(args[index]);
-  }
-  logSection('Asserting variable components and labels, Ok');
-};
-
-const assertAdding3dependantQueryVariablesScenario = (queryVariables: QueryVariableData[]) => {
-  // This creates 3 variables where 2 depends on 1 and 3 depends on 2 and for each added variable
-  // we assert that the variable looks ok in the variable list and that it looks ok in the submenu in dashboard
-  for (let queryVariableIndex = 0; queryVariableIndex < queryVariables.length; queryVariableIndex++) {
-    const { name, label, query, options, selectedOption } = queryVariables[queryVariableIndex];
-    const asserts = queryVariables.slice(0, queryVariableIndex + 1);
-    e2e.getScenarioContext().then(({ lastAddedDataSource }: any) => {
-      createQueryVariable({
-        dataSourceName: lastAddedDataSource,
-        name,
-        label,
-        query,
-        options,
-        selectedOption,
-      });
-    });
-
-    assertVariableTable(asserts);
-
-    e2e.pages.Dashboard.Settings.General.saveDashBoard().click();
-    e2e.pages.SaveDashboardModal.save().click();
-    e2e.flows.assertSuccessNotification();
-
-    e2e.components.BackButton.backArrow().click();
-
-    assertVariableLabelsAndComponents(asserts);
-
-    if (queryVariableIndex < queryVariables.length - 1) {
-      e2e.pages.Dashboard.Toolbar.toolbarItems('Dashboard settings').click();
-      e2e.pages.Dashboard.Settings.General.sectionItems('Variables').click();
-      e2e.pages.Dashboard.Settings.Variables.List.newButton().click();
-    }
-  }
-};
-
-interface QueryVariableData {
-  name: string;
-  query: string;
-  label: string;
-  options: string[];
-  selectedOption: string;
-}
-
-const logSection = (message: string, args?: any) => {
-  e2e().logToConsole('');
-  e2e().logToConsole(message, args);
-  e2e().logToConsole('===============================================================================');
-};
-
-const assertDuplicateItem = (queryVariables: QueryVariableData[]) => {
-  logSection('Asserting variable duplicate');
-
-  const itemToDuplicate = queryVariables[1];
-  e2e.pages.Dashboard.Toolbar.toolbarItems('Dashboard settings').click();
-  e2e.pages.Dashboard.Settings.General.sectionItems('Variables').click();
-  e2e.pages.Dashboard.Settings.Variables.List.tableRowDuplicateButtons(itemToDuplicate.name)
-    .should('exist')
-    .click();
-  e2e.pages.Dashboard.Settings.Variables.List.table()
-    .should('be.visible')
-    .within(() => {
-      e2e()
-        .get('tbody > tr')
-        .should('have.length', queryVariables.length + 1);
-    });
-  const newItem = { ...itemToDuplicate, name: `copy_of_${itemToDuplicate.name}` };
-  assertVariableTableRow(newItem, queryVariables.length - 1, queryVariables.length);
-  e2e.pages.Dashboard.Settings.Variables.List.tableRowNameFields(newItem.name).click();
-
-  newItem.label = `copy_of_${itemToDuplicate.label}`;
-  e2e.pages.Dashboard.Settings.Variables.Edit.General.generalLabelInput()
-    .clear()
-    .type(newItem.label);
-
-  e2e.pages.Dashboard.Settings.General.saveDashBoard().click();
-  e2e.pages.SaveDashboardModal.save().click();
-  e2e.flows.assertSuccessNotification();
-
-  e2e.components.BackButton.backArrow().click();
-
-  e2e.pages.Dashboard.SubMenu.submenuItemLabels(newItem.label).should('be.visible');
-  e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownValueLinkTexts(newItem.selectedOption)
-    .should('be.visible')
-    .eq(1)
-    .click();
-  e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownDropDown().should('be.visible');
-  for (let optionIndex = 0; optionIndex < newItem.options.length; optionIndex++) {
-    e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts(newItem.options[optionIndex]).should('be.visible');
-  }
-
-  logSection('Asserting variable duplicate, OK!');
-  return [...queryVariables, newItem];
-};
-
-const assertDeleteItem = (queryVariables: QueryVariableData[]) => {
-  logSection('Asserting variable delete');
-
-  const itemToDelete = queryVariables[1];
-  e2e.pages.Dashboard.Toolbar.toolbarItems('Dashboard settings').click();
-  e2e.pages.Dashboard.Settings.General.sectionItems('Variables').click();
-
-  e2e.pages.Dashboard.Settings.Variables.List.tableRowRemoveButtons(itemToDelete.name).click();
-  e2e.pages.Dashboard.Settings.Variables.List.table()
-    .should('be.visible')
-    .within(() => {
-      e2e()
-        .get('tbody > tr')
-        .should('have.length', queryVariables.length - 1);
-    });
-
-  e2e.pages.Dashboard.Settings.General.saveDashBoard().click();
-  e2e.pages.SaveDashboardModal.save().click();
-  e2e.flows.assertSuccessNotification();
-
-  e2e.components.BackButton.backArrow().click();
-
-  e2e.pages.Dashboard.SubMenu.submenuItemLabels(itemToDelete.label).should('not.exist');
-
-  logSection('Asserting variable delete, OK!');
-
-  return queryVariables.filter(item => item.name !== itemToDelete.name);
-};
-
-const assertUpdateItem = (data: QueryVariableData[]) => {
-  const queryVariables = [...data];
-  // updates an item to a constant variable instead
-  const itemToUpdate = queryVariables[1];
-  let updatedItem = {
-    ...itemToUpdate,
-    name: `update_of_${itemToUpdate.name}`,
-    label: `update_of_${itemToUpdate.label}`,
-    query: 'A constant',
-    options: ['A constant'],
-    selectedOption: 'undefined',
-  };
-
-  logSection('Asserting variable update');
-  queryVariables[1] = updatedItem;
-
-  e2e.pages.Dashboard.Toolbar.toolbarItems('Dashboard settings').click();
-  e2e.pages.Dashboard.Settings.General.sectionItems('Variables').click();
-  e2e.pages.Dashboard.Settings.Variables.List.tableRowNameFields(itemToUpdate.name).click();
-
-  e2e.pages.Dashboard.Settings.Variables.Edit.General.generalNameInput().should('be.visible');
-  e2e.pages.Dashboard.Settings.Variables.Edit.General.generalNameInput()
-    .should('have.value', itemToUpdate.name)
-    .clear()
-    .type(updatedItem.name);
-  e2e.pages.Dashboard.Settings.Variables.Edit.General.generalLabelInput()
-    .should('have.value', itemToUpdate.label)
-    .clear()
-    .type(updatedItem.label);
-  e2e.pages.Dashboard.Settings.Variables.Edit.General.generalTypeSelect().select('Constant');
-  e2e.pages.Dashboard.Settings.Variables.Edit.General.generalHideSelect().within(select => {
-    e2e()
-      .get('option:selected')
-      .should('have.text', 'Variable');
-  });
-  e2e.pages.Dashboard.Settings.Variables.Edit.General.generalHideSelect().select('');
-  e2e.pages.Dashboard.Settings.Variables.Edit.ConstantVariable.constantOptionsQueryInput().type(updatedItem.query);
-
-  e2e.components.BackButton.backArrow().click();
-
-  e2e()
-    .window()
-    .then((win: any) => {
-      queryVariables[1].selectedOption = 'A constant';
-      assertVariableLabelAndComponent(queryVariables[1]);
-    });
-
-  e2e.pages.Dashboard.Toolbar.toolbarItems('Dashboard settings').click();
-  e2e.pages.Dashboard.Settings.General.sectionItems('Variables').click();
-
-  assertVariableTableRow(queryVariables[1], 1, queryVariables.length);
-
-  queryVariables[1].selectedOption = 'A constant';
-
-  logSection('Asserting variable update, OK!');
-  return queryVariables;
-};
-
-const assertMoveDownItem = (data: QueryVariableData[]) => {
-  logSection('Asserting variable move down');
-  const queryVariables = [...data];
-  e2e.pages.Dashboard.Settings.Variables.List.tableRowArrowDownButtons(queryVariables[0].name).click();
-  const temp = { ...queryVariables[0] };
-  queryVariables[0] = { ...queryVariables[1] };
-  queryVariables[1] = temp;
-  e2e.pages.Dashboard.Settings.Variables.List.table().within(() => {
-    e2e()
-      .get('tbody > tr')
-      .eq(0)
-      .within(() => {
-        e2e()
-          .get('td')
-          .eq(0)
-          .contains(queryVariables[0].name);
-        e2e()
-          .get('td')
-          .eq(1)
-          .contains(queryVariables[0].query);
-      });
-    e2e()
-      .get('tbody > tr')
-      .eq(1)
-      .within(() => {
-        e2e()
-          .get('td')
-          .eq(0)
-          .contains(queryVariables[1].name);
-        e2e()
-          .get('td')
-          .eq(1)
-          .contains(queryVariables[1].query);
-      });
-  });
-
-  e2e.components.BackButton.backArrow().click();
-
-  assertVariableLabelsAndComponents(queryVariables);
-
-  logSection('Asserting variable move down, OK!');
-
-  return queryVariables;
-};
-
-const assertSelects = (queryVariables: QueryVariableData[]) => {
+const assertSelects = (variables: VariablesData[]) => {
   // Values in submenus should be
   // query1: [A] query2: [AA] query3: [AAA]
   e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownValueLinkTexts('A').click();
@@ -568,16 +388,131 @@ const assertSelects = (queryVariables: QueryVariableData[]) => {
   e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownValueLinkTexts('All').should('have.length', 0);
 };
 
-const assertMoveUpItem = (data: QueryVariableData[]) => {
-  logSection('Asserting variable move up');
-  const queryVariables = [...data];
+const assertDuplicateItem = (variables: VariablesData[]) => {
+  const itemToDuplicate = variables[1];
+  e2e.pages.Dashboard.Toolbar.toolbarItems('Dashboard settings').click();
+  e2e.pages.Dashboard.Settings.General.sectionItems('Variables').click();
+  e2e.pages.Dashboard.Settings.Variables.List.tableRowDuplicateButtons(itemToDuplicate.name)
+    .should('exist')
+    .click();
+  e2e.pages.Dashboard.Settings.Variables.List.table()
+    .should('be.visible')
+    .within(() => {
+      e2e()
+        .get('tbody > tr')
+        .should('have.length', variables.length + 1);
+    });
+  const newItem = { ...itemToDuplicate, name: `copy_of_${itemToDuplicate.name}` };
+  assertVariableTableRow(newItem, variables.length - 1, variables.length);
+  e2e.pages.Dashboard.Settings.Variables.List.tableRowNameFields(newItem.name).click();
+
+  newItem.label = `copy_of_${itemToDuplicate.label}`;
+  e2e.pages.Dashboard.Settings.Variables.Edit.General.generalLabelInput()
+    .clear()
+    .type(newItem.label);
+
+  e2e.pages.Dashboard.Settings.General.saveDashBoard().click();
+  e2e.pages.SaveDashboardModal.save().click();
+  e2e.flows.assertSuccessNotification();
+
+  e2e.components.BackButton.backArrow().click();
+
+  e2e.pages.Dashboard.SubMenu.submenuItemLabels(newItem.label).should('be.visible');
+  e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownValueLinkTexts(newItem.selectedOption)
+    .should('be.visible')
+    .eq(1)
+    .click();
+  e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownDropDown().should('be.visible');
+  for (let optionIndex = 0; optionIndex < newItem.options.length; optionIndex++) {
+    e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts(newItem.options[optionIndex]).should('be.visible');
+  }
+
+  return [...variables, newItem];
+};
+
+const assertDeleteItem = (variables: VariablesData[]) => {
+  const itemToDelete = variables[1];
   e2e.pages.Dashboard.Toolbar.toolbarItems('Dashboard settings').click();
   e2e.pages.Dashboard.Settings.General.sectionItems('Variables').click();
 
-  e2e.pages.Dashboard.Settings.Variables.List.tableRowArrowUpButtons(queryVariables[1].name).click();
-  const temp = { ...queryVariables[0] };
-  queryVariables[0] = { ...queryVariables[1] };
-  queryVariables[1] = temp;
+  e2e.pages.Dashboard.Settings.Variables.List.tableRowRemoveButtons(itemToDelete.name).click();
+  e2e.pages.Dashboard.Settings.Variables.List.table()
+    .should('be.visible')
+    .within(() => {
+      e2e()
+        .get('tbody > tr')
+        .should('have.length', variables.length - 1);
+    });
+
+  e2e.pages.Dashboard.Settings.General.saveDashBoard().click();
+  e2e.pages.SaveDashboardModal.save().click();
+  e2e.flows.assertSuccessNotification();
+
+  e2e.components.BackButton.backArrow().click();
+
+  e2e.pages.Dashboard.SubMenu.submenuItemLabels(itemToDelete.label).should('not.exist');
+
+  return variables.filter(item => item.name !== itemToDelete.name);
+};
+
+const assertUpdateItem = (data: VariablesData[]) => {
+  const variables = [...data];
+  // updates an item to a constant variable instead
+  const itemToUpdate = variables[1];
+  let updatedItem = {
+    ...itemToUpdate,
+    name: `update_of_${itemToUpdate.name}`,
+    label: `update_of_${itemToUpdate.label}`,
+    query: 'A constant',
+    options: ['A constant'],
+    selectedOption: 'undefined',
+  };
+
+  variables[1] = updatedItem;
+
+  e2e.pages.Dashboard.Toolbar.toolbarItems('Dashboard settings').click();
+  e2e.pages.Dashboard.Settings.General.sectionItems('Variables').click();
+  e2e.pages.Dashboard.Settings.Variables.List.tableRowNameFields(itemToUpdate.name).click();
+
+  e2e.pages.Dashboard.Settings.Variables.Edit.General.generalNameInput().should('be.visible');
+  e2e.pages.Dashboard.Settings.Variables.Edit.General.generalNameInput()
+    .should('have.value', itemToUpdate.name)
+    .clear()
+    .type(updatedItem.name);
+  e2e.pages.Dashboard.Settings.Variables.Edit.General.generalLabelInput()
+    .should('have.value', itemToUpdate.label)
+    .clear()
+    .type(updatedItem.label);
+  e2e.pages.Dashboard.Settings.Variables.Edit.General.generalTypeSelect().select('Constant');
+  e2e.pages.Dashboard.Settings.Variables.Edit.General.generalHideSelect().within(select => {
+    e2e()
+      .get('option:selected')
+      .should('have.text', 'Variable');
+  });
+  e2e.pages.Dashboard.Settings.Variables.Edit.General.generalHideSelect().select('');
+  e2e.pages.Dashboard.Settings.Variables.Edit.ConstantVariable.constantOptionsQueryInput().type(updatedItem.query);
+
+  e2e.components.BackButton.backArrow().click();
+
+  variables[1].selectedOption = 'A constant';
+  assertVariableLabelAndComponent(variables[1]);
+
+  e2e.pages.Dashboard.Toolbar.toolbarItems('Dashboard settings').click();
+  e2e.pages.Dashboard.Settings.General.sectionItems('Variables').click();
+
+  assertVariableTableRow(variables[1], 1, variables.length);
+
+  variables[1].selectedOption = 'A constant';
+
+  return variables;
+};
+
+const assertMoveDownItem = (data: VariablesData[]) => {
+  const variables = [...data];
+  e2e.pages.Dashboard.Settings.Variables.List.tableRowArrowDownButtons(variables[0].name).click();
+  const temp = { ...variables[0] };
+  variables[0] = { ...variables[1] };
+  variables[1] = temp;
   e2e.pages.Dashboard.Settings.Variables.List.table().within(() => {
     e2e()
       .get('tbody > tr')
@@ -586,11 +521,11 @@ const assertMoveUpItem = (data: QueryVariableData[]) => {
         e2e()
           .get('td')
           .eq(0)
-          .contains(queryVariables[0].name);
+          .contains(variables[0].name);
         e2e()
           .get('td')
           .eq(1)
-          .contains(queryVariables[0].query);
+          .contains(variables[0].query);
       });
     e2e()
       .get('tbody > tr')
@@ -599,19 +534,62 @@ const assertMoveUpItem = (data: QueryVariableData[]) => {
         e2e()
           .get('td')
           .eq(0)
-          .contains(queryVariables[1].name);
+          .contains(variables[1].name);
         e2e()
           .get('td')
           .eq(1)
-          .contains(queryVariables[1].query);
+          .contains(variables[1].query);
       });
   });
 
   e2e.components.BackButton.backArrow().click();
 
-  assertVariableLabelsAndComponents(queryVariables);
+  assertVariableLabelsAndComponents(variables);
 
-  logSection('Asserting variable move up, OK!');
+  return variables;
+};
 
-  return queryVariables;
+const assertMoveUpItem = (data: VariablesData[]) => {
+  const variables = [...data];
+  e2e.pages.Dashboard.Toolbar.toolbarItems('Dashboard settings').click();
+  e2e.pages.Dashboard.Settings.General.sectionItems('Variables').click();
+
+  e2e.pages.Dashboard.Settings.Variables.List.tableRowArrowUpButtons(variables[1].name).click();
+  const temp = { ...variables[0] };
+  variables[0] = { ...variables[1] };
+  variables[1] = temp;
+  e2e.pages.Dashboard.Settings.Variables.List.table().within(() => {
+    e2e()
+      .get('tbody > tr')
+      .eq(0)
+      .within(() => {
+        e2e()
+          .get('td')
+          .eq(0)
+          .contains(variables[0].name);
+        e2e()
+          .get('td')
+          .eq(1)
+          .contains(variables[0].query);
+      });
+    e2e()
+      .get('tbody > tr')
+      .eq(1)
+      .within(() => {
+        e2e()
+          .get('td')
+          .eq(0)
+          .contains(variables[1].name);
+        e2e()
+          .get('td')
+          .eq(1)
+          .contains(variables[1].query);
+      });
+  });
+
+  e2e.components.BackButton.backArrow().click();
+
+  assertVariableLabelsAndComponents(variables);
+
+  return variables;
 };
