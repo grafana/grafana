@@ -294,7 +294,7 @@ func (scanner *PluginScanner) loadPluginJson(pluginJsonFilePath string) error {
 				scanner.log.Debug("Cannot load plugin since its signature is modified", "pluginID", pluginCommon.Id)
 				return fmt.Errorf("plugin %q's signature has been modified", pluginCommon.Id)
 			default:
-				panic(fmt.Sprintf("Unrecognized plugin signature state %v", sig))
+				return fmt.Errorf("unrecognized plugin signature state %v", sig)
 			}
 		}
 	}
