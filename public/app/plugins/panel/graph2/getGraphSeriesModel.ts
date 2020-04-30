@@ -123,7 +123,7 @@ export const getGraphSeriesModel = (
         });
 
         graphs.push({
-          label: getFieldDisplayTitle(field, series, series.length),
+          label: getFieldDisplayTitle(field, series, dataFrames),
           data: points,
           color: field.config.color?.fixedColor,
           info: statsDisplayValues,

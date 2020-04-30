@@ -61,6 +61,7 @@ function convertTableToDataFrame(table: TableData): DataFrame {
 function convertTimeSeriesToDataFrame(timeSeries: TimeSeries): DataFrame {
   const times: number[] = [];
   const values: TimeSeriesValue[] = [];
+
   for (const point of timeSeries.datapoints) {
     values.push(point[0]);
     times.push(point[1] as number);
@@ -83,6 +84,10 @@ function convertTimeSeriesToDataFrame(timeSeries: TimeSeries): DataFrame {
       labels: timeSeries.tags,
     },
   ];
+
+  if (timeSeries.title) {
+    (fields[1].config as FieldConfig).title = timeSeries.title;
+  }
 
   return {
     name: timeSeries.target,
@@ -315,8 +320,8 @@ export const toLegacyResponseData = (frame: DataFrame): TimeSeries | TableData =
       }
 
       return {
-        alias: fields[valueIndex].name || frame.name,
-        target: fields[valueIndex].name || frame.name,
+        alias: frame.name,
+        target: frame.name,
         datapoints: rows,
         unit: fields[0].config ? fields[0].config.unit : undefined,
         refId: frame.refId,
