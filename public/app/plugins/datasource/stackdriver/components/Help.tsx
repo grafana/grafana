@@ -10,13 +10,13 @@ export interface Props {
 
 interface State {
   displayHelp: boolean;
-  displaRawQuery: boolean;
+  displayRawQuery: boolean;
 }
 
 export class Help extends React.Component<Props, State> {
   state: State = {
     displayHelp: false,
-    displaRawQuery: false,
+    displayRawQuery: false,
   };
 
   onHelpClicked = () => {
@@ -24,7 +24,7 @@ export class Help extends React.Component<Props, State> {
   };
 
   onRawQueryClicked = () => {
-    this.setState({ displaRawQuery: !this.state.displaRawQuery });
+    this.setState({ displayRawQuery: !this.state.displayRawQuery });
   };
 
   shouldComponentUpdate(nextProps: Props) {
@@ -32,7 +32,7 @@ export class Help extends React.Component<Props, State> {
   }
 
   render() {
-    const { displayHelp, displaRawQuery } = this.state;
+    const { displayHelp, displayRawQuery } = this.state;
     const { rawQuery, lastQueryError } = this.props;
 
     return (
@@ -49,7 +49,7 @@ export class Help extends React.Component<Props, State> {
               <label className="gf-form-label query-keyword">
                 Raw query
                 <Icon
-                  name={displaRawQuery ? 'angle-down' : 'angle-right'}
+                  name={displayRawQuery ? 'angle-down' : 'angle-right'}
                   ng-show="ctrl.showHelp"
                   style={{ marginTop: '3px' }}
                 />
@@ -61,7 +61,7 @@ export class Help extends React.Component<Props, State> {
             <div className="gf-form-label gf-form-label--grow" />
           </div>
         </div>
-        {rawQuery && displaRawQuery && (
+        {rawQuery && displayRawQuery && (
           <div className="gf-form">
             <pre className="gf-form-pre">{rawQuery}</pre>
           </div>
