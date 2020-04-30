@@ -203,7 +203,6 @@ export function applyFieldOverrides(options: ApplyFieldOverrideOptions): DataFra
     return {
       ...frame,
       fields,
-      name,
     };
   });
 }
