@@ -146,7 +146,7 @@ describe('toDataFrame', () => {
           '@timestamp': [1570044340458],
           tags: ['deploy', 'website-01'],
           description: 'Torkel deployed website',
-          coordinates: { latitude: 12, longitude: 121, level: { depth: 3, coolnes: 'very' } },
+          coordinates: { latitude: 12, longitude: 121, level: { depth: 3, coolness: 'very' } },
           'unescaped-content': 'breaking <br /> the <br /> row',
         },
       ],
