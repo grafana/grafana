@@ -1,4 +1,3 @@
-import toString from 'lodash/toString';
 import isEmpty from 'lodash/isEmpty';
 
 import { getDisplayProcessor } from './displayProcessor';
@@ -37,7 +36,6 @@ export interface ReduceDataOptions {
 export const VAR_SERIES_NAME = '__series.name';
 export const VAR_FIELD_NAME = '__field.name';
 export const VAR_CALC = '__calc';
-export const VAR_CELL_PREFIX = '__cell_'; // consistent with existing table templates
 
 function getTitleTemplate(title: string | undefined, stats: string[], data?: DataFrame[]): string {
   // If the title exists, use it as a template variable
@@ -135,20 +133,7 @@ export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): Fi
         const title = config.title ? config.title : defaultTitle;
         // Show all rows
         if (reduceOptions.values) {
-          const usesCellValues = title.indexOf(VAR_CELL_PREFIX) >= 0;
-
           for (let j = 0; j < field.values.length; j++) {
-            // Add all the row variables
-            if (usesCellValues) {
-              for (let k = 0; k < series.fields.length; k++) {
-                const f = series.fields[k];
-                const v = f.values.get(j);
-                scopedVars[VAR_CELL_PREFIX + k] = {
-                  value: v,
-                  text: toString(v),
-                };
-              }
-            }
             const displayValue = display(field.values.get(j));
             displayValue.title = replaceVariables(title, {
               ...field.config.scopedVars, // series and field scoped vars
