@@ -16,7 +16,7 @@ This topic includes the release notes for the Grafana v7.0, which is currently i
 
 This major release of Grafana is the next step in our Observability story. It includes powerful new features for manipulating, transforming, and doing math on data. Grafana Enterprise has the first version of Usage analytics, which will help Grafana Admins better manage large, corporate Grafana ecosystems.
 
-The Grafana 7.0 stable will be released on the 18th of May. In the meantime if your want to know more about what we have been up to and what is coming sign up to our online GrafanaCon conference.
+The Grafana 7.0 stable release is scheduled for the 18th of May. In the meantime, if you want to know more about what we've been up to and what is coming, sign up for our online GrafanaCon conference.
 
 [{{< figure src="/assets/img/blog/GrafanaCONline.jpg" max-width="800px" lightbox="false" caption="GrafanaCONline May 13-29" >}}](https://grafana.com/about/events/grafanacon/2020/?source=blog)
 
