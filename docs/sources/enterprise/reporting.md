@@ -39,7 +39,7 @@ Currently only Organization Admins can create reports.
 1. Select the layout option for generated report: **Portrait** or **Landscape**.  
 1. Enter scheduling information. Options vary depending on the frequency you select.
 1. **Save** the report.
-1. **Send test mail** after saving the report to verify that the report looks like you expect it to.
+1. **Send test mail** after saving the report to verify that the whole configuration is working as expected.
 
 {{< docs-imagebox img="/img/docs/enterprise/reports_create_new.png" max-width="500px" class="docs-image--no-shadow" >}}
 
