@@ -58,7 +58,7 @@ Transformations and maths across queries. The data you want to visualize can com
 - **Filter by name:** Filter fields by name or regex
 - **Filter by refId:** Filter by query letter
 - **Organize fields:** Reorder, rename and hide fields.
-- **Labels to fields:** Transform time series with labels into a table where labels get's converted to fields and the result is joined by time
+- **Labels to fields:** Transform time series with labels into a table where labels get converted to fields and the result is joined by time
 - **Join by field:** Join many result sets (series) together using for example the time field. Useful for transforming time series into a table with a shared time column and where each series get it's own column.
 - **Add field from calculation:** This is a powerful transformation that allows you perform many different types of math operations and add the result as a new field. Examples:
   - Calculate the difference between two series or fields and add the result to a new field
