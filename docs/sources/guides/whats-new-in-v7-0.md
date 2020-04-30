@@ -42,7 +42,7 @@ We redesigned the UI for editing panels. We separated panel display settings to 
 
 This release adds major support for distributed tracing, including a telemetry mode to complement the existing support for metrics and logs. Traces allow you to follow how single requests travel through a distributed system. We are starting with an integrated trace viewer and two new built-in data sources: Jaeger and Zipkin.
 
-You can use the new trace view in Explore either directly and search for a particular trace or you can configure Loki to detect trace IDs in the log lines and link directly to a trace timeline pulled from Jaeger or Zipkin data source.
+You can use the new trace view in Explore either directly to search for a particular trace or you can configure Loki to detect trace IDs in the log lines and link directly to a trace timeline pulled from Jaeger or Zipkin data source.
 
 In the future we will add more workflows and integrations so that correlating between metrics, logs and traces is even easier.
 
@@ -72,7 +72,7 @@ The [Google Sheets data source](https://grafana.com/grafana/plugins/grafana-goog
 
 With Grafana 7.0 we are introducing a new, unified data configuration system that powers a consistent UI for setting data options across visualizations as well as making all data display settings data driven and overridable. This new option architecture and UI will make all panels have a consistent set of options and behaviors for attributes like `unit`, `min`, `max`, `thresholds`, `links`, `decimals` or `value mappings`. Not only that but all these options will share a consistent UI for specifying override rules and is extensible for custom panel specific options.
 
-Up until now the overrides were available only for Graph and Table panel(via Column Styles), but with 7.0 they work consistently across all visualisation types and plugins.
+Up until now the overrides were available only for Graph and Table panel(via Column Styles), but with 7.0 they work consistently across all visualization types and plugins.
 
 This feature enables even more powerful visualizations and fine grained control over how the data is displayed.
 
@@ -163,7 +163,7 @@ It was released as a beta feature in Grafana 6.7. The feedback has been really p
 
 ## Time zone support
 
- You can now override the time zone used to display date and time values in a dashboard. One benefit ofthis is that you can specify the local time zone of the service or system that you are monitoring which can be helpful when monitoring a system or service that operates across several time zones.
+You can now override the time zone used to display date and time values in a dashboard. One benefit of this is that you can specify the local time zone of the service or system that you are monitoring which can be helpful when monitoring a system or service that operates across several time zones.
 
 ## Grafana Enterprise
 
