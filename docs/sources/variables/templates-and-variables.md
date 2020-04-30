@@ -81,7 +81,7 @@ Type | Description
 *Data source* | This type allows you to quickly change the data source for an entire Dashboard. Useful if you have multiple instances of a data source in for example different environments.
 *Custom* | Define the variable options manually using a comma separated list.
 *Constant* | Define a hidden constant. Useful for metric path prefixes for dashboards you want to share. During dashboard export, constant variables will be made into an import option.
-*Ad hoc filters* | Very special kind of variable that only works with some data sources, InfluxDB and Elasticsearch currently. It allows you to add key/value filters that will automatically be added to all metric queries that use the specified data source.
+*Ad hoc filters* | Very special kind of variable that only works with some data sources, InfluxDB, Prometheus, and Elasticsearch currently. It allows you to add key/value filters that will automatically be added to all metric queries that use the specified data source.
 *Text box* | This variable type will display as a free text input field with an optional default value.
 
 ## Adding a variable
@@ -202,7 +202,7 @@ Option | Description
 
 ### Formatting multiple values
 
-Interpolating a variable with multiple values selected is tricky as it is not straight forward how to format the multiple values to into a string that
+Interpolating a variable with multiple values selected is tricky as it is not straight forward how to format the multiple values into a string that
 is valid in the given context where the variable is used. Grafana tries to solve this by allowing each data source plugin to
 inform the templating interpolation engine what format to use for multiple values.
 

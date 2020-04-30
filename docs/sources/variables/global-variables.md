@@ -62,6 +62,8 @@ Currently only supported for Prometheus data sources. This variable represents t
 
 The `$timeFilter` variable returns the currently selected time range as an expression. For example, the time range interval `Last 7 days` expression is `time > now() - 7d`.
 
-This is used in the WHERE clause for the InfluxDB data source. Grafana adds it automatically to InfluxDB queries when in Query Editor Mode. It has to be added manually in Text Editor Mode: `WHERE $timeFilter`.
-
-The `$__timeFilter` is used in the MySQL data source.
+This is used in several places, including:
+* The WHERE clause for the InfluxDB data source. Grafana adds it automatically to InfluxDB queries when in Query Editor Mode. It has to be added manually in Text Editor Mode: `WHERE $timeFilter`.
+* Log Analytics queries in the Azure Monitor data source.
+* SQL queries in MySQL, Postgres, and MSSQL
+* The `$__timeFilter` variable is used in the MySQL data source.
