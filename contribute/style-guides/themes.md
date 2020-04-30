@@ -76,7 +76,7 @@ describe('MyComponent', () => {
     restoreThemeContext();
   });
 
-  it('renders correctyl', () => {
+  it('renders correctly', () => {
     const wrapper = mount(<MyComponent />)
     expect(wrapper).toMatchSnapshot();
   });
