@@ -13,8 +13,8 @@ weight = 5
 
 # Using AWS CloudWatch in Grafana
 
-Grafana ships with built in support for CloudWatch. You just have to add it as a data source and you will be ready to
- build dashboards or use explore with CloudWatch metrics and CloudWatch logs.
+Grafana ships with built-in support for CloudWatch. Add it as a data source, then you are ready to
+ build dashboards or use Explore with CloudWatch metrics and CloudWatch logs.
 
 ## Adding the data source
 
@@ -174,13 +174,13 @@ This feature is not available for metrics that are based on metric math expressi
 
 > Only available in Grafana v7.0+.
 
-To query CloudWatch logs you have to select the region and up to 20 log groups which you want to query. Use the main input area to write your query in [CloudWatch Logs Query Language](https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/CWL_QuerySyntax.html)
+To query CloudWatch logs, select the region and up to 20 log groups which you want to query. Use the main input area to write your query in [CloudWatch Logs Query Language](https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/CWL_QuerySyntax.html)
 
 You can also write queries returning time series data by using the [`stats` command](https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/CWL_Insights-Visualizing-Log-Data.html). When making `stats` queries in Explore, you have to make sure you are in Metrics Explore mode.
 
 TODO: image Explore switcher
 
-To the right of the query input field is a CloudWatch Insights link that will open the CloudWatch Insights console with your query so you can continue exploration there if needed.
+To the right of the query input field is a CloudWatch Insights link that opens the CloudWatch Insights console with your query. You can continue exploration there if necessary.
 
 TODO: image highlight link
 
