@@ -125,9 +125,7 @@ func (ps *provisioningServiceImpl) ProvisionNotifications() error {
 }
 
 func (ps *provisioningServiceImpl) ProvisionUsers() error {
-	ps.log.Info("Provisioning2 users")
 	usersPath := path.Join(ps.Cfg.ProvisioningPath, "users")
-	ps.log.Info(usersPath)
 	err := ps.provisionUsers(usersPath)
 	return errutil.Wrap("Alert notification provisioning error", err)
 }
