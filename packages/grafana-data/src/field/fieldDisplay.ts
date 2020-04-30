@@ -87,31 +87,43 @@ export function getFrameDisplayTitle(frame: DataFrame, index?: number) {
     return formatLabels(valuesWithLabels[0].labels!);
   }
 
-  if (index !== undefined) {
-    const values = frame.fields.filter(f => f.type !== FieldType.time);
-    if (values.length === 1) {
-      return getFieldDisplayTitle(values[0]);
-    }
+  // list all the
+  if (index === undefined) {
+    return frame.fields
+      .filter(f => f.type !== FieldType.time)
+      .map(f => getFieldDisplayTitle(f, frame))
+      .join(', ');
   }
 
-  return `Series[${index}]`;
+  if (frame.refId) {
+    return `Series (${frame.refId})`;
+  }
+
+  return `Series (${index})`;
 }
 
 /**
- * Get an appropriate display title
+ * Get an appropriate display title.  If the 'title' is set, use that
  */
-export function getFieldDisplayTitle(field: Field, frame?: DataFrame, frameCount?: number) {
+export function getFieldDisplayTitle(field: Field, frame?: DataFrame) {
   let title = field.config?.title;
   if (title) {
     return title; // Title is set and not a template
   }
 
-  let name = field.config?.title ?? field.name;
-
+  const id = getFieldId(field);
   const seriesName = frame?.name;
-  if (seriesName && frameCount && frameCount > 0 && name !== seriesName) {
-    name = seriesName + ' ' + name;
+  if (seriesName && name !== seriesName) {
+    return seriesName + ' ' + name;
   }
+  return id;
+}
+
+/**
+ * name + labels
+ */
+export function getFieldId(field: Field) {
+  let name = field.config?.title ?? field.name;
 
   if (field.labels) {
     name += formatLabels(field.labels);
