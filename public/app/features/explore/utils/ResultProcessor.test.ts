@@ -12,6 +12,9 @@ const testContext = (options: any = {}) => {
   const timeSeries = toDataFrame({
     name: 'A-series',
     refId: 'A',
+    meta: {
+      preferredVisualisationType: 'graph',
+    },
     fields: [
       { name: 'time', type: FieldType.time, values: [100, 200, 300] },
       { name: 'A-series', type: FieldType.number, values: [4, 5, 6] },

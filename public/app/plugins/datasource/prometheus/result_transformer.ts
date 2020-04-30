@@ -76,6 +76,7 @@ export class ResultTransformer {
       datapoints: dps,
       query: options.query,
       refId: options.refId,
+      meta: options.meta,
       target: metricLabel,
       tags: metricData.metric,
     };
@@ -144,7 +145,7 @@ export class ResultTransformer {
     let metricLabel = null;
     metricLabel = this.createMetricLabel(md.metric, options);
     dps.push([parseFloat(md.value[1]), md.value[0] * 1000]);
-    return { target: metricLabel, datapoints: dps, tags: md.metric, refId: options.refId };
+    return { target: metricLabel, datapoints: dps, tags: md.metric, refId: options.refId, meta: options.meta };
   }
 
   createMetricLabel(labelData: { [key: string]: string }, options: any) {
