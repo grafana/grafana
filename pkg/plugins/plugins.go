@@ -13,6 +13,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/grafana/grafana/pkg/infra/fs"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
@@ -43,6 +44,7 @@ type PluginScanner struct {
 	errors               []error
 	backendPluginManager backendplugin.Manager
 	cfg                  *setting.Cfg
+	requireSigned        bool
 }
 
 type PluginManager struct {
@@ -73,33 +75,40 @@ func (pm *PluginManager) Init() error {
 	}
 
 	pm.log.Info("Starting plugin search")
+
+	pm.log.Info("Scanning main plugin directory")
 	plugDir := path.Join(setting.StaticRootPath, "app/plugins")
-	if err := pm.scan(plugDir); err != nil {
-		return errutil.Wrapf(err, "Failed to scan main plugin directory '%s'", plugDir)
+	if err := pm.scan(plugDir, false); err != nil {
+		return errutil.Wrapf(err, "failed to scan main plugin directory '%s'", plugDir)
 	}
 
-	pm.log.Info("Checking Bundled Plugins")
+	pm.log.Info("Scanning bundled plugin directory")
 	plugDir = path.Join(setting.HomePath, "plugins-bundled")
-	if _, err := os.Stat(plugDir); !os.IsNotExist(err) {
-		if err := pm.scan(plugDir); err != nil {
+	exists, err := fs.Exists(plugDir)
+	if err != nil {
+		return err
+	}
+	if exists {
+		if err := pm.scan(plugDir, false); err != nil {
 			return errutil.Wrapf(err, "failed to scan bundled plugin directory '%s'", plugDir)
 		}
 	}
 
 	// check if plugins dir exists
-	if _, err := os.Stat(setting.PluginsPath); os.IsNotExist(err) {
+	exists, err = fs.Exists(setting.PluginsPath)
+	if err != nil {
+		return err
+	}
+	if !exists {
 		if err = os.MkdirAll(setting.PluginsPath, os.ModePerm); err != nil {
-			plog.Error("Failed to create plugin dir", "dir", setting.PluginsPath, "error", err)
+			plog.Error("failed to create external plugin directory", "dir", setting.PluginsPath, "error", err)
 		} else {
-			plog.Info("Plugin dir created", "dir", setting.PluginsPath)
-			if err := pm.scan(setting.PluginsPath); err != nil {
-				return errutil.Wrapf(err, "Failed to scan configured plugin directory '%s'",
-					setting.PluginsPath)
-			}
+			plog.Info("External plugin dir created", "directory", setting.PluginsPath)
 		}
 	} else {
-		if err := pm.scan(setting.PluginsPath); err != nil {
-			return errutil.Wrapf(err, "Failed to scan configured plugin directory '%s'",
+		pm.log.Info("Scanning external plugin directory")
+		if err := pm.scan(setting.PluginsPath, true); err != nil {
+			return errutil.Wrapf(err, "failed to scan external plugin directory '%s'",
 				setting.PluginsPath)
 		}
 	}
@@ -163,8 +172,8 @@ func (pm *PluginManager) checkPluginPaths() error {
 			continue
 		}
 
-		if err := pm.scan(path); err != nil {
-			return errutil.Wrapf(err, "Failed to scan directory configured for plugin '%s': '%s'", pluginID, path)
+		if err := pm.scan(path, false); err != nil {
+			return errutil.Wrapf(err, "failed to scan directory configured for plugin '%s': '%s'", pluginID, path)
 		}
 	}
 
@@ -172,11 +181,12 @@ func (pm *PluginManager) checkPluginPaths() error {
 }
 
 // scan a directory for plugins.
-func (pm *PluginManager) scan(pluginDir string) error {
+func (pm *PluginManager) scan(pluginDir string, requireSigned bool) error {
 	scanner := &PluginScanner{
 		pluginPath:           pluginDir,
 		backendPluginManager: pm.BackendPluginManager,
 		cfg:                  pm.Cfg,
+		requireSigned:        requireSigned,
 	}
 
 	if err := util.Walk(pluginDir, true, true, scanner.walker); err != nil {
@@ -229,7 +239,8 @@ func (scanner *PluginScanner) walker(currentPath string, f os.FileInfo, err erro
 	if f.Name() == "plugin.json" {
 		err := scanner.loadPluginJson(currentPath)
 		if err != nil {
-			log.Error(3, "Plugins: Failed to load plugin json file: %v,  err: %v", currentPath, err)
+			// XXX: Should we use plog here instead of log?
+			log.Error(3, "Plugins: Failed to load plugin %q,  err: %v", filepath.Dir(currentPath), err)
 			scanner.errors = append(scanner.errors, err)
 		}
 	}
@@ -252,20 +263,31 @@ func (scanner *PluginScanner) loadPluginJson(pluginJsonFilePath string) error {
 	}
 
 	if pluginCommon.Id == "" || pluginCommon.Type == "" {
-		return errors.New("Did not find type and id property in plugin.json")
+		return errors.New("did not find type or id properties in plugin.json")
 	}
 
-	var loader PluginLoader
+	if scanner.requireSigned {
+		plog.Debug("Plugin signature required, validating", "pluginID", pluginCommon.Id)
+		if sig := GetPluginSignatureState(&pluginCommon); sig != PluginSignatureValid {
+			plog.Debug("Cannot load plugin since it lacks a valid signature", "pluginID", pluginCommon.Id)
+			return fmt.Errorf("plugin %q lacks a valid signature", pluginCommon.Id)
+		}
+	}
+
 	pluginGoType, exists := PluginTypes[pluginCommon.Type]
 	if !exists {
-		return errors.New("Unknown plugin type " + pluginCommon.Type)
+		return fmt.Errorf("unknown plugin type %q", pluginCommon.Type)
 	}
-	loader = reflect.New(reflect.TypeOf(pluginGoType)).Interface().(PluginLoader)
+	loader := reflect.New(reflect.TypeOf(pluginGoType)).Interface().(PluginLoader)
 
 	// External plugins need a module.js file for SystemJS to load
 	if !strings.HasPrefix(pluginJsonFilePath, setting.StaticRootPath) && !scanner.IsBackendOnlyPlugin(pluginCommon.Type) {
 		module := filepath.Join(filepath.Dir(pluginJsonFilePath), "module.js")
-		if _, err := os.Stat(module); os.IsNotExist(err) {
+		exists, err := fs.Exists(module)
+		if err != nil {
+			return err
+		}
+		if !exists {
 			plog.Warn("Plugin missing module.js",
 				"name", pluginCommon.Name,
 				"warning", "Missing module.js, If you loaded this plugin from git, make sure to compile it.",
@@ -290,11 +312,19 @@ func GetPluginMarkdown(pluginId string, name string) ([]byte, error) {
 	}
 
 	path := filepath.Join(plug.PluginDir, fmt.Sprintf("%s.md", strings.ToUpper(name)))
-	if _, err := os.Stat(path); os.IsNotExist(err) {
+	exists, err := fs.Exists(path)
+	if err != nil {
+		return nil, err
+	}
+	if !exists {
 		path = filepath.Join(plug.PluginDir, fmt.Sprintf("%s.md", strings.ToLower(name)))
 	}
 
-	if _, err := os.Stat(path); os.IsNotExist(err) {
+	exists, err = fs.Exists(path)
+	if err != nil {
+		return nil, err
+	}
+	if !exists {
 		return make([]byte, 0), nil
 	}
 
