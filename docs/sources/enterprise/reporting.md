@@ -69,7 +69,7 @@ Weekly reports are generated once per week and takes three arguments:
 
 * **Day -** Weekday which the report should be sent on.
 * **Time -** Time of day in 24 hours format when the report should be sent.
-* **Time zone-** Time zone for the **Time** argument.
+* **Time zone -** Time zone for the **Time** argument.
 
 #### Never
 
