@@ -97,7 +97,7 @@ describe('Stats Calculators', () => {
     expect(stats.delta).toEqual(300);
   });
 
-  it('consistenly check allIsNull/allIsZero', () => {
+  it('consistently check allIsNull/allIsZero', () => {
     const empty = createField('x');
     const allNull = createField('x', [null, null, null, null]);
     const allUndefined = createField('x', [undefined, undefined, undefined, undefined]);
