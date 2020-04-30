@@ -7,6 +7,7 @@ import { Modal } from './Modal';
 import { Icon } from '../Icon/Icon';
 import { ModalTabsHeader } from './ModalTabsHeader';
 import { TabContent } from '../Tabs/TabContent';
+import mdx from './Modal.mdx';
 
 const getKnobs = () => {
   return {
@@ -29,7 +30,12 @@ amet.`
 export default {
   title: 'Overlays/Modal',
   component: Modal,
-  dectorators: [withCenteredStory],
+  decorators: [withCenteredStory],
+  parameters: {
+    docs: {
+      page: mdx,
+    },
+  },
 };
 
 export const basic = () => {
