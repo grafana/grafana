@@ -151,7 +151,7 @@ As a replacement for PhantomJS we’ve developed the [Grafana Image Renderer plu
 
 Read more about [Image Rendering]({{< relref "../administration/image_rendering/" >}}) in the documentation for further instructions.
 
-## Query History in Explore out of beta
+## Query history in Explore out of beta
 
 The Query history feature lets you view and interact with the queries that you have previously run in Explore. You can add queries to the Explore query editor, write comments, create and share URL links, star your favorite queries, and much more. Starred queries are displayed in the Starred tab, so it is easier to reuse queries that you run often without typing them from scratch.
 
