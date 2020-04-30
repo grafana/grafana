@@ -1,4 +1,4 @@
-// Load the Buildtin matchers
+// Load the Builtin matchers
 import { getFieldPredicateMatchers, getFramePredicateMatchers } from './matchers/predicates';
 import { getFieldNameMatchers, getFrameNameMatchers } from './matchers/nameMatcher';
 import { getFieldTypeMatchers } from './matchers/fieldTypeMatcher';
