@@ -63,12 +63,15 @@ function getTitleTemplate(title: string | undefined, stats: string[], data?: Dat
   if (stats.length > 1) {
     parts.push('${' + VAR_CALC + '}');
   }
+
   if (data.length > 1) {
     parts.push('${' + VAR_SERIES_NAME + '}');
   }
+
   if (fieldCount > 1 || !parts.length) {
     parts.push('${' + VAR_FIELD_NAME + '}');
   }
+
   parts.push('${' + VAR_FIELD_LABELS + '}');
 
   return parts.join(' ');
@@ -190,10 +193,12 @@ export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): Fi
       for (let i = 0; i < series.fields.length && !hitLimit; i++) {
         const field = series.fields[i];
         const fieldLinksSupplier = field.getLinks;
-        // Show all number fields
+
+        // To filter out time field, need an option for this
         if (field.type !== FieldType.number) {
           continue;
         }
+
         const config = field.config; // already set by the prepare task
 
         const display =
@@ -205,6 +210,7 @@ export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): Fi
           });
 
         const title = config.title ? config.title : defaultTitle;
+
         // Show all rows
         if (reduceOptions.values) {
           const usesCellValues = title.indexOf(VAR_CELL_PREFIX) >= 0;
@@ -221,6 +227,7 @@ export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): Fi
                 };
               }
             }
+
             const displayValue = display(field.values.get(j));
             displayValue.title = replaceVariables(title, {
               ...field.config.scopedVars, // series and field scoped vars
@@ -269,6 +276,7 @@ export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): Fi
               ...field.config.scopedVars, // series and field scoped vars
               ...scopedVars,
             });
+
             values.push({
               name: calc,
               field: config,
