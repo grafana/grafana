@@ -85,7 +85,7 @@ export interface GitLogInfo {
   body?: string;
   notes?: string;
   author: UserInfo;
-  commiter: UserInfo;
+  committer: UserInfo;
 }
 
 export interface ManifestInfo {

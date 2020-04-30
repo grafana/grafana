@@ -98,7 +98,7 @@ export async function readGitLog(): Promise<GitLogInfo | undefined> {
     let exe = await execa('git', [
       'log',
       '-1', // last line
-      '--pretty=format:{%n  "commit": "%H",%n  "tree": "%T",%n  "subject": "%s",%n  "author": {%n    "name": "%aN",%n    "email": "%aE",%n    "time":"%at"  },%n  "commiter": {%n    "name": "%cN",%n    "email": "%cE",%n    "time":"%ct"  }%n}',
+      '--pretty=format:{%n  "commit": "%H",%n  "tree": "%T",%n  "subject": "%s",%n  "author": {%n    "name": "%aN",%n    "email": "%aE",%n    "time":"%at"  },%n  "committer": {%n    "name": "%cN",%n    "email": "%cE",%n    "time":"%ct"  }%n}',
     ]);
     const info = JSON.parse(exe.stdout) as GitLogInfo;
 
