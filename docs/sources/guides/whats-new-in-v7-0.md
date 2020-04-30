@@ -150,7 +150,8 @@ That is problems like:
 
 - There are too many dashboards, how do I find the right one?
 - How to find popular dashboards
-- How to indentify dashboards that are not being used
+- How to find dashboards with errors
+- How to identify dashboards that are not being used
 - Who created or last viewed this dashboard?
 
 ## Usage Analytics and Presence
