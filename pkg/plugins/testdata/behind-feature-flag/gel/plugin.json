@@ -1,0 +1,12 @@
+{
+  "type": "transform",
+  "name": "GEL",
+  "id": "gel",
+  "info": {
+    "description": "Test",
+    "author": {
+      "name": "Grafana Labs",
+      "url": "https://grafana.com"
+    }
+  }
+}

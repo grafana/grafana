@@ -241,7 +241,7 @@ func (scanner *PluginScanner) walker(currentPath string, f os.FileInfo, err erro
 	}
 
 	if f.Name() == "plugin.json" {
-		err := scanner.loadPluginJson(currentPath)
+		err := scanner.loadPlugin(currentPath)
 		if err != nil {
 			scanner.log.Error("Failed to load plugin", "error", err, "pluginPath", filepath.Dir(currentPath))
 			scanner.errors = append(scanner.errors, err)
@@ -250,7 +250,7 @@ func (scanner *PluginScanner) walker(currentPath string, f os.FileInfo, err erro
 	return nil
 }
 
-func (scanner *PluginScanner) loadPluginJson(pluginJsonFilePath string) error {
+func (scanner *PluginScanner) loadPlugin(pluginJsonFilePath string) error {
 	currentDir := filepath.Dir(pluginJsonFilePath)
 	reader, err := os.Open(pluginJsonFilePath)
 	if err != nil {
@@ -267,6 +267,15 @@ func (scanner *PluginScanner) loadPluginJson(pluginJsonFilePath string) error {
 
 	if pluginCommon.Id == "" || pluginCommon.Type == "" {
 		return errors.New("did not find type or id properties in plugin.json")
+	}
+
+	if pluginCommon.Id == "gel" {
+		isEnabled := scanner.cfg.FeatureToggles["expressions"]
+		scanner.log.Debug("Plugin is dependent on a feature flag, checking if enabled", "pluginID", pluginCommon.Id,
+			"featureFlag", "expressions", "enabled", isEnabled)
+		if !isEnabled {
+			return fmt.Errorf("plugin %q is disabled since the expressions feature is not toggled", pluginCommon.Id)
+		}
 	}
 
 	pluginCommon.PluginDir = filepath.Dir(pluginJsonFilePath)
