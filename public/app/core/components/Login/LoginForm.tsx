@@ -14,9 +14,8 @@ interface Props {
 }
 
 const forgottenPasswordStyles = css`
-  display: block;
-  margin-top: 20px;
-  text-align: center;
+  display: inline-block;
+  margin-top: 10px;
 `;
 
 const wrapperStyles = css`
@@ -25,7 +24,6 @@ const wrapperStyles = css`
 `;
 
 export const LoginForm: FC<Props> = ({ displayForgotPassword, onSubmit, isLoggingIn, passwordHint, loginHint }) => {
-  const [hasBeenTouched, setHasBeenTouched] = useState(false);
   return (
     <div className={wrapperStyles}>
       <Form onSubmit={onSubmit} validateOn="onChange">
@@ -33,7 +31,6 @@ export const LoginForm: FC<Props> = ({ displayForgotPassword, onSubmit, isLoggin
           <>
             <Field label="Email or username" invalid={!!errors.user} error={errors.user?.message}>
               <Input
-                onChange={() => setHasBeenTouched(true)}
                 autoFocus
                 name="user"
                 ref={register({ required: 'Email or username is required' })}
@@ -43,7 +40,6 @@ export const LoginForm: FC<Props> = ({ displayForgotPassword, onSubmit, isLoggin
             </Field>
             <Field label="Password" invalid={!!errors.password} error={errors.password?.message}>
               <Input
-                onChange={() => setHasBeenTouched(true)}
                 name="password"
                 type="password"
                 placeholder={passwordHint}
@@ -57,7 +53,7 @@ export const LoginForm: FC<Props> = ({ displayForgotPassword, onSubmit, isLoggin
                 justify-content: center;
                 width: 100%;
               `}
-              disabled={!hasBeenTouched || !!(errors.password || errors.user) || isLoggingIn}
+              disabled={isLoggingIn}
             >
               {isLoggingIn ? 'Logging in...' : 'Log in'}
             </Button>
