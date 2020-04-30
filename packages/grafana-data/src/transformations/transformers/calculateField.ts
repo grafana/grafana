@@ -1,4 +1,4 @@
-import { DataFrame, DataTransformerInfo, Vector, FieldType, Field, NullValueMode, FieldConfig } from '../../types';
+import { DataFrame, DataTransformerInfo, Vector, FieldType, Field, NullValueMode } from '../../types';
 import { DataTransformerID } from './ids';
 import { ReducerID, fieldReducers } from '../fieldReducer';
 import { getFieldMatcher } from '../matchers';
@@ -66,7 +66,7 @@ export interface CalculateFieldTransformerOptions {
 
   // Output field properties
   alias?: string; // The output field name
-  config?: FieldConfig;
+  // TODO: config?: FieldConfig; or maybe field overrides? since the UI exists
 }
 
 /**
@@ -134,9 +134,6 @@ export const calculateFieldTransformer: DataTransformerInfo<CalculateFieldTransf
 
       if (options.alias) {
         field.name = options.alias;
-      }
-      if (options.config) {
-        field.config = options.config;
       }
 
       let fields: Field[] = [];
