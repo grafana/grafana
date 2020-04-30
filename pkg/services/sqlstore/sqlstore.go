@@ -308,7 +308,7 @@ type ITestDB interface {
 	Fatalf(format string, args ...interface{})
 }
 
-// InitTestDB initiliaze test DB
+// InitTestDB initialize test DB.
 func InitTestDB(t ITestDB) *SqlStore {
 	t.Helper()
 	sqlstore := &SqlStore{}

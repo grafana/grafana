@@ -189,7 +189,7 @@ func TestCloudWatchResponseParser(t *testing.T) {
 			So((*series)[1].Name, ShouldEqual, "lb4 Expanded")
 		})
 
-		Convey("can expand dimension value when no values are returned and a multi-valued template variabel is used", func() {
+		Convey("can expand dimension value when no values are returned and a multi-valued template variable is used", func() {
 			timestamp := time.Unix(0, 0)
 			resp := map[string]*cloudwatch.MetricDataResult{
 				"lb3": {
