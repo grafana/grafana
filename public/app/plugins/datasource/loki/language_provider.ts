@@ -449,6 +449,19 @@ export default class LokiLanguageProvider extends LanguageProvider {
 
     const cacheKey = this.generateCacheKey(url, start, end, key);
     const params = { start, end };
+
+    const addLabelValuesToOptions = (values: string[]) => {
+      return this.logLabelOptions.map(keyOption => {
+        if (keyOption.value === key) {
+          return {
+            ...keyOption,
+            children: values.map(value => ({ label: value, value })),
+          };
+        }
+        return keyOption;
+      });
+    };
+
     let value = this.labelsCache.get(cacheKey);
     if (!value) {
       try {
@@ -460,18 +473,13 @@ export default class LokiLanguageProvider extends LanguageProvider {
         this.labelsCache.set(cacheKey, value);
 
         // Add to label options
-        this.logLabelOptions = this.logLabelOptions.map(keyOption => {
-          if (keyOption.value === key) {
-            return {
-              ...keyOption,
-              children: values.map(value => ({ label: value, value })),
-            };
-          }
-          return keyOption;
-        });
+        this.logLabelOptions = addLabelValuesToOptions(values);
       } catch (e) {
         console.error(e);
       }
+    } else {
+      // Add to label options
+      this.logLabelOptions = addLabelValuesToOptions(value);
     }
     return value;
   }
