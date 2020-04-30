@@ -269,6 +269,8 @@
       link: /enterprise/license-expiration/
     - name: Export dashboard as PDF
       link: /enterprise/export-pdf/
+    - name: HTTP APIs
+      link: /enterprise/http_api/
 - name: Plugins
   link: /plugins/
   children:

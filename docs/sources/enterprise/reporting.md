@@ -90,26 +90,9 @@ The last saved version of the report will be sent to selected emails. You can us
 
 {{< docs-imagebox img="/img/docs/enterprise/reports_send_test_mail.png" max-width="500px" class="docs-image--no-shadow" >}}
 
-## API
+## Send report via the API
 
-> Only available in Grafana Enterprise v7.0+.
-
-Reports can be generated with the experimental `/api/reports/email` API. To access the API you need to authenticate yourself as an organization admin. For more information about API authentication, refer to [Authentication API]({{ relref "../http_api/auth.md" }}).
-
-The `/api/reports/email` API expects a JSON object with the following arguments:
-
-* **id -** ID of the report to send (same as in the URL when editing a report, not to be confused with the ID of the dashboard). Required.
-* **emails -** Comma-separated list of emails to which to send the report to. Overrides the emails from the report. Required if **useEmailsFromReport** is not present.
-* **useEmailsFromReport -** Send the report to the emails specified in the report. Required if **emails** is not present.
-
-The API queues the report for generation and returns immediately. This means that the response code is only indicative of the queueing, not the generation of the report.
-
-Example for curl:
-
-```
-$ curl -H "Authorization: Bearer <Admin API key>" https://<grafana.example.org>/api/reports/email
-    -d '{"id": "<report id>", "useEmailsFromReport": true}'
-```
+Sending reports programmatically is possible with the [manually send report]({{< relref "http_api.md#manually-send-report" >}}) endpoint in the [Enterprise HTTP APIs]({{< relref "http_api.md" >}}).
 
 ## Rendering configuration
 
