@@ -2401,7 +2401,7 @@ Pull Request: [#8472](https://github.com/grafana/grafana/pull/8472)
 
 - **API**: HTTP API for deleting org returning incorrect message for a non-existing org [#6679](https://github.com/grafana/grafana/issues/6679)
 - **Dashboard**: Posting empty dashboard result in corrupted dashboard [#5443](https://github.com/grafana/grafana/issues/5443)
-- **Logging**: Fixed logging level confing issue [#6978](https://github.com/grafana/grafana/issues/6978)
+- **Logging**: Fixed logging level config issue [#6978](https://github.com/grafana/grafana/issues/6978)
 - **Notifications**: Remove html escaping the email subject. [#6905](https://github.com/grafana/grafana/issues/6905)
 - **Influxdb**: Fixes broken field dropdown when using template vars as measurement. [#6473](https://github.com/grafana/grafana/issues/6473)
 
