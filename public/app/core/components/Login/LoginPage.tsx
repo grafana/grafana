@@ -22,7 +22,7 @@ export const LoginPage: FC = () => {
         <div className={styles.loginLogoWrapper}>
           <Branding.LoginLogo className={styles.loginLogo} />
           <div className={styles.titleWrapper}>
-            <h1 className={styles.mainTitle}>{Branding.LoginMainTitle}</h1>
+            <h1 className={styles.mainTitle}>{Branding.LoginTitle}</h1>
             <h3 className={styles.subTitle}>{Branding.LoginSubTitle}</h3>
           </div>
         </div>

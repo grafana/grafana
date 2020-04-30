@@ -30,7 +30,7 @@ export const ChangePassword: FC<Props> = ({ onSubmit, onSkip }) => {
               })}
             />
           </Field>
-          <Field label="Confirmn new password" invalid={!!errors.confirmNew} error={errors?.confirmNew?.message}>
+          <Field label="Confirm new password" invalid={!!errors.confirmNew} error={errors?.confirmNew?.message}>
             <Input
               type="password"
               name="confirmNew"

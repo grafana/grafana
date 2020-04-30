@@ -34,7 +34,7 @@ export const getStyles = stylesFactory((theme: GrafanaTheme) => {
     },
     loginLogo: css`
       width: 100%;
-      max-width: 150px;
+      max-width: 100px;
       margin-bottom: 15px;
     `,
     loginLogoWrapper: css`

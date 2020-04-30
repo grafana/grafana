@@ -9,15 +9,7 @@ export interface BrandComponentProps {
 }
 
 const LoginLogo: FC<BrandComponentProps> = ({ className }) => {
-  const maxSize = css`
-    max-width: 130px;
-  `;
-
-  return (
-    <>
-      <img className={cx(className, maxSize)} src="public/img/grafana_icon.svg" alt="Grafana" />
-    </>
-  );
+  return <img className={className} src="public/img/grafana_icon.svg" alt="Grafana" />;
 };
 
 const LoginBackground: FC<BrandComponentProps> = ({ className, children }) => {
@@ -39,7 +31,7 @@ export class Branding {
   static LoginBackground = LoginBackground;
   static MenuLogo = MenuLogo;
   static AppTitle = 'Grafana';
-  static LoginMainTitle = 'Welcome to Grafana';
+  static LoginTitle = 'Welcome to Grafana';
   static LoginSubTitle = 'Your single pane of glass';
   static LoginContentBoxBg = (theme: GrafanaTheme) => {
     return theme.isLight ? 'rgba(6, 42, 88, 0.65)' : 'rgba(6, 42, 88, 0.65)';
