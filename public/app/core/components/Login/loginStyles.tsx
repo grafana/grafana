@@ -34,7 +34,7 @@ export const getStyles = stylesFactory((theme: GrafanaTheme) => {
     },
     loginLogo: css`
       width: 100%;
-      max-width: 250px;
+      max-width: 150px;
       margin-bottom: 15px;
     `,
     loginLogoWrapper: css`
@@ -65,6 +65,7 @@ export const getStyles = stylesFactory((theme: GrafanaTheme) => {
       min-height: 320px;
       border-radius: 3px;
       background: ${boxBackground};
+      padding: 20px 0;
     `,
     loginOuterBox: css`
       display: flex;
@@ -83,19 +84,6 @@ export const getStyles = stylesFactory((theme: GrafanaTheme) => {
       width: 100%;
       transform: translate(0px, 0px);
       transition: 0.25s ease;
-
-      &.hidden {
-        display: none;
-      }
-
-      &-enter {
-        transform: translate(0px, 320px);
-        display: flex;
-      }
-
-      &-enter-active {
-        transform: translate(0px, 0px);
-      }
     `,
     enterAnimation: css`
       animation: ${flyInAnimation} ease-out 0.4s;

@@ -10,7 +10,7 @@ export interface BrandComponentProps {
 
 const LoginLogo: FC<BrandComponentProps> = ({ className }) => {
   const maxSize = css`
-    max-width: 150px;
+    max-width: 130px;
   `;
 
   return (
@@ -40,7 +40,7 @@ export class Branding {
   static MenuLogo = MenuLogo;
   static AppTitle = 'Grafana';
   static LoginMainTitle = 'Welcome to Grafana';
-  static LoginSubTtitle = 'Your single pane of glass';
+  static LoginSubTitle = 'Your single pane of glass';
   static LoginContentBoxBg = (theme: GrafanaTheme) => {
     return theme.isLight ? 'rgba(6, 42, 88, 0.65)' : 'rgba(6, 42, 88, 0.65)';
   };
