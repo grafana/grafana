@@ -94,7 +94,7 @@ export class DataSourceWithBackend<
         requestId,
       })
       .then((rsp: any) => {
-        return this.toDataQueryResponse(rsp?.data);
+        return httpResponseToDataQueryResponse(rsp);
       });
 
     return from(req);
@@ -107,16 +107,6 @@ export class DataSourceWithBackend<
    */
   applyTemplateVariables(query: DataQuery) {
     return query;
-  }
-
-  /**
-   * This makes the arrow library loading async.
-   */
-  async toDataQueryResponse(rsp: any): Promise<DataQueryResponse> {
-    const { resultsToDataFrames } = await import(
-      /* webpackChunkName: "apache-arrow-util" */ '@grafana/data/src/dataframe/ArrowDataFrame'
-    );
-    return { data: resultsToDataFrames(rsp) };
   }
 
   /**
