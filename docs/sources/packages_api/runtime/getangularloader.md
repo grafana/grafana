@@ -5,7 +5,6 @@
 title = "getAngularLoader"
 keywords = ["grafana","documentation","sdk","@grafana/runtime"]
 type = "docs"
-draft = true
 +++
 
 ## getAngularLoader() function

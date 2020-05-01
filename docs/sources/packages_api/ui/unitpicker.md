@@ -5,7 +5,6 @@
 title = "UnitPicker"
 keywords = ["grafana","documentation","sdk","@grafana/ui"]
 type = "docs"
-draft = true
 +++
 
 ## UnitPicker class

@@ -1,9 +1,8 @@
-FROM golang:1.14.1 AS go-builder
+FROM golang:1.14.2 AS go-builder
 
 WORKDIR /src/grafana
 
 COPY go.mod go.sum ./
-COPY vendor vendor/
 
 RUN go mod verify
 
@@ -12,7 +11,7 @@ COPY pkg pkg/
 
 RUN go run build.go build
 
-FROM node:12.13 AS js-builder
+FROM node:12.16.3-slim AS js-builder
 
 WORKDIR /usr/src/app/
 
@@ -30,7 +29,7 @@ COPY emails emails
 ENV NODE_ENV production
 RUN ./node_modules/.bin/grunt build
 
-FROM ubuntu:19.10
+FROM ubuntu:20.04
 
 LABEL maintainer="Grafana team <hello@grafana.com>"
 EXPOSE 3000

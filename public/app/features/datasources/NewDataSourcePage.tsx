@@ -2,8 +2,8 @@ import React, { FC, PureComponent } from 'react';
 import { connect } from 'react-redux';
 import { hot } from 'react-hot-loader';
 import { DataSourcePluginMeta, NavModel } from '@grafana/data';
-import { List, LinkButton, Button } from '@grafana/ui';
-import { e2e } from '@grafana/e2e';
+import { Button, LinkButton, List } from '@grafana/ui';
+import { selectors } from '@grafana/e2e-selectors';
 
 import Page from 'app/core/components/Page/Page';
 import { DataSourcePluginCategory, StoreState } from 'app/types';
@@ -126,7 +126,7 @@ const DataSourceTypeCard: FC<DataSourceTypeCardProps> = props => {
     <Card
       title={plugin.name}
       description={plugin.info.description}
-      ariaLabel={e2e.pages.AddDataSource.selectors.dataSourcePlugins(plugin.name)}
+      ariaLabel={selectors.pages.AddDataSource.dataSourcePlugins(plugin.name)}
       logoUrl={plugin.info.logos.small}
       actions={
         <>
@@ -145,42 +145,23 @@ const DataSourceTypeCard: FC<DataSourceTypeCardProps> = props => {
           {!isPhantom && <Button>Select</Button>}
         </>
       }
-      className={isPhantom && 'add-data-source-item--phantom'}
-      onClick={onClick}
-      aria-label={e2e.pages.AddDataSource.selectors.dataSourcePlugins(plugin.name)}
-    >
-      <img className="add-data-source-item-logo" src={plugin.info.logos.small} />
-      <div className="add-data-source-item-text-wrapper">
-        <span className="add-data-source-item-text">{plugin.name}</span>
-        {plugin.info.description && <span className="add-data-source-item-desc">{plugin.info.description}</span>}
-        {!isPhantom && (
+      labels={
+        !isPhantom && (
           <div>
             <PluginSignatureBadge status={plugin.signature} />
           </div>
-        )}
-      </div>
-      <div className="add-data-source-item-actions">
-        {learnMoreLink && (
-          <LinkButton
-            variant="secondary"
-            href={`${learnMoreLink.url}?utm_source=grafana_add_ds`}
-            target="_blank"
-            rel="noopener"
-            onClick={onLearnMoreClick}
-            icon="external-link-alt"
-          >
-            {learnMoreLink.name}
-          </LinkButton>
-        )}
-        {!isPhantom && <Button>Select</Button>}
-      </div>
-    </Card>
+        )
+      }
+      className={isPhantom && 'add-data-source-item--phantom'}
+      onClick={onClick}
+      aria-label={selectors.pages.AddDataSource.dataSourcePlugins(plugin.name)}
+    />
   );
 };
 
 export function getNavModel(): NavModel {
   const main = {
-    icon: 'gicon gicon-add-datasources',
+    icon: 'database',
     id: 'datasource-new',
     text: 'Add data source',
     href: 'datasources/new',

@@ -1,13 +1,14 @@
-import React, { useCallback, useState, CSSProperties } from 'react';
+import React, { CSSProperties, useCallback, useState } from 'react';
 import Transition from 'react-transition-group/Transition';
 import { FieldConfigSource, GrafanaTheme, PanelPlugin, SelectableValue } from '@grafana/data';
 import { DashboardModel, PanelModel } from '../../state';
-import { CustomScrollbar, stylesFactory, Tab, TabContent, TabsBar, Select, useTheme, Icon, Input } from '@grafana/ui';
+import { CustomScrollbar, Icon, Input, Select, stylesFactory, Tab, TabContent, TabsBar, useTheme } from '@grafana/ui';
 import { DefaultFieldConfigEditor, OverrideFieldConfigEditor } from './FieldConfigEditor';
 import { css } from 'emotion';
 import { PanelOptionsTab } from './PanelOptionsTab';
 import { DashNavButton } from 'app/features/dashboard/components/DashNav/DashNavButton';
 import { usePanelLatestData } from './usePanelLatestData';
+import { selectors } from '@grafana/e2e-selectors';
 
 interface Props {
   plugin: PanelPlugin;
@@ -80,7 +81,7 @@ export const OptionsPaneContent: React.FC<Props> = ({
   const showMainTab = activeTab === 'options' || plugin.meta.skipDataQuery;
 
   return (
-    <div className={styles.panelOptionsPane}>
+    <div className={styles.panelOptionsPane} aria-label={selectors.components.PanelEditor.OptionsPane.content}>
       {plugin && (
         <div className={styles.wrapper}>
           <TabsBar className={styles.tabsBar}>
@@ -184,7 +185,7 @@ export const TabsBarContent: React.FC<{
   return (
     <>
       {width < 352 ? (
-        <div className="flex-grow-1">
+        <div className="flex-grow-1" aria-label={selectors.components.PanelEditor.OptionsPane.select}>
           <Select
             options={tabs}
             value={active}
@@ -202,6 +203,7 @@ export const TabsBarContent: React.FC<{
               counter={item.value === 'overrides' ? overridesCount : undefined}
               active={active.value === item.value}
               onChangeTab={() => setActiveTab(item.value)}
+              title={item.tooltip}
             />
           ))}
           <div className="flex-grow-1" />
@@ -224,14 +226,17 @@ const tabSelections: Array<SelectableValue<string>> = [
   {
     label: 'Panel',
     value: 'options',
+    tooltip: 'Configure panel display options',
   },
   {
-    label: 'Fields',
+    label: 'Field',
     value: 'defaults',
+    tooltip: 'Configure field options',
   },
   {
     label: 'Overrides',
     value: 'overrides',
+    tooltip: 'Configure field option overrides',
   },
 ];
 

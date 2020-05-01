@@ -121,6 +121,10 @@ func (pm *PluginManager) Init() error {
 		app.initApp()
 	}
 
+	if Renderer != nil {
+		Renderer.initFrontendPlugin()
+	}
+
 	for _, p := range Plugins {
 		if p.IsCorePlugin {
 			p.Signature = PluginSignatureInternal
@@ -220,14 +224,6 @@ func (scanner *PluginScanner) walker(currentPath string, f os.FileInfo, err erro
 
 	if f.IsDir() {
 		return nil
-	}
-
-	if !scanner.cfg.FeatureToggles["tracingIntegration"] {
-		// Do not load tracing datasources if
-		prefix := path.Join(setting.StaticRootPath, "app/plugins/datasource")
-		if strings.Contains(currentPath, path.Join(prefix, "jaeger")) || strings.Contains(currentPath, path.Join(prefix, "zipkin")) {
-			return nil
-		}
 	}
 
 	if f.Name() == "plugin.json" {

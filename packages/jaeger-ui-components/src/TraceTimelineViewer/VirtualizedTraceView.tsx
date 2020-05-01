@@ -202,12 +202,12 @@ export class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTra
     if (trace !== nextTrace || childrenHiddenIDs !== nextHiddenIDs || detailStates !== nextDetailStates) {
       this.rowStates = nextTrace ? generateRowStates(nextTrace.spans, nextHiddenIDs, nextDetailStates) : [];
     }
-    if (currentViewRangeTime !== nextViewRangeTime) {
+    if (currentViewRangeTime !== nextViewRangeTime || (trace !== nextTrace && nextTrace)) {
       this.clipping = getClipping(nextViewRangeTime);
       const [zoomStart, zoomEnd] = nextViewRangeTime;
       this.getViewedBounds = createViewedBoundsFunc({
-        min: trace.startTime,
-        max: trace.endTime,
+        min: nextTrace.startTime,
+        max: nextTrace.endTime,
         viewStart: zoomStart,
         viewEnd: zoomEnd,
       });

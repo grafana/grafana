@@ -1,5 +1,13 @@
 import React, { PureComponent } from 'react';
-import { Field, LinkModel, LogRowModel, TimeZone, DataQueryResponse, GrafanaTheme } from '@grafana/data';
+import {
+  Field,
+  LinkModel,
+  LogRowModel,
+  TimeZone,
+  DataQueryResponse,
+  GrafanaTheme,
+  dateTimeFormat,
+} from '@grafana/data';
 import { Icon } from '../Icon/Icon';
 import { cx, css } from 'emotion';
 
@@ -8,6 +16,7 @@ import {
   LogRowContextQueryErrors,
   HasMoreContextRows,
   LogRowContextProvider,
+  RowContextOptions,
 } from './LogRowContextProvider';
 import { Themeable } from '../../types/theme';
 import { withTheme } from '../../themes/index';
@@ -33,8 +42,9 @@ interface Props extends Themeable {
   onClickFilterLabel?: (key: string, value: string) => void;
   onClickFilterOutLabel?: (key: string, value: string) => void;
   onContextClick?: () => void;
-  getRowContext: (row: LogRowModel, options?: any) => Promise<DataQueryResponse>;
+  getRowContext: (row: LogRowModel, options?: RowContextOptions) => Promise<DataQueryResponse>;
   getFieldLinks?: (field: Field, rowIndex: number) => Array<LinkModel<Field>>;
+  showContextToggle?: (row?: LogRowModel) => boolean;
 }
 
 interface State {
@@ -122,6 +132,7 @@ class UnThemedLogRow extends PureComponent<Props, State> {
       row,
       showDuplicates,
       timeZone,
+      showContextToggle,
       showLabels,
       showTime,
       wrapLogMessage,
@@ -131,7 +142,6 @@ class UnThemedLogRow extends PureComponent<Props, State> {
     const { showDetails, showContext, hasHoverBackground } = this.state;
     const style = getLogRowStyles(theme, row.logLevel);
     const styles = getStyles(theme);
-    const showUtc = timeZone === 'utc';
     const hoverBackground = cx(style.logsRow, { [styles.hoverBackground]: hasHoverBackground });
 
     return (
@@ -153,16 +163,7 @@ class UnThemedLogRow extends PureComponent<Props, State> {
               <Icon className={styles.topVerticalAlign} name={showDetails ? 'angle-down' : 'angle-right'} />
             </td>
           )}
-          {showTime && showUtc && (
-            <td className={style.logsRowLocalTime} title={`Local: ${row.timeLocal} (${row.timeFromNow})`}>
-              {row.timeUtc}
-            </td>
-          )}
-          {showTime && !showUtc && (
-            <td className={style.logsRowLocalTime} title={`${row.timeUtc} (${row.timeFromNow})`}>
-              {row.timeLocal}
-            </td>
-          )}
+          {showTime && <td className={style.logsRowLocalTime}>{dateTimeFormat(row.timeEpochMs, { timeZone })}</td>}
           {showLabels && row.uniqueLabels && (
             <td className={style.logsRowLabels}>
               <LogLabels labels={row.uniqueLabels} />
@@ -176,7 +177,8 @@ class UnThemedLogRow extends PureComponent<Props, State> {
             hasMoreContextRows={hasMoreContextRows}
             updateLimit={updateLimit}
             context={context}
-            showContext={showContext}
+            contextIsOpen={showContext}
+            showContextToggle={showContextToggle}
             wrapLogMessage={wrapLogMessage}
             onToggleContext={this.toggleContext}
           />

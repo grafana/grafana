@@ -138,6 +138,21 @@
       "headers": [{ "name": "x-ms-app", "content": "Grafana" }]
     },
     {
+      "path": "govworkspacesloganalytics",
+      "method": "GET",
+      "url": "https://management.usgovcloudapi.net",
+      "tokenAuth": {
+        "url": "https://login.microsoftonline.us/{{.JsonData.logAnalyticsTenantId}}/oauth2/token",
+        "params": {
+          "grant_type": "client_credentials",
+          "client_id": "{{.JsonData.logAnalyticsClientId}}",
+          "client_secret": "{{.SecureJsonData.logAnalyticsClientSecret}}",
+          "resource": "https://management.usgovcloudapi.net/"
+        }
+      },
+      "headers": [{ "name": "x-ms-app", "content": "Grafana" }]
+    },
+    {
       "path": "loganalyticsazure",
       "method": "GET",
       "url": "https://api.loganalytics.io/v1/workspaces",
@@ -152,8 +167,7 @@
       },
       "headers": [
         { "name": "x-ms-app", "content": "Grafana" },
-        { "name": "Cache-Control", "content": "public, max-age=60" },
-        { "name": "Accept-Encoding", "content": "gzip" }
+        { "name": "Cache-Control", "content": "public, max-age=60" }
       ]
     },
     {
@@ -171,8 +185,25 @@
       },
       "headers": [
         { "name": "x-ms-app", "content": "Grafana" },
-        { "name": "Cache-Control", "content": "public, max-age=60" },
-        { "name": "Accept-Encoding", "content": "gzip" }
+        { "name": "Cache-Control", "content": "public, max-age=60" }
+      ]
+    },
+    {
+      "path": "govloganalyticsazure",
+      "method": "GET",
+      "url": "https://api.loganalytics.us/v1/workspaces",
+      "tokenAuth": {
+        "url": "https://login.microsoftonline.us/{{.JsonData.logAnalyticsTenantId}}/oauth2/token",
+        "params": {
+          "grant_type": "client_credentials",
+          "client_id": "{{.JsonData.logAnalyticsClientId}}",
+          "client_secret": "{{.SecureJsonData.logAnalyticsClientSecret}}",
+          "resource": "https://api.loganalytics.us"
+        }
+      },
+      "headers": [
+        { "name": "x-ms-app", "content": "Grafana" },
+        { "name": "Cache-Control", "content": "public, max-age=60" }
       ]
     }
   ],

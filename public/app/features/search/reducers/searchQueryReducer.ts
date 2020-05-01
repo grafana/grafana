@@ -1,13 +1,14 @@
-import { SearchAction, DashboardQuery } from '../types';
+import { DashboardQuery, SearchAction, SearchLayout } from '../types';
 import {
   ADD_TAG,
   CLEAR_FILTERS,
+  LAYOUT_CHANGE,
   QUERY_CHANGE,
   REMOVE_STARRED,
   REMOVE_TAG,
   SET_TAGS,
-  TOGGLE_STARRED,
   TOGGLE_SORT,
+  TOGGLE_STARRED,
 } from './actionTypes';
 
 export const defaultQuery: DashboardQuery = {
@@ -18,6 +19,7 @@ export const defaultQuery: DashboardQuery = {
   skipStarred: false,
   folderIds: [],
   sort: null,
+  layout: SearchLayout.Folders,
 };
 
 export const queryReducer = (state: DashboardQuery, action: SearchAction) => {
@@ -38,8 +40,20 @@ export const queryReducer = (state: DashboardQuery, action: SearchAction) => {
       return { ...state, starred: false };
     case CLEAR_FILTERS:
       return { ...state, query: '', tag: [], starred: false, sort: null };
-    case TOGGLE_SORT:
-      return { ...state, sort: action.payload };
+    case TOGGLE_SORT: {
+      const sort = action.payload;
+      if (state.layout === SearchLayout.Folders) {
+        return { ...state, sort, layout: SearchLayout.List };
+      }
+      return { ...state, sort };
+    }
+    case LAYOUT_CHANGE: {
+      const layout = action.payload;
+      if (state.sort && layout === SearchLayout.Folders) {
+        return { ...state, layout, sort: null };
+      }
+      return { ...state, layout };
+    }
     default:
       return state;
   }

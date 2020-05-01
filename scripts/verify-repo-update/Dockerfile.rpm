@@ -1,4 +1,4 @@
-FROM centos
+FROM centos:8
 
 ARG REPO_CONFIG=grafana.repo.oss
 ARG PACKAGE=grafana

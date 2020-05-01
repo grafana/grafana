@@ -5,7 +5,6 @@
 title = "PanelOptionsEditorBuilder"
 keywords = ["grafana","documentation","sdk","@grafana/data"]
 type = "docs"
-draft = true
 +++
 
 ## PanelOptionsEditorBuilder class

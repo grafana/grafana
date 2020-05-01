@@ -5,7 +5,6 @@
 title = "FlotDataPoint"
 keywords = ["grafana","documentation","sdk","@grafana/data"]
 type = "docs"
-draft = true
 +++
 
 ## FlotDataPoint interface

@@ -1,31 +1,31 @@
 - name: Getting started
   link: /guides/
   children:
-  - name: What is Grafana?
-    link: /guides/what-is-grafana/
-  - name: Getting started
-    link: /guides/getting_started/
-  - name: Intro to time series
-    link: /guides/timeseries/
-  - name: Glossary
-    link: /guides/glossary/
+    - name: What is Grafana?
+      link: /guides/what-is-grafana/
+    - name: Getting started
+      link: /guides/getting_started/
+    - name: Intro to time series
+      link: /guides/timeseries/
+    - name: Glossary
+      link: /guides/glossary/
 - name: Installation
   link: /installation/
   children:
-  - name: Requirements
-    link: /installation/requirements/
-  - name: Install on Ubuntu/Debian
-    link: /installation/debian/
-  - name: Install on Centos/RedHat/SUSE
-    link: /installation/rpm/
-  - name: Install on Windows
-    link: /installation/windows/
-  - name: Install on macOS
-    link: /installation/mac/
-  - name: Run Docker image
-    link: /installation/docker/
-  - name: Upgrade Grafana
-    link: /installation/upgrading/
+    - name: Requirements
+      link: /installation/requirements/
+    - name: Install on Ubuntu/Debian
+      link: /installation/debian/
+    - name: Install on Centos/RedHat/SUSE
+      link: /installation/rpm/
+    - name: Install on Windows
+      link: /installation/windows/
+    - name: Install on macOS
+      link: /installation/mac/
+    - name: Run Docker image
+      link: /installation/docker/
+    - name: Upgrade Grafana
+      link: /installation/upgrading/
 - name: Administration
   link: /administration/
   children:
@@ -83,273 +83,283 @@
     link: /tutorials/ha_setup/
   - name: Troubleshooting
     link: /installation/troubleshooting/
-- name: Features
-  link: /features/
+- name: Panels
+  link: /features/panels/
   children:
-  - name: Panels
-    link: /features/panels/
-    children:
-    - link: /features/panels/panels/
-      name: Overview
-    - link: /features/panels/graph/
-      name: Graph
-    - link: /features/panels/table_panel/
-      name: Table
-    - link: /features/panels/stat/
-      name: Stat
-    - link: /features/panels/gauge/
-      name: Gauge
-    - link: /features/panels/bar_gauge/
-      name: Bar gauge
-    - link: /features/panels/logs/
-      name: Logs
-    - link: /features/panels/singlestat/
-      name: Singlestat
-    - link: /features/panels/heatmap/
-      name: Heatmap
-    - link: /features/panels/alertlist/
-      name: Alert list
-    - link: /features/panels/dashlist/
-      name: Dashboard list
-    - link: /features/panels/text/
-      name: Text
-  - name: Dashboard features
-    link: /features/dashboard/
-    children:
-    - link: /features/dashboard/dashboards/
-      name: Overview
-    - link: /reference/templating/
-      name: Variables
-    - link: /reference/annotations/
-      name: Annotations
-    - link: /reference/dashboard_folders/
-      name: Folders
-    - link: /reference/playlist/
-      name: Playlist
-    - link: /reference/search/
-      name: Search
-    - link: /reference/share_dashboard/
-      name: Sharing a dashboard
-    - link: /reference/share_panel/
-      name: Sharing a panel
-    - link: /reference/timerange/
-      name: Time range
-    - link: /reference/export_import/
-      name: Export and import
-    - link: /reference/datalinks/
-      name: Data links
-    - link: /reference/dashboard_history/
-      name: Dashboard version history
-    - link: /reference/dashboard/
-      name: JSON Model
-    - link: /reference/scripting/
-      name: Scripted dashboards
-  - name: Data sources
-    link: /features/datasources/
-    children:
-    - link: /features/datasources/add-a-data-source/
-      name: Add data source
-    - link: /features/datasources/cloudwatch/
-      name: AWS Cloudwatch
-    - link: /features/datasources/azuremonitor/
-      name: Azure Monitor
-    - link: /features/datasources/elasticsearch/
-      name: Elasticsearch
-    - link: /features/datasources/stackdriver/
-      name: Google Stackdriver
-    - link: /features/datasources/graphite/
-      name: Graphite
-    - link: /features/datasources/influxdb/
-      name: InfluxDB
-    - link: /features/datasources/loki/
-      name: Loki
-    - link: /features/datasources/mssql/
-      name: Microsoft SQL Server
-    - link: /features/datasources/mixed/
-      name: MixedData
-    - link: /features/datasources/mysql/
-      name: MySQL
-    - link: /features/datasources/opentsdb/
-      name: OpenTSDB
-    - link: /features/datasources/postgres/
-      name: PostgreSQL
-    - link: /features/datasources/prometheus/
-      name: Prometheus
-    - link: /features/datasources/testdata/
-      name: TestData DB
-  - name: Explore
-    link: /features/explore/
-  - name: Alerting
-    link: /alerting/
-    children:
-    - link: /alerting/rules/
-      name: Engine and Rules
-    - link: /alerting/metrics/
-      name: Metrics
-    - link: /alerting/notifications/
-      name: Notifications
-  - name: Image rendering
-    link: /administration/image_rendering/
+  - link: /features/panels/panels/
+    name: Overview
+  - link: /features/panels/graph/
+    name: Graph
+  - link: /features/panels/table_panel/
+    name: Table
+  - link: /features/panels/stat/
+    name: Stat
+  - link: /features/panels/gauge/
+    name: Gauge
+  - link: /features/panels/bar_gauge/
+    name: Bar gauge
+  - link: /features/panels/logs/
+    name: Logs
+  - link: /features/panels/singlestat/
+    name: Singlestat
+  - link: /features/panels/heatmap/
+    name: Heatmap
+  - link: /features/panels/alertlist/
+    name: Alert list
+  - link: /features/panels/dashlist/
+    name: Dashboard list
+  - link: /features/panels/text/
+    name: Text
+- name: Dashboards
+  link: /features/dashboard/
+  children:
+  - link: /features/dashboard/dashboards/
+    name: Overview
+  - link: /reference/annotations/
+    name: Annotations
+  - link: /reference/dashboard_folders/
+    name: Folders
+  - link: /reference/playlist/
+    name: Playlist
+  - link: /reference/search/
+    name: Search
+  - link: /reference/share_dashboard/
+    name: Sharing a dashboard
+  - link: /reference/share_panel/
+    name: Sharing a panel
+  - link: /reference/timerange/
+    name: Time range
+  - link: /reference/export_import/
+    name: Export and import
+  - link: /features/dashboard/links/
+    name: Navigation links
+  - link: /reference/datalinks/
+    name: Data links
+  - link: /reference/dashboard_history/
+    name: Dashboard version history
   - name: Keyboard Shortcuts
     link: /features/shortcuts/
   - name: Reporting
     link: /features/reporting/
-  - name: Navigation links
-    link: /features/navigation-links/
+  - link: /reference/dashboard/
+    name: JSON Model
+  - link: /reference/scripting/
+    name: Scripted dashboards
+- name: Data sources
+  link: /features/datasources/
+  children:
+  - link: /features/datasources/add-a-data-source/
+    name: Add data source
+  - link: /features/datasources/cloudwatch/
+    name: AWS Cloudwatch
+  - link: /features/datasources/azuremonitor/
+    name: Azure Monitor
+  - link: /features/datasources/elasticsearch/
+    name: Elasticsearch
+  - link: /features/datasources/stackdriver/
+    name: Google Stackdriver
+  - link: /features/datasources/graphite/
+    name: Graphite
+  - link: /features/datasources/influxdb/
+    name: InfluxDB
+  - link: /features/datasources/loki/
+    name: Loki
+  - link: /features/datasources/mssql/
+    name: Microsoft SQL Server
+  - link: /features/datasources/mixed/
+    name: MixedData
+  - link: /features/datasources/mysql/
+    name: MySQL
+  - link: /features/datasources/opentsdb/
+    name: OpenTSDB
+  - link: /features/datasources/postgres/
+    name: PostgreSQL
+  - link: /features/datasources/prometheus/
+    name: Prometheus
+  - link: /features/datasources/testdata/
+    name: TestData DB
+- name: Explore
+  link: /features/explore/
+- name: Alerting
+  link: /alerting/
+  children:
+  - link: /alerting/rules/
+    name: Engine and Rules
+  - link: /alerting/metrics/
+    name: Metrics
+  - link: /alerting/notifications/
+    name: Notifications
+- name: Image rendering
+  link: /administration/image_rendering/
+- name: Templates and variables
+  link: /variables/
+  children:
+    - link: /variables/templates-and-variables/
+      name: Overview
+    - link: /variables/global-variables/
+      name: Global variables
+    - link: /variables/advanced-variable-format-options/
+      name: Advanced variable formats
+    - link: /variables/repeat-panels-or-rows/
+      name: Repeat panels or rows
 - name: What's new in Grafana
   link: /whatsnew/
   children:
-  - name: Version 6.7
-    link: /guides/whats-new-in-v6-7/
-  - name: Version 6.6
-    link: /guides/whats-new-in-v6-6/
-  - name: Version 6.5
-    link: /guides/whats-new-in-v6-5/
-  - name: Version 6.4
-    link: /guides/whats-new-in-v6-4/
-  - name: Version 6.3
-    link: /guides/whats-new-in-v6-3/
-  - name: Version 6.2
-    link: /guides/whats-new-in-v6-2/
-  - name: Version 6.1
-    link: /guides/whats-new-in-v6-1/
-  - name: Version 6.0
-    link: /guides/whats-new-in-v6-0/
-  - name: Old versions
-    link: /whatsnew/
-    children:
-    - name: Version 5.4
-      link: /guides/whats-new-in-v5-4/
-    - name: Version 5.3
-      link: /guides/whats-new-in-v5-3/
-    - name: Version 5.2
-      link: /guides/whats-new-in-v5-2/
-    - name: Version 5.1
-      link: /guides/whats-new-in-v5-1/
-    - name: Version 5.0
-      link: /guides/whats-new-in-v5/
-    - name: Version 4.6
-      link: /guides/whats-new-in-v4-6/
-    - name: Version 4.5
-      link: /guides/whats-new-in-v4-5/
-    - name: Version 4.4
-      link: /guides/whats-new-in-v4-4/
-    - name: Version 4.3
-      link: /guides/whats-new-in-v4-3/
-    - name: Version 4.2
-      link: /guides/whats-new-in-v4-2/
-    - name: Version 4.1
-      link: /guides/whats-new-in-v4-1/
-    - name: Version 4.0
-      link: /guides/whats-new-in-v4/
-    - name: Version 3.1
-      link: /guides/whats-new-in-v3-1/
-    - name: Version 3.0
-      link: /guides/whats-new-in-v3/
+    - name: Version 7.0
+      link: /guides/whats-new-in-v7-0/
+    - name: Version 6.7
+      link: /guides/whats-new-in-v6-7/
+    - name: Version 6.6
+      link: /guides/whats-new-in-v6-6/
+    - name: Version 6.5
+      link: /guides/whats-new-in-v6-5/
+    - name: Version 6.4
+      link: /guides/whats-new-in-v6-4/
+    - name: Version 6.3
+      link: /guides/whats-new-in-v6-3/
+    - name: Version 6.2
+      link: /guides/whats-new-in-v6-2/
+    - name: Version 6.1
+      link: /guides/whats-new-in-v6-1/
+    - name: Version 6.0
+      link: /guides/whats-new-in-v6-0/
+    - name: Old versions
+      link: /whatsnew/
+      children:
+        - name: Version 5.4
+          link: /guides/whats-new-in-v5-4/
+        - name: Version 5.3
+          link: /guides/whats-new-in-v5-3/
+        - name: Version 5.2
+          link: /guides/whats-new-in-v5-2/
+        - name: Version 5.1
+          link: /guides/whats-new-in-v5-1/
+        - name: Version 5.0
+          link: /guides/whats-new-in-v5/
+        - name: Version 4.6
+          link: /guides/whats-new-in-v4-6/
+        - name: Version 4.5
+          link: /guides/whats-new-in-v4-5/
+        - name: Version 4.4
+          link: /guides/whats-new-in-v4-4/
+        - name: Version 4.3
+          link: /guides/whats-new-in-v4-3/
+        - name: Version 4.2
+          link: /guides/whats-new-in-v4-2/
+        - name: Version 4.1
+          link: /guides/whats-new-in-v4-1/
+        - name: Version 4.0
+          link: /guides/whats-new-in-v4/
+        - name: Version 3.1
+          link: /guides/whats-new-in-v3-1/
+        - name: Version 3.0
+          link: /guides/whats-new-in-v3/
 - name: Grafana Enterprise
   link: /enterprise/
   children:
-  - name: Overview
-    link: /enterprise/
-  - name: Data source permissions
-    link: /enterprise/datasource_permissions/
-  - name: Enhanced LDAP
-    link: /enterprise/enhanced_ldap/
-  - name: Reporting
-    link: /enterprise/reporting/
-  - name: SAML authentication
-    link: /enterprise/saml/
-  - name: Team sync
-    link: /enterprise/team-sync/
-  - name: White labeling
-    link: /enterprise/white-labeling/
-  - name: License expiration
-    link: /enterprise/license-expiration/
-  - name: Export dashboard as PDF
-    link: /enterprise/export-pdf/
+    - name: Overview
+      link: /enterprise/
+    - name: Data source permissions
+      link: /enterprise/datasource_permissions/
+    - name: Enhanced LDAP
+      link: /enterprise/enhanced_ldap/
+    - name: Reporting
+      link: /enterprise/reporting/
+    - name: SAML authentication
+      link: /enterprise/saml/
+    - name: Team sync
+      link: /enterprise/team-sync/
+    - name: White labeling
+      link: /enterprise/white-labeling/
+    - name: License expiration
+      link: /enterprise/license-expiration/
+    - name: Export dashboard as PDF
+      link: /enterprise/export-pdf/
 - name: Plugins
   link: /plugins/
   children:
-  - name: Install plugins
-    link: /plugins/installation/
-  - name: Develop plugins
-    link: /plugins/developing/
-    children:
-    - link: /plugins/developing/development/
-      name: Developer Guide
-    - link: /plugins/developing/code-styleguide/
-      name: Plugin Code Styleguide
-    - link: /plugins/developing/plugin-review-guidelines/
-      name: Plugin Review Guidelines
-    - link: /plugins/developing/auth-for-datasources/
-      name: Authentication for Datasource Plugins
-    - link: /plugins/developing/defaults-and-editor-mode/
-      name: Plugin Defaults and Editor Mode
-    - link: /plugins/developing/apps/
-      name: Developing App Plugins
-    - link: /plugins/developing/panels/
-      name: Developing Panel Plugins
-    - link: /plugins/developing/backend-plugins-guide/
-      name: Developing Backend Plugins
-    - link: /plugins/developing/datasources/
-      name: Developing Datasource Plugins
-    - link: /plugins/developing/snapshot-mode/
-      name: Snapshot Mode
-    - link: /plugins/developing/plugin.json/
-      name: plugin.json Schema
+    - name: Install plugins
+      link: /plugins/installation/
+    - name: Develop plugins
+      link: /plugins/developing/
+      children:
+        - link: /plugins/developing/development/
+          name: Developer Guide
+        - link: /plugins/developing/code-styleguide/
+          name: Plugin Code Styleguide
+        - link: /plugins/developing/plugin-review-guidelines/
+          name: Plugin Review Guidelines
+        - link: /plugins/developing/auth-for-datasources/
+          name: Authentication for Datasource Plugins
+        - link: /plugins/developing/defaults-and-editor-mode/
+          name: Plugin Defaults and Editor Mode
+        - link: /plugins/developing/apps/
+          name: Developing App Plugins
+        - link: /plugins/developing/panels/
+          name: Developing Panel Plugins
+        - link: /plugins/developing/backend-plugins-guide/
+          name: Developing Backend Plugins
+        - link: /plugins/developing/datasources/
+          name: Developing Datasource Plugins
+        - link: /plugins/developing/snapshot-mode/
+          name: Snapshot Mode
+        - link: /plugins/developing/plugin.json/
+          name: plugin.json Schema
 - name: HTTP APIs
   link: /http_api/
   children:
-  - name: API Authentication
-    link: /http_api/auth/
-  - name: Create API Tokens and Dashboards for a Specific Organization
-    link: /tutorials/api_org_token_howto/
-  - name: Admin API
-    link: /http_api/admin/
-  - name: Alerting API
-    link: /http_api/alerting/
-  - name: Alerting Notifications API
-    link: /http_api/alerting_notification_channels/
-  - name: Annotations API
-    link: /http_api/annotations/
-  - name: Dashboard API
-    link: /http_api/dashboard/
-  - name: Dashboard Permissions API
-    link: /http_api/dashboard_permissions/
-  - name: Dashboard Versions API
-    link: /http_api/dashboard_versions/
-  - name: Data Source API
-    link: /http_api/data_source/
-  - name: Data source Permissions API
-    link: /http_api/datasource_permissions/
-  - name: External Group Sync API
-    link: /http_api/external_group_sync/
-  - name: Folder API
-    link: /http_api/folder/
-  - name: Folder Permissions API
-    link: /http_api/folder_permissions/
-  - name: Folder/Dashboard Search API
-    link: /http_api/folder_dashboard_search/
-  - name: Organization API
-    link: /http_api/org/
-  - name: Other APIs
-    link: /http_api/other/
-  - name: Playlist API
-    link: /http_api/playlist/
-  - name: Preferences API
-    link: /http_api/preferences/
-  - name: Snapshot API
-    link: /http_api/snapshot/
-  - name: Teams API
-    link: /http_api/team/
-  - name: Users API
-    link: /http_api/user/
+    - name: API Authentication
+      link: /http_api/auth/
+    - name: Create API Tokens and Dashboards for a Specific Organization
+      link: /tutorials/api_org_token_howto/
+    - name: Admin API
+      link: /http_api/admin/
+    - name: Alerting API
+      link: /http_api/alerting/
+    - name: Alerting Notifications API
+      link: /http_api/alerting_notification_channels/
+    - name: Annotations API
+      link: /http_api/annotations/
+    - name: Dashboard API
+      link: /http_api/dashboard/
+    - name: Dashboard Permissions API
+      link: /http_api/dashboard_permissions/
+    - name: Dashboard Versions API
+      link: /http_api/dashboard_versions/
+    - name: Data Source API
+      link: /http_api/data_source/
+    - name: Data source Permissions API
+      link: /http_api/datasource_permissions/
+    - name: External Group Sync API
+      link: /http_api/external_group_sync/
+    - name: Folder API
+      link: /http_api/folder/
+    - name: Folder Permissions API
+      link: /http_api/folder_permissions/
+    - name: Folder/Dashboard Search API
+      link: /http_api/folder_dashboard_search/
+    - name: Organization API
+      link: /http_api/org/
+    - name: Other APIs
+      link: /http_api/other/
+    - name: Playlist API
+      link: /http_api/playlist/
+    - name: Preferences API
+      link: /http_api/preferences/
+    - name: Snapshot API
+      link: /http_api/snapshot/
+    - name: Teams API
+      link: /http_api/team/
+    - name: Users API
+      link: /http_api/user/
 - name: Developers
   link: /developers/
   children:
-  - name: Developer resources
-    link: /developers/developer-resources/
-  - name: Contributor License Agreement (CLA)
-    link: /developers/cla/
+    - name: Developer resources
+      link: /developers/developer-resources/
+    - name: Packages reference
+      link: /packages_api/
+    - name: Contributor License Agreement (CLA)
+      link: /developers/cla/
 - name: Docs Archive
   link: /archive/

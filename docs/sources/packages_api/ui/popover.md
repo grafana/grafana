@@ -5,7 +5,6 @@
 title = "Popover"
 keywords = ["grafana","documentation","sdk","@grafana/ui"]
 type = "docs"
-draft = true
 +++
 
 ## Popover class

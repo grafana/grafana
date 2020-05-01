@@ -5,7 +5,6 @@
 title = "styleMixins"
 keywords = ["grafana","documentation","sdk","@grafana/ui"]
 type = "docs"
-draft = true
 +++
 
 ## styleMixins namespace
@@ -29,4 +28,10 @@ import { styleMixins } from '@grafana/ui';
 |  [hoverColor(color, theme)](./hovercolor/) |  |
 |  [listItem(theme)](./listitem/) |  |
 |  [listItemSelected(theme)](./listitemselected/) |  |
+
+## Variables
+
+|  Variable | Description |
+|  --- | --- |
+|  [focusCss](./focuscss/) |  |
 

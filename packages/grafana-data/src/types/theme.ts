@@ -98,13 +98,13 @@ export interface GrafanaThemeCommons {
   panelPadding: number;
   panelHeaderHeight: number;
   zIndex: {
-    dropdown: string;
-    navbarFixed: string;
-    sidemenu: string;
-    tooltip: string;
-    modalBackdrop: string;
-    modal: string;
-    typeahead: string;
+    dropdown: number;
+    navbarFixed: number;
+    sidemenu: number;
+    tooltip: number;
+    modalBackdrop: number;
+    modal: number;
+    typeahead: number;
   };
 }
 
@@ -236,7 +236,6 @@ export interface GrafanaTheme extends GrafanaThemeCommons {
     formSwitchBgHover: string;
     formSwitchBgDisabled: string;
     formSwitchDot: string;
-    formCheckboxBg: string;
     formCheckboxBgChecked: string;
     formCheckboxBgCheckedHover: string;
     formCheckboxCheckmark: string;

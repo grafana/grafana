@@ -15,6 +15,7 @@ describe('InputDatasource', () => {
   const data = readCSV('a,b,c\n1,2,3\n4,5,6');
   const instanceSettings: DataSourceInstanceSettings<InputOptions> = {
     id: 1,
+    uid: 'xxx',
     type: 'x',
     name: 'xxx',
     meta: {} as PluginMeta,

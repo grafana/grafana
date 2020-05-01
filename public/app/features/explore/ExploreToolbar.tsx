@@ -191,6 +191,8 @@ export class UnConnectedExploreToolbar extends PureComponent<Props> {
     const showSmallDataSourcePicker = (splitted ? containerWidth < 700 : containerWidth < 800) || false;
     const showSmallTimePicker = splitted || containerWidth < 1210;
 
+    const showModeToggle = supportedModes.length > 1;
+
     return (
       <div className={splitted ? 'explore-toolbar splitted' : 'explore-toolbar'}>
         <div className="explore-toolbar-item">
@@ -233,7 +235,7 @@ export class UnConnectedExploreToolbar extends PureComponent<Props> {
                     hideTextValue={showSmallDataSourcePicker}
                   />
                 </div>
-                {supportedModes.length > 1 ? (
+                {showModeToggle ? (
                   <div className="query-type-toggle">
                     <ToggleButtonGroup label="" transparent={true}>
                       <ToggleButton

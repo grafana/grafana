@@ -1,14 +1,13 @@
+import chalk from 'chalk';
 import commandExists from 'command-exists';
-import { readFileSync, promises as fs } from 'fs';
+import { promises as fs, readFileSync } from 'fs';
 import { prompt } from 'inquirer';
 import kebabCase from 'lodash/kebabCase';
 import path from 'path';
 import gitPromise from 'simple-git/promise';
-
-import { useSpinner } from '../../utils/useSpinner';
+import { promptConfirm, promptInput } from '../../utils/prompt';
 import { rmdir } from '../../utils/rmdir';
-import { promptInput, promptConfirm } from '../../utils/prompt';
-import chalk from 'chalk';
+import { useSpinner } from '../../utils/useSpinner';
 
 const simpleGit = gitPromise(process.cwd());
 
@@ -21,12 +20,22 @@ interface PluginDetails {
   keywords: string;
 }
 
-type PluginType = 'angular-panel' | 'react-panel' | 'datasource-plugin';
+type PluginType = 'panel-plugin' | 'datasource-plugin' | 'backend-datasource-plugin';
 
-const RepositoriesPaths = {
-  'angular-panel': 'https://github.com/grafana/simple-angular-panel.git',
-  'react-panel': 'https://github.com/grafana/simple-react-panel.git',
+const PluginNames: Record<PluginType, string> = {
+  'panel-plugin': 'Grafana Panel Plugin',
+  'datasource-plugin': 'Grafana Data Source Plugin',
+  'backend-datasource-plugin': 'Grafana Backend Datasource Plugin',
+};
+const RepositoriesPaths: Record<PluginType, string> = {
+  'panel-plugin': 'https://github.com/grafana/simple-react-panel.git',
   'datasource-plugin': 'https://github.com/grafana/simple-datasource.git',
+  'backend-datasource-plugin': 'https://github.com/grafana/simple-datasource-backend.git',
+};
+const TutorialPaths: Record<PluginType, string> = {
+  'panel-plugin': 'https://grafana.com/tutorials/build-a-panel-plugin',
+  'datasource-plugin': 'https://grafana.com/tutorials/build-a-data-source-plugin',
+  'backend-datasource-plugin': 'TODO',
 };
 
 export const getGitUsername = async () => {
@@ -61,9 +70,9 @@ export const promptPluginType = async () =>
       message: 'Select plugin type',
       name: 'type',
       choices: [
-        { name: 'Angular panel', value: 'angular-panel' },
-        { name: 'React panel', value: 'react-panel' },
-        { name: 'Datasource plugin', value: 'datasource-plugin' },
+        { name: 'Panel Plugin', value: 'panel-plugin' },
+        { name: 'Datasource Plugin', value: 'datasource-plugin' },
+        { name: 'Backend Datasource Plugin', value: 'backend-datasource-plugin' },
       ],
     },
   ]);
@@ -100,9 +109,9 @@ export const fetchTemplate = useSpinner<{ type: PluginType; dest: string }>(
   }
 );
 
-export const prepareJsonFiles = useSpinner<{ pluginDetails: PluginDetails; pluginPath: string }>(
+export const prepareJsonFiles = useSpinner<{ type: PluginType; pluginDetails: PluginDetails; pluginPath: string }>(
   'Saving package.json and plugin.json files',
-  async ({ pluginDetails, pluginPath }) => {
+  async ({ type, pluginDetails, pluginPath }) => {
     const packageJsonPath = path.resolve(pluginPath, 'package.json');
     const pluginJsonPath = path.resolve(pluginPath, 'src/plugin.json');
     const packageJson: any = JSON.parse(readFileSync(packageJsonPath, 'utf8'));
@@ -115,6 +124,12 @@ export const prepareJsonFiles = useSpinner<{ pluginDetails: PluginDetails; plugi
 
     pluginJson.name = pluginDetails.name;
     pluginJson.id = pluginId;
+
+    if (type === 'backend-datasource-plugin') {
+      pluginJson.backend = true;
+      pluginJson.executable = 'gpx_' + pluginDetails.name;
+    }
+
     pluginJson.info = {
       ...pluginJson.info,
       description: pluginDetails.description,
@@ -149,6 +164,21 @@ export const formatPluginDetails = (details: PluginDetails) => {
   console.log(chalk.bold('Author: '), details.author);
   console.log(chalk.bold('Organisation: '), details.org);
   console.log(chalk.bold('Website: '), details.url);
+  console.log();
+  console.groupEnd();
+};
+
+export const printGrafanaTutorialsDetails = (type: PluginType) => {
+  console.group();
+  console.log();
+  console.log(chalk.bold.yellow(`Congrats! You have just created ${PluginNames[type]}.`));
+  console.log();
+  if (type !== 'backend-datasource-plugin') {
+    console.log(`${PluginNames[type]} tutorial: ${TutorialPaths[type]}`);
+  }
+  console.log(
+    'Learn more about Grafana Plugins at https://grafana.com/docs/grafana/latest/plugins/developing/development/'
+  );
   console.log();
   console.groupEnd();
 };

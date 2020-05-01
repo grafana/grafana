@@ -5,7 +5,6 @@
 title = "LegacyForms"
 keywords = ["grafana","documentation","sdk","@grafana/ui"]
 type = "docs"
-draft = true
 +++
 
 ## LegacyForms variable
@@ -16,6 +15,8 @@ draft = true
 
 ```typescript
 LegacyForms: {
+    SecretFormField: import("react").FunctionComponent<import("./SecretFormField/SecretFormField").Props>;
+    FormField: import("react").FunctionComponent<import("./FormField/FormField").Props>;
     Select: typeof Select;
     AsyncSelect: typeof AsyncSelect;
     IndicatorsContainer: (props: any) => JSX.Element;

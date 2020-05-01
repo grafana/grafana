@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { HTMLProps } from 'react';
 import { css } from 'emotion';
 import { GrafanaTheme } from '@grafana/data';
 import { stylesFactory, useTheme } from '../../themes';
@@ -11,7 +11,7 @@ type Spacing = 'none' | 'xs' | 'sm' | 'md' | 'lg';
 type Justify = 'flex-start' | 'flex-end' | 'space-between' | 'center';
 type Align = 'normal' | 'flex-start' | 'flex-end' | 'center';
 
-export interface LayoutProps {
+export interface LayoutProps extends Omit<HTMLProps<HTMLDivElement>, 'align' | 'children' | 'wrap'> {
   children: React.ReactNode[] | React.ReactNode;
   orientation?: Orientation;
   spacing?: Spacing;
@@ -33,12 +33,13 @@ export const Layout: React.FC<LayoutProps> = ({
   justify = 'flex-start',
   align = 'normal',
   wrap = false,
-  width = 'auto',
+  width = '100%',
+  ...rest
 }) => {
   const theme = useTheme();
   const styles = getStyles(theme, orientation, spacing, justify, align, wrap);
   return (
-    <div className={styles.layout} style={{ width }}>
+    <div className={styles.layout} style={{ width }} {...rest}>
       {React.Children.toArray(children)
         .filter(Boolean)
         .map((child, index) => {
@@ -75,9 +76,10 @@ export const VerticalGroup: React.FC<Omit<LayoutProps, 'orientation' | 'wrap'>> 
   children,
   spacing,
   justify,
+  align,
   width,
 }) => (
-  <Layout spacing={spacing} justify={justify} orientation={Orientation.Vertical} width={width}>
+  <Layout spacing={spacing} justify={justify} orientation={Orientation.Vertical} align={align} width={width}>
     {children}
   </Layout>
 );
@@ -91,7 +93,11 @@ export const Container: React.FC<ContainerProps> = ({ children, padding, margin 
 const getStyles = stylesFactory(
   (theme: GrafanaTheme, orientation: Orientation, spacing: Spacing, justify: Justify, align, wrap) => {
     const finalSpacing = spacing !== 'none' ? theme.spacing[spacing] : 0;
-    const marginCompensation = orientation === Orientation.Horizontal && !wrap ? 0 : `-${finalSpacing}`;
+    // compensate for last row margin when wrapped, horizontal layout
+    const marginCompensation =
+      (orientation === Orientation.Horizontal && !wrap) || orientation === Orientation.Vertical
+        ? 0
+        : `-${finalSpacing}`;
 
     return {
       layout: css`
@@ -110,7 +116,6 @@ const getStyles = stylesFactory(
         margin-right: ${orientation === Orientation.Horizontal ? finalSpacing : 0};
         display: flex;
         align-items: ${align};
-        // height: 100%;
 
         &:last-child {
           margin-bottom: 0;

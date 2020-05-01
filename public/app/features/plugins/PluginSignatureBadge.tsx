@@ -1,6 +1,12 @@
 import React from 'react';
-import { Icon, stylesFactory, useTheme, IconName, Tooltip } from '@grafana/ui';
-import { GrafanaTheme, PluginSignatureStatus, getColorFromHexRgbOrName } from '@grafana/data';
+import { Icon, IconName, stylesFactory, Tooltip, useTheme } from '@grafana/ui';
+import {
+  getColorFromHexRgbOrName,
+  GrafanaTheme,
+  PanelPluginMeta,
+  PluginSignatureStatus,
+  PluginState,
+} from '@grafana/data';
 import { css } from 'emotion';
 import tinycolor from 'tinycolor2';
 
@@ -20,6 +26,25 @@ export const PluginSignatureBadge: React.FC<Props> = ({ status }) => {
         <span>{display.text}</span>
       </div>
     </Tooltip>
+  );
+};
+
+interface PanelPluginBadgeProps {
+  plugin: PanelPluginMeta;
+}
+export const PanelPluginBadge: React.FC<PanelPluginBadgeProps> = ({ plugin }) => {
+  const theme = useTheme();
+  const display = getPanelStateBadgeDisplayModel(plugin);
+  const styles = getStyles(theme, display);
+
+  if (plugin.state !== PluginState.deprecated && plugin.state !== PluginState.alpha) {
+    return null;
+  }
+  return (
+    <div className={styles.wrapper}>
+      <Icon name={display.icon} size="sm" />
+      <span>{display.text}</span>
+    </div>
   );
 };
 
@@ -53,6 +78,25 @@ function getSignatureDisplayModel(signature: PluginSignatureStatus): DisplayMode
   }
 
   return { text: 'Unsigned', icon: 'exclamation-triangle', color: 'red', tooltip: 'Unsigned external plugin' };
+}
+
+function getPanelStateBadgeDisplayModel(panel: PanelPluginMeta): DisplayModel {
+  switch (panel.state) {
+    case PluginState.deprecated:
+      return {
+        text: 'Deprecated',
+        icon: 'exclamation-triangle',
+        color: 'red',
+        tooltip: `${panel.name} panel is deprecated`,
+      };
+  }
+
+  return {
+    text: 'Alpha',
+    icon: 'rocket',
+    color: 'blue',
+    tooltip: `${panel.name} panel is experimental`,
+  };
 }
 
 const getStyles = stylesFactory((theme: GrafanaTheme, model: DisplayModel) => {
