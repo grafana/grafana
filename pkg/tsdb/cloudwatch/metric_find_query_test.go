@@ -6,11 +6,8 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/cloudwatch"
-	"github.com/aws/aws-sdk-go/service/cloudwatch/cloudwatchiface"
 	"github.com/aws/aws-sdk-go/service/ec2"
-	"github.com/aws/aws-sdk-go/service/ec2/ec2iface"
 	"github.com/aws/aws-sdk-go/service/resourcegroupstaggingapi"
-	"github.com/aws/aws-sdk-go/service/resourcegroupstaggingapi/resourcegroupstaggingapiiface"
 	"github.com/grafana/grafana/pkg/components/securejsondata"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
@@ -19,49 +16,8 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-type mockedCloudWatch struct {
-	cloudwatchiface.CloudWatchAPI
-	Resp cloudwatch.ListMetricsOutput
-}
-
-type mockedEc2 struct {
-	ec2iface.EC2API
-	Resp        ec2.DescribeInstancesOutput
-	RespRegions ec2.DescribeRegionsOutput
-}
-
-type mockedRGTA struct {
-	resourcegroupstaggingapiiface.ResourceGroupsTaggingAPIAPI
-	Resp resourcegroupstaggingapi.GetResourcesOutput
-}
-
-func (m mockedCloudWatch) ListMetricsPages(in *cloudwatch.ListMetricsInput, fn func(*cloudwatch.ListMetricsOutput, bool) bool) error {
-	fn(&m.Resp, true)
-	return nil
-}
-
-func (m mockedEc2) DescribeInstancesPages(in *ec2.DescribeInstancesInput, fn func(*ec2.DescribeInstancesOutput, bool) bool) error {
-	fn(&m.Resp, true)
-	return nil
-}
-func (m mockedEc2) DescribeRegions(in *ec2.DescribeRegionsInput) (*ec2.DescribeRegionsOutput, error) {
-	return &m.RespRegions, nil
-}
-
-func (m mockedRGTA) GetResourcesPages(in *resourcegroupstaggingapi.GetResourcesInput, fn func(*resourcegroupstaggingapi.GetResourcesOutput, bool) bool) error {
-	fn(&m.Resp, true)
-	return nil
-}
-
 func TestCloudWatchMetrics(t *testing.T) {
-	jsonData := simplejson.New()
-	jsonData.Set("defaultRegion", "default")
-	ds := &models.DataSource{
-		Id:             1,
-		Database:       "default",
-		JsonData:       jsonData,
-		SecureJsonData: securejsondata.SecureJsonData{},
-	}
+	ds := mockDatasource()
 
 	Convey("When calling getMetricsForCustomMetrics", t, func() {
 		executor := &CloudWatchExecutor{

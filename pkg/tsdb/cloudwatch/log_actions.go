@@ -8,7 +8,6 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/service/cloudwatchlogs"
-	"github.com/aws/aws-sdk-go/service/cloudwatchlogs/cloudwatchlogsiface"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/tsdb"
@@ -60,26 +59,24 @@ func (e *CloudWatchExecutor) executeLogAction(ctx context.Context, queryContext 
 	parameters := query.Model
 	subType := query.Model.Get("subtype").MustString()
 
-	logsClient, err := e.clients.logsClient(e.getDsInfo(CLOUDWATCH_DEFAULT_REGION))
-	if err != nil {
-		return nil, err
-	}
-
-	var data *data.Frame = nil
+	var (
+		err  error
+		data *data.Frame = nil
+	)
 
 	switch subType {
 	case "DescribeLogGroups":
-		data, err = e.handleDescribeLogGroups(ctx, logsClient, parameters)
+		data, err = e.handleDescribeLogGroups(ctx, parameters)
 	case "GetLogGroupFields":
-		data, err = e.handleGetLogGroupFields(ctx, logsClient, parameters, query.RefId)
+		data, err = e.handleGetLogGroupFields(ctx, parameters, query.RefId)
 	case "StartQuery":
-		data, err = e.handleStartQuery(ctx, logsClient, parameters, queryContext.TimeRange, query.RefId)
+		data, err = e.handleStartQuery(ctx, parameters, queryContext.TimeRange, query.RefId)
 	case "StopQuery":
-		data, err = e.handleStopQuery(ctx, logsClient, parameters)
+		data, err = e.handleStopQuery(ctx, parameters)
 	case "GetQueryResults":
-		data, err = e.handleGetQueryResults(ctx, logsClient, parameters, query.RefId)
+		data, err = e.handleGetQueryResults(ctx, parameters, query.RefId)
 	case "GetLogEvents":
-		data, err = e.handleGetLogEvents(ctx, logsClient, parameters)
+		data, err = e.handleGetLogEvents(ctx, parameters)
 	}
 
 	if err != nil {
@@ -89,7 +86,7 @@ func (e *CloudWatchExecutor) executeLogAction(ctx context.Context, queryContext 
 	return data, nil
 }
 
-func (e *CloudWatchExecutor) handleGetLogEvents(ctx context.Context, logsClient cloudwatchlogsiface.CloudWatchLogsAPI, parameters *simplejson.Json) (*data.Frame, error) {
+func (e *CloudWatchExecutor) handleGetLogEvents(ctx context.Context, parameters *simplejson.Json) (*data.Frame, error) {
 	queryRequest := &cloudwatchlogs.GetLogEventsInput{
 		Limit:         aws.Int64(parameters.Get("limit").MustInt64(10)),
 		StartFromHead: aws.Bool(parameters.Get("startFromHead").MustBool(false)),
@@ -113,6 +110,11 @@ func (e *CloudWatchExecutor) handleGetLogEvents(ctx context.Context, logsClient 
 
 	if endTime, err := parameters.Get("endTime").Int64(); err == nil {
 		queryRequest.SetEndTime(endTime)
+	}
+
+	logsClient, err := e.clients.logsClient(e.getDsInfo(CLOUDWATCH_DEFAULT_REGION))
+	if err != nil {
+		return nil, err
 	}
 
 	logEvents, err := logsClient.GetLogEventsWithContext(ctx, queryRequest)
@@ -140,10 +142,15 @@ func (e *CloudWatchExecutor) handleGetLogEvents(ctx context.Context, logsClient 
 	return data.NewFrame("logEvents", timestampField, messageField), nil
 }
 
-func (e *CloudWatchExecutor) handleDescribeLogGroups(ctx context.Context, logsClient cloudwatchlogsiface.CloudWatchLogsAPI, parameters *simplejson.Json) (*data.Frame, error) {
+func (e *CloudWatchExecutor) handleDescribeLogGroups(ctx context.Context, parameters *simplejson.Json) (*data.Frame, error) {
 	logGroupNamePrefix := parameters.Get("logGroupNamePrefix").MustString("")
 	var response *cloudwatchlogs.DescribeLogGroupsOutput = nil
 	var err error
+
+	logsClient, err := e.clients.logsClient(e.getDsInfo(CLOUDWATCH_DEFAULT_REGION))
+	if err != nil {
+		return nil, err
+	}
 
 	if len(logGroupNamePrefix) < 1 {
 		response, err = logsClient.DescribeLogGroupsWithContext(ctx, &cloudwatchlogs.DescribeLogGroupsInput{
@@ -171,7 +178,7 @@ func (e *CloudWatchExecutor) handleDescribeLogGroups(ctx context.Context, logsCl
 	return frame, nil
 }
 
-func (e *CloudWatchExecutor) executeStartQuery(ctx context.Context, logsClient cloudwatchlogsiface.CloudWatchLogsAPI, parameters *simplejson.Json, timeRange *tsdb.TimeRange) (*cloudwatchlogs.StartQueryOutput, error) {
+func (e *CloudWatchExecutor) executeStartQuery(ctx context.Context, parameters *simplejson.Json, timeRange *tsdb.TimeRange) (*cloudwatchlogs.StartQueryOutput, error) {
 	startTime, err := timeRange.ParseFrom()
 	if err != nil {
 		return nil, err
@@ -186,6 +193,11 @@ func (e *CloudWatchExecutor) executeStartQuery(ctx context.Context, logsClient c
 		return nil, fmt.Errorf("invalid time range: Start time must be before end time")
 	}
 
+	logsClient, err := e.clients.logsClient(e.getDsInfo(CLOUDWATCH_DEFAULT_REGION))
+	if err != nil {
+		return nil, err
+	}
+
 	startQueryInput := &cloudwatchlogs.StartQueryInput{
 		StartTime:     aws.Int64(startTime.Unix()),
 		EndTime:       aws.Int64(endTime.Unix()),
@@ -196,8 +208,8 @@ func (e *CloudWatchExecutor) executeStartQuery(ctx context.Context, logsClient c
 	return logsClient.StartQueryWithContext(ctx, startQueryInput)
 }
 
-func (e *CloudWatchExecutor) handleStartQuery(ctx context.Context, logsClient cloudwatchlogsiface.CloudWatchLogsAPI, parameters *simplejson.Json, timeRange *tsdb.TimeRange, refID string) (*data.Frame, error) {
-	startQueryResponse, err := e.executeStartQuery(ctx, logsClient, parameters, timeRange)
+func (e *CloudWatchExecutor) handleStartQuery(ctx context.Context, parameters *simplejson.Json, timeRange *tsdb.TimeRange, refID string) (*data.Frame, error) {
+	startQueryResponse, err := e.executeStartQuery(ctx, parameters, timeRange)
 	if err != nil {
 		return nil, errutil.Wrap(err.(awserr.Error).Message(), err)
 	}
@@ -216,9 +228,14 @@ func (e *CloudWatchExecutor) handleStartQuery(ctx context.Context, logsClient cl
 	return dataFrame, nil
 }
 
-func (e *CloudWatchExecutor) executeStopQuery(ctx context.Context, logsClient cloudwatchlogsiface.CloudWatchLogsAPI, parameters *simplejson.Json) (*cloudwatchlogs.StopQueryOutput, error) {
+func (e *CloudWatchExecutor) executeStopQuery(ctx context.Context, parameters *simplejson.Json) (*cloudwatchlogs.StopQueryOutput, error) {
 	queryInput := &cloudwatchlogs.StopQueryInput{
 		QueryId: aws.String(parameters.Get("queryId").MustString()),
+	}
+
+	logsClient, err := e.clients.logsClient(e.getDsInfo(CLOUDWATCH_DEFAULT_REGION))
+	if err != nil {
+		return nil, err
 	}
 
 	response, err := logsClient.StopQueryWithContext(ctx, queryInput)
@@ -238,8 +255,8 @@ func (e *CloudWatchExecutor) executeStopQuery(ctx context.Context, logsClient cl
 	return response, err
 }
 
-func (e *CloudWatchExecutor) handleStopQuery(ctx context.Context, logsClient cloudwatchlogsiface.CloudWatchLogsAPI, parameters *simplejson.Json) (*data.Frame, error) {
-	response, err := e.executeStopQuery(ctx, logsClient, parameters)
+func (e *CloudWatchExecutor) handleStopQuery(ctx context.Context, parameters *simplejson.Json) (*data.Frame, error) {
+	response, err := e.executeStopQuery(ctx, parameters)
 	if err != nil {
 		return nil, errutil.Wrap(err.(awserr.Error).Message(), err)
 	}
@@ -248,16 +265,21 @@ func (e *CloudWatchExecutor) handleStopQuery(ctx context.Context, logsClient clo
 	return dataFrame, nil
 }
 
-func (e *CloudWatchExecutor) executeGetQueryResults(ctx context.Context, logsClient cloudwatchlogsiface.CloudWatchLogsAPI, parameters *simplejson.Json) (*cloudwatchlogs.GetQueryResultsOutput, error) {
+func (e *CloudWatchExecutor) executeGetQueryResults(ctx context.Context, parameters *simplejson.Json) (*cloudwatchlogs.GetQueryResultsOutput, error) {
 	queryInput := &cloudwatchlogs.GetQueryResultsInput{
 		QueryId: aws.String(parameters.Get("queryId").MustString()),
+	}
+
+	logsClient, err := e.clients.logsClient(e.getDsInfo(CLOUDWATCH_DEFAULT_REGION))
+	if err != nil {
+		return nil, err
 	}
 
 	return logsClient.GetQueryResultsWithContext(ctx, queryInput)
 }
 
-func (e *CloudWatchExecutor) handleGetQueryResults(ctx context.Context, logsClient cloudwatchlogsiface.CloudWatchLogsAPI, parameters *simplejson.Json, refID string) (*data.Frame, error) {
-	getQueryResultsOutput, err := e.executeGetQueryResults(ctx, logsClient, parameters)
+func (e *CloudWatchExecutor) handleGetQueryResults(ctx context.Context, parameters *simplejson.Json, refID string) (*data.Frame, error) {
+	getQueryResultsOutput, err := e.executeGetQueryResults(ctx, parameters)
 	if err != nil {
 		return nil, errutil.Wrap(err.(awserr.Error).Message(), err)
 	}
@@ -274,10 +296,15 @@ func (e *CloudWatchExecutor) handleGetQueryResults(ctx context.Context, logsClie
 	return dataFrame, nil
 }
 
-func (e *CloudWatchExecutor) handleGetLogGroupFields(ctx context.Context, logsClient cloudwatchlogsiface.CloudWatchLogsAPI, parameters *simplejson.Json, refID string) (*data.Frame, error) {
+func (e *CloudWatchExecutor) handleGetLogGroupFields(ctx context.Context, parameters *simplejson.Json, refID string) (*data.Frame, error) {
 	queryInput := &cloudwatchlogs.GetLogGroupFieldsInput{
 		LogGroupName: aws.String(parameters.Get("logGroupName").MustString()),
 		Time:         aws.Int64(parameters.Get("time").MustInt64()),
+	}
+
+	logsClient, err := e.clients.logsClient(e.getDsInfo(CLOUDWATCH_DEFAULT_REGION))
+	if err != nil {
+		return nil, err
 	}
 
 	getLogGroupFieldsOutput, err := logsClient.GetLogGroupFieldsWithContext(ctx, queryInput)

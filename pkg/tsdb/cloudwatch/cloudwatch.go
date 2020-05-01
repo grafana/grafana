@@ -104,7 +104,7 @@ func (e *CloudWatchExecutor) alertQuery(ctx context.Context, logsClient cloudwat
 	const pollPeriod = 1000 * time.Millisecond
 
 	queryParams := queryContext.Queries[0].Model
-	startQueryOutput, err := e.executeStartQuery(ctx, logsClient, queryParams, queryContext.TimeRange)
+	startQueryOutput, err := e.executeStartQuery(ctx, queryParams, queryContext.TimeRange)
 
 	if err != nil {
 		return nil, err
@@ -120,7 +120,7 @@ func (e *CloudWatchExecutor) alertQuery(ctx context.Context, logsClient cloudwat
 
 	attemptCount := 1
 	for range ticker.C {
-		if res, err := e.executeGetQueryResults(ctx, logsClient, requestParams); err != nil {
+		if res, err := e.executeGetQueryResults(ctx, requestParams); err != nil {
 			return nil, err
 		} else if isTerminated(*res.Status) {
 			return res, err
@@ -211,7 +211,7 @@ func (e *CloudWatchExecutor) executeLogAlertQuery(ctx context.Context, queryCont
 		return nil, err
 	}
 
-	result, err := e.executeStartQuery(ctx, logsClient, queryParams, queryContext.TimeRange)
+	result, err := e.executeStartQuery(ctx, queryParams, queryContext.TimeRange)
 	if err != nil {
 		return nil, err
 	}

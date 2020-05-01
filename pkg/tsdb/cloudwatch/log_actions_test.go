@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/request"
 	"github.com/aws/aws-sdk-go/service/cloudwatchlogs"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/components/simplejson"
@@ -15,16 +16,33 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func (m mockedLogs) GetQueryResultsWithContext(ctx context.Context, input *cloudwatchlogs.GetQueryResultsInput, option ...request.Option) (*cloudwatchlogs.GetQueryResultsOutput, error) {
+	return &m.queryResults, nil
+}
+
 //***
 // LogActions Tests
 //***
 
 func TestHandleDescribeLogGroups_WhenLogGroupNamePrefixIsEmpty(t *testing.T) {
-	executor := &CloudWatchExecutor{}
-
-	logsClient := &FakeLogsClient{
-		Config: aws.Config{
-			Region: aws.String("default"),
+	executor := &CloudWatchExecutor{
+		DataSource: mockDatasource(),
+		clients: &mockClients{
+			logs: mockedLogs{
+				logGroups: cloudwatchlogs.DescribeLogGroupsOutput{
+					LogGroups: []*cloudwatchlogs.LogGroup{
+						{
+							LogGroupName: aws.String("group_a"),
+						},
+						{
+							LogGroupName: aws.String("group_b"),
+						},
+						{
+							LogGroupName: aws.String("group_c"),
+						},
+					},
+				},
+			},
 		},
 	}
 
@@ -32,7 +50,7 @@ func TestHandleDescribeLogGroups_WhenLogGroupNamePrefixIsEmpty(t *testing.T) {
 		"limit": 50,
 	})
 
-	frame, err := executor.handleDescribeLogGroups(context.Background(), logsClient, params)
+	frame, err := executor.handleDescribeLogGroups(context.Background(), params)
 
 	expectedField := data.NewField("logGroupName", nil, []*string{aws.String("group_a"), aws.String("group_b"), aws.String("group_c")})
 	expectedFrame := data.NewFrame("logGroups", expectedField)
@@ -42,11 +60,24 @@ func TestHandleDescribeLogGroups_WhenLogGroupNamePrefixIsEmpty(t *testing.T) {
 }
 
 func TestHandleDescribeLogGroups_WhenLogGroupNamePrefixIsNotEmpty(t *testing.T) {
-	executor := &CloudWatchExecutor{}
-
-	logsClient := &FakeLogsClient{
-		Config: aws.Config{
-			Region: aws.String("default"),
+	executor := &CloudWatchExecutor{
+		DataSource: mockDatasource(),
+		clients: &mockClients{
+			logs: mockedLogs{
+				logGroups: cloudwatchlogs.DescribeLogGroupsOutput{
+					LogGroups: []*cloudwatchlogs.LogGroup{
+						{
+							LogGroupName: aws.String("group_a"),
+						},
+						{
+							LogGroupName: aws.String("group_b"),
+						},
+						{
+							LogGroupName: aws.String("group_c"),
+						},
+					},
+				},
+			},
 		},
 	}
 
@@ -54,7 +85,7 @@ func TestHandleDescribeLogGroups_WhenLogGroupNamePrefixIsNotEmpty(t *testing.T) 
 		"logGroupNamePrefix": "g",
 	})
 
-	frame, err := executor.handleDescribeLogGroups(context.Background(), logsClient, params)
+	frame, err := executor.handleDescribeLogGroups(context.Background(), params)
 
 	expectedField := data.NewField("logGroupName", nil, []*string{aws.String("group_a"), aws.String("group_b"), aws.String("group_c")})
 	expectedFrame := data.NewFrame("logGroups", expectedField)
@@ -63,11 +94,27 @@ func TestHandleDescribeLogGroups_WhenLogGroupNamePrefixIsNotEmpty(t *testing.T) 
 }
 
 func TestHandleGetLogGroupFields_WhenLogGroupNamePrefixIsNotEmpty(t *testing.T) {
-	executor := &CloudWatchExecutor{}
-
-	logsClient := &FakeLogsClient{
-		Config: aws.Config{
-			Region: aws.String("default"),
+	executor := &CloudWatchExecutor{
+		DataSource: mockDatasource(),
+		clients: &mockClients{
+			logs: mockedLogs{
+				logGroupFields: cloudwatchlogs.GetLogGroupFieldsOutput{
+					LogGroupFields: []*cloudwatchlogs.LogGroupField{
+						{
+							Name:    aws.String("field_a"),
+							Percent: aws.Int64(100),
+						},
+						{
+							Name:    aws.String("field_b"),
+							Percent: aws.Int64(30),
+						},
+						{
+							Name:    aws.String("field_c"),
+							Percent: aws.Int64(55),
+						},
+					},
+				},
+			},
 		},
 	}
 
@@ -76,7 +123,7 @@ func TestHandleGetLogGroupFields_WhenLogGroupNamePrefixIsNotEmpty(t *testing.T) 
 		"limit":        50,
 	})
 
-	frame, err := executor.handleGetLogGroupFields(context.Background(), logsClient, params, "A")
+	frame, err := executor.handleGetLogGroupFields(context.Background(), params, "A")
 
 	expectedNameField := data.NewField("name", nil, []*string{aws.String("field_a"), aws.String("field_b"), aws.String("field_c")})
 	expectedPercentField := data.NewField("percent", nil, []*int64{aws.Int64(100), aws.Int64(30), aws.Int64(55)})
@@ -88,11 +135,10 @@ func TestHandleGetLogGroupFields_WhenLogGroupNamePrefixIsNotEmpty(t *testing.T) 
 }
 
 func TestExecuteStartQuery(t *testing.T) {
-	executor := &CloudWatchExecutor{}
-
-	logsClient := &FakeLogsClient{
-		Config: aws.Config{
-			Region: aws.String("default"),
+	executor := &CloudWatchExecutor{
+		DataSource: mockDatasource(),
+		clients: &mockClients{
+			logs: mockedLogs{},
 		},
 	}
 
@@ -107,7 +153,7 @@ func TestExecuteStartQuery(t *testing.T) {
 		"queryString": "fields @message",
 	})
 
-	response, err := executor.executeStartQuery(context.Background(), logsClient, params, timeRange)
+	response, err := executor.executeStartQuery(context.Background(), params, timeRange)
 
 	var expectedResponse *cloudwatchlogs.StartQueryOutput = nil
 
@@ -117,11 +163,10 @@ func TestExecuteStartQuery(t *testing.T) {
 }
 
 func TestHandleStartQuery(t *testing.T) {
-	executor := &CloudWatchExecutor{}
-
-	logsClient := &FakeLogsClient{
-		Config: aws.Config{
-			Region: aws.String("default"),
+	executor := &CloudWatchExecutor{
+		DataSource: mockDatasource(),
+		clients: &mockClients{
+			logs: mockedLogs{},
 		},
 	}
 
@@ -136,7 +181,7 @@ func TestHandleStartQuery(t *testing.T) {
 		"queryString": "fields @message",
 	})
 
-	frame, err := executor.handleStartQuery(context.Background(), logsClient, params, timeRange, "A")
+	frame, err := executor.handleStartQuery(context.Background(), params, timeRange, "A")
 
 	expectedField := data.NewField("queryId", nil, []string{"abcd-efgh-ijkl-mnop"})
 	expectedFrame := data.NewFrame("A", expectedField)
@@ -152,11 +197,10 @@ func TestHandleStartQuery(t *testing.T) {
 }
 
 func TestHandleStopQuery(t *testing.T) {
-	executor := &CloudWatchExecutor{}
-
-	logsClient := &FakeLogsClient{
-		Config: aws.Config{
-			Region: aws.String("default"),
+	executor := &CloudWatchExecutor{
+		DataSource: mockDatasource(),
+		clients: &mockClients{
+			logs: mockedLogs{},
 		},
 	}
 
@@ -164,7 +208,7 @@ func TestHandleStopQuery(t *testing.T) {
 		"queryId": "abcd-efgh-ijkl-mnop",
 	})
 
-	frame, err := executor.handleStopQuery(context.Background(), logsClient, params)
+	frame, err := executor.handleStopQuery(context.Background(), params)
 
 	expectedField := data.NewField("success", nil, []bool{true})
 	expectedFrame := data.NewFrame("StopQueryResponse", expectedField)
@@ -174,11 +218,52 @@ func TestHandleStopQuery(t *testing.T) {
 }
 
 func TestHandleGetQueryResults(t *testing.T) {
-	executor := &CloudWatchExecutor{}
+	executor := &CloudWatchExecutor{
+		DataSource: mockDatasource(),
+		clients: &mockClients{
+			logs: mockedLogs{
+				queryResults: cloudwatchlogs.GetQueryResultsOutput{
+					Results: [][]*cloudwatchlogs.ResultField{
+						{
+							{
+								Field: aws.String("@timestamp"),
+								Value: aws.String("2020-03-20 10:37:23.000"),
+							},
+							{
+								Field: aws.String("field_b"),
+								Value: aws.String("b_1"),
+							},
+							{
+								Field: aws.String("@ptr"),
+								Value: aws.String("abcdefg"),
+							},
+						},
 
-	logsClient := &FakeLogsClient{
-		Config: aws.Config{
-			Region: aws.String("default"),
+						{
+							{
+								Field: aws.String("@timestamp"),
+								Value: aws.String("2020-03-20 10:40:43.000"),
+							},
+							{
+								Field: aws.String("field_b"),
+								Value: aws.String("b_2"),
+							},
+							{
+								Field: aws.String("@ptr"),
+								Value: aws.String("hijklmnop"),
+							},
+						},
+					},
+
+					Statistics: &cloudwatchlogs.QueryStatistics{
+						BytesScanned:   aws.Float64(512),
+						RecordsMatched: aws.Float64(256),
+						RecordsScanned: aws.Float64(1024),
+					},
+
+					Status: aws.String("Complete"),
+				},
+			},
 		},
 	}
 
@@ -186,7 +271,7 @@ func TestHandleGetQueryResults(t *testing.T) {
 		"queryId": "abcd-efgh-ijkl-mnop",
 	})
 
-	frame, err := executor.handleGetQueryResults(context.Background(), logsClient, params, "A")
+	frame, err := executor.handleGetQueryResults(context.Background(), params, "A")
 	timeA, _ := time.Parse("2006-01-02 15:04:05.000", "2020-03-20 10:37:23.000")
 	timeB, _ := time.Parse("2006-01-02 15:04:05.000", "2020-03-20 10:40:43.000")
 	expectedTimeField := data.NewField("@timestamp", nil, []*time.Time{
