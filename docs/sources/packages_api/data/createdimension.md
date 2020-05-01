@@ -5,7 +5,6 @@
 title = "createDimension"
 keywords = ["grafana","documentation","sdk","@grafana/data"]
 type = "docs"
-draft = true
 +++
 
 ## createDimension variable

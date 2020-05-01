@@ -90,6 +90,10 @@ $input-border: 1px solid $input-border-color;
   .select-container {
     margin-right: $space-xs;
   }
+
+  .gf-form-spacing {
+    margin-right: $space-xs;
+  }
 }
 
 .gf-form-button-row {
@@ -109,6 +113,7 @@ $input-border: 1px solid $input-border-color;
   font-size: $font-size-sm;
   background-color: $input-label-bg;
   height: $input-height;
+  line-height: $input-height;
   margin-right: $space-xs;
   border-radius: $input-border-radius;
   justify-content: space-between;
@@ -196,6 +201,7 @@ $input-border: 1px solid $input-border-color;
     white-space: pre-wrap;
     padding: 6px $space-sm;
     min-height: $input-height;
+    height: auto;
   }
 
   // Unstyle the caret on `<select>`s in IE10+.

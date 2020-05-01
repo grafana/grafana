@@ -5,12 +5,13 @@
 title = "getEchoSrv"
 keywords = ["grafana","documentation","sdk","@grafana/runtime"]
 type = "docs"
-draft = true
 +++
 
 ## getEchoSrv() function
 
 ### getEchoSrv() function
+
+Used to retrieve the [EchoSrv](./runtime/echosrv.md) that can be used to report events to registered echo backends.
 
 <b>Signature</b>
 

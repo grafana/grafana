@@ -7,6 +7,7 @@ parent = "dashboard_features"
 weight = 9
 +++
 
+> This feature is deprecated and will be removed in a future release
 
 # Scripted Dashboards
 
@@ -23,7 +24,7 @@ If you open scripted.js you can see how it reads URL parameters from ARGS variab
 ```javascript
 var seriesName = 'argName';
 
-if(!_.isUndefined(ARGS.name)) {
+if (!_.isUndefined(ARGS.name)) {
   seriesName = ARGS.name;
 }
 
@@ -40,12 +41,12 @@ dashboard.panels.push({
   },
   targets: [
     {
-      'target': "randomWalk('" + seriesName + "')"
+      target: "randomWalk('" + seriesName + "')",
     },
     {
-      'target': "randomWalk('random walk2')"
-    }
-  ]
+      target: "randomWalk('random walk2')",
+    },
+  ],
 });
 
 return dashboard;

@@ -74,7 +74,7 @@ Look at this sequence of Unix timestamps:
 1572524345, 1572524375, 1572524404, 1572524434, 1572524464
 ```
 
-Looking at these timestamp, they all start with `1572524`, leading to poor use of disk space. Instead, we could store each subsequent timestamp as the difference, or _delta_, from the first one:
+Looking at these timestamps, they all start with `1572524`, leading to poor use of disk space. Instead, we could store each subsequent timestamp as the difference, or _delta_, from the first one:
 
 ```
 1572524345, +30, +29, +30, +30

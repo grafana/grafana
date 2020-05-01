@@ -1,13 +1,13 @@
-import { PanelModel, DashboardModel } from '../../../state';
+import { DashboardModel, PanelModel } from '../../../state';
 import { PanelData } from '@grafana/data';
 import { ThunkResult } from 'app/types';
 import {
-  setEditorPanelData,
-  updateEditorInitState,
   closeCompleted,
-  PanelEditorUIState,
-  setPanelEditorUIState,
   PANEL_EDITOR_UI_STATE_STORAGE_KEY,
+  PanelEditorUIState,
+  setEditorPanelData,
+  setPanelEditorUIState,
+  updateEditorInitState,
 } from './reducers';
 import { cleanUpEditPanel, panelModelAndPluginReady } from '../../../state/reducers';
 import store from '../../../../../core/store';
@@ -34,7 +34,7 @@ export function initPanelEditor(sourcePanel: PanelModel, dashboard: DashboardMod
 export function panelEditorCleanUp(): ThunkResult<void> {
   return (dispatch, getStore) => {
     const dashboard = getStore().dashboard.getModel();
-    const { getPanel, getSourcePanel, querySubscription, shouldDiscardChanges } = getStore().panelEditorNew;
+    const { getPanel, getSourcePanel, querySubscription, shouldDiscardChanges } = getStore().panelEditor;
 
     if (!shouldDiscardChanges) {
       const panel = getPanel();
@@ -46,6 +46,10 @@ export function panelEditorCleanUp(): ThunkResult<void> {
       modifiedSaveModel.id = sourcePanel.id;
 
       sourcePanel.restoreModel(modifiedSaveModel);
+
+      // Loaded plugin is not included in the persisted properties
+      // So is not handled by restoreModel
+      sourcePanel.plugin = panel.plugin;
 
       if (panelTypeChanged) {
         dispatch(panelModelAndPluginReady({ panelId: sourcePanel.id, plugin: panel.plugin! }));
@@ -76,8 +80,12 @@ export function panelEditorCleanUp(): ThunkResult<void> {
 
 export function updatePanelEditorUIState(uiState: Partial<PanelEditorUIState>): ThunkResult<void> {
   return (dispatch, getStore) => {
-    const nextState = { ...getStore().panelEditorNew.ui, ...uiState };
+    const nextState = { ...getStore().panelEditor.ui, ...uiState };
     dispatch(setPanelEditorUIState(nextState));
-    store.setObject(PANEL_EDITOR_UI_STATE_STORAGE_KEY, nextState);
+    try {
+      store.setObject(PANEL_EDITOR_UI_STATE_STORAGE_KEY, nextState);
+    } catch (error) {
+      console.error(error);
+    }
   };
 }

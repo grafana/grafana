@@ -5,7 +5,6 @@
 title = "ScopedVars"
 keywords = ["grafana","documentation","sdk","@grafana/data"]
 type = "docs"
-draft = true
 +++
 
 ## ScopedVars interface

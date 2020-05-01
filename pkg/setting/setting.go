@@ -47,7 +47,7 @@ var (
 )
 
 // This constant corresponds to the default value for ldap_sync_ttl in .ini files
-// it is used for comparision and has to be kept in sync
+// it is used for comparison and has to be kept in sync
 const (
 	AUTH_PROXY_SYNC_TTL = 60
 )
@@ -238,11 +238,10 @@ type Cfg struct {
 	Smtp SmtpSettings
 
 	// Rendering
-	ImagesDir             string
-	RendererUrl           string
-	RendererCallbackUrl   string
-	RendererLimit         int
-	RendererLimitAlerting int
+	ImagesDir                      string
+	RendererUrl                    string
+	RendererCallbackUrl            string
+	RendererConcurrentRequestLimit int
 
 	// Security
 	DisableInitAdminCreation         bool
@@ -768,7 +767,7 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	// read dashboard settings
 	dashboards := iniFile.Section("dashboards")
 	DashboardVersionsToKeep = dashboards.Key("versions_to_keep").MustInt(20)
-	MinRefreshInterval, err = valueAsString(dashboards, "min_refresh_interval", "")
+	MinRefreshInterval, err = valueAsString(dashboards, "min_refresh_interval", "5s")
 	if err != nil {
 		return err
 	}
@@ -938,6 +937,8 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 			log.Fatal(4, "Invalid callback_url(%s): %s", cfg.RendererCallbackUrl, err)
 		}
 	}
+	cfg.RendererConcurrentRequestLimit = renderSec.Key("concurrent_render_request_limit").MustInt(30)
+
 	cfg.ImagesDir = filepath.Join(cfg.DataPath, "png")
 	cfg.TempDataLifetime = iniFile.Section("paths").Key("temp_data_lifetime").MustDuration(time.Second * 3600 * 24)
 	cfg.MetricsEndpointEnabled = iniFile.Section("metrics").Key("enabled").MustBool(true)

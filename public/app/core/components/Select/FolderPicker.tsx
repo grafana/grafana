@@ -1,11 +1,12 @@
 import React, { PureComponent } from 'react';
+import { debounce } from 'lodash';
 import { AsyncSelect } from '@grafana/ui';
 import { AppEvents, SelectableValue } from '@grafana/data';
-import { debounce } from 'lodash';
-import appEvents from '../../app_events';
 import { getBackendSrv } from '@grafana/runtime';
+import { selectors } from '@grafana/e2e-selectors';
+import appEvents from '../../app_events';
 import { contextSrv } from 'app/core/services/context_srv';
-import { DashboardSearchHit } from '../../../types';
+import { DashboardSearchHit } from 'app/features/search/types';
 
 export interface Props {
   onChange: ($folder: { title: string; id: number }) => void;
@@ -148,7 +149,7 @@ export class FolderPicker extends PureComponent<Props, State> {
     const { enableCreateNew, useNewForms } = this.props;
 
     return (
-      <>
+      <div aria-label={selectors.components.FolderPicker.container}>
         {useNewForms && (
           <AsyncSelect
             loadingMessage="Loading folders..."
@@ -180,7 +181,7 @@ export class FolderPicker extends PureComponent<Props, State> {
             </div>
           </div>
         )}
-      </>
+      </div>
     );
   }
 }

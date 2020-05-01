@@ -1,4 +1,4 @@
-FROM ubuntu:18.04 as toolchain
+FROM ubuntu:20.04 as toolchain
 
 ENV OSX_SDK_URL=https://s3.dockerproject.org/darwin/v2 \
     OSX_SDK=MacOSX10.10.sdk \
@@ -28,6 +28,8 @@ ENV OSX_SDK_URL=https://s3.dockerproject.org/darwin/v2 \
 
 # might wanna make sure osx cross and the other tarball as well as the packages ends up somewhere other than tmp
 # might also wanna put them as their own layer to not have to unpack them every time?
+
+ENV DEBIAN_FRONTEND=noninteractive
 
 RUN apt-get update   && \
     apt-get upgrade -yq && \
@@ -70,7 +72,7 @@ RUN cd /tmp && \
     rm -rf /tmp/crosstool-ng-${CTNG}
 
 # base image to crossbuild grafana
-FROM ubuntu:18.04
+FROM ubuntu:20.04
 
 ENV GOVERSION=1.14.1 \
     PATH=/usr/local/go/bin:$PATH \

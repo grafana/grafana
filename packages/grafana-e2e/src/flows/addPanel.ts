@@ -14,12 +14,10 @@ const DEFAULT_ADD_PANEL_CONFIG: AddPanelConfig = {
 export const addPanel = (config?: Partial<AddPanelConfig>) => {
   const { dataSourceName, queriesForm } = { ...DEFAULT_ADD_PANEL_CONFIG, ...config };
 
-  // @todo remove `@ts-ignore` when possible
-  // @ts-ignore
-  getScenarioContext().then(({ lastAddedDashboardUid }) => {
+  getScenarioContext().then(({ lastAddedDashboardUid }: any) => {
     e2e.flows.openDashboard(lastAddedDashboardUid);
     e2e.pages.Dashboard.Toolbar.toolbarItems('Add panel').click();
-    e2e.pages.AddDashboard.ctaButtons('Add Query').click();
+    e2e.pages.AddDashboard.addNewPanel().click();
     e2e()
       .get('.ds-picker')
       .click()

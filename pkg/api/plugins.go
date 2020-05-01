@@ -1,54 +1,62 @@
 package api
 
 import (
+	"encoding/json"
 	"errors"
 	"net/http"
 	"sort"
 	"time"
 
-	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/util/errutil"
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
+	"github.com/grafana/grafana/pkg/plugins/datasource/wrapper"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
 // ErrPluginNotFound is returned when an requested plugin is not installed.
 var ErrPluginNotFound error = errors.New("plugin not found, no installed plugin with that id")
 
-func (hs *HTTPServer) getPluginConfig(pluginID string, user *models.SignedInUser) (backendplugin.PluginConfig, error) {
-	pluginConfig := backendplugin.PluginConfig{}
+func (hs *HTTPServer) getPluginContext(pluginID string, user *models.SignedInUser) (backend.PluginContext, error) {
+	pc := backend.PluginContext{}
 	plugin, exists := plugins.Plugins[pluginID]
 	if !exists {
-		return pluginConfig, ErrPluginNotFound
+		return pc, ErrPluginNotFound
 	}
 
-	var jsonData *simplejson.Json
+	var jsonData json.RawMessage
 	var decryptedSecureJSONData map[string]string
 	var updated time.Time
 
 	ps, err := hs.getCachedPluginSettings(pluginID, user)
 	if err != nil {
 		if err != models.ErrPluginSettingNotFound {
-			return pluginConfig, errutil.Wrap("Failed to get plugin settings", err)
+			return pc, errutil.Wrap("Failed to get plugin settings", err)
 		}
-		jsonData = simplejson.New()
+		jsonData, err = json.Marshal(ps.JsonData)
+		if err != nil {
+			return pc, errutil.Wrap("Failed to unmarshal plugin json data", err)
+		}
 		decryptedSecureJSONData = make(map[string]string)
 	} else {
 		decryptedSecureJSONData = ps.DecryptedValues()
 		updated = ps.Updated
 	}
 
-	return backendplugin.PluginConfig{
-		OrgID:                   user.OrgId,
-		PluginID:                plugin.Id,
-		JSONData:                jsonData,
-		DecryptedSecureJSONData: decryptedSecureJSONData,
-		Updated:                 updated,
+	return backend.PluginContext{
+		OrgID:    user.OrgId,
+		PluginID: plugin.Id,
+		User:     wrapper.BackendUserFromSignedInUser(user),
+		AppInstanceSettings: &backend.AppInstanceSettings{
+			JSONData:                jsonData,
+			DecryptedSecureJSONData: decryptedSecureJSONData,
+			Updated:                 updated,
+		},
 	}, nil
 }
 
@@ -288,7 +296,7 @@ func (hs *HTTPServer) CollectPluginMetrics(c *models.ReqContext) Response {
 func (hs *HTTPServer) CheckHealth(c *models.ReqContext) Response {
 	pluginID := c.Params("pluginId")
 
-	config, err := hs.getPluginConfig(pluginID, c.SignedInUser)
+	pCtx, err := hs.getPluginContext(pluginID, c.SignedInUser)
 	if err != nil {
 		if err == ErrPluginNotFound {
 			return Error(404, "Plugin not found, no installed plugin with that id", nil)
@@ -297,7 +305,7 @@ func (hs *HTTPServer) CheckHealth(c *models.ReqContext) Response {
 		return Error(500, "Failed to get plugin settings", err)
 	}
 
-	resp, err := hs.BackendPluginManager.CheckHealth(c.Req.Context(), &config)
+	resp, err := hs.BackendPluginManager.CheckHealth(c.Req.Context(), pCtx)
 	if err != nil {
 		if err == backendplugin.ErrPluginNotRegistered {
 			return Error(404, "Plugin not found", err)
@@ -317,9 +325,19 @@ func (hs *HTTPServer) CheckHealth(c *models.ReqContext) Response {
 	}
 
 	payload := map[string]interface{}{
-		"status":      resp.Status.String(),
-		"message":     resp.Message,
-		"jsonDetails": resp.JSONDetails,
+		"status":  resp.Status.String(),
+		"message": resp.Message,
+	}
+
+	// Unmarshal JSONDetails if it's not empty.
+	if len(resp.JSONDetails) > 0 {
+		var jsonDetails map[string]interface{}
+		err = json.Unmarshal(resp.JSONDetails, &jsonDetails)
+		if err != nil {
+			return Error(500, "Failed to unmarshal detailed response from backend plugin", err)
+		}
+
+		payload["details"] = jsonDetails
 	}
 
 	if resp.Status != backendplugin.HealthStatusOk {
@@ -335,7 +353,7 @@ func (hs *HTTPServer) CheckHealth(c *models.ReqContext) Response {
 func (hs *HTTPServer) CallResource(c *models.ReqContext) {
 	pluginID := c.Params("pluginId")
 
-	config, err := hs.getPluginConfig(pluginID, c.SignedInUser)
+	pCtx, err := hs.getPluginContext(pluginID, c.SignedInUser)
 	if err != nil {
 		if err == ErrPluginNotFound {
 			c.JsonApiErr(404, "Plugin not found, no installed plugin with that id", nil)
@@ -345,8 +363,7 @@ func (hs *HTTPServer) CallResource(c *models.ReqContext) {
 		c.JsonApiErr(500, "Failed to get plugin settings", err)
 		return
 	}
-
-	hs.BackendPluginManager.CallResource(config, c, c.Params("*"))
+	hs.BackendPluginManager.CallResource(pCtx, c, c.Params("*"))
 }
 
 func (hs *HTTPServer) getCachedPluginSettings(pluginID string, user *models.SignedInUser) (*models.PluginSetting, error) {

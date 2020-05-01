@@ -5,7 +5,6 @@
 title = "parse"
 keywords = ["grafana","documentation","sdk","@grafana/data"]
 type = "docs"
-draft = true
 +++
 
 ## dateMath.parse() function
@@ -17,7 +16,7 @@ Parses different types input to a moment instance. There is a specific formattin
 <b>Signature</b>
 
 ```typescript
-function parse(text: string | DateTime | Date, roundUp?: boolean, timezone?: TimeZone): DateTime | undefined;
+export declare function parse(text?: string | DateTime | Date | null, roundUp?: boolean, timezone?: TimeZone): DateTime | undefined;
 ```
 <b>Import</b>
 
@@ -29,9 +28,9 @@ const { parse } = dateMath;
 
 |  Parameter | Type | Description |
 |  --- | --- | --- |
-|  text | <code>string &#124; DateTime &#124; Date</code> |  |
-|  roundUp | <code>boolean</code> |  |
-|  timezone | <code>TimeZone</code> |  |
+|  text | <code>string &#124; DateTime &#124; Date &#124; null</code> |  |
+|  roundUp | <code>boolean</code> | See parseDateMath function. |
+|  timezone | <code>TimeZone</code> | Only string 'utc' is acceptable here, for anything else, local timezone is used. |
 
 <b>Returns:</b>
 

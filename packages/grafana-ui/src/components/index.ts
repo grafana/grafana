@@ -12,11 +12,6 @@ export { ClipboardButton } from './ClipboardButton/ClipboardButton';
 export { Cascader, CascaderOption } from './Cascader/Cascader';
 export { ButtonCascader } from './ButtonCascader/ButtonCascader';
 
-// Forms
-export { FormLabel } from './FormLabel/FormLabel';
-export { FormField } from './FormField/FormField';
-export { SecretFormField } from './SecretFormField/SecretFormField';
-
 export { LoadingPlaceholder } from './LoadingPlaceholder/LoadingPlaceholder';
 export { ColorPicker, SeriesColorPicker } from './ColorPicker/ColorPicker';
 export { SeriesColorPickerPopover, SeriesColorPickerPopoverWithTheme } from './ColorPicker/SeriesColorPickerPopover';
@@ -49,10 +44,12 @@ export { ModalsProvider, ModalRoot, ModalsController } from './Modal/ModalsConte
 export { SetInterval } from './SetInterval/SetInterval';
 
 export { Table } from './Table/Table';
+export { TableCellDisplayMode } from './Table/types';
 export { TableInputCSV } from './TableInputCSV/TableInputCSV';
 export { TabsBar } from './Tabs/TabsBar';
 export { Tab } from './Tabs/Tab';
 export { TabContent } from './Tabs/TabContent';
+export { Counter } from './Tabs/Counter';
 
 // Visualizations
 export {
@@ -71,6 +68,7 @@ export { GraphContextMenu } from './Graph/GraphContextMenu';
 export { BarGauge, BarGaugeDisplayMode } from './BarGauge/BarGauge';
 export { GraphTooltipOptions } from './Graph/GraphTooltip/types';
 export { VizRepeater, VizRepeaterRenderValueProps } from './VizRepeater/VizRepeater';
+export { graphTimeFormat, graphTimeFormatter } from './Graph/utils';
 
 export {
   LegendOptions,
@@ -96,11 +94,11 @@ export { ClickOutsideWrapper } from './ClickOutsideWrapper/ClickOutsideWrapper';
 export * from './SingleStatShared/index';
 export { CallToActionCard } from './CallToActionCard/CallToActionCard';
 export { ContextMenu, ContextMenuItem, ContextMenuGroup, ContextMenuProps } from './ContextMenu/ContextMenu';
-export { DataLinksEditor } from './DataLinks/DataLinksEditor';
 export { DataLinksInlineEditor } from './DataLinks/DataLinksInlineEditor/DataLinksInlineEditor';
 export { DataLinkInput } from './DataLinks/DataLinkInput';
 export { DataLinksContextMenu } from './DataLinks/DataLinksContextMenu';
 export { SeriesIcon } from './Legend/SeriesIcon';
+export { InfoBox } from './InfoBox/InfoBox';
 
 export { JSONFormatter } from './JSONFormatter/JSONFormatter';
 export { JsonExplorer } from './JSONFormatter/json_explorer/json_explorer';
@@ -152,6 +150,9 @@ export { TextArea } from './TextArea/TextArea';
 
 // Legacy forms
 
+// Export this until we've figured out a good approach to inline form styles.
+export { FormLabel as InlineFormLabel } from './FormLabel/FormLabel';
+
 // Select
 import { Select, AsyncSelect } from './Forms/Legacy/Select/Select';
 import { IndicatorsContainer } from './Forms/Legacy/Select/IndicatorsContainer';
@@ -160,10 +161,14 @@ import { ButtonSelect } from './Forms/Legacy/Select/ButtonSelect';
 
 //Input
 import { Input, LegacyInputStatus } from './Forms/Legacy/Input/Input';
+import { FormField } from './FormField/FormField';
+import { SecretFormField } from './SecretFormField/SecretFormField';
 
 import { Switch } from './Forms/Legacy/Switch/Switch';
 
 const LegacyForms = {
+  SecretFormField,
+  FormField,
   Select,
   AsyncSelect,
   IndicatorsContainer,

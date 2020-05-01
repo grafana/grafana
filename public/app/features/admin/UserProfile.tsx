@@ -267,12 +267,12 @@ export class UserProfileRow extends PureComponent<UserProfileRowProps, UserProfi
         <td className="width-25" colSpan={2}>
           {this.state.editing ? (
             <Input
-              size="md"
               type={inputType}
               defaultValue={value}
               onBlur={this.onInputBlur}
               onChange={this.onInputChange}
               ref={this.setInputElem}
+              width={30}
             />
           ) : (
             <span>{this.props.value}</span>

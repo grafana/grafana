@@ -1,4 +1,5 @@
-import { e2e } from '../index';
+import { Flows } from '../flows';
+import { getScenarioContext } from './scenarioContext';
 
 export interface ScenarioArguments {
   describeName: string;
@@ -22,25 +23,23 @@ export const e2eScenario = ({
       it.skip(itName, () => scenario());
     } else {
       beforeEach(() => {
-        e2e.flows.login('admin', 'admin');
+        Flows.login('admin', 'admin');
         if (addScenarioDataSource) {
-          e2e.flows.addDataSource();
+          Flows.addDataSource();
         }
         if (addScenarioDashBoard) {
-          e2e.flows.addDashboard();
+          Flows.addDashboard();
         }
       });
 
       afterEach(() => {
-        // @todo remove `@ts-ignore` when possible
-        // @ts-ignore
-        e2e.getScenarioContext().then(({ lastAddedDashboardUid, lastAddedDataSource }) => {
+        getScenarioContext().then(({ lastAddedDashboardUid, lastAddedDataSource }: any) => {
           if (lastAddedDataSource) {
-            e2e.flows.deleteDataSource(lastAddedDataSource);
+            Flows.deleteDataSource(lastAddedDataSource);
           }
 
           if (lastAddedDashboardUid) {
-            e2e.flows.deleteDashboard(lastAddedDashboardUid);
+            Flows.deleteDashboard(lastAddedDashboardUid);
           }
         });
       });

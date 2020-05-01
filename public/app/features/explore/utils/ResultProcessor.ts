@@ -28,7 +28,7 @@ export class ResultProcessor {
       return null;
     }
 
-    const onlyTimeSeries = this.dataFrames.filter(isTimeSeries);
+    const onlyTimeSeries = this.dataFrames.filter(frame => isTimeSeries(frame, this.state.datasourceInstance?.meta.id));
 
     if (onlyTimeSeries.length === 0) {
       return null;
@@ -48,10 +48,7 @@ export class ResultProcessor {
       return null;
     }
 
-    // For now ignore time series
-    // We can change this later, just need to figure out how to
-    // Ignore time series only for prometheus
-    const onlyTables = this.dataFrames.filter(frame => !isTimeSeries(frame));
+    const onlyTables = this.dataFrames.filter(frame => shouldShowInTable(frame));
 
     if (onlyTables.length === 0) {
       return null;
@@ -92,6 +89,7 @@ export class ResultProcessor {
       field.display = getDisplayProcessor({
         field,
         theme: config.theme,
+        timeZone: this.timeZone,
       });
     }
 
@@ -112,7 +110,12 @@ export class ResultProcessor {
   }
 }
 
-export function isTimeSeries(frame: DataFrame): boolean {
+function isTimeSeries(frame: DataFrame, datasource?: string): boolean {
+  // TEMP: Temporary hack. Remove when logs/metrics unification is done
+  if (datasource && datasource === 'cloudwatch') {
+    return isTimeSeriesCloudWatch(frame);
+  }
+
   if (frame.fields.length === 2) {
     if (frame.fields[0].type === FieldType.time) {
       return true;
@@ -120,4 +123,20 @@ export function isTimeSeries(frame: DataFrame): boolean {
   }
 
   return false;
+}
+
+function shouldShowInTable(frame: DataFrame) {
+  if (frame.meta?.preferredVisualisationType && frame.meta?.preferredVisualisationType !== 'table') {
+    return false;
+  }
+
+  return true;
+}
+
+// TEMP: Temporary hack. Remove when logs/metrics unification is done
+function isTimeSeriesCloudWatch(frame: DataFrame): boolean {
+  return (
+    frame.fields.some(field => field.type === FieldType.time) &&
+    frame.fields.some(field => field.type === FieldType.number)
+  );
 }

@@ -5,18 +5,15 @@
 title = "dateMath"
 keywords = ["grafana","documentation","sdk","@grafana/data"]
 type = "docs"
-draft = true
 +++
 
 ## dateMath namespace
 
+> This API is provided as a preview for developers and may change based on feedback that we receive. Do not use this API in a production environment.
+> 
+
 ### dateMath namespace
 
-<b>Signature</b>
-
-```typescript
-export declare namespace dateMath 
-```
 <b>Import</b>
 
 ```typescript

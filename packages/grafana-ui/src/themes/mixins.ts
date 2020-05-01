@@ -12,8 +12,14 @@ export function cardChrome(theme: GrafanaTheme): string {
     `;
 }
 
-export function hoverColor(color: string, theme: GrafanaTheme) {
-  return theme.isDark ? tinycolor(color).brighten(2) : tinycolor(color).darken(2);
+export function hoverColor(color: string, theme: GrafanaTheme): string {
+  return theme.isDark
+    ? tinycolor(color)
+        .brighten(2)
+        .toString()
+    : tinycolor(color)
+        .darken(2)
+        .toString();
 }
 
 export function listItem(theme: GrafanaTheme): string {
@@ -33,3 +39,10 @@ export function listItemSelected(theme: GrafanaTheme): string {
        color: ${theme.colors.textStrong};
     `;
 }
+
+export const focusCss = (theme: GrafanaTheme) => `
+  outline: 2px dotted transparent;
+  outline-offset: 2px;
+  box-shadow: 0 0 0 2px ${theme.colors.bodyBg}, 0 0 0px 4px ${theme.colors.formFocusOutline};
+  transition: all 0.2s cubic-bezier(0.19, 1, 0.22, 1);
+`;

@@ -1,25 +1,27 @@
 import React, { PureComponent } from 'react';
 import { Unsubscribable } from 'rxjs';
 import { connect, MapStateToProps } from 'react-redux';
-import { InspectHeader } from './InspectHeader';
+import { InspectSubtitle } from './InspectSubtitle';
 import { InspectJSONTab } from './InspectJSONTab';
 import { QueryInspector } from './QueryInspector';
 
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
-import { JSONFormatter, Drawer, TabContent, CustomScrollbar } from '@grafana/ui';
-import { getLocationSrv, getDataSourceSrv } from '@grafana/runtime';
+import { CustomScrollbar, Drawer, JSONFormatter, TabContent } from '@grafana/ui';
+import { selectors } from '@grafana/e2e-selectors';
+import { getDataSourceSrv, getLocationSrv } from '@grafana/runtime';
 import {
   DataFrame,
-  DataSourceApi,
-  SelectableValue,
-  getDisplayProcessor,
   DataQueryError,
-  PanelData,
+  DataSourceApi,
   FieldType,
   formattedValueToString,
-  QueryResultMetaStat,
+  getDisplayProcessor,
   LoadingState,
+  PanelData,
   PanelPlugin,
+  QueryResultMetaStat,
+  SelectableValue,
+  TimeZone,
 } from '@grafana/data';
 import { config } from 'app/core/config';
 import { getPanelInspectorStyles } from './styles';
@@ -222,10 +224,10 @@ export class PanelInspectorUnconnected extends PureComponent<Props, State> {
     }
 
     return (
-      <>
+      <div aria-label={selectors.components.PanelInspector.Stats.content}>
         {this.renderStatsTable('Stats', stats)}
         {this.renderStatsTable('Data source stats', dataStats)}
-      </>
+      </div>
     );
   }
 
@@ -233,6 +235,8 @@ export class PanelInspectorUnconnected extends PureComponent<Props, State> {
     if (!stats || !stats.length) {
       return null;
     }
+
+    const { dashboard } = this.props;
 
     return (
       <div style={{ paddingBottom: '16px' }}>
@@ -243,7 +247,7 @@ export class PanelInspectorUnconnected extends PureComponent<Props, State> {
               return (
                 <tr key={`${stat.title}-${index}`}>
                   <td>{stat.title}</td>
-                  <td style={{ textAlign: 'right' }}>{formatStat(stat)}</td>
+                  <td style={{ textAlign: 'right' }}>{formatStat(stat, dashboard.getTimezone())}</td>
                 </tr>
               );
             })}
@@ -253,22 +257,10 @@ export class PanelInspectorUnconnected extends PureComponent<Props, State> {
     );
   }
 
-  drawerHeader(tabs: Array<{ label: string; value: InspectTab }>, activeTab: InspectTab) {
-    const { panel } = this.props;
+  drawerSubtitle(tabs: Array<{ label: string; value: InspectTab }>, activeTab: InspectTab) {
     const { last } = this.state;
 
-    return (
-      <InspectHeader
-        tabs={tabs}
-        tab={activeTab}
-        panelData={last}
-        onSelectTab={this.onSelectTab}
-        onClose={this.onClose}
-        panel={panel}
-        onToggleExpand={this.onToggleExpand}
-        isExpanded={this.state.drawerWidth === '100%'}
-      />
-    );
+    return <InspectSubtitle tabs={tabs} tab={activeTab} panelData={last} onSelectTab={this.onSelectTab} />;
   }
 
   getTabs() {
@@ -318,7 +310,13 @@ export class PanelInspectorUnconnected extends PureComponent<Props, State> {
     }
 
     return (
-      <Drawer title={this.drawerHeader(tabs, activeTab)} width={drawerWidth} onClose={this.onClose}>
+      <Drawer
+        title={`Inspect: ${panel.title}` || 'Panel inspect'}
+        subtitle={this.drawerSubtitle(tabs, activeTab)}
+        width={drawerWidth}
+        onClose={this.onClose}
+        expandable
+      >
         {activeTab === InspectTab.Data && this.renderDataTab()}
         <CustomScrollbar autoHeightMin="100%">
           <TabContent className={styles.tabContent}>
@@ -336,13 +334,14 @@ export class PanelInspectorUnconnected extends PureComponent<Props, State> {
   }
 }
 
-function formatStat(stat: QueryResultMetaStat): string {
+function formatStat(stat: QueryResultMetaStat, timeZone?: TimeZone): string {
   const display = getDisplayProcessor({
     field: {
       type: FieldType.number,
       config: stat,
     },
     theme: config.theme,
+    timeZone,
   });
   return formattedValueToString(display(stat.value));
 }

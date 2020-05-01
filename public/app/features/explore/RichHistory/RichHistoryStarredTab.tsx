@@ -15,8 +15,7 @@ import { sortQueries, createDatasourcesList } from '../../../core/utils/richHist
 // Components
 import RichHistoryCard from './RichHistoryCard';
 import { sortOrderOptions } from './RichHistory';
-import { LegacyForms } from '@grafana/ui';
-const { Select } = LegacyForms;
+import { Select } from '@grafana/ui';
 
 export interface Props {
   queries: RichHistoryQuery[];
@@ -87,9 +86,10 @@ export function RichHistoryStarredTab(props: Props) {
   const listOfDatasourceFilters = datasourceFilters?.map(d => d.value);
 
   const starredQueries = queries.filter(q => q.starred === true);
-  const starredQueriesFilteredByDatasource = datasourceFilters
-    ? starredQueries?.filter(q => listOfDatasourceFilters?.includes(q.datasourceName))
-    : starredQueries;
+  const starredQueriesFilteredByDatasource =
+    listOfDatasourceFilters && listOfDatasourceFilters?.length > 0
+      ? starredQueries?.filter(q => listOfDatasourceFilters?.includes(q.datasourceName))
+      : starredQueries;
 
   const sortedStarredQueries = sortQueries(starredQueriesFilteredByDatasource, sortOrder);
 

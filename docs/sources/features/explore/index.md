@@ -59,7 +59,7 @@ Query history is a list of queries that you have used in Explore. The history is
 
 Query history lets you view the history of your querying. For each individual query, you can:
 
-- Replace Explore query for selected query by clicking on the query card.
+- Run a query.
 - Create and/or edit a comment.
 - Copy a query to the clipboard.
 - Copy a URL link with the query to the clipboard.
@@ -71,12 +71,12 @@ All queries that have been starred in the Query history tab are displayed in the
 
 ### Sort query history
 
-By default, query history shows you the most recent queries. You can sort your history in by date or by data source name in ascending or descending order.
+By default, query history shows you the most recent queries. You can sort your history by date or by data source name in ascending or descending order.
 
 1. Click the **Sort queries by** field.
 2. Select one of the following options:
-   - Time ascending
-   - Time descending
+   - Newest first
+   - Oldest first
    - Data source A-Z
    - Data source Z-A
 
@@ -89,7 +89,7 @@ Filter query history in Query history and Starred tab by data source name:
 1. Click the **Filter queries for specific data source(s)** field
 2. Select the data source for which you would like to filter your history. You can select multiple data sources.
 
-In **Query history** tab is is also possible to filter queries by date using the slider:
+In **Query history** tab it is also possible to filter queries by date using the slider:
 
 - Use vertical slider to filter queries by date.
 - By dragging top handle, adjust start date.

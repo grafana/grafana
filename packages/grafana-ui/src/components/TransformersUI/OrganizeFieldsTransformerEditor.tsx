@@ -80,6 +80,7 @@ const OrganizeFieldsTransformerEditor: React.FC<OrganizeFieldsTransformerEditorP
               return (
                 <DraggableFieldName
                   fieldName={fieldName}
+                  renamedFieldName={renameByName[fieldName]}
                   index={index}
                   onToggleVisibility={onToggleVisibility}
                   onRenameField={onRenameField}
@@ -96,8 +97,11 @@ const OrganizeFieldsTransformerEditor: React.FC<OrganizeFieldsTransformerEditorP
   );
 };
 
+OrganizeFieldsTransformerEditor.displayName = 'OrganizeFieldsTransformerEditor';
+
 interface DraggableFieldProps {
   fieldName: string;
+  renamedFieldName?: string;
   index: number;
   visible: boolean;
   onToggleVisibility: (fieldName: string, isVisible: boolean) => void;
@@ -106,6 +110,7 @@ interface DraggableFieldProps {
 
 const DraggableFieldName: React.FC<DraggableFieldProps> = ({
   fieldName,
+  renamedFieldName,
   index,
   visible,
   onToggleVisibility,
@@ -133,12 +138,15 @@ const DraggableFieldName: React.FC<DraggableFieldProps> = ({
                 surface="header"
                 onClick={() => onToggleVisibility(fieldName, visible)}
               />
-              <span className={styles.name}>{fieldName}</span>
+              <span className={styles.name} title={fieldName}>
+                {fieldName}
+              </span>
             </div>
             <Input
               className="flex-grow-1"
+              defaultValue={renamedFieldName || ''}
               placeholder={`Rename ${fieldName}`}
-              onChange={event => onRenameField(fieldName, event.currentTarget.value)}
+              onBlur={event => onRenameField(fieldName, event.currentTarget.value)}
             />
           </div>
         </div>
@@ -146,6 +154,8 @@ const DraggableFieldName: React.FC<DraggableFieldProps> = ({
     </Draggable>
   );
 };
+
+DraggableFieldName.displayName = 'DraggableFieldName';
 
 const getFieldNameStyles = stylesFactory((theme: GrafanaTheme) => ({
   toggle: css`
@@ -161,6 +171,9 @@ const getFieldNameStyles = stylesFactory((theme: GrafanaTheme) => ({
     }
   `,
   name: css`
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
     font-size: ${theme.typography.size.sm};
     font-weight: ${theme.typography.weight.semibold};
   `,

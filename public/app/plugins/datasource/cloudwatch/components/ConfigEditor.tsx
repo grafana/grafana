@@ -1,5 +1,5 @@
 import React, { PureComponent } from 'react';
-import { FormLabel, LegacyForms, Button } from '@grafana/ui';
+import { InlineFormLabel, LegacyForms, Button } from '@grafana/ui';
 const { Select, Input } = LegacyForms;
 import {
   DataSourcePluginOptionsEditorProps,
@@ -11,7 +11,7 @@ import {
 } from '@grafana/data';
 import { SelectableValue } from '@grafana/data';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
-import CloudWatchDatasource from '../datasource';
+import { CloudWatchDatasource } from '../datasource';
 import { CloudWatchJsonData, CloudWatchSecureJsonData } from '../types';
 import { CancelablePromise, makePromiseCancelable } from 'app/core/utils/CancelablePromise';
 
@@ -37,7 +37,7 @@ export class ConfigEditor extends PureComponent<Props, State> {
     };
   }
 
-  loadRegionsPromise: CancelablePromise<any> = null;
+  loadRegionsPromise: CancelablePromise<any> | null = null;
 
   componentDidMount() {
     this.loadRegionsPromise = makePromiseCancelable(this.loadRegions());
@@ -57,9 +57,7 @@ export class ConfigEditor extends PureComponent<Props, State> {
   async loadRegions() {
     await getDatasourceSrv()
       .loadDatasource(this.props.options.name)
-      .then((ds: CloudWatchDatasource) => {
-        return ds.getRegions();
-      })
+      .then((ds: CloudWatchDatasource) => ds.getRegions())
       .then(
         (regions: any) => {
           this.setState({
@@ -101,12 +99,10 @@ export class ConfigEditor extends PureComponent<Props, State> {
           ];
 
           this.setState({
-            regions: regions.map((region: string) => {
-              return {
-                value: region,
-                label: region,
-              };
-            }),
+            regions: regions.map((region: string) => ({
+              value: region,
+              label: region,
+            })),
           });
 
           // expected to fail when creating new datasource
@@ -126,12 +122,12 @@ export class ConfigEditor extends PureComponent<Props, State> {
         <div className="gf-form-group">
           <div className="gf-form-inline">
             <div className="gf-form">
-              <FormLabel
+              <InlineFormLabel
                 className="width-14"
                 tooltip="Which AWS credentials chain to use. AWS SDK Default is the recommended option for EKS, ECS or if you've attached an IAM role to your EC2 instance."
               >
                 Authentication Provider
-              </FormLabel>
+              </InlineFormLabel>
               <Select
                 className="width-30"
                 value={authProviderOptions.find(authProvider => authProvider.value === options.jsonData.authType)}
@@ -149,12 +145,12 @@ export class ConfigEditor extends PureComponent<Props, State> {
           {options.jsonData.authType === 'credentials' && (
             <div className="gf-form-inline">
               <div className="gf-form">
-                <FormLabel
+                <InlineFormLabel
                   className="width-14"
                   tooltip="Credentials profile name, as specified in ~/.aws/credentials, leave blank for default."
                 >
                   Credentials Profile Name
-                </FormLabel>
+                </InlineFormLabel>
                 <div className="width-30">
                   <Input
                     className="width-30"
@@ -168,10 +164,10 @@ export class ConfigEditor extends PureComponent<Props, State> {
           )}
           {options.jsonData.authType === 'keys' && (
             <div>
-              {options.secureJsonFields.accessKey ? (
+              {options.secureJsonFields?.accessKey ? (
                 <div className="gf-form-inline">
                   <div className="gf-form">
-                    <FormLabel className="width-14">Access Key ID</FormLabel>
+                    <InlineFormLabel className="width-14">Access Key ID</InlineFormLabel>
                     <Input className="width-25" placeholder="Configured" disabled={true} />
                   </div>
                   <div className="gf-form">
@@ -189,7 +185,7 @@ export class ConfigEditor extends PureComponent<Props, State> {
               ) : (
                 <div className="gf-form-inline">
                   <div className="gf-form">
-                    <FormLabel className="width-14">Access Key ID</FormLabel>
+                    <InlineFormLabel className="width-14">Access Key ID</InlineFormLabel>
                     <div className="width-30">
                       <Input
                         className="width-30"
@@ -200,10 +196,10 @@ export class ConfigEditor extends PureComponent<Props, State> {
                   </div>
                 </div>
               )}
-              {options.secureJsonFields.secretKey ? (
+              {options.secureJsonFields?.secretKey ? (
                 <div className="gf-form-inline">
                   <div className="gf-form">
-                    <FormLabel className="width-14">Secret Access Key</FormLabel>
+                    <InlineFormLabel className="width-14">Secret Access Key</InlineFormLabel>
                     <Input className="width-25" placeholder="Configured" disabled={true} />
                   </div>
                   <div className="gf-form">
@@ -221,7 +217,7 @@ export class ConfigEditor extends PureComponent<Props, State> {
               ) : (
                 <div className="gf-form-inline">
                   <div className="gf-form">
-                    <FormLabel className="width-14">Secret Access Key</FormLabel>
+                    <InlineFormLabel className="width-14">Secret Access Key</InlineFormLabel>
                     <div className="width-30">
                       <Input
                         className="width-30"
@@ -237,12 +233,12 @@ export class ConfigEditor extends PureComponent<Props, State> {
           {options.jsonData.authType === 'arn' && (
             <div className="gf-form-inline">
               <div className="gf-form">
-                <FormLabel
+                <InlineFormLabel
                   className="width-14"
                   tooltip="ARN of role to assume. The AWS SDK Default credentials-chain will be used to assume it."
                 >
                   Assume Role ARN
-                </FormLabel>
+                </InlineFormLabel>
                 <div className="width-30">
                   <Input
                     className="width-30"
@@ -256,12 +252,12 @@ export class ConfigEditor extends PureComponent<Props, State> {
           )}
           <div className="gf-form-inline">
             <div className="gf-form">
-              <FormLabel
+              <InlineFormLabel
                 className="width-14"
                 tooltip="Specify the region, such as for US West (Oregon) use ` us-west-2 ` as the region."
               >
                 Default Region
-              </FormLabel>
+              </InlineFormLabel>
               <Select
                 className="width-30"
                 value={regions.find(region => region.value === options.jsonData.defaultRegion)}
@@ -273,9 +269,9 @@ export class ConfigEditor extends PureComponent<Props, State> {
           </div>
           <div className="gf-form-inline">
             <div className="gf-form">
-              <FormLabel className="width-14" tooltip="Namespaces of Custom Metrics.">
+              <InlineFormLabel className="width-14" tooltip="Namespaces of Custom Metrics.">
                 Custom Metrics
-              </FormLabel>
+              </InlineFormLabel>
               <Input
                 className="width-30"
                 placeholder="Namespace1,Namespace2"

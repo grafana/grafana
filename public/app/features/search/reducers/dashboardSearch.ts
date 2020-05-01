@@ -1,9 +1,16 @@
-import { DashboardSection, SearchAction } from '../types';
+import { DashboardSearchHit, DashboardSection, SearchAction } from '../types';
 import { getFlattenedSections, getLookupField, markSelected } from '../utils';
-import { FETCH_ITEMS, FETCH_RESULTS, TOGGLE_SECTION, MOVE_SELECTION_DOWN, MOVE_SELECTION_UP } from './actionTypes';
+import {
+  FETCH_ITEMS,
+  FETCH_RESULTS,
+  TOGGLE_SECTION,
+  MOVE_SELECTION_DOWN,
+  MOVE_SELECTION_UP,
+  SEARCH_START,
+} from './actionTypes';
 
 export interface DashboardsSearchState {
-  results: DashboardSection[];
+  results: DashboardSearchHit[];
   loading: boolean;
   selectedIndex: number;
 }
@@ -16,10 +23,15 @@ export const dashboardsSearchState: DashboardsSearchState = {
 
 export const searchReducer = (state: DashboardsSearchState, action: SearchAction) => {
   switch (action.type) {
+    case SEARCH_START:
+      if (!state.loading) {
+        return { ...state, loading: true };
+      }
+      return state;
     case FETCH_RESULTS: {
       const results = action.payload;
       // Highlight the first item ('Starred' folder)
-      if (results.length) {
+      if (results.length > 0) {
         results[0].selected = true;
       }
       return { ...state, results, loading: false };

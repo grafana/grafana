@@ -24,6 +24,7 @@ import { QueryEditorRowTitle } from './QueryEditorRowTitle';
 import { QueryOperationRow } from 'app/core/components/QueryOperationRow/QueryOperationRow';
 import { QueryOperationAction } from 'app/core/components/QueryOperationRow/QueryOperationAction';
 import { DashboardModel } from '../state/DashboardModel';
+import { selectors } from '@grafana/e2e-selectors';
 
 interface Props {
   panel: PanelModel;
@@ -282,11 +283,13 @@ export class QueryEditorRow extends PureComponent<Props, State> {
     const editor = this.renderPluginEditor();
 
     return (
-      <QueryOperationRow title={this.renderTitle} actions={this.renderActions} onOpen={this.onOpen}>
-        <div className={rowClasses}>
-          <ErrorBoundaryAlert>{editor}</ErrorBoundaryAlert>
-        </div>
-      </QueryOperationRow>
+      <div aria-label={selectors.components.QueryEditorRows.rows}>
+        <QueryOperationRow title={this.renderTitle} actions={this.renderActions} onOpen={this.onOpen}>
+          <div className={rowClasses}>
+            <ErrorBoundaryAlert>{editor}</ErrorBoundaryAlert>
+          </div>
+        </QueryOperationRow>
+      </div>
     );
   }
 }
@@ -335,6 +338,13 @@ export function filterPanelDataToQuery(data: PanelData, refId: string): PanelDat
 
   // No matching series
   if (!series.length) {
+    // If there was an error with no data, pass it to the QueryEditors
+    if (data.error && !data.series.length) {
+      return {
+        ...data,
+        state: LoadingState.Error,
+      };
+    }
     return undefined;
   }
 

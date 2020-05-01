@@ -1,10 +1,9 @@
 import _ from 'lodash';
 import angular, { ILocationService, IScope } from 'angular';
 
-import locationUtil from 'app/core/utils/location_util';
 import { DashboardModel } from '../../state/DashboardModel';
 import { CalculateDiffOptions, HistoryListOpts, HistorySrv, RevisionsModel } from './HistorySrv';
-import { AppEvents, dateTime, DateTimeInput, toUtc } from '@grafana/data';
+import { AppEvents, DateTimeInput, locationUtil } from '@grafana/data';
 import { GrafanaRootScope } from 'app/routes/GrafanaCtrl';
 import { CoreEvents } from 'app/types';
 import { promiseToDigest } from '../../../../core/utils/promiseToDigest';
@@ -77,9 +76,7 @@ export class HistoryListCtrl {
   }
 
   formatBasicDate(date: DateTimeInput) {
-    const now = this.dashboard.timezone === 'browser' ? dateTime() : toUtc();
-    const then = this.dashboard.timezone === 'browser' ? dateTime(date) : toUtc(date);
-    return then.from(now);
+    return this.dashboard.getRelativeTime(date);
   }
 
   getDiff(diff: 'basic' | 'json') {

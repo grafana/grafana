@@ -14,10 +14,14 @@ awsconfig
 /e2e/tmp
 .yarnrc
 .yarn/
+vendor/
 
 # Enterprise emails
 /emails/templates/enterprise_*
 /public/emails/enterprise_*
+
+# Enterprise devenv
+/devenv/docker/blocks/grafana-enterprise
 
 /tmp
 tools/phantomjs/phantomjs

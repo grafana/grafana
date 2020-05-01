@@ -12,6 +12,8 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/cloudwatch"
 	"github.com/aws/aws-sdk-go/service/cloudwatch/cloudwatchiface"
+	"github.com/aws/aws-sdk-go/service/cloudwatchlogs"
+	"github.com/aws/aws-sdk-go/service/cloudwatchlogs/cloudwatchlogsiface"
 	"github.com/aws/aws-sdk-go/service/ec2"
 	"github.com/aws/aws-sdk-go/service/ec2/ec2iface"
 	"github.com/aws/aws-sdk-go/service/resourcegroupstaggingapi"
@@ -26,6 +28,7 @@ type clientCache interface {
 	cloudWatchClient(dsInfo *DatasourceInfo) (cloudwatchiface.CloudWatchAPI, error)
 	ec2Client(dsInfo *DatasourceInfo) (ec2iface.EC2API, error)
 	rgtaClient(dsInfo *DatasourceInfo) (resourcegroupstaggingapiiface.ResourceGroupsTaggingAPIAPI, error)
+	logsClient(dsInfo *DatasourceInfo) (cloudwatchlogsiface.CloudWatchLogsAPI, error)
 }
 
 // sessionCache is an implementation of clientCache that caches sessions
@@ -145,12 +148,26 @@ func (s *sessionCache) rgtaClient(dsInfo *DatasourceInfo) (resourcegroupstagging
 	return client, nil
 }
 
+func (s *sessionCache) logsClient(dsInfo *DatasourceInfo) (cloudwatchlogsiface.CloudWatchLogsAPI, error) {
+	sess, err := s.session(dsInfo)
+	if err != nil {
+		return nil, err
+	}
+
+	client := cloudwatchlogs.New(sess)
+	client.Handlers.Send.PushFront(func(r *request.Request) {
+		r.HTTPRequest.Header.Set("User-Agent", fmt.Sprintf("Grafana/%s", setting.BuildVersion))
+	})
+	return client, nil
+}
+
 // mockClients is an implenentation of the clientCache interface that enables users to
 // mock the AWS API by providing mock implementations of the respective APIs
 type mockClients struct {
 	cloudWatch cloudwatchiface.CloudWatchAPI
 	ec2        ec2iface.EC2API
 	rgta       resourcegroupstaggingapiiface.ResourceGroupsTaggingAPIAPI
+	logs       cloudwatchlogsiface.CloudWatchLogsAPI
 }
 
 func (m *mockClients) cloudWatchClient(dsInfo *DatasourceInfo) (cloudwatchiface.CloudWatchAPI, error) {
@@ -163,4 +180,8 @@ func (m *mockClients) ec2Client(dsInfo *DatasourceInfo) (ec2iface.EC2API, error)
 
 func (m *mockClients) rgtaClient(dsInfo *DatasourceInfo) (resourcegroupstaggingapiiface.ResourceGroupsTaggingAPIAPI, error) {
 	return m.rgta, nil
+}
+
+func (m *mockClients) logsClient(dsInfo *DatasourceInfo) (cloudwatchlogsiface.CloudWatchLogsAPI, error) {
+	return m.logs, nil
 }
