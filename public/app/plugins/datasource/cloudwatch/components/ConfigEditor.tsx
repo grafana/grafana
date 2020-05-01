@@ -42,7 +42,7 @@ export class ConfigEditor extends PureComponent<Props, State> {
     this.loadRegionsPromise = makePromiseCancelable(this.loadRegions());
     this.loadRegionsPromise.promise.catch(({ isCanceled }) => {
       if (isCanceled) {
-        console.warn('Cloud Watch ConfigEditor has unmounted, intialization was canceled');
+        console.warn('Cloud Watch ConfigEditor has unmounted, initialization was canceled');
       }
     });
   }
