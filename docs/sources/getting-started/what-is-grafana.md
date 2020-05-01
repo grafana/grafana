@@ -4,6 +4,7 @@ description = "Overview of Grafana and features"
 keywords = ["grafana", "intro", "guide", "started"]
 type = "docs"
 [menu.docs]
+aliases = ["/docs/grafana/latest/guides/what-is-grafana"]
 name = "What is Grafana?"
 identifier = "what_is_grafana"
 parent = "guides"
