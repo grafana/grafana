@@ -65,7 +65,7 @@ The SAML SSO standard uses asymmetric encryption to exchange information between
 
 Grafana supports two ways of specifying both the `certificate` and `private_key`. 
 * Without a suffix (`certificate` or `private_key`), the configuration assumes you've supplied the base64-encoded file contents. 
-* With the `_path` suffix (`certificate_path` or `private_key_path`), then Grafana treats the value entered as a file path and attempt to read the file from the file system.
+* With the `_path` suffix (`certificate_path` or `private_key_path`), then Grafana treats the value entered as a file path and attempts to read the file from the file system.
 
 You can only use one form of each configuration option. Using multiple forms, such as both `certificate` and `certificate_path`, results in an error.
 

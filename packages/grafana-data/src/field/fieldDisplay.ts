@@ -153,6 +153,14 @@ export function getFieldDisplayTitle(field: Field, frame: DataFrame, allFrames?:
     }
   }
 
+  // if we have not added frame name and no labels, and field name = Value, we should add frame name
+  if (!frameNameAdded && !labelsAdded && field.name === TIME_SERIES_FIELD_NAME) {
+    if (frame.name && frame.name.length > 0) {
+      parts.push(frame.name);
+      frameNameAdded = true;
+    }
+  }
+
   // We skip the Value field name if we have a frame name or labels
   if (field.name !== TIME_SERIES_FIELD_NAME || (!frameNameAdded && !labelsAdded)) {
     parts.push(field.name);

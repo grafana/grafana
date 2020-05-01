@@ -77,6 +77,7 @@ export class ResultTransformer {
       target: name,
       tags: labels,
       title,
+      meta: options.meta,
     };
   }
 
@@ -142,7 +143,7 @@ export class ResultTransformer {
     const dps = [];
     const { name, labels } = this.createLabelInfo(md.metric, options);
     dps.push([parseFloat(md.value[1]), md.value[0] * 1000]);
-    return { target: name, datapoints: dps, tags: labels, refId: options.refId };
+    return { target: name, datapoints: dps, tags: labels, refId: options.refId, meta: options.meta };
   }
 
   createLabelInfo(

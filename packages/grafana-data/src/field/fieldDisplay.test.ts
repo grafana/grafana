@@ -285,6 +285,15 @@ describe('getFieldDisplayTitle', () => {
 
     expect(getFieldDisplayTitle(data.fields[0], data)).toBe('Value');
   });
+
+  it('should use series name when field name is TIME_SERIES_FIELD_NAME and there are no labels ', () => {
+    const data = toDataFrame({
+      name: 'Series A',
+      fields: [{ name: TIME_SERIES_FIELD_NAME, values: [], labels: {} }],
+    });
+
+    expect(getFieldDisplayTitle(data.fields[0], data)).toBe('Series A');
+  });
 });
 
 function createEmptyDisplayOptions(extend = {}): GetFieldDisplayValuesOptions {

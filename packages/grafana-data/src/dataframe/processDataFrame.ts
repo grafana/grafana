@@ -268,7 +268,10 @@ export const isTableData = (data: any): data is DataFrame => data && data.hasOwn
 
 export const isDataFrame = (data: any): data is DataFrame => data && data.hasOwnProperty('fields');
 
-export const toDataFrame = (data: any): DataFrame => {
+/**
+ * Inspect any object and return the results as a DataFrame
+ */
+export function toDataFrame(data: any): DataFrame {
   if ('fields' in data) {
     // DataFrameDTO does not have length
     if ('length' in data) {
@@ -298,7 +301,7 @@ export const toDataFrame = (data: any): DataFrame => {
 
   console.warn('Can not convert', data);
   throw new Error('Unsupported data format');
-};
+}
 
 export const toLegacyResponseData = (frame: DataFrame): TimeSeries | TableData => {
   const { fields } = frame;
