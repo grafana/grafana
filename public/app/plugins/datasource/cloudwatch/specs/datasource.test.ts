@@ -557,7 +557,7 @@ describe('CloudWatchDatasource', () => {
       });
     });
 
-    it('should generate the correct query in the case of one multilple template variables', done => {
+    it('should generate the correct query in the case of one multiple template variables', done => {
       const query = {
         range: defaultTimeRange,
         rangeRaw: { from: 1483228800, to: 1483232400 },
@@ -591,7 +591,7 @@ describe('CloudWatchDatasource', () => {
       });
     });
 
-    it('should generate the correct query in the case of multilple multi template variables', done => {
+    it('should generate the correct query in the case of multiple multi template variables', done => {
       const query = {
         range: defaultTimeRange,
         rangeRaw: { from: 1483228800, to: 1483232400 },
@@ -621,7 +621,7 @@ describe('CloudWatchDatasource', () => {
       });
     });
 
-    it('should generate the correct query for multilple template variables, lack scopedVars', done => {
+    it('should generate the correct query for multiple template variables, lack scopedVars', done => {
       const query = {
         range: defaultTimeRange,
         rangeRaw: { from: 1483228800, to: 1483232400 },
