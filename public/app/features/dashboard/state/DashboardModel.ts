@@ -1,4 +1,4 @@
-// Libaries
+// Libraries
 import _ from 'lodash';
 // Constants
 import { DEFAULT_ANNOTATION_COLOR } from '@grafana/ui';

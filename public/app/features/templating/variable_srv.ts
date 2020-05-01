@@ -1,4 +1,4 @@
-// Libaries
+// Libraries
 import angular, { auto, ILocationService, IPromise, IQService } from 'angular';
 import _ from 'lodash';
 // Utils & Services

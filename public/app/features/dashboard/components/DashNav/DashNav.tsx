@@ -1,4 +1,4 @@
-// Libaries
+// Libraries
 import React, { PureComponent, FC, ReactNode } from 'react';
 import { connect } from 'react-redux';
 import { css } from 'emotion';

@@ -1,4 +1,4 @@
-// Libaries
+// Libraries
 import flattenDeep from 'lodash/flattenDeep';
 import cloneDeep from 'lodash/cloneDeep';
 // Components

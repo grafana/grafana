@@ -1,4 +1,4 @@
-// Libaries
+// Libraries
 import React, { PureComponent } from 'react';
 import { hot } from 'react-hot-loader';
 import ReactGridLayout, { ItemCallback } from 'react-grid-layout';
