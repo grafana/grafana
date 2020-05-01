@@ -11,6 +11,7 @@ import {
 } from './reducers';
 import { cleanUpEditPanel, panelModelAndPluginReady } from '../../../state/reducers';
 import store from '../../../../../core/store';
+import { source } from 'common-tags';
 
 export function initPanelEditor(sourcePanel: PanelModel, dashboard: DashboardModel): ThunkResult<void> {
   return dispatch => {
@@ -46,6 +47,10 @@ export function panelEditorCleanUp(): ThunkResult<void> {
       modifiedSaveModel.id = sourcePanel.id;
 
       sourcePanel.restoreModel(modifiedSaveModel);
+
+      // Loaded plugin is not included in the persisted properties
+      // So is not handled by restoreModel
+      sourcePanel.plugin = panel.plugin;
 
       if (panelTypeChanged) {
         dispatch(panelModelAndPluginReady({ panelId: sourcePanel.id, plugin: panel.plugin! }));

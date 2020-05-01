@@ -1,6 +1,8 @@
 import { FieldConfig } from './dataFrame';
 import { DataTransformerConfig } from './transformations';
 import { ApplyFieldOverrideOptions } from './fieldOverrides';
+import { InterpolateFunction } from './panel';
+import { FieldConfigOptionsRegistry } from '../field';
 
 export type KeyValue<T = any> = { [s: string]: T };
 
