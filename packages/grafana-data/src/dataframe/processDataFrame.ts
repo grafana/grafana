@@ -75,7 +75,7 @@ function convertTimeSeriesToDataFrame(timeSeries: TimeSeries): DataFrame {
       values: new ArrayVector<number>(times),
     },
     {
-      name: TIME_SERIES_FIELD_NAME,
+      name: timeSeries.target || TIME_SERIES_FIELD_NAME,
       type: FieldType.number,
       config: {
         unit: timeSeries.unit,
@@ -90,7 +90,6 @@ function convertTimeSeriesToDataFrame(timeSeries: TimeSeries): DataFrame {
   }
 
   return {
-    name: timeSeries.target,
     refId: timeSeries.refId,
     meta: timeSeries.meta,
     fields,
