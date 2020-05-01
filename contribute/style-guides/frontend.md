@@ -174,7 +174,9 @@ _SASS styles are deprecated. Please migrate to Emotion whenever you need to modi
 
 ### Typing
 
-In general we let Typescript to infer the types so there is no need to type each variable. There are some exceptions to this:
+In general, you should let Typescript infer the types so that there's no need to explicitly define type for each variable. 
+
+There are some exceptions to this:
 
 ```typescript
 // Typescript needs to know type of arrays or objects otherwise it would infer it as array of any 
