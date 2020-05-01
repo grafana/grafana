@@ -78,7 +78,7 @@ describe('PromExploreQueryEditor', () => {
   });
 
   it('should render PromQueryField with ExtraFieldElement', async () => {
-    // @ts-ignore strict null errpr TS2345: Argument of type '() => Promise<void>' is not assignable to parameter of type '() => void | undefined'.
+    // @ts-ignore strict null error TS2345: Argument of type '() => Promise<void>' is not assignable to parameter of type '() => void | undefined'.
     await act(async () => {
       const wrapper = setup(shallow);
       expect(wrapper.html()).toContain('aria-label="Prometheus extra field"');
