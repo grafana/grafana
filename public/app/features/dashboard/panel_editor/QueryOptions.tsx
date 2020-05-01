@@ -130,7 +130,7 @@ export class QueryOptions extends PureComponent<Props, State> {
     const tooltip = `If your time series store has a query cache this option can override the default cache timeout. Specify a
     numeric value in seconds.`;
 
-    if (!datasource.meta.queryOptions?.maxDataPoints || !datasource.meta.queryOptions?.cacheTimeout) {
+    if (!datasource.meta.queryOptions?.cacheTimeout) {
       return null;
     }
 
