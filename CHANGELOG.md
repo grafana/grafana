@@ -1360,7 +1360,7 @@ repo on July 1st. Make sure you have switched to the new repo by then. The new r
 - **Table**: Fix CSS alpha background-color applied twice in table cell with link [#13606](https://github.com/grafana/grafana/issues/13606), thx [@grisme](https://github.com/grisme)
 - **Singlestat**: Fix XSS in prefix/postfix [#13946](https://github.com/grafana/grafana/issues/13946), thx [@cinaglia](https://github.com/cinaglia)
 - **Units**: New clock time format, to format ms or second values as for example `01h:59m`, [#13635](https://github.com/grafana/grafana/issues/13635), thx [@franciscocpg](https://github.com/franciscocpg)
-- **Alerting**: Increaste default duration for queries [#13945](https://github.com/grafana/grafana/pull/13945)
+- **Alerting**: Increase default duration for queries [#13945](https://github.com/grafana/grafana/pull/13945)
 - **Alerting**: More options for the Slack Alert notifier [#13993](https://github.com/grafana/grafana/issues/13993), thx [@andreykaipov](https://github.com/andreykaipov)
 - **Alerting**: Can't receive DingDing alert when alert is triggered [#13723](https://github.com/grafana/grafana/issues/13723), thx [@Yukinoshita-Yukino](https://github.com/Yukinoshita-Yukino)
 - **Alerting**: Increase Telegram captions length limit [#13876](https://github.com/grafana/grafana/pull/13876), thx [@skgsergio](https://github.com/skgsergio)
