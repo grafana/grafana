@@ -66,7 +66,7 @@ Variables are listed in dropdown lists across the top of the screen. Select diff
 
 To see variable settings, navigate to **Dashboard Settings > Variables**. Click a variable in the list to see its settings.
 
-Templates are in the query portion of panels. Queries with text that starts with `$` are templates. Not all panels will have template queries.
+Variables can be used in titles, descriptions, text panels, and queries. Queries with text that starts with `$` are templates. Not all panels will have template queries.
 
 ## Variable types
 
