@@ -31,7 +31,7 @@ describe('RichHistory', () => {
     const wrapper = setup();
     expect(wrapper.find(Tab)).toHaveLength(3);
   });
-  it('should render correct lebels of tabs in tab bar', () => {
+  it('should render correct labels of tabs in tab bar', () => {
     const wrapper = setup();
     expect(
       wrapper
