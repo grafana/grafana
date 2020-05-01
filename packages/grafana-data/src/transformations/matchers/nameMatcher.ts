@@ -47,7 +47,7 @@ const frameNameMacher: FrameMatcherInfo<string> = {
 };
 
 /**
- * Registry Initalization
+ * Registry Initialization
  */
 export function getFieldNameMatchers(): FieldMatcherInfo[] {
   return [fieldNameMacher];

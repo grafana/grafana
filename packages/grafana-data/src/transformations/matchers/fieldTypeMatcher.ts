@@ -52,7 +52,7 @@ const timeMatcher: FieldMatcherInfo = {
 };
 
 /**
- * Registry Initalization
+ * Registry Initialization
  */
 export function getFieldTypeMatchers(): FieldMatcherInfo[] {
   return [fieldTypeMatcher, numericMatcher, timeMatcher];
