@@ -3297,7 +3297,7 @@ Read this [blog post](https://grafana.com/blog/2014/09/11/grafana-1.8.0-rc1-rele
 
 **Fixes**
 
-- [Issue #500](https://github.com/grafana/grafana/issues/360). Fixes regex InfluxDB queries intoduced in 1.6.0
+- [Issue #500](https://github.com/grafana/grafana/issues/360). Fixes regex InfluxDB queries introduced in 1.6.0
 - [Issue #506](https://github.com/grafana/grafana/issues/506). Bug in when using % sign in legends (aliases), fixed by removing url decoding of metric names
 - [Issue #522](https://github.com/grafana/grafana/issues/522). Series names and column name typeahead cache fix
 - [Issue #504](https://github.com/grafana/grafana/issues/504). Fixed influxdb issue with raw query that caused wrong value column detection
