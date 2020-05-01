@@ -16,7 +16,7 @@ White labeling allows you to replace the Grafana brand and logo with your own co
 
 > Only available in Grafana Enterprise v6.6+.
 
-Grafana Enterprise has white labeling options in the `grafana.ini` file. As with all configuration options, you can also be set set them with environment variables.
+Grafana Enterprise has white labeling options in the `grafana.ini` file. As with all configuration options, you can also set them with environment variables.
 
 You can change the following elements:
 
