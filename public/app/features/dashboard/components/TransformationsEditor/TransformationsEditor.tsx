@@ -1,5 +1,14 @@
 import React from 'react';
-import { Button, Container, CustomScrollbar, stylesFactory, useTheme, ValuePicker, VerticalGroup } from '@grafana/ui';
+import {
+  Button,
+  Container,
+  CustomScrollbar,
+  stylesFactory,
+  useTheme,
+  ValuePicker,
+  VerticalGroup,
+  InfoBox,
+} from '@grafana/ui';
 import {
   DataFrame,
   DataTransformerConfig,
@@ -115,12 +124,6 @@ export class TransformationsEditor extends React.PureComponent<Props> {
   renderNoAddedTransformsState() {
     return (
       <>
-        <p className="muted">
-          Transformations allow you to combine, re-order, hide and rename specific parts the the data set before being
-          visualized. <br />
-          Choose one of the transformations below to start with:
-        </p>
-
         <VerticalGroup>
           {standardTransformersRegistry.list().map(t => {
             return (
@@ -146,6 +149,12 @@ export class TransformationsEditor extends React.PureComponent<Props> {
       <CustomScrollbar autoHeightMin="100%">
         <Container padding="md">
           <div aria-label={selectors.components.TransformTab.content}>
+            <InfoBox header="Beta feature">
+              Transformations is a new feature that is currenly in beta. Transformations allow you to join, calculate,
+              re-order, hide and rename your query results before being visualized. Many transforms are not suitable if
+              your using the Graph visualisation as it currently only supports time series. It can help to switch to
+              Table visualisation to understand what a transformation is doing.
+            </InfoBox>
             {!hasTransformationsConfigured && this.renderNoAddedTransformsState()}
             {hasTransformationsConfigured && this.renderTransformationEditors()}
             {hasTransformationsConfigured && this.renderTransformationSelector()}
@@ -169,6 +178,11 @@ const getTransformationCardStyles = stylesFactory((theme: GrafanaTheme) => {
       width: 100%;
       border: none;
       padding: ${theme.spacing.sm};
+
+      // hack because these cards use classes from a very different card for some reason
+      .add-data-source-item-text {
+        font-size: ${theme.typography.size.md};
+      }
 
       &:hover {
         background: ${theme.colors.bg3};

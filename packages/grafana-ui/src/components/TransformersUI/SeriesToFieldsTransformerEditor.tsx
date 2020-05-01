@@ -42,6 +42,7 @@ export const seriesToFieldsTransformerRegistryItem: TransformerRegistyItem<Serie
   id: DataTransformerID.seriesToColumns,
   editor: SeriesToFieldsTransformerEditor,
   transformation: standardTransformers.seriesToColumnsTransformer,
-  name: 'Join by field',
-  description: 'Joins many time series / data frames by a field',
+  name: 'Outer join',
+  description:
+    'Joins many time series / tables by a field. As an example this can be used to show many time series in one table.',
 };

@@ -222,5 +222,6 @@ export const organizeFieldsTransformRegistryItem: TransformerRegistyItem<Organiz
   editor: OrganizeFieldsTransformerEditor,
   transformation: standardTransformers.organizeFieldsTransformer,
   name: 'Organize fields',
-  description: 'Order, filter and rename fields',
+  description:
+    'Order, filter and rename fields. Very useful for customizing table columns but also useful in many other scenarios.',
 };

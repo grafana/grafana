@@ -190,5 +190,5 @@ export const filterFieldsByNameTransformRegistryItem: TransformerRegistyItem<Fil
   editor: FilterByNameTransformerEditor,
   transformation: standardTransformers.filterFieldsByNameTransformer,
   name: 'Filter by name',
-  description: 'Filter fields by name',
+  description: 'Filter time series or fields by name',
 };

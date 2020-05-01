@@ -5,7 +5,6 @@ import { stylesFactory, useTheme } from '../../themes';
 
 export interface Props extends React.HTMLAttributes<HTMLDivElement> {
   header?: string | JSX.Element;
-  footer?: string | JSX.Element;
 }
 
 /**
@@ -14,7 +13,7 @@ export interface Props extends React.HTMLAttributes<HTMLDivElement> {
  * @Alpha
  */
 export const InfoBox = React.memo(
-  React.forwardRef<HTMLDivElement, Props>(({ header, footer, className, children, ...otherProps }, ref) => {
+  React.forwardRef<HTMLDivElement, Props>(({ header, className, children, ...otherProps }, ref) => {
     const theme = useTheme();
     const css = getInfoBoxStyles(theme);
 
@@ -22,11 +21,10 @@ export const InfoBox = React.memo(
       <div className={cx([css.wrapper, className])} {...otherProps} ref={ref}>
         {header && (
           <div className={css.header}>
-            <h5>{header}</h5>
+            <div className={css.headerText}>{header}</div>
           </div>
         )}
-        {children}
-        {footer && <div className={css.footer}>{footer}</div>}
+        <div className={css.body}>{children}</div>
       </div>
     );
   })
@@ -35,12 +33,9 @@ export const InfoBox = React.memo(
 const getInfoBoxStyles = stylesFactory((theme: GrafanaTheme) => ({
   wrapper: css`
     position: relative;
-    padding: ${theme.spacing.lg};
     background-color: ${theme.colors.bg2};
     border-top: 3px solid ${theme.palette.blue80};
     margin-bottom: ${theme.spacing.md};
-    margin-right: ${theme.spacing.xs};
-    box-shadow: ${theme.shadows.listItem};
     flex-grow: 1;
 
     ul {
@@ -60,18 +55,20 @@ const getInfoBoxStyles = stylesFactory((theme: GrafanaTheme) => ({
       margin-bottom: 0;
     }
 
-    a {
-      @extend .external-link;
-    }
-
     &--max-lg {
       max-width: ${theme.breakpoints.lg};
     }
   `,
-  header: css`
-    margin-bottom: ${theme.spacing.d};
+  headerText: css`
+    font-size: ${theme.typography.heading.h5};
+    flex-grow: 1;
   `,
-  footer: css`
-    margin-top: ${theme.spacing.d};
+  header: css`
+    display: flex;
+    align-items: center;
+    padding: ${theme.spacing.md} ${theme.spacing.md} 0 ${theme.spacing.md};
+  `,
+  body: css`
+    padding: ${theme.spacing.md};
   `,
 }));
