@@ -1,12 +1,13 @@
-import { DataQueryResponse } from '../types';
+import { DataQueryResponse, DataFrame, arrowTableToDataFrame, base64StringToArrowTable } from '@grafana/data';
 
 /**
  * Will parse the results from `/api/ds/query
  */
 export function toDataQueryResponse(res: any): DataQueryResponse {
   if (res.data) {
+    return { data: resultsToDataFrames(res.data) };
   }
-  return { data: resultsToDataFrames(rsp) };
+  throw new Error('err!');
 }
 
 export function resultsToDataFrames(rsp: any): DataFrame[] {

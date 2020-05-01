@@ -9,6 +9,7 @@ import {
 import { Observable, from } from 'rxjs';
 import { config } from '..';
 import { getBackendSrv } from '../services';
+import { toDataQueryResponse } from './queryResponse';
 
 const ExpressionDatasourceID = '__expr__';
 
@@ -94,7 +95,7 @@ export class DataSourceWithBackend<
         requestId,
       })
       .then((rsp: any) => {
-        return httpResponseToDataQueryResponse(rsp);
+        return toDataQueryResponse(rsp);
       });
 
     return from(req);
