@@ -17,6 +17,12 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb"
 )
 
+const (
+	CLOUDWATCH_DEFAULT_REGION = "default"
+
+	CLOUDWATCH_TS_FORMAT = "2006-01-02 15:04:05.000"
+)
+
 var (
 	// In order to properly cache sessions per-datasource we need to
 	// keep a state for each datasource.
@@ -24,6 +30,10 @@ var (
 	executorLock = sync.Mutex{}
 )
 
+// CloudWatchExecutor represents a struct holding enough information to execute
+// cloudwatch queries for a specific datasource. It caches AWS SDK Sessions on
+// a region basis for each datasource version in order to load configuration as
+// seldom as possible.
 type CloudWatchExecutor struct {
 	*models.DataSource
 
@@ -38,6 +48,9 @@ type CloudWatchExecutor struct {
 	dimensionsCacheLock        sync.Mutex
 }
 
+// getExecutor finds the appropriate CloudWatchExecutor for the given
+// datasource using a global cache protected by a mutex. If there is none
+// cached a new one will be created.
 func getExecutor(dsInfo *models.DataSource) *CloudWatchExecutor {
 	executorLock.Lock()
 	defer executorLock.Unlock()
@@ -74,8 +87,6 @@ type DatasourceInfo struct {
 func NewCloudWatchExecutor(dsInfo *models.DataSource) (tsdb.TsdbQueryEndpoint, error) {
 	return getExecutor(dsInfo), nil
 }
-
-const CLOUDWATCH_TS_FORMAT = "2006-01-02 15:04:05.000"
 
 var (
 	plog        log.Logger
@@ -160,10 +171,12 @@ func (e *CloudWatchExecutor) Query(ctx context.Context, dsInfo *models.DataSourc
 	return result, err
 }
 
+// getDsInfo gets the CloudWatchExecutor's region-specific DataSourceInfo from
+// the embedded models.DataSource. Given CLOUDWATCH_DEFAULT_REGION it will fall
+// back to the region configured as default for the datasource.
 func (e *CloudWatchExecutor) getDsInfo(region string) *DatasourceInfo {
-	defaultRegion := e.DataSource.JsonData.Get("defaultRegion").MustString()
-	if region == "default" {
-		region = defaultRegion
+	if region == CLOUDWATCH_DEFAULT_REGION {
+		region = e.DataSource.JsonData.Get("defaultRegion").MustString()
 	}
 
 	authType := e.DataSource.JsonData.Get("authType").MustString()
@@ -190,7 +203,10 @@ func (e *CloudWatchExecutor) executeLogAlertQuery(ctx context.Context, queryCont
 	queryParams.Set("subtype", "StartQuery")
 	queryParams.Set("queryString", queryParams.Get("expression").MustString(""))
 
-	logsClient, err := e.clients.logsClient(e.getDsInfo("default"))
+	dsInfo := e.getDsInfo(queryParams.Get("region").MustString(CLOUDWATCH_DEFAULT_REGION))
+	queryParams.Set("region", dsInfo.Region)
+
+	logsClient, err := e.clients.logsClient(dsInfo)
 	if err != nil {
 		return nil, err
 	}

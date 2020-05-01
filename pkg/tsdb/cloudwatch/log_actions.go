@@ -60,7 +60,7 @@ func (e *CloudWatchExecutor) executeLogAction(ctx context.Context, queryContext 
 	parameters := query.Model
 	subType := query.Model.Get("subtype").MustString()
 
-	logsClient, err := e.clients.logsClient(e.getDsInfo("default"))
+	logsClient, err := e.clients.logsClient(e.getDsInfo(CLOUDWATCH_DEFAULT_REGION))
 	if err != nil {
 		return nil, err
 	}

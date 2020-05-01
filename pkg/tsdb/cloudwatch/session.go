@@ -45,6 +45,8 @@ func newSessionCache() *sessionCache {
 	return &sessionCache{awsRegionSessions: make(map[string]*session.Session)}
 }
 
+// newAwsSession creates a new *session.Session given the Authentication
+// Provider configuration in the given DataSourceInfo.
 func (s *sessionCache) newAwsSession(dsInfo *DatasourceInfo) (*session.Session, error) {
 	regionConfiguration := &aws.Config{
 		Region: aws.String(dsInfo.Region),
@@ -86,6 +88,9 @@ func (s *sessionCache) newAwsSession(dsInfo *DatasourceInfo) (*session.Session, 
 	return nil, fmt.Errorf(`%q is not a valid authentication type. Expected "arn", "credentials", "keys" or "sdk"`, dsInfo.AuthType)
 }
 
+// session return an appropriate session.Session for the configuration given in the
+// DataSourceInfo. This method is primarily used internally by the API-specific
+// methods such as `cloudWatchClient`.
 func (s *sessionCache) session(dsInfo *DatasourceInfo) (*session.Session, error) {
 	region := dsInfo.Region
 
@@ -162,7 +167,7 @@ func (s *sessionCache) logsClient(dsInfo *DatasourceInfo) (cloudwatchlogsiface.C
 }
 
 // mockClients is an implenentation of the clientCache interface that enables users to
-// mock the AWS API by providing mock implementations of the respective APIs
+// mock the AWS API by providing mock implementations of the respective APIs.
 type mockClients struct {
 	cloudWatch cloudwatchiface.CloudWatchAPI
 	ec2        ec2iface.EC2API
