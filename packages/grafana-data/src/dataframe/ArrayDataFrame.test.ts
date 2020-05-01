@@ -1,6 +1,6 @@
 import { ArrayDataFrame } from './ArrayDataFrame';
 import { toDataFrameDTO } from './processDataFrame';
-import { FieldType } from '../types';
+import { FieldType, DataFrame } from '../types';
 
 describe('Array DataFrame', () => {
   const input = [
@@ -91,5 +91,15 @@ describe('Array DataFrame', () => {
         "refId": "Z",
       }
     `);
+  });
+
+  test('Survives ES6 operations', () => {
+    const copy: DataFrame = {
+      ...frame,
+      name: 'hello',
+    };
+    expect(copy.fields).toEqual(frame.fields);
+    expect(copy.length).toEqual(frame.length);
+    expect(copy.length).toEqual(input.length);
   });
 });
