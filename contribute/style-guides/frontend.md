@@ -210,8 +210,6 @@ function transform(value?: string): TransformedValue | undefined {
 };
 ```
 
-
-
 ### File and directory naming conventions
 
 Name files according to the primary export:
