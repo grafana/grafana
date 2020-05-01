@@ -3057,7 +3057,7 @@ Grafana 2.x is fundamentally different from 1.x; it now ships with an integrated
 
 **Enhancements**
 
-- [Issue #1028](https://github.com/grafana/grafana/issues/1028). Graph: New legend option `hideEmtpy` to hide series with only null values from legend
+- [Issue #1028](https://github.com/grafana/grafana/issues/1028). Graph: New legend option `hideEmpty` to hide series with only null values from legend
 - [Issue #1242](https://github.com/grafana/grafana/issues/1242). OpenTSDB: Downsample query field now supports interval template variable
 - [Issue #1126](https://github.com/grafana/grafana/issues/1126). InfluxDB: Support more than 10 series name segments when using alias `$number` patterns
 
