@@ -82,10 +82,10 @@ describe('Functions', () => {
     const { instance } = setup({ member });
     const permission = TeamPermissionLevel.Admin;
     const item: SelectableValue<TeamPermissionLevel> = { value: permission };
-    const expectedTeamMemeber = { ...member, permission };
+    const expectedTeamMember = { ...member, permission };
 
     instance.onPermissionChange(item, member);
 
-    expect(instance.props.updateTeamMember).toHaveBeenCalledWith(expectedTeamMemeber);
+    expect(instance.props.updateTeamMember).toHaveBeenCalledWith(expectedTeamMember);
   });
 });
