@@ -40,7 +40,7 @@ type Bus interface {
 	AddEventListener(handler HandlerFunc)
 
 	// SetTransactionManager allows the user to replace the internal
-	// noop TransactionManager that is responsible for manageing
+	// noop TransactionManager that is responsible for managing
 	// transactions in `InTransaction`
 	SetTransactionManager(tm TransactionManager)
 }
