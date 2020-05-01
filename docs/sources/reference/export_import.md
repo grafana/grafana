@@ -50,7 +50,7 @@ Find dashboards for common server applications at [Grafana.com/dashboards](https
 ## Import and Sharing with Grafana 2.x or 3.0
 
 Dashboards on Grafana.com use a new feature in Grafana 3.1 that allows the import process
-to update each panel so that they are using a data source of your choosing. If you are running a
+to update each panel so that they are using a data source of your choice. If you are running a
 Grafana version older than 3.1 then you might need to do some manual steps either
 before or after import in order for the dashboard to work properly.
 
