@@ -288,6 +288,11 @@ type Cfg struct {
 	FeatureToggles map[string]bool
 }
 
+// IsExpressionsEnabled returns whether the expressions feature is enabled.
+func (c Cfg) IsExpressionsEnabled() bool {
+	return c.FeatureToggles["expressions"]
+}
+
 type CommandLineArgs struct {
 	Config   string
 	HomePath string

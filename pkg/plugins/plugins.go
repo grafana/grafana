@@ -270,7 +270,7 @@ func (scanner *PluginScanner) loadPlugin(pluginJsonFilePath string) error {
 	}
 
 	if pluginCommon.Id == "gel" {
-		isEnabled := scanner.cfg.FeatureToggles["expressions"]
+		isEnabled := scanner.cfg.IsExpressionsEnabled()
 		scanner.log.Debug("Plugin is dependent on a feature flag, checking if enabled", "pluginID", pluginCommon.Id,
 			"featureFlag", "expressions", "enabled", isEnabled)
 		if !isEnabled {
