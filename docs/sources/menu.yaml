@@ -110,7 +110,7 @@
     name: Dashboard list
   - link: /features/panels/text/
     name: Text
-- name: Dashboard features
+- name: Dashboards
   link: /features/dashboard/
   children:
   - link: /features/dashboard/dashboards/
@@ -131,6 +131,8 @@
     name: Time range
   - link: /reference/export_import/
     name: Export and import
+  - link: /features/dashboard/links/
+    name: Navigation links
   - link: /reference/datalinks/
     name: Data links
   - link: /reference/dashboard_history/
@@ -189,8 +191,6 @@
     name: Notifications
 - name: Image rendering
   link: /administration/image_rendering/
-- name: Navigation links
-  link: /features/navigation-links/
 - name: Templates and variables
   link: /variables/
   children:
