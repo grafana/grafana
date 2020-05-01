@@ -1,28 +1,49 @@
-import { DataQueryResponse, DataFrame, arrowTableToDataFrame, base64StringToArrowTable } from '@grafana/data';
+import { DataQueryResponse, arrowTableToDataFrame, base64StringToArrowTable, KeyValue } from '@grafana/data';
+
+interface DataResponse {
+  error?: string;
+  refId?: string;
+  dataframes?: string[];
+  // series: null,
+  // tables: null,
+}
 
 /**
  * Will parse the results from `/api/ds/query
  */
 export function toDataQueryResponse(res: any): DataQueryResponse {
-  if (res.data) {
-    return { data: resultsToDataFrames(res.data) };
-  }
-  throw new Error('err!');
-}
+  const rsp: DataQueryResponse = { data: [] };
+  if (res.data?.results) {
+    const results: KeyValue = res.data.results;
+    for (const refId of Object.keys(results)) {
+      const dr = results[refId] as DataResponse;
+      if (dr) {
+        if (dr.error) {
+          if (!rsp.error) {
+            rsp.error = {
+              refId,
+              status: dr.error,
+            };
+          }
+        }
 
-export function resultsToDataFrames(rsp: any): DataFrame[] {
-  if (rsp === undefined || rsp.results === undefined) {
-    return [];
-  }
-
-  const results = rsp.results as Array<{ dataframes: string[] }>;
-  const frames: DataFrame[] = Object.values(results).flatMap(res => {
-    if (!res.dataframes) {
-      return [];
+        if (dr.dataframes) {
+          for (const b64 of dr.dataframes) {
+            const t = base64StringToArrowTable(b64);
+            const f = arrowTableToDataFrame(t);
+            if (!f.refId) {
+              f.refId = refId;
+            }
+            rsp.data.push(f);
+          }
+        }
+      }
     }
+  }
 
-    return res.dataframes.map((b: string) => arrowTableToDataFrame(base64StringToArrowTable(b)));
-  });
+  if (res.status && res.status !== 200) {
+    console.log('ADD AN ERROR!');
+  }
 
-  return frames;
+  return rsp;
 }

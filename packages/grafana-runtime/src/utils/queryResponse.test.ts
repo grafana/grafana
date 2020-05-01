@@ -1,10 +1,4 @@
-import {
-  DataQueryResponse,
-  DataFrame,
-  arrowTableToDataFrame,
-  base64StringToArrowTable,
-  toDataFrameDTO,
-} from '@grafana/data';
+import { toDataFrameDTO } from '@grafana/data';
 
 import { toDataQueryResponse } from './queryResponse';
 
@@ -53,11 +47,120 @@ describe('GEL Utils', () => {
     }
 
     const norm = frames.map(f => toDataFrameDTO(f));
-    expect(norm).toMatchSnapshot();
+    expect(norm).toMatchInlineSnapshot(`
+      Array [
+        Object {
+          "fields": Array [
+            Object {
+              "config": Object {},
+              "labels": undefined,
+              "name": "Time",
+              "type": "time",
+              "values": Array [
+                1569334575000,
+                1569334580000,
+                1569334585000,
+                1569334590000,
+                1569334595000,
+                1569334600000,
+                1569334605000,
+                1569334610000,
+                1569334615000,
+                1569334620000,
+                1569334625000,
+                1569334630000,
+                1569334635000,
+              ],
+            },
+            Object {
+              "config": Object {},
+              "labels": undefined,
+              "name": "",
+              "type": "number",
+              "values": Array [
+                3,
+                3,
+                3,
+                5,
+                5,
+                5,
+                3,
+                3,
+                3,
+                5,
+                5,
+                5,
+                3,
+              ],
+            },
+          ],
+          "meta": undefined,
+          "name": undefined,
+          "refId": "GC",
+        },
+      ]
+    `);
   });
 
   test('processEmptyResults', () => {
     const frames = toDataQueryResponse(emptyResults).data;
     expect(frames.length).toEqual(0);
+  });
+
+  test('resultWithError', () => {
+    // Generated from:
+    // qdr.Responses[q.GetRefID()] = backend.DataResponse{
+    //   Error: fmt.Errorf("an Error: %w", fmt.Errorf("another error")),
+    //   Frames: data.Frames{
+    //     {
+    //       Fields: data.Fields{data.NewField("numbers", nil, []float64{1, 3})},
+    //       Meta: &data.FrameMeta{
+    //         Notices: []data.Notice{
+    //           {
+    //             Severity: data.NoticeSeverityError,
+    //             Text:     "Text",
+    //           },
+    //         },
+    //       },
+    //     },
+    //   },
+    // }
+    const res = toDataQueryResponse(resWithError);
+    expect(res.error).toMatchInlineSnapshot(`
+      Object {
+        "refId": "A",
+        "status": "an Error: another error",
+      }
+    `);
+
+    const norm = res.data.map(f => toDataFrameDTO(f));
+    expect(norm).toMatchInlineSnapshot(`
+      Array [
+        Object {
+          "fields": Array [
+            Object {
+              "config": Object {},
+              "labels": undefined,
+              "name": "numbers",
+              "type": "number",
+              "values": Array [
+                1,
+                3,
+              ],
+            },
+          ],
+          "meta": Object {
+            "notices": Array [
+              Object {
+                "severity": 2,
+                "text": "Text",
+              },
+            ],
+          },
+          "name": undefined,
+          "refId": "A",
+        },
+      ]
+    `);
   });
 });
