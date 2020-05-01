@@ -88,6 +88,7 @@ describe('panelEditor actions', () => {
 
       expect(dispatchedActions.length).toBe(3);
       expect(dispatchedActions[0].type).toBe(panelModelAndPluginReady.type);
+      expect(sourcePanel.plugin).toEqual(panel.plugin);
     });
 
     it('should discard changes when shouldDiscardChanges is true', async () => {
