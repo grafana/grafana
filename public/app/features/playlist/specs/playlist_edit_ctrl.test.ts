@@ -35,7 +35,7 @@ describe('PlaylistEditCtrl', () => {
       expect(ctx.dashboardresult.length).toBe(2);
     });
 
-    it('filtred result should be 2', () => {
+    it('filtered result should be 2', () => {
       ctx.filterFoundPlaylistItems();
       expect(ctx.filteredDashboards.length).toBe(2);
       expect(ctx.filteredTags.length).toBe(2);
@@ -52,7 +52,7 @@ describe('PlaylistEditCtrl', () => {
         expect(ctx.playlistItems.length).toBe(2);
       });
 
-      it('filtred playlistitems should be reduced by one', () => {
+      it('filtered playlistitems should be reduced by one', () => {
         expect(ctx.filteredDashboards.length).toBe(1);
         expect(ctx.filteredTags.length).toBe(1);
       });
