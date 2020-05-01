@@ -138,23 +138,23 @@ describe('calculateField transformer w/ timeseries', () => {
     expect(rows).toMatchInlineSnapshot(`
       Array [
         Object {
-          "Add": 5,
+          "B + C": 5,
           "TheTime": 1000,
         },
         Object {
-          "Add": 500,
+          "B + C": 500,
           "TheTime": 2000,
         },
       ]
     `);
   });
 
-  it('scale value', () => {
+  it('field + static number', () => {
     const cfg = {
       id: DataTransformerID.calculateField,
       options: {
         mode: CalculateFieldMode.BinaryOperation,
-        scale: {
+        binary: {
           left: 'B',
           operation: BinaryOperationID.Add,
           right: '2',
@@ -168,11 +168,11 @@ describe('calculateField transformer w/ timeseries', () => {
     expect(rows).toMatchInlineSnapshot(`
       Array [
         Object {
-          "Multiply": 4,
+          "B + 2": 4,
           "TheTime": 1000,
         },
         Object {
-          "Multiply": 400,
+          "B + 2": 202,
           "TheTime": 2000,
         },
       ]
