@@ -1790,7 +1790,7 @@ describe('prepareTargets', () => {
     });
 
     describe('and Graph is hidden', () => {
-      it('then it should return only intant related objects', () => {
+      it('then it should return only instant related objects', () => {
         const target: PromQuery = {
           refId: 'A',
           expr: 'up',
