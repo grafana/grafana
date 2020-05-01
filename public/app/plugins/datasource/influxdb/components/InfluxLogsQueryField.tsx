@@ -60,8 +60,8 @@ export class InfluxLogsQueryField extends React.PureComponent<Props, State> {
     const { datasource } = this.props;
     try {
       const queryBuilder = new InfluxQueryBuilder({ measurement: '', tags: [] }, datasource.database);
-      const measureMentsQuery = queryBuilder.buildExploreQuery('MEASUREMENTS');
-      const influxMeasurements = await datasource.metricFindQuery(measureMentsQuery);
+      const measurementsQuery = queryBuilder.buildExploreQuery('MEASUREMENTS');
+      const influxMeasurements = await datasource.metricFindQuery(measurementsQuery);
 
       const measurements = [];
       for (let index = 0; index < influxMeasurements.length; index++) {
