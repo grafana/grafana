@@ -188,7 +188,7 @@ const stringArray = [];
 const stringArray: string[] = [];
 ```
 
-We specify function return types explicitly in new code. This is to aid readability by being able to tell what function returns just by looking at the signature and also prevents errors when function's return type is broader than author expects. 
+Specify function return types explicitly in new code. This improves readability by being able to tell what a function returns just by looking at the signature. It also prevents errors when a function's return type is broader than expected by the author. 
 
 > Note: We do not have linting for this enabled because of lots of old code that needs to be fixed first.
 
