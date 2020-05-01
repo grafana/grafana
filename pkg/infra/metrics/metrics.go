@@ -111,7 +111,7 @@ var (
 	// MDataSourceProxyReqTimer is a metric summary for dataproxy request duration
 	MDataSourceProxyReqTimer prometheus.Summary
 
-	// MAlertingExecutionTime is a metric summary of alert exeuction duration
+	// MAlertingExecutionTime is a metric summary of alert execution duration
 	MAlertingExecutionTime prometheus.Summary
 
 	// MRenderingSummary is a metric summary for image rendering request duration
@@ -386,7 +386,7 @@ func init() {
 
 	MAlertingExecutionTime = prometheus.NewSummary(prometheus.SummaryOpts{
 		Name:       "alerting_execution_time_milliseconds",
-		Help:       "summary of alert exeuction duration",
+		Help:       "summary of alert execution duration",
 		Objectives: objectiveMap,
 		Namespace:  ExporterName,
 	})
