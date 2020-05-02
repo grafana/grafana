@@ -500,7 +500,6 @@ func TestSearchJSONForGroupMapping(t *testing.T) {
 					require.Equal(t, test.ExpectedResult[i].Role, result.Role)
 					require.Equal(t, test.ExpectedResult[i].OrgId, result.OrgId)
 				}
-				//require.Equal(t, test.ExpectedResult[0].Role, actualResult.GroupMappings[0].Role)
 			})
 		}
 	})
