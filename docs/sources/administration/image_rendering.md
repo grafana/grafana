@@ -20,7 +20,7 @@ You can also render a PNG by clicking the dropdown arrow next to a panel title, 
 
 ## Memory requirements
 
-Minimum free memory recommendation is 16GB on the system doing the rendering.
+Minimum free memory recommendation is 16GB on the system, which performs the rendering.
 
 Rendering images can require a lot of memory, mainly because Grafana creates browser instances in the background for the actual rendering. If multiple images are rendered in parallel, then the rendering has a bigger memory footprint. One advantage of using the remote rendering service is that the rendering will be done on the remote system, so your local system resources will not be affected by rendering.
 
