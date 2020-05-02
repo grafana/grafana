@@ -245,8 +245,9 @@ func syncUser(ctx *models.ReqContext, token *oauth2.Token, userInfo *social.Basi
 			} else {
 				oauthLogger.Debug("Skipping org map, already mapped", "login", extUser.Login, "orgID", orgID, "role", rt)
 			}
-			if groupMapping.IsGrafanaAdmin {
-				extUser.IsGrafanaAdmin = &groupMapping.IsGrafanaAdmin
+			if extUser.IsGrafanaAdmin == nil || !*extUser.IsGrafanaAdmin {
+				oauthLogger.Debug("Assign GrafanaAdmin", "login", extUser.Login, "orgID", orgID)
+				extUser.IsGrafanaAdmin = groupMapping.IsGrafanaAdmin
 			}
 		}
 	}
