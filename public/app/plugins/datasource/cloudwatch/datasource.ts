@@ -14,7 +14,6 @@ import {
   ScopedVars,
   TimeRange,
   DataFrame,
-  resultsToDataFrames,
   DataQueryResponse,
   LoadingState,
   toDataFrame,
@@ -495,6 +494,12 @@ export class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery, CloudWa
         query => (query.region = this.replace(this.getActualRegion(this.defaultRegion), scopedVars, true, 'region'))
       );
     }
+
+    const resultsToDataFrames = (val: any): DataFrame[] => {
+      //???????????????????????????????????
+      console.log('CONVERT', val);
+      return [];
+    };
 
     return from(this.awsRequest(TSDB_QUERY_ENDPOINT, requestParams)).pipe(
       map(response => resultsToDataFrames(response)),
