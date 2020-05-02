@@ -426,8 +426,16 @@
               "value": "currencyPLN"
             },
             {
-              "text": "Bitcoin (฿)",
+              "text": "Bitcoin (B͈̎)",
               "value": "currencyBTC"
+            },
+            {
+              "text": "micro Bitcoin (mBTC)",
+              "value": "currencymBTC"
+            },
+            {
+              "text": "milli Bitcoin (μBTC)",
+              "value": "currencyμBTC"
             }
           ],
           "text": "currency"
