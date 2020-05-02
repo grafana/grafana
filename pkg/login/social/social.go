@@ -98,12 +98,18 @@ func NewOAuthService() {
 			TlsClientCa:        sec.Key("tls_client_ca").String(),
 			TlsSkipVerify:      sec.Key("tls_skip_verify_insecure").MustBool(),
 		}
-		groupMappingSecName := "auth." + name + ".group_mapping"
-		err := setting.Raw.Section(groupMappingSecName).MapTo(&info.GroupMappings)
-		if err != nil {
-			log.Error(3, "Error mapping configuration: %s", err.Error())
+		for _, section := range setting.Raw.Sections() {
+			groupMappingSecName := "auth." + name + ".group_mapping"
+			if section.Name() != groupMappingSecName {
+				continue
+			}
+			groupMapping := setting.OAuthGroupMapping{
+				RoleAttributePath: section.Key("role_attribute_path").String(),
+				OrgId:             section.Key("org_id").MustInt(),
+				IsGrafanaAdmin:    section.Key("grafana_admin").MustBool(false),
+			}
+			info.GroupMappings = append(info.GroupMappings, groupMapping)
 		}
-		log.Debug("GroupMappings parsed section=%s count=%d", groupMappingSecName, len(info.GroupMappings))
 
 		if !info.Enabled {
 			continue
