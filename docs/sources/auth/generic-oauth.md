@@ -169,6 +169,14 @@ To ease configuration of a proper JMESPath expression, you can test/evaluate exp
 
 ### Role and Organization mapping
 
+Defining role and organization mapping is handled by setting a path to TOML mapping file via `group_mappings_file`, example:
+
+```bash
+[auth.generic_oauth]
+...
+group_mappings_file = /etc/grafana/oauth-mappings.toml
+```
+
 **Basic example:**
 
 In the following example user will get `Editor` as role in OrgID `2` when authenticating. The value of the property `role` will be the resulting role if the role is a proper Grafana role, i.e. `Viewer`, `Editor` or `Admin`.
@@ -184,8 +192,8 @@ Payload:
 
 Config:
 ```bash
-[auth.generic_oauth.group_mapping]
-role_attribute_path = role
+[[group_mappings]]
+role_attribute_path = "role"
 org_id = 2
 ```
 
@@ -211,14 +219,14 @@ Payload:
 
 Config:
 ```bash
-[auth.generic_oauth.group_mapping]
-role_attribute_path = contains(info.groups[*], 'admin') && 'Admin'
+[[group_mappings]]
+role_attribute_path = "contains(info.groups[*], 'admin') && 'Admin'"
 org_id = 1
 grafana_admin = true
-[auth.generic_oauth.group_mapping]
-role_attribute_path = contains(info.groups[*], 'editor') && 'Editor'
+[[group_mappings]]
+role_attribute_path = "contains(info.groups[*], 'editor') && 'Editor'"
 org_id = 1
-[auth.generic_oauth.group_mapping]
-role_attribute_path = contains(info.groups[*], 'admin') && 'Admin' || 'Viewer'
+[[group_mappings]]
+role_attribute_path = "contains(info.groups[*], 'admin') && 'Admin' || 'Viewer'"
 org_id = 2
 ```

@@ -1,0 +1,10 @@
+[[group_mappings]]
+role_attribute_path = "contains(info.groups[*], 'admin') && 'Admin'"
+org_id = 1
+grafana_admin = true
+[[group_mappings]]
+role_attribute_path = "contains(info.groups[*], 'editor') && 'Editor'"
+org_id = 1
+[[group_mappings]]
+role_attribute_path = "contains(info.groups[*], 'admin') && 'Admin' || 'Viewer'"
+org_id = 2
