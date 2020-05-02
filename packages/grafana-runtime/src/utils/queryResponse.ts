@@ -1,4 +1,11 @@
-import { DataQueryResponse, arrowTableToDataFrame, base64StringToArrowTable, KeyValue } from '@grafana/data';
+import {
+  DataQueryResponse,
+  arrowTableToDataFrame,
+  base64StringToArrowTable,
+  KeyValue,
+  LoadingState,
+  DataQueryError,
+} from '@grafana/data';
 
 interface DataResponse {
   error?: string;
@@ -9,10 +16,10 @@ interface DataResponse {
 }
 
 /**
- * Will parse the results from `/api/ds/query
+ * Parse the results from `/api/ds/query
  */
 export function toDataQueryResponse(res: any): DataQueryResponse {
-  const rsp: DataQueryResponse = { data: [] };
+  const rsp: DataQueryResponse = { data: [], state: LoadingState.Done };
   if (res.data?.results) {
     const results: KeyValue = res.data.results;
     for (const refId of Object.keys(results)) {
@@ -22,8 +29,9 @@ export function toDataQueryResponse(res: any): DataQueryResponse {
           if (!rsp.error) {
             rsp.error = {
               refId,
-              status: dr.error,
+              message: dr.error,
             };
+            rsp.state = LoadingState.Error;
           }
         }
 
@@ -41,9 +49,39 @@ export function toDataQueryResponse(res: any): DataQueryResponse {
     }
   }
 
+  // When it is not an OK response, make sure the error gets added
   if (res.status && res.status !== 200) {
-    console.log('ADD AN ERROR!');
+    if (rsp.state !== LoadingState.Error) {
+      rsp.state = LoadingState.Error;
+    }
+    if (!rsp.error) {
+      rsp.error = toDataQueryError(res);
+    }
   }
 
   return rsp;
+}
+
+export function toDataQueryError(err: any): DataQueryError {
+  const error = (err || {}) as DataQueryError;
+
+  if (!error.message) {
+    if (typeof err === 'string' || err instanceof String) {
+      return { message: err } as DataQueryError;
+    }
+
+    let message = 'Query error';
+    if (error.message) {
+      message = error.message;
+    } else if (error.data && error.data.message) {
+      message = error.data.message;
+    } else if (error.data && error.data.error) {
+      message = error.data.error;
+    } else if (error.status) {
+      message = `Query error: ${error.status} ${error.statusText}`;
+    }
+    error.message = message;
+  }
+
+  return error;
 }

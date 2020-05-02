@@ -96,6 +96,10 @@ export class DataSourceWithBackend<
       })
       .then((rsp: any) => {
         return toDataQueryResponse(rsp);
+      })
+      .catch(err => {
+        err.isHandled = true; // Avoid extra popup warning
+        return toDataQueryResponse(err);
       });
 
     return from(req);
