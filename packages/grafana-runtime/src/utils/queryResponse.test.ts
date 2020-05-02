@@ -20,7 +20,7 @@ const resWithError = {
   data: {
     results: {
       A: {
-        error: 'an Error: another error',
+        error: 'Hello Error',
         series: null,
         tables: null,
         dataframes: [
@@ -28,7 +28,6 @@ const resWithError = {
         ],
       },
     },
-    message: 'an Error: another error',
   },
 };
 
@@ -128,8 +127,8 @@ describe('GEL Utils', () => {
     const res = toDataQueryResponse(resWithError);
     expect(res.error).toMatchInlineSnapshot(`
       Object {
+        "message": "Hello Error",
         "refId": "A",
-        "status": "an Error: another error",
       }
     `);
 
