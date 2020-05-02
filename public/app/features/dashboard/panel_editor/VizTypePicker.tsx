@@ -3,7 +3,7 @@ import React, { useCallback, useMemo } from 'react';
 import config from 'app/core/config';
 import VizTypePickerPlugin from './VizTypePickerPlugin';
 import { EmptySearchResult, stylesFactory, useTheme } from '@grafana/ui';
-import { GrafanaTheme, PanelPluginMeta } from '@grafana/data';
+import { GrafanaTheme, PanelPluginMeta, PluginState } from '@grafana/data';
 import { css } from 'emotion';
 
 export interface Props {
@@ -22,14 +22,26 @@ export function getAllPanelPluginMeta(): PanelPluginMeta[] {
     .sort((a: PanelPluginMeta, b: PanelPluginMeta) => a.sort - b.sort);
 }
 
-export function filterPluginList(pluginsList: PanelPluginMeta[], searchQuery: string): PanelPluginMeta[] {
+export function filterPluginList(
+  pluginsList: PanelPluginMeta[],
+  searchQuery: string,
+  current: PanelPluginMeta
+): PanelPluginMeta[] {
   if (!searchQuery.length) {
-    return pluginsList;
+    return pluginsList.filter(p => {
+      if (p.state === PluginState.deprecated) {
+        return current.id === p.id;
+      }
+      return true;
+    });
   }
   const query = searchQuery.toLowerCase();
   const first: PanelPluginMeta[] = [];
   const match: PanelPluginMeta[] = [];
   for (const item of pluginsList) {
+    if (item.state === PluginState.deprecated && current.id !== item.id) {
+      continue;
+    }
     const name = item.name.toLowerCase();
     const idx = name.indexOf(query);
     if (idx === 0) {
@@ -48,6 +60,10 @@ export const VizTypePicker: React.FC<Props> = ({ searchQuery, onTypeChange, curr
     return getAllPanelPluginMeta();
   }, []);
 
+  const getFilteredPluginList = useCallback((): PanelPluginMeta[] => {
+    return filterPluginList(pluginsList, searchQuery, current);
+  }, [searchQuery]);
+
   const renderVizPlugin = (plugin: PanelPluginMeta, index: number) => {
     const isCurrent = plugin.id === current.id;
     const filteredPluginList = getFilteredPluginList();
@@ -55,7 +71,7 @@ export const VizTypePicker: React.FC<Props> = ({ searchQuery, onTypeChange, curr
     const matchesQuery = filteredPluginList.indexOf(plugin) > -1;
     return (
       <VizTypePickerPlugin
-        disabled={!matchesQuery}
+        disabled={!matchesQuery && !!searchQuery}
         key={plugin.id}
         isCurrent={isCurrent}
         plugin={plugin}
@@ -64,33 +80,25 @@ export const VizTypePicker: React.FC<Props> = ({ searchQuery, onTypeChange, curr
     );
   };
 
-  const getFilteredPluginList = useCallback((): PanelPluginMeta[] => {
-    return filterPluginList(pluginsList, searchQuery);
-  }, [searchQuery]);
-
   const filteredPluginList = getFilteredPluginList();
   const hasResults = filteredPluginList.length > 0;
   const renderList = filteredPluginList.concat(pluginsList.filter(p => filteredPluginList.indexOf(p) === -1));
 
   return (
-    <div className={styles.wrapper}>
-      <div className={styles.grid}>
-        {hasResults ? (
-          renderList.map((plugin, index) => renderVizPlugin(plugin, index))
-        ) : (
-          <EmptySearchResult>Could not find anything matching your query</EmptySearchResult>
-        )}
-      </div>
+    <div className={styles.grid}>
+      {hasResults ? (
+        renderList.map((plugin, index) => renderVizPlugin(plugin, index))
+      ) : (
+        <EmptySearchResult>Could not find anything matching your query</EmptySearchResult>
+      )}
     </div>
   );
 };
 
+VizTypePicker.displayName = 'VizTypePicker';
+
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
   return {
-    wrapper: css`
-      // this needed here to make the box shadow not be clicked by the parent scroll container
-      padding-top: ${theme.spacing.md};
-    `,
     grid: css`
       max-width: 100%;
       display: grid;

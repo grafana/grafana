@@ -69,10 +69,11 @@ const prepareRelease = useSpinner<any>('Preparing release', async ({ dryrun, ver
     ['git', ['config', 'user.email', DEFAULT_EMAIL_ADDRESS]],
     ['git', ['config', 'user.name', DEFAULT_USERNAME]],
     await checkoutBranch(`release-${pluginJson.info.version}`),
-    ['cp', ['-rf', distContentDir, 'dist']],
-    ['git', ['add', '--force', distDir], { dryrun }],
+    ['/bin/rm', ['-rf', 'dist'], { dryrun }],
+    ['mv', ['-v', distContentDir, 'dist']],
     ['git', ['add', '--force', 'dist'], { dryrun }],
     ['/bin/rm', ['-rf', 'src'], { enterprise: true }],
+    ['git', ['rm', '-rf', 'src'], { enterprise: true }],
     [
       'git',
       ['commit', '-m', `automated release ${pluginJson.info.version} [skip ci]`],
@@ -81,8 +82,9 @@ const prepareRelease = useSpinner<any>('Preparing release', async ({ dryrun, ver
         okOnError: [/nothing to commit/g, /nothing added to commit/g, /no changes added to commit/g],
       },
     ],
-    ['git', ['tag', '-f', pluginJson.info.version]],
     ['git', ['push', '-f', 'origin', `release-${pluginJson.info.version}`], { dryrun }],
+    ['git', ['tag', '-f', `v${pluginJson.info.version}`]],
+    ['git', ['push', '-f', 'origin', `v${pluginJson.info.version}`]],
   ];
 
   for (let line of githubPublishScript) {
@@ -100,6 +102,7 @@ const prepareRelease = useSpinner<any>('Preparing release', async ({ dryrun, ver
           line[1].push('--dry-run');
         }
 
+        // Exit if the plugin is NOT an enterprise plugin
         if (pluginJson.enterprise && !opts['enterprise']) {
           continue;
         }

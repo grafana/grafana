@@ -1,10 +1,12 @@
 import React, { useState, useMemo, useContext, useRef, RefObject, memo, useEffect } from 'react';
 import usePrevious from 'react-use/lib/usePrevious';
 import { DataLinkSuggestions } from './DataLinkSuggestions';
-import { ThemeContext, DataLinkBuiltInVars, makeValue } from '../../index';
+import { ThemeContext, makeValue } from '../../index';
 import { SelectionReference } from './SelectionReference';
-import { Portal } from '../index';
+import { Portal, getFormStyles } from '../index';
 
+// @ts-ignore
+import Prism from 'prismjs';
 import { Editor } from '@grafana/slate-react';
 import { Value } from 'slate';
 import Plain from 'slate-plain-serializer';
@@ -14,7 +16,7 @@ import { css, cx } from 'emotion';
 import { SlatePrism } from '../../slate-plugins';
 import { SCHEMA } from '../../utils/slate';
 import { stylesFactory } from '../../themes';
-import { GrafanaTheme, VariableSuggestion, VariableOrigin } from '@grafana/data';
+import { GrafanaTheme, VariableSuggestion, VariableOrigin, DataLinkBuiltInVars } from '@grafana/data';
 
 const modulo = (a: number, n: number) => a - n * Math.floor(a / n);
 
@@ -33,20 +35,40 @@ const plugins = [
 ];
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => ({
+  input: getFormStyles(theme, { variant: 'primary', size: 'md', invalid: false }).input.input,
   editor: css`
     .token.builtInVariable {
-      color: ${theme.colors.queryGreen};
+      color: ${theme.palette.queryGreen};
     }
     .token.variable {
-      color: ${theme.colors.queryKeyword};
+      color: ${theme.colors.textBlue};
+    }
+  `,
+  // Wrapper with child selector needed.
+  // When classnames are appplied to the same element as the wrapper, it causes the suggestions to stop working
+  wrapperOverrides: css`
+    width: 100%;
+    > .slate-query-field__wrapper {
+      padding: 0;
+      background-color: transparent;
+      border: none;
     }
   `,
 }));
+
+export const enableDatalinksPrismSyntax = () => {
+  Prism.languages['links'] = {
+    builtInVariable: {
+      pattern: /(\${\S+?})/,
+    },
+  };
+};
 
 // This memoised also because rerendering the slate editor grabs focus which created problem in some cases this
 // was used and changes to different state were propagated here.
 export const DataLinkInput: React.FC<DataLinkInputProps> = memo(
   ({ value, onChange, suggestions, placeholder = 'http://your-grafana.com/d/000000010/annotations' }) => {
+    enableDatalinksPrismSyntax();
     const editorRef = useRef<Editor>() as RefObject<Editor>;
     const theme = useContext(ThemeContext);
     const styles = getStyles(theme);
@@ -119,52 +141,52 @@ export const DataLinkInput: React.FC<DataLinkInputProps> = memo(
     };
 
     return (
-      <div
-        className={cx(
-          'gf-form-input',
-          css`
-            position: relative;
-            height: auto;
-          `
-        )}
-      >
-        <div className="slate-query-field">
-          {showingSuggestions && (
-            <Portal>
-              <ReactPopper
-                referenceElement={selectionRef}
-                placement="top-end"
-                modifiers={{
-                  preventOverflow: { enabled: true, boundariesElement: 'window' },
-                  arrow: { enabled: false },
-                  offset: { offset: 250 }, // width of the suggestions menu
-                }}
-              >
-                {({ ref, style, placement }) => {
-                  return (
-                    <div ref={ref} style={style} data-placement={placement}>
-                      <DataLinkSuggestions
-                        suggestions={stateRef.current.suggestions}
-                        onSuggestionSelect={onVariableSelect}
-                        onClose={() => setShowingSuggestions(false)}
-                        activeIndex={suggestionsIndex}
-                      />
-                    </div>
-                  );
-                }}
-              </ReactPopper>
-            </Portal>
-          )}
-          <Editor
-            schema={SCHEMA}
-            ref={editorRef}
-            placeholder={placeholder}
-            value={stateRef.current.linkUrl}
-            onChange={onUrlChange}
-            onKeyDown={(event, _editor, next) => onKeyDown(event as KeyboardEvent, next)}
-            plugins={plugins}
-            className={styles.editor}
-          />
+      <div className={styles.wrapperOverrides}>
+        <div className="slate-query-field__wrapper">
+          <div className="slate-query-field">
+            {showingSuggestions && (
+              <Portal>
+                <ReactPopper
+                  referenceElement={selectionRef}
+                  placement="top-end"
+                  modifiers={{
+                    preventOverflow: { enabled: true, boundariesElement: 'window' },
+                    arrow: { enabled: false },
+                    offset: { offset: 250 }, // width of the suggestions menu
+                  }}
+                >
+                  {({ ref, style, placement }) => {
+                    return (
+                      <div ref={ref} style={style} data-placement={placement}>
+                        <DataLinkSuggestions
+                          suggestions={stateRef.current.suggestions}
+                          onSuggestionSelect={onVariableSelect}
+                          onClose={() => setShowingSuggestions(false)}
+                          activeIndex={suggestionsIndex}
+                        />
+                      </div>
+                    );
+                  }}
+                </ReactPopper>
+              </Portal>
+            )}
+            <Editor
+              schema={SCHEMA}
+              ref={editorRef}
+              placeholder={placeholder}
+              value={stateRef.current.linkUrl}
+              onChange={onUrlChange}
+              onKeyDown={(event, _editor, next) => onKeyDown(event as KeyboardEvent, next)}
+              plugins={plugins}
+              className={cx(
+                styles.editor,
+                styles.input,
+                css`
+                  padding: 3px 8px;
+                `
+              )}
+            />
+          </div>
         </div>
       </div>
     );

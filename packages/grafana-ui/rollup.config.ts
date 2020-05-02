@@ -24,7 +24,7 @@ const buildCjsPackage = ({ env }) => {
         },
       },
     ],
-    external: ['react', 'react-dom', '@grafana/data', 'moment'],
+    external: ['react', 'react-dom', '@grafana/data', 'moment', '@grafana/e2e-selectors'],
     plugins: [
       commonjs({
         include: /node_modules/,
@@ -58,7 +58,14 @@ const buildCjsPackage = ({ env }) => {
           ],
           'node_modules/immutable/dist/immutable.js': ['Record', 'Set', 'Map', 'List', 'OrderedSet', 'is', 'Stack'],
           '../../node_modules/esrever/esrever.js': ['reverse'],
-          '../../node_modules/react-table/index.js': ['useTable', 'useSortBy', 'useBlockLayout', 'Cell'],
+          '../../node_modules/react-table/index.js': [
+            'useTable',
+            'useSortBy',
+            'useBlockLayout',
+            'Cell',
+            'useResizeColumns',
+            'useAbsoluteLayout',
+          ],
           '../../node_modules/react-is/index.js': ['isValidElementType', 'isContextConsumer'],
         },
       }),

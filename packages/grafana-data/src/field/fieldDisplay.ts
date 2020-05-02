@@ -11,6 +11,8 @@ import {
   FieldConfigSource,
   FieldType,
   InterpolateFunction,
+  LinkModel,
+  TimeZone,
 } from '../types';
 import { DataFrameView } from '../dataframe/DataFrameView';
 import { GraphSeriesValue } from '../types/graph';
@@ -77,6 +79,7 @@ export interface FieldDisplay {
   view?: DataFrameView;
   colIndex?: number; // The field column index
   rowIndex?: number; // only filled in when the value is from a row (ie, not a reduction)
+  getLinks?: () => LinkModel[];
 }
 
 export interface GetFieldDisplayValuesOptions {
@@ -87,12 +90,13 @@ export interface GetFieldDisplayValuesOptions {
   sparkline?: boolean; // Calculate the sparkline
   theme: GrafanaTheme;
   autoMinMax?: boolean;
+  timeZone?: TimeZone;
 }
 
 export const DEFAULT_FIELD_DISPLAY_VALUES_LIMIT = 25;
 
 export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): FieldDisplay[] => {
-  const { replaceVariables, reduceOptions, fieldConfig } = options;
+  const { replaceVariables, reduceOptions, fieldConfig, timeZone } = options;
   const calcs = reduceOptions.calcs.length ? reduceOptions.calcs : [ReducerID.last];
 
   const values: FieldDisplay[] = [];
@@ -113,7 +117,7 @@ export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): Fi
 
       for (let i = 0; i < series.fields.length && !hitLimit; i++) {
         const field = series.fields[i];
-
+        const fieldLinksSupplier = field.getLinks;
         // Show all number fields
         if (field.type !== FieldType.number) {
           continue;
@@ -125,6 +129,7 @@ export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): Fi
           getDisplayProcessor({
             field,
             theme: options.theme,
+            timeZone,
           });
 
         const title = config.title ? config.title : defaultTitle;
@@ -157,6 +162,12 @@ export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): Fi
               view,
               colIndex: i,
               rowIndex: j,
+              getLinks: fieldLinksSupplier
+                ? () =>
+                    fieldLinksSupplier({
+                      valueRowIndex: j,
+                    })
+                : () => [],
             });
 
             if (values.length >= limit) {
@@ -193,6 +204,12 @@ export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): Fi
               sparkline,
               view,
               colIndex: i,
+              getLinks: fieldLinksSupplier
+                ? () =>
+                    fieldLinksSupplier({
+                      calculatedValue: displayValue,
+                    })
+                : () => [],
             });
           }
         }
@@ -245,7 +262,7 @@ export function getDisplayValueAlignmentFactors(values: FieldDisplay[]): Display
 
 function createNoValuesFieldDisplay(options: GetFieldDisplayValuesOptions): FieldDisplay {
   const displayName = 'No data';
-  const { fieldConfig } = options;
+  const { fieldConfig, timeZone } = options;
   const { defaults } = fieldConfig;
 
   const displayProcessor = getDisplayProcessor({
@@ -254,6 +271,7 @@ function createNoValuesFieldDisplay(options: GetFieldDisplayValuesOptions): Fiel
       config: defaults,
     },
     theme: options.theme,
+    timeZone,
   });
 
   const display = displayProcessor(null);

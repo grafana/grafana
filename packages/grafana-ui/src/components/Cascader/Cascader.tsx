@@ -3,7 +3,6 @@ import { Icon } from '../Icon/Icon';
 import RCCascader from 'rc-cascader';
 
 import { Select } from '../Select/Select';
-import { FormInputSize } from '../Forms/types';
 import { Input } from '../Input/Input';
 import { SelectableValue } from '@grafana/data';
 import { css } from 'emotion';
@@ -15,7 +14,8 @@ interface CascaderProps {
   placeholder?: string;
   options: CascaderOption[];
   onSelect(val: string): void;
-  size?: FormInputSize;
+  /** Sets the width to a multiple of 8px. Should only be used with inline forms. Setting width of the container is preferred in other cases.*/
+  width?: number;
   initialValue?: string;
   allowCustomValue?: boolean;
   /** A function for formatting the message for custom value creation. Only applies when allowCustomValue is set to true*/
@@ -174,7 +174,7 @@ export class Cascader extends React.PureComponent<CascaderProps, CascaderState> 
   };
 
   render() {
-    const { size, allowCustomValue, placeholder } = this.props;
+    const { allowCustomValue, placeholder, width } = this.props;
     const { focusCascade, isSearching, searchableOptions, rcValue, activeLabel } = this.state;
 
     return (
@@ -187,9 +187,9 @@ export class Cascader extends React.PureComponent<CascaderProps, CascaderState> 
             onChange={this.onSelect}
             onBlur={this.onBlur}
             options={searchableOptions}
-            size={size}
             onCreateOption={this.onCreateOption}
             formatCreateLabel={this.props.formatCreateLabel}
+            width={width}
           />
         ) : (
           <RCCascader
@@ -206,13 +206,19 @@ export class Cascader extends React.PureComponent<CascaderProps, CascaderState> 
           >
             <div className={disableDivFocus}>
               <Input
-                size={size}
+                width={width}
                 placeholder={placeholder}
                 onBlur={this.onBlurCascade}
                 value={activeLabel}
                 onKeyDown={this.onInputKeyDown}
                 onChange={() => {}}
-                suffix={focusCascade ? <Icon name="caret-up" /> : <Icon name="caret-down" />}
+                suffix={
+                  focusCascade ? (
+                    <Icon name="angle-up" />
+                  ) : (
+                    <Icon name="angle-down" style={{ marginBottom: 0, marginLeft: '4px' }} />
+                  )
+                }
               />
             </div>
           </RCCascader>

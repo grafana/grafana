@@ -5,7 +5,6 @@
 title = "sharedSingleStatPanelChangedHandler"
 keywords = ["grafana","documentation","sdk","@grafana/ui"]
 type = "docs"
-draft = true
 +++
 
 ## sharedSingleStatPanelChangedHandler() function
@@ -15,7 +14,7 @@ draft = true
 <b>Signature</b>
 
 ```typescript
-export declare function sharedSingleStatPanelChangedHandler(options: Partial<SingleStatBaseOptions> | any, prevPluginId: string, prevOptions: any): any;
+export declare function sharedSingleStatPanelChangedHandler(panel: PanelModel<Partial<SingleStatBaseOptions>> | any, prevPluginId: string, prevOptions: any): any;
 ```
 <b>Import</b>
 
@@ -26,7 +25,7 @@ import { sharedSingleStatPanelChangedHandler } from '@grafana/ui';
 
 |  Parameter | Type | Description |
 |  --- | --- | --- |
-|  options | <code>Partial&lt;SingleStatBaseOptions&gt; &#124; any</code> |  |
+|  panel | <code>PanelModel&lt;Partial&lt;SingleStatBaseOptions&gt;&gt; &#124; any</code> |  |
 |  prevPluginId | <code>string</code> |  |
 |  prevOptions | <code>any</code> |  |
 

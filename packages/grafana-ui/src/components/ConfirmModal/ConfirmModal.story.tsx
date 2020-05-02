@@ -1,9 +1,9 @@
 import React from 'react';
-import { storiesOf } from '@storybook/react';
 import { text, boolean, select } from '@storybook/addon-knobs';
 import { action } from '@storybook/addon-actions';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { ConfirmModal } from './ConfirmModal';
+import mdx from './ConfirmModal.mdx';
 
 const getKnobs = () => {
   return {
@@ -11,7 +11,7 @@ const getKnobs = () => {
     body: text('Body', 'Are you sure you want to delete this user?'),
     confirm: text('Confirm', 'Delete'),
     visible: boolean('Visible', true),
-    icon: select('Icon', ['exclamation-triangle', 'power-off', 'cog', 'lock'], 'exclamation-triangle'),
+    icon: select('Icon', ['exclamation-triangle', 'power', 'cog', 'lock'], 'exclamation-triangle'),
   };
 };
 
@@ -24,11 +24,18 @@ const defaultActions = {
   },
 };
 
-const ConfirmModalStories = storiesOf('General/ConfirmModal', module);
+export default {
+  title: 'Overlays/ConfirmModal',
+  component: ConfirmModal,
+  decorators: [withCenteredStory],
+  parameters: {
+    docs: {
+      page: mdx,
+    },
+  },
+};
 
-ConfirmModalStories.addDecorator(withCenteredStory);
-
-ConfirmModalStories.add('default', () => {
+export const basic = () => {
   const { title, body, confirm, icon, visible } = getKnobs();
   const { onConfirm, onDismiss } = defaultActions;
   return (
@@ -42,4 +49,4 @@ ConfirmModalStories.add('default', () => {
       onDismiss={onDismiss}
     />
   );
-});
+};

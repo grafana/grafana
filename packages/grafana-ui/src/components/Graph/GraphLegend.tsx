@@ -63,8 +63,8 @@ export const GraphLegend: React.FunctionComponent<GraphLegendProps> = ({
 
     const legendTableEvenRowBackground = selectThemeVariant(
       {
-        dark: theme.colors.dark6,
-        light: theme.colors.gray5,
+        dark: theme.palette.dark6,
+        light: theme.palette.gray5,
       },
       theme.type
     );

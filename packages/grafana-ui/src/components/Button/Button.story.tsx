@@ -7,7 +7,7 @@ import mdx from './Button.mdx';
 import { ComponentSize } from '../../types/size';
 
 export default {
-  title: 'Forms/Button',
+  title: 'Buttons/Button',
   component: Button,
   decorators: [withCenteredStory, withHorizontallyCenteredStory],
   parameters: {
@@ -28,7 +28,7 @@ export const simple = () => {
   const icon = getIconKnob();
 
   return (
-    <Button variant={variant as ButtonVariant} size={size as ComponentSize} icon={icon && `fa fa-${icon}`}>
+    <Button variant={variant as ButtonVariant} size={size as ComponentSize} icon={icon}>
       {buttonText}
     </Button>
   );

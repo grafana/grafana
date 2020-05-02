@@ -1,12 +1,10 @@
-import { sharedSingleStatMigrationHandler, sharedSingleStatPanelChangedHandler } from '@grafana/ui';
+import { sharedSingleStatMigrationHandler } from '@grafana/ui';
 import { PanelPlugin } from '@grafana/data';
-import { StatPanelOptions, defaults, addStandardDataReduceOptions } from './types';
+import { StatPanelOptions, addStandardDataReduceOptions } from './types';
 import { StatPanel } from './StatPanel';
-import { StatPanelEditor } from './StatPanelEditor';
+import { statPanelChangedHandler } from './StatMigrations';
 
 export const plugin = new PanelPlugin<StatPanelOptions>(StatPanel)
-  .setDefaults(defaults)
-  .setEditor(StatPanelEditor)
   .useFieldConfig()
   .setPanelOptions(builder => {
     addStandardDataReduceOptions(builder);
@@ -16,6 +14,7 @@ export const plugin = new PanelPlugin<StatPanelOptions>(StatPanel)
         path: 'colorMode',
         name: 'Color mode',
         description: 'Color either the value or the background',
+        defaultValue: 'value',
         settings: {
           options: [
             { value: 'value', label: 'Value' },
@@ -27,6 +26,7 @@ export const plugin = new PanelPlugin<StatPanelOptions>(StatPanel)
         path: 'graphMode',
         name: 'Graph mode',
         description: 'Stat panel graph / sparkline mode',
+        defaultValue: 'area',
         settings: {
           options: [
             { value: 'none', label: 'None' },
@@ -38,6 +38,7 @@ export const plugin = new PanelPlugin<StatPanelOptions>(StatPanel)
         path: 'justifyMode',
         name: 'Justify mode',
         description: 'Value & title posititioning',
+        defaultValue: 'auto',
         settings: {
           options: [
             { value: 'auto', label: 'Auto' },
@@ -47,5 +48,5 @@ export const plugin = new PanelPlugin<StatPanelOptions>(StatPanel)
       });
   })
   .setNoPadding()
-  .setPanelChangeHandler(sharedSingleStatPanelChangedHandler)
+  .setPanelChangeHandler(statPanelChangedHandler)
   .setMigrationHandler(sharedSingleStatMigrationHandler);

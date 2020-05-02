@@ -1,5 +1,7 @@
 import React, { MouseEvent, PureComponent } from 'react';
-import { e2e } from '@grafana/e2e';
+import { Icon } from '@grafana/ui';
+import { selectors } from '@grafana/e2e-selectors';
+
 import EmptyListCTA from '../../../core/components/EmptyListCTA/EmptyListCTA';
 import { QueryVariableModel, VariableModel } from '../../templating/types';
 import { toVariableIdentifier, VariableIdentifier } from '../state/types';
@@ -47,7 +49,7 @@ export class VariableEditorList extends PureComponent<Props> {
             <div>
               <EmptyListCTA
                 title="There are no variables yet"
-                buttonIcon="gicon gicon-variable"
+                buttonIcon="calculator-alt"
                 buttonTitle="Add variable"
                 infoBox={{
                   __html: ` <p>
@@ -71,7 +73,7 @@ export class VariableEditorList extends PureComponent<Props> {
             <div>
               <table
                 className="filter-table filter-table--hover"
-                aria-label={e2e.pages.Dashboard.Settings.Variables.List.selectors.table}
+                aria-label={selectors.pages.Dashboard.Settings.Variables.List.table}
               >
                 <thead>
                   <tr>
@@ -89,7 +91,7 @@ export class VariableEditorList extends PureComponent<Props> {
                           <span
                             onClick={event => this.onEditClick(event, toVariableIdentifier(variable))}
                             className="pointer template-variable"
-                            aria-label={e2e.pages.Dashboard.Settings.Variables.List.selectors.tableRowNameFields(
+                            aria-label={selectors.pages.Dashboard.Settings.Variables.List.tableRowNameFields(
                               variable.name
                             )}
                           >
@@ -100,7 +102,7 @@ export class VariableEditorList extends PureComponent<Props> {
                           style={{ maxWidth: '200px' }}
                           onClick={event => this.onEditClick(event, toVariableIdentifier(variable))}
                           className="pointer max-width"
-                          aria-label={e2e.pages.Dashboard.Settings.Variables.List.selectors.tableRowDefinitionFields(
+                          aria-label={selectors.pages.Dashboard.Settings.Variables.List.tableRowDefinitionFields(
                             variable.name
                           )}
                         >
@@ -109,10 +111,10 @@ export class VariableEditorList extends PureComponent<Props> {
 
                         <td style={{ width: '1%' }}>
                           {index > 0 && (
-                            <i
+                            <Icon
                               onClick={event => this.onChangeVariableOrder(event, variable, MoveType.up)}
-                              className="pointer fa fa-arrow-up"
-                              aria-label={e2e.pages.Dashboard.Settings.Variables.List.selectors.tableRowArrowUpButtons(
+                              name="arrow-up"
+                              aria-label={selectors.pages.Dashboard.Settings.Variables.List.tableRowArrowUpButtons(
                                 variable.name
                               )}
                             />
@@ -120,10 +122,10 @@ export class VariableEditorList extends PureComponent<Props> {
                         </td>
                         <td style={{ width: '1%' }}>
                           {index < this.props.variables.length - 1 && (
-                            <i
+                            <Icon
                               onClick={event => this.onChangeVariableOrder(event, variable, MoveType.down)}
-                              className="pointer fa fa-arrow-down"
-                              aria-label={e2e.pages.Dashboard.Settings.Variables.List.selectors.tableRowArrowDownButtons(
+                              name="arrow-down"
+                              aria-label={selectors.pages.Dashboard.Settings.Variables.List.tableRowArrowDownButtons(
                                 variable.name
                               )}
                             />
@@ -133,7 +135,7 @@ export class VariableEditorList extends PureComponent<Props> {
                           <a
                             onClick={event => this.onDuplicateVariable(event, toVariableIdentifier(variable))}
                             className="btn btn-inverse btn-small"
-                            aria-label={e2e.pages.Dashboard.Settings.Variables.List.selectors.tableRowDuplicateButtons(
+                            aria-label={selectors.pages.Dashboard.Settings.Variables.List.tableRowDuplicateButtons(
                               variable.name
                             )}
                           >
@@ -144,11 +146,11 @@ export class VariableEditorList extends PureComponent<Props> {
                           <a
                             onClick={event => this.onRemoveVariable(event, toVariableIdentifier(variable))}
                             className="btn btn-danger btn-small"
-                            aria-label={e2e.pages.Dashboard.Settings.Variables.List.selectors.tableRowRemoveButtons(
+                            aria-label={selectors.pages.Dashboard.Settings.Variables.List.tableRowRemoveButtons(
                               variable.name
                             )}
                           >
-                            <i className="fa fa-remove" />
+                            <Icon name="times" style={{ marginBottom: 0 }} />
                           </a>
                         </td>
                       </tr>

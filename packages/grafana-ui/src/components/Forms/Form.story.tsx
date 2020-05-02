@@ -7,16 +7,16 @@ import { Field } from './Field';
 import { Input } from '../Input/Input';
 import { Button } from '../Button';
 import { Form } from './Form';
-import { Switch } from './Switch';
+import { Switch } from '../Switch/Switch';
 import { Checkbox } from './Checkbox';
 
 import { RadioButtonGroup } from './RadioButtonGroup/RadioButtonGroup';
 import { Select } from '../Select/Select';
-import Forms from './index';
+import { InputControl } from '../InputControl';
 import mdx from './Form.mdx';
 import { ValidateResult } from 'react-hook-form';
 import { boolean } from '@storybook/addon-knobs';
-import { TextArea } from './TextArea/TextArea';
+import { TextArea } from '../TextArea/TextArea';
 
 export default {
   title: 'Forms/Example forms',
@@ -70,28 +70,22 @@ const renderForm = (defaultValues?: Partial<FormDTO>) => (
           <Legend>Edit user</Legend>
 
           <Field label="Name" invalid={!!errors.name} error="Name is required">
-            <Input name="name" placeholder="Roger Waters" size="md" ref={register({ required: true })} />
+            <Input name="name" placeholder="Roger Waters" ref={register({ required: true })} />
           </Field>
 
           <Field label="Email" invalid={!!errors.email} error="E-mail is required">
-            <Input
-              id="email"
-              name="email"
-              placeholder="roger.waters@grafana.com"
-              size="md"
-              ref={register({ required: true })}
-            />
+            <Input id="email" name="email" placeholder="roger.waters@grafana.com" ref={register({ required: true })} />
           </Field>
 
           <Field label="Username">
-            <Input name="username" placeholder="mr.waters" size="md" ref={register} />
+            <Input name="username" placeholder="mr.waters" ref={register} />
           </Field>
           <Field label="Nested object">
-            <Input name="nested.path" placeholder="Nested path" size="md" ref={register} />
+            <Input name="nested.path" placeholder="Nested path" ref={register} />
           </Field>
 
           <Field label="Textarea" invalid={!!errors.text} error="Text is required">
-            <TextArea name="text" placeholder="Long text" size="md" ref={register({ required: true })} />
+            <TextArea name="text" placeholder="Long text" ref={register({ required: true })} />
           </Field>
 
           <Field label="Checkbox" invalid={!!errors.checkbox} error="We need your consent">
@@ -103,11 +97,11 @@ const renderForm = (defaultValues?: Partial<FormDTO>) => (
           </Field>
 
           <Field label="RadioButton">
-            <Forms.InputControl name="radio" control={control} options={selectOptions} as={RadioButtonGroup} />
+            <InputControl name="radio" control={control} options={selectOptions} as={RadioButtonGroup} />
           </Field>
 
           <Field label="Select" invalid={!!errors.select} error="Select is required">
-            <Forms.InputControl
+            <InputControl
               name="select"
               control={control}
               rules={{
@@ -185,7 +179,6 @@ export const asyncValidation = () => {
                 <Input
                   name="name"
                   placeholder="Roger Waters"
-                  size="md"
                   ref={register({ validate: validateAsync(passAsyncValidation) })}
                 />
               </Field>

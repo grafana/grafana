@@ -5,7 +5,6 @@
 title = "DataLink"
 keywords = ["grafana","documentation","sdk","@grafana/data"]
 type = "docs"
-draft = true
 +++
 
 ## DataLink interface
@@ -26,11 +25,22 @@ import { DataLink } from '@grafana/data';
 
 |  Property | Type | Description |
 |  --- | --- | --- |
+|  [meta](#meta-property) | <code>{</code><br/><code>        datasourceUid?: string;</code><br/><code>    }</code> |  |
 |  [onBuildUrl](#onbuildurl-property) | <code>(event: DataLinkClickEvent) =&gt; string</code> |  |
 |  [onClick](#onclick-property) | <code>(event: DataLinkClickEvent) =&gt; void</code> |  |
 |  [targetBlank](#targetblank-property) | <code>boolean</code> |  |
 |  [title](#title-property) | <code>string</code> |  |
 |  [url](#url-property) | <code>string</code> |  |
+
+### meta property
+
+<b>Signature</b>
+
+```typescript
+meta?: {
+        datasourceUid?: string;
+    };
+```
 
 ### onBuildUrl property
 

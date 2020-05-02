@@ -5,12 +5,13 @@
 title = "EchoEventType"
 keywords = ["grafana","documentation","sdk","@grafana/runtime"]
 type = "docs"
-draft = true
 +++
 
 ## EchoEventType enum
 
 ### EchoEventType enum
+
+Supported echo event types that can be sent via the [EchoSrv](./runtime/echosrv.md)<!-- -->.
 
 <b>Signature</b>
 

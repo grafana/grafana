@@ -121,6 +121,7 @@ export class QueryRow extends PureComponent<QueryRowProps, QueryRowState> {
       queryResponse,
       mode,
       latency,
+      exploreId,
     } = this.props;
 
     const canToggleEditorModes =
@@ -152,6 +153,7 @@ export class QueryRow extends PureComponent<QueryRowProps, QueryRowState> {
                 data={queryResponse}
                 absoluteRange={absoluteRange}
                 exploreMode={mode}
+                exploreId={exploreId}
               />
             ) : (
               <QueryEditor

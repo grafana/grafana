@@ -91,7 +91,6 @@ export class TagsInput extends PureComponent<Props, State> {
 
       addButtonStyle: css`
         margin-left: 8px;
-        margin-top: 2px;
       `,
     }));
 
@@ -106,7 +105,7 @@ export class TagsInput extends PureComponent<Props, State> {
           )}
         >
           <Input placeholder="Add Name" onChange={this.onNameChange} value={newTag} onKeyUp={this.onKeyboardAdd} />
-          <Button className={getStyles().addButtonStyle} onClick={this.onAdd} variant="primary" size="md">
+          <Button className={getStyles().addButtonStyle} onClick={this.onAdd} variant="secondary" size="md">
             Add
           </Button>
         </div>

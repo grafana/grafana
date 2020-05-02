@@ -5,7 +5,6 @@
 title = "FieldOverrideEditorProps"
 keywords = ["grafana","documentation","sdk","@grafana/data"]
 type = "docs"
-draft = true
 +++
 
 ## FieldOverrideEditorProps interface
@@ -13,7 +12,7 @@ draft = true
 <b>Signature</b>
 
 ```typescript
-export interface FieldOverrideEditorProps<TValue, TSettings> 
+export interface FieldOverrideEditorProps<TValue, TSettings> extends Omit<StandardEditorProps<TValue>, 'item'> 
 ```
 <b>Import</b>
 
@@ -25,9 +24,7 @@ import { FieldOverrideEditorProps } from '@grafana/data';
 |  Property | Type | Description |
 |  --- | --- | --- |
 |  [context](#context-property) | <code>FieldOverrideContext</code> |  |
-|  [item](#item-property) | <code>FieldPropertyEditorItem&lt;TValue, TSettings&gt;</code> |  |
-|  [onChange](#onchange-property) | <code>(value?: any) =&gt; void</code> |  |
-|  [value](#value-property) | <code>TValue</code> |  |
+|  [item](#item-property) | <code>FieldConfigPropertyItem&lt;TValue, TSettings&gt;</code> |  |
 
 ### context property
 
@@ -42,21 +39,5 @@ context: FieldOverrideContext;
 <b>Signature</b>
 
 ```typescript
-item: FieldPropertyEditorItem<TValue, TSettings>;
-```
-
-### onChange property
-
-<b>Signature</b>
-
-```typescript
-onChange: (value?: any) => void;
-```
-
-### value property
-
-<b>Signature</b>
-
-```typescript
-value: TValue;
+item: FieldConfigPropertyItem<TValue, TSettings>;
 ```

@@ -1,9 +1,10 @@
 import React, { FormEvent, PureComponent } from 'react';
-import { connect, MapDispatchToProps, MapStateToProps } from 'react-redux';
+import { MapDispatchToProps, MapStateToProps } from 'react-redux';
 import { css } from 'emotion';
 import { AppEvents, NavModel } from '@grafana/data';
-import { Button, Forms, stylesFactory, Input } from '@grafana/ui';
+import { Button, stylesFactory, Input, TextArea, Field, Form, Legend } from '@grafana/ui';
 import Page from 'app/core/components/Page/Page';
+import { connectWithCleanUp } from 'app/core/components/connectWithCleanUp';
 import { ImportDashboardOverview } from './components/ImportDashboardOverview';
 import { DashboardFileUpload } from './components/DashboardFileUpload';
 import { validateDashboardJson, validateGcomDashboard } from './utils/validation';
@@ -80,15 +81,11 @@ class DashboardImportUnConnected extends PureComponent<Props> {
           <DashboardFileUpload onFileUpload={this.onFileUpload} />
         </div>
         <div className={styles.option}>
-          <Forms.Legend>Import via grafana.com</Forms.Legend>
-          <Forms.Form onSubmit={this.getGcomDashboard} defaultValues={{ gcomDashboard: '' }}>
+          <Legend>Import via grafana.com</Legend>
+          <Form onSubmit={this.getGcomDashboard} defaultValues={{ gcomDashboard: '' }}>
             {({ register, errors }) => (
-              <Forms.Field
-                invalid={!!errors.gcomDashboard}
-                error={errors.gcomDashboard && errors.gcomDashboard.message}
-              >
+              <Field invalid={!!errors.gcomDashboard} error={errors.gcomDashboard && errors.gcomDashboard.message}>
                 <Input
-                  size="md"
                   name="gcomDashboard"
                   placeholder="Grafana.com dashboard url or id"
                   type="text"
@@ -98,20 +95,17 @@ class DashboardImportUnConnected extends PureComponent<Props> {
                   })}
                   addonAfter={<Button type="submit">Load</Button>}
                 />
-              </Forms.Field>
+              </Field>
             )}
-          </Forms.Form>
+          </Form>
         </div>
         <div className={styles.option}>
-          <Forms.Legend>Import via panel json</Forms.Legend>
-          <Forms.Form onSubmit={this.getDashboardFromJson} defaultValues={{ dashboardJson: '' }}>
+          <Legend>Import via panel json</Legend>
+          <Form onSubmit={this.getDashboardFromJson} defaultValues={{ dashboardJson: '' }}>
             {({ register, errors }) => (
               <>
-                <Forms.Field
-                  invalid={!!errors.dashboardJson}
-                  error={errors.dashboardJson && errors.dashboardJson.message}
-                >
-                  <Forms.TextArea
+                <Field invalid={!!errors.dashboardJson} error={errors.dashboardJson && errors.dashboardJson.message}>
+                  <TextArea
                     name="dashboardJson"
                     ref={register({
                       required: 'Need a dashboard json model',
@@ -119,11 +113,11 @@ class DashboardImportUnConnected extends PureComponent<Props> {
                     })}
                     rows={10}
                   />
-                </Forms.Field>
+                </Field>
                 <Button type="submit">Load</Button>
               </>
             )}
-          </Forms.Form>
+          </Form>
         </div>
       </>
     );
@@ -149,7 +143,11 @@ const mapDispatchToProps: MapDispatchToProps<DispatchProps, Props> = {
   importDashboardJson,
 };
 
-export const DashboardImportPage = connect(mapStateToProps, mapDispatchToProps)(DashboardImportUnConnected);
+export const DashboardImportPage = connectWithCleanUp(
+  mapStateToProps,
+  mapDispatchToProps,
+  state => state.importDashboard
+)(DashboardImportUnConnected);
 export default DashboardImportPage;
 DashboardImportPage.displayName = 'DashboardImport';
 

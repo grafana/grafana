@@ -5,7 +5,6 @@
 title = "cardChrome"
 keywords = ["grafana","documentation","sdk","@grafana/ui"]
 type = "docs"
-draft = true
 +++
 
 ## styleMixins.cardChrome() function
@@ -15,7 +14,7 @@ draft = true
 <b>Signature</b>
 
 ```typescript
-function cardChrome(theme: GrafanaTheme): string;
+export declare function cardChrome(theme: GrafanaTheme): string;
 ```
 <b>Import</b>
 

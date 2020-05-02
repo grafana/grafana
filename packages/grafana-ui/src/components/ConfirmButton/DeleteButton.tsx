@@ -3,7 +3,7 @@ import { ConfirmButton } from './ConfirmButton';
 import { ComponentSize } from '../../types/size';
 import { Button } from '../Button';
 
-interface Props {
+export interface Props {
   size?: ComponentSize;
   disabled?: boolean;
   onConfirm(): void;
@@ -18,7 +18,7 @@ export const DeleteButton: FC<Props> = ({ size, disabled, onConfirm }) => {
       disabled={disabled}
       onConfirm={onConfirm}
     >
-      <Button variant="destructive" icon="fa fa-remove" size={size || 'sm'} />
+      <Button variant="destructive" icon="times" size={size || 'sm'} />
     </ConfirmButton>
   );
 };

@@ -133,7 +133,7 @@ The option is called `Stackdriver auto` and the defaults are:
 - 5m for time ranges >= 23 hours and < 6 days
 - 1h for time ranges >= 6 days
 
-The other automatic option is `Grafana auto`. This will automatically set the group by time depending on the time range chosen and the width of the graph panel. Read more about the details [here](http://docs.grafana.org/reference/templating/#the-interval-variable).
+The other automatic option is `Grafana auto`. This will automatically set the group by time depending on the time range chosen and the width of the graph panel. Read more about the details [here](http://docs.grafana.org/variables/templates-and-variables/#the-interval-variable).
 
 It is also possible to choose fixed time intervals to group by, like `1h` or `1d`.
 
@@ -186,6 +186,8 @@ Example Result: `gce_instance - compute.googleapis.com/instance/cpu/usage_time`
 
 ### SLO (Service Level Objective) queries
 
+> Only available in Grafana v7.0+
+
 {{< docs-imagebox img="/img/docs/v70/slo-query-builder.png" max-width= "400px" class="docs-image--right" >}}
 
 The SLO query builder in the Stackdriver data source allows you to display SLO data in time series format. To get an understanding of the basic concepts in service monitoring, please refer to Google Stackdriver's [official docs](https://cloud.google.com/monitoring/service-monitoring).
@@ -196,8 +198,8 @@ To create an SLO query, follow these steps:
 
 1. Choose the option **Service Level Objectives (SLO)** in the **Query Type** dropdown.
 2. Choose a project from the **Project** dropdown.
-3. Choose a [SLO service](https://cloud.google.com/monitoring/api/ref_v3/rest/v3/services) from the **Service** dropdown.
-4. Choose a [SLO](https://cloud.google.com/monitoring/api/ref_v3/rest/v3/services.serviceLevelObjectives) from the **SLO** dropdown.
+3. Choose an [SLO service](https://cloud.google.com/monitoring/api/ref_v3/rest/v3/services) from the **Service** dropdown.
+4. Choose an [SLO](https://cloud.google.com/monitoring/api/ref_v3/rest/v3/services.serviceLevelObjectives) from the **SLO** dropdown.
 5. Choose a [time series selector](https://cloud.google.com/monitoring/service-monitoring/timeseries-selectors#ts-selector-list) from the **Selector** dropdown.
 
 The friendly names for the time series selectors are shown in Grafana. Here is the mapping from the friendly name to the system name that is used in the Service Monitoring documentation:
@@ -226,10 +228,10 @@ SLO queries use the same [alignment period functionality as metric queries]({{< 
 ## Templating
 
 Instead of hard-coding things like server, application and sensor name in you metric queries you can use variables in their place.
-Variables are shown as dropdown select boxes at the top of the dashboard. These dropdowns makes it easy to change the data
+Variables are shown as dropdown select boxes at the top of the dashboard. These dropdowns make it easy to change the data
 being displayed in your dashboard.
 
-Check out the [Templating]({{< relref "../../reference/templating.md" >}}) documentation for an introduction to the templating feature and the different
+Check out the [Templating]({{< relref "../../variables/templates-and-variables.md" >}}) documentation for an introduction to the templating feature and the different
 types of template variables.
 
 ### Query Variable
@@ -262,7 +264,7 @@ Why two ways? The first syntax is easier to read and write but does not allow yo
 
 {{< docs-imagebox img="/img/docs/v53/stackdriver_annotations_query_editor.png" max-width= "400px" class="docs-image--right" >}}
 
-[Annotations]({{< relref "../../reference/annotations.md" >}}) allows you to overlay rich event information on top of graphs. You add annotation
+[Annotations]({{< relref "../../reference/annotations.md" >}}) allow you to overlay rich event information on top of graphs. You add annotation
 queries via the Dashboard menu / Annotations view. Annotation rendering is expensive so it is important to limit the number of rows returned. There is no support for showing Stackdriver annotations and events yet but it works well with [custom metrics](https://cloud.google.com/monitoring/custom-metrics/) in Stackdriver.
 
 With the query editor for annotations, you can select a metric and filters. The `Title` and `Text` fields support templating and can use data returned from the query. For example, the Title field could have the following text:

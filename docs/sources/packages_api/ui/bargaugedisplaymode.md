@@ -5,7 +5,6 @@
 title = "BarGaugeDisplayMode"
 keywords = ["grafana","documentation","sdk","@grafana/ui"]
 type = "docs"
-draft = true
 +++
 
 ## BarGaugeDisplayMode enum

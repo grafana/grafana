@@ -5,7 +5,6 @@
 title = "PanelPlugin"
 keywords = ["grafana","documentation","sdk","@grafana/data"]
 type = "docs"
-draft = true
 +++
 
 ## PanelPlugin class
@@ -13,7 +12,7 @@ draft = true
 <b>Signature</b>
 
 ```typescript
-export declare class PanelPlugin<TOptions = any> extends GrafanaPlugin<PanelPluginMeta> 
+export declare class PanelPlugin<TOptions = any, TFieldConfigOptions extends object = any> extends GrafanaPlugin<PanelPluginMeta> 
 ```
 <b>Import</b>
 
@@ -31,24 +30,27 @@ import { PanelPlugin } from '@grafana/data';
 |  Property | Modifiers | Type | Description |
 |  --- | --- | --- | --- |
 |  [angularPanelCtrl](#angularpanelctrl-property) |  | <code>any</code> | Legacy angular ctrl. If this exists it will be used instead of the panel |
-|  [customFieldConfigs](#customfieldconfigs-property) |  | <code>FieldConfigEditorRegistry</code> |  |
-|  [defaults](#defaults-property) |  | <code>TOptions</code> |  |
+|  [defaults](#defaults-property) |  | <code>{} &#124; null</code> |  |
 |  [editor](#editor-property) |  | <code>ComponentClass&lt;PanelEditorProps&lt;TOptions&gt;&gt;</code> |  |
+|  [fieldConfigDefaults](#fieldconfigdefaults-property) |  | <code>FieldConfigSource&lt;TFieldConfigOptions&gt;</code> |  |
+|  [fieldConfigRegistry](#fieldconfigregistry-property) |  | <code>FieldConfigOptionsRegistry</code> |  |
 |  [noPadding](#nopadding-property) |  | <code>boolean</code> |  |
 |  [onPanelMigration](#onpanelmigration-property) |  | <code>PanelMigrationHandler&lt;TOptions&gt;</code> |  |
 |  [onPanelTypeChanged](#onpaneltypechanged-property) |  | <code>PanelTypeChangedHandler&lt;TOptions&gt;</code> |  |
-|  [panel](#panel-property) |  | <code>ComponentType&lt;PanelProps&lt;TOptions&gt;&gt;</code> |  |
+|  [optionEditors](#optioneditors-property) |  | <code>PanelOptionEditorsRegistry &#124; undefined</code> |  |
+|  [panel](#panel-property) |  | <code>ComponentType&lt;PanelProps&lt;TOptions&gt;&gt; &#124; null</code> |  |
 
 <b>Methods</b>
 
 |  Method | Modifiers | Description |
 |  --- | --- | --- |
-|  [setCustomFieldConfigs(registry)](#setcustomfieldconfigs-method) |  |  |
 |  [setDefaults(defaults)](#setdefaults-method) |  |  |
 |  [setEditor(editor)](#seteditor-method) |  |  |
 |  [setMigrationHandler(handler)](#setmigrationhandler-method) |  | This function is called before the panel first loads if the current version is different than the version that was saved.<!-- -->This is a good place to support any changes to the options model |
 |  [setNoPadding()](#setnopadding-method) |  |  |
-|  [setPanelChangeHandler(handler)](#setpanelchangehandler-method) |  | This function is called when the visualization was changed. This passes in the options that were used in the previous visualization |
+|  [setPanelChangeHandler(handler)](#setpanelchangehandler-method) |  | This function is called when the visualization was changed. This passes in the panel model for previous visualisation options inspection and panel model updates.<!-- -->This is useful for supporting PanelModel API updates when changing between Angular and React panels. |
+|  [setPanelOptions(builder)](#setpaneloptions-method) |  | Enables panel options editor creation |
+|  [useFieldConfig(config)](#usefieldconfig-method) |  | Allows specyfing which standard field config options panel should use and defining default values |
 
 ### constructor(panel)
 
@@ -57,13 +59,13 @@ Constructs a new instance of the `PanelPlugin` class
 <b>Signature</b>
 
 ```typescript
-constructor(panel: ComponentType<PanelProps<TOptions>>);
+constructor(panel: ComponentType<PanelProps<TOptions>> | null);
 ```
 <b>Parameters</b>
 
 |  Parameter | Type | Description |
 |  --- | --- | --- |
-|  panel | <code>ComponentType&lt;PanelProps&lt;TOptions&gt;&gt;</code> |  |
+|  panel | <code>ComponentType&lt;PanelProps&lt;TOptions&gt;&gt; &#124; null</code> |  |
 
 ### angularPanelCtrl property
 
@@ -75,20 +77,12 @@ Legacy angular ctrl. If this exists it will be used instead of the panel
 angularPanelCtrl?: any;
 ```
 
-### customFieldConfigs property
-
-<b>Signature</b>
-
-```typescript
-customFieldConfigs?: FieldConfigEditorRegistry;
-```
-
 ### defaults property
 
 <b>Signature</b>
 
 ```typescript
-defaults?: TOptions;
+get defaults(): {} | null;
 ```
 
 ### editor property
@@ -97,6 +91,22 @@ defaults?: TOptions;
 
 ```typescript
 editor?: ComponentClass<PanelEditorProps<TOptions>>;
+```
+
+### fieldConfigDefaults property
+
+<b>Signature</b>
+
+```typescript
+get fieldConfigDefaults(): FieldConfigSource<TFieldConfigOptions>;
+```
+
+### fieldConfigRegistry property
+
+<b>Signature</b>
+
+```typescript
+get fieldConfigRegistry(): FieldConfigOptionsRegistry;
 ```
 
 ### noPadding property
@@ -123,30 +133,21 @@ onPanelMigration?: PanelMigrationHandler<TOptions>;
 onPanelTypeChanged?: PanelTypeChangedHandler<TOptions>;
 ```
 
+### optionEditors property
+
+<b>Signature</b>
+
+```typescript
+get optionEditors(): PanelOptionEditorsRegistry | undefined;
+```
+
 ### panel property
 
 <b>Signature</b>
 
 ```typescript
-panel: ComponentType<PanelProps<TOptions>>;
+panel: ComponentType<PanelProps<TOptions>> | null;
 ```
-
-### setCustomFieldConfigs method
-
-<b>Signature</b>
-
-```typescript
-setCustomFieldConfigs(registry: FieldConfigEditorRegistry): this;
-```
-<b>Parameters</b>
-
-|  Parameter | Type | Description |
-|  --- | --- | --- |
-|  registry | <code>FieldConfigEditorRegistry</code> |  |
-
-<b>Returns:</b>
-
-`this`
 
 ### setDefaults method
 
@@ -216,7 +217,9 @@ setNoPadding(): this;
 
 ### setPanelChangeHandler method
 
-This function is called when the visualization was changed. This passes in the options that were used in the previous visualization
+This function is called when the visualization was changed. This passes in the panel model for previous visualisation options inspection and panel model updates.
+
+This is useful for supporting PanelModel API updates when changing between Angular and React panels.
 
 <b>Signature</b>
 
@@ -232,4 +235,128 @@ setPanelChangeHandler(handler: PanelTypeChangedHandler): this;
 <b>Returns:</b>
 
 `this`
+
+### setPanelOptions method
+
+Enables panel options editor creation
+
+<b>Signature</b>
+
+```typescript
+setPanelOptions(builder: (builder: PanelOptionsEditorBuilder<TOptions>) => void): this;
+```
+<b>Parameters</b>
+
+|  Parameter | Type | Description |
+|  --- | --- | --- |
+|  builder | <code>(builder: PanelOptionsEditorBuilder&lt;TOptions&gt;) =&gt; void</code> |  |
+
+<b>Returns:</b>
+
+`this`
+
+## Example
+
+
+```typescript
+
+import { ShapePanel } from './ShapePanel';
+
+interface ShapePanelOptions {}
+
+export const plugin = new PanelPlugin<ShapePanelOptions>(ShapePanel)
+  .setPanelOptions(builder => {
+    builder
+      .addSelect({
+        id: 'shape',
+        name: 'Shape',
+        description: 'Select shape to render'
+        settings: {
+          options: [
+            {value: 'circle', label: 'Circle' },
+            {value: 'square', label: 'Square },
+            {value: 'triangle', label: 'Triangle }
+           ]
+        },
+      })
+  })
+
+```
+
+### useFieldConfig method
+
+Allows specyfing which standard field config options panel should use and defining default values
+
+<b>Signature</b>
+
+```typescript
+useFieldConfig(config?: SetFieldConfigOptionsArgs<TFieldConfigOptions>): this;
+```
+<b>Parameters</b>
+
+|  Parameter | Type | Description |
+|  --- | --- | --- |
+|  config | <code>SetFieldConfigOptionsArgs&lt;TFieldConfigOptions&gt;</code> |  |
+
+<b>Returns:</b>
+
+`this`
+
+## Example
+
+
+```typescript
+
+import { ShapePanel } from './ShapePanel';
+
+interface ShapePanelOptions {}
+
+// when plugin should use all standard options
+export const plugin = new PanelPlugin<ShapePanelOptions>(ShapePanel)
+ .useFieldConfig();
+
+// when plugin should only display specific standard options
+// note, that options will be displayed in the order they are provided
+export const plugin = new PanelPlugin<ShapePanelOptions>(ShapePanel)
+ .useFieldConfig({
+   standardOptions: [FieldConfigProperty.Min, FieldConfigProperty.Max]
+  });
+
+// when standard option's default value needs to be provided
+export const plugin = new PanelPlugin<ShapePanelOptions>(ShapePanel)
+ .useFieldConfig({
+   standardOptions: [FieldConfigProperty.Min, FieldConfigProperty.Max],
+   standardOptionsDefaults: {
+     [FieldConfigProperty.Min]: 20,
+     [FieldConfigProperty.Max]: 100
+   }
+ });
+
+// when custom field config options needs to be provided
+export const plugin = new PanelPlugin<ShapePanelOptions>(ShapePanel)
+ .useFieldConfig({
+   useCustomConfig: builder => {
+     builder
+      .addNumberInput({
+        id: 'shapeBorderWidth',
+        name: 'Border width',
+        description: 'Border width of the shape',
+        settings: {
+          min: 1,
+          max: 5,
+        },
+      })
+      .addSelect({
+        id: 'displayMode',
+        name: 'Display mode',
+        description: 'How the shape shout be rendered'
+        settings: {
+        options: [{value: 'fill', label: 'Fill' }, {value: 'transparent', label: 'Transparent }]
+      },
+    })
+  },
+ });
+
+
+```
 

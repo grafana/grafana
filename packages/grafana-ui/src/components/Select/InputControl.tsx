@@ -1,10 +1,11 @@
 import React from 'react';
 import { useTheme } from '../../themes/ThemeContext';
-import { getFocusCss, sharedInputStyle } from '../Forms/commonStyles';
+import { sharedInputStyle } from '../Forms/commonStyles';
 import { getInputStyles } from '../Input/Input';
-import { cx, css } from 'emotion';
+import { css, cx } from 'emotion';
 import { stylesFactory } from '../../themes';
 import { GrafanaTheme } from '@grafana/data';
+import { focusCss } from '../../themes/mixins';
 
 interface InputControlProps {
   /** Show an icon as a prefix in the input */
@@ -25,7 +26,7 @@ const getInputControlStyles = stylesFactory(
         sharedInputStyle(theme, invalid),
         focused &&
           css`
-            ${getFocusCss(theme)}
+            ${focusCss(theme)}
           `,
         disabled && styles.inputDisabled,
         css`

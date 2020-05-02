@@ -2,7 +2,7 @@
 import React, { memo } from 'react';
 
 // Types
-import { FormLabel } from '@grafana/ui';
+import { InlineFormLabel } from '@grafana/ui';
 
 export interface PromExploreExtraFieldProps {
   label: string;
@@ -17,11 +17,11 @@ export function PromExploreExtraField(props: PromExploreExtraFieldProps) {
   const { label, onChangeFunc, onKeyDownFunc, value, hasTooltip, tooltipContent } = props;
 
   return (
-    <div className="gf-form-inline explore-input--ml">
+    <div className="gf-form-inline explore-input--ml" aria-label="Prometheus extra field">
       <div className="gf-form">
-        <FormLabel width={5} tooltip={hasTooltip ? tooltipContent : null}>
+        <InlineFormLabel width={5} tooltip={hasTooltip ? tooltipContent : null}>
           {label}
-        </FormLabel>
+        </InlineFormLabel>
         <input
           type={'text'}
           className="gf-form-input width-4"

@@ -5,31 +5,19 @@
 title = "updateDatasourcePluginResetOption"
 keywords = ["grafana","documentation","sdk","@grafana/data"]
 type = "docs"
-draft = true
 +++
 
-## updateDatasourcePluginResetOption() function
+## updateDatasourcePluginResetOption variable
 
-### updateDatasourcePluginResetOption() function
+### updateDatasourcePluginResetOption variable
 
 <b>Signature</b>
 
 ```typescript
-export declare function updateDatasourcePluginResetOption(props: DataSourcePluginOptionsEditorProps, key: string): void;
+updateDatasourcePluginResetOption: <J, S extends {} = KeyValue<any>>(props: DataSourcePluginOptionsEditorProps<import("../types").DataSourceJsonData, {}>, key: string) => void
 ```
 <b>Import</b>
 
 ```typescript
 import { updateDatasourcePluginResetOption } from '@grafana/data';
 ```
-<b>Parameters</b>
-
-|  Parameter | Type | Description |
-|  --- | --- | --- |
-|  props | <code>DataSourcePluginOptionsEditorProps</code> |  |
-|  key | <code>string</code> |  |
-
-<b>Returns:</b>
-
-`void`
-

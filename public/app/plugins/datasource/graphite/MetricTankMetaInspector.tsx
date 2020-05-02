@@ -20,7 +20,7 @@ export class MetricTankMetaInspector extends PureComponent<Props, State> {
     const buckets = parseSchemaRetentions(meta['schema-retentions']);
     const rollupNotice = getRollupNotice([meta]);
     const runtimeNotice = getRuntimeConsolidationNotice([meta]);
-    const normFunc = (meta['consolidate-normfetch'] || '').replace('Consolidator', '');
+    const normFunc = (meta['consolidator-normfetch'] || '').replace('Consolidator', '');
 
     let totalSeconds = 0;
 
@@ -30,7 +30,10 @@ export class MetricTankMetaInspector extends PureComponent<Props, State> {
 
     return (
       <div className={styles.metaItem} key={key}>
-        <div className={styles.metaItemHeader}>Schema: {meta['schema-name']}</div>
+        <div className={styles.metaItemHeader}>
+          Schema: {meta['schema-name']}
+          <div className="small muted">Series count: {meta.count}</div>
+        </div>
         <div className={styles.metaItemBody}>
           <div className={styles.step}>
             <div className={styles.stepHeading}>Step 1: Fetch</div>
@@ -97,7 +100,12 @@ export class MetricTankMetaInspector extends PureComponent<Props, State> {
         for (const metaItem of series.meta.custom.seriesMetaList as MetricTankSeriesMeta[]) {
           // key is to dedupe as many series will have identitical meta
           const key = `${metaItem['schema-name']}-${metaItem['archive-read']}`;
-          seriesMetas[key] = metaItem;
+
+          if (seriesMetas[key]) {
+            seriesMetas[key].count += metaItem.count;
+          } else {
+            seriesMetas[key] = metaItem;
+          }
         }
       }
     }
@@ -108,7 +116,7 @@ export class MetricTankMetaInspector extends PureComponent<Props, State> {
 
     return (
       <div>
-        <h2 className="page-heading">Aggregation & rollup</h2>
+        <h2 className="page-heading">Metrictank Lineage</h2>
         {Object.keys(seriesMetas).map(key => this.renderMeta(seriesMetas[key], key))}
       </div>
     );
@@ -117,9 +125,9 @@ export class MetricTankMetaInspector extends PureComponent<Props, State> {
 
 const getStyles = stylesFactory(() => {
   const { theme } = config;
-  const borderColor = theme.isDark ? theme.colors.gray25 : theme.colors.gray85;
-  const background = theme.isDark ? theme.colors.dark1 : theme.colors.white;
-  const headerBg = theme.isDark ? theme.colors.gray15 : theme.colors.gray85;
+  const borderColor = theme.isDark ? theme.palette.gray25 : theme.palette.gray85;
+  const background = theme.isDark ? theme.palette.dark1 : theme.palette.white;
+  const headerBg = theme.isDark ? theme.palette.gray15 : theme.palette.gray85;
 
   return {
     metaItem: css`
@@ -131,6 +139,8 @@ const getStyles = stylesFactory(() => {
       background: ${headerBg};
       padding: ${theme.spacing.xs} ${theme.spacing.md};
       font-size: ${theme.typography.size.md};
+      display: flex;
+      justify-content: space-between;
     `,
     metaItemBody: css`
       padding: ${theme.spacing.md};
@@ -160,14 +170,14 @@ const getStyles = stylesFactory(() => {
       width: 60px;
     `,
     bucketRetention: css`
-      background: linear-gradient(0deg, ${theme.colors.blue85}, ${theme.colors.blue95});
+      background: linear-gradient(0deg, ${theme.palette.blue85}, ${theme.palette.blue95});
       text-align: center;
-      color: ${theme.colors.white};
+      color: ${theme.palette.white};
       margin-right: ${theme.spacing.md};
       border-radius: ${theme.border.radius.md};
     `,
     bucketRetentionActive: css`
-      background: linear-gradient(0deg, ${theme.colors.greenBase}, ${theme.colors.greenShade});
+      background: linear-gradient(0deg, ${theme.palette.greenBase}, ${theme.palette.greenShade});
     `,
   };
 });

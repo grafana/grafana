@@ -29,25 +29,17 @@ export const organizeFieldsTransformer: DataTransformerInfo<OrganizeFieldsTransf
     const rename = renameFieldsTransformer.transformer(options);
     const order = orderFieldsTransformer.transformer(options);
     const filter = filterFieldsByNameTransformer.transformer({
-      exclude: mapToExcludeRegexp(options.excludeByName),
+      exclude: mapToExcludeArray(options.excludeByName),
     });
 
     return (data: DataFrame[]) => rename(order(filter(data)));
   },
 };
 
-const mapToExcludeRegexp = (excludeByName: Record<string, boolean>): string | undefined => {
+const mapToExcludeArray = (excludeByName: Record<string, boolean>): string[] => {
   if (!excludeByName) {
-    return undefined;
+    return [];
   }
 
-  const fieldsToExclude = Object.keys(excludeByName)
-    .filter(name => excludeByName[name])
-    .join('|');
-
-  if (fieldsToExclude.length === 0) {
-    return undefined;
-  }
-
-  return `^(${fieldsToExclude})$`;
+  return Object.keys(excludeByName).filter(name => excludeByName[name]);
 };

@@ -1,12 +1,13 @@
-import React, { FC, useMemo } from 'react';
-import { PanelModel, DashboardModel } from '../../state';
-import { SelectableValue, PanelPlugin, FieldConfigSource, PanelData } from '@grafana/data';
-import { Forms, Select, DataLinksInlineEditor, Input } from '@grafana/ui';
-import { OptionsGroup } from './OptionsGroup';
+import React, { FC, useMemo, useRef } from 'react';
+import { DashboardModel, PanelModel } from '../../state';
+import { FieldConfigSource, PanelData, PanelPlugin, SelectableValue } from '@grafana/data';
+import { Counter, DataLinksInlineEditor, Field, Input, RadioButtonGroup, Select, Switch, TextArea } from '@grafana/ui';
 import { getPanelLinksVariableSuggestions } from '../../../panel/panellinks/link_srv';
 import { getVariables } from '../../../variables/state/selectors';
 import { PanelOptionsEditor } from './PanelOptionsEditor';
-import { AngularPanelOptions } from '../../panel_editor/AngularPanelOptions';
+import { AngularPanelOptions } from './AngularPanelOptions';
+import { VisualizationTab } from './VisualizationTab';
+import { OptionsGroup } from './OptionsGroup';
 
 interface Props {
   panel: PanelModel;
@@ -27,8 +28,10 @@ export const PanelOptionsTab: FC<Props> = ({
   onPanelOptionsChanged,
   onFieldConfigsChange,
 }) => {
-  const elements: JSX.Element[] = [];
+  const visTabInputRef = useRef<HTMLInputElement>();
   const linkVariablesSuggestions = useMemo(() => getPanelLinksVariableSuggestions(), []);
+  const elements: JSX.Element[] = [];
+  const panelLinksCount = panel && panel.links ? panel.links.length : 0;
 
   const variableOptions = getVariableOptions();
   const directionOptions = [
@@ -38,65 +41,68 @@ export const PanelOptionsTab: FC<Props> = ({
 
   const maxPerRowOptions = [2, 3, 4, 6, 8, 12].map(value => ({ label: value.toString(), value }));
 
+  const focusVisPickerInput = (isExpanded: boolean) => {
+    if (isExpanded && visTabInputRef.current) {
+      visTabInputRef.current.focus();
+    }
+  };
   // Fist common panel settings Title, description
   elements.push(
-    <OptionsGroup title="Basic" key="basic settings">
-      <Forms.Field label="Panel title">
+    <OptionsGroup title="Settings" id="Panel settings" key="Panel settings">
+      <Field label="Panel title">
         <Input defaultValue={panel.title} onBlur={e => onPanelConfigChange('title', e.currentTarget.value)} />
-      </Forms.Field>
-      <Forms.Field label="Description" description="Panel description supports markdown and links.">
-        <Forms.TextArea
+      </Field>
+      <Field label="Description" description="Panel description supports markdown and links.">
+        <TextArea
           defaultValue={panel.description}
           onBlur={e => onPanelConfigChange('description', e.currentTarget.value)}
         />
-      </Forms.Field>
-      <Forms.Field label="Transparent" description="Display panel without background.">
-        <Forms.Switch
-          value={panel.transparent}
-          onChange={e => onPanelConfigChange('transparent', e.currentTarget.checked)}
-        />
-      </Forms.Field>
+      </Field>
+      <Field label="Transparent" description="Display panel without a background.">
+        <Switch value={panel.transparent} onChange={e => onPanelConfigChange('transparent', e.currentTarget.checked)} />
+      </Field>
+    </OptionsGroup>
+  );
+
+  elements.push(
+    <OptionsGroup title="Visualisation" id="Panel type" key="Panel type" defaultToClosed onToggle={focusVisPickerInput}>
+      <VisualizationTab panel={panel} ref={visTabInputRef} />
     </OptionsGroup>
   );
 
   // Old legacy react editor
   if (plugin.editor && panel && !plugin.optionEditors) {
     elements.push(
-      <OptionsGroup title="Display" key="legacy react editor">
-        <plugin.editor
-          data={data}
-          options={panel.getOptions()}
-          onOptionsChange={onPanelOptionsChanged}
-          fieldConfig={panel.getFieldConfig()}
-          onFieldConfigChange={onFieldConfigsChange}
-        />
+      <OptionsGroup title="Options" id="legacy react editor" key="legacy react editor">
+        <plugin.editor data={data} options={panel.getOptions()} onOptionsChange={onPanelOptionsChanged} />
       </OptionsGroup>
     );
   }
 
   if (plugin.optionEditors && panel) {
     elements.push(
-      <OptionsGroup title="Display" key="panel plugin options">
-        <PanelOptionsEditor
-          key="panel options"
-          options={panel.getOptions()}
-          onChange={onPanelOptionsChanged}
-          plugin={plugin}
-        />
-      </OptionsGroup>
+      <PanelOptionsEditor
+        key="panel options"
+        options={panel.getOptions()}
+        onChange={onPanelOptionsChanged}
+        plugin={plugin}
+      />
     );
   }
 
   if (plugin.angularPanelCtrl) {
     elements.push(
-      <OptionsGroup title="Display" key="angular plugin editor">
-        <AngularPanelOptions panel={panel} dashboard={dashboard} plugin={plugin} />
-      </OptionsGroup>
+      <AngularPanelOptions panel={panel} dashboard={dashboard} plugin={plugin} key="angular panel options" />
     );
   }
 
   elements.push(
-    <OptionsGroup title="Panel links" key="panel links" defaultToClosed={true}>
+    <OptionsGroup
+      renderTitle={isExpanded => <>Links {!isExpanded && panelLinksCount > 0 && <Counter value={panelLinksCount} />}</>}
+      id="panel links"
+      key="panel links"
+      defaultToClosed
+    >
       <DataLinksInlineEditor
         links={panel.links}
         onChange={links => onPanelConfigChange('links', links)}
@@ -107,8 +113,8 @@ export const PanelOptionsTab: FC<Props> = ({
   );
 
   elements.push(
-    <OptionsGroup title="Panel repeats" key="panel repeats" defaultToClosed={true}>
-      <Forms.Field
+    <OptionsGroup title="Repeat options" id="panel repeats" key="panel repeats" defaultToClosed>
+      <Field
         label="Repeat by variable"
         description="Repeat this panel for each value in the selected variable.
           This is not visible while in edit mode. You need to go back to dashboard and then update the variable or
@@ -119,25 +125,25 @@ export const PanelOptionsTab: FC<Props> = ({
           onChange={value => onPanelConfigChange('repeat', value.value)}
           options={variableOptions}
         />
-      </Forms.Field>
+      </Field>
       {panel.repeat && (
-        <Forms.Field label="Repeat direction">
-          <Forms.RadioButtonGroup
+        <Field label="Repeat direction">
+          <RadioButtonGroup
             options={directionOptions}
             value={panel.repeatDirection || 'h'}
             onChange={value => onPanelConfigChange('repeatDirection', value)}
           />
-        </Forms.Field>
+        </Field>
       )}
 
       {panel.repeat && panel.repeatDirection === 'h' && (
-        <Forms.Field label="Max per row">
+        <Field label="Max per row">
           <Select
             options={maxPerRowOptions}
             value={panel.maxPerRow}
             onChange={value => onPanelConfigChange('maxPerRow', value.value)}
           />
-        </Forms.Field>
+        </Field>
       )}
     </OptionsGroup>
   );

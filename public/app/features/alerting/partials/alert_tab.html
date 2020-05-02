@@ -1,192 +1,236 @@
 <div ng-if="ctrl.panel.alert">
   <div class="alert alert-error m-b-2" ng-show="ctrl.error">
-    <i class="fa fa-warning"></i> {{ctrl.error}}
+    <icon name="'exclamation-triangle'"></icon> {{ctrl.error}}
   </div>
-  <div class="panel-options-group">
-    <div class="panel-options-group__body">
-      <div class="gf-form-group">
-        <h4 class="section-heading">Rule</h4>
-        <div class="gf-form-inline">
-          <div class="gf-form">
-            <span class="gf-form-label width-6">Name</span>
-            <input type="text" class="gf-form-input width-20" ng-model="ctrl.alert.name">
-          </div>
-          <div class="gf-form">
-            <span class="gf-form-label width-9">Evaluate every</span>
-            <input class="gf-form-input max-width-6" type="text" ng-model="ctrl.alert.frequency" ng-blur="ctrl.checkFrequency()">
-          </div>
-          <div class="gf-form max-width-11">
-            <label class="gf-form-label width-5">For</label>
-            <input type="text" class="gf-form-input max-width-6 gf-form-input--has-help-icon" ng-model="ctrl.alert.for"
-                  spellcheck='false' placeholder="5m">
-            <info-popover mode="right-absolute">
-              If an alert rule has a configured For and the query violates the configured
-              threshold it
-              will first go from OK to Pending.
-              Going from OK to Pending Grafana will not send any notifications. Once the alert
-              rule
-              has
-              been firing for more than For duration, it will change to Alerting and send alert
-              notifications.
-            </info-popover>
-          </div>
-        </div>
-        <div class="gf-form" ng-if="ctrl.frequencyWarning">
-          <label class="gf-form-label text-warning">
-            <i
-            class="fa fa-warning"></i> {{ctrl.frequencyWarning}}
-          </label>
+
+  <div class="gf-form-group">
+    <h4 class="section-heading">Rule</h4>
+    <div class="gf-form-inline">
+      <div class="gf-form">
+        <span class="gf-form-label width-6">Name</span>
+        <input type="text" class="gf-form-input width-20" ng-model="ctrl.alert.name" />
+      </div>
+      <div class="gf-form">
+        <span class="gf-form-label width-9">Evaluate every</span>
+        <input
+          class="gf-form-input max-width-6"
+          type="text"
+          ng-model="ctrl.alert.frequency"
+          ng-blur="ctrl.checkFrequency()"
+        />
+      </div>
+      <div class="gf-form max-width-11">
+        <label class="gf-form-label width-5">For</label>
+        <input
+          type="text"
+          class="gf-form-input max-width-6 gf-form-input--has-help-icon"
+          ng-model="ctrl.alert.for"
+          spellcheck="false"
+          placeholder="5m"
+        />
+        <info-popover mode="right-absolute">
+          If an alert rule has a configured For and the query violates the configured threshold it will first go from OK
+          to Pending. Going from OK to Pending Grafana will not send any notifications. Once the alert rule has been
+          firing for more than For duration, it will change to Alerting and send alert notifications.
+        </info-popover>
+      </div>
+    </div>
+    <div class="gf-form" ng-if="ctrl.frequencyWarning">
+      <label class="gf-form-label text-warning">
+        <icon name="'exclamation-triangle'"></icon> {{ctrl.frequencyWarning}}
+      </label>
+    </div>
+  </div>
+
+  <div class="gf-form-group">
+    <h4 class="section-heading">Conditions</h4>
+    <div class="gf-form-inline" ng-repeat="conditionModel in ctrl.conditionModels">
+      <div class="gf-form">
+        <metric-segment-model
+          css-class="query-keyword width-5"
+          ng-if="$index"
+          property="conditionModel.operator.type"
+          options="ctrl.evalOperators"
+          custom="false"
+        ></metric-segment-model>
+        <span class="gf-form-label query-keyword width-5" ng-if="$index===0">WHEN</span>
+      </div>
+      <div class="gf-form">
+        <query-part-editor
+          class="gf-form-label query-part width-9"
+          part="conditionModel.reducerPart"
+          handle-event="ctrl.handleReducerPartEvent(conditionModel, $event)"
+        >
+        </query-part-editor>
+        <span class="gf-form-label query-keyword">OF</span>
+      </div>
+      <div class="gf-form">
+        <query-part-editor
+          class="gf-form-label query-part"
+          part="conditionModel.queryPart"
+          handle-event="ctrl.handleQueryPartEvent(conditionModel, $event)"
+        >
+        </query-part-editor>
+      </div>
+      <div class="gf-form">
+        <metric-segment-model
+          property="conditionModel.evaluator.type"
+          options="ctrl.evalFunctions"
+          custom="false"
+          css-class="query-keyword"
+          on-change="ctrl.evaluatorTypeChanged(conditionModel.evaluator)"
+        ></metric-segment-model>
+        <input
+          class="gf-form-input max-width-9"
+          type="number"
+          step="any"
+          ng-hide="conditionModel.evaluator.params.length === 0"
+          ng-model="conditionModel.evaluator.params[0]"
+          ng-change="ctrl.evaluatorParamsChanged()"
+        />
+        <label class="gf-form-label query-keyword" ng-show="conditionModel.evaluator.params.length === 2">TO</label>
+        <input
+          class="gf-form-input max-width-9"
+          type="number"
+          step="any"
+          ng-if="conditionModel.evaluator.params.length === 2"
+          ng-model="conditionModel.evaluator.params[1]"
+          ng-change="ctrl.evaluatorParamsChanged()"
+        />
+      </div>
+      <div class="gf-form">
+        <label class="gf-form-label">
+          <a class="pointer" tabindex="1" ng-click="ctrl.removeCondition($index)">
+            <icon name="'trash-alt'"></icon>
+          </a>
+        </label>
+      </div>
+    </div>
+
+    <div class="gf-form">
+      <label class="gf-form-label dropdown">
+        <a class="pointer dropdown-toggle" data-toggle="dropdown">
+          <icon name="'plus-circle'"></icon>
+        </a>
+        <ul class="dropdown-menu" role="menu">
+          <li ng-repeat="ct in ctrl.conditionTypes" role="menuitem">
+            <a ng-click="ctrl.addCondition(ct.value);">{{ct.text}}</a>
+          </li>
+        </ul>
+      </label>
+    </div>
+  </div>
+
+  <div class="gf-form-group">
+    <h4 class="section-heading">No Data & Error Handling</h4>
+    <div class="gf-form-inline">
+      <div class="gf-form">
+        <span class="gf-form-label width-15">If no data or all values are null</span>
+      </div>
+      <div class="gf-form">
+        <span class="gf-form-label query-keyword">SET STATE TO</span>
+        <div class="gf-form-select-wrapper">
+          <select
+            class="gf-form-input"
+            ng-model="ctrl.alert.noDataState"
+            ng-options="f.value as f.text for f in ctrl.noDataModes"
+          >
+          </select>
         </div>
       </div>
+    </div>
 
-      <div class="gf-form-group">
-        <h4 class="section-heading">Conditions</h4>
-        <div class="gf-form-inline" ng-repeat="conditionModel in ctrl.conditionModels">
-          <div class="gf-form">
-            <metric-segment-model css-class="query-keyword width-5" ng-if="$index"
-                                  property="conditionModel.operator.type" options="ctrl.evalOperators"
-                                  custom="false"></metric-segment-model>
-            <span class="gf-form-label query-keyword width-5" ng-if="$index===0">WHEN</span>
-          </div>
-          <div class="gf-form">
-            <query-part-editor class="gf-form-label query-part width-9"
-                                part="conditionModel.reducerPart"
-                                handle-event="ctrl.handleReducerPartEvent(conditionModel, $event)">
-            </query-part-editor>
-            <span class="gf-form-label query-keyword">OF</span>
-          </div>
-          <div class="gf-form">
-            <query-part-editor class="gf-form-label query-part" part="conditionModel.queryPart"
-                                handle-event="ctrl.handleQueryPartEvent(conditionModel, $event)">
-            </query-part-editor>
-          </div>
-          <div class="gf-form">
-            <metric-segment-model property="conditionModel.evaluator.type" options="ctrl.evalFunctions"
-                                  custom="false" css-class="query-keyword"
-                                  on-change="ctrl.evaluatorTypeChanged(conditionModel.evaluator)"></metric-segment-model>
-            <input class="gf-form-input max-width-9" type="number" step="any"
-                    ng-hide="conditionModel.evaluator.params.length === 0"
-                    ng-model="conditionModel.evaluator.params[0]"
-                    ng-change="ctrl.evaluatorParamsChanged()" />
-            <label class="gf-form-label query-keyword"
-                    ng-show="conditionModel.evaluator.params.length === 2">TO</label>
-            <input class="gf-form-input max-width-9" type="number" step="any"
-                    ng-if="conditionModel.evaluator.params.length === 2"
-                    ng-model="conditionModel.evaluator.params[1]"
-                    ng-change="ctrl.evaluatorParamsChanged()" />
-          </div>
-          <div class="gf-form">
-            <label class="gf-form-label">
-              <a class="pointer" tabindex="1" ng-click="ctrl.removeCondition($index)">
-                <i class="fa fa-trash"></i>
-              </a>
-            </label>
-          </div>
-        </div>
-
-        <div class="gf-form">
-          <label class="gf-form-label dropdown">
-            <a class="pointer dropdown-toggle" data-toggle="dropdown">
-              <i class="fa fa-plus"></i>
-            </a>
-            <ul class="dropdown-menu" role="menu">
-              <li ng-repeat="ct in ctrl.conditionTypes" role="menuitem">
-                <a ng-click="ctrl.addCondition(ct.value);">{{ct.text}}</a>
-              </li>
-            </ul>
-          </label>
-        </div>
+    <div class="gf-form-inline">
+      <div class="gf-form">
+        <span class="gf-form-label width-15">If execution error or timeout</span>
       </div>
-
-      <div class="gf-form-group">
-        <h4 class="section-heading">No Data & Error Handling</h4>
-        <div class="gf-form-inline">
-          <div class="gf-form">
-            <span class="gf-form-label width-15">If no data or all values are null</span>
-          </div>
-          <div class="gf-form">
-            <span class="gf-form-label query-keyword">SET STATE TO</span>
-            <div class="gf-form-select-wrapper">
-              <select class="gf-form-input" ng-model="ctrl.alert.noDataState"
-                                            ng-options="f.value as f.text for f in ctrl.noDataModes">
-              </select>
-            </div>
-          </div>
-        </div>
-
-        <div class="gf-form-inline">
-          <div class="gf-form">
-            <span class="gf-form-label width-15">If execution error or timeout</span>
-          </div>
-          <div class="gf-form">
-            <span class="gf-form-label query-keyword">SET STATE TO</span>
-            <div class="gf-form-select-wrapper">
-              <select class="gf-form-input" ng-model="ctrl.alert.executionErrorState"
-                                            ng-options="f.value as f.text for f in ctrl.executionErrorModes">
-              </select>
-            </div>
-          </div>
+      <div class="gf-form">
+        <span class="gf-form-label query-keyword">SET STATE TO</span>
+        <div class="gf-form-select-wrapper">
+          <select
+            class="gf-form-input"
+            ng-model="ctrl.alert.executionErrorState"
+            ng-options="f.value as f.text for f in ctrl.executionErrorModes"
+          >
+          </select>
         </div>
       </div>
     </div>
   </div>
 
-  <div class="panel-options-group">
-    <div class="panel-options-group__header">Notifications</div>
-    <div class="panel-options-group__body">
+  <h4 class="section-heading">Notifications</h4>
+  <div class="gf-form-inline">
+    <div class="gf-form">
+      <span class="gf-form-label width-8">Send to</span>
+    </div>
+    <div class="gf-form" ng-repeat="nc in ctrl.alertNotifications">
+      <span class="gf-form-label">
+        <icon name="'{{nc.iconClass}}'"></icon>
+        &nbsp;{{nc.name}}&nbsp;<span ng-if="nc.isDefault">(default)</span>
+        <icon
+          name="'times'"
+          class="pointer muted"
+          ng-click="ctrl.removeNotification(nc)"
+          ng-if="nc.isDefault === false"
+        ></icon>
+      </span>
+    </div>
+    <div class="gf-form">
+      <metric-segment
+        segment="ctrl.addNotificationSegment"
+        get-options="ctrl.getNotifications()"
+        on-change="ctrl.notificationAdded()"
+      ></metric-segment>
+    </div>
+  </div>
+  <div class="gf-form gf-form--v-stretch">
+    <span class="gf-form-label width-8">Message</span>
+    <textarea
+      class="gf-form-input"
+      rows="10"
+      ng-model="ctrl.alert.message"
+      placeholder="Notification message details..."
+    ></textarea>
+  </div>
+  <div class="gf-form">
+    <span class="gf-form-label width-8">Tags</span>
+    <div class="gf-form-group">
+      <div class="gf-form-inline" ng-repeat="(name, value) in ctrl.alert.alertRuleTags">
+        <label class="gf-form-label width-15">{{ name }}</label>
+        <input
+          class="gf-form-input width-15"
+          placeholder="Tag value..."
+          ng-model="ctrl.alert.alertRuleTags[name]"
+          type="text"
+        />
+        <label class="gf-form-label">
+          <a class="pointer" tabindex="1" ng-click="ctrl.removeAlertRuleTag(name)">
+            <icon name="'trash-alt'"></icon>
+          </a>
+        </label>
+      </div>
       <div class="gf-form-inline">
         <div class="gf-form">
-          <span class="gf-form-label width-8">Send to</span>
+          <input
+            class="gf-form-input width-15"
+            placeholder="New tag name..."
+            ng-model="ctrl.newAlertRuleTag.name"
+            type="text"
+          />
+          <input
+            class="gf-form-input width-15"
+            placeholder="New tag value..."
+            ng-model="ctrl.newAlertRuleTag.value"
+            type="text"
+          />
         </div>
-        <div class="gf-form" ng-repeat="nc in ctrl.alertNotifications">
-          <span class="gf-form-label">
-            <i class="{{nc.iconClass}}"></i>
-            &nbsp;{{nc.name}}&nbsp;<span ng-if="nc.isDefault">(default)</span>
-            <i class="fa fa-remove pointer muted" ng-click="ctrl.removeNotification(nc)" ng-if="nc.isDefault === false"></i>
-          </span>
-        </div>
-        <div class="gf-form">
-          <metric-segment segment="ctrl.addNotificationSegment"
-                          get-options="ctrl.getNotifications()"
-                          on-change="ctrl.notificationAdded()"></metric-segment>
-        </div>
-      </div>
-      <div class="gf-form gf-form--v-stretch">
-        <span class="gf-form-label width-8">Message</span>
-        <textarea class="gf-form-input" rows="10" ng-model="ctrl.alert.message"
-                  placeholder="Notification message details..."></textarea>
       </div>
       <div class="gf-form">
-        <span class="gf-form-label width-8">Tags</span>
-        <div class="gf-form-group">
-          <div class="gf-form-inline" ng-repeat="(name, value) in ctrl.alert.alertRuleTags">
-            <label class="gf-form-label width-15">{{ name }}</label>
-            <input class="gf-form-input width-15" placeholder="Tag value..."
-                   ng-model="ctrl.alert.alertRuleTags[name]" type="text"/>
-            <label class="gf-form-label">
-              <a class="pointer" tabindex="1" ng-click="ctrl.removeAlertRuleTag(name)">
-                <i class="fa fa-trash"></i>
-              </a>
-            </label>
-          </div>
-          <div class="gf-form-group">
-            <div class="gf-form-inline">
-              <div class="gf-form">
-                <input class="gf-form-input width-15" placeholder="New tag name..."
-                       ng-model="ctrl.newAlertRuleTag.name" type="text">
-                <input class="gf-form-input width-15" placeholder="New tag value..."
-                       ng-model="ctrl.newAlertRuleTag.value" type="text">
-              </div>
-            </div>
-            <div class="gf-form">
-              <label class="gf-form-label">
-                <a class="pointer" tabindex="1" ng-click="ctrl.addAlertRuleTag()">
-                  <i class="fa fa-plus"></i>&nbsp;Add Tag
-                </a>
-              </label>
-            </div>
-          </div>
-        </div>
+        <label class="gf-form-label">
+          <a class="pointer" tabindex="1" ng-click="ctrl.addAlertRuleTag()">
+            <icon name="'plus-circle'"></icon>&nbsp;Add Tag
+          </a>
+        </label>
       </div>
     </div>
   </div>

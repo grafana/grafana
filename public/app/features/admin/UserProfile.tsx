@@ -82,7 +82,8 @@ export class UserProfile extends PureComponent<Props, State> {
   render() {
     const { user } = this.props;
     const { showDeleteModal, showDisableModal } = this.state;
-    const lockMessage = 'Synced via LDAP';
+    const authSource = user.authLabels?.length && user.authLabels[0];
+    const lockMessage = authSource ? `Synced via ${authSource}` : '';
     const styles = getStyles(config.theme);
 
     return (
@@ -266,12 +267,12 @@ export class UserProfileRow extends PureComponent<UserProfileRowProps, UserProfi
         <td className="width-25" colSpan={2}>
           {this.state.editing ? (
             <Input
-              size="md"
               type={inputType}
               defaultValue={value}
               onBlur={this.onInputBlur}
               onChange={this.onInputChange}
               ref={this.setInputElem}
+              width={30}
             />
           ) : (
             <span>{this.props.value}</span>

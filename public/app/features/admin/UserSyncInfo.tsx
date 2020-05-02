@@ -1,6 +1,7 @@
 import React, { PureComponent } from 'react';
-import { dateTime } from '@grafana/data';
+import { dateTimeFormat } from '@grafana/data';
 import { LdapUserSyncInfo } from 'app/types';
+import { Icon } from '@grafana/ui';
 
 interface Props {
   disableSync: boolean;
@@ -12,7 +13,7 @@ interface State {
   isSyncing: boolean;
 }
 
-const syncTimeFormat = 'dddd YYYY-MM-DD HH:mm zz';
+const format = 'dddd YYYY-MM-DD HH:mm zz';
 
 export class UserSyncInfo extends PureComponent<Props, State> {
   state = {
@@ -34,16 +35,17 @@ export class UserSyncInfo extends PureComponent<Props, State> {
   render() {
     const { syncInfo, disableSync } = this.props;
     const { isSyncing } = this.state;
-    const nextSyncTime = syncInfo.nextSync ? dateTime(syncInfo.nextSync).format(syncTimeFormat) : '';
+    const nextSyncSuccessful = syncInfo && syncInfo.nextSync;
+    const nextSyncTime = nextSyncSuccessful ? dateTimeFormat(syncInfo.nextSync, { format }) : '';
     const prevSyncSuccessful = syncInfo && syncInfo.prevSync;
-    const prevSyncTime = prevSyncSuccessful ? dateTime(syncInfo.prevSync).format(syncTimeFormat) : '';
+    const prevSyncTime = prevSyncSuccessful ? dateTimeFormat(syncInfo.prevSync, { format }) : '';
     const isDisabled = isSyncing || disableSync;
 
     return (
       <>
         <button className={`btn btn-secondary pull-right`} onClick={this.onSyncClick} disabled={isDisabled}>
           <span className="btn-title">Sync user</span>
-          {isSyncing && <i className="fa fa-spinner fa-fw fa-spin run-icon" />}
+          {isSyncing && <Icon name="fa fa-spinner" className="fa-fw fa-spin run-icon" />}
         </button>
 
         <div className="clearfix" />

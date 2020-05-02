@@ -49,7 +49,7 @@ func FrameToSeriesSlice(frame *data.Frame) (TimeSeriesSlice, error) {
 	// If Long, make wide
 	if tsSchema.Type == data.TimeSeriesTypeLong {
 		var err error
-		frame, err = data.LongToWide(frame)
+		frame, err = data.LongToWide(frame, nil)
 		if err != nil {
 			return nil, errutil.Wrap("failed to convert long to wide series when converting from dataframe", err)
 		}
@@ -93,17 +93,4 @@ func FrameToSeriesSlice(frame *data.Frame) (TimeSeriesSlice, error) {
 
 	return seriesSlice, nil
 
-}
-
-// FramesFromBytes returns a data.Frame slice from marshalled arrow dataframes.
-func FramesFromBytes(bFrames [][]byte) ([]*data.Frame, error) {
-	frames := make([]*data.Frame, len(bFrames))
-	for i, bFrame := range bFrames {
-		var err error
-		frames[i], err = data.UnmarshalArrow(bFrame)
-		if err != nil {
-			return nil, err
-		}
-	}
-	return frames, nil
 }

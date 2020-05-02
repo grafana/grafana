@@ -1,7 +1,8 @@
 import React, { AnchorHTMLAttributes, ButtonHTMLAttributes, useContext } from 'react';
 import { css, cx } from 'emotion';
 import tinycolor from 'tinycolor2';
-import { selectThemeVariant, stylesFactory, ThemeContext } from '../../themes';
+import { stylesFactory, ThemeContext } from '../../themes';
+import { IconName } from '../../types/icon';
 import { getFocusStyle, getPropertiesForButtonSize } from '../Forms/commonStyles';
 import { GrafanaTheme } from '@grafana/data';
 import { ButtonContent } from './ButtonContent';
@@ -24,32 +25,23 @@ const buttonVariantStyles = (from: string, to: string, textColor: string) => css
 const getPropertiesForVariant = (theme: GrafanaTheme, variant: ButtonVariant) => {
   switch (variant) {
     case 'secondary':
-      const from = selectThemeVariant({ light: theme.colors.gray7, dark: theme.colors.gray15 }, theme.type) as string;
-      const to = selectThemeVariant(
-        {
-          light: tinycolor(from)
+      const from = theme.isLight ? theme.palette.gray7 : theme.palette.gray15;
+      const to = theme.isLight
+        ? tinycolor(from)
             .darken(5)
-            .toString(),
-          dark: tinycolor(from)
+            .toString()
+        : tinycolor(from)
             .lighten(4)
-            .toString(),
-        },
-        theme.type
-      ) as string;
-
+            .toString();
       return {
-        borderColor: selectThemeVariant({ light: theme.colors.gray85, dark: theme.colors.gray25 }, theme.type),
-        background: buttonVariantStyles(
-          from,
-          to,
-          selectThemeVariant({ light: theme.colors.gray25, dark: theme.colors.gray4 }, theme.type) as string
-        ),
+        borderColor: theme.isLight ? theme.palette.gray85 : theme.palette.gray25,
+        background: buttonVariantStyles(from, to, theme.isLight ? theme.palette.gray25 : theme.palette.gray4),
       };
 
     case 'destructive':
       return {
-        borderColor: theme.colors.redShade,
-        background: buttonVariantStyles(theme.colors.redBase, theme.colors.redShade, theme.colors.white),
+        borderColor: theme.palette.redShade,
+        background: buttonVariantStyles(theme.palette.redBase, theme.palette.redShade, theme.palette.white),
       };
 
     case 'link':
@@ -66,8 +58,8 @@ const getPropertiesForVariant = (theme: GrafanaTheme, variant: ButtonVariant) =>
     case 'primary':
     default:
       return {
-        borderColor: theme.colors.blueShade,
-        background: buttonVariantStyles(theme.colors.blueBase, theme.colors.blueShade, theme.colors.white),
+        borderColor: theme.colors.bgBlue1,
+        background: buttonVariantStyles(theme.colors.bgBlue1, theme.colors.bgBlue2, theme.palette.white),
       };
   }
 };
@@ -76,11 +68,13 @@ export interface StyleProps {
   theme: GrafanaTheme;
   size: ComponentSize;
   variant: ButtonVariant;
-  textAndIcon?: boolean;
+  hasIcon: boolean;
+  hasText: boolean;
 }
 
-export const getButtonStyles = stylesFactory(({ theme, size, variant }: StyleProps) => {
-  const { padding, fontSize, height } = getPropertiesForButtonSize(theme, size);
+export const getButtonStyles = stylesFactory((props: StyleProps) => {
+  const { theme, variant } = props;
+  const { padding, fontSize, height } = getPropertiesForButtonSize(props);
   const { background, borderColor, variantStyles } = getPropertiesForVariant(theme, variant);
 
   return {
@@ -93,8 +87,9 @@ export const getButtonStyles = stylesFactory(({ theme, size, variant }: StylePro
         font-family: ${theme.typography.fontFamily.sansSerif};
         font-size: ${fontSize};
         padding: ${padding};
-        height: ${height};
-        line-height: ${height};
+        height: ${height}px;
+        // Deduct border from line-height for perfect vertical centering on windows and linux
+        line-height: ${height - 2}px;
         vertical-align: middle;
         cursor: pointer;
         border: 1px solid ${borderColor};
@@ -113,9 +108,6 @@ export const getButtonStyles = stylesFactory(({ theme, size, variant }: StylePro
         ${variantStyles}
       `
     ),
-    buttonWithIcon: css`
-      padding-left: ${theme.spacing.sm};
-    `,
     // used for buttons with icon only
     iconButton: css`
       padding-right: 0;
@@ -134,7 +126,7 @@ export type ButtonVariant = 'primary' | 'secondary' | 'destructive' | 'link';
 type CommonProps = {
   size?: ComponentSize;
   variant?: ButtonVariant;
-  icon?: string;
+  icon?: IconName;
   className?: string;
 };
 
@@ -147,11 +139,15 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       theme,
       size: otherProps.size || 'md',
       variant: variant || 'primary',
+      hasText: children !== undefined,
+      hasIcon: icon !== undefined,
     });
 
     return (
       <button className={cx(styles.button, className)} {...otherProps} ref={ref}>
-        <ButtonContent icon={icon}>{children}</ButtonContent>
+        <ButtonContent icon={icon} size={otherProps.size}>
+          {children}
+        </ButtonContent>
       </button>
     );
   }
@@ -159,7 +155,7 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
 
 Button.displayName = 'Button';
 
-type ButtonLinkProps = CommonProps & AnchorHTMLAttributes<HTMLAnchorElement>;
+type ButtonLinkProps = CommonProps & ButtonHTMLAttributes<HTMLButtonElement> & AnchorHTMLAttributes<HTMLAnchorElement>;
 export const LinkButton = React.forwardRef<HTMLAnchorElement, ButtonLinkProps>(
   ({ variant, icon, children, className, ...otherProps }, ref) => {
     const theme = useContext(ThemeContext);
@@ -167,11 +163,15 @@ export const LinkButton = React.forwardRef<HTMLAnchorElement, ButtonLinkProps>(
       theme,
       size: otherProps.size || 'md',
       variant: variant || 'primary',
+      hasText: children !== undefined,
+      hasIcon: icon !== undefined,
     });
 
     return (
       <a className={cx(styles.button, className)} {...otherProps} ref={ref}>
-        <ButtonContent icon={icon}>{children}</ButtonContent>
+        <ButtonContent icon={icon} size={otherProps.size}>
+          {children}
+        </ButtonContent>
       </a>
     );
   }

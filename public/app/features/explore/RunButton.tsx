@@ -1,5 +1,6 @@
 import React from 'react';
 import { RefreshPicker } from '@grafana/ui';
+import { selectors } from '@grafana/e2e-selectors';
 import memoizeOne from 'memoize-one';
 import { css } from 'emotion';
 import classNames from 'classnames';
@@ -40,7 +41,9 @@ export function RunButton(props: Props) {
         'navbar-button--danger': loading,
         'btn--radius-right-0': showDropdown,
       })}
-      iconClassName={loading ? 'fa fa-spinner fa-fw fa-spin run-icon' : 'fa fa-refresh fa-fw'}
+      icon={loading ? 'fa fa-spinner' : 'sync'}
+      iconClassName={loading && ' fa-spin run-icon'}
+      aria-label={selectors.pages.Explore.General.runButton}
     />
   );
 

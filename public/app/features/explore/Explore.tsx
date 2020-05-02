@@ -1,22 +1,33 @@
-// Libraries
 import React from 'react';
 import { hot } from 'react-hot-loader';
 import { css, cx } from 'emotion';
+import { compose } from 'redux';
 import { connect } from 'react-redux';
 import AutoSizer from 'react-virtualized-auto-sizer';
 import memoizeOne from 'memoize-one';
+import { selectors } from '@grafana/e2e-selectors';
+import { ErrorBoundaryAlert, stylesFactory, withTheme } from '@grafana/ui';
+import {
+  AbsoluteTimeRange,
+  DataQuery,
+  DataSourceApi,
+  ExploreMode,
+  GrafanaTheme,
+  GraphSeriesXY,
+  LoadingState,
+  PanelData,
+  RawTimeRange,
+  TimeRange,
+  TimeZone,
+} from '@grafana/data';
 
-// Services & Utils
 import store from 'app/core/store';
-
-// Components
-import { ErrorBoundaryAlert, stylesFactory } from '@grafana/ui';
 import LogsContainer from './LogsContainer';
 import QueryRows from './QueryRows';
 import TableContainer from './TableContainer';
 import RichHistoryContainer from './RichHistory/RichHistoryContainer';
-// Actions
 import {
+  addQueryRow,
   changeSize,
   initializeExplore,
   modifyQueries,
@@ -24,22 +35,8 @@ import {
   scanStart,
   setQueries,
   toggleGraph,
-  addQueryRow,
   updateTimeRange,
 } from './state/actions';
-// Types
-import {
-  AbsoluteTimeRange,
-  DataQuery,
-  DataSourceApi,
-  GraphSeriesXY,
-  PanelData,
-  RawTimeRange,
-  TimeRange,
-  TimeZone,
-  LoadingState,
-  ExploreMode,
-} from '@grafana/data';
 
 import { ExploreId, ExploreItemState, ExploreUIState, ExploreUpdateState, ExploreUrlState } from 'app/types/explore';
 import { StoreState } from 'app/types';
@@ -47,10 +44,10 @@ import {
   DEFAULT_RANGE,
   DEFAULT_UI_STATE,
   ensureQueries,
-  getTimeRangeFromUrl,
-  getTimeRange,
-  lastUsedDatasourceKeyForOrgId,
   getFirstNonQueryRowSpecificError,
+  getTimeRange,
+  getTimeRangeFromUrl,
+  lastUsedDatasourceKeyForOrgId,
 } from 'app/core/utils/explore';
 import { Emitter } from 'app/core/utils/emitter';
 import { ExploreToolbar } from './ExploreToolbar';
@@ -59,10 +56,10 @@ import { getTimeZone } from '../profile/state/selectors';
 import { ErrorContainer } from './ErrorContainer';
 import { scanStopAction } from './state/actionTypes';
 import { ExploreGraphPanel } from './ExploreGraphPanel';
-import { TraceView } from './TraceView';
+import { TraceView } from './TraceView/TraceView';
 import { SecondaryActions } from './SecondaryActions';
 
-const getStyles = stylesFactory(() => {
+const getStyles = stylesFactory((theme: GrafanaTheme) => {
   return {
     logsMain: css`
       label: logsMain;
@@ -71,19 +68,15 @@ const getStyles = stylesFactory(() => {
       margin-top: 21px;
     `,
     button: css`
+      label: button;
       margin: 1em 4px 0 0;
     `,
-    // Utility class for iframe parents so that we can show iframe content with reasonable height instead of squished
-    // or some random explicit height.
-    fullHeight: css`
-      label: fullHeight;
-      height: 100%;
-    `,
-    iframe: css`
-      label: iframe;
-      border: none;
-      width: 100%;
-      height: 100%;
+    queryContainer: css`
+      label: queryContainer;
+      // Need to override normal css class and don't want to count on ordering of the classes in html.
+      height: auto !important;
+      flex: unset !important;
+      padding: ${theme.panelPadding}px;
     `,
   };
 });
@@ -124,6 +117,7 @@ export interface ExploreProps {
   queryResponse: PanelData;
   originPanelId: number;
   addQueryRow: typeof addQueryRow;
+  theme: GrafanaTheme;
 }
 
 interface ExploreState {
@@ -303,10 +297,11 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
       queryResponse,
       syncedTimes,
       isLive,
+      theme,
     } = this.props;
     const { showRichHistory } = this.state;
     const exploreClass = split ? 'explore explore-split' : 'explore';
-    const styles = getStyles();
+    const styles = getStyles(theme);
     const StartPage = datasourceInstance?.components?.ExploreStartPage;
     const showStartPage = !queryResponse || queryResponse.state === LoadingState.NotStarted;
 
@@ -315,37 +310,31 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
     const queryError = getFirstNonQueryRowSpecificError(queryErrors);
 
     return (
-      <div className={exploreClass} ref={this.getRef}>
+      <div className={exploreClass} ref={this.getRef} aria-label={selectors.pages.Explore.General.container}>
         <ExploreToolbar exploreId={exploreId} onChangeTime={this.onChangeTime} />
         {datasourceMissing ? this.renderEmptyState() : null}
         {datasourceInstance && (
           <div className="explore-container">
-            <QueryRows exploreEvents={this.exploreEvents} exploreId={exploreId} queryKeys={queryKeys} />
-            <SecondaryActions
-              addQueryRowButtonDisabled={isLive}
-              // We cannot show multiple traces at the same time right now so we do not show add query button.
-              addQueryRowButtonHidden={mode === ExploreMode.Tracing}
-              richHistoryButtonActive={showRichHistory}
-              onClickAddQueryRowButton={this.onClickAddQueryRowButton}
-              onClickRichHistoryButton={this.toggleShowRichHistory}
-            />
+            <div className={cx('panel-container', styles.queryContainer)}>
+              <QueryRows exploreEvents={this.exploreEvents} exploreId={exploreId} queryKeys={queryKeys} />
+              <SecondaryActions
+                addQueryRowButtonDisabled={isLive}
+                // We cannot show multiple traces at the same time right now so we do not show add query button.
+                addQueryRowButtonHidden={mode === ExploreMode.Tracing}
+                richHistoryButtonActive={showRichHistory}
+                onClickAddQueryRowButton={this.onClickAddQueryRowButton}
+                onClickRichHistoryButton={this.toggleShowRichHistory}
+              />
+            </div>
             <ErrorContainer queryError={queryError} />
-            <AutoSizer className={styles.fullHeight} onResize={this.onResize} disableHeight>
+            <AutoSizer onResize={this.onResize} disableHeight>
               {({ width }) => {
                 if (width === 0) {
                   return null;
                 }
 
                 return (
-                  <main
-                    className={cx(
-                      styles.logsMain,
-                      // We need height to be 100% for tracing iframe to look good but in case of metrics mode
-                      // it makes graph and table also full page high when they do not need to be.
-                      mode === ExploreMode.Tracing && styles.fullHeight
-                    )}
-                    style={{ width }}
-                  >
+                  <main className={cx(styles.logsMain)} style={{ width }}>
                     <ErrorBoundaryAlert>
                       {showStartPage && StartPage && (
                         <div className={'grafana-info-box grafana-info-box--max-lg'}>
@@ -507,7 +496,8 @@ const mapDispatchToProps: Partial<ExploreProps> = {
   addQueryRow,
 };
 
-export default hot(module)(
-  // @ts-ignore
-  connect(mapStateToProps, mapDispatchToProps)(Explore)
-) as React.ComponentType<{ exploreId: ExploreId }>;
+export default compose(
+  hot(module),
+  connect(mapStateToProps, mapDispatchToProps),
+  withTheme
+)(Explore) as React.ComponentType<{ exploreId: ExploreId }>;

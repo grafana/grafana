@@ -2,6 +2,10 @@ version: 2.1
 
 aliases:
   # Workflow filters
+  # filter-all triggers for all branches and version tags
+  - &filter-all
+    tags:
+      only: /^v[0-9]+(\.[0-9]+){2}(-.+|[^-.]*)$/
   - &filter-only-release
     branches:
       only: chore/test-release-pipeline
@@ -35,10 +39,10 @@ executors:
       - image: cimg/go:1.14
   grafana-build:
     docker:
-      - image: grafana/build-container:1.2.13
+      - image: grafana/build-container:1.2.16
   grafana-publish:
     docker:
-      - image: grafana/grafana-ci-deploy:1.2.4
+      - image: grafana/grafana-ci-deploy:1.2.5
   windows-installer:
     docker:
       - image: grafana/wix-toolset-ci:v3
@@ -50,7 +54,7 @@ commands:
       - run:
           name: "Install Grafana build pipeline tool"
           command: |
-            VERSION=0.2.8
+            VERSION=0.4.3
             curl -fLO https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v${VERSION}/grabpl
             chmod +x grabpl
             mv grabpl /tmp
@@ -166,6 +170,47 @@ jobs:
           command: ./scripts/ci-job-succeeded.sh
           when: on_success
 
+  build-plugins:
+    description: "Build internal Grafana plug-ins"
+    parameters:
+      edition:
+        type: string
+    executor: grafana-build
+    steps:
+      - run:
+          name: Exit if enterprise and forked PR
+          command: |
+            if [[ "<< parameters.edition >>" == "enterprise"  && -n "$CIRCLE_PR_NUMBER" ]]; then
+              echo "Nothing to do for forked PRs, so marking this step successful"
+              circleci step halt
+            fi
+      - checkout
+      - run:
+          name: CI job started
+          command: ./scripts/ci-job-started.sh
+      - install-grabpl
+      - run:
+          name: Build internal Grafana plug-ins
+          command: |
+            /tmp/grabpl build-plugins --jobs 2 --edition << parameters.edition >>
+      - run:
+          name: Move artifacts
+          command: |
+            mkdir -p << parameters.edition >>/plugins-bundled
+            mv plugins-bundled/dist << parameters.edition >>/plugins-bundled/
+      - persist_to_workspace:
+          root: .
+          paths:
+            - << parameters.edition >>/plugins-bundled/dist/*
+      - run:
+          name: CI job failed
+          command: ./scripts/ci-job-failed.sh
+          when: on_fail
+      - run:
+          name: CI job succeeded
+          command: ./scripts/ci-job-succeeded.sh
+          when: on_success
+
   build-release-publisher:
     description: "Build release-publisher"
     executor: go
@@ -204,7 +249,12 @@ jobs:
       - run:
           name: Install ShellCheck
           command: |
-            sudo apt-get update && sudo apt-get install -y shellcheck
+            VERSION=0.7.1
+            CHKSUM=beca3d7819a6bdcfbd044576df4fc284053b48f468b2f03428fe66f4ceb2c05d9b5411357fa15003cb0311406c255084cf7283a3b8fce644c340c2f6aa910b9f
+            curl -fLO http://storage.googleapis.com/grafana-downloads/ci-dependencies/shellcheck-v${VERSION}.linux.x86_64.tar.xz
+            echo $CHKSUM shellcheck-v${VERSION}.linux.x86_64.tar.xz | sha512sum --check --strict --status
+            tar xf shellcheck-v${VERSION}.linux.x86_64.tar.xz
+            sudo mv shellcheck-v${VERSION}/shellcheck /usr/local/bin/
       - run:
           name: ShellCheck
           command: |
@@ -731,7 +781,11 @@ jobs:
             golangci-lint run -v -j 4 --config scripts/go/configs/ci/.golangci.yml -E unconvert -E unused \
               -E varcheck -E goconst -E errcheck -E staticcheck ./pkg/...
             ./scripts/go/bin/revive -formatter stylish -config ./scripts/go/configs/revive.toml ./pkg/...
-            ./scripts/go/bin/revive -formatter stylish ./pkg/services/alerting/...
+            ./scripts/go/bin/revive -formatter stylish -config ./scripts/go/configs/revive-strict.toml \
+              ./pkg/services/alerting/... \
+              ./pkg/services/provisioning/datasources/... \
+              ./pkg/services/provisioning/dashboards/...
+
             ./scripts/go/bin/gosec -quiet -exclude=G104,G107,G108,G201,G202,G204,G301,G304,G401,G402,G501 \
               -conf=./scripts/go/configs/gosec.json ./pkg/...
 
@@ -789,9 +843,7 @@ jobs:
           when: on_success
 
   build-docs-website:
-    docker:
-      - image: grafana/build-container:1.2.13
-    working_directory: /docs
+    executor: grafana-build
     steps:
       - checkout
       - setup_remote_docker
@@ -804,22 +856,24 @@ jobs:
             apt-get update
             apt-get install -y docker.io
       - run:
-          name: Build grafana docs website
+          name: Build Grafana docs website
           command: |
-            # https://circleci.com/docs/2.0/building-docker-images/#mounting-folders
-            # create a dummy container which will hold a volume with config
-            docker create -v /hugo/content/docs/grafana --name docs-website alpine:3.4 /bin/true
-            # copy a config file into this volume
-            docker cp ${PWD}/docs/sources docs-website:/hugo/content/docs/grafana/latest
-            # start an application container using this volume
-            docker run --volumes-from docs-website --rm -it grafana/docs-base:latest /bin/bash -c 'npm i && make prod'
+            # Use latest revision here, since we want to catch if it breaks
+            IMAGE=grafana/docs-base:latest
+
+            # In order to copy sources into the remote container, we need to employ a trick of creating a container
+            # with a volume, that we copy the sources into. Then, we launch the build container, with the volume
+            # from the other container
+            docker create -v /hugo/content/docs/grafana --name docs alpine:3.11 /bin/true
+            docker cp ${PWD}/docs/sources docs:/hugo/content/docs/grafana/latest
+            docker run --volumes-from docs $IMAGE /bin/bash -c 'make prod'
       - run:
           name: CI job failed
-          command: "docker stop docs-website && docker rm docs-website && ./scripts/ci-job-failed.sh"
+          command: "./scripts/ci-job-failed.sh"
           when: on_fail
       - run:
           name: CI job succeeded
-          command: "docker stop docs-website && docker rm docs-website && ./scripts/ci-job-succeeded.sh"
+          command: "./scripts/ci-job-succeeded.sh"
           when: on_success
 
   deploy-to-kubernetes:
@@ -864,7 +918,7 @@ jobs:
           command: "./scripts/ci-job-succeeded.sh"
           when: on_success
 
-  scan-docker-master:
+  scan-docker-images:
     docker:
       - image: circleci/buildpack-deps:stretch
     steps:
@@ -887,11 +941,29 @@ jobs:
           name: Clear trivy cache
           command: trivy --clear-cache
       - run:
-          name: Scan the latest grafana master alpine image with trivy
+          name: Scan grafana/grafana:master
           command: trivy --exit-code 1 grafana/grafana:master
       - run:
-          name: Scan the latest grafana master ubuntu image with trivy
+          name: Scan grafana/grafana:master-ubuntu
           command: trivy --exit-code 1 grafana/grafana:master-ubuntu
+      - run:
+          name: Scan grafana/grafana-enterprise:master
+          command: trivy --exit-code 1 grafana/grafana-enterprise:master
+      - run:
+          name: Scan grafana/grafana-enterprise:master-ubuntu
+          command: trivy --exit-code 1 grafana/grafana-enterprise:master-ubuntu
+      - run:
+          name: Scan grafana/grafana:latest
+          command: trivy --exit-code 1 grafana/grafana:latest
+      - run:
+          name: Scan grafana/grafana:latest-ubuntu
+          command: trivy --exit-code 1 grafana/grafana:latest-ubuntu
+      - run:
+          name: Scan grafana/grafana-enterprise:latest
+          command: trivy --exit-code 1 grafana/grafana-enterprise:latest
+      - run:
+          name: Scan grafana/grafana-enterprise:latest-ubuntu
+          command: trivy --exit-code 1 grafana/grafana-enterprise:latest-ubuntu
       - save_cache:
           key: vulnerability-db
           paths:
@@ -900,7 +972,6 @@ jobs:
 workflows:
   build-pipeline:
     jobs:
-      # No filters, meaning this job runs for all branches
       - build-backend:
           filters: *filter-master-or-release
           edition: oss
@@ -942,7 +1013,7 @@ workflows:
             - test-backend
             - test-frontend
       - build-backend:
-          # No filters, meaning this job runs for all branches
+          filters: *filter-all
           edition: oss
           variant: osx64
           name: build-oss-backend-osx64
@@ -950,7 +1021,7 @@ workflows:
             - test-backend
             - test-frontend
       - build-backend:
-          # No filters, meaning this job runs for all branches
+          filters: *filter-all
           edition: oss
           variant: win64
           name: build-oss-backend-win64
@@ -958,7 +1029,7 @@ workflows:
             - test-backend
             - test-frontend
       - build-backend:
-          # No filters, meaning this job runs for all branches
+          filters: *filter-all
           edition: oss
           variant: linux-x64
           name: build-oss-backend-linux-x64
@@ -966,7 +1037,7 @@ workflows:
             - test-backend
             - test-frontend
       - build-backend:
-          # No filters, meaning this job runs for all branches
+          filters: *filter-all
           edition: oss
           variant: linux-x64-musl
           name: build-oss-backend-linux-x64-musl
@@ -974,8 +1045,15 @@ workflows:
             - test-backend
             - test-frontend
       - build-frontend:
-          # No filters, meaning this job runs for all branches
+          filters: *filter-all
           name: build-oss-frontend
+          edition: oss
+          requires:
+            - test-backend
+            - test-frontend
+      - build-plugins:
+          filters: *filter-all
+          name: build-oss-plugins
           edition: oss
           requires:
             - test-backend
@@ -1021,7 +1099,7 @@ workflows:
             - test-backend
             - test-frontend
       - build-backend:
-          # No filters, meaning this job runs for all branches
+          filters: *filter-all
           name: build-enterprise-backend-osx64
           edition: enterprise
           variant: osx64
@@ -1029,7 +1107,7 @@ workflows:
             - test-backend
             - test-frontend
       - build-backend:
-          # No filters, meaning this job runs for all branches
+          filters: *filter-all
           name: build-enterprise-backend-win64
           edition: enterprise
           variant: win64
@@ -1037,7 +1115,7 @@ workflows:
             - test-backend
             - test-frontend
       - build-backend:
-          # No filters, meaning this job runs for all branches
+          filters: *filter-all
           name: build-enterprise-backend-linux-x64
           edition: enterprise
           variant: linux-x64
@@ -1045,7 +1123,7 @@ workflows:
             - test-backend
             - test-frontend
       - build-backend:
-          # No filters, meaning this job runs for all branches
+          filters: *filter-all
           name: build-enterprise-backend-linux-x64-musl
           edition: enterprise
           variant: linux-x64-musl
@@ -1053,40 +1131,47 @@ workflows:
             - test-backend
             - test-frontend
       - build-frontend:
-          # No filters, meaning this job runs for all branches
+          filters: *filter-all
           name: build-enterprise-frontend
+          edition: enterprise
+          requires:
+            - test-backend
+            - test-frontend
+      - build-plugins:
+          filters: *filter-all
+          name: build-enterprise-plugins
           edition: enterprise
           requires:
             - test-backend
             - test-frontend
       - build-release-publisher:
           filters: *filter-master-or-release
-      # No filters, meaning this job runs for all branches
-      - codespell
-      # No filters, meaning this job runs for all branches
-      - lint-go
-      # No filters, meaning this job runs for all branches
-      - shellcheck
-      # No filters, meaning this job runs for all branches
+      - codespell:
+          filters: *filter-all
+      - lint-go:
+          filters: *filter-all
+      - shellcheck:
+          filters: *filter-all
       - test-backend:
+          filters: *filter-all
           requires:
             - lint-go
-      # No filters, meaning this job runs for all branches
-      - test-frontend
-      # No filters, meaning this job runs for all branches
+      - test-frontend:
+          filters: *filter-all
       - mysql-integration-test:
+          filters: *filter-all
           requires:
             - lint-go
             - test-backend
             - test-frontend
       - postgres-integration-test:
-          # No filters, meaning this job runs for all branches
+          filters: *filter-all
           requires:
             - lint-go
             - test-backend
             - test-frontend
       - package-oss:
-          # No filters, meaning this job runs for all branches
+          filters: *filter-all
           requires:
             - build-oss-backend-armv6
             - build-oss-backend-armv7
@@ -1102,8 +1187,9 @@ workflows:
             - test-frontend
             - codespell
             - shellcheck
+            - build-oss-plugins
       - package-enterprise:
-          # No filters, meaning this job runs for all branches
+          filters: *filter-all
           requires:
             - build-enterprise-backend-armv6
             - build-enterprise-backend-armv7
@@ -1119,12 +1205,13 @@ workflows:
             - test-frontend
             - codespell
             - shellcheck
+            - build-enterprise-plugins
       - build-oss-windows-installer:
-          # No filters, meaning this job runs for all branches
+          filters: *filter-all
           requires:
             - package-oss
       - build-enterprise-windows-installer:
-          # No filters, meaning this job runs for all branches
+          filters: *filter-all
           requires:
             - package-enterprise
       - release-next-packages:
@@ -1160,11 +1247,12 @@ workflows:
             - postgres-integration-test
             - build-release-publisher
       - publish-storybook:
+          filters: *filter-all
           requires:
             - test-backend
             - test-frontend
       - build-docker-images:
-          # No filters, meaning this job runs for all branches
+          filters: *filter-all
           name: build-oss-docker-images
           edition: oss
           ubuntu: false
@@ -1175,7 +1263,7 @@ workflows:
             - package-oss
             - build-oss-windows-installer
       - build-docker-images:
-          # No filters, meaning this job runs for all branches
+          filters: *filter-all
           name: build-oss-ubuntu-docker-images
           edition: oss
           ubuntu: true
@@ -1186,7 +1274,7 @@ workflows:
             - package-oss
             - build-oss-windows-installer
       - build-docker-images:
-          # No filters, meaning this job runs for all branches
+          filters: *filter-all
           name: build-enterprise-docker-images
           edition: enterprise
           ubuntu: false
@@ -1197,7 +1285,7 @@ workflows:
             - package-enterprise
             - build-enterprise-windows-installer
       - build-docker-images:
-          # No filters, meaning this job runs for all branches
+          filters: *filter-all
           name: build-enterprise-ubuntu-docker-images
           edition: enterprise
           ubuntu: true
@@ -1208,7 +1296,7 @@ workflows:
             - package-enterprise
             - build-enterprise-windows-installer
       - end-to-end-tests:
-          # No filters, meaning this job runs for all branches
+          filters: *filter-all
           requires:
             - package-oss
       - build-docs-website:
@@ -1227,4 +1315,4 @@ workflows:
           cron: "0 0 * * *"
           filters: *filter-only-master
     jobs:
-      - scan-docker-master
+      - scan-docker-images

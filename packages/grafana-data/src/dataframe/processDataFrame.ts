@@ -19,6 +19,7 @@ import { isDateTime } from '../datetime/moment_wrapper';
 import { ArrayVector } from '../vector/ArrayVector';
 import { MutableDataFrame } from './MutableDataFrame';
 import { SortedVector } from '../vector/SortedVector';
+import { ArrayDataFrame } from './ArrayDataFrame';
 
 function convertTableToDataFrame(table: TableData): DataFrame {
   const fields = table.columns.map(c => {
@@ -160,11 +161,28 @@ function convertJSONDocumentDataToDataFrame(timeSeries: TimeSeries): DataFrame {
 const NUMBER = /^\s*(-?(\d*\.?\d+|\d+\.?\d*)(e[-+]?\d+)?|NAN)\s*$/i;
 
 /**
+ * Given a name and value, this will pick a reasonable field type
+ */
+export function guessFieldTypeFromNameAndValue(name: string, v: any): FieldType {
+  if (name) {
+    name = name.toLowerCase();
+    if (name === 'date' || name === 'time') {
+      return FieldType.time;
+    }
+  }
+  return guessFieldTypeFromValue(v);
+}
+
+/**
  * Given a value this will guess the best column type
  *
  * TODO: better Date/Time support!  Look for standard date strings?
  */
 export function guessFieldTypeFromValue(v: any): FieldType {
+  if (v instanceof Date || isDateTime(v)) {
+    return FieldType.time;
+  }
+
   if (isNumber(v)) {
     return FieldType.number;
   }
@@ -183,10 +201,6 @@ export function guessFieldTypeFromValue(v: any): FieldType {
 
   if (isBoolean(v)) {
     return FieldType.boolean;
-  }
-
-  if (v instanceof Date || isDateTime(v)) {
-    return FieldType.time;
   }
 
   return FieldType.other;
@@ -217,17 +231,19 @@ export function guessFieldTypeForField(field: Field): FieldType | undefined {
 }
 
 /**
- * @returns a copy of the series with the best guess for each field type
- * If the series already has field types defined, they will be used
+ * @returns A copy of the series with the best guess for each field type.
+ * If the series already has field types defined, they will be used, unless `guessDefined` is true.
+ * @param series The DataFrame whose field's types should be guessed
+ * @param guessDefined Whether to guess types of fields with already defined types
  */
-export const guessFieldTypes = (series: DataFrame): DataFrame => {
-  for (let i = 0; i < series.fields.length; i++) {
-    if (!series.fields[i].type) {
+export const guessFieldTypes = (series: DataFrame, guessDefined = false): DataFrame => {
+  for (const field of series.fields) {
+    if (!field.type || field.type === FieldType.other || guessDefined) {
       // Something is missing a type, return a modified copy
       return {
         ...series,
         fields: series.fields.map(field => {
-          if (field.type && field.type !== FieldType.other) {
+          if (field.type && field.type !== FieldType.other && !guessDefined) {
             return field;
           }
           // Calculate a reasonable schema value
@@ -247,10 +263,13 @@ export const isTableData = (data: any): data is DataFrame => data && data.hasOwn
 
 export const isDataFrame = (data: any): data is DataFrame => data && data.hasOwnProperty('fields');
 
-export const toDataFrame = (data: any): DataFrame => {
-  if (data.hasOwnProperty('fields')) {
+/**
+ * Inspect any object and return the results as a DataFrame
+ */
+export function toDataFrame(data: any): DataFrame {
+  if ('fields' in data) {
     // DataFrameDTO does not have length
-    if (data.hasOwnProperty('length')) {
+    if ('length' in data) {
       return data as DataFrame;
     }
 
@@ -275,9 +294,13 @@ export const toDataFrame = (data: any): DataFrame => {
     return convertTableToDataFrame(data);
   }
 
+  if (Array.isArray(data)) {
+    return new ArrayDataFrame(data);
+  }
+
   console.warn('Can not convert', data);
   throw new Error('Unsupported data format');
-};
+}
 
 export const toLegacyResponseData = (frame: DataFrame): TimeSeries | TableData => {
   const { fields } = frame;

@@ -74,7 +74,7 @@ Look at this sequence of Unix timestamps:
 1572524345, 1572524375, 1572524404, 1572524434, 1572524464
 ```
 
-Looking at these timestamp, they all start with `1572524`, leading to poor use of disk space. Instead, we could store each subsequent timestamp as the difference, or _delta_, from the first one:
+Looking at these timestamps, they all start with `1572524`, leading to poor use of disk space. Instead, we could store each subsequent timestamp as the difference, or _delta_, from the first one:
 
 ```
 1572524345, +30, +29, +30, +30
@@ -96,15 +96,15 @@ Here are some of the TSDBs supported by Grafana:
 - [InfluxDB](https://www.influxdata.com/products/influxdb-overview/)
 - [Prometheus](https://prometheus.io/)
 
-```
-weather,location=us-midwest temperature=82 1465839830100400200
-  |    -------------------- --------------  |
-  |             |             |             |
-  |             |             |             |
-+-----------+--------+-+---------+-+---------+
-|measurement|,tag_set| |field_set| |timestamp|
-+-----------+--------+-+---------+-+---------+
-```
+    ```
+    weather,location=us-midwest temperature=82 1465839830100400200
+      |    -------------------- --------------  |
+      |             |             |             |
+      |             |             |             |
+    +-----------+--------+-+---------+-+---------+
+    |measurement|,tag_set| |field_set| |timestamp|
+    +-----------+--------+-+---------+-+---------+
+    ```
 
 ### Collecting time series data
 

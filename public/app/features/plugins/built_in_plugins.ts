@@ -15,6 +15,8 @@ const influxdbPlugin = async () =>
 const lokiPlugin = async () => await import(/* webpackChunkName: "lokiPlugin" */ 'app/plugins/datasource/loki/module');
 const jaegerPlugin = async () =>
   await import(/* webpackChunkName: "jaegerPlugin" */ 'app/plugins/datasource/jaeger/module');
+const zipkinPlugin = async () =>
+  await import(/* webpackChunkName: "zipkinPlugin" */ 'app/plugins/datasource/zipkin/module');
 const mixedPlugin = async () =>
   await import(/* webpackChunkName: "mixedPlugin" */ 'app/plugins/datasource/mixed/module');
 const mysqlPlugin = async () =>
@@ -44,7 +46,7 @@ import * as alertListPanel from 'app/plugins/panel/alertlist/module';
 import * as annoListPanel from 'app/plugins/panel/annolist/module';
 import * as heatmapPanel from 'app/plugins/panel/heatmap/module';
 import * as tablePanel from 'app/plugins/panel/table/module';
-import * as table2Panel from 'app/plugins/panel/table2/module';
+import * as oldTablePanel from 'app/plugins/panel/table-old/module';
 import * as singlestatPanel from 'app/plugins/panel/singlestat/module';
 import * as singlestatPanel2 from 'app/plugins/panel/stat/module';
 import * as gettingStartedPanel from 'app/plugins/panel/gettingstarted/module';
@@ -65,6 +67,7 @@ const builtInPlugins: any = {
   'app/plugins/datasource/influxdb/module': influxdbPlugin,
   'app/plugins/datasource/loki/module': lokiPlugin,
   'app/plugins/datasource/jaeger/module': jaegerPlugin,
+  'app/plugins/datasource/zipkin/module': zipkinPlugin,
   'app/plugins/datasource/mixed/module': mixedPlugin,
   'app/plugins/datasource/mysql/module': mysqlPlugin,
   'app/plugins/datasource/postgres/module': postgresPlugin,
@@ -84,7 +87,7 @@ const builtInPlugins: any = {
   'app/plugins/panel/annolist/module': annoListPanel,
   'app/plugins/panel/heatmap/module': heatmapPanel,
   'app/plugins/panel/table/module': tablePanel,
-  'app/plugins/panel/table2/module': table2Panel,
+  'app/plugins/panel/table-old/module': oldTablePanel,
   'app/plugins/panel/news/module': newsPanel,
   'app/plugins/panel/singlestat/module': singlestatPanel,
   'app/plugins/panel/stat/module': singlestatPanel2,

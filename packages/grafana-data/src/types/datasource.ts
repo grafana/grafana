@@ -274,6 +274,8 @@ export abstract class DataSourceApi<
 
   getVersion?(optionalOptions?: any): Promise<string>;
 
+  showContextToggle?(row?: LogRowModel): boolean;
+
   /**
    * Can be optionally implemented to allow datasource to be a source of annotations for dashboard. To be visible
    * in the annotation editor `annotations` capability also needs to be enabled in plugin.json.
@@ -307,6 +309,8 @@ export interface QueryEditorProps<
    * Contains query response filtered by refId of QueryResultBase and possible query error
    */
   data?: PanelData;
+  exploreMode?: ExploreMode;
+  exploreId?: any;
 }
 
 export enum DataSourceStatus {
@@ -329,6 +333,7 @@ export interface ExploreQueryFieldProps<
   onBlur?: () => void;
   absoluteRange?: AbsoluteTimeRange;
   exploreMode?: ExploreMode;
+  exploreId?: any;
 }
 
 export interface ExploreStartPageProps {
@@ -370,6 +375,11 @@ export interface DataQueryResponse {
   state?: LoadingState;
 }
 
+/**
+ * These are the common properties available to all queries in all datasources
+ * Specific implementations will extend this interface adding the required properties
+ * for the given context
+ */
 export interface DataQuery {
   /**
    * A - Z
@@ -377,7 +387,7 @@ export interface DataQuery {
   refId: string;
 
   /**
-   * true if query is disabled (ie not executed / sent to TSDB)
+   * true if query is disabled (ie should not be returned to the dashboard)
    */
   hide?: boolean;
 
@@ -385,6 +395,11 @@ export interface DataQuery {
    * Unique, guid like, string used in explore mode
    */
   key?: string;
+
+  /**
+   * Specify the query flavor
+   */
+  queryType?: string;
 
   /**
    * For mixed data sources the selected datasource is on the query level.
@@ -413,7 +428,7 @@ export interface DataQueryRequest<TQuery extends DataQuery = DataQuery> {
   intervalMs?: number;
   maxDataPoints?: number;
   panelId: number;
-  range?: TimeRange;
+  range: TimeRange;
   reverse?: boolean;
   scopedVars: ScopedVars;
   targets: TQuery[];
@@ -495,6 +510,7 @@ export interface DataSourceSettings<T extends DataSourceJsonData = DataSourceJso
  */
 export interface DataSourceInstanceSettings<T extends DataSourceJsonData = DataSourceJsonData> {
   id: number;
+  uid: string;
   type: string;
   name: string;
   meta: DataSourcePluginMeta;

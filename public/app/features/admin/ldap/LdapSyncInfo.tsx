@@ -1,5 +1,6 @@
 import React, { PureComponent } from 'react';
-import { dateTime } from '@grafana/data';
+import { dateTimeFormat } from '@grafana/data';
+import { Icon } from '@grafana/ui';
 import { SyncInfo } from 'app/types';
 
 interface Props {
@@ -10,7 +11,7 @@ interface State {
   isSyncing: boolean;
 }
 
-const syncTimeFormat = 'dddd YYYY-MM-DD HH:mm zz';
+const format = 'dddd YYYY-MM-DD HH:mm zz';
 
 export class LdapSyncInfo extends PureComponent<Props, State> {
   state = {
@@ -25,9 +26,9 @@ export class LdapSyncInfo extends PureComponent<Props, State> {
   render() {
     const { ldapSyncInfo } = this.props;
     const { isSyncing } = this.state;
-    const nextSyncTime = dateTime(ldapSyncInfo.nextSync).format(syncTimeFormat);
+    const nextSyncTime = dateTimeFormat(ldapSyncInfo.nextSync, { format });
     const prevSyncSuccessful = ldapSyncInfo && ldapSyncInfo.prevSync;
-    const prevSyncTime = prevSyncSuccessful ? dateTime(ldapSyncInfo.prevSync.started).format(syncTimeFormat) : '';
+    const prevSyncTime = prevSyncSuccessful ? dateTimeFormat(ldapSyncInfo.prevSync!.started, { format }) : '';
 
     return (
       <>
@@ -35,7 +36,7 @@ export class LdapSyncInfo extends PureComponent<Props, State> {
           LDAP Synchronisation
           <button className={`btn btn-secondary pull-right`} onClick={this.handleSyncClick} hidden={true}>
             <span className="btn-title">Bulk-sync now</span>
-            {isSyncing && <i className="fa fa-spinner fa-fw fa-spin run-icon" />}
+            {isSyncing && <Icon name="fa fa-spinner" className="fa-fw fa-spin run-icon" />}
           </button>
         </h3>
         <div className="gf-form-group">

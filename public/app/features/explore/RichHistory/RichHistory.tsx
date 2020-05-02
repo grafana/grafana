@@ -10,7 +10,7 @@ import { stylesFactory, withTheme } from '@grafana/ui';
 //Types
 import { RichHistoryQuery, ExploreId } from 'app/types/explore';
 import { SelectableValue, GrafanaTheme } from '@grafana/data';
-import { TabsBar, Tab, TabContent, Themeable, CustomScrollbar } from '@grafana/ui';
+import { TabsBar, Tab, TabContent, Themeable, CustomScrollbar, IconName, IconButton } from '@grafana/ui';
 
 //Components
 import { RichHistorySettings } from './RichHistorySettings';
@@ -24,8 +24,8 @@ export enum Tabs {
 }
 
 export const sortOrderOptions = [
-  { label: 'Time ascending', value: SortOrder.Ascending },
-  { label: 'Time descending', value: SortOrder.Descending },
+  { label: 'Newest first', value: SortOrder.Descending },
+  { label: 'Oldest first', value: SortOrder.Ascending },
   { label: 'Data source A-Z', value: SortOrder.DatasourceAZ },
   { label: 'Data source Z-A', value: SortOrder.DatasourceZA },
 ];
@@ -50,15 +50,13 @@ interface RichHistoryState {
 }
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
-  const borderColor = theme.isLight ? theme.colors.gray5 : theme.colors.dark6;
-  const tabContentBg = theme.colors.pageBg;
   return {
     container: css`
       height: 100%;
     `,
     tabContent: css`
       padding: ${theme.spacing.md};
-      background-color: ${tabContentBg};
+      background-color: ${theme.colors.bodyBg};
     `,
     close: css`
       position: absolute;
@@ -69,10 +67,14 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
     `,
     tabs: css`
       padding-top: ${theme.spacing.sm};
-      border-color: ${borderColor};
+      border-color: ${theme.colors.formInputBorder};
       ul {
         margin-left: ${theme.spacing.md};
       }
+    `,
+    scrollbar: css`
+      min-height: 100% !important;
+      background-color: ${theme.colors.panelBg};
     `,
   };
 });
@@ -114,7 +116,14 @@ class UnThemedRichHistory extends PureComponent<RichHistoryProps, RichHistorySta
   };
 
   onSelectDatasourceFilters = (value: SelectableValue[] | null) => {
-    store.setObject(RICH_HISTORY_SETTING_KEYS.datasourceFilters, value);
+    try {
+      store.setObject(RICH_HISTORY_SETTING_KEYS.datasourceFilters, value);
+    } catch (error) {
+      console.error(error);
+    }
+    /* Set data source filters to state even though they were not successfully saved in
+     * localStorage to allow interaction and filtering.
+     **/
     this.setState({ datasourceFilters: value });
   };
 
@@ -125,7 +134,7 @@ class UnThemedRichHistory extends PureComponent<RichHistoryProps, RichHistorySta
   onChangeSortOrder = (sortOrder: SortOrder) => this.setState({ sortOrder });
 
   /* If user selects activeDatasourceOnly === true, set datasource filter to currently active datasource.
-   *  Filtering based on datasource won't be available. Otherwise set to null, as filtering will be
+   * Filtering based on datasource won't be available. Otherwise set to null, as filtering will be
    * available for user.
    */
   updateFilters() {
@@ -169,7 +178,7 @@ class UnThemedRichHistory extends PureComponent<RichHistoryProps, RichHistorySta
           height={height}
         />
       ),
-      icon: 'fa fa-history',
+      icon: 'history',
     };
 
     const StarredTab = {
@@ -186,7 +195,7 @@ class UnThemedRichHistory extends PureComponent<RichHistoryProps, RichHistorySta
           exploreId={exploreId}
         />
       ),
-      icon: 'fa fa-star',
+      icon: 'star',
     };
 
     const SettingsTab = {
@@ -203,7 +212,7 @@ class UnThemedRichHistory extends PureComponent<RichHistoryProps, RichHistorySta
           deleteRichHistory={deleteRichHistory}
         />
       ),
-      icon: 'gicon gicon-preferences',
+      icon: 'sliders-v-alt',
     };
 
     let tabs = [QueriesTab, StarredTab, SettingsTab];
@@ -216,18 +225,12 @@ class UnThemedRichHistory extends PureComponent<RichHistoryProps, RichHistorySta
               label={t.label}
               active={t.value === activeTab}
               onChangeTab={() => this.onSelectTab(t)}
-              icon={t.icon}
+              icon={t.icon as IconName}
             />
           ))}
-          <div className={styles.close} onClick={onClose}>
-            <i className="fa fa-times" title="Close query history" />
-          </div>
+          <IconButton className={styles.close} onClick={onClose} name="times" title="Close query history" />
         </TabsBar>
-        <CustomScrollbar
-          className={css`
-            min-height: 100% !important;
-          `}
-        >
+        <CustomScrollbar className={styles.scrollbar}>
           <TabContent className={styles.tabContent}>{tabs.find(t => t.value === activeTab)?.content}</TabContent>
         </CustomScrollbar>
       </div>

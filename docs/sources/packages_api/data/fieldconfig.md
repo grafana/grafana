@@ -5,7 +5,6 @@
 title = "FieldConfig"
 keywords = ["grafana","documentation","sdk","@grafana/data"]
 type = "docs"
-draft = true
 +++
 
 ## FieldConfig interface
@@ -17,7 +16,7 @@ Plugins may extend this with additional properties. Something like series overri
 <b>Signature</b>
 
 ```typescript
-export interface FieldConfig 
+export interface FieldConfig<TOptions extends object = any> 
 ```
 <b>Import</b>
 
@@ -29,7 +28,7 @@ import { FieldConfig } from '@grafana/data';
 |  Property | Type | Description |
 |  --- | --- | --- |
 |  [color](#color-property) | <code>FieldColor</code> |  |
-|  [custom](#custom-property) | <code>Record&lt;string, any&gt;</code> |  |
+|  [custom](#custom-property) | <code>TOptions</code> |  |
 |  [decimals](#decimals-property) | <code>number &#124; null</code> |  |
 |  [filterable](#filterable-property) | <code>boolean</code> |  |
 |  [links](#links-property) | <code>DataLink[]</code> |  |
@@ -56,7 +55,7 @@ color?: FieldColor;
 <b>Signature</b>
 
 ```typescript
-custom?: Record<string, any>;
+custom?: TOptions;
 ```
 
 ### decimals property

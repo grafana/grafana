@@ -10,14 +10,26 @@ import {
   FieldOverrideContext,
   ScopedVars,
   ApplyFieldOverrideOptions,
+  FieldConfigPropertyItem,
+  LinkModel,
+  InterpolateFunction,
+  ValueLinkConfig,
+  GrafanaTheme,
+  TimeZone,
 } from '../types';
 import { fieldMatchers, ReducerID, reduceField } from '../transformations';
 import { FieldMatcher } from '../types/transformations';
 import isNumber from 'lodash/isNumber';
+import set from 'lodash/set';
+import unset from 'lodash/unset';
+import get from 'lodash/get';
 import { getDisplayProcessor } from './displayProcessor';
-import { guessFieldTypeForField } from '../dataframe';
+import { getTimeField, guessFieldTypeForField } from '../dataframe';
 import { standardFieldConfigEditorRegistry } from './standardFieldConfigEditorRegistry';
 import { FieldConfigOptionsRegistry } from './FieldConfigOptionsRegistry';
+import { DataLinkBuiltInVars, locationUtil } from '../utils';
+import { formattedValueToString } from '../valueFormats';
+import { getFieldDisplayValuesProxy } from './getFieldDisplayValuesProxy';
 
 interface OverrideProps {
   match: FieldMatcher;
@@ -98,10 +110,10 @@ export function applyFieldOverrides(options: ApplyFieldOverrideOptions): DataFra
       if (!fieldName) {
         fieldName = `Field[${fieldIndex}]`;
       }
+      const fieldScopedVars = { ...scopedVars };
+      fieldScopedVars['__field'] = { text: 'Field', value: { name: fieldName } };
 
-      scopedVars['__field'] = { text: 'Field', value: { name: fieldName } };
-
-      const config: FieldConfig = { ...field.config, scopedVars } || {};
+      const config: FieldConfig = { ...field.config, scopedVars: fieldScopedVars } || {};
       const context = {
         field,
         data: options.data!,
@@ -178,6 +190,13 @@ export function applyFieldOverrides(options: ApplyFieldOverrideOptions): DataFra
         theme: options.theme,
         timeZone: options.timeZone,
       });
+
+      // Attach data links supplier
+      f.getLinks = getLinksSupplier(frame, f, fieldScopedVars, context.replaceVariables, {
+        theme: options.theme,
+        timeZone: options.timeZone,
+      });
+
       return f;
     });
 
@@ -193,9 +212,8 @@ export interface FieldOverrideEnv extends FieldOverrideContext {
   fieldConfigRegistry: FieldConfigOptionsRegistry;
 }
 
-function setDynamicConfigValue(config: FieldConfig, value: DynamicConfigValue, context: FieldOverrideEnv) {
+export function setDynamicConfigValue(config: FieldConfig, value: DynamicConfigValue, context: FieldOverrideEnv) {
   const reg = context.fieldConfigRegistry;
-
   const item = reg.getIfExists(value.id);
   if (!item || !item.shouldApply(context.field!)) {
     return;
@@ -206,19 +224,19 @@ function setDynamicConfigValue(config: FieldConfig, value: DynamicConfigValue, c
   const remove = val === undefined || val === null;
 
   if (remove) {
-    if (value.isCustom && config.custom) {
-      delete config.custom[item.path];
+    if (item.isCustom && config.custom) {
+      unset(config.custom, item.path);
     } else {
-      delete (config as any)[item.path];
+      unset(config, item.path);
     }
   } else {
-    if (value.isCustom) {
+    if (item.isCustom) {
       if (!config.custom) {
         config.custom = {};
       }
-      config.custom[item.path] = val;
+      set(config.custom, item.path, val);
     } else {
-      (config as any)[item.path] = val;
+      set(config, item.path, val);
     }
   }
 }
@@ -226,26 +244,16 @@ function setDynamicConfigValue(config: FieldConfig, value: DynamicConfigValue, c
 // config -> from DS
 // defaults -> from Panel config
 export function setFieldConfigDefaults(config: FieldConfig, defaults: FieldConfig, context: FieldOverrideEnv) {
-  if (defaults) {
-    const keys = Object.keys(defaults);
-    for (const key of keys) {
-      if (key === 'custom') {
-        if (!context.fieldConfigRegistry) {
-          continue;
-        }
-        if (!config.custom) {
-          config.custom = {};
-        }
-
-        const customKeys = Object.keys(defaults.custom!);
-        for (const customKey of customKeys) {
-          processFieldConfigValue(config.custom!, defaults.custom!, `custom.${customKey}`, context);
-        }
-      } else {
-        // when config from ds exists for a given field -> use it
-        processFieldConfigValue(config, defaults, key, context);
-      }
+  for (const fieldConfigProperty of context.fieldConfigRegistry.list()) {
+    if (fieldConfigProperty.isCustom && !config.custom) {
+      config.custom = {};
     }
+    processFieldConfigValue(
+      fieldConfigProperty.isCustom ? config.custom : config,
+      fieldConfigProperty.isCustom ? defaults.custom : defaults,
+      fieldConfigProperty,
+      context
+    );
   }
 
   validateFieldConfig(config);
@@ -254,20 +262,21 @@ export function setFieldConfigDefaults(config: FieldConfig, defaults: FieldConfi
 const processFieldConfigValue = (
   destination: Record<string, any>, // it's mutable
   source: Record<string, any>,
-  key: string,
+  fieldConfigProperty: FieldConfigPropertyItem,
   context: FieldOverrideEnv
 ) => {
-  const currentConfig = destination[key];
+  const currentConfig = get(destination, fieldConfigProperty.path);
+
   if (currentConfig === null || currentConfig === undefined) {
-    const item = context.fieldConfigRegistry.getIfExists(key);
+    const item = context.fieldConfigRegistry.getIfExists(fieldConfigProperty.id);
     if (!item) {
       return;
     }
 
     if (item && item.shouldApply(context.field!)) {
-      const val = item.process(source[item.path], context, item.settings);
+      const val = item.process(get(source, item.path), context, item.settings);
       if (val !== undefined && val !== null) {
-        destination[item.path] = val;
+        set(destination, item.path, val);
       }
     }
   }
@@ -320,3 +329,85 @@ export function validateFieldConfig(config: FieldConfig) {
     config.min = tmp;
   }
 }
+
+const getLinksSupplier = (
+  frame: DataFrame,
+  field: Field,
+  fieldScopedVars: ScopedVars,
+  replaceVariables: InterpolateFunction,
+  options: {
+    theme: GrafanaTheme;
+    timeZone?: TimeZone;
+  }
+) => (config: ValueLinkConfig): Array<LinkModel<Field>> => {
+  if (!field.config.links || field.config.links.length === 0) {
+    return [];
+  }
+  const timeRangeUrl = locationUtil.getTimeRangeUrlParams();
+  const { timeField } = getTimeField(frame);
+
+  return field.config.links.map(link => {
+    let href = link.url;
+    let dataFrameVars = {};
+    let valueVars = {};
+
+    const info: LinkModel<Field> = {
+      href: locationUtil.assureBaseUrl(href.replace(/\n/g, '')),
+      title: replaceVariables(link.title || ''),
+      target: link.targetBlank ? '_blank' : '_self',
+      origin: field,
+    };
+
+    const variablesQuery = locationUtil.getVariablesUrlParams();
+
+    // We are not displaying reduction result
+    if (config.valueRowIndex !== undefined && !isNaN(config.valueRowIndex)) {
+      const fieldsProxy = getFieldDisplayValuesProxy(frame, config.valueRowIndex, options);
+      valueVars = {
+        raw: field.values.get(config.valueRowIndex),
+        numeric: fieldsProxy[field.name].numeric,
+        text: fieldsProxy[field.name].text,
+        time: timeField ? timeField.values.get(config.valueRowIndex) : undefined,
+      };
+      dataFrameVars = {
+        __data: {
+          value: {
+            name: frame.name,
+            refId: frame.refId,
+            fields: fieldsProxy,
+          },
+          text: 'Data',
+        },
+      };
+    } else {
+      if (config.calculatedValue) {
+        valueVars = {
+          raw: config.calculatedValue.numeric,
+          numeric: config.calculatedValue.numeric,
+          text: formattedValueToString(config.calculatedValue),
+        };
+      }
+    }
+
+    info.href = replaceVariables(info.href, {
+      ...fieldScopedVars,
+      __value: {
+        text: 'Value',
+        value: valueVars,
+      },
+      ...dataFrameVars,
+      [DataLinkBuiltInVars.keepTime]: {
+        text: timeRangeUrl,
+        value: timeRangeUrl,
+      },
+      [DataLinkBuiltInVars.includeVars]: {
+        text: variablesQuery,
+        value: variablesQuery,
+      },
+    });
+
+    info.href = locationUtil.processUrl(info.href);
+
+    return info;
+  });
+};

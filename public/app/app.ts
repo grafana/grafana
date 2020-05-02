@@ -31,6 +31,8 @@ import {
   setMarkdownOptions,
   standardEditorsRegistry,
   standardFieldConfigEditorRegistry,
+  standardTransformersRegistry,
+  setTimeZoneResolver,
 } from '@grafana/data';
 import appEvents from 'app/core/app_events';
 import { addClassIfNoOverlayScrollbar } from 'app/core/utils/scrollbar';
@@ -43,11 +45,11 @@ import { registerEchoBackend, setEchoSrv } from '@grafana/runtime';
 import { Echo } from './core/services/echo/Echo';
 import { reportPerformance } from './core/services/echo/EchoSrv';
 import { PerformanceBackend } from './core/services/echo/backends/PerformanceBackend';
-
 import 'app/routes/GrafanaCtrl';
 import 'app/features/all';
-import { getStandardFieldConfigs, getStandardOptionEditors } from '@grafana/ui';
+import { getStandardFieldConfigs, getStandardOptionEditors, getStandardTransformers } from '@grafana/ui';
 import { getDefaultVariableAdapters, variableAdapters } from './features/variables/adapters';
+import { initDevFeatures } from './dev';
 
 // add move to lodash for backward compatabiltiy
 // @ts-ignore
@@ -61,6 +63,10 @@ const extensionsIndex = (require as any).context('.', true, /extensions\/index.t
 extensionsIndex.keys().forEach((key: any) => {
   extensionsIndex(key);
 });
+
+if (process.env.NODE_ENV === 'development') {
+  initDevFeatures();
+}
 
 export class GrafanaApp {
   registerFunctions: any;
@@ -88,11 +94,13 @@ export class GrafanaApp {
     const app = angular.module('grafana', []);
 
     setLocale(config.bootData.user.locale);
+    setTimeZoneResolver(() => config.bootData.user.timeZone);
 
     setMarkdownOptions({ sanitize: !config.disableSanitizeHtml });
 
     standardEditorsRegistry.setInit(getStandardOptionEditors);
     standardFieldConfigEditorRegistry.setInit(getStandardFieldConfigs);
+    standardTransformersRegistry.setInit(getStandardTransformers);
     variableAdapters.setInit(getDefaultVariableAdapters);
 
     app.config(

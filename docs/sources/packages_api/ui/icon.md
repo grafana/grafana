@@ -5,7 +5,6 @@
 title = "Icon"
 keywords = ["grafana","documentation","sdk","@grafana/ui"]
 type = "docs"
-draft = true
 +++
 
 ## Icon variable
@@ -15,7 +14,7 @@ draft = true
 <b>Signature</b>
 
 ```typescript
-Icon: React.FC<IconProps>
+Icon: React.ForwardRefExoticComponent<IconProps & React.RefAttributes<HTMLDivElement>>
 ```
 <b>Import</b>
 

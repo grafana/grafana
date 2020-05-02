@@ -5,7 +5,6 @@
 title = "DataQueryResponse"
 keywords = ["grafana","documentation","sdk","@grafana/data"]
 type = "docs"
-draft = true
 +++
 
 ## DataQueryResponse interface

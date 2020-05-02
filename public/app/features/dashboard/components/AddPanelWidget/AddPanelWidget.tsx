@@ -1,19 +1,22 @@
 // Libraries
-import React from 'react';
+import React, { useMemo } from 'react';
 import _ from 'lodash';
 import { LocationUpdate } from '@grafana/runtime';
-import { e2e } from '@grafana/e2e';
+import { Button, HorizontalGroup, IconButton, stylesFactory, useTheme } from '@grafana/ui';
+import { selectors } from '@grafana/e2e-selectors';
 import { connect, MapDispatchToProps } from 'react-redux';
 // Utils
 import config from 'app/core/config';
 import store from 'app/core/store';
 // Store
-import { store as reduxStore } from 'app/store/store';
 import { updateLocation } from 'app/core/actions';
 import { addPanel } from 'app/features/dashboard/state/reducers';
 // Types
 import { DashboardModel, PanelModel } from '../../state';
 import { LS_PANEL_COPY_KEY } from 'app/core/constants';
+import { css, cx, keyframes } from 'emotion';
+import { GrafanaTheme } from '@grafana/data';
+import tinycolor from 'tinycolor2';
 
 export type PanelPluginInfo = { id: any; defaults: { gridPos: { w: any; h: any }; title: any } };
 
@@ -24,55 +27,44 @@ export interface OwnProps {
 
 export interface DispatchProps {
   addPanel: typeof addPanel;
+  updateLocation: typeof updateLocation;
 }
 
 export type Props = OwnProps & DispatchProps;
 
-export interface State {
-  copiedPanelPlugins: any[];
-}
+const getCopiedPanelPlugins = () => {
+  const panels = _.chain(config.panels)
+    .filter({ hideFromList: false })
+    .map(item => item)
+    .value();
+  const copiedPanels = [];
 
-export class AddPanelWidgetUnconnected extends React.Component<Props, State> {
-  constructor(props: Props) {
-    super(props);
-    this.handleCloseAddPanel = this.handleCloseAddPanel.bind(this);
-
-    this.state = {
-      copiedPanelPlugins: this.getCopiedPanelPlugins(),
-    };
-  }
-
-  getCopiedPanelPlugins() {
-    const panels = _.chain(config.panels)
-      .filter({ hideFromList: false })
-      .map(item => item)
-      .value();
-    const copiedPanels = [];
-
-    const copiedPanelJson = store.get(LS_PANEL_COPY_KEY);
-    if (copiedPanelJson) {
-      const copiedPanel = JSON.parse(copiedPanelJson);
-      const pluginInfo: any = _.find(panels, { id: copiedPanel.type });
-      if (pluginInfo) {
-        const pluginCopy = _.cloneDeep(pluginInfo);
-        pluginCopy.name = copiedPanel.title;
-        pluginCopy.sort = -1;
-        pluginCopy.defaults = copiedPanel;
-        copiedPanels.push(pluginCopy);
-      }
+  const copiedPanelJson = store.get(LS_PANEL_COPY_KEY);
+  if (copiedPanelJson) {
+    const copiedPanel = JSON.parse(copiedPanelJson);
+    const pluginInfo: any = _.find(panels, { id: copiedPanel.type });
+    if (pluginInfo) {
+      const pluginCopy = _.cloneDeep(pluginInfo);
+      pluginCopy.name = copiedPanel.title;
+      pluginCopy.sort = -1;
+      pluginCopy.defaults = copiedPanel;
+      copiedPanels.push(pluginCopy);
     }
-
-    return _.sortBy(copiedPanels, 'sort');
   }
 
-  handleCloseAddPanel(evt: any) {
+  return _.sortBy(copiedPanels, 'sort');
+};
+
+export const AddPanelWidgetUnconnected: React.FC<Props> = ({ panel, dashboard, updateLocation, addPanel }) => {
+  const theme = useTheme();
+
+  const onCancelAddPanel = (evt: any) => {
     evt.preventDefault();
-    this.props.dashboard.removePanel(this.props.panel);
-  }
+    dashboard.removePanel(panel);
+  };
 
-  onCreateNewPanel = (tab = 'queries') => {
-    const dashboard = this.props.dashboard;
-    const { gridPos } = this.props.panel;
+  const onCreateNewPanel = () => {
+    const { gridPos } = panel;
 
     const newPanel: any = {
       type: 'graph',
@@ -81,28 +73,20 @@ export class AddPanelWidgetUnconnected extends React.Component<Props, State> {
     };
 
     dashboard.addPanel(newPanel);
-    dashboard.removePanel(this.props.panel);
+    dashboard.removePanel(panel);
 
     const location: LocationUpdate = {
       query: {
-        panelId: newPanel.id,
-        edit: true,
-        fullscreen: true,
+        editPanel: newPanel.id,
       },
       partial: true,
     };
 
-    if (tab === 'visualization') {
-      location.query.tab = 'visualization';
-      location.query.openVizPicker = true;
-    }
-
-    reduxStore.dispatch(updateLocation(location));
+    updateLocation(location);
   };
 
-  onPasteCopiedPanel = (panelPluginInfo: PanelPluginInfo) => {
-    const dashboard = this.props.dashboard;
-    const { gridPos } = this.props.panel;
+  const onPasteCopiedPanel = (panelPluginInfo: PanelPluginInfo) => {
+    const { gridPos } = panel;
 
     const newPanel: any = {
       type: panelPluginInfo.id,
@@ -123,12 +107,10 @@ export class AddPanelWidgetUnconnected extends React.Component<Props, State> {
     }
 
     dashboard.addPanel(newPanel);
-    dashboard.removePanel(this.props.panel);
+    dashboard.removePanel(panel);
   };
 
-  onCreateNewRow = () => {
-    const dashboard = this.props.dashboard;
-
+  const onCreateNewRow = () => {
     const newRow: any = {
       type: 'row',
       title: 'Row title',
@@ -136,67 +118,130 @@ export class AddPanelWidgetUnconnected extends React.Component<Props, State> {
     };
 
     dashboard.addPanel(newRow);
-    dashboard.removePanel(this.props.panel);
+    dashboard.removePanel(panel);
   };
 
-  renderOptionLink = (icon: string, text: string, onClick: any) => {
-    return (
-      <div>
-        <a
-          href="#"
-          onClick={onClick}
-          className="add-panel-widget__link btn btn-inverse"
-          aria-label={e2e.pages.AddDashboard.selectors.ctaButtons(text)}
-        >
-          <div className="add-panel-widget__icon">
-            <i className={`gicon gicon-${icon}`} />
-          </div>
-          <span>{text}</span>
-        </a>
-      </div>
-    );
-  };
-
-  render() {
-    const { copiedPanelPlugins } = this.state;
-
-    return (
-      <div className="panel-container add-panel-widget-container">
-        <div className="add-panel-widget">
-          <div className="add-panel-widget__header grid-drag-handle">
-            <i className="gicon gicon-add-panel" />
-            <span className="add-panel-widget__title">New Panel</span>
-            <button className="add-panel-widget__close" onClick={this.handleCloseAddPanel}>
-              <i className="fa fa-close" />
-            </button>
-          </div>
-          <div className="add-panel-widget__btn-container">
-            <div className="add-panel-widget__create">
-              {this.renderOptionLink('queries', 'Add Query', this.onCreateNewPanel)}
-              {this.renderOptionLink('visualization', 'Choose Visualization', () =>
-                this.onCreateNewPanel('visualization')
-              )}
-            </div>
-            <div className="add-panel-widget__actions">
-              <button className="btn btn-inverse add-panel-widget__action" onClick={this.onCreateNewRow}>
-                Convert to row
-              </button>
-              {copiedPanelPlugins.length === 1 && (
-                <button
-                  className="btn btn-inverse add-panel-widget__action"
-                  onClick={() => this.onPasteCopiedPanel(copiedPanelPlugins[0])}
-                >
-                  Paste copied panel
-                </button>
-              )}
-            </div>
-          </div>
+  const styles = getStyles(theme);
+  return (
+    <div className={cx('panel-container', styles.wrapper)}>
+      <AddPanelWidgetHandle onCancel={onCancelAddPanel} />
+      <div className={styles.actionsWrapper}>
+        <AddPanelWidgetCreate onCreate={onCreateNewPanel} onPasteCopiedPanel={onPasteCopiedPanel} />
+        <div>
+          <HorizontalGroup justify="center">
+            <Button onClick={onCreateNewRow} variant="secondary" size="sm">
+              Convert to row
+            </Button>
+          </HorizontalGroup>
         </div>
       </div>
-    );
-  }
-}
+    </div>
+  );
+};
 
-const mapDispatchToProps: MapDispatchToProps<DispatchProps, OwnProps> = { addPanel };
+const mapDispatchToProps: MapDispatchToProps<DispatchProps, OwnProps> = { addPanel, updateLocation };
 
 export const AddPanelWidget = connect(null, mapDispatchToProps)(AddPanelWidgetUnconnected);
+
+interface AddPanelWidgetHandleProps {
+  onCancel: (e: React.MouseEvent<HTMLButtonElement>) => void;
+}
+const AddPanelWidgetHandle: React.FC<AddPanelWidgetHandleProps> = ({ onCancel }) => {
+  const theme = useTheme();
+  const styles = getAddPanelWigetHandleStyles(theme);
+  return (
+    <div className={cx(styles.handle, 'grid-drag-handle')}>
+      <IconButton name="times" onClick={onCancel} surface="header" className="add-panel-widget__close" />
+    </div>
+  );
+};
+
+interface AddPanelWidgetCreateProps {
+  onCreate: () => void;
+  onPasteCopiedPanel: (panelPluginInfo: PanelPluginInfo) => void;
+}
+
+const AddPanelWidgetCreate: React.FC<AddPanelWidgetCreateProps> = ({ onCreate, onPasteCopiedPanel }) => {
+  const copiedPanelPlugins = useMemo(() => getCopiedPanelPlugins(), []);
+  const theme = useTheme();
+  const styles = getAddPanelWidgetCreateStyles(theme);
+  return (
+    <div className={styles.wrapper}>
+      <HorizontalGroup>
+        <Button icon="plus" size="md" onClick={onCreate} aria-label={selectors.pages.AddDashboard.addNewPanel}>
+          Add new panel
+        </Button>
+        {copiedPanelPlugins.length === 1 && (
+          <Button variant="secondary" size="md" onClick={() => onPasteCopiedPanel(copiedPanelPlugins[0])}>
+            Paste copied panel
+          </Button>
+        )}
+      </HorizontalGroup>
+    </div>
+  );
+};
+
+const getStyles = stylesFactory((theme: GrafanaTheme) => {
+  const pulsate = keyframes`
+    0% {box-shadow: 0 0 0 2px ${theme.colors.bodyBg}, 0 0 0px 4px ${theme.colors.formFocusOutline};}
+    50% {box-shadow: 0 0 0 2px ${theme.colors.bodyBg}, 0 0 0px 4px ${tinycolor(theme.colors.formFocusOutline)
+    .darken(20)
+    .toHexString()};}
+    100% {box-shadow: 0 0 0 2px ${theme.colors.bodyBg}, 0 0 0px 4px  ${theme.colors.formFocusOutline};}
+  `;
+  return {
+    wrapper: css`
+      overflow: hidden;
+      outline: 2px dotted transparent;
+      outline-offset: 2px;
+      box-shadow: 0 0 0 2px black, 0 0 0px 4px #1f60c4;
+      animation: ${pulsate} 2s ease infinite;
+    `,
+    actionsWrapper: css`
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      height: 100%;
+      justify-content: center;
+    `,
+  };
+});
+
+const getAddPanelWigetHandleStyles = stylesFactory((theme: GrafanaTheme) => {
+  return {
+    handle: css`
+      position: absolute;
+      cursor: grab;
+      top: 0;
+      left: 0;
+      height: 26px;
+      padding: 0 ${theme.spacing.xs};
+      width: 100%;
+      display: flex;
+      justify-content: flex-end;
+      align-items: center;
+      transition: background-color 0.1s ease-in-out;
+      &:hover {
+        background: ${theme.colors.bg2};
+      }
+    `,
+  };
+});
+
+const getAddPanelWidgetCreateStyles = stylesFactory((theme: GrafanaTheme) => {
+  return {
+    wrapper: css`
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin-bottom: ${theme.spacing.lg};
+      &:hover {
+        background: ${theme.colors.bg2};
+      }
+    `,
+    icon: css`
+      color: ${theme.colors.textWeak};
+    `,
+  };
+});

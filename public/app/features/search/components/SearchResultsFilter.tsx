@@ -1,7 +1,9 @@
-import React, { FC } from 'react';
+import React, { Dispatch, FC, SetStateAction } from 'react';
 import { css } from 'emotion';
-import { Button, Select, Forms, stylesFactory, useTheme, HorizontalGroup } from '@grafana/ui';
+import { Button, Checkbox, stylesFactory, useTheme, HorizontalGroup } from '@grafana/ui';
 import { GrafanaTheme, SelectableValue } from '@grafana/data';
+import { DashboardQuery } from '../types';
+import { ActionRow } from './ActionRow';
 
 type onSelectChange = (value: SelectableValue) => void;
 
@@ -10,32 +12,29 @@ export interface Props {
   canDelete?: boolean;
   canMove?: boolean;
   deleteItem: () => void;
+  hideLayout?: boolean;
   moveTo: () => void;
-  onSelectAllChanged: any;
+  onLayoutChange: Dispatch<SetStateAction<string>>;
+  onSortChange: onSelectChange;
   onStarredFilterChange: onSelectChange;
   onTagFilterChange: onSelectChange;
-  selectedStarredFilter: string;
-  selectedTagFilter: string;
-  tagFilterOptions: SelectableValue[];
+  onToggleAllChecked: () => void;
+  query: DashboardQuery;
 }
-
-const starredFilterOptions = [
-  { label: 'Yes', value: true },
-  { label: 'No', value: false },
-];
 
 export const SearchResultsFilter: FC<Props> = ({
   allChecked,
   canDelete,
   canMove,
   deleteItem,
+  hideLayout,
   moveTo,
-  onSelectAllChanged,
+  onLayoutChange,
+  onSortChange,
   onStarredFilterChange,
   onTagFilterChange,
-  selectedStarredFilter,
-  selectedTagFilter,
-  tagFilterOptions,
+  onToggleAllChecked,
+  query,
 }) => {
   const showActions = canDelete || canMove;
   const theme = useTheme();
@@ -43,50 +42,46 @@ export const SearchResultsFilter: FC<Props> = ({
 
   return (
     <div className={styles.wrapper}>
-      <Forms.Checkbox value={allChecked} onChange={onSelectAllChanged} />
+      <Checkbox value={allChecked} onChange={onToggleAllChecked} />
       {showActions ? (
         <HorizontalGroup spacing="md">
-          <Button disabled={!canMove} onClick={moveTo} icon="fa fa-exchange" variant="secondary">
+          <Button disabled={!canMove} onClick={moveTo} icon="exchange-alt" variant="secondary">
             Move
           </Button>
-          <Button disabled={!canDelete} onClick={deleteItem} icon="fa fa-trash" variant="destructive">
+          <Button disabled={!canDelete} onClick={deleteItem} icon="trash-alt" variant="destructive">
             Delete
           </Button>
         </HorizontalGroup>
       ) : (
-        <HorizontalGroup spacing="md">
-          <Select
-            size="sm"
-            placeholder="Filter by starred"
-            key={selectedStarredFilter}
-            options={starredFilterOptions}
-            onChange={onStarredFilterChange}
-          />
-
-          <Select
-            size="sm"
-            placeholder="Filter by tag"
-            key={selectedTagFilter}
-            options={tagFilterOptions}
-            onChange={onTagFilterChange}
-          />
-        </HorizontalGroup>
+        <ActionRow
+          {...{
+            hideLayout,
+            onLayoutChange,
+            onSortChange,
+            onStarredFilterChange,
+            onTagFilterChange,
+            query,
+          }}
+          showStarredFilter
+        />
       )}
     </div>
   );
 };
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
+  const { sm, md } = theme.spacing;
   return {
     wrapper: css`
       height: 35px;
       display: flex;
       justify-content: space-between;
       align-items: center;
+      margin-bottom: ${sm};
 
-      label {
+      > label {
         height: 20px;
-        margin-left: 8px;
+        margin: 0 ${md} 0 ${sm};
       }
     `,
   };

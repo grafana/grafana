@@ -15,7 +15,7 @@ weight = 7
 >
 > Starting from Grafana v5.1 you can name the time column *time* in addition to earlier supported *time_sec*. Usage of *time_sec*  will eventually be deprecated.
 
-Grafana ships with a built-in MySQL data source plugin that allow you to query any visualize
+Grafana ships with a built-in MySQL data source plugin that allows you to query and visualize
 data from a MySQL compatible database.
 
 ## Adding the data source
@@ -41,7 +41,7 @@ Name | Description
 
 ### Min time interval
 
-A lower limit for the [$__interval]({{< relref "../../reference/templating/#the-interval-variable" >}}) and [$__interval_ms]({{< relref "../../reference/templating/#the-interval-ms-variable" >}}) variables.
+A lower limit for the [$__interval]({{< relref "../../variables/templates-and-variables/#the-interval-variable" >}}) and [$__interval_ms]({{< relref "../../variables/templates-and-variables/#the-interval-ms-variable" >}}) variables.
 Recommended to be set to write frequency, for example `1m` if your data is written every minute.
 This option can also be overridden/configured in a dashboard panel under data source options. It's important to note that this value **needs** to be formatted as a
 number followed by a valid time identifier, e.g. `1m` (1 minute) or `30s` (30 seconds). The following time identifiers are supported:
@@ -131,28 +131,28 @@ To simplify syntax and to allow for dynamic parts, like date range filters, the 
 
 Macro example | Description
 ------------ | -------------
-*$__time(dateColumn)* | Will be replaced by an expression to convert to a UNIX timestamp and rename the column to `time_sec`. For example, *UNIX_TIMESTAMP(dateColumn) as time_sec*
-*$__timeEpoch(dateColumn)* | Will be replaced by an expression to convert to a UNIX timestamp and rename the column to `time_sec`. For example, *UNIX_TIMESTAMP(dateColumn) as time_sec*
-*$__timeFilter(dateColumn)* | Will be replaced by a time range filter using the specified column name. For example, *dateColumn BETWEEN FROM_UNIXTIME(1494410783) AND FROM_UNIXTIME(1494410983)*
-*$__timeFrom()* | Will be replaced by the start of the currently active time selection. For example, *FROM_UNIXTIME(1494410783)*
-*$__timeTo()* | Will be replaced by the end of the currently active time selection. For example, *FROM_UNIXTIME(1494410983)*
-*$__timeGroup(dateColumn,'5m')* | Will be replaced by an expression usable in GROUP BY clause. For example, *cast(cast(UNIX_TIMESTAMP(dateColumn)/(300) as signed)*300 as signed),*
-*$__timeGroup(dateColumn,'5m', 0)* | Same as above but with a fill parameter so missing points in that series will be added by grafana and 0 will be used as value.
-*$__timeGroup(dateColumn,'5m', NULL)* | Same as above but NULL will be used as value for missing points.
-*$__timeGroup(dateColumn,'5m', previous)* | Same as above but the previous value in that series will be used as fill value if no value has been seen yet NULL will be used (only available in Grafana 5.3+).
-*$__timeGroupAlias(dateColumn,'5m')* | Will be replaced identical to $__timeGroup but with an added column alias (only available in Grafana 5.3+).
-*$__unixEpochFilter(dateColumn)* | Will be replaced by a time range filter using the specified column name with times represented as Unix timestamp. For example, *dateColumn > 1494410783 AND dateColumn < 1494497183*
-*$__unixEpochFrom()* | Will be replaced by the start of the currently active time selection as Unix timestamp. For example, *1494410783*
-*$__unixEpochTo()* | Will be replaced by the end of the currently active time selection as Unix timestamp. For example, *1494497183*
-*$__unixEpochNanoFilter(dateColumn)* | Will be replaced by a time range filter using the specified column name with times represented as nanosecond timestamp. For example, *dateColumn > 1494410783152415214 AND dateColumn < 1494497183142514872*
-*$__unixEpochNanoFrom()* | Will be replaced by the start of the currently active time selection as nanosecond timestamp. For example, *1494410783152415214*
-*$__unixEpochNanoTo()* | Will be replaced by the end of the currently active time selection as nanosecond timestamp. For example, *1494497183142514872*
-*$__unixEpochGroup(dateColumn,'5m', [fillmode])* | Same as $__timeGroup but for times stored as Unix timestamp (only available in Grafana 5.3+).
-*$__unixEpochGroupAlias(dateColumn,'5m', [fillmode])* | Same as above but also adds a column alias (only available in Grafana 5.3+).
+*`$__time(dateColumn)`* | Will be replaced by an expression to convert to a UNIX timestamp and rename the column to `time_sec`. For example, *UNIX_TIMESTAMP(dateColumn) as time_sec*
+*`$__timeEpoch(dateColumn)`* | Will be replaced by an expression to convert to a UNIX timestamp and rename the column to `time_sec`. For example, *UNIX_TIMESTAMP(dateColumn) as time_sec*
+*`$__timeFilter(dateColumn)`* | Will be replaced by a time range filter using the specified column name. For example, *dateColumn BETWEEN FROM_UNIXTIME(1494410783) AND FROM_UNIXTIME(1494410983)*
+*`$__timeFrom()`* | Will be replaced by the start of the currently active time selection. For example, *FROM_UNIXTIME(1494410783)*
+*`$__timeTo()`* | Will be replaced by the end of the currently active time selection. For example, *FROM_UNIXTIME(1494410983)*
+*`$__timeGroup(dateColumn,'5m')`* | Will be replaced by an expression usable in GROUP BY clause. For example, *cast(cast(UNIX_TIMESTAMP(dateColumn)/(300) as signed)*300 as signed),*
+*`$__timeGroup(dateColumn,'5m', 0)`* | Same as above but with a fill parameter so missing points in that series will be added by grafana and 0 will be used as value.
+*`$__timeGroup(dateColumn,'5m', NULL)`* | Same as above but NULL will be used as value for missing points.
+*`$__timeGroup(dateColumn,'5m', previous)`* | Same as above but the previous value in that series will be used as fill value if no value has been seen yet NULL will be used (only available in Grafana 5.3+).
+*`$__timeGroupAlias(dateColumn,'5m')`* | Will be replaced identical to $__timeGroup but with an added column alias (only available in Grafana 5.3+).
+*`$__unixEpochFilter(dateColumn)`* | Will be replaced by a time range filter using the specified column name with times represented as Unix timestamp. For example, *dateColumn > 1494410783 AND dateColumn < 1494497183*
+*`$__unixEpochFrom()`* | Will be replaced by the start of the currently active time selection as Unix timestamp. For example, *1494410783*
+*`$__unixEpochTo()`* | Will be replaced by the end of the currently active time selection as Unix timestamp. For example, *1494497183*
+*`$__unixEpochNanoFilter(dateColumn)`* | Will be replaced by a time range filter using the specified column name with times represented as nanosecond timestamp. For example, *dateColumn > 1494410783152415214 AND dateColumn < 1494497183142514872*
+*`$__unixEpochNanoFrom()`* | Will be replaced by the start of the currently active time selection as nanosecond timestamp. For example, *1494410783152415214*
+*`$__unixEpochNanoTo()`* | Will be replaced by the end of the currently active time selection as nanosecond timestamp. For example, *1494497183142514872*
+*`$__unixEpochGroup(dateColumn,'5m', [fillmode])`* | Same as $__timeGroup but for times stored as Unix timestamp (only available in Grafana 5.3+).
+*`$__unixEpochGroupAlias(dateColumn,'5m', [fillmode])`* | Same as above but also adds a column alias (only available in Grafana 5.3+).
 
 We plan to add many more macros. If you have suggestions for what macros you would like to see, please [open an issue](https://github.com/grafana/grafana) in our GitHub repo.
 
-The query editor has a link named `Generated SQL` that show up after a query as been executed, while in panel edit mode. Click on it and it will expand and show the raw interpolated SQL string that was executed.
+The query editor has a link named `Generated SQL` that shows up after a query has been executed, while in panel edit mode. Click on it and it will expand and show the raw interpolated SQL string that was executed.
 
 ## Table queries
 
@@ -236,9 +236,9 @@ This is something we plan to add.
 
 This feature is currently available in the nightly builds and will be included in the 5.0.0 release.
 
-Instead of hard-coding things like server, application and sensor name in you metric queries you can use variables in their place. Variables are shown as dropdown select boxes at the top of the dashboard. These dropdowns makes it easy to change the data being displayed in your dashboard.
+Instead of hard-coding things like server, application and sensor name in your metric queries you can use variables in their place. Variables are shown as dropdown select boxes at the top of the dashboard. These dropdowns make it easy to change the data being displayed in your dashboard.
 
-Check out the [Templating]({{< relref "../../reference/templating.md" >}}) documentation for an introduction to the templating feature and the different types of template variables.
+Check out the [Templating]({{< relref "../../variables/templates-and-variables.md" >}}) documentation for an introduction to the templating feature and the different types of template variables.
 
 ### Query Variable
 
@@ -251,7 +251,7 @@ For example, you can have a variable that contains all values for the `hostname`
 SELECT hostname FROM my_host
 ```
 
-A query can returns multiple columns and Grafana will automatically create a list from them. For example, the query below will return a list with values from `hostname` and `hostname2`.
+A query can return multiple columns and Grafana will automatically create a list from them. For example, the query below will return a list with values from `hostname` and `hostname2`.
 
 ```sql
 SELECT my_host.hostname, my_other_host.hostname2 FROM my_host JOIN my_other_host ON my_host.city = my_other_host.city
@@ -331,7 +331,7 @@ Grafana automatically creates a quoted, comma-separated string for multi-value v
 
 `${servers:csv}`
 
-Read more about variable formatting options in the [Variables]({{< relref "../../reference/templating.md#advanced-formatting-options" >}}) documentation.
+Read more about variable formatting options in the [Variables]({{< relref "../../variables/templates-and-variables.md#advanced-formatting-options" >}}) documentation.
 
 ## Annotations
 
@@ -342,6 +342,22 @@ Read more about variable formatting options in the [Variables]({{< relref "../..
 ```sql
 SELECT
   epoch_time as time,
+  metric1 as text,
+  CONCAT(tag1, ',', tag2) as tags
+FROM
+  public.test_data
+WHERE
+  $__unixEpochFilter(epoch_time)
+```
+
+**Example region query using time and timeend columns with epoch values:**
+
+> Only available in Grafana v6.6+.
+
+```sql
+SELECT
+  epoch_time as time,
+  epoch_timeend as timeend,
   metric1 as text,
   CONCAT(tag1, ',', tag2) as tags
 FROM
@@ -366,13 +382,13 @@ WHERE
 Name | Description
 ------------ | -------------
 time | The name of the date/time field. Could be a column with a native SQL date/time data type or epoch value.
-timeend | Optional name of the end date/time field. Could be a column with a native SQL date/time data type or epoch value.
+timeend | Optional name of the end date/time field. Could be a column with a native SQL date/time data type or epoch value. (Grafana v6.6+)
 text | Event description field.
 tags | Optional field name to use for event tags as a comma separated string.
 
 ## Alerting
 
-Time series queries should work in alerting conditions. Table formatted queries is not yet supported in alert rule conditions.
+Time series queries should work in alerting conditions. Table formatted queries are not yet supported in alert rule conditions.
 
 ## Configure the data source with provisioning
 

@@ -1,14 +1,19 @@
-import React, { useMemo, useCallback } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import { css, cx } from 'emotion';
-import { OrganizeFieldsTransformerOptions } from '@grafana/data/src/transformations/transformers/organize';
-import { DragDropContext, Droppable, Draggable, DropResult } from 'react-beautiful-dnd';
-import { TransformerUIRegistyItem, TransformerUIProps } from './types';
-import { DataTransformerID, transformersRegistry, DataFrame, GrafanaTheme } from '@grafana/data';
+import { DragDropContext, Draggable, Droppable, DropResult } from 'react-beautiful-dnd';
+import {
+  createOrderFieldsComparer,
+  DataFrame,
+  DataTransformerID,
+  GrafanaTheme,
+  OrganizeFieldsTransformerOptions,
+  standardTransformers,
+  TransformerRegistyItem,
+  TransformerUIProps,
+} from '@grafana/data';
 import { stylesFactory, useTheme } from '../../themes';
-import { Button } from '../Button';
-import { createFieldsComparer } from '@grafana/data/src/transformations/transformers/order';
-import { VerticalGroup } from '../Layout/Layout';
 import { Input } from '../Input/Input';
+import { IconButton } from '../IconButton/IconButton';
 
 interface OrganizeFieldsTransformerEditorProps extends TransformerUIProps<OrganizeFieldsTransformerOptions> {}
 
@@ -16,7 +21,7 @@ const OrganizeFieldsTransformerEditor: React.FC<OrganizeFieldsTransformerEditorP
   const { options, input, onChange } = props;
   const { indexByName, excludeByName, renameByName } = options;
 
-  const fieldNames = useMemo(() => fieldNamesFromInput(input), [input]);
+  const fieldNames = useMemo(() => getAllFieldNamesFromDataFrames(input), [input]);
   const orderedFieldNames = useMemo(() => orderFieldNamesByIndex(fieldNames, indexByName), [fieldNames, indexByName]);
 
   const onToggleVisibility = useCallback(
@@ -67,34 +72,36 @@ const OrganizeFieldsTransformerEditor: React.FC<OrganizeFieldsTransformerEditorP
   );
 
   return (
-    <VerticalGroup>
-      <DragDropContext onDragEnd={onDragEnd}>
-        <Droppable droppableId="sortable-fields-transformer" direction="vertical">
-          {provided => (
-            <div ref={provided.innerRef} {...provided.droppableProps}>
-              {orderedFieldNames.map((fieldName, index) => {
-                return (
-                  <DraggableFieldName
-                    fieldName={fieldName}
-                    index={index}
-                    onToggleVisibility={onToggleVisibility}
-                    onRenameField={onRenameField}
-                    visible={!excludeByName[fieldName]}
-                    key={fieldName}
-                  />
-                );
-              })}
-              {provided.placeholder}
-            </div>
-          )}
-        </Droppable>
-      </DragDropContext>
-    </VerticalGroup>
+    <DragDropContext onDragEnd={onDragEnd}>
+      <Droppable droppableId="sortable-fields-transformer" direction="vertical">
+        {provided => (
+          <div ref={provided.innerRef} {...provided.droppableProps}>
+            {orderedFieldNames.map((fieldName, index) => {
+              return (
+                <DraggableFieldName
+                  fieldName={fieldName}
+                  renamedFieldName={renameByName[fieldName]}
+                  index={index}
+                  onToggleVisibility={onToggleVisibility}
+                  onRenameField={onRenameField}
+                  visible={!excludeByName[fieldName]}
+                  key={fieldName}
+                />
+              );
+            })}
+            {provided.placeholder}
+          </div>
+        )}
+      </Droppable>
+    </DragDropContext>
   );
 };
 
+OrganizeFieldsTransformerEditor.displayName = 'OrganizeFieldsTransformerEditor';
+
 interface DraggableFieldProps {
   fieldName: string;
+  renamedFieldName?: string;
   index: number;
   visible: boolean;
   onToggleVisibility: (fieldName: string, isVisible: boolean) => void;
@@ -103,6 +110,7 @@ interface DraggableFieldProps {
 
 const DraggableFieldName: React.FC<DraggableFieldProps> = ({
   fieldName,
+  renamedFieldName,
   index,
   visible,
   onToggleVisibility,
@@ -115,26 +123,30 @@ const DraggableFieldName: React.FC<DraggableFieldProps> = ({
     <Draggable draggableId={fieldName} index={index}>
       {provided => (
         <div
-          className={styles.container}
+          className="gf-form-inline"
           ref={provided.innerRef}
           {...provided.draggableProps}
           {...provided.dragHandleProps}
         >
-          <div className={styles.left}>
-            <i className={cx('fa fa-ellipsis-v', styles.draggable)} />
-            <Button
-              className={styles.toggle}
-              variant="link"
-              size="md"
-              icon={visible ? 'fa fa-eye' : 'fa fa-eye-slash'}
-              onClick={() => onToggleVisibility(fieldName, visible)}
-            />
-            <span className={styles.name}>{fieldName}</span>
-          </div>
-          <div className={styles.right}>
+          <div className="gf-form gf-form--grow">
+            <div className="gf-form-label gf-form-label--justify-left width-30">
+              <i className={cx('fa fa-ellipsis-v', styles.draggable)} />
+              <IconButton
+                className={styles.toggle}
+                size="md"
+                name={visible ? 'eye' : 'eye-slash'}
+                surface="header"
+                onClick={() => onToggleVisibility(fieldName, visible)}
+              />
+              <span className={styles.name} title={fieldName}>
+                {fieldName}
+              </span>
+            </div>
             <Input
+              className="flex-grow-1"
+              defaultValue={renamedFieldName || ''}
               placeholder={`Rename ${fieldName}`}
-              onChange={event => onRenameField(fieldName, event.currentTarget.value)}
+              onBlur={event => onRenameField(fieldName, event.currentTarget.value)}
             />
           </div>
         </div>
@@ -143,32 +155,25 @@ const DraggableFieldName: React.FC<DraggableFieldProps> = ({
   );
 };
 
+DraggableFieldName.displayName = 'DraggableFieldName';
+
 const getFieldNameStyles = stylesFactory((theme: GrafanaTheme) => ({
-  container: css`
-    display: flex;
-    align-items: center;
-    margin-top: 8px;
-  `,
-  left: css`
-    width: 35%;
-    padding: 0 8px;
-    border-radius: 3px;
-    background-color: ${theme.isDark ? theme.colors.grayBlue : theme.colors.gray6};
-    border: 1px solid ${theme.isDark ? theme.colors.dark6 : theme.colors.gray5};
-  `,
-  right: css`
-    width: 65%;
-    margin-left: 8px;
-  `,
   toggle: css`
-    padding: 5px;
-    margin: 0 5px;
+    margin: 0 8px;
+    color: ${theme.colors.textWeak};
   `,
   draggable: css`
+    padding: 0 ${theme.spacing.xs};
     font-size: ${theme.typography.size.md};
     opacity: 0.4;
+    &:hover {
+      color: ${theme.colors.textStrong};
+    }
   `,
   name: css`
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
     font-size: ${theme.typography.size.sm};
     font-weight: ${theme.typography.weight.semibold};
   `,
@@ -189,11 +194,11 @@ const orderFieldNamesByIndex = (fieldNames: string[], indexByName: Record<string
   if (!indexByName || Object.keys(indexByName).length === 0) {
     return fieldNames;
   }
-  const comparer = createFieldsComparer(indexByName);
+  const comparer = createOrderFieldsComparer(indexByName);
   return fieldNames.sort(comparer);
 };
 
-const fieldNamesFromInput = (input: DataFrame[]): string[] => {
+export const getAllFieldNamesFromDataFrames = (input: DataFrame[]): string[] => {
   if (!Array.isArray(input)) {
     return [] as string[];
   }
@@ -212,10 +217,10 @@ const fieldNamesFromInput = (input: DataFrame[]): string[] => {
   );
 };
 
-export const organizeFieldsTransformRegistryItem: TransformerUIRegistyItem<OrganizeFieldsTransformerOptions> = {
+export const organizeFieldsTransformRegistryItem: TransformerRegistyItem<OrganizeFieldsTransformerOptions> = {
   id: DataTransformerID.organize,
-  component: OrganizeFieldsTransformerEditor,
-  transformer: transformersRegistry.get(DataTransformerID.organize),
+  editor: OrganizeFieldsTransformerEditor,
+  transformation: standardTransformers.organizeFieldsTransformer,
   name: 'Organize fields',
-  description: 'UI for organizing fields',
+  description: 'Order, filter and rename fields',
 };

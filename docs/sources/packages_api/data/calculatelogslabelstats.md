@@ -5,7 +5,6 @@
 title = "calculateLogsLabelStats"
 keywords = ["grafana","documentation","sdk","@grafana/data"]
 type = "docs"
-draft = true
 +++
 
 ## calculateLogsLabelStats() function

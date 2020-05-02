@@ -4,7 +4,7 @@ import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { Input } from './Input';
 import { Button } from '../Button';
 import mdx from './Input.mdx';
-import { getAvailableIcons, IconType } from '../Icon/types';
+import { getAvailableIcons, IconName } from '../../types';
 import { KeyValue } from '@grafana/data';
 import { Icon } from '../Icon/Icon';
 import { Field } from '../Forms/Field';
@@ -50,6 +50,7 @@ export const simple = () => {
 
   const VISUAL_GROUP = 'Visual options';
   // ---
+  const width = number('Width', 0, undefined, VISUAL_GROUP);
   const placeholder = text('Placeholder', 'Enter your name here...', VISUAL_GROUP);
   const before = boolean('Addon before', false, VISUAL_GROUP);
   const after = boolean('Addon after', false, VISUAL_GROUP);
@@ -59,11 +60,11 @@ export const simple = () => {
   const suffix = select('Suffix', prefixSuffixOpts, null, VISUAL_GROUP);
   let prefixEl: any = prefix;
   if (prefix && prefix.match(/icon-/g)) {
-    prefixEl = <Icon name={prefix.replace(/icon-/g, '') as IconType} />;
+    prefixEl = <Icon name={prefix.replace(/icon-/g, '') as IconName} />;
   }
   let suffixEl: any = suffix;
   if (suffix && suffix.match(/icon-/g)) {
-    suffixEl = <Icon name={suffix.replace(/icon-/g, '') as IconType} />;
+    suffixEl = <Icon name={suffix.replace(/icon-/g, '') as IconName} />;
   }
 
   const CONTAINER_GROUP = 'Container options';
@@ -84,6 +85,7 @@ export const simple = () => {
     <div style={{ width: containerWidth }}>
       <Input
         disabled={disabled}
+        width={width}
         prefix={prefixEl}
         invalid={invalid}
         suffix={suffixEl}

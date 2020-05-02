@@ -208,7 +208,7 @@ Threema | `threema` | yes, external only | no
 VictorOps | `victorops` | yes, external only | no
 Webhook | `webhook` | yes, external only | yes
 
-# Enable images in notifications {#external-image-store}
+## Enable images in notifications {#external-image-store}
 
 Grafana can render the panel associated with the alert rule as a PNG image and include that in the notification. Read more about the requirements and how to configure
 [image rendering]({{< relref "../administration/image_rendering/" >}}).
@@ -216,11 +216,11 @@ Grafana can render the panel associated with the alert rule as a PNG image and i
 Most Notification Channels require that this image be publicly accessible (Slack and PagerDuty for example). In order to include images in alert notifications, Grafana can upload the image to an image store. It currently supports
 Amazon S3, Webdav, Google Cloud Storage and Azure Blob Storage. So to set that up you need to configure the [external image uploader]({{< relref "../installation/configuration/#external-image-storage" >}}) in your grafana-server ini config file.
 
-Be aware that some notifiers requires public access to the image to be able to include it in the notification. So make sure to enable public access to the images. If you're using local image uploader, your Grafana instance need to be accessible by the internet.
+Be aware that some notifiers require public access to the image to be able to include it in the notification. So make sure to enable public access to the images. If you're using local image uploader, your Grafana instance need to be accessible by the internet.
 
 Notification services which need public image access are marked as 'external only'.
 
-# Use alert rule tags in notifications {#alert-rule-tags}
+## Use alert rule tags in notifications {#alert-rule-tags}
 
 > Only available in Grafana v6.3+.
 
@@ -230,7 +230,7 @@ It currently supports only the Prometheus Alertmanager notifier.
 
  This is an optional feature. You can get notifications without using alert rule tags.
 
-# Configure the link back to Grafana from alert notifications
+## Configure the link back to Grafana from alert notifications
 
 All alert notifications contain a link back to the triggered alert in the Grafana instance.
 This URL is based on the [domain]({{< relref "../installation/configuration/#domain" >}}) setting in Grafana.

@@ -12,41 +12,38 @@ export const getPanelEditorTabs = memoizeOne((location: LocationState, plugin?: 
 
   let defaultTab = PanelEditorTabId.Visualize;
 
+  if (plugin.meta.skipDataQuery) {
+    return [];
+  }
+
   if (!plugin.meta.skipDataQuery) {
     defaultTab = PanelEditorTabId.Query;
 
     tabs.push({
       id: PanelEditorTabId.Query,
       text: 'Query',
-      icon: 'gicon gicon-datasources',
+      icon: 'database',
       active: false,
     });
 
     tabs.push({
       id: PanelEditorTabId.Transform,
       text: 'Transform',
-      icon: 'fa fa-exchange',
+      icon: 'process',
       active: false,
     });
   }
-
-  tabs.push({
-    id: PanelEditorTabId.Visualize,
-    text: 'Visualize',
-    icon: 'fa fa-bar-chart',
-    active: false,
-  });
 
   if (plugin.meta.id === 'graph') {
     tabs.push({
       id: PanelEditorTabId.Alert,
       text: 'Alert',
-      icon: 'gicon gicon-alert',
+      icon: 'bell',
       active: false,
     });
   }
 
-  const activeTab = tabs.find(item => item.id === (location.query.tab || defaultTab));
+  const activeTab = tabs.find(item => item.id === (location.query.tab || defaultTab)) ?? tabs[0];
   activeTab.active = true;
 
   return tabs;

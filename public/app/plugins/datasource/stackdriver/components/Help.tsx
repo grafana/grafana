@@ -1,5 +1,6 @@
 import React from 'react';
 import { MetricDescriptor } from '../types';
+import { Icon } from '@grafana/ui';
 
 export interface Props {
   rawQuery: string;
@@ -39,14 +40,19 @@ export class Help extends React.Component<Props, State> {
         <div className="gf-form-inline">
           <div className="gf-form" onClick={this.onHelpClicked}>
             <label className="gf-form-label query-keyword pointer">
-              Show Help <i className={`fa fa-caret-${displayHelp ? 'down' : 'right'}`} />
+              Show Help <Icon name={displayHelp ? 'angle-down' : 'angle-right'} />
             </label>
           </div>
 
           {rawQuery && (
             <div className="gf-form" onClick={this.onRawQueryClicked}>
               <label className="gf-form-label query-keyword">
-                Raw Query <i className={`fa fa-caret-${displaRawQuery ? 'down' : 'right'}`} ng-show="ctrl.showHelp" />
+                Raw query
+                <Icon
+                  name={displaRawQuery ? 'angle-down' : 'angle-right'}
+                  ng-show="ctrl.showHelp"
+                  style={{ marginTop: '3px' }}
+                />
               </label>
             </div>
           )}

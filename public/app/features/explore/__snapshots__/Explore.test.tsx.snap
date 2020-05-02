@@ -1,147 +1,51 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`Explore should render component 1`] = `
-<ContextProvider
-  value={
-    Object {
-      "store": Object {
-        "dispatch": [Function],
-        "getState": [Function],
-        "replaceReducer": [Function],
-        "subscribe": [Function],
-        Symbol(observable): [Function],
-      },
-      "subscription": Subscription {
-        "handleChangeWrapper": [Function],
-        "listeners": Object {
-          "notify": [Function],
-        },
-        "onStateChange": [Function],
-        "parentSub": undefined,
-        "store": Object {
-          "dispatch": [Function],
-          "getState": [Function],
-          "replaceReducer": [Function],
-          "subscribe": [Function],
-          Symbol(observable): [Function],
-        },
-        "unsubscribe": null,
-      },
-    }
-  }
+<div
+  aria-label="Explore"
+  className="explore"
 >
-  <Explore
-    absoluteRange={
-      Object {
-        "from": 0,
-        "to": 0,
-      }
-    }
-    addQueryRow={[MockFunction]}
-    changeSize={[MockFunction]}
-    datasourceInstance={
-      Object {
-        "components": Object {
-          "ExploreStartPage": Object {},
-        },
-        "meta": Object {
-          "logs": true,
-          "metrics": true,
-        },
-      }
-    }
-    datasourceMissing={false}
+  <Connect(UnConnectedExploreToolbar)
     exploreId="left"
-    graphResult={Array []}
-    initialDatasource="test"
-    initialQueries={Array []}
-    initialRange={
-      Object {
-        "from": "2019-01-01T10:00:00.000Z",
-        "raw": Object {
-          "from": "now-6h",
-          "to": "now",
-        },
-        "to": "2019-01-01T16:00:00.000Z",
-      }
-    }
-    initialUI={
-      Object {
-        "showingGraph": false,
-        "showingLogs": false,
-        "showingTable": false,
-      }
-    }
-    initializeExplore={[MockFunction]}
-    initialized={true}
-    isLive={false}
-    loading={false}
-    mode="Metrics"
-    modifyQueries={[MockFunction]}
-    onHiddenSeriesChanged={[MockFunction]}
-    originPanelId={1}
-    queryKeys={Array []}
-    queryResponse={
-      Object {
-        "error": Object {},
-        "request": Object {
-          "app": "explore",
-          "dashboardId": 0,
-          "interval": "1s",
-          "panelId": 1,
-          "requestId": "1",
-          "scopedVars": Object {
-            "apps": Object {
-              "value": "value",
-            },
-          },
-          "startTime": 0,
-          "targets": Array [
-            Object {
-              "refId": "A",
-            },
-          ],
-          "timezone": "UTC",
-        },
-        "series": Array [],
-        "state": "NotStarted",
-        "timeRange": Object {
-          "from": "2019-01-01T10:00:00.000Z",
-          "raw": Object {
-            "from": "now-6h",
-            "to": "now",
-          },
-          "to": "2019-01-01T16:00:00.000Z",
-        },
-      }
-    }
-    refreshExplore={[MockFunction]}
-    scanRange={
-      Object {
-        "from": "0",
-        "to": "0",
-      }
-    }
-    scanStart={[MockFunction]}
-    scanStopAction={[Function]}
-    scanning={false}
-    setQueries={[MockFunction]}
-    showingGraph={false}
-    showingTable={false}
-    split={false}
-    syncedTimes={false}
-    timeZone="UTC"
-    toggleGraph={[Function]}
-    update={
-      Object {
-        "datasource": false,
-        "mode": false,
-        "queries": false,
-        "range": false,
-        "ui": false,
-      }
-    }
-    updateTimeRange={[MockFunction]}
+    onChangeTime={[Function]}
   />
-</ContextProvider>
+  <div
+    className="explore-container"
+  >
+    <div
+      className="panel-container css-kj45dn-queryContainer"
+    >
+      <QueryRows
+        exploreEvents={
+          Emitter {
+            "emitter": EventEmitter {
+              "_events": Object {},
+              "_eventsCount": 0,
+            },
+          }
+        }
+        exploreId="left"
+        queryKeys={Array []}
+      />
+      <SecondaryActions
+        addQueryRowButtonDisabled={false}
+        addQueryRowButtonHidden={false}
+        onClickAddQueryRowButton={[Function]}
+        onClickRichHistoryButton={[Function]}
+        richHistoryButtonActive={false}
+      />
+    </div>
+    <Component
+      queryError={Object {}}
+    />
+    <AutoSizer
+      disableHeight={true}
+      disableWidth={false}
+      onResize={[Function]}
+      style={Object {}}
+    >
+      <Component />
+    </AutoSizer>
+  </div>
+</div>
 `;

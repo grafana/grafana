@@ -21,7 +21,7 @@ export interface Props {
 }
 
 const getStyles = stylesFactory((theme: GrafanaTheme, isHorizontal: boolean) => {
-  const trackColor = theme.isLight ? theme.colors.gray5 : theme.colors.dark6;
+  const trackColor = theme.isLight ? theme.palette.gray5 : theme.palette.dark6;
   const container = isHorizontal
     ? css`
         width: 100%;
@@ -39,28 +39,28 @@ const getStyles = stylesFactory((theme: GrafanaTheme, isHorizontal: boolean) => 
         margin-top: -10px;
       }
       .rc-slider-handle {
-        border: solid 2px ${theme.colors.blue77};
-        background-color: ${theme.colors.blue77};
+        border: solid 2px ${theme.palette.blue77};
+        background-color: ${theme.palette.blue77};
       }
       .rc-slider-handle:hover {
-        border-color: ${theme.colors.blue77};
+        border-color: ${theme.palette.blue77};
       }
       .rc-slider-handle:focus {
-        border-color: ${theme.colors.blue77};
+        border-color: ${theme.palette.blue77};
         box-shadow: none;
       }
       .rc-slider-handle:active {
-        border-color: ${theme.colors.blue77};
+        border-color: ${theme.palette.blue77};
         box-shadow: none;
       }
       .rc-slider-handle-click-focused:focus {
-        border-color: ${theme.colors.blue77};
+        border-color: ${theme.palette.blue77};
       }
       .rc-slider-dot-active {
-        border-color: ${theme.colors.blue77};
+        border-color: ${theme.palette.blue77};
       }
       .rc-slider-track {
-        background-color: ${theme.colors.blue77};
+        background-color: ${theme.palette.blue77};
       }
       .rc-slider-rail {
         background-color: ${trackColor};
@@ -75,6 +75,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme, isHorizontal: boolean) => 
       .rc-slider-tooltip {
         cursor: grab;
         user-select: none;
+        z-index: ${theme.zIndex.tooltip};
       }
 
       .rc-slider-tooltip-inner {

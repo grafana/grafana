@@ -15,12 +15,12 @@ const setup = (propOverrides?: Partial<Props>, renderMethod = shallow) => {
     canMove: false,
     deleteItem: noop,
     moveTo: noop,
-    onSelectAllChanged: noop,
     onStarredFilterChange: noop,
     onTagFilterChange: noop,
-    selectedStarredFilter: 'starred',
-    selectedTagFilter: 'tag',
-    tagFilterOptions: [],
+    onToggleAllChecked: noop,
+    //@ts-ignore
+    query: { starred: false, sort: null, tag: ['tag'] },
+    onSortChange: noop,
   };
 
   Object.assign(props, propOverrides);
@@ -37,24 +37,22 @@ const setup = (propOverrides?: Partial<Props>, renderMethod = shallow) => {
 describe('SearchResultsFilter', () => {
   it('should render "filter by starred" and "filter by tag" filters by default', () => {
     const { wrapper } = setup();
-    expect(wrapper.find({ placeholder: 'Filter by starred' })).toHaveLength(1);
-    expect(wrapper.find({ placeholder: 'Filter by tag' })).toHaveLength(1);
+    const ActionRow = wrapper.find('ActionRow').shallow();
+    expect(ActionRow.find('Checkbox')).toHaveLength(1);
     expect(findBtnByText(wrapper, 'Move')).toHaveLength(0);
     expect(findBtnByText(wrapper, 'Delete')).toHaveLength(0);
   });
 
   it('should render Move and Delete buttons when canDelete is true', () => {
     const { wrapper } = setup({ canDelete: true });
-    expect(wrapper.find({ placeholder: 'Filter by starred' })).toHaveLength(0);
-    expect(wrapper.find({ placeholder: 'Filter by tag' })).toHaveLength(0);
+    expect(wrapper.find('Checkbox')).toHaveLength(1);
     expect(findBtnByText(wrapper, 'Move')).toHaveLength(1);
     expect(findBtnByText(wrapper, 'Delete')).toHaveLength(1);
   });
 
   it('should render Move and Delete buttons when canMove is true', () => {
     const { wrapper } = setup({ canMove: true });
-    expect(wrapper.find({ placeholder: 'Filter by starred' })).toHaveLength(0);
-    expect(wrapper.find({ placeholder: 'Filter by tag' })).toHaveLength(0);
+    expect(wrapper.find('Checkbox')).toHaveLength(1);
     expect(findBtnByText(wrapper, 'Move')).toHaveLength(1);
     expect(findBtnByText(wrapper, 'Delete')).toHaveLength(1);
   });
@@ -64,10 +62,12 @@ describe('SearchResultsFilter', () => {
     const option = { value: true, label: 'Yes' };
     //@ts-ignore
     const { wrapper } = setup({ onStarredFilterChange: mockFilterStarred }, mount);
+    //@ts-ignore
     wrapper
-      .find({ placeholder: 'Filter by starred' })
-      .at(0)
-      .prop('onChange')(option);
+      .find('Checkbox')
+      .at(1)
+      .prop('onChange')(option as any);
+
     expect(mockFilterStarred).toHaveBeenCalledTimes(1);
     expect(mockFilterStarred).toHaveBeenCalledWith(option);
   });
@@ -79,19 +79,12 @@ describe('SearchResultsFilter', () => {
       { value: 'tag2', label: 'Tag 2' },
     ];
     //@ts-ignore
-    const { wrapper } = setup({ onTagFilterChange: mockFilterByTags, tagFilterOptions: tags }, mount);
+    const { wrapper } = setup({ onTagFilterChange: mockFilterByTags }, mount);
     wrapper
       .find({ placeholder: 'Filter by tag' })
       .at(0)
-      .prop('onChange')(tags[0]);
+      .prop('onChange')([tags[0]]);
     expect(mockFilterByTags).toHaveBeenCalledTimes(1);
-    expect(mockFilterByTags).toHaveBeenCalledWith(tags[0]);
-  });
-
-  it('should call "onSelectAllChanged" when checkbox is changed', () => {
-    const mockSelectAll = jest.fn();
-    const { wrapper } = setup({ onSelectAllChanged: mockSelectAll });
-    wrapper.find('Checkbox').simulate('change');
-    expect(mockSelectAll).toHaveBeenCalledTimes(1);
+    expect(mockFilterByTags).toHaveBeenCalledWith(['tag1']);
   });
 });

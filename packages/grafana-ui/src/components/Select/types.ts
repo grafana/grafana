@@ -1,47 +1,58 @@
 import { SelectableValue } from '@grafana/data';
 import React from 'react';
-import { FormInputSize } from '../Forms/types';
 
 export type SelectValue<T> = T | SelectableValue<T> | T[] | Array<SelectableValue<T>>;
 
 export interface SelectCommonProps<T> {
+  allowCustomValue?: boolean;
+  /** Focus is set to the Select when rendered*/
+  autoFocus?: boolean;
+  backspaceRemovesValue?: boolean;
   className?: string;
-  options?: Array<SelectableValue<T>>;
+  closeMenuOnSelect?: boolean;
+  /** Used for custom components. For more information, see `react-select` */
+  components?: any;
   defaultValue?: any;
-  inputValue?: string;
-  value?: SelectValue<T>;
+  disabled?: boolean;
+  /**   Function for formatting the text that is displayed when creating a new value*/
+  formatCreateLabel?: (input: string) => string;
   getOptionLabel?: (item: SelectableValue<T>) => string;
   getOptionValue?: (item: SelectableValue<T>) => string;
-  onCreateOption?: (value: string) => void;
+  inputValue?: string;
+  invalid?: boolean;
+  isClearable?: boolean;
+  isLoading?: boolean;
+  isMulti?: boolean;
+  isOpen?: boolean;
+  /** Disables the possibility to type into the input*/
+  isSearchable?: boolean;
+  showAllSelectedWhenOpen?: boolean;
+  maxMenuHeight?: number;
+  maxVisibleValues?: number;
+  menuPlacement?: 'auto' | 'bottom' | 'top';
+  menuPosition?: 'fixed' | 'absolute';
+  /** The message to display when no options could be found */
+  noOptionsMessage?: string;
+  onBlur?: () => void;
   onChange: (value: SelectableValue<T>) => {} | void;
+  onCloseMenu?: () => void;
+  /** allowCustomValue must be enabled. Function decides what to do with that custom value. */
+  onCreateOption?: (value: string) => void;
   onInputChange?: (label: string) => void;
   onKeyDown?: (event: React.KeyboardEvent) => void;
-  placeholder?: string;
-  disabled?: boolean;
-  isSearchable?: boolean;
-  isClearable?: boolean;
-  autoFocus?: boolean;
-  openMenuOnFocus?: boolean;
-  onBlur?: () => void;
-  maxMenuHeight?: number;
-  isLoading?: boolean;
-  noOptionsMessage?: string;
-  isMulti?: boolean;
-  backspaceRemovesValue?: boolean;
-  isOpen?: boolean;
-  components?: any;
   onOpenMenu?: () => void;
-  onCloseMenu?: () => void;
-  tabSelectsValue?: boolean;
-  formatCreateLabel?: (input: string) => string;
-  allowCustomValue?: boolean;
-  width?: number;
-  size?: FormInputSize;
+  openMenuOnFocus?: boolean;
+  options?: Array<SelectableValue<T>>;
+  placeholder?: string;
   /** item to be rendered in front of the input */
   prefix?: JSX.Element | string | null;
   /** Use a custom element to control Select. A proper ref to the renderControl is needed if 'portal' isn't set to null*/
   renderControl?: ControlComponent<T>;
-  menuPosition?: 'fixed' | 'absolute';
+  tabSelectsValue?: boolean;
+  value?: SelectValue<T>;
+  /** Sets the width to a multiple of 8px. Should only be used with inline forms. Setting width of the container is preferred in other cases.*/
+  width?: number;
+  isOptionDisabled?: () => boolean;
 }
 
 export interface SelectAsyncProps<T> {
@@ -49,6 +60,8 @@ export interface SelectAsyncProps<T> {
   defaultOptions?: boolean | Array<SelectableValue<T>>;
   /** Asynchronously load select options */
   loadOptions?: (query: string) => Promise<Array<SelectableValue<T>>>;
+  /** If cacheOptions is true, then the loaded data will be cached. The cache will remain until cacheOptions changes value. */
+  cacheOptions?: boolean;
   /** Message to display when options are loading */
   loadingMessage?: string;
 }

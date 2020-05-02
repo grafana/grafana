@@ -1,5 +1,4 @@
 import React, { useCallback } from 'react';
-import { deprecationWarning } from '@grafana/data';
 // @ts-ignore
 import { default as ReactSelect } from '@torkelo/react-select';
 // @ts-ignore
@@ -11,7 +10,6 @@ import { default as AsyncCreatable } from '@torkelo/react-select/async-creatable
 
 import { Icon } from '../Icon/Icon';
 import { css, cx } from 'emotion';
-import { inputSizesPixels } from '../Forms/commonStyles';
 import resetSelectStyles from './resetSelectStyles';
 import { SelectMenu, SelectMenuOptions } from './SelectMenu';
 import { IndicatorsContainer } from './IndicatorsContainer';
@@ -25,6 +23,31 @@ import { useTheme } from '../../themes';
 import { getSelectStyles } from './getSelectStyles';
 import { cleanValue } from './utils';
 import { SelectBaseProps, SelectValue } from './types';
+
+interface ExtraValuesIndicatorProps {
+  maxVisibleValues?: number | undefined;
+  selectedValuesCount: number;
+  menuIsOpen: boolean;
+  showAllSelectedWhenOpen: boolean;
+}
+
+const renderExtraValuesIndicator = (props: ExtraValuesIndicatorProps) => {
+  const { maxVisibleValues, selectedValuesCount, menuIsOpen, showAllSelectedWhenOpen } = props;
+
+  if (
+    maxVisibleValues !== undefined &&
+    selectedValuesCount > maxVisibleValues &&
+    !(showAllSelectedWhenOpen && menuIsOpen)
+  ) {
+    return (
+      <span key="excess-values" id="excess-values">
+        (+{selectedValuesCount - maxVisibleValues})
+      </span>
+    );
+  }
+
+  return null;
+};
 
 const CustomControl = (props: any) => {
   const {
@@ -68,6 +91,9 @@ export function SelectBase<T>({
   allowCustomValue = false,
   autoFocus = false,
   backspaceRemovesValue = true,
+  cacheOptions,
+  className,
+  closeMenuOnSelect = true,
   components,
   defaultOptions,
   defaultValue,
@@ -81,10 +107,13 @@ export function SelectBase<T>({
   isLoading = false,
   isMulti = false,
   isOpen,
+  isOptionDisabled,
   isSearchable = true,
   loadOptions,
   loadingMessage = 'Loading options...',
   maxMenuHeight = 300,
+  maxVisibleValues,
+  menuPlacement = 'auto',
   menuPosition,
   noOptionsMessage = 'No options found',
   onBlur,
@@ -99,7 +128,7 @@ export function SelectBase<T>({
   placeholder = 'Choose',
   prefix,
   renderControl,
-  size = 'auto',
+  showAllSelectedWhenOpen = true,
   tabSelectsValue = true,
   value,
   width,
@@ -143,6 +172,7 @@ export function SelectBase<T>({
     autoFocus,
     backspaceRemovesValue,
     captureMenuScroll: false,
+    closeMenuOnSelect,
     defaultValue,
     // Also passing disabled, as this is the new Select API, and I want to use this prop instead of react-select's one
     disabled,
@@ -155,10 +185,12 @@ export function SelectBase<T>({
     isDisabled: disabled,
     isLoading,
     isMulti,
+    isOptionDisabled,
     isSearchable,
     maxMenuHeight,
+    maxVisibleValues,
     menuIsOpen: isOpen,
-    menuPlacement: 'auto',
+    menuPlacement,
     menuPosition,
     menuShouldScrollIntoView: false,
     onBlur,
@@ -172,16 +204,10 @@ export function SelectBase<T>({
     placeholder,
     prefix,
     renderControl,
+    showAllSelectedWhenOpen,
     tabSelectsValue,
     value: isMulti ? selectedValue : selectedValue[0],
   };
-
-  // width property is deprecated in favor of size or className
-  let widthClass = '';
-  if (width) {
-    deprecationWarning('Select', 'width property', 'size or className');
-    widthClass = 'width-' + width;
-  }
 
   if (allowCustomValue) {
     ReactSelectComponent = Creatable;
@@ -194,6 +220,7 @@ export function SelectBase<T>({
     ReactSelectComponent = allowCustomValue ? AsyncCreatable : ReactAsyncSelect;
     asyncSelectProps = {
       loadOptions,
+      cacheOptions,
       defaultOptions,
     };
   }
@@ -204,7 +231,7 @@ export function SelectBase<T>({
         components={{
           MenuList: SelectMenu,
           Group: SelectOptionGroup,
-          ValueContainer: ValueContainer,
+          ValueContainer,
           Placeholder: (props: any) => (
             <div
               {...props.innerProps}
@@ -224,7 +251,28 @@ export function SelectBase<T>({
               {props.children}
             </div>
           ),
-          IndicatorsContainer: IndicatorsContainer,
+          IndicatorsContainer: (props: any) => {
+            const { selectProps } = props;
+            const { value, showAllSelectedWhenOpen, maxVisibleValues, menuIsOpen } = selectProps;
+
+            if (maxVisibleValues !== undefined) {
+              const selectedValuesCount = value.length;
+              const indicatorChildren = [...props.children];
+              indicatorChildren.splice(
+                -1,
+                0,
+                renderExtraValuesIndicator({
+                  maxVisibleValues,
+                  selectedValuesCount,
+                  showAllSelectedWhenOpen,
+                  menuIsOpen,
+                })
+              );
+              return <IndicatorsContainer {...props} children={indicatorChildren} />;
+            }
+
+            return <IndicatorsContainer {...props} />;
+          },
           IndicatorSeparator: () => <></>,
           Control: CustomControl,
           Option: SelectMenuOptions,
@@ -242,7 +290,7 @@ export function SelectBase<T>({
             );
           },
           LoadingIndicator: (props: any) => {
-            return <Icon name="spinner" className="fa fa-spin" />;
+            return <Icon className="fa-spin" name="fa fa-spinner" />;
           },
           LoadingMessage: (props: any) => {
             return <div className={styles.loadingMessage}>{loadingMessage}</div>;
@@ -262,21 +310,28 @@ export function SelectBase<T>({
         }}
         styles={{
           ...resetSelectStyles(),
+          menuPortal: () => ({
+            zIndex: theme.zIndex.dropdown,
+          }),
           //These are required for the menu positioning to function
-          menu: ({ top, bottom, width, position }: any) => ({
+          menu: ({ top, bottom, position }: any) => ({
             top,
             bottom,
-            width,
             position,
             marginBottom: !!bottom ? '10px' : '0',
-            zIndex: 9999,
+            minWidth: '100%',
+            zIndex: theme.zIndex.dropdown,
           }),
           container: () => ({
             position: 'relative',
-            width: inputSizesPixels(size),
+            width: width ? `${8 * width}px` : '100%',
+          }),
+          option: (provided: any, state: any) => ({
+            ...provided,
+            opacity: state.isDisabled ? 0.5 : 1,
           }),
         }}
-        className={widthClass}
+        className={className}
         {...commonSelectProps}
         {...creatableProps}
         {...asyncSelectProps}

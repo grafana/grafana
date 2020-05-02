@@ -4,7 +4,7 @@ $select-input-bg-disabled: $input-bg-disabled;
 @mixin select-control() {
   width: 100%;
   margin-right: $space-xs;
-  @include border-radius($input-border-radius-sm);
+  @include border-radius($input-border-radius);
   background-color: $input-bg;
 }
 
@@ -43,8 +43,6 @@ $select-input-bg-disabled: $input-bg-disabled;
 }
 
 .gf-form-select-box__input {
-  padding-left: 5px;
-
   input {
     line-height: inherit;
   }
@@ -122,7 +120,7 @@ $select-input-bg-disabled: $input-bg-disabled;
 
 .gf-form-select-box__value-container {
   display: inline-block;
-  padding: 6px 16px 6px 10px;
+  padding: 6px 20px 6px 10px;
   vertical-align: middle;
 
   > div {
@@ -135,24 +133,9 @@ $select-input-bg-disabled: $input-bg-disabled;
   position: absolute;
   height: 100%;
   right: 8px;
+  top: 1px;
   display: inline-block;
   text-align: right;
-}
-
-.gf-form-select-box__select-arrow {
-  border-color: $input-color-select-arrow transparent transparent;
-  border-style: solid;
-  border-width: 4px 4px 2.5px;
-  display: inline-block;
-  position: absolute;
-  top: 50%;
-  right: 2px;
-  margin-top: -2px;
-
-  &.gf-form-select-box__select-arrow--reversed {
-    border-color: transparent transparent $input-color-select-arrow;
-    border-width: 0 4px 4px;
-  }
 }
 
 .gf-form-input--form-dropdown {

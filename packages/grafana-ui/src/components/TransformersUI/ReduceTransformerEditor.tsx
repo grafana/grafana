@@ -1,34 +1,44 @@
 import React from 'react';
 import { StatsPicker } from '../StatsPicker/StatsPicker';
-import { ReduceTransformerOptions, DataTransformerID, ReducerID, transformersRegistry } from '@grafana/data';
-import { TransformerUIRegistyItem, TransformerUIProps } from './types';
+import {
+  ReduceTransformerOptions,
+  DataTransformerID,
+  ReducerID,
+  standardTransformers,
+  TransformerRegistyItem,
+  TransformerUIProps,
+} from '@grafana/data';
 
 // TODO:  Minimal implementation, needs some <3
 export const ReduceTransformerEditor: React.FC<TransformerUIProps<ReduceTransformerOptions>> = ({
   options,
   onChange,
-  input,
 }) => {
   return (
-    <StatsPicker
-      width={25}
-      placeholder="Choose Stat"
-      allowMultiple
-      stats={options.reducers || []}
-      onChange={stats => {
-        onChange({
-          ...options,
-          reducers: stats as ReducerID[],
-        });
-      }}
-    />
+    <div className="gf-form-inline">
+      <div className="gf-form gf-form--grow">
+        <div className="gf-form-label width-8">Calculations</div>
+        <StatsPicker
+          className="flex-grow-1"
+          placeholder="Choose Stat"
+          allowMultiple
+          stats={options.reducers || []}
+          onChange={stats => {
+            onChange({
+              ...options,
+              reducers: stats as ReducerID[],
+            });
+          }}
+        />
+      </div>
+    </div>
   );
 };
 
-export const reduceTransformRegistryItem: TransformerUIRegistyItem<ReduceTransformerOptions> = {
+export const reduceTransformRegistryItem: TransformerRegistyItem<ReduceTransformerOptions> = {
   id: DataTransformerID.reduce,
-  component: ReduceTransformerEditor,
-  transformer: transformersRegistry.get(DataTransformerID.reduce),
-  name: 'Reduce',
-  description: 'UI for reduce transformation',
+  editor: ReduceTransformerEditor,
+  transformation: standardTransformers.reduceTransformer,
+  name: standardTransformers.reduceTransformer.name,
+  description: standardTransformers.reduceTransformer.description,
 };

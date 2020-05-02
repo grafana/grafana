@@ -5,7 +5,6 @@
 title = "parseDateMath"
 keywords = ["grafana","documentation","sdk","@grafana/data"]
 type = "docs"
-draft = true
 +++
 
 ## dateMath.parseDateMath() function
@@ -17,7 +16,7 @@ Parses math part of the time string and shifts supplied time according to that m
 <b>Signature</b>
 
 ```typescript
-function parseDateMath(mathString: string, time: any, roundUp?: boolean): DateTime | undefined;
+export declare function parseDateMath(mathString: string, time: any, roundUp?: boolean): DateTime | undefined;
 ```
 <b>Import</b>
 
@@ -31,7 +30,7 @@ const { parseDateMath } = dateMath;
 |  --- | --- | --- |
 |  mathString | <code>string</code> |  |
 |  time | <code>any</code> |  |
-|  roundUp | <code>boolean</code> |  |
+|  roundUp | <code>boolean</code> | If true it will round the time to endOf time unit, otherwise to startOf time unit. |
 
 <b>Returns:</b>
 

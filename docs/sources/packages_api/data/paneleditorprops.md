@@ -5,7 +5,6 @@
 title = "PanelEditorProps"
 keywords = ["grafana","documentation","sdk","@grafana/data"]
 type = "docs"
-draft = true
 +++
 
 ## PanelEditorProps interface
@@ -24,11 +23,13 @@ import { PanelEditorProps } from '@grafana/data';
 
 |  Property | Type | Description |
 |  --- | --- | --- |
-|  [data](#data-property) | <code>PanelData</code> |  |
-|  [onOptionsChange](#onoptionschange-property) | <code>(options: T, callback?: () =&gt; void) =&gt; void</code> |  |
-|  [options](#options-property) | <code>T</code> |  |
+|  [data](#data-property) | <code>PanelData</code> | Result set of panel queries |
+|  [onOptionsChange](#onoptionschange-property) | <code>(options: T, callback?: () =&gt; void) =&gt; void</code> | Panel options change handler |
+|  [options](#options-property) | <code>T</code> | Panel options |
 
 ### data property
+
+Result set of panel queries
 
 <b>Signature</b>
 
@@ -38,6 +39,8 @@ data: PanelData;
 
 ### onOptionsChange property
 
+Panel options change handler
+
 <b>Signature</b>
 
 ```typescript
@@ -45,6 +48,8 @@ onOptionsChange: (options: T, callback?: () => void) => void;
 ```
 
 ### options property
+
+Panel options
 
 <b>Signature</b>
 

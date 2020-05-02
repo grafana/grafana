@@ -3,7 +3,7 @@ import { getBackendSrv } from '@grafana/runtime';
 import { NavModelSrv } from 'app/core/core';
 import { User } from 'app/core/services/context_srv';
 import { UserSession, Scope, CoreEvents, AppEventEmitter } from 'app/types';
-import { dateTime } from '@grafana/data';
+import { dateTimeFormatTimeAgo, dateTimeFormat } from '@grafana/data';
 import { promiseToDigest } from 'app/core/utils/promiseToDigest';
 
 export default class AdminEditUserCtrl {
@@ -47,8 +47,8 @@ export default class AdminEditUserCtrl {
             return {
               id: session.id,
               isActive: session.isActive,
-              seenAt: dateTime(session.seenAt).fromNow(),
-              createdAt: dateTime(session.createdAt).format('MMMM DD, YYYY'),
+              seenAt: dateTimeFormatTimeAgo(session.seenAt),
+              createdAt: dateTimeFormat(session.createdAt, { format: 'MMMM DD, YYYY' }),
               clientIp: session.clientIp,
               browser: session.browser,
               browserVersion: session.browserVersion,
@@ -188,7 +188,7 @@ export default class AdminEditUserCtrl {
       $scope.appEvent(CoreEvents.showConfirmModal, {
         title: 'Delete',
         text: 'Do you want to delete ' + user.login + '?',
-        icon: 'fa-trash',
+        icon: 'trash-alt',
         yesText: 'Delete',
         onConfirm: () => {
           promiseToDigest($scope)(

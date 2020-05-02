@@ -1,5 +1,5 @@
 import React from 'react';
-import { storiesOf } from '@storybook/react';
+
 import { DataSourceHttpSettings } from './DataSourceHttpSettings';
 import { DataSourceSettings } from '@grafana/data';
 import { UseState } from '../../utils/storybook/UseState';
@@ -31,9 +31,12 @@ const settingsMock: DataSourceSettings<any, any> = {
   readOnly: true,
 };
 
-const DataSourceHttpSettingsStories = storiesOf('Panel/DataSource/DataSourceHttpSettings', module);
+export default {
+  title: 'Data Source/DataSourceHttpSettings',
+  component: DataSourceHttpSettings,
+};
 
-DataSourceHttpSettingsStories.add('default', () => {
+export const basic = () => {
   return (
     <UseState initialState={settingsMock} logState>
       {(dataSourceSettings, updateDataSourceSettings) => {
@@ -48,4 +51,4 @@ DataSourceHttpSettingsStories.add('default', () => {
       }}
     </UseState>
   );
-});
+};

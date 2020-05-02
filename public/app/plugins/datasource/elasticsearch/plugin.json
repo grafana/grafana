@@ -7,7 +7,7 @@
   "info": {
     "description": "Open source logging & analytics database",
     "author": {
-      "name": "Grafana Project",
+      "name": "Grafana Labs",
       "url": "https://grafana.com"
     },
     "keywords": ["elasticsearch"],

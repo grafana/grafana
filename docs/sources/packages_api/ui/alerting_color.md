@@ -5,7 +5,6 @@
 title = "ALERTING_COLOR"
 keywords = ["grafana","documentation","sdk","@grafana/ui"]
 type = "docs"
-draft = true
 +++
 
 ## ALERTING\_COLOR variable

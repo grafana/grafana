@@ -1,18 +1,14 @@
 <div class="editor-row">
 
   <div class="grafana-info-box" ng-if="ctrl.panel.gauge.show">
-    <h5>Gauge Migration</h5>
+    <h5>Gauge migration</h5>
     <p>
-      Gauge visualizations within the Singlestat panel are deprecated.  Please
-      migrate this panel to use the Gauge panel
+      This panel is deprecated. Please migrate to the new Gauge panel.
 
       <div class="gf-form-button-row">
-        <button class="btn btn-primary" ng-click="ctrl.migrateToGaugePanel(true)">
-          Migrate to Gauge Panel
-        </button>
-        <button class="btn btn-inverse" ng-click="ctrl.migrateToGaugePanel(false)">
-          Show as single stat
-        </button>
+        <button class="btn btn-primary" ng-click="ctrl.migrateToPanel('gauge')">
+          Migrate to Gauge panel
+        </button>       
       </div>
 
       <br/>
@@ -22,16 +18,35 @@
       </div>
 
       <div ng-if="ctrl.panel.prefix">
-        <b>NOTE:</b> Prefix will not be show in the gauge panel
+        <b>NOTE:</b> Prefix is no longer supported but can be done via a custom unit
       </div>
 
       <div ng-if="ctrl.panel.postfix">
-        <b>NOTE:</b> Postfix will not be show in the gauge panel
+        <b>NOTE:</b> Postfix is no longer supported but can be done via a custom unit
+      </div>
+    </p>
+  </div>
+
+  <div class="grafana-info-box" ng-if="!ctrl.panel.gauge.show">
+    <h5>Migration</h5>
+    <p>
+      This panel is deprecated. Please migrate to the new Stat panel.
+
+      <div class="gf-form-button-row">
+        <button class="btn btn-primary" ng-click="ctrl.migrateToPanel('stat')">
+          Migrate to Stat panel
+        </button>       
+      </div>
+      
+      <br/>
+
+      <div ng-if="ctrl.panel.prefix">
+        <b>NOTE:</b> Prefix is no longer supported but can be done via a custom unit
       </div>
 
-      <div ng-if="ctrl.panel.links && ctrl.panel.links.length">
-        <b>NOTE:</b> Links will be in the upper left corner, rather than anywhere on the gauge
-      </div>
+      <div ng-if="ctrl.panel.postfix">
+        <b>NOTE:</b> Postfix is no longer supported but can be done via a custom unit
+      </div>      
     </p>
   </div>
 
@@ -163,7 +178,7 @@
         <label class="gf-form-label width-10">Min</label>
         <input type="number" class="gf-form-input width-6" placeholder="0" data-placement="right" ng-model="ctrl.panel.gauge.minValue" ng-change="ctrl.refresh()" ng-model-onblur>
         <label class="gf-form-label alert-state-critical" ng-show="ctrl.invalidGaugeRange">
-          &nbsp; <i class="fa fa-warning"></i>
+          &nbsp; <icon name="'exclamation-triangle'"></icon>
           Min value is bigger than max.
         </label>
       </div>

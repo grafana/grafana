@@ -15,7 +15,6 @@ import { GRID_CELL_HEIGHT, GRID_CELL_VMARGIN, GRID_COLUMN_COUNT } from 'app/core
 import { DashboardPanel } from './DashboardPanel';
 import { DashboardModel, PanelModel } from '../state';
 import { CoreEvents } from 'app/types';
-import { PanelEvents } from '@grafana/data';
 import { panelAdded, panelRemoved } from '../state/PanelModel';
 
 let lastGridWidth = 1200;
@@ -33,7 +32,7 @@ interface GridWrapperProps {
   className: string;
   isResizable?: boolean;
   isDraggable?: boolean;
-  isFullscreen?: boolean;
+  viewPanel: PanelModel | null;
 }
 
 function GridWrapper({
@@ -48,7 +47,7 @@ function GridWrapper({
   className,
   isResizable,
   isDraggable,
-  isFullscreen,
+  viewPanel,
 }: GridWrapperProps) {
   const width = size.width > 0 ? size.width : lastGridWidth;
 
@@ -56,7 +55,7 @@ function GridWrapper({
   if (width !== lastGridWidth) {
     if (ignoreNextWidthChange) {
       ignoreNextWidthChange = false;
-    } else if (!isFullscreen && Math.abs(width - lastGridWidth) > 8) {
+    } else if (!viewPanel && Math.abs(width - lastGridWidth) > 8) {
       onWidthChange();
       lastGridWidth = width;
     }
@@ -95,10 +94,10 @@ const SizedReactLayoutGrid = sizeMe({ monitorWidth: true })(GridWrapper);
 
 export interface Props {
   dashboard: DashboardModel;
-  isEditing: boolean;
-  isFullscreen: boolean;
+  editPanel: PanelModel | null;
+  viewPanel: PanelModel | null;
   scrollTop: number;
-  isNewEditorOpen?: boolean;
+  isPanelEditorOpen?: boolean;
 }
 
 export class DashboardGrid extends PureComponent<Props> {
@@ -111,7 +110,6 @@ export class DashboardGrid extends PureComponent<Props> {
     dashboard.on(panelAdded, this.triggerForceUpdate);
     dashboard.on(panelRemoved, this.triggerForceUpdate);
     dashboard.on(CoreEvents.repeatsProcessed, this.triggerForceUpdate);
-    dashboard.on(PanelEvents.viewModeChanged, this.onViewModeChanged);
     dashboard.on(CoreEvents.rowCollapsed, this.triggerForceUpdate);
     dashboard.on(CoreEvents.rowExpanded, this.triggerForceUpdate);
   }
@@ -121,7 +119,6 @@ export class DashboardGrid extends PureComponent<Props> {
     dashboard.off(panelAdded, this.triggerForceUpdate);
     dashboard.off(panelRemoved, this.triggerForceUpdate);
     dashboard.off(CoreEvents.repeatsProcessed, this.triggerForceUpdate);
-    dashboard.off(PanelEvents.viewModeChanged, this.onViewModeChanged);
     dashboard.off(CoreEvents.rowCollapsed, this.triggerForceUpdate);
     dashboard.off(CoreEvents.rowExpanded, this.triggerForceUpdate);
   }
@@ -181,10 +178,6 @@ export class DashboardGrid extends PureComponent<Props> {
     }
   };
 
-  onViewModeChanged = () => {
-    ignoreNextWidthChange = true;
-  };
-
   updateGridPos = (item: ReactGridLayout.Layout, layout: ReactGridLayout.Layout[]) => {
     this.panelMap[item.i!].updateGridPos(item);
 
@@ -207,7 +200,7 @@ export class DashboardGrid extends PureComponent<Props> {
   };
 
   isInView = (panel: PanelModel): boolean => {
-    if (panel.fullscreen || panel.isEditing) {
+    if (panel.isViewing || panel.isEditing) {
       return true;
     }
 
@@ -248,7 +241,7 @@ export class DashboardGrid extends PureComponent<Props> {
     const panelElements = [];
 
     for (const panel of this.props.dashboard.panels) {
-      const panelClasses = classNames({ 'react-grid-item--fullscreen': panel.fullscreen });
+      const panelClasses = classNames({ 'react-grid-item--fullscreen': panel.isViewing });
       const id = panel.id.toString();
       panel.isInView = this.isInView(panel);
 
@@ -276,14 +269,14 @@ export class DashboardGrid extends PureComponent<Props> {
         panel={panel}
         dashboard={this.props.dashboard}
         isEditing={panel.isEditing}
-        isFullscreen={panel.fullscreen}
+        isViewing={panel.isViewing}
         isInView={panel.isInView}
       />
     );
   }
 
   render() {
-    const { dashboard, isFullscreen } = this.props;
+    const { dashboard, viewPanel } = this.props;
 
     return (
       <SizedReactLayoutGrid
@@ -296,7 +289,7 @@ export class DashboardGrid extends PureComponent<Props> {
         onDragStop={this.onDragStop}
         onResize={this.onResize}
         onResizeStop={this.onResizeStop}
-        isFullscreen={isFullscreen}
+        viewPanel={viewPanel}
       >
         {this.renderPanels()}
       </SizedReactLayoutGrid>

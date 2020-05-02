@@ -1,35 +1,36 @@
 import React, { HTMLProps, ReactNode } from 'react';
 import { GrafanaTheme } from '@grafana/data';
 import { css, cx } from 'emotion';
-import { getFocusStyle, inputSizes, sharedInputStyle } from '../Forms/commonStyles';
+import { getFocusStyle, sharedInputStyle } from '../Forms/commonStyles';
 import { stylesFactory, useTheme } from '../../themes';
 import { Icon } from '../Icon/Icon';
 import { useClientRect } from '../../utils/useClientRect';
-import { FormInputSize } from '../Forms/types';
 
 export interface Props extends Omit<HTMLProps<HTMLInputElement>, 'prefix' | 'size'> {
+  /** Sets the width to a multiple of 8px. Should only be used with inline forms. Setting width of the container is preferred in other cases.*/
+  width?: number;
   /** Show an invalid state around the input */
   invalid?: boolean;
   /** Show an icon as a prefix in the input */
-  prefix?: JSX.Element | string | null;
+  prefix?: ReactNode;
   /** Show an icon as a suffix in the input */
-  suffix?: JSX.Element | string | null;
+  suffix?: ReactNode;
   /** Show a loading indicator as a suffix in the input */
   loading?: boolean;
   /** Add a component as an addon before the input  */
   addonBefore?: ReactNode;
   /** Add a component as an addon after the input */
   addonAfter?: ReactNode;
-  size?: FormInputSize;
 }
 
 interface StyleDeps {
   theme: GrafanaTheme;
   invalid: boolean;
+  width?: number;
 }
 
-export const getInputStyles = stylesFactory(({ theme, invalid = false }: StyleDeps) => {
-  const colors = theme.colors;
+export const getInputStyles = stylesFactory(({ theme, invalid = false, width }: StyleDeps) => {
+  const { palette, colors } = theme;
   const borderRadius = theme.border.radius.sm;
   const height = theme.spacing.formInputHeight;
 
@@ -47,6 +48,7 @@ export const getInputStyles = stylesFactory(({ theme, invalid = false }: StyleDe
     height: 100%;
     /* Min width specified for prefix/suffix classes used outside React component*/
     min-width: ${prefixSuffixStaticWidth};
+    color: ${theme.colors.textWeak};
   `;
 
   return {
@@ -55,14 +57,14 @@ export const getInputStyles = stylesFactory(({ theme, invalid = false }: StyleDe
       css`
         label: input-wrapper;
         display: flex;
-        width: 100%;
-        height: ${height};
+        width: ${width ? `${8 * width}px` : '100%'};
+        height: ${height}px;
         border-radius: ${borderRadius};
         &:hover {
           > .prefix,
           .suffix,
           .input {
-            border-color: ${invalid ? colors.redBase : colors.formInputBorder};
+            border-color: ${invalid ? palette.redBase : colors.formInputBorder};
           }
 
           // only show number buttons on hover
@@ -196,6 +198,7 @@ export const getInputStyles = stylesFactory(({ theme, invalid = false }: StyleDe
         label: input-suffix;
         padding-right: ${theme.spacing.sm};
         padding-left: ${theme.spacing.xs};
+        margin-bottom: -2px;
         border-left: none;
         border-top-left-radius: 0;
         border-bottom-left-radius: 0;
@@ -211,7 +214,7 @@ export const getInputStyles = stylesFactory(({ theme, invalid = false }: StyleDe
 });
 
 export const Input = React.forwardRef<HTMLInputElement, Props>((props, ref) => {
-  const { className, addonAfter, addonBefore, prefix, suffix, invalid, loading, size = 'auto', ...restProps } = props;
+  const { className, addonAfter, addonBefore, prefix, suffix, invalid, loading, width = 0, ...restProps } = props;
   /**
    * Prefix & suffix are positioned absolutely within inputWrapper. We use client rects below to apply correct padding to the input
    * when prefix/suffix is larger than default (28px = 16px(icon) + 12px(left/right paddings)).
@@ -221,10 +224,10 @@ export const Input = React.forwardRef<HTMLInputElement, Props>((props, ref) => {
   const [suffixRect, suffixRef] = useClientRect<HTMLDivElement>();
 
   const theme = useTheme();
-  const styles = getInputStyles({ theme, invalid: !!invalid });
+  const styles = getInputStyles({ theme, invalid: !!invalid, width });
 
   return (
-    <div className={cx(styles.wrapper, inputSizes()[size], className)}>
+    <div className={cx(styles.wrapper, className)}>
       {!!addonBefore && <div className={styles.addon}>{addonBefore}</div>}
 
       <div className={styles.inputWrapper}>
@@ -246,7 +249,7 @@ export const Input = React.forwardRef<HTMLInputElement, Props>((props, ref) => {
 
         {(suffix || loading) && (
           <div className={styles.suffix} ref={suffixRef}>
-            {loading && <Icon name="spinner" className={cx('fa-spin', styles.loadingIndicator)} />}
+            {loading && <Icon name="fa fa-spinner" className={cx('fa-spin', styles.loadingIndicator)} />}
             {suffix}
           </div>
         )}

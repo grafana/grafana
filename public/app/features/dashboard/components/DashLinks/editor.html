@@ -1,8 +1,8 @@
 <div class="page-action-bar">
   <h3 class="dashboard-settings__header">
     <a ng-click="ctrl.backToList()">Dashboard Links</a>
-    <span ng-show="ctrl.mode === 'new'"><i class="fa fa-fw fa-chevron-right"></i> New</span>
-    <span ng-show="ctrl.mode === 'edit'"><i class="fa fa-fw fa-chevron-right"></i> Edit</span>
+    <span ng-show="ctrl.mode === 'new'"><icon name="'angle-right'"></icon> New</span>
+    <span ng-show="ctrl.mode === 'edit'"><icon name="'angle-right'"></icon> Edit</span>
   </h3>
 
   <div class="page-action-bar__spacer"></div>
@@ -11,15 +11,22 @@
     class="btn btn-primary"
     ng-click="ctrl.setupNew()"
     ng-if="ctrl.dashboard.links.length > 0"
-    ng-hide="ctrl.mode === 'edit' || ctrl.mode === 'new'">
-    New
-  </a
+    ng-hide="ctrl.mode === 'edit' || ctrl.mode === 'new'"
   >
+    New
+  </a>
 </div>
 
 <div ng-if="ctrl.mode == 'list'">
   <div ng-if="ctrl.dashboard.links.length === 0">
-    <empty-list-cta on-click="ctrl.setupNew" title="ctrl.emptyListCta.title" buttonIcon="ctrl.emptyListCta.buttonIcon" buttonTitle="ctrl.emptyListCta.buttonTitle" infoBox="ctrl.emptyListCta.infoBox" infoBoxTitle="ctrl.emptyListCta.infoBoxTitle"/>
+    <empty-list-cta
+      on-click="ctrl.setupNew"
+      title="ctrl.emptyListCta.title"
+      buttonIcon="ctrl.emptyListCta.buttonIcon"
+      buttonTitle="ctrl.emptyListCta.buttonTitle"
+      infoBox="ctrl.emptyListCta.infoBox"
+      infoBoxTitle="ctrl.emptyListCta.infoBoxTitle"
+    />
   </div>
 
   <div ng-if="ctrl.dashboard.links.length > 0">
@@ -34,7 +41,7 @@
       <tbody>
         <tr ng-repeat="link in ctrl.dashboard.links">
           <td class="pointer" ng-click="ctrl.editLink(link)">
-            <i class="fa fa-fw fa-external-link"></i>
+            <icon name="'external-link-alt'"></icon>
             {{ link.type }}
           </td>
           <td>
@@ -55,14 +62,14 @@
             </span>
           </td>
           <td style="width: 1%">
-            <i ng-click="ctrl.moveLink($index, -1)" ng-hide="$first" class="pointer fa fa-arrow-up"></i>
+            <icon ng-click="ctrl.moveLink($index, -1)" ng-hide="$first" name="'arrow-up'"></icon>
           </td>
           <td style="width: 1%">
-            <i ng-click="ctrl.moveLink($index, 1)" ng-hide="$last" class="pointer fa fa-arrow-down"></i>
+            <icon ng-click="ctrl.moveLink($index, 1)" ng-hide="$last" name="'arrow-down'"></icon>
           </td>
           <td style="width: 1%">
             <a ng-click="ctrl.deleteLink($index)" class="btn btn-danger btn-small" ng-hide="annotation.builtIn">
-              <i class="fa fa-remove"></i>
+              <icon name="'times'" style="margin-bottom: 0;"></icon>
             </a>
           </td>
         </tr>

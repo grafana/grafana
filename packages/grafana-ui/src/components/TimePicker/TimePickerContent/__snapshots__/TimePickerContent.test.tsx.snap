@@ -2,10 +2,10 @@
 
 exports[`TimePickerContent renders correctly in full screen 1`] = `
 <div
-  className="css-1fbt695"
+  className="css-1py091y"
 >
   <div
-    className="css-13dsoi7"
+    className="css-dlnzj7"
   >
     <FullScreenForm
       historyOptions={Array []}
@@ -93,10 +93,10 @@ exports[`TimePickerContent renders correctly in full screen 1`] = `
 
 exports[`TimePickerContent renders correctly in narrow screen 1`] = `
 <div
-  className="css-1fbt695"
+  className="css-1py091y"
 >
   <div
-    className="css-13dsoi7"
+    className="css-dlnzj7"
   >
     <FullScreenForm
       historyOptions={Array []}
@@ -184,10 +184,10 @@ exports[`TimePickerContent renders correctly in narrow screen 1`] = `
 
 exports[`TimePickerContent renders recent absolute ranges correctly 1`] = `
 <div
-  className="css-1fbt695"
+  className="css-1py091y"
 >
   <div
-    className="css-13dsoi7"
+    className="css-dlnzj7"
   >
     <FullScreenForm
       history={
@@ -214,15 +214,15 @@ exports[`TimePickerContent renders recent absolute ranges correctly 1`] = `
         Array [
           Object {
             "display": "2019-12-17 07:48:27 to 2019-12-18 07:48:27",
-            "from": "2019-12-17 07:48:27",
+            "from": "2019-12-17T07:48:27Z",
             "section": 3,
-            "to": "2019-12-18 07:48:27",
+            "to": "2019-12-18T07:48:27Z",
           },
           Object {
             "display": "2019-10-17 07:48:27 to 2019-10-18 07:48:27",
-            "from": "2019-10-17 07:48:27",
+            "from": "2019-10-17T07:48:27Z",
             "section": 3,
-            "to": "2019-10-18 07:48:27",
+            "to": "2019-10-18T07:48:27Z",
           },
         ]
       }
@@ -277,15 +277,15 @@ exports[`TimePickerContent renders recent absolute ranges correctly 1`] = `
         Array [
           Object {
             "display": "2019-12-17 07:48:27 to 2019-12-18 07:48:27",
-            "from": "2019-12-17 07:48:27",
+            "from": "2019-12-17T07:48:27Z",
             "section": 3,
-            "to": "2019-12-18 07:48:27",
+            "to": "2019-12-18T07:48:27Z",
           },
           Object {
             "display": "2019-10-17 07:48:27 to 2019-10-18 07:48:27",
-            "from": "2019-10-17 07:48:27",
+            "from": "2019-10-17T07:48:27Z",
             "section": 3,
-            "to": "2019-10-18 07:48:27",
+            "to": "2019-10-18T07:48:27Z",
           },
         ]
       }

@@ -11,11 +11,11 @@
       <input type="text" class="gf-form-input" placeholder="{{ctrl.scenario.stringInput}}" ng-model="ctrl.target.stringInput" ng-change="ctrl.refresh()" ng-model-onblur>
 		</div>
 		<div class="gf-form">
-			<label class="gf-form-label query-keyword">Alias</label>
+			<label class="gf-form-label query-keyword width-7">Alias</label>
 			<input type="text" class="gf-form-input width-14" placeholder="optional" ng-model="ctrl.target.alias" ng-change="ctrl.refresh()" ng-model-onblur>
 		</div>
 		<div ng-if="ctrl.showLabels" class="gf-form gf-form--grow">
-			<label class="gf-form-label query-keyword">
+			<label class="gf-form-label query-keyword width-7">
 				Labels
 				<info-popover mode="right-normal">
 					Set labels using a key=value syntax:<br/>
@@ -52,21 +52,25 @@
     <div class="gf-form">
 			<label class="gf-form-label query-keyword width-7">Series count</label>
 			<input type="number"
-				class="gf-form-input width-7"
+				class="gf-form-input width-15"
 				placeholder="1"
 				ng-model="ctrl.target.seriesCount"
 				min="1"
 				step="1"
-				ng-change="ctrl.refresh()" />
+				ng-change="ctrl.refresh()"
+				aria-label="{{::ctrl.selectors.seriesCount}}"
+			/>
 		</div>
     <div class="gf-form">
 			<label class="gf-form-label query-keyword width-7">Start value</label>
 			<input type="number"
-				class="gf-form-input width-6"
+				class="gf-form-input width-14"
 				placeholder="auto"
 				ng-model="ctrl.target.startValue"
 				step="1"
-				ng-change="ctrl.refresh()" />
+				ng-change="ctrl.refresh()"
+				aria-label="{{::ctrl.selectors.startValue}}"
+			/>
 		</div>
 		<div class="gf-form">
 			<label class="gf-form-label query-keyword width-7">Spread</label>
@@ -76,7 +80,9 @@
 				ng-model="ctrl.target.spread"
 				min="0.5"
 				step="0.1"
-				ng-change="ctrl.refresh()" />
+				ng-change="ctrl.refresh()"
+				aria-label="{{::ctrl.selectors.spread}}"
+			/>
 		</div>
 		<div class="gf-form">
 			<label class="gf-form-label query-keyword width-7">Noise</label>
@@ -86,25 +92,31 @@
 				ng-model="ctrl.target.noise"
 				min="0"
 				step="0.1"
-				ng-change="ctrl.refresh()" />
+				ng-change="ctrl.refresh()"
+				aria-label="{{::ctrl.selectors.noise}}"
+			/>
 		</div>
     <div class="gf-form">
 			<label class="gf-form-label query-keyword width-7">Min</label>
 			<input type="number"
-				class="gf-form-input width-6"
+				class="gf-form-input width-15"
 				placeholder="none"
 				ng-model="ctrl.target.min"
 				step="0.1"
-				ng-change="ctrl.refresh()" />
+				ng-change="ctrl.refresh()"
+				aria-label="{{::ctrl.selectors.min}}"
+			/>
 		</div>
     <div class="gf-form">
 			<label class="gf-form-label query-keyword width-7">Max</label>
 			<input type="number"
-				class="gf-form-input width-6"
+				class="gf-form-input width-15"
 				placeholder="none"
 				ng-model="ctrl.target.max"
 				step="0.1"
-				ng-change="ctrl.refresh()" />
+				ng-change="ctrl.refresh()"
+				aria-label="{{::ctrl.selectors.max}}"
+			/>
 		</div>
   </div>
 	<div class="gf-form-inline" ng-if="ctrl.scenario.id === 'streaming_client'">
@@ -127,7 +139,8 @@
 				ng-model="ctrl.target.stream.speed"
 				min="10"
 				step="10"
-				ng-change="ctrl.streamChanged()" />
+				ng-change="ctrl.streamChanged()"
+				/>
 		</div>
 		<div class="gf-form" ng-if="ctrl.target.stream.type === 'signal'">
 			<label class="gf-form-label query-keyword">Spread</label>
@@ -185,6 +198,33 @@
 		</div>
 		<div class="gf-form">
 			<gf-form-switch class="gf-form" label="Level" label-class="query-keyword width-5" checked="ctrl.target.levelColumn" switch-class="max-width-6" on-change="ctrl.refresh()"></gf-form-switch>
+		</div>
+	</div>
+
+	<div class="gf-form-inline" ng-if="ctrl.scenario.id === 'grafana_api'">
+		<div class="gf-form gf-form">
+			<label class="gf-form-label query-keyword width-7">Endpoint</label>
+			<div class="gf-form-select-wrapper">
+				<select
+				  ng-model="ctrl.target.stringInput"
+				  class="gf-form-input"
+				  ng-options="type for type in ['datasources', 'search', 'annotations']"
+				  ng-change="ctrl.refresh()" />
+				</select>
+			</div>
+		</div>
+	</div>
+
+	
+	<div class="gf-form-inline" ng-if="ctrl.scenario.id === 'arrow'">
+		<div class="gf-form" style="width: 100%;">
+			<textarea type="string"
+				class="gf-form-input"
+				rows="10"
+				placeholder="copy base64 text data from query result"
+				ng-model="ctrl.target.stringInput"
+				ng-change="ctrl.refresh()"
+				ng-model-onblur />
 		</div>
 	</div>
 

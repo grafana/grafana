@@ -112,7 +112,7 @@ grafana-cli --debug plugins install <plugin-id>
 
 `--configOverrides` is a command line argument that acts like an environmental variable override.
 
-For example, you can use it to redirect logging to another file (maybe to log plugin installs in a service like Hosted Grafana) or when resetting the admin password and you have non-default values for some important config value (like where the database is located).
+For example, you can use it to redirect logging to another file (maybe to log plugin installations in a service like Hosted Grafana) or when resetting the admin password and you have non-default values for some important config value (like where the database is located).
 
 **Example:**
 ```bash

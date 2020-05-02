@@ -1,160 +1,139 @@
 import React, { FC } from 'react';
-import { css, cx } from 'emotion';
+import { css } from 'emotion';
+import { FixedSizeList } from 'react-window';
+import AutoSizer from 'react-virtualized-auto-sizer';
 import { GrafanaTheme } from '@grafana/data';
-import { Icon, stylesFactory, useTheme } from '@grafana/ui';
-import { IconType } from '@grafana/ui/src/components/Icon/types';
-import { DashboardSection, ItemClickWithEvent } from '../types';
+import { stylesFactory, useTheme, Spinner } from '@grafana/ui';
+import { DashboardSection, OnToggleChecked, SearchLayout, DashboardSearchHit } from '../types';
+import { SEARCH_ITEM_HEIGHT, SEARCH_ITEM_MARGIN } from '../constants';
 import { SearchItem } from './SearchItem';
-import { SearchCheckbox } from './SearchCheckbox';
+import { SectionHeader } from './SectionHeader';
 
 export interface Props {
-  results: DashboardSection[] | undefined;
-  onSelectionChanged: () => void;
+  editable?: boolean;
+  loading?: boolean;
   onTagSelected: (name: string) => any;
-  onFolderExpanding: () => void;
-  onToggleSelection: ItemClickWithEvent;
-  editable: boolean;
+  onToggleChecked?: OnToggleChecked;
+  onToggleSection: (section: DashboardSection) => void;
+  results: DashboardSearchHit[];
+  layout?: string;
 }
 
 export const SearchResults: FC<Props> = ({
-  results,
-  onSelectionChanged,
-  onTagSelected,
-  onFolderExpanding,
-  onToggleSelection,
   editable,
+  loading,
+  onTagSelected,
+  onToggleChecked,
+  onToggleSection,
+  results,
+  layout,
 }) => {
   const theme = useTheme();
   const styles = getSectionStyles(theme);
-
-  const toggleFolderExpand = (section: DashboardSection) => {
-    if (section.toggle) {
-      if (!section.expanded && onFolderExpanding) {
-        onFolderExpanding();
-      }
-
-      section.toggle(section).then(() => {
-        if (onSelectionChanged) {
-          onSelectionChanged();
-        }
-      });
-    }
+  const itemProps = { editable, onToggleChecked, onTagSelected };
+  const renderFolders = () => {
+    return (
+      <div className={styles.wrapper}>
+        {results.map(section => {
+          return (
+            <div aria-label="Search section" className={styles.section} key={section.id || section.title}>
+              <SectionHeader onSectionClick={onToggleSection} {...{ onToggleChecked, editable, section }} />
+              <div aria-label="Search items" className={styles.sectionItems}>
+                {section.expanded && section.items.map(item => <SearchItem key={item.id} {...itemProps} item={item} />)}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    );
+  };
+  const renderDashboards = () => {
+    const items = results[0]?.items;
+    return (
+      <div className={styles.listModeWrapper}>
+        <AutoSizer disableWidth>
+          {({ height }) => (
+            <FixedSizeList
+              aria-label="Search items"
+              className={styles.wrapper}
+              innerElementType="ul"
+              itemSize={SEARCH_ITEM_HEIGHT + SEARCH_ITEM_MARGIN}
+              height={height}
+              itemCount={items.length}
+              width="100%"
+            >
+              {({ index, style }) => {
+                const item = items[index];
+                // The wrapper div is needed as the inner SearchItem has margin-bottom spacing
+                // And without this wrapper there is no room for that margin
+                return (
+                  <div style={style}>
+                    <SearchItem key={item.id} {...itemProps} item={item} />
+                  </div>
+                );
+              }}
+            </FixedSizeList>
+          )}
+        </AutoSizer>
+      </div>
+    );
   };
 
-  // TODO display 'No results' messages after manage dashboards is refactored
-  if (!results) {
-    return null;
+  if (loading) {
+    return <Spinner className={styles.spinner} />;
+  } else if (!results || !results.length) {
+    return <div className={styles.noResults}>No dashboards matching your query were found.</div>;
   }
 
   return (
-    <ul className={styles.wrapper}>
-      {results.map(section => (
-        <li aria-label="Search section" className={styles.section} key={section.title}>
-          <SectionHeader onSectionClick={toggleFolderExpand} {...{ onToggleSelection, editable, section }} />
-          <ul aria-label="Search items" className={styles.wrapper}>
-            {section.expanded &&
-              section.items.map(item => (
-                <SearchItem key={item.id} {...{ item, editable, onToggleSelection, onTagSelected }} />
-              ))}
-          </ul>
-        </li>
-      ))}
-    </ul>
+    <div className={styles.resultsContainer}>
+      {layout === SearchLayout.Folders ? renderFolders() : renderDashboards()}
+    </div>
   );
 };
 
 const getSectionStyles = stylesFactory((theme: GrafanaTheme) => {
+  const { md } = theme.spacing;
+
   return {
     wrapper: css`
-      list-style: none;
+      display: flex;
+      flex-direction: column;
     `,
     section: css`
+      display: flex;
+      flex-direction: column;
       background: ${theme.colors.panelBg};
-      border-bottom: solid 1px ${theme.isLight ? theme.colors.gray95 : theme.colors.gray25};
-      padding: 0px 4px 4px 4px;
-      margin-bottom: 3px;
+      border-bottom: solid 1px ${theme.colors.border2};
     `,
-  };
-});
-
-interface SectionHeaderProps {
-  section: DashboardSection;
-  onSectionClick: (section: DashboardSection) => void;
-  onToggleSelection: ItemClickWithEvent;
-  editable: boolean;
-}
-
-const SectionHeader: FC<SectionHeaderProps> = ({ section, onSectionClick, onToggleSelection, editable }) => {
-  const theme = useTheme();
-  const styles = getSectionHeaderStyles(theme, section.selected);
-
-  const expandSection = () => {
-    onSectionClick(section);
-  };
-
-  return !section.hideHeader ? (
-    <div className={styles.wrapper} onClick={expandSection}>
-      <SearchCheckbox
-        editable={editable}
-        checked={section.checked}
-        onClick={(e: MouseEvent) => onToggleSelection(section, e)}
-      />
-      <Icon className={styles.icon} name={section.icon as IconType} />
-
-      <span className={styles.text}>{section.title}</span>
-      {section.url && (
-        <a href={section.url} className={styles.link}>
-          <Icon name="cog" />
-        </a>
-      )}
-      <Icon name={section.expanded ? 'angle-down' : 'angle-right'} className={styles.toggle} />
-    </div>
-  ) : (
-    <div className={styles.wrapper} />
-  );
-};
-
-const getSectionHeaderStyles = stylesFactory((theme: GrafanaTheme, selected = false) => {
-  const { sm, xs } = theme.spacing;
-  return {
-    wrapper: cx(
-      css`
-        display: flex;
-        align-items: center;
-        font-size: ${theme.typography.size.base};
-        padding: ${sm} ${xs} ${xs};
-        color: ${theme.colors.textWeak};
-
-        &:hover,
-        &.selected {
-          color: ${theme.colors.text};
-        }
-
-        &:hover {
-          a {
-            opacity: 1;
-          }
-        }
-      `,
-      'pointer',
-      { selected }
-    ),
-    icon: css`
-      padding: 5px 0;
-      width: 43px;
+    sectionItems: css`
+      margin: 0 24px 0 32px;
     `,
-    text: css`
-      flex-grow: 1;
-      line-height: 24px;
+    spinner: css`
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100px;
     `,
-    link: css`
-      padding: 2px 10px 0;
-      color: ${theme.colors.textWeak};
-      opacity: 0;
-      transition: opacity 150ms ease-in-out;
+    resultsContainer: css`
+      position: relative;
+      flex-grow: 10;
+      margin-bottom: ${md};
+      background: ${theme.colors.bg1};
+      border: 1px solid ${theme.colors.border1};
+      border-radius: 3px;
+      height: 100%;
     `,
-    toggle: css`
-      padding: 5px;
+    noResults: css`
+      padding: ${md};
+      background: ${theme.colors.bg2};
+      font-style: italic;
+      margin-top: ${theme.spacing.md};
+    `,
+    listModeWrapper: css`
+      position: relative;
+      height: 100%;
+      padding: ${md};
     `,
   };
 });

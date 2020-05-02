@@ -1,6 +1,7 @@
 import React, { PureComponent } from 'react';
-import { getTagColorsFromName } from '@grafana/ui';
-import { e2e } from '@grafana/e2e';
+import { getTagColorsFromName, Icon } from '@grafana/ui';
+import { selectors } from '@grafana/e2e-selectors';
+
 import { VariableTag } from '../../../templating/types';
 
 interface Props {
@@ -22,7 +23,7 @@ export class VariableLink extends PureComponent<Props> {
       <a
         onClick={this.onClick}
         className="variable-value-link"
-        aria-label={e2e.pages.Dashboard.SubMenu.selectors.submenuItemValueDropDownValueLinkTexts(`${text}`)}
+        aria-label={selectors.pages.Dashboard.SubMenu.submenuItemValueDropDownValueLinkTexts(`${text}`)}
       >
         {text}
         {tags.map(tag => {
@@ -30,12 +31,14 @@ export class VariableLink extends PureComponent<Props> {
           return (
             <span bs-tooltip="tag.valuesText" data-placement="bottom" key={`${tag.text}`}>
               <span className="label-tag" style={{ backgroundColor: color, borderColor }}>
-                &nbsp;&nbsp;<i className="fa fa-tag"></i>&nbsp; {tag.text}
+                &nbsp;&nbsp;
+                <Icon name="tag-alt" />
+                &nbsp; {tag.text}
               </span>
             </span>
           );
         })}
-        <i className="fa fa-caret-down" style={{ fontSize: '12px' }}></i>
+        <Icon name="angle-down" size="sm" />
       </a>
     );
   }

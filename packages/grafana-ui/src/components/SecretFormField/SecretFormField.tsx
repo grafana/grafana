@@ -1,9 +1,10 @@
 import omit from 'lodash/omit';
 import React, { InputHTMLAttributes, FunctionComponent } from 'react';
 import { FormField } from '../FormField/FormField';
+import { Button } from '../Button/Button';
 import { css, cx } from 'emotion';
 
-interface Props extends Omit<InputHTMLAttributes<HTMLInputElement>, 'onReset'> {
+export interface Props extends Omit<InputHTMLAttributes<HTMLInputElement>, 'onReset'> {
   // Function to use when reset is clicked. Means you have to reset the input value yourself as this is  uncontrolled
   // component (or do something else if required).
   onReset: (event: React.SyntheticEvent<HTMLButtonElement>) => void;
@@ -61,13 +62,9 @@ export const SecretFormField: FunctionComponent<Props> = ({
               value="configured"
               {...omit(inputProps, 'value')}
             />
-            <button
-              className={cx('btn btn-secondary gf-form-btn', styles.noRadiusButton)}
-              onClick={onReset}
-              style={{ height: '100%' }}
-            >
-              reset
-            </button>
+            <Button onClick={onReset} variant="secondary">
+              Reset
+            </Button>
           </>
         ) : (
           <input

@@ -2,8 +2,8 @@
   <div class="page-action-bar">
     <h3 class="dashboard-settings__header">
       <a ng-click="ctrl.backToList()">Annotations</a>
-      <span ng-show="ctrl.mode === 'new'"><i class="fa fa-fw fa-chevron-right"></i> New</span>
-      <span ng-show="ctrl.mode === 'edit'"><i class="fa fa-fw fa-chevron-right"></i> Edit</span>
+      <span ng-show="ctrl.mode === 'new'"><icon name="'angle-right'"></icon> New</span>
+      <span ng-show="ctrl.mode === 'edit'"><icon name="'angle-right'"></icon> Edit</span>
     </h3>
 
     <div class="page-action-bar__spacer"></div>
@@ -31,21 +31,20 @@
       <tbody>
         <tr ng-repeat="annotation in ctrl.annotations track by annotation.name">
           <td style="width:90%" ng-hide="annotation.builtIn" class="pointer" ng-click="ctrl.edit(annotation)">
-            <i class="fa fa-comment" style="color:{{ annotation.iconColor }}"></i> &nbsp;
-            {{ annotation.name }}
+            <icon name="'comment-alt'" style="color:{{ annotation.iconColor }}"></icon> &nbsp; {{ annotation.name }}
           </td>
           <td style="width:90%" ng-show="annotation.builtIn" class="pointer" ng-click="ctrl.edit(annotation)">
-            <i class="gicon gicon-annotation"></i> &nbsp;
+            <icon name="'comment-alt'"></icon> &nbsp;
             <em class="muted">{{ annotation.name }} (Built-in)</em>
           </td>
           <td class="pointer" ng-click="ctrl.edit(annotation)">
             {{ annotation.datasource || 'Default' }}
           </td>
           <td style="width: 1%">
-            <i ng-click="ctrl.move($index,-1)" ng-hide="$first" class="pointer fa fa-arrow-up"></i>
+            <icon ng-click="ctrl.move($index,-1)" ng-hide="$first" name="'arrow-up'"></icon>
           </td>
           <td style="width: 1%">
-            <i ng-click="ctrl.move($index,1)" ng-hide="$last" class="pointer fa fa-arrow-down"></i>
+            <icon ng-click="ctrl.move($index,1)" ng-hide="$last" name="'arrow-down'"></icon>
           </td>
           <td style="width: 1%">
             <a
@@ -53,7 +52,7 @@
               class="btn btn-danger btn-small"
               ng-hide="annotation.builtIn"
             >
-              <i class="fa fa-remove"></i>
+              <icon name="'times'" style="margin-bottom: 0;"></icon>
             </a>
           </td>
         </tr>
@@ -62,7 +61,14 @@
 
     <!-- empty list cta, there is always one built in query -->
     <div ng-if="ctrl.annotations.length === 1" class="p-t-2">
-      <empty-list-cta title="ctrl.emptyListCta.title" buttonIcon="ctrl.emptyListCta.buttonIcon" buttonTitle="ctrl.emptyListCta.buttonTitle" infoBox="ctrl.emptyListCta.infoBox" infoBoxTitle="ctrl.emptyListCta.infoBoxTitle" on-click="ctrl.setupNew"/>
+      <empty-list-cta
+        title="ctrl.emptyListCta.title"
+        buttonIcon="ctrl.emptyListCta.buttonIcon"
+        buttonTitle="ctrl.emptyListCta.buttonTitle"
+        infoBox="ctrl.emptyListCta.infoBox"
+        infoBoxTitle="ctrl.emptyListCta.infoBoxTitle"
+        on-click="ctrl.setupNew"
+      />
     </div>
   </div>
 

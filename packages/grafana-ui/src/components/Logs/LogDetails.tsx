@@ -41,7 +41,7 @@ export interface Props extends Themeable {
 }
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
-  const bgColor = selectThemeVariant({ light: theme.colors.gray7, dark: theme.colors.dark2 }, theme.type);
+  const bgColor = selectThemeVariant({ light: theme.palette.gray7, dark: theme.palette.dark2 }, theme.type);
   return {
     hoverBackground: css`
       label: hoverBackground;
@@ -121,7 +121,19 @@ class UnThemedLogDetails extends PureComponent<Props> {
       }
       return acc;
     }, {} as { [key: string]: FieldDef });
-    return Object.values(fieldsMap);
+    const allFields = Object.values(fieldsMap);
+    allFields.sort((fieldA, fieldB) => {
+      if (fieldA.links?.length && !fieldB.links?.length) {
+        return -1;
+      }
+
+      if (!fieldA.links?.length && fieldB.links?.length) {
+        return 1;
+      }
+
+      return fieldA.key > fieldB.key ? 1 : fieldA.key < fieldB.key ? -1 : 0;
+    });
+    return allFields;
   });
 
   getStatsForParsedField = (key: string) => {

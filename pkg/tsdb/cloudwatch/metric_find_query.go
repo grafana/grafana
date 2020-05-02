@@ -49,6 +49,7 @@ func init() {
 		"AWS/Athena":            {"DataScannedInBytes", "EngineExecutionTime", "QueryPlanningTime", "QueryQueueTime", "QueryState", "QueryType", "ServiceProcessingTime", "TotalExecutionTime", "WorkGroup"},
 		"AWS/AutoScaling":       {"GroupDesiredCapacity", "GroupInServiceInstances", "GroupMaxSize", "GroupMinSize", "GroupPendingInstances", "GroupStandbyInstances", "GroupTerminatingInstances", "GroupTotalInstances"},
 		"AWS/Billing":           {"EstimatedCharges"},
+		"AWS/Chatbot":           {"EventsThrottled", "EventsProcessed", "MessageDeliverySuccess", "MessageDeliveryFailure", "UnsupportedEvents"},
 		"AWS/CloudFront":        {"4xxErrorRate", "5xxErrorRate", "BytesDownloaded", "BytesUploaded", "Requests", "TotalErrorRate"},
 		"AWS/CloudHSM":          {"HsmKeysSessionOccupied", "HsmKeysTokenOccupied", "HsmSessionCount", "HsmSslCtxsOccupied", "HsmTemperature", "HsmUnhealthy", "HsmUsersAvailable", "HsmUsersMax", "InterfaceEth2OctetsInput", "InterfaceEth2OctetsOutput"},
 		"AWS/CloudSearch":       {"IndexUtilization", "Partitions", "SearchableDocuments", "SuccessfulRequests"},
@@ -100,7 +101,7 @@ func init() {
 		"AWS/NetworkELB":        {"ActiveFlowCount", "ActiveFlowCount_TLS", "ClientTLSNegotiationErrorCount", "ConsumedLCUs", "HealthyHostCount", "NewFlowCount", "NewFlowCount_TLS", "ProcessedBytes", "ProcessedBytes_TLS", "TCP_Client_Reset_Count", "TCP_ELB_Reset_Count", "TCP_Target_Reset_Count", "TargetTLSNegotiationErrorCount", "UnHealthyHostCount"},
 		"AWS/OpsWorks":          {"cpu_idle", "cpu_nice", "cpu_steal", "cpu_system", "cpu_user", "cpu_waitio", "load_1", "load_15", "load_5", "memory_buffers", "memory_cached", "memory_free", "memory_swap", "memory_total", "memory_used", "procs"},
 		"AWS/Polly":             {"2XXCount", "4XXCount", "5XXCount", "RequestCharacters", "ResponseLatency"},
-		"AWS/RDS":               {"ActiveTransactions", "AuroraBinlogReplicaLag", "AuroraGlobalDBDataTransferBytes", "AuroraGlobalDBReplicatedWriteIO", "AuroraGlobalDBReplicationLag", "AuroraReplicaLag", "AuroraReplicaLagMaximum", "AuroraReplicaLagMinimum", "BacktrackChangeRecordsCreationRate", "BacktrackChangeRecordsStored", "BacktrackWindowActual", "BacktrackWindowAlert", "BackupRetentionPeriodStorageUsed", "BinLogDiskUsage", "BlockedTransactions", "BufferCacheHitRatio", "BurstBalance", "CPUCreditBalance", "CPUCreditUsage", "CPUUtilization", "CommitLatency", "CommitThroughput", "DDLLatency", "DDLThroughput", "DMLLatency", "DMLThroughput", "DatabaseConnections", "Deadlocks", "DeleteLatency", "DeleteThroughput", "DiskQueueDepth", "EngineUptime", "FailedSQLServerAgentJobsCount", "FreeLocalStorage", "FreeStorageSpace", "FreeableMemory", "InsertLatency", "InsertThroughput", "LoginFailures", "MaximumUsedTransactionIDs", "NetworkReceiveThroughput", "NetworkThroughput", "NetworkTransmitThroughput", "OldestReplicationSlotLag", "Queries", "RDSToAuroraPostgreSQLReplicaLag", "ReadIOPS", "ReadLatency", "ReadThroughput", "ReplicaLag", "ReplicationSlotDiskUsage", "ResultSetCacheHitRatio", "SelectLatency", "SelectThroughput", "SnapshotStorageUsed", "SwapUsage", "TotalBackupStorageBilled", "TransactionLogsDiskUsage", "TransactionLogsGeneration", "UpdateLatency", "UpdateThroughput", "VolumeBytesUsed", "VolumeReadIOPs", "VolumeWriteIOPs", "WriteIOPS", "WriteLatency", "WriteThroughput"},
+		"AWS/RDS":               {"ActiveTransactions", "AuroraBinlogReplicaLag", "AuroraGlobalDBDataTransferBytes", "AuroraGlobalDBReplicatedWriteIO", "AuroraGlobalDBReplicationLag", "AuroraReplicaLag", "AuroraReplicaLagMaximum", "AuroraReplicaLagMinimum", "BacktrackChangeRecordsCreationRate", "BacktrackChangeRecordsStored", "BacktrackWindowActual", "BacktrackWindowAlert", "BackupRetentionPeriodStorageUsed", "BinLogDiskUsage", "BlockedTransactions", "BufferCacheHitRatio", "BurstBalance", "CPUCreditBalance", "CPUCreditUsage", "CPUUtilization", "CommitLatency", "CommitThroughput", "DDLLatency", "DDLThroughput", "DMLLatency", "DMLThroughput", "DatabaseConnections", "Deadlocks", "DeleteLatency", "DeleteThroughput", "DiskQueueDepth", "EngineUptime", "FailedSQLServerAgentJobsCount", "FreeLocalStorage", "FreeStorageSpace", "FreeableMemory", "InsertLatency", "InsertThroughput", "LoginFailures", "MaximumUsedTransactionIDs", "NetworkReceiveThroughput", "NetworkThroughput", "NetworkTransmitThroughput", "OldestReplicationSlotLag", "Queries", "RDSToAuroraPostgreSQLReplicaLag", "ReadIOPS", "ReadLatency", "ReadThroughput", "ReplicaLag", "ReplicationSlotDiskUsage", "ResultSetCacheHitRatio", "SelectLatency", "SelectThroughput", "ServerlessDatabaseCapacity", "SnapshotStorageUsed", "SwapUsage", "TotalBackupStorageBilled", "TransactionLogsDiskUsage", "TransactionLogsGeneration", "UpdateLatency", "UpdateThroughput", "VolumeBytesUsed", "VolumeReadIOPs", "VolumeWriteIOPs", "WriteIOPS", "WriteLatency", "WriteThroughput"},
 		"AWS/Redshift":          {"CPUUtilization", "DatabaseConnections", "HealthStatus", "MaintenanceMode", "NetworkReceiveThroughput", "NetworkTransmitThroughput", "PercentageDiskSpaceUsed", "QueriesCompletedPerSecond", "QueryDuration", "QueryRuntimeBreakdown", "ReadIOPS", "ReadLatency", "ReadThroughput", "TotalTableCount", "WLMQueriesCompletedPerSecond", "WLMQueryDuration", "WLMQueueLength", "WriteIOPS", "WriteLatency", "WriteThroughput"},
 		"AWS/Route53":           {"ChildHealthCheckHealthyCount", "ConnectionTime", "HealthCheckPercentageHealthy", "HealthCheckStatus", "SSLHandshakeTime", "TimeToFirstByte"},
 		"AWS/Route53Resolver":   {"InboundQueryVolume", "OutboundQueryVolume", "OutboundQueryAggregatedVolume"},
@@ -124,7 +125,7 @@ func init() {
 		"ContainerInsights":     {"cluster_failed_node_count", "cluster_node_count", "namespace_number_of_running_pods", "node_cpu_limit", "node_cpu_reserved_capacity", "node_cpu_usage_total", "node_cpu_utilization", "node_filesystem_utilization", "node_memory_limit", "node_memory_reserved_capacity", "node_memory_utilization", "node_memory_working_set", "node_network_total_bytes", "node_number_of_running_containers", "node_number_of_running_pods", "pod_cpu_reserved_capacity", "pod_cpu_utilization", "pod_cpu_utilization_over_pod_limit", "pod_memory_reserved_capacity", "pod_memory_utilization", "pod_memory_utilization_over_pod_limit", "pod_number_of_container_restarts", "pod_network_rx_bytes", "pod_network_tx_bytes", "service_number_of_running_pods"},
 		"Rekognition":           {"DetectedFaceCount", "DetectedLabelCount", "ResponseTime", "ServerErrorCount", "SuccessfulRequestCount", "ThrottledCount", "UserErrorCount"},
 		"WAF":                   {"AllowedRequests", "BlockedRequests", "CountedRequests", "DDoSAttackBitsPerSecond", "DDoSAttackPacketsPerSecond", "DDoSAttackRequestsPerSecond", "DDoSDetected", "PassedRequests"},
-		"AWS/Cassandra":         {"AccountMaxTableLevelReads", "AccountMaxTableLevelWrites", "ConditionalCheckFailedRequests", "ReturnedItemCount", "SuccessfulRequestLatency", "SystemErrors", "UserErrors"},
+		"AWS/Cassandra":         {"AccountMaxReads", "AccountMaxTableLevelReads", "AccountMaxTableLevelWrites", "AccountMaxWrites", "AccountProvisionedReadCapacityUtilization", "AccountProvisionedWriteCapacityUtilization", "ConditionalCheckFailedRequests", "ConsumedReadCapacityUnits", "ConsumedWriteCapacityUnits", "MaxProvisionedTableReadCapacityUtilization", "MaxProvisionedTableWriteCapacityUtilization", "ReturnedItemCount", "ReturnedItemCountBySelect", "SuccessfulRequestCount", "SuccessfulRequestLatency", "SystemErrors", "UserErrors"},
 	}
 	dimensionsMap = map[string][]string{
 		"AWS/ACMPrivateCA":      {},
@@ -135,6 +136,7 @@ func init() {
 		"AWS/ApplicationELB":    {"AvailabilityZone", "LoadBalancer", "TargetGroup"},
 		"AWS/AutoScaling":       {"AutoScalingGroupName"},
 		"AWS/Billing":           {"Currency", "LinkedAccount", "ServiceName"},
+		"AWS/Chatbot":           {"ConfigurationName"},
 		"AWS/CloudFront":        {"DistributionId", "Region"},
 		"AWS/CloudHSM":          {"ClusterId", "HsmId", "Region"},
 		"AWS/CloudSearch":       {"ClientId", "DomainName"},
@@ -467,7 +469,7 @@ func (e *CloudWatchExecutor) handleGetDimensionValues(ctx context.Context, param
 func (e *CloudWatchExecutor) ensureClientSession(region string) error {
 	if e.ec2Svc == nil {
 		dsInfo := e.getDsInfo(region)
-		cfg, err := e.getAwsConfig(dsInfo)
+		cfg, err := getAwsConfig(dsInfo)
 		if err != nil {
 			return fmt.Errorf("Failed to call ec2:getAwsConfig, %v", err)
 		}
@@ -593,7 +595,7 @@ func (e *CloudWatchExecutor) handleGetEc2InstanceAttribute(ctx context.Context, 
 func (e *CloudWatchExecutor) ensureRGTAClientSession(region string) error {
 	if e.rgtaSvc == nil {
 		dsInfo := e.getDsInfo(region)
-		cfg, err := e.getAwsConfig(dsInfo)
+		cfg, err := getAwsConfig(dsInfo)
 		if err != nil {
 			return fmt.Errorf("Failed to call ec2:getAwsConfig, %v", err)
 		}
