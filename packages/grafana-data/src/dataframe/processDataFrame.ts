@@ -20,6 +20,7 @@ import { isDateTime } from '../datetime/moment_wrapper';
 import { ArrayVector } from '../vector/ArrayVector';
 import { MutableDataFrame } from './MutableDataFrame';
 import { SortedVector } from '../vector/SortedVector';
+import { ArrayDataFrame } from './ArrayDataFrame';
 
 function convertTableToDataFrame(table: TableData): DataFrame {
   const fields = table.columns.map(c => {
@@ -297,6 +298,10 @@ export function toDataFrame(data: any): DataFrame {
 
   if (data.hasOwnProperty('columns')) {
     return convertTableToDataFrame(data);
+  }
+
+  if (Array.isArray(data)) {
+    return new ArrayDataFrame(data);
   }
 
   console.warn('Can not convert', data);
