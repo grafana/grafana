@@ -10,13 +10,14 @@ import { IconButton } from '../IconButton/IconButton';
 
 export interface Props extends Themeable {
   icon?: IconName;
+  /** Title for the modal or custom header element */
   title: string | JSX.Element;
   className?: string;
 
   isOpen?: boolean;
   onDismiss?: () => void;
 
-  // If not set will call onDismiss if that is set.
+  /** If not set will call onDismiss if that is set. */
   onClickBackdrop?: () => void;
 }
 
