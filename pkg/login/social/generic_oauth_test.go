@@ -339,11 +339,12 @@ func TestSearchJSONForGroupMapping(t *testing.T) {
 			},
 		}
 
+		grafanaAdminTrue := true
 		groupMappings := []setting.OAuthGroupMapping{
 			{
 				RoleAttributePath: "contains(groups[*], 'admin') && 'Admin'",
 				OrgId:             1,
-				IsGrafanaAdmin:    true,
+				IsGrafanaAdmin:    &grafanaAdminTrue,
 			},
 			{
 				RoleAttributePath: "contains(groups[*], 'editor') && 'Editor'",

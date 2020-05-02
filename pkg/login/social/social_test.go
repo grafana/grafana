@@ -26,5 +26,5 @@ func TestReadingFullGroupMappingSettings(t *testing.T) {
 		return
 	}
 	assert.EqualValues(t, "contains(info.groups[*], 'admin') && 'Admin'", config.GroupMappings[0].RoleAttributePath)
-	assert.EqualValues(t, true, config.GroupMappings[0].IsGrafanaAdmin)
+	assert.EqualValues(t, true, *config.GroupMappings[0].IsGrafanaAdmin)
 }
