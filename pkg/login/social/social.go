@@ -1,16 +1,20 @@
 package social
 
 import (
+	"io/ioutil"
 	"net/http"
 	"strings"
 
 	"context"
 
+	"github.com/BurntSushi/toml"
 	"golang.org/x/oauth2"
+	"golang.org/x/xerrors"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
+	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
 type BasicUserInfo struct {
@@ -56,6 +60,7 @@ const (
 )
 
 var (
+	oauthLogger   = log.New("oauth")
 	SocialBaseUrl = "/login/"
 	SocialMap     = make(map[string]SocialConnector)
 	allOauthes    = []string{"github", "gitlab", "google", "generic_oauth", "grafananet", grafanaCom, "azuread", "okta"}
@@ -97,22 +102,18 @@ func NewOAuthService() {
 			TlsClientKey:       sec.Key("tls_client_key").String(),
 			TlsClientCa:        sec.Key("tls_client_ca").String(),
 			TlsSkipVerify:      sec.Key("tls_skip_verify_insecure").MustBool(),
-		}
-		for _, section := range setting.Raw.Sections() {
-			groupMappingSecName := "auth." + name + ".group_mapping"
-			if section.Name() != groupMappingSecName {
-				continue
-			}
-			groupMapping := setting.OAuthGroupMapping{
-				RoleAttributePath: section.Key("role_attribute_path").String(),
-				OrgId:             section.Key("org_id").MustInt(),
-				IsGrafanaAdmin:    section.Key("grafana_admin").MustBool(false),
-			}
-			info.GroupMappings = append(info.GroupMappings, groupMapping)
+			GroupMappingsFile:  sec.Key("group_mappings_file").String(),
 		}
 
 		if !info.Enabled {
 			continue
+		}
+
+		groupMappingsConfig, err := readConfig(info.GroupMappingsFile)
+		if err != nil {
+			log.Error(3, "Error reading group mappings config: %s", err.Error())
+		} else {
+			info.GroupMappings = groupMappingsConfig.GroupMappings
 		}
 
 		if name == "grafananet" {
@@ -236,4 +237,36 @@ var GetOAuthProviders = func(cfg *setting.Cfg) map[string]bool {
 	}
 
 	return result
+}
+
+func readConfig(configFile string) (*setting.OAuthGroupMappingsConfig, error) {
+	if configFile == "" {
+		return nil, nil
+	}
+	result := &setting.OAuthGroupMappingsConfig{}
+
+	oauthLogger.Info("OAuth enabled, reading config file", "file", configFile)
+
+	fileBytes, err := ioutil.ReadFile(configFile)
+	if err != nil {
+		return nil, errutil.Wrap("Failed to load OAuth config file", err)
+	}
+
+	_, err = toml.Decode(string(fileBytes), result)
+	if err != nil {
+		return nil, errutil.Wrap("Failed to load OAuth config file", err)
+	}
+
+	if len(result.GroupMappings) == 0 {
+		return nil, xerrors.New("OAuth enabled but no group mappings defined in config file")
+	}
+
+	// Validate role_attribute_path is set
+	for _, groupMapping := range result.GroupMappings {
+		if groupMapping.RoleAttributePath == "" {
+			return nil, xerrors.New("Failed to validate role_attribute_path setting")
+		}
+	}
+
+	return result, nil
 }
