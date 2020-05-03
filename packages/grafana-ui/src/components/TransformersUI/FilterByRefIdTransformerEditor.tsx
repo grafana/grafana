@@ -39,6 +39,12 @@ export class FilterByRefIdTransformerEditor extends React.PureComponent<
     this.initOptions();
   }
 
+  componentDidUpdate(oldProps: FilterByRefIdTransformerEditorProps) {
+    if (this.props.input !== oldProps.input) {
+      this.initOptions();
+    }
+  }
+
   private initOptions() {
     const { input, options } = this.props;
     const configuredOptions = options.include ? options.include.split('|') : [];

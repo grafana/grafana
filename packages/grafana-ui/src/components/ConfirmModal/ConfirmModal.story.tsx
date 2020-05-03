@@ -3,6 +3,7 @@ import { text, boolean, select } from '@storybook/addon-knobs';
 import { action } from '@storybook/addon-actions';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { ConfirmModal } from './ConfirmModal';
+import mdx from './ConfirmModal.mdx';
 
 const getKnobs = () => {
   return {
@@ -27,6 +28,11 @@ export default {
   title: 'Overlays/ConfirmModal',
   component: ConfirmModal,
   decorators: [withCenteredStory],
+  parameters: {
+    docs: {
+      page: mdx,
+    },
+  },
 };
 
 export const basic = () => {
