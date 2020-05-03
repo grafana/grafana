@@ -379,7 +379,7 @@ export function logSeriesToLogsModel(logSeries: DataFrame[]): LogsModel | undefi
   // Hack to print loki stats in Explore. Should be using proper stats display via drawer in Explore (rework in 7.1)
   let totalBytes = 0;
   for (const series of logSeries) {
-    const totalBytesKey = series.meta.custom?.lokiQueryStatKey;
+    const totalBytesKey = series.meta?.custom?.lokiQueryStatKey;
     if (totalBytesKey && series.meta.stats) {
       const byteStat = series.meta.stats.find(stat => stat.title === totalBytesKey);
       if (byteStat) {
