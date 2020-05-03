@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { renderOrCallToRender, Icon, stylesFactory, useTheme, HorizontalGroup } from '@grafana/ui';
+import { HorizontalGroup, Icon, renderOrCallToRender, stylesFactory, useTheme } from '@grafana/ui';
 import { GrafanaTheme } from '@grafana/data';
 import { css } from 'emotion';
 import { useUpdateEffect } from 'react-use';

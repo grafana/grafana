@@ -1,16 +1,17 @@
 import React from 'react';
 
-import { storiesOf } from '@storybook/react';
 import TableInputCSV from './TableInputCSV';
 import { action } from '@storybook/addon-actions';
 import { DataFrame } from '@grafana/data';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 
-const TableInputStories = storiesOf('Forms/TableInputCSV', module);
+export default {
+  title: 'Forms/TableInputCSV',
+  component: TableInputCSV,
+  decorators: [withCenteredStory],
+};
 
-TableInputStories.addDecorator(withCenteredStory);
-
-TableInputStories.add('default', () => {
+export const basic = () => {
   return (
     <TableInputCSV
       width={400}
@@ -22,4 +23,4 @@ TableInputStories.add('default', () => {
       }}
     />
   );
-});
+};
