@@ -26,7 +26,7 @@ An alternative syntax (that might be deprecated in the future) is `[[var_name:op
 
 ## CSV
 
-Formats multi-value variable as a comma-separated string.
+Formats multi-valued variable as a comma-separated string.
 
 ```bash
 servers = ['test1', 'test2']
