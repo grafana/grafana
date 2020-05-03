@@ -1,6 +1,6 @@
 import { ThresholdsConfig } from './thresholds';
 import { ValueMapping } from './valueMapping';
-import { QueryResultBase, Labels, NullValueMode } from './data';
+import { QueryResultBase, Labels, NullValueMode, QueryResultMeta } from './data';
 import { DisplayProcessor, DisplayValue } from './displayValue';
 import { DataLink, LinkModel } from './dataLink';
 import { Vector } from './vector';
@@ -97,12 +97,61 @@ export interface Field<T = any, V = Vector<T>> {
   /**
    * Convert a value for display
    */
-  display?: DisplayProcessor;
+  display: DisplayProcessor;
 
   /**
    * Get value data links with variables interpolated
    */
+  getLinks: (config: ValueLinkConfig) => Array<LinkModel<Field>>;
+}
+
+export interface FieldContent<T = any, V = Vector<T>> {
+  name: string;
+  type: FieldType;
+  config: FieldConfig;
+  values: V; // The raw field values
+  labels?: Labels;
+  calcs?: FieldCalcs;
+  parse?: (value: any) => T;
+  display?: DisplayProcessor;
   getLinks?: (config: ValueLinkConfig) => Array<LinkModel<Field>>;
+}
+
+export class FieldImpl<T = any, V = Vector<T>> implements Field<T, V> {
+  content: FieldContent<T, V>;
+  name: string;
+  type: FieldType;
+  config: FieldConfig;
+  values: V; // The raw field values
+  labels?: Labels;
+  calcs?: FieldCalcs;
+  parse?: (value: any) => T;
+
+  constructor(content: FieldContent<T, V>) {
+    this.content = content;
+    this.name = content.name;
+    this.type = content.type;
+    this.config = content.config;
+    this.values = content.values;
+    this.labels = content.labels;
+    this.calcs = content.calcs;
+    this.parse = content.parse;
+  }
+
+  display(value: any): DisplayValue {
+    if (this.content.display) {
+      return this.content.display(value);
+    }
+
+    return { numeric: value, text: value.toString() };
+  }
+
+  getLinks(config: ValueLinkConfig): Array<LinkModel<Field>> {
+    if (this.content.getLinks) {
+      return this.content.getLinks(config);
+    }
+    return [];
+  }
 }
 
 export interface DataFrame extends QueryResultBase {
@@ -111,6 +160,33 @@ export interface DataFrame extends QueryResultBase {
 
   // The number of rows
   length: number;
+}
+
+export interface DataFrameContent extends QueryResultBase {
+  name?: string;
+  fields: Field[];
+}
+
+export class DataFrameImpl implements DataFrame {
+  content: DataFrameContent;
+  name?: string;
+  fields: Field[];
+  refId?: string;
+  meta?: QueryResultMeta;
+  length: number;
+
+  constructor(content: DataFrameContent) {
+    this.content = content;
+    this.name = content.name;
+    this.fields = content.fields;
+    this.refId = content.refId;
+    this.meta = content.meta;
+    this.length = 0;
+
+    if (this.fields.length > 0) {
+      this.length = this.fields[0].values.length;
+    }
+  }
 }
 
 /**
@@ -129,5 +205,5 @@ export interface FieldDTO<T = any> {
  */
 export interface DataFrameDTO extends QueryResultBase {
   name?: string;
-  fields: Array<FieldDTO | Field>;
+  fields: FieldDTO[];
 }

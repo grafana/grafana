@@ -14,6 +14,7 @@ import {
   TimeSeriesValue,
   FieldDTO,
   DataFrameDTO,
+  FieldImpl,
 } from '../types/index';
 import { isDateTime } from '../datetime/moment_wrapper';
 import { ArrayVector } from '../vector/ArrayVector';
@@ -24,12 +25,12 @@ import { ArrayDataFrame } from './ArrayDataFrame';
 function convertTableToDataFrame(table: TableData): DataFrame {
   const fields = table.columns.map(c => {
     const { text, ...disp } = c;
-    return {
+    return new FieldImpl({
       name: text, // rename 'text' to the 'name' field
       config: (disp || {}) as FieldConfig,
       values: new ArrayVector(),
       type: FieldType.other,
-    };
+    });
   });
 
   if (!isArray(table.rows)) {
@@ -67,13 +68,13 @@ function convertTimeSeriesToDataFrame(timeSeries: TimeSeries): DataFrame {
   }
 
   const fields = [
-    {
+    new FieldImpl({
       name: 'Time',
       type: FieldType.time,
       config: {},
       values: new ArrayVector<number>(times),
-    },
-    {
+    }),
+    new FieldImpl({
       name: timeSeries.target || 'Value',
       type: FieldType.number,
       config: {
@@ -81,7 +82,7 @@ function convertTimeSeriesToDataFrame(timeSeries: TimeSeries): DataFrame {
       },
       values: new ArrayVector<TimeSeriesValue>(values),
       labels: timeSeries.tags,
-    },
+    }),
   ];
 
   return {
@@ -110,20 +111,20 @@ function convertGraphSeriesToDataFrame(graphSeries: GraphSeriesXY): DataFrame {
   return {
     name: graphSeries.label,
     fields: [
-      {
+      new FieldImpl({
         name: graphSeries.label || 'Value',
         type: FieldType.number,
         config: {},
         values: x,
-      },
-      {
+      }),
+      new FieldImpl({
         name: 'Time',
         type: FieldType.time,
         config: {
           unit: 'dateTimeAsIso',
         },
         values: y,
-      },
+      }),
     ],
     length: x.buffer.length,
   };

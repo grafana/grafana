@@ -13,7 +13,7 @@ import {
   FieldConfig,
   DataFrameView,
   DataLink,
-  Field,
+  FieldImpl,
 } from '@grafana/data';
 
 import templateSrv from 'app/features/templating/template_srv';
@@ -74,10 +74,10 @@ function constructDataFrame(
   const dataFrame = {
     refId,
     fields: [
-      { name: 'ts', type: FieldType.time, config: { title: 'Time' }, values: times }, // Time
-      { name: 'line', type: FieldType.string, config: {}, values: lines, labels }, // Line
-      { name: 'id', type: FieldType.string, config: {}, values: uids },
-      { name: 'tsNs', type: FieldType.time, config: { title: 'Time ns' }, values: timesNs }, // Time
+      new FieldImpl({ name: 'ts', type: FieldType.time, config: { title: 'Time' }, values: times }), // Time
+      new FieldImpl({ name: 'line', type: FieldType.string, config: {}, values: lines, labels }), // Line
+      new FieldImpl({ name: 'id', type: FieldType.string, config: {}, values: uids }),
+      new FieldImpl({ name: 'tsNs', type: FieldType.time, config: { title: 'Time ns' }, values: timesNs }), // Time
     ],
     length: times.length,
   };

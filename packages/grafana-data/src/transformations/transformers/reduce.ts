@@ -2,7 +2,7 @@ import { DataTransformerID } from './ids';
 import { DataTransformerInfo, MatcherConfig } from '../../types/transformations';
 import { fieldReducers, reduceField, ReducerID } from '../fieldReducer';
 import { alwaysFieldMatcher } from '../matchers/predicates';
-import { DataFrame, Field, FieldType } from '../../types/dataFrame';
+import { DataFrame, Field, FieldType, FieldImpl } from '../../types/dataFrame';
 import { ArrayVector } from '../../vector/ArrayVector';
 import { KeyValue } from '../../types/data';
 import { guessFieldTypeForField } from '../../dataframe/processDataFrame';
@@ -42,27 +42,31 @@ export const reduceTransformer: DataTransformerInfo<ReduceTransformerOptions> = 
         const byId: KeyValue<ArrayVector> = {};
 
         values.push(new ArrayVector()); // The name
-        fields.push({
-          name: 'Field',
-          type: FieldType.string,
-          values: values[0],
-          config: {},
-        });
+        fields.push(
+          new FieldImpl({
+            name: 'Field',
+            type: FieldType.string,
+            values: values[0],
+            config: {},
+          })
+        );
 
         for (const info of calculators) {
           const vals = new ArrayVector();
           byId[info.id] = vals;
           values.push(vals);
 
-          fields.push({
-            name: info.id,
-            type: FieldType.other, // UNKNOWN until after we call the functions
-            values: values[values.length - 1],
-            config: {
-              title: info.name,
-              // UNIT from original field?
-            },
-          });
+          fields.push(
+            new FieldImpl({
+              name: info.id,
+              type: FieldType.other, // UNKNOWN until after we call the functions
+              values: values[values.length - 1],
+              config: {
+                title: info.name,
+                // UNIT from original field?
+              },
+            })
+          );
         }
 
         for (let i = 0; i < series.fields.length; i++) {

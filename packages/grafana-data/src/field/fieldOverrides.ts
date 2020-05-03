@@ -16,6 +16,7 @@ import {
   ValueLinkConfig,
   GrafanaTheme,
   TimeZone,
+  FieldImpl,
 } from '../types';
 import { fieldMatchers, ReducerID, reduceField } from '../transformations';
 import { FieldMatcher } from '../types/transformations';
@@ -178,11 +179,13 @@ export function applyFieldOverrides(options: ApplyFieldOverrideOptions): DataFra
       }
 
       // Overwrite the configs
-      const f: Field = {
+      const f: Field = new FieldImpl({
         ...field,
         config,
         type,
-      };
+      });
+
+      // Here is where it gets' tricky, since these take in field as argument
 
       // and set the display processor using it
       f.display = getDisplayProcessor({
