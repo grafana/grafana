@@ -31,7 +31,7 @@ import { DataLinkBuiltInVars, locationUtil } from '../utils';
 import { formattedValueToString } from '../valueFormats';
 import { getFieldDisplayValuesProxy } from './getFieldDisplayValuesProxy';
 import { formatLabels } from '../utils/labels';
-import { getFrameDisplayTitle } from './fieldDisplay';
+import { getFrameDisplayTitle, getFieldState } from './fieldDisplay';
 
 interface OverrideProps {
   match: FieldMatcher;
@@ -104,16 +104,19 @@ export function applyFieldOverrides(options: ApplyFieldOverrideOptions): DataFra
     const fields: Field[] = frame.fields.map((field, fieldIndex) => {
       // Config is mutable within this scope
       const fieldScopedVars = { ...scopedVars };
+      const state = getFieldState(field, frame, options.data);
+
       fieldScopedVars['__field'] = {
         text: 'Field',
         value: {
-          name: field.name ?? `Field[${fieldIndex}]`,
+          name: state.title, // Generally appropriate (may include the series name if useful)
           labels: formatLabels(field.labels!),
           label: field.labels,
         },
       };
+      state.scopedVars = fieldScopedVars;
 
-      const config: FieldConfig = { ...field.config, scopedVars: fieldScopedVars } || {};
+      const config: FieldConfig = { ...field.config };
       const context = {
         field,
         data: options.data!,
@@ -181,6 +184,7 @@ export function applyFieldOverrides(options: ApplyFieldOverrideOptions): DataFra
       const f: Field = {
         ...field,
         config,
+        state,
         type,
       };
 

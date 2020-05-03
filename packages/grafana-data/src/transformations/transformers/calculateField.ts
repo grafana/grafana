@@ -61,7 +61,9 @@ export const calculateFieldTransformer: DataTransformerInfo<CalculateFieldTransf
       const vals: number[] = [];
       for (let i = 0; i < frame.length; i++) {
         iter.rowIndex = i;
-        row.calcs = undefined; // bust the cache (just in case)
+        if (row.state) {
+          row.state.calcs = undefined; // bust the cache (just in case)
+        }
         const val = reducer(row, ignoreNulls, nullAsZero)[options.reducer];
         vals.push(val);
       }

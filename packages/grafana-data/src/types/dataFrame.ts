@@ -53,8 +53,6 @@ export interface FieldConfig<TOptions extends object = any> {
 
   // Panel Specific Values
   custom?: TOptions;
-
-  scopedVars?: ScopedVars;
 }
 
 export interface ValueLinkConfig {
@@ -85,9 +83,9 @@ export interface Field<T = any, V = Vector<T>> {
   labels?: Labels;
 
   /**
-   * Cache of reduced values
+   * Cached values with appropriate dispaly and id values
    */
-  calcs?: FieldCalcs;
+  state?: FieldState;
 
   /**
    * Convert text to the field value
@@ -103,6 +101,23 @@ export interface Field<T = any, V = Vector<T>> {
    * Get value data links with variables interpolated
    */
   getLinks?: (config: ValueLinkConfig) => Array<LinkModel<Field>>;
+}
+
+export interface FieldState {
+  /**
+   * An appropriate name for the field (does not include frame info)
+   */
+  title: string;
+
+  /**
+   * Cache of reduced values
+   */
+  calcs?: FieldCalcs;
+
+  /**
+   * Appropriate values for templating
+   */
+  scopedVars?: ScopedVars;
 }
 
 export interface DataFrame extends QueryResultBase {

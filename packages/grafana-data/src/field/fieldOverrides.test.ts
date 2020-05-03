@@ -111,14 +111,14 @@ describe('applyFieldOverrides', () => {
         fieldConfigRegistry: new FieldConfigOptionsRegistry(),
       });
 
-      expect(withOverrides[0].fields[0].config.scopedVars).toMatchInlineSnapshot(`
+      expect(withOverrides[0].fields[0].state!.scopedVars).toMatchInlineSnapshot(`
         Object {
           "__field": Object {
             "text": "Field",
             "value": Object {
               "label": undefined,
               "labels": "",
-              "name": "message",
+              "name": "A message",
             },
           },
           "__series": Object {
@@ -130,14 +130,14 @@ describe('applyFieldOverrides', () => {
         }
       `);
 
-      expect(withOverrides[1].fields[0].config.scopedVars).toMatchInlineSnapshot(`
+      expect(withOverrides[1].fields[0].state!.scopedVars).toMatchInlineSnapshot(`
         Object {
           "__field": Object {
             "text": "Field",
             "value": Object {
               "label": undefined,
               "labels": "",
-              "name": "info",
+              "name": "B info",
             },
           },
           "__series": Object {

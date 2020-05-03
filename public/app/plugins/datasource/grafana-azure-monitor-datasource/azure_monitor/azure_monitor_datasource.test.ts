@@ -137,7 +137,7 @@ describe('AzureMonitorDatasource', () => {
       return ctx.ds.query(options).then((results: any) => {
         expect(results.data.length).toBe(1);
         const data = results.data[0] as DataFrame;
-        expect(getFrameDisplayTitle(data.name)).toEqual('Percentage CPU');
+        expect(getFrameDisplayTitle(data)).toEqual('Percentage CPU');
         expect(data.fields[0].values.get(0)).toEqual(1558278660000);
         expect(data.fields[1].values.get(0)).toEqual(2.2075);
         expect(data.fields[0].values.get(1)).toEqual(1558278720000);

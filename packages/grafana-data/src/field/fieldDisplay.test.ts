@@ -1,10 +1,10 @@
 import merge from 'lodash/merge';
-import { getFieldDisplayValues, GetFieldDisplayValuesOptions, getFieldDisplayTitle } from './fieldDisplay';
+import { getFieldDisplayValues, GetFieldDisplayValuesOptions, calculateFieldState } from './fieldDisplay';
 import { toDataFrame } from '../dataframe/processDataFrame';
 import { ReducerID } from '../transformations/fieldReducer';
 import { ThresholdsMode } from '../types/thresholds';
 import { GrafanaTheme } from '../types/theme';
-import { FieldConfig, MappingType, TIME_SERIES_FIELD_NAME } from '../types';
+import { DataFrame, FieldConfig, MappingType, TIME_SERIES_FIELD_NAME, FieldState, FieldType } from '../types';
 import { validateFieldConfig } from './fieldOverrides';
 import { standardFieldConfigEditorRegistry } from './standardFieldConfigEditorRegistry';
 
@@ -216,83 +216,136 @@ describe('FieldDisplay', () => {
   });
 });
 
-describe('getFieldDisplayTitle', () => {
-  it('should use field name if no frame name', () => {
-    const data = toDataFrame({
-      fields: [{ name: 'Field 1', values: [] }],
-    });
+interface TitleScenario {
+  frames: DataFrame[];
+  frameIndex?: number; // assume 0
+  fieldIndex?: number; // assume 0
+}
 
-    expect(getFieldDisplayTitle(data.fields[0], data)).toBe('Field 1');
+function checkScenario(scenario: TitleScenario): FieldState {
+  const frame = scenario.frames[scenario.frameIndex ?? 0];
+  const field = frame.fields[scenario.fieldIndex ?? 0];
+  return calculateFieldState(field, frame, scenario.frames);
+}
+
+describe('Check field state calculations (title and id)', () => {
+  it('should use field name if no frame name', () => {
+    const state = checkScenario({
+      frames: [
+        toDataFrame({
+          fields: [{ name: 'Field 1' }],
+        }),
+      ],
+    });
+    expect(state.title).toEqual('Field 1');
   });
 
   it('should use only field name if only one series', () => {
-    const data = toDataFrame({
-      name: 'Series A',
-      fields: [{ name: 'Field 1', values: [] }],
+    const state = checkScenario({
+      frames: [
+        toDataFrame({
+          name: 'Series A',
+          fields: [{ name: 'Field 1' }],
+        }),
+      ],
     });
-
-    expect(getFieldDisplayTitle(data.fields[0], data, [data])).toBe('Field 1');
+    expect(state.title).toEqual('Field 1');
   });
 
   it('should use frame name and field name if more than one frame', () => {
-    const data = toDataFrame({
-      name: 'Series A',
-      fields: [{ name: 'Field 1', values: [] }],
+    const state = checkScenario({
+      frames: [
+        toDataFrame({
+          name: 'Series A',
+          fields: [{ name: 'Field 1' }],
+        }),
+        toDataFrame({
+          name: 'Series B',
+          fields: [{ name: 'Field 1' }],
+        }),
+      ],
     });
-
-    const data2 = toDataFrame({
-      name: 'Series B',
-      fields: [{ name: 'Field 1', values: [] }],
-    });
-
-    expect(getFieldDisplayTitle(data.fields[0], data, [data, data2])).toBe('Series A Field 1');
+    expect(state.title).toEqual('Series A Field 1');
   });
 
   it('should only use label value if only one label', () => {
-    const data = toDataFrame({
-      fields: [{ name: 'Value', values: [], labels: { server: 'Server A' } }],
+    const state = checkScenario({
+      frames: [
+        toDataFrame({
+          fields: [{ name: 'Value', labels: { server: 'Server A' } }],
+        }),
+      ],
     });
-
-    expect(getFieldDisplayTitle(data.fields[0], data, [data])).toBe('Server A');
+    expect(state.title).toEqual('Server A');
   });
 
   it('should use label value only if all series have same name', () => {
-    const data = toDataFrame({
-      name: 'cpu',
-      fields: [{ name: 'Value', values: [], labels: { server: 'Server A' } }],
+    const state = checkScenario({
+      frames: [
+        toDataFrame({
+          name: 'cpu',
+          fields: [{ name: 'Value', labels: { server: 'Server A' } }],
+        }),
+        toDataFrame({
+          name: 'cpu',
+          fields: [{ name: 'Value', labels: { server: 'Server A' } }],
+        }),
+      ],
     });
-
-    const data2 = toDataFrame({
-      name: 'cpu',
-      fields: [{ name: 'Value', values: [], labels: { server: 'Server A' } }],
-    });
-
-    expect(getFieldDisplayTitle(data.fields[0], data, [data, data2])).toBe('Server A');
+    expect(state.title).toEqual('Server A');
   });
 
   it('should use label name and value if more than one label', () => {
-    const data = toDataFrame({
-      fields: [{ name: 'Value', values: [], labels: { server: 'Server A', mode: 'B' } }],
+    const state = checkScenario({
+      frames: [
+        toDataFrame({
+          fields: [{ name: 'Value', labels: { server: 'Server A', mode: 'B' } }],
+        }),
+      ],
     });
-
-    expect(getFieldDisplayTitle(data.fields[0], data, [data])).toBe('{mode="B", server="Server A"}');
+    expect(state.title).toEqual('{mode="B", server="Server A"}');
   });
 
   it('should use field name even when it is TIME_SERIES_FIELD_NAME if there are no labels', () => {
-    const data = toDataFrame({
-      fields: [{ name: TIME_SERIES_FIELD_NAME, values: [], labels: {} }],
+    const state = checkScenario({
+      frames: [
+        toDataFrame({
+          fields: [{ name: TIME_SERIES_FIELD_NAME, labels: {} }],
+        }),
+      ],
     });
-
-    expect(getFieldDisplayTitle(data.fields[0], data)).toBe('Value');
+    expect(state.title).toEqual('Value');
   });
 
   it('should use series name when field name is TIME_SERIES_FIELD_NAME and there are no labels ', () => {
-    const data = toDataFrame({
-      name: 'Series A',
-      fields: [{ name: TIME_SERIES_FIELD_NAME, values: [], labels: {} }],
+    const state = checkScenario({
+      frames: [
+        toDataFrame({
+          name: 'Series A',
+          fields: [{ name: TIME_SERIES_FIELD_NAME, labels: {} }],
+        }),
+      ],
     });
+    expect(state.title).toEqual('Series A');
+  });
 
-    expect(getFieldDisplayTitle(data.fields[0], data)).toBe('Series A');
+  it('should reder loki frames', () => {
+    const state = checkScenario({
+      frames: [
+        toDataFrame({
+          refId: 'A',
+          fields: [
+            { name: 'time', type: FieldType.time },
+            {
+              name: 'line',
+              labels: { host: 'ec2-13-53-116-156.eu-north-1.compute.amazonaws.com', region: 'eu-north1' },
+            },
+          ],
+        }),
+      ],
+      fieldIndex: 1,
+    });
+    expect(state.title).toEqual('line {host="ec2-13-53-116-156.eu-north-1.compute.amazonaws.com", region="eu-north1"}');
   });
 });
 

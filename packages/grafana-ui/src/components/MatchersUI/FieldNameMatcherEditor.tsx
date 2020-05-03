@@ -1,6 +1,6 @@
 import React from 'react';
 import { MatcherUIProps, FieldMatcherUIRegistryItem } from './types';
-import { FieldMatcherID, fieldMatchers, getFieldId } from '@grafana/data';
+import { FieldMatcherID, fieldMatchers, getFieldState } from '@grafana/data';
 import { Select } from '../Select/Select';
 
 export class FieldNameMatcherEditor extends React.PureComponent<MatcherUIProps<string>> {
@@ -10,7 +10,7 @@ export class FieldNameMatcherEditor extends React.PureComponent<MatcherUIProps<s
 
     for (const frame of data) {
       for (const field of frame.fields) {
-        names.add(getFieldId(field, frame));
+        names.add(getFieldState(field, frame, data).title);
       }
     }
     if (options) {
@@ -32,6 +32,6 @@ export const fieldNameMatcherItem: FieldMatcherUIRegistryItem<string> = {
   id: FieldMatcherID.byName,
   component: FieldNameMatcherEditor,
   matcher: fieldMatchers.get(FieldMatcherID.byName),
-  name: 'Filter by name',
+  name: 'Filter by field',
   description: 'Set properties for fields matching the name',
 };

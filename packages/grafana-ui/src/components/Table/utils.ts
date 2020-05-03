@@ -1,5 +1,5 @@
 import { TextAlignProperty } from 'csstype';
-import { DataFrame, Field, FieldType, getFieldDisplayTitle } from '@grafana/data';
+import { DataFrame, Field, FieldType, getFieldState } from '@grafana/data';
 import { Column } from 'react-table';
 import { DefaultCell } from './DefaultCell';
 import { BarGaugeCell } from './BarGaugeCell';
@@ -48,11 +48,10 @@ export function getColumns(data: DataFrame, availableWidth: number, columnMinWid
     }
 
     const Cell = getCellComponent(fieldTableOptions.displayMode, field);
-
     columns.push({
       Cell,
       id: fieldIndex.toString(),
-      Header: getFieldDisplayTitle(field, data),
+      Header: getFieldState(field, data).title,
       accessor: (row: any, i: number) => {
         return field.values.get(i);
       },

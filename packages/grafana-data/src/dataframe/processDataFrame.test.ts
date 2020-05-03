@@ -22,7 +22,8 @@ describe('toDataFrame', () => {
       ],
     };
     let series = toDataFrame(input1);
-    expect(series.fields[1].name).toBe(input1.target);
+    expect(series.name).toBe(input1.target);
+    expect(series.fields[1].name).toBe('Value');
 
     const v0 = series.fields[0].values;
     const v1 = series.fields[1].values;

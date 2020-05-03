@@ -10,6 +10,7 @@ import {
   standardTransformers,
   TransformerRegistyItem,
   TransformerUIProps,
+  getFieldState,
 } from '@grafana/data';
 import { stylesFactory, useTheme } from '../../themes';
 import { Input } from '../Input/Input';
@@ -70,6 +71,11 @@ const OrganizeFieldsTransformerEditor: React.FC<OrganizeFieldsTransformerEditorP
     },
     [onChange, fieldNames, renameByName]
   );
+
+  // Show warning that we only apply the first frame
+  if (input.length > 1) {
+    return <div>Organize fields only works with a sigle frame. Consider applying a join transformation first.</div>;
+  }
 
   return (
     <DragDropContext onDragEnd={onDragEnd}>
@@ -210,7 +216,8 @@ export const getAllFieldNamesFromDataFrames = (input: DataFrame[]): string[] => 
       }
 
       return frame.fields.reduce((names, field) => {
-        names[field.name] = null;
+        const t = getFieldState(field, frame, input).title;
+        names[t] = null;
         return names;
       }, names);
     }, {} as Record<string, null>)

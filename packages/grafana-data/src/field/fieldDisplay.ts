@@ -15,6 +15,7 @@ import {
   TimeZone,
   Field,
   TIME_SERIES_FIELD_NAME,
+  FieldState,
 } from '../types';
 import { DataFrameView } from '../dataframe/DataFrameView';
 import { GraphSeriesValue } from '../types/graph';
@@ -43,37 +44,13 @@ export const VAR_FIELD_LABELS = '__field.labels';
 export const VAR_CALC = '__calc';
 export const VAR_CELL_PREFIX = '__cell_'; // consistent with existing table templates
 
-function getTitleTemplate(title: string | undefined, stats: string[], data?: DataFrame[]): string {
-  // If the title exists, use it as a template variable
-  if (title) {
-    return title;
-  }
-
-  if (!data || !data.length) {
-    return 'No Data';
-  }
-
-  let fieldCount = 0;
-  for (const field of data[0].fields) {
-    if (field.type === FieldType.number) {
-      fieldCount++;
-    }
-  }
-
+function getTitleTemplate(stats: string[]): string {
   const parts: string[] = [];
   if (stats.length > 1) {
     parts.push('${' + VAR_CALC + '}');
   }
 
-  if (data.length > 1) {
-    parts.push('${' + VAR_SERIES_NAME + '}');
-  }
-
-  if (fieldCount > 1 || !parts.length) {
-    parts.push('${' + VAR_FIELD_NAME + '}');
-  }
-
-  parts.push('${' + VAR_FIELD_LABELS + '}');
+  parts.push('${' + VAR_FIELD_NAME + '}');
 
   return parts.join(' ');
 }
@@ -96,7 +73,7 @@ export function getFrameDisplayTitle(frame: DataFrame, index?: number) {
   if (index === undefined) {
     return frame.fields
       .filter(f => f.type !== FieldType.time)
-      .map(f => getFieldDisplayTitle(f, frame))
+      .map(f => getFieldState(f, frame).title)
       .join(', ');
   }
 
@@ -107,67 +84,89 @@ export function getFrameDisplayTitle(frame: DataFrame, index?: number) {
   return `Series (${index})`;
 }
 
+export function getFieldState(field: Field, frame?: DataFrame, allFrames?: DataFrame[]): FieldState {
+  if (!field.state || !field.state.title) {
+    field.state = calculateFieldState(field, frame, allFrames);
+  }
+  return field.state;
+}
+
 /**
  * Get an appropriate display title. If the 'title' is set, use that
  */
-export function getFieldDisplayTitle(field: Field, frame: DataFrame, allFrames?: DataFrame[]) {
-  let title = field.config?.title;
+export function calculateFieldState(field: Field, frame?: DataFrame, allFrames?: DataFrame[]): FieldState {
+  const hasConfigTitle = field.config?.title && field.config?.title.length;
 
-  if (title) {
-    return title; // Title is set and not a template
-  }
+  let title = hasConfigTitle ? field.config!.title! : field.name;
+  let allLabels = field.labels ? formatLabels(field.labels) : '';
 
-  let parts: string[] = [];
-  let frameNamesDiffer = false;
+  if (field.type === FieldType.time) {
+    if (!title) {
+      title = 'Time';
+    }
+  } else if (!hasConfigTitle) {
+    let parts: string[] = [];
+    let frameNamesDiffer = false;
 
-  if (allFrames && allFrames.length > 1) {
-    for (let i = 1; i < allFrames.length; i++) {
-      const frame = allFrames[i];
-      if (frame.name !== allFrames[i - 1].name) {
-        frameNamesDiffer = true;
-        break;
+    if (allFrames && allFrames.length > 1) {
+      for (let i = 1; i < allFrames.length; i++) {
+        const frame = allFrames[i];
+        if (frame.name !== allFrames[i - 1].name) {
+          frameNamesDiffer = true;
+          break;
+        }
       }
     }
-  }
 
-  let frameNameAdded = false;
-  let labelsAdded = false;
+    let frameNameAdded = false;
+    let labelsAdded = false;
 
-  if (frameNamesDiffer && frame.name) {
-    parts.push(frame.name);
-    frameNameAdded = true;
-  }
-
-  if (field.labels) {
-    let singleLabelName = getSingleLabelName(allFrames ?? [frame]);
-
-    if (!singleLabelName) {
-      const allLabels = formatLabels(field.labels);
-      if (allLabels) {
-        parts.push(allLabels);
-        labelsAdded = true;
-      }
-    } else if (field.labels[singleLabelName]) {
-      parts.push(field.labels[singleLabelName]);
-      labelsAdded = true;
-    }
-  }
-
-  // if we have not added frame name and no labels, and field name = Value, we should add frame name
-  if (!frameNameAdded && !labelsAdded && field.name === TIME_SERIES_FIELD_NAME) {
-    if (frame.name && frame.name.length > 0) {
+    if (frameNamesDiffer && frame?.name) {
       parts.push(frame.name);
       frameNameAdded = true;
     }
+
+    if (field.name && field.name !== TIME_SERIES_FIELD_NAME) {
+      parts.push(field.name);
+    }
+
+    if (field.labels && frame) {
+      let singleLabelName = getSingleLabelName(allFrames ?? [frame]);
+
+      if (!singleLabelName) {
+        if (allLabels) {
+          parts.push(allLabels);
+          labelsAdded = true;
+        }
+      } else if (field.labels[singleLabelName]) {
+        parts.push(field.labels[singleLabelName]);
+        labelsAdded = true;
+      }
+    }
+
+    // if we have not added frame name and no labels, and field name = Value, we should add frame name
+    if (frame && !frameNameAdded && !labelsAdded && field.name === TIME_SERIES_FIELD_NAME) {
+      if (frame.name && frame.name.length > 0) {
+        parts.push(frame.name);
+        frameNameAdded = true;
+      }
+    }
+
+    if (parts.length) {
+      title = parts.join(' ');
+    } else if (field.name) {
+      title = field.name;
+    } else {
+      title = TIME_SERIES_FIELD_NAME;
+    }
   }
 
-  // We skip the Value field name if we have a frame name or labels
-  if (field.name !== TIME_SERIES_FIELD_NAME || (!frameNameAdded && !labelsAdded)) {
-    parts.push(field.name);
-  }
-
-  return parts.join(' ');
+  return {
+    ...field.state,
+    title,
+  };
 }
+
 /**
  * Checks all data frames and return name of label if there is only one label name in all frames
  */
@@ -194,24 +193,6 @@ function getSingleLabelName(frames: DataFrame[]): string | null {
   }
 
   return singleName;
-}
-
-/**
- * name + labels
- */
-export function getFieldId(field: Field) {
-  let name = field.config?.title ?? field.name;
-
-  // If we have labels and field name is just default time series field name (Value) then return only labels
-  if (field.labels && Object.keys(field.labels).length > 0 && name === TIME_SERIES_FIELD_NAME) {
-    return formatLabels(field.labels);
-  }
-
-  if (field.labels) {
-    name += ' ' + formatLabels(field.labels);
-  }
-
-  return name;
 }
 
 export interface FieldDisplay {
@@ -252,6 +233,7 @@ export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): Fi
     let hitLimit = false;
     const limit = reduceOptions.limit ? reduceOptions.limit : DEFAULT_FIELD_DISPLAY_VALUES_LIMIT;
     const scopedVars: ScopedVars = {};
+    const defaultTitle = getTitleTemplate(calcs);
 
     for (let s = 0; s < data.length && !hitLimit; s++) {
       const series = data[s]; // Name is already set
@@ -269,6 +251,8 @@ export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): Fi
         }
 
         const config = field.config; // already set by the prepare task
+        const state = getFieldState(field, series, options.data);
+        const title = field.config.title ?? defaultTitle;
 
         const display =
           field.display ??
@@ -277,8 +261,6 @@ export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): Fi
             theme: options.theme,
             timeZone,
           });
-
-        const title = config.title ?? getFieldDisplayTitle(field, series, data);
 
         // Show all rows
         if (reduceOptions.values) {
@@ -299,7 +281,7 @@ export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): Fi
 
             const displayValue = display(field.values.get(j));
             displayValue.title = replaceVariables(title, {
-              ...field.config.scopedVars, // series and field scoped vars
+              ...state.scopedVars, // series and field scoped vars
               ...scopedVars,
             });
 
@@ -342,7 +324,7 @@ export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): Fi
             scopedVars[VAR_CALC] = { value: calc, text: calc };
             const displayValue = display(results[calc]);
             displayValue.title = replaceVariables(title, {
-              ...field.config.scopedVars, // series and field scoped vars
+              ...state.scopedVars, // series and field scoped vars
               ...scopedVars,
             });
 
