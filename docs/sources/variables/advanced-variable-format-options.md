@@ -56,7 +56,7 @@ Interpolation result: '"test1","test2"'
 
 ## Glob - Graphite
 
-Formats multi-value variable into a glob (for Graphite queries).
+Formats multi-valued variable into a glob (for Graphite queries).
 
 ```bash
 servers = ['test1', 'test2']
