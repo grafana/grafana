@@ -96,7 +96,7 @@ Interpolation result: 'foo%28%29bar%20BAZ%2Ctest2'
 
 ## Pipe
 
-Formats multi-value variable into a pipe-separated string.
+Formats multi-valued variable into a pipe-separated string.
 
 ```bash
 servers = ['test1.', 'test2']
