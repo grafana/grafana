@@ -664,6 +664,9 @@ jobs:
           command: ./e2e/start-server
           background: true
       - run:
+          name: "Wait for Grafana to start"
+          command: './e2e/wait-for-grafana'
+      - run:
           name: Run end-to-end tests
           command: ./e2e/run-suite
           no_output_timeout: 5m
