@@ -3,15 +3,17 @@ import {
   Button,
   Container,
   CustomScrollbar,
+  FeatureInfoBox,
   stylesFactory,
   useTheme,
   ValuePicker,
   VerticalGroup,
-  InfoBox,
 } from '@grafana/ui';
 import {
   DataFrame,
   DataTransformerConfig,
+  DocsId,
+  FeatureState,
   GrafanaTheme,
   SelectableValue,
   standardTransformersRegistry,
@@ -21,6 +23,7 @@ import { TransformationOperationRow } from './TransformationOperationRow';
 import { Card, CardProps } from '../../../../core/components/Card/Card';
 import { css } from 'emotion';
 import { selectors } from '@grafana/e2e-selectors';
+import { getDocsLink } from 'app/core/utils/docsLinks';
 
 interface Props {
   onChange: (transformations: DataTransformerConfig[]) => void;
@@ -123,7 +126,21 @@ export class TransformationsEditor extends React.PureComponent<Props> {
 
   renderNoAddedTransformsState() {
     return (
-      <>
+      <VerticalGroup spacing={'lg'}>
+        <Container grow={1}>
+          <FeatureInfoBox
+            title="Transformations"
+            featureState={FeatureState.beta}
+            onDismiss={() => {}}
+            url={getDocsLink(DocsId.Transformations)}
+          >
+            Transformations allow you to join, calculate, re-order, hide and rename your query results before being
+            visualized. <br />
+            Many transforms are not suitable if your using the Graph visualisation as it currently only supports time
+            series. <br />
+            It can help to switch to Table visualisation to understand what a transformation is doing. <br />
+          </FeatureInfoBox>
+        </Container>
         <VerticalGroup>
           {standardTransformersRegistry.list().map(t => {
             return (
@@ -139,7 +156,7 @@ export class TransformationsEditor extends React.PureComponent<Props> {
             );
           })}
         </VerticalGroup>
-      </>
+      </VerticalGroup>
     );
   }
 
@@ -149,12 +166,6 @@ export class TransformationsEditor extends React.PureComponent<Props> {
       <CustomScrollbar autoHeightMin="100%">
         <Container padding="md">
           <div aria-label={selectors.components.TransformTab.content}>
-            <InfoBox header="Beta feature">
-              Transformations is a new feature that is currenly in beta. Transformations allow you to join, calculate,
-              re-order, hide and rename your query results before being visualized. Many transforms are not suitable if
-              your using the Graph visualisation as it currently only supports time series. It can help to switch to
-              Table visualisation to understand what a transformation is doing.
-            </InfoBox>
             {!hasTransformationsConfigured && this.renderNoAddedTransformsState()}
             {hasTransformationsConfigured && this.renderTransformationEditors()}
             {hasTransformationsConfigured && this.renderTransformationSelector()}

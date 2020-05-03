@@ -2,18 +2,21 @@ import React, { useCallback } from 'react';
 import cloneDeep from 'lodash/cloneDeep';
 import {
   DataFrame,
+  DocsId,
   FieldConfigPropertyItem,
   FieldConfigSource,
   PanelPlugin,
   SelectableValue,
   VariableSuggestionsScope,
 } from '@grafana/data';
-import { Container, Counter, Field, fieldMatchersUI, Label, ValuePicker } from '@grafana/ui';
+import { Container, Counter, FeatureInfoBox, Field, fieldMatchersUI, Label, useTheme, ValuePicker } from '@grafana/ui';
 import { getDataLinksVariableSuggestions } from '../../../panel/panellinks/link_srv';
 import { OverrideEditor } from './OverrideEditor';
 import groupBy from 'lodash/groupBy';
 import { OptionsGroup } from './OptionsGroup';
 import { selectors } from '@grafana/e2e-selectors';
+import { getDocsLink } from '../../../../core/utils/docsLinks';
+import { css } from 'emotion';
 
 interface Props {
   plugin: PanelPlugin;
@@ -27,6 +30,7 @@ interface Props {
  * Expects the container div to have size set and will fill it 100%
  */
 export const OverrideFieldConfigEditor: React.FC<Props> = props => {
+  const theme = useTheme();
   const onOverrideChange = (index: number, override: any) => {
     const { config } = props;
     let overrides = cloneDeep(config.overrides);
@@ -104,6 +108,17 @@ export const OverrideFieldConfigEditor: React.FC<Props> = props => {
 
   return (
     <div aria-label={selectors.components.OverridesConfigEditor.content}>
+      <FeatureInfoBox
+        title="Overrides"
+        url={getDocsLink(DocsId.FieldConfigOverrides)}
+        onDismiss={() => {}}
+        className={css`
+          margin: ${theme.spacing.md};
+        `}
+      >
+        Field options overrides give you a fine grained control over how your data is displayed.
+      </FeatureInfoBox>
+
       {renderOverrides()}
       {renderAddOverride()}
     </div>

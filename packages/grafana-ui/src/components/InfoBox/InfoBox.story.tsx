@@ -1,6 +1,9 @@
 import React from 'react';
 import { number } from '@storybook/addon-knobs';
 import { InfoBox } from './InfoBox';
+import { FeatureInfoBox } from './FeatureInfoBox';
+import { FeatureState } from '@grafana/data';
+import { InfoBoxV2 } from '../../index';
 
 export default {
   title: 'Layout/InfoBox',
@@ -34,7 +37,13 @@ export const basic = () => {
 
   return (
     <div style={{ width: containerWidth }}>
-      <InfoBox header="User Permission">
+      <InfoBox
+        title="User Permission"
+        url={'http://docs.grafana.org/features/datasources/mysql/'}
+        onDismiss={() => {
+          alert('onDismiss clicked');
+        }}
+      >
         <p>
           The database user should only be granted SELECT permissions on the specified database &amp; tables you want to
           query. Grafana does not validate that queries are safe so queries can contain any SQL statement. For example,
@@ -42,14 +51,30 @@ export const basic = () => {
           against this we <strong>Highly</strong> recommmend you create a specific MySQL user with restricted
           permissions.
         </p>
-        <p>
-          Checkout the{' '}
-          <a className="external-link" target="_blank" href="http://docs.grafana.org/features/datasources/mysql/">
-            MySQL Data Source Docs
-          </a>{' '}
-          for more information.,
-        </p>
       </InfoBox>
+    </div>
+  );
+};
+
+export const featureInfoBox = () => {
+  const { containerWidth } = getKnobs();
+
+  return (
+    <div style={{ width: containerWidth }}>
+      <FeatureInfoBox
+        title="Transformations"
+        url={'http://www.grafana.com'}
+        featureState={FeatureState.beta}
+        onDismiss={() => {
+          alert('onDismiss clicked');
+        }}
+      >
+        Transformations allow you to join, calculate, re-order, hide and rename your query results before being
+        visualized. <br />
+        Many transforms are not suitable if your using the Graph visualisation as it currently only supports time
+        series. <br />
+        It can help to switch to Table visualisation to understand what a transformation is doing.
+      </FeatureInfoBox>
     </div>
   );
 };
