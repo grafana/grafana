@@ -36,7 +36,7 @@ Interpolation result: 'test1,test2'
 
 ## Distributed - OpenTSDB
 
-Formats multi-value variable in custom format for OpenTSDB.
+Formats multi-valued variable in custom format for OpenTSDB.
 
 ```bash
 servers = ['test1', 'test2']
