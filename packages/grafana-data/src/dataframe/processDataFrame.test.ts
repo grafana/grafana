@@ -183,6 +183,24 @@ describe('SerisData backwards compatibility', () => {
     expect(roundtrip.target).toBe(timeseries.target);
   });
 
+  it('can convert TimeSeries to series and back again with tags should render name with tags', () => {
+    const timeseries = {
+      target: 'Series A',
+      tags: { server: 'ServerA', job: 'app' },
+      datapoints: [
+        [100, 1],
+        [200, 2],
+      ],
+    };
+    const series = toDataFrame(timeseries);
+    expect(isDataFrame(timeseries)).toBeFalsy();
+    expect(isDataFrame(series)).toBeTruthy();
+
+    const roundtrip = toLegacyResponseData(series) as TimeSeries;
+    expect(isDataFrame(roundtrip)).toBeFalsy();
+    expect(roundtrip.target).toBe('{job="app", server="ServerA"}');
+  });
+
   it('can convert empty table to DataFrame then back to legacy', () => {
     const table = {
       columns: [],

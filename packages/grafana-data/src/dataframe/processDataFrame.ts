@@ -21,6 +21,7 @@ import { ArrayVector } from '../vector/ArrayVector';
 import { MutableDataFrame } from './MutableDataFrame';
 import { SortedVector } from '../vector/SortedVector';
 import { ArrayDataFrame } from './ArrayDataFrame';
+import { getFieldState } from '../field';
 
 function convertTableToDataFrame(table: TableData): DataFrame {
   const fields = table.columns.map(c => {
@@ -318,18 +319,22 @@ export const toLegacyResponseData = (frame: DataFrame): TimeSeries | TableData =
     const { timeField, timeIndex } = getTimeField(frame);
     if (timeField) {
       const valueIndex = timeIndex === 0 ? 1 : 0;
+      const valueField = fields[valueIndex];
+      const timeField = fields[timeIndex!];
 
       // Make sure it is [value,time]
       for (let i = 0; i < rowCount; i++) {
         rows.push([
-          fields[valueIndex].values.get(i), // value
-          fields[timeIndex!].values.get(i), // time
+          valueField.values.get(i), // value
+          timeField.values.get(i), // time
         ]);
       }
 
+      const state = getFieldState(valueField, frame);
+
       return {
         alias: frame.name,
-        target: frame.name,
+        target: state.title,
         datapoints: rows,
         unit: fields[0].config ? fields[0].config.unit : undefined,
         refId: frame.refId,
