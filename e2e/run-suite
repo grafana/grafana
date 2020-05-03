@@ -2,18 +2,12 @@
 
 . e2e/variables
 
-HOST=${HOST:-localhost}
-PORT=${PORT:-$DEFAULT_PORT}
-
-echo -e "Waiting for grafana-server to finish starting, host=$HOST, port=$PORT"
-
-timeout 60 bash -c 'until nc -z $0 $1; do sleep 1; done' $HOST $PORT
-
 echo -e "Starting Cypress scenarios"
 
 CMD="start"
 PARAMS=""
 SLOWMO=0
+URL=${BASE_URL:-"http://$DEFAULT_HOST:$DEFAULT_PORT"}
 
 if [ "$1" == "debug" ]; then
     echo -e "Debug mode"
@@ -28,6 +22,6 @@ fi
 
 cd packages/grafana-e2e
 
-yarn $CMD --env BASE_URL=http://$HOST:$PORT,CIRCLE_SHA1=$CIRCLE_SHA1,SLOWMO=$SLOWMO \
+yarn $CMD --env BASE_URL=$URL,CIRCLE_SHA1=$CIRCLE_SHA1,SLOWMO=$SLOWMO \
   --config integrationFolder=../../e2e/suite1/specs,screenshotsFolder=../../e2e/suite1/screenshots,videosFolder=../../e2e/suite1/videos,fileServerFolder=./cypress,viewportWidth=1920,viewportHeight=1080,trashAssetsBeforeRuns=false \
   $PARAMS
