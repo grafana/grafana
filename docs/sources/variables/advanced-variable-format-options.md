@@ -106,7 +106,7 @@ Interpolation result: 'test1.|test2'
 
 ## Regex
 
-Formats multi-value variable into a regex string.
+Formats multi-valued variable into a regex string.
 
 ```bash
 servers = ['test1.', 'test2']
