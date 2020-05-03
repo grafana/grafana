@@ -230,9 +230,10 @@ type Cfg struct {
 	ServeFromSubPath bool
 
 	// Paths
-	ProvisioningPath string
-	DataPath         string
-	LogsPath         string
+	ProvisioningPath   string
+	DataPath           string
+	LogsPath           string
+	BundledPluginsPath string
 
 	// SMTP email settings
 	Smtp SmtpSettings
@@ -637,6 +638,7 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 		return err
 	}
 	PluginsPath = makeAbsolute(plugins, HomePath)
+	cfg.BundledPluginsPath = makeAbsolute("plugins-bundled", HomePath)
 	provisioning, err := valueAsString(iniFile.Section("paths"), "provisioning", "")
 	if err != nil {
 		return err

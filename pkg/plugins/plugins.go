@@ -84,7 +84,7 @@ func (pm *PluginManager) Init() error {
 		return errutil.Wrapf(err, "failed to scan core plugin directory '%s'", plugDir)
 	}
 
-	plugDir = path.Join(setting.HomePath, "plugins-bundled")
+	plugDir = pm.Cfg.BundledPluginsPath
 	pm.log.Debug("Scanning bundled plugins directory", "dir", plugDir)
 	exists, err := fs.Exists(plugDir)
 	if err != nil {
