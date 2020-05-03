@@ -66,7 +66,7 @@ Interpolation result: '{test1,test2}'
 
 ## JSON
 
-Formats multi-value variable as a comma-separated string.
+Formats multi-valued variable as a comma-separated string.
 
 ```bash
 servers = ['test1', 'test2']
@@ -76,7 +76,7 @@ Interpolation result: '["test1", "test2"]'
 
 ## Lucene - Elasticsearch
 
-Formats multi-value variable in Lucene format for Elasticsearch.
+Formats multi-valued variable in Lucene format for Elasticsearch.
 
 ```bash
 servers = ['test1', 'test2']
