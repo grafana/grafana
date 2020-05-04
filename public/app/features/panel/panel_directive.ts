@@ -82,6 +82,9 @@ module.directive('grafanaPanel', ($rootScope, $document, $timeout) => {
       scope.$on('$destroy', () => {
         elem.off();
 
+        panel.events.emit(PanelEvents.panelTeardown);
+        panel.events.removeAllListeners();
+
         if (panelScrollbar) {
           panelScrollbar.dispose();
         }
