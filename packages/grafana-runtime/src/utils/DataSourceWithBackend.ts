@@ -9,6 +9,7 @@ import {
 import { Observable, from } from 'rxjs';
 import { config } from '..';
 import { getBackendSrv } from '../services';
+import { toDataQueryResponse } from './queryResponse';
 
 const ExpressionDatasourceID = '__expr__';
 
@@ -94,7 +95,11 @@ export class DataSourceWithBackend<
         requestId,
       })
       .then((rsp: any) => {
-        return this.toDataQueryResponse(rsp?.data);
+        return toDataQueryResponse(rsp);
+      })
+      .catch(err => {
+        err.isHandled = true; // Avoid extra popup warning
+        return toDataQueryResponse(err);
       });
 
     return from(req);
@@ -107,16 +112,6 @@ export class DataSourceWithBackend<
    */
   applyTemplateVariables(query: DataQuery) {
     return query;
-  }
-
-  /**
-   * This makes the arrow library loading async.
-   */
-  async toDataQueryResponse(rsp: any): Promise<DataQueryResponse> {
-    const { resultsToDataFrames } = await import(
-      /* webpackChunkName: "apache-arrow-util" */ '@grafana/data/src/dataframe/ArrowDataFrame'
-    );
-    return { data: resultsToDataFrames(rsp) };
   }
 
   /**

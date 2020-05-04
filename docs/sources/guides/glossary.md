@@ -12,7 +12,7 @@ weight = 400
 
 # Glossary
 
-This topic lists words and abbreviations that commonly used in the Grafana documentation and community.
+This topic lists words and abbreviations that are commonly used in the Grafana documentation and community.
 
 <table>
   <tr>

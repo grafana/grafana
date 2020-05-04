@@ -14,6 +14,7 @@ import {
   DataFrameView,
   DataLink,
   Field,
+  QueryResultMetaStat,
 } from '@grafana/data';
 
 import templateSrv from 'app/features/templating/template_srv';
@@ -31,6 +32,8 @@ import {
   LokiQuery,
   LokiOptions,
   DerivedFieldConfig,
+  LokiStreamResponse,
+  LokiStats,
 } from './types';
 
 /**
@@ -257,13 +260,48 @@ function getOriginalMetricName(labelData: { [key: string]: string }) {
   return `${metricName}{${labelPart}}`;
 }
 
+export function decamelize(s: string): string {
+  return s.replace(/[A-Z]/g, m => ` ${m.toLowerCase()}`);
+}
+
+// Turn loki stats { metric: value } into meta stat { title: metric, value: value }
+function lokiStatsToMetaStat(stats: LokiStats): QueryResultMetaStat[] {
+  const result: QueryResultMetaStat[] = [];
+  if (!stats) {
+    return result;
+  }
+  for (const section in stats) {
+    const values = stats[section];
+    for (const label in values) {
+      const value = values[label];
+      let unit;
+      if (/time/i.test(label) && value) {
+        unit = 's';
+      } else if (/bytes.*persecond/i.test(label)) {
+        unit = 'Bps';
+      } else if (/bytes/i.test(label)) {
+        unit = 'decbytes';
+      }
+      const title = `${_.capitalize(section)}: ${decamelize(label)}`;
+      result.push({ title, value, unit });
+    }
+  }
+  return result;
+}
+
 export function lokiStreamsToDataframes(
-  data: LokiStreamResult[],
+  response: LokiStreamResponse,
   target: { refId: string; expr?: string; regexp?: string },
   limit: number,
   config: LokiOptions,
   reverse = false
 ): DataFrame[] {
+  const data = limit > 0 ? response.data.result : [];
+  const stats: QueryResultMetaStat[] = lokiStatsToMetaStat(response.data.stats);
+  // Use custom mechanism to identify which stat we want to promote to label
+  const custom = {
+    lokiQueryStatKey: 'Summary: totalBytesProcessed',
+  };
   const series: DataFrame[] = data.map(stream => {
     const dataFrame = lokiStreamResultToDataFrame(stream, reverse);
     enhanceDataFrame(dataFrame, config);
@@ -273,6 +311,8 @@ export function lokiStreamsToDataframes(
       meta: {
         searchWords: getHighlighterExpressionsFromQuery(formatQuery(target.expr, target.regexp)),
         limit,
+        stats,
+        custom,
       },
     };
   });
@@ -378,7 +418,7 @@ export function processRangeQueryResponse(
   switch (response.data.resultType) {
     case LokiResultType.Stream:
       return of({
-        data: lokiStreamsToDataframes(limit > 0 ? response.data.result : [], target, limit, config, reverse),
+        data: lokiStreamsToDataframes(response as LokiStreamResponse, target, limit, config, reverse),
         key: `${target.refId}_log`,
       });
 
