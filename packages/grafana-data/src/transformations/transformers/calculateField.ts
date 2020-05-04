@@ -55,44 +55,6 @@ export interface CalculateFieldTransformerOptions {
   // TODO: config?: FieldConfig; or maybe field overrides? since the UI exists
 }
 
-export function GetResultFieldNameForCalculateFieldTransformerOptions(options: CalculateFieldTransformerOptions) {
-  if (options.alias?.length) {
-    return options.alias;
-  }
-
-  if (options.mode === CalculateFieldMode.BinaryOperation) {
-    const { binary } = options;
-    return `${binary?.left ?? '?'} ${binary?.operator} ${binary?.right ?? '?'}`;
-  }
-  if (options.mode === CalculateFieldMode.ReduceRow) {
-    const r = fieldReducers.getIfExists(options.reduce?.reducer);
-    if (r) {
-      return r.name;
-    }
-  }
-  return 'math';
-}
-
-/**
- * Find the name for the time field used in all frames (if one exists)
- */
-function findTimeSeriesName(data: DataFrame[]): string | undefined {
-  let name: string | undefined = undefined;
-  for (const frame of data) {
-    const { timeField } = getTimeField(frame);
-    if (!timeField) {
-      return undefined; // Not timeseries
-    }
-    if (!name) {
-      name = timeField.name;
-    } else if (name !== timeField.name) {
-      // Second frame has a different time column?!
-      return undefined;
-    }
-  }
-  return name;
-}
-
 type ValuesCreator = (data: DataFrame) => Vector;
 
 export const calculateFieldTransformer: DataTransformerInfo<CalculateFieldTransformerOptions> = {
@@ -107,7 +69,8 @@ export const calculateFieldTransformer: DataTransformerInfo<CalculateFieldTransf
   },
   transformer: options => (data: DataFrame[]) => {
     // Assume timeseries should first be joined by time
-    const timeFieldName = findTimeSeriesName(data);
+    const timeFieldName = findConsistentTimeFieldName(data);
+
     if (data.length > 1 && timeFieldName && options.timeSeries !== false) {
       data = seriesToColumnsTransformer.transformer({
         byField: timeFieldName,
@@ -116,6 +79,7 @@ export const calculateFieldTransformer: DataTransformerInfo<CalculateFieldTransf
 
     const mode = options.mode ?? CalculateFieldMode.ReduceRow;
     let creator: ValuesCreator | undefined = undefined;
+
     if (mode === CalculateFieldMode.ReduceRow) {
       creator = getReduceRowCreator(defaults(options.reduce, defaultReduceOptions));
     } else if (mode === CalculateFieldMode.BinaryOperation) {
@@ -135,7 +99,7 @@ export const calculateFieldTransformer: DataTransformerInfo<CalculateFieldTransf
       }
 
       const field = {
-        name: GetResultFieldNameForCalculateFieldTransformerOptions(options),
+        name: getResultFieldNameForCalculateFieldTransformerOptions(options),
         type: FieldType.number,
         config: {},
         values,
@@ -165,6 +129,7 @@ function getReduceRowCreator(options: ReduceOptions): ValuesCreator {
   let matcher = getFieldMatcher({
     id: FieldMatcherID.numeric,
   });
+
   if (options.include && options.include.length) {
     matcher = getFieldMatcher({
       id: FieldMatcherID.byName,
@@ -173,9 +138,11 @@ function getReduceRowCreator(options: ReduceOptions): ValuesCreator {
   }
 
   const info = fieldReducers.get(options.reducer);
+
   if (!info) {
     throw new Error(`Unknown reducer: ${options.reducer}`);
   }
+
   const reducer = info.reduce ?? doStandardCalcs;
   const ignoreNulls = options.nullValueMode === NullValueMode.Ignore;
   const nullAsZero = options.nullValueMode === NullValueMode.AsZero;
@@ -183,11 +150,11 @@ function getReduceRowCreator(options: ReduceOptions): ValuesCreator {
   return (frame: DataFrame) => {
     // Find the columns that should be examined
     const columns: Vector[] = [];
-    frame.fields.forEach(field => {
+    for (const field of frame.fields) {
       if (matcher(field)) {
         columns.push(field.values);
       }
-    });
+    }
 
     // Prepare a "fake" field for the row
     const iter = new RowVector(columns);
@@ -198,6 +165,7 @@ function getReduceRowCreator(options: ReduceOptions): ValuesCreator {
       config: {},
     };
     const vals: number[] = [];
+
     for (let i = 0; i < frame.length; i++) {
       iter.rowIndex = i;
       row.calcs = undefined; // bust the cache (just in case)
@@ -240,4 +208,44 @@ function getBinaryCreator(options: BinaryOptions): ValuesCreator {
 
     return new BinaryOperationVector(left, right, operator.operation);
   };
+}
+
+/**
+ * Find the name for the time field used in all frames (if one exists)
+ */
+function findConsistentTimeFieldName(data: DataFrame[]): string | undefined {
+  let name: string | undefined = undefined;
+  for (const frame of data) {
+    const { timeField } = getTimeField(frame);
+    if (!timeField) {
+      return undefined; // Not timeseries
+    }
+    if (!name) {
+      name = timeField.name;
+    } else if (name !== timeField.name) {
+      // Second frame has a different time column?!
+      return undefined;
+    }
+  }
+  return name;
+}
+
+export function getResultFieldNameForCalculateFieldTransformerOptions(options: CalculateFieldTransformerOptions) {
+  if (options.alias?.length) {
+    return options.alias;
+  }
+
+  if (options.mode === CalculateFieldMode.BinaryOperation) {
+    const { binary } = options;
+    return `${binary?.left ?? ''} ${binary?.operator ?? ''} ${binary?.right ?? ''}`;
+  }
+
+  if (options.mode === CalculateFieldMode.ReduceRow) {
+    const r = fieldReducers.getIfExists(options.reduce?.reducer);
+    if (r) {
+      return r.name;
+    }
+  }
+
+  return 'math';
 }

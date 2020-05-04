@@ -20,10 +20,11 @@ import { FilterPill } from '../FilterPill/FilterPill';
 import { HorizontalGroup } from '../Layout/Layout';
 import {
   CalculateFieldMode,
-  GetResultFieldNameForCalculateFieldTransformerOptions,
+  getResultFieldNameForCalculateFieldTransformerOptions,
 } from '@grafana/data/src/transformations/transformers/calculateField';
 import { Select } from '../Select/Select';
 import defaults from 'lodash/defaults';
+import { Segment } from '../Segment';
 
 // Copied from @grafana/data ;(  not sure how to best support his
 interface ReduceOptions {
@@ -202,10 +203,11 @@ export class CalculateFieldTransformerEditor extends React.PureComponent<
           </div>
         </div>
         <div className="gf-form-inline">
-          <div className="gf-form gf-form--grow">
+          <div className="gf-form">
             <div className="gf-form-label width-8">Calculation</div>
             <StatsPicker
               allowMultiple={false}
+              className="width-18"
               stats={[options.reducer]}
               onChange={this.onStatsChange}
               defaultStat={ReducerID.sum}
@@ -276,26 +278,30 @@ export class CalculateFieldTransformerEditor extends React.PureComponent<
 
     return (
       <div className="gf-form-inline">
-        <div className="gf-form-label width-8">Operation</div>
-        <div className="gf-form gf-form--grow">
+        <div className="gf-form">
+          <div className="gf-form-label width-8">Operation</div>
+        </div>
+        <div className="gf-form">
           <Select
             allowCustomValue
             placeholder="Field or number"
             options={leftNames}
-            value={leftNames.find(v => v.value === options?.left)}
+            className="min-width-18 gf-form-spacing"
+            value={options?.left}
             onChange={this.onBinaryLeftChanged}
           />
           <Select
-            className="width-8"
+            className="width-8 gf-form-spacing"
             options={ops}
-            value={ops.find(v => v.value === options?.operator)}
+            value={options.operator ?? ops[0].value}
             onChange={this.onBinaryOperationChanged}
           />
           <Select
             allowCustomValue
             placeholder="Field or number"
+            className="min-width-10"
             options={rightNames}
-            value={rightNames.find(v => v.value === options?.right)}
+            value={options?.right}
             onChange={this.onBinaryRightChanged}
           />
         </div>
@@ -315,9 +321,10 @@ export class CalculateFieldTransformerEditor extends React.PureComponent<
     return (
       <div>
         <div className="gf-form-inline">
-          <div className="gf-form gf-form--grow">
+          <div className="gf-form">
             <div className="gf-form-label width-8">Mode</div>
             <Select
+              className="width-18"
               options={calculationModes}
               value={calculationModes.find(v => v.value === mode)}
               onChange={this.onModeChanged}
@@ -327,17 +334,18 @@ export class CalculateFieldTransformerEditor extends React.PureComponent<
         {mode === CalculateFieldMode.BinaryOperation && this.renderBinaryOperation(options.binary)}
         {mode === CalculateFieldMode.ReduceRow && this.renderReduceRow(options.reduce)}
         <div className="gf-form-inline">
-          <div className="gf-form gf-form--grow">
+          <div className="gf-form">
             <div className="gf-form-label width-8">Alias</div>
             <Input
-              value={options.alias}
-              placeholder={GetResultFieldNameForCalculateFieldTransformerOptions(options)}
+              className="width-18"
+              value={options.alias ?? ''}
+              placeholder={getResultFieldNameForCalculateFieldTransformerOptions(options)}
               onChange={this.onAliasChanged}
             />
           </div>
         </div>
         <div className="gf-form-inline">
-          <div className="gf-form gf-form--grow">
+          <div className="gf-form">
             <Switch
               label="Replace all fields"
               labelClass="width-8"
