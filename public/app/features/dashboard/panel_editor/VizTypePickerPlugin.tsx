@@ -1,9 +1,8 @@
 import React from 'react';
 import { GrafanaTheme, PanelPluginMeta, PluginState } from '@grafana/data';
-import { styleMixins, stylesFactory, useTheme } from '@grafana/ui';
+import { Badge, BadgeProps, styleMixins, stylesFactory, useTheme } from '@grafana/ui';
 import { css, cx } from 'emotion';
 import { selectors } from '@grafana/e2e-selectors';
-import { PanelPluginBadge } from '../../plugins/PluginSignatureBadge';
 
 interface Props {
   isCurrent: boolean;
@@ -126,3 +125,36 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
 });
 
 export default VizTypePickerPlugin;
+
+interface PanelPluginBadgeProps {
+  plugin: PanelPluginMeta;
+}
+const PanelPluginBadge: React.FC<PanelPluginBadgeProps> = ({ plugin }) => {
+  const display = getPanelStateBadgeDisplayModel(plugin);
+
+  if (plugin.state !== PluginState.deprecated && plugin.state !== PluginState.alpha) {
+    return null;
+  }
+  return <Badge color={display.color} text={display.text} icon={display.icon} tooltip={display.tooltip} />;
+};
+
+function getPanelStateBadgeDisplayModel(panel: PanelPluginMeta): BadgeProps {
+  switch (panel.state) {
+    case PluginState.deprecated:
+      return {
+        text: 'Deprecated',
+        icon: 'exclamation-triangle',
+        color: 'red',
+        tooltip: `${panel.name} panel is deprecated`,
+      };
+  }
+
+  return {
+    text: 'Alpha',
+    icon: 'rocket',
+    color: 'blue',
+    tooltip: `${panel.name} panel is experimental`,
+  };
+}
+
+PanelPluginBadge.displayName = 'PanelPluginBadge';

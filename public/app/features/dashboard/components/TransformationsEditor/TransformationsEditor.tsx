@@ -1,8 +1,18 @@
 import React from 'react';
-import { Button, Container, CustomScrollbar, stylesFactory, useTheme, ValuePicker, VerticalGroup } from '@grafana/ui';
+import {
+  Button,
+  Container,
+  CustomScrollbar,
+  FeatureInfoBox,
+  stylesFactory,
+  useTheme,
+  ValuePicker,
+  VerticalGroup,
+} from '@grafana/ui';
 import {
   DataFrame,
   DataTransformerConfig,
+  FeatureState,
   GrafanaTheme,
   SelectableValue,
   standardTransformersRegistry,
@@ -114,13 +124,23 @@ export class TransformationsEditor extends React.PureComponent<Props> {
 
   renderNoAddedTransformsState() {
     return (
-      <>
-        <p className="muted">
-          Transformations allow you to combine, re-order, hide and rename specific parts the the data set before being
-          visualized. <br />
-          Choose one of the transformations below to start with:
-        </p>
-
+      <VerticalGroup spacing={'lg'}>
+        <Container grow={1}>
+          <FeatureInfoBox
+            title="Transformations"
+            featureState={FeatureState.beta}
+            // url={getDocsLink(DocsId.Transformations)}
+          >
+            <p>
+              Transformations allow you to join, calculate, re-order, hide and rename your query results before being
+              visualized. <br />
+              Many transforms are not suitable if your using the Graph visualisation as it currently only supports time
+              series. <br />
+              It can help to switch to Table visualisation to understand what a transformation is doing. <br />
+            </p>
+            <p>Select one of the transformations below to start.</p>
+          </FeatureInfoBox>
+        </Container>
         <VerticalGroup>
           {standardTransformersRegistry.list().map(t => {
             return (
@@ -136,7 +156,7 @@ export class TransformationsEditor extends React.PureComponent<Props> {
             );
           })}
         </VerticalGroup>
-      </>
+      </VerticalGroup>
     );
   }
 
@@ -169,6 +189,11 @@ const getTransformationCardStyles = stylesFactory((theme: GrafanaTheme) => {
       width: 100%;
       border: none;
       padding: ${theme.spacing.sm};
+
+      // hack because these cards use classes from a very different card for some reason
+      .add-data-source-item-text {
+        font-size: ${theme.typography.size.md};
+      }
 
       &:hover {
         background: ${theme.colors.bg3};
