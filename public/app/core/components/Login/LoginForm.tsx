@@ -4,7 +4,6 @@ import { selectors } from '@grafana/e2e-selectors';
 import { FormModel } from './LoginCtrl';
 import { Button, Form, Input, Field } from '@grafana/ui';
 import { css } from 'emotion';
-import { getStyles } from './loginStyles';
 
 interface Props {
   displayForgotPassword: boolean;
@@ -25,8 +24,12 @@ const wrapperStyles = css`
   padding-bottom: 15px;
 `;
 
+export const submitButton = css`
+  justify-content: center;
+  width: 100%;
+`;
+
 export const LoginForm: FC<Props> = ({ displayForgotPassword, onSubmit, isLoggingIn, passwordHint, loginHint }) => {
-  const styles = getStyles();
   return (
     <div className={wrapperStyles}>
       <Form onSubmit={onSubmit} validateOn="onChange">
@@ -50,7 +53,7 @@ export const LoginForm: FC<Props> = ({ displayForgotPassword, onSubmit, isLoggin
                 aria-label={selectors.pages.Login.password}
               />
             </Field>
-            <Button aria-label={selectors.pages.Login.submit} className={styles.submitButton} disabled={isLoggingIn}>
+            <Button aria-label={selectors.pages.Login.submit} className={submitButton} disabled={isLoggingIn}>
               {isLoggingIn ? 'Logging in...' : 'Log in'}
             </Button>
             {displayForgotPassword && (

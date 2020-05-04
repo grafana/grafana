@@ -1,8 +1,7 @@
 import React, { FC, SyntheticEvent } from 'react';
 import { Tooltip, Form, Field, Input, VerticalGroup, Button, LinkButton } from '@grafana/ui';
 import { selectors } from '@grafana/e2e-selectors';
-import { getStyles } from './loginStyles';
-
+import { submitButton } from './LoginForm';
 interface Props {
   onSubmit: (pw: string) => void;
   onSkip: (event?: SyntheticEvent) => void;
@@ -14,7 +13,6 @@ interface PasswordDTO {
 }
 
 export const ChangePassword: FC<Props> = ({ onSubmit, onSkip }) => {
-  const styles = getStyles();
   const submit = (passwords: PasswordDTO) => {
     onSubmit(passwords.newPassword);
   };
@@ -43,7 +41,7 @@ export const ChangePassword: FC<Props> = ({ onSubmit, onSkip }) => {
             />
           </Field>
           <VerticalGroup>
-            <Button type="submit" className={styles.submitButton}>
+            <Button type="submit" className={submitButton}>
               Submit
             </Button>
             <Tooltip
