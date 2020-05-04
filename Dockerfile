@@ -1,4 +1,21 @@
-FROM node:12.13.0-alpine AS js-builder
+# Golang build container
+FROM golang:1.14.2-alpine3.11 as go-builder
+
+RUN apk add --no-cache gcc g++
+
+WORKDIR $GOPATH/src/github.com/grafana/grafana
+
+COPY go.mod go.sum ./
+
+RUN go mod verify
+
+COPY pkg pkg
+COPY build.go package.json ./
+
+RUN go run build.go build
+
+# Node build container
+FROM node:12.16.3-alpine3.11 as js-builder
 
 WORKDIR /usr/src/app/
 
@@ -16,22 +33,8 @@ COPY emails emails
 ENV NODE_ENV production
 RUN ./node_modules/.bin/grunt build
 
-FROM golang:1.14.1-alpine AS go-builder
-
-RUN apk add --no-cache gcc g++
-
-WORKDIR $GOPATH/src/github.com/grafana/grafana
-
-COPY go.mod go.sum ./
-
-RUN go mod verify
-
-COPY pkg pkg
-COPY build.go package.json ./
-
-RUN go run build.go build
-
-FROM alpine:3.10
+# Final container
+FROM alpine:3.11
 
 LABEL maintainer="Grafana team <hello@grafana.com>"
 
@@ -49,7 +52,7 @@ ENV PATH="/usr/share/grafana/bin:$PATH" \
 WORKDIR $GF_PATHS_HOME
 
 RUN apk add --no-cache ca-certificates bash tzdata && \
-    apk add --no-cache --upgrade --repository=http://dl-cdn.alpinelinux.org/alpine/edge/main openssl musl-utils
+    apk add --no-cache --upgrade openssl musl-utils
 
 COPY conf ./conf
 

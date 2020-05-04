@@ -67,7 +67,7 @@ export const ManageDashboards: FC<Props> = memo(({ folderId, folderUid }) => {
     setIsDeleteModalOpen(true);
   };
 
-  if (canSave && folderId && !hasFilters && results.length === 0) {
+  if (canSave && folderId && !hasFilters && results.length === 0 && !loading) {
     return (
       <EmptyListCTA
         title="This folder doesn't have any dashboards yet"

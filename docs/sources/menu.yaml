@@ -29,173 +29,179 @@
 - name: Administration
   link: /administration/
   children:
-    - name: Configuration
-      link: /installation/configuration/
-    - name: Configure Docker image
-      link: /installation/configure-docker/
-    - name: Security
-      link: /installation/security/
-    - name: Authentication
-      link: /auth/
-      children:
-        - link: /auth/overview/
-          name: Overview
-        - link: /auth/auth-proxy/
-          name: Auth Proxy
-        - link: /auth/ldap/
-          name: LDAP
-        - link: /auth/enhanced_ldap/
-          name: Enhanced LDAP
-        - link: /auth/generic-oauth/
-          name: Generic OAuth
-        - link: /auth/google/
-          name: Google
-        - link: /auth/azuread/
-          name: Azure AD
-        - link: /auth/github/
-          name: GitHub
-        - link: /auth/gitlab/
-          name: GitLab
-        - link: /auth/okta/
-          name: Okta
-        - link: /auth/saml/
-          name: SAML
-        - link: /auth/team-sync/
-          name: Team Sync
-    - name: Permissions
-      link: /permissions/
-      children:
-        - link: /permissions/overview/
-          name: Overview
-        - link: /permissions/organization_roles/
-          name: Organization Roles
-        - link: /permissions/dashboard_folder_permissions/
-          name: Dashboard and Folder
-        - link: /permissions/datasource_permissions/
-          name: Data source
-    - name: Grafana CLI
-      link: /administration/cli/
-    - name: Internal metrics
-      link: /administration/metrics/
-    - name: Provisioning
-      link: /administration/provisioning/
-    - name: Set up Grafana for high availability
-      link: /tutorials/ha_setup/
-    - name: Troubleshooting
-      link: /installation/troubleshooting/
-- name: Features
-  link: /features/
+  - name: Configuration
+    link: /installation/configuration/
+  - name: Configure Docker image
+    link: /installation/configure-docker/
+  - name: Security
+    link: /installation/security/
+  - name: Authentication
+    link: /auth/
+    children:
+    - link: /auth/overview/
+      name: Overview
+    - link: /auth/auth-proxy/
+      name: Auth Proxy
+    - link: /auth/ldap/
+      name: LDAP
+    - link: /auth/enhanced_ldap/
+      name: Enhanced LDAP
+    - link: /auth/generic-oauth/
+      name: Generic OAuth
+    - link: /auth/google/
+      name: Google
+    - link: /auth/azuread/
+      name: Azure AD
+    - link: /auth/github/
+      name: GitHub
+    - link: /auth/gitlab/
+      name: GitLab
+    - link: /auth/okta/
+      name: Okta
+    - link: /auth/saml/
+      name: SAML
+    - link: /auth/team-sync/
+      name: Team Sync
+  - name: Permissions
+    link: /permissions/
+    children:
+    - link: /permissions/overview/
+      name: Overview
+    - link: /permissions/organization_roles/
+      name: Organization Roles
+    - link: /permissions/dashboard_folder_permissions/
+      name: Dashboard and Folder
+    - link: /permissions/datasource_permissions/
+      name: Data source
+  - name: Grafana CLI
+    link: /administration/cli/
+  - name: Internal metrics
+    link: /administration/metrics/
+  - name: Provisioning
+    link: /administration/provisioning/
+  - name: Set up Grafana for high availability
+    link: /tutorials/ha_setup/
+  - name: Troubleshooting
+    link: /installation/troubleshooting/
+- name: Panels
+  link: /features/panels/
   children:
-    - name: Panels
-      link: /features/panels/
-      children:
-        - link: /features/panels/panels/
-          name: Overview
-        - link: /features/panels/graph/
-          name: Graph
-        - link: /features/panels/table_panel/
-          name: Table
-        - link: /features/panels/stat/
-          name: Stat
-        - link: /features/panels/gauge/
-          name: Gauge
-        - link: /features/panels/bar_gauge/
-          name: Bar gauge
-        - link: /features/panels/logs/
-          name: Logs
-        - link: /features/panels/singlestat/
-          name: Singlestat
-        - link: /features/panels/heatmap/
-          name: Heatmap
-        - link: /features/panels/alertlist/
-          name: Alert list
-        - link: /features/panels/dashlist/
-          name: Dashboard list
-        - link: /features/panels/text/
-          name: Text
-    - name: Dashboard features
-      link: /features/dashboard/
-      children:
-        - link: /features/dashboard/dashboards/
-          name: Overview
-        - link: /reference/templating/
-          name: Variables
-        - link: /reference/annotations/
-          name: Annotations
-        - link: /reference/dashboard_folders/
-          name: Folders
-        - link: /reference/playlist/
-          name: Playlist
-        - link: /reference/search/
-          name: Search
-        - link: /reference/share_dashboard/
-          name: Sharing a dashboard
-        - link: /reference/share_panel/
-          name: Sharing a panel
-        - link: /reference/timerange/
-          name: Time range
-        - link: /reference/export_import/
-          name: Export and import
-        - link: /reference/datalinks/
-          name: Data links
-        - link: /reference/dashboard_history/
-          name: Dashboard version history
-        - link: /reference/dashboard/
-          name: JSON Model
-        - link: /reference/scripting/
-          name: Scripted dashboards
-    - name: Data sources
-      link: /features/datasources/
-      children:
-        - link: /features/datasources/add-a-data-source/
-          name: Add data source
-        - link: /features/datasources/cloudwatch/
-          name: AWS Cloudwatch
-        - link: /features/datasources/azuremonitor/
-          name: Azure Monitor
-        - link: /features/datasources/elasticsearch/
-          name: Elasticsearch
-        - link: /features/datasources/stackdriver/
-          name: Google Stackdriver
-        - link: /features/datasources/graphite/
-          name: Graphite
-        - link: /features/datasources/influxdb/
-          name: InfluxDB
-        - link: /features/datasources/loki/
-          name: Loki
-        - link: /features/datasources/mssql/
-          name: Microsoft SQL Server
-        - link: /features/datasources/mixed/
-          name: MixedData
-        - link: /features/datasources/mysql/
-          name: MySQL
-        - link: /features/datasources/opentsdb/
-          name: OpenTSDB
-        - link: /features/datasources/postgres/
-          name: PostgreSQL
-        - link: /features/datasources/prometheus/
-          name: Prometheus
-        - link: /features/datasources/testdata/
-          name: TestData DB
-    - name: Explore
-      link: /features/explore/
-    - name: Alerting
-      link: /alerting/
-      children:
-        - link: /alerting/rules/
-          name: Engine and Rules
-        - link: /alerting/metrics/
-          name: Metrics
-        - link: /alerting/notifications/
-          name: Notifications
-    - name: Image rendering
-      link: /administration/image_rendering/
-    - name: Keyboard Shortcuts
-      link: /features/shortcuts/
-    - name: Reporting
-      link: /features/reporting/
-    - name: Navigation links
-      link: /features/navigation-links/
+  - link: /features/panels/panels/
+    name: Overview
+  - link: /features/panels/graph/
+    name: Graph
+  - link: /features/panels/table_panel/
+    name: Table
+  - link: /features/panels/stat/
+    name: Stat
+  - link: /features/panels/gauge/
+    name: Gauge
+  - link: /features/panels/bar_gauge/
+    name: Bar gauge
+  - link: /features/panels/logs/
+    name: Logs
+  - link: /features/panels/singlestat/
+    name: Singlestat
+  - link: /features/panels/heatmap/
+    name: Heatmap
+  - link: /features/panels/alertlist/
+    name: Alert list
+  - link: /features/panels/dashlist/
+    name: Dashboard list
+  - link: /features/panels/text/
+    name: Text
+- name: Dashboards
+  link: /features/dashboard/
+  children:
+  - link: /features/dashboard/dashboards/
+    name: Overview
+  - link: /reference/annotations/
+    name: Annotations
+  - link: /reference/dashboard_folders/
+    name: Folders
+  - link: /reference/playlist/
+    name: Playlist
+  - link: /reference/search/
+    name: Search
+  - link: /reference/share_dashboard/
+    name: Sharing a dashboard
+  - link: /reference/share_panel/
+    name: Sharing a panel
+  - link: /reference/timerange/
+    name: Time range
+  - link: /reference/export_import/
+    name: Export and import
+  - link: /features/dashboard/links/
+    name: Navigation links
+  - link: /reference/datalinks/
+    name: Data links
+  - link: /reference/dashboard_history/
+    name: Dashboard version history
+  - name: Keyboard Shortcuts
+    link: /features/shortcuts/
+  - name: Reporting
+    link: /features/reporting/
+  - link: /reference/dashboard/
+    name: JSON Model
+  - link: /reference/scripting/
+    name: Scripted dashboards
+- name: Data sources
+  link: /features/datasources/
+  children:
+  - link: /features/datasources/add-a-data-source/
+    name: Add data source
+  - link: /features/datasources/cloudwatch/
+    name: AWS Cloudwatch
+  - link: /features/datasources/azuremonitor/
+    name: Azure Monitor
+  - link: /features/datasources/elasticsearch/
+    name: Elasticsearch
+  - link: /features/datasources/stackdriver/
+    name: Google Stackdriver
+  - link: /features/datasources/graphite/
+    name: Graphite
+  - link: /features/datasources/influxdb/
+    name: InfluxDB
+  - link: /features/datasources/loki/
+    name: Loki
+  - link: /features/datasources/mssql/
+    name: Microsoft SQL Server
+  - link: /features/datasources/mixed/
+    name: MixedData
+  - link: /features/datasources/mysql/
+    name: MySQL
+  - link: /features/datasources/opentsdb/
+    name: OpenTSDB
+  - link: /features/datasources/postgres/
+    name: PostgreSQL
+  - link: /features/datasources/prometheus/
+    name: Prometheus
+  - link: /features/datasources/testdata/
+    name: TestData DB
+- name: Explore
+  link: /features/explore/
+- name: Alerting
+  link: /alerting/
+  children:
+  - link: /alerting/rules/
+    name: Engine and Rules
+  - link: /alerting/metrics/
+    name: Metrics
+  - link: /alerting/notifications/
+    name: Notifications
+- name: Image rendering
+  link: /administration/image_rendering/
+- name: Templates and variables
+  link: /variables/
+  children:
+    - link: /variables/templates-and-variables/
+      name: Overview
+    - link: /variables/global-variables/
+      name: Global variables
+    - link: /variables/advanced-variable-format-options/
+      name: Advanced variable formats
+    - link: /variables/repeat-panels-or-rows/
+      name: Repeat panels or rows
 - name: What's new in Grafana
   link: /whatsnew/
   children:

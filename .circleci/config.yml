@@ -39,7 +39,7 @@ executors:
       - image: cimg/go:1.14
   grafana-build:
     docker:
-      - image: grafana/build-container:1.2.15
+      - image: grafana/build-container:1.2.16
   grafana-publish:
     docker:
       - image: grafana/grafana-ci-deploy:1.2.5
@@ -54,7 +54,7 @@ commands:
       - run:
           name: "Install Grafana build pipeline tool"
           command: |
-            VERSION=0.4.2
+            VERSION=0.4.3
             curl -fLO https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v${VERSION}/grabpl
             chmod +x grabpl
             mv grabpl /tmp
@@ -664,6 +664,9 @@ jobs:
           command: ./e2e/start-server
           background: true
       - run:
+          name: "Wait for Grafana to start"
+          command: './e2e/wait-for-grafana'
+      - run:
           name: Run end-to-end tests
           command: ./e2e/run-suite
           no_output_timeout: 5m
@@ -858,7 +861,8 @@ jobs:
       - run:
           name: Build Grafana docs website
           command: |
-            IMAGE=grafana/docs-base@sha256:63758b74e3990ab61e274f5e98da092d5c38378829dad0488aa97c59f0144f34
+            # Use latest revision here, since we want to catch if it breaks
+            IMAGE=grafana/docs-base:latest
 
             # In order to copy sources into the remote container, we need to employ a trick of creating a container
             # with a volume, that we copy the sources into. Then, we launch the build container, with the volume
