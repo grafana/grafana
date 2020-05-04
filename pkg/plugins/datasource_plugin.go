@@ -4,14 +4,12 @@ import (
 	"encoding/json"
 	"path"
 
-	"github.com/grafana/grafana/pkg/plugins/backendplugin"
-
-	"github.com/grafana/grafana/pkg/util/errutil"
-
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/datasource/wrapper"
 	"github.com/grafana/grafana/pkg/tsdb"
+	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
 // DataSourcePlugin contains all metadata about a datasource plugin
@@ -30,9 +28,7 @@ type DataSourcePlugin struct {
 	Routes       []*AppPluginRoute `json:"routes"`
 	Streaming    bool              `json:"streaming"`
 
-	Backend    bool   `json:"backend,omitempty"`
 	Executable string `json:"executable,omitempty"`
-	SDK        bool   `json:"sdk,omitempty"`
 }
 
 func (p *DataSourcePlugin) Load(decoder *json.Decoder, pluginDir string, backendPluginManager backendplugin.Manager) error {
