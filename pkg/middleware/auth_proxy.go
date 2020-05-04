@@ -65,6 +65,11 @@ func initContextWithAuthProxy(store *remotecache.RemoteCache, ctx *models.ReqCon
 
 	user, err := auth.GetSignedUser(id)
 	if err != nil {
+		// The reason we couldn't find the user corresponding to the ID might be that the ID was found from a stale
+		// cache entry. For example, if a user is deleted via the API, corresponding cache entries aren't invalidated
+		// because cache keys are computed from request header values and not just the user ID. Meaning that
+		// we can't easily derive cache keys to invalidate when deleting a user. To work around this, we try to
+		// log the user in again without the cache.
 		logger.Debug("Failed to get user info given ID, retrying without cache", "userID", id)
 		if err := auth.RemoveUserFromCache(logger); err != nil {
 			if !errors.Is(err, remotecache.ErrCacheItemNotFound) {
