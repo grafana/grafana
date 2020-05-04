@@ -1,5 +1,4 @@
 import { e2e } from '@grafana/e2e';
-import { Flows } from '@grafana/e2e/src/flows';
 
 // skipped scenario helper because of some perf issue upgrading cypress to 4.5.0 and splitted the whole test into smaller
 // several it functions. Very important to keep the order of these it functions because they have dependency in the order
@@ -27,10 +26,10 @@ describe('Variables', () => {
   ];
 
   beforeEach(() => {
-    Flows.login('admin', 'admin');
+    e2e.flows.login('admin', 'admin');
     if (!lastUid || !lastData) {
-      Flows.addDataSource();
-      Flows.addDashboard();
+      e2e.flows.addDataSource();
+      e2e.flows.addDashboard();
     } else {
       e2e.setScenarioContext({ lastAddedDataSource: lastData, lastAddedDashboardUid: lastUid });
     }
