@@ -21,7 +21,7 @@ import {
   FieldType,
   LogRowModel,
 } from '@grafana/data';
-import { getBackendSrv } from '@grafana/runtime';
+import { getBackendSrv, toDataQueryResponse } from '@grafana/runtime';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { ThrottlingErrorMessage } from './components/ThrottlingErrorMessage';
@@ -496,9 +496,9 @@ export class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery, CloudWa
     }
 
     const resultsToDataFrames = (val: any): DataFrame[] => {
-      //???????????????????????????????????
-      console.log('CONVERT', val);
-      return [];
+      // NOTE: this function currently only processes binary results from:
+      // /api/ds/query -- it will retrun empty results most of the time
+      return toDataQueryResponse(val).data || [];
     };
 
     return from(this.awsRequest(TSDB_QUERY_ENDPOINT, requestParams)).pipe(
