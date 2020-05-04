@@ -106,6 +106,13 @@ class DashNav extends PureComponent<Props> {
     this.forceUpdate();
   };
 
+  onDashboardNameClick = () => {
+    this.props.updateLocation({
+      query: { search: 'open' },
+      partial: true,
+    });
+  };
+
   addCustomContent(actions: DashNavButtonModel[], buttons: ReactNode[]) {
     actions.map((action, index) => {
       const Component = action.component;
@@ -186,7 +193,7 @@ class DashNav extends PureComponent<Props> {
                 </a>
               </>
             )}
-            <span>{dashboard.title}</span>
+            <a onClick={this.onDashboardNameClick}>{dashboard.title}</a>
           </div>
         </div>
         <div className="navbar-buttons navbar-buttons--actions">{this.renderLeftActionsButton()}</div>

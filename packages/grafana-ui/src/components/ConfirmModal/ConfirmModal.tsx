@@ -7,8 +7,6 @@ import { stylesFactory, ThemeContext } from '../../themes';
 import { GrafanaTheme } from '@grafana/data';
 import { HorizontalGroup } from '..';
 
-const defaultIcon: IconName = 'exclamation-triangle';
-
 export interface Props {
   isOpen: boolean;
   title: string;
@@ -26,7 +24,7 @@ export const ConfirmModal: FC<Props> = ({
   body,
   confirmText,
   dismissText = 'Cancel',
-  icon,
+  icon = 'exclamation-triangle',
   onConfirm,
   onDismiss,
 }) => {
@@ -34,7 +32,7 @@ export const ConfirmModal: FC<Props> = ({
   const styles = getStyles(theme);
 
   return (
-    <Modal className={styles.modal} title={title} icon={icon || defaultIcon} isOpen={isOpen} onDismiss={onDismiss}>
+    <Modal className={styles.modal} title={title} icon={icon} isOpen={isOpen} onDismiss={onDismiss}>
       <div className={styles.modalContent}>
         <div className={styles.modalText}>{body}</div>
         <HorizontalGroup justify="center">

@@ -32,6 +32,7 @@ import { getThemeColor } from 'app/core/utils/colors';
 
 import { sortInAscendingOrder, deduplicateLogRowsById } from 'app/core/utils/explore';
 import { getGraphSeriesModel } from 'app/plugins/panel/graph2/getGraphSeriesModel';
+import { decimalSIPrefix } from '@grafana/data/src/valueFormats/symbolFormatters';
 
 export const LogLevelColor = {
   [LogLevel.critical]: colors[7],
@@ -371,6 +372,26 @@ export function logSeriesToLogsModel(logSeries: DataFrame[]): LogsModel | undefi
     meta.push({
       label: 'Limit',
       value: `${limitValue} (${deduplicatedLogRows.length} returned)`,
+      kind: LogsMetaKind.String,
+    });
+  }
+
+  // Hack to print loki stats in Explore. Should be using proper stats display via drawer in Explore (rework in 7.1)
+  let totalBytes = 0;
+  for (const series of logSeries) {
+    const totalBytesKey = series.meta?.custom?.lokiQueryStatKey;
+    if (totalBytesKey && series.meta.stats) {
+      const byteStat = series.meta.stats.find(stat => stat.title === totalBytesKey);
+      if (byteStat) {
+        totalBytes += byteStat.value;
+      }
+    }
+  }
+  if (totalBytes > 0) {
+    const { text, suffix } = decimalSIPrefix('B')(totalBytes);
+    meta.push({
+      label: 'Total bytes processed',
+      value: `${text} ${suffix}`,
       kind: LogsMetaKind.String,
     });
   }

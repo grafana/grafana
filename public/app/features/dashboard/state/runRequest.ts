@@ -18,6 +18,7 @@ import {
   DataFrame,
   guessFieldTypes,
 } from '@grafana/data';
+import { toDataQueryError } from '@grafana/runtime';
 import { emitDataRequestEvent } from './analyticsProcessor';
 import { ExpressionDatasourceID, expressionDatasource } from 'app/features/expressions/ExpressionDatasource';
 
@@ -117,7 +118,7 @@ export function runRequest(datasource: DataSourceApi, request: DataQueryRequest)
       of({
         ...state.panelData,
         state: LoadingState.Error,
-        error: processQueryError(err),
+        error: toDataQueryError(err),
       })
     ),
     tap(emitDataRequestEvent(datasource)),
@@ -151,30 +152,6 @@ export function callQueryMethod(datasource: DataSourceApi, request: DataQueryReq
   // Otherwise it is a standard datasource request
   const returnVal = datasource.query(request);
   return from(returnVal);
-}
-
-export function processQueryError(err: any): DataQueryError {
-  const error = (err || {}) as DataQueryError;
-
-  if (!error.message) {
-    if (typeof err === 'string' || err instanceof String) {
-      return { message: err } as DataQueryError;
-    }
-
-    let message = 'Query error';
-    if (error.message) {
-      message = error.message;
-    } else if (error.data && error.data.message) {
-      message = error.data.message;
-    } else if (error.data && error.data.error) {
-      message = error.data.error;
-    } else if (error.status) {
-      message = `Query error: ${error.status} ${error.statusText}`;
-    }
-    error.message = message;
-  }
-
-  return error;
 }
 
 /**
