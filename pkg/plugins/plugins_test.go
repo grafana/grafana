@@ -18,15 +18,18 @@ import (
 func TestPluginManager_Init(t *testing.T) {
 	origRootPath := setting.StaticRootPath
 	origRaw := setting.Raw
+	origEnv := setting.Env
 	t.Cleanup(func() {
 		setting.StaticRootPath = origRootPath
 		setting.Raw = origRaw
+		setting.Env = origEnv
 	})
 
 	var err error
 	setting.StaticRootPath, err = filepath.Abs("../../public/")
 	require.NoError(t, err)
 	setting.Raw = ini.Empty()
+	setting.Env = setting.PROD
 
 	t.Run("Base case", func(t *testing.T) {
 		pm := &PluginManager{
