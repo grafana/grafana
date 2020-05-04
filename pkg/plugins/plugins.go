@@ -269,6 +269,7 @@ func (scanner *PluginScanner) loadPlugin(pluginJsonFilePath string) error {
 		return errors.New("did not find type or id properties in plugin.json")
 	}
 
+	// The expressions feature toggle corresponds to transform plug-ins.
 	if pluginCommon.Type == "transform" {
 		isEnabled := scanner.cfg.IsExpressionsEnabled()
 		if !isEnabled {

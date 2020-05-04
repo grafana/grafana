@@ -101,7 +101,7 @@ func TestPluginManager_Init(t *testing.T) {
 		assert.Equal(t, []error{fmt.Errorf(`plugin "test" has an invalid signature`)}, pm.scanningErrors)
 	})
 
-	t.Run("GEL plugin should be ignored when expressions feature is off", func(t *testing.T) {
+	t.Run("Transform plugins should be ignored when expressions feature is off", func(t *testing.T) {
 		origPluginsPath := setting.PluginsPath
 		t.Cleanup(func() {
 			setting.PluginsPath = origPluginsPath
@@ -120,7 +120,7 @@ func TestPluginManager_Init(t *testing.T) {
 		assert.Equal(t, 0, fm.registerCount)
 	})
 
-	t.Run("GEL plugin should be loaded when expressions feature is on", func(t *testing.T) {
+	t.Run("Transform plugins should be loaded when expressions feature is on", func(t *testing.T) {
 		origPluginsPath := setting.PluginsPath
 		t.Cleanup(func() {
 			setting.PluginsPath = origPluginsPath
