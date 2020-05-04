@@ -58,7 +58,7 @@ export const ManageDashboards: FC<Props> = memo(({ folderId, folderUid }) => {
     onDeleteItems,
     onMoveItems,
   } = useManageDashboards(query, { hasEditPermissionInFolders: contextSrv.hasEditPermissionInFolders }, folderUid);
-  console.log(canMove);
+
   const onMoveTo = () => {
     setIsMoveModalOpen(true);
   };
