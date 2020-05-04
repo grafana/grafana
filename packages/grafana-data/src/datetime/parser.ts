@@ -5,15 +5,38 @@ import { DateTimeOptions, getTimeZone } from './common';
 import { parse, isValid } from './datemath';
 import { lowerCase } from 'lodash';
 
+/**
+ * Type that describes options that can be passed when parsing a date and time value.
+ * @public
+ */
 export interface DateTimeOptionsWhenParsing extends DateTimeOptions {
+  /**
+   * If the input is a Grafana quick date e.g. now-6h you can specify this to control
+   * if the last part of the date and time value should be included or excluded.
+   *
+   * As an example now-6h and the current time is 12:20:00 if roundUp is set to true
+   * the returned DateTime value will be 06:00:00.
+   */
   roundUp?: boolean;
 }
 
-export type DateTimeParser<T extends DateTimeOptions = DateTimeOptions> = (
-  value: DateTimeInput,
-  options?: T
-) => DateTime;
+type DateTimeParser<T extends DateTimeOptions = DateTimeOptions> = (value: DateTimeInput, options?: T) => DateTime;
 
+/**
+ * Helper function to parse a number, text or Date to a DateTime value. If a timeZone is supplied the incoming value
+ * will be parsed with that timeZone as a base. The only exception to this is if the passed value is in a UTC based
+ * format. Then it will use UTC as the base. Examples on UTC based values are Unix Epoch, ISO formatted strings etc.
+ *
+ * It can also parse the Grafana quick date and time format e.g. now-6h will be parsed as Date.now() - 6 hours and
+ * returned as a valid DateTime value.
+ *
+ * If no options is supplied default values will be used. For more details please see {@link DateTimeOptions}.
+ *
+ * @param value - should be a date and time parsable value
+ * @param options
+ *
+ * @public
+ */
 export const dateTimeParse: DateTimeParser<DateTimeOptionsWhenParsing> = (value, options?): DateTime => {
   if (isDateTime(value)) {
     return value;
