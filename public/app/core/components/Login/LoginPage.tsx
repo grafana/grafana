@@ -74,7 +74,7 @@ export const LoginPage: FC = () => {
 
 const flyInAnimation = keyframes`
 from{
-  transform: translate(620px, 0px);
+  transform: translate(-400px, 0px);
 }
 
 to{
