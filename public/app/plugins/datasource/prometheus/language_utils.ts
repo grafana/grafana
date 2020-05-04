@@ -115,7 +115,7 @@ export function expandRecordingRules(query: string, mapping: { [name: string]: s
 }
 
 /**
- * Adds metadata for synthetic summary metrics for which the API does not provide metadata.
+ * Adds metadata for synthetic metrics for which the API does not provide metadata.
  * See https://github.com/grafana/grafana/issues/22337 for details.
  *
  * @param metadata HELP and TYPE metadata from /api/v1/metadata
