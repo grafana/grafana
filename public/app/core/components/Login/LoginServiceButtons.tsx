@@ -1,8 +1,7 @@
 import React from 'react';
 import config from 'app/core/config';
 import { css } from 'emotion';
-import { getStyles } from './loginStyles';
-import { useStyles, useTheme } from '@grafana/ui';
+import { useStyles } from '@grafana/ui';
 import { GrafanaTheme } from '@grafana/data';
 
 const loginServices: () => LoginServices = () => {
@@ -73,23 +72,38 @@ const getServiceStyles = (theme: GrafanaTheme) => {
       margin: 0 0 ${theme.spacing.md};
       width: 100%;
     `,
+    divider: {
+      base: css`
+        float: left;
+        width: 100%;
+        margin: 0 25% ${theme.spacing.md} 25%;
+        display: flex;
+        justify-content: space-between;
+        text-align: center;
+        color: ${theme.colors.text};
+      `,
+      line: css`
+        width: 100px;
+        height: 10px;
+        border-bottom: 1px solid ${theme.colors.text};
+      `,
+    },
   };
 };
 
 const LoginDivider = () => {
-  const theme = useTheme();
-  const dividerStyles = getStyles(theme);
+  const styles = useStyles(getServiceStyles);
   return (
     <>
-      <div className={dividerStyles.divider.base}>
+      <div className={styles.divider.base}>
         <div>
-          <div className={dividerStyles.divider.line} />
+          <div className={styles.divider.line} />
         </div>
         <div>
           <span>{!config.disableLoginForm && <span>or</span>}</span>
         </div>
         <div>
-          <div className={dividerStyles.divider.line} />
+          <div className={styles.divider.line} />
         </div>
       </div>
       <div className="clearfix" />

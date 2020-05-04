@@ -1,7 +1,6 @@
 import React, { FC } from 'react';
 import { css, cx } from 'emotion';
 import { useTheme } from '@grafana/ui';
-import { GrafanaTheme } from '@grafana/data';
 
 export interface BrandComponentProps {
   className?: string;
@@ -26,6 +25,14 @@ const MenuLogo: FC<BrandComponentProps> = ({ className }) => {
   return <img className={className} src="public/img/grafana_icon.svg" alt="Grafana" />;
 };
 
+const LoginBoxBackground = () => {
+  const theme = useTheme();
+  return css`
+    background: ${theme.isLight ? 'rgba(6, 30, 200, 0.1 )' : 'rgba(18, 28, 41, 0.65)'};
+    background-size: cover;
+  `;
+};
+
 export class Branding {
   static LoginLogo = LoginLogo;
   static LoginBackground = LoginBackground;
@@ -33,7 +40,5 @@ export class Branding {
   static AppTitle = 'Grafana';
   static LoginTitle = 'Welcome to Grafana';
   static LoginSubTitle = 'Your single pane of glass';
-  static LoginContentBoxBg = (theme: GrafanaTheme) => {
-    return theme.isLight ? 'rgba(6, 42, 88, 0.65)' : 'rgba(6, 42, 88, 0.65)';
-  };
+  static LoginBoxBackground = LoginBoxBackground;
 }

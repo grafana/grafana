@@ -1,9 +1,10 @@
-import React, { FC, useState } from 'react';
+import React, { FC } from 'react';
 import { selectors } from '@grafana/e2e-selectors';
 
 import { FormModel } from './LoginCtrl';
 import { Button, Form, Input, Field } from '@grafana/ui';
 import { css } from 'emotion';
+import { getStyles } from './loginStyles';
 
 interface Props {
   displayForgotPassword: boolean;
@@ -16,6 +17,7 @@ interface Props {
 const forgottenPasswordStyles = css`
   display: inline-block;
   margin-top: 10px;
+  float: right;
 `;
 
 const wrapperStyles = css`
@@ -24,6 +26,7 @@ const wrapperStyles = css`
 `;
 
 export const LoginForm: FC<Props> = ({ displayForgotPassword, onSubmit, isLoggingIn, passwordHint, loginHint }) => {
+  const styles = getStyles();
   return (
     <div className={wrapperStyles}>
       <Form onSubmit={onSubmit} validateOn="onChange">
@@ -47,14 +50,7 @@ export const LoginForm: FC<Props> = ({ displayForgotPassword, onSubmit, isLoggin
                 aria-label={selectors.pages.Login.password}
               />
             </Field>
-            <Button
-              aria-label={selectors.pages.Login.submit}
-              className={css`
-                justify-content: center;
-                width: 100%;
-              `}
-              disabled={isLoggingIn}
-            >
+            <Button aria-label={selectors.pages.Login.submit} className={styles.submitButton} disabled={isLoggingIn}>
               {isLoggingIn ? 'Logging in...' : 'Log in'}
             </Button>
             {displayForgotPassword && (
