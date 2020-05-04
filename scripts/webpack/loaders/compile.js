@@ -72,7 +72,7 @@ module.exports.pitch = function pitch(remainingRequest) {
 };
 
 function getOutputFilename(options, { target }) {
-  if (!options) { return { filename: `[contenthash].${target}.js`, options: undefined }; }
+  if (!options) { return { filename: `[hash].${target}.js`, options: undefined }; }
   if (typeof options === 'string') { return { filename: options, options: undefined }; }
   if (typeof options === 'object') {
     return {

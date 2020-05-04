@@ -17,7 +17,9 @@ module.exports = merge(common, {
     dark: './public/sass/grafana.dark.scss',
     light: './public/sass/grafana.light.scss',
   },
-
+  output: {
+    filename: '[name].[contenthash].js',
+  },
   module: {
     // Note: order is bottom-to-top and/or right-to-left
     rules: [
@@ -98,7 +100,7 @@ module.exports = merge(common, {
       memoryLimit: 4096,
     }),
     new MiniCssExtractPlugin({
-      filename: 'grafana.[name].[contenthash].css',
+      filename: 'grafana.[name].[hash].css',
     }),
     new HtmlWebpackPlugin({
       filename: path.resolve(__dirname, '../../public/views/error.html'),
