@@ -8,6 +8,7 @@ import { DataFrame } from './dataFrame';
  */
 export enum LogLevel {
   emerg = 'critical',
+  fatal = 'critical',
   alert = 'critical',
   crit = 'critical',
   critical = 'critical',
@@ -17,6 +18,7 @@ export enum LogLevel {
   eror = 'error',
   error = 'error',
   info = 'info',
+  information = 'info',
   notice = 'info',
   dbug = 'debug',
   debug = 'debug',
