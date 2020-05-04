@@ -147,7 +147,7 @@ Depending on the cardinality of the data and the time range MetricTank may retur
 
 Since then we have been working towards removing PhantomJS. In October 2019, when Grafana v6.4 was released, we [announced](https://grafana.com/blog/2019/10/02/grafana-v6.4-released/#phantomjs-deprecation) the deprecation of PhantomJS. Grafana v7.0 removes all PhantomJS support which means that Grafana distribution no longer will include a built-in image renderer.
 
-As a replacement for PhantomJS we’ve developed the [Grafana Image Renderer plugin](https://grafana.com/grafana/plugins/grafana-image-renderer) which is a plugin that runs on the backend and handles rendering panels and dashboards as PNG images using headless Chromium/Chrome. The [Grafana Image Renderer plugin](https://grafana.com/grafana/plugins/grafana-image-renderer) can either be installed as a Grafana plugin running in its own process side-by-side with Grafana. or run as an external HTTP service, hosted using Docker or as a standalone application.
+As a replacement for PhantomJS we’ve developed the [Grafana Image Renderer plugin](https://grafana.com/grafana/plugins/grafana-image-renderer) which is a plugin that runs on the backend and handles rendering panels and dashboards as PNG images using headless Chromium/Chrome. The [Grafana Image Renderer plugin](https://grafana.com/grafana/plugins/grafana-image-renderer) can either be installed as a Grafana plugin running in its own process side-by-side with Grafana. or runs as an external HTTP service, hosted using Docker or as a standalone application.
 
 Read more about [Image Rendering]({{< relref "../administration/image_rendering/" >}}) in the documentation for further instructions.
 
