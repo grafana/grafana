@@ -69,6 +69,12 @@ export class CalculateFieldTransformerEditor extends React.PureComponent<
     this.initOptions();
   }
 
+  componentDidUpdate(oldProps: CalculateFieldTransformerEditorProps) {
+    if (this.props.input !== oldProps.input) {
+      this.initOptions();
+    }
+  }
+
   private initOptions() {
     const { input, options } = this.props;
     const include = options?.reduce?.include || '';
