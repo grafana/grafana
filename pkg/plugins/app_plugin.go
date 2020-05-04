@@ -2,12 +2,14 @@ package plugins
 
 import (
 	"encoding/json"
+	"path"
 	"strings"
 
 	"github.com/gosimple/slug"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
 type AppPluginCss struct {
@@ -21,6 +23,8 @@ type AppPlugin struct {
 
 	FoundChildPlugins []*PluginInclude `json:"-"`
 	Pinned            bool             `json:"-"`
+
+	Executable string `json:"executable,omitempty"`
 }
 
 // AppPluginRoute describes a plugin route that is defined in
@@ -65,6 +69,15 @@ func (app *AppPlugin) Load(decoder *json.Decoder, pluginDir string, backendPlugi
 
 	if err := app.registerPlugin(pluginDir); err != nil {
 		return err
+	}
+
+	if app.Backend {
+		cmd := ComposePluginStartCommmand(app.Executable)
+		fullpath := path.Join(app.PluginDir, cmd)
+		descriptor := backendplugin.NewBackendPluginDescriptor(app.Id, fullpath, backendplugin.PluginStartFuncs{})
+		if err := backendPluginManager.Register(descriptor); err != nil {
+			return errutil.Wrapf(err, "Failed to register backend plugin")
+		}
 	}
 
 	Apps[app.Id] = app
