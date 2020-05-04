@@ -218,7 +218,6 @@ func (auth *AuthProxy) RemoveUserFromCache(logger log.Logger) error {
 	cacheKey := auth.getKey()
 	logger.Debug("Removing user from auth cache", "cacheKey", cacheKey)
 	if err := auth.store.Delete(cacheKey); err != nil {
-		logger.Warn("Failed removing user from auth cache", "cacheKey", cacheKey, "error", err)
 		return err
 	}
 

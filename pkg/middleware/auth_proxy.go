@@ -1,6 +1,8 @@
 package middleware
 
 import (
+	"errors"
+
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
 	authproxy "github.com/grafana/grafana/pkg/middleware/auth_proxy"
@@ -64,7 +66,11 @@ func initContextWithAuthProxy(store *remotecache.RemoteCache, ctx *models.ReqCon
 	user, err := auth.GetSignedUser(id)
 	if err != nil {
 		logger.Debug("Failed to get user info given ID, retrying without cache", "userID", id)
-		_ = auth.RemoveUserFromCache(logger)
+		if err := auth.RemoveUserFromCache(logger); err != nil {
+			if !errors.Is(err, remotecache.ErrCacheItemNotFound) {
+				logger.Error("Got unexpected error when removing user from auth cache", "error", err)
+			}
+		}
 		id, err := logUserIn(auth, username, logger, true)
 		if err != nil {
 			ctx.Handle(407, err.Error(), err.DetailsError)
