@@ -8,6 +8,7 @@ export * from './labels';
 export * from './object';
 export * from './namedColorsPalette';
 export * from './series';
+export * from './binaryOperators';
 export { PanelOptionsEditorBuilder, FieldConfigEditorBuilder } from './OptionsUIBuilders';
 
 export { getMappedValue } from './valueMappings';
