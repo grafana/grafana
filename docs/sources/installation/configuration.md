@@ -842,7 +842,7 @@ Set to true if you want to test alpha plugins that are not yet ready for general
 
 ### allow_loading_unsigned_plugins
 
-Optionally specify a comma-separated list of plugins that can be loaded, even if they lack a (valid signature).
+Enter a comma-separated list of plugin identifiers to identify plugins that are allowed to be loaded even if they lack a valid signature. 
 
 ## [feature_toggles]
 ### enable

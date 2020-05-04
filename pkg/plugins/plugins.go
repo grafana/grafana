@@ -78,14 +78,14 @@ func (pm *PluginManager) Init() error {
 
 	pm.log.Info("Starting plugin search")
 
-	pm.log.Info("Scanning main plugin directory")
 	plugDir := path.Join(setting.StaticRootPath, "app/plugins")
+	pm.log.Debug("Scanning core plugin directory", "dir", plugDir)
 	if err := pm.scan(plugDir, false); err != nil {
-		return errutil.Wrapf(err, "failed to scan main plugin directory '%s'", plugDir)
+		return errutil.Wrapf(err, "failed to scan core plugin directory '%s'", plugDir)
 	}
 
-	pm.log.Info("Scanning bundled plugins directory")
-	plugDir = path.Join(setting.HomePath, "plugins-bundled")
+	plugDir = pm.Cfg.BundledPluginsPath
+	pm.log.Debug("Scanning bundled plugins directory", "dir", plugDir)
 	exists, err := fs.Exists(plugDir)
 	if err != nil {
 		return err
@@ -108,7 +108,7 @@ func (pm *PluginManager) Init() error {
 			pm.log.Info("External plugins directory created", "directory", setting.PluginsPath)
 		}
 	} else {
-		pm.log.Info("Scanning external plugins directory")
+		pm.log.Debug("Scanning external plugins directory", "dir", setting.PluginsPath)
 		if err := pm.scan(setting.PluginsPath, true); err != nil {
 			return errutil.Wrapf(err, "failed to scan external plugins directory '%s'",
 				setting.PluginsPath)
