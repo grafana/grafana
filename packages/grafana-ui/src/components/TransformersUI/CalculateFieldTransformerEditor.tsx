@@ -24,7 +24,6 @@ import {
 } from '@grafana/data/src/transformations/transformers/calculateField';
 import { Select } from '../Select/Select';
 import defaults from 'lodash/defaults';
-import { Segment } from '../Segment';
 
 // Copied from @grafana/data ;(  not sure how to best support his
 interface ReduceOptions {
