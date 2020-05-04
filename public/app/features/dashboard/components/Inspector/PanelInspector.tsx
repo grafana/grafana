@@ -27,6 +27,7 @@ import { config } from 'app/core/config';
 import { getPanelInspectorStyles } from './styles';
 import { StoreState } from 'app/types';
 import { InspectDataTab } from './InspectDataTab';
+import { supportsDataQuery } from '../PanelEditor/utils';
 
 interface OwnProps {
   dashboard: DashboardModel;
@@ -284,7 +285,7 @@ export class PanelInspectorUnconnected extends PureComponent<Props, State> {
       tabs.push({ label: 'Error', value: InspectTab.Error });
     }
 
-    if (dashboard.meta.canEdit) {
+    if (dashboard.meta.canEdit && supportsDataQuery(this.props.panel)) {
       tabs.push({ label: 'Query', value: InspectTab.Query });
     }
     return tabs;

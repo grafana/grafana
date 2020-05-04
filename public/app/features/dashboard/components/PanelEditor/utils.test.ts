@@ -1,4 +1,6 @@
 import { FieldConfig, standardFieldConfigEditorRegistry } from '@grafana/data';
+import { supportsDataQuery } from './utils';
+import { PanelModel } from '../../state/PanelModel';
 
 describe('standardFieldConfigEditorRegistry', () => {
   const dummyConfig: FieldConfig = {
@@ -17,6 +19,36 @@ describe('standardFieldConfigEditorRegistry', () => {
       if (!dummyConfig.hasOwnProperty(v.id)) {
         fail(`Registry uses unknown property: ${v.id}`);
       }
+    });
+  });
+});
+
+describe('supportsDataQuery', () => {
+  describe('when called with plugin that supports queries', () => {
+    it('then it should return true', () => {
+      const panel = ({ plugin: { meta: { skipDataQuery: false } } } as unknown) as PanelModel;
+      expect(supportsDataQuery(panel)).toBe(true);
+    });
+  });
+
+  describe('when called with plugin that does not support queries', () => {
+    it('then it should return false', () => {
+      const panel = ({ plugin: { meta: { skipDataQuery: true } } } as unknown) as PanelModel;
+      expect(supportsDataQuery(panel)).toBe(false);
+    });
+  });
+
+  describe('when called without skipDataQuery', () => {
+    it('then it should return false', () => {
+      const panel = ({ plugin: { meta: {} } } as unknown) as PanelModel;
+      expect(supportsDataQuery(panel)).toBe(false);
+    });
+  });
+
+  describe('when called without plugin', () => {
+    it('then it should return false', () => {
+      const panel = ({} as unknown) as PanelModel;
+      expect(supportsDataQuery(panel)).toBe(false);
     });
   });
 });

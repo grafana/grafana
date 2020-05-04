@@ -24,3 +24,7 @@ export function calculatePanelSize(mode: DisplayMode, width: number, height: num
     height: pHeight * scale,
   };
 }
+
+export function supportsDataQuery(panel: PanelModel): boolean {
+  return panel.plugin?.meta.skipDataQuery === false;
+}
