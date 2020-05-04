@@ -228,6 +228,7 @@ export const organizeFieldsTransformRegistryItem: TransformerRegistyItem<Organiz
   id: DataTransformerID.organize,
   editor: OrganizeFieldsTransformerEditor,
   transformation: standardTransformers.organizeFieldsTransformer,
-  name: 'Organize fields',
-  description: 'Order, filter and rename fields',
+  name: 'Change order, hide and rename',
+  description:
+    "Allows the user to re-order, hide, or rename columns. Useful when data source doesn't allow overrides for visualizing data.",
 };

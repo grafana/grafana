@@ -197,6 +197,6 @@ export const filterFieldsByNameTransformRegistryItem: TransformerRegistyItem<Fil
   id: DataTransformerID.filterFieldsByName,
   editor: FilterByNameTransformerEditor,
   transformation: standardTransformers.filterFieldsByNameTransformer,
-  name: 'Filter by field',
-  description: 'Filter fields by identifier',
+  name: 'Filter by name',
+  description: 'Removes part of the query results using a regex pattern. The pattern can be inclusive or exclusive.',
 };
