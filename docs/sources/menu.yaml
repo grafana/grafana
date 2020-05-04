@@ -249,24 +249,26 @@
 - name: Grafana Enterprise
   link: /enterprise/
   children:
-  - name: Overview
-    link: /enterprise/
-  - name: Data source permissions
-    link: /enterprise/datasource_permissions/
-  - name: Enhanced LDAP
-    link: /enterprise/enhanced_ldap/
-  - name: Reporting
-    link: /enterprise/reporting/
-  - name: SAML authentication
-    link: /enterprise/saml/
-  - name: Team sync
-    link: /enterprise/team-sync/
-  - name: White labeling
-    link: /enterprise/white-labeling/
-  - name: License expiration
-    link: /enterprise/license-expiration/
-  - name: Export dashboard as PDF
-    link: /enterprise/export-pdf/
+    - name: Overview
+      link: /enterprise/
+    - name: Data source permissions
+      link: /enterprise/datasource_permissions/
+    - name: Enhanced LDAP
+      link: /enterprise/enhanced_ldap/
+    - name: Reporting
+      link: /enterprise/reporting/
+    - name: Export dashboard as PDF
+      link: /enterprise/export-pdf/
+    - name: SAML authentication
+      link: /enterprise/saml/
+    - name: Team sync
+      link: /enterprise/team-sync/
+    - name: White labeling
+      link: /enterprise/white-labeling/
+    - name: Usage insights
+      link: /enterprise/usage-insights/
+    - name: License expiration
+      link: /enterprise/license-expiration/
 - name: Plugins
   link: /plugins/
   children:
