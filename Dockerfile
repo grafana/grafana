@@ -1,20 +1,3 @@
-# Golang build container
-FROM golang:1.14.2-alpine3.11 as go-builder
-
-RUN apk add --no-cache gcc g++
-
-WORKDIR $GOPATH/src/github.com/grafana/grafana
-
-COPY go.mod go.sum ./
-
-RUN go mod verify
-
-COPY pkg pkg
-COPY build.go package.json ./
-
-RUN go run build.go build
-
-# Node build container
 FROM node:12.16.3-alpine3.11 as js-builder
 
 WORKDIR /usr/src/app/
@@ -33,7 +16,22 @@ COPY emails emails
 ENV NODE_ENV production
 RUN ./node_modules/.bin/grunt build
 
-# Final container
+FROM golang:1.14.2-alpine3.11 as go-builder
+
+RUN apk add --no-cache gcc g++
+
+WORKDIR $GOPATH/src/github.com/grafana/grafana
+
+COPY go.mod go.sum ./
+
+RUN go mod verify
+
+COPY pkg pkg
+COPY build.go package.json ./
+
+RUN go run build.go build
+
+# Final stage
 FROM alpine:3.11
 
 LABEL maintainer="Grafana team <hello@grafana.com>"
