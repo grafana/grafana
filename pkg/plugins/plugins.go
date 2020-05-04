@@ -174,7 +174,7 @@ func (pm *PluginManager) checkPluginPaths() error {
 			continue
 		}
 
-		if err := pm.scan(path, false); err != nil {
+		if err := pm.scan(path, true); err != nil {
 			return errutil.Wrapf(err, "failed to scan directory configured for plugin '%s': '%s'", pluginID, path)
 		}
 	}
