@@ -8,6 +8,7 @@ import { CopyToClipboard } from 'app/core/components/CopyToClipboard/CopyToClipb
 import { CoreEvents } from 'app/types';
 import { PanelModel } from 'app/features/dashboard/state';
 import { getPanelInspectorStyles } from './styles';
+import { supportsDataQuery } from '../PanelEditor/utils';
 
 interface DsQuery {
   isLoading: boolean;
@@ -187,6 +188,10 @@ export class QueryInspector extends PureComponent<Props, State> {
     const openNodes = this.getNrOfOpenNodes();
     const styles = getPanelInspectorStyles();
     const haveData = Object.keys(response).length > 0;
+
+    if (!supportsDataQuery(this.props.panel.plugin)) {
+      return null;
+    }
 
     return (
       <>
