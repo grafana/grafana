@@ -269,12 +269,10 @@ func (scanner *PluginScanner) loadPlugin(pluginJsonFilePath string) error {
 		return errors.New("did not find type or id properties in plugin.json")
 	}
 
-	if pluginCommon.Id == "gel" {
+	if pluginCommon.Type == "transform" {
 		isEnabled := scanner.cfg.IsExpressionsEnabled()
-		scanner.log.Debug("Plugin is dependent on a feature flag, checking if enabled", "pluginID", pluginCommon.Id,
-			"featureFlag", "expressions", "enabled", isEnabled)
 		if !isEnabled {
-			scanner.log.Debug("Plugin is disabled since the expressions feature is not toggled",
+			scanner.log.Debug("Transform plugin is disabled since the expressions feature toggle is not enabled",
 				"pluginID", pluginCommon.Id)
 			return nil
 		}
