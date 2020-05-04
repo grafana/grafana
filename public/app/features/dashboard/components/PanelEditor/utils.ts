@@ -2,6 +2,7 @@ import { CSSProperties } from 'react';
 import { PanelModel } from '../../state/PanelModel';
 import { DisplayMode } from './types';
 import { GRID_CELL_HEIGHT, GRID_CELL_VMARGIN, GRID_COLUMN_COUNT } from 'app/core/constants';
+import { PanelPlugin } from '@grafana/data';
 
 export function calculatePanelSize(mode: DisplayMode, width: number, height: number, panel: PanelModel): CSSProperties {
   if (mode === DisplayMode.Fill) {
@@ -25,6 +26,6 @@ export function calculatePanelSize(mode: DisplayMode, width: number, height: num
   };
 }
 
-export function supportsDataQuery(panel: PanelModel): boolean {
-  return panel.plugin?.meta.skipDataQuery === false;
+export function supportsDataQuery(plugin: PanelPlugin | undefined): boolean {
+  return plugin?.meta.skipDataQuery === false;
 }

@@ -1,6 +1,5 @@
-import { FieldConfig, standardFieldConfigEditorRegistry } from '@grafana/data';
+import { FieldConfig, PanelPlugin, standardFieldConfigEditorRegistry } from '@grafana/data';
 import { supportsDataQuery } from './utils';
-import { PanelModel } from '../../state/PanelModel';
 
 describe('standardFieldConfigEditorRegistry', () => {
   const dummyConfig: FieldConfig = {
@@ -26,29 +25,28 @@ describe('standardFieldConfigEditorRegistry', () => {
 describe('supportsDataQuery', () => {
   describe('when called with plugin that supports queries', () => {
     it('then it should return true', () => {
-      const panel = ({ plugin: { meta: { skipDataQuery: false } } } as unknown) as PanelModel;
-      expect(supportsDataQuery(panel)).toBe(true);
+      const plugin = ({ meta: { skipDataQuery: false } } as unknown) as PanelPlugin;
+      expect(supportsDataQuery(plugin)).toBe(true);
     });
   });
 
   describe('when called with plugin that does not support queries', () => {
     it('then it should return false', () => {
-      const panel = ({ plugin: { meta: { skipDataQuery: true } } } as unknown) as PanelModel;
-      expect(supportsDataQuery(panel)).toBe(false);
+      const plugin = ({ meta: { skipDataQuery: true } } as unknown) as PanelPlugin;
+      expect(supportsDataQuery(plugin)).toBe(false);
     });
   });
 
   describe('when called without skipDataQuery', () => {
     it('then it should return false', () => {
-      const panel = ({ plugin: { meta: {} } } as unknown) as PanelModel;
-      expect(supportsDataQuery(panel)).toBe(false);
+      const plugin = ({ meta: {} } as unknown) as PanelPlugin;
+      expect(supportsDataQuery(plugin)).toBe(false);
     });
   });
 
   describe('when called without plugin', () => {
     it('then it should return false', () => {
-      const panel = ({} as unknown) as PanelModel;
-      expect(supportsDataQuery(panel)).toBe(false);
+      expect(supportsDataQuery(undefined)).toBe(false);
     });
   });
 });

@@ -270,7 +270,7 @@ export class PanelInspectorUnconnected extends PureComponent<Props, State> {
     const error = last?.error;
     const tabs = [];
 
-    if (plugin && !plugin.meta.skipDataQuery) {
+    if (supportsDataQuery(plugin)) {
       tabs.push({ label: 'Data', value: InspectTab.Data });
       tabs.push({ label: 'Stats', value: InspectTab.Stats });
     }
@@ -285,7 +285,7 @@ export class PanelInspectorUnconnected extends PureComponent<Props, State> {
       tabs.push({ label: 'Error', value: InspectTab.Error });
     }
 
-    if (dashboard.meta.canEdit && supportsDataQuery(this.props.panel)) {
+    if (dashboard.meta.canEdit && supportsDataQuery(plugin)) {
       tabs.push({ label: 'Query', value: InspectTab.Query });
     }
     return tabs;

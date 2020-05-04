@@ -189,7 +189,7 @@ export class QueryInspector extends PureComponent<Props, State> {
     const styles = getPanelInspectorStyles();
     const haveData = Object.keys(response).length > 0;
 
-    if (!supportsDataQuery(this.props.panel)) {
+    if (!supportsDataQuery(this.props.panel.plugin)) {
       return null;
     }
 
