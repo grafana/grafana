@@ -12,13 +12,13 @@ weight = 700
 
 # Usage insights
 
-Usage insights allows you to have a better understanding on how your Grafana instance is used. The collected data are: dashboard views (aggregated and per user), data source errors, and number of data source queries.
+Usage insights allows you to have a better understanding of how your Grafana instance is used. The collected data are: dashboard views (aggregated and per user), data source errors, and number of data source queries.
 
 > Only available in Grafana Enterprise v7.0+.
 
 ## Presence indicator
 
-Presence indicator is visible to all signed-in users on all dashboards. It shows the avatars of users who interacted with the dashboard recently. You can see the user's name by hovering your cursor over the user's avatar. Users' avatars come from [Gravatar](https://gravatar.com) based on the user's email.
+Presence indicator is visible to all signed-in users on all dashboards. It shows the avatars of users who interacted with the dashboard recently. You can see the user's name by hovering your cursor over the user's avatar. The avatars come from [Gravatar](https://gravatar.com) based on the user's email.
 
 When more users are active on a dashboard than can fit in the presence indicator section, click on the `+X` icon that opens [dashboard insights]({{< relref "#dashboard-insights" >}}) to see more details about recent user activity. 
 
@@ -38,7 +38,7 @@ You can see dashboard usage information by clicking on the `Dashboard insights` 
 
 {{< docs-imagebox img="/img/docs/enterprise/dashboard_insights_button.png" max-width="400px" class="docs-image--no-shadow" >}}
 
-It shows two kind of information:
+It shows two kinds of information:
 
 - **Stats:** Shows the daily query count and error count for the last 30 days.
 - **Users & activity:** Shows the daily view count for the last 30 days; last activities on the dashboard and recent users (with a limit of 20).
