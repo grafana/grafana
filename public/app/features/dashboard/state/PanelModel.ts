@@ -18,11 +18,8 @@ import {
   ScopedVars,
 } from '@grafana/data';
 import { EDIT_PANEL_ID } from 'app/core/constants';
-
 import config from 'app/core/config';
-
 import { PanelQueryRunner } from './PanelQueryRunner';
-import { take } from 'rxjs/operators';
 
 export const panelAdded = eventFactory<PanelModel | undefined>('panel-added');
 export const panelRemoved = eventFactory<PanelModel | undefined>('panel-removed');
@@ -426,10 +423,10 @@ export class PanelModel implements DataConfigSource {
     const sourceQueryRunner = this.getQueryRunner();
 
     // pipe last result to new clone query runner
-    sourceQueryRunner
-      .getData()
-      .pipe(take(1))
-      .subscribe(val => clone.getQueryRunner().pipeDataToSubject(val));
+    const lastResult = sourceQueryRunner.getLastResult();
+    if (lastResult) {
+      clone.getQueryRunner().pipeDataToSubject(lastResult);
+    }
 
     return clone;
   }
