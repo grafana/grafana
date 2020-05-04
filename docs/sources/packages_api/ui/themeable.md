@@ -5,7 +5,6 @@
 title = "Themeable"
 keywords = ["grafana","documentation","sdk","@grafana/ui"]
 type = "docs"
-draft = true
 +++
 
 ## Themeable interface

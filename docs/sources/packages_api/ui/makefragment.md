@@ -5,7 +5,6 @@
 title = "makeFragment"
 keywords = ["grafana","documentation","sdk","@grafana/ui"]
 type = "docs"
-draft = true
 +++
 
 ## makeFragment variable

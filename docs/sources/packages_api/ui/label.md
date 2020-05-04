@@ -5,7 +5,6 @@
 title = "Label"
 keywords = ["grafana","documentation","sdk","@grafana/ui"]
 type = "docs"
-draft = true
 +++
 
 ## Label variable

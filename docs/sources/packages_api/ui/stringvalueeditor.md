@@ -5,7 +5,6 @@
 title = "StringValueEditor"
 keywords = ["grafana","documentation","sdk","@grafana/ui"]
 type = "docs"
-draft = true
 +++
 
 ## StringValueEditor variable

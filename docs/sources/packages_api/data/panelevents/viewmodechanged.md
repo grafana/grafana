@@ -5,7 +5,6 @@
 title = "viewModeChanged"
 keywords = ["grafana","documentation","sdk","@grafana/data"]
 type = "docs"
-draft = true
 +++
 
 ## PanelEvents.viewModeChanged variable

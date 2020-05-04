@@ -1,4 +1,4 @@
-FROM golang:1.14.1 AS go-builder
+FROM golang:1.14.2 AS go-builder
 
 WORKDIR /src/grafana
 
@@ -11,7 +11,7 @@ COPY pkg pkg/
 
 RUN go run build.go build
 
-FROM node:12.13 AS js-builder
+FROM node:12.16.3-slim AS js-builder
 
 WORKDIR /usr/src/app/
 

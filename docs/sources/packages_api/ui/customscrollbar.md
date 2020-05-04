@@ -5,7 +5,6 @@
 title = "CustomScrollbar"
 keywords = ["grafana","documentation","sdk","@grafana/ui"]
 type = "docs"
-draft = true
 +++
 
 ## CustomScrollbar class

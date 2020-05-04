@@ -187,7 +187,7 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
     return tabs.length > 0 ? (
       <SplitPane
         split="horizontal"
-        minSize={50}
+        minSize={200}
         primary="first"
         /* Use persisted state for default size */
         defaultSize={uiState.topPaneSize}

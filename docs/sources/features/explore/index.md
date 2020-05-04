@@ -51,15 +51,13 @@ You can close the newly created query by clicking on the Close Split button.
 
 ## Query history
 
-> BETA: Query history is a beta feature.
-
 Query history is a list of queries that you have used in Explore. The history is local to your browser and is not shared with others. To open and interact with your history, click the **Query history** button in Explore.
 
 ### View query history
 
 Query history lets you view the history of your querying. For each individual query, you can:
 
-- Replace Explore query for selected query by clicking on the query card.
+- Run a query.
 - Create and/or edit a comment.
 - Copy a query to the clipboard.
 - Copy a URL link with the query to the clipboard.
@@ -75,8 +73,8 @@ By default, query history shows you the most recent queries. You can sort your h
 
 1. Click the **Sort queries by** field.
 2. Select one of the following options:
-   - Time ascending
-   - Time descending
+   - Newest first
+   - Oldest first
    - Data source A-Z
    - Data source Z-A
 
