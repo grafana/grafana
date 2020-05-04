@@ -15,13 +15,13 @@ interface Props {
 
 const forgottenPasswordStyles = css`
   display: inline-block;
-  margin-top: 10px;
+  margin-top: 16px;
   float: right;
 `;
 
 const wrapperStyles = css`
   width: 100%;
-  padding-bottom: 15px;
+  padding-bottom: 16px;
 `;
 
 export const submitButton = css`

@@ -14,7 +14,6 @@ import { GrafanaTheme } from '@grafana/data';
 
 export const LoginPage: FC = () => {
   const loginStyles = useStyles(getLoginStyles);
-
   return (
     <Branding.LoginBackground className={loginStyles.container}>
       <div className={cx(loginStyles.loginContent, Branding.LoginBoxBackground())}>
@@ -22,7 +21,7 @@ export const LoginPage: FC = () => {
           <Branding.LoginLogo className={loginStyles.loginLogo} />
           <div className={loginStyles.titleWrapper}>
             <h1 className={loginStyles.mainTitle}>{Branding.LoginTitle}</h1>
-            <h3 className={loginStyles.subTitle}>{Branding.LoginSubTitle}</h3>
+            <h3 className={loginStyles.subTitle}>{Branding.GetLoginSubTitle()}</h3>
           </div>
         </div>
         <LoginCtrl>
@@ -118,6 +117,7 @@ export const getLoginStyles = (theme: GrafanaTheme) => {
     `,
     subTitle: css`
       font-size: ${theme.typography.size.md};
+      color: ${theme.colors.textSemiWeak};
     `,
     loginContent: css`
       max-width: 550px;
