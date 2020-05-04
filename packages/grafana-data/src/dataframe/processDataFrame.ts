@@ -21,7 +21,7 @@ import { ArrayVector } from '../vector/ArrayVector';
 import { MutableDataFrame } from './MutableDataFrame';
 import { SortedVector } from '../vector/SortedVector';
 import { ArrayDataFrame } from './ArrayDataFrame';
-import { getFieldState } from '../field';
+import { getFieldState, getTimeField } from '../field';
 
 function convertTableToDataFrame(table: TableData): DataFrame {
   const fields = table.columns.map(c => {
@@ -442,18 +442,6 @@ export function reverseDataFrame(data: DataFrame): DataFrame {
     }),
   };
 }
-
-export const getTimeField = (series: DataFrame): { timeField?: Field; timeIndex?: number } => {
-  for (let i = 0; i < series.fields.length; i++) {
-    if (series.fields[i].type === FieldType.time) {
-      return {
-        timeField: series.fields[i],
-        timeIndex: i,
-      };
-    }
-  }
-  return {};
-};
 
 /**
  * Wrapper to get an array from each field value

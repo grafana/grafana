@@ -24,14 +24,14 @@ import set from 'lodash/set';
 import unset from 'lodash/unset';
 import get from 'lodash/get';
 import { getDisplayProcessor } from './displayProcessor';
-import { getTimeField, guessFieldTypeForField } from '../dataframe';
+import { guessFieldTypeForField } from '../dataframe';
 import { standardFieldConfigEditorRegistry } from './standardFieldConfigEditorRegistry';
 import { FieldConfigOptionsRegistry } from './FieldConfigOptionsRegistry';
 import { DataLinkBuiltInVars, locationUtil } from '../utils';
 import { formattedValueToString } from '../valueFormats';
 import { getFieldDisplayValuesProxy } from './getFieldDisplayValuesProxy';
 import { formatLabels } from '../utils/labels';
-import { getFrameDisplayTitle, getFieldState } from './fieldDisplay';
+import { getFrameDisplayTitle, getFieldState, getTimeField } from './fieldDisplay';
 
 interface OverrideProps {
   match: FieldMatcher;

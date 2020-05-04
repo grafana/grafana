@@ -1,7 +1,7 @@
 // Libraries
 import isNumber from 'lodash/isNumber';
 
-import { NullValueMode, Field, FieldState } from '../types/index';
+import { NullValueMode, Field, FieldState, FieldCalcs } from '../types/index';
 import { Registry, RegistryItem } from '../utils/Registry';
 
 export enum ReducerID {
@@ -26,10 +26,6 @@ export enum ReducerID {
 
   allIsZero = 'allIsZero',
   allIsNull = 'allIsNull',
-}
-
-export interface FieldCalcs {
-  [key: string]: any;
 }
 
 // Internal function

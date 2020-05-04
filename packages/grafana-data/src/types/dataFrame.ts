@@ -4,7 +4,6 @@ import { QueryResultBase, Labels, NullValueMode } from './data';
 import { DisplayProcessor, DisplayValue } from './displayValue';
 import { DataLink, LinkModel } from './dataLink';
 import { Vector } from './vector';
-import { FieldCalcs } from '../transformations/fieldReducer';
 import { FieldColor } from './fieldColor';
 import { ScopedVars } from './ScopedVars';
 
@@ -16,6 +15,10 @@ export enum FieldType {
   // Used to detect that the value is some kind of trace data to help with the visualisation and processing.
   trace = 'trace',
   other = 'other', // Object, Array, etc
+}
+
+export interface FieldCalcs {
+  [key: string]: any;
 }
 
 /**

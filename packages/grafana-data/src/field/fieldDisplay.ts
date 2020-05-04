@@ -22,7 +22,6 @@ import { GraphSeriesValue } from '../types/graph';
 import { GrafanaTheme } from '../types/theme';
 import { reduceField, ReducerID } from '../transformations/fieldReducer';
 import { ScopedVars } from '../types/ScopedVars';
-import { getTimeField } from '../dataframe/processDataFrame';
 import { formatLabels } from '../utils';
 
 /**
@@ -427,3 +426,15 @@ function getDisplayText(display: DisplayValue, fallback: string): string {
   }
   return display.text;
 }
+
+export const getTimeField = (series: DataFrame): { timeField?: Field; timeIndex?: number } => {
+  for (let i = 0; i < series.fields.length; i++) {
+    if (series.fields[i].type === FieldType.time) {
+      return {
+        timeField: series.fields[i],
+        timeIndex: i,
+      };
+    }
+  }
+  return {};
+};
