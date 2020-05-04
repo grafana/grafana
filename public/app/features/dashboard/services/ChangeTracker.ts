@@ -59,7 +59,6 @@ export class ChangeTracker {
         return true;
       }
 
-      console.log('location change start', event);
       if (this.hasChanges()) {
         event.preventDefault();
         this.next = next;
