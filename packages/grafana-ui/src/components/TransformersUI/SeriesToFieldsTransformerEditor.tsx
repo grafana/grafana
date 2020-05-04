@@ -44,5 +44,5 @@ export const seriesToFieldsTransformerRegistryItem: TransformerRegistyItem<Serie
   transformation: standardTransformers.seriesToColumnsTransformer,
   name: 'Outer join',
   description:
-    'Joins many time series / tables by a field. As an example this can be used to show many time series in one table.',
+    'Joins many time series/tables by a field. This can be used to outer join multiple time series on the _time_ field to show many time series in one table.',
 };
