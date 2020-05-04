@@ -98,7 +98,7 @@ export const OptionsPaneContent: React.FC<Props> = ({
             />
           </TabsBar>
           <TabContent className={styles.tabContent}>
-            <CustomScrollbar>
+            <CustomScrollbar autoHeightMin="100%">
               {showMainTab ? (
                 <PanelOptionsTab
                   panel={panel}

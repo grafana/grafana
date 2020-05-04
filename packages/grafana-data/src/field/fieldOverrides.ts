@@ -46,6 +46,7 @@ export function findNumericFieldMinMax(data: DataFrame[]): GlobalMinMax {
   let max = Number.MIN_VALUE;
 
   const reducers = [ReducerID.min, ReducerID.max];
+
   for (const frame of data) {
     for (const field of frame.fields) {
       if (field.type === FieldType.number) {
