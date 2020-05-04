@@ -20,8 +20,8 @@ export default class QueryRows extends PureComponent<QueryRowsProps> {
     const { className = '', exploreEvents, exploreId, queryKeys } = this.props;
     return (
       <div className={className}>
-        {queryKeys.map((key, index) => {
-          return <QueryRow key={key} exploreEvents={exploreEvents} exploreId={exploreId} index={index} />;
+        {queryKeys.map((_, index) => {
+          return <QueryRow key={index} exploreEvents={exploreEvents} exploreId={exploreId} index={index} />;
         })}
       </div>
     );

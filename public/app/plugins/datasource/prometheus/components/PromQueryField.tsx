@@ -20,7 +20,6 @@ import { CancelablePromise, makePromiseCancelable } from 'app/core/utils/Cancela
 import { ExploreQueryFieldProps, QueryHint, isDataFrame, toLegacyResponseData, HistoryItem } from '@grafana/data';
 import { DOMUtil, SuggestionsState } from '@grafana/ui';
 import { PrometheusDatasource } from '../datasource';
-import PromQlLanguageProvider from '../language_provider';
 
 const HISTOGRAM_GROUP = '__histograms__';
 const PRISM_SYNTAX = 'promql';
@@ -121,15 +120,10 @@ interface PromQueryFieldState {
 
 class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryFieldState> {
   plugins: Plugin[];
-  languageProvider: PromQlLanguageProvider;
   languageProviderInitializationPromise: CancelablePromise<any>;
 
   constructor(props: PromQueryFieldProps, context: React.Context<any>) {
     super(props, context);
-
-    if (props.datasource.languageProvider) {
-      this.languageProvider = props.datasource.languageProvider;
-    }
 
     this.plugins = [
       BracesPlugin(),
@@ -147,9 +141,8 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
   }
 
   componentDidMount() {
-    if (this.languageProvider) {
-      Prism.languages[PRISM_SYNTAX] = this.languageProvider.syntax;
-      this.refreshMetrics(makePromiseCancelable(this.languageProvider.start()));
+    if (this.props.datasource.languageProvider) {
+      this.refreshMetrics();
     }
     this.refreshHint();
   }
@@ -161,7 +154,14 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
   }
 
   componentDidUpdate(prevProps: PromQueryFieldProps) {
-    const { data } = this.props;
+    const {
+      data,
+      datasource: { languageProvider },
+    } = this.props;
+
+    if (languageProvider !== prevProps.datasource.languageProvider) {
+      this.refreshMetrics();
+    }
 
     if (data && prevProps.data && prevProps.data.series !== data.series) {
       this.refreshHint();
@@ -182,8 +182,13 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
     this.setState({ hint });
   };
 
-  refreshMetrics = (cancelablePromise: CancelablePromise<any>) => {
-    this.languageProviderInitializationPromise = cancelablePromise;
+  refreshMetrics = () => {
+    const {
+      datasource: { languageProvider },
+    } = this.props;
+
+    Prism.languages[PRISM_SYNTAX] = languageProvider.syntax;
+    this.languageProviderInitializationPromise = makePromiseCancelable(languageProvider.start());
     this.languageProviderInitializationPromise.promise
       .then(remaining => {
         remaining.map((task: Promise<any>) => task.then(this.onUpdateLanguage).catch(() => {}));
@@ -246,7 +251,8 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
       metricsMetadata,
       lookupsDisabled,
       lookupMetricsThreshold,
-    } = this.languageProvider;
+    } = this.props.datasource.languageProvider;
+
     if (!metrics) {
       return;
     }
@@ -275,14 +281,18 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
   };
 
   onTypeahead = async (typeahead: TypeaheadInput): Promise<TypeaheadOutput> => {
-    if (!this.languageProvider) {
+    const {
+      datasource: { languageProvider },
+    } = this.props;
+
+    if (!languageProvider) {
       return { suggestions: [] };
     }
 
     const { history } = this.props;
     const { prefix, text, value, wrapperClasses, labelKey } = typeahead;
 
-    const result = await this.languageProvider.provideCompletionItems(
+    const result = await languageProvider.provideCompletionItems(
       { text, value, prefix, wrapperClasses, labelKey },
       { history }
     );
@@ -293,9 +303,13 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
   };
 
   render() {
-    const { query, ExtraFieldElement } = this.props;
+    const {
+      datasource: { languageProvider },
+      query,
+      ExtraFieldElement,
+    } = this.props;
     const { metricsOptions, syntaxLoaded, hint } = this.state;
-    const cleanText = this.languageProvider ? this.languageProvider.cleanText : undefined;
+    const cleanText = languageProvider ? languageProvider.cleanText : undefined;
     const chooserText = getChooserText(syntaxLoaded, metricsOptions);
     const buttonDisabled = !(syntaxLoaded && metricsOptions && metricsOptions.length > 0);
 
