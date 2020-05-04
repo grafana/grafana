@@ -64,7 +64,7 @@ Add a link to a URL at the top of your current dashboard. You can link to any av
    - **Url** – Enter the URL you want to link to. Depending on the target, you might want to include field values. **Example:** https://github.com/grafana/grafana/issues/new?title=Dashboard%3A%20HTTP%20Requests
    - **Title** – Enter the title you want the link to display.
    - **Tooltip** – Enter the tooltip you want the link to display when the user hovers their mouse over it.
-   - **Icon** – Choose the icon you want displayed with the link.
+   - **Icon** – Choose the icon you want to be displayed with the link.
    - **Time range** – Select this option to include the dashboard time range in the link. When the user clicks the link, the linked dashboard opens with the indicated time range already set. **Example:** https://play.grafana.org/d/000000010/annotations?orgId=1&from=now-3h&to=now
    - **Variable values** – Select this option to include template variables currently used as query parameters in the link. When the user clicks the link, any matching templates in the linked dashboard are set to the values from the link. **Example:** https://play.grafana.org/d/000000074/alerting?var-app=backend&var-server=backend_01&var-server=backend_03&var-interval=1h
    - **Open in new tab** – Select this option if you want the dashboard link to open in a new tab or window.
