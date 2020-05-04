@@ -54,7 +54,7 @@ commands:
       - run:
           name: "Install Grafana build pipeline tool"
           command: |
-            VERSION=0.4.2
+            VERSION=0.4.3
             curl -fLO https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v${VERSION}/grabpl
             chmod +x grabpl
             mv grabpl /tmp
@@ -663,6 +663,9 @@ jobs:
           name: Start grafana-server
           command: ./e2e/start-server
           background: true
+      - run:
+          name: "Wait for Grafana to start"
+          command: './e2e/wait-for-grafana'
       - run:
           name: Run end-to-end tests
           command: ./e2e/run-suite

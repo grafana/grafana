@@ -1,11 +1,14 @@
 import { ArrayVector } from './ArrayVector';
-import { ScaledVector } from './ScaledVector';
+import { BinaryOperationVector } from './BinaryOperationVector';
+import { ConstantVector } from './ConstantVector';
+import { binaryOperators, BinaryOperationID } from '../utils/binaryOperators';
 
 describe('ScaledVector', () => {
   it('should support multiply operations', () => {
     const source = new ArrayVector([1, 2, 3, 4]);
     const scale = 2.456;
-    const v = new ScaledVector(source, scale);
+    const operation = binaryOperators.get(BinaryOperationID.Multiply).operation;
+    const v = new BinaryOperationVector(source, new ConstantVector(scale, source.length), operation);
     expect(v.length).toEqual(source.length);
     //  expect(v.push(10)).toEqual(source.length); // not implemented
     for (let i = 0; i < 10; i++) {
