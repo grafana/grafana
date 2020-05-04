@@ -1,5 +1,5 @@
 import { CircularDataFrame, FieldCache, FieldType, MutableDataFrame } from '@grafana/data';
-import { LokiStreamResult, LokiTailResponse } from './types';
+import { LokiStreamResult, LokiTailResponse, LokiStreamResponse, LokiResultType } from './types';
 import * as ResultTransformer from './result_transformer';
 import { enhanceDataFrame } from './result_transformer';
 
@@ -17,6 +17,19 @@ const streamResult: LokiStreamResult[] = [
     values: [['1579857562031616000', "bar: 'foo'"]],
   },
 ];
+
+const lokiResponse: LokiStreamResponse = {
+  status: 'success',
+  data: {
+    result: streamResult,
+    resultType: LokiResultType.Stream,
+    stats: {
+      summary: {
+        bytesTotal: 900,
+      },
+    },
+  },
+};
 
 describe('loki result transformer', () => {
   afterAll(() => {
@@ -45,7 +58,7 @@ describe('loki result transformer', () => {
   describe('lokiStreamsToDataframes', () => {
     it('should enhance data frames', () => {
       jest.spyOn(ResultTransformer, 'enhanceDataFrame');
-      const dataFrames = ResultTransformer.lokiStreamsToDataframes(streamResult, { refId: 'B' }, 500, {
+      const dataFrames = ResultTransformer.lokiStreamsToDataframes(lokiResponse, { refId: 'B' }, 500, {
         derivedFields: [
           {
             matcherRegex: 'trace=(w+)',
