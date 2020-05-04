@@ -160,11 +160,11 @@ export const LogRowContextProvider: React.FunctionComponent<LogRowContextProvide
         let hasMoreLogsBefore = true,
           hasMoreLogsAfter = true;
 
-        if (currentResult && currentResult.data[0][0].length === value.data[0][0].length) {
+        if (currentResult && (!value.data[0][0] || currentResult.data[0][0].length === value.data[0][0].length)) {
           hasMoreLogsBefore = false;
         }
 
-        if (currentResult && currentResult.data[1][0].length === value.data[1][0].length) {
+        if (currentResult && (!value.data[1][0] || currentResult.data[1][0].length === value.data[1][0].length)) {
           hasMoreLogsAfter = false;
         }
 
