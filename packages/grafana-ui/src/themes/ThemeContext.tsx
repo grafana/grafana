@@ -38,7 +38,7 @@ export const withTheme = <P extends Themeable, S extends {} = {}>(Component: Rea
 export function useTheme() {
   return useContext(ThemeContextMock || ThemeContext);
 }
-/** Hook for using a getStyles that is wrapped in stylesFactory. */
+/** Hook for using memoized styles with access to the theme. */
 export const useStyles = (getStyles: (theme?: GrafanaTheme) => any) => {
   const currentTheme = useTheme();
   const callback = stylesFactory(stylesTheme => getStyles(stylesTheme));
