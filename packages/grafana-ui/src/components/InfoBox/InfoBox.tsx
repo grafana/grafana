@@ -80,7 +80,7 @@ const getInfoBoxStyles = stylesFactory((theme: GrafanaTheme) => ({
     }
   `,
   wrapperBranded: css`
-    padding: ${theme.spacing.lg};
+    padding: ${theme.spacing.md};
     border-radius: ${theme.border.radius.md};
     position: relative;
     box-shadow: 0 0 30px 10px rgba(0, 0, 0, ${theme.isLight ? 0.05 : 0.2});
@@ -99,6 +99,10 @@ const getInfoBoxStyles = stylesFactory((theme: GrafanaTheme) => ({
       background-size: cover;
       filter: saturate(80%);
       z-index: -1;
+    }
+
+    p:last-child {
+      margin-bottom: 0;
     }
   `,
   docsLink: css`
