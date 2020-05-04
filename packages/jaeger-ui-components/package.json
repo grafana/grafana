@@ -11,7 +11,7 @@
   "devDependencies": {
     "enzyme": "^3.8.0",
     "enzyme-adapter-react-16": "^1.2.0",
-    "typescript": "3.5.3"
+    "typescript": "3.7.5"
   },
   "dependencies": {
     "@types/classnames": "^2.2.7",
