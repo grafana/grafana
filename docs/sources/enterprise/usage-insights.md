@@ -12,7 +12,7 @@ weight = 700
 
 # Usage insights
 
-Usage insights allows you to have a better understanding on how your Grafana instance is used. The collected data are: dashboard views (aggregated and per user), data source errors, and number of data source queries.
+Usage insights allows you to have a better understanding of how your Grafana instance is used. The collected data are: dashboard views (aggregated and per user), data source errors, and number of data source queries.
 
 > Only available in Grafana Enterprise v7.0+.
 
