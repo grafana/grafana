@@ -260,6 +260,10 @@ function getOriginalMetricName(labelData: { [key: string]: string }) {
   return `${metricName}{${labelPart}}`;
 }
 
+export function decamelize(s: string): string {
+  return s.replace(/[A-Z]/g, m => ` ${m.toLowerCase()}`);
+}
+
 // Turn loki stats { metric: value } into meta stat { title: metric, value: value }
 function lokiStatsToMetaStat(stats: LokiStats): QueryResultMetaStat[] {
   const result: QueryResultMetaStat[] = [];
@@ -270,8 +274,16 @@ function lokiStatsToMetaStat(stats: LokiStats): QueryResultMetaStat[] {
     const values = stats[section];
     for (const label in values) {
       const value = values[label];
-      const title = `${_.capitalize(section)}: ${label}`;
-      result.push({ title, value });
+      let unit;
+      if (/time/i.test(label) && value) {
+        unit = 's';
+      } else if (/bytes.*persecond/i.test(label)) {
+        unit = 'Bps';
+      } else if (/bytes/i.test(label)) {
+        unit = 'decbytes';
+      }
+      const title = `${_.capitalize(section)}: ${decamelize(label)}`;
+      result.push({ title, value, unit });
     }
   }
   return result;
