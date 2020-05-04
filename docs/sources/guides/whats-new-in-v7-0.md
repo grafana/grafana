@@ -76,11 +76,13 @@ Up until now the overrides were available only for Graph and Table panel(via Col
 
 This feature enables even more powerful visualizations and fine grained control over how the data is displayed.
 
-## Panel inspect and export to CSV
+## Inspect panels and export data to CSV
 
 {{< docs-imagebox img="/img/docs/v70/panel_edit_export_raw_data.png" max-width="800px" class="docs-image--right" caption="Panel Edit - Export raw data to CSV" >}}
 
-Another new feature of Grafana 7.0 is Panel inspect. Inspect allows you to view the raw data for any Grafana panel as well as export that data to a CSV file. With Panel inspect you will also be able to perform simple raw data transformations like join, view query stats or detailed execution data.
+Another new feature of Grafana 7.0 is the panel inspector. Inspect allows you to view the raw data for any Grafana panel as well as export that data to a CSV file. With Panel inspect you will also be able to perform simple raw data transformations like join, view query stats or detailed execution data.
+
+Learn more about this feature in [Inspect a panel]({{< relref "../panels/inspect-panel.md" >}})
 
 <div class="clearfix"></div>
 
