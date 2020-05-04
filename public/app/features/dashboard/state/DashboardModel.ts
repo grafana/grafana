@@ -341,6 +341,7 @@ export class DashboardModel {
   }
 
   exitPanelEditor() {
+    this.panelInEdit.destroy();
     this.panelInEdit = undefined;
   }
 
