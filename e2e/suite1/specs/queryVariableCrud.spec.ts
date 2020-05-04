@@ -1,5 +1,4 @@
 import { e2e } from '@grafana/e2e';
-import { describe } from '../../../public/test/lib/common';
 import { Flows } from '@grafana/e2e/src/flows';
 
 // skipped scenario helper because of some perf issue upgrading cypress to 4.5.0 and splitted the whole test into smaller
