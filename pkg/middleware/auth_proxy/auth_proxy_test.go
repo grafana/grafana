@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/ldap"
@@ -66,6 +67,7 @@ func prepareMiddleware(t *testing.T, req *http.Request, store *remotecache.Remot
 }
 
 func TestMiddlewareContext(t *testing.T) {
+	logger := log.New("test")
 	Convey("auth_proxy helper", t, func() {
 		req, _ := http.NewRequest("POST", "http://example.com", nil)
 		setting.AuthProxyHeaderName = "X-Killa"
@@ -84,7 +86,7 @@ func TestMiddlewareContext(t *testing.T) {
 
 				// Set up the middleware
 				auth := prepareMiddleware(t, req, store)
-				id, err := auth.Login()
+				id, err := auth.Login(logger, false)
 				So(err, ShouldBeNil)
 
 				So(auth.getKey(), ShouldEqual, "auth-proxy-sync-ttl:0a7f3374e9659b10980fd66247b0cf2f")
@@ -102,7 +104,7 @@ func TestMiddlewareContext(t *testing.T) {
 
 				auth := prepareMiddleware(t, req, store)
 
-				id, err := auth.Login()
+				id, err := auth.Login(logger, false)
 				So(err, ShouldBeNil)
 				So(auth.getKey(), ShouldEqual, "auth-proxy-sync-ttl:14f69b7023baa0ac98c96b31cec07bc0")
 				So(id, ShouldEqual, 33)
@@ -155,7 +157,7 @@ func TestMiddlewareContext(t *testing.T) {
 
 				auth := prepareMiddleware(t, req, store)
 
-				id, err := auth.Login()
+				id, err := auth.Login(logger, false)
 
 				So(err, ShouldBeNil)
 				So(id, ShouldEqual, 42)
@@ -189,10 +191,10 @@ func TestMiddlewareContext(t *testing.T) {
 					return stub
 				}
 
-				id, err := auth.Login()
+				id, err := auth.Login(logger, false)
 
 				So(err, ShouldNotBeNil)
-				So(err.Error(), ShouldContainSubstring, "Failed to get the user")
+				So(err.Error(), ShouldContainSubstring, "failed to get the user")
 				So(id, ShouldNotEqual, 42)
 				So(stub.loginCalled, ShouldEqual, false)
 			})
