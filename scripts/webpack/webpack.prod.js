@@ -98,7 +98,7 @@ module.exports = merge(common, {
       memoryLimit: 4096,
     }),
     new MiniCssExtractPlugin({
-      filename: 'grafana.[name].[hash].css',
+      filename: 'grafana.[name].[contenthash].css',
     }),
     new HtmlWebpackPlugin({
       filename: path.resolve(__dirname, '../../public/views/error.html'),
