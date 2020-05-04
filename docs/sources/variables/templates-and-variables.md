@@ -94,7 +94,7 @@ You add variables via Dashboard cogs menu > Templating. This opens up a list of 
 
 Option | Description
 ------- | --------
-*Name* | The name of the variable, this is the name you use when you refer to your variable in your metric queries. Must be unique and contain no white-spaces.
+*Name* | The name of the variable, this is the name you use when you refer to your variable in your metric queries. Must be unique and contains no white-spaces.
 *Label* | The name of the dropdown for this variable.
 *Hide* | Options to hide the dropdown select box.
 *Type* | Defines the variable type.
