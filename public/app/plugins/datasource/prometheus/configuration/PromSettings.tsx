@@ -79,10 +79,10 @@ export const PromSettings = (props: Props) => {
         <div className="gf-form">
           <Switch
             checked={options.jsonData.disableLanguageProvider}
-            label="Disable metric lookup"
+            label="Disable metrics lookup"
             labelClass="width-14"
             onChange={onUpdateDatasourceJsonDataOptionChecked(props, 'disableLanguageProvider')}
-            tooltip="Switch on if you experience performance issues in the query editor. This will disable autocomplete and the metrics chooser."
+            tooltip="Checking this option will disable the metrics chooser and metric/label support in the query field's autocomplete. This helps if you have performance issues with bigger Prometheus instances."
           />
         </div>
         <div className="gf-form-inline">

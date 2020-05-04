@@ -246,12 +246,10 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
 
   onUpdateLanguage = () => {
     const {
-      histogramMetrics,
-      metrics,
-      metricsMetadata,
-      lookupsDisabled,
-      lookupMetricsThreshold,
-    } = this.props.datasource.languageProvider;
+      datasource,
+      datasource: { languageProvider },
+    } = this.props;
+    const { histogramMetrics, metrics, metricsMetadata, lookupMetricsThreshold } = languageProvider;
 
     if (!metrics) {
       return;
@@ -270,7 +268,7 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
 
     // Hint for big disabled lookups
     let hint: QueryHint;
-    if (lookupsDisabled) {
+    if (!datasource.lookupsDisabled && languageProvider.lookupsDisabled) {
       hint = {
         label: `Dynamic label lookup is disabled for datasources with more than ${lookupMetricsThreshold} metrics.`,
         type: 'INFO',
@@ -304,6 +302,7 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
 
   render() {
     const {
+      datasource,
       datasource: { languageProvider },
       query,
       ExtraFieldElement,
@@ -316,7 +315,7 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
     return (
       <>
         <div className="gf-form-inline gf-form-inline--nowrap flex-grow-1">
-          {this.languageProvider && (
+          {!datasource.lookupsDisabled && (
             <div className="gf-form flex-shrink-0">
               <ButtonCascader options={metricsOptions} disabled={buttonDisabled} onChange={this.onChangeMetrics}>
                 {chooserText}
