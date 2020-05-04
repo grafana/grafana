@@ -467,6 +467,7 @@ export class PanelModel implements DataConfigSource {
   }
 
   destroy() {
+    this.events.emit(PanelEvents.panelTeardown);
     this.events.removeAllListeners();
 
     if (this.queryRunner) {
