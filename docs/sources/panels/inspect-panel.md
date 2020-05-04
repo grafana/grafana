@@ -11,7 +11,7 @@ weight = 400
 
 > **Note:** This documentation refers to a feature only available in Grafana 7.0 beta.
 
-The panel inspector helps you understand and troubleshoot your panels. You can inspect the raw data for any Grafana panel, export that data to a comma-separated variable (CSV) file, view query requests, and export panel and data JSON.
+The panel inspector helps you understand and troubleshoot your panels. You can inspect the raw data for any Grafana panel, export that data to a comma-separated values (CSV) file, view query requests, and export panel and data JSON.
 
 ## Panel inspector UI
 
