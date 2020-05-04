@@ -1,4 +1,4 @@
-import React, { useContext, useRef, useState, useLayoutEffect } from 'react';
+import React, { useContext, useRef, useState, useLayoutEffect, useEffect } from 'react';
 import { LogRowModel } from '@grafana/data';
 import { css, cx } from 'emotion';
 
@@ -197,6 +197,19 @@ export const LogRowContext: React.FunctionComponent<LogRowContextProps> = ({
   onLoadMoreContext,
   hasMoreContextRows,
 }) => {
+  const handleEscKeyDown = (e: KeyboardEvent): void => {
+    if (e.keyCode === 27) {
+      onOutsideClick();
+    }
+  };
+
+  useEffect(() => {
+    document.addEventListener('keydown', handleEscKeyDown, false);
+    return () => {
+      document.removeEventListener('keydown', handleEscKeyDown, false);
+    };
+  }, []);
+
   return (
     <ClickOutsideWrapper onClick={onOutsideClick}>
       <div>
