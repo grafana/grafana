@@ -265,16 +265,18 @@
       link: /enterprise/enhanced_ldap/
     - name: Reporting
       link: /enterprise/reporting/
+    - name: Export dashboard as PDF
+      link: /enterprise/export-pdf/
     - name: SAML authentication
       link: /enterprise/saml/
     - name: Team sync
       link: /enterprise/team-sync/
     - name: White labeling
       link: /enterprise/white-labeling/
+    - name: Usage insights
+      link: /enterprise/usage-insights/
     - name: License expiration
       link: /enterprise/license-expiration/
-    - name: Export dashboard as PDF
-      link: /enterprise/export-pdf/
 - name: Plugins
   link: /plugins/
   children:
