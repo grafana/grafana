@@ -154,7 +154,7 @@ export const getLoginStyles = (theme: GrafanaTheme) => {
       transition: 0.25s ease;
     `,
     enterAnimation: css`
-      animation: ${flyInAnimation} ease-out 0.4s;
+      animation: ${flyInAnimation} ease-out 0.2s;
     `,
   };
 };
