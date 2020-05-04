@@ -29,8 +29,8 @@ func (hs *HTTPServer) getPluginContext(pluginID string, user *models.SignedInUse
 		return pc, ErrPluginNotFound
 	}
 
-	var jsonData json.RawMessage
-	var decryptedSecureJSONData map[string]string
+	jsonData := json.RawMessage{}
+	decryptedSecureJSONData := map[string]string{}
 	var updated time.Time
 
 	ps, err := hs.getCachedPluginSettings(pluginID, user)
@@ -38,7 +38,6 @@ func (hs *HTTPServer) getPluginContext(pluginID string, user *models.SignedInUse
 		if err != models.ErrPluginSettingNotFound {
 			return pc, errutil.Wrap("Failed to get plugin settings", err)
 		}
-		decryptedSecureJSONData = make(map[string]string)
 	} else {
 		jsonData, err = json.Marshal(ps.JsonData)
 		if err != nil {
