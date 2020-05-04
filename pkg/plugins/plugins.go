@@ -282,26 +282,32 @@ func (scanner *PluginScanner) loadPlugin(pluginJsonFilePath string) error {
 	pluginCommon.PluginDir = filepath.Dir(pluginJsonFilePath)
 
 	// For the time being, we choose to only require back-end plugins to be signed
+	// NOTE: the state is calculated again for when setting metadata on the object
 	if pluginCommon.Backend && scanner.requireSigned {
-		scanner.log.Debug("Plugin signature required, validating", "pluginID", pluginCommon.Id,
-			"pluginDir", pluginCommon.PluginDir)
-		allowUnsigned := false
-		for _, plug := range scanner.cfg.PluginsAllowUnsigned {
-			if plug == pluginCommon.Id {
-				allowUnsigned = true
-				break
-			}
-		}
-		if sig := GetPluginSignatureState(&pluginCommon); sig != PluginSignatureValid && !allowUnsigned {
-			switch sig {
-			case PluginSignatureUnsigned:
-				return fmt.Errorf("plugin %q is unsigned", pluginCommon.Id)
-			case PluginSignatureInvalid:
-				return fmt.Errorf("plugin %q has an invalid signature", pluginCommon.Id)
-			case PluginSignatureModified:
-				return fmt.Errorf("plugin %q's signature has been modified", pluginCommon.Id)
-			default:
-				return fmt.Errorf("unrecognized plugin signature state %v", sig)
+		sig := GetPluginSignatureState(&pluginCommon)
+		if sig != PluginSignatureValid {
+			scanner.log.Debug("Invalid Plugin Signature", "pluginID", pluginCommon.Id, "pluginDir", pluginCommon.PluginDir, "state", sig)
+			if sig == PluginSignatureUnsigned {
+				allowUnsigned := false
+				for _, plug := range scanner.cfg.PluginsAllowUnsigned {
+					if plug == pluginCommon.Id {
+						allowUnsigned = true
+						break
+					}
+				}
+				if setting.Env != setting.DEV && !allowUnsigned {
+					return fmt.Errorf("plugin %q is unsigned", pluginCommon.Id)
+				}
+				scanner.log.Warn("Running an unsigned backend plugin", "pluginID", pluginCommon.Id, "pluginDir", pluginCommon.PluginDir)
+			} else {
+				switch sig {
+				case PluginSignatureInvalid:
+					return fmt.Errorf("plugin %q has an invalid signature", pluginCommon.Id)
+				case PluginSignatureModified:
+					return fmt.Errorf("plugin %q's signature has been modified", pluginCommon.Id)
+				default:
+					return fmt.Errorf("unrecognized plugin signature state %v", sig)
+				}
 			}
 		}
 	}
