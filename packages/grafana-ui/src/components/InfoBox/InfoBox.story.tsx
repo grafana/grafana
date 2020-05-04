@@ -3,7 +3,6 @@ import { number } from '@storybook/addon-knobs';
 import { InfoBox } from './InfoBox';
 import { FeatureInfoBox } from './FeatureInfoBox';
 import { FeatureState } from '@grafana/data';
-import { InfoBoxV2 } from '../../index';
 
 export default {
   title: 'Layout/InfoBox',

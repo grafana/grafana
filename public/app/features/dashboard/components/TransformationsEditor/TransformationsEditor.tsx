@@ -12,7 +12,6 @@ import {
 import {
   DataFrame,
   DataTransformerConfig,
-  DocsId,
   FeatureState,
   GrafanaTheme,
   SelectableValue,
@@ -23,7 +22,6 @@ import { TransformationOperationRow } from './TransformationOperationRow';
 import { Card, CardProps } from '../../../../core/components/Card/Card';
 import { css } from 'emotion';
 import { selectors } from '@grafana/e2e-selectors';
-import { getDocsLink } from 'app/core/utils/docsLinks';
 
 interface Props {
   onChange: (transformations: DataTransformerConfig[]) => void;
@@ -131,14 +129,16 @@ export class TransformationsEditor extends React.PureComponent<Props> {
           <FeatureInfoBox
             title="Transformations"
             featureState={FeatureState.beta}
-            onDismiss={() => {}}
-            url={getDocsLink(DocsId.Transformations)}
+            // url={getDocsLink(DocsId.Transformations)}
           >
-            Transformations allow you to join, calculate, re-order, hide and rename your query results before being
-            visualized. <br />
-            Many transforms are not suitable if your using the Graph visualisation as it currently only supports time
-            series. <br />
-            It can help to switch to Table visualisation to understand what a transformation is doing. <br />
+            <p>
+              Transformations allow you to join, calculate, re-order, hide and rename your query results before being
+              visualized. <br />
+              Many transforms are not suitable if your using the Graph visualisation as it currently only supports time
+              series. <br />
+              It can help to switch to Table visualisation to understand what a transformation is doing. <br />
+            </p>
+            <p>Select one of the transformations below to start.</p>
           </FeatureInfoBox>
         </Container>
         <VerticalGroup>
