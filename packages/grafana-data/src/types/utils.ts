@@ -12,3 +12,5 @@ export function eventFactory<T = undefined>(name: string): AppEvent<T> {
   typeList.add(name);
   return { name };
 }
+
+export type KeyValue<T = any> = { [s: string]: T };

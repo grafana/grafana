@@ -1,9 +1,20 @@
 import { readCSV, toCSV, CSVHeaderStyle } from './csv';
-import { getDataFrameRow } from '../dataframe/processDataFrame';
 
 // Test with local CSV files
 import fs from 'fs';
 import { toDataFrameDTO } from '../dataframe/processDataFrame';
+import { DataFrame } from '../types';
+
+/**
+ * Wrapper to get an array from each field value
+ */
+function getDataFrameRow(data: DataFrame, row: number): any[] {
+  const values: any[] = [];
+  for (const field of data.fields) {
+    values.push(field.values.get(row));
+  }
+  return values;
+}
 
 describe('read csv', () => {
   it('should get X and y', () => {

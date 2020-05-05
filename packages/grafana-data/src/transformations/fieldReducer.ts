@@ -28,10 +28,6 @@ export enum ReducerID {
   allIsNull = 'allIsNull',
 }
 
-export interface FieldCalcs {
-  [key: string]: any;
-}
-
 // Internal function
 type FieldReducer = (field: Field, ignoreNulls: boolean, nullAsZero: boolean) => FieldCalcs;
 

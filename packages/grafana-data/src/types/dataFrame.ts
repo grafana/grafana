@@ -4,7 +4,6 @@ import { QueryResultBase, Labels, NullValueMode } from './data';
 import { DisplayProcessor, DisplayValue } from './displayValue';
 import { DataLink, LinkModel } from './dataLink';
 import { Vector } from './vector';
-import { FieldCalcs } from '../transformations/fieldReducer';
 import { FieldColor } from './fieldColor';
 import { ScopedVars } from './ScopedVars';
 
@@ -66,6 +65,10 @@ export interface ValueLinkConfig {
    * Index of the value row within Field. Should be provided only when value is not a result of a reduction
    */
   valueRowIndex?: number;
+}
+
+export interface FieldCalcs {
+  [key: string]: any;
 }
 
 export interface Field<T = any, V = Vector<T>> {
