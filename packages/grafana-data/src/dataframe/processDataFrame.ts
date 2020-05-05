@@ -21,7 +21,7 @@ import { ArrayVector } from '../vector/ArrayVector';
 import { MutableDataFrame } from './MutableDataFrame';
 import { SortedVector } from '../vector/SortedVector';
 import { ArrayDataFrame } from './ArrayDataFrame';
-import { getFieldState, getTimeField } from '../field';
+import { getFieldState } from '../field/fieldState';
 
 function convertTableToDataFrame(table: TableData): DataFrame {
   const fields = table.columns.map(c => {
@@ -486,3 +486,15 @@ export function toDataFrameDTO(data: DataFrame): DataFrameDTO {
     name: data.name,
   };
 }
+
+export const getTimeField = (series: DataFrame): { timeField?: Field; timeIndex?: number } => {
+  for (let i = 0; i < series.fields.length; i++) {
+    if (series.fields[i].type === FieldType.time) {
+      return {
+        timeField: series.fields[i],
+        timeIndex: i,
+      };
+    }
+  }
+  return {};
+};

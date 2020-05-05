@@ -7,3 +7,4 @@ export { FieldConfigOptionsRegistry } from './FieldConfigOptionsRegistry';
 
 export { applyFieldOverrides, validateFieldConfig } from './fieldOverrides';
 export { getFieldDisplayValuesProxy } from './getFieldDisplayValuesProxy';
+export { getFieldState, getFrameDisplayTitle } from './fieldState';

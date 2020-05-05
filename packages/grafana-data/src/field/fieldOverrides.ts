@@ -31,7 +31,8 @@ import { DataLinkBuiltInVars, locationUtil } from '../utils';
 import { formattedValueToString } from '../valueFormats';
 import { getFieldDisplayValuesProxy } from './getFieldDisplayValuesProxy';
 import { formatLabels } from '../utils/labels';
-import { getFrameDisplayTitle, getFieldState, getTimeField } from './fieldDisplay';
+import { getFrameDisplayTitle, getFieldState } from './fieldState';
+import { getTimeField } from '../dataframe/processDataFrame';
 
 interface OverrideProps {
   match: FieldMatcher;

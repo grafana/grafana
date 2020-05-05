@@ -7,7 +7,7 @@ import { RowVector } from '../../vector/RowVector';
 import { ArrayVector, BinaryOperationVector, ConstantVector } from '../../vector';
 import { doStandardCalcs } from '../fieldReducer';
 import { seriesToColumnsTransformer } from './seriesToColumns';
-import { getTimeField } from '../../field';
+import { getTimeField } from '../../dataframe/processDataFrame';
 import defaults from 'lodash/defaults';
 import { BinaryOperationID, binaryOperators } from '../../utils/binaryOperators';
 
