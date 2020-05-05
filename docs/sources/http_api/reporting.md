@@ -13,9 +13,9 @@ parent = "http_api"
 
 > Reporting is only available in Grafana Enterprise. Read more about [Grafana Enterprise]({{< relref "../enterprise" >}}).
 
-The Reporting API allows for programmatic access to [Reporting]({{< relref "../enterprise/reporting.md" >}}) functionality.
+This API allows you to interact programmatically with the [Reporting]({{< relref "../enterprise/reporting.md" >}}) feature.
 
-## Send report
+## Send a report
 
 > Only available in Grafana Enterprise v7.0+.
 
