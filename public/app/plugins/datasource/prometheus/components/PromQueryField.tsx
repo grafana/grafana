@@ -187,6 +187,10 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
       datasource: { languageProvider },
     } = this.props;
 
+    this.setState({
+      syntaxLoaded: false,
+    });
+
     Prism.languages[PRISM_SYNTAX] = languageProvider.syntax;
     this.languageProviderInitializationPromise = makePromiseCancelable(languageProvider.start());
     this.languageProviderInitializationPromise.promise
