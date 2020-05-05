@@ -139,14 +139,14 @@ describe('ShareModal', () => {
       expect(state?.shareUrl).toBe('http://server/#!/test?from=1000&to=2000&orgId=1&theme=light');
     });
 
-    it('should remove edit from image url when is first param in querystring and modeSharePanel is true', () => {
+    it('should remove editPanel from image url when is first param in querystring', () => {
       mockLocationHref('http://server/#!/test?editPanel=1');
       ctx.mount({
         panel: { id: 1, options: {}, fieldConfig: { defaults: {}, overrides: [] } },
       });
 
       const state = ctx.wrapper?.state();
-      expect(state?.shareUrl).toContain('?from=1000&to=2000&orgId=1&editPanel=1');
+      expect(state?.shareUrl).toContain('?editPanel=1&from=1000&to=2000&orgId=1');
       expect(state?.imageUrl).toContain('?from=1000&to=2000&orgId=1&viewPanel=1&width=1000&height=500&tz=UTC');
     });
 

@@ -29,7 +29,7 @@ export function buildParams(
     params.theme = selectedTheme;
   }
 
-  if (panel) {
+  if (panel && !params.editPanel) {
     params.viewPanel = panel.id;
   } else {
     delete params.viewPanel;
@@ -72,7 +72,12 @@ export function buildSoloUrl(
 
   let soloUrl = baseUrl.replace(config.appSubUrl + '/dashboard/', config.appSubUrl + '/dashboard-solo/');
   soloUrl = soloUrl.replace(config.appSubUrl + '/d/', config.appSubUrl + '/d-solo/');
-  delete params.edit;
+
+  if (params.editPanel) {
+    params.viewPanel = params.editPanel;
+    delete params.editPanel;
+  }
+
   return urlUtil.appendQueryToUrl(soloUrl, urlUtil.toUrlParams(params));
 }
 
