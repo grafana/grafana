@@ -112,7 +112,7 @@ export class ElasticMetricAggCtrl {
       }
       if ($scope.aggDef.supportsInlineScript) {
         // I know this stores the inline script twice
-        // but having it like this simplifes the query_builder
+        // but having it like this simplifies the query_builder
         const inlineScript = $scope.agg.inlineScript;
         if (inlineScript) {
           $scope.agg.settings.script = { inline: inlineScript };
