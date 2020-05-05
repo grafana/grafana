@@ -60,6 +60,10 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       padding: 0 50px 0 140px;
       justify-content: space-between;
 
+      @media only screen and (max-width: ${theme.breakpoints.xl}) {
+        padding: 0 30px 0 100px;
+      }
+
       @media only screen and (max-width: ${theme.breakpoints.md}) {
         padding: 0 24px 0 100px;
         background-position: 0px;
@@ -95,14 +99,12 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       }
     `,
     helpLinks: css`
-      margin-left: 24px;
-
       @media only screen and (max-width: ${theme.breakpoints.lg}) {
         display: none;
       }
     `,
     helpLink: css`
-      margin-left: 16px;
+      margin-right: 8px;
       text-decoration: underline;
     `,
     smallScreenHelp: css`
