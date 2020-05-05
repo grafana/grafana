@@ -25,13 +25,19 @@ const HISTOGRAM_GROUP = '__histograms__';
 const PRISM_SYNTAX = 'promql';
 export const RECORDING_RULES_GROUP = '__recording_rules__';
 
-function getChooserText(hasSyntax: boolean, metrics: string[]) {
+function getChooserText(metricsLookupDisabled: boolean, hasSyntax: boolean, metrics: string[]) {
+  if (metricsLookupDisabled) {
+    return '(Disabled)';
+  }
+
   if (!hasSyntax) {
     return 'Loading metrics...';
   }
+
   if (metrics && metrics.length === 0) {
     return '(No metrics found)';
   }
+
   return 'Metrics';
 }
 
@@ -250,12 +256,10 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
 
   onUpdateLanguage = () => {
     const {
-      histogramMetrics,
-      metrics,
-      metricsMetadata,
-      lookupsDisabled,
-      lookupMetricsThreshold,
-    } = this.props.datasource.languageProvider;
+      datasource,
+      datasource: { languageProvider },
+    } = this.props;
+    const { histogramMetrics, metrics, metricsMetadata, lookupMetricsThreshold } = languageProvider;
 
     if (!metrics) {
       return;
@@ -274,7 +278,7 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
 
     // Hint for big disabled lookups
     let hint: QueryHint;
-    if (lookupsDisabled) {
+    if (!datasource.lookupsDisabled && languageProvider.lookupsDisabled) {
       hint = {
         label: `Dynamic label lookup is disabled for datasources with more than ${lookupMetricsThreshold} metrics.`,
         type: 'INFO',
@@ -308,13 +312,14 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
 
   render() {
     const {
+      datasource,
       datasource: { languageProvider },
       query,
       ExtraFieldElement,
     } = this.props;
     const { metricsOptions, syntaxLoaded, hint } = this.state;
     const cleanText = languageProvider ? languageProvider.cleanText : undefined;
-    const chooserText = getChooserText(syntaxLoaded, metricsOptions);
+    const chooserText = getChooserText(datasource.lookupsDisabled, syntaxLoaded, metricsOptions);
     const buttonDisabled = !(syntaxLoaded && metricsOptions && metricsOptions.length > 0);
 
     return (
