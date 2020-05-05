@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"io"
 	"net/http"
-	"net/http/httptest"
 	"time"
 
 	"github.com/stretchr/testify/require"
@@ -177,7 +176,7 @@ func TestUserInfoSearchesForEmailAndRole(t *testing.T) {
 
 		tests := []struct {
 			Name              string
-			APIURLReponse     interface{}
+			APIURLResponse    interface{}
 			OAuth2Extra       interface{}
 			RoleAttributePath string
 			ExpectedEmail     string
@@ -215,7 +214,7 @@ func TestUserInfoSearchesForEmailAndRole(t *testing.T) {
 			},
 			{
 				Name: "Given no id_token, a valid role path, a valid api response, use api response",
-				APIURLReponse: map[string]interface{}{
+				APIURLResponse: map[string]interface{}{
 					"role":  "Admin",
 					"email": "john.doe@example.com",
 				},
@@ -225,7 +224,7 @@ func TestUserInfoSearchesForEmailAndRole(t *testing.T) {
 			},
 			{
 				Name: "Given no id_token, no role path, a valid api response, use api response",
-				APIURLReponse: map[string]interface{}{
+				APIURLResponse: map[string]interface{}{
 					"email": "john.doe@example.com",
 				},
 				RoleAttributePath: "",
@@ -234,7 +233,7 @@ func TestUserInfoSearchesForEmailAndRole(t *testing.T) {
 			},
 			{
 				Name: "Given no id_token, a role path, a valid api response without a role, use api response",
-				APIURLReponse: map[string]interface{}{
+				APIURLResponse: map[string]interface{}{
 					"email": "john.doe@example.com",
 				},
 				RoleAttributePath: "role",
@@ -253,7 +252,7 @@ func TestUserInfoSearchesForEmailAndRole(t *testing.T) {
 					// { "role": "Admin", "email": "john.doe@example.com" }
 					"id_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiQWRtaW4iLCJlbWFpbCI6ImpvaG4uZG9lQGV4YW1wbGUuY29tIn0.9PtHcCaXxZa2HDlASyKIaFGfOKlw2ILQo32xlvhvhRg",
 				},
-				APIURLReponse: map[string]interface{}{
+				APIURLResponse: map[string]interface{}{
 					"role":  "FromResponse",
 					"email": "from_response@example.com",
 				},
@@ -267,7 +266,7 @@ func TestUserInfoSearchesForEmailAndRole(t *testing.T) {
 					// { "role": "Admin", "email": "john.doe@example.com" }
 					"id_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiQWRtaW4iLCJlbWFpbCI6ImpvaG4uZG9lQGV4YW1wbGUuY29tIn0.9PtHcCaXxZa2HDlASyKIaFGfOKlw2ILQo32xlvhvhRg",
 				},
-				APIURLReponse: map[string]interface{}{
+				APIURLResponse: map[string]interface{}{
 					"role":  "FromResponse",
 					"email": "from_response@example.com",
 				},
@@ -281,7 +280,7 @@ func TestUserInfoSearchesForEmailAndRole(t *testing.T) {
 					// { "role": "Admin" }
 					"id_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiQWRtaW4ifQ.k5GwPcZvGe2BE_jgwN0ntz0nz4KlYhEd0hRRLApkTJ4",
 				},
-				APIURLReponse: map[string]interface{}{
+				APIURLResponse: map[string]interface{}{
 					"email": "from_response@example.com",
 				},
 				RoleAttributePath: "role",
@@ -294,7 +293,7 @@ func TestUserInfoSearchesForEmailAndRole(t *testing.T) {
 					// { "email": "john.doe@example.com" }
 					"id_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImpvaG4uZG9lQGV4YW1wbGUuY29tIn0.k5GwPcZvGe2BE_jgwN0ntz0nz4KlYhEd0hRRLApkTJ4",
 				},
-				APIURLReponse: map[string]interface{}{
+				APIURLResponse: map[string]interface{}{
 					"role": "FromResponse",
 				},
 				RoleAttributePath: "role",
@@ -306,7 +305,7 @@ func TestUserInfoSearchesForEmailAndRole(t *testing.T) {
 		for _, test := range tests {
 			provider.roleAttributePath = test.RoleAttributePath
 			t.Run(test.Name, func(t *testing.T) {
-				response, _ := json.Marshal(test.APIURLReponse)
+				response, _ := json.Marshal(test.APIURLResponse)
 				ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 					w.WriteHeader(http.StatusOK)
 					w.Header().Set("Content-Type", "application/json")
