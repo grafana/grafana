@@ -53,7 +53,6 @@ export type IconName =
   | 'circle'
   | 'arrow-up'
   | 'arrow-from-right'
-  | 'arrow-from-left'
   | 'keyboard'
   | 'search'
   | 'chart-line'
@@ -113,7 +112,9 @@ export type IconName =
   | 'heart-break'
   | 'ellipsis-v'
   | 'favorite'
-  | 'sort-amount-down';
+  | 'line-alt'
+  | 'sort-amount-down'
+  | 'cloud';
 
 export const getAvailableIcons = (): IconName[] => [
   'fa fa-spinner',
@@ -166,7 +167,6 @@ export const getAvailableIcons = (): IconName[] => [
   'circle',
   'arrow-up',
   'arrow-from-right',
-  'arrow-from-left',
   'keyboard',
   'search',
   'chart-line',
@@ -227,4 +227,5 @@ export const getAvailableIcons = (): IconName[] => [
   'ellipsis-v',
   'favorite',
   'sort-amount-down',
+  'cloud',
 ];

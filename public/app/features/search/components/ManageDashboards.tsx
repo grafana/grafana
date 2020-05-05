@@ -11,7 +11,6 @@ import { useManageDashboards } from '../hooks/useManageDashboards';
 import { SearchResultsFilter } from './SearchResultsFilter';
 import { SearchResults } from './SearchResults';
 import { DashboardActions } from './DashboardActions';
-import { useSearchLayout } from '../hooks/useSearchLayout';
 import { SearchLayout } from '../types';
 import { FilterInput } from 'app/core/components/FilterInput/FilterInput';
 
@@ -27,7 +26,13 @@ export const ManageDashboards: FC<Props> = memo(({ folderId, folderUid }) => {
   const styles = getStyles(theme);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isMoveModalOpen, setIsMoveModalOpen] = useState(false);
-  const queryParams = { skipRecent: true, skipStarred: true, folderIds: folderId ? [folderId] : [] };
+  const defaultLayout = folderId ? SearchLayout.List : SearchLayout.Folders;
+  const queryParams = {
+    skipRecent: true,
+    skipStarred: true,
+    folderIds: folderId ? [folderId] : [],
+    layout: defaultLayout,
+  };
   const {
     query,
     hasFilters,
@@ -36,6 +41,7 @@ export const ManageDashboards: FC<Props> = memo(({ folderId, folderUid }) => {
     onStarredFilterChange,
     onTagAdd,
     onSortChange,
+    onLayoutChange,
   } = useSearchQuery(queryParams);
 
   const {
@@ -53,9 +59,6 @@ export const ManageDashboards: FC<Props> = memo(({ folderId, folderUid }) => {
     onMoveItems,
   } = useManageDashboards(query, { hasEditPermissionInFolders: contextSrv.hasEditPermissionInFolders }, folderUid);
 
-  const defaultLayout = folderId ? SearchLayout.List : SearchLayout.Folders;
-  const { layout, setLayout } = useSearchLayout(query, defaultLayout);
-
   const onMoveTo = () => {
     setIsMoveModalOpen(true);
   };
@@ -64,14 +67,7 @@ export const ManageDashboards: FC<Props> = memo(({ folderId, folderUid }) => {
     setIsDeleteModalOpen(true);
   };
 
-  const onLayoutChange = (layout: string) => {
-    setLayout(layout);
-    if (query.sort) {
-      onSortChange(null);
-    }
-  };
-
-  if (canSave && folderId && !hasFilters && results.length === 0) {
+  if (canSave && folderId && !hasFilters && results.length === 0 && !loading) {
     return (
       <EmptyListCTA
         title="This folder doesn't have any dashboards yet"
@@ -104,8 +100,8 @@ export const ManageDashboards: FC<Props> = memo(({ folderId, folderUid }) => {
       <div className={styles.results}>
         <SearchResultsFilter
           allChecked={allChecked}
-          canDelete={canDelete}
-          canMove={canMove}
+          canDelete={hasEditPermissionInFolders && canDelete}
+          canMove={hasEditPermissionInFolders && canMove}
           deleteItem={onItemDelete}
           moveTo={onMoveTo}
           onToggleAllChecked={onToggleAllChecked}
@@ -113,18 +109,17 @@ export const ManageDashboards: FC<Props> = memo(({ folderId, folderUid }) => {
           onSortChange={onSortChange}
           onTagFilterChange={onTagFilterChange}
           query={query}
-          layout={layout}
           hideLayout={!!folderUid}
           onLayoutChange={onLayoutChange}
         />
         <SearchResults
           loading={loading}
           results={results}
-          editable
+          editable={hasEditPermissionInFolders}
           onTagSelected={onTagAdd}
           onToggleSection={onToggleSection}
           onToggleChecked={onToggleChecked}
-          layout={layout}
+          layout={query.layout}
         />
       </div>
       <ConfirmDeleteModal

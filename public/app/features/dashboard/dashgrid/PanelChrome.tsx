@@ -73,6 +73,7 @@ export class PanelChrome extends PureComponent<Props, State> {
 
     panel.events.on(PanelEvents.refresh, this.onRefresh);
     panel.events.on(PanelEvents.render, this.onRender);
+
     dashboard.panelInitialized(this.props.panel);
 
     // Move snapshot data into the query response
@@ -98,6 +99,15 @@ export class PanelChrome extends PureComponent<Props, State> {
       if (!this.wantsQueryExecution) {
         this.setState({ isFirstLoad: false });
       }
+    }
+
+    if (!this.querySubscription) {
+      this.querySubscription = panel
+        .getQueryRunner()
+        .getData()
+        .subscribe({
+          next: data => this.onDataUpdate(data),
+        });
     }
   }
 
@@ -184,15 +194,7 @@ export class PanelChrome extends PureComponent<Props, State> {
         return;
       }
 
-      const queryRunner = panel.getQueryRunner();
-
-      if (!this.querySubscription) {
-        this.querySubscription = queryRunner.getData().subscribe({
-          next: data => this.onDataUpdate(data),
-        });
-      }
-
-      queryRunner.run({
+      panel.getQueryRunner().run({
         datasource: panel.datasource,
         queries: panel.targets,
         panelId: panel.id,
@@ -200,8 +202,7 @@ export class PanelChrome extends PureComponent<Props, State> {
         timezone: this.props.dashboard.getTimezone(),
         timeRange: timeData.timeRange,
         timeInfo: timeData.timeInfo,
-        widthPixels: width,
-        maxDataPoints: panel.maxDataPoints,
+        maxDataPoints: panel.maxDataPoints || width,
         minInterval: panel.interval,
         scopedVars: panel.scopedVars,
         cacheTimeout: panel.cacheTimeout,

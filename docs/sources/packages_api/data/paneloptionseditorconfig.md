@@ -5,7 +5,6 @@
 title = "PanelOptionsEditorConfig"
 keywords = ["grafana","documentation","sdk","@grafana/data"]
 type = "docs"
-draft = true
 +++
 
 ## PanelOptionsEditorConfig interface
@@ -30,7 +29,7 @@ import { PanelOptionsEditorConfig } from '@grafana/data';
 |  [name](#name-property) | <code>string</code> | Name of the option. Will be displayed in the UI as form element label. |
 |  [path](#path-property) | <code>(keyof TOptions &amp; string) &#124; string</code> | Path of the option property to control. |
 |  [settings](#settings-property) | <code>TSettings</code> | al Custom settings of the editor. |
-|  [showIf](#showif-property) | <code>(currentConfig: TOptions) =&gt; boolean</code> | Function that enables configuration of when option editor should be shown based on current panel option properties. |
+|  [showIf](#showif-property) | <code>(currentConfig: TOptions) =&gt; boolean &#124; undefined</code> | Function that enables configuration of when option editor should be shown based on current panel option properties. |
 
 ### category property
 
@@ -111,5 +110,5 @@ Function that enables configuration of when option editor should be shown based 
 <b>Signature</b>
 
 ```typescript
-showIf?: (currentConfig: TOptions) => boolean;
+showIf?: (currentConfig: TOptions) => boolean | undefined;
 ```

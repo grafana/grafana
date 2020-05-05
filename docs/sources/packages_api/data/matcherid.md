@@ -5,7 +5,6 @@
 title = "MatcherID"
 keywords = ["grafana","documentation","sdk","@grafana/data"]
 type = "docs"
-draft = true
 +++
 
 ## MatcherID enum

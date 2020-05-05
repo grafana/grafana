@@ -172,7 +172,15 @@ export class QueriesTab extends PureComponent<Props, State> {
             <DataSourcePicker datasources={this.datasources} onChange={this.onChangeDataSource} current={currentDS} />
           </div>
           <div className={styles.dataSourceRowItem}>
-            <Button variant="secondary" icon="info-circle" title="Open data source help" onClick={this.onOpenHelp} />
+            <Button
+              variant="secondary"
+              icon="question-circle"
+              title="Open data source help"
+              onClick={this.onOpenHelp}
+            />
+          </div>
+          <div className={styles.dataSourceRowItemOptions}>
+            <QueryOptions panel={panel} datasource={currentDS} data={data} />
           </div>
           <div className={styles.dataSourceRowItem}>
             <Button
@@ -182,9 +190,6 @@ export class QueriesTab extends PureComponent<Props, State> {
             >
               Query inspector
             </Button>
-          </div>
-          <div className={styles.dataSourceRowItemOptions}>
-            <QueryOptions panel={panel} datasource={currentDS} data={data} />
           </div>
         </div>
       </div>
@@ -266,7 +271,12 @@ export class QueriesTab extends PureComponent<Props, State> {
     return (
       <HorizontalGroup spacing="md" align="flex-start">
         {showAddButton && (
-          <Button icon="plus" onClick={this.onAddQueryClick} variant="secondary">
+          <Button
+            icon="plus"
+            onClick={this.onAddQueryClick}
+            variant="secondary"
+            aria-label={selectors.components.QueryTab.addQuery}
+          >
             Query
           </Button>
         )}
@@ -327,6 +337,7 @@ const getStyles = stylesFactory(() => {
     `,
     dataSourceRowItemOptions: css`
       flex-grow: 1;
+      margin-right: ${theme.spacing.inlineFormMargin};
     `,
     queriesWrapper: css`
       padding-bottom: 16px;

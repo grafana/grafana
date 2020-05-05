@@ -5,7 +5,6 @@
 title = "StringFieldConfigSettings"
 keywords = ["grafana","documentation","sdk","@grafana/data"]
 type = "docs"
-draft = true
 +++
 
 ## StringFieldConfigSettings interface

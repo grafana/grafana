@@ -5,7 +5,6 @@
 title = "cardChrome"
 keywords = ["grafana","documentation","sdk","@grafana/ui"]
 type = "docs"
-draft = true
 +++
 
 ## styleMixins.cardChrome() function

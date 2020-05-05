@@ -12,7 +12,7 @@ weight = 400
 
 # Glossary
 
-This topic lists words and abbreviations that commonly used in the Grafana documentation and community.
+This topic lists words and abbreviations that are commonly used in the Grafana documentation and community.
 
 <table>
   <tr>
@@ -36,7 +36,7 @@ This topic lists words and abbreviations that commonly used in the Grafana docum
     <td>An extension of Grafana that allows users to provide additional functionality to enhance their experience. The types of plugins currently supported are:
     <ul>
       <li><b>App plugin:</b> Extends Grafana with a customized experience. It includes a set of panel and data source plugins, as well as custom pages.</li>
-      <li><b>Data source plugin:</b> Extends Grafana with supports additional data sources in Grafana.</li>
+      <li><b>Data source plugin:</b> Extends Grafana with support for additional data sources.</li>
       <li><b>Panel plugin:</b> Extends Grafana with additional visualization options.</li>
     </ul>
     </td>

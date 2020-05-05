@@ -4,7 +4,6 @@ import { useTheme, CustomScrollbar, stylesFactory, IconButton } from '@grafana/u
 import { GrafanaTheme } from '@grafana/data';
 import { useSearchQuery } from '../hooks/useSearchQuery';
 import { useDashboardSearch } from '../hooks/useDashboardSearch';
-import { useSearchLayout } from '../hooks/useSearchLayout';
 import { SearchField } from './SearchField';
 import { SearchResults } from './SearchResults';
 import { ActionRow } from './ActionRow';
@@ -15,25 +14,11 @@ export interface Props {
 }
 
 export const DashboardSearch: FC<Props> = memo(({ onCloseSearch, folder }) => {
-  const payload = folder ? { query: `folder:${folder}` } : {};
-  const { query, onQueryChange, onTagFilterChange, onTagAdd, onSortChange } = useSearchQuery(payload);
+  const payload = folder ? { query: `folder:${folder} ` } : {};
+  const { query, onQueryChange, onTagFilterChange, onTagAdd, onSortChange, onLayoutChange } = useSearchQuery(payload);
   const { results, loading, onToggleSection, onKeyDown } = useDashboardSearch(query, onCloseSearch);
-  const { layout, setLayout } = useSearchLayout(query);
   const theme = useTheme();
   const styles = getStyles(theme);
-
-  // The main search input has own keydown handler, also TagFilter uses input, so
-  // clicking Esc when tagFilter is active shouldn't close the whole search overlay
-  const onClose = () => {
-    onCloseSearch();
-  };
-
-  const onLayoutChange = (layout: string) => {
-    setLayout(layout);
-    if (query.sort) {
-      onSortChange(null);
-    }
-  };
 
   return (
     <div tabIndex={0} className={styles.overlay}>
@@ -41,13 +26,12 @@ export const DashboardSearch: FC<Props> = memo(({ onCloseSearch, folder }) => {
         <div className={styles.searchField}>
           <SearchField query={query} onChange={onQueryChange} onKeyDown={onKeyDown} autoFocus clearable />
           <div className={styles.closeBtn}>
-            <IconButton name="times" surface="panel" onClick={onClose} size="xxl" tooltip="Close search" />
+            <IconButton name="times" surface="panel" onClick={onCloseSearch} size="xxl" tooltip="Close search" />
           </div>
         </div>
         <div className={styles.search}>
           <ActionRow
             {...{
-              layout,
               onLayoutChange,
               onSortChange,
               onTagFilterChange,
@@ -61,7 +45,7 @@ export const DashboardSearch: FC<Props> = memo(({ onCloseSearch, folder }) => {
               onTagSelected={onTagAdd}
               editable={false}
               onToggleSection={onToggleSection}
-              layout={layout}
+              layout={query.layout}
             />
           </CustomScrollbar>
         </div>

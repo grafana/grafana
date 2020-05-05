@@ -21,7 +21,7 @@ export const addPanel = (config?: Partial<AddPanelConfig>) => {
     e2e()
       .get('.ds-picker')
       .click()
-      .contains('.gf-form-select-box__desc-option', dataSourceName)
+      .contains('[id^="react-select-"][id*="-option-"]', dataSourceName)
       .click();
     queriesForm();
   });

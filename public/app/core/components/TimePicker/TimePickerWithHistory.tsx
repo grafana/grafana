@@ -1,6 +1,6 @@
 import React from 'react';
 import { LocalStorageValueProvider } from '../LocalStorageValueProvider';
-import { TimeRange, isDateTime, dateTime } from '@grafana/data';
+import { TimeRange, isDateTime, toUtc } from '@grafana/data';
 import { Props as TimePickerProps, TimeRangePicker } from '@grafana/ui/src/components/TimePicker/TimeRangePicker';
 
 const LOCAL_STORAGE_KEY = 'grafana.dashboard.timepicker.history';
@@ -33,8 +33,8 @@ function convertIfJson(history: TimeRange[]): TimeRange[] {
     }
 
     return {
-      from: dateTime(time.from),
-      to: dateTime(time.to),
+      from: toUtc(time.from),
+      to: toUtc(time.to),
       raw: time.raw,
     };
   });

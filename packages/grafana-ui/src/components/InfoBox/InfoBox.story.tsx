@@ -1,9 +1,11 @@
 import React from 'react';
 import { number } from '@storybook/addon-knobs';
 import { InfoBox } from './InfoBox';
+import { FeatureInfoBox } from './FeatureInfoBox';
+import { FeatureState } from '@grafana/data';
 
 export default {
-  title: 'General/InfoBox',
+  title: 'Layout/InfoBox',
   component: InfoBox,
   decorators: [],
   parameters: {
@@ -35,16 +37,11 @@ export const basic = () => {
   return (
     <div style={{ width: containerWidth }}>
       <InfoBox
-        header="User Permission"
-        footer={
-          <>
-            Checkout the{' '}
-            <a className="external-link" target="_blank" href="http://docs.grafana.org/features/datasources/mysql/">
-              MySQL Data Source Docs
-            </a>{' '}
-            for more information.,
-          </>
-        }
+        title="User Permission"
+        url={'http://docs.grafana.org/features/datasources/mysql/'}
+        onDismiss={() => {
+          alert('onDismiss clicked');
+        }}
       >
         <p>
           The database user should only be granted SELECT permissions on the specified database &amp; tables you want to
@@ -54,6 +51,29 @@ export const basic = () => {
           permissions.
         </p>
       </InfoBox>
+    </div>
+  );
+};
+
+export const featureInfoBox = () => {
+  const { containerWidth } = getKnobs();
+
+  return (
+    <div style={{ width: containerWidth }}>
+      <FeatureInfoBox
+        title="Transformations"
+        url={'http://www.grafana.com'}
+        featureState={FeatureState.beta}
+        onDismiss={() => {
+          alert('onDismiss clicked');
+        }}
+      >
+        Transformations allow you to join, calculate, re-order, hide and rename your query results before being
+        visualized. <br />
+        Many transforms are not suitable if your using the Graph visualisation as it currently only supports time
+        series. <br />
+        It can help to switch to Table visualisation to understand what a transformation is doing.
+      </FeatureInfoBox>
     </div>
   );
 };
