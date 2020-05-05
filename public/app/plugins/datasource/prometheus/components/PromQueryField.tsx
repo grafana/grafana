@@ -25,13 +25,19 @@ const HISTOGRAM_GROUP = '__histograms__';
 const PRISM_SYNTAX = 'promql';
 export const RECORDING_RULES_GROUP = '__recording_rules__';
 
-function getChooserText(hasSyntax: boolean, metrics: string[]) {
+function getChooserText(metricsLookupDisabled: boolean, hasSyntax: boolean, metrics: string[]) {
+  if (metricsLookupDisabled) {
+    return '(Disabled)';
+  }
+
   if (!hasSyntax) {
     return 'Loading metrics...';
   }
+
   if (metrics && metrics.length === 0) {
     return '(No metrics found)';
   }
+
   return 'Metrics';
 }
 
@@ -268,11 +274,9 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
 
     // Hint for big disabled lookups
     let hint: QueryHint;
-    if (datasource.lookupsDisabled || languageProvider.lookupsDisabled) {
+    if (!datasource.lookupsDisabled && languageProvider.lookupsDisabled) {
       hint = {
-        label: datasource.lookupsDisabled
-          ? 'Retrieval of metric/label names for autocomplete and metrics chooser is disabled in the data source configuration.'
-          : `Dynamic label lookup is disabled for datasources with more than ${lookupMetricsThreshold} metrics.`,
+        label: `Dynamic label lookup is disabled for datasources with more than ${lookupMetricsThreshold} metrics.`,
         type: 'INFO',
       };
     }
@@ -311,19 +315,17 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
     } = this.props;
     const { metricsOptions, syntaxLoaded, hint } = this.state;
     const cleanText = languageProvider ? languageProvider.cleanText : undefined;
-    const chooserText = getChooserText(syntaxLoaded, metricsOptions);
+    const chooserText = getChooserText(datasource.lookupsDisabled, syntaxLoaded, metricsOptions);
     const buttonDisabled = !(syntaxLoaded && metricsOptions && metricsOptions.length > 0);
 
     return (
       <>
         <div className="gf-form-inline gf-form-inline--nowrap flex-grow-1">
-          {!datasource.lookupsDisabled && (
-            <div className="gf-form flex-shrink-0">
-              <ButtonCascader options={metricsOptions} disabled={buttonDisabled} onChange={this.onChangeMetrics}>
-                {chooserText}
-              </ButtonCascader>
-            </div>
-          )}
+          <div className="gf-form flex-shrink-0">
+            <ButtonCascader options={metricsOptions} disabled={buttonDisabled} onChange={this.onChangeMetrics}>
+              {chooserText}
+            </ButtonCascader>
+          </div>
           <div className="gf-form gf-form--grow flex-shrink-1">
             <QueryField
               additionalPlugins={this.plugins}

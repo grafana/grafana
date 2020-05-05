@@ -14,7 +14,7 @@ describe('PromQueryField', () => {
     window.getSelection = () => {};
   });
 
-  it('renders a metrics chooser if lookups are not disabled in the datasource settings', () => {
+  it('renders metrics chooser regularly if lookups are not disabled in the datasource settings', () => {
     const datasource = ({
       languageProvider: {
         start: () => Promise.resolve([]),
@@ -35,7 +35,7 @@ describe('PromQueryField', () => {
     expect(queryField.find(ButtonCascader).length).toBe(1);
   });
 
-  it('does not render metrics chooser if lookups are disabled in datasource settings', () => {
+  it('renders a disabled metrics chooser if lookups are disabled in datasource settings', () => {
     const queryField = mount(
       <PromQueryField
         // @ts-ignore
@@ -47,7 +47,12 @@ describe('PromQueryField', () => {
       />
     );
 
-    expect(queryField.find(ButtonCascader).length).toBe(0);
+    expect(
+      queryField
+        .find(ButtonCascader)
+        .find('button')
+        .props().disabled
+    ).toBe(true);
   });
 
   it('refreshes metrics when the data source changes', async () => {
