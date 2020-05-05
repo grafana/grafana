@@ -315,7 +315,7 @@ export function logSeriesToLogsModel(logSeries: DataFrame[], isLoki?: boolean): 
       const ts = timeField.values.get(j);
       const time = dateTime(ts);
       const tsNs = isLoki ? timeNanosecondField.values.get(j) : undefined;
-      const timeEpochNs = Number(isLoki ? tsNs : (time.valueOf() + '0000000000000000000').substr(0, 19));
+      const timeEpochNs = Number(isLoki ? tsNs : time.valueOf() + '000000');
 
       const messageValue: unknown = stringField.values.get(j);
       // This should be string but sometimes isn't (eg elastic) because the dataFrame is not strongly typed.
