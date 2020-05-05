@@ -38,7 +38,7 @@ const navModel = {
   },
 };
 
-const SingupInvitedPageUnconnected: FC<DispatchProps & ConnectedProps> = ({ code }) => {
+const SignupInvitedPageUnconnected: FC<DispatchProps & ConnectedProps> = ({ code }) => {
   const [initFormModel, setInitFormModel] = useState<FormModel>();
   const [greeting, setGreeting] = useState<string>();
   const [invitedBy, setInvitedBy] = useState<string>();
@@ -118,4 +118,4 @@ const mapDispatchToProps: MapDispatchToProps<DispatchProps, {}> = {
   updateLocation,
 };
 
-export default hot(module)(connect(mapStateToProps, mapDispatchToProps)(SingupInvitedPageUnconnected));
+export default hot(module)(connect(mapStateToProps, mapDispatchToProps)(SignupInvitedPageUnconnected));
