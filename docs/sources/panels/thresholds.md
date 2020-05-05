@@ -19,6 +19,7 @@ You can apply thresholds to the following visualizations:
 * Gauge
 * Bar gauge
 * Table
+* Graph
 
 ## Default thresholds
 
