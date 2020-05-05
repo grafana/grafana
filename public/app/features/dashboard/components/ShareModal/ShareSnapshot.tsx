@@ -56,10 +56,10 @@ export class ShareSnapshot extends PureComponent<Props, State> {
   }
 
   componentDidMount() {
-    this.getSnaphotShareOptions();
+    this.getSnapshotShareOptions();
   }
 
-  async getSnaphotShareOptions() {
+  async getSnapshotShareOptions() {
     const shareOptions = await getBackendSrv().get('/api/snapshot/shared-options');
     this.setState({
       sharingButtonText: shareOptions['externalSnapshotName'],
