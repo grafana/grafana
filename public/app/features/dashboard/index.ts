@@ -8,7 +8,6 @@ import './components/DashExportModal';
 import './components/DashNav';
 import './components/VersionHistory';
 import './components/DashboardSettings';
-import './components/SubMenu';
 import './components/AdHocFilters';
 import './components/RowOptions';
 

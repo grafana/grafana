@@ -48,7 +48,7 @@ export const PanelOptionsTab: FC<Props> = ({
   };
   // Fist common panel settings Title, description
   elements.push(
-    <OptionsGroup title="Panel settings" id="Panel settings" key="Panel settings">
+    <OptionsGroup title="Settings" id="Panel settings" key="Panel settings">
       <Field label="Panel title">
         <Input defaultValue={panel.title} onBlur={e => onPanelConfigChange('title', e.currentTarget.value)} />
       </Field>
@@ -65,7 +65,7 @@ export const PanelOptionsTab: FC<Props> = ({
   );
 
   elements.push(
-    <OptionsGroup title="Panel type" id="Panel type" key="Panel type" defaultToClosed onToggle={focusVisPickerInput}>
+    <OptionsGroup title="Visualisation" id="Panel type" key="Panel type" defaultToClosed onToggle={focusVisPickerInput}>
       <VisualizationTab dashboardUid={dashboard.uid} panel={panel} ref={visTabInputRef} />
     </OptionsGroup>
   );
@@ -73,7 +73,7 @@ export const PanelOptionsTab: FC<Props> = ({
   // Old legacy react editor
   if (plugin.editor && panel && !plugin.optionEditors) {
     elements.push(
-      <OptionsGroup title="Display" id="legacy react editor" key="legacy react editor">
+      <OptionsGroup title="Options" id="legacy react editor" key="legacy react editor">
         <plugin.editor data={data} options={panel.getOptions()} onOptionsChange={onPanelOptionsChanged} />
       </OptionsGroup>
     );
@@ -98,9 +98,7 @@ export const PanelOptionsTab: FC<Props> = ({
 
   elements.push(
     <OptionsGroup
-      renderTitle={isExpanded => (
-        <>Panel links {!isExpanded && panelLinksCount > 0 && <Counter value={panelLinksCount} />}</>
-      )}
+      renderTitle={isExpanded => <>Links {!isExpanded && panelLinksCount > 0 && <Counter value={panelLinksCount} />}</>}
       id="panel links"
       key="panel links"
       defaultToClosed
@@ -115,7 +113,7 @@ export const PanelOptionsTab: FC<Props> = ({
   );
 
   elements.push(
-    <OptionsGroup title="Panel repeats" id="panel repeats" key="panel repeats" defaultToClosed>
+    <OptionsGroup title="Repeat options" id="panel repeats" key="panel repeats" defaultToClosed>
       <Field
         label="Repeat by variable"
         description="Repeat this panel for each value in the selected variable.

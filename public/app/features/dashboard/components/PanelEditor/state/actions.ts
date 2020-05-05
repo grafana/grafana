@@ -48,6 +48,10 @@ export function panelEditorCleanUp(): ThunkResult<void> {
 
       sourcePanel.restoreModel(modifiedSaveModel);
 
+      // Loaded plugin is not included in the persisted properties
+      // So is not handled by restoreModel
+      sourcePanel.plugin = panel.plugin;
+
       if (panelTypeChanged) {
         dispatch(
           toCollectionAction(
