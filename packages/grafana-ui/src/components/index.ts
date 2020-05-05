@@ -68,6 +68,7 @@ export { GraphContextMenu } from './Graph/GraphContextMenu';
 export { BarGauge, BarGaugeDisplayMode } from './BarGauge/BarGauge';
 export { GraphTooltipOptions } from './Graph/GraphTooltip/types';
 export { VizRepeater, VizRepeaterRenderValueProps } from './VizRepeater/VizRepeater';
+export { graphTimeFormat, graphTimeFormatter } from './Graph/utils';
 
 export {
   LegendOptions,
@@ -98,6 +99,7 @@ export { DataLinkInput } from './DataLinks/DataLinkInput';
 export { DataLinksContextMenu } from './DataLinks/DataLinksContextMenu';
 export { SeriesIcon } from './Legend/SeriesIcon';
 export { InfoBox } from './InfoBox/InfoBox';
+export { FeatureInfoBox } from './InfoBox/FeatureInfoBox';
 
 export { JSONFormatter } from './JSONFormatter/JSONFormatter';
 export { JsonExplorer } from './JSONFormatter/json_explorer/json_explorer';
@@ -137,6 +139,7 @@ export * from './Select/Select';
 export { ButtonSelect } from './Select/ButtonSelect';
 
 export { HorizontalGroup, VerticalGroup, Container } from './Layout/Layout';
+export { Badge, BadgeColor, BadgeProps } from './Badge/Badge';
 export { RadioButtonGroup } from './Forms/RadioButtonGroup/RadioButtonGroup';
 
 export { Input } from './Input/Input';

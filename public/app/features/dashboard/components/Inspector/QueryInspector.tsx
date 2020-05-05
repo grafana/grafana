@@ -8,6 +8,7 @@ import { CopyToClipboard } from 'app/core/components/CopyToClipboard/CopyToClipb
 import { CoreEvents } from 'app/types';
 import { PanelModel } from 'app/features/dashboard/state';
 import { getPanelInspectorStyles } from './styles';
+import { supportsDataQuery } from '../PanelEditor/utils';
 
 interface DsQuery {
   isLoading: boolean;
@@ -188,6 +189,10 @@ export class QueryInspector extends PureComponent<Props, State> {
     const styles = getPanelInspectorStyles();
     const haveData = Object.keys(response).length > 0;
 
+    if (!supportsDataQuery(this.props.panel.plugin)) {
+      return null;
+    }
+
     return (
       <>
         <div aria-label={selectors.components.PanelInspector.Query.content}>
@@ -198,7 +203,11 @@ export class QueryInspector extends PureComponent<Props, State> {
           </p>
         </div>
         <div className={styles.toolbar}>
-          <Button icon="sync" onClick={this.onIssueNewQuery}>
+          <Button
+            icon="sync"
+            onClick={this.onIssueNewQuery}
+            aria-label={selectors.components.PanelInspector.Query.refreshButton}
+          >
             Refresh
           </Button>
 

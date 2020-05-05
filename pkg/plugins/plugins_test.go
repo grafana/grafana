@@ -1,40 +1,39 @@
 package plugins
 
 import (
+	"context"
+	"fmt"
 	"path/filepath"
 	"testing"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/setting"
-	. "github.com/smartystreets/goconvey/convey"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"gopkg.in/ini.v1"
 )
 
-func TestPluginScans(t *testing.T) {
-
-	Convey("When scanning for plugins", t, func() {
-		setting.StaticRootPath, _ = filepath.Abs("../../public/")
-		setting.Raw = ini.Empty()
-
-		pm := &PluginManager{
-			Cfg: &setting.Cfg{
-				FeatureToggles: map[string]bool{},
-			},
-		}
-		err := pm.Init()
-
-		So(err, ShouldBeNil)
-		So(len(DataSources), ShouldBeGreaterThan, 1)
-		So(len(Panels), ShouldBeGreaterThan, 1)
-
-		Convey("Should set module automatically", func() {
-			So(DataSources["graphite"].Module, ShouldEqual, "app/plugins/datasource/graphite/module")
-		})
+func TestPluginManager_Init(t *testing.T) {
+	origRootPath := setting.StaticRootPath
+	origRaw := setting.Raw
+	origEnv := setting.Env
+	t.Cleanup(func() {
+		setting.StaticRootPath = origRootPath
+		setting.Raw = origRaw
+		setting.Env = origEnv
 	})
 
-	Convey("When reading app plugin definition", t, func() {
+	var err error
+	setting.StaticRootPath, err = filepath.Abs("../../public/")
+	require.NoError(t, err)
+	setting.Raw = ini.Empty()
+	setting.Env = setting.PROD
+
+	t.Run("Base case", func(t *testing.T) {
 		pm := &PluginManager{
 			Cfg: &setting.Cfg{
-				FeatureToggles: map[string]bool{},
 				PluginSettings: setting.PluginSettings{
 					"nginx-app": map[string]string{
 						"path": "testdata/test-app",
@@ -43,25 +42,149 @@ func TestPluginScans(t *testing.T) {
 			},
 		}
 		err := pm.Init()
-		So(err, ShouldBeNil)
+		require.NoError(t, err)
 
-		So(len(Apps), ShouldBeGreaterThan, 0)
-		So(Apps["test-app"].Info.Logos.Large, ShouldEqual, "public/plugins/test-app/img/logo_large.png")
-		So(Apps["test-app"].Info.Screenshots[1].Path, ShouldEqual, "public/plugins/test-app/img/screenshot2.png")
+		assert.Empty(t, pm.scanningErrors)
+		assert.Greater(t, len(DataSources), 1)
+		assert.Greater(t, len(Panels), 1)
+		assert.Equal(t, "app/plugins/datasource/graphite/module", DataSources["graphite"].Module)
+		assert.NotEmpty(t, Apps)
+		assert.Equal(t, "public/plugins/test-app/img/logo_large.png", Apps["test-app"].Info.Logos.Large)
+		assert.Equal(t, "public/plugins/test-app/img/screenshot2.png", Apps["test-app"].Info.Screenshots[1].Path)
 	})
 
-	Convey("When checking if renderer is backend only plugin", t, func() {
-		pluginScanner := &PluginScanner{}
-		result := pluginScanner.IsBackendOnlyPlugin("renderer")
+	t.Run("With external back-end plugin lacking signature", func(t *testing.T) {
+		origPluginsPath := setting.PluginsPath
+		t.Cleanup(func() {
+			setting.PluginsPath = origPluginsPath
+		})
+		setting.PluginsPath = "testdata/unsigned"
 
-		So(result, ShouldEqual, true)
+		pm := &PluginManager{
+			Cfg: &setting.Cfg{},
+		}
+		err := pm.Init()
+		require.NoError(t, err)
+
+		assert.Equal(t, []error{fmt.Errorf(`plugin "test" is unsigned`)}, pm.scanningErrors)
 	})
 
-	Convey("When checking if app is backend only plugin", t, func() {
-		pluginScanner := &PluginScanner{}
-		result := pluginScanner.IsBackendOnlyPlugin("app")
+	t.Run("With external unsigned back-end plugin and configuration disabling signature check of this plugin", func(t *testing.T) {
+		origPluginsPath := setting.PluginsPath
+		t.Cleanup(func() {
+			setting.PluginsPath = origPluginsPath
+		})
+		setting.PluginsPath = "testdata/unsigned"
 
-		So(result, ShouldEqual, false)
+		pm := &PluginManager{
+			Cfg: &setting.Cfg{
+				PluginsAllowUnsigned: []string{"test"},
+			},
+			BackendPluginManager: &fakeBackendPluginManager{},
+		}
+		err := pm.Init()
+		require.NoError(t, err)
+
+		assert.Empty(t, pm.scanningErrors)
 	})
 
+	t.Run("With external back-end plugin with invalid signature", func(t *testing.T) {
+		origPluginsPath := setting.PluginsPath
+		t.Cleanup(func() {
+			setting.PluginsPath = origPluginsPath
+		})
+		setting.PluginsPath = "testdata/invalid-signature"
+
+		pm := &PluginManager{
+			Cfg: &setting.Cfg{},
+		}
+		err := pm.Init()
+		require.NoError(t, err)
+
+		assert.Equal(t, []error{fmt.Errorf(`plugin "test" has an invalid signature`)}, pm.scanningErrors)
+	})
+
+	t.Run("Transform plugins should be ignored when expressions feature is off", func(t *testing.T) {
+		origPluginsPath := setting.PluginsPath
+		t.Cleanup(func() {
+			setting.PluginsPath = origPluginsPath
+		})
+		setting.PluginsPath = "testdata/behind-feature-flag"
+
+		fm := fakeBackendPluginManager{}
+		pm := &PluginManager{
+			Cfg:                  &setting.Cfg{},
+			BackendPluginManager: &fm,
+		}
+		err := pm.Init()
+		require.NoError(t, err)
+
+		assert.Empty(t, pm.scanningErrors)
+		assert.Equal(t, 0, fm.registerCount)
+	})
+
+	t.Run("Transform plugins should be loaded when expressions feature is on", func(t *testing.T) {
+		origPluginsPath := setting.PluginsPath
+		t.Cleanup(func() {
+			setting.PluginsPath = origPluginsPath
+		})
+		setting.PluginsPath = "testdata/behind-feature-flag"
+
+		pm := &PluginManager{
+			Cfg: &setting.Cfg{
+				FeatureToggles: map[string]bool{
+					"expressions": true,
+				},
+			},
+			BackendPluginManager: &fakeBackendPluginManager{},
+		}
+		err := pm.Init()
+		require.NoError(t, err)
+
+		assert.Equal(t, []error{fmt.Errorf(`plugin "gel" is unsigned`)}, pm.scanningErrors)
+	})
+}
+
+func TestPluginManager_IsBackendOnlyPlugin(t *testing.T) {
+	pluginScanner := &PluginScanner{}
+
+	type testCase struct {
+		name          string
+		isBackendOnly bool
+	}
+
+	for _, c := range []testCase{
+		{name: "renderer", isBackendOnly: true},
+		{name: "app", isBackendOnly: false},
+	} {
+		t.Run(fmt.Sprintf("Plugin %s", c.name), func(t *testing.T) {
+			result := pluginScanner.IsBackendOnlyPlugin(c.name)
+
+			assert.Equal(t, c.isBackendOnly, result)
+		})
+	}
+}
+
+type fakeBackendPluginManager struct {
+	registerCount int
+}
+
+func (f *fakeBackendPluginManager) Register(descriptor backendplugin.PluginDescriptor) error {
+	f.registerCount++
+	return nil
+}
+
+func (f *fakeBackendPluginManager) StartPlugin(ctx context.Context, pluginID string) error {
+	return nil
+}
+
+func (f *fakeBackendPluginManager) CollectMetrics(ctx context.Context, pluginID string) (*backendplugin.CollectMetricsResult, error) {
+	return nil, nil
+}
+
+func (f *fakeBackendPluginManager) CheckHealth(ctx context.Context, pCtx backend.PluginContext) (*backendplugin.CheckHealthResult, error) {
+	return nil, nil
+}
+
+func (f *fakeBackendPluginManager) CallResource(pluginConfig backend.PluginContext, ctx *models.ReqContext, path string) {
 }

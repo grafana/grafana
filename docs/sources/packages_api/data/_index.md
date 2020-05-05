@@ -5,7 +5,6 @@
 title = "@grafana/data"
 keywords = ["grafana","documentation","sdk","@grafana/data"]
 type = "docs"
-draft = true
 +++
 
 ## @grafana/data package
@@ -64,6 +63,7 @@ A library containing most of the core functionality and data types used in Grafa
 |  [NullValueMode](./nullvaluemode/) |  |
 |  [OrgRole](./orgrole/) |  |
 |  [PluginIncludeType](./pluginincludetype/) |  |
+|  [PluginSignatureStatus](./pluginsignaturestatus/) |  |
 |  [PluginState](./pluginstate/) |  |
 |  [PluginType](./plugintype/) |  |
 |  [ReducerID](./reducerid/) |  |
@@ -145,7 +145,6 @@ A library containing most of the core functionality and data types used in Grafa
 |  Interface | Description |
 |  --- | --- |
 |  [AbsoluteTimeRange](./absolutetimerange/) |  |
-|  [AngularPanelMenuItem](./angularpanelmenuitem/) |  |
 |  [AnnotationEvent](./annotationevent/) |  |
 |  [AnnotationQueryRequest](./annotationqueryrequest/) | Options passed to the datasource.annotationQuery method. See docs/plugins/developing/datasource.md |
 |  [AppEvent](./appevent/) |  |
@@ -187,6 +186,9 @@ A library containing most of the core functionality and data types used in Grafa
 |  [DateTimeBuiltinFormat](./datetimebuiltinformat/) |  |
 |  [DateTimeDuration](./datetimeduration/) |  |
 |  [DateTimeLocale](./datetimelocale/) |  |
+|  [DateTimeOptions](./datetimeoptions/) |  |
+|  [DateTimeOptionsWhenParsing](./datetimeoptionswhenparsing/) |  |
+|  [DateTimeOptionsWithFormat](./datetimeoptionswithformat/) |  |
 |  [DecimalInfo](./decimalinfo/) |  |
 |  [Dimension](./dimension/) |  |
 |  [DisplayValue](./displayvalue/) |  |
@@ -243,7 +245,6 @@ A library containing most of the core functionality and data types used in Grafa
 |  [OrganizeFieldsTransformerOptions](./organizefieldstransformeroptions/) |  |
 |  [PanelData](./paneldata/) |  |
 |  [PanelEditorProps](./paneleditorprops/) |  |
-|  [PanelMenuItem](./panelmenuitem/) |  |
 |  [PanelModel](./panelmodel/) |  |
 |  [PanelOptionsEditorConfig](./paneloptionseditorconfig/) |  |
 |  [PanelOptionsEditorItem](./paneloptionseditoritem/) |  |
@@ -325,7 +326,12 @@ A library containing most of the core functionality and data types used in Grafa
 |  [dataLinksOverrideProcessor](./datalinksoverrideprocessor/) |  |
 |  [dateTime](./datetime/) |  |
 |  [dateTimeAsMoment](./datetimeasmoment/) |  |
+|  [dateTimeFormat](./datetimeformat/) |  |
+|  [dateTimeFormatISO](./datetimeformatiso/) |  |
+|  [dateTimeFormatTimeAgo](./datetimeformattimeago/) |  |
+|  [dateTimeFormatWithAbbrevation](./datetimeformatwithabbrevation/) |  |
 |  [dateTimeForTimeZone](./datetimefortimezone/) |  |
+|  [dateTimeParse](./datetimeparse/) |  |
 |  [DEFAULT\_DATE\_TIME\_FORMAT](./default_date_time_format/) |  |
 |  [DEFAULT\_FIELD\_DISPLAY\_VALUES\_LIMIT](./default_field_display_values_limit/) |  |
 |  [DefaultTimeRange](./defaulttimerange/) |  |
@@ -375,6 +381,7 @@ A library containing most of the core functionality and data types used in Grafa
 |  [onUpdateDatasourceSecureJsonDataOptionSelect](./onupdatedatasourcesecurejsondataoptionselect/) |  |
 |  [selectOverrideProcessor](./selectoverrideprocessor/) |  |
 |  [setLocale](./setlocale/) |  |
+|  [setTimeZoneResolver](./settimezoneresolver/) |  |
 |  [standardEditorsRegistry](./standardeditorsregistry/) |  |
 |  [standardFieldConfigEditorRegistry](./standardfieldconfigeditorregistry/) |  |
 |  [standardTransformers](./standardtransformers/) |  |
@@ -383,6 +390,7 @@ A library containing most of the core functionality and data types used in Grafa
 |  [textUtil](./textutil/) |  |
 |  [thresholdsOverrideProcessor](./thresholdsoverrideprocessor/) |  |
 |  [TIME\_FORMAT](./time_format/) |  |
+|  [timeZoneAbbrevation](./timezoneabbrevation/) |  |
 |  [toDataFrame](./todataframe/) |  |
 |  [toDuration](./toduration/) |  |
 |  [toLegacyResponseData](./tolegacyresponsedata/) |  |
@@ -410,7 +418,9 @@ A library containing most of the core functionality and data types used in Grafa
 |  [DataSourceOptionsType](./datasourceoptionstype/) |  |
 |  [DataSourceQueryType](./datasourcequerytype/) |  |
 |  [DataTransformer](./datatransformer/) | Function that transform data frames (AKA transformer) |
+|  [DateTimeFormatter](./datetimeformatter/) |  |
 |  [DateTimeInput](./datetimeinput/) |  |
+|  [DateTimeParser](./datetimeparser/) |  |
 |  [DecimalCount](./decimalcount/) |  |
 |  [Dimensions](./dimensions/) |  |
 |  [DisplayProcessor](./displayprocessor/) |  |
@@ -437,6 +447,7 @@ A library containing most of the core functionality and data types used in Grafa
 |  [TimeSeriesValue](./timeseriesvalue/) |  |
 |  [TimeZone](./timezone/) |  |
 |  [TimeZoneBrowser](./timezonebrowser/) |  |
+|  [TimeZoneResolver](./timezoneresolver/) |  |
 |  [TimeZoneUtc](./timezoneutc/) |  |
 |  [UrlQueryMap](./urlquerymap/) | Type to represent the values parsed from the query string. |
 |  [UrlQueryValue](./urlqueryvalue/) | Type to represent the value of a single query variable. |

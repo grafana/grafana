@@ -19,6 +19,7 @@ import { isDateTime } from '../datetime/moment_wrapper';
 import { ArrayVector } from '../vector/ArrayVector';
 import { MutableDataFrame } from './MutableDataFrame';
 import { SortedVector } from '../vector/SortedVector';
+import { ArrayDataFrame } from './ArrayDataFrame';
 
 function convertTableToDataFrame(table: TableData): DataFrame {
   const fields = table.columns.map(c => {
@@ -262,7 +263,10 @@ export const isTableData = (data: any): data is DataFrame => data && data.hasOwn
 
 export const isDataFrame = (data: any): data is DataFrame => data && data.hasOwnProperty('fields');
 
-export const toDataFrame = (data: any): DataFrame => {
+/**
+ * Inspect any object and return the results as a DataFrame
+ */
+export function toDataFrame(data: any): DataFrame {
   if ('fields' in data) {
     // DataFrameDTO does not have length
     if ('length' in data) {
@@ -290,9 +294,13 @@ export const toDataFrame = (data: any): DataFrame => {
     return convertTableToDataFrame(data);
   }
 
+  if (Array.isArray(data)) {
+    return new ArrayDataFrame(data);
+  }
+
   console.warn('Can not convert', data);
   throw new Error('Unsupported data format');
-};
+}
 
 export const toLegacyResponseData = (frame: DataFrame): TimeSeries | TableData => {
   const { fields } = frame;

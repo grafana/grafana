@@ -12,17 +12,14 @@ import {
   DataQueryResponseData,
   DataTransformerConfig,
   eventFactory,
+  FieldConfigSource,
   PanelEvents,
   PanelPlugin,
   ScopedVars,
-  FieldConfigSource,
 } from '@grafana/data';
 import { EDIT_PANEL_ID } from 'app/core/constants';
-
 import config from 'app/core/config';
-
 import { PanelQueryRunner } from './PanelQueryRunner';
-import { take } from 'rxjs/operators';
 
 export const panelAdded = eventFactory<PanelModel | undefined>('panel-added');
 export const panelRemoved = eventFactory<PanelModel | undefined>('panel-removed');
@@ -84,6 +81,7 @@ const mustKeepProps: { [str: string]: boolean } = {
   queryRunner: true,
   transformations: true,
   fieldConfig: true,
+  editSourceId: true,
 };
 
 const defaults: any = {
@@ -157,6 +155,35 @@ export class PanelModel implements DataConfigSource {
 
   /** Given a persistened PanelModel restores property values */
   restoreModel(model: any) {
+    // Start with clean-up
+    for (const property of Object.keys(this)) {
+      if (notPersistedProperties[property]) {
+        continue;
+      }
+
+      if (mustKeepProps[property]) {
+        continue;
+      }
+
+      if (model[property]) {
+        continue;
+      }
+
+      if (!this.hasOwnProperty(property)) {
+        continue;
+      }
+
+      if (typeof (this as any)[property] === 'function') {
+        continue;
+      }
+
+      if (typeof (this as any)[property] === 'symbol') {
+        continue;
+      }
+
+      delete (this as any)[property];
+    }
+
     // copy properties from persisted model
     for (const property in model) {
       (this as any)[property] = model[property];
@@ -396,10 +423,10 @@ export class PanelModel implements DataConfigSource {
     const sourceQueryRunner = this.getQueryRunner();
 
     // pipe last result to new clone query runner
-    sourceQueryRunner
-      .getData()
-      .pipe(take(1))
-      .subscribe(val => clone.getQueryRunner().pipeDataToSubject(val));
+    const lastResult = sourceQueryRunner.getLastResult();
+    if (lastResult) {
+      clone.getQueryRunner().pipeDataToSubject(lastResult);
+    }
 
     return clone;
   }
@@ -437,6 +464,7 @@ export class PanelModel implements DataConfigSource {
   }
 
   destroy() {
+    this.events.emit(PanelEvents.panelTeardown);
     this.events.removeAllListeners();
 
     if (this.queryRunner) {

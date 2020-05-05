@@ -1,24 +1,7 @@
-const realMomentWrapper = jest.requireActual('@grafana/data/src/datetime/moment_wrapper');
-
-jest.mock('@grafana/data/src/datetime/moment_wrapper', () => {
-  const momentMock = {
-    dateTime: (ts: any) => {
-      return {
-        valueOf: () => ts,
-        fromNow: () => 'fromNow() jest mocked',
-        format: (fmt: string) => 'format() jest mocked',
-      };
-    },
-    toUtc: null as any,
-    isDateTime: realMomentWrapper.isDateTime,
-  };
-  momentMock.toUtc = (ts: any) => ({
-    format: (fmt: string) => 'format() jest mocked',
-    local: () => momentMock.dateTime(ts),
-  });
-
-  return momentMock;
-});
+jest.mock('@grafana/data/src/datetime/formatter', () => ({
+  dateTimeFormat: () => 'format() jest mocked',
+  dateTimeFormatTimeAgo: (ts: any) => 'fromNow() jest mocked',
+}));
 
 import { ResultProcessor } from './ResultProcessor';
 import { ExploreItemState } from 'app/types/explore';
@@ -29,6 +12,9 @@ const testContext = (options: any = {}) => {
   const timeSeries = toDataFrame({
     name: 'A-series',
     refId: 'A',
+    meta: {
+      preferredVisualisationType: 'graph',
+    },
     fields: [
       { name: 'time', type: FieldType.time, values: [100, 200, 300] },
       { name: 'A-series', type: FieldType.number, values: [4, 5, 6] },

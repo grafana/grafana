@@ -36,7 +36,7 @@ export const SearchResults: FC<Props> = ({
       <div className={styles.wrapper}>
         {results.map(section => {
           return (
-            <div aria-label="Search section" className={styles.section} key={section.title}>
+            <div aria-label="Search section" className={styles.section} key={section.id || section.title}>
               <SectionHeader onSectionClick={onToggleSection} {...{ onToggleChecked, editable, section }} />
               <div aria-label="Search items" className={styles.sectionItems}>
                 {section.expanded && section.items.map(item => <SearchItem key={item.id} {...itemProps} item={item} />)}
@@ -47,8 +47,8 @@ export const SearchResults: FC<Props> = ({
       </div>
     );
   };
-
   const renderDashboards = () => {
+    const items = results[0]?.items;
     return (
       <div className={styles.listModeWrapper}>
         <AutoSizer disableWidth>
@@ -59,11 +59,11 @@ export const SearchResults: FC<Props> = ({
               innerElementType="ul"
               itemSize={SEARCH_ITEM_HEIGHT + SEARCH_ITEM_MARGIN}
               height={height}
-              itemCount={results.length}
+              itemCount={items.length}
               width="100%"
             >
               {({ index, style }) => {
-                const item = results[index];
+                const item = items[index];
                 // The wrapper div is needed as the inner SearchItem has margin-bottom spacing
                 // And without this wrapper there is no room for that margin
                 return (
@@ -127,7 +127,8 @@ const getSectionStyles = stylesFactory((theme: GrafanaTheme) => {
     noResults: css`
       padding: ${md};
       background: ${theme.colors.bg2};
-      text-style: italic;
+      font-style: italic;
+      margin-top: ${theme.spacing.md};
     `,
     listModeWrapper: css`
       position: relative;

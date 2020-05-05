@@ -170,7 +170,7 @@ export class ConfigEditor extends PureComponent<Props, State> {
     let azureMonitorUrl = '',
       subscriptionId = this.templateSrv.replace(subscription || this.props.options.jsonData.subscriptionId);
 
-    if (!!subscriptionId || !!azureLogAnalyticsSameAs) {
+    if (azureLogAnalyticsSameAs) {
       const azureCloud = cloudName || 'azuremonitor';
       azureMonitorUrl = `/${azureCloud}/subscriptions`;
     } else {

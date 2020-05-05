@@ -10,11 +10,15 @@ draft = true
 
 ## Introduction to data frames
 
-Data frames were introduced in Grafana 7.0. They replace the Time Series and Table types in Grafana. Data frames are a more generic structure that can hold different shapes of time series, tables, and other types.
+Grafana supports a variety of different data sources, each with its own data model. To make this possible, Grafana consolidates the query results from each of these data sources into one, unified data structure called _data frames_.
 
-A data frame is a [Columnar oriented](https://en.wikipedia.org/wiki/Column-oriented_DBMS) table structure, meaning it stores data by column and not by row.
+Data frames were introduced in Grafana 7.0 to replace the Time series and Table structures with a more generic data structure that can support a wider range of data types.
 
-**Simplified data frame model:**
+This document gives an overview of the data frame structure, and of how data is handled within Grafana.
+
+### The data frame
+
+A data frame is a columnar-oriented table structure, which means it stores data by column and not by row. To understand what this means, let’s look at the TypeScript definition used by Grafana:
 
 ```ts
 interface DataFrame {
@@ -25,6 +29,8 @@ interface DataFrame {
     fields: []Field;
 }
 ```
+
+In essence, a data frame is a collection of _fields_, where each field corresponds to a column. Each field, in turn, consists of a collection of values, along with meta information, such as the data type of those values.
 
 ```ts
 interface Field {
@@ -42,19 +48,44 @@ interface Field {
 }
 ```
 
-With data frames, each column is represented by a **Field**. So the essence of a data frame is an field array with additional properties on both the data frame and its fields.
+Let's look an example. The table below demonstrates a data frame with two fields, _time_ and _temperature_.
+
+| time                | temperature |
+|---------------------|-------------|
+| 2020-01-02 03:04:00 | 45.0        |
+| 2020-01-02 03:05:00 | 47.0        |
+| 2020-01-02 03:06:00 | 48.0        |
+
+Each field has three values, and each value in a field must share the same type. In this case, all values in the time field are timestamps, and all values in the temperature field are numbers.
 
 One restriction on data frames is that all fields in the frame must be of the same length to be a valid data frame.
 
-### When is a data frame a time series or a table
+### Data frames as time series
 
-Any valid data frame can be a table. If you have row-oriented data, the rows need to be converted to the data frame's column-oriented structure.
+A data frame with at least one time field is considered a _time series_.
 
-Because each field in a data frame has a type, we can use the types of the fields (the schema of the data frame) to determine if it data frame, or a collection of data frames, can be time series. In the simplest case, if a Frame has a Time field and Number field then it can be a time series (the frame should be sorted by time ascending).
+For more information on time series, refer to our [Introduction to time series](https://grafana.com/docs/grafana/latest/guides/timeseries/).
 
-#### Time series with unshared time values
+#### Wide format
 
-A collection of time series that don't share a time index would be represented as an array of frames. For example, two time series (differentiated by their labels):
+When a collection of time series share the same _time index_—the time fields in each time series are identical—they can be stored together, in a _wide_ format. By reusing the time field, we can reduce the amount of data being sent to the browser.
+
+In this example, the `cpu` usage from each host share the time index, so we can store them in the same data frame.
+
+```text
+Name: Wide
+Dimensions: 3 fields by 2 rows
++---------------------+-----------------+-----------------+
+| Name: time          | Name: cpu       | Name: cpu       |
+| Labels:             | Labels: host=a  | Labels: host=b  |
+| Type: []time.Time   | Type: []float64 | Type: []float64 |
++---------------------+-----------------+-----------------+
+| 2020-01-02 03:04:00 | 3               | 4               |
+| 2020-01-02 03:05:00 | 6               | 7               |
++---------------------+-----------------+-----------------+
+```
+
+However, if the two time series don't share the same time values, they are represented as two distinct data frames.
 
 ```text
 Name: cpu
@@ -80,34 +111,19 @@ Dimensions: 2 fields by 2 rows
 +---------------------+-----------------+
 ```
 
-The name of the time field doesn't matter, nor does its order in the frame (unless there are multiple time columns, in which case the first is used).
+The wide format can typically be used when multiple time series are collected by the same process. In this case, every measurement is made at the same interval and will therefore share the same time values.
 
-#### Time series with shared time values
+### Long format
 
-If all the series share the same time values, then a "wide" format can be used:
+Some data sources return data in a _long_ format (also called _narrow_ format). This is common format returned by, for example, SQL databases.
 
-```text
-Name: Wide
-Dimensions: 3 fields by 2 rows
-+---------------------+-----------------+-----------------+
-| Name: time          | Name: cpu       | Name: cpu       |
-| Labels:             | Labels: host=a  | Labels: host=b  |
-| Type: []time.Time   | Type: []float64 | Type: []float64 |
-+---------------------+-----------------+-----------------+
-| 2020-01-02 03:04:00 | 3               | 4               |
-| 2020-01-02 03:05:00 | 6               | 7               |
-+---------------------+-----------------+-----------------+
-```
+In long format, string values are represented as separate fields rather than as labels. As a result, a data form in long form may have duplicated time values.
 
-#### Time series in long format
+Grafana can detect and convert data frames in long format into wide format.
 
-(Note: Currently supported on backend only: [Grafana Issue #22219](https://github.com/grafana/grafana/issues/22219)).
+> Note: Long format is currently only supported in the backend: [Grafana Issue #22219](https://github.com/grafana/grafana/issues/22219).
 
-A common CSV or SQL format is the [long (a.k.a tall/narrow) Format](https://en.wikipedia.org/wiki/Wide_and_narrow_data) of time series data.
-
-This format is supported and is detected when there are string columns in the data frame. There can be multiple number and multiple string columns, and the series will be grouped.
-
-For example a Long format Series:
+For example, the following data frame in long format:
 
 ```text
 Name: Long
@@ -124,7 +140,7 @@ Dimensions: 4 fields by 4 rows
 +---------------------+-----------------+-----------------+----------------+
 ```
 
-Would look like the following in "Wide" format:
+can be converted into a data frame in wide format:
 
 ```text
 Name: Wide
@@ -145,7 +161,7 @@ This section contains links to technical reference and implementations of data f
 
 ### Apache Arrow
 
-The dataframe structure is inspired by and uses the [Apache Arrow Project](https://arrow.apache.org/). Javascript Data frames use Arrow Tables as the underlying structure, and the backend Go code serializes its Frames in Arrow Tables for transmission.
+The data frame structure is inspired by, and uses the [Apache Arrow Project](https://arrow.apache.org/). Javascript Data frames use Arrow Tables as the underlying structure, and the backend Go code serializes its Frames in Arrow Tables for transmission.
 
 ### Javascript
 

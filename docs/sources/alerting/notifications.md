@@ -216,7 +216,7 @@ Grafana can render the panel associated with the alert rule as a PNG image and i
 Most Notification Channels require that this image be publicly accessible (Slack and PagerDuty for example). In order to include images in alert notifications, Grafana can upload the image to an image store. It currently supports
 Amazon S3, Webdav, Google Cloud Storage and Azure Blob Storage. So to set that up you need to configure the [external image uploader]({{< relref "../installation/configuration/#external-image-storage" >}}) in your grafana-server ini config file.
 
-Be aware that some notifiers requires public access to the image to be able to include it in the notification. So make sure to enable public access to the images. If you're using local image uploader, your Grafana instance need to be accessible by the internet.
+Be aware that some notifiers require public access to the image to be able to include it in the notification. So make sure to enable public access to the images. If you're using local image uploader, your Grafana instance need to be accessible by the internet.
 
 Notification services which need public image access are marked as 'external only'.
 

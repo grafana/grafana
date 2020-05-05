@@ -5,7 +5,6 @@
 title = "DataRequestInfo"
 keywords = ["grafana","documentation","sdk","@grafana/runtime"]
 type = "docs"
-draft = true
 +++
 
 ## DataRequestInfo interface

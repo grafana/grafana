@@ -1,6 +1,5 @@
 import _ from 'lodash';
 import {
-  dateTime,
   escapeStringForRegex,
   formattedValueToString,
   getColorFromHexRgbOrName,
@@ -11,6 +10,9 @@ import {
   stringToJsRegex,
   textUtil,
   unEscapeStringFromRegex,
+  TimeZone,
+  dateTimeFormatISO,
+  dateTimeFormat,
 } from '@grafana/data';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { ColumnRender, TableRenderModel, ColumnStyle } from './types';
@@ -23,7 +25,7 @@ export class TableRenderer {
   constructor(
     private panel: { styles: ColumnStyle[]; pageSize: number },
     private table: TableRenderModel,
-    private isUtc: boolean,
+    private timeZone: TimeZone,
     private sanitize: (v: any) => any,
     private templateSrv: TemplateSrv,
     private theme?: GrafanaThemeType
@@ -119,13 +121,16 @@ export class TableRenderer {
           v = parseInt(v, 10);
         }
 
-        let date = dateTime(v);
-
-        if (this.isUtc) {
-          date = date.utc();
+        if (!column.style.dateFormat) {
+          return dateTimeFormatISO(v, {
+            timeZone: this.timeZone,
+          });
         }
 
-        return date.format(column.style.dateFormat);
+        return dateTimeFormat(v, {
+          format: column.style.dateFormat,
+          timeZone: this.timeZone,
+        });
       };
     }
 

@@ -619,7 +619,7 @@ func TestStackdriver(t *testing.T) {
 
 		Convey("when interpolating filter wildcards", func() {
 			Convey("and wildcard is used in the beginning and the end of the word", func() {
-				Convey("and theres no wildcard in the middle of the word", func() {
+				Convey("and there's no wildcard in the middle of the word", func() {
 					value := interpolateFilterWildcards("*-central1*")
 					So(value, ShouldEqual, `has_substring("-central1")`)
 				})
@@ -680,7 +680,7 @@ func TestStackdriver(t *testing.T) {
 		})
 
 		Convey("when building filter string", func() {
-			Convey("and theres no regex operator", func() {
+			Convey("and there's no regex operator", func() {
 				Convey("and there are wildcards in a filter value", func() {
 					filterParts := []string{"zone", "=", "*-central1*"}
 					value := buildFilterString("somemetrictype", filterParts)

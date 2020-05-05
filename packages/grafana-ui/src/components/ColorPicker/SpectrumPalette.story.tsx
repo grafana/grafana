@@ -1,15 +1,22 @@
 import React from 'react';
-import { storiesOf } from '@storybook/react';
 import SpectrumPalette from './SpectrumPalette';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { UseState } from '../../utils/storybook/UseState';
 import { renderComponentWithTheme } from '../../utils/storybook/withTheme';
+import mdx from './ColorPicker.mdx';
 
-const SpectrumPaletteStories = storiesOf('General/ColorPicker/Palettes/SpectrumPalette', module);
+export default {
+  title: 'Pickers and Editors/ColorPicker/Palettes/SpectrumPalette',
+  component: SpectrumPalette,
+  decorators: [withCenteredStory],
+  parameters: {
+    docs: {
+      page: mdx,
+    },
+  },
+};
 
-SpectrumPaletteStories.addDecorator(withCenteredStory);
-
-SpectrumPaletteStories.add('default', () => {
+export const simple = () => {
   return (
     <UseState initialState="red">
       {(selectedColor, updateSelectedColor) => {
@@ -17,4 +24,4 @@ SpectrumPaletteStories.add('default', () => {
       }}
     </UseState>
   );
-});
+};

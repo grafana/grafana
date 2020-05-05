@@ -5,7 +5,6 @@
 title = "VariableSuggestionsScope"
 keywords = ["grafana","documentation","sdk","@grafana/data"]
 type = "docs"
-draft = true
 +++
 
 ## VariableSuggestionsScope enum

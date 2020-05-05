@@ -5,7 +5,6 @@
 title = "booleanOverrideProcessor"
 keywords = ["grafana","documentation","sdk","@grafana/data"]
 type = "docs"
-draft = true
 +++
 
 ## booleanOverrideProcessor variable
