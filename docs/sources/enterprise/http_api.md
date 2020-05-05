@@ -44,7 +44,7 @@ Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 
 JSON Body Schema:
 
-field name | type | description
+Field name | Type | Description
 ---------- | ---- | -----------
 id | string | ID of the report to send (same as in the URL when editing a report, not to be confused with the ID of the dashboard). Required.
 emails | string | Comma-separated list of emails to which to send the report to. Overrides the emails from the report. Required if **useEmailsFromReport** is not present.
