@@ -628,8 +628,12 @@ jobs:
             if [[ $CIRCLE_BRANCH == "chore/test-release-pipeline" ]]; then
               # We're testing the release pipeline
               /tmp/grabpl publish-docker --jobs 4 --edition << parameters.edition >> --ubuntu=<< parameters.ubuntu >> --dry-run
-            else
+            elif [[ -n $CIRCLE_TAG ]]; then
+              # This is a release
               /tmp/grabpl publish-docker --jobs 4 --edition << parameters.edition >> --ubuntu=<< parameters.ubuntu >>
+            else
+              # TODO: Don't ignore errors, temporary workaround until we fix #22955
+              /tmp/grabpl publish-docker --jobs 4 --edition << parameters.edition >> --ubuntu=<< parameters.ubuntu >> || echo Publishing failed!
             fi
       - run:
           name: CI job failed
