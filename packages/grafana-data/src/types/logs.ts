@@ -60,6 +60,7 @@ export interface LogRowModel {
   searchWords?: string[];
   timeFromNow: string;
   timeEpochMs: number;
+  timeEpochNs: number;
   timeLocal: string;
   timeUtc: string;
   uid: string;
