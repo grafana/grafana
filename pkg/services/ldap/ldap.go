@@ -157,7 +157,7 @@ func (server *Server) Close() {
 // 2. Single bind
 // // If all the users meant to be used with Grafana have the ability to search in LDAP server
 // then we bind with LDAP server with targeted login/password
-// and then search for the said user in order to retrive all the information about them
+// and then search for the said user in order to retrieve all the information about them
 // 3. Unauthenticated bind
 // For some LDAP configurations it is allowed to search the
 // user without login/password binding with LDAP server, in such case
