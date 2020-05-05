@@ -31,9 +31,9 @@ type DateTimeFormatter<T extends DateTimeOptions = DateTimeOptions> = (dateInUtc
 
 /**
  * Helper function to format date and time according to the specified options. If no options
- * is supplied default values will be used. For more details please see {@link DateTimeOptionsWithFormat}.
+ * is supplied default values will be used. For more details, see {@link DateTimeOptionsWithFormat}.
  *
- * @param dateInUtc - date in utc format e.g. string formatted with utc offset, unix epoch in seconds etc.
+ * @param dateInUtc - date in UTC format, e.g. string formatted with UTC offset, unix epoch in seconds etc.
  * @param options
  *
  * @public
@@ -43,9 +43,9 @@ export const dateTimeFormat: DateTimeFormatter<DateTimeOptionsWithFormat> = (dat
 
 /**
  * Helper function to format date and time according to the standard ISO format e.g. 2013-02-04T22:44:30.652Z.
- * If no options is supplied default values will be used. For more details please see {@link DateTimeOptionsWithFormat}.
+ * If no options is supplied default values will be used. For more details, see {@link DateTimeOptionsWithFormat}.
  *
- * @param dateInUtc - date in utc format e.g. string formatted with utc offset, unix epoch in seconds etc.
+ * @param dateInUtc - date in UTC format, e.g. string formatted with UTC offset, unix epoch in seconds etc.
  * @param options
  *
  * @public
@@ -58,7 +58,7 @@ export const dateTimeFormatISO: DateTimeFormatter = (dateInUtc, options?) =>
  * in a human readable format e.g. 4 years ago. If no options is supplied default values will
  * be used. For more details please see {@link DateTimeOptions}.
  *
- * @param dateInUtc - date in utc format e.g. string formatted with utc offset, unix epoch in seconds etc.
+ * @param dateInUtc - date in UTC format, e.g. string formatted with UTC offset, unix epoch in seconds etc.
  * @param options
  *
  * @public
@@ -71,7 +71,7 @@ export const dateTimeFormatTimeAgo: DateTimeFormatter = (dateInUtc, options?) =>
  * will also append the time zone abbrevation at the end e.g. 2020-05-20 13:37:00 CET. If no options
  * is supplied default values will be used. For more details please see {@link DateTimeOptions}.
  *
- * @param dateInUtc - date in utc format e.g. string formatted with utc offset, unix epoch in seconds etc.
+ * @param dateInUtc - date in UTC format, e.g. string formatted with UTC offset, unix epoch in seconds etc.
  * @param options
  *
  * @public
@@ -83,7 +83,7 @@ export const dateTimeFormatWithAbbrevation: DateTimeFormatter = (dateInUtc, opti
  * Helper function to only return the time zone abbrevation for a given date and time value. If no options
  * is supplied default values will be used. For more details please see {@link DateTimeOptions}.
  *
- * @param dateInUtc - date in utc format e.g. string formatted with utc offset, unix epoch in seconds etc.
+ * @param dateInUtc - date in UTC format, e.g. string formatted with UTC offset, unix epoch in seconds etc.
  * @param options
  *
  * @public
