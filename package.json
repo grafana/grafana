@@ -53,12 +53,10 @@
   },
   "lint-staged": {
     "*.{ts,tsx,json,scss}": [
-      "prettier --write",
-      "git add"
+      "prettier --write"
     ],
     "*pkg/**/*.go": [
-      "gofmt -w -s",
-      "git add"
+      "gofmt -w -s"
     ]
   },
   "devDependencies": {
