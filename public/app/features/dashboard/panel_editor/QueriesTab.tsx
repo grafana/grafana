@@ -161,7 +161,7 @@ export class QueriesTab extends PureComponent<Props, State> {
     this.setState({ scrollTop: 1000 });
   };
 
-  renderTopSection(styles: QueriesTabStyls) {
+  renderTopSection(styles: QueriesTabStyles) {
     const { panel } = this.props;
     const { currentDS, data } = this.state;
 
@@ -264,7 +264,7 @@ export class QueriesTab extends PureComponent<Props, State> {
     );
   }
 
-  renderAddQueryRow(styles: QueriesTabStyls) {
+  renderAddQueryRow(styles: QueriesTabStyles) {
     const { currentDS, isAddingMixed } = this.state;
     const showAddButton = !(isAddingMixed || isSharedDashboardQuery(currentDS.name));
 
@@ -340,4 +340,4 @@ const getStyles = stylesFactory(() => {
   };
 });
 
-type QueriesTabStyls = ReturnType<typeof getStyles>;
+type QueriesTabStyles = ReturnType<typeof getStyles>;
