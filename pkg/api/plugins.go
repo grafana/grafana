@@ -35,6 +35,8 @@ func (hs *HTTPServer) getPluginContext(pluginID string, user *models.SignedInUse
 
 	ps, err := hs.getCachedPluginSettings(pluginID, user)
 	if err != nil {
+		// models.ErrPluginSettingNotFound is expected if there's no row found for plugin setting in database (if non-app plugin).
+		// If it's not this expected error something is wrong with cache or database and we return the error to the client.
 		if err != models.ErrPluginSettingNotFound {
 			return pc, errutil.Wrap("Failed to get plugin settings", err)
 		}
