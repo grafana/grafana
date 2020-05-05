@@ -227,7 +227,7 @@ SLO queries use the same [alignment period functionality as metric queries]({{< 
 
 ## Templating
 
-Instead of hard-coding things like server, application and sensor name in you metric queries you can use variables in their place.
+Instead of hard-coding things like server, application and sensor name in your metric queries you can use variables in their place.
 Variables are shown as dropdown select boxes at the top of the dashboard. These dropdowns make it easy to change the data
 being displayed in your dashboard.
 

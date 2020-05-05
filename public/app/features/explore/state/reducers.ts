@@ -302,7 +302,6 @@ export const itemReducer = (state: ExploreItemState = makeExploreItemState(), ac
       latency: 0,
       queryResponse: createEmptyQueryResponse(),
       loading: false,
-      queryKeys: [],
       supportedModes,
       mode: mode ?? newMode,
       originPanelId: state.urlState && state.urlState.originPanelId,
