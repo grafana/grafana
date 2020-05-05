@@ -9,7 +9,7 @@ import { User, Team, UserOrg, UserSession } from 'app/types';
 import { config } from '@grafana/runtime';
 import { LoadingPlaceholder } from '@grafana/ui';
 
-export const ReactProfileWrapper = () => (
+export const UserProfileEdit = () => (
   <UserProvider userId={config.bootData.user.id}>
     {(api: UserAPI, states: LoadingStates, teams: Team[], orgs: UserOrg[], sessions: UserSession[], user: User) => {
       return (
@@ -49,4 +49,4 @@ export const ReactProfileWrapper = () => (
   </UserProvider>
 );
 
-export default ReactProfileWrapper;
+export default UserProfileEdit;

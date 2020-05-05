@@ -302,10 +302,14 @@ export function setupAngularRoutes($routeProvider: route.IRouteProvider, $locati
       },
     })
     .when('/profile', {
-      templateUrl: 'public/app/features/profile/partials/profile.html',
-      controller: 'ProfileCtrl',
-      controllerAs: 'ctrl',
+      template: '<react-container />',
       reloadOnSearch: false,
+      resolve: {
+        component: () =>
+          SafeDynamicImport(
+            import(/* webPackChunkName: "ChangePasswordPage" */ 'app/features/profile/UserProfileEdit')
+          ),
+      },
     })
     .when('/profile/password', {
       template: '<react-container />',

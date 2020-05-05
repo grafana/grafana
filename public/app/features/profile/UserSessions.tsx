@@ -18,8 +18,6 @@ export class UserSessions extends PureComponent<Props> {
   render() {
     const { isLoading, sessions, revokeUserSession } = this.props;
 
-    console.log(revokeUserSession);
-
     if (isLoading) {
       return <LoadingPlaceholder text="Loading sessions..." />;
     }

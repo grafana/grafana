@@ -20,7 +20,6 @@ import {
 } from '@grafana/ui';
 const { SecretFormField } = LegacyForms;
 import { FunctionEditor } from 'app/plugins/datasource/graphite/FunctionEditor';
-import ReactProfileWrapper from 'app/features/profile/ReactProfileWrapper';
 import { LokiAnnotationsQueryEditor } from '../plugins/datasource/loki/components/AnnotationsQueryEditor';
 import { HelpModal } from './components/help/HelpModal';
 import { Footer } from './components/Footer/Footer';
@@ -163,8 +162,6 @@ export function registerAngularDirectives() {
     'suggestions',
     ['onChange', { watchDepth: 'reference', wrapApply: true }],
   ]);
-
-  react2AngularDirective('reactProfileWrapper', ReactProfileWrapper, []);
 
   react2AngularDirective('lokiAnnotationsQueryEditor', LokiAnnotationsQueryEditor, [
     'expr',
