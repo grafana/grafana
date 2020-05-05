@@ -180,7 +180,7 @@ export class PanelChrome extends PureComponent<Props, State> {
     // Issue Query
     if (this.wantsQueryExecution) {
       if (width < 0) {
-        console.log('Refresh skippted, no width yet... wait till we know');
+        console.log('Refresh skipped, no width yet... wait till we know');
         return;
       }
 
