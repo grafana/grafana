@@ -1,4 +1,4 @@
-import { createAction, PayloadAction } from '@reduxjs/toolkit';
+import { PayloadAction } from '@reduxjs/toolkit';
 import { StoreState } from '../../types';
 import { Reducer } from 'redux';
 
@@ -11,8 +11,11 @@ interface CollectionAction {
   action: PayloadAction<any>;
 }
 const COLLECTION_UNKNOWN_ID = 'unknown-id';
-const collectionAction = createAction<CollectionAction>('collectionAction');
-export const toCollectionAction = (action: PayloadAction<any>, id: string) => collectionAction({ id, action });
+const COLLECTION_ACTION_PREFIX = 'collectionAction::';
+export const toCollectionAction = (action: PayloadAction<any>, id: string): PayloadAction<CollectionAction> => ({
+  type: `${COLLECTION_ACTION_PREFIX}${action.type}`, // makes it easier to debug in Redux dev tools
+  payload: { id, action },
+});
 
 export const createCollection = <InstanceState extends {}>(args: {
   instanceReducer: Reducer<InstanceState>;
@@ -23,13 +26,13 @@ export const createCollection = <InstanceState extends {}>(args: {
   // there might be a better redux toolkit way to create HOC reducer but I couldn't find anything
   const reducer = (
     state: CollectionReducerState<InstanceState> = {},
-    colAction: PayloadAction
+    collectionAction: PayloadAction<CollectionAction>
   ): CollectionReducerState<InstanceState> => {
-    if (!collectionAction.match(colAction)) {
+    if (collectionAction.type.indexOf(COLLECTION_ACTION_PREFIX) !== 0) {
       return state;
     }
 
-    const { id, action } = colAction.payload;
+    const { id, action } = collectionAction.payload;
     const collectionId = id ?? COLLECTION_UNKNOWN_ID;
 
     const oldState = state[collectionId];

@@ -35,7 +35,6 @@ interface ConnectedProps {
 
 interface DispatchProps {
   setPanelAngularComponent: typeof setPanelAngularComponent;
-  setCollectionPanelAngularComponent: typeof setPanelAngularComponent;
   updateLocation: typeof updateLocation;
 }
 
@@ -168,7 +167,7 @@ export class PanelChromeAngularUnconnected extends PureComponent<Props, State> {
   }
 
   loadAngularPanel() {
-    const { panel, dashboard, setPanelAngularComponent, setCollectionPanelAngularComponent } = this.props;
+    const { panel, dashboard, setPanelAngularComponent } = this.props;
 
     // if we have no element or already have loaded the panel return
     if (!this.element) {
@@ -183,11 +182,6 @@ export class PanelChromeAngularUnconnected extends PureComponent<Props, State> {
       dashboard: dashboard,
       size: { width: this.getInnerPanelWidth(), height: this.getInnerPanelHeight() },
     };
-
-    setCollectionPanelAngularComponent({
-      panelId: panel.id,
-      angularComponent: loader.load(this.element, this.scopeProps, template),
-    });
 
     setPanelAngularComponent({
       panelId: panel.id,
@@ -278,8 +272,7 @@ const mapStateToProps: MapStateToProps<ConnectedProps, OwnProps, StoreState> = (
 // @ts-ignore
 const mapDispatchToProps: MapDispatchToProps<DispatchProps, OwnProps> = (dispatch, ownProps) => {
   return {
-    setPanelAngularComponent: payload => dispatch(setPanelAngularComponent(payload)),
-    setCollectionPanelAngularComponent: payload =>
+    setPanelAngularComponent: payload =>
       dispatch(toCollectionAction(setPanelAngularComponent(payload), ownProps.dashboard.uid)),
     updateLocation: payload => dispatch(updateLocation(payload)),
   };

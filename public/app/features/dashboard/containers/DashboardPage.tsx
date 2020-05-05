@@ -53,7 +53,6 @@ export interface Props {
   initError?: DashboardInitError;
   initDashboard: typeof initDashboard;
   cleanUpDashboard: typeof cleanUpDashboard;
-  cleanUpCollectionDashboard: typeof cleanUpDashboard;
   notifyApp: typeof notifyApp;
   updateLocation: typeof updateLocation;
   inspectTab?: InspectTab;
@@ -93,7 +92,6 @@ export class DashboardPage extends PureComponent<Props, State> {
 
   componentWillUnmount() {
     if (this.props.dashboard) {
-      this.props.cleanUpCollectionDashboard();
       this.props.cleanUpDashboard();
       this.setPanelFullscreenClass(false);
     }
@@ -346,8 +344,7 @@ const mapDispatchToProps = (outerDispatch: Dispatch, ownProps: any) =>
   bindActionCreators(
     {
       initDashboard,
-      cleanUpDashboard,
-      cleanUpCollectionDashboard: () => toCollectionAction(cleanUpDashboard(), ownProps.urlUid),
+      cleanUpDashboard: () => toCollectionAction(cleanUpDashboard(), ownProps.urlUid),
       notifyApp,
       updateLocation,
     },

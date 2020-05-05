@@ -59,7 +59,6 @@ export function panelEditorCleanUp(): ThunkResult<void> {
             dashboard.uid
           )
         );
-        dispatch(panelModelAndPluginReady({ panelId: sourcePanel.id, plugin: panel.plugin! }));
       }
 
       // Resend last query result on source panel query runner

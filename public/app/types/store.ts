@@ -28,8 +28,7 @@ export interface StoreState {
   teams: TeamsState;
   team: TeamState;
   folder: FolderState;
-  dashboard: DashboardState;
-  hocDashboard: CollectionReducerState<DashboardState>;
+  dashboards: CollectionReducerState<DashboardState>;
   panelEditor: PanelEditorState;
   dataSources: DataSourcesState;
   dataSourceSettings: DataSourceSettingsState;

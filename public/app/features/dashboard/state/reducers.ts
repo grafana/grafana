@@ -125,11 +125,10 @@ export const dashboardReducer = dashboardSlice.reducer;
 
 export const dashboardCollection = createCollection({
   instanceReducer: dashboardSlice.reducer,
-  stateSelector: state => state.hocDashboard,
+  stateSelector: state => state.dashboards,
 });
 
 export default {
-  dashboard: dashboardReducer,
-  hocDashboard: dashboardCollection.reducer,
+  dashboards: dashboardCollection.reducer,
   panelEditor: panelEditorReducer,
 };

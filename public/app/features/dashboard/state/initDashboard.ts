@@ -111,7 +111,6 @@ async function fetchDashboard(
     dispatch(
       toCollectionAction(dashboardInitFailed({ message: 'Failed to fetch dashboard', error: err }), args.urlUid)
     );
-    dispatch(dashboardInitFailed({ message: 'Failed to fetch dashboard', error: err }));
     console.log(err);
     return null;
   }
@@ -130,14 +129,12 @@ export function initDashboard(args: InitDashboardArgs): ThunkResult<void> {
   return async (dispatch, getState) => {
     // set fetching state
     dispatch(toCollectionAction(dashboardInitFetching(), args.urlUid));
-    dispatch(dashboardInitFetching());
 
     // Detect slow loading / initializing and set state flag
     // This is in order to not show loading indication for fast loading dashboards as it creates blinking/flashing
     setTimeout(() => {
       if (getState().dashboard.getModel() === null) {
         dispatch(toCollectionAction(dashboardInitSlow(), args.urlUid));
-        dispatch(dashboardInitSlow());
       }
     }, 500);
 
@@ -151,7 +148,6 @@ export function initDashboard(args: InitDashboardArgs): ThunkResult<void> {
 
     // set initializing state
     dispatch(toCollectionAction(dashboardInitServices(), args.urlUid));
-    dispatch(dashboardInitServices());
 
     // create model
     let dashboard: DashboardModel;
@@ -161,7 +157,6 @@ export function initDashboard(args: InitDashboardArgs): ThunkResult<void> {
       dispatch(
         toCollectionAction(dashboardInitFailed({ message: 'Failed create dashboard model', error: err }), args.urlUid)
       );
-      dispatch(dashboardInitFailed({ message: 'Failed create dashboard model', error: err }));
       console.log(err);
       return;
     }
@@ -238,7 +233,6 @@ export function initDashboard(args: InitDashboardArgs): ThunkResult<void> {
 
     // yay we are done
     dispatch(toCollectionAction(dashboardInitCompleted(dashboard), args.urlUid));
-    dispatch(dashboardInitCompleted(dashboard));
   };
 }
 
@@ -283,5 +277,4 @@ function updateQueriesWhenComingFromExplore(
 
   // Clear update state now that we're done
   dispatch(toCollectionAction(clearDashboardQueriesToUpdateOnLoad(), dashboard.uid));
-  dispatch(clearDashboardQueriesToUpdateOnLoad());
 }

@@ -68,7 +68,6 @@ function dashboardPageScenario(description: string, scenarioFn: (ctx: ScenarioCo
           updateLocation: mockToolkitActionCreator(updateLocation),
           notifyApp: mockToolkitActionCreator(notifyApp),
           cleanUpDashboard: ctx.cleanUpDashboardMock,
-          cleanUpCollectionDashboard: mockToolkitActionCreator(cleanUpDashboard),
           dashboard: null,
         };
 

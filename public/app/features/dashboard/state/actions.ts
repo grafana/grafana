@@ -15,7 +15,6 @@ export function getDashboardPermissions(id: number, uid: string): ThunkResult<vo
   return async dispatch => {
     const permissions = await getBackendSrv().get(`/api/dashboards/id/${id}/permissions`);
     dispatch(toCollectionAction(loadDashboardPermissions(permissions), uid));
-    dispatch(loadDashboardPermissions(permissions));
   };
 }
 
@@ -135,7 +134,6 @@ export function initDashboardPanel(dashboardUid: string, panel: PanelModel): Thu
     }
 
     dispatch(toCollectionAction(panelModelAndPluginReady({ panelId: panel.id, plugin }), dashboardUid));
-    dispatch(panelModelAndPluginReady({ panelId: panel.id, plugin }));
   };
 }
 
@@ -160,12 +158,10 @@ export function changePanelPlugin(dashboardUId: string, panel: PanelModel, plugi
       dispatch(
         toCollectionAction(setPanelAngularComponent({ panelId: panel.id, angularComponent: null }), dashboardUId)
       );
-      dispatch(setPanelAngularComponent({ panelId: panel.id, angularComponent: null }));
     }
 
     panel.changePlugin(plugin);
 
     dispatch(toCollectionAction(panelModelAndPluginReady({ panelId: panel.id, plugin }), dashboardUId));
-    dispatch(panelModelAndPluginReady({ panelId: panel.id, plugin }));
   };
 }
