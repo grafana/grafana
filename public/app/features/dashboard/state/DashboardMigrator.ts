@@ -6,7 +6,7 @@ import kbn from 'app/core/utils/kbn';
 // Types
 import { PanelModel } from './PanelModel';
 import { DashboardModel } from './DashboardModel';
-import { DataLink, urlUtil, DataLinkBuiltInVars } from '@grafana/data';
+import { DataLink, DataLinkBuiltInVars, urlUtil } from '@grafana/data';
 // Constants
 import {
   DEFAULT_PANEL_SPAN,
@@ -16,8 +16,9 @@ import {
   GRID_COLUMN_COUNT,
   MIN_PANEL_HEIGHT,
 } from 'app/core/constants';
-import { isMulti } from 'app/features/variables/guard';
+import { isMulti, isQuery } from 'app/features/variables/guard';
 import { alignCurrentWithMulti } from 'app/features/variables/shared/multiOptions';
+import { VariableTag } from '../../templating/types';
 
 export class DashboardMigrator {
   dashboard: DashboardModel;
@@ -30,7 +31,7 @@ export class DashboardMigrator {
     let i, j, k, n;
     const oldVersion = this.dashboard.schemaVersion;
     const panelUpgrades = [];
-    this.dashboard.schemaVersion = 24;
+    this.dashboard.schemaVersion = 25;
 
     if (oldVersion === this.dashboard.schemaVersion) {
       return;
@@ -520,6 +521,47 @@ export class DashboardMigrator {
         }
         panel.type = wasAngularTable ? 'table-old' : 'table';
       });
+    }
+
+    if (oldVersion < 25) {
+      for (const variable of this.dashboard.templating.list) {
+        if (!isQuery(variable)) {
+          continue;
+        }
+
+        const { tags, current } = variable;
+        if (!Array.isArray(tags)) {
+          variable.tags = [];
+          continue;
+        }
+
+        const currentTags = current?.tags ?? [];
+        const currents = currentTags.reduce((all, tag) => {
+          if (tag && tag.hasOwnProperty('text') && typeof tag['text'] === 'string') {
+            all[tag.text] = tag;
+          }
+          return all;
+        }, {} as Record<string, VariableTag>);
+
+        const newTags: VariableTag[] = [];
+
+        for (const tag of tags) {
+          if (typeof tag === 'object') {
+            // new format let's assume it's correct
+            newTags.push(tag);
+            continue;
+          }
+
+          if (typeof tag !== 'string') {
+            // something that we do not support
+            continue;
+          }
+
+          const currentValue = currents[tag];
+          newTags.push({ text: tag, selected: false, ...currentValue });
+        }
+        variable.tags = newTags;
+      }
     }
 
     if (panelUpgrades.length === 0) {
