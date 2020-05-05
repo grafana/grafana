@@ -267,7 +267,7 @@ func (n *testNotifier) Notify(evalCtx *EvalContext) error {
 	return nil
 }
 
-func (n *testNotifier) ShouldNotify(ctx context.Context, evalCtx *EvalContext, notiferState *models.AlertNotificationState) bool {
+func (n *testNotifier) ShouldNotify(ctx context.Context, evalCtx *EvalContext, notifierState *models.AlertNotificationState) bool {
 	return true
 }
 

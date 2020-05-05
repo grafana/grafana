@@ -49,7 +49,7 @@ func NewNotifierBase(model *models.AlertNotification) NotifierBase {
 }
 
 // ShouldNotify checks this evaluation should send an alert notification
-func (n *NotifierBase) ShouldNotify(ctx context.Context, context *alerting.EvalContext, notiferState *models.AlertNotificationState) bool {
+func (n *NotifierBase) ShouldNotify(ctx context.Context, context *alerting.EvalContext, notifierState *models.AlertNotificationState) bool {
 	prevState := context.PrevAlertState
 	newState := context.Rule.State
 
@@ -60,8 +60,8 @@ func (n *NotifierBase) ShouldNotify(ctx context.Context, context *alerting.EvalC
 
 	if prevState == newState && n.SendReminder {
 		// Do not notify if interval has not elapsed
-		lastNotify := time.Unix(notiferState.UpdatedAt, 0)
-		if notiferState.UpdatedAt != 0 && lastNotify.Add(n.Frequency).After(time.Now()) {
+		lastNotify := time.Unix(notifierState.UpdatedAt, 0)
+		if notifierState.UpdatedAt != 0 && lastNotify.Add(n.Frequency).After(time.Now()) {
 			return false
 		}
 
@@ -94,8 +94,8 @@ func (n *NotifierBase) ShouldNotify(ctx context.Context, context *alerting.EvalC
 	}
 
 	// Do not notify if state pending and it have been updated last minute
-	if notiferState.State == models.AlertNotificationStatePending {
-		lastUpdated := time.Unix(notiferState.UpdatedAt, 0)
+	if notifierState.State == models.AlertNotificationStatePending {
+		lastUpdated := time.Unix(notifierState.UpdatedAt, 0)
 		if lastUpdated.Add(1 * time.Minute).After(time.Now()) {
 			return false
 		}
