@@ -45,11 +45,7 @@ function calculateFieldState(field: Field, frame?: DataFrame, allFrames?: DataFr
 
   let title = hasConfigTitle ? field.config!.title! : field.name;
 
-  if (field.type === FieldType.time) {
-    if (!title) {
-      title = 'Time';
-    }
-  } else if (!hasConfigTitle) {
+  if (!hasConfigTitle) {
     let parts: string[] = [];
     let frameNamesDiffer = false;
 
