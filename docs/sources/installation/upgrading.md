@@ -89,7 +89,7 @@ sudo apt-get upgrade
 If you downloaded the binary `.tar.gz` package, then you can just download and extract the new package and overwrite all your existing files. However, this might overwrite your config changes.
 
 We recommend that you save your custom config changes in a file named `<grafana_install_dir>/conf/custom.ini`.
-This allows you to upgrade Grafana without risking losing your configuration changes.
+This allows you to upgrade Grafana without risking loss of your configuration changes.
 
 ### Centos / RHEL
 
