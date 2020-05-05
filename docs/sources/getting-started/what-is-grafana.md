@@ -4,6 +4,7 @@ description = "Overview of Grafana and features"
 keywords = ["grafana", "intro", "guide", "started"]
 type = "docs"
 [menu.docs]
+aliases = ["/docs/grafana/latest/guides/what-is-grafana"]
 name = "What is Grafana?"
 identifier = "what_is_grafana"
 parent = "guides"
@@ -12,11 +13,11 @@ weight = 200
 
 # What is Grafana?
 
-This topic provides a high-level look at Grafana, the Grafana process, and Grafana features. It's a good place to start if you want to learn more about Grafana software. To jump right in, refer to [Getting started]({{< relref "getting_started.md" >}}).
+This topic provides a high-level look at Grafana, the Grafana process, and Grafana features. It's a good place to start if you want to learn more about Grafana software. To jump right in, refer to [Getting started]({{< relref "getting-started.md" >}}).
 
 Grafana is open source visualization and analytics software. It allows you to query, visualize, alert on, and explore your metrics no matter where they are stored. In plain English, it provides you with tools to turn your time-series database (TSDB) data into beautiful graphs and visualizations.
 
-After creating a dashboard like you do in [Getting started]({{< relref "getting_started.md" >}}), there are many possible things you might do next. It all depends on your needs and your use case. 
+After creating a dashboard like you do in [Getting started]({{< relref "getting-started.md" >}}), there are many possible things you might do next. It all depends on your needs and your use case. 
 
 For example, if you want to view weather data and statistics about your smart home, then you might create a playlist. If you are the administrator for a corporation and are managing Grafana for multiple teams, then you might need to set up provisioning and authentication.
 

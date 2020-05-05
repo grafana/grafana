@@ -4,6 +4,7 @@ description = "Introduction to time series"
 keywords = ["grafana", "intro", "guide", "concepts", "timeseries"]
 type = "docs"
 [menu.docs]
+aliases = ["/docs/grafana/latest/guides/timeseries"]
 name = "Time series"
 identifier = "time_series"
 parent = "guides"

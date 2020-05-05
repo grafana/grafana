@@ -1,14 +1,16 @@
 - name: Getting started
-  link: /guides/
+  link: /getting-started/
   children:
     - name: What is Grafana?
-      link: /guides/what-is-grafana/
+      link: /getting-started/what-is-grafana/
     - name: Getting started
-      link: /guides/getting_started/
+      link: /getting-started/getting-started/
     - name: Intro to time series
-      link: /guides/timeseries/
+      link: /getting-started/timeseries/
+    - name: Intro to histograms
+      link: /getting-started/intro-histograms/
     - name: Glossary
-      link: /guides/glossary/
+      link: /getting-started/glossary/
 - name: Installation
   link: /installation/
   children:
