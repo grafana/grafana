@@ -115,7 +115,7 @@ image_scale_factor = 2
 
 ## Report time range
 
-Reports uses the saved time range of the dashboard. Changing the time range of the report is done by saving a modified time range to the dashboard.
+Reports use the saved time range of the dashboard. Changing the time range of the report is done by saving a modified time range to the dashboard.
 
 The page header of the report displays the time range for the dashboard's data queries. Dashboards set to use the browser's time zone will use the time zone on the Grafana server.
 
