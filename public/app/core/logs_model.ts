@@ -198,10 +198,11 @@ function isLogsData(series: DataFrame) {
 export function dataFrameToLogsModel(
   dataFrame: DataFrame[],
   intervalMs: number | undefined,
-  timeZone: TimeZone
+  timeZone: TimeZone,
+  isLoki?: boolean
 ): LogsModel {
   const { logSeries, metricSeries } = separateLogsAndMetrics(dataFrame);
-  const logsModel = logSeriesToLogsModel(logSeries);
+  const logsModel = logSeriesToLogsModel(logSeries, isLoki);
 
   if (logsModel) {
     if (metricSeries.length === 0) {
@@ -257,6 +258,7 @@ interface LogFields {
 
   timeField: FieldWithIndex;
   stringField: FieldWithIndex;
+  timeNanosecondField?: FieldWithIndex;
   logLevelField?: FieldWithIndex;
   idField?: FieldWithIndex;
 }
@@ -265,7 +267,7 @@ interface LogFields {
  * Converts dataFrames into LogsModel. This involves merging them into one list, sorting them and computing metadata
  * like common labels.
  */
-export function logSeriesToLogsModel(logSeries: DataFrame[]): LogsModel | undefined {
+export function logSeriesToLogsModel(logSeries: DataFrame[], isLoki?: boolean): LogsModel | undefined {
   if (logSeries.length === 0) {
     return undefined;
   }
@@ -284,6 +286,7 @@ export function logSeriesToLogsModel(logSeries: DataFrame[]): LogsModel | undefi
     return {
       series,
       timeField: fieldCache.getFirstFieldOfType(FieldType.time),
+      timeNanosecondField: isLoki && fieldCache.hasFieldNamed('tsNs') ? fieldCache.getFieldByName('tsNs') : undefined,
       stringField,
       logLevelField: fieldCache.getFieldByName('level'),
       idField: getIdField(fieldCache),
@@ -296,7 +299,7 @@ export function logSeriesToLogsModel(logSeries: DataFrame[]): LogsModel | undefi
   let hasUniqueLabels = false;
 
   for (const info of allSeries) {
-    const { timeField, stringField, logLevelField, idField, series } = info;
+    const { timeField, timeNanosecondField, stringField, logLevelField, idField, series } = info;
     const labels = stringField.labels;
     const uniqueLabels = findUniqueLabels(labels, commonLabels);
     if (Object.keys(uniqueLabels).length > 0) {
@@ -311,6 +314,8 @@ export function logSeriesToLogsModel(logSeries: DataFrame[]): LogsModel | undefi
     for (let j = 0; j < series.length; j++) {
       const ts = timeField.values.get(j);
       const time = dateTime(ts);
+      const tsNs = isLoki ? timeNanosecondField.values.get(j) : undefined;
+      const timeEpochNs = Number(isLoki ? tsNs : (time.valueOf() + '0000000000000000000').substr(0, 19));
 
       const messageValue: unknown = stringField.values.get(j);
       // This should be string but sometimes isn't (eg elastic) because the dataFrame is not strongly typed.
@@ -327,7 +332,6 @@ export function logSeriesToLogsModel(logSeries: DataFrame[]): LogsModel | undefi
       } else {
         logLevel = getLogLevel(message);
       }
-
       rows.push({
         entryFieldIndex: stringField.index,
         rowIndex: j,
@@ -335,6 +339,7 @@ export function logSeriesToLogsModel(logSeries: DataFrame[]): LogsModel | undefi
         logLevel,
         timeFromNow: dateTimeFormatTimeAgo(ts),
         timeEpochMs: time.valueOf(),
+        timeEpochNs,
         timeLocal: dateTimeFormat(ts, { timeZone: 'browser' }),
         timeUtc: dateTimeFormat(ts, { timeZone: 'utc' }),
         uniqueLabels,
