@@ -101,7 +101,8 @@ export class ResultProcessor {
       return null;
     }
 
-    const newResults = dataFrameToLogsModel(this.dataFrames, this.intervalMs, this.timeZone);
+    const isLokiDatasource: boolean = this.state.datasourceInstance?.meta?.id === 'loki';
+    const newResults = dataFrameToLogsModel(this.dataFrames, this.intervalMs, this.timeZone, isLokiDatasource);
     const sortOrder = refreshIntervalToSortOrder(this.state.refreshInterval);
     const sortedNewResults = sortLogsResult(newResults, sortOrder);
     const rows = sortedNewResults.rows;
