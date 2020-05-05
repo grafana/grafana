@@ -1,10 +1,10 @@
 import merge from 'lodash/merge';
-import { getFieldDisplayValues, GetFieldDisplayValuesOptions, calculateFieldState } from './fieldDisplay';
+import { getFieldDisplayValues, GetFieldDisplayValuesOptions } from './fieldDisplay';
 import { toDataFrame } from '../dataframe/processDataFrame';
 import { ReducerID } from '../transformations/fieldReducer';
 import { ThresholdsMode } from '../types/thresholds';
 import { GrafanaTheme } from '../types/theme';
-import { DataFrame, FieldConfig, MappingType, TIME_SERIES_FIELD_NAME, FieldState, FieldType } from '../types';
+import { FieldConfig, MappingType } from '../types';
 import { validateFieldConfig } from './fieldOverrides';
 import { standardFieldConfigEditorRegistry } from './standardFieldConfigEditorRegistry';
 
