@@ -192,7 +192,13 @@ jobs:
       - run:
           name: Build internal Grafana plug-ins
           command: |
-            /tmp/grabpl build-plugins --jobs 2 --edition << parameters.edition >>
+            if [[ -n "$CIRCLE_PR_NUMBER" ]]; then
+              # This is a forked PR, so don't sign as it requires an API secret
+              /tmp/grabpl build-plugins --jobs 2 --edition << parameters.edition >>
+            else
+              export GRAFANA_API_KEY=$GRAFANA_COM_API_KEY
+              /tmp/grabpl build-plugins --jobs 2 --edition << parameters.edition >> --sign --signing-admin
+            fi
       - run:
           name: Move artifacts
           command: |
